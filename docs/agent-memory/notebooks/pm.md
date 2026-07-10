@@ -1,5 +1,21 @@
 # PM — Notebook
 
+## c326 D3-BACKLOG-HYGIENE-NORMALIZE-TODO-DEFERRED · 2026-07-10T20:35Z
+
+**MANDATE:** Normalize 62 backlog rows with TODO/DEFERRED status → status:BACKLOG. Per architect brief §8, pure relabel (low risk, no data claim), run first to achieve biggest warning-count drop (133→71). Preserve old status values in verify_note field.
+
+**OUTPUT:** All 62 TODO/DEFERRED rows in backlog lane successfully normalized to BACKLOG status. Disposition bucket: confirm-relabel=62, confirm-move=0, exception=0. Every row's prior status (TODO or DEFERRED) preserved in verify_note field as "prior_status=<STATUS>", appending if verify_note already existed.
+
+**COHERENCE WARNINGS:** Before 133, after 71. Exact drop of 62 warnings = 100% of TODO/DEFERRED rows targeted.
+
+**BOARD MUTATION:** 62 backlog rows: status TODO/DEFERRED→BACKLOG (via `jq -f .../d3_normalize.jq | orch-apply.sh`). D3 task row moved backlog[]→done_verified[], status TODO→DONE_VERIFIED, added triage_result field with disposition buckets. Validator re-run confirmed coherence count: 71 warnings live.
+
+**VERIFICATION:** Ran `bun scripts/orch-validate.mjs` post-mutation: 71 coherence warning(s) reported (down from baseline 133). Gap exactly matches the 62 rows modified (TODO/DEFERRED→BACKLOG).
+
+**NEXT:** D2.5 (schema decision on BLOCKED lane) and D1 (terminal-row eviction) remain unblocked per original plan. D3 now DONE_VERIFIED, ready for router to acknowledge completion.
+
+---
+
 ## c325 D0-BACKLOG-HYGIENE-TERMINAL-ROW-TRIAGE · 2026-07-10T19:45Z
 
 **MANDATE:** Per-row triage of 88 backlog/review rows carrying terminal-looking status labels that `orch-cold-evict.sh` never evicted (root cause: script has zero code path touching `task_board.backlog[]`). Output: machine-parseable confirm-terminal/exclude/relabel buckets for D1's eventual execution.

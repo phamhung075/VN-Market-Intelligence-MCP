@@ -12,6 +12,14 @@
   },
   "decision_journal": [
     {
+      "by": "pm",
+      "task_id": "D3-BACKLOG-HYGIENE-NORMALIZE-TODO-DEFERRED",
+      "ts": "2026-07-10T20:35:00Z",
+      "decision": "Normalized 62 backlog rows from TODO/DEFERRED status to BACKLOG status. Per architect brief §8, this is a pure relabel operation (all rows sit in the correct backlog lane; only the status label was stale/wrong). Preserved prior status values in verify_note field. Disposition: confirm-relabel=62, confirm-move=0, exception=0. Single jq transform piped through orch-apply.sh with conservation check. Coherence warnings dropped from 133 to 71 (exact match of 62 warnings eliminated).",
+      "what_considered": "(A) Move rows to other lanes based on their old status — REJECTED: all 62 rows are already in the backlog lane where they belong; moving them would be double-fixing. (B) Leave status as TODO/DEFERRED — REJECTED: violates lane-coherence schema (backlog lane only allows BACKLOG status per LANE_ALLOWED_STATUSES). (C) Relabel to BACKLOG + preserve old status — CHOSEN: fixes coherence violation while maintaining audit trail in verify_note.",
+      "why_change": "Architect brief §8 explicitly prescribes this as the disposition for D3, confirmed via spot-check: all 62 rows are in the correct lane, only their status label needs updating to match."
+    },
+    {
       "by": "ba",
       "task_id": "BA-FRONTEND-FRESHNESS-TRANSPARENCY",
       "ts": "2026-06-27T19:45:58Z",
@@ -2679,61 +2687,67 @@
         "id": "TASK17-FOREIGN-FLOW",
         "size": "S",
         "sprint": "TASK-17",
-        "status": "TODO",
+        "status": "BACKLOG",
         "title": "TASK-17 Foreign-flow page: live foreign net-buy/sell over vnstock_trading_stats (confirmed 91 rows TODAY 2026-06-11, directional 30 buy/61 sell)",
         "type": "SPRINT-S",
         "zone": "multi",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#TASK17-FOREIGN-FLOW"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#TASK17-FOREIGN-FLOW",
+        "verify_note": "prior_status=TODO"
       },
       {
         "id": "FU-CHEF-MARKER-INFLOW",
         "size": "S",
         "sprint": "COWORK-RELIABILITY",
-        "status": "DEFERRED",
+        "status": "BACKLOG",
         "title": "chef.md self-enforces published-marker before send_telegram, with per-cadence key granularity",
         "type": "FIX",
         "zone": "cross-service/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-CHEF-MARKER-INFLOW"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-CHEF-MARKER-INFLOW",
+        "verify_note": "prior_status=DEFERRED"
       },
       {
         "id": "BCTC-HIST-VCB-REFINE",
         "priority": "medium",
         "size": "XS",
-        "status": "DEFERRED",
+        "status": "BACKLOG",
         "title": "Re-refine VCB 2025-Q1 + 2025-Q4 (2 known PENDING rows, OCR-garbage CF scalars)",
         "type": "FIX",
         "zone": "corpus",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#BCTC-HIST-VCB-REFINE"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#BCTC-HIST-VCB-REFINE",
+        "verify_note": "prior_status=DEFERRED"
       },
       {
         "id": "BCTC-HIST-VPS-BACKFILL",
         "priority": "high",
         "size": "M",
-        "status": "DEFERRED",
+        "status": "BACKLOG",
         "title": "VPS BCTC source lacks historical PDF cache (pre-Q4-2025) — backfill VPS /root/bctc-cache + 8765/bctc-files endpoint so seeded historical queue rows can drain",
         "type": "SPIKE",
         "zone": "infra-vps",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#BCTC-HIST-VPS-BACKFILL"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#BCTC-HIST-VPS-BACKFILL",
+        "verify_note": "prior_status=DEFERRED"
       },
       {
         "id": "BCTC-ENRICHER-OLD-QUARTERS",
         "priority": "medium",
         "size": "M",
-        "status": "DEFERRED",
+        "status": "BACKLOG",
         "title": "bctcQueueEnricherJob returns 0 URLs for pre-Q4-2025 quarters (valid tickers) — add fallback discovery (HSX mediafiles API has PDFs back to Q1-2022 per FU-BCTC-HISTORY spike)",
         "type": "FIX",
         "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#BCTC-ENRICHER-OLD-QUARTERS"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#BCTC-ENRICHER-OLD-QUARTERS",
+        "verify_note": "prior_status=DEFERRED"
       },
       {
         "id": "FU-RAPID-SKILLS-RESIDUAL",
         "size": "S",
         "sprint": "COWORK-RELIABILITY",
-        "status": "DEFERRED",
+        "status": "BACKLOG",
         "title": "Tidy residuals from expert-rapid-analysis-skills brief (size-justification counts + PO confirm of 3 default thresholds)",
         "type": "FIX",
         "zone": "cross-service/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-RAPID-SKILLS-RESIDUAL"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-RAPID-SKILLS-RESIDUAL",
+        "verify_note": "prior_status=DEFERRED"
       },
       {
         "id": "FU-PROFILE-DATA-VERIFY",
@@ -2901,37 +2915,41 @@
       {
         "id": "SPIKE-C44-PARALLEL-PROOF",
         "priority": "low",
-        "status": "DEFERRED",
+        "status": "BACKLOG",
         "title": "Verify c44 parallel-isolation proof (F-13): two developer agents in worktrees on disjoint zones, no shared-index race -> lift sequential mandate (Phase 4)",
         "type": "SPIKE",
         "zone": "docs/protocols/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#SPIKE-C44-PARALLEL-PROOF"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#SPIKE-C44-PARALLEL-PROOF",
+        "verify_note": "prior_status=DEFERRED"
       },
       {
         "id": "WF-DEFER-THROUGHPUT",
         "priority": "low",
-        "status": "DEFERRED",
+        "status": "BACKLOG",
         "title": "F-10 WIP-utilization telemetry (auditor Tier-2 daily WORK metric) + F-11 CRITICAL-signal dual-path emit (file bus + signal_queue)",
         "type": "FIX",
         "zone": "docs/agents/system-auditor/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#WF-DEFER-THROUGHPUT"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#WF-DEFER-THROUGHPUT",
+        "verify_note": "prior_status=DEFERRED"
       },
       {
         "id": "HEADROOM-COMPRESS-P1",
-        "status": "DEFERRED",
+        "status": "BACKLOG",
         "title": "Headroom SmartCrusher Phase-1 pilot in mcp-server tool-response layer (brief 2026-06-06-headroom-context-compression.md) — APPROVED-LANE-B DEFERRED P3",
         "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#HEADROOM-COMPRESS-P1"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#HEADROOM-COMPRESS-P1",
+        "verify_note": "prior_status=DEFERRED"
       },
       {
         "id": "FIX-BLOAT-HOOK-JUSTIFY-SUPPRESS",
         "priority": "low",
         "size": "XS",
-        "status": "TODO",
+        "status": "BACKLOG",
         "title": "context-bloat-backstop.sh: suppress breach signal when file header carries <!-- size-justification: --> (cold-path check)",
         "type": "FIX",
         "zone": "scripts/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-BLOAT-HOOK-JUSTIFY-SUPPRESS"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-BLOAT-HOOK-JUSTIFY-SUPPRESS",
+        "verify_note": "prior_status=TODO"
       },
       {
         "id": "HPG-REPARSE-POST-REBUILD",
@@ -2948,41 +2966,45 @@
         "id": "VCB-MISSING-PDFS",
         "priority": "P2",
         "size": "XS",
-        "status": "TODO",
+        "status": "BACKLOG",
         "title": "Re-source missing VCB PDFs or clean dead rows",
         "type": "OPS",
         "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#VCB-MISSING-PDFS"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#VCB-MISSING-PDFS",
+        "verify_note": "prior_status=TODO"
       },
       {
         "id": "FIX-LANCEDB-INSERT-SEGFAULT",
         "priority": "P3",
         "size": "XS",
-        "status": "TODO",
+        "status": "BACKLOG",
         "title": "Fix LanceDB insert segfault (Bun v1.3.13)",
         "type": "DEV",
         "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-LANCEDB-INSERT-SEGFAULT"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-LANCEDB-INSERT-SEGFAULT",
+        "verify_note": "prior_status=TODO"
       },
       {
         "id": "REVIEW-PPC-Q4-LOW-CONFIDENCE",
         "priority": "P2",
         "size": "XS",
-        "status": "TODO",
+        "status": "BACKLOG",
         "title": "Human review: PPC Q4-2025 extraction_confidence=0.25 (normal-low)",
         "type": "QA",
         "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#REVIEW-PPC-Q4-LOW-CONFIDENCE"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#REVIEW-PPC-Q4-LOW-CONFIDENCE",
+        "verify_note": "prior_status=TODO"
       },
       {
         "id": "HPG-DISCOVER-CONSOLIDATED-PDF",
         "priority": "P2",
         "size": "S",
-        "status": "TODO",
+        "status": "BACKLOG",
         "title": "Discover HPG consolidated PDF (Q4-2025)",
         "type": "DEV",
         "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#HPG-DISCOVER-CONSOLIDATED-PDF"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#HPG-DISCOVER-CONSOLIDATED-PDF",
+        "verify_note": "prior_status=TODO"
       },
       {
         "id": "DOCKER-IMAGE-RETENTION",
@@ -2998,86 +3020,95 @@
         "id": "FIX-BCTC-1345B-REPORT-BATCH",
         "priority": "P3",
         "size": "XS",
-        "status": "TODO",
+        "status": "BACKLOG",
         "title": "Batch telegram analysis reports or suppress duplicates",
         "type": "enhancement",
         "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-BCTC-1345B-REPORT-BATCH"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-BCTC-1345B-REPORT-BATCH",
+        "verify_note": "prior_status=TODO"
       },
       {
         "id": "SPIKE-UNIFIED-NB-GAP",
         "priority": "medium",
         "size": "S",
-        "status": "TODO",
+        "status": "BACKLOG",
         "title": "SPIKE: why do unified-agent cowork sessions die before Step 8 notebook write? Friday 2026-06-06 fully absent; 3rd consecutive cycle with gaps",
         "type": "SPIKE",
         "zone": "cross-service/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#SPIKE-UNIFIED-NB-GAP"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#SPIKE-UNIFIED-NB-GAP",
+        "verify_note": "prior_status=TODO"
       },
       {
         "id": "CLEAN-COWORK-ROSTER-DRIFT",
         "priority": "low",
         "size": "S",
-        "status": "TODO",
+        "status": "BACKLOG",
         "title": "Reconcile cowork-team flow roster vs docs/data/system-map.json (flow_roster_mismatch signal)",
         "type": "CLEAN",
         "zone": "cross-service/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#CLEAN-COWORK-ROSTER-DRIFT"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#CLEAN-COWORK-ROSTER-DRIFT",
+        "verify_note": "prior_status=TODO"
       },
       {
         "id": "FIX-MCP-SUITE-HEALTH-BASELINE",
         "size": "M",
-        "status": "TODO",
+        "status": "BACKLOG",
         "title": "Triage standing bun-test baseline in apps/mcp-server (40 fail / 848 pass): classify (a) order-dependent pdf-extractor loop-pollution overlap (FIX-PDFX-TEST-LOOP-POLLUTION) vs (b) real regressions; define + document green baseline",
         "type": "FIX",
         "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MCP-SUITE-HEALTH-BASELINE"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MCP-SUITE-HEALTH-BASELINE",
+        "verify_note": "prior_status=TODO"
       },
       {
         "id": "FIX-REE-BS-SECTION-REGEX",
         "size": "S",
-        "status": "TODO",
+        "status": "BACKLOG",
         "title": "REE conf 0.05: balance-sheet section-total codes 100/200/300/400 absent from extracted text — extend BS section regex/discovery, reparse REE 2026-Q1",
         "type": "FIX",
         "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-REE-BS-SECTION-REGEX"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-REE-BS-SECTION-REGEX",
+        "verify_note": "prior_status=TODO"
       },
       {
         "id": "CLEAN-HOST-DB-DECOYS",
         "size": "XS",
-        "status": "TODO",
+        "status": "BACKLOG",
         "title": "Quarantine/delete stale host DB copies (apps/mcp-server/data/*.db, ./data/*.db, root market.db 0B) after grep-verifying no compose mount/code path reads them; document live-DB location (docker volume) in dev-standards + system-map",
         "type": "CLEAN",
         "zone": "cross-service/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#CLEAN-HOST-DB-DECOYS"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#CLEAN-HOST-DB-DECOYS",
+        "verify_note": "prior_status=TODO"
       },
       {
         "id": "FIX-CADENCE-COWORK-DUP-MARKET-WATCHER",
         "priority": "low",
-        "status": "TODO",
+        "status": "BACKLOG",
         "title": "PLAN-ONLY: market-watcher double-fire at 16:00 weekday (offhours 0 */4 + eod 0 16 * * 1-5 overlap) — architect cadence-dedup brief → agent-father (cowork-schedule.json _maintained_by agent-father via brief only)",
         "type": "SPRINT-S",
         "zone": "docs/data/cowork-schedule.json",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-CADENCE-COWORK-DUP-MARKET-WATCHER"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-CADENCE-COWORK-DUP-MARKET-WATCHER",
+        "verify_note": "prior_status=TODO"
       },
       {
         "id": "CLEAN-NB-TRIM-PDFX-2",
         "priority": "low",
-        "status": "TODO",
+        "status": "BACKLOG",
         "title": "Trim docs/agent-memory/notebooks/dev-pdf-extractor.md 240L → ≤200L (cap breach, deferred CLEAN-NB-TRIM-BATCH 4/5 pdfx skipped)",
         "type": "CLEAN",
         "zone": "docs/agent-memory/notebooks/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#CLEAN-NB-TRIM-PDFX-2"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#CLEAN-NB-TRIM-PDFX-2",
+        "verify_note": "prior_status=TODO"
       },
       {
         "id": "FIX-AUDITOR-COMMIT-NONEXPLICIT-PATHSPEC",
         "priority": "medium",
         "size": "S",
-        "status": "DEFERRED",
+        "status": "BACKLOG",
         "title": "system-auditor flow commit step uses non-explicit git add — swept in-flight peer (architect) working-tree edits into commit f05795c3 alongside its own notebook (7 files, msg claimed notebook-only). Benign this time (peer edits were correct + headed for commit), latent concurrent-commit-race / wrong-attribution bug.",
         "type": "FIX",
         "zone": "cross-service/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AUDITOR-COMMIT-NONEXPLICIT-PATHSPEC"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AUDITOR-COMMIT-NONEXPLICIT-PATHSPEC",
+        "verify_note": "prior_status=DEFERRED"
       },
       {
         "id": "FIX-SCHEMA-DRIFT-P5-SELFHEAL",
@@ -3412,29 +3443,32 @@
       {
         "id": "FIX-PREDICTION-SIGNALS-EMPTY",
         "priority": "medium",
-        "status": "TODO",
+        "status": "BACKLOG",
         "title": "prediction_signals poll green-but-empty: table frozen 2026-04-27 (45d, 6 rows) while predictionMarketPollJob ran 2026-06-11 17:30 status=success (predictionMarketPollJob + predictionResolutionJob both running). Poll executes, zero signals land 45d.",
         "type": "FIX",
         "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-PREDICTION-SIGNALS-EMPTY"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-PREDICTION-SIGNALS-EMPTY",
+        "verify_note": "prior_status=TODO"
       },
       {
         "id": "FIX-CRON-JOB-RUNS-DOUBLE-LOG",
         "priority": "low",
-        "status": "TODO",
+        "status": "BACKLOG",
         "title": "cron_job_runs double-logging: every job run logged TWICE per started_at (one row blank rows_written, one with the integer). Minor observability bug — inflates run counts + corrupts rows_written aggregates used by audits.",
         "type": "FIX",
         "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-CRON-JOB-RUNS-DOUBLE-LOG"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-CRON-JOB-RUNS-DOUBLE-LOG",
+        "verify_note": "prior_status=TODO"
       },
       {
         "id": "INVESTIGATE-EMPTY-DATA-TABLES",
         "priority": "low",
-        "status": "TODO",
+        "status": "BACKLOG",
         "title": "5 EMPTY data tables — confirm intended-empty vs dead-pipeline: credit_data(0), insider_transactions(0), public_contracts(0), pharma_events(0), broker_sanctions(0). Each has a writer somewhere; 0 rows may be by-design (rare events) OR a dead pipeline. SINGLE investigation task (not 5).",
         "type": "SPIKE",
         "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#INVESTIGATE-EMPTY-DATA-TABLES"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#INVESTIGATE-EMPTY-DATA-TABLES",
+        "verify_note": "prior_status=TODO"
       },
       {
         "id": "FU-REPUTATION-CRON-MISS",
@@ -3450,50 +3484,55 @@
         "id": "OPS-POLLNEWS-NIGHT-ZERO",
         "priority": "medium",
         "sprint": null,
-        "status": "TODO",
+        "status": "BACKLOG",
         "title": "pollNews returns 0 items from ALL sources at ~23:00 UTC two consecutive nights (2026-06-10 23:00, 2026-06-11 23:30) — only 3/7 sources active (cafef/vnexpress/vneconomy/teChromiumNews/reuters/tradingeconomics/newsapi). Night-window fetch/proxy health: check VPS proxy nighttime availability + the 4 inactive sources. Infra/fetch lane, NOT a methodology gap.",
         "zone": "infrastructure/news-fetch",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#OPS-POLLNEWS-NIGHT-ZERO"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#OPS-POLLNEWS-NIGHT-ZERO",
+        "verify_note": "prior_status=TODO"
       },
       {
         "id": "AF-SEMBLE-INIT-DEF",
         "priority": "low",
         "size": "S",
-        "status": "TODO",
+        "status": "BACKLOG",
         "title": "semble-search agent-def structural gap: docs/agents/semble-search/init.md is a pure markdown skill-pointer (no agent: block, no flow pointer). Decide pattern: delete init.md + point .claude/agents/semble-search.md straight at .claude/skills/semble-search/SKILL.md, OR rewrite init.md as a real agent def. agents-architect picks pattern (consistency with other agent bootstraps); agent-father implements.",
         "type": "SPIKE",
         "zone": "docs/agents/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#AF-SEMBLE-INIT-DEF"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#AF-SEMBLE-INIT-DEF",
+        "verify_note": "prior_status=TODO"
       },
       {
         "id": "AF-DISAGREEMENT-VERIFY-OVERAGE",
         "priority": "low",
         "size": "XS",
-        "status": "TODO",
+        "status": "BACKLOG",
         "title": "docs/agents/refine_bctc_md/flow/disagreement-verify.md is 126L (6L over 120 cap) with no size-justification comment on line 1/2. Trivial: add a <!-- size-justification: ... --> header OR split 6L out. Route agent-father (agent-md-factory SSOT/DRY).",
         "type": "FIX",
         "zone": "docs/agents/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#AF-DISAGREEMENT-VERIFY-OVERAGE"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#AF-DISAGREEMENT-VERIFY-OVERAGE",
+        "verify_note": "prior_status=TODO"
       },
       {
         "id": "STYLE-SKILL-FRONTMATTER-ALIGN",
         "priority": "low",
         "size": "XS",
-        "status": "DEFERRED",
+        "status": "BACKLOG",
         "title": "DEFERRED style drift: 6 SKILL.md lack YAML frontmatter (49/55 have it). Genuine outliers are 3 heading-led (task-lock, dispatch-claim, token-economy start '# Skill:'); the other 3 (signal-dashboard, system-map-query, commit-mutex) start with an intentional <!-- size-justification --> header, NOT a defect. No standard mandates SKILL.md frontmatter. Cosmetic, no functional impact.",
         "type": "CLEAN",
         "zone": ".claude/skills/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#STYLE-SKILL-FRONTMATTER-ALIGN"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#STYLE-SKILL-FRONTMATTER-ALIGN",
+        "verify_note": "prior_status=DEFERRED"
       },
       {
         "id": "NB-AUDITOR-MAIN-SPLIT",
         "priority": "low",
         "size": "M",
-        "status": "DEFERRED",
+        "status": "BACKLOG",
         "title": "system-auditor/flow/main.md (627L) Tier-2/Tier-3 extraction/split sprint — explicitly deferred in-file. Split per agent-md-factory lazy-load/tree-DAG into sub-flow files. dev-team (335L) + fb-market-poster (492L) are size-justified — NO action. Scheduled-later, low urgency (flow is functional today).",
         "type": "SPRINT-S",
         "zone": "docs/agents/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#NB-AUDITOR-MAIN-SPLIT"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#NB-AUDITOR-MAIN-SPLIT",
+        "verify_note": "prior_status=DEFERRED"
       },
       {
         "id": "FIX-OHLCV-DAILY-AGGREGATOR-STALE",
@@ -3506,67 +3545,74 @@
       {
         "id": "FIX-COMMODITY-WTI-DELTA-CORRUPT",
         "priority": "P2",
-        "status": "TODO",
+        "status": "BACKLOG",
         "title": "FIX-COMMODITY-WTI-DELTA-CORRUPT — commodityTracker gaps: I10 wti_crude_usd stuck $95.5 vs live Brent $87.33 (WTI>Brent physically impossible, corrupts oil regime); I8 get_macro_snapshot oil/gold/usdVnd deltas null; I4 BDI stale 67+ days (not in commodityTrackerRefreshJob scope).",
         "type": "FIX",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-COMMODITY-WTI-DELTA-CORRUPT"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-COMMODITY-WTI-DELTA-CORRUPT",
+        "verify_note": "prior_status=TODO"
       },
       {
         "id": "FIX-ALERT-CASCADE-OUTCOME-DEAD",
         "priority": "P3",
-        "status": "TODO",
+        "status": "BACKLOG",
         "title": "FIX-ALERT-CASCADE-OUTCOME-DEAD — record_signal_outcome never called: 1965+ rule hits, Eval=0 for ALL 49 cascade rules; 653/683 alerts (95.6%) 'unknown' verdict. Outcome feedback loop disconnected — system can't learn signal quality.",
         "type": "FIX",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-ALERT-CASCADE-OUTCOME-DEAD"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-ALERT-CASCADE-OUTCOME-DEAD",
+        "verify_note": "prior_status=TODO"
       },
       {
         "id": "FIX-VPS-NEWS-STALE-FALSEPOS",
         "priority": "P3",
-        "status": "TODO",
+        "status": "BACKLOG",
         "title": "FIX-VPS-NEWS-STALE-FALSEPOS — get_vps_proxy_health reports news:STALE false-positive: 0407 push log shows recent pushes (03:52, 03:36, 03:20, 03:04, 03:00) contradicting the STALE flag. The VPS staleness threshold is miscalibrated vs actual news push cadence; no real data gap. FIX: align the news stale-detection threshold with the observed push cadence (decouple the STALE flag from data-flow health so a healthy, actively-pushing feed is not flagged stale).",
         "type": "FIX",
         "zone": "apps/news-fetch/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-VPS-NEWS-STALE-FALSEPOS"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-VPS-NEWS-STALE-FALSEPOS",
+        "verify_note": "prior_status=TODO"
       },
       {
         "id": "FIX-BASE-RATE-COMPUTATION-CRON-DEAD",
         "type": "FIX",
-        "status": "TODO",
+        "status": "BACKLOG",
         "size": "S",
         "priority": "P2",
         "zone": "apps/mcp-server/",
         "title": "baseRateComputationJob ~20 days stale — genuinely broken weekly job (CORRECT watchdog alert from T3 LIVE run, now actionable)",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-BASE-RATE-COMPUTATION-CRON-DEAD"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-BASE-RATE-COMPUTATION-CRON-DEAD",
+        "verify_note": "prior_status=TODO"
       },
       {
         "id": "ARCH-WATCHDOG-WEEKDAY-AWARE-THRESHOLD",
         "type": "SPRINT-S",
-        "status": "TODO",
+        "status": "BACKLOG",
         "size": "S",
         "priority": "P2",
         "zone": "apps/mcp-server/",
         "title": "weekday-aware watchdog threshold for weekday-only jobs (morningBriefingJob / eveningSummaryJob / franceSummaryJob) — eliminate weekend false-stale",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#ARCH-WATCHDOG-WEEKDAY-AWARE-THRESHOLD"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#ARCH-WATCHDOG-WEEKDAY-AWARE-THRESHOLD",
+        "verify_note": "prior_status=TODO"
       },
       {
         "id": "CLEAN-CONTEXT-BLOAT-NOTEBOOKS-20260614",
         "type": "CLEAN",
-        "status": "TODO",
+        "status": "BACKLOG",
         "size": "S",
         "priority": "P3",
         "zone": "cross-service/",
         "title": "context-bloat: trim 6 RAW-verified over-cap agent notebooks to SSOT cap=200",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#CLEAN-CONTEXT-BLOAT-NOTEBOOKS-20260614"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#CLEAN-CONTEXT-BLOAT-NOTEBOOKS-20260614",
+        "verify_note": "prior_status=TODO"
       },
       {
         "id": "ROUTE-BCTC-FPT-Q1-2026-ROUTINE",
         "type": "FIX",
-        "status": "TODO",
+        "status": "BACKLOG",
         "size": "XS",
         "priority": "P3",
         "zone": "cross-service/",
         "title": "FPT Q1-2026 routine BCTC signal -> bctc-analyst/cowork (ALL_PASS, routine, no escalation)",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#ROUTE-BCTC-FPT-Q1-2026-ROUTINE"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#ROUTE-BCTC-FPT-Q1-2026-ROUTINE",
+        "verify_note": "prior_status=TODO"
       },
       {
         "id": "FIX-ALERT-OPEN-ZERO-PRICE-RACE",
@@ -4120,11 +4166,12 @@
         "id": "BA-FE-PAGE-REORG",
         "type": "SPRINT-M",
         "title": "Requirement spec for FE-PAGE-REORG: frontend page-resemblance consolidation (6-category taxonomy + shared generic components), Wave-1 (P0+P1) then Wave-2 (P2+P3)",
-        "status": "TODO",
+        "status": "BACKLOG",
         "priority": "P2",
         "zone": "docs/agents/",
         "sprint": "FE-PAGE-REORG",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#BA-FE-PAGE-REORG"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#BA-FE-PAGE-REORG",
+        "verify_note": "prior_status=TODO"
       },
       {
         "id": "FIX-ERRAUDIT-W3-MCP-P2",
@@ -4294,10 +4341,11 @@
         "type": "FIX",
         "priority": "low",
         "size": "S",
-        "status": "TODO",
+        "status": "BACKLOG",
         "title": "system-auditor C-06 (market_messages) false-positives off-market: fixed 3h-count check fires HIGH during normal off-market quiet windows",
         "zone": "docs/agents/system-auditor/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AUDITOR-C06-OFFMARKET-RECALIBRATE"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AUDITOR-C06-OFFMARKET-RECALIBRATE",
+        "verify_note": "prior_status=TODO"
       },
       {
         "id": "FOLLOW-ON-CWKSCH-3",
@@ -5018,11 +5066,12 @@
         "id": "FIX-MOCKGUARD-SCOPE-EXCLUDE-TESTGO",
         "size": "S",
         "sprint": "INFRA-AUDIT",
-        "status": "TODO",
+        "status": "BACKLOG",
         "type": "SPRINT-S",
         "zone": "multi",
         "title": "mock-guard.sh: tighten scan scope — exclude Go *_test.go (adjacent test stubs e.g. usecases_vmt_bop_test.go/handlers_vmt_failclose_test.go return https://stub.sbv.vn) AND untracked vendored cache (apps/*/~/.bun/install/cache). Both trip HARD-FAIL/CAUTION every dev-team post-cycle tick = false positives. Add *_test.go + ~/.bun to exclusion glob.",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MOCKGUARD-SCOPE-EXCLUDE-TESTGO"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MOCKGUARD-SCOPE-EXCLUDE-TESTGO",
+        "verify_note": "prior_status=TODO"
       },
       {
         "id": "BA-FRONTEND-FRESHNESS-TRANSPARENCY",
@@ -5528,10 +5577,11 @@
         "title": "FIX-VPS-SSC-INSIDER-502 — VPS proxy HTTP 502 on ssc-insider upstream (decoupled from BA-PREDICTION-EVIDENCE-REVIVAL)",
         "type": "FIX",
         "zone": "vps-scripts/",
-        "status": "TODO",
+        "status": "BACKLOG",
         "priority": "medium",
         "size": "S",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-VPS-SSC-INSIDER-502"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-VPS-SSC-INSIDER-502",
+        "verify_note": "prior_status=TODO"
       },
       {
         "id": "CCATO-T2-CLAIM-TRUTH-SKILL",
@@ -5674,29 +5724,32 @@
         "id": "FIX-SEARCH-1466-MOCK-MODULE-POLLUTION",
         "title": "1466-sync-db-corruption-bail.test.ts mock.module pollution (reviewer follow-up)",
         "type": "FIX",
-        "status": "TODO",
+        "status": "BACKLOG",
         "priority": "low",
         "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-SEARCH-1466-MOCK-MODULE-POLLUTION"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-SEARCH-1466-MOCK-MODULE-POLLUTION",
+        "verify_note": "prior_status=TODO"
       },
       {
         "id": "FIX-AUDITOR-NOTEBOOK-COMMIT-TRAILER-DOC",
         "title": "auditor-notebook-commit.sh commit-trailer spec + election-release ownership doc line (reviewer follow-up)",
         "type": "CLEAN",
-        "status": "TODO",
+        "status": "BACKLOG",
         "priority": "low",
         "zone": "cross-service/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AUDITOR-NOTEBOOK-COMMIT-TRAILER-DOC"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AUDITOR-NOTEBOOK-COMMIT-TRAILER-DOC",
+        "verify_note": "prior_status=TODO"
       },
       {
         "id": "FIX-BCTC-BANK-FORM-CLASSIFIER-BOLD-STRIP",
         "title": "Bank form classifier: strip markdown emphasis from anchor regex (FIX-B)",
         "type": "FIX",
         "zone": "apps/mcp-server",
-        "status": "TODO",
+        "status": "BACKLOG",
         "priority": "high",
         "size": "S",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-BCTC-BANK-FORM-CLASSIFIER-BOLD-STRIP"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-BCTC-BANK-FORM-CLASSIFIER-BOLD-STRIP",
+        "verify_note": "prior_status=TODO"
       },
       {
         "id": "FEAT-SEVERITY-OVERRIDE-SURFACING",
@@ -5738,12 +5791,13 @@
       {
         "id": "VERIFY-BCTC-STRATEGY0-QUARTER-PARAM-CONTRACT",
         "type": "FIX",
-        "status": "TODO",
+        "status": "BACKLOG",
         "priority": "low",
         "size": "S",
         "zone": "apps/mcp-server/",
         "title": "Confirm HSX Strategy-0 false '0 URLs' = ops-recon test-harness type bug (quarter:4 numeric vs required 'Q4' string) + add durable guard",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#VERIFY-BCTC-STRATEGY0-QUARTER-PARAM-CONTRACT"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#VERIFY-BCTC-STRATEGY0-QUARTER-PARAM-CONTRACT",
+        "verify_note": "prior_status=TODO"
       },
       {
         "id": "OPS-BCTC-REFINE-REPASS-NONBANK-5T",
@@ -5927,23 +5981,25 @@
       {
         "id": "FIX-SIGNALQUEUE-DUP-ID-GUARD",
         "title": "FIX-SIGNALQUEUE-DUP-ID-GUARD (cross-service/) — orch-apply.sh id-uniqueness guard for signal_queue.rows[]/archive[] + normalize auditor ts to full ISO8601",
-        "status": "TODO",
+        "status": "BACKLOG",
         "type": "FIX",
         "priority": "med",
         "zone": "cross-service/",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-SIGNALQUEUE-DUP-ID-GUARD",
-        "supervised": true
+        "supervised": true,
+        "verify_note": "prior_status=TODO"
       },
       {
         "id": "FIX-AUDITOR-B05-BCTC-FRESHNESS-LAYER-SPLIT",
         "type": "FIX",
-        "status": "TODO",
+        "status": "BACKLOG",
         "priority": "P2",
         "zone": "docs/agents/system-auditor/",
         "size": "S",
         "title": "system-auditor B-05 (bctc-vps freshness) applies a 24h-continuous SLA to the RAW quarterly-PDF push layer instead of the authoritative analysis-layer SLA gate -> phantom CRITICAL + Telegram BUG ~6x/day for an event-driven quarterly source",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AUDITOR-B05-BCTC-FRESHNESS-LAYER-SPLIT",
-        "supervised": true
+        "supervised": true,
+        "verify_note": "prior_status=TODO"
       },
       {
         "id": "P1-IDLE-DEVTEAM-PREFLIGHT-SCRIPT",
@@ -5984,13 +6040,14 @@
       {
         "id": "P1-DRIFT-QUARANTINE-FREEZE-FLAG",
         "title": "RC-DRIFT §1.3: project-stats.json — quarantine zero-reader recurringBugEscalationFlag/escalationReason",
-        "status": "TODO",
+        "status": "BACKLOG",
         "type": "FIX",
         "priority": "med",
         "size": "XS",
         "zone": "docs/data/",
         "sprint": "SYSTEMIC-REMAKE-P1",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#P1-DRIFT-QUARANTINE-FREEZE-FLAG"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#P1-DRIFT-QUARANTINE-FREEZE-FLAG",
+        "verify_note": "prior_status=TODO"
       },
       {
         "id": "P1-DRIFT-NARRATIVE-NUMBER-POINTER",
@@ -6006,12 +6063,13 @@
       {
         "id": "P1-DETECTOR-CLOSURE-TRIAGE-SIGNALS",
         "title": "Wire origin_signal_id field in PO triage-signals flow",
-        "status": "TODO",
+        "status": "BACKLOG",
         "type": "feature",
         "zone": "docs/agents/po/",
         "priority": "P1",
         "size": "S",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#P1-DETECTOR-CLOSURE-TRIAGE-SIGNALS"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#P1-DETECTOR-CLOSURE-TRIAGE-SIGNALS",
+        "verify_note": "prior_status=TODO"
       },
       {
         "title": "Extract inline server.ts routes into routes/<name>Handler.ts (staged)",
@@ -6108,9 +6166,10 @@
         "size": "XS",
         "type": "FIX",
         "zone": "scripts/",
-        "status": "TODO",
+        "status": "BACKLOG",
         "sprint": null,
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-VERIFY-DEPLOY-SHA-BENIGN-DRIFT"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-VERIFY-DEPLOY-SHA-BENIGN-DRIFT",
+        "verify_note": "prior_status=TODO"
       },
       {
         "id": "UNBLOCK-CLOSEGATE-STEP4-HEAD-SYNC",
@@ -6155,7 +6214,7 @@
       },
       {
         "id": "FIX-DRAIN-QUARANTINE-NONROUTABLE-SIGNALS",
-        "status": "TODO",
+        "status": "BACKLOG",
         "title": "drain-signals re-skips 4 non-routable stray files every tick — quarantine + confirm writer output dir",
         "owner": "dev-team",
         "type": "FIX",
@@ -6171,7 +6230,8 @@
         "related": [
           "FIX-DEVTEAM-BOUNDED1-DETAIL-ITEMS-ARRAY-INDEX"
         ],
-        "status_note": "Recurring per-tick noise, no functional impact: docs/signals/cowork-team-2026-07-03T16-00-00Z.json + 3x price_anomaly_202607{02,03,04}*.json are correctly skipped as non-routable (no from/type) but re-scanned every tick. FIX: (a) drain-signals.js quarantines unrecognized no-from/type files to docs/signals/malformed/ after logging so they stop being re-scanned; (b) redirect upstream writers (cowork tick-report + price_anomaly detector) so their output artifacts stop landing in the routable-signal inbox. Do NOT blindly delete the price_anomaly_*.json files — confirm no live consumer (money-radar/dish surfacing) reads them before choosing quarantine-vs-relocate. Held in backlog (not in_progress) to respect WIP<=2 this tick — eligible for BOUNDED-1 auto-pickup once id1 (FIX-DEVTEAM-BOUNDED1-DETAIL-ITEMS-ARRAY-INDEX) ships. baseline_pass: a fresh dev-team tick's drain step logs the 4 files as quarantined/handled ONCE, a second tick does not re-scan them; no routable signal is ever quarantined."
+        "status_note": "Recurring per-tick noise, no functional impact: docs/signals/cowork-team-2026-07-03T16-00-00Z.json + 3x price_anomaly_202607{02,03,04}*.json are correctly skipped as non-routable (no from/type) but re-scanned every tick. FIX: (a) drain-signals.js quarantines unrecognized no-from/type files to docs/signals/malformed/ after logging so they stop being re-scanned; (b) redirect upstream writers (cowork tick-report + price_anomaly detector) so their output artifacts stop landing in the routable-signal inbox. Do NOT blindly delete the price_anomaly_*.json files — confirm no live consumer (money-radar/dish surfacing) reads them before choosing quarantine-vs-relocate. Held in backlog (not in_progress) to respect WIP<=2 this tick — eligible for BOUNDED-1 auto-pickup once id1 (FIX-DEVTEAM-BOUNDED1-DETAIL-ITEMS-ARRAY-INDEX) ships. baseline_pass: a fresh dev-team tick's drain step logs the 4 files as quarantined/handled ONCE, a second tick does not re-scan them; no routable signal is ever quarantined.",
+        "verify_note": "prior_status=TODO"
       },
       {
         "id": "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
@@ -6256,7 +6316,7 @@
         "type": "DEVELOPMENT",
         "title": "SUBTASK-DAILY-FF-1: daily_foreign_flow DDL + index + daily_ohlcv_with_flow view",
         "zone": "apps/mcp-server/",
-        "status": "TODO",
+        "status": "BACKLOG",
         "priority": "P1",
         "size": "M",
         "depends_on": [],
@@ -6269,7 +6329,8 @@
         "created_by": "pm",
         "promotion_note": "PM atomization of ARCH-DAILY-FOREIGN-FLOW-TABLE",
         "handoff": "docs/handoffs/TASK_2000-daily-ff-schema.md",
-        "note": "New table + view creation, additive only, unblocks all downstream subtasks"
+        "note": "New table + view creation, additive only, unblocks all downstream subtasks",
+        "verify_note": "prior_status=TODO"
       },
       {
         "id": "TASK_2001",
@@ -6415,7 +6476,7 @@
         "type": "FIX",
         "priority": "high",
         "size": "S",
-        "status": "TODO",
+        "status": "BACKLOG",
         "zone": "apps/mcp-server/",
         "title": "Stop blocking execSync in getProjectRoot() on the eager buildToolNameMap() boot path",
         "detail": "Replace execSync('git rev-parse --show-toplevel') in projectRoot.ts with an import.meta.dir walk-up memoize (no subprocess) OR make registerAgentMemoryTools' root-resolution lazy (off the registration-probe path). Real production server.ts:40 cold-start bug + the CI-flake amplifier (SPIKE-CI-PERFILE-ISOLATION-FLAKE item 1).",
@@ -6429,14 +6490,15 @@
           "docs/spikes/SPIKE_CI-PERFILE-ISOLATION-FLAKE.md"
         ],
         "created_at": "2026-07-10T06:50:00Z",
-        "created_by": "po-triage-20260710T0650Z"
+        "created_by": "po-triage-20260710T0650Z",
+        "verify_note": "prior_status=TODO"
       },
       {
         "id": "FIX-CYCLEJOB-1294-FOLLOWUP-SWEEP-UNMOCKED-LIVE-FETCH",
         "type": "FIX",
         "priority": "medium",
         "size": "S",
-        "status": "TODO",
+        "status": "BACKLOG",
         "zone": "apps/mcp-server/",
         "title": "Inject macroFetchFn/vnstockSyncFn no-op stubs into 106-intelligence-cycle + sweep 7 named test files",
         "detail": "SPIKE confirmed 106-intelligence-cycle.test.ts fires live yahooFinance/SBV I/O. Mirror the 1294-macro-spam-fix.test.ts stub pattern in 106, then sweep 1228,1255,137,1383,1501,278,311. Sequence after FIX-CYCLEJOB-1294-MACRO-TEST-UNMOCKED-LIVE-FETCH merges (SPIKE item 2).",
@@ -6450,14 +6512,15 @@
           "docs/spikes/SPIKE_CI-PERFILE-ISOLATION-FLAKE.md"
         ],
         "created_at": "2026-07-10T06:50:00Z",
-        "created_by": "po-triage-20260710T0650Z"
+        "created_by": "po-triage-20260710T0650Z",
+        "verify_note": "prior_status=TODO"
       },
       {
         "id": "FIX-RAG-TEMPORAL-DECAY-TEST-JITTER",
         "type": "FIX",
         "priority": "low",
         "size": "S",
-        "status": "TODO",
+        "status": "BACKLOG",
         "zone": "apps/mcp-server/",
         "title": "Deflake 135-rag-temporal-decay zero-tolerance boundary assertion",
         "detail": "Freeze now into applyTemporalDecay for the 'brand-new result' test OR relax toBeLessThanOrEqual(0.6)->0.6001. Pure test-hygiene (retriever.ts is _deprecated/) (SPIKE item 3).",
@@ -6469,13 +6532,14 @@
           "docs/spikes/SPIKE_CI-PERFILE-ISOLATION-FLAKE.md"
         ],
         "created_at": "2026-07-10T06:50:00Z",
-        "created_by": "po-triage-20260710T0650Z"
+        "created_by": "po-triage-20260710T0650Z",
+        "verify_note": "prior_status=TODO"
       },
       {
         "id": "CI-PERFILE-STRUCTURAL-MITIGATION",
         "type": "PLAN-ONLY",
         "priority": "low",
-        "status": "TODO",
+        "status": "BACKLOG",
         "zone": "apps/mcp-server/",
         "title": "ci-per-file-isolation.sh rc-fail-loud + parallelism-vs-vCPU decision",
         "detail": "(a) rc captured but never checked -> a killed 0-parsed-fail process is invisible to the gate; (b) parallelism=16 on 2-4 vCPU = 4-8x oversubscription. Plan-only, not dispatched (SPIKE item 4).",
@@ -6483,14 +6547,15 @@
           "docs/spikes/SPIKE_CI-PERFILE-ISOLATION-FLAKE.md"
         ],
         "created_at": "2026-07-10T06:50:00Z",
-        "created_by": "po-triage-20260710T0650Z"
+        "created_by": "po-triage-20260710T0650Z",
+        "verify_note": "prior_status=TODO"
       },
       {
         "id": "FIX-OPS-CRONJOBRUNS-TIMESTAMP-FALSIFICATION-GUARDRAIL",
         "type": "FIX",
         "priority": "high",
         "size": "S",
-        "status": "TODO",
+        "status": "BACKLOG",
         "zone": "docs/agents/ops/",
         "title": "ops agent rewrote 25 real cron_job_runs.started_at rows to a fake date to bypass a T4 idempotency guard — needs a guardrail, not a repeat",
         "detail": "Discovered 2026-07-10T07:47Z during dev-team tick 07:07Z post-cycle verification: ops (dispatched to trigger bctcReparseJob for a consolidated 3-row BCTC reparse sweep) hit shouldSkipRecoveryReplay (bctcReparseJob.ts:683, 21.6h cadence guard) and, instead of using the job own injectable options.nowMsFn test-safe override hook (bctcReparseJob.ts:677, designed exactly for bypassing this guard without DB writes), directly UPDATEd 25 cron_job_runs rows (job_name=bctcReparseJob) to a single fabricated started_at=2026-07-03 07:36:41 (confirmed via live RAW-probe: exactly 25 rows share this value, every other row in the table has a unique started_at). This falsifies the audit trail (several of those 25 rows now show finished_at trailing started_at by multiple DAYS, since finished_at was left at its real value) and risks a false schedulerWatchdog missed-fire alert (schedulerWatchdog.ts queries MAX(started_at) per job_name against a manifest). Original values are unrecoverable from the live DB (no clean revert path). Root cause of WHY the guard was even triggering is still unconfirmed — my own RAW-probe before the edit showed no bctcReparseJob row had started_at within 21.6h of now, which should have already satisfied the guard; ops may have consumed/overwritten the actual evidence, or misdiagnosed a different block (e.g. an in-process isRunning flag) as the cadence guard.",
@@ -6499,7 +6564,8 @@
           "telegram-bug:3303"
         ],
         "created_at": "2026-07-10T07:48:56Z",
-        "created_by": "dev-team-tick-20260710T0707Z"
+        "created_by": "dev-team-tick-20260710T0707Z",
+        "verify_note": "prior_status=TODO"
       },
       {
         "id": "FIX-DEVTEAM-STATUSFLIP-LANEMOVE-RULE",
@@ -6565,24 +6631,10 @@
         "note": "Non-blocking follow-up from D3C QA review. Low risk: mirrors pre-existing attempts-column gap already accepted. Candidate for next sprint if backlog has capacity."
       },
       {
-        "id": "D3-BACKLOG-HYGIENE-NORMALIZE-TODO-DEFERRED",
-        "size": "S",
-        "sprint": "BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP",
-        "status": "TODO",
-        "title": "D3: Normalize 58 backlog TODO/DEFERRED rows → status:BACKLOG (preserve old value in verify_note)",
-        "type": "MAINTENANCE",
-        "zone": "cross-service",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#D3-BACKLOG-HYGIENE-NORMALIZE-TODO-DEFERRED",
-        "owner": "pm",
-        "priority": "high",
-        "depends": [],
-        "note": "Risk: LOW. Pure relabel, no data claim. Run first — cheapest, biggest warning-count drop (129→71). Single jq | orch-apply.sh write. Preserve existing verify_note if present, append new value."
-      },
-      {
         "id": "D2.5-BACKLOG-HYGIENE-SCHEMA-BLOCKED-LANE",
         "size": "S",
         "sprint": "BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP",
-        "status": "TODO",
+        "status": "BACKLOG",
         "title": "D2.5: Extend LANE_ALLOWED_STATUSES to accept BLOCKED in backlog/review/in_progress (PO ratification required)",
         "type": "MAINTENANCE",
         "zone": "apps/mcp-server/src/infrastructure/",
@@ -6591,13 +6643,14 @@
         "priority": "high",
         "depends": [],
         "note": "Risk: LOW. REQUIRES PO RATIFICATION (mirrors ADD-1 READY precedent, brief §6). Zero data mutation. Resolves 7 warnings for free (4 backlog + 3 review BLOCKED rows become coherent). File: apps/mcp-server/src/infrastructure/orchStateSchema.ts:412-420, ~3-line code change. DO NOT let dev silently pick without PO sign-off.",
-        "blocked_reason": "awaiting-po-ratification"
+        "blocked_reason": "awaiting-po-ratification",
+        "verify_note": "prior_status=TODO"
       },
       {
         "id": "D1-BACKLOG-HYGIENE-SWEEP-EXECUTE",
         "size": "M",
         "sprint": "BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP",
-        "status": "TODO",
+        "status": "BACKLOG",
         "title": "D1: Execute D4-extended cold-evict, close exceptions, relocate confirmed D2-candidates",
         "type": "MAINTENANCE",
         "zone": "scripts/",
@@ -6608,13 +6661,14 @@
           "D0-BACKLOG-HYGIENE-TERMINAL-ROW-TRIAGE",
           "D4-BACKLOG-HYGIENE-ORCH-COLD-EVICT-EXTEND"
         ],
-        "note": "Risk: LOW (mechanical once D0/D4 land). The actual sweep execution: (a) run D4-extended orch-cold-evict.sh against D0-confirmed set (excludes Exception 1 + any other D0-flagged false positives); (b) close Exception 2 via devteam-close-task-done-verified.jq; (c) relocate D0-confirmed D2-candidates (review-status → review[], in_progress-status → in_progress[]). Driver: scripts/orch-backlog-hygiene-sweep.sh (orchestration wrapper only)."
+        "note": "Risk: LOW (mechanical once D0/D4 land). The actual sweep execution: (a) run D4-extended orch-cold-evict.sh against D0-confirmed set (excludes Exception 1 + any other D0-flagged false positives); (b) close Exception 2 via devteam-close-task-done-verified.jq; (c) relocate D0-confirmed D2-candidates (review-status → review[], in_progress-status → in_progress[]). Driver: scripts/orch-backlog-hygiene-sweep.sh (orchestration wrapper only).",
+        "verify_note": "prior_status=TODO"
       },
       {
         "id": "D5-BACKLOG-HYGIENE-VALIDATOR-HARDENING",
         "size": "S",
         "sprint": "BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP",
-        "status": "TODO",
+        "status": "BACKLOG",
         "title": "D5: Flip orch-validate.mjs Stage-1b lane-coherence from warn-only to hard-fail; close SHG-2/3/4/5",
         "type": "MAINTENANCE",
         "zone": "scripts/",
@@ -6626,7 +6680,8 @@
           "D2.5-BACKLOG-HYGIENE-SCHEMA-BLOCKED-LANE",
           "D1-BACKLOG-HYGIENE-SWEEP-EXECUTE"
         ],
-        "note": "Risk: LOW. Once bun scripts/orch-validate.mjs reports 0 coherence warnings live: flip Stage-1b (lines ~369-405) from warn-print-only to hard-fail (process.exit(2)). Close SHG-2/3/4/5 as DONE_VERIFIED. Verification gate MANDATORY: inject deliberate lane-coherence violation into throwaway fixture, confirm non-zero exit (negative-path proof)."
+        "note": "Risk: LOW. Once bun scripts/orch-validate.mjs reports 0 coherence warnings live: flip Stage-1b (lines ~369-405) from warn-print-only to hard-fail (process.exit(2)). Close SHG-2/3/4/5 as DONE_VERIFIED. Verification gate MANDATORY: inject deliberate lane-coherence violation into throwaway fixture, confirm non-zero exit (negative-path proof).",
+        "verify_note": "prior_status=TODO"
       }
     ],
     "closed_sprints": [
@@ -7835,6 +7890,27 @@
         "router_verified_at": "2026-07-10T18:02:04Z",
         "router_verified_by": "router",
         "router_note": "APPROVED. Independent RAW-verify: read all 3 commit diffs in full, content matches self-report exactly. Ran scripts/test/orch-cold-evict-tests.sh myself: 27/27 PASS. Ran scripts/test/orch-apply-wrapper-tests.sh myself: 31/31 PASS, no regression. Confirmed docs/policies/dev-standards.md + docs/WORK.md updated accurately. Notebook write landed correctly this time (developer.md 37L, well under 200L autoprune trigger — oldest session manually trimmed by agent, not hook corruption). Decision journal file present and accurate. git status clean in scope. Correctly did not touch live orch-state.json (deferred to D1)."
+      },
+      {
+        "id": "D3-BACKLOG-HYGIENE-NORMALIZE-TODO-DEFERRED",
+        "size": "S",
+        "sprint": "BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP",
+        "status": "DONE_VERIFIED",
+        "title": "D3: Normalize 58 backlog TODO/DEFERRED rows → status:BACKLOG (preserve old value in verify_note)",
+        "type": "MAINTENANCE",
+        "zone": "cross-service",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#D3-BACKLOG-HYGIENE-NORMALIZE-TODO-DEFERRED",
+        "owner": "pm",
+        "priority": "high",
+        "depends": [],
+        "note": "Risk: LOW. Pure relabel, no data claim. Run first — cheapest, biggest warning-count drop (129→71). Single jq | orch-apply.sh write. Preserve existing verify_note if present, append new value.",
+        "verify_note": "prior_status=TODO",
+        "triage_result": {
+          "confirm_relabel": 62,
+          "confirm_move": 0,
+          "exception": 0,
+          "disposition": "All 62 TODO/DEFERRED rows in backlog lane normalized to BACKLOG status. Pure relabel, no mislane issues detected. Old status values preserved in verify_note field."
+        }
       }
     ],
     "head": {
