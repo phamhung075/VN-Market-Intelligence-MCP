@@ -1,6 +1,16 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-10T22:44Z (dev-team tick 2026-07-10T2237Z — skip-PO-respawn applied 2nd consecutive tick, WIP fully unchanged; cold-evict idempotent no-op 4th consecutive tick)
+**Written:** 2026-07-11T00:02Z (dev-team tick 2026-07-10T2307Z — 84min cadence guard expired, fresh PO spawn executed real CLEAN reconciliation (2 stale in_progress closed), cold-evict genuine eviction this time)
+
+## cycle-20260710T2307Z — skip-respawn cadence expired → PO executed real CLEAN work → genuine cold-evict
+
+- **Preflight RUN** (tick 2307Z). GCC-PREFLIGHT clean. Drain-signals 0 new. CI green on `d64210d1f`, no signal. Orphan-signal probe: 0.
+- **Skip-PO-respawn did NOT apply**: 84min elapsed since last real triage `1e3c03e56` (21:52:24Z) — past the ~60min guard, despite board being byte-identical over the prior 2 ticks. Spawned fresh `po` per Step 1 (`task:po-triage-20260710` claim, background, ~13min runtime).
+- **PO disposition = executed CLEAN inline** (not NOTHING, not a dispatch): picked up the router-minted `CLEAN-STALE-INPROGRESS-P5SELFHEAL-L2FRESHNESS` tracker deferred since 2026-07-10T21:07Z. RAW-verified by PO before mutating: `FIX-L2-FRESHNESS-DATAASOF-FIELDS` → `done_verified` (shipped out-of-band by `a384497a3`, board never flipped, sat 13 days); `FIX-SCHEMA-DRIFT-P5-SELFHEAL` → `done` (direction abandoned, precedent commits `755c761a8`/`efbab47b6`, modeled as DONE+resolution note since no SUPERSEDED enum exists). Commits `5cbcf2453` (board) + `f6dd98ca6` (notebook). New reusable script: `scripts/po-s142-clean-stale-inprogress-reconcile.jq`.
+- **Router RAW-verified PO's report — zero discrepancies:** `in_progress` 3→1 (only legit `OPS-BCTC-REFINE-REPASS-NONBANK-5T` remains), `done_verified` 0→1, `done` +2, `backlog` 319→318, `orch-state-validate.sh` PASS, script file confirmed on disk, both commits confirmed on HEAD.
+- **Post-cycle:** mock-guard same known `stub.sbv.vn` FP, no new signal. No non-main branches, telegram still empty.
+- **Cold eviction — genuine this time** (broke the 4-tick no-op streak): `DONE_N=16>10` AND `DV_N=1>0` (first nonzero done_verified all session) → script reported `New items to cold: 2`, `task_total` conservation-checked `468→466`. Committed `95e1424fc` (2 files, +37/-38). Confirms the earlier no-op ticks' diagnosis was correct — eviction genuinely fires once real terminal work exists to move, it wasn't stuck.
+- **Push-backstop:** `ahead=7`, still under threshold=20 — silent no-op.
 
 ## cycle-20260710T2237Z — skip-PO-respawn applied again → NOTHING new, board completely static across 2 ticks
 
