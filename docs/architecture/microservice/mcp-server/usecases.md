@@ -37,6 +37,30 @@ WHERE action_code = ? AND sort_key = ?`) before assembling the returned `Financi
 in-memory `report.id` handed back to the caller matches the DB-persisted id on a re-parse too (not
 just the SQL-column-level guarantee). Test: `src/__tests__/FIX-BCTC-D1-STABILIZE-REPORT-ID.test.ts`.
 
+### bctc/ensureFinancialReportShellRow.ts
+
+**FIX-BCTC-D2-ENSURE-SHELL-ROW (2026-07-10):** idempotent upsert that ensures a
+`financial_reports` shell row exists for a PDF the pull job has just saved to
+disk, decoupled from the legacy OCR-confidence scalar-parse pipeline. Called
+from `bctcPdfPullJob.ts` (Step 4b) immediately after `deps.savePdf()` succeeds,
+before Step 5 `triggerExtraction`. `ON CONFLICT(action_code, sort_key) DO
+UPDATE SET pdf_path = excluded.pdf_path WHERE financial_reports.pdf_path IS
+NULL` — sets `pdf_path` at PDF-save time without ever clobbering a value a
+later scalar/legacy write already set. First-insert rows carry
+`validation_status='pending_extraction'` (new additive enum value, distinct
+from `pending|passed|failed|passed_with_warnings|low_confidence`) and empty
+JSON statement columns (`'{}'`) — a shell with no scalar data yet. Reuses
+D1's id-stability pattern (pre-check `SELECT id FROM financial_reports WHERE
+action_code = ? AND sort_key = ?`) so the returned id matches whatever
+`parseBctcReport.ts::storeReport()`'s own `ON CONFLICT DO UPDATE` would reuse
+for the same row later — one shared id-stability contract, not two. `db` is
+an optional injected parameter (default `getDb()` singleton), matching the
+sibling `backfillBctcPdfPaths(db, pdfDir)` pattern for this same table —
+`bctcPdfPullJob.ts` always passes its own `db` (`opts.db ?? getDb()`)
+explicitly so the write lands in the same database the job (and its test
+suite's dedicated `:memory:` instance) reads back from.
+Test: `src/__tests__/FIX-BCTC-D2-ENSURE-SHELL-ROW.test.ts`.
+
 ### fetchParseAndStoreBctc.ts
 VPS PDF pull → OCR → parser → DB storage. FACTORY-APP-split-fetchParseAndStoreBctc
 (2026-07-08): this file is now a thin Step 1/3/4 sequencer (<=120L); split into

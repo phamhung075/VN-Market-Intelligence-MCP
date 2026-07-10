@@ -509,4 +509,92 @@ describe("bctcPdfPullJob", () => {
     expect(pipelineCalls[0]!.usedFilePath).toBe(true);
     expect(pipelineCalls[0]!.usedPdfUrl).toBe(false);
   });
+
+  // ── TC-13: FIX-BCTC-D2-ENSURE-SHELL-ROW — shell row exists w/ pdf_path set ──
+  // Design: docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md §D2.
+  // No seedExtractionResult() call here — GAS is a brand-new ticker with no
+  // prior financial_reports row and no legacy scalar pipeline entry. Proves
+  // Step 4b creates the shell row regardless (concern 3: decoupled from the
+  // OCR-confidence gate) with pdf_path already set (concern 2) at PDF-save
+  // time, into the SAME db the job was given — not the getDb() singleton.
+
+  it("TC-13: PDF saved → financial_reports shell row exists with pdf_path set (pending_extraction, new ticker)", async () => {
+    const sourceUrl = `${VPS_BCTC_BASE_URL}GAS/20260130-GAS-BCTC.pdf`;
+    insertQueueItem(testDb, "GAS", 2025, "Q4", sourceUrl);
+
+    const deps: BctcPdfPullDeps = {
+      fetchPdf: async () => mockOkResponse(MIN_PDF_BYTES + 1_000),
+      savePdf: async () => {},
+      triggerExtraction: async () => {},
+    };
+
+    const pdfDir = "/app/data/pdfs";
+    await runBctcPdfPullJob({ db: testDb, deps, pdfDir });
+
+    const expectedPath = buildPdfSavePath("GAS", 2025, "Q4", pdfDir);
+    const shellRow = testDb
+      .prepare(
+        `SELECT id, pdf_path, validation_status FROM financial_reports
+         WHERE action_code = ? AND sort_key = ?`,
+      )
+      .get("GAS", "2025-Q4") as { id: string; pdf_path: string | null; validation_status: string } | null;
+
+    expect(shellRow).not.toBeNull();
+    expect(shellRow!.pdf_path).toBe(expectedPath);
+    expect(shellRow!.validation_status).toBe("pending_extraction");
+
+    // 0-row gate has no data for a shell-only row → enrich_failed (not done);
+    // this is the pre-existing D3-scope gate, unaffected by D2 — the shell
+    // row's existence/pdf_path is the D2 assertion above.
+    const queueRow = getQueueRow(testDb, "GAS", 2025, "Q4");
+    expect(queueRow?.status).toBe("enrich_failed");
+  });
+
+  it("TC-13b: pre-existing legacy row with pdf_path IS NULL gets pdf_path set at PDF-save time (same id preserved)", async () => {
+    const sourceUrl = `${VPS_BCTC_BASE_URL}GVR/20260130-GVR-BCTC.pdf`;
+    insertQueueItem(testDb, "GVR", 2025, "Q4", sourceUrl);
+
+    // Simulate the exact GVR/MBB/D2D bug this task's design doc targets: a
+    // legacy scalar-pipeline row already exists but pdf_path was never
+    // flushed to SQLite (post-persist-mutation-never-flushed bug, see D1/D2
+    // brownfield findings).
+    const preExistingId = "gvr-preexisting-0000-0000-000000000000";
+    testDb.prepare(`
+      INSERT INTO financial_reports (
+        id, action_code, company_name, exchange, domain,
+        period_year, period_quarter, period_type, period_start, period_end, sort_key,
+        pdf_path, parsed_at, validation_status,
+        balance_sheet_json, income_stmt_json, cash_flow_json, ratios_json
+      ) VALUES (
+        ?, 'GVR', 'GVR Corp', 'HOSE', 'other',
+        2025, 4, 'Q4', '2025-10-01', '2025-12-31', '2025-Q4',
+        NULL, datetime('now'), 'passed',
+        '{}', '{}', '{}', '{}'
+      )
+    `).run(preExistingId);
+
+    const deps: BctcPdfPullDeps = {
+      fetchPdf: async () => mockOkResponse(MIN_PDF_BYTES + 1_000),
+      savePdf: async () => {},
+      triggerExtraction: async () => {},
+    };
+
+    const pdfDir = "/app/data/pdfs";
+    await runBctcPdfPullJob({ db: testDb, deps, pdfDir });
+
+    const expectedPath = buildPdfSavePath("GVR", 2025, "Q4", pdfDir);
+    const row = testDb
+      .prepare(
+        `SELECT id, pdf_path, validation_status FROM financial_reports
+         WHERE action_code = ? AND sort_key = ?`,
+      )
+      .get("GVR", "2025-Q4") as { id: string; pdf_path: string | null; validation_status: string } | null;
+
+    expect(row).not.toBeNull();
+    expect(row!.id).toBe(preExistingId); // id preserved — no re-mint
+    expect(row!.pdf_path).toBe(expectedPath);
+    // validation_status untouched by the shell-row upsert (DO UPDATE SET
+    // only touches pdf_path) — legacy row's own status survives.
+    expect(row!.validation_status).toBe("passed");
+  });
 });

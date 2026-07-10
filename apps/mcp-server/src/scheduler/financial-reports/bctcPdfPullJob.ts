@@ -11,11 +11,16 @@
  *   2. For each row: fetch PDF with X-API-Key header (VPS_PUSH_API_KEY).
  *   3. Validate response size >= MIN_PDF_BYTES (10 240) — existing guard.
  *   4. Save to data/pdfs/<TICKER>_<YEAR>_Q<QUARTER>.pdf.
+ *   4b. Ensure a financial_reports shell row exists with pdf_path set
+ *       (FIX-BCTC-D2-ENSURE-SHELL-ROW; errors logged, non-fatal).
  *   5. Update bctc_vps_queue status to 'done'.
  *   6. Await PDF text extraction pipeline (Bug 1352a fix; errors logged, non-fatal).
  *
  * All I/O (fetch, save, extraction trigger) is injectable so tests run without
- * real network, real file system, or real DB writes.
+ * real network, real file system, or real DB writes. Step 4b writes directly
+ * via the job's own `db` handle (opts.db ?? getDb()) rather than through the
+ * injectable deps — it is a pure SQLite persistence op on the same DB the job
+ * already reads/writes bctc_vps_queue against, not external I/O.
  *
  * Runs every 30 min (CRON_BCTC_PDF_PULL env var) or right after bctcQueueEnricher.
  *
@@ -43,6 +48,7 @@ import type { Database } from "bun:sqlite";
 import { getDb } from "../../infrastructure/db/schema.js";
 import { logger } from "../../infrastructure/logger.js";
 import { withDeadline } from "../../infrastructure/fetchers/fetchDeadline.js";
+import { ensureFinancialReportShellRow } from "../../application/usecases/bctc/ensureFinancialReportShellRow.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants
@@ -525,6 +531,35 @@ export async function runBctcPdfPullJob(opts: {
         bytes: buf.length,
         filePath,
       });
+
+      // ── 4b. Ensure financial_reports shell row (FIX-BCTC-D2-ENSURE-SHELL-ROW) ──
+      // Idempotent upsert: sets pdf_path at PDF-save time (no dependency on the
+      // legacy scalar pipeline ever running) and creates a row for every pulled
+      // PDF regardless of the downstream OCR-confidence gate (concerns 2+3 of
+      // the design doc). `db` is passed explicitly — NOT the getDb() singleton —
+      // so this write always lands in the same database the caller (this job,
+      // and its test suite's dedicated :memory: instance) reads back from.
+      // Errors are logged and non-fatal: the pull job's own success (file saved
+      // to disk) must not be reverted by a shell-row write failure; the legacy
+      // scalar pipeline triggered next can still create/complete the row itself.
+      try {
+        const shellQuarter = row.period_quarter.startsWith("Q")
+          ? (row.period_quarter as "Q1" | "Q2" | "Q3" | "Q4")
+          : (`Q${row.period_quarter}` as "Q1" | "Q2" | "Q3" | "Q4");
+        await ensureFinancialReportShellRow({
+          db,
+          actionCode: row.action_code,
+          year: row.period_year,
+          quarter: shellQuarter,
+          pdfPath: filePath,
+        });
+      } catch (err) {
+        logger.warn("[bctcPdfPull] ensureFinancialReportShellRow failed (non-fatal)", {
+          ticker: row.action_code,
+          filePath,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
 
       // ── 5. Trigger extraction (await — ensures text is stored before done) ────
       // Bug 1352a: was fire-and-forget; MCP tools called immediately after
