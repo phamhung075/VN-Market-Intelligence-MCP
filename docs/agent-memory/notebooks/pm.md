@@ -1,21 +1,5 @@
 # PM — Notebook
 
-## c324 FIX-BCTC-D3A UNBLOCK + FIX-BCTC-SERVE-GATE-FINANCIAL-REPORTS BACKLOG MINT · 2026-07-10T12:30Z
-
-**MANDATE:** D2 (FIX-BCTC-D2-ENSURE-SHELL-ROW) landed DONE_VERIFIED — unblock D3A (FIX-BCTC-D3A-PEK-TRIGGER-HELPER, which has `depends: [D2]`), and mint a follow-up task for a data-integrity gap QA found outside D2's scope.
-
-**OUTPUT:**
-1. `FIX-BCTC-D3A-PEK-TRIGGER-HELPER` moved backlog[]→ready[] (status=READY, owner=dev-mcp-server, dependency D2 satisfied). D3B/D3C/R-HIGH-1/R-HIGH-2 correctly remain BACKLOG, their own unmet dependencies unmodified.
-2. New task `FIX-BCTC-SERVE-GATE-FINANCIAL-REPORTS` minted into backlog[] (status=BACKLOG, priority=high, zone=apps/mcp-server/, owner=dev-mcp-server, dep: D2) for a serve-layer validation_status gate gap: `get_financial_summary` and `compare_financials` in apps/mcp-server/src/interface/mcp/tools/financial-reports/reports.ts lack validation_status guards. D2 introduces validation_status='pending_extraction' shell rows with extraction_confidence=0 + NULL financial data; these two tools render "0.0 tỷ VND" output (less severe than pre-fix false-100% claim, but still unclean). Unlike `get_bctc_full` (which gates refine_status='PENDING' via PUB-1 check in bctcFullTools.ts), reports.ts has no validation_status gate. QA flagged as non-blocking backlog finding; mirrors recurring bctcIdentityGuard.ts precedent (gate belongs at serve layer, not per-ticker patch). Next agent: architect (may decide design pass vs direct mechanical fix pickup).
-
-**BOARD MUTATIONS:** `.task_board.ready[] += [D3A]` (unblock), `.task_board.backlog[] += [FIX-BCTC-SERVE-GATE-FINANCIAL-REPORTS]` (mint new).
-
-**ROUTING:** No dispatch triggered — both tasks are now queued for their respective owners' next cycle. Head.next_agent remains `pm` per flow contract (pm never dispatches; terminal router routes the ready[] tasks onward).
-
-**NEXT:** Head yields to main terminal. Router will dispatch D3A to dev-mcp-server, route FIX-BCTC-SERVE-GATE-FINANCIAL-REPORTS to architect for design triage (or skip architect if determined mechanical enough).
-
----
-
 ## c322 FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION DECOMPOSITION · 2026-07-10T12:00Z
 
 **MANDATE:** Decompose architect's D1/D2/D3 design (`docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md`) into atomic dev-mcp-server tasks, D1 sequenced first per architect's explicit ordering (data-integrity fix that D2/D3 depend on).

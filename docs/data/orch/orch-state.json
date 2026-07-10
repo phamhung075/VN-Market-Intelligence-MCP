@@ -6623,20 +6623,6 @@
         "note": "Risk: MEDIUM. Extends the sole SSOT eviction script. Brief §8 D4 row: new Pass-1 scanning {backlog,review,qa,in_progress,ready} for TERMINAL_SET status, cold sink = dormant .backlog_detail[] field in monthly archive, add --exclude-ids param, new test file scripts/test/orch-cold-evict-tests.sh (6 required test cases: evict correctness, non-terminal skip, exclude honored, idempotent, conservation guard, dry-run). Parallel with D0."
       },
       {
-        "id": "D0-BACKLOG-HYGIENE-TERMINAL-ROW-TRIAGE",
-        "size": "L",
-        "sprint": "BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP",
-        "status": "TODO",
-        "title": "D0: Per-row triage of 56 backlog/review terminal-labeled rows (Tier 1/2/3 mechanical + mandatory live-reprobe)",
-        "type": "MAINTENANCE",
-        "zone": "cross-service",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#D0-BACKLOG-HYGIENE-TERMINAL-ROW-TRIAGE",
-        "owner": "pm",
-        "priority": "high",
-        "depends": [],
-        "note": "Risk: MEDIUM-HIGH. NOT a blind bulk op — brief §4 confirms 2/56-sampled error rate. Tier 1 (13 rows with commit hashes): git log corroboration. Tier 2 (~43 rows): git grep + status_note read. Tier 3 (mandatory for any falsifiable data/infra claim): live-reprobe. Seed exclude-list with Exception 1 (FIX-BCTC-BANK-SUMMARY-MAPPING — proven open, do not re-verify). Verify 8 D2-relocate candidates (5 REVIEW + 3 IN_PROGRESS in backlog[]) — one found (Exception 2: FACTORY-INTERFACE-split-server-ts, needs devteam-close-task-done-verified.jq not relocation). Output: JSON list of {confirm-terminal / exclude / relabel} rows. Parallel with D4."
-      },
-      {
         "id": "D1-BACKLOG-HYGIENE-SWEEP-EXECUTE",
         "size": "M",
         "sprint": "BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP",
@@ -7818,6 +7804,41 @@
         "router_verified_at": "2026-07-10T16:55:06Z",
         "router_verified_by": "router",
         "router_note": "STALE BOUNDED-1 PICK (5th confirmed instance of the project_bounded1_first_pickup_stale_backlog_hygiene_debt pattern) — NOT dispatched to a developer. scripts/orch-state-validate.sh already exists (created by commit d6f9b0580 \"feat(scripts/SHG-1): create orch-state-validate.sh write-gate validator\", later hardened by 4a5d655df \"SHG-5 promote G-5 status-enum check to hard gate\" and demoted to a thin shim of the canonical scripts/orch-validate.mjs by 33b3f12be — a documented SUPERSET of the original G-1..G-6 checks). Actively in live use: this very tick's own orch-apply.sh writes ran through this exact validation path. Pre-verify-pruned per established mitigation rather than spawning duplicate work. Broader finding (all of SHG-2..SHG-5 also show matching completion commits yet remain BACKLOG/TODO, plus a genuinely-still-open coherence hard-fail flip condition documented in orch-validate.mjs line 375 with 129 live violations this tick) routed to BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP's status_note for adjudicated follow-up — NOT closed here, out of this tick's scope."
+      },
+      {
+        "id": "D0-BACKLOG-HYGIENE-TERMINAL-ROW-TRIAGE",
+        "size": "L",
+        "sprint": "BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP",
+        "status": "DONE_VERIFIED",
+        "title": "D0: Per-row triage of 56 backlog/review terminal-labeled rows (Tier 1/2/3 mechanical + mandatory live-reprobe)",
+        "type": "MAINTENANCE",
+        "zone": "cross-service",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#D0-BACKLOG-HYGIENE-TERMINAL-ROW-TRIAGE",
+        "owner": "pm",
+        "priority": "high",
+        "depends": [],
+        "note": "COMPLETED 2026-07-10T19:45Z. Triaged 88 total rows (67 backlog + 21 review). Results: 73 confirm-terminal, 4 exclude, 11 relabel (mislaned). Exceptions: FACTORY-INTERFACE-split-server-ts (CONFIRM-TERMINAL, fully shipped 4/4 stages), FIX-BCTC-BANK-SUMMARY-MAPPING (EXCLUDE, proven open via live DB probe CTG 2026Q1).",
+        "triage_result": {
+          "completed_at": "2026-07-10T19:45:00Z",
+          "total_rows_triaged": 88,
+          "total_backlog_terminal": 67,
+          "total_review_terminal": 21,
+          "confirm_terminal_count": 73,
+          "exclude_count": 4,
+          "relabel_count": 11,
+          "exceptions": [
+            {
+              "id": "FACTORY-INTERFACE-split-server-ts",
+              "action": "CONFIRM-TERMINAL",
+              "reason": "All 4 stage commits verified (bce8be44b, 821bbbeea, 56f922c93, 8c228ffa6). Use devteam-close-task-done-verified.jq."
+            },
+            {
+              "id": "FIX-BCTC-BANK-SUMMARY-MAPPING",
+              "action": "EXCLUDE",
+              "reason": "Proven open via live DB probe. CTG 2026Q1 net_margin_pct=229157%, total_assets=0, parsed_at 2026-07-10T07:51:33Z. Corroborated by review-lane sub-task TASK-W5-...-VALIDATION-REINGEST (status BLOCKED, same-day validation)."
+            }
+          ]
+        }
       }
     ],
     "head": {
