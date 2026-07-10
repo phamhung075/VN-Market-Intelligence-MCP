@@ -6549,24 +6549,6 @@
         "detail": " | [router-3rd-occurrence-20260710T1205Z] 3RD CONFIRMED HIT: pm decomposed FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION into 7 subtasks (D1/D2/D3A/D3B/D3C/R-HIGH-1/R-HIGH-2), all minted with status=READY but physically placed in .task_board.backlog[] (coherence validator itself expects backlog-lane status=BACKLOG) — invisible to BOUNDED-1 array-membership WIP scan; PM own claim (\"developer can start immediately\") would have silently no-op'd. Distinct mechanism from the first 2 occurrences (single-row REVIEW-status-stuck-in-in_progress[]) — this time NEW-MINT rows given a post-decomposition status token without the matching lane placement. Router fixed manually (moved unblocked D1 to ready[], relabeled the 6 dependency-blocked rows READY->BACKLOG in place) per standing workaround. 3rd occurrence crosses the escalation bar decisively — this P2 fix should be prioritized for the next dev-team BOUNDED-1 pick."
       },
       {
-        "id": "FIX-BCTC-D3A-PEK-TRIGGER-HELPER",
-        "type": "FIX",
-        "priority": "high",
-        "status": "BACKLOG",
-        "zone": "apps/mcp-server/",
-        "size": "S",
-        "title": "Extract triggerPekExtractionForReport() shared helper from handleTriggerPekExtract",
-        "owner": "dev-mcp-server",
-        "depends": [
-          "FIX-BCTC-D2-ENSURE-SHELL-ROW"
-        ],
-        "detail_ref": "docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md#D3-D3a",
-        "created_at": "2026-07-10T12:00:00Z",
-        "created_by": "pm",
-        "note": "Refactoring prep: extract shared HTTP fetch/market-hours-handling logic from handleTriggerPekExtract. Reuse in both manual route and new auto-trigger. DRY refactor, no new logic.",
-        "blocked_note": "status-flip-lane-move fix (3rd occurrence this session, router 2026-07-10T~12:05Z): stayed in backlog[] lane, relabeled READY->BACKLOG since depends[] unmet; will promote to ready[] once its dependency lands DONE_VERIFIED"
-      },
-      {
         "id": "FIX-BCTC-D3B-GATE-PEK-TRIGGERED-STATUS",
         "type": "FIX",
         "priority": "high",
@@ -6684,6 +6666,32 @@
         "created_by": "po-triage-scope-expansion-20260710T110002Z",
         "origin_signal_id": "cowork-recurring-guaranteed-miss-scope-expansion-20260710T0917Z",
         "note": "PLAN-ONLY (anomaly->BACKLOG bridge, project_anomaly_task_bridge). Triaged from HIGH-severity scope-expansion signal cowork-recurring-guaranteed-miss-scope-expansion-20260710T0917Z (supersedes the CHEF-only framing of prior signal cowork-recurring-guaranteed-miss-20260710T0847Z, now READ). EVIDENCE FOR SINGLE DISPATCHER-LEVEL DEFECT: three DISTINCT guaranteed slots each missed their cron tick on BOTH 2026-07-09 and 2026-07-10 — chef-morning (05:15Z) + chef-eod (08:45Z) [chef parallel_group] AND fb-daily (09:15Z) [fb-poster parallel_group]. The fb-daily miss is the key datum: it is NOT in the chef parallel_group, so the defect is dispatcher-wide across ALL guaranteed slots, not CHEF-specific. Same deprecated-backstop symptom pattern on all three: _superseded_by=cowork-dispatcher marks the slot undeliverable via the gateway-blind bypass; fb-daily shows trigger_id=null while the two chef slots reportedly have trigger_id set — investigator must reconcile this discrepancy between the two source signals as part of the spike. Session guaranteed-miss count = 9. SCOPE: investigate the guaranteed-slot backstop/supersede dispatch path (docs/agents/cowork-team/flow/, docs/data/cowork-schedule.json, scripts/agents-flow/) as ONE defect; deliverable is a findings doc + durable-fix recommendation, NOT 3 separate per-slot fixes and NOT a live dispatch. CROSS-REFERENCES (do not duplicate): OPS-COWORK-GUARANTEED-SLOT-INSTALL (REVIEW — launchd guaranteed-slot firer is a DELIVERY-SIDE mitigation/workaround, complementary to but distinct from this root-cause investigation; first live fire window 2026-07-11T05:15Z chef-morning); FIX-COWORK-LASTFIRED-DECOUPLE-FROM-DELIVERY (BACKLOG — last_fired bumped on dispatch not delivery proof MASKS misses, adjacent detection defect); FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK (BACKLOG P1 — curl-bypass retrofit for gateway-blind flows); SPIKE-GATEWAY-BLIND-CLI-HANDSHAKE (DONE — root-caused gateway-blind to CLI MCP-client handshake; prior art the investigator should read first). Route to architect after normal po->ba->pm chain."
+      },
+      {
+        "id": "FIX-BCTC-SERVE-GATE-FINANCIAL-REPORTS",
+        "type": "FIX",
+        "priority": "high",
+        "status": "BACKLOG",
+        "zone": "apps/mcp-server/",
+        "size": "S",
+        "title": "Add validation_status gate to get_financial_summary and compare_financials tools",
+        "owner": "dev-mcp-server",
+        "depends": [
+          "FIX-BCTC-D2-ENSURE-SHELL-ROW"
+        ],
+        "detail_ref": "docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md#D2-QA-FINDING",
+        "created_at": "2026-07-10T12:00:00Z",
+        "created_by": "pm",
+        "note": "D2 shell-row feature introduces validation_status=pending_extraction rows with extraction_confidence=0 and NULL financial data. get_bctc_full correctly gates refine_status=PENDING via PUB-1; get_financial_summary and compare_financials lack validation_status gates, rendering 0.0 tỷ VND for zero-data shell rows. Mirrors recurring bctcIdentityGuard.ts precedent (serve-layer gate, not per-ticker patch). Out of D2 scope; non-blocking backlog finding from QA.",
+        "blocked_note": "",
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/financial-reports/reports.ts"
+        ],
+        "status_note": "Pending triage by architect or dev-mcp-server. May be copyable pattern from bctcFullTools.ts PUB-1 check.",
+        "next_agent": "architect",
+        "commit": null,
+        "qa_verified_at": null,
+        "done_verified": false
       }
     ],
     "closed_sprints": [
@@ -7469,7 +7477,26 @@
       "last_updated_at": "2026-07-10T09:19:45Z",
       "last_updated_by": "ops"
     },
-    "ready": [],
+    "ready": [
+      {
+        "id": "FIX-BCTC-D3A-PEK-TRIGGER-HELPER",
+        "type": "FIX",
+        "priority": "high",
+        "status": "READY",
+        "zone": "apps/mcp-server/",
+        "size": "S",
+        "title": "Extract triggerPekExtractionForReport() shared helper from handleTriggerPekExtract",
+        "owner": "dev-mcp-server",
+        "depends": [
+          "FIX-BCTC-D2-ENSURE-SHELL-ROW"
+        ],
+        "detail_ref": "docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md#D3-D3a",
+        "created_at": "2026-07-10T12:00:00Z",
+        "created_by": "pm",
+        "note": "Refactoring prep: extract shared HTTP fetch/market-hours-handling logic from handleTriggerPekExtract. Reuse in both manual route and new auto-trigger. DRY refactor, no new logic.",
+        "blocked_note": "status-flip-lane-move fix (3rd occurrence this session, router 2026-07-10T~12:05Z): stayed in backlog[] lane, relabeled READY->BACKLOG since depends[] unmet; will promote to ready[] once its dependency lands DONE_VERIFIED"
+      }
+    ],
     "review": [
       {
         "id": "TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST",
