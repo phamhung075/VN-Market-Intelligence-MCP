@@ -58,12 +58,14 @@
 # there was NO depends_on eligibility check at all. dev-team caught it
 # pre-dispatch and reverted by hand (see the row's revert_note in the live
 # doc). This gate prevents that class structurally:
-#   - depends_on lives in TWO possible places per candidate row:
-#     1. inline `.depends_on` directly on the board row (used when non-null
-#        and non-empty), OR
-#     2. for detail_ref'd rows (`.detail_ref` non-null, inline depends_on
-#        null/empty) — the REAL array lives in
-#        docs/data/orch/archive/backlog-detail.json `.items[<id>].depends_on`.
+#   - depends_on/depends lives in TWO possible places per candidate row:
+#     1. inline `.depends_on` or legacy `.depends` directly on the board row
+#        (used when non-null and non-empty; both fields are unioned), OR
+#     2. for detail_ref'd rows (`.detail_ref` non-null, inline depends_on/
+#        depends null/empty) — the REAL array lives in
+#        docs/data/orch/archive/backlog-detail.json `.items[<id>].depends_on`
+#        or `.items[<id>].depends` (71 detail rows use legacy `.depends` name;
+#        same semantics, just pre-schema-rename — both unioned here).
 #        This file MUST be threaded in via `--slurpfile detail` (see Usage).
 #     3. `[]` if neither location yields a usable array.
 #   - A dependency counts SATISFIED only when it resolves to
@@ -169,12 +171,13 @@ def as_dep_array:
 
 # Effective depends_on for a candidate row (`.` = the backlog row object).
 # See "DEPENDS-ON GATE" header comment for the precedence rule.
+# Unions both .depends_on and legacy .depends fields at each location.
 def effective_depends_on($detail_items):
-  (.depends_on | as_dep_array) as $inline
+  ((.depends_on | as_dep_array) + (.depends | as_dep_array)) as $inline
   | if ($inline | length) > 0 then
       $inline
     elif (.detail_ref != null) then
-      ($detail_items[.id].depends_on | as_dep_array)
+      (($detail_items[.id].depends_on | as_dep_array) + ($detail_items[.id].depends | as_dep_array))
     else
       []
     end;
