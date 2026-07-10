@@ -6503,15 +6503,17 @@
       {
         "id": "OPS-BCTC-BANK-2025Q4-ENRICH-0ROW-REPARSE",
         "type": "OPS-BACKLOG",
-        "priority": "medium",
+        "priority": "high",
         "status": "TODO",
         "owner": "bctc-analyst/ops",
         "zone": "apps/pdf-extractor/",
-        "title": "Reparse ACB+BID 2025-Q4 bank enrich_failed rows (0-row B02-TCTD); links reports 3542+3543",
-        "detail": "Operational-first (ZERO new code): trigger bctcReparseJob on the two enrich_failed rows. ESCALATE to a code SPIKE (bank B02-TCTD 2025-Q4 0-row RC; candidate: FIX-BCTC-BANK-FORM-CLASSIFIER-BOLD-STRIP) IF either ticker still yields 0 bctc_table_rows after a reparse pass.",
+        "title": "Reparse 2025-Q4 COHORT enrich_failed 0-row rows — ACB/BID/EIB(banks)+D2D(non-bank), NOT bank-specific; links reports 3542+3543+3544+3545",
+        "detail": "Operational-first (ZERO new code): trigger bctcReparseJob on the 2025-Q4 enrich_failed rows. Signature bctc_table_rows=0 AND bctc_md_tables=0 = BOTH extraction layers empty = extraction/OCR-layer failure, upstream of the classifier. Non-bank D2D failing identically => NOT bank-form-specific; common denominator = the 2025-Q4 batch, not form type. ESCALATE to a code SPIKE IF any ticker still yields 0 bctc_table_rows AFTER a reparse pass — SPIKE targets the EXTRACTION/OCR/VPS re-fetch pipeline (apps/pdf-extractor + VPS extraction health for the 2025-Q4 batch), NOT the bank-form classifier (FIX-BCTC-BANK-FORM-CLASSIFIER-BOLD-STRIP is PROVABLY off-path: bank-only + operates on md tables that are 0 here). Also probe whether enrich_failed rows are auto-retried, and WHY this reparse row stayed TODO a full cycle (ops-execution-path check).",
         "related": [
           "telegram-report:3542",
-          "telegram-report:3543"
+          "telegram-report:3543",
+          "telegram-report:3544",
+          "telegram-report:3545"
         ],
         "created_at": "2026-07-10T06:50:00Z",
         "created_by": "po-triage-20260710T0650Z"
