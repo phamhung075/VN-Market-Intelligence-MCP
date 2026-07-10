@@ -6549,24 +6549,6 @@
         "detail": " | [router-3rd-occurrence-20260710T1205Z] 3RD CONFIRMED HIT: pm decomposed FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION into 7 subtasks (D1/D2/D3A/D3B/D3C/R-HIGH-1/R-HIGH-2), all minted with status=READY but physically placed in .task_board.backlog[] (coherence validator itself expects backlog-lane status=BACKLOG) — invisible to BOUNDED-1 array-membership WIP scan; PM own claim (\"developer can start immediately\") would have silently no-op'd. Distinct mechanism from the first 2 occurrences (single-row REVIEW-status-stuck-in-in_progress[]) — this time NEW-MINT rows given a post-decomposition status token without the matching lane placement. Router fixed manually (moved unblocked D1 to ready[], relabeled the 6 dependency-blocked rows READY->BACKLOG in place) per standing workaround. 3rd occurrence crosses the escalation bar decisively — this P2 fix should be prioritized for the next dev-team BOUNDED-1 pick."
       },
       {
-        "id": "FIX-BCTC-D3B-GATE-PEK-TRIGGERED-STATUS",
-        "type": "FIX",
-        "priority": "high",
-        "status": "BACKLOG",
-        "zone": "apps/mcp-server/",
-        "size": "M",
-        "title": "Remove 0-row gate from bctcPdfPullJob; wire shell-row + trigger; write pek_triggered status; update 3 status-enum consumers (includes R-HIGH-1)",
-        "owner": "dev-mcp-server",
-        "depends": [
-          "FIX-BCTC-D3A-PEK-TRIGGER-HELPER"
-        ],
-        "detail_ref": "docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md#D3-D3b",
-        "created_at": "2026-07-10T12:00:00Z",
-        "created_by": "pm",
-        "note": "Main mechanical change: (1) Remove 0-row gate entirely; (2) Wire D2 shell-row + D3A trigger after save; (3) Write pek_triggered status; (4) Update vpsHealthPoller/freshnessSlaMonitorJob/bctcQueueEnricherJob status enums (R-HIGH-1). Critical: gate removal means reconciliation cron (D3C) becomes essential fail-loud path.",
-        "blocked_note": "status-flip-lane-move fix (3rd occurrence this session, router 2026-07-10T~12:05Z): stayed in backlog[] lane, relabeled READY->BACKLOG since depends[] unmet; will promote to ready[] once its dependency lands DONE_VERIFIED"
-      },
-      {
         "id": "FIX-BCTC-D3C-RECONCILE-JOB",
         "type": "FIX",
         "priority": "high",
@@ -7520,7 +7502,28 @@
       "last_updated_at": "2026-07-10T09:19:45Z",
       "last_updated_by": "ops"
     },
-    "ready": [],
+    "ready": [
+      {
+        "id": "FIX-BCTC-D3B-GATE-PEK-TRIGGERED-STATUS",
+        "type": "FIX",
+        "priority": "high",
+        "status": "READY",
+        "zone": "apps/mcp-server/",
+        "size": "M",
+        "title": "Remove 0-row gate from bctcPdfPullJob; wire shell-row + trigger; write pek_triggered status; update 3 status-enum consumers (includes R-HIGH-1)",
+        "owner": "dev-mcp-server",
+        "depends": [
+          "FIX-BCTC-D3A-PEK-TRIGGER-HELPER"
+        ],
+        "detail_ref": "docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md#D3-D3b",
+        "created_at": "2026-07-10T12:00:00Z",
+        "created_by": "pm",
+        "note": "Main mechanical change: (1) Remove 0-row gate entirely; (2) Wire D2 shell-row + D3A trigger after save; (3) Write pek_triggered status; (4) Update vpsHealthPoller/freshnessSlaMonitorJob/bctcQueueEnricherJob status enums (R-HIGH-1). Critical: gate removal means reconciliation cron (D3C) becomes essential fail-loud path.",
+        "updated_at": "2026-07-10T13:10:30Z",
+        "updated_by": "router",
+        "next_agent": "dev-mcp-server"
+      }
+    ],
     "review": [
       {
         "id": "TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST",
