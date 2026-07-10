@@ -1,6 +1,20 @@
 # PO Notebook
 
-_Last: 2026-07-10T07:55Z_
+_Last: 2026-07-10T08:06Z_
+
+## Tick 2026-07-10T08:06Z — Round-3 same tick: CTG 2026-Q1 #3551 composite=0.00 → BANK, NOT non-bank → rejected NONBANK-5T fold; flagged distinctly on the bank track (no mint)
+Bridge REACHABLE (`scripts/agents-flow/mcp-call.sh`; native `mcp__gateway__*` still absent). ONE new unclaimed report: #3551 (msg_id 3304, from analysis-agent, 07:51:34Z) — `[BCTC-1345b] Low financial confidence (composite=0.00, financial=0.00) — conviction signal skipped for CTG 2026-Q1`. **Claimed as po via bridge (exit 0, "Report 3551 successfully claimed by 'po'").**
+
+**Router's core question — is the "proven CTG runbook" claim in NONBANK-5T stale, and is #3551 a regression on the reference case, or just a 6th non-bank fold?** EVIDENCE-RESOLVED, and it is NEITHER of the two framings as posed: **CTG is a BANK ticker** (Vietinbank — Banking sector, peer of BID/VCB in stock-classification.json; the canonical B02-TCTD test case across the whole BCTC fix chain). So folding it into `OPS-BCTC-REFINE-REPASS-NONBANK-5T` (VHM/VIC/VRE/HSG/MWG, strictly non-bank) would be a **bank/non-bank category error** — the exact class round-1 of this tick corrected on `OPS-BCTC-BANK-2025Q4-ENRICH-0ROW-REPARSE`. Scenario-2 (6th non-bank fold) = REJECTED.
+
+**What "proven CTG runbook" actually means (git + orch evidence):** the phrase = the general refine→push_bctc_refined_unit→finalize_bctc_refine→`reingest-bctc-report.ts` PROCEDURE (proven to EXECUTE on CTG report 96e36139), NOT a claim CTG 2026-Q1's DATA is green. CTG 2026-Q1 is STILL BLOCKED on TWO owning bank-track rows: `W5-FU-CTG-REFINE-96e36139` (po, review-lane/status=BLOCKED) + `TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST` (dev-mcp-server, BLOCKED). RAW-confirmed today by qa (2026-07-10T03:39Z, docker-exec named-volume): `financial_reports` total_assets=0.0, validation_status=low_confidence; 451 `bctc_table_rows` for report 96e36139 with **ZERO balance_sheet-tagged rows**. Today's `TASK-W5-...-CTG-CARRY-FORWARD` (commit 0647db163, 02:52Z) carried 451 rows fwd but AC-TRACK1-3 ESCALATED: balance-sheet page window genuinely absent from source extraction → BEQ-6 gate refused DONE → PARTIAL, scalars unchanged from garbage. So composite=0.00 is the **expected, already-escalated** consequence — NOT a fresh regression, NOT a mystery.
+
+**Decision = flag distinctly, no mint, no wrong-batch fold (anti-churn, recurring-bug 2+):**
+- Recorded #3551 as a re-emission note (`po_triage_20260710_round3_note`, 2230c) on the correct owner `W5-FU-CTG-REFINE-96e36139` — first surfacing of this to the conviction-signal layer, corroborating served CTG data is still garbage; blocker unchanged = DEPLOY-GATE ([Production Deploy] denied pending user auth, deploy_gate_note 07-04) + balance-sheet-absent root.
+- Added a breadcrumb (`po_triage_20260710_round3_ctg_not_folded_note`, 1207c) on `OPS-BCTC-REFINE-REPASS-NONBANK-5T` explaining WHY CTG was NOT folded (bank ≠ non-bank) and clarifying "proven CTG runbook" = procedure-proven, not data-green — so a future triager can't misread the title.
+- Both writes via `jq --rawfile … | orch-apply.sh` (exit 0; 131 pre-existing SHG warns, non-blocking). git diff = orch-state.json only (+4/-2). No `.head`/in_progress-owned row touched. Did NOT touch `task:po-triage-20260710` (router's lock).
+
+**Router asks:** commit explicit paths — (a) `docs/agent-memory/notebooks/po.md`; (b) `docs/data/orch/orch-state.json`. Report 3551 already claimed by me via bridge. NEXT ACTION (unchanged, now 2nd corroboration on the bank track): clear the deploy-gate (ops reingest under explicit user auth) THEN, if reingest still yields 0 balance_sheet rows, escalate the balance-sheet-absent root to dev-mcp-server/architect via SPIKE — do NOT re-attempt ops reingest blindly.
 
 ## Tick 2026-07-10T07:55Z — Round-2 same day: cohort 4→7 + D2D-2026Q1 re-emission + reparse-trigger FALSIFIED → HELD-ARMED SPIKE (no dispatch), fold-not-mint
 Bridge REACHABLE (`scripts/agents-flow/mcp-call.sh`; native gateway still absent). Re-entry per main.md Step 4.1 #2 (genuinely new NEW-status reports since 07:20Z, not a dup pass). 4 new reports, ALL claimed as po via bridge: 3546 GAS / 3547 GVR / 3549 HCM (2025-Q4, IDENTICAL `bctc_table_rows=0 AND bctc_md_tables=0`) + 3548 D2D **2026-Q1** (DIFFERENT class).
