@@ -333,34 +333,7 @@
     "_updated_at": "2026-07-09T18:58:19Z",
     "_updated_by": "dev-team (post-cycle 4.0.5)",
     "archive": [],
-    "rows": [
-      {
-        "id": "dev-20260709T173139Z-b",
-        "ts": "2026-07-09T17:31Z",
-        "from": "dev-team",
-        "to": "agents-architect",
-        "type": "system-issue",
-        "summary": "mock-guard HARD-FAIL: fabricated data in production source (likely Go _test.go false-positive)",
-        "severity": "MED",
-        "status": "READ",
-        "payload_ref": null,
-        "read_at": "2026-07-10T03:17:51Z",
-        "read_by": "dev-team"
-      },
-      {
-        "id": "dev-20260709T185819-rebuild",
-        "ts": "2026-07-09T18:58Z",
-        "from": "dev-team",
-        "to": "ops",
-        "type": "rebuild-verify-needed",
-        "summary": "FACTORY-KINHDICH-name-confidence-constants (commit 282dd0589) touches live kinh-dich-service serving code (reading_composer.go, ComposeReading) — rebuild_required:true but rebuild+live RAW-verify of /reading and /market Confidence values (DoD requirement) was deferred by dev-kinh-dich per user-gate rebuild policy. Change is a pure literal->named-const substitution (diff-verified, no value drift: 0.8/0.7/0.3/1000/80/5 all match), tests+sandbox green — low risk, but DoD line is not yet closed.",
-        "severity": "LOW",
-        "status": "READ",
-        "payload_ref": null,
-        "read_at": "2026-07-10T03:17:51Z",
-        "read_by": "dev-team"
-      }
-    ],
+    "rows": [],
     "last_triaged_at": "2026-07-03T19:49:38Z",
     "last_triaged_by": "po"
   },
@@ -7174,40 +7147,7 @@
         "qa_note": "RAW-verified: commit 6f054ea3a touched exactly the 8 claimed files (git show --stat); f511c1d39 touched exactly orch-state.json; both present on origin/main (f511c1d39 IS origin/main HEAD). STEP ops-Sn grep confirms sequential S1-S6, no gaps/dupes; pre-existing duplicate-S2 bug fix confirmed via before/after diff (old S1 relocate-stock-catalog->S3, old S2 extract-computeDecision->S4, old S2 split-repositories->S6). 3 offender files confirmed genuinely absent from disk + git ls-files + repo-wide find. Brief section 5 DoD items 3-4 text confirmed verbatim-satisfied (runbook footnote + commit-boundary ops zone row + STEP ops-Sn enforcement line + 3 offenders folded). agent-father-S5 journal + notebook (85L, under 200L) confirmed. Board handoff f511c1d39 coherent: review lane, next_agent=qa, head synced (status=review, active_task_id unchanged, next_agent=qa). NON-BLOCKING gap noted: runbook Step 4/4b Commit-Gate Invariant has no direct hook in ops flow files (init.md/handlers.md/docker.md) -- enforcement relies entirely on the pre-existing PO/developer dispatch-prompt citation of the runbook Microservice Code-Change Close Gate heading (developer/flow/microservice-main.md:162, po/flow/sprint-signoff.md:13), not on ops own bootstrapped knowledge list. Acceptable for THIS task literal DoD (section 5 items 3-4 only require the doc text, not flow-file wiring) and mirrors the same enforcement model as the agents-architect Brief-Commit Invariant it is modeled on (self-attested, not code-gated) -- flagging for a possible future hardening task, not a blocker here."
       }
     ],
-    "done_verified": [
-      {
-        "_adjudicated_by": "po",
-        "_updated_at": "2026-06-13T08:48:41Z",
-        "brief_file": "docs/handoffs/SHIP-WAVE-REAUDIT-architect-brief.md",
-        "created_at": "2026-06-11T19:27:17Z",
-        "created_by": "po",
-        "desc": "Brownfield analysis from docs/handoffs/SHIP-WAVE-REAUDIT-BA-spec.md (APPROVED). Rule NFR-C-1 stale-flag Option A (handler) vs B (middleware). Probe reputation_scores trend distribution + design trend-delta fix (PO ruled A-16 DEGRADED in-scope). Split zone:multi fixes (endpoint+page): NFR-C-4 stockPerformance direction, NFR-C-5 foreign-flow stale_fields, NFR-C-7 reputation trend. Order: BROKEN->DEGRADED->NFR. Output design brief -> pm decomposes.",
-        "id": "ARCH-SHIP-WAVE-REAUDIT",
-        "owner": "architect",
-        "park_reason": "KEEP PARKED (design COMPLETE + valid, brief docs/handoffs/SHIP-WAVE-REAUDIT-architect-brief.md 16.6KB on disk). NOT closeable: accept->pm-decomposition mints zone:multi subtasks spanning apps/mcp-server + apps/frontend (NFR-C-4/5/7). The apps/mcp-server lane is load-bearing — held by ARCH-CRON-SCHEDULER-RELIABILITY (Monday market-day gate) AND queued for BA-VN-MACRO-TOOLING WAVE-1 (Zone B/C mcp-server). UNPARK CONDITION: dispatch decomposition only once BOTH (a) ARCH-CRON umbrella closes to done_verified after today's market-day gate AND (b) BA-MACRO WAVE-1 mcp-server tasks land — then apps/mcp-server is free for the NFR-C endpoint+page fixes. Until then parking is the correct serialization, not neglect.",
-        "priority": "high",
-        "sprint": "SHIP-WAVE-REAUDIT",
-        "status": "DONE_VERIFIED",
-        "title": "Technical design for SHIP-WAVE-REAUDIT — brownfield analysis + NFR impl design from APPROVED BA spec",
-        "updated_at": "2026-06-11T19:33:43Z",
-        "updated_by": "architect",
-        "zone": "multi",
-        "zone_block_reason": "zone:multi touches apps/mcp-server/, which is serialized + HELD by EVIDENCE-ACCUM-SILENT-CRON until ~2026-06-13T16:00Z. Re-adjudicate for pm-handoff after the 16:00 evidenceAccumulatorJob gate lands + zone releases.",
-        "po_reparked_at": "2026-06-15T06:35:17Z",
-        "park_status_relabel": {
-          "from": "PARKED",
-          "to": "DEFERRED",
-          "by": "po-s121",
-          "at": "2026-06-27T08:03:52Z",
-          "note": "enum-clean (C2): PARKED qualifier-as-status -> DEFERRED (deliberate serialization); park_reason retained verbatim as the qualifier prose. UNPARK CONDITION unchanged."
-        },
-        "entered_review_at": "2026-06-11T19:34:15Z",
-        "qa_verdict": "APPROVED",
-        "reviewed_at": "2026-07-10T03:39:51Z",
-        "reviewed_by": "qa",
-        "qa_signoff_note": "[qa review-drain sweep 2026-07-10T03:39:51Z] CLOSED DONE_VERIFIED — the DEFERRED/park status was STALE. Full-chain re-audit confirms the umbrella's entire purpose (design brief -> pm decomposes -> dev implements -> qa approves) was completed a month ago and simply never flipped in orch-state: architect brief committed 425349144 (2026-06-11T19:34:15Z, DJ-GATE-1 journal docs/agent-memory/decisions/sprint-SHIP-WAVE-REAUDIT-architect.md task-id:ARCH-SHIP-WAVE-REAUDIT confirmed present); pm decomposed into 8 atomic tasks same day (commit 7cf1d9bf 2026-06-11T19:38:19Z UTC) = BA-SHIP-WAVE-REAUDIT + REAUDIT-001..005 + REAUDIT-FE-001..003; all 8 implemented and QA-APPROVED by 2026-06-12T12:22:00Z (docs/agent-memory/decisions/sprint-SHIP-WAVE-REAUDIT-qa.md steps S1-S10, commit 487ca5091 7-task QA wave APPROVED); all 9 rows now sit archived status=DONE in docs/data/orch/archive/2026-06.json. PO parked this umbrella row (commit b1de4ff92, 2026-06-13T08:48:55Z UTC) >20h AFTER the downstream chain had already fully shipped+QA-approved, and re-park/relabel cycles on 06-15 and 06-27 repeated the same stale premise without re-checking. Both UNPARK CONDITIONS named in park_reason are independently ALSO satisfied: (a) ARCH-CRON-SCHEDULER-RELIABILITY is done_verified (archive promotion_note: apps/mcp-server/ zone collision CLEARED); (b) BA-VN-MACRO-TOOLING WAVE-1 mcp-server task VMT-6-CREDIT-FLOW-EXTEND status=DONE. No remaining work exists for this row — safe DONE_VERIFIED."
-      }
-    ],
+    "done_verified": [],
     "head": {
       "status": "deprecated",
       "canonical_moved_to": ".head",
