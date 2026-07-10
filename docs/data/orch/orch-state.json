@@ -307,11 +307,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-07-10T15:35:33Z",
-    "updated_by": "architect",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "active_task_id": "FIX-AUDITOR-ORCHSTATE-FULLDOC-OVERWRITE-CLOBBERS-SSOT",
+    "next_agent": "architect",
+    "next_action": "PLAN-ONLY (recurring_bug_escalation) — architect root-causes the system-auditor orch-state scaffold-overwrite path per backlog-detail fix_spec; router corrected BOUNDED-1 zone-detect default (developer -> architect).",
+    "updated_at": "2026-07-10T15:43:43Z",
+    "updated_by": "dev-team (router next_agent correction)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -4943,17 +4944,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AUDITOR-SBVFX-SLA-POSTMARKET-TOLERANCE"
       },
       {
-        "id": "FIX-AUDITOR-ORCHSTATE-FULLDOC-OVERWRITE-CLOBBERS-SSOT",
-        "type": "FIX",
-        "title": "system-auditor signal-write emits a fresh minimal-scaffold orch-state document instead of read-modify-append -> a single signal-emitting auditor run COLLAPSES the whole board (backlog 312->0, signal_queue.rows 97->1, head nulled)",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "zone": "multi",
-        "size": "M",
-        "sprint": null,
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AUDITOR-ORCHSTATE-FULLDOC-OVERWRITE-CLOBBERS-SSOT"
-      },
-      {
         "id": "TASK-MACRO-COMMODITY-DELTA",
         "title": "Wire commodity_prices_history prev-close → compute oil/gold/usdVnd deltas",
         "sprint": "S2-DATA-HONESTY",
@@ -8189,9 +8179,28 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-10T15:24:17Z",
+    "last_triaged_at": "2026-07-10T15:43:19Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-AUDITOR-ORCHSTATE-FULLDOC-OVERWRITE-CLOBBERS-SSOT",
+        "type": "FIX",
+        "title": "system-auditor signal-write emits a fresh minimal-scaffold orch-state document instead of read-modify-append -> a single signal-emitting auditor run COLLAPSES the whole board (backlog 312->0, signal_queue.rows 97->1, head nulled)",
+        "status": "IN_PROGRESS",
+        "priority": "P1",
+        "zone": "multi",
+        "size": "M",
+        "sprint": null,
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AUDITOR-ORCHSTATE-FULLDOC-OVERWRITE-CLOBBERS-SSOT",
+        "promoted_at": "2026-07-10T15:43:19Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-10T15:43:23Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "architect",
+        "routing_note": "plan_only:true / next_agent:architect / recurring_bug_escalation:true in backlog-detail.json — corrected from BOUNDED-1 zone-detect default (developer)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
