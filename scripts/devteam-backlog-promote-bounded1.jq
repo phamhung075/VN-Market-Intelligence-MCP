@@ -50,24 +50,37 @@
 #     use as the primary sort key)
 #   - exactly ONE row promoted per invocation (BOUNDED-1)
 #
-# DEPENDS-ON GATE (FIX-DEVTEAM-BOUNDED1-DEPENDS-ON-GATE, 2026-07-08):
-# root cause — on 2026-07-08 this script auto-promoted+claimed
+# DEPENDS-ON & BLOCKED-BY GATE (FIX-DEVTEAM-BOUNDED1-DEPENDS-ON-GATE 2026-07-08 +
+# FIX-DEVTEAM-BOUNDED1-BLOCKED-BY-GATE 2026-07-10):
+# root cause (DEPENDS-ON) — on 2026-07-08 this script auto-promoted+claimed
 # FACTORY-TECHANALYSIS-delete-orphaned-ts-service (a legitimate P1 row) while
 # its own declared depends_on ([FACTORY-TECHANALYSIS-go-livepath-tests,
 # FACTORY-TECHANALYSIS-reconcile-ta-contract]) were both still plain BACKLOG —
 # there was NO depends_on eligibility check at all. dev-team caught it
 # pre-dispatch and reverted by hand (see the row's revert_note in the live
-# doc). This gate prevents that class structurally:
-#   - depends_on/depends lives in TWO possible places per candidate row:
-#     1. inline `.depends_on` or legacy `.depends` directly on the board row
-#        (used when non-null and non-empty; both fields are unioned), OR
-#     2. for detail_ref'd rows (`.detail_ref` non-null, inline depends_on/
-#        depends null/empty) — the REAL array lives in
-#        docs/data/orch/archive/backlog-detail.json `.items[<id>].depends_on`
-#        or `.items[<id>].depends` (71 detail rows use legacy `.depends` name;
-#        same semantics, just pre-schema-rename — both unioned here).
+# doc).
+# root cause (BLOCKED-BY) — on 2026-07-10 this script auto-promoted+claimed
+# F1-CLOUD-TRIGGER-DECOMMISSION even though it carried blocked_by:
+# [F1-LAUNCHD-COWORK-BACKSTOP] (in backlog-detail.json, not inline on the board
+# row) while F1-LAUNCHD-COWORK-BACKSTOP was still plain BACKLOG. The script's
+# effective_depends_on() function only read .depends_on and .depends fields,
+# missing .blocked_by entirely (a third field name with identical gating
+# semantics). dev-team caught it pre-dispatch and reverted by hand, identical
+# to the depends_on near-miss two days prior.
+# This unified gate prevents both classes structurally:
+#   - depends_on/depends/blocked_by all live in TWO possible places per
+#     candidate row:
+#     1. inline (`.depends_on`, `.depends`, `.blocked_by`) directly on the
+#        board row (used when non-null and non-empty; all three fields are
+#        unioned), OR
+#     2. for detail_ref'd rows (`.detail_ref` non-null, inline fields null/
+#        empty) — the REAL arrays live in docs/data/orch/archive/
+#        backlog-detail.json `.items[<id>].depends_on`, `.items[<id>].depends`,
+#        or `.items[<id>].blocked_by` (71 detail rows use legacy `.depends`
+#        name; same semantics, just pre-schema-rename — all three unioned here).
 #        This file MUST be threaded in via `--slurpfile detail` (see Usage).
-#     3. `[]` if neither location yields a usable array.
+#     3. `[]` if neither location yields a usable array for ANY of the three
+#        field names.
 #   - A dependency counts SATISFIED only when it resolves to
 #     status == "DONE_VERIFIED" in ANY task_board lane — scanned across ALL
 #     lanes (done_verified, done, review, qa, in_progress, ready, backlog),
@@ -170,14 +183,14 @@ def as_dep_array:
   else [] end;
 
 # Effective depends_on for a candidate row (`.` = the backlog row object).
-# See "DEPENDS-ON GATE" header comment for the precedence rule.
-# Unions both .depends_on and legacy .depends fields at each location.
+# See "DEPENDS-ON & BLOCKED-BY GATE" header comment for the precedence rule.
+# Unions .depends_on, .depends, and .blocked_by fields at each location.
 def effective_depends_on($detail_items):
-  ((.depends_on | as_dep_array) + (.depends | as_dep_array)) as $inline
+  ((.depends_on | as_dep_array) + (.depends | as_dep_array) + (.blocked_by | as_dep_array)) as $inline
   | if ($inline | length) > 0 then
       $inline
     elif (.detail_ref != null) then
-      (($detail_items[.id].depends_on | as_dep_array) + ($detail_items[.id].depends | as_dep_array))
+      (($detail_items[.id].depends_on | as_dep_array) + ($detail_items[.id].depends | as_dep_array) + ($detail_items[.id].blocked_by | as_dep_array))
     else
       []
     end;
