@@ -307,12 +307,14 @@
     }
   ],
   "head": {
-    "status": "design_complete",
-    "active_task_id": "FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION",
-    "next_agent": "pm",
-    "next_action": "pm decompose FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION (docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md) into atomic dev-mcp-server tasks — D1 (financial_reports.id stability) must sequence before D2 (shell-row+pdf_path) and D3 (auto PEK trigger+reconciliation cron); also atomize the status-enum consumer updates (vpsHealthPoller.ts, freshnessSlaMonitorJob.ts, bctcQueueEnricherJob.ts)",
-    "updated_at": "2026-07-10T09:41:54Z",
-    "updated_by": "architect"
+    "status": "in_progress",
+    "active_task_id": "FIX-TASKLOCK-OWNER-SESSION-SERVER-SCOPED-DEFEATS-MUTEX",
+    "next_agent": "architect",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-TASKLOCK-OWNER-SESSION-SERVER-SCOPED-DEFEATS-MUTEX corrected pre-dispatch: backlog-detail.json marks plan_only=true, owner=architect, route_to=architect — routing to architect for root-cause/design (NOT developer/zone-detect Tier-3 fallback), per main.md NON-CODE/DESIGN row next_agent gap guidance.",
+    "updated_at": "2026-07-10T15:24:25Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)",
+    "corrected_at": "2026-07-10T15:25:32Z",
+    "corrected_by": "router (pre-dispatch plan_only gate)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -4894,16 +4896,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-COWORK-LASTFIRED-DECOUPLE-FROM-DELIVERY"
       },
       {
-        "id": "FIX-TASKLOCK-OWNER-SESSION-SERVER-SCOPED-DEFEATS-MUTEX",
-        "type": "FIX",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "M",
-        "zone": "apps/mcp-server/",
-        "title": "task_claim owner_session is server-INSTANCE-scoped (pid+startupTs), not client-scoped -> concurrent clients on one mcp-server collapse to one owner identity -> re-entrant self-reclaim returns claimed:true -> mutual exclusion DEFEATED (cowork double-fire)",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-TASKLOCK-OWNER-SESSION-SERVER-SCOPED-DEFEATS-MUTEX"
-      },
-      {
         "id": "FIX-MARKET-MESSAGES-TIMESTAMP-FORMAT",
         "type": "FIX",
         "status": "BACKLOG",
@@ -8171,9 +8163,26 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-10T15:14:02Z",
-    "last_triaged_by": "qa",
-    "in_progress": []
+    "last_triaged_at": "2026-07-10T15:24:17Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
+    "in_progress": [
+      {
+        "id": "FIX-TASKLOCK-OWNER-SESSION-SERVER-SCOPED-DEFEATS-MUTEX",
+        "type": "FIX",
+        "status": "IN_PROGRESS",
+        "priority": "P1",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "title": "task_claim owner_session is server-INSTANCE-scoped (pid+startupTs), not client-scoped -> concurrent clients on one mcp-server collapse to one owner identity -> re-entrant self-reclaim returns claimed:true -> mutual exclusion DEFEATED (cowork double-fire)",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-TASKLOCK-OWNER-SESSION-SERVER-SCOPED-DEFEATS-MUTEX",
+        "promoted_at": "2026-07-10T15:24:17Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-10T15:24:25Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "architect"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
