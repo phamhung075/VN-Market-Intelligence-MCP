@@ -6594,20 +6594,6 @@
         "blocked_reason": "awaiting-po-ratification"
       },
       {
-        "id": "D4-BACKLOG-HYGIENE-ORCH-COLD-EVICT-EXTEND",
-        "size": "M",
-        "sprint": "BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP",
-        "status": "TODO",
-        "title": "D4: Extend scripts/orch-cold-evict.sh with Pass-1 terminal-status category + new test suite",
-        "type": "MAINTENANCE",
-        "zone": "scripts/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#D4-BACKLOG-HYGIENE-ORCH-COLD-EVICT-EXTEND",
-        "owner": "developer",
-        "priority": "high",
-        "depends": [],
-        "note": "Risk: MEDIUM. Extends the sole SSOT eviction script. Brief §8 D4 row: new Pass-1 scanning {backlog,review,qa,in_progress,ready} for TERMINAL_SET status, cold sink = dormant .backlog_detail[] field in monthly archive, add --exclude-ids param, new test file scripts/test/orch-cold-evict-tests.sh (6 required test cases: evict correctness, non-terminal skip, exclude honored, idempotent, conservation guard, dry-run). Parallel with D0."
-      },
-      {
         "id": "D1-BACKLOG-HYGIENE-SWEEP-EXECUTE",
         "size": "M",
         "sprint": "BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP",
@@ -8374,6 +8360,23 @@
         "updated_at": "2026-07-10T12:15:00Z",
         "updated_by": "router-raw-verify-fix",
         "next_agent": "dev-team"
+      },
+      {
+        "id": "D4-BACKLOG-HYGIENE-ORCH-COLD-EVICT-EXTEND",
+        "size": "M",
+        "sprint": "BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP",
+        "status": "REVIEW",
+        "title": "D4: Extend scripts/orch-cold-evict.sh with Pass-1 terminal-status category + new test suite",
+        "type": "MAINTENANCE",
+        "zone": "scripts/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#D4-BACKLOG-HYGIENE-ORCH-COLD-EVICT-EXTEND",
+        "owner": "developer",
+        "priority": "high",
+        "depends": [],
+        "note": "Risk: MEDIUM. Extends the sole SSOT eviction script. Brief §8 D4 row: new Pass-1 scanning {backlog,review,qa,in_progress,ready} for TERMINAL_SET status, cold sink = dormant .backlog_detail[] field in monthly archive, add --exclude-ids param, new test file scripts/test/orch-cold-evict-tests.sh (6 required test cases: evict correctness, non-terminal skip, exclude honored, idempotent, conservation guard, dry-run). Parallel with D0.",
+        "next_agent": "qa",
+        "entered_review_at": "2026-07-10T17:56:40Z",
+        "review_note": "[developer 2026-07-10T17:56:40Z] Landed D4: new Pass-1 category in scripts/orch-cold-evict.sh scans flat lanes {backlog,review,qa,in_progress,ready} for TERMINAL_TASK_STATUSES (default byte-identical to TERMINAL_SET SSOT), cold sink = dormant .backlog_detail[] field in monthly archive (wired both create/append branches), --exclude-ids safety valve added (repeatable + CSV forms). New scripts/test/orch-cold-evict-tests.sh (none existed before, R-HIGH-1) -- 27/27 GREEN: evict-correctness, non-terminal-skip, exclude-ids honored, idempotent re-run, conservation-guard-still-fires (paired control), dry-run zero-mutation. Regression-checked against a fixture exercising all 5 pre-existing eviction categories (done/done_verified/active_sprints/sprint_goal.entries/signal_queue) alongside the new one -- all still function correctly. orch-apply-wrapper-tests.sh baseline re-run 31/31 GREEN (no regression). Did NOT execute against live orch-state.json -- that is D1 (depends on D0 triage, running in parallel). Requesting qa review given R-HIGH-1 flag on this sole-SSOT eviction script."
       }
     ],
     "qa": [],
