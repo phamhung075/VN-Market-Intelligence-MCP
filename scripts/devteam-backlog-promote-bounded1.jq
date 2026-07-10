@@ -32,6 +32,11 @@
 #     supervised set (held for router-adjudicated dispatch, see .head.note
 #     in the live doc) is NEVER auto-promoted by this script, regardless of
 #     which of the two possible locations carries the flag.
+#   - not an epic wrapper (FIX-DEVTEAM-BOUNDED1-EPIC-WRAPPER-GATE, 2026-07-10)
+#     — see "EPIC-WRAPPER GATE" section below. Rows carrying a non-empty
+#     children[] array (inline or detail-authoritative) are decomposition
+#     containers, not directly-dispatchable atomic tasks, and are NEVER
+#     auto-promoted by this script.
 #   - depends_on eligibility (FIX-DEVTEAM-BOUNDED1-DEPENDS-ON-GATE, 2026-07-08)
 #     — see "DEPENDS-ON GATE" section below. Applied DURING candidate
 #     selection so a blocked top-ranked row can never starve a lower-ranked
@@ -71,6 +76,32 @@
 #     rather than risk auto-dispatching against an unknown/mistyped dep).
 #   - The filter runs at candidate-selection time (before ranking/picking the
 #     top row), not as a post-hoc check on the already-chosen pick.
+#
+# EPIC-WRAPPER GATE (FIX-DEVTEAM-BOUNDED1-EPIC-WRAPPER-GATE, 2026-07-10):
+# root cause — on 2026-07-09T23:17Z this script auto-claimed the P1 epic
+# AUDIT-FETCH-COMPLETE (mode=audit-epic, children=[4 ids], no own
+# next_agent/probe) for direct dispatch. dev-team reverted + point-fixed
+# supervised:true onto that ONE row. A structurally identical second row,
+# FACTORY-GUARD-CI-REGRESSION-SPIKE (children=[7 ids]), remained exposed:
+# its board row's `supervised` is null and no supervised:true was ever
+# stamped anywhere for it, so the supervised gate above does NOT catch it —
+# only a dedicated children[]-based gate protects it (and any future epic
+# row that is never hand-stamped supervised). This gate prevents that class
+# structurally, independent of whether anyone remembers to stamp supervised:
+#   - children lives in TWO possible places per candidate row (mirrors the
+#     effective_supervised precedence exactly, including its "no detail_ref
+#     precondition" property):
+#     1. inline `.children` directly on the board row, OR
+#     2. docs/data/orch/archive/backlog-detail.json `.items[<id>].children`
+#        (detail-authoritative; lookup is keyed purely by `.id`, same
+#        $detail_items already threaded in for the depends_on/supervised
+#        gates above — no new call-site flag needed).
+#   - A row counts as an EPIC WRAPPER (not a directly-dispatchable atomic
+#     task) if EITHER location yields a non-empty children array — never
+#     require both.
+#   - Conservative default: absent/null/empty children in BOTH places = NOT
+#     an epic wrapper (promotable) — preserves baseline behavior for the
+#     common non-epic case.
 #
 # SUPERVISED GATE (FIX-DEVTEAM-BOUNDED1-SUPERVISED-FLAG-GATE, 2026-07-09):
 # root cause — on 2026-07-09T15:48Z this script auto-promoted+claimed
@@ -186,6 +217,27 @@ def effective_supervised($detail_items):
   (.supervised == true)
     or ( (.id != null) and ($detail_items[.id].supervised // false) == true );
 
+# Effective children[] for a candidate row (`.` = the backlog row object).
+# FIX-DEVTEAM-BOUNDED1-EPIC-WRAPPER-GATE, 2026-07-10 — mirrors the
+# effective_supervised precedence exactly (including its "no detail_ref
+# precondition" property): a row counts as an epic wrapper if EITHER the
+# inline `.children` on the board row OR
+# $detail_items[.id].children (docs/data/orch/archive/backlog-detail.json
+# `.items[<id>].children`) is a non-empty array. Reuses as_dep_array to
+# normalize null/string/array shapes defensively, same as depends_on.
+def effective_children($detail_items):
+  (.children | as_dep_array) as $inline
+  | if ($inline | length) > 0 then
+      $inline
+    elif (.id != null) then
+      ($detail_items[.id].children | as_dep_array)
+    else
+      []
+    end;
+
+def is_epic_wrapper($detail_items):
+  (effective_children($detail_items) | length) > 0;
+
 if (wip >= 1) then
   .   # BOUNDED-1 GATE: WIP>=1 — refuse to promote (no-op, idempotent re-run-safe)
 else
@@ -205,6 +257,7 @@ else
       | to_entries[]
       | select(.value.status == "BACKLOG" or .value.status == "TODO")
       | select((.value | effective_supervised($detail_items)) != true)
+      | select((.value | is_epic_wrapper($detail_items)) != true)
       | select(.value | deps_satisfied($detail_items; $status_map))
       | { idx: .key, row: .value, rank: (.value | priority_rank) }
     ] | sort_by([.rank, .idx])
