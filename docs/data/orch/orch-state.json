@@ -6046,19 +6046,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#INFRA-CLOUDFLARE-TUNNEL-OUTAGE-ROOT-CAUSE"
       },
       {
-        "id": "OPS-COWORK-GUARANTEED-SLOT-INSTALL",
-        "status": "BACKLOG",
-        "priority": "high",
-        "type": "FIX",
-        "zone": "cross-service",
-        "title": "Install generalized cowork guaranteed-slot firer LaunchAgent; unload retired fb-only one",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#OPS-COWORK-GUARANTEED-SLOT-INSTALL",
-        "status_note": "[po-triage-20260710-round6 ~08:37Z] ESCALATED priority->high + recurrence-witness. Signal cowork-recurring-guaranteed-miss-20260710T0847Z (HIGH, from cowork-dispatcher): chef-morning(cron 15 5 * * 1-5, trigger_id trig_01FdUF4YWg8TqpXVnBLC7GYj) AND chef-eod(cron 45 8, trigger_id trig_01NS8j25rYt4meXVqHyRsVNn) both last_fired 2026-07-03 = 7d stale (RAW-read cowork-schedule.json this tick). Mechanism CONFIRMED = superseded-despite-trigger-id: _superseded_by=cowork-dispatcher hands delivery to the gateway-blind local dispatcher (feedback_local_cowork_subagents_gateway_blind + headless_gateway_noPost_false_negative) while the cloud RemoteTrigger backstop is retired-not-firing (feedback_no_remote_trigger_all_local) -> neither path delivers -> miss. NO architect SPIKE minted (anti-churn): root cause already known AND this row already scopes the durable fix = install the generalized LIVE-CLI guaranteed-slot firer LaunchAgent (project_cowork_guaranteed_slot_needs_live_cli_session). The signal request \"architect review of dispatch path\" would only re-derive this. DISPATCHED via dev-team BATCH round6 (ops track). Related dormant facet (do not conflate): FIX-COWORK-LASTFIRED-DECOUPLE-FROM-DELIVERY (last_fired masks misses).",
-        "origin_signal_id": "cowork-recurring-guaranteed-miss-20260710T0847Z",
-        "updated_at": "2026-07-10T08:37:00Z",
-        "updated_by": "po-triage-20260710T0837Z-round6"
-      },
-      {
         "id": "QA-COWORK-SLOT-SESSION-DOWN-SURVIVAL",
         "status": "BACKLOG",
         "priority": "high",
@@ -7744,6 +7731,19 @@
         "next_agent": "cowork-refactory-expert",
         "review_note": "Flow edit complete (chef.md Step 7.6 added). Awaiting live CHEF cycle to verify docs/data/unified-agent-synthesis-<DATE>-<SLOT>.json is created with non-empty conviction_calls and sector_phases. Verification scheduled for next natural CHEF cycle (morning/intraday/eod/evening).",
         "review_gated_by": "live-cycle-verification"
+      },
+      {
+        "id": "OPS-COWORK-GUARANTEED-SLOT-INSTALL",
+        "status": "REVIEW",
+        "priority": "high",
+        "type": "FIX",
+        "zone": "cross-service",
+        "title": "Install generalized cowork guaranteed-slot firer LaunchAgent; unload retired fb-only one",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#OPS-COWORK-GUARANTEED-SLOT-INSTALL",
+        "status_note": "[ops-install-20260710T110900Z] Plist installed and loaded successfully at ~/Library/LaunchAgents/com.vn-market.cowork-guaranteed-slot-firer.plist. LaunchAgent active (launchctl list shows entry). Script verified executable. Environment variables set correctly. Waiting for next guaranteed-slot fire window (next fire: 2026-07-11T05:15Z chef-morning). No forced live cycle possible this tick (no slots currently due). Landing in REVIEW for manual QA verification after first live fire.",
+        "origin_signal_id": "cowork-recurring-guaranteed-miss-20260710T0847Z",
+        "updated_at": "2026-07-10T08:37:00Z",
+        "updated_by": "po-triage-20260710T0837Z-round6"
       }
     ],
     "qa": [],

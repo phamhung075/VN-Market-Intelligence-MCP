@@ -352,3 +352,13 @@
 - Rebuild: 2026-07-09T14:51:30Z
 - Docker image: vn-market-intelligence-mcp-mcp-server:latest (sha256:2173c45a05204958d7685353ce04bdddb7b0952e119898390ac24196744f7a51)
 - Commit: 0b6d97bf3503dc4f10363a2d678cfc5af6a6eaa7 (already on origin/main)
+
+### STEP ops-S1 · ops · 2026-07-10T09:11:30Z
+**task-id:** OPS-COWORK-GUARANTEED-SLOT-INSTALL
+**what-done:** Installed generalized cowork guaranteed-slot firer LaunchAgent (plist → ~/Library/LaunchAgents), loaded via launchctl, retired old fb-daily-firer symlink, verified executable and environment setup.
+**what-considered:**
+- Create new separate agent (rejected: CLAUDE.md flags hardcode accretion)
+- Generalize via matcher reuse (chosen: existing scripts-agents-flow/cowork-match-slots.js + script)
+- Force live fire test (rejected: no slots currently due; next fire 2026-07-11T05:15Z chef-morning)
+**why-decision:** Generalized approach proven in architecture-brief §3, eliminates hardcode per-slot if-blocks, reuses SSOT (docs/data/cowork-schedule.json), auto-covers new guaranteed:true slots.
+**why-change:** Landed in REVIEW (not DONE_VERIFIED) per DoD: requires live-fire verification which must wait until next guaranteed-slot window; installation verified complete and correct.
