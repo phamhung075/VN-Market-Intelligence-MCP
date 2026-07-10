@@ -1,6 +1,18 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-10 | **Cycle:** FIX-DEVTEAM-BOUNDED1-EPIC-WRAPPER-GATE
+**Last updated:** 2026-07-10 | **Cycle:** D4-BACKLOG-HYGIENE-ORCH-COLD-EVICT-EXTEND
+
+## Session 2026-07-10 — D4-BACKLOG-HYGIENE-ORCH-COLD-EVICT-EXTEND (sprint BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP, router-dispatched, zone `scripts/`)
+
+**Task:** `scripts/orch-cold-evict.sh` had zero code path reading `task_board.backlog[]` (or sibling flat lanes review/qa/in_progress/ready) — root cause of a 55+-row backlog-hygiene sweep: rows whose status flips to a terminal value in-place without a lane move permanently strand there. Architect brief `2026-07-10-backlog-hygiene-verify-prune-sweep.md` §8 D4 row = spec; corrected PO's mis-named cold-sink target (`archive/backlog-detail.json` is the LIVE hot-stub/cold-detail split, NOT a terminal-eviction sink).
+
+**Fix:** new Pass-1 category in `orch-cold-evict.sh` scanning `{backlog,review,qa,in_progress,ready}` (done/done_verified excluded — already handled) for `TERMINAL_TASK_STATUSES` (new env var, default byte-identical to existing `TERMINAL_SPRINT_STATUSES` = TERMINAL_SET SSOT, not a new definition). Cold sink = the dormant `.backlog_detail[]` field already in the monthly-archive schema (line ~323, always `[]` since inception, now wired both branches of `build_cold_temp`). Added `COLD_BACKLOG_DETAIL_IDS` idempotency read mirroring the existing pattern. Added `--exclude-ids` (repeatable + comma-separated forms) / `EXCLUDE_TASK_IDS` env safety valve for D0's one-time migration exclude-list.
+
+**Test:** new `scripts/test/orch-cold-evict-tests.sh` (none existed before — R-HIGH-1, sole SSOT eviction script) — 27/27 GREEN: evict-correctness, non-terminal-skip (BLOCKED/REVIEW/IN_PROGRESS untouched), `--exclude-ids` both forms, idempotent re-run (byte-identical hot+cold), conservation-guard-still-fires (paired control: direct `orch-apply.sh` no-bypass call rejected exit 1 + the real script succeeds via its existing bypass), `--dry-run` zero-mutation + cold-file-not-created. Mirrors `orch-apply-wrapper-tests.sh`'s fixture/real-live-hash-unchanged pattern — never ran against live `docs/data/orch/orch-state.json`.
+
+**Regression check:** manual fixture with done[]/done_verified[]/active_sprints[]/sprint_goal.entries[]/signal_queue rows populated alongside new terminal backlog/review rows — confirmed all 5 pre-existing eviction categories (done age/keep_n, done_verified all-terminal, active_sprints terminal+BCTC-*, sprint_goal.entries terminal, signal rows+archive) still function correctly alongside the new 6th category in the same run.
+
+**Scope discipline:** did NOT execute the new pass against live `orch-state.json` — that's D1's job (depends on D0's parallel triage output). Updated `docs/policies/dev-standards.md` CANONICAL block for orch-cold-evict.sh (D4 extension + new test pointer) + `docs/WORK.md` one-liner. graphify skipped — no Skill-tool invocation available in this sub-agent's toolset (Read/Edit/Write/Bash only); `graphify-out/graph.json` already ~7 weeks stale independent of this task. DJ: `sprint-BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP-developer.md`. Board: own row `D4-BACKLOG-HYGIENE-ORCH-COLD-EVICT-EXTEND` backlog→done_verified via `orch-apply.sh`.
 
 ## Session 2026-07-10 — FIX-DEVTEAM-BOUNDED1-EPIC-WRAPPER-GATE (4th BOUNDED-1 eligibility-gate defect this class; PO batch, direct-execute FIX routing)
 
@@ -23,27 +35,3 @@
 **Self-caught bug:** first draft referenced the pipe character in the cell's own prose as an inline code span, which reintroduced an unescaped pipe in that same cell (5 pipes instead of 4) — caught by a raw pipe-count check across all table lines before calling it done.
 
 **Board:** status stays REVIEW, `next_agent` developer→qa, `qa_verdict` CHANGES_REQUESTED→null (repo precedent: commit `975465911`), `.head.next_agent` synced to qa in the same atomic `orch-apply.sh` write.
-
-## Session 2026-07-09 — FIX-DEVTEAM-BOUNDED1-DETAIL-ITEMS-ARRAY-INDEX (router-dispatched, RAW-verified crash)
-
-**Task:** `devteam-backlog-promote-bounded1.jq` L150 bound `$detail_items` as `($detail[0].items // {})`, assuming an object shape, but live `docs/data/orch/archive/backlog-detail.json` `.items` is a plain ARRAY of 437 id-bearing objects. `effective_depends_on`'s `$detail_items[.id]` object-index then crashed (`Cannot index array with string`) on the first `detail_ref`'d row scanned — silently promoting NOTHING via BOUNDED-1 on every dev-team tick since 2026-07-08 (`orch-apply.sh` correctly aborted the empty candidate, zero corruption). **Zone:** `cross-service/` → developer direct, no dispatch.
-
-**Fix:** id-key the array at ingest (`map(select(.id!=null)|{key:.id,value:.})|from_entries`); object input still passes through unchanged. No `depends_on` semantic change, zero hardcoded task-id literals added.
-
-**Test:** existing `test-devteam-bounded1-depends-on.sh` fixtures were ALL object-shaped `.items` — that's WHY 17/17 passed while prod crashed. Added RED Case 1c (array-shaped `.items`, live-data shape) — reproduced the crash pre-fix, 18/18 GREEN post-fix.
-
-**Live-verified beyond fixtures:** ran the exact reproducer from the bug report (`TASK17-FOREIGN-FLOW` against the real live `backlog-detail.json`) — exit 5 crash pre-fix, exit 0 post-fix. End-to-end scratch-copy run through `orch-apply.sh` (`ORCH_APPLY_LIVE_FILE_OVERRIDE`, WIP forced to 0 on a copy — never the live file, since live WIP was 2): exactly one row promoted, no "empty candidate" abort.
-
-**Scope discipline:** inspected companion `devteam-backlog-claim-bounded1.jq` — never touches `backlog-detail.json` (only claims whatever `ready[]` row promote already stamped), no equivalent bug, left unchanged. Diff confined to the one shape-defensive binding + the new test case (2 files). Board flipped IN_PROGRESS→REVIEW, `next_agent`→qa via `orch-apply.sh`.
-
-## Session 2026-07-09 — FIX-DEVTEAM-BOUNDED1-SUPERVISED-FLAG-GATE (4th BOUNDED-1 eligibility-gate defect in ~5 days)
-
-**Task:** `devteam-backlog-promote-bounded1.jq`'s eligibility filter read `supervised` ONLY off the thin `task_board.backlog[]` row, but `supervised:true` is authoritative in `docs/data/orch/archive/backlog-detail.json` `.items[<id>].supervised` for `detail_ref`'d rows — every detail_ref'd supervised row silently evaluated false. Caused a LIVE near-miss (2026-07-09T15:48Z): auto-promoted+claimed `FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD` (P0, explicitly "NOT a BOUNDED-1 auto-pickup target", supervised since 07-04) into `in_progress`. Router reverted the claim + hand-stamped `supervised:true` onto all 8 Phase-1 rows — a data-hygiene patch, not the fix. **Zone:** `cross-service/` → developer direct, no dispatch.
-
-**Fix:** added `def effective_supervised($detail_items): (.supervised==true) or ($detail_items[.id].supervised//false)==true` mirroring the shipped `effective_depends_on` precedence pattern (from `FIX-DEVTEAM-BOUNDED1-DEPENDS-ON-GATE`); swapped the candidate-selection filter to call it. Deliberately no `.detail_ref != null` precondition (unlike depends_on) — PO's mint spec had none, and id-keyed `$detail_items` makes the lookup a safe no-op for rows lacking a matching id. Absent/null in both locations = promotable (baseline preserved). No new call-site change — `--slurpfile detail` already threaded for the depends_on gate.
-
-**Test:** new `test-devteam-bounded1-supervised-flag.sh` — 15/15 GREEN, covering detail-only (exact 07-09 repro), board-only (router-stamp shape), neither, both, absent-key, and ARRAY-shaped `backlog-detail.json .items`.
-
-**Live-verified beyond fixtures:** scratch-only (live `orch-state.json`/`backlog-detail.json` never touched) — re-ran the OLD script (via `git show HEAD:...`) against a WIP-0 fixture with `FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD`'s inline `supervised` stripped (its real pre-router-patch shape) + real `backlog-detail.json`: OLD promoted it (bug reproduced), NEW skipped it. End-to-end `orch-apply.sh` run (`ORCH_APPLY_LIVE_FILE_OVERRIDE`, coherent WIP-0 fixture): exactly one row promoted; re-run on the resulting WIP-1 state = no-op, no abort (124 pre-existing SHG warnings, non-blocking).
-
-**Self-caught regression:** sibling `test-devteam-bounded1-depends-on.sh`'s static grep-count assertion broke (my first comment draft pushed `--slurpfile detail` occurrences 2→3) — reworded to drop the literal substring; both suites GREEN (18/18 + 15/15). Updated `docs/agents/dev-team/flow/main.md` + `docs/policies/dev-standards.md` prose pointers. graphify skipped — no LLM API key in this sandbox. Board flipped IN_PROGRESS→REVIEW, `next_agent`→qa via `orch-apply.sh`.
