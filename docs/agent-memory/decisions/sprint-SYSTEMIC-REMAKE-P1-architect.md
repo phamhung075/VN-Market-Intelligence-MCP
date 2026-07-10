@@ -25,3 +25,13 @@
 - Extend mcp-call.sh for the 3 gateway meta-tools now vs defer — CHOSEN defer to a scoped FIX task (architect does not implement); scope proven feasible via the curl replay so the follow-up task carries a working recipe, not a research gap.
 **why-decision:** Evidence chain (own-session blind + full live handshake success + 3.5-day container-log silence spanning an ineffective restart) triangulates cleanly on client-side/CLI-harness root cause from three independent angles — strong enough to close the SPIKE conclusively within timebox rather than extend.
 **why-change:** Supersedes F1-GATEWAY-TRANSPORT-PROBE/F1-WRITE-MCP-JSON-GATEWAY/F1-AGENT-FATHER-BLIND-GUARD-REMOVE (already CANCELLED by PO pre-dispatch) — this SPIKE's evidence goes further than the CRITICAL bug-escalation that triggered the cancellation, adding the full-handshake proof and the container-log forensics.
+
+### STEP architect-S3 · architect · 2026-07-10T02:00:00Z
+**task-id:** ARCH-DAILY-FOREIGN-FLOW-TABLE
+**what-done:** Designed the parent's queued Option-F follow-on: additive `daily_foreign_flow` table (no NOT NULL price coupling → unconditional write, R-1 structurally closed not windowed) + `daily_ohlcv_with_flow` compat VIEW so 9 read sites migrate via one-line rename, not rip-and-replace. Backfill (Change 4) ordered strictly before writer cutover (Change 2) — R-6.
+**what-considered:**
+- Big-bang column move off `daily_ohlcv` in one PR — REJECTED: 9 read sites + ~15 tests coupled to column names; unnecessary blast radius for P1/non-blocking.
+- Compat VIEW (COALESCE new-table over frozen legacy columns) — CHOSEN: safe incremental per-file migration, no synchronized flag-day.
+- Class-B freshness probes (4 files) query `daily_foreign_flow` directly rather than the view — CHOSEN: closes a latent false-negative (OHLCV-stall read as foreign-flow-stale) as a bonus, not just a rename.
+**why-decision:** New table has zero price-coupled constraints (unlike `daily_ohlcv.close NOT NULL`) — the only design that makes the write truly unconditional, not merely a longer/shorter deferral window.
+**why-change:** n/a — first design pass for this follow-on task, first time in this repo a compat VIEW is used for a table-split migration.

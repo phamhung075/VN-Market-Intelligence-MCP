@@ -294,8 +294,9 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": null,
-    "updated_at": "2026-07-10T01:31:03Z",
-    "updated_by": "dev-mcp-server"
+    "next_action": "ARCH-DAILY-FOREIGN-FLOW-TABLE moved in_progress -> review; architect design complete (daily_foreign_flow table + compat view), next_agent=pm for subtask decomposition. head idle.",
+    "updated_at": "2026-07-10T01:59:03Z",
+    "updated_by": "architect"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -4264,16 +4265,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#LINT-OHLCV-WRITE-BYPASS"
       },
       {
-        "id": "ARCH-DAILY-FOREIGN-FLOW-TABLE",
-        "type": "ARCHITECTURE",
-        "title": "ARCH-DAILY-FOREIGN-FLOW-TABLE: Separate staging table to eliminate R-1 data-loss window",
-        "zone": "apps/mcp-server/",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "L",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#ARCH-DAILY-FOREIGN-FLOW-TABLE"
-      },
-      {
         "id": "FIX-BCTC-SLA-FRESHNESS-EXCLUDE-TERMINAL",
         "type": "FIX",
         "priority": "P3",
@@ -7470,6 +7461,28 @@
         "status_note": "ROOT CAUSE (verified by PO reading scripts/devteam-backlog-promote-bounded1.jq): the BOUNDED-1 idle-pickup promote gate had WIP + effective_supervised + deps_satisfied filters but NO gate excluding epic-wrapper rows (rows carrying a non-null/non-empty children[] array). On 2026-07-09T23:17Z it auto-claimed the P1 epic AUDIT-FETCH-COMPLETE (mode=audit-epic, children=4, no own next_agent/probe) for direct dispatch; dev-team reverted + point-fixed supervised:true on that ONE row. docs/data/orch/archive/backlog-detail.json has a SECOND children[]-bearing row still exposed: FACTORY-GUARD-CI-REGRESSION-SPIKE (children=7, supervised:null) -- the supervised gate does NOT catch supervised:null, so only a structural children!=null gate protects it. FIX: added effective_children/is_epic_wrapper predicate mirroring the shipped effective_supervised precedence (inline .children OR $detail_items[.id].children, no .detail_ref precondition) -- reused the already-threaded --slurpfile detail. Applied the select() filter at candidate-selection time alongside the existing supervised/deps filters. Added scripts/test-devteam-bounded1-epic-wrapper.sh (15/15 pass) covering detail-only children (the exact FACTORY-GUARD-CI-REGRESSION-SPIKE reproducer with supervised:null), board-only children, both-signal (AUDIT-FETCH-COMPLETE shape), empty children[] (not a wrapper), missing key (conservative-default promotable), and ARRAY-shaped $detail_items (no crash). Verified baseline suites unregressed: test-devteam-bounded1-supervised-flag.sh (15/15) + test-devteam-bounded1-depends-on.sh (18/18), all green after the change. Live-data dry-run (never through orch-apply.sh) confirmed the shipped gate now skips both FACTORY-GUARD-CI-REGRESSION-SPIKE and AUDIT-FETCH-COMPLETE and promotes a legitimate non-epic row instead when WIP is forced to 0 on a scratch copy. This is the 4th BOUNDED-1 eligibility-gate defect in the same class -- SPIKE-BOUNDED1-ELIGIBILITY-CONTRACT-REVIEW (architect, non-blocking, already minted 2026-07-09) covers whether a shared detail-resolution contract should replace hole-by-hole patches; not re-escalated again here, same open spike already tracks it. DJ-GATE-1 entry required before DONE/REVIEW flip. -- IMPLEMENTATION DONE: shipped effective_children/is_epic_wrapper gate + candidate-selection wiring in scripts/devteam-backlog-promote-bounded1.jq; new scripts/test-devteam-bounded1-epic-wrapper.sh (15/15 GREEN); baseline test-devteam-bounded1-supervised-flag.sh (15/15) + test-devteam-bounded1-depends-on.sh (18/18) re-confirmed GREEN, no regression; live-data dry-run confirms both FACTORY-GUARD-CI-REGRESSION-SPIKE and AUDIT-FETCH-COMPLETE now skip promotion. DJ-GATE-1 entry: sprint-SYSTEMIC-REMAKE-P1-developer.md STEP developer-S12.",
         "done_by": "developer",
         "done_at": "2026-07-10T00:35:55Z"
+      },
+      {
+        "id": "ARCH-DAILY-FOREIGN-FLOW-TABLE",
+        "type": "ARCHITECTURE",
+        "title": "ARCH-DAILY-FOREIGN-FLOW-TABLE: Separate staging table to eliminate R-1 data-loss window",
+        "zone": "apps/mcp-server/",
+        "status": "REVIEW",
+        "priority": "P1",
+        "size": "L",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#ARCH-DAILY-FOREIGN-FLOW-TABLE",
+        "promoted_at": "2026-07-10T01:47:26Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-10T01:47:52Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "pm",
+        "next_agent_correction_note": "BOUNDED-1 auto-pickup: zone apps/mcp-server/ resembles a dev-zone pattern but backlog-detail.owner=\"architect\" (type=ARCHITECTURE design task) — corrected next_agent from developer placeholder to architect per main.md NON-CODE/DESIGN gap-fix (2026-07-09T17:48Z).",
+        "handoff": "docs/handoffs/ARCH-DAILY-FOREIGN-FLOW-TABLE-architect-design.md",
+        "architect_done_at": "2026-07-10T01:59:03Z",
+        "note": "Design deliverable shipped (handoff); additive daily_foreign_flow table + daily_ohlcv_with_flow compat VIEW eliminates R-1 structurally (unconditional write, no NOT NULL price coupling). 7-subtask PM atomization (SUBTASK-DAILY-FF-1..7) in handoff; -2 backfill MUST land before -3 writer cutover (R-6).",
+        "updated_at": "2026-07-10T01:59:03Z",
+        "updated_by": "architect"
       }
     ],
     "qa": [],
@@ -7489,7 +7502,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-09T23:47:35Z",
+    "last_triaged_at": "2026-07-10T01:47:26Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": []
   },
