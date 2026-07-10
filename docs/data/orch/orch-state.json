@@ -6549,42 +6549,6 @@
         "detail": " | [router-3rd-occurrence-20260710T1205Z] 3RD CONFIRMED HIT: pm decomposed FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION into 7 subtasks (D1/D2/D3A/D3B/D3C/R-HIGH-1/R-HIGH-2), all minted with status=READY but physically placed in .task_board.backlog[] (coherence validator itself expects backlog-lane status=BACKLOG) — invisible to BOUNDED-1 array-membership WIP scan; PM own claim (\"developer can start immediately\") would have silently no-op'd. Distinct mechanism from the first 2 occurrences (single-row REVIEW-status-stuck-in-in_progress[]) — this time NEW-MINT rows given a post-decomposition status token without the matching lane placement. Router fixed manually (moved unblocked D1 to ready[], relabeled the 6 dependency-blocked rows READY->BACKLOG in place) per standing workaround. 3rd occurrence crosses the escalation bar decisively — this P2 fix should be prioritized for the next dev-team BOUNDED-1 pick."
       },
       {
-        "id": "FIX-BCTC-D3C-RECONCILE-JOB",
-        "type": "FIX",
-        "priority": "high",
-        "status": "BACKLOG",
-        "zone": "apps/mcp-server/",
-        "size": "M",
-        "title": "bctcExtractReconcileJob cron — check layout_units/legacy tables, bounded attempts, enrich_failed terminal",
-        "owner": "dev-mcp-server",
-        "depends": [
-          "FIX-BCTC-D3B-GATE-PEK-TRIGGERED-STATUS"
-        ],
-        "detail_ref": "docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md#D3-D3c",
-        "created_at": "2026-07-10T12:00:00Z",
-        "created_by": "pm",
-        "note": "New reconciliation cron (suggested 5,35 * * * * cadence): queries pek_triggered rows, checks bctc_layout_units(quarantined=0) OR legacy tables, transitions to done/enrich_failed/stays pek_triggered per attempt budget. MUST land same-cycle as D3B (no intermediate state without reconciliation).",
-        "blocked_note": "status-flip-lane-move fix (3rd occurrence this session, router 2026-07-10T~12:05Z): stayed in backlog[] lane, relabeled READY->BACKLOG since depends[] unmet; will promote to ready[] once its dependency lands DONE_VERIFIED"
-      },
-      {
-        "id": "FIX-BCTC-R-HIGH-1-STATUS-ENUM-UPDATE",
-        "type": "FIX",
-        "priority": "high",
-        "status": "BACKLOG",
-        "zone": "apps/mcp-server/",
-        "size": "S",
-        "title": "Verify pek_triggered status in vpsHealthPoller, freshnessSlaMonitorJob, bctcQueueEnricherJob (folded into D3B)",
-        "owner": "dev-mcp-server",
-        "depends": [
-          "FIX-BCTC-D3B-GATE-PEK-TRIGGERED-STATUS"
-        ],
-        "detail_ref": "docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md#R-HIGH-1",
-        "created_at": "2026-07-10T12:00:00Z",
-        "created_by": "pm",
-        "note": "R-HIGH-1 mandatory in-cycle: status enum must include pek_triggered in active-work guards, else false health/freshness alarms during normal PEK work. Already folded into D3B (same zone, developer, 3-file surface). This task formalizes the cross-check.",
-        "blocked_note": "status-flip-lane-move fix (3rd occurrence this session, router 2026-07-10T~12:05Z): stayed in backlog[] lane, relabeled READY->BACKLOG since depends[] unmet; will promote to ready[] once its dependency lands DONE_VERIFIED"
-      },
-      {
         "id": "FIX-BCTC-R-HIGH-2-MARKET-HOURS-GUARD",
         "type": "FIX",
         "priority": "medium",
@@ -7535,6 +7499,32 @@
         "qa_verified_at": "2026-07-10T13:47:15Z",
         "qa_verified_by": "qa",
         "qa_note": "APPROVED. Router already independently RAW-verified diff/tests(76/76,231 expect())/tsc/mock-guard(10 files)/3-consumer-file diffs/repo-wide grep — did not re-verify those, focused on 5 dispatcher-named fresh-eyes points. (1) Outcome-folding soundness: PekTriggerOutcome's 4 variants (queued/market_hours/pdf_extractor_error/unreachable) all fold to pek_triggered; traced that D3C's future bctc_layout_units row-count check is correctness-preserving regardless of which outcome fired (row-count is the sole ground-truth signal for all 4). Flagged non-blocking: because folding makes never-started (503/502) indistinguishable from already-in-flight (202) at the DB-column level, D3C's reconciliation loop must adopt a uniform always-re-fire-on-still-zero policy (not passive re-check) to guarantee eventual convergence for the 503/502 cases — already an explicitly open PM decision in the design doc itself (§D3 line 73); recommend this note travel into D3C's dispatch. Per-outcome detail not unrecoverably lost (pekExtractTrigger.ts already logs it via log.error). (2) Read bctc-pdf-pull-job.test.ts's full diff: TC-14 uses a real SELECT-from-financial_reports read-back for the shell-row id; TC-15/16 correctly test this job's own unconditional-write logic via injected outcome stubs + real getQueueRow DB reads; TC-17 forces a REAL sqlite failure (DROP TABLE financial_reports, not a mocked throw) and proves the catch/non-fatal/skip-but-advance edge case end-to-end via real DB reads — the strongest of the 4, genuinely non-tautological. (3) Read FIX-BCTC-ENRICH-SILENT-0ROWS.test.ts's full rewrite: SUPERSEDED header explicitly maps every historic AC-1..AC-8 to either a successor test or a stated merge-rationale — AC-1/2/3/5/6 -> 1 test (sendBugFn/enrichFailed fields provably no longer exist; ticker-genericity moot, code path no longer branches on ticker), AC-4/4b/8 -> 1 test (row-count no longer branches the outcome, so the 3 historic row-count variants are now provably redundant with each other), AC-7 -> its own dedicated test. Zero ACs vanish silently. (4) D3C-dependency risk (status_note's own explicit flag): confirmed accurately review-window-acceptable — cross-checked project standing policy (nothing rebuilds/deploys without a separate user-gated ops step) and confirmed D3C already correctly sits in backlog[] depends:[D3B], set to auto-promote to ready[] once this lands DONE_VERIFIED — a correctly-sequenced next dispatch, not a dangling risk. (5) No-fake-data lens: diff touches only bctc_vps_queue.status enum + control-flow + test fixtures (synthetic UUIDs/tickers, standard repo convention) — zero market-data synthesis. DJ-GATE-1 satisfied (sprint-SYSTEMIC-REMAKE-P1-dev-mcp-server.md STEP dev-mcp-server-S35, task-id-stamped, line 337)."
+      },
+      {
+        "id": "FIX-BCTC-R-HIGH-1-STATUS-ENUM-UPDATE",
+        "type": "FIX",
+        "priority": "high",
+        "status": "DONE_VERIFIED",
+        "zone": "apps/mcp-server/",
+        "size": "S",
+        "title": "Verify pek_triggered status in vpsHealthPoller, freshnessSlaMonitorJob, bctcQueueEnricherJob (folded into D3B)",
+        "owner": "dev-mcp-server",
+        "depends": [
+          "FIX-BCTC-D3B-GATE-PEK-TRIGGERED-STATUS"
+        ],
+        "detail_ref": "docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md#R-HIGH-1",
+        "created_at": "2026-07-10T12:00:00Z",
+        "created_by": "pm",
+        "note": "R-HIGH-1 mandatory in-cycle: status enum must include pek_triggered in active-work guards, else false health/freshness alarms during normal PEK work. Already folded into D3B (same zone, developer, 3-file surface). This task formalizes the cross-check.",
+        "done_verified": true,
+        "next_agent": "pm",
+        "updated_at": "2026-07-10T13:51:07Z",
+        "updated_by": "router",
+        "commit": "850ced6ee",
+        "qa_verdict": "APPROVED",
+        "qa_verified_at": "2026-07-10T13:51:07Z",
+        "qa_verified_by": "qa (via FIX-BCTC-D3B-GATE-PEK-TRIGGERED-STATUS)",
+        "status_note": "Board-only formality close, no fresh dispatch — this task duplicate-tracks work already inside D3B's diff. D3B's files[] list includes all 3 named consumers (vpsHealthPoller.ts, freshnessSlaMonitorJob.ts, bctcQueueEnricherJob.ts); router independently diff-read all 3 and confirmed pek_triggered added to each active/idle status-enum check (with the Arm-2 sweep deliberately left out, documented inline); repo-wide grep confirmed no 4th consumer file exists. QA's D3B review (round 1, APPROVED) covered this same diff in full as part of its dispatch scope. Committed under 850ced6ee alongside D3B — no separate commit exists for this task since the code was never split out."
       }
     ],
     "head": {
@@ -7544,7 +7534,28 @@
       "last_updated_at": "2026-07-10T09:19:45Z",
       "last_updated_by": "ops"
     },
-    "ready": [],
+    "ready": [
+      {
+        "id": "FIX-BCTC-D3C-RECONCILE-JOB",
+        "type": "FIX",
+        "priority": "high",
+        "status": "READY",
+        "zone": "apps/mcp-server/",
+        "size": "M",
+        "title": "bctcExtractReconcileJob cron — check layout_units/legacy tables, bounded attempts, enrich_failed terminal",
+        "owner": "dev-mcp-server",
+        "depends": [
+          "FIX-BCTC-D3B-GATE-PEK-TRIGGERED-STATUS"
+        ],
+        "detail_ref": "docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md#D3-D3c",
+        "created_at": "2026-07-10T12:00:00Z",
+        "created_by": "pm",
+        "note": "New reconciliation cron (suggested 5,35 * * * * cadence): queries pek_triggered rows, checks bctc_layout_units(quarantined=0) OR legacy tables, transitions to done/enrich_failed/stays pek_triggered per attempt budget. MUST land same-cycle as D3B (no intermediate state without reconciliation).",
+        "updated_at": "2026-07-10T13:50:50Z",
+        "updated_by": "router",
+        "next_agent": "dev-mcp-server"
+      }
+    ],
     "review": [
       {
         "id": "TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST",
@@ -8064,8 +8075,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-10T13:47:15Z",
-    "last_triaged_by": "qa",
+    "last_triaged_at": "2026-07-10T13:51:07Z",
+    "last_triaged_by": "router",
     "in_progress": [
       {
         "id": "FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION",
