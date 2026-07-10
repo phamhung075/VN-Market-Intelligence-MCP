@@ -1,0 +1,41 @@
+{
+  "source": "cowork-team",
+  "type": "tick-report",
+  "severity": "MEDIUM",
+  "tick": "2026-07-10T03:15Z",
+  "verdict": "WORK",
+  "matched_slots": [
+    "chef-intraday",
+    "alert-commander-market"
+  ],
+  "spawned": [],
+  "skipped": [
+    {
+      "slot_id": "chef-intraday",
+      "agent": "unified-agent",
+      "guaranteed": false,
+      "reason": "undeliverable-gateway-blind — trigger_id=null, _superseded_by=cowork-dispatcher (deprecated-backstop pattern), 2nd occurrence this segment (02:15Z, 03:15Z) — hourly cron 13 2-8 * * 1-5, last_fired stale since not delivered."
+    },
+    {
+      "slot_id": "alert-commander-market",
+      "agent": "alert-commander",
+      "guaranteed": false,
+      "reason": "undeliverable-gateway-blind — trigger_id=null, _superseded_by=cowork-dispatcher (deprecated-backstop pattern), 6th consecutive tick for this slot (02:00Z-03:15Z)."
+    }
+  ],
+  "signal_queue_drained": [],
+  "chef_mutex_applied": false,
+  "chef_mutex_note": "Only one chef-group slot matched (chef-intraday) — no coincident guaranteed CHEF slot this tick. Step 4.5c mutex not applicable.",
+  "methodology_note": "Discriminator per docs/agents/cowork-team/flow/spawn-fanout.md (trigger_id + _superseded_by, OR logic). Both matched slots: deprecated-backstop pattern, unchanged.",
+  "gateway_blind_status": "still live — native mcp__gateway__call_tool tool absent from available tool set this tick; mcp_call bypass reachable (emit_pressure_state succeeded).",
+  "work_channel_message_sent": false,
+  "stale_warning_note": "stale_warning field TRUE this tick. Cumulative (02:00Z 07-09 through 03:15Z 07-10, 51 WORK ticks; SILENT ticks not counted): 20 true, 31 absent.",
+  "recurring_symptom_note": "Neither matched slot guaranteed:true — no new guaranteed-slot miss this tick. Session guaranteed-miss count remains 6. chef-intraday's hourly :13 cron (13 2-8 * * 1-5) will keep re-matching every hour through market close (08:00Z) since it never gets delivered — expect it to recur at 04:15Z, 05:15Z, 06:15Z, 07:15Z alongside the steady alert-commander-market cadence.",
+  "emitted_at": "2026-07-10T03:16:52.077Z",
+  "_processed": {
+    "fingerprint": "c9d6db07117978325f630635c656645a9abb18d08604b38362270ed9d680f9e7",
+    "processedAt": "2026-07-10T03:17:10Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
