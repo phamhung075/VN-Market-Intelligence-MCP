@@ -548,8 +548,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-09T18:52:30Z",
-    "_updated_by": "dev-team (zone-detect pre-resolve, tick 2026-07-09T18:37Z)",
+    "_updated_at": "2026-07-10T00:35:55Z",
+    "_updated_by": "developer",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -7444,6 +7444,40 @@
         "updated_by": "dev-pdf-extractor",
         "review_note": "Updated assertion to >=79 with inline comment referencing FR-5 (0ae36a0eb). Did NOT touch dedup logic or balance gate. Verified: -m slow real-OCR test (real Tesseract run, ~15s) now PASSES (was FAIL rows_stored=79<80). Full non-slow suite: 1018 passed/8 failed/7 deselected — git stash A/B confirms all 8 failures are byte-identical pre-existing env-only failures (missing pandas module + rasterizer page-count test-isolation issue), zero regressions from this change. Unblocks FIX-BCTC-FPT-BT5-BALANCE-GATE's review-lane verification (same named test file, first assertion no longer short-circuits before balance_pass check). Decision journal: docs/agent-memory/decisions/sprint-SYSTEMIC-REMAKE-P1-dev-pdf-extractor.md STEP dev-pdf-extractor-S6.",
         "decision_journal_ref": "docs/agent-memory/decisions/sprint-SYSTEMIC-REMAKE-P1-dev-pdf-extractor.md#dev-pdf-extractor-S6"
+      },
+      {
+        "id": "FIX-DEVTEAM-BOUNDED1-EPIC-WRAPPER-GATE",
+        "status": "REVIEW",
+        "title": "BOUNDED-1 promote script: exclude epic-wrapper rows (non-null children[]) from auto-promotion",
+        "owner": "developer",
+        "next_agent": "qa",
+        "type": "FIX",
+        "zone": "cross-service/",
+        "size": "S",
+        "priority": "P0",
+        "severity": "HIGH",
+        "created_at": "2026-07-10T00:34:51Z",
+        "created_by": "po (triage 2026-07-10T00:07Z, direct-execute FIX routing)",
+        "claimed_by": "developer",
+        "claimed_at": "2026-07-10T00:34:51Z",
+        "related": [
+          "FIX-DEVTEAM-BOUNDED1-SUPERVISED-FLAG-GATE",
+          "FIX-DEVTEAM-BOUNDED1-DEPENDS-ON-GATE",
+          "FIX-DEVTEAM-BOUNDED1-DETAIL-ITEMS-ARRAY-INDEX",
+          "BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP",
+          "AUDIT-FETCH-COMPLETE",
+          "SPIKE-BOUNDED1-ELIGIBILITY-CONTRACT-REVIEW"
+        ],
+        "recurrence_class": "project_bounded1_first_pickup_stale_backlog_hygiene_debt (4th variant: epic-wrapper container rows bypass both supervised and depends_on gates)",
+        "files": [
+          "scripts/devteam-backlog-promote-bounded1.jq",
+          "scripts/test-devteam-bounded1-epic-wrapper.sh",
+          "docs/agents/dev-team/flow/main.md",
+          "docs/policies/dev-standards.md"
+        ],
+        "status_note": "ROOT CAUSE (verified by PO reading scripts/devteam-backlog-promote-bounded1.jq): the BOUNDED-1 idle-pickup promote gate had WIP + effective_supervised + deps_satisfied filters but NO gate excluding epic-wrapper rows (rows carrying a non-null/non-empty children[] array). On 2026-07-09T23:17Z it auto-claimed the P1 epic AUDIT-FETCH-COMPLETE (mode=audit-epic, children=4, no own next_agent/probe) for direct dispatch; dev-team reverted + point-fixed supervised:true on that ONE row. docs/data/orch/archive/backlog-detail.json has a SECOND children[]-bearing row still exposed: FACTORY-GUARD-CI-REGRESSION-SPIKE (children=7, supervised:null) -- the supervised gate does NOT catch supervised:null, so only a structural children!=null gate protects it. FIX: added effective_children/is_epic_wrapper predicate mirroring the shipped effective_supervised precedence (inline .children OR $detail_items[.id].children, no .detail_ref precondition) -- reused the already-threaded --slurpfile detail. Applied the select() filter at candidate-selection time alongside the existing supervised/deps filters. Added scripts/test-devteam-bounded1-epic-wrapper.sh (15/15 pass) covering detail-only children (the exact FACTORY-GUARD-CI-REGRESSION-SPIKE reproducer with supervised:null), board-only children, both-signal (AUDIT-FETCH-COMPLETE shape), empty children[] (not a wrapper), missing key (conservative-default promotable), and ARRAY-shaped $detail_items (no crash). Verified baseline suites unregressed: test-devteam-bounded1-supervised-flag.sh (15/15) + test-devteam-bounded1-depends-on.sh (18/18), all green after the change. Live-data dry-run (never through orch-apply.sh) confirmed the shipped gate now skips both FACTORY-GUARD-CI-REGRESSION-SPIKE and AUDIT-FETCH-COMPLETE and promotes a legitimate non-epic row instead when WIP is forced to 0 on a scratch copy. This is the 4th BOUNDED-1 eligibility-gate defect in the same class -- SPIKE-BOUNDED1-ELIGIBILITY-CONTRACT-REVIEW (architect, non-blocking, already minted 2026-07-09) covers whether a shared detail-resolution contract should replace hole-by-hole patches; not re-escalated again here, same open spike already tracks it. DJ-GATE-1 entry required before DONE/REVIEW flip. -- IMPLEMENTATION DONE: shipped effective_children/is_epic_wrapper gate + candidate-selection wiring in scripts/devteam-backlog-promote-bounded1.jq; new scripts/test-devteam-bounded1-epic-wrapper.sh (15/15 GREEN); baseline test-devteam-bounded1-supervised-flag.sh (15/15) + test-devteam-bounded1-depends-on.sh (18/18) re-confirmed GREEN, no regression; live-data dry-run confirms both FACTORY-GUARD-CI-REGRESSION-SPIKE and AUDIT-FETCH-COMPLETE now skip promotion. DJ-GATE-1 entry: sprint-SYSTEMIC-REMAKE-P1-developer.md STEP developer-S12.",
+        "done_by": "developer",
+        "done_at": "2026-07-10T00:35:55Z"
       }
     ],
     "qa": [],
