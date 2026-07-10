@@ -7232,11 +7232,19 @@
           "source": "analysis-agent Telegram #3507",
           "report_id": "TBD via get_bctc_pending_refine",
           "added_at": "2026-07-07T17:06:41Z",
-          "note": "non-bank low-confidence extraction; diagnose never-refined-vs-OCR-garble at repass via get_bctc_pending_refine; same runbook + generic_mandate (NO per-ticker regex)"
+          "note": "non-bank low-confidence extraction; diagnose never-refined-vs-OCR-garble at repass via get_bctc_pending_refine; same runbook + generic_mandate (NO per-ticker regex)",
+          "reemissions": [
+            {
+              "telegram": 3548,
+              "at": "2026-07-10T07:42:56Z",
+              "signal": "[BCTC-1345b] Low financial confidence (composite=0.10, financial=0.10) — conviction signal skipped for D2D 2026-Q1 (VNM/VEA OCR-corruption pattern: assets<equity or margin>100%)",
+              "note": "2nd emission of the SAME D2D 2026-Q1 composite=0.10 skip (1st was #3507, folded 07-07). Re-emission proves the repass has NOT run for D2D 3 days after fold-in — DEPLOY-GATE still unmet. NOT a new task (recurring-bug 2+: already tracked here). Claimed report as po; no standalone row minted."
+            }
+          ]
         }
       ],
-      "updated_at": "2026-07-07T17:06:41Z",
-      "folded_note": "[po-triage 2026-07-07T16:37Z] Folded D2D 2026-Q1 (composite=0.10, analysis-agent #3507) into this operational non-bank refine-repass batch instead of minting a standalone per-ticker row (anti-churn). Same DEPLOY-GATE as W5-FU-CTG — run D2D in the same post-deploy repass batch."
+      "updated_at": "2026-07-10T07:55:00Z",
+      "folded_note": "[po-triage 2026-07-07T16:37Z] Folded D2D 2026-Q1 (composite=0.10, analysis-agent #3507) into this operational non-bank refine-repass batch instead of minting a standalone per-ticker row (anti-churn). Same DEPLOY-GATE as W5-FU-CTG — run D2D in the same post-deploy repass batch. | [po-triage-20260710-round2 07:55Z] D2D 2026-Q1 RE-EMITTED as Telegram #3548 (same composite=0.10 skip) — duplicate of the already-folded item, claimed as po, NOT re-minted. Re-emission is evidence the non-bank repass batch is now OVERDUE (3 days since fold, DEPLOY-GATE still unmet). This is a separate failure CLASS from the 2025-Q4 0-row cohort (OPS-BCTC-BANK-2025Q4-ENRICH-0ROW-REPARSE): 3548 = OCR-corruption/garble (rows extracted but assets<equity), NOT bctc_table_rows=0 (both-layers-empty). Different root, different fix path — correctly kept apart."
     },
     {
       "id": "SPIKE-BCTC-REFINE-TOTAL-ROW-TRANSCRIPTION-DROP",

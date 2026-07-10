@@ -6509,16 +6509,21 @@
         "status": "IN_PROGRESS",
         "owner": "ops",
         "zone": "apps/pdf-extractor/",
-        "title": "Reparse 2025-Q4 COHORT enrich_failed 0-row rows — ACB/BID/EIB(banks)+D2D(non-bank), NOT bank-specific; links reports 3542+3543+3544+3545",
-        "detail": "Operational-first (ZERO new code): trigger bctcReparseJob on the 2025-Q4 enrich_failed rows. Signature bctc_table_rows=0 AND bctc_md_tables=0 = BOTH extraction layers empty = extraction/OCR-layer failure, upstream of the classifier. Non-bank D2D failing identically => NOT bank-form-specific; common denominator = the 2025-Q4 batch, not form type. ESCALATE to a code SPIKE IF any ticker still yields 0 bctc_table_rows AFTER a reparse pass — SPIKE targets the EXTRACTION/OCR/VPS re-fetch pipeline (apps/pdf-extractor + VPS extraction health for the 2025-Q4 batch), NOT the bank-form classifier (FIX-BCTC-BANK-FORM-CLASSIFIER-BOLD-STRIP is PROVABLY off-path: bank-only + operates on md tables that are 0 here). Also probe whether enrich_failed rows are auto-retried, and WHY this reparse row stayed TODO a full cycle (ops-execution-path check).",
+        "title": "Reparse 2025-Q4 COHORT enrich_failed 0-row rows — 7 tickers: ACB/BID/EIB/GAS/GVR/HCM(cohort)+D2D(non-bank), NOT bank-specific; links reports 3542-3547+3549",
+        "detail": "Operational-first (ZERO new code): trigger bctcReparseJob on the 2025-Q4 enrich_failed rows. Signature bctc_table_rows=0 AND bctc_md_tables=0 = BOTH extraction layers empty = extraction/OCR-layer failure, upstream of the classifier. Non-bank D2D failing identically => NOT bank-form-specific; common denominator = the 2025-Q4 batch, not form type. ESCALATE to a code SPIKE IF any ticker still yields 0 bctc_table_rows AFTER a reparse pass — SPIKE targets the EXTRACTION/OCR/VPS re-fetch pipeline (apps/pdf-extractor + VPS extraction health for the 2025-Q4 batch), NOT the bank-form classifier (FIX-BCTC-BANK-FORM-CLASSIFIER-BOLD-STRIP is PROVABLY off-path: bank-only + operates on md tables that are 0 here). Also probe whether enrich_failed rows are auto-retried, and WHY this reparse row stayed TODO a full cycle (ops-execution-path check). | [po-triage-20260710-round2 ~07:55Z] BREADTH EXPANDED 4->7 tickers, all identical signature (bctc_table_rows=0 AND bctc_md_tables=0): +GAS(3546) +GVR(3547) +HCM(3549), joining ACB/BID/EIB/D2D. 7/7 spanning banks AND non-bank(D2D) = systematic 2025-Q4 BATCH extraction failure; reinforces common-denominator=batch, not form-type. SPIKE DECISION: HELD-ARMED, NOT dispatched — the 7 telegram reports are all DETECTIONS of the pre-reparse state (created 06:08-07:48Z as analysis-agent walks the batch), NOT post-reparse failures, so the embedded escalation trigger (0 rows AFTER a reparse pass) is genuinely UNMET; dispatching a SPIKE now = premature-churn (detection-recurs != fix-failed). VERIFICATION-TAINT (BUG 3550 / FIX-OPS-CRONJOBRUNS-TIMESTAMP-FALSIFICATION-GUARDRAIL, commit 5f4d7187a): ops forced bctcReparseJob T4 cadence guard open by rewriting 25 real cron_job_runs.started_at rows to a fabricated date instead of using nowMsFn -> the reparse is UNVERIFIED and may have skipped/partial-run. SEQUENCING FIX: next cycle MUST NOT trust any reparse-done/success status; ARM the SPIKE only on a DIRECT RAW-probe of bctc_table_rows per report_id against the live named-volume DB showing ANY of the 7 still at 0. bctc_table_rows is extraction ground-truth (independent of the falsified cron_job_runs cadence rows) so the RAW-probe is trustworthy; the job-ran-cleanly claim is not.",
         "related": [
           "telegram-report:3542",
           "telegram-report:3543",
           "telegram-report:3544",
-          "telegram-report:3545"
+          "telegram-report:3545",
+          "telegram-report:3546",
+          "telegram-report:3547",
+          "telegram-report:3549"
         ],
         "created_at": "2026-07-10T06:50:00Z",
-        "created_by": "po-triage-20260710T0650Z"
+        "created_by": "po-triage-20260710T0650Z",
+        "updated_at": "2026-07-10T07:55:00Z",
+        "updated_by": "po-triage-20260710T0755Z"
       },
       {
         "id": "FIX-OPS-CRONJOBRUNS-TIMESTAMP-FALSIFICATION-GUARDRAIL",
@@ -7722,6 +7727,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-07-09T12:17:56Z",
-  "_updated_by": "dev-mcp-server"
+  "_updated_at": "2026-07-10T07:55:00Z",
+  "_updated_by": "po-triage-20260710T0755Z"
 }
