@@ -221,6 +221,43 @@ queue-eligibility filters by design, RF-3) is the required manual step first.
 Default target/documented example: CTG 2026-Q1, report_id=96e36139-5dac-414d-8e4d-20a4725890d1
 (frozen total_assets=0 — architect brief 2026-07-01-FIX-BCTC-BANK-SUMMARY-MAPPING §2).
 
+**CANONICAL: BCTC orphaned-row carry-forward (TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-CTG-CARRY-FORWARD,
+Track 1 of FIX-BCTC-BANK-SUMMARY-MAPPING's W5 replacement, architect brief
+2026-07-10-FIX-BCTC-BANK-SCALAR-MAPPING §2.5)**
+```bash
+# Verify only (default — read-only, no writes):
+bun scripts/migrations/carry-forward-bctc-orphaned-rows.ts
+bun scripts/migrations/carry-forward-bctc-orphaned-rows.ts --source <id> --target <id>
+
+# Apply — INSERT...SELECT copies bctc_table_rows from an orphaned report_id onto
+# the current one (report_id has no duplicate-(action_code,sort_key) reuse — a
+# re-parse hard-deletes the old row and orphans any already-refined table rows
+# under it), then reuses the LIVE backfill_bctc_scalars aggregator (zero
+# duplicated logic) to reflow total_assets/net_revenue/etc.:
+bun scripts/migrations/carry-forward-bctc-orphaned-rows.ts --apply
+
+# Against the live named-volume DB (docker exec — matches reingest-bctc-report.ts):
+docker cp scripts/migrations/carry-forward-bctc-orphaned-rows.ts \
+  vn-market-intelligence-mcp-mcp-server-1:/app/carry-forward-bctc-orphaned-rows.ts
+docker exec vn-market-intelligence-mcp-mcp-server-1 \
+  bun /app/carry-forward-bctc-orphaned-rows.ts --apply
+```
+Idempotent: target row count already matching source → no-op (exit 0). Refuses
+(never touches) CONFIRMED targets, 0-row sources, or conflicting nonzero target
+row counts (exit 2/3/4 — see script header). Default source/target: CTG 2026-Q1
+orphan 96e36139-... → current e497f7d1-8717-49cc-bfa9-88804464d143.
+**LIVE RESULT (2026-07-10T00:40Z, executed):** AC-TRACK1-2 succeeded (451 rows
+carried forward, RAW-verified). AC-TRACK1-3 did NOT fully resolve — the
+carried-forward rows are 208 income_statement + 173 cash_flow + 70 notes, ZERO
+balance_sheet/general rows, so the BEQ-6 section-completeness gate correctly
+refuses DONE (refine_status now PARTIAL, total_assets/net_revenue/net_margin_pct
+scalars unchanged from pre-migration garbage — this is honest behavior, not a
+script bug). Root defect is one level deeper than W2's row-repair scope: the
+balance-sheet window was apparently never captured during the original
+agentic-refine pass that produced this orphan. Escalated — needs a fresh
+agentic-refine pass targeting CTG's balance-sheet page window once the
+gateway-blind defect (architect brief §1) resolves.
+
 **CANONICAL: OHLCV backfill-queue manual trigger (DATA-BACKFILL-PRICES-20260706-MONDAY-GAP)**
 ```bash
 # Dry-run (default — reports pending-queue state, no writes):
