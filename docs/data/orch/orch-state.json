@@ -7048,33 +7048,6 @@
         "zone": "qa"
       },
       {
-        "id": "SPIKE-BCTC-CTG-BS-REALDATA-ROOT",
-        "title": "Real-data root-cause recon: why CTG 96e36139 total_assets stays 0 after the 3-defect classifier fix + full refine",
-        "type": "SPIKE",
-        "status": "DONE",
-        "owner": "dev-team",
-        "next_agent": "architect",
-        "zone": "multi",
-        "priority": "high",
-        "mode": "spike",
-        "timebox_min": 120,
-        "created_at": "2026-07-03T05:47:12Z",
-        "created_by": "po-triage-2026-07-03T05:07Z",
-        "claimed_at": "2026-07-03T05:47:12Z",
-        "claimed_by": "router",
-        "parent_task": "FIX-BCTC-BANK-BS-SECTION-CLASSIFIER",
-        "related": [
-          "W5-FU-CTG-REFINE-96e36139",
-          "TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST"
-        ],
-        "question": "For the REAL fully-refined CTG 2026-Q1 consolidated bank report (report_id 96e36139-5dac-414d-8e4d-20a4725890d1, 56/56 DONE, 451 materialized rows), locate WHERE total_assets is lost across three layers: (a) TRANSCRIPTION/refine — are the grand-total rows (Tong tai san Co / Tong no phai tra / Von chu so huu) genuinely ABSENT from the materialized markdown or present-but-mislabeled/mis-normalized (qa RAW-inspection found ZERO grand-total labels in the primary BS, only an unrelated pair on page-56 notes table); (b) CLASSIFICATION — why does isBankFormFromRows classify the real Roman-numeral bank row set as NON-bank, routing to the corporate path (server log 'scalar backfill: no non-null scalars found' = ALL scalars null); (c) PARSER vs SOURCE — is the page-45 equity-movement + note/schedule column (code/label/value) misalignment a refinedMarkdownParser defect or upstream OCR. Output: findings doc + scoped fix design SPLIT BY LAYER so the follow-on dev task(s) target the true root — NOT a 4th synthetic-passing classifier patch.",
-        "dispatch_note": "Dispatched architect 2026-07-03T05:47:12Z. PO triage 2026-07-03T05:07Z: bank-bs DoD FAILED on real data (2nd DoD-cycle failure same doc => recurring-bug bar => escalate to architect design recon, not a 4th blind dev-mcp-server patch). Timebox 120min. Deliverable: findings doc + layer-split fix design. Blocks W5 chain (W5-FU-CTG-REFINE, TASK-W5-VALIDATION-REINGEST) + FIX-BCTC-BANK-BS-SECTION-CLASSIFIER.",
-        "completed_at": "2026-07-03T07:10:00Z",
-        "completed_by": "architect",
-        "finding": "3 independent stacking layer-owned bugs, NOT the classifier alone. (1) DOMINANT — application/refinedMarkdownParser.ts 4-cell branch hardcodes column order [code,label,...] (corporate-VAS convention); CTG real bank-form header is label-first (Muc(Item)|Ma(Code)) -> blank-Ma rows (incl. BOTH grand totals + equity subtotal) unconditionally dropped via empty-label guard, populated-Ma rows silently code/label-swapped. Verified pre-parse via get_bctc_refined: grand totals ARE present + correctly valued (2924176928/2735484770/188692158, matching devs own fixture numbers) -- transcription/layer(a) EXONERATED, corrects a stale absent-from-source claim in 2026-07-01-FIX-BCTC-BANK-SUMMARY-MAPPING.md. (2) domain/bctcFormType.ts isBankFormFromRows exact-anchor regex has zero tolerance for markdown emphasis (**I**..**XV** bolded codes observed live on CTG income-statement pages 8-9) -- empirically 0/451 real codes match either regex. (3) detectSection has zero vocabulary for the bank canonical BS title BAO CAO TINH HINH TAI CHINH + a false-positive ToC keyword match (\"luu chuyen tien te\" substring) that the already-shipped RC-3 carry-forward mechanism propagates forward -- both empirically replayed. Full evidence + fix design SPLIT BY LAYER (FIX-A parser column-order + FIX-B classifier bold-strip + FIX-C mandatory real-markdown regression fixture + FIX-D section vocabulary + FIX-E doc correction): docs/architecture-briefs/2026-07-03-ctg-bs-realdata-root.md",
-        "handoff_ref": "docs/architecture-briefs/2026-07-03-ctg-bs-realdata-root.md"
-      },
-      {
         "id": "DOC-COWORK-CRON-RUNBOOK-FRESHEN",
         "status": "DONE",
         "priority": "med",
