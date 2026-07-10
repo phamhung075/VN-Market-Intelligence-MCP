@@ -149,9 +149,17 @@ async def test_extract_tables_usecase_real_ocr_path() -> None:
     # ---- Assertions ----
 
     # BT-3-D AC core: the real OCR path must yield rows (NOT 0)
-    assert result["rows_stored"] >= 80, (
+    # Threshold lowered 80 -> 79 (FIX-BCTC-BT3D-ROWS-THRESHOLD-STALE, 2026-07-10):
+    # raw parse yields 80 rows incl. a spurious duplicate code "868" (an
+    # income-statement EPS value token on page 8 mis-extracted as a code, from a
+    # 4-value-column layout bleeding a value into the code position). FR-5
+    # same-section dedup (commit 0ae36a0eb, 2026-06-28) correctly drops that
+    # duplicate, so the correct post-dedup count is 79, not 80. The `>=80`
+    # threshold was set 2026-05-28 (commit d1be505048), before FR-5 existed, and
+    # was never updated after FR-5 started correctly removing the duplicate.
+    assert result["rows_stored"] >= 79, (
         f"BT-3-D FAIL: real OCR path returned rows_stored={result['rows_stored']} "
-        f"(expected ≥80). This proves OCR was never called (still the bug) or "
+        f"(expected ≥79). This proves OCR was never called (still the bug) or "
         f"the balance-sheet pages were not located correctly."
     )
 

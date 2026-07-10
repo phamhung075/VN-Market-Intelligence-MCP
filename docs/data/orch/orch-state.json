@@ -7424,6 +7424,26 @@
           "docs/architecture/microservice/mcp-server/market-data.md"
         ],
         "rebuild_required": true
+      },
+      {
+        "id": "FIX-BCTC-BT3D-ROWS-THRESHOLD-STALE",
+        "type": "FIX",
+        "priority": "P2",
+        "status": "REVIEW",
+        "zone": "apps/pdf-extractor/",
+        "size": "S",
+        "owner": "dev-pdf-extractor",
+        "next_agent": "qa",
+        "title": "BT3D real-OCR test — update stale rows_stored >= 80 to >= 79 (post-FR-5 dedup)",
+        "desc": "PO triage 2026-07-10T00:07Z tick, FIX-type direct-execute (skip PM decomposition). test_extract_tables_bt3d_real_ocr.py line 152 asserted rows_stored>=80; live value=79. Threshold set 2026-05-28 (d1be505048) BEFORE FR-5 same-section dedup (0ae36a0eb, 2026-06-28) shipped. FR-5 now correctly drops one legitimate duplicate row (spurious code \"868\" bled from an income-statement 4-value-column EPS layout — traced in dev-pdf-extractor-2026-07-09T2300Z-FIX-BCTC-FPT-BT5-BALANCE-GATE.md), lowering the correct count from 80 to 79. This is the FIRST assertion in the test and was short-circuiting BEFORE the balance_pass assertion, so FIX-BCTC-FPT-BT5-BALANCE-GATE (review[], balance-gate independently verified fixed: balance_pass=True, delta=0.0) still showed the named test FAILED overall.",
+        "created_at": "2026-07-10T00:33:22Z",
+        "created_by": "po (2026-07-10T00:07Z tick, direct-execute FIX routing, skip PM decomposition)",
+        "claimed_at": "2026-07-10T00:33:22Z",
+        "claimed_by": "dev-pdf-extractor",
+        "updated_at": "2026-07-10T00:33:22Z",
+        "updated_by": "dev-pdf-extractor",
+        "review_note": "Updated assertion to >=79 with inline comment referencing FR-5 (0ae36a0eb). Did NOT touch dedup logic or balance gate. Verified: -m slow real-OCR test (real Tesseract run, ~15s) now PASSES (was FAIL rows_stored=79<80). Full non-slow suite: 1018 passed/8 failed/7 deselected — git stash A/B confirms all 8 failures are byte-identical pre-existing env-only failures (missing pandas module + rasterizer page-count test-isolation issue), zero regressions from this change. Unblocks FIX-BCTC-FPT-BT5-BALANCE-GATE's review-lane verification (same named test file, first assertion no longer short-circuits before balance_pass check). Decision journal: docs/agent-memory/decisions/sprint-SYSTEMIC-REMAKE-P1-dev-pdf-extractor.md STEP dev-pdf-extractor-S6.",
+        "decision_journal_ref": "docs/agent-memory/decisions/sprint-SYSTEMIC-REMAKE-P1-dev-pdf-extractor.md#dev-pdf-extractor-S6"
       }
     ],
     "qa": [],
