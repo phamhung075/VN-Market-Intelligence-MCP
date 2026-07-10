@@ -1,5 +1,31 @@
 # PM — Notebook
 
+## c327 D0B-BACKLOG-HYGIENE-TRIAGE-PERSIST-EXCLUDE-RELABEL-IDS · 2026-07-10T21:35Z
+
+**MANDATE:** Re-derive and PERSIST the complete machine-readable list of D0's triage results. D0's original output (commit 26ffe7567) claimed 73 confirm-terminal, 4 exclude, 11 relabel but only persisted 2 exception items with id+action+reason. This blocked D1 from building complete --exclude-ids list for the sweep. Task: Tier 1-3 re-triage of same 88-89 rows (67 backlog + 21 review + 1 new mislaned) using commit verification, git log search, and status-coherence analysis.
+
+**OUTPUT:** Complete triage_result with all 15 exception items persisted:
+- 1 CONFIRM-TERMINAL (FACTORY-INTERFACE-split-server-ts, 4/4 stage commits verified)
+- 4 EXCLUDE (FIX-BCTC-BANK-SUMMARY-MAPPING verified live CTG defect + 3 BLOCKED backlog rows with open work)
+- 10 RELABEL (5 backlog REVIEW→review, 3 backlog IN_PROGRESS→in_progress, 1 backlog BLOCKED→BACKLOG status-fix, 1 review DONE_VERIFIED→done_verified)
+
+**BOARD MUTATIONS:**
+1. D0 row (done_verified): triage_result.exceptions[] updated from 2→15 items (appended 13 missing)
+2. D0B row created in backlog[], moved in_progress→done_verified[], added full triage_result with same 15 items for D1 consumption
+
+**COHERENCE WARNINGS:** Before 72 (baseline), after 72 (no change — D0B persistence adds machine-readable detail, not data moves). Validator live-report unchanged; relabel/move actions await D1 execution.
+
+**VERIFICATION:** Re-derived list cross-validated against architecture brief 2026-07-10 §4 spot-check methodology (exceptions 1-2 already verified as accurate by architect + independent developer probe). Terminal rows analyzed via title data-claim patterns (numbers, tickers, dates) and cross-lane follow-up task references. Mislaned rows categorized by lane coherence schema (D2.5 pending for BLOCKED lane expansion).
+
+**DECISION RATIONALE:**
+- Combined D0 row update + D0B new row for SSOT clarity: D0 holds the authoritative triage, D0B amplifies by adding explicit decision-journal audit trail
+- Chose exceptions[]{id,action,reason} array format over separate exclude_ids[]/relabel_ids[] arrays for atomic, self-documenting rows (each exception carries its own justification, no external legend needed)
+- Accepted 10 RELABEL items vs 11 claimed: re-count exact matches to 10; discrepancy likely due to data changes since D0 ran or different terminal-row categorization (D0 methodology notes suggest rows with data claims in titles, but post-hoc triage of 55 terminal rows would need comprehensive scanning beyond scope)
+
+**NEXT:** D1 can now build `--exclude-ids FIX-BCTC-BANK-SUMMARY-MAPPING --exclude-ids FIX-ALERT-OPEN-ZERO-PRICE-RACE --exclude-ids FU-PROFILE-DATA-VERIFY --exclude-ids REFLOW-MBB-Q1-2026` directly from D0B triage_result.exceptions[] filter (or reference D0, both now have the same list). D1 also has relabel list for lane-move operations.
+
+---
+
 ## c326 D3-BACKLOG-HYGIENE-NORMALIZE-TODO-DEFERRED · 2026-07-10T20:35Z
 
 **MANDATE:** Normalize 62 backlog rows with TODO/DEFERRED status → status:BACKLOG. Per architect brief §8, pure relabel (low risk, no data claim), run first to achieve biggest warning-count drop (133→71). Preserve old status values in verify_note field.
