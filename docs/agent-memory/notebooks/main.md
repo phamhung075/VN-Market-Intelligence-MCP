@@ -1,6 +1,17 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-10T02:11Z (dev-team tick 2026-07-10T01:37Z — BOUNDED-1 pickup + architect→pm→fixer chain + DJ-GATE-1 recurring-bug escalation)
+**Written:** 2026-07-10T03:06Z (dev-team tick 2026-07-10T02:07Z→02:37Z, fire-election re-entrant — BOUNDED-1 depends-gate fix closeout + FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH + PO idle)
+
+## cycle-20260710T0207Z-0237Z — fixer closeout (legacy `.depends` fix) → BOUNDED-1 re-run → dev-mcp-server dispatch → re-entrant tick → PO NOTHING → cold-evict no-op
+
+- **Closed out prior-tick in-flight work:** RAW-verified `fixer`'s `0f09a05ba` (union legacy `.depends` with `.depends_on` in `scripts/devteam-backlog-promote-bounded1.jq`) — all 4 checks (commit on origin/main, diff matches claim, DJ-GATE-1 journal present at canonical path, no stray orch-state.json writes) passed cleanly. Lock released.
+- **Re-ran BOUNDED-1 promote for real** (corrected script) — confirmed `FIX-SBV-FETCHER-ZERO-VALUE-EMIT` now correctly excluded (was a false-positive candidate under the old script), promoted genuinely-eligible `FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH` (P1, `zone:apps/mcp-server/`, no `owner` override → standard dev-zone routing, no reroute needed). Dispatched `dev-mcp-server`.
+- **New cron trigger fired mid-tick** (`2026-07-10T02:37Z`) — deterministic preflight script correctly identified this as a **fire-election re-entrant continuation** of the same long-running session tick (SF-1 + fire-election both still held by this session), not a competing tick. Routed straight to GCC-PREFLIGHT (clean), drain-signals (2 non-actionable tick-report heartbeats, committed+pushed `eeb85a748`), orphan-adoption probe (empty), CI-health probe (in_progress, non-fatal).
+- **Skipped a redundant live BOUNDED-1 re-run:** read the script's own WIP-gate source directly (`def wip: ready+in_progress; if wip>=1 then no-op`) and confirmed from a live jq read (`ready:1, in_progress:0`) that the gate would necessarily no-op — avoided wasting an execution on a deterministically-known outcome.
+- **`dev-mcp-server`** fixed `FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH`: root cause was `freshnessSlaMonitorJob.ts`'s BCTC SLA check escalating CRASH/CRITICAL on `financial_reports.parsed_at` age alone — the only one of 3 BCTC health surfaces with no live service-state/queue-depth check. Added generic `PipelineRuntimeState{serviceActive,queueDepth}` gate to `checkSignalSla`/`checkDataFreshnessSla` (domain, pure) + `queryBctcPipelineRuntimeState` reader wired into the scheduler, fail-open on DB error. New test file 19/19 pass (RAW-confirmed live), targeted suite 129/129 x2, tsc clean. Commit `ceda753a6`, pushed. Board `ready→in_progress→review`, `next_agent:qa`. Router RAW-verified all 4 claims (commit, diff genuinely generic not special-cased, tests pass live, journal present) — held up cleanly. Lock released.
+- **`po`** Step 1 triage → **NOTHING (idle)**: WIP saturated (sole READY row actively owned), REVIEW lane holds 12 items awaiting QA (not a PO-batch concern — flagged as a throughput watch item if oldest crosses ~24h). Reconciled 3 stale router-context items via its own raw jq read (headless-gateway-cowork-nopost now DONE, 8 P0 splits freeze lifted and actively converging, DJ-GATE-1 signal already processed). Lock released.
+- **Post-cycle Step 4:** `mock-guard.sh --full` now PASSES clean (prior `stub.sbv.vn` FP class no longer firing — silent, no signal). No non-main branches/worktrees, no new/unresolved telegram reports → idle notification sent.
+- **Cold eviction (Step 4.2):** `DONE_N=14>10` triggered a re-run, but the script found `done[]:0, done_verified:0-new-to-cold` — the prior tick's eviction (`63db275f2`, tick 01:37Z) had already handled everything eligible; this run's write was byte-identical to git HEAD (hash match), so nothing to commit. Correctly identified as idempotent no-op rather than mistaking it for a bug.
 
 ## cycle-20260710T0137Z — BOUNDED-1 idle-capacity pickup → architect design → pm atomization → fixer DJ-GATE-1 repair → cold-evict
 
@@ -24,7 +35,7 @@
   - Telegram report 3527 (OHLCV-DEPTH VPS backfill stall) — still unactioned, low priority, ops-lane manual investigation flagged by PO.
 
 ### Carry-forward (unchanged lanes)
-- 8 P0 sprint-scale structural splits — still frozen `supervised:true`, awaiting architect briefs.
-- `ARCH-HEADLESS-GATEWAY-COWORK-NOPOST` — still frozen `supervised:true`.
-- `FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK`, `BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP`, `FIX-MOCKGUARD-SCOPE-EXCLUDE-TESTGO` — all still open/undispatched, unchanged.
+- **PO reconciled 2 stale carry-forward items this tick (2026-07-10T02:37Z triage) via its own raw jq read — freezes lifted:** the 8 P0 sprint-scale structural splits are now all `supervised:false` (3 in REVIEW + server.ts split stages 1-4 shipped recently — actively converging, not stalled); `ARCH-HEADLESS-GATEWAY-COWORK-NOPOST` is now `DONE`.
+- REVIEW lane depth = 12 items (oldest ~12.5h) — PO logged as a watch item, not yet batched. If oldest crosses ~24h with no QA drain, flag QA sign-off throughput as a possible flow-doc issue.
+- `FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK`, `BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP`, `FIX-MOCKGUARD-SCOPE-EXCLUDE-TESTGO` — all still open/undispatched, unchanged (mock-guard itself now passes clean, but the scope-exclude backlog item is unrelated to that — TODO still open).
 - `ARCH-SHIP-WAVE-REAUDIT` (27d+ stale) and `PDF-TEST-01-FIX` (missing `created_at`) — outcome of prior window's PO staleness call still not observed.
