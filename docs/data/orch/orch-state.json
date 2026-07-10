@@ -6578,6 +6578,98 @@
         "created_at": "2026-07-10T14:55:00Z",
         "created_by": "pm",
         "note": "Non-blocking follow-up from D3C QA review. Low risk: mirrors pre-existing attempts-column gap already accepted. Candidate for next sprint if backlog has capacity."
+      },
+      {
+        "id": "D3-BACKLOG-HYGIENE-NORMALIZE-TODO-DEFERRED",
+        "size": "S",
+        "sprint": "BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP",
+        "status": "TODO",
+        "title": "D3: Normalize 58 backlog TODO/DEFERRED rows → status:BACKLOG (preserve old value in verify_note)",
+        "type": "MAINTENANCE",
+        "zone": "cross-service",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#D3-BACKLOG-HYGIENE-NORMALIZE-TODO-DEFERRED",
+        "owner": "pm",
+        "priority": "high",
+        "depends": [],
+        "note": "Risk: LOW. Pure relabel, no data claim. Run first — cheapest, biggest warning-count drop (129→71). Single jq | orch-apply.sh write. Preserve existing verify_note if present, append new value."
+      },
+      {
+        "id": "D2.5-BACKLOG-HYGIENE-SCHEMA-BLOCKED-LANE",
+        "size": "S",
+        "sprint": "BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP",
+        "status": "TODO",
+        "title": "D2.5: Extend LANE_ALLOWED_STATUSES to accept BLOCKED in backlog/review/in_progress (PO ratification required)",
+        "type": "MAINTENANCE",
+        "zone": "apps/mcp-server/src/infrastructure/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#D2.5-BACKLOG-HYGIENE-SCHEMA-BLOCKED-LANE",
+        "owner": "dev-mcp-server",
+        "priority": "high",
+        "depends": [],
+        "note": "Risk: LOW. REQUIRES PO RATIFICATION (mirrors ADD-1 READY precedent, brief §6). Zero data mutation. Resolves 7 warnings for free (4 backlog + 3 review BLOCKED rows become coherent). File: apps/mcp-server/src/infrastructure/orchStateSchema.ts:412-420, ~3-line code change. DO NOT let dev silently pick without PO sign-off.",
+        "blocked_reason": "awaiting-po-ratification"
+      },
+      {
+        "id": "D4-BACKLOG-HYGIENE-ORCH-COLD-EVICT-EXTEND",
+        "size": "M",
+        "sprint": "BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP",
+        "status": "TODO",
+        "title": "D4: Extend scripts/orch-cold-evict.sh with Pass-1 terminal-status category + new test suite",
+        "type": "MAINTENANCE",
+        "zone": "scripts/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#D4-BACKLOG-HYGIENE-ORCH-COLD-EVICT-EXTEND",
+        "owner": "developer",
+        "priority": "high",
+        "depends": [],
+        "note": "Risk: MEDIUM. Extends the sole SSOT eviction script. Brief §8 D4 row: new Pass-1 scanning {backlog,review,qa,in_progress,ready} for TERMINAL_SET status, cold sink = dormant .backlog_detail[] field in monthly archive, add --exclude-ids param, new test file scripts/test/orch-cold-evict-tests.sh (6 required test cases: evict correctness, non-terminal skip, exclude honored, idempotent, conservation guard, dry-run). Parallel with D0."
+      },
+      {
+        "id": "D0-BACKLOG-HYGIENE-TERMINAL-ROW-TRIAGE",
+        "size": "L",
+        "sprint": "BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP",
+        "status": "TODO",
+        "title": "D0: Per-row triage of 56 backlog/review terminal-labeled rows (Tier 1/2/3 mechanical + mandatory live-reprobe)",
+        "type": "MAINTENANCE",
+        "zone": "cross-service",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#D0-BACKLOG-HYGIENE-TERMINAL-ROW-TRIAGE",
+        "owner": "pm",
+        "priority": "high",
+        "depends": [],
+        "note": "Risk: MEDIUM-HIGH. NOT a blind bulk op — brief §4 confirms 2/56-sampled error rate. Tier 1 (13 rows with commit hashes): git log corroboration. Tier 2 (~43 rows): git grep + status_note read. Tier 3 (mandatory for any falsifiable data/infra claim): live-reprobe. Seed exclude-list with Exception 1 (FIX-BCTC-BANK-SUMMARY-MAPPING — proven open, do not re-verify). Verify 8 D2-relocate candidates (5 REVIEW + 3 IN_PROGRESS in backlog[]) — one found (Exception 2: FACTORY-INTERFACE-split-server-ts, needs devteam-close-task-done-verified.jq not relocation). Output: JSON list of {confirm-terminal / exclude / relabel} rows. Parallel with D4."
+      },
+      {
+        "id": "D1-BACKLOG-HYGIENE-SWEEP-EXECUTE",
+        "size": "M",
+        "sprint": "BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP",
+        "status": "TODO",
+        "title": "D1: Execute D4-extended cold-evict, close exceptions, relocate confirmed D2-candidates",
+        "type": "MAINTENANCE",
+        "zone": "scripts/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#D1-BACKLOG-HYGIENE-SWEEP-EXECUTE",
+        "owner": "developer",
+        "priority": "high",
+        "depends": [
+          "D0-BACKLOG-HYGIENE-TERMINAL-ROW-TRIAGE",
+          "D4-BACKLOG-HYGIENE-ORCH-COLD-EVICT-EXTEND"
+        ],
+        "note": "Risk: LOW (mechanical once D0/D4 land). The actual sweep execution: (a) run D4-extended orch-cold-evict.sh against D0-confirmed set (excludes Exception 1 + any other D0-flagged false positives); (b) close Exception 2 via devteam-close-task-done-verified.jq; (c) relocate D0-confirmed D2-candidates (review-status → review[], in_progress-status → in_progress[]). Driver: scripts/orch-backlog-hygiene-sweep.sh (orchestration wrapper only)."
+      },
+      {
+        "id": "D5-BACKLOG-HYGIENE-VALIDATOR-HARDENING",
+        "size": "S",
+        "sprint": "BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP",
+        "status": "TODO",
+        "title": "D5: Flip orch-validate.mjs Stage-1b lane-coherence from warn-only to hard-fail; close SHG-2/3/4/5",
+        "type": "MAINTENANCE",
+        "zone": "scripts/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#D5-BACKLOG-HYGIENE-VALIDATOR-HARDENING",
+        "owner": "developer",
+        "priority": "high",
+        "depends": [
+          "D3-BACKLOG-HYGIENE-NORMALIZE-TODO-DEFERRED",
+          "D2.5-BACKLOG-HYGIENE-SCHEMA-BLOCKED-LANE",
+          "D1-BACKLOG-HYGIENE-SWEEP-EXECUTE"
+        ],
+        "note": "Risk: LOW. Once bun scripts/orch-validate.mjs reports 0 coherence warnings live: flip Stage-1b (lines ~369-405) from warn-print-only to hard-fail (process.exit(2)). Close SHG-2/3/4/5 as DONE_VERIFIED. Verification gate MANDATORY: inject deliberate lane-coherence violation into throwaway fixture, confirm non-zero exit (negative-path proof)."
       }
     ],
     "closed_sprints": [
