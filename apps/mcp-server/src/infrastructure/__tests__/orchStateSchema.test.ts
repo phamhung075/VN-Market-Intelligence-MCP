@@ -600,8 +600,8 @@ describe("C2 — checkLaneCoherence: wrong-lane task is flagged", () => {
   });
 });
 
-describe("C3 — checkLaneCoherence: live data has known coherence issues", () => {
-  it("C3-a: live data coherence issues are identified (not silently ignored)", () => {
+describe("C3 — checkLaneCoherence: live data coherence status", () => {
+  it("C3-a: live data has zero lane-coherence issues (post SHG migration, Stage 1b hard-fail)", () => {
     const raw = loadLiveOrchState();
     if (!raw) return;
     const result = OrchStateSchema.safeParse(raw);
@@ -610,9 +610,10 @@ describe("C3 — checkLaneCoherence: live data has known coherence issues", () =
       return;
     }
     const issues = checkLaneCoherence(result.data);
-    // We EXPECT coherence issues (data migration not yet complete)
-    // The test proves issues are IDENTIFIED, not that they are zero
-    console.log(`[test] C3-a: ${issues.length} lane coherence issue(s) in live data (expected during SHG migration)`);
+    // Post D3 (relabel) + D2.5 (schema-blocked lane) + D1 (sweep-execute),
+    // live orch-state.json is expected to be fully lane-coherent. D5 flipped
+    // Stage 1b in scripts/orch-validate.mjs to hard-fail on any issue found here.
+    console.log(`[test] C3-a: ${issues.length} lane coherence issue(s) in live data (expect 0 post-migration)`);
     for (const issue of issues.slice(0, 3)) {
       console.log(`  → ${issue.lane}[${issue.taskId}]: ${issue.status} (expected: ${issue.allowedStatuses.join(",")})`);
     }
@@ -1118,9 +1119,10 @@ describe("QA-2 — Stage-0 tokenizer: nested-object independent key tracking", (
 // Validator CLI exit-code contract: 0 / 1 / 2 / 3
 // (SSOT-W1-ZOD-VALIDATOR-CLI hardening — rank 2)
 //
-// Exit 0 = Stage 0 + Stage 1 pass (coherence warnings non-blocking)
+// Exit 0 = Stage 0 + Stage 1 pass (zero lane-coherence issues, zero dangling refs)
 // Exit 1 = Stage 0 fail: duplicate JSON keys in raw text
-// Exit 2 = Stage 1 fail: schema violation OR dangling ref
+// Exit 2 = Stage 1 fail: schema violation OR lane-coherence (Stage 1b, hard-fail
+//          post D5-BACKLOG-HYGIENE-VALIDATOR-HARDENING) OR dangling ref (Stage 1c)
 // Exit 3 = file not found / unreadable
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -1131,22 +1133,18 @@ describe("Validator CLI exit-code contract: 0 (SSOT-W1-ZOD-VALIDATOR-CLI)", () =
     expect(r.stdout).toContain("PASS");
   });
 
-  it("exit-0-with-coherence-warnings: coherence warnings are non-blocking (exit still 0)", () => {
-    // Task in wrong lane (TODO in backlog — coherence violation).
-    // Stage-0 and Stage-1 both pass; coherence check warns but does NOT block.
+  it("exit-0-lane-coherent: task in correct lane (no coherence issues) exits 0, no Stage-1b noise", () => {
     const state = {
       ...makeValidBase(),
       task_board: {
-        // TODO in backlog[] → coherence warning (allowed statuses: BACKLOG only)
-        backlog: [{ id: "CLI-WARN-T1", status: "TODO" }],
+        backlog: [{ id: "CLI-COHERENT-T1", status: "BACKLOG" }],
         active_sprints: [],
       },
     };
     const r = runCliValidator(state);
-    // Must still exit 0 despite coherence warning
     expect(r.exitCode).toBe(0);
-    // Coherence warning should appear in stderr
-    expect(r.stderr).toContain("COHERENCE WARNINGS");
+    expect(r.stdout).toContain("PASS");
+    expect(r.stderr).not.toContain("Stage 1b");
   });
 });
 
@@ -1199,6 +1197,24 @@ describe("Validator CLI exit-code contract: 2 (SSOT-W1-ZOD-VALIDATOR-CLI)", () =
     expect(r.exitCode).toBe(2);
     // Stage-1c message contains "dangling ref"
     expect(r.stderr).toContain("Stage 1c");
+  });
+
+  // D5-BACKLOG-HYGIENE-VALIDATOR-HARDENING: Stage-1b flipped from warn-only to
+  // hard-fail once SHG migration (D3+D2.5+D1) drove live coherence warnings to 0.
+  it("exit-2: lane-coherence violation → Stage-1b rejects, exit 2 (hard-fail, not warn-only)", () => {
+    const bad = {
+      ...makeValidBase(),
+      task_board: {
+        // IN_PROGRESS in backlog[] → coherence violation (allowed: BACKLOG, BLOCKED)
+        backlog: [{ id: "CLI-COHERENCE-VIOLATION-T1", status: "IN_PROGRESS" }],
+        active_sprints: [],
+      },
+    };
+    const r = runCliValidator(bad);
+    expect(r.exitCode).toBe(2);
+    expect(r.stderr).toContain("Stage 1b");
+    expect(r.stderr).toContain("VALIDATION FAILED");
+    expect(r.stderr).not.toContain("COHERENCE WARNINGS");
   });
 });
 
@@ -1329,12 +1345,13 @@ describe("Auto-fix hint: custom (superRefine dangling active_task_id)", () => {
 
 describe("Validator invocation contract (SSOT-W1-ZOD-VALIDATOR-CLI)", () => {
   it("invocation-default: no-arg invocation reads docs/data/orch/orch-state.json (exit 0)", () => {
-    // Live orch-state has 73 coherence warnings but exits 0 (warnings are non-blocking).
+    // Post SHG-migration (D3+D2.5+D1 DONE_VERIFIED), live orch-state has 0
+    // lane-coherence issues — Stage 1b hard-fail (D5) does not trip here.
     const result = spawnSync(process.execPath, [VALIDATOR_PATH], {
       encoding: "utf-8",
       timeout: 15_000,
     });
-    // Exit 0 = Stage 0 + Stage 1 pass (coherence warnings are non-blocking)
+    // Exit 0 = Stage 0 + Stage 1 pass (zero lane-coherence issues, zero dangling refs)
     expect(result.status).toBe(0);
     expect(result.stdout).toContain("PASS");
   });

@@ -140,12 +140,16 @@ Bash shell writes that bypass the Write/Edit tools (surfaces warning; non-blocki
 bun scripts/orch-validate.mjs
 # Validate a specific candidate file (e.g., before atomic rename):
 bun scripts/orch-validate.mjs path/to/candidate.json
-# Exit 0 = Stage 0 + Stage 1 PASS. Exit 1 = dup-key. Exit 2 = schema/ref fail. Exit 3 = file-not-found.
+# Exit 0 = Stage 0 + Stage 1 PASS (0 coherence issues, 0 dangling refs). Exit 1 = dup-key.
+# Exit 2 = schema/lane-coherence/ref/sprint-goal-status fail. Exit 3 = file-not-found.
 # Owning task: SSOT-W1-ZOD-VALIDATOR-CLI; directive: docs/architecture-briefs/SSOT-zod-validation-directive-2026-06-27.md § Step 3
 # Acceptance fixture: bun scripts/test-orch-validate-ac.mjs (exercises AC-1..AC-4)
 ```
 Imports schema from apps/mcp-server/src/infrastructure/orchStateSchema.ts (single source of truth — never duplicated).
-Stage 0: raw-byte duplicate-key scan (pre-parse). Stage 1: OrchStateSchema.safeParse. Stage 1b: lane coherence (warn during SHG migration). Stage 1c: ref integrity (hard fail on dangling detail_ref / payload_ref).
+Stage 0: raw-byte duplicate-key scan (pre-parse). Stage 1: OrchStateSchema.safeParse. Stage 1b: lane coherence
+(HARD FAIL — flipped from warn-only by D5-BACKLOG-HYGIENE-VALIDATOR-HARDENING once SHG migration drove live
+coherence to 0; process.exit(2) on any violation). Stage 1c: ref integrity (hard fail on dangling detail_ref /
+payload_ref). Stage 1d: sprint_goal terminal-status canonicalization (hard fail).
 
 **CANONICAL: Orch-state write-gate validator (ORCH-STATE-SCHEMA-HARDENING SHG-1 / SSOT-W1-BASH-SHIM)**
 ```bash

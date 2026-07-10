@@ -17,7 +17,11 @@
  *     last value — silent data corruption. This scan runs BEFORE parse.
  *     Closes the feedback_ssot_duplicate_key clobber class.
  *   Stage 1: OrchStateSchema.safeParse(JSON.parse(text))
- *     Stage 1b: checkLaneCoherence() — WARN-only during SHG migration (~72 violations expected)
+ *     Stage 1b: checkLaneCoherence() — HARD FAIL (SHG migration complete, 0 live
+ *       violations as of D5-BACKLOG-HYGIENE-VALIDATOR-HARDENING). Flipped from
+ *       warn-print-only to process.exit(2) once D3 (relabel) + D2.5 (schema-blocked
+ *       lane) + D1 (sweep-execute) landed DONE_VERIFIED under sprint
+ *       BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP.
  *     Stage 1c: checkRefIntegrity() — hard fail on dangling detail_ref / payload_ref
  *     Stage 1d: checkSprintGoalStatusCanonical() — hard fail on non-canonical
  *       .sprint_goal.entries[].status terminal-status drift (CLOSED/COMPLETE/done/
@@ -26,9 +30,10 @@
  *       scripts/orch-cold-evict.sh's TERMINAL_SET eviction predicate.
  *
  * EXIT CODES:
- *   0  = Stage 0 + Stage 1 pass (coherence warnings do NOT cause non-zero exit during migration)
+ *   0  = Stage 0 + Stage 1 pass (zero coherence issues, zero dangling refs, canonical statuses)
  *   1  = Stage 0 failure (duplicate JSON keys detected in raw text)
- *   2  = Stage 1 failure (schema violation) OR Stage 1c failure (dangling refs)
+ *   2  = Stage 1 failure (schema violation) OR Stage 1b (lane-coherence) OR
+ *        Stage 1c (dangling refs) OR Stage 1d (sprint_goal status drift)
  *   3  = file not found / unreadable
  *
  * AUTO-FIX ERROR CONTRACT (per directive § "Auto-fix error contract"):
@@ -366,13 +371,14 @@ if (!result.success) {
   process.exit(2);
 }
 
-// ── Stage 1b: Lane coherence (warn-only during SHG migration) ─────────────────
+// ── Stage 1b: Lane coherence (HARD-FAIL — SHG migration complete) ─────────────
 //
-// checkLaneCoherence() is exported SEPARATELY from OrchStateSchema because
-// the live data has ~72 coherence violations during the SHG migration period
-// (backlog[] still contains REVIEW/IN_PROGRESS/DONE stragglers pre-SHG-2).
-// These do NOT cause safeParse to fail — they are reported as warnings here.
-// Switch coherence to a hard-fail AFTER SHG-2 (status migration) + SHG-4 (eviction) complete.
+// checkLaneCoherence() is exported SEPARATELY from OrchStateSchema.
+// SHG migration (D3 relabel + D2.5 schema-blocked-lane + D1 sweep-execute, all
+// DONE_VERIFIED under sprint BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP) has driven live
+// coherence warnings to 0. Coherence is now a HARD FAIL like Stage 1c/1d — any
+// lane/status mismatch blocks the write instead of merely printing a warning.
+// Task: D5-BACKLOG-HYGIENE-VALIDATOR-HARDENING.
 
 const coherenceIssues = checkLaneCoherence(result.data);
 
@@ -383,25 +389,22 @@ const coherenceIssues = checkLaneCoherence(result.data);
 
 const refIssues = checkRefIntegrity(result.data, existsSync, PROJECT_ROOT);
 
-// Print coherence warnings (non-blocking during migration)
+// Hard-fail on lane coherence issues
 if (coherenceIssues.length > 0) {
   const c = coherenceIssues.length;
   process.stderr.write(
-    `\n[orch-validate] COHERENCE WARNINGS (${c} issue${c !== 1 ? 's' : ''} — SHG migration in progress, not blocking exit):\n`
+    `\nORCH-STATE VALIDATION FAILED — Stage 1b (${c} lane-coherence issue${c !== 1 ? 's' : ''}) — fix and retry:\n`
   );
-  const showMax = Math.min(c, 10); // cap display — full count in header
-  for (let i = 0; i < showMax; i++) {
+  for (let i = 0; i < c; i++) {
     const ci = coherenceIssues[i];
     process.stderr.write(
-      `  [${i + 1}] task_board.${ci.lane}[id=${ci.taskId}].status: ` +
+      `[${i + 1}] task_board.${ci.lane}[id=${ci.taskId}].status: ` +
         `"${ci.status}" is not allowed in lane "${ci.lane}"\n`
     );
-    process.stderr.write(`        expected: ${ci.allowedStatuses.join('|')}\n`);
-    process.stderr.write(`        fix: ${ci.fix}\n`);
+    process.stderr.write(`    expected: ${ci.allowedStatuses.join('|')}\n`);
+    process.stderr.write(`    fix: ${ci.fix}\n`);
   }
-  if (c > showMax) {
-    process.stderr.write(`  ... and ${c - showMax} more coherence issue(s)\n`);
-  }
+  process.exit(2);
 }
 
 // Hard-fail on dangling refs
@@ -446,13 +449,7 @@ if (sprintGoalIssues.length > 0) {
 }
 
 // ── All checks passed ──────────────────────────────────────────────────────────
+// coherenceIssues is always empty here — Stage 1b exits(2) above on any issue.
 
-if (coherenceIssues.length > 0) {
-  process.stdout.write(
-    `[orch-validate] Stage 0 + Stage 1 PASS — ` +
-      `${coherenceIssues.length} coherence warning(s) (SHG migration, non-blocking) — ${absPath}\n`
-  );
-} else {
-  process.stdout.write(`[orch-validate] Stage 0 + Stage 1 PASS — ${absPath}\n`);
-}
+process.stdout.write(`[orch-validate] Stage 0 + Stage 1 PASS — ${absPath}\n`);
 process.exit(0);

@@ -115,11 +115,11 @@ fi
 # REUSE bun scripts/orch-validate.mjs — do NOT duplicate validation logic.
 #
 # Validator exit codes (from orch-validate.mjs):
-#   0 = Stage 0 + Stage 1 PASS
-#       (coherence WARNINGS emitted to stderr but exit is still 0 — non-blocking
-#        during SHG migration; do NOT abort on warnings)
+#   0 = Stage 0 + Stage 1 PASS (zero lane-coherence issues, zero dangling refs)
 #   1 = Stage 0 fail: duplicate JSON keys detected in raw text
 #   2 = Stage 1 fail: schema violation (OrchStateSchema.safeParse) OR
+#       Stage 1b fail: lane-coherence violation (hard-fail as of
+#       D5-BACKLOG-HYGIENE-VALIDATOR-HARDENING — SHG migration complete) OR
 #       Stage 1c fail: dangling detail_ref / payload_ref
 #   3 = file not found / unreadable (should not occur — we created TMP above)
 #
