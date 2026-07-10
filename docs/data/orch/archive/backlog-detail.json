@@ -5353,7 +5353,7 @@
     {
       "id": "FIX-TASKLOCK-OWNER-SESSION-SERVER-SCOPED-DEFEATS-MUTEX",
       "type": "FIX",
-      "status": "BACKLOG",
+      "status": "SUPERSEDED",
       "priority": "P1",
       "size": "M",
       "zone": "apps/mcp-server/",
@@ -5388,7 +5388,14 @@
       "source": "router dev-team inline tick 2026-06-26T05:22Z RAW-verified during signal drain; PO PLAN-ONLY mint (WIP stays 0)",
       "created_at": "2026-06-26T05:31:34Z",
       "created_by": "po",
-      "plan_only": true
+      "plan_only": true,
+      "resolution": "superseded-already-fixed",
+      "superseded_by": "TASK_1980 / P1-FINAL (CROSS-SESSION-MULTI-TEAM-ORCH sprint)",
+      "superseded_commit": "dea481e40",
+      "superseded_at": "2026-06-28T12:32:09Z",
+      "ac_clarification": "RESOLVED 2026-07-10 (po). The acceptance line above reads 'distinct owner_session' under the 2026-06-26 mental model that owner_session itself would be made per-client. The shipped fix (TASK_1980/P1-FINAL, commit dea481e40, 2026-06-28) instead INTRODUCED a new authoritative field owner_client_session (required, sole ownership key in every WHERE clause) and DELIBERATELY kept owner_session process-scoped as diagnostic-only. Read the AC as 'distinct owner_client_session' — intent fully met; original text preserved for the record. See docs/architecture-briefs/2026-07-10-tasklock-owner-session-already-fixed.md §4/§5.",
+      "closed_by": "po",
+      "closed_at": "2026-07-10T15:40:40Z"
     },
     {
       "id": "FIX-MARKET-MESSAGES-TIMESTAMP-FORMAT",
