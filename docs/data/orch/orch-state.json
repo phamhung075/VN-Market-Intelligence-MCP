@@ -293,10 +293,10 @@
   "head": {
     "status": "review",
     "active_task_id": "FIX-AGENT-SIGNALS-ORPHAN-ALERT-ID",
-    "next_agent": "qa",
-    "next_action": "FIX-AGENT-SIGNALS-ORPHAN-ALERT-ID moved to review — writer-level existence guard in alertStore.ts (storeAlerts/storeAlertsFromCommander) closes the agent_signals.alert_id dangling-FK class + D-NEW2 ongoing audit tripwire; live DB currently shows 0 orphans (historical 124 self-expired via TTL). rebuild_required:true, qa runs RAW-verify Step 5.",
-    "updated_at": "2026-07-10T04:35:00Z",
-    "updated_by": "dev-mcp-server"
+    "next_agent": "ops",
+    "next_action": "FIX-AGENT-SIGNALS-ORPHAN-ALERT-ID: qa APPROVED code+tests (independently re-verified), held at REVIEW — mcp-server rebuild+swap still pending (image predates fix commit). ops rebuilds+swaps, then re-runs the live 0-orphan RAW-probe before qa/po can close done_verified.",
+    "updated_at": "2026-07-10T04:49:04Z",
+    "updated_by": "qa"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7571,9 +7571,9 @@
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
         "owner": "dev-mcp-server",
         "started_at": "2026-07-10T04:04:26Z",
-        "updated_at": "2026-07-10T04:35:00Z",
-        "updated_by": "dev-mcp-server",
-        "next_agent": "qa",
+        "updated_at": "2026-07-10T04:49:04Z",
+        "updated_by": "qa",
+        "next_agent": "ops",
         "rebuild_required": true,
         "files": [
           "apps/mcp-server/src/infrastructure/db/alertStore.ts",
@@ -7583,7 +7583,10 @@
           "docs/architecture/microservice/mcp-server/infrastructure.md"
         ],
         "status_note": "Live RAW-verify against the named-volume DB found 0 current orphans (10/10 alert_id-tagged agent_signals rows resolve; historical 124 (06-22/23) self-expired via TTL=2h+cleanExpired(), unrecoverable to inspect). Root-caused via git archaeology instead of live data: storeAlerts/storeAlertsFromCommander (alertStore.ts) co-write the agent_signals correlation row whenever no existing row shares alert_id, WITHOUT confirming the paired INSERT OR IGNORE INTO alerts actually persisted a row. That insert can silently no-op on the alerts.fingerprint UNIQUE-index collision (idx_alerts_fingerprint, FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS 06-16), not just an id collision. Pre-06-25 taAlertScanJob/bbAlertScanJob paired a deterministic fingerprint with a random crypto.randomUUID() id — a repeat fire (same fingerprint) got a fresh id whose alerts insert was ignored while the agent_signals insert still fired, producing the dangling FK (confirmed by commit 57a781a14 own message: 220 rows +96/day as of 06-25, which fixed the CALLER side for those 2 jobs only). e3386bdf (TASK-CONF-1) ruled out — diff touches only confidence_score plumbing, and 06-22 orphans predate its 06-23T17:55Z landing anyway. Fix applied at the WRITER (defense in depth): both storeAlerts/storeAlertsFromCommander now confirm SELECT 1 FROM alerts WHERE id=? before writing the correlation row — agent_signals.alert_id can never dangle regardless of any future caller correctness. Added checkOrphanAgentSignalsAlertId (D-NEW2, dataAuditJob.ts) as an ongoing regression tripwire (inverse of C-08/W-6 checkOrphanAlerts). New FIX-AGENT-SIGNALS-ORPHAN-ALERT-ID.test.ts (8 tests, TDD RED->GREEN, RED reproduced the exact dangling-FK defect at the writer level before the fix). Targeted alert suites (FIX-ALERT-ORPHAN-CORRELATION, ta/bb-scan-job, foreign-flow, UUID-MISMATCH, CONFIDENCE-DEFAULT-50, data-audit-job) 110/110 pass. tsc clean. Full bun test 14449 pass/40 skip/63 fail/9 errors/1187 files (599s, known Bun 1.3.13 teardown crash) - grepped all failures for alert/signal/orphan/audit: zero matches, pre-existing/unrelated. toolCount=183 unchanged, no scheduler files touched (no new cron.schedule). Server-boot probe: health 200, bctc-inspect/news-fetch dashboard routes clean. VERIFICATION-GATE CAVEAT: live re-check of 0-NEW-orphans-post-deploy requires an ops rebuild+swap (container swaps user-gated, not run by this agent) - rebuild_required:true. Historical 124 orphans no longer exist to backfill/NULL (self-expired before this task began) - documented, not silently skipped.",
-        "commit": "pending"
+        "commit": "pending",
+        "qa_verified_at": "2026-07-10T04:49:04Z",
+        "qa_verified_by": "qa",
+        "qa_note": "QA independently re-verified (not trusted from report): (1) diff confirmed generic parameterized `SELECT 1 FROM alerts WHERE id = ?` existence guard in BOTH storeAlerts/storeAlertsFromCommander (alertStore.ts), not hardcoded to any alert id. (2) New FIX-AGENT-SIGNALS-ORPHAN-ALERT-ID.test.ts re-run fresh: 8/8 pass. (3) Targeted alert suites re-run fresh (8 files incl. FIX-ALERT-ORPHAN-CORRELATION/ta-scan-job/bb-scan-job/UUID-MISMATCH/CONFIDENCE-DEFAULT-50/data-audit-job x2 + 2 foreign-flow-alert files): 129/129 pass. tsc clean (0 errors). DDD clean (no domain-layer files touched; scheduler/infra imports match each file's own documented layer). Security clean (parameterized SQL, no process.env, no secrets). mock-guard PASS exit 0. (4) Independently re-ran FULL `bun test`: 14456 pass/40 skip/56 fail/5 errors/1187 files (552s, same documented Bun 1.3.13 teardown-crash class) — grepped all 56 failing test names for alert/signal/orphan/audit/alertStore/dataAuditJob/checkOrphanAgentSignalsAlertId: zero overlap. Spot-isolated 3 of the 56 (102-job-news-poll.test.ts, 1875c-record-signal-outcome-routing.test.ts, 1518-get-foreign-flow-ohlcv-source.test.ts) in isolation: the pollNews cluster fails on a real local-sandbox cause (`Browser was not found at /usr/bin/chromium`, 5000ms bun-test-default timeout), the other 2 pass 9/9 clean in isolation — confirms pre-existing resource-contention/env flake, not a regression from this diff, matching dev-mcp-server's own claim (their run: 14449/63/9; run-to-run count variance is itself the documented flakiness signature per S27/S12 precedent). (5) Live-DB RAW-probe (docker exec bun against the named-volume DB `/app/data/market.db`, confirmed via DB_PATH env + volume-mount inspection, not readonly to avoid WAL-blindness): 0 orphans, 10/10 alert_id-tagged agent_signals rows resolve to a real alerts.id — independently reproduces the claimed 0-orphan snapshot. (6) Verified the running container's image was built 2026-07-09T12:49:50Z, strictly BEFORE this fix's commit (33bb3078e, 2026-07-10T04:30:25Z) — the deployed container is CONFIRMED still running the pre-fix code; the writer guard is not live in production yet, so the underlying defect (silent dangling-FK creation on a future fingerprint collision) has not actually stopped, even though the current DB snapshot happens to read 0 orphans. VERDICT: code+tests APPROVED, held at REVIEW (not DONE_VERIFIED) per standing precedent (qa-S7/S9/qa journal: docker compose swap is ops-gated, QA does not self-authorize) — routing next_agent=ops for the rebuild+swap; DJ-GATE-1 confirmed satisfied (dev-mcp-server-S28, task-id stamped)."
       }
     ],
     "qa": [],
