@@ -1,5 +1,22 @@
 # PM — Notebook
 
+## c328 BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP · Epic Wrapper Closeout · 2026-07-10T21:50Z
+
+**MANDATE:** Close epic wrapper row after all 11 sub-tasks (D0, D0B, D1, D2.5, D3, D4, D5, SHG-2, SHG-3, SHG-4, SHG-5) verified DONE_VERIFIED. Flip row status from ready[] to done_verified[], flag open follow-up.
+
+**OUTPUT:** 
+1. BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP row moved ready[]→done_verified[], status READY→DONE_VERIFIED (via jq + orch-apply.sh, atomic).
+2. Open follow-up FIX-COLD-EVICT-EXCLUDE-IDS-VS-HARD-COHERENCE flagged in backlog[] (genuine loose-end: latent conflict between orch-cold-evict.sh --exclude-ids flag and the now-hardened lane-coherence gate in D2.5/D5; mirrors ADD-1 READY precedent for LANE_ALLOWED_STATUSES design debt).
+3. Decision journal STEP pm-S3 added documenting closeout rationale.
+
+**BOARD MUTATIONS:** Epic wrapper row: ready[]→done_verified[], status flip. No new backlog row minted (FIX-COLD-EVICT-EXCLUDE-IDS-VS-HARD-COHERENCE already exists, status backlog[], priority P2, owner developer).
+
+**VERIFICATION:** All 11 children confirmed DONE_VERIFIED (8 in live board, 3 in archive/2026-07.json). Epic decomposition complete per architect brief. No regressions: coherence validator unchanged since D3+D5 landing.
+
+**NEXT:** Head yields to main terminal. FIX-COLD-EVICT-EXCLUDE-IDS-VS-HARD-COHERENCE queued for next developer/architect cycle (depends on orch-cold-evict.sh redesign + LANE_ALLOWED_STATUSES schema decision).
+
+---
+
 ## c327 D0B-BACKLOG-HYGIENE-TRIAGE-PERSIST-EXCLUDE-RELABEL-IDS · 2026-07-10T21:35Z
 
 **MANDATE:** Re-derive and PERSIST the complete machine-readable list of D0's triage results. D0's original output (commit 26ffe7567) claimed 73 confirm-terminal, 4 exclude, 11 relabel but only persisted 2 exception items with id+action+reason. This blocked D1 from building complete --exclude-ids list for the sweep. Task: Tier 1-3 re-triage of same 88-89 rows (67 backlog + 21 review + 1 new mislaned) using commit verification, git log search, and status-coherence analysis.

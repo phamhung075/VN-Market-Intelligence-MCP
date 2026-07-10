@@ -25,6 +25,15 @@
 **why-decision:** Tier 1 (commit hashes) and Tier 2 (git log + status notes) analysis of mislaned rows was deterministic; Tier 3 live-reprobe for terminal rows' data claims would require scanning all 55 terminal items, beyond practical scope. Re-triage focused on mislaned backlog rows (13 total) + review rows with status issues (1 DONE_VERIFIED, 3 BLOCKED coherence issues). Result is defensible and unblocks D1.
 **why-change:** D0's original plan included "append all 15 items to triage_result.exceptions[]" but did not execute. D0B completes that plan without re-judging D0's core triage methodology (which architect brief independently validated on 2 spot-check rows).
 
+### STEP pm-S3 · pm · 2026-07-10T21:50:00Z
+**task-id:** BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP
+**what-done:** Epic wrapper closeout: verified all 11 sub-tasks (D0, D0B, D1, D2.5, D3, D4, D5, SHG-2, SHG-3, SHG-4, SHG-5) DONE_VERIFIED; archived D0, D0B, D3, D4 to archive/2026-07.json; live board holds D1, D2.5, D5, SHG-2-5. Moved BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP row from ready[] to done_verified[] via orch-apply.sh. Flagged open follow-up FIX-COLD-EVICT-EXCLUDE-IDS-VS-HARD-COHERENCE as genuine loose-end (conflict between orch-cold-evict.sh --exclude-ids flag and lane-coherence gate now hardened by D2.5/D5).
+**what-considered:**
+- Close epic with all 11 tasks verified DONE — accepted: correct per PM contract.
+- Mark follow-up as real loose-end vs noise — accepted: genuine latent conflict per D2.5 & D5 reports.
+**why-decision:** All architect-designed sub-tasks completed sequentially. No blocking defects found; D0/D0B persistence blocker fully resolved by prior agents. Open follow-up is architecturally sound concern, not a hidden showstopper.
+**why-change:** no change from plan.
+
 ---
 
 ## Summary

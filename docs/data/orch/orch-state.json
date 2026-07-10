@@ -6803,6 +6803,25 @@
         "router_verified_at": "2026-07-10T19:24:05Z",
         "router_verified_by": "router",
         "router_note": "APPROVED. Independent RAW-verify: read full commit diff (ed01c5c1b), matches self-report exactly. Re-ran bun scripts/orch-validate.mjs fresh: exit 0, 0 issues, unchanged. Independently re-ran the mandatory negative-path proof with a fresh injected violation: exit 2 confirmed. Re-ran orchStateSchema.test.ts fresh: 104/0/627. Re-ran orch-apply-wrapper-tests.sh: 31/31. Scrutinized SHG-2/3/4/5 closures (not rubber-stamped): referenced commits 46eba4b33/41d925d8c exist and match cited scope, task-archive.md eviction section present, 0 null-id sprints, 4 cited live-excluded IDs confirmed BLOCKED/coherent. Independently reproduced the reported orch-cold-evict-tests.sh regression: 19/27, exact match, confirmed confined to test fixtures (live orch-state.json unaffected). Notebook prepend clean. Sprint BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP now fully closed. Minting follow-up FIX-COLD-EVICT-EXCLUDE-IDS-VS-HARD-COHERENCE per D5's recommendation."
+      },
+      {
+        "id": "BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP",
+        "priority": "P1",
+        "size": "M",
+        "status": "DONE_VERIFIED",
+        "title": "Batch verify-prune sweep of task_board.backlog[] — 4 confirmed stale-already-done BOUNDED-1 picks in one tick (FACTORY-INTERFACE 07-04T09:07Z, FACTORY-INFRA 07-04T09:37Z, FIX-SBV-FX-VPS-FETCHER-UNHEALTHY + SYS-FUNC-05-FIX both 07-07T16:37Z)",
+        "type": "FIX",
+        "zone": "cross-service",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP",
+        "supervised": false,
+        "next_agent": "pm",
+        "owner": "pm",
+        "adjudicated_dispatch": true,
+        "dispatched_by": "po",
+        "promoted_at": "2026-07-10T17:05:08Z",
+        "updated_at": "2026-07-10T21:50:00Z",
+        "updated_by": "pm",
+        "status_note": "ARCHITECT DESIGN COMPLETE 2026-07-10T17:31:06Z — brief: docs/architecture-briefs/2026-07-10-backlog-hygiene-verify-prune-sweep.md; handoff: docs/handoffs/TASK_BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP.md. Root cause CONFIRMED (orch-cold-evict.sh never scans backlog[]); PO counts (55/12/1/58=129 total, +3 review-BLOCKED PO omitted) exactly re-verified live. All 11 sub-tasks (D0, D0B, D1, D2.5, D3, D4, D5, SHG-2, SHG-3, SHG-4, SHG-5) verified DONE_VERIFIED. Open follow-up FIX-COLD-EVICT-EXCLUDE-IDS-VS-HARD-COHERENCE flagged (backlog[], owner=developer, latent conflict between orch-cold-evict.sh --exclude-ids flag and now-hardened lane-coherence gate)."
       }
     ],
     "head": {
@@ -6813,25 +6832,6 @@
       "last_updated_by": "ops"
     },
     "ready": [
-      {
-        "id": "BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP",
-        "priority": "P1",
-        "size": "M",
-        "status": "READY",
-        "title": "Batch verify-prune sweep of task_board.backlog[] — 4 confirmed stale-already-done BOUNDED-1 picks in one tick (FACTORY-INTERFACE 07-04T09:07Z, FACTORY-INFRA 07-04T09:37Z, FIX-SBV-FX-VPS-FETCHER-UNHEALTHY + SYS-FUNC-05-FIX both 07-07T16:37Z)",
-        "type": "FIX",
-        "zone": "cross-service",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP",
-        "supervised": false,
-        "status_note": "ARCHITECT DESIGN COMPLETE 2026-07-10T17:31:06Z — brief: docs/architecture-briefs/2026-07-10-backlog-hygiene-verify-prune-sweep.md; handoff: docs/handoffs/TASK_BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP.md. Root cause CONFIRMED (orch-cold-evict.sh never scans backlog[]); PO counts (55/12/1/58=129 total, +3 review-BLOCKED PO omitted) exactly re-verified live. 2 corrections to PO plan: (1) D1 archive target is the dormant .backlog_detail[] field in monthly cold archive (docs/data/orch/archive/<MONTH>.json), NOT archive/backlog-detail.json (that file is the live-task detail-prose split, 361/384 backlog rows still point there for OPEN work). (2) NEW D2.5 required (PO-ratification needed, mirrors ADD-1 READY precedent): LANE_ALLOWED_STATUSES has no lane accepting BLOCKED anywhere (7 rows homeless) — blocks D5 hard-fail flip. Spot-check found 2 CONFIRMED mislabels (exceptions, do not bulk-evict): FIX-BCTC-BANK-SUMMARY-MAPPING falsely DONE (live-DB-probed today, defect still reproducing, corroborated by its own BLOCKED review-lane sub-task); FACTORY-INTERFACE-split-server-ts falsely BLOCKED (4/4 shipped commits confirmed in git log — needs devteam-close-task-done-verified.jq, not relocation). Recommend PM decompose D3/D2.5/D4/D0 in parallel -> D1 (after D0+D4) -> D5 (after D3+D2.5+D1, 0 warnings live). Full sequencing/risk table in brief §8.",
-        "next_agent": "pm",
-        "owner": "pm",
-        "adjudicated_dispatch": true,
-        "dispatched_by": "po",
-        "promoted_at": "2026-07-10T17:05:08Z",
-        "updated_at": "2026-07-10T17:31:06Z",
-        "updated_by": "architect"
-      },
       {
         "id": "FIX-NOTEBOOK-AUTOPRUNE-ORDERING-ASSUMPTION",
         "type": "FIX",
