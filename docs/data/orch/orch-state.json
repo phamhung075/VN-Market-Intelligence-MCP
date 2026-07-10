@@ -3077,17 +3077,6 @@
         "verify_note": "prior_status=DEFERRED"
       },
       {
-        "id": "FIX-SCHEMA-DRIFT-P5-SELFHEAL",
-        "priority": "high",
-        "size": "S",
-        "sprint": "CI-RED-RECONCILE",
-        "status": "IN_PROGRESS",
-        "title": "Self-healing getDb(): fix 629 residual failures from full-suite singleton pollution",
-        "type": "TASK",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-SCHEMA-DRIFT-P5-SELFHEAL"
-      },
-      {
         "id": "EVAL-PUSH-DOUBLE-ENCODE",
         "priority": "low",
         "sprint": null,
@@ -4155,12 +4144,15 @@
         "id": "FIX-BCTC-BANK-SUMMARY-MAPPING",
         "type": "FIX",
         "priority": "P1",
-        "status": "DONE",
+        "status": "BLOCKED",
         "sprint": "BCTC-ANALYTICS-LAYER",
         "zone": "apps/mcp-server/src/interface/mcp/tools/financial-reports/",
         "size": "M",
         "title": "BANK financial_reports SCALAR summary columns are garbage: B02-TCTD balance-sheet rows squeezed into income-statement scalar columns -> net_margin_pct=229157%, total_assets=0, accounting-identity violated (CTG 2026Q1) -> validation_status=low_confidence on every bank ticker",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-BCTC-BANK-SUMMARY-MAPPING"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-BCTC-BANK-SUMMARY-MAPPING",
+        "relabeled_at": "2026-07-10T19:05:55Z",
+        "relabeled_by": "developer@D1-BACKLOG-HYGIENE-SWEEP-EXECUTE",
+        "relabeled_reason": "D0B triage_result.exceptions[] EXCLUDE: status=DONE but genuinely open (CTG 2026Q1 net_margin_pct=229157%, total_assets=0; corroborated by BLOCKED review sub-task TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST); DONE label was wrong, blocked on ops re-ingest."
       },
       {
         "id": "AUDIT-FC-FRED-MACRO",
@@ -4326,16 +4318,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT"
       },
       {
-        "id": "FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0",
-        "type": "FIX",
-        "status": "REVIEW",
-        "zone": "apps/mcp-server/",
-        "priority": "P0",
-        "size": "M",
-        "title": "FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0 — daily_ohlcv writer admits OHLC-constraint violations + 1000x scale leak (db1+db2, 835 viol/129 tickers + DFF 1000x)",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0"
-      },
-      {
         "id": "CLEAN-OHLCV-INTEGRITY-RESIDUE-REPAIR",
         "type": "CLEAN",
         "status": "BACKLOG",
@@ -4381,15 +4363,6 @@
         "priority": "P2",
         "zone": "apps/mcp-server/",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-SIGNAL-OUTCOMES-RESOLUTION-STALLED"
-      },
-      {
-        "id": "FIX-DIGEST-RSI-DUAL-ENGINE-DIVERGE",
-        "type": "FIX",
-        "title": "Evening digest: same-ticker RSI diverges between alert-block (Go svc, 35-candle) and TA/sector-block (TS local computeRSILocal, 15-candle + market_prices_history fallback)",
-        "priority": "P1",
-        "zone": "multi",
-        "status": "REVIEW",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-DIGEST-RSI-DUAL-ENGINE-DIVERGE"
       },
       {
         "id": "FIX-FB-GATE-POINT-PCT-MATH",
@@ -4528,24 +4501,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#F1-CLOUD-TRIGGER-DECOMMISSION"
       },
       {
-        "id": "FIX-MACRO-THRESHOLD-FXFLOOR-OVERCLAMP",
-        "title": "FIX CI-RED macro cluster — classifyDeviation FX %-floor over-clamps high/extreme->elevated (1269/1270/1326/FIX-1270)",
-        "status": "REVIEW",
-        "priority": "P1",
-        "type": "FIX",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MACRO-THRESHOLD-FXFLOOR-OVERCLAMP"
-      },
-      {
-        "id": "FIX-FOREIGN-FLOW-BULLETIN-UNAVAIL-STRING",
-        "title": "FIX CI-RED 1783 — foreign-flow bulletin all-zero/empty emits wrong unavailable string (expects Du lieu khong kha dung)",
-        "status": "REVIEW",
-        "priority": "P2",
-        "type": "FIX",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-FOREIGN-FLOW-BULLETIN-UNAVAIL-STRING"
-      },
-      {
         "id": "SPIKE-FB-SOURCE-LINK-RECHECK-AFFORDANCE",
         "status": "BACKLOG",
         "priority": "P3",
@@ -4657,15 +4612,6 @@
         "status": "BACKLOG",
         "zone": "multi",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#GAP-CHEF-SYNTHESIS-B-ENDPOINT-CARD"
-      },
-      {
-        "id": "FIX-L2-FRESHNESS-DATAASOF-FIELDS",
-        "title": "L2 freshness fields: /api/market-digest (marketDigestHandler), /api/quality-checklist (qualityChecklist), /api/vps-proxy-health (vpsProxyHealthHandler) return NO top-level data_asof/generatedAt. Add a freshness field to each, REUSING the sectorRotationHandler.ts (generatedAt/tradingDate) pattern. Also covers alerts/priceHistory generatedAt per update_mechanic.L2_asof.",
-        "type": "FIX",
-        "priority": "P2",
-        "status": "IN_PROGRESS",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-L2-FRESHNESS-DATAASOF-FIELDS"
       },
       {
         "id": "FIX-L3-FRONTEND-AUTOREFRESH-FRESHNESS-BADGE",
@@ -5129,17 +5075,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#IND-P1-MOMENTUM-CONSUMER-WIRING"
       },
       {
-        "id": "FIX-FB-WEEKEND-DEDUP-GATE",
-        "type": "FIX",
-        "size": "S",
-        "status": "REVIEW",
-        "priority": "high",
-        "zone": "cross-service/",
-        "sprint": "FB-POSTER-LAUNCHD-FIRER",
-        "title": "Add the MISSING period-keyed publish-once dedup gate to the FB weekend sub-flows (weekly-recap.md + weekly-prediction.md)",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-FB-WEEKEND-DEDUP-GATE"
-      },
-      {
         "id": "FB-LAUNCHD-QA-FIRE-VERIFY-DEDUP",
         "type": "FIX",
         "size": "M",
@@ -5399,17 +5334,6 @@
         "verify_note": "prior_status=TODO"
       },
       {
-        "id": "OPS-BCTC-REFINE-REPASS-NONBANK-5T",
-        "title": "OPS — agentic-refine repass + reingest 5 non-bank Q1-2026 reports (VHM/VIC/VRE/HSG/MWG) to recover total_assets=0; ZERO new code, proven CTG runbook + D2D 2026-Q1 (folded from analysis #3507, composite=0.10)",
-        "status": "IN_PROGRESS",
-        "zone": "multi",
-        "priority": "high",
-        "type": "FIX",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#OPS-BCTC-REFINE-REPASS-NONBANK-5T",
-        "owner": "ops",
-        "po_triage_20260710_round3_ctg_not_folded_note": "[po-triage-20260710-round3 08:06Z] CTG 2026-Q1 (analysis-agent Telegram #3551, composite=0.00/financial=0.00) was triaged this tick and DELIBERATELY NOT FOLDED into this batch. CTG is a BANK (B02-TCTD form); this batch is strictly NON-BANK (VHM/VIC/VRE/HSG/MWG) — a different failure CLASS (bank balance-sheet section-classifier + scalar mapping) with its own owning track: W5-FU-CTG-REFINE-96e36139 + TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST (both BLOCKED on a deploy-gate). CLARIFICATION for future triagers: the title's phrase \"proven CTG runbook\" refers to the general refine -> push_bctc_refined_unit -> finalize_bctc_refine -> reingest-bctc-report.ts PROCEDURE (proven to EXECUTE on CTG report 96e36139), NOT a claim that CTG 2026-Q1's DATA outcome is green — CTG 2026-Q1 total_assets is still 0 and its bank track is BLOCKED (deploy-gate + a genuine balance-sheet-absent root gap, CTG-CARRY-FORWARD AC-TRACK1-3 escalated 2026-07-10). Do NOT read \"proven CTG runbook\" as \"CTG is fixed\"; do NOT fold any BANK ticker into this NON-BANK batch. (Mirrors the bank/non-bank framing correction made in round-1 of this same 2026-07-10T07:07Z tick on OPS-BCTC-BANK-2025Q4-ENRICH-0ROW-REPARSE.)"
-      },
-      {
         "id": "SPIKE-BCTC-REFINE-TOTAL-ROW-TRANSCRIPTION-DROP",
         "title": "SPIKE (architect-first) — grand-total balance-sheet rows (270/440) silently dropped during agentic-refine transcription even when the page window is correctly bounded (POW class)",
         "status": "BACKLOG",
@@ -5522,16 +5446,6 @@
         "size": "S",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#P1-DETECTOR-CLOSURE-TRIAGE-SIGNALS",
         "verify_note": "prior_status=TODO"
-      },
-      {
-        "title": "Extract inline server.ts routes into routes/<name>Handler.ts (staged)",
-        "priority": "P0",
-        "zone": "mcp-server-interface",
-        "type": "FACTORY",
-        "status": "BLOCKED",
-        "id": "FACTORY-INTERFACE-split-server-ts",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INTERFACE-split-server-ts",
-        "size": "L"
       },
       {
         "id": "INFRA-CLOUDFLARE-TUNNEL-OUTAGE-ROOT-CAUSE",
@@ -6810,6 +6724,20 @@
         "router_verified_at": "2026-07-10T19:01:51Z",
         "router_verified_by": "router",
         "router_note": "APPROVED. Independent RAW-verify: read full commit diff (b7d669061), matches self-report exactly. Re-ran bun scripts/orch-validate.mjs fresh: 9 warnings, same 9 IDs as D1-residual note (16-7=9, matches po arithmetic). Re-ran orchStateSchema.test.ts fresh: 103/0/622, unchanged. Notebook prepend clean (63L, prior entry intact). git status confirms orch-state.json untouched by sub-agent as instructed."
+      },
+      {
+        "title": "Extract inline server.ts routes into routes/<name>Handler.ts (staged)",
+        "priority": "P0",
+        "zone": "mcp-server-interface",
+        "type": "FACTORY",
+        "status": "DONE_VERIFIED",
+        "id": "FACTORY-INTERFACE-split-server-ts",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INTERFACE-split-server-ts",
+        "size": "L",
+        "done_verified": true,
+        "verified_by": "developer@D1-BACKLOG-HYGIENE-SWEEP-EXECUTE",
+        "verified_at": "2026-07-10T19:05:55Z",
+        "signoff_note": "All 4 stage commits verified in git history (bce8be44b, 821bbbeea, 56f922c93, 8c228ffa6) — server.ts route-extraction FACTORY split fully shipped. D0B triage_result.exceptions[] CONFIRM-TERMINAL."
       }
     ],
     "head": {
@@ -7345,6 +7273,54 @@
         "updated_at": "2026-07-10T12:15:00Z",
         "updated_by": "router-raw-verify-fix",
         "next_agent": "dev-team"
+      },
+      {
+        "id": "FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0",
+        "type": "FIX",
+        "status": "REVIEW",
+        "zone": "apps/mcp-server/",
+        "priority": "P0",
+        "size": "M",
+        "title": "FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0 — daily_ohlcv writer admits OHLC-constraint violations + 1000x scale leak (db1+db2, 835 viol/129 tickers + DFF 1000x)",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0"
+      },
+      {
+        "id": "FIX-DIGEST-RSI-DUAL-ENGINE-DIVERGE",
+        "type": "FIX",
+        "title": "Evening digest: same-ticker RSI diverges between alert-block (Go svc, 35-candle) and TA/sector-block (TS local computeRSILocal, 15-candle + market_prices_history fallback)",
+        "priority": "P1",
+        "zone": "multi",
+        "status": "REVIEW",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-DIGEST-RSI-DUAL-ENGINE-DIVERGE"
+      },
+      {
+        "id": "FIX-MACRO-THRESHOLD-FXFLOOR-OVERCLAMP",
+        "title": "FIX CI-RED macro cluster — classifyDeviation FX %-floor over-clamps high/extreme->elevated (1269/1270/1326/FIX-1270)",
+        "status": "REVIEW",
+        "priority": "P1",
+        "type": "FIX",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MACRO-THRESHOLD-FXFLOOR-OVERCLAMP"
+      },
+      {
+        "id": "FIX-FOREIGN-FLOW-BULLETIN-UNAVAIL-STRING",
+        "title": "FIX CI-RED 1783 — foreign-flow bulletin all-zero/empty emits wrong unavailable string (expects Du lieu khong kha dung)",
+        "status": "REVIEW",
+        "priority": "P2",
+        "type": "FIX",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-FOREIGN-FLOW-BULLETIN-UNAVAIL-STRING"
+      },
+      {
+        "id": "FIX-FB-WEEKEND-DEDUP-GATE",
+        "type": "FIX",
+        "size": "S",
+        "status": "REVIEW",
+        "priority": "high",
+        "zone": "cross-service/",
+        "sprint": "FB-POSTER-LAUNCHD-FIRER",
+        "title": "Add the MISSING period-keyed publish-once dedup gate to the FB weekend sub-flows (weekly-recap.md + weekly-prediction.md)",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-FB-WEEKEND-DEDUP-GATE"
       }
     ],
     "qa": [],
@@ -7364,9 +7340,41 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-10T19:01:51Z",
-    "last_triaged_by": "router",
-    "in_progress": []
+    "last_triaged_at": "2026-07-10T19:05:55Z",
+    "last_triaged_by": "developer@D1-BACKLOG-HYGIENE-SWEEP-EXECUTE",
+    "in_progress": [
+      {
+        "id": "FIX-SCHEMA-DRIFT-P5-SELFHEAL",
+        "priority": "high",
+        "size": "S",
+        "sprint": "CI-RED-RECONCILE",
+        "status": "IN_PROGRESS",
+        "title": "Self-healing getDb(): fix 629 residual failures from full-suite singleton pollution",
+        "type": "TASK",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-SCHEMA-DRIFT-P5-SELFHEAL"
+      },
+      {
+        "id": "FIX-L2-FRESHNESS-DATAASOF-FIELDS",
+        "title": "L2 freshness fields: /api/market-digest (marketDigestHandler), /api/quality-checklist (qualityChecklist), /api/vps-proxy-health (vpsProxyHealthHandler) return NO top-level data_asof/generatedAt. Add a freshness field to each, REUSING the sectorRotationHandler.ts (generatedAt/tradingDate) pattern. Also covers alerts/priceHistory generatedAt per update_mechanic.L2_asof.",
+        "type": "FIX",
+        "priority": "P2",
+        "status": "IN_PROGRESS",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-L2-FRESHNESS-DATAASOF-FIELDS"
+      },
+      {
+        "id": "OPS-BCTC-REFINE-REPASS-NONBANK-5T",
+        "title": "OPS — agentic-refine repass + reingest 5 non-bank Q1-2026 reports (VHM/VIC/VRE/HSG/MWG) to recover total_assets=0; ZERO new code, proven CTG runbook + D2D 2026-Q1 (folded from analysis #3507, composite=0.10)",
+        "status": "IN_PROGRESS",
+        "zone": "multi",
+        "priority": "high",
+        "type": "FIX",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#OPS-BCTC-REFINE-REPASS-NONBANK-5T",
+        "owner": "ops",
+        "po_triage_20260710_round3_ctg_not_folded_note": "[po-triage-20260710-round3 08:06Z] CTG 2026-Q1 (analysis-agent Telegram #3551, composite=0.00/financial=0.00) was triaged this tick and DELIBERATELY NOT FOLDED into this batch. CTG is a BANK (B02-TCTD form); this batch is strictly NON-BANK (VHM/VIC/VRE/HSG/MWG) — a different failure CLASS (bank balance-sheet section-classifier + scalar mapping) with its own owning track: W5-FU-CTG-REFINE-96e36139 + TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST (both BLOCKED on a deploy-gate). CLARIFICATION for future triagers: the title's phrase \"proven CTG runbook\" refers to the general refine -> push_bctc_refined_unit -> finalize_bctc_refine -> reingest-bctc-report.ts PROCEDURE (proven to EXECUTE on CTG report 96e36139), NOT a claim that CTG 2026-Q1's DATA outcome is green — CTG 2026-Q1 total_assets is still 0 and its bank track is BLOCKED (deploy-gate + a genuine balance-sheet-absent root gap, CTG-CARRY-FORWARD AC-TRACK1-3 escalated 2026-07-10). Do NOT read \"proven CTG runbook\" as \"CTG is fixed\"; do NOT fold any BANK ticker into this NON-BANK batch. (Mirrors the bank/non-bank framing correction made in round-1 of this same 2026-07-10T07:07Z tick on OPS-BCTC-BANK-2025Q4-ENRICH-0ROW-REPARSE.)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
