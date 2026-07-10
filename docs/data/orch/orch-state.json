@@ -6650,7 +6650,7 @@
         "id": "D1-BACKLOG-HYGIENE-SWEEP-EXECUTE",
         "size": "M",
         "sprint": "BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP",
-        "status": "BACKLOG",
+        "status": "BLOCKED",
         "title": "D1: Execute D4-extended cold-evict, close exceptions, relocate confirmed D2-candidates",
         "type": "MAINTENANCE",
         "zone": "scripts/",
@@ -6662,7 +6662,8 @@
           "D4-BACKLOG-HYGIENE-ORCH-COLD-EVICT-EXTEND"
         ],
         "note": "Risk: LOW (mechanical once D0/D4 land). The actual sweep execution: (a) run D4-extended orch-cold-evict.sh against D0-confirmed set (excludes Exception 1 + any other D0-flagged false positives); (b) close Exception 2 via devteam-close-task-done-verified.jq; (c) relocate D0-confirmed D2-candidates (review-status → review[], in_progress-status → in_progress[]). Driver: scripts/orch-backlog-hygiene-sweep.sh (orchestration wrapper only).",
-        "verify_note": "prior_status=TODO"
+        "verify_note": "prior_status=TODO",
+        "status_note": "[developer 2026-07-10T20:15:00Z] EXECUTION ATTEMPTED, BLOCKED before any live orch-state.json mutation. D0-BACKLOG-HYGIENE-TERMINAL-ROW-TRIAGE claims DONE_VERIFIED with note \"73 confirm-terminal, 4 exclude, 11 relabel\" but its persisted triage_result field contains ONLY aggregate counts + 2 named exceptions (FACTORY-INTERFACE-split-server-ts=confirm-terminal, FIX-BCTC-BANK-SUMMARY-MAPPING=exclude) -- 0 of the other 3 exclude IDs and 0 of 11 relabel IDs are recorded anywhere. Verified via git show 26ffe7567 (D0s own commit touched ONLY its board row + pm.md notebook, no per-row annotation) and repo-wide grep for exclude_count/relabel_count/D0-BACKLOG-HYGIENE-TERMINAL-ROW-TRIAGE (no other artifact exists). Dry-run (scripts/orch-cold-evict.sh --dry-run --exclude-ids FIX-BCTC-BANK-SUMMARY-MAPPING) confirms 55 rows (54 backlog + 1 review) currently match TERMINAL_TASK_STATUSES and would auto-evict with only 1 of 15 D0-flagged protections applied -- and that pool is confirmed to contain at least 1 of the 15 (FIX-BCTC-BANK-SUMMARY-MAPPING itself, status=DONE), so the other 14 are plausibly in-pool too. Router explicitly forbade guessing exclude IDs. Not executed -- matches R-CRIT-1 (architect brief 2026-07-10-backlog-hygiene-verify-prune-sweep.md sec 11): risk of silently archiving genuinely-open work. REMEDY: D0 needs reopening/supplementing to append the full 4-item exclude + 11-item relabel ID list (machine-readable) to triage_result before D1 can safely re-run. Brief sec8 D1 scope (close Exception 2 via devteam-close-task-done-verified.jq + relocate D2 candidates) also NOT attempted -- router explicitly narrowed this cycles scope to eviction-only."
       },
       {
         "id": "D5-BACKLOG-HYGIENE-VALIDATOR-HARDENING",
