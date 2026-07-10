@@ -5950,6 +5950,18 @@
         "created_at": "2026-07-10T19:59:57Z",
         "created_by": "router",
         "source": "router discovery during routine board inspection, 2026-07-10 dev-team cron tick"
+      },
+      {
+        "id": "CI-RED-1a8c1bff-FIX",
+        "title": "CI-RED-1a8c1bff-FIX — CI RED bun test (3 files: 1190 schedulerFileCount, FACTORY-SCHEDULER job-table, 1352a async-extraction-race)",
+        "type": "FIX",
+        "priority": "P1",
+        "status": "BACKLOG",
+        "zone": "apps/mcp-server/",
+        "origin_signal_id": "ci-red-1a8c1bff-20260710201719",
+        "created_at": "2026-07-10T20:24:22Z",
+        "detail_ref": null,
+        "status_note": "AC: gh run list --branch main --limit 3 shows conclusion=success for a push AFTER 1a8c1bffb (verification_gate=ci_green_on_subsequent_push). Priority: high. Failing job: bun test (run 29119824897). Three failing files under apps/mcp-server/src/__tests__ — PO-reproduced 2026-07-10T20:21Z, deterministic not-flaky: (1) 1190-pipeline-watchdog.test.ts:284 schedulerFileCount expect 64 got 65 — stale count-drift (same class as its own REWRITE 2026-06-09 comment). (2) FACTORY-SCHEDULER-job-table-registry.test.ts — 3 asserts off by +1 (57->58 x2, 79->80) — one new scheduler file/job entry added by server.ts split-refactor commits 8c228ffa6/56f922c93/821bbbeea/bce8be44b; count-drift. FIX (1)+(2): verify the new scheduler file/job is legit, then bump the hardcoded counts. (3) 1352a-async-extraction-race.test.ts A-1/A-2 expect bctc_vps_queue.status='done' after bctcPdfPullJob, got 'pek_triggered' — DO NOT blind-patch: PO recon shows pek_triggered is a documented INTENDED intermediate status — bctcExtractReconcileJob.ts exists solely to resolve pek_triggered rows that bctcPdfPullJob leaves via fire-and-forget /pek-extract. Investigate whether the test asserts a superseded synchronous model (=> update test to expect pek_triggered) or a genuine regression where the row should still reach done, BEFORE editing either side."
       }
     ],
     "closed_sprints": [
