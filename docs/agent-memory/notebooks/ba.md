@@ -1,6 +1,16 @@
 # BA — Notebook
 
-**Last updated:** 2026-07-02 | **Sprint:** MERGE-MONEY-RADAR-INTO-MOMENTUM
+**Last updated:** 2026-07-09 | **Sprint:** FIX-BCTC-BANK-SCALAR-MAPPING
+
+## BA-FIX-BCTC-BANK-SCALAR-MAPPING · 2026-07-09
+
+Spec complete. REQ file: `docs/handoffs/BA-FIX-BCTC-BANK-SCALAR-MAPPING.md`. Zero PO blockers. NEXT: architect — LIGHT SPIKE (reconcile, not re-derive).
+
+**Key finding — this task is a same-day (2026-06-16) near-duplicate mint of the still-`active` sprint `FIX-BCTC-BANK-SUMMARY-MAPPING`** (PO-s70 00:04Z vs PO-s91 21:34Z off a TNB c97 finding, dedup missed the sibling). That sprint's architect SPIKE already pinned zone=`apps/mcp-server/` ONLY (`bctc_md_tables` NULL evidence ruled out `apps/pdf-extractor` — overrides this task's own stale `zone_hint` proposing a split) and shipped W1-W4 code fixes (`done_verified`) + 2 follow-ons; W5 (operational CTG re-ingest) still BLOCKED. Recommended architect reuse the existing brief/SPLIT, not re-derive.
+
+**Live-probe (docker exec vs named-volume market.db, today):** CTG's CURRENT `report_id` (`e497f7d1-…`, parsed 2026-07-07) is a FRESH re-ingest since the twin sprint's last check (was `96e36139-…`) but reproduces byte-identical corrupted figures (`total_assets=0`, `net_margin_pct=229157%`) — AND has **zero** `bctc_table_rows` (not the 55 rows the task's own desc claims). VCB likewise 0 rows but plausible (frozen lucky INSERT-time value, per twin SPIKE's own diagnosis, not row-mapper-derived). **New systemic finding beyond the twin spec:** `financial_reports.refine_status` shows ZERO reports reaching DONE/PARTIAL since 2026-06-07 (63 PENDING, most recent 07-07); `bctc_refined_units` most recent write is 07-04 — the agentic-refine pipeline (`refine_bctc_md` agent) has produced no output in 6+ days. Corroborated by an independent 07-08 gateway-blind escalation naming `refine_bctc_md` (`docs/agent-memory/notebooks/archive/po-2026-07-08.md`) and the 07-09 `ARCH-HEADLESS-GATEWAY-COWORK-NOPOST` closure brief (harness-level MCP-connection defect, "not fixable from this repo at all" — detect+escalate shipped, not restoration). Added FR-8 (pipeline-health diagnosis) + FR-9 (deterministic reflow fallback, extend `backfill_bctc_scalars force_reflow` beyond stale-DONE to PENDING) + AC-15 as new MUST-RECONCILE SPIKE inputs — if the pipeline can't execute, no scalar-mapping code fix can reach CTG's served row regardless of correctness. Bonus: same 07-07 batch shows MBB/ACB/BID also `total_assets=0` (3 more real bank fixtures, non-allowlist) alongside VPB/EIB clean — confirms per-form/layout defect, not simple bank-vs-corp split.
+
+Decision journal (task_id: FIX-BCTC-BANK-SCALAR-MAPPING): see `docs/agent-memory/decisions/sprint-FIX-BCTC-BANK-SCALAR-MAPPING-ba.md`.
 
 ## BA-MERGE-MONEY-RADAR-INTO-MOMENTUM · 2026-07-02
 

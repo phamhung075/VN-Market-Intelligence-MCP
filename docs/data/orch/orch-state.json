@@ -291,12 +291,12 @@
     }
   ],
   "head": {
-    "status": "review",
-    "active_task_id": "FIX-FOREIGN-FLOW-COVERAGE",
-    "next_agent": "ops",
-    "next_action": "mcp-server rebuild+swap is user-gated (docker compose up -d --build mcp-server) then VPS re-deploy of vps-scripts/fetch-foreign-flow.sh, then market-hours RAW-verify per docs/signals/ops-rebuild-verify-mcp-server-20260709T2332Z.json",
-    "updated_at": "2026-07-09T23:36:14Z",
-    "updated_by": "dev-mcp-server"
+    "status": "in_progress",
+    "active_task_id": "FIX-BCTC-BANK-SCALAR-MAPPING",
+    "next_agent": "architect",
+    "next_action": "LIGHT SPIKE (reconcile+extend, not re-derive) per docs/handoffs/BA-FIX-BCTC-BANK-SCALAR-MAPPING.md — twin sprint FIX-BCTC-BANK-SUMMARY-MAPPING already pinned zone=apps/mcp-server/; answer FR-8 refine-pipeline-health question (63 reports stuck refine_status=PENDING since 2026-06-07/07-04) before re-attempting the blocked W5 CTG re-ingest runbook.",
+    "updated_at": "2026-07-10T00:02:16Z",
+    "updated_by": "ba"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -4246,16 +4246,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MACRO-CARRY-YIELD-ESTIMATE-FLAG"
       },
       {
-        "id": "FIX-BCTC-BANK-SCALAR-MAPPING",
-        "type": "FIX",
-        "priority": "high",
-        "status": "BACKLOG",
-        "zone": "multi",
-        "title": "FIX-BCTC-BANK-SCALAR-MAPPING: bank B02-TCTD scalar summarizer garbage (net_margin_pct=229157%, total_assets=0)",
-        "size": "M",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-BCTC-BANK-SCALAR-MAPPING"
-      },
-      {
         "id": "FIX-AGENTSIGNALS-FROMAGENT-SCHEMA",
         "title": "get_agent_signals({from_agent}) fails schema (`agent` Required) -> news-scout SELF_SIGNALS_CACHE empty every cycle",
         "type": "FIX",
@@ -7398,9 +7388,29 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-09T23:20:22Z",
+    "last_triaged_at": "2026-07-09T23:47:35Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-BCTC-BANK-SCALAR-MAPPING",
+        "type": "FIX",
+        "priority": "high",
+        "status": "IN_PROGRESS",
+        "zone": "apps/mcp-server/",
+        "title": "FIX-BCTC-BANK-SCALAR-MAPPING: bank B02-TCTD scalar summarizer garbage (net_margin_pct=229157%, total_assets=0)",
+        "size": "M",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-BCTC-BANK-SCALAR-MAPPING",
+        "promoted_at": "2026-07-09T23:47:35Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-09T23:47:35Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "architect",
+        "ba_spec_complete": true,
+        "ba_handoff": "docs/handoffs/BA-FIX-BCTC-BANK-SCALAR-MAPPING.md",
+        "ba_completed_at": "2026-07-09T23:58:33Z"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
