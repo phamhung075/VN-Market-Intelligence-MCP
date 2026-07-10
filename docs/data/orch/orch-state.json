@@ -293,10 +293,10 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-CTG-CARRY-FORWARD",
-    "next_agent": "dev-mcp-server",
-    "next_action": "Implement Track 1 (AC-14 dedup resolution): CTG orphaned-row carry-forward migration. Architect brief §2.5 operative. Extend backfill_bctc_scalars with optional source_report_id param or create migration script; copy 451 rows from 96e36139-... to e497f7d1-.... Sequence verified after W2 deploy (2026-07-03 ✓). Re-check RISK-2 (gateway recovery) before committing dev effort.",
-    "updated_at": "2026-07-10T00:45:00Z",
-    "updated_by": "pm"
+    "next_agent": "qa",
+    "next_action": "QA verify TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-CTG-CARRY-FORWARD: AC-TRACK1-1/2/4/5/6 PASS, AC-TRACK1-3 escalated (balance-sheet window missing from carried-forward data, root defect deeper than W2 scope -- needs fresh agentic-refine once gateway-blind resolves). See handoff Implementation Record.",
+    "updated_at": "2026-07-10T01:00:00Z",
+    "updated_by": "dev-mcp-server"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7042,37 +7042,7 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2/§4, router-d1-claim). RE-INFLATION RECURRENCE: collapsed to a stub by po-s66 (2026-06-15) but updated_by=dev-team RE-INFLATED routing fields on 2026-07-01T06:26:45Z (status=in_progress, active_task_id=BA-PREDICTION-EVIDENCE-REVIVAL, next_agent=architect), frozen >27h. BA-PREDICTION-EVIDENCE-REVIVAL is ABANDONED/SUPERSEDED — no real board row ever existed; its concrete work was spun out to FIX-EVIDENCE-PIPELINE-STARVED (real root: evidence_fragments=0 -> accumulator falsely reports success) + FIX-VPS-SSC-INSIDER-502 (decoupled VPS dep, 2026-07-01T06:49Z). Do NOT resurrect the umbrella. Any write to .task_board.head is a BUG — write .head. Durable write-gate guard tracked by FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (DeprecatedHeadStubSchema.passthrough() currently lets routing keys pass Zod silently)."
     },
-    "ready": [
-      {
-        "id": "TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-CTG-CARRY-FORWARD",
-        "type": "FIX-MIGRATION",
-        "priority": "P1",
-        "status": "READY",
-        "zone": "apps/mcp-server/",
-        "title": "W5: CTG orphaned-row carry-forward (Track 1 — deterministic migration, W5 replacement)",
-        "size": "S",
-        "sprint": "FIX-BCTC-BANK-SUMMARY-MAPPING",
-        "spec_ref": "docs/handoffs/TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-CTG-CARRY-FORWARD.md",
-        "architecture_brief": "docs/architecture-briefs/2026-07-10-FIX-BCTC-BANK-SCALAR-MAPPING.md",
-        "acceptance": [
-          "AC-TRACK1-1: source_report_id param or migration script",
-          "AC-TRACK1-2: live execution on named-volume DB, 451 rows migrated",
-          "AC-TRACK1-3: CTG scalars (total_assets, net_revenue, net_margin_pct) become plausible",
-          "AC-TRACK1-4: VCB/FPT/VNM non-regressions verified",
-          "AC-TRACK1-5: AC-16 report_id freshness re-checked",
-          "AC-TRACK1-6: commit discipline (dedup note, brief ref, no session UUIDs)"
-        ],
-        "depends": [],
-        "created_at": "2026-07-10T00:45:00Z",
-        "created_by": "pm",
-        "next_agent": "dev-mcp-server",
-        "risk_flags": [
-          "RISK-1 [HIGH]: sequenced after W2 deploy (verified ✓ 2026-07-03)",
-          "RISK-2 [MEDIUM]: if gateway recovers, original W5 becomes viable — re-check live",
-          "RISK-3 [LOW]: unidentified orphans (4316f6d1/65a9c724/d6f1885f) out of scope"
-        ]
-      }
-    ],
+    "ready": [],
     "review": [
       {
         "_adjudicated_by": "po",
@@ -7478,6 +7448,39 @@
         "status_note": "ROOT CAUSE (verified by PO reading scripts/devteam-backlog-promote-bounded1.jq): the BOUNDED-1 idle-pickup promote gate had WIP + effective_supervised + deps_satisfied filters but NO gate excluding epic-wrapper rows (rows carrying a non-null/non-empty children[] array). On 2026-07-09T23:17Z it auto-claimed the P1 epic AUDIT-FETCH-COMPLETE (mode=audit-epic, children=4, no own next_agent/probe) for direct dispatch; dev-team reverted + point-fixed supervised:true on that ONE row. docs/data/orch/archive/backlog-detail.json has a SECOND children[]-bearing row still exposed: FACTORY-GUARD-CI-REGRESSION-SPIKE (children=7, supervised:null) -- the supervised gate does NOT catch supervised:null, so only a structural children!=null gate protects it. FIX: added effective_children/is_epic_wrapper predicate mirroring the shipped effective_supervised precedence (inline .children OR $detail_items[.id].children, no .detail_ref precondition) -- reused the already-threaded --slurpfile detail. Applied the select() filter at candidate-selection time alongside the existing supervised/deps filters. Added scripts/test-devteam-bounded1-epic-wrapper.sh (15/15 pass) covering detail-only children (the exact FACTORY-GUARD-CI-REGRESSION-SPIKE reproducer with supervised:null), board-only children, both-signal (AUDIT-FETCH-COMPLETE shape), empty children[] (not a wrapper), missing key (conservative-default promotable), and ARRAY-shaped $detail_items (no crash). Verified baseline suites unregressed: test-devteam-bounded1-supervised-flag.sh (15/15) + test-devteam-bounded1-depends-on.sh (18/18), all green after the change. Live-data dry-run (never through orch-apply.sh) confirmed the shipped gate now skips both FACTORY-GUARD-CI-REGRESSION-SPIKE and AUDIT-FETCH-COMPLETE and promotes a legitimate non-epic row instead when WIP is forced to 0 on a scratch copy. This is the 4th BOUNDED-1 eligibility-gate defect in the same class -- SPIKE-BOUNDED1-ELIGIBILITY-CONTRACT-REVIEW (architect, non-blocking, already minted 2026-07-09) covers whether a shared detail-resolution contract should replace hole-by-hole patches; not re-escalated again here, same open spike already tracks it. DJ-GATE-1 entry required before DONE/REVIEW flip. -- IMPLEMENTATION DONE: shipped effective_children/is_epic_wrapper gate + candidate-selection wiring in scripts/devteam-backlog-promote-bounded1.jq; new scripts/test-devteam-bounded1-epic-wrapper.sh (15/15 GREEN); baseline test-devteam-bounded1-supervised-flag.sh (15/15) + test-devteam-bounded1-depends-on.sh (18/18) re-confirmed GREEN, no regression; live-data dry-run confirms both FACTORY-GUARD-CI-REGRESSION-SPIKE and AUDIT-FETCH-COMPLETE now skip promotion. DJ-GATE-1 entry: sprint-SYSTEMIC-REMAKE-P1-developer.md STEP developer-S12.",
         "done_by": "developer",
         "done_at": "2026-07-10T00:35:55Z"
+      },
+      {
+        "id": "TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-CTG-CARRY-FORWARD",
+        "type": "FIX-MIGRATION",
+        "priority": "P1",
+        "status": "REVIEW",
+        "zone": "apps/mcp-server/",
+        "title": "W5: CTG orphaned-row carry-forward (Track 1 — deterministic migration, W5 replacement)",
+        "size": "S",
+        "sprint": "FIX-BCTC-BANK-SUMMARY-MAPPING",
+        "spec_ref": "docs/handoffs/TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-CTG-CARRY-FORWARD.md",
+        "architecture_brief": "docs/architecture-briefs/2026-07-10-FIX-BCTC-BANK-SCALAR-MAPPING.md",
+        "acceptance": [
+          "AC-TRACK1-1: source_report_id param or migration script",
+          "AC-TRACK1-2: live execution on named-volume DB, 451 rows migrated",
+          "AC-TRACK1-3: CTG scalars (total_assets, net_revenue, net_margin_pct) become plausible",
+          "AC-TRACK1-4: VCB/FPT/VNM non-regressions verified",
+          "AC-TRACK1-5: AC-16 report_id freshness re-checked",
+          "AC-TRACK1-6: commit discipline (dedup note, brief ref, no session UUIDs)"
+        ],
+        "depends": [],
+        "created_at": "2026-07-10T00:45:00Z",
+        "created_by": "pm",
+        "next_agent": "qa",
+        "risk_flags": [
+          "RISK-1 [HIGH]: sequenced after W2 deploy (verified ✓ 2026-07-03)",
+          "RISK-2 [MEDIUM]: if gateway recovers, original W5 becomes viable — re-check live",
+          "RISK-3 [LOW]: unidentified orphans (4316f6d1/65a9c724/d6f1885f) out of scope"
+        ],
+        "dev_agent": "dev-mcp-server",
+        "updated_at": "2026-07-10T01:00:00Z",
+        "updated_by": "dev-mcp-server",
+        "dev_note": "AC-TRACK1-1/2/4/5/6 PASS (451 CTG rows carried forward live, RAW-verified). AC-TRACK1-3 ESCALATED not silently passed: carried rows are 208 income_statement+173 cash_flow+70 notes, ZERO balance_sheet rows -> BEQ-6 gate correctly set PARTIAL not DONE, total_assets/net_revenue/net_margin_pct unchanged. Deeper defect than W2 scope -- balance-sheet window never captured in original refine pass. RISK-2 re-checked live (gateway still blind, Track 1 confirmed necessary). Handoff: docs/handoffs/TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-CTG-CARRY-FORWARD.md Implementation Record."
       }
     ],
     "qa": [],
