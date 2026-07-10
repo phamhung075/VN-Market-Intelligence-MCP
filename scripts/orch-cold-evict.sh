@@ -12,8 +12,25 @@
 # from task_board.active_sprints[], keyed by sprint_id not id, previously untouched
 # by this script (root cause of sprint_goal.entries growing past its 15-entry cap).
 #
+# D4-BACKLOG-HYGIENE-ORCH-COLD-EVICT-EXTEND (2026-07-10, sprint BACKLOG-HYGIENE-
+# VERIFY-PRUNE-SWEEP): extended with a new Pass-1 category — scans the flat task
+# lanes {backlog, review, qa, in_progress, ready} (NOT done/done_verified —
+# already handled above) for rows whose .status is in TERMINAL_TASK_STATUSES
+# (default = TERMINAL_SET, SSOT apps/mcp-server/src/infrastructure/
+# orchStateSchema.ts — same set already used by TERMINAL_SPRINT_STATUSES above;
+# not a new definition). Root cause: rows whose status gets flipped to a
+# terminal value in-place without a lane move permanently strand in backlog[]
+# (and siblings) because this script never read those lanes — see
+# docs/architecture-briefs/2026-07-10-backlog-hygiene-verify-prune-sweep.md §1/§8
+# (D4 row). Cold sink: the dormant `.backlog_detail[]` field in the monthly
+# archive schema (already present since inception at the "create new cold
+# file" branch below, previously wired to `[]` and never populated).
+# Safety valve: `--exclude-ids <comma-list>` (repeatable) / `EXCLUDE_TASK_IDS`
+# env — lets a one-time migration run skip D0-flagged false-positives (e.g.
+# a row whose label is terminal but which is empirically still open).
+#
 # Usage:
-#   scripts/orch-cold-evict.sh [--dry-run]
+#   scripts/orch-cold-evict.sh [--dry-run] [--exclude-ids ID1,ID2 [--exclude-ids ID3]]
 #
 # Contract:
 #   - MUST be called while commit-mutex:main is held by the caller (task_claim).
@@ -68,10 +85,61 @@ TERMINAL_SPRINT_STATUSES="${TERMINAL_SPRINT_STATUSES:-DONE,DONE_VERIFIED,CANCELL
 # Rows whose status field matches any of these are evicted from signal_queue.rows[].
 # signal_queue.archive[] is always fully evicted (inline archive = RC-1 root cause).
 TERMINAL_SIGNAL_STATUSES="${TERMINAL_SIGNAL_STATUSES:-READ,RESOLVED,SUPERSEDED,ACUTE-RESOLVED-ROOT-TRACKED}"
+
+# Terminal task statuses: comma-separated list (D4-BACKLOG-HYGIENE-ORCH-COLD-EVICT-EXTEND).
+# Rows in the flat task lanes below whose .status matches any of these are evicted.
+# SAME definition as TERMINAL_SPRINT_STATUSES above — both mirror TERMINAL_SET,
+# SSOT apps/mcp-server/src/infrastructure/orchStateSchema.ts:58-64. Kept as a
+# separate env var (not a shared alias) only to match this script's existing
+# one-tunable-per-category convention (TERMINAL_SPRINT_STATUSES / TERMINAL_SIGNAL_STATUSES);
+# the DEFAULT VALUE is intentionally byte-identical — do not drift it.
+TERMINAL_TASK_STATUSES="${TERMINAL_TASK_STATUSES:-DONE,DONE_VERIFIED,CANCELLED,DEFERRED,SKIPPED}"
+
+# Flat task-board lanes scanned by the terminal-task-status pass. done[] and
+# done_verified[] are deliberately EXCLUDED — they already have their own
+# dedicated eviction logic above (age/keep_n policy for done[], all-terminal
+# for done_verified[]); re-scanning them here would double-process the same
+# rows. Matches LANE_ALLOWED_STATUSES keys minus {done, done_verified}.
+TASK_LANES="${TASK_LANES:-backlog,review,qa,in_progress,ready}"
+
+# Safety-valve: comma-separated task IDs to NEVER evict via the terminal-task-
+# status pass, regardless of status. One-time migration use case: skip a
+# D0-flagged false-positive (label says terminal, reality says still open).
+# Settable via env directly, or appended to via repeatable `--exclude-ids` flag.
+EXCLUDE_TASK_IDS="${EXCLUDE_TASK_IDS:-}"
 # =============================================================================
 
 DRY_RUN=false
-[[ "${1:-}" == "--dry-run" ]] && DRY_RUN=true
+
+# ─── argument parsing ────────────────────────────────────────────────────────
+# Supports (any order, repeatable --exclude-ids):
+#   --dry-run
+#   --exclude-ids ID1,ID2
+#   --exclude-ids=ID1,ID2
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --dry-run)
+      DRY_RUN=true
+      shift
+      ;;
+    --exclude-ids)
+      if [[ $# -lt 2 ]]; then
+        echo "[orch-cold-evict] ABORT: --exclude-ids requires a value" >&2
+        exit 1
+      fi
+      EXCLUDE_TASK_IDS="${EXCLUDE_TASK_IDS:+${EXCLUDE_TASK_IDS},}$2"
+      shift 2
+      ;;
+    --exclude-ids=*)
+      EXCLUDE_TASK_IDS="${EXCLUDE_TASK_IDS:+${EXCLUDE_TASK_IDS},}${1#--exclude-ids=}"
+      shift
+      ;;
+    *)
+      echo "[orch-cold-evict] ABORT: unknown argument: $1" >&2
+      exit 1
+      ;;
+  esac
+done
 
 MONTH="$(date -u +%Y-%m)"
 COLD_FILE="${ARCHIVE_DIR}/${MONTH}.json"
@@ -117,9 +185,10 @@ mkdir -p "${ARCHIVE_DIR}"
 # This keeps the output well under ARG_MAX so it can be passed via --argjson.
 #
 # Output fields:
-#   rm_done, rm_dv, rm_sprint, rm_sprint_goal, rm_sig_rows  — {id:true} removal maps for hot
-#   new_cold_done_set, new_cold_sprint_set, new_cold_sprint_goal_set, new_cold_signal_set
-#     — {id:true} for cold select
+#   rm_done, rm_dv, rm_sprint, rm_sprint_goal, rm_sig_rows, rm_task_by_lane
+#     — {id:true} removal maps for hot (rm_task_by_lane is {lane: {id:true}})
+#   new_cold_done_set, new_cold_sprint_set, new_cold_sprint_goal_set,
+#   new_cold_signal_set, new_cold_backlog_detail_set — {id:true} for cold select
 #   n_evict_* counts
 # =============================================================================
 compute_id_maps() {
@@ -128,20 +197,31 @@ compute_id_maps() {
   local cold_sprint="$3"
   local cold_signal="$4"
   local cold_sprint_goal="$5"
+  local cold_backlog_detail="$6"
 
   jq \
     --argjson keep_n      "${KEEP_RECENT_DONE}" \
     --argjson max_days    "${DONE_MAX_AGE_DAYS}" \
     --arg     term_sprint "${TERMINAL_SPRINT_STATUSES}" \
     --arg     term_signal "${TERMINAL_SIGNAL_STATUSES}" \
+    --arg     term_task   "${TERMINAL_TASK_STATUSES}" \
+    --arg     task_lanes  "${TASK_LANES}" \
+    --arg     exclude_ids "${EXCLUDE_TASK_IDS}" \
     --argjson cold_done   "${cold_done}" \
     --argjson cold_sprint "${cold_sprint}" \
     --argjson cold_signal "${cold_signal}" \
     --argjson cold_sprint_goal "${cold_sprint_goal}" \
+    --argjson cold_backlog_detail "${cold_backlog_detail}" \
     '
+      . as $root |
+
       # ── parse config ─────────────────────────────────────────────────────
       ($term_sprint | split(",")) as $ts_arr |
       ($term_signal | split(",")) as $tsig_arr |
+      ($term_task   | split(",")) as $tt_arr |
+      ($task_lanes  | split(",")) as $lane_arr |
+      ($exclude_ids | split(",") | map(select(. != ""))
+        | map({key: ., value: true}) | from_entries) as $excl_set |
       (now - ($max_days * 86400)) as $cutoff |
 
       # cold-known ID sets (for idempotency + partial-failure recovery)
@@ -149,6 +229,7 @@ compute_id_maps() {
       ($cold_sprint | map({key: (. // ""), value: true}) | from_entries) as $cs_set   |
       ($cold_signal | map({key: (. // ""), value: true}) | from_entries) as $csig_set |
       ($cold_sprint_goal | map({key: (. // ""), value: true}) | from_entries) as $csg_set |
+      ($cold_backlog_detail | map({key: (. // ""), value: true}) | from_entries) as $cbd_set |
 
       # ── done[]: sort DESC; evict beyond keep_n AND older than cutoff ─────
       (.task_board.done // []
@@ -214,6 +295,30 @@ compute_id_maps() {
 
       [$all_sig_archive_ids[] | select(. != "" and ($csig_set[.] != true))] as $new_sig_arch_ids |
 
+      # ── flat task lanes (backlog/review/qa/in_progress/ready): terminal
+      # status (D4-BACKLOG-HYGIENE-ORCH-COLD-EVICT-EXTEND) ──────────────────
+      # done[]/done_verified[] are excluded from $lane_arr by config (own logic
+      # above). --exclude-ids safety valve applied here (per-lane, per-row).
+      (reduce $lane_arr[] as $lane (
+        {};
+        . + { ($lane): [
+          ($root.task_board[$lane] // [])[] | select(
+            (.id != null) and
+            ((.status // "") | IN($tt_arr[])) and
+            ($excl_set[(.id // "")] != true)
+          ) | .id
+        ] }
+      )) as $terminal_ids_by_lane |
+
+      [$lane_arr[] as $lane | $terminal_ids_by_lane[$lane][]] as $all_terminal_task_ids |
+
+      [$all_terminal_task_ids[] | select($cbd_set[.] != true)] as $new_task_ids |
+
+      ($lane_arr | map({
+          key: .,
+          value: ($terminal_ids_by_lane[.] | map({key: ., value: true}) | from_entries)
+        }) | from_entries) as $rm_task_by_lane |
+
       # ── output: IDs and lookup maps only (NOT full objects) ──────────────
       {
         # {id: true} removal maps for hot file transformation
@@ -222,6 +327,8 @@ compute_id_maps() {
         rm_sprint:      ($all_terminal_sprint_ids | map({key: ., value: true}) | from_entries),
         rm_sprint_goal: ($all_terminal_sprint_goal_ids | map({key: ., value: true}) | from_entries),
         rm_sig_rows:    ($all_terminal_sig_row_ids | map({key: ., value: true}) | from_entries),
+        # {lane: {id: true}} removal map — one sub-map per flat task lane
+        rm_task_by_lane: $rm_task_by_lane,
 
         # {id: true} sets for selecting new items to cold
         # done + done_verified share the same cold target (done_tasks[])
@@ -230,6 +337,8 @@ compute_id_maps() {
         new_cold_sprint_goal_set: ($new_sprint_goal_ids | map({key: ., value: true}) | from_entries),
         # rows + archive share the same cold target (signal_rows[])
         new_cold_signal_set: (($new_sig_row_ids + $new_sig_arch_ids) | map({key: ., value: true}) | from_entries),
+        # flat-task-lane terminal rows share the cold target (backlog_detail[])
+        new_cold_backlog_detail_set: ($new_task_ids | map({key: ., value: true}) | from_entries),
 
         # Counts for reporting
         n_evict_done:        ($all_terminal_done_ids | length),
@@ -238,10 +347,13 @@ compute_id_maps() {
         n_evict_sprint_goal: ($all_terminal_sprint_goal_ids | length),
         n_evict_sig_rows:    ($all_terminal_sig_row_ids | length),
         n_evict_sig_arch:    ($all_sig_archive_ids | length),
+        n_evict_task_total:  ($all_terminal_task_ids | length),
+        n_evict_task_by_lane: ($lane_arr | map({key: ., value: ($terminal_ids_by_lane[.] | length)}) | from_entries),
         n_new_cold: (
           ($new_done_ids | length) + ($new_dv_ids | length) +
           ($new_sprint_ids | length) + ($new_sprint_goal_ids | length) +
-          ($new_sig_row_ids | length) + ($new_sig_arch_ids | length)
+          ($new_sig_row_ids | length) + ($new_sig_arch_ids | length) +
+          ($new_task_ids | length)
         )
       }
     ' "${src}"
@@ -261,12 +373,15 @@ build_cold_temp() {
     # --slurpfile hot wraps orch-state.json as array; access via $hot[0].
     jq \
       --argjson maps  "${maps}" \
+      --arg     task_lanes "${TASK_LANES}" \
       --slurpfile hot "${ORCH_STATE}" \
       '
         ($maps.new_cold_done_set)        as $cd_set   |
         ($maps.new_cold_sprint_set)      as $cs_set   |
         ($maps.new_cold_sprint_goal_set) as $csg_set  |
         ($maps.new_cold_signal_set)      as $csig_set |
+        ($maps.new_cold_backlog_detail_set) as $nbd_set |
+        ($task_lanes | split(",")) as $lane_arr |
 
         (
           (($hot[0].task_board.done // []) + ($hot[0].task_board.done_verified // [])) |
@@ -284,11 +399,17 @@ build_cold_temp() {
           (($hot[0].signal_queue.rows // []) + ($hot[0].signal_queue.archive // [])) |
           [.[] | select((.id // "") as $id | $csig_set[$id] == true)]
         ) as $new_signals |
+        (
+          [ $lane_arr[] as $lane | ($hot[0].task_board[$lane] // [])[] |
+            select((.id // "") as $id | $nbd_set[$id] == true)
+          ]
+        ) as $new_backlog_detail |
 
         .done_tasks          += $new_done          |
         .closed_sprints      += $new_sprints       |
         .closed_sprint_goals  = ((.closed_sprint_goals // []) + $new_sprint_goals) |
-        .signal_rows         += $new_signals
+        .signal_rows         += $new_signals       |
+        .backlog_detail       = ((.backlog_detail // []) + $new_backlog_detail)
       ' "${COLD_FILE}" > "${output}"
   else
     # Create new cold file with schema from §3.2 of brief.
@@ -296,11 +417,14 @@ build_cold_temp() {
       --argjson maps "${maps}" \
       --arg     month "${MONTH}" \
       --arg     now   "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+      --arg     task_lanes "${TASK_LANES}" \
       '
         ($maps.new_cold_done_set)        as $cd_set   |
         ($maps.new_cold_sprint_set)      as $cs_set   |
         ($maps.new_cold_sprint_goal_set) as $csg_set  |
         ($maps.new_cold_signal_set)      as $csig_set |
+        ($maps.new_cold_backlog_detail_set) as $nbd_set |
+        ($task_lanes | split(",")) as $lane_arr |
         {
           month:      $month,
           created_at: $now,
@@ -320,7 +444,13 @@ build_cold_temp() {
             ((.signal_queue.rows // []) + (.signal_queue.archive // [])) |
             .[] | select((.id // "") as $id | $csig_set[$id] == true)
           ],
-          backlog_detail: []
+          # D4-BACKLOG-HYGIENE-ORCH-COLD-EVICT-EXTEND: previously always [] —
+          # now the cold sink for terminal-status rows evicted from the flat
+          # task lanes (backlog/review/qa/in_progress/ready).
+          backlog_detail: [
+            $lane_arr[] as $lane | (.task_board[$lane] // [])[] |
+            select((.id // "") as $id | $nbd_set[$id] == true)
+          ]
         }
       ' "${ORCH_STATE}" > "${output}"
   fi
@@ -336,19 +466,28 @@ build_hot_temp() {
 
   jq \
     --argjson maps "${maps}" \
+    --arg     task_lanes "${TASK_LANES}" \
     '
       .task_board.done           |= [.[] | select((.id // "") as $id | $maps.rm_done[$id]     != true)] |
       .task_board.done_verified  |= [.[] | select((.id // "") as $id | $maps.rm_dv[$id]       != true)] |
       .task_board.active_sprints |= [.[] | select((.id // "") as $id | $maps.rm_sprint[$id]   != true)] |
       .sprint_goal.entries       |= [.[] | select((.sprint_id // "") as $id | $maps.rm_sprint_goal[$id] != true)] |
       .signal_queue.rows         |= [.[] | select((.id // "") as $id | $maps.rm_sig_rows[$id] != true)] |
-      .signal_queue.archive       = []
+      .signal_queue.archive       = [] |
+      # D4-BACKLOG-HYGIENE-ORCH-COLD-EVICT-EXTEND: remove terminal-status rows
+      # from each flat task lane (backlog/review/qa/in_progress/ready).
+      reduce ($task_lanes | split(","))[] as $lane (
+        .;
+        .task_board[$lane] = ((.task_board[$lane] // []) |
+          [.[] | select((.id // "") as $id | ($maps.rm_task_by_lane[$lane][$id] // false) != true)])
+      )
     ' "${ORCH_STATE}" > "${output}"
 }
 
 # =============================================================================
 # Helper: read cold-known IDs from existing cold file (for idempotency)
-# Sets globals: COLD_DONE_IDS, COLD_SPRINT_IDS, COLD_SPRINT_GOAL_IDS, COLD_SIGNAL_IDS
+# Sets globals: COLD_DONE_IDS, COLD_SPRINT_IDS, COLD_SPRINT_GOAL_IDS,
+#               COLD_SIGNAL_IDS, COLD_BACKLOG_DETAIL_IDS
 # =============================================================================
 read_cold_ids() {
   if [[ -f "${COLD_FILE}" ]]; then
@@ -360,11 +499,16 @@ read_cold_ids() {
     # `// []` default so pre-existing cold files without this key still parse.
     COLD_SPRINT_GOAL_IDS=$(jq '[(.closed_sprint_goals // [])[].sprint_id // ""]' "${COLD_FILE}")
     COLD_SIGNAL_IDS=$(jq '[.signal_rows[].id // ""]' "${COLD_FILE}")
+    # backlog_detail is the D4-BACKLOG-HYGIENE-ORCH-COLD-EVICT-EXTEND cold sink —
+    # `// []` default so pre-existing cold files (field always present but empty
+    # since inception) and any legacy file missing the key still parse.
+    COLD_BACKLOG_DETAIL_IDS=$(jq '[(.backlog_detail // [])[].id // ""]' "${COLD_FILE}")
   else
     COLD_DONE_IDS='[]'
     COLD_SPRINT_IDS='[]'
     COLD_SPRINT_GOAL_IDS='[]'
     COLD_SIGNAL_IDS='[]'
+    COLD_BACKLOG_DETAIL_IDS='[]'
   fi
 }
 
@@ -377,7 +521,7 @@ if [[ "${DRY_RUN}" == "true" ]]; then
   CURRENT_SIZE=$(wc -c < "${ORCH_STATE}" | tr -d ' ')
 
   read_cold_ids
-  MAPS=$(compute_id_maps "${ORCH_STATE}" "${COLD_DONE_IDS}" "${COLD_SPRINT_IDS}" "${COLD_SIGNAL_IDS}" "${COLD_SPRINT_GOAL_IDS}")
+  MAPS=$(compute_id_maps "${ORCH_STATE}" "${COLD_DONE_IDS}" "${COLD_SPRINT_IDS}" "${COLD_SIGNAL_IDS}" "${COLD_SPRINT_GOAL_IDS}" "${COLD_BACKLOG_DETAIL_IDS}")
 
   N_DONE=$(echo "${MAPS}"    | jq '.n_evict_done')
   N_DV=$(echo "${MAPS}"      | jq '.n_evict_dv')
@@ -385,6 +529,8 @@ if [[ "${DRY_RUN}" == "true" ]]; then
   N_SPRINT_GOAL=$(echo "${MAPS}" | jq '.n_evict_sprint_goal')
   N_SIG_R=$(echo "${MAPS}"   | jq '.n_evict_sig_rows')
   N_SIG_A=$(echo "${MAPS}"   | jq '.n_evict_sig_arch')
+  N_TASK=$(echo "${MAPS}"    | jq '.n_evict_task_total')
+  N_TASK_BY_LANE=$(echo "${MAPS}" | jq -c '.n_evict_task_by_lane')
   N_NEW=$(echo "${MAPS}"     | jq '.n_new_cold')
 
   # Project hot-file size without writing (pipe jq output to wc -c)
@@ -400,6 +546,7 @@ if [[ "${DRY_RUN}" == "true" ]]; then
   log "  sprint_goal.entries[] would evict: ${N_SPRINT_GOAL} items from hot"
   log "  signal_queue.rows[] would evict: ${N_SIG_R} items from hot"
   log "  signal_queue.archive[] evict:   ${N_SIG_A} items from hot"
+  log "  flat task lanes (${TASK_LANES}) would evict: ${N_TASK} items from hot -> backlog_detail[] (${N_TASK_BY_LANE})"
   log "  New items to append to cold:    ${N_NEW}"
   log "  Current hot-file size:          ${CURRENT_SIZE} bytes"
   log "  Projected hot-file size:        ${PROJECTED_SIZE} bytes"
@@ -426,7 +573,7 @@ while [[ ${ATTEMPT} -lt ${MTIME_CAS_RETRIES} ]]; do
   read_cold_ids
 
   # ── Pass 1: compute ID maps (small output, safe for --argjson) ────────────
-  MAPS=$(compute_id_maps "${ORCH_STATE}" "${COLD_DONE_IDS}" "${COLD_SPRINT_IDS}" "${COLD_SIGNAL_IDS}" "${COLD_SPRINT_GOAL_IDS}")
+  MAPS=$(compute_id_maps "${ORCH_STATE}" "${COLD_DONE_IDS}" "${COLD_SPRINT_IDS}" "${COLD_SIGNAL_IDS}" "${COLD_SPRINT_GOAL_IDS}" "${COLD_BACKLOG_DETAIL_IDS}")
 
   log "Attempt $((ATTEMPT + 1))/${MTIME_CAS_RETRIES}: ID maps computed"
   log "  done[]:              $(echo "${MAPS}" | jq '.n_evict_done') to evict from hot"
@@ -435,6 +582,7 @@ while [[ ${ATTEMPT} -lt ${MTIME_CAS_RETRIES} ]]; do
   log "  sprint_goal.entries[]: $(echo "${MAPS}" | jq '.n_evict_sprint_goal') to evict from hot"
   log "  signal rows[]:       $(echo "${MAPS}" | jq '.n_evict_sig_rows') to evict from hot"
   log "  signal archive[]:    $(echo "${MAPS}" | jq '.n_evict_sig_arch') to evict from hot"
+  log "  flat task lanes (${TASK_LANES}): $(echo "${MAPS}" | jq '.n_evict_task_total') to evict from hot -> backlog_detail[] ($(echo "${MAPS}" | jq -c '.n_evict_task_by_lane'))"
   log "  New items to cold:   $(echo "${MAPS}" | jq '.n_new_cold')"
 
   # ── Pass 2a: Build cold temp ─────────────────────────────────────────────

@@ -163,7 +163,7 @@ SHIM (SSOT-W1-BASH-SHIM, 2026-06-27): scripts/orch-state-validate.sh is now a th
 (superset: Zod checks 9 lanes vs former 3-lane G-5; READY added as 12th valid status).
 G-6 (last_tick skew warn-only) dropped — no exit-code impact. Caller contract unchanged (0=pass, non-zero=fail).
 
-**CANONICAL: Orch-state cold eviction (ORCH-STATE-HOT-COLD-SPLIT HSC-1)**
+**CANONICAL: Orch-state cold eviction (ORCH-STATE-HOT-COLD-SPLIT HSC-1; extended D4-BACKLOG-HYGIENE-ORCH-COLD-EVICT-EXTEND)**
 ```bash
 # Dry-run (preview eviction counts + projected hot-file size, no writes):
 bash scripts/orch-cold-evict.sh --dry-run
@@ -171,16 +171,33 @@ bash scripts/orch-cold-evict.sh --dry-run
 bash scripts/orch-cold-evict.sh
 # Override retention policy (env vars):
 KEEP_RECENT_DONE=10 DONE_MAX_AGE_DAYS=7 bash scripts/orch-cold-evict.sh --dry-run
+# One-time migration safety valve — skip specific task IDs regardless of status
+# (repeatable flag or comma-separated; also settable via EXCLUDE_TASK_IDS env):
+bash scripts/orch-cold-evict.sh --exclude-ids FIX-BCTC-BANK-SUMMARY-MAPPING --exclude-ids OTHER-ID
+bash scripts/orch-cold-evict.sh --exclude-ids=FIX-BCTC-BANK-SUMMARY-MAPPING,OTHER-ID
 # Owning brief: docs/architecture-briefs/2026-06-26-orch-state-hot-cold-split.md §3
-# Called from: HSC-2 (one-time migration); HSC-6 (pm/dev-team post-cycle hook)
+#   D4 extension brief: docs/architecture-briefs/2026-07-10-backlog-hygiene-verify-prune-sweep.md §8
+# Called from: HSC-2 (one-time migration); HSC-6 (pm/dev-team post-cycle hook); D1 (sweep execution)
 ```
-Evicts done[], done_verified[], terminal active_sprints[], terminal signal_queue.rows[], and signal_queue.archive[] to docs/data/orch/archive/YYYY-MM.json.
+Evicts done[], done_verified[], terminal active_sprints[], terminal signal_queue.rows[], and
+signal_queue.archive[] to docs/data/orch/archive/YYYY-MM.json. **D4 extension (2026-07-10):** also
+scans the flat task lanes `{backlog, review, qa, in_progress, ready}` (NOT done/done_verified —
+already handled) for rows whose `.status` is terminal (`TERMINAL_TASK_STATUSES` env, default =
+TERMINAL_SET, same definition as `TERMINAL_SPRINT_STATUSES`) — root cause: a status flipped to
+terminal in-place without a lane move previously stranded forever in these lanes (this script never
+read them). Cold sink: the `.backlog_detail[]` field in the monthly archive (present in the schema
+since inception, previously always `[]`, now wired). `--exclude-ids` is a migration-time safety
+valve only — not a permanent per-row allowlist.
 Atomic temp-then-rename; cold-first ordering; mtime-CAS retry; idempotent.
 Internal orch-apply.sh call propagates `ORCH_APPLY_LIVE_FILE_OVERRIDE="${ORCH_STATE}"` (no-op in
 production — REQUIRED whenever `ORCH_STATE` is overridden, e.g. testing against a throwaway
 fixture; without it orch-apply.sh silently falls back to its own default, the REAL live file) and
 sets `ORCH_APPLY_ALLOW_SHRINK` (this script is one of only 2 legitimate bulk-eviction bypass
 call sites — see FIX-ORCHSTATE-CONSERVATION-GUARD-CIRCUIT-BREAKER above).
+Test coverage: `bash scripts/test/orch-cold-evict-tests.sh` (evict-correctness / non-terminal-skip /
+--exclude-ids / idempotent-rerun / conservation-guard-still-fires / --dry-run-no-mutation — mirrors
+`orch-apply-wrapper-tests.sh`'s fixture + real-live-hash-unchanged safety pattern; never run against
+the live `docs/data/orch/orch-state.json` file).
 
 **CANONICAL: Backlog stub migration + cold detail writer (ORCH-STATE-HOT-COLD-SPLIT HSC-4)**
 ```bash

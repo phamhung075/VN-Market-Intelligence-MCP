@@ -61,3 +61,5 @@ TASK-1380 updated: [DATA] → [BUG]. Root cause confirmed by ops: alert_engine f
 ## [Developer] 2026-05-14 — 1916a-vps-part: add GET /proxy/bctc-discover/:ticker to vps-proxy-server.js — deployed to VPS 125.212.251.27:8765, 200+[] with key / 401 without key — branch task/1916a-vps-discover-route commit 1b8f8cd5
 
 ## [Developer] 2026-05-22 — 1970-ta-ohlcv: taOhlcvBackfillJob added — daily 01:30 UTC cron, INSERT OR REPLACE heals 1972-era low=0 corrupt rows, TA_MIN_ROWS=35, 10 tests GREEN, tsc clean — apps/mcp-server
+
+## [Developer] 2026-07-10 — D4-BACKLOG-HYGIENE-ORCH-COLD-EVICT-EXTEND: scripts/orch-cold-evict.sh new Pass-1 category scans flat lanes {backlog,review,qa,in_progress,ready} for terminal-status rows, cold sink = dormant .backlog_detail[] archive field, --exclude-ids safety valve added — 27/27 GREEN new scripts/test/orch-cold-evict-tests.sh, no live-file execution (D1's job)
