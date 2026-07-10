@@ -293,10 +293,10 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-CTG-CARRY-FORWARD",
-    "next_agent": "qa",
-    "next_action": "QA verify TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-CTG-CARRY-FORWARD: AC-TRACK1-1/2/4/5/6 PASS, AC-TRACK1-3 escalated (balance-sheet window missing from carried-forward data, root defect deeper than W2 scope -- needs fresh agentic-refine once gateway-blind resolves). See handoff Implementation Record.",
-    "updated_at": "2026-07-10T01:00:00Z",
-    "updated_by": "dev-mcp-server"
+    "next_agent": "dev-mcp-server",
+    "next_action": "DJ-GATE-1 hold: write missing decision-journal STEP entry (task-id: TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-CTG-CARRY-FORWARD) in docs/agent-memory/decisions/sprint-FIX-BCTC-BANK-SUMMARY-MAPPING-dev-mcp-server.md, then task is done_verified-ready (qa already RAW-verified AC-TRACK1-1/2/4/5/6 PASS + AC-TRACK1-3 escalation legitimate). pm: mint follow-on backlog for CTG balance-sheet agentic-refine, blocked_on gateway-blind resolution.",
+    "updated_at": "2026-07-10T01:24:35Z",
+    "updated_by": "qa"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7471,7 +7471,7 @@
         "depends": [],
         "created_at": "2026-07-10T00:45:00Z",
         "created_by": "pm",
-        "next_agent": "qa",
+        "next_agent": "dev-mcp-server",
         "risk_flags": [
           "RISK-1 [HIGH]: sequenced after W2 deploy (verified ✓ 2026-07-03)",
           "RISK-2 [MEDIUM]: if gateway recovers, original W5 becomes viable — re-check live",
@@ -7480,7 +7480,12 @@
         "dev_agent": "dev-mcp-server",
         "updated_at": "2026-07-10T01:00:00Z",
         "updated_by": "dev-mcp-server",
-        "dev_note": "AC-TRACK1-1/2/4/5/6 PASS (451 CTG rows carried forward live, RAW-verified). AC-TRACK1-3 ESCALATED not silently passed: carried rows are 208 income_statement+173 cash_flow+70 notes, ZERO balance_sheet rows -> BEQ-6 gate correctly set PARTIAL not DONE, total_assets/net_revenue/net_margin_pct unchanged. Deeper defect than W2 scope -- balance-sheet window never captured in original refine pass. RISK-2 re-checked live (gateway still blind, Track 1 confirmed necessary). Handoff: docs/handoffs/TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-CTG-CARRY-FORWARD.md Implementation Record."
+        "dev_note": "AC-TRACK1-1/2/4/5/6 PASS (451 CTG rows carried forward live, RAW-verified). AC-TRACK1-3 ESCALATED not silently passed: carried rows are 208 income_statement+173 cash_flow+70 notes, ZERO balance_sheet rows -> BEQ-6 gate correctly set PARTIAL not DONE, total_assets/net_revenue/net_margin_pct unchanged. Deeper defect than W2 scope -- balance-sheet window never captured in original refine pass. RISK-2 re-checked live (gateway still blind, Track 1 confirmed necessary). Handoff: docs/handoffs/TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-CTG-CARRY-FORWARD.md Implementation Record.",
+        "qa_verify_at": "2026-07-10T01:24:35Z",
+        "qa_verify_by": "qa",
+        "qa_verdict": "APPROVE_HELD_DJGATE1",
+        "qa_note": "RAW-verified live (docker exec, readonly): AC-TRACK1-1/2/4/5/6 all confirmed PASS exactly as claimed (451-row breakdown 208 IS+173 CF+70 notes matches source+target byte-identical, CTG scalars unchanged garbage total_assets=0/net_revenue=3910/net_margin_pct=229157%, VCB/FPT/VNM untouched, report_id freshness current). AC-TRACK1-3 escalation CONFIRMED LEGITIMATE, not deflectable within this ticket scope: cross-checked all 4 other orphaned report_ids in bctc_table_rows for a cheap in-repo balance_sheet rescue -- none match CTG (65a9c724 + 31f2a9a9 are VCB per markdown header text; 4316f6d1 + d6f1885f use a non-bank current-assets balance-sheet layout, not CTGs bank-format BS) -- no hidden fix available, root defect genuinely requires a fresh agentic-refine pass blocked on the separate gateway-blind defect. Tests 8/8 green (in-memory fixture proves the reflow codepath itself is correct when BS data exists), tsc clean, mock-guard PASS, no DDD/security violations. BLOCKING FINDING (own gate, not code): DJ-GATE-1 decision-journal entry for this exact task-id is ABSENT from every docs/agent-memory/decisions/sprint-FIX-BCTC-BANK-SUMMARY-MAPPING-*.md file (dev-mcp-servers own flow line 164 requires this before REVIEW flip) -- per QA flow DJ-GATE-1 clause, holding status REVIEW rather than flipping done_verified. Non-code fix: dev-mcp-server (or pm) writes the missing journal STEP entry, then this is done_verified-ready without a fresh full QA pass. Recommend pm mint a follow-on backlog task (balance-sheet agentic-refine for CTG, blocked_on gateway-blind resolution) to carry AC-TRACK1-3 forward -- not built here (no-fake-data policy, task-breakdown is pms job).",
+        "status_note": "journal-missing"
       }
     ],
     "qa": [],
