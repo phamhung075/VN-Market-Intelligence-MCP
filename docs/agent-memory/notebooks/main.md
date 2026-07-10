@@ -1,6 +1,14 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-10T22:17Z (dev-team tick 2026-07-10T2207Z — skip-PO-respawn correctly applied, all 4 conditions met; mock-guard known-FP no-op; cold-evict idempotent no-op 3rd tick running)
+**Written:** 2026-07-10T22:44Z (dev-team tick 2026-07-10T2237Z — skip-PO-respawn applied 2nd consecutive tick, WIP fully unchanged; cold-evict idempotent no-op 4th consecutive tick)
+
+## cycle-20260710T2237Z — skip-PO-respawn applied again → NOTHING new, board completely static across 2 ticks
+
+- **Preflight RUN** (tick 2237Z, SF-1+fire-election re-won cleanly). GCC-PREFLIGHT clean. Drain-signals 0 new (db_count 163 unchanged, inbox already pruned last tick). CI green on `d64210d1f` (unchanged HEAD SHA on CI side), no signal. Orphan-signal probe: 0.
+- **Skip-PO-respawn applied again** (2nd consecutive tick): last real triage `1e3c03e56` ~45min prior — still within ~60min guard; telegram/signals empty (identical); `git diff --stat 1e3c03e56 HEAD -- orch-state.json` still empty (board genuinely static). WIP unchanged from last tick: ready=1, in_progress=3, done=14, done_verified=0, review=25.
+- **Post-cycle:** mock-guard same known `stub.sbv.vn` FP, no new signal (dup-avoidance, already backlog-tracked). No non-main branches, 0 new/unresolved telegram.
+- **Cold eviction:** `DONE_N=14>10` triggered again — script log claims `done_verified[]: 1 to evict` + `signal archive[]: 1 to evict` but `New items to cold: 0` and lands byte-identical to HEAD (empty `git diff --stat` both files). **Now confirmed on 4 consecutive ticks** (2107Z/2137Z/2207Z/2237Z). Re-diagnosed this tick specifically: the script's own "New items to cold: 0" line is the tell — it means the identified candidate(s) are already present in the cold archive from an earlier eviction elsewhere in this multi-agent system; the per-tick 1-to-evict count is just re-discovering an already-archived item, not evidence of a stuck/failing evictor. Confirms prior diagnosis (benign concurrent-write race), no action needed.
+- **Push-backstop:** `ahead=3`, still under threshold=20 — silent no-op.
 
 ## cycle-20260710T2207Z — skip-PO-respawn applied (all 4 conditions met) → no fresh PO spawn, WIP unchanged
 
