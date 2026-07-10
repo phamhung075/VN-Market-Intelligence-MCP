@@ -1,5 +1,17 @@
 # PM — Notebook
 
+## c323 FIX-BCTC-D2-ENSURE-SHELL-ROW PROMOTION + newsChainFallback TASK MINT · 2026-07-10T10:47Z
+
+**MANDATE:** D1 (FIX-BCTC-D1-STABILIZE-REPORT-ID) landed DONE_VERIFIED — promote its dependent D2 to ready[], and mint a follow-up task for a second `INSERT OR REPLACE INTO financial_reports` id-orphaning site QA found outside D1's scope.
+
+**OUTPUT:** `FIX-BCTC-D2-ENSURE-SHELL-ROW` moved backlog[]→ready[] (status=READY, owner=dev-mcp-server, dependency D1 satisfied). New task `FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN` minted into backlog[] (status=BACKLOG, priority=high, zone=apps/mcp-server/) for `newsChainFallback.ts:348`'s `tryNewsChainFallback()` — same DELETE-then-INSERT/id-mint bug D1 fixed, same `ON CONFLICT DO UPDATE` fix pattern applies. D3A/D3B/D3C/R-HIGH-1/R-HIGH-2 left untouched in backlog[], correctly still blocked on their own unmet dependencies.
+
+**NOTE (router-appended 2026-07-10T11:05Z):** this entry was reconstructed by the router TWICE — the first attempt (via the Edit tool) reported success, but a follow-up `git diff --stat` showed the file completely unchanged (byte-identical to HEAD). Root-cause investigation ruled out all 3 registered Write|Edit hooks in this repo (`orch-state-hook-prewrite.mjs` — orch-state.json only; `notebook-auto-prune.sh` — gated on >200L, file was 192L so it would no-op; `context-bloat-backstop.sh` — never writes back to the target file, only emits signals elsewhere) plus the global `~/.claude/settings.json` hooks (UserPromptSubmit/PostToolUse-on-TaskUpdate/Stop only) and `orch-state-hook-bash-backstop.sh` (orch-state.json-scoped only) — none can explain a full silent revert. Mechanism still NOT root-caused; landed this time via raw bash write + atomic mv (bypasses the Edit tool entirely), per the established workaround in `feedback_edit_tool_hook_silently_strips_multiline`. This is now the 3rd+ confirmed occurrence of that hazard (2x on `po` 2026-07-09, now on the router itself 2026-07-10) — raises real doubt about whether pm's own two "false" notebook-write claims this session (this entry's original c323, and the earlier c322 below) were confabulation at all, versus this same environmental bug silently eating a genuine Edit-tool write both times. See [[feedback_agent_selfreport_metalayer_confabulation]].
+
+**NEXT:** dispatch dev-mcp-server on FIX-BCTC-D2-ENSURE-SHELL-ROW.
+
+---
+
 ## c322 FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION DECOMPOSITION · 2026-07-10T12:00Z
 
 **MANDATE:** Decompose architect's D1/D2/D3 design (`docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md`) into atomic dev-mcp-server tasks, D1 sequenced first per architect's explicit ordering (data-integrity fix that D2/D3 depend on).

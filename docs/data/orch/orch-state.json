@@ -564,7 +564,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-10T12:00:00Z",
+    "_updated_at": "2026-07-10T18:00:00Z",
     "_updated_by": "pm",
     "active_sprints": [
       {
@@ -6549,24 +6549,6 @@
         "detail": " | [router-3rd-occurrence-20260710T1205Z] 3RD CONFIRMED HIT: pm decomposed FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION into 7 subtasks (D1/D2/D3A/D3B/D3C/R-HIGH-1/R-HIGH-2), all minted with status=READY but physically placed in .task_board.backlog[] (coherence validator itself expects backlog-lane status=BACKLOG) — invisible to BOUNDED-1 array-membership WIP scan; PM own claim (\"developer can start immediately\") would have silently no-op'd. Distinct mechanism from the first 2 occurrences (single-row REVIEW-status-stuck-in-in_progress[]) — this time NEW-MINT rows given a post-decomposition status token without the matching lane placement. Router fixed manually (moved unblocked D1 to ready[], relabeled the 6 dependency-blocked rows READY->BACKLOG in place) per standing workaround. 3rd occurrence crosses the escalation bar decisively — this P2 fix should be prioritized for the next dev-team BOUNDED-1 pick."
       },
       {
-        "id": "FIX-BCTC-D2-ENSURE-SHELL-ROW",
-        "type": "FIX",
-        "priority": "high",
-        "status": "BACKLOG",
-        "zone": "apps/mcp-server/",
-        "size": "S",
-        "title": "ensureFinancialReportShellRow() — create shell row at PDF-save, set pdf_path, decouple from OCR gate",
-        "owner": "dev-mcp-server",
-        "depends": [
-          "FIX-BCTC-D1-STABILIZE-REPORT-ID"
-        ],
-        "detail_ref": "docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md#D2",
-        "created_at": "2026-07-10T12:00:00Z",
-        "created_by": "pm",
-        "note": "New usecase: idempotent upsert with validation_status=pending_extraction at PDF-save time, decoupled from OCR gate. Depends on D1 id-stability fix.",
-        "blocked_note": "status-flip-lane-move fix (3rd occurrence this session, router 2026-07-10T~12:05Z): stayed in backlog[] lane, relabeled READY->BACKLOG since depends[] unmet; will promote to ready[] once its dependency lands DONE_VERIFIED"
-      },
-      {
         "id": "FIX-BCTC-D3A-PEK-TRIGGER-HELPER",
         "type": "FIX",
         "priority": "high",
@@ -6655,6 +6637,21 @@
         "created_by": "pm",
         "note": "PM DECISION POINT: (A) client-side isVnMarketOpen guard (recommended: skip during 02:00-08:59 UTC, avoids 503 spam) vs (B) no guard (simpler, more logs). Implement A unless PO over-rides. Move to backlog-close if B chosen.",
         "blocked_note": "status-flip-lane-move fix (3rd occurrence this session, router 2026-07-10T~12:05Z): stayed in backlog[] lane, relabeled READY->BACKLOG since depends[] unmet; will promote to ready[] once its dependency lands DONE_VERIFIED"
+      },
+      {
+        "id": "FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN",
+        "type": "FIX",
+        "priority": "high",
+        "status": "BACKLOG",
+        "zone": "apps/mcp-server/",
+        "size": "S",
+        "title": "newsChainFallback.ts:348 — same INSERT OR REPLACE id-orphaning bug as D1, apply ON CONFLICT fix pattern",
+        "owner": "dev-mcp-server",
+        "depends": [],
+        "detail_ref": "docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md#newsChainFallback-finding",
+        "created_at": "2026-07-10T18:00:00Z",
+        "created_by": "pm",
+        "note": "QA finding during D1 regression: tryNewsChainFallback() at apps/mcp-server/src/application/usecases/bctc/newsChainFallback.ts:348 calls the same INSERT OR REPLACE INTO financial_reports pattern D1 just fixed in parseBctcReport.ts. Same root cause (fresh randomUUID() on every re-run orphans bctc_layout_units/bctc_page_zones rows). Not in D1 scope (design doc + D1 files[] list only covered parseBctcReport.ts; architect's brownfield findings didn't catch this second call site). Standalone fix task — same fix pattern applies. QA recommended backlog follow-up, did not judge urgency; placement in chain TBD by pm/architect."
       }
     ],
     "closed_sprints": [
@@ -7403,7 +7400,26 @@
       "last_updated_at": "2026-07-10T09:19:45Z",
       "last_updated_by": "ops"
     },
-    "ready": [],
+    "ready": [
+      {
+        "id": "FIX-BCTC-D2-ENSURE-SHELL-ROW",
+        "type": "FIX",
+        "priority": "high",
+        "status": "READY",
+        "zone": "apps/mcp-server/",
+        "size": "S",
+        "title": "ensureFinancialReportShellRow() — create shell row at PDF-save, set pdf_path, decouple from OCR gate",
+        "owner": "dev-mcp-server",
+        "depends": [
+          "FIX-BCTC-D1-STABILIZE-REPORT-ID"
+        ],
+        "detail_ref": "docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md#D2",
+        "created_at": "2026-07-10T12:00:00Z",
+        "created_by": "pm",
+        "note": "New usecase: idempotent upsert with validation_status=pending_extraction at PDF-save time, decoupled from OCR gate. Depends on D1 id-stability fix.",
+        "blocked_note": null
+      }
+    ],
     "review": [
       {
         "id": "TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST",
