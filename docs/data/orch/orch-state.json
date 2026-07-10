@@ -7054,48 +7054,7 @@
         "qa_note": "RAW-verified: commit 6f054ea3a touched exactly the 8 claimed files (git show --stat); f511c1d39 touched exactly orch-state.json; both present on origin/main (f511c1d39 IS origin/main HEAD). STEP ops-Sn grep confirms sequential S1-S6, no gaps/dupes; pre-existing duplicate-S2 bug fix confirmed via before/after diff (old S1 relocate-stock-catalog->S3, old S2 extract-computeDecision->S4, old S2 split-repositories->S6). 3 offender files confirmed genuinely absent from disk + git ls-files + repo-wide find. Brief section 5 DoD items 3-4 text confirmed verbatim-satisfied (runbook footnote + commit-boundary ops zone row + STEP ops-Sn enforcement line + 3 offenders folded). agent-father-S5 journal + notebook (85L, under 200L) confirmed. Board handoff f511c1d39 coherent: review lane, next_agent=qa, head synced (status=review, active_task_id unchanged, next_agent=qa). NON-BLOCKING gap noted: runbook Step 4/4b Commit-Gate Invariant has no direct hook in ops flow files (init.md/handlers.md/docker.md) -- enforcement relies entirely on the pre-existing PO/developer dispatch-prompt citation of the runbook Microservice Code-Change Close Gate heading (developer/flow/microservice-main.md:162, po/flow/sprint-signoff.md:13), not on ops own bootstrapped knowledge list. Acceptable for THIS task literal DoD (section 5 items 3-4 only require the doc text, not flow-file wiring) and mirrors the same enforcement model as the agents-architect Brief-Commit Invariant it is modeled on (self-attested, not code-gated) -- flagging for a possible future hardening task, not a blocker here."
       }
     ],
-    "done_verified": [
-      {
-        "id": "TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-CTG-CARRY-FORWARD",
-        "type": "FIX-MIGRATION",
-        "priority": "P1",
-        "status": "DONE_VERIFIED",
-        "zone": "apps/mcp-server/",
-        "title": "W5: CTG orphaned-row carry-forward (Track 1 — deterministic migration, W5 replacement)",
-        "size": "S",
-        "sprint": "FIX-BCTC-BANK-SUMMARY-MAPPING",
-        "spec_ref": "docs/handoffs/TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-CTG-CARRY-FORWARD.md",
-        "architecture_brief": "docs/architecture-briefs/2026-07-10-FIX-BCTC-BANK-SCALAR-MAPPING.md",
-        "acceptance": [
-          "AC-TRACK1-1: source_report_id param or migration script",
-          "AC-TRACK1-2: live execution on named-volume DB, 451 rows migrated",
-          "AC-TRACK1-3: CTG scalars (total_assets, net_revenue, net_margin_pct) become plausible",
-          "AC-TRACK1-4: VCB/FPT/VNM non-regressions verified",
-          "AC-TRACK1-5: AC-16 report_id freshness re-checked",
-          "AC-TRACK1-6: commit discipline (dedup note, brief ref, no session UUIDs)"
-        ],
-        "depends": [],
-        "created_at": "2026-07-10T00:45:00Z",
-        "created_by": "pm",
-        "risk_flags": [
-          "RISK-1 [HIGH]: sequenced after W2 deploy (verified ✓ 2026-07-03)",
-          "RISK-2 [MEDIUM]: if gateway recovers, original W5 becomes viable — re-check live",
-          "RISK-3 [LOW]: unidentified orphans (4316f6d1/65a9c724/d6f1885f) out of scope"
-        ],
-        "dev_agent": "dev-mcp-server",
-        "updated_at": "2026-07-10T01:31:03Z",
-        "updated_by": "dev-mcp-server",
-        "dev_note": "AC-TRACK1-1/2/4/5/6 PASS (451 CTG rows carried forward live, RAW-verified). AC-TRACK1-3 ESCALATED not silently passed: carried rows are 208 income_statement+173 cash_flow+70 notes, ZERO balance_sheet rows -> BEQ-6 gate correctly set PARTIAL not DONE, total_assets/net_revenue/net_margin_pct unchanged. Deeper defect than W2 scope -- balance-sheet window never captured in original refine pass. RISK-2 re-checked live (gateway still blind, Track 1 confirmed necessary). Handoff: docs/handoffs/TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-CTG-CARRY-FORWARD.md Implementation Record.",
-        "qa_verify_at": "2026-07-10T01:24:35Z",
-        "qa_verify_by": "qa",
-        "qa_verdict": "APPROVE_HELD_DJGATE1",
-        "qa_note": "RAW-verified live (docker exec, readonly): AC-TRACK1-1/2/4/5/6 all confirmed PASS exactly as claimed (451-row breakdown 208 IS+173 CF+70 notes matches source+target byte-identical, CTG scalars unchanged garbage total_assets=0/net_revenue=3910/net_margin_pct=229157%, VCB/FPT/VNM untouched, report_id freshness current). AC-TRACK1-3 escalation CONFIRMED LEGITIMATE, not deflectable within this ticket scope: cross-checked all 4 other orphaned report_ids in bctc_table_rows for a cheap in-repo balance_sheet rescue -- none match CTG (65a9c724 + 31f2a9a9 are VCB per markdown header text; 4316f6d1 + d6f1885f use a non-bank current-assets balance-sheet layout, not CTGs bank-format BS) -- no hidden fix available, root defect genuinely requires a fresh agentic-refine pass blocked on the separate gateway-blind defect. Tests 8/8 green (in-memory fixture proves the reflow codepath itself is correct when BS data exists), tsc clean, mock-guard PASS, no DDD/security violations. BLOCKING FINDING (own gate, not code): DJ-GATE-1 decision-journal entry for this exact task-id is ABSENT from every docs/agent-memory/decisions/sprint-FIX-BCTC-BANK-SUMMARY-MAPPING-*.md file (dev-mcp-servers own flow line 164 requires this before REVIEW flip) -- per QA flow DJ-GATE-1 clause, holding status REVIEW rather than flipping done_verified. Non-code fix: dev-mcp-server (or pm) writes the missing journal STEP entry, then this is done_verified-ready without a fresh full QA pass. Recommend pm mint a follow-on backlog task (balance-sheet agentic-refine for CTG, blocked_on gateway-blind resolution) to carry AC-TRACK1-3 forward -- not built here (no-fake-data policy, task-breakdown is pms job).",
-        "status_note": "DJ-GATE-1 resolved: missing decision-journal STEP entry written (STEP dev-mcp-server-S3, docs/agent-memory/decisions/sprint-FIX-BCTC-BANK-SUMMARY-MAPPING-dev-mcp-server.md). QA already RAW-verified AC-TRACK1-1/2/4/5/6 PASS + AC-TRACK1-3 escalation legitimate (docs/handoffs/TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-CTG-CARRY-FORWARD.md [QA] Review Record) -- no fresh QA pass required per QA's own RETURN. AC-TRACK1-3 (balance-sheet gap) routed to pm as separate backlog item, out of scope here.",
-        "moved_to_done_verified_at": "2026-07-10T01:31:03Z",
-        "closed_at": "2026-07-10T01:31:03Z",
-        "closed_by": "dev-mcp-server"
-      }
-    ],
+    "done_verified": [],
     "head": {
       "status": "deprecated",
       "canonical_moved_to": ".head",
