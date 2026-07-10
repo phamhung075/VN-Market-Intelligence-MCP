@@ -316,7 +316,7 @@
   ],
   "head": {
     "status": "idle",
-    "updated_at": "2026-07-10T19:08:39Z",
+    "updated_at": "2026-07-10T19:24:05Z",
     "updated_by": "router",
     "active_task_id": null,
     "next_agent": null
@@ -5922,23 +5922,19 @@
         "note": "Non-blocking follow-up from D3C QA review. Low risk: mirrors pre-existing attempts-column gap already accepted. Candidate for next sprint if backlog has capacity."
       },
       {
-        "id": "D5-BACKLOG-HYGIENE-VALIDATOR-HARDENING",
+        "id": "FIX-COLD-EVICT-EXCLUDE-IDS-VS-HARD-COHERENCE",
         "size": "S",
-        "sprint": "BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP",
         "status": "BACKLOG",
-        "title": "D5: Flip orch-validate.mjs Stage-1b lane-coherence from warn-only to hard-fail; close SHG-2/3/4/5",
-        "type": "MAINTENANCE",
+        "title": "Reconcile orch-cold-evict.sh --exclude-ids safety valve with Stage-1b hard-fail lane coherence",
+        "type": "FIX",
         "zone": "scripts/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#D5-BACKLOG-HYGIENE-VALIDATOR-HARDENING",
         "owner": "developer",
-        "priority": "high",
-        "depends": [
-          "D3-BACKLOG-HYGIENE-NORMALIZE-TODO-DEFERRED",
-          "D2.5-BACKLOG-HYGIENE-SCHEMA-BLOCKED-LANE",
-          "D1-BACKLOG-HYGIENE-SWEEP-EXECUTE"
-        ],
-        "note": "Risk: LOW. Once bun scripts/orch-validate.mjs reports 0 coherence warnings live: flip Stage-1b (lines ~369-405) from warn-print-only to hard-fail (process.exit(2)). Close SHG-2/3/4/5 as DONE_VERIFIED. Verification gate MANDATORY: inject deliberate lane-coherence violation into throwaway fixture, confirm non-zero exit (negative-path proof).",
-        "verify_note": "prior_status=TODO"
+        "priority": "normal",
+        "depends": [],
+        "note": "D5-BACKLOG-HYGIENE-VALIDATOR-HARDENING (commit ed01c5c1b) flipped orch-validate.mjs Stage-1b from warn-only to hard-fail process.exit(2). Discovered side-effect: orch-cold-evict.sh --exclude-ids leaves an excluded terminal-status row in a non-terminal lane (by design, to skip it during eviction) — now lane-incoherent, aborting the whole eviction run via the script's own pre-rename validate check. Reproduced independently: scripts/test/orch-cold-evict-tests.sh 19/27 PASS (8 FAIL), git-stash-confirmed causal by D5. Risk LOW today (no cron invokes orch-cold-evict.sh; current 4 live exclusions all use direct BLOCKED relabel instead of --exclude-ids, so the flag is not live-exercised) but latent — breaks the moment --exclude-ids is actually used. Needs a design decision: force-relabel excluded rows to a coherent status (e.g. BLOCKED) at eviction time, or give Stage-1b a bounded exception list for rows under active --exclude-ids. orch-cold-evict.sh carries a pre-existing R-HIGH-1 sole-SSOT-eviction-script flag — read that context first.",
+        "created_at": "2026-07-10T19:24:28Z",
+        "created_by": "router",
+        "source": "D5-BACKLOG-HYGIENE-VALIDATOR-HARDENING self-report recommendation, independently reproduced by router before minting"
       }
     ],
     "closed_sprints": [
@@ -6780,6 +6776,33 @@
         "verified_by": "developer@D5-BACKLOG-HYGIENE-VALIDATOR-HARDENING",
         "verified_at": "2026-07-10T19:19:26Z",
         "signoff_note": "D5-BACKLOG-HYGIENE-VALIDATOR-HARDENING landed. SHG-5 (promote G-5 status-enum check to hard gate) satisfied in spirit and substance: the original literal AC (uncomment 'exit 5' in the old bash scripts/orch-state-validate.sh) is now moot -- that script was rewritten into a THIN SHIM (task SSOT-W1-BASH-SHIM) that execs bun scripts/orch-validate.mjs, where StatusEnum (G-5 equivalent) has ALWAYS been an unconditional hard gate (Stage 1 Zod safeParse, exit 2 on any non-canonical status -- confirmed via M3/E2/QA-1 tests, never warn-only). The ONE remaining piece that was still warn-only was lane-coherence (Stage 1b, checkLaneCoherence) -- flipped to hard-fail (process.exit(2)) by this task. Negative-path proof: throwaway fixture with IN_PROGRESS status in backlog[] lane -> exit 2, confirmed non-zero. Live orch-state.json re-validated clean post-flip: exit 0, 0 issues. orchStateSchema.test.ts 104/104 GREEN, orch-apply-wrapper-tests.sh 31/31 GREEN -- no regression."
+      },
+      {
+        "id": "D5-BACKLOG-HYGIENE-VALIDATOR-HARDENING",
+        "size": "S",
+        "sprint": "BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP",
+        "status": "DONE_VERIFIED",
+        "title": "D5: Flip orch-validate.mjs Stage-1b lane-coherence from warn-only to hard-fail; close SHG-2/3/4/5",
+        "type": "MAINTENANCE",
+        "zone": "scripts/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#D5-BACKLOG-HYGIENE-VALIDATOR-HARDENING",
+        "owner": "developer",
+        "priority": "high",
+        "depends": [
+          "D3-BACKLOG-HYGIENE-NORMALIZE-TODO-DEFERRED",
+          "D2.5-BACKLOG-HYGIENE-SCHEMA-BLOCKED-LANE",
+          "D1-BACKLOG-HYGIENE-SWEEP-EXECUTE"
+        ],
+        "note": "Risk: LOW. Once bun scripts/orch-validate.mjs reports 0 coherence warnings live: flip Stage-1b (lines ~369-405) from warn-print-only to hard-fail (process.exit(2)). Close SHG-2/3/4/5 as DONE_VERIFIED. Verification gate MANDATORY: inject deliberate lane-coherence violation into throwaway fixture, confirm non-zero exit (negative-path proof).",
+        "verify_note": "prior_status=TODO",
+        "done_verified": true,
+        "updated_at": "2026-07-10T19:24:05Z",
+        "updated_by": "router",
+        "commit": "ed01c5c1b",
+        "router_verdict": "APPROVED",
+        "router_verified_at": "2026-07-10T19:24:05Z",
+        "router_verified_by": "router",
+        "router_note": "APPROVED. Independent RAW-verify: read full commit diff (ed01c5c1b), matches self-report exactly. Re-ran bun scripts/orch-validate.mjs fresh: exit 0, 0 issues, unchanged. Independently re-ran the mandatory negative-path proof with a fresh injected violation: exit 2 confirmed. Re-ran orchStateSchema.test.ts fresh: 104/0/627. Re-ran orch-apply-wrapper-tests.sh: 31/31. Scrutinized SHG-2/3/4/5 closures (not rubber-stamped): referenced commits 46eba4b33/41d925d8c exist and match cited scope, task-archive.md eviction section present, 0 null-id sprints, 4 cited live-excluded IDs confirmed BLOCKED/coherent. Independently reproduced the reported orch-cold-evict-tests.sh regression: 19/27, exact match, confirmed confined to test fixtures (live orch-state.json unaffected). Notebook prepend clean. Sprint BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP now fully closed. Minting follow-up FIX-COLD-EVICT-EXCLUDE-IDS-VS-HARD-COHERENCE per D5's recommendation."
       }
     ],
     "head": {
@@ -7364,8 +7387,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-10T19:19:26Z",
-    "last_triaged_by": "developer@D5-BACKLOG-HYGIENE-VALIDATOR-HARDENING",
+    "last_triaged_at": "2026-07-10T19:24:28Z",
+    "last_triaged_by": "router",
     "in_progress": [
       {
         "id": "FIX-SCHEMA-DRIFT-P5-SELFHEAL",
