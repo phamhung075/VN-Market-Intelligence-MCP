@@ -1,6 +1,14 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-10T21:52Z (dev-team tick 2026-07-10T2137Z — fresh PO triage NOTHING after skip-respawn cadence expired, board-hygiene scan clean, mock-guard known-FP no-op, cold-evict idempotent no-op again)
+**Written:** 2026-07-10T22:17Z (dev-team tick 2026-07-10T2207Z — skip-PO-respawn correctly applied, all 4 conditions met; mock-guard known-FP no-op; cold-evict idempotent no-op 3rd tick running)
+
+## cycle-20260710T2207Z — skip-PO-respawn applied (all 4 conditions met) → no fresh PO spawn, WIP unchanged
+
+- **Preflight RUN** (tick 2207Z, SF-1+fire-election re-won cleanly). GCC-PREFLIGHT clean (no index.lock, worktree clean). Drain-signals 0 new inserted, pruned 4 stale processed-signal files (db_count 167→163). CI green on `d64210d1f`, no signal. Orphan-signal probe: 0. Session-presence roster: this session + cowork-dispatcher only, no overlap.
+- **Skip-PO-respawn DID apply this tick** (first clean application this session): (a) last real triage `1e3c03e56` at ~21:52:24Z UTC, ~24min prior — within the ~60min cadence guard; (b) `read_telegram_reports(status="new")` empty, identical to last tick; (c) 0 new signals; (d) `.head.status=idle`, `git diff --stat 1e3c03e56 HEAD -- orch-state.json` empty (board genuinely unchanged). All 4 conditions met → skipped fresh `po` spawn, proceeded straight to Step 4 post-cycle. WIP unchanged: ready=1 (`FIX-NOTEBOOK-AUTOPRUNE-ORDERING-ASSUMPTION`, owner=claude-manager-helper, pre-existing), in_progress=3 (2 known-stale awaiting po pickup via prior `CLEAN-STALE-INPROGRESS-P5SELFHEAL-L2FRESHNESS` mint + `OPS-BCTC-REFINE-REPASS-NONBANK-5T` legit ops-owned row with detailed PO annotation, not stale) — BOUNDED-1 correctly no-op'd (WIP=4≥1).
+- **Post-cycle Step 4:** `mock-guard.sh --full` HARD-FAILed on the identical known `stub.sbv.vn` `_test.go` FP class (same 2 files as every prior tick, tracked `FIX-MOCKGUARD-SCOPE-EXCLUDE-TESTGO`) — no new signal emitted (already backlog-tracked, avoided duplicate detective noise). No non-main branches, 0 new/unresolved telegram.
+- **Cold eviction (Step 4.2):** `DONE_N=14>10` triggered again. Script log claimed `done_verified[]: 1 to evict` + `signal archive[]: 1 to evict` but landed byte-identical to committed HEAD (empty `git diff --stat` both files) — same benign concurrent-write race, now confirmed on 3 consecutive ticks (2107Z, 2137Z, 2207Z). Validated PASS, correctly treated as idempotent no-op.
+- **Push-backstop:** `ahead=2` (unchanged from last tick — this tick made no new commits until this checkpoint), well under threshold=20 — silent no-op by design.
 
 ## cycle-20260710T2137Z — fresh PO triage (skip-respawn cadence expired) → NOTHING, all inputs clean
 
