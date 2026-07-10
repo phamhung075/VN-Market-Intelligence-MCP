@@ -63,3 +63,5 @@ TASK-1380 updated: [DATA] → [BUG]. Root cause confirmed by ops: alert_engine f
 ## [Developer] 2026-05-22 — 1970-ta-ohlcv: taOhlcvBackfillJob added — daily 01:30 UTC cron, INSERT OR REPLACE heals 1972-era low=0 corrupt rows, TA_MIN_ROWS=35, 10 tests GREEN, tsc clean — apps/mcp-server
 
 ## [Developer] 2026-07-10 — D4-BACKLOG-HYGIENE-ORCH-COLD-EVICT-EXTEND: scripts/orch-cold-evict.sh new Pass-1 category scans flat lanes {backlog,review,qa,in_progress,ready} for terminal-status rows, cold sink = dormant .backlog_detail[] archive field, --exclude-ids safety valve added — 27/27 GREEN new scripts/test/orch-cold-evict-tests.sh, no live-file execution (D1's job)
+
+## [Developer] 2026-07-10 — D1-BACKLOG-HYGIENE-SWEEP-EXECUTE: BLOCKED, not executed. D0's persisted triage_result only holds aggregate counts (73/4/11) + 2 named exceptions — 3 of 4 exclude IDs and all 11 relabel IDs are unrecoverable from any repo artifact (verified via git show 26ffe7567 + repo-wide grep). Dry-run confirms 55 rows would auto-evict on 1-of-15 known protections. D1's own board row flipped BACKLOG→BLOCKED with remedy note (commit d45c03f1a) instead of guessing IDs.
