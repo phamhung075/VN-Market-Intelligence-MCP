@@ -45,6 +45,7 @@ import { runDailyAudit } from './news-analysis/dataAuditJob.js'
 import { runPredictionMarketPoll } from './macro/predictionMarketJob.js'
 import { runBctcQueueEnricherJob } from './financial-reports/bctcQueueEnricherJob.js'
 import { runBctcPdfPullJob } from './financial-reports/bctcPdfPullJob.js'
+import { runBctcExtractReconcileJob } from './financial-reports/bctcExtractReconcileJob.js'
 import { runBctcBatchSweepJob } from './financial-reports/bctcBatchSweepJob.js'
 import { runAskQueueCheck } from './system/askQueueCheckJob.js'
 import { runWeeklyPortfolioReport } from './portfolio/weeklyPortfolioReportJob.js'
@@ -248,6 +249,21 @@ export function buildJobTable(ctx: SchedulerJobTableCtx): JobTableEntry[] {
       runner: async () => {
         const result = await runBctcPdfPullJob()
         return { rowsWritten: result.downloaded }
+      },
+    },
+
+    // 5,35 * * * * — BCTC extract reconcile job (FIX-BCTC-D3C-RECONCILE-JOB)
+    // Resolves 'pek_triggered' rows (bctcPdfPullJob's async /pek-extract trigger)
+    // to 'done'/'enrich_failed' by checking bctc_layout_units/bctc_table_rows/
+    // bctc_md_tables row counts once PEK has had runway. Without this job,
+    // 'pek_triggered' rows have no further transition path (accumulate forever).
+    {
+      name: 'bctcExtractReconcileJob',
+      cron: CRONS.bctcExtractReconcile,
+      options: { timezone: 'Asia/Ho_Chi_Minh' },
+      runner: async () => {
+        const result = await runBctcExtractReconcileJob()
+        return { rowsWritten: result.done }
       },
     },
 

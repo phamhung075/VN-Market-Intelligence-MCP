@@ -5,7 +5,7 @@
   "_definition": "schedulerFileCount = jobs[] array length (registered scheduler entries in this file); excludes orchestrators (jobs.ts, index.ts, cronConfig.ts, startScheduler.ts, startupHelpers.ts)",
   "_jq_ssot": "jq '.project.microservices[] | select(.id==\"mcp-server\") | .crons | length' docs/data/system-map.json",
   "lastUpdated": "2026-05-18-sprint1949",
-  "schedulerFileCount": 64,
+  "schedulerFileCount": 65,
   "jobs": [
     { "schedule": "*/15 min", "name": "intelligenceCycle", "desc": "Main engine: news+prices+cascade+alerts" },
     { "schedule": "*/30 min", "name": "predictionMarketPoll", "desc": "Polymarket fetch + signal detection" },
@@ -50,6 +50,7 @@
     { "id": "imf_indicator_poller", "schedule": "0 */6 * * *", "name": "imfIndicatorPoller", "file": "src/scheduler/market-data/imfIndicatorPollerJob.ts", "timeoutMs": 30000, "enabled": true, "desc": "IMF economic indicator poller: fetch global GDP growth/inflation/oil forecast every 6h, store in imf_indicators table, classify macro sentiment (task 1296b)" },
     { "schedule": "*/15 * * * *", "name": "bctcQueueEnricher", "file": "src/scheduler/bctcQueueEnricherJob.ts", "desc": "BCTC queue enricher: every 15 min — enrich bctc_queue pending rows with metadata (task 1287)" },
     { "schedule": "*/30 * * * *", "name": "bctcPdfPull", "file": "src/scheduler/bctcPdfPullJob.ts", "desc": "BCTC PDF pull: every 30 min — MCP downloads PDFs from VPS cache (feat/bctc-pull-pdf)" },
+    { "schedule": "5,35 * * * *", "name": "bctcExtractReconcile", "file": "src/scheduler/financial-reports/bctcExtractReconcileJob.ts", "desc": "FIX-BCTC-D3C-RECONCILE-JOB: resolves bctc_vps_queue 'pek_triggered' rows to done/enrich_failed by checking bctc_layout_units/bctc_table_rows/bctc_md_tables row counts once PEK has had runway" },
     { "schedule": "30 22 * * *", "name": "summaryDaily", "file": "src/scheduler/summaryDailyJob.ts", "desc": "Daily periodic summary at 22:30 GMT+7 every day (task 1023)" },
     { "schedule": "0 23 * * 0", "name": "summaryWeekly", "file": "src/scheduler/summaryWeeklyJob.ts", "desc": "Weekly periodic summary at 23:00 GMT+7 every Sunday (task 1023)" },
     { "schedule": "30 0 1 * *", "name": "summaryMonthly", "file": "src/scheduler/summaryMonthlyJob.ts", "desc": "Monthly periodic summary at 00:30 on the 1st (task 1023)" },

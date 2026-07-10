@@ -26,6 +26,8 @@ Individual tool signatures: `docs/agents/tools/list/<tool>.md`
 |-----|---------|---------|
 | `bctcOverdueCheckJob` | Daily | Alert on overdue BCTC filings (threshold from earnings calendar) |
 | `bctcReparseJob` | On-demand / 6h | Re-parse previously stored PDFs with improved extractor |
+| `bctcPdfPullJob` | `*/30 * * * *` | Downloads PDFs from VPS cache, upserts `financial_reports` shell row, fires async `/pek-extract` table-extraction trigger, marks `bctc_vps_queue.status='pek_triggered'` (FIX-BCTC-D3B) |
+| `bctcExtractReconcileJob` | `5,35 * * * *` | Resolves `pek_triggered` rows to `done`/`enrich_failed` by checking `bctc_layout_units`/`bctc_table_rows`/`bctc_md_tables` row counts once PEK has had runway; bounded re-fire via `MAX_RECONCILE_ATTEMPTS` (FIX-BCTC-D3C-RECONCILE-JOB) |
 | `vnstockStartupProbe` | Once on startup (+90s delay) | Detects cold/stale vnstock_fetch_log (< 10 codes or > 7d old) → fires `runVnstockFundamentalsJob()`. Non-fatal. |
 
 ---
@@ -39,6 +41,7 @@ Individual tool signatures: `docs/agents/tools/list/<tool>.md`
 5. VPS BCTC pipeline is PULL-based: VPS pulls queue (`bctc_vps_queue` table) → downloads → pushes back. MCP never initiates PDF downloads.
 6. `push-bctc-pdf` extraction: when VPS pushes a PDF via `POST /api/push-bctc-pdf`, extraction uses `triggerPushBctcExtraction` (`scheduler/financial-reports/pushBctcExtraction.ts`) — OCR via `extractAndStorePdfPagesWithRetry` + `pdfTextOverride` to `fetchParseAndStoreBctc`. Direct URL download is bypassed (geo-blocked; Task 1945d GAP-B fix).
 7. `bctcReparseJob` disk scan: runs unconditionally every cycle (not just when `agent_feedback` is empty). Fresh PDFs stored between D-7c audit runs are picked up without 18+ h wait (Task 1945d GAP-A fix). Deduplicates with feedback-row filenames to avoid double-processing.
+8. `bctc_vps_queue.status` async table-extraction state machine (FIX-BCTC-D3B/D3C, docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md §D3): `bctcPdfPullJob` fires `/pek-extract` (fire-and-forget 202) and unconditionally advances the row to `pek_triggered` — this status folds all 4 possible trigger outcomes (202 queued / 503 market-hours / 502 pdf_extractor_error / 502 unreachable) since the DB column cannot distinguish them. `bctcExtractReconcileJob` is the ONLY code path that ever moves a row out of `pek_triggered`: success (`bctc_layout_units` non-quarantined, OR `bctc_table_rows`, OR `bctc_md_tables` row count > 0) → `done`; still-zero under `MAX_RECONCILE_ATTEMPTS` → stays `pek_triggered` and uniformly re-fires `triggerPekExtractionForReport()` (idempotent via `pushBctcLayoutHandler.ts`'s DELETE-before-INSERT); attempts exhausted → `enrich_failed` (terminal, fail-loud Telegram BUG). `bctc_vps_queue` has no `report_id` column — both jobs re-derive it via `(action_code, sort_key)` lookup against `financial_reports` on every pass.
 
 ---
 

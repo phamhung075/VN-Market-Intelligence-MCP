@@ -408,6 +408,11 @@
             "desc": "BCTC PDF pull from VPS cache"
           },
           {
+            "name": "bctcExtractReconcile",
+            "schedule": "5,35 * * * *",
+            "desc": "FIX-BCTC-D3C: resolves pek_triggered rows to done/enrich_failed"
+          },
+          {
             "name": "summaryDaily",
             "schedule": "30 22 * * *",
             "desc": "Daily periodic summary at 22:30 GMT+7"

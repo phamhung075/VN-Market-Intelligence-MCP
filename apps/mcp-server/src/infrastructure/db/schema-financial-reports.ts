@@ -263,6 +263,28 @@ export function initFinancialReportsTables(db: Database): void {
   db.exec(`CREATE INDEX IF NOT EXISTS idx_bvq_status ON bctc_vps_queue(status)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_bvq_code   ON bctc_vps_queue(action_code)`);
 
+  // FIX-BCTC-D3C-RECONCILE-JOB: dedicated attempt counter for the
+  // bctcExtractReconcileJob's bounded reconciliation-pass budget
+  // (MAX_RECONCILE_ATTEMPTS). Deliberately a SEPARATE column from the
+  // existing `attempts` field above — `attempts` already carries pre-download
+  // fetch-failure semantics (MAX_404_ATTEMPTS gate in bctcPdfPullJob.ts) and a
+  // row reaching `pek_triggered` may already have a nonzero `attempts` value
+  // from earlier fetch retries; reusing it for the unrelated reconciliation
+  // budget would corrupt both counters' meaning. Idempotent guarded ALTER
+  // TABLE — same pattern as the financial_reports migrations above.
+  try {
+    const bvqCols = db
+      .query<{ name: string }, []>("PRAGMA table_info(bctc_vps_queue)")
+      .all();
+    if (!bvqCols.some((c) => c.name === "reconcile_attempts")) {
+      db.exec(
+        "ALTER TABLE bctc_vps_queue ADD COLUMN reconcile_attempts INTEGER NOT NULL DEFAULT 0",
+      );
+    }
+  } catch {
+    // fresh DB — CREATE TABLE will include the column on next start
+  }
+
   // ── BCTC Health State (FIX-BCTC-ZERO-URL-ALERT) ──────────────────────────
   // Single-row persistent state for the consecutive-zero-URL counter and the
   // 6h dedup guard.  CREATE TABLE IF NOT EXISTS → safe to call on existing DBs.

@@ -167,3 +167,19 @@ Router already independently RAW-verified diff genuineness (0-row gate removed, 
 (5) No-fake-data: diff touches only status enum + control-flow + synthetic test fixtures.
 
 VERDICT: APPROVED, DONE_VERIFIED. Board row moved `task_board.review[]`→`done_verified[]` via new `scripts/qa-fix-bctc-d3b-gate-pek-triggered-status-done-verified.jq`+`scripts/orch-apply.sh` (dry-run diffed first: review 22→21, done_verified 4→5, `.head` byte-identical, coherence warnings 130→130 unchanged). `qa_verdict`→`APPROVED`, `next_agent` qa→pm (dispatch D3C next), `commit:"pending"` (router RAW-verifies+commits). `.head` deliberately untouched — same guard convention as D1/D2/D3a/SERVE-GATE. DJ: sprint-SYSTEMIC-REMAKE-P1-qa.md §qa-S49.
+
+## cycle-431 · 2026-07-10 · FIX-BCTC-D3C-RECONCILE-JOB — APPROVED, DONE_VERIFIED
+
+New `bctcExtractReconcileJob.ts` cron (`5,35 * * * *`) resolves `pek_triggered` rows to `done`/`enrich_failed` via OR-across-3-tables (`bctc_layout_units` non-quarantined / `bctc_table_rows` / `bctc_md_tables`), bounded `MAX_RECONCILE_ATTEMPTS=8` (own `reconcile_attempts` column, separate from pre-existing `attempts`), uniform re-fire on every still-zero pass. Router already independently verified board row/diff/tsc/mock-guard/own-test-run/2-sibling-regression/counters/notebook/DJ-GATE-1 — dispatch scoped review to 5 fresh-eyes points.
+
+(1) Re-fire-vs-passive: read `pushBctcLayoutHandler.ts` directly — DELETE-before-INSERT genuinely runs inside the SAME `db.transaction()` as the re-INSERT, confirming idempotency is real; `bctc_vps_queue` structurally cannot distinguish 202-in-flight from 503/502-never-started, so uniform re-fire is the only policy guaranteeing eventual convergence for the 503/502 class. SOUND, endorsed.
+
+(2) Cross-file ownership grep: `bctcExtractReconcileJob.ts` confirmed sole writer moving rows OUT of `pek_triggered`. Found NON-BLOCKING: `bctcQueueEnricherJob.ts`'s pre-existing (2026-07-02) Arm-2 grace-period retry recycles `enrich_failed`→`pending` after 7d without ever zeroing `reconcile_attempts` (or the identically-affected pre-existing `attempts`) — a recycled row can re-exhaust almost immediately on its 2nd `pek_triggered` episode instead of a fresh ~4h budget. Mirrors an already-accepted pre-existing gap (same issue on `attempts`), not a regression, not silent (BUG still fires) — recommended backlog follow-up; fix belongs in 2 out-of-scope files from already-approved prior tasks.
+
+(3) `financial_reports` UNIQUE(action_code, sort_key) CONFIRMED present (`bctc-schema.ts`, executed via `db.exec(SQLITE_DDL)`) — same pair the job's lookup + D1's `ON CONFLICT` both target. No duplicate-row risk.
+
+(4) Independently ran the FULL 105-file `*bctc*`/`*pek*` per-file-isolation sweep myself (new `scripts/qa-bctc-pek-test-sweep.sh`, modeled on `ci-per-file-isolation.sh`): 1153 pass/4 skip/8 fail, all 8 isolated to the pre-existing unrelated `1294b-bctc-fallback.test.ts` standalone timeout (grep-confirmed zero symbol overlap) — matches claim exactly on pass/fail/attribution.
+
+(5) `financial-reports.md` invariant #8 read against actual code — accurate on every clause.
+
+VERDICT: APPROVED, DONE_VERIFIED. Board row moved `task_board.review[]`→`done_verified[]` via new `scripts/qa-fix-bctc-d3c-reconcile-job-done-verified.jq`+`scripts/orch-apply.sh` (dry-run diffed first: review 22→21, done_verified 6→7, `.head` byte-identical, coherence warnings 130→130 unchanged). `qa_verdict`→`APPROVED`, `next_agent` qa→pm, `commit:"pending"` (router RAW-verifies+commits). `.head` deliberately untouched (idle/null) — same guard convention as D1/D2/D3a/D3b/SERVE-GATE. DJ: sprint-SYSTEMIC-REMAKE-P1-qa.md §qa-S50.

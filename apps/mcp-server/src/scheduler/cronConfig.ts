@@ -30,6 +30,11 @@ export const CRONS = {
   bctcQueueEnricher:      Bun.env.CRON_BCTC_QUEUE_ENRICHER        ?? '*/15 * * * *',
   /** BCTC PDF pull: every 30 min — MCP downloads PDFs from VPS cache (feat/bctc-pull-pdf) */
   bctcPdfPull:            Bun.env.CRON_BCTC_PDF_PULL               ?? '*/30 * * * *',
+  /** BCTC extract reconcile: 5,35 * * * * — resolves 'pek_triggered' rows to
+   *  done/enrich_failed once PEK's async table extraction has had runway.
+   *  Offset +5min from bctcPdfPull (:00/:30) so PEK has at least 5-35 min
+   *  before the first reconciliation check (FIX-BCTC-D3C-RECONCILE-JOB). */
+  bctcExtractReconcile:   Bun.env.CRON_BCTC_EXTRACT_RECONCILE       ?? '5,35 * * * *',
   /** /ask queue check: every 12 min — signal 07-qa-responder when pending (task 1074) */
   askQueueCheck:          Bun.env.CRON_ASK_QUEUE_CHECK             ?? '*/12 * * * *',
   /** SQLite WAL checkpoint: every 30min FULL (live hours) + TRUNCATE+backup at 03-05 UTC (task 1329a) */
