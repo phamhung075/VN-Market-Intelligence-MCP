@@ -1,6 +1,14 @@
 # PO Notebook
 
-_Last: 2026-07-10T08:06Z_
+_Last: 2026-07-10T08:07Z_
+
+## Tick 2026-07-10T08:07Z — Round-4 same tick: HSG #3552 2025-Q4 0-row → 8th cohort fold into OPS-BCTC-BANK-2025Q4-ENRICH-0ROW-REPARSE (mechanical breadth, no mint)
+Bridge REACHABLE. ONE new unclaimed report: **#3552** (msg_id 3305, analysis-agent, 08:05:51Z) — `[bctcPdfPull] ENRICH 0-rows FAIL-LOUD: HSG 2025-Q4 — bctc_table_rows=0 AND bctc_md_tables=0 ... enrich_failed`. **Claimed as po via bridge (exit 0, "Report 3552 successfully claimed by 'po'").** Read-back: 3552 gone from unclaimed pool (now shows only 3553/3554); tool ignores id/status/claimed_by filters so no positive echo — exit-from-pool + explicit success = authoritative.
+
+**VERIFY-BEFORE-FOLD (not blind pattern-match):** 3552 EXACTLY matches the cohort's defining signature (0 table_rows AND 0 md_tables, 2025-Q4, enrich_failed). HSG on 2 OTHER rows, both checked & NOT conflated: (a) `SPIKE-BCTC-CONVICTION-COMPOSITE-DRAG-PERFECT-FINANCIAL` (BACKLOG/low) cites HSG Q4-2025 financial=1.00 PERFECT-extraction — DIFFERENT class (conviction composite scoring); the tension (prior 1.00 vs now 0 rows) = possible regression/re-pull-lost-extraction, flagged in note for any post-reparse re-probe, does NOT block fold; (b) `OPS-BCTC-REFINE-REPASS-NONBANK-5T` = Q1-2026 non-bank total_assets=0 REFINE (different quarter + class) — same trap round-3 navigated for CTG. HSG is non-bank steel → 2nd non-bank example (with D2D) → reinforces batch-wide (NOT bank-specific) thesis.
+
+**Action = fold, no mint:** widened `OPS-BCTC-BANK-2025Q4-ENRICH-0ROW-REPARSE` — related[] += telegram-report:3552, title 7→8 tickers (+HSG, "links reports ...+3552"), round-4 addendum note, updated_at/by. Via `jq --rawfile … | orch-apply.sh` (exit 0; 131 pre-existing SHG warns, non-blocking). SPIKE stays HELD-ARMED (3552 = pre-reparse DETECTION, trigger still UNMET). Did NOT touch `task:po-triage-20260710` (router's lock). **NEXT-ROUND:** MBB 3553/3554 (2025-Q4, SAME signature) landed 08:11Z → likely 9th member, deliberately out of scope this round.
+Files modified (router to RAW-verify + commit): (a) `docs/data/orch/orch-state.json`; (b) `docs/agent-memory/notebooks/po.md`.
 
 ## Tick 2026-07-10T08:06Z — Round-3 same tick: CTG 2026-Q1 #3551 composite=0.00 → BANK, NOT non-bank → rejected NONBANK-5T fold; flagged distinctly on the bank track (no mint)
 Bridge REACHABLE (`scripts/agents-flow/mcp-call.sh`; native `mcp__gateway__*` still absent). ONE new unclaimed report: #3551 (msg_id 3304, from analysis-agent, 07:51:34Z) — `[BCTC-1345b] Low financial confidence (composite=0.00, financial=0.00) — conviction signal skipped for CTG 2026-Q1`. **Claimed as po via bridge (exit 0, "Report 3551 successfully claimed by 'po'").**
