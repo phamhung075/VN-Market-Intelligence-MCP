@@ -151,9 +151,21 @@ architect MUST NOT re-run the full AC-1 SPIKE from zero (zone is already pinned,
 **task_id:** FIX-BCTC-BANK-SCALAR-MAPPING
 See `docs/agent-memory/decisions/sprint-FIX-BCTC-BANK-SCALAR-MAPPING-ba.md`.
 
+## [Architect] Brownfield Findings (LIGHT SPIKE — DONE)
+
+**Full brief:** `docs/architecture-briefs/2026-07-10-FIX-BCTC-BANK-SCALAR-MAPPING.md` (live evidence, code trace — this section is a pointer + zone summary per the flow contract).
+
+- **Zone:** `apps/mcp-server/` — reconciled unchanged from the twin sprint's 2026-07-01 SPIKE. Not re-derived.
+- **FR-8/AC-15 verdict:** **(a) confirmed** — the refine pipeline stall is the same harness-level gateway-blind defect (`docs/architecture-briefs/2026-07-08-gateway-blind-cli-handshake-spike.md`), directly corroborated: `bctc_refined_units` zero writes 07-05→07-10 (last write 07-04T14:08:34), ALL 4 `refine-bctc-*` cowork slots frozen at `last_fired` 07-03/07-04 (and in fact ALL 23 cowork slots frozen since 07-07T20:17:30Z), and `docs/signals/processed/cowork-team-20260708T090000Z.json` explicitly names `refine_bctc_md` as skipped `SKIPPED-GATEWAY-BLIND` on a correctly-matched, correctly-scheduled tick — ruling out (b) dispatch/cadence gap. **AC-15 answer: NO, the pipeline cannot currently execute end-to-end** (most recent evidence 2026-07-09T21:01:48Z, gateway still absent). A secondary, distinct ~71h session-absence gap (07-04→07-07) is layered underneath, already tracked by the separate cowork-guaranteed-slot-durability chain — not re-scoped here.
+- **FR-9 re-scope (IMPORTANT — BA's literal ask is a no-op):** `backfillBctcScalarsTool.ts`'s default (no `force_reflow`) already targets `refine_status='PENDING'` — `force_reflow=true` extends to ALSO include `DONE`, the opposite direction from the spec's framing. RAW-queried the full live table: **100% of the 63 PENDING reports (CTG/VCB included) have ZERO `bctc_table_rows`** — the tool's existing 0-row skip guard means calling it today, with or without `force_reflow`, returns `SKIPPED` for every one of them; extending the status filter changes no served value. Real, narrower fallback found: CTG's OLD `report_id` (`96e36139-…`, now orphaned — the ticker+period was hard-deleted+re-minted on re-parse, not upserted) still holds 451 same-period table rows; a scoped `source_report_id` carry-forward extension (sequenced strictly AFTER the twin sprint's W2 row-repair deploys) can close AC-5 for CTG without waiting on the gateway. VCB and the other 62 PENDING reports have **no equivalent orphaned same-period data** — no safe deterministic substitute exists for them today (re-running the raw extractor reproduces the same corruption, per BA's own byte-identical-reparse finding); flagged as separate, larger backlog scope, not this sprint. Full detail + risk flags (esp. sequencing risk) in the brief.
+- **AC-14 (dedup, advisory only — architect does not merge board rows):** recommend pm/po reconcile `FIX-BCTC-BANK-SUMMARY-MAPPING` (still active, W1-W4 done_verified, W5 blocked) and this task onto ONE thread — this brief's Track 1 carry-forward design is the concrete deterministic replacement for the twin sprint's blocked W5, not a second parallel W5.
+- **AC-16:** CTG (`e497f7d1-…`) and VCB (`bac3e1c1-…`) current `report_id`s re-verified live at brief time — unchanged since BA's spec. Twin sprint's W5 runbook (`96e36139-…`) is stale regardless of which execution path (agentic re-ingest vs. Track-1 carry-forward) is eventually run.
+- **BUILD-STANDARD:** not-applicable (SPIKE itself); Track 1 build (if pm approves) is `lean`.
+- **Scan clean:** true ✓
+
 ## RETURN
-DONE: BA spec complete — requirements written to `docs/handoffs/BA-FIX-BCTC-BANK-SCALAR-MAPPING.md`. Zero PO blockers.
+DONE: BA spec complete — requirements written to `docs/handoffs/BA-FIX-BCTC-BANK-SCALAR-MAPPING.md`. Zero PO blockers. Architect LIGHT SPIKE complete — FR-8 verdict (a) confirmed with fresh live evidence, FR-9 re-scoped (BA's literal ask is a no-op; real fallback = CTG-specific carry-forward Track 1).
 ZONE: `apps/mcp-server/` (re-confirmed from twin sprint's architect SPIKE; `apps/pdf-extractor/` ruled OUT — the current task's own `zone_hint` proposing a split is stale)
-NEXT: architect — LIGHT SPIKE (reconcile + FR-8 pipeline-health diagnosis; do not re-derive the zone split)
-HANDOFF: `docs/handoffs/BA-FIX-BCTC-BANK-SCALAR-MAPPING.md`
+NEXT: pm — reconcile with the twin sprint (`FIX-BCTC-BANK-SUMMARY-MAPPING`) onto ONE execution thread per AC-14 rather than minting a parallel W5; decompose Track 1 (§2.5 of the brief) as the concrete W5 replacement, sequenced after the twin sprint's W2 deploys. Track 2 (general 62-report unblock) is separate backlog scope, not this sprint.
+HANDOFF: `docs/handoffs/BA-FIX-BCTC-BANK-SCALAR-MAPPING.md` + `docs/architecture-briefs/2026-07-10-FIX-BCTC-BANK-SCALAR-MAPPING.md`
 PIPELINE: continue

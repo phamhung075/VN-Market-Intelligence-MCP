@@ -293,10 +293,10 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "FIX-BCTC-BANK-SCALAR-MAPPING",
-    "next_agent": "architect",
-    "next_action": "LIGHT SPIKE (reconcile+extend, not re-derive) per docs/handoffs/BA-FIX-BCTC-BANK-SCALAR-MAPPING.md — twin sprint FIX-BCTC-BANK-SUMMARY-MAPPING already pinned zone=apps/mcp-server/; answer FR-8 refine-pipeline-health question (63 reports stuck refine_status=PENDING since 2026-06-07/07-04) before re-attempting the blocked W5 CTG re-ingest runbook.",
-    "updated_at": "2026-07-10T00:02:16Z",
-    "updated_by": "ba"
+    "next_agent": "pm",
+    "next_action": "Reconcile FIX-BCTC-BANK-SCALAR-MAPPING with the still-active twin sprint FIX-BCTC-BANK-SUMMARY-MAPPING (AC-14) onto ONE execution thread; decompose Track 1 (CTG orphaned-row carry-forward, docs/architecture-briefs/2026-07-10-FIX-BCTC-BANK-SCALAR-MAPPING.md §2.5) as the concrete W5 replacement, sequenced strictly after the twin sprint W2 row-repair deploys. Track 2 (general 62-report unblock) is separate backlog scope.",
+    "updated_at": "2026-07-10T00:20:00Z",
+    "updated_by": "architect"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7405,10 +7405,13 @@
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
         "claimed_at": "2026-07-09T23:47:35Z",
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "architect",
+        "next_agent": "pm",
         "ba_spec_complete": true,
         "ba_handoff": "docs/handoffs/BA-FIX-BCTC-BANK-SCALAR-MAPPING.md",
-        "ba_completed_at": "2026-07-09T23:58:33Z"
+        "ba_completed_at": "2026-07-09T23:58:33Z",
+        "architect_brief": "docs/architecture-briefs/2026-07-10-FIX-BCTC-BANK-SCALAR-MAPPING.md",
+        "architect_completed_at": "2026-07-10T00:20:00Z",
+        "architect_note": "FR-8 verdict=(a) gateway-blind, pipeline cannot execute end-to-end. FR-9 re-scoped: BA literal ask (force_reflow->PENDING) is a no-op (already default); real fallback = CTG-specific orphaned-row carry-forward (Track 1), sequenced after twin sprint W2 deploy. AC-14: pm/po should reconcile with twin sprint FIX-BCTC-BANK-SUMMARY-MAPPING onto ONE thread, not mint a parallel W5."
       }
     ]
   },
