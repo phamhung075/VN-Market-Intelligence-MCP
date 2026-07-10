@@ -142,3 +142,12 @@
 - Test suite (FIX-EVIDENCE-PIPELINE-STARVED.test.ts): 6 pass / 0 fail. tsc exit 0.
 **why-decision:** Two of three conditions met (foreignFlowAlertJob rows_written>0 today=18, evidence_fragments.count=9>0). Third condition (evidenceAccumulatorJob 16:00Z run) not yet observable at probe time 12:11 UTC. Based on: fix is deployed, upstream producer writes fragments successfully (18 rows in evidence_fragments today), accumulator will process them at 16:00 UTC. Partial DEFER on accumulator; main pipeline chain (evidence production) is LIVE and working. Per instructions: report DEFER with recheck time 2026-06-12T16:00Z for accumulator condition only.
 **why-change:** No change from plan — evidence production chain verified functional. Accumulator gate DEFER pending 16:00Z.
+
+### STEP qa-S11 · qa · 2026-07-10T03:39:51Z
+**task-id:** ARCH-SHIP-WAVE-REAUDIT
+**what-done:** Review-drain sweep (router-dispatched, no board row): found this umbrella row sitting DEFERRED in review[] since 2026-06-11 despite its entire purpose already fulfilled. Closed to done_verified.
+**what-considered:**
+- Leave parked, trust park_reason/UNPARK CONDITION prose — rejected: both cited conditions (ARCH-CRON-SCHEDULER-RELIABILITY done_verified, VN-MACRO-TOOLING WAVE-1 mcp-server) independently verified ALREADY satisfied
+- Re-check whether decomposition ever happened — found it DID: pm commit 7cf1d9bf (2026-06-11) minted 8 tasks, all implemented + QA-APPROVED by 487ca5091 (2026-06-12T09:37:54Z UTC), all archived DONE in archive/2026-06.json
+**why-decision:** PO's park (b1de4ff92, 2026-06-13T08:48:55Z UTC) postdates full downstream completion by >20h — stale premise, repeated at 06-15/06-27 relabels without re-check. Pre-existing DJ-GATE-1 entry confirmed (architect-S1/S2 above). No work remains — safe DONE_VERIFIED.
+**why-change:** Router asked for sign-off decision on a stuck REVIEW row, not a new design task — closed instead of leaving parked, since remaining-parked was itself the bug.
