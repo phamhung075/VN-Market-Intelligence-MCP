@@ -14,9 +14,14 @@
 #        filesystem → mv(2) is POSIX-atomic)
 #     3. Validation via bun scripts/orch-validate.mjs (Zod schema + dup-key
 #        + coherence + ref integrity). NEVER duplicated here — single SSOT.
-#     4. CAS-mtime guard: mtime captured before stdin-read; re-checked before
+#     4. Conservation circuit-breaker via bun scripts/orch-conservation-check.mjs
+#        (whole-board task_total/signal_total magnitude-ratio guard). NEVER
+#        duplicated here — single SSOT. Closes the empirically live-exploitable
+#        full-doc-collapse class (commit de595a44) — see
+#        docs/architecture-briefs/2026-07-10-auditor-orchstate-conservation-guard.md
+#     5. CAS-mtime guard: mtime captured before stdin-read; re-checked before
 #        rename. Mismatch → ABORT with exit 2 so caller can retry.
-#     5. Atomic rename: temp → live file
+#     6. Atomic rename: temp → live file
 #
 # CALL PATTERN (canonical — minimal churn over existing jq idiom):
 #   jq '<filter>' docs/data/orch/orch-state.json | scripts/orch-apply.sh
@@ -28,16 +33,26 @@
 # EXIT CODES:
 #   0  = success (candidate atomically applied to live file)
 #   1  = validation failed (dup-key / schema violation / dangling refs)
-#        — live file left UNTOUCHED
+#        OR conservation check failed (candidate's task_total/signal_total
+#        dropped below FLOOR_RATIO of the live value) — live file left UNTOUCHED
 #   2  = CAS mtime mismatch — concurrent writer detected; caller should retry
 #   3  = usage error (empty stdin, live file missing, I/O error)
 #
 # HARD CONSTRAINTS:
 #   - NEVER duplicate or reimplement validation logic — REUSE orch-validate.mjs
+#     and orch-conservation-check.mjs
 #   - Live file is SACRED — on any failure, leave it untouched
 #   - Coherence WARNINGS from validator (exit 0 with stderr lines) are
 #     non-blocking: they do NOT abort the write
 #   - Temp file MUST live in docs/data/orch/ (same filesystem as live file)
+#
+# CONSERVATION BYPASS (ORCH_APPLY_ALLOW_SHRINK):
+#   NARROW NAMED BYPASS, mirrors ORCH_APPLY_LIVE_FILE_OVERRIDE below. Set to a
+#   non-empty reason string to allow a candidate that legitimately shrinks
+#   task_total/signal_total (bulk eviction/archival). Wired ONLY into
+#   scripts/orch-cold-evict.sh and docs/agents/pm/flow/task-archive.md — the
+#   2 already-shipped legitimate bulk-eviction writers. NEVER set this from
+#   any other caller (in particular, never from system-auditor).
 # =============================================================================
 
 set -euo pipefail
@@ -117,6 +132,26 @@ validation_output=$(bun "${REPO_ROOT}/scripts/orch-validate.mjs" "${TMP}" 2>&1) 
 }
 # Print any pass-message or coherence warnings (non-blocking; informational)
 [[ -n "${validation_output}" ]] && printf '%s\n' "${validation_output}" >&2
+
+# ─── Stage 2: Conservation circuit-breaker ───────────────────────────────────
+# REUSE bun scripts/orch-conservation-check.mjs — do NOT duplicate this logic.
+# Compares the candidate's whole-board task_total/signal_total against the
+# live file's current totals; aborts if either drops below FLOOR_RATIO
+# (default 0.5) of its live value once live >= MIN_BASELINE (default 10).
+# Closes the empirically live-exploitable full-doc-collapse class (commit
+# de595a44, docs/architecture-briefs/2026-07-10-auditor-orchstate-conservation-guard.md §3/§4).
+#
+# NARROW NAMED BYPASS: ORCH_APPLY_ALLOW_SHRINK=<reason> — see header comment.
+# Read directly by orch-conservation-check.mjs from its inherited process env;
+# no special plumbing needed here beyond the normal env-inheritance a
+# subprocess already gets.
+conservation_output=$(bun "${REPO_ROOT}/scripts/orch-conservation-check.mjs" "${LIVE_FILE}" "${TMP}" 2>&1) || {
+  conservation_exit=$?
+  printf '%s\n' "${conservation_output}" >&2
+  printf '[orch-apply] ABORTED: conservation check exit %s — live file untouched\n' "${conservation_exit}" >&2
+  exit 1
+}
+[[ -n "${conservation_output}" ]] && printf '%s\n' "${conservation_output}" >&2
 
 # ─── CAS-mtime guard: re-check before rename ─────────────────────────────────
 # If the live file was modified between the caller's read and our rename,

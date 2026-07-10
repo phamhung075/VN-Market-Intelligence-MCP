@@ -15,6 +15,14 @@
  *   The server-side enforcement (SSOT-W1-SERVER-ENFORCE) covers internal server writes;
  *   this hook closes the Claude tool-call side (Write + Edit tools).
  *
+ *   Also shells out to scripts/orch-conservation-check.mjs (FIX-ORCHSTATE-
+ *   CONSERVATION-GUARD-CIRCUIT-BREAKER) — defense-in-depth parity with the
+ *   primary Stage-2 gate in scripts/orch-apply.sh. Secondary hardening, not
+ *   the load-bearing fix (the writer-audit found zero live direct-Write/Edit
+ *   bypass sites of orch-apply.sh — see docs/architecture-briefs/
+ *   2026-07-10-auditor-orchstate-conservation-guard.md §4.3). Honors the same
+ *   ORCH_APPLY_ALLOW_SHRINK bypass, read from this hook process's own env.
+ *
  * WRITE handling:
  *   Extracts tool_input.content → writes to temp file → validates → block or allow.
  *
@@ -46,10 +54,14 @@ const PROJECT_ROOT = resolve(SCRIPTS_DIR, '../..');
 const ORCHSTATE_PATH = resolve(PROJECT_ROOT, 'docs/data/orch/orch-state.json');
 
 // ORCH_HOOK_VALIDATOR — override validator path (test coverage for fail-open infra paths).
+// ORCH_HOOK_CONSERVATION_CHECK — override conservation-check path (same test-coverage intent).
 // ORCH_HOOK_BUN_BIN  — override bun binary (test coverage for spawn-fail fail-open path).
-// Both overrides default to the production values when env vars are absent.
+// All overrides default to the production values when env vars are absent.
 const VALIDATOR_PATH =
   process.env.ORCH_HOOK_VALIDATOR ?? resolve(PROJECT_ROOT, 'scripts/orch-validate.mjs');
+const CONSERVATION_CHECK_PATH =
+  process.env.ORCH_HOOK_CONSERVATION_CHECK ??
+  resolve(PROJECT_ROOT, 'scripts/orch-conservation-check.mjs');
 const BUN_BIN = process.env.ORCH_HOOK_BUN_BIN ?? 'bun';
 
 // ── Block helper ─────────────────────────────────────────────────────────────
@@ -89,6 +101,15 @@ if (!existsSync(VALIDATOR_PATH)) {
   process.stderr.write(
     `[orch-state-hook] WARN: validator not found at ${VALIDATOR_PATH} — ` +
     `allowing write through (infrastructure fail-open; run SSOT-W1-ZOD-VALIDATOR-CLI to restore)\n`
+  );
+  process.exit(0);
+}
+
+// Conservation-check script missing = INFRASTRUCTURE failure → FAIL-OPEN (same policy as above).
+if (!existsSync(CONSERVATION_CHECK_PATH)) {
+  process.stderr.write(
+    `[orch-state-hook] WARN: conservation-check not found at ${CONSERVATION_CHECK_PATH} — ` +
+    `allowing write through (infrastructure fail-open; run FIX-ORCHSTATE-CONSERVATION-GUARD-CIRCUIT-BREAKER to restore)\n`
   );
   process.exit(0);
 }
@@ -163,6 +184,42 @@ try {
     // Truncate to keep the JSON block reason readable
     const truncated = detail.length > 600 ? detail.slice(0, 600) + ' …(truncated)' : detail;
     block(`schema validation failed (exit ${result.status}): ${truncated}`);
+  }
+
+  // Schema validation passed — Stage 2 parity: conservation circuit-breaker
+  // (FIX-ORCHSTATE-CONSERVATION-GUARD-CIRCUIT-BREAKER). Compares this
+  // proposal's whole-board totals against the CURRENT on-disk live file.
+  // Skipped when the live file does not exist yet (first-time create — no
+  // baseline to shrink against). Honors ORCH_APPLY_ALLOW_SHRINK from this
+  // hook process's own env — set ONLY by the 2 legitimate bulk-eviction
+  // writers (scripts/orch-cold-evict.sh, docs/agents/pm/flow/task-archive.md);
+  // neither of those calls the Write/Edit tools directly (they write via
+  // orch-apply.sh), so in practice this branch fires without the bypass set
+  // — it is defense-in-depth, not the load-bearing gate (brief §4.3).
+  if (existsSync(ORCHSTATE_PATH)) {
+    const conservationResult = spawnSync(
+      BUN_BIN,
+      [CONSERVATION_CHECK_PATH, ORCHSTATE_PATH, PROPOSAL_TMP],
+      { encoding: 'utf-8', cwd: PROJECT_ROOT, timeout: 15000 }
+    );
+
+    if (conservationResult.error) {
+      // spawn failed → allow through (infra fail-open, same policy as validator spawn above)
+      process.stderr.write(
+        `[orch-state-hook] conservation-check spawn error: ${conservationResult.error.message}\n`
+      );
+    } else if (conservationResult.status === 1) {
+      const stderr = (conservationResult.stderr ?? '').trim();
+      const stdout = (conservationResult.stdout ?? '').trim();
+      const detail = stderr || stdout || `exit ${conservationResult.status}`;
+      const truncated = detail.length > 600 ? detail.slice(0, 600) + ' …(truncated)' : detail;
+      block(`conservation check failed: ${truncated}`);
+    } else if (conservationResult.status !== 0) {
+      // exit 3 (usage/file error) or any other non-1 status — infra class, fail-open (never block).
+      process.stderr.write(
+        `[orch-state-hook] WARN: conservation-check usage/infra error (exit ${conservationResult.status}) — allowing through\n`
+      );
+    }
   }
 
   // Validation passed — allow the write

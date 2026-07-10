@@ -277,6 +277,178 @@ fi
 assert_real_live_unchanged "HAPPY"
 
 # =============================================================================
+# CONSERVATION-GUARD TESTS (FIX-ORCHSTATE-CONSERVATION-GUARD-CIRCUIT-BREAKER)
+# =============================================================================
+# Brief: docs/architecture-briefs/2026-07-10-auditor-orchstate-conservation-guard.md §8
+#
+# Populated fixture: 320 backlog tasks (>=312 per the ticket's literal ask) +
+# 340 done_verified tasks (sized so emptying done_verified[] ALONE crosses the
+# 50% floor: 320/(320+340) < 0.5 — needed so SHRINK-ALLOWED tests a genuine
+# violation, not a no-op) + 100 signal_queue rows (>=97 per the ticket's
+# literal ask). Mirrors the empirically-reproduced incident scale (commit
+# de595a44: 320 backlog -> 0, 100 signal rows -> 1).
+#
+# COLLAPSE      — CONFIRMED RED before this fix (§3 of the brief: exit 0,
+#                 fixture destroyed); must be GREEN (exit 1, byte-unchanged) after.
+# APPEND-HAPPY  — regression guard: a normal single-row append must NOT be blocked.
+# SHRINK-ALLOWED — proves the ORCH_APPLY_ALLOW_SHRINK bypass (wired into
+#                 scripts/orch-cold-evict.sh + docs/agents/pm/flow/task-archive.md)
+#                 is honored.
+# =============================================================================
+CONSERVATION_LIVE="$FIXTURE_DIR/conservation-live.json"
+N_BACKLOG=320
+N_DONE_VERIFIED=340
+N_SIGNAL=100
+
+build_conservation_fixture() {
+  jq -n \
+    --argjson n_backlog "$N_BACKLOG" \
+    --argjson n_dv "$N_DONE_VERIFIED" \
+    --argjson n_signal "$N_SIGNAL" \
+    '{
+      "_meta": {"schema":"v4","ssot":true,"updated_at":"2026-06-01T00:00:00Z","updated_by":"fixture"},
+      "head": {"status":"idle","active_task_id":null,"next_agent":null},
+      "task_board": {
+        "backlog": [range($n_backlog) | {id: ("POP-BACKLOG-" + (. | tostring)), status: "BACKLOG"}],
+        "done_verified": [range($n_dv) | {id: ("POP-DV-" + (. | tostring)), status: "DONE_VERIFIED"}],
+        "active_sprints": []
+      },
+      "signal_queue": {
+        "_updated_at": "2026-06-01T00:00:00Z",
+        "_updated_by": "fixture",
+        "rows": [range($n_signal) | {id: ("POP-SIGNAL-" + (. | tostring)), summary: "fixture row", severity: "INFO", status: "NEW"}]
+      }
+    }' > "$CONSERVATION_LIVE"
+}
+build_conservation_fixture
+
+# Sanity: fixture itself must be schema-valid standalone (same pattern the
+# architect used for the live-exploitability repro in the brief §3).
+if ! bun "$VALIDATOR" "$CONSERVATION_LIVE" >/dev/null 2>&1; then
+  fail "CONSERVATION setup — populated fixture failed standalone validation (test bug, not product bug)"
+fi
+
+CONSERVATION_HASH_BEFORE=$(file_hash "$CONSERVATION_LIVE")
+
+# ─────────────────────────────────────────────────────────────────────────
+# COLLAPSE — scaffold candidate mirroring commit de595a44's exact shape:
+# minimal valid .head, task_board={backlog:[],active_sprints:[]} only
+# (done_verified omitted -> defaults to [] downstream), signal_queue.rows =
+# [1 fabricated row].
+# ─────────────────────────────────────────────────────────────────────────
+COLLAPSE_CANDIDATE='{"_meta":{"schema":"v4","ssot":true,"updated_at":"2026-06-01T00:01:00Z","updated_by":"fixture-collapse"},"head":{"status":"idle","active_task_id":null,"next_agent":null},"task_board":{"backlog":[],"active_sprints":[]},"signal_queue":{"_updated_at":"2026-06-01T00:01:00Z","_updated_by":"fixture-collapse","rows":[{"id":"POP-SIGNAL-0","summary":"fixture row","severity":"INFO","status":"NEW"}]}}'
+
+EXIT_COLLAPSE=0
+printf '%s' "$COLLAPSE_CANDIDATE" \
+  | ORCH_APPLY_LIVE_FILE_OVERRIDE="$CONSERVATION_LIVE" bash "$APPLY_SH" 2>/dev/null \
+  || EXIT_COLLAPSE=$?
+
+if [ "$EXIT_COLLAPSE" -eq 1 ]; then
+  pass "COLLAPSE — full-doc collapse candidate rejected — exit 1"
+else
+  fail "COLLAPSE — expected exit 1, got $EXIT_COLLAPSE"
+fi
+
+CONSERVATION_HASH_AFTER_COLLAPSE=$(file_hash "$CONSERVATION_LIVE")
+if [ "$CONSERVATION_HASH_BEFORE" = "$CONSERVATION_HASH_AFTER_COLLAPSE" ]; then
+  pass "COLLAPSE — populated fixture UNCHANGED (no rename occurred)"
+else
+  fail "COLLAPSE — populated fixture CHANGED (CRITICAL — conservation guard did not block the write)"
+fi
+assert_real_live_unchanged "COLLAPSE"
+
+# ─────────────────────────────────────────────────────────────────────────
+# APPEND-HAPPY — regression guard: the circuit-breaker must NOT block a
+# normal, legitimate single-row append (e.g. system-auditor's real
+# signal-dashboard WRITE).
+# ─────────────────────────────────────────────────────────────────────────
+APPEND_CANDIDATE=$(jq --arg now "2026-06-01T00:02:00Z" \
+  '.signal_queue.rows += [{"id":"POP-SIGNAL-APPENDED","summary":"legit append","severity":"INFO","status":"NEW"}]
+   | .signal_queue._updated_at = $now | ._meta.updated_at = $now' \
+  "$CONSERVATION_LIVE")
+
+PRE_APPEND_SIGNAL_N=$(jq '.signal_queue.rows | length' "$CONSERVATION_LIVE")
+PRE_APPEND_BACKLOG_N=$(jq '.task_board.backlog | length' "$CONSERVATION_LIVE")
+
+EXIT_APPEND=0
+printf '%s' "$APPEND_CANDIDATE" \
+  | ORCH_APPLY_LIVE_FILE_OVERRIDE="$CONSERVATION_LIVE" bash "$APPLY_SH" 2>/dev/null \
+  || EXIT_APPEND=$?
+
+if [ "$EXIT_APPEND" -eq 0 ]; then
+  pass "APPEND-HAPPY — legit single-row append accepted — exit 0"
+else
+  fail "APPEND-HAPPY — expected exit 0, got $EXIT_APPEND"
+fi
+
+POST_APPEND_SIGNAL_N=$(jq '.signal_queue.rows | length' "$CONSERVATION_LIVE" 2>/dev/null || echo -1)
+POST_APPEND_BACKLOG_N=$(jq '.task_board.backlog | length' "$CONSERVATION_LIVE" 2>/dev/null || echo -1)
+
+if [ "$POST_APPEND_SIGNAL_N" = "$((PRE_APPEND_SIGNAL_N + 1))" ]; then
+  pass "APPEND-HAPPY — signal_queue.rows.length == pre+1"
+else
+  fail "APPEND-HAPPY — signal_queue.rows.length expected $((PRE_APPEND_SIGNAL_N + 1)), got $POST_APPEND_SIGNAL_N"
+fi
+
+if [ "$POST_APPEND_BACKLOG_N" = "$PRE_APPEND_BACKLOG_N" ]; then
+  pass "APPEND-HAPPY — task_board.backlog.length unchanged"
+else
+  fail "APPEND-HAPPY — task_board.backlog.length expected $PRE_APPEND_BACKLOG_N, got $POST_APPEND_BACKLOG_N"
+fi
+
+ALL_LANES_ARRAYS=$(jq '[.task_board.backlog, .task_board.active_sprints, (.task_board.done_verified // [])] | map(type == "array") | all' "$CONSERVATION_LIVE" 2>/dev/null || echo "false")
+if [ "$ALL_LANES_ARRAYS" = "true" ]; then
+  pass "APPEND-HAPPY — all lanes remain arrays"
+else
+  fail "APPEND-HAPPY — a lane is no longer an array"
+fi
+
+assert_real_live_unchanged "APPEND-HAPPY"
+
+# ─────────────────────────────────────────────────────────────────────────
+# SHRINK-ALLOWED — same populated fixture (post-APPEND-HAPPY state) +
+# done_verified[] emptied (a genuine >50% task_total shrink on its own:
+# 320/(320+340) < 0.5) + ORCH_APPLY_ALLOW_SHRINK set -> proves
+# scripts/orch-cold-evict.sh / docs/agents/pm/flow/task-archive.md's bypass
+# is honored and will not regress once the guard lands. A no-bypass control
+# run proves the fixture genuinely trips the floor (not a vacuous pass).
+# ─────────────────────────────────────────────────────────────────────────
+SHRINK_CANDIDATE=$(jq --arg now "2026-06-01T00:03:00Z" \
+  '.task_board.done_verified = [] | ._meta.updated_at = $now' \
+  "$CONSERVATION_LIVE")
+
+EXIT_SHRINK_CONTROL=0
+printf '%s' "$SHRINK_CANDIDATE" \
+  | ORCH_APPLY_LIVE_FILE_OVERRIDE="$CONSERVATION_LIVE" bash "$APPLY_SH" 2>/dev/null \
+  || EXIT_SHRINK_CONTROL=$?
+
+if [ "$EXIT_SHRINK_CONTROL" -eq 1 ]; then
+  pass "SHRINK-ALLOWED (control, no bypass) — done_verified[] wipe rejected — exit 1"
+else
+  fail "SHRINK-ALLOWED (control, no bypass) — expected exit 1, got $EXIT_SHRINK_CONTROL (fixture does not actually trip the floor)"
+fi
+
+EXIT_SHRINK=0
+printf '%s' "$SHRINK_CANDIDATE" \
+  | ORCH_APPLY_LIVE_FILE_OVERRIDE="$CONSERVATION_LIVE" ORCH_APPLY_ALLOW_SHRINK="cold-evict-test" bash "$APPLY_SH" 2>/dev/null \
+  || EXIT_SHRINK=$?
+
+if [ "$EXIT_SHRINK" -eq 0 ]; then
+  pass "SHRINK-ALLOWED — done_verified[] wipe WITH ORCH_APPLY_ALLOW_SHRINK accepted — exit 0"
+else
+  fail "SHRINK-ALLOWED — expected exit 0 with bypass, got $EXIT_SHRINK"
+fi
+
+POST_SHRINK_DV_N=$(jq '.task_board.done_verified | length' "$CONSERVATION_LIVE" 2>/dev/null || echo -1)
+if [ "$POST_SHRINK_DV_N" = "0" ]; then
+  pass "SHRINK-ALLOWED — fixture done_verified[] emptied (rename applied)"
+else
+  fail "SHRINK-ALLOWED — expected done_verified[] length 0, got $POST_SHRINK_DV_N"
+fi
+
+assert_real_live_unchanged "SHRINK-ALLOWED"
+
+# =============================================================================
 # Summary
 # =============================================================================
 TOTAL=$((PASS+FAIL))

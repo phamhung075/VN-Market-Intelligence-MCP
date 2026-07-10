@@ -1,21 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-07-10 — FIX-BCTC-D3B-GATE-PEK-TRIGGERED-STATUS → REVIEW
-
-**Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (router-dispatched, D3b of the chain — D1/D2/D3A landed DONE_VERIFIED; D3c reconciliation job still BACKLOG, must be dispatched next)
-
-Removed the synchronous 0-row gate (bctc_table_rows/bctc_md_tables count → done/enrich_failed decided right after triggerExtraction) from `bctcPdfPullJob.ts` — `/pek-extract` is 202 fire-and-forget so the check was structurally guaranteed to read 0. After D2's shell-row upsert, now calls D3A's `triggerPekExtractionForReport(shellRow.id, filePath)` (new injectable dep, optional only for pre-D3B test ergonomics, always real in `makeProductionDeps()`) and unconditionally writes `bctc_vps_queue.status='pek_triggered'` — ALL 4 outcomes (202 queued, 503 market-hours, 502 pdf_extractor_error, 502 unreachable) fold into `pek_triggered` (generalized the design doc's explicit 503-folding call to the other 2 undocumented outcomes: no outcome is a proven synchronous verdict at this layer, only D3C's future row-count check is). Legacy scalar `triggerExtraction` (Step 5) UNCHANGED — separate pipeline/tables. Removed the now-dead `enrichFailed` result field + `sendBugFn` option (BUG-notify responsibility moves to D3C).
-
-R-HIGH-1 (folded in): `vpsHealthPoller.ts` + `freshnessSlaMonitorJob.ts` active_count queries and `bctcQueueEnricherJob.ts`'s `isEarningsWindowActive()` now include `pek_triggered` as active/in-progress. Deliberately did NOT add it to bctcQueueEnricherJob's Arm-2 grace-period sweep (would wrongly reset in-flight PEK rows) — documented inline. Repo-wide grep confirmed exactly these 3 files have `bctc_vps_queue.status IN(...)` lists; `fetchStatusHandler.ts`'s dashboard SUM(CASE) counters are a separate display-only pattern, flagged not touched.
-
-Tests: `bctc-pdf-pull-job.test.ts` +4 (TC-14..17: call-contract, 503/error-folding, shell-row-failure-skip), 5 pre-existing status asserts updated. `FIX-BCTC-ENRICH-SILENT-0ROWS.test.ts` REWRITTEN — its whole premise (the removed gate) is obsolete; explicit SUPERSEDED header maps every old AC, 3 tests now prove row-count no longer branches the outcome. `FIX-BCTC-PDFPULL-JOB-OVERLAP-GUARD` + `FIX-BCTC-VPS-QUEUE-SYNC` (1 genuine miss caught by first full sweep, fixed): done→pek_triggered. `FIX-BCTC-FRESHNESS-GATE` +1, `FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH` +1. Full BCTC per-file sweep (~105 files) 0 fail after the fix above; `1294b-bctc-fallback.test.ts` times out standalone — pre-existing/unrelated (imports only `fetchParseAndStoreBctc`, zero overlap; matches prior root-cause note). tsc clean. mock-guard PASS. toolCount=183 + scheduler count unaffected (no tool/cron file touched).
-
-**D3C dependency flag:** any `pek_triggered` row created after this lands has NO path to done/enrich_failed until `bctcExtractReconcileJob.ts` (FIX-BCTC-D3C-RECONCILE-JOB) lands — expected/acceptable for this review window, but D3C must dispatch immediately after DONE_VERIFIED.
-
-Commit: NOT committed by this agent — router RAW-verifies and commits. Board: READY→REVIEW via orch-apply.sh, `next_agent=qa`.
-
-Zone health: tsc clean, new+rewritten tests pass, full BCTC-scoped sweep clean (1 pre-existing unrelated flaky file), mock-guard PASS, toolCount=183 unchanged | HEALTHY.
-
 ## 2026-07-10 — FIX-BCTC-D3C-RECONCILE-JOB → REVIEW
 
 **Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (D3c — closes the chain: D1/D2/D3A/D3B all landed DONE_VERIFIED; this is the FINAL leaf, architecturally urgent since D3B ships `pek_triggered` with no exit path)
@@ -47,3 +31,19 @@ Verification: `bun tsc --noEmit` clean, `mock-guard.sh --files` PASS (both files
 Commit: NOT committed by this agent — router RAW-verifies and commits per the D1/D2/D3A/D3B/D3C dispatch discipline. Board: `READY`→`REVIEW` via `orch-apply.sh` (new dev-side guard script `scripts/dev-fix-bctc-r-high-2-market-hours-guard-ready-to-review.jq`, mirrors the D3C precedent script), `next_agent=qa`.
 
 Zone health: tsc clean, new test 3/3 pass (9 expect()), 26/26 in the extended file, 4 sibling files 26/26 pass zero regression, mock-guard PASS, toolCount/scheduler-count unchanged, guard-the-call-not-the-state-machine contract verified (updatePekTriggered.run unconditional either branch) | HEALTHY.
+
+## 2026-07-10 — FIX-ORCHSTATE-CONSERVATION-GUARD-CIRCUIT-BREAKER → REVIEW
+
+**Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (router-adjudicated DIRECT dispatch, supervised:true, bypassed BOUNDED-1 FIFO — closes the content-safety half of FIX-AUDITOR-ORCHSTATE-FULLDOC-OVERWRITE-CLOBBERS-SSOT)
+
+New `scripts/orch-conservation-check.mjs` (bun) — whole-board magnitude-ratio guard (task_total = 6 flat lanes + active/closed sprint tasks per brief formula; signal_total = signal_queue.rows.length; FLOOR_RATIO=0.5, MIN_BASELINE=10, `ORCH_APPLY_ALLOW_SHRINK` bypass mirroring `ORCH_APPLY_LIVE_FILE_OVERRIDE`). Wired as `orch-apply.sh` Stage 2 (after schema validation, before CAS-mtime rename) + `orch-state-hook-prewrite.mjs` PreToolUse parity (same fail-open-on-infra-missing contract as the existing validator check). Bypass wired ONLY into `orch-cold-evict.sh` (its internal `orch-apply.sh` call) + `pm/flow/task-archive.md` Sprint Eviction step — the 2 legitimate bulk-eviction writers per the brief; audited `orch-backlog-stub.sh` — confirmed no bypass needed (field-strip only, backlog length unchanged).
+
+Extended (not forked) `scripts/test/orch-apply-wrapper-tests.sh` with COLLAPSE/APPEND-HAPPY/SHRINK-ALLOWED (320-backlog/340-done_verified/100-signal populated fixture). Proved RED-before (git-reverted `orch-apply.sh`, reran same extended harness: COLLAPSE exit 0, fixture destroyed) → GREEN-after (restored fix: exit 1, byte-unchanged) — both runs shown, not just asserted. Full harness 31/31. Extended pre-existing `orch-state-hook.test.mjs`: 2 tests needed `ORCH_HOOK_CONSERVATION_CHECK=/nonexistent` isolation (they compare minimal synthetic Write-tool content against the REAL live file's much larger totals — correctly blocking that IS the guard working as designed, not a bug) + 1 new fail-open parity test. 19/19.
+
+**Incident (disclosed, recovered same tool-call):** an ad-hoc `orch-cold-evict.sh` smoke test against a throwaway `ORCH_STATE`-overridden fixture briefly overwrote the REAL `docs/data/orch/orch-state.json` — its internal `orch-apply.sh` call was not propagating `ORCH_STATE` into `ORCH_APPLY_LIVE_FILE_OVERRIDE` (pre-existing latent gap, not introduced by this task). Caught immediately (count mismatch vs the just-run `--dry-run` preview), recovered via `git checkout` to last commit (10a9a934d), hash-verified clean. Fixed as in-scope safety hardening: both `orch-cold-evict.sh` and `orch-backlog-stub.sh` now explicitly propagate `ORCH_APPLY_LIVE_FILE_OVERRIDE="${ORCH_STATE}"` (no-op in production — both already default to the identical canonical path); re-verified end-to-end against a throwaway fixture with real-file-hash-unchanged proof.
+
+Live-confirmed in production: this row's own backlog→in_progress move passed the guard with zero friction (task_total live=538 candidate=538), proving normal lane moves net to zero as designed. Zero `apps/mcp-server/src` changes (verified). CANONICAL pointers added to `docs/policies/dev-standards.md`.
+
+Commit: NOT committed by this agent — router RAW-verifies (re-run both test suites) and commits. Board: `BACKLOG`→`IN_PROGRESS`→`REVIEW` via `orch-apply.sh` (2 new dev-side jq scripts), `next_agent=router`.
+
+Zone health: harness 31/31 PASS (RED-before/GREEN-after shown), hook tests 19/19 PASS, tsc N/A (no .ts touched), zero apps/mcp-server/src changes, real orch-state.json hash-verified unchanged post-incident-recovery | HEALTHY.

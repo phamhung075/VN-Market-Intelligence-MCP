@@ -63,9 +63,15 @@
      `{ "id": "QUARANTINED-NULL-ID-<index>", "quarantine_reason": "null id", "tasks": [...] }`
    - Remove from `active_sprints[]` (no hot-file stub — corrupt artifacts)
 
-4. **Apply via gated wrapper:** pipe candidate through orch-apply.sh (validates + CAS-mtime + atomic rename):
+4. **Apply via gated wrapper:** pipe candidate through orch-apply.sh (validates + CAS-mtime + atomic rename).
+   NARROW NAMED BYPASS: this write moves sprints out of `active_sprints[]` into one-line
+   `closed_sprints[]` stubs (no `tasks[]`), which legitimately shrinks `task_total` — set
+   `ORCH_APPLY_ALLOW_SHRINK` (FIX-ORCHSTATE-CONSERVATION-GUARD-CIRCUIT-BREAKER) so the
+   conservation guard does not reject it. This is one of only 2 call sites in the repo
+   permitted to set this env var — do not copy this pattern elsewhere without architect sign-off.
    ```bash
-   cat "$TMP" | bash "$PROJECT_ROOT/scripts/orch-apply.sh" \
+   cat "$TMP" | ORCH_APPLY_ALLOW_SHRINK="pm/task-archive.md:sprint-eviction" \
+     bash "$PROJECT_ROOT/scripts/orch-apply.sh" \
      || { rm -f "$TMP"; echo "[pm/task-archive] ABORTED: orch-apply.sh failed" >&2; exit 1; }
    rm -f "$TMP"
    ```

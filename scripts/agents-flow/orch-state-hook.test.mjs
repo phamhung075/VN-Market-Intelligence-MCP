@@ -84,6 +84,41 @@ function runPrewrite(stdinData) {
   });
 }
 
+/**
+ * Invoke the prewrite hook with extra env overrides (test coverage for
+ * fail-open infra paths — ORCH_HOOK_VALIDATOR / ORCH_HOOK_CONSERVATION_CHECK /
+ * ORCH_HOOK_BUN_BIN — and for isolating the schema-validator stage from the
+ * conservation-check stage, see "conservation-check bypassed" note below).
+ */
+function runPrewriteWithEnv(stdinData, extraEnv) {
+  return spawnSync('bun', [HOOK_MJS], {
+    input: stdinData,
+    encoding: 'utf-8',
+    cwd: PROJECT_ROOT,
+    timeout: 30000,
+    env: { ...process.env, ...extraEnv },
+  });
+}
+
+/**
+ * FIX-ORCHSTATE-CONSERVATION-GUARD-CIRCUIT-BREAKER note:
+ * The hook's conservation-check Stage 2 always compares the proposed content
+ * against the REAL on-disk docs/data/orch/orch-state.json (same hardcoded
+ * ORCHSTATE_PATH the pre-existing Edit-path branch already reads from — this
+ * test suite's Write-path payloads intentionally carry a minimal synthetic
+ * `buildOrchContent()` document to test SCHEMA validation in isolation, not a
+ * realistic full-board replacement). Comparing that minimal doc's task_total
+ * (1) against the live production board's real (much larger) total correctly
+ * trips the new guard — this IS the conservation guard doing its job (a
+ * minimal hand-authored scaffold overwriting the real file is exactly commit
+ * de595a44's failure mode). Tests below that exist to prove the SCHEMA
+ * validator's pass-through behavior (not the conservation guard, which has
+ * its own dedicated coverage in scripts/test/orch-apply-wrapper-tests.sh)
+ * pass ORCH_HOOK_CONSERVATION_CHECK=/nonexistent to isolate that stage via
+ * the same fail-open infra-missing contract already covered below.
+ */
+const CONSERVATION_CHECK_DISABLED = { ORCH_HOOK_CONSERVATION_CHECK: '/nonexistent/orch-conservation-check.mjs' };
+
 // ── QA-5: Write of bad orch-state is blocked ──────────────────────────────────
 
 describe('QA-5 — Write of invalid orch-state is BLOCKED', () => {
@@ -133,7 +168,10 @@ describe('AC-2 — PreToolUse Write and Edit paths', () => {
       buildOrchContent('BACKLOG'),
     );
 
-    const result = runPrewrite(payload);
+    // Conservation-check disabled: this test isolates schema-validator
+    // pass-through behavior, not the (separately covered) conservation guard
+    // — see CONSERVATION_CHECK_DISABLED note above.
+    const result = runPrewriteWithEnv(payload, CONSERVATION_CHECK_DISABLED);
 
     expect(result.status).toBe(0);
     expect(result.stdout.trim()).toBe('');
@@ -285,15 +323,7 @@ describe('AC-6 — Non-orch Write/Edit calls pass through', () => {
 //   ORCH_HOOK_BUN_BIN   — override bun binary path (default: bun)
 
 describe('WEDGE-GUARD — infrastructure failures MUST allow write through (fail-open)', () => {
-  function runPrewriteWithEnv(stdinData, extraEnv) {
-    return spawnSync('bun', [HOOK_MJS], {
-      input: stdinData,
-      encoding: 'utf-8',
-      cwd: PROJECT_ROOT,
-      timeout: 30000,
-      env: { ...process.env, ...extraEnv },
-    });
-  }
+  // Uses the module-scope runPrewriteWithEnv() helper defined above.
 
   test('validator missing (ORCH_HOOK_VALIDATOR=/nonexistent) → allow through (exit 0, no block json)', () => {
     const payload = writePayload(
@@ -347,14 +377,33 @@ describe('WEDGE-GUARD — infrastructure failures MUST allow write through (fail
   test('valid orch-state write with production validator → passes unimpeded (exit 0)', () => {
     // Regression gate: the production validator path must continue to allow valid writes.
     // This exercises the full happy path: hook intercepts → validator runs → PASS → exit 0.
+    // Conservation-check disabled: this test isolates schema-validator pass-through
+    // behavior — see CONSERVATION_CHECK_DISABLED note above.
     const payload = writePayload(
       'docs/data/orch/orch-state.json',
       buildOrchContent('BACKLOG'),
     );
 
-    const result = runPrewrite(payload); // uses production env (no overrides)
+    const result = runPrewriteWithEnv(payload, CONSERVATION_CHECK_DISABLED);
 
     expect(result.status).toBe(0);
     expect(result.stdout.trim()).toBe('');
+  });
+
+  test('conservation-check missing (ORCH_HOOK_CONSERVATION_CHECK=/nonexistent) → allow through (exit 0, no block json)', () => {
+    // Parity with the validator-missing case above: an infrastructure failure on the
+    // Stage-2 conservation gate must FAIL-OPEN, not wedge every orch-state write.
+    const payload = writePayload(
+      'docs/data/orch/orch-state.json',
+      buildOrchContent('BACKLOG'),
+    );
+
+    const result = runPrewriteWithEnv(payload, {
+      ORCH_HOOK_CONSERVATION_CHECK: '/nonexistent/orch-conservation-check.mjs',
+    });
+
+    expect(result.status).toBe(0);
+    expect(result.stdout.trim()).toBe('');
+    expect(result.stderr).toContain('WARN');
   });
 });

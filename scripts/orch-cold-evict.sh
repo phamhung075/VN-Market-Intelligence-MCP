@@ -479,10 +479,35 @@ while [[ ${ATTEMPT} -lt ${MTIME_CAS_RETRIES} ]]; do
   mv "${COLD_TEMP}" "${COLD_FILE}"
   COLD_TEMP=""
 
-  # Cold is confirmed written — now safely write hot via gated wrapper
+  # Cold is confirmed written — now safely write hot via gated wrapper.
+  #
+  # ORCH_APPLY_LIVE_FILE_OVERRIDE="${ORCH_STATE}": explicitly propagates this
+  # script's own ORCH_STATE override into orch-apply.sh's LIVE_FILE
+  # resolution. No-op in production (both default to the identical canonical
+  # path) — REQUIRED for safety whenever ORCH_STATE is overridden (e.g. a
+  # throwaway test fixture): without this, orch-apply.sh would silently fall
+  # back to its OWN default (the REAL production orch-state.json) even though
+  # every preceding step in this script operated on the override path —
+  # i.e. it would compute an eviction against a test fixture and then apply
+  # the resulting (drastically smaller) candidate to the REAL live file.
+  # Discovered empirically during FIX-ORCHSTATE-CONSERVATION-GUARD-CIRCUIT-
+  # BREAKER verification (recovered via `git checkout` — see brief §incident
+  # note); this propagation gap pre-dates and is independent of the
+  # conservation-guard bypass below.
+  #
+  # NARROW NAMED BYPASS: this eviction run intentionally shrinks task_board/
+  # signal_queue counts (that is this script's entire purpose) — honor
+  # orch-apply.sh's ORCH_APPLY_ALLOW_SHRINK conservation-guard bypass
+  # (FIX-ORCHSTATE-CONSERVATION-GUARD-CIRCUIT-BREAKER; mirrors the
+  # ORCH_APPLY_LIVE_FILE_OVERRIDE test-only precedent). This is one of only 2
+  # call sites in the repo permitted to set ORCH_APPLY_ALLOW_SHRINK — do not
+  # copy this pattern elsewhere without architect sign-off.
   log "Writing hot file (via orch-apply.sh gated write): ${ORCH_STATE}"
   set +e
-  cat "${HOT_TEMP}" | bash "${REPO_ROOT}/scripts/orch-apply.sh"
+  cat "${HOT_TEMP}" \
+    | ORCH_APPLY_LIVE_FILE_OVERRIDE="${ORCH_STATE}" \
+      ORCH_APPLY_ALLOW_SHRINK="orch-cold-evict.sh:scheduled-eviction" \
+      bash "${REPO_ROOT}/scripts/orch-apply.sh"
   apply_exit=${PIPESTATUS[1]}
   set -e
   if [[ ${apply_exit} -eq 0 ]]; then

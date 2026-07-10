@@ -300,10 +300,19 @@ while [[ ${ATTEMPT} -lt ${MTIME_CAS_RETRIES} ]]; do
   mv "${DETAIL_TEMP}" "${DETAIL_FILE}"
   DETAIL_TEMP=""
 
-  # Cold is confirmed written — now safely write hot via gated wrapper
+  # Cold is confirmed written — now safely write hot via gated wrapper.
+  # ORCH_APPLY_LIVE_FILE_OVERRIDE="${ORCH_STATE}": explicitly propagates this
+  # script's own ORCH_STATE override into orch-apply.sh's LIVE_FILE
+  # resolution. No-op in production (both default to the identical canonical
+  # path) — REQUIRED for safety whenever ORCH_STATE is overridden (e.g. a
+  # throwaway test fixture); see scripts/orch-cold-evict.sh for the same fix
+  # + the incident that motivated it (FIX-ORCHSTATE-CONSERVATION-GUARD-
+  # CIRCUIT-BREAKER verification). This script does not need
+  # ORCH_APPLY_ALLOW_SHRINK — it strips fields, it does not remove items
+  # (task_board.backlog length is unchanged by this script).
   log "Writing hot file (via orch-apply.sh gated write): ${ORCH_STATE}"
   set +e
-  cat "${HOT_TEMP}" | bash "${REPO_ROOT}/scripts/orch-apply.sh"
+  cat "${HOT_TEMP}" | ORCH_APPLY_LIVE_FILE_OVERRIDE="${ORCH_STATE}" bash "${REPO_ROOT}/scripts/orch-apply.sh"
   apply_exit=${PIPESTATUS[1]}
   set -e
   if [[ ${apply_exit} -eq 0 ]]; then

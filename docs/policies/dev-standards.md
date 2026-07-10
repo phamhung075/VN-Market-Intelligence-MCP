@@ -78,10 +78,13 @@ bash scripts/fb-data-integrity-gate.sh <post-file> [YYYY-MM-DD] [snapshot-json-f
 # Canonical call-site idiom (minimal churn over existing jq pattern):
 #   jq '<filter>' docs/data/orch/orch-state.json | bash "$PROJECT_ROOT/scripts/orch-apply.sh"
 # Exit 0 = success (candidate atomically applied).
-# Exit 1 = validation failed (dup-key / schema / dangling refs) — live file untouched.
+# Exit 1 = validation failed (dup-key / schema / dangling refs) OR conservation check failed
+#   (candidate's task_total/signal_total dropped below FLOOR_RATIO of live) — live file untouched.
 # Exit 2 = CAS mtime mismatch (concurrent writer) — caller should retry.
 # Exit 3 = usage error (empty stdin / live file missing).
-# Owning task: SSOT-W1-ORCH-APPLY-WRAPPER; validator wired: bun scripts/orch-validate.mjs (same SSOT)
+# Owning task: SSOT-W1-ORCH-APPLY-WRAPPER; validator wired: bun scripts/orch-validate.mjs (same SSOT);
+#   conservation guard wired: bun scripts/orch-conservation-check.mjs (FIX-ORCHSTATE-CONSERVATION-
+#   GUARD-CIRCUIT-BREAKER — see canonical entry below)
 # Routed writers: po-s*/router-*.jq apply idiom, scripts/orch-backlog-stub.sh,
 #   scripts/orch-cold-evict.sh, dev-team WF-1 head-reset, signal-dashboard WRITE/READ/PRUNE,
 #   pm/flow/main.md task-status writes, po/sprint-signoff.md, developer/fixer/qa WF-1 STOP-RELEASE,
@@ -89,6 +92,33 @@ bash scripts/fb-data-integrity-gate.sh <post-file> [YYYY-MM-DD] [snapshot-json-f
 # Integration test (exit-code 0/1/2/3 + live-UNCHANGED guarantee): bash scripts/test/orch-apply-wrapper-tests.sh
 # Writer audit (all ~290/tick sites categorized): docs/signals/orch-state-writer-audit.json
 ```
+
+**CANONICAL: Orch-state conservation circuit-breaker (FIX-ORCHSTATE-CONSERVATION-GUARD-CIRCUIT-BREAKER)**
+```bash
+# Standalone invocation (usually called internally by orch-apply.sh Stage 2 — rarely called directly):
+bun scripts/orch-conservation-check.mjs <liveFilePath> <candidateFilePath>
+# Exit 0 = OK (within floor, live total below MIN_BASELINE, or bypass honored).
+# Exit 1 = conservation violated — candidate's task_total/signal_total dropped below
+#   CONSERVATION_FLOOR_RATIO (default 0.5) of the live value, live total >= CONSERVATION_MIN_BASELINE
+#   (default 10), and no bypass set.
+# Exit 3 = usage error (missing args / file not found / unparseable).
+```
+Whole-board magnitude-ratio design (NOT naive per-lane never-decrease — a normal single-task lane
+move nets to zero on `task_total`, so it never trips the floor). Closes the empirically
+live-exploitable full-doc-collapse class (commit `de595a44`: 320 backlog rows -> 0, 100 signal
+rows -> 1, exit 0, no warning — reproduced live against current code before this fix landed).
+Shared by `scripts/orch-apply.sh` (Stage 2 gate, after schema validation, before the CAS-mtime
+rename — load-bearing) and `scripts/agents-flow/orch-state-hook-prewrite.mjs` (PreToolUse parity —
+defense-in-depth, secondary). Bypass: `ORCH_APPLY_ALLOW_SHRINK=<reason>` — narrow named bypass
+(mirrors the `ORCH_APPLY_LIVE_FILE_OVERRIDE` test-only precedent), wired ONLY into
+`scripts/orch-cold-evict.sh` and `docs/agents/pm/flow/task-archive.md` (the 2 already-shipped
+legitimate bulk-eviction writers). NEVER set it anywhere else — in particular, never from
+system-auditor / signal-dashboard WRITE.
+Owning brief: `docs/architecture-briefs/2026-07-10-auditor-orchstate-conservation-guard.md`
+(§4.1 metric formula, §4.2 rejected-design proof, §4.3 hook-parity rationale).
+Test coverage: `bash scripts/test/orch-apply-wrapper-tests.sh` (COLLAPSE / APPEND-HAPPY /
+SHRINK-ALLOWED cases) + `bun test scripts/agents-flow/orch-state-hook.test.mjs` (hook parity +
+fail-open infra path).
 
 **CANONICAL: Orch-state Claude hook gate (SSOT-INTEGRITY-PERIMETER SSOT-W1-HOOK-ENFORCE)**
 ```bash
@@ -146,6 +176,11 @@ KEEP_RECENT_DONE=10 DONE_MAX_AGE_DAYS=7 bash scripts/orch-cold-evict.sh --dry-ru
 ```
 Evicts done[], done_verified[], terminal active_sprints[], terminal signal_queue.rows[], and signal_queue.archive[] to docs/data/orch/archive/YYYY-MM.json.
 Atomic temp-then-rename; cold-first ordering; mtime-CAS retry; idempotent.
+Internal orch-apply.sh call propagates `ORCH_APPLY_LIVE_FILE_OVERRIDE="${ORCH_STATE}"` (no-op in
+production — REQUIRED whenever `ORCH_STATE` is overridden, e.g. testing against a throwaway
+fixture; without it orch-apply.sh silently falls back to its own default, the REAL live file) and
+sets `ORCH_APPLY_ALLOW_SHRINK` (this script is one of only 2 legitimate bulk-eviction bypass
+call sites — see FIX-ORCHSTATE-CONSERVATION-GUARD-CIRCUIT-BREAKER above).
 
 **CANONICAL: Backlog stub migration + cold detail writer (ORCH-STATE-HOT-COLD-SPLIT HSC-4)**
 ```bash
@@ -162,6 +197,10 @@ Strips prose from all backlog[] items in hot orch-state; moves full items (id-ke
 docs/data/orch/archive/backlog-detail.json. Adds detail_ref pointer to every stub.
 Atomic temp-then-rename; cold-first ordering; mtime-CAS retry; idempotent (existing cold wins).
 Lazy-load full detail for one id: `jq '.items["<id>"]' docs/data/orch/archive/backlog-detail.json`
+Internal orch-apply.sh call propagates `ORCH_APPLY_LIVE_FILE_OVERRIDE="${ORCH_STATE}"` (same
+no-op-in-production safety propagation as orch-cold-evict.sh above). Does NOT set
+`ORCH_APPLY_ALLOW_SHRINK` — this script only strips fields, `task_board.backlog` length is
+unchanged, so it never trips the conservation guard.
 
 **CANONICAL: Context-bloat backstop regression test (FIX-CTXBLOAT-ARCHIVE-CAP-OVERMATCH)**
 ```bash

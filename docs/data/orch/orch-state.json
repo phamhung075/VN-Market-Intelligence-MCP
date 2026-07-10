@@ -308,8 +308,8 @@
   ],
   "head": {
     "status": "idle",
-    "updated_at": "2026-07-10T15:56:53Z",
-    "updated_by": "architect",
+    "updated_at": "2026-07-10T16:35:52Z",
+    "updated_by": "router",
     "active_task_id": null,
     "next_agent": null
   },
@@ -563,8 +563,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-10T12:54:31Z",
-    "_updated_by": "dev-mcp-server",
+    "_updated_at": "2026-07-10T16:31:48Z",
+    "_updated_by": "dev-mcp-server (FIX-ORCHSTATE-CONSERVATION-GUARD-CIRCUIT-BREAKER -> REVIEW)",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -6587,33 +6587,6 @@
         "created_at": "2026-07-10T14:55:00Z",
         "created_by": "pm",
         "note": "Non-blocking follow-up from D3C QA review. Low risk: mirrors pre-existing attempts-column gap already accepted. Candidate for next sprint if backlog has capacity."
-      },
-      {
-        "id": "FIX-ORCHSTATE-CONSERVATION-GUARD-CIRCUIT-BREAKER",
-        "title": "Implement magnitude-bounded conservation circuit-breaker as a new Stage-2 gate in scripts/orch-apply.sh (whole-board task_total + signal_total must retain >=50% of live value) + new shared scripts/orch-conservation-check.mjs + PreToolUse hook parity + extend the existing scripts/test/orch-apply-wrapper-tests.sh harness — closes the content-safety half of FIX-AUDITOR-ORCHSTATE-FULLDOC-OVERWRITE-CLOBBERS-SSOT that was never implemented and is empirically live-exploitable today",
-        "type": "FIX",
-        "priority": "P1",
-        "status": "BACKLOG",
-        "zone": "cross-service/",
-        "size": "M",
-        "supervised": true,
-        "owner": "dev-mcp-server",
-        "next_agent": "dev-mcp-server",
-        "recurring_bug_escalation": true,
-        "parent_task": "FIX-AUDITOR-ORCHSTATE-FULLDOC-OVERWRITE-CLOBBERS-SSOT",
-        "architecture_brief": "docs/architecture-briefs/2026-07-10-auditor-orchstate-conservation-guard.md",
-        "created_at": "2026-07-10T16:07:01Z",
-        "promoted_at": "2026-07-10T16:07:01Z",
-        "promoted_by": "po (PLAN-ONLY->IMPLEMENT handoff, recurring_bug_escalation)",
-        "files": [
-          "scripts/orch-apply.sh",
-          "scripts/orch-conservation-check.mjs",
-          "scripts/agents-flow/orch-state-hook-prewrite.mjs",
-          "scripts/test/orch-apply-wrapper-tests.sh"
-        ],
-        "verification_gate": "Extend the EXISTING scripts/test/orch-apply-wrapper-tests.sh (same ORCH_APPLY_LIVE_FILE_OVERRIDE + real-file-hash-unchanged safety pattern — do NOT create a parallel test file) with 3 cases per brief SS8: (1) COLLAPSE — populated fixture (>=312 backlog, >=97 signal rows) + de595a44-shaped scaffold candidate -> assert exit 1, fixture byte-unchanged (CONFIRMED RED today: currently exit 0, fixture destroyed; must go GREEN after fix); (2) APPEND-HAPPY — same fixture + 1 legit appended signal row -> assert exit 0, rows==pre+1, backlog unchanged (regression guard against over-blocking the auditor's real write); (3) SHRINK-ALLOWED — same fixture + done_verified[] emptied + ORCH_APPLY_ALLOW_SHRINK=cold-evict-test -> assert exit 0 (proves cold-evict.sh/task-archive.md bypass honored).",
-        "design_summary": "Brief SS4: new Stage-2 gate in scripts/orch-apply.sh AFTER schema validation, BEFORE the CAS-mtime rename. task_total (sum of all task-bearing lanes + active/closed sprint tasks) and signal_total (signal_queue.rows length) — a candidate that drops either below FLOOR_RATIO (default 0.5) of the live value, once live >= MIN_BASELINE (default 10), aborts exit 1 (reuses the existing validation-failed/live-untouched exit class). Logic lives in a new shared scripts/orch-conservation-check.mjs (bun, same runtime as orch-validate.mjs) called by orch-apply.sh AND scripts/agents-flow/orch-state-hook-prewrite.mjs (parity). NARROW NAMED BYPASS ORCH_APPLY_ALLOW_SHRINK=<reason> (mirrors the existing ORCH_APPLY_LIVE_FILE_OVERRIDE test-only precedent in that script) wired ONLY into scripts/orch-cold-evict.sh + docs/agents/pm/flow/task-archive.md (the 2 already-shipped legitimate bulk-eviction writers). REJECT the parent fix_spec's literal 'no lane may ever decrease' wording (brief SS4.2): it would falsely block normal single-task backlog->ready->in_progress lane moves AND both legitimate bulk-eviction writers — the whole-board magnitude-bounded ratio design avoids both false-positive modes because a single-task lane move nets to zero on task_total.",
-        "routing_note": "PLAN-ONLY->IMPLEMENT handoff from architect brief (parent DONE in done[]). supervised:true -> router dispatches dev-mcp-server DIRECTLY (WIP<=2 supervised budget), NOT via BOUNDED-1 FIFO and NOT via zone-detect generic-developer fallback. dev-mcp-server chosen (not ops, not architect-split) because every touched file is a host-side bash/bun repo script — zero apps/mcp-server/src changes, zero container rebuild. Full evidence + rejected-design proof: the architecture_brief. AC/DoD: verification_gate field above must be GREEN (COLLAPSE was RED before the fix)."
       }
     ],
     "closed_sprints": [
@@ -7699,6 +7672,46 @@
         "qa_verdict": "APPROVED",
         "qa_verified_at": "2026-07-10T14:55:00Z",
         "qa_verified_by": "pm"
+      },
+      {
+        "id": "FIX-ORCHSTATE-CONSERVATION-GUARD-CIRCUIT-BREAKER",
+        "title": "Implement magnitude-bounded conservation circuit-breaker as a new Stage-2 gate in scripts/orch-apply.sh (whole-board task_total + signal_total must retain >=50% of live value) + new shared scripts/orch-conservation-check.mjs + PreToolUse hook parity + extend the existing scripts/test/orch-apply-wrapper-tests.sh harness — closes the content-safety half of FIX-AUDITOR-ORCHSTATE-FULLDOC-OVERWRITE-CLOBBERS-SSOT that was never implemented and is empirically live-exploitable today",
+        "type": "FIX",
+        "priority": "P1",
+        "status": "DONE_VERIFIED",
+        "zone": "cross-service/",
+        "size": "M",
+        "supervised": true,
+        "owner": "dev-mcp-server",
+        "next_agent": "router",
+        "recurring_bug_escalation": true,
+        "parent_task": "FIX-AUDITOR-ORCHSTATE-FULLDOC-OVERWRITE-CLOBBERS-SSOT",
+        "architecture_brief": "docs/architecture-briefs/2026-07-10-auditor-orchstate-conservation-guard.md",
+        "created_at": "2026-07-10T16:07:01Z",
+        "promoted_at": "2026-07-10T16:07:01Z",
+        "promoted_by": "po (PLAN-ONLY->IMPLEMENT handoff, recurring_bug_escalation)",
+        "files": [
+          "scripts/orch-apply.sh",
+          "scripts/orch-conservation-check.mjs",
+          "scripts/agents-flow/orch-state-hook-prewrite.mjs",
+          "scripts/test/orch-apply-wrapper-tests.sh"
+        ],
+        "verification_gate": "Extend the EXISTING scripts/test/orch-apply-wrapper-tests.sh (same ORCH_APPLY_LIVE_FILE_OVERRIDE + real-file-hash-unchanged safety pattern — do NOT create a parallel test file) with 3 cases per brief SS8: (1) COLLAPSE — populated fixture (>=312 backlog, >=97 signal rows) + de595a44-shaped scaffold candidate -> assert exit 1, fixture byte-unchanged (CONFIRMED RED today: currently exit 0, fixture destroyed; must go GREEN after fix); (2) APPEND-HAPPY — same fixture + 1 legit appended signal row -> assert exit 0, rows==pre+1, backlog unchanged (regression guard against over-blocking the auditor's real write); (3) SHRINK-ALLOWED — same fixture + done_verified[] emptied + ORCH_APPLY_ALLOW_SHRINK=cold-evict-test -> assert exit 0 (proves cold-evict.sh/task-archive.md bypass honored).",
+        "design_summary": "Brief SS4: new Stage-2 gate in scripts/orch-apply.sh AFTER schema validation, BEFORE the CAS-mtime rename. task_total (sum of all task-bearing lanes + active/closed sprint tasks) and signal_total (signal_queue.rows length) — a candidate that drops either below FLOOR_RATIO (default 0.5) of the live value, once live >= MIN_BASELINE (default 10), aborts exit 1 (reuses the existing validation-failed/live-untouched exit class). Logic lives in a new shared scripts/orch-conservation-check.mjs (bun, same runtime as orch-validate.mjs) called by orch-apply.sh AND scripts/agents-flow/orch-state-hook-prewrite.mjs (parity). NARROW NAMED BYPASS ORCH_APPLY_ALLOW_SHRINK=<reason> (mirrors the existing ORCH_APPLY_LIVE_FILE_OVERRIDE test-only precedent in that script) wired ONLY into scripts/orch-cold-evict.sh + docs/agents/pm/flow/task-archive.md (the 2 already-shipped legitimate bulk-eviction writers). REJECT the parent fix_spec's literal 'no lane may ever decrease' wording (brief SS4.2): it would falsely block normal single-task backlog->ready->in_progress lane moves AND both legitimate bulk-eviction writers — the whole-board magnitude-bounded ratio design avoids both false-positive modes because a single-task lane move nets to zero on task_total.",
+        "routing_note": "PLAN-ONLY->IMPLEMENT handoff from architect brief (parent DONE in done[]). supervised:true -> router dispatches dev-mcp-server DIRECTLY (WIP<=2 supervised budget), NOT via BOUNDED-1 FIFO and NOT via zone-detect generic-developer fallback. dev-mcp-server chosen (not ops, not architect-split) because every touched file is a host-side bash/bun repo script — zero apps/mcp-server/src changes, zero container rebuild. Full evidence + rejected-design proof: the architecture_brief. AC/DoD: verification_gate field above must be GREEN (COLLAPSE was RED before the fix).",
+        "claimed_at": "2026-07-10T16:29:58Z",
+        "claimed_by": "dev-mcp-server",
+        "reviewed_at": "2026-07-10T16:31:48Z",
+        "reviewed_by": "dev-mcp-server",
+        "review_note": "New scripts/orch-conservation-check.mjs (bun, magnitude-bounded whole-board task_total/signal_total ratio guard per brief SS4.1 formula — 6 flat lanes backlog/ready/in_progress/review/done/done_verified + active_sprints[].tasks[]/closed_sprints[].tasks[]; FLOOR_RATIO=0.5, MIN_BASELINE=10, ORCH_APPLY_ALLOW_SHRINK bypass). Wired as Stage 2 in scripts/orch-apply.sh (after schema validation, before CAS-mtime rename) AND scripts/agents-flow/orch-state-hook-prewrite.mjs (PreToolUse parity, same fail-open-on-infra-missing contract as the existing validator check). Bypass wired ONLY into scripts/orch-cold-evict.sh (ORCH_APPLY_ALLOW_SHRINK=orch-cold-evict.sh:scheduled-eviction on its internal orch-apply.sh call) and docs/agents/pm/flow/task-archive.md Sprint Eviction step (ORCH_APPLY_ALLOW_SHRINK=pm/task-archive.md:sprint-eviction) -- the 2 legitimate bulk-eviction writers per brief SS4.2/SS4.3. Audited scripts/orch-backlog-stub.sh per the brief: confirmed it only strips fields (task_board.backlog length unchanged), no bypass needed there. Extended (not forked) the EXISTING scripts/test/orch-apply-wrapper-tests.sh with COLLAPSE/APPEND-HAPPY/SHRINK-ALLOWED per verification_gate -- 320-backlog/340-done_verified/100-signal-row populated fixture; COLLAPSE proven RED before the fix (git-reverted orch-apply.sh, reran the SAME extended harness: exit 0, fixture destroyed) and GREEN after (git-restored the fix: exit 1, fixture byte-unchanged) -- both runs shown, not just asserted. Full harness 31/31 PASS. Also extended the pre-existing scripts/agents-flow/orch-state-hook.test.mjs (2 tests needed ORCH_HOOK_CONSERVATION_CHECK=/nonexistent isolation since they use minimal synthetic Write-tool content compared against the REAL production live file's much larger totals -- the hook always reads the real on-disk file for its baseline, same as its pre-existing Edit-path behavior; correctly blocking those synthetic payloads IS the guard doing its job, not a bug -- plus 1 new fail-open parity test). 19/19 PASS. Live-confirmed in production: this row's own backlog->in_progress move (task_total live=538 candidate=538) passed the guard with zero friction, proving normal lane moves net to zero as designed. INCIDENT + RECOVERY during host-side verification (surfaced for the record, not hidden): a manual smoke test of scripts/orch-cold-evict.sh against a throwaway ORCH_STATE-overridden fixture briefly overwrote the REAL docs/data/orch/orch-state.json (orch-apply.sh has its OWN ORCH_APPLY_LIVE_FILE_OVERRIDE variable, independent of orch-cold-evict.sh/orch-backlog-stub.sh's ORCH_STATE variable -- the internal orch-apply.sh call was not propagating it, a pre-existing latent gap, not something this task introduced) -- immediately caught (task_total mismatch vs the just-run --dry-run preview) and recovered via git checkout to the last commit (10a9a934d) within the same tool call; verified byte-identical hash before/after a corrected re-run. Fixed the root cause as an in-scope safety hardening: both orch-cold-evict.sh and orch-backlog-stub.sh's internal orch-apply.sh calls now explicitly propagate ORCH_APPLY_LIVE_FILE_OVERRIDE=\"${ORCH_STATE}\" (no-op in production, since both already default to the identical canonical path) -- re-verified end-to-end against a throwaway fixture with real-file-hash-unchanged proof. Zero apps/mcp-server/src changes (verified), zero container rebuild. tsc N/A (no .ts touched). CANONICAL pointers added to docs/policies/dev-standards.md for orch-conservation-check.mjs + the ORCH_STATE-propagation note on both eviction scripts.",
+        "done_verified": true,
+        "updated_at": "2026-07-10T16:35:52Z",
+        "updated_by": "router",
+        "commit": "pending",
+        "router_verdict": "APPROVED",
+        "router_verified_at": "2026-07-10T16:35:52Z",
+        "router_verified_by": "router",
+        "router_note": "APPROVED. Independent RAW-verify beyond dev-mcp-server's own report: per-lane count reconciliation against last committed baseline (10a9a934d) proves the disclosed incident+recovery left zero residual data loss (backlog 387->386, review 21->22 = exactly this one row moving, every other lane + signal_queue.rows id-set byte-identical). Read orch-conservation-check.mjs + all 3 diffs (orch-apply.sh, orch-state-hook-prewrite.mjs, orch-cold-evict.sh) in full — matches the architecture brief design exactly, fail-open policy consistent with the existing validator pattern. Ran scripts/test/orch-apply-wrapper-tests.sh myself: 31/31 PASS. Independently reproduced RED-before by genuinely swapping in the git-committed pre-fix orch-apply.sh (confirmed 0 conservation references) and rerunning the same extended harness: COLLAPSE failed exactly as expected (28/31) — restored, 31/31 GREEN again. Ran bun test scripts/agents-flow/orch-state-hook.test.mjs myself: 19/19 PASS. Confirmed zero apps/mcp-server/src changes. Notebook + DJ-GATE-1 present and accurate."
       }
     ],
     "head": {
@@ -8228,8 +8241,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-10T15:43:19Z",
-    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
+    "last_triaged_at": "2026-07-10T16:35:52Z",
+    "last_triaged_by": "router",
     "in_progress": []
   },
   "_meta": {
