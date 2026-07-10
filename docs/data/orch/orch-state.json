@@ -2907,11 +2907,12 @@
         "id": "HPG-REPARSE-POST-REBUILD",
         "priority": "P2",
         "size": "XS",
-        "status": "TODO",
+        "status": "DONE",
         "title": "Verify bctcReparseJob picks HPG Q4-2025 with REBUILT code",
         "type": "SPIKE",
         "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#HPG-REPARSE-POST-REBUILD"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#HPG-REPARSE-POST-REBUILD",
+        "owner": "ops"
       },
       {
         "id": "VCB-MISSING-PDFS",
@@ -5745,11 +5746,12 @@
       {
         "id": "OPS-BCTC-REFINE-REPASS-NONBANK-5T",
         "title": "OPS — agentic-refine repass + reingest 5 non-bank Q1-2026 reports (VHM/VIC/VRE/HSG/MWG) to recover total_assets=0; ZERO new code, proven CTG runbook + D2D 2026-Q1 (folded from analysis #3507, composite=0.10)",
-        "status": "BACKLOG",
+        "status": "IN_PROGRESS",
         "zone": "multi",
         "priority": "high",
         "type": "FIX",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#OPS-BCTC-REFINE-REPASS-NONBANK-5T"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#OPS-BCTC-REFINE-REPASS-NONBANK-5T",
+        "owner": "ops"
       },
       {
         "id": "SPIKE-BCTC-REFINE-TOTAL-ROW-TRANSCRIPTION-DROP",
@@ -6504,8 +6506,8 @@
         "id": "OPS-BCTC-BANK-2025Q4-ENRICH-0ROW-REPARSE",
         "type": "OPS-BACKLOG",
         "priority": "high",
-        "status": "TODO",
-        "owner": "bctc-analyst/ops",
+        "status": "IN_PROGRESS",
+        "owner": "ops",
         "zone": "apps/pdf-extractor/",
         "title": "Reparse 2025-Q4 COHORT enrich_failed 0-row rows — ACB/BID/EIB(banks)+D2D(non-bank), NOT bank-specific; links reports 3542+3543+3544+3545",
         "detail": "Operational-first (ZERO new code): trigger bctcReparseJob on the 2025-Q4 enrich_failed rows. Signature bctc_table_rows=0 AND bctc_md_tables=0 = BOTH extraction layers empty = extraction/OCR-layer failure, upstream of the classifier. Non-bank D2D failing identically => NOT bank-form-specific; common denominator = the 2025-Q4 batch, not form type. ESCALATE to a code SPIKE IF any ticker still yields 0 bctc_table_rows AFTER a reparse pass — SPIKE targets the EXTRACTION/OCR/VPS re-fetch pipeline (apps/pdf-extractor + VPS extraction health for the 2025-Q4 batch), NOT the bank-form classifier (FIX-BCTC-BANK-FORM-CLASSIFIER-BOLD-STRIP is PROVABLY off-path: bank-only + operates on md tables that are 0 here). Also probe whether enrich_failed rows are auto-retried, and WHY this reparse row stayed TODO a full cycle (ops-execution-path check).",
