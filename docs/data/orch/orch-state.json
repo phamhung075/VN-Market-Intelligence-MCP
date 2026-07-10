@@ -6060,41 +6060,6 @@
         "note": "Non-blocking follow-up from D3C QA review. Low risk: mirrors pre-existing attempts-column gap already accepted. Candidate for next sprint if backlog has capacity."
       },
       {
-        "id": "D2.5-BACKLOG-HYGIENE-SCHEMA-BLOCKED-LANE",
-        "size": "S",
-        "sprint": "BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP",
-        "status": "BACKLOG",
-        "title": "D2.5: Extend LANE_ALLOWED_STATUSES to accept BLOCKED in backlog/review/in_progress (PO ratification required)",
-        "type": "MAINTENANCE",
-        "zone": "apps/mcp-server/src/infrastructure/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#D2.5-BACKLOG-HYGIENE-SCHEMA-BLOCKED-LANE",
-        "owner": "dev-mcp-server",
-        "priority": "high",
-        "depends": [],
-        "note": "Risk: LOW. REQUIRES PO RATIFICATION (mirrors ADD-1 READY precedent, brief §6). Zero data mutation. Resolves 7 warnings for free (4 backlog + 3 review BLOCKED rows become coherent). File: apps/mcp-server/src/infrastructure/orchStateSchema.ts:412-420, ~3-line code change. DO NOT let dev silently pick without PO sign-off.",
-        "blocked_reason": "awaiting-po-ratification",
-        "verify_note": "prior_status=TODO"
-      },
-      {
-        "id": "D1-BACKLOG-HYGIENE-SWEEP-EXECUTE",
-        "size": "M",
-        "sprint": "BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP",
-        "status": "BACKLOG",
-        "title": "D1: Execute D4-extended cold-evict, close exceptions, relocate confirmed D2-candidates",
-        "type": "MAINTENANCE",
-        "zone": "scripts/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#D1-BACKLOG-HYGIENE-SWEEP-EXECUTE",
-        "owner": "developer",
-        "priority": "high",
-        "depends": [
-          "D0-BACKLOG-HYGIENE-TERMINAL-ROW-TRIAGE",
-          "D4-BACKLOG-HYGIENE-ORCH-COLD-EVICT-EXTEND"
-        ],
-        "note": "Risk: LOW (mechanical once D0/D4 land). The actual sweep execution: (a) run D4-extended orch-cold-evict.sh against D0-confirmed set (excludes Exception 1 + any other D0-flagged false positives); (b) close Exception 2 via devteam-close-task-done-verified.jq; (c) relocate D0-confirmed D2-candidates (review-status → review[], in_progress-status → in_progress[]). Driver: scripts/orch-backlog-hygiene-sweep.sh (orchestration wrapper only).",
-        "verify_note": "prior_status=TODO",
-        "status_note": "[developer 2026-07-10T20:15:00Z] EXECUTION ATTEMPTED, BLOCKED before any live orch-state.json mutation. D0-BACKLOG-HYGIENE-TERMINAL-ROW-TRIAGE claims DONE_VERIFIED with note \"73 confirm-terminal, 4 exclude, 11 relabel\" but its persisted triage_result field contains ONLY aggregate counts + 2 named exceptions (FACTORY-INTERFACE-split-server-ts=confirm-terminal, FIX-BCTC-BANK-SUMMARY-MAPPING=exclude) -- 0 of the other 3 exclude IDs and 0 of 11 relabel IDs are recorded anywhere. Verified via git show 26ffe7567 (D0s own commit touched ONLY its board row + pm.md notebook, no per-row annotation) and repo-wide grep for exclude_count/relabel_count/D0-BACKLOG-HYGIENE-TERMINAL-ROW-TRIAGE (no other artifact exists). Dry-run (scripts/orch-cold-evict.sh --dry-run --exclude-ids FIX-BCTC-BANK-SUMMARY-MAPPING) confirms 55 rows (54 backlog + 1 review) currently match TERMINAL_TASK_STATUSES and would auto-evict with only 1 of 15 D0-flagged protections applied -- and that pool is confirmed to contain at least 1 of the 15 (FIX-BCTC-BANK-SUMMARY-MAPPING itself, status=DONE), so the other 14 are plausibly in-pool too. Router explicitly forbade guessing exclude IDs. Not executed -- matches R-CRIT-1 (architect brief 2026-07-10-backlog-hygiene-verify-prune-sweep.md sec 11): risk of silently archiving genuinely-open work. REMEDY: D0 needs reopening/supplementing to append the full 4-item exclude + 11-item relabel ID list (machine-readable) to triage_result before D1 can safely re-run. Brief sec8 D1 scope (close Exception 2 via devteam-close-task-done-verified.jq + relocate D2 candidates) also NOT attempted -- router explicitly narrowed this cycles scope to eviction-only. || [developer 2026-07-10T18:26:34Z] UNBLOCKED — D0B (commit 98d26dc01) persisted the full 15-item exceptions[] list to both D0 and D0B done_verified rows (router independently RAW-verified). Re-confirmed exceptions[] live before building --exclude-ids (4 EXCLUDE ids match router-provided list exactly). Proceeding to dry-run + live eviction; close-exception (FACTORY-INTERFACE-split-server-ts) and D2-candidate relocation remain OUT OF SCOPE this cycle per router narrowing. || [developer 2026-07-10T18:31:39Z] SUB-SCOPE (a) COMPLETE — live eviction executed (commit 42e565c7b): 2 done[] + 15 done_verified[] + 55 flat-lane rows (54 backlog + 1 review) evicted to archive/2026-07.json .backlog_detail[]; all 4 EXCLUDE ids confirmed still hot post-write; conservation-guard OK (task_total 545->473, exact match to evicted count; signal_total 2->0); coherence warnings 72->16 (bun scripts/orch-validate.mjs). Sub-scopes (b) close-exception FACTORY-INTERFACE-split-server-ts via devteam-close-task-done-verified.jq and (c) relocate the 10 D0/D0B RELABEL rows to their correct lanes remain NOT STARTED — router explicitly held these out of scope this cycle. Row left status=BACKLOG (not done_verified) because (b)/(c) are still open per this task titles own definition; router/pm to decide whether to spin a follow-on task or re-dispatch this row for (b)/(c)."
-      },
-      {
         "id": "D5-BACKLOG-HYGIENE-VALIDATOR-HARDENING",
         "size": "S",
         "sprint": "BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP",
@@ -6868,6 +6833,40 @@
         "escalated_at": "2026-07-10T17:48:41Z",
         "escalated_by": "router",
         "escalation_reason": "3rd confirmed instance this session (recurring-bug-2+ policy) — D0-BACKLOG-HYGIENE-TERMINAL-ROW-TRIAGE sub-agent's notebook write deleted the c324 entry on pm.md with no replacement, same root cause already diagnosed in this row's own note. Router restored the lost content directly; promoting for immediate dispatch rather than leaving a proven-recurring data-loss bug sitting in backlog."
+      },
+      {
+        "id": "D2.5-BACKLOG-HYGIENE-SCHEMA-BLOCKED-LANE",
+        "size": "S",
+        "sprint": "BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP",
+        "status": "READY",
+        "title": "D2.5: Extend LANE_ALLOWED_STATUSES to accept BLOCKED in backlog/review/in_progress (PO ratification required)",
+        "type": "MAINTENANCE",
+        "zone": "apps/mcp-server/src/infrastructure/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#D2.5-BACKLOG-HYGIENE-SCHEMA-BLOCKED-LANE",
+        "owner": "dev-mcp-server",
+        "priority": "high",
+        "depends": [],
+        "note": "PO-RATIFIED (see po_signoff). Extend LANE_ALLOWED_STATUSES: backlog+=BLOCKED, review+=BLOCKED, in_progress+=BLOCKED. Resolves 7 live BLOCKED coherence warnings with zero data mutation. File apps/mcp-server/src/infrastructure/orchStateSchema.ts:412-420; update doc-comment block 392-399 too.",
+        "verify_note": "prior_status=TODO",
+        "po_signoff": "PO RATIFIED 2026-07-10T18:41Z: extend LANE_ALLOWED_STATUSES to accept BLOCKED in {backlog, review, in_progress} (architect brief §6 chosen design; mirrors ADD-1 READY precedent). Rejected new blocked[] lane (blast radius). qa/done/done_verified/ready deliberately unchanged; qa-BLOCKED may be revisited if ever observed. Zero data mutation. Dispatch dev-mcp-server (~3 line change orchStateSchema.ts:412-420 + doc-comment 392-399)."
+      },
+      {
+        "id": "D1-BACKLOG-HYGIENE-SWEEP-EXECUTE",
+        "size": "S",
+        "sprint": "BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP",
+        "status": "READY",
+        "title": "D1 residual: close FACTORY exception + apply 8 RELABEL lane-moves + relabel FIX-BCTC DONE->BLOCKED (cold-evict sub-scope (a) already SHIPPED 42e565c7b)",
+        "type": "MAINTENANCE",
+        "zone": "scripts/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#D1-BACKLOG-HYGIENE-SWEEP-EXECUTE",
+        "owner": "developer",
+        "priority": "high",
+        "depends": [
+          "D2.5-BACKLOG-HYGIENE-SCHEMA-BLOCKED-LANE"
+        ],
+        "note": "RESIDUAL of D1. Sub-scope (a) cold-evict SHIPPED (commit 42e565c7b, router RAW-verified) — DO NOT re-run cold-evict. Remaining: (b) close FACTORY-INTERFACE-split-server-ts backlog[BLOCKED]->done_verified via scripts/devteam-close-task-done-verified.jq (4/4 stage commits verified bce8be44b,821bbbeea,56f922c93,8c228ffa6). (c) 8 lane-moves per D0B triage_result.exceptions[] RELABEL (archive/2026-07.json .backlog_detail[id=D0B-BACKLOG-HYGIENE-TRIAGE-PERSIST-EXCLUDE-RELABEL-IDS]): 5 backlog[REVIEW]->review[] (FIX-DIGEST-RSI-DUAL-ENGINE-DIVERGE, FIX-FB-WEEKEND-DEDUP-GATE, FIX-FOREIGN-FLOW-BULLETIN-UNAVAIL-STRING, FIX-MACRO-THRESHOLD-FXFLOOR-OVERCLAMP, FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0); 3 backlog[IN_PROGRESS]->in_progress[] (FIX-L2-FRESHNESS-DATAASOF-FIELDS, FIX-SCHEMA-DRIFT-P5-SELFHEAL, OPS-BCTC-REFINE-REPASS-NONBANK-5T); status UNCHANGED, lane only. (d) PO-ADDED: relabel FIX-BCTC-BANK-SUMMARY-MAPPING status DONE->BLOCKED (stays backlog[]; EXCLUDE-from-evict but DONE label is wrong — genuinely open, blocked on ops re-ingest per live DB probe + BLOCKED review sub-task TASK-W5-...-VALIDATION-REINGEST; coherent once D2.5 lands). depends=[D2.5] so BLOCKED-in-backlog rows land coherent. EXPECTED: bun scripts/orch-validate.mjs 16->0 warnings. Zone scripts/, owner developer.",
+        "verify_note": "prior_status=TODO",
+        "status_note": "[developer 2026-07-10T20:15:00Z] EXECUTION ATTEMPTED, BLOCKED before any live orch-state.json mutation. D0-BACKLOG-HYGIENE-TERMINAL-ROW-TRIAGE claims DONE_VERIFIED with note \"73 confirm-terminal, 4 exclude, 11 relabel\" but its persisted triage_result field contains ONLY aggregate counts + 2 named exceptions (FACTORY-INTERFACE-split-server-ts=confirm-terminal, FIX-BCTC-BANK-SUMMARY-MAPPING=exclude) -- 0 of the other 3 exclude IDs and 0 of 11 relabel IDs are recorded anywhere. Verified via git show 26ffe7567 (D0s own commit touched ONLY its board row + pm.md notebook, no per-row annotation) and repo-wide grep for exclude_count/relabel_count/D0-BACKLOG-HYGIENE-TERMINAL-ROW-TRIAGE (no other artifact exists). Dry-run (scripts/orch-cold-evict.sh --dry-run --exclude-ids FIX-BCTC-BANK-SUMMARY-MAPPING) confirms 55 rows (54 backlog + 1 review) currently match TERMINAL_TASK_STATUSES and would auto-evict with only 1 of 15 D0-flagged protections applied -- and that pool is confirmed to contain at least 1 of the 15 (FIX-BCTC-BANK-SUMMARY-MAPPING itself, status=DONE), so the other 14 are plausibly in-pool too. Router explicitly forbade guessing exclude IDs. Not executed -- matches R-CRIT-1 (architect brief 2026-07-10-backlog-hygiene-verify-prune-sweep.md sec 11): risk of silently archiving genuinely-open work. REMEDY: D0 needs reopening/supplementing to append the full 4-item exclude + 11-item relabel ID list (machine-readable) to triage_result before D1 can safely re-run. Brief sec8 D1 scope (close Exception 2 via devteam-close-task-done-verified.jq + relocate D2 candidates) also NOT attempted -- router explicitly narrowed this cycles scope to eviction-only. || [developer 2026-07-10T18:26:34Z] UNBLOCKED — D0B (commit 98d26dc01) persisted the full 15-item exceptions[] list to both D0 and D0B done_verified rows (router independently RAW-verified). Re-confirmed exceptions[] live before building --exclude-ids (4 EXCLUDE ids match router-provided list exactly). Proceeding to dry-run + live eviction; close-exception (FACTORY-INTERFACE-split-server-ts) and D2-candidate relocation remain OUT OF SCOPE this cycle per router narrowing. || [developer 2026-07-10T18:31:39Z] SUB-SCOPE (a) COMPLETE — live eviction executed (commit 42e565c7b): 2 done[] + 15 done_verified[] + 55 flat-lane rows (54 backlog + 1 review) evicted to archive/2026-07.json .backlog_detail[]; all 4 EXCLUDE ids confirmed still hot post-write; conservation-guard OK (task_total 545->473, exact match to evicted count; signal_total 2->0); coherence warnings 72->16 (bun scripts/orch-validate.mjs). Sub-scopes (b) close-exception FACTORY-INTERFACE-split-server-ts via devteam-close-task-done-verified.jq and (c) relocate the 10 D0/D0B RELABEL rows to their correct lanes remain NOT STARTED — router explicitly held these out of scope this cycle. Row left status=BACKLOG (not done_verified) because (b)/(c) are still open per this task titles own definition; router/pm to decide whether to spin a follow-on task or re-dispatch this row for (b)/(c)."
       }
     ],
     "review": [

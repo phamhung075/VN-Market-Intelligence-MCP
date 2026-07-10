@@ -1,6 +1,12 @@
 # PO Notebook
 
-_Last: 2026-07-10T17:05Z_
+_Last: 2026-07-10T18:41Z_
+
+## Tick 2026-07-10T18:41Z — RATIFY D2.5 (BLOCKED lane) + re-scope D1 residual (SWEEP convergence)
+Router requested PO adjudication: sprint nearly converged (133->16 coherence warns; D0/D0B/D3/D4/D1-a all DONE_VERIFIED, RAW-verified). Two decisions, board groomed via `jq -f | orch-apply.sh` (conservation 473=473, zero data mutation). Full rationale → `docs/agent-memory/decisions/sprint-BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP-po.md`.
+- **D2.5 = RATIFY** (architect brief §6). Extend `LANE_ALLOWED_STATUSES`: backlog/review/in_progress each += BLOCKED (orchStateSchema.ts:412-420 + doc-comment 392-399, ~3L). BLOCKED = orthogonal sub-state, NOT a lane (rejected new `blocked[]` lane = blast radius + loses in-progress framing). Precedent ADD-1 `ready+=TODO` (live). Zero data mutation → 7 BLOCKED warns coherent (4 backlog + 3 review). qa/done/done_verified/ready left unchanged (never observed; "done-but-blocked" contradictory); qa-BLOCKED revisit-if-observed. Moved backlog->ready[] +po_signoff, dispatchable now, dev-mcp-server.
+- **D1 residual = reuse D1 row** (not fresh D1b — its title already charters this; keeps D5.depends valid). Did NOT fold into D2.5 dispatch (diff zone/owner: schema-code vs data-mutation → avoids "dev silently picks" hazard). Scope: (b) close FACTORY-INTERFACE-split-server-ts (4/4 commits verified) via devteam-close-task-done-verified.jq; (c) 8 lane-moves per D0B triage_result RELABEL (5 REVIEW->review[], 3 IN_PROGRESS->in_progress[]); (d) **PO-ADDED** FIX-BCTC-BANK-SUMMARY-MAPPING DONE->BLOCKED (EXCLUDE-from-evict but DONE label wrong; genuinely open, blocked-on-ops-reingest, corroborated by BLOCKED review sub-task — accurate+coherent, NOT a fake close). depends=[D2.5], size S, moved backlog->ready[].
+- **Math 16->0:** D2.5=7, (c)=8, (d)=1, (b)=correctness/0-delta → unblocks D5 (validator hard-fail flip + close SHG-2/3/4/5). PO closed no task (dev/qa execute). Router to commit.
 
 ## Tick 2026-07-10T16:37Z — dev-team triage: 21 telegram reports (all dedup'd, NO new data task) + promote the verify-prune SWEEP (SHG convergence-blocker)
 pendingSignals[] EMPTY; CI GREEN; WIP=0/idle. Router surfaced 21 unresolved reports + the SHG-2..SHG-5 stale-pickup finding for adjudication.
