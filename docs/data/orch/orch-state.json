@@ -6409,6 +6409,21 @@
         "zone": "apps/macro-indicators/",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-SBV-FETCHER-ZERO-VALUE-EMIT",
         "status": "BACKLOG"
+      },
+      {
+        "id": "FIX-VERIFY-DEPLOY-SHA-BENIGN-DOC-DRIFT",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P3",
+        "size": "S",
+        "zone": "scripts/",
+        "owner": "ops",
+        "title": "verify-deploy-sha.sh false-positives on doc/orch-state-only commits landing after a build (3rd confirmed occurrence)",
+        "desc": "scripts/verify-deploy-sha.sh compares deployed image git_sha label against current HEAD — fails whenever HEAD advances via a doc/notebook/orch-state-only commit made after the build, even though deployed source is byte-identical to HEAD at build time. Confirmed benign 3x: FACTORY-APP-dedup (qa 096a0588d), FACTORY-SCHEDULER-job-table-registry (ops f3edc46bf, 2026-07-09), FIX-AGENT-SIGNALS-ORPHAN-ALERT-ID (ops faa75cf29, 2026-07-10 — this occurrence). Each time confirmed via `git diff --stat <deployed_sha>..HEAD -- apps/<svc>/ scripts/` returning empty.",
+        "fix_spec": "Teach the script to PASS when: (deployed SHA is an ancestor of HEAD) AND (git diff <deployed_sha>..HEAD -- apps/<service>/ is empty) — i.e. treat doc-only HEAD advancement post-build as non-drift. Only FAIL when the diff against source paths is non-empty (real undeployed code change).",
+        "created_at": "2026-07-10T05:02:34Z",
+        "created_by": "dev-team",
+        "opened_by": "dev-team"
       }
     ],
     "closed_sprints": [
