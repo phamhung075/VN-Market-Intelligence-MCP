@@ -45,3 +45,29 @@
 - Leave `financial_reports.id` regeneration as-is (out of stated scope) — REJECTED: directly undermines this task's own goal (PEK rows would get silently orphaned by any later scalar re-parse) — CHOSEN: fold in an `ON CONFLICT(action_code,sort_key) DO UPDATE` rewrite of `storeReport()` preserving `id`, as a prerequisite (D1) for the shell-row work.
 **why-decision:** Both new risks are load-bearing — shipping concern 1 without D1 (id stability) or the corrected gate-target would leave the exact "0 rows after extraction ran" symptom this task exists to close, just relocated.
 **why-change:** Widens the SPIKE's "populate bctc_table_rows/bctc_md_tables" framing (all 4 endpoints treated as equivalent) — RAW-verified only 2 of 4 endpoints write those tables; `/pek-extract` (the only proven-functional one) writes a different pair. Design retargets the reconciliation check accordingly rather than trusting the SPIKE's endpoint-table mapping verbatim.
+
+### STEP pm-S5 · pm (router terminal) · 2026-07-10T12:00:00Z
+**task-id:** FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION
+**action:** DECOMPOSED into 7 atomic tasks per architect sequencing (D1→D2→D3A→D3B→D3C + R-HIGH-1 + R-HIGH-2)
+**decomposition-rationale:**
+- Architect flagged SEQUENCING-CRITICAL ordering: D1 (id stability) MUST land first (foundational data-integrity fix), then D2 (shell-row), then D3 substeps (auto-trigger + gate + reconciliation). Shipping out-of-order leaves latent data-loss (D2 id gets orphaned if legacy scalar re-parses after PEK lands) or silent 0-row bug one layer down (gate retargeting missed).
+- R-HIGH-1 (status enum in 3 files) folded into D3B (same zone, same developer, same PR surface — no risk of separate dispatch). R-HIGH-1 is NOT optional; missing it creates false "queue idle" alarms during normal PEK async work.
+- R-HIGH-2 (market-hours guard) flagged as open PM decision (Option A recommended: client-side guard; Option B: no guard, let reconciliation absorb retries). Task created ready for Option A; can move to backlog-close if PO chooses B.
+**tasks-created:** 7 tasks in backlog/READY (all zones apps/mcp-server/, owner dev-mcp-server):
+1. FIX-BCTC-D1-STABILIZE-REPORT-ID (S) — parseBctcReport.ts ON CONFLICT fix, foundational
+2. FIX-BCTC-D2-ENSURE-SHELL-ROW (S) — ensureFinancialReportShellRow usecase, depends D1
+3. FIX-BCTC-D3A-PEK-TRIGGER-HELPER (S) — extract shared triggerPekExtractionForReport helper, depends D2
+4. FIX-BCTC-D3B-GATE-PEK-TRIGGERED-STATUS (M) — remove gate, wire shell-row + trigger, add status + enum updates, depends D3A
+5. FIX-BCTC-D3C-RECONCILE-JOB (M) — new bctcExtractReconcileJob cron, depends D3B
+6. FIX-BCTC-R-HIGH-1-STATUS-ENUM-UPDATE (S) — verify pek_triggered in 3 status-enum files, depends D3B
+7. FIX-BCTC-R-HIGH-2-MARKET-HOURS-GUARD (XS) — market-hours skip guard (Option A default; PM decision), depends D3B
+**board-mutations:**
+- .task_board.ready -= [FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION]
+- .task_board.in_progress += [FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION with status=DECOMPOSED + decomposed_into=[7 tasks] + dependency_order]
+- .task_board.backlog += [all 7 new tasks, status=READY, depends arrays wired]
+**key-decisions:**
+1. Accepted architect sequencing as-written — D1 first, no renegotiation
+2. All tasks READY (not backlog-hold) — developer can start immediately on D1
+3. R-HIGH-1 mandatory, same-cycle with D3B (no separate dispatch risk)
+4. R-HIGH-2 flagged PM decision, default Option A (client-side guard recommended)
+**next-agent:** dev-mcp-server — claim D1 first (no deps), then D2, then D3A, then D3B (gates R-HIGH-1), then D3C/R-HIGH-2 parallel

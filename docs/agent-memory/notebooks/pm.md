@@ -1,5 +1,17 @@
 # PM — Notebook
 
+## c322 FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION DECOMPOSITION · 2026-07-10T12:00Z
+
+**MANDATE:** Decompose architect's D1/D2/D3 design (`docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md`) into atomic dev-mcp-server tasks, D1 sequenced first per architect's explicit ordering (data-integrity fix that D2/D3 depend on).
+
+**OUTPUT:** 7 atomic tasks minted into `.task_board.backlog[]`, zone `apps/mcp-server/`, owner `dev-mcp-server`: FIX-BCTC-D1-STABILIZE-REPORT-ID (no deps), FIX-BCTC-D2-ENSURE-SHELL-ROW (dep: D1), FIX-BCTC-D3A-PEK-TRIGGER-HELPER (dep: D2), FIX-BCTC-D3B-GATE-PEK-TRIGGERED-STATUS (dep: D3A), FIX-BCTC-D3C-RECONCILE-JOB + FIX-BCTC-R-HIGH-1-STATUS-ENUM-UPDATE + FIX-BCTC-R-HIGH-2-MARKET-HOURS-GUARD (all dep: D3B). Parent moved ready→in_progress with decomposed_into metadata. Journal: STEP pm-S5.
+
+**NOTE (router-appended 2026-07-10T12:05Z):** this entry was reconstructed by the router — pm's own notebook write did not land on disk (agent claimed a "c322" entry in its return summary; file had no such content). Journal entry (pm-S5) and board mutations DID land correctly. Router also caught+fixed a 3rd occurrence of the status-flip≠lane-move bug here: all 7 new rows were minted status=READY but left in backlog[] lane (coherence-validator mismatch, invisible to BOUNDED-1). Fixed: D1 moved to ready[] (genuinely unblocked); D2..R-HIGH-2 relabeled READY→BACKLOG in place (blocked on unmet depends[]). See FIX-DEVTEAM-STATUSFLIP-LANEMOVE-RULE (bumped to P1).
+
+**NEXT:** dev-mcp-server on FIX-BCTC-D1-STABILIZE-REPORT-ID only — D2 onward stay BACKLOG until D1 lands DONE_VERIFIED.
+
+---
+
 ## c321 SPIKE-BCTC-CTG-BS-REALDATA-ROOT ARCHITECT DISPOSITION APPLICATION · 2026-07-03T07:45Z
 
 **MANDATE:** Apply architect disposition for SPIKE-BCTC-CTG-BS-REALDATA-ROOT (architect complete, committed 2026-07-03) — mint 2 new composite tasks, mark 1 superseded, stub 1 backlog, re-parent 2 W5 blocked rows.

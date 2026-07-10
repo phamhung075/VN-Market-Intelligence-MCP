@@ -296,6 +296,14 @@
       "decision": "Docker rebuild+swap completed successfully per OVERRIDE 07-03. (1) Build: docker compose build mcp-server completed in 206s. (2) Deploy: docker compose up -d mcp-server recreated and started container, marked healthy 23s after startup. (3) SHA verification: deployed image SHA 3afc9b80dabe0ca208eafa08d5dc44e20b320407 >= fix commit 33bb3078e (fix is live). (4) Post-swap health: HTTP /health returned status=ok, toolCount=183 unchanged, no new boot errors. (5) Post-swap data integrity: docker exec bun:sqlite query on live DB returned orphan_count=0 (no dangling FK violations post-deployment). Signal file status=swapped-pending-live-cycle-confirm; task board updated to document successful swap + verification results. NEXT: Future tick re-verify orphan count after >=1 alert-scan cycle to complete acceptance criterion (0-orphans across live traffic). Task remains REVIEW pending final multi-cycle live confirmation.",
       "what_considered": "(A) Deploy immediately per OVERRIDE 07-03 — CHOSEN (standing precedent: container swap user-gated at decision point; once open, execution is ops responsibility). (B) Defer until orphan verification complete — REJECTED (acceptance criterion requires live-cycle observation which cannot be instant; deployment+immediate-verify is correct breakpoint; multi-cycle observation deferred to future tick).",
       "why_change": "Standing precedent (ops-gated container swaps) + acceptance criterion design (deferred live-cycle verification) — deploy immediately, document post-deploy state, flag next tick for cycle-confirmation."
+    },
+    {
+      "by": "ops",
+      "task_id": "OPS-BCTC-BANK-2025Q4-ENRICH-0ROW-REPARSE",
+      "ts": "2026-07-10T09:52:30Z",
+      "decision": "TRACK1 OPERATIONAL UNBLOCK: Executed per-report_id trigger sequence. Completed data prep: (1) synced financial_reports.pdf_path for GVR/MBB/D2D via direct UPDATE to predictable on-disk path; (2) created GAS shell row with minimal fields (action_code, sort_key, pdf_path, json stubs); (3) submitted all 12 report_ids to POST /api/trigger-pek-extract outside market-hours guard (09:52Z UTC, well outside 02:00-08:59 UTC). All triggers accepted (async 202/timeout patterns expected). PEK model loader + table extraction is CPU-bound; ACB extraction confirmed in-flight at submission time. RAW-probe at submission showed 0/12 completed. Ground-truth verification: must poll bctc_table_rows per report_id every 15-30s until queue drains (estimated 15-30min total for full cohort on single CPU core). Row status set to REVIEW pending verification results.",
+      "what_considered": "(A) Wait for extraction completion before session exit — REJECTED (CPU-bound task, 20-30min est, token budget). (B) Async background trigger + verify next session — CHOSEN (operational unblock complete; extraction queue left running; dev-team can verify results independently via task_board.review row + decision_journal entry + updated .detail field).",
+      "why_change": "Operational unblock is structural-separate from fix: triggers are queued and system is functioning; data is prepared correctly; extractions in-flight and will populate bctc_table_rows as they complete on the background pdf-extractor process. Bottleneck is CPU time, not logic/data sync."
     }
   ],
   "head": {
@@ -556,8 +564,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-10T03:39:51Z",
-    "_updated_by": "qa",
+    "_updated_at": "2026-07-10T12:00:00Z",
+    "_updated_by": "pm",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -6558,7 +6566,7 @@
         "id": "FIX-DEVTEAM-STATUSFLIP-LANEMOVE-RULE",
         "type": "FIX",
         "status": "BACKLOG",
-        "priority": "P2",
+        "priority": "P1",
         "size": "S",
         "zone": "docs/agents/dev-team/flow/",
         "owner": "cowork-refactory-expert",
@@ -6567,7 +6575,116 @@
         "fix_spec": "Add an explicit MUST-clause to docs/agents/dev-team/flow/main.md (execute-tier.md dispatch-wrap section) and/or the shared task-closeout convention doc: any agent that flips a task .status to a terminal/review token (REVIEW, DONE, DONE_VERIFIED, QA) MUST, in the SAME write, move the row array-membership into the matching task_board.<lane>[] array — never just patch .status in place. Also sync .head to idle (or to the next legitimate active_task_id) in that same write. Reference: feedback_review_status_stuck_in_inprogress_lane_blocks_wip.md memory (originSessionId 5a45feda-431e-46c8-941d-a6539a0eca77) for both prior occurrences and root-cause detail.",
         "created_at": "2026-07-10T08:58:53Z",
         "created_by": "dev-team",
-        "opened_by": "dev-team"
+        "opened_by": "dev-team",
+        "detail": " | [router-3rd-occurrence-20260710T1205Z] 3RD CONFIRMED HIT: pm decomposed FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION into 7 subtasks (D1/D2/D3A/D3B/D3C/R-HIGH-1/R-HIGH-2), all minted with status=READY but physically placed in .task_board.backlog[] (coherence validator itself expects backlog-lane status=BACKLOG) — invisible to BOUNDED-1 array-membership WIP scan; PM own claim (\"developer can start immediately\") would have silently no-op'd. Distinct mechanism from the first 2 occurrences (single-row REVIEW-status-stuck-in-in_progress[]) — this time NEW-MINT rows given a post-decomposition status token without the matching lane placement. Router fixed manually (moved unblocked D1 to ready[], relabeled the 6 dependency-blocked rows READY->BACKLOG in place) per standing workaround. 3rd occurrence crosses the escalation bar decisively — this P2 fix should be prioritized for the next dev-team BOUNDED-1 pick."
+      },
+      {
+        "id": "FIX-BCTC-D2-ENSURE-SHELL-ROW",
+        "type": "FIX",
+        "priority": "high",
+        "status": "BACKLOG",
+        "zone": "apps/mcp-server/",
+        "size": "S",
+        "title": "ensureFinancialReportShellRow() — create shell row at PDF-save, set pdf_path, decouple from OCR gate",
+        "owner": "dev-mcp-server",
+        "depends": [
+          "FIX-BCTC-D1-STABILIZE-REPORT-ID"
+        ],
+        "detail_ref": "docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md#D2",
+        "created_at": "2026-07-10T12:00:00Z",
+        "created_by": "pm",
+        "note": "New usecase: idempotent upsert with validation_status=pending_extraction at PDF-save time, decoupled from OCR gate. Depends on D1 id-stability fix.",
+        "blocked_note": "status-flip-lane-move fix (3rd occurrence this session, router 2026-07-10T~12:05Z): stayed in backlog[] lane, relabeled READY->BACKLOG since depends[] unmet; will promote to ready[] once its dependency lands DONE_VERIFIED"
+      },
+      {
+        "id": "FIX-BCTC-D3A-PEK-TRIGGER-HELPER",
+        "type": "FIX",
+        "priority": "high",
+        "status": "BACKLOG",
+        "zone": "apps/mcp-server/",
+        "size": "S",
+        "title": "Extract triggerPekExtractionForReport() shared helper from handleTriggerPekExtract",
+        "owner": "dev-mcp-server",
+        "depends": [
+          "FIX-BCTC-D2-ENSURE-SHELL-ROW"
+        ],
+        "detail_ref": "docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md#D3-D3a",
+        "created_at": "2026-07-10T12:00:00Z",
+        "created_by": "pm",
+        "note": "Refactoring prep: extract shared HTTP fetch/market-hours-handling logic from handleTriggerPekExtract. Reuse in both manual route and new auto-trigger. DRY refactor, no new logic.",
+        "blocked_note": "status-flip-lane-move fix (3rd occurrence this session, router 2026-07-10T~12:05Z): stayed in backlog[] lane, relabeled READY->BACKLOG since depends[] unmet; will promote to ready[] once its dependency lands DONE_VERIFIED"
+      },
+      {
+        "id": "FIX-BCTC-D3B-GATE-PEK-TRIGGERED-STATUS",
+        "type": "FIX",
+        "priority": "high",
+        "status": "BACKLOG",
+        "zone": "apps/mcp-server/",
+        "size": "M",
+        "title": "Remove 0-row gate from bctcPdfPullJob; wire shell-row + trigger; write pek_triggered status; update 3 status-enum consumers (includes R-HIGH-1)",
+        "owner": "dev-mcp-server",
+        "depends": [
+          "FIX-BCTC-D3A-PEK-TRIGGER-HELPER"
+        ],
+        "detail_ref": "docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md#D3-D3b",
+        "created_at": "2026-07-10T12:00:00Z",
+        "created_by": "pm",
+        "note": "Main mechanical change: (1) Remove 0-row gate entirely; (2) Wire D2 shell-row + D3A trigger after save; (3) Write pek_triggered status; (4) Update vpsHealthPoller/freshnessSlaMonitorJob/bctcQueueEnricherJob status enums (R-HIGH-1). Critical: gate removal means reconciliation cron (D3C) becomes essential fail-loud path.",
+        "blocked_note": "status-flip-lane-move fix (3rd occurrence this session, router 2026-07-10T~12:05Z): stayed in backlog[] lane, relabeled READY->BACKLOG since depends[] unmet; will promote to ready[] once its dependency lands DONE_VERIFIED"
+      },
+      {
+        "id": "FIX-BCTC-D3C-RECONCILE-JOB",
+        "type": "FIX",
+        "priority": "high",
+        "status": "BACKLOG",
+        "zone": "apps/mcp-server/",
+        "size": "M",
+        "title": "bctcExtractReconcileJob cron — check layout_units/legacy tables, bounded attempts, enrich_failed terminal",
+        "owner": "dev-mcp-server",
+        "depends": [
+          "FIX-BCTC-D3B-GATE-PEK-TRIGGERED-STATUS"
+        ],
+        "detail_ref": "docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md#D3-D3c",
+        "created_at": "2026-07-10T12:00:00Z",
+        "created_by": "pm",
+        "note": "New reconciliation cron (suggested 5,35 * * * * cadence): queries pek_triggered rows, checks bctc_layout_units(quarantined=0) OR legacy tables, transitions to done/enrich_failed/stays pek_triggered per attempt budget. MUST land same-cycle as D3B (no intermediate state without reconciliation).",
+        "blocked_note": "status-flip-lane-move fix (3rd occurrence this session, router 2026-07-10T~12:05Z): stayed in backlog[] lane, relabeled READY->BACKLOG since depends[] unmet; will promote to ready[] once its dependency lands DONE_VERIFIED"
+      },
+      {
+        "id": "FIX-BCTC-R-HIGH-1-STATUS-ENUM-UPDATE",
+        "type": "FIX",
+        "priority": "high",
+        "status": "BACKLOG",
+        "zone": "apps/mcp-server/",
+        "size": "S",
+        "title": "Verify pek_triggered status in vpsHealthPoller, freshnessSlaMonitorJob, bctcQueueEnricherJob (folded into D3B)",
+        "owner": "dev-mcp-server",
+        "depends": [
+          "FIX-BCTC-D3B-GATE-PEK-TRIGGERED-STATUS"
+        ],
+        "detail_ref": "docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md#R-HIGH-1",
+        "created_at": "2026-07-10T12:00:00Z",
+        "created_by": "pm",
+        "note": "R-HIGH-1 mandatory in-cycle: status enum must include pek_triggered in active-work guards, else false health/freshness alarms during normal PEK work. Already folded into D3B (same zone, developer, 3-file surface). This task formalizes the cross-check.",
+        "blocked_note": "status-flip-lane-move fix (3rd occurrence this session, router 2026-07-10T~12:05Z): stayed in backlog[] lane, relabeled READY->BACKLOG since depends[] unmet; will promote to ready[] once its dependency lands DONE_VERIFIED"
+      },
+      {
+        "id": "FIX-BCTC-R-HIGH-2-MARKET-HOURS-GUARD",
+        "type": "FIX",
+        "priority": "medium",
+        "status": "BACKLOG",
+        "zone": "apps/mcp-server/",
+        "size": "XS",
+        "title": "Market-hours guard for automatic /pek-extract trigger (PM option A recommended: client-side skip)",
+        "owner": "dev-mcp-server",
+        "depends": [
+          "FIX-BCTC-D3B-GATE-PEK-TRIGGERED-STATUS"
+        ],
+        "detail_ref": "docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md#R-HIGH-2",
+        "created_at": "2026-07-10T12:00:00Z",
+        "created_by": "pm",
+        "note": "PM DECISION POINT: (A) client-side isVnMarketOpen guard (recommended: skip during 02:00-08:59 UTC, avoids 503 spam) vs (B) no guard (simpler, more logs). Implement A unless PO over-rides. Move to backlog-close if B chosen.",
+        "blocked_note": "status-flip-lane-move fix (3rd occurrence this session, router 2026-07-10T~12:05Z): stayed in backlog[] lane, relabeled READY->BACKLOG since depends[] unmet; will promote to ready[] once its dependency lands DONE_VERIFIED"
       }
     ],
     "closed_sprints": [
@@ -7287,26 +7404,19 @@
     },
     "ready": [
       {
-        "id": "FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION",
-        "type": "SPRINT-S",
+        "id": "FIX-BCTC-D1-STABILIZE-REPORT-ID",
+        "type": "FIX",
         "priority": "high",
         "status": "READY",
         "zone": "apps/mcp-server/",
-        "title": "Wire automatic table-extraction into bctcPdfPullJob, decoupled from the synchronous 0-row gate",
-        "detail": "Per SPIKE-BCTC-2025Q4-PDFPULL-OCR-0ROW (docs/spikes/SPIKE-BCTC-2025Q4-PDFPULL-OCR-0ROW.md, commit 336a6ce11) + PO round BATCH triage (task_id OPS-BCTC-BANK-2025Q4-ENRICH-0ROW-REPARSE): bctcPdfPullJob's */30min cron calls ONLY pdf-extractor's scalar-only /extract endpoint (pdfExtractorClient.ts:65), never a table-extraction endpoint, so its own 0-row gate (bctc_table_rows=0 AND bctc_md_tables=0) fires enrich_failed unconditionally on EVERY newly-pulled report batch-wide (VCI/VHM confirmed hitting it live outside the 2025-Q4 12-ticker cohort). Not a Jul-8 regression (corroborated by architect SPIKE docs/architecture-briefs/2026-07-03-bctc-discover-pipeline-dead.md predating fdb424178). Three concerns for architect design: (a) fire /pek-extract (or /extract-md-tables) automatically for newly-pulled reports; PEK is 202/async so the existing synchronous 0-row gate MUST become deferred/next-cycle (else it still reads 0 immediately after firing); (b) populate financial_reports.pdf_path at PDF-save time, not deferred to the legacy scalar pipeline's success (GVR/MBB/D2D currently have pdf_path IS NULL despite the file existing on disk, blocking /api/trigger-pek-extract's own NULL-pdf_path skip rule); (c) decouple financial_reports shell-row creation from the legacy OCR-confidence gate (_OCR_CONFIDENCE_THRESHOLD=0.5 in domain/services.py) so a PEK-extractable PDF (e.g. GAS, likely scanned, currently has NO financial_reports row at all) is not blocked by an unrelated low-confidence scalar read. SPIKE RAW-verified pdf-extractor's /pek-extract endpoint + push-back path already exist and work (manual POST /api/trigger-pek-extract is proven functional) — keep single-zone apps/mcp-server/; escalate to `multi` zone ONLY if the deferred-gate write-back contract genuinely needs a new pdf-extractor callback change.",
-        "baseline_pass": "pnpm --filter vn-market check green",
-        "related": [
-          "telegram-report:3542",
-          "telegram-report:3546",
-          "spike:SPIKE-BCTC-2025Q4-PDFPULL-OCR-0ROW",
-          "task:OPS-BCTC-BANK-2025Q4-ENRICH-0ROW-REPARSE"
-        ],
-        "created_at": "2026-07-10T09:40:00Z",
-        "created_by": "po-triage-BATCH-dispatch-20260710T0940Z",
-        "updated_at": "2026-07-10T09:41:54Z",
-        "updated_by": "architect",
-        "owner": "pm",
-        "detail_ref": "docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md"
+        "size": "S",
+        "title": "Stabilize financial_reports.id across repeat writes via ON CONFLICT DO UPDATE",
+        "owner": "dev-mcp-server",
+        "depends": [],
+        "detail_ref": "docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md#D1",
+        "created_at": "2026-07-10T12:00:00Z",
+        "created_by": "pm",
+        "note": "Foundational fix: replace INSERT OR REPLACE with ON CONFLICT to preserve id across repeat writes. Must land first before D2/D3."
       }
     ],
     "review": [
@@ -7800,7 +7910,41 @@
     },
     "last_triaged_at": "2026-07-10T08:51:06Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION",
+        "type": "SPRINT-S",
+        "priority": "high",
+        "status": "IN_PROGRESS",
+        "zone": "apps/mcp-server/",
+        "title": "Wire automatic table-extraction into bctcPdfPullJob, decoupled from the synchronous 0-row gate",
+        "detail": "Per SPIKE-BCTC-2025Q4-PDFPULL-OCR-0ROW (docs/spikes/SPIKE-BCTC-2025Q4-PDFPULL-OCR-0ROW.md, commit 336a6ce11) + PO round BATCH triage (task_id OPS-BCTC-BANK-2025Q4-ENRICH-0ROW-REPARSE): bctcPdfPullJob's */30min cron calls ONLY pdf-extractor's scalar-only /extract endpoint (pdfExtractorClient.ts:65), never a table-extraction endpoint, so its own 0-row gate (bctc_table_rows=0 AND bctc_md_tables=0) fires enrich_failed unconditionally on EVERY newly-pulled report batch-wide (VCI/VHM confirmed hitting it live outside the 2025-Q4 12-ticker cohort). Not a Jul-8 regression (corroborated by architect SPIKE docs/architecture-briefs/2026-07-03-bctc-discover-pipeline-dead.md predating fdb424178). Three concerns for architect design: (a) fire /pek-extract (or /extract-md-tables) automatically for newly-pulled reports; PEK is 202/async so the existing synchronous 0-row gate MUST become deferred/next-cycle (else it still reads 0 immediately after firing); (b) populate financial_reports.pdf_path at PDF-save time, not deferred to the legacy scalar pipeline's success (GVR/MBB/D2D currently have pdf_path IS NULL despite the file existing on disk, blocking /api/trigger-pek-extract's own NULL-pdf_path skip rule); (c) decouple financial_reports shell-row creation from the legacy OCR-confidence gate (_OCR_CONFIDENCE_THRESHOLD=0.5 in domain/services.py) so a PEK-extractable PDF (e.g. GAS, likely scanned, currently has NO financial_reports row at all) is not blocked by an unrelated low-confidence scalar read. SPIKE RAW-verified pdf-extractor's /pek-extract endpoint + push-back path already exist and work (manual POST /api/trigger-pek-extract is proven functional) — keep single-zone apps/mcp-server/; escalate to `multi` zone ONLY if the deferred-gate write-back contract genuinely needs a new pdf-extractor callback change.",
+        "baseline_pass": "pnpm --filter vn-market check green",
+        "related": [
+          "telegram-report:3542",
+          "telegram-report:3546",
+          "spike:SPIKE-BCTC-2025Q4-PDFPULL-OCR-0ROW",
+          "task:OPS-BCTC-BANK-2025Q4-ENRICH-0ROW-REPARSE"
+        ],
+        "created_at": "2026-07-10T09:40:00Z",
+        "created_by": "po-triage-BATCH-dispatch-20260710T0940Z",
+        "updated_at": "2026-07-10T12:00:00Z",
+        "updated_by": "pm",
+        "owner": "pm",
+        "detail_ref": "docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md",
+        "decomposed_into": [
+          "FIX-BCTC-D1-STABILIZE-REPORT-ID",
+          "FIX-BCTC-D2-ENSURE-SHELL-ROW",
+          "FIX-BCTC-D3A-PEK-TRIGGER-HELPER",
+          "FIX-BCTC-D3B-GATE-PEK-TRIGGERED-STATUS",
+          "FIX-BCTC-D3C-RECONCILE-JOB",
+          "FIX-BCTC-R-HIGH-1-STATUS-ENUM-UPDATE",
+          "FIX-BCTC-R-HIGH-2-MARKET-HOURS-GUARD"
+        ],
+        "dependency_order": "D1→D2→D3A→D3B→(D3C+R-HIGH-1+R-HIGH-2 parallel)",
+        "note": "Parent task DECOMPOSED into 7 atomic sub-tasks. All sub-tasks in backlog/READY, ready for dev-mcp-server dispatch starting with D1 (no deps). Architect sequencing critical: D1 (id stability) MUST land first; D2, D3A, D3B, D3C/R-HIGH-1/R-HIGH-2 chain per dependency graph."
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
