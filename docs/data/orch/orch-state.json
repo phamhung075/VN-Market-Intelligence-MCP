@@ -316,7 +316,7 @@
   ],
   "head": {
     "status": "idle",
-    "updated_at": "2026-07-10T18:02:04Z",
+    "updated_at": "2026-07-10T19:01:51Z",
     "updated_by": "router",
     "active_task_id": null,
     "next_agent": null
@@ -6786,7 +6786,32 @@
         "qa_note": "RAW-verified: commit 6f054ea3a touched exactly the 8 claimed files (git show --stat); f511c1d39 touched exactly orch-state.json; both present on origin/main (f511c1d39 IS origin/main HEAD). STEP ops-Sn grep confirms sequential S1-S6, no gaps/dupes; pre-existing duplicate-S2 bug fix confirmed via before/after diff (old S1 relocate-stock-catalog->S3, old S2 extract-computeDecision->S4, old S2 split-repositories->S6). 3 offender files confirmed genuinely absent from disk + git ls-files + repo-wide find. Brief section 5 DoD items 3-4 text confirmed verbatim-satisfied (runbook footnote + commit-boundary ops zone row + STEP ops-Sn enforcement line + 3 offenders folded). agent-father-S5 journal + notebook (85L, under 200L) confirmed. Board handoff f511c1d39 coherent: review lane, next_agent=qa, head synced (status=review, active_task_id unchanged, next_agent=qa). NON-BLOCKING gap noted: runbook Step 4/4b Commit-Gate Invariant has no direct hook in ops flow files (init.md/handlers.md/docker.md) -- enforcement relies entirely on the pre-existing PO/developer dispatch-prompt citation of the runbook Microservice Code-Change Close Gate heading (developer/flow/microservice-main.md:162, po/flow/sprint-signoff.md:13), not on ops own bootstrapped knowledge list. Acceptable for THIS task literal DoD (section 5 items 3-4 only require the doc text, not flow-file wiring) and mirrors the same enforcement model as the agents-architect Brief-Commit Invariant it is modeled on (self-attested, not code-gated) -- flagging for a possible future hardening task, not a blocker here."
       }
     ],
-    "done_verified": [],
+    "done_verified": [
+      {
+        "id": "D2.5-BACKLOG-HYGIENE-SCHEMA-BLOCKED-LANE",
+        "size": "S",
+        "sprint": "BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP",
+        "status": "DONE_VERIFIED",
+        "title": "D2.5: Extend LANE_ALLOWED_STATUSES to accept BLOCKED in backlog/review/in_progress (PO ratification required)",
+        "type": "MAINTENANCE",
+        "zone": "apps/mcp-server/src/infrastructure/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#D2.5-BACKLOG-HYGIENE-SCHEMA-BLOCKED-LANE",
+        "owner": "dev-mcp-server",
+        "priority": "high",
+        "depends": [],
+        "note": "PO-RATIFIED (see po_signoff). Extend LANE_ALLOWED_STATUSES: backlog+=BLOCKED, review+=BLOCKED, in_progress+=BLOCKED. Resolves 7 live BLOCKED coherence warnings with zero data mutation. File apps/mcp-server/src/infrastructure/orchStateSchema.ts:412-420; update doc-comment block 392-399 too.",
+        "verify_note": "prior_status=TODO",
+        "po_signoff": "PO RATIFIED 2026-07-10T18:41Z: extend LANE_ALLOWED_STATUSES to accept BLOCKED in {backlog, review, in_progress} (architect brief §6 chosen design; mirrors ADD-1 READY precedent). Rejected new blocked[] lane (blast radius). qa/done/done_verified/ready deliberately unchanged; qa-BLOCKED may be revisited if ever observed. Zero data mutation. Dispatch dev-mcp-server (~3 line change orchStateSchema.ts:412-420 + doc-comment 392-399).",
+        "done_verified": true,
+        "updated_at": "2026-07-10T19:01:51Z",
+        "updated_by": "router",
+        "commit": "b7d669061",
+        "router_verdict": "APPROVED",
+        "router_verified_at": "2026-07-10T19:01:51Z",
+        "router_verified_by": "router",
+        "router_note": "APPROVED. Independent RAW-verify: read full commit diff (b7d669061), matches self-report exactly. Re-ran bun scripts/orch-validate.mjs fresh: 9 warnings, same 9 IDs as D1-residual note (16-7=9, matches po arithmetic). Re-ran orchStateSchema.test.ts fresh: 103/0/622, unchanged. Notebook prepend clean (63L, prior entry intact). git status confirms orch-state.json untouched by sub-agent as instructed."
+      }
+    ],
     "head": {
       "active_task_id": null,
       "next_agent": null,
@@ -6833,22 +6858,6 @@
         "escalated_at": "2026-07-10T17:48:41Z",
         "escalated_by": "router",
         "escalation_reason": "3rd confirmed instance this session (recurring-bug-2+ policy) — D0-BACKLOG-HYGIENE-TERMINAL-ROW-TRIAGE sub-agent's notebook write deleted the c324 entry on pm.md with no replacement, same root cause already diagnosed in this row's own note. Router restored the lost content directly; promoting for immediate dispatch rather than leaving a proven-recurring data-loss bug sitting in backlog."
-      },
-      {
-        "id": "D2.5-BACKLOG-HYGIENE-SCHEMA-BLOCKED-LANE",
-        "size": "S",
-        "sprint": "BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP",
-        "status": "READY",
-        "title": "D2.5: Extend LANE_ALLOWED_STATUSES to accept BLOCKED in backlog/review/in_progress (PO ratification required)",
-        "type": "MAINTENANCE",
-        "zone": "apps/mcp-server/src/infrastructure/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#D2.5-BACKLOG-HYGIENE-SCHEMA-BLOCKED-LANE",
-        "owner": "dev-mcp-server",
-        "priority": "high",
-        "depends": [],
-        "note": "PO-RATIFIED (see po_signoff). Extend LANE_ALLOWED_STATUSES: backlog+=BLOCKED, review+=BLOCKED, in_progress+=BLOCKED. Resolves 7 live BLOCKED coherence warnings with zero data mutation. File apps/mcp-server/src/infrastructure/orchStateSchema.ts:412-420; update doc-comment block 392-399 too.",
-        "verify_note": "prior_status=TODO",
-        "po_signoff": "PO RATIFIED 2026-07-10T18:41Z: extend LANE_ALLOWED_STATUSES to accept BLOCKED in {backlog, review, in_progress} (architect brief §6 chosen design; mirrors ADD-1 READY precedent). Rejected new blocked[] lane (blast radius). qa/done/done_verified/ready deliberately unchanged; qa-BLOCKED may be revisited if ever observed. Zero data mutation. Dispatch dev-mcp-server (~3 line change orchStateSchema.ts:412-420 + doc-comment 392-399)."
       },
       {
         "id": "D1-BACKLOG-HYGIENE-SWEEP-EXECUTE",
@@ -7355,7 +7364,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-10T18:14:00Z",
+    "last_triaged_at": "2026-07-10T19:01:51Z",
     "last_triaged_by": "router",
     "in_progress": []
   },
