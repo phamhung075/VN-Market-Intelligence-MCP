@@ -390,13 +390,17 @@ export type OrchState = z.infer<typeof OrchStateSchema>;
 // complete, promote this to a superRefine on OrchStateSchema.
 //
 // Source: SSOT-zod-validation-directive-2026-06-27.md ADD-2
-//   backlog      → {BACKLOG}
-//   review       → {REVIEW}
+// Extended: D2.5 (BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP, PO-ratified 2026-07-10T18:41Z,
+// po_signoff commit aa1901c72) — BLOCKED admitted as an orthogonal sub-state of
+// backlog/review/in_progress (mandatory blocked_reason/verify_note); qa/done/
+// done_verified/ready deliberately left unchanged.
+//   backlog      → {BACKLOG, BLOCKED}
+//   review       → {REVIEW, BLOCKED}
 //   qa           → {QA}
 //   done         → {DONE, DONE_VERIFIED}
 //   done_verified→ {DONE_VERIFIED}
 //   ready        → {READY, TODO}
-//   in_progress  → {IN_PROGRESS}
+//   in_progress  → {IN_PROGRESS, BLOCKED}
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export interface LaneCoherenceIssue {
@@ -410,13 +414,13 @@ export interface LaneCoherenceIssue {
 
 /** ADD-2 lane → allowed status set mapping. */
 export const LANE_ALLOWED_STATUSES: Readonly<Record<string, ReadonlySet<string>>> = {
-  backlog:       new Set(["BACKLOG"]),
-  review:        new Set(["REVIEW"]),
+  backlog:       new Set(["BACKLOG", "BLOCKED"]),
+  review:        new Set(["REVIEW", "BLOCKED"]),
   qa:            new Set(["QA"]),
   done:          new Set(["DONE", "DONE_VERIFIED"]),
   done_verified: new Set(["DONE_VERIFIED"]),
   ready:         new Set(["READY", "TODO"]),
-  in_progress:   new Set(["IN_PROGRESS"]),
+  in_progress:   new Set(["IN_PROGRESS", "BLOCKED"]),
 };
 
 /**
