@@ -1,21 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-07-09 — FIX-CYCLEJOB-1294-MACRO-TEST-UNMOCKED-LIVE-FETCH → REVIEW
-
-**Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (dispatched from ci-red-554bb302 signal, dev-team)
-
-1294-macro-spam-fix.test.ts's AC-1/AC-2 `CycleDeps` objects omitted `macroFetchFn`/`vnstockSyncFn` (both already exist on `CycleDeps`, added by CI-RED-8081e584-FIX round 2 / commit 8a2ef7255 for the sibling 1285-macro-alert-cooldown test) — step A2 defaulted to REAL Yahoo Finance/SBV HTTP calls on every run, confirmed live via `[yahooFinance] fetched commodity prices`/`[sbv] macro snapshot fetched` log lines that vanished after the fix. Fix: injected `async () => {}` no-op stubs for both fields, mirroring the 1285 precedent (no new DI convention).
-
-RAW-verified: target test green x4 local runs, no live-fetch log lines, duration ~1050ms→~150ms proves no network I/O. tsc clean. `git stash` A/B on a monolithic `bun test` run's 12-file failure list confirmed those 65 fails pre-exist independent of this diff. CI-equivalent `ci-per-file-isolation.sh`: 1294 not among the (unrelated) failed files. Pushed 76acfb4e4 → CI initially red on FU-LOCKSTORE-EXPIRED-GC.test.ts (unrelated, zero code overlap, confirmed 3/3 local isolated pass — a NEW unrelated flake, not this fix) → re-ran same commit's CI job (GH run 29025427212) → green.
-
-Scope note: 8 other test files (106-intelligence-cycle/1228/1255/137/1383/1501/278/311) call `runIntelligenceCycle` without stubbing `macroFetchFn`/`vnstockSyncFn` — same exposure class, currently passing (network reachable), flagged for a follow-up sweep rather than folded into this S-size targeted fix.
-
-Doc updates: NONE (test-only fix, no architecture/behavior change).
-
-Commit: 76acfb4e4. Board: `in_progress`→`review` (orch-apply.sh, commit 531af9a11), `next_agent=qa`.
-
-Zone health: tsc clean, tools=183 unchanged, target test green x4 no live-fetch, CI green on re-run | HEALTHY.
-
 ## 2026-07-09 — FACTORY-NEWS-extract-rss-parse → misroute, NOT implemented (zone violation)
 
 **Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (BOUNDED-1 idle-capacity auto-pickup, dev-team)
@@ -47,3 +31,21 @@ Doc updates: `market-data.md` (Invariant 6 clarified + new Invariant 8 documenti
 Commit: pending (this cycle). Board: `in_progress`→`review`, `next_agent=ops`, `rebuild_required=true` (mcp-server container swap is user-gated — NOT run by this agent, per feedback_container_swaps_user_gated.md). Filed `docs/signals/ops-rebuild-verify-mcp-server-20260709T2332Z.json` — deferred market-hours RAW-verify of live foreign_net_vol coverage growth + VPS script redeploy confirmation.
 
 Zone health: tsc clean, tools=183 unchanged, 78/78 targeted tests pass, live-tested full-universe API call (1459 codes, HTTP 200) | HEALTHY.
+
+## 2026-07-10 — TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-CTG-CARRY-FORWARD → REVIEW
+
+**Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (dev-team dispatch, Track 1 of FIX-BCTC-BANK-SUMMARY-MAPPING W5 replacement, AC-14 dedup)
+
+RISK-2 pre-check (mandatory before dev effort): latest on-disk signal (`cowork-team-20260710T000000Z`, newer than the architect brief's own citation) confirms gateway still gateway-blind — Track 1 (deterministic migration) stays the correct path; did not silently switch to the original agentic W5 approach.
+
+Built `scripts/migrations/carry-forward-bctc-orphaned-rows.ts` (idempotent, `--source`/`--target`/`--apply`, dry-run default) — INSERT...SELECT copies orphaned `bctc_table_rows` onto the current `report_id`, then reuses the existing `buildBackfillBctcScalarsHandler` (zero duplicated aggregation logic) to reflow scalars. Ran live against the named-volume DB: 451 CTG 2026-Q1 rows carried forward `96e36139-...` → `e497f7d1-...` (RAW pre/post-verified via `docker exec`).
+
+Finding (escalated, not silently claimed as fixed): the 451 carried rows are 208 income_statement + 173 cash_flow + 70 notes — ZERO balance_sheet/general rows. The BEQ-6 section-completeness gate correctly refused to promote to DONE (set `refine_status=PARTIAL`, left `total_assets=0`/`net_revenue=3910`/`net_margin_pct=~229157%` unchanged). AC-TRACK1-2 (row carry-forward) PASSED; AC-TRACK1-3 (scalars plausible) did NOT resolve — the defect is one level deeper than W2's row-repair scope: the balance-sheet page window was apparently never captured in the original agentic-refine pass that produced this orphan. Needs a fresh refine pass targeting that window once gateway-blind resolves.
+
+AC-TRACK1-4/5/6 all PASS: VCB/FPT/VNM unaffected (RAW-verified live + by code inspection — writes scoped to source/target report_id only); CTG/VCB report_ids re-confirmed current (no churn since the architect brief); commit references sprint + AC-14 dedup note + brief path.
+
+New test file 8/8 pass (24 expect()) — `:memory:` SQLite, zero live-DB dependency. tsc clean. Targeted financial-reports suite (BEQ-2/BEQ-SECTION-GUARD/FU-BACKFILL-DE-SYNC/LF-SERVE-REFLOW/TSU-DEV-U3) 39/39 pass. Full `bun test` 14426 pass/40 skip/59 fail/5 errors/1185 files (626s, known Bun 1.3.13 teardown crash after summary) — zero apps/mcp-server/src/ files touched by this task, so pre-existing/unrelated by construction. toolCount=183 unchanged. Live health/dashboard probes clean (no rebuild needed — server code untouched).
+
+Commit: pending (this cycle). Board: `ready`→`review` via orch-apply.sh, `next_agent=qa`.
+
+Zone health: tsc clean, tools=183 unchanged, new script 8/8 + targeted BCTC suite 39/39 pass, zero apps/mcp-server/src/ files touched, live migration RAW-verified (451 rows) with an honest AC-TRACK1-3 escalation (not a false-green) | HEALTHY.
