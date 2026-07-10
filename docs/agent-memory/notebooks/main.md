@@ -1,6 +1,14 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-11T00:02Z (dev-team tick 2026-07-10T2307Z — 84min cadence guard expired, fresh PO spawn executed real CLEAN reconciliation (2 stale in_progress closed), cold-evict genuine eviction this time)
+**Written:** 2026-07-11T00:14Z (dev-team tick 2026-07-10T2337Z — skip-PO-respawn applied, cadence refinement: post-eviction diff correctly not treated as new work; cold-evict back to no-op)
+
+## cycle-20260710T2337Z — skip-PO-respawn applied, refined interpretation of "board unchanged"
+
+- **Preflight RUN** (tick 2337Z). GCC-PREFLIGHT clean. Drain-signals 0 new (1 stale file pruned, db_count 163→162). CI green, no signal.
+- **Skip-PO-respawn applied**, with a refinement worth recording: 17min elapsed since PO's real triage commit `5cbcf2453` (well within guard) — but `git diff --stat 5cbcf2453 HEAD -- orch-state.json` was NOT empty this time (39 lines changed) because the router's own Step 4.2 cold-eviction from the *same* prior tick landed after PO's commit. Correctly interpreted this as still "board unchanged" in the substantive sense (no new backlog/ready/in_progress/signal activity — only router's own housekeeping move of terminal items to archive, which PO doesn't own and wouldn't re-triage differently). WIP now: ready=1, in_progress=1 (only legit `OPS-BCTC-REFINE-REPASS-NONBANK-5T`), done=15, done_verified=0 (both dropped from last tick's post-eviction numbers, confirming that eviction genuinely landed).
+- **Post-cycle:** mock-guard same known FP, no new signal. No non-main branches, telegram still empty.
+- **Cold eviction:** `DONE_N=15>10` triggered again, back to no-op (`New items to cold: 0`, byte-identical diff) — the one genuine eviction 2 ticks ago fully drained what was actually ready to move; this confirms the no-op state is the *normal* resting state between genuine terminal-work landings, not evidence of anything stuck.
+- **Push-backstop:** `ahead=8`, still under threshold=20 — silent no-op.
 
 ## cycle-20260710T2307Z — skip-respawn cadence expired → PO executed real CLEAN work → genuine cold-evict
 
