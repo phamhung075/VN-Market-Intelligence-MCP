@@ -1,23 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-07-10 — TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-CTG-CARRY-FORWARD → REVIEW
-
-**Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (dev-team dispatch, Track 1 of FIX-BCTC-BANK-SUMMARY-MAPPING W5 replacement, AC-14 dedup)
-
-RISK-2 pre-check (mandatory before dev effort): latest on-disk signal (`cowork-team-20260710T000000Z`, newer than the architect brief's own citation) confirms gateway still gateway-blind — Track 1 (deterministic migration) stays the correct path; did not silently switch to the original agentic W5 approach.
-
-Built `scripts/migrations/carry-forward-bctc-orphaned-rows.ts` (idempotent, `--source`/`--target`/`--apply`, dry-run default) — INSERT...SELECT copies orphaned `bctc_table_rows` onto the current `report_id`, then reuses the existing `buildBackfillBctcScalarsHandler` (zero duplicated aggregation logic) to reflow scalars. Ran live against the named-volume DB: 451 CTG 2026-Q1 rows carried forward `96e36139-...` → `e497f7d1-...` (RAW pre/post-verified via `docker exec`).
-
-Finding (escalated, not silently claimed as fixed): the 451 carried rows are 208 income_statement + 173 cash_flow + 70 notes — ZERO balance_sheet/general rows. The BEQ-6 section-completeness gate correctly refused to promote to DONE (set `refine_status=PARTIAL`, left `total_assets=0`/`net_revenue=3910`/`net_margin_pct=~229157%` unchanged). AC-TRACK1-2 (row carry-forward) PASSED; AC-TRACK1-3 (scalars plausible) did NOT resolve — the defect is one level deeper than W2's row-repair scope: the balance-sheet page window was apparently never captured in the original agentic-refine pass that produced this orphan. Needs a fresh refine pass targeting that window once gateway-blind resolves.
-
-AC-TRACK1-4/5/6 all PASS: VCB/FPT/VNM unaffected (RAW-verified live + by code inspection — writes scoped to source/target report_id only); CTG/VCB report_ids re-confirmed current (no churn since the architect brief); commit references sprint + AC-14 dedup note + brief path.
-
-New test file 8/8 pass (24 expect()) — `:memory:` SQLite, zero live-DB dependency. tsc clean. Targeted financial-reports suite (BEQ-2/BEQ-SECTION-GUARD/FU-BACKFILL-DE-SYNC/LF-SERVE-REFLOW/TSU-DEV-U3) 39/39 pass. Full `bun test` 14426 pass/40 skip/59 fail/5 errors/1185 files (626s, known Bun 1.3.13 teardown crash after summary) — zero apps/mcp-server/src/ files touched by this task, so pre-existing/unrelated by construction. toolCount=183 unchanged. Live health/dashboard probes clean (no rebuild needed — server code untouched).
-
-Commit: pending (this cycle). Board: `ready`→`review` via orch-apply.sh, `next_agent=qa`.
-
-Zone health: tsc clean, tools=183 unchanged, new script 8/8 + targeted BCTC suite 39/39 pass, zero apps/mcp-server/src/ files touched, live migration RAW-verified (451 rows) with an honest AC-TRACK1-3 escalation (not a false-green) | HEALTHY.
-
 ## 2026-07-10 — FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH → REVIEW
 
 **Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (BOUNDED-1 idle-capacity auto-pickup, dev-team)
@@ -49,3 +31,23 @@ Verification-gate caveat (honest, not silently claimed): live re-check of "0 NEW
 Commit: pending (this cycle). Board: `in_progress`→`review` via orch-apply.sh, `next_agent=qa`.
 
 Zone health: tsc clean, tools=183 unchanged, new test 8/8 + targeted alert suites 110/110 pass, full-suite flakiness isolated/unrelated, live server-boot + dashboard probes clean, live DB re-verified 0 current orphans | HEALTHY.
+
+## 2026-07-10 — FIX-BCTC-D1-STABILIZE-REPORT-ID → REVIEW
+
+**Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (router-dispatched, D1 of 7-task FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION decomposition chain — D2/D3 out of scope, backlog pending this task DONE_VERIFIED)
+
+Verified live schema first (not just the architect's cited test-file copies): `financial_reports` DDL lives in `apps/mcp-server/bctc-schema.ts:727-822` (`SQLITE_DDL`), wired via `initFinancialReportsTables` (`schema-financial-reports.ts:28`) → `schema.ts initDatabase()`. Confirmed `UNIQUE(action_code, sort_key)` (line 821) is the live constraint — not the `UNIQUE(action_code, period_year, period_quarter)` some sibling fixtures use for the unrelated `bctc_vps_queue` table.
+
+Root cause: `storeReport()` used `INSERT OR REPLACE INTO financial_reports`, which SQLite resolves any UNIQUE conflict via DELETE-then-INSERT — minting a fresh `randomUUID()` id on every re-parse of the same (action_code, sort_key). `bctc_layout_units`/`bctc_page_zones` (PEK extraction tables) reference `financial_reports.id` via a plain TEXT column, no real FK — a replaced id silently orphans any rows a prior PEK run already wrote.
+
+Fix: rewrote the write as `INSERT INTO financial_reports (...) VALUES (...) ON CONFLICT(action_code, sort_key) DO UPDATE SET <60 cols except id>` — `id` deliberately absent from SET so SQLite never touches it on conflict. Also added a pre-check `SELECT id FROM financial_reports WHERE action_code=? AND sort_key=?` inside `parseBctcReport()` itself, before assembling the returned object, so the in-memory `report.id` handed back to callers stays stable too (not just the DB column) — closes a gap the SQL-only trick alone would leave (architect's full D1 design specified this pre-check).
+
+New `FIX-BCTC-D1-STABILIZE-REPORT-ID.test.ts` (3 tests, 17 assertions): parse #1 captures DB id + net_revenue; parse #2 (same action_code+sort_key, different net_revenue via a modified fixture) asserts DB row id UNCHANGED, in-memory `report.id` UNCHANGED, net_revenue DID update, exactly 1 row exists; 3rd test proves a genuinely different sort_key gets its own distinct id. Grepped every existing caller/test for a double-call-same-key pattern — none exist, zero regression risk to the pre-existing suite.
+
+Full `bun test` hung indefinitely twice in this sandbox (killed both after >10min with near-0% CPU — network-hung, not slow; matches S29's already-filed SPIKE-CI-PERFILE-ISOLATION-FLAKE finding). Switched to `scripts/ci-per-file-isolation.sh` (P=12, canonical per-file isolation runner) — completed all 1184 files: 14286 pass/40 skip/37 fail. Of the 18 non-clean files: 3 rc=137 (my kill after confirmed hangs — re-verified 1, `1294b-bctc-fallback.test.ts`, hangs even standalone with zero contention, unrelated to `storeReport`), 3 rc=132/SIGILL pass-then-crash (matches the S26-S29-documented recurring Bun 1.3.13 teardown crash), 12 genuine fails all in pollNews/Chromium/SSC-breaker/pdf-extractor/RAG files with zero reference to `parseBctcReport`/`storeReport`/`financial_reports`. BCTC/financial-reports-scoped subset (106 files): 1220 pass/0 fail (only the 1 pre-existing-hung file inconclusive). tsc clean. toolCount unchanged (no interface/tool file touched).
+
+`docs/architecture/microservice/mcp-server/usecases.md` updated (application layer changed — doc-review Step 1 rule).
+
+Commit: NOT committed by this agent — router/dev-team commits per explicit task-dispatch instruction (overrides this zone's normal RUN-SOLO direct-commit default for this cycle). Board: `ready`→`review` via orch-apply.sh, `next_agent=qa`.
+
+Zone health: tsc clean, new test 3/3 pass, BCTC/financial-reports-scoped suite 1220/0 fail (106 files), full-suite hang isolated to 1 pre-existing unrelated file (independently re-confirmed hung in total isolation), zero overlap between any genuine failure and this diff's touched files | HEALTHY.

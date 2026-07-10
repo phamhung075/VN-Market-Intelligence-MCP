@@ -21,7 +21,21 @@ Sector classification sync from static mappings
 ## Financial Reports
 
 ### parseBctcReport.ts
-BCTC PDF text extraction & field validation
+BCTC PDF text extraction & field validation.
+
+**FIX-BCTC-D1-STABILIZE-REPORT-ID (2026-07-10):** `storeReport()` (`parseBctcReport.ts:219,275-372`)
+persists to `financial_reports` (`UNIQUE(action_code, sort_key)`, `bctc-schema.ts:727-822`) via
+`INSERT ... ON CONFLICT(action_code, sort_key) DO UPDATE SET <all columns except id>` — NOT
+`INSERT OR REPLACE`. `id` is deliberately absent from the `DO UPDATE SET` clause, so SQLite never
+touches it on conflict: the row's `id` is stable across every re-parse of the same
+(action_code, sort_key). Before this fix, `INSERT OR REPLACE` resolved the unique-key conflict via
+DELETE-then-INSERT, minting a fresh `randomUUID()` id on every re-parse — silently orphaning any
+`bctc_layout_units`/`bctc_page_zones` rows a prior PEK extraction had already written against the old
+id (those tables reference `financial_reports.id` by plain TEXT column, no real FK). `parseBctcReport()`
+(`parseBctcReport.ts:673-679`) also pre-checks for an existing row (`SELECT id FROM financial_reports
+WHERE action_code = ? AND sort_key = ?`) before assembling the returned `FinancialReport`, so the
+in-memory `report.id` handed back to the caller matches the DB-persisted id on a re-parse too (not
+just the SQL-column-level guarantee). Test: `src/__tests__/FIX-BCTC-D1-STABILIZE-REPORT-ID.test.ts`.
 
 ### fetchParseAndStoreBctc.ts
 VPS PDF pull → OCR → parser → DB storage. FACTORY-APP-split-fetchParseAndStoreBctc

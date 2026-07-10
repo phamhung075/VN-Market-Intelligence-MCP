@@ -195,7 +195,22 @@ function toMetrics(report: FinancialReport): FinancialMetrics {
 
 /**
  * Upsert a FinancialReport into the financial_reports SQLite table.
- * Uses INSERT OR REPLACE to handle re-runs idempotently.
+ *
+ * FIX-BCTC-D1-STABILIZE-REPORT-ID: uses INSERT ... ON CONFLICT(action_code,
+ * sort_key) DO UPDATE SET <all columns except id> — NOT INSERT OR REPLACE.
+ * `financial_reports` has UNIQUE(action_code, sort_key) (bctc-schema.ts).
+ * INSERT OR REPLACE resolves conflicts by DELETE-then-INSERT, which mints a
+ * brand-new `id` (report.id = randomUUID() below) on every re-parse of the
+ * same (action_code, sort_key). Downstream PEK tables (bctc_layout_units,
+ * bctc_page_zones) reference financial_reports.id via a plain TEXT column —
+ * NOT a real FK — so a replaced id silently orphans any rows already written
+ * against the old id. The ON CONFLICT ... DO UPDATE form updates the existing
+ * row in place instead: `id` is deliberately omitted from the SET clause, so
+ * SQLite never touches it on conflict — the original row's id survives across
+ * every re-parse. `action_code`/`sort_key` are also omitted from SET since
+ * they ARE the conflict-target match key (guaranteed identical, updating them
+ * would be a no-op). The `$id` bind value is only ever used on a genuine
+ * first insert (no existing row) — on conflict it is discarded by SQLite.
  *
  * 1196: extractionConfidence guard —
  *   0.0   → skip insert entirely (all-zero extraction, no signal value)
@@ -272,7 +287,7 @@ async function storeReport(
 
   const db = getDb();
   const stmt = db.prepare(`
-    INSERT OR REPLACE INTO financial_reports (
+    INSERT INTO financial_reports (
       id, action_code, company_name, exchange, domain,
       period_year, period_quarter, period_type, period_start, period_end, sort_key,
       ssc_url, pdf_path, published_at, parsed_at, audit_status, auditor,
@@ -307,6 +322,69 @@ async function storeReport(
       $validationStatus, $validationNotes, $extractionMethod,
       $ocrConfidence, $confidenceFinancial
     )
+    ON CONFLICT(action_code, sort_key) DO UPDATE SET
+      company_name = excluded.company_name,
+      exchange = excluded.exchange,
+      domain = excluded.domain,
+      period_year = excluded.period_year,
+      period_quarter = excluded.period_quarter,
+      period_type = excluded.period_type,
+      period_start = excluded.period_start,
+      period_end = excluded.period_end,
+      ssc_url = excluded.ssc_url,
+      pdf_path = excluded.pdf_path,
+      published_at = excluded.published_at,
+      parsed_at = excluded.parsed_at,
+      audit_status = excluded.audit_status,
+      auditor = excluded.auditor,
+      extraction_confidence = excluded.extraction_confidence,
+      net_revenue = excluded.net_revenue,
+      gross_profit = excluded.gross_profit,
+      operating_profit = excluded.operating_profit,
+      ebitda = excluded.ebitda,
+      profit_before_tax = excluded.profit_before_tax,
+      net_profit = excluded.net_profit,
+      eps = excluded.eps,
+      diluted_eps = excluded.diluted_eps,
+      total_assets = excluded.total_assets,
+      current_assets = excluded.current_assets,
+      cash = excluded.cash,
+      inventory = excluded.inventory,
+      total_liabilities = excluded.total_liabilities,
+      short_term_debt = excluded.short_term_debt,
+      long_term_debt = excluded.long_term_debt,
+      equity_total = excluded.equity_total,
+      operating_cf = excluded.operating_cf,
+      investing_cf = excluded.investing_cf,
+      financing_cf = excluded.financing_cf,
+      capex = excluded.capex,
+      free_cash_flow = excluded.free_cash_flow,
+      gross_margin_pct = excluded.gross_margin_pct,
+      operating_margin_pct = excluded.operating_margin_pct,
+      net_margin_pct = excluded.net_margin_pct,
+      roe = excluded.roe,
+      roa = excluded.roa,
+      current_ratio = excluded.current_ratio,
+      debt_to_equity = excluded.debt_to_equity,
+      net_debt_to_ebitda = excluded.net_debt_to_ebitda,
+      pe = excluded.pe,
+      pb = excluded.pb,
+      balance_sheet_json = excluded.balance_sheet_json,
+      income_stmt_json = excluded.income_stmt_json,
+      cash_flow_json = excluded.cash_flow_json,
+      ratios_json = excluded.ratios_json,
+      yoy_delta_json = excluded.yoy_delta_json,
+      qoq_delta_json = excluded.qoq_delta_json,
+      market_data_json = excluded.market_data_json,
+      embedding_text = excluded.embedding_text,
+      notes_raw_text = excluded.notes_raw_text,
+      validation_status = excluded.validation_status,
+      validation_notes = excluded.validation_notes,
+      extraction_method = excluded.extraction_method,
+      ocr_confidence = excluded.ocr_confidence,
+      confidence_financial = excluded.confidence_financial
+    -- id is deliberately NOT in this SET clause — SQLite keeps the existing
+    -- row's id untouched on conflict (FIX-BCTC-D1-STABILIZE-REPORT-ID).
   `);
 
   stmt.run({
@@ -584,8 +662,24 @@ export async function parseBctcReport(
   // ── Step 6: Assemble the FinancialReport ──────────────────────────────────
   const parsedAt = new Date().toISOString();
 
+  // FIX-BCTC-D1-STABILIZE-REPORT-ID: reuse the existing row's id when one
+  // already exists for this (action_code, sort_key). storeReport()'s
+  // ON CONFLICT DO UPDATE never touches the id column on a real conflict, so
+  // this pre-check is not needed for DB correctness — but WITHOUT it, the
+  // in-memory FinancialReport returned to the caller would carry a freshly
+  // minted (and never-persisted) id on every re-parse, silently diverging
+  // from the id actually stored in SQLite. DB init is moved up from Step 7
+  // so the pre-check SELECT has a table to query on the very first call.
+  await initDatabase();
+  const existingReportRow = getDb()
+    .query<{ id: string }, [string, string]>(
+      "SELECT id FROM financial_reports WHERE action_code = ? AND sort_key = ?",
+    )
+    .get(actionCode, period.sortKey);
+  const reportId = existingReportRow?.id ?? randomUUID();
+
   const report: FinancialReport = {
-    id: randomUUID(),
+    id: reportId,
     actionCode,
     companyName: "",          // Not extracted from text in this task; set by caller or task 048
     exchange: "HOSE",         // Default; overridable by caller
@@ -621,8 +715,8 @@ export async function parseBctcReport(
   };
 
   // ── Step 7: Persist to SQLite ─────────────────────────────────────────────
-  // Ensure DB is initialised (idempotent — no-op if already done)
-  await initDatabase();
+  // DB already initialised above (Step 6 pre-check) — idempotent, safe to
+  // reuse the same singleton connection here.
   const db = getDb();
 
   try {
