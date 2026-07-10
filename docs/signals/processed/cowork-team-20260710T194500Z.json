@@ -1,0 +1,36 @@
+{
+  "source": "cowork-team",
+  "type": "tick-report",
+  "severity": "HIGH",
+  "tick": "2026-07-10T19:45Z",
+  "verdict": "WORK",
+  "matched_slots": [
+    "chef-evening"
+  ],
+  "spawned": [],
+  "skipped": [
+    {
+      "slot_id": "chef-evening",
+      "agent": "unified-agent",
+      "guaranteed": true,
+      "reason": "undeliverable-gateway-blind — trigger_id=trig_013zatVHSRiChMJwm5XtSBEx (non-null) but _superseded_by=cowork-dispatcher (superseded-despite-trigger-id pattern) — same as 07-09T19:45Z occurrence"
+    }
+  ],
+  "signal_queue_drained": [],
+  "escalation_note": "GUARANTEED SLOT MISSED: chef-evening (3rd daily CHEF dish synthesis, unified-agent, cron 45 19 * * *) could not be spawned this tick. 2nd consecutive daily occurrence of this exact slot — identical to 07-09T19:45Z (docs/signals/processed/cowork-team-20260709T194500Z.json), exactly 24h apart, same superseded-despite-trigger-id pattern. Session guaranteed-miss count now 11 (was 10, +1). Full daily CHEF cycle (chef-morning, chef-eod, chef-evening) has now missed end-to-end 2 days running under the gateway-blind condition. Root cause unchanged: native mcp__gateway__call_tool absent from tool set; this slot's backstop trigger exists but is marked superseded by cowork-dispatcher without an active replacement. Durable fix requires user action: register gateway in .mcp.json + reconnect (docs/handoffs/GATEWAY-BLIND-USER-ACTION-2026-06-18.md). Telegram sent to WORK channel.",
+  "chef_mutex_applied": false,
+  "chef_mutex_note": "Only one chef-group slot (chef-evening) matched this tick — Step 4.5c mutex requires two same-tick chef matches, not applicable.",
+  "methodology_note": "Discriminator per docs/agents/cowork-team/flow/spawn-fanout.md (trigger_id + _superseded_by, OR logic). chef-evening: superseded-despite-trigger-id pattern, guaranteed:true — recurring guaranteed miss (2nd consecutive day for this exact slot, same class as chef-eod).",
+  "gateway_blind_status": "unresolved — native mcp__gateway__call_tool still absent; routed via mcp_call bash bypass (send_telegram + emit_pressure_state both succeeded this tick).",
+  "work_channel_message_sent": true,
+  "guaranteed_miss_count_session": 11,
+  "stale_warning_note": "PRESENT (true) this tick — cumulative tally 32 true / 58 absent over 90 WORK ticks",
+  "recurring_symptom_note": "All 3 daily CHEF guaranteed slots (chef-morning, chef-eod, chef-evening) plus digest-daily have now missed 2 consecutive days running — persistent multi-slot guaranteed-miss pattern, all tracing to the same unresolved gateway-blind root cause. Worth flagging to PO as a consolidated durable-fix priority rather than per-slot escalation.",
+  "emitted_at": "2026-07-10T19:47:14.489Z",
+  "_processed": {
+    "fingerprint": "d4fd557df7165b3f99ae5ed4efa391ac38df0e513d53fd5d9d539f37a44cd3b7",
+    "processedAt": "2026-07-10T20:16:54Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
