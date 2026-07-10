@@ -5935,6 +5935,21 @@
         "created_at": "2026-07-10T19:24:28Z",
         "created_by": "router",
         "source": "D5-BACKLOG-HYGIENE-VALIDATOR-HARDENING self-report recommendation, independently reproduced by router before minting"
+      },
+      {
+        "id": "FIX-DEVTEAM-EPIC-WRAPPER-AUTOCLOSE-SWEEP",
+        "size": "S",
+        "status": "BACKLOG",
+        "title": "dev-team post-cycle: sweep ready[]/in_progress[] for epic-wrapper rows whose children are all terminal, auto-dispatch pm for closeout",
+        "type": "FIX",
+        "zone": "docs/agents/dev-team/flow/",
+        "owner": "developer",
+        "priority": "normal",
+        "depends": [],
+        "note": "Discovered 2026-07-10: BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP's ready[] row (owner=pm) sat open for hours after all 11 children (D0/D0B/D1/D2.5/D3/D4/D5+SHG-2..5) reached DONE_VERIFIED. Root cause: Step 0b pipeline-resume in docs/agents/dev-team/flow/main.md only fires on .head.status==\"in_progress\" -- once PM decomposes an epic and head resets to idle, nothing re-checks whether the parent's children are now all terminal. Router caught this only by chance during manual board inspection. Fix: add a Step 4 (post-cycle) candidate that scans ready[]/in_progress[] for rows with non-null/non-empty children[] where every child (board-live or archived) is terminal (DONE/DONE_VERIFIED/CANCELLED/DEFERRED/SKIPPED), and auto-dispatches the row's own next_agent/owner (usually pm) for closeout instead of relying on router luck. Distinct from already-shipped FIX-DEVTEAM-BOUNDED1-EPIC-WRAPPER-GATE (that one prevents premature BOUNDED-1 pickup of a wrapper row; this one closes a wrapper once legitimately done). See feedback_epic_wrapper_closeout_gap_no_auto_revisit memory.",
+        "created_at": "2026-07-10T19:59:57Z",
+        "created_by": "router",
+        "source": "router discovery during routine board inspection, 2026-07-10 dev-team cron tick"
       }
     ],
     "closed_sprints": [
@@ -7208,7 +7223,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-10T19:24:28Z",
+    "last_triaged_at": "2026-07-10T19:59:57Z",
     "last_triaged_by": "router",
     "in_progress": [
       {
