@@ -6594,6 +6594,21 @@
         "created_by": "po-triage-scope-expansion-20260710T110002Z",
         "origin_signal_id": "cowork-recurring-guaranteed-miss-scope-expansion-20260710T0917Z",
         "note": "PLAN-ONLY (anomaly->BACKLOG bridge, project_anomaly_task_bridge). Triaged from HIGH-severity scope-expansion signal cowork-recurring-guaranteed-miss-scope-expansion-20260710T0917Z (supersedes the CHEF-only framing of prior signal cowork-recurring-guaranteed-miss-20260710T0847Z, now READ). EVIDENCE FOR SINGLE DISPATCHER-LEVEL DEFECT: three DISTINCT guaranteed slots each missed their cron tick on BOTH 2026-07-09 and 2026-07-10 — chef-morning (05:15Z) + chef-eod (08:45Z) [chef parallel_group] AND fb-daily (09:15Z) [fb-poster parallel_group]. The fb-daily miss is the key datum: it is NOT in the chef parallel_group, so the defect is dispatcher-wide across ALL guaranteed slots, not CHEF-specific. Same deprecated-backstop symptom pattern on all three: _superseded_by=cowork-dispatcher marks the slot undeliverable via the gateway-blind bypass; fb-daily shows trigger_id=null while the two chef slots reportedly have trigger_id set — investigator must reconcile this discrepancy between the two source signals as part of the spike. Session guaranteed-miss count = 9. SCOPE: investigate the guaranteed-slot backstop/supersede dispatch path (docs/agents/cowork-team/flow/, docs/data/cowork-schedule.json, scripts/agents-flow/) as ONE defect; deliverable is a findings doc + durable-fix recommendation, NOT 3 separate per-slot fixes and NOT a live dispatch. CROSS-REFERENCES (do not duplicate): OPS-COWORK-GUARANTEED-SLOT-INSTALL (REVIEW — launchd guaranteed-slot firer is a DELIVERY-SIDE mitigation/workaround, complementary to but distinct from this root-cause investigation; first live fire window 2026-07-11T05:15Z chef-morning); FIX-COWORK-LASTFIRED-DECOUPLE-FROM-DELIVERY (BACKLOG — last_fired bumped on dispatch not delivery proof MASKS misses, adjacent detection defect); FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK (BACKLOG P1 — curl-bypass retrofit for gateway-blind flows); SPIKE-GATEWAY-BLIND-CLI-HANDSHAKE (DONE — root-caused gateway-blind to CLI MCP-client handshake; prior art the investigator should read first). Route to architect after normal po->ba->pm chain."
+      },
+      {
+        "id": "FIX-BCTC-D3C-FOLLOW-UP-RESET-ATTEMPTS",
+        "type": "FIX",
+        "priority": "medium",
+        "status": "BACKLOG",
+        "zone": "apps/mcp-server/",
+        "size": "XS",
+        "title": "Reset reconcile_attempts+attempts when row recycles via Arm-2 grace-period retry",
+        "detail": "QA finding (D3C DONE_VERIFIED review, sprint-SYSTEMIC-REMAKE-P1-qa.md, point 2): bctcQueueEnricherJob.ts's pre-existing Arm-2 grace-period retry (after 7d in enrich_failed, if attempts<6) recycles the row back to pending without zeroing reconcile_attempts (nor the pre-existing attempts column). Result: a recycled row re-enters pek_triggered carrying its old ~8 counter and can re-exhaust to enrich_failed on the very next reconciliation pass instead of getting a fresh ~4h budget. This mirrors an identical pre-existing gap already accepted on the attempts column itself (both are fetch-failure counters, semantically orthogonal). Not a regression from FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION (pre-existing behavior); not silent/data-corrupting (worst case: earlier fail-loud re-terminalization). Must touch two already-approved prior-task files: bctcPdfPullJob.ts (when writing pek_triggered status on initial pull) and bctcQueueEnricherJob.ts (Arm-2 recycle path). Recommend this as a small separate backlog fix to prevent staleness on the recycle path.",
+        "owner": "dev-mcp-server",
+        "depends": [],
+        "created_at": "2026-07-10T14:55:00Z",
+        "created_by": "pm",
+        "note": "Non-blocking follow-up from D3C QA review. Low risk: mirrors pre-existing attempts-column gap already accepted. Candidate for next sprint if backlog has capacity."
       }
     ],
     "closed_sprints": [
@@ -7589,6 +7604,44 @@
         "qa_note": "APPROVED. Router already independently RAW-verified diff/tsc/mock-guard/own-test-run(26/26,80 expect())/TC-18-19-20 read/isVnMarketHours-provenance-correction/isVnMarketHours-impl-read/1352a-git-stash-isolation/board-flip/notebook/DJ-GATE-1 — did not re-derive those, focused on the one dispatcher-named judgment point: direction-of-guard correctness. Independently read the design doc itself (docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md, R-HIGH-2 bullet, line 114) — it explicitly asks for a client-side is_vn_market_open pre-check to avoid a guaranteed 503 round-trip + noisy log spam during 02:00-08:59 UTC, i.e. SKIP-when-OPEN / FIRE-when-CLOSED. Cross-checked against the actual implementation (`if (shellRow && isVnMarketHours(now)) { log-only skip }`) and the actual test assertions: TC-18 pins MARKET_HOURS_NOW (2026-07-06T04:00:00Z, inside 02:00-08:59 UTC), asserts isVnMarketHours(MARKET_HOURS_NOW)===true then pekCalled===false AND queueRow.status==='pek_triggered' AND result.downloaded===1 in one test — call skipped when market open, state machine unaffected, confirmed. TC-19 pins OFF_HOURS_NOW (09:30:00Z, after the 08:59 close), asserts isVnMarketHours(OFF_HOURS_NOW)===false then pekCalled===true — call fires when market closed, unchanged baseline, confirmed. Both legs match the design doc's stated direction exactly; no no-op-during-off-hours regression risk. The router's own dispatch prompt's separate VERIFICATION BAR paragraph stating the two cases in reverse was correctly NOT followed (a probable typo, documented as a judgment call in the decision journal) — implementation matches the EXACT SCOPE section + the design doc, the correct interpretation. Standard gate: own tsc clean, own mock-guard PASS (2 files), DDD clean (scheduler/financial-reports/bctcPdfPullJob.ts is an interface-layer file already importing application/+infrastructure/ elsewhere in the same file; the new domain/services/freshnessSlaChecker.ts import follows the same scheduler->domain/services precedent already used by allzeroOhlcvBackfill.ts/ohlcvSanityCheckJob.ts/foreignFlowAlertJob.ts), no secrets/process.env added (grepped only the diff's `+` lines — 0 hits), no fabricated data, no cron/scheduler-registration file touched (git diff --stat on scheduler/** shows exactly 1 file changed). Sibling regression: independently ran the 4 closest sibling test files myself — 26/26 pass, 114 expect(), zero regression, matches the claim exactly. DJ-GATE-1 satisfied (sprint-SYSTEMIC-REMAKE-P1-dev-mcp-server.md, task-id-stamped).",
         "committed_at": "2026-07-10T15:15:32Z",
         "committed_by": "router"
+      },
+      {
+        "id": "FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION",
+        "type": "SPRINT-S",
+        "priority": "high",
+        "status": "DONE_VERIFIED",
+        "zone": "apps/mcp-server/",
+        "title": "Wire automatic table-extraction into bctcPdfPullJob, decoupled from the synchronous 0-row gate",
+        "detail": "All 7 atomic sub-tasks DONE_VERIFIED: D1 (e9bb1c3e4) + D2 (d2cad2508) + D3A (6f1bc8765) + D3B (850ced6ee) + D3C (43f4c8a22) + R-HIGH-1 (850ced6ee, folded with D3B) + R-HIGH-2 (f8b4b3d50). Baseline DoD (pnpm --filter vn-market check green) PASS. Risk review completed: R-CRIT-1/R-CRIT-2 (must-fix, both in decomposition); R-HIGH-1/R-HIGH-2 (both in decomposition); R-MED-1 (satisfied: MAX_RECONCILE_ATTEMPTS=8 at 30min cadence = ~4h budget, 2x design minimum); R-LOW-1 (QA-verified clear via grep of 7 financial_reports readers). Non-blocking follow-up flagged by D3C QA: reset reconcile_attempts+attempts on Arm-2 recycle — recommend new backlog task FIX-BCTC-D3C-FOLLOW-UP-RESET-ATTEMPTS to prevent staleness on recycled rows.",
+        "baseline_pass": "pnpm --filter vn-market check green",
+        "related": [
+          "telegram-report:3542",
+          "telegram-report:3546",
+          "spike:SPIKE-BCTC-2025Q4-PDFPULL-OCR-0ROW",
+          "task:OPS-BCTC-BANK-2025Q4-ENRICH-0ROW-REPARSE"
+        ],
+        "created_at": "2026-07-10T09:40:00Z",
+        "created_by": "po-triage-BATCH-dispatch-20260710T0940Z",
+        "updated_at": "2026-07-10T12:00:00Z",
+        "updated_by": "pm",
+        "owner": "pm",
+        "detail_ref": "docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md",
+        "decomposed_into": [
+          "FIX-BCTC-D1-STABILIZE-REPORT-ID",
+          "FIX-BCTC-D2-ENSURE-SHELL-ROW",
+          "FIX-BCTC-D3A-PEK-TRIGGER-HELPER",
+          "FIX-BCTC-D3B-GATE-PEK-TRIGGERED-STATUS",
+          "FIX-BCTC-D3C-RECONCILE-JOB",
+          "FIX-BCTC-R-HIGH-1-STATUS-ENUM-UPDATE",
+          "FIX-BCTC-R-HIGH-2-MARKET-HOURS-GUARD"
+        ],
+        "dependency_order": "D1→D2→D3A→D3B→(D3C+R-HIGH-1+R-HIGH-2 parallel)",
+        "note": "Parent task DECOMPOSED into 7 atomic sub-tasks. All sub-tasks in backlog/READY, ready for dev-mcp-server dispatch starting with D1 (no deps). Architect sequencing critical: D1 (id stability) MUST land first; D2, D3A, D3B, D3C/R-HIGH-1/R-HIGH-2 chain per dependency graph.",
+        "completed_at": "2026-07-10T14:55:00Z",
+        "closed_by": "pm",
+        "qa_verdict": "APPROVED",
+        "qa_verified_at": "2026-07-10T14:55:00Z",
+        "qa_verified_by": "pm"
       }
     ],
     "head": {
@@ -8120,41 +8173,7 @@
     },
     "last_triaged_at": "2026-07-10T15:14:02Z",
     "last_triaged_by": "qa",
-    "in_progress": [
-      {
-        "id": "FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION",
-        "type": "SPRINT-S",
-        "priority": "high",
-        "status": "IN_PROGRESS",
-        "zone": "apps/mcp-server/",
-        "title": "Wire automatic table-extraction into bctcPdfPullJob, decoupled from the synchronous 0-row gate",
-        "detail": "Per SPIKE-BCTC-2025Q4-PDFPULL-OCR-0ROW (docs/spikes/SPIKE-BCTC-2025Q4-PDFPULL-OCR-0ROW.md, commit 336a6ce11) + PO round BATCH triage (task_id OPS-BCTC-BANK-2025Q4-ENRICH-0ROW-REPARSE): bctcPdfPullJob's */30min cron calls ONLY pdf-extractor's scalar-only /extract endpoint (pdfExtractorClient.ts:65), never a table-extraction endpoint, so its own 0-row gate (bctc_table_rows=0 AND bctc_md_tables=0) fires enrich_failed unconditionally on EVERY newly-pulled report batch-wide (VCI/VHM confirmed hitting it live outside the 2025-Q4 12-ticker cohort). Not a Jul-8 regression (corroborated by architect SPIKE docs/architecture-briefs/2026-07-03-bctc-discover-pipeline-dead.md predating fdb424178). Three concerns for architect design: (a) fire /pek-extract (or /extract-md-tables) automatically for newly-pulled reports; PEK is 202/async so the existing synchronous 0-row gate MUST become deferred/next-cycle (else it still reads 0 immediately after firing); (b) populate financial_reports.pdf_path at PDF-save time, not deferred to the legacy scalar pipeline's success (GVR/MBB/D2D currently have pdf_path IS NULL despite the file existing on disk, blocking /api/trigger-pek-extract's own NULL-pdf_path skip rule); (c) decouple financial_reports shell-row creation from the legacy OCR-confidence gate (_OCR_CONFIDENCE_THRESHOLD=0.5 in domain/services.py) so a PEK-extractable PDF (e.g. GAS, likely scanned, currently has NO financial_reports row at all) is not blocked by an unrelated low-confidence scalar read. SPIKE RAW-verified pdf-extractor's /pek-extract endpoint + push-back path already exist and work (manual POST /api/trigger-pek-extract is proven functional) — keep single-zone apps/mcp-server/; escalate to `multi` zone ONLY if the deferred-gate write-back contract genuinely needs a new pdf-extractor callback change.",
-        "baseline_pass": "pnpm --filter vn-market check green",
-        "related": [
-          "telegram-report:3542",
-          "telegram-report:3546",
-          "spike:SPIKE-BCTC-2025Q4-PDFPULL-OCR-0ROW",
-          "task:OPS-BCTC-BANK-2025Q4-ENRICH-0ROW-REPARSE"
-        ],
-        "created_at": "2026-07-10T09:40:00Z",
-        "created_by": "po-triage-BATCH-dispatch-20260710T0940Z",
-        "updated_at": "2026-07-10T12:00:00Z",
-        "updated_by": "pm",
-        "owner": "pm",
-        "detail_ref": "docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md",
-        "decomposed_into": [
-          "FIX-BCTC-D1-STABILIZE-REPORT-ID",
-          "FIX-BCTC-D2-ENSURE-SHELL-ROW",
-          "FIX-BCTC-D3A-PEK-TRIGGER-HELPER",
-          "FIX-BCTC-D3B-GATE-PEK-TRIGGERED-STATUS",
-          "FIX-BCTC-D3C-RECONCILE-JOB",
-          "FIX-BCTC-R-HIGH-1-STATUS-ENUM-UPDATE",
-          "FIX-BCTC-R-HIGH-2-MARKET-HOURS-GUARD"
-        ],
-        "dependency_order": "D1→D2→D3A→D3B→(D3C+R-HIGH-1+R-HIGH-2 parallel)",
-        "note": "Parent task DECOMPOSED into 7 atomic sub-tasks. All sub-tasks in backlog/READY, ready for dev-mcp-server dispatch starting with D1 (no deps). Architect sequencing critical: D1 (id stability) MUST land first; D2, D3A, D3B, D3C/R-HIGH-1/R-HIGH-2 chain per dependency graph."
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
