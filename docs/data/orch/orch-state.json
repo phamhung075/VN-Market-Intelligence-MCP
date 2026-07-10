@@ -6671,7 +6671,7 @@
         "id": "FIX-BCTC-SERVE-GATE-FINANCIAL-REPORTS",
         "type": "FIX",
         "priority": "high",
-        "status": "BACKLOG",
+        "status": "READY",
         "zone": "apps/mcp-server/",
         "size": "S",
         "title": "Add validation_status gate to get_financial_summary and compare_financials tools",
@@ -6687,8 +6687,8 @@
         "files": [
           "apps/mcp-server/src/interface/mcp/tools/financial-reports/reports.ts"
         ],
-        "status_note": "Pending triage by architect or dev-mcp-server. May be copyable pattern from bctcFullTools.ts PUB-1 check.",
-        "next_agent": "architect",
+        "status_note": "ARCHITECT TRIAGE (S, mechanical — no design doc; PUB-1 pattern is NOT a blind copy, see rationale). Gate condition: row.validation_status === 'pending_extraction' — NOT refine_status (unlike get_bctc_full's PUB-1 refine_status==='PENDING' check). Rationale: refine_status only transitions via the separate agentic-refine pipeline (finalizeBctcRefine.ts); rows extracted ONLY through the legacy scalar pipeline (fetchParseAndStoreBctc/storeReport) never touch refine_status and sit at DB DEFAULT 'PENDING' forever even though they hold real data — mirroring PUB-1's field verbatim would wrongly hide legitimate legacy reports (regression). validation_status='pending_extraction' is D2's new additive-only enum value (ensureFinancialReportShellRow.ts L34), exclusive to unextracted shell rows, no collision with pending|passed|failed|passed_with_warnings|low_confidence. Steps: (1) add validation_status: string field to ReportRow interface, reports.ts ~L139-183 (SELECT * already returns the column; interface just lacks the field). (2) get_financial_summary (~L255-369): after the existing if(!row) 404 branch (~L283-297) and BEFORE checkBctcIdentityGuard (~L302-321), add a check: if row.validation_status === 'pending_extraction' return { content: [{ type: text, text: <English pending-extraction message, same tone/shape as the existing 404 text at L292-293, e.g. PDF downloaded but not yet extracted> }] } — plain text content, NOT isError, NOT thrown, mirrors both get_bctc_full's PUB-1 shape and this function's own existing 404 shape one branch up. (3) compare_financials (~L387-565): after if(!row1 || !row2) (~L411-425) and BEFORE the dual identity-guard block (~L432-457), check row1.validation_status and row2.validation_status individually, mirroring the existing per-period guard1/guard2 dual-check idiom at L433-456; report which period(s) are pending in the same missing-period message style. (4) Keep messages English — reports.ts's established convention differs from bctcFullTools.ts's Vietnamese 'Chưa có dữ liệu BCTC'; do not cross-import, each tool keeps its own established language boundary. Full rationale: docs/agent-memory/decisions/sprint-SYSTEMIC-REMAKE-P1-architect.md STEP architect-S5.",
+        "next_agent": "dev-mcp-server",
         "commit": null,
         "qa_verified_at": null,
         "done_verified": false
@@ -7477,26 +7477,7 @@
       "last_updated_at": "2026-07-10T09:19:45Z",
       "last_updated_by": "ops"
     },
-    "ready": [
-      {
-        "id": "FIX-BCTC-D3A-PEK-TRIGGER-HELPER",
-        "type": "FIX",
-        "priority": "high",
-        "status": "READY",
-        "zone": "apps/mcp-server/",
-        "size": "S",
-        "title": "Extract triggerPekExtractionForReport() shared helper from handleTriggerPekExtract",
-        "owner": "dev-mcp-server",
-        "depends": [
-          "FIX-BCTC-D2-ENSURE-SHELL-ROW"
-        ],
-        "detail_ref": "docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md#D3-D3a",
-        "created_at": "2026-07-10T12:00:00Z",
-        "created_by": "pm",
-        "note": "Refactoring prep: extract shared HTTP fetch/market-hours-handling logic from handleTriggerPekExtract. Reuse in both manual route and new auto-trigger. DRY refactor, no new logic.",
-        "blocked_note": "status-flip-lane-move fix (3rd occurrence this session, router 2026-07-10T~12:05Z): stayed in backlog[] lane, relabeled READY->BACKLOG since depends[] unmet; will promote to ready[] once its dependency lands DONE_VERIFIED"
-      }
-    ],
+    "ready": [],
     "review": [
       {
         "id": "TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST",
@@ -8051,6 +8032,27 @@
         ],
         "dependency_order": "D1→D2→D3A→D3B→(D3C+R-HIGH-1+R-HIGH-2 parallel)",
         "note": "Parent task DECOMPOSED into 7 atomic sub-tasks. All sub-tasks in backlog/READY, ready for dev-mcp-server dispatch starting with D1 (no deps). Architect sequencing critical: D1 (id stability) MUST land first; D2, D3A, D3B, D3C/R-HIGH-1/R-HIGH-2 chain per dependency graph."
+      },
+      {
+        "id": "FIX-BCTC-D3A-PEK-TRIGGER-HELPER",
+        "type": "FIX",
+        "priority": "high",
+        "status": "IN_PROGRESS",
+        "zone": "apps/mcp-server/",
+        "size": "S",
+        "title": "Extract triggerPekExtractionForReport() shared helper from handleTriggerPekExtract",
+        "owner": "dev-mcp-server",
+        "depends": [
+          "FIX-BCTC-D2-ENSURE-SHELL-ROW"
+        ],
+        "detail_ref": "docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md#D3-D3a",
+        "created_at": "2026-07-10T12:00:00Z",
+        "created_by": "pm",
+        "note": "Refactoring prep: extract shared HTTP fetch/market-hours-handling logic from handleTriggerPekExtract. Reuse in both manual route and new auto-trigger. DRY refactor, no new logic.",
+        "blocked_note": "status-flip-lane-move fix (3rd occurrence this session, router 2026-07-10T~12:05Z): stayed in backlog[] lane, relabeled READY->BACKLOG since depends[] unmet; will promote to ready[] once its dependency lands DONE_VERIFIED",
+        "started_at": "2026-07-10T12:09:00Z",
+        "updated_at": "2026-07-10T12:09:00Z",
+        "updated_by": "dev-mcp-server"
       }
     ]
   },
