@@ -368,7 +368,7 @@
         "to": "po",
         "type": "repair_task_request",
         "severity": "HIGH",
-        "status": "NEW",
+        "status": "READ",
         "summary": "SCOPE EXPANSION on prior signal cowork-recurring-guaranteed-miss-20260710T0847Z (now READ/triaged). A THIRD distinct guaranteed slot, fb-daily (09:15Z, fb-poster parallel_group), missed its cron tick 2 consecutive days running (2026-07-09 and 2026-07-10), same deprecated-backstop pattern (trigger_id=null, _superseded_by=cowork-dispatcher) already seen on chef-morning (05:15Z) and chef-eod (08:45Z). Critically, fb-daily is NOT in the chef parallel_group — this proves the root cause is dispatcher-wide across ALL guaranteed slots, not CHEF-specific. Recommend architect treat this as a single dispatcher-level defect (guaranteed-slot backstop/supersede wiring) rather than 3 separate per-slot issues. Session guaranteed-miss count now 9.",
         "payload_ref": null
       }
@@ -6667,6 +6667,23 @@
         "created_at": "2026-07-10T11:20:00Z",
         "created_by": "router-raw-verify-fix",
         "note": "scripts/agents-flow/notebook-auto-prune.sh (PostToolUse hook, Write|Edit, docs/agent-memory/notebooks/*.md) drops the physically-FIRST ## section when a notebook exceeds 200L, assuming file order == chronological-oldest-first. Correct for append-style notebooks (e.g. qa.md, oldest-first). INVERTED for prepend-style notebooks (e.g. pm.md, newest-first, c322 above c321 above c320) — on those, an edit that pushes the file over 200L causes the hook to silently delete the section JUST ADDED, not an old one, since the new section sits at the top = physically-first. Confirmed mechanistically 2026-07-10T11:05Z on pm.md: a 192L HEAD + ~15L edit (207L, over cap) triggered the hook, which pruned the file back to exactly 192L, byte-identical to pre-edit HEAD (git diff --stat empty). This retroactively explains 2 prior false notebook-write-claim incidents attributed to pm this session (previously miscategorized as agent confabulation in feedback_agent_selfreport_metalayer_confabulation memory, now corrected). Fix: make the drop-oldest loop ordering-aware — parse the \"· <ISO timestamp>\" suffix on each ## heading (convention already used across notebooks) and drop the section with the OLDEST timestamp, not the physically-first one. Regression test should cover both append-style and prepend-style notebooks explicitly."
+      },
+      {
+        "id": "SPIKE-COWORK-GUARANTEED-SLOT-SUPERSEDE-WIRING",
+        "type": "SPIKE",
+        "status": "BACKLOG",
+        "priority": "high",
+        "zone": "cross-service/",
+        "size": "S",
+        "mode": "spike",
+        "timebox": 120,
+        "owner": "po",
+        "title": "SPIKE: dispatcher-wide guaranteed-slot backstop/supersede wiring root cause — 3 non-overlapping slots (chef-morning 05:15Z, chef-eod 08:45Z, fb-daily 09:15Z) each miss the same tick 2 days running",
+        "question": "Why does the cowork dispatcher mark guaranteed slots undeliverable (_superseded_by=cowork-dispatcher in docs/data/cowork-schedule.json) even when a backstop is supposed to fire — is the true root cause the guaranteed-slot backstop/supersede-trigger wiring itself (dispatcher-wide), independent of any per-slot trigger_id state? Confirm or refute the single-defect hypothesis, pinpoint the exact wiring gap in the guaranteed-slot dispatch path, and recommend the durable fix (findings doc, no code change).",
+        "created_at": "2026-07-10T11:00:02Z",
+        "created_by": "po-triage-scope-expansion-20260710T110002Z",
+        "origin_signal_id": "cowork-recurring-guaranteed-miss-scope-expansion-20260710T0917Z",
+        "note": "PLAN-ONLY (anomaly->BACKLOG bridge, project_anomaly_task_bridge). Triaged from HIGH-severity scope-expansion signal cowork-recurring-guaranteed-miss-scope-expansion-20260710T0917Z (supersedes the CHEF-only framing of prior signal cowork-recurring-guaranteed-miss-20260710T0847Z, now READ). EVIDENCE FOR SINGLE DISPATCHER-LEVEL DEFECT: three DISTINCT guaranteed slots each missed their cron tick on BOTH 2026-07-09 and 2026-07-10 — chef-morning (05:15Z) + chef-eod (08:45Z) [chef parallel_group] AND fb-daily (09:15Z) [fb-poster parallel_group]. The fb-daily miss is the key datum: it is NOT in the chef parallel_group, so the defect is dispatcher-wide across ALL guaranteed slots, not CHEF-specific. Same deprecated-backstop symptom pattern on all three: _superseded_by=cowork-dispatcher marks the slot undeliverable via the gateway-blind bypass; fb-daily shows trigger_id=null while the two chef slots reportedly have trigger_id set — investigator must reconcile this discrepancy between the two source signals as part of the spike. Session guaranteed-miss count = 9. SCOPE: investigate the guaranteed-slot backstop/supersede dispatch path (docs/agents/cowork-team/flow/, docs/data/cowork-schedule.json, scripts/agents-flow/) as ONE defect; deliverable is a findings doc + durable-fix recommendation, NOT 3 separate per-slot fixes and NOT a live dispatch. CROSS-REFERENCES (do not duplicate): OPS-COWORK-GUARANTEED-SLOT-INSTALL (REVIEW — launchd guaranteed-slot firer is a DELIVERY-SIDE mitigation/workaround, complementary to but distinct from this root-cause investigation; first live fire window 2026-07-11T05:15Z chef-morning); FIX-COWORK-LASTFIRED-DECOUPLE-FROM-DELIVERY (BACKLOG — last_fired bumped on dispatch not delivery proof MASKS misses, adjacent detection defect); FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK (BACKLOG P1 — curl-bypass retrofit for gateway-blind flows); SPIKE-GATEWAY-BLIND-CLI-HANDSHAKE (DONE — root-caused gateway-blind to CLI MCP-client handshake; prior art the investigator should read first). Route to architect after normal po->ba->pm chain."
       }
     ],
     "closed_sprints": [
