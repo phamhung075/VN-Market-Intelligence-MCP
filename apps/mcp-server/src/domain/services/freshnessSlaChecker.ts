@@ -52,6 +52,38 @@ export interface SlaCheckResult {
   thresholdMinutes: number;
   status: "ok" | "breached";
   severity?: BreachSeverity; // only present when status='breached'
+  /**
+   * FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH: three-way runtime verdict, only
+   * populated when a PipelineRuntimeState was supplied for this signal type.
+   *   "crash" — service confirmed down, OR queue has actionable work AND is stale.
+   *   "idle"  — service running, queue empty (nothing due) — NEVER a P0 crash,
+   *             even if raw wall-clock push-age is large.
+   *   "ok"    — normal age-vs-threshold pass (no runtime state supplied, or
+   *             runtime state supplied and queue has work but is within SLA).
+   */
+  verdict?: "crash" | "idle" | "ok";
+}
+
+/**
+ * Live runtime signal for an event-driven, queue-backed pipeline (e.g. the
+ * BCTC VPS fetch/refine pipeline).  Generic — applies to any signal type
+ * whose push-age is idle-dependent (queue can legitimately sit empty for
+ * long periods with the service still healthy).
+ *
+ * FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH root cause: the pre-fix classifier
+ * keyed the CRASH/UNHEALTHY verdict on last-push-age alone.  push-age is
+ * high whenever the queue is empty/idle (no work due) — that is normal
+ * off-season behavior, not a crash.  The correct gate is:
+ *   verdict = CRASH  if serviceActive === false
+ *           = CRASH  if queueDepth > 0 AND ageMinutes > thresholdMinutes
+ *           = IDLE   if serviceActive === true AND queueDepth === 0
+ *                      (regardless of ageMinutes — no work was due)
+ */
+export interface PipelineRuntimeState {
+  /** True when the underlying service/process is confirmed active/running. */
+  serviceActive: boolean;
+  /** Count of actionable/pending work items in the pipeline's queue. 0 = idle. */
+  queueDepth: number;
 }
 
 /**
@@ -726,10 +758,25 @@ export function classifySeverity(
 /**
  * Checks a single signal type for SLA breach.
  *
+ * FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH: when a `runtimeState` is supplied
+ * (queue-depth + service-active probe for an event-driven, queue-backed
+ * pipeline), the CRASH/UNHEALTHY verdict is gated generically:
+ *   - service-state != active  -> CRASH (status='breached', severity=CRITICAL)
+ *     regardless of queue-depth or age — a confirmed-down service is always
+ *     a crash.
+ *   - service active AND queue-depth === 0 -> IDLE (status='ok', verdict='idle')
+ *     regardless of raw wall-clock push-age — no work was due, so a large
+ *     push-age is expected and must NEVER escalate as a P0 crash.
+ *   - service active AND queue-depth > 0 -> normal age-vs-threshold check
+ *     applies unchanged (existing behavior preserved).
+ * When no `runtimeState` is supplied (all non-queue-backed signal types),
+ * behavior is byte-for-byte unchanged from before this fix.
+ *
  * @param signalType Signal type
  * @param ageMinutes Data age in minutes
  * @param config SLA configuration (optional override per signal type)
  * @param now Current time (for time-based thresholds)
+ * @param runtimeState Optional live service-state + queue-depth probe
  * @returns SlaCheckResult
  */
 export function checkSignalSla(
@@ -737,8 +784,36 @@ export function checkSignalSla(
   ageMinutes: number,
   config: SignalSlaConfig[] = DEFAULT_SLA_CONFIG,
   now: Date = new Date(),
+  runtimeState?: PipelineRuntimeState,
 ): SlaCheckResult {
   const thresholdMinutes = getSlaThreshold(signalType, config, now);
+
+  if (runtimeState) {
+    if (!runtimeState.serviceActive) {
+      // Service confirmed down — always a crash, regardless of queue/age.
+      return {
+        signalType,
+        ageMinutes,
+        thresholdMinutes,
+        status: "breached",
+        severity: "CRITICAL",
+        verdict: "crash",
+      };
+    }
+    if (runtimeState.queueDepth === 0) {
+      // Service running, nothing queued — idle by design, never a crash,
+      // even if push-age is far beyond the raw threshold.
+      return {
+        signalType,
+        ageMinutes,
+        thresholdMinutes,
+        status: "ok",
+        verdict: "idle",
+      };
+    }
+    // Service running AND queue has actionable work -> fall through to the
+    // normal age-vs-threshold check below (queueDepth > 0 branch of the gate).
+  }
 
   if (ageMinutes <= thresholdMinutes) {
     return {
@@ -746,6 +821,7 @@ export function checkSignalSla(
       ageMinutes,
       thresholdMinutes,
       status: "ok",
+      ...(runtimeState ? { verdict: "ok" as const } : {}),
     };
   }
 
@@ -755,6 +831,7 @@ export function checkSignalSla(
     thresholdMinutes,
     status: "breached",
     severity: classifySeverity(ageMinutes, thresholdMinutes),
+    ...(runtimeState ? { verdict: "crash" as const } : {}),
   };
 }
 
@@ -764,10 +841,16 @@ export function checkSignalSla(
  * Sentinel guard: if ageMinutes === -1 the table has zero rows (not yet seeded).
  * These are silently skipped — no breach recorded, no escalation fired (FR-4).
  *
+ * FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH: `runtimeStates` is an additive,
+ * optional per-signal-type map of live queue-depth + service-active probes.
+ * Only signal types with an entry get the generic crash/idle gate applied
+ * (see `checkSignalSla` doc); all others are unaffected.
+ *
  * @param signalAges Map of signalType → ageMinutes (-1 = not seeded)
  * @param config SLA configuration (defaults to DEFAULT_SLA_CONFIG)
  * @param priorBreaches Prior SLA breach records (for recovery detection)
  * @param now Current time
+ * @param runtimeStates Optional per-signal-type live runtime probes (queue-backed pipelines)
  * @returns FreshnessSlaCheckOutput with breaches and recoveries
  */
 export function checkDataFreshnessSla(
@@ -775,6 +858,7 @@ export function checkDataFreshnessSla(
   config: SignalSlaConfig[] = DEFAULT_SLA_CONFIG,
   priorBreaches: Array<{ signalType: SignalType; status: "breach_open" | "recovered" }> = [],
   now: Date = new Date(),
+  runtimeStates?: Partial<Record<SignalType, PipelineRuntimeState>>,
 ): FreshnessSlaCheckOutput {
   const checkedAt = now.toISOString();
   const breaches: SlaCheckResult[] = [];
@@ -808,7 +892,13 @@ export function checkDataFreshnessSla(
       continue;
     }
 
-    const result = checkSignalSla(signalType, ageMinutes, config, now);
+    const result = checkSignalSla(
+      signalType,
+      ageMinutes,
+      config,
+      now,
+      runtimeStates?.[signalType],
+    );
 
     if (result.status === "breached") {
       breaches.push(result);

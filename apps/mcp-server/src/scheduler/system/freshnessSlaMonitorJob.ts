@@ -18,6 +18,7 @@ import {
   checkDataFreshnessSla,
   isVnMarketHours,
   type SignalType,
+  type PipelineRuntimeState,
 } from "../../domain/services/freshnessSlaChecker.js";
 import {
   checkCoverageMapFreshness,
@@ -165,6 +166,73 @@ export function querySignalAges(
   }
 
   return result;
+}
+
+/**
+ * FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH — live queue-depth + service-state
+ * probe for the BCTC VPS fetch pipeline.
+ *
+ * Root cause: the bctc SLA breach path (below, via checkDataFreshnessSla)
+ * previously classified CRASH/UNHEALTHY on last-push-age alone. An empty
+ * queue (no filings currently due) produces a large push-age that is
+ * completely normal, not a crash. This reads the two live signals the
+ * fix_spec requires:
+ *   - queueDepth: COUNT of actionable bctc_vps_queue rows (pending /
+ *     url_not_found / enrich_failed) — mirrors the queueGuardSql pattern
+ *     already used by vpsHealthPoller.ts (FIX-BCTC-FRESHNESS-GATE).
+ *   - serviceActive: latest vps_service_health.health_status for
+ *     'vn-bctc-fetch' — 'unreachable' means the poller found zero evidence
+ *     of the service ever running; any other status (healthy/idle/unhealthy)
+ *     means the service is confirmed alive.
+ *
+ * Fail-open by design: if either table is absent (older schema, or a test DB
+ * that only mirrors a subset of the schema) this returns `undefined` so the
+ * caller falls back to the pre-fix age-only check — no behavior change for
+ * callers that never had this data.  No poll row yet (fresh deploy) is
+ * treated as serviceActive=true for the same reason: we do not want to
+ * fabricate a false CRASH from the absence of evidence.
+ *
+ * Generic by design (per fix_spec's generic_mandate): this function is the
+ * BCTC-specific *reader*; the *gate logic* itself
+ * (`PipelineRuntimeState` + the branch in `checkSignalSla`) is fully generic
+ * and reusable by any other event-driven, queue-backed pipeline that wires
+ * up its own reader.
+ *
+ * @param db Database instance
+ * @returns PipelineRuntimeState, or undefined if the probe cannot be made
+ */
+export function queryBctcPipelineRuntimeState(
+  db: Database,
+): PipelineRuntimeState | undefined {
+  try {
+    const queueRow = db
+      .query<{ active_count: number }, []>(
+        `SELECT COUNT(*) AS active_count
+           FROM bctc_vps_queue
+          WHERE status IN ('pending', 'url_not_found', 'enrich_failed')`,
+      )
+      .get();
+    const queueDepth = queueRow?.active_count ?? 0;
+
+    // ORDER BY polled_at DESC, id DESC: id is the deterministic tiebreaker
+    // when two polls land within the same datetime('now') second-resolution
+    // bucket — always resolves to the most recently inserted row.
+    const healthRow = db
+      .query<{ health_status: string }, []>(
+        `SELECT health_status FROM vps_service_health
+          WHERE service_name = 'vn-bctc-fetch'
+          ORDER BY polled_at DESC, id DESC LIMIT 1`,
+      )
+      .get();
+    const serviceActive = healthRow
+      ? healthRow.health_status !== "unreachable"
+      : true;
+
+    return { serviceActive, queueDepth };
+  } catch {
+    // bctc_vps_queue / vps_service_health absent — fail open, no gate applied.
+    return undefined;
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -369,6 +437,9 @@ const MARKET_HOURS_ONLY_SIGNALS: SignalType[] = ["price", "foreign_flow"];
  * @param injectedCoverageMapRows Optional pre-parsed coverage-map rows for test isolation.
  *        When provided, the scheduler skips reading COVERAGE_MAP_JSON_PATH from disk.
  *        In production (undefined), the scheduler reads the live JSON file via Bun.file().
+ * @param injectedRuntimeStates FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH: optional pre-computed
+ *        per-signal-type queue-depth + service-state probes (for testing). In production
+ *        (undefined), the scheduler queries live via queryBctcPipelineRuntimeState().
  * @returns Job result summary
  */
 export async function runFreshnessSlaMonitor(
@@ -377,7 +448,8 @@ export async function runFreshnessSlaMonitor(
   injectedSignalAges?: Record<SignalType, number>,
   now: Date = new Date(),
   sendWorkFn: (msg: string) => Promise<unknown> = sendTelegramWork,
-  injectedCoverageMapRows?: CoverageMapRow[]
+  injectedCoverageMapRows?: CoverageMapRow[],
+  injectedRuntimeStates?: Partial<Record<SignalType, PipelineRuntimeState>>,
 ): Promise<{ breaches: number; recoveries: number; escalations: number }> {
   // Query current signal ages (or use injected ages for testing)
   const signalAges = injectedSignalAges ?? querySignalAges(db);
@@ -385,8 +457,27 @@ export async function runFreshnessSlaMonitor(
   // Get prior breaches for recovery detection
   const priorBreaches = getPriorBreaches(db);
 
+  // FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH: gate the bctc verdict on live
+  // queue-depth + service-state (see queryBctcPipelineRuntimeState doc).
+  const runtimeStates: Partial<Record<SignalType, PipelineRuntimeState>> =
+    injectedRuntimeStates ?? (() => {
+      const bctcState = queryBctcPipelineRuntimeState(db);
+      return bctcState ? { bctc: bctcState } : {};
+    })();
+
+  if (
+    runtimeStates.bctc?.serviceActive === true &&
+    runtimeStates.bctc.queueDepth === 0 &&
+    signalAges.bctc !== -1
+  ) {
+    console.debug(
+      `[sla-monitor] bctc: queue empty (0 actionable rows), service active — ` +
+        `IDLE (no filings due), push-age=${signalAges.bctc}min not escalated as CRASH`,
+    );
+  }
+
   // Check freshness SLAs
-  const slaCheck = checkDataFreshnessSla(signalAges, undefined, priorBreaches, now);
+  const slaCheck = checkDataFreshnessSla(signalAges, undefined, priorBreaches, now, runtimeStates);
 
   let breaches = 0;
   let recoveries = 0;

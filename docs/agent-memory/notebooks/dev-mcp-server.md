@@ -1,17 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-07-09 — FACTORY-NEWS-extract-rss-parse → misroute, NOT implemented (zone violation)
-
-**Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (BOUNDED-1 idle-capacity auto-pickup, dev-team)
-
-BOUNDED-1 dispatched this task (files: `apps/news-fetch/src/infrastructure/scrapers/{reuters,bloomberg}-rss.ts` + new `rss-parse.ts`) to dev-mcp-server. Zone=news-fetch, entirely outside dev-mcp-server's hard `zone_restricted: apps/mcp-server/` boundary — refused to implement. Root cause: `backlog-detail.json` `dev_agent` field was wrong (`dev-mcp-server`) for ALL 6 `FACTORY-NEWS-*` rows since the 2026-06-15 audit-sprint data-entry pass; `.claude/skills/zone-detect/SKILL.md` Tier-1 (`zone:` field) correctly resolves `news-fetch` → `dev-news-fetch` per `system-map.json`, but the dispatch used the stale `dev_agent` field instead.
-
-Fixed: `backlog-detail.json` `dev_agent` → `dev-news-fetch` for all 6 news-fetch FACTORY rows. Board row `FACTORY-NEWS-extract-rss-parse` reverted `in_progress`→`backlog` (status `BACKLOG`, `reroute_note` added) via `orch-apply.sh`. Top-level `.head` (NOT `.task_board.head`, which is a deprecated do-not-write stub) reset to idle/`next_agent=router`. Released intent lock. `send_telegram(bug)` flagged the router-side gap for the dispatcher to prefer zone-detect Tier-1 over `dev_agent` field on future BOUNDED-1 picks.
-
-Zero apps/news-fetch/ files touched. Commit covers: `docs/data/orch/archive/backlog-detail.json`, `docs/data/orch/orch-state.json`, decision journal, this notebook.
-
-Zone health: apps/mcp-server/ untouched (out-of-zone task correctly declined), board self-corrected, WIP freed | HEALTHY.
-
 ## 2026-07-09 — FIX-FOREIGN-FLOW-COVERAGE → REVIEW
 
 **Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (dev-team dispatch)
@@ -49,3 +37,19 @@ New test file 8/8 pass (24 expect()) — `:memory:` SQLite, zero live-DB depende
 Commit: pending (this cycle). Board: `ready`→`review` via orch-apply.sh, `next_agent=qa`.
 
 Zone health: tsc clean, tools=183 unchanged, new script 8/8 + targeted BCTC suite 39/39 pass, zero apps/mcp-server/src/ files touched, live migration RAW-verified (451 rows) with an honest AC-TRACK1-3 escalation (not a false-green) | HEALTHY.
+
+## 2026-07-10 — FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH → REVIEW
+
+**Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (BOUNDED-1 idle-capacity auto-pickup, dev-team)
+
+Root cause (SSH RAW-verify report 3256, 2026-06-19T16:20Z): `freshnessSlaMonitorJob.ts`'s bctc check escalated CRASH/CRITICAL to alert-commander on `financial_reports.parsed_at` age alone, firing a false BCTC P0 every ~2h whenever the queue was legitimately empty (no filings due). Of the 3 BCTC health surfaces in the codebase, this was the only one that never checked live queue-depth/service-state — `vpsHealthPoller.ts` (FIX-BCTC-FRESHNESS-GATE) already gates on `bctc_vps_queue` active-count, and `freshnessSlaChecker.ts` (FIX-BCTC-SLA-THRESHOLD-360) already has calendar-earnings-window awareness — neither of those touches actual runtime state.
+
+Fix: added a generic `PipelineRuntimeState{serviceActive,queueDepth}` gate to `checkSignalSla`/`checkDataFreshnessSla` (`freshnessSlaChecker.ts`, domain/pure) — service-down→CRASH unconditionally; queue-depth=0+service-active→IDLE unconditionally (never a crash, regardless of push-age); queue>0+active→existing age-vs-threshold logic unchanged. New scheduler-side reader `queryBctcPipelineRuntimeState` (`freshnessSlaMonitorJob.ts`) sources queue-depth from `bctc_vps_queue` and service-state from the latest `vps_service_health` row (reuses the existing poll table — no new SSH/systemd probe, matches the task's generic_mandate). Fail-open (`undefined`) on any DB error so environments/tests without the new tables see zero behavior change.
+
+New `FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH.test.ts` (19 tests, 3 groups): Group A/B pure-domain DoD cases (idle→IDLE, service-down→CRASH, queue-backlog+stale→CRASH, ungated signals unaffected); Group C scheduler-wiring end-to-end via `runFreshnessSlaMonitor` (idle→no escalation, service-down→escalates CRITICAL, queue-backlog→escalates as before, missing-tables→fail-open/legacy-unchanged). All 19 pass. Targeted SLA/BCTC-health suite (9 pre-existing files, 129 tests) still 129/129 pass, run twice.
+
+Full `bun test` full-suite is flaky in this environment (two runs: 55 fail/3 err then 62 fail/7 err, non-deterministic counts, both end in the known Bun 1.3.13 teardown panic) — grepped every failing test name across both runs: zero overlap with freshnessSla/bctc/vpsHealth; re-ran 3 sampled full-suite-only failures (1113-vps-proxy-health/1146-get-insider-transactions/RAPID-B2-get-market-cap, 35 tests) in isolation → 35/35 pass, confirming pre-existing resource-contention flake, not a regression from this change. tsc clean. Server-boot probe: health 200, toolCount=183 unchanged, boot log confirms "SLA monitor" still registered among the 85 cron keys, `bctc-inspect`/`news-fetch` dashboard routes clean (no circular-dep break).
+
+Commit: pending (this cycle). Board: `ready`→`in_progress`→`review` via orch-apply.sh, `next_agent=qa`.
+
+Zone health: tsc clean, tools=183 unchanged, new test 19/19 + targeted SLA/BCTC suite 129/129 pass (run twice), full-suite flakiness isolated and confirmed pre-existing/unrelated, live server-boot + dashboard probes clean | HEALTHY.
