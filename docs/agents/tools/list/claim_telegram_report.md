@@ -13,6 +13,7 @@ Mark a telegram report as claimed (in progress). Part of the Dev Team autonomous
 | Name | Type | Required | Default | Description |
 |------|------|----------|---------|-------------|
 | `id` | number | Yes | — | Report ID to claim |
+| `claimant` | string | Yes | — | Agent/role name claiming the report (e.g. `"ops"`, `"dev-team"`) — live tool requires this; not optional (doc drift found 2026-07-10) |
 
 ## Return Format
 
