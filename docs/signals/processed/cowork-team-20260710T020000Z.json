@@ -1,0 +1,34 @@
+{
+  "source": "cowork-team",
+  "type": "tick-report",
+  "severity": "MEDIUM",
+  "tick": "2026-07-10T02:00Z",
+  "verdict": "WORK",
+  "matched_slots": [
+    "alert-commander-market"
+  ],
+  "spawned": [],
+  "skipped": [
+    {
+      "slot_id": "alert-commander-market",
+      "agent": "alert-commander",
+      "guaranteed": false,
+      "reason": "undeliverable-gateway-blind — trigger_id=null, _superseded_by=cowork-dispatcher (deprecated-backstop pattern, same class as alert-commander-critical)"
+    }
+  ],
+  "signal_queue_drained": [],
+  "chef_mutex_applied": false,
+  "chef_mutex_note": "alert-commander-market is parallel_group=alerts, not chef — Step 4.5c mutex not applicable.",
+  "methodology_note": "Discriminator per docs/agents/cowork-team/flow/spawn-fanout.md (trigger_id + _superseded_by, OR logic). alert-commander-market: deprecated-backstop pattern. New slot type this session (first market-hours alert-commander match — VN market open, 09:00 ICT).",
+  "gateway_blind_status": "still live — native mcp__gateway__call_tool tool absent from available tool set this tick; mcp_call bypass reachable (emit_pressure_state succeeded).",
+  "work_channel_message_sent": false,
+  "stale_warning_note": "stale_warning field ABSENT this tick. Cumulative (02:00Z 07-09 through 02:00Z 07-10, 46 WORK ticks; SILENT ticks not counted): 18 true, 28 absent.",
+  "recurring_symptom_note": "alert-commander-market not guaranteed:true — no new guaranteed-slot miss this tick. Session guaranteed-miss count remains 6. VN market session has opened (02:00Z=09:00 ICT); expect higher-cadence alert-commander-market matches through market hours if gateway-blind persists.",
+  "emitted_at": "2026-07-10T02:01:48.410Z",
+  "_processed": {
+    "fingerprint": "7a0af429a2c46ab0c63f1e49c13c496ec14c2aa809ec5537590cee5431a5bb00",
+    "processedAt": "2026-07-10T02:18:10Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

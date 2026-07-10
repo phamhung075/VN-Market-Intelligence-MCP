@@ -1,0 +1,41 @@
+{
+  "source": "cowork-team",
+  "type": "tick-report",
+  "severity": "MEDIUM",
+  "tick": "2026-07-10T02:15Z",
+  "verdict": "WORK",
+  "matched_slots": [
+    "chef-intraday",
+    "alert-commander-market"
+  ],
+  "spawned": [],
+  "skipped": [
+    {
+      "slot_id": "chef-intraday",
+      "agent": "unified-agent",
+      "guaranteed": false,
+      "reason": "undeliverable-gateway-blind — trigger_id=null, _superseded_by=cowork-dispatcher (deprecated-backstop pattern). First chef-group slot match this session segment."
+    },
+    {
+      "slot_id": "alert-commander-market",
+      "agent": "alert-commander",
+      "guaranteed": false,
+      "reason": "undeliverable-gateway-blind — trigger_id=null, _superseded_by=cowork-dispatcher (deprecated-backstop pattern), 2nd consecutive tick for this slot."
+    }
+  ],
+  "signal_queue_drained": [],
+  "chef_mutex_applied": false,
+  "chef_mutex_note": "Only one chef-group slot matched (chef-intraday) — no coincident guaranteed CHEF slot this tick. Step 4.5c mutex not applicable.",
+  "methodology_note": "Discriminator per docs/agents/cowork-team/flow/spawn-fanout.md (trigger_id + _superseded_by, OR logic). Both matched slots: deprecated-backstop pattern.",
+  "gateway_blind_status": "still live — native mcp__gateway__call_tool tool absent from available tool set this tick; mcp_call bypass reachable (emit_pressure_state succeeded).",
+  "work_channel_message_sent": false,
+  "stale_warning_note": "stale_warning field TRUE this tick. Cumulative (02:00Z 07-09 through 02:15Z 07-10, 47 WORK ticks; SILENT ticks not counted): 19 true, 28 absent.",
+  "recurring_symptom_note": "Neither matched slot guaranteed:true — no new guaranteed-slot miss this tick. Session guaranteed-miss count remains 6. alert-commander-market matched 2 consecutive ticks (02:00Z, 02:15Z) now that VN market hours are open — confirms the flagged pattern of higher-cadence matches during 02:00-08:00 UTC weekdays.",
+  "emitted_at": "2026-07-10T02:16:54.027Z",
+  "_processed": {
+    "fingerprint": "3aea189573d86b971bc591ee1bbd0933dd2259ba592cfe5e14afbdee11521181",
+    "processedAt": "2026-07-10T02:18:10Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -22,5 +22,11 @@
     "suggested_fix": "Consider hardening DJ-GATE-1 from an honor-system grep-after-the-fact check into an actual precondition gate — e.g. scripts/orch-apply.sh (or a wrapper it calls) could refuse a status transition into REVIEW/DONE/DONE_VERIFIED for a given task_id unless docs/agent-memory/decisions/sprint-*-<updated_by>.md already contains a matching 'task-id:** <id>' line, computed via the same sprint-id resolution logic the skill itself uses. This moves the check from 'downstream reviewer might notice' to 'the write itself is refused.' Scope/feasibility assessment left to architect.",
     "verification_gate": "architect assessment doc or brief addressing feasibility; not a code-fix verification gate at this stage"
   },
-  "createdAt": "2026-07-10T02:10:13Z"
+  "createdAt": "2026-07-10T02:10:13Z",
+  "_processed": {
+    "fingerprint": "7e9d627d6e5e0a0a7efdc749b7aeada6e42f3ea283402f2e51cf20804fd8929e",
+    "processedAt": "2026-07-10T02:18:10Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }
