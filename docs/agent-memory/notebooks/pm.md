@@ -1,5 +1,35 @@
 # PM — Notebook
 
+## c325 D0-BACKLOG-HYGIENE-TERMINAL-ROW-TRIAGE · 2026-07-10T19:45Z
+
+**MANDATE:** Per-row triage of 88 backlog/review rows carrying terminal-looking status labels that `orch-cold-evict.sh` never evicted (root cause: script has zero code path touching `task_board.backlog[]`). Output: machine-parseable confirm-terminal/exclude/relabel buckets for D1's eventual execution.
+
+**OUTPUT:** 88 rows triaged (67 backlog + 21 review) — 73 confirm-terminal, 4 exclude, 11 relabel. 2 exceptions carried forward from architect's spot-check (not re-triaged): FACTORY-INTERFACE-split-server-ts (CONFIRM-TERMINAL, all 4 stage commits live-verified) and FIX-BCTC-BANK-SUMMARY-MAPPING (EXCLUDE, genuinely-open P1 defect reproduced via live DB probe same-day). Full bucket detail: `.task_board.done_verified[id=D0-BACKLOG-HYGIENE-TERMINAL-ROW-TRIAGE].triage_result`.
+
+**BOARD MUTATION:** D0 row moved backlog[]→done_verified[], status TODO→DONE_VERIFIED. Commit 26ffe7567.
+
+**NEXT:** D1-BACKLOG-HYGIENE-SWEEP-EXECUTE unblocked (still depends on D4 landing the extended orch-cold-evict.sh). D3/D0(this)/D4 were dispatched in parallel this tick.
+
+**ROUTER NOTE (2026-07-10T20:00Z):** the D0 agent's own notebook write did NOT land — its edit deleted the pre-existing c324 entry (D3A unblock + FIX-BCTC-SERVE-GATE-FINANCIAL-REPORTS mint, 2026-07-10T12:30Z) and added nothing in its place; this c325 entry was reconstructed by the router from the agent's verified board write + commit message. Root cause: `scripts/agents-flow/notebook-auto-prune.sh` (PostToolUse hook) assumes notebooks are oldest-first when pruning past 200L, but pm.md is prepend-style (newest-first) — already tracked as `FIX-NOTEBOOK-AUTOPRUNE-ORDERING-ASSUMPTION` (BACKLOG, created 2026-07-10T11:20Z). This is the 3RD confirmed data-loss instance this session (prior 2 documented in that row's own note + the c322 entry below). Escalated: that row promoted to `ready[]` for immediate dispatch.
+
+---
+
+## c324 FIX-BCTC-D3A UNBLOCK + FIX-BCTC-SERVE-GATE-FINANCIAL-REPORTS BACKLOG MINT · 2026-07-10T12:30Z
+
+**MANDATE:** D2 (FIX-BCTC-D2-ENSURE-SHELL-ROW) landed DONE_VERIFIED — unblock D3A (FIX-BCTC-D3A-PEK-TRIGGER-HELPER, which has `depends: [D2]`), and mint a follow-up task for a data-integrity gap QA found outside D2's scope.
+
+**OUTPUT:**
+1. `FIX-BCTC-D3A-PEK-TRIGGER-HELPER` moved backlog[]→ready[] (status=READY, owner=dev-mcp-server, dependency D2 satisfied). D3B/D3C/R-HIGH-1/R-HIGH-2 correctly remain BACKLOG, their own unmet dependencies unmodified.
+2. New task `FIX-BCTC-SERVE-GATE-FINANCIAL-REPORTS` minted into backlog[] (status=BACKLOG, priority=high, zone=apps/mcp-server/, owner=dev-mcp-server, dep: D2) for a serve-layer validation_status gate gap: `get_financial_summary` and `compare_financials` in apps/mcp-server/src/interface/mcp/tools/financial-reports/reports.ts lack validation_status guards. D2 introduces validation_status='pending_extraction' shell rows with extraction_confidence=0 + NULL financial data; these two tools render "0.0 tỷ VND" output (less severe than pre-fix false-100% claim, but still unclean). Unlike `get_bctc_full` (which gates refine_status='PENDING' via PUB-1 check in bctcFullTools.ts), reports.ts has no validation_status gate. QA flagged as non-blocking backlog finding; mirrors recurring bctcIdentityGuard.ts precedent (gate belongs at serve layer, not per-ticker patch). Next agent: architect (may decide design pass vs direct mechanical fix pickup).
+
+**BOARD MUTATIONS:** `.task_board.ready[] += [D3A]` (unblock), `.task_board.backlog[] += [FIX-BCTC-SERVE-GATE-FINANCIAL-REPORTS]` (mint new).
+
+**ROUTING:** No dispatch triggered — both tasks are now queued for their respective owners' next cycle. Head.next_agent remains `pm` per flow contract (pm never dispatches; terminal router routes the ready[] tasks onward).
+
+**NEXT:** Head yields to main terminal. Router will dispatch D3A to dev-mcp-server, route FIX-BCTC-SERVE-GATE-FINANCIAL-REPORTS to architect for design triage (or skip architect if determined mechanical enough).
+
+---
+
 ## c322 FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION DECOMPOSITION · 2026-07-10T12:00Z
 
 **MANDATE:** Decompose architect's D1/D2/D3 design (`docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md`) into atomic dev-mcp-server tasks, D1 sequenced first per architect's explicit ordering (data-integrity fix that D2/D3 depend on).
@@ -37,48 +67,7 @@
 - .task_board.review[TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST].blocked_on = "FIX-BCTC-BANK-BS-COLUMN-ORDER — <root cause rationale>"
 - .task_board.active_sprints[W5-FU-CTG-REFINE-96e36139].blocked_on = "FIX-BCTC-BANK-BS-COLUMN-ORDER — <root cause rationale>"
 
-**CRITICAL TRACKING (INSIGHT):**
-- Architect probe unmasked 3 independent bugs stacking: parser positional assumption (DOMINANT, drops 0/56 CTG units pre-DB) + classifier bold-intolerance + section-vocabulary gap. Prior cycles (W1-W4) failed because root cause was incorrectly localized to the classifier alone → narrow patches failed.
-- **Real-data mandate enforced:** FIX-C regression fixture MUST capture live unit-0002/0003/0038 from `get_bctc_refined(96e36139-5dac-414d-8e4d-20a4725890d1)` verbatim. Hand-written fixtures diverging from reality is the exact anti-pattern that produced 2 DoD-cycle failures.
-- FIX-A + FIX-D are prerequisites (§5 of brief: aggregator section-fallback depends on BOTH); both must ship with FIX-C regression gate in ONE PR. Do NOT split further.
-- FIX-B independent, can ship in parallel — generic defect (affects any bank ticker with bold-wrapped codes).
-
-**HANDOFFS CREATED:**
-1. docs/handoffs/FIX-BCTC-BANK-BS-COLUMN-ORDER.md (L, composite FIX-A+FIX-D+FIX-C, unblocks W5)
-2. docs/handoffs/FIX-BCTC-BANK-FORM-CLASSIFIER-BOLD-STRIP.md (S, independent FIX-B, parallel-safe)
-
 **NEXT AGENT:** dev-mcp-server (both tasks route to same zone; no dispatch ordering constraint between them — PO-triage determines which dev spawns first). Head.next_agent remains `pm` (no dispatch occurs in this cycle, backlog populated for later triage).
-
-**KEY PM DECISIONS:**
-1. Accepted architect disposition as-written — no renegotiation
-2. Re-scoped FIX-BCTC-BANK-BS-SECTION-CLASSIFIER as SUPERSEDED, NOT re-open for 4th narrow patch (recurring-bug bar, 2+ failed cycles → block)
-3. Preserved all 3 RC fixes (commit 2c7fb5b0) as real non-regressions; FIX-A/FIX-D do NOT revert them
-4. Enforced real-data gate: FIX-C fixture from live `get_bctc_refined` verbatim, NOT synthetic
-5. Minted both tasks to backlog (NOT ready) — they are ready for dispatch, but head remains idle per flow mandate (pm never dispatches directly)
-
----
-
-## c320 BA-PREDICTION-EVIDENCE-REVIVAL SPRINT DECOMPOSITION · 2026-07-01T05:37Z
-
-**PARENT:** BA-PREDICTION-EVIDENCE-REVIVAL (SPRINT-M, high, zone=multi, active)
-**ARCHITECT:** Completed SPLIT into 2 parallel-safe hops; architecture brief docs/architecture-briefs/2026-07-01-BA-PREDICTION-EVIDENCE-REVIVAL.md
-**INPUT:** Brief + handoff + PO-approved scope reshape (B1-B4 resolved); corrected 4 load-bearing BA/PO spec errors live-verified during brief
-
-**DECOMPOSITION PLAN:**
-- **Hop 1 (dev-mcp-server):** FR-1.1 (get_evidence_summary direction+horizon bug, surfaces live n=18 TRUSTED row) + FR-2.2 (insider-accumulation watchdog extension, probe done, verdict=SILENT BUG) + FR-1.2 (baseRateComputationJob cadence weekly→daily, CRITICAL two-file coupling: cronConfig.ts:62 + baseRateComputationJob.ts:299 must move together)
-- **Hop 2 (agent-father):** FR-2.1 (wire record_evidence_fragment into news-scout/bctc-analyst/market-watcher flows + corrected tools_package docs, use REAL seeded evidence_type set per brief §0 C3) + FR-3 (strip false Sharpe>1.0 hard-gate language from digest-predict/init.md, B1=Design B PO-approved)
-- **Backlog (decoupled):** FIX-VPS-SSC-INSIDER-502 (VPS upstream diagnosis async; FR-2.2 watchdog extends observability, root-cause chase deferred outside sprint scope per B2)
-
-**OUTPUT:** 3 orch-state rows created:
-1. TASK-EVIDENCE-HOP1-MCP (READY, specialist=dev-mcp-server, next_agent=dev-mcp-server, zone=apps/mcp-server/)
-2. TASK-EVIDENCE-HOP2-AGENTS (READY, specialist=agent-father, next_agent=agent-father, zone=docs/agents/)
-3. FIX-VPS-SSC-INSIDER-502 (TODO backlog, specialist=developer, parent_sprint=BA-PREDICTION-EVIDENCE-REVIVAL)
-
-**BOARD MUTATION:** Parent row status=READY (held for dispatch routing), decomposed_tasks=[hop1, hop2], decomposed_backlog=[fix], parallel_dispatch={mode:simultaneous, agents:[dev-mcp-server, agent-father], tasks:[hop1, hop2]}. Head updated: next_agent=dev-mcp-server, parallel_dispatch active. WIP after dispatch = 2 (within limit).
-
-**CRITICAL TRACKING (RISK-1 HIGH):** Hop1 FR-1.2 two-file coupling — cronConfig.ts:62 + baseRateComputationJob.ts:299 must land in same commit (missing either defeats cadence upgrade). Developer must annotate commit message with this coupling.
-
-**DISPATCH WAVE:** Parallel simultaneous: both hop1 + hop2 ready for dispatch NOW. Zero file overlap verified. Sequential constraint: none (parallel-safe). Parent row held, router/dispatcher will claim per-task + spawn both agents. Backlog row (FIX-VPS-SSC-INSIDER-502) status=TODO, awaits VPS live diagnosis.
 
 ---
 
@@ -92,101 +81,8 @@
 3. Set done_verified gates on LIVE probe, not build-green (self-confirming test failure mode lesson applies)
 4. Left legacy 3316 confidence=50 rows untouched (FR-5: no backfill, honest honesty posture)
 
-**DISPATCH WAVE SEQUENCING:**
-- **NOW (WIP available):** TASK-CONF-1 → dev-mcp-server (1/2 WIP)
-- **After TASK-CONF-1 done_verified + rebuild:** TASK-CONF-2 → dev-frontend (2/2 WIP)
-- **Both done_verified:** Parent task marked COMPLETE; sprint S2-DATA-HONESTY ready for next phase (if any)
-
----
-
-## c319 EVENING_SUMMARY QUALITY 5-TASK SPRINT SEQUENCING · 2026-06-21T000000Z
-
-**PARENT:** Architect brief + PO triage: FIX-DIGEST-RSI-DUAL-ENGINE-DIVERGE + 4 quality fixes from 2026-06-19 evening cycle review
-
-**INPUT:** 5 raw_verified:true tasks from orch-state backlog (TASK-RSIFIX-1/2, FIX-MACRO-FX-SIGMA, FIX-DIGEST-FOREIGN-FLOW, FIX-DIGEST-BB-ALERT), architect brief docs/architecture-briefs/2026-06-21-digest-rsi-dual-engine-diverge.md, PM init
-
-**OUTPUT:** 5 handoff files + orch-state.json board update (backlog → ready, wave/blocking metadata). Developers ready to dispatch Wave 1.
-
-**Handoffs created:**
-1. docs/handoffs/TASK-RSIFIX-1-ta-engine-contract.md (dev-technical-analysis, no rebuild)
-2. docs/handoffs/TASK-RSIFIX-2-digest-go-engine-rewire.md (dev-mcp-server, rebuild, blocked_by RSIFIX-1)
-3. docs/handoffs/FIX-MACRO-FX-SIGMA-PHANTOM-EXTREME.md (dev-macro-indicators, rebuild)
-4. docs/handoffs/FIX-DIGEST-FOREIGN-FLOW-ZERO-PAD-TOPN.md (dev-mcp-server, rebuild, file conflict with RSIFIX-2)
-5. docs/handoffs/FIX-DIGEST-BB-ALERT-LIQUIDITY-FLOOR.md (dev-technical-analysis, rebuild, file conflict with RSIFIX-1)
-
-**Board mutation (atomic):**
-- **Before:** ready=N, backlog includes TASK-RSIFIX-1/2 + 3 FIX tasks (all TODO)
-- **After:** ready=N+5, backlog -= 5 tasks. All moved tasks status=TODO, with wave/blocked_by/blocks metadata
-
-**DISPATCH WAVE SEQUENCING (WIP=2 max concurrent coding):**
-
-**Wave 1 (READY NOW, parallel, independent zones + files):**
-- **dev-technical-analysis:** TASK-RSIFIX-1 (docs only, ~1h, unblocks RSIFIX-2)
-- **dev-macro-indicators:** FIX-MACRO-FX-SIGMA-PHANTOM-EXTREME (code fix, ~1.5h, independent)
-
-**Wave 2 (after Wave 1 done_verified; WIP=2):**
-- **dev-mcp-server:** TASK-RSIFIX-2 (code fix, ~3h, blocked_by TASK-RSIFIX-1, rebuild)
-- **dev-mcp-server:** FIX-DIGEST-FOREIGN-FLOW-ZERO-PAD-TOPN (code fix, ~1h, rebuild)
-- **Conflict:** both edit assembleEveningSummary.ts + eveningSummaryJob.ts → SERIALIZE. Dispatch RSIFIX-2 first, then FOREIGN-FLOW.
-
-**Wave 3 (after Wave 2 WIP clears; P3):**
-- **dev-technical-analysis:** FIX-DIGEST-BB-ALERT-LIQUIDITY-FLOOR (code fix, ~1h, rebuild)
-
-**Verification gates (live evening-cycle before done_verified):**
-- **RSIFIX-1:** Contract doc exists + verified against Go source (rsi.go)
-- **RSIFIX-2:** RSI agreement ≤0.1 between Go + TS digest for ≥3 tickers; <35-candle → null; no synthetic fallback
-- **FX-SIGMA:** 0.25% USD/VND move → INFO/WARN not CRITICAL; 0.6% move → CRITICAL/HIGH
-- **FOREIGN-FLOW:** No 0.000k padding lines in digest; only nonzero movers rendered
-- **BB-ALERT:** Sub-100K-volume tickers emit no BB alert; liquid tickers still do
-
-**Key PM decisions:**
-1. Moved RSIFIX-1 as doc-first task to unblock architecture
-2. Serialized RSIFIX-2 + FOREIGN-FLOW due to assembleEveningSummary.ts overlap
-3. Queued P3 BB-ALERT for Wave 3 (lower urgency)
-4. Set blocking_by/blocks metadata explicitly
-5. Wave 1 sized for immediate parallel start
-
-**Follow-ons (queued backlog):**
-- CLEAN: remove unused computeRSILocal (after RSIFIX-2 done_verified)
-- OBSERVABILITY: add RSI divergence detector to system-auditor
-- BACKLOG: FIX-FOREIGN-FLOW-COVERAGE (source data gaps, lower priority)
-
 ---
 
 ## Archive
 
-Cycles c318 (ARCH-AUTO-PUSH, 2026-06-18), c317 (OHLCV-WRITER, 2026-06-17), c316 (ERRAUDIT-W2, 2026-06-16), and c315 (BCTC-ENRICH, 2026-06-15) archived. See git history commits 675891163d...5d121989 for full sprint records. Older cycles (c299–c189) archived to [pm-20260611.md](../../archive/notebooks/pm-20260611.md).
-
-## c327 P1 MOMENTUM & RELATIVE-STRENGTH DECOMPOSITION · 2026-06-30T030000Z
-
-**PARENT:** BA-IND-P1-MOMENTUM-RS (architect blueprint complete, ready for PM decomposition). Architect identified 2 zones + 1 MCP layer, 5 ARCH-RATIFY items (all resolved via code probe).
-
-**CRITICAL CORRECTIONS CARRIED VERBATIM** (architect caught as BA errors; dev must NOT miss):
-1. **RISK-1 [HIGH]:** Foreign flow data source is **`daily_ohlcv`** (foreign_buy_vol, foreign_sell_vol, foreign_net_vol), NOT `vnstock_trading_stats` (has no per-day buy/sell). ADTV unit = shares; response MUST include `adtv_unit: "shares"`.
-2. **RISK-2 [HIGH]:** `foreign_room_events.event_type` enum = ('ROOM_FULL', 'ROOM_REOPEN'), NOT ROOM_LOCKED/FULL_ROOM_SELL. `room_exhaustion = true` iff latest event = ROOM_FULL (no subsequent ROOM_REOPEN); no event row → `room_exhaustion: null` + `null_reason: "room_event_not_found"` (NEVER false — that is fabrication).
-3. **RISK-3 [HIGH]:** `apps/technical-analysis/src/` (TypeScript) is DEAD CODE; Dockerfile builds ONLY from `pkg/` + `cmd/`. Dev MUST work exclusively in Go under `pkg/`/`cmd/`.
-
-**OUTPUT:** 3 comprehensive handoff files + board decomposition + 2 commits:
-1. **IND-P1-TECHNICAL-ANALYSIS-SUITE.md** (dev-technical-analysis): Bundled 3 tools (ROC/RS/52W) in one zone task; domain/application/infra/interface architecture; honest-null discipline; feed-forward scalars (momentum_factor_z, market_rs_composite, net_new_highs); test strategy; 15 files touched (11 new + 2 modified).
-2. **IND-P1-FOREIGN-ACCUM-SUITE.md** (dev-stock-price): 1 tool (foreign-accum-rank); CRITICAL: reads `daily_ohlcv` (NOT vnstock_trading_stats); room_exhaustion from foreign_room_events; ADTV normalization (shares); feed-forward scalar foreign_accum_z_market; 9 files touched.
-3. **IND-P1-MCP-PROXY-INDICATORS.md** (dev-mcp-server): MCP proxy layer; BACKLOG status (serial dependency on both Go zones LIVE); 4 tool registrations + 4 client functions; 6 files touched.
-
-**Board mutation (via orch-apply.sh):**
-- BA-IND-P1-MOMENTUM-RS: READY → IN_PROGRESS (next_agent: qa, pm_decomposed_at: 2026-06-30T03:00:00Z)
-- IND-P1-ROC-MOMENTUM: backlog → ready, status: IN_PROGRESS, owner/next_agent: dev-technical-analysis
-- IND-P1-RELATIVE-STRENGTH: backlog → ready, status: IN_PROGRESS, owner/next_agent: dev-technical-analysis
-- IND-P1-52W-HIGH-PROXIMITY: backlog → ready, status: IN_PROGRESS, owner/next_agent: dev-technical-analysis
-- IND-P1-FOREIGN-ACCUM-RANK: backlog → ready, status: IN_PROGRESS, owner/next_agent: dev-stock-price
-- IND-P1-MCP-PROXY-INDICATORS: new backlog entry, status: BACKLOG, owner: dev-mcp-server
-
-**Decomposition strategy:**
-- **Zone 1 (apps/technical-analysis, Go):** Bundled 3 TA tools (ROC, RS, 52W) in SINGLE zone task (one dev-technical-analysis team; shared MultiTickerOHLCVRepository port; reuse TACalculator for MA200; parallel domain/application/infra development).
-- **Zone 2 (apps/stock-price, Go):** 1 tool (foreign-accum-rank) isolated to its own task (distinct dev-stock-price team; reads daily_ohlcv + foreign_room_events).
-- **Zone 3 (apps/mcp-server, TypeScript):** MCP proxy layer (dev-mcp-server) BACKLOG (serial dependency: wait for both Go zones LIVE).
-
-**Delivery sequence (WIP limit enforcement):**
-1. dev-technical-analysis ships IND-P1-TECHNICAL-ANALYSIS-SUITE (3 tools, 1 HTTP endpoint path) + QA sign-off
-2. dev-stock-price ships IND-P1-FOREIGN-ACCUM-RANK (1 tool, 1 HTTP endpoint path) + QA sign-off
-3. dev-mcp-server wires IND-P1-MCP-PROXY-INDICATORS (all 4 tools go LIVE) → QA sign-off → Fear & Greed layer consumes scalars
-
-**Commits:** c06b09a1 (pm: DECOMPOSED into atomic dev tasks) + notebook entry
+Cycles c320 (BA-PREDICTION-EVIDENCE-REVIVAL, 2026-07-01), c319 (EVENING_SUMMARY, 2026-06-21), c327 (P1-MOMENTUM-RS, 2026-06-30), c318 (ARCH-AUTO-PUSH, 2026-06-18), c317 (OHLCV-WRITER, 2026-06-17), c316 (ERRAUDIT-W2, 2026-06-16), and c315 (BCTC-ENRICH, 2026-06-15) archived — see git history (this file, pre-2026-07-10T20:00Z) and commits 675891163d...5d121989 / c06b09a1 for full sprint records. Older cycles (c299–c189) archived to [pm-20260611.md](../../archive/notebooks/pm-20260611.md).

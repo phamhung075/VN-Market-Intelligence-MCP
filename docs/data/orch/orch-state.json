@@ -6533,21 +6533,6 @@
         "note": "QA finding during D1 regression: tryNewsChainFallback() at apps/mcp-server/src/application/usecases/bctc/newsChainFallback.ts:348 calls the same INSERT OR REPLACE INTO financial_reports pattern D1 just fixed in parseBctcReport.ts. Same root cause (fresh randomUUID() on every re-run orphans bctc_layout_units/bctc_page_zones rows). Not in D1 scope (design doc + D1 files[] list only covered parseBctcReport.ts; architect's brownfield findings didn't catch this second call site). Standalone fix task — same fix pattern applies. QA recommended backlog follow-up, did not judge urgency; placement in chain TBD by pm/architect."
       },
       {
-        "id": "FIX-NOTEBOOK-AUTOPRUNE-ORDERING-ASSUMPTION",
-        "type": "FIX",
-        "priority": "high",
-        "status": "BACKLOG",
-        "zone": "scripts/agents-flow/",
-        "size": "S",
-        "title": "notebook-auto-prune.sh drops newest section on newest-first notebooks — fix ordering assumption",
-        "owner": "claude-manager-helper",
-        "depends": [],
-        "detail_ref": "scripts/agents-flow/notebook-auto-prune.sh",
-        "created_at": "2026-07-10T11:20:00Z",
-        "created_by": "router-raw-verify-fix",
-        "note": "scripts/agents-flow/notebook-auto-prune.sh (PostToolUse hook, Write|Edit, docs/agent-memory/notebooks/*.md) drops the physically-FIRST ## section when a notebook exceeds 200L, assuming file order == chronological-oldest-first. Correct for append-style notebooks (e.g. qa.md, oldest-first). INVERTED for prepend-style notebooks (e.g. pm.md, newest-first, c322 above c321 above c320) — on those, an edit that pushes the file over 200L causes the hook to silently delete the section JUST ADDED, not an old one, since the new section sits at the top = physically-first. Confirmed mechanistically 2026-07-10T11:05Z on pm.md: a 192L HEAD + ~15L edit (207L, over cap) triggered the hook, which pruned the file back to exactly 192L, byte-identical to pre-edit HEAD (git diff --stat empty). This retroactively explains 2 prior false notebook-write-claim incidents attributed to pm this session (previously miscategorized as agent confabulation in feedback_agent_selfreport_metalayer_confabulation memory, now corrected). Fix: make the drop-oldest loop ordering-aware — parse the \"· <ISO timestamp>\" suffix on each ## heading (convention already used across notebooks) and drop the section with the OLDEST timestamp, not the physically-first one. Regression test should cover both append-style and prepend-style notebooks explicitly."
-      },
-      {
         "id": "SPIKE-COWORK-GUARANTEED-SLOT-SUPERSEDE-WIRING",
         "type": "SPIKE",
         "status": "BACKLOG",
@@ -7867,6 +7852,26 @@
         "promoted_at": "2026-07-10T17:05:08Z",
         "updated_at": "2026-07-10T17:31:06Z",
         "updated_by": "architect"
+      },
+      {
+        "id": "FIX-NOTEBOOK-AUTOPRUNE-ORDERING-ASSUMPTION",
+        "type": "FIX",
+        "priority": "high",
+        "status": "READY",
+        "zone": "scripts/agents-flow/",
+        "size": "S",
+        "title": "notebook-auto-prune.sh drops newest section on newest-first notebooks — fix ordering assumption",
+        "owner": "claude-manager-helper",
+        "depends": [],
+        "detail_ref": "scripts/agents-flow/notebook-auto-prune.sh",
+        "created_at": "2026-07-10T11:20:00Z",
+        "created_by": "router-raw-verify-fix",
+        "note": "scripts/agents-flow/notebook-auto-prune.sh (PostToolUse hook, Write|Edit, docs/agent-memory/notebooks/*.md) drops the physically-FIRST ## section when a notebook exceeds 200L, assuming file order == chronological-oldest-first. Correct for append-style notebooks (e.g. qa.md, oldest-first). INVERTED for prepend-style notebooks (e.g. pm.md, newest-first, c322 above c321 above c320) — on those, an edit that pushes the file over 200L causes the hook to silently delete the section JUST ADDED, not an old one, since the new section sits at the top = physically-first. Confirmed mechanistically 2026-07-10T11:05Z on pm.md: a 192L HEAD + ~15L edit (207L, over cap) triggered the hook, which pruned the file back to exactly 192L, byte-identical to pre-edit HEAD (git diff --stat empty). This retroactively explains 2 prior false notebook-write-claim incidents attributed to pm this session (previously miscategorized as agent confabulation in feedback_agent_selfreport_metalayer_confabulation memory, now corrected). Fix: make the drop-oldest loop ordering-aware — parse the \"· <ISO timestamp>\" suffix on each ## heading (convention already used across notebooks) and drop the section with the OLDEST timestamp, not the physically-first one. Regression test should cover both append-style and prepend-style notebooks explicitly.",
+        "updated_at": "2026-07-10T17:48:41Z",
+        "updated_by": "router",
+        "escalated_at": "2026-07-10T17:48:41Z",
+        "escalated_by": "router",
+        "escalation_reason": "3rd confirmed instance this session (recurring-bug-2+ policy) — D0-BACKLOG-HYGIENE-TERMINAL-ROW-TRIAGE sub-agent's notebook write deleted the c324 entry on pm.md with no replacement, same root cause already diagnosed in this row's own note. Router restored the lost content directly; promoting for immediate dispatch rather than leaving a proven-recurring data-loss bug sitting in backlog."
       }
     ],
     "review": [
@@ -8388,7 +8393,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-10T16:55:06Z",
+    "last_triaged_at": "2026-07-10T17:48:41Z",
     "last_triaged_by": "router",
     "in_progress": []
   },
