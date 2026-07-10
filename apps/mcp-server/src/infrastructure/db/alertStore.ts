@@ -137,6 +137,14 @@ function hasAgentSignalsTable(db: Database): boolean {
  * check whose JOIN `ON a.id = s.id` was comparing TEXT to INTEGER (always NULL).
  * The corrected C-08 query uses `ON a.id = s.alert_id` instead.
  *
+ * FIX-AGENT-SIGNALS-ORPHAN-ALERT-ID: `INSERT OR IGNORE INTO alerts` can be
+ * silently no-op'd not only by an `id` (PK) collision but also by an
+ * `alerts.fingerprint` UNIQUE-index collision (idx_alerts_fingerprint) when a
+ * caller's `id` isn't 1:1 with its `fingerprint`. The agent_signals co-write
+ * must NEVER assume the paired alerts row exists — it confirms via a direct
+ * `alerts` lookup before writing, so `agent_signals.alert_id` can never
+ * dangle regardless of caller id/fingerprint correctness.
+ *
  * @param alerts - Array of Alert objects returned by `generateAlerts`
  * @param db     - Active bun:sqlite Database connection (injected by caller)
  */
@@ -181,6 +189,15 @@ export function storeAlerts(alerts: Alert[], db: Database): void {
     ? db.prepare("SELECT 1 FROM agent_signals WHERE alert_id = ? LIMIT 1")
     : null;
 
+  // FIX-AGENT-SIGNALS-ORPHAN-ALERT-ID: existence guard — the correlation row
+  // may only be written when an `alerts` row for this id is CONFIRMED to
+  // exist (freshly inserted OR pre-existing). Never write on faith that
+  // `insert.run()` succeeded — INSERT OR IGNORE can no-op on a fingerprint
+  // collision too, not just an id collision.
+  const checkAlertRow = writeSignal
+    ? db.prepare("SELECT 1 FROM alerts WHERE id = ? LIMIT 1")
+    : null;
+
   const insertMany = db.transaction((rows: Alert[]) => {
     for (const alert of rows) {
       insert.run(
@@ -195,9 +212,13 @@ export function storeAlerts(alerts: Alert[], db: Database): void {
         alert.fingerprint ?? null,
       );
       // Co-write agent_signals correlation row (fail-loud if insert throws)
-      if (insertSignal && checkSignal) {
+      if (insertSignal && checkSignal && checkAlertRow) {
         const existing = checkSignal.get(alert.id);
-        if (!existing) {
+        // FIX-AGENT-SIGNALS-ORPHAN-ALERT-ID: only proceed when the alerts row
+        // for this id is confirmed present — guards against a silent
+        // INSERT-OR-IGNORE no-op (fingerprint collision) leaving a dangling FK.
+        const alertRowExists = checkAlertRow.get(alert.id);
+        if (!existing && alertRowExists) {
           const stockCode = alert.actionCode === "MACRO" ? null : (alert.actionCode || null);
           // FR-1 FIX-SIGNAL-CONFIDENCE-DEFAULT-50: use alert's real confidence when in [0,100];
           // otherwise derive from severity via module-private severityToConfidence().
@@ -274,6 +295,13 @@ export function storeAlertsFromCommander(alerts: Alert[], db: Database): void {
     ? db.prepare("SELECT 1 FROM agent_signals WHERE alert_id = ? LIMIT 1")
     : null;
 
+  // FIX-AGENT-SIGNALS-ORPHAN-ALERT-ID: existence guard (see storeAlerts above
+  // for full rationale) — never write the correlation row on faith that the
+  // paired `alerts` INSERT OR IGNORE actually persisted a row.
+  const checkAlertRow = writeSignal
+    ? db.prepare("SELECT 1 FROM alerts WHERE id = ? LIMIT 1")
+    : null;
+
   const insertMany = db.transaction((rows: Alert[]) => {
     for (const alert of rows) {
       insert.run(
@@ -287,9 +315,10 @@ export function storeAlertsFromCommander(alerts: Alert[], db: Database): void {
         alert.validated_at ?? null,
         alert.fingerprint ?? null,
       );
-      if (insertSignal && checkSignal) {
+      if (insertSignal && checkSignal && checkAlertRow) {
         const existing = checkSignal.get(alert.id);
-        if (!existing) {
+        const alertRowExists = checkAlertRow.get(alert.id);
+        if (!existing && alertRowExists) {
           const stockCode = alert.actionCode === "MACRO" ? null : (alert.actionCode || null);
           // FR-1 FIX-SIGNAL-CONFIDENCE-DEFAULT-50: use alert's real confidence when in [0,100];
           // otherwise derive from severity via module-private severityToConfidence().

@@ -1,25 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-07-09 — FIX-FOREIGN-FLOW-COVERAGE → REVIEW
-
-**Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (dev-team dispatch)
-
-Root cause (AUDIT-FC-FOREIGN-FLOW-recon.md): CODES sent to `bgapidatafeed.vps.com.vn/getliststockdata/<CODES>` were built only from watchlist DB + `mcp.config.json` referenceStocks (~111 codes) → ~1457 of ~1569 daily_ohlcv traded tickers permanently carried `foreign_net_vol=NULL`. Added `GET /api/ohlcv-codes` (`ohlcvBackfillHandler.ts` new `handleOhlcvCodes` — `SELECT DISTINCT code FROM daily_ohlcv`, no hardcoded list, generic_mandate-compliant) and wired it into `server.ts`. Updated `vps-scripts/fetch-foreign-flow.sh` to source CODES from `/api/ohlcv-codes` first, falling back to `/api/watchlist` — mirrors `fetch-ohlcv-backfill.sh`'s pre-existing R-2 fallback pattern, which had ALREADY been calling `/api/ohlcv-codes` and silently falling back every cycle because the endpoint was never implemented server-side (confirmed dormant 404 in `docs/vps-sources/ohlcv-backfill-pipeline-stall/recon.md`) — this fix closes that gap too, for free.
-
-money_terms_elevated half of the task (fBValue/fSValue → foreign_buy_value/foreign_sell_value columns, VND tỷ đồng served via `get_foreign_flow`) was already shipped 2026-06-16 (commit ddc36452e) — verified live via `docker exec` query against the running mcp-server container (columns present, populated). No new work needed there; `foreign_net_value` is derived on read (buy−sell), not a stored column — matches the "no derived-column duplication" pattern used elsewhere.
-
-Deliberately did NOT widen `/api/watchlist` itself — that endpoint is also consumed by `fetch-prices.sh`'s per-minute price fetch (unrelated pipeline); widening it would have ballooned that CODES list as an unintended side effect. Separate endpoint keeps the fix scoped to the actual bug.
-
-RAW-verified the single-call design against the real API (off-market-hours, non-VPS host): 1459 live distinct daily_ohlcv codes → HTTP 200, 1400 items returned, ~1.2MB, ~7s, ends with `]` (no truncation) — confirms recon's "no pagination" claim at full scale, not just the 111-code sample it was originally checked against. Bumped `PAYLOAD_SIZE_THRESHOLD` 50000→3,000,000 and the bgapidatafeed fetch timeout 60s→90s to match the ~13x larger payload (avoids WARN-log spam on the new normal size).
-
-New `FIX-FOREIGN-FLOW-COVERAGE.test.ts` (5 tests, TDD RED→GREEN): auth guard, empty-DB, full-universe coverage sorted, DISTINCT dedup across dates, and the exact non-watchlist-code scenario this task fixes. Targeted suite (foreign-flow + ohlcv-backfill, 9 files) 78/78 pass. tsc clean. toolCount=183 unchanged (HTTP route, not an MCP tool). Server-boot probe clean (health 200, new route 401-no-auth as expected), `bctc-inspect`/`news-fetch` dashboard circular-dep probes clean. shellcheck clean on all new script lines.
-
-Doc updates: `market-data.md` (Invariant 6 clarified + new Invariant 8 documenting `/api/ohlcv-codes` and the UPDATE-only-write self-healing coverage model).
-
-Commit: pending (this cycle). Board: `in_progress`→`review`, `next_agent=ops`, `rebuild_required=true` (mcp-server container swap is user-gated — NOT run by this agent, per feedback_container_swaps_user_gated.md). Filed `docs/signals/ops-rebuild-verify-mcp-server-20260709T2332Z.json` — deferred market-hours RAW-verify of live foreign_net_vol coverage growth + VPS script redeploy confirmation.
-
-Zone health: tsc clean, tools=183 unchanged, 78/78 targeted tests pass, live-tested full-universe API call (1459 codes, HTTP 200) | HEALTHY.
-
 ## 2026-07-10 — TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-CTG-CARRY-FORWARD → REVIEW
 
 **Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (dev-team dispatch, Track 1 of FIX-BCTC-BANK-SUMMARY-MAPPING W5 replacement, AC-14 dedup)
@@ -53,3 +33,19 @@ Full `bun test` full-suite is flaky in this environment (two runs: 55 fail/3 err
 Commit: pending (this cycle). Board: `ready`→`in_progress`→`review` via orch-apply.sh, `next_agent=qa`.
 
 Zone health: tsc clean, tools=183 unchanged, new test 19/19 + targeted SLA/BCTC suite 129/129 pass (run twice), full-suite flakiness isolated and confirmed pre-existing/unrelated, live server-boot + dashboard probes clean | HEALTHY.
+
+## 2026-07-10 — FIX-AGENT-SIGNALS-ORPHAN-ALERT-ID → REVIEW
+
+**Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (BOUNDED-1 idle-capacity auto-pickup, dev-team)
+
+Live RAW-verify against the named-volume DB found 0 orphans now (10/10 alert_id-tagged `agent_signals` rows resolve, table churns via 2h TTL + `cleanExpired()`) — the 124 historical rows (06-22/23) are long self-expired, unrecoverable to inspect directly. Root-caused via git archaeology instead: `alertStore.ts` `storeAlerts`/`storeAlertsFromCommander` co-write the `agent_signals` correlation row whenever no existing row shares `alert_id` — WITHOUT confirming the paired `INSERT OR IGNORE INTO alerts` actually persisted a row. That insert can silently no-op not only on an `id` (PK) collision but also on the `alerts.fingerprint` UNIQUE-index collision (`idx_alerts_fingerprint`, FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS 06-16). taAlertScanJob/bbAlertScanJob paired a **deterministic** fingerprint with a **random** `crypto.randomUUID()` id pre-06-25 — a repeat fire (same fingerprint) got a fresh id whose `alerts` insert was ignored while the `agent_signals` insert still fired, producing the dangling FK (confirmed by commit `57a781a14`'s own message: "220 rows, +96/day" as of 06-25). That commit already fixed the CALLER side (deterministic id) for those 2 jobs. `e3386bdf` (TASK-CONF-1, confidence-score plumbing only) is unrelated — ruled out as a contributing regression.
+
+Fix applied at the WRITER (defense in depth, not just caller discipline): both `storeAlerts`/`storeAlertsFromCommander` now confirm `SELECT 1 FROM alerts WHERE id = ?` before writing the correlation row — `agent_signals.alert_id` can never dangle regardless of any future caller's id/fingerprint correctness. Added `checkOrphanAgentSignalsAlertId` (D-NEW2, `dataAuditJob.ts`) as an ongoing regression tripwire — the INVERSE of C-08/W-6 `checkOrphanAlerts`.
+
+New `FIX-AGENT-SIGNALS-ORPHAN-ALERT-ID.test.ts` (8 tests, TDD RED→GREEN — RED reproduced the exact dangling-FK defect at the writer level before the fix): fingerprint-collision AC-1/2/3, legit-write AC-4, idempotent-refire AC-5, null-fingerprint callers AC-6, audit-tripwire clean/dirty AC-7/8. Targeted alert suites (FIX-ALERT-ORPHAN-CORRELATION, ta/bb-scan-job, foreign-flow, UUID-MISMATCH, CONFIDENCE-DEFAULT-50, data-audit-job) 110/110 pass. tsc clean. Full `bun test` 14449 pass/40 skip/63 fail/9 errors/1187 files (599s, known Bun 1.3.13 teardown crash) — grepped all failures for alert/signal/orphan/audit: zero matches, confirmed pre-existing/unrelated. toolCount=183 unchanged, scheduler files untouched (no new cron.schedule). Server-boot probe: health 200, `bctc-inspect`/`news-fetch` dashboard routes clean.
+
+Verification-gate caveat (honest, not silently claimed): live re-check of "0 NEW orphans post-deploy" requires an ops rebuild+swap (container swaps are user-gated, not run by this agent) — `rebuild_required: true`. Historical 124 orphans no longer exist to backfill/NULL — self-expired via TTL before this task began; documented here as the answer to fix-spec point 4, not a skipped step.
+
+Commit: pending (this cycle). Board: `in_progress`→`review` via orch-apply.sh, `next_agent=qa`.
+
+Zone health: tsc clean, tools=183 unchanged, new test 8/8 + targeted alert suites 110/110 pass, full-suite flakiness isolated/unrelated, live server-boot + dashboard probes clean, live DB re-verified 0 current orphans | HEALTHY.

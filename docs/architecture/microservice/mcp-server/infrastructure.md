@@ -181,9 +181,19 @@ scratch pre/post comparison script — see `docs/agent-memory/notebooks/dev-mcp-
 FACTORY-SCHEDULER-split-dataAuditJob extracted the D-1..D-11 (daily) and
 W-1..W-7 (weekly) inline check bodies (previously ~800L combined inside
 `runDailyChecks`/`runWeeklyChecks`) into one file per check group under
-`scheduler/news-analysis/audit-checks/` (19 files, each ≤120L, each a pure
+`scheduler/news-analysis/audit-checks/` (20 files, each ≤120L, each a pure
 `(db: Database) => AuditFinding[]` — W-7's `checkLancedbDrift` is the one
-async exception, taking an injected `GetCountFn`). `AuditFinding`/
+async exception, taking an injected `GetCountFn`). D-NEW2
+`checkOrphanAgentSignalsAlertId` (FIX-AGENT-SIGNALS-ORPHAN-ALERT-ID,
+2026-07-10) is the ongoing regression tripwire for
+`agent_signals.alert_id` dangling-FK rows (inverse of C-08/W-6
+`checkOrphanAlerts`) — flags `agent_signals.alert_id IS NOT NULL AND
+alerts.id` missing; the root writer defect (alertStore.ts `storeAlerts`/
+`storeAlertsFromCommander` co-writing the correlation row without
+confirming the paired `alerts` INSERT OR IGNORE actually persisted a row —
+it can silently no-op on an `alerts.fingerprint` UNIQUE-index collision,
+not just an `id` collision) is fixed at the writer with an existence guard.
+`AuditFinding`/
 `TelegramFn`/`GetCountFn`, the category/priority mapping, the
 `insertFeedbackIfNew` dedup-guarded feedback insert, `getPreviousRowCounts`,
 `INDICATOR_RANGES`/`SNAPSHOT_TABLES`, and the Telegram message formatter now
