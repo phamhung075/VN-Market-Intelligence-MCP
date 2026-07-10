@@ -278,10 +278,14 @@ describe("cron-registry.json integrity", () => {
   const registryPath = join(process.cwd(), "docs/data/cron-registry.json");
   const json = JSON.parse(readFileSync(registryPath, "utf8"));
 
-  it("schedulerFileCount === 64", () => {
+  it("schedulerFileCount === 65", () => {
     // REWRITE 2026-06-09 (BATCH4-CI-C-CD-CONFIG-DRIFT-ASSERTS): count grew from 43 → 44 → 64
     // as new scheduler files were added to apps/mcp-server/src/scheduler/.
-    expect(json.schedulerFileCount).toBe(64);
+    // BUMP 2026-07-10 (CI-RED-1a8c1bff-FIX): 64 → 65 — commit 43f4c8a22 (D3C)
+    // added bctcExtractReconcileJob.ts (src/scheduler/financial-reports/) +
+    // its cron-registry.json entry, resolving 'pek_triggered' bctc_vps_queue
+    // rows left behind by bctcPdfPullJob.ts's fire-and-forget /pek-extract call.
+    expect(json.schedulerFileCount).toBe(65);
   });
 
   it("jobs array contains entry with name 'pipelineWatchdog'", () => {

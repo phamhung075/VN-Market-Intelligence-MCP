@@ -12,12 +12,33 @@ Bun.env["DB_PATH"] = ":memory:";
  *   3. fetchParseAndStoreBctc: extraction_method stamped for all paths
  *
  * Test groups:
- *   A (4 cases) — bctcPdfPullJob: extraction awaited before queue marked done
+ *   A (4 cases) — bctcPdfPullJob: extraction awaited before queue marked terminal
  *   B (2 cases) — bctcReparseJob: DPI 300 retry for confidence < 0.3
  *   C (2 cases) — fetchParseAndStoreBctc: extraction_method stamp
  *
  * Mock strategy: inject deps directly — no real I/O, no DB.
  * Layer: tests — unit, all injectable.
+ *
+ * UPDATE 2026-07-10 (CI-RED-1a8c1bff-FIX): Group A's terminal-status assertion
+ * was updated from 'done' to 'pek_triggered'. Root cause investigated (not
+ * blind-patched): commit history shows FIX-BCTC-D3B-GATE-PEK-TRIGGERED-STATUS
+ * (2026-07-10, pre-existing on this branch before this fix) deliberately
+ * REMOVED the old synchronous 0-row done/enrich_failed gate from
+ * bctcPdfPullJob.ts — /pek-extract is fire-and-forget 202, so a synchronous
+ * post-fire row-count check is structurally guaranteed to read 0. The row now
+ * lands at the intermediate 'pek_triggered' status; commit 43f4c8a22 (D3C,
+ * bctcExtractReconcileJob.ts) is the sole successor that later reconciles
+ * 'pek_triggered' → 'done'/'enrich_failed' out-of-band (grace window + row
+ * checks). This is the INTENDED, already-shipped async hand-off model, not a
+ * regression — this test's old 'done' expectation asserted the superseded
+ * synchronous model. The reconcile-to-done/enrich_failed transition itself is
+ * already covered by src/__tests__/bctc-extract-reconcile-job.test.ts (14
+ * cases) — not duplicated here. What THIS test still validates (unchanged,
+ * still meaningful): triggerExtraction is genuinely AWAITED before the queue
+ * row's status write happens at all (A-1's mid-flight snapshot), and that a
+ * throwing triggerExtraction does not block the row from reaching its
+ * terminal-for-this-job status (A-2) — i.e. the original 1352a race-condition
+ * regression this file guards against is still exercised end-to-end.
  */
 
 import { describe, it, expect } from "bun:test";
@@ -81,8 +102,8 @@ function makePdfBuf(): ArrayBuffer {
 // Group A — bctcPdfPullJob: extraction must be awaited before queue marked done
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("Task 1352a — Group A: bctcPdfPullJob awaits extraction before marking done", () => {
-  it("A-1: queue row status is 'pending' while extraction runs, 'done' only after extraction completes", async () => {
+describe("Task 1352a — Group A: bctcPdfPullJob awaits extraction before marking terminal status", () => {
+  it("A-1: queue row status is 'pending' while extraction runs, 'pek_triggered' only after extraction completes", async () => {
     const db = makeInMemoryDb();
     const url = `${VPS_BCTC_BASE_URL}VCB/VCB_2025_Q4.pdf`;
     insertPendingRow(db, 1, "VCB", url);
@@ -122,14 +143,17 @@ describe("Task 1352a — Group A: bctcPdfPullJob awaits extraction before markin
     extractionResolveFn();
     await jobPromise;
 
-    // Now the row must be 'done'
+    // Now the row must be 'pek_triggered' — FIX-BCTC-D3B-GATE-PEK-TRIGGERED-STATUS
+    // replaced the old synchronous 'done' write with this intermediate status;
+    // bctcExtractReconcileJob.ts (D3C) later reconciles it to 'done'/'enrich_failed'
+    // out-of-band (covered by bctc-extract-reconcile-job.test.ts).
     const row = db
       .prepare("SELECT status FROM bctc_vps_queue WHERE id = 1")
       .get() as { status: string };
-    expect(row.status).toBe("done");
+    expect(row.status).toBe("pek_triggered");
   });
 
-  it("A-2: queue row is still marked done even when triggerExtraction throws", async () => {
+  it("A-2: queue row still reaches 'pek_triggered' even when triggerExtraction throws", async () => {
     const db = makeInMemoryDb();
     const url = `${VPS_BCTC_BASE_URL}HPG/HPG_2025_Q4.pdf`;
     insertPendingRow(db, 2, "HPG", url);
@@ -146,11 +170,14 @@ describe("Task 1352a — Group A: bctcPdfPullJob awaits extraction before markin
 
     // downloaded should still be 1 — extraction failure is non-fatal
     expect(result.downloaded).toBe(1);
-    // Queue row must be marked done (extraction failure is logged, not re-thrown)
+    // Queue row must still reach 'pek_triggered' (extraction failure is logged,
+    // not re-thrown, and does not block the status write — see A-1 comment above
+    // for why 'pek_triggered' rather than 'done' is the correct terminal status
+    // for this synchronous code path).
     const row = db.prepare("SELECT status FROM bctc_vps_queue WHERE id = 2").get() as {
       status: string;
     };
-    expect(row.status).toBe("done");
+    expect(row.status).toBe("pek_triggered");
   });
 
   it("A-3: triggerExtraction is awaited — result.downloaded is correct after extraction", async () => {
