@@ -307,12 +307,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-AUDITOR-ORCHSTATE-FULLDOC-OVERWRITE-CLOBBERS-SSOT",
-    "next_agent": "architect",
-    "next_action": "PLAN-ONLY (recurring_bug_escalation) — architect root-causes the system-auditor orch-state scaffold-overwrite path per backlog-detail fix_spec; router corrected BOUNDED-1 zone-detect default (developer -> architect).",
-    "updated_at": "2026-07-10T15:43:43Z",
-    "updated_by": "dev-team (router next_agent correction)"
+    "status": "idle",
+    "updated_at": "2026-07-10T15:56:53Z",
+    "updated_by": "architect",
+    "active_task_id": null,
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7324,6 +7323,29 @@
         "po_review_note": "PO closeout (po-tick 2026-07-10): CONFIRM architect disposition SUPERSEDED/RESOLVED. Root cause (server-process-scoped owner_session as sole ownership key defeating cross-client mutex) is structurally gone — superseded by the independent CROSS-SESSION-MULTI-TEAM-ORCH P1-FINAL (TASK_1980, commit dea481e40, 2026-06-28), which made owner_client_session a REQUIRED (non-optional Zod) sole ownership key in every claim/heartbeat/release/orphan WHERE clause and demoted owner_session to diagnostic-only. Sanity-checked the architect reasoning holds against all 4 backlog ACs: AC2 (second claimer -> claimed:false+current_holder), AC3 (own-restart orphan-release still works, improved), AC4 (no dup-spawn discriminator regression) all functionally MET; AC1 (distinct owner_session) is stale WORDING against a field deliberately NOT repurposed, not a functional gap — the discriminating field owner_client_session IS distinct per claimer. NO residual gap warrants a new ticket. Option (a) (RequestHandlerExtra.sessionId) correctly rejected: gateway dials fresh SSE transport+McpServer per /mcp call, no server-observable cross-call session persists (server.ts:299-456). Shipped fix is a stricter SUPERSET of this ticket's own preferred option (b) — mandatory, not opt-in. Router independently RAW-re-verified 116/116 cited tests + live probe + call-site audit; no implementation files touched (PLAN-ONLY). Non-blocking AC-wording nit (brief §5) resolved non-destructively in the backlog-detail.json archive record (original AC text preserved, ac_clarification + resolution stamped). NO commit made by PO — router independently re-verifies + commits this board write.",
         "closed_by": "po",
         "closed_at": "2026-07-10T15:40:40Z"
+      },
+      {
+        "id": "FIX-AUDITOR-ORCHSTATE-FULLDOC-OVERWRITE-CLOBBERS-SSOT",
+        "type": "FIX",
+        "title": "system-auditor signal-write emits a fresh minimal-scaffold orch-state document instead of read-modify-append -> a single signal-emitting auditor run COLLAPSES the whole board (backlog 312->0, signal_queue.rows 97->1, head nulled)",
+        "status": "DONE",
+        "priority": "P1",
+        "zone": "multi",
+        "size": "M",
+        "sprint": null,
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AUDITOR-ORCHSTATE-FULLDOC-OVERWRITE-CLOBBERS-SSOT",
+        "promoted_at": "2026-07-10T15:43:19Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-10T15:43:23Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "po",
+        "routing_note": "plan_only:true / next_agent:architect / recurring_bug_escalation:true in backlog-detail.json — corrected from BOUNDED-1 zone-detect default (developer)",
+        "completed_at": "2026-07-10T15:56:53Z",
+        "completed_by": "architect",
+        "architecture_brief": "docs/architecture-briefs/2026-07-10-auditor-orchstate-conservation-guard.md",
+        "finding": "Root cause CONFIRMED LIVE, not stale (unlike the sibling task-lock ticket). TWO-PART verdict: (1) ROUTING half of fix_spec already shipped 2026-06-27/06-30 -- SSOT-W1-ORCH-APPLY-WRAPPER (commit 86286d265) made scripts/orch-apply.sh the single gated write path; writer-audit (docs/signals/processed/orch-state-writer-audit.json, dev-mcp-server, 2026-06-30) confirms all 13 live writer sites incl. signal-dashboard skill (system-auditor's own write path) route through it; .head is now a required Zod field, closing the \"head disappeared\" sub-symptom. (2) CONTENT-SAFETY half (the CONSERVATION check, fix_spec item 3) was NEVER implemented at any layer. EMPIRICALLY REPRODUCED LIVE this session (zero risk to real file, used the project's own ORCH_APPLY_LIVE_FILE_OVERRIDE test-safety idiom): built a disposable 320-backlog/100-signal-row populated fixture, fed a scaffold candidate mirroring commit de595a44's exact shape through the REAL current scripts/orch-apply.sh -- result: \"[orch-apply] OK -- candidate applied\", exit 0, backlog 320->0, signal_rows 100->1. This proves the vulnerability is live through the CURRENT production write path, not a bypass of it -- schema validation (orchStateSchema.ts) has no minimum-length constraint on any Lane array or signal_queue.rows, and done/done_verified/in_progress/qa/ready/review are all .optional().default([]), so a document that omits them entirely still validates. INTERIM MITIGATION STATUS: LAPSED. docs/agents/system-auditor/flow/main.md still mandates signal_queue.rows writes unconditionally in 4 places (Tier-2 E-3, Tier-3 E-3, D-BCTC-EVAL, D-IMPROVE, all \"mandatory, no skip path\"); docs/data/orch/archive/2026-07.json shows 138 continuous system-auditor signal rows through 2026-07-08 (2 days before this brief) -- the \"Telegram-only\" mitigation was never durably wired into the flow doc and could not have survived system-auditor's fully unattended cron cadence. This ticket has been live-exploitable, not mitigated, for the full 2 weeks since filing.",
+        "review_note": "PLAN-ONLY architect brief complete -- code change IS required (unlike the stale sibling task-lock ticket). Design: magnitude-bounded conservation circuit-breaker as new Stage-2 gate inside scripts/orch-apply.sh (task_total and signal_total must retain >=50% of live value across the whole board, not per-lane -- a naive \"no lane may ever decrease\" rule per fix_spec's literal wording would break normal single-task backlog->ready->in_progress moves AND the 2 already-shipped legitimate bulk-eviction writers scripts/orch-cold-evict.sh + pm/flow/task-archive.md, both already routed through orch-apply.sh per the writer-audit -- proof + full design in the brief SS4). Narrow named bypass (ORCH_APPLY_ALLOW_SHRINK=<reason>) for those 2 blessed callers only, mirroring the existing ORCH_APPLY_LIVE_FILE_OVERRIDE test-only precedent already in that script. New shared scripts/orch-conservation-check.mjs (bun, same runtime as orch-validate.mjs) invoked by both orch-apply.sh and the PreToolUse hook (scripts/agents-flow/orch-state-hook-prewrite.mjs) for parity -- single SSOT implementation, no per-caller duplication (satisfies backlog record's generic_mandate, and covers MORE than the ticket literally asked since it protects all ~290/tick writers, not just system-auditor). Verification gate: extend the EXISTING scripts/test/orch-apply-wrapper-tests.sh harness (same ORCH_APPLY_LIVE_FILE_OVERRIDE + real-file-hash-unchanged safety pattern already in use) with COLLAPSE (confirmed RED today, must go GREEN after fix) + APPEND-HAPPY (regression guard against over-blocking) + SHRINK-ALLOWED (proves cold-evict/task-archive won't regress) cases -- do not create a new parallel test file. PO: recommend routing implementation to dev-mcp-server (same zone that authored SSOT-W1-ORCH-APPLY-WRAPPER per writer-audit's own audited_by field) -- NOT ops; every touched file is a host-side bash/bun repo script, zero apps/mcp-server/src changes, zero container rebuild needed. Full evidence, empirical repro commands, and rejected-design proof: docs/architecture-briefs/2026-07-10-auditor-orchstate-conservation-guard.md."
       }
     ],
     "done_verified": [
@@ -8181,26 +8203,7 @@
     },
     "last_triaged_at": "2026-07-10T15:43:19Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-AUDITOR-ORCHSTATE-FULLDOC-OVERWRITE-CLOBBERS-SSOT",
-        "type": "FIX",
-        "title": "system-auditor signal-write emits a fresh minimal-scaffold orch-state document instead of read-modify-append -> a single signal-emitting auditor run COLLAPSES the whole board (backlog 312->0, signal_queue.rows 97->1, head nulled)",
-        "status": "IN_PROGRESS",
-        "priority": "P1",
-        "zone": "multi",
-        "size": "M",
-        "sprint": null,
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AUDITOR-ORCHSTATE-FULLDOC-OVERWRITE-CLOBBERS-SSOT",
-        "promoted_at": "2026-07-10T15:43:19Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-10T15:43:23Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "architect",
-        "routing_note": "plan_only:true / next_agent:architect / recurring_bug_escalation:true in backlog-detail.json — corrected from BOUNDED-1 zone-detect default (developer)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
