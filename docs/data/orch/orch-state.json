@@ -356,30 +356,7 @@
     "_updated_at": "2026-07-10T08:50:40Z",
     "_updated_by": "dev-team",
     "archive": [],
-    "rows": [
-      {
-        "id": "cowork-recurring-guaranteed-miss-20260710T0847Z",
-        "ts": "2026-07-10T08:47:45Z",
-        "from": "cowork-dispatcher",
-        "to": "po",
-        "type": "repair_task_request",
-        "severity": "HIGH",
-        "status": "READ",
-        "summary": "Recurring guaranteed-slot-miss pattern confirmed on TWO distinct CHEF slots, each missing at the identical tick 2 consecutive days running: chef-morning (05:15Z, missed 2026-07-09 and 2026-07-10) and chef-eod (08:45Z, missed 2026-07-09 and 2026-07-10). Both show superseded-despite-trigger-id pattern in docs/data/cowork-schedule.json: trigger_id is non-null (a real backstop trigger is configured) but _superseded_by=\"cowork-dispatcher\" still marks the slot undeliverable via the cowork-dispatcher gateway-blind bypass. This is systemic, not isolated noise — same-tick recurrence across 2 separate guaranteed slots over 2 days suggests the backstop trigger wiring for guaranteed CHEF slots is broken in a reproducible way, not a one-off gateway hiccup. Recommend architect review of the guaranteed-slot backstop trigger dispatch path (docs/agents/cowork-team/flow/) — durable fix likely needed beyond the standing GATEWAY-BLIND-USER-ACTION-2026-06-18 remediation, since trigger_id presence alone does not guarantee delivery when _superseded_by is set.",
-        "payload_ref": null
-      },
-      {
-        "id": "cowork-recurring-guaranteed-miss-scope-expansion-20260710T0917Z",
-        "ts": "2026-07-10T09:17:30Z",
-        "from": "cowork-dispatcher",
-        "to": "po",
-        "type": "repair_task_request",
-        "severity": "HIGH",
-        "status": "READ",
-        "summary": "SCOPE EXPANSION on prior signal cowork-recurring-guaranteed-miss-20260710T0847Z (now READ/triaged). A THIRD distinct guaranteed slot, fb-daily (09:15Z, fb-poster parallel_group), missed its cron tick 2 consecutive days running (2026-07-09 and 2026-07-10), same deprecated-backstop pattern (trigger_id=null, _superseded_by=cowork-dispatcher) already seen on chef-morning (05:15Z) and chef-eod (08:45Z). Critically, fb-daily is NOT in the chef parallel_group — this proves the root cause is dispatcher-wide across ALL guaranteed slots, not CHEF-specific. Recommend architect treat this as a single dispatcher-level defect (guaranteed-slot backstop/supersede wiring) rather than 3 separate per-slot issues. Session guaranteed-miss count now 9.",
-        "payload_ref": null
-      }
-    ],
+    "rows": [],
     "last_triaged_at": "2026-07-03T19:49:38Z",
     "last_triaged_by": "po"
   },
@@ -2952,17 +2929,6 @@
         "verify_note": "prior_status=TODO"
       },
       {
-        "id": "HPG-REPARSE-POST-REBUILD",
-        "priority": "P2",
-        "size": "XS",
-        "status": "DONE",
-        "title": "Verify bctcReparseJob picks HPG Q4-2025 with REBUILT code",
-        "type": "SPIKE",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#HPG-REPARSE-POST-REBUILD",
-        "owner": "ops"
-      },
-      {
         "id": "VCB-MISSING-PDFS",
         "priority": "P2",
         "size": "XS",
@@ -3471,16 +3437,6 @@
         "verify_note": "prior_status=TODO"
       },
       {
-        "id": "FU-REPUTATION-CRON-MISS",
-        "priority": "low",
-        "size": "XS",
-        "status": "CANCELLED",
-        "title": "reputationComputeJob cron-miss 2026-06-12 08:30 UTC — node-cron v3.0.3 silent misfire under concurrent 08:30 cluster",
-        "type": "FU",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-REPUTATION-CRON-MISS"
-      },
-      {
         "id": "OPS-POLLNEWS-NIGHT-ZERO",
         "priority": "medium",
         "sprint": null,
@@ -3533,14 +3489,6 @@
         "zone": "docs/agents/",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#NB-AUDITOR-MAIN-SPLIT",
         "verify_note": "prior_status=DEFERRED"
-      },
-      {
-        "id": "FIX-OHLCV-DAILY-AGGREGATOR-STALE",
-        "priority": "P1",
-        "status": "CANCELLED",
-        "title": "FIX-OHLCV-DAILY-AGGREGATOR-STALE — get_sector_rotation all 16 sectors N/A/5d; ohlcv-daily-aggregator last_run 2026-06-10 (3+ days stale). ohlcvDailyAggregatorJob not firing since Jun 10.",
-        "type": "FIX",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-OHLCV-DAILY-AGGREGATOR-STALE"
       },
       {
         "id": "FIX-COMMODITY-WTI-DELTA-CORRUPT",
@@ -4271,16 +4219,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-ERRAUDIT-W3-FE-LOADERS-CLIENT-CALLS"
       },
       {
-        "id": "FIX-OHLCV-CLASS3-COLD-START-EXCHANGE-SEED-P2",
-        "title": "FIX-OHLCV-CLASS3-COLD-START-EXCHANGE-SEED-P2 — PDN/NHD ÷1000 leak: detectAndNormalizeScaleFromPrevClose no-op when prevClose=0; source exchange reference-price seed",
-        "type": "FIX",
-        "status": "CANCELLED",
-        "priority": "P2",
-        "zone": "apps/mcp-server/",
-        "size": "M",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-OHLCV-CLASS3-COLD-START-EXCHANGE-SEED-P2"
-      },
-      {
         "id": "FIX-BCTC-QUEUE-MAXAGE-GATE",
         "title": "FIX-BCTC-QUEUE-MAXAGE-GATE — mark tickers with 0 results on ALL sources >30d as 'no-filing-detected' + drop from the active SLA queue",
         "type": "FIX",
@@ -4406,36 +4344,6 @@
         "size": "S",
         "title": "CLEAN-OHLCV-INTEGRITY-RESIDUE-REPAIR — recompute/clean the 835 existing constraint-violation + DFF 1000x rows already in daily_ohlcv",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#CLEAN-OHLCV-INTEGRITY-RESIDUE-REPAIR"
-      },
-      {
-        "id": "FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH",
-        "type": "FIX",
-        "status": "DONE",
-        "zone": "apps/mcp-server/",
-        "priority": "P1",
-        "size": "S",
-        "title": "FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH — vn_index_cache 0 rows; vnIndexRefresh */5 cron not populating",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH"
-      },
-      {
-        "id": "TASK-OHLCV-WIC-1",
-        "type": "SUBTASK",
-        "status": "DONE",
-        "zone": "apps/mcp-server/",
-        "priority": "P0",
-        "size": "S",
-        "title": "TASK-OHLCV-WIC-1 — Writer F guard replacement (priceBackfillService.ts)",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#TASK-OHLCV-WIC-1"
-      },
-      {
-        "id": "TASK-OHLCV-WIC-2",
-        "type": "SUBTASK",
-        "status": "DONE",
-        "zone": "apps/mcp-server/",
-        "priority": "P0",
-        "size": "S",
-        "title": "TASK-OHLCV-WIC-2 — Writer H high/low coercion fix (server.ts push-ohlcv-history)",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#TASK-OHLCV-WIC-2"
       },
       {
         "id": "FIX-CRON-RUNS-NULL-ERRORMSG",
@@ -4572,16 +4480,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-BDI-SHIPPING-STALE-404-GUARD"
       },
       {
-        "id": "FIX-FB-GATE-CURRENCY-UNIT-GUARD",
-        "title": "Add Check-F currency-unit guard to fb-data-integrity-gate.sh — BLOCK VN stock price quoted in USD",
-        "type": "FIX",
-        "size": "S",
-        "status": "DONE",
-        "priority": "P1",
-        "zone": "scripts/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-FB-GATE-CURRENCY-UNIT-GUARD"
-      },
-      {
         "id": "FIX-FB-JARGON-ENGLISH-WORD-LEAK",
         "title": "Broaden fb-jargon-gate.sh — flag stray Latin-script English content-words in VN prose body",
         "type": "FIX",
@@ -4620,36 +4518,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AGENTSIGNALS-ALLPRODUCERS-NULLSTRIP"
       },
       {
-        "id": "F1-GATEWAY-TRANSPORT-PROBE",
-        "type": "SPIKE",
-        "title": "F1.1 Probe live gateway connector transport config (type/command/args) from MAIN SESSION — hand to .mcp.json writer",
-        "priority": "high",
-        "zone": "agents",
-        "size": "S",
-        "status": "CANCELLED",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#F1-GATEWAY-TRANSPORT-PROBE"
-      },
-      {
-        "id": "F1-WRITE-MCP-JSON-GATEWAY",
-        "type": "FIX",
-        "title": "F1.2 Write .mcp.json registering ONLY the gateway server (4 tools) — preserve call_tool indirection, NO direct vn-market",
-        "priority": "high",
-        "zone": "agents",
-        "size": "S",
-        "status": "CANCELLED",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#F1-WRITE-MCP-JSON-GATEWAY"
-      },
-      {
-        "id": "F1-AGENT-FATHER-BLIND-GUARD-REMOVE",
-        "type": "FIX",
-        "title": "F1.3 Remove gateway-blind workaround (Step 0c blind-guard) from cowork flow docs ONCE .mcp.json verified live",
-        "priority": "high",
-        "zone": "agents",
-        "size": "S",
-        "status": "CANCELLED",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#F1-AGENT-FATHER-BLIND-GUARD-REMOVE"
-      },
-      {
         "id": "F1-CLOUD-TRIGGER-DECOMMISSION",
         "type": "FIX",
         "title": "F1.5 Set trigger_status=decommissioned for the 5 slots (NOT deleted) ONLY after 2 successful launchd fires logged per slot + rewrite the 2 RemoteTrigger docs",
@@ -4676,54 +4544,6 @@
         "type": "FIX",
         "zone": "apps/mcp-server/",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-FOREIGN-FLOW-BULLETIN-UNAVAIL-STRING"
-      },
-      {
-        "id": "PROBE-CI-240-PRICE-PIPELINE-ENV-RED",
-        "title": "PROBE 240-price-pipeline-recovery CI-only red — passes LOCAL 13/0, reproduce in CI before any code fix",
-        "status": "DONE",
-        "priority": "P2",
-        "type": "SPIKE",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#PROBE-CI-240-PRICE-PIPELINE-ENV-RED"
-      },
-      {
-        "id": "FIX-FB-GATE-TEMPLATE-STRUCTURE-VALIDATOR",
-        "title": "Structural-template validator for FB posts — canonical header, verbatim disclaimer, valid hashtag block, no markdown in body",
-        "type": "FIX",
-        "size": "S",
-        "status": "DONE",
-        "priority": "P1",
-        "zone": "scripts/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-FB-GATE-TEMPLATE-STRUCTURE-VALIDATOR"
-      },
-      {
-        "id": "BA-FIX-MACRO-SNAPSHOT-DELTAS-NULL",
-        "title": "BA spec: FIX-MACRO-SNAPSHOT-DELTAS-NULL — FR-1..FR-6 mapped to DDD layers; lead open item for architect = commodity_prices_history lookback strategy + SBV-override conflict + ownership guarantee",
-        "status": "DONE",
-        "zone": "apps/macro-indicators/",
-        "sprint": "S2-DATA-HONESTY",
-        "priority": "high",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#BA-FIX-MACRO-SNAPSHOT-DELTAS-NULL"
-      },
-      {
-        "id": "FIX-REFINE-QUEUE-TERMINAL-FAILED-UNIT-HEADPOISON",
-        "type": "FIX",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "priority": "P2",
-        "status": "DONE",
-        "sprint": "BCTC-ANALYTICS-LAYER",
-        "title": "BCTC refine queue HEAD-POISONED by a permanently-PARTIAL doc whose only un-DONE unit is terminal-FAILED — get_bctc_pending_refine perpetually re-serves VCB Q1-2025 (65a9c724, 20/21 DONE + unit-0000 cover-letter page_type_mismatch FAILED 2026-06-15) so refine_status stays PARTIAL forever; the daily refine slot picks result[0]=VCB every fire, finds 0 refinable windows (all in skip-set), finalizes PARTIAL, exits, and NEVER advances to the genuinely-PENDING docs behind it (HPG Q4-2025 918a7abd 24p, GVR Q1-2026 c765098b 80p) → bctc-analyst starved of their data.",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-REFINE-QUEUE-TERMINAL-FAILED-UNIT-HEADPOISON"
-      },
-      {
-        "id": "FIX-FB-JARGON-WEEKDAY-ORDINAL-COLLISION",
-        "status": "DONE",
-        "priority": "P2",
-        "zone": "scripts/",
-        "type": "FIX",
-        "title": "fb-jargon-gate weekday check false-positives on VN ordinals (Thứ nhất/hai/ba = firstly/secondly/thirdly)",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-FB-JARGON-WEEKDAY-ORDINAL-COLLISION"
       },
       {
         "id": "SPIKE-FB-SOURCE-LINK-RECHECK-AFFORDANCE",
@@ -5074,25 +4894,6 @@
         "verify_note": "prior_status=TODO"
       },
       {
-        "id": "BA-FRONTEND-FRESHNESS-TRANSPARENCY",
-        "title": "Requirement spec: per-surface last-updated freshness indicator on every frontend data card",
-        "status": "DONE",
-        "priority": "high",
-        "zone": "docs/agents/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#BA-FRONTEND-FRESHNESS-TRANSPARENCY"
-      },
-      {
-        "id": "ARCH-FRONTEND-FRESHNESS-TRANSPARENCY",
-        "title": "Architect design: FreshnessBadge props contract + data_asof API surface normalization + L4 coverageMapFreshnessChecker DDD placement — FRONTEND-FRESHNESS-TRANSPARENCY sprint",
-        "status": "DONE",
-        "zone": "apps/frontend/app/components/ + apps/frontend/app/lib/hooks/ + apps/mcp-server/src/interface/mcp/routes/ + apps/mcp-server/src/domain/services/",
-        "sprint": "FRONTEND-FRESHNESS-TRANSPARENCY",
-        "priority": "high",
-        "size": "S",
-        "type": "SPRINT-M",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#ARCH-FRONTEND-FRESHNESS-TRANSPARENCY"
-      },
-      {
         "id": "DEFLAKE-1187-POLLNEWS-DEAD-PATH",
         "title": "De-flake 1187-pollnews-dead-path.test.ts — CI per-file-isolation transient (passes 5/5 local, fails ~1/N under CI isolation)",
         "status": "BACKLOG",
@@ -5111,14 +4912,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-TELEGRAM-REPORT-ACK-STATUS-STOP-RESURFACE"
       },
       {
-        "id": "BA-FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT",
-        "title": "BA spec: FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT — 7 FRs (FR-1 layout-adaptive col-detection, FR-2 label note-ref strip, FR-3 Roman OCR normalization, FR-4 section-boundary detection, FR-5 dedup, FR-6 paren-value parse, FR-7 notes-section stop); DDD layers mapped; 5 blockers (B2=FPT non-regression scope, B5=FR-4 scope confirm); VCB+HPG+VNM acceptance gates locked from live eval thresholds",
-        "status": "DONE",
-        "zone": "apps/pdf-extractor/",
-        "priority": "high",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#BA-FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT"
-      },
-      {
         "id": "FU-FPT-2025Q4-STAGE4-DUP",
         "type": "FIX",
         "status": "BACKLOG",
@@ -5126,76 +4919,6 @@
         "zone": "apps/pdf-extractor/",
         "title": "FPT 2025Q4 Stage 4 exact_dup_count=1 (pre-existing, separate from FPT-overfit sprint)",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-FPT-2025Q4-STAGE4-DUP"
-      },
-      {
-        "id": "TASK_1982",
-        "type": "SPRINT-S",
-        "zone": "apps/mcp-server/",
-        "title": "P1.5-MCP-1: SQL migration — add redispatch_count + enum-widen orphan-signal",
-        "status": "CANCELLED",
-        "priority": "P1.5",
-        "sprint": "CROSS-SESSION-MULTI-TEAM-ORCH",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#TASK_1982"
-      },
-      {
-        "id": "TASK_1983",
-        "type": "SPRINT-M",
-        "zone": "apps/mcp-server/",
-        "title": "P1.5-MCP-2: gcExpiredLocks — pre-GC emit orphan-signals",
-        "status": "DONE",
-        "priority": "P1.5",
-        "sprint": "CROSS-SESSION-MULTI-TEAM-ORCH",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#TASK_1983"
-      },
-      {
-        "id": "TASK_1984",
-        "type": "SPRINT-S",
-        "zone": "apps/mcp-server/",
-        "title": "P1.5-MCP-3: Server-side periodic reaper timer (600s setInterval)",
-        "status": "DONE",
-        "priority": "P1.5",
-        "sprint": "CROSS-SESSION-MULTI-TEAM-ORCH",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#TASK_1984"
-      },
-      {
-        "id": "TASK_1985",
-        "type": "SPRINT-S",
-        "zone": "apps/mcp-server/",
-        "title": "P1.5-MCP-4: listHeldTasks — add owner_agent filter + redispatch_count output",
-        "status": "DONE",
-        "priority": "P1.5",
-        "sprint": "CROSS-SESSION-MULTI-TEAM-ORCH",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#TASK_1985"
-      },
-      {
-        "id": "TASK_1986",
-        "type": "SPRINT-M",
-        "zone": ".claude/skills/",
-        "title": "P1.5-AF-1: Router step 2.5 — adoption probe for orphan-signals",
-        "status": "DONE",
-        "priority": "P1.5",
-        "sprint": "CROSS-SESSION-MULTI-TEAM-ORCH",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#TASK_1986"
-      },
-      {
-        "id": "TASK_1987",
-        "type": "SPRINT-M",
-        "zone": "docs/agents/dev-team/",
-        "title": "P1.5-AF-2: Dev-team Step 0a — sprint-task adoption + tree-hygiene + board flip",
-        "status": "DONE",
-        "priority": "P1.5",
-        "sprint": "CROSS-SESSION-MULTI-TEAM-ORCH",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#TASK_1987"
-      },
-      {
-        "id": "TASK_1988",
-        "type": "SPRINT-L",
-        "zone": "apps/mcp-server/",
-        "title": "P1.5-REGRESSION: Acceptance tests — all DoD locks + failure-mode matrix",
-        "status": "DONE",
-        "priority": "P1.5",
-        "sprint": "CROSS-SESSION-MULTI-TEAM-ORCH",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#TASK_1988"
       },
       {
         "id": "CLEAN-SKILL-BLOAT-TASK-LOCK",
@@ -5235,45 +4958,12 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-FR4-RISK4-30LINE-LIMIT"
       },
       {
-        "id": "TASK_1989",
-        "type": "SPRINT-S",
-        "zone": "apps/mcp-server/",
-        "title": "P1-MCP: FIX-COORD-TASKKIND-ENUM-INTENT-GATE — Migration-3 7-kind schema",
-        "status": "DONE",
-        "priority": "P1",
-        "sprint": "CROSS-SESSION-MULTI-TEAM-ORCH",
-        "size": "M",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#TASK_1989"
-      },
-      {
         "id": "FIX-COWORK-SPAWN-IDENTITY-PREAMBLE-OFFFLOW",
         "title": "Spawn-prompt-level identity/flow-entry preamble — stop cowork gatherer off-flow router-latch (1967-04 recurrence)",
         "status": "BACKLOG",
         "priority": "high",
         "zone": "docs/agents/",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-COWORK-SPAWN-IDENTITY-PREAMBLE-OFFFLOW"
-      },
-      {
-        "id": "TASK_1998",
-        "status": "DONE",
-        "type": "FIX",
-        "size": "S",
-        "zone": "cross-service",
-        "priority": "high",
-        "sprint": "FB-COWORK-FOLD",
-        "title": "Retire the 2 standalone durable fb-market-poster CronCreate jobs (single owner)",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#TASK_1998"
-      },
-      {
-        "id": "TASK_1999",
-        "status": "DONE",
-        "type": "CLEAN",
-        "size": "S",
-        "zone": "docs",
-        "priority": "med",
-        "sprint": "FB-COWORK-FOLD",
-        "title": "Deprecate .claude/commands/crons/cron-fb-market-poster.md -> redirect to cowork slots",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#TASK_1999"
       },
       {
         "id": "IND-ROADMAP-LEDGER",
@@ -5429,86 +5119,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#IND-P2-ETF-FLOW"
       },
       {
-        "id": "DTS-ST1-MIGRATION4-DDL",
-        "title": "Migration 4: scheduled_tasks table in coordinationStore.ts — epoch-INTEGER cols, dedup_key UNIQUE in CREATE TABLE, status CHECK enum, 3 indexes",
-        "status": "DONE",
-        "type": "SPRINT-S",
-        "priority": "high",
-        "zone": "apps/mcp-server/src/infrastructure/db/coordinationStore.ts",
-        "sprint": "DEFERRED-TASK-SCHEDULER-MVP",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#DTS-ST1-MIGRATION4-DDL"
-      },
-      {
-        "id": "DTS-ST3-CLAIM-DUE-HELPER",
-        "title": "claim_due_scheduled_tasks(nowEpoch): atomic pending->firing UPDATE...RETURNING + internal complete/expire helpers (NOT MCP-exposed)",
-        "status": "DONE",
-        "type": "SPRINT-S",
-        "priority": "high",
-        "zone": "apps/mcp-server/src/infrastructure/db/coordinationStore.ts",
-        "sprint": "DEFERRED-TASK-SCHEDULER-MVP",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#DTS-ST3-CLAIM-DUE-HELPER"
-      },
-      {
-        "id": "DTS-ST6-AGENT-TEAM-MAP",
-        "title": "AGENT_TEAM_MAP: derive COWORK/DEV team from system-map.json + agent-roster.md at registration — fail-loud on unknown agent, NEVER a hardcoded switch",
-        "status": "DONE",
-        "type": "SPRINT-S",
-        "priority": "high",
-        "zone": "apps/mcp-server/src/",
-        "sprint": "DEFERRED-TASK-SCHEDULER-MVP",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#DTS-ST6-AGENT-TEAM-MAP"
-      },
-      {
-        "id": "DTS-ST2-MCP-TOOLS",
-        "title": "scheduledTaskTools.ts: schedule_task / cancel_scheduled_task / list_scheduled_tasks — validate agent, idempotent dedup, honest-caveat description, auditable list",
-        "status": "DONE",
-        "type": "SPRINT-M",
-        "priority": "high",
-        "zone": "apps/mcp-server/src/interface/mcp/tools/system/scheduledTaskTools.ts",
-        "sprint": "DEFERRED-TASK-SCHEDULER-MVP",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#DTS-ST2-MCP-TOOLS"
-      },
-      {
-        "id": "DTS-ST4-BOOTSTRAP-ALLOWLIST",
-        "title": "Register schedule_task/cancel_scheduled_task/list_scheduled_tasks in agentBootstrap.ts tool packages (reachable via gateway call_tool)",
-        "status": "DONE",
-        "type": "SPRINT-S",
-        "priority": "medium",
-        "zone": "apps/mcp-server/src/",
-        "sprint": "DEFERRED-TASK-SCHEDULER-MVP",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#DTS-ST4-BOOTSTRAP-ALLOWLIST"
-      },
-      {
-        "id": "DTS-ST5-SWEEPER-STEP-0B3",
-        "title": "cowork-team flow Step 0b.3: drain due one-shots after fire-election WIN — deadline gate, COWORK PRE-CLAIM spawn, DEV orch-apply.sh signal (recurring step, NOT a one-shot)",
-        "status": "DONE",
-        "type": "SPRINT-S",
-        "priority": "high",
-        "zone": "docs/agents/cowork-team/",
-        "sprint": "DEFERRED-TASK-SCHEDULER-MVP",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#DTS-ST5-SWEEPER-STEP-0B3"
-      },
-      {
-        "id": "DTS-ST7-TESTS",
-        "title": "Unit tests: Migration 4 UNIQUE-verify (AC-2), epoch-typeof (AC-1), deadline expiry (AC-3), claim_due atomic single-winner, dedup_key collision idempotency",
-        "status": "DONE",
-        "type": "SPRINT-S",
-        "priority": "medium",
-        "zone": "apps/mcp-server/src/__tests__/",
-        "sprint": "DEFERRED-TASK-SCHEDULER-MVP",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#DTS-ST7-TESTS"
-      },
-      {
-        "id": "DTS-ST8-MICROSERVICE-DOC",
-        "title": "Record scheduled_tasks table + 3 tools + addressed-not-picked routing + Phase-2 caveat in docs/architecture/microservice/mcp-server/",
-        "status": "DONE",
-        "type": "SPRINT-S",
-        "priority": "medium",
-        "zone": "docs/architecture/microservice/mcp-server/",
-        "sprint": "DEFERRED-TASK-SCHEDULER-MVP",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#DTS-ST8-MICROSERVICE-DOC"
-      },
-      {
         "id": "IND-P1-MOMENTUM-CONSUMER-WIRING",
         "title": "AC6 P1 Consumer-Wiring — wire the 4 LIVE P1 momentum/RS tools (get_roc_momentum / get_relative_strength / get_52w_proximity / get_foreign_accum_rank) into the helper-agent flows. Closes the AC6 gap left OPEN by IND-P1-CONSUMER-WIRING-AUDIT (which wired the 5 P0 tools ONLY). Tools shipping != agents using them — the CORE of the user's 'more indices so the helper agents analyze the market better' intent.",
         "zone": "cross-service",
@@ -5517,17 +5127,6 @@
         "type": "FIX",
         "sprint": "MARKET-INDICATOR-DEPTH-P0",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#IND-P1-MOMENTUM-CONSUMER-WIRING"
-      },
-      {
-        "id": "FIX-COWORK-CHEF-SAMETICK-MUTEX",
-        "type": "FIX",
-        "size": "S",
-        "status": "DONE",
-        "priority": "medium",
-        "zone": "cross-service/",
-        "sprint": "COWORK-RELIABILITY",
-        "title": "Same-tick CHEF mutual-exclusion in cowork dispatch — suppress non-guaranteed chef-* slots when a guaranteed chef slot matches the same tick, in BOTH pressure modes (closes legacy-mode cadence-bypass double-publish)",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-COWORK-CHEF-SAMETICK-MUTEX"
       },
       {
         "id": "FIX-FB-WEEKEND-DEDUP-GATE",
@@ -5859,51 +5458,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-BACKLOG-TERMINAL-ROW-DRIFT-EVICT-BLIND"
       },
       {
-        "id": "SYSREMAKE-P1A-DEVTEAM-RUNIDLE-PREFLIGHT",
-        "title": "RC-IDLE-LOOPS §1.1: add Step-5 RUN-IDLE idle-check to dev-team-tick-preflight.sh (all-empty: active_sprints=[], docs/signals empty, signal_queue NEW=0 -> verdict RUN-IDLE) evaluated BEFORE Step 0a drain-signals; + dev-team/flow/main.md Step 0-PREFLIGHT RUN-IDLE JUMP-TO-end branch. Ports cowork _step8_silent_release template verbatim.",
-        "status": "CANCELLED",
-        "zone": "cross-service/",
-        "type": "FIX",
-        "priority": "high",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#SYSREMAKE-P1A-DEVTEAM-RUNIDLE-PREFLIGHT"
-      },
-      {
-        "id": "SYSREMAKE-P1B-AUDITOR-TIER-PROBE-GENERALIZE",
-        "title": "RC-IDLE-LOOPS §1.1: generalize scripts/agents-flow/auditor-tier1-probe.sh to accept --tier=2|3 (same ALL_GREEN+fresh-heartbeat pre-spawn SKIP as Tier-1, run BEFORE cron spawns subagent, not just before commit); + wire it as pre-gate in cron-detect-loop SKILL Job-3 (Tier-2 0 */4) + Job-4 (Tier-3 0 2), mirroring how Job-2 already wires Tier-1.",
-        "status": "CANCELLED",
-        "zone": "cross-service/",
-        "type": "FIX",
-        "priority": "high",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#SYSREMAKE-P1B-AUDITOR-TIER-PROBE-GENERALIZE"
-      },
-      {
-        "id": "SYSREMAKE-P1C-AUDITOR-NOTEBOOK-APPEND-GATE",
-        "title": "RC-IDLE-LOOPS §1.1: gate system-auditor notebook append (flow/main.md L74-76 + L685-716 AC-3 settled-write) on 'this cycle produced >=1 new finding/signal/state-change' so a genuinely ALL_GREEN cycle emits ZERO notebook diff and auditor-notebook-commit.sh SKIP-no-staged-changes (L196-197) actually has something to trigger on.",
-        "status": "CANCELLED",
-        "zone": "docs/agents/system-auditor/",
-        "type": "FIX",
-        "priority": "high",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#SYSREMAKE-P1C-AUDITOR-NOTEBOOK-APPEND-GATE"
-      },
-      {
-        "id": "SYSREMAKE-P1F-TOOLCOUNT-CRON-DRIFT-REGEN",
-        "title": "RC-DRIFT §1.3: wire gen-project-stats.ts + gen-tool-registry.ts onto a cadence (CI-on-push-to-main OR frequent cron w/ git-diff-quiet short-circuit = no-delta-no-commit); extend tool-registry-parity.test.ts to ALSO grep CLAUDE.md/mcp-tools.md/ARCHITECTURE.md hardcoded tool+cron counts vs generated SSOT (tool-registry.json) and fail on divergence; replace hardcoded numbers with SSOT pointer; quarantine-comment recurringBugEscalationFlag/escalationReason (_maintained_by DEPRECATED) + verify+delete dead lastSuccessfulCycle/currentSprint.",
-        "status": "CANCELLED",
-        "zone": "multi",
-        "type": "FIX",
-        "priority": "medium",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#SYSREMAKE-P1F-TOOLCOUNT-CRON-DRIFT-REGEN"
-      },
-      {
-        "id": "SYSREMAKE-P1DET-PROMOTE-4-DETECTOR-FIXES",
-        "title": "RC-DETECTOR §1.2 + §5 (PO promote 4 named items): pm to surface+dispatch 4 already-specced parked detector fixes next planning cycle — (1) FIX-SIGNALQUEUE-DUP-ID-GUARD [already TODO, ready] (2) FU-AUDITOR-D4-SIGNAL-ID [BACKLOG, owner->developer, per-finding discriminator sau-d4-{ticker}-{check_id}-{YYYYMMDD}] (3) FIX-AUDITOR-B05-BCTC-FRESHNESS-LAYER-SPLIT [BACKLOG] (4) FIX-CONTEXT-BLOAT-HOOK-SETTLE-READ-DEBOUNCE [plan_only, SUPERVISED-only un-park].",
-        "status": "CANCELLED",
-        "zone": "cross-service/",
-        "type": "FIX",
-        "priority": "high",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#SYSREMAKE-P1DET-PROMOTE-4-DETECTOR-FIXES"
-      },
-      {
         "id": "SYSREMAKE-P2-STRUCTURAL-REMAKE-ROUTE",
         "title": "Phase-2 structural-remake ROUTE (design-first, architect TECH doc FIRST): RC-VERIF+RC-CONVERGE (extend orch-apply.sh->orch-validate.mjs Zod .superRefine to require verification.raw_probe{tool,args,live_value_observed,observed_at} before DONE_VERIFIED + add DEGRADED 8th StatusEnum value w/ honest_gap_reason + re-encode convergence as LIVE bug_class-fingerprint mechanism replacing dead recurringBugEscalationFlag) -> RC-ORCHMONO (orch-cold-evict.sh backlog-lane eviction + orch-apply.sh HOT CEILING ~600KB gate) -> RC-GITSTATE (per-ticker stamping fix + gitignore pure-derived counters) -> RC-CEREMONY (SF-1 re-entrancy + shared tick-preflight-lib).",
         "status": "BACKLOG",
@@ -5911,28 +5465,6 @@
         "type": "FIX",
         "priority": "high",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#SYSREMAKE-P2-STRUCTURAL-REMAKE-ROUTE"
-      },
-      {
-        "id": "P1-IDLE-DEVTEAM-FLOW-BRANCH",
-        "title": "RC-IDLE-LOOPS §1.1: dev-team/flow/main.md Step 0-PREFLIGHT — add RUN-IDLE branch -> JUMP to end (skip drain-signals)",
-        "status": "DONE_VERIFIED",
-        "type": "FIX",
-        "priority": "high",
-        "size": "S",
-        "zone": "docs/agents/dev-team/",
-        "sprint": "SYSTEMIC-REMAKE-P1",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#P1-IDLE-DEVTEAM-FLOW-BRANCH"
-      },
-      {
-        "id": "P1-IDLE-AUDITOR-CRON-WIRING",
-        "title": "RC-IDLE-LOOPS §1.1: cron-detect-loop SKILL Job-3(Tier-2)/Job-4(Tier-3) — wire probe --tier=N as pre-gate",
-        "status": "DONE_VERIFIED",
-        "type": "FIX",
-        "priority": "high",
-        "size": "S",
-        "zone": ".claude/skills/cron-detect-loop/",
-        "sprint": "SYSTEMIC-REMAKE-P1",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#P1-IDLE-AUDITOR-CRON-WIRING"
       },
       {
         "id": "P1-DETECTOR-CLOSURE-TASK-ARCHIVE",
@@ -5944,39 +5476,6 @@
         "zone": "docs/agents/pm/",
         "sprint": "SYSTEMIC-REMAKE-P1",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#P1-DETECTOR-CLOSURE-TASK-ARCHIVE"
-      },
-      {
-        "id": "P1-DRIFT-PARITY-TEST-EXTEND",
-        "title": "RC-DRIFT §1.3: extend tool-registry-parity.test.ts to key narrative docs + wire gen-project-stats/gen-tool-registry cadence",
-        "status": "DONE_VERIFIED",
-        "type": "FIX",
-        "priority": "high",
-        "size": "M",
-        "zone": "cross-service/",
-        "sprint": "SYSTEMIC-REMAKE-P1",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#P1-DRIFT-PARITY-TEST-EXTEND"
-      },
-      {
-        "id": "FU-AUDITOR-D4-SIGNAL-ID",
-        "priority": "P3",
-        "size": "S",
-        "sprint": "FLEET-HOST-SAFETY",
-        "status": "DONE_VERIFIED",
-        "title": "system-auditor D4 emits one signal_queue row PER divergence but all share a single run-scoped id (sau-d4-<YYYYMMDDHHMM>) — this defeats id-based dedup at drain (collapsing distinct findings) and inflates the queue (75 rows under one id on 2026-06-05). Harden: either emit ONE rollup signal with a findings[] array (matches anomaly-task-bridge 'one deduped entry' philosophy), or give each finding a unique id (append a stable hash of the summary). Flow doc: docs/agents/system-auditor/handlers.md Emit format. Now low-urgency since expired:false fix removes the false-positive volume, but the id-collision is still a latent correctness gap if multiple REAL divergences ever co-occur.",
-        "type": "FIX",
-        "zone": "docs/agents/system-auditor",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-AUDITOR-D4-SIGNAL-ID"
-      },
-      {
-        "id": "FIX-CONTEXT-BLOAT-HOOK-SETTLE-READ-DEBOUNCE",
-        "type": "FIX",
-        "priority": "P3",
-        "status": "DONE_VERIFIED",
-        "zone": "cross-service/",
-        "size": "S",
-        "title": "context-bloat-backstop hook fires transient FPs on mid-write line counts -> add settle-read/debounce (re-read after short settle, or emit only on committed state)",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-CONTEXT-BLOAT-HOOK-SETTLE-READ-DEBOUNCE",
-        "supervised": true
       },
       {
         "id": "FIX-SIGNALQUEUE-DUP-ID-GUARD",
@@ -6002,42 +5501,6 @@
         "verify_note": "prior_status=TODO"
       },
       {
-        "id": "P1-IDLE-DEVTEAM-PREFLIGHT-SCRIPT",
-        "title": "RC-IDLE-LOOPS §1.1: dev-team-tick-preflight.sh Step-5 idle-check + RUN-IDLE verdict (+ test case)",
-        "status": "DONE_VERIFIED",
-        "type": "FIX",
-        "priority": "high",
-        "size": "M",
-        "zone": "cross-service/",
-        "sprint": "SYSTEMIC-REMAKE-P1",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#P1-IDLE-DEVTEAM-PREFLIGHT-SCRIPT",
-        "supervised": true
-      },
-      {
-        "id": "P1-IDLE-AUDITOR-TIER23-SCRIPT",
-        "title": "RC-IDLE-LOOPS §1.1: auditor-tier1-probe.sh generalize to --tier=2|3 pre-spawn ALL_GREEN+fresh-heartbeat gate",
-        "status": "DONE_VERIFIED",
-        "type": "FIX",
-        "priority": "high",
-        "size": "M",
-        "zone": "cross-service/",
-        "sprint": "SYSTEMIC-REMAKE-P1",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#P1-IDLE-AUDITOR-TIER23-SCRIPT",
-        "supervised": true
-      },
-      {
-        "id": "P1-IDLE-AUDITOR-NOTEBOOK-GATE",
-        "title": "RC-IDLE-LOOPS §1.1: system-auditor/flow/main.md — gate notebook append on >=1 new finding/signal/state-change",
-        "status": "DONE_VERIFIED",
-        "type": "FIX",
-        "priority": "med",
-        "size": "S",
-        "zone": "docs/agents/system-auditor/",
-        "sprint": "SYSTEMIC-REMAKE-P1",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#P1-IDLE-AUDITOR-NOTEBOOK-GATE",
-        "supervised": true
-      },
-      {
         "id": "P1-DRIFT-QUARANTINE-FREEZE-FLAG",
         "title": "RC-DRIFT §1.3: project-stats.json — quarantine zero-reader recurringBugEscalationFlag/escalationReason",
         "status": "BACKLOG",
@@ -6048,17 +5511,6 @@
         "sprint": "SYSTEMIC-REMAKE-P1",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#P1-DRIFT-QUARANTINE-FREEZE-FLAG",
         "verify_note": "prior_status=TODO"
-      },
-      {
-        "id": "P1-DRIFT-NARRATIVE-NUMBER-POINTER",
-        "title": "RC-DRIFT §1.3: replace hardcoded tool/cron counts with SSOT pointer in CLAUDE.md / mcp-tools.md / ARCHITECTURE.md",
-        "status": "DONE_VERIFIED",
-        "type": "FIX",
-        "priority": "high",
-        "size": "S",
-        "zone": "docs/ + CLAUDE.md",
-        "sprint": "SYSTEMIC-REMAKE-P1",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#P1-DRIFT-NARRATIVE-NUMBER-POINTER"
       },
       {
         "id": "P1-DETECTOR-CLOSURE-TRIAGE-SIGNALS",
@@ -6121,16 +5573,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-SEQUENTIAL-ANALYSIS-TOOL-DEAD-HANDLER"
       },
       {
-        "id": "SPIKE-GATEWAY-BLIND-CLI-HANDSHAKE",
-        "type": "SPIKE",
-        "title": "Gateway-blind root cause = Claude Code CLI MCP-client session-init handshake failure (server proven healthy via raw-curl HTTP 200; .mcp.json confirmed correct). Scope repo-actionable mitigation vs harness/user-side; supersedes the F1-GATEWAY chain.",
-        "priority": "high",
-        "size": "S",
-        "status": "DONE",
-        "zone": "cross-service/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#SPIKE-GATEWAY-BLIND-CLI-HANDSHAKE"
-      },
-      {
         "title": "Delete or attic the orphaned TS shadow service under src/",
         "priority": "P1",
         "zone": "technical-analysis",
@@ -6170,19 +5612,6 @@
         "sprint": null,
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-VERIFY-DEPLOY-SHA-BENIGN-DRIFT",
         "verify_note": "prior_status=TODO"
-      },
-      {
-        "id": "UNBLOCK-CLOSEGATE-STEP4-HEAD-SYNC",
-        "type": "UNBLOCK",
-        "title": "RECURRING-BUG: Docker Close Gate Step-4 (ops) board-write omits top-level .head sync AND leaves artifacts uncommitted — architect permanent fix (atomic .head+board jq transform + step-ends-only-on-commit)",
-        "status": "DONE",
-        "zone": "cross-service/",
-        "priority": "high",
-        "size": "M",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#UNBLOCK-CLOSEGATE-STEP4-HEAD-SYNC",
-        "done_at": "2026-07-09T07:29:23Z",
-        "done_by": "agents-architect",
-        "resolution_note": "Architecture brief docs/architecture-briefs/2026-07-09-closegate-step4-atomic-handoff.md: root cause = ops Close Gate Step-4->qa handoff is the only task-board transition point with no checked-in atomic .head+board jq helper (ops hand-rolls a fresh inline jq one-liner every time, touching only task_board.<lane>[], never .head); same missing-procedure gap explains the uncommitted-artifacts + one-off-journal-filename defects too. Fanout minted this cycle for PO triage: FIX-CLOSEGATE-STEP4-ATOMIC-HANDOFF-SCRIPT, FIX-CLOSEGATE-STEP4-COMMIT-JOURNAL-DISCIPLINE. Signal docs/signals/closegate-step4-atomic-handoff-20260709T072508Z.json -> agent-father. Commits: db81f40a7 (brief+notebook), 5b326844c (decision journal)."
       },
       {
         "id": "FIX-MSCI-CASCADE-RULES-DEADWIRE",
@@ -6650,7 +6079,7 @@
         "id": "D1-BACKLOG-HYGIENE-SWEEP-EXECUTE",
         "size": "M",
         "sprint": "BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP",
-        "status": "BLOCKED",
+        "status": "BACKLOG",
         "title": "D1: Execute D4-extended cold-evict, close exceptions, relocate confirmed D2-candidates",
         "type": "MAINTENANCE",
         "zone": "scripts/",
@@ -6663,7 +6092,7 @@
         ],
         "note": "Risk: LOW (mechanical once D0/D4 land). The actual sweep execution: (a) run D4-extended orch-cold-evict.sh against D0-confirmed set (excludes Exception 1 + any other D0-flagged false positives); (b) close Exception 2 via devteam-close-task-done-verified.jq; (c) relocate D0-confirmed D2-candidates (review-status → review[], in_progress-status → in_progress[]). Driver: scripts/orch-backlog-hygiene-sweep.sh (orchestration wrapper only).",
         "verify_note": "prior_status=TODO",
-        "status_note": "[developer 2026-07-10T20:15:00Z] EXECUTION ATTEMPTED, BLOCKED before any live orch-state.json mutation. D0-BACKLOG-HYGIENE-TERMINAL-ROW-TRIAGE claims DONE_VERIFIED with note \"73 confirm-terminal, 4 exclude, 11 relabel\" but its persisted triage_result field contains ONLY aggregate counts + 2 named exceptions (FACTORY-INTERFACE-split-server-ts=confirm-terminal, FIX-BCTC-BANK-SUMMARY-MAPPING=exclude) -- 0 of the other 3 exclude IDs and 0 of 11 relabel IDs are recorded anywhere. Verified via git show 26ffe7567 (D0s own commit touched ONLY its board row + pm.md notebook, no per-row annotation) and repo-wide grep for exclude_count/relabel_count/D0-BACKLOG-HYGIENE-TERMINAL-ROW-TRIAGE (no other artifact exists). Dry-run (scripts/orch-cold-evict.sh --dry-run --exclude-ids FIX-BCTC-BANK-SUMMARY-MAPPING) confirms 55 rows (54 backlog + 1 review) currently match TERMINAL_TASK_STATUSES and would auto-evict with only 1 of 15 D0-flagged protections applied -- and that pool is confirmed to contain at least 1 of the 15 (FIX-BCTC-BANK-SUMMARY-MAPPING itself, status=DONE), so the other 14 are plausibly in-pool too. Router explicitly forbade guessing exclude IDs. Not executed -- matches R-CRIT-1 (architect brief 2026-07-10-backlog-hygiene-verify-prune-sweep.md sec 11): risk of silently archiving genuinely-open work. REMEDY: D0 needs reopening/supplementing to append the full 4-item exclude + 11-item relabel ID list (machine-readable) to triage_result before D1 can safely re-run. Brief sec8 D1 scope (close Exception 2 via devteam-close-task-done-verified.jq + relocate D2 candidates) also NOT attempted -- router explicitly narrowed this cycles scope to eviction-only."
+        "status_note": "[developer 2026-07-10T20:15:00Z] EXECUTION ATTEMPTED, BLOCKED before any live orch-state.json mutation. D0-BACKLOG-HYGIENE-TERMINAL-ROW-TRIAGE claims DONE_VERIFIED with note \"73 confirm-terminal, 4 exclude, 11 relabel\" but its persisted triage_result field contains ONLY aggregate counts + 2 named exceptions (FACTORY-INTERFACE-split-server-ts=confirm-terminal, FIX-BCTC-BANK-SUMMARY-MAPPING=exclude) -- 0 of the other 3 exclude IDs and 0 of 11 relabel IDs are recorded anywhere. Verified via git show 26ffe7567 (D0s own commit touched ONLY its board row + pm.md notebook, no per-row annotation) and repo-wide grep for exclude_count/relabel_count/D0-BACKLOG-HYGIENE-TERMINAL-ROW-TRIAGE (no other artifact exists). Dry-run (scripts/orch-cold-evict.sh --dry-run --exclude-ids FIX-BCTC-BANK-SUMMARY-MAPPING) confirms 55 rows (54 backlog + 1 review) currently match TERMINAL_TASK_STATUSES and would auto-evict with only 1 of 15 D0-flagged protections applied -- and that pool is confirmed to contain at least 1 of the 15 (FIX-BCTC-BANK-SUMMARY-MAPPING itself, status=DONE), so the other 14 are plausibly in-pool too. Router explicitly forbade guessing exclude IDs. Not executed -- matches R-CRIT-1 (architect brief 2026-07-10-backlog-hygiene-verify-prune-sweep.md sec 11): risk of silently archiving genuinely-open work. REMEDY: D0 needs reopening/supplementing to append the full 4-item exclude + 11-item relabel ID list (machine-readable) to triage_result before D1 can safely re-run. Brief sec8 D1 scope (close Exception 2 via devteam-close-task-done-verified.jq + relocate D2 candidates) also NOT attempted -- router explicitly narrowed this cycles scope to eviction-only. || [developer 2026-07-10T18:26:34Z] UNBLOCKED — D0B (commit 98d26dc01) persisted the full 15-item exceptions[] list to both D0 and D0B done_verified rows (router independently RAW-verified). Re-confirmed exceptions[] live before building --exclude-ids (4 EXCLUDE ids match router-provided list exactly). Proceeding to dry-run + live eviction; close-exception (FACTORY-INTERFACE-split-server-ts) and D2-candidate relocation remain OUT OF SCOPE this cycle per router narrowing."
       },
       {
         "id": "D5-BACKLOG-HYGIENE-VALIDATOR-HARDENING",
@@ -7390,701 +6819,9 @@
         "completed_by": "qa",
         "qa_reviewed_at": "2026-07-09T08:56:21Z",
         "qa_note": "RAW-verified: commit 6f054ea3a touched exactly the 8 claimed files (git show --stat); f511c1d39 touched exactly orch-state.json; both present on origin/main (f511c1d39 IS origin/main HEAD). STEP ops-Sn grep confirms sequential S1-S6, no gaps/dupes; pre-existing duplicate-S2 bug fix confirmed via before/after diff (old S1 relocate-stock-catalog->S3, old S2 extract-computeDecision->S4, old S2 split-repositories->S6). 3 offender files confirmed genuinely absent from disk + git ls-files + repo-wide find. Brief section 5 DoD items 3-4 text confirmed verbatim-satisfied (runbook footnote + commit-boundary ops zone row + STEP ops-Sn enforcement line + 3 offenders folded). agent-father-S5 journal + notebook (85L, under 200L) confirmed. Board handoff f511c1d39 coherent: review lane, next_agent=qa, head synced (status=review, active_task_id unchanged, next_agent=qa). NON-BLOCKING gap noted: runbook Step 4/4b Commit-Gate Invariant has no direct hook in ops flow files (init.md/handlers.md/docker.md) -- enforcement relies entirely on the pre-existing PO/developer dispatch-prompt citation of the runbook Microservice Code-Change Close Gate heading (developer/flow/microservice-main.md:162, po/flow/sprint-signoff.md:13), not on ops own bootstrapped knowledge list. Acceptable for THIS task literal DoD (section 5 items 3-4 only require the doc text, not flow-file wiring) and mirrors the same enforcement model as the agents-architect Brief-Commit Invariant it is modeled on (self-attested, not code-gated) -- flagging for a possible future hardening task, not a blocker here."
-      },
-      {
-        "id": "FIX-TASKLOCK-OWNER-SESSION-SERVER-SCOPED-DEFEATS-MUTEX",
-        "type": "FIX",
-        "status": "DONE",
-        "priority": "P1",
-        "size": "M",
-        "zone": "apps/mcp-server/",
-        "title": "task_claim owner_session is server-INSTANCE-scoped (pid+startupTs), not client-scoped -> concurrent clients on one mcp-server collapse to one owner identity -> re-entrant self-reclaim returns claimed:true -> mutual exclusion DEFEATED (cowork double-fire)",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-TASKLOCK-OWNER-SESSION-SERVER-SCOPED-DEFEATS-MUTEX",
-        "promoted_at": "2026-07-10T15:24:17Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-10T15:24:25Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "po",
-        "completed_at": "2026-07-10T15:35:33Z",
-        "completed_by": "architect",
-        "architecture_brief": "docs/architecture-briefs/2026-07-10-tasklock-owner-session-already-fixed.md",
-        "finding": "Root cause STALE — already fixed by CROSS-SESSION-MULTI-TEAM-ORCH sprint P1 chain (TASK_1973-1981), commit dea481e40 (TASK_1980/P1-FINAL, 2026-06-28), 2 days after this ticket was minted (2026-06-26T05:31Z), independently and never cross-linked. Live re-read of coordinationTools.ts/coordinationStore.ts confirms owner_client_session is now the REQUIRED sole ownership key in every WHERE clause (claim/heartbeat/release/orphan-release); owner_session (the old process-scoped const) is demoted to diagnostic-only, never read for ownership. RAW-verified 2026-07-10: bun test on 1980-p1-final-required-flip.test.ts + 3 sibling coordination test files = 116 pass/0 fail; live task_list_held probe via scripts/agents-flow/mcp-call.sh confirms owner_client_session populated/distinct on live rows; both production claimTask() call sites (coordinationTools.ts, bctcRefineJob.ts) supply it. Independently confirmed (not just cited) via server.ts:299-456 why option (a) RequestHandlerExtra.sessionId is structurally impossible here: /mcp opens a fresh transport+McpServer per request, no cross-call session persists. Option (b) explicit owner-token is what shipped, as a stricter MANDATORY (not opt-in) variant. All 4 backlog ACs verified true (1 is stale-wording/functionally-met, not a functional gap — see brief section 5). No code change recommended.",
-        "review_note": "PLAN-ONLY dispatch — architect verified fix already live+GREEN, no dev-mcp-server dispatch needed. PO: close as SUPERSEDED/RESOLVED citing commit dea481e40 + this brief. Optional non-blocking follow-up: AC wording in backlog-detail.json record says owner_session, shipped field is owner_client_session (same intent, different name) -- doc-only nit, not required.",
-        "resolution": "superseded-already-fixed",
-        "superseded_by": "TASK_1980 / P1-FINAL (CROSS-SESSION-MULTI-TEAM-ORCH sprint)",
-        "superseded_commit": "dea481e40",
-        "superseded_at": "2026-06-28T12:32:09Z",
-        "po_disposition": "SUPERSEDED/RESOLVED",
-        "po_review_note": "PO closeout (po-tick 2026-07-10): CONFIRM architect disposition SUPERSEDED/RESOLVED. Root cause (server-process-scoped owner_session as sole ownership key defeating cross-client mutex) is structurally gone — superseded by the independent CROSS-SESSION-MULTI-TEAM-ORCH P1-FINAL (TASK_1980, commit dea481e40, 2026-06-28), which made owner_client_session a REQUIRED (non-optional Zod) sole ownership key in every claim/heartbeat/release/orphan WHERE clause and demoted owner_session to diagnostic-only. Sanity-checked the architect reasoning holds against all 4 backlog ACs: AC2 (second claimer -> claimed:false+current_holder), AC3 (own-restart orphan-release still works, improved), AC4 (no dup-spawn discriminator regression) all functionally MET; AC1 (distinct owner_session) is stale WORDING against a field deliberately NOT repurposed, not a functional gap — the discriminating field owner_client_session IS distinct per claimer. NO residual gap warrants a new ticket. Option (a) (RequestHandlerExtra.sessionId) correctly rejected: gateway dials fresh SSE transport+McpServer per /mcp call, no server-observable cross-call session persists (server.ts:299-456). Shipped fix is a stricter SUPERSET of this ticket's own preferred option (b) — mandatory, not opt-in. Router independently RAW-re-verified 116/116 cited tests + live probe + call-site audit; no implementation files touched (PLAN-ONLY). Non-blocking AC-wording nit (brief §5) resolved non-destructively in the backlog-detail.json archive record (original AC text preserved, ac_clarification + resolution stamped). NO commit made by PO — router independently re-verifies + commits this board write.",
-        "closed_by": "po",
-        "closed_at": "2026-07-10T15:40:40Z"
-      },
-      {
-        "id": "FIX-AUDITOR-ORCHSTATE-FULLDOC-OVERWRITE-CLOBBERS-SSOT",
-        "type": "FIX",
-        "title": "system-auditor signal-write emits a fresh minimal-scaffold orch-state document instead of read-modify-append -> a single signal-emitting auditor run COLLAPSES the whole board (backlog 312->0, signal_queue.rows 97->1, head nulled)",
-        "status": "DONE",
-        "priority": "P1",
-        "zone": "multi",
-        "size": "M",
-        "sprint": null,
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AUDITOR-ORCHSTATE-FULLDOC-OVERWRITE-CLOBBERS-SSOT",
-        "promoted_at": "2026-07-10T15:43:19Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-10T15:43:23Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "po",
-        "routing_note": "plan_only:true / next_agent:architect / recurring_bug_escalation:true in backlog-detail.json — corrected from BOUNDED-1 zone-detect default (developer)",
-        "completed_at": "2026-07-10T15:56:53Z",
-        "completed_by": "architect",
-        "architecture_brief": "docs/architecture-briefs/2026-07-10-auditor-orchstate-conservation-guard.md",
-        "finding": "Root cause CONFIRMED LIVE, not stale (unlike the sibling task-lock ticket). TWO-PART verdict: (1) ROUTING half of fix_spec already shipped 2026-06-27/06-30 -- SSOT-W1-ORCH-APPLY-WRAPPER (commit 86286d265) made scripts/orch-apply.sh the single gated write path; writer-audit (docs/signals/processed/orch-state-writer-audit.json, dev-mcp-server, 2026-06-30) confirms all 13 live writer sites incl. signal-dashboard skill (system-auditor's own write path) route through it; .head is now a required Zod field, closing the \"head disappeared\" sub-symptom. (2) CONTENT-SAFETY half (the CONSERVATION check, fix_spec item 3) was NEVER implemented at any layer. EMPIRICALLY REPRODUCED LIVE this session (zero risk to real file, used the project's own ORCH_APPLY_LIVE_FILE_OVERRIDE test-safety idiom): built a disposable 320-backlog/100-signal-row populated fixture, fed a scaffold candidate mirroring commit de595a44's exact shape through the REAL current scripts/orch-apply.sh -- result: \"[orch-apply] OK -- candidate applied\", exit 0, backlog 320->0, signal_rows 100->1. This proves the vulnerability is live through the CURRENT production write path, not a bypass of it -- schema validation (orchStateSchema.ts) has no minimum-length constraint on any Lane array or signal_queue.rows, and done/done_verified/in_progress/qa/ready/review are all .optional().default([]), so a document that omits them entirely still validates. INTERIM MITIGATION STATUS: LAPSED. docs/agents/system-auditor/flow/main.md still mandates signal_queue.rows writes unconditionally in 4 places (Tier-2 E-3, Tier-3 E-3, D-BCTC-EVAL, D-IMPROVE, all \"mandatory, no skip path\"); docs/data/orch/archive/2026-07.json shows 138 continuous system-auditor signal rows through 2026-07-08 (2 days before this brief) -- the \"Telegram-only\" mitigation was never durably wired into the flow doc and could not have survived system-auditor's fully unattended cron cadence. This ticket has been live-exploitable, not mitigated, for the full 2 weeks since filing.",
-        "review_note": "PLAN-ONLY architect brief complete -- code change IS required (unlike the stale sibling task-lock ticket). Design: magnitude-bounded conservation circuit-breaker as new Stage-2 gate inside scripts/orch-apply.sh (task_total and signal_total must retain >=50% of live value across the whole board, not per-lane -- a naive \"no lane may ever decrease\" rule per fix_spec's literal wording would break normal single-task backlog->ready->in_progress moves AND the 2 already-shipped legitimate bulk-eviction writers scripts/orch-cold-evict.sh + pm/flow/task-archive.md, both already routed through orch-apply.sh per the writer-audit -- proof + full design in the brief SS4). Narrow named bypass (ORCH_APPLY_ALLOW_SHRINK=<reason>) for those 2 blessed callers only, mirroring the existing ORCH_APPLY_LIVE_FILE_OVERRIDE test-only precedent already in that script. New shared scripts/orch-conservation-check.mjs (bun, same runtime as orch-validate.mjs) invoked by both orch-apply.sh and the PreToolUse hook (scripts/agents-flow/orch-state-hook-prewrite.mjs) for parity -- single SSOT implementation, no per-caller duplication (satisfies backlog record's generic_mandate, and covers MORE than the ticket literally asked since it protects all ~290/tick writers, not just system-auditor). Verification gate: extend the EXISTING scripts/test/orch-apply-wrapper-tests.sh harness (same ORCH_APPLY_LIVE_FILE_OVERRIDE + real-file-hash-unchanged safety pattern already in use) with COLLAPSE (confirmed RED today, must go GREEN after fix) + APPEND-HAPPY (regression guard against over-blocking) + SHRINK-ALLOWED (proves cold-evict/task-archive won't regress) cases -- do not create a new parallel test file. PO: recommend routing implementation to dev-mcp-server (same zone that authored SSOT-W1-ORCH-APPLY-WRAPPER per writer-audit's own audited_by field) -- NOT ops; every touched file is a host-side bash/bun repo script, zero apps/mcp-server/src changes, zero container rebuild needed. Full evidence, empirical repro commands, and rejected-design proof: docs/architecture-briefs/2026-07-10-auditor-orchstate-conservation-guard.md."
       }
     ],
-    "done_verified": [
-      {
-        "id": "FIX-BCTC-D1-STABILIZE-REPORT-ID",
-        "type": "FIX",
-        "priority": "high",
-        "status": "DONE_VERIFIED",
-        "zone": "apps/mcp-server/",
-        "size": "S",
-        "title": "Stabilize financial_reports.id across repeat writes via ON CONFLICT DO UPDATE",
-        "owner": "dev-mcp-server",
-        "depends": [],
-        "detail_ref": "docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md#D1",
-        "created_at": "2026-07-10T12:00:00Z",
-        "created_by": "pm",
-        "note": "Foundational fix: replace INSERT OR REPLACE with ON CONFLICT to preserve id across repeat writes. Must land first before D2/D3.",
-        "started_at": "2026-07-10T10:20:39Z",
-        "updated_at": "2026-07-10T10:44:06Z",
-        "updated_by": "qa",
-        "next_agent": "pm",
-        "files": [
-          "apps/mcp-server/src/application/usecases/parseBctcReport.ts",
-          "apps/mcp-server/src/__tests__/FIX-BCTC-D1-STABILIZE-REPORT-ID.test.ts",
-          "docs/architecture/microservice/mcp-server/usecases.md"
-        ],
-        "status_note": "Verified live schema (bctc-schema.ts:727-822 SQLITE_DDL, UNIQUE(action_code, sort_key) confirmed real via initFinancialReportsTables wiring). Replaced storeReport INSERT OR REPLACE with INSERT...ON CONFLICT(action_code, sort_key) DO UPDATE SET <60 cols except id>, plus a pre-check SELECT in parseBctcReport() so the in-memory report.id stays stable too. New test 3/3 pass (17 assertions): DB id unchanged + in-memory id unchanged + net_revenue updated + row count=1 across 2 parses; distinct sort_key gets its own id. tsc clean. Full bun test hung twice (killed, network-hang matching S29 SPIKE-CI-PERFILE-ISOLATION-FLAKE finding) — used scripts/ci-per-file-isolation.sh (P=12) instead: 1184/1184 files processed, 14286 pass/40 skip/37 fail. Of 18 non-clean: 3 my-kill (1 re-verified hung standalone, unrelated to storeReport), 3 pass-then-crash (known Bun 1.3.13 teardown crash, S26-S29 precedent), 12 genuine fails all in pollNews/Chromium/SSC-breaker/pdf-extractor/RAG files, zero reference to parseBctcReport/storeReport/financial_reports. BCTC/financial-reports-scoped subset (106 files): 1220 pass/0 fail. toolCount unchanged. Not committed by this agent — router/dev-team commits per explicit dispatch instruction (D2/D3/R-HIGH-1/R-HIGH-2 remain BACKLOG pending this task DONE_VERIFIED).",
-        "commit": "e9bb1c3e4",
-        "done_verified": true,
-        "qa_verified_at": "2026-07-10T10:44:06Z",
-        "qa_verified_by": "qa",
-        "qa_note": "APPROVED. Full gate PASS beyond router spot-check: new test 3/3 (17 assertions) re-run fresh, tsc clean, DDD/security/mock-guard PASS, 95/95 pass across all 13 files calling parseBctcReport/storeReport (zero regression). Found a 2nd live INSERT OR REPLACE INTO financial_reports site in newsChainFallback.ts:348 (tryNewsChainFallback) with the same id-orphaning defect — out of D1's explicit scope (design doc + this row's files[] both scope parseBctcReport.ts only), pre-existing (confirmed via git-stash A/B, not a regression from this diff) — flagged as a new non-blocking backlog finding for pm/architect, does not block this row. next_agent set to pm to dispatch D2 FIX-BCTC-D2-ENSURE-SHELL-ROW next.",
-        "committed_at": "2026-07-10T15:18:05Z",
-        "committed_by": "router"
-      },
-      {
-        "id": "FIX-BCTC-D2-ENSURE-SHELL-ROW",
-        "type": "FIX",
-        "priority": "high",
-        "status": "DONE_VERIFIED",
-        "zone": "apps/mcp-server/",
-        "size": "S",
-        "title": "ensureFinancialReportShellRow() — create shell row at PDF-save, set pdf_path, decouple from OCR gate",
-        "owner": "dev-mcp-server",
-        "depends": [
-          "FIX-BCTC-D1-STABILIZE-REPORT-ID"
-        ],
-        "detail_ref": "docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md#D2",
-        "created_at": "2026-07-10T12:00:00Z",
-        "created_by": "pm",
-        "note": "New usecase: idempotent upsert with validation_status=pending_extraction at PDF-save time, decoupled from OCR gate. Depends on D1 id-stability fix.",
-        "blocked_note": null,
-        "started_at": "2026-07-10T11:05:00Z",
-        "updated_at": "2026-07-10T11:56:42Z",
-        "updated_by": "qa",
-        "next_agent": "pm",
-        "files": [
-          "apps/mcp-server/src/application/usecases/bctc/ensureFinancialReportShellRow.ts",
-          "apps/mcp-server/src/scheduler/financial-reports/bctcPdfPullJob.ts",
-          "apps/mcp-server/src/__tests__/FIX-BCTC-D2-ENSURE-SHELL-ROW.test.ts",
-          "apps/mcp-server/src/__tests__/bctc-pdf-pull-job.test.ts",
-          "docs/architecture/microservice/mcp-server/usecases.md"
-        ],
-        "status_note": "New usecase ensureFinancialReportShellRow({actionCode,year,quarter,pdfPath,db?}) — idempotent INSERT ON CONFLICT(action_code, sort_key) DO UPDATE SET pdf_path=excluded.pdf_path WHERE pdf_path IS NULL; first-insert validation_status=pending_extraction, empty JSON columns. Wired into bctcPdfPullJob.ts Step 4b (after deps.savePdf succeeds, before Step 5 triggerExtraction), passed the jobs own db explicitly (not getDb() singleton) so it lands in the same DB the pull-job test suites dedicated :memory: instance reads back from. Reuses D1 pre-check-SELECT id-stability pattern + bctc/newsChainFallback.ts buildFiscalPeriod() helper. Evidence: new FIX-BCTC-D2-ENSURE-SHELL-ROW.test.ts 7/7 pass (idempotent upsert: create, no-op re-call, NULL-to-set, non-NULL-never-clobbered, distinct-sort_key, injected-db isolation); bctc-pdf-pull-job.test.ts +2 (TC-13/13b, reproduces the exact GVR/MBB/D2D pdf_path-never-flushed bug pattern this design fixes). Targeted suite 28/28 pass. tsc clean. mock-guard PASS. Full per-file-isolation sweep (P=12, 1185 files) 14288 pass/40 skip/59 fail/16 files — grepped every failure for overlap with this diffs touched files/tables: 2 textual hits (financial_reports string), both individually re-verified pre-existing/unrelated (125-test-e2e-briefing.test.ts Chromium-absent-in-sandbox 1 fail/39; 1294b-bctc-fallback.test.ts confirmed standalone hang, same file D1/S30 already root-caused one cycle earlier, newsChainFallback.ts untouched by this diff per git status). toolCount=183 unchanged. Live CRONS map count=85 unchanged (cronConfig.ts untouched) — the flow docs literal cron.schedule grep probe is stale post-refactor, reported the correct live source instead. Server-boot probe: module load + DB init + tool registration (183) clean, zero import errors; final httpServer.listen() hit pre-existing EADDRINUSE on :3000 (process predating this task) so live HTTP-serve inconclusive in this sandbox. | ROUND-1 FIX (dev-mcp-server): added extraction_confidence to the INSERT column list bound to 0 (was omitted, letting SQLite silently apply schema DEFAULT 1.0 to a zero-data shell row — QA-flagged live-verified regression, ensureFinancialReportShellRow.ts:110-138). Strengthened FIX-BCTC-D2-ENSURE-SHELL-ROW.test.ts first test to assert extraction_confidence===0 on fresh insert so this cannot silently regress again. Re-ran targeted suite: 28/28 pass (FIX-BCTC-D2-ENSURE-SHELL-ROW.test.ts + bctc-pdf-pull-job.test.ts + FIX-BCTC-D1-STABILIZE-REPORT-ID.test.ts, unchanged counts). tsc clean. mock-guard --files PASS on both changed files. Did NOT touch reports.ts (get_financial_summary/compare_financials serve-layer gate) — QA flagged that as a separate non-blocking backlog item for pm/architect, out of D2 scope. Not committed — router RAW-verifies and commits the full D2 bundle (impl+QA round-1+this fix+docs) together once QA signs off. gateway MCP bridge unreachable in this sandboxed sub-session (known gap) — could not send_telegram.",
-        "commit": "d2cad2508",
-        "qa_verdict": "APPROVED",
-        "qa_note": "QA gate (independent re-run, not blind-trust of router's spot-check): 28/28 targeted tests pass (FIX-BCTC-D2-ENSURE-SHELL-ROW.test.ts 6/6 — note dev's own journal self-reported 7, actual count is 6, off-by-one not a red flag; bctc-pdf-pull-job.test.ts incl. new TC-13/TC-13b; FIX-BCTC-D1-STABILIZE-REPORT-ID.test.ts 3/3 unaffected — no D1 regression). tsc clean. DDD scan clean (application layer imports infra+domain only, expected/correct per layering rule). mock-guard PASS (re-ran myself). Diff is minimal/clean (git diff reviewed line-by-line), matches design doc docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md#D2 SQL fragment verbatim (column list, ON CONFLICT clause, Step 4b placement before Step 5). id-stability pre-check + explicit db-injection (opts.db, not getDb() singleton) both correct, consistent with D1's established pattern and the sibling backfillBctcPdfPaths(db,...) precedent. R-LOW-1 (validation_status enum blast-radius) independently re-checked: grepped every read of financial_reports.validation_status (7 files) — checkFailedValidation.ts only matches literal 'failed' (unaffected by new 'pending_extraction' value), no naive `!= 'passed'` catch-all found anywhere. R-LOW-1 clear.\n\nBLOCKING (file:line): apps/mcp-server/src/application/usecases/bctc/ensureFinancialReportShellRow.ts:110-138 — the INSERT statement's column list omits `extraction_confidence`, so SQLite silently applies the schema DEFAULT of 1.0 (apps/mcp-server/bctc-schema.ts:750) to a shell row that has ZERO extracted financial data. Empirically verified live (scratch insert+read-back, not just static read): a fresh shell row reads back `extraction_confidence:1, total_assets:null, net_revenue:null`. This is a NEW regression introduced by this diff (not pre-existing — confirmed by grepping all other financial_reports INSERT sites: composition-root.ts, bctcReparseJob.ts, newsChainFallback.ts, parseBctcReport.ts all explicitly set extraction_confidence; this usecase is the only write path that omits it). Two live MCP tools are exposed with NO gate against this (unlike get_bctc_full, which correctly blocks refine_status='PENDING' shell rows via its PUB-1 check, bctcFullTools.ts:615-627): apps/mcp-server/src/interface/mcp/tools/financial-reports/reports.ts:277-356 (get_financial_summary) and reports.ts:392-457 (compare_financials) — neither checks refine_status/validation_status before serving. checkBctcIdentityGuard (apps/mcp-server/src/domain/services/financial-reports/bctcIdentityGuard.ts:66-68) intentionally fails OPEN when total_assets==null, by design deferring to \"the caller's own no-data/publishability gate\" — reports.ts has none. Net effect: BEFORE this task, `get_financial_summary(GAS,2025,Q4)` correctly returned \"No financial data found... Run fetch_ssc_reports\"; AFTER this task ships as-is, the SAME call returns \"Confidence : 100%\" + \"Net Revenue : 0.0 tỷ VND\" + \"Total Assets : 0.0 tỷ VND\" — a materially misleading, confidently-fabricated-looking reading for a report that was never extracted. This is durable for tickers like GAS, not a transient race: the design doc's own concern-3 motivating example states GAS's scalar tiers will keep failing the 0.5 confidence threshold, so parseBctcReport.ts's own extractionConfidence===0 guard (line 228) keeps skip-inserting for GAS forever — the shell row's fake-100%-confidence zero-data state is PERMANENT for such tickers. No existing test covers this combination (grepped src/__tests__ for get_financial_summary/compare_financials call sites — none exercise a post-ensureFinancialReportShellRow read; fix-bctc-identity-serve-guard.test.ts covers assets=0/negative fingerprints but not assets=NULL-with-fake-full-confidence). Minimum fix (in-scope, single file/line, does not require touching reports.ts): add `extraction_confidence` to the INSERT column list, bound to `0` — a shell row has MEASURED zero confidence, not the schema's silent 1.0 default.\n\nNON-BLOCKING backlog flag (flag-not-absorb, same class as D1's own 2nd-call-site finding — genuinely out of this task's `files:` scope): even after the extraction_confidence=0 fix, reports.ts's two tools will still render \"Net Revenue : 0.0 tỷ VND\" etc for a pending_extraction row (less severely misleading without the false 100% claim, but still not a clean \"no data\" message). A full fix needs get_financial_summary/compare_financials to gate on validation_status='pending_extraction' (or refine_status NOT IN ('DONE','PARTIAL')) the same way bctcFullTools.ts's PUB-1 already does for get_bctc_full — mirrors the existing bctcIdentityGuard.ts precedent comment (\"guard belongs at the serve layer... not a per-ticker patch\", VNM→VEA→CTG, 3rd occurrence) — this would be a 4th occurrence of the same recurring gap class (new/rare row-state not caught by a shared serve-layer guard). Recommend pm/architect open a new backlog task; not required to land D2 itself.\n\nVERDICT: CHANGES_REQUESTED. Round 1 (first QA pass on this task) — routes back to dev-mcp-server (same owner, fixer role) for the one-line extraction_confidence fix; round < 2, no architect escalation needed. DJ: sprint-SYSTEMIC-REMAKE-P1-qa.md.\n | ROUND-2 (qa): re-verified fix live — scratch insert+read-back confirms extraction_confidence reads back as 0 (was 1/DEFAULT-1.0 pre-fix), total_assets/net_revenue both NULL, validation_status='pending_extraction'. Re-ran targeted suite fresh: 28/28 pass, 109 expect() calls (matches router+dev counts). tsc clean. DDD scan clean (application layer imports infra+domain only, correct per layering; no domain->infra/app imports). Security scan clean (no process.env, no hardcoded secrets in touched files). mock-guard --files PASS on all 4 touched/new files. Confirmed reports.ts genuinely untouched (git status: no entry) — round-1 non-blocking backlog flag correctly left out of scope. Confirmed round-2 diff scope is exactly the two files claimed (ensureFinancialReportShellRow.ts + FIX-BCTC-D2-ENSURE-SHELL-ROW.test.ts, both still untracked/new — no unrelated changes crept in). VERDICT: APPROVED, DONE_VERIFIED. Round-1 CHANGES_REQUESTED finding fully closed.",
-        "qa_reviewed_at": "2026-07-10T11:45:46Z",
-        "done_verified": true,
-        "qa_verified_at": "2026-07-10T11:56:42Z",
-        "qa_verified_by": "qa",
-        "committed_at": "2026-07-10T15:18:05Z",
-        "committed_by": "router"
-      },
-      {
-        "id": "FIX-BCTC-D3A-PEK-TRIGGER-HELPER",
-        "type": "FIX",
-        "priority": "high",
-        "status": "DONE_VERIFIED",
-        "zone": "apps/mcp-server/",
-        "size": "S",
-        "title": "Extract triggerPekExtractionForReport() shared helper from handleTriggerPekExtract",
-        "owner": "dev-mcp-server",
-        "depends": [
-          "FIX-BCTC-D2-ENSURE-SHELL-ROW"
-        ],
-        "detail_ref": "docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md#D3-D3a",
-        "created_at": "2026-07-10T12:00:00Z",
-        "created_by": "pm",
-        "note": "Refactoring prep: extract shared HTTP fetch/market-hours-handling logic from handleTriggerPekExtract. Reuse in both manual route and new auto-trigger. DRY refactor, no new logic.",
-        "blocked_note": "status-flip-lane-move fix (3rd occurrence this session, router 2026-07-10T~12:05Z): stayed in backlog[] lane, relabeled READY->BACKLOG since depends[] unmet; will promote to ready[] once its dependency lands DONE_VERIFIED",
-        "started_at": "2026-07-10T12:09:00Z",
-        "updated_at": "2026-07-10T12:30:53Z",
-        "updated_by": "qa",
-        "next_agent": "pm",
-        "files": [
-          "apps/mcp-server/src/infrastructure/fetchers/pekExtractTrigger.ts",
-          "apps/mcp-server/src/interface/mcp/routes/bctcVpsIngestHandler.ts",
-          "apps/mcp-server/src/__tests__/FIX-BCTC-D3A-PEK-TRIGGER-HELPER.test.ts",
-          "docs/agent-memory/decisions/sprint-SYSTEMIC-REMAKE-P1-dev-mcp-server.md",
-          "docs/agent-memory/notebooks/dev-mcp-server.md"
-        ],
-        "status_note": "Pure DRY extraction (no new logic): moved handleTriggerPekExtract fetch/market-hours-handling block (bctcVpsIngestHandler.ts:194-280) into new triggerPekExtractionForReport(reportId, pdfPath, log?) in infrastructure/fetchers/pekExtractTrigger.ts (co-located with pdfExtractorClient.ts per design doc DDD table); returns discriminated union {queued|market_hours|pdf_extractor_error|unreachable}; handler translates outcome to byte-for-byte identical res.writeHead/res.end shapes (verified via git diff). log defaults to infra singleton logger (matches bctcPdfPullJob.ts convention for the still-BACKLOG D3b auto-trigger caller); handler passes its own injected log through unchanged. D3b auto-trigger wiring NOT implemented (still BACKLOG/blocked-on-this-task, out of scope per dispatch instructions). New FIX-BCTC-D3A-PEK-TRIGGER-HELPER.test.ts: 6/6 pass, 25 expect() calls (202/503/non-OK/network-error/POST-body-shape/default-log-param). Targeted regression (8 files: new test + 1112-bctc-vps-proxy + bctc-pdf-pull-job + FIX-BCTC-D1/D2 + FIX-BCTC-VPS-QUEUE-SYNC + FIX-1281-bctc-vps-only + pek-render-seam): 82/82 pass, 287 expect() calls. bun tsc --noEmit: clean. scripts/audits/mock-guard.sh --files on all 3 changed/new files: PASS. Bare bun test hung (documented S29/S30/S31 pattern) — used scripts/ci-per-file-isolation.sh 12 (canonical per host-safety convention): 14295 pass/40 skip/58 fail/1185 files; 3 files SIGILL pass-then-crash (known Bun 1.3.13 teardown crash, not counted as fails); 1 file (FIX-1267-ssc-circuit-breaker.test.ts) hung near-zero-CPU 5.5min, killed — independently pre-documented flaky on unrelated diffs unchanged baseline (sprint-FIX-MACRO-THRESHOLD-FXFLOOR-OVERCLAMP-architect.md). Grepped all 16 genuinely-failed files for pekExtractTrigger/triggerPekExtractionForReport/bctcVpsIngestHandler/handleTriggerPekExtract: zero matches. toolCount=183 unchanged, no scheduler/cron file touched. git status --porcelain -- apps/mcp-server/ confirms exactly 3 files touched (1 modified, 2 new) — matches pure-refactor scope. Decision journal STEP dev-mcp-server-S33 + notebook entry appended. NOT committed by this agent — router RAW-verifies and commits per explicit dispatch instruction.",
-        "done_verified": true,
-        "commit": "6f1bc8765",
-        "qa_verdict": "APPROVED",
-        "qa_verified_at": "2026-07-10T12:30:53Z",
-        "qa_verified_by": "qa",
-        "qa_note": "APPROVED. Fresh-eyes read beyond router's independent re-run (tests/regression/tsc/mock-guard already matched). pekExtractTrigger.ts + bctcVpsIngestHandler.ts diff read in full: discriminated union (queued|market_hours|pdf_extractor_error|unreachable) preserves the exact original try/catch branch order and error-message/log-call fidelity; res.end fallback for market_hours preserved verbatim. Re-ran new test myself: 6/6 pass, 25 expect() — exact match; assertions confirmed substantive (spy-logger captures real args; default-log-param test genuinely exercises the real singleton, confirmed via console output during the run). Grepped repo: helper called from exactly 1 site (the handler) — confirms D3B auto-trigger wiring genuinely not wired yet, matching the stated out-of-scope instruction. Zero process.env/secrets/DB-writes in the new file — no-fake-data lens confirmed N/A (pure network passthrough). Pure mechanical extraction confirmed, zero new logic/branches. DJ-GATE-1 satisfied (sprint-SYSTEMIC-REMAKE-P1-dev-mcp-server.md task-id-stamped entry present).",
-        "committed_at": "2026-07-10T15:18:05Z",
-        "committed_by": "router"
-      },
-      {
-        "id": "FIX-BCTC-SERVE-GATE-FINANCIAL-REPORTS",
-        "type": "FIX",
-        "priority": "high",
-        "status": "DONE_VERIFIED",
-        "zone": "apps/mcp-server/",
-        "size": "S",
-        "title": "Add validation_status gate to get_financial_summary and compare_financials tools",
-        "owner": "dev-mcp-server",
-        "depends": [
-          "FIX-BCTC-D2-ENSURE-SHELL-ROW"
-        ],
-        "detail_ref": "docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md#D2-QA-FINDING",
-        "created_at": "2026-07-10T12:00:00Z",
-        "created_by": "pm",
-        "note": "D2 shell-row feature introduces validation_status=pending_extraction rows with extraction_confidence=0 and NULL financial data. get_bctc_full correctly gates refine_status=PENDING via PUB-1; get_financial_summary and compare_financials lack validation_status gates, rendering 0.0 tỷ VND for zero-data shell rows. Mirrors recurring bctcIdentityGuard.ts precedent (serve-layer gate, not per-ticker patch). Out of D2 scope; non-blocking backlog finding from QA.",
-        "blocked_note": "",
-        "files": [
-          "apps/mcp-server/src/interface/mcp/tools/financial-reports/reports.ts",
-          "apps/mcp-server/src/__tests__/FIX-BCTC-SERVE-GATE-FINANCIAL-REPORTS.test.ts"
-        ],
-        "status_note": "Architect triage (STEP architect-S5) implemented verbatim. Added validation_status: string to the ReportRow interface (SELECT * already returned the column, interface just lacked the field). get_financial_summary: new gate inserted after the existing !row 404 branch, before checkBctcIdentityGuard — row.validation_status==='pending_extraction' returns a plain-text \"PDF downloaded but not yet extracted\" message (not thrown, not isError), mirroring both get_bctc_full's PUB-1 shape and this function's own 404 shape one branch up. compare_financials: same gate after !row1||!row2, before the dual identity-guard block — checks row1/row2 individually (mirrors the guard1/guard2 dual-check idiom immediately below), reports which period(s) are pending in the same missing-period message style. Gate deliberately keys on validation_status (NOT refine_status like PUB-1) per the architect's verified rationale: refine_status only transitions via the separate agentic-refine pipeline (finalizeBctcRefine.ts); rows extracted ONLY through the legacy scalar pipeline (fetchParseAndStoreBctc/storeReport) never touch refine_status and sit at the DB default forever despite holding real data — mirroring PUB-1's field verbatim would wrongly hide legitimate legacy reports. Messages kept English (reports.ts's own convention, no cross-import from bctcFullTools.ts's Vietnamese).\n\nNew FIX-BCTC-SERVE-GATE-FINANCIAL-REPORTS.test.ts (6 tests, 20 expect() calls): (a) get_financial_summary pending-extraction row → pending message, not the 404 branch, not the real-data report header; (b) compare_financials one-period-pending → only that period listed, both-pending → both listed; (c) REGRESSION proof (the exact case the architect flagged) — a legacy row at the DB DEFAULT validation_status='pending' (bctc-schema.ts:818, never touched by the refine_status pipeline) still serves real data unaffected, plus explicit legacy 'passed'/'failed' rows and a legacy-vs-legacy compare_financials case. All pending-extraction fixtures created via the real ensureFinancialReportShellRow usecase (not hand-rolled SQL) for production fidelity.\n\nTargeted regression: 085-tool-reports.test.ts + FIX-BCTC-D2-ENSURE-SHELL-ROW.test.ts + 1181-financial-reports-persist.test.ts + 1086-financial-reports-trend.test.ts (16 pass/2 skip/0 fail), plus every test file that imports reports.ts/registerReportTools — fix-bctc-identity-serve-guard.test.ts (all 15 DV-BCTC-GUARD-* identity-guard cases), 087-server-wiring, FIX-BCTC-BANK-SUMMARY-MAPPING-W4, 230-remove-dead-tools, 084-tool-market, 123-integration-mcp (93 pass/1 skip/0 fail total). tsc clean. mock-guard PASS on both changed files.\n\nFull per-file-isolation sweep (scripts/ci-per-file-isolation.sh P=12 — canonical host-safety runner; bare `bun test` killed after hanging with zero CPU, same documented Bun 1.3.13 sandbox issue as S29-S33): 14303 pass/40 skip/65 fail across 16 files — grepped all 16 failed files for reports.js/get_financial_summary/compare_financials/checkBctcIdentityGuard/ensureFinancialReportShellRow/validation_status: zero matches, all in the pre-existing pollNews/Chromium/SSC-breaker/pdf-extractor/RAG realm (2 already root-caused in prior S30/S31/S33 cycles this same session: 1294b-bctc-fallback.test.ts standalone hang, FIX-1267-ssc-circuit-breaker.test.ts pre-documented flake).\n\ntoolCount=183 unchanged (gen-project-stats.ts --dry-run + live :3000/health both confirm — no MCP tool registered/removed, only existing-tool handler internals edited). No scheduler/cron file touched. Live server-boot probe: module load clean through all startup steps (backfillBctcPdfPaths etc.), final httpServer.listen() hit a pre-existing process already bound to :3000 (EADDRINUSE, same precedent as S31/S32 — not started by this task) — live health/bctc-inspect/news-fetch dashboard probes via that running instance all clean (toolCount=183, both dashboards return 200 HTML).\n\ngit status --porcelain -- apps/mcp-server/ confirms exactly 2 files touched (1 modified: reports.ts, 1 new: test file) — matches the board row's declared files:[] scope. NOT committed by this agent — router RAW-verifies and commits per this session's established dispatch instruction.\n",
-        "next_agent": "pm",
-        "commit": "pending",
-        "qa_verified_at": "2026-07-10T13:03:15Z",
-        "done_verified": true,
-        "started_at": "2026-07-10T12:54:31Z",
-        "updated_at": "2026-07-10T13:03:15Z",
-        "updated_by": "qa",
-        "qa_verdict": "APPROVED",
-        "qa_verified_by": "qa",
-        "qa_note": "APPROVED. Router already independently re-ran/confirmed tests(6/6,20 expect())/tsc/mock-guard/diff-read — did not re-verify those, focused on the 6 dispatcher-specified substance points. (1) Regression-proof test read directly: legacy validation_status='pending' (DB DEFAULT, bctc-schema.ts:818) row asserts BOTH the real report header (\"=== GATETEST4\") AND a real fixture value (\"39\" from netRevenue~39.5B) — non-trivial, not just \"doesn't throw\". (2) compare_financials one-pending case confirmed the message names ONLY the pending period (\"2024-Q2\" present, \"2024-Q1\" explicitly asserted absent) — genuinely distinguishes which period, not a generic message. (3) Read reports.ts directly: pending-extraction gate sits strictly BEFORE checkBctcIdentityGuard in both tools (get_financial_summary L308-328 before L330-352; compare_financials L458-487 before L489-519). Traced further: a shell row's total_assets is genuinely NULL (omitted from the shell INSERT, no schema DEFAULT) so the identity guard fails OPEN on null by its own docstring — without this gate the row would have silently rendered a fabricated-looking \"Confidence:100%,NetRevenue:0.0 ty VND\" reading (the exact pre-fix regression), never even reaching a guard-caught message — placement before the guard is correct and load-bearing. (4) Both new messages read in full: pure English, matches reports.ts's own message convention, no cross-import from bctcFullTools.ts Vietnamese. (5) git status --porcelain confirms exactly 2 files touched, matches board files:[]. (6) All 3 pending-extraction fixtures call the REAL ensureFinancialReportShellRow usecase (import+call sites read directly); 5 legacy real-data fixtures use raw-SQL insertRealRow() by necessity (simulating pre-existing DB state, no real usecase produces it) with plausible values that also pass checkBctcIdentityGuard. Independently re-ran the new test file myself: 6 pass/0 fail/20 expect() — exact match. Informational (non-blocking, out of scope): confirmed docs/agents/tools/list/compare_financials.md documents a different tool (compareTools.ts actually registers compare_stocks, different params/output) — genuinely stale, left untouched. DJ-GATE-1 satisfied (sprint-SYSTEMIC-REMAKE-P1-dev-mcp-server.md task-id-stamped entry present, line 329)."
-      },
-      {
-        "id": "FIX-BCTC-D3B-GATE-PEK-TRIGGERED-STATUS",
-        "type": "FIX",
-        "priority": "high",
-        "status": "DONE_VERIFIED",
-        "zone": "apps/mcp-server/",
-        "size": "M",
-        "title": "Remove 0-row gate from bctcPdfPullJob; wire shell-row + trigger; write pek_triggered status; update 3 status-enum consumers (includes R-HIGH-1)",
-        "owner": "dev-mcp-server",
-        "depends": [
-          "FIX-BCTC-D3A-PEK-TRIGGER-HELPER"
-        ],
-        "detail_ref": "docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md#D3-D3b",
-        "created_at": "2026-07-10T12:00:00Z",
-        "created_by": "pm",
-        "note": "Main mechanical change: (1) Remove 0-row gate entirely; (2) Wire D2 shell-row + D3A trigger after save; (3) Write pek_triggered status; (4) Update vpsHealthPoller/freshnessSlaMonitorJob/bctcQueueEnricherJob status enums (R-HIGH-1). Critical: gate removal means reconciliation cron (D3C) becomes essential fail-loud path.",
-        "updated_at": "2026-07-10T13:47:15Z",
-        "updated_by": "qa",
-        "next_agent": "pm",
-        "started_at": "2026-07-10T13:10:30Z",
-        "files": [
-          "apps/mcp-server/src/scheduler/financial-reports/bctcPdfPullJob.ts",
-          "apps/mcp-server/src/domain/services/vpsHealthPoller.ts",
-          "apps/mcp-server/src/scheduler/system/freshnessSlaMonitorJob.ts",
-          "apps/mcp-server/src/scheduler/financial-reports/bctcQueueEnricherJob.ts",
-          "apps/mcp-server/src/__tests__/bctc-pdf-pull-job.test.ts",
-          "apps/mcp-server/src/__tests__/FIX-BCTC-ENRICH-SILENT-0ROWS.test.ts",
-          "apps/mcp-server/src/__tests__/FIX-BCTC-PDFPULL-JOB-OVERLAP-GUARD.test.ts",
-          "apps/mcp-server/src/__tests__/FIX-BCTC-VPS-QUEUE-SYNC.test.ts",
-          "apps/mcp-server/src/__tests__/FIX-BCTC-FRESHNESS-GATE.test.ts",
-          "apps/mcp-server/src/__tests__/FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH.test.ts",
-          "docs/agent-memory/decisions/sprint-SYSTEMIC-REMAKE-P1-dev-mcp-server.md",
-          "docs/agent-memory/notebooks/dev-mcp-server.md"
-        ],
-        "status_note": "Removed bctcPdfPullJob.ts's synchronous 0-row gate entirely (bctc_table_rows/bctc_md_tables count read immediately after triggerExtraction, deciding done vs enrich_failed on the spot) — /pek-extract is 202/fire-and-forget so that check was structurally guaranteed to read 0 regardless of eventual outcome. After D2's shell-row upsert (ensureFinancialReportShellRow, unchanged) succeeds and filePath is known, the job now calls D3A's triggerPekExtractionForReport(shellRow.id, filePath) (new BctcPdfPullDeps.triggerPekExtraction field — optional in the type for pre-D3B test ergonomics only; makeProductionDeps() always wires the real helper) and unconditionally writes bctc_vps_queue.status='pek_triggered'. Legacy scalar triggerExtraction (Step 5, triggerPushBctcExtraction 3-tier pipeline) is UNCHANGED — a separate pipeline populating separate financial_reports scalar/JSON columns, unrelated to /pek-extract's table-extraction concern.\n\nOutcome-folding decision (beyond the design doc's explicit instruction, which only named 202 and 503): ALL 4 discriminated outcomes of triggerPekExtractionForReport (queued/202, market_hours/503, pdf_extractor_error/502, unreachable/502) land the row on 'pek_triggered', not just the 2 the doc named. Rationale: none of the 4 is a proven synchronous success/failure signal at this layer — /pek-extract's 202 doesn't confirm PEK will actually succeed, and a 502 doesn't rule out a subsequent successful retry either; only the not-yet-landed bctcExtractReconcileJob's actual bctc_layout_units row-count check (D3C) is authoritative. The router's task text explicitly forbids introducing any new status beyond pek_triggered, which forecloses a separate error-state alternative. triggerPekExtractionForReport() itself already logs pdf_extractor_error/unreachable loudly (log.error) — the DB status doesn't need to duplicate that.\n\nEdge case handled: if ensureFinancialReportShellRow itself throws (no report_id available), the PEK trigger call is skipped (logged) but the row still advances to pek_triggered — D3C re-derives report_id via (action_code, sort_key) independently when it runs, so it isn't blocked by this job's local variable.\n\nR-HIGH-1 (folded into this task per board note): updated the 3 named status-enum consumers to treat pek_triggered as active/in-progress, not idle/stalled/orphaned — vpsHealthPoller.ts's queueGuardSql and freshnessSlaMonitorJob.ts's queryBctcPipelineRuntimeState active_count queries both now include 'pek_triggered'; bctcQueueEnricherJob.ts's isEarningsWindowActive() likewise. Deliberately did NOT add pek_triggered to bctcQueueEnricherJob's Arm-2 grace-period retry sweep (status IN ('url_not_found','enrich_failed')) despite the architect brownfield note's softer \"recognize/expire\" language — sweeping would reset genuinely in-flight PEK rows back to 'pending' (source_url reset + status reset), corrupting real work, contradicting the router's explicit \"not idle/stalled/orphaned\" framing; documented inline why with a comment block. Repo-wide grep (grep -rn \"status IN (\" across all .ts/.py/.js/.sql, filtered to bctc_vps_queue-relevant hits) confirmed exactly these 3 files contain bctc_vps_queue.status IN(...) membership-test lists — no 4th file exists. fetchStatusHandler.ts's bctcPipeline{} dashboard response uses per-status SUM(CASE WHEN status = 'x' THEN 1 ELSE 0 END) counters (a different pattern — individual buckets, not an active/idle membership gate) and does NOT currently count pek_triggered as a distinct bucket; flagged as a display-only gap for a possible future task, explicitly NOT touched here (out of the router's named scope, no alerting logic depends on it).\n\nRemoved the now-dead BctcPdfPullResult.enrichFailed field and the sendBugFn option from runBctcPdfPullJob's opts (both were exclusively part of the removed 0-row-gate code path — nothing sets/reads either any more; the BUG-notification responsibility for a genuinely-exhausted pek_triggered row moves to D3C per the design doc). result.downloaded keeps its existing numeric meaning/consumer contract (schedulerJobTable.ts's rowsWritten) — it now increments unconditionally at the pek_triggered write instead of conditionally at the old done/enrich_failed branch point.\n\nTests: bctc-pdf-pull-job.test.ts +4 new (TC-14 report_id/pdf_path call-contract via shell row id; TC-15 503-folding; TC-16 pdf_extractor_error/unreachable-folding; TC-17 shell-row-failure skip-but-still-pek_triggered), 5 pre-existing done/enrich_failed status assertions updated to pek_triggered (TC-3, TC-9, TC-13, TC-10/TC-10b rewritten since their whole premise — the removed gate's throw-vs-seeded-rows branching — no longer exists). FIX-BCTC-ENRICH-SILENT-0ROWS.test.ts REWRITTEN, not silently edited away: explicit SUPERSEDED header maps every historic AC-1..AC-8 to its fate, 3 new tests prove row-count (0, 145, or no header at all) no longer branches bctcPdfPullJob's queue-status outcome — the AC-1..AC-8-level done/enrich_failed contract now lives exclusively in D3C's future test suite. FIX-BCTC-PDFPULL-JOB-OVERLAP-GUARD.test.ts: 3 done->pek_triggered + 1 dead enrichFailed assertion removed. FIX-BCTC-VPS-QUEUE-SYNC.test.ts: 1 done->pek_triggered (this was the ONE genuine regression the first full BCTC sweep caught — fixed same cycle). FIX-BCTC-FRESHNESS-GATE.test.ts +1 baseline_pass_F (pek_triggered-only queue -> UNREACHABLE not IDLE) + config assertion extended. FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH.test.ts +1 C-2b (pek_triggered counted in queueDepth).\n\nVerification: bun tsc --noEmit clean (whole apps/mcp-server project). scripts/audits/mock-guard.sh --files (all 9 changed production+test files, quoted as one string per the script's actual arg contract) PASS. Targeted suites individually green: bctc-pdf-pull-job (23/23), FIX-BCTC-ENRICH-SILENT-0ROWS+OVERLAP-GUARD (6/6), FIX-BCTC-FRESHNESS-GATE+IDLE-VS-CRASH+1287-queue-enricher+1358b+ENRICHER-STUCK-BACKLOG+ZERO-URL-ALERT (58/58), 1272-push-bctc-layout+pushBctcTableHandler+1270-push-bctc-md-tables+pek-render-seam (60/60). Full BCTC-scoped per-file-isolation sweep (~105 files matching 'bctc' in filename, run individually via bun test per-file to avoid the documented bare-bun-test-hang pattern): 0 fail after the FIX-BCTC-VPS-QUEUE-SYNC fix above, EXCEPT 1294b-bctc-fallback.test.ts which times out standalone (8/8 tests timeout at their own 5-15s per-test limits) — confirmed pre-existing/unrelated: it imports only fetchParseAndStoreBctc (zero overlap with any of the 9 files this task touched), and matches session precedent (S30/S31's prior root-cause note on this exact file). toolCount=183 unchanged (no MCP tool file touched). Scheduler cron.schedule grep probe returns 3 (pre-existing drift from the documented Gate-2d baseline of 76 — this session's S31 entry already flagged this exact probe as stale post-refactor; not caused by this task, no scheduler/cron file touched by this diff).\n\nD3C DEPENDENCY — EXPLICIT FLAG FOR QA AND ROUTER: because the synchronous gate is removed WITHOUT bctcExtractReconcileJob.ts (FIX-BCTC-D3C-RECONCILE-JOB) existing yet, any pek_triggered row this creates has NO transition path to done/enrich_failed until D3C lands. This is expected/acceptable for the review/verification window (nothing is deployed/rebuilt without a separate user-gated ops step) but D3C must be dispatched immediately once this task is DONE_VERIFIED, not left dangling — leaving it dangling would mean production pek_triggered rows accumulate forever with no reconciliation once this ships live.\n\nCommit: NOT committed by this agent — router RAW-verifies and commits per this session's established dispatch discipline. Decision journal STEP dev-mcp-server-S35 + notebook entry appended this cycle.\n",
-        "done_verified": true,
-        "commit": "850ced6ee",
-        "qa_verdict": "APPROVED",
-        "qa_verified_at": "2026-07-10T13:47:15Z",
-        "qa_verified_by": "qa",
-        "qa_note": "APPROVED. Router already independently RAW-verified diff/tests(76/76,231 expect())/tsc/mock-guard(10 files)/3-consumer-file diffs/repo-wide grep — did not re-verify those, focused on 5 dispatcher-named fresh-eyes points. (1) Outcome-folding soundness: PekTriggerOutcome's 4 variants (queued/market_hours/pdf_extractor_error/unreachable) all fold to pek_triggered; traced that D3C's future bctc_layout_units row-count check is correctness-preserving regardless of which outcome fired (row-count is the sole ground-truth signal for all 4). Flagged non-blocking: because folding makes never-started (503/502) indistinguishable from already-in-flight (202) at the DB-column level, D3C's reconciliation loop must adopt a uniform always-re-fire-on-still-zero policy (not passive re-check) to guarantee eventual convergence for the 503/502 cases — already an explicitly open PM decision in the design doc itself (§D3 line 73); recommend this note travel into D3C's dispatch. Per-outcome detail not unrecoverably lost (pekExtractTrigger.ts already logs it via log.error). (2) Read bctc-pdf-pull-job.test.ts's full diff: TC-14 uses a real SELECT-from-financial_reports read-back for the shell-row id; TC-15/16 correctly test this job's own unconditional-write logic via injected outcome stubs + real getQueueRow DB reads; TC-17 forces a REAL sqlite failure (DROP TABLE financial_reports, not a mocked throw) and proves the catch/non-fatal/skip-but-advance edge case end-to-end via real DB reads — the strongest of the 4, genuinely non-tautological. (3) Read FIX-BCTC-ENRICH-SILENT-0ROWS.test.ts's full rewrite: SUPERSEDED header explicitly maps every historic AC-1..AC-8 to either a successor test or a stated merge-rationale — AC-1/2/3/5/6 -> 1 test (sendBugFn/enrichFailed fields provably no longer exist; ticker-genericity moot, code path no longer branches on ticker), AC-4/4b/8 -> 1 test (row-count no longer branches the outcome, so the 3 historic row-count variants are now provably redundant with each other), AC-7 -> its own dedicated test. Zero ACs vanish silently. (4) D3C-dependency risk (status_note's own explicit flag): confirmed accurately review-window-acceptable — cross-checked project standing policy (nothing rebuilds/deploys without a separate user-gated ops step) and confirmed D3C already correctly sits in backlog[] depends:[D3B], set to auto-promote to ready[] once this lands DONE_VERIFIED — a correctly-sequenced next dispatch, not a dangling risk. (5) No-fake-data lens: diff touches only bctc_vps_queue.status enum + control-flow + test fixtures (synthetic UUIDs/tickers, standard repo convention) — zero market-data synthesis. DJ-GATE-1 satisfied (sprint-SYSTEMIC-REMAKE-P1-dev-mcp-server.md STEP dev-mcp-server-S35, task-id-stamped, line 337).",
-        "committed_at": "2026-07-10T15:18:05Z",
-        "committed_by": "router"
-      },
-      {
-        "id": "FIX-BCTC-R-HIGH-1-STATUS-ENUM-UPDATE",
-        "type": "FIX",
-        "priority": "high",
-        "status": "DONE_VERIFIED",
-        "zone": "apps/mcp-server/",
-        "size": "S",
-        "title": "Verify pek_triggered status in vpsHealthPoller, freshnessSlaMonitorJob, bctcQueueEnricherJob (folded into D3B)",
-        "owner": "dev-mcp-server",
-        "depends": [
-          "FIX-BCTC-D3B-GATE-PEK-TRIGGERED-STATUS"
-        ],
-        "detail_ref": "docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md#R-HIGH-1",
-        "created_at": "2026-07-10T12:00:00Z",
-        "created_by": "pm",
-        "note": "R-HIGH-1 mandatory in-cycle: status enum must include pek_triggered in active-work guards, else false health/freshness alarms during normal PEK work. Already folded into D3B (same zone, developer, 3-file surface). This task formalizes the cross-check.",
-        "done_verified": true,
-        "next_agent": "pm",
-        "updated_at": "2026-07-10T13:51:07Z",
-        "updated_by": "router",
-        "commit": "850ced6ee",
-        "qa_verdict": "APPROVED",
-        "qa_verified_at": "2026-07-10T13:51:07Z",
-        "qa_verified_by": "qa (via FIX-BCTC-D3B-GATE-PEK-TRIGGERED-STATUS)",
-        "status_note": "Board-only formality close, no fresh dispatch — this task duplicate-tracks work already inside D3B's diff. D3B's files[] list includes all 3 named consumers (vpsHealthPoller.ts, freshnessSlaMonitorJob.ts, bctcQueueEnricherJob.ts); router independently diff-read all 3 and confirmed pek_triggered added to each active/idle status-enum check (with the Arm-2 sweep deliberately left out, documented inline); repo-wide grep confirmed no 4th consumer file exists. QA's D3B review (round 1, APPROVED) covered this same diff in full as part of its dispatch scope. Committed under 850ced6ee alongside D3B — no separate commit exists for this task since the code was never split out."
-      },
-      {
-        "id": "FIX-BCTC-D3C-RECONCILE-JOB",
-        "type": "FIX",
-        "priority": "high",
-        "status": "DONE_VERIFIED",
-        "zone": "apps/mcp-server/",
-        "size": "M",
-        "title": "bctcExtractReconcileJob cron — check layout_units/legacy tables, bounded attempts, enrich_failed terminal",
-        "owner": "dev-mcp-server",
-        "depends": [
-          "FIX-BCTC-D3B-GATE-PEK-TRIGGERED-STATUS"
-        ],
-        "detail_ref": "docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md#D3-D3c",
-        "created_at": "2026-07-10T12:00:00Z",
-        "created_by": "pm",
-        "note": "New reconciliation cron (suggested 5,35 * * * * cadence): queries pek_triggered rows, checks bctc_layout_units(quarantined=0) OR legacy tables, transitions to done/enrich_failed/stays pek_triggered per attempt budget. MUST land same-cycle as D3B (no intermediate state without reconciliation).",
-        "updated_at": "2026-07-10T14:30:48Z",
-        "updated_by": "qa",
-        "next_agent": "pm",
-        "started_at": "2026-07-10T14:13:58Z",
-        "commit": "43f4c8a22",
-        "files": [
-          "apps/mcp-server/src/scheduler/financial-reports/bctcExtractReconcileJob.ts",
-          "apps/mcp-server/src/scheduler/cronConfig.ts",
-          "apps/mcp-server/src/scheduler/schedulerJobTable.ts",
-          "apps/mcp-server/src/infrastructure/db/schema-financial-reports.ts",
-          "apps/mcp-server/src/__tests__/bctc-extract-reconcile-job.test.ts",
-          "docs/architecture/microservice/mcp-server/financial-reports.md",
-          "docs/data/system-map.json",
-          "docs/data/cron-registry.json"
-        ],
-        "status_note": "New bctcExtractReconcileJob.ts (interface/scheduler, mirrors bctcPdfPullJob.ts's deps-injection/makeProductionDeps()/runXJob(opts) shape + _isRunning overlap guard). Each tick: SELECT bctc_vps_queue WHERE status='pek_triggered' AND last_attempt < datetime('now','-5 minutes'); for each row re-derives report_id via (action_code, sort_key) lookup against financial_reports (the queue row carries NO report_id column at all — this lookup is the ONLY path, not a defensive fallback). Success check (explicit OR-across-three per design doc, not simplified to layout_units alone): (bctc_layout_units WHERE report_id=? AND quarantined=0 count>0) OR (bctc_table_rows count>0) OR (bctc_md_tables count>0). Success -> status=done. Exhausted MAX_RECONCILE_ATTEMPTS (new const=8, mirrors MAX_404_ATTEMPTS's convention/location, value gives a ~4h budget at the 30-min cadence — 2x the design doc's own >=4-passes/~2h minimum recommendation) -> status=enrich_failed, fail-loud Telegram BUG via sendTelegramBug (the SAME mechanism the pre-D3B synchronous 0-row gate used before D3B deleted it from bctcPdfPullJob.ts — grepped out of git show 989654f22, reused not reinvented). Under cap -> stays pek_triggered, reconcile_attempts++ (NEW dedicated column on bctc_vps_queue, idempotent guarded ALTER TABLE in schema-financial-reports.ts — deliberately SEPARATE from the existing attempts column, which already carries unrelated pre-download fetch-failure semantics for bctcPdfPullJob's own MAX_404_ATTEMPTS gate; reusing it would either falsely fast-track a row toward enrich_failed via an inherited nonzero count, or require a reset-to-0 write that corrupts attempts' own meaning). New cron CRONS.bctcExtractReconcile = 5,35 * * * * (design doc's own suggested offset), registered in schedulerJobTable.ts JOB_TABLE array (58 entries now, was 57) — wired automatically via the array's existing generic scheduleCron(j.cron, () => jobRunRepo.wrapRun(j.name, j.runner), j.options) consumption loop, confirmed by reading it, not assumed. RE-FIRE-VS-PASSIVE DECISION (QA-flagged open point at D3B, mine to resolve): adopted the uniform ALWAYS-re-fire-on-still-zero policy (bounded by the SAME MAX_RECONCILE_ATTEMPTS cap, no separate re-fire budget) recommended in the dispatch prompt, after independently re-deriving the rationale rather than rubber-stamping it: bctc_vps_queue has NO column recording which of D3B's 4 folded trigger outcomes (202/503/502x2) fired for a given row, so a never-started 503/502 row and a genuinely-in-flight 202 row are structurally indistinguishable at this layer. A passive-only re-check policy would leave the entire 503/502 class stuck at pek_triggered until MAX_RECONCILE_ATTEMPTS silently exhausts them into enrich_failed WITHOUT EVER HAVING ACTUALLY RETRIED — a second silent-failure class stacked on the one D3B/D3C exist to close. The flip-side cost (wastefully re-firing an already-in-flight 202 row) is bounded and acceptable: pushBctcLayoutHandler.ts's DELETE-before-INSERT write pattern makes repeat /pek-extract calls for the same report_id idempotent. TESTS: new bctc-extract-reconcile-job.test.ts, 14 tests / 56 expect() calls — empty queue no-op; grace-window row untouched; 3 success tests each satisfying the OR-check via a DIFFERENT single table in isolation (bctc_layout_units-only, bctc_table_rows-only, bctc_md_tables-only, confirming the OR is real not vacuous); quarantined-only layout units correctly do NOT count as success; under-cap still-zero -> stays pek_triggered + reconcile_attempts++ + re-fire call verified (reportId/pdfPath asserted against the real shell row); re-fire correctly SKIPPED (but attempt counter still advances) when no financial_reports row is resolvable yet; exhausted-attempts -> enrich_failed + bug notification fired exactly once (message content asserted, incl. report_id) + a parallel case with NO report_id ever resolved (message explicitly says UNRESOLVED); sendBugFn throwing does not block the enrich_failed status transition (fail-loud, non-fatal notify, mirrors the OLD 0-row gate's own contract); a dedicated report_id-re-derivation test (queue row inserted BEFORE the shell row, via a separate call, proving no in-memory coupling between the two writes — this is the reconciliation job's core correctness property since the queue schema has no report_id column); an overlap-guard test (second concurrent invocation early-returns already_running, mirrors FIX-BCTC-PDFPULL-JOB-OVERLAP-GUARD.test.ts's own pattern). VERIFICATION: bun tsc --noEmit clean. scripts/audits/mock-guard.sh --files PASS on all 5 touched/new files. Full BCTC-scoped per-file sweep (105 files matching *bctc*/*pek* under src/__tests__/, incl. this new test file — bun test <file> individually per file, NEVER bare bun test per this sandbox's documented hang pattern): 1153 pass / 8 fail / 5 skip — all 8 fails are 1294b-bctc-fallback.test.ts (grepped for bctc_vps_queue/reconcile_attempts/pek_triggered/bctcExtractReconcile — zero matches; same standalone real-network-timeout hang already root-caused at S30/S31/S33/S35, unrelated fetchParseAndStoreBctc OCR-fallback surface, never touches bctc_vps_queue). toolCount=183 unchanged (dry-run gen-project-stats.ts probe) — no MCP tool file touched. Gate-2d cron.schedule literal-grep probe is (still, pre-existing, same drift class S31/S35 already reported) stale: a prior refactor centralized all cron registration through a scheduleCron() wrapper, so the literal cron.schedule string now appears in exactly 1 file (startupHelpers.ts, the wrapper's own implementation) regardless of job count — reported the real JOB_TABLE entry-count delta (57->58) instead of trusting the stale-pattern grep's wrong number. Live server-boot probe: module load + DB init (incl. the new reconcile_attempts idempotent migration) + tool registration (183) + full JOB_TABLE/bespoke scheduler registration all clean, zero import/migration errors; final httpServer.listen() hit the same pre-existing EADDRINUSE on :3000 (a live Docker container predating this task) as every prior S31-S35 probe — that live instance's /health (toolCount=183) and /api/bctc-inspect routes both still respond cleanly post-diff. DOCS: docs/architecture/microservice/mcp-server/financial-reports.md (+2 Scheduler-Jobs rows for bctcPdfPullJob+bctcExtractReconcileJob, since the file omitted bctcPdfPullJob even pre-D3B — added the minimum needed for my own addition to read coherently, did NOT attempt a full staleness rewrite of the file's older push-based-era invariant #5, out of this task's scope) + new invariant #8 documenting the full pek_triggered state machine end-to-end; docs/data/system-map.json#project.microservices[id=mcp-server].crons (SSOT, 65->66) + docs/data/cron-registry.json (backward-compat mirror, schedulerFileCount 64->65) both updated, both re-validated as well-formed JSON via jq -e. docs/data/project-stats.json#cronJobCount deliberately NOT regenerated — its generator (scripts/gen-project-stats.ts) uses the SAME stale literal-cron.schedule-grep source of truth (confirmed by reading the script header), so running it would just write a differently-wrong number; not this task's scope to fix the generator itself. Not committed — router RAW-verifies diff/tests/tsc/mock-guard independently and commits, per this session's established D1/D2/D3A/D3B dispatch discipline.",
-        "done_verified": true,
-        "qa_verdict": "APPROVED",
-        "qa_verified_at": "2026-07-10T14:30:48Z",
-        "qa_verified_by": "qa",
-        "qa_note": "APPROVED. Router already independently RAW-verified board row/diff/tsc/mock-guard/own-test-run/2-sibling-regression/counters/notebook/DJ-GATE-1 — did not re-derive those, focused on 5 dispatcher-named fresh-eyes points, all independently re-verified from source. (1) Re-fire-vs-passive: SOUND — read pushBctcLayoutHandler.ts directly, confirmed DELETE-before-INSERT runs inside the same db.transaction() as the re-INSERT (genuine idempotency, not a paraphrase); bctc_vps_queue structurally cannot distinguish 202-in-flight from 503/502-never-started, so uniform re-fire (bounded by the same 8-pass cap) is the only policy that guarantees eventual convergence for the 503/502 class. (2) Cross-file ownership: bctcExtractReconcileJob.ts confirmed (repo-wide grep) as the ONLY writer moving rows OUT of pek_triggered. Found and flagged NON-BLOCKING: bctcQueueEnricherJob.ts's pre-existing (2026-07-02, untouched by this task) Arm-2 grace-period retry recycles enrich_failed rows back to pending after 7d without ever zeroing reconcile_attempts (or the pre-existing attempts column, same gap already accepted there) — a recycled row can re-exhaust to enrich_failed almost immediately on its second pek_triggered episode instead of getting a fresh ~4h budget. Not a regression from this task (mirrors an identical pre-existing gap), not silent/data-corrupting (worst case: earlier fail-loud re-terminalization), and the fix belongs in files outside this task's scope (bctcPdfPullJob.ts/bctcQueueEnricherJob.ts, both from already-approved prior tasks) — recommend a small backlog follow-up to reset reconcile_attempts+attempts on Arm-2 recycle. (3) financial_reports UNIQUE(action_code, sort_key) CONFIRMED present in bctc-schema.ts's CREATE TABLE (executed via schema-financial-reports.ts db.exec(SQLITE_DDL)) — same pair the job's lookup and D1's ON CONFLICT both target; no arbitrary-row risk. (4) Independently ran the full 105-file *bctc*/*pek* per-file-isolation sweep myself (new scripts/qa-bctc-pek-test-sweep.sh): 1153 pass / 4 skip / 8 fail, all 8 fails isolated to the pre-existing unrelated 1294b-bctc-fallback.test.ts standalone timeout (grep-confirmed zero symbol overlap) — pass/fail/attribution match the claim exactly (skip count off by 1, immaterial). (5) financial-reports.md invariant #8 read against actual code — accurate on every clause. Standard gate: own tsc clean, own mock-guard PASS (5 files), DDD clean (scheduler imports infra only; schedulerJobTable.ts's IJobRunRepository domain-interface import confirmed via git diff to predate this task), no secrets/process.env, no fabricated data. DJ-GATE-1 satisfied (sprint-SYSTEMIC-REMAKE-P1-dev-mcp-server.md STEP dev-mcp-server-S36, task-id-stamped).",
-        "committed_at": "2026-07-10T15:18:05Z",
-        "committed_by": "router"
-      },
-      {
-        "id": "FIX-BCTC-R-HIGH-2-MARKET-HOURS-GUARD",
-        "type": "FIX",
-        "priority": "medium",
-        "status": "DONE_VERIFIED",
-        "zone": "apps/mcp-server/",
-        "size": "XS",
-        "title": "Market-hours guard for automatic /pek-extract trigger (PM option A recommended: client-side skip)",
-        "owner": "dev-mcp-server",
-        "depends": [
-          "FIX-BCTC-D3B-GATE-PEK-TRIGGERED-STATUS"
-        ],
-        "detail_ref": "docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md#R-HIGH-2",
-        "created_at": "2026-07-10T12:00:00Z",
-        "created_by": "pm",
-        "note": "PM DECISION POINT: (A) client-side isVnMarketOpen guard (recommended: skip during 02:00-08:59 UTC, avoids 503 spam) vs (B) no guard (simpler, more logs). Implement A unless PO over-rides. Move to backlog-close if B chosen.",
-        "updated_at": "2026-07-10T15:14:02Z",
-        "updated_by": "qa",
-        "next_agent": "pm",
-        "started_at": "2026-07-10T15:07:13Z",
-        "commit": "f8b4b3d50",
-        "files": [
-          "apps/mcp-server/src/scheduler/financial-reports/bctcPdfPullJob.ts",
-          "apps/mcp-server/src/__tests__/bctc-pdf-pull-job.test.ts"
-        ],
-        "status_note": "Added a client-side isVnMarketHours(now) pre-check immediately before the deps.triggerPekExtraction call in bctcPdfPullJob.ts's Step 6 block (line ~636, if(shellRow) branch) — reused the EXISTING shared helper from domain/services/freshnessSlaChecker.ts (isVnMarketHours(now: Date = new Date())), imported not reinvented; verified via RAW read+grep that no new market-hours math was written. NOTE for QA: the dispatch prompt's claim that vpsProxyWatchdogJob.ts/priceUpdateWatchdogJob.ts/vpsHealthPoller.ts 'already import and reuse' this exact helper is factually incorrect (RAW-verified: each defines its OWN separate isVnMarketHoursUtc/isVnMarketHoursAt function, none import from freshnessSlaChecker.ts) — this does not change which helper is correct to reuse here (freshnessSlaChecker.ts's isVnMarketHours IS the canonical helper already reused by freshnessSlaMonitorJob.ts, coverageMapFreshnessChecker.ts, vpsProxyHealthHandler.ts, vpsProxyTools.ts, slaStatusTools.ts — same scheduler/financial-reports precedent-adjacent family bctcPdfPullJob.ts belongs to), just flagging the prompt's own factual error since PRE-CLAIM verification is mandatory. BEHAVIOR: if(shellRow && isVnMarketHours(now)) -> log a clear skip reason (ticker + reportId) and do NOT call triggerPekExtraction; else if(shellRow) -> call exactly as before (unchanged); else -> pre-existing shellRow-null branch, completely untouched, unaffected by the guard either way (shellRow falsy short-circuits before isVnMarketHours is even evaluated). The unconditional `updatePekTriggered.run(row.id)` call immediately after the if/else-if/else block was NOT touched/gated — confirmed by diff: the guard only wraps the network-call decision, the row ALWAYS still advances to pek_triggered on this cycle regardless of which branch fired, exactly matching the router's 'guard the network call only, not the state machine' instruction. Added opts.now?:Date (default new Date()) to runBctcPdfPullJob's signature so the guard is deterministically testable (production caller in schedulerJobTable.ts passes no opts, so defaults to real wall-clock — zero behavior change in production). TESTS: extended the existing bctc-pdf-pull-job.test.ts (731L pre-task; judged large-but-still-extendable rather than large-and-hard-to-extend, so extended in place per the task's own either/or framing) with TC-18/TC-19/TC-20 (3 new, 9 new expect() calls) plus pinned an explicit off-hours `now: OFF_HOURS_NOW` (2026-07-06T09:30:00Z, Monday after 08:59 UTC close) into the 3 PRE-EXISTING D3B tests that assert triggerPekExtraction IS called (TC-14, TC-15, TC-16) — those 3 did not pass `now` before this task and would have become wall-clock-flaky (silently start failing whenever the suite happens to run during 02:00-08:59 UTC on a weekday) the moment the new guard shipped; this is a direct, in-scope consequence of adding the guard, not scope creep. TC-18: isVnMarketHours(MARKET_HOURS_NOW)=true (2026-07-06T04:00:00Z, same Monday, inside market hours) -> triggerPekExtraction NOT called (pekCalled=false) AND queue row still lands at pek_triggered AND result.downloaded=1 (asserts both halves of the 'guard the call, not the state machine' contract in one test). TC-19: isVnMarketHours(OFF_HOURS_NOW)=false -> triggerPekExtraction IS called (pekCalled=true), confirming the false-branch baseline explicitly (isolated from TC-14's call-contract assertions). TC-20: shellRow-null branch (financial_reports table dropped, same technique as pre-existing TC-17) run under MARKET_HOURS_NOW specifically -> pekCalled=false for the PRE-EXISTING reason (no report_id available), not the new guard's reason (shellRow falsy short-circuits the `&&` before isVnMarketHours(now) is ever evaluated) -> row still pek_triggered. All 3 new tests include an isVnMarketHours(...) sanity-check assertion on the fixed clock itself (matching this codebase's existing convention in FIX-BCTC-SLA-WEEKEND.test.ts/FIX-SLA-WEEKEND-AWARE.test.ts) so a future change to isVnTradingDay's holiday/weekend table cannot silently invalidate these fixed dates without a visible failure. VERIFICATION: bun tsc --noEmit clean (both files). scripts/audits/mock-guard.sh --files on both touched files: PASS. bctc-pdf-pull-job.test.ts standalone: 26/26 pass, 80 expect() calls (was 23 tests/71 calls pre-task). 4 closest sibling files run standalone (FIX-BCTC-D3A-PEK-TRIGGER-HELPER.test.ts, bctc-extract-reconcile-job.test.ts, FIX-BCTC-ENRICH-SILENT-0ROWS.test.ts, FIX-BCTC-PDFPULL-JOB-OVERLAP-GUARD.test.ts): 26/26 pass, 114 expect() calls, zero regression (none of these 4 pin `now` and none touch the new guard's if(shellRow) branch in a way that depends on real wall-clock market-hours state at the time this suite ran, ~14:41 UTC = off-hours; residual finding, not in R-HIGH-2's DO-NOT-TOUCH-listed scope: FIX-BCTC-PDFPULL-JOB-OVERLAP-GUARD.test.ts's own triggerPekExtraction-call assertions do not pin `now` either and could in principle become wall-clock-flaky during an actual 02:00-08:59 UTC CI run — flagging for a future task, not fixing here since that file is outside this task's exact scope). Full BCTC-scoped suite verification: bare `bun test` hangs in this sandbox (confirmed live this cycle — killed after 2min CPU with zero output, same documented S29-S33 issue) so used the canonical scripts/ci-per-file-isolation.sh host-safety runner instead — pass/fail counts and any pre-existing-hang attribution appended by router/QA from that run's actual output. toolCount unchanged (no MCP tool file touched — bctcPdfPullJob.ts is a scheduler/interface file, not a tool registration file). No scheduler cron registration touched (CRONS.bctcPdfPull's existing */30 * * * * cadence and schedulerJobTable.ts wiring are both completely untouched by this diff — confirmed via git diff --stat). Diff is genuinely minimal: 1 new import line, +1 opts field (+3 doc lines), +1 local `now` assignment, the if(shellRow)->if(shellRow && isVnMarketHours(now))/else-if(shellRow) restructure (net +11 lines incl. comments) at the exact call site, zero refactor of the surrounding function. Board READY->REVIEW via orch-apply.sh, next_agent=qa. NOT committed — router RAW-verifies and commits per this session's established D1/D2/D3A/D3B/D3C dispatch discipline.",
-        "done_verified": true,
-        "qa_verdict": "APPROVED",
-        "qa_verified_at": "2026-07-10T15:14:02Z",
-        "qa_verified_by": "qa",
-        "qa_note": "APPROVED. Router already independently RAW-verified diff/tsc/mock-guard/own-test-run(26/26,80 expect())/TC-18-19-20 read/isVnMarketHours-provenance-correction/isVnMarketHours-impl-read/1352a-git-stash-isolation/board-flip/notebook/DJ-GATE-1 — did not re-derive those, focused on the one dispatcher-named judgment point: direction-of-guard correctness. Independently read the design doc itself (docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md, R-HIGH-2 bullet, line 114) — it explicitly asks for a client-side is_vn_market_open pre-check to avoid a guaranteed 503 round-trip + noisy log spam during 02:00-08:59 UTC, i.e. SKIP-when-OPEN / FIRE-when-CLOSED. Cross-checked against the actual implementation (`if (shellRow && isVnMarketHours(now)) { log-only skip }`) and the actual test assertions: TC-18 pins MARKET_HOURS_NOW (2026-07-06T04:00:00Z, inside 02:00-08:59 UTC), asserts isVnMarketHours(MARKET_HOURS_NOW)===true then pekCalled===false AND queueRow.status==='pek_triggered' AND result.downloaded===1 in one test — call skipped when market open, state machine unaffected, confirmed. TC-19 pins OFF_HOURS_NOW (09:30:00Z, after the 08:59 close), asserts isVnMarketHours(OFF_HOURS_NOW)===false then pekCalled===true — call fires when market closed, unchanged baseline, confirmed. Both legs match the design doc's stated direction exactly; no no-op-during-off-hours regression risk. The router's own dispatch prompt's separate VERIFICATION BAR paragraph stating the two cases in reverse was correctly NOT followed (a probable typo, documented as a judgment call in the decision journal) — implementation matches the EXACT SCOPE section + the design doc, the correct interpretation. Standard gate: own tsc clean, own mock-guard PASS (2 files), DDD clean (scheduler/financial-reports/bctcPdfPullJob.ts is an interface-layer file already importing application/+infrastructure/ elsewhere in the same file; the new domain/services/freshnessSlaChecker.ts import follows the same scheduler->domain/services precedent already used by allzeroOhlcvBackfill.ts/ohlcvSanityCheckJob.ts/foreignFlowAlertJob.ts), no secrets/process.env added (grepped only the diff's `+` lines — 0 hits), no fabricated data, no cron/scheduler-registration file touched (git diff --stat on scheduler/** shows exactly 1 file changed). Sibling regression: independently ran the 4 closest sibling test files myself — 26/26 pass, 114 expect(), zero regression, matches the claim exactly. DJ-GATE-1 satisfied (sprint-SYSTEMIC-REMAKE-P1-dev-mcp-server.md, task-id-stamped).",
-        "committed_at": "2026-07-10T15:15:32Z",
-        "committed_by": "router"
-      },
-      {
-        "id": "FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION",
-        "type": "SPRINT-S",
-        "priority": "high",
-        "status": "DONE_VERIFIED",
-        "zone": "apps/mcp-server/",
-        "title": "Wire automatic table-extraction into bctcPdfPullJob, decoupled from the synchronous 0-row gate",
-        "detail": "All 7 atomic sub-tasks DONE_VERIFIED: D1 (e9bb1c3e4) + D2 (d2cad2508) + D3A (6f1bc8765) + D3B (850ced6ee) + D3C (43f4c8a22) + R-HIGH-1 (850ced6ee, folded with D3B) + R-HIGH-2 (f8b4b3d50). Baseline DoD (pnpm --filter vn-market check green) PASS. Risk review completed: R-CRIT-1/R-CRIT-2 (must-fix, both in decomposition); R-HIGH-1/R-HIGH-2 (both in decomposition); R-MED-1 (satisfied: MAX_RECONCILE_ATTEMPTS=8 at 30min cadence = ~4h budget, 2x design minimum); R-LOW-1 (QA-verified clear via grep of 7 financial_reports readers). Non-blocking follow-up flagged by D3C QA: reset reconcile_attempts+attempts on Arm-2 recycle — recommend new backlog task FIX-BCTC-D3C-FOLLOW-UP-RESET-ATTEMPTS to prevent staleness on recycled rows.",
-        "baseline_pass": "pnpm --filter vn-market check green",
-        "related": [
-          "telegram-report:3542",
-          "telegram-report:3546",
-          "spike:SPIKE-BCTC-2025Q4-PDFPULL-OCR-0ROW",
-          "task:OPS-BCTC-BANK-2025Q4-ENRICH-0ROW-REPARSE"
-        ],
-        "created_at": "2026-07-10T09:40:00Z",
-        "created_by": "po-triage-BATCH-dispatch-20260710T0940Z",
-        "updated_at": "2026-07-10T12:00:00Z",
-        "updated_by": "pm",
-        "owner": "pm",
-        "detail_ref": "docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md",
-        "decomposed_into": [
-          "FIX-BCTC-D1-STABILIZE-REPORT-ID",
-          "FIX-BCTC-D2-ENSURE-SHELL-ROW",
-          "FIX-BCTC-D3A-PEK-TRIGGER-HELPER",
-          "FIX-BCTC-D3B-GATE-PEK-TRIGGERED-STATUS",
-          "FIX-BCTC-D3C-RECONCILE-JOB",
-          "FIX-BCTC-R-HIGH-1-STATUS-ENUM-UPDATE",
-          "FIX-BCTC-R-HIGH-2-MARKET-HOURS-GUARD"
-        ],
-        "dependency_order": "D1→D2→D3A→D3B→(D3C+R-HIGH-1+R-HIGH-2 parallel)",
-        "note": "Parent task DECOMPOSED into 7 atomic sub-tasks. All sub-tasks in backlog/READY, ready for dev-mcp-server dispatch starting with D1 (no deps). Architect sequencing critical: D1 (id stability) MUST land first; D2, D3A, D3B, D3C/R-HIGH-1/R-HIGH-2 chain per dependency graph.",
-        "completed_at": "2026-07-10T14:55:00Z",
-        "closed_by": "pm",
-        "qa_verdict": "APPROVED",
-        "qa_verified_at": "2026-07-10T14:55:00Z",
-        "qa_verified_by": "pm"
-      },
-      {
-        "id": "FIX-ORCHSTATE-CONSERVATION-GUARD-CIRCUIT-BREAKER",
-        "title": "Implement magnitude-bounded conservation circuit-breaker as a new Stage-2 gate in scripts/orch-apply.sh (whole-board task_total + signal_total must retain >=50% of live value) + new shared scripts/orch-conservation-check.mjs + PreToolUse hook parity + extend the existing scripts/test/orch-apply-wrapper-tests.sh harness — closes the content-safety half of FIX-AUDITOR-ORCHSTATE-FULLDOC-OVERWRITE-CLOBBERS-SSOT that was never implemented and is empirically live-exploitable today",
-        "type": "FIX",
-        "priority": "P1",
-        "status": "DONE_VERIFIED",
-        "zone": "cross-service/",
-        "size": "M",
-        "supervised": true,
-        "owner": "dev-mcp-server",
-        "next_agent": "router",
-        "recurring_bug_escalation": true,
-        "parent_task": "FIX-AUDITOR-ORCHSTATE-FULLDOC-OVERWRITE-CLOBBERS-SSOT",
-        "architecture_brief": "docs/architecture-briefs/2026-07-10-auditor-orchstate-conservation-guard.md",
-        "created_at": "2026-07-10T16:07:01Z",
-        "promoted_at": "2026-07-10T16:07:01Z",
-        "promoted_by": "po (PLAN-ONLY->IMPLEMENT handoff, recurring_bug_escalation)",
-        "files": [
-          "scripts/orch-apply.sh",
-          "scripts/orch-conservation-check.mjs",
-          "scripts/agents-flow/orch-state-hook-prewrite.mjs",
-          "scripts/test/orch-apply-wrapper-tests.sh"
-        ],
-        "verification_gate": "Extend the EXISTING scripts/test/orch-apply-wrapper-tests.sh (same ORCH_APPLY_LIVE_FILE_OVERRIDE + real-file-hash-unchanged safety pattern — do NOT create a parallel test file) with 3 cases per brief SS8: (1) COLLAPSE — populated fixture (>=312 backlog, >=97 signal rows) + de595a44-shaped scaffold candidate -> assert exit 1, fixture byte-unchanged (CONFIRMED RED today: currently exit 0, fixture destroyed; must go GREEN after fix); (2) APPEND-HAPPY — same fixture + 1 legit appended signal row -> assert exit 0, rows==pre+1, backlog unchanged (regression guard against over-blocking the auditor's real write); (3) SHRINK-ALLOWED — same fixture + done_verified[] emptied + ORCH_APPLY_ALLOW_SHRINK=cold-evict-test -> assert exit 0 (proves cold-evict.sh/task-archive.md bypass honored).",
-        "design_summary": "Brief SS4: new Stage-2 gate in scripts/orch-apply.sh AFTER schema validation, BEFORE the CAS-mtime rename. task_total (sum of all task-bearing lanes + active/closed sprint tasks) and signal_total (signal_queue.rows length) — a candidate that drops either below FLOOR_RATIO (default 0.5) of the live value, once live >= MIN_BASELINE (default 10), aborts exit 1 (reuses the existing validation-failed/live-untouched exit class). Logic lives in a new shared scripts/orch-conservation-check.mjs (bun, same runtime as orch-validate.mjs) called by orch-apply.sh AND scripts/agents-flow/orch-state-hook-prewrite.mjs (parity). NARROW NAMED BYPASS ORCH_APPLY_ALLOW_SHRINK=<reason> (mirrors the existing ORCH_APPLY_LIVE_FILE_OVERRIDE test-only precedent in that script) wired ONLY into scripts/orch-cold-evict.sh + docs/agents/pm/flow/task-archive.md (the 2 already-shipped legitimate bulk-eviction writers). REJECT the parent fix_spec's literal 'no lane may ever decrease' wording (brief SS4.2): it would falsely block normal single-task backlog->ready->in_progress lane moves AND both legitimate bulk-eviction writers — the whole-board magnitude-bounded ratio design avoids both false-positive modes because a single-task lane move nets to zero on task_total.",
-        "routing_note": "PLAN-ONLY->IMPLEMENT handoff from architect brief (parent DONE in done[]). supervised:true -> router dispatches dev-mcp-server DIRECTLY (WIP<=2 supervised budget), NOT via BOUNDED-1 FIFO and NOT via zone-detect generic-developer fallback. dev-mcp-server chosen (not ops, not architect-split) because every touched file is a host-side bash/bun repo script — zero apps/mcp-server/src changes, zero container rebuild. Full evidence + rejected-design proof: the architecture_brief. AC/DoD: verification_gate field above must be GREEN (COLLAPSE was RED before the fix).",
-        "claimed_at": "2026-07-10T16:29:58Z",
-        "claimed_by": "dev-mcp-server",
-        "reviewed_at": "2026-07-10T16:31:48Z",
-        "reviewed_by": "dev-mcp-server",
-        "review_note": "New scripts/orch-conservation-check.mjs (bun, magnitude-bounded whole-board task_total/signal_total ratio guard per brief SS4.1 formula — 6 flat lanes backlog/ready/in_progress/review/done/done_verified + active_sprints[].tasks[]/closed_sprints[].tasks[]; FLOOR_RATIO=0.5, MIN_BASELINE=10, ORCH_APPLY_ALLOW_SHRINK bypass). Wired as Stage 2 in scripts/orch-apply.sh (after schema validation, before CAS-mtime rename) AND scripts/agents-flow/orch-state-hook-prewrite.mjs (PreToolUse parity, same fail-open-on-infra-missing contract as the existing validator check). Bypass wired ONLY into scripts/orch-cold-evict.sh (ORCH_APPLY_ALLOW_SHRINK=orch-cold-evict.sh:scheduled-eviction on its internal orch-apply.sh call) and docs/agents/pm/flow/task-archive.md Sprint Eviction step (ORCH_APPLY_ALLOW_SHRINK=pm/task-archive.md:sprint-eviction) -- the 2 legitimate bulk-eviction writers per brief SS4.2/SS4.3. Audited scripts/orch-backlog-stub.sh per the brief: confirmed it only strips fields (task_board.backlog length unchanged), no bypass needed there. Extended (not forked) the EXISTING scripts/test/orch-apply-wrapper-tests.sh with COLLAPSE/APPEND-HAPPY/SHRINK-ALLOWED per verification_gate -- 320-backlog/340-done_verified/100-signal-row populated fixture; COLLAPSE proven RED before the fix (git-reverted orch-apply.sh, reran the SAME extended harness: exit 0, fixture destroyed) and GREEN after (git-restored the fix: exit 1, fixture byte-unchanged) -- both runs shown, not just asserted. Full harness 31/31 PASS. Also extended the pre-existing scripts/agents-flow/orch-state-hook.test.mjs (2 tests needed ORCH_HOOK_CONSERVATION_CHECK=/nonexistent isolation since they use minimal synthetic Write-tool content compared against the REAL production live file's much larger totals -- the hook always reads the real on-disk file for its baseline, same as its pre-existing Edit-path behavior; correctly blocking those synthetic payloads IS the guard doing its job, not a bug -- plus 1 new fail-open parity test). 19/19 PASS. Live-confirmed in production: this row's own backlog->in_progress move (task_total live=538 candidate=538) passed the guard with zero friction, proving normal lane moves net to zero as designed. INCIDENT + RECOVERY during host-side verification (surfaced for the record, not hidden): a manual smoke test of scripts/orch-cold-evict.sh against a throwaway ORCH_STATE-overridden fixture briefly overwrote the REAL docs/data/orch/orch-state.json (orch-apply.sh has its OWN ORCH_APPLY_LIVE_FILE_OVERRIDE variable, independent of orch-cold-evict.sh/orch-backlog-stub.sh's ORCH_STATE variable -- the internal orch-apply.sh call was not propagating it, a pre-existing latent gap, not something this task introduced) -- immediately caught (task_total mismatch vs the just-run --dry-run preview) and recovered via git checkout to the last commit (10a9a934d) within the same tool call; verified byte-identical hash before/after a corrected re-run. Fixed the root cause as an in-scope safety hardening: both orch-cold-evict.sh and orch-backlog-stub.sh's internal orch-apply.sh calls now explicitly propagate ORCH_APPLY_LIVE_FILE_OVERRIDE=\"${ORCH_STATE}\" (no-op in production, since both already default to the identical canonical path) -- re-verified end-to-end against a throwaway fixture with real-file-hash-unchanged proof. Zero apps/mcp-server/src changes (verified), zero container rebuild. tsc N/A (no .ts touched). CANONICAL pointers added to docs/policies/dev-standards.md for orch-conservation-check.mjs + the ORCH_STATE-propagation note on both eviction scripts.",
-        "done_verified": true,
-        "updated_at": "2026-07-10T16:35:52Z",
-        "updated_by": "router",
-        "commit": "pending",
-        "router_verdict": "APPROVED",
-        "router_verified_at": "2026-07-10T16:35:52Z",
-        "router_verified_by": "router",
-        "router_note": "APPROVED. Independent RAW-verify beyond dev-mcp-server's own report: per-lane count reconciliation against last committed baseline (10a9a934d) proves the disclosed incident+recovery left zero residual data loss (backlog 387->386, review 21->22 = exactly this one row moving, every other lane + signal_queue.rows id-set byte-identical). Read orch-conservation-check.mjs + all 3 diffs (orch-apply.sh, orch-state-hook-prewrite.mjs, orch-cold-evict.sh) in full — matches the architecture brief design exactly, fail-open policy consistent with the existing validator pattern. Ran scripts/test/orch-apply-wrapper-tests.sh myself: 31/31 PASS. Independently reproduced RED-before by genuinely swapping in the git-committed pre-fix orch-apply.sh (confirmed 0 conservation references) and rerunning the same extended harness: COLLAPSE failed exactly as expected (28/31) — restored, 31/31 GREEN again. Ran bun test scripts/agents-flow/orch-state-hook.test.mjs myself: 19/19 PASS. Confirmed zero apps/mcp-server/src changes. Notebook + DJ-GATE-1 present and accurate."
-      },
-      {
-        "id": "SHG-1",
-        "title": "Create scripts/orch-state-validate.sh with G-1…G-6 checks",
-        "status": "DONE_VERIFIED",
-        "zone": "scripts/",
-        "priority": "HIGH",
-        "size": "XS",
-        "type": "TASK",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#SHG-1",
-        "promoted_at": "2026-07-10T16:48:21Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-10T16:48:21Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "done_verified": true,
-        "updated_at": "2026-07-10T16:55:06Z",
-        "updated_by": "router",
-        "commit": "pending",
-        "router_verdict": "SUPERSEDED — already done",
-        "router_verified_at": "2026-07-10T16:55:06Z",
-        "router_verified_by": "router",
-        "router_note": "STALE BOUNDED-1 PICK (5th confirmed instance of the project_bounded1_first_pickup_stale_backlog_hygiene_debt pattern) — NOT dispatched to a developer. scripts/orch-state-validate.sh already exists (created by commit d6f9b0580 \"feat(scripts/SHG-1): create orch-state-validate.sh write-gate validator\", later hardened by 4a5d655df \"SHG-5 promote G-5 status-enum check to hard gate\" and demoted to a thin shim of the canonical scripts/orch-validate.mjs by 33b3f12be — a documented SUPERSET of the original G-1..G-6 checks). Actively in live use: this very tick's own orch-apply.sh writes ran through this exact validation path. Pre-verify-pruned per established mitigation rather than spawning duplicate work. Broader finding (all of SHG-2..SHG-5 also show matching completion commits yet remain BACKLOG/TODO, plus a genuinely-still-open coherence hard-fail flip condition documented in orch-validate.mjs line 375 with 129 live violations this tick) routed to BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP's status_note for adjudicated follow-up — NOT closed here, out of this tick's scope."
-      },
-      {
-        "id": "D0-BACKLOG-HYGIENE-TERMINAL-ROW-TRIAGE",
-        "size": "L",
-        "sprint": "BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP",
-        "status": "DONE_VERIFIED",
-        "title": "D0: Per-row triage of 56 backlog/review terminal-labeled rows (Tier 1/2/3 mechanical + mandatory live-reprobe)",
-        "type": "MAINTENANCE",
-        "zone": "cross-service",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#D0-BACKLOG-HYGIENE-TERMINAL-ROW-TRIAGE",
-        "owner": "pm",
-        "priority": "high",
-        "depends": [],
-        "note": "COMPLETED 2026-07-10T19:45Z. Triaged 88 total rows (67 backlog + 21 review). Results: 73 confirm-terminal, 4 exclude, 11 relabel (mislaned). Exceptions: FACTORY-INTERFACE-split-server-ts (CONFIRM-TERMINAL, fully shipped 4/4 stages), FIX-BCTC-BANK-SUMMARY-MAPPING (EXCLUDE, proven open via live DB probe CTG 2026Q1).",
-        "triage_result": {
-          "completed_at": "2026-07-10T19:45:00Z",
-          "total_rows_triaged": 88,
-          "total_backlog_terminal": 67,
-          "total_review_terminal": 21,
-          "confirm_terminal_count": 73,
-          "exclude_count": 4,
-          "relabel_count": 11,
-          "exceptions": [
-            {
-              "id": "FACTORY-INTERFACE-split-server-ts",
-              "action": "CONFIRM-TERMINAL",
-              "reason": "All 4 stage commits verified (bce8be44b, 821bbbeea, 56f922c93, 8c228ffa6). Use devteam-close-task-done-verified.jq."
-            },
-            {
-              "id": "FIX-BCTC-BANK-SUMMARY-MAPPING",
-              "action": "EXCLUDE",
-              "reason": "Proven open via live DB probe. CTG 2026Q1 net_margin_pct=229157%, total_assets=0, parsed_at 2026-07-10T07:51:33Z. Corroborated by review-lane sub-task TASK-W5-...-VALIDATION-REINGEST (status BLOCKED, same-day validation)."
-            },
-            {
-              "id": "FIX-ALERT-OPEN-ZERO-PRICE-RACE",
-              "action": "EXCLUDE",
-              "reason": "Status=BLOCKED. Live market bug: bbAlertScanJob/taAlertScanJob fire giá=0 BB-breakout + single-digit RSI at market open 02:00-02:15Z, self-normalizing by 06:08Z. Blocked on ongoing market behavior observation/fix. Still open work."
-            },
-            {
-              "id": "FU-PROFILE-DATA-VERIFY",
-              "action": "EXCLUDE",
-              "reason": "Status=BLOCKED. Verification task: get_company_profile.foreign_holding_ratio + get_bctc_full.structured_data.receivables serve null after vnstock sync. Open verification work required before resolution."
-            },
-            {
-              "id": "REFLOW-MBB-Q1-2026",
-              "action": "EXCLUDE",
-              "reason": "Status=BLOCKED. Re-extraction/reingest task: MBB Q1-2026 total_assets=666.7B corrupt, equity=0 (predates a46131cf). Blocked on ops re-extract and reingest. Open operational work."
-            },
-            {
-              "id": "FIX-DIGEST-RSI-DUAL-ENGINE-DIVERGE",
-              "action": "RELABEL",
-              "reason": "Currently in backlog[] with status=REVIEW. Should be in review[] lane (status already correct, wrong lane). Move backlog→review."
-            },
-            {
-              "id": "FIX-FB-WEEKEND-DEDUP-GATE",
-              "action": "RELABEL",
-              "reason": "Currently in backlog[] with status=REVIEW. Should be in review[] lane (status already correct, wrong lane). Move backlog→review."
-            },
-            {
-              "id": "FIX-FOREIGN-FLOW-BULLETIN-UNAVAIL-STRING",
-              "action": "RELABEL",
-              "reason": "Currently in backlog[] with status=REVIEW (CI-RED 1783). Should be in review[] lane (status already correct, wrong lane). Move backlog→review."
-            },
-            {
-              "id": "FIX-MACRO-THRESHOLD-FXFLOOR-OVERCLAMP",
-              "action": "RELABEL",
-              "reason": "Currently in backlog[] with status=REVIEW (CI-RED macro cluster). Should be in review[] lane (status already correct, wrong lane). Move backlog→review."
-            },
-            {
-              "id": "FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0",
-              "action": "RELABEL",
-              "reason": "Currently in backlog[] with status=REVIEW. Describes data-integrity constraint violations. Should be in review[] lane (status already correct, wrong lane). Move backlog→review."
-            },
-            {
-              "id": "FIX-L2-FRESHNESS-DATAASOF-FIELDS",
-              "action": "RELABEL",
-              "reason": "Currently in backlog[] with status=IN_PROGRESS. Should be in in_progress[] lane (status already correct, wrong lane). Move backlog→in_progress."
-            },
-            {
-              "id": "FIX-SCHEMA-DRIFT-P5-SELFHEAL",
-              "action": "RELABEL",
-              "reason": "Currently in backlog[] with status=IN_PROGRESS. Self-healing getDb() is active work. Should be in in_progress[] lane (status already correct, wrong lane). Move backlog→in_progress."
-            },
-            {
-              "id": "D1-BACKLOG-HYGIENE-SWEEP-EXECUTE",
-              "action": "RELABEL",
-              "reason": "Currently in backlog[] with status=BLOCKED. This is a sprint task (part of BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP sprint) that should have status=BACKLOG (not BLOCKED). Misclassified; relabel to BACKLOG."
-            },
-            {
-              "id": "FIX-AGENT-SIGNALS-ORPHAN-ALERT-ID",
-              "action": "RELABEL",
-              "reason": "Currently in review[] with status=DONE_VERIFIED (124 orphaned rows). This completed task has finalized status. Should be in done_verified[] lane, not review[]. Move review→done_verified."
-            },
-            {
-              "id": "OPS-BCTC-REFINE-REPASS-NONBANK-5T",
-              "action": "RELABEL",
-              "reason": "Currently in backlog[] with status=IN_PROGRESS. OPS task actively running agentic-refine repass for 5 non-bank Q1-2026 reports. Should be in in_progress[] lane (status already correct, wrong lane). Move backlog→in_progress."
-            }
-          ]
-        }
-      },
-      {
-        "id": "D4-BACKLOG-HYGIENE-ORCH-COLD-EVICT-EXTEND",
-        "size": "M",
-        "sprint": "BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP",
-        "status": "DONE_VERIFIED",
-        "title": "D4: Extend scripts/orch-cold-evict.sh with Pass-1 terminal-status category + new test suite",
-        "type": "MAINTENANCE",
-        "zone": "scripts/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#D4-BACKLOG-HYGIENE-ORCH-COLD-EVICT-EXTEND",
-        "owner": "developer",
-        "priority": "high",
-        "depends": [],
-        "note": "Risk: MEDIUM. Extends the sole SSOT eviction script. Brief §8 D4 row: new Pass-1 scanning {backlog,review,qa,in_progress,ready} for TERMINAL_SET status, cold sink = dormant .backlog_detail[] field in monthly archive, add --exclude-ids param, new test file scripts/test/orch-cold-evict-tests.sh (6 required test cases: evict correctness, non-terminal skip, exclude honored, idempotent, conservation guard, dry-run). Parallel with D0.",
-        "next_agent": "qa",
-        "entered_review_at": "2026-07-10T17:56:40Z",
-        "review_note": "[developer 2026-07-10T17:56:40Z] Landed D4: new Pass-1 category in scripts/orch-cold-evict.sh scans flat lanes {backlog,review,qa,in_progress,ready} for TERMINAL_TASK_STATUSES (default byte-identical to TERMINAL_SET SSOT), cold sink = dormant .backlog_detail[] field in monthly archive (wired both create/append branches), --exclude-ids safety valve added (repeatable + CSV forms). New scripts/test/orch-cold-evict-tests.sh (none existed before, R-HIGH-1) -- 27/27 GREEN: evict-correctness, non-terminal-skip, exclude-ids honored, idempotent re-run, conservation-guard-still-fires (paired control), dry-run zero-mutation. Regression-checked against a fixture exercising all 5 pre-existing eviction categories (done/done_verified/active_sprints/sprint_goal.entries/signal_queue) alongside the new one -- all still function correctly. orch-apply-wrapper-tests.sh baseline re-run 31/31 GREEN (no regression). Did NOT execute against live orch-state.json -- that is D1 (depends on D0 triage, running in parallel). Requesting qa review given R-HIGH-1 flag on this sole-SSOT eviction script.",
-        "done_verified": true,
-        "updated_at": "2026-07-10T18:02:04Z",
-        "updated_by": "router",
-        "commit": "f336ddaca,0597f0f6a,ac8deb8f1",
-        "router_verdict": "APPROVED",
-        "router_verified_at": "2026-07-10T18:02:04Z",
-        "router_verified_by": "router",
-        "router_note": "APPROVED. Independent RAW-verify: read all 3 commit diffs in full, content matches self-report exactly. Ran scripts/test/orch-cold-evict-tests.sh myself: 27/27 PASS. Ran scripts/test/orch-apply-wrapper-tests.sh myself: 31/31 PASS, no regression. Confirmed docs/policies/dev-standards.md + docs/WORK.md updated accurately. Notebook write landed correctly this time (developer.md 37L, well under 200L autoprune trigger — oldest session manually trimmed by agent, not hook corruption). Decision journal file present and accurate. git status clean in scope. Correctly did not touch live orch-state.json (deferred to D1)."
-      },
-      {
-        "id": "D3-BACKLOG-HYGIENE-NORMALIZE-TODO-DEFERRED",
-        "size": "S",
-        "sprint": "BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP",
-        "status": "DONE_VERIFIED",
-        "title": "D3: Normalize 58 backlog TODO/DEFERRED rows → status:BACKLOG (preserve old value in verify_note)",
-        "type": "MAINTENANCE",
-        "zone": "cross-service",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#D3-BACKLOG-HYGIENE-NORMALIZE-TODO-DEFERRED",
-        "owner": "pm",
-        "priority": "high",
-        "depends": [],
-        "note": "Risk: LOW. Pure relabel, no data claim. Run first — cheapest, biggest warning-count drop (129→71). Single jq | orch-apply.sh write. Preserve existing verify_note if present, append new value.",
-        "verify_note": "prior_status=TODO",
-        "triage_result": {
-          "confirm_relabel": 62,
-          "confirm_move": 0,
-          "exception": 0,
-          "disposition": "All 62 TODO/DEFERRED rows in backlog lane normalized to BACKLOG status. Pure relabel, no mislane issues detected. Old status values preserved in verify_note field."
-        }
-      },
-      {
-        "id": "D0B-BACKLOG-HYGIENE-TRIAGE-PERSIST-EXCLUDE-RELABEL-IDS",
-        "size": "M",
-        "sprint": "BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP",
-        "status": "DONE_VERIFIED",
-        "title": "D0B: Re-derive + PERSIST full machine-readable exclude/relabel ID lists (D0's triage_result only has 2 of 15 named)",
-        "type": "MAINTENANCE",
-        "zone": "cross-service",
-        "owner": "pm",
-        "priority": "high",
-        "depends": [],
-        "note": "Blocks D1 re-run (self-blocked commit d45c03f1a, status_note documents the exact gap) and transitively D5. D0 (DONE_VERIFIED, commit 26ffe7567) triage_result.exceptions[] has only 2 of the claimed 15 items (4 exclude + 11 relabel) with per-row id+action+reason. Re-run the same 88-row triage methodology (spot-check pattern already proven correct on the 2 existing exceptions), but this time append EVERY exclude/relabel row to triage_result.exceptions[] (or a new triage_result.exclude_ids[]/relabel_ids[] array) — not just outliers. Do not touch D0's DONE_VERIFIED status; this is additive persistence on the same row, or a new row referencing it — pm's judgment call on which is cleaner, as long as D1 ends up with a machine-readable full ID list to build --exclude-ids from.",
-        "created_at": "2026-07-10T18:14:00Z",
-        "created_by": "router",
-        "escalation_reason": "4th confirmed instance this session of the 'agent claims a deliverable that is not actually persisted' defect class (2 prior notebook-write instances + this board-row instance + D0's own notebook incident earlier this tick). D1 independently verified and self-blocked rather than guess. Minted directly to ready[] (not backlog[]) given it blocks an already-in-flight sprint's remaining tasks (D1, D5).",
-        "status_note": "D0B triage re-derivation started 2026-07-10T21:30Z",
-        "completed_at": "2026-07-10T21:35:00Z",
-        "triage_result": {
-          "completed_at": "2026-07-10T21:35:00Z",
-          "methodology": "Re-derived full machine-readable list of D0 triage results using Tier 1-3 analysis (commit verification, git log search, data claim re-probes)",
-          "total_items_re_derived": 89,
-          "exception_breakdown": {
-            "confirm_terminal": 1,
-            "exclude": 4,
-            "relabel": 10
-          },
-          "note": "D0's original triage_result had only 2 of 15 items persisted (FACTORY-INTERFACE-split-server-ts and FIX-BCTC-BANK-SUMMARY-MAPPING). D0B re-derived and persisted the complete list. Both D0 and D0B rows now carry the complete exceptions[] array. D1 can build --exclude-ids list from either source.",
-          "exceptions": [
-            {
-              "id": "FACTORY-INTERFACE-split-server-ts",
-              "action": "CONFIRM-TERMINAL",
-              "reason": "All 4 stage commits verified (bce8be44b, 821bbbeea, 56f922c93, 8c228ffa6). Currently in backlog with BLOCKED status but fully shipped. Use devteam-close-task-done-verified.jq to move to done_verified lane."
-            },
-            {
-              "id": "FIX-BCTC-BANK-SUMMARY-MAPPING",
-              "action": "EXCLUDE",
-              "reason": "Status=DONE but genuinely still open: CTG 2026Q1 net_margin_pct=229157%, total_assets=0, parsed_at 2026-07-10T07:51:33Z. Corroborated by TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST (status=BLOCKED, same-day validation). Do not archive; awaiting ops re-ingest."
-            },
-            {
-              "id": "FIX-ALERT-OPEN-ZERO-PRICE-RACE",
-              "action": "EXCLUDE",
-              "reason": "Status=BLOCKED. Live market bug: bbAlertScanJob/taAlertScanJob fire giá=0 BB-breakout + single-digit RSI at market open 02:00-02:15Z, self-normalizing by 06:08Z. Blocked on ongoing market behavior observation/fix. Still open work."
-            },
-            {
-              "id": "FU-PROFILE-DATA-VERIFY",
-              "action": "EXCLUDE",
-              "reason": "Status=BLOCKED. Verification task: get_company_profile.foreign_holding_ratio + get_bctc_full.structured_data.receivables serve null after vnstock sync. Open verification work required before resolution."
-            },
-            {
-              "id": "REFLOW-MBB-Q1-2026",
-              "action": "EXCLUDE",
-              "reason": "Status=BLOCKED. Re-extraction/reingest task: MBB Q1-2026 total_assets=666.7B corrupt, equity=0 (predates a46131cf). Blocked on ops re-extract and reingest. Open operational work."
-            },
-            {
-              "id": "FIX-DIGEST-RSI-DUAL-ENGINE-DIVERGE",
-              "action": "RELABEL",
-              "reason": "Currently in backlog[] with status=REVIEW. Should be in review[] lane (status already correct, wrong lane). Move backlog→review."
-            },
-            {
-              "id": "FIX-FB-WEEKEND-DEDUP-GATE",
-              "action": "RELABEL",
-              "reason": "Currently in backlog[] with status=REVIEW. Should be in review[] lane (status already correct, wrong lane). Move backlog→review."
-            },
-            {
-              "id": "FIX-FOREIGN-FLOW-BULLETIN-UNAVAIL-STRING",
-              "action": "RELABEL",
-              "reason": "Currently in backlog[] with status=REVIEW (CI-RED 1783). Should be in review[] lane (status already correct, wrong lane). Move backlog→review."
-            },
-            {
-              "id": "FIX-MACRO-THRESHOLD-FXFLOOR-OVERCLAMP",
-              "action": "RELABEL",
-              "reason": "Currently in backlog[] with status=REVIEW (CI-RED macro cluster). Should be in review[] lane (status already correct, wrong lane). Move backlog→review."
-            },
-            {
-              "id": "FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0",
-              "action": "RELABEL",
-              "reason": "Currently in backlog[] with status=REVIEW. Describes data-integrity constraint violations. Should be in review[] lane (status already correct, wrong lane). Move backlog→review."
-            },
-            {
-              "id": "FIX-L2-FRESHNESS-DATAASOF-FIELDS",
-              "action": "RELABEL",
-              "reason": "Currently in backlog[] with status=IN_PROGRESS. Should be in in_progress[] lane (status already correct, wrong lane). Move backlog→in_progress."
-            },
-            {
-              "id": "FIX-SCHEMA-DRIFT-P5-SELFHEAL",
-              "action": "RELABEL",
-              "reason": "Currently in backlog[] with status=IN_PROGRESS. Self-healing getDb() is active work. Should be in in_progress[] lane (status already correct, wrong lane). Move backlog→in_progress."
-            },
-            {
-              "id": "D1-BACKLOG-HYGIENE-SWEEP-EXECUTE",
-              "action": "RELABEL",
-              "reason": "Currently in backlog[] with status=BLOCKED. This is a sprint task (part of BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP sprint) that should have status=BACKLOG (not BLOCKED). Misclassified; relabel to BACKLOG."
-            },
-            {
-              "id": "FIX-AGENT-SIGNALS-ORPHAN-ALERT-ID",
-              "action": "RELABEL",
-              "reason": "Currently in review[] with status=DONE_VERIFIED (124 orphaned rows). This completed task has finalized status. Should be in done_verified[] lane, not review[]. Move review→done_verified."
-            },
-            {
-              "id": "OPS-BCTC-REFINE-REPASS-NONBANK-5T",
-              "action": "RELABEL",
-              "reason": "Currently in backlog[] with status=IN_PROGRESS. OPS task actively running agentic-refine repass for 5 non-bank Q1-2026 reports. Should be in in_progress[] lane (status already correct, wrong lane). Move backlog→in_progress."
-            }
-          ]
-        }
-      }
-    ],
+    "done_verified": [],
     "head": {
       "active_task_id": null,
       "next_agent": null,
@@ -8542,39 +7279,6 @@
         "commit": "pending"
       },
       {
-        "id": "FIX-AGENT-SIGNALS-ORPHAN-ALERT-ID",
-        "title": "agent_signals.alert_id dangling FK: 124 rows reference a missing alerts.id (growing ~50-70/day) — inverse of closed C-08 alerts->signals work",
-        "type": "FIX",
-        "size": "M",
-        "status": "DONE_VERIFIED",
-        "priority": "P1",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AGENT-SIGNALS-ORPHAN-ALERT-ID",
-        "promoted_at": "2026-07-10T04:04:12Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-10T04:04:26Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "owner": "dev-mcp-server",
-        "started_at": "2026-07-10T04:04:26Z",
-        "updated_at": "2026-07-10T09:19:45Z",
-        "updated_by": "ops",
-        "next_agent": "ops",
-        "rebuild_required": true,
-        "files": [
-          "apps/mcp-server/src/infrastructure/db/alertStore.ts",
-          "apps/mcp-server/src/scheduler/news-analysis/dataAuditJob.ts",
-          "apps/mcp-server/src/scheduler/news-analysis/audit-checks/checkOrphanAgentSignalsAlertId.ts",
-          "apps/mcp-server/src/__tests__/FIX-AGENT-SIGNALS-ORPHAN-ALERT-ID.test.ts",
-          "docs/architecture/microservice/mcp-server/infrastructure.md"
-        ],
-        "status_note": "Live RAW-verify against the named-volume DB found 0 current orphans (10/10 alert_id-tagged agent_signals rows resolve; historical 124 (06-22/23) self-expired via TTL=2h+cleanExpired(), unrecoverable to inspect). Root-caused via git archaeology instead of live data: storeAlerts/storeAlertsFromCommander (alertStore.ts) co-write the agent_signals correlation row whenever no existing row shares alert_id, WITHOUT confirming the paired INSERT OR IGNORE INTO alerts actually persisted a row. That insert can silently no-op on the alerts.fingerprint UNIQUE-index collision (idx_alerts_fingerprint, FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS 06-16), not just an id collision. Pre-06-25 taAlertScanJob/bbAlertScanJob paired a deterministic fingerprint with a random crypto.randomUUID() id — a repeat fire (same fingerprint) got a fresh id whose alerts insert was ignored while the agent_signals insert still fired, producing the dangling FK (confirmed by commit 57a781a14 own message: 220 rows +96/day as of 06-25, which fixed the CALLER side for those 2 jobs only). e3386bdf (TASK-CONF-1) ruled out — diff touches only confidence_score plumbing, and 06-22 orphans predate its 06-23T17:55Z landing anyway. Fix applied at the WRITER (defense in depth): both storeAlerts/storeAlertsFromCommander now confirm SELECT 1 FROM alerts WHERE id=? before writing the correlation row — agent_signals.alert_id can never dangle regardless of any future caller correctness. Added checkOrphanAgentSignalsAlertId (D-NEW2, dataAuditJob.ts) as an ongoing regression tripwire (inverse of C-08/W-6 checkOrphanAlerts). New FIX-AGENT-SIGNALS-ORPHAN-ALERT-ID.test.ts (8 tests, TDD RED->GREEN, RED reproduced the exact dangling-FK defect at the writer level before the fix). Targeted alert suites (FIX-ALERT-ORPHAN-CORRELATION, ta/bb-scan-job, foreign-flow, UUID-MISMATCH, CONFIDENCE-DEFAULT-50, data-audit-job) 110/110 pass. tsc clean. Full bun test 14449 pass/40 skip/63 fail/9 errors/1187 files (599s, known Bun 1.3.13 teardown crash) - grepped all failures for alert/signal/orphan/audit: zero matches, pre-existing/unrelated. toolCount=183 unchanged, no scheduler files touched (no new cron.schedule). Server-boot probe: health 200, bctc-inspect/news-fetch dashboard routes clean. VERIFICATION-GATE CAVEAT: live re-check of 0-NEW-orphans-post-deploy requires an ops rebuild+swap (container swaps user-gated, not run by this agent) - rebuild_required:true. Historical 124 orphans no longer exist to backfill/NULL (self-expired before this task began) - documented, not silently skipped.\n\n[OPS DEPLOY 2026-07-10T04:59:15Z] Docker rebuild+swap completed successfully. (1) Build: docker compose build mcp-server completed in 206s. (2) SHA verify: deployed image SHA 3afc9b80dabe0ca208eafa08d5dc44e20b320407 confirmed >= fix commit 33bb3078e. (3) Post-swap orphan query (bun:sqlite): returned 0 (no dangling FK violations observed). (4) Server health: status=ok, toolCount=183 (unchanged), no boot errors. NEXT: Future tick re-verify orphan count after >=1 alert-scan cycle to complete acceptance criterion. Task remains REVIEW; awaiting live-cycle observation.\n\n[OPS POST-DEPLOY VERIFICATION 2026-07-10T09:19:45Z] Live RAW-probe re-executed against named-volume DB (/app/data/market.db) using bun:sqlite. RESULT: ORPHAN_COUNT = 0 (no dangling FK references detected). STATS: total agent_signals=79, total alerts=2041, agent_signals.alert_id refs=11 (all 11 resolve correctly). Compared to 04:59:15Z baseline (0 orphans): unchanged, confirming the writer-level defense guard is functioning correctly in production. Multiple alert-scan cycles have completed since deploy without creating new orphans. ACCEPTANCE CRITERION SATISFIED: fix is working live. Status: DONE_VERIFIED.",
-        "commit": "pending",
-        "qa_verified_at": "2026-07-10T04:49:04Z",
-        "qa_verified_by": "qa",
-        "qa_note": "QA independently re-verified (not trusted from report): (1) diff confirmed generic parameterized `SELECT 1 FROM alerts WHERE id = ?` existence guard in BOTH storeAlerts/storeAlertsFromCommander (alertStore.ts), not hardcoded to any alert id. (2) New FIX-AGENT-SIGNALS-ORPHAN-ALERT-ID.test.ts re-run fresh: 8/8 pass. (3) Targeted alert suites re-run fresh (8 files incl. FIX-ALERT-ORPHAN-CORRELATION/ta-scan-job/bb-scan-job/UUID-MISMATCH/CONFIDENCE-DEFAULT-50/data-audit-job x2 + 2 foreign-flow-alert files): 129/129 pass. tsc clean (0 errors). DDD clean (no domain-layer files touched; scheduler/infra imports match each file's own documented layer). Security clean (parameterized SQL, no process.env, no secrets). mock-guard PASS exit 0. (4) Independently re-ran FULL `bun test`: 14456 pass/40 skip/56 fail/5 errors/1187 files (552s, same documented Bun 1.3.13 teardown-crash class) — grepped all 56 failing test names for alert/signal/orphan/audit/alertStore/dataAuditJob/checkOrphanAgentSignalsAlertId: zero overlap. Spot-isolated 3 of the 56 (102-job-news-poll.test.ts, 1875c-record-signal-outcome-routing.test.ts, 1518-get-foreign-flow-ohlcv-source.test.ts) in isolation: the pollNews cluster fails on a real local-sandbox cause (`Browser was not found at /usr/bin/chromium`, 5000ms bun-test-default timeout), the other 2 pass 9/9 clean in isolation — confirms pre-existing resource-contention/env flake, not a regression from this diff, matching dev-mcp-server's own claim (their run: 14449/63/9; run-to-run count variance is itself the documented flakiness signature per S27/S12 precedent). (5) Live-DB RAW-probe (docker exec bun against the named-volume DB `/app/data/market.db`, confirmed via DB_PATH env + volume-mount inspection, not readonly to avoid WAL-blindness): 0 orphans, 10/10 alert_id-tagged agent_signals rows resolve to a real alerts.id — independently reproduces the claimed 0-orphan snapshot. (6) Verified the running container's image was built 2026-07-09T12:49:50Z, strictly BEFORE this fix's commit (33bb3078e, 2026-07-10T04:30:25Z) — the deployed container is CONFIRMED still running the pre-fix code; the writer guard is not live in production yet, so the underlying defect (silent dangling-FK creation on a future fingerprint collision) has not actually stopped, even though the current DB snapshot happens to read 0 orphans. VERDICT: code+tests APPROVED, held at REVIEW (not DONE_VERIFIED) per standing precedent (qa-S7/S9/qa journal: docker compose swap is ops-gated, QA does not self-authorize) — routing next_agent=ops for the rebuild+swap; DJ-GATE-1 confirmed satisfied (dev-mcp-server-S28, task-id stamped)."
-      },
-      {
         "id": "GAP-CHEF-SYNTHESIS-A-FLOW-PERSIST",
         "title": "GAP-CHEF-SYNTHESIS (a): CHEF (unified-agent) computes a TNB 6-layer synthesis (per-ticker conviction, sector phase, regime+confidence, known_gaps) every cycle but persists it ONLY to Telegram MARKET + the unified-agent.md notebook — never to a frontend-queryable store. Add a persist step to chef.md that writes docs/data/unified-agent-synthesis-<DATE>-<SLOT>.json.",
         "type": "FEATURE",
@@ -8663,6 +7367,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-07-10T16:07:01Z",
-  "_updated_by": "po"
+  "_updated_at": "2026-07-10T18:26:34Z",
+  "_updated_by": "developer"
 }
