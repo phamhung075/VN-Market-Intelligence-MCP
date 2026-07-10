@@ -300,11 +300,11 @@
   ],
   "head": {
     "status": "in_progress",
-    "updated_at": "2026-07-10T07:19:07Z",
-    "updated_by": "dev-team",
-    "active_task_id": "FIX-AGENT-SIGNALS-ORPHAN-ALERT-ID",
-    "next_agent": "ops",
-    "next_action": "ops: rebuild+swap CONFIRMED live 2026-07-10T04:59:15Z (image SHA >= fix commit, 0 orphans post-swap). >=1 alert-scan cycle has now elapsed — re-run the live 0-orphan RAW-probe (docker exec bun against named-volume DB) to complete the acceptance criterion. If still 0 orphans, hand to qa/po for done_verified close."
+    "active_task_id": "GAP-CHEF-SYNTHESIS-A-FLOW-PERSIST",
+    "next_agent": "cowork-refactory-expert",
+    "next_action": "BOUNDED-1 auto-pickup GAP-CHEF-SYNTHESIS-A-FLOW-PERSIST — router corrected next_agent developer->cowork-refactory-expert (zone-detect Tier-3 gap for non-apps/ zones; owner=cowork/agent-md-factory in backlog-detail, exact precedent FIX-CHEF-SENDTELEGRAM-ARGSHAPE sprint-2026-07-08-cowork-refactory-expert.md). Add persist step to chef.md AFTER synthesis/BEFORE end-cycle writing docs/data/unified-agent-synthesis-<DATE>-<SLOT>.json (conviction/sector-phase/regime/known_gaps). Edit chef.md via agent-md-factory skill discipline. Pre-verified 2026-07-10: no unified-agent-synthesis-*.json exists yet, chef.md has no persist step, not epic/supervised.",
+    "updated_at": "2026-07-10T08:52:26Z",
+    "updated_by": "dev-team"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -338,10 +338,22 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-09T18:58:19Z",
-    "_updated_by": "dev-team (post-cycle 4.0.5)",
+    "_updated_at": "2026-07-10T08:50:40Z",
+    "_updated_by": "dev-team",
     "archive": [],
-    "rows": [],
+    "rows": [
+      {
+        "id": "cowork-recurring-guaranteed-miss-20260710T0847Z",
+        "ts": "2026-07-10T08:47:45Z",
+        "from": "cowork-dispatcher",
+        "to": "po",
+        "type": "repair_task_request",
+        "severity": "HIGH",
+        "status": "READ",
+        "summary": "Recurring guaranteed-slot-miss pattern confirmed on TWO distinct CHEF slots, each missing at the identical tick 2 consecutive days running: chef-morning (05:15Z, missed 2026-07-09 and 2026-07-10) and chef-eod (08:45Z, missed 2026-07-09 and 2026-07-10). Both show superseded-despite-trigger-id pattern in docs/data/cowork-schedule.json: trigger_id is non-null (a real backstop trigger is configured) but _superseded_by=\"cowork-dispatcher\" still marks the slot undeliverable via the cowork-dispatcher gateway-blind bypass. This is systemic, not isolated noise — same-tick recurrence across 2 separate guaranteed slots over 2 days suggests the backstop trigger wiring for guaranteed CHEF slots is broken in a reproducible way, not a one-off gateway hiccup. Recommend architect review of the guaranteed-slot backstop trigger dispatch path (docs/agents/cowork-team/flow/) — durable fix likely needed beyond the standing GATEWAY-BLIND-USER-ACTION-2026-06-18 remediation, since trigger_id presence alone does not guarantee delivery when _superseded_by is set.",
+        "payload_ref": null
+      }
+    ],
     "last_triaged_at": "2026-07-03T19:49:38Z",
     "last_triaged_by": "po"
   },
@@ -4752,15 +4764,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MACRO-INDICATORS-EMPTY-COLUMNS"
       },
       {
-        "id": "GAP-CHEF-SYNTHESIS-A-FLOW-PERSIST",
-        "title": "GAP-CHEF-SYNTHESIS (a): CHEF (unified-agent) computes a TNB 6-layer synthesis (per-ticker conviction, sector phase, regime+confidence, known_gaps) every cycle but persists it ONLY to Telegram MARKET + the unified-agent.md notebook — never to a frontend-queryable store. Add a persist step to chef.md that writes docs/data/unified-agent-synthesis-<DATE>-<SLOT>.json.",
-        "type": "FEATURE",
-        "priority": "P1",
-        "status": "BACKLOG",
-        "zone": "docs/agents/unified-agent/flow/chef.md",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#GAP-CHEF-SYNTHESIS-A-FLOW-PERSIST"
-      },
-      {
         "id": "GAP-CHEF-SYNTHESIS-B-ENDPOINT-CARD",
         "title": "GAP-CHEF-SYNTHESIS (b): make the captured CHEF synthesis queryable. dev-mcp-server adds GET /api/cheb-synthesis (or folds into /api/market-digest) reading docs/data/unified-agent-synthesis-<DATE>-<SLOT>.json with a data_asof/generatedAt field; dev-frontend adds a card surfacing conviction calls, sector phases, regime, known_gaps.",
         "type": "FEATURE",
@@ -7721,9 +7724,27 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-10T04:04:12Z",
+    "last_triaged_at": "2026-07-10T08:51:06Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "GAP-CHEF-SYNTHESIS-A-FLOW-PERSIST",
+        "title": "GAP-CHEF-SYNTHESIS (a): CHEF (unified-agent) computes a TNB 6-layer synthesis (per-ticker conviction, sector phase, regime+confidence, known_gaps) every cycle but persists it ONLY to Telegram MARKET + the unified-agent.md notebook — never to a frontend-queryable store. Add a persist step to chef.md that writes docs/data/unified-agent-synthesis-<DATE>-<SLOT>.json.",
+        "type": "FEATURE",
+        "priority": "P1",
+        "status": "REVIEW",
+        "zone": "docs/agents/unified-agent/flow/chef.md",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#GAP-CHEF-SYNTHESIS-A-FLOW-PERSIST",
+        "promoted_at": "2026-07-10T08:51:06Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-10T08:51:33Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "cowork-refactory-expert",
+        "review_note": "Flow edit complete (chef.md Step 7.6 added). Awaiting live CHEF cycle to verify docs/data/unified-agent-synthesis-<DATE>-<SLOT>.json is created with non-empty conviction_calls and sector_phases. Verification scheduled for next natural CHEF cycle (morning/intraday/eod/evening).",
+        "review_gated_by": "live-cycle-verification"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",

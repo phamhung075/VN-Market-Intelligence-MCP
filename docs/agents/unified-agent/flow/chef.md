@@ -1,4 +1,4 @@
-<!-- size-justification: 509L — telemetry extracted to chef-telemetry.md (S1 split); dual-output Step 7 splits MARKET (plain-VI) from WORK (TNB-auditable) — atomic responsibility, cannot split without breaking recipe coherence; Steps 0–7 are a sequential decision framework that must be read end-to-end per dish cycle; Step 8 rewritten NB-FLOW-SETTLED-WRITE: compose-in-memory then single-Write (AC-3 invariant, closes notebook-bloat class); DSI-CONSUMER-HONORS-ISESTIMATE carry provenance rule in Step 6.5; Step 0.5 published-marker gate added FIX-COWORK-GUARANTEED-BACKSTOP AC-5 2026-06-13; Step 0.5 cadence-derived marker key+TTL FIX-CHEF-INTRADAY-MARKER-CADENCE 2026-06-15; FIX-CHEF-FABRICATED-TA-NUMBERS: anti-fabrication numeric-indicator rule + Step 6.7 pre-publish self-check gate 2026-06-15; F-EVENING-QUALITY-OVERCLAIM: Step 7.5 deterministic quality-verdict gate added 2026-06-24 — closes false-full badge class -->
+<!-- size-justification: 654L (+145L from GAP-CHEF-SYNTHESIS-A-FLOW-PERSIST: added Step 7.6 machine-queryable JSON persist); telemetry extracted to chef-telemetry.md (S1 split); dual-output Step 7 splits MARKET (plain-VI) from WORK (TNB-auditable) — atomic responsibility, cannot split without breaking recipe coherence; Steps 0–7.6 are a sequential decision framework that must be read end-to-end per dish cycle; Step 8 rewritten NB-FLOW-SETTLED-WRITE: compose-in-memory then single-Write (AC-3 invariant, closes notebook-bloat class); DSI-CONSUMER-HONORS-ISESTIMATE carry provenance rule in Step 6.5; Step 0.5 published-marker gate added FIX-COWORK-GUARANTEED-BACKSTOP AC-5 2026-06-13; Step 0.5 cadence-derived marker key+TTL FIX-CHEF-INTRADAY-MARKER-CADENCE 2026-06-15; FIX-CHEF-FABRICATED-TA-NUMBERS: anti-fabrication numeric-indicator rule + Step 6.7 pre-publish self-check gate 2026-06-15; F-EVENING-QUALITY-OVERCLAIM: Step 7.5 deterministic quality-verdict gate added 2026-06-24 — closes false-full badge class; Step 7.6 PERSIST-SYNTHESIS added 2026-07-10 — enables frontend/downstream-tool access to structured conviction/sector/regime/gap data -->
 > Parent: [./main.md](./main.md)
 
 # Unified Agent — Chef Flow (TNB 6-Layer Recipe)
@@ -479,6 +479,99 @@ else:
 - When `$QUALITY_VERDICT = "degraded"`, conviction scores throughout the dish are retroactively capped at MEDIUM (this mirrors the EOD degraded-dish floor in Step 1 and the per-cluster LOW conviction rule in Step 6.5).
 - This gate fires for ALL `$DISH_TYPE` values (morning / intraday / eod / evening). There is no dish window exempt from the gate.
 - The intraday silent-exit path (Step 1, 0 clusters) is exempt — it exits before Step 7 and may still use `QUALITY: full` in its EXIT line because no layer-walk was attempted (nothing to degrade).
+
+---
+
+## Step 7.6 — PERSIST SYNTHESIS (JSON output — machine-queryable store)
+
+After the quality verdict gate (Step 7.5) completes, persist the synthesized TNB 6-layer analysis to a machine-queryable JSON file. This enables frontend queries and downstream tools to access the structured conviction/sector/regime/gap data without parsing Telegram prose or notebooks.
+
+**File path:**
+```
+CYCLE_DATE = YYYY-MM-DD (VN date of cycle execution)
+SLOT_ID = <dish_type> (morning | intraday | eod | evening)
+FILEPATH = docs/data/unified-agent-synthesis-{CYCLE_DATE}-{SLOT_ID}.json
+```
+
+Example: `docs/data/unified-agent-synthesis-2026-07-03-eod.json`
+
+**JSON schema — synthesized 6-layer delivery:**
+```json
+{
+  "metadata": {
+    "cycle_id": "<DISH_TYPE>-<CYCLE_START_UTC>",
+    "dish_type": "morning|intraday|eod|evening",
+    "date_vn": "YYYY-MM-DD",
+    "timestamp_utc": "YYYY-MM-DDTHH:MM:SSZ",
+    "quality_verdict": "full|degraded",
+    "layers_walked_summary": "1-6 (full)" | "partial — [gap:...]"
+  },
+  
+  "tnb_synthesis": {
+    "clock_phase": "expansion|slowdown|contraction|recovery|transition",
+    "regime_state": "risk-on|risk-off|carry-unwind|macro-uncertainty|...",
+    "regime_confidence": "HIGH|MEDIUM|LOW",
+    "us_macro_layer": "...(Layer 2 narrative excerpt)",
+    "vn_macro_layer": "...(Layer 3 narrative excerpt)",
+    "valuation_layer": "...(Layer 4 sector phases + conviction drivers)"
+  },
+  
+  "conviction_calls": [
+    {
+      "ticker": "VCB",
+      "conviction_level": "HIGH|MEDIUM|LOW",
+      "direction": "BUY|HOLD|SELL|NEUTRAL",
+      "pillars_aligned_count": 0-4,
+      "rationale_one_liner": "..."
+    }
+  ],
+  
+  "sector_phases": [
+    {
+      "sector_vn": "ngân hàng|bất động sản|...",
+      "investment_phase": "expansion|slowdown|contraction|recovery|transition",
+      "pyramid_tier": "equity|fixed_income|cash|defensive",
+      "direction_this_cycle": "positive|negative|mixed"
+    }
+  ],
+  
+  "known_gaps": [
+    "[L6-gap: gold >$4,300 active — regime-drift risk: ...]",
+    "[gap: L2_US_macro_absent_no_gap_token]",
+    "[gap: L4_partial_pillar_coverage]"
+  ],
+  
+  "causal_chains": [
+    "Fed hawkish hold → VND carry pressure +0.4σ → banking sector net-sell by foreigners → VCB price +4.12% on SOE inflow contradicts the macro signal."
+  ],
+  
+  "clusters_summary": {
+    "qualified": 4,
+    "tickers_covered": ["VCB", "BID", "VHM", "ACB"],
+    "sectors_covered": ["banking", "real_estate"]
+  }
+}
+```
+
+**Implementation rules:**
+- Extract conviction calls from Step 4 per-ticker scoring + Step 4 pillar alignment counts.
+- Extract sector phases from Step 4 phase/tier declarations + Step 4 pillar evidence.
+- Extract regime state from Step 3 macro analysis (Layer 2+3) + carry regime if `$carry_usable=true`.
+- Extract known_gaps from Step 6 gap catalogue (the `[gap: ...]` markers that were written to Step 7 Block B).
+- Extract causal chains from Step 6.5 session state (the full sentences produced for the dish).
+- Extract cluster summary from Step 1 cluster grouping results.
+- `quality_verdict` and `layers_walked_summary` sourced directly from Step 7.5 gate output.
+
+**Write tool call (single atomic write):**
+```
+Write(path=FILEPATH, content=<JSON content from above schema>)
+```
+
+**Verification (after write):**
+Confirm the JSON file exists at FILEPATH and is valid JSON with non-empty `conviction_calls` and `sector_phases` arrays (unless the cycle was intraday-silent, in which case SKIP this step entirely per the intraday silent-exit exception below).
+
+**Intraday silent-exit exception:**
+If the cycle exited silently in Step 1 (0 clusters, intraday slot), skip Step 7.6 entirely — no JSON file is written for silent cycles. The exit in Step 1 already returned early before reaching Step 7.
 
 ---
 
