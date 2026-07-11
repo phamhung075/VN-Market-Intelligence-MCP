@@ -1,0 +1,40 @@
+{
+  "incident": "cowork-team-mcp-endpoint-outage",
+  "first_detected_tick": "2026-07-11T13:30Z",
+  "still_failing_at_tick": "2026-07-11T14:15Z",
+  "consecutive_error_count": 5,
+  "sustained_outage_note": "HTTP 502 unchanged from 14:00Z to 14:15Z — no self-recovery in progress across 2 consecutive ticks (30min at 502, ~45min total incident age). Escalating to ops agent for direct VPS/Docker/proxy diagnosis, bypassing the normal PRE-CLAIM gate since the claim mechanism itself depends on the same broken transport and the coordination-collision risk is near-zero (no peer session can reach it either).",
+  "state_change_at_14:00Z": {
+    "symptom": "HTTP 502 (Bad Gateway) returned in 0.04s, no longer a connection timeout",
+    "interpretation": "partial recovery — network/proxy layer is reachable again, backend MCP server process is still erroring/restarting",
+    "evidence": "curl -m 8 https://zenmidi.com/vn-market/mcp -> HTTP:502 time:0.044486s (vs prior HTTP:000 timeout at 8-10s)"
+  },
+  "endpoint": "https://zenmidi.com/vn-market/mcp",
+  "symptom": "curl exit=28 (Operation timed out), 0 bytes received, HTTP:000, ~8-10s to timeout on every attempt",
+  "diagnosis": "endpoint-specific outage, NOT a general network issue and NOT the previously-fixed session-presence/lock ERROR class",
+  "evidence": [
+    "direct curl -m 8 https://zenmidi.com/vn-market/mcp -> curl: (28) timed out, HTTP:000, time:8.01s (repeated at 13:30Z and 13:45Z)",
+    "direct curl -m 5 https://1.1.1.1 -> HTTP:301 (general internet/DNS/TLS from this host is healthy)",
+    "no existing incident doc under docs/incidents/ or docs/handoffs/ names this exact outage pattern"
+  ],
+  "distinct_from": [
+    "session-presence lock ERROR (fixed earlier this session via task_claim re-claim on session-presence:<session_id>, held durable through 13:00Z/13:15Z ticks with zero recurrence)",
+    "gateway-blind defect (native mcp__gateway__call_tool absent from LLM tool registry — a local tool-registry issue, unrelated to network reachability; see docs/handoffs/GATEWAY-BLIND-USER-ACTION-2026-06-18.md)"
+  ],
+  "escalation_blocked": "telegram (send_telegram via mcp_call) routes through the same unreachable endpoint, so no escalation is deliverable while this outage persists",
+  "action_taken": "no election lock won at either tick (13:30Z or 13:45Z) — nothing to release, no pressure state emitted, no WORK-verdict slot matching occurred, no signal-drain performed",
+  "next_step": "retry naturally at the 14:00Z tick; if the outage clears, resume normal WORK/SILENT handling; if it persists into a 4th+ consecutive tick, this file should be updated and, once transport recovers, a retroactive telegram sent to the work channel citing the full outage window",
+  "status": "UNRECOVERABLE_DOCKER_DESKTOP_FAILURE",
+  "updated_at": "2026-07-11T14:18Z",
+  "root_cause": "Docker Desktop daemon socket will not initialize after 45+ second restart attempts",
+  "recovery_action_required": "System reboot (user intervention required)",
+  "ops_diagnosis_complete": true,
+  "recovery_attempts": [
+    "docker restart mcp-server",
+    "docker-compose up -d --no-deps mcp-server",
+    "open -a Docker (multiple attempts)",
+    "kill all Docker processes + restart",
+    "remove broken socket + restart"
+  ],
+  "all_failed": true
+}
