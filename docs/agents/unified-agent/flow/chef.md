@@ -108,8 +108,12 @@ call_tool(server="vn-market", tool="get_volatility_indicators", arguments={})
 call_tool(server="vn-market", tool="get_market_sentiment_index", arguments={})
 call_tool(server="vn-market", tool="get_foreign_room", arguments={})
 call_tool(server="vn-market", tool="get_breadth_thrust", arguments={})
+call_tool(server="vn-market", tool="get_roc_momentum", arguments={})
+call_tool(server="vn-market", tool="get_relative_strength", arguments={})
+call_tool(server="vn-market", tool="get_52w_proximity", arguments={})
+call_tool(server="vn-market", tool="get_insider_sentiment", arguments={})
 ```
-If successful: extract volatility regime (gk_vol_20d_pct, vol_regime), market sentiment z-score (news_sentiment_z, sentiment_ema_5d), foreign-room utilization (tickers[].utilization.room_utilization_pct — high pct = exhausted), and breadth indicators (mclellan_osc, mclellan_summation, breadth_z_score). Store as MARKET_INDICATORS context. Use to enrich Step 3 (Layer 2+3 VN stack — FII flow context via foreign-room and sentiment) and Step 4 (Layer 4 valuation — volatility/breadth context for conviction scoring). If any tool returns NULL or error: log `[SKIP] <tool_name> unavailable` and continue — these are enrichment sources only, not blockers.
+If successful: extract volatility regime (gk_vol_20d_pct, vol_regime), market sentiment z-score (news_sentiment_z, sentiment_ema_5d), foreign-room utilization (tickers[].utilization.room_utilization_pct — high pct = exhausted), breadth indicators (mclellan_osc, mclellan_summation, breadth_z_score), momentum indicators (roc, z_score, decile), relative strength metrics (rs, percentile, composite_score), 52-week proximity (pct_from_52w_high, pct_from_52w_low), and insider sentiment (net_sentiment_score). Store as MARKET_INDICATORS context. Use to enrich Step 3 (Layer 2+3 VN stack — FII flow context via foreign-room and sentiment, momentum/RS context for thesis strength) and Step 4 (Layer 4 valuation — volatility/breadth context for conviction scoring, momentum/strength/52w-proximity context for accumulation/distribution risk assessment, insider sentiment context for insider-activity thesis). If any tool returns NULL or error: log `[SKIP] <tool_name> unavailable` and continue — these are enrichment sources only, not blockers.
 
 Note signal count + IDs for LOG step.
 
@@ -181,6 +185,12 @@ Mark any level-reporting-only gap in the draft for Layer 6 fix.
 
 **Thesis mapping:** US → VN via carry/FII flow chain. If US tightening → FII net-sell pressure on VN → document the transmission. Enrich with foreign-room utilization and market sentiment divergence signals if available.
 
+**Momentum & Relative Strength Context (P0 indicators):** When available, `get_roc_momentum()` provides 5-day rate-of-change (roc) with z-score normalization (z_score) and decile ranking (decile = 1-10 ranking vs recent history). `get_relative_strength()` provides relative strength rank (rs percentile vs watchlist) and composite momentum score. Use to refine entry/exit timing: decile ≥ 8 (strong momentum) + high RS percentile → accumulation signal; decile ≤ 2 (weak momentum) + low RS → distribution signal. When discussing ticker strength thesis, cite decile + RS percentile context if available.
+
+**52-Week Proximity Context (P0 indicator):** When available, `get_52w_proximity()` provides percentage distance from 52-week high (pct_from_52w_high) and low (pct_from_52w_low). Use to assess valuation/risk positioning: pricing near 52w-high (pct_from_52w_high > 80%) + weak momentum → resistance risk; pricing near 52w-low (pct_from_52w_low < 20%) + rising momentum → recovery opportunity. Flag in Layer 3 thesis when positioning is extreme.
+
+**Insider Activity Context (P0 indicator):** When available, `get_insider_sentiment()` provides aggregate insider net sentiment score (net_sentiment_score) reflecting insider buy/sell signal. High positive score (insider buying concentration) + bullish technical setup → corroborating thesis; negative score (insider selling) contradicting bullish thesis → flag as Layer 6 risk divergence. When insider data is unavailable (honest-NULL per `FIX-VPS-SSC-INSIDER-502`), note as a gap explicitly.
+
 **Electronics/IZ/banking sectors:** When any qualifying cluster involves these sectors, invoke `trade-fx-pressure-decomp` (skill: `.claude/skills/trade-fx-pressure-decomp/SKILL.md`) and incorporate TRADE_FX.fx_incidence and margin_trap_flag into the sector layer narrative. Degraded mode (TRADE_FX.is_estimate=true) → note gap explicitly.
 
 ---
@@ -206,6 +216,14 @@ When available, use `get_volatility_indicators()` and `get_breadth_thrust()` to 
 - High volatility (gk_vol_20d_pct elevated, vol_regime='high') + bullish thesis → cap conviction at MEDIUM (increased realization risk)
 - Weakening breadth (mclellan_osc negative, zweig_max_consecutive declining) + sector bullish thesis → flag divergence in Layer 6 (sector enthusiasm not supported by breadth)
 - Compressed volatility (vol_regime='compressed') + bearish thesis → cap conviction at MEDIUM (asymmetric risk on volatility expansion)
+
+**Momentum, Relative Strength & Insider Context (P0 indicators):**
+When available, use the momentum/RS/52w-proximity/insider indicators to refine conviction and risk assessment:
+- Bullish thesis (EPS ↑, COC low, valuation attractive) + strong momentum (decile ≥ 8) + high RS percentile + positive insider_sentiment → elevate conviction to HIGH (accumulation confirmation)
+- Bullish thesis + weak momentum (decile ≤ 2) + low RS percentile → cap conviction at MEDIUM (thesis not yet confirmed by accumulation; requires patience)
+- Bearish thesis + falling momentum (decile ≤ 2) + low RS percentile → elevate conviction to HIGH (distribution confirmation)
+- Pricing at 52w-high with falling momentum + thesis reversal (e.g., EPS forecast cut) → elevate risk flag to Layer 6 (top-of-range vulnerability)
+- Pricing at 52w-low with rising momentum + recovery thesis + positive insider_sentiment → flag as oversold recovery opportunity (cite decile + insider_sentiment in conviction narrative)
 
 **Cycle phase declaration (MANDATORY — TNB Step H):**
 After scoring pillars, declare the investment-clock phase and matching pyramid tier:
@@ -334,12 +352,12 @@ When discussing technical posture, use ONLY:
 Before constructing the `send_telegram` call for either Block A or Block B, CHEF MUST mentally scan the composed text for the following token patterns:
 
 ```
-BLOCKED tokens: RSI \d+\.?\d* | MACD \d+\.?\d* | BB \d+\.?\d* | σ \d+\.?\d* | MA\d+ = \d+
+BLOCKED tokens: RSI \d+\.?\d* | MACD \d+\.?\d* | BB \d+\.?\d* | σ \d+\.?\d* | MA\d+ = \d+ | roc -?\d+\.?\d* | z_score -?\d+\.?\d* | decile \d+ | percentile \d+ | rs \d+ | composite_score \d+\.?\d* | pct_from_52w_high \d+\.?\d* | pct_from_52w_low -?\d+\.?\d* | net_sentiment_score -?\d+\.?\d*
 ```
 
 **If any blocked token is found in the text:**
-1. Check: was `get_technical_indicators` called this cycle with a response containing that exact number? If YES → token is permitted.
-2. If NO (no `get_technical_indicators` call, or the number does not match the tool response) → STRIP the numeric token entirely. Replace with the qualitative equivalent (e.g. "RSI 9.8" → "quá bán theo kỹ thuật"; "RSI 72" → "quá mua theo kỹ thuật") OR remove the clause entirely if no qualitative equivalent is meaningful.
+1. Check: was the corresponding tool (`get_technical_indicators` for TA indicators, or `get_roc_momentum`/`get_relative_strength`/`get_52w_proximity`/`get_insider_sentiment` for the new momentum/strength/52w/insider families) called this cycle with a response containing that exact number? If YES → token is permitted.
+2. If NO (no corresponding tool call, or the number does not match the tool response) → STRIP the numeric token entirely. Replace with the qualitative equivalent (e.g. "roc -0.4" → "tâm lý suy yếu"; "percentile 75" → "xếp hạng mạnh") OR remove the clause entirely if no qualitative equivalent is meaningful.
 3. Log the strip action in Block B WORK message: `[AF-GATE: stripped fabricated indicator "<original token>"]`.
 4. If more than 2 blocked tokens are found in one dish → escalate: add `[AF-GATE: ESCALATION — >2 indicator tokens stripped; recipe review needed]` to the WORK message.
 
