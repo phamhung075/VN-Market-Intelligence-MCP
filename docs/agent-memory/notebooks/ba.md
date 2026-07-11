@@ -1,6 +1,14 @@
 # BA — Notebook
 
-**Last updated:** 2026-07-09 | **Sprint:** FIX-BCTC-BANK-SCALAR-MAPPING
+**Last updated:** 2026-07-11 | **Sprint:** ANALYSIS-QUALITY-CONVERGENCE
+
+## BA-ANALYSIS-QUALITY-CONVERGENCE · 2026-07-11
+
+Spec complete. REQ file: `docs/handoffs/BA-ANALYSIS-QUALITY-CONVERGENCE.md`. Zero PO blockers. NEXT: agents-architect.
+
+Key BA findings (live-probed 2026-07-11): built a 9-tool × 6-flow coverage matrix via grep — bctc-analyst is a total silo (0/9, zero gateway market-data tool calls of any kind); market-watcher/digest-predict missing 2 P0 tools (foreign_room, sentiment_index) the roadmap already names them as intended consumers of. The OHLCV-depth gate that `held_by:po-s135`'d `IND-P1-MOMENTUM-CONSUMER-WIRING` is now SATISFIED (live depth 750-762 bars/code) — 3/4 P1 momentum tools return real non-null data; only `get_foreign_accum_rank` still empty (`tickers:[]`, blocked on `FIX-FOREIGN-FLOW-COVERAGE` rebuild, ops-gated). `get_insider_sentiment` is wireable but `insider_transactions`=0 rows live (root cause already tracked: `FIX-VPS-SSC-INSIDER-502`, BACKLOG — cross-referenced, not re-diagnosed). `CCATO-T3-FLOW-WIRING-6PT` (subsumed) hard-depends on `CCATO-T2-CLAIM-TRUTH-SKILL`, which doesn't exist yet (skill file missing) — added as an in-spec FR-4 prerequisite rather than a PO round-trip. `GAP-CHEF-SYNTHESIS-A` is code-shipped but zero live synthesis JSON exists on disk — B's endpoint work stays gated on that closing first (confirmed still-accurate, not stale). market-analyst's prior "excluded pending tool-call-mechanism verification" note is resolved — its 4 P0 tools already call via the correct gateway mechanism with graceful degrade.
+
+Decision journal (task_id: ANALYSIS-QUALITY-CONVERGENCE): see `docs/agent-memory/decisions/sprint-ANALYSIS-QUALITY-CONVERGENCE-ba.md`.
 
 ## BA-FIX-BCTC-BANK-SCALAR-MAPPING · 2026-07-09
 
@@ -20,25 +28,9 @@ Key BA findings (direct code read, both live routes serve 200): `dashboard.momen
 
 Decision journal (task_id: BA-MERGE-MONEY-RADAR-INTO-MOMENTUM): see `docs/agent-memory/decisions/sprint-MERGE-MONEY-RADAR-INTO-MOMENTUM-ba.md`.
 
-## BA-FIX-BCTC-BANK-SUMMARY-MAPPING · 2026-07-01
-
-Spec complete. REQ file: `docs/handoffs/BA-FIX-BCTC-BANK-SUMMARY-MAPPING.md`. Zero PO blockers. 13 numbered ACs (success_metric a-e carried verbatim as AC-5..AC-9). NEXT: architect — MANDATORY root-cause SPIKE (live gateway) FIRST, zone SPLIT after (3rd re-fire over 15d, feedback_recurring_bug_escalation).
-
-Key BA findings (live-probed named-volume market.db `vn-market-intelligence-mcp_market_data` via docker exec bun:sqlite — 5 decoy volumes confirmed live but unmounted): defect reconfirmed unchanged (CTG total_assets=0, net_margin_pct=229157%, confidence=0.5625, validation_status=low_confidence; VCB clean/passed). **CRITICAL counter-finding contesting the sprint's own defect_raw_evidence claim** ("raw extraction already correct for banks"): CTG `bctc_table_rows` show 20/55 (36%) rows with `code=NULL` and BOTH current+prior period numbers garbled into the `label` string (Roman-numeral/section headers unparsed), vs VCB 0/57 (0%) — clean `code="I"/"II"/"IV"/"VI"` with `value_current` populated. Also found CTG-only section-boundary contamination (IS lines tagged `statement_section='balance_sheet'`, same class as sibling sprint FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT's FM-VCB-1) and code collisions (`code="21"` reused ×4, `code="13"` reused ×2) — `findByCode` unreliable for CTG. This evidence is carried into architect's AC-1 SPIKE as a MUST-RECONCILE input — may mean `dev-pdf-extractor` owns part of the fix, not only `dev-mcp-server` `bctcScalarAggregator`. Grep-confirmed identity-serve-guard (`[CORRUPT DATA — SKIP]`) exists in exactly ONE handler (`get_financial_summary`, reports.ts) — its own test docstring self-scopes to that tool only; `get_bctc_full` (bctcFullTools.ts) and a 3rd path `compare_financials` (reports.ts, independent `fetchRow()`) both re-query `financial_reports` directly with NO guard call — BA classification: never-fired design-time scope gap, not a regression (architect/dev-mcp-server to ratify). Non-regression baselines pinned live: FPT 2026-Q1 already `validation_status=failed` pre-fix (unrelated cause, cross-linked to FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT — no-worse floor, not a fix target here); FPT 2025-Q4 (`passed_with_warnings`) and VNM 2025-Q4 (`passed`, identity holds exactly) are the clean reference rows; VNM 2026-Q1 is a 0-row/`refine_status=PENDING` pipeline gap (FIX-BCTC-ENRICH-SILENT-0ROWS territory, excluded — not a bank ticker either).
-
-Decision journal (task_id: BA-FIX-BCTC-BANK-SUMMARY-MAPPING): see `docs/agent-memory/decisions/sprint-FIX-BCTC-BANK-SUMMARY-MAPPING-ba.md`.
-
-## BA-DASH-CRON-RECHECK-TABLE · 2026-07-01
-
-Spec complete. REQ file: `docs/handoffs/BA-DASH-CRON-RECHECK-TABLE.md`. Zero PO blockers. Five ARCH-RATIFY items (non-blocking). NEXT: architect (zone SPLIT: dev-mcp-server status-compute+REST / dev-frontend proxy+table). 29 ACs total covering all 5 sprint success_metric (a)-(e) + 4 standing gates.
-
-Key BA findings (live-verified): CRONS map = 85 Layer-A entries (no hardcode — derived at runtime). Layer-B = 14 `.claude/commands/crons/*.md` command files + 4 cron-detect-loop crons + 1 cron-cowork-team master dispatcher. Critical job-name mismatch: CRONS key (e.g., `ohlcvDailyAggregator`) ≠ cron_job_runs DB name (e.g., `ohlcv-daily-aggregator`) — WATCHDOG_MANIFEST keys ARE the real DB names for 16 jobs; remaining crons need ARCH-RATIFY-CN-1 resolution strategy. `get_cron_health` gap confirmed: emits last_run/last_status but zero expected-vs-actual classify — that IS the sole compute gap. WATCHDOG_MANIFEST cadenceMs × thresholdMultiplier is the PARITY oracle — any job the watchdog would alert on MUST show MISSED/STALE (AC-9 gate). Layer-B SESSION_SCOPED honesty rule is AC-13/AC-14 — enforced as non-red always.
-
-Decision journal (task_id: BA-DASH-CRON-RECHECK-TABLE): see `docs/agent-memory/decisions/sprint-DASH-CRON-RECHECK-TABLE-ba.md`.
-
 ## Archive
 
-Pre-2026-06-24 specs (FIX-SIGNAL-CONFIDENCE-DEFAULT-50-VERIFIED-DECISION, FIX-COWORK-SCHEDULE-STALE-BASE-CLOBBER, FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH, FIX-SIGNAL-CONFIDENCE-SLA-TEST-TS2367, FIX-OHLCV-SEED-CANDLE-UNIT-SCALE-P0, FIX-ERRAUDIT-W1-PEK-P0, FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE, FIX-ERRAUDIT-W1-MCP-P0, Cycle-2026-06-05-THRU-14): See `docs/archive/notebooks/ba-2026-05-21.md` and git history (commits 4b13a23–9a1e5e8; prior notebook revisions pre-2026-07-01). Cycles 2026-06-24 through 2026-06-30 (FIX-MACRO-SNAPSHOT-DELTAS-NULL, FRONTEND-FRESHNESS-TRANSPARENCY, FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT, FEAT-NEWS-DECISION-RESUME, MARKET-INDICATOR-DEPTH-P0, DEFERRED-TASK-SCHEDULER-MVP, BA-IND-P1-MOMENTUM-RS, BA-PREDICTION-EVIDENCE-REVIVAL): pruned from live notebook 2026-07-02 (200L cap discipline) — full text in git history (commit history for this file, pre-2026-07-02 revision).
+Pre-2026-06-24 specs (FIX-SIGNAL-CONFIDENCE-DEFAULT-50-VERIFIED-DECISION, FIX-COWORK-SCHEDULE-STALE-BASE-CLOBBER, FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH, FIX-SIGNAL-CONFIDENCE-SLA-TEST-TS2367, FIX-OHLCV-SEED-CANDLE-UNIT-SCALE-P0, FIX-ERRAUDIT-W1-PEK-P0, FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE, FIX-ERRAUDIT-W1-MCP-P0, Cycle-2026-06-05-THRU-14): See `docs/archive/notebooks/ba-2026-05-21.md` and git history (commits 4b13a23–9a1e5e8; prior notebook revisions pre-2026-07-01). Cycles 2026-06-24 through 2026-06-30 (FIX-MACRO-SNAPSHOT-DELTAS-NULL, FRONTEND-FRESHNESS-TRANSPARENCY, FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT, FEAT-NEWS-DECISION-RESUME, MARKET-INDICATOR-DEPTH-P0, DEFERRED-TASK-SCHEDULER-MVP, BA-IND-P1-MOMENTUM-RS, BA-PREDICTION-EVIDENCE-REVIVAL): pruned from live notebook 2026-07-02 (200L cap discipline) — full text in git history (commit history for this file, pre-2026-07-02 revision). Cycle 2026-07-01 (BA-FIX-BCTC-BANK-SUMMARY-MAPPING, BA-DASH-CRON-RECHECK-TABLE): pruned from live notebook 2026-07-11 (3-section retention) — full text in git history (this file, pre-2026-07-11 revision).
 
 ## Known patterns / preferences
 
