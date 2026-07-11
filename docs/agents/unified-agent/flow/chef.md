@@ -187,7 +187,7 @@ Mark any level-reporting-only gap in the draft for Layer 6 fix.
 
 **Momentum & Relative Strength Context (P0 indicators):** When available, `get_roc_momentum()` provides 5-day rate-of-change (roc) with z-score normalization (z_score) and decile ranking (decile = 1-10 ranking vs recent history). `get_relative_strength()` provides relative strength rank (rs percentile vs watchlist) and composite momentum score. Use to refine entry/exit timing: decile ≥ 8 (strong momentum) + high RS percentile → accumulation signal; decile ≤ 2 (weak momentum) + low RS → distribution signal. When discussing ticker strength thesis, cite decile + RS percentile context if available.
 
-**52-Week Proximity Context (P0 indicator):** When available, `get_52w_proximity()` provides percentage distance from 52-week high (pct_from_52w_high) and low (pct_from_52w_low). Use to assess valuation/risk positioning: pricing near 52w-high (pct_from_52w_high > 80%) + weak momentum → resistance risk; pricing near 52w-low (pct_from_52w_low < 20%) + rising momentum → recovery opportunity. Flag in Layer 3 thesis when positioning is extreme.
+**52-Week Proximity Context (P0 indicator):** When available, `get_52w_proximity()` provides percentage distance from 52-week high (pct_from_52w_high) and low (pct_from_52w_low). Use to assess valuation/risk positioning: pricing near 52w-high (pct_from_52w_high > -5%) + weak momentum → resistance risk; pricing near 52w-low (pct_from_52w_low < 20%) + rising momentum → recovery opportunity. Flag in Layer 3 thesis when positioning is extreme.
 
 **Insider Activity Context (P0 indicator):** When available, `get_insider_sentiment()` provides aggregate insider net sentiment score (net_sentiment_score) reflecting insider buy/sell signal. High positive score (insider buying concentration) + bullish technical setup → corroborating thesis; negative score (insider selling) contradicting bullish thesis → flag as Layer 6 risk divergence. When insider data is unavailable (honest-NULL per `FIX-VPS-SSC-INSIDER-502`), note as a gap explicitly.
 
@@ -352,7 +352,7 @@ When discussing technical posture, use ONLY:
 Before constructing the `send_telegram` call for either Block A or Block B, CHEF MUST mentally scan the composed text for the following token patterns:
 
 ```
-BLOCKED tokens: RSI \d+\.?\d* | MACD \d+\.?\d* | BB \d+\.?\d* | σ \d+\.?\d* | MA\d+ = \d+ | roc -?\d+\.?\d* | z_score -?\d+\.?\d* | decile \d+ | percentile \d+ | rs \d+ | composite_score \d+\.?\d* | pct_from_52w_high \d+\.?\d* | pct_from_52w_low -?\d+\.?\d* | net_sentiment_score -?\d+\.?\d*
+BLOCKED tokens: RSI \d+\.?\d* | MACD \d+\.?\d* | BB \d+\.?\d* | σ \d+\.?\d* | MA\d+ = \d+ | roc -?\d+\.?\d* | z_score -?\d+\.?\d* | decile \d+ | percentile \d+ | rs \d+ | composite_score \d+\.?\d* | pct_from_52w_high -?\d+\.?\d* | pct_from_52w_low -?\d+\.?\d* | net_sentiment_score -?\d+\.?\d*
 ```
 
 **If any blocked token is found in the text:**
