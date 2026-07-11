@@ -369,3 +369,117 @@ Text extraction completed but produced no parseable table structure (0 rows post
 
 **Blockers**: None — operational unblock can proceed independently.
 
+## Docker Container Swap: WATCHLIST-DB-SYSMAP-DRIFT-FIX (2026-07-11T13:48Z)
+
+**Task**: Execute mcp-server container swap (user-gated lane) — deploy code fix 91ef0ac74 (seedWatchlist.ts SSOT derivation).
+
+**Context**: Code fix already shipped; DB already one-time resynced (33 rows exact SSOT match); image already built (1c5845d64406). Running container still has OLD hardcoded seeder baked in; any restart without swap re-seeds drift. Swap required for durability + live serving freshness.
+
+**Execution**:
+
+1. **Pre-swap state** (13:47Z):
+   - Current image: sha256:358ae13be48ea99c14a4434b0e213387d57443254bb6ccbb3052c0bc12068983
+   - Uptime: 31 hours
+   - Health: healthy
+
+2. **Swap** (13:48Z):
+   - Command: `docker compose up -d mcp-server` (single-service, no down, no --force-recreate)
+   - Result: Container recreated, image 1c5845d64406 deployed
+
+3. **Post-swap verification**:
+   - Image ID: ✓ sha256:1c5845d644062a79973edb058dd85e7121229502d95a36da3c9b7cbf0a0b2ac5 (matches 1c5845d64406 prefix)
+   - Health endpoint: ✓ status=ok, uptime=43.2s, toolCount=183
+   - get_watchlist: ✓ 33 tickers served (SSOT active set), no VNH/VEA (inactive)/GVR (orphan)
+   - Rowcount stable: ✓ re-checked 2× (both 33), no orphan re-insertion post-init
+
+**Status**: ✓ COMPLETE (container healthy, serving verified, telegram sent)
+
+Zone: `apps/mcp-server/` | Code commit: 91ef0ac74 | Image: 1c5845d64406
+
+---
+
+
+## Restart-Only Remediation: WATCHLIST-DB-SYSMAP-DRIFT-FIX QA Round 1 (2026-07-11T14:06-14:07Z)
+
+**Task**: technical-analysis service restart to re-read corrected watchlist DB (41→33 rows)
+
+**Context**: mcp-server already swapped + verified; DB resynced 41→33; technical-analysis (Go, port 5003) reads WATCHLIST_TICKERS env on startup (unset), falls back to DB table → stale state persists until restart.
+
+**Execution**:
+1. `docker compose restart technical-analysis` (single service ONLY) → Container restarted
+2. Startup log verification: `resolved from DB watchlist table, count:33` ✓ (old logs showed count=41)
+3. Post-restart serving verify:
+   - `/ta/roc-momentum`: 33 unique tickers ✓
+   - `/ta/money-flow-oscillators`: 33 unique tickers ✓
+   - Stale entries (BDI,DLC,GVR,JSH,SIS,VDC,VEA,VNH): 0 present in both endpoints ✓
+
+**Status**: ✓ COMPLETE (restart gate-passed, serving verified, telegram sent)
+**Next**: QA round 2 verification
+
+Zone: `apps/technical-analysis/` | Service: Go/port:5003 | Transport: docker-compose single-service restart
+
+## INCIDENT: mcp-server OS-Level Wedge (2026-07-11T13:44:53Z)
+
+**Session UUID:** 3dce23eb-6a30-4f92-aec0-51c1393dc399
+**Status:** ESCALATION — Unrecoverable (OS-level, docker daemon cannot kill process)
+
+### Incident Timeline
+- **11:47:59Z** — Container swapped to QA image sha256:1c5845d64406 (watchlist-fix)
+- **13:21–13:29Z** — Normal operations (market analysis, OCF backfill)
+- **13:29:28Z** — Last log entry: "[bctcPdfPull] PDF saved — PDR Q4"
+- **13:44:53Z** — First healthcheck timeout
+- **13:45:00Z–now** — 28 consecutive healthcheck failures (10s timeout, process unresponsive)
+
+### Diagnostics Captured
+**Healthcheck:**
+- Status: unhealthy
+- FailingStreak: 28
+- All failures: "Health check exceeded timeout (10s)"
+- Interval: ~40s between checks
+
+**Resource Health:**
+- Memory: 394.8MiB / 3GiB (12.85% — healthy)
+- CPU: 0.13% (normal)
+- PIDs: 7 (normal)
+- No resource exhaustion, no crash-loop
+
+**Logs:**
+- Last entry frozen at 13:29:28Z (~15min before wedge onset)
+- Logs show normal operations, zero errors/panics
+- No indication of failure leading to wedge
+
+### Root Cause Hypothesis
+Bun JIT corruption or event-loop deadlock triggered by intelligence-cycle job (15m cadence; prior cycle ~13:15Z, next due ~13:30Z). Process enters uninterruptible kernel state, unable to respond to signals or graceful shutdown.
+
+**Precedent:** Memory notes doc — "restart-masks-bun-jit-corruption" (project_restart_masks_bun_JIT_corruption.md)
+
+### Recovery Attempts (All Failed)
+1. `docker compose restart mcp-server`
+   - Error: "tried to kill container, but did not receive an exit event"
+   
+2. `docker kill mcp-server` (SIGKILL)
+   - Error: "tried to kill container, but did not receive an exit event"
+   
+3. `docker compose up -d --no-deps mcp-server`
+   - Result: Container already running, no restart occurred (PID unchanged: 33194)
+
+### Severity Assessment
+- **Container:** Unresponsive, in uninterruptible kernel state
+- **Restartability:** IMPOSSIBLE — Docker daemon cannot terminate process (SIGKILL fails)
+- **Gateway Status:** Wedged mcp-server blocks all downstream MCP tool calls (send_telegram timeout observed)
+- **Peer Services:** 10/11 healthy (mcp-server unavailable blocks gateway routing)
+- **Data Risk:** Low (read-only operations only, no data corruption detected)
+- **Availability Impact:** HIGH — no MCP tool access, gateway dependent
+
+### Required Remediation (Beyond Ops Scope)
+**Single-service restart exhausted.** Requires host-level intervention:
+- Docker daemon restart (systemctl restart docker / Docker Desktop restart)
+- OR host reboot
+- OR forcible cgroup destruction (high-risk, requires sudo)
+
+### Next Steps
+ESCALATION to dev-team/architect for host-level container runtime intervention.
+Image rollback NOT recommended (image is QA-approved; root cause is runtime corruption, not code).
+
+---
+
