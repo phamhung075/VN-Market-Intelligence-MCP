@@ -38,6 +38,31 @@ For each MARKET alert about a specific ticker:
 
 Log: `"[Verify] [TICKER] claim={X} actual={Y} → MATCH|MISMATCH"`
 
+**Step 2 Backstop — CLAIM-TRUTH GATE (flag MISMATCH via TNB emit path)**
+
+→ skill: `.claude/skills/claim-truth-gate/SKILL.md`
+
+After Step 2 verification loop, invoke the claim-truth-gate on each MARKET alert body as a final validation before reporting findings. Any narrative contradiction is flagged and logged for escalation.
+
+Invoke (per each MARKET alert):
+```
+GATE_EXIT = skill `.claude/skills/claim-truth-gate/SKILL.md`
+  post_body = <MARKET alert text>
+  agent_id  = "tran-ngoc-bau"
+  cache     = <live tool results from this audit cycle, or null>
+```
+
+**Exit-code handling:**
+- `0` = PASS → alert body is coherent with live data; log and continue.
+- `1` = FAIL — contradiction detected. Script emits `narrative_contradiction` signal to `po`. Log the mismatch:
+  - `"[TNB-BACKSTOP] MISMATCH detected: [FAIL] dimension=... tool=... ticker=... claim='...' returned='...'"`
+  - Append to audit report and Phase 2 findings.
+- `2` = config-error → fail-loud: `send_telegram(channel="bug", message="[tran-ngoc-bau] claim-truth-gate CONFIG ERROR")` and EXIT.
+
+**Signal:** Script fires `narrative_contradiction` on FAIL; TNB logs it in audit trail.
+
+---
+
 ## Phase 2: Review Agent Notebooks
 
 **Step 3 — Read agent notebooks**

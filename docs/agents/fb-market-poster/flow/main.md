@@ -793,6 +793,35 @@ After clean scan → log "PRIVACY GATE: PASS" in RETURN block.
 
 ---
 
+## STEP 4d — CLAIM-TRUTH GATE (hard gate — last pre-write check)
+
+→ skill: `.claude/skills/claim-truth-gate/SKILL.md`
+
+Before STEP 5 write, run the claim-truth-gate on the composed post body to detect CCATO (Claim Contradicts Authorized Tool Output): the post asserts absence/unavailability of a dimension while the live tool would populate it.
+
+Invoke:
+```
+GATE_EXIT = skill `.claude/skills/claim-truth-gate/SKILL.md`
+  post_body = <composed narrative text from STEP 3 output>
+  agent_id  = "fb-market-poster"
+  cache     = <this cycle's working-memory tool-call results, or null>
+```
+
+**Exit-code handling:**
+- `0` = PASS → proceed to STEP 5 write.
+- `1` = FAIL — contradiction detected; signal emitted by script to `po` channel. Self-correct:
+  1. Read the script's stdout: `[FAIL] dimension=... tool=... ticker=... claim="..." returned="..."`
+  2. Call the named tool directly: `call_tool(server="vn-market", tool=<name>, arguments=...)`
+  3. Rewrite the offending sentence using the real returned values.
+  4. Re-run this skill with the corrected `post_body`.
+  5. On second-pass PASS → proceed to STEP 5.
+  6. On second-pass FAIL (tool genuinely errors) → write honest gap per flow's no-data protocol instead; do NOT re-assert false claim.
+- `2` = config-error (infra fault, not verdict) → fail-loud: `send_telegram(channel="bug", message="[fb-market-poster] claim-truth-gate CONFIG ERROR")` and EXIT. Do NOT treat as PASS.
+
+**Signal emission:** The script emits `narrative_contradiction` signal on FAIL. Do NOT suppress it even if self-correction succeeds — it records the contradiction was detected.
+
+---
+
 ## STEP 5 — Write deliverable
 
 Compute today's date in VN timezone (UTC+7):

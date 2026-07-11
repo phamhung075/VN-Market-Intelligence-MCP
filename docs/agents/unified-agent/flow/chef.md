@@ -363,6 +363,33 @@ BLOCKED tokens: RSI \d+\.?\d* | MACD \d+\.?\d* | BB \d+\.?\d* | σ \d+\.?\d* | M
 
 This self-check is NOT optional. Bypassing it is a flow violation equivalent to bypassing Step 6a Scenario-4 block.
 
+### Rule AF-3 — Narrative Truth Gate (CCATO detector — run before send_telegram)
+
+→ skill: `.claude/skills/claim-truth-gate/SKILL.md`
+
+Before constructing EITHER Block A or Block B `send_telegram` call, invoke the claim-truth-gate on the composed narrative to detect CCATO (Claim Contradicts Authorized Tool Output).
+
+Invoke (choose Block A or Block B text accordingly):
+```
+GATE_EXIT = skill `.claude/skills/claim-truth-gate/SKILL.md`
+  post_body = <composed Block A or Block B text>
+  agent_id  = "unified-agent"
+  cache     = <this cycle's tool-call results, or null>
+```
+
+**Exit-code handling:**
+- `0` = PASS → proceed to `send_telegram` call(s).
+- `1` = FAIL — contradiction detected; signal emitted to `po`. Self-correct:
+  1. Read stdout: `[FAIL] dimension=... tool=... ticker=...`
+  2. Call the named tool directly.
+  3. Rewrite the offending sentence using real returned values.
+  4. Re-run this skill with corrected text.
+  5. Second-pass PASS → proceed to `send_telegram`.
+  6. Second-pass FAIL → write honest gap (e.g. "công cụ chưa trả được <dimension>") and proceed to send (no hard block for CHEF because the message must publish).
+- `2` = config-error → fail-loud: `send_telegram(channel="bug", message="[unified-agent] claim-truth-gate CONFIG ERROR")` and EXIT.
+
+**Signal:** Script fires `narrative_contradiction` on FAIL. Do NOT suppress it.
+
 ---
 
 ## Step 7 — WRITE DISH (Dual-Output)

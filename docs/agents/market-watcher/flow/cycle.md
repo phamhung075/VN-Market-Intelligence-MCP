@@ -244,6 +244,34 @@ Inputs:
 On PASS → continue to WORK ping + log_agent_work below.
 On FAIL → skill exits; do not continue to Step 5b.
 
+**Step 4f — CLAIM-TRUTH GATE (real-time override — proceed with honest-gap on second FAIL)**
+
+→ skill: `.claude/skills/claim-truth-gate/SKILL.md`
+
+Real-time alert flows must not block indefinitely on narrative contradictions. Invoke the gate on the composed alert narrative before Step 5b WORK send.
+
+Invoke (per each pending alert to be sent):
+```
+GATE_EXIT = skill `.claude/skills/claim-truth-gate/SKILL.md`
+  post_body = <composed alert text>
+  agent_id  = "market-watcher"
+  cache     = <this cycle's tool-call results, or null>
+```
+
+**Exit-code handling (time-sensitivity override per brief §4.6):**
+- `0` = PASS → proceed to Step 5b WORK + signal send.
+- `1` = FAIL — contradiction detected; signal emitted to `po`. Self-correct:
+  1. Call the named tool directly.
+  2. Rewrite the offending sentence using real returned values.
+  3. Re-run this skill.
+  4. Second-pass PASS → proceed to send.
+  5. **Second-pass FAIL (tool genuinely errors) → write honest gap and PROCEED to send anyway** (time-sensitivity override: real-time flow must alert promptly; do NOT hold).
+- `2` = config-error → fail-loud: `send_telegram(channel="bug", message="[market-watcher] claim-truth-gate CONFIG ERROR")` and EXIT.
+
+**Signal:** Script fires `narrative_contradiction` on FAIL (first pass only).
+
+---
+
 **5b. WORK** — ULTRA tier per `.claude/skills/caveman/SKILL.md` (cycle-status ping = inter-agent state change):
 ```
 [mw] HH:MM — N stocks | anom:X vol:Y chain:Z | next:TIME

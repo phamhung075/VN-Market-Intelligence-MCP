@@ -2,6 +2,34 @@
 
 # Alert Commander — Stage 4-5: Dispatch + Log
 
+**Step 4a-pre — CLAIM-TRUTH GATE (emit signal on MISMATCH — proceed with time-sensitivity override)**
+
+→ skill: `.claude/skills/claim-truth-gate/SKILL.md`
+
+Real-time alert flow: before dispatching each alert to MARKET, run the gate to detect narrative contradictions. On FAIL, emit `narrative_contradiction` signal but do NOT hard-block the dispatch.
+
+Invoke (per each pending alert):
+```
+GATE_EXIT = skill `.claude/skills/claim-truth-gate/SKILL.md`
+  post_body = <composed alert text>
+  agent_id  = "alert-commander"
+  cache     = <this cycle's tool-call results, or null>
+```
+
+**Exit-code handling (time-sensitivity override):**
+- `0` = PASS → proceed to Step 4a MARKET send.
+- `1` = FAIL — contradiction detected; signal emitted to `po` by script. Self-correct:
+  1. Call the named tool directly.
+  2. Rewrite the offending sentence using real returned values.
+  3. Re-run this skill.
+  4. Second-pass PASS → proceed to dispatch.
+  5. **Second-pass FAIL → write honest gap and proceed to dispatch anyway** (time-sensitivity: real-time alerts must fire promptly).
+- `2` = config-error → fail-loud: `send_telegram(channel="bug", message="[alert-commander] claim-truth-gate CONFIG ERROR")` and EXIT.
+
+**Signal:** Script emits `narrative_contradiction` on FAIL (first pass); record it in session log with alert ID and ticker.
+
+---
+
 **4a. MARKET channel**
 Pre-send: `get_market_snapshot()` — divergence > 5% → discard, max 2 attempts
 - > 3 pending → `send_alert_digest(alerts=[], channel="market")`
