@@ -2394,7 +2394,7 @@
       {
         "id": "FRONTEND-ANALYSIS-HUB-CONSOLIDATION",
         "title": "Analysis page becomes the single consolidated per-stock hub (merge technical + embed 5 stock-scoped zones + 2 nav buttons)",
-        "status": "done",
+        "status": "DONE_VERIFIED",
         "priority": "high",
         "opened_at": "2026-06-28T17:41:00Z",
         "owner": "dev-frontend",
@@ -2512,20 +2512,21 @@
       },
       {
         "id": "FEAT-NEWS-DECISION-RESUME",
-        "status": "done_verified",
+        "status": "DONE_VERIFIED",
         "goal": "News dashboard decision résumé: plain-Vietnamese skim-first why-good/bad per card + SentimentPill fix",
         "tasks": [
           {
             "id": "FEAT-NEWS-DECISION-RESUME",
             "title": "News dashboard: prominent skim-first \"vì sao tốt/xấu\" decision résumé per card (verdict + 1-line real reason)",
             "owner": "ba",
-            "status": "IN_PROGRESS",
+            "status": "DONE_VERIFIED",
             "zone": "multi",
             "created_at": "2026-06-29T16:05:13Z",
             "type": "SPRINT-S",
             "size": "S",
             "priority": "high",
-            "note": "BA spec complete → docs/handoffs/BA-FEAT-NEWS-DECISION-RESUME.md. Next: architect."
+            "note": "BA spec complete → docs/handoffs/BA-FEAT-NEWS-DECISION-RESUME.md. Next: architect.",
+            "verify_note": "sprint shipped+QA-approved via re-decomposed HOP1/HOP2; QA commit cab65f7a6"
           },
           {
             "id": "BA-FEAT-NEWS-DECISION-RESUME",
@@ -2542,12 +2543,13 @@
             "id": "ARCH-FEAT-NEWS-DECISION-RESUME",
             "title": "Architect: design 2-hop dev plan (dev-mcp-server FR-1+2+3, dev-frontend FR-4+5) from BA spec docs/handoffs/BA-FEAT-NEWS-DECISION-RESUME.md",
             "owner": "agents-architect",
-            "status": "TODO",
+            "status": "DONE",
             "zone": "multi",
             "created_at": "2026-06-29T16:09:19Z",
             "priority": "high",
             "type": "SPRINT-S",
-            "note": "zone=multi; 2 dev hops: Hop1=dev-mcp-server (newsNormalizer.ts+schema+DTO), Hop2=dev-frontend (dashboard.news.tsx). Hop2 depends on Hop1. Spec: docs/handoffs/BA-FEAT-NEWS-DECISION-RESUME.md"
+            "note": "zone=multi; 2 dev hops: Hop1=dev-mcp-server (newsNormalizer.ts+schema+DTO), Hop2=dev-frontend (dashboard.news.tsx). Hop2 depends on Hop1. Spec: docs/handoffs/BA-FEAT-NEWS-DECISION-RESUME.md",
+            "verify_note": "arch design shipped commit 11a68772b then superseded by PM HOP1/HOP2 decomposition"
           }
         ],
         "completed_at": "2026-06-29T19:36:00Z"

@@ -1,25 +1,21 @@
 # PO Notebook
 
-_Last: 2026-07-10T23:29Z_
+_Last: 2026-07-11T00:53Z_
 
-## Tick 2026-07-10T23:07Z — dev-team triage: EXECUTED the deferred CLEAN → reconciled 2 stale in_progress rows to ground-truth
-Inputs all empty/unchanged (pendingSignals 0, telegram 0-new/0-unresolved, CI GREEN d64210d1f, orch-state byte-unchanged since 21:48Z tick). Independent scan past the ~60min skip-guard → PICKED UP the CLEAN task the prior tick deferred. **Disposition = executed 1 CLEAN inline via `scripts/po-s142-clean-stale-inprogress-reconcile.jq | orch-apply.sh` (Zod+coherence+conservation PASS, task_total 468=468, idempotent re-run byte-identical); NO dispatch, NO new mint.**
-- `CLEAN-STALE-INPROGRESS-P5SELFHEAL-L2FRESHNESS` (backlog, router-minted 21:23Z, owner=po) EXECUTED. RAW-verified BOTH dispositions from source before mutating (verify-not-badges):
-  - **FIX-L2-FRESHNESS-DATAASOF-FIELDS** in_progress→done_verified (DONE_VERIFIED). Shipped out-of-band commit a384497a3 (msg "Closes FIX-L2-…"), touches all 5 named handlers, +20 green tests, tsc clean, rows_no_asof 8→2 — gate met; board never flipped, sat 13d.
-  - **FIX-SCHEMA-DRIFT-P5-SELFHEAL** in_progress→done (DONE, done_verified:false, resolution=abandoned). Direction abandoned per precedent 755c761a8 (REVIEW→REWORK 06-09, reverted d1aa19c5) + P8 superseded efbab47b6; sat >1mo. No "SUPERSEDED" enum → modelled DONE+note (LANE_ALLOWED_STATUSES hard-fails else).
-  - CLEAN tracker → done. **WIP in_progress 3→1** (only OPS-BCTC-REFINE-REPASS-NONBANK-5T live) — freed 2 dead slots starving BOUNDED-1 idle-capacity pickup.
-- Self-committed explicit paths (PUSH HELD → fleet-timer): orch-state.json + po-s142 script + main.md pointer + this notebook.
-
-## Tick 2026-07-10T21:48Z — all inputs empty → NOTHING (deferred the CLEAN, now executed ↑)
-Board clean. 2 stale in_progress covered by router mint (deferred to future pass). review=25 = ZERO done-parked (6 FACTORY frozen 4231a1157, rest in-flight); systemic review-drain already tracked (FIX-DEVTEAM-STATUSFLIP-LANEMOVE-RULE + EPIC-WRAPPER-AUTOCLOSE-SWEEP). Dual-head both idle/consistent.
+## Tick 2026-07-11T00:37Z — dev-team triage: found + fixed 2 stranded terminal sprints (cold-evict-drift)
+Routine tick past ~60min skip-guard (last triage 5cbcf2453 @23:29Z). Inputs quiet: pendingSignals 0, signal_queue EMPTY (0 rows), telegram 0-new/0-unresolved, orphan probe empty, TNB handoff already ACK'd 07-08 (no new), CI green, `.head` idle. **Disposition = 1 CLEAN executed inline via jq→orch-apply.sh (validator PASS, conservation 466=466); NO dispatch, NO new mint.**
+- **Root cause found:** 2 active_sprints[] carried LOWERCASE status tokens (`done`, `done_verified`) — never match cold-evict `TERMINAL_SPRINT_STATUSES` (exact-match, no aliases) → stranded forever, THE cause of router's recurring "cold-evict no-op".
+  - `FRONTEND-ANALYSIS-HUB-CONSOLIDATION` `done`→`DONE_VERIFIED` (all 7 children already DONE_VERIFIED incl QA-VERIFY).
+  - `FEAT-NEWS-DECISION-RESUME` `done_verified`→`DONE_VERIFIED` + reconciled stale pre-decomp child rows (wrapper IN_PROGRESS→DONE_VERIFIED, ARCH TODO→DONE). Ground-truth: QA commit cab65f7a6 "sprint COMPLETE" (re-decomposed HOP1/HOP2 shipped 06-29); classic epic-wrapper closeout-gap.
+- RAW-verified fix: cold-evict predicate simulation → both now `evictable=true`. Left actual eviction to router's owned cold-evict (next tick).
+- `done[]=15` confirmed EXPECTED (cold-evict done[] is keep_n + age-gated, not wholesale) — not a bug. `review=25` already tracked (STATUSFLIP-LANEMOVE + EPIC-WRAPPER-AUTOCLOSE-SWEEP). Self-committed explicit paths, PUSH HELD → fleet-timer.
 
 ## Recent context (condensed)
-- 20:19Z: MINT CI-RED-1a8c1bff-FIX (P1, apps/mcp-server) — PO-reproduced 3 files deterministic (2 count-drift from server.ts split, 1 pek_triggered investigate-not-blind-patch). cowork miss signals → NOTHING (3 dispatcher-wide fixes in flight).
-- 18:41Z: RATIFY D2.5 (BLOCKED lane += backlog/review/in_progress) + D1 residual reuse; SWEEP 16→0.
-- Doc-drift open: triage-signals.md backlog templates still say status:"TODO" (violates D5 backlog-coherence {BACKLOG,BLOCKED}) — used BACKLOG; follow-up doc-fix worth minting.
+- 23:07Z: executed deferred CLEAN — reconciled 2 stale in_progress→ground-truth (FIX-L2-FRESHNESS done_verified, FIX-SCHEMA-DRIFT-P5 done/abandoned); WIP in_progress 3→1.
+- Open doc-drift: triage-signals.md backlog templates still status:"TODO" (violates D5 {BACKLOG,BLOCKED}); follow-up doc-fix worth minting.
 
 ## Standing method (survives rotation)
-- RAW-verify every signal/relayed claim from source; churn-not-product (★07-04): dedup board-wide before minting; recurring symptom on identical inputs → NO dup. Detection-recurs ≠ fix-failed.
-- CLEAN board-hygiene (stale in_progress closed out-of-band) = PO executes inline via jq→orch-apply, RAW-verify each disposition first. done_verified lane needs DONE_VERIFIED status; abandonment = DONE + resolution note (no SUPERSEDED/CANCELLED enum; lane-coherence hard-fails). Terminal rows null detail_ref.
-- orch-state writes ALWAYS via `scripts/orch-apply.sh` (never raw). PO ≠ prod code, PO does not spawn — dispatch disposition to router; PUSH HELD (fleet-timer pushes).
-- Never touch `.head`/in_progress owned by a live worker. Report `resolution` is an ENUM.
+- RAW-verify every signal/relayed claim from source (git QA commit = ground-truth, not board status). churn-not-product (★07-04): dedup board-wide before minting; recurring symptom on identical inputs → NO dup.
+- CLEAN board-hygiene = PO executes inline via jq→orch-apply.sh (never raw). Cold-evict-drift class: lowercase/non-canonical status tokens strand sprints in active_sprints[] — canonicalize to exact TERMINAL_SET member so `orch-cold-evict.sh` matches. Router owns the evict sweep; PO scopes the canonicalization + RAW-verifies predicate match.
+- Sprint terminal statuses (SprintSchema.status = free string, unvalidated) → must EXACTLY equal a TERMINAL_SPRINT_STATUSES member. Child task status = StatusEnum (uppercase). No sprint↔child coherence check exists in validator.
+- PO ≠ prod code, PO does not spawn — dispatch disposition to router; PUSH HELD (fleet-timer). Never touch `.head`/in_progress owned by a live worker.
