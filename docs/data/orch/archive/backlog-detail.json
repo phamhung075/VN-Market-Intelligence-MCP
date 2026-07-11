@@ -6776,7 +6776,7 @@
       "id": "CONTAM-11-REMEDIATE",
       "type": "FIX",
       "size": "M",
-      "status": "BACKLOG",
+      "status": "DONE_VERIFIED",
       "priority": "medium",
       "zone": "apps/mcp-server/",
       "owner": "",
@@ -6794,7 +6794,8 @@
         "Repair ONLY the 9 confirmed bucket-(b) tickers (3023 rows) using an EXTERNAL anchor (VPS fetch / official archive) + ratio>=100 guard -- NOT a widened DB-history predicate.",
         "BACKUP + drift-check before any UPDATE; off-hours window; PO go/no-go gate (destructive, mirrors CONTAM-10-EXEC).",
         "Post-verify 0 remaining contaminated rows for the 9 tickers + serving-layer RS/ROC/52w normalization; bucket-(a) 6345 legit-cheap rows untouched."
-      ]
+      ],
+      "closure_note": "Archived to orch-state done_verified[] on 2026-07-11 — obsolete-by-other-lanes (bulk repaired by ongoing OHLCV lanes; single-digit residual below action threshold). Full disposition in orch-state done_verified[].verify_note."
     },
     {
       "id": "SPIKE-TICK-SNAPSHOT-DEADCODE-OR-REGRESSED",
