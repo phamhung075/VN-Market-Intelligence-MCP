@@ -33,3 +33,12 @@
 - Route to fixer (code bug) vs ops (restart-only, zero code change) — chose ops, root cause is a stale-process-state gap not a code defect.
 **why-decision:** CHANGES_REQUESTED — mcp-server-side fix is sound, but the task's stated deliverable (corrected TA endpoints) is not live; same "two-layer freshness" class as qa-S1/S2 findings this sprint.
 **why-change:** none from plan — RAW-verify surfaced a real gap outside what dev/ops checked.
+
+### STEP qa-S4 · qa · 2026-07-11T12:12:52Z
+**task-id:** WATCHLIST-DB-SYSMAP-DRIFT-FIX
+**what-done:** Round-2. Scope-checked (edd1ec31e..HEAD on task files = empty, no re-run of full battery). Live-verified myself: container restart log line count:33 (was 41), both TA endpoints curled fresh — 33 unique codes each, zero-diff vs SSOT, zero stale-set tickers. Flipped board REVIEW→DONE via physical lane-move (review[]→done[]), not status-only.
+**what-considered:**
+- Trust ops/router remediation summary vs re-curl both endpoints myself — chose re-curl (task mandate + standing rule: verify raw, not relayed).
+- next_agent: null vs omit key entirely — hit real `orch-validate.mjs` Stage-1 fail (schema: plain optional string, null rejected), fixed via `del(.next_agent)` before merge.
+**why-decision:** APPROVED — AC-5 blocker fully closed on live serving surface, both endpoints exact-match SSOT, no new commits since round-1 to re-review.
+**why-change:** none from plan. Side-finding: jq pipe-precedence bug (`A|B|add + (C|length)` — parenthesized addend inherits upstream pipe input, not root `.`) caught pre-apply via dry-run diff/validate, fixed by concatenating arrays before a single `|length`.
