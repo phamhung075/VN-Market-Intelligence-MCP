@@ -130,3 +130,23 @@ Both return the exact OLD stale set verbatim — including the 5 garbage orphans
 **Minimum fix:** ops restarts (NOT rebuilds — zero code/image change needed, `technical-analysis`'s DB-read-at-startup code was already correct before this task and is untouched by it) the `technical-analysis` container (`docker compose restart technical-analysis` or single-service `up -d technical-analysis`, no `--force-recreate`, no `down`) so it re-executes `readWatchlistFromDB` against the now-corrected shared volume; then re-curl both `/ta/roc-momentum` and `/ta/money-flow-oscillators` to confirm the ticker set now matches the 33-ticker SSOT before flipping DONE.
 
 Board: `task_board.review[]` unchanged (no lane move — CHANGES_REQUESTED does not merge), `qa_verdict:"CHANGES_REQUESTED"`, `qa_round:1`, `next_agent:"ops"` added via `scripts/qa-watchlist-db-sysmap-drift-fix-changes-requested.jq` + `scripts/orch-apply.sh` (dry-run diffed first: only the 4 new fields added, rest of doc byte-identical, `orch-validate.mjs` + `orch-conservation-check.mjs` both PASS, task_total 458 unchanged).
+
+## [QA] Review Record (2026-07-11T12:12:52Z) — round 2
+
+**VERDICT: APPROVED.**
+
+Scope check first: `git log edd1ec31e..HEAD -- apps/mcp-server apps/technical-analysis` = empty — no new commits touched task files since round-1 HEAD. Round-1's code/tests/tsc/DDD/security/mock-guard results all stand unchanged; this round targets only the round-1 blocker (AC-5).
+
+Live-verified myself, first-hand, not relayed from the ops/dev remediation summary:
+- `docker ps` / `docker inspect`: `vn-market-intelligence-mcp-technical-analysis-1` — `StartedAt=2026-07-11T12:06:33Z`, `Health=healthy`. `docker exec ... env | grep WATCHLIST` — `WATCHLIST_TICKERS` unset, confirms DB-fallback code path is what's live (not an env override masking a code path never exercised).
+- `docker logs` grepped for `watchlist`: two boot lines — `2026-07-08T09:15:53Z ... count:41` (prior stale boot) then `2026-07-11T12:06:34Z ... "resolved from DB watchlist table" count:33` (the restart under review) — direct evidence the restart re-executed `readWatchlistFromDB` against the now-corrected shared volume.
+- Live curl, both endpoints, `POST {}` against `http://localhost:5003`:
+  - `/ta/roc-momentum` → 33 unique `.tickers[].code`
+  - `/ta/money-flow-oscillators` → 33 unique `.tickers[].code`
+  - `diff` of `roc-momentum`'s sorted ticker list against `jq '.project.watchlist[]|select(.active==true)|.ticker'` (system-map.json SSOT, also 33) = **zero lines both directions** — exact set match, not just count match.
+  - Explicit stale-set absence check (`BDI,DLC,GVR,JSH,SIS,VDC,VEA,VNH,GAS,MBB,ACB,CTG,VPB,HSG,NKG,HVN,ACV,HCM,DHG,POW,PPC,TCH,REE,MWG`) against roc-momentum's code list — zero matches.
+- AC-5 ("All TA endpoints return corrected universe") now demonstrably met on the live serving surface — the round-1 blocking defect is closed.
+
+**Board flip:** `task_board.review[]` → `task_board.done[]` (physical lane move, not status-flip-only — per standing note on status-flip-without-lane-move blocking WIP). `qa_verdict:"APPROVED"`, `qa_round:2`, `qa_reviewed_at`/`completed_at:"2026-07-11T12:12:52Z"`, `next_agent` key removed (schema: `orchStateSchema.ts:100` — plain optional string, `null` rejected; must be absent, not null — first pass hit `orch-validate.mjs` Stage 1 fail on this, fixed via `del(.next_agent)` before merge). Applied via `scripts/qa-watchlist-db-sysmap-drift-fix-approve-round2.jq` + `scripts/orch-apply.sh`: dry-run validated first (`orch-validate.mjs` PASS, `orch-conservation-check.mjs` PASS, task_total live=458/candidate=458), then applied; live file re-checked post-write (row absent from `review[]`, present in `done[]`, task_total 458 unchanged).
+
+Note for the record: the conservation-total jq formula itself needed a fix mid-task — an unparenthesized `A|B|add + (C|length) + (D|length)` expression silently evaluated `C`/`D`'s `.task_board...` paths against the *upstream pipe stage's* output (an array of lane-lengths) instead of the root document (`jq` pipe precedence: `|` is lower than `+`, so parenthesized addends inherit the *current* pipe input, not the original `.`). Fixed by concatenating all lane arrays with `+` before a single trailing `| length`, avoiding the ambiguity entirely.

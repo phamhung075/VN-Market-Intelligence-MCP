@@ -538,8 +538,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-11T10:57:10Z",
-    "_updated_by": "developer",
+    "_updated_at": "2026-07-11T12:12:52Z",
+    "_updated_by": "qa",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -6675,6 +6675,27 @@
         "qa_verdict": "APPROVED",
         "qa_round": 2,
         "completed_at": "2026-07-11T09:01:53Z"
+      },
+      {
+        "id": "WATCHLIST-DB-SYSMAP-DRIFT-FIX",
+        "title": "Resync live SQLite watchlist table from docs/data/system-map.json .project.watchlist (SSOT) — corrects /ta/money-flow-oscillators + /ta/roc-momentum + sibling TA endpoints",
+        "status": "DONE",
+        "zone": "cross-service",
+        "type": "FIX",
+        "size": "S",
+        "priority": "low",
+        "sprint": "MONEY-RADAR-P0",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#WATCHLIST-DB-SYSMAP-DRIFT-FIX",
+        "dispatched_to": "dev-mcp-server",
+        "dispatch_note": "developer team-lead 2026-07-11T10:57:10Z: zone verdict apps/mcp-server/ (SqliteWatchlistRepository.ts, watchlistReadStore.ts, seedWatchlist.ts, schema.ts) — routed to dev-mcp-server per zone_dispatch. Root-cause pre-analysis in handoff: seedWatchlist.ts WATCHLIST_SEED hardcoded 34-ticker list independent of system-map.json SSOT, runs unconditionally every server init (schema.ts:202) — pure DB resync will not survive next restart without fixing the seeder derivation too.",
+        "dev_completed_at": "2026-07-11T11:46:00Z",
+        "dev_note": "WATCHLIST_SEED now derives from system-map.json SSOT (was 2nd hardcoded array). Live table resynced 41->33 rows (exact SSOT match) via scripts/migrations/resync-watchlist-sysmap-2026-07-11.ts --apply, RAW-verified via direct table probe. get_watchlist MCP tool still stale (server holds a long-lived connection that never observed the out-of-process write) -- self-resolves on the container restart already required for the code fix. docker compose build mcp-server done (image 1c5845d64406); swap NOT executed (user/ops-gated). Commit 91ef0ac74.",
+        "qa_verdict": "APPROVED",
+        "qa_round": 2,
+        "qa_reviewed_at": "2026-07-11T12:12:52Z",
+        "qa_note": "APPROVED round 2. Round-1 AC-5 blocker (technical-analysis Go container serving stale 41-ticker set, resolved once at startup) remediated by ops: single-service `docker compose restart technical-analysis`, no code/image change (WATCHLIST_TICKERS unset, DB-fallback path). QA RAW-verified live, first-hand: container StartedAt=2026-07-11T12:06:33Z healthy; startup log 'resolved from DB watchlist table count:33' (was 41 on prior boot). Live-curled both endpoints myself: POST /ta/roc-momentum and /ta/money-flow-oscillators each return 33 unique .tickers[].code, zero-diff against system-map.json's 33 active tickers both directions, zero of the prior stale-set tickers in either response. git log edd1ec31e..HEAD -- apps/mcp-server apps/technical-analysis = empty (no new commits since round-1 HEAD, scope unchanged from round-1's already-clean code/tests/DDD/security pass).",
+        "qa_reviewed_by": "qa",
+        "completed_at": "2026-07-11T12:12:52Z"
       }
     ],
     "done_verified": [],
@@ -7175,26 +7196,6 @@
         "sprint": "COWORK-GUARANTEED-SLOT-DURABILITY",
         "title": "Add the MISSING period-keyed publish-once dedup gate to the FB weekend sub-flows (weekly-recap.md + weekly-prediction.md)",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-FB-WEEKEND-DEDUP-GATE"
-      },
-      {
-        "id": "WATCHLIST-DB-SYSMAP-DRIFT-FIX",
-        "title": "Resync live SQLite watchlist table from docs/data/system-map.json .project.watchlist (SSOT) — corrects /ta/money-flow-oscillators + /ta/roc-momentum + sibling TA endpoints",
-        "status": "REVIEW",
-        "zone": "cross-service",
-        "type": "FIX",
-        "size": "S",
-        "priority": "low",
-        "sprint": "MONEY-RADAR-P0",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#WATCHLIST-DB-SYSMAP-DRIFT-FIX",
-        "dispatched_to": "dev-mcp-server",
-        "dispatch_note": "developer team-lead 2026-07-11T10:57:10Z: zone verdict apps/mcp-server/ (SqliteWatchlistRepository.ts, watchlistReadStore.ts, seedWatchlist.ts, schema.ts) — routed to dev-mcp-server per zone_dispatch. Root-cause pre-analysis in handoff: seedWatchlist.ts WATCHLIST_SEED hardcoded 34-ticker list independent of system-map.json SSOT, runs unconditionally every server init (schema.ts:202) — pure DB resync will not survive next restart without fixing the seeder derivation too.",
-        "next_agent": "ops",
-        "dev_completed_at": "2026-07-11T11:46:00Z",
-        "dev_note": "WATCHLIST_SEED now derives from system-map.json SSOT (was 2nd hardcoded array). Live table resynced 41->33 rows (exact SSOT match) via scripts/migrations/resync-watchlist-sysmap-2026-07-11.ts --apply, RAW-verified via direct table probe. get_watchlist MCP tool still stale (server holds a long-lived connection that never observed the out-of-process write) -- self-resolves on the container restart already required for the code fix. docker compose build mcp-server done (image 1c5845d64406); swap NOT executed (user/ops-gated). Commit 91ef0ac74.",
-        "qa_verdict": "CHANGES_REQUESTED",
-        "qa_round": 1,
-        "qa_reviewed_at": "2026-07-11T12:10:00Z",
-        "qa_note": "AC-5 unmet on live serving: apps/technical-analysis (Go TA service, separate container, shares market_data volume DB_READONLY) resolves its watchlist ONCE at process startup (cmd/server/main.go:54-64 readWatchlistFromDB) and was never restarted after the DB resync/mcp-server swap -- Up 3 days, unchanged. Live-curled /ta/roc-momentum + /ta/money-flow-oscillators right now both return the OLD stale 41-ticker set verbatim, incl. the 5 pre-existing garbage orphans named in commit 91ef0ac74's own message (VDC/BDI/DLC/JSH/SIS) plus GAS/GVR/MBB/ACB/CTG/VPB/HSG/NKG/HVN/ACV/HCM/DHG/POW/PPC/TCH/VNH/REE/MWG/VEA -- zero overlap with the corrected 33-ticker SSOT set. mcp-server get_watchlist (33, correct) and direct DB probe (33, correct) are BOTH fine -- this is a second, separate serving surface the task's own TLDR/AC-5 named explicitly and nobody restarted. Minimum fix: ops restart (not rebuild -- no code/image change needed, technical-analysis code is already correct) technical-analysis container so it re-reads the now-corrected shared DB at startup; then re-curl both endpoints to confirm ticker-set match."
       }
     ],
     "qa": [],
@@ -7237,6 +7238,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-07-11T07:22:56Z",
-  "_updated_by": "po"
+  "_updated_at": "2026-07-11T12:12:52Z",
+  "_updated_by": "qa"
 }
