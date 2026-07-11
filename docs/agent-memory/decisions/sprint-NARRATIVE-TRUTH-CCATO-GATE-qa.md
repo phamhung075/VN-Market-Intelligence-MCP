@@ -15,3 +15,12 @@
 - Brief S4.3 step-3 literal "±50 char window" vs implemented full-sentence-scope keyword match — functionally equivalent, no false positive/negative in DoD, non-blocking.
 **why-decision:** exit 0, 10/10 pass both runs; live orch-state.json hash byte-identical before/after both runs (only pre-existing dispatcher head-note diff present, unrelated to harness); grep confirms zero ticker/tool/lexicon literals in .sh (all via claim_map.get() at runtime); FAIL-on-non-null (VNM RSI, foreign_flow) + PASS-on-null (ANI 1/35 candles) + determinism (2x live-probe runs, identical verdict set) all RAW-confirmed → APPROVE.
 **why-change:** no change from plan.
+
+### STEP qa-S2 · qa · 2026-07-11T08:11:14Z
+**task-id:** CCATO-T2-CLAIM-TRUTH-SKILL
+**what-done:** Diffed SKILL.md contract vs narrative-truth-gate.sh source; re-ran harness live (10/10) + 3 own standalone smokes (rc=1/2/0).
+**what-considered:**
+- Trust dev's 10/10 + 3-smoke self-report vs re-run myself — re-ran per gate mandate, matched exactly.
+- Grep SKILL.md for negation_lexicon/python3/classify to confirm zero forked probe logic — zero hits, thin wrapper confirmed.
+**why-decision:** args/exit-codes(0/1/2)/signal-emit/honest-NULL all verbatim match script; signal_queue narrative_contradiction=0 before+after all smokes (no stray row); brief S4.6 + Lane C cross-check exact; DJ-GATE-1 (developer's own S1 entry) present → APPROVE, REVIEW→DONE with lane-move.
+**why-change:** no change from plan.

@@ -315,12 +315,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "SPIKE-EARNINGS-REV-VALUATION-PCTILE-FEASIBILITY",
-    "next_agent": "ops-mainserver-fetch",
-    "updated_at": "2026-07-11T08:05:59Z",
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "updated_at": "2026-07-11T08:11:43Z",
     "updated_by": "ops-mainserver-fetch",
-    "note": "recon SPIKE — live HTTP probe for earnings-revisions + valuation-history-percentile feasibility (Lane E FR-7)"
+    "note": "SPIKE-EARNINGS-REV-VALUATION-PCTILE-FEASIBILITY → REVIEW; both gaps INFEASIBLE, recon doc at docs/mainserver-sources/spike-earnings-rev-valuation-pctile-feasibility/recon.md; qa gate next"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6620,6 +6620,30 @@
         "completed_by": "qa",
         "qa_reviewed_at": "2026-07-11T04:27:07Z",
         "qa_note": "APPROVED, DONE. RAW-verified independently (did not trust dev self-report): (1) 106-intelligence-cycle.test.ts standalone 25/25 pass, 60 expect(), full run log grepped for [yahooFinance]/[sbv]/yahoo -> ZERO matches, runtime ~100-150ms matching dev-claimed 2.21s(live)->~150ms(stubbed) delta. (2) 1294-macro-spam-fix.test.ts standalone 2/2 pass; both files together 27/27 pass, 67 expect() (exact match). (3) bun tsc --noEmit clean. (4) gh run view 29139234779: conclusion=success, headSha=b4fda300a982791b124ef8788e06ff62abeb7a08 exact match to board commit field, confirmed the bun test job itself (not an unrelated lint job) succeeded (8/8 jobs green). (5) DJ-GATE-1: sprint-SYSTEMIC-REMAKE-P1-dev-mcp-server.md has a substantive task-id-stamped entry (root-cause/what-considered/why-decision/why-change), not a stub. (6) Sanity-checked fix premise: types.ts confirms macroFetchFn/vnstockSyncFn already on CycleDeps; git log -S macroFetchFn traces their introduction to commit 8a2ef7255 (2026-06-12, pre-dates this fix by weeks) -- the reopen note premise (no injection point exists) is confirmed FALSE, dev correctly reused the existing seam instead of adding a redundant one. (7) git show --stat b4fda300a: exactly 1 file changed, 23 insertions/0 deletions -- zero production code touched. (8) Manually walked all 19 actual runIntelligenceCycle() call sites in 106-intelligence-cycle.test.ts and confirmed every one now resolves through NO_NET_BASE_DEPS (directly or via NO_NET_MARKET_DEPS/a shared deps var) -- call-site coverage claim is genuine, matches the observed zero-live-fetch-log-lines result exactly, not approximate. VERDICT: sound root-cause fix, test-file-scoped, zero fake data, CI independently confirmed green on the exact claimed headSha. DJ-GATE-1 satisfied via qa's own entry sprint-SYSTEMIC-REMAKE-P1-qa.md STEP qa-S51."
+      },
+      {
+        "id": "CCATO-T2-CLAIM-TRUTH-SKILL",
+        "title": "Shared SSOT skill .claude/skills/claim-truth-gate/SKILL.md wrapping narrative-truth-gate.sh: invocation contract (post_body/agent_id/cache) + self-correct in-cycle protocol (brief S4.6) + time-sensitivity override for real-time agents + PASS-on-null honest-NULL note",
+        "status": "DONE",
+        "zone": ".claude/skills/",
+        "type": "FEATURE",
+        "size": "S",
+        "priority": "high",
+        "sprint": "NARRATIVE-TRUTH-CCATO-GATE",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#CCATO-T2-CLAIM-TRUTH-SKILL",
+        "owner": "developer",
+        "next_agent": "qa",
+        "started_at": "2026-07-11T07:57:06Z",
+        "updated_at": "2026-07-11T08:11:14Z",
+        "updated_by": "qa",
+        "dispatched_at": "2026-07-11T07:57:06Z",
+        "dispatched_by": "router",
+        "status_note": "Skill authored + RAW-verified against shipped narrative-truth-gate.sh (10/10 DoD harness pass + 3 standalone exit-code smoke-tests). No engine/SSOT changes. Ready for qa: confirm skill is the single invocation surface (no duplicated re-probe logic) and documented contract matches script exit-code/signal behavior verbatim.",
+        "completed_by": "qa",
+        "qa_verdict": "APPROVED",
+        "qa_reviewed_at": "2026-07-11T08:11:14Z",
+        "commit": "d9b5c408aa566a262394b6493543bf8b139d3196",
+        "qa_note": "APPROVED. RAW-verified independently, not from status_note: (1) diffed SKILL.md contract against scripts/narrative-truth-gate.sh source — args order (post-file/agent_id/cache-file), exit-codes (0=PASS/1=FAIL/2=config-error), signal-emit (narrative_contradiction to:po via orch-apply.sh), honest-NULL classifier all verbatim match. (2) grepped SKILL.md for negation_lexicon/dimensions/python3/classify — zero hits, confirmed thin wrapper, zero forked probe logic (its own Engine SSOT section is explicit: do not duplicate). (3) ran scripts/test-narrative-truth-gate.sh live against the running gateway: 10/10 pass (Step0 tool-resolution, a/b real FAIL cases, c honest-NULL PASS negative-control, d determinism) — matches dev-claimed 10/10 exactly. (4) ran 3 own standalone smokes: VNM TA-absence body -> rc=1 [FAIL] line naming VNM+RSI/MACD; missing post-file -> rc=2 config-error; clean body -> rc=0 PASS — all three match the documented exit-code table exactly. signal_queue narrative_contradiction count=0 before AND after every smoke run (used the FAIL case with NTG_SKIP_SIGNAL_EMIT=1, the scripts own documented iterative-testing escape hatch) — no stray live signal row leaked. (5) cross-checked brief S4.6 self-correct protocol + S5 per-agent wiring text + Lane C of 2026-07-11-analysis-quality-convergence-lanes.md — file path/zone/deliverable match exactly. DJ-GATE-1: sprint-NARRATIVE-TRUTH-CCATO-GATE-developer.md STEP developer-S1 has a substantive task-id-stamped entry. Unblocks CCATO-T3-FLOW-WIRING-6PT."
       }
     ],
     "done_verified": [],
@@ -7144,23 +7168,26 @@
         "qa_round": 2
       },
       {
-        "id": "CCATO-T2-CLAIM-TRUTH-SKILL",
-        "title": "Shared SSOT skill .claude/skills/claim-truth-gate/SKILL.md wrapping narrative-truth-gate.sh: invocation contract (post_body/agent_id/cache) + self-correct in-cycle protocol (brief S4.6) + time-sensitivity override for real-time agents + PASS-on-null honest-NULL note",
+        "id": "SPIKE-EARNINGS-REV-VALUATION-PCTILE-FEASIBILITY",
+        "type": "SPIKE",
+        "title": "Recon SPIKE (PLAN-ONLY): probe for a REAL, machine-reachable, HTTP-only, VPS-compatible, no-paid-API-key feed for (a) analyst-consensus earnings-revisions and (b) VN-Index P/E multi-year history — GO/NO-GO verdict only, forbid any build/compute/indicator design this cycle",
         "status": "REVIEW",
-        "zone": ".claude/skills/",
-        "type": "FEATURE",
+        "priority": "low",
         "size": "S",
-        "priority": "high",
-        "sprint": "NARRATIVE-TRUTH-CCATO-GATE",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#CCATO-T2-CLAIM-TRUTH-SKILL",
-        "owner": "developer",
-        "next_agent": "qa",
-        "started_at": "2026-07-11T07:57:06Z",
-        "updated_at": "2026-07-11T08:02:30Z",
-        "updated_by": "developer",
-        "dispatched_at": "2026-07-11T07:57:06Z",
-        "dispatched_by": "router",
-        "status_note": "Skill authored + RAW-verified against shipped narrative-truth-gate.sh (10/10 DoD harness pass + 3 standalone exit-code smoke-tests). No engine/SSOT changes. Ready for qa: confirm skill is the single invocation surface (no duplicated re-probe logic) and documented contract matches script exit-code/signal behavior verbatim."
+        "plan_only": true,
+        "zone": "recon",
+        "sprint": "ANALYSIS-QUALITY-CONVERGENCE",
+        "owner": "ops-mainserver-fetch",
+        "next_agent": "ops-mainserver-fetch",
+        "depends": [],
+        "spec_ref": "docs/handoffs/BA-ANALYSIS-QUALITY-CONVERGENCE.md §4",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#SPIKE-EARNINGS-REV-VALUATION-PCTILE-FEASIBILITY",
+        "generic_mandate": "Probe candidates: FiinGroup/FiinTrade consensus API (expect paywalled — confirm), VNDirect/SSI/Simplize research portals (expect narrative-only — confirm structured-data absence), Refinitiv/Bloomberg VN coverage (expect enterprise-paywalled — confirm), TradingEconomics (check for a P/E multi-year VN-Index series on the already-used slug family). If any candidate is VN-hosted/geo-blocked from main server, hand the HTTP recon leg to ops-vps-fetch (same split pattern as the existing dev-vps-crawls/dev-mainserver-crawls division). Output a GO/NO-GO verdict per gap ONLY — do not scope a build even if GO (per BA: a future sprint scopes it, speculative ahead of the SPIKE's own finding).",
+        "acceptance": "A findings doc exists (docs/vps-sources/ or docs/mainserver-sources/ per the recon-pipeline convention) with an explicit GO/NO-GO verdict for both (a) and (b), each backed by an actual HTTP probe result (status code / response shape / paywall confirmation), not an assumption.",
+        "verification_gate": "qa confirms zero code/compute/indicator-design artifacts were produced (PLAN-ONLY discipline) and both verdicts are evidenced by a real probe, not restated from the roadmap's prior rejection text.",
+        "source": "BA-ANALYSIS-QUALITY-CONVERGENCE FR-7 / AC-12",
+        "recon_doc": "docs/mainserver-sources/spike-earnings-rev-valuation-pctile-feasibility/recon.md",
+        "verdict_summary": "(a) earnings-consensus-revisions = INFEASIBLE; (b) VN-Index P/E multi-year-history-percentile = INFEASIBLE — both confirmed by live HTTP probe against all BA-mandated candidates (FiinGroup/FiinTrade, VNDirect/SSI/Simplize, Refinitiv/Bloomberg, TradingEconomics). No VPS-LANE handoff (no geo-block triggered). PLAN-ONLY discipline held — zero code/compute/indicator-design artifacts produced."
       }
     ],
     "qa": [],
@@ -7193,26 +7220,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#OPS-BCTC-REFINE-REPASS-NONBANK-5T",
         "owner": "ops",
         "po_triage_20260710_round3_ctg_not_folded_note": "[po-triage-20260710-round3 08:06Z] CTG 2026-Q1 (analysis-agent Telegram #3551, composite=0.00/financial=0.00) was triaged this tick and DELIBERATELY NOT FOLDED into this batch. CTG is a BANK (B02-TCTD form); this batch is strictly NON-BANK (VHM/VIC/VRE/HSG/MWG) — a different failure CLASS (bank balance-sheet section-classifier + scalar mapping) with its own owning track: W5-FU-CTG-REFINE-96e36139 + TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST (both BLOCKED on a deploy-gate). CLARIFICATION for future triagers: the title's phrase \"proven CTG runbook\" refers to the general refine -> push_bctc_refined_unit -> finalize_bctc_refine -> reingest-bctc-report.ts PROCEDURE (proven to EXECUTE on CTG report 96e36139), NOT a claim that CTG 2026-Q1's DATA outcome is green — CTG 2026-Q1 total_assets is still 0 and its bank track is BLOCKED (deploy-gate + a genuine balance-sheet-absent root gap, CTG-CARRY-FORWARD AC-TRACK1-3 escalated 2026-07-10). Do NOT read \"proven CTG runbook\" as \"CTG is fixed\"; do NOT fold any BANK ticker into this NON-BANK batch. (Mirrors the bank/non-bank framing correction made in round-1 of this same 2026-07-10T07:07Z tick on OPS-BCTC-BANK-2025Q4-ENRICH-0ROW-REPARSE.)"
-      },
-      {
-        "id": "SPIKE-EARNINGS-REV-VALUATION-PCTILE-FEASIBILITY",
-        "type": "SPIKE",
-        "title": "Recon SPIKE (PLAN-ONLY): probe for a REAL, machine-reachable, HTTP-only, VPS-compatible, no-paid-API-key feed for (a) analyst-consensus earnings-revisions and (b) VN-Index P/E multi-year history — GO/NO-GO verdict only, forbid any build/compute/indicator design this cycle",
-        "status": "IN_PROGRESS",
-        "priority": "low",
-        "size": "S",
-        "plan_only": true,
-        "zone": "recon",
-        "sprint": "ANALYSIS-QUALITY-CONVERGENCE",
-        "owner": "ops-mainserver-fetch",
-        "next_agent": "ops-mainserver-fetch",
-        "depends": [],
-        "spec_ref": "docs/handoffs/BA-ANALYSIS-QUALITY-CONVERGENCE.md §4",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#SPIKE-EARNINGS-REV-VALUATION-PCTILE-FEASIBILITY",
-        "generic_mandate": "Probe candidates: FiinGroup/FiinTrade consensus API (expect paywalled — confirm), VNDirect/SSI/Simplize research portals (expect narrative-only — confirm structured-data absence), Refinitiv/Bloomberg VN coverage (expect enterprise-paywalled — confirm), TradingEconomics (check for a P/E multi-year VN-Index series on the already-used slug family). If any candidate is VN-hosted/geo-blocked from main server, hand the HTTP recon leg to ops-vps-fetch (same split pattern as the existing dev-vps-crawls/dev-mainserver-crawls division). Output a GO/NO-GO verdict per gap ONLY — do not scope a build even if GO (per BA: a future sprint scopes it, speculative ahead of the SPIKE's own finding).",
-        "acceptance": "A findings doc exists (docs/vps-sources/ or docs/mainserver-sources/ per the recon-pipeline convention) with an explicit GO/NO-GO verdict for both (a) and (b), each backed by an actual HTTP probe result (status code / response shape / paywall confirmation), not an assumption.",
-        "verification_gate": "qa confirms zero code/compute/indicator-design artifacts were produced (PLAN-ONLY discipline) and both verdicts are evidenced by a real probe, not restated from the roadmap's prior rejection text.",
-        "source": "BA-ANALYSIS-QUALITY-CONVERGENCE FR-7 / AC-12"
       }
     ]
   },
