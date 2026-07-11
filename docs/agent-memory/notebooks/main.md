@@ -1,6 +1,14 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-11T00:58Z (dev-team tick 2026-07-11T0037Z — PO found+fixed the REAL root cause of cold-evict no-ops: lowercase status tokens; genuine eviction landed)
+**Written:** 2026-07-11T01:17Z (dev-team tick 2026-07-11T0107Z — skip-PO-respawn, cold-evict no-op confirming last tick's fix is durable)
+
+## cycle-20260711T0107Z — skip-PO-respawn applied, cold-evict no-op is now genuinely the resting state post-fix
+
+- **Preflight RUN** (tick 0107Z). GCC-PREFLIGHT clean. Drain-signals 0 new (`db_count=158` unchanged; 41 stray non-signal files in inbox, all known `CLEAN-SIGNALS-DIR-NONSIGNAL-ARTIFACTS` debt). CI green. `signal_queue` 0 NEW rows. Orphan-signal probe: 0.
+- **Skip-PO-respawn applied** (all 4 conditions met): (a) ~20min since PO's last real triage commit `383563cc2`; (b) telegram new-reports empty; (c) 0 new signals; (d) board byte-identical to last tick's close (ready=1, in_progress=1 `OPS-BCTC-REFINE-REPASS-NONBANK-5T`, done=15, done_verified=0, head idle).
+- **Post-cycle:** mock-guard same known `_test.go` FP (`FIX-MOCKGUARD-SCOPE-EXCLUDE-TESTGO` already in backlog, no duplicate signal). No non-main branches, telegram/unresolved empty.
+- **Cold eviction:** `DONE_N=15>10` triggered the check; script logged `done_verified[]: 1 to evict` / `signal archive[]: 1 to evict` internally but `New items to cold: 0`, md5 byte-identical before/after, conservation `456=456` — genuine no-op, RAW-verified via `git status`/`git diff --stat` (empty). This is now the *expected* resting state confirming last tick's `383563cc2`+`609286a92` fix is durable — not a recurrence of the case-drift class.
+- **Push-backstop:** `ahead=13`, unchanged (zero new commits this tick besides this notebook entry), still under threshold=20 — silent no-op.
 
 ## cycle-20260711T0037Z — skip-respawn cadence expired → PO root-causes cold-evict no-op streak → genuine eviction (REVISES prior session diagnosis)
 
