@@ -2510,6 +2510,17 @@
         "closed_at": "2026-07-09T17:58:13Z",
         "closed_by": "agents-architect",
         "note": "Superseded/closed — RemoteTrigger Layer A retired (all-local cutover 2026-06-23T17:22Z, reconfirmed enabled:false live 2026-07-08T20:35Z); detect-missing-gateway/don't-silently-drop principle already shipped against the current local-subagent gateway-blind mechanism (blind-guard.md Step 0c, spawn-fanout.md Step 5.0, cycle-bootstrap CONFIRMED-BLIND fallback, gateway-call-contract.md §6 Degraded Mode). See docs/architecture-briefs/2026-07-09-arch-headless-gateway-cowork-nopost-closure.md"
+      },
+      {
+        "id": "IND-P1-MOMENTUM-CONSUMER-WIRING",
+        "title": "AC6 P1 Consumer-Wiring — wire the 4 LIVE P1 momentum/RS tools (get_roc_momentum / get_relative_strength / get_52w_proximity / get_foreign_accum_rank) into the helper-agent flows. [CANCELLED — superseded by FR-1's fresh BA §0.4 matrix, live-verified 2026-07-11]",
+        "zone": "cross-service",
+        "priority": "high",
+        "status": "CANCELLED",
+        "type": "FIX",
+        "sprint": "MARKET-INDICATOR-DEPTH-P0",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#IND-P1-MOMENTUM-CONSUMER-WIRING",
+        "verify_note": "CANCELLED: Superseded by FR-1-CHEF-LEG-FR-2-ATOMIC + FR-1-REMAINING-5-FLOWS. FR-1's BA §0.4 matrix excludes alert-commander/tran-ngoc-bau, defers get_foreign_accum_rank everywhere, and includes market-analyst (stale prior exclusion note now resolved per BA §0.5). See architecture brief §3."
       }
     ],
     "backlog": [
@@ -4856,16 +4867,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#IND-P2-ETF-FLOW"
       },
       {
-        "id": "IND-P1-MOMENTUM-CONSUMER-WIRING",
-        "title": "AC6 P1 Consumer-Wiring — wire the 4 LIVE P1 momentum/RS tools (get_roc_momentum / get_relative_strength / get_52w_proximity / get_foreign_accum_rank) into the helper-agent flows. Closes the AC6 gap left OPEN by IND-P1-CONSUMER-WIRING-AUDIT (which wired the 5 P0 tools ONLY). Tools shipping != agents using them — the CORE of the user's 'more indices so the helper agents analyze the market better' intent.",
-        "zone": "cross-service",
-        "priority": "high",
-        "status": "BACKLOG",
-        "type": "FIX",
-        "sprint": "MARKET-INDICATOR-DEPTH-P0",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#IND-P1-MOMENTUM-CONSUMER-WIRING"
-      },
-      {
         "id": "FB-LAUNCHD-QA-FIRE-VERIFY-DEDUP",
         "type": "FIX",
         "size": "M",
@@ -5807,7 +5808,64 @@
         "ba_spec_complete": true,
         "ba_handoff": "docs/handoffs/BA-ANALYSIS-QUALITY-CONVERGENCE.md",
         "ba_completed_at": "2026-07-11T07:36:59Z",
-        "next_agent": "agents-architect"
+        "next_agent": "agents-architect",
+        "po_approved": true,
+        "po_approved_at": "2026-07-11T07:37:30Z",
+        "po_approval_note": "spec APPROVED — zero PO blockers, respects honest-NULL/additive-only/zone-discipline/PLAN-ONLY-phase2/feasibility-recon precedents; resume SPRINT-M cascade at agents-architect, do NOT re-run BA"
+      },
+      {
+        "id": "FR-1-CHEF-LEG-FR-2-ATOMIC",
+        "title": "FR-1 (chef.md leg) + FR-2 (ATOMIC): Wire momentum/RS/52w/insider indicators into CHEF (unified-agent/flow/chef.md Step 0/3/4) AND extend CHEF Step 6.7 Rule AF-1's blocked-token regex to cover these 4 new families — MUST land in single commit to prevent FIX-CHEF-FABRICATED-TA-NUMBERS regression window (brief §2.2)",
+        "type": "FEATURE",
+        "priority": "P1",
+        "status": "BACKLOG",
+        "zone": "docs/agents/unified-agent/",
+        "size": "M",
+        "sprint": "ANALYSIS-QUALITY-CONVERGENCE",
+        "owner": "cowork-refactory-expert",
+        "depends": [],
+        "spec_ref": "docs/architecture-briefs/2026-07-11-analysis-quality-convergence-lanes.md §2.1 bctc-analyst decision, §2.2 atomicity requirement",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FR-1-CHEF-LEG-FR-2-ATOMIC",
+        "generic_mandate": "Add get_roc_momentum/get_relative_strength/get_52w_proximity/get_insider_sentiment to chef.md Step 0 GATHER (P0 tool block) and feed Step 3/Step 4 per BA §1. Extend chef.md Step 6.7 Rule AF-1's indicator-class enumeration + blocked-token regex to cover roc/z_score/decile, rs/percentile/composite_score, pct_from_52w_high/low, insider net_sentiment_score — zero un-sourced numeric tokens from these families in live cycle output. Gate: self-checked via live CHEF cycle audit (Block B WORK message). Honest-NULL/[SKIP] degrade when tools unavailable.",
+        "acceptance": "Single commit: both chef.md Step 0/3/4 wiring edits AND Step 6.7 Rule AF-1 regex extension. tsc passes. Additive-only diff. Live CHEF cycle audit shows zero un-sourced numeric tokens from the 4 new families. BA AC-6 satisfied."
+      },
+      {
+        "id": "FR-1-REMAINING-5-FLOWS",
+        "title": "FR-1 (remaining 5 flows): Wire momentum/RS/52w/insider indicators into market-watcher / bctc-analyst / news-scout / digest-predict / market-analyst per BA §0.4 ADD column — independent of CHEF leg (non-coupled per NFR-3)",
+        "type": "FEATURE",
+        "priority": "P1",
+        "status": "BACKLOG",
+        "zone": "docs/agents/",
+        "size": "M",
+        "sprint": "ANALYSIS-QUALITY-CONVERGENCE",
+        "owner": "cowork-refactory-expert",
+        "depends": [
+          "FR-1-CHEF-LEG-FR-2-ATOMIC"
+        ],
+        "spec_ref": "docs/architecture-briefs/2026-07-11-analysis-quality-convergence-lanes.md §2.1 flow table (5 anchors: market-watcher/cycle.md Step 'Market indicators', bctc-analyst/stage-analyze.md E1+E3, news-scout/stage-sentiment.md L32, digest-predict/daily-predict.md P-3/P-4, market-analyst/main.md P0 tool block)",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FR-1-REMAINING-5-FLOWS",
+        "generic_mandate": "Additive-only wiring per the 5 flow anchors. Each flow: add call_tool(server='vn-market', tool='<bare>') for assigned tools, with graceful [SKIP] degrade. Client-side filter required (BA §0.9 — full-universe tickers[] returned, not per-symbol scoped). No code change to existing steps. Honest-NULL / fabricated-fallback-forbidden (NFR-1).",
+        "acceptance": "Grep finds each tool in the assigned flows per BA §0.4 ADD column. Honest-NULL guards in all new calls. Additive-only diff; tsc + each flow's gate/suite pass. BA AC-1/3 satisfied for these 5 flows."
+      },
+      {
+        "id": "SPIKE-EARNINGS-REV-VALUATION-PCTILE-FEASIBILITY",
+        "type": "SPIKE",
+        "title": "Recon SPIKE (PLAN-ONLY): probe for a REAL, machine-reachable, HTTP-only, VPS-compatible, no-paid-API-key feed for (a) analyst-consensus earnings-revisions and (b) VN-Index P/E multi-year history — GO/NO-GO verdict only, forbid any build/compute/indicator design this cycle",
+        "status": "BACKLOG",
+        "priority": "low",
+        "size": "S",
+        "plan_only": true,
+        "zone": "recon",
+        "sprint": "ANALYSIS-QUALITY-CONVERGENCE",
+        "owner": "ops-mainserver-fetch",
+        "next_agent": "ops-mainserver-fetch",
+        "depends": [],
+        "spec_ref": "docs/handoffs/BA-ANALYSIS-QUALITY-CONVERGENCE.md §4",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#SPIKE-EARNINGS-REV-VALUATION-PCTILE-FEASIBILITY",
+        "generic_mandate": "Probe candidates: FiinGroup/FiinTrade consensus API (expect paywalled — confirm), VNDirect/SSI/Simplize research portals (expect narrative-only — confirm structured-data absence), Refinitiv/Bloomberg VN coverage (expect enterprise-paywalled — confirm), TradingEconomics (check for a P/E multi-year VN-Index series on the already-used slug family). If any candidate is VN-hosted/geo-blocked from main server, hand the HTTP recon leg to ops-vps-fetch (same split pattern as the existing dev-vps-crawls/dev-mainserver-crawls division). Output a GO/NO-GO verdict per gap ONLY — do not scope a build even if GO (per BA: a future sprint scopes it, speculative ahead of the SPIKE's own finding).",
+        "acceptance": "A findings doc exists (docs/vps-sources/ or docs/mainserver-sources/ per the recon-pipeline convention) with an explicit GO/NO-GO verdict for both (a) and (b), each backed by an actual HTTP probe result (status code / response shape / paywall confirmation), not an assumption.",
+        "verification_gate": "qa confirms zero code/compute/indicator-design artifacts were produced (PLAN-ONLY discipline) and both verdicts are evidenced by a real probe, not restated from the roadmap's prior rejection text.",
+        "source": "BA-ANALYSIS-QUALITY-CONVERGENCE FR-7 / AC-12"
       }
     ],
     "closed_sprints": [
@@ -7128,8 +7186,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-11T04:27:07Z",
-    "last_triaged_by": "qa",
+    "last_triaged_at": "2026-07-11T07:37:30Z",
+    "last_triaged_by": "po",
     "in_progress": [
       {
         "id": "OPS-BCTC-REFINE-REPASS-NONBANK-5T",
