@@ -1,6 +1,6 @@
 # ops-mainserver-fetch — Notebook
 
-**Last updated:** 2026-06-04 20:20 UTC | **Sprint:** fred-effr fetch broken recon
+**Last updated:** 2026-07-11 08:15 UTC | **Sprint:** ANALYSIS-QUALITY-CONVERGENCE Lane E — SPIKE-EARNINGS-REV-VALUATION-PCTILE-FEASIBILITY (recon SPIKE, both gaps INFEASIBLE)
 
 ---
 
@@ -47,6 +47,7 @@ Zone: ops-zone (local probe, no VPS)
 | 2026-06-04 | fred-effr | fetch_broken (EFFR stale 7d) | fredgraph.csv blocked by Akamai; api.stlouisfed.org WORKING — fix = change URL in fredEffrIorb.ts | no |
 | 2026-05-13 | marketwatch-indices | new_source_needed | VN Index not available on MW | no |
 | 2026-05-13 | cnbc-world-markets | new_source_needed | recon complete, quote API open | no |
+| 2026-07-11 | spike-earnings-rev-valuation-pctile-feasibility (SPIKE, 4 candidate families: FiinGroup/FiinTrade, VNDirect/SSI/Simplize, Refinitiv/Bloomberg, TradingEconomics) | new_source_needed (PLAN-ONLY recon) | Both gaps INFEASIBLE — no candidate serves a real multi-year P/E series or a consensus-EPS-revision feed over HTTP without paid auth; TE's "already-used slug family" has NO P/E page (soft-404), Simplize has single-point-snapshot peRatio only (no history key), Bloomberg/SSI are anti-bot+paywall-blocked, VNDirect dchart is price-only. No dev-mainserver-crawls signal dropped (no build follows a NO-GO SPIKE). | no (no geo-block triggered on any candidate) |
 
 ---
 
@@ -61,6 +62,20 @@ No geo-blocks detected in this cycle. All 11 sources are accessible from main se
 ---
 
 ## Lessons Learned
+
+### 2026-07-11 — SPIKE-EARNINGS-REV-VALUATION-PCTILE-FEASIBILITY Recon
+
+12. **TradingEconomics soft-404 pattern** — a non-existent indicator slug (e.g. `/vietnam/price-earnings-ratio`, `/vietnam/stock-market-pe-ratio`) still returns HTTP 200, but the `<title>` falls back to the generic `TRADING ECONOMICS | 20 Million Indicators for 196 Countries` + a `Search-result` DOM marker, vs. a real page's specific title (`Vietnam GDP`). HTTP status alone is NOT sufficient to confirm a TE indicator page exists — always diff the `<title>` against the generic fallback.
+
+13. **TE guest:guest demo API key is dead** — `api.tradingeconomics.com/country/vietnam?c=guest:guest` now returns 410 "guest account has been discontinued." No free/anonymous API path remains on TradingEconomics.
+
+14. **Simplize.vn serves real per-ticker SSR JSON (`__NEXT_DATA__`) but single-point-in-time only** — `peRatio`, `epsRatio`, `bookValue` etc. are live current-day values; grep of the full page for `"pe[A-Za-z]*"` surfaces only the one `peRatio` key, no `peHistory`/`historicalPE`/percentile field. No dedicated `/dinh-gia` (valuation) sub-route exists (soft-404). Useful future source for current snapshots, NOT for any historical/percentile computation.
+
+15. **VNDirect's `dchart-api.vndirect.com.vn` is directly reachable from main server** (not VPS-only as roadmap's Sprint-0 note implied) and returns real OHLCV bars for VNINDEX — but price-only, no valuation-multiple field. `livedragon.vndirect.com.vn` (older research subdomain) is DNS-dead.
+
+16. **SSI iBoard (`iboard.ssi.com.vn`) is Cloudflare Managed Challenge, not geo-blocked** — 403 + `__cf_bm` cookie, no VN-only/451/X-Country-Block signal. Anti-bot layer, main-server IP itself is not geo-fenced.
+
+17. **CafeF and Vietstock both answered directly from main server (France IP), no geo-fence** — contradicts a blanket assumption that VN-domestic hosts require the VPS proxy; worth a live reachability check before routing any future VN-domestic recon to ops-vps-fetch by default.
 
 ### 2026-06-04 — fred-effr Fetch Broken Recon
 
