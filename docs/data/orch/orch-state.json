@@ -4293,16 +4293,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-BDI-SHIPPING-STALE-404-GUARD"
       },
       {
-        "id": "FIX-FB-JARGON-ENGLISH-WORD-LEAK",
-        "title": "Broaden fb-jargon-gate.sh — flag stray Latin-script English content-words in VN prose body",
-        "type": "FIX",
-        "size": "S",
-        "status": "BACKLOG",
-        "priority": "P2",
-        "zone": "scripts/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-FB-JARGON-ENGLISH-WORD-LEAK"
-      },
-      {
         "id": "FIX-MACRO-CALENDAR-WIRE-STATIC-SOURCE",
         "type": "FIX",
         "title": "get_macro_calendar serves empty events[] — MCP tool proxies the FDA-4 honest-unavailable Go stub while a complete unwired static-calendar domain service exists in mcp-server",
