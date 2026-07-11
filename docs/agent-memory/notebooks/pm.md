@@ -1,5 +1,25 @@
 # PM — Notebook
 
+## c329 MONEY-RADAR-P0 · Idle-Slot Fill · Task Pull · 2026-07-11T10:40Z
+
+**MANDATE:** Router-initiated idle-slot fill for WIP=1/2 (OPS-BCTC-REFINE-REPASS-NONBANK-5T peer-owned, untouchable). PO pre-verified two unblocked mission-aligned candidates: CONTAM-11-REMEDIATE (primary) and WATCHLIST-DB-SYSMAP-DRIFT-FIX (alternate). Task: pull the valid candidate into ready[], verify pre-conditions, create handoff doc.
+
+**PRE-VERIFY FINDINGS:**
+- **CONTAM-11-REMEDIATE (primary):** STALE-PICK HAZARD — live daily_ohlcv contamination (sub-1000 close) = 4 rows (BMP/HGM/KSV/MCH × 1 each), NOT 3023 claimed in task description. Evidence: pre-verified via `sqlite3 data/market.db` query on 9 target tickers (BMP/MCH/HGM/PMC/KSV/TOS/AGX/TBD/STS); 5 tickers have 0 rows. Conclusion: contamination already 99.9% fixed (prior agent or abandoned midway). Stale-pick rule applied → SKIP.
+- **WATCHLIST-DB-SYSMAP-DRIFT-FIX (alternate):** LIVE DRIFT CONFIRMED — live SQLite watchlist=52 rows vs SSOT system-map.json=34 items. Delta: 18 rows (VEA inactive present, VNH mis-seeded, 17+ active missing). Pre-verify: PASSED ✓
+
+**OUTPUT:**
+1. CONTAM-11-REMEDIATE: SKIPPED (stale-pick, task remains BACKLOG for root-cause triage by dev-team/ops)
+2. WATCHLIST-DB-SYSMAP-DRIFT-FIX: PULLED into ready[] lane, status BACKLOG→READY
+3. Handoff doc: docs/handoffs/TASK_WATCHLIST-DB-SYSMAP-DRIFT-FIX.md (acceptance criteria, known hazards, execution steps)
+4. Decision journal: docs/agent-memory/decisions/sprint-MONEY-RADAR-P0-pm.md § STEP pm-S1
+
+**BOARD MUTATIONS:** task_board.backlog→ready move (backlog=315→314, ready=0→1, in_progress=1 stable). Task conservation check PASSED (task_total=458 maintained). Terminal-lane bloat noted (done[]=22 > 10 threshold HSC-3); deferred to next PM cycle.
+
+**NEXT:** dev-cross-service to pick up WATCHLIST-DB-SYSMAP-DRIFT-FIX from ready[]. Router routes next.
+
+---
+
 ## c328 BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP · Epic Wrapper Closeout · 2026-07-10T21:50Z
 
 **MANDATE:** Close epic wrapper row after all 11 sub-tasks (D0, D0B, D1, D2.5, D3, D4, D5, SHG-2, SHG-3, SHG-4, SHG-5) verified DONE_VERIFIED. Flip row status from ready[] to done_verified[], flag open follow-up.

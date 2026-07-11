@@ -4886,17 +4886,6 @@
         "verify_note": "prior_status=TODO"
       },
       {
-        "id": "WATCHLIST-DB-SYSMAP-DRIFT-FIX",
-        "title": "Resync live SQLite watchlist table from docs/data/system-map.json .project.watchlist (SSOT) — corrects /ta/money-flow-oscillators + /ta/roc-momentum + sibling TA endpoints",
-        "status": "BACKLOG",
-        "zone": "cross-service",
-        "type": "FIX",
-        "size": "S",
-        "priority": "low",
-        "sprint": "MONEY-RADAR-P0",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#WATCHLIST-DB-SYSMAP-DRIFT-FIX"
-      },
-      {
         "id": "CLEAN-SIGNALS-DIR-NONSIGNAL-ARTIFACTS",
         "title": "Relocate 3 non-signal artifacts out of docs/signals/ + teach signal-drain to archive from/type-less files (stop per-tick re-skip)",
         "status": "BACKLOG",
@@ -6696,7 +6685,19 @@
       "last_updated_at": "2026-07-10T09:19:45Z",
       "last_updated_by": "ops"
     },
-    "ready": [],
+    "ready": [
+      {
+        "id": "WATCHLIST-DB-SYSMAP-DRIFT-FIX",
+        "title": "Resync live SQLite watchlist table from docs/data/system-map.json .project.watchlist (SSOT) — corrects /ta/money-flow-oscillators + /ta/roc-momentum + sibling TA endpoints",
+        "status": "READY",
+        "zone": "cross-service",
+        "type": "FIX",
+        "size": "S",
+        "priority": "low",
+        "sprint": "MONEY-RADAR-P0",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#WATCHLIST-DB-SYSMAP-DRIFT-FIX"
+      }
+    ],
     "review": [
       {
         "id": "TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST",
