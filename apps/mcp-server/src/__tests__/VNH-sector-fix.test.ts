@@ -1,5 +1,14 @@
 // apps/mcp-server/src/__tests__/VNH-sector-fix.test.ts
 // Sprint VNH-SECTOR-FIX — VNH must be classified as agriculture, not real_estate
+//
+// SUPERSEDED by WATCHLIST-DB-SYSMAP-DRIFT-FIX (2026-07-11): VNH has zero
+// entries in docs/data/system-map.json `.project.watchlist[]` (confirmed —
+// it was a seeder-only orphan, never part of the real watchlist SSOT). Now
+// that WATCHLIST_SEED derives from system-map.json, VNH correctly drops out
+// of the seed entirely rather than being relabeled to a different sector.
+// The original sector-relabel fix (commit 9713118fe) is moot; kept here as a
+// regression guard that VNH stays absent, plus the still-valid collateral
+// assertions from the original fix.
 
 import { describe, it, expect } from "bun:test";
 import type { DomainType } from "../../bctc-schema.js";
@@ -33,19 +42,10 @@ const VALID_DOMAINS: DomainType[] = [
   "other",
 ];
 
-describe("Sprint VNH-SECTOR-FIX — VNH sector classification", () => {
-  const vnh = WATCHLIST_SEED.find((e) => e.code === "VNH");
-
-  it("VNH entry exists in WATCHLIST_SEED", () => {
-    expect(vnh).toBeDefined();
-  });
-
-  it("VNH domain is agriculture, not real_estate", () => {
-    expect(vnh?.domain).toBe("agriculture");
-  });
-
-  it("VNH is not classified as real_estate", () => {
-    expect(vnh?.domain).not.toBe("real_estate");
+describe("Sprint VNH-SECTOR-FIX — VNH sector classification (superseded by WATCHLIST-DB-SYSMAP-DRIFT-FIX)", () => {
+  it("VNH is absent from WATCHLIST_SEED (not in system-map.json SSOT)", () => {
+    const vnh = WATCHLIST_SEED.find((e) => e.code === "VNH");
+    expect(vnh).toBeUndefined();
   });
 
   it("real_estate peers are unaffected (no collateral damage)", () => {

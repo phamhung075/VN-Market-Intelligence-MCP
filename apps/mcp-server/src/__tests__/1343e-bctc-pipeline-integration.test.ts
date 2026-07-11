@@ -26,6 +26,7 @@ import { initDatabase, closeDb } from "../infrastructure/db/schema.js";
 import {
   seedWatchlist,
   backfillBctcQ4,
+  WATCHLIST_SEED,
 } from "../infrastructure/db/seedWatchlist.js";
 import { discoverHosePdfUrls } from "../domain/services/bctcDiscovery.js";
 
@@ -59,20 +60,21 @@ describe("1343e — BCTC Pipeline Integration", () => {
     seedWatchlist(db);
 
     // Verify watchlist populated
-    // NOTE: seedWatchlist seeds 34 tickers (sprint-054 cleanup removed 5 inactive: VDC, BDI, DLC,
-    // JSH, SIS; sprint-1869 Task-1876a-A6 added 7 high-vol tickers: NVL, DPM, REE, VNH, KBC, MWG,
-    // TCH; Task-1946a added PLX). Test updated from 26 → 34.
+    // NOTE (WATCHLIST-DB-SYSMAP-DRIFT-FIX, 2026-07-11): seedWatchlist now derives
+    // WATCHLIST_SEED from docs/data/system-map.json (SSOT) instead of a hardcoded
+    // ticker list — count asserted dynamically against WATCHLIST_SEED.length so this
+    // test never drifts again when system-map.json's watchlist changes.
     const wlCount = db
       .prepare("SELECT COUNT(*) AS cnt FROM watchlist")
       .get() as { cnt: number };
-    expect(wlCount.cnt).toBe(34);
+    expect(wlCount.cnt).toBe(WATCHLIST_SEED.length);
 
-    // Run backfill — all 34 tickers missing Q4 reports → should enqueue all
+    // Run backfill — all seed tickers missing Q4 reports → should enqueue all
     backfillBctcQ4(db);
 
     // Verify every watchlist ticker has a Q4 2025 queue entry (pending or pre-existing)
     // Note: initDatabase also pre-populates some Q4 entries for known tickers.
-    // We assert that ALL 34 seed tickers have a queue entry, regardless of source.
+    // We assert that ALL seed tickers have a queue entry, regardless of source.
     const missingFromQueue = db
       .prepare(
         `SELECT w.code FROM watchlist w
@@ -190,9 +192,9 @@ describe("1343e — BCTC Pipeline Integration", () => {
 
   // ── Test 5: Watchlist count 30+ post-restore ──────────────────────────────
 
-  it("should maintain watchlist of 34 tickers after seedWatchlist", () => {
-    // seedWatchlist has 34 entries (sprint-054 removed 5 inactive; sprint-1869 added 7 high-vol;
-    // Task-1946a added PLX). toBeGreaterThanOrEqual anchors the floor.
+  it("should maintain a watchlist of at least 26 tickers after seedWatchlist", () => {
+    // WATCHLIST_SEED now derives from system-map.json SSOT (WATCHLIST-DB-SYSMAP-DRIFT-FIX,
+    // 2026-07-11) — toBeGreaterThanOrEqual(26) anchors a floor rather than an exact drifting count.
     seedWatchlist(db);
 
     const count = db

@@ -1,31 +1,33 @@
 /**
  * seedWatchlist.ts — Task 1343a: Watchlist restore + Q4 2025 backfill
+ * Refactored under WATCHLIST-DB-SYSMAP-DRIFT-FIX (2026-07-11).
  *
  * Provides two idempotent functions:
- *   - seedWatchlist(db)     — inserts 25 tickers (10 sectors) via UPSERT
+ *   - seedWatchlist(db)     — upserts the SSOT watchlist via UPSERT
  *   - backfillBctcQ4(db)    — enqueues bctc_vps_queue for tickers missing Q4 2025
  *
  * Both functions are pure SQLite operations with no side effects beyond DB writes.
  * Safe to call multiple times (idempotent).
  *
- * Removed (stale/invalid — bgapidatafeed.vps.com.vn returns [] for all):
- *   VDC  — UPCOM securities  (delisted/inactive)
- *   BDI  — HNX agriculture   (Baltic Dry Index — not a VN stock, seed data error)
- *   DLC  — UPCOM agriculture (delisted/inactive)
- *   JSH  — HNX utilities     (delisted/inactive)
- *   SIS  — HOSE tech         (delisted/inactive)
+ * WATCHLIST-DB-SYSMAP-DRIFT-FIX root cause: WATCHLIST_SEED used to be a
+ * SECOND hardcoded ticker array, independent of and badly diverged from
+ * `docs/data/system-map.json` `.project.watchlist[]` (the project's actual
+ * watchlist SSOT). schema.ts runs seedWatchlist() unconditionally on every
+ * non-test DB init, so the stale hardcoded list silently re-seeded itself on
+ * every container restart. WATCHLIST_SEED now derives from system-map.json
+ * at module load — never hardcode ticker lists here again.
  */
 
 import type { Database } from "bun:sqlite";
+import * as fs from "node:fs";
 import type { DomainType } from "../../../bctc-schema.js";
 import { sqlInClause } from "./sqlHelpers.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Watchlist seed data — 34 tickers, 12 sectors
-//   - 27 standard tickers (Sprint 054 user config + PLX added Task 1946a)
-//   - 7 high-vol tickers added Task 1876a-A6 (Sprint 1869 high-vol tier)
+// Watchlist seed data — derived from docs/data/system-map.json (SSOT)
 // Default thresholds: dropPct=-3, risePct=5, impactScore=5
-// migrateWatchlistThresholds() promotes high-vol to -9.0 on every startup.
+// migrateWatchlistThresholds() promotes a fixed high-vol tier to -9.0 on
+// every startup (HIGH_VOL_TICKERS — independent of watchlist membership).
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface WatchlistSeedEntry {
@@ -34,80 +36,140 @@ export interface WatchlistSeedEntry {
   domain: DomainType;
 }
 
-export const WATCHLIST_SEED: WatchlistSeedEntry[] = [
-  // Oil & Gas
-  { code: "GAS", exchange: "HOSE",  domain: "oil_gas" },
-  { code: "PLX", exchange: "HOSE",  domain: "oil_gas" }, // Petrolimex — petroleum retail, HOSE (Task 1946a)
-  // Agriculture / Rubber
-  { code: "GVR", exchange: "HOSE",  domain: "agriculture" }, // Vietnam Rubber Group — cao su, not petroleum
-  // Banking
-  { code: "VCB", exchange: "HOSE",  domain: "banking" },
-  { code: "BID", exchange: "HOSE",  domain: "banking" },
-  { code: "EIB", exchange: "HOSE",  domain: "banking" },
-  { code: "MBB", exchange: "HOSE",  domain: "banking" },
-  { code: "ACB", exchange: "HOSE",  domain: "banking" },
-  { code: "CTG", exchange: "HOSE",  domain: "banking" },
-  { code: "VPB", exchange: "HOSE",  domain: "banking" },
-  // Real Estate
-  { code: "VRE", exchange: "HOSE",  domain: "real_estate" },
-  { code: "VIC", exchange: "HOSE",  domain: "real_estate" },
-  { code: "VHM", exchange: "HOSE",  domain: "real_estate" },
-  { code: "D2D", exchange: "HOSE",  domain: "real_estate" },
-  // Steel
-  { code: "HPG", exchange: "HOSE",  domain: "steel" },
-  { code: "HSG", exchange: "HOSE",  domain: "steel" },
-  { code: "NKG", exchange: "HOSE",  domain: "steel" },
-  // Aviation
-  { code: "HVN", exchange: "HOSE",  domain: "aviation" },
-  { code: "ACV", exchange: "UPCOM", domain: "aviation" },
-  // Tech
-  { code: "FPT", exchange: "HOSE",  domain: "tech" },
-  // Securities
-  { code: "VCI", exchange: "HOSE",  domain: "securities" },
-  { code: "SSI", exchange: "HOSE",  domain: "securities" },
-  { code: "HCM", exchange: "HOSE",  domain: "securities" },
-  // Machinery
-  { code: "DAG", exchange: "HOSE",  domain: "machinery" }, // Đông Á Plastic Group — plastics/industrial, HOSE
-  // Pharma
-  { code: "DHG", exchange: "HOSE",  domain: "pharma" },
-  // Utilities
-  { code: "POW", exchange: "HOSE",  domain: "utilities" },
-  { code: "PPC", exchange: "HOSE",  domain: "utilities" },
-  // Agriculture — BDI (Baltic Dry Index) and DLC removed (not VN stocks or delisted)
+/** Shape of one entry in system-map.json `.project.watchlist[]`. */
+export interface SystemMapWatchlistEntry {
+  ticker: string;
+  company?: string;
+  sector: string;
+  exchange: "HOSE" | "HNX" | "UPCOM";
+  active?: boolean;
+  note?: string;
+}
 
-  // ── Sprint 1869 high-vol tier (Task 1876a-A6) ────────────────────────────
-  // Real-estate / retail / chemicals sectors with historical daily std-dev
-  // > 2σ of watchlist average. Seeded at drop=-3 default; migrateWatchlistThresholds()
-  // (called immediately after in initDatabase()) applies -9.0 unconditionally.
-  // Real Estate (high-vol)
-  { code: "NVL", exchange: "HOSE",  domain: "real_estate" }, // Novaland — std dev ~2.5%
-  { code: "KBC", exchange: "HOSE",  domain: "real_estate" }, // Kinh Bac City Development — std dev ~2.3%
-  { code: "TCH", exchange: "HOSE",  domain: "real_estate" }, // Hoang Huy Investment Financial Services — real estate/auto services, HOSE; std dev ~1.9%
-  // Agriculture (high-vol)
-  { code: "VNH", exchange: "HNX",   domain: "agriculture" }, // CTCP Đầu tư Việt Việt Nhật — seafood/food import-export (xuất nhập khẩu thủy hải sản & thực phẩm), HNX; std dev ~2.1%
-  // Chemicals
-  { code: "DPM", exchange: "HOSE",  domain: "chemicals" },   // Đạm Phú Mỹ (PetroVietnam Fertilizer & Chemicals) — fertilizer, HOSE; std dev ~2.2%
-  // Utilities (high-vol)
-  { code: "REE", exchange: "HOSE",  domain: "utilities" },   // REE Holdings — std dev ~2.4%
-  // Retail
-  { code: "MWG", exchange: "HOSE",  domain: "retail" },      // Mobile World Investment — std dev ~2.0%
-];
+/**
+ * Best-fit sector-text -> DomainType classifier. Matches the first
+ * "/"-delimited segment of the sector string (case-insensitive substring)
+ * against a keyword table; falls back to "other" when nothing matches.
+ *
+ * Pure — no I/O. Exported for direct unit testing.
+ *
+ * Note: DomainType has no dedicated "food_beverage" bucket, so
+ * food/beverage sector text (e.g. "Food / Beverage / Retail") maps to
+ * "agriculture" — the closest existing bucket, consistent with the prior
+ * GVR ("Agriculture / Rubber") and DPM ("Agriculture / Chemicals")
+ * classifications.
+ */
+export function mapSectorToDomain(sector: string): DomainType {
+  const firstSegment = (sector.split("/")[0] ?? "").trim().toLowerCase();
+
+  const rules: Array<[string, DomainType]> = [
+    ["real estate", "real_estate"],
+    ["bank", "banking"],
+    ["steel", "steel"],
+    ["aviation", "aviation"],
+    ["retail", "retail"],
+    ["tech", "tech"],
+    ["utilities", "utilities"],
+    ["securities", "securities"],
+    ["insurance", "insurance"],
+    ["pharma", "pharmaceutical"],
+    ["logistics", "logistics"],
+    ["gold", "gold_mining"],
+    ["automotive", "automotive"],
+    ["construction", "construction"],
+    ["energy", "energy"],
+    ["machinery", "machinery"],
+    ["chemicals", "chemicals"],
+    ["oil", "oil_gas"],
+    ["gas", "oil_gas"],
+    ["food", "agriculture"],
+    ["agriculture", "agriculture"],
+  ];
+
+  for (const [keyword, domain] of rules) {
+    if (firstSegment.includes(keyword)) return domain;
+  }
+  return "other";
+}
+
+/**
+ * Pure filter+map: system-map.json watchlist entries -> WatchlistSeedEntry[].
+ * Keeps only active !== false entries (missing `active` defaults to active,
+ * matching the convention already used by deepFetchGate.ts's
+ * buildSectorKeywordMap()).
+ *
+ * Pure — no I/O. Exported for direct unit testing.
+ */
+export function deriveWatchlistSeedFromSystemMap(
+  entries: SystemMapWatchlistEntry[],
+): WatchlistSeedEntry[] {
+  return entries
+    .filter((e) => e.active !== false)
+    .map((e) => ({
+      code: e.ticker.toUpperCase().trim(),
+      exchange: e.exchange,
+      domain: mapSectorToDomain(e.sector),
+    }));
+}
+
+const DEFAULT_SYSTEM_MAP_PATH = "docs/data/system-map.json";
+
+/**
+ * Reads docs/data/system-map.json and derives the watchlist seed.
+ *
+ * Path resolves the same way as the existing stock-classification.json
+ * readers (boardDetailsJob.ts, agmPlanJob.ts): relative to cwd, which is
+ * `/app` in the container (docs/data is a live-synced Docker volume mount —
+ * see docker-compose.yml `./docs/data:/app/docs/data`) and resolves via the
+ * `apps/mcp-server/docs -> ../../docs` symlink for local `bun test` runs.
+ *
+ * Never throws — a missing/corrupt SSOT file must not crash the whole MCP
+ * server at module load. On failure: warns and returns [] (seedWatchlist's
+ * UPSERT loop then simply does nothing, leaving the live table untouched
+ * rather than destructively wiping it).
+ *
+ * Exported so tests can point at a fixture path.
+ */
+export function loadWatchlistSeedFromSystemMap(
+  path: string = DEFAULT_SYSTEM_MAP_PATH,
+): WatchlistSeedEntry[] {
+  try {
+    const raw = fs.readFileSync(path, "utf-8");
+    const parsed = JSON.parse(raw) as {
+      project?: { watchlist?: SystemMapWatchlistEntry[] };
+    };
+    const entries = parsed.project?.watchlist ?? [];
+    return deriveWatchlistSeedFromSystemMap(entries);
+  } catch (err) {
+    console.warn(
+      `[seedWatchlist] WARN: could not load ${path} (${(err as Error).message}) — ` +
+      `WATCHLIST_SEED is empty this run, live watchlist table left untouched`,
+    );
+    return [];
+  }
+}
+
+export const WATCHLIST_SEED: WatchlistSeedEntry[] = loadWatchlistSeedFromSystemMap();
 
 // ─────────────────────────────────────────────────────────────────────────────
 // seedWatchlist
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Upserts 34 watchlist tickers with default alert thresholds.
- * Uses ON CONFLICT(code) DO UPDATE to be idempotent.
+ * Upserts WATCHLIST_SEED (derived from system-map.json SSOT) with default
+ * alert thresholds. Uses ON CONFLICT(code) DO UPDATE to be idempotent.
+ * Does NOT delete rows — tickers no longer in WATCHLIST_SEED are left alone
+ * here (see the one-time WATCHLIST-DB-SYSMAP-DRIFT-FIX resync migration in
+ * schema.ts for orphan removal).
  *
  * Default thresholds (from Sprint 054 user config):
  *   dropPct=-3, risePct=5, impactScore=5
  *
- * Sprint 1869 high-vol tier (Task 1876a-A6):
- *   7 tickers added (NVL/DPM/REE/VNH/KBC/MWG/TCH) — seeded at drop=-3 so that
- *   migrateWatchlistThresholds() (called immediately after in initDatabase())
- *   can UPDATE them to the correct HIGH_VOL_DROP_PCT (-9.0) unconditionally.
+ * HIGH_VOL_TICKERS (below) is a separate, independently-curated alert-tuning
+ * tier layered on top of whatever subset of it is actually present in
+ * WATCHLIST_SEED — seeded at drop=-3 so that migrateWatchlistThresholds()
+ * (called immediately after in initDatabase()) can UPDATE present rows to
+ * the correct HIGH_VOL_DROP_PCT (-9.0) unconditionally.
  */
 export function seedWatchlist(db: Database): void {
   const stmt = db.prepare(`

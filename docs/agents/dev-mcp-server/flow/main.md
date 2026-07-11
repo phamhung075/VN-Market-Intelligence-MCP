@@ -287,6 +287,33 @@ Date-specific (2026-07-06) but the `findGapCodes`/`runBackfill` exports are reus
 the 3 date constants for a future one-off gap. NO FAKE DATA: only real VNDirect responses are written;
 empty responses are honest gaps (skipped, logged), never zero-filled.
 
+**CANONICAL: Watchlist SSOT resync (WATCHLIST-DB-SYSMAP-DRIFT-FIX, 2026-07-11)**
+```bash
+# Dry-run (default — reports orphans/missing, no writes):
+bun scripts/migrations/resync-watchlist-sysmap-2026-07-11.ts
+
+# Apply (transaction: DELETE orphans not in system-map.json + UPSERT every SSOT row):
+docker cp scripts/migrations/resync-watchlist-sysmap-2026-07-11.ts \
+  vn-market-intelligence-mcp-mcp-server-1:/app/resync-watchlist-sysmap.ts
+docker exec vn-market-intelligence-mcp-mcp-server-1 \
+  bun /app/resync-watchlist-sysmap.ts --apply
+```
+Root cause: `seedWatchlist.ts`'s `WATCHLIST_SEED` was a second hardcoded ticker
+array independently diverged from `docs/data/system-map.json` SSOT (only
+15/33 overlap) — `schema.ts` ran it unconditionally on every non-test DB init,
+so a pure resync would not have survived a restart. `WATCHLIST_SEED` now
+derives from system-map.json at module load (never hardcode ticker lists).
+This script deliberately duplicates the SSOT-derivation logic rather than
+importing seedWatchlist.ts — the Docker image bakes `src/` at build time
+(NOT live-synced like `docs/data/`), so it must work correctly whether run
+before or after an image rebuild+swap. Idempotent: a second run finds zero
+orphans/missing (exit 0, no-op). Known hazard hit during first live run:
+the long-running server's singleton `getDb()` connection did not observe
+this script's external write (get_watchlist MCP tool served a stale
+row-count until the next container restart) even though two independent
+fresh connections both read the correct post-resync state — direct-probe
+BOTH tools after ANY out-of-process watchlist write, don't trust one alone.
+
 ---
 
 ## Low-Confidence Reparse Runbook

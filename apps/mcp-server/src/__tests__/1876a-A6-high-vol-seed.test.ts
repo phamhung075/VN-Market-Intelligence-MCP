@@ -1,20 +1,30 @@
 Bun.env["DB_PATH"] = ":memory:";
 
 /**
- * Task 1876a-A6 — Seed 7 high-vol watchlist tickers at -9.0 alert_drop_pct
+ * Task 1876a-A6 — Seed high-vol watchlist tickers at -9.0 alert_drop_pct
  *
  * Verifies the full seedWatchlist() + migrateWatchlistThresholds() startup sequence
- * after adding NVL/DPM/REE/VNH/KBC/MWG/TCH to WATCHLIST_SEED.
+ * for the HIGH_VOL_TICKERS tier (originally NVL/DPM/REE/VNH/KBC/MWG/TCH).
  *
  * Sprint 1869 high-vol tier: real-estate / retail sectors with historical
  * daily std-dev > 2σ of watchlist average.
  *
- *   AC1: 7 high-vol rows present at -9.0 after seed + migrate
+ * WATCHLIST-DB-SYSMAP-DRIFT-FIX (2026-07-11): WATCHLIST_SEED now derives
+ * from docs/data/system-map.json (SSOT). HIGH_VOL_TICKERS is a separate,
+ * independently-curated alert-tuning tier that is NOT required to be a
+ * subset of the current watchlist membership — REE/VNH/MWG/TCH are no
+ * longer in system-map.json and therefore no longer get a live watchlist
+ * row; migrateWatchlistThresholds()'s `UPDATE ... WHERE code IN (...)` is a
+ * harmless no-op for those codes. Tests below operate on `seededHighVol`
+ * (the actual intersection of HIGH_VOL_TICKERS and WATCHLIST_SEED) rather
+ * than assuming every HIGH_VOL_TICKERS code has a live row.
+ *
+ *   AC1: seeded high-vol rows present at -9.0 after seed + migrate
  *   AC2: standard rows remain at -7.0 (untouched by high-vol update)
  *   AC3: no rows remain at -3.0 or NULL post-migrate
  *   AC4: total watchlist row count >= 32 (25 original + 7 high-vol)
  *   AC5: idempotency — second migrate call leaves all values unchanged
- *   AC6: exchange spot-check (NVL/DPM/REE/KBC/MWG/TCH = HOSE, VNH = HNX)
+ *   AC6: exchange spot-check for seeded high-vol tickers; VNH absent
  */
 
 import { describe, it, expect } from "bun:test";
@@ -73,36 +83,39 @@ function getRow(db: Database, code: string): WatchlistRow | null {
 // Tests
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Actual intersection of HIGH_VOL_TICKERS and the SSOT-derived WATCHLIST_SEED
+// (see WATCHLIST-DB-SYSMAP-DRIFT-FIX note above — not every HIGH_VOL_TICKERS
+// code still has a live watchlist row).
+const seededCodes = new Set(WATCHLIST_SEED.map((e) => e.code));
+const seededHighVol = HIGH_VOL_TICKERS.filter((t) => seededCodes.has(t));
+
 describe("Task 1876a-A6 — high-vol seed: seedWatchlist + migrateWatchlistThresholds", () => {
 
-  // ── WATCHLIST_SEED constant includes all 7 high-vol tickers ──────────────
+  // ── WATCHLIST_SEED / HIGH_VOL_TICKERS intersection ────────────────────────
 
-  it("WATCHLIST_SEED contains all 7 HIGH_VOL_TICKERS", () => {
-    const seedCodes = WATCHLIST_SEED.map((e) => e.code);
-    for (const ticker of HIGH_VOL_TICKERS) {
-      expect(seedCodes).toContain(ticker);
-    }
+  it("WATCHLIST_SEED contains at least one HIGH_VOL_TICKERS entry", () => {
+    expect(seededHighVol.length).toBeGreaterThan(0);
   });
 
   it("WATCHLIST_SEED has at least 32 entries (25 original + 7 high-vol)", () => {
     expect(WATCHLIST_SEED.length).toBeGreaterThanOrEqual(32);
   });
 
-  // ── AC1: 7 high-vol rows at -9.0 after seed + migrate ────────────────────
+  // ── AC1: seeded high-vol rows at -9.0 after seed + migrate ────────────────
 
-  it("AC1: all 7 HIGH_VOL_TICKERS have alert_drop_pct = -9.0 after seed+migrate", () => {
+  it("AC1: every seeded HIGH_VOL_TICKERS entry has alert_drop_pct = -9.0 after seed+migrate", () => {
     const db = makeDb();
     seedWatchlist(db);
     migrateWatchlistThresholds(db);
 
-    for (const ticker of HIGH_VOL_TICKERS) {
+    for (const ticker of seededHighVol) {
       const row = getRow(db, ticker);
       expect(row).not.toBeNull();
       expect(row?.alert_drop_pct).toBe(HIGH_VOL_DROP_PCT); // -9.0
     }
   });
 
-  it("AC1: COUNT high-vol rows with alert_drop_pct = -9.0 equals 7", () => {
+  it("AC1: COUNT high-vol rows with alert_drop_pct = -9.0 equals seededHighVol.length", () => {
     const db = makeDb();
     seedWatchlist(db);
     migrateWatchlistThresholds(db);
@@ -115,7 +128,7 @@ describe("Task 1876a-A6 — high-vol seed: seedWatchlist + migrateWatchlistThres
       )
       .get(...HIGH_VOL_TICKERS) as { n: number }).n;
 
-    expect(count).toBe(7);
+    expect(count).toBe(seededHighVol.length);
   });
 
   // ── AC2: standard rows remain at -7.0 ─────────────────────────────────────
@@ -212,25 +225,24 @@ describe("Task 1876a-A6 — high-vol seed: seedWatchlist + migrateWatchlistThres
 
   // ── AC6: exchange correctness ─────────────────────────────────────────────
 
-  it("AC6: NVL/DPM/REE/KBC/MWG/TCH have exchange = HOSE", () => {
+  it("AC6: every seeded HIGH_VOL_TICKERS entry has exchange matching WATCHLIST_SEED", () => {
     const db = makeDb();
     seedWatchlist(db);
 
-    const hoseHighVol = ["NVL", "DPM", "REE", "KBC", "MWG", "TCH"] as const;
-    for (const ticker of hoseHighVol) {
+    for (const ticker of seededHighVol) {
       const row = getRow(db, ticker);
+      const seedEntry = WATCHLIST_SEED.find((e) => e.code === ticker);
       expect(row).not.toBeNull();
-      expect(row?.exchange).toBe("HOSE");
+      expect(row?.exchange).toBe(seedEntry?.exchange);
     }
   });
 
-  it("AC6: VNH has exchange = HNX", () => {
+  it("AC6: VNH is absent from the watchlist post-seed (not in system-map.json SSOT)", () => {
     const db = makeDb();
     seedWatchlist(db);
 
     const row = getRow(db, "VNH");
-    expect(row).not.toBeNull();
-    expect(row?.exchange).toBe("HNX");
+    expect(row).toBeNull();
   });
 
 });

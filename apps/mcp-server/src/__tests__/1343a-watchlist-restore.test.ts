@@ -1,20 +1,16 @@
 /**
  * Task 1343a — Watchlist Restore + Q4 2025 Backfill
  *
- * Tests for seedWatchlist() and backfillBctcQ4() against an in-memory SQLite DB.
+ * Rewritten under WATCHLIST-DB-SYSMAP-DRIFT-FIX (2026-07-11): WATCHLIST_SEED
+ * now derives from docs/data/system-map.json (SSOT) instead of a hardcoded
+ * ticker array. The exact ticker set / exchange / domain composition is
+ * pinned against the live system-map.json in
+ * WATCHLIST-DB-SYSMAP-DRIFT-FIX.test.ts. These tests assert only the
+ * seedWatchlist()/backfillBctcQ4() SQL behavior generically against
+ * WATCHLIST_SEED (whatever it currently contains) so they never drift again
+ * when system-map.json's watchlist changes.
  *
- * Acceptance criteria:
- *   - watchlist table has exactly 34 rows after seed (HPG 1416c, high-vol 1876a-A6, PLX 1946a)
- *   - All 26 tickers have exchange and domain filled
- *   - Alert thresholds match Sprint 054 defaults (dropPct=-3, risePct=5, impactScore=5)
- *   - seedWatchlist is idempotent (calling twice still yields 34 rows)
- *   - backfillBctcQ4 enqueues all watchlist tickers missing Q4 2025 financial_reports
- *   - backfillBctcQ4 skips tickers that already have a Q4 2025 financial_report row
- *   - backfillBctcQ4 is idempotent (calling twice keeps same queue count)
- *   - All enqueued queue entries have status='pending' and attempts=0
- *   - sector distribution: 13 distinct domains covered (incl. chemicals/retail from 1876a-A6)
- *   - HOSE / UPCOM / HNX exchanges present in seed data (VNH=HNX added 1876a-A6)
- *   - validateSeedTickers warns when seeded tickers have no market_prices row
+ * Tests for seedWatchlist() and backfillBctcQ4() against an in-memory SQLite DB.
  */
 
 import { describe, it, expect, beforeEach } from "bun:test";
@@ -85,47 +81,30 @@ describe("Task 1343a — Watchlist Restore + Q4 2025 Backfill", () => {
     db = createTestDb();
   });
 
-  // ── WATCHLIST_SEED constant ────────────────────────────────────────────────
+  // ── WATCHLIST_SEED constant — shape invariants only ───────────────────────
+  // Exact composition is pinned against system-map.json elsewhere
+  // (WATCHLIST-DB-SYSMAP-DRIFT-FIX.test.ts).
 
-  it("WATCHLIST_SEED contains exactly 34 entries (HPG added 1416c, 7 high-vol 1876a-A6, PLX 1946a)", () => {
-    expect(WATCHLIST_SEED).toHaveLength(34);
+  it("WATCHLIST_SEED is non-empty", () => {
+    expect(WATCHLIST_SEED.length).toBeGreaterThan(0);
   });
 
-  it("WATCHLIST_SEED covers 13 expected sectors (agriculture 1787, machinery JANITOR-012, chemicals/retail/real_estate high-vol 1876a-A6)", () => {
-    const domains = new Set(WATCHLIST_SEED.map((e) => e.domain));
-    expect(domains).toContain("oil_gas");
-    expect(domains).toContain("banking");
-    expect(domains).toContain("real_estate");
-    expect(domains).toContain("steel");
-    expect(domains).toContain("aviation");
-    expect(domains).toContain("tech");
-    expect(domains).toContain("securities");
-    expect(domains).toContain("pharma");
-    expect(domains).toContain("utilities");
-    // agriculture restored: GVR (Vietnam Rubber Group) correctly classified here (task 1787)
-    expect(domains).toContain("agriculture");
-    // machinery: DAG = Da Nang Rubber Group — industrial/machinery (JANITOR-012)
-    expect(domains).toContain("machinery");
-    // high-vol additions (Task 1876a-A6): chemicals + retail sectors
-    expect(domains).toContain("chemicals");
-    expect(domains).toContain("retail");
-    expect(domains.size).toBe(13);
+  it("WATCHLIST_SEED has no duplicate codes", () => {
+    const codes = WATCHLIST_SEED.map((e) => e.code);
+    expect(new Set(codes).size).toBe(codes.length);
   });
 
-  it("WATCHLIST_SEED has HOSE, UPCOM, and HNX entries (VNH=HNX added Task 1876a-A6)", () => {
+  it("WATCHLIST_SEED contains at least one HOSE entry", () => {
     const exchanges = new Set(WATCHLIST_SEED.map((e) => e.exchange));
     expect(exchanges).toContain("HOSE");
-    expect(exchanges).toContain("UPCOM");
-    // VNH (HNX real_estate, high-vol) added in Task 1876a-A6
-    expect(exchanges).toContain("HNX");
   });
 
   // ── seedWatchlist ──────────────────────────────────────────────────────────
 
-  it("seedWatchlist inserts exactly 34 rows into watchlist (HPG 1416c, 7 high-vol 1876a-A6, PLX 1946a)", () => {
+  it("seedWatchlist inserts exactly WATCHLIST_SEED.length rows into watchlist", () => {
     seedWatchlist(db);
     const { cnt } = db.prepare("SELECT COUNT(*) AS cnt FROM watchlist").get() as { cnt: number };
-    expect(cnt).toBe(34);
+    expect(cnt).toBe(WATCHLIST_SEED.length);
   });
 
   it("seedWatchlist sets default thresholds: drop=-3, rise=5, impact=5", () => {
@@ -147,86 +126,76 @@ describe("Task 1343a — Watchlist Restore + Q4 2025 Backfill", () => {
       .prepare("SELECT code, exchange, domain FROM watchlist")
       .all() as { code: string; exchange: string; domain: string }[];
 
-    expect(rows).toHaveLength(34);
+    expect(rows).toHaveLength(WATCHLIST_SEED.length);
     for (const row of rows) {
       expect(row.exchange).toBeTruthy();
       expect(row.domain).toBeTruthy();
-      expect(row.domain).not.toBe("other");
     }
   });
 
-  it("seedWatchlist is idempotent: calling twice still yields 34 rows", () => {
+  it("seedWatchlist is idempotent: calling twice still yields WATCHLIST_SEED.length rows", () => {
     seedWatchlist(db);
     seedWatchlist(db);
     const { cnt } = db.prepare("SELECT COUNT(*) AS cnt FROM watchlist").get() as { cnt: number };
-    expect(cnt).toBe(34);
+    expect(cnt).toBe(WATCHLIST_SEED.length);
   });
 
-  it("seedWatchlist includes expected tickers from each sector", () => {
+  it("seedWatchlist inserts every WATCHLIST_SEED code exactly once", () => {
     seedWatchlist(db);
     const codes = new Set(
       (db.prepare("SELECT code FROM watchlist").all() as { code: string }[]).map((r) => r.code),
     );
-
-    // Spot-check one per sector
-    expect(codes).toContain("GAS");   // oil_gas
-    expect(codes).toContain("VCB");   // banking
-    expect(codes).toContain("VIC");   // real_estate
-    expect(codes).toContain("HSG");   // steel
-    expect(codes).toContain("HVN");   // aviation
-    expect(codes).toContain("FPT");   // tech
-    expect(codes).toContain("SSI");   // securities
-    expect(codes).toContain("POW");   // utilities
-    expect(codes).toContain("DHG");   // pharma
-    // Invalid tickers removed: VDC, BDI, DLC, JSH, SIS
-    expect(codes).not.toContain("VDC");
-    expect(codes).not.toContain("BDI");
-    expect(codes).not.toContain("DLC");
-    expect(codes).not.toContain("JSH");
-    expect(codes).not.toContain("SIS");
+    for (const entry of WATCHLIST_SEED) {
+      expect(codes.has(entry.code)).toBe(true);
+    }
+    expect(codes.size).toBe(WATCHLIST_SEED.length);
   });
 
   // ── backfillBctcQ4 ─────────────────────────────────────────────────────────
 
-  it("backfillBctcQ4 enqueues all 34 tickers when none have Q4 2025 reports (HPG 1416c, high-vol 1876a-A6, PLX 1946a)", () => {
+  it("backfillBctcQ4 enqueues all WATCHLIST_SEED tickers when none have Q4 2025 reports", () => {
     seedWatchlist(db);
     backfillBctcQ4(db);
 
     const { cnt } = db
       .prepare("SELECT COUNT(*) AS cnt FROM bctc_vps_queue WHERE period_year = 2025 AND period_quarter = 'Q4'")
       .get() as { cnt: number };
-    expect(cnt).toBe(34);
+    expect(cnt).toBe(WATCHLIST_SEED.length);
   });
 
   it("backfillBctcQ4 skips tickers that already have a Q4 2025 financial_report", () => {
     seedWatchlist(db);
 
-    // Pre-populate FPT and VCB as already having Q4 2025 reports
+    // Pre-populate the first two SSOT-seeded tickers as already having Q4 2025 reports
+    const first = WATCHLIST_SEED[0];
+    const second = WATCHLIST_SEED[1];
+    if (!first || !second) {
+      throw new Error("WATCHLIST_SEED must contain at least 2 entries for this test");
+    }
     db.prepare(
       "INSERT INTO financial_reports (id, action_code, period_year, period_type) VALUES (?, ?, ?, ?)",
-    ).run("fpt-2025-q4", "FPT", 2025, "Q4");
+    ).run(`${first.code}-2025-q4`, first.code, 2025, "Q4");
     db.prepare(
       "INSERT INTO financial_reports (id, action_code, period_year, period_type) VALUES (?, ?, ?, ?)",
-    ).run("vcb-2025-q4", "VCB", 2025, "Q4");
+    ).run(`${second.code}-2025-q4`, second.code, 2025, "Q4");
 
     backfillBctcQ4(db);
 
     const { cnt } = db
       .prepare("SELECT COUNT(*) AS cnt FROM bctc_vps_queue WHERE period_year = 2025 AND period_quarter = 'Q4'")
       .get() as { cnt: number };
-    // 34 watchlist - 2 already have reports = 32 enqueued (HPG 1416c, high-vol 1876a-A6, PLX 1946a)
-    expect(cnt).toBe(32);
+    expect(cnt).toBe(WATCHLIST_SEED.length - 2);
 
-    // FPT and VCB must NOT be in the queue
-    const fptRow = db
-      .prepare("SELECT * FROM bctc_vps_queue WHERE action_code = 'FPT' AND period_quarter = 'Q4'")
-      .get();
-    expect(fptRow).toBeNull();
+    // Pre-populated tickers must NOT be in the queue
+    const firstRow = db
+      .prepare("SELECT * FROM bctc_vps_queue WHERE action_code = ? AND period_quarter = 'Q4'")
+      .get(first.code);
+    expect(firstRow).toBeNull();
 
-    const vcbRow = db
-      .prepare("SELECT * FROM bctc_vps_queue WHERE action_code = 'VCB' AND period_quarter = 'Q4'")
-      .get();
-    expect(vcbRow).toBeNull();
+    const secondRow = db
+      .prepare("SELECT * FROM bctc_vps_queue WHERE action_code = ? AND period_quarter = 'Q4'")
+      .get(second.code);
+    expect(secondRow).toBeNull();
   });
 
   it("backfillBctcQ4 sets status=pending and attempts=0 on all enqueued rows", () => {
@@ -252,7 +221,7 @@ describe("Task 1343a — Watchlist Restore + Q4 2025 Backfill", () => {
     const { cnt } = db
       .prepare("SELECT COUNT(*) AS cnt FROM bctc_vps_queue WHERE period_year = 2025 AND period_quarter = 'Q4'")
       .get() as { cnt: number };
-    expect(cnt).toBe(34);
+    expect(cnt).toBe(WATCHLIST_SEED.length);
   });
 });
 
@@ -310,7 +279,7 @@ describe("Task stale-tickers — validateSeedTickers startup check", () => {
 
   it("warns when seeded tickers have no market_prices data", () => {
     seedWatchlist(db);
-    // No market_prices rows inserted — all 25 are missing
+    // No market_prices rows inserted — every seeded ticker is missing
     const warnings: string[] = [];
     const original = console.warn;
     console.warn = (...args: unknown[]) => warnings.push(String(args[0]));
@@ -318,14 +287,15 @@ describe("Task stale-tickers — validateSeedTickers startup check", () => {
     console.warn = original;
 
     expect(warnings.length).toBe(1);
-    expect(warnings[0]).toContain("34 seeded ticker(s) have no market_prices data");
+    expect(warnings[0]).toContain(`${WATCHLIST_SEED.length} seeded ticker(s) have no market_prices data`);
     expect(warnings[0]).toContain("possible delisted/inactive");
   });
 
   it("warns only for the specific tickers missing prices (partial case)", () => {
     seedWatchlist(db);
-    // Only VCB and FPT have prices
-    for (const code of ["VCB", "FPT"]) {
+    // Only the first two SSOT-seeded tickers have prices
+    const withPrices = WATCHLIST_SEED.slice(0, 2).map((e) => e.code);
+    for (const code of withPrices) {
       db.prepare(
         "INSERT INTO market_prices (code, price, change_pct, volume, updated_at, exchange) VALUES (?, ?, ?, ?, ?, ?)"
       ).run(code, 50000, 0, 1000000, new Date().toISOString(), "HOSE");
@@ -337,8 +307,11 @@ describe("Task stale-tickers — validateSeedTickers startup check", () => {
     console.warn = original;
 
     expect(warnings.length).toBe(1);
-    expect(warnings[0]).toContain("32 seeded ticker(s) have no market_prices data");
-    expect(warnings[0]).not.toContain("VCB");
-    expect(warnings[0]).not.toContain("FPT");
+    expect(warnings[0]).toContain(
+      `${WATCHLIST_SEED.length - withPrices.length} seeded ticker(s) have no market_prices data`,
+    );
+    for (const code of withPrices) {
+      expect(warnings[0]).not.toContain(code);
+    }
   });
 });
