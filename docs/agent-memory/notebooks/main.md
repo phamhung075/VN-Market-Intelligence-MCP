@@ -1,6 +1,12 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-11T01:17Z (dev-team tick 2026-07-11T0107Z — skip-PO-respawn, cold-evict no-op confirming last tick's fix is durable)
+**Written:** 2026-07-11T01:47Z (dev-team tick 2026-07-11T0137Z — repeat of prior tick, quiet)
+
+## cycle-20260711T0137Z — skip-PO-respawn applied, cold-evict no-op (2nd consecutive RAW-verified confirmation)
+
+- Preflight RUN, GCC-PREFLIGHT clean, drain 0 new (`db_count=158`), CI green, 0 signal_queue rows, 0 orphans. Board byte-identical to last close (ready=1, in_progress=1 same row, done=15, done_verified=0). Skip-PO-respawn applied: 49min since `383563cc2` (within guard), telegram/unresolved empty.
+- Cold eviction re-run (`DONE_N=15>10`): genuine no-op again, md5 identical, `git diff --stat` empty, conservation 456=456 — 2nd consecutive tick confirming the resting state is stable post-fix.
+- mock-guard same known `_test.go` FP, no new signal. No non-main branches. Push-backstop `ahead` under threshold — no-op.
 
 ## cycle-20260711T0107Z — skip-PO-respawn applied, cold-evict no-op is now genuinely the resting state post-fix
 
