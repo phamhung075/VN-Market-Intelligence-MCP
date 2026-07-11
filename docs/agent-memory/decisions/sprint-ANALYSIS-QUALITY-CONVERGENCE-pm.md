@@ -5,6 +5,32 @@ agent: pm
 sprint: ANALYSIS-QUALITY-CONVERGENCE
 ---
 
+## PM PASS 3 — Closeout Pass & Triage Handoff (2026-07-11T14:50Z)
+
+**task_id:** ANALYSIS-QUALITY-CONVERGENCE (PM closeout — wave completion & board hygiene)
+
+**Prior state:** All 4 wave items DONE in done[] lane (FR-1-CHEF-LEG-FR-2-ATOMIC, FR-1-REMAINING-5-FLOWS, CCATO-T3-FLOW-WIRING-6PT, SPIKE-EARNINGS-REV-VALUATION-PCTILE-FEASIBILITY). CCATO-T3 qa_round=2, qa_verdict=APPROVED (ac7b2dbfa commit). WIP=1/2 (OPS-BCTC-REFINE-REPASS-NONBANK-5T owned by peer session).
+
+**Board hygiene check:**
+1. CCATO-T3 done[] placement: VERIFIED — task correctly in done[] lane, status=DONE, qa_verdict=APPROVED.
+2. Parent epic wrapper (BA-ANALYSIS-QUALITY-CONVERGENCE): status=BACKLOG in backlog[] lane (CORRECT — awaiting architect decomposition for Phase-2; not a stale-open issue).
+3. Child-to-parent coverage: BA row explicitly subsumes these completed flows via title prose ("subsumes IND-P1-MOMENTUM-CONSUMER-WIRING + GAP-CHEF-SYNTHESIS-B + CCATO-T3-FLOW-WIRING"); no orphaned children.
+4. Cold eviction check (HSC-6): done[]=22, done_verified[]=0 — no eviction trigger (soft-cap is done_verified<=5).
+
+**Next-action decision:**
+- ready[]: 0 tasks available
+- in_progress[]: 1 task (peer-owned; WIP=1/2, can technically pull 1 more)
+- backlog top-priority (high/P1/P0 unpinned): BCTC-HIST-VPS-BACKFILL, FIX-ALERT-OPEN-ZERO-PRICE-RACE, FACTORY-ALERT-dedup-window-config, FACTORY-APP-split-pollNews, etc. exist but lack sprint context
+- sprint_goal.entries: 16 (EXCEEDS soft-cap of 15 by 1)
+- blocking constraint: FR-3 (GAP-CHEF-SYNTHESIS-B-ENDPOINT-CARD) remains BACKLOG, depends on GAP-CHEF-SYNTHESIS-A DONE_VERIFIED; GAP-A is in review[], gated by live-cycle-verification (not yet unblocked)
+
+**Why hand off to PO:**
+Per PM flow step 2: "if your pass concludes the next decision is scoping/prioritization, hand off NEXT: po rather than picking a lane yourself." The real bottleneck here is NOT WIP overflow or a missing ready task, but a triage sweep: sprint_goal exceeded, FR-3 still blocked (awaiting live cycle), and no decision path is clear among the 300+ backlog items without PO context. Pulling a random high-P1 backlog task would violate the sprint-scoped decomposition principle.
+
+**Decision:** NO board writes this round (hygiene check passed, no eviction triggered, parent epics already correctly placed). Return PIPELINE: blocked, NEXT: po, with reasoning that sprint_goal triage sweep is the blocking decision, not developer capacity.
+
+---
+
 ## PM PASS CONTEXT
 
 Three rows closed by QA (all APPROVED with lane-moves + orch-validate PASS):
