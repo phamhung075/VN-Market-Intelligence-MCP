@@ -94,7 +94,24 @@ describe("Task 106 — isMarketHours()", () => {
 // prevent 5-second Bun test timeouts caused by real I/O.
 // ─────────────────────────────────────────────────────────────────────────────
 
+// FIX-CYCLEJOB-1294-MACRO-TEST-UNMOCKED-LIVE-FETCH (reopened 2026-07-11):
+// step A2 (macro fetch: Yahoo Finance + SBV) and step A3 (vnstock lazy sync)
+// both run unconditionally EVERY cycle — market hours AND off-hours, and
+// even under the concurrency-guard/duration-tracking test blocks below that
+// build their own deps literal instead of spreading NO_NET_MARKET_DEPS.
+// Neither macroFetchFn nor vnstockSyncFn were stubbed anywhere in this file,
+// so every runIntelligenceCycle() call here hit REAL Yahoo Finance/SBV HTTP
+// + real syncVnstockData — nondeterministic and CI-flake-prone (confirmed
+// via [yahooFinance]/[sbv] live-fetch log lines on every local run prior to
+// this fix). Mirrors the stub pattern already used by
+// 1294-macro-spam-fix.test.ts (CI-RED-554bb302-FIX, commit 76acfb4e4).
+const NO_NET_BASE_DEPS = {
+  macroFetchFn: async () => {},
+  vnstockSyncFn: async () => {},
+};
+
 const NO_NET_MARKET_DEPS = {
+  ...NO_NET_BASE_DEPS,
   isMarketHoursFn: () => true as boolean,
   listSscDocsFn: async () => [] as import("../infrastructure/fetchers/ssc.js").SscDocument[],
   fetchPricesFn: async () => 0,
@@ -254,6 +271,7 @@ describe("Task 106 — runIntelligenceCycle() outside market hours", () => {
     let impactCalled = false;
 
     await runIntelligenceCycle({
+      ...NO_NET_BASE_DEPS,
       isMarketHoursFn: () => false,
       pollNewsFn: async () => {
         pollCalled = true;
@@ -286,6 +304,7 @@ describe("Task 106 — runIntelligenceCycle() outside market hours", () => {
     resetCycleGuard();
 
     const result = await runIntelligenceCycle({
+      ...NO_NET_BASE_DEPS,
       isMarketHoursFn: () => false,
       pollNewsFn: async () => ({ fetched: 2, inserted: 1, duplicates: 1, alerts: 0, errors: 0 }),
       listSscDocsFn: async () => [],
@@ -322,6 +341,7 @@ describe("Task 106 — concurrency guard", () => {
     };
 
     const deps = {
+      ...NO_NET_BASE_DEPS,
       isMarketHoursFn: () => false,
       pollNewsFn: slowPoll,
       listSscDocsFn: async () => [],
@@ -356,6 +376,7 @@ describe("Task 106 — concurrency guard", () => {
     };
 
     const deps = {
+      ...NO_NET_BASE_DEPS,
       isMarketHoursFn: () => false,
       pollNewsFn: fastPoll,
       listSscDocsFn: async () => [],
@@ -383,6 +404,7 @@ describe("Task 106 — duration tracking", () => {
 
     const start = Date.now();
     const result = await runIntelligenceCycle({
+      ...NO_NET_BASE_DEPS,
       isMarketHoursFn: () => false,
       pollNewsFn: async () => ({ fetched: 0, inserted: 0, duplicates: 0, alerts: 0, errors: 0 }),
       listSscDocsFn: async () => [],
@@ -414,6 +436,7 @@ describe("Task 106 — duration tracking", () => {
     // Per TECH-009 spec, the implementation reads Date.now() internally,
     // so we inject a fakeDurationMs that triggers the warning path.
     const result = await runIntelligenceCycle({
+      ...NO_NET_BASE_DEPS,
       isMarketHoursFn: () => false,
       pollNewsFn: async () => ({ fetched: 0, inserted: 0, duplicates: 0, alerts: 0, errors: 0 }),
       listSscDocsFn: async () => [],
