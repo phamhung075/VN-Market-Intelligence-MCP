@@ -41,3 +41,22 @@
 - Board-flip provenance: traced the claimed "concurrent sweep commit" to 174244356 (bundled with CCATO-T2 QA approval, same session) — not a phantom/unverifiable claim; verdict_summary field matches recon.md RETURN block verbatim.
 **why-decision:** All 3 scope checks pass — evidence real not restated, PLAN-ONLY discipline held (no code/compute), board state consistent with recon doc. APPROVED. Board row moved review[]→done[] (proper lane-move, `orch-validate`+`orch-conservation-check` both PASS, task_total 458/signal_total 0 unchanged).
 **why-change:** No change from plan — lighter PLAN-ONLY spike-verification scope as dispatched (spot-check plausibility, not re-run probes; no fabrication/self-contradiction found so no re-probe needed).
+
+---
+
+### STEP qa-S4 · qa · 2026-07-11T14:45:00Z
+**task-id:** FR-1-REMAINING-5-FLOWS
+**what-done:** RAW-verified builder commit 387ff2e90 (cowork-refactory-expert) — read full diff of all 6 flow files, not trusted from commit message.
+**what-considered:**
+- Additive-only: `git diff --stat bde9ba072..387ff2e90 -- docs/agents` = 24 ins/4 del across 6 files; the 4 deletions are single-sentence extensions (existing prose expanded with new field names), no step deleted/restructured, no headers touched.
+- Gateway-only call form: grepped every `call_tool(` line added — all use `call_tool(server="vn-market", tool="<bare>", arguments={})`, identical to the pre-existing convention already used in the same files (e.g. `record_evidence_fragment` calls). Zero `mcp__vn-market__*` direct-call occurrences anywhere in the diff.
+- Tool existence: all 4 (`get_roc_momentum`, `get_relative_strength`, `get_52w_proximity`, `get_insider_sentiment`) confirmed present in `docs/data/tool-registry.json` groups.
+- Honest-NULL/[SKIP]: every added block carries explicit `[SKIP] <tool_name> unavailable` degrade wording (stage-analyze.md: `insider_sentiment_context=unavailable` honest-NULL; the 4 P0-suite blocks: generic `[SKIP] <tool_name> unavailable` covering all newly-added calls).
+- Sign convention (`pct_from_52w_high`): none of the 5 flows assert a numeric threshold/comparison on this field (unlike round-1's chef.md `>80%` bug) — only field-name extraction in prose, so no wrong-sign defect surface exists here. Notebook explicitly documents awareness: "Sign convention: pct_from_52w_high negative values allowed (-100% to 0%)".
+- bctc-analyst 2-file coherence: `stage-analyze.md` E1+E3 pre-pass stores `insider_sentiment_context` (inserted exactly where architect brief §2.1 specifies — before the `[E1] Sequential passes` block, per-TICKER not per-pass); `stage-consolidate.md` Step 5 cites the identical variable name `insider_sentiment_context` — matches architect's resolved anchor decision verbatim.
+- Anchor-spec match: all 5 non-bctc anchors (`market-watcher/cycle.md` "**2. Market indicators**", `digest-predict/daily-predict.md` P-3, `market-analyst/flow/main.md` P0 tool block, `news-scout/stage-sentiment.md` L27-34 block) land exactly where `docs/architecture-briefs/2026-07-11-analysis-quality-convergence-lanes.md` §2.1 specifies.
+- FR-2 scoping claim (no anti-fabrication gates in these 5 flows): cross-checked against brief §2.2 verbatim: "The other 5 flows in FR-1 ... have no analogous Rule-AF-1-style gate in scope this sprint (BA scoped FR-2 to chef.md only) and are NOT coupled" — builder's claim is TRUE, not a defect.
+- Scope leak check: `git show 387ff2e90 --name-only` = exactly 7 files (6 flow docs + own notebook) — zero `.claude/skills/claim-truth-gate/` touch, zero orch-state.json touch (consistent with builder's claim that QA owns the board flip).
+- Notebook: `docs/agent-memory/notebooks/cowork-refactory-expert.md` = 35 lines, well under 200L cap.
+**why-decision:** Every RETURN claim in the dispatch verified against raw diff/registry/brief, not trusted. Zero defects found: additive-only holds, gateway wrapper form correct throughout, all 4 tool names real, honest-NULL present on every new call, no sign-convention violation (none introduced), bctc-analyst variable-name coherent across both files, FR-2 CHEF-only scoping independently confirmed true against the architect brief text, no truth-gate scope leak. APPROVED.
+**why-change:** No change from plan — full RAW-verify checklist as dispatched, all 7 items closed clean.
