@@ -124,27 +124,43 @@ EOF
     exit 0
   fi
 
-  # Drop oldest (first) ## block:
-  # - Preamble = everything before first "^## "
-  # - First section = from first "^## " to (but not including) second "^## "
-  # Strategy: use awk to drop lines from first ## heading up to (not including) second ## heading
+  # Drop oldest (chronologically) ## block by parsing timestamps:
+  # - Extract timestamps from each "^## " heading (look for ISO8601 or date patterns)
+  # - Find the section with the oldest (earliest) timestamp
+  # - Drop from that section's start to (but not including) the next section
+  # Strategy: build a map of line_num→timestamp, find min timestamp's line, drop that section
 
-  FILE_CONTENT="$(echo "$FILE_CONTENT" | awk '
-    BEGIN { in_first=0; found_first=0; dropped=0 }
-    /^## / {
-      if (!found_first) {
-        found_first=1
-        in_first=1
-        next
-      } else if (in_first) {
-        in_first=0
-        dropped=1
-      }
-    }
-    {
-      if (!in_first) print
-    }
-  ')"
+  # First, extract all section lines with their timestamps
+  SECTIONS_WITH_TS="$(echo "$FILE_CONTENT" | grep -n "^## " | while IFS=: read -r line_num heading; do
+    # Extract timestamp: look for ISO8601 (YYYY-MM-DDTHH:MM:SSZ) or date (YYYY-MM-DD)
+    # Timestamps typically appear after a "·" or at the end of the line
+    ts=$(echo "$heading" | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}:[0-9]{2}Z)?' | tail -1)
+    if [ -n "$ts" ]; then
+      echo "$line_num:$ts:$heading"
+    else
+      # No timestamp found (e.g., "## Archive") — treat as max to sort last
+      echo "$line_num:9999-12-31T23:59:59Z:$heading"
+    fi
+  done)"
+
+  # Find the oldest timestamp (minimum timestamp)
+  OLDEST_LINE="$(echo "$SECTIONS_WITH_TS" | sort -t: -k2 | head -1 | cut -d: -f1)"
+
+  if [ -z "$OLDEST_LINE" ]; then
+    # Fallback: if timestamp parsing failed, drop first section (legacy behavior)
+    OLDEST_LINE="$(echo "$FILE_CONTENT" | grep -n "^## " | head -1 | cut -d: -f1)"
+  fi
+
+  # Find the next section line after OLDEST_LINE (if any)
+  NEXT_SECTION_LINE="$(echo "$FILE_CONTENT" | grep -n "^## " | awk -F: -v oldest="$OLDEST_LINE" '$1 > oldest { print $1; exit }')"
+
+  if [ -z "$NEXT_SECTION_LINE" ]; then
+    # OLDEST_LINE is the last section: drop from OLDEST_LINE to end
+    FILE_CONTENT="$(echo "$FILE_CONTENT" | head -n $((OLDEST_LINE - 1)))"
+  else
+    # Drop lines from OLDEST_LINE up to (not including) NEXT_SECTION_LINE
+    FILE_CONTENT="$(echo "$FILE_CONTENT" | awk -v drop_from="$OLDEST_LINE" -v drop_to=$((NEXT_SECTION_LINE - 1)) 'NR < drop_from || NR > drop_to { print }')"
+  fi
 
 done
 
