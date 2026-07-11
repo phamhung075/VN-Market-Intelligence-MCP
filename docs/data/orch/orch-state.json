@@ -545,12 +545,25 @@
         "vision": "Guaranteed cowork slots (chef/digest/fb-daily) survive CLI-session absence via a generalized, self-verifying OS-level launchd backstop — one matcher SSOT, zero per-slot hardcode, Tier-1 auditor watches the watcher.",
         "ruling": "Signed off agents-architect brief 2026-07-07 Option A (generalized); rejected Option B (VPS: no LLM runtime/creds, larger security surface). Re-spec F1.4 + auditor self-check (developer), ops install, agent-father runbook freshen; QA 7-point session-down survival is the DoD gate before signal resolve.",
         "brief": "docs/architecture-briefs/2026-07-07-cowork-guaranteed-slot-durability.md"
+      },
+      {
+        "sprint_id": "ANALYSIS-QUALITY-CONVERGENCE",
+        "status": "active",
+        "priority": "high",
+        "created_by": "po",
+        "user_prioritized": true,
+        "origin": "USER standing mission 2026-07-11: 'current analysis results are LOW QUALITY' — wants quality+precision upgrade. TRIAGE FINDING: the DATA-EXPANSION pillar is ALREADY answered by the VERIFIED 56-agent roadmap docs/roadmaps/vn-market-indicator-roadmap.md; sprint MARKET-INDICATOR-DEPTH-P0 is CLOSED and P0 + 4 P1 momentum/RS tools are LIVE in mcp-server registry.ts. Root cause of low quality is NOT missing data — built data sits in SILOS: IND-P1-MOMENTUM-CONSUMER-WIRING (agents don't consume the live tools), GAP-CHEF-SYNTHESIS-A(review)/-B(backlog) (synthesis half-wired), CCATO-T3-FLOW-WIRING (truth-gate unwired). This program CONVERGES existing work rather than opening a new-data mega-program (respects 07-04 churn-without-convergence warning).",
+        "vision": "Every LIVE data plane is actually CONSUMED by the analysis agents and CONVERGES into ONE precise synthesized result — data cooperates, not siloed. Precision over verbosity.",
+        "scope_in": "PHASE-1 (this sprint — highest analysis-quality impact, UNBLOCKED: no new fetch, no OHLCV-depth dependency). Audit + rewire the 6 analysis-agent flows (unified-agent/CHEF, bctc-analyst, market-watcher, news-scout, digest-predict, market-analyst) so the already-LIVE tools (get_volatility_indicators, get_foreign_room, get_market_sentiment_index, get_insider_sentiment, get_breadth_thrust, get_roc_momentum, get_relative_strength, get_52w_proximity, get_foreign_accum_rank) + BCTC + macro planes are ALL consumed and converge in the final synthesis. Subsumes IND-P1-MOMENTUM-CONSUMER-WIRING, GAP-CHEF-SYNTHESIS-B-ENDPOINT-CARD, CCATO-T3-FLOW-WIRING-6PT. Full pipeline for the surfacing leg: DB/JSON -> /api endpoint -> frontend card -> ops gated rebuild.",
+        "scope_out": "PHASE-2 DATA-DEPTH (NEXT sprint, PLAN-ONLY this cycle — already exist as IND-P1/P2 + FIX-MACRO rows): get_vn_yield_curve (bond yields), prop/putthrough net-flow, margin-leverage, PMI/credit completeness (FIX-MACRO-INDICATORS-EMPTY-COLUMNS, FIX-MACRO-ISM-FRED-API-KEY-MISSING, INVESTIGATE-EMPTY-DATA-TABLES). GAPS the mission adds NOT in roadmap: earnings-revisions + valuation-history-percentile — roadmap §4 REJECTS both as fabrication-risk; only defensible path = a recon SPIKE to source a REAL external feed. BA feasibility-gates these — do NOT build on invented distributions. NO OHLCV-depth-blocked † items (RRG, participation-breadth) in this program.",
+        "success_metric": "done_verified: each of the 6 analysis-agent flows demonstrably reads >=1 previously-siloed LIVE data plane AND the CHEF synthesis converges them into one output surfaced via /api + a frontend card; RAW-live proof (not prose); no verbosity inflation; tsc + suites GREEN.",
+        "created_at": "2026-07-11T07:22:56Z"
       }
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-11T03:47:31Z",
-    "_updated_by": "po (reopen FIX-CYCLEJOB-1294 from REVIEW — incomplete fix; ci_red CI-RED-284f8ca6 recurrence)",
+    "_updated_at": "2026-07-11T07:22:56Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -5780,6 +5793,17 @@
         "created_at": "2026-07-10T19:59:57Z",
         "created_by": "router",
         "source": "router discovery during routine board inspection, 2026-07-10 dev-team cron tick"
+      },
+      {
+        "id": "BA-ANALYSIS-QUALITY-CONVERGENCE",
+        "title": "Requirement spec for ANALYSIS-QUALITY-CONVERGENCE — Phase-1: audit + rewire the 6 analysis-agent flows so every LIVE data plane converges into the synthesized result (subsumes IND-P1-MOMENTUM-CONSUMER-WIRING + GAP-CHEF-SYNTHESIS-B + CCATO-T3-FLOW-WIRING); Phase-2 data-depth sequencing + feasibility-gate earnings-revisions & valuation-percentile per roadmap §4.",
+        "owner": "ba",
+        "status": "BACKLOG",
+        "zone": "docs/agents/",
+        "type": "SPRINT-M",
+        "priority": "high",
+        "sprint": "ANALYSIS-QUALITY-CONVERGENCE",
+        "created_at": "2026-07-11T07:22:56Z"
       }
     ],
     "closed_sprints": [
@@ -7123,6 +7147,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-07-10T18:31:39Z",
-  "_updated_by": "developer"
+  "_updated_at": "2026-07-11T07:22:56Z",
+  "_updated_by": "po"
 }

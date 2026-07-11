@@ -1,6 +1,9 @@
 # PO Notebook
 
-_Last: 2026-07-11T04:37Z_
+_Last: 2026-07-11T (kickoff ANALYSIS-QUALITY-CONVERGENCE)_
+
+## Kickoff ANALYSIS-QUALITY-CONVERGENCE — USER "analysis LOW QUALITY" mission
+Triage: DATA-EXPANSION pillar ALREADY solved — VERIFIED roadmap `docs/roadmaps/vn-market-indicator-roadmap.md` (56-agent); sprint MARKET-INDICATOR-DEPTH-P0 CLOSED; P0 + 4 P1 momentum/RS tools LIVE in registry.ts. Root cause of low quality = data in SILOS not missing data: IND-P1-MOMENTUM-CONSUMER-WIRING (agents don't consume live tools), GAP-CHEF-SYNTHESIS-A(review)/-B(backlog), CCATO-T3-FLOW-WIRING. Decision: Phase-1 = CONVERGENCE (rewire 6 analysis-agent flows to consume live planes → one synthesis; subsumes those 3 rows; UNBLOCKED, no new fetch). Phase-2 DATA-DEPTH (yield-curve/prop/putthrough/margin/PMI/credit) PLAN-ONLY = existing IND-P1/P2+FIX-MACRO rows. 2 mission gaps (earnings-revisions, valuation-percentile) → roadmap §4 fabrication-risk; BA feasibility-gates a real-external-feed spike, NOT a build. Wrote sprint_goal entry + BA-ANALYSIS-QUALITY-CONVERGENCE (orch-apply PASS, task_total 455→456); umbrella lock claimed. NOTE: sprint_goal.entries now 16 (>15 soft cap) — next cold-evict sweep reconciles (no confidently-closeable entry to evict this tick). NEXT: ba.
 
 ## Tick 2026-07-11T04:37Z — dev-team triage: NOTHING (board steady-drain; stale head-note cleaned)
 Router flagged a stale `.head.note` referencing a "3x-recurring notebook-autoprune silent-data-loss FIX to claude-manager-helper" while `active_task_id`/`next_agent` were both null and no board row matched. **RESOLVED — the fix already SHIPPED + RAW-verified, note was a leftover:** `FIX-NOTEBOOK-AUTOPRUNE-ORDERING-ASSUMPTION` is in `done[]` status=DONE; script `scripts/agents-flow/notebook-auto-prune.sh` now parses ISO timestamps and drops the chronologically-OLDEST `## ` block (commit e24e6b8b6, L127-155, legacy fallback preserved); regression test `scripts/agents-flow/test-notebook-auto-prune.sh` present (covers append + prepend style); dev-team checkpoint b5ec739bc confirms "pipeline-resume shipped … RAW-verified". The 03:07Z PO tick already validated this ("note field stale, safe to ignore").
