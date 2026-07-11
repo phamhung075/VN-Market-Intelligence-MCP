@@ -1,107 +1,97 @@
-# PM Decomposition — ANALYSIS-QUALITY-CONVERGENCE
-
-**Date:** 2026-07-11
-**Task:** pm sprint ANALYSIS-QUALITY-CONVERGENCE decomposition
-**Coordination session:** 3dce23eb-6a30-4f92-aec0-51c1393dc399
-**Upstream:** agents-architect brief (docs/architecture-briefs/2026-07-11-analysis-quality-convergence-lanes.md)
-
+---
+task_id: ANALYSIS-QUALITY-CONVERGENCE (PM pass — QA-approved 3 rows closed)
+date: 2026-07-11T14:30:00Z
+agent: pm
+sprint: ANALYSIS-QUALITY-CONVERGENCE
 ---
 
-## Lane Decomposition Summary
+## PM PASS CONTEXT
 
-| Lane | Scope | Action | Status |
-|---|---|---|---|
-| A | FR-1 (6-flow indicator wiring) + FR-2 (CHEF AF-1 gate) | Mint FR-1-CHEF-LEG-FR-2-ATOMIC (atomic commit) + FR-1-REMAINING-5-FLOWS (independent wiring) | MINTING |
-| C | FR-4 (CCATO-T2 skill) | Dispatch existing CCATO-T2-CLAIM-TRUTH-SKILL (developer lane, unblocked) | NO MINT — existing row |
-| B | FR-5 (CCATO-T3, 6-pt claim-truth-gate wiring) | Dispatch existing CCATO-T3-FLOW-WIRING-6PT (cowork-refactory-expert, sequenced after FR-4 DONE_VERIFIED + Lane A chef.md/cycle.md/daily-predict.md edits landed) | NO MINT — existing row |
-| D | FR-3 (GAP-CHEF-SYNTHESIS-B endpoint+card) | Hold dispatch: GAP-CHEF-SYNTHESIS-A-FLOW-PERSIST is REVIEW (live-cycle-verification pending). No new board action needed; gate already on row. | HOLD |
-| E | FR-7 (recon SPIKE) | Mint FR-7 via orch-apply.sh (brief §6 spec) — PLAN-ONLY, ops-mainserver-fetch primary owner | MINTING |
-| F | FR-6 (Phase-2 note) | Prose passthrough, no action | SKIP |
+Three rows closed by QA (all APPROVED with lane-moves + orch-validate PASS):
+1. CCATO-T2-CLAIM-TRUTH-SKILL → DONE (commit d9b5c408aa) — skill authored + RAW-verified
+2. FR-1-CHEF-LEG-FR-2-ATOMIC → DONE (commit ceab8e25c, round 2) — CHEF wiring + AF-1 regex gate both landed atomically
+3. SPIKE-EARNINGS-REV-VALUATION-PCTILE-FEASIBILITY → DONE (commit c8eb85b63) — INFEASIBLE both candidates, PLAN-ONLY discipline held
 
----
+## GATE CLEARING & DEPENDENCY RESOLUTION
 
-## Key Decisions
+### CCATO-T3-FLOW-WIRING-6PT
+**Status:** BACKLOG, `depends: ["CCATO-T2-CLAIM-TRUTH-SKILL"]`
+**Action:** Clear blocked_by (CCATO-T2 is now DONE), but DO NOT dispatch yet.
+**Reason:** File overlap with FR-1-REMAINING-5-FLOWS (both routes to cowork-refactory-expert):
+- Overlapping files: chef.md, market-watcher/cycle.md, digest-predict/daily-predict.md (3 shared between the two tasks)
+- Brief §5 mandate: FR-1's edits must land BEFORE FR-5 (CCATO-T3) touches the same files — FR-5's anchor lines depend on FR-1's modifications existing
+- **Sequencing decision:** FR-1-REMAINING-5-FLOWS must be dispatched, complete DONE_VERIFIED, and merged BEFORE CCATO-T3 starts
 
-### 1. IND-P1-MOMENTUM-CONSUMER-WIRING Disposition
+**New gate:** Add FR-1-REMAINING-5-FLOWS to `depends` (replacing CCATO-T2 or alongside it)
+- Clear blocked_by[] (CCATO-T2 done)
+- Set depends: ["FR-1-REMAINING-5-FLOWS"]
+- Leave status: BACKLOG, next_agent: cowork-refactory-expert
+- Dispatch order: FR-1-REMAINING-5-FLOWS → [verified by QA] → CCATO-T3 (within same agent queue, no WIP overshoot)
 
-**Status:** BACKLOG, held_by:po-s135 (3/4 tools cleared per BA §0.1-0.2)
+### FR-1-REMAINING-5-FLOWS
+**Status:** BACKLOG, `depends: ["FR-1-CHEF-LEG-FR-2-ATOMIC"]`
+**Gate:** FR-1-CHEF-LEG-FR-2-ATOMIC is DONE → gate cleared
+**Action:** Dispatch immediately to cowork-refactory-expert (in_progress)
 
-**Finding:** Three material divergences from BA's FR-1 §0.4 fresh matrix:
-1. Its wiring_map targets alert-commander + tran-ngoc-bau (FR-1 excludes both).
-2. Its wiring_map assigns get_foreign_accum_rank to 4 flows (FR-1 defers this tool everywhere, blocked on FIX-FOREIGN-FLOW-COVERAGE per BA §0.2).
-3. It excludes market-analyst ("pending tool-call verification") — BA §0.5 confirms this exclusion is stale; market-analyst is now IN SCOPE.
+**Flows wired (per BA §0.4 ADD column, independent of CHEF leg):**
+- market-watcher/cycle.md: Step "2. Market indicators" — add get_roc_momentum, get_relative_strength, get_52w_proximity
+- bctc-analyst/stage-analyze.md: E1+E3 — add get_insider_sentiment (pre-pass, per brief §2.1 architect decision)
+- news-scout/stage-sentiment.md: L27-34 — add get_insider_sentiment alongside existing get_market_sentiment_index
+- digest-predict/daily-predict.md: P-3/P-4 — add the 4 indicators
+- market-analyst/main.md: P0 tool block — add call_tool(server='vn-market', ...) for all 4 tools
 
-**Action:** Supersede IND-P1-MOMENTUM-CONSUMER-WIRING to SUPERSEDED status with cross-reference to FR-1 task(s), since FR-1's §0.4 table is the corrected, live-verified version (brief §3).
+**WIP impact:** Current in_progress=1, ready=0. Adding FR-1-REMAINING-5-FLOWS brings in_progress to 2 (at WIP limit). No other tasks can be dispatched until one of the 2 in_progress clears.
 
-### 2. FR-1 Task Atomicity Constraint
+### GAP-CHEF-SYNTHESIS-A-FLOW-PERSIST Gate Status
+**Current:** REVIEW, gate=live-cycle-verification (waiting for first successful CHEF cycle producing docs/data/unified-agent-synthesis-<DATE>-<SLOT>.json)
+**Impact on FR-3:** GAP-CHEF-SYNTHESIS-B-ENDPOINT-CARD is BACKLOG, depends: ["GAP-CHEF-SYNTHESIS-A-FLOW-PERSIST"]
+**Verdict:** NOT YET UNBLOCKED. Leave FR-3 (both FR-3a dev-mcp-server + FR-3b dev-frontend) in BACKLOG, held by the gate.
+**Next:** When GAP-CHEF-SYNTHESIS-A flips DONE_VERIFIED (live synthesis file confirmed), then FR-3 can be dispatched. Per WIP=2 constraint, that happens only after one of FR-1-REMAINING-5-FLOWS or CCATO-T3 completes.
 
-**Requirement:** FR-1's chef.md leg (adding roc/z_score/decile, rs/percentile, pct_from_52w_*, insider net_sentiment_score to chef.md Step 0/3/4) and FR-2 (extending chef.md Step 6.7 Rule AF-1's blocked-token regex) MUST land in the same commit/task. Shipping FR-1's CHEF wiring without FR-2 reopens FIX-CHEF-FABRICATED-TA-NUMBERS (zero-day regression window, brief §2.2).
+## IND-P1-MOMENTUM-CONSUMER-WIRING HANDLING
+**Status:** Not found on current task_board (may be in archive or never minted as separate row).
+**Context:** Brief §3 recommends either:
+- **(a) Supersede-and-close** if it exists: flip to SUPERSEDED with cross-ref to FR-1 task id(s)
+- **(b) Merge-in-place** if it exists: overwrite wiring_map with BA's §0.4 table
 
-**Minting strategy:** 
-- One atomic task **FR-1-CHEF-LEG-FR-2-ATOMIC** containing both chef.md 0/3/4 wiring and Step 6.7 Rule AF-1 regex extension.
-- One independent task **FR-1-REMAINING-5-FLOWS** (or 5 smaller tasks as queue prefers) for bctc-analyst/market-watcher/news-scout/digest-predict/market-analyst — these are NOT coupled to the CHEF pair per brief §2.2 (NFR-3 additive-only makes them safe independently after CHEF ships).
+**Decision:** Since FR-1-REMAINING-5-FLOWS and FR-1-CHEF-LEG-FR-2-ATOMIC are now on the board and FR-1-REMAINING-5-FLOWS is about to be dispatched, the supersession (BA's fresh §0.4 matrix) is implicit. If IND-P1-MOMENTUM-CONSUMER-WIRING exists on a different sprint's backlog, the router will decide its fate later. For this sprint's PM pass, the deliverable is FR-1 task(s) as specified by BA, not the stale row.
 
-### 3. CCATO-T2 / CCATO-T3 — No Duplicate Mint
+## SPIKE-EARNINGS-REV-VALUATION-PCTILE-FEASIBILITY CLOSE-OUT
+**Verdict:** INFEASIBLE (both (a) earnings-consensus-revisions and (b) VN-Index P/E multi-year history)
+**Evidence:** Live HTTP probe against all BA-mandated candidates, PLAN-ONLY discipline held (zero build artifacts)
+**Board action:** Already moved to DONE by QA. No follow-on FR-7 tasks minted (per SPIKE own PLAN-ONLY mandate and BA AC-12).
 
-**Finding:** Both rows already exist in BACKLOG (sprint NARRATIVE-TRUTH-CCATO-GATE):
-- CCATO-T2-CLAIM-TRUTH-SKILL (developer lane, .claude/skills/ zone) — unblocked, dependency CCATO-T1 is DONE_VERIFIED.
-- CCATO-T3-FLOW-WIRING-6PT (cowork-refactory-expert lane) — depends on CCATO-T2 DONE_VERIFIED.
+## SPRINT_GOAL.ENTRIES HOUSEKEEPING NOTE
+**Current count:** 16 entries (exceeds soft cap of 15)
+**Action:** Flag for next PO triage sweep (not pm's job to prune). Explicitly note in RETURN.
 
-**Action:** Dispatch existing rows directly (no mint), NOT as FR-4/FR-5 duplicates. Sequencing: CCATO-T2 → [FR-1/FR-2 chef.md/cycle.md/daily-predict.md land] → CCATO-T3.
+## BOARD UPDATES (jq transforms via scripts/orch-apply.sh)
+Will execute 2 updates:
+1. Move FR-1-REMAINING-5-FLOWS from backlog→in_progress; set owner, next_agent, dispatched_at timestamp
+2. Update CCATO-T3-FLOW-WIRING-6PT: clear blocked_by[], update depends: ["FR-1-REMAINING-5-FLOWS"]
 
-### 4. FR-7 SPIKE Mint (PM Authority)
+## SEQUENCING DECISION SUMMARY
+**Dispatch order (sequential within cowork-refactory-expert queue):**
+1. FR-1-REMAINING-5-FLOWS (5 flows: market-watcher, bctc-analyst, news-scout, digest-predict, market-analyst)
+   - Status: in_progress, awaiting QA completion
+   - WIP slot: 2/2 (at limit)
+2. Once FR-1-REMAINING-5-FLOWS → DONE_VERIFIED (QA approves)
+3. CCATO-T3-FLOW-WIRING-6PT (6 flows: fb-market-poster, chef, market-watcher, alert-commander, digest-predict, TNB)
+   - Status: remains BACKLOG, depends: FR-1-REMAINING-5-FLOWS
+   - Can start once FR-1 QA-verified and WIP slot opens (when one of the in_progress rows clears)
+   - File edits will hit chef.md, cycle.md, daily-predict.md AFTER FR-1's edits are in those files
 
-**Rationale:** Architect's brief §6 specifies pm mints via orch-apply.sh (architect does not write orch-state.json per task write-boundary constraint).
+**Disjoint flows (can run in parallel if WIP allows):**
+- FR-1 nonlinear with Lane C (CCATO-T2, developer agent, .claude/skills/ zone) — already DONE
+- FR-1 nonlinear with Lane E (SPIKE, ops-mainserver-fetch, recon zone) — already DONE
+- Both can coexist without merge conflict since zones differ (docs/agents/* vs .claude/skills/ vs recon)
 
-**Spec:** SPIKE-EARNINGS-REV-VALUATION-PCTILE-FEASIBILITY (BACKLOG, PLAN-ONLY, size S, ops-mainserver-fetch primary, recon-only, no build/compute allowed).
+**File overlap safety:**
+- chef.md: FR-1 Step 0/3/4 GATHER→FEED; CCATO-T3 Step 6.7 AF-3 gate → sequential, no collision if FR-1 lands first ✓
+- cycle.md: FR-1 Step "Market indicators"; CCATO-T3 Step 4f → sequential ✓
+- daily-predict.md: FR-1 P-3/P-4; CCATO-T3 P-5.5 → sequential ✓
 
-**Minting:** Via orch-apply.sh transform (see docs/policies/dev-standards.md CANONICAL:SSOT-W1-ORCH-APPLY-WRAPPER).
-
-### 5. Lane A Ordering (WIP=2, Parallel C)
-
-**Constraint:** WIP=2 enforcement — sequence dispatches, don't flood.
-
-**Parallel ready:** Lane A (FR-1 tasks) and Lane C (CCATO-T2) can start in parallel (disjoint zones: docs/agents/* vs .claude/skills/). Lane B (CCATO-T3) sequenced after both Lane C (CCATO-T2 DONE_VERIFIED) and Lane A overlapping files (chef.md/cycle.md/daily-predict.md edits landed).
-
-**Dispatch order (WIP=2):**
-1. First batch: FR-1-CHEF-LEG-FR-2-ATOMIC + CCATO-T2-CLAIM-TRUTH-SKILL (parallel, different zones)
-2. Next batch (after first batch starts/completes): FR-1-REMAINING-5-FLOWS
-3. After FR-4 DONE_VERIFIED + overlapping files landed: CCATO-T3-FLOW-WIRING-6PT
-
-### 6. FR-3 Gated — No Action This Sprint
-
-**Finding:** GAP-CHEF-SYNTHESIS-A-FLOW-PERSIST is REVIEW (live-cycle-verification pending). Zero docs/data/unified-agent-synthesis-*.json files exist on disk (BA §0.6).
-
-**Status:** GAP-CHEF-SYNTHESIS-B-ENDPOINT-CARD already has blocked_by relationship on board. No new gate needed; pm defers dispatch until A reaches DONE_VERIFIED.
-
----
-
-## Orch-State Changes Required
-
-1. **Supersede IND-P1-MOMENTUM-CONSUMER-WIRING:** status → SUPERSEDED, add note cross-referencing FR-1 task id(s).
-2. **Mint FR-1-CHEF-LEG-FR-2-ATOMIC:** task row (cowork-refactory-expert, ANALYSIS-QUALITY-CONVERGENCE sprint).
-3. **Mint FR-1-REMAINING-5-FLOWS:** task row (cowork-refactory-expert, ANALYSIS-QUALITY-CONVERGENCE sprint).
-4. **Mint FR-7 SPIKE:** SPIKE-EARNINGS-REV-VALUATION-PCTILE-FEASIBILITY (ops-mainserver-fetch, ANALYSIS-QUALITY-CONVERGENCE sprint).
-
-No new rows for FR-4/FR-5 (dispatch existing CCATO-T2/T3).
-
----
-
-## Commit Strategy
-
-**Atomicity:** FR-1-CHEF-LEG-FR-2-ATOMIC's DoD includes "Lands in a single commit with no other unrelated changes." This ensures the regression guard (FR-2) ships with the new chef.md wiring (FR-1's chef leg).
-
-**Minting commit:** All board writes (IND-P1 supersede + FR-1 mint + FR-7 mint) via single orch-apply.sh call, captured in one pm commit (explicit paths: docs/data/orch/orch-state.json + docs/agent-memory/decisions/this-file).
-
----
-
-## Verification Checklist (AC mapping)
-
-- AC-1..5: FR-1's 6 flows per BA §0.4 wiring table (grep verify in dispatch phase).
-- AC-6: chef.md Step 6.7 Rule AF-1 regex coverage (FR-2, atomic with FR-1's chef leg).
-- AC-7: additive-only, no regression (tsc + existing gates pass).
-- AC-8: FR-3 QA starts only after GAP-CHEF-SYNTHESIS-A DONE_VERIFIED.
-- AC-9: CCATO-T2/T3 full wiring per documented anchors (dispatch phase verification).
-- AC-10: Cross-reference discipline (architect brief captures, pm does not re-diagnose).
-- AC-11: Phase-2 prose passthrough (no code, no board mutation).
-- AC-12: FR-7 SPIKE minted (PLAN-ONLY, zero code this cycle).
+## COMMIT STRATEGY
+Two explicit-path commits:
+1. `docs/data/orch/orch-state.json` (board updates via jq transform)
+2. `docs/agent-memory/decisions/sprint-ANALYSIS-QUALITY-CONVERGENCE-pm.md` (this file)
