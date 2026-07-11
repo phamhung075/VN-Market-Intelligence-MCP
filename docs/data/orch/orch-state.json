@@ -7156,6 +7156,25 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FR-1-CHEF-LEG-FR-2-ATOMIC",
         "generic_mandate": "Add get_roc_momentum/get_relative_strength/get_52w_proximity/get_insider_sentiment to chef.md Step 0 GATHER (P0 tool block) and feed Step 3/Step 4 per BA §1. Extend chef.md Step 6.7 Rule AF-1's indicator-class enumeration + blocked-token regex to cover roc/z_score/decile, rs/percentile/composite_score, pct_from_52w_high/low, insider net_sentiment_score — zero un-sourced numeric tokens from these families in live cycle output. Gate: self-checked via live CHEF cycle audit (Block B WORK message). Honest-NULL/[SKIP] degrade when tools unavailable.",
         "acceptance": "Single commit: both chef.md Step 0/3/4 wiring edits AND Step 6.7 Rule AF-1 regex extension. tsc passes. Additive-only diff. Live CHEF cycle audit shows zero un-sourced numeric tokens from the 4 new families. BA AC-6 satisfied."
+      },
+      {
+        "id": "CCATO-T2-CLAIM-TRUTH-SKILL",
+        "title": "Shared SSOT skill .claude/skills/claim-truth-gate/SKILL.md wrapping narrative-truth-gate.sh: invocation contract (post_body/agent_id/cache) + self-correct in-cycle protocol (brief S4.6) + time-sensitivity override for real-time agents + PASS-on-null honest-NULL note",
+        "status": "REVIEW",
+        "zone": ".claude/skills/",
+        "type": "FEATURE",
+        "size": "S",
+        "priority": "high",
+        "sprint": "NARRATIVE-TRUTH-CCATO-GATE",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#CCATO-T2-CLAIM-TRUTH-SKILL",
+        "owner": "developer",
+        "next_agent": "qa",
+        "started_at": "2026-07-11T07:57:06Z",
+        "updated_at": "2026-07-11T08:02:30Z",
+        "updated_by": "developer",
+        "dispatched_at": "2026-07-11T07:57:06Z",
+        "dispatched_by": "router",
+        "status_note": "Skill authored + RAW-verified against shipped narrative-truth-gate.sh (10/10 DoD harness pass + 3 standalone exit-code smoke-tests). No engine/SSOT changes. Ready for qa: confirm skill is the single invocation surface (no duplicated re-probe logic) and documented contract matches script exit-code/signal behavior verbatim."
       }
     ],
     "qa": [],
@@ -7188,24 +7207,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#OPS-BCTC-REFINE-REPASS-NONBANK-5T",
         "owner": "ops",
         "po_triage_20260710_round3_ctg_not_folded_note": "[po-triage-20260710-round3 08:06Z] CTG 2026-Q1 (analysis-agent Telegram #3551, composite=0.00/financial=0.00) was triaged this tick and DELIBERATELY NOT FOLDED into this batch. CTG is a BANK (B02-TCTD form); this batch is strictly NON-BANK (VHM/VIC/VRE/HSG/MWG) — a different failure CLASS (bank balance-sheet section-classifier + scalar mapping) with its own owning track: W5-FU-CTG-REFINE-96e36139 + TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST (both BLOCKED on a deploy-gate). CLARIFICATION for future triagers: the title's phrase \"proven CTG runbook\" refers to the general refine -> push_bctc_refined_unit -> finalize_bctc_refine -> reingest-bctc-report.ts PROCEDURE (proven to EXECUTE on CTG report 96e36139), NOT a claim that CTG 2026-Q1's DATA outcome is green — CTG 2026-Q1 total_assets is still 0 and its bank track is BLOCKED (deploy-gate + a genuine balance-sheet-absent root gap, CTG-CARRY-FORWARD AC-TRACK1-3 escalated 2026-07-10). Do NOT read \"proven CTG runbook\" as \"CTG is fixed\"; do NOT fold any BANK ticker into this NON-BANK batch. (Mirrors the bank/non-bank framing correction made in round-1 of this same 2026-07-10T07:07Z tick on OPS-BCTC-BANK-2025Q4-ENRICH-0ROW-REPARSE.)"
-      },
-      {
-        "id": "CCATO-T2-CLAIM-TRUTH-SKILL",
-        "title": "Shared SSOT skill .claude/skills/claim-truth-gate/SKILL.md wrapping narrative-truth-gate.sh: invocation contract (post_body/agent_id/cache) + self-correct in-cycle protocol (brief S4.6) + time-sensitivity override for real-time agents + PASS-on-null honest-NULL note",
-        "status": "IN_PROGRESS",
-        "zone": ".claude/skills/",
-        "type": "FEATURE",
-        "size": "S",
-        "priority": "high",
-        "sprint": "NARRATIVE-TRUTH-CCATO-GATE",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#CCATO-T2-CLAIM-TRUTH-SKILL",
-        "owner": "developer",
-        "next_agent": "developer",
-        "started_at": "2026-07-11T07:57:06Z",
-        "updated_at": "2026-07-11T07:57:06Z",
-        "updated_by": "developer",
-        "dispatched_at": "2026-07-11T07:57:06Z",
-        "dispatched_by": "router"
       }
     ]
   },
