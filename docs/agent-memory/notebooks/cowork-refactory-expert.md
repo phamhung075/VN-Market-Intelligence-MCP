@@ -52,3 +52,17 @@ Wired `.claude/skills/claim-truth-gate/SKILL.md` into 6 narrative-producing flow
 4. alert-commander/flow/stage-dispatch-log.md — Step 4a-pre (before dispatch) — time-override
 5. digest-predict/flow/daily-predict.md — P-5.5 (before P-6 notebook) — hard gate
 6. tran-ngoc-bau/flow/audit-market.md — Step 2 Backstop (after verify) — audit flag
+
+### Round-2 Fixes (QA CHANGES_REQUESTED → APPROVED)
+
+**DEFECT A — digest-predict/flow/daily-predict.md — P-5.5 gate repositioned**
+- Was: P-5.5 gate ran AFTER create_prediction_claim() persisted all claims
+- Now: P-5.5 gate runs BEFORE create_prediction_claim(), per-ticker
+- Behavior: PASS → persist claim; FAIL first → self-correct; FAIL second → DROP ticker (honest-gap only, no claim filed)
+- Result: False claims no longer persisted to prediction-claims system
+
+**DEFECT B — market-watcher/flow/cycle.md — Step 4f gate repositioned**
+- Was: Step 4f gate ran AFTER post_agent_signal() dispatch (after line 147)
+- Now: Step 4f gate runs BEFORE post_agent_signal(), per-anomaly (before line 147)
+- Behavior: Gate on payload.title/detail; time-sensitivity override preserved (2nd FAIL → honest-gap + proceed)
+- Result: All anomaly signals gated before leaving market-watcher boundary

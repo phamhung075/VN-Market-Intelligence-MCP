@@ -77,33 +77,39 @@ Horizon:
 ```json
 {"metric":"price_close","operator":">","value":80000,"currency":"VND","description":"..."}
 ```
-`create_prediction_claim(stock, claim_text, probability, horizon_days, resolution_criteria)`
 
-**P-5.5 — CLAIM-TRUTH GATE (hard gate before digest write)**
+**P-5.5 — CLAIM-TRUTH GATE (hard gate before claim persistence)**
 
 → skill: `.claude/skills/claim-truth-gate/SKILL.md`
 
-Before P-6 notebook commit, run the gate on the composed daily digest narrative to detect CCATO (Claim Contradicts Authorized Tool Output).
+Before any `create_prediction_claim()` persists a claim, run the gate on each `claim_text` to detect CCATO (Claim Contradicts Authorized Tool Output).
 
-Invoke:
+Invoke (per each candidate claim):
 ```
 GATE_EXIT = skill `.claude/skills/claim-truth-gate/SKILL.md`
-  post_body = <composed daily digest text>
+  post_body = <claim_text for this ticker>
   agent_id  = "digest-predict"
   cache     = <this cycle's tool-call results, or null>
 ```
 
 **Exit-code handling:**
-- `0` = PASS → proceed to P-6 notebook commit.
+- `0` = PASS → proceed to create_prediction_claim call for this ticker.
 - `1` = FAIL — contradiction detected; signal emitted to `po`. Self-correct:
   1. Call the named tool directly.
-  2. Rewrite the offending sentence using real returned values.
-  3. Re-run this skill.
-  4. Second-pass PASS → proceed to P-6.
-  5. Second-pass FAIL (tool genuinely errors) → write honest gap and proceed to P-6 (no hard block; digest must commit).
+  2. Rewrite `claim_text` using real returned values.
+  3. Re-run this skill on the rewritten claim_text.
+  4. Second-pass PASS → proceed to create_prediction_claim.
+  5. Second-pass FAIL (tool genuinely errors) → DROP this ticker from P-5 (do not file a claim built on a false negation); write honest gap note in digest and continue to next ticker.
 - `2` = config-error → fail-loud: `send_telegram(channel="bug", message="[digest-predict] claim-truth-gate CONFIG ERROR")` and EXIT.
 
 **Signal:** Script fires `narrative_contradiction` on FAIL. Do NOT suppress it.
+
+For each qualifying ticker (bullish_score > 0.6 OR bearish_score > 0.6):
+  Run P-5.5 gate on claim_text
+  If PASS:
+    `create_prediction_claim(stock, claim_text, probability, horizon_days, resolution_criteria)`
+  If FAIL second-pass:
+    Skip claim creation for this ticker; log as honest-gap in digest (e.g., "[SKIP] VCB claim contradicts 52w data — re-evaluated, unresolved")
 
 **P-6. Notebook commit** — settled-write invariant (AC-3: compose in memory, one Write only):
 
