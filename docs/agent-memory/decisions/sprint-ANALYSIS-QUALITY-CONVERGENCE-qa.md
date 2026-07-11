@@ -28,3 +28,16 @@
 - Round-1 wiring intact: grep confirms Step 0 tool calls (chef.md:111-114), Step 3 guidance (188/190/192), Step 4 conviction-scoring (222-226), Step 6.7 self-check tool-source cross-reference (359) — all present, unmodified beyond the two D1/D2 edits.
 **why-decision:** Both defects from round 1 are fixed at the exact reported root cause (sign-convention misread), minimum targeted diff, no new defects introduced, no scope creep, round-1 approved scope fully intact. APPROVE.
 **why-change:** No change from plan — round-2 re-review scope as dispatched (re-verify raw, confirm scope, verdict + lane-move), no full re-audit needed since round-1 already validated atomicity/wiring/family-count.
+
+---
+
+### STEP qa-S3 · qa · 2026-07-11T08:20:13Z
+**task-id:** SPIKE-EARNINGS-REV-VALUATION-PCTILE-FEASIBILITY
+**what-done:** Verified ops-mainserver-fetch's PLAN-ONLY recon spike (commit c8eb85b63) against the row's own `verification_gate`: real-probe-backed verdicts + zero build artifacts.
+**what-considered:**
+- Evidence quality: recon.md cites specific HTTP codes/cookies/JSON fragments per source (FiinTrade 3361B webpack shell, SSI `__cf_bm` 403, Bloomberg `_pxhd` 403, TE soft-404 title contrast, TE guest API 410, Simplize `peRatio` single-field JSON) — not restated roadmap prose.
+- Cross-checked citations against prior recon docs (trading-economics-vn slug pattern, bloomberg-markets `_pxhd` cookie) — consistent, no contradiction/fabrication signal found.
+- Build-artifact check: `git show --stat c8eb85b63` = 2 files (notebook + recon.md) only; `git log` on apps/scripts/ across the probe window (07:50-08:20Z) = empty.
+- Board-flip provenance: traced the claimed "concurrent sweep commit" to 174244356 (bundled with CCATO-T2 QA approval, same session) — not a phantom/unverifiable claim; verdict_summary field matches recon.md RETURN block verbatim.
+**why-decision:** All 3 scope checks pass — evidence real not restated, PLAN-ONLY discipline held (no code/compute), board state consistent with recon doc. APPROVED. Board row moved review[]→done[] (proper lane-move, `orch-validate`+`orch-conservation-check` both PASS, task_total 458/signal_total 0 unchanged).
+**why-change:** No change from plan — lighter PLAN-ONLY spike-verification scope as dispatched (spot-check plausibility, not re-run probes; no fabrication/self-contradiction found so no re-probe needed).
