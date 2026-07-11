@@ -538,8 +538,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-11T07:22:56Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-07-11T10:57:10Z",
+    "_updated_by": "developer",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -6685,19 +6685,7 @@
       "last_updated_at": "2026-07-10T09:19:45Z",
       "last_updated_by": "ops"
     },
-    "ready": [
-      {
-        "id": "WATCHLIST-DB-SYSMAP-DRIFT-FIX",
-        "title": "Resync live SQLite watchlist table from docs/data/system-map.json .project.watchlist (SSOT) — corrects /ta/money-flow-oscillators + /ta/roc-momentum + sibling TA endpoints",
-        "status": "READY",
-        "zone": "cross-service",
-        "type": "FIX",
-        "size": "S",
-        "priority": "low",
-        "sprint": "MONEY-RADAR-P0",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#WATCHLIST-DB-SYSMAP-DRIFT-FIX"
-      }
-    ],
+    "ready": [],
     "review": [
       {
         "id": "TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST",
@@ -7219,6 +7207,19 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#OPS-BCTC-REFINE-REPASS-NONBANK-5T",
         "owner": "ops",
         "po_triage_20260710_round3_ctg_not_folded_note": "[po-triage-20260710-round3 08:06Z] CTG 2026-Q1 (analysis-agent Telegram #3551, composite=0.00/financial=0.00) was triaged this tick and DELIBERATELY NOT FOLDED into this batch. CTG is a BANK (B02-TCTD form); this batch is strictly NON-BANK (VHM/VIC/VRE/HSG/MWG) — a different failure CLASS (bank balance-sheet section-classifier + scalar mapping) with its own owning track: W5-FU-CTG-REFINE-96e36139 + TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST (both BLOCKED on a deploy-gate). CLARIFICATION for future triagers: the title's phrase \"proven CTG runbook\" refers to the general refine -> push_bctc_refined_unit -> finalize_bctc_refine -> reingest-bctc-report.ts PROCEDURE (proven to EXECUTE on CTG report 96e36139), NOT a claim that CTG 2026-Q1's DATA outcome is green — CTG 2026-Q1 total_assets is still 0 and its bank track is BLOCKED (deploy-gate + a genuine balance-sheet-absent root gap, CTG-CARRY-FORWARD AC-TRACK1-3 escalated 2026-07-10). Do NOT read \"proven CTG runbook\" as \"CTG is fixed\"; do NOT fold any BANK ticker into this NON-BANK batch. (Mirrors the bank/non-bank framing correction made in round-1 of this same 2026-07-10T07:07Z tick on OPS-BCTC-BANK-2025Q4-ENRICH-0ROW-REPARSE.)"
+      },
+      {
+        "id": "WATCHLIST-DB-SYSMAP-DRIFT-FIX",
+        "title": "Resync live SQLite watchlist table from docs/data/system-map.json .project.watchlist (SSOT) — corrects /ta/money-flow-oscillators + /ta/roc-momentum + sibling TA endpoints",
+        "status": "IN_PROGRESS",
+        "zone": "cross-service",
+        "type": "FIX",
+        "size": "S",
+        "priority": "low",
+        "sprint": "MONEY-RADAR-P0",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#WATCHLIST-DB-SYSMAP-DRIFT-FIX",
+        "dispatched_to": "dev-mcp-server",
+        "dispatch_note": "developer team-lead 2026-07-11T10:57:10Z: zone verdict apps/mcp-server/ (SqliteWatchlistRepository.ts, watchlistReadStore.ts, seedWatchlist.ts, schema.ts) — routed to dev-mcp-server per zone_dispatch. Root-cause pre-analysis in handoff: seedWatchlist.ts WATCHLIST_SEED hardcoded 34-ticker list independent of system-map.json SSOT, runs unconditionally every server init (schema.ts:202) — pure DB resync will not survive next restart without fixing the seeder derivation too."
       }
     ]
   },
