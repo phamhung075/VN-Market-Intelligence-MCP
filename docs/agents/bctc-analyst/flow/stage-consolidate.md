@@ -41,6 +41,7 @@ Rules:
 - Plain Vietnamese (no Hán-Việt jargon, no σ/bp notation)
 - Name the trick types in plain terms (e.g. "vốn hóa chi phí vận hành", "doanh thu ghi nhận sớm")
 - If `trick_confidence=none`: write "Không phát hiện dấu hiệu bất thường trong kỳ này."
+- **Insider activity context:** When `insider_sentiment_context` is available (from pre-pass fetch in stage-analyze.md), cite it as corroborating or contradicting evidence in the trick narrative. Example: "Không tìm thấy dấu hiệu bất thường — và cộng thêm hành động mua vào của nhà quản lý, tín hiệu lạc quan." Or: "Doanh thu ghi nhận sớm dấu hiệu — mâu thuẫn với bán ra của nhà quản lý, cảnh báo sự thận trọng của nội bộ."
 
 Example (high confidence): "FPT Q1-2026 có dấu hiệu vốn hóa chi phí (TSCĐ tăng 34% trong khi doanh thu giảm 38%) và sai lệch dòng tiền hoạt động so với lợi nhuận (OCF/NI = -1.15). Mức độ tin cậy cao — có bằng chứng từ 2 đường phân tích độc lập."
 

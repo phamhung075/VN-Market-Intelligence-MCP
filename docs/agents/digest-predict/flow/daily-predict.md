@@ -42,8 +42,12 @@ All "No evidence" → `send_telegram(channel="work", message="[digest-predict] D
 ```
 call_tool(server="vn-market", tool="get_volatility_indicators", arguments={})
 call_tool(server="vn-market", tool="get_breadth_thrust", arguments={})
+call_tool(server="vn-market", tool="get_roc_momentum", arguments={})
+call_tool(server="vn-market", tool="get_relative_strength", arguments={})
+call_tool(server="vn-market", tool="get_52w_proximity", arguments={})
+call_tool(server="vn-market", tool="get_insider_sentiment", arguments={})
 ```
-If successful: extract volatility regime (rv_10/20/60d, GK vol) and breadth indicators (McClellan/Zweig). Use to contextualize individual ticker predictions (e.g., if market volatility is elevated or breadth is weakening, adjust confidence). If either tool returns NULL or error: log `[SKIP] <tool_name> unavailable` and continue with ticker-level evidence only (no market context).
+If successful: extract volatility regime (rv_10/20/60d, GK vol), breadth indicators (McClellan/Zweig), momentum indicators (roc, z_score, decile), relative strength metrics (rs, percentile, composite_score), 52-week proximity (pct_from_52w_high, pct_from_52w_low), and insider sentiment (net_sentiment_score). Use to contextualize individual ticker predictions (e.g., if market volatility is elevated or breadth is weakening, adjust confidence; if momentum strong or positioning near 52w-low with rising momentum, increase conviction for recovery thesis; if insider buying concentration correlates with bullish evidence, boost confidence). If any tool returns NULL or error: log `[SKIP] <tool_name> unavailable` and continue with ticker-level evidence only (no market context).
 
 **P-3. Evidence** per ticker `get_evidence_summary(stock)`
 Skip "No evidence" | parse: `bullish_score`, `bearish_score`, `neutral_score`, likelihood ratios

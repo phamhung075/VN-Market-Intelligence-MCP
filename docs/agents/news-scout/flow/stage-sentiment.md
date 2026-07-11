@@ -30,8 +30,9 @@ For each ticker in STALE_TICKERS that is NOT already in the article-impacted set
 Market sentiment context (run at start of sentiment analysis):
 ```
 call_tool(server="vn-market", tool="get_market_sentiment_index", arguments={})
+call_tool(server="vn-market", tool="get_insider_sentiment", arguments={})
 ```
-If successful: extract `news_sentiment_z` (or `sentiment_z_60d`), `sentiment_ema_5d`, and ratio fields `bull_ratio_5d` / `bear_ratio_5d` / `neutral_ratio_5d`. Use to contextualize individual article sentiment (e.g., if news_sentiment_z is already -2.0, a single bearish article has less marginal impact). If tool returns NULL or error: log `[SKIP] get_market_sentiment_index unavailable` and continue with article-level sentiment only (no market context).
+If successful: extract `news_sentiment_z` (or `sentiment_z_60d`), `sentiment_ema_5d`, and ratio fields `bull_ratio_5d` / `bear_ratio_5d` / `neutral_ratio_5d` from get_market_sentiment_index. Use to contextualize individual article sentiment (e.g., if news_sentiment_z is already -2.0, a single bearish article has less marginal impact). Extract aggregate insider net sentiment score (net_sentiment_score) from get_insider_sentiment. Use to assess whether insider activity aligns or contradicts article sentiment (e.g., bearish article during insider buying concentration may signal insider confidence vs market pessimism). If either tool returns NULL or error: log `[SKIP] <tool_name> unavailable` and continue with article-level sentiment only (no market context).
 
 Score each article: -1.0 (bearish) to +1.0 (bullish).
 

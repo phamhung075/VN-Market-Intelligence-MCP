@@ -76,8 +76,12 @@ Extract from `get_macro_snapshot()` (call once at session start):
 call_tool(server="vn-market", tool="get_volatility_indicators", arguments={})
 call_tool(server="vn-market", tool="get_breadth_thrust", arguments={})
 call_tool(server="vn-market", tool="get_foreign_room", arguments={})
+call_tool(server="vn-market", tool="get_roc_momentum", arguments={})
+call_tool(server="vn-market", tool="get_relative_strength", arguments={})
+call_tool(server="vn-market", tool="get_52w_proximity", arguments={})
+call_tool(server="vn-market", tool="get_insider_sentiment", arguments={})
 ```
-If successful: extract volatility regime (vol_regime), breadth indicators (mclellan_osc, mclellan_summation, thrust_triggered), foreign-room utilization (room_utilization_pct) for [Thiên Thời] / [Địa Lợi] sections above. If any tool returns NULL or error: log `[SKIP] <tool_name> unavailable` and proceed with macro snapshot + financials only (degraded environment analysis).
+If successful: extract volatility regime (vol_regime), breadth indicators (mclellan_osc, mclellan_summation, thrust_triggered), foreign-room utilization (room_utilization_pct), momentum indicators (roc, z_score, decile), relative strength metrics (rs, percentile, composite_score), 52-week proximity (pct_from_52w_high, pct_from_52w_low), and insider sentiment (net_sentiment_score) for [Thiên Thời] / [Địa Lợi] sections above and for individual stock analysis. Use momentum/RS/52w-proximity context to refine entry/exit timing and positioning risk assessment; use insider sentiment as a divergence flag when it contradicts bullish/bearish recommendation. If any tool returns NULL or error: log `[SKIP] <tool_name> unavailable` and proceed with macro snapshot + financials only (degraded environment analysis).
 
 ---
 

@@ -130,6 +130,12 @@ Routine mode → NO ledger write. Signal bus only.
 
 ## E1+E3 — Multi-Pass Trick Detection (per ticker, after routine/release steps above)
 
+**Per-TICKER market context fetch (run BEFORE E1 pass block):**
+```
+call_tool(server="vn-market", tool="get_insider_sentiment", arguments={})
+```
+Store result as `insider_sentiment_context`. If successful: extract aggregate insider net sentiment score (net_sentiment_score). If tool returns NULL or error: log `[SKIP] get_insider_sentiment unavailable` and set `insider_sentiment_context=unavailable` (honest-NULL per AC-10 — insider transactions may be zero on a given day). This context will be cited in Stage-Consolidate Step 5's trick_summary as corroborating or contradicting evidence.
+
 Run AFTER standard analysis steps (2–4b or R1–R4) for each TICKER.
 
 ```
