@@ -318,9 +318,9 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": null,
-    "updated_at": "2026-07-11T02:24:07Z",
+    "updated_at": "2026-07-11T04:51:58Z",
     "updated_by": "po",
-    "note": "po unstick: stranded ready row (next_agent:null since router escalation 07-10T17:48Z, undispatched 4+ ticks); pointing head so dev-team Step-0b head-resume dispatches the 3x-recurring notebook-autoprune silent-data-loss FIX to claude-manager-helper"
+    "note": "idle — FIX-NOTEBOOK-AUTOPRUNE-ORDERING-ASSUMPTION shipped+RAW-verified (commit e24e6b8b6, in done[]); prior po-unstick note was a stale leftover the 02:24Z idle-reset failed to clear (cleared by po triage tick)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
