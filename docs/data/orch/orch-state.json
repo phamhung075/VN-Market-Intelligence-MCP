@@ -362,9 +362,9 @@
     "last_triaged_by": "po"
   },
   "sprint_goal": {
-    "_note": "Structured projection of active sprint entries. Migrated from plain-string drift (schema drift fix, CI-RED CLUSTER-A).",
-    "_updated_at": "2026-07-02T01:49:09Z",
-    "_updated_by": "fix-sprint-goal-status-drift-evict-normalize",
+    "_note": "Active sprint visions. PO triage 2026-07-11 16->14: merged FB-POSTER-LAUNCHD-FIRER into COWORK-GUARANTEED-SLOT-DURABILITY (superseded per cron-jobs.md, firer plist installed+loaded); archived NARRATIVE-TRUTH-CCATO-GATE (T2+T3 both DONE, T3 qa-APPROVED). Reasoning: sprint-ANALYSIS-QUALITY-CONVERGENCE-po.md.",
+    "_updated_at": "2026-07-11T09:18:50Z",
+    "_updated_by": "po-triage-sweep-16to14-2026-07-11",
     "entries": [
       {
         "created_at": "2026-06-12T15:13:17Z",
@@ -448,17 +448,6 @@
         "chain": "agents-architect (cadence+cap+dedup design brief) -> agent-father (init.md scope + daily-predict sub-flow + cowork-schedule.json daily slot) -> qa (live consecutive-day verification) ; immediate catch-up = router/digest-predict on-demand"
       },
       {
-        "sprint_id": "FB-POSTER-LAUNCHD-FIRER",
-        "status": "active",
-        "vision": "Guaranteed FB slots (fb-daily 09:15Z Mon-Fri, fb-weekend 13:13Z Sat-Sun) fire reliably via an OS-level, all-local macOS launchd LaunchAgent independent of any live Claude CLI session — closing the missed-slot gap caused by the session-scoped */15 cowork dispatcher (06-30 fb-daily 09:15Z missed, posted ~6h late).",
-        "scope_in": "scripts/fb-poster-headless.sh wrapper invoking `claude -p \"run docs/agents/fb-market-poster/flow/main.md slot=<slot>\" --dangerously-skip-permissions` headlessly (no prompts); DST-robust launchd LaunchAgent(s) at the guaranteed slots; idempotent install/uninstall/verify script (launchctl bootstrap/bootout); add the MISSING period-keyed dedup gate to the weekend sub-flows so the weekend firer is double-post-safe.",
-        "scope_out": "NO general bypass-everything wrapper (--dangerously-skip-permissions scoped to the single fb-market-poster flow ONLY); NO cloud RemoteTrigger (feedback_no_remote_trigger_all_local); NO change to FB post content/Vietnamese-language/no-fake-data honest-NULL; does NOT retire the cowork */15 dispatcher (launchd is an independent race-and-dedup backstop).",
-        "success_metric": "An OBSERVED real firing (near-future test slot or launchctl kickstart) with NO live Claude CLI session writes a real docs/social/fb-post-YYYY-MM-DD.md, AND a second same-period firing no-ops (period-keyed dedup demonstrated for BOTH fb-daily and fb-weekend).",
-        "root_cause_ref": "project_cowork_guaranteed_slot_needs_live_cli_session.md",
-        "created_by": "po",
-        "created_at": "2026-06-30T17:28:32Z"
-      },
-      {
         "sprint_id": "OHLCV-UNIT-CONTAM-WHOLEROW-LT1000",
         "status": "active",
         "vision": "Eliminate the SECOND daily_ohlcv unit-contamination class — whole-row thousands-format (close<1000, e.g. FPT close=70.2 meaning 70200 VND) introduced at ingest over ~Aug2025-Feb2026 — so the public Relative-Strength + ROC-momentum + 52w-proximity cards stop serving garbage, and harden the WRITER so the residue can never re-accumulate.",
@@ -466,19 +455,6 @@
         "scope_out": "The already-fixed mixed-scale class (open<100 AND close>=1000, CONTAM-6) — untouched. Any change to index-type rows (VNINDEX legitimately ~1300-1900, just backfilled in RC3) — the predicate MUST exclude them. Legitimately low-priced stocks — never multiplied.",
         "success_metric": "RAW (gateway): get_relative_strength no-arg returns |rs|<=~3 for h63/h126/h252 on ALL watchlist tickers (no 594/922/-1.35 artifacts); get_roc_momentum returns roc in a sane band for all (no 606x, no -0.998); VNINDEX 253 bars intact; a synthetic thousands-format push for a high-price ticker is normalized/rejected at write (unit test); CONTAM-5 sanity job flags the close<1000 whole-row class.",
         "created_at": "2026-06-30T20:20:07Z"
-      },
-      {
-        "sprint_id": "NARRATIVE-TRUTH-CCATO-GATE",
-        "status": "active",
-        "priority": "high",
-        "created_by": "po",
-        "origin": "architecture_brief_2026-06-30-narrative-quality-ccato-gate (5e4f75ea)",
-        "vision": "Close the CCATO gap: no cowork narrative ships an absence/unavailability claim for a dimension its own authorized tools would populate. Deterministic re-probe: null tool result -> PASS (honest-NULL safe); non-null -> FAIL + block the artifact. The 2026-06-30 fb post (VNM 'khong co du lieu ky thuat' while get_technical_indicators returns RSI ~20.3, + foreign per-ticker 'cong cu chua tra duoc so' while get_foreign_flow returns rows) would not have shipped.",
-        "scope_in": "TIER-1 ONLY. (1) docs/data/claim-tool-map.json SSOT: negation_lexicon + 5 dimension->tool routings, NO hardcode in script. (2) scripts/narrative-truth-gate.sh re-probe engine: sentence-scan -> negation match -> dimension keyword -> ticker extract -> LIVE gateway re-probe (mcp gateway call_tool server=vn-market) -> non-null=FAIL exit!=0 / null=PASS exit 0 -> emit narrative_contradiction row to .signal_queue.rows via scripts/orch-apply.sh. (3) .claude/skills/claim-truth-gate/SKILL.md shared SSOT wrapper: invocation contract + self-correct in-cycle protocol (brief S4.6) + time-sensitivity override for real-time agents. (4) Wire pre-write into 6 points: fb-market-poster STEP 4d, CHEF chef.md Step 6.7 Rule AF-3, market-watcher cycle.md Step 4f, alert-commander stage-dispatch-log.md Step 4a-pre, digest-predict daily-predict.md P-5.5, TNB audit-market.md Step 2 backstop. (5) DoD test harness scripts/test-narrative-truth-gate.sh proving a-d RAW.",
-        "scope_out": "Tier-2 completeness (per-agent required-citation map) / Tier-3 Vietnamese language+spelling+jargon gate / Tier-4 per-agent calibration scorecard AND the evidenceTools.ts:413 agent_id one-liner — ALL deferred to follow-on sprints (mint separately). ZERO apps/mcp-server change in Tier-1. Money Radar brief (2026-07-01) is a SEPARATE sprint — not in scope.",
-        "success_metric": "RAW-demonstrable end-to-end: (a) feed docs/social/fb-post-2026-06-30.md body -> gate detects VNM absence-claim -> re-probes get_technical_indicators(VNM) -> non-null (RSI ~20.3) -> exit!=0 (BLOCKED). (b) foreign per-ticker line FAILs (get_foreign_flow returns per-ticker; VNM net 3d -85,985 shares). (c) NEGATIVE CONTROL: genuine honest-NULL response -> exit 0 (no false-positive on OHLCV-depth-gated indicators). (d) determinism across runs. (e) fb-market-poster STEP 4d wired before STEP 5 write. (f) TNB Step 2 calls the same skill on published dish body.",
-        "po_determination_signal_type": "narrative_contradiction needs NO Zod migration. SignalRowSchema (orchStateSchema.ts:175) types the row `type` field as z.string().optional() under .passthrough() — free string, no enum. Tier-1 therefore touches ZERO apps/mcp-server code. RECONCILE-VS-BRIEF: brief S4.5 names the field `signal_type` + a `payload` object; the LIVE schema keys on `type` (+ summary/severity/status/from/to, optional payload_ref). Emit step MUST set live field `type`:\"narrative_contradiction\" (the PO signal-dashboard reads `type`, NOT signal_type) + summary/severity/status:NEW/from:<agent_id>/to:po; structured detail via a payload object (passthrough-allowed) or a payload_ref file.",
-        "created_at": "2026-07-01T08:13:17Z"
       },
       {
         "sprint_id": "MONEY-RADAR-P0",
@@ -4873,7 +4849,7 @@
         "status": "BACKLOG",
         "priority": "high",
         "zone": "cross-service/",
-        "sprint": "FB-POSTER-LAUNCHD-FIRER",
+        "sprint": "COWORK-GUARANTEED-SLOT-DURABILITY",
         "title": "OBSERVED fire-verification + double-post-guard demonstration + survives-session-end (the critical 'exists != fires' gate)",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FB-LAUNCHD-QA-FIRE-VERIFY-DEDUP"
       },
@@ -7117,7 +7093,7 @@
         "claimed_at": "2026-07-10T08:51:33Z",
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
         "next_agent": "cowork-refactory-expert",
-        "review_note": "Flow edit complete (chef.md Step 7.6 added). Awaiting live CHEF cycle to verify docs/data/unified-agent-synthesis-<DATE>-<SLOT>.json is created with non-empty conviction_calls and sector_phases. Verification scheduled for next natural CHEF cycle (morning/intraday/eod/evening).",
+        "review_note": "Live-cycle verify path (PO 2026-07-11 triage): artifact docs/data/unified-agent-synthesis-<DATE>-<SLOT>.json NOT yet written (no CHEF dish since chef.md Step 7.6 landed 07-10; Sat = weekday dishes dark). Nearest cycle = Evening Preview 19:45Z Sat 07-11 (daily slot, guaranteed via com.vn-market.cowork-guaranteed-slot-firer launchd). Reliable full-dish fallback = Mon 07-13 Morning 05:15Z or EOD 08:45Z. qa/dev-team next tick after cycle: verify file exists AND (.conviction_calls|length>0) AND (.sector_phases|length>0) -> flip A REVIEW->DONE_VERIFIED, then GAP-CHEF-SYNTHESIS-B (FR-3) unblocks. No new board row (conservation-neutral).",
         "review_gated_by": "live-cycle-verification"
       },
       {
@@ -7207,7 +7183,7 @@
         "status": "REVIEW",
         "priority": "high",
         "zone": "cross-service/",
-        "sprint": "FB-POSTER-LAUNCHD-FIRER",
+        "sprint": "COWORK-GUARANTEED-SLOT-DURABILITY",
         "title": "Add the MISSING period-keyed publish-once dedup gate to the FB weekend sub-flows (weekly-recap.md + weekly-prediction.md)",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-FB-WEEKEND-DEDUP-GATE"
       }
