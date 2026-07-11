@@ -95,3 +95,37 @@ Will execute 2 updates:
 Two explicit-path commits:
 1. `docs/data/orch/orch-state.json` (board updates via jq transform)
 2. `docs/agent-memory/decisions/sprint-ANALYSIS-QUALITY-CONVERGENCE-pm.md` (this file)
+
+---
+
+## PM PASS 2 — CCATO-T3 Dispatch (2026-07-11T08:41Z)
+
+**task_id:** CCATO-T3-FLOW-WIRING-6PT
+
+**Prior decision reconfirmed:** commit bde9ba072 + this journal established that CCATO-T3 would remain BACKLOG until FR-1-REMAINING-5-FLOWS reached DONE_VERIFIED (per Lane B sequencing in architecture brief §5).
+
+**Gate status:** FR-1-REMAINING-5-FLOWS is now DONE_VERIFIED (QA APPROVED commit 8756d6e8f). File overlap safety cleared — FR-1's edits to chef.md/cycle.md/daily-predict.md are merged; CCATO-T3 can now land its edits to the same files sequentially.
+
+**Action:** Flip CCATO-T3-FLOW-WIRING-6PT from backlog[] to in_progress[] with status IN_PROGRESS, dispatched_by pm, dispatched_at 2026-07-11T08:41:19Z, owner cowork-refactory-expert.
+
+**Scope confirmation (6 flows, 6-point claim-truth-gate wiring):**
+
+| Flow | Anchor | Wiring point | File |
+|---|---|---|---|
+| fb-market-poster | STEP 4d | Call .claude/skills/claim-truth-gate/SKILL.md before STEP 5 write | docs/agents/fb-market-poster/flow/main.md |
+| unified-agent (CHEF) | Step 6.7 Rule AF-3 | Gate rule checking narrative contradiction before publish | docs/agents/unified-agent/flow/chef.md |
+| market-watcher | cycle.md Step 4f | Real-time flow with time-sensitivity override (proceed-with-honest-gap on persistent FAIL) | docs/agents/market-watcher/flow/cycle.md |
+| alert-commander | stage-dispatch-log.md Step 4a-pre | Gate before dispatch log write, emit signal on MISMATCH | docs/agents/alert-commander/flow/stage-dispatch-log.md |
+| digest-predict | daily-predict.md P-5.5 | Gate before daily digest write | docs/agents/digest-predict/flow/daily-predict.md |
+| TNB (tran-ngoc-bau) | audit-market.md Step 2 backstop | Gate on published dish body, flag MISMATCH via TNB emit path | docs/agents/tran-ngoc-bau/flow/audit-market.md |
+
+**Constraints (from brief §Lane B, 2026-07-11-analysis-quality-convergence-lanes.md):**
+1. All 6 flows invoke identical `.claude/skills/claim-truth-gate/SKILL.md` (no drift, no inline reimplementation)
+2. Real-time flows (market-watcher, alert-commander) MUST include time-sensitivity override (per brief S4.6: proceed-with-honest-gap on persistent FAIL, not a hard-block)
+3. Insertion is ALWAYS the last gate step before narrative write or channel send (no reordering around other gates)
+4. File overlap from FR-1: chef.md Step 0/3/4 + cycle.md + daily-predict.md already wired by FR-1; CCATO-T3 edits to different step numbers (6.7 / 4f / P-5.5) — no merge conflict
+5. Honest-NULL / PASS-on-null discipline: gate does not inject fake data, flags narrative_contradiction signal if truth-gate rejects
+
+**WIP impact:** Flip increases in_progress from 1 → 2 (OPS-BCTC-REFINE-REPASS-NONBANK-5T + CCATO-T3-FLOW-WIRING-6PT). At WIP max; no further dispatches until one completes.
+
+**Decision:** No re-litigation of prior sequencing. Mechanical flip is gate-cleared by FR-1-REMAINING-5-FLOWS DONE_VERIFIED. Proceed.
