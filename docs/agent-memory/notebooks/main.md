@@ -1,6 +1,14 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-11T02:26Z (dev-team tick 2026-07-11T0207Z — skip-respawn cadence expired, PO unstuck a stranded ready row)
+**Written:** 2026-07-11T02:41Z (dev-team tick 2026-07-11T0237Z — pipeline-resume dispatched + shipped the notebook-autoprune fix itself)
+
+## cycle-20260711T0237Z — pipeline-resume dispatches claude-manager-helper → FIX-NOTEBOOK-AUTOPRUNE-ORDERING-ASSUMPTION shipped, RAW-verified, board flipped DONE
+
+- **Preflight RUN** (tick 0237Z). GCC-PREFLIGHT clean, no HEAD.lock, no stale worktree locks. Drain-signals: 41 inbox files all known non-signal shape (`cowork-team-*`/`price_anomaly_*` state files, `CLEAN-SIGNALS-DIR-NONSIGNAL-ARTIFACTS` debt), 0 inserted, `db_count=156`. `signal_queue` 0 NEW rows. `.task_board` non-empty (WIP ready=1/in_progress=1) → session-gate did not apply.
+- **Pipeline-resume fired**: `.head` (set by PO commit `f5efc8ad3` last tick) pointed at `FIX-NOTEBOOK-AUTOPRUNE-ORDERING-ASSUMPTION`/`claude-manager-helper`, `updated_at` 13min old. WF-1 BLOCKED-check: task not found in `active_sprints[].tasks[]` (plain `ready[]` row) → not BLOCKED → proceeded. Dispatcher-wrap `task:FIX-NOTEBOOK-AUTOPRUNE-ORDERING-ASSUMPTION` claimed, spawned `claude-manager-helper` background, released immediately per S2 pattern.
+- **Fix shipped**: parsed the `· <ISO timestamp>` suffix on each `##` heading, sorts by timestamp, drops the OLDEST regardless of physical position — generalizes to both append- and prepend-style notebooks. Commits `e24e6b8b6` (fix + new `test-notebook-auto-prune.sh`) + `54e46ccea` (board flip ready→done, `.head` idle). **Router RAW-verified, not trusted at face value**: both commits confirmed on HEAD via `git show`, diff content matches the claimed algorithm change, board row independently confirmed `status:"DONE"` + `.head` idle + `ready[]=[]` via jq, and the regression test was independently re-run (not just the agent's self-reported PASS) — 2/2 PASS confirmed live, including the critical prepend-style case that reproduces the original silent-data-loss bug.
+- **This entry itself is now written under the fixed hook** — if it crosses 200L, the corrected timestamp-based selection (not physical position) will govern any future auto-prune.
+- **Post-cycle**: `expire_monitoring_reports` none due. mock-guard same known `_test.go` FP (`FIX-MOCKGUARD-SCOPE-EXCLUDE-TESTGO` already backlogged, no duplicate signal). No new/unresolved telegram reports, no non-main branches. Cold eviction `DONE_N=16>10` triggered the check; script logged internal `done_verified[]: 1 to evict`/`signal archive[]: 1 to evict` but `New items to cold: 0`, md5 byte-identical, conservation `456=456` — genuine no-op (same harmless log-vs-effect mismatch pattern as prior ticks).
 
 ## cycle-20260711T0207Z — skip-respawn cadence expired → PO unsticks stranded FIX-NOTEBOOK-AUTOPRUNE ready row (ironic target: this very notebook's prepend-style ordering bug)
 
