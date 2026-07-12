@@ -1,6 +1,15 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-12T06:44Z (dev-team tick 2026-07-12T0637Z — compact-checkpoint offload, ctx~39%)
+**Written:** 2026-07-12T07:22Z (dev-team tick 2026-07-12T0707Z — compact-checkpoint offload, ctx~44%)
+
+## cycle-20260712T0707Z — false-green regression fix dispatched, large external TOKEN-ECONOMY-AUDIT intake caught mid-eviction, cleared ~40-commit signals-hygiene backlog
+
+- **PO caught a "failed-fix recurrence" (not a fresh bug)**: the notebook-auto-prune duplicate-heading incident from the prior tick's compact-checkpoint traces to the SAME script FIX-NOTEBOOK-AUTOPRUNE-ORDERING-ASSUMPTION (`e24e6b8b6`, 07-11) claimed to fix — that fix's own regression test only covers a heading format (`## X · <full ISO w/ seconds>`) nothing in the live repo uses, so it shipped "RAW-verified" but was false-green. Filed `FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH` with acceptance criteria explicitly designed to prevent the same false-green trap this time (real-format regression tests + a live-run verification gate, not just synthetic-test-green). Dispatched to `developer` — in progress.
+- **Large legitimate external write landed mid-tick**: while running the routine cold-eviction check, discovered orch-state.json had grown by +555L since the router's last commit — NOT eviction output (`New items to cold: 0`, genuinely). RAW-investigated rather than assuming corruption: a concurrent `po`/user process had committed a **TOKEN-ECONOMY-AUDIT** intake directly to the live hot file — new active `sprint_goal` entry + **33 backlog rows** (`TE-T01`..`TE-T33`, 4 waves) from a user-approved lazy-load/token-economy architecture-brief audit (`docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md`, 633L, confirmed on disk). Validated (Zod PASS, all 33 rows present, sprint entry well-formed) before committing with an accurate provenance note (not misattributed as the router's own eviction work). This ties to a separate memory entry (`project_ultracode_workflow_audit_20260712.md`) that appeared externally earlier this session — now confirmed to be actively landing real backlog work, not just a pending review item.
+- **Cleared ~8+ ticks of unaddressed `docs/signals/` drain-hygiene debt**: the drain-signals.js commit contract (`docs/signals/processed/` moves, 7-day prune deletions, `signals.db`) had been running every tick this session but never committed — ~40 files of accumulated churn. Committed in one hygiene pass, correctly excluding the ~40 known-debt non-signal-shape state files (`cowork-team-*.json`, tracked separately as `CLEAN-SIGNALS-DIR-NONSIGNAL-ARTIFACTS`) that drain-signals deliberately leaves untouched.
+- **Push-backstop at exactly threshold** (`ahead=20`, condition is `-gt 20` so no-op) — next tick's first commit should push it over and fire.
+
+## cycle-20260712T0607Z + 0637Z — SPIKE closed out, cron-refine-bctc re-armed, steady stream of duplicate BCTC reconcile reports correctly no-op'd
 
 ## cycle-20260712T0607Z + 0637Z — SPIKE closed out, cron-refine-bctc re-armed, steady stream of duplicate BCTC reconcile reports correctly no-op'd
 
