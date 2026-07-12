@@ -538,8 +538,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-11T12:23:05Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-07-12T06:11:33Z",
+    "_updated_by": "developer",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -5765,6 +5765,20 @@
           "FIX-DEVTEAM-BOUNDED1-SUPERVISED-FLAG-GATE",
           "project_bounded1_first_pickup_stale_backlog_hygiene_debt"
         ]
+      },
+      {
+        "id": "FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP",
+        "title": "Give refine_bctc_md dispatch a session-independent durable backstop (launchd-class), so bctc_table_rows production survives session restarts -- durable fix for SPIKE-BCTC-TABLEROWS-FROZEN-HOLLOW-DONE + supersede/fold stale REFINE-CRON-ARM",
+        "owner": "ops",
+        "status": "BACKLOG",
+        "zone": "multi",
+        "priority": "high",
+        "type": "FIX",
+        "depends": [],
+        "note": "Filed from docs/spikes/SPIKE-BCTC-TABLEROWS-FROZEN-HOLLOW-DONE.md (2026-07-12). RAW-verified root cause: bctc_table_rows (the serving financial-table data analysis-agent consumes) has exactly ONE live producer, the BCTC-AGENTIC-REFINE pipeline (apps/mcp-server/src/scheduler/financial-reports/bctcRefineJob.ts refineOneReport Phase 4). Per the Option-Y architectural ruling, this pipeline has NO in-container/Docker scheduler trigger (production spawn path deliberately DELETED) -- it depends entirely on a session-scoped Claude-native CronCreate cron (.claude/commands/crons/cron-refine-bctc.md, schedule 0 9,14,20 * * * UTC) dispatching the refine_bctc_md subagent through a live interactive CLI/gateway session. This trigger has gone dormant: bctc_refined_units has produced 0 new rows since 2026-07-04 (8 days as of filing), 151 financial_reports rows stuck at refine_status=PENDING, and board task REFINE-CRON-ARM (sprint BCTC-ANALYTICS-LAYER, opened 2026-06-12, whose entire purpose was to durably arm+verify this exact cron) has sat status=TODO for 30 days untouched. This is a RECURRING instance (2nd+ occurrence) of the identical defect class diagnosed 2026-06-27 in sprint BCTC-REFINE-STALL-RETRIGGER (root cause (a): cowork CronCreate not re-armed after session restart) -- that sprint shipped throughput mitigations (T1 chunk-size, T2 extra cowork-schedule slots) but never the durable fix (T3-WATCHDOG, still BACKLOG) and its own cowork-schedule.json slot additions (commit 19764c0e2) are no longer present in the live schedule file today. AC (proposed, PM/architect to refine): (1) refine_bctc_md dispatch survives a Claude Code session restart without manual re-arming -- mirror the already-proven com.vn-market.cowork-guaranteed-slot-firer.plist launchd pattern (confirmed live via launchctl list during the SPIKE); (2) fold/supersede REFINE-CRON-ARM into this fix rather than a 3rd bare CronCreate re-arm attempt; (3) build BCTC-REFINE-T3-WATCHDOG (already scoped under sprint BCTC-REFINE-STALL-RETRIGGER, still BACKLOG) so the next stall alarms automatically instead of silently accumulating for a week+; (4) after fix, RAW-verify bctc_refined_units resumes growing and the 151-report PENDING backlog drains. Optional/non-blocking: bctcExtractReconcileJob observability signal for hollow-done rows (layout_units>0 AND table_rows=0) -- do NOT conflate with this fix, current reconcile-job behavior is correct per its own D3 spec.",
+        "created_at": "2026-07-12T06:11:33Z",
+        "created_by": "developer (SPIKE-BCTC-TABLEROWS-FROZEN-HOLLOW-DONE)",
+        "source": "docs/spikes/SPIKE-BCTC-TABLEROWS-FROZEN-HOLLOW-DONE.md"
       }
     ],
     "closed_sprints": [
@@ -7021,6 +7035,24 @@
         "sprint": "COWORK-GUARANTEED-SLOT-DURABILITY",
         "title": "Add the MISSING period-keyed publish-once dedup gate to the FB weekend sub-flows (weekly-recap.md + weekly-prediction.md)",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-FB-WEEKEND-DEDUP-GATE"
+      },
+      {
+        "id": "SPIKE-BCTC-TABLEROWS-FROZEN-HOLLOW-DONE",
+        "title": "bctc-table-rows-frozen-despite-live-pek-layout-extraction — 4-day serving-data outage",
+        "status": "REVIEW",
+        "zone": "multi",
+        "priority": "high",
+        "type": "SPIKE",
+        "mode": "spike",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#SPIKE-BCTC-TABLEROWS-FROZEN-HOLLOW-DONE",
+        "owner": "developer",
+        "next_agent": "router",
+        "spike_verdict": "ROOT_CAUSE_CONCLUSIVE_NOT_D3C_BUG",
+        "deliverables": [
+          "docs/spikes/SPIKE-BCTC-TABLEROWS-FROZEN-HOLLOW-DONE.md"
+        ],
+        "review_note": "[developer 2026-07-12] SPIKE complete, findings doc written, follow-on FIX filed (FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP). VERDICT: bctcExtractReconcileJob's layout_units-sufficient success check is intentional, documented, QA-approved design (D3 point 3, R-CRIT-2 in TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md) -- NOT a bug in the reconcile job. bctc_layout_units (BCTC-LAYOUT-FIRST sprint, 2026-05-26) was designed as a geometric-zone QA/review overlay, never as a bctc_table_rows source -- no derivation step was ever scoped or wired (grep-confirmed: stitched_markdown consumed only by bctcInspectHandler.ts overlay). bctc_table_rows has exactly one live producer, BCTC-AGENTIC-REFINE (bctcRefineJob.ts refineOneReport Phase 4), which per the Option-Y ruling has NO in-container automated trigger -- it depends on a session-scoped Claude-native cron (cron-refine-bctc.md) that RAW evidence shows has been dormant since 2026-07-04 (bctc_refined_units 0 new rows in 8d, 151 financial_reports stuck refine_status=PENDING). This is a RECURRING instance of a defect already diagnosed 2026-06-27 (sprint BCTC-REFINE-STALL-RETRIGGER root cause (a): CronCreate not re-armed after session restart) whose durable fix (T3-WATCHDOG) was never built. REFINE-CRON-ARM board row (opened 2026-06-12) has sat status=TODO for 30 days -- the actual root cause, sitting in plain sight. Recommend router RAW-verify findings doc + FIX row, then close DONE_VERIFIED.",
+        "updated_at": "2026-07-12T06:11:33Z"
       }
     ],
     "qa": [],
@@ -7053,17 +7085,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#OPS-BCTC-REFINE-REPASS-NONBANK-5T",
         "owner": "ops",
         "po_triage_20260710_round3_ctg_not_folded_note": "[po-triage-20260710-round3 08:06Z] CTG 2026-Q1 (analysis-agent Telegram #3551, composite=0.00/financial=0.00) was triaged this tick and DELIBERATELY NOT FOLDED into this batch. CTG is a BANK (B02-TCTD form); this batch is strictly NON-BANK (VHM/VIC/VRE/HSG/MWG) — a different failure CLASS (bank balance-sheet section-classifier + scalar mapping) with its own owning track: W5-FU-CTG-REFINE-96e36139 + TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST (both BLOCKED on a deploy-gate). CLARIFICATION for future triagers: the title's phrase \"proven CTG runbook\" refers to the general refine -> push_bctc_refined_unit -> finalize_bctc_refine -> reingest-bctc-report.ts PROCEDURE (proven to EXECUTE on CTG report 96e36139), NOT a claim that CTG 2026-Q1's DATA outcome is green — CTG 2026-Q1 total_assets is still 0 and its bank track is BLOCKED (deploy-gate + a genuine balance-sheet-absent root gap, CTG-CARRY-FORWARD AC-TRACK1-3 escalated 2026-07-10). Do NOT read \"proven CTG runbook\" as \"CTG is fixed\"; do NOT fold any BANK ticker into this NON-BANK batch. (Mirrors the bank/non-bank framing correction made in round-1 of this same 2026-07-10T07:07Z tick on OPS-BCTC-BANK-2025Q4-ENRICH-0ROW-REPARSE.)"
-      },
-      {
-        "id": "SPIKE-BCTC-TABLEROWS-FROZEN-HOLLOW-DONE",
-        "title": "bctc-table-rows-frozen-despite-live-pek-layout-extraction — 4-day serving-data outage",
-        "status": "IN_PROGRESS",
-        "zone": "multi",
-        "priority": "high",
-        "type": "SPIKE",
-        "mode": "spike",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#SPIKE-BCTC-TABLEROWS-FROZEN-HOLLOW-DONE",
-        "owner": "developer"
       }
     ]
   },
