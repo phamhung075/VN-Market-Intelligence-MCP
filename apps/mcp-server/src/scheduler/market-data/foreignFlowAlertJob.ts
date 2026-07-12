@@ -102,7 +102,9 @@ function getForeignFlowHistoryFromDb(
       `SELECT code,
               date,
               COALESCE(foreign_net_vol, 0) AS net_vol
-       FROM daily_ohlcv
+       FROM daily_ohlcv_with_flow
+       -- TASK_2003 (SUBTASK-DAILY-FF-4): daily_ohlcv_with_flow compat view
+       -- (COALESCE new daily_foreign_flow, then legacy daily_ohlcv.foreign_*).
        WHERE code = ?
        ORDER BY date DESC
        LIMIT ?`,

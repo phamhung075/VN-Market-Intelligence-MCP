@@ -43,3 +43,13 @@
 - Sync Writer-G inventory row in `ohlcvWriteService.ts` (SSOT doc for the writer-bypass class) vs leave stale — synced: it now claims Writer G still touches `daily_ohlcv`, which is false post-cutover
 **why-decision:** `changes=0` is structurally impossible now (task's explicit point) — any test asserting it as correct behavior encodes removed behavior, must be updated not preserved.
 **why-change:** no change from handoff/design — SQL, freeze annotation, caller-compat all per spec; test-file surgery was implied necessity, not scope creep (the 3 files directly call the rewritten function with the old contract baked into assertions).
+
+### STEP dev-mcp-server-S5 · dev-mcp-server · 2026-07-12T18:35:00Z
+**task-id:** TASK_2003
+**what-done:** Migrated 5 Class-A read sites (`marketWideForeignFlowTool.ts`, `foreignFlowTools.ts`, `foreignFlowAlertJob.ts`, `assembleEveningSummary.ts`, `franceSummaryJob.ts`) `FROM daily_ohlcv` → `FROM daily_ohlcv_with_flow`; fixed cascading breakage in 9 test files whose bespoke `:memory:` fixtures predated the view.
+**what-considered:**
+- Leave the 9 broken tests red as "pre-existing design assumption wrong, not my bug" vs fix them — fixed: handoff's own "existing tests stay green" AC required it, and the break is a direct, necessary consequence of this task's read-source swap, not scope creep
+- Per-file DDL duplication (mirror view SQL inline, as 1503's `addDailyForeignFlowTable` precedent already does) vs import real `initMarketDataTables`+`migrateForeignFlowColumns` — used real functions in 8/9 files (DRY, no schema drift risk); kept 1503's own established inline-mirror convention for its 1 broken case (file explicitly states "avoids pulling in production schema")
+- Investigated 3 more incidental warn-only hits (`1322/1370/1348`) found in a full-suite bounded run — left untouched: none assert on foreignFlowMovers/Khối ngoại, pre-existing same-class gaps (missing commodity_prices/positions too), try/catch graceful-degrade already absorbs it, no hard fail
+**why-decision:** SQLite must resolve a view's full underlying SELECT even for a partial column query — `daily_ohlcv_with_flow` needs `daily_ohlcv.updated_at`/`data_env`/`foreign_buy_value`/`foreign_sell_value` present, which several ad-hoc test fixtures lacked; root-cause fix (reuse real schema functions) over patching production code to tolerate a missing view.
+**why-change:** handoff said "no changes needed to tests" — proven false empirically; fixed per CLAUDE.md root-cause mandate rather than leaving G12 test-suite gate red.

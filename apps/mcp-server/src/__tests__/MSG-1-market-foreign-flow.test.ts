@@ -25,6 +25,11 @@ import {
   queryMarketWideForeignFlow,
   queryTopFlowTickers,
 } from "../interface/mcp/tools/market-data/marketWideForeignFlowTool.js";
+// TASK_2003 (SUBTASK-DAILY-FF-4): production code now reads foreign-flow via the
+// daily_ohlcv_with_flow compat view. Reuse the real schema init/migration
+// functions (no duplicated DDL) to upgrade this ad-hoc fixture so the view resolves.
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { migrateForeignFlowColumns } from "../infrastructure/db/schema.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MCP callTool returns unknown — use this helper to extract content safely
@@ -59,7 +64,7 @@ let _testServer: McpServer;
 // Helpers
 // ---------------------------------------------------------------------------
 
-function buildDb(): Database {
+async function buildDb(): Promise<Database> {
   const db = new Database(":memory:");
   db.exec(`
     CREATE TABLE IF NOT EXISTS daily_ohlcv (
@@ -78,6 +83,12 @@ function buildDb(): Database {
       PRIMARY KEY (code, date)
     )
   `);
+
+  // TASK_2003: create daily_foreign_flow + the compat view via the real
+  // init path (updated_at already present above) so the view resolves.
+  initMarketDataTables(db);
+  await migrateForeignFlowColumns(db);
+
   return db;
 }
 
@@ -110,8 +121,8 @@ async function callTool(
 // Setup / Teardown
 // ---------------------------------------------------------------------------
 
-beforeEach(() => {
-  _testDb = buildDb();
+beforeEach(async () => {
+  _testDb = await buildDb();
   _testServer = new McpServer({ name: "test", version: "0.0.0" });
   registerMarketWideForeignFlowTool(_testServer, _testDb);
 });

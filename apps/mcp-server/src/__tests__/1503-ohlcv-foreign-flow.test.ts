@@ -116,6 +116,36 @@ function addDailyForeignFlowTable(db: Database): void {
   `);
 }
 
+/**
+ * TASK_2003 (SUBTASK-DAILY-FF-4): assembleEveningSummary's default foreign-flow
+ * mover query now reads from daily_ohlcv_with_flow. Mirrors the production
+ * view DDL in schema-market-data.ts (kept in sync manually — this file
+ * explicitly avoids importing production schema, see file header above).
+ */
+function addForeignFlowCompatView(db: Database): void {
+  const cols = db
+    .prepare<{ name: string }, []>("PRAGMA table_info(daily_ohlcv)")
+    .all()
+    .map((r) => r.name);
+  if (!cols.includes("data_env")) {
+    db.exec(`ALTER TABLE daily_ohlcv ADD COLUMN data_env TEXT`);
+  }
+  addDailyForeignFlowTable(db); // idempotent — no-op if already created
+  db.exec(`
+    CREATE VIEW IF NOT EXISTS daily_ohlcv_with_flow AS
+    SELECT
+      o.code, o.date, o.open, o.high, o.low, o.close, o.volume, o.updated_at, o.data_env,
+      COALESCE(f.foreign_buy_vol,    o.foreign_buy_vol)    AS foreign_buy_vol,
+      COALESCE(f.foreign_sell_vol,   o.foreign_sell_vol)   AS foreign_sell_vol,
+      COALESCE(f.foreign_net_vol,    o.foreign_net_vol)    AS foreign_net_vol,
+      COALESCE(f.put_through_vol,    o.put_through_vol)    AS put_through_vol,
+      COALESCE(f.foreign_buy_value,  o.foreign_buy_value)  AS foreign_buy_value,
+      COALESCE(f.foreign_sell_value, o.foreign_sell_value) AS foreign_sell_value
+    FROM daily_ohlcv o
+    LEFT JOIN daily_foreign_flow f ON f.code = o.code AND f.date = o.date;
+  `);
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Resolve the store module — returns null when module not yet implemented
 // ─────────────────────────────────────────────────────────────────────────────
@@ -298,6 +328,7 @@ describe("Task 1503 AC4 — assembleEveningSummary includes foreignFlowMovers", 
   it("result has foreignFlowMovers field; top entry has largest |foreignNetVol|", async () => {
     const db = buildBaseDb();
     addForeignFlowCols(db);
+    addForeignFlowCompatView(db);
 
     // Seed two OHLCV rows with foreign flow — VCB has bigger |foreignNetVol|
     db.prepare(

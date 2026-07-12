@@ -16,6 +16,11 @@ import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { Database } from "bun:sqlite";
 import { registerForeignFlowTools } from "../interface/mcp/tools/market-data/foreignFlowTools.js";
+// TASK_2003 (SUBTASK-DAILY-FF-4): production code now reads foreign-flow via the
+// daily_ohlcv_with_flow compat view. Reuse the real schema init/migration
+// functions (no duplicated DDL) to upgrade this ad-hoc fixture so the view resolves.
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { migrateForeignFlowColumns } from "../infrastructure/db/schema.js";
 
 // MCP callTool returns unknown — use this helper to extract content safely
 interface McpTextResult {
@@ -47,7 +52,7 @@ let _testServer: McpServer;
 // Helpers
 // ---------------------------------------------------------------------------
 
-function buildInMemoryDb(): Database {
+async function buildInMemoryDb(): Promise<Database> {
   const db = new Database(":memory:");
 
   // Minimal schema — daily_ohlcv is the foreign flow source since sprint 1517b
@@ -67,6 +72,19 @@ function buildInMemoryDb(): Database {
       PRIMARY KEY (code, date)
     );
   `);
+
+  // TASK_2003: this ad-hoc fixture predates daily_ohlcv_with_flow and lacks
+  // updated_at — add it (idempotent guard) then create daily_foreign_flow +
+  // the compat view via the real init path so the view resolves.
+  const cols = db
+    .prepare<{ name: string }, []>("PRAGMA table_info(daily_ohlcv)")
+    .all()
+    .map((r) => r.name);
+  if (!cols.includes("updated_at")) {
+    db.exec(`ALTER TABLE daily_ohlcv ADD COLUMN updated_at TEXT NOT NULL DEFAULT ''`);
+  }
+  initMarketDataTables(db);
+  await migrateForeignFlowColumns(db);
 
   return db;
 }
@@ -113,8 +131,8 @@ async function callTool(
 // Setup / Teardown
 // ---------------------------------------------------------------------------
 
-beforeEach(() => {
-  _testDb = buildInMemoryDb();
+beforeEach(async () => {
+  _testDb = await buildInMemoryDb();
   _testServer = new McpServer({ name: "test", version: "0.0.1" });
   registerForeignFlowTools(_testServer, _testDb);
 });

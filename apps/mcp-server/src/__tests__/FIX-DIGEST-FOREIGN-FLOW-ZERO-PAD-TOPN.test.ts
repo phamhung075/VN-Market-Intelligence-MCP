@@ -28,12 +28,17 @@ import { describe, it, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import { assembleEveningSummary } from "../application/usecases/assembleEveningSummary.js";
 import { formatForeignFlowSection } from "../scheduler/briefings/eveningSummaryJob.js";
+// TASK_2003 (SUBTASK-DAILY-FF-4): production code now reads foreign-flow via the
+// daily_ohlcv_with_flow compat view. Reuse the real schema init/migration
+// functions (no duplicated DDL) to upgrade this ad-hoc fixture so the view resolves.
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { migrateForeignFlowColumns } from "../infrastructure/db/schema.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DB factory — minimal schema for foreignFlowMovers step
 // ─────────────────────────────────────────────────────────────────────────────
 
-function buildDb(): Database {
+async function buildDb(): Promise<Database> {
   const db = new Database(":memory:");
   db.exec(`
     CREATE TABLE IF NOT EXISTS daily_ohlcv (
@@ -118,6 +123,12 @@ function buildDb(): Database {
       fetched_at TEXT NOT NULL
     );
   `);
+
+  // TASK_2003: create daily_foreign_flow + the compat view via the real
+  // init path (updated_at already present above) so the view resolves.
+  initMarketDataTables(db);
+  await migrateForeignFlowColumns(db);
+
   return db;
 }
 
@@ -128,8 +139,8 @@ function buildDb(): Database {
 describe("FIX-DIGEST-FOREIGN-FLOW-ZERO-PAD-TOPN T-1 — SQL excludes zero-net rows (partial-zero DB)", () => {
   let db: Database;
 
-  beforeEach(() => {
-    db = buildDb();
+  beforeEach(async () => {
+    db = await buildDb();
     // 2 real movers + 3 zero-pad rows — simulates 2026-06-19 scenario
     db.exec(`
       INSERT INTO daily_ohlcv (code, date, close, foreign_buy_vol, foreign_sell_vol, foreign_net_vol)
@@ -195,8 +206,8 @@ describe("FIX-DIGEST-FOREIGN-FLOW-ZERO-PAD-TOPN T-1 — SQL excludes zero-net ro
 describe("FIX-DIGEST-FOREIGN-FLOW-ZERO-PAD-TOPN T-2 — all-zero DB → empty foreignFlowMovers", () => {
   let db: Database;
 
-  beforeEach(() => {
-    db = buildDb();
+  beforeEach(async () => {
+    db = await buildDb();
     db.exec(`
       INSERT INTO daily_ohlcv (code, date, close, foreign_buy_vol, foreign_sell_vol, foreign_net_vol)
       VALUES

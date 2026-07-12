@@ -570,7 +570,9 @@ async function _assembleEveningSummaryImpl(
       const flowRows = db
         .prepare<OhlcvFlowRow, []>(
           `SELECT code, foreign_net_vol, foreign_buy_vol, foreign_sell_vol
-             FROM daily_ohlcv
+             FROM daily_ohlcv_with_flow
+            -- TASK_2003 (SUBTASK-DAILY-FF-4): daily_ohlcv_with_flow compat view
+            -- (COALESCE new daily_foreign_flow, then legacy daily_ohlcv.foreign_*).
             WHERE date = (SELECT MAX(date) FROM daily_ohlcv)
               AND foreign_net_vol IS NOT NULL
               AND foreign_net_vol <> 0

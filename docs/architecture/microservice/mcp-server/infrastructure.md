@@ -41,10 +41,7 @@ daily_foreign_flow (code TEXT, date TEXT, foreign_buy_vol, foreign_sell_vol,
   -- only. It no longer writes daily_ohlcv.foreign_* in ANY mode — those columns
   -- are FROZEN/historical-only from this point on (populated once by the
   -- SUBTASK-DAILY-FF-2 backfill above, never again). R-1 is now structurally
-  -- closed: `changes` can never be 0 for a valid (non-empty) row. Class-A read
-  -- sites (SUBTASK-DAILY-FF-4, not yet shipped) still query raw daily_ohlcv —
-  -- until they migrate to daily_ohlcv_with_flow, freshly-written post-cutover
-  -- foreign-flow data is only visible via the view, not via raw daily_ohlcv.
+  -- closed: `changes` can never be 0 for a valid (non-empty) row.
   -- Design: docs/handoffs/ARCH-DAILY-FOREIGN-FLOW-TABLE-architect-design.md § Change 2
 
 daily_ohlcv_with_flow (VIEW — daily_ohlcv LEFT JOIN daily_foreign_flow ON code,date)
@@ -54,6 +51,20 @@ daily_ohlcv_with_flow (VIEW — daily_ohlcv LEFT JOIN daily_foreign_flow ON code
   -- yet present in the new table. Lets read sites migrate `FROM daily_ohlcv` ->
   -- `FROM daily_ohlcv_with_flow` one at a time with zero query-shape change.
   -- Design: docs/handoffs/ARCH-DAILY-FOREIGN-FLOW-TABLE-architect-design.md § Change 3
+  --
+  -- SUBTASK-DAILY-FF-4 / TASK_2003 (2026-07-12, CLASS-A READ MIGRATION — SHIPPED):
+  -- all 5 Class-A "value reader" sites now query this view instead of raw
+  -- daily_ohlcv: marketWideForeignFlowTool.ts, foreignFlowTools.ts,
+  -- foreignFlowAlertJob.ts, assembleEveningSummary.ts (default
+  -- getForeignFlowMoversFn), franceSummaryJob.ts (default getForeignFlowMoversFn,
+  -- both the latest-date lookup and the mover query). This closes the
+  -- writer-cutover transition gap: post-cutover daily_foreign_flow writes are
+  -- now visible to every Class-A reader, not just via the frozen legacy columns.
+  -- Class-B freshness/health probes (freshnessSlaMonitorJob.ts, slaStatusTools.ts,
+  -- vpsProxyWatchdogJob.ts, vpsHealthPoller.ts) deliberately do NOT go through
+  -- this view — per design they should query daily_foreign_flow directly
+  -- (separate, not-yet-shipped follow-on); left untouched by this subtask.
+  -- Design: docs/handoffs/ARCH-DAILY-FOREIGN-FLOW-TABLE-architect-design.md § Read-site inventory
 
 vn_index_cache (code TEXT PK, price REAL NOT NULL, prev_price REAL DEFAULT 0,
   change_pct REAL DEFAULT 0, volume REAL DEFAULT 0, fetched_at TEXT NOT NULL)

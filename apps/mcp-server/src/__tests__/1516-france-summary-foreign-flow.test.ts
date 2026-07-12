@@ -8,12 +8,17 @@ import {
 } from "../scheduler/briefings/franceSummaryJob.js";
 import type { FranceSummaryOptions, FranceSummaryResult } from "../scheduler/briefings/franceSummaryJob.js";
 import type { ForeignFlowMover } from "../application/usecases/assembleEveningSummary.js";
+// TASK_2003 (SUBTASK-DAILY-FF-4): production code now reads foreign-flow via the
+// daily_ohlcv_with_flow compat view. Reuse the real schema init/migration
+// functions (no duplicated DDL) to upgrade this ad-hoc fixture so the view resolves.
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { migrateForeignFlowColumns } from "../infrastructure/db/schema.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DB setup
 // ─────────────────────────────────────────────────────────────────────────────
 
-function setupTestDb(): Database {
+async function setupTestDb(): Promise<Database> {
   const db = new Database(":memory:");
   db.exec("PRAGMA journal_mode = WAL");
   db.exec(`
@@ -73,6 +78,20 @@ function setupTestDb(): Database {
       fetched_at TEXT NOT NULL
     );
   `);
+
+  // TASK_2003: this ad-hoc fixture predates daily_ohlcv_with_flow and lacks
+  // updated_at — add it (idempotent guard) then create daily_foreign_flow +
+  // the compat view via the real init path so the view resolves.
+  const cols = db
+    .prepare<{ name: string }, []>("PRAGMA table_info(daily_ohlcv)")
+    .all()
+    .map((r) => r.name);
+  if (!cols.includes("updated_at")) {
+    db.exec(`ALTER TABLE daily_ohlcv ADD COLUMN updated_at TEXT NOT NULL DEFAULT ''`);
+  }
+  initMarketDataTables(db);
+  await migrateForeignFlowColumns(db);
+
   return db;
 }
 
@@ -91,7 +110,7 @@ const MOCK_MOVERS: ForeignFlowMover[] = [
 
 describe("1516 AC-1 — FranceSummaryResult has foreignFlowMovers field", () => {
   it("result.foreignFlowMovers key exists in returned object", async () => {
-    const db = setupTestDb();
+    const db = await setupTestDb();
     const result = await runFranceSummary({
       db,
       sendFn: async () => true,
@@ -109,7 +128,7 @@ describe("1516 AC-1 — FranceSummaryResult has foreignFlowMovers field", () => 
 
 describe("1516 AC-2 — getForeignFlowMoversFn injectable", () => {
   it("calls getForeignFlowMoversFn and populates result.foreignFlowMovers", async () => {
-    const db = setupTestDb();
+    const db = await setupTestDb();
     db.exec(`INSERT INTO watchlist (code) VALUES ('VCB')`);
     db.exec(`
       INSERT INTO market_prices_history (code, price, volume, fetched_at)
@@ -129,7 +148,7 @@ describe("1516 AC-2 — getForeignFlowMoversFn injectable", () => {
   });
 
   it("result.foreignFlowMovers equals value returned by getForeignFlowMoversFn", async () => {
-    const db = setupTestDb();
+    const db = await setupTestDb();
     db.exec(`INSERT INTO watchlist (code) VALUES ('VCB')`);
     db.exec(`
       INSERT INTO market_prices_history (code, price, volume, fetched_at)
@@ -220,7 +239,7 @@ describe("1516 AC-4 — formatFranceSummaryVI omits section when empty", () => {
 
 describe("1516 AC-5 — default path reads daily_ohlcv foreign flow", () => {
   it("populates foreignFlowMovers from daily_ohlcv when fn not injected", async () => {
-    const db = setupTestDb();
+    const db = await setupTestDb();
     // Seed daily_ohlcv with foreign flow data — latest date, 2 rows
     db.exec(`
       INSERT INTO daily_ohlcv (code, date, open, high, low, close, volume, foreign_buy_vol, foreign_sell_vol, foreign_net_vol)
@@ -255,7 +274,7 @@ describe("1516 AC-5 — default path reads daily_ohlcv foreign flow", () => {
 
 describe("1516 AC-6 — foreignFlowMovers alone satisfies hasContent guard", () => {
   it("sends digest when only foreignFlowMovers present (no movers/alerts/TA)", async () => {
-    const db = setupTestDb();
+    const db = await setupTestDb();
     // No watchlist, no alerts, no TA — only foreign flow injected
     const result = await runFranceSummary({
       db,

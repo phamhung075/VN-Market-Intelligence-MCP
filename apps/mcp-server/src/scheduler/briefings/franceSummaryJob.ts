@@ -735,18 +735,20 @@ export async function runFranceSummary(opts: FranceSummaryOptions = {}): Promise
     if (opts.getForeignFlowMoversFn) {
       foreignFlowMovers = opts.getForeignFlowMoversFn(resolvedDb)
     } else {
-      // Default: query daily_ohlcv latest date, exclude NULL foreign_net_vol, top 5 by ABS(net)
+      // Default: query daily_ohlcv_with_flow (TASK_2003) latest date, exclude NULL
+      // foreign_net_vol, top 5 by ABS(net). View COALESCEs daily_foreign_flow
+      // (new) then daily_ohlcv.foreign_* (legacy) so column names are unchanged.
       interface FfRow { code: string; foreign_buy_vol: number; foreign_sell_vol: number; foreign_net_vol: number }
       const latestDateRow = resolvedDb
         .prepare<{ date: string }, []>(
-          `SELECT date FROM daily_ohlcv WHERE foreign_net_vol IS NOT NULL ORDER BY date DESC LIMIT 1`,
+          `SELECT date FROM daily_ohlcv_with_flow WHERE foreign_net_vol IS NOT NULL ORDER BY date DESC LIMIT 1`,
         )
         .get()
       if (latestDateRow) {
         const ffRows = resolvedDb
           .prepare<FfRow, [string]>(
             `SELECT code, foreign_buy_vol, foreign_sell_vol, foreign_net_vol
-               FROM daily_ohlcv
+               FROM daily_ohlcv_with_flow
               WHERE date = ? AND foreign_net_vol IS NOT NULL
               ORDER BY ABS(foreign_net_vol) DESC
               LIMIT 5`,

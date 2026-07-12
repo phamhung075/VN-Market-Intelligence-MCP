@@ -22,12 +22,17 @@ import {
   type TelegramOverridesFF,
 } from "../scheduler/market-data/foreignFlowAlertJob.js";
 import { CRONS } from "../scheduler/jobs.js";
+// TASK_2003 (SUBTASK-DAILY-FF-4): production code now reads foreign-flow via the
+// daily_ohlcv_with_flow compat view. Reuse the real schema init/migration
+// functions (no duplicated DDL) to upgrade this ad-hoc fixture so the view resolves.
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { migrateForeignFlowColumns } from "../infrastructure/db/schema.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // In-memory DB setup
 // ─────────────────────────────────────────────────────────────────────────────
 
-function makeDb(): Database {
+async function makeDb(): Promise<Database> {
   const db = new Database(":memory:");
 
   // watchlist table
@@ -132,6 +137,19 @@ function makeDb(): Database {
     )
   `);
 
+  // TASK_2003: this ad-hoc fixture predates daily_ohlcv_with_flow and lacks
+  // updated_at — add it (idempotent guard) then create daily_foreign_flow +
+  // the compat view via the real init path so the view resolves.
+  const cols = db
+    .prepare<{ name: string }, []>("PRAGMA table_info(daily_ohlcv)")
+    .all()
+    .map((r) => r.name);
+  if (!cols.includes("updated_at")) {
+    db.exec(`ALTER TABLE daily_ohlcv ADD COLUMN updated_at TEXT NOT NULL DEFAULT ''`);
+  }
+  initMarketDataTables(db);
+  await migrateForeignFlowColumns(db);
+
   return db;
 }
 
@@ -206,7 +224,7 @@ describe("Task 1133 — foreignFlowAlertJob", () => {
     let result: ForeignFlowAlertResult;
 
     beforeEach(async () => {
-      db = makeDb();
+      db = await makeDb();
       seedWatchlist(db, ["VNM", "FPT"]);
 
       // VNM: 4 consecutive net_buy days of 150k each → cumsum ascending → deltas +150k → HIGH
@@ -235,7 +253,7 @@ describe("Task 1133 — foreignFlowAlertJob", () => {
     const today = new Date().toISOString().slice(0, 10);
 
     beforeEach(async () => {
-      db = makeDb();
+      db = await makeDb();
       seedWatchlist(db, ["VNM"]);
       seedForeignFlow(db, "VNM", [150_000, 150_000, 150_000, 150_000, 0]);
       const { overrides } = makeNoopTelegram();
@@ -275,7 +293,7 @@ describe("Task 1133 — foreignFlowAlertJob", () => {
     let db: Database;
 
     beforeEach(async () => {
-      db = makeDb();
+      db = await makeDb();
       seedWatchlist(db, ["VNM"]);
       seedForeignFlow(db, "VNM", [150_000, 150_000, 150_000, 150_000, 0]);
       const { overrides } = makeNoopTelegram();
@@ -300,7 +318,7 @@ describe("Task 1133 — foreignFlowAlertJob", () => {
     let db: Database;
 
     beforeEach(async () => {
-      db = makeDb();
+      db = await makeDb();
       seedWatchlist(db, ["VNM"]);
       seedForeignFlow(db, "VNM", [150_000, 150_000, 150_000, 150_000, 0]);
       const { overrides } = makeNoopTelegram();
@@ -319,7 +337,7 @@ describe("Task 1133 — foreignFlowAlertJob", () => {
     let result: ForeignFlowAlertResult;
 
     beforeEach(async () => {
-      db = makeDb();
+      db = await makeDb();
       seedWatchlist(db, ["VNM"]);
       // All zeros → zero-data guard fires
       seedForeignFlow(db, "VNM", [0, 0, 0, 0, 0]);
@@ -340,7 +358,7 @@ describe("Task 1133 — foreignFlowAlertJob", () => {
     let marketCalls: string[];
 
     beforeEach(async () => {
-      db = makeDb();
+      db = await makeDb();
       seedWatchlist(db, ["VNM"]);
       seedForeignFlow(db, "VNM", [150_000, 150_000, 150_000, 150_000, 0]);
       const t = makeNoopTelegram();
@@ -362,7 +380,7 @@ describe("Task 1133 — foreignFlowAlertJob", () => {
     let db: Database;
 
     beforeEach(async () => {
-      db = makeDb();
+      db = await makeDb();
       seedWatchlist(db, ["VNM"]);
       // Negative per-day net_vol → cumsum decreasing → deltas negative → net_sell → bearish
       seedForeignFlow(db, "VNM", [-150_000, -150_000, -150_000, -150_000, 0]);
@@ -386,7 +404,7 @@ describe("Task 1133 — foreignFlowAlertJob", () => {
     let result: ForeignFlowAlertResult;
 
     beforeEach(async () => {
-      db = makeDb();
+      db = await makeDb();
       seedWatchlist(db, ["VNM"]);
       // Alternating per-day net_vol → no consistent streak → neutral/low severity
       seedForeignFlow(db, "VNM", [10_000, -10_000, 10_000, -10_000, 0]);
@@ -414,14 +432,14 @@ describe("Task 1133 — foreignFlowAlertJob", () => {
     it("a borderline HIGH signal (~120k shares/3d) yields lower confidence than a maxed-out one (600k shares/3d)", async () => {
       // Weak: 3 consecutive net-buy days of 40k each → totalNetVolume3d=120k
       // (magnitude = 120_000/500_000 = 0.24 → confidence = 0.55 + 0.24*0.40 = 0.646)
-      const weakDb = makeDb();
+      const weakDb = await makeDb();
       seedWatchlist(weakDb, ["VNM"]);
       seedForeignFlow(weakDb, "VNM", [40_000, 40_000, 40_000, 0, 0]);
       await runForeignFlowAlertJob(weakDb, makeNoopTelegram().overrides);
 
       // Strong: 3 consecutive net-buy days of 200k each → totalNetVolume3d=600k,
       // clamped magnitude=1.0 → confidence = 0.55 + 1.0*0.40 = 0.95
-      const strongDb = makeDb();
+      const strongDb = await makeDb();
       seedWatchlist(strongDb, ["VNM"]);
       seedForeignFlow(strongDb, "VNM", [200_000, 200_000, 200_000, 0, 0]);
       await runForeignFlowAlertJob(strongDb, makeNoopTelegram().overrides);
@@ -466,7 +484,7 @@ describe("Task 1133 — foreignFlowAlertJob", () => {
     let db: Database;
 
     beforeEach(async () => {
-      db = makeDb();
+      db = await makeDb();
       seedWatchlist(db, ["VNM"]);
       seedForeignFlow(db, "VNM", [150_000, 150_000, 150_000, 150_000, 0]);
       const { overrides } = makeNoopTelegram();
@@ -508,7 +526,7 @@ describe("Task 1133 — foreignFlowAlertJob", () => {
     let db: Database;
 
     beforeEach(async () => {
-      db = makeDb();
+      db = await makeDb();
       seedWatchlist(db, ["VNM"]);
       seedForeignFlow(db, "VNM", [150_000, 150_000, 150_000, 150_000, 0]);
       const { overrides } = makeNoopTelegram();

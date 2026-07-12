@@ -55,7 +55,9 @@ function getForeignFlowValues(
         `SELECT date,
                 foreign_buy_value  AS foreignBuyValue,
                 foreign_sell_value AS foreignSellValue
-         FROM daily_ohlcv
+         FROM daily_ohlcv_with_flow
+         -- TASK_2003 (SUBTASK-DAILY-FF-4): daily_ohlcv_with_flow compat view
+         -- (COALESCE new daily_foreign_flow, then legacy daily_ohlcv.foreign_*).
          WHERE code = ?
            AND (foreign_buy_value IS NOT NULL OR foreign_sell_value IS NOT NULL)
          ORDER BY date DESC
@@ -276,14 +278,14 @@ export function registerForeignFlowTools(
         // we call the query directly on the injected db.
         let history: DailyForeignFlow[];
         if (db) {
-          // Test path: query daily_ohlcv directly on injected db.
+          // Test path: query daily_ohlcv_with_flow directly on injected db (TASK_2003).
           // ASC order to build cumulative sum; reversed to DESC for analyzeForeignFlow.
           const rows = resolvedDb
             .prepare<any, [string, number]>(
               `SELECT code,
                       date,
                       COALESCE(foreign_net_vol, 0) AS net_vol
-               FROM daily_ohlcv
+               FROM daily_ohlcv_with_flow
                WHERE code = ?
                ORDER BY date ASC
                LIMIT ?`,

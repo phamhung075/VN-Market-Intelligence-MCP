@@ -14,8 +14,13 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { registerForeignFlowTools } from "../interface/mcp/tools/market-data/foreignFlowTools.js";
+// TASK_2003 (SUBTASK-DAILY-FF-4): production code now reads foreign-flow via the
+// daily_ohlcv_with_flow compat view. Reuse the real schema init/migration
+// functions (no duplicated DDL) to upgrade this ad-hoc fixture so the view resolves.
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { migrateForeignFlowColumns } from "../infrastructure/db/schema.js";
 
-function setupTestDb(): Database {
+async function setupTestDb(): Promise<Database> {
   const db = new Database(":memory:");
 
   db.run(`
@@ -57,6 +62,19 @@ function setupTestDb(): Database {
     ["VNM", "2026-04-18", 150_000],
   );
 
+  // TASK_2003: this ad-hoc fixture predates daily_ohlcv_with_flow and lacks
+  // updated_at — add it (idempotent guard) then create daily_foreign_flow +
+  // the compat view via the real init path so the view resolves.
+  const cols = db
+    .prepare<{ name: string }, []>("PRAGMA table_info(daily_ohlcv)")
+    .all()
+    .map((r) => r.name);
+  if (!cols.includes("updated_at")) {
+    db.exec(`ALTER TABLE daily_ohlcv ADD COLUMN updated_at TEXT NOT NULL DEFAULT ''`);
+  }
+  initMarketDataTables(db);
+  await migrateForeignFlowColumns(db);
+
   return db;
 }
 
@@ -87,7 +105,7 @@ async function callTool(
 
 describe("Task 1518 — get_foreign_flow reads daily_ohlcv.foreign_net_vol", () => {
   it("AC1: returns signal text (not no-data message) with only daily_ohlcv rows", async () => {
-    const db = setupTestDb();
+    const db = await setupTestDb();
     const text = await callTool(db, "VNM", 10);
     expect(text).not.toContain("foreign investor volume has not been collected yet");
     expect(text).toContain("Foreign Flow Analysis");
@@ -95,21 +113,21 @@ describe("Task 1518 — get_foreign_flow reads daily_ohlcv.foreign_net_vol", () 
   });
 
   it("AC2: signal direction is net_buy (3-day BUY streak)", async () => {
-    const db = setupTestDb();
+    const db = await setupTestDb();
     const text = await callTool(db, "VNM", 10);
     expect(text).toContain("net_buy");
     db.close();
   });
 
   it("AC3: severity is HIGH (3+ consecutive days AND net vol > 100k)", async () => {
-    const db = setupTestDb();
+    const db = await setupTestDb();
     const text = await callTool(db, "VNM", 10);
     expect(text).toContain("HIGH");
     db.close();
   });
 
   it("AC4: daily history table header shows 'Net Vol (daily)' not 'Foreign Volume'", async () => {
-    const db = setupTestDb();
+    const db = await setupTestDb();
     const text = await callTool(db, "VNM", 10);
     expect(text).toContain("Net Vol (daily)");
     expect(text).not.toContain("Foreign Volume");

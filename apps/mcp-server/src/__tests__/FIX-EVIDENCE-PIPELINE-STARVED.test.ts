@@ -23,12 +23,17 @@ import {
   type TelegramOverridesFF,
 } from "../scheduler/market-data/foreignFlowAlertJob.js";
 import { runEvidenceAccumulator } from "../scheduler/news-analysis/evidenceAccumulatorJob.js";
+// TASK_2003 (SUBTASK-DAILY-FF-4): production code now reads foreign-flow via the
+// daily_ohlcv_with_flow compat view. Reuse the real schema init/migration
+// functions (no duplicated DDL) to upgrade this ad-hoc fixture so the view resolves.
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { migrateForeignFlowColumns } from "../infrastructure/db/schema.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Shared in-memory DB helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
-function makeDb(): Database {
+async function makeDb(): Promise<Database> {
   const db = new Database(":memory:");
 
   db.run(`
@@ -142,6 +147,19 @@ function makeDb(): Database {
     )
   `);
 
+  // TASK_2003: this ad-hoc fixture predates daily_ohlcv_with_flow and lacks
+  // updated_at — add it (idempotent guard) then create daily_foreign_flow +
+  // the compat view via the real init path so the view resolves.
+  const cols = db
+    .prepare<{ name: string }, []>("PRAGMA table_info(daily_ohlcv)")
+    .all()
+    .map((r) => r.name);
+  if (!cols.includes("updated_at")) {
+    db.exec(`ALTER TABLE daily_ohlcv ADD COLUMN updated_at TEXT NOT NULL DEFAULT ''`);
+  }
+  initMarketDataTables(db);
+  await migrateForeignFlowColumns(db);
+
   return db;
 }
 
@@ -192,8 +210,8 @@ function seedOhlcvWithOldZeroRows(
 describe("FIX-EVIDENCE-PIPELINE-STARVED (a) — foreignFlowAlertJob producer fix", () => {
   let db: Database;
 
-  beforeEach(() => {
-    db = makeDb();
+  beforeEach(async () => {
+    db = await makeDb();
     db.run(`INSERT INTO watchlist (code) VALUES ('ACB')`);
 
     // Simulate production scenario:
@@ -240,8 +258,8 @@ describe("FIX-EVIDENCE-PIPELINE-STARVED (a) — foreignFlowAlertJob producer fix
 describe("FIX-EVIDENCE-PIPELINE-STARVED (b) — evidenceAccumulator fail-loud on empty input", () => {
   let db: Database;
 
-  beforeEach(() => {
-    db = makeDb();
+  beforeEach(async () => {
+    db = await makeDb();
     // evidence_fragments is empty — simulates the starved state
   });
 

@@ -89,7 +89,9 @@ export function queryMarketWideForeignFlow(
          COALESCE(SUM(foreign_sell_vol), 0) AS total_sell,
          COALESCE(SUM(foreign_net_vol),  0) AS total_net,
          COUNT(*)                           AS ticker_count
-       FROM daily_ohlcv
+       FROM daily_ohlcv_with_flow
+       -- TASK_2003 (SUBTASK-DAILY-FF-4): reads foreign-flow via the daily_ohlcv_with_flow
+       -- compat view (COALESCE new daily_foreign_flow, then legacy daily_ohlcv.foreign_*).
        WHERE foreign_net_vol IS NOT NULL
        GROUP BY date
        HAVING COUNT(*) > 0
@@ -120,7 +122,7 @@ export function queryTopFlowTickers(
               COALESCE(foreign_buy_vol,  0) AS foreign_buy_vol,
               COALESCE(foreign_sell_vol, 0) AS foreign_sell_vol,
               COALESCE(foreign_net_vol,  0) AS foreign_net_vol
-       FROM daily_ohlcv
+       FROM daily_ohlcv_with_flow
        WHERE date = ? AND foreign_net_vol IS NOT NULL
        ORDER BY foreign_net_vol DESC
        LIMIT ?`,
@@ -133,7 +135,7 @@ export function queryTopFlowTickers(
               COALESCE(foreign_buy_vol,  0) AS foreign_buy_vol,
               COALESCE(foreign_sell_vol, 0) AS foreign_sell_vol,
               COALESCE(foreign_net_vol,  0) AS foreign_net_vol
-       FROM daily_ohlcv
+       FROM daily_ohlcv_with_flow
        WHERE date = ? AND foreign_net_vol IS NOT NULL
        ORDER BY foreign_net_vol ASC
        LIMIT ?`,
