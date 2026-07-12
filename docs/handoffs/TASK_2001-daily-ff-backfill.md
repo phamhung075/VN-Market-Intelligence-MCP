@@ -51,3 +51,36 @@ One-time idempotent backfill: copy all existing foreign-flow data from frozen `d
 - **Risk R-6 (design doc):** backfill omitted/out-of-order → multi-day depth regression on cutover day. Mitigation: explicit task dependency + test idempotency.
 - If live DB has > 1000 rows with foreign data, do not worry about performance — idempotent INSERT OR IGNORE is O(n) with index on PK; even 10k rows should be < 1s on modern SQLite.
 - Backfill must run on every boot (idempotent) to handle DB resets/rebuilds during development and test.
+
+## [Developer] Implementation Record
+- **Service:** mcp-server
+- **Zone:** apps/mcp-server/
+- **Files modified:**
+  - `apps/mcp-server/src/infrastructure/db/schema.ts:264-296` — added `backfillDailyForeignFlow(db)` (exported, sync) implementing the exact `INSERT OR IGNORE INTO daily_foreign_flow (...) SELECT ... FROM daily_ohlcv WHERE foreign_buy_vol IS NOT NULL OR foreign_sell_vol IS NOT NULL` from the architect design § Change 4; wired into `initDatabase()` immediately after the existing `await migrateForeignFlowColumns(db);` call.
+  - `docs/architecture/microservice/mcp-server/infrastructure.md` — documented SUBTASK-DAILY-FF-2 backfill under the `daily_foreign_flow` DDL block.
+  - `docs/architecture/microservice/mcp-server/testing.md` — added row for the new test file.
+- **Tests written:** `apps/mcp-server/src/__tests__/daily-foreign-flow-backfill.test.ts` — 6 tests / 24 expect(), GREEN. Covers T-5 idempotency (backfill run twice against a seeded DB — 2nd run no-op, identical row count, no dup/error), correctness (all 8 columns + PK copied identically), WHERE-clause exclusion (rows with both foreign_buy_vol/foreign_sell_vol NULL skipped), additive-only proof (pre-existing `daily_foreign_flow` row never overwritten via PK conflict), boot-sequence wiring proof (re-running `initDatabase()` backfills without a direct function call), and a performance checkpoint (3000 synthetic rows backfilled in well under 5s).
+- **Git commits:** `878f5414a` feat(mcp-server/ARCH-DAILY-FOREIGN-FLOW-TABLE): TASK_2001 — daily_foreign_flow one-time backfill (SUBTASK-DAILY-FF-2)
+- **Type check:** clean (`bun tsc --noEmit`)
+- **bun test:** new suite 6/6 pass; regression (`daily-foreign-flow-schema` 15/15 + `2026-ohlcv-foreign-flow-merge` 7/7 + `1286-daily-ohlcv-schema` + `1527-schema-slices` + `002-db-schema`) 123/123 pass, 0 fail
+- **Tool count:** 183 — matches pre-task baseline (unchanged, no tool file touched)
+- **Scheduler count:** cron.schedule grep = 3 (pre-existing doc/reality drift vs the flow doc's stated baseline of 76, already flagged in the TASK_2000-cycle notebook entry; unrelated to this diff, zero scheduler files touched)
+- **Docs updated:** `docs/architecture/microservice/mcp-server/infrastructure.md`, `docs/architecture/microservice/mcp-server/testing.md`
+- **Graphify:** skipped (small doc delta, additive-only change; no new architectural concept introduced beyond what TASK_2000 already documented)
+
+**Idempotency test (T-5) result (raw, `bun test ... -t "T-5"`):**
+```
+bun test v1.3.13 (bf2e2cec)
+
+src/__tests__/daily-foreign-flow-backfill.test.ts:
+ 1 pass
+ 5 filtered out
+ 0 fail
+ 7 expect() calls
+Ran 1 test across 1 file. [131.00ms]
+```
+Both `afterFirst.cnt` and `afterSecond.cnt` assert `toBe(1)` — second run produces zero new rows and zero errors.
+
+**Additive/idempotent confirmation:** `INSERT OR IGNORE` is PK-guarded on `(code, date)` — it only inserts rows that don't yet exist in `daily_foreign_flow`. It never issues an UPDATE or DELETE, so it cannot overwrite or remove any existing row (proven by the "additive-only" test: a pre-existing row with different values is untouched when a conflicting legacy `daily_ohlcv` row exists for the same `(code,date)`).
+
+**Redeploy note:** rides the pending user/ops-gated mcp-server rebuild (same as TASK_2000) — the backfill runs automatically and safely on the next container boot against the live named-volume DB. This agent did NOT run it against the live serving DB (tested only against an in-memory `:memory:` DB, per task's data-safety instruction).
