@@ -319,8 +319,8 @@
     "active_task_id": null,
     "next_agent": null,
     "next_action": "await next cron tick — BOUNDED-1 idle-capacity pickup or PO triage",
-    "updated_at": "2026-07-12T12:35:13Z",
-    "updated_by": "dev-team (merge-gate close FIX-BCTC-BANK-FORM-CLASSIFIER-BOLD-STRIP)"
+    "updated_at": "2026-07-12T13:42:02Z",
+    "updated_by": "dev-team (merge-gate close FIX-DEVTEAM-BOUNDED1-DETAIL-NEXTAGENT-NONDEV-GATE)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7459,6 +7459,28 @@
         "verified_by": "dev-team",
         "commit": "8c8cd8232",
         "merge_gate": "PASS: production FIX-B (stripEmphasis /[*_]/g in isBankFormFromRows bctcFormType.ts:91-93) already shipped d69b13f41 (2026-07-03) — row was a bookkeeping gap not a missing fix; deliverable = the missing ISOLATED unit coverage (8c8cd8232, 78L). Dispatcher RAW-verified: strip logic present at HEAD; targeted test re-run 9 pass/0 fail/12 expect; only 2 files committed (test+notebook), zero production entanglement, apps/mcp-server tree clean; full-suite 82 fails = documented pre-existing baseline (additive test-only new-file diff cannot regress unrelated files)."
+      },
+      {
+        "id": "FIX-DEVTEAM-BOUNDED1-DETAIL-NEXTAGENT-NONDEV-GATE",
+        "type": "FIX",
+        "status": "DONE_VERIFIED",
+        "size": "S",
+        "zone": "cross-service/",
+        "title": "BOUNDED-1: gate detail-authoritative non-dev next_agent rows from idle auto-pickup",
+        "owner": "developer",
+        "next_agent": "developer",
+        "files": [
+          "scripts/devteam-backlog-promote-bounded1.jq",
+          "scripts/ (new bounded-1 non-dev-next_agent gate verifier)",
+          "docs/agents/dev-team/flow/main.md"
+        ],
+        "assigned_to": "69b0312e-df43-43a9-9e0b-bddf66d374e3",
+        "started_at": "2026-07-12T13:32:35Z",
+        "note": "PO BATCH tick 2026-07-12T13:07Z; 4th BOUNDED-1 promote-gate sibling blind-spot; add non-dev next_agent gate mirroring non-dev-owner precedence; gate iff detail next_agent non-empty non-dev AND board next_agent null/empty; class 16 rows; ship reusable verifier + main.md pointer; AC1 dry-run must NOT promote FEAT-SEVERITY-OVERRIDE-SURFACING",
+        "verified_at": "2026-07-12T13:42:02Z",
+        "verified_by": "dev-team",
+        "commit": "a0c56d989",
+        "merge_gate": "PASS: index-check rc0 + tree-verify a0c56d989 rc0 + c2-alert C2-OK + RAW verifier 5/5 (AC1 FEAT-SEVERITY-OVERRIDE-SURFACING not promoted, AC4 non-dev-next_agent gated, control clean-row still promoted); DJ-GATE-1 journal present; atomic 4-file commit; class=42 detail rows (39 reachable BACKLOG/TODO)"
       }
     ],
     "head": {
