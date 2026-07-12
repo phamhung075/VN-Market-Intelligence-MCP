@@ -315,12 +315,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "next_action": "await next cron tick — BOUNDED-1 idle-capacity pickup or PO triage. PENDING user-gated mcp-server redeploy for FIX-SEQUENTIAL to go live.",
-    "updated_at": "2026-07-12T15:25:44Z",
-    "updated_by": "dev-team (merge-gate close FIX-SEQUENTIAL-ANALYSIS-TOOL-DEAD-HANDLER)"
+    "status": "in_progress",
+    "active_task_id": "FACTORY-NEWS-extract-rss-parse",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-NEWS-extract-rss-parse — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-12T15:53:49Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -5334,17 +5334,8 @@
           "FIX-DEVTEAM-BOUNDED1-SUPERVISED-FLAG-GATE",
           "INFRA-CLOUDFLARE-TUNNEL-OUTAGE-ROOT-CAUSE"
         ],
-        "status_note": "Recurrence-escalation SPIKE per feedback_recurring_bug_escalation (2+ recurrence -> architect). Plan-only findings doc; no code change in this row. Deliberately NOT a blocker on the immediate FIX. || 2026-07-12T13:59Z PO DECISION (5th BOUNDED-1 near-miss, now DUE): consolidation IS warranted — this is no longer a should-we question. Since the original 4 defects, four more sibling select() gates shipped (epic-wrapper 07-10; detail-deferred/non-dev-owner/plan-only 07-12; non-dev-next_agent a0c56d989 07-12) and today the INFRA-CLOUDFLARE null-owner+ops-domain-zone near-miss escaped ALL of them. Architect task: (a) design ONE is_detail_non_autodispatchable($detail_items) predicate that unions every disposition signal (supervised|epic|detail-deferred|non_dev_owner|plan_only|non_dev_next_agent), preserving each FIX-ID provenance in comments; (b) ADD a new disposition class ops_zone_unrouted = zone matches (infra|ops|vps) case-insensitive AND owner+next_agent both empty on BOTH board and detail -> hold for PO/ops triage, never idle-pick to generic developer; (c) keep deps_satisfied as a separate positive gate; then FILE the implementing FIX (dev-shippable, non-supervised, zone cross-service/, with a behavior-preserving harness)."
-      },
-      {
-        "title": "Extract the shared RSS parse layer; collapse the two 95%-identical scrapers",
-        "priority": "P1",
-        "zone": "news-fetch",
-        "type": "FACTORY",
-        "status": "BACKLOG",
-        "id": "FACTORY-NEWS-extract-rss-parse",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-NEWS-extract-rss-parse",
-        "reroute_note": "BOUNDED-1 auto-pickup 2026-07-09T21:16:58Z dispatched dev-mcp-server (from backlog-detail.json dev_agent field), but zone=news-fetch -> zone-detect Tier-1 correct specialist is dev-news-fetch (apps/mcp-server/ zone_restricted forbids dev-mcp-server from touching apps/news-fetch/). No code changed. Root-cause: backlog-detail.json dev_agent field was stale for ALL 6 FACTORY-NEWS-* rows (2026-06-15 audit-sprint data-entry bug) -- corrected to dev-news-fetch in same commit. Reverted to backlog for correct re-pickup."
+        "status_note": "Recurrence-escalation SPIKE per feedback_recurring_bug_escalation (2+ recurrence -> architect). Plan-only findings doc; no code change in this row. Deliberately NOT a blocker on the immediate FIX. || 2026-07-12T13:59Z PO DECISION (5th BOUNDED-1 near-miss, now DUE): consolidation IS warranted — this is no longer a should-we question. Since the original 4 defects, four more sibling select() gates shipped (epic-wrapper 07-10; detail-deferred/non-dev-owner/plan-only 07-12; non-dev-next_agent a0c56d989 07-12) and today the INFRA-CLOUDFLARE null-owner+ops-domain-zone near-miss escaped ALL of them. Architect task: (a) design ONE is_detail_non_autodispatchable($detail_items) predicate that unions every disposition signal (supervised|epic|detail-deferred|non_dev_owner|plan_only|non_dev_next_agent), preserving each FIX-ID provenance in comments; (b) ADD a new disposition class ops_zone_unrouted = zone matches (infra|ops|vps) case-insensitive AND owner+next_agent both empty on BOTH board and detail -> hold for PO/ops triage, never idle-pick to generic developer; (c) keep deps_satisfied as a separate positive gate; then FILE the implementing FIX (dev-shippable, non-supervised, zone cross-service/, with a behavior-preserving harness). || 2026-07-12T15:37Z dev-team: set supervised:true — held for deliberate architect dispatch behind user-prioritized flow-alpha (11 ALPHA-S* rows still supervised/parked; architect reserved). ALSO closes a real recurring leak: this row's plan_only:true + next_agent:architect are BOARD-INLINE with NO backlog-detail entry, so the plan_only + non-dev-next_agent promote gates (detail-only readers) miss it and BOUNDED-1 mis-promotes it every idle tick. The supervised gate reads board-inline -> correctly withholds. NB this board-inline-vs-detail plan_only miss is itself an instance of THIS SPIKE's charter: fold 'resolve plan_only from board OR detail' into the consolidation.",
+        "supervised": true
       },
       {
         "id": "AUDIT-FETCH-COMPLETE",
@@ -7990,9 +7981,25 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-12T14:50:43Z",
+    "last_triaged_at": "2026-07-12T15:53:49Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "title": "Extract the shared RSS parse layer; collapse the two 95%-identical scrapers",
+        "priority": "P1",
+        "zone": "news-fetch",
+        "type": "FACTORY",
+        "status": "IN_PROGRESS",
+        "id": "FACTORY-NEWS-extract-rss-parse",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-NEWS-extract-rss-parse",
+        "reroute_note": "BOUNDED-1 auto-pickup 2026-07-09T21:16:58Z dispatched dev-mcp-server (from backlog-detail.json dev_agent field), but zone=news-fetch -> zone-detect Tier-1 correct specialist is dev-news-fetch (apps/mcp-server/ zone_restricted forbids dev-mcp-server from touching apps/news-fetch/). No code changed. Root-cause: backlog-detail.json dev_agent field was stale for ALL 6 FACTORY-NEWS-* rows (2026-06-15 audit-sprint data-entry bug) -- corrected to dev-news-fetch in same commit. Reverted to backlog for correct re-pickup.",
+        "promoted_at": "2026-07-12T15:53:49Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-12T15:53:49Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
