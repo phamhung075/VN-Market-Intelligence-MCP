@@ -45,3 +45,15 @@ Verified: new suite 9/9; 3-file regression-fallout set 46/46; foreign-flow file-
 Commit: this agent's own direct commit (RUN-SOLO, explicit-path staging — 4 prod files + 4 test files (3 fixed + 1 new) + 2 doc files + journal). Dispatcher owns the board row. **Redeploy rides the pending user/ops-gated mcp-server rebuild** (same one as TASK_2000-2003) — this change is additive to the now-lifted DEPLOY-HOLD.
 
 Zone health: tsc clean, 9 new + 46 regression-fallout + 729 foreign-flow-sweep pass/0 fail, toolCount=183 unchanged, 4/4 Class-B probes decoupled from OHLCV | HEALTHY.
+
+## 2026-07-12 — TASK_2005 (SUBTASK-DAILY-FF-6, ARCH-DAILY-FOREIGN-FLOW-TABLE, integration test / R-1 gate) → FINDING, not DONE
+
+**Session:** 69b0312e-df43-43a9-9e0b-bddf66d374e3 (dev-team dispatch, task=TASK_2005; PM handoff `docs/handoffs/TASK_2005-daily-ff-integration-test.md`)
+
+Added `apps/mcp-server/src/__tests__/daily-foreign-flow-integration.test.ts` (5 cases) composing `writeForeignFlowToOhlcv()` + the `daily_ohlcv_with_flow` view exactly the way a live Class-A tool would. RAW: 3 pass / 2 fail. Write-side R-1 (permanent data loss) is confirmed CLOSED (TASK_2002). Read-side R-1 is NOT closed: `daily_ohlcv_with_flow` is `FROM daily_ohlcv o LEFT JOIN daily_foreign_flow f` — anchored on `daily_ohlcv`, so a foreign-flow-only row (no matching OHLCV row) is never returned by the view, regardless of COALESCE. All 5 already-migrated Class-A read sites (TASK_2003) still cannot surface a ticker's foreign-flow value before its OHLCV bar lands — the literal "chưa trả số từng mã" symptom, reproduced end-to-end. This gap was already flagged (but not escalated) inside TASK_2000's own schema test comment ("documenting the known anchoring behavior") — this task turns it into a live, RED, end-to-end proof instead of a passing note.
+
+Per task's explicit contingency clause ("if the read path does not return the value, STOP — report, do not paper over"): did NOT modify the view or any production source (additive test-only task, out of scope for a schema fix); did NOT flip TASK_2005 to done. tsc clean (0 errors). Targeted regression (10 related foreign-flow files incl. daily-foreign-flow-{table,schema,backfill}.test.ts) 69/69 pass, 0 fail — no collateral breakage. No full-suite log artifact was available to grep; targeted subset is the proportionate substitute per the additive-change exception.
+
+Commit: d15eedbec (2 files: new test + decision-journal entry, explicit-path). Dispatcher/PM should open a new FIX task for the view's join-anchor direction (e.g. bidirectional/UNION-based join or Class-A sites querying `daily_foreign_flow` directly with a LEFT-anchor fallback to `daily_ohlcv`) before this sprint can claim R-1 fully eliminated end-to-end.
+
+Zone health: tsc clean, new-test 3/3 valid-pass + 2/2 correctly-RED (real gap, not flaky), targeted regression 69/69, toolCount unchanged (no prod file touched) | FINDING — read-side R-1 gap open, routed as FIX candidate.
