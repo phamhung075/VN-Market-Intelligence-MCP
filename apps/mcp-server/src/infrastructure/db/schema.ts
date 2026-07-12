@@ -262,6 +262,13 @@ export async function initDatabase(dbArg?: import("bun:sqlite").Database): Promi
 
   // Task 198: wire foreign flow column migration so daily_ohlcv always has all 4 columns.
   await migrateForeignFlowColumns(db);
+
+  // TASK_2001 (SUBTASK-DAILY-FF-2, ARCH-DAILY-FOREIGN-FLOW-TABLE): one-time idempotent
+  // backfill of legacy daily_ohlcv.foreign_* history into daily_foreign_flow. Must run
+  // after migrateForeignFlowColumns (legacy columns guaranteed to exist) and after
+  // initMarketDataTables (daily_foreign_flow table guaranteed to exist). R-6 ordering:
+  // MUST complete before the writer cutover (SUBTASK-DAILY-FF-3) ships.
+  backfillDailyForeignFlow(db);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -297,4 +304,33 @@ export async function migrateForeignFlowColumns(db: import("bun:sqlite").Databas
       db.exec(`ALTER TABLE daily_ohlcv ADD COLUMN ${col} ${type}`);
     }
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TASK_2001 (SUBTASK-DAILY-FF-2, ARCH-DAILY-FOREIGN-FLOW-TABLE) — one-time backfill
+// Copies historical foreign-flow data out of the frozen `daily_ohlcv.foreign_*`
+// columns into the new authoritative `daily_foreign_flow` table (SUBTASK-DAILY-FF-1).
+// INSERT OR IGNORE is PK-guarded (code,date) — safe/no-op to run on every boot,
+// same idempotent posture as migrateForeignFlowColumns() above. Additive only:
+// never overwrites or deletes an existing daily_foreign_flow row.
+// R-6 (design doc): this MUST land and complete before the writer cutover
+// (SUBTASK-DAILY-FF-3) ships, or the new table starts with a strict subset of
+// history. See docs/handoffs/ARCH-DAILY-FOREIGN-FLOW-TABLE-architect-design.md § Change 4.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * One-time idempotent backfill: copy all `daily_ohlcv` rows carrying legacy
+ * foreign-flow data into `daily_foreign_flow`. Safe to call on every boot —
+ * `INSERT OR IGNORE` is a PK-guarded no-op for rows already present.
+ */
+export function backfillDailyForeignFlow(db: import("bun:sqlite").Database): void {
+  db.exec(`
+    INSERT OR IGNORE INTO daily_foreign_flow
+      (code, date, foreign_buy_vol, foreign_sell_vol, foreign_net_vol, put_through_vol,
+       foreign_buy_value, foreign_sell_value, updated_at)
+    SELECT code, date, foreign_buy_vol, foreign_sell_vol, foreign_net_vol, put_through_vol,
+           foreign_buy_value, foreign_sell_value, updated_at
+    FROM daily_ohlcv
+    WHERE foreign_buy_vol IS NOT NULL OR foreign_sell_vol IS NOT NULL;
+  `);
 }

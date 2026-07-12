@@ -26,10 +26,19 @@ daily_foreign_flow (code TEXT, date TEXT, foreign_buy_vol, foreign_sell_vol,
   -- dropped when no daily_ohlcv row exists) because none of these columns are
   -- coupled to price data / NOT NULL constraints — the write is unconditional.
   -- Writer cutover (ohlcvForeignFlowStore.ts still merge-only UPDATE against
-  -- daily_ohlcv today) and historical backfill are separate follow-on subtasks
-  -- (SUBTASK-DAILY-FF-2/-3) — NOT part of this DDL-only ship.
+  -- daily_ohlcv today) is a separate follow-on subtask (SUBTASK-DAILY-FF-3) —
+  -- NOT part of this DDL-only ship.
   -- Design: docs/handoffs/ARCH-DAILY-FOREIGN-FLOW-TABLE-architect-design.md § Change 1
   -- Schema: apps/mcp-server/src/infrastructure/db/schema-market-data.ts
+  --
+  -- SUBTASK-DAILY-FF-2 (TASK_2001, 2026-07-12): one-time idempotent backfill —
+  -- `backfillDailyForeignFlow()` in schema.ts, wired into initDatabase() right
+  -- after migrateForeignFlowColumns() (same INSERT OR IGNORE, PK-guarded,
+  -- safe-on-every-boot pattern). Copies every daily_ohlcv row with foreign_* data
+  -- into daily_foreign_flow. Additive-only — never overwrites an existing row.
+  -- R-6 ordering constraint: MUST land + complete before the writer cutover
+  -- (SUBTASK-DAILY-FF-3) ships, or the new table starts with a subset of history.
+  -- Design: docs/handoffs/ARCH-DAILY-FOREIGN-FLOW-TABLE-architect-design.md § Change 4
 
 daily_ohlcv_with_flow (VIEW — daily_ohlcv LEFT JOIN daily_foreign_flow ON code,date)
   -- Compatibility read view: same column names as daily_ohlcv's legacy foreign_*

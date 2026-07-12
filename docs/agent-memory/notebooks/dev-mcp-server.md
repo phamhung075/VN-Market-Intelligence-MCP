@@ -1,19 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-07-12 — FIX-BCTC-BANK-FORM-CLASSIFIER-BOLD-STRIP → REVIEW
-
-**Session:** 69b0312e-df43-43a9-9e0b-bddf66d374e3 (dev-team cron dispatch, tick 11:37Z)
-
-Task = SPIKE-BCTC-CTG-BS-REALDATA-ROOT follow-on #2 (FIX-B only): strip markdown emphasis (`**`,`__`) from `code` before `ROMAN_SECTION`/`CORP_BALANCE` anchor matching in `bctcFormType.ts` `isBankFormFromRows`. **Found already implemented**: the composite commit `d69b13f41` (2026-07-03T10:03Z, "bank-form column-order + classifier + section vocab") had already shipped this exact `stripEmphasis` fix as part of FIX-A+FIX-B+FIX-C+FIX-D+FIX-E — this backlog row (minted 2026-07-03T06:21Z, ~4h earlier) was never itself closed/superseded, a bookkeeping gap, not a missing fix. Zero production-code change needed or made.
-
-Gap that WAS real: no isolated, synthetic unit test of `isBankFormFromRows` existed — coverage only came via heavy real-markdown/full-pipeline fixtures (`FIX-BCTC-BANK-BS-COLUMN-ORDER.test.ts`'s "FIX-D" block), and none exercised the `__bold__` (double-underscore) emphasis variant the production regex (`/[*_]/g`) also strips. Added `FIX-BCTC-BANK-FORM-CLASSIFIER-BOLD-STRIP.test.ts` (9 tests, 12 expect): bold (`**I**`,`**A**`,`**XIII**`) and double-underscore (`__I__`) anchors → BANK; bare anchors unaffected (non-regression); bare AND bold-wrapped 3-digit corp codes (`280`,`**280**`) still veto → CORPORATE; VAS letter-suffix codes (`411a`/`420a`) still veto as designed; null-code rows don't break the strip.
-
-Verified: new file 9/9 pass. All 4 bank-classifier-related suites together (new file + `FIX-BCTC-BANK-BS-COLUMN-ORDER` + `BEQ-BANK-DISCRIM` + `FIX-BCTC-BANK-BS-SECTION-CLASSIFIER`) 41/41 pass, 127 expect(). `bun tsc --noEmit` clean. Full bare `bun test`: 14491 pass/40 skip/82 fail/6 errors across 14613 tests (1194 files, 1241.7s) — zero overlap with bctcFormType/bank-classifier (grepped; visible failures are `src/_deprecated/1302-technical-indicators.test.ts` + other unrelated pre-existing files, matching the documented 07-11/07-10 precedent of ~80-86 pre-existing full-suite fails in this sandbox). Server-boot probe: full bootstrap succeeds (183 tools registered, DB ready) through to the final `httpServer.listen()` step, which hits `EADDRINUSE` because the live container already holds :3000 — confirms zero import errors from the new test file (test files are never imported by `index.ts`). toolCount=183 unchanged (test-only diff, zero tools added/removed). Scheduler-count probe (`grep -rc cron.schedule apps/mcp-server/src/scheduler/`) returns 3 vs the flow doc's stated baseline of 76 — pre-existing doc/reality drift, unrelated to this diff (zero scheduler files touched); flagging for a future doc-hygiene task, not fixed here (out of FIX-B's surgical scope).
-
-Commit: this agent's own direct commit (RUN-SOLO, explicit-path staging, 1 file only — `FIX-BCTC-BANK-FORM-CLASSIFIER-BOLD-STRIP.test.ts`). Dispatcher owns the board row (already IN_PROGRESS) and closes it after merge-gate — no orch-state write from this agent.
-
-Zone health: tsc clean, bank-classifier suites 41/41 pass, toolCount=183 unchanged, full suite 82 fail/6 errors ALL pre-existing (grepped zero overlap, consistent with documented sandbox baseline) | HEALTHY.
-
 ## 2026-07-12 — FIX-SEQUENTIAL-ANALYSIS-TOOL-DEAD-HANDLER → REVIEW
 
 **Session:** 69b0312e-df43-43a9-9e0b-bddf66d374e3 (dev-team cron dispatch, tick 14:37Z; bug discovered during FACTORY-INTERFACE-sequential-confidence-05-mask post-swap QA sanity check — unrelated root cause, pure registration-shape bug)
@@ -41,3 +27,17 @@ Verified: new suite 15/15 pass; regression run (`2026-ohlcv-foreign-flow-merge`,
 Commit: this agent's own direct commit (RUN-SOLO, explicit-path staging — schema DDL + new test + 3 doc files + journal). Dispatcher owns the board row — no orch-state write from this agent (task's explicit constraint). **Redeploy needed to reach the live DB**: no container rebuild/swap performed (user/ops-gated); until rebuilt, the live named-volume DB has neither the new table nor the view. No backfill performed — historical rows populate only after SUBTASK-DAILY-FF-2 ships and runs.
 
 Zone health: tsc clean, 15 new + 123 regression pass/0 fail, toolCount=183 unchanged, additive-only (daily_ohlcv untouched) | HEALTHY.
+
+## 2026-07-12 — TASK_2001 (SUBTASK-DAILY-FF-2, ARCH-DAILY-FOREIGN-FLOW-TABLE) → REVIEW
+
+**Session:** 69b0312e-df43-43a9-9e0b-bddf66d374e3 (dev-team cron dispatch, tick 16:37Z; PM handoff `docs/handoffs/TASK_2001-daily-ff-backfill.md`)
+
+One-time idempotent backfill (Change 4 of the architect design), gated by R-6 ordering — must land+complete before the writer cutover (SUBTASK-DAILY-FF-3, TASK_2002). Added `backfillDailyForeignFlow(db)` to `schema.ts` right next to its direct precedent `migrateForeignFlowColumns()`: `INSERT OR IGNORE INTO daily_foreign_flow (...) SELECT ... FROM daily_ohlcv WHERE foreign_buy_vol IS NOT NULL OR foreign_sell_vol IS NOT NULL`, all 8 columns + (code,date) PK. Wired into `initDatabase()` immediately after the existing `await migrateForeignFlowColumns(db);` call (both preconditions — legacy columns exist, new table exists — guaranteed satisfied at call time).
+
+New test file `daily-foreign-flow-backfill.test.ts` (6 tests): T-5 idempotency (run twice, 2nd run no-op — identical row count, no dup/error); correctness (all 8 columns + PK copied identically); rows with both foreign_buy_vol/foreign_sell_vol NULL correctly skipped (WHERE clause); additive-only proof (pre-existing daily_foreign_flow row with different values untouched by a conflicting legacy row — INSERT OR IGNORE PK-guard); boot-sequence wiring proof (re-running `initDatabase()` on the same in-memory connection backfills a freshly-inserted legacy row WITHOUT a direct `backfillDailyForeignFlow()` call); performance checkpoint (3000 synthetic rows backfilled in well under 5s).
+
+Verified: new suite 6/6 pass (24 expect). Regression: `daily-foreign-flow-schema` (15/15) + `2026-ohlcv-foreign-flow-merge` (7/7) + `1286-daily-ohlcv-schema` + `1527-schema-slices` + `002-db-schema` = 123/123 pass, 0 fail. `bun tsc --noEmit` clean. toolCount=183 unchanged (no tool/scheduler file touched); scheduler cron.schedule grep=3 (pre-existing doc/reality drift already flagged in the prior TASK_2000-cycle entry, unrelated to this diff).
+
+Commit: this agent's own direct commit (RUN-SOLO, explicit-path staging — schema.ts + new test + 2 doc files + journal). Dispatcher owns the board row — no orch-state write from this agent (task's explicit constraint). **Redeploy needed to reach the live DB**: no container rebuild/swap performed (user/ops-gated); backfill runs automatically+safely on the next mcp-server boot against the live named-volume DB (not run manually against it per task's data-safety instruction). Unblocks SUBTASK-DAILY-FF-3 (TASK_2002, writer cutover) per R-6.
+
+Zone health: tsc clean, 6 new + 123 regression pass/0 fail, toolCount=183 unchanged, additive+idempotent (INSERT OR IGNORE only, never overwrites) | HEALTHY.
