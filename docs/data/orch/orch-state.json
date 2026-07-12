@@ -315,12 +315,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FACTORY-NEWS-extract-rss-parse",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-NEWS-extract-rss-parse — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-12T15:53:49Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "await next cron tick. PENDING user-gated redeploys: (1) mcp-server for FIX-SEQUENTIAL, (2) news-fetch for FACTORY-NEWS-extract-rss-parse.",
+    "updated_at": "2026-07-12T16:10:35Z",
+    "updated_by": "dev-team (merge-gate close FACTORY-NEWS-extract-rss-parse)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7508,6 +7508,26 @@
         "commit": "90af32aa8",
         "merge_gate": "PASS: index-check rc0 + RAW regression test 2/2 (dispatcher re-ran; dev proved RED-before via stash / GREEN-after) + c2 C2-OK + DJ-GATE-1 journal present; both commits atomic (90af32aa8 src+test 2f, da2b68f9c journal+notebook 2f); tree-verify code-SHA-vs-HEAD mismatch = benign 2-commit doc-drift FP. NOT LIVE: source-only, redeploy USER-GATED.",
         "note": "CODE-COMPLETE + RAW-verified. Root cause: registerTool() passed handler as a config key instead of the MCP SDK 3rd positional callback arg -> handler undefined -> 'originalHandler is not a function' on every call. Fix: 90af32aa8 (src+regression test) + da2b68f9c (journal/notebook). NOT YET LIVE: source-only; running mcp-server container serves pre-fix registration until rebuild+restart (USER-GATED, surfaced to WORK, NOT self-armed). Only real registerTool mis-registration in codebase (no siblings); toolCount 183 unchanged."
+      },
+      {
+        "title": "Extract the shared RSS parse layer; collapse the two 95%-identical scrapers",
+        "priority": "P1",
+        "zone": "news-fetch",
+        "type": "FACTORY",
+        "status": "DONE_VERIFIED",
+        "id": "FACTORY-NEWS-extract-rss-parse",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-NEWS-extract-rss-parse",
+        "reroute_note": "BOUNDED-1 auto-pickup 2026-07-09T21:16:58Z dispatched dev-mcp-server (from backlog-detail.json dev_agent field), but zone=news-fetch -> zone-detect Tier-1 correct specialist is dev-news-fetch (apps/mcp-server/ zone_restricted forbids dev-mcp-server from touching apps/news-fetch/). No code changed. Root-cause: backlog-detail.json dev_agent field was stale for ALL 6 FACTORY-NEWS-* rows (2026-06-15 audit-sprint data-entry bug) -- corrected to dev-news-fetch in same commit. Reverted to backlog for correct re-pickup.",
+        "promoted_at": "2026-07-12T15:53:49Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-12T15:53:49Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "verified_at": "2026-07-12T16:10:35Z",
+        "verified_by": "dev-team",
+        "commit": "079b49dae",
+        "merge_gate": "PASS: index-check rc0 + RAW news-fetch suite 233/6/0 (dispatcher re-ran) + dev before/after git-stash proof (64 pass identical both ways) + sandbox 16 PASS + tsc0 + lint clean; code commit 079b49dae atomic (3 files apps/news-fetch/scrapers, no mcp-server leak); DJ-GATE-1 present. NOT LIVE: news-fetch container redeploy user-gated.",
+        "note": "Extracted shared rss-parse.ts (fetchRss + parseRssXml + extractTag); collapsed bloomberg-rss + reuters-rss onto it, 417L->204L (-51%), behavior-preserving (before/after stash proof identical 64 pass). Followed po-authored approach spec. Kept per-file URL literals (a readFileSync regression guard reads them). Commits 079b49dae (code) + 1d3597249 (journal). NOT YET LIVE: news-fetch docker-compose service runs pre-change image until 'docker compose up -d --build news-fetch' (USER/OPS-GATED, surfaced, NOT self-armed)."
       }
     ],
     "head": {
@@ -7983,23 +8003,7 @@
     },
     "last_triaged_at": "2026-07-12T15:53:49Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "title": "Extract the shared RSS parse layer; collapse the two 95%-identical scrapers",
-        "priority": "P1",
-        "zone": "news-fetch",
-        "type": "FACTORY",
-        "status": "IN_PROGRESS",
-        "id": "FACTORY-NEWS-extract-rss-parse",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-NEWS-extract-rss-parse",
-        "reroute_note": "BOUNDED-1 auto-pickup 2026-07-09T21:16:58Z dispatched dev-mcp-server (from backlog-detail.json dev_agent field), but zone=news-fetch -> zone-detect Tier-1 correct specialist is dev-news-fetch (apps/mcp-server/ zone_restricted forbids dev-mcp-server from touching apps/news-fetch/). No code changed. Root-cause: backlog-detail.json dev_agent field was stale for ALL 6 FACTORY-NEWS-* rows (2026-06-15 audit-sprint data-entry bug) -- corrected to dev-news-fetch in same commit. Reverted to backlog for correct re-pickup.",
-        "promoted_at": "2026-07-12T15:53:49Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-12T15:53:49Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
