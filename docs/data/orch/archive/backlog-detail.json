@@ -9178,6 +9178,34 @@
       "timebox_minutes": 120,
       "verification_gate": "findings doc + follow-on FIX row filed identifying where layout_units->table_rows derivation is missing/broken",
       "updated_at": "2026-07-12T06:01:43Z"
+    },
+    {
+      "id": "FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH",
+      "title": "notebook-auto-prune regex (line 137) never matches real cycle-YYYYMMDDTHHMMZ headings -> all sections tie -> drops NEWEST, silently regressing shipped fix e24e6b8b6",
+      "owner": "developer",
+      "status": "IN_PROGRESS",
+      "zone": "cross-service/",
+      "priority": "normal",
+      "type": "FIX",
+      "size": "S",
+      "next_agent": "developer",
+      "created_at": "2026-07-12T07:17:22Z",
+      "created_by": "po-triage-20260712",
+      "owner_hint": "claude-manager-helper",
+      "status_note": "scripts/agents-flow/notebook-auto-prune.sh line 137 timestamp regex requires a DASHED date; repo real heading conventions are compact cycle-YYYYMMDDTHHMMZ (main.md) and Tick YYYY-MM-DDTHH:MMZ no-seconds (po.md) -- neither matches. All sections fall to sentinel 9999-12-31, tie-break drops NEWEST not oldest (prepend-style notebooks), regressing FIX-NOTEBOOK-AUTOPRUNE-ORDERING-ASSUMPTION (e24e6b8b6, 07-11) which self-reported RAW-verified but was false-green -- its own test only covers a suffix+full-seconds format nothing in the repo actually uses. Live symptom: main.md gained 2 duplicate headings this session, router manually dedup-ed (3e83f4846).",
+      "files": [
+        "scripts/agents-flow/notebook-auto-prune.sh",
+        "scripts/agents-flow/test-notebook-auto-prune.sh"
+      ],
+      "acceptance": [
+        "Regex widened (or headings normalized+backfilled) so ALL live formats sort chronologically: compact cycle-YYYYMMDDTHHMMZ, dashed-no-seconds Tick YYYY-MM-DDTHH:MMZ, and suffix full-ISO",
+        "test-notebook-auto-prune.sh gains regression cases using the REAL prepend heading formats, asserting OLDEST section dropped and NEWEST retained",
+        "Duplicate-heading symptom investigated: why 2 sequential hook firings on a >200L file produced a duplicate rather than a clean single bad-drop; add idempotency/reentrancy guard + test",
+        "VERIFICATION GATE (not synthetic-test-green): live-run the hook against a real prepend-style notebook snapshot >200L; assert OLDEST section dropped, line count <=200, no duplicate ## heading"
+      ],
+      "baseline_note": "Existing test suite is GREEN but FALSE-GREEN -- never exercises the real heading format; treat green baseline as unreliable, add real-format cases FIRST before trusting it again",
+      "origin_signal": "docs/signals/processed/claude-manager-helper-2026-07-12T065101Z-notebook-autoprune-regex-mismatch.json",
+      "updated_at": "2026-07-12T07:17:22Z"
     }
   ]
 }

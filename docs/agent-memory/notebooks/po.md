@@ -1,6 +1,16 @@
 # PO Notebook
 
-_Last: 2026-07-12T06:45Z (dev-team triage re-claim po-triage-20260712 for 4 new reports #3580-3583 DGC/DIG/DXG/FRT → NOTHING: RAW-confirmed identical reconcile-exhausted 2025-Q1 pattern, same cluster as #3573-3579, durable FIX still queued in backlog)_
+_Last: 2026-07-12T07:15Z (dev-team triage re-claim po-triage-20260712 for 1 recurring_bug signal → BATCH 1 FIX: notebook-auto-prune regex never matches real headings, silently regresses shipped fix e24e6b8b6)_
+
+## Tick 2026-07-12T07:15Z — dev-team triage: BATCH 1 FIX (notebook-autoprune regex↔heading mismatch)
+Router relayed 1 new signal it filed itself: `claude-manager-helper-…-notebook-autoprune-regex-mismatch.json` (type=recurring_bug, zone scripts/agents-flow/). **RAW-verified ALL claims, did NOT trust router characterization:**
+- **Regex line 137** `[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}:[0-9]{2}Z)?` requires DASHED date. Live test: `echo '## cycle-20260712T0607Z — …' | grep -oE '<regex>'` → **EMPTY (NO MATCH)**. Confirmed against real `main.md` headings (all `## cycle-YYYYMMDDTHHMMZ`, compact).
+- **po.md** uses `## Tick 2026-07-12T06:45Z` (dashed date, NO seconds) → only the date sub-match hits, T-group fails → same-day ticks all TIE at day granularity.
+- **Root cause of regression:** every section falls to sentinel `9999-12-31T23:59:59Z` → all tie → `sort -k2 | head -1` keeps grep's top-to-bottom order → drops FIRST (newest, prepend-style) section, reintroducing exactly the drop-newest bug that `FIX-NOTEBOOK-AUTOPRUNE-ORDERING-ASSUMPTION` (e24e6b8b6, 07-11, "RAW-verified") shipped to fix.
+- **Why the shipped fix passed:** `test-notebook-auto-prune.sh` only exercises `## X · 2026-07-01T10:00:00Z` (suffix + full-seconds ISO) — the ONE format the regex matches. **Classic false-green: verified against synthetic content it never sees in prod** (★ feedback_fence_false_green / recurring_detection_vs_failed_fix → this is FAILED-FIX not detection-never-ran).
+- **Live symptom (RAW):** `main.md` got 2 duplicate `## ` headings after 2 sequential Edits crossed 200L; router manually dedup'd (3e83f4846), no data lost. Live data-corruption risk in a file-rewriting hook.
+- **Dedup:** no existing board row (jq scan clean). Minted new FIX. head idle, WIP=1 (legit ops row, unchanged).
+- **Batch → router:** `FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH`, zone `cross-service/` (scripts/, generic developer), owner_hint claude-manager-helper. Verification gate embedded = live-run hook on real prepend notebook >200L, assert OLDEST dropped + NO dup heading (not just synthetic test green).
 
 ## Tick 2026-07-12T06:45Z — dev-team triage: NOTHING (reports #3580-3583 dedup'd)
 Router relayed 4 new reports since 06:21Z: **#3580 DGC, #3581 DIG, #3582 DXG, #3583 FRT** (06:36-06:41Z). **RAW-confirmed via bash-transport read_telegram_reports (did NOT trust router characterization):** ALL 4 = byte-identical `[bctcExtractReconcile] RECONCILE EXHAUSTED: <ticker> 2025-Q1 — 0 rows across bctc_layout_units/bctc_table_rows/bctc_md_tables → enrich_failed` — same class as #3573-3579 already triaged twice.

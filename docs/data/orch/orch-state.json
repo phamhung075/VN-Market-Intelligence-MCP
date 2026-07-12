@@ -7067,6 +7067,16 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#OPS-BCTC-REFINE-REPASS-NONBANK-5T",
         "owner": "ops",
         "po_triage_20260710_round3_ctg_not_folded_note": "[po-triage-20260710-round3 08:06Z] CTG 2026-Q1 (analysis-agent Telegram #3551, composite=0.00/financial=0.00) was triaged this tick and DELIBERATELY NOT FOLDED into this batch. CTG is a BANK (B02-TCTD form); this batch is strictly NON-BANK (VHM/VIC/VRE/HSG/MWG) — a different failure CLASS (bank balance-sheet section-classifier + scalar mapping) with its own owning track: W5-FU-CTG-REFINE-96e36139 + TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST (both BLOCKED on a deploy-gate). CLARIFICATION for future triagers: the title's phrase \"proven CTG runbook\" refers to the general refine -> push_bctc_refined_unit -> finalize_bctc_refine -> reingest-bctc-report.ts PROCEDURE (proven to EXECUTE on CTG report 96e36139), NOT a claim that CTG 2026-Q1's DATA outcome is green — CTG 2026-Q1 total_assets is still 0 and its bank track is BLOCKED (deploy-gate + a genuine balance-sheet-absent root gap, CTG-CARRY-FORWARD AC-TRACK1-3 escalated 2026-07-10). Do NOT read \"proven CTG runbook\" as \"CTG is fixed\"; do NOT fold any BANK ticker into this NON-BANK batch. (Mirrors the bank/non-bank framing correction made in round-1 of this same 2026-07-10T07:07Z tick on OPS-BCTC-BANK-2025Q4-ENRICH-0ROW-REPARSE.)"
+      },
+      {
+        "id": "FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH",
+        "title": "notebook-auto-prune regex mismatch -- drops NEWEST not oldest, regresses e24e6b8b6 (false-green)",
+        "status": "IN_PROGRESS",
+        "zone": "cross-service/",
+        "priority": "normal",
+        "type": "FIX",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH",
+        "owner": "developer"
       }
     ]
   },
