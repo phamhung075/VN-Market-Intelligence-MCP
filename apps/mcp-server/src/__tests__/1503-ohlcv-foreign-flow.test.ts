@@ -93,6 +93,29 @@ function addForeignFlowCols(db: Database): void {
   db.exec(`ALTER TABLE daily_ohlcv ADD COLUMN foreign_sell_value REAL`);
 }
 
+/**
+ * ARCH-DAILY-FOREIGN-FLOW-TABLE (TASK_2000/TASK_2002): the writer now targets
+ * this table exclusively — daily_ohlcv.foreign_* is frozen/historical-only.
+ * This minimal test DB doesn't run the full schema-market-data.ts bootstrap,
+ * so the table is created inline here (mirrors the production DDL).
+ */
+function addDailyForeignFlowTable(db: Database): void {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS daily_foreign_flow (
+      code               TEXT NOT NULL,
+      date               TEXT NOT NULL,
+      foreign_buy_vol    REAL,
+      foreign_sell_vol   REAL,
+      foreign_net_vol    REAL,
+      put_through_vol    REAL,
+      foreign_buy_value  REAL,
+      foreign_sell_value REAL,
+      updated_at         TEXT NOT NULL DEFAULT '',
+      PRIMARY KEY (code, date)
+    );
+  `);
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Resolve the store module — returns null when module not yet implemented
 // ─────────────────────────────────────────────────────────────────────────────
@@ -157,10 +180,11 @@ describe("Task 1503 AC1 — daily_ohlcv foreign flow columns", () => {
 // AC2: writeForeignFlowToOhlcv updates row and sets foreign_net_vol = buy - sell
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("Task 1503 AC2 — writeForeignFlowToOhlcv updates OHLCV row", () => {
-  it("updates existing OHLCV row: changes >= 0 and foreign_net_vol = buy - sell", async () => {
+describe("Task 1503 AC2 (ARCH-DAILY-FOREIGN-FLOW-TABLE cutover, TASK_2002) — writeForeignFlowToOhlcv updates daily_foreign_flow", () => {
+  it("updates existing OHLCV row's ticker: changes=1 and foreign_net_vol = buy - sell (in daily_foreign_flow, not daily_ohlcv)", async () => {
     const db = buildBaseDb();
     addForeignFlowCols(db);
+    addDailyForeignFlowTable(db);
 
     // Seed a VCB OHLCV row for the target date
     db.prepare(
@@ -184,16 +208,26 @@ describe("Task 1503 AC2 — writeForeignFlowToOhlcv updates OHLCV row", () => {
       db,
     );
 
-    expect(result.changes).toBeGreaterThanOrEqual(0);
+    // ARCH-DAILY-FOREIGN-FLOW-TABLE: unconditional upsert — always 1, never deferred.
+    expect(result.changes).toBe(1);
 
+    // Authoritative row lands in daily_foreign_flow (SSOT-frozen: daily_ohlcv.foreign_* untouched).
     const row = db
       .prepare<{ foreign_net_vol: number | null }, []>(
-        `SELECT foreign_net_vol FROM daily_ohlcv WHERE code = 'VCB' AND date = '2026-04-19'`,
+        `SELECT foreign_net_vol FROM daily_foreign_flow WHERE code = 'VCB' AND date = '2026-04-19'`,
       )
       .get();
 
     expect(row).not.toBeNull();
     expect(row!.foreign_net_vol).toBe(400); // 1000 - 600
+
+    // daily_ohlcv.foreign_net_vol stays NULL — writer no longer touches it.
+    const legacyRow = db
+      .prepare<{ foreign_net_vol: number | null }, []>(
+        `SELECT foreign_net_vol FROM daily_ohlcv WHERE code = 'VCB' AND date = '2026-04-19'`,
+      )
+      .get();
+    expect(legacyRow!.foreign_net_vol).toBeNull();
 
     db.close();
   });
@@ -203,13 +237,17 @@ describe("Task 1503 AC2 — writeForeignFlowToOhlcv updates OHLCV row", () => {
 // AC3: writeForeignFlowToOhlcv returns 0 when no matching OHLCV row
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("Task 1503 AC3 (UPDATED) — writeForeignFlowToOhlcv merge-only: deferred on absent row", () => {
-  it("FIX-OHLCV-WRITER-SSOT-DURABLE: returns changes=0 and inserts NO row when OHLCV row absent", async () => {
-    // FIX-OHLCV-WRITER-SSOT-DURABLE: The old DPI-4 UPSERT stub-insert behavior
-    // (changes=1 + stub row with close=0) is replaced by merge-only UPDATE.
-    // When no OHLCV row exists: changes=0, no row created (honest gap beats fake close=0).
+describe("Task 1503 AC3 (RE-UPDATED per ARCH-DAILY-FOREIGN-FLOW-TABLE cutover, TASK_2002) — writeForeignFlowToOhlcv: unconditional upsert, no daily_ohlcv stub", () => {
+  it("ARCH-DAILY-FOREIGN-FLOW-TABLE: returns changes=1 (write always lands in daily_foreign_flow); daily_ohlcv still gets NO stub row", async () => {
+    // FIX-OHLCV-WRITER-SSOT-DURABLE (retired): merge-only UPDATE deferred (changes=0)
+    // when no OHLCV row existed. ARCH-DAILY-FOREIGN-FLOW-TABLE (TASK_2002) structurally
+    // eliminates the deferral: the write now unconditionally upserts into
+    // daily_foreign_flow, which has no NOT NULL price coupling. daily_ohlcv itself
+    // still never gets a stub row — that invariant is preserved, just via a
+    // different mechanism (the writer no longer touches daily_ohlcv at all).
     const db = buildBaseDb();
     addForeignFlowCols(db);
+    addDailyForeignFlowTable(db);
 
     // No OHLCV row seeded for HPG/2026-04-19
     const writeFn = await resolveWriteFn();
@@ -228,16 +266,25 @@ describe("Task 1503 AC3 (UPDATED) — writeForeignFlowToOhlcv merge-only: deferr
       db,
     );
 
-    // Merge-only: no OHLCV row to update => changes=0, deferred (not an error)
-    expect(result.changes).toBe(0);
+    // Unconditional upsert: changes=1, never 0 for a valid row.
+    expect(result.changes).toBe(1);
 
-    // No stub row created: COUNT = 0
+    // Still no stub row in daily_ohlcv: COUNT = 0 (invariant preserved).
     const row = db
       .prepare<{ cnt: number }, []>(
         `SELECT COUNT(*) AS cnt FROM daily_ohlcv WHERE code = 'HPG' AND date = '2026-04-19'`,
       )
       .get();
     expect(row!.cnt).toBe(0); // No stub row
+
+    // The row DID land in daily_foreign_flow (the whole point of the cutover).
+    const ffRow = db
+      .prepare<{ foreign_buy_vol: number }, []>(
+        `SELECT foreign_buy_vol FROM daily_foreign_flow WHERE code = 'HPG' AND date = '2026-04-19'`,
+      )
+      .get();
+    expect(ffRow).not.toBeNull();
+    expect(ffRow!.foreign_buy_vol).toBe(500);
 
     db.close();
   });

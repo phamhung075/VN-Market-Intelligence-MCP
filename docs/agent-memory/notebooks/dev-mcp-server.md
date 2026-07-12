@@ -1,19 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-07-12 — FIX-SEQUENTIAL-ANALYSIS-TOOL-DEAD-HANDLER → REVIEW
-
-**Session:** 69b0312e-df43-43a9-9e0b-bddf66d374e3 (dev-team cron dispatch, tick 14:37Z; bug discovered during FACTORY-INTERFACE-sequential-confidence-05-mask post-swap QA sanity check — unrelated root cause, pure registration-shape bug)
-
-`registerSequentialMarketAnalysisTools()` nested `handler: tool.handle` inside the `registerTool()` config object instead of the SDK's required 3rd positional callback (`registerTool(name, config, cb)`). Confirmed by reading the SDK source directly (`@modelcontextprotocol/sdk/dist/esm/server/mcp.js`: `registerTool(name, config, cb){ const {title,description,inputSchema,outputSchema,annotations,_meta} = config; ... cb }` then `_createRegisteredTool(...,handler)` stores `handler: handler` verbatim) — config only destructures 6 known keys, so the unknown `handler` key was silently dropped and `cb` stayed `undefined`. Every real call hit `server.ts`'s per-call telemetry wrapper (`originalHandler(args)`) with `originalHandler=undefined`, throwing exactly "originalHandler is not a function". This was the ONLY real `registerTool()` call in the codebase (grepped) — no sibling instances of the pattern to fix.
-
-Fix: moved `tool.handle` to the 3rd positional arg — zero change to tool name/description/schema/response contract. Added `FIX-SEQUENTIAL-ANALYSIS-TOOL-DEAD-HANDLER.test.ts`: registers on a REAL `McpServer` instance (no mocking) and asserts `_registeredTools[...].handler` is callable and returns a real result. Proved RED-before via `git stash` of just the fix line + re-run: confirmed `typeof handler === "undefined"` / `TypeError: handler is not a function`, matching the reported bug exactly, then `git stash pop` restored the fix → GREEN (2/2).
-
-Verified: new test 2/2 pass; `tool-registry-parity.test.ts` + `FACTORY-INTERFACE-sequential-confidence-05-mask.test.ts` unaffected (24/24 together). `bun tsc --noEmit` clean. `083-tool-analysis.test.ts`/`308-tool-registry.test.ts`/`230-remove-dead-tools.test.ts` together: 38 pass/2 fail — the 2 fails are pre-existing `search_similar_context` rag-service-unreachable network timeouts (own recurring-bug test file already exists for this), zero relation to this diff. Full bare `bun test`: 14484 pass/40 skip/89 fail/7 errors + known Bun-engine crash at tail (1311.9s) — consistent with this zone's documented ~80-90 pre-existing-failure sandbox baseline; toolCount=183 unchanged (registration-argument-order-only diff).
-
-Commit: this agent's own direct commit `90af32aa8` (RUN-SOLO, explicit-path staging, 2 files only — fix + new regression test). Dispatcher owns the board row — no orch-state write from this agent (per task's explicit constraint). **Redeploy needed**: no container rebuild/swap performed (user/ops-gated) — the live container still serves the pre-fix broken registration until rebuilt+restarted.
-
-Zone health: tsc clean, targeted regression 2/2 (RED-before/GREEN-after via git-stash proof), toolCount=183 unchanged, full suite 89 fail/7 errors all pre-existing (zero overlap grepped) | HEALTHY.
-
 ## 2026-07-12 — TASK_2000 (SUBTASK-DAILY-FF-1, ARCH-DAILY-FOREIGN-FLOW-TABLE) → REVIEW
 
 **Session:** 69b0312e-df43-43a9-9e0b-bddf66d374e3 (dev-team cron dispatch, tick 16:07Z; PM handoff `docs/handoffs/TASK_2000-daily-ff-schema.md`)
@@ -41,3 +27,17 @@ Verified: new suite 6/6 pass (24 expect). Regression: `daily-foreign-flow-schema
 Commit: this agent's own direct commit (RUN-SOLO, explicit-path staging — schema.ts + new test + 2 doc files + journal). Dispatcher owns the board row — no orch-state write from this agent (task's explicit constraint). **Redeploy needed to reach the live DB**: no container rebuild/swap performed (user/ops-gated); backfill runs automatically+safely on the next mcp-server boot against the live named-volume DB (not run manually against it per task's data-safety instruction). Unblocks SUBTASK-DAILY-FF-3 (TASK_2002, writer cutover) per R-6.
 
 Zone health: tsc clean, 6 new + 123 regression pass/0 fail, toolCount=183 unchanged, additive+idempotent (INSERT OR IGNORE only, never overwrites) | HEALTHY.
+
+## 2026-07-12 — TASK_2002 (SUBTASK-DAILY-FF-3, ARCH-DAILY-FOREIGN-FLOW-TABLE, writer cutover) → REVIEW
+
+**Session:** 69b0312e-df43-43a9-9e0b-bddf66d374e3 (dev-team cron dispatch, tick 17:07Z; PM handoff `docs/handoffs/TASK_2002-daily-ff-writer-cutover.md`)
+
+Rewrote `writeForeignFlowToOhlcv` (`ohlcvForeignFlowStore.ts`) to unconditional `INSERT...ON CONFLICT(code,date) DO UPDATE` into `daily_foreign_flow` — R-1 structurally closed, `changes` can no longer be 0 for a valid row. Stopped writing `daily_ohlcv.foreign_*` entirely (any mode); added SSOT-freeze JSDoc + synced the now-stale Writer-G inventory row in `ohlcvWriteService.ts`. Return shape/signature unchanged — zero caller edits (`foreignFlowFetcher.ts`, `pushForeignFlowHandler.ts` confirmed).
+
+3 legacy test files directly called the rewritten function with the retired merge-only `changes=0` contract baked into assertions — updated in place (`1503-ohlcv-foreign-flow.test.ts` AC2/AC3, `DPI-4-foreign-flow-upsert.test.ts` AC-1/AC-7) and deleted 1 fully-superseded (`2026-ohlcv-foreign-flow-merge.test.ts` — every assertion duplicated by the new file under new semantics). New `daily-foreign-flow-table.test.ts` (T-1/T-2/T-4/T-5 + upsert-path + generic-across-codes + empty-input, 8 tests).
+
+Verified: new suite 8/8; 5-file targeted set (new + backfill + schema + 1503 + DPI-4) 38/38; broader 15-file foreign-flow sweep 120/120, 0 fail. `bun tsc --noEmit` clean. toolCount=183 unchanged.
+
+Commit: this agent's own direct commit (RUN-SOLO, explicit-path staging). Dispatcher owns the board row. **Redeploy rides the pending user/ops-gated mcp-server rebuild** (same one applying TASK_2000+2001) — do not run. **Flagged, not fixed (out of scope):** Class-A read sites (marketWideForeignFlowTool.ts etc., SUBTASK-DAILY-FF-4) still query raw `daily_ohlcv` — until they migrate to `daily_ohlcv_with_flow`, freshly-written post-cutover foreign-flow data is invisible to them (view COALESCE only helps view readers). PM should sequence -4/-5 promptly after this ships.
+
+Zone health: tsc clean, 8 new + 158 regression pass/0 fail (5-file + 15-file sweeps), toolCount=183 unchanged | HEALTHY.

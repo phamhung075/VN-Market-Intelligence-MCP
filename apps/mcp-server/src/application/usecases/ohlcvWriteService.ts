@@ -47,7 +47,7 @@
 // D      | scheduler/market-data/taOhlcvBackfillJob.ts        | writeOhlcvBatch       | Migrated        | Historical backfill for TA indicators
 // E      | infrastructure/fetchers/ohlcvBackfill.ts           | INSERT OR IGNORE      | In-scope bypass | Historical backfill; guarded FR-S1+validateOhlcvUnit; sentinel present
 // F      | domain/services/priceBackfillService.ts            | INSERT OR IGNORE      | In-scope bypass | Historical seed/mock only (not live-market); sentinel present
-// G      | infrastructure/db/ohlcvForeignFlowStore.ts         | UPDATE-only (merge)   | Fixed           | No INSERT stub; defers on absent row (/goal#1); changes=0 = deferred, not error
+// G      | infrastructure/db/ohlcvForeignFlowStore.ts         | N/A -- retired        | Migrated out    | ARCH-DAILY-FOREIGN-FLOW-TABLE/TASK_2002 (2026-07-12): no longer writes daily_ohlcv AT ALL (any mode). Writes exclusively to daily_foreign_flow (unconditional upsert). daily_ohlcv.foreign_* is now frozen/historical-only (TASK_2001 backfill, one-time).
 // H      | interface/mcp/routes/ohlcvBackfillHandler.ts        | writeOhlcvBatch       | Migrated        | CONTAM-10-WRITER-H (2026-07-08): VPS backfill queue push (~15-30min cadence)
 //
 // Note: There is no Writer B (label skipped for historical continuity).
@@ -68,7 +68,11 @@
 // ARCHITECTURAL VIOLATION and must be escalated to the architect.
 //
 // Writer G (ohlcvForeignFlowStore.ts) was converted to UPDATE-only (no INSERT)
-// as of FIX-OHLCV-WRITER-SSOT-DURABLE -- it no longer needs the sentinel.
+// as of FIX-OHLCV-WRITER-SSOT-DURABLE, then migrated OUT of daily_ohlcv entirely
+// as of ARCH-DAILY-FOREIGN-FLOW-TABLE/TASK_2002 (2026-07-12) -- it now writes
+// exclusively to the separate daily_foreign_flow table and never needed (nor
+// needs) the daily_ohlcv sentinel. See ohlcvForeignFlowStore.ts's own SSOT-FREEZE
+// JSDoc block for the daily_ohlcv.foreign_* freeze annotation (R-7 mitigation).
 //
 // =============================================================================
 // FUTURE HARDENING (follow-on LINT-OHLCV-WRITE-BYPASS -- backlog, not P0)

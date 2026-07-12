@@ -33,3 +33,13 @@
 - Sync vs async function signature — sync: db.exec is synchronous in bun:sqlite, no I/O to await; matches most other migration helpers in the file
 **why-decision:** R-6 ordering requires this to run on every boot before writer cutover (SUBTASK-DAILY-FF-3); wiring immediately after the existing legacy-column migration keeps both "legacy columns guaranteed to exist" and "new table guaranteed to exist" preconditions satisfied at call time.
 **why-change:** no change from handoff/architect design § Change 4 — exact SQL, additive/idempotent as specified.
+
+### STEP dev-mcp-server-S4 · dev-mcp-server · 2026-07-12T17:35:00Z
+**task-id:** TASK_2002
+**what-done:** Rewrote `writeForeignFlowToOhlcv` to unconditional `INSERT...ON CONFLICT(code,date) DO UPDATE` into `daily_foreign_flow`; stopped writing `daily_ohlcv.foreign_*`; added SSOT-freeze JSDoc + synced stale Writer-G row in `ohlcvWriteService.ts`; new test file (T-1/T-2/T-4/T-5); updated 2 legacy test files, deleted 1 fully-superseded.
+**what-considered:**
+- Leave `2026-ohlcv-foreign-flow-merge.test.ts` red (asserts retired merge-only `changes=0` contract) vs update assertions vs delete — deleted: every assertion fully superseded by new test file (same T-1..T-4 IDs), keeping both = duplicated debt
+- Update `1503`/`DPI-4` legacy tests' `changes=0`/`daily_ohlcv.foreign_*` assertions vs leave red as "expected fail" — updated in place (3rd revision marker, same codebase convention as prior "(UPDATED)" tags) since PM's "~15 files stay green" AC requires it and stale-contract assertions are dead-code debt
+- Sync Writer-G inventory row in `ohlcvWriteService.ts` (SSOT doc for the writer-bypass class) vs leave stale — synced: it now claims Writer G still touches `daily_ohlcv`, which is false post-cutover
+**why-decision:** `changes=0` is structurally impossible now (task's explicit point) — any test asserting it as correct behavior encodes removed behavior, must be updated not preserved.
+**why-change:** no change from handoff/design — SQL, freeze annotation, caller-compat all per spec; test-file surgery was implied necessity, not scope creep (the 3 files directly call the rewritten function with the old contract baked into assertions).

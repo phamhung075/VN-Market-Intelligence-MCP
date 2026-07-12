@@ -25,9 +25,6 @@ daily_foreign_flow (code TEXT, date TEXT, foreign_buy_vol, foreign_sell_vol,
   -- new authoritative foreign-flow table. Eliminates R-1 (foreign-flow write
   -- dropped when no daily_ohlcv row exists) because none of these columns are
   -- coupled to price data / NOT NULL constraints — the write is unconditional.
-  -- Writer cutover (ohlcvForeignFlowStore.ts still merge-only UPDATE against
-  -- daily_ohlcv today) is a separate follow-on subtask (SUBTASK-DAILY-FF-3) —
-  -- NOT part of this DDL-only ship.
   -- Design: docs/handoffs/ARCH-DAILY-FOREIGN-FLOW-TABLE-architect-design.md § Change 1
   -- Schema: apps/mcp-server/src/infrastructure/db/schema-market-data.ts
   --
@@ -36,9 +33,19 @@ daily_foreign_flow (code TEXT, date TEXT, foreign_buy_vol, foreign_sell_vol,
   -- after migrateForeignFlowColumns() (same INSERT OR IGNORE, PK-guarded,
   -- safe-on-every-boot pattern). Copies every daily_ohlcv row with foreign_* data
   -- into daily_foreign_flow. Additive-only — never overwrites an existing row.
-  -- R-6 ordering constraint: MUST land + complete before the writer cutover
-  -- (SUBTASK-DAILY-FF-3) ships, or the new table starts with a subset of history.
   -- Design: docs/handoffs/ARCH-DAILY-FOREIGN-FLOW-TABLE-architect-design.md § Change 4
+  --
+  -- SUBTASK-DAILY-FF-3 / TASK_2002 (2026-07-12, WRITER CUTOVER — SHIPPED):
+  -- `writeForeignFlowToOhlcv()` (ohlcvForeignFlowStore.ts) now performs an
+  -- UNCONDITIONAL `INSERT ... ON CONFLICT(code,date) DO UPDATE` into THIS table
+  -- only. It no longer writes daily_ohlcv.foreign_* in ANY mode — those columns
+  -- are FROZEN/historical-only from this point on (populated once by the
+  -- SUBTASK-DAILY-FF-2 backfill above, never again). R-1 is now structurally
+  -- closed: `changes` can never be 0 for a valid (non-empty) row. Class-A read
+  -- sites (SUBTASK-DAILY-FF-4, not yet shipped) still query raw daily_ohlcv —
+  -- until they migrate to daily_ohlcv_with_flow, freshly-written post-cutover
+  -- foreign-flow data is only visible via the view, not via raw daily_ohlcv.
+  -- Design: docs/handoffs/ARCH-DAILY-FOREIGN-FLOW-TABLE-architect-design.md § Change 2
 
 daily_ohlcv_with_flow (VIEW — daily_ohlcv LEFT JOIN daily_foreign_flow ON code,date)
   -- Compatibility read view: same column names as daily_ohlcv's legacy foreign_*
