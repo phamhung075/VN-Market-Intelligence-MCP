@@ -41,6 +41,18 @@
 #     — see "DEPENDS-ON GATE" section below. Applied DURING candidate
 #     selection so a blocked top-ranked row can never starve a lower-ranked
 #     but eligible row out of the same tick's pick.
+#   - not detail-authoritative DEFERRED (FIX-DEVTEAM-BOUNDED1-DETAIL-
+#     DISPOSITION-GATE, 2026-07-12) — see "DETAIL-DEFERRED GATE" section
+#     below. A row whose backlog-detail.json status starts with "DEFERRED"
+#     (case-insensitive; covers DEFERRED, DEFERRED-INFRA, etc.) is held for
+#     deliberate human/router grooming, never auto-promoted here.
+#   - not a non-dev-owner + null-next_agent row (FIX-DEVTEAM-BOUNDED1-
+#     DETAIL-DISPOSITION-GATE, 2026-07-12) — see "NON-DEV-OWNER GATE"
+#     section below. A row whose detail-authoritative owner names a
+#     deliberate-launch, non-dev agent (po/ops/architect/etc.) AND whose
+#     board row carries no `next_agent` would otherwise be mis-routed to the
+#     generic `developer` zone-detect placeholder; held for router-adjudicated
+#     dispatch instead.
 #   - ordered by priority_rank ascending (0=highest: P0/critical,
 #     1: P1/high, 2: P2/medium/normal, 3: P3/low, 9: missing/unrecognized —
 #     priority values in the wild are a messy mix of "P0".."P3" and
@@ -144,6 +156,52 @@
 #   - Conservative default: absent/null supervised in BOTH places = NOT
 #     supervised (promotable) — preserves baseline behavior for the common
 #     unsupervised case.
+#
+# DETAIL-DEFERRED GATE (FIX-DEVTEAM-BOUNDED1-DETAIL-DISPOSITION-GATE,
+# 2026-07-12):
+# root cause — BCTC-HIST-VPS-BACKFILL (detail status "DEFERRED-INFRA") was
+# re-picked by this script at 09:37Z and again at 10:07Z despite being
+# deferred at the detail layer; dev-team caught it pre-dispatch and
+# BLOCKED it by hand both times. The board layer never mirrors a detail
+# DEFERRED* disposition back onto the thin backlog[] row's `status` field
+# (it stays plain BACKLOG/TODO there), so the existing status filter
+# (`status ∈ {BACKLOG, TODO}`) cannot see it — only a dedicated read of
+# backlog-detail.json's own status field closes this class:
+#   - looked up purely by `.id` in `$detail_items[.id].status` (no
+#     `.detail_ref` precondition, mirrors the supervised/children precedent).
+#   - a row is gated if that detail status is a non-null string whose
+#     ascii-downcased value STARTS WITH "deferred" (covers DEFERRED,
+#     DEFERRED-INFRA, and any future DEFERRED-<reason> variant — 11 rows
+#     carry a detail-DEFERRED* status live today).
+#   - Conservative default: absent/null detail status = NOT deferred
+#     (promotable) — preserves baseline behavior for the common case.
+#
+# NON-DEV-OWNER GATE (FIX-DEVTEAM-BOUNDED1-DETAIL-DISPOSITION-GATE,
+# 2026-07-12):
+# root cause — the two rows queued immediately behind BCTC-HIST-VPS-BACKFILL
+# for the next BOUNDED-1 picks, FIX-COWORK-SPAWN-IDENTITY-PREAMBLE-OFFFLOW
+# and IND-ROADMAP-LEDGER, both carry detail `owner:"po"` (a deliberate-launch
+# owner, not a dev-* implementer) and a board row with `next_agent` null —
+# exactly the gap already documented in the "NON-CODE / DESIGN row
+# `next_agent` gap" note (docs/agents/dev-team/flow/main.md, 2026-07-09):
+# with no `next_agent`, zone-detect's Tier-3 fallback would route the claimed
+# row to the generic `developer` placeholder instead of the real owner. This
+# gate closes the class at promotion time instead of relying on a post-claim
+# hand-correction:
+#   - a row is gated ONLY if BOTH hold:
+#     1. `$detail_items[.id].owner` is a non-empty string that does NOT match
+#        the dev-role pattern `^dev(-|$)|^developer$` (case-insensitive) —
+#        i.e. it names po/ops/architect/agents-architect/ba/pm/qa/
+#        agent-father/system-auditor/... a deliberate-launch owner, AND
+#     2. the BOARD row's `.next_agent` is null/absent/empty (a dev-owned or
+#        already-next_agent-stamped row is NOT gated by this rule).
+#   - Scoped to THIS unattended BOUNDED-1 idle-pickup lane only — it does not
+#     ban owner-scoped rows globally; they still launch normally via the
+#     router-adjudicated path (Step 1 PO triage / manual dispatch), this gate
+#     only removes them from idle auto-pickup eligibility.
+#   - Conservative default: absent/empty detail owner, OR a dev-role owner,
+#     OR a non-empty board `next_agent` = NOT gated (promotable) — preserves
+#     baseline behavior for the common case.
 #
 # Mutation (single row only):
 #   backlog[] -> ready[] ; status BACKLOG/TODO -> READY ; stamp promoted_at /
@@ -254,6 +312,40 @@ def effective_children($detail_items):
 def is_epic_wrapper($detail_items):
   (effective_children($detail_items) | length) > 0;
 
+# Detail-authoritative DEFERRED* disposition for a candidate row (`.` = the
+# backlog row object). FIX-DEVTEAM-BOUNDED1-DETAIL-DISPOSITION-GATE,
+# 2026-07-12 — see "DETAIL-DEFERRED GATE" header comment above. Looked up
+# purely by `.id` (no `.detail_ref` precondition), same precedence pattern as
+# effective_supervised/effective_children. Conservative default: absent/null
+# detail status = NOT deferred (promotable).
+def is_detail_deferred($detail_items):
+  if (.id == null) then false
+  else
+    ($detail_items[.id].status) as $ds
+    | if ($ds == null) or (($ds | type) != "string") then false
+      else ($ds | ascii_downcase | startswith("deferred"))
+      end
+  end;
+
+# Non-dev detail owner + null board next_agent for a candidate row (`.` =
+# the backlog row object). FIX-DEVTEAM-BOUNDED1-DETAIL-DISPOSITION-GATE,
+# 2026-07-12 — see "NON-DEV-OWNER GATE" header comment above. Gated ONLY when
+# BOTH conditions hold; conservative default (absent/empty owner, dev-role
+# owner, or a non-empty board next_agent) = NOT gated (promotable).
+def is_non_dev_owner_unrouted($detail_items):
+  if (.id == null) then false
+  else
+    ($detail_items[.id].owner) as $owner
+    | ( ($owner != null) and (($owner | type) == "string") and ($owner != "") ) as $owner_present
+    | if ($owner_present | not) then false
+      else
+        ($owner | test("^dev(-|$)|^developer$"; "i")) as $is_dev_owner
+        | if $is_dev_owner then false
+          else ((.next_agent // "") == "")
+          end
+      end
+  end;
+
 if (wip >= 1) then
   .   # BOUNDED-1 GATE: WIP>=1 — refuse to promote (no-op, idempotent re-run-safe)
 else
@@ -275,6 +367,8 @@ else
       | select((.value | effective_supervised($detail_items)) != true)
       | select((.value | is_epic_wrapper($detail_items)) != true)
       | select(.value | deps_satisfied($detail_items; $status_map))
+      | select((.value | is_detail_deferred($detail_items)) != true)
+      | select((.value | is_non_dev_owner_unrouted($detail_items)) != true)
       | { idx: .key, row: .value, rank: (.value | priority_rank) }
     ] | sort_by([.rank, .idx])
   ) as $candidates
