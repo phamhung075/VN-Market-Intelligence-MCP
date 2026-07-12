@@ -24,3 +24,12 @@
 - Proceed with commit after manual git-contention check — chosen.
 **why-decision:** No destructive/irreversible action was skipped; git commit itself is safe/serializable at the VCS layer, and the explicit-paths-only staging avoids capturing unrelated dirty-tree files from other concurrent agents.
 **why-change:** Deviates from literal instruction (mutex claim via MCP tool) due to a hard tool-availability constraint in this session, not a judgment call to skip a safety gate — flagged prominently in the RETURN block for the dispatcher.
+
+### STEP developer-S3 · developer · 2026-07-12T13:20:00Z
+**task-id:** FIX-DEVTEAM-BOUNDED1-DETAIL-NEXTAGENT-NONDEV-GATE
+**what-done:** Added 4th sibling gate `is_non_dev_next_agent_unrouted` to `scripts/devteam-backlog-promote-bounded1.jq` — mirrors `is_non_dev_owner_unrouted` exactly but keys off detail `.next_agent` instead of `.owner` (closes the case where `owner` is absent but `next_agent` already names a non-dev handler, e.g. `FEAT-SEVERITY-OVERRIDE-SURFACING`). Extended the shared verifier (`devteam-bounded1-detail-disposition-gate-verify.sh`) with AC-4 pool/picker/assertion + widened the control-pool query to also exclude the new class (prevents future false-positive control failures).
+**what-considered:**
+- Folding into existing `is_non_dev_owner_unrouted` (single function, two field names) — rejected: task spec + existing file convention (one predicate per named gate) favor an independent, separately-named predicate; also keeps the "AFTER non-dev-owner select" ordering explicit and each gate's regression story isolated.
+- New standalone verifier script vs extending the existing one — chose extending: same fixture-harness shape (`make_isolated_fixture`, `run_promote_picked_id`), avoids duplicating ~150L of boilerplate, task brief explicitly allowed either.
+**why-decision:** Proved against git-HEAD (pre-fix) copy of the jq that the isolated `FEAT-SEVERITY-OVERRIDE-SURFACING` fixture flips PROMOTED->NOT-PROMOTED only after the new gate — load-bearing, not a false-green. Spot-checked 3 more class members (`AUDIT-FC-FRED-MACRO`, `FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP`, `FOLLOW-ON-CWKSCH-3`) individually gated; full verifier control assertion still passes (no over-block).
+**why-change:** No change from task brief.

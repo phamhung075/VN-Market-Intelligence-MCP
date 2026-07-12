@@ -58,6 +58,17 @@
 #     whose backlog-detail.json entry carries `plan_only:true` is a
 #     plan-first / architect-recon ask, not an autonomous code-fix, and is
 #     never auto-promoted here regardless of its board-layer status.
+#   - not a non-dev detail next_agent + null-board-next_agent row
+#     (FIX-DEVTEAM-BOUNDED1-DETAIL-NEXTAGENT-NONDEV-GATE, 2026-07-12) — see
+#     "NON-DEV-NEXT_AGENT GATE" section below. A row whose detail-authoritative
+#     `next_agent` names a deliberate non-dev specialist (architect/ba/pm/
+#     ops*/po/qa/agent-father/agents-architect/system-auditor/...) AND whose
+#     board row carries no `next_agent` would otherwise be mis-routed to the
+#     generic `developer` zone-detect placeholder; held for router-adjudicated
+#     dispatch instead. Sibling of the NON-DEV-OWNER gate above but keys off
+#     `next_agent` instead of `owner` — catches rows whose detail `owner` is
+#     absent/empty (owner gate silent) but whose detail `next_agent` already
+#     names the real non-dev handler.
 #   - ordered by priority_rank ascending (0=highest: P0/critical,
 #     1: P1/high, 2: P2/medium/normal, 3: P3/low, 9: missing/unrecognized —
 #     priority values in the wild are a messy mix of "P0".."P3" and
@@ -233,6 +244,37 @@
 #     plan_only row is entirely unaffected — it still launches normally via
 #     the router-adjudicated path (Step 1 PO triage / manual dispatch).
 #
+# NON-DEV-NEXT_AGENT GATE (FIX-DEVTEAM-BOUNDED1-DETAIL-NEXTAGENT-NONDEV-GATE,
+# 2026-07-12):
+# root cause — FEAT-SEVERITY-OVERRIDE-SURFACING (board `status:BACKLOG`, only
+# a `detail_ref`, no inline `next_agent`/`owner`) carries a backlog-detail.json
+# entry with `next_agent:"architect"` but NO `owner` field at all — the
+# NON-DEV-OWNER gate above reads `$detail_items[.id].owner`, which is
+# absent/empty here, so it evaluates NOT gated and this multi-zone
+# architect-led FEATURE would fall straight into `ready[]`, where zone-detect's
+# Tier-3 fallback mis-routes it to a single generic `developer` (see the
+# "NON-CODE / DESIGN row `next_agent` gap" note below), skipping the required
+# ba->architect->pm SPRINT-M relay entirely. dev-team caught it pre-dispatch
+# (runtime-withheld 2 ticks, 12:37Z + 13:07Z). This gate closes the class
+# structurally, independent of whether `owner` happens to be populated:
+#   - a row is gated ONLY if BOTH hold:
+#     1. `$detail_items[.id].next_agent` is a non-empty string that does NOT
+#        match the dev-role pattern `^dev(-|$)|^developer$` (case-insensitive)
+#        — i.e. it names architect/ba/pm/ops*/po/qa/agent-father/
+#        agents-architect/system-auditor/... a deliberate non-dev handler, AND
+#     2. the BOARD row's `.next_agent` is null/absent/empty (a row that
+#        already carries its own board-level `next_agent` is NOT gated by
+#        this rule — the dispatcher will honor it directly).
+#   - Composed as an INDEPENDENT `select()` AFTER the existing NON-DEV-OWNER
+#     select in the candidate filter chain (fail-toward-safety: it can only
+#     REMOVE rows from idle auto-pickup; deliberate router/PO/architect
+#     dispatch of a gated row is entirely unaffected).
+#   - Looked up purely by `.id` (no `.detail_ref` precondition), same
+#     precedence pattern as every sibling gate above.
+#   - Conservative default: absent/null/empty detail `next_agent`, OR a
+#     dev-role detail `next_agent`, OR a non-empty board `next_agent` = NOT
+#     gated (promotable) — preserves baseline behavior for the common case.
+#
 # Mutation (single row only):
 #   backlog[] -> ready[] ; status BACKLOG/TODO -> READY ; stamp promoted_at /
 #   promoted_by / promotion_note. Also stamps
@@ -390,6 +432,28 @@ def is_plan_only($detail_items):
     | ($po == true)
   end;
 
+# Non-dev detail next_agent + null board next_agent for a candidate row
+# (`.` = the backlog row object). FIX-DEVTEAM-BOUNDED1-DETAIL-NEXTAGENT-
+# NONDEV-GATE, 2026-07-12 — see "NON-DEV-NEXT_AGENT GATE" header comment
+# above. Sibling of is_non_dev_owner_unrouted but keys off `next_agent`
+# instead of `owner` — same structure/precedence, different field. Gated
+# ONLY when BOTH conditions hold; conservative default (absent/empty detail
+# next_agent, dev-role detail next_agent, or a non-empty board next_agent) =
+# NOT gated (promotable).
+def is_non_dev_next_agent_unrouted($detail_items):
+  if (.id == null) then false
+  else
+    ($detail_items[.id].next_agent) as $dna
+    | ( ($dna != null) and (($dna | type) == "string") and ($dna != "") ) as $dna_present
+    | if ($dna_present | not) then false
+      else
+        ($dna | test("^dev(-|$)|^developer$"; "i")) as $is_dev_next_agent
+        | if $is_dev_next_agent then false
+          else ((.next_agent // "") == "")
+          end
+      end
+  end;
+
 if (wip >= 1) then
   .   # BOUNDED-1 GATE: WIP>=1 — refuse to promote (no-op, idempotent re-run-safe)
 else
@@ -414,6 +478,7 @@ else
       | select((.value | is_detail_deferred($detail_items)) != true)
       | select((.value | is_non_dev_owner_unrouted($detail_items)) != true)
       | select((.value | is_plan_only($detail_items)) != true)
+      | select((.value | is_non_dev_next_agent_unrouted($detail_items)) != true)
       | { idx: .key, row: .value, rank: (.value | priority_rank) }
     ] | sort_by([.rank, .idx])
   ) as $candidates

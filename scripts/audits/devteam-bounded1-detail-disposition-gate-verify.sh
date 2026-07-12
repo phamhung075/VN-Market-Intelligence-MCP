@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # devteam-bounded1-detail-disposition-gate-verify.sh
 # Regression verifier for FIX-DEVTEAM-BOUNDED1-DETAIL-DISPOSITION-GATE (2026-07-12)
-# + its 3rd sibling FIX-DEVTEAM-BOUNDED1-PLAN-ONLY-GATE (2026-07-12).
-# Brief: this fix (scripts/devteam-backlog-promote-bounded1.jq AC-1/AC-2/AC-3) —
+# + its 3rd sibling FIX-DEVTEAM-BOUNDED1-PLAN-ONLY-GATE (2026-07-12)
+# + its 4th sibling FIX-DEVTEAM-BOUNDED1-DETAIL-NEXTAGENT-NONDEV-GATE (2026-07-12).
+# Brief: this fix (scripts/devteam-backlog-promote-bounded1.jq AC-1/AC-2/AC-3/AC-4) —
 # see docs/agents/dev-team/flow/main.md § Idle-capacity backlog pickup (BOUNDED-1).
 #
 # Proves, against the CURRENT live docs/data/orch/orch-state.json +
@@ -18,10 +19,19 @@
 #         live proof row is FIX-MCP-MEMORY-CODE-LEAK (board
 #         `status:BACKLOG,next_agent:null`; detail `plan_only:true,
 #         next_agent:"architect",owner:"dev",status:"TODO"`).
+#   AC-4: a row whose detail `next_agent` is a non-dev deliberate handler
+#         (architect/ba/pm/ops*/po/qa/...) AND whose board `next_agent` is
+#         null is NEVER auto-promoted, even when it defeats AC-1/AC-2/AC-3
+#         (non-DEFERRED status, absent/empty detail owner, not plan_only) —
+#         the live proof row is FEAT-SEVERITY-OVERRIDE-SURFACING (board
+#         `status:BACKLOG`, only a `detail_ref`, no inline `next_agent`/
+#         `owner`; detail `next_agent:"architect"`, no `owner` field at all —
+#         the AC-2 owner gate is silent here because `owner` is absent, not
+#         non-dev).
 #   CONTROL: a clean row (no detail-DEFERRED*, no non-dev-owner+null-
 #            next_agent block, no supervised/epic/depends_on block, no
-#            plan_only) IS still promoted — proves the new gates do not
-#            over-block.
+#            plan_only, no non-dev-next_agent+null-board-next_agent block)
+#            IS still promoted — proves the new gates do not over-block.
 #
 # READ-ONLY: never writes back to the live orch-state.json/backlog-detail.json
 # (no orch-apply.sh call anywhere) — all fixtures are synthetic copies in a
@@ -133,6 +143,20 @@ jq -r '
 
 jq -r '
   .items[]
+  | select(.next_agent != null and (.next_agent|type)=="string" and .next_agent != "")
+  | select((.next_agent | test("^dev(-|$)|^developer$"; "i")) | not)
+  | select(((.status // "" | ascii_downcase) | startswith("deferred")) | not)
+  | select((.supervised // false) != true)
+  | select(((.children // []) | length) == 0)
+  | select((.depends_on // null) == null)
+  | select((.depends // null) == null)
+  | select((.blocked_by // null) == null)
+  | select((.plan_only // false) != true)
+  | .id
+' "$DETAIL" > "$WORK/ac4-pool.txt"
+
+jq -r '
+  .items[]
   | select(((.status // "" | ascii_downcase) | startswith("deferred")) | not)
   | select((.supervised // false) != true)
   | select(((.children // []) | length) == 0)
@@ -141,6 +165,7 @@ jq -r '
   | select(((.blocked_by // []) | length) == 0)
   | select((.owner // "") == "" or (.owner | test("^dev(-|$)|^developer$"; "i")))
   | select((.plan_only // false) != true)
+  | select((.next_agent // "") == "" or (.next_agent | test("^dev(-|$)|^developer$"; "i")))
   | .id
 ' "$DETAIL" > "$WORK/control-pool.txt"
 
@@ -175,6 +200,18 @@ pick_first_ac3() {
   return 1
 }
 
+pick_first_ac4() {
+  while IFS= read -r id; do
+    [ -z "$id" ] && continue
+    if [ "$(board_backlog_status_ok "$id")" = "true" ] \
+       && [ "$(board_next_agent_empty "$id")" = "true" ] \
+       && [ "$(board_inline_clean "$id")" = "true" ]; then
+      echo "$id"; return 0
+    fi
+  done < "$WORK/ac4-pool.txt"
+  return 1
+}
+
 pick_first_control() {
   while IFS= read -r id; do
     [ -z "$id" ] && continue
@@ -189,10 +226,12 @@ pick_first_control() {
 AC1_ID=""
 AC2_ID=""
 AC3_ID=""
+AC4_ID=""
 CONTROL_ID=""
 AC1_ID=$(pick_first_ac1) || true
 AC2_ID=$(pick_first_ac2) || true
 AC3_ID=$(pick_first_ac3) || true
+AC4_ID=$(pick_first_ac4) || true
 CONTROL_ID=$(pick_first_control) || true
 
 if [ -n "$AC1_ID" ]; then
@@ -232,6 +271,19 @@ if [ -n "$AC3_ID" ]; then
   fi
 else
   echo "[SKIP] AC-3: no eligible plan_only fixture candidate in live data"
+fi
+
+if [ -n "$AC4_ID" ]; then
+  make_isolated_fixture "$AC4_ID" "$WORK/ac4.json"
+  PICKED=$(run_promote_picked_id "$WORK/ac4.json")
+  if [ "$PICKED" = "$AC4_ID" ]; then
+    echo "[FAIL] AC-4 regression: non-dev-next_agent/null-board-next_agent row $AC4_ID WAS promoted"
+    FAIL=1
+  else
+    echo "[PASS] AC-4: non-dev-next_agent/null-board-next_agent row $AC4_ID NOT promoted (picked='${PICKED:-<none>}')"
+  fi
+else
+  echo "[SKIP] AC-4: no eligible non-dev-next_agent/null-board-next_agent fixture candidate in live data"
 fi
 
 if [ -n "$CONTROL_ID" ]; then
