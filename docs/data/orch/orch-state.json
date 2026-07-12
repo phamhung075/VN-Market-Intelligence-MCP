@@ -315,12 +315,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "TASK_2001",
-    "next_agent": "dev-mcp-server",
-    "next_action": "BOUNDED-1 auto-pickup claim of TASK_2001 — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-12T16:49:53Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "await next cron tick. TASK_2001 done unblocks TASK_2002 (writer cutover — data-sensitive, pre-verify carefully). PENDING user-gated redeploys: mcp-server (FIX-SEQUENTIAL + TASK_2000 schema + TASK_2001 backfill), news-fetch (FACTORY-NEWS).",
+    "updated_at": "2026-07-12T16:59:59Z",
+    "updated_by": "dev-team (merge-gate close TASK_2001)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7517,6 +7517,35 @@
         "verified_by": "dev-team",
         "commit": "fd1d19191",
         "merge_gate": "PASS: index-check rc0 + RAW new schema suite 15/15 (dispatcher re-ran) + regression 123/123 + tsc0; commit fd1d19191 atomic (6 files TASK_2000-scoped, no peer sweep); DJ-GATE-1 present; full-suite killed (zone Bun tail-crash) but partials grep-clean for new identifiers. NOT LIVE: mcp-server rebuild user-gated."
+      },
+      {
+        "id": "TASK_2001",
+        "type": "DEVELOPMENT",
+        "title": "SUBTASK-DAILY-FF-2: one-time backfill from legacy daily_ohlcv.foreign_*",
+        "zone": "apps/mcp-server/",
+        "status": "DONE_VERIFIED",
+        "priority": "P1",
+        "size": "M",
+        "depends_on": [
+          "TASK_2000"
+        ],
+        "blocks": [
+          "TASK_2002"
+        ],
+        "created_at": "2026-07-10T19:30:00Z",
+        "created_by": "pm",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "handoff": "docs/handoffs/TASK_2001-daily-ff-backfill.md",
+        "note": "SUBTASK-DAILY-FF-2: idempotent one-time backfill backfillDailyForeignFlow(db) — INSERT OR IGNORE from legacy daily_ohlcv.foreign_* into daily_foreign_flow (8 cols + PK), wired into initDatabase() after migrateForeignFlowColumns(), boot-idempotent. PK-guarded insert-only (no UPDATE/DELETE; pre-existing rows untouched, proven by test). Commit 878f5414a. Tested :memory: only (not live DB). UNBLOCKS TASK_2002 (writer cutover). NOT LIVE: rides pending mcp-server rebuild (runs on boot; same redeploy as TASK_2000).",
+        "promoted_at": "2026-07-12T16:49:53Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "claimed_at": "2026-07-12T16:49:53Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "dev-mcp-server",
+        "verified_at": "2026-07-12T16:59:59Z",
+        "verified_by": "dev-team",
+        "commit": "878f5414a",
+        "merge_gate": "PASS: index-check rc0 + RAW backfill idempotency 6/6 (dispatcher re-ran) + regression 123/123 + tsc0; commit 878f5414a atomic (6 files mcp-server-scoped, no peer sweep); DJ-GATE-1 present. NOT LIVE: mcp-server rebuild user-gated."
       }
     ],
     "head": {
@@ -7992,33 +8021,7 @@
     },
     "last_triaged_at": "2026-07-12T16:49:53Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "TASK_2001",
-        "type": "DEVELOPMENT",
-        "title": "SUBTASK-DAILY-FF-2: one-time backfill from legacy daily_ohlcv.foreign_*",
-        "zone": "apps/mcp-server/",
-        "status": "IN_PROGRESS",
-        "priority": "P1",
-        "size": "M",
-        "depends_on": [
-          "TASK_2000"
-        ],
-        "blocks": [
-          "TASK_2002"
-        ],
-        "created_at": "2026-07-10T19:30:00Z",
-        "created_by": "pm",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "handoff": "docs/handoffs/TASK_2001-daily-ff-backfill.md",
-        "note": "R-6 critical: backfill MUST land before writer cutover",
-        "promoted_at": "2026-07-12T16:49:53Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "claimed_at": "2026-07-12T16:49:53Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "dev-mcp-server"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
