@@ -262,12 +262,22 @@ export async function registerSequentialMarketAnalysisTools(
 ): Promise<void> {
   const tool = createSequentialMarketAnalysisTool();
 
-  server.registerTool("sequential_market_analysis", {
-    title: "Sequential Market Analysis",
-    description: tool.description,
-    inputSchema: tool.schema,
-    handler: tool.handle,
-  });
+  // FIX-SEQUENTIAL-ANALYSIS-TOOL-DEAD-HANDLER: the MCP SDK's registerTool()
+  // signature is registerTool(name, config, cb) — the handler MUST be the
+  // 3rd positional argument. It was previously nested as a `handler` key
+  // inside the config object, which the SDK silently ignores (config only
+  // reads title/description/inputSchema/outputSchema/annotations/_meta),
+  // leaving `cb` undefined → `_registeredTools[name].handler` was undefined
+  // → every real invocation threw "originalHandler is not a function".
+  server.registerTool(
+    "sequential_market_analysis",
+    {
+      title: "Sequential Market Analysis",
+      description: tool.description,
+      inputSchema: tool.schema,
+    },
+    tool.handle,
+  );
 
   log.info("Sequential Market Analysis tool registered");
 }
