@@ -1,0 +1,18 @@
+{
+  "from": "developer",
+  "to": "po",
+  "type": "recurring_bug",
+  "priority": "normal",
+  "createdAt": "2026-07-12T07:33:16Z",
+  "payload": {
+    "summary": "Root cause of the notebook-auto-prune duplicate-heading incidents found: docs/agents/dev-team/flow/post-cycle.md Step 4.5 writes docs/agent-memory/notebooks/main.md via a bare 'Write docs/agent-memory/notebooks/main.md' instruction with NO reference to .claude/skills/notebook-write/SKILL.md's AC-3 compose-in-memory-then-single-settled-write invariant.",
+    "evidence": "Task FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH investigated item 3 (why 2 sequential Edit calls on an >200L file produced a DUPLICATE heading rather than a clean bad-drop). Code audit of scripts/agents-flow/notebook-auto-prune.sh's drop-oldest loop proved it structurally CANNOT duplicate a line -- every mutation path (`head -n`, `awk 'NR<a||NR>b'`) only ever REMOVES lines. Git archaeology of the real incident (commit 3e83f4846, parent 3e83f4846^) confirmed both duplicate heading pairs found in main.md existed inside a 196-line file -- i.e. UNDER the hook's 200L guard, so the hook never even touched the file at that size. A SECOND, independent live occurrence of the exact same corruption was found live in main.md at the start of this task (heading 'cycle-20260712T0607Z + 0637Z' duplicated back-to-back at lines 12/14, referenced by the notebook's own line 7 as the origin of this very task) -- also well under 200L. Both data points rule out the hook and point upstream to whatever process writes main.md. `.claude/skills/notebook-write/SKILL.md` AC-3 explicitly forbids 'any 2-Edit sequence where the file exceeds 200L after the first Edit' and mandates composing the full settled body in memory before a single Edit/Write -- but docs/agents/dev-team/flow/post-cycle.md Step 4.5 ('Compact Checkpoint', where main.md is written, especially during multi-tick 'compact-checkpoint offload' merges like the observed '+0637Z' merged heading) has none of that discipline; it is a 1-line instruction with no compose-then-single-write contract, no retention/prune logic reference, nothing.",
+    "observed_symptom": "docs/agent-memory/notebooks/main.md gained duplicate back-to-back '## ' headings at least twice (commit 3e83f4846 dedup + a fresh live occurrence found and manually deduped this task, 2026-07-12), always in a file well under the 200L cap.",
+    "suggested_fix": "Update docs/agents/dev-team/flow/post-cycle.md Step 4.5 to explicitly invoke `.claude/skills/notebook-write/SKILL.md`'s AC-3 compose-in-memory-then-single-settled-write pattern (or add main.md to the notebook-write skill's AC-6 contract table) before writing docs/agent-memory/notebooks/main.md, especially for multi-tick 'compact-checkpoint offload' merges where more than one Edit call risks re-inserting the heading.",
+    "out_of_scope_note": "docs/agents/dev-team/flow/post-cycle.md is outside the scripts/agents-flow/ zone this task was scoped to (developer handled scripts/agents-flow/notebook-auto-prune.sh directly, no zone specialist exists for scripts/). Filing this signal rather than editing that flow doc inline, per the task's zone boundary.",
+    "suggested_sprint_class": "FIX",
+    "zone": "docs/agents/dev-team/",
+    "owner_hint": "developer or agent-father (owns dev-team flow docs)",
+    "related_task": "FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH"
+  }
+}

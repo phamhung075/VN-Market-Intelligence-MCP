@@ -551,8 +551,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-12T07:18:33Z",
-    "_updated_by": "po (token-economy-audit-exec intake)",
+    "_updated_at": "2026-07-12T07:27:36Z",
+    "_updated_by": "po (TE dep-gate depends->depends_on)",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -5885,11 +5885,11 @@
         "est_saving": "~30-60k tok/day (partly discounted by T-01 gating)",
         "zone": "docs/agents/",
         "sprint": "TOKEN-ECONOMY-AUDIT",
-        "depends": [
-          "TE-T01"
-        ],
         "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-13",
-        "note": "SEQUENCING: depends on TE-T01 (T-01 cowork prompt-gating discounts this file's per-tick savings; land gate first, do NOT double-count). Trim size-justification markers to <=300 chars (market-analyst form), delete dated change entries (they live in git). Encode cap in agent-md-factory skill. Pure comment edit."
+        "note": "SEQUENCING: depends on TE-T01 (T-01 cowork prompt-gating discounts this file's per-tick savings; land gate first, do NOT double-count). Trim size-justification markers to <=300 chars (market-analyst form), delete dated change entries (they live in git). Encode cap in agent-md-factory skill. Pure comment edit.",
+        "depends_on": [
+          "TE-T01"
+        ]
       },
       {
         "id": "TE-T08",
@@ -5999,11 +5999,11 @@
         "est_saving": "~11k tok/day (rides every subagent context)",
         "zone": "cross-service/",
         "sprint": "TOKEN-ECONOMY-AUDIT",
-        "depends": [
-          "TE-T12"
-        ],
         "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-23",
-        "note": "SEQUENCING: depends on TE-T12 (CARD.md must exist first). CLAUDE.md is injected into EVERY subagent system prompt, so 21 router-only lines are paid by every spawn. Compress to ~5L pointing at CARD. Net -16L from CLAUDE.md; kills 3-copy pre-claim drift."
+        "note": "SEQUENCING: depends on TE-T12 (CARD.md must exist first). CLAUDE.md is injected into EVERY subagent system prompt, so 21 router-only lines are paid by every spawn. Compress to ~5L pointing at CARD. Net -16L from CLAUDE.md; kills 3-copy pre-claim drift.",
+        "depends_on": [
+          "TE-T12"
+        ]
       },
       {
         "id": "TE-T18",
@@ -6113,11 +6113,11 @@
         "est_saving": "~200k gross / ~40-60k marginal after TE-T01",
         "zone": "docs/agents/",
         "sprint": "TOKEN-ECONOMY-AUDIT",
-        "depends": [
-          "TE-T01"
-        ],
         "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-03",
-        "note": "SEQUENCING: depends on TE-T01 (prompt gating lands first; this thins only the residual WORK/ERROR ticks — do NOT double-count the SILENT-tick savings already captured by T-01). QA-GATED. Split L97-307 into work-tick.md (Step 0a drain + 0b.3 routing) + preflight-error-fallback.md (full ERROR chain). main.md -> ~95L."
+        "note": "SEQUENCING: depends on TE-T01 (prompt gating lands first; this thins only the residual WORK/ERROR ticks — do NOT double-count the SILENT-tick savings already captured by T-01). QA-GATED. Split L97-307 into work-tick.md (Step 0a drain + 0b.3 routing) + preflight-error-fallback.md (full ERROR chain). main.md -> ~95L.",
+        "depends_on": [
+          "TE-T01"
+        ]
       },
       {
         "id": "TE-T05",
@@ -7583,6 +7583,19 @@
         "sprint": "COWORK-GUARANTEED-SLOT-DURABILITY",
         "title": "Add the MISSING period-keyed publish-once dedup gate to the FB weekend sub-flows (weekly-recap.md + weekly-prediction.md)",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-FB-WEEKEND-DEDUP-GATE"
+      },
+      {
+        "id": "FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH",
+        "title": "notebook-auto-prune regex mismatch -- drops NEWEST not oldest, regresses e24e6b8b6 (false-green)",
+        "status": "REVIEW",
+        "zone": "cross-service/",
+        "priority": "normal",
+        "type": "FIX",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH",
+        "owner": "developer",
+        "next_agent": "qa",
+        "entered_review_at": "2026-07-12T07:36:27Z",
+        "review_note": "[developer] Regex widened to one ERE (optional dash/colon separators) covering ALL live notebook heading formats (compact cycle-YYYYMMDDTHHMMZ / dashed-no-seconds Tick.../ dashed-with-seconds-or-ms suffix / date-only), normalized to a 17-char zero-padded numeric sort key, sort restricted to -k2,2 -s (was unbounded -k2, silently alphabetical on ties). Added detection-only duplicate-heading tripwire (pre-cap+post-prune) as defense-in-depth; root cause of the duplicate-heading symptom found to be UPSTREAM (docs/agents/dev-team/flow/post-cycle.md Step 4.5 missing notebook-write SKILL AC-3 discipline) -- signal filed docs/signals/developer-2026-07-12T073316Z-main-notebook-writepath-missing-ac3.json, out of this zone. 5/5 regression tests GREEN (2 new real-format cases + 1 duplicate-tripwire case). AC-4 live-verified against 100%-real main.md content (HEAD + reinstated real historical section, 207L) via the actual fixed script: oldest dropped, newest retained, final 177L, zero duplicate headings -- confirmed via direct grep/wc, not self-report. Also manually deduped a second, independent live duplicate found active in main.md at task start. Full trail: docs/agent-memory/decisions/sprint-TOKEN-ECONOMY-AUDIT-developer.md STEP developer-S1/S2/S3."
       }
     ],
     "qa": [],
@@ -7615,16 +7628,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#OPS-BCTC-REFINE-REPASS-NONBANK-5T",
         "owner": "ops",
         "po_triage_20260710_round3_ctg_not_folded_note": "[po-triage-20260710-round3 08:06Z] CTG 2026-Q1 (analysis-agent Telegram #3551, composite=0.00/financial=0.00) was triaged this tick and DELIBERATELY NOT FOLDED into this batch. CTG is a BANK (B02-TCTD form); this batch is strictly NON-BANK (VHM/VIC/VRE/HSG/MWG) — a different failure CLASS (bank balance-sheet section-classifier + scalar mapping) with its own owning track: W5-FU-CTG-REFINE-96e36139 + TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST (both BLOCKED on a deploy-gate). CLARIFICATION for future triagers: the title's phrase \"proven CTG runbook\" refers to the general refine -> push_bctc_refined_unit -> finalize_bctc_refine -> reingest-bctc-report.ts PROCEDURE (proven to EXECUTE on CTG report 96e36139), NOT a claim that CTG 2026-Q1's DATA outcome is green — CTG 2026-Q1 total_assets is still 0 and its bank track is BLOCKED (deploy-gate + a genuine balance-sheet-absent root gap, CTG-CARRY-FORWARD AC-TRACK1-3 escalated 2026-07-10). Do NOT read \"proven CTG runbook\" as \"CTG is fixed\"; do NOT fold any BANK ticker into this NON-BANK batch. (Mirrors the bank/non-bank framing correction made in round-1 of this same 2026-07-10T07:07Z tick on OPS-BCTC-BANK-2025Q4-ENRICH-0ROW-REPARSE.)"
-      },
-      {
-        "id": "FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH",
-        "title": "notebook-auto-prune regex mismatch -- drops NEWEST not oldest, regresses e24e6b8b6 (false-green)",
-        "status": "IN_PROGRESS",
-        "zone": "cross-service/",
-        "priority": "normal",
-        "type": "FIX",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH",
-        "owner": "developer"
       }
     ]
   },
@@ -7635,6 +7638,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-07-12T07:18:33Z",
-  "_updated_by": "po (token-economy-audit-exec intake)"
+  "_updated_at": "2026-07-12T07:27:36Z",
+  "_updated_by": "po (TE dep-gate canonical-field rename depends->depends_on)"
 }

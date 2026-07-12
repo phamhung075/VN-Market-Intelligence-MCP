@@ -23,6 +23,55 @@ PROJECT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || echo "${CLAUDE_PROJ
 
 SIGNALS_DIR="$PROJECT_ROOT/docs/signals"
 
+# --- Duplicate-heading detector (FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH item 3) ---
+# Detection-only, never auto-fixes: code audit of the drop-oldest loop below (and git
+# archaeology of a real duplicate-heading incident — see decision journal for task
+# FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH) confirmed this hook's mutation paths
+# (`head -n`, `awk 'NR<a||NR>b'`) can only REMOVE lines — there is no code path that can
+# duplicate one, and the observed duplicate pair survived inside a file that was UNDER the
+# 200L cap (so this hook's line-count guard would have short-circuited before ever touching
+# it) — i.e. the corruption was introduced upstream of this hook (agent-side notebook-write),
+# not by this script. This guard exists as a proactive early-warning tripwire regardless of
+# root cause, and runs on every invocation (not just >200L) since that is where duplicates
+# have actually been observed surviving.
+detect_dup_heading() {
+  awk '
+    /^## / {
+      if ($0 == prev && blank_only) { print; exit }
+      prev = $0; blank_only = 1; next
+    }
+    NF == 0 { next }
+    { blank_only = 0 }
+  '
+}
+
+emit_dup_signal() {
+  local dup="$1" stage="$2"
+  local ts
+  ts="$(date -u +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null || true)"
+  [ -z "$ts" ] && return 0
+  local sig_file
+  sig_file="$SIGNALS_DIR/notebook-duplicate-heading-$(echo "$REL_PATH" | tr '/.' '-')-$(echo "$ts" | tr -d ':').json"
+  local dup_json
+  dup_json="$(printf '%s' "$dup" | jq -Rs . 2>/dev/null || printf '"%s"' "$dup")"
+  cat > "$sig_file" <<EOF 2>/dev/null || true
+{
+  "from": "notebook-auto-prune-hook",
+  "to": "claude-manager-helper",
+  "type": "notebook_duplicate_heading_detected",
+  "priority": "normal",
+  "createdAt": "$ts",
+  "payload": {
+    "file": "$REL_PATH",
+    "stage": "$stage",
+    "duplicate_heading": $dup_json,
+    "reason": "identical ## heading found twice back-to-back (no non-blank content between) — corruption signature; not auto-fixed by this hook (detection-only, avoids risking deletion of legitimately-repeated content)",
+    "action_required": "manual_review"
+  }
+}
+EOF
+}
+
 # --- Parse file path from PostToolUse JSON on STDIN ---
 STDIN_JSON="$(cat 2>/dev/null || true)"
 [ -z "$STDIN_JSON" ] && exit 0
@@ -51,6 +100,10 @@ esac
 
 # --- Guard: file must exist and be readable ---
 [ -f "$FILE_PATH" ] || exit 0
+
+# --- Duplicate-heading tripwire (runs regardless of line-count cap — see detector def above) ---
+DUP_PRE="$(detect_dup_heading < "$FILE_PATH")"
+[ -n "$DUP_PRE" ] && emit_dup_signal "$DUP_PRE" "pre-cap-scan"
 
 # --- Count lines ---
 LINE_COUNT=$(wc -l < "$FILE_PATH" 2>/dev/null | tr -d ' ' || true)
@@ -125,26 +178,40 @@ EOF
   fi
 
   # Drop oldest (chronologically) ## block by parsing timestamps:
-  # - Extract timestamps from each "^## " heading (look for ISO8601 or date patterns)
+  # - Extract timestamps from each "^## " heading (look for ISO8601 or compact/date patterns)
   # - Find the section with the oldest (earliest) timestamp
   # - Drop from that section's start to (but not including) the next section
-  # Strategy: build a map of line_num→timestamp, find min timestamp's line, drop that section
+  # Strategy: build a map of line_num→normalized-timestamp-key, find min key's line, drop that section
+  #
+  # Regex supports ALL live notebook heading conventions in one pattern (dash/colon made
+  # optional so a single ERE covers every real shape found across docs/agent-memory/notebooks/*.md):
+  #   - compact:      cycle-YYYYMMDDTHHMMZ          (main.md — no dashes/colons/seconds)
+  #   - dashed-no-sec: YYYY-MM-DDTHH:MMZ             (po.md "Tick ..." — no seconds)
+  #   - dashed-full:   YYYY-MM-DDTHH:MM:SS[.fff]Z    (bctc-analyst.md/system-auditor.md suffix style)
+  #   - date-only:     YYYY-MM-DD                    (qa.md "cycle-N · YYYY-MM-DD · ...", no time)
+  # The matched substring is then normalized (all non-digits stripped, zero-padded/truncated to a
+  # fixed 17-char width = YYYYMMDDHHMMSSfff) so formats with different precision still compare
+  # correctly against each other as plain numeric strings.
 
   # First, extract all section lines with their timestamps
   SECTIONS_WITH_TS="$(echo "$FILE_CONTENT" | grep -n "^## " | while IFS=: read -r line_num heading; do
-    # Extract timestamp: look for ISO8601 (YYYY-MM-DDTHH:MM:SSZ) or date (YYYY-MM-DD)
-    # Timestamps typically appear after a "·" or at the end of the line
-    ts=$(echo "$heading" | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}:[0-9]{2}Z)?' | tail -1)
-    if [ -n "$ts" ]; then
-      echo "$line_num:$ts:$heading"
+    ts_raw=$(echo "$heading" | grep -oE '[0-9]{4}-?[0-9]{2}-?[0-9]{2}(T[0-9]{2}:?[0-9]{2}(:?[0-9]{2}(\.[0-9]+)?)?Z)?' | tail -1)
+    if [ -n "$ts_raw" ]; then
+      ts_digits=$(echo "$ts_raw" | tr -dc '0-9')
+      ts_key=$(printf '%-17s' "$ts_digits" | tr ' ' '0' | cut -c1-17)
+      echo "$line_num:$ts_key:$heading"
     else
-      # No timestamp found (e.g., "## Archive") — treat as max to sort last
-      echo "$line_num:9999-12-31T23:59:59Z:$heading"
+      # No timestamp found (e.g., "## Archive") — treat as max (17 nines) to sort last
+      echo "$line_num:99999999999999999:$heading"
     fi
   done)"
 
-  # Find the oldest timestamp (minimum timestamp)
-  OLDEST_LINE="$(echo "$SECTIONS_WITH_TS" | sort -t: -k2 | head -1 | cut -d: -f1)"
+  # Find the oldest timestamp (minimum key). -k2,2 restricts the sort strictly to the
+  # normalized numeric key (now pure digits, no embedded colons/dashes, so it can never bleed
+  # into the heading text the way the old unbounded -k2 did); -s forces a stable sort so ties
+  # (e.g. two "## Archive"-style sentinel entries) break on physical/original order instead of
+  # falling back to alphabetical heading-text comparison.
+  OLDEST_LINE="$(echo "$SECTIONS_WITH_TS" | sort -t: -k2,2 -s | head -1 | cut -d: -f1)"
 
   if [ -z "$OLDEST_LINE" ]; then
     # Fallback: if timestamp parsing failed, drop first section (legacy behavior)
@@ -163,6 +230,12 @@ EOF
   fi
 
 done
+
+# --- Post-prune duplicate-heading tripwire (belt-and-suspenders re-check on the content
+# this hook is about to write; non-blocking — still writes the file, since blocking here
+# would leave a genuinely-oversized file stuck forever) ---
+DUP_POST="$(echo "$FILE_CONTENT" | detect_dup_heading)"
+[ -n "$DUP_POST" ] && emit_dup_signal "$DUP_POST" "post-prune-scan"
 
 # --- Atomic write: write to TEMP then mv to FILE_PATH ---
 TEMP="$(mktemp 2>/dev/null || true)"
