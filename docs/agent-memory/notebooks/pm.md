@@ -1,5 +1,29 @@
 # PM — Notebook
 
+## c330 FLOW-PRICE-ALPHA-LOOP · Architect Corrections · Wave-1 Release · 2026-07-12T19:45Z
+
+**MANDATE:** Apply architect-verified zone/supervision corrections to the 3 ALPHA-S1 wave-1 rows (ALPHA-S1-CANDLE-RECOVER, ALPHA-S1-STARTUP-CANDLE-GUARD, ALPHA-S1-OHLCV-BACKFILL-DONE-BUG) and release them into the live BOUNDED-1 dev loop. Handoff: `docs/handoffs/ALPHA-S1-architect-design.md` (READY_FOR_PM commit c8a73aa42).
+
+**PRE-CONDITIONS VERIFIED:**
+- Architect design ready: all 3 rows pre-verified single-zone (`apps/mcp-server/`), disjoint file sets, parallel-safe via `isolation:"worktree"`.
+- No further decomposition needed: each row already S-size/atomic, no TASK_2xxx fan-out.
+- Design decision journal: `docs/agent-memory/decisions/sprint-FLOW-PRICE-ALPHA-LOOP-architect.md` (STEP architect-S1/S2/S3).
+
+**BOARD CORRECTIONS APPLIED:**
+1. **Zone correction** (all 3 rows): `zone: "multi"` → `zone: "apps/mcp-server/"` (verified single-zone, route → dev-mcp-server BOUNDED-1 dispatcher).
+2. **Supervision clear** (all 3 rows): `supervised: true` → `supervised: false` (supervision gate's purpose "zone=multi → architect splits" satisfied; rows now eligible for dev-team auto-drain).
+3. **Dependency add** (ALPHA-S1-STARTUP-CANDLE-GUARD): `depends: []` → `depends: ["ALPHA-S1-CANDLE-RECOVER"]` (shares new recovery function per §2 design; CANDLE-RECOVER picks P0-first so low sequencing cost).
+
+**VERIFICATION:**
+- orch-apply.sh: Stage 0+1 PASS, conservation check PASSED (task_total=503 stable), atomic rename applied.
+- Post-apply jq query confirms all 3 rows: zone="apps/mcp-server/", supervised=false, STARTUP row depends on CANDLE-RECOVER.
+
+**BOARD MUTATIONS:** Backlog state updated, 3 rows now unsupervised + correct zone, ready for BOUNDED-1 auto-dispatch on next ~30-min tick.
+
+**NEXT:** dev-mcp-server BOUNDED-1 dispatcher picks up eligible rows. Router routes next.
+
+---
+
 ## c329 MONEY-RADAR-P0 · Idle-Slot Fill · Task Pull · 2026-07-11T10:40Z
 
 **MANDATE:** Router-initiated idle-slot fill for WIP=1/2 (OPS-BCTC-REFINE-REPASS-NONBANK-5T peer-owned, untouchable). PO pre-verified two unblocked mission-aligned candidates: CONTAM-11-REMEDIATE (primary) and WATCHLIST-DB-SYSMAP-DRIFT-FIX (alternate). Task: pull the valid candidate into ready[], verify pre-conditions, create handoff doc.
