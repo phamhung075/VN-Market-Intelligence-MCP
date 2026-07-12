@@ -315,12 +315,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "TASK_2004",
-    "next_agent": "dev-mcp-server",
-    "next_action": "BOUNDED-1 auto-pickup claim of TASK_2004 — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-12T18:49:39Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "await next cron tick. HOLD TASK_2005 (integration test) pending PO reconcile: memory flags ALPHA-S2-FOREIGN-FLOW-WRITE-RACE (flow-alpha) OVERLAPS this sprint (TASK_2000-2004) — same foreign-flow write path; must reconcile before more sprint work. flow-alpha wave-1 reportedly launched 19:10Z (possibly peer session — check presence/overlap). Redeploys pending (deploy-hold lifted): mcp-server, news-fetch. Architect: SPRINT-CCATO + SPIKE supervised.",
+    "updated_at": "2026-07-12T19:09:52Z",
+    "updated_by": "dev-team (merge-gate close TASK_2004; sprint hold pending FF-RACE reconcile)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7558,6 +7558,33 @@
         "verified_by": "dev-team",
         "commit": "069a15014",
         "merge_gate": "PASS: index-check rc0 + tsc0 + RAW core foreign-flow 33/0 (dispatcher re-ran) + dev 162/0 sweep; commit 069a15014 atomic (19 files: 5 prod Class-A sites + 9 test-fixture root-fixes + docs, no leak/peer-sweep); DJ-GATE-1 present; no additional un-migrated read sites (grep-confirmed, Class-B probes out of scope). DEPLOY-HOLD LIFTED (redeploy now safe, user-gated)."
+      },
+      {
+        "id": "TASK_2004",
+        "type": "DEVELOPMENT",
+        "title": "SUBTASK-DAILY-FF-5: migrate 4 Class-B freshness/health probes to daily_foreign_flow",
+        "zone": "apps/mcp-server/",
+        "status": "DONE_VERIFIED",
+        "priority": "P1",
+        "size": "S",
+        "depends_on": [
+          "TASK_2000"
+        ],
+        "blocks": [],
+        "created_at": "2026-07-10T19:30:00Z",
+        "created_by": "pm",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "handoff": "docs/handoffs/TASK_2004-daily-ff-class-b-probes.md",
+        "note": "SUBTASK-DAILY-FF-5 Class-B probe migration: 4 freshness/health probes (freshnessSlaMonitorJob, slaStatusTools, vpsProxyWatchdogJob, vpsHealthPoller) now query daily_foreign_flow DIRECTLY (not the view) — clean foreign-flow freshness signal decoupled from OHLCV (view COALESCE would mask a dead writer). Behavioral decoupling proven. Commit a6917a9ce. Verified RAW 9/0 + dev 729/0 sweep + tsc. All ARCH-DAILY-FOREIGN-FLOW-TABLE read-site subtasks SHIPPED.",
+        "promoted_at": "2026-07-12T18:49:39Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "claimed_at": "2026-07-12T18:49:39Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "dev-mcp-server",
+        "verified_at": "2026-07-12T19:09:52Z",
+        "verified_by": "dev-team",
+        "commit": "a6917a9ce",
+        "merge_gate": "PASS: index-check rc0 + RAW new probe suite 9/0 (dispatcher re-ran) + dev 729/0 foreign-flow sweep + tsc0; commit a6917a9ce atomic (13 files: 4 prod probes + 3 test-fallout root-fixes + new test + docs, no leak/peer-sweep); DJ-GATE-1 present. rides pending mcp-server rebuild (deploy-hold already lifted)."
       }
     ],
     "head": {
@@ -8033,31 +8060,7 @@
     },
     "last_triaged_at": "2026-07-12T18:49:39Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "TASK_2004",
-        "type": "DEVELOPMENT",
-        "title": "SUBTASK-DAILY-FF-5: migrate 4 Class-B freshness/health probes to daily_foreign_flow",
-        "zone": "apps/mcp-server/",
-        "status": "IN_PROGRESS",
-        "priority": "P1",
-        "size": "S",
-        "depends_on": [
-          "TASK_2000"
-        ],
-        "blocks": [],
-        "created_at": "2026-07-10T19:30:00Z",
-        "created_by": "pm",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "handoff": "docs/handoffs/TASK_2004-daily-ff-class-b-probes.md",
-        "note": "Direct table queries for clean freshness signal (not through view); decouples foreign-flow health from OHLCV health",
-        "promoted_at": "2026-07-12T18:49:39Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "claimed_at": "2026-07-12T18:49:39Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "dev-mcp-server"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
