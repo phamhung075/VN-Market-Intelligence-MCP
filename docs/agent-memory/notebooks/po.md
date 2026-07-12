@@ -1,6 +1,12 @@
 # PO Notebook
 
-_Last: 2026-07-12T06:21Z (dev-team triage re-claim po-triage-20260712 for new report #3579 → NOTHING: pure dedup of the reconcile-exhausted cluster already covered by SPIKE(done_verified)+durable FIX(backlog))_
+_Last: 2026-07-12T06:45Z (dev-team triage re-claim po-triage-20260712 for 4 new reports #3580-3583 DGC/DIG/DXG/FRT → NOTHING: RAW-confirmed identical reconcile-exhausted 2025-Q1 pattern, same cluster as #3573-3579, durable FIX still queued in backlog)_
+
+## Tick 2026-07-12T06:45Z — dev-team triage: NOTHING (reports #3580-3583 dedup'd)
+Router relayed 4 new reports since 06:21Z: **#3580 DGC, #3581 DIG, #3582 DXG, #3583 FRT** (06:36-06:41Z). **RAW-confirmed via bash-transport read_telegram_reports (did NOT trust router characterization):** ALL 4 = byte-identical `[bctcExtractReconcile] RECONCILE EXHAUSTED: <ticker> 2025-Q1 — 0 rows across bctc_layout_units/bctc_table_rows/bctc_md_tables → enrich_failed` — same class as #3573-3579 already triaged twice.
+- **Board RAW-verified:** durable follow-up `FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP`=**BACKLOG, owner=ops** still tracked (fix queued, NOT yet run). SPIKE-BCTC-TABLEROWS-FROZEN-HOLLOW-DONE cold-evicted→archive (done_verified). head=idle, WIP=1 (legit ops row, unchanged).
+- **queued-fix ≠ failed-fix (★):** detection recurs while durable fix sits un-run in backlog = EXPECTED, not fix-shipped-but-inert. Reconcile detector correctly marks enrich_failed per D3 spec until BCTC-AGENTIC-REFINE serving pipeline is re-armed. Resurface-as-new tracked by FIX-TELEGRAM-REPORT-ACK-STATUS-STOP-RESURFACE (no ACK tool).
+- **Disposition = NOTHING.** No escalation, no re-prioritization (bumping = churn). Short-cycle confirm per router brief.
 
 ## Tick 2026-07-12T06:21Z — dev-team triage: NOTHING (report #3579 dedup'd)
 Router spawned me for the one new report since 05:58Z: **#3579 `[bctcExtractReconcile] RECONCILE EXHAUSTED: DBC 2025-Q1 — 0 rows → enrich_failed (terminal)`**. This is the **7th identical instance** in sequence 3573-3579 (MSN/VND/BSR/VJC Q1-Q3), all the same `RECONCILE EXHAUSTED — 0 rows across all 3 tables → enrich_failed` pattern my 05:58Z tick already triaged.
