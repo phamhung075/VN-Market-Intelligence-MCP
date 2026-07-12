@@ -28,5 +28,11 @@
     },
     "no_write_made": "orch-state.json untouched (dry-run to scratchpad only); no promote/claim applied; no specialist spawned.",
     "next_pick_note": "With this row held, PO should also confirm whether any OTHER genuinely dev-shippable committed backlog row should be the BOUNDED-1 target, or whether the idle lane simply stays quiet until flow-alpha is deliberately launched."
+  },
+  "_processed": {
+    "fingerprint": "7097a2c890cd1bda8cfa27ae3839f9c8e9dfeebabfcb767caffdf426af73497a",
+    "processedAt": "2026-07-12T10:18:26Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }
