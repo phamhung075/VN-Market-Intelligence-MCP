@@ -62,9 +62,21 @@ daily_ohlcv_with_flow (VIEW — daily_ohlcv LEFT JOIN daily_foreign_flow ON code
   -- now visible to every Class-A reader, not just via the frozen legacy columns.
   -- Class-B freshness/health probes (freshnessSlaMonitorJob.ts, slaStatusTools.ts,
   -- vpsProxyWatchdogJob.ts, vpsHealthPoller.ts) deliberately do NOT go through
-  -- this view — per design they should query daily_foreign_flow directly
-  -- (separate, not-yet-shipped follow-on); left untouched by this subtask.
+  -- this view — they query daily_foreign_flow directly (see below).
   -- Design: docs/handoffs/ARCH-DAILY-FOREIGN-FLOW-TABLE-architect-design.md § Read-site inventory
+  --
+  -- SUBTASK-DAILY-FF-5 / TASK_2004 (2026-07-12, CLASS-B PROBE MIGRATION — SHIPPED):
+  -- all 4 Class-B freshness/health probes now query `daily_foreign_flow WHERE
+  -- foreign_buy_vol IS NOT NULL` DIRECTLY (not via this view — its COALESCE
+  -- fallback to the frozen legacy daily_ohlcv.foreign_* columns would mask a
+  -- stale/dead foreign-flow writer behind a healthy-looking OHLCV row):
+  -- freshnessSlaMonitorJob.ts (querySignalAges), slaStatusTools.ts
+  -- (querySignalAges, tool-surface twin), vpsProxyWatchdogJob.ts
+  -- (readLatestForeignFlowTimestamp), vpsHealthPoller.ts
+  -- (DEFAULT_FRESHNESS_CONFIGS vn-foreign-flow entry). Closes the last
+  -- ARCH-DAILY-FOREIGN-FLOW-TABLE read-site subtask — foreign-flow pipeline
+  -- health is now fully decoupled from OHLCV pipeline health.
+  -- Design: docs/handoffs/ARCH-DAILY-FOREIGN-FLOW-TABLE-architect-design.md § Change 3
 
 vn_index_cache (code TEXT PK, price REAL NOT NULL, prev_price REAL DEFAULT 0,
   change_pct REAL DEFAULT 0, volume REAL DEFAULT 0, fetched_at TEXT NOT NULL)

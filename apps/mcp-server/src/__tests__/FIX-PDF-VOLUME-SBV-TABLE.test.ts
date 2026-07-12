@@ -10,7 +10,10 @@
  *   Bug 2: freshnessSlaMonitorJob.querySignalAges references two non-existent
  *          tables:
  *            - macro_sbv_rates  → correct: sbv_rates (column: fetched_at)
- *            - foreign_flow     → correct: daily_ohlcv WHERE foreign_buy_vol IS NOT NULL (column: updated_at)
+ *            - foreign_flow     → correct: daily_foreign_flow WHERE foreign_buy_vol IS NOT NULL (column: updated_at)
+ *              (ARCH-DAILY-FOREIGN-FLOW-TABLE/TASK_2004, 2026-07-12: migrated off the
+ *              legacy daily_ohlcv.foreign_* columns onto the new authoritative
+ *              daily_foreign_flow table — queried directly, not via the compat view.)
  *          Fix: update the SQL in querySignalAges to use the correct table names.
  */
 
@@ -103,7 +106,7 @@ describe("Bug 2 — freshnessSlaMonitorJob uses correct table names", () => {
     expect(src).not.toContain("FROM foreign_flow");
   });
 
-  it("freshnessSlaMonitorJob references daily_ohlcv for foreign_flow signal", async () => {
+  it("freshnessSlaMonitorJob references daily_foreign_flow for foreign_flow signal", async () => {
     const fs = await import("fs");
     const src = fs.readFileSync(
       new URL(
@@ -113,7 +116,7 @@ describe("Bug 2 — freshnessSlaMonitorJob uses correct table names", () => {
       "utf8",
     );
 
-    expect(src).toContain("daily_ohlcv");
+    expect(src).toContain("daily_foreign_flow");
   });
 
   it("sbv_fx SQL fragment executes without error against in-memory DB with sbv_rates", async () => {
@@ -148,14 +151,16 @@ describe("Bug 2 — freshnessSlaMonitorJob uses correct table names", () => {
     expect(rows[0]!.age_minutes).toBeLessThanOrEqual(23);
   });
 
-  it("foreign_flow SQL fragment executes without error against in-memory DB with daily_ohlcv", async () => {
+  it("foreign_flow SQL fragment executes without error against in-memory DB with daily_foreign_flow", async () => {
     const db = new Database(":memory:");
     await initDatabase(db);
 
+    // ARCH-DAILY-FOREIGN-FLOW-TABLE/TASK_2004: seed the new authoritative table,
+    // not the legacy daily_ohlcv.foreign_* columns.
     db.prepare(
-      `INSERT INTO daily_ohlcv (code, date, close, updated_at, foreign_buy_vol)
-       VALUES (?, ?, ?, ?, ?)`,
-    ).run("VNM", "2026-04-27", 80000, minutesAgoIso(5), 500_000);
+      `INSERT INTO daily_foreign_flow (code, date, updated_at, foreign_buy_vol)
+       VALUES (?, ?, ?, ?)`,
+    ).run("VNM", "2026-04-27", minutesAgoIso(5), 500_000);
 
     const now = Math.floor(Date.now() / 1000);
     let threw = false;
@@ -163,13 +168,14 @@ describe("Bug 2 — freshnessSlaMonitorJob uses correct table names", () => {
     try {
       rows = db.query<{ signal_type: string; age_minutes: number | null }, [number]>(
         `SELECT 'foreign_flow' as signal_type,
-           CAST((? - CAST((SELECT MAX(updated_at) FROM daily_ohlcv WHERE foreign_buy_vol IS NOT NULL) as INTEGER)) / 60 AS INTEGER) as age_minutes`,
+           CAST((? - CAST((SELECT MAX(updated_at) FROM daily_foreign_flow WHERE foreign_buy_vol IS NOT NULL) as INTEGER)) / 60 AS INTEGER) as age_minutes`,
       ).all(now);
     } catch {
       threw = true;
     }
 
-    // Key assertion: the query targets daily_ohlcv (not foreign_flow table) so it does not throw.
+    // Key assertion: the query targets daily_foreign_flow (not the legacy foreign_flow-named
+    // table) so it does not throw.
     expect(threw).toBe(false);
     expect(rows).toHaveLength(1);
     expect(rows[0]!.signal_type).toBe("foreign_flow");
@@ -187,9 +193,9 @@ describe("Bug 2 — freshnessSlaMonitorJob uses correct table names", () => {
       db.query<{ age_minutes: number | null }, [number]>(
         `SELECT CAST((? - CAST((SELECT MAX(fetched_at) FROM sbv_rates) as INTEGER)) / 60 AS INTEGER) as age_minutes`,
       ).all(now);
-      // daily_ohlcv empty → MAX(updated_at) = NULL → same (no throw)
+      // daily_foreign_flow empty → MAX(updated_at) = NULL → same (no throw)
       db.query<{ age_minutes: number | null }, [number]>(
-        `SELECT CAST((? - CAST((SELECT MAX(updated_at) FROM daily_ohlcv WHERE foreign_buy_vol IS NOT NULL) as INTEGER)) / 60 AS INTEGER) as age_minutes`,
+        `SELECT CAST((? - CAST((SELECT MAX(updated_at) FROM daily_foreign_flow WHERE foreign_buy_vol IS NOT NULL) as INTEGER)) / 60 AS INTEGER) as age_minutes`,
       ).all(now);
     } catch {
       threw = true;

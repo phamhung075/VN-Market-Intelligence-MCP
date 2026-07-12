@@ -120,18 +120,28 @@ export interface FreshnessConfig {
  *
  *  vn-price-fetch   — market_prices.updated_at                            stale > 5 min  (market hours only)
  *  vn-news-fetch    — market_messages.sent_at                             stale > 20 min
- *  vn-foreign-flow  — daily_ohlcv WHERE foreign_buy_vol IS NOT NULL       stale > 5 min  (market hours only)
+ *  vn-foreign-flow  — daily_foreign_flow WHERE foreign_buy_vol IS NOT NULL stale > 5 min  (market hours only)
  *  vn-sbv-fetch     — sbv_rates.fetched_at                                stale > 35 min
  *  vn-bctc-fetch    — MAX(last_attempt) WHERE status='done' in bctc_vps_queue  stale > 24h
  *                     (FIX-BCTC-FRESHNESS-GATE: was passive:true — now active freshness)
  *
- * BUG FIX (Bug 1): vn-foreign-flow was incorrectly querying
- *   vnstock_trading_stats.fetched_at.  Foreign-flow VPS push writes to
- *   daily_ohlcv (columns: foreign_buy_vol, updated_at).
+ * BUG FIX (Bug 1, historical): vn-foreign-flow was incorrectly querying
+ *   vnstock_trading_stats.fetched_at.  Foreign-flow VPS push then wrote to
+ *   daily_ohlcv (columns: foreign_buy_vol, updated_at) — superseded by the
+ *   daily_foreign_flow migration below (TASK_2004).
  *
  * BUG FIX (Bug 2): vn-price-fetch and vn-foreign-flow are market-hours-only
  *   services.  Outside Mon-Fri 02:00-08:30 UTC the staleness check is
  *   suppressed and the status is reported as "idle".
+ *
+ * ARCH-DAILY-FOREIGN-FLOW-TABLE/TASK_2004 (SUBTASK-DAILY-FF-5, 2026-07-12):
+ *   vn-foreign-flow migrated OFF legacy daily_ohlcv.foreign_* onto the new
+ *   authoritative `daily_foreign_flow` table, queried directly (NOT via the
+ *   `daily_ohlcv_with_flow` compat view — the view's COALESCE fallback to legacy
+ *   daily_ohlcv columns would mask a stale/dead foreign-flow writer behind a
+ *   healthy-looking OHLCV row). This decouples "is the foreign-flow VPS pipeline
+ *   healthy" from "has the OHLCV pipeline also written a row" — a stalled OHLCV
+ *   writer no longer masquerades as foreign-flow-stale.
  */
 export const DEFAULT_FRESHNESS_CONFIGS: FreshnessConfig[] = [
   {
@@ -186,9 +196,18 @@ export const DEFAULT_FRESHNESS_CONFIGS: FreshnessConfig[] = [
   {
     serviceName: "vn-foreign-flow",
     description: "Foreign buy/sell flows",
-    // BUG 1 FIX: was vnstock_trading_stats.fetched_at — wrong table.
-    // VPS foreign-flow push writes to daily_ohlcv (foreign_buy_vol / updated_at).
-    latestTimestampSql: `SELECT MAX(updated_at) AS latest_at FROM daily_ohlcv WHERE foreign_buy_vol IS NOT NULL`,
+    // BUG 1 FIX (historical): was vnstock_trading_stats.fetched_at — wrong table.
+    // VPS foreign-flow push wrote to daily_ohlcv (foreign_buy_vol / updated_at).
+    //
+    // ARCH-DAILY-FOREIGN-FLOW-TABLE/TASK_2004 (SUBTASK-DAILY-FF-5, 2026-07-12):
+    // migrated OFF legacy daily_ohlcv.foreign_* onto the new authoritative
+    // daily_foreign_flow table, queried directly (NOT via the daily_ohlcv_with_flow
+    // compat view — the view's COALESCE fallback to legacy daily_ohlcv columns
+    // would mask a stale/dead foreign-flow writer behind a healthy-looking OHLCV
+    // row). Decouples "is the foreign-flow VPS pipeline healthy" from "has the
+    // OHLCV pipeline also written a row" — a stalled OHLCV writer no longer
+    // masquerades as foreign-flow-stale.
+    latestTimestampSql: `SELECT MAX(updated_at) AS latest_at FROM daily_foreign_flow WHERE foreign_buy_vol IS NOT NULL`,
     maxAgeMs: 5 * 60_000, // 5 minutes
     marketHoursOnly: true,
   },

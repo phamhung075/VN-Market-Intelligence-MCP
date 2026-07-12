@@ -150,11 +150,63 @@ describe("FIX-VPS-HEALTH-FRESHN — data-freshness health checks", () => {
     expect(result.healthStatus).toBe("unhealthy");
   });
 
-  // ── vn-foreign-flow: healthy if daily_ohlcv (foreign_buy_vol) updated within 5 min ──
+  // ── vn-foreign-flow: healthy if daily_foreign_flow (foreign_buy_vol) updated within 5 min ──
   // NOTE: vn-foreign-flow is marketHoursOnly — tests use fixed market-hours timestamps.
-  // BUG 1 FIX: was vnstock_trading_stats; correct table is daily_ohlcv (foreign_buy_vol / updated_at).
+  // BUG 1 FIX (historical): was vnstock_trading_stats; correct table was then daily_ohlcv
+  // (foreign_buy_vol / updated_at). ARCH-DAILY-FOREIGN-FLOW-TABLE/TASK_2004 (2026-07-12):
+  // migrated onto the new authoritative daily_foreign_flow table (queried directly).
 
-  it("vn-foreign-flow: healthy when daily_ohlcv has a foreign_buy_vol row within 5 minutes", () => {
+  it("vn-foreign-flow: healthy when daily_foreign_flow has a foreign_buy_vol row within 5 minutes", () => {
+    db.prepare(`
+      INSERT INTO daily_foreign_flow (code, date, updated_at, foreign_buy_vol)
+      VALUES (?, ?, ?, ?)
+    `).run("VNM", "2026-04-27", "2026-04-27T05:00:00.000Z", 1000000);
+
+    const config = DEFAULT_FRESHNESS_CONFIGS.find(
+      (c) => c.serviceName === "vn-foreign-flow",
+    )!;
+    const result = checkServiceFreshness(db, config, "2026-04-27T05:02:00.000Z");
+
+    expect(result.healthStatus).toBe("healthy");
+  });
+
+  it("vn-foreign-flow: unhealthy when daily_foreign_flow foreign_buy_vol row is older than 5 minutes", () => {
+    db.prepare(`
+      INSERT INTO daily_foreign_flow (code, date, updated_at, foreign_buy_vol)
+      VALUES (?, ?, ?, ?)
+    `).run("VNM", "2026-04-27", "2026-04-27T05:05:00.000Z", 1000000);
+
+    const config = DEFAULT_FRESHNESS_CONFIGS.find(
+      (c) => c.serviceName === "vn-foreign-flow",
+    )!;
+    const result = checkServiceFreshness(db, config, "2026-04-27T05:15:00.000Z");
+
+    expect(result.healthStatus).toBe("unhealthy");
+  });
+
+  // ── ARCH-DAILY-FOREIGN-FLOW-TABLE/TASK_2004: decoupling proof ────────────────
+  // A stale/absent daily_ohlcv row must NOT mask a fresh daily_foreign_flow write
+  // (and vice versa) — the two pipelines' health signals are now independent.
+
+  it("vn-foreign-flow: healthy from a fresh daily_foreign_flow row even when daily_ohlcv has NO row at all", () => {
+    // No daily_ohlcv row inserted — legacy table completely empty/dead.
+    db.prepare(`
+      INSERT INTO daily_foreign_flow (code, date, updated_at, foreign_buy_vol)
+      VALUES (?, ?, ?, ?)
+    `).run("VNM", "2026-04-27", "2026-04-27T05:00:00.000Z", 1000000);
+
+    const config = DEFAULT_FRESHNESS_CONFIGS.find(
+      (c) => c.serviceName === "vn-foreign-flow",
+    )!;
+    const result = checkServiceFreshness(db, config, "2026-04-27T05:02:00.000Z");
+
+    expect(result.healthStatus).toBe("healthy");
+  });
+
+  it("vn-foreign-flow: unreachable when daily_foreign_flow is empty even though daily_ohlcv has a fresh row", () => {
+    // daily_ohlcv has a fresh row (legacy OHLCV pipeline healthy) but daily_foreign_flow
+    // (the new authoritative foreign-flow table) has never been written — a dead
+    // foreign-flow writer must surface as unreachable, NOT masked as healthy by OHLCV.
     db.prepare(`
       INSERT INTO daily_ohlcv (code, date, close, updated_at, foreign_buy_vol)
       VALUES (?, ?, ?, ?, ?)
@@ -165,21 +217,7 @@ describe("FIX-VPS-HEALTH-FRESHN — data-freshness health checks", () => {
     )!;
     const result = checkServiceFreshness(db, config, "2026-04-27T05:02:00.000Z");
 
-    expect(result.healthStatus).toBe("healthy");
-  });
-
-  it("vn-foreign-flow: unhealthy when daily_ohlcv foreign_buy_vol row is older than 5 minutes", () => {
-    db.prepare(`
-      INSERT INTO daily_ohlcv (code, date, close, updated_at, foreign_buy_vol)
-      VALUES (?, ?, ?, ?, ?)
-    `).run("VNM", "2026-04-27", 80000, "2026-04-27T05:05:00.000Z", 1000000);
-
-    const config = DEFAULT_FRESHNESS_CONFIGS.find(
-      (c) => c.serviceName === "vn-foreign-flow",
-    )!;
-    const result = checkServiceFreshness(db, config, "2026-04-27T05:15:00.000Z");
-
-    expect(result.healthStatus).toBe("unhealthy");
+    expect(result.healthStatus).toBe("unreachable");
   });
 
   // ── vn-sbv-fetch: healthy if sbv_rates updated within 35 min ─────────────────

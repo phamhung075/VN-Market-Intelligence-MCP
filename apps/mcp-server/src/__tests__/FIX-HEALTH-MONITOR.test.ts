@@ -4,14 +4,17 @@
  * Regression tests for three health-monitoring bugs:
  *
  *   Bug 1: vn-foreign-flow freshness check queried vnstock_trading_stats.fetched_at
- *          but foreign-flow VPS push writes to daily_ohlcv (updated_at / foreign_buy_vol).
+ *          but foreign-flow VPS push writes to daily_foreign_flow (updated_at / foreign_buy_vol).
+ *          (ARCH-DAILY-FOREIGN-FLOW-TABLE/TASK_2004, 2026-07-12: migrated off the
+ *          legacy daily_ohlcv.foreign_* columns onto the new authoritative
+ *          daily_foreign_flow table — queried directly, not via the compat view.)
  *
  *   Bug 2: No market-hours guard — price + foreign-flow marked unhealthy/unreachable
  *          outside Mon-Fri 09:00-15:30 ICT (02:00-08:30 UTC). Should be "idle".
  *
  *   Bug 3: get_sla_status queries macro_sbv_rates (does not exist) and
  *          vnstock_trading_stats.fetched_at (wrong table). Correct tables:
- *          sbv_rates.fetched_at and daily_ohlcv.updated_at (WHERE foreign_buy_vol IS NOT NULL).
+ *          sbv_rates.fetched_at and daily_foreign_flow.updated_at (WHERE foreign_buy_vol IS NOT NULL).
  */
 
 import { describe, it, expect, beforeEach } from "bun:test";
@@ -51,7 +54,7 @@ function weekdayOffHoursNowIso(): string {
 
 // ─── suite: Bug 1 — foreign-flow table fix ────────────────────────────────────
 
-describe("Bug 1 — vn-foreign-flow freshness uses daily_ohlcv not vnstock_trading_stats", () => {
+describe("Bug 1 — vn-foreign-flow freshness uses daily_foreign_flow not vnstock_trading_stats", () => {
   let db: Database;
 
   beforeEach(() => {
@@ -59,13 +62,13 @@ describe("Bug 1 — vn-foreign-flow freshness uses daily_ohlcv not vnstock_tradi
     initDatabase(db);
   });
 
-  it("DEFAULT_FRESHNESS_CONFIGS vn-foreign-flow SQL references daily_ohlcv", () => {
+  it("DEFAULT_FRESHNESS_CONFIGS vn-foreign-flow SQL references daily_foreign_flow", () => {
     const cfg = DEFAULT_FRESHNESS_CONFIGS.find(
       (c) => c.serviceName === "vn-foreign-flow",
     )!;
     expect(cfg).toBeDefined();
     expect(cfg.latestTimestampSql).toBeDefined();
-    expect(cfg.latestTimestampSql!.toLowerCase()).toContain("daily_ohlcv");
+    expect(cfg.latestTimestampSql!.toLowerCase()).toContain("daily_foreign_flow");
   });
 
   it("DEFAULT_FRESHNESS_CONFIGS vn-foreign-flow SQL does NOT reference vnstock_trading_stats", () => {
@@ -77,16 +80,16 @@ describe("Bug 1 — vn-foreign-flow freshness uses daily_ohlcv not vnstock_tradi
     );
   });
 
-  it("vn-foreign-flow: healthy when daily_ohlcv has a recent row with foreign_buy_vol", () => {
+  it("vn-foreign-flow: healthy when daily_foreign_flow has a recent row with foreign_buy_vol", () => {
     // Use a market-hours timestamp so the marketHoursOnly guard does not suppress the check.
     // 2026-04-27 05:00 UTC = Monday within 02:00-08:30 UTC window.
     const marketNow = "2026-04-27T05:02:00.000Z";
     const twoMinBefore = "2026-04-27T05:00:00.000Z";
 
     db.prepare(
-      `INSERT INTO daily_ohlcv (code, date, close, updated_at, foreign_buy_vol)
-       VALUES (?, ?, ?, ?, ?)`,
-    ).run("VNM", "2026-04-27", 80000, twoMinBefore, 1000000);
+      `INSERT INTO daily_foreign_flow (code, date, updated_at, foreign_buy_vol)
+       VALUES (?, ?, ?, ?)`,
+    ).run("VNM", "2026-04-27", twoMinBefore, 1000000);
 
     const cfg = DEFAULT_FRESHNESS_CONFIGS.find(
       (c) => c.serviceName === "vn-foreign-flow",
@@ -96,15 +99,15 @@ describe("Bug 1 — vn-foreign-flow freshness uses daily_ohlcv not vnstock_tradi
     expect(result.healthStatus).toBe("healthy");
   });
 
-  it("vn-foreign-flow: unhealthy when daily_ohlcv foreign_buy_vol row is stale (>5 min)", () => {
+  it("vn-foreign-flow: unhealthy when daily_foreign_flow foreign_buy_vol row is stale (>5 min)", () => {
     // 05:15 UTC now, row updated at 05:00 UTC = 15 min stale > 5 min threshold
     const marketNow = "2026-04-27T05:15:00.000Z";
     const tenMinBefore = "2026-04-27T05:05:00.000Z";
 
     db.prepare(
-      `INSERT INTO daily_ohlcv (code, date, close, updated_at, foreign_buy_vol)
-       VALUES (?, ?, ?, ?, ?)`,
-    ).run("VNM", "2026-04-27", 80000, tenMinBefore, 1000000);
+      `INSERT INTO daily_foreign_flow (code, date, updated_at, foreign_buy_vol)
+       VALUES (?, ?, ?, ?)`,
+    ).run("VNM", "2026-04-27", tenMinBefore, 1000000);
 
     const cfg = DEFAULT_FRESHNESS_CONFIGS.find(
       (c) => c.serviceName === "vn-foreign-flow",
@@ -114,12 +117,12 @@ describe("Bug 1 — vn-foreign-flow freshness uses daily_ohlcv not vnstock_tradi
     expect(result.healthStatus).toBe("unhealthy");
   });
 
-  it("vn-foreign-flow: unreachable when daily_ohlcv has no foreign_buy_vol rows (during market hours)", () => {
+  it("vn-foreign-flow: unreachable when daily_foreign_flow has no foreign_buy_vol rows (during market hours)", () => {
     // Insert a row without foreign_buy_vol (NULL) — should not match WHERE foreign_buy_vol IS NOT NULL
     db.prepare(
-      `INSERT INTO daily_ohlcv (code, date, close, updated_at)
-       VALUES (?, ?, ?, ?)`,
-    ).run("VNM", "2026-04-27", 80000, "2026-04-27T04:58:00.000Z");
+      `INSERT INTO daily_foreign_flow (code, date, updated_at)
+       VALUES (?, ?, ?)`,
+    ).run("VNM", "2026-04-27", "2026-04-27T04:58:00.000Z");
 
     const cfg = DEFAULT_FRESHNESS_CONFIGS.find(
       (c) => c.serviceName === "vn-foreign-flow",
@@ -128,6 +131,23 @@ describe("Bug 1 — vn-foreign-flow freshness uses daily_ohlcv not vnstock_tradi
     const result = checkServiceFreshness(db, cfg, "2026-04-27T05:00:00.000Z");
 
     expect(result.healthStatus).toBe("unreachable");
+  });
+
+  it("vn-foreign-flow: healthy from daily_foreign_flow even when daily_ohlcv has NO row at all (decoupling proof)", () => {
+    // No daily_ohlcv row inserted at all — legacy table completely empty/dead.
+    // daily_foreign_flow alone must drive the signal (ARCH-DAILY-FOREIGN-FLOW-TABLE/TASK_2004).
+    const marketNow = "2026-04-27T05:02:00.000Z";
+    db.prepare(
+      `INSERT INTO daily_foreign_flow (code, date, updated_at, foreign_buy_vol)
+       VALUES (?, ?, ?, ?)`,
+    ).run("VNM", "2026-04-27", "2026-04-27T05:00:00.000Z", 1000000);
+
+    const cfg = DEFAULT_FRESHNESS_CONFIGS.find(
+      (c) => c.serviceName === "vn-foreign-flow",
+    )!;
+    const result = checkServiceFreshness(db, cfg, marketNow);
+
+    expect(result.healthStatus).toBe("healthy");
   });
 });
 
@@ -257,7 +277,7 @@ describe("Bug 3 — get_sla_status uses correct table names (sbv_rates, daily_oh
     expect(src).not.toContain("vnstock_trading_stats");
   });
 
-  it("slaStatusTools querySignalAges references daily_ohlcv for foreign_flow signal", async () => {
+  it("slaStatusTools querySignalAges references daily_foreign_flow for foreign_flow signal", async () => {
     const fs = await import("fs");
     const src = fs.readFileSync(
       new URL(
@@ -267,7 +287,7 @@ describe("Bug 3 — get_sla_status uses correct table names (sbv_rates, daily_oh
       "utf8",
     );
 
-    expect(src).toContain("daily_ohlcv");
+    expect(src).toContain("daily_foreign_flow");
   });
 
   it("get_sla_status tool does not throw when sbv_rates table exists but is empty", async () => {
@@ -289,16 +309,18 @@ describe("Bug 3 — get_sla_status uses correct table names (sbv_rates, daily_oh
   });
 
   it("querySignalAges executes without error against in-memory DB with correct tables", async () => {
-    // Directly exercise the SQL that was crashing. We seed sbv_rates and daily_ohlcv
-    // to confirm the fixed queries work end-to-end.
+    // Directly exercise the SQL that was crashing. We seed sbv_rates and
+    // daily_foreign_flow (ARCH-DAILY-FOREIGN-FLOW-TABLE/TASK_2004: authoritative
+    // foreign-flow table, not the legacy daily_ohlcv) to confirm the fixed
+    // queries work end-to-end.
     db.prepare(
       `INSERT INTO sbv_rates (source, fetched_at) VALUES (?, ?)`,
     ).run("sbv", minutesAgoIso(15));
 
     db.prepare(
-      `INSERT INTO daily_ohlcv (code, date, close, updated_at, foreign_buy_vol)
-       VALUES (?, ?, ?, ?, ?)`,
-    ).run("VNM", "2026-04-27", 80000, minutesAgoIso(3), 500000);
+      `INSERT INTO daily_foreign_flow (code, date, updated_at, foreign_buy_vol)
+       VALUES (?, ?, ?, ?)`,
+    ).run("VNM", "2026-04-27", minutesAgoIso(3), 500000);
 
     // Run the fixed query directly
     const now = Math.floor(Date.now() / 1000);
@@ -312,7 +334,7 @@ describe("Bug 3 — get_sla_status uses correct table names (sbv_rates, daily_oh
          UNION ALL
          SELECT
           'foreign_flow' as signal_type,
-          CAST((? - CAST((SELECT MAX(updated_at) FROM daily_ohlcv WHERE foreign_buy_vol IS NOT NULL) as INTEGER)) / 60 AS INTEGER) as age_minutes`,
+          CAST((? - CAST((SELECT MAX(updated_at) FROM daily_foreign_flow WHERE foreign_buy_vol IS NOT NULL) as INTEGER)) / 60 AS INTEGER) as age_minutes`,
       ).all(now, now);
     } catch {
       threw = true;

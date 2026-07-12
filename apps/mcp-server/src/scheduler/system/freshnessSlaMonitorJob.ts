@@ -78,8 +78,15 @@ export function querySignalAges(
   //
   // Table mapping (original 5):
   //   sbv_fx       — sbv_rates.fetched_at
-  //   foreign_flow — daily_ohlcv.updated_at WHERE foreign_buy_vol IS NOT NULL
-  //                  (VPS pushes foreign flow into daily_ohlcv, not a separate table)
+  //   foreign_flow — daily_foreign_flow.updated_at WHERE foreign_buy_vol IS NOT NULL
+  //                  ARCH-DAILY-FOREIGN-FLOW-TABLE/TASK_2004 (SUBTASK-DAILY-FF-5, 2026-07-12):
+  //                  migrated OFF legacy daily_ohlcv.foreign_* onto the new authoritative
+  //                  daily_foreign_flow table (queried directly, NOT via the
+  //                  daily_ohlcv_with_flow compat view — the view's COALESCE fallback to
+  //                  legacy daily_ohlcv columns would mask a stale/dead foreign-flow writer
+  //                  behind a healthy-looking OHLCV row). This decouples "is the foreign-flow
+  //                  VPS pipeline healthy" from "has the OHLCV pipeline also written a row" —
+  //                  a stalled OHLCV writer no longer masquerades as foreign-flow-stale.
   //
   // Sprint 1920 additions (Task 1920i — 7 new entries):
   //   vnstock_fundamentals — vnstock_financials.fetched_at (weekly Mon 01:00 UTC; 72h SLA)
@@ -109,7 +116,7 @@ export function querySignalAges(
       UNION ALL
       SELECT
         'foreign_flow' as signal_type,
-        CAST((? - CAST(strftime('%s', (SELECT MAX(updated_at) FROM daily_ohlcv WHERE foreign_buy_vol IS NOT NULL)) AS INTEGER)) / 60 AS INTEGER) as age_minutes
+        CAST((? - CAST(strftime('%s', (SELECT MAX(updated_at) FROM daily_foreign_flow WHERE foreign_buy_vol IS NOT NULL)) AS INTEGER)) / 60 AS INTEGER) as age_minutes
       UNION ALL
       SELECT
         'vnstock_fundamentals' as signal_type,

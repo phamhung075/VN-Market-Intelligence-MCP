@@ -47,7 +47,14 @@ function querySignalAges(db: Database): Record<string, number> {
   //   bctc         — financial_reports.parsed_at (ISO string → strftime epoch)
   //   news         — rag_analyses.created_at (ISO string → strftime epoch)
   //   sbv_fx       — sbv_rates.fetched_at (ISO string → strftime epoch)
-  //   foreign_flow — daily_ohlcv.updated_at WHERE foreign_buy_vol IS NOT NULL
+  //   foreign_flow — daily_foreign_flow.updated_at WHERE foreign_buy_vol IS NOT NULL
+  //                  ARCH-DAILY-FOREIGN-FLOW-TABLE/TASK_2004 (SUBTASK-DAILY-FF-5, 2026-07-12):
+  //                  migrated OFF legacy daily_ohlcv.foreign_* onto the new authoritative
+  //                  daily_foreign_flow table, queried directly (NOT via the
+  //                  daily_ohlcv_with_flow compat view — the view's COALESCE fallback to
+  //                  legacy daily_ohlcv columns would mask a stale/dead foreign-flow writer).
+  //                  Decouples this tool-surface twin's freshness signal from OHLCV pipeline
+  //                  health, same rationale as freshnessSlaMonitorJob.ts.
   const rows = db
     .query<AgeRow, [number, number, number, number, number]>(
       `SELECT
@@ -68,7 +75,7 @@ function querySignalAges(db: Database): Record<string, number> {
       UNION ALL
       SELECT
         'foreign_flow' as signal_type,
-        CAST((? - CAST(strftime('%s', (SELECT MAX(updated_at) FROM daily_ohlcv WHERE foreign_buy_vol IS NOT NULL)) AS INTEGER)) / 60 AS INTEGER) as age_minutes`
+        CAST((? - CAST(strftime('%s', (SELECT MAX(updated_at) FROM daily_foreign_flow WHERE foreign_buy_vol IS NOT NULL)) AS INTEGER)) / 60 AS INTEGER) as age_minutes`
     )
     .all(now, now, now, now, now) as AgeRow[];
 

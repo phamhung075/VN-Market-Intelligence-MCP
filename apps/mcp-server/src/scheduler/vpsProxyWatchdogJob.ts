@@ -123,10 +123,19 @@ export function readLatestNewsTimestamp(): Date | null {
 }
 
 /**
- * Most recent `daily_ohlcv.updated_at` where foreign_buy_vol is populated,
+ * Most recent `daily_foreign_flow.updated_at` where foreign_buy_vol is populated,
  * as a Date, or null if no foreign-flow rows exist.
- * The vn-foreign-flow.service writes to daily_ohlcv via UPDATE; this reader
- * detects when that service last pushed data.
+ *
+ * ARCH-DAILY-FOREIGN-FLOW-TABLE/TASK_2004 (SUBTASK-DAILY-FF-5, 2026-07-12): migrated
+ * OFF legacy `daily_ohlcv.foreign_*` onto the new authoritative `daily_foreign_flow`
+ * table, queried directly (NOT via the `daily_ohlcv_with_flow` compat view — the
+ * view's COALESCE fallback to legacy `daily_ohlcv` columns would mask a stale/dead
+ * foreign-flow writer behind a healthy-looking OHLCV row). This decouples
+ * "is the foreign-flow VPS pipeline healthy" from "has the OHLCV pipeline also
+ * written a row" — a stalled OHLCV writer no longer masquerades as
+ * foreign-flow-stale. The vn-foreign-flow.service now writes exclusively to
+ * `daily_foreign_flow` (unconditional upsert, TASK_2002); this reader detects when
+ * that service last pushed data.
  * Exported for tests.
  */
 export function readLatestForeignFlowTimestamp(): Date | null {
@@ -134,7 +143,7 @@ export function readLatestForeignFlowTimestamp(): Date | null {
     const db = getDb();
     const row = db
       .query<{ ts: string | null }, []>(
-        "SELECT MAX(updated_at) AS ts FROM daily_ohlcv WHERE foreign_buy_vol IS NOT NULL",
+        "SELECT MAX(updated_at) AS ts FROM daily_foreign_flow WHERE foreign_buy_vol IS NOT NULL",
       )
       .get();
     if (!row?.ts) return null;

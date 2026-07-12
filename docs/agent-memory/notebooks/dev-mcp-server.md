@@ -1,19 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-07-12 — TASK_2001 (SUBTASK-DAILY-FF-2, ARCH-DAILY-FOREIGN-FLOW-TABLE) → REVIEW
-
-**Session:** 69b0312e-df43-43a9-9e0b-bddf66d374e3 (dev-team cron dispatch, tick 16:37Z; PM handoff `docs/handoffs/TASK_2001-daily-ff-backfill.md`)
-
-One-time idempotent backfill (Change 4 of the architect design), gated by R-6 ordering — must land+complete before the writer cutover (SUBTASK-DAILY-FF-3, TASK_2002). Added `backfillDailyForeignFlow(db)` to `schema.ts` right next to its direct precedent `migrateForeignFlowColumns()`: `INSERT OR IGNORE INTO daily_foreign_flow (...) SELECT ... FROM daily_ohlcv WHERE foreign_buy_vol IS NOT NULL OR foreign_sell_vol IS NOT NULL`, all 8 columns + (code,date) PK. Wired into `initDatabase()` immediately after the existing `await migrateForeignFlowColumns(db);` call (both preconditions — legacy columns exist, new table exists — guaranteed satisfied at call time).
-
-New test file `daily-foreign-flow-backfill.test.ts` (6 tests): T-5 idempotency (run twice, 2nd run no-op — identical row count, no dup/error); correctness (all 8 columns + PK copied identically); rows with both foreign_buy_vol/foreign_sell_vol NULL correctly skipped (WHERE clause); additive-only proof (pre-existing daily_foreign_flow row with different values untouched by a conflicting legacy row — INSERT OR IGNORE PK-guard); boot-sequence wiring proof (re-running `initDatabase()` on the same in-memory connection backfills a freshly-inserted legacy row WITHOUT a direct `backfillDailyForeignFlow()` call); performance checkpoint (3000 synthetic rows backfilled in well under 5s).
-
-Verified: new suite 6/6 pass (24 expect). Regression: `daily-foreign-flow-schema` (15/15) + `2026-ohlcv-foreign-flow-merge` (7/7) + `1286-daily-ohlcv-schema` + `1527-schema-slices` + `002-db-schema` = 123/123 pass, 0 fail. `bun tsc --noEmit` clean. toolCount=183 unchanged (no tool/scheduler file touched); scheduler cron.schedule grep=3 (pre-existing doc/reality drift already flagged in the prior TASK_2000-cycle entry, unrelated to this diff).
-
-Commit: this agent's own direct commit (RUN-SOLO, explicit-path staging — schema.ts + new test + 2 doc files + journal). Dispatcher owns the board row — no orch-state write from this agent (task's explicit constraint). **Redeploy needed to reach the live DB**: no container rebuild/swap performed (user/ops-gated); backfill runs automatically+safely on the next mcp-server boot against the live named-volume DB (not run manually against it per task's data-safety instruction). Unblocks SUBTASK-DAILY-FF-3 (TASK_2002, writer cutover) per R-6.
-
-Zone health: tsc clean, 6 new + 123 regression pass/0 fail, toolCount=183 unchanged, additive+idempotent (INSERT OR IGNORE only, never overwrites) | HEALTHY.
-
 ## 2026-07-12 — TASK_2002 (SUBTASK-DAILY-FF-3, ARCH-DAILY-FOREIGN-FLOW-TABLE, writer cutover) → REVIEW
 
 **Session:** 69b0312e-df43-43a9-9e0b-bddf66d374e3 (dev-team cron dispatch, tick 17:07Z; PM handoff `docs/handoffs/TASK_2002-daily-ff-writer-cutover.md`)
@@ -43,3 +29,19 @@ Verified: 19-file/162-test targeted foreign-flow sweep 162/162 pass, 0 fail. `bu
 Commit: this agent's own direct commit (RUN-SOLO, explicit-path staging — 5 prod files + 9 test files + 2 doc files + journal). Dispatcher owns the board row. **Redeploy rides the pending user/ops-gated mcp-server rebuild** (same one as TASK_2000-2002) — closes the transition gap once released.
 
 Zone health: tsc clean, 162/162 targeted pass, toolCount=183 unchanged, transition gap closed | HEALTHY.
+
+## 2026-07-12 — TASK_2004 (SUBTASK-DAILY-FF-5, ARCH-DAILY-FOREIGN-FLOW-TABLE, Class-B probe migration) → REVIEW
+
+**Session:** 69b0312e-df43-43a9-9e0b-bddf66d374e3 (dev-team cron dispatch, tick 18:37Z; PM handoff `docs/handoffs/TASK_2004-daily-ff-class-b-probes.md`)
+
+Migrated the 4 flagged Class-B freshness/health probes `FROM daily_ohlcv WHERE foreign_buy_vol IS NOT NULL` → `FROM daily_foreign_flow WHERE foreign_buy_vol IS NOT NULL` (direct table read, NOT the `daily_ohlcv_with_flow` compat view — its COALESCE fallback would mask a stale/dead foreign-flow writer): `freshnessSlaMonitorJob.ts`, `slaStatusTools.ts`, `vpsProxyWatchdogJob.ts` (readLatestForeignFlowTimestamp), `vpsHealthPoller.ts` (DEFAULT_FRESHNESS_CONFIGS vn-foreign-flow entry). Closes SUBTASK-DAILY-FF-5, the last read-site subtask — foreign-flow health signal is now fully decoupled from OHLCV pipeline health.
+
+Unplanned but necessary (same class as TASK_2003): 2 static-source contract-lock tests + 4 seed-based behavior tests (across `FIX-PDF-VOLUME-SBV-TABLE.test.ts`, `FIX-HEALTH-MONITOR.test.ts`, `FIX-VPS-HEALTH-FRESHN.test.ts`) asserted/seeded the legacy `daily_ohlcv` contract — updated in place. Added new `TASK-2004-daily-ff-class-b-probes.test.ts` (9 tests) proving the decoupling contract for all 4 probes: fresh `daily_foreign_flow` reads fresh even with daily_ohlcv absent/empty; stale/empty `daily_foreign_flow` reads stale/unreachable even with a fresh daily_ohlcv row.
+
+grep confirms zero remaining `daily_ohlcv WHERE foreign_buy_vol` production sites outside tests/writer/DDL — all 5 ARCH-DAILY-FOREIGN-FLOW-TABLE subtasks now complete.
+
+Verified: new suite 9/9; 3-file regression-fallout set 46/46; foreign-flow file-glob sweep 729/729, 0 fail. `bun tsc --noEmit` clean. Server boot + `/health` OK, toolCount=183 unchanged. Bounded single full-suite run stalled at ~20.3k lines before reaching these files (documented tail-crash zone) — targeted sweeps above are the authoritative evidence.
+
+Commit: this agent's own direct commit (RUN-SOLO, explicit-path staging — 4 prod files + 4 test files (3 fixed + 1 new) + 2 doc files + journal). Dispatcher owns the board row. **Redeploy rides the pending user/ops-gated mcp-server rebuild** (same one as TASK_2000-2003) — this change is additive to the now-lifted DEPLOY-HOLD.
+
+Zone health: tsc clean, 9 new + 46 regression-fallout + 729 foreign-flow-sweep pass/0 fail, toolCount=183 unchanged, 4/4 Class-B probes decoupled from OHLCV | HEALTHY.
