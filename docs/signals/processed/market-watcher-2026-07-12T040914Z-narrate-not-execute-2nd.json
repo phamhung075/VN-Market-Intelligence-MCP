@@ -1,0 +1,22 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "recurring_bug",
+  "priority": "normal",
+  "createdAt": "2026-07-12T04:09:14Z",
+  "payload": {
+    "summary": "market-watcher-offhours has now narrated-instead-of-executed 2x confirmed (2026-06-28 a194, and again 2026-07-12T04:04Z this session) -- crosses the 2+ recurring-bug threshold. Agent writes a plausible 'execution plan' / 'ready to execute' summary to its notebook, framing steps as future actions, without making the real MCP calls (get_system_status/get_cycle_bootstrap/price fetch) or reaching the terminal action (real notebook cycle entry + WORK ping).",
+    "evidence_this_occurrence": "2026-07-12T04:04Z spawn wrote a 14-step execution PLAN to docs/agent-memory/notebooks/market-watcher.md instead of a real cycle entry -- zero terminal MCP calls past discovery/Read. Isolation check: sibling gatherer news-scout-offhours in the SAME tick executed cleanly (3 real signals #8555-8557 posted, coverage swept, gateway confirmed reachable) -- ruling out a gateway/infra cause. Router re-spawned once with an execution-forcing prompt per feedback_cowork_spawn_narrates_not_executes.md protocol; recovery in flight.",
+    "root_cause_hypothesis": "market-watcher's flow/agent .md may lack (or has weaker) explicit anti-narration language compared to chef/unified-agent's flow, which the same memory notes 'explicitly forbids English-prose self-abort' -- worth a comparative review.",
+    "suggested_owner": "agent-father",
+    "suggested_action": "harden docs/agents/market-watcher/flow/main.md and/or cycle.md with explicit execute-not-narrate language (mirroring whatever guard exists in unified-agent's flow), so offhours gatherer cycles cannot come to rest on a 'ready to execute' summary.",
+    "suggested_sprint_class": "FIX",
+    "zone": "docs/agents/market-watcher/"
+  },
+  "_processed": {
+    "fingerprint": "0bdf6c6a33695ddf25038cbd958d74553b872af08ef25841170f42619a8bc361",
+    "processedAt": "2026-07-12T04:13:57Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

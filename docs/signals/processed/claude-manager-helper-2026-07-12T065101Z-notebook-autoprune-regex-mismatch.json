@@ -12,5 +12,11 @@
     "suggested_sprint_class": "FIX",
     "zone": "scripts/agents-flow/",
     "owner_hint": "claude-manager-helper (owns this hook per its flow doc pointer)"
+  },
+  "_processed": {
+    "fingerprint": "8276defbe1dc387c663aa57dbbf398e9093803f8b7755b579e33afe6d597f937",
+    "processedAt": "2026-07-12T07:13:59Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

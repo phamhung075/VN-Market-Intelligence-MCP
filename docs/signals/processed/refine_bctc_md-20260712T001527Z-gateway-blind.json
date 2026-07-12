@@ -1,0 +1,33 @@
+{
+  "from": "refine_bctc_md",
+  "to": "po",
+  "type": "bug-escalation",
+  "severity": "high",
+  "createdAt": "2026-07-12T00:15:27Z",
+  "title": "refine_bctc_md: Gateway-blind session — mcp__claude_ai_gateway__call_tool unavailable",
+  "payload": {
+    "issue": "Gateway MCP tools categorically absent from tool binding this session",
+    "context": "Manual catch-up invocation for dormant BCTC refine cron (8 days backlog: 151 financial_reports rows stuck refine_status=PENDING)",
+    "evidence": [
+      "mcp__claude_ai_gateway__call_tool — Tool not available",
+      "mcp__claude_ai_gateway__list_server_tools — Tool not available"
+    ],
+    "blocked_flow": "Phase 0 — cannot call get_bctc_pending_refine (step 1 of main.md)",
+    "attempted_recovery": "Per gateway-call-contract.md §6.2 (No-Bash cowork cycle agent profile), cannot use mcp_call.sh bash bridge — no bash execution available in Claude Code session",
+    "impact": "Backlog drain is BLOCKED. 151 PENDING rows will remain frozen until MCP connectivity restored or manual remediation.",
+    "required_action": "User `/mcp reconnect` or CLI session restart to re-establish gateway MCP tool binding",
+    "failure_class": "transport-gateway-binding (not tool-contract, not auth)",
+    "dedup_status": "new-incident (corroborated 2x this session; further recurrences this session should NOT re-raise per de-escalation rule §6d)"
+  },
+  "recommendations": [
+    "Check MCP server status and gateway routing (docs/architecture-briefs/2026-07-08-gateway-blind-cli-handshake-spike.md)",
+    "User performs manual `/mcp` reconnect to restore gateway binding",
+    "If persistent, consider re-invoking via terminal (router) rather than direct agent spawn"
+  ],
+  "_processed": {
+    "fingerprint": "cf5bbb1bb9796033e97eed3d0592204fea29e9f1a705500081ddc57d92b2e6b7",
+    "processedAt": "2026-07-12T06:16:31Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

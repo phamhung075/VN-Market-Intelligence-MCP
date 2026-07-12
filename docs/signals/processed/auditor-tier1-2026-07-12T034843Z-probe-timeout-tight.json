@@ -1,0 +1,21 @@
+{
+  "from": "system-auditor",
+  "to": "po",
+  "type": "probe_bug",
+  "priority": "low",
+  "createdAt": "2026-07-12T03:48:43Z",
+  "payload": {
+    "summary": "scripts/agents-flow/auditor-tier1-probe.sh health_3001 check uses curl --max-time 3, but frontend-1's baseline response time is ~2.0-2.2s with observed spikes to 3.4s -- the timeout margin is too tight and produces recurring false FAILURE verdicts under normal jitter, not real outages.",
+    "evidence": "Tier-1 system-auditor investigation 2026-07-12T03:44Z: 15 sequential requests to http://localhost:3001/ measured 2.0-3.4s response time (network delay <1ms, all server-side), container 0 restarts, CPU 0%, mem 18%, stable 6h post-reboot. 3 recurring transient CURL_ERR->200-on-retry blips this session (~03:11Z, 03:15Z, 03:43Z) all traced to this same margin issue.",
+    "suggested_fix": "Bump curl --max-time in the health_3001 check (and likely health_3000/other HTTP checks in the same script) from 3s to something with real margin, e.g. 6-8s, in scripts/agents-flow/auditor-tier1-probe.sh. Small, low-risk, single-file change.",
+    "secondary_finding_not_actionable_here": "pdf-extractor showing real stress during this probe (CPU 202%, mem 92%, event-loop appeared wedged 0/3 multi-probe) but auditor assessed as expected-under-active-extraction-load, not a new regression -- pdf-extractor has been pre-existing-unhealthy since before the 2026-07-11 incident per prior session notes. Flagging for awareness only, not requesting action.",
+    "suggested_sprint_class": "FIX",
+    "zone": "scripts/agents-flow/"
+  },
+  "_processed": {
+    "fingerprint": "0a6c706431d6bc33ad797a6d001a7df5428502e1dd3dbea1dd833a4eaef8ae14",
+    "processedAt": "2026-07-12T04:13:57Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

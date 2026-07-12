@@ -11,5 +11,11 @@
     "CCATO-T2-CLAIM-TRUTH-SKILL and CCATO-T3-FLOW-WIRING-6PT already exist as BACKLOG rows (sprint NARRATIVE-TRUTH-CCATO-GATE) with owners/anchors pre-specified -- dispatch those rows for FR-4/FR-5, do not mint duplicates.",
     "bctc-analyst wiring anchor (BA left open) resolved: stage-analyze.md E1+E3 pre-pass fetch + stage-consolidate.md Step 5 citation -- see brief §2.1.",
     "FR-1's chef.md leg and FR-2 MUST land atomically (same commit) -- shipping FR-1's CHEF momentum/RS/52w/insider wiring without FR-2's AF-1 regex extension reopens FIX-CHEF-FABRICATED-TA-NUMBERS."
-  ]
+  ],
+  "_processed": {
+    "fingerprint": "660acfeab5b3257855f71cc1d76ff2b7067be5500c843716cacfe87ff1a64de6",
+    "processedAt": "2026-07-11T08:17:32Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

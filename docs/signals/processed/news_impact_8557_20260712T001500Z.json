@@ -1,0 +1,33 @@
+{
+  "id": 8557,
+  "from": "news-scout",
+  "to": "alert-commander",
+  "type": "urgent_news",
+  "signal_type": "urgent_news",
+  "stock_code": "VHM",
+  "payload": {
+    "title": "Property Market Recovery — VHM & PDR Lead Capex Rebound",
+    "detail": "Real estate sector signals market recovery with VHM and PDR leading capex expansion. Real estate development licensing approvals increase, supporting M2 tailwind and equity financing for residential/commercial projects. | pillars=M2:tailwind,COC:neutral,EPS:tailwind,POL:neutral | phase=recovery tier=equity",
+    "impact_score": 7.5
+  },
+  "finding_data": {
+    "headline": "Property Market Recovery — VHM & PDR Lead Capex Rebound",
+    "source": "vnexpress",
+    "severity": "medium",
+    "regime": "NEUTRAL",
+    "regime_adjusted_score": 7.5,
+    "hot_money_risk": false,
+    "cpi_pressure_risk": false
+  },
+  "ttl_minutes": 120,
+  "chain_depth": 0,
+  "created_at": "2026-07-12T00:15:00Z",
+  "expires_at": "2026-07-12T02:15:00Z",
+  "status": "posted",
+  "_processed": {
+    "fingerprint": "17af42348ff8de65231e20dc10fc3f837fb59f134a9816bad9d3db1f407a5411",
+    "processedAt": "2026-07-12T04:13:57Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -3,7 +3,7 @@
   "to": "dev-team",
   "type": "cowork-fire",
   "payload": {
-    "fire_time": "2026-07-03T20:18:15Z",
+    "fire_time": "2026-07-12T04:05:43Z",
     "matched_slots": [
       "news-scout-offhours",
       "market-watcher-offhours",
@@ -22,25 +22,25 @@
       "docs/agents/alert-commander/flow/main.md"
     ],
     "silent": false,
-    "drift_min": 9,
+    "drift_min": 2,
     "errors": [],
-    "pressure_mode": "legacy",
-    "calendar_status": "closed",
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
     "suppressed_calendar": [],
     "suppressed_cadence": [],
     "downgraded": [],
     "chef_mutex_applied": false,
     "due_reasons": {
-      "news-scout-offhours": "cron",
-      "market-watcher-offhours": "cron",
-      "alert-commander-critical": "cron"
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence",
+      "alert-commander-critical": "cadence"
     },
     "cadence_minutes": {
-      "news-scout-offhours": null,
-      "market-watcher-offhours": null,
-      "alert-commander-critical": null
+      "news-scout-offhours": 240,
+      "market-watcher-offhours": 240,
+      "alert-commander-critical": 240
     },
-    "last_fired_timestamp": "2026-07-03T20:18:15Z",
+    "last_fired_timestamp": "2026-07-12T04:05:18Z",
     "last_fired_slots": [
       "news-scout-offhours",
       "market-watcher-offhours",
@@ -49,18 +49,18 @@
     "last_fired_write_errors": null,
     "classification": "FIRE",
     "reason": "spawned",
-    "nominal_tick": "20:00",
+    "nominal_tick": "04:00",
     "leader_lock": "acquired",
     "dev_head": "idle",
-    "devq": 0,
-    "signal_backlog": 0,
-    "note": "cowork 20:00Z tick — legacy mode (pressure-state 28min stale > 20min thresh); 3 off-hours slots fired: news-scout+market-watcher due at 4h cadence (last 16:00Z), alert-commander-critical dormant since 2026-05-25 (event-only, evaluates live state). Router-dispatched, session sighted (subagents reach gateway)."
+    "devq": 1,
+    "signal_backlog": 3,
+    "note": "3 offhours/critical slots overdue since 2026-07-04T16:05:03Z (8 days stale, cadence=240min) -- all matched cron 0 */4 * * *, all claimed+spawned successfully, no collisions/suppression/downgrade applied"
   },
   "priority": "low",
-  "createdAt": "2026-07-03T20:18:15Z",
+  "createdAt": "2026-07-12T04:05:43Z",
   "_processed": {
-    "fingerprint": "de3852eeea5bd3884ef1f098d29f71f05e31323cb108bcf969f9d323db498784",
-    "processedAt": "2026-07-03T21:06:38Z",
+    "fingerprint": "f3e5c992cfe1bb88eb00baba6ee8ec96a5892d1c7cb6e313814972aac34644ae",
+    "processedAt": "2026-07-12T04:13:57Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

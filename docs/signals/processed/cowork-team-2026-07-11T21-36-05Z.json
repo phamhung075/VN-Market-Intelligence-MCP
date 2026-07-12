@@ -1,0 +1,28 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-11T21:36:05Z",
+    "matched_slots": [],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": false,
+    "drift_min": 4,
+    "errors": [],
+    "classification": "ERROR",
+    "reason": "session_blind",
+    "leader_lock": "acquired",
+    "note": "SESSION_BLIND=true — mcp__gateway__call_tool unreachable from this router session even though full Docker fleet (14/14 containers) is healthy post-2026-07-11 reboot incident. blind-guard.md belt-and-suspenders check hit 'No such tool available: mcp__gateway__call_tool'. No cowork agents spawned this tick per Step 5.0 block. Requires user /mcp reconnect or full CLI session restart per feedback_local_cowork_subagents_gateway_blind.md precedent (2026-06-26)."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-11T21:36:05Z",
+  "_processed": {
+    "fingerprint": "f78b83966bc92e34b0452d6e73148b51979daac9aae2bd64e44ed5c9f5b6d4d7",
+    "processedAt": "2026-07-12T02:16:47Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
