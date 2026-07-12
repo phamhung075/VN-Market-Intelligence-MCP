@@ -6566,6 +6566,19 @@
         "completed_by": "qa",
         "qa_reviewed_at": "2026-07-11T04:27:07Z",
         "qa_note": "APPROVED, DONE. RAW-verified independently (did not trust dev self-report): (1) 106-intelligence-cycle.test.ts standalone 25/25 pass, 60 expect(), full run log grepped for [yahooFinance]/[sbv]/yahoo -> ZERO matches, runtime ~100-150ms matching dev-claimed 2.21s(live)->~150ms(stubbed) delta. (2) 1294-macro-spam-fix.test.ts standalone 2/2 pass; both files together 27/27 pass, 67 expect() (exact match). (3) bun tsc --noEmit clean. (4) gh run view 29139234779: conclusion=success, headSha=b4fda300a982791b124ef8788e06ff62abeb7a08 exact match to board commit field, confirmed the bun test job itself (not an unrelated lint job) succeeded (8/8 jobs green). (5) DJ-GATE-1: sprint-SYSTEMIC-REMAKE-P1-dev-mcp-server.md has a substantive task-id-stamped entry (root-cause/what-considered/why-decision/why-change), not a stub. (6) Sanity-checked fix premise: types.ts confirms macroFetchFn/vnstockSyncFn already on CycleDeps; git log -S macroFetchFn traces their introduction to commit 8a2ef7255 (2026-06-12, pre-dates this fix by weeks) -- the reopen note premise (no injection point exists) is confirmed FALSE, dev correctly reused the existing seam instead of adding a redundant one. (7) git show --stat b4fda300a: exactly 1 file changed, 23 insertions/0 deletions -- zero production code touched. (8) Manually walked all 19 actual runIntelligenceCycle() call sites in 106-intelligence-cycle.test.ts and confirmed every one now resolves through NO_NET_BASE_DEPS (directly or via NO_NET_MARKET_DEPS/a shared deps var) -- call-site coverage claim is genuine, matches the observed zero-live-fetch-log-lines result exactly, not approximate. VERDICT: sound root-cause fix, test-file-scoped, zero fake data, CI independently confirmed green on the exact claimed headSha. DJ-GATE-1 satisfied via qa's own entry sprint-SYSTEMIC-REMAKE-P1-qa.md STEP qa-S51."
+      },
+      {
+        "id": "FIX-MARKET-WATCHER-NARRATE-NOT-EXECUTE-GUARD",
+        "title": "market-watcher-offhours narrate-not-execute (2nd confirmed) — harden flow docs with execute-not-narrate guard",
+        "status": "DONE",
+        "zone": "cross-service/",
+        "priority": "normal",
+        "type": "UNBLOCK",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MARKET-WATCHER-NARRATE-NOT-EXECUTE-GUARD",
+        "owner": "agent-father",
+        "status_note": "Verified PO root-cause hypothesis: market-watcher no_self_abort (init.md) covered only notebook-append self-refusal, narrower than unified-agent chef.md Gate-fired contract; market-watcher had no procedural anti-narration guard in its own executing flow. Hardened 3 files: init.md no_self_abort broadened to explicit forbidden-output list (plan-as-future-actions, English self-abort, mid-flow stop short of terminal action); main.md Step -1 execute-not-narrate preamble added (dispatcher, all modes); cycle.md Execution contract preamble added (Step 0-GW through 5b mandatory, no third path). Decision journal: docs/agent-memory/decisions/sprint-ANALYSIS-QUALITY-CONVERGENCE-agent-father.md. Verification gate is behavioral (next offhours cycle) — not verifiable in this dispatch.",
+        "created_at": "2026-07-12T04:19:36Z",
+        "closed_at": "2026-07-12T04:27:30Z"
       }
     ],
     "done_verified": [],
@@ -7040,16 +7053,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#OPS-BCTC-REFINE-REPASS-NONBANK-5T",
         "owner": "ops",
         "po_triage_20260710_round3_ctg_not_folded_note": "[po-triage-20260710-round3 08:06Z] CTG 2026-Q1 (analysis-agent Telegram #3551, composite=0.00/financial=0.00) was triaged this tick and DELIBERATELY NOT FOLDED into this batch. CTG is a BANK (B02-TCTD form); this batch is strictly NON-BANK (VHM/VIC/VRE/HSG/MWG) — a different failure CLASS (bank balance-sheet section-classifier + scalar mapping) with its own owning track: W5-FU-CTG-REFINE-96e36139 + TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST (both BLOCKED on a deploy-gate). CLARIFICATION for future triagers: the title's phrase \"proven CTG runbook\" refers to the general refine -> push_bctc_refined_unit -> finalize_bctc_refine -> reingest-bctc-report.ts PROCEDURE (proven to EXECUTE on CTG report 96e36139), NOT a claim that CTG 2026-Q1's DATA outcome is green — CTG 2026-Q1 total_assets is still 0 and its bank track is BLOCKED (deploy-gate + a genuine balance-sheet-absent root gap, CTG-CARRY-FORWARD AC-TRACK1-3 escalated 2026-07-10). Do NOT read \"proven CTG runbook\" as \"CTG is fixed\"; do NOT fold any BANK ticker into this NON-BANK batch. (Mirrors the bank/non-bank framing correction made in round-1 of this same 2026-07-10T07:07Z tick on OPS-BCTC-BANK-2025Q4-ENRICH-0ROW-REPARSE.)"
-      },
-      {
-        "id": "FIX-MARKET-WATCHER-NARRATE-NOT-EXECUTE-GUARD",
-        "title": "market-watcher-offhours narrate-not-execute (2nd confirmed) — harden flow docs with execute-not-narrate guard",
-        "status": "IN_PROGRESS",
-        "zone": "cross-service/",
-        "priority": "normal",
-        "type": "UNBLOCK",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MARKET-WATCHER-NARRATE-NOT-EXECUTE-GUARD",
-        "owner": "agent-father"
       }
     ]
   },
