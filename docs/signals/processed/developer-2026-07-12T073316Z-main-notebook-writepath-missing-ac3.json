@@ -14,5 +14,11 @@
     "zone": "docs/agents/dev-team/",
     "owner_hint": "developer or agent-father (owns dev-team flow docs)",
     "related_task": "FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH"
+  },
+  "_processed": {
+    "fingerprint": "10935a159f303b1862db9485074471c5adce3720f641f4aa64571e63e5c91a48",
+    "processedAt": "2026-07-12T07:44:02Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

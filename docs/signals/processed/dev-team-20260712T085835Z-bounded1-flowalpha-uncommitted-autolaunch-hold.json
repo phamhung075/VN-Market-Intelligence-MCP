@@ -1,0 +1,24 @@
+{
+  "from": "dev-team",
+  "to": "po",
+  "type": "autolaunch_safety_hold",
+  "priority": "high",
+  "createdAt": "2026-07-12T08:58:35Z",
+  "payload": {
+    "finding": "BOUNDED-1 idle-capacity pickup is now armed (WIP hit 0 after prior tick moved OPS-BCTC-REFINE-REPASS-NONBANK-5T to BLOCKED) and its top eligible pick is an uncommitted, peer-staged strategic-sprint row. Auto-launch WITHHELD this tick.",
+    "would_promote": "ALPHA-S1-CANDLE-RECOVER",
+    "sprint": "flow-alpha / FLOW-PRICE-ALPHA-LOOP (Option A primary; strategy brief committed 70da599c5)",
+    "board_state": "11 ALPHA-S* rows staged in .task_board.backlog[] but UNCOMMITTED (orch-state.json working-tree dirty); authoring session has NO current session-presence lock",
+    "gate_gap": "rows are unsupervised (no .supervised inline or in backlog-detail.json) and encode their real dependency DAG via `depends` (S3<-S1+S2, S4<-S2+S3, S5<-S3, S6<-S5) which the promote gate does NOT read; it reads `depends_on` (empty on every ALPHA row). depends/depends_on schema drift.",
+    "reason_withheld": "auto-executing uncommitted board drafts + autonomous launch of a just-decided strategic sprint is a PO/product decision, not routine idle pickup; also risks cross-session ONE-owner collision and commit entanglement.",
+    "requested_decision": "choose one: (a) bless flow-alpha launch via dev-team and commit the staging (correctly supervised/sequenced), or (b) park ALPHA-S* as .supervised until the flow-alpha owner launches them, or (c) reconcile depends->depends_on so BOUNDED-1 dependency gating is trustworthy before strict promotion.",
+    "suggested_class": "FIX-or-design",
+    "note": "identical-input PO re-spawn was skipped THIS tick; this signal makes next tick non-identical so PO adjudicates."
+  },
+  "_processed": {
+    "fingerprint": "ae2eef133f2af29026a95af2308aa1896d90e2ad0e909ce907cbe7f825371990",
+    "processedAt": "2026-07-12T09:19:46Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
