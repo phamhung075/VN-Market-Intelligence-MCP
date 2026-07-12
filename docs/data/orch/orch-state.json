@@ -315,13 +315,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "none",
-    "next_action": "idle — awaiting next cron tick or signal",
-    "updated_at": "2026-07-12T11:26:25Z",
-    "updated_by": "dev-team",
-    "note": "FIX-DEVTEAM-BOUNDED1-PLAN-ONLY-GATE closed DONE_VERIFIED (commit 4e7de1db4, merge-gate PASS); 3rd sibling gate — detail plan_only:true rows now withheld from BOUNDED-1 idle auto-pickup; tick 2026-07-12T10:37Z"
+    "status": "in_progress",
+    "active_task_id": "FIX-BCTC-BANK-FORM-CLASSIFIER-BOLD-STRIP",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-BCTC-BANK-FORM-CLASSIFIER-BOLD-STRIP — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-12T11:51:02Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -5028,17 +5027,6 @@
         "verify_note": "prior_status=TODO"
       },
       {
-        "id": "FIX-BCTC-BANK-FORM-CLASSIFIER-BOLD-STRIP",
-        "title": "Bank form classifier: strip markdown emphasis from anchor regex (FIX-B)",
-        "type": "FIX",
-        "zone": "apps/mcp-server",
-        "status": "BACKLOG",
-        "priority": "high",
-        "size": "S",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-BCTC-BANK-FORM-CLASSIFIER-BOLD-STRIP",
-        "verify_note": "prior_status=TODO"
-      },
-      {
         "id": "FEAT-SEVERITY-OVERRIDE-SURFACING",
         "type": "FEATURE",
         "priority": "HIGH",
@@ -7916,9 +7904,26 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-12T07:18:33Z",
-    "last_triaged_by": "po",
-    "in_progress": []
+    "last_triaged_at": "2026-07-12T11:51:02Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
+    "in_progress": [
+      {
+        "id": "FIX-BCTC-BANK-FORM-CLASSIFIER-BOLD-STRIP",
+        "title": "Bank form classifier: strip markdown emphasis from anchor regex (FIX-B)",
+        "type": "FIX",
+        "zone": "apps/mcp-server",
+        "status": "IN_PROGRESS",
+        "priority": "high",
+        "size": "S",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-BCTC-BANK-FORM-CLASSIFIER-BOLD-STRIP",
+        "verify_note": "prior_status=TODO",
+        "promoted_at": "2026-07-12T11:51:02Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-12T11:51:02Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
