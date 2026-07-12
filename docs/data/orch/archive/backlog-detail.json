@@ -9160,6 +9160,24 @@
       "verification_gate": "scripts/agents-flow/auditor-tier1-probe.test.sh green; manual: 15x curl localhost:3001/ all resolve <6s -> health_3001 PASS, no CURL_ERR",
       "origin_signal": "auditor-tier1-2026-07-12T034843Z-probe-timeout-tight.json",
       "updated_at": "2026-07-12T04:31:47Z"
+    },
+    {
+      "id": "SPIKE-BCTC-TABLEROWS-FROZEN-HOLLOW-DONE",
+      "title": "bctc-table-rows-frozen-despite-live-pek-layout-extraction",
+      "owner": "developer",
+      "status": "IN_PROGRESS",
+      "zone": "multi",
+      "priority": "high",
+      "type": "SPIKE",
+      "mode": "spike",
+      "next_agent": "developer",
+      "created_at": "2026-07-12T06:01:43Z",
+      "created_by": "po-triage-20260712-hourly",
+      "question": "PEK layout extraction is live post-FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION (bctc_layout_units +1627 since 07-10, +1158 today, newest 2026-07-12 05:47Z), but bctc_table_rows -- the serving financial-table data -- is frozen at MAX(extracted_at)=2026-07-08 12:35:10 (0 new in 4d) and bctc_md_tables is dead (1 row, May-26). 42 queue rows resolved to done since 07-10 producing 0 table_rows (hollow-done). WHERE should layout_units->table_rows (and/or md_tables->table_rows) derivation happen, is it wired/called at all post-D3C, and why does bctcExtractReconcileJob mark rows done without any table_rows? Output: findings doc + follow-on FIX.",
+      "status_note": "4-day serving-data outage on core BCTC analysis product. RAW-verified against live named-volume DB by po-triage-20260712, corroborated by conviction-skip telegram reports 3565-3572 (composite 0.00-0.25 = analysis starved of financial data). Router-facing correction embedded: this is NOT a dedup of OPS-BCTC-BANK-2025Q4-ENRICH-0ROW-REPARSE -- that fix (FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION, shipped+pm-closed 07-10, D3B 850ced6ee/D3C 43f4c8a22) resolved its premise (pull cron never called table endpoints); this SPIKE covers the NEXT stage the fix did not cover.",
+      "timebox_minutes": 120,
+      "verification_gate": "findings doc + follow-on FIX row filed identifying where layout_units->table_rows derivation is missing/broken",
+      "updated_at": "2026-07-12T06:01:43Z"
     }
   ]
 }
