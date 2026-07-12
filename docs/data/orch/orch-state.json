@@ -363,7 +363,7 @@
   },
   "sprint_goal": {
     "_note": "Active sprint visions. PO triage 2026-07-11 16->14: merged FB-POSTER-LAUNCHD-FIRER into COWORK-GUARANTEED-SLOT-DURABILITY (superseded per cron-jobs.md, firer plist installed+loaded); archived NARRATIVE-TRUTH-CCATO-GATE (T2+T3 both DONE, T3 qa-APPROVED). Reasoning: sprint-ANALYSIS-QUALITY-CONVERGENCE-po.md.",
-    "_updated_at": "2026-07-12T07:18:33Z",
+    "_updated_at": "2026-07-12T07:56:33Z",
     "_updated_by": "po",
     "entries": [
       {
@@ -547,12 +547,26 @@
         "scope_out": "Re-deriving the audit (brief is SSOT). Spawning developers from PO (a live dev-team BOUNDED-1 dispatcher drains these). The /cron-cowork-team re-arm after TE-T01 lands (a live-CLI ROUTER step, not a subagent).",
         "success_metric": "done_verified: each landed edit RAW-verified to preserve behavior (no regression) with the byte/token saving realized; TE-T24/T-25 governance in place so savings do not regrow; tsc + suites GREEN where code touched.",
         "created_at": "2026-07-12T07:18:33Z"
+      },
+      {
+        "sprint_id": "FLOW-PRICE-ALPHA-LOOP",
+        "status": "active",
+        "priority": "high",
+        "created_by": "po",
+        "user_prioritized": true,
+        "origin": "USER APPROVED Option A — Flow-and-Price Alpha Loop — from docs/architecture-briefs/2026-07-11-data-strategy-selection.md (commit 70da599c5), §3 Option A / §5 Recommendation / 6-step sequenced roadmap. Router dispatch 2026-07-12 (task=option-a-flow-alpha-loop). Scoring A=40/50 vs B=27, C=31.",
+        "vision": "Turn the platform's richest, freshest, most unusual asset — full-universe 60s foreign flow — into a small number of ranked, regime-gated, outcome-scored daily watchlist signals (33-34 tickers). Foreign z-score x news sentiment x relative strength, gated by a carry/DXY/OMO regime dial, graded nightly by the already-running outcome/calibration layer. Reliability of the serving floor first, then the alpha loop, then truth-ledger calibration. Parallel 'archive-now' track banks irreplaceable forward-only data (intraday ticks, foreign flow, OMO auctions, FTS corpus) every trading day.",
+        "scope_in": "Six sequenced roadmap steps minted as ALPHA-S1..S6 backlog rows for the live dev-team BOUNDED-1 loop to drain. S1 (URGENT/P0, tick-retention race): repair the serving floor — re-aggregate missing 2026-07-11 Friday candle before the 24h purge, startup last-session-candle-present guard, fix ohlcv-backfill done=1-regardless bug + inserted-count check. S2 (P1, archive-now parallel batch): 5-min tick downsample table before purge, fix foreign-flow deferred-write race, daily /liquidity-state cron -> sbv_omo_daily, daily FTS-rebuild cron on rag-service. S3 (P2): divergence screen v1 (foreign z-score x sentiment x RS, watchlist-scoped, daily Telegram digest via existing alerts path). S4 (P2): regime gate v1 (carry spread x DXY-vs-30d-mean x OMO stress; exclude is_estimate honestly). S5 (P2): truth ledger + backtest calibration over signal_outcomes/alerts/backtest_runs. S6 (P3, GATE/supervised): decision gate to Option B only after pdf-extractor healthy >=2 weeks AND A producing scored signals.",
+        "scope_out": "Re-litigating the strategy selection (brief is SSOT, user already approved Option A). Option B's heavy BCTC deferred_infra drain + AGM multi-year backfill (GATED behind S6 decision gate — NOT in this sprint). PO spawning developers or a parallel dev drive — a live dev-team BOUNDED-1 dispatcher (session bdf62a0c) drains these rows. Sources explicitly excluded until their writers are made honest: sector-tool static seeds, SBV config-fallback rates (is_estimate), GSO empty pushes, bond_maturity seed rows.",
+        "success_metric": "done_verified per row, RAW-verified. Sprint outcome (~3-4 weeks): a live, scored, regime-gated flow loop — S1 serving floor repaired (Friday candle present, startup guard live, backfill inserted-count verified); S2 forward-loss classes closed (5-min bars accruing, foreign-flow race fixed, sbv_omo_daily + rag FTS accruing daily); S3 divergence digest posting daily to Telegram; S4 regime dial prepended to every screen output; S5 signal classes ranked by realized hit-rate with losing alert classes muted. tsc + suites GREEN where code touched.",
+        "kill_criteria": "(1) Signal-quality kill (A): after 8 weeks of outcome scoring, if divergence-screen resolved T+24/48h hit-rate is indistinguishable from base rate AND avg 3d impact <=0 at n>=40 signals -> stop A, pivot freed effort to Option B, keep only regime gate + archive track. (2) Ingestion-integrity kill: a second silent-loss class beyond the deferred-write race, OR >2 multi-day VPS outages in a quarter -> freeze new signal work, redirect to acquisition hardening. (3) BCTC pivot (B): if at S6 gate the extractor still can't hold 2 weeks health or deferred_infra can't drop below ~30% of queue -> abandon in-house structured extraction for historical quarters, downgrade B to vnstock-only fundamentals, reserve PEK for current-quarter filings.",
+        "created_at": "2026-07-12T07:56:33Z"
       }
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-12T07:27:36Z",
-    "_updated_by": "po (TE dep-gate depends->depends_on)",
+    "_updated_at": "2026-07-12T07:56:33Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -6349,6 +6363,225 @@
         "created_at": "2026-07-12T07:47:22Z",
         "created_by": "po (triage — recurring_bug signal)",
         "source": "docs/signals/processed/developer-2026-07-12T073316Z-main-notebook-writepath-missing-ac3.json"
+      },
+      {
+        "id": "ALPHA-S1-CANDLE-RECOVER",
+        "title": "URGENT/TIME-CRITICAL: re-aggregate the missing 2026-07-11 Friday daily_ohlcv candle from surviving market_prices_history ticks BEFORE the 24h retention purges them (taOhlcvBackfill fallback if ticks already gone)",
+        "owner": "developer",
+        "status": "BACKLOG",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P0",
+        "wave": 1,
+        "urgent": true,
+        "zone": "multi",
+        "sprint": "FLOW-PRICE-ALPHA-LOOP",
+        "depends": [],
+        "created_by": "po-option-a-flow-alpha-loop",
+        "created_at": "2026-07-12T07:56:33Z",
+        "note": "PICK FIRST — race against the 24h market_prices_history retention timer. The Docker incident (07-11) made the tick aggregator skip the incident day, so daily_ohlcv is missing the 2026-07-11 Friday candle and every downstream (snapshot, breadth, TA, briefings) is serving Thursday closes; prices flagged 'Rat cu' 36.7h. DoD: (1) probe whether the 07-11 surviving ticks still exist in market_prices_history; if present, re-aggregate the Friday OHLCV bar from them and INSERT into daily_ohlcv for all affected tickers; (2) if ticks already purged, use taOhlcvBackfill as the fallback source; (3) RAW-verify the Friday bar now serves (get_market_snapshot / TA freshness no longer stale). This is the DATA-RECOVERY row only; the recurrence guard + backfill bug are separate rows (ALPHA-S1-STARTUP-CANDLE-GUARD, ALPHA-S1-OHLCV-BACKFILL-DONE-BUG). Brief: docs/architecture-briefs/2026-07-11-data-strategy-selection.md roadmap step 1 + gap #5. zone=multi (tick source + aggregator + verification) -> architect splits.",
+        "supervised": true
+      },
+      {
+        "id": "ALPHA-S1-STARTUP-CANDLE-GUARD",
+        "title": "Add startup 'last-session-candle-present?' guard + aggregator catch-up path so a Docker incident can never again silently drop a session's daily_ohlcv candle",
+        "owner": "developer",
+        "status": "BACKLOG",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "wave": 1,
+        "zone": "multi",
+        "sprint": "FLOW-PRICE-ALPHA-LOOP",
+        "depends": [],
+        "created_by": "po-option-a-flow-alpha-loop",
+        "created_at": "2026-07-12T07:56:33Z",
+        "note": "Recurrence-prevention for the ALPHA-S1-CANDLE-RECOVER incident class. The daily aggregation chain currently has NO catch-up path: one Docker incident produced a missing candle and nobody ran the fix while the raw ticks expired. DoD: on startup (and/or first tick of a session) the aggregator checks that the most-recent trading session has a daily_ohlcv candle for the expected tickers; if missing, it triggers a catch-up re-aggregation from surviving ticks (or taOhlcvBackfill) and logs/alerts. Must be idempotent (no double-insert) and fail-loud on catch-up failure. Brief roadmap step 1 + gap #5. zone=multi -> architect splits.",
+        "supervised": true
+      },
+      {
+        "id": "ALPHA-S1-OHLCV-BACKFILL-DONE-BUG",
+        "title": "Fix the ohlcv-backfill done=1-regardless bug + add inserted-count verification on /api/ohlcv-backfill-done (universe backfill silently no-ops, marking rows done with zero bars)",
+        "owner": "developer",
+        "status": "BACKLOG",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "wave": 1,
+        "zone": "multi",
+        "sprint": "FLOW-PRICE-ALPHA-LOOP",
+        "depends": [],
+        "created_by": "po-option-a-flow-alpha-loop",
+        "created_at": "2026-07-12T07:56:33Z",
+        "note": "Root cause of the universe-vs-watchlist depth split (gap #6): the ~1459-code universe backfill marks queue rows done=1 regardless of exit code with no inserted-count verification, so 457+ queue rows are 'done' with zero bars — cross-sectional z-scores (foreign-accum rank, ROC deciles) then rank against a partly-empty cross-section, which degrades the divergence screen (ALPHA-S3). Also corroborated by BUG channel id3564 (OHLCV-DEPTH VPS backfill stalled, shallow codes). DoD: /api/ohlcv-backfill-done only marks a row done when the fetch actually inserted the expected bar count; on zero/short insert it records the real failure state (retry/deferred) instead of a false done; add an inserted-count check + fail-loud. Brief roadmap step 1 + gap #6. zone=multi -> architect splits.",
+        "supervised": true
+      },
+      {
+        "id": "ALPHA-S2-TICK-DOWNSAMPLE-5MIN",
+        "title": "Archive-now: new 5-min tick downsample table populated from market_prices_history BEFORE the 24h purge — stop deleting irreplaceable intraday ticks",
+        "owner": "developer",
+        "status": "BACKLOG",
+        "type": "SPRINT-S",
+        "size": "M",
+        "priority": "P1",
+        "wave": 2,
+        "zone": "multi",
+        "sprint": "FLOW-PRICE-ALPHA-LOOP",
+        "depends": [],
+        "created_by": "po-option-a-flow-alpha-loop",
+        "created_at": "2026-07-12T07:56:33Z",
+        "note": "ARCHIVE-NOW parallel track (gap #2 — irreplaceable data thrown away daily). VN intraday tick history is not purchasable; market_prices_history is only 24h rolling. DoD: create a permanent 5-min OHLCV bars table and a cron/job that compacts surviving ticks into 5-min bars before the 24h retention deletes them; idempotent, gap-tolerant, no dependence on market open. Forward-only preservation — every trading day of delay loses that day permanently. Brief roadmap step 2 + §5 archive-now. zone=multi -> architect splits.",
+        "supervised": true
+      },
+      {
+        "id": "ALPHA-S2-FOREIGN-FLOW-WRITE-RACE",
+        "title": "Archive-now: fix the foreign-flow deferred-write race that drops 60s foreign buy/sell/value/room rows until the daily_ohlcv bar exists",
+        "owner": "developer",
+        "status": "BACKLOG",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "wave": 2,
+        "zone": "multi",
+        "sprint": "FLOW-PRICE-ALPHA-LOOP",
+        "depends": [],
+        "created_by": "po-option-a-flow-alpha-loop",
+        "created_at": "2026-07-12T07:56:33Z",
+        "note": "ARCHIVE-NOW + ingestion-integrity (gap #2; also the ingestion-integrity kill-criterion #2 watches this plane). Full-universe 60s foreign-flow pushes are the richest, freshest, most unusual asset in the system, but intraday granularity is discarded and the deferred-write path drops rows until an OHLCV bar exists for the ticker. DoD: foreign-flow rows persist (buffered/queued) even when the daily_ohlcv row is not yet present, then reconcile when the bar lands — no silent row loss. This is the foreign plane the whole divergence screen (ALPHA-S3) and foreign-accum-rank depend on. Brief roadmap step 2 + gap #2. zone=multi -> architect splits.",
+        "supervised": true
+      },
+      {
+        "id": "ALPHA-S2-OMO-LIQUIDITY-CRON",
+        "title": "Archive-now: daily cron calling macro-indicators /liquidity-state -> sbv_omo_daily so the regime gate's OMO-stress leg starts accruing (currently near-empty, score stays null)",
+        "owner": "developer",
+        "status": "BACKLOG",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "wave": 2,
+        "zone": "multi",
+        "sprint": "FLOW-PRICE-ALPHA-LOOP",
+        "depends": [],
+        "created_by": "po-option-a-flow-alpha-loop",
+        "created_at": "2026-07-12T07:56:33Z",
+        "note": "ARCHIVE-NOW (gap #2). The macro-indicators /liquidity-state endpoint is live but NO scheduler calls it, so sbv_omo_daily accrues nothing and the built OMO-stress score stays null — OMO auction history is forward-only and not purchasable. DoD: a daily cron hits /liquidity-state and writes sbv_omo_daily; fail-loud if the endpoint/VPS is down (no fake-freshness). Blocks ALPHA-S4-REGIME-GATE-V1 (regime gate needs >=5 accrued auctions before the OMO leg is honest). Brief roadmap step 2. zone=multi -> architect splits.",
+        "supervised": true
+      },
+      {
+        "id": "ALPHA-S2-RAG-FTS-REBUILD-CRON",
+        "title": "Archive-now: daily FTS-rebuild cron on rag-service so the hybrid BM25 leg stops silently missing post-boot rows (FTS rebuild was never wired)",
+        "owner": "developer",
+        "status": "BACKLOG",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "wave": 2,
+        "zone": "multi",
+        "sprint": "FLOW-PRICE-ALPHA-LOOP",
+        "depends": [],
+        "created_by": "po-option-a-flow-alpha-loop",
+        "created_at": "2026-07-12T07:56:33Z",
+        "note": "ARCHIVE-NOW (gap #4-adjacent — sentiment corpus quality). The rag-service FTS rebuild cron was never wired, so the hybrid retrieval's BM25 leg silently misses rows added since the last boot — degrading the sentiment input (rag_analyses) that feeds the divergence screen (ALPHA-S3). DoD: a daily cron rebuilds the FTS index on rag-service over the LanceDB rag_entries corpus; verify post-rebuild that recent rows are searchable via the BM25 leg. Brief roadmap step 2. zone=multi -> architect splits.",
+        "supervised": true
+      },
+      {
+        "id": "ALPHA-S3-DIVERGENCE-SCREEN-V1",
+        "title": "Divergence screen v1: foreign z-score (accum-rank) x news sentiment (rag_analyses) x relative strength (/ta/relative-strength), watchlist-scoped, daily Telegram digest via the existing alerts path",
+        "owner": "developer",
+        "status": "BACKLOG",
+        "type": "SPRINT-M",
+        "size": "M",
+        "priority": "P2",
+        "wave": 3,
+        "zone": "multi",
+        "sprint": "FLOW-PRICE-ALPHA-LOOP",
+        "depends": [
+          "ALPHA-S1-CANDLE-RECOVER",
+          "ALPHA-S1-OHLCV-BACKFILL-DONE-BUG",
+          "ALPHA-S2-FOREIGN-FLOW-WRITE-RACE"
+        ],
+        "created_by": "po-option-a-flow-alpha-loop",
+        "created_at": "2026-07-12T07:56:33Z",
+        "note": "THE core alpha deliverable (alpha lens #1 — 'nearly pure SQL'). Joins daily_ohlcv foreign columns + foreign_room_events (foreign z-score / foreignAccumZMarket via stock-price /price/foreign-accum-rank) x rag_analyses sentiment + mention_velocity x technical-analysis /ta/relative-strength, watchlist-scoped (33-34 tickers), emitting a small ranked set as a daily Telegram digest through the EXISTING alerts path (do not build a new delivery channel). DoD: a daily digest posts ranked divergence signals with honest nulls (no fabrication when a leg is thin). Depends on S1 (sane cross-section: candle present + backfill inserted-count) and S2 foreign-flow race fix (no dropped foreign rows). Needs dev-team PM/architect decomposition when picked. Brief roadmap step 3 + §3 Option A. zone=multi -> architect splits.",
+        "supervised": true
+      },
+      {
+        "id": "ALPHA-S4-REGIME-GATE-V1",
+        "title": "Regime gate v1: carry spread x DXY-vs-30d-mean x OMO stress as a size-up/stand-down dial prepended to every screen output; exclude is_estimate fields honestly",
+        "owner": "developer",
+        "status": "BACKLOG",
+        "type": "SPRINT-S",
+        "size": "M",
+        "priority": "P2",
+        "wave": 4,
+        "zone": "multi",
+        "sprint": "FLOW-PRICE-ALPHA-LOOP",
+        "depends": [
+          "ALPHA-S2-OMO-LIQUIDITY-CRON",
+          "ALPHA-S3-DIVERGENCE-SCREEN-V1"
+        ],
+        "created_by": "po-option-a-flow-alpha-loop",
+        "created_at": "2026-07-12T07:56:33Z",
+        "note": "Top-down conditioning dial prepended to every divergence-screen output. Inputs: carry spread (sbv_rates x fred_series_daily), DXY-vs-30d-mean (commodity_prices_history), OMO stress (sbv_omo_daily, once >=5 auctions accrue from ALPHA-S2-OMO-LIQUIDITY-CRON). HARD honesty rule: exclude is_estimate fields (SBV config-fallback policy rates, interbank_1w) — the dial must be visibly 'partial' rather than silently include estimated inputs. DoD: each screen output carries a size-up / neutral / stand-down regime read derived only from non-estimate inputs. Depends on S2 OMO cron (data) + S3 (the surface it prepends to). Brief roadmap step 4. zone=multi -> architect splits.",
+        "supervised": true
+      },
+      {
+        "id": "ALPHA-S5-TRUTH-LEDGER-BACKTEST",
+        "title": "Truth ledger + backtest calibration: rank signal classes by realized hit-rate/impact from signal_outcomes/alerts; backtest RSI/BB thresholds vs ~3y bars; mute losing alert classes",
+        "owner": "developer",
+        "status": "BACKLOG",
+        "type": "SPRINT-M",
+        "size": "M",
+        "priority": "P2",
+        "wave": 5,
+        "zone": "multi",
+        "sprint": "FLOW-PRICE-ALPHA-LOOP",
+        "depends": [
+          "ALPHA-S3-DIVERGENCE-SCREEN-V1"
+        ],
+        "created_by": "po-option-a-flow-alpha-loop",
+        "created_at": "2026-07-12T07:56:33Z",
+        "note": "Closes the loop (gap #7 — outcome/calibration layer runs nightly but nothing converts grades into weights). DoD: a 'signal truth ledger' view over the already-running signal_outcomes / alerts / calibration_snapshots / backtest_runs ranks each signal class by realized T+24/48h hit-rate and 3d impact; run_backtest calibrates RSI/BB thresholds against the ~3y watchlist bars; losing alert classes are muted. Feeds the kill-criterion #1 measurement (n>=40 signals, 8-week window). Depends on S3 (signals must be flowing to accrue outcomes). Needs dev-team PM/architect decomposition. Brief roadmap step 5. zone=multi -> architect splits.",
+        "supervised": true
+      },
+      {
+        "id": "ALPHA-S6-OPTIONB-DECISION-GATE",
+        "title": "GATE (do not auto-pick): decision gate to Option B (BCTC deferred_infra drain + AGM multi-year backfill) — trip ONLY when pdf-extractor healthy >=2 weeks AND Option A producing scored signals",
+        "owner": "po",
+        "status": "BACKLOG",
+        "type": "SPIKE",
+        "size": "S",
+        "priority": "P3",
+        "wave": 6,
+        "supervised": true,
+        "zone": "docs/architecture-briefs/",
+        "sprint": "FLOW-PRICE-ALPHA-LOOP",
+        "depends": [
+          "ALPHA-S5-TRUTH-LEDGER-BACKTEST"
+        ],
+        "created_by": "po-option-a-flow-alpha-loop",
+        "created_at": "2026-07-12T07:56:33Z",
+        "note": "PLAN-ONLY GATE, NOT buildable work — supervised:true so the dev-team BOUNDED-1 idle-capacity promote SKIPS it; it is a PO/human decision checkpoint + dedup anchor so the gate is not lost. Trip condition (both required): (a) pdf-extractor container has held healthy >=2 weeks; (b) Option A is producing scored signals (S3 digest live + S5 ledger accruing). When BOTH true, PO re-opens strategy: start the Option B major build (BCTC 328-row deferred_infra drain to 8+ quarters x 34 tickers, AGM multi-year backfill + de-hardcode the 33-ticker VPS list). Apply BCTC pivot-trigger (kill-criterion #3): if the extractor still can't hold 2 weeks health or deferred_infra can't drop below ~30% of the bctc_vps_queue -> downgrade Option B to vnstock-only fundamentals, reserve PEK for current-quarter filings. Brief roadmap step 6 + §5 + kill criteria. Do NOT decompose or dispatch until PO trips the gate."
+      },
+      {
+        "id": "OPS-BCTC-REFINE-REPASS-NONBANK-5T",
+        "title": "OPS — agentic-refine repass + reingest 5 non-bank Q1-2026 reports (VHM/VIC/VRE/HSG/MWG) to recover total_assets=0; ZERO new code, proven CTG runbook + D2D 2026-Q1 (folded from analysis #3507, composite=0.10)",
+        "status": "BLOCKED",
+        "zone": "multi",
+        "priority": "high",
+        "type": "FIX",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#OPS-BCTC-REFINE-REPASS-NONBANK-5T",
+        "owner": "ops",
+        "po_triage_20260710_round3_ctg_not_folded_note": "[po-triage-20260710-round3 08:06Z] CTG 2026-Q1 (analysis-agent Telegram #3551, composite=0.00/financial=0.00) was triaged this tick and DELIBERATELY NOT FOLDED into this batch. CTG is a BANK (B02-TCTD form); this batch is strictly NON-BANK (VHM/VIC/VRE/HSG/MWG) — a different failure CLASS (bank balance-sheet section-classifier + scalar mapping) with its own owning track: W5-FU-CTG-REFINE-96e36139 + TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST (both BLOCKED on a deploy-gate). CLARIFICATION for future triagers: the title's phrase \"proven CTG runbook\" refers to the general refine -> push_bctc_refined_unit -> finalize_bctc_refine -> reingest-bctc-report.ts PROCEDURE (proven to EXECUTE on CTG report 96e36139), NOT a claim that CTG 2026-Q1's DATA outcome is green — CTG 2026-Q1 total_assets is still 0 and its bank track is BLOCKED (deploy-gate + a genuine balance-sheet-absent root gap, CTG-CARRY-FORWARD AC-TRACK1-3 escalated 2026-07-10). Do NOT read \"proven CTG runbook\" as \"CTG is fixed\"; do NOT fold any BANK ticker into this NON-BANK batch. (Mirrors the bank/non-bank framing correction made in round-1 of this same 2026-07-10T07:07Z tick on OPS-BCTC-BANK-2025Q4-ENRICH-0ROW-REPARSE.)",
+        "depends_on": [
+          "FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP"
+        ],
+        "depends": [
+          "FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP"
+        ],
+        "blocked_reason": "STRANDED >24h, no live ops owner/lock (PO adjudication dev-team tick 2026-07-12T08:07Z). Shared root cause with reconcile-exhausted cluster: agentic-refine trigger dormant since 2026-07-04. Unblock when FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP ships (refine-pipeline-live). Do NOT cancel — total_assets=0 recovery for VHM/VIC/VRE/HSG/MWG still wanted.",
+        "updated_at": "2026-07-12T08:37:35Z",
+        "updated_by": "pm"
       }
     ],
     "closed_sprints": [
@@ -7639,19 +7872,7 @@
     },
     "last_triaged_at": "2026-07-12T07:18:33Z",
     "last_triaged_by": "po",
-    "in_progress": [
-      {
-        "id": "OPS-BCTC-REFINE-REPASS-NONBANK-5T",
-        "title": "OPS — agentic-refine repass + reingest 5 non-bank Q1-2026 reports (VHM/VIC/VRE/HSG/MWG) to recover total_assets=0; ZERO new code, proven CTG runbook + D2D 2026-Q1 (folded from analysis #3507, composite=0.10)",
-        "status": "IN_PROGRESS",
-        "zone": "multi",
-        "priority": "high",
-        "type": "FIX",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#OPS-BCTC-REFINE-REPASS-NONBANK-5T",
-        "owner": "ops",
-        "po_triage_20260710_round3_ctg_not_folded_note": "[po-triage-20260710-round3 08:06Z] CTG 2026-Q1 (analysis-agent Telegram #3551, composite=0.00/financial=0.00) was triaged this tick and DELIBERATELY NOT FOLDED into this batch. CTG is a BANK (B02-TCTD form); this batch is strictly NON-BANK (VHM/VIC/VRE/HSG/MWG) — a different failure CLASS (bank balance-sheet section-classifier + scalar mapping) with its own owning track: W5-FU-CTG-REFINE-96e36139 + TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST (both BLOCKED on a deploy-gate). CLARIFICATION for future triagers: the title's phrase \"proven CTG runbook\" refers to the general refine -> push_bctc_refined_unit -> finalize_bctc_refine -> reingest-bctc-report.ts PROCEDURE (proven to EXECUTE on CTG report 96e36139), NOT a claim that CTG 2026-Q1's DATA outcome is green — CTG 2026-Q1 total_assets is still 0 and its bank track is BLOCKED (deploy-gate + a genuine balance-sheet-absent root gap, CTG-CARRY-FORWARD AC-TRACK1-3 escalated 2026-07-10). Do NOT read \"proven CTG runbook\" as \"CTG is fixed\"; do NOT fold any BANK ticker into this NON-BANK batch. (Mirrors the bank/non-bank framing correction made in round-1 of this same 2026-07-10T07:07Z tick on OPS-BCTC-BANK-2025Q4-ENRICH-0ROW-REPARSE.)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
@@ -7660,6 +7881,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-07-12T07:27:36Z",
-  "_updated_by": "po (TE dep-gate canonical-field rename depends->depends_on)"
+  "_updated_at": "2026-07-12T07:56:33Z",
+  "_updated_by": "po-option-a-flow-alpha-loop"
 }
