@@ -5744,6 +5744,27 @@
         "po_approved": true,
         "po_approved_at": "2026-07-11T07:37:30Z",
         "po_approval_note": "spec APPROVED — zero PO blockers, respects honest-NULL/additive-only/zone-discipline/PLAN-ONLY-phase2/feasibility-recon precedents; resume SPRINT-M cascade at agents-architect, do NOT re-run BA"
+      },
+      {
+        "id": "FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "M",
+        "plan_only": true,
+        "owner": "architect",
+        "zone": "docs/agents/dev-team/flow/",
+        "title": "PLAN-ONLY: dev-team flow has no review-lane drain — rows flipped to REVIEW/next_agent=qa strand forever when the inline execute-tier QA merge-gate is missed (session death / reboot / incident). QA runs ONLY inline inside an active dev pipeline, never as a board scan.",
+        "created_at": "2026-07-12T02:22:50Z",
+        "created_by": "po (2026-07-12 QA-not-draining diagnosis)",
+        "recurrence_class": "DISTINCT from FIX-DEVTEAM-STATUSFLIP-LANEMOVE-RULE (that = status not matching lane); THIS = status+lane+next_agent all correct but no dispatcher step scans review[] to spawn qa",
+        "status_note": "ROOT CAUSE (grep-confirmed 2026-07-12): qa is spawned in only two places — execute-tier.md merge-gate (inline, needs a live developer->qa pipeline) and main.md S4 CLEAN (branch cleanup). NO step scans task_board.review[] for status==REVIEW && next_agent=='qa' to re-dispatch qa. Step 0b pipeline-resume resumes only off .head (idle here). So a REVIEW row whose inline qa never ran (dev session died / 07-11 Docker VM wedge + SESSION_BLIND) strands forever. EVIDENCE: 2026-07-12 nine review[] rows carried next_agent=qa while qa[]==0; two BOUNDED-1 gate fixes sat 3 days fully green (fix committed+pushed, tests 18/18 + 15/15, live baseline_pass exit 0, DJ present) yet never signed off; PO hand-drained them. SECOND FACET: these FIX rows commit directly to main (branch:null, no docs/handoffs/TASK_NNN.md), but qa/flow/main.md Pipeline assumes `git checkout task/NNN-*` + TASK_NNN.md handoff — so the drain must also give qa a 'verify-committed-fix-against-baseline_pass' mode. SUGGESTED REMEDY (do NOT weld inline into execute-tier): add an age-ordered QA-drain step to dev-team flow mirroring the BOUNDED-1 idle-capacity pickup pattern — new step after Step 0b pipeline-resume, before Step 1 PO triage: scan review[] for status==REVIEW && next_agent=='qa', pick oldest by (updated_at // reviewed_at // created_at), dispatcher-wrap claim task:<id>, spawn qa (WIP<=1 for this lane), idempotent + orch-apply.sh-gated. architect owns the pick/claim contract + the qa verify-committed-fix mode.",
+        "related": [
+          "FIX-DEVTEAM-STATUSFLIP-LANEMOVE-RULE",
+          "FIX-DEVTEAM-BOUNDED1-DETAIL-ITEMS-ARRAY-INDEX",
+          "FIX-DEVTEAM-BOUNDED1-SUPERVISED-FLAG-GATE",
+          "project_bounded1_first_pickup_stale_backlog_hygiene_debt"
+        ]
       }
     ],
     "closed_sprints": [
@@ -6701,6 +6722,70 @@
         "closed_at": "2026-07-11T12:23:05Z",
         "status_note": "backlog->done_verified: obsolete — bulk repaired by other OHLCV lanes; single-digit residual below action threshold",
         "verify_note": "ARCHIVED as obsolete-by-other-lanes. Row claimed 3023 contaminated sub-1000 daily_ohlcv rows (9 tickers BMP/MCH/HGM/PMC/KSV/TOS/AGX/TBD/STS); ~99.8% repaired by ongoing OHLCV normalization lanes. Live re-verify 2026-07-11 (named-volume vn-market-intelligence-mcp_market_data /app/data/market.db, WAL-inclusive): 6 residual sub-1000 rows, ALL TBD (close 100-135, 2023-06-28..07-06). pm probe 07cd7d848 (~2h earlier) found 4 DIFFERENT rows (BMP/HGM/KSV/MCH x1) — differing composition confirms the residual is a moving target churned by live lanes, so a rescoped row would re-stale within hours. 6/754216 = 0.0008%, historical, below any action threshold; the row's own AC-mandated heavyweight remediation (VPS anchor + BACKUP + off-hours window + PO go/no-go gate) is disproportionate. No fresh row minted — the OHLCV contamination auditor/CONTAM-10 detector is the correct self-regenerating re-detection path if residual ever crosses threshold. Provenance: pm raw-verify commit 07cd7d848 + po live re-verify this tick."
+      },
+      {
+        "id": "FIX-DEVTEAM-BOUNDED1-DETAIL-ITEMS-ARRAY-INDEX",
+        "status": "DONE_VERIFIED",
+        "title": "bounded-1 promote jq crashes object-indexing .items ARRAY with task-id string",
+        "owner": "dev-team",
+        "next_agent": "qa",
+        "type": "FIX",
+        "zone": "cross-service/",
+        "size": "S",
+        "priority": "high",
+        "created_at": "2026-07-09T14:02:56Z",
+        "created_by": "po-triage-20260709T1337Z",
+        "files": [
+          "scripts/devteam-backlog-promote-bounded1.jq"
+        ],
+        "related": [
+          "FIX-DEVTEAM-BOUNDED1-DEPENDS-ON-GATE"
+        ],
+        "status_note": "REPRODUCED live (exit 5, no corruption). effective_depends_on (L112-120) does $detail_items[.id] at L117 (object-indexing) but $detail_items = ($detail[0].items // {}) (L150) and live docs/data/orch/archive/backlog-detail.json .items is a plain ARRAY of 437 objects each carrying its own .id. First detail_ref'd row scanned during eligibility filtering (TASK17-FOREIGN-FLOW) crashes the WHOLE transform: jq error Cannot index array with string. orch-apply.sh correctly aborted (empty candidate, zero corruption) but BOUNDED-1 idle-capacity backlog pickup has promoted NOTHING on any tick since 2026-07-08. FIX: id-key the array at ingest, e.g. replace L150 ($detail[0].items // {}) with a shape-defensive map: (($detail[0].items // []) | if type==\"object\" then . else (map(select(.id!=null)|{key:.id,value:.})|from_entries) end). Do NOT change depends_on semantics, only the array-vs-object lookup. Read the actual script first. baseline_pass: jq --arg now \"$NOW\" --slurpfile detail docs/data/orch/archive/backlog-detail.json -f scripts/devteam-backlog-promote-bounded1.jq docs/data/orch/orch-state.json > /dev/null must exit 0 with live WIP==0, emitting a doc that moves exactly ONE eligible row backlog->ready; re-run through orch-apply.sh must not abort on empty candidate.",
+        "review_note": "fix committed 1d0549e52 (scripts/devteam-backlog-promote-bounded1.jq + scripts/test-devteam-bounded1-depends-on.sh, pushed to main). Shape-defensive $detail_items ingest: id-key backlog-detail.json .items ARRAY at ingest so existing $detail_items[.id] lookup works unmodified; object input passes through unchanged; zero depends_on semantic change; zero hardcoded task-id literals. New RED/GREEN test Case 1c reproduces the live ARRAY shape (17->18/18 pass). Live-data reproducer (TASK17-FOREIGN-FLOW vs real backlog-detail.json): exit 5 pre-fix -> exit 0 post-fix. End-to-end scratch-copy run through orch-apply.sh (ORCH_APPLY_LIVE_FILE_OVERRIDE, WIP forced to 0 on a scratch copy, live file untouched since live WIP=2): exactly one row promoted, no empty-candidate abort. Companion devteam-backlog-claim-bounded1.jq inspected -- never touches backlog-detail.json, no equivalent bug, left unchanged. Decision journal: sprint-SYSTEMIC-REMAKE-P1-developer.md STEP developer-S10.",
+        "reviewed_at": "2026-07-09T14:11:04Z",
+        "reviewed_by": "developer",
+        "verified_at": "2026-07-12T02:22:50Z",
+        "verified_by": "po",
+        "verify_note": "PO sign-off 2026-07-12 (QA-not-draining remediation; no qa-spawn tool in this session). Fix 1d0549e52 on main. Live baseline_pass `jq --slurpfile detail docs/data/orch/archive/backlog-detail.json -f scripts/devteam-backlog-promote-bounded1.jq docs/data/orch/orch-state.json` exits 0 (no 'Cannot index array with string'). scripts/test-devteam-bounded1-depends-on.sh 18/18 incl Case-1c ARRAY-shape reproducer. DJ present: sprint-SYSTEMIC-REMAKE-P1-developer.md L90."
+      },
+      {
+        "id": "FIX-DEVTEAM-BOUNDED1-SUPERVISED-FLAG-GATE",
+        "status": "DONE_VERIFIED",
+        "title": "BOUNDED-1 promote script: cross-check supervised from backlog-detail.json .items[] (not just the thin board row) so the Phase-1 supervised set can't be auto-promoted",
+        "owner": "po",
+        "next_agent": "qa",
+        "type": "FIX",
+        "zone": "cross-service/",
+        "size": "S",
+        "priority": "P0",
+        "severity": "HIGH",
+        "created_at": "2026-07-09T15:57:12Z",
+        "created_by": "po (triage 2026-07-09T15:37Z, router-driven dev-team tick)",
+        "related": [
+          "FIX-DEVTEAM-BOUNDED1-DEPENDS-ON-GATE",
+          "FIX-DEVTEAM-BOUNDED1-DETAIL-ITEMS-ARRAY-INDEX",
+          "BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP",
+          "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
+          "SPIKE-BOUNDED1-ELIGIBILITY-CONTRACT-REVIEW"
+        ],
+        "recurrence_class": "project_bounded1_first_pickup_stale_backlog_hygiene_debt (3rd+ variant: bypasses an explicit safety flag, not just staleness)",
+        "files": [
+          "scripts/devteam-backlog-promote-bounded1.jq",
+          "docs/agents/dev-team/flow/main.md",
+          "scripts/test-devteam-bounded1-supervised-flag.sh"
+        ],
+        "status_note": "LIVE near-miss on a safety-critical dispatch guard (2026-07-09T15:48Z): scripts/devteam-backlog-promote-bounded1.jq auto-promoted+claimed FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD (P0, supervised since 2026-07-04T19:23:49Z/4231a1157) into in_progress despite supervised_note='NOT a BOUNDED-1 auto-pickup target'. ROOT CAUSE: the candidate-selection filter (~L165) `select((.value.supervised // false) != true)` reads supervised ONLY off the thin task_board.backlog[] row, but supervised:true is authoritatively written to docs/data/orch/archive/backlog-detail.json .items[].supervised -- so the check silently evaluated false for every detail_ref'd supervised row (all 8 in the Phase-1 set). Router mitigated (90e970b47): reverted the claim (row back to backlog[], .head->idle) + stamped supervised:true onto every Phase-1 board row -- a DATA-HYGIENE PATCH that must be re-applied by hand on every future supervised-set addition, NOT the fix. APPROACH (mirror the depends_on gate that already shipped in this same file): the script ALREADY receives --slurpfile detail docs/data/orch/archive/backlog-detail.json and id-keys it into $detail_items (see the FIX-DEVTEAM-BOUNDED1-DETAIL-ITEMS-ARRAY-INDEX ingest ~L156). Add def effective_supervised($detail_items): true if EITHER `.supervised == true` on the inline board row OR `$detail_items[.id].supervised == true` (detail-authoritative). Change the ~L165 filter to `select((.value | effective_supervised($detail_items)) != true)`. NO new call-site change needed -- the --slurpfile detail is already threaded through BOTH dev-team flow invocations for the depends_on gate; VERIFY (do not re-add). Conservative default: absent/null supervised in both places = NOT supervised (promotable) -- preserves baseline behavior. Add scripts/test-devteam-bounded1-supervised-flag.sh covering: (a) supervised ONLY in backlog-detail.json .items[] (board row has no flag) -> SKIPPED (the exact 07-09 failure), (b) supervised ONLY on the board row (router-stamp case) -> SKIPPED, (c) supervised in neither -> promoted (baseline), (d) supervised in both -> SKIPPED. Keep orch-apply.sh-gated, no hardcoded task IDs, idempotent/re-run-safe. DJ-GATE applies before any DONE/REVIEW flip. This is the 4th distinct BOUNDED-1 eligibility-gate defect in ~5 days (stale 07-04, depends_on 07-08, array-index 07-09, supervised-flag 07-09) -- SPIKE-BOUNDED1-ELIGIBILITY-CONTRACT-REVIEW (architect, non-blocking) asks whether all eligibility metadata should resolve through ONE detail-resolution contract; do NOT wait on it -- ship this hole-closer now.",
+        "promoted_at": "2026-07-09T16:46:54Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "claimed_at": "2026-07-09T16:47:32Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "updated_at": "2026-07-09T17:28:07Z",
+        "updated_by": "developer",
+        "verified_at": "2026-07-12T02:22:50Z",
+        "verified_by": "po",
+        "verify_note": "PO sign-off 2026-07-12 (QA-not-draining remediation; no qa-spawn tool in this session). Fix 6f83ae467 on main. scripts/test-devteam-bounded1-supervised-flag.sh 15/15 incl detail-only/board-only/both-location + ARRAY-shape bonus. DJ present: sprint-SYSTEMIC-REMAKE-P1-developer.md L99."
       }
     ],
     "head": {
@@ -6805,64 +6890,6 @@
         "reviewed_at": "2026-07-07T22:17:37Z",
         "reviewed_by": "qa",
         "blocked_on": "FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK"
-      },
-      {
-        "id": "FIX-DEVTEAM-BOUNDED1-DETAIL-ITEMS-ARRAY-INDEX",
-        "status": "REVIEW",
-        "title": "bounded-1 promote jq crashes object-indexing .items ARRAY with task-id string",
-        "owner": "dev-team",
-        "next_agent": "qa",
-        "type": "FIX",
-        "zone": "cross-service/",
-        "size": "S",
-        "priority": "high",
-        "created_at": "2026-07-09T14:02:56Z",
-        "created_by": "po-triage-20260709T1337Z",
-        "files": [
-          "scripts/devteam-backlog-promote-bounded1.jq"
-        ],
-        "related": [
-          "FIX-DEVTEAM-BOUNDED1-DEPENDS-ON-GATE"
-        ],
-        "status_note": "REPRODUCED live (exit 5, no corruption). effective_depends_on (L112-120) does $detail_items[.id] at L117 (object-indexing) but $detail_items = ($detail[0].items // {}) (L150) and live docs/data/orch/archive/backlog-detail.json .items is a plain ARRAY of 437 objects each carrying its own .id. First detail_ref'd row scanned during eligibility filtering (TASK17-FOREIGN-FLOW) crashes the WHOLE transform: jq error Cannot index array with string. orch-apply.sh correctly aborted (empty candidate, zero corruption) but BOUNDED-1 idle-capacity backlog pickup has promoted NOTHING on any tick since 2026-07-08. FIX: id-key the array at ingest, e.g. replace L150 ($detail[0].items // {}) with a shape-defensive map: (($detail[0].items // []) | if type==\"object\" then . else (map(select(.id!=null)|{key:.id,value:.})|from_entries) end). Do NOT change depends_on semantics, only the array-vs-object lookup. Read the actual script first. baseline_pass: jq --arg now \"$NOW\" --slurpfile detail docs/data/orch/archive/backlog-detail.json -f scripts/devteam-backlog-promote-bounded1.jq docs/data/orch/orch-state.json > /dev/null must exit 0 with live WIP==0, emitting a doc that moves exactly ONE eligible row backlog->ready; re-run through orch-apply.sh must not abort on empty candidate.",
-        "review_note": "fix committed 1d0549e52 (scripts/devteam-backlog-promote-bounded1.jq + scripts/test-devteam-bounded1-depends-on.sh, pushed to main). Shape-defensive $detail_items ingest: id-key backlog-detail.json .items ARRAY at ingest so existing $detail_items[.id] lookup works unmodified; object input passes through unchanged; zero depends_on semantic change; zero hardcoded task-id literals. New RED/GREEN test Case 1c reproduces the live ARRAY shape (17->18/18 pass). Live-data reproducer (TASK17-FOREIGN-FLOW vs real backlog-detail.json): exit 5 pre-fix -> exit 0 post-fix. End-to-end scratch-copy run through orch-apply.sh (ORCH_APPLY_LIVE_FILE_OVERRIDE, WIP forced to 0 on a scratch copy, live file untouched since live WIP=2): exactly one row promoted, no empty-candidate abort. Companion devteam-backlog-claim-bounded1.jq inspected -- never touches backlog-detail.json, no equivalent bug, left unchanged. Decision journal: sprint-SYSTEMIC-REMAKE-P1-developer.md STEP developer-S10.",
-        "reviewed_at": "2026-07-09T14:11:04Z",
-        "reviewed_by": "developer"
-      },
-      {
-        "id": "FIX-DEVTEAM-BOUNDED1-SUPERVISED-FLAG-GATE",
-        "status": "REVIEW",
-        "title": "BOUNDED-1 promote script: cross-check supervised from backlog-detail.json .items[] (not just the thin board row) so the Phase-1 supervised set can't be auto-promoted",
-        "owner": "po",
-        "next_agent": "qa",
-        "type": "FIX",
-        "zone": "cross-service/",
-        "size": "S",
-        "priority": "P0",
-        "severity": "HIGH",
-        "created_at": "2026-07-09T15:57:12Z",
-        "created_by": "po (triage 2026-07-09T15:37Z, router-driven dev-team tick)",
-        "related": [
-          "FIX-DEVTEAM-BOUNDED1-DEPENDS-ON-GATE",
-          "FIX-DEVTEAM-BOUNDED1-DETAIL-ITEMS-ARRAY-INDEX",
-          "BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP",
-          "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
-          "SPIKE-BOUNDED1-ELIGIBILITY-CONTRACT-REVIEW"
-        ],
-        "recurrence_class": "project_bounded1_first_pickup_stale_backlog_hygiene_debt (3rd+ variant: bypasses an explicit safety flag, not just staleness)",
-        "files": [
-          "scripts/devteam-backlog-promote-bounded1.jq",
-          "docs/agents/dev-team/flow/main.md",
-          "scripts/test-devteam-bounded1-supervised-flag.sh"
-        ],
-        "status_note": "LIVE near-miss on a safety-critical dispatch guard (2026-07-09T15:48Z): scripts/devteam-backlog-promote-bounded1.jq auto-promoted+claimed FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD (P0, supervised since 2026-07-04T19:23:49Z/4231a1157) into in_progress despite supervised_note='NOT a BOUNDED-1 auto-pickup target'. ROOT CAUSE: the candidate-selection filter (~L165) `select((.value.supervised // false) != true)` reads supervised ONLY off the thin task_board.backlog[] row, but supervised:true is authoritatively written to docs/data/orch/archive/backlog-detail.json .items[].supervised -- so the check silently evaluated false for every detail_ref'd supervised row (all 8 in the Phase-1 set). Router mitigated (90e970b47): reverted the claim (row back to backlog[], .head->idle) + stamped supervised:true onto every Phase-1 board row -- a DATA-HYGIENE PATCH that must be re-applied by hand on every future supervised-set addition, NOT the fix. APPROACH (mirror the depends_on gate that already shipped in this same file): the script ALREADY receives --slurpfile detail docs/data/orch/archive/backlog-detail.json and id-keys it into $detail_items (see the FIX-DEVTEAM-BOUNDED1-DETAIL-ITEMS-ARRAY-INDEX ingest ~L156). Add def effective_supervised($detail_items): true if EITHER `.supervised == true` on the inline board row OR `$detail_items[.id].supervised == true` (detail-authoritative). Change the ~L165 filter to `select((.value | effective_supervised($detail_items)) != true)`. NO new call-site change needed -- the --slurpfile detail is already threaded through BOTH dev-team flow invocations for the depends_on gate; VERIFY (do not re-add). Conservative default: absent/null supervised in both places = NOT supervised (promotable) -- preserves baseline behavior. Add scripts/test-devteam-bounded1-supervised-flag.sh covering: (a) supervised ONLY in backlog-detail.json .items[] (board row has no flag) -> SKIPPED (the exact 07-09 failure), (b) supervised ONLY on the board row (router-stamp case) -> SKIPPED, (c) supervised in neither -> promoted (baseline), (d) supervised in both -> SKIPPED. Keep orch-apply.sh-gated, no hardcoded task IDs, idempotent/re-run-safe. DJ-GATE applies before any DONE/REVIEW flip. This is the 4th distinct BOUNDED-1 eligibility-gate defect in ~5 days (stale 07-04, depends_on 07-08, array-index 07-09, supervised-flag 07-09) -- SPIKE-BOUNDED1-ELIGIBILITY-CONTRACT-REVIEW (architect, non-blocking) asks whether all eligibility metadata should resolve through ONE detail-resolution contract; do NOT wait on it -- ship this hole-closer now.",
-        "promoted_at": "2026-07-09T16:46:54Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
-        "claimed_at": "2026-07-09T16:47:32Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "updated_at": "2026-07-09T17:28:07Z",
-        "updated_by": "developer"
       },
       {
         "title": "Name price_score normalization divisor 0.05 and 7-point threshold",
@@ -7219,7 +7246,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-11T07:37:30Z",
+    "last_triaged_at": "2026-07-12T02:22:50Z",
     "last_triaged_by": "po",
     "in_progress": [
       {
