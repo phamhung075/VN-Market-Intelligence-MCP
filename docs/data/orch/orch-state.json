@@ -5196,7 +5196,10 @@
         "title": "Root-cause + harden Cloudflare Tunnel push-delivery outage 2026-07-04T19:47Z to 2026-07-07T16:46Z (self-recovered, cause unknown)",
         "type": "FIX",
         "zone": "infra",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#INFRA-CLOUDFLARE-TUNNEL-OUTAGE-ROOT-CAUSE"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#INFRA-CLOUDFLARE-TUNNEL-OUTAGE-ROOT-CAUSE",
+        "owner": "ops",
+        "next_agent": "ops",
+        "status_note": "2026-07-12T13:59Z PO triage: genuine P1 ops-domain incident (Cloudflare Tunnel 69h push-delivery outage 07-04->07-07, self-recovered, cause unknown). Assigned owner+next_agent=ops for a deliberate ops-led root-cause (diagnose tunnel drop + add push-delivery-error-rate alerting). Was the 5th consecutive BOUNDED-1 idle-pickup near-miss: null-owner + null-next_agent + ops-domain zone=\"infra\" passed every promote gate and would mis-route this infra incident to a generic `developer` via zone-detect Tier-3. Setting board next_agent=ops routes the dispatcher to ops directly."
       },
       {
         "id": "QA-COWORK-SLOT-SESSION-DOWN-SURVIVAL",
@@ -5338,18 +5341,23 @@
         "plan_only": true,
         "zone": "cross-service/",
         "size": "S",
-        "priority": "medium",
+        "priority": "high",
         "timebox": 120,
         "created_at": "2026-07-09T15:57:12Z",
         "created_by": "po (triage 2026-07-09T15:37Z — feedback_recurring_bug_escalation 2+ threshold)",
         "question": "scripts/devteam-backlog-promote-bounded1.jq has taken 4 distinct eligibility-gate defects in ~5 days -- 07-04 stale-already-done (BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP), 07-08 no depends_on check (FIX-DEVTEAM-BOUNDED1-DEPENDS-ON-GATE), 07-09 backlog-detail .items shape crash (FIX-DEVTEAM-BOUNDED1-DETAIL-ITEMS-ARRAY-INDEX), 07-09 supervised read off thin board row only (FIX-DEVTEAM-BOUNDED1-SUPERVISED-FLAG-GATE). Common root: eligibility-gating metadata (depends_on, supervised) is authoritative in docs/data/orch/archive/backlog-detail.json .items[] but the filter has wired each field in ad-hoc. QUESTION: should the eligibility filter be refactored around ONE 'resolve candidate eligibility from detail' contract (single shape-normalizer + a declared set of gating fields) so the Nth field addition can't reintroduce this class? Output: a findings doc + recommendation (refactor vs. status-quo-is-fine). NON-BLOCKING: FIX-DEVTEAM-BOUNDED1-SUPERVISED-FLAG-GATE ships independently and this SPIKE only informs the next iteration.",
         "related": [
-          "FIX-DEVTEAM-BOUNDED1-SUPERVISED-FLAG-GATE",
+          "BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP",
           "FIX-DEVTEAM-BOUNDED1-DEPENDS-ON-GATE",
+          "FIX-DEVTEAM-BOUNDED1-DETAIL-DISPOSITION-GATE",
           "FIX-DEVTEAM-BOUNDED1-DETAIL-ITEMS-ARRAY-INDEX",
-          "BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP"
+          "FIX-DEVTEAM-BOUNDED1-DETAIL-NEXTAGENT-NONDEV-GATE",
+          "FIX-DEVTEAM-BOUNDED1-EPIC-WRAPPER-GATE",
+          "FIX-DEVTEAM-BOUNDED1-PLAN-ONLY-GATE",
+          "FIX-DEVTEAM-BOUNDED1-SUPERVISED-FLAG-GATE",
+          "INFRA-CLOUDFLARE-TUNNEL-OUTAGE-ROOT-CAUSE"
         ],
-        "status_note": "Recurrence-escalation SPIKE per feedback_recurring_bug_escalation (2+ recurrence -> architect). Plan-only findings doc; no code change in this row. Deliberately NOT a blocker on the immediate FIX."
+        "status_note": "Recurrence-escalation SPIKE per feedback_recurring_bug_escalation (2+ recurrence -> architect). Plan-only findings doc; no code change in this row. Deliberately NOT a blocker on the immediate FIX. || 2026-07-12T13:59Z PO DECISION (5th BOUNDED-1 near-miss, now DUE): consolidation IS warranted — this is no longer a should-we question. Since the original 4 defects, four more sibling select() gates shipped (epic-wrapper 07-10; detail-deferred/non-dev-owner/plan-only 07-12; non-dev-next_agent a0c56d989 07-12) and today the INFRA-CLOUDFLARE null-owner+ops-domain-zone near-miss escaped ALL of them. Architect task: (a) design ONE is_detail_non_autodispatchable($detail_items) predicate that unions every disposition signal (supervised|epic|detail-deferred|non_dev_owner|plan_only|non_dev_next_agent), preserving each FIX-ID provenance in comments; (b) ADD a new disposition class ops_zone_unrouted = zone matches (infra|ops|vps) case-insensitive AND owner+next_agent both empty on BOTH board and detail -> hold for PO/ops triage, never idle-pick to generic developer; (c) keep deps_satisfied as a separate positive gate; then FILE the implementing FIX (dev-shippable, non-supervised, zone cross-service/, with a behavior-preserving harness)."
       },
       {
         "title": "Extract the shared RSS parse layer; collapse the two 95%-identical scrapers",
@@ -7954,8 +7962,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-12T11:51:02Z",
-    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
+    "last_triaged_at": "2026-07-12T14:00:22Z",
+    "last_triaged_by": "po (triage: INFRA-CLOUDFLARE->ops route + BOUNDED-1 consolidation DUE)",
     "in_progress": []
   },
   "_meta": {
