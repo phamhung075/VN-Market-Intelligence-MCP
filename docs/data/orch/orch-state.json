@@ -315,12 +315,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "next_action": "await next cron tick. HOLD TASK_2005 (integration test) pending PO reconcile: memory flags ALPHA-S2-FOREIGN-FLOW-WRITE-RACE (flow-alpha) OVERLAPS this sprint (TASK_2000-2004) — same foreign-flow write path; must reconcile before more sprint work. flow-alpha wave-1 reportedly launched 19:10Z (possibly peer session — check presence/overlap). Redeploys pending (deploy-hold lifted): mcp-server, news-fetch. Architect: SPRINT-CCATO + SPIKE supervised.",
-    "updated_at": "2026-07-12T19:09:52Z",
-    "updated_by": "dev-team (merge-gate close TASK_2004; sprint hold pending FF-RACE reconcile)"
+    "status": "ready",
+    "active_task_id": "ALPHA-S1-CANDLE-RECOVER",
+    "next_agent": "pm",
+    "next_action": "architect wave-1 split complete for ALPHA-S1-CANDLE-RECOVER/ALPHA-S1-STARTUP-CANDLE-GUARD/ALPHA-S1-OHLCV-BACKFILL-DONE-BUG — see docs/handoffs/ALPHA-S1-architect-design.md (READY_FOR_PM). Zone corrected multi->apps/mcp-server/ for all 3 (verified single-zone); recommend supervised:true->false + STARTUP-CANDLE-GUARD depends:[ALPHA-S1-CANDLE-RECOVER] (shared recoverMissingOhlcvSession() reuse). No further TASK_2xxx fan-out needed — each row already S-size/atomic. ALPHA-S2-FOREIGN-FLOW-WRITE-RACE reconciliation already applied by PO (af465eb93) before this cycle, no action needed.",
+    "updated_by": "architect",
+    "updated_at": "2026-07-12T19:29:05Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -5372,25 +5372,6 @@
         "notes": "Not a defect in the carry-forward script; the script correctly refused to promote PARTIAL status because the source rows lack balance-sheet data. This is a genuine data-completeness gap requiring re-extraction from the original CTG report source. Escalated by QA 2026-07-10 per the task's own AC-TRACK1-3 clause (if source rows are still corrupted / incomplete, escalate — found incomplete). Mint timing: after gateway-blind defect resolves (blocker confirmed live as of 2026-07-10T01:24Z). QA Review Record indicates the AC-TRACK1-3 escalation is legitimate and correctly routed to backlog."
       },
       {
-        "id": "TASK_2005",
-        "type": "DEVELOPMENT",
-        "title": "SUBTASK-DAILY-FF-6: integration test + behavioral gate (R-1 elimination proof)",
-        "zone": "apps/mcp-server/",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "M",
-        "depends_on": [
-          "TASK_2002",
-          "TASK_2003"
-        ],
-        "blocks": [],
-        "created_at": "2026-07-10T19:30:00Z",
-        "created_by": "pm",
-        "promotion_note": "PM atomization of ARCH-DAILY-FOREIGN-FLOW-TABLE",
-        "handoff": "docs/handoffs/TASK_2005-daily-ff-integration-test.md",
-        "note": "Direct falsification of chưa trả số từng mã symptom; T-3 view correctness + late-OHLCV join"
-      },
-      {
         "id": "TASK_2006",
         "type": "DEVELOPMENT",
         "title": "SUBTASK-DAILY-FF-7 (follow-on): schema comment marking daily_ohlcv.foreign_* frozen",
@@ -8058,9 +8039,33 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-12T18:49:39Z",
+    "last_triaged_at": "2026-07-12T19:22:15Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "TASK_2005",
+        "type": "DEVELOPMENT",
+        "title": "SUBTASK-DAILY-FF-6: integration test + behavioral gate (R-1 elimination proof)",
+        "zone": "apps/mcp-server/",
+        "status": "IN_PROGRESS",
+        "priority": "P1",
+        "size": "M",
+        "depends_on": [
+          "TASK_2002",
+          "TASK_2003"
+        ],
+        "blocks": [],
+        "created_at": "2026-07-10T19:30:00Z",
+        "created_by": "pm",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "handoff": "docs/handoffs/TASK_2005-daily-ff-integration-test.md",
+        "note": "Direct falsification of chưa trả số từng mã symptom; T-3 view correctness + late-OHLCV join",
+        "promoted_at": "2026-07-12T19:22:15Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "claimed_at": "2026-07-12T19:22:15Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
