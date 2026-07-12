@@ -315,12 +315,13 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "updated_at": "2026-07-11T08:11:43Z",
-    "updated_by": "ops-mainserver-fetch",
-    "note": "SPIKE-EARNINGS-REV-VALUATION-PCTILE-FEASIBILITY → REVIEW; both gaps INFEASIBLE, recon doc at docs/mainserver-sources/spike-earnings-rev-valuation-pctile-feasibility/recon.md; qa gate next"
+    "status": "in_progress",
+    "active_task_id": "FIX-DEVTEAM-BOUNDED1-DETAIL-DISPOSITION-GATE",
+    "next_agent": "developer",
+    "next_action": "implement AC-1/AC-2 gates in promote jq + document in main.md",
+    "updated_at": "2026-07-12T10:35:12Z",
+    "updated_by": "dev-team",
+    "note": "FIX dispatched from PO BATCH tick 2026-07-12T10:07Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2564,12 +2565,13 @@
         "id": "BCTC-HIST-VPS-BACKFILL",
         "priority": "high",
         "size": "M",
-        "status": "BACKLOG",
+        "status": "BLOCKED",
         "title": "VPS BCTC source lacks historical PDF cache (pre-Q4-2025) — backfill VPS /root/bctc-cache + 8765/bctc-files endpoint so seeded historical queue rows can drain",
         "type": "SPIKE",
         "zone": "infra-vps",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#BCTC-HIST-VPS-BACKFILL",
-        "verify_note": "prior_status=DEFERRED"
+        "verify_note": "BOUNDED-1 re-pick loop (2 idle ticks) — flipped BACKLOG->BLOCKED to match detail DEFERRED-INFRA; see blocked_reason. prior_status=DEFERRED.",
+        "blocked_reason": "DEFERRED-INFRA (PO adjudication dev-team tick 2026-07-12T10:07Z). Authoritative backlog-detail.json disposition: VPS http://125.212.251.27:8765/bctc-files lacks pre-Q4-2025 PDFs (333 rows null-url). Backfilling VPS PDF cache = M-sized ops-owned remote-host infra, ~1-2wk, NOT dev-shippable. Board flipped BACKLOG->BLOCKED to match detail + stop BOUNDED-1 idle re-pick loop (re-picked 09:37Z + 10:07Z). Reactivate only via deliberate ops-led launch (next_agent=ops + supervised:true), ideally paired with BCTC-ENRICHER-OLD-QUARTERS (HSX->VPS cache)."
       },
       {
         "id": "BCTC-ENRICHER-OLD-QUARTERS",
@@ -7872,7 +7874,25 @@
     },
     "last_triaged_at": "2026-07-12T07:18:33Z",
     "last_triaged_by": "po",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-DEVTEAM-BOUNDED1-DETAIL-DISPOSITION-GATE",
+        "type": "FIX",
+        "status": "IN_PROGRESS",
+        "size": "S",
+        "zone": "cross-service/",
+        "title": "BOUNDED-1 promote gate blind to detail-authoritative non-dispatchable dispositions (detail .status=DEFERRED* + non-dev-* owner without next_agent)",
+        "owner": "developer",
+        "next_agent": "developer",
+        "files": [
+          "scripts/devteam-backlog-promote-bounded1.jq",
+          "docs/agents/dev-team/flow/main.md"
+        ],
+        "assigned_to": "69b0312e-df43-43a9-9e0b-bddf66d374e3",
+        "started_at": "2026-07-12T10:35:12Z",
+        "note": "PO BATCH tick 2026-07-12T10:07Z; AC-1 skip candidate if detail .status starts DEFERRED (11 rows incl BCTC); AC-2 skip if detail .owner non-dev-* AND board next_agent null; mirror existing detail-authoritative supervised/epic/depends_on precedence; +doc in main.md"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
