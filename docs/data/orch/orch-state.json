@@ -319,8 +319,8 @@
     "active_task_id": null,
     "next_agent": null,
     "next_action": "await next cron tick — BOUNDED-1 idle-capacity pickup or PO triage",
-    "updated_at": "2026-07-12T13:42:02Z",
-    "updated_by": "dev-team (merge-gate close FIX-DEVTEAM-BOUNDED1-DETAIL-NEXTAGENT-NONDEV-GATE)"
+    "updated_at": "2026-07-12T14:27:33Z",
+    "updated_by": "dev-team (close INFRA-CLOUDFLARE RCA + mint FIX-PUSH-DELIVERY-ERROR-RATE-ALERT)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -5189,19 +5189,6 @@
         "verify_note": "prior_status=TODO"
       },
       {
-        "id": "INFRA-CLOUDFLARE-TUNNEL-OUTAGE-ROOT-CAUSE",
-        "priority": "P1",
-        "size": "S",
-        "status": "BACKLOG",
-        "title": "Root-cause + harden Cloudflare Tunnel push-delivery outage 2026-07-04T19:47Z to 2026-07-07T16:46Z (self-recovered, cause unknown)",
-        "type": "FIX",
-        "zone": "infra",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#INFRA-CLOUDFLARE-TUNNEL-OUTAGE-ROOT-CAUSE",
-        "owner": "ops",
-        "next_agent": "ops",
-        "status_note": "2026-07-12T13:59Z PO triage: genuine P1 ops-domain incident (Cloudflare Tunnel 69h push-delivery outage 07-04->07-07, self-recovered, cause unknown). Assigned owner+next_agent=ops for a deliberate ops-led root-cause (diagnose tunnel drop + add push-delivery-error-rate alerting). Was the 5th consecutive BOUNDED-1 idle-pickup near-miss: null-owner + null-next_agent + ops-domain zone=\"infra\" passed every promote gate and would mis-route this infra incident to a generic `developer` via zone-detect Tier-3. Setting board next_agent=ops routes the dispatcher to ops directly."
-      },
-      {
         "id": "QA-COWORK-SLOT-SESSION-DOWN-SURVIVAL",
         "status": "BACKLOG",
         "priority": "high",
@@ -6580,6 +6567,15 @@
         "blocked_reason": "STRANDED >24h, no live ops owner/lock (PO adjudication dev-team tick 2026-07-12T08:07Z). Shared root cause with reconcile-exhausted cluster: agentic-refine trigger dormant since 2026-07-04. Unblock when FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP ships (refine-pipeline-live). Do NOT cancel — total_assets=0 recovery for VHM/VIC/VRE/HSG/MWG still wanted.",
         "updated_at": "2026-07-12T08:37:35Z",
         "updated_by": "pm"
+      },
+      {
+        "id": "FIX-PUSH-DELIVERY-ERROR-RATE-ALERT",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "size": "M",
+        "zone": "multi",
+        "priority": "P2",
+        "title": "Push-delivery 5xx error-rate alert (alert-engine consuming mcp-server /metrics) — detect CF-tunnel push outage in ~10min not 69h; from INFRA-CLOUDFLARE RCA (docs/incidents/2026-07-04-cloudflare-tunnel-push-delivery-outage-rca.md); PO confirm priority + single-FIX vs ba->architect split"
       }
     ],
     "closed_sprints": [
@@ -7489,6 +7485,27 @@
         "verified_by": "dev-team",
         "commit": "a0c56d989",
         "merge_gate": "PASS: index-check rc0 + tree-verify a0c56d989 rc0 + c2-alert C2-OK + RAW verifier 5/5 (AC1 FEAT-SEVERITY-OVERRIDE-SURFACING not promoted, AC4 non-dev-next_agent gated, control clean-row still promoted); DJ-GATE-1 journal present; atomic 4-file commit; class=42 detail rows (39 reachable BACKLOG/TODO)"
+      },
+      {
+        "id": "INFRA-CLOUDFLARE-TUNNEL-OUTAGE-ROOT-CAUSE",
+        "priority": "P1",
+        "size": "S",
+        "status": "DONE_VERIFIED",
+        "title": "Root-cause + harden Cloudflare Tunnel push-delivery outage 2026-07-04T19:47Z to 2026-07-07T16:46Z (self-recovered, cause unknown)",
+        "type": "FIX",
+        "zone": "infra",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#INFRA-CLOUDFLARE-TUNNEL-OUTAGE-ROOT-CAUSE",
+        "owner": "ops",
+        "next_agent": "ops",
+        "status_note": "2026-07-12T13:59Z PO triage: genuine P1 ops-domain incident (Cloudflare Tunnel 69h push-delivery outage 07-04->07-07, self-recovered, cause unknown). Assigned owner+next_agent=ops for a deliberate ops-led root-cause (diagnose tunnel drop + add push-delivery-error-rate alerting). Was the 5th consecutive BOUNDED-1 idle-pickup near-miss: null-owner + null-next_agent + ops-domain zone=\"infra\" passed every promote gate and would mis-route this infra incident to a generic `developer` via zone-detect Tier-3. Setting board next_agent=ops routes the dispatcher to ops directly.",
+        "promoted_at": "2026-07-12T14:18:57Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-12T14:18:57Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "verified_at": "2026-07-12T14:27:33Z",
+        "verified_by": "dev-team",
+        "note": "RCA complete (ops, MEDIUM confidence): CF Tunnel connection-pool stall correlated with mcp-server contention; recovered by 07-07T16:42Z mcp-server container restart; no code defect (821bbbeea verified clean). Root-cause deliverable DONE; hardening spun to FIX-PUSH-DELIVERY-ERROR-RATE-ALERT. Findings: docs/incidents/2026-07-04-cloudflare-tunnel-push-delivery-outage-rca.md"
       }
     ],
     "head": {
@@ -7962,8 +7979,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-12T14:00:22Z",
-    "last_triaged_by": "po (triage: INFRA-CLOUDFLARE->ops route + BOUNDED-1 consolidation DUE)",
+    "last_triaged_at": "2026-07-12T14:18:57Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": []
   },
   "_meta": {
