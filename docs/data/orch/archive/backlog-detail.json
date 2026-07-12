@@ -9120,6 +9120,46 @@
       "sprint": "ORCH-STATE-HOT-COLD-SPLIT",
       "depends_on": "HSC-1",
       "completed_at": "2026-06-26T19:36:41Z"
+    },
+    {
+      "id": "FIX-MARKET-WATCHER-NARRATE-NOT-EXECUTE-GUARD",
+      "title": "market-watcher-offhours narrate-not-execute (2nd confirmed 06-28+07-12) — harden flow docs with execute-not-narrate guard",
+      "owner": "agent-father",
+      "status": "DONE",
+      "zone": "cross-service/",
+      "priority": "normal",
+      "type": "UNBLOCK",
+      "next_agent": "agent-father",
+      "created_at": "2026-07-12T04:19:36Z",
+      "created_by": "po-triage-20260712",
+      "status_note": "Verified PO root-cause hypothesis by direct comparison of unified-agent (init.md no_self_abort L52 + chef.md Gate-fired contract L139) vs market-watcher (init.md no_self_abort L47 was narrower — notebook-append only; main.md/cycle.md had no procedural equivalent). Hardened market-watcher/init.md no_self_abort (broadened forbidden-output list), market-watcher/flow/main.md (new Step -1 execute-not-narrate preamble, all modes), market-watcher/flow/cycle.md (new Execution contract preamble, Step 0-GW→5b mandatory). Decision journal: docs/agent-memory/decisions/sprint-ANALYSIS-QUALITY-CONVERGENCE-agent-father.md. Verification is behavioral (next natural offhours cycle) — out of scope for this dispatch.",
+      "files": [
+        "docs/agents/market-watcher/flow/main.md",
+        "docs/agents/market-watcher/flow/cycle.md"
+      ],
+      "verification_gate": "Next natural market-watcher-offhours cycle produces real MCP calls + real notebook cycle entry + WORK ping, no PLAN narration",
+      "origin_signal": "market-watcher-2026-07-12T040914Z-narrate-not-execute-2nd.json",
+      "updated_at": "2026-07-12T04:27:58Z"
+    },
+    {
+      "id": "FIX-AUDITOR-TIER1-PROBE-HEALTH-TIMEOUT-TIGHT",
+      "title": "auditor-tier1-probe.sh _check_health curl --max-time 3s too tight vs frontend-1 2.0-3.4s response → recurring false FAILURE",
+      "owner": "developer",
+      "status": "DONE",
+      "zone": "cross-service/",
+      "priority": "normal",
+      "type": "FIX",
+      "size": "XS",
+      "next_agent": "developer",
+      "created_at": "2026-07-12T04:19:36Z",
+      "created_by": "po-triage-20260712",
+      "status_note": "SHIPPED: bumped curl --max-time from 3 to 6 in the shared _check_health() helper (covers both health_3000 + health_3001). Verified: scripts/agents-flow/auditor-tier1-probe.test.sh 79/79 PASS (mocks curl, timeout value invisible to assertions by design); live manual check 10/10 curl -m 6 http://localhost:3001/ all returned 200 at ~2.01-2.02s. Decision journal: docs/agent-memory/decisions/2026-07-12-FIX-AUDITOR-TIER1-PROBE-HEALTH-TIMEOUT-TIGHT.md. Commit 16d3982c4.",
+      "files": [
+        "scripts/agents-flow/auditor-tier1-probe.sh"
+      ],
+      "verification_gate": "scripts/agents-flow/auditor-tier1-probe.test.sh green; manual: 15x curl localhost:3001/ all resolve <6s -> health_3001 PASS, no CURL_ERR",
+      "origin_signal": "auditor-tier1-2026-07-12T034843Z-probe-timeout-tight.json",
+      "updated_at": "2026-07-12T04:31:47Z"
     }
   ]
 }
