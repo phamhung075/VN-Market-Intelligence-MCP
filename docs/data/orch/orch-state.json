@@ -315,12 +315,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-BCTC-BANK-FORM-CLASSIFIER-BOLD-STRIP",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-BCTC-BANK-FORM-CLASSIFIER-BOLD-STRIP — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-12T11:51:02Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "await next cron tick — BOUNDED-1 idle-capacity pickup or PO triage",
+    "updated_at": "2026-07-12T12:35:13Z",
+    "updated_by": "dev-team (merge-gate close FIX-BCTC-BANK-FORM-CLASSIFIER-BOLD-STRIP)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7431,6 +7431,34 @@
         "verified_by": "dev-team",
         "commit": "4e7de1db4",
         "merge_gate": "PASS: orch-validate green + 4 gates independently re-run from RAW (GATE1 canonical promote-jq parses/runs clean exit0; GATE2 no erroneous pickup, WIP-gated identity; GATE4 persistent verifier AC-1/AC-2/AC-3/control all PASS exit0; developer HEAD~1 differential confirms gate is load-bearing not false-green)"
+      },
+      {
+        "id": "FIX-BCTC-BANK-FORM-CLASSIFIER-BOLD-STRIP",
+        "title": "Bank form classifier: strip markdown emphasis from anchor regex (FIX-B)",
+        "type": "FIX",
+        "zone": "apps/mcp-server",
+        "status": "DONE_VERIFIED",
+        "priority": "high",
+        "size": "S",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-BCTC-BANK-FORM-CLASSIFIER-BOLD-STRIP",
+        "verify_note": "prior_status=TODO",
+        "promoted_at": "2026-07-12T11:51:02Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-12T11:51:02Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "owner": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "assigned_to": "69b0312e-df43-43a9-9e0b-bddf66d374e3",
+        "files": [
+          "apps/mcp-server/src/__tests__/FIX-BCTC-BANK-FORM-CLASSIFIER-BOLD-STRIP.test.ts",
+          "docs/agent-memory/notebooks/dev-mcp-server.md"
+        ],
+        "started_at": "2026-07-12T11:51:02Z",
+        "verified_at": "2026-07-12T12:35:13Z",
+        "verified_by": "dev-team",
+        "commit": "8c8cd8232",
+        "merge_gate": "PASS: production FIX-B (stripEmphasis /[*_]/g in isBankFormFromRows bctcFormType.ts:91-93) already shipped d69b13f41 (2026-07-03) — row was a bookkeeping gap not a missing fix; deliverable = the missing ISOLATED unit coverage (8c8cd8232, 78L). Dispatcher RAW-verified: strip logic present at HEAD; targeted test re-run 9 pass/0 fail/12 expect; only 2 files committed (test+notebook), zero production entanglement, apps/mcp-server tree clean; full-suite 82 fails = documented pre-existing baseline (additive test-only new-file diff cannot regress unrelated files)."
       }
     ],
     "head": {
@@ -7906,24 +7934,7 @@
     },
     "last_triaged_at": "2026-07-12T11:51:02Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-BCTC-BANK-FORM-CLASSIFIER-BOLD-STRIP",
-        "title": "Bank form classifier: strip markdown emphasis from anchor regex (FIX-B)",
-        "type": "FIX",
-        "zone": "apps/mcp-server",
-        "status": "IN_PROGRESS",
-        "priority": "high",
-        "size": "S",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-BCTC-BANK-FORM-CLASSIFIER-BOLD-STRIP",
-        "verify_note": "prior_status=TODO",
-        "promoted_at": "2026-07-12T11:51:02Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-12T11:51:02Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
