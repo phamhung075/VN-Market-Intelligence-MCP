@@ -63,3 +63,12 @@
 - Full non-deterministic `get_sla_status` tool call for the stale-decoupling case vs deterministic direct-SQL-fragment check — used the SQL-fragment form: the tool's internal `new Date()` is not injectable, and off-hours dynamic-threshold logic would make a live-clock-dependent "breached" assertion flaky
 **why-decision:** grep confirmed zero remaining `daily_ohlcv WHERE foreign_buy_vol` production sites outside tests/writer/DDL; targeted sweep (foreign-flow file glob) 729/729 pass, modified-file sweep 46/46 + 9/9 pass, tsc clean, server boots (toolCount=183 unchanged).
 **why-change:** no change from handoff's SQL-shape guidance; corrected its "no test updates needed" assumption per empirical TDD discipline (same class of correction as TASK_2003's S5 entry).
+
+### STEP dev-mcp-server-S7 · dev-mcp-server · 2026-07-12T19:30:00Z
+**task-id:** TASK_2005
+**what-done:** Added `daily-foreign-flow-integration.test.ts` (5 cases: T-3 view-only, behavioral gate, COALESCE-both, COALESCE-legacy-fallback, late-OHLCV join) composing writer+view exactly as a live Class-A caller would. RAW: 3 pass / 2 fail.
+**what-considered:**
+- Assert the AC's literal intended spec vs assert the view's actual current behavior — chose spec-literal: instructions explicitly forbid papering over a real gap with a passing test
+- Fix the view's join direction myself (in-zone, feasible) vs report-only — report-only: this task is scoped additive/test-only; a schema-join fix is a distinct decision for PM/architect
+**why-decision:** Empirically confirmed `daily_ohlcv_with_flow` is `FROM daily_ohlcv LEFT JOIN daily_foreign_flow` (anchored on daily_ohlcv) — a foreign-flow-only row is never returned, so all 5 already-migrated Class-A sites still can't surface a value before its OHLCV bar lands. Write-side R-1 (permanent loss) IS closed (TASK_2002); read-side "chưa trả số từng mã" is NOT closed by TASK_2003's view-based migration.
+**why-change:** Deviates from the expected N/0 proportionate-gate outcome per the handoff's own explicit contingency — STOP, do not flip DONE_VERIFIED, route as new FIX.
