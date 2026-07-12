@@ -315,12 +315,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "next_action": "await next cron tick. PENDING user-gated redeploys: (1) mcp-server for FIX-SEQUENTIAL, (2) news-fetch for FACTORY-NEWS-extract-rss-parse.",
-    "updated_at": "2026-07-12T16:10:35Z",
-    "updated_by": "dev-team (merge-gate close FACTORY-NEWS-extract-rss-parse)"
+    "status": "in_progress",
+    "active_task_id": "TASK_2000",
+    "next_agent": "dev-mcp-server",
+    "next_action": "BOUNDED-1 auto-pickup claim of TASK_2000 — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-12T16:19:31Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -5372,27 +5372,6 @@
         "notes": "Not a defect in the carry-forward script; the script correctly refused to promote PARTIAL status because the source rows lack balance-sheet data. This is a genuine data-completeness gap requiring re-extraction from the original CTG report source. Escalated by QA 2026-07-10 per the task's own AC-TRACK1-3 clause (if source rows are still corrupted / incomplete, escalate — found incomplete). Mint timing: after gateway-blind defect resolves (blocker confirmed live as of 2026-07-10T01:24Z). QA Review Record indicates the AC-TRACK1-3 escalation is legitimate and correctly routed to backlog."
       },
       {
-        "id": "TASK_2000",
-        "type": "DEVELOPMENT",
-        "title": "SUBTASK-DAILY-FF-1: daily_foreign_flow DDL + index + daily_ohlcv_with_flow view",
-        "zone": "apps/mcp-server/",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "M",
-        "depends_on": [],
-        "blocks": [
-          "TASK_2001",
-          "TASK_2003",
-          "TASK_2004"
-        ],
-        "created_at": "2026-07-10T19:30:00Z",
-        "created_by": "pm",
-        "promotion_note": "PM atomization of ARCH-DAILY-FOREIGN-FLOW-TABLE",
-        "handoff": "docs/handoffs/TASK_2000-daily-ff-schema.md",
-        "note": "New table + view creation, additive only, unblocks all downstream subtasks",
-        "verify_note": "prior_status=TODO"
-      },
-      {
         "id": "TASK_2001",
         "type": "DEVELOPMENT",
         "title": "SUBTASK-DAILY-FF-2: one-time backfill from legacy daily_ohlcv.foreign_*",
@@ -8001,9 +7980,36 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-12T15:53:49Z",
+    "last_triaged_at": "2026-07-12T16:19:31Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "TASK_2000",
+        "type": "DEVELOPMENT",
+        "title": "SUBTASK-DAILY-FF-1: daily_foreign_flow DDL + index + daily_ohlcv_with_flow view",
+        "zone": "apps/mcp-server/",
+        "status": "IN_PROGRESS",
+        "priority": "P1",
+        "size": "M",
+        "depends_on": [],
+        "blocks": [
+          "TASK_2001",
+          "TASK_2003",
+          "TASK_2004"
+        ],
+        "created_at": "2026-07-10T19:30:00Z",
+        "created_by": "pm",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "handoff": "docs/handoffs/TASK_2000-daily-ff-schema.md",
+        "note": "New table + view creation, additive only, unblocks all downstream subtasks",
+        "verify_note": "prior_status=TODO",
+        "promoted_at": "2026-07-12T16:19:31Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "claimed_at": "2026-07-12T16:19:31Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "dev-mcp-server"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
