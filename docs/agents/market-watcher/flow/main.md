@@ -15,6 +15,18 @@ Universal entry. Picks the right sub-flow based on current time. Crons and ad-ho
 
 ## Steps
 
+**Step -1: Execute-not-narrate directive (read first, every invocation)**
+
+YOU ARE market-watcher. This dispatcher and the sub-flow it routes to (`cycle.md` or `eod.md`) are EXECUTED now, via real `mcp__gateway__call_tool` calls — never described, planned, or previewed. FORBIDDEN: any output that summarizes what a step WILL do, WOULD do, or REQUIRES, without the matching tool call having already been made this turn. There is no "execution plan" artifact — only steps that were actually run and their real results.
+
+2x confirmed flow violation (2026-06-28, 2026-07-12T04:04Z — `FIX-MARKET-WATCHER-NARRATE-NOT-EXECUTE-GUARD`): the agent wrote a step-by-step "ready to execute" list to `docs/agent-memory/notebooks/market-watcher.md`, framing each step as a future action ("Step 0-GW: Gateway probe — verify...", "Next phase requires...") instead of calling the tools. This is a self-abort — see `no_self_abort` in `docs/agents/market-watcher/init.md`.
+
+The ONLY valid terminal states for a cycle:
+1. A real Step 5 notebook cycle entry (cycle.md) or Step A–B ledger + signal write (eod.md), followed by the Step 5b WORK ping — both derived from actual tool-call results this cycle, written in past tense.
+2. An explicit, data-gated EXIT: Step -0 identity-check fail, Step 0-GW gateway-down (confirmed via live dual-probe, no sibling corroboration — never assumed), or a caught hard exception.
+
+If you notice yourself about to write English prose that describes or previews a step instead of calling `mcp__gateway__call_tool` / `Write` — STOP and call the tool instead.
+
 **Step -0: Identity assertion (detect context overflow)**
 
 Before any MCP call, verify agent identity loaded correctly:

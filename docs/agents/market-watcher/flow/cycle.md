@@ -1,4 +1,4 @@
-<!-- size-justification: 253L (was 233L pre-existing drift, undocumented since header last read 191L) — atomic price-monitoring flow; sigma threshold logic + channel routing rules are operationally coupled step-by-step; Step 5 OVERWRITE class expanded with inline wc fail-loud guard (NB-PRUNE-IMPL); Step 0-sweep coverage-rotation floor added (coverage-state.json SSOT + atomic update); offhours threshold floor added (FIX-MW-OFFHOURS-DISPATCH, prepost-equivalent easing floor for 00Z/04Z/weekend fires); Step 0-GW gateway-availability gate added (FIX-COWORK-GATEWAY-GATE). +20L TASK-EVIDENCE-HOP2-AGENTS FR-2.1 (2026-07-01): Step 1b evidence-fragment recording — reuses Step 1's already-fetched get_technical_indicators output, cannot split without breaking the atomic per-ticker price-analysis loop. FLAG: file exceeds 200L flow-doc discipline pre- AND post-edit — pre-existing debt, out of this task's scope to split (would require a structural flow-file refactor, not a docs-wiring change). -->
+<!-- size-justification: 291L (was 253L) — atomic price-monitoring flow; sigma threshold logic + channel routing rules are operationally coupled step-by-step; Step 5 OVERWRITE class expanded with inline wc fail-loud guard (NB-PRUNE-IMPL); Step 0-sweep coverage-rotation floor added (coverage-state.json SSOT + atomic update); offhours threshold floor added (FIX-MW-OFFHOURS-DISPATCH, prepost-equivalent easing floor for 00Z/04Z/weekend fires); Step 0-GW gateway-availability gate added (FIX-COWORK-GATEWAY-GATE). +20L TASK-EVIDENCE-HOP2-AGENTS FR-2.1 (2026-07-01): Step 1b evidence-fragment recording — reuses Step 1's already-fetched get_technical_indicators output, cannot split without breaking the atomic per-ticker price-analysis loop. +8L FIX-MARKET-WATCHER-NARRATE-NOT-EXECUTE-GUARD (2026-07-12): Execution contract preamble — mandatory Step 0-GW→5b terminal-action guard, prevents narrate-not-execute self-abort (2x confirmed 2026-06-28 + 2026-07-12); belongs at flow entry, cannot be split out. FLAG: file exceeds 200L flow-doc discipline pre- AND post-edit — pre-existing debt, out of this task's scope to split (would require a structural flow-file refactor, not a docs-wiring change). -->
 # Market Watcher — Cycle Flow
 
 **Tools:** `docs/agents/tools/package/market-watcher.md`
@@ -14,6 +14,12 @@ Bootstrap (market context 24h, agent signals) | watchlist prices
 `price_anomaly` signals on bus | WORK status | chain confirmations
 
 > Channel rule: MARKET = EOD summary (eod.md, 16:00 UTC) ONLY. Cycle status → WORK. Errors → BUG. Never route "N stocks monitored / 0 anomalies" to MARKET.
+
+---
+
+**Execution contract (read first — every invocation, every mode):** Once this flow is entered (`mode=market|prepost|offhours`), Step 0-GW through Step 5b are MANDATORY — the agent MUST make the real `mcp__gateway__call_tool` calls for each step and reach a terminal action. There is no third path between (a) a completed Step 5 notebook cycle entry + Step 5b WORK ping and (b) an explicit Step 0-GW gateway-down EXIT (dual-probe confirmed, no sibling corroboration in the 15-min window).
+
+Self-refusal is a flow violation — 2x confirmed (2026-06-28, 2026-07-12T04:04Z — `FIX-MARKET-WATCHER-NARRATE-NOT-EXECUTE-GUARD`): writing a step-by-step "execution plan" to the notebook that frames Step 0-GW/0/1/2/3/4 as future actions ("Step 0-GW: Gateway probe — verify...", "Next phase requires...") instead of calling them now is equivalent to the English-prose self-abort prohibited by `no_self_abort` (`docs/agents/market-watcher/init.md`). The Step 5 notebook write records what WAS DONE this cycle, in past tense, from real tool outputs — never a forward-looking plan.
 
 ---
 

@@ -44,7 +44,7 @@ agent:
   constraints:
     session_log: mandatory
     identity_role: "market-watcher"  # You ARE market-watcher. Never claim to be a router, orchestrator, or generic Claude. Execute your own flow directly.
-    no_self_abort: true  # Write tool IS available. Self-refusal on notebook append (e.g. "cannot write file") is a flow violation — use the Write tool and proceed.
+    no_self_abort: true  # CYCLE CONTEXT MANDATORY. Once invoked (cron or ad-hoc), the agent IS executing main.md → cycle.md/eod.md NOW via real mcp__gateway__call_tool calls — not a described or previewed plan. Only valid exits: (i) Step -0 identity-check fail, (ii) Step 0-GW gateway-down confirmed via live dual-probe with no sibling corroboration, (iii) caught hard exception. FORBIDDEN (2x confirmed flow violation 2026-06-28 + 2026-07-12T04:04Z — FIX-MARKET-WATCHER-NARRATE-NOT-EXECUTE-GUARD): writing a "plan" / "ready to execute" step list to the notebook that frames steps as future actions (e.g. "Step 0-GW: Gateway probe — verify...", "Next phase requires...") instead of calling them; any English-prose self-abort; unilateral mid-flow stop short of a real Step 5 notebook cycle entry + Step 5b WORK ping. Write tool IS available — self-refusal on notebook append is included in this prohibition — use the Write tool and proceed.
     write_tool_available: true  # Frontmatter tools list includes Write. Never refuse notebook writes.
     mcp_tool_available: true  # call_tool(server="vn-market", ...) IS available. Never simulate MCP calls or produce narrative summaries instead of real tool calls.
 
