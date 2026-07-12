@@ -1,6 +1,16 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-12T04:24Z (dev-team tick 2026-07-12T0407Z — compact-checkpoint offload, ctx~28%)
+**Written:** 2026-07-12T05:59Z (dev-team tick 2026-07-12T0537Z — compact-checkpoint offload, ctx~34%)
+
+## cycle-20260712T0537Z — hourly full PO triage catches a REAL 4-day serving-data outage that 2 quiet skip-gated ticks missed
+
+- **Two intervening ticks (0437Z, 0507Z) were correctly skip-gated** per `feedback_router_skip_po_respawn_identical_inputs.md`'s 60min cadence guard — telegram byte-identical (3564-3575), 0 new signals, board unchanged both times. Both cold-evict checks were genuine no-ops (RAW-verified via empty `git diff`).
+- **At ~90min since the last full triage, spawned a real hourly PO triage regardless of apparent quietness** — this is exactly why the cadence guard exists: the router's own narrow telegram gate-probe was STALE (missed 3 new reports #3576-3578 that arrived 05:39-05:43Z, mid-triage). PO's full sweep (not just telegram-diffing) caught something no shallow check would: a DB-level RAW investigation (querying `bctc_layout_units`/`bctc_table_rows`/`bctc_md_tables` directly, not trusting queue status) found `bctc_table_rows` (the serving financial-table data) frozen at `MAX(extracted_at)=2026-07-08T12:35:10Z` — **0 new rows in 4 days** — despite `bctc_layout_units` growing live (+1627 since 07-10, +1158 today). 42 queue rows resolved `done` since 07-10 while producing **zero** table_rows each ("hollow-done"). PO correctly distinguished this from the already-closed `FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION` (shipped+pm-closed 07-10) — that fix resolved ITS premise (pull cron never called table endpoints); this is the NEXT pipeline stage the fix didn't cover (layout→table-row derivation missing/broken).
+- **Dispatched `SPIKE-BCTC-TABLEROWS-FROZEN-HOLLOW-DONE`** (SPIKE, zone=multi spanning mcp-server+pdf-extractor, priority=high, timebox=120min) to `developer` in spike-mode (findings-doc-only, no fix inline unless trivial). Board row + backlog-detail entry minted and committed (`e1e3bc9ca`) — **in progress, not yet returned**.
+- **Post-cycle**: same known mock-guard `_test.go` FP (no new signal). Cold-evict check triggered a real `git diff` this time (+11L) but it was purely the router's own uncommitted SPIKE board-row addition surfacing through the eviction rewrite, not new eviction activity — committed alongside the detail entry. Push-backstop `ahead=10`, still under threshold=20.
+- **Lesson reinforced**: the skip-gate rule's ~60min cadence ceiling is load-bearing, not cosmetic — a purely telegram-diff-based gate-probe cannot see DB-level drift; only PO's full sweep can. Do not extend the skip-gate window past 60min even when N consecutive ticks look quiet.
+
+## cycle-20260712T0407Z — 2 real BATCH items dispatched (1 shipped), cold-evict fires for real (10 items), Docker VM wedge incident CLOSED same session
 
 ## cycle-20260712T0407Z — 2 real BATCH items dispatched (1 shipped), cold-evict fires for real (10 items), Docker VM wedge incident CLOSED same session
 
