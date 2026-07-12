@@ -315,12 +315,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "TASK_2000",
-    "next_agent": "dev-mcp-server",
-    "next_action": "BOUNDED-1 auto-pickup claim of TASK_2000 — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-12T16:19:31Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "await next cron tick. TASK_2000 done unblocks TASK_2001/2003/2004. PENDING user-gated redeploys: (1) mcp-server (covers FIX-SEQUENTIAL + TASK_2000 schema), (2) news-fetch (FACTORY-NEWS).",
+    "updated_at": "2026-07-12T16:42:49Z",
+    "updated_by": "dev-team (merge-gate close TASK_2000)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7507,6 +7507,36 @@
         "commit": "079b49dae",
         "merge_gate": "PASS: index-check rc0 + RAW news-fetch suite 233/6/0 (dispatcher re-ran) + dev before/after git-stash proof (64 pass identical both ways) + sandbox 16 PASS + tsc0 + lint clean; code commit 079b49dae atomic (3 files apps/news-fetch/scrapers, no mcp-server leak); DJ-GATE-1 present. NOT LIVE: news-fetch container redeploy user-gated.",
         "note": "Extracted shared rss-parse.ts (fetchRss + parseRssXml + extractTag); collapsed bloomberg-rss + reuters-rss onto it, 417L->204L (-51%), behavior-preserving (before/after stash proof identical 64 pass). Followed po-authored approach spec. Kept per-file URL literals (a readFileSync regression guard reads them). Commits 079b49dae (code) + 1d3597249 (journal). NOT YET LIVE: news-fetch docker-compose service runs pre-change image until 'docker compose up -d --build news-fetch' (USER/OPS-GATED, surfaced, NOT self-armed)."
+      },
+      {
+        "id": "TASK_2000",
+        "type": "DEVELOPMENT",
+        "title": "SUBTASK-DAILY-FF-1: daily_foreign_flow DDL + index + daily_ohlcv_with_flow view",
+        "zone": "apps/mcp-server/",
+        "status": "DONE_VERIFIED",
+        "priority": "P1",
+        "size": "M",
+        "depends_on": [],
+        "blocks": [
+          "TASK_2001",
+          "TASK_2003",
+          "TASK_2004"
+        ],
+        "created_at": "2026-07-10T19:30:00Z",
+        "created_by": "pm",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "handoff": "docs/handoffs/TASK_2000-daily-ff-schema.md",
+        "note": "SUBTASK-DAILY-FF-1: daily_foreign_flow table + index + daily_ohlcv_with_flow view (COALESCE fallback to legacy daily_ohlcv.foreign_* so the view works pre-population), wired idempotent into initMarketDataTables() boot. Additive-only (no existing object altered). Commit fd1d19191. UNBLOCKS TASK_2001/2003/2004. NOT LIVE: live named-volume DB lacks the new table/view until mcp-server rebuild+restart (USER/OPS-GATED); no backfill needed (SUBTASK-DAILY-FF-2 scope).",
+        "verify_note": "prior_status=TODO",
+        "promoted_at": "2026-07-12T16:19:31Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "claimed_at": "2026-07-12T16:19:31Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "dev-mcp-server",
+        "verified_at": "2026-07-12T16:42:49Z",
+        "verified_by": "dev-team",
+        "commit": "fd1d19191",
+        "merge_gate": "PASS: index-check rc0 + RAW new schema suite 15/15 (dispatcher re-ran) + regression 123/123 + tsc0; commit fd1d19191 atomic (6 files TASK_2000-scoped, no peer sweep); DJ-GATE-1 present; full-suite killed (zone Bun tail-crash) but partials grep-clean for new identifiers. NOT LIVE: mcp-server rebuild user-gated."
       }
     ],
     "head": {
@@ -7982,34 +8012,7 @@
     },
     "last_triaged_at": "2026-07-12T16:19:31Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "TASK_2000",
-        "type": "DEVELOPMENT",
-        "title": "SUBTASK-DAILY-FF-1: daily_foreign_flow DDL + index + daily_ohlcv_with_flow view",
-        "zone": "apps/mcp-server/",
-        "status": "IN_PROGRESS",
-        "priority": "P1",
-        "size": "M",
-        "depends_on": [],
-        "blocks": [
-          "TASK_2001",
-          "TASK_2003",
-          "TASK_2004"
-        ],
-        "created_at": "2026-07-10T19:30:00Z",
-        "created_by": "pm",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "handoff": "docs/handoffs/TASK_2000-daily-ff-schema.md",
-        "note": "New table + view creation, additive only, unblocks all downstream subtasks",
-        "verify_note": "prior_status=TODO",
-        "promoted_at": "2026-07-12T16:19:31Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "claimed_at": "2026-07-12T16:19:31Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "dev-mcp-server"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
