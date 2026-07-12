@@ -312,15 +312,23 @@
       "decision": "TRACK1 OPERATIONAL UNBLOCK: Executed per-report_id trigger sequence. Completed data prep: (1) synced financial_reports.pdf_path for GVR/MBB/D2D via direct UPDATE to predictable on-disk path; (2) created GAS shell row with minimal fields (action_code, sort_key, pdf_path, json stubs); (3) submitted all 12 report_ids to POST /api/trigger-pek-extract outside market-hours guard (09:52Z UTC, well outside 02:00-08:59 UTC). All triggers accepted (async 202/timeout patterns expected). PEK model loader + table extraction is CPU-bound; ACB extraction confirmed in-flight at submission time. RAW-probe at submission showed 0/12 completed. Ground-truth verification: must poll bctc_table_rows per report_id every 15-30s until queue drains (estimated 15-30min total for full cohort on single CPU core). Row status set to REVIEW pending verification results.",
       "what_considered": "(A) Wait for extraction completion before session exit — REJECTED (CPU-bound task, 20-30min est, token budget). (B) Async background trigger + verify next session — CHOSEN (operational unblock complete; extraction queue left running; dev-team can verify results independently via task_board.review row + decision_journal entry + updated .detail field).",
       "why_change": "Operational unblock is structural-separate from fix: triggers are queued and system is functioning; data is prepared correctly; extractions in-flight and will populate bctc_table_rows as they complete on the background pdf-extractor process. Bottleneck is CPU time, not logic/data sync."
+    },
+    {
+      "agent": "po",
+      "task_id": "TASK_2005 / FIX-DAILY-FF-VIEW-JOIN-ANCHOR",
+      "timestamp": "2026-07-12T19:45:17Z",
+      "decision": "dev-team tick 19:07Z BOUNDED-1 ran TASK_2005 (SUBTASK-DAILY-FF-6 integration test) -> dev-mcp-server returned RED (3 pass / 2 fail, genuine). STOP/FIX per handoff contingency. FOUR actions applied atomically via orch-apply.sh: (1) MINTED FIX-DAILY-FF-VIEW-JOIN-ANCHOR (backlog TODO high, zone apps/mcp-server/, owner+next_agent=architect) — view daily_ohlcv_with_flow anchored FROM daily_ohlcv LEFT JOIN daily_foreign_flow never surfaces FF-only rows; 2 candidate shapes (bidirectional/FULL-OUTER view UNION vs Class-A sites query daily_foreign_flow direct+fallback join); architect-led (shared view + 5 read sites). (2) TASK_2005 in_progress->backlog status=BLOCKED depends_on+=FIX; test artifact accepted+committed (d15eedbec), NOT flipped DONE_VERIFIED. (3) SPRINT-RECORD CORRECTION: annotated TASK_2003 (falsified 'writer+reads consistent'/R-1-read-side-closed claim) + TASK_2002 (transition gap only partially closed) + narrative watch_items — ARCH-DAILY-FOREIGN-FLOW-TABLE is NOT R-1-complete (read-side open); write-side R-1 closed by TASK_2002 unaffected. (4) HEAD-DIVERGENCE RECONCILE: architect overwrote .head 19:29:05Z -> {ready, ALPHA-S1-CANDLE-RECOVER, next_agent:pm}; but peer PM (b0a23a9ec/45c558cb5) had ALREADY cleared supervised:true->false on all 3 wave-1 rows before any user go. Restored gate: RE-PARKED supervised:true on the 3 ALPHA-S1 rows (preserving architect zone/depends/safety-note corrections), set .head=blocked/next_agent:null (architect handoff detail preserved in next_action) so neither pipeline-resume nor BOUNDED-1 auto-launches the still-gated wave. Surfaced USER gate to WORK.",
+      "what_considered": "(A) flip TASK_2005 DONE_VERIFIED as R-1 proven — REJECTED: 2 assertions genuinely fail, that is the sprint's own non-negotiable behavioral gate; would ship a false R-1-eliminated record. (B) route the view fix as a single dev-mcp-server FIX — REJECTED: touches a SHARED view + up to 5 read sites and needs a design choice between two shapes -> architect-led. (C) accept the peer PM's supervised->false flip (let wave-1 proceed to PM/dev) — REJECTED: flow-alpha wave promotion + supervised flips are USER-GATED per standing policy (surface, never self-launch); no user go exists in reports/WORK; the 7ce57c5f7 park was a deliberate hold. (D) neutralize .head only, leave supervised:false — REJECTED: BOUNDED-1 idle-pickup is a SEPARATE auto-advance path from pipeline-resume; with WIP about to hit 0 (TASK_2005 leaving in_progress) it would auto-pick P0 dep-free CANDLE-RECOVER at the next :37Z tick regardless of head — both paths must be closed, so supervised:true re-park is required.",
+      "why_change": "Handoff's explicit contingency: RED on the behavioral gate = STOP, do not flip DONE_VERIFIED, route as new FIX. Standing policy: flow-alpha USER-GATED (surface never self-launch); a peer PM jumped the gate, so restoring supervised:true is a correction not new churn. Both auto-advance paths (pipeline-resume + BOUNDED-1) closed so the imminent :37Z tick cannot launch a still-gated wave."
     }
   ],
   "head": {
-    "status": "ready",
+    "status": "blocked",
     "active_task_id": "ALPHA-S1-CANDLE-RECOVER",
-    "next_agent": "pm",
-    "next_action": "architect wave-1 split complete for ALPHA-S1-CANDLE-RECOVER/ALPHA-S1-STARTUP-CANDLE-GUARD/ALPHA-S1-OHLCV-BACKFILL-DONE-BUG — see docs/handoffs/ALPHA-S1-architect-design.md (READY_FOR_PM). Zone corrected multi->apps/mcp-server/ for all 3 (verified single-zone); recommend supervised:true->false + STARTUP-CANDLE-GUARD depends:[ALPHA-S1-CANDLE-RECOVER] (shared recoverMissingOhlcvSession() reuse). No further TASK_2xxx fan-out needed — each row already S-size/atomic. ALPHA-S2-FOREIGN-FLOW-WRITE-RACE reconciliation already applied by PO (af465eb93) before this cycle, no action needed.",
-    "updated_by": "architect",
-    "updated_at": "2026-07-12T19:29:05Z"
+    "next_agent": null,
+    "next_action": "GATED — flow-alpha wave-1 (ALPHA-S1-CANDLE-RECOVER / ALPHA-S1-STARTUP-CANDLE-GUARD / ALPHA-S1-OHLCV-BACKFILL-DONE-BUG) is USER-GATED per standing policy (surface, never self-launch). Architect design READY_FOR_PM: docs/handoffs/ALPHA-S1-architect-design.md — zone corrected multi->apps/mcp-server/ (verified single-zone), recommends supervised:false + ALPHA-S1-STARTUP-CANDLE-GUARD depends:[ALPHA-S1-CANDLE-RECOVER] (shared recoverMissingOhlcvSession() reuse), NO further TASK_2xxx fan-out (each row S-size/atomic). Peer PM (b0a23a9ec 19:32Z, 45c558cb5 19:33Z) prematurely cleared supervised:true->false before any user go; PO RE-PARKED supervised:true on all 3 rows 2026-07-12T19:45:17Z to restore the FIX-ALPHA-SPRINT-PARK-SUPERVISED (7ce57c5f7) gate. Zone + depends + safety-warning notes PRESERVED. AWAITING USER GO (surfaced to WORK). Do NOT auto-spawn PM; do NOT BOUNDED-1 auto-pick. Separately this tick: TASK_2005 (DAILY-FF integration test) returned RED — read-side R-1 view-anchor gap OPEN, minted FIX-DAILY-FF-VIEW-JOIN-ANCHOR (architect); TASK_2005 moved in_progress->backlog status=BLOCKED on that FIX. ARCH-DAILY-FOREIGN-FLOW-TABLE NOT R-1-complete (read-side open).",
+    "updated_by": "po (coordination_session 69b0312e — head-divergence reconcile: ALPHA-S1 gate restore + TASK_2005 STOP/FIX + sprint-record correction)",
+    "updated_at": "2026-07-12T19:45:17Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -346,7 +354,9 @@
       "AUD-ND-1 REGRESSION SUSPECTED: mcp-server-1 SIGTERM-stopped ~14:30 06-01 while host healthy, culprit unidentified — verify detectors PLAN-ONLY; check system-auditor/cron logs. 4th host-danger candidate.",
       "tnb-c85 morning-dish fix DONE-PENDING-LIVE-VERIFY — confirm next morning fire 05:23Z publishes.",
       "1967b architect orchestration audit DEFERRED (REQ_1967 ready) — re-queue when FLEET-HOST-SAFETY closes.",
-      "FU-DEV-CAFEF-1 (awaiting USER greenlight): wire /proxy/article-body into push-news ingestion."
+      "FU-DEV-CAFEF-1 (awaiting USER greenlight): wire /proxy/article-body into push-news ingestion.",
+      "ARCH-DAILY-FOREIGN-FLOW-TABLE NOT R-1-complete (2026-07-12): read-side view-anchor gap — daily_ohlcv_with_flow is FROM daily_ohlcv LEFT JOIN daily_foreign_flow, so 5 Class-A sites still return 0 for a ticker before its OHLCV bar lands. FIX-DAILY-FF-VIEW-JOIN-ANCHOR minted (architect). Write-side R-1 closed by TASK_2002. Do NOT mark the sprint R-1-complete until the FIX lands + TASK_2005's 2 assertions pass RAW.",
+      "flow-alpha wave-1 GATED (2026-07-12): peer PM cleared supervised:true->false on ALPHA-S1-CANDLE-RECOVER/STARTUP-CANDLE-GUARD/OHLCV-BACKFILL-DONE-BUG before any user go; PO re-parked supervised:true. Architect design READY_FOR_PM (docs/handoffs/ALPHA-S1-architect-design.md). AWAITING USER GO before PM decomposition/dev — router must NOT auto-launch."
     ]
   },
   "session_handoff_status": {
@@ -6227,8 +6237,8 @@
         "depends": [],
         "created_by": "po-option-a-flow-alpha-loop",
         "created_at": "2026-07-12T07:56:33Z",
-        "note": "PICK FIRST — race against the 24h market_prices_history retention timer. The Docker incident (07-11) made the tick aggregator skip the incident day, so daily_ohlcv is missing the 2026-07-11 Friday candle and every downstream (snapshot, breadth, TA, briefings) is serving Thursday closes; prices flagged 'Rat cu' 36.7h. DoD: (1) probe whether the 07-11 surviving ticks still exist in market_prices_history; if present, re-aggregate the Friday OHLCV bar from them and INSERT into daily_ohlcv for all affected tickers; (2) if ticks already purged, use taOhlcvBackfill as the fallback source; (3) RAW-verify the Friday bar now serves (get_market_snapshot / TA freshness no longer stale). This is the DATA-RECOVERY row only; the recurrence guard + backfill bug are separate rows (ALPHA-S1-STARTUP-CANDLE-GUARD, ALPHA-S1-OHLCV-BACKFILL-DONE-BUG). Brief: docs/architecture-briefs/2026-07-11-data-strategy-selection.md roadmap step 1 + gap #5. zone=multi (tick source + aggregator + verification) -> architect splits. ⚠ ARCHITECT CORRECTION (READ docs/handoffs/ALPHA-S1-architect-design.md FIRST): 07-11 ticks were NEVER captured (0 rows in market_prices_history) — skip the tick-probe branch. taOhlcvBackfill/taOhlcvBackfillJob are DEAD paths from this host (VNDirect geo-blocked + count-only coverage gate silently no-ops). ONLY viable recovery = VPS-relay pipeline: ohlcv_backfill_queue trigger → vn-ohlcv-backfill.timer (30-min systemd oneshot on VPS). Deadline: Friday bar serving BEFORE Mon 2026-07-14 02:15Z open.",
-        "supervised": false
+        "note": "PICK FIRST — race against the 24h market_prices_history retention timer. The Docker incident (07-11) made the tick aggregator skip the incident day, so daily_ohlcv is missing the 2026-07-11 Friday candle and every downstream (snapshot, breadth, TA, briefings) is serving Thursday closes; prices flagged 'Rat cu' 36.7h. DoD: (1) probe whether the 07-11 surviving ticks still exist in market_prices_history; if present, re-aggregate the Friday OHLCV bar from them and INSERT into daily_ohlcv for all affected tickers; (2) if ticks already purged, use taOhlcvBackfill as the fallback source; (3) RAW-verify the Friday bar now serves (get_market_snapshot / TA freshness no longer stale). This is the DATA-RECOVERY row only; the recurrence guard + backfill bug are separate rows (ALPHA-S1-STARTUP-CANDLE-GUARD, ALPHA-S1-OHLCV-BACKFILL-DONE-BUG). Brief: docs/architecture-briefs/2026-07-11-data-strategy-selection.md roadmap step 1 + gap #5. zone=multi (tick source + aggregator + verification) -> architect splits. ⚠ ARCHITECT CORRECTION (READ docs/handoffs/ALPHA-S1-architect-design.md FIRST): 07-11 ticks were NEVER captured (0 rows in market_prices_history) — skip the tick-probe branch. taOhlcvBackfill/taOhlcvBackfillJob are DEAD paths from this host (VNDirect geo-blocked + count-only coverage gate silently no-ops). ONLY viable recovery = VPS-relay pipeline: ohlcv_backfill_queue trigger → vn-ohlcv-backfill.timer (30-min systemd oneshot on VPS). Deadline: Friday bar serving BEFORE Mon 2026-07-14 02:15Z open.  [PO 2026-07-12T19:45:17Z coordination_session 69b0312e] RE-PARKED supervised:true — restore FIX-ALPHA-SPRINT-PARK-SUPERVISED gate (7ce57c5f7). Peer PM (b0a23a9ec 19:32Z / 45c558cb5 19:33Z) cleared supervised->false before any user go; flow-alpha wave promotion is USER-GATED (surface, never self-launch). Architect zone(apps/mcp-server/)+depends+safety-notes PRESERVED. Awaiting USER go (surfaced WORK). Do NOT BOUNDED-1 auto-pick.",
+        "supervised": true
       },
       {
         "id": "ALPHA-S1-STARTUP-CANDLE-GUARD",
@@ -6246,8 +6256,8 @@
         ],
         "created_by": "po-option-a-flow-alpha-loop",
         "created_at": "2026-07-12T07:56:33Z",
-        "note": "Recurrence-prevention for the ALPHA-S1-CANDLE-RECOVER incident class. The daily aggregation chain currently has NO catch-up path: one Docker incident produced a missing candle and nobody ran the fix while the raw ticks expired. DoD: on startup (and/or first tick of a session) the aggregator checks that the most-recent trading session has a daily_ohlcv candle for the expected tickers; if missing, it triggers a catch-up re-aggregation from surviving ticks (or taOhlcvBackfill) and logs/alerts. Must be idempotent (no double-insert) and fail-loud on catch-up failure. Brief roadmap step 1 + gap #5. zone=multi -> architect splits. Design: docs/handoffs/ALPHA-S1-architect-design.md",
-        "supervised": false
+        "note": "Recurrence-prevention for the ALPHA-S1-CANDLE-RECOVER incident class. The daily aggregation chain currently has NO catch-up path: one Docker incident produced a missing candle and nobody ran the fix while the raw ticks expired. DoD: on startup (and/or first tick of a session) the aggregator checks that the most-recent trading session has a daily_ohlcv candle for the expected tickers; if missing, it triggers a catch-up re-aggregation from surviving ticks (or taOhlcvBackfill) and logs/alerts. Must be idempotent (no double-insert) and fail-loud on catch-up failure. Brief roadmap step 1 + gap #5. zone=multi -> architect splits. Design: docs/handoffs/ALPHA-S1-architect-design.md  [PO 2026-07-12T19:45:17Z coordination_session 69b0312e] RE-PARKED supervised:true — restore FIX-ALPHA-SPRINT-PARK-SUPERVISED gate (7ce57c5f7). Peer PM (b0a23a9ec 19:32Z / 45c558cb5 19:33Z) cleared supervised->false before any user go; flow-alpha wave promotion is USER-GATED (surface, never self-launch). Architect zone(apps/mcp-server/)+depends+safety-notes PRESERVED. Awaiting USER go (surfaced WORK). Do NOT BOUNDED-1 auto-pick.",
+        "supervised": true
       },
       {
         "id": "ALPHA-S1-OHLCV-BACKFILL-DONE-BUG",
@@ -6263,8 +6273,8 @@
         "depends": [],
         "created_by": "po-option-a-flow-alpha-loop",
         "created_at": "2026-07-12T07:56:33Z",
-        "note": "Root cause of the universe-vs-watchlist depth split (gap #6): the ~1459-code universe backfill marks queue rows done=1 regardless of exit code with no inserted-count verification, so 457+ queue rows are 'done' with zero bars — cross-sectional z-scores (foreign-accum rank, ROC deciles) then rank against a partly-empty cross-section, which degrades the divergence screen (ALPHA-S3). Also corroborated by BUG channel id3564 (OHLCV-DEPTH VPS backfill stalled, shallow codes). DoD: /api/ohlcv-backfill-done only marks a row done when the fetch actually inserted the expected bar count; on zero/short insert it records the real failure state (retry/deferred) instead of a false done; add an inserted-count check + fail-loud. Brief roadmap step 1 + gap #6. zone=multi -> architect splits. Design: docs/handoffs/ALPHA-S1-architect-design.md",
-        "supervised": false
+        "note": "Root cause of the universe-vs-watchlist depth split (gap #6): the ~1459-code universe backfill marks queue rows done=1 regardless of exit code with no inserted-count verification, so 457+ queue rows are 'done' with zero bars — cross-sectional z-scores (foreign-accum rank, ROC deciles) then rank against a partly-empty cross-section, which degrades the divergence screen (ALPHA-S3). Also corroborated by BUG channel id3564 (OHLCV-DEPTH VPS backfill stalled, shallow codes). DoD: /api/ohlcv-backfill-done only marks a row done when the fetch actually inserted the expected bar count; on zero/short insert it records the real failure state (retry/deferred) instead of a false done; add an inserted-count check + fail-loud. Brief roadmap step 1 + gap #6. zone=multi -> architect splits. Design: docs/handoffs/ALPHA-S1-architect-design.md  [PO 2026-07-12T19:45:17Z coordination_session 69b0312e] RE-PARKED supervised:true — restore FIX-ALPHA-SPRINT-PARK-SUPERVISED gate (7ce57c5f7). Peer PM (b0a23a9ec 19:32Z / 45c558cb5 19:33Z) cleared supervised->false before any user go; flow-alpha wave promotion is USER-GATED (surface, never self-launch). Architect zone(apps/mcp-server/)+depends+safety-notes PRESERVED. Awaiting USER go (surfaced WORK). Do NOT BOUNDED-1 auto-pick.",
+        "supervised": true
       },
       {
         "id": "ALPHA-S2-TICK-DOWNSAMPLE-5MIN",
@@ -6453,6 +6463,51 @@
         "next_agent": "architect",
         "supervised": true,
         "note": "PO triage 17:37Z from digest-predict bug-escalation (2x recur 2026-07-12, fingerprint 6856dd31). Fix path (b) gateway-native narrative_truth_gate MCP tool — preserves no-Bash cowork design, generalizes to 5 narrative agents (digest-predict/fb-market-poster/CHEF/market-watcher/alert-commander). SUPERVISED: needs architect-led planning (SPRINT-S architect->pm) but architect reserved for flow-alpha — held for deliberate dispatch; contention escalated to user. git-commit half folds into FIX-BCTC-ANALYST-STAGELOG-NOTIFY-NO-BASH (no dup mint). Full ACs in po.md commit 4e5c56e67."
+      },
+      {
+        "id": "TASK_2005",
+        "type": "DEVELOPMENT",
+        "title": "SUBTASK-DAILY-FF-6: integration test + behavioral gate (R-1 elimination proof)",
+        "zone": "apps/mcp-server/",
+        "status": "BLOCKED",
+        "priority": "P1",
+        "size": "M",
+        "depends_on": [
+          "TASK_2002",
+          "TASK_2003",
+          "FIX-DAILY-FF-VIEW-JOIN-ANCHOR"
+        ],
+        "blocks": [],
+        "created_at": "2026-07-10T19:30:00Z",
+        "created_by": "pm",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "handoff": "docs/handoffs/TASK_2005-daily-ff-integration-test.md",
+        "note": "Direct falsification of chưa trả số từng mã symptom; T-3 view correctness + late-OHLCV join  DISPOSITION 2026-07-12T19:45:17Z (PO, coordination_session 69b0312e): dev-mcp-server returned RED (verification-complete, NOT green) — RAW 3 pass / 2 fail, both genuine (STEP dev-mcp-server-S7). TEST ARTIFACT ACCEPTED + committed (d15eedbec) — it correctly FALSIFIED the sprint's R-1-read-side-eliminated claim (view join-anchor bug). Moved in_progress->backlog, status=BLOCKED. Does NOT flip DONE_VERIFIED (R-1 NOT proven eliminated). Unblocks + closes ONLY when FIX-DAILY-FF-VIEW-JOIN-ANCHOR lands and the 2 failing assertions pass RAW. depends_on += FIX-DAILY-FF-VIEW-JOIN-ANCHOR.",
+        "promoted_at": "2026-07-12T19:22:15Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "claimed_at": "2026-07-12T19:22:15Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      },
+      {
+        "id": "FIX-DAILY-FF-VIEW-JOIN-ANCHOR",
+        "type": "FIX",
+        "title": "daily_ohlcv_with_flow view anchored FROM daily_ohlcv LEFT JOIN daily_foreign_flow — foreign-flow-only rows (FF present, OHLCV bar not yet landed) never surface; R-1 READ-SIDE still OPEN across 5 Class-A sites (chua tra so tung ma, one layer up)",
+        "zone": "apps/mcp-server/",
+        "status": "BACKLOG",
+        "priority": "high",
+        "size": "M",
+        "owner": "architect",
+        "next_agent": "architect",
+        "supervised": false,
+        "depends": [],
+        "blocks": [
+          "TASK_2005"
+        ],
+        "sprint": "ARCH-DAILY-FOREIGN-FLOW-TABLE",
+        "created_at": "2026-07-12T19:45:17Z",
+        "created_by": "po (coordination_session 69b0312e — TASK_2005 STOP/FIX)",
+        "verification_gate": "The 2 currently-failing assertions in apps/mcp-server/src/__tests__/daily-foreign-flow-integration.test.ts pass RAW (not skipped/deleted) + full targeted regression stays green; AND RAW-live: a Class-A tool (marketWideForeignFlow / foreignFlow) returns the per-ticker foreign value for a code whose daily_foreign_flow row exists but whose daily_ohlcv bar has NOT yet landed.",
+        "note": "ROOT CAUSE (RAW-confirmed by TASK_2005 test + schema read): view daily_ohlcv_with_flow in apps/mcp-server/src/infrastructure/db/schema-market-data.ts = 'FROM daily_ohlcv o LEFT JOIN daily_foreign_flow f ON f.code=o.code AND f.date=o.date' — anchored on daily_ohlcv. A row that exists ONLY in daily_foreign_flow (FF written, no OHLCV bar yet) is NEVER returned; the inner COALESCE only picks the column winner AFTER an anchor daily_ohlcv row exists. CONSEQUENCE: TASK_2002 closed the WRITE side of R-1 (FF value always lands in daily_foreign_flow, no permanent loss). TASK_2003 migrated 5 Class-A read sites FROM daily_ohlcv TO the view but did NOT close R-1: all 5 (marketWideForeignFlowTool.ts, foreignFlowTools.ts, foreignFlowAlertJob.ts, assembleEveningSummary.ts, franceSummaryJob.ts) still return 0 for a ticker before its OHLCV bar lands = the live 'chua tra so tung ma' symptom. CANDIDATE FIX SHAPES (architect chooses ONE): (A) make view bidirectional / FULL-OUTER-emulated = SELECT over a UNION of daily_foreign_flow(code,date) keys and daily_ohlcv(code,date) keys, then COALESCE both planes so an FF-only key surfaces; (B) point the 5 Class-A sites at daily_foreign_flow directly with a fallback LEFT JOIN to daily_ohlcv for price columns (mirrors the Class-B pattern TASK_2004 already used). Touches a SHARED view + up to 5 read sites -> architect-led design first, then dev-mcp-server impl. REFS: test apps/mcp-server/src/__tests__/daily-foreign-flow-integration.test.ts (RAW 2/5 assertions fail, genuine); commits d15eedbec (test+journal) + 2eafbb6a2 (notebook); handoff docs/handoffs/TASK_2005-daily-ff-integration-test.md; decision journal docs/agent-memory/decisions/sprint-FLOW-PRICE-ALPHA-LOOP-dev-mcp-server.md STEP dev-mcp-server-S7."
       }
     ],
     "closed_sprints": [
@@ -7531,7 +7586,7 @@
         "created_by": "pm",
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
         "handoff": "docs/handoffs/TASK_2003-daily-ff-class-a-reads.md",
-        "note": "SUBTASK-DAILY-FF-4 read-site migration: 5 Class-A read sites (marketWideForeignFlowTool, foreignFlowTools, foreignFlowAlertJob, assembleEveningSummary, franceSummaryJob) migrated FROM daily_ohlcv TO daily_ohlcv_with_flow view (pure FROM-clause swaps). grep-confirmed NO additional un-migrated sites. Also root-fixed 9 test fixtures that duplicated DDL (now call real initMarketDataTables — debt reduction). Commit 069a15014 (19 files). Verified RAW core 33/0 + dev 162/0 + tsc0 + COALESCE-transition proof. CLOSES the TASK_2002 writer-cutover transition gap -> writer+reads consistent. DEPLOY-HOLD LIFTED: pending mcp-server redeploy now SAFE (still user-gated).",
+        "note": "SUBTASK-DAILY-FF-4 read-site migration: 5 Class-A read sites (marketWideForeignFlowTool, foreignFlowTools, foreignFlowAlertJob, assembleEveningSummary, franceSummaryJob) migrated FROM daily_ohlcv TO daily_ohlcv_with_flow view (pure FROM-clause swaps). grep-confirmed NO additional un-migrated sites. Also root-fixed 9 test fixtures that duplicated DDL (now call real initMarketDataTables — debt reduction). Commit 069a15014 (19 files). Verified RAW core 33/0 + dev 162/0 + tsc0 + COALESCE-transition proof. CLOSES the TASK_2002 writer-cutover transition gap -> writer+reads consistent. DEPLOY-HOLD LIFTED: pending mcp-server redeploy now SAFE (still user-gated).  !! CORRECTION 2026-07-12T19:45:17Z (PO, coordination_session 69b0312e): the 'writer+reads consistent' / read-side-R-1-closed framing in this note is FALSIFIED by TASK_2005 integration test (RAW 2/5 assertions fail, genuine not flaky). The view daily_ohlcv_with_flow is FROM daily_ohlcv LEFT JOIN daily_foreign_flow (anchored on daily_ohlcv) — an FF-only row (no OHLCV bar yet) is NEVER returned, so all 5 migrated Class-A sites still return 0 pre-bar = 'chua tra so tung ma' one layer up. This subtask's mechanical FROM-clause swap DID land (status stays DONE_VERIFIED) but does NOT close R-1 read-side. READ-SIDE R-1 REMAINS OPEN -> FIX-DAILY-FF-VIEW-JOIN-ANCHOR (architect). Write-side R-1 (permanent loss) IS closed by TASK_2002, unaffected.",
         "promoted_at": "2026-07-12T18:19:01Z",
         "promoted_by": "dev-team (bounded-1 auto-pickup)",
         "claimed_at": "2026-07-12T18:19:01Z",
@@ -8043,31 +8098,7 @@
     },
     "last_triaged_at": "2026-07-12T19:22:15Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "TASK_2005",
-        "type": "DEVELOPMENT",
-        "title": "SUBTASK-DAILY-FF-6: integration test + behavioral gate (R-1 elimination proof)",
-        "zone": "apps/mcp-server/",
-        "status": "IN_PROGRESS",
-        "priority": "P1",
-        "size": "M",
-        "depends_on": [
-          "TASK_2002",
-          "TASK_2003"
-        ],
-        "blocks": [],
-        "created_at": "2026-07-10T19:30:00Z",
-        "created_by": "pm",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "handoff": "docs/handoffs/TASK_2005-daily-ff-integration-test.md",
-        "note": "Direct falsification of chưa trả số từng mã symptom; T-3 view correctness + late-OHLCV join",
-        "promoted_at": "2026-07-12T19:22:15Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "claimed_at": "2026-07-12T19:22:15Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
