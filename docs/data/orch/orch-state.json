@@ -318,9 +318,9 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": null,
-    "next_action": "await next cron tick — BOUNDED-1 idle-capacity pickup or PO triage",
-    "updated_at": "2026-07-12T14:27:33Z",
-    "updated_by": "dev-team (close INFRA-CLOUDFLARE RCA + mint FIX-PUSH-DELIVERY-ERROR-RATE-ALERT)"
+    "next_action": "await next cron tick — BOUNDED-1 idle-capacity pickup or PO triage. PENDING user-gated mcp-server redeploy for FIX-SEQUENTIAL to go live.",
+    "updated_at": "2026-07-12T15:25:44Z",
+    "updated_by": "dev-team (merge-gate close FIX-SEQUENTIAL-ANALYSIS-TOOL-DEAD-HANDLER)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -5208,16 +5208,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK"
       },
       {
-        "id": "FIX-SEQUENTIAL-ANALYSIS-TOOL-DEAD-HANDLER",
-        "priority": "high",
-        "size": "S",
-        "status": "BACKLOG",
-        "title": "sequential_market_analysis MCP tool unreachable over the wire — registerTool() passes handler nested in config instead of the SDK's required 3rd positional callback arg, \"originalHandler is not a function\" on every real call (pre-existing, discovered during FACTORY-INTERFACE-sequential-confidence-05-mask post-swap QA sanity check, unrelated root cause)",
-        "type": "FIX",
-        "zone": "mcp-server-interface",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-SEQUENTIAL-ANALYSIS-TOOL-DEAD-HANDLER"
-      },
-      {
         "title": "Delete or attic the orphaned TS shadow service under src/",
         "priority": "P1",
         "zone": "technical-analysis",
@@ -7506,6 +7496,27 @@
         "verified_at": "2026-07-12T14:27:33Z",
         "verified_by": "dev-team",
         "note": "RCA complete (ops, MEDIUM confidence): CF Tunnel connection-pool stall correlated with mcp-server contention; recovered by 07-07T16:42Z mcp-server container restart; no code defect (821bbbeea verified clean). Root-cause deliverable DONE; hardening spun to FIX-PUSH-DELIVERY-ERROR-RATE-ALERT. Findings: docs/incidents/2026-07-04-cloudflare-tunnel-push-delivery-outage-rca.md"
+      },
+      {
+        "id": "FIX-SEQUENTIAL-ANALYSIS-TOOL-DEAD-HANDLER",
+        "priority": "high",
+        "size": "S",
+        "status": "DONE_VERIFIED",
+        "title": "sequential_market_analysis MCP tool unreachable over the wire — registerTool() passes handler nested in config instead of the SDK's required 3rd positional callback arg, \"originalHandler is not a function\" on every real call (pre-existing, discovered during FACTORY-INTERFACE-sequential-confidence-05-mask post-swap QA sanity check, unrelated root cause)",
+        "type": "FIX",
+        "zone": "mcp-server-interface",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-SEQUENTIAL-ANALYSIS-TOOL-DEAD-HANDLER",
+        "promoted_at": "2026-07-12T14:50:43Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-12T14:50:43Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "dev-mcp-server",
+        "verified_at": "2026-07-12T15:25:44Z",
+        "verified_by": "dev-team",
+        "commit": "90af32aa8",
+        "merge_gate": "PASS: index-check rc0 + RAW regression test 2/2 (dispatcher re-ran; dev proved RED-before via stash / GREEN-after) + c2 C2-OK + DJ-GATE-1 journal present; both commits atomic (90af32aa8 src+test 2f, da2b68f9c journal+notebook 2f); tree-verify code-SHA-vs-HEAD mismatch = benign 2-commit doc-drift FP. NOT LIVE: source-only, redeploy USER-GATED.",
+        "note": "CODE-COMPLETE + RAW-verified. Root cause: registerTool() passed handler as a config key instead of the MCP SDK 3rd positional callback arg -> handler undefined -> 'originalHandler is not a function' on every call. Fix: 90af32aa8 (src+regression test) + da2b68f9c (journal/notebook). NOT YET LIVE: source-only; running mcp-server container serves pre-fix registration until rebuild+restart (USER-GATED, surfaced to WORK, NOT self-armed). Only real registerTool mis-registration in codebase (no siblings); toolCount 183 unchanged."
       }
     ],
     "head": {
@@ -7979,7 +7990,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-12T14:18:57Z",
+    "last_triaged_at": "2026-07-12T14:50:43Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": []
   },
