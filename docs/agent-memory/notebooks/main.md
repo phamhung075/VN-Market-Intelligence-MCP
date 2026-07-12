@@ -1,6 +1,12 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-12T05:59Z (dev-team tick 2026-07-12T0537Z — compact-checkpoint offload, ctx~34%)
+**Written:** 2026-07-12T06:44Z (dev-team tick 2026-07-12T0637Z — compact-checkpoint offload, ctx~39%)
+
+## cycle-20260712T0607Z + 0637Z — SPIKE closed out, cron-refine-bctc re-armed, steady stream of duplicate BCTC reconcile reports correctly no-op'd
+
+- **SPIKE-BCTC-TABLEROWS-FROZEN-HOLLOW-DONE returned and RAW-verified**: root cause was NOT the reconcile job (working as architect-designed) but the BCTC-AGENTIC-REFINE pipeline's session-scoped cron (`cron-refine-bctc`, `0 9,14,20 * * *` UTC) having been dormant since 2026-07-04 — 8 days, 151 `financial_reports` rows stuck PENDING, the sole live producer of `bctc_table_rows` silently starved. This is a recurring defect class (`BCTC-REFINE-STALL-RETRIGGER`, first diagnosed 06-27) whose durable fix was never built. Router RAW-verified all claims (commit `9572549ce` on HEAD, findings doc 90L, follow-on backlog item filed, throwaway branch cleaned up), flipped board `REVIEW→DONE_VERIFIED` (commit `b203fc8c4`), re-armed the recurring cron for the rest of this session, and fired one manual catch-up invocation — **the catch-up itself hit the session's intermittent gateway-blind condition** (this agent type has no Bash grant, can't use the mcp-call.sh workaround) and correctly deferred without fabricating. Durable fix tracked: `FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP` (backlog, ops, high) — memory note `project_cron_refine_bctc_dormant_gap.md` also flags an unresolved meta-question: no skill currently auto-verifies ALL 6 session crons the way `cron-detect-loop` covers its 4.
+- **Two subsequent ticks (0607Z, 0637Z)** each saw a fresh cluster of `bctcExtractReconcile RECONCILE EXHAUSTED: <ticker>` telegram reports (5 tickers total: DBC, DGC, DIG, DXG, FRT) — each tick's new-report-count disqualified skip-gating (not byte-identical to prior triage), so PO ran normally each time, RAW-confirmed every report as another Nth-emission of the same already-diagnosed outage, and correctly returned NOTHING both times (detector working correctly per its own spec; escalating a queued-but-not-yet-run fix would be churn). Router pre-briefed PO with report content both times to keep cycles short.
+- **Cold-eviction settled the closed SPIKE** (commit `255912fe2`, conservation 453→452) then returned to genuine no-op both following ticks (RAW-verified via empty `git diff` each time). Push-backstop climbing but still under threshold (`ahead` 15→16→16, threshold=20) — expect it to fire in the next tick or two.
 
 ## cycle-20260712T0537Z — hourly full PO triage catches a REAL 4-day serving-data outage that 2 quiet skip-gated ticks missed
 
@@ -9,8 +15,6 @@
 - **Dispatched `SPIKE-BCTC-TABLEROWS-FROZEN-HOLLOW-DONE`** (SPIKE, zone=multi spanning mcp-server+pdf-extractor, priority=high, timebox=120min) to `developer` in spike-mode (findings-doc-only, no fix inline unless trivial). Board row + backlog-detail entry minted and committed (`e1e3bc9ca`) — **in progress, not yet returned**.
 - **Post-cycle**: same known mock-guard `_test.go` FP (no new signal). Cold-evict check triggered a real `git diff` this time (+11L) but it was purely the router's own uncommitted SPIKE board-row addition surfacing through the eviction rewrite, not new eviction activity — committed alongside the detail entry. Push-backstop `ahead=10`, still under threshold=20.
 - **Lesson reinforced**: the skip-gate rule's ~60min cadence ceiling is load-bearing, not cosmetic — a purely telegram-diff-based gate-probe cannot see DB-level drift; only PO's full sweep can. Do not extend the skip-gate window past 60min even when N consecutive ticks look quiet.
-
-## cycle-20260712T0407Z — 2 real BATCH items dispatched (1 shipped), cold-evict fires for real (10 items), Docker VM wedge incident CLOSED same session
 
 ## cycle-20260712T0407Z — 2 real BATCH items dispatched (1 shipped), cold-evict fires for real (10 items), Docker VM wedge incident CLOSED same session
 
@@ -164,33 +168,3 @@
   - `FIX-AGENT-SIGNALS-ORPHAN-ALERT-ID` — REVIEW, `next_agent:ops`, code live in production, multi-day live-cycle confirmation still pending.
   - `FIX-VERIFY-DEPLOY-SHA-BENIGN-DOC-DRIFT` — BACKLOG (P3), candidate for a future BOUNDED-1 pickup.
   - `FIX-BCTC-CTG-BALANCE-SHEET-REFINE`, `FIX-GATEWAY-BLIND-DEGRADED-MODE-PROCEDURE`, `FIX-SEQUENTIAL-ANALYSIS-TOOL-DEAD-HANDLER`, `CONTAM-10-WRITER-H`, 2 BCTC W5 `BLOCKED` items — all still open/undispatched, unchanged.
-
-## cycle-20260710T0407Z — BOUNDED-1 pickup (agent_signals orphan FK) → dev-mcp-server root-cause+fix → qa independent re-verify (caught stale-container gap) → ops rebuild+swap+verify → cold-evict no-op
-
-## cycle-20260710T0407Z — BOUNDED-1 pickup (agent_signals orphan FK) → dev-mcp-server root-cause+fix → qa independent re-verify (caught stale-container gap) → ops rebuild+swap+verify → cold-evict no-op
-
-- **Signals drain:** 3 new cowork-team tick-report heartbeats routed-to-po (non-actionable), 4 known stale non-signal files left in inbox (unchanged pattern). `.signal_queue.rows[]` empty (no NEW rows). Committed+pushed `a7e68086288`.
-- **BOUNDED-1** (WIP=0, head idle) promoted+claimed `FIX-AGENT-SIGNALS-ORPHAN-ALERT-ID` (P1, zone `apps/mcp-server/`, owner `dev-mcp-server` — matches zone, no reroute needed). Sanity-checked backlog-detail.json fields directly before dispatch (not supervised, no epic-wrapper children, no unmet deps) — first live production use of the `blocked_by`-patched promote script from the prior tick; picked cleanly.
-- **`dev-mcp-server`** root-caused the 124-row `agent_signals.alert_id` dangling-FK bug via git archaeology (historical rows had already self-expired via 2h TTL, nothing left to directly inspect): `storeAlerts`/`storeAlertsFromCommander` wrote the correlation row without confirming the paired `alerts` INSERT actually persisted — that insert can silently no-op on an `alerts.fingerprint` UNIQUE collision (not just PK), and pre-2026-06-25 `taAlertScanJob`/`bbAlertScanJob` paired a deterministic fingerprint with a random id, producing exactly this failure mode on repeat fires. Fixed at the writer (defense in depth): both functions now `SELECT 1 FROM alerts WHERE id = ?` before the co-write. Added `checkOrphanAgentSignalsAlertId` (D-NEW2) as an ongoing regression tripwire. TDD RED→GREEN, 8 new tests + 110/110 targeted pass, tsc clean, full suite 14449/63fail/9err with zero overlap on the changed area (known Bun 1.3.13 teardown flake). Moved `in_progress`→`review`, `next_agent:qa`. Router RAW-verified commit `33bb3078e`, journal, board state — held up. Chained `qa` same tick.
-- **`qa` did NOT trust the report — independently re-verified everything from scratch**: re-read the diff (confirmed generic parameterized guard, not hardcoded), re-ran the new test file + targeted suite fresh (137/137), and critically **re-ran the ENTIRE full suite itself** rather than accepting the "63 fail, zero overlap" claim — got 56 fail/5 errors this run (flake count drifts, as expected), grepped all 56 names for overlap (zero) and isolation-reran 3 samples to confirm genuinely pre-existing/unrelated (one is a real local chromium-binary-missing flake). **Caught the critical gap dev-mcp-server missed**: `docker inspect` showed the running mcp-server image was built 2026-07-09T12:49:50Z — strictly BEFORE the fix commit (2026-07-10T04:30:25Z) — meaning the "0 orphans" observation reflected OLD code, not the fix. Correctly held the row at `REVIEW` (not `DONE_VERIFIED`), routed `next_agent:qa`→`ops`, filed a tracking signal for the deferred rebuild+swap+multi-cycle-live-verify. RAW-verified commit `3afc9b80d`, board state, journal — held up exactly.
-- **Dispatched `ops`** (per standing OVERRIDE 07-03 — delegate gated swaps/deploys, don't wait) to execute the actual rebuild+swap: `docker compose build`+`up -d`, confirmed deployed SHA ≥ fix commit, live orphan-query re-ran (0), health check clean (toolCount=183 unchanged). Correctly did NOT flip to `DONE_VERIFIED` — QA's acceptance criterion needs the orphan count to hold across ≥1 live alert-scan cycle, which can't be observed in a single dispatch; left `REVIEW` with a clear note for a future tick to complete. Commit `faa75cf29`.
-- **RAW-verify surfaced the KNOWN benign SHA-drift pattern for the 3rd time**: `verify-deploy-sha.sh` reported drift because ops' own post-build doc/orch-state commit (`faa75cf29`, zero code files) advanced HEAD past the built image's SHA (`3afc9b80d`) — confirmed benign via `git diff --stat 3afc9b80d..HEAD -- apps/ scripts/` (empty) and `git merge-base --is-ancestor` (fix commit IS an ancestor of the deployed SHA — fix was genuinely live). Per the memory's own 3rd-occurrence escalation trigger, filed `FIX-VERIFY-DEPLOY-SHA-BENIGN-DOC-DRIFT` (P3, zone `scripts/`, owner `ops`) to backlog instead of manually re-reasoning through this again next time. Commit `23fb384e5`.
-- **Mock-guard (4.0.5):** same known `stub.sbv.vn` `_test.go` HARD-FAIL — signal already tracked (`FIX-MOCKGUARD-SCOPE-EXCLUDE-TESTGO` still TODO), skipped duplicate escalation.
-- **Cold eviction (Step 4.2):** `DONE_N=14>10` triggered a re-run, but script found 0 new-to-cold (prior tick's `8eb704b59` eviction already handled everything eligible) — idempotent no-op, zero file diff, no commit.
-
-### Queue watch for next cycle
-- **`FIX-AGENT-SIGNALS-ORPHAN-ALERT-ID` still open** — REVIEW lane, `next_agent:ops`, code fix is live in production (confirmed via SHA-ancestor check) but the multi-day live-cycle confirmation (orphan count holds across ≥1 alert-scan cycle) is still pending. A future tick should re-run the RAW orphan query and close this out if it holds.
-- **`FIX-VERIFY-DEPLOY-SHA-BENIGN-DOC-DRIFT`** — new backlog row (P3), candidate for a future BOUNDED-1 pickup once higher-priority items clear.
-- Carried from prior tick (unchanged, not touched this tick):
-  - `FIX-BCTC-CTG-BALANCE-SHEET-REFINE` — BACKLOG, blocked_on gateway-blind resolution.
-  - `FIX-GATEWAY-BLIND-DEGRADED-MODE-PROCEDURE` — BACKLOG, medium, next:developer.
-  - `FIX-SEQUENTIAL-ANALYSIS-TOOL-DEAD-HANDLER` — P-high BACKLOG, owner dev-mcp-server, still undispatched across multiple ticks.
-  - `CONTAM-10-WRITER-H` — REVIEW, `next_agent:"qa"`, image built but NOT swapped. Still untouched.
-  - 2 BCTC W5 items left `BLOCKED` (`TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST`, `W5-FU-CTG-REFINE-96e36139`) — needs live reingest re-run against `FIX-BCTC-BANK-BS-COLUMN-ORDER`.
-
-### Carry-forward (unchanged lanes)
-- REVIEW lane throughput — was 17 last tick after QA's drain; watch whether it's still trending down or growing again.
-- `FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK`, `BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP`, `FIX-MOCKGUARD-SCOPE-EXCLUDE-TESTGO` — all still open/undispatched, unchanged.
-- `PDF-TEST-01-FIX` (missing `created_at`) — outcome of prior window's PO staleness call still not observed.
-
-_[Pruned: cycle-20260710T0307Z (BOUNDED-1 blocked_by near-miss, fixer+QA+ops) and cycle-20260710T0207Z-0237Z (fixer closeout, dev-mcp-server health-recheck fix) — oldest 2 entries, cut 2026-07-11T02:26Z to hold the 200L cap ahead of the still-unpatched prepend-style notebook-autoprune bug. Full detail in git history of this file.]_
