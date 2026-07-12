@@ -319,9 +319,9 @@
     "active_task_id": null,
     "next_agent": "none",
     "next_action": "idle — awaiting next cron tick or signal",
-    "updated_at": "2026-07-12T10:48:38Z",
+    "updated_at": "2026-07-12T11:26:25Z",
     "updated_by": "dev-team",
-    "note": "FIX-DEVTEAM-BOUNDED1-DETAIL-DISPOSITION-GATE closed DONE_VERIFIED (commit 6382a9c97, merge-gate PASS); tick 2026-07-12T10:07Z"
+    "note": "FIX-DEVTEAM-BOUNDED1-PLAN-ONLY-GATE closed DONE_VERIFIED (commit 4e7de1db4, merge-gate PASS); 3rd sibling gate — detail plan_only:true rows now withheld from BOUNDED-1 idle auto-pickup; tick 2026-07-12T10:37Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7421,6 +7421,28 @@
         "verified_by": "dev-team",
         "commit": "6382a9c97",
         "merge_gate": "PASS: orch-validate green + 3 regression checks (AC-1 detail-DEFERRED withheld, AC-2 non-dev-owner withheld, control clean-row promoted)"
+      },
+      {
+        "id": "FIX-DEVTEAM-BOUNDED1-PLAN-ONLY-GATE",
+        "type": "FIX",
+        "status": "DONE_VERIFIED",
+        "size": "S",
+        "zone": "cross-service/",
+        "title": "BOUNDED-1 promote gate: skip detail plan_only:true rows (3rd sibling gate)",
+        "owner": "developer",
+        "next_agent": "developer",
+        "files": [
+          "scripts/devteam-backlog-promote-bounded1.jq",
+          "docs/agents/dev-team/flow/main.md",
+          "scripts/audits/devteam-bounded1-detail-disposition-gate-verify.sh"
+        ],
+        "assigned_to": "69b0312e-df43-43a9-9e0b-bddf66d374e3",
+        "started_at": "2026-07-12T11:16:59Z",
+        "note": "PO BATCH tick 2026-07-12T10:37Z; plan_only:true = 38-row class; add is_plan_only($detail_items) select mirroring is_detail_deferred precedence EXACTLY (absent/null=promotable); fail-toward-safety; +doc pointer + AC-3 regression case in verifier",
+        "verified_at": "2026-07-12T11:26:25Z",
+        "verified_by": "dev-team",
+        "commit": "4e7de1db4",
+        "merge_gate": "PASS: orch-validate green + 4 gates independently re-run from RAW (GATE1 canonical promote-jq parses/runs clean exit0; GATE2 no erroneous pickup, WIP-gated identity; GATE4 persistent verifier AC-1/AC-2/AC-3/control all PASS exit0; developer HEAD~1 differential confirms gate is load-bearing not false-green)"
       }
     ],
     "head": {
