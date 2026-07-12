@@ -6327,6 +6327,28 @@
         "depends": [],
         "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-33",
         "note": "3 write-heavy dirs grow unboundedly (707/974 handoffs >30d). Add monthly cold-archive sweep to code-janitor 6h cron (guard: 1st of month): mv >30d + no open task_board ref -> archive/YYYY-MM/. Rotate po-decisions.md at 200L. Update DJ-GATE-1 grep to exclude archive/. Mirrors existing orch archive/ precedent."
+      },
+      {
+        "id": "FIX-POSTCYCLE-STEP45-NB-WRITE-AC3",
+        "title": "post-cycle.md Step 4.5 (Compact Checkpoint) writes docs/agent-memory/notebooks/main.md via a bare 1-line Write with no notebook-write SKILL AC-3 compose-then-single-settled-write invariant — proven root cause of RECURRING duplicate back-to-back headings in main.md (auto-prune hook exonerated)",
+        "owner": "agent-father",
+        "status": "BACKLOG",
+        "zone": "docs/agents/dev-team/",
+        "priority": "medium",
+        "type": "FIX",
+        "depends": [],
+        "route_to": "agent-father",
+        "files": [
+          "docs/agents/dev-team/flow/post-cycle.md",
+          ".claude/skills/notebook-write/SKILL.md"
+        ],
+        "note": "Filed from triage signal developer-2026-07-12T073316Z (side-finding of in-progress FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH; that task is scoped to scripts/agents-flow/ only, so this docs/agents/dev-team/ flow-doc fix is out of its zone). RAW-verified root cause: scripts/agents-flow/notebook-auto-prune.sh EXONERATED — its drop-oldest loop (head -n / awk NR<a||NR>b) structurally only REMOVES lines, cannot duplicate. Git archaeology (commit 3e83f4846 + parent) plus a fresh live occurrence found+deduped 2026-07-12 both show the duplicate back-to-back headings in main.md at 196L — UNDER the 200L guard, so the hook never fired. The real writer is docs/agents/dev-team/flow/post-cycle.md Step 4.5 (Compact Checkpoint), a 1-line bare Write instruction with no compose-in-memory-then-single-settled-write discipline, no reference to .claude/skills/notebook-write/SKILL.md AC-3 (which forbids any 2-Edit sequence on a >200L file and mandates single settled write); multi-tick compact-checkpoint offload merges (e.g. the observed +0637Z merged heading) do sequential Edits that re-insert the heading. RECURRING (2 confirmed occurrences). Owner: agent-father (owns dev-team flow docs) or developer.",
+        "status_note": "AC: post-cycle.md Step 4.5 explicitly invokes .claude/skills/notebook-write/SKILL.md AC-3 (compose-in-memory-then-single-settled-write) before writing docs/agent-memory/notebooks/main.md — OR add main.md to notebook-write AC-6 contract table. VERIFY: no duplicate back-to-back ## headings appear in main.md after a subsequent multi-tick compact-checkpoint offload merge. Priority: medium (recurring but non-serving cosmetic corruption).",
+        "origin_signal_id": "developer-2026-07-12T073316Z-main-notebook-writepath-missing-ac3",
+        "related_task": "FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH",
+        "created_at": "2026-07-12T07:47:22Z",
+        "created_by": "po (triage — recurring_bug signal)",
+        "source": "docs/signals/processed/developer-2026-07-12T073316Z-main-notebook-writepath-missing-ac3.json"
       }
     ],
     "closed_sprints": [
