@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # devteam-bounded1-detail-disposition-gate-verify.sh
 # Regression verifier for FIX-DEVTEAM-BOUNDED1-DETAIL-DISPOSITION-GATE (2026-07-12)
-# Brief: this fix (scripts/devteam-backlog-promote-bounded1.jq AC-1/AC-2) —
+# + its 3rd sibling FIX-DEVTEAM-BOUNDED1-PLAN-ONLY-GATE (2026-07-12).
+# Brief: this fix (scripts/devteam-backlog-promote-bounded1.jq AC-1/AC-2/AC-3) —
 # see docs/agents/dev-team/flow/main.md § Idle-capacity backlog pickup (BOUNDED-1).
 #
 # Proves, against the CURRENT live docs/data/orch/orch-state.json +
@@ -11,9 +12,16 @@
 #   AC-2: a row whose detail owner is a non-dev deliberate-launch agent
 #         (po/ops/architect/...) AND whose board `next_agent` is null is
 #         NEVER auto-promoted, even when forced to top priority.
+#   AC-3: a row whose detail entry carries `plan_only:true` is NEVER
+#         auto-promoted, even when forced to top priority and even when it
+#         defeats AC-1/AC-2 (dev-role owner, non-DEFERRED status) — the
+#         live proof row is FIX-MCP-MEMORY-CODE-LEAK (board
+#         `status:BACKLOG,next_agent:null`; detail `plan_only:true,
+#         next_agent:"architect",owner:"dev",status:"TODO"`).
 #   CONTROL: a clean row (no detail-DEFERRED*, no non-dev-owner+null-
-#            next_agent block, no supervised/epic/depends_on block) IS
-#            still promoted — proves the new gates do not over-block.
+#            next_agent block, no supervised/epic/depends_on block, no
+#            plan_only) IS still promoted — proves the new gates do not
+#            over-block.
 #
 # READ-ONLY: never writes back to the live orch-state.json/backlog-detail.json
 # (no orch-apply.sh call anywhere) — all fixtures are synthetic copies in a
@@ -106,8 +114,22 @@ jq -r '
   | select((.depends_on // null) == null)
   | select((.depends // null) == null)
   | select((.blocked_by // null) == null)
+  | select((.plan_only // false) != true)
   | .id
 ' "$DETAIL" > "$WORK/ac2-pool.txt"
+
+jq -r '
+  .items[]
+  | select((.plan_only // false) == true)
+  | select(((.status // "" | ascii_downcase) | startswith("deferred")) | not)
+  | select((.supervised // false) != true)
+  | select(((.children // []) | length) == 0)
+  | select((.depends_on // null) == null)
+  | select((.depends // null) == null)
+  | select((.blocked_by // null) == null)
+  | select((.owner // "") == "" or (.owner | test("^dev(-|$)|^developer$"; "i")))
+  | .id
+' "$DETAIL" > "$WORK/ac3-pool.txt"
 
 jq -r '
   .items[]
@@ -118,6 +140,7 @@ jq -r '
   | select(((.depends // []) | length) == 0)
   | select(((.blocked_by // []) | length) == 0)
   | select((.owner // "") == "" or (.owner | test("^dev(-|$)|^developer$"; "i")))
+  | select((.plan_only // false) != true)
   | .id
 ' "$DETAIL" > "$WORK/control-pool.txt"
 
@@ -141,6 +164,17 @@ pick_first_ac2() {
   return 1
 }
 
+pick_first_ac3() {
+  while IFS= read -r id; do
+    [ -z "$id" ] && continue
+    if [ "$(board_backlog_status_ok "$id")" = "true" ] \
+       && [ "$(board_inline_clean "$id")" = "true" ]; then
+      echo "$id"; return 0
+    fi
+  done < "$WORK/ac3-pool.txt"
+  return 1
+}
+
 pick_first_control() {
   while IFS= read -r id; do
     [ -z "$id" ] && continue
@@ -154,9 +188,11 @@ pick_first_control() {
 
 AC1_ID=""
 AC2_ID=""
+AC3_ID=""
 CONTROL_ID=""
 AC1_ID=$(pick_first_ac1) || true
 AC2_ID=$(pick_first_ac2) || true
+AC3_ID=$(pick_first_ac3) || true
 CONTROL_ID=$(pick_first_control) || true
 
 if [ -n "$AC1_ID" ]; then
@@ -183,6 +219,19 @@ if [ -n "$AC2_ID" ]; then
   fi
 else
   echo "[SKIP] AC-2: no eligible non-dev-owner/null-next_agent fixture candidate in live data"
+fi
+
+if [ -n "$AC3_ID" ]; then
+  make_isolated_fixture "$AC3_ID" "$WORK/ac3.json"
+  PICKED=$(run_promote_picked_id "$WORK/ac3.json")
+  if [ "$PICKED" = "$AC3_ID" ]; then
+    echo "[FAIL] AC-3 regression: plan_only row $AC3_ID WAS promoted"
+    FAIL=1
+  else
+    echo "[PASS] AC-3: plan_only row $AC3_ID NOT promoted (picked='${PICKED:-<none>}')"
+  fi
+else
+  echo "[SKIP] AC-3: no eligible plan_only fixture candidate in live data"
 fi
 
 if [ -n "$CONTROL_ID" ]; then

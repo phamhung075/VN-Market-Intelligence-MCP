@@ -53,6 +53,11 @@
 #     board row carries no `next_agent` would otherwise be mis-routed to the
 #     generic `developer` zone-detect placeholder; held for router-adjudicated
 #     dispatch instead.
+#   - not a detail-authoritative plan_only row (FIX-DEVTEAM-BOUNDED1-PLAN-
+#     ONLY-GATE, 2026-07-12) — see "PLAN-ONLY GATE" section below. A row
+#     whose backlog-detail.json entry carries `plan_only:true` is a
+#     plan-first / architect-recon ask, not an autonomous code-fix, and is
+#     never auto-promoted here regardless of its board-layer status.
 #   - ordered by priority_rank ascending (0=highest: P0/critical,
 #     1: P1/high, 2: P2/medium/normal, 3: P3/low, 9: missing/unrecognized —
 #     priority values in the wild are a messy mix of "P0".."P3" and
@@ -203,6 +208,31 @@
 #     OR a non-empty board `next_agent` = NOT gated (promotable) — preserves
 #     baseline behavior for the common case.
 #
+# PLAN-ONLY GATE (FIX-DEVTEAM-BOUNDED1-PLAN-ONLY-GATE, 2026-07-12):
+# root cause — FIX-MCP-MEMORY-CODE-LEAK carries a board row shaped exactly
+# like an ordinary auto-pickup candidate (`status:BACKLOG`, `next_agent:null`,
+# no supervised/children/depends_on) but its backlog-detail.json entry is
+# `plan_only:true` (+ `next_agent:"architect"`, `owner:"dev"`, `status:"TODO"`)
+# — a plan-first / architect-recon ask, not a directly-dispatchable code fix.
+# `owner:"dev"` defeats the NON-DEV-OWNER gate above and `status:"TODO"`
+# defeats the DETAIL-DEFERRED gate, so this script auto-picked it and routed
+# it to a dev specialist as an autonomous code-fix — diverging from its
+# plan-first intent. `plan_only:true` is a 38-row class in
+# backlog-detail.json (grep-confirmed), well above the >1-row bar for a
+# durable code gate. This gate prevents that class structurally:
+#   - looked up purely by `.id` in `$detail_items[.id].plan_only` (no
+#     `.detail_ref` precondition, mirrors the DETAIL-DEFERRED/NON-DEV-OWNER
+#     precedent).
+#   - a row is gated iff that detail `plan_only` value is exactly `true`.
+#   - Conservative default: absent/null detail `plan_only` (or any candidate
+#     with no matching detail entry at all) = NOT plan-only (promotable) —
+#     preserves baseline behavior for the common case, same fail-open-toward-
+#     promotable default as `is_detail_deferred`.
+#   - Fail-toward-safety invariant: this gate only REMOVES rows from idle
+#     auto-pickup eligibility; deliberate router/architect/PO dispatch of a
+#     plan_only row is entirely unaffected — it still launches normally via
+#     the router-adjudicated path (Step 1 PO triage / manual dispatch).
+#
 # Mutation (single row only):
 #   backlog[] -> ready[] ; status BACKLOG/TODO -> READY ; stamp promoted_at /
 #   promoted_by / promotion_note. Also stamps
@@ -346,6 +376,20 @@ def is_non_dev_owner_unrouted($detail_items):
       end
   end;
 
+# Detail-authoritative plan_only disposition for a candidate row (`.` = the
+# backlog row object). FIX-DEVTEAM-BOUNDED1-PLAN-ONLY-GATE, 2026-07-12 — see
+# "PLAN-ONLY GATE" header comment above. Looked up purely by `.id` (no
+# `.detail_ref` precondition), same precedence pattern as
+# is_detail_deferred/is_non_dev_owner_unrouted. Conservative default:
+# absent/null detail `plan_only` (or no matching detail entry) = NOT
+# plan-only (promotable).
+def is_plan_only($detail_items):
+  if (.id == null) then false
+  else
+    ($detail_items[.id].plan_only) as $po
+    | ($po == true)
+  end;
+
 if (wip >= 1) then
   .   # BOUNDED-1 GATE: WIP>=1 — refuse to promote (no-op, idempotent re-run-safe)
 else
@@ -369,6 +413,7 @@ else
       | select(.value | deps_satisfied($detail_items; $status_map))
       | select((.value | is_detail_deferred($detail_items)) != true)
       | select((.value | is_non_dev_owner_unrouted($detail_items)) != true)
+      | select((.value | is_plan_only($detail_items)) != true)
       | { idx: .key, row: .value, rank: (.value | priority_rank) }
     ] | sort_by([.rank, .idx])
   ) as $candidates
