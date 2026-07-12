@@ -17,6 +17,28 @@ daily_ohlcv (code TEXT, date TEXT, open, high, low, close, volume,
   updated_at, foreign_buy_vol, foreign_sell_vol, foreign_net_vol, put_through_vol,
   PK(code, date), INDEX idx_daily_ohlcv_code_date(code, date DESC))
 
+daily_foreign_flow (code TEXT, date TEXT, foreign_buy_vol, foreign_sell_vol,
+  foreign_net_vol, put_through_vol, foreign_buy_value, foreign_sell_value,
+  updated_at DEFAULT '', PK(code, date),
+  INDEX idx_daily_foreign_flow_code_date(code, date DESC))
+  -- SUBTASK-DAILY-FF-1 (ARCH-DAILY-FOREIGN-FLOW-TABLE, 2026-07-12): additive-only
+  -- new authoritative foreign-flow table. Eliminates R-1 (foreign-flow write
+  -- dropped when no daily_ohlcv row exists) because none of these columns are
+  -- coupled to price data / NOT NULL constraints — the write is unconditional.
+  -- Writer cutover (ohlcvForeignFlowStore.ts still merge-only UPDATE against
+  -- daily_ohlcv today) and historical backfill are separate follow-on subtasks
+  -- (SUBTASK-DAILY-FF-2/-3) — NOT part of this DDL-only ship.
+  -- Design: docs/handoffs/ARCH-DAILY-FOREIGN-FLOW-TABLE-architect-design.md § Change 1
+  -- Schema: apps/mcp-server/src/infrastructure/db/schema-market-data.ts
+
+daily_ohlcv_with_flow (VIEW — daily_ohlcv LEFT JOIN daily_foreign_flow ON code,date)
+  -- Compatibility read view: same column names as daily_ohlcv's legacy foreign_*
+  -- columns, COALESCE-preferring daily_foreign_flow (new table) and falling back
+  -- to the frozen legacy daily_ohlcv.foreign_* columns for any (code,date) not
+  -- yet present in the new table. Lets read sites migrate `FROM daily_ohlcv` ->
+  -- `FROM daily_ohlcv_with_flow` one at a time with zero query-shape change.
+  -- Design: docs/handoffs/ARCH-DAILY-FOREIGN-FLOW-TABLE-architect-design.md § Change 3
+
 vn_index_cache (code TEXT PK, price REAL NOT NULL, prev_price REAL DEFAULT 0,
   change_pct REAL DEFAULT 0, volume REAL DEFAULT 0, fetched_at TEXT NOT NULL)
   -- FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH (2026-06-20)
