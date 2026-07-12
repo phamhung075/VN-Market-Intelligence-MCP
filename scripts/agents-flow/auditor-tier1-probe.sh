@@ -18,8 +18,14 @@
 #   1. docker ps health-state sweep — every service in system-map.json
 #      .project.infrastructure.docker.host_runtime_set.services[] must show
 #      "Up" in `docker ps -a`.
-#   2. curl -m3 http://localhost:3000/health == 200
-#   3. curl -m3 http://localhost:3001/       == 200
+#   2. curl -m6 http://localhost:3000/health == 200
+#   3. curl -m6 http://localhost:3001/       == 200
+#      (FIX-AUDITOR-TIER1-PROBE-HEALTH-TIMEOUT-TIGHT 2026-07-12: bumped from
+#      -m3 to -m6 — live-measured frontend-1 (:3001) baseline response time
+#      is 2.0-2.2s with spikes to 3.4s, all server-side/no network delay; a
+#      3s timeout left near-zero margin and randomly false-FAILed on
+#      ordinary jitter, recurring 3-4x/session, each requiring a re-verify.
+#      6s gives real margin without masking a genuinely hung service.)
 #   4. df -h / capacity < 85% (WARN boundary reused from tier1-probe.md A-32
 #      as this pre-gate's pass/fail line — anything >= 85% defers to the
 #      subagent, which applies the full WARN/CRITICAL severity split)
@@ -150,7 +156,7 @@ _check_docker_ps() {
 # ── Checks 2/3: health endpoints ──────────────────────────────────────────────
 _check_health() {
   local port="$1" path="$2" code
-  code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 3 "http://localhost:${port}${path}" 2>/dev/null) || code="CURL_ERR"
+  code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 6 "http://localhost:${port}${path}" 2>/dev/null) || code="CURL_ERR"
   [ -z "$code" ] && code="CURL_ERR"
   if [ "$code" != "200" ]; then
     echo "http://localhost:${port}${path} -> HTTP ${code}"

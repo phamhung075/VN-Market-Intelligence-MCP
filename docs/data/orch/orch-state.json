@@ -6706,6 +6706,18 @@
         "qa_note": "APPROVED round 2. Round-1 AC-5 blocker (technical-analysis Go container serving stale 41-ticker set, resolved once at startup) remediated by ops: single-service `docker compose restart technical-analysis`, no code/image change (WATCHLIST_TICKERS unset, DB-fallback path). QA RAW-verified live, first-hand: container StartedAt=2026-07-11T12:06:33Z healthy; startup log 'resolved from DB watchlist table count:33' (was 41 on prior boot). Live-curled both endpoints myself: POST /ta/roc-momentum and /ta/money-flow-oscillators each return 33 unique .tickers[].code, zero-diff against system-map.json's 33 active tickers both directions, zero of the prior stale-set tickers in either response. git log edd1ec31e..HEAD -- apps/mcp-server apps/technical-analysis = empty (no new commits since round-1 HEAD, scope unchanged from round-1's already-clean code/tests/DDD/security pass).",
         "qa_reviewed_by": "qa",
         "completed_at": "2026-07-11T12:12:52Z"
+      },
+      {
+        "id": "FIX-AUDITOR-TIER1-PROBE-HEALTH-TIMEOUT-TIGHT",
+        "title": "auditor-tier1-probe.sh health check timeout too tight vs frontend-1 response time — recurring false FAILURE",
+        "status": "DONE",
+        "zone": "cross-service/",
+        "priority": "normal",
+        "type": "FIX",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AUDITOR-TIER1-PROBE-HEALTH-TIMEOUT-TIGHT",
+        "owner": "developer",
+        "closed_at": "2026-07-12T04:23:08Z",
+        "status_note": "curl --max-time 3->6 in _check_health (auditor-tier1-probe.sh, scripts/agents-flow/); test suite 79/79 green (mocks curl as shell fn, timeout value invisible to assertions); live manual check 10/10 real curl -m6 http://localhost:3001/ all returned 200 @ ~2.01-2.02s, comfortably inside new margin. Decision journal: docs/agent-memory/decisions/2026-07-12-FIX-AUDITOR-TIER1-PROBE-HEALTH-TIMEOUT-TIGHT.md"
       }
     ],
     "done_verified": [
@@ -7259,6 +7271,16 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#OPS-BCTC-REFINE-REPASS-NONBANK-5T",
         "owner": "ops",
         "po_triage_20260710_round3_ctg_not_folded_note": "[po-triage-20260710-round3 08:06Z] CTG 2026-Q1 (analysis-agent Telegram #3551, composite=0.00/financial=0.00) was triaged this tick and DELIBERATELY NOT FOLDED into this batch. CTG is a BANK (B02-TCTD form); this batch is strictly NON-BANK (VHM/VIC/VRE/HSG/MWG) — a different failure CLASS (bank balance-sheet section-classifier + scalar mapping) with its own owning track: W5-FU-CTG-REFINE-96e36139 + TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST (both BLOCKED on a deploy-gate). CLARIFICATION for future triagers: the title's phrase \"proven CTG runbook\" refers to the general refine -> push_bctc_refined_unit -> finalize_bctc_refine -> reingest-bctc-report.ts PROCEDURE (proven to EXECUTE on CTG report 96e36139), NOT a claim that CTG 2026-Q1's DATA outcome is green — CTG 2026-Q1 total_assets is still 0 and its bank track is BLOCKED (deploy-gate + a genuine balance-sheet-absent root gap, CTG-CARRY-FORWARD AC-TRACK1-3 escalated 2026-07-10). Do NOT read \"proven CTG runbook\" as \"CTG is fixed\"; do NOT fold any BANK ticker into this NON-BANK batch. (Mirrors the bank/non-bank framing correction made in round-1 of this same 2026-07-10T07:07Z tick on OPS-BCTC-BANK-2025Q4-ENRICH-0ROW-REPARSE.)"
+      },
+      {
+        "id": "FIX-MARKET-WATCHER-NARRATE-NOT-EXECUTE-GUARD",
+        "title": "market-watcher-offhours narrate-not-execute (2nd confirmed) — harden flow docs with execute-not-narrate guard",
+        "status": "IN_PROGRESS",
+        "zone": "cross-service/",
+        "priority": "normal",
+        "type": "UNBLOCK",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MARKET-WATCHER-NARRATE-NOT-EXECUTE-GUARD",
+        "owner": "agent-father"
       }
     ]
   },
