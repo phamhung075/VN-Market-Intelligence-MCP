@@ -6595,29 +6595,7 @@
         "closed_at": "2026-07-12T04:27:30Z"
       }
     ],
-    "done_verified": [
-      {
-        "id": "SPIKE-BCTC-TABLEROWS-FROZEN-HOLLOW-DONE",
-        "title": "bctc-table-rows-frozen-despite-live-pek-layout-extraction — 4-day serving-data outage",
-        "status": "DONE_VERIFIED",
-        "zone": "multi",
-        "priority": "high",
-        "type": "SPIKE",
-        "mode": "spike",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#SPIKE-BCTC-TABLEROWS-FROZEN-HOLLOW-DONE",
-        "owner": "developer",
-        "next_agent": "router",
-        "spike_verdict": "ROOT_CAUSE_CONCLUSIVE_NOT_D3C_BUG",
-        "deliverables": [
-          "docs/spikes/SPIKE-BCTC-TABLEROWS-FROZEN-HOLLOW-DONE.md"
-        ],
-        "review_note": "[developer 2026-07-12] SPIKE complete, findings doc written, follow-on FIX filed (FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP). VERDICT: bctcExtractReconcileJob's layout_units-sufficient success check is intentional, documented, QA-approved design (D3 point 3, R-CRIT-2 in TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md) -- NOT a bug in the reconcile job. bctc_layout_units (BCTC-LAYOUT-FIRST sprint, 2026-05-26) was designed as a geometric-zone QA/review overlay, never as a bctc_table_rows source -- no derivation step was ever scoped or wired (grep-confirmed: stitched_markdown consumed only by bctcInspectHandler.ts overlay). bctc_table_rows has exactly one live producer, BCTC-AGENTIC-REFINE (bctcRefineJob.ts refineOneReport Phase 4), which per the Option-Y ruling has NO in-container automated trigger -- it depends on a session-scoped Claude-native cron (cron-refine-bctc.md) that RAW evidence shows has been dormant since 2026-07-04 (bctc_refined_units 0 new rows in 8d, 151 financial_reports stuck refine_status=PENDING). This is a RECURRING instance of a defect already diagnosed 2026-06-27 (sprint BCTC-REFINE-STALL-RETRIGGER root cause (a): CronCreate not re-armed after session restart) whose durable fix (T3-WATCHDOG) was never built. REFINE-CRON-ARM board row (opened 2026-06-12) has sat status=TODO for 30 days -- the actual root cause, sitting in plain sight. Recommend router RAW-verify findings doc + FIX row, then close DONE_VERIFIED.",
-        "updated_at": "2026-07-12T06:11:33Z",
-        "verified_by": "router",
-        "verified_at": "2026-07-12T06:14:48Z",
-        "verify_note": "RAW-verified 2026-07-12: commit 9572549ce on HEAD, findings doc docs/spikes/SPIKE-BCTC-TABLEROWS-FROZEN-HOLLOW-DONE.md exists (90L), follow-on FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP filed to backlog (owner=ops, priority=high), throwaway branch spike/bctc-tablerows-frozen-hollow-done confirmed deleted. Root cause: refine-fleet cron dormant since 07-04, not a D3C reconcile-job bug. Router also re-armed the recurring cron (0 9,14,20 * * * UTC) + fired one immediate catch-up invocation."
-      }
-    ],
+    "done_verified": [],
     "head": {
       "active_task_id": null,
       "next_agent": null,
