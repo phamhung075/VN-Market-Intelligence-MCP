@@ -71,6 +71,21 @@ carries the named `NEWS_FALLBACK_BASELINE`/`TEMPORAL_DISCOUNT`/`FALLBACK_CONF_MI
 `FALLBACK_CONF_MAX` confidence-tuning constants), and `bctc/insertBctcAnalysis.ts`
 (Step 4 LanceDB embed). Arithmetic/behavior unchanged — pure relocation + naming.
 
+**FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN (2026-07-13):** `tryNewsChainFallback()`
+(`bctc/newsChainFallback.ts:239-252,373-474`) is the SECOND `financial_reports`
+call site carrying the same id-orphaning defect D1 fixed in `parseBctcReport.ts`
+(same file, same `UNIQUE(action_code, sort_key)` target, `bctc-schema.ts:727-822`)
+— D1's design doc/files[] covered only `parseBctcReport.ts`, so this call site
+was missed at the time. Same fix applied: `INSERT ... ON CONFLICT(action_code,
+sort_key) DO UPDATE SET <all columns except id>` replaces `INSERT OR REPLACE`,
+and a pre-check (`SELECT id FROM financial_reports WHERE action_code = ? AND
+sort_key = ?`) supplies the existing row's `id` before assembling the returned
+`fallbackReport` — mirrors D1's `parseBctcReport()` pre-check so the in-memory
+id handed back to the caller matches what's persisted. Closes the same
+`bctc_layout_units`/`bctc_page_zones` orphan risk for reports whose FIRST
+successful write was a news-chain fallback (not a scalar OCR parse).
+Test: `src/__tests__/FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN.test.ts`.
+
 ### discoverBctcPdfUrlBrowser.ts / discoverBctcPdfUrlDirectApi.ts
 PDF discovery strategies (browser scraping vs direct API)
 

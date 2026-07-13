@@ -236,13 +236,28 @@ export async function tryNewsChainFallback(
 
     logger.info(`${tag} fallback valid — confidence=${finalConfidence.toFixed(2)}`);
 
+    // FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN: reuse the existing row's id when
+    // one already exists for this (action_code, sort_key) — mirrors the D1 fix
+    // in parseBctcReport.ts::storeReport() (docs/handoffs/
+    // TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md §D1). Without this, the
+    // in-memory `fallbackReport.id` returned to the caller would carry a
+    // freshly minted (and never-persisted) uuid on every re-run, silently
+    // diverging from the id actually stored in SQLite by the ON CONFLICT
+    // upsert below. Downstream PEK tables (bctc_layout_units, bctc_page_zones)
+    // reference financial_reports.id via a plain TEXT column — NOT a real FK —
+    // so an id that drifts from what's persisted would orphan them.
+    const existingReportRow = db
+      .prepare("SELECT id FROM financial_reports WHERE action_code = ? AND sort_key = ?")
+      .get(actionCode, period.sortKey) as { id: string } | null;
+    const reportId = existingReportRow?.id ?? randomUUID();
+
     // Build minimal fallback report
     const fallbackReport: FinancialReport & {
       fallback: boolean;
       extraction_method: string;
       confidence: number;
     } = {
-      id: randomUUID(),
+      id: reportId,
       actionCode,
       companyName: 'Unknown (news_inference)',
       exchange: 'UNKNOWN' as any,
@@ -343,9 +358,20 @@ export async function tryNewsChainFallback(
       confidence: finalConfidence,
     } as any;
 
-    // Insert into database with fallback metadata
+    // Insert into database with fallback metadata.
+    // FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN: INSERT ... ON CONFLICT(action_code,
+    // sort_key) DO UPDATE SET <all columns except id> — NOT INSERT OR REPLACE.
+    // `financial_reports` has UNIQUE(action_code, sort_key) (bctc-schema.ts).
+    // INSERT OR REPLACE resolves conflicts by DELETE-then-INSERT, which would
+    // mint a brand-new id every re-run (same class of bug fixed in
+    // parseBctcReport.ts::storeReport() — see D1 in docs/handoffs/
+    // TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md). The ON CONFLICT DO
+    // UPDATE form updates the existing row in place instead: `id` is
+    // deliberately omitted from the SET clause, so SQLite never touches it on
+    // conflict — the original row's id (and therefore any bctc_layout_units /
+    // bctc_page_zones rows FK'd to it by convention) survives every re-run.
     const stmt = db.prepare(`
-      INSERT OR REPLACE INTO financial_reports (
+      INSERT INTO financial_reports (
         id, action_code, company_name, exchange, domain,
         period_year, period_quarter, period_type, period_start, period_end, sort_key,
         ssc_url, pdf_path, published_at, parsed_at, audit_status, auditor,
@@ -380,6 +406,71 @@ export async function tryNewsChainFallback(
         $validationStatus, $validationNotes, $extractionMethod, $extractionSourceNote,
         $revenueGrowthQoq, $marginTrend, $debtRatioHint
       )
+      ON CONFLICT(action_code, sort_key) DO UPDATE SET
+        company_name = excluded.company_name,
+        exchange = excluded.exchange,
+        domain = excluded.domain,
+        period_year = excluded.period_year,
+        period_quarter = excluded.period_quarter,
+        period_type = excluded.period_type,
+        period_start = excluded.period_start,
+        period_end = excluded.period_end,
+        ssc_url = excluded.ssc_url,
+        pdf_path = excluded.pdf_path,
+        published_at = excluded.published_at,
+        parsed_at = excluded.parsed_at,
+        audit_status = excluded.audit_status,
+        auditor = excluded.auditor,
+        extraction_confidence = excluded.extraction_confidence,
+        net_revenue = excluded.net_revenue,
+        gross_profit = excluded.gross_profit,
+        operating_profit = excluded.operating_profit,
+        ebitda = excluded.ebitda,
+        profit_before_tax = excluded.profit_before_tax,
+        net_profit = excluded.net_profit,
+        eps = excluded.eps,
+        diluted_eps = excluded.diluted_eps,
+        total_assets = excluded.total_assets,
+        current_assets = excluded.current_assets,
+        cash = excluded.cash,
+        inventory = excluded.inventory,
+        total_liabilities = excluded.total_liabilities,
+        short_term_debt = excluded.short_term_debt,
+        long_term_debt = excluded.long_term_debt,
+        equity_total = excluded.equity_total,
+        operating_cf = excluded.operating_cf,
+        investing_cf = excluded.investing_cf,
+        financing_cf = excluded.financing_cf,
+        capex = excluded.capex,
+        free_cash_flow = excluded.free_cash_flow,
+        gross_margin_pct = excluded.gross_margin_pct,
+        operating_margin_pct = excluded.operating_margin_pct,
+        net_margin_pct = excluded.net_margin_pct,
+        roe = excluded.roe,
+        roa = excluded.roa,
+        current_ratio = excluded.current_ratio,
+        debt_to_equity = excluded.debt_to_equity,
+        net_debt_to_ebitda = excluded.net_debt_to_ebitda,
+        pe = excluded.pe,
+        pb = excluded.pb,
+        balance_sheet_json = excluded.balance_sheet_json,
+        income_stmt_json = excluded.income_stmt_json,
+        cash_flow_json = excluded.cash_flow_json,
+        ratios_json = excluded.ratios_json,
+        yoy_delta_json = excluded.yoy_delta_json,
+        qoq_delta_json = excluded.qoq_delta_json,
+        market_data_json = excluded.market_data_json,
+        embedding_text = excluded.embedding_text,
+        notes_raw_text = excluded.notes_raw_text,
+        validation_status = excluded.validation_status,
+        validation_notes = excluded.validation_notes,
+        extraction_method = excluded.extraction_method,
+        extraction_source_note = excluded.extraction_source_note,
+        revenue_growth_qoq = excluded.revenue_growth_qoq,
+        margin_trend = excluded.margin_trend,
+        debt_ratio_hint = excluded.debt_ratio_hint
+      -- id is deliberately NOT in this SET clause — SQLite keeps the existing
+      -- row's id untouched on conflict (FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN).
     `);
 
     stmt.run({
