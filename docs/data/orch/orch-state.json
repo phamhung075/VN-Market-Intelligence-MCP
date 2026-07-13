@@ -7770,36 +7770,6 @@
         "qa_verdict": "APPROVED",
         "qa_verified_at": "2026-07-13T13:39:12Z",
         "qa_verified_by": "qa"
-      },
-      {
-        "id": "VCB-MISSING-PDFS",
-        "priority": "P2",
-        "size": "XS",
-        "status": "DONE_VERIFIED",
-        "title": "Re-source missing VCB PDFs or clean dead rows",
-        "type": "OPS",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#VCB-MISSING-PDFS",
-        "verify_note": "prior_status=TODO",
-        "promoted_at": "2026-07-13T13:54:02Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "claimed_at": "2026-07-13T13:54:18Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "entered_review_at": "2026-07-13T14:35:00Z",
-        "status_note": "RAW-verified via docker exec on live named-volume market.db: VCB_2025_Q4.pdf genuinely absent from data/pdfs/ (feedback id=323, 271 reparse_attempts, live log confirmed \"file disappeared\" 2026-07-11T11:48Z) — financial_reports already holds a valid VCB Q4-2025 row parsed under the canonical filename, so this is a dead duplicate reference, not a real data gap. VCB_2025_Q1.pdf is actually PRESENT on disk (board desc stale for this half; attempts=0, no live spin). Root-cause code fix: added DEAD_AT_ATTEMPTS(10) guard in bctcReparseJob.ts (generic, no ticker literal) that retires a row to status=dead once it fails past 10 attempts AND its file is confirmed missing, so the job stops spinning forever instead of just this run. Ran new scripts/migrations/reap-dead-stranded-bctc-rows.ts --apply directly against the live named-volume DB (dev-mcp-server owns market.db read-write per its own agent contract; same precedent as resync-watchlist-sysmap/carry-forward-bctc-orphaned-rows/reingest-bctc-report scripts already run live by this zone) to retire id=323 immediately (the DEAD_AT_ATTEMPTS CODE guard itself is deploy-gated, separate from this data-layer write). Evidence (scoped, deterministic): apps/mcp-server bun test src/__tests__/1019-bctc-reparse-job.test.ts -> 21 pass/0 fail (17 pre-existing + 4 new dead-row cases, 53 expect() calls); scripts/migrations/__tests__/reap-dead-stranded-bctc-rows.test.ts -> 9 pass/0 fail. tsc clean. toolCount=183 unchanged (no MCP tool touched). One completed full-suite run (before a coordinator note flagged the full local suite unreliable in this env) showed 14573 pass/65 fail/4 err, grepped 0 hits for bctcReparseJob/VCB/stranded_bctc_pdf/reap-dead among the fails. DEPLOY-REQUIRED: bctcReparseJob.ts code fix needs an mcp-server image rebuild (container swap) to self-heal FUTURE occurrences live — that part is user-gated, NOT self-deployed. The live-DB data cleanup for id=323 is already in effect right now, independent of the rebuild.",
-        "deploy_required": true,
-        "deploy_required_note": "mcp-server image rebuild needed for DEAD_AT_ATTEMPTS guard (bctcReparseJob.ts) to take effect live — user-gated per CLAUDE.md, not self-deployed. Live-DB data cleanup (agent_feedback id=323 -> dead) already applied directly and does not depend on this rebuild.",
-        "journal_ref": "docs/agent-memory/decisions/sprint-FLOW-PRICE-ALPHA-LOOP-dev-mcp-server.md#dev-mcp-server-S10",
-        "qa_verdict": "APPROVED",
-        "qa_code_passed": true,
-        "deploy_pending": true,
-        "qa_commit": "8f6dae658",
-        "qa_report": "reports/TASK_REPORT_VCB-MISSING-PDFS.md",
-        "reviewed_at": "2026-07-13T14:48:26Z",
-        "verified_by": "qa",
-        "qa_resolution_note": "CODE_VERIFIED_DEPLOY_PENDING — live-DB cleanup (agent_feedback id=323 -> status=dead) RAW-verified in effect now, independent of rebuild; DEAD_AT_ATTEMPTS(10) code guard in bctcReparseJob.ts awaits user-gated mcp-server image rebuild for FUTURE-occurrence self-heal only.",
-        "qa_journal_ref": "docs/agent-memory/decisions/sprint-FLOW-PRICE-ALPHA-LOOP-qa.md#qa-S8"
       }
     ],
     "head": {
@@ -8390,6 +8360,37 @@
         "qa_report": "reports/TASK_REPORT_FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN.md",
         "reviewed_at": "2026-07-13T09:17:26Z",
         "verified_by": "qa"
+      },
+      {
+        "id": "VCB-MISSING-PDFS",
+        "priority": "P2",
+        "size": "XS",
+        "status": "REVIEW",
+        "title": "Re-source missing VCB PDFs or clean dead rows",
+        "type": "OPS",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#VCB-MISSING-PDFS",
+        "verify_note": "prior_status=TODO",
+        "promoted_at": "2026-07-13T13:54:02Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "claimed_at": "2026-07-13T13:54:18Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "entered_review_at": "2026-07-13T14:35:00Z",
+        "status_note": "RAW-verified via docker exec on live named-volume market.db: VCB_2025_Q4.pdf genuinely absent from data/pdfs/ (feedback id=323, 271 reparse_attempts, live log confirmed \"file disappeared\" 2026-07-11T11:48Z) — financial_reports already holds a valid VCB Q4-2025 row parsed under the canonical filename, so this is a dead duplicate reference, not a real data gap. VCB_2025_Q1.pdf is actually PRESENT on disk (board desc stale for this half; attempts=0, no live spin). Root-cause code fix: added DEAD_AT_ATTEMPTS(10) guard in bctcReparseJob.ts (generic, no ticker literal) that retires a row to status=dead once it fails past 10 attempts AND its file is confirmed missing, so the job stops spinning forever instead of just this run. Ran new scripts/migrations/reap-dead-stranded-bctc-rows.ts --apply directly against the live named-volume DB (dev-mcp-server owns market.db read-write per its own agent contract; same precedent as resync-watchlist-sysmap/carry-forward-bctc-orphaned-rows/reingest-bctc-report scripts already run live by this zone) to retire id=323 immediately (the DEAD_AT_ATTEMPTS CODE guard itself is deploy-gated, separate from this data-layer write). Evidence (scoped, deterministic): apps/mcp-server bun test src/__tests__/1019-bctc-reparse-job.test.ts -> 21 pass/0 fail (17 pre-existing + 4 new dead-row cases, 53 expect() calls); scripts/migrations/__tests__/reap-dead-stranded-bctc-rows.test.ts -> 9 pass/0 fail. tsc clean. toolCount=183 unchanged (no MCP tool touched). One completed full-suite run (before a coordinator note flagged the full local suite unreliable in this env) showed 14573 pass/65 fail/4 err, grepped 0 hits for bctcReparseJob/VCB/stranded_bctc_pdf/reap-dead among the fails. DEPLOY-REQUIRED: bctcReparseJob.ts code fix needs an mcp-server image rebuild (container swap) to self-heal FUTURE occurrences live — that part is user-gated, NOT self-deployed. The live-DB data cleanup for id=323 is already in effect right now, independent of the rebuild.",
+        "deploy_required": true,
+        "deploy_required_note": "mcp-server image rebuild needed for DEAD_AT_ATTEMPTS guard (bctcReparseJob.ts) to take effect live — user-gated per CLAUDE.md, not self-deployed. Live-DB data cleanup (agent_feedback id=323 -> dead) already applied directly and does not depend on this rebuild.",
+        "journal_ref": "docs/agent-memory/decisions/sprint-FLOW-PRICE-ALPHA-LOOP-dev-mcp-server.md#dev-mcp-server-S10",
+        "qa_verdict": "APPROVED",
+        "qa_code_passed": true,
+        "deploy_pending": true,
+        "qa_commit": "8f6dae658",
+        "qa_report": "reports/TASK_REPORT_VCB-MISSING-PDFS.md",
+        "reviewed_at": "2026-07-13T14:48:26Z",
+        "verified_by": "qa",
+        "qa_resolution_note": "CODE_VERIFIED_DEPLOY_PENDING — live-DB cleanup (agent_feedback id=323 -> status=dead) RAW-verified in effect now, independent of rebuild; DEAD_AT_ATTEMPTS(10) code guard in bctcReparseJob.ts awaits user-gated mcp-server image rebuild for FUTURE-occurrence self-heal only.",
+        "qa_journal_ref": "docs/agent-memory/decisions/sprint-FLOW-PRICE-ALPHA-LOOP-qa.md#qa-S8",
+        "router_convention_note": "reconciled done_verified→review 2026-07-13T14:55:44Z: deploy-pending fixes park in REVIEW to ride the shared user-gated off-market mcp-server rebuild alongside 4 siblings (ALPHA-S1-OHLCV-BACKFILL-DONE-BUG, ALPHA-S1-STARTUP-CANDLE-GUARD, FIX-MCP-BOOTSTRAP-BLOCKING-EXECSYNC-PROJECTROOT, FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN); live-DB dead-row retirement already in effect, DEAD_AT_ATTEMPTS code guard awaits deploy"
       }
     ],
     "qa": [],
@@ -8420,6 +8421,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-07-13T09:37:00Z",
-  "_updated_by": "po-groom-20260713T0937Z (bounded-1 non-dev-owner churn-class groom: 4 rows supervised + FIX P2->P1)"
+  "_updated_at": "2026-07-13T14:55:44Z",
+  "_updated_by": "dev-team (reconcile VCB-MISSING-PDFS -> REVIEW deploy-pending convention)"
 }
