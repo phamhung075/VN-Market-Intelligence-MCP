@@ -363,12 +363,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "TE-T04",
-    "next_agent": "qa",
-    "next_action": "TE-T04 (strip Example Invocation tails, 6 cowork packages) landed, dev-self-verified, moved in_progress->review. QA to RAW-verify tool tables byte-identical + pointer line present + no stray WRONG example remains, then flip REVIEW->DONE_VERIFIED.",
-    "updated_at": "2026-07-13T10:59:48Z",
-    "updated_by": "developer"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "TE-T04 DONE_VERIFIED (qa) -- docs-only 6-package Example Invocation strip, RAW-verified. Head idle, no active task.",
+    "updated_at": "2026-07-13T11:07:20Z",
+    "updated_by": "qa"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7694,6 +7694,35 @@
         "verified_at": "2026-07-13T10:35:37Z",
         "qa_report": "reports/TASK_REPORT_TE-T01.md",
         "verify_note": "RAW-verified: script-first prompt ordering + verdict-gated main.md reads (verbatim match to main.md Step 0 JUMP-TO table: SILENT/LOST_ELECTION/DEFER->no read, WORK->§ WORK continuation, ERROR->Step 0a) + byte-identity of cadence/main.md/preflight-script confirmed untouched in all 3 commits (git show --name-only) + cowork-tick-preflight.test.sh 20/20 pass. POST-CLOSE ROUTER STEP owed: /cron-cowork-team re-arm."
+      },
+      {
+        "id": "TE-T04",
+        "title": "T-04 Strip 'Example Invocation' tails from 6 high-cadence cowork tool packages [~150k tok/weekday]",
+        "owner": "developer",
+        "status": "DONE_VERIFIED",
+        "type": "CLEAN",
+        "size": "S",
+        "priority": "P1",
+        "wave": 1,
+        "est_saving": "~150k tok/weekday",
+        "zone": "docs/agents/",
+        "sprint": "TOKEN-ECONOMY-AUDIT",
+        "depends": [],
+        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-04",
+        "note": "Delete '## Example Invocation' from market-watcher/news-scout/alert-commander/unified-agent/qa-responder/digest-predict packages; keep tool tables + add 1 pointer to tools/list/<tool>.md. Also fixes a stale WRONG example (get_price_history tickers vs code). No behavior change.",
+        "promoted_at": "2026-07-13T10:52:11Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-13T10:52:19Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "dev_completed_at": "2026-07-13T10:59:48Z",
+        "dev_note": "Example Invocation sections deleted from all 6 packages (market-watcher/news-scout/alert-commander/unified-agent/qa-responder/digest-predict), commit 2c29f8e73 -- each replaced with 1 pointer line to tools/list/<tool_name>.md. Tool tables byte-identical pre/post (row-count verified). Also resolves the brief's flagged get_price_history tickers-vs-code drift (deleted with the section; tools/list/get_price_history.md was already correct). Docs-only, no apps/ code touched -- no bun test/tsc applicable. QA hand-off: verify (a) Example Invocation heading gone from all 6, (b) tool tables unchanged, (c) 1 pointer line present per file, (d) no other section touched.",
+        "updated_at": "2026-07-13T11:07:20Z",
+        "updated_by": "qa",
+        "verified_by": "qa",
+        "verified_at": "2026-07-13T11:07:20Z",
+        "qa_report": "reports/TASK_REPORT_TE-T04.md",
+        "verify_note": "RAW-verified against the commit diff (not developer self-report): 2c29f8e73 touches ONLY the 6 named files (6 ins/746 del); 'Example Invocation' grep=0 across all 6; exactly 1 pointer line per file to tools/list/<tool>.md; 0 removed table rows in diff, live row counts 28/22/26/44/20/48 match claimed; stale get_price_history tickers-vs-code example fully gone (grep 'tickers:'=0), tools/list/get_price_history.md confirmed untouched+already-correct; peer file alert-commander/flow/stage-signals.md absent from all 3 commits' file lists. No behavior change. All 5 checks PASS."
       }
     ],
     "head": {
@@ -8284,32 +8313,6 @@
         "qa_report": "reports/TASK_REPORT_FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN.md",
         "reviewed_at": "2026-07-13T09:17:26Z",
         "verified_by": "qa"
-      },
-      {
-        "id": "TE-T04",
-        "title": "T-04 Strip 'Example Invocation' tails from 6 high-cadence cowork tool packages [~150k tok/weekday]",
-        "owner": "developer",
-        "status": "REVIEW",
-        "type": "CLEAN",
-        "size": "S",
-        "priority": "P1",
-        "wave": 1,
-        "est_saving": "~150k tok/weekday",
-        "zone": "docs/agents/",
-        "sprint": "TOKEN-ECONOMY-AUDIT",
-        "depends": [],
-        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-04",
-        "note": "Delete '## Example Invocation' from market-watcher/news-scout/alert-commander/unified-agent/qa-responder/digest-predict packages; keep tool tables + add 1 pointer to tools/list/<tool>.md. Also fixes a stale WRONG example (get_price_history tickers vs code). No behavior change.",
-        "promoted_at": "2026-07-13T10:52:11Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-13T10:52:19Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
-        "dev_completed_at": "2026-07-13T10:59:48Z",
-        "dev_note": "Example Invocation sections deleted from all 6 packages (market-watcher/news-scout/alert-commander/unified-agent/qa-responder/digest-predict), commit 2c29f8e73 -- each replaced with 1 pointer line to tools/list/<tool_name>.md. Tool tables byte-identical pre/post (row-count verified). Also resolves the brief's flagged get_price_history tickers-vs-code drift (deleted with the section; tools/list/get_price_history.md was already correct). Docs-only, no apps/ code touched -- no bun test/tsc applicable. QA hand-off: verify (a) Example Invocation heading gone from all 6, (b) tool tables unchanged, (c) 1 pointer line present per file, (d) no other section touched.",
-        "updated_at": "2026-07-13T10:59:48Z",
-        "updated_by": "developer"
       }
     ],
     "qa": [],
