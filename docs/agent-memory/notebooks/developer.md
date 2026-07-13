@@ -1,6 +1,19 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-12 | **Cycle:** FACTORY-NEWS-extract-rss-parse (router-dispatched, mode=FACTORY, zone=news-fetch)
+**Last updated:** 2026-07-13 | **Cycle:** TE-T01 (dev-team BOUNDED-1 auto-pickup, mode=CLEAN, zone=multi)
+
+## Session 2026-07-13 — TE-T01 (dev-team BOUNDED-1 auto-pickup, mode=CLEAN, zone `multi`) — IN_PROGRESS→REVIEW
+
+**Task:** Token-economy audit T-01 (`docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md`) — apply the WU-2 script-first prompt-gating pattern (already shipped for dev-team's Job 1 hourly cron) to the cowork `*/15` master-cron `CronCreate` prompt, so SILENT/LOST_ELECTION/DEFER ticks (~80% of 96 fires/day) stop paying the 15,916-byte `main.md` read.
+
+**Actions taken:** Prompt-only edit in `.claude/skills/cron-cowork-team/SKILL.md` Step 2 — `CronCreate` prompt now runs `scripts/agents-flow/cowork-tick-preflight.sh` directly and branches on its JSON `.verdict`: SILENT/LOST_ELECTION/DEFER → done, no further reads; WORK → read `main.md` from `§ WORK continuation` (skip re-running Steps 0b/0b.3/0c/1-4b, per `main.md`'s own JUMP-TO table); ERROR → read `main.md` from **Step 0a** (not the file top — avoids re-invoking the already-errored script). Also fixed the stale WU-1 "prompt text UNCHANGED" note to reflect the WU-2 supersession. Zero change to `main.md`, cadence (`*/15 * * * *`), or the preflight script.
+
+**Verification:** File stays 148L (< 200L cap). `bash scripts/agents-flow/cowork-tick-preflight.test.sh` — 20/20 pass (script untouched, re-run to confirm no regression). Grep sweep found no test/script asserting the literal old prompt string. No TypeScript touched → no `bun test`/`tsc` applicable. Manual cross-check of new prompt verdict names + anchors against `main.md`'s Step 0 JUMP-TO table — verbatim match.
+
+**Board:** Moved `task_board.in_progress[TE-T01]` → `task_board.review[]` (status REVIEW, next_agent=qa) + `.head` updated, via `orch-apply.sh` (conservation OK, task_total unchanged at 507). Commits: `48c73f784` (SKILL.md prompt edit), `d9a850e95` (orch-state board move). Decision journal: `docs/agent-memory/decisions/2026-07-13-TE-T01.md`.
+
+**Scope discipline:** Did not touch `main.md`, the preflight script, or cadence — prompt-only per task constraint. Did not flip REVIEW→DONE_VERIFIED (QA gate's job). Did not run `/cron-cowork-team` re-arm (explicit POST-CLOSE router step, not mine).
+Zone health: `.claude/skills/` doc zone — no other drift observed this cycle | HEALTHY
 
 ## Session 2026-07-12 — FACTORY-NEWS-extract-rss-parse (router-dispatched, mode=FACTORY, zone=news-fetch) — IN_PROGRESS→REVIEW
 
@@ -25,20 +38,3 @@ Zone health: `apps/news-fetch/` scraper pair de-duplicated (flagged in the 2026-
 **Actions taken:** Read-only investigation only (SPIKE-mode, timeboxed 120 min) — no code changed. Created + deleted throwaway branch `spike/bctc-tablerows-frozen-hollow-done` per protocol (zero commits on it). Wrote findings doc `docs/spikes/SPIKE-BCTC-TABLEROWS-FROZEN-HOLLOW-DONE.md`. Filed follow-on `FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP` (backlog, high, owner=ops — session-independent launchd-class backstop for `refine_bctc_md` dispatch, mirroring the already-proven `com.vn-market.cowork-guaranteed-slot-firer.plist` pattern) rather than fixing inline — genuinely infra-scoped design work, out of SPIKE read-only mandate. Flipped board row `in_progress[]`→`review[]` (status REVIEW, next_agent=router) + added the FIX row to `backlog[]`, both in one atomic `orch-apply.sh` write (conservation: task_total 452→453 PASS). Did NOT self-close to DONE_VERIFIED — left for router RAW-verify per established SPIKE-closure precedent (router signed off `SPIKE-BCTC-NONBANK-TOTAL-ASSETS-ZERO`/`SPIKE-HSX-STRATEGY0-0URLS` the same way). Did NOT release `task_claim` (router's job per dispatch contract). DJ: `sprint-SPIKE-BCTC-TABLEROWS-FROZEN-HOLLOW-DONE-developer.md`.
 
 **Scope discipline:** No code/config file touched outside `docs/` (findings doc, decision journal, notebook, orch-state.json board write). No fix attempted inline per SPIKE mandate.
-
-## Session 2026-07-11 — WATCHLIST-DB-SYSMAP-DRIFT-FIX (sprint MONEY-RADAR-P0, router-dispatched, zone `apps/mcp-server/`) — READY→IN_PROGRESS, routed to dev-mcp-server (not implemented here)
-
-**Task:** Handoff (`docs/handoffs/TASK_WATCHLIST-DB-SYSMAP-DRIFT-FIX.md`) said `zone: cross-service`, PM's RETURN named a non-existent "dev-cross-service" agent. Router asked me to determine the correct routing.
-
-**Zone check (Step 0, mandatory before any code):** grepped every candidate write target — `SqliteWatchlistRepository.ts`, `watchlistReadStore.ts`, `seedWatchlist.ts`, `schema.ts`, `schema-market-data.ts`, `system/watchlist.ts` MCP tool — ALL live under `apps/mcp-server/src/`. `apps/technical-analysis` (Go TA compute service) only *reads* watchlist codes via a client, doesn't own the table. Zone match = `dev-mcp-server`. Did not write any implementation code — dispatched instead, per Step 0 rule.
-
-**Root-cause finding beyond the PM's pre-verify (appended to handoff):** `seedWatchlist.ts`'s `WATCHLIST_SEED` is a *second* hardcoded 34-ticker array, independently diverged from `system-map.json` SSOT (only 15/33 overlap — 19 seeder-only tickers, 18 SSOT-only tickers missing from the seed). `schema.ts:202` calls `seedWatchlist(db)` unconditionally on every non-test DB init (comment: "Runs always ... so post-migration DBs ... get restored"), via `INSERT...ON CONFLICT DO UPDATE`. **A pure DB resync will not survive the next server restart** — the 19 non-SSOT tickers will silently re-INSERT. Flagged as mandatory scope for dev-mcp-server: derive `WATCHLIST_SEED` from `system-map.json` `.project.watchlist[]` at seed time, not hardcode it.
-
-**VNH ambiguity resolved:** `system-map.json` has zero VNH entries (grep-confirmed). TLDR + AC-2 group VNH with VEA under "18 orphaned rows to remove" — the AC-4 "correctly sectored as seafood" bullet documents *why* it's an orphan (mis-seed, no valid domain bucket), not a directive to keep it. Prior commit `9713118fe` already patched the code-side hardcode to `domain: "agriculture"` for VNH; that fix becomes moot once the seeder derives from SSOT (VNH drops out entirely).
-
-**Actions taken:** appended `[Developer Team Lead] Zone Routing + Root-Cause Pre-Analysis` section to the handoff; flipped board row `ready[]→in_progress[]` (status READY→IN_PROGRESS, `dispatched_to: dev-mcp-server`) via `scripts/dev-team-flip-watchlist-drift-fix-in-progress-20260711.jq` + `orch-apply.sh` (conservation task_total 458→458 confirmed); committed `56eb19ef4` (orch-state.json + handoff + new jq script, explicit paths).
-
-**Constraint discovered:** this session's toolset is Read/Edit/Write/Bash only — no Agent-spawn or MCP `call_tool` tool bound. Per `agent-chaining-protocol.md` line 10 ("sub-agents cannot spawn each other"), I cannot literally invoke `Agent(dev-mcp-server, ...)` or `task_claim`/`task_release` myself. RETURN block below tells the router (which does hold Agent-spawn + MCP capability) to spawn `dev-mcp-server` next with the updated handoff — this is the correct handoff point given the constraint, not a skipped step.
-
-**Scope discipline:** did not touch any `apps/mcp-server/` source file, did not query/write the live watchlist DB (dev-mcp-server's job — I lack MCP tool access to the gateway anyway). DJ: `sprint-MONEY-RADAR-P0-developer.md` STEP developer-S1.
-Zone health: no drift detected in own zone (`scripts/`, `docs/handoffs/`, `docs/data/orch/`) this cycle.
