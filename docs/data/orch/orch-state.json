@@ -365,10 +365,10 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "TE-T07",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of TE-T07 — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-13T11:19:52Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "next_agent": "qa",
+    "next_action": "TE-T07 (cron-detect-loop SKILL split) landed, dev-self-verified byte-identity of register bodies, moved in_progress->review. QA to RAW-diff SKILL.md@HEAD vs register.md CronCreate blocks + confirm both files <=200L, then flip REVIEW->DONE_VERIFIED.",
+    "updated_at": "2026-07-13T11:25:56Z",
+    "updated_by": "developer"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -8297,6 +8297,32 @@
         "qa_report": "reports/TASK_REPORT_FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN.md",
         "reviewed_at": "2026-07-13T09:17:26Z",
         "verified_by": "qa"
+      },
+      {
+        "id": "TE-T07",
+        "title": "T-07 cron-detect-loop SKILL: split 25L idempotency card from ~160L register bodies [~85-93k tok/day]",
+        "owner": "developer",
+        "status": "REVIEW",
+        "type": "CLEAN",
+        "size": "S",
+        "priority": "P1",
+        "wave": 1,
+        "est_saving": "~85-93k tok/day",
+        "zone": ".claude/skills/",
+        "sprint": "TOKEN-ECONOMY-AUDIT",
+        "depends": [],
+        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-07",
+        "note": "SKILL.md -> ~35L card (idempotency guard + verify); move 4 CronCreate bodies + divergence commentary + retirement notes to .claude/skills/cron-detect-loop/register.md (lazy-load on session restart only). No cron-prompt change. Prior ctx-bloat signal was ducked by 203L->196L trim; needs structural split.",
+        "promoted_at": "2026-07-13T11:19:51Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-13T11:19:52Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "dev_completed_at": "2026-07-13T11:25:56Z",
+        "dev_note": "SKILL.md split 196L->51L: Step 1 idempotency guard + Step 3 verify kept, Step-2 CronCreate Job 1-4 bodies + inline divergence notes + P3-OBSERVE-ONLY-RETIREMENT moved verbatim to new .claude/skills/cron-detect-loop/register.md (156L). Byte-identity verified: diff+md5 zero-diff on the 4 CronCreate(...) blocks and the full Step2/P3 sections (git HEAD vs register.md) -- cadences (7,37 * * * */30 * * * */0 */4 * * */0 2 * * *), recurring/durable flags, and every prompt string unchanged. No cron-prompt edit needed (Job 1 prompt still points at SKILL.md). Commit 6c68dd782. QA hand-off: RAW-diff .claude/skills/cron-detect-loop/SKILL.md@HEAD vs register.md CronCreate blocks yourself (do not trust this note), confirm both files <=200L, confirm no peer files touched.",
+        "updated_at": "2026-07-13T11:25:56Z",
+        "updated_by": "developer"
       }
     ],
     "qa": [],
@@ -8316,31 +8342,9 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-13T11:19:51Z",
-    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "TE-T07",
-        "title": "T-07 cron-detect-loop SKILL: split 25L idempotency card from ~160L register bodies [~85-93k tok/day]",
-        "owner": "developer",
-        "status": "IN_PROGRESS",
-        "type": "CLEAN",
-        "size": "S",
-        "priority": "P1",
-        "wave": 1,
-        "est_saving": "~85-93k tok/day",
-        "zone": ".claude/skills/",
-        "sprint": "TOKEN-ECONOMY-AUDIT",
-        "depends": [],
-        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-07",
-        "note": "SKILL.md -> ~35L card (idempotency guard + verify); move 4 CronCreate bodies + divergence commentary + retirement notes to .claude/skills/cron-detect-loop/register.md (lazy-load on session restart only). No cron-prompt change. Prior ctx-bloat signal was ducked by 203L->196L trim; needs structural split.",
-        "promoted_at": "2026-07-13T11:19:51Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-13T11:19:52Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "last_triaged_at": "2026-07-13T11:25:56Z",
+    "last_triaged_by": "developer (TE-T07 review handoff)",
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
