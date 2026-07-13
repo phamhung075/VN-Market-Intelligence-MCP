@@ -58,3 +58,13 @@
 - Collapsing the SSOT-note + Step-2-intro duplication into one paragraph vs keeping both as-authored — kept both verbatim to avoid any risk of altering register-body meaning; only new content added is the SKILL.md pointer sentence itself.
 **why-decision:** `diff`+`md5` on the extracted CronCreate blocks (all 4) and the full Step 2/P3 sections between git HEAD SKILL.md and new register.md returned zero diff — objective byte-identity proof, not self-report.
 **why-change:** No change from plan.
+
+---
+
+### STEP developer-S6 · developer · 2026-07-13T11:57:52Z
+**task-id:** TE-T09/TE-T09b
+**what-done:** Split `docs/agents/po/flow/main.md` (274L/69,513B -> 158L/9,443B): relocated the "Reusable triage scripts" registry (44L, po-s50..po-s142) verbatim to `po/flow/scripts-registry.md`, and the never-firing Step PUSH-BACKSTOP body (80L, superseded by launchd fleet-push timer) verbatim to `po/flow/push-backstop.md`. main.md keeps the orch-apply.sh write invariant inline + one pointer per sub-doc; corrected line-1 size-justification (was drifted at 229L pre-edit, true was 274L).
+**what-considered:**
+- Literal "line 225 through EOF" per brief vs actual section boundary — brief's own EOF read was imprecise: lines 269-274 (Doc self-heal + Skills-available lazy-load list) are separate always-loaded boilerplate, NOT registry entries; moving them would be a behavioral regression (breaks every-cycle doc-self-heal). Chose true boundary (225-268), verified zero per-script-entry loss.
+**why-decision:** `diff`+`md5` of both extracted blocks against `git show HEAD:...main.md` (independent of my own scratch copies) returned zero-diff for both relocations — objective byte-identity, not self-report.
+**why-change:** Boundary correction above; no other change from plan.
