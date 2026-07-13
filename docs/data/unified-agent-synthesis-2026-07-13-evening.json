@@ -1,0 +1,125 @@
+{
+  "metadata": {
+    "cycle_id": "evening-2026-07-13T19:49:00Z",
+    "dish_type": "evening",
+    "date_vn": "2026-07-13",
+    "timestamp_utc": "2026-07-13T19:49:00Z",
+    "quality_verdict": "full",
+    "layers_walked_summary": "1-6 (full)"
+  },
+
+  "tnb_synthesis": {
+    "clock_phase": "transition",
+    "regime_state": "breadth-collapse",
+    "regime_confidence": "MEDIUM",
+    "us_macro_layer": "EFFR-IORB 1.38pp confirmed (Fed tightening). US PMI data unavailable this cycle.",
+    "vn_macro_layer": "USD/VND 26080 above 25000 threshold (depreciation pressure). Carry 1.38pp NEUTRAL (no acute unwind). CPI trend missing.",
+    "valuation_layer": "COC rising (EFFR 1.38pp), M2 unavailable. Selective valuations at 52w-lows (banking, securities) vs momentum anomaly (RE decile-10 leaders). Consensus phase: transition with fixed-income tilt."
+  },
+
+  "conviction_calls": [
+    {
+      "ticker": "VCB",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Banking cost rising (EFFR), pricing cheap at 52w-low; macro pressure offset by valuation"
+    },
+    {
+      "ticker": "BID",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Same banking cluster: COC rising, valuation attractive near 52w-low"
+    },
+    {
+      "ticker": "VHM",
+      "conviction_level": "MEDIUM",
+      "direction": "BUY",
+      "pillars_aligned_count": 3,
+      "rationale_one_liner": "Momentum leader (decile 10, +64% ROC), RS strong 93, but LOW vol regime caps conviction; phase transition calls caution"
+    },
+    {
+      "ticker": "VIC",
+      "conviction_level": "MEDIUM",
+      "direction": "BUY",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Momentum extreme (decile 10, +81% ROC, RS 96), but price at 111% 52w-low (overextension); LOW vol asymmetry risk"
+    },
+    {
+      "ticker": "SSI",
+      "conviction_level": "LOW",
+      "direction": "SELL",
+      "pillars_aligned_count": 1,
+      "rationale_one_liner": "Securities sector capitulation (ADL -281, -3.4% sector), weak momentum (decile 5), only valuation cheap at 52w-low"
+    },
+    {
+      "ticker": "BSR",
+      "conviction_level": "MEDIUM",
+      "direction": "BUY",
+      "pillars_aligned_count": 3,
+      "rationale_one_liner": "Oil sector tailwind (Brent +5.65%), momentum leader (decile 9), RS strong 88; sector +1.08% supports thesis"
+    }
+  ],
+
+  "sector_phases": [
+    {
+      "sector_vn": "ngân hàng",
+      "investment_phase": "transition",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "negative"
+    },
+    {
+      "sector_vn": "bất động sản",
+      "investment_phase": "transition",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "mixed"
+    },
+    {
+      "sector_vn": "chứng khoán",
+      "investment_phase": "contraction",
+      "pyramid_tier": "cash",
+      "direction_this_cycle": "negative"
+    },
+    {
+      "sector_vn": "dầu khí",
+      "investment_phase": "recovery",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "positive"
+    }
+  ],
+
+  "known_gaps": [
+    "[gap:US_PMI_absent] — cannot confirm US manufacturing stack direction",
+    "[gap:macro_health_inflation_missing] — CPI trend unavailable; inflation pressure incomplete",
+    "[gap:foreign_room_sparse] — FII flow hypothesis unverified",
+    "[gap:M2_missing] — money supply pillar absent from all L4 clusters",
+    "[gap:insider_sentiment_insufficient] — net buy/sell <90d window",
+    "[L6-gap: gold 4006.4 >$4300 active — regime-drift risk until retraces below $4300 or EFFR-IORB spike]"
+  ],
+
+  "causal_chains": [
+    "VND carry 1.38pp NEUTRAL + ADL -281 breadth collapse → 25 new lows (vs 0 highs) → banking/RE/securities cascading sell-off → divergence: momentum leaders VHM (+64% ROC decile 10) + VIC (+81% ROC decile 10) accumulate despite macro weakness → institutional positioning hypothesis (foreign room sparse, insider data insufficient)."
+  ],
+
+  "clusters_summary": {
+    "qualified": 4,
+    "tickers_covered": ["VCB", "BID", "EIB", "SHB", "VHM", "VIC", "KBC", "VRE", "PDR", "NVL", "VCI", "VIX", "SSI", "BSR", "PLX"],
+    "sectors_covered": ["banking", "real_estate", "securities", "oil_gas"]
+  },
+
+  "market_context": {
+    "vn_index_price": 1802.09,
+    "vn_index_delta": -26.25,
+    "vn_index_pct": -1.45,
+    "gold_usd_oz": 4006.4,
+    "brent_crude_usd": 82.84,
+    "usd_vnd": 26080,
+    "breadth_new_highs": 0,
+    "breadth_new_lows": 24,
+    "adl_value": -281,
+    "volatility_regime": "LOW",
+    "market_sentiment_z": -0.33,
+    "market_hexagram": "Khiêm (15) TIÊU CỰC 64%"
+  }
+}
