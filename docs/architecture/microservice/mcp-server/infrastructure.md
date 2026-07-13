@@ -44,13 +44,31 @@ daily_foreign_flow (code TEXT, date TEXT, foreign_buy_vol, foreign_sell_vol,
   -- closed: `changes` can never be 0 for a valid (non-empty) row.
   -- Design: docs/handoffs/ARCH-DAILY-FOREIGN-FLOW-TABLE-architect-design.md § Change 2
 
-daily_ohlcv_with_flow (VIEW — daily_ohlcv LEFT JOIN daily_foreign_flow ON code,date)
+daily_ohlcv_with_flow (VIEW — [daily_ohlcv LEFT JOIN daily_foreign_flow ON code,date]
+  UNION ALL [anti-join: daily_foreign_flow rows with no daily_ohlcv match])
   -- Compatibility read view: same column names as daily_ohlcv's legacy foreign_*
   -- columns, COALESCE-preferring daily_foreign_flow (new table) and falling back
   -- to the frozen legacy daily_ohlcv.foreign_* columns for any (code,date) not
   -- yet present in the new table. Lets read sites migrate `FROM daily_ohlcv` ->
   -- `FROM daily_ohlcv_with_flow` one at a time with zero query-shape change.
   -- Design: docs/handoffs/ARCH-DAILY-FOREIGN-FLOW-TABLE-architect-design.md § Change 3
+  --
+  -- FIX-DAILY-FF-VIEW-JOIN-ANCHOR (2026-07-13, SHAPE A — bidirectional view):
+  -- the LEFT JOIN alone is anchored on daily_ohlcv, so a (code,date) key that
+  -- exists ONLY in daily_foreign_flow (FF data landed, OHLCV bar not yet) was
+  -- NEVER emitted — R-1 read-side gap across all 5 Class-A sites. SQLite has
+  -- no FULL OUTER JOIN, so the fix UNION ALLs a second SELECT: an anti-join
+  -- pass over daily_foreign_flow (`LEFT JOIN daily_ohlcv ... WHERE o.code IS
+  -- NULL`) for exactly the keys the first half misses. 15 columns, identical
+  -- order both halves; price cols (open/high/low/close/volume) + data_env are
+  -- NULL on the anti-join half (no OHLCV bar exists yet — honest NULL, not
+  -- fabricated); updated_at uses f.updated_at (the FF write's own freshness
+  -- signal). Definition is `DROP VIEW IF EXISTS` + unconditional `CREATE VIEW`
+  -- (NOT `IF NOT EXISTS`) — the live DB is a persistent named Docker volume, so
+  -- `IF NOT EXISTS` would be a silent no-op on redeploy despite tests (fresh
+  -- `:memory:` DB) going green. View: apps/mcp-server/src/infrastructure/db/
+  -- schema-market-data.ts:162-200.
+  -- Design: docs/architecture-briefs/2026-07-13-daily-ff-view-join-anchor.md
   --
   -- SUBTASK-DAILY-FF-4 / TASK_2003 (2026-07-12, CLASS-A READ MIGRATION — SHIPPED):
   -- all 5 Class-A "value reader" sites now query this view instead of raw

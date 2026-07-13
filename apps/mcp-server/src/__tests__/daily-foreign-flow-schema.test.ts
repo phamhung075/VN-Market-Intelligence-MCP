@@ -239,7 +239,7 @@ describe("TASK_2000 — daily_ohlcv_with_flow compatibility view", () => {
     expect(row.foreign_sell_vol).toBe(200);
   });
 
-  it("view returns a row via LEFT JOIN when only daily_foreign_flow has data and daily_ohlcv has none (R-1 view-level proof)", () => {
+  it("view returns a row via anti-join UNION ALL when only daily_foreign_flow has data and daily_ohlcv has none (R-1 view-level proof)", () => {
     const db = getDb();
     const now = new Date().toISOString();
 
@@ -248,17 +248,23 @@ describe("TASK_2000 — daily_ohlcv_with_flow compatibility view", () => {
        VALUES (?, ?, ?, ?, ?)`,
     ).run("ORPHAN-FF-VIEW-TEST", "2026-07-12", 300, 280, now);
 
-    // The view is anchored on daily_ohlcv (o), so with no daily_ohlcv row the
-    // view itself returns zero rows for this code/date — documenting the
-    // known anchoring behavior (Class-A read sites join through daily_ohlcv;
-    // the "R-1 elimination" claim is about the underlying table accepting
-    // the write unconditionally, proven in the table-level test above).
+    // Shape A (FIX-DAILY-FF-VIEW-JOIN-ANCHOR): the view is now a LEFT JOIN
+    // UNION ALL an anti-join over daily_foreign_flow, so a (code,date) key
+    // that exists ONLY in daily_foreign_flow surfaces via the anti-join half
+    // — price columns are NULL (no OHLCV bar exists yet) but the foreign-flow
+    // values are real, not fabricated.
     const rows = db
       .prepare(`SELECT * FROM daily_ohlcv_with_flow WHERE code=? AND date=?`)
       .all("ORPHAN-FF-VIEW-TEST", "2026-07-12");
-    expect(rows.length).toBe(0);
+    expect(rows.length).toBe(1);
 
-    // But the underlying table has the row, proving the write was never lost.
+    const row = db
+      .prepare(`SELECT foreign_buy_vol, close FROM daily_ohlcv_with_flow WHERE code=? AND date=?`)
+      .get("ORPHAN-FF-VIEW-TEST", "2026-07-12") as { foreign_buy_vol: number; close: number | null };
+    expect(row.foreign_buy_vol).toBe(300);
+    expect(row.close).toBeNull();
+
+    // The underlying table also has the row, proving the write was never lost.
     const ffRow = db
       .prepare(`SELECT foreign_buy_vol FROM daily_foreign_flow WHERE code=? AND date=?`)
       .get("ORPHAN-FF-VIEW-TEST", "2026-07-12") as { foreign_buy_vol: number };

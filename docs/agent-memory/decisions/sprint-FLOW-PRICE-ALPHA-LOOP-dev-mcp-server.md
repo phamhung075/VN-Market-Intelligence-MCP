@@ -102,6 +102,15 @@
 **why-decision:** DB is the single ground truth (271 attempts + fresh "file disappeared" log line = live, not stale); financial_reports already-filed confirms clean-dead-row is correct over re-source (no fake/duplicate data). `status='dead'` (not `'resolved'`) keeps the row honest — it was never actually reparsed.
 **why-change:** No change — board's own two remediation options (re-source | clean-dead-rows) anticipated exactly this outcome; picked clean-dead-rows per its own "prefer if re-sourcing not cleanly possible" guidance.
 
+### STEP dev-mcp-server-S12 · dev-mcp-server · 2026-07-13T21:40:00Z
+**task-id:** FIX-DAILY-FF-VIEW-JOIN-ANCHOR
+**what-done:** Implemented architect Shape A verbatim: `daily_ohlcv_with_flow` view = `DROP VIEW IF EXISTS` + unconditional `CREATE VIEW` (LEFT JOIN UNION ALL anti-join over `daily_foreign_flow`, 15 cols); flipped `daily-foreign-flow-schema.test.ts` R-1 view-level-proof `toBe(0)`→`toBe(1)` + asserted `foreign_buy_vol`/`close IS NULL`. Did not touch the frozen integration-test gate file.
+**what-considered:**
+- `CREATE VIEW IF NOT EXISTS` (pre-existing idiom) vs `DROP`+unconditional `CREATE` — DROP+unconditional per brief's explicit footgun: live DB is a persistent named Docker volume, `IF NOT EXISTS` would silently no-op the fix on redeploy despite green tests
+- `rows[0].foreign_buy_vol` direct-index assertion (as sketched in the brief's SQL comment) vs a separate `.get()` call — `.get()`: `noUncheckedIndexedAccess` flags `rows[0]` as possibly-undefined; matches this file's existing COALESCE-test `.get()` idiom, zero behavior change
+**why-decision:** Frozen gate assertions in `daily-foreign-flow-integration.test.ts` query the view directly — only a view-level fix (not a read-site rewrite) can flip them green, per brief's Shape A vs Shape B disqualification.
+**why-change:** No change from brief — exact SQL verbatim; one tsc-driven micro-adjustment to test assertion mechanics (not coverage/intent). Full `bun test` (1203 files) hit its documented Bun-native tail-crash after printing 14549 pass/40 skip/103 fail/12 errors — none reference `daily_ohlcv_with_flow`/foreign-flow files (grepped); isolated 14-file foreign-flow sweep (incl. 1518 not in brief's list) 118/118 pass confirms zero regression.
+
 ### STEP dev-mcp-server-S11 · dev-mcp-server · 2026-07-13T16:50:00Z
 **task-id:** HPG-DISCOVER-CONSOLIDATED-PDF
 **what-done:** Confirmed (live hsx.vn mediafiles API) HPG 2025-Q4's on-disk/queued PDF was the wrong scope (`...rieng Cong ty me...`, standalone parent-only, ingested pre-FIX-CTG-1); discovered+downloaded the real consolidated (`hop nhat`) sibling PDF (33p, 7,135,524 bytes, verified against hsx.vn content-length), placed it in the live pipeline's data/pdfs/, corrected `bctc_vps_queue` row 223's `source_url` to the consolidated URL via new script `scripts/migrations/discover-consolidated-bctc-pdf.ts`. Full scalar reflow into `financial_reports` did NOT complete: pdf-extractor's OCR of this scanned doc exceeds `pdfExtractorClient.ts`'s 120s Tier-1 timeout (confirmed: one page alone ran >17 min); did not blind-bump the timeout without ability to verify within session.

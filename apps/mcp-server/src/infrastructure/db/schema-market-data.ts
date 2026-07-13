@@ -159,8 +159,22 @@ export function initMarketDataTables(db: Database): void {
   // `FROM daily_ohlcv` -> `FROM daily_ohlcv_with_flow` rename (no query-shape
   // change, existing tests stay green). Placed after the data_env ALTER
   // migration above so o.data_env always resolves on first-boot view creation.
+  // Shape A (bidirectional / FULL-OUTER-emulated view — FIX-DAILY-FF-VIEW-JOIN-ANCHOR,
+  // architect brief docs/architecture-briefs/2026-07-13-daily-ff-view-join-anchor.md):
+  // the previous LEFT JOIN was anchored on daily_ohlcv, so a (code,date) key that exists
+  // ONLY in daily_foreign_flow was never emitted (COALESCE cannot manufacture a row the
+  // anchor table lacks). SQLite has no FULL OUTER JOIN keyword, so this emulates one:
+  // the existing LEFT JOIN half UNION ALL an anti-joined pass over daily_foreign_flow for
+  // the keys daily_ohlcv doesn't have. 15 columns, identical order in both halves.
+  //
+  // DROP + unconditional CREATE (NOT `CREATE VIEW IF NOT EXISTS`) is required: the live
+  // MCP-server DB is a persistent named Docker volume, not recreated per boot — on a DB
+  // that already has daily_ohlcv_with_flow in sqlite_master, IF NOT EXISTS is a silent
+  // no-op and this fix would never take effect after deploy. Views carry no data —
+  // dropping and recreating is O(1), zero data-loss risk, safe to run unconditionally.
+  db.exec(`DROP VIEW IF EXISTS daily_ohlcv_with_flow;`);
   db.exec(`
-    CREATE VIEW IF NOT EXISTS daily_ohlcv_with_flow AS
+    CREATE VIEW daily_ohlcv_with_flow AS
     SELECT
       o.code, o.date, o.open, o.high, o.low, o.close, o.volume, o.updated_at, o.data_env,
       COALESCE(f.foreign_buy_vol,    o.foreign_buy_vol)    AS foreign_buy_vol,
@@ -170,7 +184,19 @@ export function initMarketDataTables(db: Database): void {
       COALESCE(f.foreign_buy_value,  o.foreign_buy_value)  AS foreign_buy_value,
       COALESCE(f.foreign_sell_value, o.foreign_sell_value) AS foreign_sell_value
     FROM daily_ohlcv o
-    LEFT JOIN daily_foreign_flow f ON f.code = o.code AND f.date = o.date;
+    LEFT JOIN daily_foreign_flow f ON f.code = o.code AND f.date = o.date
+
+    UNION ALL
+
+    SELECT
+      f.code, f.date,
+      NULL AS open, NULL AS high, NULL AS low, NULL AS close, NULL AS volume,
+      f.updated_at, NULL AS data_env,
+      f.foreign_buy_vol, f.foreign_sell_vol, f.foreign_net_vol, f.put_through_vol,
+      f.foreign_buy_value, f.foreign_sell_value
+    FROM daily_foreign_flow f
+    LEFT JOIN daily_ohlcv o ON o.code = f.code AND o.date = f.date
+    WHERE o.code IS NULL;
   `);
 
   // ── OHLCV Backfill Queue (Task 1361 / Sprint 123) ─────────────────────────
