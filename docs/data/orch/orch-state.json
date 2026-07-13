@@ -365,10 +365,10 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "UC-RDL-P1",
-    "next_agent": "architect",
-    "next_action": "architect: ADJUDICATE UC-RDL-P1 (Ultracode-critic 'lock-key drift' CRITICAL). Router PRE-CLAIM outer-wrap lock uses task_id prefix 'intent:<agent>:<intent-key>' (task_kind=intent) while live row/coordination locks use 'task:' / 'cron:' / 'session-presence:'. STEP 1 VERIFY: is this REAL drift or INTENTIONAL two-tier separation (intent:=dispatcher-mutex vs task:=row-mutex serve different purposes)? If critic false-positive -> recommend REJECT/close with rationale (audit had 23 RESCOPE/8 REJECTED). STEP 2 (only if real): design the alignment — which prefix is canonical, in-flight-lock migration, blast radius on CLAUDE.md PRE-CLAIM + .claude/skills/dispatch-claim + task-lock tooling -> READY_FOR_DEV brief to docs/architecture-briefs/. Do NOT edit lock code directly (delicate: affects live orchestration locks). No AC/detail exists on this fresh 2026-07-13T19:31Z PO mint — architect produces it.",
-    "updated_by": "dev-team (19:37Z tick: BOUNDED-1 gated-promote picked UC-RDL-P1 -> line-521 correct next_agent developer->architect for audit adjudication; PDFEXTRACTOR reflow pek_triggered confirmed)",
-    "updated_at": "2026-07-13T19:52:40Z"
+    "next_agent": "agent-father",
+    "next_action": "agent-father: apply UC-RDL-P1 doc-only lock-namespace fix per brief docs/architecture-briefs/2026-07-13-uc-rdl-p1-lock-namespace-adjudication.md. Correct the task_id VALUE prefix sprint-task:<id> -> task:<id> in .claude/skills/dispatch-claim/SKILL.md (Canonical Namespace table ~L39 + Sprint-Task Outer Wrap block ~L269-283, reword closing rule to id-prefix vs kind) and .claude/skills/task-lock/SKILL.md (~L29-30). task_kind stays 'sprint-task' (kind != id-prefix; do NOT rename enum). 6 ACs: AC4 regression grep task_id.*\"sprint-task: -> zero hits; AC5 CLAUDE.md Phase B intent: pattern UNCHANGED (guard); AC6 no apps/mcp-server touched. The intent:/task: merge is a REJECTED false-positive — do NOT touch CLAUDE.md.",
+    "updated_by": "dev-team (architect UC-RDL-P1 verdict RAW-verified GREEN -> chain advance to agent-father doc-only fix)",
+    "updated_at": "2026-07-13T20:12:15Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -8998,9 +8998,9 @@
     "head": {
       "status": "in_progress",
       "active_task_id": "UC-RDL-P1",
-      "next_agent": "architect",
-      "last_updated_at": "2026-07-13T19:52:40Z",
-      "last_updated_by": "dev-team (BOUNDED-1 UC-RDL-P1 -> architect adjudication)"
+      "next_agent": "agent-father",
+      "last_updated_at": "2026-07-13T20:12:15Z",
+      "last_updated_by": "dev-team (UC-RDL-P1 architect->agent-father doc fix)"
     },
     "ready": [],
     "review": [
@@ -9528,9 +9528,12 @@
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
         "claimed_at": "2026-07-13T19:52:10Z",
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "owner": "architect",
-        "next_agent": "architect",
-        "dispatch_note": "BOUNDED-1 idle-pickup picked this fresh (19:31Z) unscoped P0; router routes ARCHITECT-FIRST (adjudicate real-drift-vs-intentional critic FP) instead of blind developer auto-fix on router lock primitives"
+        "owner": "agent-father",
+        "next_agent": "agent-father",
+        "dispatch_note": "architect adjudication DONE -> READY_FOR_DEV agent-father applies doc-only fix (2 SKILL.md files); router RAW-verifies 6 ACs (esp AC4 grep, AC5 CLAUDE guard) before REVIEW flip",
+        "architect_verdict": "REAL_DRIFT (scoped): intent:/task: merge REJECTED as false-positive (intentional 2-tier: intent=router pre-claim board-row-less, task=row chain mutex); sprint-task:->task: doc-only drift CONFIRMED, zero live call sites, zero runtime/migration risk.",
+        "adjudication_brief": "docs/architecture-briefs/2026-07-13-uc-rdl-p1-lock-namespace-adjudication.md",
+        "adjudicated_by": "architect a04042c839fa2aa80 @ commit 664cab10a (router RAW-verified: 3 files, no lock code/SKILL/CLAUDE touched, brief 195L, row lock untouched)"
       }
     ]
   },
