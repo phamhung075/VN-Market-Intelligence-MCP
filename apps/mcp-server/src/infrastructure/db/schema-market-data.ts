@@ -185,6 +185,10 @@ export function initMarketDataTables(db: Database): void {
   db.exec(`CREATE INDEX IF NOT EXISTS idx_obq_done ON ohlcv_backfill_queue(done)`);
 
   // Migration: add retry_count column if missing (SUBTASK-B FIX-OHLCV-DEPTH-PERSIST)
+  // + bars_inserted column (ALPHA-S1-OHLCV-BACKFILL-DONE-BUG) — nullable, records the
+  // authoritative bars_pushed_total reported by fetch-ohlcv-backfill.sh for the row that
+  // this done-call actually closed. NULL = no authoritative report ever landed for that
+  // closed row (blind poller ack) — distinguishable from a genuine 0.
   {
     const obqCols = db
       .prepare<{ name: string }, []>("PRAGMA table_info(ohlcv_backfill_queue)")
@@ -194,6 +198,9 @@ export function initMarketDataTables(db: Database): void {
       db.exec(
         "ALTER TABLE ohlcv_backfill_queue ADD COLUMN retry_count INTEGER NOT NULL DEFAULT 0"
       );
+    }
+    if (!obqCols.includes("bars_inserted")) {
+      db.exec("ALTER TABLE ohlcv_backfill_queue ADD COLUMN bars_inserted INTEGER");
     }
   }
 

@@ -36,6 +36,21 @@
  * `sendTelegramBug` only when currentRetryCount >= 5, otherwise re-queue with an
  * incremented retry_count.
  *
+ * ALPHA-S1-OHLCV-BACKFILL-DONE-BUG (2026-07-13): handleOhlcvBackfillDone used to mark
+ * ohlcv_backfill_queue rows done=1 REGARDLESS of bars_pushed_total, so a crashed/zero-insert
+ * universe backfill run was silently recorded identically to a healthy one (457+ historical
+ * rows done-with-zero-bars per docs/architecture-briefs/2026-07-11-data-strategy-selection.md
+ * gap #6 — degrades ALPHA-S3 cross-sectional z-scores, corroborated by BUG id3564). Fix: added
+ * nullable ohlcv_backfill_queue.bars_inserted column (schema-market-data.ts) + an inserted-count
+ * verification step that fires BEFORE the existing depth probe — barsPushedTotal===null (no
+ * authoritative report ever landed) or ===0 (script ran, inserted nothing) both re-queue via a
+ * NEW row (reusing the R-5 retry/escalate ladder) instead of silently accepting the close. The
+ * two checks are mutually exclusive per call (depth-probe skipped when insert-verification
+ * already fired) to avoid a double re-queue/double Telegram alert for the same underlying
+ * event. `done` still flips unconditionally on every call — preserves vn-ohlcv-backfill.timer's
+ * poller's documented "regardless of exit code" unblock contract; the fix re-queues via a new
+ * row rather than gating the original row's `done`. Design: docs/handoffs/ALPHA-S1-architect-design.md §3.
+ *
  * DI contract: db + log are injected by the caller (server.ts handleRequest).
  * No getDb() calls here.
  */
@@ -205,14 +220,68 @@ export async function handleOhlcvBackfillDone(
   } catch { /* empty body or non-JSON — treat as null (idempotent secondary poll) */ }
 
   try {
-    // 1. Mark all pending queue rows done
-    db.prepare("UPDATE ohlcv_backfill_queue SET done = 1 WHERE done = 0").run();
-    log.info("[ohlcv-backfill-done] marked done", { barsPushedTotal });
+    // 1. Mark all pending queue rows done, recording the authoritative bars_inserted
+    //    value (NULL for a blind/empty-body poller ack — never conflated with a real 0).
+    //    done=1 still flips unconditionally: vn-ohlcv-backfill.timer's poller call is
+    //    documented "regardless of exit code" so the systemd oneshot never blocks — the
+    //    ALPHA-S1-OHLCV-BACKFILL-DONE-BUG fix re-queues via a NEW row (step 2 below)
+    //    instead of gating this flip, preserving that unblock contract exactly.
+    const closeResult = db
+      .prepare("UPDATE ohlcv_backfill_queue SET done = 1, bars_inserted = ? WHERE done = 0")
+      .run(barsPushedTotal);
+    log.info("[ohlcv-backfill-done] marked done", { barsPushedTotal, rowsClosed: closeResult.changes });
 
-    // 2. Depth probe — verify watchlist code coverage against 252-bar floor
+    // 2. ALPHA-S1-OHLCV-BACKFILL-DONE-BUG — inserted-count verification (fail-loud, not a
+    //    silent success). closeResult.changes > 0 means THIS call is the one that actually
+    //    closed a pending row (not a redundant idempotent ack finding nothing pending).
+    //    barsPushedTotal===null (no authoritative report ever landed — fetch-ohlcv-backfill.sh
+    //    likely crashed/DNS-failed before its own POST) or ===0 (script ran but the universe
+    //    fetch genuinely inserted nothing) are both real failure states — reuse the existing
+    //    R-5 retry/escalate ladder (same cap, same escalation shape) rather than a new one.
+    let insertVerificationFailed = false;
+    if (closeResult.changes > 0 && (barsPushedTotal === null || barsPushedTotal === 0)) {
+      insertVerificationFailed = true;
+      const lastRow = db
+        .prepare<{ retry_count: number }, []>(
+          "SELECT retry_count FROM ohlcv_backfill_queue WHERE done = 1 ORDER BY id DESC LIMIT 1",
+        )
+        .get();
+      const currentRetryCount = lastRow?.retry_count ?? 0;
+      const reason =
+        barsPushedTotal === null
+          ? "no completion report received (fetch-ohlcv-backfill.sh likely crashed/DNS-failed before reporting — poller force-closed the queue row)"
+          : "fetch-ohlcv-backfill.sh reported 0 bars inserted across all tickers";
+
+      if (currentRetryCount >= 5) {
+        // R-5 cap: too many retries — escalate to BUG, do NOT re-queue
+        log.error("[ohlcv-backfill-done] insert-count retry cap reached (>=5), escalating to BUG", {
+          retry_count: currentRetryCount,
+          reason,
+        });
+        void sendTelegramBug(
+          `[OHLCV-BACKFILL] ${reason}, after ${currentRetryCount} retries. Manual VPS investigation required.`,
+        );
+      } else {
+        // Re-queue with incremented retry_count for next VPS poll cycle (30-min systemd timer)
+        const nextRetryCount = currentRetryCount + 1;
+        db.prepare(
+          "INSERT INTO ohlcv_backfill_queue (queued_at, done, retry_count) VALUES (datetime('now'), 0, ?)",
+        ).run(nextRetryCount);
+        log.warn("[ohlcv-backfill-done] insert-count verification failed — re-queued", {
+          retry_count: nextRetryCount,
+          reason,
+        });
+      }
+    }
+
+    // 3. Depth probe — verify watchlist code coverage against 252-bar floor
     //    FR-B2: also verify VNINDEX depth (benchmark ticker — not in watchlist table)
+    //    Skipped when step 2 already re-queued/escalated this cycle — a depth-shortfall
+    //    diagnostic is meaningless when the underlying run couldn't be verified to have
+    //    inserted anything, and running both would double-fire (duplicate re-queue row +
+    //    duplicate Telegram alert for the same underlying event).
     const DEPTH_FLOOR = 252;
-    try {
+    if (!insertVerificationFailed) try {
       const depthRows = db.prepare<{ code: string; cnt: number }, []>(`
         SELECT w.code, COUNT(d.code) AS cnt
         FROM watchlist w
@@ -246,7 +315,7 @@ export async function handleOhlcvBackfillDone(
           depth_floor: DEPTH_FLOOR,
         });
 
-        // 3. Retry-storm cap check (R-5): read retry_count of last done row
+        // Retry-storm cap check (R-5): read retry_count of last done row
         const lastRow = db.prepare<{ retry_count: number }, []>(
           "SELECT retry_count FROM ohlcv_backfill_queue WHERE done = 1 ORDER BY id DESC LIMIT 1"
         ).get();

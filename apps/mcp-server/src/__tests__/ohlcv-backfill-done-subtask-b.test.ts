@@ -8,6 +8,14 @@ Bun.env["DB_PATH"] = ":memory:";
 //   BT-3: shallow watchlist code (cnt<252), retry_count=0 → re-queue inserted (done=0, retry_count=1)
 //   BT-4: shallow watchlist code, last done row retry_count=5 → NO re-queue (cap enforced)
 //   BT-5: watchlist code with >=252 bars → no re-queue (success path)
+//
+// ALPHA-S1-OHLCV-BACKFILL-DONE-BUG (inserted-count verification, added 2026-07-13):
+//   BT-6: bars_pushed_total:0, retry_count=0 pending row → re-queue inserted (retry_count:1),
+//         bars_inserted persisted as 0 on the closed row, depth-probe NOT independently fired
+//   BT-7: empty body (barsPushedTotal=null), retry_count=0 pending row, NO shallow watchlist
+//         code seeded → re-queue inserted anyway (retry_count:1) — proves a full-universe
+//         zero-insert failure is caught even when watchlist itself is deep
+//   BT-8: bars_pushed_total:0, retry_count=5 → escalate, no new row (cap enforced, same as BT-4)
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "bun:test";
 import { getDb, closeDb, initDatabase } from "../infrastructure/db/schema.js";
@@ -84,6 +92,13 @@ function getLastQueueRow(): { done: number; retry_count: number } | null {
   return db.prepare<{ done: number; retry_count: number }, []>(
     "SELECT done, retry_count FROM ohlcv_backfill_queue ORDER BY id DESC LIMIT 1"
   ).get();
+}
+
+function getAllQueueRows(): { id: number; done: number; retry_count: number; bars_inserted: number | null }[] {
+  const db = getDb();
+  return db.prepare<{ id: number; done: number; retry_count: number; bars_inserted: number | null }, []>(
+    "SELECT id, done, retry_count, bars_inserted FROM ohlcv_backfill_queue ORDER BY id ASC"
+  ).all();
 }
 
 async function postBackfillDone(body?: string): Promise<{ status: number; json: unknown }> {
@@ -182,6 +197,71 @@ describe("SUBTASK-B BT-5: all codes >=252 bars → no re-queue", () => {
     expect((json as { ok: boolean }).ok).toBe(true);
 
     // No new pending queue row — depth verified
+    const pending_after = countPendingQueueRows();
+    expect(pending_after).toBe(0);
+  });
+});
+
+// ── BT-6: bars_pushed_total:0 → re-queue + bars_inserted persisted on closed row ─────
+
+describe("ALPHA-S1-OHLCV-BACKFILL-DONE-BUG BT-6: zero-insert report → re-queue, bars_inserted=0 recorded", () => {
+  it("bars_pushed_total:0, retry_count=0 pending row → re-queue inserted (retry_count:1), bars_inserted=0 on the closed row, depth-probe NOT independently re-triggered", async () => {
+    seedQueueRow(0, 0); // pending row, first attempt
+
+    const { status, json } = await postBackfillDone(JSON.stringify({ bars_pushed_total: 0 }));
+    expect(status).toBe(200);
+    expect((json as { ok: boolean }).ok).toBe(true);
+
+    const rows = getAllQueueRows();
+    expect(rows.length).toBe(2); // original closed row + 1 new re-queued row
+    expect(rows[0]!.done).toBe(1);
+    expect(rows[0]!.bars_inserted).toBe(0); // authoritative zero persisted, not swallowed
+    expect(rows[1]!.done).toBe(0);
+    expect(rows[1]!.retry_count).toBe(1);
+
+    // Mutual-exclusion: exactly one re-queued row — the depth probe did not ALSO
+    // re-queue independently (would produce a 3rd row if double-fired).
+    const pending_after = countPendingQueueRows();
+    expect(pending_after).toBe(1);
+  });
+});
+
+// ── BT-7: empty body (no report), deep watchlist → still re-queues (full-universe gap) ─
+
+describe("ALPHA-S1-OHLCV-BACKFILL-DONE-BUG BT-7: no completion report → re-queue even when watchlist depth looks fine", () => {
+  it("empty body, retry_count=0 pending row, NO shallow watchlist code seeded → re-queue inserted (retry_count:1)", async () => {
+    // Deliberately do NOT seed any watchlist/daily_ohlcv rows — proves this path is
+    // independent of the pre-existing depth-shortfall diagnostic.
+    seedQueueRow(0, 0);
+
+    const { status, json } = await postBackfillDone(); // empty body -> barsPushedTotal=null
+    expect(status).toBe(200);
+    expect((json as { ok: boolean }).ok).toBe(true);
+
+    const rows = getAllQueueRows();
+    expect(rows.length).toBe(2);
+    expect(rows[0]!.done).toBe(1);
+    expect(rows[0]!.bars_inserted).toBeNull(); // no authoritative report ever landed
+    expect(rows[1]!.done).toBe(0);
+    expect(rows[1]!.retry_count).toBe(1);
+  });
+});
+
+// ── BT-8: bars_pushed_total:0, retry_count=5 → escalate, no new row ──────────────────
+
+describe("ALPHA-S1-OHLCV-BACKFILL-DONE-BUG BT-8: zero-insert + retry cap reached → escalate, no re-queue", () => {
+  it("bars_pushed_total:0, last done row retry_count=5 → cap enforced, no new queue row", async () => {
+    seedQueueRow(0, 5); // pending row already at the R-5 cap
+
+    const { status, json } = await postBackfillDone(JSON.stringify({ bars_pushed_total: 0 }));
+    expect(status).toBe(200);
+    expect((json as { ok: boolean }).ok).toBe(true);
+
+    const rows = getAllQueueRows();
+    expect(rows.length).toBe(1); // only the original row — no re-queue
+    expect(rows[0]!.done).toBe(1);
+    expect(rows[0]!.bars_inserted).toBe(0);
+
     const pending_after = countPendingQueueRows();
     expect(pending_after).toBe(0);
   });

@@ -131,14 +131,15 @@ describe("Task 1360 — POST /api/ohlcv-backfill-done: auth", () => {
 // ── TC-6 through TC-7: POST with valid auth ──────────────────────────────────
 
 describe("Task 1360 — POST /api/ohlcv-backfill-done: mark done", () => {
-  it("TC-6: valid auth, pending row exists → 200, row marked done=1", async () => {
+  it("TC-6: valid auth, pending row exists, closed via empty-body call → 200, row marked done=1, bars_inserted=NULL", async () => {
     // Seed a pending row
     const db = getDb();
     db.exec(`
       INSERT INTO ohlcv_backfill_queue (queued_at, done) VALUES (datetime('now'), 0)
     `);
 
-    // FR-B2: seed VNINDEX with >=252 bars so depth probe does not trigger re-queue
+    // FR-B2: seed VNINDEX with >=252 bars — watchlist/VNINDEX depth is healthy here,
+    // but is now irrelevant to the outcome of THIS call (see below).
     const vnidxStmt = db.prepare(
       "INSERT OR IGNORE INTO daily_ohlcv (code, date, open, high, low, close, volume, updated_at) VALUES ('VNINDEX', ?, 1200, 1220, 1180, 1210, 0, datetime('now'))"
     );
@@ -157,11 +158,25 @@ describe("Task 1360 — POST /api/ohlcv-backfill-done: mark done", () => {
     const body = await res.json() as { ok: boolean };
     expect(body.ok).toBe(true);
 
-    // Verify row was marked done (and no re-queue was inserted since VNINDEX depth ok)
-    const row = db.query<{ done: number }, []>(
-      "SELECT done FROM ohlcv_backfill_queue WHERE done = 0"
+    // ALPHA-S1-OHLCV-BACKFILL-DONE-BUG (2026-07-13): this call is an empty-body close
+    // (no `bars_pushed_total` — the poller's own blind "regardless of exit code" ack, per
+    // the route's own header comment) landing on a row nobody's authoritative
+    // fetch-ohlcv-backfill.sh report ever closed first. That is now correctly treated as
+    // a REAL failure state (no insert ever verified for this row), not a silent success —
+    // the row is marked done with bars_inserted=NULL and a fresh row is re-queued for the
+    // next VPS poll cycle, regardless of watchlist/VNINDEX depth (this is precisely the
+    // "full-universe zero-insert failure caught even though watchlist itself is deep" gap
+    // this fix exists to close — see BT-7 in ohlcv-backfill-done-subtask-b.test.ts).
+    const closedRow = db.query<{ done: number; bars_inserted: number | null }, []>(
+      "SELECT done, bars_inserted FROM ohlcv_backfill_queue ORDER BY id ASC LIMIT 1"
     ).get();
-    expect(row).toBeNull();
+    expect(closedRow?.done).toBe(1);
+    expect(closedRow?.bars_inserted).toBeNull();
+
+    const requeued = db.query<{ done: number; retry_count: number }, []>(
+      "SELECT done, retry_count FROM ohlcv_backfill_queue WHERE done = 0"
+    ).get();
+    expect(requeued?.retry_count).toBe(1);
   });
 
   it("TC-7: valid auth, no pending row → 200 no-op (ok: true)", async () => {
