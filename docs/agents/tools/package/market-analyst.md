@@ -4,22 +4,7 @@
 **Load when:** Agent starts, before first MCP call
 **Last Updated:** 2026-05-19
 
-## How to Invoke Tools
-
-All VN Market MCP tools are accessed via the MCP gateway `call_tool` (server="vn-market").
-Server name: **`vn-market`** (exact, no variants). See `docs/data/system-map.json` → `project.microservices[id=mcp-server].mcp_server_name`.
-
-```
-call_tool(
-  server: "vn-market",
-  tool: "<tool_name>",
-  arguments: { ... }
-)
-```
-
-**Wrong** → ~~`tool_name`~~ use `tool` | ~~`input`~~ use `arguments` | ~~`vnmarket-mcp`~~ use `"vn-market"`
-
-For detailed parameters and return signatures: `docs/agents/tools/list/<tool_name>.md`
+Invoke via gateway: call_tool(server="vn-market", tool="<name>", arguments={...}) — grammar SSOT: project CLAUDE.md § MCP Tools. Wrong: tool_name/input/vnmarket-mcp.
 
 ---
 
@@ -42,24 +27,7 @@ If a needed tool is not in this package → `post_agent_signal(to="po", signal_t
 | `post_agent_signal` | Emit signal to signal bus | `from_agent`, `to_agent`, `signal_type`, `payload` |
 | `send_telegram` | Send message to WORK channel | `channel`, `message` |
 
-#### `log_agent_work` — Two-Call Recipe
-
-```
-// Call 1 — START
-const startResult = call_tool(server="vn-market", tool="log_agent_work", arguments={
-  "agent_name": "market-analyst",
-  "status": "running"
-})
-const logId = startResult.id
-
-// Call 2 — END
-call_tool(server="vn-market", tool="log_agent_work", arguments={
-  "agent_name": "market-analyst",
-  "id": logId,
-  "status": "completed",
-  "summary": "<one-line description>"
-})
-```
+Lifecycle recipe (2 calls, id round-trip) → `docs/agents/tools/list/log_agent_work.md`
 
 ---
 

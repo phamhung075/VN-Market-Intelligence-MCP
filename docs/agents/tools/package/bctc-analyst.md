@@ -5,21 +5,7 @@
 **Last Updated:** 2026-05-29
 **Supersedes:** `financial-analyst.md` + `report-analyzer.md` (merged per 2026-05-29 architect brief)
 
-## How to Invoke Tools
-
-All VN Market MCP tools are accessed via the MCP gateway `call_tool` (server="vn-market").
-
-```
-call_tool(
-  server: "vn-market",
-  tool: "<tool_name>",
-  arguments: { ... }
-)
-```
-
-**Wrong** → ~~`tool_name`~~ use `tool` | ~~`input`~~ use `arguments` | ~~`vnmarket-mcp`~~ use `"vn-market"`
-
-For detailed parameters and return signatures: `docs/agents/tools/list/<tool_name>.md`
+Invoke via gateway: call_tool(server="vn-market", tool="<name>", arguments={...}) — grammar SSOT: project CLAUDE.md § MCP Tools. Wrong: tool_name/input/vnmarket-mcp.
 
 ---
 
@@ -113,28 +99,7 @@ All monetary values in VND millions.
 | `send_telegram` | Send message to Telegram channel | `message: string, channel: "work"\|"bug"` |
 | `submit_feedback` | Submit feature request or bug report | `severity: string, title: string` |
 
-#### `log_agent_work` — Two-Call Recipe
-
-```
-// Call 1 — session START (at top of cycle, before any work)
-const startResult = call_tool(server="vn-market", tool="log_agent_work", arguments={
-  "agent_name": "bctc-analyst",
-  "status": "running"
-})
-const logId = startResult.id
-
-// ... do cycle work ...
-
-// Call 2 — session END (after all work)
-call_tool(server="vn-market", tool="log_agent_work", arguments={
-  "agent_name": "bctc-analyst",
-  "id": logId,
-  "status": "completed",  // or "error"
-  "summary": "one-line description",
-  "findings": "signals found, E1 trick passes run, etc.",
-  "actions": ["list of actions taken"]
-})
-```
+Lifecycle recipe (2 calls, id round-trip) → `docs/agents/tools/list/log_agent_work.md`
 
 ---
 

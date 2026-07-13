@@ -4,22 +4,7 @@
 **Load when:** Agent starts, before first MCP call
 **Last Updated:** 2026-05-15
 
-## How to Invoke Tools
-
-All VN Market MCP tools are accessed via the MCP gateway `call_tool` (server="vn-market").
-Server name: **`vn-market`** (exact, no variants).
-
-```
-call_tool(
-  server: "vn-market",
-  tool: "<tool_name>",
-  arguments: { ... }
-)
-```
-
-⚠️ **Wrong** → ~~`tool_name`~~ use `tool` | ~~`input`~~ use `arguments` | ~~`vnmarket-mcp`~~ use `"vn-market"`
-
-For detailed parameters and return signatures: `docs/agents/tools/list/<tool_name>.md`
+Invoke via gateway: call_tool(server="vn-market", tool="<name>", arguments={...}) — grammar SSOT: project CLAUDE.md § MCP Tools. Wrong: tool_name/input/vnmarket-mcp.
 
 ---
 
@@ -86,32 +71,7 @@ For detailed parameters and return signatures: `docs/agents/tools/list/<tool_nam
 | `send_telegram` | Send message to Telegram channel | `message: string, channel: "market" \| "work" \| "bug"` |
 | `submit_feedback` | Submit feature request or bug report | `severity: "critical" \| "high" \| "medium" \| "low", title: string` |
 
-#### `log_agent_work` — Two-Call Recipe
-
-```
-// Call 1 — session START (at top of cycle, before any work)
-const startResult = call_tool(server="vn-market", tool="log_agent_work", arguments={
-  "agent_name": "market-watcher",
-  "status": "running"
-})
-// startResult → { "id": <number> }
-const logId = startResult.id
-
-// ... do cycle work ...
-
-// Call 2 — session END (at bottom of cycle, after all work)
-call_tool(server="vn-market", tool="log_agent_work", arguments={
-  "agent_name": "market-watcher",
-  "id": logId,
-  "status": "completed",
-  "summary": "one-line description of what was done",
-  "findings": "optional: signals found, alerts fired, etc.",
-  "actions": ["optional: list of actions taken"]
-})
-// Returns → { "ok": true, "id": <number> }
-```
-
-**Error path:** if cycle errors, pass `status: "error"` in Call 2 instead of `"completed"`. The `id` from Call 1 is always required for Call 2.
+Lifecycle recipe (2 calls, id round-trip) → `docs/agents/tools/list/log_agent_work.md`
 
 ---
 

@@ -23,32 +23,7 @@
 | `send_telegram` | Send sprint updates or task notifications |
 | `log_agent_work` | Record task completion or sprint milestone — **two-call pattern required** (see recipe below) |
 
-#### `log_agent_work` — Two-Call Recipe
-
-```
-// Call 1 — session START (at top of cycle, before any work)
-const startResult = call_tool(server="vn-market", tool="log_agent_work", arguments={
-  "agent_name": "po",
-  "status": "running"
-})
-// startResult → { "id": <number> }
-const logId = startResult.id
-
-// ... do cycle work ...
-
-// Call 2 — session END (at bottom of cycle, after all work)
-call_tool(server="vn-market", tool="log_agent_work", arguments={
-  "agent_name": "po",
-  "id": logId,
-  "status": "completed",
-  "summary": "one-line description of what was done",
-  "findings": "optional: tasks dispatched, sprint milestones, etc.",
-  "actions": ["optional: list of actions taken"]
-})
-// Returns → { "ok": true, "id": <number> }
-```
-
-**Error path:** if cycle errors, pass `status: "error"` in Call 2 instead of `"completed"`. The `id` from Call 1 is always required for Call 2.
+Lifecycle recipe (2 calls, id round-trip) → `docs/agents/tools/list/log_agent_work.md`
 
 ---
 

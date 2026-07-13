@@ -4,17 +4,7 @@
 **Load when:** Agent starts, before first MCP call
 **Last Updated:** 2026-06-07 (v3 — phantom tools replaced with live equivalents)
 
-## How to Invoke Tools
-
-All VN Market MCP tools are accessed via the MCP gateway `call_tool` (server="vn-market").
-
-```
-call_tool(
-  server: "vn-market",
-  tool: "<tool_name>",
-  arguments: { ... }
-)
-```
+Invoke via gateway: call_tool(server="vn-market", tool="<name>", arguments={...}) — grammar SSOT: project CLAUDE.md § MCP Tools. Wrong: tool_name/input/vnmarket-mcp.
 
 ---
 
@@ -73,28 +63,7 @@ All tools are **read-only**. Do NOT call any write tool in this block.
 
 ---
 
-## `log_agent_work` — Two-Call Recipe
-
-```
-// Call 1 — cycle START
-const startResult = call_tool(server="vn-market", tool="log_agent_work", arguments={
-  "agent_name": "fb-market-poster",
-  "status": "running"
-})
-const logId = startResult.id
-
-// ... do cycle work ...
-
-// Call 2 — cycle END
-call_tool(server="vn-market", tool="log_agent_work", arguments={
-  "agent_name": "fb-market-poster",
-  "id": logId,
-  "status": "completed",
-  "summary": "FB post written for YYYY-MM-DD",
-  "findings": "Sources read: ...",
-  "actions": ["wrote docs/social/fb-post-YYYY-MM-DD.md"]
-})
-```
+Lifecycle recipe (2 calls, id round-trip) → `docs/agents/tools/list/log_agent_work.md`
 
 ---
 

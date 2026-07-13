@@ -94,9 +94,10 @@ New agent. No prior sessions.
 
 ## Step 7 — Create Tool Package
 
-Create `docs/agents/tools/package/<agent_name>.md` following the pattern from reference agents read in Step 3. Include:
+Create `docs/agents/tools/package/<agent_name>.md` in the LEAN format (agent-md-factory DRY discipline — do NOT copy the old 17L grammar block or 30L log_agent_work recipe from pre-2026-07-13 packages, both are duplicated SSOT content per T-10 dedup). Include:
+- `## How to Invoke Tools` — 2 lines only: heading + `Invoke via gateway: call_tool(server="vn-market", tool="<name>", arguments={...}) — grammar SSOT: project CLAUDE.md § MCP Tools. Wrong: tool_name/input/vnmarket-mcp.`
 - File System Tools table (if dev team)
-- MCP Tools section (if cowork team)
+- MCP Tools section (if cowork team), with a `log_agent_work` table row plus one pointer line: `Lifecycle recipe (2 calls, id round-trip) → docs/agents/tools/list/log_agent_work.md` — NO inline worked-example/recipe block
 - Constraints & Permissions
 - Channel Permissions table
 
