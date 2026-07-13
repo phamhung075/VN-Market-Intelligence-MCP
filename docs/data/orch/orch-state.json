@@ -363,11 +363,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "updated_at": "2026-07-13T13:39:12Z",
-    "updated_by": "qa (FIX-DEVTEAM-BOUNDED1-NONDEV-OWNER-BOARD-FALLBACK-GATE done_verified)"
+    "status": "in_progress",
+    "active_task_id": "VCB-MISSING-PDFS",
+    "next_agent": "dev-mcp-server",
+    "next_action": "BOUNDED-1 auto-pickup claim of VCB-MISSING-PDFS — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-13T13:55:29Z",
+    "updated_by": "dev-team (bounded-1 route-correct: developer placeholder -> dev-mcp-server via zone-detect apps/mcp-server/ + detail owner)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2843,17 +2844,6 @@
         "type": "FIX",
         "zone": "scripts/",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-BLOAT-HOOK-JUSTIFY-SUPPRESS",
-        "verify_note": "prior_status=TODO"
-      },
-      {
-        "id": "VCB-MISSING-PDFS",
-        "priority": "P2",
-        "size": "XS",
-        "status": "BACKLOG",
-        "title": "Re-source missing VCB PDFs or clean dead rows",
-        "type": "OPS",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#VCB-MISSING-PDFS",
         "verify_note": "prior_status=TODO"
       },
       {
@@ -8390,9 +8380,27 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-13T13:20:23Z",
+    "last_triaged_at": "2026-07-13T13:54:02Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "VCB-MISSING-PDFS",
+        "priority": "P2",
+        "size": "XS",
+        "status": "IN_PROGRESS",
+        "title": "Re-source missing VCB PDFs or clean dead rows",
+        "type": "OPS",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#VCB-MISSING-PDFS",
+        "verify_note": "prior_status=TODO",
+        "promoted_at": "2026-07-13T13:54:02Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "claimed_at": "2026-07-13T13:54:18Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "dev-mcp-server"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
