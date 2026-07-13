@@ -6359,7 +6359,23 @@
         "verification_gate": "The 2 currently-failing assertions in apps/mcp-server/src/__tests__/daily-foreign-flow-integration.test.ts pass RAW (not skipped/deleted) + full targeted regression stays green; AND RAW-live: a Class-A tool (marketWideForeignFlow / foreignFlow) returns the per-ticker foreign value for a code whose daily_foreign_flow row exists but whose daily_ohlcv bar has NOT yet landed.",
         "note": "ROOT CAUSE (RAW-confirmed by TASK_2005 test + schema read): view daily_ohlcv_with_flow in apps/mcp-server/src/infrastructure/db/schema-market-data.ts = 'FROM daily_ohlcv o LEFT JOIN daily_foreign_flow f ON f.code=o.code AND f.date=o.date' — anchored on daily_ohlcv. A row that exists ONLY in daily_foreign_flow (FF written, no OHLCV bar yet) is NEVER returned; the inner COALESCE only picks the column winner AFTER an anchor daily_ohlcv row exists. CONSEQUENCE: TASK_2002 closed the WRITE side of R-1 (FF value always lands in daily_foreign_flow, no permanent loss). TASK_2003 migrated 5 Class-A read sites FROM daily_ohlcv TO the view but did NOT close R-1: all 5 (marketWideForeignFlowTool.ts, foreignFlowTools.ts, foreignFlowAlertJob.ts, assembleEveningSummary.ts, franceSummaryJob.ts) still return 0 for a ticker before its OHLCV bar lands = the live 'chua tra so tung ma' symptom. CANDIDATE FIX SHAPES (architect chooses ONE): (A) make view bidirectional / FULL-OUTER-emulated = SELECT over a UNION of daily_foreign_flow(code,date) keys and daily_ohlcv(code,date) keys, then COALESCE both planes so an FF-only key surfaces; (B) point the 5 Class-A sites at daily_foreign_flow directly with a fallback LEFT JOIN to daily_ohlcv for price columns (mirrors the Class-B pattern TASK_2004 already used). Touches a SHARED view + up to 5 read sites -> architect-led design first, then dev-mcp-server impl. REFS: test apps/mcp-server/src/__tests__/daily-foreign-flow-integration.test.ts (RAW 2/5 assertions fail, genuine); commits d15eedbec (test+journal) + 2eafbb6a2 (notebook); handoff docs/handoffs/TASK_2005-daily-ff-integration-test.md; decision journal docs/agent-memory/decisions/sprint-FLOW-PRICE-ALPHA-LOOP-dev-mcp-server.md STEP dev-mcp-server-S7.",
         "supervised_by": "po-groom-20260713T0937Z",
-        "supervised_note": "architect-owned FIX (next_agent=architect) -> supervised cascade, not a BOUNDED-1 atomic dev pick. Removed from idle auto-pickup; resume via router supervised dispatch."
+        "supervised_note": "architect-owned FIX (next_agent=architect) -> supervised cascade, not a BOUNDED-1 atomic dev pick. Removed from idle auto-pickup; resume via router supervised dispatch.",
+        "origin_signal_id": "ci_red:29f92c5bef668f5991052631619cfb6071be14ca:bun test",
+        "ci_red_gate": {
+          "check_id": "CI-RED-29f92c5b",
+          "head_sha": "29f92c5bef668f5991052631619cfb6071be14ca",
+          "run_id": 29279251504,
+          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/29279251504",
+          "failing_job": "bun test",
+          "failing_test_file": "apps/mcp-server/src/__tests__/daily-foreign-flow-integration.test.ts",
+          "failing_assertions": 2,
+          "test_result": "14471 pass / 51 skip / 2 fail",
+          "signal_dedup_key": "ci_red:29f92c5bef668f5991052631619cfb6071be14ca:bun test",
+          "verification_gate": "ci_green_on_subsequent_push",
+          "linked_by": "po (coordination_session 69b0312e — dev-team triage tick 2026-07-13T20:07Z)",
+          "linked_at": "2026-07-13T20:38:04Z",
+          "note": "ACTIVE merge-gate blocker. The 2 deliberately-RED behavioral-gate assertions in daily-foreign-flow-integration.test.ts (T-3 view correctness + R-1 elimination gate) fail bun test on main HEAD 29f92c5b (committed RED by design in d15eedbec, PO-accepted). They flip GREEN when this view fix lands (candidate shapes A/B in .note). NO duplicate CI-RED-29f92c5b-FIX minted — this pre-existing root-cause row IS the fix (dedup: same failure, one open FIX). Dispatch via router supervised cascade to architect (next_agent), then dev-mcp-server impl. CI green on subsequent push == the 2 assertions pass RAW == this row DONE."
+        }
       },
       {
         "id": "FIX-GAP-STALENESS-DETECTOR-CALENDAR-AWARE",
