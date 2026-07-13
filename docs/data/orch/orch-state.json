@@ -363,11 +363,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "updated_at": "2026-07-13T12:43:51Z",
-    "updated_by": "qa"
+    "status": "in_progress",
+    "active_task_id": "TE-T13",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of TE-T13 — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-13T12:51:39Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -5648,24 +5649,6 @@
         "supervised_note": "ops-owned FIX, null next_agent, no backlog-detail entry -> code non-dev-owner gate is detail-blind. Supervised dispatch to ops; removed from BOUNDED-1 idle auto-pickup (would mis-route to developer placeholder)."
       },
       {
-        "id": "TE-T13",
-        "title": "T-13 Purge size-justification line-1 changelogs to <=300 chars across 6 hot flows + cap in factory [~30-60k tok/day]",
-        "owner": "developer",
-        "status": "BACKLOG",
-        "type": "CLEAN",
-        "size": "S",
-        "priority": "P1",
-        "wave": 1,
-        "est_saving": "~30-60k tok/day (partly discounted by T-01 gating)",
-        "zone": "docs/agents/",
-        "sprint": "TOKEN-ECONOMY-AUDIT",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-13",
-        "note": "SEQUENCING: depends on TE-T01 (T-01 cowork prompt-gating discounts this file's per-tick savings; land gate first, do NOT double-count). Trim size-justification markers to <=300 chars (market-analyst form), delete dated change entries (they live in git). Encode cap in agent-md-factory skill. Pure comment edit.",
-        "depends_on": [
-          "TE-T01"
-        ]
-      },
-      {
         "id": "TE-T08",
         "title": "T-08 commit-mutex SKILL: invert to ~60L hot card + lazy backoff/failure refs [~60-90k tok/day]",
         "owner": "developer",
@@ -8369,9 +8352,33 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-13T12:34:23Z",
-    "last_triaged_by": "developer (TE-T10 review handoff)",
-    "in_progress": []
+    "last_triaged_at": "2026-07-13T12:51:28Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
+    "in_progress": [
+      {
+        "id": "TE-T13",
+        "title": "T-13 Purge size-justification line-1 changelogs to <=300 chars across 6 hot flows + cap in factory [~30-60k tok/day]",
+        "owner": "developer",
+        "status": "IN_PROGRESS",
+        "type": "CLEAN",
+        "size": "S",
+        "priority": "P1",
+        "wave": 1,
+        "est_saving": "~30-60k tok/day (partly discounted by T-01 gating)",
+        "zone": "docs/agents/",
+        "sprint": "TOKEN-ECONOMY-AUDIT",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-13",
+        "note": "SEQUENCING: depends on TE-T01 (T-01 cowork prompt-gating discounts this file's per-tick savings; land gate first, do NOT double-count). Trim size-justification markers to <=300 chars (market-analyst form), delete dated change entries (they live in git). Encode cap in agent-md-factory skill. Pure comment edit.",
+        "depends_on": [
+          "TE-T01"
+        ],
+        "promoted_at": "2026-07-13T12:51:28Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-13T12:51:39Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
