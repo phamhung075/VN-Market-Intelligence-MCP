@@ -89,3 +89,12 @@
 **what-considered:** 69/10 vs dev's claimed 62/7 — differs, but within this sprint's own established flaky baseline (qa-S6: 64/5; prior gates 63-67/4-10) → additional flake from full 1203-file parallel run, not a new regression (zero overlap with changed files either way).
 **why-decision:** AC1 (discriminated outcome, no silent `done`), AC2 (confidence gate both directions), MUST-FIX Risk-1 (`overwritePdfPathUnconditional` proven via REAL in-memory DB — sibling test shows ensureShellRow alone does NOT clobber, second test shows the explicit UPDATE DOES) all pass code review + tests. SQL parameterized, no `process.env`/secrets, layering unchanged. APPROVED.
 **why-change:** No change from plan.
+
+### STEP qa-S11 · qa · 2026-07-13T21:44:00Z
+**task-id:** FIX-DAILY-FF-VIEW-JOIN-ANCHOR
+**what-done:** Merge-gate signoff on dev commit d71f45949, CI-red unblocker. Read live `schema-market-data.ts:162-200`, confirmed byte-match to architect brief's prescribed DROP+unconditional CREATE VIEW SQL (LEFT JOIN UNION ALL anti-join, 15 cols). RAW re-ran merge-gate pair myself: `daily-foreign-flow-integration.test.ts`+`daily-foreign-flow-schema.test.ts` = 20/0 (matches router). Own 9-file consumer/isolation sweep (1518, MSG-1, 1134, 1516, 1517, 1503, 1133, FIX-DIGEST-FF-ZERO-PAD, TASK-2004) = 79/0. `bun tsc --noEmit` 0 errors. Combined RAW total 99/0 across 11 files, did not re-run full 42-min suite (router already RAW-verified full-suite fail set has zero daily-ff overlap; not tick-appropriate to repeat).
+**what-considered:**
+- Redo full 42-min `bun test` vs targeted+consumer sweep — targeted: router already isolation-verified full-suite noise is unrelated (grepped, 0 daily-ff matches), redoing wastes ~40min for zero new signal.
+- DDD: grepped diff for new `import` lines (zero) + `git show --stat` (exactly 1 production file, infra/db layer) — confirms zero domain touch, no new ports, matches architect brief's own claim.
+**why-decision:** View SQL exact match to brief, companion R-1 test assertion diff exact match to brief's prescribed toBe(1)+foreign_buy_vol+comment fix, all RAW tests green, DDD clean, security clean (static DDL, no new env/secrets). APPROVED.
+**why-change:** No change from plan.
