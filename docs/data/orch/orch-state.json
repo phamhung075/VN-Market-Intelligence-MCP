@@ -365,10 +365,10 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "TE-T04",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of TE-T04 — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-13T10:52:19Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "next_agent": "qa",
+    "next_action": "TE-T04 (strip Example Invocation tails, 6 cowork packages) landed, dev-self-verified, moved in_progress->review. QA to RAW-verify tool tables byte-identical + pointer line present + no stray WRONG example remains, then flip REVIEW->DONE_VERIFIED.",
+    "updated_at": "2026-07-13T10:59:48Z",
+    "updated_by": "developer"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -8284,6 +8284,32 @@
         "qa_report": "reports/TASK_REPORT_FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN.md",
         "reviewed_at": "2026-07-13T09:17:26Z",
         "verified_by": "qa"
+      },
+      {
+        "id": "TE-T04",
+        "title": "T-04 Strip 'Example Invocation' tails from 6 high-cadence cowork tool packages [~150k tok/weekday]",
+        "owner": "developer",
+        "status": "REVIEW",
+        "type": "CLEAN",
+        "size": "S",
+        "priority": "P1",
+        "wave": 1,
+        "est_saving": "~150k tok/weekday",
+        "zone": "docs/agents/",
+        "sprint": "TOKEN-ECONOMY-AUDIT",
+        "depends": [],
+        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-04",
+        "note": "Delete '## Example Invocation' from market-watcher/news-scout/alert-commander/unified-agent/qa-responder/digest-predict packages; keep tool tables + add 1 pointer to tools/list/<tool>.md. Also fixes a stale WRONG example (get_price_history tickers vs code). No behavior change.",
+        "promoted_at": "2026-07-13T10:52:11Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-13T10:52:19Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "dev_completed_at": "2026-07-13T10:59:48Z",
+        "dev_note": "Example Invocation sections deleted from all 6 packages (market-watcher/news-scout/alert-commander/unified-agent/qa-responder/digest-predict), commit 2c29f8e73 -- each replaced with 1 pointer line to tools/list/<tool_name>.md. Tool tables byte-identical pre/post (row-count verified). Also resolves the brief's flagged get_price_history tickers-vs-code drift (deleted with the section; tools/list/get_price_history.md was already correct). Docs-only, no apps/ code touched -- no bun test/tsc applicable. QA hand-off: verify (a) Example Invocation heading gone from all 6, (b) tool tables unchanged, (c) 1 pointer line present per file, (d) no other section touched.",
+        "updated_at": "2026-07-13T10:59:48Z",
+        "updated_by": "developer"
       }
     ],
     "qa": [],
@@ -8303,31 +8329,9 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-13T10:52:11Z",
-    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "TE-T04",
-        "title": "T-04 Strip 'Example Invocation' tails from 6 high-cadence cowork tool packages [~150k tok/weekday]",
-        "owner": "developer",
-        "status": "IN_PROGRESS",
-        "type": "CLEAN",
-        "size": "S",
-        "priority": "P1",
-        "wave": 1,
-        "est_saving": "~150k tok/weekday",
-        "zone": "docs/agents/",
-        "sprint": "TOKEN-ECONOMY-AUDIT",
-        "depends": [],
-        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-04",
-        "note": "Delete '## Example Invocation' from market-watcher/news-scout/alert-commander/unified-agent/qa-responder/digest-predict packages; keep tool tables + add 1 pointer to tools/list/<tool>.md. Also fixes a stale WRONG example (get_price_history tickers vs code). No behavior change.",
-        "promoted_at": "2026-07-13T10:52:11Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-13T10:52:19Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "last_triaged_at": "2026-07-13T10:59:48Z",
+    "last_triaged_by": "developer (TE-T04 review handoff)",
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
