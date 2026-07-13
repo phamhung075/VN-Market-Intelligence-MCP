@@ -83,3 +83,20 @@
   than overriding my own zone boundary on a launching agent's instruction. Reported the exact
   validated jq transform for router/po to re-run + commit.
 - Decision journal: `docs/agent-memory/decisions/sprint-SYSTEMIC-REMAKE-P1-agent-father.md` S5.
+
+## 2026-07-13T20:15Z — UC-RDL-P1 lock-namespace doc fix (router-dispatched, brief docs/architecture-briefs/2026-07-13-uc-rdl-p1-lock-namespace-adjudication.md)
+
+- Doc-only fix: `.claude/skills/dispatch-claim/SKILL.md` (Canonical Namespace table L39 + §Sprint-Task
+  Outer Wrap L267-284) and `.claude/skills/task-lock/SKILL.md` (L29) documented the sprint-task
+  chain-mutex `task_id` VALUE prefix as `sprint-task:<id>`; 100% of live flows + server code use
+  `task:<id>`. Corrected both to `task:<id>`; `task_kind` stays `"sprint-task"` (id-prefix and kind
+  are different axes — did not rename the enum). Also reworded the L269 intro sentence in the same
+  section for internal consistency (not explicitly line-cited in the brief but directly adjacent to
+  the two named edits — same file/section, no scope creep).
+- Rejected touching `docs/handoffs/TASK_1979-p1-af-4-task-lock-skill-rebind.md` (a completed
+  historical handoff also containing the old string) — out of the brief's named scope (two SKILL.md
+  files only); left L492 provenance prose in dispatch-claim untouched per brief instruction; verified
+  `CLAUDE.md`'s `intent:` pattern (Phase B) unchanged (that merge was adjudicated a false positive).
+- Commit `18885ff50`, explicit pathspec, exactly the 2 target files — none of the ~89 dirty peer
+  files in the tree were staged.
+- Decision journal: `docs/agent-memory/decisions/sprint-ULTRACODE-AUDIT-FIXALL-agent-father.md` S1.
