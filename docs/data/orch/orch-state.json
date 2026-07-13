@@ -614,8 +614,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-13T16:12:44Z",
-    "_updated_by": "po-reconcile (wave-1 deploy: 5 rows review->done_verified)",
+    "_updated_at": "2026-07-13T17:28:19Z",
+    "_updated_by": "po (dev-team triage: FR-FUNC-02-FIX->DONE_VERIFIED reclassify; +FIX-PDFEXTRACTOR-TIER1-OCR-TIMEOUT; +DEBT-SCRIPTS-MIGRATIONS-TSC-COVERAGE)",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -2989,16 +2989,6 @@
         "type": "fix",
         "zone": "qa",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#SYS-TEST-01-FIX"
-      },
-      {
-        "id": "FR-FUNC-02-FIX",
-        "priority": "normal",
-        "size": "S",
-        "status": "BACKLOG",
-        "title": "Fix FR-FUNC-02: Does get_bctc_full return structured financial data for a ticker with known BCTC data",
-        "type": "fix",
-        "zone": "dev-mcp-server",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FR-FUNC-02-FIX"
       },
       {
         "id": "FR-DEGRADE-01-FIX",
@@ -6409,6 +6399,36 @@
         ],
         "created_at": "2026-07-13T16:12:44Z",
         "created_by": "po-triage-20260713T1612Z (new-anomaly route)"
+      },
+      {
+        "id": "FIX-PDFEXTRACTOR-TIER1-OCR-TIMEOUT",
+        "priority": "high",
+        "size": "M",
+        "status": "BACKLOG",
+        "title": "pdfExtractorClient Tier-1 120s OCR timeout -> silent BCTC reflow failure (durable: fail-loud + async re-route for large scanned PDFs)",
+        "type": "FIX",
+        "zone": "apps/mcp-server/",
+        "created_at": "2026-07-13T17:28:19Z",
+        "created_by": "po (dev-team signal triage)",
+        "origin_signal": "docs/signals/processed/dev-mcp-server-2026-07-13T1655Z-pdfextractor-tier1-ocr-timeout.json",
+        "deploy_gated": true,
+        "followup_of": "HPG-DISCOVER-CONSOLIDATED-PDF",
+        "status_note": "DURABLE FIX for a recurring SILENT-FAILURE class — NOT a bare timeout bump. Evidence: a direct 480s call to pdf-extractor:5001/extract still did not return and tesseract ran 17+ min continuously on HPG Q4-2025 consolidated (33pp scanned), so any fixed larger SYNC timeout is still a symptom patch and a 17+ min synchronous HTTP hold is itself fragile. Root: pdfExtractorClient.ts Tier-1 hardcodes AbortSignal.timeout(120_000); when it (and all 3 tiers) fail, push-bctc-pdf returns {ok:true} and marks bctc_vps_queue row done (attempts=1), leaving financial_reports scalars silently stale with NO error surfaced. TWO-PART AC: (1) FAIL-LOUD (the root cause) — push-bctc-pdf MUST NOT return ok:true and MUST NOT mark the queue row done when OCR times out / all tiers fail; propagate the error so the queue row stays retryable (status pending/failed, attempts incremented) and the staleness is surfaced (BUG/observability signal), never silently swallowed. (2) LARGE-PDF PATH — route large/scanned PDFs (size or page-count threshold) through the async /api/trigger-pek-extract path instead of the synchronous 3-tier gauntlet, marking the queue row done only when the reflow completes with real scalars. Architect design touch: async-reroute vs sync-timeout-bump sub-decision + threshold value. DEPLOY-GATED (mcp-server rebuild): per 2026-07-13 ruling, dispatch OPS to attempt the rebuild once through the front door and capture any classifier denial verbatim — do NOT default to waiting for the user. POST-DEPLOY: reset bctc_vps_queue row 223 (HPG 2025-Q4) status done->pending to re-trigger the consolidated reflow (it is 'done' from the silent-failure path and will NOT auto-reparse without an explicit reset). Closes the HPG Q4-2025 consolidated data-coverage-gap (queue row 223 source_url + on-disk 7,135,524B PDF already correct; only OCR reflow blocked). VERIFY: financial_reports row 918a7abd-... holds real consolidated hop-nhat scalars (not stale standalone rieng) after reflow."
+      },
+      {
+        "id": "DEBT-SCRIPTS-MIGRATIONS-TSC-COVERAGE",
+        "priority": "low",
+        "size": "S",
+        "status": "BACKLOG",
+        "type": "CLEAN",
+        "zone": "cross-service/",
+        "plan_only": true,
+        "deploy_gated": false,
+        "created_at": "2026-07-13T17:28:19Z",
+        "created_by": "po (dev-team signal triage)",
+        "origin_signal": "docs/signals/processed/qa-2026-07-13T1710Z-scripts-migrations-tsc-coverage-gap.json",
+        "title": "scripts/migrations/ outside all tsconfig include globs -> type errors ship silently (add tsc coverage + fix 3 errors)",
+        "status_note": "PLAN-ONLY low DEBT; ZERO runtime impact (Bun strips types; both scripts already ran live). scripts/migrations/ is outside the include globs of BOTH root tsconfig.json AND apps/mcp-server/tsconfig.json, so `pnpm --filter vn-market check` never type-checks it; any router/dev 'tsc-clean' claim on those scripts is false-clean-by-omission. Design choice (architect): (a) add scripts/migrations/ (or scripts/) to an existing tsconfig include OR a dedicated scripts tsconfig; OR (b) a standalone `tsc --noEmit` pass over scripts/ wired into the check/CI gate. Then fix the 3 QA-surfaced errors (isolated tsc 5.9.3): (1) discover-consolidated-bctc-pdf.ts:395 new Blob([pdfBytes]) — Uint8Array<ArrayBufferLike> not assignable to BlobPart (shipped commit 90c975415, HPG-DISCOVER); (2)+(3) reparse-bctc-reports.ts 2 pre-existing own errors (already shipped — confirms gap is directory-wide, not a single-task regression). AC: chosen tsc gate covers scripts/migrations/ AND all 3 errors resolved AND `pnpm check` (or the new pass) green."
       }
     ],
     "closed_sprints": [
@@ -8047,6 +8067,24 @@
         "verified_by": "qa",
         "qa_resolution_note": "DISCOVERY DELIVERABLE VERIFIED LIVE: RAW-verified myself via docker exec — consolidated hop-nhat PDF 7,135,524B on disk, bctc_vps_queue id=223 source_url corrected + status=done. financial_reports row 918a7abd confirmed still stale (reflow gap) — matches disclosed caveat exactly, routed to follow-up FIX-PDFEXTRACTOR-TIER1-OCR-TIMEOUT, not this task's defect. CAUTION (non-blocking): scripts/migrations/discover-consolidated-bctc-pdf.ts:395 has 1 real tsc strict-mode error (Uint8Array/BlobPart) invisible to the project's actual tsc gate since scripts/ is outside all tsconfig include globs — same pre-existing blind spot confirmed present in sibling reparse-bctc-reports.ts (2 own errors); zero runtime impact, script already ran successfully live.",
         "qa_journal_ref": "docs/agent-memory/decisions/sprint-FLOW-PRICE-ALPHA-LOOP-qa.md#qa-S9"
+      },
+      {
+        "id": "FR-FUNC-02-FIX",
+        "priority": "normal",
+        "size": "S",
+        "status": "DONE_VERIFIED",
+        "title": "Fix FR-FUNC-02: Does get_bctc_full return structured financial data for a ticker with known BCTC data",
+        "type": "fix",
+        "zone": "dev-mcp-server",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FR-FUNC-02-FIX",
+        "promoted_at": "2026-07-13T17:28:19Z",
+        "promoted_by": "po (dev-team triage disposition)",
+        "verified_by": "po",
+        "reviewed_at": "2026-07-13T17:28:19Z",
+        "qa_verdict": "RECLASSIFIED-FALSE-WARN-NO-CODE",
+        "disposition": "expectation-reclassify (CLUSTER-G auditor probe-error); row mis-scoped as a dev code-fix (type=fix, zone=dev-mcp-server) — corrected to no-code",
+        "router_verify_note": "PO RAW-verified 2026-07-13T17:28Z via gateway call_tool(vn-market, get_bctc_full, code=HPG): returns fully-structured financial data (income statement net_revenue 52,900.8 tỷ; balance sheet total_assets 259,327.5 tỷ, equity 139,781.8 tỷ; ratios ROE 6.5%; structured_data JSON present; source_tier=2, confidence 80%, published 2026-06-07). CHECK PASSES. The original FR-FUNC-02 WARN was an auditor probe-error (CLUSTER-G): the 2026-06-10 probe used ticker VCB, which had NO ingested BCTC at that time, so get_bctc_full correctly graceful-degraded to 'Chưa có dữ liệu BCTC' — expected degrade behavior, not a code defect. Corroborated by docs/agent-memory/decisions/sprint-QUALITY-BURNDOWN-phase4-verdict.md ('FR-FUNC-02 -> PASS: graceful degrade when no data is expected behavior') and docs/architecture-briefs/2026-06-10-quality-burndown-strategy.md line 25/69 (CLUSTER-G, verdict RECLASSIFY, 'Fix expected. No code', owner qa/system-auditor). No code work warranted; NOT a data-ingest gap (get_bctc_full works for ingested tickers; VCB coverage is a separate matter this check does not exercise).",
+        "journal_ref": "docs/agent-memory/decisions/po-decisions.md#FR-FUNC-02-FIX"
       }
     ],
     "head": {
