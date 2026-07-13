@@ -9208,6 +9208,24 @@
       "baseline_note": "Existing test suite is GREEN but FALSE-GREEN -- never exercises the real heading format; treat green baseline as unreliable, add real-format cases FIRST before trusting it again",
       "origin_signal": "docs/signals/processed/claude-manager-helper-2026-07-12T065101Z-notebook-autoprune-regex-mismatch.json",
       "updated_at": "2026-07-12T07:17:22Z"
+    },
+    {
+      "id": "FIX-DEVTEAM-STATUSFLIP-LANEMOVE-RULE",
+      "title": "dev-team flow docs missing explicit status-flip=lane-move MUST-clause (3rd confirmed occurrence stalls WIP-release)",
+      "type": "FIX",
+      "status": "BACKLOG",
+      "priority": "P1",
+      "size": "S",
+      "zone": "docs/agents/dev-team/flow/",
+      "owner": "agent-father",
+      "next_agent": "agent-father",
+      "disposition": "Re-routed 2026-07-13 by po-groom. Board owner was cowork-refactory-expert = MIS-ROUTE (that agent rewrites cowork .md files only, dispatch SKILL line 45). This fix edits dev-team AGENT flow docs (docs/agents/dev-team/flow/main.md + execute-tier.md), which per dispatch SKILL line 47 (create/edit/review/maintain agent -> agent-father, all agent-file lifecycle) is agent-father domain. Board owner+next_agent corrected to agent-father; this detail entry added so promote-bounded1.jq non-dev-owner / non-dev-next_agent gates cover the row going forward (the row previously had NO detail entry, so both gates were silent and its non-dev board owner went unchecked — the exact promote-gate gap now tracked by FIX-DEVTEAM-BOUNDED1-NONDEV-OWNER-BOARD-FALLBACK-GATE). fix_spec is COMPLETE on the board row: one S-sized doc edit adding a MUST-clause (any agent flipping .status to a terminal/review token MUST move array-membership into the matching task_board.<lane>[] in the SAME write + sync .head). No decomposition needed. 3rd confirmed occurrence crosses the escalation bar decisively (recurring-bug 2+); router hand-dispatch of agent-father recommended.",
+      "recurrence_count": 3,
+      "recurrence_note": "3 confirmed hits: FACTORY-KINHDICH-name-price-score-constants (2026-07-09T19:37Z), GAP-CHEF-SYNTHESIS-A-FLOW-PERSIST (2026-07-10T08:55Z commit 7320e4f50), pm-decompose-FIX-BCTC-PDFPULL new-mint READY-in-backlog (2026-07-10T12:05Z). See feedback_review_status_stuck_in_inprogress_lane_blocks_wip.md.",
+      "created_at": "2026-07-13T08:27:23Z",
+      "created_by": "po-groom-20260713",
+      "groomed_at": "2026-07-13T08:27:23Z",
+      "groomed_by": "po"
     }
   ]
 }

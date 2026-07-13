@@ -5527,14 +5527,16 @@
         "priority": "P1",
         "size": "S",
         "zone": "docs/agents/dev-team/flow/",
-        "owner": "cowork-refactory-expert",
+        "owner": "agent-father",
         "title": "dev-team flow docs missing explicit status-flip=lane-move rule — 2nd occurrence stalls WIP-release",
         "desc": "Board lanes (task_board.backlog/ready/in_progress/qa/review/done/done_verified) are separate ARRAYS; scripts/devteam-backlog-promote-bounded1.jq computes wip by array membership, not by reading .status. A dispatched agent that edits a row .status from IN_PROGRESS to REVIEW in-place without physically moving the row into task_board.review[] leaves WIP pinned even though .head looks idle-eligible. Confirmed 2x: FACTORY-KINHDICH-name-price-score-constants (dev-kinh-dich, 2026-07-09T19:37Z) and GAP-CHEF-SYNTHESIS-A-FLOW-PERSIST (cowork-refactory-expert, 2026-07-10T08:55Z, commit 7320e4f50 — status field said REVIEW but row stayed in task_board.in_progress[0], .head also stale-pointed at it as active WIP). Both times router caught it via post-dispatch RAW-verify and fixed with a manual orch-apply.sh-gated lane-move, not the flow doc itself.",
         "fix_spec": "Add an explicit MUST-clause to docs/agents/dev-team/flow/main.md (execute-tier.md dispatch-wrap section) and/or the shared task-closeout convention doc: any agent that flips a task .status to a terminal/review token (REVIEW, DONE, DONE_VERIFIED, QA) MUST, in the SAME write, move the row array-membership into the matching task_board.<lane>[] array — never just patch .status in place. Also sync .head to idle (or to the next legitimate active_task_id) in that same write. Reference: feedback_review_status_stuck_in_inprogress_lane_blocks_wip.md memory (originSessionId 5a45feda-431e-46c8-941d-a6539a0eca77) for both prior occurrences and root-cause detail.",
         "created_at": "2026-07-10T08:58:53Z",
         "created_by": "dev-team",
         "opened_by": "dev-team",
-        "detail": " | [router-3rd-occurrence-20260710T1205Z] 3RD CONFIRMED HIT: pm decomposed FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION into 7 subtasks (D1/D2/D3A/D3B/D3C/R-HIGH-1/R-HIGH-2), all minted with status=READY but physically placed in .task_board.backlog[] (coherence validator itself expects backlog-lane status=BACKLOG) — invisible to BOUNDED-1 array-membership WIP scan; PM own claim (\"developer can start immediately\") would have silently no-op'd. Distinct mechanism from the first 2 occurrences (single-row REVIEW-status-stuck-in-in_progress[]) — this time NEW-MINT rows given a post-decomposition status token without the matching lane placement. Router fixed manually (moved unblocked D1 to ready[], relabeled the 6 dependency-blocked rows READY->BACKLOG in place) per standing workaround. 3rd occurrence crosses the escalation bar decisively — this P2 fix should be prioritized for the next dev-team BOUNDED-1 pick."
+        "detail": " | [router-3rd-occurrence-20260710T1205Z] 3RD CONFIRMED HIT: pm decomposed FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION into 7 subtasks (D1/D2/D3A/D3B/D3C/R-HIGH-1/R-HIGH-2), all minted with status=READY but physically placed in .task_board.backlog[] (coherence validator itself expects backlog-lane status=BACKLOG) — invisible to BOUNDED-1 array-membership WIP scan; PM own claim (\"developer can start immediately\") would have silently no-op'd. Distinct mechanism from the first 2 occurrences (single-row REVIEW-status-stuck-in-in_progress[]) — this time NEW-MINT rows given a post-decomposition status token without the matching lane placement. Router fixed manually (moved unblocked D1 to ready[], relabeled the 6 dependency-blocked rows READY->BACKLOG in place) per standing workaround. 3rd occurrence crosses the escalation bar decisively — this P2 fix should be prioritized for the next dev-team BOUNDED-1 pick.",
+        "next_agent": "agent-father",
+        "routing_note": "re-routed cowork-refactory-expert->agent-father (dev-team flow-doc edit; dispatch SKILL L47 agent-file lifecycle) by po-groom 2026-07-13T08:27:23Z"
       },
       {
         "id": "FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN",
@@ -6500,6 +6502,23 @@
         "created_at": "2026-07-13T07:37:00Z",
         "created_by": "po-triage-split-20260713T0737Z",
         "verify_note": "split_from=FIX-OPS-CRONJOBRUNS-TIMESTAMP-FALSIFICATION-GUARDRAIL AC-2+AC-3; dispatch=BOUNDED-1 eligible (dev owner)"
+      },
+      {
+        "id": "FIX-DEVTEAM-BOUNDED1-NONDEV-OWNER-BOARD-FALLBACK-GATE",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "size": "S",
+        "zone": "scripts/",
+        "owner": "dev",
+        "next_agent": "developer",
+        "title": "promote-bounded1.jq non-dev-owner gate misses BOARD-level owner when a row has no backlog-detail entry",
+        "desc": "scripts/devteam-backlog-promote-bounded1.jq is_non_dev_owner_unrouted() reads ONLY $detail_items[.id].owner (detail-authoritative). When a backlog row has NO backlog-detail.json entry (detail owner absent/empty), the gate evaluates NOT-gated even though the BOARD-level .owner names a non-dev deliberate-launch agent (po/ops/architect/agent-father/cowork-refactory-expert) AND .next_agent is null — so the row is auto-promotable and falls through zone-detect Tier-3 to the generic developer placeholder (mis-route). Surfaced 2026-07-13 by FIX-DEVTEAM-STATUSFLIP-LANEMOVE-RULE (board owner=cowork-refactory-expert, no detail entry) which BOUNDED-1 ranked top-pick; router withheld auto-launch. Class size = 10 live backlog rows (grep-verified: non-dev board owner + null next_agent + no detail entry).",
+        "fix_spec": "In is_non_dev_owner_unrouted compute an EFFECTIVE owner = $detail_items[.id].owner if present-and-non-empty ELSE the board-level .owner (fallback), mirroring the inline-OR-detail union/precedence already used by effective_supervised/effective_children. Apply the existing non-dev-pattern (^dev(-|$)|^developer$ negation) + null-board-next_agent gate against that effective owner. Conservative defaults unchanged: dev-role owner, empty owner in BOTH places, or a non-empty board next_agent = NOT gated (promotable). Add jq fixtures: (a) no-detail + non-dev board owner + null next_agent -> gated; (b) no-detail + non-dev board owner + non-empty next_agent -> NOT gated; (c) detail owner present still authoritative over board owner. Do NOT gate rows carrying an explicit board next_agent — they are already correctly routed. Fail-toward-safety: this only REMOVES rows from idle auto-pickup; router/PO manual dispatch of any gated row is unaffected.",
+        "created_at": "2026-07-13T08:27:23Z",
+        "created_by": "po-groom-20260713",
+        "opened_by": "po",
+        "sibling_of": "FIX-DEVTEAM-BOUNDED1-DETAIL-DISPOSITION-GATE"
       }
     ],
     "closed_sprints": [
