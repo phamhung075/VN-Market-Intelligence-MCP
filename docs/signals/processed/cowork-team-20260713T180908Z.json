@@ -1,0 +1,57 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "2026-07-13T18:09:08.286Z",
+  "payload": {
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "18:00",
+    "matched": [
+      "bctc-analyst-slot-2"
+    ],
+    "won": [
+      "bctc-analyst-slot-2"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 7,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "closed",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "bctc-analyst-slot-2": "cadence"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-2": 240
+    },
+    "guaranteed": false,
+    "last_fired_timestamp": "2026-07-13T18:08:34.648Z",
+    "last_fired_slots": [
+      "bctc-analyst-slot-2"
+    ],
+    "last_fired_write_errors": null,
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 4,
+    "tick_snapshot_built": null,
+    "tick_snapshot_skip_reason": "bctc-analyst flow references neither cycle-snapshot nor get_cycle_bootstrap — no snapshot consumer; build skipped per token-economy",
+    "note": "bctc-analyst-slot-2 off-market cadence fire (cron 0 18 UTC); last_fired was 6d stale (2026-07-07T18:03:06Z). Standing gaps unchanged: emit_pressure_state cycle_snapshot_promoted:false → last_regime stays unknown (dev-team/system-auditor/PO loop concern, not dispatcher). stale_warning flipped true on this emit — advisory for next tick read."
+  },
+  "_processed": {
+    "fingerprint": "db1697359fc053d0770fab60563a576dafd9c321fefdd21570365f213a0e8687",
+    "processedAt": "2026-07-13T18:18:58Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
