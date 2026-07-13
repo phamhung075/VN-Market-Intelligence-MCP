@@ -1,0 +1,77 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "2026-07-13T16:16:22Z",
+  "payload": {
+    "fire_time": "2026-07-13T16:16:22Z",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "market-watcher-eod",
+      "alert-commander-critical"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "market-watcher-eod",
+      "alert-commander-critical"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 7,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "closed",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "collision_warned": [
+      "market-watcher"
+    ],
+    "tick_snapshot_built": "docs/data/cycle-snapshot-16:11.json",
+    "due_reasons": {
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence",
+      "market-watcher-eod": "cadence",
+      "alert-commander-critical": "cadence"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": 240,
+      "market-watcher-offhours": 240,
+      "market-watcher-eod": 240,
+      "alert-commander-critical": 240
+    },
+    "last_fired_timestamp": "2026-07-13T16:15:42.000Z",
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "market-watcher-eod",
+      "alert-commander-critical"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "16:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 3,
+    "note": "4-slot FIRE (adaptive). Collision WARN emitted: agent market-watcher matched 2 slots (offhours cron 0 */4 + eod cron 0 16 * * 1-5 both hit 16:00Z weekday) — both spawned per R3. market-watcher-eod last_fired was 2026-07-03 (10d stale, now current). Shared tick-snapshot cycle-snapshot-16:11.json built (11379B) for the 4 market-consuming agents. cycle_snapshot_promoted=false (regime stays unknown, standing gap). All 4 spawned background."
+  },
+  "_processed": {
+    "fingerprint": "7a601fb268da0f448ff029c6e681cdf8fdf842207774472b186f737b47d03be4",
+    "processedAt": "2026-07-13T16:20:39Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
