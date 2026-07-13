@@ -52,3 +52,19 @@ regression if that contract were altered).
 **why-change:** Added mutual-exclusion guard vs the existing depth-probe re-queue block (traced
 all 5 existing BT-1..BT-5 tests) — without it, a `bars_pushed_total:0` + shallow-watchlist-code
 call would double-fire (2 queue rows, 2 Telegram alerts) for one underlying event.
+
+### STEP architect-S4 · architect · 2026-07-13T00:00:00Z
+**task-id:** FIX-PDFEXTRACTOR-TIER1-OCR-TIMEOUT
+**what-done:** Confirmed async-reroute over sync-bump (480s direct call already failed to
+return); rejected size/page threshold via live `data/pdfs/` corpus check (15-23MB files serve
+fine, 2-3x the 7.1MB HPG failure) — adopted existing `extractPdfText`/`PDF_CONFIDENCE_HIGH_THRESHOLD`
+(200 chars) classifier instead. Confirmed `bctcExtractReconcileJob.ts` (FIX-BCTC-D3A/B/C) already
+owns the done/enrich_failed state machine origin-agnostically — push path just needs to feed it.
+**what-considered:**
+- Byte-size/page-count cutoff (PO's literal ask) — falsified by corpus evidence
+- Reuse existing pdf.ts confidence classifier as the gate (zero new constant)
+**why-decision:** Content-based signal (has-real-text-layer) is direct causally; size is only a
+weak proxy in this corpus (large legit text-native filings coexist with the small scanned failure).
+**why-change:** Flagged a must-fix risk PO/dev didn't ask about: `ensureFinancialReportShellRow`'s
+upsert never clobbers an existing `pdf_path` — silently defeats the corrective push use-case
+(HPG-style re-source) unless dev adds an explicit unconditional pdf_path UPDATE after it.

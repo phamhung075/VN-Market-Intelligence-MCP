@@ -365,10 +365,10 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "FIX-PDFEXTRACTOR-TIER1-OCR-TIMEOUT",
-    "next_agent": "architect",
-    "next_action": "architect: decide async-reroute-vs-sync-timeout-bump + size/page-count threshold for the pdfExtractorClient large-scanned-PDF path; confirm the /api/trigger-pek-extract async state-machine (bctc_vps_queue row flips done ONLY after reflow completes with real scalars) + the fail-loud contract per PO 2-part AC; output short design brief -> docs/architecture-briefs/ + READY_FOR_DEV handoff to dev-mcp-server. deploy-gated: ops attempts mcp-server rebuild post-dev (2026-07-13 ruling, not user-wait); post-deploy reset bctc_vps_queue row 223 done->pending to reflow HPG Q4-2025.",
-    "updated_by": "dev-team (17:37Z tick: BOUNDED-1 pick FIX-PDFEXTRACTOR-TIER1-OCR-TIMEOUT -> WITHHOLD dev auto-launch; drive PO-decided architect-first chain; deploy-gated)",
-    "updated_at": "2026-07-13T17:55:09Z"
+    "next_agent": "dev-mcp-server",
+    "next_action": "dev-mcp-server: implement FIX-PDFEXTRACTOR-TIER1-OCR-TIMEOUT per docs/architecture-briefs/2026-07-13-pdfextractor-ocr-timeout-async-reroute.md. AC1 FAIL-LOUD: triggerPushBctcExtraction Promise<void>->discriminated outcome (done|async_routed|failed); handlePushBctcPdf marks queue done ONLY on {outcome:done}; failed->status stays retryable + sendTelegramBug; runPipeline null also -> failed. AC2 LARGE-PDF: extractPdfText confidence<1.0 gate ahead of Tier1 -> ensureFinancialReportShellRow + EXPLICIT unconditional pdf_path UPDATE (must-fix no-clobber Risk1) + triggerPekExtractionForReport -> queue row pek_triggered (reconcile job owns rest, untouched). Add unit tests. Then qa gate. deploy-gated: ops rebuild post-qa (2026-07-13 ruling); post-deploy reset bctc_vps_queue row 223 done->pending.",
+    "updated_by": "dev-team (chain hop: architect design DONE -> dispatch dev-mcp-server; task lock held)",
+    "updated_at": "2026-07-13T18:13:51Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -8076,9 +8076,9 @@
     "head": {
       "status": "in_progress",
       "active_task_id": "FIX-PDFEXTRACTOR-TIER1-OCR-TIMEOUT",
-      "next_agent": "architect",
-      "last_updated_at": "2026-07-13T17:55:09Z",
-      "last_updated_by": "dev-team (BOUNDED-1 -> architect-first chain; deploy-gated)"
+      "next_agent": "dev-mcp-server",
+      "last_updated_at": "2026-07-13T18:13:51Z",
+      "last_updated_by": "dev-team (chain hop: architect -> dev-mcp-server)"
     },
     "ready": [],
     "review": [
@@ -8561,8 +8561,8 @@
         "deploy_gated": true,
         "followup_of": "HPG-DISCOVER-CONSOLIDATED-PDF",
         "status_note": "DURABLE FIX for a recurring SILENT-FAILURE class — NOT a bare timeout bump. Evidence: a direct 480s call to pdf-extractor:5001/extract still did not return and tesseract ran 17+ min continuously on HPG Q4-2025 consolidated (33pp scanned), so any fixed larger SYNC timeout is still a symptom patch and a 17+ min synchronous HTTP hold is itself fragile. Root: pdfExtractorClient.ts Tier-1 hardcodes AbortSignal.timeout(120_000); when it (and all 3 tiers) fail, push-bctc-pdf returns {ok:true} and marks bctc_vps_queue row done (attempts=1), leaving financial_reports scalars silently stale with NO error surfaced. TWO-PART AC: (1) FAIL-LOUD (the root cause) — push-bctc-pdf MUST NOT return ok:true and MUST NOT mark the queue row done when OCR times out / all tiers fail; propagate the error so the queue row stays retryable (status pending/failed, attempts incremented) and the staleness is surfaced (BUG/observability signal), never silently swallowed. (2) LARGE-PDF PATH — route large/scanned PDFs (size or page-count threshold) through the async /api/trigger-pek-extract path instead of the synchronous 3-tier gauntlet, marking the queue row done only when the reflow completes with real scalars. Architect design touch: async-reroute vs sync-timeout-bump sub-decision + threshold value. DEPLOY-GATED (mcp-server rebuild): per 2026-07-13 ruling, dispatch OPS to attempt the rebuild once through the front door and capture any classifier denial verbatim — do NOT default to waiting for the user. POST-DEPLOY: reset bctc_vps_queue row 223 (HPG 2025-Q4) status done->pending to re-trigger the consolidated reflow (it is 'done' from the silent-failure path and will NOT auto-reparse without an explicit reset). Closes the HPG Q4-2025 consolidated data-coverage-gap (queue row 223 source_url + on-disk 7,135,524B PDF already correct; only OCR reflow blocked). VERIFY: financial_reports row 918a7abd-... holds real consolidated hop-nhat scalars (not stale standalone rieng) after reflow.",
-        "owner": "architect",
-        "next_agent": "architect",
+        "owner": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
         "started_at": "2026-07-13T17:55:09Z"
       }
     ]
