@@ -363,12 +363,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "TE-T09",
-    "next_agent": "qa",
-    "next_action": "TE-T09/TE-T09b (docs/agents/po/flow lazy-load split) complete, code committed 959242139 — QA merge-gate review pending.",
-    "updated_at": "2026-07-13T11:59:10Z",
-    "updated_by": "developer"
+    "status": "idle",
+    "updated_at": "2026-07-13T12:09:31Z",
+    "updated_by": "qa",
+    "active_task_id": null,
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7720,6 +7719,34 @@
         "verified_at": "2026-07-13T11:32:40Z",
         "qa_report": "reports/TASK_REPORT_TE-T07.md",
         "verify_note": "RAW-verified against b941cf4ac (pre-split) diff, not dev self-report: git show --name-only 6c68dd782 touches exactly 2 files (SKILL.md 196L->51L, register.md new 156L), +162/-151, both <=200L. Extracted+diffed the 4 CronCreate(...) blocks (pre-split SKILL.md vs register.md) myself: zero diff, md5 match on both sides (dae8fefe35b443ef4eb6d1508c6169ff) -- cadences 7,37 * * * */ */30 * * * */ 0 */4 * * */ 0 2 * * *, recurring:true/durable:true, and every prompt string byte-identical. Extended the diff to the FULL relocated prose (SSOT/divergence note + Why-this-skill-exists + Step2 Job-header inline notes + P3-OBSERVE-ONLY-RETIREMENT), not just the CronCreate bodies: zero substantive diff (only a blank-line/--- separator artifact from my own manual range-slicing, not a content change). Job 1 prompt still names docs/agents/dev-team/flow/main.md verbatim; confirmed that file exists (pointer resolves). Step 1 pointer to register.md present + correct path/step-ref. Scope isolation: no other skill (.claude/skills/cron-cowork-team/ empty diff b941cf4ac..6c68dd782), no code/orch-state/peer file touched by 6c68dd782. DJ-GATE-1: developer journal sprint-TOKEN-ECONOMY-AUDIT-developer.md STEP developer-S5 has substantive task-id-stamped entry."
+      },
+      {
+        "id": "TE-T09",
+        "title": "T-09 po/flow/main.md: extract 54KB inline triage-script registry to lazy scripts-registry.md (+ fold PUSH-BACKSTOP to pointer) [~77-135k tok/day]",
+        "owner": "developer",
+        "status": "DONE_VERIFIED",
+        "type": "CLEAN",
+        "size": "S",
+        "priority": "P1",
+        "wave": 1,
+        "est_saving": "~77-135k tok/day",
+        "zone": "docs/agents/",
+        "sprint": "TOKEN-ECONOMY-AUDIT",
+        "depends": [],
+        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-09",
+        "note": "Move 'Reusable triage scripts' registry (line 225->EOF, 78% of bytes) to docs/agents/po/flow/scripts-registry.md; keep orch-apply.sh rule + 1 pointer. T-09b: also collapse the never-firing 80L PUSH-BACKSTOP step to a pointer. main.md 17.4k->~2k tokens/spawn.",
+        "promoted_at": "2026-07-13T11:50:06Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-13T11:50:06Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "updated_at": "2026-07-13T12:09:31Z",
+        "updated_by": "qa",
+        "verified_by": "qa",
+        "verified_at": "2026-07-13T12:09:31Z",
+        "qa_report": "reports/TASK_REPORT_TE-T09.md",
+        "verify_note": "RAW-verified byte-identity: registry block md5 34719fdc2d16192e602222f77dffd65d (44L, zero diff both sides), PUSH-BACKSTOP body md5 5e9fb727ce876a65af12d94535ddd0a3 (79L, zero diff both sides); Doc self-heal + Skills-available boilerplate (old 270-274) confirmed byte-identical in new main.md 154-158 and absent from scripts-registry.md/push-backstop.md; scope isolation confirmed via git show --name-only on both commits (959242139 = 3 po/flow docs only, c92dba10e = orch-state.json + decision journal only)."
       }
     ],
     "head": {
@@ -8310,30 +8337,6 @@
         "qa_report": "reports/TASK_REPORT_FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN.md",
         "reviewed_at": "2026-07-13T09:17:26Z",
         "verified_by": "qa"
-      },
-      {
-        "id": "TE-T09",
-        "title": "T-09 po/flow/main.md: extract 54KB inline triage-script registry to lazy scripts-registry.md (+ fold PUSH-BACKSTOP to pointer) [~77-135k tok/day]",
-        "owner": "developer",
-        "status": "REVIEW",
-        "type": "CLEAN",
-        "size": "S",
-        "priority": "P1",
-        "wave": 1,
-        "est_saving": "~77-135k tok/day",
-        "zone": "docs/agents/",
-        "sprint": "TOKEN-ECONOMY-AUDIT",
-        "depends": [],
-        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-09",
-        "note": "Move 'Reusable triage scripts' registry (line 225->EOF, 78% of bytes) to docs/agents/po/flow/scripts-registry.md; keep orch-apply.sh rule + 1 pointer. T-09b: also collapse the never-firing 80L PUSH-BACKSTOP step to a pointer. main.md 17.4k->~2k tokens/spawn.",
-        "promoted_at": "2026-07-13T11:50:06Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-13T11:50:06Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
-        "updated_at": "2026-07-13T11:59:10Z",
-        "updated_by": "developer"
       }
     ],
     "qa": [],
