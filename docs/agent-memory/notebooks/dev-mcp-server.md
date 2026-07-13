@@ -1,31 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-07-12 — TASK_2005 (SUBTASK-DAILY-FF-6, ARCH-DAILY-FOREIGN-FLOW-TABLE, integration test / R-1 gate) → FINDING, not DONE
-
-**Session:** 69b0312e-df43-43a9-9e0b-bddf66d374e3 (dev-team dispatch, task=TASK_2005; PM handoff `docs/handoffs/TASK_2005-daily-ff-integration-test.md`)
-
-Added `apps/mcp-server/src/__tests__/daily-foreign-flow-integration.test.ts` (5 cases) composing `writeForeignFlowToOhlcv()` + the `daily_ohlcv_with_flow` view exactly the way a live Class-A tool would. RAW: 3 pass / 2 fail. Write-side R-1 (permanent data loss) is confirmed CLOSED (TASK_2002). Read-side R-1 is NOT closed: `daily_ohlcv_with_flow` is `FROM daily_ohlcv o LEFT JOIN daily_foreign_flow f` — anchored on `daily_ohlcv`, so a foreign-flow-only row (no matching OHLCV row) is never returned by the view, regardless of COALESCE. All 5 already-migrated Class-A read sites (TASK_2003) still cannot surface a ticker's foreign-flow value before its OHLCV bar lands — the literal "chưa trả số từng mã" symptom, reproduced end-to-end. This gap was already flagged (but not escalated) inside TASK_2000's own schema test comment ("documenting the known anchoring behavior") — this task turns it into a live, RED, end-to-end proof instead of a passing note.
-
-Per task's explicit contingency clause ("if the read path does not return the value, STOP — report, do not paper over"): did NOT modify the view or any production source (additive test-only task, out of scope for a schema fix); did NOT flip TASK_2005 to done. tsc clean (0 errors). Targeted regression (10 related foreign-flow files incl. daily-foreign-flow-{table,schema,backfill}.test.ts) 69/69 pass, 0 fail — no collateral breakage. No full-suite log artifact was available to grep; targeted subset is the proportionate substitute per the additive-change exception.
-
-Commit: d15eedbec (2 files: new test + decision-journal entry, explicit-path). Dispatcher/PM should open a new FIX task for the view's join-anchor direction (e.g. bidirectional/UNION-based join or Class-A sites querying `daily_foreign_flow` directly with a LEFT-anchor fallback to `daily_ohlcv`) before this sprint can claim R-1 fully eliminated end-to-end.
-
-Zone health: tsc clean, new-test 3/3 valid-pass + 2/2 correctly-RED (real gap, not flaky), targeted regression 69/69, toolCount unchanged (no prod file touched) | FINDING — read-side R-1 gap open, routed as FIX candidate.
-
-## 2026-07-13 — ALPHA-S1-CANDLE-RECOVER (wave-1, P0) → FALSE-POSITIVE FINDING, not DONE
-
-**Session:** 69b0312e-df43-43a9-9e0b-bddf66d374e3 (dev-team dispatch, wave-1 pick-first; architect design `docs/handoffs/ALPHA-S1-architect-design.md`)
-
-Claimed ready→in_progress (WIP=1) then probed the LIVE named-volume DB (`docker exec mcp-server-1 bun:sqlite readonly` on `/app/data/market.db`, not host `data/`) before touching any code, per fail-loud Anti-Hallucination Rule. Finding: **2026-07-11 is a real Saturday** — `isVnTradingDay('2026-07-11')` (the app's own domain calendar, `vnTradingCalendar.ts`) returns `is_trading_day:false, session_status:"weekend"`; 07-12 is Sunday, same. `daily_ohlcv` is gapless across every real weekday 2026-06-16..2026-07-10 (908-1012 rows/day; 07-10=985 rows, VNINDEX close=1828.34 present); weekend 07-11/07-12 correctly show 0 rows universe-wide (not a gap); today 2026-07-13 (real Monday, `is_trading_day:true`) already has 443 rows and is live-updating right now (`market_prices_history` ticks flowing 02:00Z-04:48Z, VNINDEX row `updated_at`=04:48:10Z). git log confirms the referenced Docker incident (`95822aa90`) is real but fired Sat evening 14:18Z — after that non-trading day's would-be close, no market-data causal link. **There is no missing Friday candle to recover** — 07-10 was never lost, and 07-11 cannot legitimately have a bar without fabricating data (forbidden per `no fake data` standing rule). Root cause of the original alarm looks like a calendar/weekend-blind staleness check upstream of this zone (matches the known `mkt-blind` FP-class lesson family) — not identified to an exact file, out of `apps/mcp-server/` in any case.
-
-Per this task's own STOP-condition framing ("do NOT push past these, report back") applied to a third case beyond the two enumerated (deploy-required / pending-timer): an invalid premise. Did NOT implement the architect's `recoverMissingOhlcvSession.ts`/CLI wrapper (would be unexercised scope-creep for a non-existent bug) and did NOT insert a `ohlcv_backfill_queue` row (would be a pointless real VPS-relay fetch — correctly finds zero Saturday trades, burns retry_count budget already at 5 from an earlier 2026-07-11T07:32Z cycle, id=646). Zero code touched, zero tests run (nothing to test).
-
-Also found in passing (out of scope, flagged only): ticker `DAG` has `MAX(date)=2026-04-28`, stale since April — unrelated real gap, separate from this row.
-
-Board: appended finding note to the in_progress row (not moved to review — no code for QA to verify) + `.head` retargeted to `next_agent:"po"` for reconciliation. Recommend PO close as verified non-issue, and re-examine whether `ALPHA-S1-STARTUP-CANDLE-GUARD`'s `depends:[ALPHA-S1-CANDLE-RECOVER]` still makes sense (guard's own calendar-aware design is independently sound and doesn't need this incident to be real).
-
-Zone health: no code changed, toolCount/tsc unaffected | FINDING — false-positive, routed to PO for board reconciliation.
-
 ## 2026-07-13 — ALPHA-S1-OHLCV-BACKFILL-DONE-BUG (wave-1, P1) → REVIEW
 
 **Session:** 69b0312e-df43-43a9-9e0b-bddf66d374e3 (dev-team dispatch; architect design `docs/handoffs/ALPHA-S1-architect-design.md` §3, fully implemented as specified)
@@ -57,3 +31,17 @@ New test file `ALPHA-S1-STARTUP-CANDLE-GUARD.test.ts` (14 cases, own in-memory `
 Disjoint file set from sibling `ALPHA-S1-OHLCV-BACKFILL-DONE-BUG` (`ohlcvBackfillHandler.ts`, untouched). Commit `1bbc8cead` (6 files: 3 new, 3 edited). Board: moved in_progress→review, `deploy_pending:true`, top-level `.head.next_agent="qa"` synced (not the decorative `.task_board.head`, per standing lesson). **DEPLOY-REQUIRED:** code only, not live — batch with `599f4aee0` into one off-market `docker compose up -d --build mcp-server` (VN market OPEN at task time, deploy is user/ops-gated).
 
 Zone health: tsc clean, 14/14 new + 93/93 regression pass, toolCount unaffected (no MCP tool surface touched), mock-guard PASS | HEALTHY, REVIEW pending QA + deploy.
+
+## 2026-07-13 — VCB-MISSING-PDFS (BOUNDED-1 auto-pickup, P2/XS) → REVIEW
+
+**Session:** 69b0312e-df43-43a9-9e0b-bddf66d374e3 (dev-team BOUNDED-1 idle-capacity auto-pickup)
+
+Pick-time pre-verify (row is 5 weeks old) found the board's claim was half-stale: docker exec RAW-probe of the live named-volume market.db confirmed `VCB_2025_Q4.pdf` is genuinely gone from `data/pdfs/` (feedback id=323, 271 reparse_attempts, live log confirms "file disappeared before reparse" as recently as 2026-07-11T11:48Z) but `VCB_2025_Q1.pdf` is actually PRESENT on disk right now (0 attempts, no spin — board desc wrong for this half). `financial_reports` already holds valid VCB Q4-2025 AND Q1-2025 rows parsed under their real canonical filenames — re-sourcing the duplicate `VCB_2025_Q4.pdf` name would add nothing, no data is actually missing.
+
+Root-cause fix: added `DEAD_AT_ATTEMPTS(10)` guard to `bctcReparseJob.ts`'s feedback-row retry loop — a row failing past 10 attempts AND confirmed file-missing now flips to `status='dead'` (never `'resolved'` — honest, it was never reparsed) instead of spinning forever. Threshold-gated so it doesn't fire before the existing escalate(3)/alert(5) budget, and doesn't break the 6 existing test files whose synthetic `/tmp/*` seed paths never exist (their `reparseFn` stubs bypass real fs). Confirmed this is a GENERIC recurring class, not VCB-only: 6 other tickers (NVL/HCM/VHM/HSG/CTG/KBC/REE) sit at 99-100 attempts too, but their files are still present — a different, still-open failure mode, correctly left untouched. New generic script `scripts/migrations/reap-dead-stranded-bctc-rows.ts` (no ticker literals; dry-run default) ran `--apply` live to retire id=323 immediately, independent of any rebuild.
+
+Verified (scoped, deterministic): `1019-bctc-reparse-job.test.ts` 21/21 pass (17 pre-existing + 4 new dead-row cases, 53 expect() calls); new script's own test file 9/9 pass; `tsc --noEmit` clean; toolCount=183 unchanged (scheduler-internal change, no MCP tool touched). One full-suite run (bls39jc60) completed clean before a coordinator note flagged the full local suite as unreliable in this env (2nd run died mid-run on an unrelated chromium/pollNews crash-loop, killed) — the completed run showed 14573 pass/65 fail/4 err, grepped for bctcReparseJob/VCB/stranded_bctc_pdf/reap-dead: 0 hits among all fails; scoped runs above are the authoritative gate per dispatcher guidance.
+
+**DEPLOY-REQUIRED:** `DEAD_AT_ATTEMPTS` code guard needs an mcp-server rebuild to self-heal FUTURE occurrences live (user-gated, not self-deployed). Live-DB cleanup for id=323 is already in effect right now via the migration script, independent of the rebuild.
+
+Zone health: tsc clean, 21/21+9/9 scoped pass, toolCount=183 unchanged, full-suite fails unrelated (grepped) | HEALTHY, REVIEW pending QA + deploy.

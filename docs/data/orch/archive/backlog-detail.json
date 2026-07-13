@@ -1,7 +1,7 @@
 {
   "_sentinel": "backlog-detail-v1",
   "created_at": "2026-06-26T19:51:45Z",
-  "updated_at": "2026-07-09T23:19:42Z",
+  "updated_at": "2026-07-13T14:35:00Z",
   "count": 437,
   "items": [
     {
@@ -376,10 +376,11 @@
       "owner": "dev-mcp-server",
       "priority": "P2",
       "size": "XS",
-      "status": "TODO",
+      "status": "REVIEW",
       "title": "Re-source missing VCB PDFs or clean dead rows",
       "type": "OPS",
-      "zone": "apps/mcp-server/"
+      "zone": "apps/mcp-server/",
+      "status_note": "dev-mcp-server: VCB_2025_Q4.pdf dead-row cleaned (DEAD_AT_ATTEMPTS guard added + live retire), VCB_2025_Q1.pdf verified present (not missing, no live spin). See task_board.review status_note for full evidence."
     },
     {
       "created_at": "2026-06-07T10:13:10.964971Z",

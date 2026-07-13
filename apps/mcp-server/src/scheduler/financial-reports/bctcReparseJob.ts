@@ -11,6 +11,13 @@
  *   to `priority='high'` after 3 attempts and a WORK-channel alert fires
  *   after 5.
  *
+ * VCB-MISSING-PDFS fix: a row that is STILL failing past DEAD_AT_ATTEMPTS (10)
+ *   AND whose source file is confirmed absent from disk right now is retired
+ *   to `status='dead'` (never `resolved` — it was never actually reparsed) so
+ *   it stops being selected by this job's `WHERE status='new'` query forever.
+ *   Rows whose file still exists but keep failing extraction are unaffected —
+ *   only a long-failing row with a confirmed-gone file is retired.
+ *
  * Bug 1068 fix: reparseSingle() now falls back to getCachedPdfText() when
  *   extractPdfText (pdf-parse) yields < 100 chars or confidence < 0.3.
  *   Scanned/image PDFs that OCR already processed are correctly re-ingested.
@@ -62,6 +69,12 @@ export interface ReparseRunResult {
   escalated: number;
   /** Number of WORK-channel alerts sent (fires at attempt>=5) */
   alerted: number;
+  /**
+   * Number of rows permanently retired to status='dead' this run because the
+   * source PDF is confirmed missing from disk after DEAD_AT_ATTEMPTS retries
+   * (VCB-MISSING-PDFS root-cause fix — see markDeadIfPermanentlyMissing).
+   */
+  deadMarked: number;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -73,6 +86,21 @@ const ESCALATE_AT_ATTEMPTS = 3;
 
 /** Threshold at which a WORK-channel alert fires (one-shot per row). */
 const ALERT_AT_ATTEMPTS = 5;
+
+/**
+ * Threshold at which a still-failing row is checked for permanent file
+ * absence and, if the file is confirmed missing, retired to status='dead'
+ * so it stops being retried forever (VCB-MISSING-PDFS).
+ *
+ * Deliberately higher than ALERT_AT_ATTEMPTS (5): transient failures
+ * (extraction confidence too low, pdf-extractor service outage) get their
+ * full escalate+alert retry budget first. Only a row that is STILL failing
+ * past this threshold AND whose file is confirmed absent from disk right
+ * now is treated as permanently dead — a row whose file exists but keeps
+ * failing extraction is left alone (out of scope; a different, still-open
+ * failure mode).
+ */
+const DEAD_AT_ATTEMPTS = 10;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -675,17 +703,25 @@ export async function runBctcReparseJob(
     pdfDir?: string;
     /** Injectable nowMs for recovery dedup guard (tests only) */
     nowMsFn?: () => number;
+    /**
+     * Injectable file-existence check for the DEAD_AT_ATTEMPTS permanent-miss
+     * guard (VCB-MISSING-PDFS). Defaults to the real filesystem check;
+     * override in tests to simulate a confirmed-missing file without
+     * depending on real disk state.
+     */
+    fileExistsFn?: (path: string) => boolean;
   } = {},
 ): Promise<ReparseRunResult> {
   const db = options.db ?? getDb();
 
   const DAILY_CADENCE_MS = 86_400_000;
   if (shouldSkipRecoveryReplay(db, "bctcReparseJob", DAILY_CADENCE_MS, options.nowMsFn)) {
-    return { examined: 0, resolved: 0, failed: 0, escalated: 0, alerted: 0 };
+    return { examined: 0, resolved: 0, failed: 0, escalated: 0, alerted: 0, deadMarked: 0 };
   }
   const notify =
     options.notify ?? ((msg: string) => sendTelegramWork(msg, { parseMode: "" }));
   const reparse = options.reparseFn ?? reparseSingle;
+  const fileExistsFn = options.fileExistsFn ?? existsSync;
 
   const rows = db
     .prepare(
@@ -710,6 +746,7 @@ export async function runBctcReparseJob(
     failed: 0,
     escalated: 0,
     alerted: 0,
+    deadMarked: 0,
   };
 
   for (const row of rows) {
@@ -747,6 +784,31 @@ export async function runBctcReparseJob(
     }
 
     const nextAttempts = row.reparse_attempts + 1;
+
+    // VCB-MISSING-PDFS root-cause fix: once a row has exhausted its normal
+    // escalate+alert retry budget (past DEAD_AT_ATTEMPTS) AND its source PDF
+    // is confirmed absent from disk right now, retrying forever wastes cycles
+    // (Tier 1a/1b pdf-extractor service calls) on a file that will never
+    // reappear. Retire it to status='dead' — distinct from 'resolved' (it was
+    // never actually reparsed) — so the `WHERE status='new'` query above stops
+    // selecting it on every future run. Gated on the threshold so transient
+    // failures (low-confidence extraction, service outage) with a file that
+    // still exists keep retrying exactly as before — this only fires for a
+    // row that is BOTH long-failing AND file-confirmed-gone.
+    if (nextAttempts >= DEAD_AT_ATTEMPTS && !fileExistsFn(payload.filePath)) {
+      db.prepare(
+        "UPDATE agent_feedback SET status = 'dead', reparse_attempts = ? WHERE id = ?",
+      ).run(nextAttempts, row.id);
+      result.deadMarked++;
+      logger.warn("[bctc-reparse-job] file permanently missing — marking dead (no further retries)", {
+        id: row.id,
+        ticker: payload.ticker,
+        filePath: payload.filePath,
+        attempts: nextAttempts,
+      });
+      continue;
+    }
+
     db.prepare(
       "UPDATE agent_feedback SET reparse_attempts = ? WHERE id = ?",
     ).run(nextAttempts, row.id);

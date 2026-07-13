@@ -314,6 +314,38 @@ row-count until the next container restart) even though two independent
 fresh connections both read the correct post-resync state — direct-probe
 BOTH tools after ANY out-of-process watchlist write, don't trust one alone.
 
+**CANONICAL: Dead stranded_bctc_pdf row cleanup (VCB-MISSING-PDFS, 2026-07-13)**
+```bash
+# Dry-run (default — reports dead candidates, no writes):
+bun scripts/migrations/reap-dead-stranded-bctc-rows.ts
+
+# Apply (UPDATE status='dead' for every candidate found):
+bun scripts/migrations/reap-dead-stranded-bctc-rows.ts --apply
+
+# Against the live named-volume DB (docker exec — matches other CANONICAL scripts):
+docker cp scripts/migrations/reap-dead-stranded-bctc-rows.ts \
+  vn-market-intelligence-mcp-mcp-server-1:/app/reap-dead-stranded-bctc-rows.ts
+docker exec vn-market-intelligence-mcp-mcp-server-1 \
+  bun /app/reap-dead-stranded-bctc-rows.ts --apply
+```
+Generic (no ticker/date literals): selects `agent_feedback` rows tagged
+`[AUDIT] stranded_bctc_pdf%` with `status='new'`, `reparse_attempts >=
+DEAD_AT_ATTEMPTS(10)`, and a `filePath` (parsed from `detail`) confirmed
+absent from disk right now — retires them to `status='dead'` (never
+`'resolved'` — they were never actually reparsed) so `bctcReparseJob`'s
+`WHERE status='new'` query stops selecting them forever. A row whose file
+still exists but keeps failing extraction is untouched (different, still-open
+failure mode). Self-contained (duplicates the tiny JSON-detail parse rather
+than importing `bctcReparseJob.ts` — same Docker-image-bakes-`src/`-at-
+build-time reasoning as `resync-watchlist-sysmap-2026-07-11.ts`). Idempotent:
+a second run finds 0 candidates once already marked (exit 0, no-op).
+Companion code fix: `DEAD_AT_ATTEMPTS` guard added directly inside
+`bctcReparseJob.ts`'s retry loop so future occurrences self-heal without
+needing this script re-run (deploy-gated — takes effect after next mcp-server
+image rebuild). **LIVE RESULT (2026-07-13T14:11Z, executed):** 1 candidate
+found (id=323, VCB_2025_Q4.pdf, 271 reparse_attempts) — marked `dead`.
+Second dry-run confirmed 0 candidates remain.
+
 ---
 
 ## Low-Confidence Reparse Runbook
