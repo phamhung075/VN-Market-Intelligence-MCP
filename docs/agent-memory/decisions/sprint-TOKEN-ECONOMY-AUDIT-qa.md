@@ -94,3 +94,37 @@ scaffold-files.md Step 7 now scaffolds lean, zero apps/ + zero peer-file scope l
 present. Flagged log_agent_work.md's stale Usage-example grammar (tool_name/input) as non-blocking
 PO follow-up — coverage intact, only the example is stale.
 **why-change:** No change from plan.
+
+### STEP qa-S6 · qa · 2026-07-13T15:10:00Z
+**task-id:** TE-T13
+**what-done:** Merge-gated dev commit bf808eede479a56398f15a858774ffb0ff8d6847 (line-1
+size-justification marker purge on 6 hot flows + agent-md-factory Q-3 cap rule); flipped
+REVIEW→DONE_VERIFIED via orch-apply.sh.
+**what-considered:**
+- Trust dev_note's claim of "single line-1 hunk" per file — rejected, independently re-ran
+  `git show --numstat` + `grep '^@@'` on all 6 flows myself: all 6 = `1  1` numstat + single
+  `@@ -1,4 +1,4 @@` hunk. This was the load-bearing check (dev-team/cowork-team are LIVE
+  dispatchers) — confirmed zero Step/anchor/jump: bytes touched below line 1.
+- Whether the new markers are genuinely rewritten vs merely truncated mid-changelog — read all
+  6 new line-1 markers myself, grepped for `TASK_[0-9]+`/dated/`+NL` residue: 0 hits across all
+  6, each reads as one coherent current-size-justification sentence matching the compliant
+  reference form (market-analyst/main.md line 1).
+- Line-count accuracy per marker vs real `wc -l` — found 3/6 exact, 3/6 drifted (chef.md
+  654L-vs-699 real, cowork-team ~195L-vs-307 real, fb-market-poster ~907L-vs-945 real). Verified
+  each drift is PRE-EXISTING (old pre-edit marker carried the identical wrong headline number,
+  not introduced by this commit) and out of T-13's brief-scoped proposal (purge changelog
+  entries, not reconcile line-count math) — treated as non-blocking, flagged for PO follow-up
+  rather than failing the gate over pre-existing unrelated debt.
+- Factory cap: confirmed ADD-only (`1 +`/`0 -` in --stat), no existing agent-md-factory rule
+  deleted.
+- Conservation: re-ran `orch-conservation-check.mjs` myself against `bf808eede~1` vs live —
+  `task_total live=507 candidate=507`.
+**why-decision:** All 6 gate checks RAW-true: scope = exactly the 9 named files (no peer-dirty
+sweep), all 6 line-1 byte counts ≤301B, all 6 flows are line-1-ONLY diffs (behavioral-safety
+check holds), all 6 markers genuinely rewritten with zero dated-changelog residue, factory cap
+additive and correctly worded, conservation 507=507. Pure comment edit, zero behavioral risk —
+same disposition class as TE-T01/T04/T07/T09/T10 precedent (RAW diff-content verification IS
+the gate for docs-only changes with no test surface).
+**why-change:** No change from plan — router's disposition instructions matched what RAW
+verification found. Added one non-blocking PO follow-up (pre-existing line-count drift on 3
+markers) not present in the router's dispatch prompt, surfaced from my own independent read.
