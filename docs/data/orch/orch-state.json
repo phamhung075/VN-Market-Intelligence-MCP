@@ -366,9 +366,9 @@
     "status": "in_progress",
     "active_task_id": "FIX-DAILY-FF-VIEW-JOIN-ANCHOR",
     "next_agent": "dev-mcp-server",
-    "next_action": "dev-mcp-server: implement Shape A per docs/architecture-briefs/2026-07-13-daily-ff-view-join-anchor.md — replace daily_ohlcv_with_flow view (schema-market-data.ts:162-174) with DROP VIEW IF EXISTS + unconditional CREATE VIEW (bidirectional UNION ALL anti-join, NOT `IF NOT EXISTS` — that is a no-op on the persisted named-volume DB). Companion fix REQUIRED same commit: daily-foreign-flow-schema.test.ts lines 242-266 R-1 view-level-proof assertion flips from rows.length===0 to 1 (documents the exact bug being fixed). Do NOT edit daily-foreign-flow-integration.test.ts (the 2 RED gate assertions must pass raw as a side effect). Run targeted suite then full `bun test` green before handing to qa. CI-red freeze: PO holds pushing.",
-    "updated_by": "architect (FIX-DAILY-FF-VIEW-JOIN-ANCHOR design done, coordination_session 69b0312e)",
-    "updated_at": "2026-07-13T20:52:09Z"
+    "next_action": "dev-mcp-server: implement FIX-DAILY-FF-VIEW-JOIN-ANCHOR per brief docs/architecture-briefs/2026-07-13-daily-ff-view-join-anchor.md (SHAPE=A, architect-verified). ZONE apps/mcp-server/ ONLY. (1) Replace schema-market-data.ts:162-174 view def with the EXACT SQL in the brief: DROP VIEW IF EXISTS daily_ohlcv_with_flow; then UNCONDITIONAL CREATE VIEW (LEFT JOIN + UNION ALL anti-join, 15 cols identical order, price cols NULL on anti-join branch). MUST be DROP+unconditional CREATE — NOT CREATE VIEW IF NOT EXISTS (silent no-op on persistent named-volume prod DB -> fix would never deploy despite CI green). (2) SAME COMMIT: fix companion regression daily-foreign-flow-schema.test.ts:242-266 'R-1 view-level proof' — flip toBe(0)->toBe(1) + assert foreign_buy_vol surfaces + update stale comment (else CI just moves red to that file). (3) Do NOT edit daily-foreign-flow-integration.test.ts — its 2 RED gate assertions pass raw as a side effect. (4) Run targeted test list in brief §Test strategy, then full `bun test` (0 fail). (5) CI-red freeze: do NOT push — get green LOCALLY, hand to qa. Do NOT touch the router-held row lock task:FIX-DAILY-FF-VIEW-JOIN-ANCHOR. RETURN: files changed + targeted+full bun test raw result (pass counts) + NEXT=qa.",
+    "updated_by": "dev-team (20:37Z tick: architect FIX-DAILY-FF brief cacf5607f RAW-verified GREEN -> chain advance to dev-mcp-server implementation; CI-red unblocker)",
+    "updated_at": "2026-07-13T20:55:06Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -9006,9 +9006,9 @@
     "head": {
       "status": "in_progress",
       "active_task_id": "FIX-DAILY-FF-VIEW-JOIN-ANCHOR",
-      "next_agent": "architect",
-      "last_updated_at": "2026-07-13T20:45:04Z",
-      "last_updated_by": "dev-team (FIX-DAILY-FF-VIEW-JOIN-ANCHOR -> architect; CI-red merge-gate unblocker)"
+      "next_agent": "dev-mcp-server",
+      "last_updated_at": "2026-07-13T20:55:06Z",
+      "last_updated_by": "dev-team (FIX-DAILY-FF architect->dev-mcp-server; CI-red merge-gate unblocker)"
     },
     "ready": [],
     "review": [
@@ -9527,7 +9527,7 @@
         "status": "IN_PROGRESS",
         "priority": "high",
         "size": "M",
-        "owner": "architect",
+        "owner": "dev-mcp-server",
         "next_agent": "dev-mcp-server",
         "supervised": true,
         "depends": [],
@@ -9558,9 +9558,12 @@
           "note": "ACTIVE merge-gate blocker. The 2 deliberately-RED behavioral-gate assertions in daily-foreign-flow-integration.test.ts (T-3 view correctness + R-1 elimination gate) fail bun test on main HEAD 29f92c5b (committed RED by design in d15eedbec, PO-accepted). They flip GREEN when this view fix lands (candidate shapes A/B in .note). NO duplicate CI-RED-29f92c5b-FIX minted — this pre-existing root-cause row IS the fix (dedup: same failure, one open FIX). Dispatch via router supervised cascade to architect (next_agent), then dev-mcp-server impl. CI green on subsequent push == the 2 assertions pass RAW == this row DONE."
         },
         "started_at": "2026-07-13T20:45:04Z",
-        "dispatch_note": "PO triage 20:07Z BATCH -> router supervised cascade (architect-first, NOT BOUNDED-1). Sole CI-merge-gate unblocker; ci_red CI-RED-29f92c5b linked by PO (550ea0edd). architect decides view shape A vs B -> READY_FOR_DEV dev-mcp-server -> qa -> CI green on push. | ARCHITECT DONE 2026-07-13T20:52:09Z: Shape A chosen, brief=docs/architecture-briefs/2026-07-13-daily-ff-view-join-anchor.md -> READY_FOR_DEV dev-mcp-server.",
+        "dispatch_note": "architect SHAPE=A adjudication RAW-verified -> READY_FOR_DEV dev-mcp-server implements view SQL + companion schema.test.ts fix in one commit; qa next; CI-red freeze (no push). dispatched 2026-07-13T20:55:06Z",
         "architect_brief_ref": "docs/architecture-briefs/2026-07-13-daily-ff-view-join-anchor.md",
-        "architect_shape_decision": "A"
+        "architect_shape_decision": "A",
+        "decided_shape": "A",
+        "design_brief": "docs/architecture-briefs/2026-07-13-daily-ff-view-join-anchor.md",
+        "designed_by": "architect a503b6dea6b66a78b @ commit cacf5607f (router RAW-verified GREEN: 4 files docs+orch only, NO apps/mcp-server code/test touched, row lock untouched; exact view SQL empirically validated vs :memory:, DROP-VIEW named-volume footgun + companion schema.test.ts regression both caught)"
       }
     ]
   },
