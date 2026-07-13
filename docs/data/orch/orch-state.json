@@ -363,12 +363,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-OPS-AUDITTRAIL-TIMESTAMP-BYPASS-GUARDRAIL",
-    "next_agent": "agent-father",
-    "next_action": "agent-father hand-dispatched (router) for AC-1 audit-trail-timestamp-bypass guardrail — doc-only MUST-NOT clause in docs/agents/ops/flow, non-market-sensitive. DEPLOY BATCH still owed+user-gated at 08:00Z close: 3 fixes 599f4aee0+1bbc8cead+252f8ffd1 ride ONE mcp-server rebuild (deploy_pending flags authoritative). Sibling SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY parked in backlog for BOUNDED-1.",
-    "updated_by": "dev-team (router hand-dispatch AC-1)",
-    "updated_at": "2026-07-13T08:07:38Z"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "BOUNDED-1 idle draining resumes — sibling SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY (dev-mcp-server) eligible for pickup. DEPLOY BATCH owed+user-gated: 3 fixes 599f4aee0+1bbc8cead+252f8ffd1 ride ONE off-market mcp-server rebuild at 08:00Z close (deploy_pending flags authoritative).",
+    "updated_by": "dev-team (AC-1 guardrail DONE_VERIFIED closeout)",
+    "updated_at": "2026-07-13T08:13:31Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7643,6 +7643,33 @@
         "verified_commit": "f045a791c",
         "closed_at": "2026-07-13T05:07:38Z",
         "resolution_note": "CLOSED as VERIFIED FALSE-POSITIVE / NON-ISSUE — NOT a QA merge (no code shipped, nothing to verify). RAW calendar+DB evidence @ HEAD commit f045a791c: 2026-07-11 and 2026-07-12 are Saturday/Sunday per the app's own domain calendar apps/mcp-server/src/domain/services/vnTradingCalendar.ts (isVnTradingDay('2026-07-11')->is_trading_day:false, session_status:weekend); live serving DB (named volume vn-market-intelligence-mcp_market_data, /app/data/market.db) daily_ohlcv is 100% GAPLESS across every real weekday 2026-06-16..2026-07-10 (985 rows on 07-10, VNINDEX close=1828.34), weekend 07-11/07-12 correctly 0 rows, Monday 07-13 already 443 rows live-updating. There is NO missing 07-11 Friday candle to recover; fabricating a weekend bar is forbidden. Root-cause of the phantom alarm (weekend/calendar-blind upstream staleness/gap detector, mkt-blind FP class) tracked separately as FIX-GAP-STALENESS-DETECTOR-CALENDAR-AWARE. No ohlcv_backfill_queue triggered (would burn retry budget for zero Saturday trades). dev-mcp-server finding 2026-07-13T04:52Z; PO reconcile 2026-07-13T05:07:38Z."
+      },
+      {
+        "id": "FIX-OPS-AUDITTRAIL-TIMESTAMP-BYPASS-GUARDRAIL",
+        "type": "FIX",
+        "priority": "high",
+        "size": "S",
+        "status": "DONE_VERIFIED",
+        "zone": "docs/agents/ops/",
+        "owner": "agent-father",
+        "next_agent": "agent-father",
+        "split_from": "FIX-OPS-CRONJOBRUNS-TIMESTAMP-FALSIFICATION-GUARDRAIL",
+        "related": [
+          "telegram-bug:3303",
+          "telegram-bug:3550"
+        ],
+        "title": "ops flow gets an explicit MUST-NOT clause: never UPDATE cron_job_runs / any job-run/audit-trail timestamp to bypass an idempotency/cadence guard",
+        "detail": "SPLIT (AC-1) from FIX-OPS-CRONJOBRUNS-TIMESTAMP-FALSIFICATION-GUARDRAIL by PO triage 2026-07-13T07:37Z. This is the actionable, highest-value, recurrence-preventing half — doc-edit ONLY, no code. TASK for agent-father (agent-file lifecycle): add an explicit MUST-NOT clause to the ops agent flow — docs/agents/ops/flow/main.md as the standing rule, and/or the DB-write sub-flow docs/agents/ops/flow/db.md where any cron_job_runs write would be authored. CLAUSE: ops MUST NOT UPDATE cron_job_runs — or ANY job-run / audit-trail table timestamp (started_at / finished_at) — to force open or bypass an idempotency / cadence / recovery-replay guard. Correct alternatives, in strict order: (1) use the job's own injectable test-safe override hook if one exists — bctcReparseJob exposes options.nowMsFn at bctcReparseJob.ts:677, designed exactly to move the clock past shouldSkipRecoveryReplay (bctcReparseJob.ts:683, 21.6h cadence guard) WITHOUT any DB write; (2) if the target job has NO such injectable override, ESCALATE to dev-<service> to add one (never hand-write DB rows); (3) otherwise WAIT for the natural cadence. Cite the incident in the clause: on 2026-07-10 ops UPDATEd 25 real cron_job_runs.started_at rows (job_name=bctcReparseJob) to a single fabricated 2026-07-03 07:36:41 — falsifying the audit trail (finished_at now trails started_at by days), destroying unrecoverable originals, and risking a false schedulerWatchdog missed-fire alert (schedulerWatchdog.ts queries MAX(started_at) per job_name against a manifest). This is a recognized recurring feedback class (feedback_ops_db_timestamp_falsification_to_bypass_guard.md). Keep it tight and testable. NON-DEV owner (agent-father) => router/PO HAND-DISPATCHED, NOT BOUNDED-1 auto-launched (that lane is dev-only).",
+        "ac": "docs/agents/ops/flow/main.md (or the relevant ops DB-write sub-flow, e.g. db.md) carries an explicit MUST-NOT clause: never UPDATE cron_job_runs / any job-run/audit-trail timestamp to bypass an idempotency/cadence/recovery guard — use the job's injectable override (e.g. bctcReparseJob options.nowMsFn) if present, else escalate to dev-<service> to add one, else wait for the natural cadence. Clause names the 2026-07-10 incident + the nowMsFn correct-path as the worked example.",
+        "created_at": "2026-07-13T07:37:00Z",
+        "created_by": "po-triage-split-20260713T0737Z",
+        "verify_note": "RAW-verified: db.md § FORBIDDEN + main.md pointer; 2 docs only (no code/DB/orch); cites 2026-07-10 incident + injectable nowMsFn ladder. DJ: docs/agent-memory/decisions/2026-07-13-FIX-OPS-AUDITTRAIL-TIMESTAMP-BYPASS-GUARDRAIL.md",
+        "claimed_by": "dev-team",
+        "claimed_at": "2026-07-13T08:07:38Z",
+        "dispatched_to": "agent-father",
+        "verified_by": "dev-team",
+        "closed_at": "2026-07-13T08:13:31Z",
+        "verify_commit": "3c35844f9"
       }
     ],
     "head": {
@@ -8229,32 +8256,7 @@
     },
     "last_triaged_at": "2026-07-13T06:52:15Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-OPS-AUDITTRAIL-TIMESTAMP-BYPASS-GUARDRAIL",
-        "type": "FIX",
-        "priority": "high",
-        "size": "S",
-        "status": "IN_PROGRESS",
-        "zone": "docs/agents/ops/",
-        "owner": "agent-father",
-        "next_agent": "agent-father",
-        "split_from": "FIX-OPS-CRONJOBRUNS-TIMESTAMP-FALSIFICATION-GUARDRAIL",
-        "related": [
-          "telegram-bug:3303",
-          "telegram-bug:3550"
-        ],
-        "title": "ops flow gets an explicit MUST-NOT clause: never UPDATE cron_job_runs / any job-run/audit-trail timestamp to bypass an idempotency/cadence guard",
-        "detail": "SPLIT (AC-1) from FIX-OPS-CRONJOBRUNS-TIMESTAMP-FALSIFICATION-GUARDRAIL by PO triage 2026-07-13T07:37Z. This is the actionable, highest-value, recurrence-preventing half — doc-edit ONLY, no code. TASK for agent-father (agent-file lifecycle): add an explicit MUST-NOT clause to the ops agent flow — docs/agents/ops/flow/main.md as the standing rule, and/or the DB-write sub-flow docs/agents/ops/flow/db.md where any cron_job_runs write would be authored. CLAUSE: ops MUST NOT UPDATE cron_job_runs — or ANY job-run / audit-trail table timestamp (started_at / finished_at) — to force open or bypass an idempotency / cadence / recovery-replay guard. Correct alternatives, in strict order: (1) use the job's own injectable test-safe override hook if one exists — bctcReparseJob exposes options.nowMsFn at bctcReparseJob.ts:677, designed exactly to move the clock past shouldSkipRecoveryReplay (bctcReparseJob.ts:683, 21.6h cadence guard) WITHOUT any DB write; (2) if the target job has NO such injectable override, ESCALATE to dev-<service> to add one (never hand-write DB rows); (3) otherwise WAIT for the natural cadence. Cite the incident in the clause: on 2026-07-10 ops UPDATEd 25 real cron_job_runs.started_at rows (job_name=bctcReparseJob) to a single fabricated 2026-07-03 07:36:41 — falsifying the audit trail (finished_at now trails started_at by days), destroying unrecoverable originals, and risking a false schedulerWatchdog missed-fire alert (schedulerWatchdog.ts queries MAX(started_at) per job_name against a manifest). This is a recognized recurring feedback class (feedback_ops_db_timestamp_falsification_to_bypass_guard.md). Keep it tight and testable. NON-DEV owner (agent-father) => router/PO HAND-DISPATCHED, NOT BOUNDED-1 auto-launched (that lane is dev-only).",
-        "ac": "docs/agents/ops/flow/main.md (or the relevant ops DB-write sub-flow, e.g. db.md) carries an explicit MUST-NOT clause: never UPDATE cron_job_runs / any job-run/audit-trail timestamp to bypass an idempotency/cadence/recovery guard — use the job's injectable override (e.g. bctcReparseJob options.nowMsFn) if present, else escalate to dev-<service> to add one, else wait for the natural cadence. Clause names the 2026-07-10 incident + the nowMsFn correct-path as the worked example.",
-        "created_at": "2026-07-13T07:37:00Z",
-        "created_by": "po-triage-split-20260713T0737Z",
-        "verify_note": "split_from=FIX-OPS-CRONJOBRUNS-TIMESTAMP-FALSIFICATION-GUARDRAIL AC-1; dispatch=router-hand (non-dev owner)",
-        "claimed_by": "dev-team",
-        "claimed_at": "2026-07-13T08:07:38Z",
-        "dispatched_to": "agent-father"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
