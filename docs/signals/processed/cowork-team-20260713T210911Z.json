@@ -1,0 +1,43 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "2026-07-13T21:09:11.580Z",
+  "payload": {
+    "tick": "2026-07-13T21:00Z",
+    "fired_at": "2026-07-13T21:08:39.337Z",
+    "drift_min": 7,
+    "pressure_mode": "adaptive",
+    "calendar_status": "closed",
+    "last_regime": "unknown",
+    "dev_queue_depth": 5,
+    "signal_backlog": 4,
+    "spawned": [
+      {
+        "slot_id": "bctc-analyst-slot-3",
+        "agent": "bctc-analyst",
+        "guaranteed": false
+      }
+    ],
+    "chef_mutex_applied": false,
+    "calendar_suppression": "not applied (calendar_status=closed ∉ {holiday,weekend}); bctc-offmarket non-guaranteed slot survives",
+    "due_reasons": {
+      "bctc-analyst-slot-3": "cadence"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-3": 240
+    },
+    "tick_snapshot": "skipped",
+    "tick_snapshot_skip_reason": "bctc-analyst-slot-3 snapshot_file_rc=1 AND bootstrap_rc=1 — calls get_earnings_calendar/financial tools directly, consumes neither pre-built cycle-snapshot file nor get_cycle_bootstrap",
+    "collision_guard": "pass (single slot, single agent)",
+    "errors": [],
+    "note": "MODE OSCILLATION observed: decision-time pressure-state (emitted 20:52:31Z, 20:45Z SILENT tick) had stale_warning:false → this tick ran ADAPTIVE (calendar suppression + freshness gates active). But tick-end emit_pressure_state (21:08:49Z) returned stale_warning:true again + cycle_snapshot_promoted:false. stale_warning now flickering false↔true across ticks; last_regime still pinned unknown; cycle_snapshot never promoted. Root cause unchanged — standing observability concern for dev-team/system-auditor/PO. NOT a dispatcher action."
+  },
+  "_processed": {
+    "fingerprint": "43a773703e9fcb7331dbf3e4c3e51deae722878bd310a673d6437c8a1b63bf54",
+    "processedAt": "2026-07-13T21:19:16Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

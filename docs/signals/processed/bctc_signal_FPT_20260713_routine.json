@@ -4,24 +4,32 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "IT services, software exports, telecom (FPT Telecom), education (FPT Edu)",
-  "customer": "Enterprise IT buyers (VN + offshore), SME telecom subscribers, students (FPT Edu)",
-  "ops": "Gross margin 34.0%, operating margin 22.0%, net margin 19.8%; ROE 6.2% quarterly (28.3% sector-tool annualized, well above 10.6% sector median)",
-  "mgmt": "EY spread FAIR (+2.25pp over 5.00% deposit rate); B/S balances 0% imbalance; data byte-identical across 5 consecutive cycles (c079-c084), consistent extraction confidence 81%",
-  "esc3_status": "DATA-COVERAGE-LIMITED",
-  "coverage_guard_key": "esc-datacov:FPT:Q1-2026:ESC-3",
-  "coverage_guard_held": true,
-  "kinhdich": {
-    "que": "24 Phuc",
-    "xu_huong": "THUAN LOI",
-    "tin_hieu": "GIU",
-    "do_tin_cay_pct": 100
+  "product": "IT services & software exports, telecom (FPT Telecom), education (FPT Edu), digital services",
+  "customer": "Enterprise IT buyers (VN + offshore/Japan-US export markets), SME/retail telecom subscribers, students",
+  "ops": "Revenue 12,480 ty VND, NI 2,476.8 ty (bien 19.8%), ROE 6.2% quy (28.3% sector-tool, tren trung vi 10.6%). B/S can bang (0% lech). OCF/NI phan ky -1.15x nhung chi 2/4 quy du lieu (ESC-3 DATA-COVERAGE-LIMITED, guard GUARD-HELD den 2026-07-20).",
+  "mgmt": "Du lieu byte-identical qua 6 chu ky lien tiep (c079-c085) - on dinh, khong co dieu chinh/sua doi bat thuong. Khong co tin hieu insider/phap ly.",
+  "valuation": {
+    "ey_spread_pct": 2.25,
+    "ey_verdict": "FAIR",
+    "pe_vs_sector": "-20% discount (13.8x vs 17.3x)",
+    "pb_vs_sector": "+136% premium (3.6x vs 1.5x)"
   },
-  "cycle_ts": "2026-07-13T18:15:00Z",
-  "slot": "bctc-analyst-slot-2",
+  "escalation_gate": {
+    "esc1_accounting_trick": "SKIPPED — E1 trick passes unavailable (no row-level OCR tool, capability gap)",
+    "esc2_balance_sheet": "PASS (0% imbalance)",
+    "esc3_ocf_ni_divergence": "DATA-COVERAGE-LIMITED (2/4 quarters) — guard GUARD-HELD, no re-emit",
+    "esc4_nonop_share": "FALSE (2.0% non-operating share of PBT, below 15% threshold)",
+    "esc5_refine_confidence": "SKIPPED (no report_id available)"
+  },
+  "kinhdich": "Que 24 Phuc — THUAN LOI — GIU 100%",
+  "evidence_fragment_id": 399,
+  "agent_signal_id": 9097,
+  "cycle_id": "20260713-2100",
+  "generated_at": "2026-07-13T21:20:00Z",
+  "generated_by": "bctc-analyst-slot-3",
   "_processed": {
-    "fingerprint": "a9e8ecda1f2a90bf58933edf9692197c1b5b1f114fe520f2388061b7925d3865",
-    "processedAt": "2026-07-13T18:18:58Z",
+    "fingerprint": "6ccd8afe6d8cc2c4b811a358128c8a5055bacc41e3b53ea70b85aa6af76c5d17",
+    "processedAt": "2026-07-13T21:19:16Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
