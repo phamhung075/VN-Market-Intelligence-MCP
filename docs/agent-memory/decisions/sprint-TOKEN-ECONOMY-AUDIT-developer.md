@@ -79,3 +79,15 @@
 - Keeping the '## How to Invoke Tools' heading with a shrunk body vs deleting the heading text entirely — switched to full deletion after checking the task's own success criterion ("grep -l counts should drop 11->0 for both markers"), which requires the heading string itself to disappear, not just its body.
 **why-decision:** Objective grep re-run after edit confirms 0 hits for both markers across the 11 in-scope files (ops.md correctly still shows the marker, out of scope); log_agent_work.md (SSOT pointer target) independently confirmed to cover session-start + id round-trip + completed/error end for all 11 agent names before deleting any recipe block.
 **why-change:** File-set correction (po.md in, ops.md out — 12-file total unchanged) + full heading-deletion correction from an initial partial-shrink pass; no change to the 3 substantive edits (grammar pointer / recipe pointer / scaffold template fix).
+
+---
+
+### STEP developer-S8 · developer · 2026-07-13T13:05:00Z
+**task-id:** TE-T13
+**what-done:** Trimmed the line-1 size-justification marker on the 6 hottest flow files to ≤300 chars, current-shape-only (deleted dated changelog entries — each already a commit message), and added a cap rule (Q-3) to `.claude/skills/agent-md-factory/SKILL.md`. Before→after line-1 char counts (`head -1 | wc -c`, includes trailing newline): `dev-team/flow/main.md` 4199→247, `system-auditor/flow/main.md` 2435→227, `fb-market-poster/flow/main.md` 1701→222, `market-watcher/flow/cycle.md` 1211→266, `unified-agent/flow/chef.md` 1165→264, `cowork-team/flow/main.md` 1107→268. All ≤301 (300 chars + newline).
+**what-considered:**
+- Deleting the marker entirely vs rewriting it — chose rewrite: the governance rule (Q-3 in agent-md-factory) requires flow `main.md` files >120L to carry a justification; blanking it would fail that gate. Kept one sentence per file stating current-size drivers (dispatcher-thin + sub-flow extraction / tier split deferred / 3-mode coupling / step-by-step coupling / atomic recipe framework), dropped all dated FIX-*/TASK_*/sprint entries.
+- Editing `dev-team/flow/main.md` and `cowork-team/flow/main.md` (live dispatcher flows, one of them mid-cron-cycle) — verified via `git diff` that each produces exactly one `@@ -1,4 +1,4 @@` hunk (1 insertion/1 deletion, line 1 only); zero Step/anchor/`jump:` text touched, so no behavioral risk despite the files being hot.
+- Where to add the factory cap — added as a new Q-3 bullet (size-cap check section, already the home of the existing `>120L` justification-presence rule) rather than a new Pre-Edit checklist item, since this is a post-edit content-shape rule for a marker already required by the pre-existing Q-3 check.
+**why-decision:** Per-file `git diff --stat` + `grep -E "^@@"` confirmed single-hunk (`1 file changed, 1 insertion(+), 1 deletion(-)`, `@@ -1,4 +1,4 @@`) for all 6 flow files before commit — objective proof of line-1-only scope, not self-report. `head -1 | wc -c` re-verified ≤301 on all 6 post-edit.
+**why-change:** No change from plan.

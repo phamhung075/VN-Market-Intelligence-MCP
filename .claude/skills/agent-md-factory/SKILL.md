@@ -74,6 +74,7 @@ Spot-check that pointers added in the edit resolve to real files.
 - Agent `.md`: no hard cap, but flag if > 200L (suggest lazy-load extraction).
 - Flow `main.md`: flag if > 120L without a `<!-- size-justification: ... -->` comment on line 1 or 2.
 - SKILL.md: no hard cap, but flag if > 80L (skill should be focused).
+- `size-justification` marker = justification of the file's CURRENT size ONLY (≤300 chars) — NOT a changelog. Never append a dated entry per fix/sprint; each edit already exists as a commit message. On every touch, rewrite the marker to state only why the file is its current size; delete prior dated entries instead of appending to them.
 
 ### Q-4 — MEMORY.md index update (when adding new skill or new agent)
 If a new `.claude/skills/<name>/SKILL.md` was created:
