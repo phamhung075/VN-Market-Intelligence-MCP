@@ -218,11 +218,20 @@ describe("TC-PDFPATH-2: URL mode regression — body is {url, source_type} with 
 // TC-PDFPATH-3: tier order — pdf_path Tier 1 before Tier 3 pdf-parse
 // ─────────────────────────────────────────────────────────────────────────────
 
+// FIX-PDFEXTRACTOR-TIER1-OCR-TIMEOUT: `extractText`/`readFile` are now ALSO
+// consulted once by the confidence pre-gate (Decision 2) BEFORE Tier 1 runs
+// — the same deps Tier 3 already used. All mocks below return
+// confidence===1.0 (text-native) so the pre-gate lets these scenarios
+// through to the sync Tier1→2→3 gauntlet unchanged (a confidence<1.0 mock
+// would short-circuit straight to the async branch and Tier 1/2/3 would
+// never be attempted at all). Call counts (not booleans) are asserted below
+// so the pre-gate's own extractText call is correctly distinguished from an
+// actual Tier-3 fallback call.
 describe("TC-PDFPATH-3: tier order — extractViaServicePdfPath (Tier 1) before pdf-parse (Tier 3)", () => {
-  it("Tier 3 (pdf-parse) NOT called when Tier 1 (pdf_path) succeeds", async () => {
+  it("Tier 3 (pdf-parse) NOT called when Tier 1 (pdf_path) succeeds — extractText only called once (pre-gate)", async () => {
     const pdfPathText = "Bảng cân đối kế toán VNM 2025 " + "A".repeat(200);
     let pdfPathCalled = false;
-    let pdfParseCalled = false;
+    let extractTextCallCount = 0;
     const pipelineArgs: unknown[] = [];
 
     const deps: PushBctcExtractionDeps = {
@@ -243,10 +252,9 @@ describe("TC-PDFPATH-3: tier order — extractViaServicePdfPath (Tier 1) before 
         pipelineArgs.push(params);
         return { id: "vnm-q4-2025" };
       },
-      // Tier 3: pdf-parse — must NOT be called
       extractText: async (_buf: Buffer): Promise<{ text: string; confidence: number }> => {
-        pdfParseCalled = true;
-        return { text: pdfPathText, confidence: 0.8 };
+        extractTextCallCount++;
+        return { text: pdfPathText, confidence: 1.0 };
       },
       readFile: (_path: string): Buffer => {
         return Buffer.from("fake-pdf");
@@ -265,17 +273,18 @@ describe("TC-PDFPATH-3: tier order — extractViaServicePdfPath (Tier 1) before 
 
     // Tier 1 must have been attempted
     expect(pdfPathCalled).toBe(true);
-    // Tier 3 must NOT have been called (Tier 1 succeeded)
-    expect(pdfParseCalled).toBe(false);
+    // extractText called exactly once (the pre-gate) — Tier 3 itself is
+    // never separately invoked because Tier 1 succeeded.
+    expect(extractTextCallCount).toBe(1);
     // Pipeline must have been called with Tier 1 text
     expect(pipelineArgs.length).toBe(1);
   });
 
-  it("Tier 1 absent → Tier 2 URL fails → Tier 3 pdf-parse IS called", async () => {
+  it("Tier 1 absent → Tier 2 URL fails → Tier 3 pdf-parse IS called (extractText called twice: pre-gate + Tier 3)", async () => {
     // Regression: when Tier 1 dep is absent and Tier 2 URL also fails,
     // Tier 3 (pdf-parse) must be the last resort.
     const pdfParseText = "Kết quả kinh doanh HPG Q4 2025 " + "B".repeat(200);
-    let pdfParseCalled = false;
+    let extractTextCallCount = 0;
     const pipelineArgs: unknown[] = [];
 
     const deps: PushBctcExtractionDeps = {
@@ -286,8 +295,8 @@ describe("TC-PDFPATH-3: tier order — extractViaServicePdfPath (Tier 1) before 
         return { id: "hpg-q4-2025" };
       },
       extractText: async (_buf: Buffer): Promise<{ text: string; confidence: number }> => {
-        pdfParseCalled = true;
-        return { text: pdfParseText, confidence: 0.7 };
+        extractTextCallCount++;
+        return { text: pdfParseText, confidence: 1.0 };
       },
       readFile: (_path: string): Buffer => Buffer.from("fake-hpg-pdf"),
     };
@@ -302,13 +311,14 @@ describe("TC-PDFPATH-3: tier order — extractViaServicePdfPath (Tier 1) before 
       deps,
     });
 
-    expect(pdfParseCalled).toBe(true);
+    // Called twice: once for the pre-gate, once for the actual Tier 3 fallback.
+    expect(extractTextCallCount).toBe(2);
     expect(pipelineArgs.length).toBe(1);
   });
 
-  it("Tier 1 fails → Tier 2 URL succeeds → Tier 3 pdf-parse NOT called", async () => {
+  it("Tier 1 fails → Tier 2 URL succeeds → Tier 3 pdf-parse NOT called (extractText only called once, pre-gate)", async () => {
     const urlText = "Thu nhập lãi thuần ACB Q4 2025 " + "C".repeat(200);
-    let pdfParseCalled = false;
+    let extractTextCallCount = 0;
     let tier1Called = false;
     let tier2Called = false;
     const pipelineArgs: unknown[] = [];
@@ -333,8 +343,8 @@ describe("TC-PDFPATH-3: tier order — extractViaServicePdfPath (Tier 1) before 
         return { id: "acb-q4-2025" };
       },
       extractText: async (_buf: Buffer): Promise<{ text: string; confidence: number }> => {
-        pdfParseCalled = true;
-        return { text: "", confidence: 0 };
+        extractTextCallCount++;
+        return { text: "X".repeat(200), confidence: 1.0 };
       },
       readFile: (_path: string): Buffer => Buffer.from("fake-acb-pdf"),
     };
@@ -351,7 +361,9 @@ describe("TC-PDFPATH-3: tier order — extractViaServicePdfPath (Tier 1) before 
 
     expect(tier1Called).toBe(true);    // Tier 1 was attempted
     expect(tier2Called).toBe(true);    // Tier 2 was attempted (Tier 1 failed)
-    expect(pdfParseCalled).toBe(false); // Tier 3 NOT called (Tier 2 succeeded)
+    // extractText called exactly once (the pre-gate) — Tier 3 itself is
+    // never separately invoked because Tier 2 succeeded.
+    expect(extractTextCallCount).toBe(1);
     expect(pipelineArgs.length).toBe(1);
   });
 });

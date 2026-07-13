@@ -80,15 +80,20 @@ describe("FIX-1-A: pipeline called via extractViaServicePdfPath (Tier 1) when wi
         callArgs.push(params);
         return { id: "ctg-q1-2026" };
       },
+      // FIX-PDFEXTRACTOR-TIER1-OCR-TIMEOUT: this same dep is now ALSO consulted
+      // by the confidence pre-gate (Decision 2) BEFORE Tier 1. It must report
+      // confidence===1.0 (text-native) here so this test keeps exercising the
+      // sync Tier1→2→3 gauntlet unchanged — a confidence<1.0 mock would route
+      // straight to the async branch and Tier 1 would never be attempted.
       extractText: async (_buf: Buffer): Promise<{ text: string; confidence: number }> => {
-        return { text: "", confidence: 0 };
+        return { text: "X".repeat(200), confidence: 1.0 };
       },
       readFile: (_path: string): Buffer => {
         return Buffer.from("fake-pdf-bytes");
       },
     };
 
-    await triggerPushBctcExtraction({
+    const outcome = await triggerPushBctcExtraction({
       actionCode: "CTG",
       year: 2026,
       quarter: "Q1",
@@ -106,6 +111,8 @@ describe("FIX-1-A: pipeline called via extractViaServicePdfPath (Tier 1) when wi
     expect(pdfPathCallCount).toBe(1);
     // Tier 2 (remote URL) must NOT have been called (Tier 1 succeeded)
     expect(remoteUrlCallCount).toBe(0);
+    // FIX-PDFEXTRACTOR-TIER1-OCR-TIMEOUT AC1: discriminated outcome, not void
+    expect(outcome).toEqual({ outcome: "done", reportId: "ctg-q1-2026" });
   });
 });
 
@@ -124,9 +131,13 @@ describe("FIX-1-B: pipeline called via direct pdf-parse when service tiers absen
         callArgs.push(params);
         return { id: "ctg-direct" };
       },
+      // FIX-PDFEXTRACTOR-TIER1-OCR-TIMEOUT: confidence pre-gate (Decision 2)
+      // calls this SAME dep before Tier 1. Must be 1.0 (text-native) so this
+      // test keeps exercising the sync gauntlet's Tier 3 fallback — a
+      // confidence<1.0 mock would route straight to the async branch instead.
       extractText: async (_buf: Buffer): Promise<{ text: string; confidence: number }> => {
         extractTextCalled = true;
-        return { text: bufText, confidence: 0.65 };
+        return { text: bufText, confidence: 1.0 };
       },
       readFile: (_path: string): Buffer => {
         readFileCalled = true;
@@ -134,7 +145,7 @@ describe("FIX-1-B: pipeline called via direct pdf-parse when service tiers absen
       },
     };
 
-    await triggerPushBctcExtraction({
+    const outcome = await triggerPushBctcExtraction({
       actionCode: "CTG",
       year: 2026,
       quarter: "Q1",
@@ -148,6 +159,8 @@ describe("FIX-1-B: pipeline called via direct pdf-parse when service tiers absen
     expect(extractTextCalled).toBe(true);
     expect(callArgs.length).toBe(1);
     expect(callArgs[0]!.pdfTextOverride).toBe(bufText);
+    // FIX-PDFEXTRACTOR-TIER1-OCR-TIMEOUT AC1: discriminated outcome, not void
+    expect(outcome).toEqual({ outcome: "done", reportId: "ctg-direct" });
   });
 });
 
@@ -163,7 +176,7 @@ describe("FIX-1-C: pipeline NOT called when no filePath and service fails", () =
       },
     };
 
-    await triggerPushBctcExtraction({
+    const outcome = await triggerPushBctcExtraction({
       actionCode: "CTG",
       year: 2026,
       quarter: "Q1",
@@ -175,6 +188,8 @@ describe("FIX-1-C: pipeline NOT called when no filePath and service fails", () =
     });
 
     expect(callCount.n).toBe(0);
+    // FIX-PDFEXTRACTOR-TIER1-OCR-TIMEOUT AC1: exhausted tiers → "failed", never "done"
+    expect(outcome.outcome).toBe("failed");
   });
 });
 

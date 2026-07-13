@@ -18,6 +18,18 @@
  * pipeline via setImmediate, the cross-service HTTP fetch to pdf-extractor:5001, and the
  * bctc_vps_queue state-machine transitions (pending → fetching → done/failed).
  *
+ * FIX-PDFEXTRACTOR-TIER1-OCR-TIMEOUT (AC1, design: docs/architecture-briefs/
+ * 2026-07-13-pdfextractor-ocr-timeout-async-reroute.md): the setImmediate
+ * callback used to `await triggerPushBctcExtraction(...)` (old `Promise<void>`,
+ * "never throws") and unconditionally set `status='done'` — silently
+ * swallowing every all-tiers-exhausted / pipeline-null outcome. It now
+ * switches on `triggerPushBctcExtraction`'s discriminated
+ * `PushBctcExtractionOutcome` via `applyPushBctcExtractionOutcome` (below),
+ * which is the single source of truth for the `done` / `pek_triggered` /
+ * `failed` state transitions — extracted into its own exported function so
+ * it is directly unit-testable (real in-memory `bctc_vps_queue` + injectable
+ * `sendBugFn`) without simulating the HTTP/multipart request.
+ *
  * DI contract: db + log are injected by the caller (server.ts handleRequest).
  * No getDb() calls here.
  */
@@ -29,8 +41,97 @@ import { requireVpsApiKey } from "./_shared/requireVpsApiKey.js";
 import { parseMultipartFields } from "./_shared/multipartParser.js";
 import { safeLogVpsPush } from "../../../infrastructure/db/vpsPushLogStore.js";
 import { triggerPekExtractionForReport } from "../../../infrastructure/fetchers/pekExtractTrigger.js";
+import type { PushBctcExtractionOutcome } from "../../../scheduler/financial-reports/pushBctcExtraction.js";
 
 type Logger = ReturnType<typeof createLogger>;
+
+/** Default fail-loud sender — matches bctcExtractReconcileJob.ts's own `defaultSendBug` mechanism. */
+const defaultSendBug: (msg: string) => Promise<void> = async (msg) => {
+  const { sendTelegramBug } = await import(
+    "../../../infrastructure/notifiers/telegram.js"
+  );
+  await sendTelegramBug(msg);
+};
+
+/**
+ * FIX-PDFEXTRACTOR-TIER1-OCR-TIMEOUT (AC1) — applies `triggerPushBctcExtraction`'s
+ * discriminated outcome to the `bctc_vps_queue` row's state machine:
+ *
+ *   "done"         → status='done' — ONLY reachable now that `runPipeline()`
+ *                    has proven a non-null result.
+ *   "async_routed" → status='pek_triggered', last_attempt=now — the
+ *                    already-shipped `bctcExtractReconcileJob.ts` (untouched)
+ *                    owns the rest of the lifecycle (done / enrich_failed).
+ *   "failed"       → status='failed' (retryable; attempts were already
+ *                    incremented at push time by the initial upsert) +
+ *                    fail-loud `sendBugFn` (defaults to `sendTelegramBug` —
+ *                    the SAME mechanism `bctcExtractReconcileJob.ts`'s
+ *                    `enrich_failed` path uses) so staleness is surfaced
+ *                    immediately instead of silently retryable.
+ *
+ * Exported + `sendBugFn` injectable for direct unit testing against a real
+ * in-memory `bctc_vps_queue` table — no HTTP/multipart simulation needed.
+ */
+export async function applyPushBctcExtractionOutcome(
+  db: Database,
+  log: Logger,
+  key: { actionCode: string; periodYear: number; periodQuarter: string },
+  outcome: PushBctcExtractionOutcome,
+  sendBugFn: (msg: string) => Promise<void> = defaultSendBug,
+): Promise<void> {
+  const { actionCode, periodYear, periodQuarter } = key;
+
+  switch (outcome.outcome) {
+    case "done":
+      db.prepare(
+        `UPDATE bctc_vps_queue SET status = 'done' WHERE action_code = ? AND period_year = ? AND period_quarter = ?`,
+      ).run(actionCode, periodYear, periodQuarter);
+      log.info("[push-bctc-pdf] pipeline complete", {
+        actionCode,
+        periodYear,
+        periodQuarter,
+        reportId: outcome.reportId,
+      });
+      return;
+
+    case "async_routed":
+      db.prepare(
+        `UPDATE bctc_vps_queue SET status = 'pek_triggered', last_attempt = datetime('now') WHERE action_code = ? AND period_year = ? AND period_quarter = ?`,
+      ).run(actionCode, periodYear, periodQuarter);
+      log.info("[push-bctc-pdf] scanned PDF routed to async PEK extraction — reconcile job owns lifecycle", {
+        actionCode,
+        periodYear,
+        periodQuarter,
+        reportId: outcome.reportId,
+      });
+      return;
+
+    case "failed": {
+      db.prepare(
+        `UPDATE bctc_vps_queue SET status = 'failed' WHERE action_code = ? AND period_year = ? AND period_quarter = ?`,
+      ).run(actionCode, periodYear, periodQuarter);
+      log.error("[push-bctc-pdf] pipeline failed", {
+        actionCode,
+        periodYear,
+        periodQuarter,
+        reason: outcome.reason,
+      });
+      try {
+        await sendBugFn(
+          `[push-bctc-pdf] EXTRACTION FAILED: ${actionCode} ${periodYear}-${periodQuarter} — ${outcome.reason}. Queue row marked 'failed' (retryable).`,
+        );
+      } catch (notifyErr) {
+        // Bug notification errors must NEVER block the fail-loud status
+        // transition itself — the UPDATE above already committed.
+        log.error("[push-bctc-pdf] sendBugFn threw (non-fatal to fail-loud status transition)", {
+          actionCode,
+          error: notifyErr instanceof Error ? notifyErr.message : String(notifyErr),
+        });
+      }
+      return;
+    }
+  }
+}
 
 // ── POST /api/push-bctc-pdf ──────────────────────────────────────────────────
 // Task 1112: BCTC VPS proxy — push PDF
@@ -150,7 +251,7 @@ export async function handlePushBctcPdf(
     setImmediate(async () => {
       try {
         const { triggerPushBctcExtraction } = await import("../../../scheduler/financial-reports/pushBctcExtraction.js");
-        await triggerPushBctcExtraction({
+        const outcome = await triggerPushBctcExtraction({
           actionCode,
           year: periodYear,
           quarter: periodQuarter as "Q1" | "Q2" | "Q3" | "Q4",
@@ -158,18 +259,38 @@ export async function handlePushBctcPdf(
           filename,
           pdfUrl: sourceUrl || `file://${pdfPath}`,
         });
-        db.prepare(
-          `UPDATE bctc_vps_queue SET status = 'done' WHERE action_code = ? AND period_year = ? AND period_quarter = ?`,
-        ).run(actionCode, periodYear, periodQuarter);
-        log.info("[push-bctc-pdf] pipeline complete", { actionCode, periodYear, periodQuarter });
+        // FIX-PDFEXTRACTOR-TIER1-OCR-TIMEOUT (AC1): switch on the discriminated
+        // outcome instead of blindly marking 'done' on no-throw.
+        await applyPushBctcExtractionOutcome(
+          db,
+          log,
+          { actionCode, periodYear, periodQuarter },
+          outcome,
+        );
       } catch (err) {
+        // Defensive — triggerPushBctcExtraction is designed to never throw
+        // (all failure modes are represented in its returned outcome union).
+        // Still fail-loud here for genuinely unexpected exceptions, mirroring
+        // the "failed" outcome's own sendTelegramBug mechanism.
         db.prepare(
           `UPDATE bctc_vps_queue SET status = 'failed' WHERE action_code = ? AND period_year = ? AND period_quarter = ?`,
         ).run(actionCode, periodYear, periodQuarter);
+        const errMsg = err instanceof Error ? err.message : String(err);
         log.error("[push-bctc-pdf] pipeline failed", {
           actionCode,
-          error: err instanceof Error ? err.message : String(err),
+          error: errMsg,
         });
+        try {
+          const { sendTelegramBug } = await import("../../../infrastructure/notifiers/telegram.js");
+          await sendTelegramBug(
+            `[push-bctc-pdf] EXTRACTION THREW UNEXPECTEDLY: ${actionCode} ${periodYear}-${periodQuarter} — ${errMsg}. Queue row marked 'failed' (retryable).`,
+          );
+        } catch (notifyErr) {
+          log.error("[push-bctc-pdf] sendTelegramBug threw (non-fatal)", {
+            actionCode,
+            error: notifyErr instanceof Error ? notifyErr.message : String(notifyErr),
+          });
+        }
       }
     });
 
