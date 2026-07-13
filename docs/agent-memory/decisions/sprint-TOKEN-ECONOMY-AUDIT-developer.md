@@ -47,3 +47,14 @@
 - Fixing the WRONG `tickers` example in-place vs deleting it — chose deletion: whole section removed per DoD item 1; verified `tools/list/get_price_history.md` already correct (`code: string`), so no separate fix commit needed.
 **why-decision:** Row-count diff (`grep -c "| \`"`) proved tool tables byte-identical pre/post for all 6 files — satisfies "keep tool tables intact" with objective evidence, not self-report.
 **why-change:** No change from plan.
+
+---
+
+### STEP developer-S5 · developer · 2026-07-13T11:24:50Z
+**task-id:** TE-T07
+**what-done:** Split `.claude/skills/cron-detect-loop/SKILL.md` (196L->51L): kept frontmatter + Step 1 idempotency guard + Step 3 verify; moved "Why this skill exists", SSOT/divergence note, Job 1-4 CronCreate bodies (+inline notes), and P3-OBSERVE-ONLY-RETIREMENT verbatim to new `register.md` (156L), pointed to from Step 1's missing-entry branch.
+**what-considered:**
+- Rewording the divergence commentary while moving it vs verbatim relocation — chose verbatim: hard constraint is prose reorg only, and brief's own precedent (T-02) requires "relocated, not deleted."
+- Collapsing the SSOT-note + Step-2-intro duplication into one paragraph vs keeping both as-authored — kept both verbatim to avoid any risk of altering register-body meaning; only new content added is the SKILL.md pointer sentence itself.
+**why-decision:** `diff`+`md5` on the extracted CronCreate blocks (all 4) and the full Step 2/P3 sections between git HEAD SKILL.md and new register.md returned zero diff — objective byte-identity proof, not self-report.
+**why-change:** No change from plan.
