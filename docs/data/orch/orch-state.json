@@ -363,12 +363,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "next_action": "BOUNDED-1 idle draining resumes — eligible: SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY (dev-mcp-server) + FIX-DEVTEAM-BOUNDED1-NONDEV-OWNER-BOARD-FALLBACK-GATE (developer P2, minted 57aa86350). DEPLOY BATCH owed+user-gated: 3 fixes 599f4aee0+1bbc8cead+252f8ffd1 ride ONE off-market mcp-server rebuild (deploy_pending flags authoritative).",
-    "updated_by": "dev-team (FIX-DEVTEAM-STATUSFLIP-LANEMOVE-RULE DONE_VERIFIED closeout, guardrail 226bb755c)",
-    "updated_at": "2026-07-13T08:39:28Z"
+    "status": "in_progress",
+    "active_task_id": "FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-13T08:52:07Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -5521,21 +5521,6 @@
         "verify_note": "prior_status=TODO"
       },
       {
-        "id": "FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN",
-        "type": "FIX",
-        "priority": "high",
-        "status": "BACKLOG",
-        "zone": "apps/mcp-server/",
-        "size": "S",
-        "title": "newsChainFallback.ts:348 — same INSERT OR REPLACE id-orphaning bug as D1, apply ON CONFLICT fix pattern",
-        "owner": "dev-mcp-server",
-        "depends": [],
-        "detail_ref": "docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md#newsChainFallback-finding",
-        "created_at": "2026-07-10T18:00:00Z",
-        "created_by": "pm",
-        "note": "QA finding during D1 regression: tryNewsChainFallback() at apps/mcp-server/src/application/usecases/bctc/newsChainFallback.ts:348 calls the same INSERT OR REPLACE INTO financial_reports pattern D1 just fixed in parseBctcReport.ts. Same root cause (fresh randomUUID() on every re-run orphans bctc_layout_units/bctc_page_zones rows). Not in D1 scope (design doc + D1 files[] list only covered parseBctcReport.ts; architect's brownfield findings didn't catch this second call site). Standalone fix task — same fix pattern applies. QA recommended backlog follow-up, did not judge urgency; placement in chain TBD by pm/architect."
-      },
-      {
         "id": "SPIKE-COWORK-GUARANTEED-SLOT-SUPERSEDE-WIRING",
         "type": "SPIKE",
         "status": "BACKLOG",
@@ -8278,9 +8263,30 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-13T06:52:15Z",
+    "last_triaged_at": "2026-07-13T08:52:07Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN",
+        "type": "FIX",
+        "priority": "high",
+        "status": "IN_PROGRESS",
+        "zone": "apps/mcp-server/",
+        "size": "S",
+        "title": "newsChainFallback.ts:348 — same INSERT OR REPLACE id-orphaning bug as D1, apply ON CONFLICT fix pattern",
+        "owner": "dev-mcp-server",
+        "depends": [],
+        "detail_ref": "docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md#newsChainFallback-finding",
+        "created_at": "2026-07-10T18:00:00Z",
+        "created_by": "pm",
+        "note": "QA finding during D1 regression: tryNewsChainFallback() at apps/mcp-server/src/application/usecases/bctc/newsChainFallback.ts:348 calls the same INSERT OR REPLACE INTO financial_reports pattern D1 just fixed in parseBctcReport.ts. Same root cause (fresh randomUUID() on every re-run orphans bctc_layout_units/bctc_page_zones rows). Not in D1 scope (design doc + D1 files[] list only covered parseBctcReport.ts; architect's brownfield findings didn't catch this second call site). Standalone fix task — same fix pattern applies. QA recommended backlog follow-up, did not judge urgency; placement in chain TBD by pm/architect.",
+        "promoted_at": "2026-07-13T08:52:07Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-13T08:52:07Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
