@@ -365,10 +365,11 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "FIX-DAILY-FF-VIEW-JOIN-ANCHOR",
-    "next_agent": "po",
-    "next_action": "po: FINAL merge-gate signoff for FIX-DAILY-FF-VIEW-JOIN-ANCHOR — the SOLE unblocker for CI-RED-29f92c5b (entire fleet stranded behind it). Supervised cascade COMPLETE + RAW-verified GREEN at every hop: architect brief cacf5607f (SHAPE=A) -> dev-mcp-server impl d71f45949 (DROP+unconditional CREATE VIEW bidirectional daily_ohlcv_with_flow, UNION ALL anti-join) -> qa APPROVE commit 8e905c31d. Router RAW-verified qa: scope clean (3 docs only, no prod/test/orch touch), Task Report reports/TASK_REPORT_FIX-DAILY-FF-VIEW-JOIN-ANCHOR.md exists, merge-gate pair re-run 20 pass/0 fail post-qa-commit, DDD infra-only (1 production file, zero domain touch), companion schema.test.ts regression fixed same commit. YOUR JOB: (a) FINAL merge-gate signoff decision (APPROVED|HOLD); (b) CI-RED-FREEZE PROTOCOL — the fix push (d71f45949 + 16 board/signal commits) is exactly what lifts the freeze & flips CI green, BUT the actual `git push origin main` is USER-GATED ('push only when user asks') — do NOT push yourself; record your signoff + mark push-readiness so the router surfaces the one user action; (c) once pushed+CI-green: merge gate clears, then drain queued PO signals (tnb 20:23Z, bctc_signal_FPT_20260713_routine, prior BCTC serve-layer gap, digest-predict Bash-grant obs). Do NOT start new sprints this hop. Do NOT touch the router-held row lock task:FIX-DAILY-FF-VIEW-JOIN-ANCHOR. RETURN: SIGNOFF=APPROVED|HOLD + push-readiness (ready|blocker) + what you recorded (journal/notebook paths).",
-    "updated_by": "dev-team (qa APPROVE 8e905c31d RAW-verified GREEN -> po final merge-gate signoff; push user-gated; CI-red unblocker)",
-    "updated_at": "2026-07-13T21:49:11Z"
+    "next_agent": "router",
+    "awaiting_user_push": true,
+    "next_action": "AWAITING USER PUSH AUTHORIZATION — FIX-DAILY-FF-VIEW-JOIN-ANCHOR (sole CI-RED-29f92c5b unblocker) supervised cascade architect(cacf5607f)->dev(d71f45949)->qa(8e905c31d APPROVE)->po(e591d1119 APPROVED) ALL GREEN + router RAW-verified at every hop (merge-gate pair 20 pass/0 fail re-run by dev+qa+po+router independently; scope clean; DDD infra-only). ONLY remaining step = `git push origin main` (19 unpushed local commits incl. fix d71f45949) — USER-GATED per standing 'push only when user asks' + CI-red-freeze protocol. Router does NOT auto-push. On user push authorization: execute push, then RAW-verify CI GREEN on the NEW head SHA (gh run list --branch main; verification_gate=ci_green_on_subsequent_push, must differ from failing 29f92c5be), THEN close chain: move FIX-DAILY-FF review->done_verified, release row lock task:FIX-DAILY-FF-VIEW-JOIN-ANCHOR, reset head idle, drain PO carry-over signals (tnb 20:23Z, bctc_signal_FPT_20260713_routine, BCTC serve-layer gap, digest-predict Bash-grant). Until pushed: each tick hold (housekeeping + re-confirm freeze + re-surface), do NOT spawn, do NOT start new work behind the freeze.",
+    "updated_by": "dev-team (21:37Z tick: po APPROVED e591d1119 RAW-verified GREEN -> cascade complete; push user-gated; AWAITING USER PUSH to lift CI-red freeze)",
+    "updated_at": "2026-07-13T21:58:02Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -9006,9 +9007,10 @@
     "head": {
       "status": "in_progress",
       "active_task_id": "FIX-DAILY-FF-VIEW-JOIN-ANCHOR",
-      "next_agent": "po",
-      "last_updated_at": "2026-07-13T21:49:11Z",
-      "last_updated_by": "dev-team (FIX-DAILY-FF qa->po final merge-gate signoff)"
+      "next_agent": "router",
+      "awaiting_user_push": true,
+      "last_updated_at": "2026-07-13T21:58:02Z",
+      "last_updated_by": "dev-team (FIX-DAILY-FF po-APPROVED; awaiting user push)"
     },
     "ready": [],
     "review": [
@@ -9496,9 +9498,10 @@
         "queue_status_observed": "pek_triggered @ 2026-07-13 19:38:48 (RAW market.db) — async-reroute FIRED, not silent-done; RED-flag averted",
         "pek_status_observed": "IN-FLIGHT @ 2026-07-13T20:12Z — pdf-extractor pek _run_extraction ACTIVELY running report_id=918a7abd (DocLayout-YOLO + PaddleOCR PP-StructureV2 loaded, CPU); POST /pek-extract 202 Accepted. Container 'unhealthy' badge = /health curl starved by extraction CPU saturation (30s timeout, 0 bytes), NOT a dead service. Async-reroute IS engaging.",
         "ordering_smell": "queue row223 flipped status=done @ 2026-07-13 20:05:00 while scalars NOT yet landed (net_revenue still -1264.66, net_profit 319257.88, parsed_at 2026-06-07, refine_status PARTIAL, reconcile_attempts=0). Done-before-scalars is a latent ordering defect vs the fix AC (done ONLY after real scalars). CONFIRM next pass: if pek completes and net_revenue flips plausible-positive -> eventual-consistency OK but mint a hardening follow-up for the premature done; if net_revenue stays stale after pek finishes -> REAL regression, reopen.",
-        "reflow_last_probed_at": "2026-07-13T21:20:32Z",
+        "reflow_last_probed_at": "2026-07-13T21:58:02Z",
         "reflow_probe_2107": "pek ALIVE+extracting @21:18Z (CPU 217%, mem 2.312/2.5GiB=92.5% STABLE — NOT OOM), ~1.5hr since 19:37Z pek_triggered. RAW serving read: financial_reports.id=918a7abd-ae17-466f-be30-96ec55218ccc net_revenue STILL -1264.657037, refine_status PARTIAL, parsed_at 2026-06-07T10:27:16Z (unchanged) — extraction not yet written back. Correct verify query next tick: SELECT id,net_revenue,refine_status,parsed_at FROM financial_reports WHERE id LIKE '918a7abd%' (col is `id`, NOT report_id). Expect net_revenue flips -1264.66 -> plausible POSITIVE + parsed_at updates.",
-        "reflow_slowness_threshold": "Extraction ~1.5hr on a 33pp scanned consolidated PDF. If STILL extracting at 21:37Z tick (~2hr) with net_revenue still stale -> escalate pathological-slowness/OOM-risk to dev-pdf-extractor (streaming/page-chunk perf fix, root cause) — NOT a symptom retry. If pek OOMs before writeback -> silent-stale materializes -> REAL regression, reopen this row."
+        "reflow_slowness_threshold": "Extraction ~1.5hr on a 33pp scanned consolidated PDF. If STILL extracting at 21:37Z tick (~2hr) with net_revenue still stale -> escalate pathological-slowness/OOM-risk to dev-pdf-extractor (streaming/page-chunk perf fix, root cause) — NOT a symptom retry. If pek OOMs before writeback -> silent-stale materializes -> REAL regression, reopen this row.",
+        "reflow_probe_2137": "pek HEALTHY-extracting @21:55Z (CPU 202%, mem 2.255/2.5GiB=90% STABLE not climbing — NOT OOM, NOT hung), ~2h18m since 19:37Z. RAW serving read (market.db — CORRECT db; main.db was 0-byte empty): financial_reports.id=918a7abd net_revenue STILL -1264.657037, refine_status PARTIAL, parsed_at 2026-06-07T10:27:16Z unchanged — not yet written back. Escalation refinement: threshold intent = catch HUNG/OOM; process is HEALTHY-slow (neither holds), so hold 1 more tick. HARD-STOP: if 22:07Z tick (~2.8hr) STILL extracting+stale -> emit perf signal (streaming/page-chunk root-cause fix) to PO->dev-pdf-extractor as BACKLOG PLAN-ONLY. If pek OOMs before writeback -> silent-stale materializes -> REAL regression, reopen this row."
       },
       {
         "id": "FIX-DAILY-FF-VIEW-JOIN-ANCHOR",
@@ -9509,7 +9512,7 @@
         "priority": "high",
         "size": "M",
         "owner": "po",
-        "next_agent": "po",
+        "next_agent": "router",
         "supervised": true,
         "depends": [],
         "blocks": [
@@ -9539,7 +9542,7 @@
           "note": "ACTIVE merge-gate blocker. The 2 deliberately-RED behavioral-gate assertions in daily-foreign-flow-integration.test.ts (T-3 view correctness + R-1 elimination gate) fail bun test on main HEAD 29f92c5b (committed RED by design in d15eedbec, PO-accepted). They flip GREEN when this view fix lands (candidate shapes A/B in .note). NO duplicate CI-RED-29f92c5b-FIX minted — this pre-existing root-cause row IS the fix (dedup: same failure, one open FIX). Dispatch via router supervised cascade to architect (next_agent), then dev-mcp-server impl. CI green on subsequent push == the 2 assertions pass RAW == this row DONE."
         },
         "started_at": "2026-07-13T20:45:04Z",
-        "dispatch_note": "qa APPROVE (8e905c31d) RAW-verified GREEN by router -> po FINAL merge-gate signoff; push is user-gated (lifts CI-red freeze). dispatched 2026-07-13T21:49:11Z",
+        "dispatch_note": "po APPROVED (e591d1119) RAW-verified GREEN -> cascade complete; push is user-gated (lifts CI-red freeze). AWAITING USER PUSH. 2026-07-13T21:58:02Z",
         "architect_brief_ref": "docs/architecture-briefs/2026-07-13-daily-ff-view-join-anchor.md",
         "architect_shape_decision": "A",
         "decided_shape": "A",
@@ -9552,7 +9555,12 @@
         "qa_task_report": "reports/TASK_REPORT_FIX-DAILY-FF-VIEW-JOIN-ANCHOR.md",
         "qa_confirm_tests": "merge-gate pair 20 pass/0 fail + qa 9-file consumer/isolation sweep 79 pass/0 fail + tsc 0 err = 99 pass/0 fail across 11 files (raw)",
         "router_qa_gate_verified": "2026-07-13T21:47Z RAW: qa commit 8e905c31d scope=3 docs only (no prod/test/orch touch, row lock untouched); Task Report exists 4146B; merge-gate pair re-run POST qa-commit 20 pass/0 fail (no drift); freeze held (d71f45949 NOT pushed, 17 unpushed local).",
-        "push_gate_pending": true
+        "push_gate_pending": true,
+        "po_signoff": "APPROVED",
+        "po_commit": "e591d1119",
+        "push_ready": true,
+        "awaiting_user_push": true,
+        "router_po_gate_verified": "2026-07-13T21:55Z RAW: po commit e591d1119 scope=2 memory docs (journal+notebook, NO orch/prod/test); freeze held (origin/main 29f92c5be, 19 unpushed, d71f45949 NOT pushed); merge-gate pair 20 pass/0 fail re-run independently by po. Full cascade architect->dev->qa->po all GREEN."
       }
     ],
     "qa": [],
