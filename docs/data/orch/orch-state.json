@@ -5602,7 +5602,10 @@
         "next_agent": "agents-architect",
         "po_approved": true,
         "po_approved_at": "2026-07-11T07:37:30Z",
-        "po_approval_note": "spec APPROVED — zero PO blockers, respects honest-NULL/additive-only/zone-discipline/PLAN-ONLY-phase2/feasibility-recon precedents; resume SPRINT-M cascade at agents-architect, do NOT re-run BA"
+        "po_approval_note": "spec APPROVED — zero PO blockers, respects honest-NULL/additive-only/zone-discipline/PLAN-ONLY-phase2/feasibility-recon precedents; resume SPRINT-M cascade at agents-architect, do NOT re-run BA",
+        "supervised": true,
+        "supervised_by": "po-groom-20260713T0937Z",
+        "supervised_note": "po_approved SPRINT-M cascade (BA spec done, next=agents-architect). Declassified from BOUNDED-1 idle auto-pickup -> resume via router supervised dispatch. Stops 5th-hole non-dev-owner board-class per-tick re-pick churn (3rd consecutive idle tick)."
       },
       {
         "id": "FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN",
@@ -5623,7 +5626,10 @@
           "FIX-DEVTEAM-BOUNDED1-DETAIL-ITEMS-ARRAY-INDEX",
           "FIX-DEVTEAM-BOUNDED1-SUPERVISED-FLAG-GATE",
           "project_bounded1_first_pickup_stale_backlog_hygiene_debt"
-        ]
+        ],
+        "supervised": true,
+        "supervised_by": "po-groom-20260713T0937Z",
+        "supervised_note": "architect-owned FIX, null next_agent, no backlog-detail entry -> code non-dev-owner gate is detail-blind. Supervised dispatch to architect; removed from BOUNDED-1 idle auto-pickup (would mis-route to developer placeholder)."
       },
       {
         "id": "FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP",
@@ -5637,7 +5643,10 @@
         "note": "Filed from docs/spikes/SPIKE-BCTC-TABLEROWS-FROZEN-HOLLOW-DONE.md (2026-07-12). RAW-verified root cause: bctc_table_rows (the serving financial-table data analysis-agent consumes) has exactly ONE live producer, the BCTC-AGENTIC-REFINE pipeline (apps/mcp-server/src/scheduler/financial-reports/bctcRefineJob.ts refineOneReport Phase 4). Per the Option-Y architectural ruling, this pipeline has NO in-container/Docker scheduler trigger (production spawn path deliberately DELETED) -- it depends entirely on a session-scoped Claude-native CronCreate cron (.claude/commands/crons/cron-refine-bctc.md, schedule 0 9,14,20 * * * UTC) dispatching the refine_bctc_md subagent through a live interactive CLI/gateway session. This trigger has gone dormant: bctc_refined_units has produced 0 new rows since 2026-07-04 (8 days as of filing), 151 financial_reports rows stuck at refine_status=PENDING, and board task REFINE-CRON-ARM (sprint BCTC-ANALYTICS-LAYER, opened 2026-06-12, whose entire purpose was to durably arm+verify this exact cron) has sat status=TODO for 30 days untouched. This is a RECURRING instance (2nd+ occurrence) of the identical defect class diagnosed 2026-06-27 in sprint BCTC-REFINE-STALL-RETRIGGER (root cause (a): cowork CronCreate not re-armed after session restart) -- that sprint shipped throughput mitigations (T1 chunk-size, T2 extra cowork-schedule slots) but never the durable fix (T3-WATCHDOG, still BACKLOG) and its own cowork-schedule.json slot additions (commit 19764c0e2) are no longer present in the live schedule file today. AC (proposed, PM/architect to refine): (1) refine_bctc_md dispatch survives a Claude Code session restart without manual re-arming -- mirror the already-proven com.vn-market.cowork-guaranteed-slot-firer.plist launchd pattern (confirmed live via launchctl list during the SPIKE); (2) fold/supersede REFINE-CRON-ARM into this fix rather than a 3rd bare CronCreate re-arm attempt; (3) build BCTC-REFINE-T3-WATCHDOG (already scoped under sprint BCTC-REFINE-STALL-RETRIGGER, still BACKLOG) so the next stall alarms automatically instead of silently accumulating for a week+; (4) after fix, RAW-verify bctc_refined_units resumes growing and the 151-report PENDING backlog drains. Optional/non-blocking: bctcExtractReconcileJob observability signal for hollow-done rows (layout_units>0 AND table_rows=0) -- do NOT conflate with this fix, current reconcile-job behavior is correct per its own D3 spec.",
         "created_at": "2026-07-12T06:11:33Z",
         "created_by": "developer (SPIKE-BCTC-TABLEROWS-FROZEN-HOLLOW-DONE)",
-        "source": "docs/spikes/SPIKE-BCTC-TABLEROWS-FROZEN-HOLLOW-DONE.md"
+        "source": "docs/spikes/SPIKE-BCTC-TABLEROWS-FROZEN-HOLLOW-DONE.md",
+        "supervised": true,
+        "supervised_by": "po-groom-20260713T0937Z",
+        "supervised_note": "ops-owned FIX, null next_agent, no backlog-detail entry -> code non-dev-owner gate is detail-blind. Supervised dispatch to ops; removed from BOUNDED-1 idle auto-pickup (would mis-route to developer placeholder)."
       },
       {
         "id": "TE-T01",
@@ -6418,7 +6427,7 @@
         "size": "M",
         "owner": "architect",
         "next_agent": "architect",
-        "supervised": false,
+        "supervised": true,
         "depends": [],
         "blocks": [
           "TASK_2005"
@@ -6427,7 +6436,9 @@
         "created_at": "2026-07-12T19:45:17Z",
         "created_by": "po (coordination_session 69b0312e — TASK_2005 STOP/FIX)",
         "verification_gate": "The 2 currently-failing assertions in apps/mcp-server/src/__tests__/daily-foreign-flow-integration.test.ts pass RAW (not skipped/deleted) + full targeted regression stays green; AND RAW-live: a Class-A tool (marketWideForeignFlow / foreignFlow) returns the per-ticker foreign value for a code whose daily_foreign_flow row exists but whose daily_ohlcv bar has NOT yet landed.",
-        "note": "ROOT CAUSE (RAW-confirmed by TASK_2005 test + schema read): view daily_ohlcv_with_flow in apps/mcp-server/src/infrastructure/db/schema-market-data.ts = 'FROM daily_ohlcv o LEFT JOIN daily_foreign_flow f ON f.code=o.code AND f.date=o.date' — anchored on daily_ohlcv. A row that exists ONLY in daily_foreign_flow (FF written, no OHLCV bar yet) is NEVER returned; the inner COALESCE only picks the column winner AFTER an anchor daily_ohlcv row exists. CONSEQUENCE: TASK_2002 closed the WRITE side of R-1 (FF value always lands in daily_foreign_flow, no permanent loss). TASK_2003 migrated 5 Class-A read sites FROM daily_ohlcv TO the view but did NOT close R-1: all 5 (marketWideForeignFlowTool.ts, foreignFlowTools.ts, foreignFlowAlertJob.ts, assembleEveningSummary.ts, franceSummaryJob.ts) still return 0 for a ticker before its OHLCV bar lands = the live 'chua tra so tung ma' symptom. CANDIDATE FIX SHAPES (architect chooses ONE): (A) make view bidirectional / FULL-OUTER-emulated = SELECT over a UNION of daily_foreign_flow(code,date) keys and daily_ohlcv(code,date) keys, then COALESCE both planes so an FF-only key surfaces; (B) point the 5 Class-A sites at daily_foreign_flow directly with a fallback LEFT JOIN to daily_ohlcv for price columns (mirrors the Class-B pattern TASK_2004 already used). Touches a SHARED view + up to 5 read sites -> architect-led design first, then dev-mcp-server impl. REFS: test apps/mcp-server/src/__tests__/daily-foreign-flow-integration.test.ts (RAW 2/5 assertions fail, genuine); commits d15eedbec (test+journal) + 2eafbb6a2 (notebook); handoff docs/handoffs/TASK_2005-daily-ff-integration-test.md; decision journal docs/agent-memory/decisions/sprint-FLOW-PRICE-ALPHA-LOOP-dev-mcp-server.md STEP dev-mcp-server-S7."
+        "note": "ROOT CAUSE (RAW-confirmed by TASK_2005 test + schema read): view daily_ohlcv_with_flow in apps/mcp-server/src/infrastructure/db/schema-market-data.ts = 'FROM daily_ohlcv o LEFT JOIN daily_foreign_flow f ON f.code=o.code AND f.date=o.date' — anchored on daily_ohlcv. A row that exists ONLY in daily_foreign_flow (FF written, no OHLCV bar yet) is NEVER returned; the inner COALESCE only picks the column winner AFTER an anchor daily_ohlcv row exists. CONSEQUENCE: TASK_2002 closed the WRITE side of R-1 (FF value always lands in daily_foreign_flow, no permanent loss). TASK_2003 migrated 5 Class-A read sites FROM daily_ohlcv TO the view but did NOT close R-1: all 5 (marketWideForeignFlowTool.ts, foreignFlowTools.ts, foreignFlowAlertJob.ts, assembleEveningSummary.ts, franceSummaryJob.ts) still return 0 for a ticker before its OHLCV bar lands = the live 'chua tra so tung ma' symptom. CANDIDATE FIX SHAPES (architect chooses ONE): (A) make view bidirectional / FULL-OUTER-emulated = SELECT over a UNION of daily_foreign_flow(code,date) keys and daily_ohlcv(code,date) keys, then COALESCE both planes so an FF-only key surfaces; (B) point the 5 Class-A sites at daily_foreign_flow directly with a fallback LEFT JOIN to daily_ohlcv for price columns (mirrors the Class-B pattern TASK_2004 already used). Touches a SHARED view + up to 5 read sites -> architect-led design first, then dev-mcp-server impl. REFS: test apps/mcp-server/src/__tests__/daily-foreign-flow-integration.test.ts (RAW 2/5 assertions fail, genuine); commits d15eedbec (test+journal) + 2eafbb6a2 (notebook); handoff docs/handoffs/TASK_2005-daily-ff-integration-test.md; decision journal docs/agent-memory/decisions/sprint-FLOW-PRICE-ALPHA-LOOP-dev-mcp-server.md STEP dev-mcp-server-S7.",
+        "supervised_by": "po-groom-20260713T0937Z",
+        "supervised_note": "architect-owned FIX (next_agent=architect) -> supervised cascade, not a BOUNDED-1 atomic dev pick. Removed from idle auto-pickup; resume via router supervised dispatch."
       },
       {
         "id": "FIX-GAP-STALENESS-DETECTOR-CALENDAR-AWARE",
@@ -6478,7 +6489,7 @@
         "id": "FIX-DEVTEAM-BOUNDED1-NONDEV-OWNER-BOARD-FALLBACK-GATE",
         "type": "FIX",
         "status": "BACKLOG",
-        "priority": "P2",
+        "priority": "P1",
         "size": "S",
         "zone": "scripts/",
         "owner": "dev",
@@ -6489,7 +6500,10 @@
         "created_at": "2026-07-13T08:27:23Z",
         "created_by": "po-groom-20260713",
         "opened_by": "po",
-        "sibling_of": "FIX-DEVTEAM-BOUNDED1-DETAIL-DISPOSITION-GATE"
+        "sibling_of": "FIX-DEVTEAM-BOUNDED1-DETAIL-DISPOSITION-GATE",
+        "priority_bumped_from": "P2",
+        "priority_bumped_by": "po-groom-20260713T0937Z",
+        "priority_bump_note": "Un-starve durable class fix: was rank-2 behind ~40 detail rows, never reachable by BOUNDED-1. Bumped to rank-1 dev band so it drains after the TE-* series (idx-order) and permanently closes the board-owner-fallback hole. Recurring 3rd-tick churn justifies elevation; NOT P0 (no overclaim / would preempt in-flight TE dev work)."
       }
     ],
     "closed_sprints": [
@@ -8303,6 +8317,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-07-13T07:37:30Z",
-  "_updated_by": "po-triage-split-cronjobruns-guardrail"
+  "_updated_at": "2026-07-13T09:37:00Z",
+  "_updated_by": "po-groom-20260713T0937Z (bounded-1 non-dev-owner churn-class groom: 4 rows supervised + FIX P2->P1)"
 }
