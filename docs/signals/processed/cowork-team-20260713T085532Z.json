@@ -1,0 +1,56 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-13T08:55:32Z",
+    "nominal_tick": "08:45",
+    "classification": "FIRE",
+    "reason": "spawned",
+    "matched_slots": [
+      "chef-eod"
+    ],
+    "won_slots": [
+      "chef-eod"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "silent": false,
+    "drift_min": 7,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "closed",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "chef-eod": "cron"
+    },
+    "cadence_minutes": {
+      "chef-eod": null
+    },
+    "last_fired_timestamp": "2026-07-13T08:55:03.000Z",
+    "last_fired_slots": [
+      "chef-eod"
+    ],
+    "last_fired_write_errors": null,
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 3,
+    "cycle_snapshot_promoted": false,
+    "note": "Adaptive-mode EOD tick (pressure fresh, stale_warning=false at read). Single guaranteed slot chef-eod (End-of-Day dish, cron 45 8 * * 1-5) fired at 08:45 nominal / 08:53 actual, just before VN close 08:59Z. Adaptive gates ran: calendar=closed (no suppress), cadence=cron-passthrough (policy_id=null), freshness untouched (guaranteed, backlog=3). CHEF mutex no-op (only guaranteed chef present, no NG sibling). Snapshot cycle-snapshot-08:53.json 4051B. emit_pressure_state cycle_snapshot_promoted=false (standing regime gap, 19th+ cycle); stale_warning re-flagged true post-emit → next tick likely legacy. calendar_status=closed vs market_context OPEN = known benign divergence."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-13T08:55:32Z",
+  "_processed": {
+    "fingerprint": "8476e24ba6b0c5766d288f2ba891ea5b291f55214f45c7e3cf89d49d10561d4f",
+    "processedAt": "2026-07-13T09:48:51Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

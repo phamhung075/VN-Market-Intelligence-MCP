@@ -1,0 +1,57 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "2026-07-13T09:25:41Z",
+  "payload": {
+    "fire_time": "2026-07-13T09:25:07Z",
+    "nominal_tick": "09:15",
+    "classification": "FIRE",
+    "reason": "spawned",
+    "matched_slots": [
+      "fb-daily"
+    ],
+    "won_slots": [
+      "fb-daily"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/fb-market-poster/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 7,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "closed",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "fb-daily": "cron"
+    },
+    "cadence_minutes": {
+      "fb-daily": null
+    },
+    "last_fired_timestamp": "2026-07-13T09:25:02.000Z",
+    "last_fired_slots": [
+      "fb-daily"
+    ],
+    "last_fired_write_errors": null,
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 3,
+    "cycle_snapshot_promoted": false,
+    "tick_snapshot_skipped": false,
+    "note": "adaptive-mode daily FB-post tick (cron 15 9 * * 1-5, guaranteed); stale_warning=false → adaptive; gates 4.3 (calendar=closed, no suppress) / 4.4 (policy_id=null cron passthrough) / 4.5 (freshness gate false: signal_backlog=3, calendar not holiday/weekend; fb-daily guaranteed non-gatherer untouched) all no-op; chef mutex no-op (no chef in matches); tick-snapshot 4.7 BUILT (cycle-snapshot-09:24.json 4336B — fb-market-poster is market-consuming); first fire since 2026-07-03T09:31:51Z; standing gaps unchanged: cycle_snapshot_promoted=false (regime unknown), macro REGIME line absent; calendar=closed vs post-close boundary benign."
+  },
+  "_processed": {
+    "fingerprint": "2d38b57838b6603b6d2b7fed560242af7c29fa2f71916edbc39c5ae285222c2a",
+    "processedAt": "2026-07-13T09:48:51Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

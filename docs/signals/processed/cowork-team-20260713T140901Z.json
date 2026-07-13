@@ -1,0 +1,40 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "2026-07-13T14:09:01Z",
+  "payload": {
+    "event": "FIRE",
+    "tick": "2026-07-13T14:00Z",
+    "drift_min": 7,
+    "pressure_mode": "adaptive",
+    "matched": [
+      "refine-bctc-slot-2"
+    ],
+    "won": [
+      "refine-bctc-slot-2"
+    ],
+    "spawned": [
+      "docs/agents/refine_bctc_md/flow/main.md"
+    ],
+    "one_shots": [],
+    "tick_snapshot_skipped": true,
+    "tick_snapshot_skip_reason": "sole won slot refine_bctc_md is a non-market BCTC PDF refiner — never consumes market context; zero-blocker with get_bctc_pending_refine fallback (token-economy)",
+    "due_reasons": {
+      "refine-bctc-slot-2": "cadence"
+    },
+    "cadence_minutes": {
+      "refine-bctc-slot-2": 240
+    },
+    "last_fired_timestamp": "2026-07-13T14:08:38.000Z",
+    "calendar_status": "closed",
+    "errors": []
+  },
+  "_processed": {
+    "fingerprint": "af0b49fdd65b95389ca306aac44c74b8b35f65456167cf80b4370bafdf91a6c7",
+    "processedAt": "2026-07-13T14:51:48Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

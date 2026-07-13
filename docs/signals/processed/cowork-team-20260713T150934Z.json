@@ -1,0 +1,40 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "2026-07-13T15:09:34Z",
+  "payload": {
+    "event": "FIRE",
+    "tick": "2026-07-13T15:00Z",
+    "drift_min": 7,
+    "pressure_mode": "adaptive",
+    "matched": [
+      "bctc-analyst-slot-1"
+    ],
+    "won": [
+      "bctc-analyst-slot-1"
+    ],
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md"
+    ],
+    "one_shots": [],
+    "tick_snapshot_skipped": true,
+    "tick_snapshot_skip_reason": "sole won slot bctc-analyst is a non-market BCTC financial-statement analyst — flow tree provably never reads the dispatcher cycle-snapshot (grep-verified); pulls its own BCTC/earnings data via MCP; zero-blocker (token-economy)",
+    "due_reasons": {
+      "bctc-analyst-slot-1": "cadence"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-1": 240
+    },
+    "last_fired_timestamp": "2026-07-13T15:09:08.000Z",
+    "calendar_status": "closed",
+    "errors": []
+  },
+  "_processed": {
+    "fingerprint": "d5f2b1f2382868b6210ec11836b415997e105a0f1a87ca3742acec5cbb400443",
+    "processedAt": "2026-07-13T15:19:04Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
