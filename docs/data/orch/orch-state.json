@@ -355,12 +355,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "next_action": "FLOW-PRICE-ALPHA-LOOP wave-1 CODE-COMPLETE: CANDLE-RECOVER done_verified (no-code false-positive); OHLCV-BACKFILL-DONE-BUG (599f4aee0) + STARTUP-CANDLE-GUARD (1bbc8cead) both qa_code_passed + deploy_pending in REVIEW. BLOCKED on ONE user-gated off-market docker-compose-up-d-build-mcp-server batching both fixes (market OPEN until 08:00Z) -> ops post-verify -> done_verified + sprint close. Dispatcher idle; normal BOUNDED-1 backlog draining resumes next tick. Waves 2+ parked (supervised, user-gated).",
-    "updated_at": "2026-07-13T06:23:47Z",
-    "updated_by": "dev-team dispatcher (wave-1 code-complete; both P1 fixes deploy-pending; consolidated deploy surfaced to user)"
+    "status": "in_progress",
+    "active_task_id": "FIX-MCP-BOOTSTRAP-BLOCKING-EXECSYNC-PROJECTROOT",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-MCP-BOOTSTRAP-BLOCKING-EXECSYNC-PROJECTROOT — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-13T06:53:35Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -5456,28 +5456,6 @@
         "opened_by": "dev-team"
       },
       {
-        "id": "FIX-MCP-BOOTSTRAP-BLOCKING-EXECSYNC-PROJECTROOT",
-        "type": "FIX",
-        "priority": "high",
-        "size": "S",
-        "status": "BACKLOG",
-        "zone": "apps/mcp-server/",
-        "title": "Stop blocking execSync in getProjectRoot() on the eager buildToolNameMap() boot path",
-        "detail": "Replace execSync('git rev-parse --show-toplevel') in projectRoot.ts with an import.meta.dir walk-up memoize (no subprocess) OR make registerAgentMemoryTools' root-resolution lazy (off the registration-probe path). Real production server.ts:40 cold-start bug + the CI-flake amplifier (SPIKE-CI-PERFILE-ISOLATION-FLAKE item 1).",
-        "files": [
-          "apps/mcp-server/src/infrastructure/projectRoot.ts",
-          "apps/mcp-server/src/interface/mcp/bootstrap/agentBootstrap.ts"
-        ],
-        "baseline_pass": "green on quiet machine; flakes only under CI CPU-oversubscription",
-        "ac": "cold-start non-regression guard + all ~107 tool names resolve + 1299b + ~30 agentBootstrap-importer tests green",
-        "related": [
-          "docs/spikes/SPIKE_CI-PERFILE-ISOLATION-FLAKE.md"
-        ],
-        "created_at": "2026-07-10T06:50:00Z",
-        "created_by": "po-triage-20260710T0650Z",
-        "verify_note": "prior_status=TODO"
-      },
-      {
         "id": "FIX-CYCLEJOB-1294-FOLLOWUP-SWEEP-UNMOCKED-LIVE-FETCH",
         "type": "FIX",
         "priority": "medium",
@@ -8191,9 +8169,37 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-12T19:22:15Z",
+    "last_triaged_at": "2026-07-13T06:52:15Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-MCP-BOOTSTRAP-BLOCKING-EXECSYNC-PROJECTROOT",
+        "type": "FIX",
+        "priority": "high",
+        "size": "S",
+        "status": "IN_PROGRESS",
+        "zone": "apps/mcp-server/",
+        "title": "Stop blocking execSync in getProjectRoot() on the eager buildToolNameMap() boot path",
+        "detail": "Replace execSync('git rev-parse --show-toplevel') in projectRoot.ts with an import.meta.dir walk-up memoize (no subprocess) OR make registerAgentMemoryTools' root-resolution lazy (off the registration-probe path). Real production server.ts:40 cold-start bug + the CI-flake amplifier (SPIKE-CI-PERFILE-ISOLATION-FLAKE item 1).",
+        "files": [
+          "apps/mcp-server/src/infrastructure/projectRoot.ts",
+          "apps/mcp-server/src/interface/mcp/bootstrap/agentBootstrap.ts"
+        ],
+        "baseline_pass": "green on quiet machine; flakes only under CI CPU-oversubscription",
+        "ac": "cold-start non-regression guard + all ~107 tool names resolve + 1299b + ~30 agentBootstrap-importer tests green",
+        "related": [
+          "docs/spikes/SPIKE_CI-PERFILE-ISOLATION-FLAKE.md"
+        ],
+        "created_at": "2026-07-10T06:50:00Z",
+        "created_by": "po-triage-20260710T0650Z",
+        "verify_note": "prior_status=TODO",
+        "promoted_at": "2026-07-13T06:52:15Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-13T06:53:35Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
