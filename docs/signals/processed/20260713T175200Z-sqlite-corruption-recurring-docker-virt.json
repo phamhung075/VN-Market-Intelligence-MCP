@@ -1,0 +1,34 @@
+{
+  "from": "ops",
+  "to": "architect",
+  "type": "recurring-bug",
+  "priority": "critical",
+  "payload": {
+    "module": "Docker SQLite virtualization layer",
+    "title": "FIX-SQLITE-DOCKER-VIRT-CORRUPTION",
+    "count": 2,
+    "occurrences": [
+      {
+        "tick": "2026-04-25T~14:30Z",
+        "incident": "market.db SQLITE_CORRUPT (1st recorded incident)",
+        "evidence": "multiple market.db.corrupt-* backup files in volume dated 2026-04-25"
+      },
+      {
+        "tick": "2026-07-13T15:42–17:51Z",
+        "incident": "market.db SQLITE_CORRUPT restart-loop in mcp-server, pages 107935–107973 corrupted",
+        "mechanism": "Container reapZombieJobRuns UPDATE crashed on cron_job_runs; PRAGMA integrity_check showed widespread corruption across Trees 8772, 57970, 57984, 49348. No code regression (image SHA 1c5845d64406, unchanged 42h). Recovery: DB swap from 04:30Z backup (PRAGMA integrity_check=ok), container healthy post-swap.",
+        "concurrent_activity": "dev-team peer agent (BOUNDED-1 HPG-DISCOVER-CONSOLIDATED-PDF, 15:29Z) may have exec-written live DB during vulnerable window (15:41–15:44Z corruption window)"
+      }
+    ],
+    "diagnosis": "Two SQLITE_CORRUPT incidents (2026-04-25, 2026-07-13) indicate a recurring Docker virtualization layer corruption pattern, not application-code regression. Root cause likely: (a) concurrent exec-write from peer container + Docker virt race condition, (b) WAL checkpoint timing vulnerability, or (c) Docker named-volume sync issue under concurrent load. Corruption is not localized to operational telemetry (cron_job_runs) — it spreads across unrelated page ranges, suggesting a low-level FS/virt corruption rather than an application invariant violation.",
+    "suggested_fix": "Hardening options: (1) Add per-transaction write-lock coordination (currently multiple containers can exec-write same DB); (2) Enforce WAL checkpoint synchronization before peer exec-writes; (3) Switch to SQLite replication/RAFT-based consensus (distributed, corruption-resistant); (4) Implement periodic integrity-check health gates (PRAGMA integrity_check every N hours, alert if FAIL). Scope/feasibility assessment left to architect and infrastructure team.",
+    "verification_gate": "architect assessment doc addressing root-cause hypothesis and hardening feasibility; ops will not attempt application workarounds without architecture guidance (recurring-bug escalation means human decision required)"
+  },
+  "createdAt": "2026-07-13T17:52:00Z",
+  "_processed": {
+    "fingerprint": "TODO-computed-by-system",
+    "processedAt": null,
+    "processedBy": null,
+    "result": "pending-routing"
+  }
+}
