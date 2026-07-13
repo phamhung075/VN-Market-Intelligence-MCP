@@ -363,12 +363,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "TE-T01",
-    "next_agent": "qa",
-    "next_action": "TE-T01 (cowork master cron WU-2 script-first prompt gating) prompt edit landed, dev-self-verified, moved in_progress->review. QA to verify prompt correctness (script-first, verdict-gated reads, cadence/flow-logic unchanged) then flip REVIEW->DONE_VERIFIED. Router owes POST-CLOSE /cron-cowork-team re-arm after DONE_VERIFIED.",
-    "updated_at": "2026-07-13T10:27:08Z",
-    "updated_by": "developer"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "updated_at": "2026-07-13T10:35:37Z",
+    "updated_by": "qa"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7681,6 +7680,35 @@
         "verified_at": "2026-07-13T08:39:28Z",
         "completed_at": "2026-07-13T08:39:28Z",
         "fix_commit": "226bb755c"
+      },
+      {
+        "id": "TE-T01",
+        "title": "T-01 Cowork master cron: apply WU-2 script-first prompt gating (skip main.md on silent ticks) [~300k tok/day]",
+        "owner": "developer",
+        "status": "DONE_VERIFIED",
+        "type": "CLEAN",
+        "size": "S",
+        "priority": "P1",
+        "wave": 1,
+        "est_saving": "~300k tok/day",
+        "zone": "multi",
+        "sprint": "TOKEN-ECONOMY-AUDIT",
+        "depends": [],
+        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-01",
+        "note": "SINGLE TOP WIN. PROMPT-ONLY edit: CronCreate prompt in .claude/skills/cron-cowork-team/SKILL.md -> mirror dev-team Job 1 (preflight-script-first). Dependency scripts/agents-flow/cowork-tick-preflight.sh EXISTS with tests (router-verified). ZERO flow-logic change. DoD = prompt edit landed + QA-verified correct. POST-CLOSE ROUTER STEP (NOT a subagent, live-CLI): run /cron-cowork-team re-arm after done_verified. Unblocks TE-T03 + TE-T13 (they double-count against this gate).",
+        "promoted_at": "2026-07-13T10:07:00Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-13T10:07:00Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "dev_completed_at": "2026-07-13T10:27:08Z",
+        "dev_note": "Prompt-only edit landed in .claude/skills/cron-cowork-team/SKILL.md, commit 48c73f784 — CronCreate prompt now runs scripts/agents-flow/cowork-tick-preflight.sh first; SILENT/LOST_ELECTION/DEFER verdicts exit with no further reads, WORK verdict reads main.md from § WORK continuation, ERROR verdict reads main.md from Step 0a. main.md, cadence (*/15 * * * *), and the preflight script itself are UNCHANGED. cowork-tick-preflight.test.sh re-run clean (20/20 pass, unaffected by this doc-only change). QA hand-off: verify the new CronCreate prompt text (a) invokes the script first, (b) gates the main.md read on verdict, (c) leaves cadence/flow-logic untouched -- this is a documentation/prompt change, no TypeScript touched, no bun test/tsc applicable. POST-CLOSE ROUTER STEP (not QA/dev): run /cron-cowork-team re-arm after DONE_VERIFIED so the live registered cron picks up the new prompt text.",
+        "updated_at": "2026-07-13T10:35:37Z",
+        "updated_by": "qa",
+        "verified_by": "qa",
+        "verified_at": "2026-07-13T10:35:37Z",
+        "qa_report": "reports/TASK_REPORT_TE-T01.md",
+        "verify_note": "RAW-verified: script-first prompt ordering + verdict-gated main.md reads (verbatim match to main.md Step 0 JUMP-TO table: SILENT/LOST_ELECTION/DEFER->no read, WORK->§ WORK continuation, ERROR->Step 0a) + byte-identity of cadence/main.md/preflight-script confirmed untouched in all 3 commits (git show --name-only) + cowork-tick-preflight.test.sh 20/20 pass. POST-CLOSE ROUTER STEP owed: /cron-cowork-team re-arm."
       }
     ],
     "head": {
@@ -8271,32 +8299,6 @@
         "qa_report": "reports/TASK_REPORT_FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN.md",
         "reviewed_at": "2026-07-13T09:17:26Z",
         "verified_by": "qa"
-      },
-      {
-        "id": "TE-T01",
-        "title": "T-01 Cowork master cron: apply WU-2 script-first prompt gating (skip main.md on silent ticks) [~300k tok/day]",
-        "owner": "developer",
-        "status": "REVIEW",
-        "type": "CLEAN",
-        "size": "S",
-        "priority": "P1",
-        "wave": 1,
-        "est_saving": "~300k tok/day",
-        "zone": "multi",
-        "sprint": "TOKEN-ECONOMY-AUDIT",
-        "depends": [],
-        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-01",
-        "note": "SINGLE TOP WIN. PROMPT-ONLY edit: CronCreate prompt in .claude/skills/cron-cowork-team/SKILL.md -> mirror dev-team Job 1 (preflight-script-first). Dependency scripts/agents-flow/cowork-tick-preflight.sh EXISTS with tests (router-verified). ZERO flow-logic change. DoD = prompt edit landed + QA-verified correct. POST-CLOSE ROUTER STEP (NOT a subagent, live-CLI): run /cron-cowork-team re-arm after done_verified. Unblocks TE-T03 + TE-T13 (they double-count against this gate).",
-        "promoted_at": "2026-07-13T10:07:00Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-13T10:07:00Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
-        "dev_completed_at": "2026-07-13T10:27:08Z",
-        "dev_note": "Prompt-only edit landed in .claude/skills/cron-cowork-team/SKILL.md, commit 48c73f784 — CronCreate prompt now runs scripts/agents-flow/cowork-tick-preflight.sh first; SILENT/LOST_ELECTION/DEFER verdicts exit with no further reads, WORK verdict reads main.md from § WORK continuation, ERROR verdict reads main.md from Step 0a. main.md, cadence (*/15 * * * *), and the preflight script itself are UNCHANGED. cowork-tick-preflight.test.sh re-run clean (20/20 pass, unaffected by this doc-only change). QA hand-off: verify the new CronCreate prompt text (a) invokes the script first, (b) gates the main.md read on verdict, (c) leaves cadence/flow-logic untouched -- this is a documentation/prompt change, no TypeScript touched, no bun test/tsc applicable. POST-CLOSE ROUTER STEP (not QA/dev): run /cron-cowork-team re-arm after DONE_VERIFIED so the live registered cron picks up the new prompt text.",
-        "updated_at": "2026-07-13T10:27:08Z",
-        "updated_by": "developer"
       }
     ],
     "qa": [],
