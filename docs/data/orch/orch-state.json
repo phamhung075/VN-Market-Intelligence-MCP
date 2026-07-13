@@ -363,12 +363,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "UC-RDL-P1",
-    "next_agent": "agent-father",
-    "next_action": "agent-father: apply UC-RDL-P1 doc-only lock-namespace fix per brief docs/architecture-briefs/2026-07-13-uc-rdl-p1-lock-namespace-adjudication.md. Correct the task_id VALUE prefix sprint-task:<id> -> task:<id> in .claude/skills/dispatch-claim/SKILL.md (Canonical Namespace table ~L39 + Sprint-Task Outer Wrap block ~L269-283, reword closing rule to id-prefix vs kind) and .claude/skills/task-lock/SKILL.md (~L29-30). task_kind stays 'sprint-task' (kind != id-prefix; do NOT rename enum). 6 ACs: AC4 regression grep task_id.*\"sprint-task: -> zero hits; AC5 CLAUDE.md Phase B intent: pattern UNCHANGED (guard); AC6 no apps/mcp-server touched. The intent:/task: merge is a REJECTED false-positive — do NOT touch CLAUDE.md.",
-    "updated_by": "dev-team (architect UC-RDL-P1 verdict RAW-verified GREEN -> chain advance to agent-father doc-only fix)",
-    "updated_at": "2026-07-13T20:12:15Z"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "UC-RDL-P1 DONE_VERIFIED (doc-only lock-namespace fix 18885ff50, RAW-verified) -> PO signoff. FIX-PDFEXTRACTOR reflow parked review[]: pek extraction IN-FLIGHT (not failed) — re-verify serving net_revenue next tick before any close; watch done-before-scalars ordering smell. Head idle -> BOUNDED-1 free.",
+    "updated_by": "dev-team (UC-RDL-P1 closeout: agent-father fix RAW-verified GREEN -> done_verified/PO; reflow in-flight evidence corrected, kept parked; row lock task:UC-RDL-P1 released)",
+    "updated_at": "2026-07-13T20:20:43Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -8993,14 +8993,45 @@
         "disposition": "expectation-reclassify (CLUSTER-G auditor probe-error); row mis-scoped as a dev code-fix (type=fix, zone=dev-mcp-server) — corrected to no-code",
         "router_verify_note": "PO RAW-verified 2026-07-13T17:28Z via gateway call_tool(vn-market, get_bctc_full, code=HPG): returns fully-structured financial data (income statement net_revenue 52,900.8 tỷ; balance sheet total_assets 259,327.5 tỷ, equity 139,781.8 tỷ; ratios ROE 6.5%; structured_data JSON present; source_tier=2, confidence 80%, published 2026-06-07). CHECK PASSES. The original FR-FUNC-02 WARN was an auditor probe-error (CLUSTER-G): the 2026-06-10 probe used ticker VCB, which had NO ingested BCTC at that time, so get_bctc_full correctly graceful-degraded to 'Chưa có dữ liệu BCTC' — expected degrade behavior, not a code defect. Corroborated by docs/agent-memory/decisions/sprint-QUALITY-BURNDOWN-phase4-verdict.md ('FR-FUNC-02 -> PASS: graceful degrade when no data is expected behavior') and docs/architecture-briefs/2026-06-10-quality-burndown-strategy.md line 25/69 (CLUSTER-G, verdict RECLASSIFY, 'Fix expected. No code', owner qa/system-auditor). No code work warranted; NOT a data-ingest gap (get_bctc_full works for ingested tickers; VCB coverage is a separate matter this check does not exercise).",
         "journal_ref": "docs/agent-memory/decisions/po-decisions.md#FR-FUNC-02-FIX"
+      },
+      {
+        "id": "UC-RDL-P1",
+        "type": "FIX",
+        "title": "Align router outer-wrap lock namespace to the live 'task:' prefix",
+        "status": "DONE_VERIFIED",
+        "priority": "P0",
+        "size": "S",
+        "zone": "cross-service/",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "CONFIRMED",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#router-dispatch-locking-P1",
+        "note": "CRITICAL/S — SEQUENCE LEAD. CLAUDE.md/dispatch outer-wrap claims a lock prefix that diverges from the live 'task:' namespace the store actually uses, so the mutex does not mutex. Align the wrap prefix to 'task:'.",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "promoted_at": "2026-07-13T19:50:40Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "claimed_at": "2026-07-13T19:52:10Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "owner": "agent-father",
+        "next_agent": "po",
+        "dispatch_note": "architect adjudication DONE -> READY_FOR_DEV agent-father applies doc-only fix (2 SKILL.md files); router RAW-verifies 6 ACs (esp AC4 grep, AC5 CLAUDE guard) before REVIEW flip",
+        "architect_verdict": "REAL_DRIFT (scoped): intent:/task: merge REJECTED as false-positive (intentional 2-tier: intent=router pre-claim board-row-less, task=row chain mutex); sprint-task:->task: doc-only drift CONFIRMED, zero live call sites, zero runtime/migration risk.",
+        "adjudication_brief": "docs/architecture-briefs/2026-07-13-uc-rdl-p1-lock-namespace-adjudication.md",
+        "adjudicated_by": "architect a04042c839fa2aa80 @ commit 664cab10a (router RAW-verified: 3 files, no lock code/SKILL/CLAUDE touched, brief 195L, row lock untouched)",
+        "fix_commit": "18885ff50",
+        "verified_by": "dev-team RAW 2026-07-13T20:1x: git show diff = exact brief spec (sprint-task:->task: value prefix in dispatch-claim table L39 + Outer-Wrap block + task-lock L29; task_kind stays sprint-task); AC5 CLAUDE.md NOT touched (guard clean); AC4 grep only residual = brief-sanctioned historical prose L493; AC6 no apps/mcp-server. Doc-only -> router RAW-verify = QA gate (no test surface).",
+        "verified_at": "2026-07-13T20:20:43Z",
+        "closeout_note": "architect adjudication (664cab10a: intent:/task: merge REJECTED false-positive; sprint-task:->task: doc drift CONFIRMED) -> agent-father fix (18885ff50) -> router RAW-verify GREEN. READY_FOR_PO signoff/archive."
       }
     ],
     "head": {
-      "status": "in_progress",
-      "active_task_id": "UC-RDL-P1",
-      "next_agent": "agent-father",
-      "last_updated_at": "2026-07-13T20:12:15Z",
-      "last_updated_by": "dev-team (UC-RDL-P1 architect->agent-father doc fix)"
+      "status": "idle",
+      "active_task_id": null,
+      "next_agent": null,
+      "last_updated_at": "2026-07-13T20:20:43Z",
+      "last_updated_by": "dev-team (UC-RDL-P1 -> done_verified/po; reflow re-verify pending)"
     },
     "ready": [],
     "review": [
@@ -9482,10 +9513,13 @@
           "fetchedAt": "2026-06-07T10:27:16Z",
           "queue_row_223": "pending (reset done->pending engaged; NOT silent-done)"
         },
-        "reflow_verify_note": "FIX PROVEN TO ENGAGE: row223 pending->pek_triggered confirmed 19:37Z tick (RAW market.db). Serving net_revenue still stale -1264.66 (pek extraction of 33pp scanned consolidated PDF in-flight; reconcile cron :05/:35). FOLLOW-UP tick RAW-verifies net_revenue flips to plausible POSITIVE + row->done. THEN review->done_verified + PO route. Silent row->done with net_revenue ~-1264 = RED flag.",
+        "reflow_verify_note": "STILL PENDING (do NOT close). pek extraction in-flight (slow: 33pp scanned consolidated PDF, CPU model-load). Re-verify next tick: RAW-read financial_reports.net_revenue for 918a7abd flips from -1264.66 to plausible POSITIVE. Never done_verified until serving scalar confirmed real.",
         "review_parked_at": "2026-07-13T19:24:30Z",
         "reflow_engaged": true,
-        "queue_status_observed": "pek_triggered @ 2026-07-13 19:38:48 (RAW market.db) — async-reroute FIRED, not silent-done; RED-flag averted"
+        "queue_status_observed": "pek_triggered @ 2026-07-13 19:38:48 (RAW market.db) — async-reroute FIRED, not silent-done; RED-flag averted",
+        "pek_status_observed": "IN-FLIGHT @ 2026-07-13T20:12Z — pdf-extractor pek _run_extraction ACTIVELY running report_id=918a7abd (DocLayout-YOLO + PaddleOCR PP-StructureV2 loaded, CPU); POST /pek-extract 202 Accepted. Container 'unhealthy' badge = /health curl starved by extraction CPU saturation (30s timeout, 0 bytes), NOT a dead service. Async-reroute IS engaging.",
+        "ordering_smell": "queue row223 flipped status=done @ 2026-07-13 20:05:00 while scalars NOT yet landed (net_revenue still -1264.66, net_profit 319257.88, parsed_at 2026-06-07, refine_status PARTIAL, reconcile_attempts=0). Done-before-scalars is a latent ordering defect vs the fix AC (done ONLY after real scalars). CONFIRM next pass: if pek completes and net_revenue flips plausible-positive -> eventual-consistency OK but mint a hardening follow-up for the premature done; if net_revenue stays stale after pek finishes -> REAL regression, reopen.",
+        "reflow_last_probed_at": "2026-07-13T20:20:43Z"
       }
     ],
     "qa": [],
@@ -9507,35 +9541,7 @@
     },
     "last_triaged_at": "2026-07-13T19:50:40Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "UC-RDL-P1",
-        "type": "FIX",
-        "title": "Align router outer-wrap lock namespace to the live 'task:' prefix",
-        "status": "IN_PROGRESS",
-        "priority": "P0",
-        "size": "S",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "CONFIRMED",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#router-dispatch-locking-P1",
-        "note": "CRITICAL/S — SEQUENCE LEAD. CLAUDE.md/dispatch outer-wrap claims a lock prefix that diverges from the live 'task:' namespace the store actually uses, so the mutex does not mutex. Align the wrap prefix to 'task:'.",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "promoted_at": "2026-07-13T19:50:40Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
-        "claimed_at": "2026-07-13T19:52:10Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "owner": "agent-father",
-        "next_agent": "agent-father",
-        "dispatch_note": "architect adjudication DONE -> READY_FOR_DEV agent-father applies doc-only fix (2 SKILL.md files); router RAW-verifies 6 ACs (esp AC4 grep, AC5 CLAUDE guard) before REVIEW flip",
-        "architect_verdict": "REAL_DRIFT (scoped): intent:/task: merge REJECTED as false-positive (intentional 2-tier: intent=router pre-claim board-row-less, task=row chain mutex); sprint-task:->task: doc-only drift CONFIRMED, zero live call sites, zero runtime/migration risk.",
-        "adjudication_brief": "docs/architecture-briefs/2026-07-13-uc-rdl-p1-lock-namespace-adjudication.md",
-        "adjudicated_by": "architect a04042c839fa2aa80 @ commit 664cab10a (router RAW-verified: 3 files, no lock code/SKILL/CLAUDE touched, brief 195L, row lock untouched)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
