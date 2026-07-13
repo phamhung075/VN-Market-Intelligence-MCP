@@ -158,3 +158,40 @@ export function getTodayVnDate(): string {
   const iso = vnDate.toISOString(); // e.g. "2025-01-27T07:30:00.000Z"
   return iso.slice(0, 10); // "2025-01-27"
 }
+
+/**
+ * Shift a YYYY-MM-DD date string by a signed number of calendar days.
+ * Pure UTC date arithmetic — no timezone/DST ambiguity (mirrors the existing
+ * `addDaysToDate` idiom in scheduler/macro/baseRateComputationJob.ts).
+ *
+ * @param date - ISO date string YYYY-MM-DD
+ * @param days - signed day offset (negative = backward)
+ */
+export function shiftDateDays(date: string, days: number): string {
+  const d = new Date(`${date}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+/**
+ * Most recent VN trading day on or before `date` (inclusive). Walks backward through
+ * weekends/holidays using isVnTradingDay. Bounded to 14 days back — VN holiday blocks
+ * never exceed ~9 consecutive non-trading days (e.g. Tết).
+ *
+ * ALPHA-S1-STARTUP-CANDLE-GUARD (2026-07-13): this is the calendar-awareness primitive
+ * that structurally prevents the weekend-blind false-positive class that minted the
+ * phantom ALPHA-S1-CANDLE-RECOVER task (2026-07-11 was a Saturday — no candle to
+ * recover; a naive "expect yesterday's date" check would have wrongly flagged it missing).
+ *
+ * @param date - ISO date string YYYY-MM-DD, the starting point of the backward walk
+ * @returns the most recent trading day on or before `date`, or `date` unchanged if the
+ *          14-day bound is exhausted (caller treats this as "unknown" — does not alert).
+ */
+export function mostRecentTradingDayOnOrBefore(date: string): string {
+  let d = date;
+  for (let i = 0; i < 14; i++) {
+    if (isVnTradingDay(d).is_trading_day) return d;
+    d = shiftDateDays(d, -1);
+  }
+  return date; // exhausted bound — caller treats as "unknown", does not alert
+}

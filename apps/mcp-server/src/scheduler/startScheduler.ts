@@ -20,6 +20,7 @@ import { registerSummaryJobs, runSummaryJob } from './summaryJobs.js'
 import { registerShutdownHook } from '../infrastructure/db/checkpoint.js'
 import { runDailyAuditIfStale } from './news-analysis/dataAuditJob.js'
 import { runOhlcvStartupProbe } from './market-data/ohlcvStartupProbe.js'
+import { runOhlcvCandlePresenceGuard } from './market-data/ohlcvCandleGuard.js'
 import { purgeStrandedSeedRows } from './market-data/allzeroOhlcvBackfill.js'
 import { runMorningBriefing } from './briefings/morningBriefingJob.js'
 import { runEveningSummary } from './briefings/eveningSummaryJob.js'
@@ -93,6 +94,14 @@ export function startScheduler() {
   void runOhlcvStartupProbe().then((r) => {
     if (r.sent) log(`[ohlcv-probe] sparse tickers: ${r.sparseTickers.map(t => t.code).join(', ')}`)
   }).catch(console.error)
+
+  // ALPHA-S1-STARTUP-CANDLE-GUARD (2026-07-13) — calendar-aware catch-up guard. Detects a
+  // missing daily_ohlcv session for the most recent VN TRADING day (weekends/holidays
+  // structurally skipped via vnTradingCalendar — see ohlcvCandleGuard.ts header) and
+  // triggers recoverMissingOhlcvSession(). Fire-and-forget, same phase as the probe above.
+  void runOhlcvCandlePresenceGuard().catch((err) => {
+    log(`[ohlcv-candle-guard] startup guard error: ${err instanceof Error ? err.message : String(err)}`)
+  })
 
   // Startup CB reset — task 1404
   // Resets breakers.foreignFlow after FOREIGN_FLOW_CB_RESET_DELAY_MS (default 60s).

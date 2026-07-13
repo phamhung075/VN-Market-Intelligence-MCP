@@ -11,16 +11,30 @@
 import { Database } from "bun:sqlite";
 import { getDb } from "../../infrastructure/db/schema.js";
 import { sendTelegramWork } from "../../infrastructure/notifiers/telegram.js";
-import { VN_OFFSET_MS } from "../../domain/services/timeConstants.js";
+import { VN_OFFSET_MS, MS_PER_DAY } from "../../domain/services/timeConstants.js";
 import {
   writeOhlcvBatch,
   type OhlcvWriteRow,
 } from "../../application/usecases/ohlcvWriteService.js";
+import type { OhlcvCandlePresenceGuardResult } from "./ohlcvCandleGuard.js";
 
 export interface OhlcvAggregatorDeps {
   db?: () => Database;
   nowMsFn?: () => number;
   sendWorkFn?: (msg: string) => Promise<unknown>;
+  /**
+   * ALPHA-S1-STARTUP-CANDLE-GUARD — injectable for tests. Defaults to the real
+   * runOhlcvCandlePresenceGuard, loaded via dynamic import (see trailing call below) to
+   * avoid a static circular import: ohlcvCandleGuard.ts -> recoverMissingOhlcvSession.ts ->
+   * this file (for re-aggregation). Dynamic import defers resolution past module-load time,
+   * same deferred-load idiom already used by ohlcvStartupProbe.ts for its own DB/telegram/
+   * backfill deps.
+   */
+  candleGuardFn?: (guardDeps: {
+    db?: Database;
+    nowMs?: number;
+    sendWorkFn?: (msg: string) => Promise<unknown>;
+  }) => Promise<OhlcvCandlePresenceGuardResult>;
 }
 
 export interface OhlcvAggregatorResult {
@@ -203,6 +217,33 @@ export async function runOhlcvDailyAggregator(
     sent = true;
   } catch {
     // Swallow notification errors — aggregation succeeded regardless
+  }
+
+  // ALPHA-S1-STARTUP-CANDLE-GUARD (2026-07-13) — trailing daily self-heal check. Verifies the
+  // PREVIOUS trading day's candle also exists (today's own row was just written above) —
+  // catches a gap that survived past the startup-only guard, e.g. a multi-day outage with no
+  // container restart in between. nowMs shifted back 24h so the guard's own
+  // "beforeMarketOpen"/cutoffDate recency logic resolves to yesterday relative to THIS cron's
+  // fire time, with zero special-casing inside the guard itself. Guard failures are logged and
+  // swallowed here — the guard already escalates a genuine catch-up failure to Telegram BUG
+  // internally; letting it also reject this promise would mis-record a successful aggregation
+  // run as "error" in cron_job_runs.
+  const candleGuardFn =
+    deps?.candleGuardFn ??
+    (async (guardDeps: {
+      db?: Database;
+      nowMs?: number;
+      sendWorkFn?: (msg: string) => Promise<unknown>;
+    }) => {
+      const { runOhlcvCandlePresenceGuard } = await import("./ohlcvCandleGuard.js");
+      return runOhlcvCandlePresenceGuard(guardDeps);
+    });
+  try {
+    await candleGuardFn({ db, nowMs: nowMs - MS_PER_DAY, sendWorkFn });
+  } catch (err) {
+    console.error(
+      `[ohlcv-aggregator] trailing candle-guard error (non-fatal to aggregator): ${err instanceof Error ? err.message : String(err)}`
+    );
   }
 
   return { tickersProcessed, rowsWritten, tickersSkipped, sent };
