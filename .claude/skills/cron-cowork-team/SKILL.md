@@ -46,11 +46,19 @@ Only execute this step if Step 1 found no existing entry.
 
 <!-- BGFAN-1: The dispatcher that runs on each tick (cowork-team/flow/main.md → spawn-fanout.md) MUST spawn all cowork agents with run_in_background=true. Canonical rule → docs/protocols/agent-chaining-protocol.md § Background Spawn Mandate -->
 
+> **TOKEN-ECONOMY-TICK-PREFLIGHT WU-2 (2026-07-13, TE-T01):** this prompt now mirrors dev-team
+> Job 1 (`.claude/skills/cron-detect-loop/SKILL.md`) — the preflight script runs FIRST, directly
+> from the cron prompt, so the ~80% of ticks that are SILENT/LOST_ELECTION/DEFER never pay the
+> 15,916-byte `main.md` read at all. Rationale identical to dev-team's: `CronCreate` is LLM-narrated,
+> unreachable from the script's own transport, so the script-first gate can only live in the prompt
+> text, not inside main.md (main.md's own Step 0 — unchanged — remains the correct entry point for
+> manual/ad-hoc invocations of this flow, e.g. testing or a direct operator run).
+
 ```
 CronCreate(
   description : "cowork-team master dispatcher — fires every 15 min, fans out to schedule SSOT (agents spawned run_in_background=true per BGFAN-1)",
   cron        : "*/15 * * * *",
-  prompt      : "run docs/agents/cowork-team/flow/main.md",
+  prompt      : "Run: bash scripts/agents-flow/cowork-tick-preflight.sh (requires $CLAUDE_CODE_SESSION_ID) and read its one-line JSON verdict. On verdict=SILENT: done, no further reads needed (script already emitted pressure state and released the election lock). On verdict=WORK: read and execute docs/agents/cowork-team/flow/main.md starting at '§ WORK continuation' (script already handled presence/election/one-shot claims/blind guard/slot matching — do NOT re-run Steps 0b/0b.3/0c/1-4b, per main.md's own JUMP-TO table). On verdict=LOST_ELECTION: done, no further reads needed (script already sent the work-channel telegram — peer session leads this tick). On verdict=DEFER: done, no further reads needed (AF-1 backstop-window defer — retries automatically at the next 15-min tick). On verdict=ERROR: read and execute docs/agents/cowork-team/flow/main.md starting at Step 0a (original inline pseudocode, unabridged fallback — do NOT re-run Step 0's preflight script, its result is undefined).",
   durable     : true
 )
 ```
@@ -105,11 +113,13 @@ CronList
 - `durable: true` makes the cron persist across CLI process restarts within the same session. It does NOT survive session-end (CLI exit / restart). That is why this skill exists.
 - The 12 RemoteTriggers (registered in claude.ai, not CLI) are the session-independent backstop for guaranteed slots. They fire independently of this dispatcher.
 - Full silence-detection + recovery procedure: `docs/protocols/cowork-master-cron-runbook.md`.
-- **TOKEN-ECONOMY-TICK-PREFLIGHT WU-1 (2026-07-02):** the `CronCreate prompt:` text below is
-  UNCHANGED — it still just points at `docs/agents/cowork-team/flow/main.md`. main.md itself now
-  opens with a deterministic `scripts/agents-flow/cowork-tick-preflight.sh` preflight call that
-  short-circuits the common SILENT/WORK tick (~80% off-hours/no-due-work ticks) before any
-  LLM-narrated pseudocode reads. See main.md § Step 0 JUMP-TO table.
+- **TOKEN-ECONOMY-TICK-PREFLIGHT WU-1 (2026-07-02) → superseded by WU-2 (2026-07-13, TE-T01):**
+  WU-1 shipped the deterministic `scripts/agents-flow/cowork-tick-preflight.sh` script and wired
+  it into `main.md`'s own Step 0, but left the `CronCreate prompt:` text pointing straight at
+  `main.md` — so every tick still paid the full 15,916-byte file read before Step 0 ever ran the
+  script. WU-2 (Step 2 above) moves the script call into the prompt itself, so SILENT/LOST_ELECTION/
+  DEFER ticks (~80% of fires) skip the `main.md` read entirely. main.md's own Step 0 and § Step 0
+  JUMP-TO table are unchanged and still serve as the entry point for manual/ad-hoc runs of this flow.
 
 ---
 
