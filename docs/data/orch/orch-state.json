@@ -363,12 +363,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "next_action": "UC-RDL-P1 DONE_VERIFIED (doc-only lock-namespace fix 18885ff50, RAW-verified) -> PO signoff. FIX-PDFEXTRACTOR reflow parked review[]: pek extraction IN-FLIGHT (not failed) — re-verify serving net_revenue next tick before any close; watch done-before-scalars ordering smell. Head idle -> BOUNDED-1 free.",
-    "updated_by": "dev-team (UC-RDL-P1 closeout: agent-father fix RAW-verified GREEN -> done_verified/PO; reflow in-flight evidence corrected, kept parked; row lock task:UC-RDL-P1 released)",
-    "updated_at": "2026-07-13T20:20:43Z"
+    "status": "in_progress",
+    "active_task_id": "FIX-DAILY-FF-VIEW-JOIN-ANCHOR",
+    "next_agent": "architect",
+    "next_action": "architect: design fix for daily_ohlcv_with_flow view dropping FF-only rows (CI merge-gate blocker CI-RED-29f92c5b, run 29279251504, `bun test`). The view `FROM daily_ohlcv o LEFT JOIN daily_foreign_flow f` drops any daily_foreign_flow-only (code,date) whose daily_ohlcv bar has not landed -> 2 assertions RED-by-design (committed RED d15eedbec, PO-accepted): T-3 view correctness + R-1 elimination gate in apps/mcp-server/src/__tests__/daily-foreign-flow-integration.test.ts. DECIDE shape A (bidirectional / FULL-OUTER-emulated view) vs B (point ~5 Class-A read sites at daily_foreign_flow w/ LEFT JOIN daily_ohlcv for price cols). Output design brief -> docs/architecture-briefs/ + READY_FOR_DEV handoff to dev-mcp-server (ZONE apps/mcp-server/). The 2 gate tests MUST be made to PASS RAW (do NOT skip/delete). Fix flips CI green on subsequent push -> unblocks stranded pre-push fleet + TASK_2005 (BLOCKED, depends_on this). CI-red freeze: PO holds pushing until green.",
+    "updated_by": "dev-team (20:07Z tick: PO BATCH -> supervised dispatch FIX-DAILY-FF-VIEW-JOIN-ANCHOR architect-first; CI-red unblocker)",
+    "updated_at": "2026-07-13T20:45:04Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6339,45 +6339,6 @@
         "claimed_by": "dev-team (bounded-1 auto-pickup)"
       },
       {
-        "id": "FIX-DAILY-FF-VIEW-JOIN-ANCHOR",
-        "type": "FIX",
-        "title": "daily_ohlcv_with_flow view anchored FROM daily_ohlcv LEFT JOIN daily_foreign_flow — foreign-flow-only rows (FF present, OHLCV bar not yet landed) never surface; R-1 READ-SIDE still OPEN across 5 Class-A sites (chua tra so tung ma, one layer up)",
-        "zone": "apps/mcp-server/",
-        "status": "BACKLOG",
-        "priority": "high",
-        "size": "M",
-        "owner": "architect",
-        "next_agent": "architect",
-        "supervised": true,
-        "depends": [],
-        "blocks": [
-          "TASK_2005"
-        ],
-        "sprint": "ARCH-DAILY-FOREIGN-FLOW-TABLE",
-        "created_at": "2026-07-12T19:45:17Z",
-        "created_by": "po (coordination_session 69b0312e — TASK_2005 STOP/FIX)",
-        "verification_gate": "The 2 currently-failing assertions in apps/mcp-server/src/__tests__/daily-foreign-flow-integration.test.ts pass RAW (not skipped/deleted) + full targeted regression stays green; AND RAW-live: a Class-A tool (marketWideForeignFlow / foreignFlow) returns the per-ticker foreign value for a code whose daily_foreign_flow row exists but whose daily_ohlcv bar has NOT yet landed.",
-        "note": "ROOT CAUSE (RAW-confirmed by TASK_2005 test + schema read): view daily_ohlcv_with_flow in apps/mcp-server/src/infrastructure/db/schema-market-data.ts = 'FROM daily_ohlcv o LEFT JOIN daily_foreign_flow f ON f.code=o.code AND f.date=o.date' — anchored on daily_ohlcv. A row that exists ONLY in daily_foreign_flow (FF written, no OHLCV bar yet) is NEVER returned; the inner COALESCE only picks the column winner AFTER an anchor daily_ohlcv row exists. CONSEQUENCE: TASK_2002 closed the WRITE side of R-1 (FF value always lands in daily_foreign_flow, no permanent loss). TASK_2003 migrated 5 Class-A read sites FROM daily_ohlcv TO the view but did NOT close R-1: all 5 (marketWideForeignFlowTool.ts, foreignFlowTools.ts, foreignFlowAlertJob.ts, assembleEveningSummary.ts, franceSummaryJob.ts) still return 0 for a ticker before its OHLCV bar lands = the live 'chua tra so tung ma' symptom. CANDIDATE FIX SHAPES (architect chooses ONE): (A) make view bidirectional / FULL-OUTER-emulated = SELECT over a UNION of daily_foreign_flow(code,date) keys and daily_ohlcv(code,date) keys, then COALESCE both planes so an FF-only key surfaces; (B) point the 5 Class-A sites at daily_foreign_flow directly with a fallback LEFT JOIN to daily_ohlcv for price columns (mirrors the Class-B pattern TASK_2004 already used). Touches a SHARED view + up to 5 read sites -> architect-led design first, then dev-mcp-server impl. REFS: test apps/mcp-server/src/__tests__/daily-foreign-flow-integration.test.ts (RAW 2/5 assertions fail, genuine); commits d15eedbec (test+journal) + 2eafbb6a2 (notebook); handoff docs/handoffs/TASK_2005-daily-ff-integration-test.md; decision journal docs/agent-memory/decisions/sprint-FLOW-PRICE-ALPHA-LOOP-dev-mcp-server.md STEP dev-mcp-server-S7.",
-        "supervised_by": "po-groom-20260713T0937Z",
-        "supervised_note": "architect-owned FIX (next_agent=architect) -> supervised cascade, not a BOUNDED-1 atomic dev pick. Removed from idle auto-pickup; resume via router supervised dispatch.",
-        "origin_signal_id": "ci_red:29f92c5bef668f5991052631619cfb6071be14ca:bun test",
-        "ci_red_gate": {
-          "check_id": "CI-RED-29f92c5b",
-          "head_sha": "29f92c5bef668f5991052631619cfb6071be14ca",
-          "run_id": 29279251504,
-          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/29279251504",
-          "failing_job": "bun test",
-          "failing_test_file": "apps/mcp-server/src/__tests__/daily-foreign-flow-integration.test.ts",
-          "failing_assertions": 2,
-          "test_result": "14471 pass / 51 skip / 2 fail",
-          "signal_dedup_key": "ci_red:29f92c5bef668f5991052631619cfb6071be14ca:bun test",
-          "verification_gate": "ci_green_on_subsequent_push",
-          "linked_by": "po (coordination_session 69b0312e — dev-team triage tick 2026-07-13T20:07Z)",
-          "linked_at": "2026-07-13T20:38:04Z",
-          "note": "ACTIVE merge-gate blocker. The 2 deliberately-RED behavioral-gate assertions in daily-foreign-flow-integration.test.ts (T-3 view correctness + R-1 elimination gate) fail bun test on main HEAD 29f92c5b (committed RED by design in d15eedbec, PO-accepted). They flip GREEN when this view fix lands (candidate shapes A/B in .note). NO duplicate CI-RED-29f92c5b-FIX minted — this pre-existing root-cause row IS the fix (dedup: same failure, one open FIX). Dispatch via router supervised cascade to architect (next_agent), then dev-mcp-server impl. CI green on subsequent push == the 2 assertions pass RAW == this row DONE."
-        }
-      },
-      {
         "id": "FIX-GAP-STALENESS-DETECTOR-CALENDAR-AWARE",
         "type": "FIX",
         "title": "Make the OHLCV gap/staleness detector calendar-aware — it minted the phantom ALPHA-S1-CANDLE-RECOVER task by flagging a normal weekend (2026-07-11/12 Sat/Sun) as a 'missing Friday candle' + 'Rat cu 36.7h' stale-price incident (mkt-blind FP class)",
@@ -9043,11 +9004,11 @@
       }
     ],
     "head": {
-      "status": "idle",
-      "active_task_id": null,
-      "next_agent": null,
-      "last_updated_at": "2026-07-13T20:20:43Z",
-      "last_updated_by": "dev-team (UC-RDL-P1 -> done_verified/po; reflow re-verify pending)"
+      "status": "in_progress",
+      "active_task_id": "FIX-DAILY-FF-VIEW-JOIN-ANCHOR",
+      "next_agent": "architect",
+      "last_updated_at": "2026-07-13T20:45:04Z",
+      "last_updated_by": "dev-team (FIX-DAILY-FF-VIEW-JOIN-ANCHOR -> architect; CI-red merge-gate unblocker)"
     },
     "ready": [],
     "review": [
@@ -9557,7 +9518,49 @@
     },
     "last_triaged_at": "2026-07-13T19:50:40Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-DAILY-FF-VIEW-JOIN-ANCHOR",
+        "type": "FIX",
+        "title": "daily_ohlcv_with_flow view anchored FROM daily_ohlcv LEFT JOIN daily_foreign_flow — foreign-flow-only rows (FF present, OHLCV bar not yet landed) never surface; R-1 READ-SIDE still OPEN across 5 Class-A sites (chua tra so tung ma, one layer up)",
+        "zone": "apps/mcp-server/",
+        "status": "IN_PROGRESS",
+        "priority": "high",
+        "size": "M",
+        "owner": "architect",
+        "next_agent": "architect",
+        "supervised": true,
+        "depends": [],
+        "blocks": [
+          "TASK_2005"
+        ],
+        "sprint": "ARCH-DAILY-FOREIGN-FLOW-TABLE",
+        "created_at": "2026-07-12T19:45:17Z",
+        "created_by": "po (coordination_session 69b0312e — TASK_2005 STOP/FIX)",
+        "verification_gate": "The 2 currently-failing assertions in apps/mcp-server/src/__tests__/daily-foreign-flow-integration.test.ts pass RAW (not skipped/deleted) + full targeted regression stays green; AND RAW-live: a Class-A tool (marketWideForeignFlow / foreignFlow) returns the per-ticker foreign value for a code whose daily_foreign_flow row exists but whose daily_ohlcv bar has NOT yet landed.",
+        "note": "ROOT CAUSE (RAW-confirmed by TASK_2005 test + schema read): view daily_ohlcv_with_flow in apps/mcp-server/src/infrastructure/db/schema-market-data.ts = 'FROM daily_ohlcv o LEFT JOIN daily_foreign_flow f ON f.code=o.code AND f.date=o.date' — anchored on daily_ohlcv. A row that exists ONLY in daily_foreign_flow (FF written, no OHLCV bar yet) is NEVER returned; the inner COALESCE only picks the column winner AFTER an anchor daily_ohlcv row exists. CONSEQUENCE: TASK_2002 closed the WRITE side of R-1 (FF value always lands in daily_foreign_flow, no permanent loss). TASK_2003 migrated 5 Class-A read sites FROM daily_ohlcv TO the view but did NOT close R-1: all 5 (marketWideForeignFlowTool.ts, foreignFlowTools.ts, foreignFlowAlertJob.ts, assembleEveningSummary.ts, franceSummaryJob.ts) still return 0 for a ticker before its OHLCV bar lands = the live 'chua tra so tung ma' symptom. CANDIDATE FIX SHAPES (architect chooses ONE): (A) make view bidirectional / FULL-OUTER-emulated = SELECT over a UNION of daily_foreign_flow(code,date) keys and daily_ohlcv(code,date) keys, then COALESCE both planes so an FF-only key surfaces; (B) point the 5 Class-A sites at daily_foreign_flow directly with a fallback LEFT JOIN to daily_ohlcv for price columns (mirrors the Class-B pattern TASK_2004 already used). Touches a SHARED view + up to 5 read sites -> architect-led design first, then dev-mcp-server impl. REFS: test apps/mcp-server/src/__tests__/daily-foreign-flow-integration.test.ts (RAW 2/5 assertions fail, genuine); commits d15eedbec (test+journal) + 2eafbb6a2 (notebook); handoff docs/handoffs/TASK_2005-daily-ff-integration-test.md; decision journal docs/agent-memory/decisions/sprint-FLOW-PRICE-ALPHA-LOOP-dev-mcp-server.md STEP dev-mcp-server-S7.",
+        "supervised_by": "po-groom-20260713T0937Z",
+        "supervised_note": "architect-owned FIX (next_agent=architect) -> supervised cascade, not a BOUNDED-1 atomic dev pick. Removed from idle auto-pickup; resume via router supervised dispatch.",
+        "origin_signal_id": "ci_red:29f92c5bef668f5991052631619cfb6071be14ca:bun test",
+        "ci_red_gate": {
+          "check_id": "CI-RED-29f92c5b",
+          "head_sha": "29f92c5bef668f5991052631619cfb6071be14ca",
+          "run_id": 29279251504,
+          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/29279251504",
+          "failing_job": "bun test",
+          "failing_test_file": "apps/mcp-server/src/__tests__/daily-foreign-flow-integration.test.ts",
+          "failing_assertions": 2,
+          "test_result": "14471 pass / 51 skip / 2 fail",
+          "signal_dedup_key": "ci_red:29f92c5bef668f5991052631619cfb6071be14ca:bun test",
+          "verification_gate": "ci_green_on_subsequent_push",
+          "linked_by": "po (coordination_session 69b0312e — dev-team triage tick 2026-07-13T20:07Z)",
+          "linked_at": "2026-07-13T20:38:04Z",
+          "note": "ACTIVE merge-gate blocker. The 2 deliberately-RED behavioral-gate assertions in daily-foreign-flow-integration.test.ts (T-3 view correctness + R-1 elimination gate) fail bun test on main HEAD 29f92c5b (committed RED by design in d15eedbec, PO-accepted). They flip GREEN when this view fix lands (candidate shapes A/B in .note). NO duplicate CI-RED-29f92c5b-FIX minted — this pre-existing root-cause row IS the fix (dedup: same failure, one open FIX). Dispatch via router supervised cascade to architect (next_agent), then dev-mcp-server impl. CI green on subsequent push == the 2 assertions pass RAW == this row DONE."
+        },
+        "started_at": "2026-07-13T20:45:04Z",
+        "dispatch_note": "PO triage 20:07Z BATCH -> router supervised cascade (architect-first, NOT BOUNDED-1). Sole CI-merge-gate unblocker; ci_red CI-RED-29f92c5b linked by PO (550ea0edd). architect decides view shape A vs B -> READY_FOR_DEV dev-mcp-server -> qa -> CI green on push."
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
