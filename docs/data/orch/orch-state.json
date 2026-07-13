@@ -355,12 +355,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "ALPHA-S1-STARTUP-CANDLE-GUARD",
-    "next_agent": "qa",
-    "next_action": "ALPHA-S1-STARTUP-CANDLE-GUARD code-complete: recoverMissingOhlcvSession() + runOhlcvCandlePresenceGuard() net-new (sibling CANDLE-RECOVER shipped no code), calendar-aware via vnTradingCalendar, wired at startup + daily-aggregator trailing self-heal. Commit 1bbc8cead. QA: RAW code merge-gate — run targeted suite + tsc, confirm calendar-skip/fail-loud/disjoint-from-599f4aee0, then hold REVIEW, DEPLOY-PENDING (batch with 599f4aee0 into one off-market mcp-server rebuild — market OPEN, deploy is user/ops-gated).",
-    "updated_at": "2026-07-13T06:05:30Z",
-    "updated_by": "dev-mcp-server (wave-1 guard code-complete, RAW code merge-gate, DEPLOY-PENDING)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "FLOW-PRICE-ALPHA-LOOP wave-1 CODE-COMPLETE: CANDLE-RECOVER done_verified (no-code false-positive); OHLCV-BACKFILL-DONE-BUG (599f4aee0) + STARTUP-CANDLE-GUARD (1bbc8cead) both qa_code_passed + deploy_pending in REVIEW. BLOCKED on ONE user-gated off-market docker-compose-up-d-build-mcp-server batching both fixes (market OPEN until 08:00Z) -> ops post-verify -> done_verified + sprint close. Dispatcher idle; normal BOUNDED-1 backlog draining resumes next tick. Waves 2+ parked (supervised, user-gated).",
+    "updated_at": "2026-07-13T06:23:47Z",
+    "updated_by": "dev-team dispatcher (wave-1 code-complete; both P1 fixes deploy-pending; consolidated deploy surfaced to user)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7653,9 +7653,9 @@
     "head": {
       "status": "idle",
       "active_task_id": null,
-      "next_agent": "po",
-      "last_updated_at": "2026-07-13T05:35:00Z",
-      "last_updated_by": "dev-mcp-server"
+      "next_agent": null,
+      "last_updated_at": "2026-07-13T06:23:47Z",
+      "last_updated_by": "dev-team dispatcher (wave-1 code-complete, deploy-pending)"
     },
     "ready": [],
     "review": [
