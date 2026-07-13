@@ -68,3 +68,21 @@ weak proxy in this corpus (large legit text-native filings coexist with the smal
 **why-change:** Flagged a must-fix risk PO/dev didn't ask about: `ensureFinancialReportShellRow`'s
 upsert never clobbers an existing `pdf_path` — silently defeats the corrective push use-case
 (HPG-style re-source) unless dev adds an explicit unconditional pdf_path UPDATE after it.
+
+### STEP architect-S5 · architect · 2026-07-13T21:00:00Z
+**task-id:** FIX-DAILY-FF-VIEW-JOIN-ANCHOR
+**what-done:** Chose Shape A (bidirectional/FULL-OUTER-emulated `daily_ohlcv_with_flow` view via
+LEFT JOIN + UNION ALL anti-join); verified empirically against a throwaway `sqlite3 :memory:`
+session (T-3/T-4/legacy-fallback all correct, no dup rows). Wrote brief to
+docs/architecture-briefs/2026-07-13-daily-ff-view-join-anchor.md.
+**what-considered:**
+- Shape B (rewire 5 Class-A read sites to query daily_foreign_flow directly)
+- Shape A (fix the view itself)
+**why-decision:** Structural disqualifier for B — the 2 frozen gate assertions query
+`daily_ohlcv_with_flow` directly via `queryViewRow()`, not through any Class-A tool function;
+only a view-level fix can flip them GREEN without editing the test.
+**why-change:** Found a real regression the task didn't flag: `daily-foreign-flow-schema.test.ts`
+"R-1 view-level proof" test currently asserts `rows.length===0` (documents the bug as correct) —
+will flip red under Shape A unless dev-mcp-server updates it in the same commit. Also flagged a
+production footgun: `CREATE VIEW IF NOT EXISTS` is a no-op on the persisted named-volume DB —
+needs `DROP VIEW IF EXISTS` first or the fix never actually deploys.

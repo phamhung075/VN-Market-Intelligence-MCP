@@ -365,10 +365,10 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "FIX-DAILY-FF-VIEW-JOIN-ANCHOR",
-    "next_agent": "architect",
-    "next_action": "architect: design fix for daily_ohlcv_with_flow view dropping FF-only rows (CI merge-gate blocker CI-RED-29f92c5b, run 29279251504, `bun test`). The view `FROM daily_ohlcv o LEFT JOIN daily_foreign_flow f` drops any daily_foreign_flow-only (code,date) whose daily_ohlcv bar has not landed -> 2 assertions RED-by-design (committed RED d15eedbec, PO-accepted): T-3 view correctness + R-1 elimination gate in apps/mcp-server/src/__tests__/daily-foreign-flow-integration.test.ts. DECIDE shape A (bidirectional / FULL-OUTER-emulated view) vs B (point ~5 Class-A read sites at daily_foreign_flow w/ LEFT JOIN daily_ohlcv for price cols). Output design brief -> docs/architecture-briefs/ + READY_FOR_DEV handoff to dev-mcp-server (ZONE apps/mcp-server/). The 2 gate tests MUST be made to PASS RAW (do NOT skip/delete). Fix flips CI green on subsequent push -> unblocks stranded pre-push fleet + TASK_2005 (BLOCKED, depends_on this). CI-red freeze: PO holds pushing until green.",
-    "updated_by": "dev-team (20:07Z tick: PO BATCH -> supervised dispatch FIX-DAILY-FF-VIEW-JOIN-ANCHOR architect-first; CI-red unblocker)",
-    "updated_at": "2026-07-13T20:45:04Z"
+    "next_agent": "dev-mcp-server",
+    "next_action": "dev-mcp-server: implement Shape A per docs/architecture-briefs/2026-07-13-daily-ff-view-join-anchor.md — replace daily_ohlcv_with_flow view (schema-market-data.ts:162-174) with DROP VIEW IF EXISTS + unconditional CREATE VIEW (bidirectional UNION ALL anti-join, NOT `IF NOT EXISTS` — that is a no-op on the persisted named-volume DB). Companion fix REQUIRED same commit: daily-foreign-flow-schema.test.ts lines 242-266 R-1 view-level-proof assertion flips from rows.length===0 to 1 (documents the exact bug being fixed). Do NOT edit daily-foreign-flow-integration.test.ts (the 2 RED gate assertions must pass raw as a side effect). Run targeted suite then full `bun test` green before handing to qa. CI-red freeze: PO holds pushing.",
+    "updated_by": "architect (FIX-DAILY-FF-VIEW-JOIN-ANCHOR design done, coordination_session 69b0312e)",
+    "updated_at": "2026-07-13T20:52:09Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -9528,7 +9528,7 @@
         "priority": "high",
         "size": "M",
         "owner": "architect",
-        "next_agent": "architect",
+        "next_agent": "dev-mcp-server",
         "supervised": true,
         "depends": [],
         "blocks": [
@@ -9558,7 +9558,9 @@
           "note": "ACTIVE merge-gate blocker. The 2 deliberately-RED behavioral-gate assertions in daily-foreign-flow-integration.test.ts (T-3 view correctness + R-1 elimination gate) fail bun test on main HEAD 29f92c5b (committed RED by design in d15eedbec, PO-accepted). They flip GREEN when this view fix lands (candidate shapes A/B in .note). NO duplicate CI-RED-29f92c5b-FIX minted — this pre-existing root-cause row IS the fix (dedup: same failure, one open FIX). Dispatch via router supervised cascade to architect (next_agent), then dev-mcp-server impl. CI green on subsequent push == the 2 assertions pass RAW == this row DONE."
         },
         "started_at": "2026-07-13T20:45:04Z",
-        "dispatch_note": "PO triage 20:07Z BATCH -> router supervised cascade (architect-first, NOT BOUNDED-1). Sole CI-merge-gate unblocker; ci_red CI-RED-29f92c5b linked by PO (550ea0edd). architect decides view shape A vs B -> READY_FOR_DEV dev-mcp-server -> qa -> CI green on push."
+        "dispatch_note": "PO triage 20:07Z BATCH -> router supervised cascade (architect-first, NOT BOUNDED-1). Sole CI-merge-gate unblocker; ci_red CI-RED-29f92c5b linked by PO (550ea0edd). architect decides view shape A vs B -> READY_FOR_DEV dev-mcp-server -> qa -> CI green on push. | ARCHITECT DONE 2026-07-13T20:52:09Z: Shape A chosen, brief=docs/architecture-briefs/2026-07-13-daily-ff-view-join-anchor.md -> READY_FOR_DEV dev-mcp-server.",
+        "architect_brief_ref": "docs/architecture-briefs/2026-07-13-daily-ff-view-join-anchor.md",
+        "architect_shape_decision": "A"
       }
     ]
   },
