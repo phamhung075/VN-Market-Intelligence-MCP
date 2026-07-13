@@ -341,10 +341,10 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "ALPHA-S1-CANDLE-RECOVER",
-    "next_agent": "dev-mcp-server",
-    "next_action": "wave-1 readied; dev-mcp-server executes CANDLE-RECOVER first (VPS-relay recovery, deadline Mon 02:15Z), then STARTUP-CANDLE-GUARD after it, then OHLCV-BACKFILL-DONE-BUG",
-    "updated_by": "pm (wave-1 ready + dev handoff, coordination_session 69b0312e)",
-    "updated_at": "2026-07-13T04:42:11Z"
+    "next_agent": "po",
+    "next_action": "dev-mcp-server reports FALSE-POSITIVE finding on ALPHA-S1-CANDLE-RECOVER (no real 07-11 gap — Saturday, calendar-verified; daily_ohlcv gapless through real Friday 07-10, today 07-13 live-updating). PO/PM must reconcile row (close as non-issue vs re-scope) before any further wave-1 action on this row.",
+    "updated_at": "2026-07-13T04:52:05Z",
+    "updated_by": "dev-mcp-server (ALPHA-S1-CANDLE-RECOVER false-positive finding, coordination_session 69b0312e)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7596,24 +7596,6 @@
     },
     "ready": [
       {
-        "id": "ALPHA-S1-CANDLE-RECOVER",
-        "title": "URGENT/TIME-CRITICAL: re-aggregate the missing 2026-07-11 Friday daily_ohlcv candle from surviving market_prices_history ticks BEFORE the 24h retention purges them (taOhlcvBackfill fallback if ticks already gone)",
-        "owner": "developer",
-        "status": "READY",
-        "type": "FIX",
-        "size": "S",
-        "priority": "P0",
-        "wave": 1,
-        "urgent": true,
-        "zone": "apps/mcp-server/",
-        "sprint": "FLOW-PRICE-ALPHA-LOOP",
-        "depends": [],
-        "created_by": "po-option-a-flow-alpha-loop",
-        "created_at": "2026-07-12T07:56:33Z",
-        "note": "PICK FIRST — race against the 24h market_prices_history retention timer. The Docker incident (07-11) made the tick aggregator skip the incident day, so daily_ohlcv is missing the 2026-07-11 Friday candle and every downstream (snapshot, breadth, TA, briefings) is serving Thursday closes; prices flagged 'Rat cu' 36.7h. DoD: (1) probe whether the 07-11 surviving ticks still exist in market_prices_history; if present, re-aggregate the Friday OHLCV bar from them and INSERT into daily_ohlcv for all affected tickers; (2) if ticks already purged, use taOhlcvBackfill as the fallback source; (3) RAW-verify the Friday bar now serves (get_market_snapshot / TA freshness no longer stale). This is the DATA-RECOVERY row only; the recurrence guard + backfill bug are separate rows (ALPHA-S1-STARTUP-CANDLE-GUARD, ALPHA-S1-OHLCV-BACKFILL-DONE-BUG). Brief: docs/architecture-briefs/2026-07-11-data-strategy-selection.md roadmap step 1 + gap #5. zone=multi (tick source + aggregator + verification) -> architect splits. ⚠ ARCHITECT CORRECTION (READ docs/handoffs/ALPHA-S1-architect-design.md FIRST): 07-11 ticks were NEVER captured (0 rows in market_prices_history) — skip the tick-probe branch. taOhlcvBackfill/taOhlcvBackfillJob are DEAD paths from this host (VNDirect geo-blocked + count-only coverage gate silently no-ops). ONLY viable recovery = VPS-relay pipeline: ohlcv_backfill_queue trigger → vn-ohlcv-backfill.timer (30-min systemd oneshot on VPS). Deadline: Friday bar serving BEFORE Mon 2026-07-14 02:15Z open.  [PO 2026-07-12T19:45:17Z coordination_session 69b0312e] RE-PARKED supervised:true — restore FIX-ALPHA-SPRINT-PARK-SUPERVISED gate (7ce57c5f7). Peer PM (b0a23a9ec 19:32Z / 45c558cb5 19:33Z) cleared supervised->false before any user go; flow-alpha wave promotion is USER-GATED (surface, never self-launch). Architect zone(apps/mcp-server/)+depends+safety-notes PRESERVED. Awaiting USER go (surfaced WORK). Do NOT BOUNDED-1 auto-pick.  [PO 2026-07-13 coordination_session 69b0312e] USER GO — supervised:false AUTHORIZED (explicit user greenlight via dev-team dispatcher; NOT a gate-jump). Wave-1 un-parked; PM decompose->dev. The 07-12T19:45Z RE-PARKED/Awaiting-USER-go note above is SUPERSEDED. Do NOT re-park.",
-        "supervised": false
-      },
-      {
         "id": "ALPHA-S1-STARTUP-CANDLE-GUARD",
         "title": "Add startup 'last-session-candle-present?' guard + aggregator catch-up path so a Docker incident can never again silently drop a session's daily_ohlcv candle",
         "owner": "developer",
@@ -8115,7 +8097,30 @@
     },
     "last_triaged_at": "2026-07-12T19:22:15Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "ALPHA-S1-CANDLE-RECOVER",
+        "title": "URGENT/TIME-CRITICAL: re-aggregate the missing 2026-07-11 Friday daily_ohlcv candle from surviving market_prices_history ticks BEFORE the 24h retention purges them (taOhlcvBackfill fallback if ticks already gone)",
+        "owner": "developer",
+        "status": "IN_PROGRESS",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P0",
+        "wave": 1,
+        "urgent": true,
+        "zone": "apps/mcp-server/",
+        "sprint": "FLOW-PRICE-ALPHA-LOOP",
+        "depends": [],
+        "created_by": "po-option-a-flow-alpha-loop",
+        "created_at": "2026-07-12T07:56:33Z",
+        "note": "PICK FIRST — race against the 24h market_prices_history retention timer. The Docker incident (07-11) made the tick aggregator skip the incident day, so daily_ohlcv is missing the 2026-07-11 Friday candle and every downstream (snapshot, breadth, TA, briefings) is serving Thursday closes; prices flagged 'Rat cu' 36.7h. DoD: (1) probe whether the 07-11 surviving ticks still exist in market_prices_history; if present, re-aggregate the Friday OHLCV bar from them and INSERT into daily_ohlcv for all affected tickers; (2) if ticks already purged, use taOhlcvBackfill as the fallback source; (3) RAW-verify the Friday bar now serves (get_market_snapshot / TA freshness no longer stale). This is the DATA-RECOVERY row only; the recurrence guard + backfill bug are separate rows (ALPHA-S1-STARTUP-CANDLE-GUARD, ALPHA-S1-OHLCV-BACKFILL-DONE-BUG). Brief: docs/architecture-briefs/2026-07-11-data-strategy-selection.md roadmap step 1 + gap #5. zone=multi (tick source + aggregator + verification) -> architect splits. ⚠ ARCHITECT CORRECTION (READ docs/handoffs/ALPHA-S1-architect-design.md FIRST): 07-11 ticks were NEVER captured (0 rows in market_prices_history) — skip the tick-probe branch. taOhlcvBackfill/taOhlcvBackfillJob are DEAD paths from this host (VNDirect geo-blocked + count-only coverage gate silently no-ops). ONLY viable recovery = VPS-relay pipeline: ohlcv_backfill_queue trigger → vn-ohlcv-backfill.timer (30-min systemd oneshot on VPS). Deadline: Friday bar serving BEFORE Mon 2026-07-14 02:15Z open.  [PO 2026-07-12T19:45:17Z coordination_session 69b0312e] RE-PARKED supervised:true — restore FIX-ALPHA-SPRINT-PARK-SUPERVISED gate (7ce57c5f7). Peer PM (b0a23a9ec 19:32Z / 45c558cb5 19:33Z) cleared supervised->false before any user go; flow-alpha wave promotion is USER-GATED (surface, never self-launch). Architect zone(apps/mcp-server/)+depends+safety-notes PRESERVED. Awaiting USER go (surfaced WORK). Do NOT BOUNDED-1 auto-pick.  [PO 2026-07-13 coordination_session 69b0312e] USER GO — supervised:false AUTHORIZED (explicit user greenlight via dev-team dispatcher; NOT a gate-jump). Wave-1 un-parked; PM decompose->dev. The 07-12T19:45Z RE-PARKED/Awaiting-USER-go note above is SUPERSEDED. Do NOT re-park.  [dev-mcp-server 2026-07-13T04:52:05Z coordination_session 69b0312e] FALSE-POSITIVE FINDING — STOP, no code change made, do NOT push past this without PO/PM reconciliation. Live DB probe (docker exec mcp-server-1, bun:sqlite readonly against the real named-volume /app/data/market.db — NOT host data/): 2026-07-11 IS a real Saturday (isVnTradingDay('2026-07-11') -> is_trading_day:false, session_status:weekend, note:'Thu Bay', confirmed by direct call to apps/mcp-server/src/domain/services/vnTradingCalendar.ts) and 2026-07-12 is Sunday (same, 'Chu Nhat') — the app's OWN calendar ground-truth says NEITHER day was ever supposed to have a trading session. daily_ohlcv is in fact 100% GAPLESS: every real weekday 2026-06-16..2026-07-10 has a full universe row-count (908-1012 rows/day, e.g. 07-10=985 rows, VNINDEX close=1828.34), weekend 07-11/07-12 correctly show 0 rows (not a gap, expected), and today 2026-07-13 (Monday, real trading day, confirmed is_trading_day:true) already has 443 rows and climbing in REAL TIME (market_prices_history MIN/MAX fetched_at = 2026-07-13T02:00Z..04:48Z, live ticks flowing right now; VNINDEX 07-13 row updated_at=04:48:10 UTC, ~2 min before this probe). git log confirms the referenced Docker incident (95822aa90) is real but fired 2026-07-11T14:18-14:something UTC (Sat evening ICT, market already closed for the weekend) — unrelated to any trading-session data loss. There is NO missing 2026-07-11 Friday candle to recover: 07-10 (the real last-Friday session) was never lost, and 07-11 is not a trading day so a 'Friday bar' for that date cannot legitimately exist without fabricating data (forbidden). Root cause of the alarm: upstream staleness/freshness detection (outside apps/mcp-server/ zone, not yet identified precisely) appears calendar/weekend-blind (matches known FP class docs/agent-memory in the 'mkt-blind' lesson family) — flagging normal weekend non-freshness as an incident. Recommend PO: (a) close this row as a verified non-issue / false-positive-duplicate rather than routing to QA (no code shipped, nothing to verify), (b) reconsider whether ALPHA-S1-STARTUP-CANDLE-GUARD's depends:[ALPHA-S1-CANDLE-RECOVER] linkage still makes sense given the shared recoverMissingOhlcvSession() function this row was meant to create is not needed for THIS incident (guard's own calendar-aware design in docs/handoffs/ALPHA-S1-architect-design.md is unaffected and still worth building on its own merits), (c) separately track the DAG ticker (unrelated, real, MAX(date)=2026-04-28, stale since April — found during this probe, out of this row's scope). Did NOT trigger ohlcv_backfill_queue (would be a pointless real VPS fetch that correctly finds zero Saturday trades and does nothing productive, while burning retry_count budget already at 5 from an earlier queue id=646 cycle 2026-07-11T07:32Z). Did NOT write any code. Lane left IN_PROGRESS (not moved to review — no code change for QA to verify) pending PO/PM decision.",
+        "supervised": false,
+        "claimed_at": "2026-07-13T04:45:47Z",
+        "claimed_by": "dev-mcp-server",
+        "updated_at": "2026-07-13T04:52:05Z",
+        "updated_by": "dev-mcp-server"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
