@@ -363,11 +363,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "updated_at": "2026-07-13T10:35:37Z",
-    "updated_by": "qa"
+    "status": "in_progress",
+    "active_task_id": "TE-T04",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of TE-T04 — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-13T10:52:19Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -5648,22 +5649,6 @@
         "supervised_note": "ops-owned FIX, null next_agent, no backlog-detail entry -> code non-dev-owner gate is detail-blind. Supervised dispatch to ops; removed from BOUNDED-1 idle auto-pickup (would mis-route to developer placeholder)."
       },
       {
-        "id": "TE-T04",
-        "title": "T-04 Strip 'Example Invocation' tails from 6 high-cadence cowork tool packages [~150k tok/weekday]",
-        "owner": "developer",
-        "status": "BACKLOG",
-        "type": "CLEAN",
-        "size": "S",
-        "priority": "P1",
-        "wave": 1,
-        "est_saving": "~150k tok/weekday",
-        "zone": "docs/agents/",
-        "sprint": "TOKEN-ECONOMY-AUDIT",
-        "depends": [],
-        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-04",
-        "note": "Delete '## Example Invocation' from market-watcher/news-scout/alert-commander/unified-agent/qa-responder/digest-predict packages; keep tool tables + add 1 pointer to tools/list/<tool>.md. Also fixes a stale WRONG example (get_price_history tickers vs code). No behavior change."
-      },
-      {
         "id": "TE-T07",
         "title": "T-07 cron-detect-loop SKILL: split 25L idempotency card from ~160L register bodies [~85-93k tok/day]",
         "owner": "developer",
@@ -8318,9 +8303,31 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-13T10:27:08Z",
-    "last_triaged_by": "developer (TE-T01 review handoff)",
-    "in_progress": []
+    "last_triaged_at": "2026-07-13T10:52:11Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
+    "in_progress": [
+      {
+        "id": "TE-T04",
+        "title": "T-04 Strip 'Example Invocation' tails from 6 high-cadence cowork tool packages [~150k tok/weekday]",
+        "owner": "developer",
+        "status": "IN_PROGRESS",
+        "type": "CLEAN",
+        "size": "S",
+        "priority": "P1",
+        "wave": 1,
+        "est_saving": "~150k tok/weekday",
+        "zone": "docs/agents/",
+        "sprint": "TOKEN-ECONOMY-AUDIT",
+        "depends": [],
+        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-04",
+        "note": "Delete '## Example Invocation' from market-watcher/news-scout/alert-commander/unified-agent/qa-responder/digest-predict packages; keep tool tables + add 1 pointer to tools/list/<tool>.md. Also fixes a stale WRONG example (get_price_history tickers vs code). No behavior change.",
+        "promoted_at": "2026-07-13T10:52:11Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-13T10:52:19Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
