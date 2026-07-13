@@ -363,11 +363,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "updated_at": "2026-07-13T15:10:00Z",
-    "updated_by": "qa (TE-T13 done_verified)"
+    "status": "in_progress",
+    "active_task_id": "FIX-DEVTEAM-BOUNDED1-NONDEV-OWNER-BOARD-FALLBACK-GATE",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-DEVTEAM-BOUNDED1-NONDEV-OWNER-BOARD-FALLBACK-GATE — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-13T13:20:38Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6385,26 +6386,6 @@
         "created_at": "2026-07-13T07:37:00Z",
         "created_by": "po-triage-split-20260713T0737Z",
         "verify_note": "split_from=FIX-OPS-CRONJOBRUNS-TIMESTAMP-FALSIFICATION-GUARDRAIL AC-2+AC-3; dispatch=BOUNDED-1 eligible (dev owner)"
-      },
-      {
-        "id": "FIX-DEVTEAM-BOUNDED1-NONDEV-OWNER-BOARD-FALLBACK-GATE",
-        "type": "FIX",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "S",
-        "zone": "scripts/",
-        "owner": "dev",
-        "next_agent": "developer",
-        "title": "promote-bounded1.jq non-dev-owner gate misses BOARD-level owner when a row has no backlog-detail entry",
-        "desc": "scripts/devteam-backlog-promote-bounded1.jq is_non_dev_owner_unrouted() reads ONLY $detail_items[.id].owner (detail-authoritative). When a backlog row has NO backlog-detail.json entry (detail owner absent/empty), the gate evaluates NOT-gated even though the BOARD-level .owner names a non-dev deliberate-launch agent (po/ops/architect/agent-father/cowork-refactory-expert) AND .next_agent is null — so the row is auto-promotable and falls through zone-detect Tier-3 to the generic developer placeholder (mis-route). Surfaced 2026-07-13 by FIX-DEVTEAM-STATUSFLIP-LANEMOVE-RULE (board owner=cowork-refactory-expert, no detail entry) which BOUNDED-1 ranked top-pick; router withheld auto-launch. Class size = 10 live backlog rows (grep-verified: non-dev board owner + null next_agent + no detail entry).",
-        "fix_spec": "In is_non_dev_owner_unrouted compute an EFFECTIVE owner = $detail_items[.id].owner if present-and-non-empty ELSE the board-level .owner (fallback), mirroring the inline-OR-detail union/precedence already used by effective_supervised/effective_children. Apply the existing non-dev-pattern (^dev(-|$)|^developer$ negation) + null-board-next_agent gate against that effective owner. Conservative defaults unchanged: dev-role owner, empty owner in BOTH places, or a non-empty board next_agent = NOT gated (promotable). Add jq fixtures: (a) no-detail + non-dev board owner + null next_agent -> gated; (b) no-detail + non-dev board owner + non-empty next_agent -> NOT gated; (c) detail owner present still authoritative over board owner. Do NOT gate rows carrying an explicit board next_agent — they are already correctly routed. Fail-toward-safety: this only REMOVES rows from idle auto-pickup; router/PO manual dispatch of any gated row is unaffected.",
-        "created_at": "2026-07-13T08:27:23Z",
-        "created_by": "po-groom-20260713",
-        "opened_by": "po",
-        "sibling_of": "FIX-DEVTEAM-BOUNDED1-DETAIL-DISPOSITION-GATE",
-        "priority_bumped_from": "P2",
-        "priority_bumped_by": "po-groom-20260713T0937Z",
-        "priority_bump_note": "Un-starve durable class fix: was rank-2 behind ~40 detail rows, never reachable by BOUNDED-1. Bumped to rank-1 dev band so it drains after the TE-* series (idx-order) and permanently closes the board-owner-fallback hole. Recurring 3rd-tick churn justifies elevation; NOT P0 (no overclaim / would preempt in-flight TE dev work)."
       }
     ],
     "closed_sprints": [
@@ -8380,9 +8361,35 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-13T12:51:28Z",
+    "last_triaged_at": "2026-07-13T13:20:23Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-DEVTEAM-BOUNDED1-NONDEV-OWNER-BOARD-FALLBACK-GATE",
+        "type": "FIX",
+        "status": "IN_PROGRESS",
+        "priority": "P1",
+        "size": "S",
+        "zone": "scripts/",
+        "owner": "dev",
+        "next_agent": "developer",
+        "title": "promote-bounded1.jq non-dev-owner gate misses BOARD-level owner when a row has no backlog-detail entry",
+        "desc": "scripts/devteam-backlog-promote-bounded1.jq is_non_dev_owner_unrouted() reads ONLY $detail_items[.id].owner (detail-authoritative). When a backlog row has NO backlog-detail.json entry (detail owner absent/empty), the gate evaluates NOT-gated even though the BOARD-level .owner names a non-dev deliberate-launch agent (po/ops/architect/agent-father/cowork-refactory-expert) AND .next_agent is null — so the row is auto-promotable and falls through zone-detect Tier-3 to the generic developer placeholder (mis-route). Surfaced 2026-07-13 by FIX-DEVTEAM-STATUSFLIP-LANEMOVE-RULE (board owner=cowork-refactory-expert, no detail entry) which BOUNDED-1 ranked top-pick; router withheld auto-launch. Class size = 10 live backlog rows (grep-verified: non-dev board owner + null next_agent + no detail entry).",
+        "fix_spec": "In is_non_dev_owner_unrouted compute an EFFECTIVE owner = $detail_items[.id].owner if present-and-non-empty ELSE the board-level .owner (fallback), mirroring the inline-OR-detail union/precedence already used by effective_supervised/effective_children. Apply the existing non-dev-pattern (^dev(-|$)|^developer$ negation) + null-board-next_agent gate against that effective owner. Conservative defaults unchanged: dev-role owner, empty owner in BOTH places, or a non-empty board next_agent = NOT gated (promotable). Add jq fixtures: (a) no-detail + non-dev board owner + null next_agent -> gated; (b) no-detail + non-dev board owner + non-empty next_agent -> NOT gated; (c) detail owner present still authoritative over board owner. Do NOT gate rows carrying an explicit board next_agent — they are already correctly routed. Fail-toward-safety: this only REMOVES rows from idle auto-pickup; router/PO manual dispatch of any gated row is unaffected.",
+        "created_at": "2026-07-13T08:27:23Z",
+        "created_by": "po-groom-20260713",
+        "opened_by": "po",
+        "sibling_of": "FIX-DEVTEAM-BOUNDED1-DETAIL-DISPOSITION-GATE",
+        "priority_bumped_from": "P2",
+        "priority_bumped_by": "po-groom-20260713T0937Z",
+        "priority_bump_note": "Un-starve durable class fix: was rank-2 behind ~40 detail rows, never reachable by BOUNDED-1. Bumped to rank-1 dev band so it drains after the TE-* series (idx-order) and permanently closes the board-owner-fallback hole. Recurring 3rd-tick churn justifies elevation; NOT P0 (no overclaim / would preempt in-flight TE dev work).",
+        "promoted_at": "2026-07-13T13:20:23Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-13T13:20:38Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
