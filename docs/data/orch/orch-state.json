@@ -355,12 +355,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-MCP-BOOTSTRAP-BLOCKING-EXECSYNC-PROJECTROOT",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-MCP-BOOTSTRAP-BLOCKING-EXECSYNC-PROJECTROOT — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-13T06:53:35Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "BOUNDED-1 idle draining resumes — FIX-MCP-BOOTSTRAP-BLOCKING-EXECSYNC-PROJECTROOT closed REVIEW/deploy-pending (qa_commit 252f8ffd1); rides off-market mcp-server rebuild batch with wave-1 ALPHA fixes 599f4aee0 + 1bbc8cead",
+    "updated_at": "2026-07-13T07:24:20Z",
+    "updated_by": "dev-team (merge-gate closeout)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
