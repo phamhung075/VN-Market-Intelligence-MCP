@@ -1,0 +1,57 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "2026-07-13T17:39:41.866Z",
+  "payload": {
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "17:30",
+    "matched": [
+      "digest-daily"
+    ],
+    "won": [
+      "digest-daily"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/digest-predict/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 7,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "closed",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "digest-daily": "cron"
+    },
+    "cadence_minutes": {
+      "digest-daily": null
+    },
+    "guaranteed": true,
+    "last_fired_timestamp": "2026-07-13T17:39:02.066Z",
+    "last_fired_slots": [
+      "digest-daily"
+    ],
+    "last_fired_write_errors": null,
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 4,
+    "tick_snapshot_built": null,
+    "tick_snapshot_skip_reason": "digest-predict flow references neither cycle-snapshot nor get_cycle_bootstrap — no snapshot consumer; build skipped per token-economy",
+    "note": "digest-daily guaranteed daily slot; last_fired was 2026-07-07T17:34Z (6d stale, cron 30 17 * * *, now due). Standing gaps (dev-team/system-auditor, NOT dispatcher): cycle_snapshot_promoted:false repeatedly → last_regime stays unknown."
+  },
+  "_processed": {
+    "fingerprint": "d19882623803746cfcf10cc903c89c99c549e37f1e52d1c7bb50f2cb3863f5e2",
+    "processedAt": "2026-07-13T17:48:25Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
