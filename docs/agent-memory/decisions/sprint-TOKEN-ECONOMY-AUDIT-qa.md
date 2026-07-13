@@ -57,3 +57,21 @@ split into 51L card + new register.md 156L); flipped REVIEW→DONE_VERIFIED via 
 change (Job1→main.md pointer resolves), both files ≤200L (51/156), scope isolated (2 files only,
 cron-cowork-team untouched), split integrity intact (Step1/Step3 kept, Step2 pointer correct).
 **why-change:** No change from plan.
+
+### STEP qa-S4 · qa · 2026-07-13T12:09:31Z
+**task-id:** TE-T09/TE-T09b
+**what-done:** Merge-gated dev commits 959242139+c92dba10e (po/flow main.md registry +
+PUSH-BACKSTOP relocation into scripts-registry.md/push-backstop.md); flipped REVIEW→
+DONE_VERIFIED via orch-apply.sh.
+**what-considered:**
+- Trust the router's/developer's reported md5s — rejected, re-derived my own from `git show
+  959242139~1` vs the live sub-docs: registry block (34719fdc2d16192e602222f77dffd65d, 44L)
+  and PUSH-BACKSTOP body (5e9fb727ce876a65af12d94535ddd0a3, 79L), both zero-diff.
+- Verify the boundary call itself, not just trust it: confirmed OLD 270-274 (Doc self-heal +
+  Skills-available) byte-identical in new main.md 154-158 AND absent (grep=0) from both
+  sub-docs — the developer's own boundary correction (225-268, not literal 225-EOF) holds.
+**why-decision:** All 4 AC RAW-true: registry+push-backstop bodies byte-identical, jump anchor
+retained (not moved), orch-apply.sh rule + both lazy-load pointers present in main.md, no
+content swept into the wrong doc. Pure DOC/CLEAN relocation, no test surface — RAW byte-identity
+diff against the pre-split blob IS the gate (precedent: TE-T07, FIX-DEVTEAM-STATUSFLIP-LANEMOVE-RULE).
+**why-change:** No change from plan.
