@@ -41,3 +41,20 @@
 **what-considered:** Same deploy-pending disposition as sibling `ALPHA-S1-OHLCV-BACKFILL-DONE-BUG` — only path, dispatcher pre-specified batching both into one off-market rebuild.
 **why-decision:** Container not rebuilt yet (VN market open, user/ops-gated deploy) — flipping DONE_VERIFIED would misrepresent serving state.
 **why-change:** No change from plan.
+
+### STEP qa-S5 · qa · 2026-07-13T07:20:00Z
+**task-id:** FIX-MCP-BOOTSTRAP-BLOCKING-EXECSYNC-PROJECTROOT
+**what-done:** RAW merge-gate on dev-mcp-server commits 252f8ffd1 (fix) + ea3236f43 (DJ). Re-ran targeted 12-file suite myself: 123 pass/0 fail (matches dev exactly). `tsc --noEmit` exit 0.
+**what-considered:**
+- Trust dev's 123/0 vs re-run RAW — re-run mandatory; own numbers matched exactly.
+- Behavioral parity of fs walk-up vs old `git rev-parse` — traced markers (`.git`/`pnpm-workspace.yaml`) exist ONLY at repo root, not `apps/` or `apps/mcp-server/`; new test's own independent `../../../../` expectation confirms 4-level walk-up = repo root.
+- Container fallback correctness (the fix's whole point) — read Dockerfile: no `.git`/`pnpm-workspace.yaml` copied into `/app`; walk-up returns undefined → `process.cwd()`="/app" (WORKDIR), matching docker-compose's `/app/docs/*`,`/app/reports` mounts — identical to OLD code's fallback (git absent in image too → same catch→cwd path). No wrong-root risk found.
+**why-decision:** Confirmed hot-path claim directly (not trusted): `agentBootstrap.ts:358` `buildToolNameMap()` runs at module load, synchronously probes every `registryFn` incl. `registerAgentMemoryTools` whose line 185 is literally `const memoryDir = resolve(getProjectRoot(), ...)` — first line of the fn body, executed before any `await`. DDD clean: zero infra→application/interface imports in projectRoot.ts (grep). Security clean (no process.env/secret in diff). mock-guard PASS. tool-count: live `gen-project-stats --dry-run` toolCount=183 == committed baseline, file untouched by dry-run — no tools silenced.
+**why-change:** No change from plan — dispatcher's 7-point checklist executed in full, all pass.
+
+### STEP qa-S6 · qa · 2026-07-13T07:20:00Z
+**task-id:** FIX-MCP-BOOTSTRAP-BLOCKING-EXECSYNC-PROJECTROOT
+**what-done:** Ran full 1201-file suite myself: 14569 pass/40 skip/64 fail/5 errors (552s) then known Bun 1.3.13 post-summary tail-crash. Grepped entire log case-insensitive for "projectroot": 0 matches anywhere — zero of the 64 fail/5 errors relate to the changed identifiers.
+**what-considered:** 64 fail/5 err is within the same range as the last ~6 QA gates this sprint/prior (63-67 fail, 4-10 errors documented in sprint-SYSTEMIC-REMAKE-P1-qa.md, this file's own qa-S1/S3) — pre-existing structural baseline, not a regression.
+**why-decision:** DJ-GATE-1 confirmed present (dev's `sprint-FLOW-PRICE-ALPHA-LOOP-dev-mcp-server.md` STEP dev-mcp-server-S9, `task-id:** FIX-MCP-BOOTSTRAP-BLOCKING-EXECSYNC-PROJECTROOT` literal match). Held row REVIEW (not done) — this is mcp-server bootstrap CODE, takes effect only on container rebuild; same deploy-pending pattern as sibling ALPHA-S1 rows (qa-S2/S4), batches onto the same off-market rebuild.
+**why-change:** No change from plan.
