@@ -1,4 +1,4 @@
-<!-- size-justification: 122L — ops flow; VPS/Docker/DB operations + fleet OCR regression protocol + incident steps are all blocking operational content with no factoring seam; +2L for DJ-GATE-1 pointer (2026-06-07) -->
+<!-- size-justification: 124L — ops flow; VPS/Docker/DB operations + fleet OCR regression protocol + incident steps are all blocking operational content with no factoring seam; +2L for DJ-GATE-1 pointer (2026-06-07); +1L for audit-trail-timestamp FORBIDDEN pointer to db.md (2026-07-13, FIX-OPS-AUDITTRAIL-TIMESTAMP-BYPASS-GUARDRAIL) -->
 # Ops — Main Flow
 
 **Tools:** `docs/agents/tools/package/ops.md`
@@ -78,6 +78,7 @@ NEVER: `bun --hot` | `bun --watch` | `nodemon` | `pm2` | manual Bun restarts
 ls -lh apps/mcp-server/data/db.sqlite*            # WAL < 10MB normal, >50MB = flag
 sqlite3 apps/mcp-server/data/db.sqlite "PRAGMA integrity_check;"  # must = "ok"
 ```
+> Forbidden: rewriting `cron_job_runs`/audit-trail timestamps to bypass a cadence/idempotency guard → `docs/agents/ops/flow/db.md` § FORBIDDEN.
 
 **DJ-GATE-1** (before any task DONE/REVIEW flip): run skill `.claude/skills/decision-journal/SKILL.md` § Write Entry — gate: `docs/protocols/agent-chaining-protocol.md` § Journal-before-DONE Gate.
 
