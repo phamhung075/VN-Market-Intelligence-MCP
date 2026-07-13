@@ -1,0 +1,15 @@
+{
+  "from": "tran-ngoc-bau",
+  "to": "po",
+  "type": "audit-handoff",
+  "payload": "docs/handoffs/tnb-audit-latest.md",
+  "priority": "high",
+  "createdAt": "2026-07-13T20:23:00Z",
+  "summary": "c108 NEEDS_ATTENTION: chef-morning/eod dormancy RESOLVED (3/3 dishes today); root-caused + auto-cured chef.md Step 7.5 gate coverage gap (never checked L3/biz-ctx, explains F9); tnb-audit still gateway-blind 12th+ cycle, isolated to its own spawn config (sibling bctc-analyst has MCP same-day); c107 handoff still unACK'd.",
+  "_processed": {
+    "fingerprint": "b2dff39729dd14b27d79ea3d0ac131978c5f8828a1fdf6a68719b70088364a4a",
+    "processedAt": "2026-07-13T20:50:53Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
