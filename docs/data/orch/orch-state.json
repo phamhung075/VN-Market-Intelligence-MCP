@@ -363,12 +363,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-PDFEXTRACTOR-TIER1-OCR-TIMEOUT",
-    "next_agent": "ops",
-    "next_action": "ops: GATED mcp-server rebuild (2026-07-13 ruling — dev-team dispatches ops through the front door, NOT user-wait; outside 02:00-08:00Z market window so no deferral). QA APPROVED dev commit ad26f2f95 (report TASK_REPORT_FIX-PDFEXTRACTOR-TIER1-OCR-TIMEOUT.md, gate commit 568e3b404). STEP 1: docker compose up -d --build mcp-server; capture ANY classifier denial VERBATIM (do not default to waiting). STEP 2: RAW-verify image ID actually swapped + container healthy RestartCount=0. STEP 3 (post-deploy reflow, the whole point): reset bctc_vps_queue row 223 (HPG 2025-Q4) status done->pending to re-trigger extraction through the NEW async-reroute path; STEP 4: RAW-verify financial_reports for HPG reflects the real consolidated hop-nhat scalars (pdf_path + a scalar e.g. net_revenue actually updated — NEVER trust queue status=done or push {ok:true}, per feedback_bctc_push_ok_masks_stale_ocr_reflow). Report image sha before/after + HPG serving scalars.",
-    "updated_by": "dev-team (18:37Z-chain: qa APPROVED 568e3b404 RAW-verified linear+scoped -> dispatch ops gated rebuild; deploy_pending; lock held)",
-    "updated_at": "2026-07-13T19:13:11Z"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "FIX-PDFEXTRACTOR-TIER1-OCR-TIMEOUT deploy SHIPPED+RAW-verified (image ab7db8a7, healthy); parked review[] reflow_verify_pending. Head idle -> BOUNDED-1 free next idle tick. Follow-up tick verifies HPG serving scalar post async reflow before done_verified/PO.",
+    "updated_by": "dev-team (ops rebuild verified: image ab7db8a7 swapped+healthy, row223 reset->pending engaged, serving still stale -> park review reflow_verify_pending, head idle, release row lock)",
+    "updated_at": "2026-07-13T19:24:30Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -8074,11 +8074,11 @@
       }
     ],
     "head": {
-      "status": "in_progress",
-      "active_task_id": "FIX-PDFEXTRACTOR-TIER1-OCR-TIMEOUT",
-      "next_agent": "ops",
-      "last_updated_at": "2026-07-13T19:13:11Z",
-      "last_updated_by": "dev-team (qa APPROVED -> ops gated rebuild)"
+      "status": "idle",
+      "active_task_id": null,
+      "next_agent": null,
+      "last_updated_at": "2026-07-13T19:24:30Z",
+      "last_updated_by": "dev-team (FIX-PDFEXTRACTOR deploy shipped+verified -> review reflow_verify_pending; head idle)"
     },
     "ready": [],
     "review": [
@@ -8525,6 +8525,43 @@
         "next_agent": "qa",
         "entered_review_at": "2026-07-12T07:36:27Z",
         "review_note": "[developer] Regex widened to one ERE (optional dash/colon separators) covering ALL live notebook heading formats (compact cycle-YYYYMMDDTHHMMZ / dashed-no-seconds Tick.../ dashed-with-seconds-or-ms suffix / date-only), normalized to a 17-char zero-padded numeric sort key, sort restricted to -k2,2 -s (was unbounded -k2, silently alphabetical on ties). Added detection-only duplicate-heading tripwire (pre-cap+post-prune) as defense-in-depth; root cause of the duplicate-heading symptom found to be UPSTREAM (docs/agents/dev-team/flow/post-cycle.md Step 4.5 missing notebook-write SKILL AC-3 discipline) -- signal filed docs/signals/developer-2026-07-12T073316Z-main-notebook-writepath-missing-ac3.json, out of this zone. 5/5 regression tests GREEN (2 new real-format cases + 1 duplicate-tripwire case). AC-4 live-verified against 100%-real main.md content (HEAD + reinstated real historical section, 207L) via the actual fixed script: oldest dropped, newest retained, final 177L, zero duplicate headings -- confirmed via direct grep/wc, not self-report. Also manually deduped a second, independent live duplicate found active in main.md at task start. Full trail: docs/agent-memory/decisions/sprint-TOKEN-ECONOMY-AUDIT-developer.md STEP developer-S1/S2/S3."
+      },
+      {
+        "id": "FIX-PDFEXTRACTOR-TIER1-OCR-TIMEOUT",
+        "priority": "high",
+        "size": "M",
+        "status": "REVIEW",
+        "title": "pdfExtractorClient Tier-1 120s OCR timeout -> silent BCTC reflow failure (durable: fail-loud + async re-route for large scanned PDFs)",
+        "type": "FIX",
+        "zone": "apps/mcp-server/",
+        "created_at": "2026-07-13T17:28:19Z",
+        "created_by": "po (dev-team signal triage)",
+        "origin_signal": "docs/signals/processed/dev-mcp-server-2026-07-13T1655Z-pdfextractor-tier1-ocr-timeout.json",
+        "deploy_gated": true,
+        "followup_of": "HPG-DISCOVER-CONSOLIDATED-PDF",
+        "status_note": "DURABLE FIX for a recurring SILENT-FAILURE class — NOT a bare timeout bump. Evidence: a direct 480s call to pdf-extractor:5001/extract still did not return and tesseract ran 17+ min continuously on HPG Q4-2025 consolidated (33pp scanned), so any fixed larger SYNC timeout is still a symptom patch and a 17+ min synchronous HTTP hold is itself fragile. Root: pdfExtractorClient.ts Tier-1 hardcodes AbortSignal.timeout(120_000); when it (and all 3 tiers) fail, push-bctc-pdf returns {ok:true} and marks bctc_vps_queue row done (attempts=1), leaving financial_reports scalars silently stale with NO error surfaced. TWO-PART AC: (1) FAIL-LOUD (the root cause) — push-bctc-pdf MUST NOT return ok:true and MUST NOT mark the queue row done when OCR times out / all tiers fail; propagate the error so the queue row stays retryable (status pending/failed, attempts incremented) and the staleness is surfaced (BUG/observability signal), never silently swallowed. (2) LARGE-PDF PATH — route large/scanned PDFs (size or page-count threshold) through the async /api/trigger-pek-extract path instead of the synchronous 3-tier gauntlet, marking the queue row done only when the reflow completes with real scalars. Architect design touch: async-reroute vs sync-timeout-bump sub-decision + threshold value. DEPLOY-GATED (mcp-server rebuild): per 2026-07-13 ruling, dispatch OPS to attempt the rebuild once through the front door and capture any classifier denial verbatim — do NOT default to waiting for the user. POST-DEPLOY: reset bctc_vps_queue row 223 (HPG 2025-Q4) status done->pending to re-trigger the consolidated reflow (it is 'done' from the silent-failure path and will NOT auto-reparse without an explicit reset). Closes the HPG Q4-2025 consolidated data-coverage-gap (queue row 223 source_url + on-disk 7,135,524B PDF already correct; only OCR reflow blocked). VERIFY: financial_reports row 918a7abd-... holds real consolidated hop-nhat scalars (not stale standalone rieng) after reflow.",
+        "owner": "dev-team",
+        "next_agent": "dev-team",
+        "started_at": "2026-07-13T17:55:09Z",
+        "dev_commit": "ad26f2f95",
+        "qa_note": "dev commit ad26f2f95; dispatcher RAW-verified tsc-clean + 29 targeted pass; QA REVIEW-ITEM: bctcPdfPullJob Step5 double-fires /pek-extract for scanned pull-path PDFs (dev: benign, Semaphore(1)/429 + cosmetic log.error) -> confirm/reject.",
+        "qa_verdict": "APPROVED",
+        "qa_commit": "568e3b404",
+        "deploy_pending": false,
+        "deployed": true,
+        "deployed_image": "ab7db8a7fb8a",
+        "deployed_at": "2026-07-13T19:15:02Z",
+        "deploy_verified_by": "dev-team RAW 2026-07-13T19:23Z (docker: image ffc7c01e->ab7db8a7 swapped; container Up healthy RestartCount=0 recreated 19:15:02Z)",
+        "reflow_verify_pending": true,
+        "serving_baseline_stale": {
+          "report_id": "918a7abd-ae17-466f-be30-96ec55218ccc",
+          "net_revenue": -1264.657037,
+          "refine_status": "PARTIAL",
+          "fetchedAt": "2026-06-07T10:27:16Z",
+          "queue_row_223": "pending (reset done->pending engaged; NOT silent-done)"
+        },
+        "reflow_verify_note": "Deploy shipped+RAW-verified. Async reflow in-flight via pek worker + bctcExtractReconcileJob (cron :05/:35). FOLLOW-UP dev-team tick RAW-verifies financial_reports.net_revenue flips from stale -1264.66 to a plausible POSITIVE consolidated value AND queue row 223 pending->pek_triggered->done. THEN flip review->done_verified + route PO. Silent flip back to done with net_revenue still ~-1264 = RED flag (async-reroute did NOT engage).",
+        "review_parked_at": "2026-07-13T19:24:30Z"
       }
     ],
     "qa": [],
@@ -8546,31 +8583,7 @@
     },
     "last_triaged_at": "2026-07-13T15:25:20Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-PDFEXTRACTOR-TIER1-OCR-TIMEOUT",
-        "priority": "high",
-        "size": "M",
-        "status": "IN_PROGRESS",
-        "title": "pdfExtractorClient Tier-1 120s OCR timeout -> silent BCTC reflow failure (durable: fail-loud + async re-route for large scanned PDFs)",
-        "type": "FIX",
-        "zone": "apps/mcp-server/",
-        "created_at": "2026-07-13T17:28:19Z",
-        "created_by": "po (dev-team signal triage)",
-        "origin_signal": "docs/signals/processed/dev-mcp-server-2026-07-13T1655Z-pdfextractor-tier1-ocr-timeout.json",
-        "deploy_gated": true,
-        "followup_of": "HPG-DISCOVER-CONSOLIDATED-PDF",
-        "status_note": "DURABLE FIX for a recurring SILENT-FAILURE class — NOT a bare timeout bump. Evidence: a direct 480s call to pdf-extractor:5001/extract still did not return and tesseract ran 17+ min continuously on HPG Q4-2025 consolidated (33pp scanned), so any fixed larger SYNC timeout is still a symptom patch and a 17+ min synchronous HTTP hold is itself fragile. Root: pdfExtractorClient.ts Tier-1 hardcodes AbortSignal.timeout(120_000); when it (and all 3 tiers) fail, push-bctc-pdf returns {ok:true} and marks bctc_vps_queue row done (attempts=1), leaving financial_reports scalars silently stale with NO error surfaced. TWO-PART AC: (1) FAIL-LOUD (the root cause) — push-bctc-pdf MUST NOT return ok:true and MUST NOT mark the queue row done when OCR times out / all tiers fail; propagate the error so the queue row stays retryable (status pending/failed, attempts incremented) and the staleness is surfaced (BUG/observability signal), never silently swallowed. (2) LARGE-PDF PATH — route large/scanned PDFs (size or page-count threshold) through the async /api/trigger-pek-extract path instead of the synchronous 3-tier gauntlet, marking the queue row done only when the reflow completes with real scalars. Architect design touch: async-reroute vs sync-timeout-bump sub-decision + threshold value. DEPLOY-GATED (mcp-server rebuild): per 2026-07-13 ruling, dispatch OPS to attempt the rebuild once through the front door and capture any classifier denial verbatim — do NOT default to waiting for the user. POST-DEPLOY: reset bctc_vps_queue row 223 (HPG 2025-Q4) status done->pending to re-trigger the consolidated reflow (it is 'done' from the silent-failure path and will NOT auto-reparse without an explicit reset). Closes the HPG Q4-2025 consolidated data-coverage-gap (queue row 223 source_url + on-disk 7,135,524B PDF already correct; only OCR reflow blocked). VERIFY: financial_reports row 918a7abd-... holds real consolidated hop-nhat scalars (not stale standalone rieng) after reflow.",
-        "owner": "ops",
-        "next_agent": "ops",
-        "started_at": "2026-07-13T17:55:09Z",
-        "dev_commit": "ad26f2f95",
-        "qa_note": "dev commit ad26f2f95; dispatcher RAW-verified tsc-clean + 29 targeted pass; QA REVIEW-ITEM: bctcPdfPullJob Step5 double-fires /pek-extract for scanned pull-path PDFs (dev: benign, Semaphore(1)/429 + cosmetic log.error) -> confirm/reject.",
-        "qa_verdict": "APPROVED",
-        "qa_commit": "568e3b404",
-        "deploy_pending": true
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
