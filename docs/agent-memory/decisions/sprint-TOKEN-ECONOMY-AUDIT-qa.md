@@ -75,3 +75,22 @@ retained (not moved), orch-apply.sh rule + both lazy-load pointers present in ma
 content swept into the wrong doc. Pure DOC/CLEAN relocation, no test surface — RAW byte-identity
 diff against the pre-split blob IS the gate (precedent: TE-T07, FIX-DEVTEAM-STATUSFLIP-LANEMOVE-RULE).
 **why-change:** No change from plan.
+
+### STEP qa-S5 · qa · 2026-07-13T14:40:00Z
+**task-id:** TE-T10
+**what-done:** Merge-gated dev commits 897f4fe8c+98830d558 (dedup How-to-Invoke + log_agent_work
+recipe across 11 tool packages + scaffold-files.md root-cause fix); flipped REVIEW→DONE_VERIFIED
+via orch-apply.sh.
+**what-considered:**
+- Trust dev_note's claim that grep -l counts drop 11→0 — rejected, re-ran both greps myself
+  post-edit: 'How to Invoke Tools' only on ops.md (out of scope, correct); 'Two-Call Recipe' 0
+  fleet-wide.
+- The real risk isn't marker removal, it's SSOT coverage — independently re-read CLAUDE.md §
+  MCP Tools and tools/list/log_agent_work.md myself; confirmed both cover the deleted content
+  (grammar; session-start/id-round-trip/completed-or-error) BEFORE trusting the deletion was safe.
+**why-decision:** All 6 AC RAW-true: markers 11→0 in-scope (ops.md correctly still shows it),
+both SSOT pointer targets independently confirmed complete, pointers present in all 12 files,
+scaffold-files.md Step 7 now scaffolds lean, zero apps/ + zero peer-file scope leak, DJ-GATE-1
+present. Flagged log_agent_work.md's stale Usage-example grammar (tool_name/input) as non-blocking
+PO follow-up — coverage intact, only the example is stale.
+**why-change:** No change from plan.
