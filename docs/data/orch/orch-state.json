@@ -363,11 +363,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-07-13T11:32:40Z",
-    "updated_by": "qa",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "active_task_id": "TE-T09",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of TE-T09 — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-13T11:50:06Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -5648,22 +5649,6 @@
         "supervised_note": "ops-owned FIX, null next_agent, no backlog-detail entry -> code non-dev-owner gate is detail-blind. Supervised dispatch to ops; removed from BOUNDED-1 idle auto-pickup (would mis-route to developer placeholder)."
       },
       {
-        "id": "TE-T09",
-        "title": "T-09 po/flow/main.md: extract 54KB inline triage-script registry to lazy scripts-registry.md (+ fold PUSH-BACKSTOP to pointer) [~77-135k tok/day]",
-        "owner": "developer",
-        "status": "BACKLOG",
-        "type": "CLEAN",
-        "size": "S",
-        "priority": "P1",
-        "wave": 1,
-        "est_saving": "~77-135k tok/day",
-        "zone": "docs/agents/",
-        "sprint": "TOKEN-ECONOMY-AUDIT",
-        "depends": [],
-        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-09",
-        "note": "Move 'Reusable triage scripts' registry (line 225->EOF, 78% of bytes) to docs/agents/po/flow/scripts-registry.md; keep orch-apply.sh rule + 1 pointer. T-09b: also collapse the never-firing 80L PUSH-BACKSTOP step to a pointer. main.md 17.4k->~2k tokens/spawn."
-      },
-      {
         "id": "TE-T10",
         "title": "T-10 tools/package/*: dedup 47L 'How to Invoke' + log_agent_work recipe across 11 packages + fix factory template [~65-70k tok/weekday]",
         "owner": "developer",
@@ -8344,9 +8329,31 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-13T11:25:56Z",
-    "last_triaged_by": "developer (TE-T07 review handoff)",
-    "in_progress": []
+    "last_triaged_at": "2026-07-13T11:50:06Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
+    "in_progress": [
+      {
+        "id": "TE-T09",
+        "title": "T-09 po/flow/main.md: extract 54KB inline triage-script registry to lazy scripts-registry.md (+ fold PUSH-BACKSTOP to pointer) [~77-135k tok/day]",
+        "owner": "developer",
+        "status": "IN_PROGRESS",
+        "type": "CLEAN",
+        "size": "S",
+        "priority": "P1",
+        "wave": 1,
+        "est_saving": "~77-135k tok/day",
+        "zone": "docs/agents/",
+        "sprint": "TOKEN-ECONOMY-AUDIT",
+        "depends": [],
+        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-09",
+        "note": "Move 'Reusable triage scripts' registry (line 225->EOF, 78% of bytes) to docs/agents/po/flow/scripts-registry.md; keep orch-apply.sh rule + 1 pointer. T-09b: also collapse the never-firing 80L PUSH-BACKSTOP step to a pointer. main.md 17.4k->~2k tokens/spawn.",
+        "promoted_at": "2026-07-13T11:50:06Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-13T11:50:06Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
