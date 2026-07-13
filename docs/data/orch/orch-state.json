@@ -12,6 +12,14 @@
   },
   "decision_journal": [
     {
+      "agent": "dev-mcp-server",
+      "task_id": "ALPHA-S1-STARTUP-CANDLE-GUARD",
+      "timestamp": "2026-07-13T06:05:30Z",
+      "decision": "Built recoverMissingOhlcvSession() + runOhlcvCandlePresenceGuard() net-new (sibling ALPHA-S1-CANDLE-RECOVER closed false-positive, shipped no code, so its shared primitive never existed). Calendar-aware via vnTradingCalendar's new mostRecentTradingDayOnOrBefore() (bounded 14-day backward walk over isVnTradingDay) — structurally prevents ever treating a weekend/holiday as a missing session. Wired at startup (static import) + trailing inside runOhlcvDailyAggregator itself (checks the PREVIOUS trading day via nowMs-24h, dynamic import to avoid a static circular import back through this same file). Fixed a real arithmetic bug in the architect design doc's illustrative re-aggregation snippet (nowMs must be end-of-VN-session, not midnight+5h, else the afternoon close is silently dropped from the recovered candle) — disclosed in commit message, not a re-architecture. Fail-loud does not invent a new retry ladder: a persistent gap that routes through VPS-relay is escalated by the ALREADY-EXISTING R-5 ladder in handleOhlcvBackfillDone (sibling commit 599f4aee0) once the poller reports back. Commit 1bbc8cead, disjoint file set from the sibling row. Moved in_progress->review, deploy_pending:true, top-level .head synced to next_agent:qa.",
+      "what_considered": "(A) implement recoverMissingOhlcvSession per the architect's §1 snippet verbatim, including the nowMs=midnight+5h re-aggregation window — REJECTED after a direct unit test (3 ticks spanning the full VN session) showed the aggregator's own window is [vnMidnight(nowMs), nowMs), so +5h truncates capture to the pre-market hours and silently drops the actual session close; would have shipped a recovery path that produces a wrong candle while looking correct. (B) leave the trailing daily-aggregator call site as a static import of ohlcvCandleGuard.ts — REJECTED: creates a 3-node static circular import (ohlcvDailyAggregatorJob -> ohlcvCandleGuard -> recoverMissingOhlcvSession -> ohlcvDailyAggregatorJob); used a dynamic import instead, mirroring the deferred-load idiom ohlcvStartupProbe.ts already uses for the same reason. (C) add a bespoke retry-cap/escalation ladder inside the guard itself for a persistent gap — REJECTED per the task's explicit instruction to reuse the existing ladder, not invent a new one: the VPS-relay branch's ohlcv_backfill_queue insert already flows into the sibling's already-fixed R-5 ladder.",
+      "why_change": "Architect design (docs/handoffs/ALPHA-S1-architect-design.md §1/§2) is the design authority and was followed for orchestration/branch structure/interfaces verbatim; the one deviation (aggregation-window arithmetic) is a correctness bug-fix within the design's own illustrative code, not a scope or architecture change, and is fully disclosed in the commit message and notebook."
+    },
+    {
       "by": "pm",
       "task_id": "D3-BACKLOG-HYGIENE-NORMALIZE-TODO-DEFERRED",
       "ts": "2026-07-10T20:35:00Z",
@@ -349,10 +357,10 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "ALPHA-S1-STARTUP-CANDLE-GUARD",
-    "next_agent": "dev-mcp-server",
-    "next_action": "Wave-1 last code row: build calendar-aware startup OHLCV catch-up guard (recoverMissingOhlcvSession) consulting vnTradingCalendar — skip weekends/holidays, fail-loud only on genuine trading-day gaps. Disjoint file set from ohlcvBackfillHandler done-flip. Code + targeted tests + tsc, commit explicit paths, move row to REVIEW. DEPLOY-REQUIRED — do NOT deploy (user-gated + market OPEN). Sync TOP-LEVEL .head.",
-    "updated_at": "2026-07-13T05:48:49Z",
-    "updated_by": "dev-team dispatcher (wave-1 guard dispatch)"
+    "next_agent": "qa",
+    "next_action": "ALPHA-S1-STARTUP-CANDLE-GUARD code-complete: recoverMissingOhlcvSession() + runOhlcvCandlePresenceGuard() net-new (sibling CANDLE-RECOVER shipped no code), calendar-aware via vnTradingCalendar, wired at startup + daily-aggregator trailing self-heal. Commit 1bbc8cead. QA: RAW code merge-gate — run targeted suite + tsc, confirm calendar-skip/fail-loud/disjoint-from-599f4aee0, then hold REVIEW, DEPLOY-PENDING (batch with 599f4aee0 into one off-market mcp-server rebuild — market OPEN, deploy is user/ops-gated).",
+    "updated_at": "2026-07-13T06:05:30Z",
+    "updated_by": "dev-mcp-server (wave-1 guard code-complete, RAW code merge-gate, DEPLOY-PENDING)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -8129,6 +8137,36 @@
         "qa_reviewed_at": "2026-07-13T05:41:26Z",
         "qa_reviewed_by": "qa",
         "qa_note": "Code green + RAW-verified, held in REVIEW (not done/serving-verified) — mcp-server container not yet rebuilt with this fix. Deploy is user/ops-gated + market-sensitive (docker compose up -d --build mcp-server); QA does not deploy. Full DONE_VERIFIED deferred to post-deploy serving check per docs/handoffs/ALPHA-S1-architect-design.md shared verification gate. Task Report: reports/TASK_REPORT_ALPHA-S1-OHLCV-BACKFILL-DONE-BUG.md"
+      },
+      {
+        "id": "ALPHA-S1-STARTUP-CANDLE-GUARD",
+        "title": "Add startup 'last-session-candle-present?' guard + aggregator catch-up path so a Docker incident can never again silently drop a session's daily_ohlcv candle",
+        "owner": "dev-mcp-server",
+        "status": "REVIEW",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "wave": 1,
+        "zone": "apps/mcp-server/",
+        "sprint": "FLOW-PRICE-ALPHA-LOOP",
+        "depends": [],
+        "created_by": "po-option-a-flow-alpha-loop",
+        "created_at": "2026-07-12T07:56:33Z",
+        "note": "Recurrence-prevention for the ALPHA-S1-CANDLE-RECOVER incident class. The daily aggregation chain currently has NO catch-up path: one Docker incident produced a missing candle and nobody ran the fix while the raw ticks expired. DoD: on startup (and/or first tick of a session) the aggregator checks that the most-recent trading session has a daily_ohlcv candle for the expected tickers; if missing, it triggers a catch-up re-aggregation from surviving ticks (or taOhlcvBackfill) and logs/alerts. Must be idempotent (no double-insert) and fail-loud on catch-up failure. Brief roadmap step 1 + gap #5. zone=multi -> architect splits. Design: docs/handoffs/ALPHA-S1-architect-design.md  [PO 2026-07-12T19:45:17Z coordination_session 69b0312e] RE-PARKED supervised:true — restore FIX-ALPHA-SPRINT-PARK-SUPERVISED gate (7ce57c5f7). Peer PM (b0a23a9ec 19:32Z / 45c558cb5 19:33Z) cleared supervised->false before any user go; flow-alpha wave promotion is USER-GATED (surface, never self-launch). Architect zone(apps/mcp-server/)+depends+safety-notes PRESERVED. Awaiting USER go (surfaced WORK). Do NOT BOUNDED-1 auto-pick.  [PO 2026-07-13 coordination_session 69b0312e] USER GO — supervised:false AUTHORIZED (explicit user greenlight via dev-team dispatcher; NOT a gate-jump). Wave-1 un-parked; PM decompose->dev. The 07-12T19:45Z RE-PARKED/Awaiting-USER-go note above is SUPERSEDED. Do NOT re-park.  [PO RECONCILE 2026-07-13 coordination_session 69b0312e] depends:[ALPHA-S1-CANDLE-RECOVER] DROPPED — blocker CLOSED as VERIFIED FALSE-POSITIVE (commit f045a791c; 07-11/07-12 = weekend per vnTradingCalendar, daily_ohlcv gapless thru Fri 07-10). Guard KEPT — real P1 on its own merits (design docs/handoffs/ALPHA-S1-architect-design.md 2). CANDLE-RECOVER shipped NO code, so the shared recoverMissingOhlcvSession() it was to create does NOT exist: this guard must implement its OWN calendar-aware catch-up/recover path. CRITICAL: the guard's last-session-present check MUST consult vnTradingCalendar.isVnTradingDay so it never treats a weekend/holiday as a missing session — do not reproduce the mkt-blind false-positive that seeded CANDLE-RECOVER.",
+        "supervised": false,
+        "updated_at": "2026-07-13T05:48:49Z",
+        "updated_by": "dev-team dispatcher (wave-1 guard dispatch)",
+        "coordination_session": "69b0312e-df43-43a9-9e0b-bddf66d374e3",
+        "started_at": "2026-07-13T05:48:49Z",
+        "started_by": "dev-mcp-server",
+        "commit": "1bbc8cead",
+        "completed_at": "2026-07-13T06:05:30Z",
+        "completed_by": "dev-mcp-server",
+        "deploy_required": true,
+        "deploy_pending": true,
+        "deploy_note": "code committed, NOT yet live — mcp-server rebuild is user/ops-gated (VN market open at task time). Rebuild cmd: docker compose up -d --build mcp-server. Batch with sibling 599f4aee0 into one off-market rebuild.",
+        "review_note": "dev-mcp-server: net-new recoverMissingOhlcvSession() + runOhlcvCandlePresenceGuard() built (sibling CANDLE-RECOVER shipped no code). Calendar-aware via vnTradingCalendar.mostRecentTradingDayOnOrBefore — weekend+holiday walk-back verified (2026-07-12 Sun->07-10 Fri; 2026-05-01 holiday block->04-29). Wired at 2 call sites (startScheduler.ts static import; ohlcvDailyAggregatorJob.ts trailing self-heal via dynamic import to avoid a 3-node static circular import). Fixed one arithmetic bug in the architect's illustrative re-aggregation snippet (nowMs must be end-of-session not +5h, else afternoon close is dropped). Targeted 14/14 new tests pass; tsc clean; 93/93 regression across 7 related suites (aggregator x4, is-trading-day, backfill-done-subtask-b, contam/pred/guard-checks/volume-unit/diacritics) all green; combined-file run showed 1 pre-existing unrelated flake (getVpsProxyHealth export error), confirmed via git-stash against clean baseline — same failure with my changes fully removed. mock-guard PASS. DDD: domain/ zero infra imports (golden rule intact); application usecase importing the scheduler-layer aggregator function matches architect design verbatim (disclosed, not a new pattern). Disjoint from sibling ALPHA-S1-OHLCV-BACKFILL-DONE-BUG (ohlcvBackfillHandler.ts untouched). Commit 1bbc8cead.",
+        "qa_raw_tests": "New suite: 14/14 pass (ALPHA-S1-STARTUP-CANDLE-GUARD.test.ts). Regression 93/93 pass across: 1358/1368/1374-ohlcv-aggregator*.test.ts, FIX-OHLCV-AGGREGATOR-SEED-UNMIGRATED-P0.test.ts, DWF-is-trading-day.test.ts, ohlcv-backfill-done-subtask-b.test.ts, CONTAM-7-ohlcv-unit-contam-integration.test.ts, PRED-RESOLVER-GAP-FIX.test.ts, 1277/1551-ohlcv-guard-checks.test.ts, 1390-ohlcv-volume-unit.test.ts, 1421-ohlcv-health-and-digest-diacritics.test.ts. tsc --noEmit 0 errors. mock-guard PASS. Full 1199-file suite NOT run (VN market open, host-starvation risk) per dispatch constraint."
       }
     ],
     "qa": [],
@@ -8150,27 +8188,7 @@
     },
     "last_triaged_at": "2026-07-12T19:22:15Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "ALPHA-S1-STARTUP-CANDLE-GUARD",
-        "title": "Add startup 'last-session-candle-present?' guard + aggregator catch-up path so a Docker incident can never again silently drop a session's daily_ohlcv candle",
-        "owner": "dev-mcp-server",
-        "status": "IN_PROGRESS",
-        "type": "FIX",
-        "size": "S",
-        "priority": "P1",
-        "wave": 1,
-        "zone": "apps/mcp-server/",
-        "sprint": "FLOW-PRICE-ALPHA-LOOP",
-        "depends": [],
-        "created_by": "po-option-a-flow-alpha-loop",
-        "created_at": "2026-07-12T07:56:33Z",
-        "note": "Recurrence-prevention for the ALPHA-S1-CANDLE-RECOVER incident class. The daily aggregation chain currently has NO catch-up path: one Docker incident produced a missing candle and nobody ran the fix while the raw ticks expired. DoD: on startup (and/or first tick of a session) the aggregator checks that the most-recent trading session has a daily_ohlcv candle for the expected tickers; if missing, it triggers a catch-up re-aggregation from surviving ticks (or taOhlcvBackfill) and logs/alerts. Must be idempotent (no double-insert) and fail-loud on catch-up failure. Brief roadmap step 1 + gap #5. zone=multi -> architect splits. Design: docs/handoffs/ALPHA-S1-architect-design.md  [PO 2026-07-12T19:45:17Z coordination_session 69b0312e] RE-PARKED supervised:true — restore FIX-ALPHA-SPRINT-PARK-SUPERVISED gate (7ce57c5f7). Peer PM (b0a23a9ec 19:32Z / 45c558cb5 19:33Z) cleared supervised->false before any user go; flow-alpha wave promotion is USER-GATED (surface, never self-launch). Architect zone(apps/mcp-server/)+depends+safety-notes PRESERVED. Awaiting USER go (surfaced WORK). Do NOT BOUNDED-1 auto-pick.  [PO 2026-07-13 coordination_session 69b0312e] USER GO — supervised:false AUTHORIZED (explicit user greenlight via dev-team dispatcher; NOT a gate-jump). Wave-1 un-parked; PM decompose->dev. The 07-12T19:45Z RE-PARKED/Awaiting-USER-go note above is SUPERSEDED. Do NOT re-park.  [PO RECONCILE 2026-07-13 coordination_session 69b0312e] depends:[ALPHA-S1-CANDLE-RECOVER] DROPPED — blocker CLOSED as VERIFIED FALSE-POSITIVE (commit f045a791c; 07-11/07-12 = weekend per vnTradingCalendar, daily_ohlcv gapless thru Fri 07-10). Guard KEPT — real P1 on its own merits (design docs/handoffs/ALPHA-S1-architect-design.md 2). CANDLE-RECOVER shipped NO code, so the shared recoverMissingOhlcvSession() it was to create does NOT exist: this guard must implement its OWN calendar-aware catch-up/recover path. CRITICAL: the guard's last-session-present check MUST consult vnTradingCalendar.isVnTradingDay so it never treats a weekend/holiday as a missing session — do not reproduce the mkt-blind false-positive that seeded CANDLE-RECOVER.",
-        "supervised": false,
-        "updated_at": "2026-07-13T05:48:49Z",
-        "updated_by": "dev-team dispatcher (wave-1 guard dispatch)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
