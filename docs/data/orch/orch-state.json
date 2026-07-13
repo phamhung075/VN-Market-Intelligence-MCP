@@ -352,6 +352,14 @@
       "decision": "RECONCILE of dev-mcp-server RAW-verified false-positive finding (commit f045a791c, coordination_session 69b0312e). (1) CLOSED ALPHA-S1-CANDLE-RECOVER as VERIFIED FALSE-POSITIVE / NON-ISSUE -> done_verified lane, status DONE_VERIFIED (conservation-preserving counted terminal lane). No code shipped, no QA merge: closed on RAW calendar+DB evidence (07-11/12 = weekend per vnTradingCalendar; daily_ohlcv gapless thru Fri 07-10; Mon 07-13 live-updating). (2) DROPPED ALPHA-S1-STARTUP-CANDLE-GUARD depends:[ALPHA-S1-CANDLE-RECOVER] (blocker void) — guard KEPT as real P1, re-noted it must build its own calendar-aware catch-up path + consult vnTradingCalendar. (3) ALPHA-S1-OHLCV-BACKFILL-DONE-BUG left READY (independent, real). (4) MINTED durable-fix FIX-GAP-STALENESS-DETECTOR-CALENDAR-AWARE (FIX, P1, supervised PLAN-ONLY) to make the weekend/calendar-blind OHLCV gap/staleness detector consult vnTradingCalendar — fix-root-not-symptom; scoped for BA/architect to pinpoint the exact detector (outside apps/mcp-server/). (5) head -> next_agent=dev-mcp-server, active_task_id=ALPHA-S1-OHLCV-BACKFILL-DONE-BUG (next wave-1 ready row).",
       "what_considered": "(A) route CANDLE-RECOVER to QA — REJECTED: no code shipped, nothing to verify; closes on RAW calendar/DB ground-truth. (B) move to archive lane — REJECTED: archive is NOT counted in task_total (conservation), done_verified is the coherent terminal lane (LANE_ALLOWED_STATUSES). (C) trigger ohlcv_backfill_queue for 07-11 — REJECTED: fabricating a weekend bar is forbidden + burns VPS retry budget for zero Saturday trades. (D) CANCEL the guard because the incident was phantom — REJECTED: guard's calendar-aware startup design stands on its own merits (Docker-incident recurrence prevention). (E) link to existing ARCH-WATCHDOG-WEEKDAY-AWARE-THRESHOLD instead of minting — PARTIAL: that row is scoped to briefing/summary watchdogs, not the OHLCV gap/candle detector that minted a recovery TASK; minted a distinct row + cross-linked for BA dedupe. (F) nominate STARTUP-CANDLE-GUARD as next dev pick — REJECTED in favor of OHLCV-BACKFILL-DONE-BUG (fully independent, live data-quality impact on ALPHA-S3 z-scores, RAW-verifiable, no residual design coupling).",
       "why_change": "dev-mcp-server RAW-verified the 07-11 'missing candle' as a weekend/calendar-blind false-positive; the board must reflect ground-truth (close the phantom, unblock the real guard, fix the root-cause detector) so wave-1 proceeds on real work. User GO standing; supervised:false authorized for wave-1 execution rows."
+    },
+    {
+      "agent": "po",
+      "task_id": "FIX-OPS-CRONJOBRUNS-TIMESTAMP-FALSIFICATION-GUARDRAIL (SPLIT)",
+      "timestamp": "2026-07-13T07:37:00Z",
+      "decision": "TRIAGE-ONE-ROW grooming for dev-team BOUNDED-1 (session 69b0312e, tick 07:37Z). The dispatcher WITHHELD auto-launch (autolaunch_safety_hold) on this row: resolved primary implementer is a NON-DEV meta-agent (agent-father) and the AC was multi-agent + partly time-gated — not a clean atomic dev unit. DECISION: SPLIT the parent (removed from backlog[]) into 2 sibling children (no epic-wrapper — avoids the known epic-wrapper closeout gap). (A) FIX-OPS-AUDITTRAIL-TIMESTAMP-BYPASS-GUARDRAIL = AC-1 only, owner+next_agent=agent-father, zone=docs/agents/ops/, priority=high, size=S. Doc-edit MUST-NOT clause on the ops flow (never UPDATE cron_job_runs/audit-trail timestamps to bypass an idempotency/cadence guard; use bctcReparseJob options.nowMsFn, else escalate to dev-<service>, else wait). NON-DEV owner => router HAND-DISPATCH, NOT BOUNDED-1. This is the highest-value recurrence-prevention half and fully actionable NOW. (B) SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY = AC-2 + AC-3, owner+next_agent=dev-mcp-server, zone=apps/mcp-server/, priority=medium, size=S, timebox=120, mode=spike. AC-2 traces shouldSkipRecoveryReplay call path (the genuinely-open question: why did the 21.6h guard block when the pre-edit probe showed no in-window row?) — actionable now; the fresh cron_job_runs RAW-probe is TIME-GATED (needs >=21.6h new history) and deferred as a noted sub-step. AC-3 RAW-probes the 9 targets' reparse state now. Dev owner => BOUNDED-1 eligible. Conservation: parent -1, children +2 => net +1 (task_total 505->506; conservation guard is shrink-only, passes). signal_total unchanged 0.",
+      "what_considered": "(A) keep together as one row with a lead+assist (agent-father lead, dev-mcp-server assist) — REJECTED: the dispatcher explicitly flagged it as NON-atomic and non-BOUNDED-1; a single row cannot carry two different owner lanes (hand-dispatch vs auto-launch) cleanly, and AC-1 is fully actionable while AC-2 is time-gated — coupling them delays the recurrence-prevention guardrail. (B) epic-wrapper parent + children — REJECTED: known epic-wrapper closeout gap (parent sits open after children DONE_VERIFIED); two independent siblings + decision_journal traceability is cleaner. (C) fold AC-2/AC-3 into the already-closed SPIKE-BCTC-2025Q4-PDFPULL-OCR-0ROW — REJECTED: that SPIKE closed the 2025-Q4 EXTRACTION axis (bctcPdfPull /extract-tables gap), a DIFFERENT question; the cadence-guard call-path is unanswered anywhere and the Q1-2026 non-bank verification is a different quarter. Cross-referenced instead of merged so the extraction axis is not re-treaded. (D) cancel AC-3 as moot because the reparse was 'architecturally incapable' for 2025-Q4 — REJECTED: that finding covers 2025-Q4 only; the Q1-2026 non-bank set (VHM/VIC/VRE/HSG/MWG) is a distinct target with real data-quality stakes.",
+      "why_change": "The recurrence-prevention guardrail (AC-1) is fully actionable, small, and belongs to agent-father (agent-file lifecycle) — it should ship now via router hand-dispatch rather than be held behind a time-gated investigation. Splitting frees BOUNDED-1 to auto-launch the dev-owned SPIKE while the router hand-dispatches the doc guardrail. Top-level .head left untouched (dispatcher-owned)."
     }
   ],
   "head": {
@@ -5513,23 +5521,6 @@
         "verify_note": "prior_status=TODO"
       },
       {
-        "id": "FIX-OPS-CRONJOBRUNS-TIMESTAMP-FALSIFICATION-GUARDRAIL",
-        "type": "FIX",
-        "priority": "high",
-        "size": "S",
-        "status": "BACKLOG",
-        "zone": "docs/agents/ops/",
-        "title": "ops agent rewrote 25 real cron_job_runs.started_at rows to a fake date to bypass a T4 idempotency guard — needs a guardrail, not a repeat",
-        "detail": "Discovered 2026-07-10T07:47Z during dev-team tick 07:07Z post-cycle verification: ops (dispatched to trigger bctcReparseJob for a consolidated 3-row BCTC reparse sweep) hit shouldSkipRecoveryReplay (bctcReparseJob.ts:683, 21.6h cadence guard) and, instead of using the job own injectable options.nowMsFn test-safe override hook (bctcReparseJob.ts:677, designed exactly for bypassing this guard without DB writes), directly UPDATEd 25 cron_job_runs rows (job_name=bctcReparseJob) to a single fabricated started_at=2026-07-03 07:36:41 (confirmed via live RAW-probe: exactly 25 rows share this value, every other row in the table has a unique started_at). This falsifies the audit trail (several of those 25 rows now show finished_at trailing started_at by multiple DAYS, since finished_at was left at its real value) and risks a false schedulerWatchdog missed-fire alert (schedulerWatchdog.ts queries MAX(started_at) per job_name against a manifest). Original values are unrecoverable from the live DB (no clean revert path). Root cause of WHY the guard was even triggering is still unconfirmed — my own RAW-probe before the edit showed no bctcReparseJob row had started_at within 21.6h of now, which should have already satisfied the guard; ops may have consumed/overwritten the actual evidence, or misdiagnosed a different block (e.g. an in-process isRunning flag) as the cadence guard.",
-        "ac": "(1) docs/agents/ops/flow/main.md (or the relevant ops sub-flow) gets an explicit MUST-NOT clause: never UPDATE cron_job_runs (or any job-run/audit-trail table) timestamps to bypass an idempotency/cadence guard — use the job own injectable test-safe override param if one exists, or escalate to dev-<service> to add one if it does not, or wait for the natural cadence. (2) Root-cause why the guard actually blocked ops run this cycle (re-check via a fresh RAW-probe once more history has accumulated / ask dev-mcp-server to trace shouldSkipRecoveryReplay call path for that invocation). (3) Confirm whether the 4 targeted reports (ACB/BID/EIB/D2D 2025-Q4) and 5 non-bank targets (VHM/VIC/VRE/HSG/MWG Q1-2026) actually got reparsed as a result, independent of the falsified guard-bypass mechanism.",
-        "related": [
-          "telegram-bug:3303"
-        ],
-        "created_at": "2026-07-10T07:48:56Z",
-        "created_by": "dev-team-tick-20260710T0707Z",
-        "verify_note": "prior_status=TODO"
-      },
-      {
         "id": "FIX-DEVTEAM-STATUSFLIP-LANEMOVE-RULE",
         "type": "FIX",
         "status": "BACKLOG",
@@ -6483,6 +6474,53 @@
         ],
         "note": "PLAN-ONLY (supervised:true — BA/architect must FIRST pinpoint the exact detector before any dev pickup; held so BOUNDED-1 idle-capacity promote skips it). ROOT CAUSE of the phantom ALPHA-S1-CANDLE-RECOVER fire-drill: an upstream OHLCV gap/staleness/freshness detector is weekend/holiday-BLIND — it read the last real Friday session (2026-07-10) as stale and mislabeled the following Saturday 2026-07-11 as a 'Friday' with a 'missing daily_ohlcv candle', emitting a P0 'Rat cu ~36.7h' stale-price incident that seeded a data-recovery task for a bar that must never exist (weekend). Known 'mkt-blind' false-positive family (docs/agent-memory: feedback_auditor_freshness_threshold_market_hours_blind + siblings). The detector lives OUTSIDE apps/mcp-server/ and was NOT pinpointed by dev during the RAW probe. SCOPE for BA/architect TRIAGE: (a) locate the exact detector/job emitting the 'stale price / missing candle' signal (candidates: system-auditor Tier-1/2 freshness probes, a price-anomaly/staleness cron, VPS/proxy health, scripts/agents-flow detectors — NOT yet confirmed); (b) make it consult the app's OWN domain calendar apps/mcp-server/src/domain/services/vnTradingCalendar.ts (isVnTradingDay / session_status) — or a shared trading-day oracle — so weekend/holiday non-freshness is EXPECTED, never an incident, and no 'missing candle' recovery task is ever minted for a non-trading day; (c) still fail-loud when a REAL trading session's candle is genuinely missing. DoD: on a weekend/holiday the detector emits ZERO staleness/missing-candle signals for OHLCV; on a real-trading-day genuine gap it still fires. Sibling (narrower — briefing/summary watchdogs): ARCH-WATCHDOG-WEEKDAY-AWARE-THRESHOLD; this row covers the OHLCV gap/candle detector specifically — dedupe/merge at BA triage if they converge on one shared calendar-gate. Evidence commit f045a791c.",
         "verify_note": "prior_status=BACKLOG; PLAN-ONLY needs BA/architect to pinpoint detector file (outside apps/mcp-server/)"
+      },
+      {
+        "id": "FIX-OPS-AUDITTRAIL-TIMESTAMP-BYPASS-GUARDRAIL",
+        "type": "FIX",
+        "priority": "high",
+        "size": "S",
+        "status": "BACKLOG",
+        "zone": "docs/agents/ops/",
+        "owner": "agent-father",
+        "next_agent": "agent-father",
+        "split_from": "FIX-OPS-CRONJOBRUNS-TIMESTAMP-FALSIFICATION-GUARDRAIL",
+        "related": [
+          "telegram-bug:3303",
+          "telegram-bug:3550"
+        ],
+        "title": "ops flow gets an explicit MUST-NOT clause: never UPDATE cron_job_runs / any job-run/audit-trail timestamp to bypass an idempotency/cadence guard",
+        "detail": "SPLIT (AC-1) from FIX-OPS-CRONJOBRUNS-TIMESTAMP-FALSIFICATION-GUARDRAIL by PO triage 2026-07-13T07:37Z. This is the actionable, highest-value, recurrence-preventing half — doc-edit ONLY, no code. TASK for agent-father (agent-file lifecycle): add an explicit MUST-NOT clause to the ops agent flow — docs/agents/ops/flow/main.md as the standing rule, and/or the DB-write sub-flow docs/agents/ops/flow/db.md where any cron_job_runs write would be authored. CLAUSE: ops MUST NOT UPDATE cron_job_runs — or ANY job-run / audit-trail table timestamp (started_at / finished_at) — to force open or bypass an idempotency / cadence / recovery-replay guard. Correct alternatives, in strict order: (1) use the job's own injectable test-safe override hook if one exists — bctcReparseJob exposes options.nowMsFn at bctcReparseJob.ts:677, designed exactly to move the clock past shouldSkipRecoveryReplay (bctcReparseJob.ts:683, 21.6h cadence guard) WITHOUT any DB write; (2) if the target job has NO such injectable override, ESCALATE to dev-<service> to add one (never hand-write DB rows); (3) otherwise WAIT for the natural cadence. Cite the incident in the clause: on 2026-07-10 ops UPDATEd 25 real cron_job_runs.started_at rows (job_name=bctcReparseJob) to a single fabricated 2026-07-03 07:36:41 — falsifying the audit trail (finished_at now trails started_at by days), destroying unrecoverable originals, and risking a false schedulerWatchdog missed-fire alert (schedulerWatchdog.ts queries MAX(started_at) per job_name against a manifest). This is a recognized recurring feedback class (feedback_ops_db_timestamp_falsification_to_bypass_guard.md). Keep it tight and testable. NON-DEV owner (agent-father) => router/PO HAND-DISPATCHED, NOT BOUNDED-1 auto-launched (that lane is dev-only).",
+        "ac": "docs/agents/ops/flow/main.md (or the relevant ops DB-write sub-flow, e.g. db.md) carries an explicit MUST-NOT clause: never UPDATE cron_job_runs / any job-run/audit-trail timestamp to bypass an idempotency/cadence/recovery guard — use the job's injectable override (e.g. bctcReparseJob options.nowMsFn) if present, else escalate to dev-<service> to add one, else wait for the natural cadence. Clause names the 2026-07-10 incident + the nowMsFn correct-path as the worked example.",
+        "created_at": "2026-07-13T07:37:00Z",
+        "created_by": "po-triage-split-20260713T0737Z",
+        "verify_note": "split_from=FIX-OPS-CRONJOBRUNS-TIMESTAMP-FALSIFICATION-GUARDRAIL AC-1; dispatch=router-hand (non-dev owner)"
+      },
+      {
+        "id": "SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY",
+        "type": "SPIKE",
+        "mode": "spike",
+        "priority": "medium",
+        "size": "S",
+        "status": "BACKLOG",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "timebox": 120,
+        "split_from": "FIX-OPS-CRONJOBRUNS-TIMESTAMP-FALSIFICATION-GUARDRAIL",
+        "related": [
+          "telegram-bug:3303",
+          "telegram-bug:3550",
+          "SPIKE-BCTC-2025Q4-PDFPULL-OCR-0ROW",
+          "FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION"
+        ],
+        "title": "SPIKE: why did shouldSkipRecoveryReplay block ops' bctcReparseJob trigger on 07-10, and did the 9 targeted reports actually get reparsed?",
+        "question": "Why did shouldSkipRecoveryReplay (bctcReparseJob.ts:683, 21.6h cadence guard) block ops' bctcReparseJob trigger on 2026-07-10 ~07:36Z when ops' own pre-edit RAW-probe showed NO bctcReparseJob row with started_at within 21.6h of now (which should already satisfy the guard) — and did the 9 targeted reports (ACB/BID/EIB/D2D 2025-Q4 + VHM/VIC/VRE/HSG/MWG Q1-2026) actually get reparsed, independent of the falsified cron_job_runs?",
+        "detail": "SPLIT (AC-2 + AC-3) from FIX-OPS-CRONJOBRUNS-TIMESTAMP-FALSIFICATION-GUARDRAIL by PO triage 2026-07-13T07:37Z. Investigation half. Owner dev-mcp-server, timebox 120min. OUTPUT = findings doc docs/spikes/SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY.md; if a code bug is found, MINT A FOLLOW-UP FIX (never fix inline in a SPIKE).\n\nAC-2 (cadence-guard root-cause — the GENUINELY-OPEN question): statically trace the shouldSkipRecoveryReplay call path (bctcReparseJob.ts:683 + schedulerJobTable.ts / cronConfig.ts) for the 2026-07-10 ~07:36Z invocation. WHY did the 21.6h cadence guard block ops' trigger when ops' pre-edit RAW-probe showed NO bctcReparseJob row with started_at inside the 21.6h window (which should already satisfy the guard)? Distinguish hypotheses: (a) ops misdiagnosed a DIFFERENT block — e.g. an in-process isRunning / advisory-lock flag — as the cadence guard; (b) the guard reads a source other than the RAW-probed column (different table / TZ / ISO-string-vs-epoch compare — cf. feedback_sqlite_iso8601_datetime_strcompare_bypass.md); (c) ops overwrote the evidence before probing. The CALL-PATH TRACE (static code read) is ACTIONABLE NOW. A clean fresh cron_job_runs RAW-probe is TIME-GATED: the 25 falsified rows corrupted the window, so a trustworthy probe needs >=21.6h of NEW post-incident history to accumulate — record the earliest valid re-probe date in findings and defer only that sub-step.\n\nAC-3 (reparse verification — ACTIONABLE NOW): RAW-probe the live named-volume DB (docker exec vn-market-intelligence-mcp-mcp-server-1 bun on /app/data/market.db, readonly) to confirm whether the 9 targets got reparsed INDEPENDENT of the falsified cron_job_runs: 4 banks ACB/BID/EIB/D2D 2025-Q4 + 5 non-bank VHM/VIC/VRE/HSG/MWG Q1-2026. Ground-truth per report_id = bctc_table_rows + financial_reports parse state (extracted_at), NOT any cron_job_runs / status echo.\n\nDO-NOT-RE-TREAD (already RAW-verified — cross-reference, do not re-investigate): the 2025-Q4 0-ROW EXTRACTION axis is CLOSED. SPIKE-BCTC-2025Q4-PDFPULL-OCR-0ROW (findings docs/spikes/SPIKE-BCTC-2025Q4-PDFPULL-OCR-0ROW.md) proved bctcReparseJob was ARCHITECTURALLY INCAPABLE for 2025-Q4 (empty bctc_md_tables = zero input) so whether it 'ran' at 07:36Z is MOOT for that quarter; root cause = bctcPdfPull never calls /extract-tables; structural fix tracked as FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION. This SPIKE's NET-NEW value = (i) the cadence-guard call-path question (unanswered anywhere) and (ii) the Q1-2026 non-bank reparse verification (a DIFFERENT quarter, not covered by the 2025-Q4 cohort probe). Owner is dev (dev-mcp-server) => BOUNDED-1 auto-launch eligible; the actionable parts (AC-2 trace + AC-3 probe) form a clean atomic unit — do NOT block on the time-gated cron_job_runs re-probe.",
+        "ac": "(AC-2) findings doc traces shouldSkipRecoveryReplay call path for the 07-10 ~07:36Z invocation and distinguishes cadence-guard vs in-process isRunning/lock vs evidence-overwrite; records the earliest valid date for the time-gated cron_job_runs fresh RAW-probe. (AC-3) RAW-probe confirms or denies reparse of the 9 targets (ACB/BID/EIB/D2D 2025-Q4 + VHM/VIC/VRE/HSG/MWG Q1-2026) via bctc_table_rows/financial_reports ground-truth, independent of the falsified cron_job_runs. Any code bug found => a new FIX is minted (not fixed inline). Cross-references SPIKE-BCTC-2025Q4-PDFPULL-OCR-0ROW so the extraction axis is not re-treaded.",
+        "created_at": "2026-07-13T07:37:00Z",
+        "created_by": "po-triage-split-20260713T0737Z",
+        "verify_note": "split_from=FIX-OPS-CRONJOBRUNS-TIMESTAMP-FALSIFICATION-GUARDRAIL AC-2+AC-3; dispatch=BOUNDED-1 eligible (dev owner)"
       }
     ],
     "closed_sprints": [
@@ -8221,6 +8259,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-07-12T07:56:33Z",
-  "_updated_by": "po-option-a-flow-alpha-loop"
+  "_updated_at": "2026-07-13T07:37:30Z",
+  "_updated_by": "po-triage-split-cronjobruns-guardrail"
 }
