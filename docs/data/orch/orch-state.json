@@ -363,12 +363,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-DEVTEAM-STATUSFLIP-LANEMOVE-RULE",
-    "next_agent": "agent-father",
-    "next_action": "agent-father implementing STATUSFLIP-LANEMOVE-RULE MUST-clause (any .status→terminal/review token moves array-membership into matching task_board.<lane>[] in the SAME write + syncs .head) on dev-team flow docs — hand-dispatched 08:07Z tick. DEPLOY BATCH owed+user-gated: 3 fixes 599f4aee0+1bbc8cead+252f8ffd1 ride ONE off-market mcp-server rebuild.",
-    "updated_by": "dev-team (BOUNDED-1 withhold→PO groom 57aa86350→hand-dispatch agent-father)",
-    "updated_at": "2026-07-13T08:32:07Z"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "BOUNDED-1 idle draining resumes — eligible: SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY (dev-mcp-server) + FIX-DEVTEAM-BOUNDED1-NONDEV-OWNER-BOARD-FALLBACK-GATE (developer P2, minted 57aa86350). DEPLOY BATCH owed+user-gated: 3 fixes 599f4aee0+1bbc8cead+252f8ffd1 ride ONE off-market mcp-server rebuild (deploy_pending flags authoritative).",
+    "updated_by": "dev-team (FIX-DEVTEAM-STATUSFLIP-LANEMOVE-RULE DONE_VERIFIED closeout, guardrail 226bb755c)",
+    "updated_at": "2026-07-13T08:39:28Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7671,6 +7671,29 @@
         "verified_by": "dev-team",
         "closed_at": "2026-07-13T08:13:31Z",
         "verify_commit": "3c35844f9"
+      },
+      {
+        "id": "FIX-DEVTEAM-STATUSFLIP-LANEMOVE-RULE",
+        "type": "FIX",
+        "status": "DONE_VERIFIED",
+        "priority": "P1",
+        "size": "S",
+        "zone": "docs/agents/dev-team/flow/",
+        "owner": "agent-father",
+        "title": "dev-team flow docs missing explicit status-flip=lane-move rule — 2nd occurrence stalls WIP-release",
+        "desc": "Board lanes (task_board.backlog/ready/in_progress/qa/review/done/done_verified) are separate ARRAYS; scripts/devteam-backlog-promote-bounded1.jq computes wip by array membership, not by reading .status. A dispatched agent that edits a row .status from IN_PROGRESS to REVIEW in-place without physically moving the row into task_board.review[] leaves WIP pinned even though .head looks idle-eligible. Confirmed 2x: FACTORY-KINHDICH-name-price-score-constants (dev-kinh-dich, 2026-07-09T19:37Z) and GAP-CHEF-SYNTHESIS-A-FLOW-PERSIST (cowork-refactory-expert, 2026-07-10T08:55Z, commit 7320e4f50 — status field said REVIEW but row stayed in task_board.in_progress[0], .head also stale-pointed at it as active WIP). Both times router caught it via post-dispatch RAW-verify and fixed with a manual orch-apply.sh-gated lane-move, not the flow doc itself.",
+        "fix_spec": "Add an explicit MUST-clause to docs/agents/dev-team/flow/main.md (execute-tier.md dispatch-wrap section) and/or the shared task-closeout convention doc: any agent that flips a task .status to a terminal/review token (REVIEW, DONE, DONE_VERIFIED, QA) MUST, in the SAME write, move the row array-membership into the matching task_board.<lane>[] array — never just patch .status in place. Also sync .head to idle (or to the next legitimate active_task_id) in that same write. Reference: feedback_review_status_stuck_in_inprogress_lane_blocks_wip.md memory (originSessionId 5a45feda-431e-46c8-941d-a6539a0eca77) for both prior occurrences and root-cause detail.",
+        "created_at": "2026-07-10T08:58:53Z",
+        "created_by": "dev-team",
+        "opened_by": "dev-team",
+        "detail": " | [router-3rd-occurrence-20260710T1205Z] 3RD CONFIRMED HIT: pm decomposed FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION into 7 subtasks (D1/D2/D3A/D3B/D3C/R-HIGH-1/R-HIGH-2), all minted with status=READY but physically placed in .task_board.backlog[] (coherence validator itself expects backlog-lane status=BACKLOG) — invisible to BOUNDED-1 array-membership WIP scan; PM own claim (\"developer can start immediately\") would have silently no-op'd. Distinct mechanism from the first 2 occurrences (single-row REVIEW-status-stuck-in-in_progress[]) — this time NEW-MINT rows given a post-decomposition status token without the matching lane placement. Router fixed manually (moved unblocked D1 to ready[], relabeled the 6 dependency-blocked rows READY->BACKLOG in place) per standing workaround. 3rd occurrence crosses the escalation bar decisively — this P2 fix should be prioritized for the next dev-team BOUNDED-1 pick.",
+        "next_agent": "agent-father",
+        "routing_note": "re-routed cowork-refactory-expert->agent-father (dev-team flow-doc edit; dispatch SKILL L47 agent-file lifecycle) by po-groom 2026-07-13T08:27:23Z",
+        "started_at": "2026-07-13T08:32:07Z",
+        "verified_by": "dev-team",
+        "verified_at": "2026-07-13T08:39:28Z",
+        "completed_at": "2026-07-13T08:39:28Z",
+        "fix_commit": "226bb755c"
       }
     ],
     "head": {
@@ -8257,27 +8280,7 @@
     },
     "last_triaged_at": "2026-07-13T06:52:15Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-DEVTEAM-STATUSFLIP-LANEMOVE-RULE",
-        "type": "FIX",
-        "status": "IN_PROGRESS",
-        "priority": "P1",
-        "size": "S",
-        "zone": "docs/agents/dev-team/flow/",
-        "owner": "agent-father",
-        "title": "dev-team flow docs missing explicit status-flip=lane-move rule — 2nd occurrence stalls WIP-release",
-        "desc": "Board lanes (task_board.backlog/ready/in_progress/qa/review/done/done_verified) are separate ARRAYS; scripts/devteam-backlog-promote-bounded1.jq computes wip by array membership, not by reading .status. A dispatched agent that edits a row .status from IN_PROGRESS to REVIEW in-place without physically moving the row into task_board.review[] leaves WIP pinned even though .head looks idle-eligible. Confirmed 2x: FACTORY-KINHDICH-name-price-score-constants (dev-kinh-dich, 2026-07-09T19:37Z) and GAP-CHEF-SYNTHESIS-A-FLOW-PERSIST (cowork-refactory-expert, 2026-07-10T08:55Z, commit 7320e4f50 — status field said REVIEW but row stayed in task_board.in_progress[0], .head also stale-pointed at it as active WIP). Both times router caught it via post-dispatch RAW-verify and fixed with a manual orch-apply.sh-gated lane-move, not the flow doc itself.",
-        "fix_spec": "Add an explicit MUST-clause to docs/agents/dev-team/flow/main.md (execute-tier.md dispatch-wrap section) and/or the shared task-closeout convention doc: any agent that flips a task .status to a terminal/review token (REVIEW, DONE, DONE_VERIFIED, QA) MUST, in the SAME write, move the row array-membership into the matching task_board.<lane>[] array — never just patch .status in place. Also sync .head to idle (or to the next legitimate active_task_id) in that same write. Reference: feedback_review_status_stuck_in_inprogress_lane_blocks_wip.md memory (originSessionId 5a45feda-431e-46c8-941d-a6539a0eca77) for both prior occurrences and root-cause detail.",
-        "created_at": "2026-07-10T08:58:53Z",
-        "created_by": "dev-team",
-        "opened_by": "dev-team",
-        "detail": " | [router-3rd-occurrence-20260710T1205Z] 3RD CONFIRMED HIT: pm decomposed FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION into 7 subtasks (D1/D2/D3A/D3B/D3C/R-HIGH-1/R-HIGH-2), all minted with status=READY but physically placed in .task_board.backlog[] (coherence validator itself expects backlog-lane status=BACKLOG) — invisible to BOUNDED-1 array-membership WIP scan; PM own claim (\"developer can start immediately\") would have silently no-op'd. Distinct mechanism from the first 2 occurrences (single-row REVIEW-status-stuck-in-in_progress[]) — this time NEW-MINT rows given a post-decomposition status token without the matching lane placement. Router fixed manually (moved unblocked D1 to ready[], relabeled the 6 dependency-blocked rows READY->BACKLOG in place) per standing workaround. 3rd occurrence crosses the escalation bar decisively — this P2 fix should be prioritized for the next dev-team BOUNDED-1 pick.",
-        "next_agent": "agent-father",
-        "routing_note": "re-routed cowork-refactory-expert->agent-father (dev-team flow-doc edit; dispatch SKILL L47 agent-file lifecycle) by po-groom 2026-07-13T08:27:23Z",
-        "started_at": "2026-07-13T08:32:07Z"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
