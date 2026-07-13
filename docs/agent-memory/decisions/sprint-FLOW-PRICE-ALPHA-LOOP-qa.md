@@ -65,3 +65,13 @@
 **what-considered:** Scope-isolation — `git show --stat 8874901b2` = exactly the 4 named files; `git status --porcelain` still shows the same ~84 pre-existing peer-dirty entries (none overlap task files) — untouched, not staged/reverted. Conservation: `orch-conservation-check.mjs` vs `8874901b2~1` → task_total 507=507.
 **why-decision:** Fixtures are non-tautological — dynamic live-data id discovery (AC-1..AC-5/control, zero hardcoded literals) + clearly-labeled `ZZ-SYNTH-*` synthetic rows only where no live example exists (AC-6/AC-7a/AC-7b), each invoking the real `-f scripts/devteam-backlog-promote-bounded1.jq` program against a realistic board+detail snapshot. AC-5 is the actual bug repro (no-detail + non-dev board owner + null next_agent → withheld); AC-6/AC-7a/AC-7b are over-block/precedence regression guards. All PASS → APPROVED, DONE_VERIFIED.
 **why-change:** No change from plan.
+
+### STEP qa-S8 · qa · 2026-07-13T14:50:00Z
+**task-id:** VCB-MISSING-PDFS
+**what-done:** RAW merge-gate on commit `8f6dae658` (resolved by path, not trusted SHA). Re-ran both scoped suites myself: 21/0 (1019-bctc-reparse-job) + 9/0 (reap-dead-stranded-bctc-rows) — matches dev exactly. tsc clean, mock-guard PASS.
+**what-considered:**
+- Trust dev's file-scope claim (10 files, no stray jq) vs verify raw — verified raw: `git show --name-only` = exactly the 10 named files; `router-mint-d0b-supplement-exclude-relabel-ids.jq` confirmed untracked with zero git history, not in commit.
+- Trust the "id=323 retired live" claim vs docker-exec probe the named-volume DB directly — probed directly: `agent_feedback id=323` status='dead'/271 attempts (was new), id=534 status='new'/0 attempts untouched; `ls` on `/app/data/pdfs/` confirms Q4 file genuinely gone, Q1 file genuinely present; `financial_reports` still holds both canonical VCB rows (Q4-2025 + Q1-2025) intact under real filenames.
+- DEAD_AT_ATTEMPTS infra-import grep flag vs real DDD violation — read pre-commit revision (`56e7f7633`): identical infra import block pre-existed; new code only reuses already-imported `existsSync`, no new domain→infra edge.
+**why-decision:** All RAW evidence corroborates the claims independently (no data loss, dead-row correctly retired, code guard generic/threshold-gated, no test regression). DEAD_AT_ATTEMPTS code guard only self-heals FUTURE rows after an mcp-server rebuild — user-gated/market-sensitive, not QA's call. APPROVED → DONE_VERIFIED, deploy-pending (same pattern as sibling ALPHA-S1/FIX-MCP-BOOTSTRAP rows this sprint).
+**why-change:** No change from plan.
