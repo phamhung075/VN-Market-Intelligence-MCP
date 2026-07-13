@@ -363,12 +363,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "TE-T07",
-    "next_agent": "qa",
-    "next_action": "TE-T07 (cron-detect-loop SKILL split) landed, dev-self-verified byte-identity of register bodies, moved in_progress->review. QA to RAW-diff SKILL.md@HEAD vs register.md CronCreate blocks + confirm both files <=200L, then flip REVIEW->DONE_VERIFIED.",
-    "updated_at": "2026-07-13T11:25:56Z",
-    "updated_by": "developer"
+    "status": "idle",
+    "updated_at": "2026-07-13T11:32:40Z",
+    "updated_by": "qa",
+    "active_task_id": null,
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7707,6 +7706,35 @@
         "verified_at": "2026-07-13T11:07:20Z",
         "qa_report": "reports/TASK_REPORT_TE-T04.md",
         "verify_note": "RAW-verified against the commit diff (not developer self-report): 2c29f8e73 touches ONLY the 6 named files (6 ins/746 del); 'Example Invocation' grep=0 across all 6; exactly 1 pointer line per file to tools/list/<tool>.md; 0 removed table rows in diff, live row counts 28/22/26/44/20/48 match claimed; stale get_price_history tickers-vs-code example fully gone (grep 'tickers:'=0), tools/list/get_price_history.md confirmed untouched+already-correct; peer file alert-commander/flow/stage-signals.md absent from all 3 commits' file lists. No behavior change. All 5 checks PASS."
+      },
+      {
+        "id": "TE-T07",
+        "title": "T-07 cron-detect-loop SKILL: split 25L idempotency card from ~160L register bodies [~85-93k tok/day]",
+        "owner": "developer",
+        "status": "DONE_VERIFIED",
+        "type": "CLEAN",
+        "size": "S",
+        "priority": "P1",
+        "wave": 1,
+        "est_saving": "~85-93k tok/day",
+        "zone": ".claude/skills/",
+        "sprint": "TOKEN-ECONOMY-AUDIT",
+        "depends": [],
+        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-07",
+        "note": "SKILL.md -> ~35L card (idempotency guard + verify); move 4 CronCreate bodies + divergence commentary + retirement notes to .claude/skills/cron-detect-loop/register.md (lazy-load on session restart only). No cron-prompt change. Prior ctx-bloat signal was ducked by 203L->196L trim; needs structural split.",
+        "promoted_at": "2026-07-13T11:19:51Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-13T11:19:52Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "dev_completed_at": "2026-07-13T11:25:56Z",
+        "dev_note": "SKILL.md split 196L->51L: Step 1 idempotency guard + Step 3 verify kept, Step-2 CronCreate Job 1-4 bodies + inline divergence notes + P3-OBSERVE-ONLY-RETIREMENT moved verbatim to new .claude/skills/cron-detect-loop/register.md (156L). Byte-identity verified: diff+md5 zero-diff on the 4 CronCreate(...) blocks and the full Step2/P3 sections (git HEAD vs register.md) -- cadences (7,37 * * * */30 * * * */0 */4 * * */0 2 * * *), recurring/durable flags, and every prompt string unchanged. No cron-prompt edit needed (Job 1 prompt still points at SKILL.md). Commit 6c68dd782. QA hand-off: RAW-diff .claude/skills/cron-detect-loop/SKILL.md@HEAD vs register.md CronCreate blocks yourself (do not trust this note), confirm both files <=200L, confirm no peer files touched.",
+        "updated_at": "2026-07-13T11:32:40Z",
+        "updated_by": "qa",
+        "verified_by": "qa",
+        "verified_at": "2026-07-13T11:32:40Z",
+        "qa_report": "reports/TASK_REPORT_TE-T07.md",
+        "verify_note": "RAW-verified against b941cf4ac (pre-split) diff, not dev self-report: git show --name-only 6c68dd782 touches exactly 2 files (SKILL.md 196L->51L, register.md new 156L), +162/-151, both <=200L. Extracted+diffed the 4 CronCreate(...) blocks (pre-split SKILL.md vs register.md) myself: zero diff, md5 match on both sides (dae8fefe35b443ef4eb6d1508c6169ff) -- cadences 7,37 * * * */ */30 * * * */ 0 */4 * * */ 0 2 * * *, recurring:true/durable:true, and every prompt string byte-identical. Extended the diff to the FULL relocated prose (SSOT/divergence note + Why-this-skill-exists + Step2 Job-header inline notes + P3-OBSERVE-ONLY-RETIREMENT), not just the CronCreate bodies: zero substantive diff (only a blank-line/--- separator artifact from my own manual range-slicing, not a content change). Job 1 prompt still names docs/agents/dev-team/flow/main.md verbatim; confirmed that file exists (pointer resolves). Step 1 pointer to register.md present + correct path/step-ref. Scope isolation: no other skill (.claude/skills/cron-cowork-team/ empty diff b941cf4ac..6c68dd782), no code/orch-state/peer file touched by 6c68dd782. DJ-GATE-1: developer journal sprint-TOKEN-ECONOMY-AUDIT-developer.md STEP developer-S5 has substantive task-id-stamped entry."
       }
     ],
     "head": {
@@ -8297,32 +8325,6 @@
         "qa_report": "reports/TASK_REPORT_FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN.md",
         "reviewed_at": "2026-07-13T09:17:26Z",
         "verified_by": "qa"
-      },
-      {
-        "id": "TE-T07",
-        "title": "T-07 cron-detect-loop SKILL: split 25L idempotency card from ~160L register bodies [~85-93k tok/day]",
-        "owner": "developer",
-        "status": "REVIEW",
-        "type": "CLEAN",
-        "size": "S",
-        "priority": "P1",
-        "wave": 1,
-        "est_saving": "~85-93k tok/day",
-        "zone": ".claude/skills/",
-        "sprint": "TOKEN-ECONOMY-AUDIT",
-        "depends": [],
-        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-07",
-        "note": "SKILL.md -> ~35L card (idempotency guard + verify); move 4 CronCreate bodies + divergence commentary + retirement notes to .claude/skills/cron-detect-loop/register.md (lazy-load on session restart only). No cron-prompt change. Prior ctx-bloat signal was ducked by 203L->196L trim; needs structural split.",
-        "promoted_at": "2026-07-13T11:19:51Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-13T11:19:52Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
-        "dev_completed_at": "2026-07-13T11:25:56Z",
-        "dev_note": "SKILL.md split 196L->51L: Step 1 idempotency guard + Step 3 verify kept, Step-2 CronCreate Job 1-4 bodies + inline divergence notes + P3-OBSERVE-ONLY-RETIREMENT moved verbatim to new .claude/skills/cron-detect-loop/register.md (156L). Byte-identity verified: diff+md5 zero-diff on the 4 CronCreate(...) blocks and the full Step2/P3 sections (git HEAD vs register.md) -- cadences (7,37 * * * */30 * * * */0 */4 * * */0 2 * * *), recurring/durable flags, and every prompt string unchanged. No cron-prompt edit needed (Job 1 prompt still points at SKILL.md). Commit 6c68dd782. QA hand-off: RAW-diff .claude/skills/cron-detect-loop/SKILL.md@HEAD vs register.md CronCreate blocks yourself (do not trust this note), confirm both files <=200L, confirm no peer files touched.",
-        "updated_at": "2026-07-13T11:25:56Z",
-        "updated_by": "developer"
       }
     ],
     "qa": [],

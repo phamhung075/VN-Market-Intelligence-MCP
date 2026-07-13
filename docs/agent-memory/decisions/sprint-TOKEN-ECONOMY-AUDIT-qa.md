@@ -43,3 +43,17 @@ no test surface — RAW clause-content verification against the commit diff IS t
 (precedent: TE-T01, FIX-DEVTEAM-STATUSFLIP-LANEMOVE-RULE).
 **why-change:** No change from plan — router's disposition instructions matched what RAW
 verification found.
+
+### STEP qa-S3 · qa · 2026-07-13T11:32:40Z
+**task-id:** TE-T07
+**what-done:** Merge-gated dev commits 6c68dd782+db934da7a+3a3b81b0f (cron-detect-loop SKILL.md
+split into 51L card + new register.md 156L); flipped REVIEW→DONE_VERIFIED via orch-apply.sh.
+**what-considered:**
+- Trust dev's reported md5 match on the CronCreate blocks — rejected, re-extracted+diffed all
+  4 blocks myself from `git show b941cf4ac` vs live register.md, own md5 matched independently.
+- Extend the diff beyond just the 4 blocks to the FULL relocated prose (SSOT note, Why-exists,
+  Job inline notes, P3 section) — found only a benign separator-line artifact, no real diff.
+**why-decision:** All 5 AC RAW-true: byte-identity of register bodies + full prose, no cron-prompt
+change (Job1→main.md pointer resolves), both files ≤200L (51/156), scope isolated (2 files only,
+cron-cowork-team untouched), split integrity intact (Step1/Step3 kept, Step2 pointer correct).
+**why-change:** No change from plan.
