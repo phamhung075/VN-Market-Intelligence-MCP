@@ -365,10 +365,10 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "TE-T10",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of TE-T10 — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-13T12:21:58Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "next_agent": "qa",
+    "next_action": "TE-T10 (tools/package dedup) landed, 12-file commit 897f4fe8c. Dev-self-verified: grep -l \"How to Invoke Tools\"/\"Two-Call Recipe\" both drop 11->0 across in-scope packages (ops.md correctly untouched, out of T-10 brief scope). QA to RAW-diff 897f4fe8c against the brief file list, confirm SSOT pointer targets (CLAUDE.md § MCP Tools; tools/list/log_agent_work.md) resolve and cover the deleted content, then flip REVIEW->DONE_VERIFIED.",
+    "updated_at": "2026-07-13T12:34:23Z",
+    "updated_by": "developer"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -8322,6 +8322,32 @@
         "qa_report": "reports/TASK_REPORT_FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN.md",
         "reviewed_at": "2026-07-13T09:17:26Z",
         "verified_by": "qa"
+      },
+      {
+        "id": "TE-T10",
+        "title": "T-10 tools/package/*: dedup 47L 'How to Invoke' + log_agent_work recipe across 11 packages + fix factory template [~65-70k tok/weekday]",
+        "owner": "developer",
+        "status": "REVIEW",
+        "type": "CLEAN",
+        "size": "S",
+        "priority": "P1",
+        "wave": 1,
+        "est_saving": "~65-70k tok/weekday",
+        "zone": "docs/agents/",
+        "sprint": "TOKEN-ECONOMY-AUDIT",
+        "depends": [],
+        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-10",
+        "note": "Replace 'How to Invoke Tools' (17L, dup of CLAUDE.md) + 'log_agent_work Two-Call Recipe' (30L, dup of tools/list/log_agent_work.md) with pointers across 11 packages. Root-cause: edit agent-father/flow/scaffold-files.md so new packages scaffold lean. Non-overlapping line ranges with T-04.",
+        "promoted_at": "2026-07-13T12:21:58Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-13T12:21:58Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "dev_completed_at": "2026-07-13T12:34:23Z",
+        "dev_note": "Deduped '## How to Invoke Tools' (17L) + '#### log_agent_work Two-Call Recipe' (~30L) across 11 tools/package/*.md files (market-watcher/news-scout/alert-commander/unified-agent/digest-predict/qa-responder/bctc-analyst/tran-ngoc-bau/fb-market-poster/market-analyst/po), replaced with a 1-line grammar pointer (CLAUDE.md § MCP Tools) + a 1-line lifecycle pointer (tools/list/log_agent_work.md); fixed agent-father/flow/scaffold-files.md Step 7 to scaffold the lean format. Deviation from task's literal grep-intersection premise: both greps returned 11 files each but DIFFERENT sets (ops.md carries only the invoke-block, po.md carries only the recipe-block) -- used the brief's explicit T-10 \"Files:\" list as authoritative (matches the recipe-grep set exactly); ops.md correctly left untouched. Commit 897f4fe8c, net -402L across 12 files (24 ins/426 del). grep -l counts confirmed 11->0 for both markers post-edit. Docs-only, no apps/ code touched -- no bun test/tsc applicable. QA hand-off: RAW-diff 897f4fe8c yourself (do not trust this note), confirm (a) both marker greps are 0 across the 11 in-scope packages + still present on ops.md (out of scope), (b) CLAUDE.md § MCP Tools and tools/list/log_agent_work.md still cover the deleted content, (c) no peer files touched, (d) scaffold-files.md Step 7 now describes the lean format.",
+        "updated_at": "2026-07-13T12:34:23Z",
+        "updated_by": "developer"
       }
     ],
     "qa": [],
@@ -8341,31 +8367,9 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-13T12:21:58Z",
-    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "TE-T10",
-        "title": "T-10 tools/package/*: dedup 47L 'How to Invoke' + log_agent_work recipe across 11 packages + fix factory template [~65-70k tok/weekday]",
-        "owner": "developer",
-        "status": "IN_PROGRESS",
-        "type": "CLEAN",
-        "size": "S",
-        "priority": "P1",
-        "wave": 1,
-        "est_saving": "~65-70k tok/weekday",
-        "zone": "docs/agents/",
-        "sprint": "TOKEN-ECONOMY-AUDIT",
-        "depends": [],
-        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-10",
-        "note": "Replace 'How to Invoke Tools' (17L, dup of CLAUDE.md) + 'log_agent_work Two-Call Recipe' (30L, dup of tools/list/log_agent_work.md) with pointers across 11 packages. Root-cause: edit agent-father/flow/scaffold-files.md so new packages scaffold lean. Non-overlapping line ranges with T-04.",
-        "promoted_at": "2026-07-13T12:21:58Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-13T12:21:58Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "last_triaged_at": "2026-07-13T12:34:23Z",
+    "last_triaged_by": "developer (TE-T10 review handoff)",
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",

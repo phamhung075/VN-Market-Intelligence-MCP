@@ -68,3 +68,14 @@
 - Literal "line 225 through EOF" per brief vs actual section boundary — brief's own EOF read was imprecise: lines 269-274 (Doc self-heal + Skills-available lazy-load list) are separate always-loaded boilerplate, NOT registry entries; moving them would be a behavioral regression (breaks every-cycle doc-self-heal). Chose true boundary (225-268), verified zero per-script-entry loss.
 **why-decision:** `diff`+`md5` of both extracted blocks against `git show HEAD:...main.md` (independent of my own scratch copies) returned zero-diff for both relocations — objective byte-identity, not self-report.
 **why-change:** Boundary correction above; no other change from plan.
+
+---
+
+### STEP developer-S7 · developer · 2026-07-13T12:30:00Z
+**task-id:** TE-T10
+**what-done:** Deduped '## How to Invoke Tools' (17L) + 'log_agent_work Two-Call Recipe' (~30L) boilerplate across 11 `docs/agents/tools/package/*.md` files, replaced with a 1-line grammar pointer (CLAUDE.md § MCP Tools) and a 1-line lifecycle pointer (`tools/list/log_agent_work.md`); fixed `agent-father/flow/scaffold-files.md` Step 7 to scaffold the lean format so new packages don't regress.
+**what-considered:**
+- Task's literal "grep both return exactly 11, use intersection" instruction vs actual repo state — the two greps DID each return 11 but DIFFERENT files (`ops.md` has only the invoke-block, `po.md` has only the recipe-block, no heading overlap); used the brief's own explicit T-10 "Files:" list (11 named packages, matches the recipe-grep set exactly) as authoritative over the mis-assumed identical-intersection premise, leaving `ops.md` untouched (out of brief scope) and applying only the recipe-edit to `po.md` (no invoke-block present there to replace).
+- Keeping the '## How to Invoke Tools' heading with a shrunk body vs deleting the heading text entirely — switched to full deletion after checking the task's own success criterion ("grep -l counts should drop 11->0 for both markers"), which requires the heading string itself to disappear, not just its body.
+**why-decision:** Objective grep re-run after edit confirms 0 hits for both markers across the 11 in-scope files (ops.md correctly still shows the marker, out of scope); log_agent_work.md (SSOT pointer target) independently confirmed to cover session-start + id round-trip + completed/error end for all 11 agent names before deleting any recipe block.
+**why-change:** File-set correction (po.md in, ops.md out — 12-file total unchanged) + full heading-deletion correction from an initial partial-shrink pass; no change to the 3 substantive edits (grammar pointer / recipe pointer / scaffold template fix).
