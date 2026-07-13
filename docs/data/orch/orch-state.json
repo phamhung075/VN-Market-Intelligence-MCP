@@ -365,10 +365,10 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "FIX-DAILY-FF-VIEW-JOIN-ANCHOR",
-    "next_agent": "qa",
-    "next_action": "qa: FORMAL merge-gate signoff for FIX-DAILY-FF-VIEW-JOIN-ANCHOR (CI-RED-29f92c5b unblocker), dev commit d71f45949 (SHAPE=A per brief docs/architecture-briefs/2026-07-13-daily-ff-view-join-anchor.md). Router has ALREADY RAW-verified (do NOT redo the 42-min full run): scope clean (only schema-market-data.ts + daily-foreign-flow-schema.test.ts + 3 docs; integration.test.ts untouched); view SQL matches brief (DROP+unconditional CREATE, UNION ALL anti-join, 15 cols, NULL price on anti-join half); 2 merge-gate assertions PASS RAW (`bun test` integration+schema = 20 pass/0 fail); CI history baseline = every commit thru 07-12 GREEN, 29f92c5be first red -> the dev's 103 local full-suite fails/12 errors are LOCAL single-process resource-exhaustion flakiness (not in CI, not a regression; dev grepped all 103 -> 0 daily-ff refs + isolation-verified 1518 4/4). YOUR JOB: (a) CONFIRM (targeted, not full-run): re-run the 2 gate test files + a small sample (e.g. 1518-get-foreign-flow-ohlcv-source + marketWideForeignFlow consumer) to independently confirm 0 daily-ff regressions; (b) validate DDD/infra-only (architect: zero domain touch); (c) write the Task Report; (d) VERDICT: APPROVE (fix flips CI green on push) or CHANGES_NEEDED+reason. CI-red freeze: do NOT push. On APPROVE -> NEXT=po (PO owns merge-gate push authorization per CI-red-freeze protocol). Do NOT touch the router-held row lock task:FIX-DAILY-FF-VIEW-JOIN-ANCHOR.",
-    "updated_by": "dev-team (dev-mcp-server FIX-DAILY-FF d71f45949 RAW-verified GREEN -> qa merge-gate signoff; CI-red unblocker)",
-    "updated_at": "2026-07-13T21:42:11Z"
+    "next_agent": "po",
+    "next_action": "po: FINAL merge-gate signoff for FIX-DAILY-FF-VIEW-JOIN-ANCHOR — the SOLE unblocker for CI-RED-29f92c5b (entire fleet stranded behind it). Supervised cascade COMPLETE + RAW-verified GREEN at every hop: architect brief cacf5607f (SHAPE=A) -> dev-mcp-server impl d71f45949 (DROP+unconditional CREATE VIEW bidirectional daily_ohlcv_with_flow, UNION ALL anti-join) -> qa APPROVE commit 8e905c31d. Router RAW-verified qa: scope clean (3 docs only, no prod/test/orch touch), Task Report reports/TASK_REPORT_FIX-DAILY-FF-VIEW-JOIN-ANCHOR.md exists, merge-gate pair re-run 20 pass/0 fail post-qa-commit, DDD infra-only (1 production file, zero domain touch), companion schema.test.ts regression fixed same commit. YOUR JOB: (a) FINAL merge-gate signoff decision (APPROVED|HOLD); (b) CI-RED-FREEZE PROTOCOL — the fix push (d71f45949 + 16 board/signal commits) is exactly what lifts the freeze & flips CI green, BUT the actual `git push origin main` is USER-GATED ('push only when user asks') — do NOT push yourself; record your signoff + mark push-readiness so the router surfaces the one user action; (c) once pushed+CI-green: merge gate clears, then drain queued PO signals (tnb 20:23Z, bctc_signal_FPT_20260713_routine, prior BCTC serve-layer gap, digest-predict Bash-grant obs). Do NOT start new sprints this hop. Do NOT touch the router-held row lock task:FIX-DAILY-FF-VIEW-JOIN-ANCHOR. RETURN: SIGNOFF=APPROVED|HOLD + push-readiness (ready|blocker) + what you recorded (journal/notebook paths).",
+    "updated_by": "dev-team (qa APPROVE 8e905c31d RAW-verified GREEN -> po final merge-gate signoff; push user-gated; CI-red unblocker)",
+    "updated_at": "2026-07-13T21:49:11Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -9006,9 +9006,9 @@
     "head": {
       "status": "in_progress",
       "active_task_id": "FIX-DAILY-FF-VIEW-JOIN-ANCHOR",
-      "next_agent": "qa",
-      "last_updated_at": "2026-07-13T21:42:11Z",
-      "last_updated_by": "dev-team (FIX-DAILY-FF dev->qa merge-gate signoff)"
+      "next_agent": "po",
+      "last_updated_at": "2026-07-13T21:49:11Z",
+      "last_updated_by": "dev-team (FIX-DAILY-FF qa->po final merge-gate signoff)"
     },
     "ready": [],
     "review": [
@@ -9508,8 +9508,8 @@
         "status": "REVIEW",
         "priority": "high",
         "size": "M",
-        "owner": "qa",
-        "next_agent": "qa",
+        "owner": "po",
+        "next_agent": "po",
         "supervised": true,
         "depends": [],
         "blocks": [
@@ -9539,14 +9539,20 @@
           "note": "ACTIVE merge-gate blocker. The 2 deliberately-RED behavioral-gate assertions in daily-foreign-flow-integration.test.ts (T-3 view correctness + R-1 elimination gate) fail bun test on main HEAD 29f92c5b (committed RED by design in d15eedbec, PO-accepted). They flip GREEN when this view fix lands (candidate shapes A/B in .note). NO duplicate CI-RED-29f92c5b-FIX minted — this pre-existing root-cause row IS the fix (dedup: same failure, one open FIX). Dispatch via router supervised cascade to architect (next_agent), then dev-mcp-server impl. CI green on subsequent push == the 2 assertions pass RAW == this row DONE."
         },
         "started_at": "2026-07-13T20:45:04Z",
-        "dispatch_note": "dev-mcp-server impl d71f45949 RAW-verified GREEN by router -> qa formal merge-gate signoff (confirm targeted, not 42-min full run); on APPROVE -> po push-gate. CI-red freeze holds. dispatched 2026-07-13T21:42:11Z",
+        "dispatch_note": "qa APPROVE (8e905c31d) RAW-verified GREEN by router -> po FINAL merge-gate signoff; push is user-gated (lifts CI-red freeze). dispatched 2026-07-13T21:49:11Z",
         "architect_brief_ref": "docs/architecture-briefs/2026-07-13-daily-ff-view-join-anchor.md",
         "architect_shape_decision": "A",
         "decided_shape": "A",
         "design_brief": "docs/architecture-briefs/2026-07-13-daily-ff-view-join-anchor.md",
         "designed_by": "architect a503b6dea6b66a78b @ commit cacf5607f (router RAW-verified GREEN: 4 files docs+orch only, NO apps/mcp-server code/test touched, row lock untouched; exact view SQL empirically validated vs :memory:, DROP-VIEW named-volume footgun + companion schema.test.ts regression both caught)",
         "dev_commit": "d71f45949",
-        "router_gate_verified": "2026-07-13T21:42Z RAW: scope clean (5 files, no cross-service, integration.test.ts untouched); view SQL == brief (DROP+unconditional CREATE, UNION ALL); 2 merge-gate assertions 20 pass/0 fail (router-run bun test); CI baseline green thru 07-12 bcac7c399 -> 103 local fails = local-only flakiness not CI-real."
+        "router_gate_verified": "2026-07-13T21:42Z RAW: scope clean (5 files, no cross-service, integration.test.ts untouched); view SQL == brief (DROP+unconditional CREATE, UNION ALL); 2 merge-gate assertions 20 pass/0 fail (router-run bun test); CI baseline green thru 07-12 bcac7c399 -> 103 local fails = local-only flakiness not CI-real.",
+        "qa_verdict": "APPROVE",
+        "qa_commit": "8e905c31d",
+        "qa_task_report": "reports/TASK_REPORT_FIX-DAILY-FF-VIEW-JOIN-ANCHOR.md",
+        "qa_confirm_tests": "merge-gate pair 20 pass/0 fail + qa 9-file consumer/isolation sweep 79 pass/0 fail + tsc 0 err = 99 pass/0 fail across 11 files (raw)",
+        "router_qa_gate_verified": "2026-07-13T21:47Z RAW: qa commit 8e905c31d scope=3 docs only (no prod/test/orch touch, row lock untouched); Task Report exists 4146B; merge-gate pair re-run POST qa-commit 20 pass/0 fail (no drift); freeze held (d71f45949 NOT pushed, 17 unpushed local).",
+        "push_gate_pending": true
       }
     ],
     "qa": [],
