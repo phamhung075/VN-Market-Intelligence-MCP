@@ -1,5 +1,30 @@
 # PM — Notebook
 
+## c331 FLOW-PRICE-ALPHA-LOOP · Wave-1 Readiness Gate + Dev Handoff · 2026-07-13T04:42Z
+
+**MANDATE:** Complete PM wave-1 readiness gate: validate architect design, move 3 wave-1 rows backlog→ready, set up dev-mcp-server handoff.
+
+**PRE-CONDITIONS VERIFIED:**
+- Architect design READY_FOR_PM: `docs/handoffs/ALPHA-S1-architect-design.md` — 3 rows confirmed single-zone `apps/mcp-server/`, no further TASK_2xxx fan-out needed (S-size/atomic).
+- Field corrections already applied (2026-07-13T04:34Z): zone=apps/mcp-server/, depends for STARTUP-CANDLE-GUARD=[ALPHA-S1-CANDLE-RECOVER] (shares recoverMissingOhlcvSession).
+- All 3 rows supervised:false (USER-authorized via dev-team dispatcher coordination_session 69b0312e, commit 4e4210e0e).
+
+**BOARD MUTATIONS APPLIED:**
+1. Moved ALPHA-S1-CANDLE-RECOVER from backlog→ready (status=BACKLOG→READY, all fields preserved)
+2. Moved ALPHA-S1-STARTUP-CANDLE-GUARD from backlog→ready (status=BACKLOG→READY, depends=[ALPHA-S1-CANDLE-RECOVER] intact)
+3. Moved ALPHA-S1-OHLCV-BACKFILL-DONE-BUG from backlog→ready (status=BACKLOG→READY, all fields preserved)
+4. Updated .head: status=in_progress, active_task_id=ALPHA-S1-CANDLE-RECOVER, **next_agent=dev-mcp-server**, next_action="wave-1 readied; dev-mcp-server executes CANDLE-RECOVER first (VPS-relay, deadline Mon 02:15Z), then STARTUP-CANDLE-GUARD, then OHLCV-BACKFILL-DONE-BUG"
+5. Added decision_journal entry documenting wave-1 readiness gate complete, architect design verified, dev handoff.
+
+**VERIFICATION:**
+- orch-apply.sh: Stage 0+1 PASS, conservation check PASSED (task_total=504 preserved), atomic rename applied ✓
+- Post-apply jq confirms: all 3 rows status=READY, supervised=false, zone=apps/mcp-server/, depends intact, note fields (USER-GO annotations) preserved ✓
+- .head next_agent=dev-mcp-server for dispatcher-driven dev handoff ✓
+
+**NEXT:** dev-team dispatcher spawns dev-mcp-server for ALPHA-S1-CANDLE-RECOVER (P0, VPS-relay recovery, deadline Mon 02:15Z open). After dev completion, gates will auto-advance STARTUP-CANDLE-GUARD (P1, dep on CANDLE-RECOVER done_verified), then OHLCV-BACKFILL-DONE-BUG (P1, parallel-safe).
+
+---
+
 ## c330 FLOW-PRICE-ALPHA-LOOP · Architect Corrections · Wave-1 Release · 2026-07-12T19:45Z
 
 **MANDATE:** Apply architect-verified zone/supervision corrections to the 3 ALPHA-S1 wave-1 rows (ALPHA-S1-CANDLE-RECOVER, ALPHA-S1-STARTUP-CANDLE-GUARD, ALPHA-S1-OHLCV-BACKFILL-DONE-BUG) and release them into the live BOUNDED-1 dev loop. Handoff: `docs/handoffs/ALPHA-S1-architect-design.md` (READY_FOR_PM commit c8a73aa42).
@@ -142,47 +167,6 @@
 **NOTE (router-appended 2026-07-10T12:05Z):** this entry was reconstructed by the router — pm's own notebook write did not land on disk (agent claimed a "c322" entry in its return summary; file had no such content). Journal entry (pm-S5) and board mutations DID land correctly. Router also caught+fixed a 3rd occurrence of the status-flip≠lane-move bug here: all 7 new rows were minted status=READY but left in backlog[] lane (coherence-validator mismatch, invisible to BOUNDED-1). Fixed: D1 moved to ready[] (genuinely unblocked); D2..R-HIGH-2 relabeled READY→BACKLOG in place (blocked on unmet depends[]). See FIX-DEVTEAM-STATUSFLIP-LANEMOVE-RULE (bumped to P1).
 
 **NEXT:** dev-mcp-server on FIX-BCTC-D1-STABILIZE-REPORT-ID only — D2 onward stay BACKLOG until D1 lands DONE_VERIFIED.
-
----
-
-## c321 SPIKE-BCTC-CTG-BS-REALDATA-ROOT ARCHITECT DISPOSITION APPLICATION · 2026-07-03T07:45Z
-
-**MANDATE:** Apply architect disposition for SPIKE-BCTC-CTG-BS-REALDATA-ROOT (architect complete, committed 2026-07-03) — mint 2 new composite tasks, mark 1 superseded, stub 1 backlog, re-parent 2 W5 blocked rows.
-
-**ARCHITECT BRIEF:** docs/architecture-briefs/2026-07-03-ctg-bs-realdata-root.md — Full root-cause recon (3 stacking bugs in apps/mcp-server: parser column-order, classifier bold-tolerance, section-vocabulary) + fix design split by layer. Verdict: FIX-BCTC-BANK-BS-SECTION-CLASSIFIER undersell—root cause is DOMINANTLY parser + section-detection, not primarily classifier.
-
-**INPUT:**
-- Architect disposition field in .task_board.review[FIX-BCTC-BANK-BS-SECTION-CLASSIFIER]
-- Current orch-state.json .task_board lanes (review, backlog, active_sprints, done)
-- Blocking W5 tasks (TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST in review, W5-FU-CTG-REFINE-96e36139 in active_sprints)
-
-**OUTPUT:** 4 orch-state rows created/modified:
-1. **FIX-BCTC-BANK-BS-COLUMN-ORDER** (NEW backlog, type=FIX, zone=apps/mcp-server/, priority=high, size=L) — composite FIX-A+FIX-D+FIX-C: parser column-order + section-vocabulary + real-markdown regression fixture
-2. **FIX-BCTC-BANK-FORM-CLASSIFIER-BOLD-STRIP** (NEW backlog, type=FIX, zone=apps/mcp-server/, priority=high, size=S) — independent FIX-B: strip markdown emphasis from anchors
-3. **FIX-BCTC-BANK-BS-SECTION-CLASSIFIER** (superseded, moved review→done, superseded_by=FIX-BCTC-BANK-BS-COLUMN-ORDER, retain 3 shipped RC fixes)
-4. **FIX-BCTC-BANK-SUMMARY-MAPPING** (marked DONE/superseded, scope fully owned by #1)
-
-**BOARD MUTATIONS:**
-- .task_board.backlog += [FIX-BCTC-BANK-BS-COLUMN-ORDER, FIX-BCTC-BANK-FORM-CLASSIFIER-BOLD-STRIP] (2 new)
-- .task_board.review -= [FIX-BCTC-BANK-BS-SECTION-CLASSIFIER] (remove from review)
-- .task_board.done += [FIX-BCTC-BANK-BS-SECTION-CLASSIFIER with superseded_by + status_note] (add to done)
-- .task_board.backlog[FIX-BCTC-BANK-SUMMARY-MAPPING].status = "DONE", superseded_by = "FIX-BCTC-BANK-BS-COLUMN-ORDER"
-- .task_board.review[TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST].blocked_on = "FIX-BCTC-BANK-BS-COLUMN-ORDER — <root cause rationale>"
-- .task_board.active_sprints[W5-FU-CTG-REFINE-96e36139].blocked_on = "FIX-BCTC-BANK-BS-COLUMN-ORDER — <root cause rationale>"
-
-**NEXT AGENT:** dev-mcp-server (both tasks route to same zone; no dispatch ordering constraint between them — PO-triage determines which dev spawns first). Head.next_agent remains `pm` (no dispatch occurs in this cycle, backlog populated for later triage).
-
----
-
-## Archive (pre-2026-06-28)
-
-[21 cycles archived: 2026-06-27 — 2026-06-23. Recent cycles retained above for active context.]
-
-**Key PM decisions:**
-1. Accepted architect atomization as-written (no renegotiation; CONF-1..CONF-4 all ratified)
-2. Blocked TASK-CONF-2 explicitly to enforce sequential deployment (frontend AC requires backend DB state)
-3. Set done_verified gates on LIVE probe, not build-green (self-confirming test failure mode lesson applies)
-4. Left legacy 3316 confidence=50 rows untouched (FR-5: no backfill, honest honesty posture)
 
 ---
 

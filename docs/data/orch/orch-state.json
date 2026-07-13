@@ -328,15 +328,23 @@
       "decision": "USER GO received 2026-07-13 via the dev-team dispatcher (coordination_session 69b0312e) to LAUNCH flow-alpha wave-1. This IS the user greenlight the supervised gate was waiting for — NOT a gate-jump (contrast the peer-PM premature unpark b0a23a9ec/45c558cb5 that PO correctly reverted 2026-07-12T19:45Z). Applied atomically via scripts/orch-apply.sh: (1) flipped supervised:true->false on all 3 wave-1 backlog rows, architect-corrected fields PRESERVED (zone apps/mcp-server/, depends, safety-warning notes), each row note annotated with the GO so the row is internally consistent with supervised:false; (2) confirmed ALPHA-S1-STARTUP-CANDLE-GUARD depends:[ALPHA-S1-CANDLE-RECOVER] (shared recoverMissingOhlcvSession() reuse per docs/handoffs/ALPHA-S1-architect-design.md); (3) set top-level authoritative .head = in_progress / active_task_id=ALPHA-S1-CANDLE-RECOVER / next_agent=pm; (4) task_total conserved at 355 (no lane moves — only boolean+head+journal edits). The dev-team dispatcher drives the PM->dev chain from the head after PO returns.",
       "what_considered": "(A) treat the relayed GO as unauthorized and re-park supervised:true — REJECTED: this is an explicit USER go relayed through the dev-team dispatcher, the exact greenlight the FIX-ALPHA-SPRINT-PARK-SUPERVISED gate awaited; categorically distinct from the 07-12T19:45Z peer-PM unpark which had NO user go behind it. (B) fan the rows out into TASK_2xxx subtasks — REJECTED: architect design marks each row S-size/atomic, single-zone apps/mcp-server/, explicitly NO further decomposition. (C) move .head only and leave supervised:true — REJECTED: BOUNDED-1 idle-pickup + pipeline-resume both must see an un-gated wave; supervised:false is the authorization signal, so the flip is required.",
       "why_change": "USER-authorized launch of the parked wave. Standing policy: flow-alpha is USER-GATED (surface, never self-launch); the user has now given GO, so un-parking is the authorized fulfillment of that gate — a correction/completion of the supervised hold, not a self-launch or churn."
+    },
+    {
+      "agent": "pm",
+      "task_id": "ALPHA-S1 flow-alpha wave-1 (CANDLE-RECOVER / STARTUP-CANDLE-GUARD / OHLCV-BACKFILL-DONE-BUG)",
+      "timestamp": "2026-07-13T04:42:11Z",
+      "decision": "PM wave-1 readiness gate + dev handoff. Verified: (1) architect design READY_FOR_PM (docs/handoffs/ALPHA-S1-architect-design.md); all 3 wave-1 rows confirmed single-zone apps/mcp-server/, no further TASK_2xxx fan-out needed (S-size/atomic per architect); (2) field corrections applied by architect (zone, depends) already in place: CANDLE-RECOVER zone=apps/mcp-server/ depends=[], STARTUP-CANDLE-GUARD zone=apps/mcp-server/ depends=[ALPHA-S1-CANDLE-RECOVER] (reuses shared recoverMissingOhlcvSession), OHLCV-BACKFILL-DONE-BUG zone=apps/mcp-server/ depends=[]; (3) all 3 rows BACKLOG->READY, supervised:false preserved, note fields annotated with USER GO retained. Set .head next_agent=dev-mcp-server; dev-team dispatcher will spawn dev-mcp-server for CANDLE-RECOVER after PM returns. User-GO reference: commit 4e4210e0e.",
+      "what_considered": "(A) re-fan the rows or layer new TASK_2xxx subtasks — REJECTED: architect design explicitly marks each row S-size/atomic, single-zone, no decomposition needed. (B) validate/adjust zone or depends fields — REJECTED: architect design already applied these corrections to live orch-state.json (prior journal entries 2026-07-12T19:45Z and 2026-07-13T04:34Z confirm); field match verified. (C) place rows in in_progress lane now — REJECTED: WIP gate = dispatcher promotes to in_progress when spawning dev; PM moves to ready only, preserving dispatcher's lane-advancement authority.",
+      "why_change": "USER-authorized wave-1 launch + arch design verification complete. PM completes the readiness gate (backlog->ready), setting up dev handoff. This is the final PM action before dev-mcp-server execution begins."
     }
   ],
   "head": {
     "status": "in_progress",
     "active_task_id": "ALPHA-S1-CANDLE-RECOVER",
-    "next_agent": "pm",
-    "next_action": "USER GO 2026-07-13 (coordination_session 69b0312e) — flow-alpha wave-1 AUTHORIZED + un-parked. Architect design READY_FOR_PM (docs/handoffs/ALPHA-S1-architect-design.md, single-zone apps/mcp-server/, shared recoverMissingOhlcvSession() reuse). PM: validate + move the 3 wave-1 rows to ready with depends (STARTUP-CANDLE-GUARD after CANDLE-RECOVER), NO further TASK_2xxx fan-out (each row S-size/atomic per architect); then dev-mcp-server executes CANDLE-RECOVER first. P0 target Mon 02:15Z.",
-    "updated_by": "po (user-GO wave-1 launch, coordination_session 69b0312e)",
-    "updated_at": "2026-07-13T04:34:00Z"
+    "next_agent": "dev-mcp-server",
+    "next_action": "wave-1 readied; dev-mcp-server executes CANDLE-RECOVER first (VPS-relay recovery, deadline Mon 02:15Z), then STARTUP-CANDLE-GUARD after it, then OHLCV-BACKFILL-DONE-BUG",
+    "updated_by": "pm (wave-1 ready + dev handoff, coordination_session 69b0312e)",
+    "updated_at": "2026-07-13T04:42:11Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6231,60 +6239,6 @@
         "source": "docs/signals/processed/developer-2026-07-12T073316Z-main-notebook-writepath-missing-ac3.json"
       },
       {
-        "id": "ALPHA-S1-CANDLE-RECOVER",
-        "title": "URGENT/TIME-CRITICAL: re-aggregate the missing 2026-07-11 Friday daily_ohlcv candle from surviving market_prices_history ticks BEFORE the 24h retention purges them (taOhlcvBackfill fallback if ticks already gone)",
-        "owner": "developer",
-        "status": "BACKLOG",
-        "type": "FIX",
-        "size": "S",
-        "priority": "P0",
-        "wave": 1,
-        "urgent": true,
-        "zone": "apps/mcp-server/",
-        "sprint": "FLOW-PRICE-ALPHA-LOOP",
-        "depends": [],
-        "created_by": "po-option-a-flow-alpha-loop",
-        "created_at": "2026-07-12T07:56:33Z",
-        "note": "PICK FIRST — race against the 24h market_prices_history retention timer. The Docker incident (07-11) made the tick aggregator skip the incident day, so daily_ohlcv is missing the 2026-07-11 Friday candle and every downstream (snapshot, breadth, TA, briefings) is serving Thursday closes; prices flagged 'Rat cu' 36.7h. DoD: (1) probe whether the 07-11 surviving ticks still exist in market_prices_history; if present, re-aggregate the Friday OHLCV bar from them and INSERT into daily_ohlcv for all affected tickers; (2) if ticks already purged, use taOhlcvBackfill as the fallback source; (3) RAW-verify the Friday bar now serves (get_market_snapshot / TA freshness no longer stale). This is the DATA-RECOVERY row only; the recurrence guard + backfill bug are separate rows (ALPHA-S1-STARTUP-CANDLE-GUARD, ALPHA-S1-OHLCV-BACKFILL-DONE-BUG). Brief: docs/architecture-briefs/2026-07-11-data-strategy-selection.md roadmap step 1 + gap #5. zone=multi (tick source + aggregator + verification) -> architect splits. ⚠ ARCHITECT CORRECTION (READ docs/handoffs/ALPHA-S1-architect-design.md FIRST): 07-11 ticks were NEVER captured (0 rows in market_prices_history) — skip the tick-probe branch. taOhlcvBackfill/taOhlcvBackfillJob are DEAD paths from this host (VNDirect geo-blocked + count-only coverage gate silently no-ops). ONLY viable recovery = VPS-relay pipeline: ohlcv_backfill_queue trigger → vn-ohlcv-backfill.timer (30-min systemd oneshot on VPS). Deadline: Friday bar serving BEFORE Mon 2026-07-14 02:15Z open.  [PO 2026-07-12T19:45:17Z coordination_session 69b0312e] RE-PARKED supervised:true — restore FIX-ALPHA-SPRINT-PARK-SUPERVISED gate (7ce57c5f7). Peer PM (b0a23a9ec 19:32Z / 45c558cb5 19:33Z) cleared supervised->false before any user go; flow-alpha wave promotion is USER-GATED (surface, never self-launch). Architect zone(apps/mcp-server/)+depends+safety-notes PRESERVED. Awaiting USER go (surfaced WORK). Do NOT BOUNDED-1 auto-pick.  [PO 2026-07-13 coordination_session 69b0312e] USER GO — supervised:false AUTHORIZED (explicit user greenlight via dev-team dispatcher; NOT a gate-jump). Wave-1 un-parked; PM decompose->dev. The 07-12T19:45Z RE-PARKED/Awaiting-USER-go note above is SUPERSEDED. Do NOT re-park.",
-        "supervised": false
-      },
-      {
-        "id": "ALPHA-S1-STARTUP-CANDLE-GUARD",
-        "title": "Add startup 'last-session-candle-present?' guard + aggregator catch-up path so a Docker incident can never again silently drop a session's daily_ohlcv candle",
-        "owner": "developer",
-        "status": "BACKLOG",
-        "type": "FIX",
-        "size": "S",
-        "priority": "P1",
-        "wave": 1,
-        "zone": "apps/mcp-server/",
-        "sprint": "FLOW-PRICE-ALPHA-LOOP",
-        "depends": [
-          "ALPHA-S1-CANDLE-RECOVER"
-        ],
-        "created_by": "po-option-a-flow-alpha-loop",
-        "created_at": "2026-07-12T07:56:33Z",
-        "note": "Recurrence-prevention for the ALPHA-S1-CANDLE-RECOVER incident class. The daily aggregation chain currently has NO catch-up path: one Docker incident produced a missing candle and nobody ran the fix while the raw ticks expired. DoD: on startup (and/or first tick of a session) the aggregator checks that the most-recent trading session has a daily_ohlcv candle for the expected tickers; if missing, it triggers a catch-up re-aggregation from surviving ticks (or taOhlcvBackfill) and logs/alerts. Must be idempotent (no double-insert) and fail-loud on catch-up failure. Brief roadmap step 1 + gap #5. zone=multi -> architect splits. Design: docs/handoffs/ALPHA-S1-architect-design.md  [PO 2026-07-12T19:45:17Z coordination_session 69b0312e] RE-PARKED supervised:true — restore FIX-ALPHA-SPRINT-PARK-SUPERVISED gate (7ce57c5f7). Peer PM (b0a23a9ec 19:32Z / 45c558cb5 19:33Z) cleared supervised->false before any user go; flow-alpha wave promotion is USER-GATED (surface, never self-launch). Architect zone(apps/mcp-server/)+depends+safety-notes PRESERVED. Awaiting USER go (surfaced WORK). Do NOT BOUNDED-1 auto-pick.  [PO 2026-07-13 coordination_session 69b0312e] USER GO — supervised:false AUTHORIZED (explicit user greenlight via dev-team dispatcher; NOT a gate-jump). Wave-1 un-parked; PM decompose->dev. The 07-12T19:45Z RE-PARKED/Awaiting-USER-go note above is SUPERSEDED. Do NOT re-park.",
-        "supervised": false
-      },
-      {
-        "id": "ALPHA-S1-OHLCV-BACKFILL-DONE-BUG",
-        "title": "Fix the ohlcv-backfill done=1-regardless bug + add inserted-count verification on /api/ohlcv-backfill-done (universe backfill silently no-ops, marking rows done with zero bars)",
-        "owner": "developer",
-        "status": "BACKLOG",
-        "type": "FIX",
-        "size": "S",
-        "priority": "P1",
-        "wave": 1,
-        "zone": "apps/mcp-server/",
-        "sprint": "FLOW-PRICE-ALPHA-LOOP",
-        "depends": [],
-        "created_by": "po-option-a-flow-alpha-loop",
-        "created_at": "2026-07-12T07:56:33Z",
-        "note": "Root cause of the universe-vs-watchlist depth split (gap #6): the ~1459-code universe backfill marks queue rows done=1 regardless of exit code with no inserted-count verification, so 457+ queue rows are 'done' with zero bars — cross-sectional z-scores (foreign-accum rank, ROC deciles) then rank against a partly-empty cross-section, which degrades the divergence screen (ALPHA-S3). Also corroborated by BUG channel id3564 (OHLCV-DEPTH VPS backfill stalled, shallow codes). DoD: /api/ohlcv-backfill-done only marks a row done when the fetch actually inserted the expected bar count; on zero/short insert it records the real failure state (retry/deferred) instead of a false done; add an inserted-count check + fail-loud. Brief roadmap step 1 + gap #6. zone=multi -> architect splits. Design: docs/handoffs/ALPHA-S1-architect-design.md  [PO 2026-07-12T19:45:17Z coordination_session 69b0312e] RE-PARKED supervised:true — restore FIX-ALPHA-SPRINT-PARK-SUPERVISED gate (7ce57c5f7). Peer PM (b0a23a9ec 19:32Z / 45c558cb5 19:33Z) cleared supervised->false before any user go; flow-alpha wave promotion is USER-GATED (surface, never self-launch). Architect zone(apps/mcp-server/)+depends+safety-notes PRESERVED. Awaiting USER go (surfaced WORK). Do NOT BOUNDED-1 auto-pick.  [PO 2026-07-13 coordination_session 69b0312e] USER GO — supervised:false AUTHORIZED (explicit user greenlight via dev-team dispatcher; NOT a gate-jump). Wave-1 un-parked; PM decompose->dev. The 07-12T19:45Z RE-PARKED/Awaiting-USER-go note above is SUPERSEDED. Do NOT re-park.",
-        "supervised": false
-      },
-      {
         "id": "ALPHA-S2-TICK-DOWNSAMPLE-5MIN",
         "title": "Archive-now: new 5-min tick downsample table populated from market_prices_history BEFORE the 24h purge — stop deleting irreplaceable intraday ticks",
         "owner": "developer",
@@ -7640,7 +7594,62 @@
       "last_updated_at": "2026-07-10T09:19:45Z",
       "last_updated_by": "ops"
     },
-    "ready": [],
+    "ready": [
+      {
+        "id": "ALPHA-S1-CANDLE-RECOVER",
+        "title": "URGENT/TIME-CRITICAL: re-aggregate the missing 2026-07-11 Friday daily_ohlcv candle from surviving market_prices_history ticks BEFORE the 24h retention purges them (taOhlcvBackfill fallback if ticks already gone)",
+        "owner": "developer",
+        "status": "READY",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P0",
+        "wave": 1,
+        "urgent": true,
+        "zone": "apps/mcp-server/",
+        "sprint": "FLOW-PRICE-ALPHA-LOOP",
+        "depends": [],
+        "created_by": "po-option-a-flow-alpha-loop",
+        "created_at": "2026-07-12T07:56:33Z",
+        "note": "PICK FIRST — race against the 24h market_prices_history retention timer. The Docker incident (07-11) made the tick aggregator skip the incident day, so daily_ohlcv is missing the 2026-07-11 Friday candle and every downstream (snapshot, breadth, TA, briefings) is serving Thursday closes; prices flagged 'Rat cu' 36.7h. DoD: (1) probe whether the 07-11 surviving ticks still exist in market_prices_history; if present, re-aggregate the Friday OHLCV bar from them and INSERT into daily_ohlcv for all affected tickers; (2) if ticks already purged, use taOhlcvBackfill as the fallback source; (3) RAW-verify the Friday bar now serves (get_market_snapshot / TA freshness no longer stale). This is the DATA-RECOVERY row only; the recurrence guard + backfill bug are separate rows (ALPHA-S1-STARTUP-CANDLE-GUARD, ALPHA-S1-OHLCV-BACKFILL-DONE-BUG). Brief: docs/architecture-briefs/2026-07-11-data-strategy-selection.md roadmap step 1 + gap #5. zone=multi (tick source + aggregator + verification) -> architect splits. ⚠ ARCHITECT CORRECTION (READ docs/handoffs/ALPHA-S1-architect-design.md FIRST): 07-11 ticks were NEVER captured (0 rows in market_prices_history) — skip the tick-probe branch. taOhlcvBackfill/taOhlcvBackfillJob are DEAD paths from this host (VNDirect geo-blocked + count-only coverage gate silently no-ops). ONLY viable recovery = VPS-relay pipeline: ohlcv_backfill_queue trigger → vn-ohlcv-backfill.timer (30-min systemd oneshot on VPS). Deadline: Friday bar serving BEFORE Mon 2026-07-14 02:15Z open.  [PO 2026-07-12T19:45:17Z coordination_session 69b0312e] RE-PARKED supervised:true — restore FIX-ALPHA-SPRINT-PARK-SUPERVISED gate (7ce57c5f7). Peer PM (b0a23a9ec 19:32Z / 45c558cb5 19:33Z) cleared supervised->false before any user go; flow-alpha wave promotion is USER-GATED (surface, never self-launch). Architect zone(apps/mcp-server/)+depends+safety-notes PRESERVED. Awaiting USER go (surfaced WORK). Do NOT BOUNDED-1 auto-pick.  [PO 2026-07-13 coordination_session 69b0312e] USER GO — supervised:false AUTHORIZED (explicit user greenlight via dev-team dispatcher; NOT a gate-jump). Wave-1 un-parked; PM decompose->dev. The 07-12T19:45Z RE-PARKED/Awaiting-USER-go note above is SUPERSEDED. Do NOT re-park.",
+        "supervised": false
+      },
+      {
+        "id": "ALPHA-S1-STARTUP-CANDLE-GUARD",
+        "title": "Add startup 'last-session-candle-present?' guard + aggregator catch-up path so a Docker incident can never again silently drop a session's daily_ohlcv candle",
+        "owner": "developer",
+        "status": "READY",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "wave": 1,
+        "zone": "apps/mcp-server/",
+        "sprint": "FLOW-PRICE-ALPHA-LOOP",
+        "depends": [
+          "ALPHA-S1-CANDLE-RECOVER"
+        ],
+        "created_by": "po-option-a-flow-alpha-loop",
+        "created_at": "2026-07-12T07:56:33Z",
+        "note": "Recurrence-prevention for the ALPHA-S1-CANDLE-RECOVER incident class. The daily aggregation chain currently has NO catch-up path: one Docker incident produced a missing candle and nobody ran the fix while the raw ticks expired. DoD: on startup (and/or first tick of a session) the aggregator checks that the most-recent trading session has a daily_ohlcv candle for the expected tickers; if missing, it triggers a catch-up re-aggregation from surviving ticks (or taOhlcvBackfill) and logs/alerts. Must be idempotent (no double-insert) and fail-loud on catch-up failure. Brief roadmap step 1 + gap #5. zone=multi -> architect splits. Design: docs/handoffs/ALPHA-S1-architect-design.md  [PO 2026-07-12T19:45:17Z coordination_session 69b0312e] RE-PARKED supervised:true — restore FIX-ALPHA-SPRINT-PARK-SUPERVISED gate (7ce57c5f7). Peer PM (b0a23a9ec 19:32Z / 45c558cb5 19:33Z) cleared supervised->false before any user go; flow-alpha wave promotion is USER-GATED (surface, never self-launch). Architect zone(apps/mcp-server/)+depends+safety-notes PRESERVED. Awaiting USER go (surfaced WORK). Do NOT BOUNDED-1 auto-pick.  [PO 2026-07-13 coordination_session 69b0312e] USER GO — supervised:false AUTHORIZED (explicit user greenlight via dev-team dispatcher; NOT a gate-jump). Wave-1 un-parked; PM decompose->dev. The 07-12T19:45Z RE-PARKED/Awaiting-USER-go note above is SUPERSEDED. Do NOT re-park.",
+        "supervised": false
+      },
+      {
+        "id": "ALPHA-S1-OHLCV-BACKFILL-DONE-BUG",
+        "title": "Fix the ohlcv-backfill done=1-regardless bug + add inserted-count verification on /api/ohlcv-backfill-done (universe backfill silently no-ops, marking rows done with zero bars)",
+        "owner": "developer",
+        "status": "READY",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "wave": 1,
+        "zone": "apps/mcp-server/",
+        "sprint": "FLOW-PRICE-ALPHA-LOOP",
+        "depends": [],
+        "created_by": "po-option-a-flow-alpha-loop",
+        "created_at": "2026-07-12T07:56:33Z",
+        "note": "Root cause of the universe-vs-watchlist depth split (gap #6): the ~1459-code universe backfill marks queue rows done=1 regardless of exit code with no inserted-count verification, so 457+ queue rows are 'done' with zero bars — cross-sectional z-scores (foreign-accum rank, ROC deciles) then rank against a partly-empty cross-section, which degrades the divergence screen (ALPHA-S3). Also corroborated by BUG channel id3564 (OHLCV-DEPTH VPS backfill stalled, shallow codes). DoD: /api/ohlcv-backfill-done only marks a row done when the fetch actually inserted the expected bar count; on zero/short insert it records the real failure state (retry/deferred) instead of a false done; add an inserted-count check + fail-loud. Brief roadmap step 1 + gap #6. zone=multi -> architect splits. Design: docs/handoffs/ALPHA-S1-architect-design.md  [PO 2026-07-12T19:45:17Z coordination_session 69b0312e] RE-PARKED supervised:true — restore FIX-ALPHA-SPRINT-PARK-SUPERVISED gate (7ce57c5f7). Peer PM (b0a23a9ec 19:32Z / 45c558cb5 19:33Z) cleared supervised->false before any user go; flow-alpha wave promotion is USER-GATED (surface, never self-launch). Architect zone(apps/mcp-server/)+depends+safety-notes PRESERVED. Awaiting USER go (surfaced WORK). Do NOT BOUNDED-1 auto-pick.  [PO 2026-07-13 coordination_session 69b0312e] USER GO — supervised:false AUTHORIZED (explicit user greenlight via dev-team dispatcher; NOT a gate-jump). Wave-1 un-parked; PM decompose->dev. The 07-12T19:45Z RE-PARKED/Awaiting-USER-go note above is SUPERSEDED. Do NOT re-park.",
+        "supervised": false
+      }
+    ],
     "review": [
       {
         "id": "TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST",
