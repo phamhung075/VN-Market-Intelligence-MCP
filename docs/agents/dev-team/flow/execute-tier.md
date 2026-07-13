@@ -94,4 +94,19 @@ Enter only after ALL tier agents returned.
 4. If Control 1 or Control 3 fired: STOP tier, WORK alert, await human.
    Recovery: bash scripts/audits/recovery-snapshot.sh  (operator-explicit only — Control 5)
 5. All controls pass → DJ-GATE-1 pre-flip check: verify journal entry exists for each completed task (canonical gate → `docs/protocols/agent-chaining-protocol.md` § Journal-before-DONE Gate) — tasks without journal entry stay REVIEW + status_note="journal-missing"; spawn pm (run_in_background=true) (background — BGFAN-1) to update `docs/data/orch/orch-state.json` `.task_board` + unblock next tier
+6. Status-flip MUST move lane array-membership in the SAME write (no exceptions) → see § MUST — Status-Flip = Lane-Move below; a `.status` patch left in its old lane array is an INVALID flip, not a partial one.
 ```
+
+---
+
+## MUST — Status-Flip = Lane-Move (CANONICAL:SSOT-STATUSFLIP-LANEMOVE)
+
+> **SSOT for this rule** — `docs/agents/dev-team/flow/main.md` § Step 3 Execution points here; do NOT duplicate the clause there.
+
+Any agent (pm, qa, developer, fixer, or any other agent operating under dev-team dispatch) that flips a task's `.status` to a terminal/review token (`REVIEW`, `QA`, `DONE`, `DONE_VERIFIED`, `BLOCKED`, etc.) MUST, in the SAME `scripts/orch-apply.sh` write:
+- (a) move the task's array-membership OUT of its current `.task_board.<oldlane>[]` and INTO the matching `.task_board.<newlane>[]` — never patch `.status` in place while leaving the object in the old lane array;
+- (b) if the flipped task is `.head.active_task_id`, sync top-level `.head` (to `idle`, or to the next legitimate `active_task_id`/`next_agent`) in that SAME write.
+
+A status-flip WITHOUT the matching lane-move is **FORBIDDEN**. WIP and coherence checks (e.g. `main.md` § Idle-capacity backlog pickup BOUNDED-1, `scripts/devteam-backlog-promote-bounded1.jq`) are computed by ARRAY MEMBERSHIP, not by reading `.status` — a status-only flip desyncs WIP counts from ground truth and strands the row in the wrong lane (`.status` says REVIEW/QA/DONE while the object still physically sits in `in_progress[]`).
+
+**Confirmed recurrence (3x)** — root-cause + incident detail: `feedback_review_status_stuck_in_inprogress_lane_blocks_wip.md`; board row `FIX-DEVTEAM-STATUSFLIP-LANEMOVE-RULE`. Note: the review lane also lacks a dedicated QA-drain step — that is a SEPARATE, NOT-yet-fixed gap tracked as `FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN`; do not conflate the two.
