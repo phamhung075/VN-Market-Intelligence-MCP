@@ -36,7 +36,7 @@ Never fall back to `owner_agent` alone.
 |---|---|---|
 | Router user-intent dispatch | `intent:<agent-role>:<intent-key>` | N/A |
 | Cron tick fire-time election | `cron:<flow-slug>:<YYYY-MM-DDTHH:MMZ>` | floor(fire_time) to scheduled boundary (ISO-8601 UTC, minute precision); see §Fire-Time Election below. DISTINCT from artifact dedup. |
-| Sprint task (outer dispatcher) | `sprint-task:<task-id>` | must match inner self-claim key exactly |
+| Sprint task (outer dispatcher) | `task:<task-id>` | must match inner self-claim key exactly |
 | Published artifact dedup | `published:<kind>:<period-key>` | daily or weekly date-range string (e.g. `2026-06-23/2026-06-29`); never conflate with fire-time election key |
 | Session presence | `session-presence:$CLAUDE_CODE_SESSION_ID` | per-session singleton |
 
@@ -266,11 +266,11 @@ else:
 
 ## Sprint-Task Outer Wrap (unchanged from Phase 4)
 
-For sprint-task dispatch (dev-team, pm fan-out), the same principle applies with `sprint-task:` prefix:
+For sprint-task dispatch (dev-team, pm fan-out), the same principle applies with the `task:` id-prefix (task_kind stays `sprint-task`):
 
 ```
 outer_claim = call_tool(server="vn-market", tool="task_claim", arguments={
-  task_id:              "sprint-task:<task_id>",   # must match inner self-claim key
+  task_id:              "task:<task_id>",   # must match inner self-claim key
   task_kind:            "sprint-task",
   owner_agent:          "<dispatcher-agent>",
   owner_client_session: $CLAUDE_CODE_SESSION_ID,   # REQUIRED
@@ -280,7 +280,8 @@ outer_claim = call_tool(server="vn-market", tool="task_claim", arguments={
 ```
 
 The outer claim key MUST match the inner self-claim key used by the spawned agent. Mismatch = two
-independent locks = no protection. Align on `sprint-task:` prefix everywhere.
+independent locks = no protection. Align on the `task:` id-prefix everywhere; `task_kind` stays
+`sprint-task` — id-prefix and kind are different axes.
 
 ---
 

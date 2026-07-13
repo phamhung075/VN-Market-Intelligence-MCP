@@ -26,7 +26,7 @@ Always key on `owner_client_session`.
 
 ```
 result = call_tool(server="vn-market", tool="task_claim", arguments={
-  task_id:              "<kind>:<id>",          // e.g. "sprint-task:TASK_1974"
+  task_id:              "task:<id>",            // e.g. "task:TASK_1974"
   task_kind:            "sprint-task",           // or "cowork-slot" | "dashboard-row" | "intent"
   owner_agent:          "<your-agent-name>",     // role label (NON-AUTHORITATIVE)
   owner_client_session: $CLAUDE_CODE_SESSION_ID, // REQUIRED — authoritative key
