@@ -363,12 +363,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-13T08:52:07Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "QA PASS closeout of FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN → REVIEW/deploy-pending (4th mcp-server rebuild-batch member). Normal BOUNDED-1 backlog draining resumes.",
+    "updated_at": "2026-07-13T09:17:26Z",
+    "updated_by": "dev-team (qa-pass closeout)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -8244,6 +8244,31 @@
         "qa_reviewed_at": "2026-07-13T07:20:00Z",
         "qa_reviewed_by": "qa",
         "qa_note": "RAW merge-gate, not trusted from dev numbers. Confirmed fs walk-up parity with old git-rev-parse in normal checkout (markers only exist at true repo root) AND container fallback correctness (Dockerfile copies no .git/pnpm-workspace.yaml into /app; walk-up returns undefined -> process.cwd()=/app, matching docker-compose volume mounts under /app/docs, /app/reports — identical to old codes git-absent catch-fallback, git itself not installed in image either). Held in REVIEW (not done) — mcp-server container not yet rebuilt with this fix; deploy is user/ops-gated. Task Report: reports/TASK_REPORT_FIX-MCP-BOOTSTRAP-BLOCKING-EXECSYNC-PROJECTROOT.md"
+      },
+      {
+        "id": "FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN",
+        "type": "FIX",
+        "priority": "high",
+        "status": "REVIEW",
+        "zone": "apps/mcp-server/",
+        "size": "S",
+        "title": "newsChainFallback.ts:348 — same INSERT OR REPLACE id-orphaning bug as D1, apply ON CONFLICT fix pattern",
+        "owner": "dev-mcp-server",
+        "depends": [],
+        "detail_ref": "docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md#newsChainFallback-finding",
+        "created_at": "2026-07-10T18:00:00Z",
+        "created_by": "pm",
+        "note": "QA finding during D1 regression: tryNewsChainFallback() at apps/mcp-server/src/application/usecases/bctc/newsChainFallback.ts:348 calls the same INSERT OR REPLACE INTO financial_reports pattern D1 just fixed in parseBctcReport.ts. Same root cause (fresh randomUUID() on every re-run orphans bctc_layout_units/bctc_page_zones rows). Not in D1 scope (design doc + D1 files[] list only covered parseBctcReport.ts; architect's brownfield findings didn't catch this second call site). Standalone fix task — same fix pattern applies. QA recommended backlog follow-up, did not judge urgency; placement in chain TBD by pm/architect.",
+        "promoted_at": "2026-07-13T08:52:07Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-13T08:52:07Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "qa_code_passed": true,
+        "deploy_pending": true,
+        "qa_report": "reports/TASK_REPORT_FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN.md",
+        "reviewed_at": "2026-07-13T09:17:26Z",
+        "verified_by": "qa"
       }
     ],
     "qa": [],
@@ -8265,28 +8290,7 @@
     },
     "last_triaged_at": "2026-07-13T08:52:07Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN",
-        "type": "FIX",
-        "priority": "high",
-        "status": "IN_PROGRESS",
-        "zone": "apps/mcp-server/",
-        "size": "S",
-        "title": "newsChainFallback.ts:348 — same INSERT OR REPLACE id-orphaning bug as D1, apply ON CONFLICT fix pattern",
-        "owner": "dev-mcp-server",
-        "depends": [],
-        "detail_ref": "docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md#newsChainFallback-finding",
-        "created_at": "2026-07-10T18:00:00Z",
-        "created_by": "pm",
-        "note": "QA finding during D1 regression: tryNewsChainFallback() at apps/mcp-server/src/application/usecases/bctc/newsChainFallback.ts:348 calls the same INSERT OR REPLACE INTO financial_reports pattern D1 just fixed in parseBctcReport.ts. Same root cause (fresh randomUUID() on every re-run orphans bctc_layout_units/bctc_page_zones rows). Not in D1 scope (design doc + D1 files[] list only covered parseBctcReport.ts; architect's brownfield findings didn't catch this second call site). Standalone fix task — same fix pattern applies. QA recommended backlog follow-up, did not judge urgency; placement in chain TBD by pm/architect.",
-        "promoted_at": "2026-07-13T08:52:07Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-13T08:52:07Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
