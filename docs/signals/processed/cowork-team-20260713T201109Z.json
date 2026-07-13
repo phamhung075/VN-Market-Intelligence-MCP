@@ -1,0 +1,69 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "2026-07-13T20:11:09.904Z",
+  "payload": {
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "20:00",
+    "matched": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "won": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 7,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "closed",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "news-scout-offhours": "cron",
+      "market-watcher-offhours": "cron",
+      "alert-commander-critical": "cron"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": null,
+      "market-watcher-offhours": null,
+      "alert-commander-critical": null
+    },
+    "guaranteed": false,
+    "last_fired_timestamp": "2026-07-13T20:09:53.953Z",
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "last_fired_write_errors": null,
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 4,
+    "tick_snapshot_built": null,
+    "tick_snapshot_skip_reason": "none of news-scout/market-watcher/alert-commander read the pre-built cycle-snapshot file (all snapshot_file_rc=1); news-scout+market-watcher call get_cycle_bootstrap directly, alert-commander uses neither — build serves zero consumers, skipped per token-economy",
+    "note": "4-hourly off-hours gatherer cluster (3 distinct agents, no Step-4b collision). Ran LEGACY mode: pressure-state stale_warning:true forced adaptive→legacy downgrade (Steps 4.3–4.5 skipped, MATCHES passed raw). STANDING observability concern for dev-team/system-auditor: emit_pressure_state has returned stale_warning:true AND cycle_snapshot_promoted:false on 3 consecutive emits (18:08/19:54/20:10) → last_regime pinned unknown, adaptive cadence effectively disabled. Not a dispatcher fix."
+  },
+  "_processed": {
+    "fingerprint": "25c472ef6cb95da11f95cfa8f5adbbef186b65fd557b88f24ce82b297fc46710",
+    "processedAt": "2026-07-13T20:25:18Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

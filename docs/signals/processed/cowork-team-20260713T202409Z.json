@@ -1,0 +1,42 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "2026-07-13T20:24:09.761Z",
+  "payload": {
+    "tick": "2026-07-13T20:15Z",
+    "fired_at": "2026-07-13T20:23:34.779Z",
+    "drift_min": 7,
+    "pressure_mode": "legacy",
+    "calendar_status": "closed",
+    "last_regime": "unknown",
+    "dev_queue_depth": 5,
+    "signal_backlog": 4,
+    "spawned": [
+      {
+        "slot_id": "tnb-audit",
+        "agent": "tran-ngoc-bau",
+        "guaranteed": true
+      }
+    ],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "tnb-audit": "cron"
+    },
+    "cadence_minutes": {
+      "tnb-audit": null
+    },
+    "tick_snapshot": "skipped",
+    "tick_snapshot_skip_reason": "tnb-audit snapshot_file_rc=1 AND bootstrap_rc=1 — strategy supervisor reads MARKET dishes, consumes neither pre-built cycle-snapshot file nor get_cycle_bootstrap",
+    "collision_guard": "pass (single slot, single agent)",
+    "errors": [],
+    "note": "legacy downgrade forced by stale_warning:true; 4th consecutive emit_pressure_state with cycle_snapshot_promoted:false + stale_warning:true (18:08/19:54/20:10/20:23) — last_regime pinned unknown, adaptive cadence effectively disabled. Standing observability concern for dev-team/system-auditor/PO; NOT a dispatcher action."
+  },
+  "_processed": {
+    "fingerprint": "5b0a93915f6dbb752cc2ca928244c12375dce1dabefdd0174a3f6748c404c216",
+    "processedAt": "2026-07-13T20:25:18Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

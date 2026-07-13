@@ -1,0 +1,14 @@
+{
+  "from": "tran-ngoc-bau",
+  "to": "po",
+  "type": "bug-escalation",
+  "payload": "[tran-ngoc-bau] c108 Bootstrap Step 0c failed: gateway-blind. call_tool wrapper categorically absent from this session's tool binding this turn (6 distinct tool-name probes: mcp__gateway__call_tool(get_week_period), mcp__gateway__list_servers, list_servers, search_tools, mcp__claude_ai_gateway__call_tool(get_macro_snapshot), get_system_status — all 'No such tool available', categorical absence not transient error; per fail-loud-protocol.md Anti-Hallucination Rule, actual calls were attempted this turn, not skipped from memory). Per bootstrap.md gateway-down handling (A): reporting failure, EXITING, NOT claiming infra/gateway itself is down. Per bootstrap.md's current instruction ('Do NOT switch to file-evidence mode in either case') this cycle performed NO layer-walk audit from notebooks/files — a stricter compliance than c97-c107's file-evidence fallback pattern; the fresh 2026-07-13 chef-evening dish (cowork-schedule.json last_fired=2026-07-13T19:53:47Z) is UNAUDITED this cycle by policy, not by quality gap. PUBLISHED MARKER GATE never claimed (get_week_period/task_claim both MCP) so no lock to release. This is the 12th+ consecutive tnb-audit cycle (c97-c108) with this session-transport gap — root cause already traced and user-notified 2026-07-08 (SPIKE-GATEWAY-BLIND-CLI-HANDSHAKE DONE); not re-diagnosing. Recommend confirming a session reload/`/mcp` reconnect actually restores tnb-audit's tool grant. Also: docs/handoffs/tnb-audit-latest.md (c107) still has no '## PO ACK' section — F-L2-OVERCLAIM-REGRESSION-0712 (HIGH, SUSPECTED) unconfirmed and unACK'd.",
+  "priority": "high",
+  "createdAt": "2026-07-13T20:25:00Z",
+  "_processed": {
+    "fingerprint": "5f9be73b02a1acf13743815b0ecc5ef2e930b00e22f2c514b7766c85f4d25744",
+    "processedAt": "2026-07-13T20:30:43Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
