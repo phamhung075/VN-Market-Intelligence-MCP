@@ -399,24 +399,48 @@ def is_detail_deferred($detail_items):
       end
   end;
 
-# Non-dev detail owner + null board next_agent for a candidate row (`.` =
-# the backlog row object). FIX-DEVTEAM-BOUNDED1-DETAIL-DISPOSITION-GATE,
-# 2026-07-12 — see "NON-DEV-OWNER GATE" header comment above. Gated ONLY when
-# BOTH conditions hold; conservative default (absent/empty owner, dev-role
-# owner, or a non-empty board next_agent) = NOT gated (promotable).
+# Effective owner for a candidate row (`.` = the backlog row object).
+# FIX-DEVTEAM-BOUNDED1-NONDEV-OWNER-BOARD-FALLBACK-GATE, 2026-07-13 — mirrors
+# the effective_supervised/effective_children precedence idiom (keyed purely
+# by `.id`, no `.detail_ref` precondition), but with a detail-FIRST /
+# board-FALLBACK order (the reverse of effective_depends_on's inline-first
+# order) because detail is the AUTHORITATIVE owner source when it exists —
+# see "NON-DEV-OWNER GATE" header comment above for the root cause this
+# closes: a board row with NO backlog-detail.json entry at all (detail owner
+# absent/empty) previously fell through with no owner signal even though its
+# own board-level `.owner` already names a non-dev deliberate-launch agent.
+#   1. `$detail_items[.id].owner` if it is a present-and-non-empty string
+#      (detail-authoritative — regression guard: unchanged from prior
+#      behavior for any row that DOES carry a detail entry), ELSE
+#   2. the board-level `.owner` (fallback — new: only reached when detail is
+#      silent/absent), ELSE
+#   3. "" (conservative default — absent/empty owner in BOTH places).
+def effective_owner($detail_items):
+  (if (.id != null) then $detail_items[.id].owner else null end) as $detail_owner
+  | if ($detail_owner != null) and (($detail_owner | type) == "string") and ($detail_owner != "") then
+      $detail_owner
+    else
+      (.owner // "")
+    end;
+
+# Non-dev effective owner (detail-authoritative, board-fallback) + null board
+# next_agent for a candidate row (`.` = the backlog row object).
+# FIX-DEVTEAM-BOUNDED1-DETAIL-DISPOSITION-GATE, 2026-07-12 — extended by
+# FIX-DEVTEAM-BOUNDED1-NONDEV-OWNER-BOARD-FALLBACK-GATE, 2026-07-13 to read
+# effective_owner() instead of the detail-only owner — see "NON-DEV-OWNER
+# GATE" header comment above. Gated ONLY when BOTH conditions hold;
+# conservative default (absent/empty owner in BOTH places, dev-role owner in
+# either place, or a non-empty board next_agent) = NOT gated (promotable).
 def is_non_dev_owner_unrouted($detail_items):
-  if (.id == null) then false
-  else
-    ($detail_items[.id].owner) as $owner
-    | ( ($owner != null) and (($owner | type) == "string") and ($owner != "") ) as $owner_present
-    | if ($owner_present | not) then false
-      else
-        ($owner | test("^dev(-|$)|^developer$"; "i")) as $is_dev_owner
-        | if $is_dev_owner then false
-          else ((.next_agent // "") == "")
-          end
-      end
-  end;
+  (effective_owner($detail_items)) as $owner
+  | ( (($owner | type) == "string") and ($owner != "") ) as $owner_present
+  | if ($owner_present | not) then false
+    else
+      ($owner | test("^dev(-|$)|^developer$"; "i")) as $is_dev_owner
+      | if $is_dev_owner then false
+        else ((.next_agent // "") == "")
+        end
+    end;
 
 # Detail-authoritative plan_only disposition for a candidate row (`.` = the
 # backlog row object). FIX-DEVTEAM-BOUNDED1-PLAN-ONLY-GATE, 2026-07-12 — see
