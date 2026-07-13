@@ -1,6 +1,20 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-13 | **Cycle:** TE-T01 (dev-team BOUNDED-1 auto-pickup, mode=CLEAN, zone=multi)
+**Last updated:** 2026-07-13 | **Cycle:** TE-T04 (dev-team BOUNDED-1 auto-pickup, mode=CLEAN, zone=docs/agents/)
+
+## Session 2026-07-13 — TE-T04 (dev-team BOUNDED-1 auto-pickup, mode=CLEAN, zone `docs/agents/`) — IN_PROGRESS→REVIEW
+
+**Task:** Token-economy audit T-04 (`docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md` § T-04) — strip the `## Example Invocation` tail (100-170L each) from the 6 highest-cadence cowork tool packages (market-watcher/news-scout/alert-commander/unified-agent/qa-responder/digest-predict) — every cron fire re-loads the full package, and 40-55% of each was a verbose second copy of examples already lazy-loadable per-tool in `docs/agents/tools/list/<tool>.md`.
+
+**Actions taken:** Deleted the entire `## Example Invocation` section from all 6 packages, replacing each with the brief's exact 1-line pointer: "Per-tool params + worked example → `docs/agents/tools/list/<tool_name>.md` (lazy-load only when calling an unfamiliar tool)". Left every `## Tools — <agent>` table, Signal Types, Channel Permissions, Task-Lock, and Related Documentation section untouched.
+
+**Verification:** `wc -l` before→after: market-watcher 290→160, news-scout 249→148, alert-commander 211→141, unified-agent 287→175, qa-responder 317→151, digest-predict 349→188 (near brief's projected ranges). `git diff --stat` shows exactly 6 insertions total (the 6 pointer lines) across all 6 files — no table/section content altered. Row-count check (`grep -c "| \`"`) confirms tool tables byte-identical pre/post: 28/22/26/44/20/48 rows unchanged per file. `grep -c "Example Invocation"` = 0 post-edit. This also resolves the brief's flagged drift bug: market-watcher's deleted example passed `get_price_history` a `tickers: [...]` array while the tool table + `tools/list/get_price_history.md` both document a single `code: string` param — `tools/list/get_price_history.md` was already correct (zero diff, no edit needed). Docs-only, no `apps/` code touched → no `bun test`/`tsc` applicable.
+
+**Board:** Moved `task_board.in_progress[TE-T04]` → `task_board.review[]` (status REVIEW, next_agent=qa) + `.head` synced, via `orch-apply.sh` (conservation OK, task_total unchanged at 507). Commits: `2c29f8e73` (6 package edits), `30f8a3c77` (orch-state board move). Decision journal: `sprint-TOKEN-ECONOMY-AUDIT-developer.md` STEP developer-S4.
+
+**Scope discipline:** Touched ONLY the 6 named packages — did not touch `docs/agents/tools/list/*` (pointer targets already correct) or peer-dirty `docs/agents/alert-commander/flow/stage-signals.md` (out of scope, untouched). Did not flip REVIEW→DONE_VERIFIED (QA gate's job).
+
+Zone health: `docs/agents/tools/package/` — 6/6 high-cadence packages de-duplicated this cycle; no other drift observed | HEALTHY
 
 ## Session 2026-07-13 — TE-T01 (dev-team BOUNDED-1 auto-pickup, mode=CLEAN, zone `multi`) — IN_PROGRESS→REVIEW
 
@@ -28,13 +42,3 @@ Zone health: `.claude/skills/` doc zone — no other drift observed this cycle |
 Zone health: `apps/news-fetch/` scraper pair de-duplicated (flagged in the 2026-06-15 maintainability audit); no other drift observed this cycle | HEALTHY
 
 **Redeploy:** news-fetch is a docker-compose service — code change needs `docker compose up -d --build news-fetch` to reach the live container. NOT performed here (user/ops-gated); flagged for router/ops.
-
-## Session 2026-07-12 — SPIKE-BCTC-TABLEROWS-FROZEN-HOLLOW-DONE (router-dispatched, mode=spike, zone `multi`) — IN_PROGRESS→REVIEW
-
-**Task:** Diagnose why `bctc_table_rows` (serving financial-table data analysis-agent consumes) is frozen 4 days despite `bctc_layout_units` (PEK layout-first extraction) growing hourly, and why `bctcExtractReconcileJob` marks queue rows `done` with zero `bctc_table_rows` ("hollow-done", 42 rows since 2026-07-10).
-
-**Verdict (RAW-verified, not a D3C code bug):** `bctcExtractReconcileJob`'s "layout_units alone = done" success check is intentional, documented, QA-approved design (D3 point 3 / R-CRIT-2 in `TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md`, commit `43f4c8a22`) — not broken code. `bctc_layout_units` was scoped ONLY as a geometric-zone QA/review overlay (`BCTC-LAYOUT-FIRST` sprint, 2026-05-26 brief) — no derivation step to `bctc_table_rows` was ever built or planned (grep-confirmed zero consumers of `stitched_markdown` besides the human-review overlay). `bctc_table_rows` has exactly ONE live producer, the BCTC-AGENTIC-REFINE pipeline (`bctcRefineJob.ts` `refineOneReport` Phase 4) — completely orthogonal to PEK/layout-first. Per the "Option-Y" ruling, that pipeline's ONLY trigger is a session-scoped Claude-native `CronCreate` cron (`cron-refine-bctc.md`) with no in-container/Docker backstop, and RAW evidence (docker-exec direct SQLite queries) shows it has been dormant since 2026-07-04 (8 days: `bctc_refined_units` 0 new rows, 151 `financial_reports` stuck at `refine_status=PENDING`). **This is a RECURRING instance** of a defect already diagnosed 2026-06-27 (sprint `BCTC-REFINE-STALL-RETRIGGER`, root cause (a): "CronCreate not re-armed after session restart") — that sprint shipped throughput mitigations (T1/T2) but never the durable fix (T3-WATCHDOG still `BACKLOG`); board task `REFINE-CRON-ARM` (opened 2026-06-12, purpose = durably arm this exact cron) has sat `status:TODO` for 30 days, sitting in plain sight the whole time. "Hollow-done" is a masking side-effect of D3C's broadened success check removing what used to be an (accidental) leading indicator of this pre-existing outage — not new data loss.
-
-**Actions taken:** Read-only investigation only (SPIKE-mode, timeboxed 120 min) — no code changed. Created + deleted throwaway branch `spike/bctc-tablerows-frozen-hollow-done` per protocol (zero commits on it). Wrote findings doc `docs/spikes/SPIKE-BCTC-TABLEROWS-FROZEN-HOLLOW-DONE.md`. Filed follow-on `FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP` (backlog, high, owner=ops — session-independent launchd-class backstop for `refine_bctc_md` dispatch, mirroring the already-proven `com.vn-market.cowork-guaranteed-slot-firer.plist` pattern) rather than fixing inline — genuinely infra-scoped design work, out of SPIKE read-only mandate. Flipped board row `in_progress[]`→`review[]` (status REVIEW, next_agent=router) + added the FIX row to `backlog[]`, both in one atomic `orch-apply.sh` write (conservation: task_total 452→453 PASS). Did NOT self-close to DONE_VERIFIED — left for router RAW-verify per established SPIKE-closure precedent (router signed off `SPIKE-BCTC-NONBANK-TOTAL-ASSETS-ZERO`/`SPIKE-HSX-STRATEGY0-0URLS` the same way). Did NOT release `task_claim` (router's job per dispatch contract). DJ: `sprint-SPIKE-BCTC-TABLEROWS-FROZEN-HOLLOW-DONE-developer.md`.
-
-**Scope discipline:** No code/config file touched outside `docs/` (findings doc, decision journal, notebook, orch-state.json board write). No fix attempted inline per SPIKE mandate.

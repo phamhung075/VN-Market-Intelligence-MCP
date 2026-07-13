@@ -36,3 +36,14 @@
 - Trusting the 5/5 synthetic-test GREEN alone vs mandatory live-run against real data — task explicitly required the latter (that's exactly how the prior `e24e6b8b6` fix false-passed); did both, and the live-run additionally surfaced a live, currently-active duplicate in the real repo that the synthetic tests alone would never have found.
 **why-decision:** Direct behavioral evidence beats agent self-report per standing project convention (raw-verify, not badge-trust).
 **why-change:** No change from plan.
+
+---
+
+### STEP developer-S4 · developer · 2026-07-13T10:55:00Z
+**task-id:** TE-T04
+**what-done:** Deleted `## Example Invocation` (100-170L) from all 6 packages (market-watcher/news-scout/alert-commander/unified-agent/qa-responder/digest-predict), replaced each with the brief's exact 1-line pointer to `tools/list/<tool_name>.md`.
+**what-considered:**
+- Per-package generic pointer (matches existing L22 "How to Invoke" line style) vs enumerating every referenced tool per package — chose generic: brief's own proposal text is generic, DoD says "ONE pointer line", enumerating would duplicate example bodies by proxy.
+- Fixing the WRONG `tickers` example in-place vs deleting it — chose deletion: whole section removed per DoD item 1; verified `tools/list/get_price_history.md` already correct (`code: string`), so no separate fix commit needed.
+**why-decision:** Row-count diff (`grep -c "| \`"`) proved tool tables byte-identical pre/post for all 6 files — satisfies "keep tool tables intact" with objective evidence, not self-report.
+**why-change:** No change from plan.
