@@ -363,12 +363,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "next_action": "FIX-PDFEXTRACTOR-TIER1-OCR-TIMEOUT deploy SHIPPED+RAW-verified (image ab7db8a7, healthy); parked review[] reflow_verify_pending. Head idle -> BOUNDED-1 free next idle tick. Follow-up tick verifies HPG serving scalar post async reflow before done_verified/PO.",
-    "updated_by": "dev-team (ops rebuild verified: image ab7db8a7 swapped+healthy, row223 reset->pending engaged, serving still stale -> park review reflow_verify_pending, head idle, release row lock)",
-    "updated_at": "2026-07-13T19:24:30Z"
+    "status": "in_progress",
+    "active_task_id": "UC-RDL-P1",
+    "next_agent": "architect",
+    "next_action": "architect: ADJUDICATE UC-RDL-P1 (Ultracode-critic 'lock-key drift' CRITICAL). Router PRE-CLAIM outer-wrap lock uses task_id prefix 'intent:<agent>:<intent-key>' (task_kind=intent) while live row/coordination locks use 'task:' / 'cron:' / 'session-presence:'. STEP 1 VERIFY: is this REAL drift or INTENTIONAL two-tier separation (intent:=dispatcher-mutex vs task:=row-mutex serve different purposes)? If critic false-positive -> recommend REJECT/close with rationale (audit had 23 RESCOPE/8 REJECTED). STEP 2 (only if real): design the alignment — which prefix is canonical, in-flight-lock migration, blast radius on CLAUDE.md PRE-CLAIM + .claude/skills/dispatch-claim + task-lock tooling -> READY_FOR_DEV brief to docs/architecture-briefs/. Do NOT edit lock code directly (delicate: affects live orchestration locks). No AC/detail exists on this fresh 2026-07-13T19:31Z PO mint — architect produces it.",
+    "updated_by": "dev-team (19:37Z tick: BOUNDED-1 gated-promote picked UC-RDL-P1 -> line-521 correct next_agent developer->architect for audit adjudication; PDFEXTRACTOR reflow pek_triggered confirmed)",
+    "updated_at": "2026-07-13T19:52:40Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6468,22 +6468,6 @@
         "status_note": "PLAN-ONLY low DEBT; ZERO runtime impact (Bun strips types; both scripts already ran live). scripts/migrations/ is outside the include globs of BOTH root tsconfig.json AND apps/mcp-server/tsconfig.json, so `pnpm --filter vn-market check` never type-checks it; any router/dev 'tsc-clean' claim on those scripts is false-clean-by-omission. Design choice (architect): (a) add scripts/migrations/ (or scripts/) to an existing tsconfig include OR a dedicated scripts tsconfig; OR (b) a standalone `tsc --noEmit` pass over scripts/ wired into the check/CI gate. Then fix the 3 QA-surfaced errors (isolated tsc 5.9.3): (1) discover-consolidated-bctc-pdf.ts:395 new Blob([pdfBytes]) — Uint8Array<ArrayBufferLike> not assignable to BlobPart (shipped commit 90c975415, HPG-DISCOVER); (2)+(3) reparse-bctc-reports.ts 2 pre-existing own errors (already shipped — confirms gap is directory-wide, not a single-task regression). AC: chosen tsc gate covers scripts/migrations/ AND all 3 errors resolved AND `pnpm check` (or the new pass) green."
       },
       {
-        "id": "UC-RDL-P1",
-        "type": "FIX",
-        "title": "Align router outer-wrap lock namespace to the live 'task:' prefix",
-        "status": "BACKLOG",
-        "priority": "P0",
-        "size": "S",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "CONFIRMED",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#router-dispatch-locking-P1",
-        "note": "CRITICAL/S — SEQUENCE LEAD. CLAUDE.md/dispatch outer-wrap claims a lock prefix that diverges from the live 'task:' namespace the store actually uses, so the mutex does not mutex. Align the wrap prefix to 'task:'.",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po"
-      },
-      {
         "id": "UC-RDL-P5",
         "type": "CLEAN",
         "title": "Shrink CLAUDE.md step 2.5 to a pointer + 3-outcome table incl the missing re-entrant branch",
@@ -9012,11 +8996,11 @@
       }
     ],
     "head": {
-      "status": "idle",
-      "active_task_id": null,
-      "next_agent": null,
-      "last_updated_at": "2026-07-13T19:24:30Z",
-      "last_updated_by": "dev-team (FIX-PDFEXTRACTOR deploy shipped+verified -> review reflow_verify_pending; head idle)"
+      "status": "in_progress",
+      "active_task_id": "UC-RDL-P1",
+      "next_agent": "architect",
+      "last_updated_at": "2026-07-13T19:52:40Z",
+      "last_updated_by": "dev-team (BOUNDED-1 UC-RDL-P1 -> architect adjudication)"
     },
     "ready": [],
     "review": [
@@ -9498,8 +9482,10 @@
           "fetchedAt": "2026-06-07T10:27:16Z",
           "queue_row_223": "pending (reset done->pending engaged; NOT silent-done)"
         },
-        "reflow_verify_note": "Deploy shipped+RAW-verified. Async reflow in-flight via pek worker + bctcExtractReconcileJob (cron :05/:35). FOLLOW-UP dev-team tick RAW-verifies financial_reports.net_revenue flips from stale -1264.66 to a plausible POSITIVE consolidated value AND queue row 223 pending->pek_triggered->done. THEN flip review->done_verified + route PO. Silent flip back to done with net_revenue still ~-1264 = RED flag (async-reroute did NOT engage).",
-        "review_parked_at": "2026-07-13T19:24:30Z"
+        "reflow_verify_note": "FIX PROVEN TO ENGAGE: row223 pending->pek_triggered confirmed 19:37Z tick (RAW market.db). Serving net_revenue still stale -1264.66 (pek extraction of 33pp scanned consolidated PDF in-flight; reconcile cron :05/:35). FOLLOW-UP tick RAW-verifies net_revenue flips to plausible POSITIVE + row->done. THEN review->done_verified + PO route. Silent row->done with net_revenue ~-1264 = RED flag.",
+        "review_parked_at": "2026-07-13T19:24:30Z",
+        "reflow_engaged": true,
+        "queue_status_observed": "pek_triggered @ 2026-07-13 19:38:48 (RAW market.db) — async-reroute FIRED, not silent-done; RED-flag averted"
       }
     ],
     "qa": [],
@@ -9519,9 +9505,34 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-13T15:25:20Z",
+    "last_triaged_at": "2026-07-13T19:50:40Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "UC-RDL-P1",
+        "type": "FIX",
+        "title": "Align router outer-wrap lock namespace to the live 'task:' prefix",
+        "status": "IN_PROGRESS",
+        "priority": "P0",
+        "size": "S",
+        "zone": "cross-service/",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "CONFIRMED",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#router-dispatch-locking-P1",
+        "note": "CRITICAL/S — SEQUENCE LEAD. CLAUDE.md/dispatch outer-wrap claims a lock prefix that diverges from the live 'task:' namespace the store actually uses, so the mutex does not mutex. Align the wrap prefix to 'task:'.",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "promoted_at": "2026-07-13T19:50:40Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "claimed_at": "2026-07-13T19:52:10Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "owner": "architect",
+        "next_agent": "architect",
+        "dispatch_note": "BOUNDED-1 idle-pickup picked this fresh (19:31Z) unscoped P0; router routes ARCHITECT-FIRST (adjudicate real-drift-vs-intentional critic FP) instead of blind developer auto-fix on router lock primitives"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
