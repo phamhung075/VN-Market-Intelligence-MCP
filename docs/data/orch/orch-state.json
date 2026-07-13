@@ -349,10 +349,10 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "ALPHA-S1-OHLCV-BACKFILL-DONE-BUG",
-    "next_agent": "dev-mcp-server",
-    "next_action": "RECONCILE COMPLETE (ALPHA-S1-CANDLE-RECOVER closed VERIFIED FALSE-POSITIVE, commit f045a791c). Pick up next wave-1 ready row ALPHA-S1-OHLCV-BACKFILL-DONE-BUG (P1, zone apps/mcp-server/, depends:[], supervised:false): fix /api/ohlcv-backfill-done marking rows done=1 regardless of inserted count (457+ rows 'done' with zero bars, degrades ALPHA-S3 cross-sectional z-scores; corroborated by BUG id3564). DoD: only mark done when the expected bar count actually inserted; record real failure state on zero/short insert; add inserted-count check + fail-loud. Design docs/handoffs/ALPHA-S1-architect-design.md. ALPHA-S1-STARTUP-CANDLE-GUARD (P1, dep now cleared) is the following ready pick.",
-    "updated_at": "2026-07-13T05:07:38Z",
-    "updated_by": "po RECONCILE (coordination_session 69b0312e)"
+    "next_agent": "qa",
+    "next_action": "Code committed 599f4aee0, row in REVIEW. RAW code merge-gate (re-run targeted suites) then hold DEPLOY-PENDING: fix is DEPLOY-REQUIRED (docker compose up -d --build mcp-server), user-gated + market-sensitive — do NOT deploy, surface for off-market. Do NOT re-dispatch dev-mcp-server (task code-complete).",
+    "updated_at": "2026-07-13T05:37:32Z",
+    "updated_by": "dev-team dispatcher (head-sync: dev wrote only decorative .task_board.head; reconcile authoritative .head -> qa review-gate)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7643,11 +7643,11 @@
       }
     ],
     "head": {
-      "status": "in_progress",
-      "active_task_id": "ALPHA-S1-OHLCV-BACKFILL-DONE-BUG",
-      "next_agent": "dev-mcp-server",
-      "last_updated_at": "2026-07-13T05:07:38Z",
-      "last_updated_by": "po (RECONCILE)"
+      "status": "idle",
+      "active_task_id": null,
+      "next_agent": "po",
+      "last_updated_at": "2026-07-13T05:35:00Z",
+      "last_updated_by": "dev-mcp-server"
     },
     "ready": [
       {
@@ -7668,23 +7668,6 @@
         "supervised": false,
         "updated_at": "2026-07-13T05:07:38Z",
         "updated_by": "po (RECONCILE)"
-      },
-      {
-        "id": "ALPHA-S1-OHLCV-BACKFILL-DONE-BUG",
-        "title": "Fix the ohlcv-backfill done=1-regardless bug + add inserted-count verification on /api/ohlcv-backfill-done (universe backfill silently no-ops, marking rows done with zero bars)",
-        "owner": "developer",
-        "status": "READY",
-        "type": "FIX",
-        "size": "S",
-        "priority": "P1",
-        "wave": 1,
-        "zone": "apps/mcp-server/",
-        "sprint": "FLOW-PRICE-ALPHA-LOOP",
-        "depends": [],
-        "created_by": "po-option-a-flow-alpha-loop",
-        "created_at": "2026-07-12T07:56:33Z",
-        "note": "Root cause of the universe-vs-watchlist depth split (gap #6): the ~1459-code universe backfill marks queue rows done=1 regardless of exit code with no inserted-count verification, so 457+ queue rows are 'done' with zero bars — cross-sectional z-scores (foreign-accum rank, ROC deciles) then rank against a partly-empty cross-section, which degrades the divergence screen (ALPHA-S3). Also corroborated by BUG channel id3564 (OHLCV-DEPTH VPS backfill stalled, shallow codes). DoD: /api/ohlcv-backfill-done only marks a row done when the fetch actually inserted the expected bar count; on zero/short insert it records the real failure state (retry/deferred) instead of a false done; add an inserted-count check + fail-loud. Brief roadmap step 1 + gap #6. zone=multi -> architect splits. Design: docs/handoffs/ALPHA-S1-architect-design.md  [PO 2026-07-12T19:45:17Z coordination_session 69b0312e] RE-PARKED supervised:true — restore FIX-ALPHA-SPRINT-PARK-SUPERVISED gate (7ce57c5f7). Peer PM (b0a23a9ec 19:32Z / 45c558cb5 19:33Z) cleared supervised->false before any user go; flow-alpha wave promotion is USER-GATED (surface, never self-launch). Architect zone(apps/mcp-server/)+depends+safety-notes PRESERVED. Awaiting USER go (surfaced WORK). Do NOT BOUNDED-1 auto-pick.  [PO 2026-07-13 coordination_session 69b0312e] USER GO — supervised:false AUTHORIZED (explicit user greenlight via dev-team dispatcher; NOT a gate-jump). Wave-1 un-parked; PM decompose->dev. The 07-12T19:45Z RE-PARKED/Awaiting-USER-go note above is SUPERSEDED. Do NOT re-park.",
-        "supervised": false
       }
     ],
     "review": [
@@ -8131,6 +8114,41 @@
         "next_agent": "qa",
         "entered_review_at": "2026-07-12T07:36:27Z",
         "review_note": "[developer] Regex widened to one ERE (optional dash/colon separators) covering ALL live notebook heading formats (compact cycle-YYYYMMDDTHHMMZ / dashed-no-seconds Tick.../ dashed-with-seconds-or-ms suffix / date-only), normalized to a 17-char zero-padded numeric sort key, sort restricted to -k2,2 -s (was unbounded -k2, silently alphabetical on ties). Added detection-only duplicate-heading tripwire (pre-cap+post-prune) as defense-in-depth; root cause of the duplicate-heading symptom found to be UPSTREAM (docs/agents/dev-team/flow/post-cycle.md Step 4.5 missing notebook-write SKILL AC-3 discipline) -- signal filed docs/signals/developer-2026-07-12T073316Z-main-notebook-writepath-missing-ac3.json, out of this zone. 5/5 regression tests GREEN (2 new real-format cases + 1 duplicate-tripwire case). AC-4 live-verified against 100%-real main.md content (HEAD + reinstated real historical section, 207L) via the actual fixed script: oldest dropped, newest retained, final 177L, zero duplicate headings -- confirmed via direct grep/wc, not self-report. Also manually deduped a second, independent live duplicate found active in main.md at task start. Full trail: docs/agent-memory/decisions/sprint-TOKEN-ECONOMY-AUDIT-developer.md STEP developer-S1/S2/S3."
+      },
+      {
+        "id": "ALPHA-S1-OHLCV-BACKFILL-DONE-BUG",
+        "title": "Fix the ohlcv-backfill done=1-regardless bug + add inserted-count verification on /api/ohlcv-backfill-done (universe backfill silently no-ops, marking rows done with zero bars)",
+        "owner": "developer",
+        "status": "REVIEW",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "wave": 1,
+        "zone": "apps/mcp-server/",
+        "sprint": "FLOW-PRICE-ALPHA-LOOP",
+        "depends": [],
+        "created_by": "po-option-a-flow-alpha-loop",
+        "created_at": "2026-07-12T07:56:33Z",
+        "note": "Root cause of the universe-vs-watchlist depth split (gap #6): the ~1459-code universe backfill marks queue rows done=1 regardless of exit code with no inserted-count verification, so 457+ queue rows are 'done' with zero bars — cross-sectional z-scores (foreign-accum rank, ROC deciles) then rank against a partly-empty cross-section, which degrades the divergence screen (ALPHA-S3). Also corroborated by BUG channel id3564 (OHLCV-DEPTH VPS backfill stalled, shallow codes). DoD: /api/ohlcv-backfill-done only marks a row done when the fetch actually inserted the expected bar count; on zero/short insert it records the real failure state (retry/deferred) instead of a false done; add an inserted-count check + fail-loud. Brief roadmap step 1 + gap #6. zone=multi -> architect splits. Design: docs/handoffs/ALPHA-S1-architect-design.md  [PO 2026-07-12T19:45:17Z coordination_session 69b0312e] RE-PARKED supervised:true — restore FIX-ALPHA-SPRINT-PARK-SUPERVISED gate (7ce57c5f7). Peer PM (b0a23a9ec 19:32Z / 45c558cb5 19:33Z) cleared supervised->false before any user go; flow-alpha wave promotion is USER-GATED (surface, never self-launch). Architect zone(apps/mcp-server/)+depends+safety-notes PRESERVED. Awaiting USER go (surfaced WORK). Do NOT BOUNDED-1 auto-pick.  [PO 2026-07-13 coordination_session 69b0312e] USER GO — supervised:false AUTHORIZED (explicit user greenlight via dev-team dispatcher; NOT a gate-jump). Wave-1 un-parked; PM decompose->dev. The 07-12T19:45Z RE-PARKED/Awaiting-USER-go note above is SUPERSEDED. Do NOT re-park.",
+        "supervised": false,
+        "started_at": "2026-07-13T05:15:00Z",
+        "started_by": "dev-mcp-server",
+        "coordination_session": "69b0312e-df43-43a9-9e0b-bddf66d374e3",
+        "commit": "599f4aee0",
+        "completed_at": "2026-07-13T05:35:00Z",
+        "completed_by": "dev-mcp-server",
+        "deploy_required": true,
+        "deploy_note": "code committed, NOT yet live — mcp-server rebuild is user/ops-gated (VN market open at task time). Rebuild cmd: docker compose up -d --build mcp-server. Live verification per docs/handoffs/ALPHA-S1-architect-design.md shared verification gate.",
+        "remediation_note": "457 historical done-with-zero-bar rows NOT retroactively fixed (no ground truth ever existed to identify them — the missing bars_inserted column IS the bug). Proposed non-destructive remediation: after deploy, either let the next vn-ohlcv-backfill.timer cycle (30-min systemd, already running) exercise the new fail-loud path naturally, or force one cycle via existing canonical scripts/migrations/trigger-ohlcv-backfill-queue.ts --apply — only AFTER deploy (pre-deploy the live container still runs the buggy handler).",
+        "review_note": "dev-mcp-server: targeted 109/109 pass (5 files), tsc clean, toolCount=183 unchanged. Full-suite bounded run 14549 pass/40 skip/67 fail/5 errors then documented Bun tail-crash — grepped clean for changed identifiers, all 67 fails pre-existing/unrelated. Commit 599f4aee0.",
+        "qa_code_passed": true,
+        "deploy_pending": true,
+        "qa_resolution_note": "CODE_VERIFIED_DEPLOY_PENDING",
+        "qa_commit": "599f4aee0",
+        "qa_raw_tests": "17 pass / 0 fail (ohlcv-backfill-done-subtask-b.test.ts 8/8 incl BT-6/7/8, 1360-ohlcv-backfill-queue.test.ts 9/9 incl updated TC-6); tsc --noEmit 0 errors; ddd PASS; security PASS; mock-guard PASS. Full 1199-file suite NOT run (VN market open, host-starvation risk) per dispatch constraint.",
+        "qa_reviewed_at": "2026-07-13T05:41:26Z",
+        "qa_reviewed_by": "qa",
+        "qa_note": "Code green + RAW-verified, held in REVIEW (not done/serving-verified) — mcp-server container not yet rebuilt with this fix. Deploy is user/ops-gated + market-sensitive (docker compose up -d --build mcp-server); QA does not deploy. Full DONE_VERIFIED deferred to post-deploy serving check per docs/handoffs/ALPHA-S1-architect-design.md shared verification gate. Task Report: reports/TASK_REPORT_ALPHA-S1-OHLCV-BACKFILL-DONE-BUG.md"
       }
     ],
     "qa": [],
