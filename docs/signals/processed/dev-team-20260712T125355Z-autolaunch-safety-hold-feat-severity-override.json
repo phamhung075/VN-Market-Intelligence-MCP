@@ -1,0 +1,63 @@
+{
+  "from": "dev-team",
+  "to": "po",
+  "type": "autolaunch_safety_hold",
+  "priority": "high",
+  "createdAt": "2026-07-12T12:53:55Z",
+  "dedup_key": "autolaunch_safety_hold:FEAT-SEVERITY-OVERRIDE-SURFACING",
+  "payload": {
+    "tick": "2026-07-12T12:37Z",
+    "picked_task_id": "FEAT-SEVERITY-OVERRIDE-SURFACING",
+    "priority_rank": 1,
+    "lane": "BOUNDED-1 idle-capacity backlog pickup",
+    "action_taken": "WITHHELD auto-launch — no promote/claim write; live orch-state.json untouched (dry-run to scratchpad only); no specialist spawned",
+    "why_withheld": "Detail-layer disposition marks this a type=FEATURE size=M zone=multi row whose detail next_agent='architect' and zone_note require ARCHITECT-LED decomposition across 5 zones (.claude/skills/severity-override-gate/, docs/agents/unified-agent/, docs/agents/fb-market-poster/, docs/agents/news-scout/, docs/data/system-map.json; S5 sequencing; 6 ACs incl AC5 PNJ #8371 replay). It is NOT a self-contained dev-shippable fix. BOUNDED-1's claim would set head.next_agent='developer' placeholder (board next_agent is null) -> zone-detect Tier-3 would MISROUTE a multi-zone architecture FEATURE to a single dev specialist, skipping the required ba->architect->pm SPRINT-M planning relay + PO sequencing vs its paired FIX.",
+    "passes_existing_withhold_conditions": {
+      "a_uncommitted": false,
+      "b_absent_peer_authored": false,
+      "c_depends_blind": false,
+      "d_detail_deferred": false,
+      "note": "Row is committed (in HEAD, clean tree), created_by=po, no unmet deps, status BACKLOG in BOTH board+detail layers (no DEFERRED divergence). Necessary-but-not-sufficient: detail-layer disposition (architect-led multi-zone FEATURE) is the disqualifier."
+    },
+    "new_gate_blind_spot": "The NON-DEV-OWNER gate in scripts/devteam-backlog-promote-bounded1.jq keys on detail .owner (must be non-empty non-dev string AND board next_agent null). THIS row has detail .owner ABSENT and expresses its non-dev routing via detail .next_agent='architect' instead -> the gate does NOT fire -> the architect-led multi-zone FEATURE is silently auto-promotable. Structurally identical class to the 2026-07-12 DETAIL-DEFERRED/NON-DEV-OWNER near-misses closed by commit 6382a9c97, but via a field (.next_agent) the current gate does not read when .owner is absent.",
+    "board_row": {
+      "id": "FEAT-SEVERITY-OVERRIDE-SURFACING",
+      "status": "BACKLOG",
+      "type": "FEATURE",
+      "size": "M",
+      "zone": "multi",
+      "priority": "HIGH",
+      "next_agent": null,
+      "owner": null,
+      "supervised": null,
+      "children": null,
+      "depends_on": null,
+      "detail_ref": "docs/data/orch/archive/backlog-detail.json#FEAT-SEVERITY-OVERRIDE-SURFACING"
+    },
+    "detail_disposition": {
+      "status": "BACKLOG",
+      "type": "FEATURE",
+      "size": "M",
+      "zone": "multi",
+      "next_agent": "architect",
+      "owner": "(absent)",
+      "created_by": "po",
+      "related": "FIX-ALERT-COMMANDER-DEAD-NO-SLOT",
+      "payload_ref": "docs/architecture-briefs/2026-07-03-severity-override-surfacing.md",
+      "zone_note": "multi -- architect must split across 5 zones; sequencing per brief S5: shared skill first -> CHEF (primary) -> fb-market-poster; news-scout exception + system-map doc-sync parallel"
+    },
+    "po_options": {
+      "a_launch_proper_sprint_m": "Launch as a proper SPRINT-M via planning relay ba->architect->pm using the existing arch brief (docs/architecture-briefs/2026-07-03-severity-override-surfacing.md), sequenced against paired FIX-ALERT-COMMANDER-DEAD-NO-SLOT (decide ordering).",
+      "b_mint_gate_fix": "Mint a FIX extending scripts/devteam-backlog-promote-bounded1.jq NON-DEV-OWNER gate to ALSO gate when detail .next_agent names a non-dev specialist (^dev(-|$)|^developer$ negative) AND board next_agent is null/empty, when detail .owner is absent -- closes this blind-spot structurally, same precedence pattern as the 6382a9c97 detail-authoritative gates.",
+      "c_supervise_row": "Set the board/detail row supervised:true (or correct board next_agent) so idle auto-pickup withholds it going forward."
+    },
+    "recommendation": "(a)+(b): launch the feature properly under PO sequencing AND close the gate so the next idle tick auto-advances past this class instead of re-surfacing it.",
+    "convergence_note": "Mirrors the 2026-07-12 ALPHA-sprint and BCTC-HIST-VPS-BACKFILL withhold->signal->PO-adjudicate loops (both converged in 2 ticks). This tick emitted the signal; next dev-team tick drains it and PO adjudicates. PO re-spawn SKIPPED this tick (signals were otherwise empty; this signal makes next tick non-identical)."
+  },
+  "_processed": {
+    "fingerprint": "c5c716a542d12f410846c548fd8c7adf8c3745fe48956354aa6a38b561c5f12f",
+    "processedAt": "2026-07-12T13:18:39Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

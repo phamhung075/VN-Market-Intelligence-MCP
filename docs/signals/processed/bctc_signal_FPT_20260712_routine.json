@@ -1,0 +1,52 @@
+{
+  "ticker": "FPT",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Xuất khẩu phần mềm, dịch vụ CNTT tích hợp hệ thống, viễn thông (FPT Telecom), giáo dục (FPT Education).",
+  "customer": "Doanh nghiệp trong và ngoài nước thuê ngoài phần mềm (Nhật/Mỹ/APAC), thuê bao viễn thông FPT Telecom, sinh viên hệ thống FPT Edu.",
+  "ops": "Biên gộp 34,0%, biên hoạt động 22,0%, LNST 2.476,8 tỷ (biên ròng 19,8%). OCF quý âm -2.847,8 tỷ trong khi NI dương — tỷ lệ OCF/NI=-1,15, dấu hiệu áp lực vốn lưu động cần theo dõi (dữ liệu lịch sử chỉ 2/4 quý nên chưa đủ xác nhận xu hướng, không nâng thành escalation chính thức).",
+  "mgmt": "Chưa đủ dữ liệu kế hoạch-thực tế nhiều năm trong chu kỳ này để chấm điểm quản trị; ROE quý 6,2% (tương đương ~24,7% quy năm) và biên lợi nhuận ổn định phản ánh vận hành có kỷ luật.",
+  "valuation": {
+    "pe": 13.8,
+    "earning_yield_pct": 7.25,
+    "max_deposit_rate_pct": 5,
+    "ey_spread_pct": 2.25,
+    "verdict": "FAIR"
+  },
+  "sector_comparison": {
+    "sector": "Công nghệ",
+    "pe_vs_median": "13.8 vs 17.3 (discount -20%)",
+    "pb_vs_median": "3.6 vs 1.5 (premium +136%)",
+    "roe_vs_median": "28.3% (annualized, sector tool) vs 10.6%"
+  },
+  "kinhdich": {
+    "que": "Quẻ 7 — Sư",
+    "xu_huong": "TRUNG TINH",
+    "khuyen_nghi": "GIU",
+    "do_tin_cay_pct": 37
+  },
+  "esc_gate": {
+    "ESC-1": "FALSE",
+    "ESC-2": "FALSE (imbalance=0%)",
+    "ESC-3": "DATA-COVERAGE-LIMITED (2/4 quarters, guard claimed, signal to ops)",
+    "ESC-4": "FALSE (non_operating_share ~2.0%, threshold 15%)",
+    "ESC-5": "FALSE (no refined units for report_id FPT_2026_Q1)"
+  },
+  "trick_summary": "Không phát hiện dấu hiệu bất thường trong kỳ này — nhưng chỉ 2/6 lượt kiểm tra (footnote, phân khúc) chạy được do thiếu quyền truy cập dữ liệu bảng chi tiết theo dòng trong phiên này; không có tín hiệu giao dịch nội bộ để đối chiếu (dữ liệu nội bộ 90 ngày không đủ).",
+  "trick_confidence": "none",
+  "trick_pass_versions": [
+    "footnote-v1",
+    "segment-v1"
+  ],
+  "data_gap_note": "Passes 1-4 (balance-sheet-v1, pl-v1, cashflow-v1, rpt-v1) skipped this cycle — no row-level bctc_table_rows/report_id-keyed OCR page tool resolvable from this session's tool set; only aggregate get_bctc_full structured_data + sampled prose_sections available.",
+  "as_of": "2026-07-12T21:15:00Z",
+  "slot": "bctc-analyst-slot-3",
+  "_processed": {
+    "fingerprint": "b8b110281418fdf293aea3d619777e78fa49978b7a2c398192f096d538b91e5c",
+    "processedAt": "2026-07-13T06:49:52Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

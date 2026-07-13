@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260712T202717Z",
+    "matched_slots": [
+      "tnb-audit"
+    ],
+    "won_slots": [
+      "tnb-audit"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/tran-ngoc-bau/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 7,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "closed",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "tnb-audit": "cron"
+    },
+    "cadence_minutes": {
+      "tnb-audit": null
+    },
+    "last_fired_timestamp": "2026-07-12T20:26:58.000Z",
+    "last_fired_slots": [
+      "tnb-audit"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "20:15",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 3,
+    "note": "guaranteed tnb-audit daily slot (cron 13 20, last fired 07-07 ~5d ago); legacy mode forced by stale_warning=true; single-slot audit fan-out, no CHEF mutex, gateway sighted"
+  },
+  "priority": "low",
+  "createdAt": "20260712T202717Z",
+  "_processed": {
+    "fingerprint": "4e8df782a36be7f9dab6a88cdaaa5ea67bd5ecd1c3d5c44d3e3c0bb2797dc677",
+    "processedAt": "2026-07-13T06:49:52Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-13T04:28:27Z",
+    "matched_slots": [
+      "chef-intraday",
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "chef-intraday",
+      "alert-commander-market"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 7,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "closed",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "chef-intraday": "cron",
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "chef-intraday": null,
+      "alert-commander-market": null
+    },
+    "last_fired_timestamp": "2026-07-13T04:27:32.000Z",
+    "last_fired_slots": [
+      "chef-intraday",
+      "alert-commander-market"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "04:15",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 7,
+    "note": "Legacy mode forced by prior emit stale_warning=true (isStale short-circuit); adaptive gates 4.3-4.5 skipped, both slots fired on raw cron. chef-intraday (non-guaranteed) fired ALONE — no guaranteed chef in MATCHES so CHEF mutex no-op; published-marker gate (published:chef-intraday:VN-date) dedups downstream if chef already published today (last_fired was 02:25). Standing gaps: cycle_snapshot_promoted=false (regime stays unknown); calendar_status=closed while bootstrap reports VN market open (resolver drift) — neither affects legacy dispatch. Weekday raw-verified Monday (2026-07-13, DoY193 mod7=4)."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-13T04:28:27Z",
+  "_processed": {
+    "fingerprint": "c5c4f9449c0f51190bc6a17a9f145e2de64a690279e141464dcb98481448f3a9",
+    "processedAt": "2026-07-13T06:49:52Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "from": "tran-ngoc-bau",
+  "to": "po",
+  "type": "audit-handoff",
+  "payload": "docs/handoffs/tnb-audit-latest.md",
+  "priority": "high",
+  "createdAt": "2026-07-12T20:13:00Z",
+  "summary": "c107 NEEDS_ATTENTION. Chef-evening dish resumed 07-12 (first since 07-07 FAILED) but self-reported QUALITY:full is SUSPECT on L2 — justified only by carry-proxy+Fed-rate data, the exact basis the c103 auto-cure (chef.md Step 7.5 sub-check(a)) excludes. Gate code re-verified intact/correct in chef.md; cannot confirm from file evidence whether this is execution non-compliance or notebook-write evidence loss without WORK-channel access (MCP-blocked this session, 11th+ such cycle). L3 also gap (no CPI/VIRA), business context absent 7th+ consecutive dish (F9). chef-morning/eod still dormant ~9d — already tracked at PO level (SPIKE-COWORK-GUARANTEED-SLOT-SUPERSEDE-WIRING), not re-escalated. No auto-cure applied pending WORK-channel confirmation.",
+  "findings": [
+    {
+      "id": "F-L2-OVERCLAIM-REGRESSION-0712",
+      "severity": "HIGH",
+      "status": "NEW-SUSPECTED"
+    },
+    {
+      "id": "F9",
+      "severity": "MED",
+      "status": "PERSISTING"
+    },
+    {
+      "id": "F-CHEF-GUARANTEED-SLOT-DORMANCY",
+      "severity": "HIGH",
+      "status": "PERSISTING-TRACKED-ELSEWHERE"
+    },
+    {
+      "id": "F-MCP-SUBAGENT-SYSTEMIC",
+      "severity": "HIGH",
+      "status": "PERSISTING"
+    }
+  ],
+  "_processed": {
+    "fingerprint": "269254f97c43b2589f667728e92e2075006eacdbd25aadb0a5e57581dd8e453c",
+    "processedAt": "2026-07-13T06:49:52Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "id": "bca-datacov-20260712T211500Z",
+  "ts": "2026-07-12T21:15:00Z",
+  "from": "bctc-analyst",
+  "to": "ops",
+  "type": "data-coverage-gap",
+  "summary": "ESC-3 DATA-COVERAGE-LIMITED: FPT Q1-2026 — 2/4 quarters available",
+  "severity": "LOW",
+  "status": "NEW",
+  "payload_ref": null,
+  "payload": {
+    "trigger_id": "ESC-3",
+    "ticker": "FPT",
+    "quarter": "Q1-2026",
+    "quarters_returned": 2,
+    "quarters_required": 4,
+    "root_task": "BCTC-HIST-VPS-BACKFILL",
+    "note": "Multi-period accrual decomposition blocked by data coverage, not tool bug. No Opus deep-dive warranted. Re-check when quarters_returned >= 4. Single-quarter signal: OCF=-2,847.8 ty vs NI=2,476.8 ty (ratio -1.15) — qualitatively flagged in fundamental_validation signal id=9027 as accruals_flag=true, but formal ESC-3 escalation withheld pending sufficient historical coverage.",
+    "guard_key": "esc-datacov:FPT:Q1-2026:ESC-3",
+    "guard_ttl_days": 8
+  },
+  "_processed": {
+    "fingerprint": "16ef9af9449b598a703ab67b9b486472e1e6603d53ca51545f36bdbf90efbf37",
+    "processedAt": "2026-07-13T06:49:52Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

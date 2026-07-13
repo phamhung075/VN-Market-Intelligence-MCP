@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-13T02:26:07Z",
+    "matched_slots": [
+      "chef-intraday"
+    ],
+    "won_slots": [
+      "chef-intraday"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "silent": false,
+    "drift_min": 7,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "closed",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "chef-intraday": "cadence"
+    },
+    "cadence_minutes": {
+      "chef-intraday": 240
+    },
+    "last_fired_timestamp": "2026-07-13T02:25:34.000Z",
+    "last_fired_slots": [
+      "chef-intraday"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "02:15",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 7,
+    "note": "Monday intraday CHEF fire (chef-intraday, 02:15Z=09:15 VN trading hours), cadence-due (last_fired 2026-07-03, 10d stale >> 240m). unified-agent self-gates on convergence — may SILENT-EXIT if no new intraday-worthy signal. calendar_status=closed during a live trading session = persistent calendar/regime-unknown gap (regime=unknown, vol=unknown). emit_pressure_state returned cycle_snapshot_promoted=false + stale_warning=true again → next tick likely downgrades to legacy mode; standing system-auditor/dev-team concern, not a dispatcher fix."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-13T02:26:07Z",
+  "_processed": {
+    "fingerprint": "e2e34bccf7ae726fffa73fa4c420babbf3dfbfd45096675e268e6de6bc621753",
+    "processedAt": "2026-07-13T06:49:52Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

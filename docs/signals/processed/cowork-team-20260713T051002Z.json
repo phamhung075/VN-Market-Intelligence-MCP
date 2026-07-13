@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-13T05:10:02Z",
+    "matched_slots": [
+      "news-scout-sentiment"
+    ],
+    "won_slots": [
+      "news-scout-sentiment"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 7,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "closed",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "news-scout-sentiment": "cadence"
+    },
+    "cadence_minutes": {
+      "news-scout-sentiment": 240
+    },
+    "last_fired_timestamp": "2026-07-13T05:09:21.000Z",
+    "last_fired_slots": [
+      "news-scout-sentiment"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "05:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 7,
+    "note": "adaptive mode (fresh pressure-state not stale, age ~16min<20). news-scout-sentiment cadence-due (240min; last fired 2026-07-03T05:05Z → ~10d elapsed). calendar_status=closed (weekday VN lunch break, not weekend/holiday) → no Step4.3 suppression. CHEF mutex n/a (non-chef). Standing gaps: emit cycle_snapshot_promoted=false (regime stays unknown); this emit set stale_warning=true → next tick falls back to legacy."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-13T05:10:02Z",
+  "_processed": {
+    "fingerprint": "90011c455622ac44d7393fc7c07c6e5a45383c1d9cd33d3bfea886a400ee5d45",
+    "processedAt": "2026-07-13T06:49:52Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
