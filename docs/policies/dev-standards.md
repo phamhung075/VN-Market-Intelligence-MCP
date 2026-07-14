@@ -1,6 +1,6 @@
 # Developer Standards
 
-<!-- size-justification: 140L — unified developer reference: code search tools, test patterns, DDD rules, TypeScript conventions, naming. All read together at sprint start to set context; splitting into tool-guide + test-patterns + naming-rules fragments the unified "how we code" standard. SCRIPT-PERSIST 2026-06-07: Script Persistence section incl. maintenance clause (+15L, user directive). SYSREMAKE-P2-DEVTEAM-BACKLOG-PICKUP-BOUNDED1 2026-07-04: CANONICAL pointer for the dev-team idle-capacity backlog pickup scripts (+11L). -->
+<!-- size-justification: 140L — unified developer reference: code search tools, test patterns, DDD rules, TypeScript conventions, naming. All read together at sprint start to set context; splitting into tool-guide + test-patterns + naming-rules fragments the unified "how we code" standard. SCRIPT-PERSIST 2026-06-07: Script Persistence section incl. maintenance clause (+15L, user directive). SYSREMAKE-P2-DEVTEAM-BACKLOG-PICKUP-BOUNDED1 2026-07-04: CANONICAL pointer for the dev-team idle-capacity backlog pickup scripts (+11L). PUSH-AUTONOMY-1 2026-07-14: Autonomous Push Gate section (+16L, user directive — push on 100% green, no user action, post-push real-data verify task). -->
 
 ## Script Persistence — scripts/, never /tmp
 
@@ -402,3 +402,16 @@ AC: <terse criterion 1> / <terse criterion 2>
 EOF
 )"
 ```
+
+## Push Policy — Autonomous Push Gate
+
+**CANONICAL: PUSH-AUTONOMY-1 (user directive 2026-07-14).** Supersedes any "push only when user asks" / user-gated-push stance — that rule was never written; do NOT resurrect it. Never freeze the pipeline or `head` on "awaiting user push".
+
+1. **Push is autonomous.** `git push origin main` requires NO user authorization when the gate below is green.
+2. **Gate — 100% tests green, RAW:**
+   - supervised cascade complete for the head task (dev commit + QA APPROVE + PO sign-off, each RAW-verified), and
+   - targeted/merge-gate suite: 0 fail — assertions may not be skipped or deleted to reach green, and
+   - pre-push hook (`pnpm --filter vn-market check`) green — never bypass with `--no-verify` / `PRE_PUSH_SKIP_TSC=1`.
+3. **Executor + serialization:** the session holding the chain mutex (dev-team tick) pushes; router may push on direct user instruction. ONE push at a time (fleet-push serialization).
+4. **Post-push CI gate:** RAW-verify CI GREEN on the NEW head SHA (`gh run list --branch main`) — gate id `ci_green_on_subsequent_push`.
+5. **Post-push REAL-DATA verification task (mandatory):** after CI green, po mints a board task `VERIFY-<task-id>-REALDATA` whose verification gate is a RAW-live probe of the SERVING layer with real data (the live tool/endpoint returns correct values) — test-suite green alone does NOT close the loop. If the change touches serving code, the task's precondition is the single-service rebuild+deploy (`docker compose build <svc> && docker compose up -d --no-deps <svc>`), executed by ops per OVERRIDE 2026-07-03 — no user gate.
