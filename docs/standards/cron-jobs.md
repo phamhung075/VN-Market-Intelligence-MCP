@@ -73,6 +73,20 @@ Env override: `CRON_ACCURACY_DIGEST` (default `0 7 * * *`)
 - Env override: `CRON_TA_OHLCV_BACKFILL` (default `30 1 * * 1-5`)
 - Source: `apps/mcp-server/src/scheduler/market-data/taOhlcvBackfillJob.ts`
 
+## Intraday 5-min OHLCV Compaction (Archive-Now)
+
+| Schedule | Job | Task |
+|----------|-----|------|
+| `*/5 * * * *` (24/7, no market-hours gate) | `intraday5mCompactorJob` — compacts `market_prices_history` ticks into 5-min UTC-aligned OHLCV bars in `intraday_ohlcv_5m` (open/high/low/close + MAX(volume) cumulative-to-date convention, same as `daily_ohlcv` + `tick_count`), ALL codes present in the source table (not watchlist-scoped, unlike `ohlcvDailyAggregatorJob`) | ALPHA-S2 |
+
+- **Why:** `market_prices_history` is purged on a rolling ~24h window as a side effect of every `/api/push-prices` write (`pushPricesHandler.ts`), not a fixed nightly job — VN intraday ticks are otherwise unrecoverable once purged. This job compacts them into a permanent 5-min archive before that purge fires.
+- Idempotent full-row `INSERT OR REPLACE` every run (recomputes each bucket from all currently-surviving source ticks) — safe to re-run, gap-tolerant if a cycle is skipped.
+- Zero market-hours dependence by design (contrast `taAlertScanJob`/`vpsProxyWatchdogJob`, which correctly DO restrict to market hours for their own domains) — an empty source table on weekends/holidays is a no-op, not an error.
+- Startup one-shot call wired in `startScheduler.ts` doubles as the backfill of ticks surviving at deploy time — no separate migration script.
+- Env override: `CRON_INTRADAY_5M_COMPACTOR` (default `*/5 * * * *`)
+- Source: `apps/mcp-server/src/scheduler/market-data/intraday5mCompactorJob.ts`
+- Design SSOT: `docs/architecture-briefs/2026-07-14-alpha-s2-tick-downsample-5min.md`
+
 ## Analysis Ownership (dedup policy)
 
 | Domain | Owner | Verifier | Notes |

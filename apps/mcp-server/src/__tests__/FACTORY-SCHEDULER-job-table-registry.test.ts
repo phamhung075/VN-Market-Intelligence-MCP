@@ -9,13 +9,13 @@ Bun.env["DB_PATH"] = ":memory:";
  * WAL-checkpoint escalation closure (walEscalation.ts).
  *
  * Groups:
- *   A — buildJobTable() shape: 58 entries, unique names, cron keys resolve, options valid.
+ *   A — buildJobTable() shape: 59 entries, unique names, cron keys resolve, options valid.
  *   B — registerJobTable(): the single generic loop registers every entry via
  *       scheduleCron(j.cron, () => jobRunRepo.wrapRun(j.name, j.runner), j.options).
  *   C — registerBespokeJobs(): exactly 22 individual scheduleCron(...) call sites fire,
  *       covering the CRONS keys that do NOT go through the plain wrapRun envelope.
  *   D — "scheduler boot" smoke: calling BOTH registration functions together (as
- *       startScheduler.ts does) yields exactly 80 total scheduleCron registrations with
+ *       startScheduler.ts does) yields exactly 81 total scheduleCron registrations with
  *       no duplicate cron keys — the full pre-split registration count, reproduced exactly.
  *   E — walEscalation.ts: createWalEscalateFn() appends a WAL_ESCALATION signal_queue row.
  *
@@ -25,6 +25,13 @@ Bun.env["DB_PATH"] = ":memory:";
  * new entry, not a duplicate registration (verified: `bctcExtractReconcileJob`
  * appears exactly once in schedulerJobTable.ts). Group C (bespoke, 22) is
  * unaffected — the new job goes through the generic loop, not registerBespokeJobs().
+ *
+ * BUMP 2026-07-15 (ALPHA-S2-SUB3-DOCS-CRON): 58→59 (Group A/B), 80→81 (Group D).
+ * commit de8c49d67 (ALPHA-S2-SUB2-JOB-CRON) added intraday5mCompactorJob.ts's
+ * `intraday5mCompactor` entry to buildJobTable()'s generic wrapRun table
+ * (schedulerJobTable.ts) — a single legitimate new entry, not a duplicate
+ * registration. Group C (bespoke, 22) is unaffected — the new job goes through
+ * the generic loop, not registerBespokeJobs().
  */
 
 import { describe, it, expect, mock, afterEach } from "bun:test";
@@ -57,11 +64,11 @@ const FAKE_DB = {} as Database;
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("FACTORY-SCHEDULER-job-table-registry — Group A: buildJobTable() shape", () => {
-  it("returns exactly 58 entries", async () => {
+  it("returns exactly 59 entries", async () => {
     const { buildJobTable } = await import("../scheduler/schedulerJobTable.js");
     const jobRunRepo = makeStubJobRunRepo();
     const table = buildJobTable({ db: FAKE_DB, jobRunRepo });
-    expect(table).toHaveLength(58);
+    expect(table).toHaveLength(59);
   });
 
   it("every entry has a unique name", async () => {
@@ -164,14 +171,14 @@ function installScheduleCronSpy(): { calls: CapturedCall[]; restore: () => void 
 }
 
 describe("FACTORY-SCHEDULER-job-table-registry — Group B: registerJobTable() generic loop", () => {
-  it("registers all 58 buildJobTable() entries via scheduleCron(j.cron, ..., j.options)", async () => {
+  it("registers all 59 buildJobTable() entries via scheduleCron(j.cron, ..., j.options)", async () => {
     const { calls } = installScheduleCronSpy();
     const { buildJobTable, registerJobTable } = await import("../scheduler/schedulerJobTable.js");
     const jobRunRepo = makeStubJobRunRepo();
     const table = buildJobTable({ db: FAKE_DB, jobRunRepo });
     registerJobTable(table, jobRunRepo);
 
-    expect(calls).toHaveLength(58);
+    expect(calls).toHaveLength(59);
     // Every registered cron expression corresponds 1:1 to a JOB_TABLE entry's cron.
     const expectedCrons = table.map((j) => j.cron).sort();
     const actualCrons = calls.map((c) => c.cron).sort();
@@ -230,7 +237,7 @@ describe("FACTORY-SCHEDULER-job-table-registry — Group C: registerBespokeJobs(
 });
 
 describe("FACTORY-SCHEDULER-job-table-registry — Group D: scheduler-boot smoke (registerJobTable + registerBespokeJobs together)", () => {
-  it("registers exactly 80 total scheduleCron calls — reproduces the pre-split registration count exactly", async () => {
+  it("registers exactly 81 total scheduleCron calls — reproduces the pre-split registration count exactly", async () => {
     // NOTE: cron EXPRESSION VALUES are not all unique across the 80 registrations (e.g.
     // CRONS.commodityTrackerRefresh intentionally shares '0 6 * * *' with
     // CRONS.macroIndicatorRefresh — kept as separate job registrations for independent
@@ -244,7 +251,7 @@ describe("FACTORY-SCHEDULER-job-table-registry — Group D: scheduler-boot smoke
     registerJobTable(buildJobTable(ctx), jobRunRepo);
     registerBespokeJobs(ctx);
 
-    expect(calls).toHaveLength(80);
+    expect(calls).toHaveLength(81);
   });
 });
 

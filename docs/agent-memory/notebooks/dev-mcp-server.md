@@ -1,5 +1,19 @@
 # dev-mcp-server -- Notebook
 
+## 2026-07-15 — ALPHA-S2-SUB3-DOCS-CRON (relay dev-hop, sequential 3/5) → returned to router
+
+**Session:** 69b0312e-df43-43a9-9e0b-bddf66d374e3 (router umbrella-chain relay `task:ALPHA-S2-TICK-DOWNSAMPLE-5MIN`; architect brief `docs/architecture-briefs/2026-07-14-alpha-s2-tick-downsample-5min.md` §8 AC-7/§9; SUB1-DDL `392c17f00` + SUB2-JOB-CRON `de8c49d67` already landed)
+
+Two parts, per dispatch: (1) reconciled the `FACTORY-SCHEDULER-job-table-registry.test.ts` hardcoded guard-rail counts, which SUB2's legitimate new `intraday5mCompactor` job-table entry deliberately moved out of sync — RAW-confirmed the pre-edit RED state first (`bun test` → exactly 3 failures, `toHaveLength(58)`→received 59 ×2 + `toHaveLength(80)`→received 81, matching the dispatch's predicted line numbers exactly), then bumped Group A (line 64, 58→59), Group B (line 174, 58→59), Group D (line 247, 80→81), updated the two `it()` descriptions containing the stale numbers, and appended a `BUMP 2026-07-15` note to the file's header docstring (same convention as the existing `BUMP 2026-07-10` note for the prior `bctcExtractReconcileJob` addition) — logic/schema untouched, purely the intended acknowledgement of SUB2's new entry. (2) Documented the new `intraday5mCompactor` cron in all 3 places the brief's AC-7 names: `docs/data/system-map.json` `.project.microservices[id=mcp-server].crons` (66→67, new entry after `walCheckpoint`), `docs/data/cron-registry.json` `.jobs[]` (new entry appended) + `.schedulerFileCount` (67 — corrects a pre-existing off-by-one drift against the file's own `.jobs[].length` invariant found while touching this row: field said 65, array was already 66 before my addition), and a new `## Intraday 5-min OHLCV Compaction (Archive-Now)` section in `docs/standards/cron-jobs.md` (same table+bullets+env-override+source format as the adjacent `taOhlcvBackfillJob` section).
+
+Explicitly did NOT hand-edit `docs/data/project-stats.json`'s `cronJobCount` — confirmed via `bun scripts/gen-project-stats.ts --dry-run` that the generator's own `cron.schedule()` call-site count is unaffected (stays 2; SUB2 registered via `buildJobTable()`→`scheduleCron()`, not a literal `cron.schedule()` call-site) and `toolCount` (183) already matches the live registry — no generator run needed, file left untouched per dispatch instruction.
+
+Verified: `bun test src/__tests__/FACTORY-SCHEDULER-job-table-registry.test.ts` → 15 pass / 0 fail (was 12 pass / 3 fail pre-edit). `pnpm --filter vn-market check` (`bun tsc --noEmit`) clean, zero output, exit 0. All 3 edited docs re-validated with `jq -e .` (system-map.json, cron-registry.json) — valid JSON.
+
+Did not advance `.head`/`.task_board` or touch `task:ALPHA-S2-TICK-DOWNSAMPLE-5MIN` — router owns relay advancement. Committed on `main` (explicit pathspec: the test file + `docs/data/system-map.json` + `docs/data/cron-registry.json` + `docs/standards/cron-jobs.md` + this notebook + the sprint decision-journal entry), not pushed (router's cadence — router relays SUB2+SUB3 together after RAW-verify).
+
+Zone health: registry test green (15/15), tsc clean, all 3 doc targets from brief AC-7 updated consistently, `project-stats.json` correctly left untouched | HEALTHY.
+
 ## 2026-07-14 — ALPHA-S2-SUB2-JOB-CRON (relay dev-hop, sequential 2/5) → returned to router
 
 **Session:** 69b0312e-df43-43a9-9e0b-bddf66d374e3 (router umbrella-chain relay `task:ALPHA-S2-TICK-DOWNSAMPLE-5MIN`; architect brief `docs/architecture-briefs/2026-07-14-alpha-s2-tick-downsample-5min.md` §4-6, SUB1-DDL already landed at commit `392c17f00`)

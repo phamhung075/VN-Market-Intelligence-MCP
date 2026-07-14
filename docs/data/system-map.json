@@ -508,6 +508,11 @@
             "desc": "SQLite WAL checkpoint every 30 min"
           },
           {
+            "name": "intraday5mCompactor",
+            "schedule": "*/5 * * * *",
+            "desc": "Compacts market_prices_history ticks into intraday_ohlcv_5m 5-min bars, ALL codes, no market-hours gate — runs before the rolling 24h purge deletes surviving ticks (ALPHA-S2)"
+          },
+          {
             "name": "systemAuditTier1",
             "schedule": "*/30 * * * *",
             "desc": "system-auditor Tier-1: container + health ping every 30 min"
