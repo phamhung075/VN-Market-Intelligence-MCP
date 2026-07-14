@@ -86,6 +86,35 @@ export function initMarketDataTables(db: Database): void {
       ON market_prices_history(code, fetched_at DESC);
   `);
 
+  // ── Intraday OHLCV 5-min bars (ALPHA-S2-TICK-DOWNSAMPLE-5MIN, SUB1 — DDL only) ──
+  // Archive-now compaction target for market_prices_history ticks, which are
+  // purged on a rolling ~24h window by pushPricesHandler.ts on every VPS push
+  // (see docs/architecture-briefs/2026-07-14-alpha-s2-tick-downsample-5min.md §1.1).
+  // Populated by the (separate, SUB2) intraday5mCompactorJob — this subtask only
+  // creates the table + index, idempotently, co-located with its source table.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS intraday_ohlcv_5m (
+      code         TEXT NOT NULL,
+      bucket_ts    TEXT NOT NULL,   -- ISO-8601 UTC, 5-min-aligned bucket START
+                                     -- e.g. '2026-07-14T02:35:00.000Z'
+      open         REAL NOT NULL,
+      high         REAL NOT NULL,
+      low          REAL NOT NULL,
+      close        REAL NOT NULL,
+      volume       REAL NOT NULL DEFAULT 0,  -- SAME cumulative-to-date convention as daily_ohlcv.volume
+                                              -- (MAX(volume) of ticks in the bucket) — NOT a per-bar
+                                              -- delta. Consumers wanting delta-volume derive it at read
+                                              -- time via LAG(volume) OVER (PARTITION BY code ORDER BY
+                                              -- bucket_ts). No new volume semantics invented.
+      tick_count   INTEGER NOT NULL DEFAULT 0,  -- # source ticks compacted into this bar — gap/sparsity
+                                                 -- observability, NOT used for correctness
+      compacted_at TEXT NOT NULL             -- last (re)write timestamp
+      , PRIMARY KEY (code, bucket_ts)
+    );
+    CREATE INDEX IF NOT EXISTS idx_intraday_5m_code_bucket
+      ON intraday_ohlcv_5m(code, bucket_ts DESC);
+  `);
+
   // ── Daily OHLCV — MERGED DDL (both definitions unified) ──────────────────
   // Original definition 1 (line ~154): base columns only
   // Original definition 2 (line ~1122): adds foreign_buy_vol, foreign_sell_vol,

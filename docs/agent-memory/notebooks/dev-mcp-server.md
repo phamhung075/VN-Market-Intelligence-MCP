@@ -1,5 +1,17 @@
 # dev-mcp-server -- Notebook
 
+## 2026-07-14 — ALPHA-S2-SUB1-DDL (relay dev-hop, DDL-only) → returned to router
+
+**Session:** 69b0312e-df43-43a9-9e0b-bddf66d374e3 (router umbrella-chain relay `task:ALPHA-S2-TICK-DOWNSAMPLE-5MIN`; architect brief `docs/architecture-briefs/2026-07-14-alpha-s2-tick-downsample-5min.md` §3, USER-GO, supervised=false)
+
+Added `intraday_ohlcv_5m` table + `idx_intraday_5m_code_bucket` index to `schema-market-data.ts`'s `initMarketDataTables()`, immediately after `market_prices_history` (co-located with source table, mirrors `daily_ohlcv` placement). DDL verbatim from brief §3: PK `(code, bucket_ts)`, OHLC `REAL NOT NULL`, `volume REAL NOT NULL DEFAULT 0` with the same cumulative-to-date MAX(volume) convention as `daily_ohlcv.volume` (explanatory comment carried over, not a per-bar delta), `tick_count INTEGER NOT NULL DEFAULT 0` (observability only), `compacted_at TEXT NOT NULL`. Both statements `IF NOT EXISTS` — idempotent. Strictly SUB1 scope: did NOT touch `intraday5mCompactorJob.ts`, `cronConfig.ts`, `schedulerJobTable.ts`, `startScheduler.ts`, `pushPricesHandler.ts`, or any MCP tool (all later subtasks per the router's explicit DO-NOT list).
+
+Verified: `pnpm --filter vn-market check` (`bun tsc --noEmit`) clean, zero output. Diff-reviewed: exactly the 29-line DDL block added, nothing else touched in the file.
+
+Did not advance `.head`/`.task_board` or touch `task:ALPHA-S2-TICK-DOWNSAMPLE-5MIN` — router owns relay advancement per this dispatch's explicit constraint. Committed on `main` (explicit pathspec: `schema-market-data.ts` + this notebook + the sprint decision-journal entry), not pushed (router's cadence).
+
+Zone health: tsc clean, DDL matches brief §3 verbatim (columns/PK/index/volume-convention comment confirmed), zero deviation | HEALTHY.
+
 ## 2026-07-13 — ALPHA-S1-OHLCV-BACKFILL-DONE-BUG (wave-1, P1) → REVIEW
 
 **Session:** 69b0312e-df43-43a9-9e0b-bddf66d374e3 (dev-team dispatch; architect design `docs/handoffs/ALPHA-S1-architect-design.md` §3, fully implemented as specified)
