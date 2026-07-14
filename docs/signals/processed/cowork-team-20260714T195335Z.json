@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "2026-07-14T19:53:35.623Z",
+  "payload": {
+    "fire_time": "2026-07-14T19:53:35.623Z",
+    "matched_slots": [
+      "chef-evening"
+    ],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": false,
+    "drift_min": 4,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "closed",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "suppressed_dedup": [
+      "chef-evening"
+    ],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "chef-evening": "cron"
+    },
+    "cadence_minutes": {
+      "chef-evening": null
+    },
+    "last_fired_timestamp": "2026-07-14T19:48:44.480Z",
+    "last_fired_slots": [],
+    "last_fired_write_errors": null,
+    "classification": "SUPPRESSED_DEDUP",
+    "reason": "already_fired_this_nominal_tick",
+    "nominal_tick": "19:45",
+    "leader_lock": "acquired_then_released",
+    "dev_head": "unknown",
+    "devq": null,
+    "signal_backlog": 0,
+    "preflight_verdict": "WORK",
+    "first_delivery_agent": "ade181a80ab44eb13",
+    "first_delivery_result": "evening_dish_published_MARKET",
+    "note": "Same-nominal-tick redundant re-delivery: preflight returned WORK for tick 19:45Z matching chef-evening AGAIN, but chef-evening already fired this exact nominal tick at 19:48:44.480Z (agent ade181a80ab44eb13). Dispatcher applied last_fired dedup (last_fired >= nominal_tick_start) and SUPPRESSED the re-spawn — per memory feedback_cowork_matcher_legacy_no_lastfired_dedup, the legacy matcher cron-matches without last_fired dedup so this guard is the dispatcher's responsibility. Confirmed correct: first agent COMPLETED with evening dish PUBLISHED to MARKET (2 clusters energy/real-estate, VN-date 2026-07-15, quality degraded L3 CPI gap). Re-spawn would have raced the published:chef-evening:2026-07-15 marker (best case no-op, worst case notebook-write race / double-publish). one-dish-per-tick invariant preserved. Election lock re-acquired by preflight then released. NOTE for system-auditor/dev-team: two dispatcher firings landed in the same 19:45Z nominal window (first at ~19:45Z ERROR-fallback, second at ~19:49Z) — matcher lacks last_fired dedup; consider adding last_fired>=nominal_tick suppression to cowork-match-slots.js so the dispatcher does not depend solely on the published-marker backstop."
+  },
+  "_processed": {
+    "fingerprint": "35677e87612eb3602c7173f74f7f813d45e2066eeb178d04b356cad019ad863f",
+    "processedAt": "2026-07-14T23:29:18Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "2026-07-14T04:24:18.347Z",
+  "payload": {
+    "tick": "2026-07-14T04:15Z",
+    "pressure_mode": "legacy",
+    "calendar_status": "open",
+    "slots": [
+      "chef-intraday",
+      "alert-commander-market"
+    ],
+    "guaranteed": false,
+    "due_reasons": "chef-intraday cadence (last 02:23Z >60m); alert-commander-market cron-match */15",
+    "calendar_suppression": "skipped (legacy mode)",
+    "freshness_gate": "skipped (legacy mode; also neither is a gatherer slot)",
+    "chef_mutex_applied": false,
+    "chef_mutex_reason": "single non-guaranteed chef slot alone (no guaranteed chef in MATCHES)",
+    "tick_snapshot": "skipped (both agents rc=1, no cycle-snapshot FILE ref)",
+    "collision_guard": "none (2 distinct agents: unified-agent, alert-commander)",
+    "slot_claim": {
+      "claimed": true,
+      "count": 2,
+      "ttl": 180
+    },
+    "last_fired": "2026-07-14T04:23:44.868Z",
+    "emit": {
+      "emitted_at": "2026-07-14T04:24:01.478Z",
+      "cycle_snapshot_promoted": false
+    }
+  },
+  "_processed": {
+    "fingerprint": "3d1d9e7d9862bc5c6d12cfbbd6be6c2d5affd7dba723cb3226bb3ad87fffab08",
+    "processedAt": "2026-07-14T23:29:18Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

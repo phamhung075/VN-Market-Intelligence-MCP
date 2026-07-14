@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-14T21:10:48.003Z",
+    "matched_slots": [
+      "bctc-analyst-slot-3"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-3"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 7,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "closed",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "bctc-analyst-slot-3": "cadence"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-3": 240
+    },
+    "last_fired_timestamp": "2026-07-14T21:10:15.780Z",
+    "last_fired_slots": [
+      "bctc-analyst-slot-3"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "21:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 6,
+    "note": "daily bctc-analyst-slot-3 off-market slot (cron 0 21 * * *, policy bctc-offmarket, cadence 240min); last_fired 2026-07-13T21:08Z (yesterday) < nominal 21:00:00Z so no same-tick dedup; adaptive mode (pressure fresh 14min, stale_warning=false at match time); calendar=closed (Tue after-hours, not holiday/weekend → no suppression); non-chef slot → CHEF mutex no-op; snapshot build skipped (flow reads no cycle-snapshot file); spawned bctc-analyst affff747 background."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-14T21:10:48.003Z",
+  "_processed": {
+    "fingerprint": "d2148231a8ed2671082b7cd9aa3dda7edc35cdbe438949b0a4138978074488d6",
+    "processedAt": "2026-07-14T23:29:18Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

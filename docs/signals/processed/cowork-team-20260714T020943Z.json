@@ -1,0 +1,51 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "2026-07-14T02:09:43.625Z",
+  "payload": {
+    "verdict": "WORK",
+    "tick": "2026-07-14T02:00Z",
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "slots_matched": [
+      "alert-commander-market"
+    ],
+    "slots_spawned": [
+      "alert-commander-market"
+    ],
+    "agents": {
+      "alert-commander-market": "alert-commander"
+    },
+    "guaranteed": {
+      "alert-commander-market": false
+    },
+    "due_reasons": {
+      "alert-commander-market": "cadence"
+    },
+    "cadence_minutes": {
+      "alert-commander-market": 240
+    },
+    "calendar_suppression": "not applied (open not in {holiday,weekend})",
+    "freshness_gate": "not applied (alert-commander-market is not a gatherer slot)",
+    "chef_mutex_applied": false,
+    "tick_snapshot": "skipped (cycle-snapshot FILE ref rc=1; alert-commander uses live get_alerts/get_cycle_bootstrap)",
+    "collision_guard": "none (single agent)",
+    "slot_claim": {
+      "alert-commander-market": "claimed:true, ttl=180s"
+    },
+    "last_fired": "2026-07-14T02:09:07.858Z",
+    "emit": {
+      "emitted_at": "2026-07-14T02:09:21.706Z",
+      "cycle_snapshot_promoted": false
+    },
+    "note": "Single-slot market-open fan-out. alert-commander-market first fire since VN market reopened (last_fired 2026-07-13T08:26:55Z, cadence 240min due). ADAPTIVE mode (pressure emitted_at 01:52:28Z age ~15.5min<20min, stale_warning=false). Gates: calendar suppression not applied (open not in {holiday,weekend}); freshness N/A (alert-commander-market not a gatherer slot); chef_mutex N/A. tick-snapshot SKIP (alert-commander flow has no cycle-snapshot FILE ref, rc=1). collision none (single agent). STANDING: emit cycle_snapshot_promoted=false persists; last_regime/last_volatility pinned unknown; alert-commander notebook Bash-binding gap (agent self-escalated to @po). Not dispatcher fixes."
+  },
+  "_processed": {
+    "fingerprint": "8a3e19c58dd907d2e8fe4f6b8458fb2d3c47dcf72824fc35499ec5fcb958a3be",
+    "processedAt": "2026-07-14T23:29:18Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

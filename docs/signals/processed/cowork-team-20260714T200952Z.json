@@ -1,0 +1,38 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "2026-07-14T20:09:53.051Z",
+  "payload": {
+    "tick": "2026-07-14T20:00Z",
+    "preflight_verdict": "WORK",
+    "drift_min": 7,
+    "pressure_mode": "legacy",
+    "calendar_status": "closed",
+    "matched": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "won": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "chef_mutex_applied": false,
+    "classification": "FIRE",
+    "note": "4-hourly off-hours boundary 20:00Z; all 3 slots last_fired 04:08Z (prior boundary) < nominal 20:00:00Z so no same-tick dedup; legacy mode (stale_warning=true); zero chef slots in match set."
+  },
+  "_processed": {
+    "fingerprint": "014af832f929158401751214edca90e6381ffa09c7021800b9d6b40b72fb8164",
+    "processedAt": "2026-07-14T23:29:18Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

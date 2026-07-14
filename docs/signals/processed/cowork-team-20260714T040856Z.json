@@ -1,0 +1,46 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "2026-07-14T04:08:56.972Z",
+  "payload": {
+    "tick": "2026-07-14T04:00Z",
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "slots_matched": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "slots_spawned": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "guaranteed": false,
+    "due_reasons": "cadence (0 */4 batch)",
+    "calendar_suppression": "not applied (open not in {holiday,weekend})",
+    "freshness_gate": "not applied (AND-gate fails: signal_backlog=5 != 0, calendar=open)",
+    "chef_mutex_applied": false,
+    "tick_snapshot": "skipped (all 3 agents rc=1, no cycle-snapshot FILE ref)",
+    "collision_guard": "none (3 distinct agents)",
+    "slot_claim": {
+      "claimed": true,
+      "ttl_seconds": 180,
+      "count": 3
+    },
+    "last_fired": "2026-07-14T04:08:27.047Z",
+    "emit": {
+      "emitted_at": "2026-07-14T04:08:43.619Z",
+      "cycle_snapshot_promoted": false,
+      "stale_warning": true
+    }
+  },
+  "_processed": {
+    "fingerprint": "6821b0455019be9dce578c6d12dd15e2e4ac08c9ff2508e865bb9668021be9c7",
+    "processedAt": "2026-07-14T23:29:18Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "2026-07-14T02:38:49.574Z",
+  "payload": {
+    "verdict": "WORK",
+    "tick": "2026-07-14T02:30Z",
+    "pressure_mode": "legacy",
+    "calendar_status": "open",
+    "slots_matched": [
+      "alert-commander-market"
+    ],
+    "slots_spawned": [
+      "alert-commander-market"
+    ],
+    "guaranteed": {
+      "alert-commander-market": false
+    },
+    "due_reasons": {
+      "alert-commander-market": "cron-match"
+    },
+    "calendar_suppression": "skipped (legacy mode)",
+    "freshness_gate": "skipped (legacy mode; also not a gatherer slot)",
+    "chef_mutex_applied": false,
+    "tick_snapshot": "skipped (alert-commander flow has no cycle-snapshot FILE ref, rc=1)",
+    "collision_guard": "none (single agent)",
+    "slot_claim": {
+      "claimed": true,
+      "ttl_seconds": 180
+    },
+    "last_fired": "2026-07-14T02:38:18.488Z",
+    "emit": {
+      "emitted_at": "2026-07-14T02:38:35.669Z",
+      "cycle_snapshot_promoted": false,
+      "stale_warning": false
+    },
+    "note": "alert-commander-market cron-match fire during VN market-open. Mode=LEGACY (decision-time pressure-state stale_warning:true -> isStale -> Steps 4.3-4.5 suppression skipped, adaptive-only). Slot not gatherer/chef so suppression would not have applied in adaptive either; outcome identical. tick-snapshot skipped (alert-commander rc=1, live get_alerts). Standing: stale_warning oscillates (true at 02:30 decision, cleared at 02:38 emit); last_regime/vol pinned unknown -> dev-team/system-auditor."
+  },
+  "_processed": {
+    "fingerprint": "e4d7a080696e57bb94678316043a61391d68b0213ad3fefc5d1fab6734a0f52d",
+    "processedAt": "2026-07-14T23:29:18Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

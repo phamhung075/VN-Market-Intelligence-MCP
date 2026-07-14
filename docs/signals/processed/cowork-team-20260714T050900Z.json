@@ -1,0 +1,43 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "2026-07-14T05:09:00.633Z",
+  "payload": {
+    "tick_id": "2026-07-14T05:00:00Z",
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "slots": [
+      {
+        "slot_id": "news-scout-sentiment",
+        "agent": "news-scout",
+        "guaranteed": false
+      }
+    ],
+    "due_reasons": "news-scout-sentiment cadence (last 2026-07-13T05:09Z >60m)",
+    "calendar_suppression": "none (calendar=open, not holiday/weekend)",
+    "freshness_gate": "none (gatherer slot; last_regime=unknown but signal_backlog=5!=0 and calendar=open) — AND-gate false",
+    "chef_mutex_applied": false,
+    "chef_mutex_reason": "not a chef slot",
+    "tick_snapshot": "skipped (news-scout flow rc=1, no cycle-snapshot FILE ref)",
+    "collision_guard": "none (1 slot, 1 agent)",
+    "slot_claim": {
+      "claimed": true,
+      "count": 1,
+      "ttl": 180
+    },
+    "last_fired": "2026-07-14T05:08:34.833Z",
+    "emit": {
+      "emitted_at": "2026-07-14T05:08:46.908Z",
+      "cycle_snapshot_promoted": false,
+      "stale_warning": true
+    }
+  },
+  "_processed": {
+    "fingerprint": "3dbcbf0f4a53da77a9c8a198d9e5f40abb39a7b9e21d125c8b633a5590d467f4",
+    "processedAt": "2026-07-14T23:29:18Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

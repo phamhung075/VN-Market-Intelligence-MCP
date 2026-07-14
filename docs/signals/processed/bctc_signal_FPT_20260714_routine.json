@@ -3,30 +3,22 @@
   "signal_type": "bctc_signal",
   "quarter": "Q1-2026",
   "mode": "routine",
-  "product": "IT services, software exports, telecom (FPT Telecom), education (FPT Edu)",
-  "customer": "Enterprise IT buyers (VN + offshore), SME telecom subscribers",
-  "ops": "Gross margin 34.0%, operating margin 22.0%; NI 2,476.8 ty (19.8% margin), ROE 6.17%/quarter",
-  "mgmt": "Byte-identical re-verify across 8 consecutive cycles since 2026-07-04 — no restatements, no data drift",
-  "valuation": {
-    "pe": 13.8,
-    "pb": 3.6,
-    "ey_pct": 7.25,
-    "ey_spread_pp": 2.25,
-    "verdict": "FAIR"
-  },
-  "escalation": {
-    "esc2_balance_sheet": "PASS (imbalance 0%)",
-    "esc3_status": "DATA-COVERAGE-LIMITED",
-    "esc3_guard_key": "esc-datacov:FPT:Q1-2026:ESC-3",
-    "esc3_guard_held": true,
-    "esc4_non_operating_share_pct": 2.0,
-    "esc4_result": false,
-    "esc5_result": false
-  },
-  "trick_summary": null,
-  "trick_confidence": "none",
-  "confidence_pct": 81,
-  "kinhdich": "Que 24 Phuc THUAN LOI GIU 100%",
-  "sourced_at": "2026-07-14T00:15:00Z",
-  "slot": "bctc-analyst-slot-4"
+  "beat_miss": null,
+  "product": "IT services, software exports, telecom (FPT Telecom), education (FPT Education)",
+  "customer": "Enterprise IT buyers (VN + offshore), SME telecom subscribers, tuition-paying students",
+  "ops": "Gross margin 34.0% / operating margin 22.0% ổn định; ROE quý 6.17% (28.3% sector-tool annualized, trên median ngành 10.6%); EY spread +2.25pp (FAIR) so với lãi suất tiền gửi 5%",
+  "mgmt": "Báo cáo Q1-2026 nộp đúng hạn (24/05/2026); không có giao dịch nội bộ đáng ngờ 30 ngày qua; B/S cân đối 0% lệch (tài sản = nợ + VCSH khớp chính xác)",
+  "esc3_status": "DATA-COVERAGE-LIMITED",
+  "coverage_guard_key": "esc-datacov:FPT:Q1-2026:ESC-3",
+  "coverage_guard_held": true,
+  "kinhdich_note": "Chuyển từ Quẻ 24 Phục (THUẬN LỢI, 100%) sang Quẻ 2 Khôn (TRUNG TÍNH, GIU, 38%) trong chu kỳ này — nền tảng tài chính không đổi, tín hiệu thị trường trung tính hơn",
+  "generated_at": "2026-07-14T21:15:00Z",
+  "generated_by": "bctc-analyst",
+  "slot": "bctc-analyst-slot-3",
+  "_processed": {
+    "fingerprint": "c46686de3764366b18df9138af1ea8485b481cc162caf0334a423eafdac77f77",
+    "processedAt": "2026-07-14T23:29:18Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

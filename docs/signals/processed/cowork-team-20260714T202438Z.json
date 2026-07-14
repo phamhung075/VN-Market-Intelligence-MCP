@@ -1,0 +1,33 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "2026-07-14T20:24:38.490Z",
+  "payload": {
+    "tick": "2026-07-14T20:15Z",
+    "nominal_tick": "2026-07-14T20:15:00Z",
+    "preflight_verdict": "WORK",
+    "drift_min": 7,
+    "pressure_mode": "legacy",
+    "calendar_status": "closed",
+    "chef_mutex_applied": false,
+    "classification": "FIRE",
+    "matched": [
+      "tnb-audit"
+    ],
+    "won": [
+      "tnb-audit"
+    ],
+    "spawned": [
+      "docs/agents/tran-ngoc-bau/flow/main.md"
+    ],
+    "note": "daily tnb-audit guaranteed slot (cron 13 20 * * *); last_fired 2026-07-13T20:23Z (yesterday) < nominal 20:15:00Z so no same-tick dedup; legacy mode (stale_warning=true); zero chef slots in match set → mutex no-op."
+  },
+  "_processed": {
+    "fingerprint": "fe3c6609a4f56bc425155ef17062d151f99aaedef26c065edf535c5187a79a84",
+    "processedAt": "2026-07-14T23:29:18Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

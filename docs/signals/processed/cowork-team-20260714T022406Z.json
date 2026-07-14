@@ -1,0 +1,50 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "2026-07-14T02:24:06.390Z",
+  "payload": {
+    "verdict": "WORK",
+    "tick": "2026-07-14T02:15Z",
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "slots_matched": [
+      "chef-intraday"
+    ],
+    "slots_spawned": [
+      "chef-intraday"
+    ],
+    "guaranteed": {
+      "chef-intraday": false
+    },
+    "due_reasons": {
+      "chef-intraday": "cadence"
+    },
+    "cadence_minutes": {
+      "chef-intraday": 60
+    },
+    "calendar_suppression": "not applied (open not in {holiday,weekend})",
+    "freshness_gate": "not applied (not a gatherer slot)",
+    "chef_mutex_applied": false,
+    "tick_snapshot": "skipped (unified-agent flow has no cycle-snapshot FILE ref, rc=1)",
+    "collision_guard": "none (single agent)",
+    "slot_claim": {
+      "claimed": true,
+      "ttl_seconds": 180
+    },
+    "last_fired": "2026-07-14T02:23:33.245Z",
+    "emit": {
+      "emitted_at": "2026-07-14T02:23:47.224Z",
+      "cycle_snapshot_promoted": false,
+      "stale_warning": true
+    },
+    "note": "chef-intraday intraday CHEF fire during VN market-open. CHEF mutex not applied (single non-guaranteed chef slot; mutex requires both guaranteed+non-guaranteed present). tick-snapshot skipped (unified-agent flow rc=1, uses live MCP not pre-built file). Standing: emit cycle_snapshot_promoted:false + stale_warning oscillates true; last_regime/vol pinned unknown -> dev-team/system-auditor. CHEF publishes to MARKET only if convergence gate met (own responsibility)."
+  },
+  "_processed": {
+    "fingerprint": "788ce5356463619e103cdc958704ef4408fd3adc6c26330e393b4974ecda4053",
+    "processedAt": "2026-07-14T23:29:18Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

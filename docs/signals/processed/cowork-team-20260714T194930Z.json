@@ -1,0 +1,57 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "2026-07-14T19:49:30.648Z",
+  "payload": {
+    "fire_time": "2026-07-14T19:49:30.648Z",
+    "matched_slots": [
+      "chef-evening"
+    ],
+    "won_slots": [
+      "chef-evening"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "silent": false,
+    "drift_min": 1,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "closed",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "chef-evening": "cron"
+    },
+    "cadence_minutes": {
+      "chef-evening": null
+    },
+    "last_fired_timestamp": "2026-07-14T19:48:44.480Z",
+    "last_fired_slots": [
+      "chef-evening"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "19:45",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": null,
+    "signal_backlog": 0,
+    "preflight_verdict": "ERROR",
+    "fallback_reason": "presence_heartbeat_expired_dormant_session",
+    "note": "ERROR-fallback path: preflight returned ERROR (presence heartbeat expired after ~14h dormant session). Ran full inline pseudocode Steps 0a-6: 0 NEW signals, presence re-registered fresh, fire-election WON tick 19:45Z. Legacy mode (pressure-state ~14h stale by age; stale_warning was false but emitted_at>20min). Single guaranteed chef-evening matched; CHEF mutex 4.5c computed file-direct = no-op (no chef-intraday present). Off-market weekday close: VN-Index 1806.63 +0.34%, HOSE turnover 14262bn -34.6%. emit re-set stale_warning:true (standing adaptive<->legacy oscillation, system-auditor concern)."
+  },
+  "_processed": {
+    "fingerprint": "e119a99adfb8ac2f5128353228fdbd04efdb9927aec8d8d4e745c7f5d3c83c79",
+    "processedAt": "2026-07-14T23:29:18Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
