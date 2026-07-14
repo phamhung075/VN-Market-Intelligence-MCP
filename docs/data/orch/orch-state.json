@@ -374,9 +374,9 @@
     "status": "in_progress",
     "active_task_id": "ALPHA-S2-TICK-DOWNSAMPLE-5MIN",
     "next_agent": "dev-mcp-server",
-    "next_action": "dev-mcp-server: implement ALPHA-S2-SUB2-JOB-CRON per brief docs/architecture-briefs/2026-07-14-alpha-s2-tick-downsample-5min.md §4/§5/§6. Create intraday5mCompactorJob.ts — standalone 24/7 */5 cron, NO market-hours gate (§4); group market_prices_history ticks into 5-min buckets (bucket_ts = 5-min-aligned START, ISO-8601 UTC) and UPSERT into intraday_ohlcv_5m via full-row INSERT OR REPLACE (open=first, high=max, low=min, close=last, volume=MAX(volume) cumulative per §1.2, tick_count=count, compacted_at=now); JS-grouping algorithm per §4. Register cron in cronConfig.ts + schedulerJobTable.ts; backfill = first invocation + startScheduler.ts one-shot (§5); compact ALL codes not just watchlist (§6). PRESERVE design: full-row INSERT OR REPLACE (NO writeOhlcvBatch scale-detection), volume=MAX same as daily_ohlcv (NOT delta). OUT-OF-SCOPE: do NOT touch pushPricesHandler.ts (§1.1 rolling-24h purge stays), do NOT fix W-3 checkDuplicatePriceHistory (§1.3 -> separate PO row), no new MCP read tool. Verify tsc green. Commit explicit-pathspec only (job + cronConfig + schedulerJobTable + startScheduler + Task Report + notebook), do NOT push, do NOT touch .head/.task_board, do NOT touch task:ALPHA-S2. Router holds umbrella chain mutex + pushes under commit-mutex. On completion relay to qa/SUB3.",
-    "updated_at": "2026-07-14T22:00:24Z",
-    "updated_by": "dev-team (22:00Z relay: SUB1-DDL RAW-verified GREEN [tsc/SQL/scope/brief §3] + pushed -> dispatch dev-mcp-server SUB2-JOB-CRON)"
+    "next_action": "dev-mcp-server: implement ALPHA-S2-SUB3-DOCS-CRON per brief docs/architecture-briefs/2026-07-14-alpha-s2-tick-downsample-5min.md. Two parts: (1) CRON REGISTRATION CONSISTENCY — SUB2 (de8c49d67) added the intraday5mCompactorJob job-table entry, which deliberately moves the guard-rail counts in apps/mcp-server/src/__tests__/FACTORY-SCHEDULER-job-table-registry.test.ts: Group A buildJobTable().toHaveLength(58)->59, Group B registerJobTable calls.toHaveLength(58)->59, Group D total scheduleCron calls.toHaveLength(80)->81. READ the test to confirm exact literals/lines (~64, ~174, ~247) then bump each +1 — these are intended guard-rail acknowledgements of the new job, NOT a logic change. (2) HUMAN-FACING CRON DOCS — document the new 24/7 */5 intraday_ohlcv_5m compactor cron in the cron inventory doc(s)/system-map wherever crons are catalogued for humans. DO NOT hand-edit docs/data/project-stats.json cronJobCount (generator-maintained; counts cron.schedule() call-sites, which SUB2 did NOT add via the job-table path — it stays 2; if the repo convention is to re-run scripts/gen-project-stats.ts, run it and let it regenerate, do not hand-edit). VERIFY: `bun test src/__tests__/FACTORY-SCHEDULER-job-table-registry.test.ts` ALL PASS + `pnpm --filter vn-market check` tsc exit0. Commit explicit-pathspec ONLY (test file + cron doc(s) + regenerated project-stats if applicable + Task Report + notebook), do NOT push, do NOT touch orch-state .head/.task_board or task:ALPHA-S2. Router holds umbrella mutex + pushes SUB2+SUB3 together after joint verify. On completion relay to SUB4-TESTS.",
+    "updated_at": "2026-07-14T22:15:49Z",
+    "updated_by": "dev-team (22:15Z relay: SUB2-JOB-CRON logic RAW-verified GREEN [brief §3-6, tsc] but registry guard-rail count needs bump -> dispatch dev-mcp-server SUB3-DOCS-CRON; SUB2 push held)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7408,28 +7408,6 @@
         "verification_gate": "read_telegram_reports cycle_id pairing shows either (a) single evening publish -> chef.md UTC-header fix lands + no dup, or (b) genuine dup -> folded to dedup cluster. done_verified requires the header-fix RAW-verified in a subsequent evening dish header carrying UTC date."
       },
       {
-        "id": "ALPHA-S2-SUB3-DOCS-CRON",
-        "type": "subtask",
-        "title": "Docs sync: cron-registry dual-update (docs/data/cron-registry.json, docs/data/system-map.json, docs/standards/cron-jobs.md)",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "XS",
-        "zone": "apps/mcp-server/",
-        "owner": "developer",
-        "next_agent": "dev-mcp-server",
-        "sprint": "FLOW-PRICE-ALPHA-LOOP",
-        "parent": "ALPHA-S2-TICK-DOWNSAMPLE-5MIN",
-        "depends": [
-          "ALPHA-S2-SUB2-JOB-CRON"
-        ],
-        "blocks": [],
-        "supervised": false,
-        "created_at": "2026-07-14T21:40:00Z",
-        "created_by": "pm (ALPHA-S2 decomposition)",
-        "note": "Update docs/data/cron-registry.json: add intraday5mCompactor to .jobs[], increment .schedulerFileCount by 1. Update docs/data/system-map.json: microservices[id=mcp-server].crons count 66→67. Update docs/standards/cron-jobs.md with new row. Matches existing dual-doc precedent (see cron-registry.json _trigger).",
-        "acceptance_criteria": "Three docs files updated consistently, cron count incremented in both system-map and cron-registry, new cron row in standards/cron-jobs.md"
-      },
-      {
         "id": "ALPHA-S2-SUB4-TESTS",
         "type": "subtask",
         "title": "Tests: idempotency, gap-tolerance, no-market-hours, forward-preservation e2e (ALPHA-S2-intraday-5m-compactor.test.ts)",
@@ -9246,8 +9224,8 @@
       "status": "in_progress",
       "active_task_id": "ALPHA-S2-TICK-DOWNSAMPLE-5MIN",
       "next_agent": "dev-mcp-server",
-      "last_updated_at": "2026-07-14T22:00:24Z",
-      "last_updated_by": "dev-team (ALPHA-S2 SUB1->SUB2 relay)"
+      "last_updated_at": "2026-07-14T22:15:49Z",
+      "last_updated_by": "dev-team (ALPHA-S2 SUB2->SUB3 relay)"
     },
     "ready": [],
     "review": [
@@ -9790,7 +9768,7 @@
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
         "next_agent": "dev-mcp-server",
         "epic_wrapper": true,
-        "epic_note": "SUB1-DDL DONE (dev-complete + router-verified, pushed 392c17f00); SUB2-JOB-CRON IN FLIGHT; SUB3-DOCS-CRON/SUB4-TESTS backlog on sequential depends-chain; SUB5-WATCHDOG-STRETCH optional (depends SUB2); W-3 FIX-W3-CHECKDUPLICATEPRICE-COLLAPSE = PO backlog. CLOSE epic-wrapper on SUB4 qa-green (feature gate). 2026-07-14T22:00:24Z"
+        "epic_note": "SUB1-DDL DONE (verified, pushed 392c17f00). SUB2-JOB-CRON dev-done + logic-verified (de8c49d67, push HELD — trips job-table guard-rail count, SUB3 reconciles). SUB3-DOCS-CRON IN FLIGHT. SUB4-TESTS backlog (compactor unit tests + qa gate = feature merge gate). SUB5-WATCHDOG-STRETCH optional. W-3 = PO backlog. Push SUB2+SUB3 together once jointly full-suite-green; CLOSE epic-wrapper on SUB4 qa-green. 2026-07-14T22:15:49Z"
       },
       {
         "id": "ALPHA-S2-SUB1-DDL",
@@ -9828,7 +9806,7 @@
         "size": "S",
         "zone": "apps/mcp-server/",
         "owner": "developer",
-        "next_agent": "dev-mcp-server",
+        "next_agent": "qa",
         "sprint": "FLOW-PRICE-ALPHA-LOOP",
         "parent": "ALPHA-S2-TICK-DOWNSAMPLE-5MIN",
         "depends": [
@@ -9841,7 +9819,38 @@
         "note": "New intraday5mCompactorJob.ts: runIntraday5mCompactor(). SELECT market_prices_history, group by (code, 5-min bucket), aggregate open/high/low/close/volume/tick_count per brief § 4. Insert OR REPLACE into intraday_ohlcv_5m. Register in cronConfig.ts (*/5), schedulerJobTable.ts buildJobTable(). Startup call in startScheduler.ts (non-fatal). DESIGN DECISIONS TO PRESERVE: (1) ALL codes present, not watchlist-only, (2) no market-hours gate (*/5 unrestricted 24/7), (3) full table reprocess every run (idempotent, gap-tolerant), (4) volume=MAX cumulative, no scale-detection reuse, (5) backfill = first job invocation + startup one-shot, NO separate migration",
         "acceptance_criteria": "Job idempotent (re-run produces byte-identical rows); gap-tolerant (accumulate 2+ buckets, single run catches all); no isVnTradingWindowUtc anywhere; startup call wired non-fatal",
         "claimed_at": "2026-07-14T22:00:24Z",
-        "claimed_by": "dev-team (SPRINT-S relay: ALPHA-S2 subtask 2/5)"
+        "claimed_by": "dev-team (SPRINT-S relay: ALPHA-S2 subtask 2/5)",
+        "dev_complete": true,
+        "dev_commit": "de8c49d67101adb632b05e6304bc785b773925e4",
+        "awaiting_epic_gate": true,
+        "push_held": true,
+        "push_held_reason": "SUB2 trips FACTORY-SCHEDULER-job-table-registry.test.ts guard-rail counts (buildJobTable 58->59, total scheduleCron 80->81) — deliberate +1 job. SUB3 reconciles; push SUB2+SUB3 together once jointly full-suite-green (no RED-trunk window).",
+        "router_verify": "2026-07-14T22:15Z RAW: git de8c49d67 scope=exactly 6 files (+227/-0), apps/ tree clean (0 peer sweep), pushPricesHandler.ts + checkDuplicatePriceHistory.ts UNTOUCHED. Logic correct per brief §3-6: 5-min UTC-aligned bucketing (floor(tickMs/300000)*300000 -> toISOString), open=first/high=max/low=min/close=last (rows ORDER BY fetched_at ASC), volume=Math.max cumulative-to-date (NOT per-bar delta), tick_count, compacted_at; full-row INSERT OR REPLACE in db.transaction (NOT writeOhlcvBatch); ALL codes (no watchlist filter); NO market-hours gate (empty table -> natural no-op); nowMsFn/db dependency-injection for SUB4 testability. Cron registered: cronConfig */5 env-overridable + schedulerJobTable entry {cron:CRONS.intraday5mCompactor, options.timezone:UTC, runner->runIntraday5mCompactor}; startScheduler startup one-shot backfill (non-fatal). Independent tsc=exit0. KNOWN: registry guard-rail counts need SUB3 bump (58->59/80->81); cronJobCount generator-maintained (counts cron.schedule() call-sites, unaffected — leave alone).",
+        "dispatch_note": "SUB2-JOB-CRON dev-complete + logic RAW-verified GREEN; push HELD for SUB3 registry-count reconciliation. 2026-07-14T22:15:49Z"
+      },
+      {
+        "id": "ALPHA-S2-SUB3-DOCS-CRON",
+        "type": "subtask",
+        "title": "Docs sync: cron-registry dual-update (docs/data/cron-registry.json, docs/data/system-map.json, docs/standards/cron-jobs.md)",
+        "status": "IN_PROGRESS",
+        "priority": "P1",
+        "size": "XS",
+        "zone": "apps/mcp-server/",
+        "owner": "developer",
+        "next_agent": "dev-mcp-server",
+        "sprint": "FLOW-PRICE-ALPHA-LOOP",
+        "parent": "ALPHA-S2-TICK-DOWNSAMPLE-5MIN",
+        "depends": [
+          "ALPHA-S2-SUB2-JOB-CRON"
+        ],
+        "blocks": [],
+        "supervised": false,
+        "created_at": "2026-07-14T21:40:00Z",
+        "created_by": "pm (ALPHA-S2 decomposition)",
+        "note": "Update docs/data/cron-registry.json: add intraday5mCompactor to .jobs[], increment .schedulerFileCount by 1. Update docs/data/system-map.json: microservices[id=mcp-server].crons count 66→67. Update docs/standards/cron-jobs.md with new row. Matches existing dual-doc precedent (see cron-registry.json _trigger).",
+        "acceptance_criteria": "Three docs files updated consistently, cron count incremented in both system-map and cron-registry, new cron row in standards/cron-jobs.md",
+        "claimed_at": "2026-07-14T22:15:49Z",
+        "claimed_by": "dev-team (SPRINT-S relay: ALPHA-S2 subtask 3/5)"
       }
     ]
   },
