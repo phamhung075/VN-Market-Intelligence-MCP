@@ -360,6 +360,14 @@
       "decision": "TRIAGE-ONE-ROW grooming for dev-team BOUNDED-1 (session 69b0312e, tick 07:37Z). The dispatcher WITHHELD auto-launch (autolaunch_safety_hold) on this row: resolved primary implementer is a NON-DEV meta-agent (agent-father) and the AC was multi-agent + partly time-gated — not a clean atomic dev unit. DECISION: SPLIT the parent (removed from backlog[]) into 2 sibling children (no epic-wrapper — avoids the known epic-wrapper closeout gap). (A) FIX-OPS-AUDITTRAIL-TIMESTAMP-BYPASS-GUARDRAIL = AC-1 only, owner+next_agent=agent-father, zone=docs/agents/ops/, priority=high, size=S. Doc-edit MUST-NOT clause on the ops flow (never UPDATE cron_job_runs/audit-trail timestamps to bypass an idempotency/cadence guard; use bctcReparseJob options.nowMsFn, else escalate to dev-<service>, else wait). NON-DEV owner => router HAND-DISPATCH, NOT BOUNDED-1. This is the highest-value recurrence-prevention half and fully actionable NOW. (B) SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY = AC-2 + AC-3, owner+next_agent=dev-mcp-server, zone=apps/mcp-server/, priority=medium, size=S, timebox=120, mode=spike. AC-2 traces shouldSkipRecoveryReplay call path (the genuinely-open question: why did the 21.6h guard block when the pre-edit probe showed no in-window row?) — actionable now; the fresh cron_job_runs RAW-probe is TIME-GATED (needs >=21.6h new history) and deferred as a noted sub-step. AC-3 RAW-probes the 9 targets' reparse state now. Dev owner => BOUNDED-1 eligible. Conservation: parent -1, children +2 => net +1 (task_total 505->506; conservation guard is shrink-only, passes). signal_total unchanged 0.",
       "what_considered": "(A) keep together as one row with a lead+assist (agent-father lead, dev-mcp-server assist) — REJECTED: the dispatcher explicitly flagged it as NON-atomic and non-BOUNDED-1; a single row cannot carry two different owner lanes (hand-dispatch vs auto-launch) cleanly, and AC-1 is fully actionable while AC-2 is time-gated — coupling them delays the recurrence-prevention guardrail. (B) epic-wrapper parent + children — REJECTED: known epic-wrapper closeout gap (parent sits open after children DONE_VERIFIED); two independent siblings + decision_journal traceability is cleaner. (C) fold AC-2/AC-3 into the already-closed SPIKE-BCTC-2025Q4-PDFPULL-OCR-0ROW — REJECTED: that SPIKE closed the 2025-Q4 EXTRACTION axis (bctcPdfPull /extract-tables gap), a DIFFERENT question; the cadence-guard call-path is unanswered anywhere and the Q1-2026 non-bank verification is a different quarter. Cross-referenced instead of merged so the extraction axis is not re-treaded. (D) cancel AC-3 as moot because the reparse was 'architecturally incapable' for 2025-Q4 — REJECTED: that finding covers 2025-Q4 only; the Q1-2026 non-bank set (VHM/VIC/VRE/HSG/MWG) is a distinct target with real data-quality stakes.",
       "why_change": "The recurrence-prevention guardrail (AC-1) is fully actionable, small, and belongs to agent-father (agent-file lifecycle) — it should ship now via router hand-dispatch rather than be held behind a time-gated investigation. Splitting frees BOUNDED-1 to auto-launch the dev-owned SPIKE while the router hand-dispatches the doc guardrail. Top-level .head left untouched (dispatcher-owned)."
+    },
+    {
+      "agent": "po",
+      "task_id": "tnb-audit-handoff-c109",
+      "timestamp": "2026-07-14T20:44:24Z",
+      "decision": "PLAN-ONLY triage of tnb-audit c109 (verdict GAPS). Minted ONE new backlog row (FIX-CHEF-EVENING-DUP-DATE-MISLABEL-INVESTIGATE, P2) for the sole genuinely-new/untracked finding. Folded F-MCP-SUBAGENT-SYSTEMIC + F-TNB-DUAL-DISPATCH-GATE-MCP-DEPENDENT into the already-tracked stale P1 FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK (escalate-in-place, 14th+-cycle recurrence). Recorded F-CHEF-EOD-DORMANT-0714 as a recurrence datum on SPIKE-COWORK-GUARANTEED-SLOT-SUPERSEDE-WIRING (delivery mitigation OPS-COWORK-GUARANTEED-SLOT-INSTALL already in review[]). Skipped: F-CHEF-STEP75 (RESOLVED by TNB), F-L4 (LOW), F9 + BCTC-serve-gap (owned by bctc-analyst), F-L2-OVERCLAIM + F-EFFR-IORB (MCP-blocked WATCH).",
+      "what_considered": "(A) mint a fresh fix row for F-MCP-SUBAGENT per recurring-bug-2+ -> REJECTED: root cause already root-caused (SPIKE-GATEWAY-BLIND-CLI-HANDSHAKE DONE), remediation tracked P1 with fix script scripts/agents-flow/mcp-call.sh ON DISK but UNWIRED; a 15th dup = churn not convergence. (B) accept trigger premise MCP-blind BY DESIGN and CLOSE -> REJECTED: RAW-read tran-ngoc-bau/init.md (tools_packages incl tran-ngoc-bau-full) + tools/package/tran-ngoc-bau.md (Access level FULL) prove MCP granted by design; zero-MCP runtime is a real provisioning defect. (C) mint competing file-lock row for F-TNB-DUAL-DISPATCH -> REJECTED: gateway-blind bridge remediates same root; folded as AC so architect picks bridge-vs-file-lock. (D) mint new ops row for chef-eod -> REJECTED: SPIKE (root cause) + OPS install (delivery, review[]) already track it; annotate recurrence.",
+      "why_change": "PLAN-ONLY per router coordination (no self-promote, no dev-team-loop overlap). Board convergence over churn: 3 of 4 actionable findings deduped into existing rows; only the untracked date-mislabel component minted new. Promotion of the escalated P1 + commit of the uncommitted c107/c108/c109 tran-ngoc-bau notebook backlog deferred to router/dev-team."
     }
   ],
   "head": {
@@ -5277,7 +5285,19 @@
         "priority": "P1",
         "status": "BACKLOG",
         "zone": "cross-service/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK",
+        "tnb_escalation": {
+          "at": "2026-07-14T20:41:08Z",
+          "by": "po-tnb-c109-triage",
+          "recurrence": "14th+ consecutive tnb-audit cycle (c97..c109) spawned MCP-blind; c107/c108/c109 handoffs all flag it. Per standing recurring-bug-2+ policy this is now blocking-grade.",
+          "design_vs_defect": "REAL DEFECT, not expected-by-design. Correcting the handoff premise: tran-ngoc-bau/init.md grants tools_packages=[bootstrap, tran-ngoc-bau-full]; tran-ngoc-bau.md declares 'Access level: FULL — all vn-market tools'. So full MCP is granted BY DESIGN; the zero-MCP runtime is a provisioning/spawn-binding failure. Second c109 session confirmed the whole MCP surface (incl mcp__semble__search) was unbound, not just vn-market — a session-level MCP-binding failure, which is exactly why the curl-bypass (does not depend on MCP-client handshake) is the right fallback. Root cause already root-caused (SPIKE-GATEWAY-BLIND-CLI-HANDSHAKE, DONE); the remediation script scripts/agents-flow/mcp-call.sh ALREADY EXISTS ON DISK but is UNWIRED into tnb-audit's flow (fix never shipped != fix keeps failing).",
+          "folded_findings": [
+            "F-MCP-SUBAGENT-SYSTEMIC (HIGH): wire scripts/agents-flow/mcp-call.sh curl-bypass into tnb-audit flow (docs/agents/tran-ngoc-bau/flow/) so Phase 0.5 read_telegram_reports + Phase 3 get_agent_signals/get_signal_effectiveness/get_alert_accuracy work MCP-blind.",
+            "F-TNB-DUAL-DISPATCH-GATE-MCP-DEPENDENT (MED): the PUBLISHED MARKER GATE dedup mutex is task_claim-over-MCP, so two gateway-blind sessions cannot dedup and both wrote the shared notebook (peer self-detected + deferred, no data lost). Dedup must survive gateway-blind — via the mcp-call.sh bridge to task_claim OR a file-based fallback lock (claim-file under docs/signals/ checked via Read); architect chooses during po->ba->pm->architect."
+          ],
+          "stale": "promoted 2026-07-08, still BACKLOG 6 days / 13+ cycles. supervised handling applies (bounded-1 5th-hole class); promotion left to router/dev-team adjudication — PLAN-ONLY triage does not self-promote.",
+          "source": "docs/handoffs/tnb-audit-latest.md"
+        }
       },
       {
         "id": "FIX-VERIFY-DEPLOY-SHA-BENIGN-DRIFT",
@@ -5538,7 +5558,13 @@
         "supervised": true,
         "groomed_at": "2026-07-13T09:30:19Z",
         "groomed_by": "po (bounded-1 5th-hole groom)",
-        "groom_note": "supervised:true stamped inline to stop BOUNDED-1 idle re-pick churn. Board owner:po + next_agent:null + NO backlog-detail entry defeats all detail-keyed promote gates (is_non_dev_owner_unrouted reads DETAIL owner, absent here). This is the 5th-hole class; durable code fix = FIX-DEVTEAM-BOUNDED1-NONDEV-OWNER-BOARD-FALLBACK-GATE (already queued BACKLOG). Row stays in BACKLOG, available for deliberate router-adjudicated po->ba->pm->architect relay per note; only removed from unattended auto-pickup."
+        "groom_note": "supervised:true stamped inline to stop BOUNDED-1 idle re-pick churn. Board owner:po + next_agent:null + NO backlog-detail entry defeats all detail-keyed promote gates (is_non_dev_owner_unrouted reads DETAIL owner, absent here). This is the 5th-hole class; durable code fix = FIX-DEVTEAM-BOUNDED1-NONDEV-OWNER-BOARD-FALLBACK-GATE (already queued BACKLOG). Row stays in BACKLOG, available for deliberate router-adjudicated po->ba->pm->architect relay per note; only removed from unattended auto-pickup.",
+        "tnb_recurrence": {
+          "at": "2026-07-14T20:41:08Z",
+          "by": "po-tnb-c109-triage",
+          "datum": "F-CHEF-EOD-DORMANT-0714 (HIGH): chef-eod guaranteed slot did NOT fire 2026-07-14 (last_fired stuck 2026-07-13T08:55:03Z, cron 45 8 * * 1-5). RAW-verified in docs/data/cowork-schedule.json: chef-eod _superseded_by=cowork-dispatcher (same undeliverable-supersede symptom this SPIKE tracks). NARROWING vs 07-09/07-10 3-slot miss: today ONLY chef-eod missed — chef-morning (05:26Z) + chef-evening (19:48Z) both fired. chef-eod carries depends_on=foreignFlowAlertJob:08:13:UTC (24-min upstream gate) — plausible dependency-chain stall, ops/dev diagnosis not TNB's. Delivery-side mitigation OPS-COWORK-GUARANTEED-SLOT-INSTALL is in review[] (launchd firer) — this SPIKE remains the root-cause investigation.",
+          "source": "docs/handoffs/tnb-audit-latest.md#F-CHEF-EOD-DORMANT-0714"
+        }
       },
       {
         "id": "FIX-BCTC-D3C-FOLLOW-UP-RESET-ATTEMPTS",
@@ -7384,6 +7410,21 @@
         "title": "Wire the working VPS /proxy/article-body endpoint (CafeF full article text) into the push-news ingestion pipeline so stored news rows carry full body text (not just the RSS ~500-char excerpt).",
         "note": "GREENLIT 2026-07-14 (USER GO, coordination_session e417ef1f — explicit user selection via router AskUserQuestion). Converts the long-parked FU-DEV-CAFEF-1 follow-up (watch_items 'awaiting USER greenlight' since 2026-06-01; recon docs/vps-sources/cafef-article-body/recon.md) into real board work. Endpoint is LIVE + verified: VPS:8765/proxy/article-body?url= (article-body-fetcher.py; cafef 5000ch 200 OK, vneconomy 5000ch 200 OK — dev-vps-crawls notebook 2026-06-01). DoD: push-news ingestion (apps/news-fetch/) fetches full CafeF article body via /proxy/article-body per RSS item and persists it on the news row. architect designs FIRST: storage schema (a body/full-text column + migration), the per-article fetch fan-out policy (bounded, latency/rate-aware, must degrade honest-null when the proxy is down — NO fabrication, feedback_no_fake_data_real_fetch), and a backfill decision. Then dev implements. zone apps/news-fetch/ (owner dev-news-fetch per docs/data/system-map.json). Do NOT store the RSS ~500-char excerpt as if it were the full body.",
         "verification_gate": "RAW-live per PUSH-AUTONOMY-1 culture: a REALLY-ingested news row in the live news store whose body/full-text column contains the FULL CafeF article text (materially longer than the RSS ~500-char excerpt), fetched via VPS:8765/proxy/article-body, confirmed by a direct read of a real stored row post-deploy — never a mocked/synthetic row."
+      },
+      {
+        "id": "FIX-CHEF-EVENING-DUP-DATE-MISLABEL-INVESTIGATE",
+        "title": "Confirm/refute chef-evening 07-14 duplicate-publish + fix VN-local date-mislabel in notebook session headers",
+        "type": "FIX",
+        "priority": "P2",
+        "status": "BACKLOG",
+        "zone": "cross-service/",
+        "owner": "po",
+        "supervised": true,
+        "created_at": "2026-07-14T20:41:08Z",
+        "created_by": "po-tnb-c109-triage",
+        "origin": "docs/handoffs/tnb-audit-latest.md#F-CHEF-EVENING-DUPLICATE-DATE-MISLABEL",
+        "note": "PLAN-ONLY (anomaly->BACKLOG bridge, project_anomaly_task_bridge). SUSPECTED, MCP-blocked at audit time. TWO components: (1) DATE-MISLABEL [genuinely new/untracked]: unified-agent.md top entry headed 'Session: 2026-07-15 (evening — current)' @19:49 UTC sits 1 min above a 'Session: 2026-07-14 (evening)' @19:48 UTC entry; 19:49UTC+7h = 02:49 VN on 07-15 => VN-local date leaked into the session header instead of UTC (premise-date-error class, feedback_premise_date_error_survives_agent_chain). Fix: chef.md must stamp UTC date in session/notebook headers, never VN-local. (2) DUP-PUBLISH [likely REFUTED — verify cheaply, do NOT re-litigate the dedup mechanism]: PO RAW-verified docs/data/cowork-schedule.json chef-evening.last_fired = single 2026-07-14T19:48:44.480Z matching ONLY the 19:48 entry, NOT the 19:49 entry — a genuine 2nd scheduled fire would have bumped last_fired, so this leans to a notebook mislabel/manual write, not a real double MARKET publish. CONFIRM step: one read_telegram_reports cycle_id pairing of the two [CHEF-DETAIL] WORK messages once MCP restored — IF a real duplicate MARKET post is found, fold to the EXISTING dedup cluster (FIX-CHEF-PUBLISHED-MARKER-RELEASE / FU-CHEF-MARKER-INFLOW / UC-CCA-P3) and do NOT duplicate that work here; this row's own deliverable is the UTC-date-header fix.",
+        "verification_gate": "read_telegram_reports cycle_id pairing shows either (a) single evening publish -> chef.md UTC-header fix lands + no dup, or (b) genuine dup -> folded to dedup cluster. done_verified requires the header-fix RAW-verified in a subsequent evening dish header carrying UTC date."
       }
     ],
     "closed_sprints": [
@@ -9668,6 +9709,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-07-14T20:29:05Z",
-  "_updated_by": "po-decision4-ccato-raise-bashgrant-denied"
+  "_updated_at": "2026-07-14T20:44:24Z",
+  "_updated_by": "po-tnb-c109-decision-journal"
 }
