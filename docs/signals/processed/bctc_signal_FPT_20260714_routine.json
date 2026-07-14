@@ -1,0 +1,32 @@
+{
+  "ticker": "FPT",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "product": "IT services, software exports, telecom (FPT Telecom), education (FPT Edu)",
+  "customer": "Enterprise IT buyers (VN + offshore), SME telecom subscribers",
+  "ops": "Gross margin 34.0%, operating margin 22.0%; NI 2,476.8 ty (19.8% margin), ROE 6.17%/quarter",
+  "mgmt": "Byte-identical re-verify across 8 consecutive cycles since 2026-07-04 — no restatements, no data drift",
+  "valuation": {
+    "pe": 13.8,
+    "pb": 3.6,
+    "ey_pct": 7.25,
+    "ey_spread_pp": 2.25,
+    "verdict": "FAIR"
+  },
+  "escalation": {
+    "esc2_balance_sheet": "PASS (imbalance 0%)",
+    "esc3_status": "DATA-COVERAGE-LIMITED",
+    "esc3_guard_key": "esc-datacov:FPT:Q1-2026:ESC-3",
+    "esc3_guard_held": true,
+    "esc4_non_operating_share_pct": 2.0,
+    "esc4_result": false,
+    "esc5_result": false
+  },
+  "trick_summary": null,
+  "trick_confidence": "none",
+  "confidence_pct": 81,
+  "kinhdich": "Que 24 Phuc THUAN LOI GIU 100%",
+  "sourced_at": "2026-07-14T00:15:00Z",
+  "slot": "bctc-analyst-slot-4"
+}
