@@ -1,0 +1,9 @@
+{
+  "from": "tran-ngoc-bau",
+  "to": "po",
+  "type": "audit-handoff",
+  "payload": "docs/handoffs/tnb-audit-latest.md",
+  "priority": "high",
+  "createdAt": "2026-07-14T20:24:00Z",
+  "summary": "c109 layer-walk audit: verdict GAPS (not PASS). chef-eod dormant 1 day (new). c108 L3/BizCtx auto-cure verified effective. New: dual-dispatch notebook collision (F-TNB-DUAL-DISPATCH-GATE-MCP-DEPENDENT), suspected chef-evening duplicate-publish+date-mislabel. F-MCP-SUBAGENT-SYSTEMIC now 14th+ cycle, escalating to blocking-grade. c107+c108 handoffs still unACK'd."
+}
