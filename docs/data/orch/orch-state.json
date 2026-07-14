@@ -373,10 +373,10 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "ALPHA-S2-TICK-DOWNSAMPLE-5MIN",
-    "next_agent": "pm",
+    "next_agent": "dev-mcp-server",
     "next_action": "PM decomposition — architect brief docs/architecture-briefs/2026-07-14-alpha-s2-tick-downsample-5min.md § 9 5-subtask sequential split, all zone apps/mcp-server/ (corrected from stale board zone=\"multi\"). New intraday_ohlcv_5m table + 24/7 compaction cron, no market-hours gate, idempotent/gap-tolerant reprocessing of surviving market_prices_history ticks before the inline rolling-24h purge in pushPricesHandler.ts deletes them.",
-    "updated_at": "2026-07-14T21:35:05Z",
-    "updated_by": "architect (ALPHA-S2 design complete)"
+    "updated_at": "2026-07-14T21:40:00Z",
+    "updated_by": "pm (ALPHA-S2 decomposition)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7406,6 +7406,111 @@
         "origin": "docs/handoffs/tnb-audit-latest.md#F-CHEF-EVENING-DUPLICATE-DATE-MISLABEL",
         "note": "PLAN-ONLY (anomaly->BACKLOG bridge, project_anomaly_task_bridge). SUSPECTED, MCP-blocked at audit time. TWO components: (1) DATE-MISLABEL [genuinely new/untracked]: unified-agent.md top entry headed 'Session: 2026-07-15 (evening — current)' @19:49 UTC sits 1 min above a 'Session: 2026-07-14 (evening)' @19:48 UTC entry; 19:49UTC+7h = 02:49 VN on 07-15 => VN-local date leaked into the session header instead of UTC (premise-date-error class, feedback_premise_date_error_survives_agent_chain). Fix: chef.md must stamp UTC date in session/notebook headers, never VN-local. (2) DUP-PUBLISH [likely REFUTED — verify cheaply, do NOT re-litigate the dedup mechanism]: PO RAW-verified docs/data/cowork-schedule.json chef-evening.last_fired = single 2026-07-14T19:48:44.480Z matching ONLY the 19:48 entry, NOT the 19:49 entry — a genuine 2nd scheduled fire would have bumped last_fired, so this leans to a notebook mislabel/manual write, not a real double MARKET publish. CONFIRM step: one read_telegram_reports cycle_id pairing of the two [CHEF-DETAIL] WORK messages once MCP restored — IF a real duplicate MARKET post is found, fold to the EXISTING dedup cluster (FIX-CHEF-PUBLISHED-MARKER-RELEASE / FU-CHEF-MARKER-INFLOW / UC-CCA-P3) and do NOT duplicate that work here; this row's own deliverable is the UTC-date-header fix.",
         "verification_gate": "read_telegram_reports cycle_id pairing shows either (a) single evening publish -> chef.md UTC-header fix lands + no dup, or (b) genuine dup -> folded to dedup cluster. done_verified requires the header-fix RAW-verified in a subsequent evening dish header carrying UTC date."
+      },
+      {
+        "id": "ALPHA-S2-SUB2-JOB-CRON",
+        "type": "subtask",
+        "title": "Compaction job + startup hook + cron registration (intraday5mCompactorJob, cronConfig, schedulerJobTable, startScheduler)",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "owner": "developer",
+        "next_agent": "dev-mcp-server",
+        "sprint": "FLOW-PRICE-ALPHA-LOOP",
+        "parent": "ALPHA-S2-TICK-DOWNSAMPLE-5MIN",
+        "depends": [
+          "ALPHA-S2-SUB1-DDL"
+        ],
+        "blocks": [],
+        "supervised": false,
+        "created_at": "2026-07-14T21:40:00Z",
+        "created_by": "pm (ALPHA-S2 decomposition)",
+        "note": "New intraday5mCompactorJob.ts: runIntraday5mCompactor(). SELECT market_prices_history, group by (code, 5-min bucket), aggregate open/high/low/close/volume/tick_count per brief § 4. Insert OR REPLACE into intraday_ohlcv_5m. Register in cronConfig.ts (*/5), schedulerJobTable.ts buildJobTable(). Startup call in startScheduler.ts (non-fatal). DESIGN DECISIONS TO PRESERVE: (1) ALL codes present, not watchlist-only, (2) no market-hours gate (*/5 unrestricted 24/7), (3) full table reprocess every run (idempotent, gap-tolerant), (4) volume=MAX cumulative, no scale-detection reuse, (5) backfill = first job invocation + startup one-shot, NO separate migration",
+        "acceptance_criteria": "Job idempotent (re-run produces byte-identical rows); gap-tolerant (accumulate 2+ buckets, single run catches all); no isVnTradingWindowUtc anywhere; startup call wired non-fatal"
+      },
+      {
+        "id": "ALPHA-S2-SUB3-DOCS-CRON",
+        "type": "subtask",
+        "title": "Docs sync: cron-registry dual-update (docs/data/cron-registry.json, docs/data/system-map.json, docs/standards/cron-jobs.md)",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "XS",
+        "zone": "apps/mcp-server/",
+        "owner": "developer",
+        "next_agent": "dev-mcp-server",
+        "sprint": "FLOW-PRICE-ALPHA-LOOP",
+        "parent": "ALPHA-S2-TICK-DOWNSAMPLE-5MIN",
+        "depends": [
+          "ALPHA-S2-SUB2-JOB-CRON"
+        ],
+        "blocks": [],
+        "supervised": false,
+        "created_at": "2026-07-14T21:40:00Z",
+        "created_by": "pm (ALPHA-S2 decomposition)",
+        "note": "Update docs/data/cron-registry.json: add intraday5mCompactor to .jobs[], increment .schedulerFileCount by 1. Update docs/data/system-map.json: microservices[id=mcp-server].crons count 66→67. Update docs/standards/cron-jobs.md with new row. Matches existing dual-doc precedent (see cron-registry.json _trigger).",
+        "acceptance_criteria": "Three docs files updated consistently, cron count incremented in both system-map and cron-registry, new cron row in standards/cron-jobs.md"
+      },
+      {
+        "id": "ALPHA-S2-SUB4-TESTS",
+        "type": "subtask",
+        "title": "Tests: idempotency, gap-tolerance, no-market-hours, forward-preservation e2e (ALPHA-S2-intraday-5m-compactor.test.ts)",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "owner": "developer",
+        "next_agent": "dev-mcp-server",
+        "sprint": "FLOW-PRICE-ALPHA-LOOP",
+        "parent": "ALPHA-S2-TICK-DOWNSAMPLE-5MIN",
+        "depends": [
+          "ALPHA-S2-SUB3-DOCS-CRON"
+        ],
+        "blocks": [],
+        "supervised": false,
+        "created_at": "2026-07-14T21:40:00Z",
+        "created_by": "pm (ALPHA-S2 decomposition)",
+        "note": "New apps/mcp-server/src/__tests__/ALPHA-S2-intraday-5m-compactor.test.ts: (1) Idempotency: run twice with same source ticks, diff intraday_ohlcv_5m before/after 2nd run = zero delta. (2) Gap-tolerance: simulate missed cycle (accumulate 2+ bucket-widths), single run catches all. (3) No market-hours gate: verify empty market_prices_history produces zero-op, no isVnTradingWindowUtc anywhere. (4) Forward-preservation e2e: ticks compacted into intraday_ohlcv_5m, then pushPricesHandler purge deletes them from market_prices_history, verify bars remain and summarize correctly.",
+        "acceptance_criteria": "All 4 test classes pass; re-run produces deterministic results; no market-hours predicates; e2e verifies both tables in sequence"
+      },
+      {
+        "id": "ALPHA-S2-SUB5-WATCHDOG-STRETCH",
+        "type": "subtask",
+        "title": "[OPTIONAL STRETCH] WATCHDOG_MANIFEST self-heal entry for intraday5mCompactor (schedulerJobTable.ts)",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "XS",
+        "zone": "apps/mcp-server/",
+        "owner": "developer",
+        "next_agent": "dev-mcp-server",
+        "sprint": "FLOW-PRICE-ALPHA-LOOP",
+        "parent": "ALPHA-S2-TICK-DOWNSAMPLE-5MIN",
+        "depends": [
+          "ALPHA-S2-SUB2-JOB-CRON"
+        ],
+        "blocks": [],
+        "supervised": false,
+        "created_at": "2026-07-14T21:40:00Z",
+        "created_by": "pm (ALPHA-S2 decomposition)",
+        "note": "OPTIONAL HARDENING (brief § 4): Add entry to schedulerWatchdogJob.ts WATCHDOG_MANIFEST mirroring ohlcv-daily-aggregator/reputationComputeJob/ta-ohlcv-backfill (cadence 300_000ms, thresholdMultiplier: 3, action: 'self-heal'). Defense-in-depth against residual risk (§2: if compactor is down ≥24h, underlying ticks are purged before any cron can rescue). Optional — does not block task closure; may defer to post-launch ops tuning.",
+        "acceptance_criteria": "WATCHDOG entry added to schedulerJobTable.ts; registers intraday5mCompactor with 5-min health cadence"
+      },
+      {
+        "id": "FIX-W3-CHECKDUPLICATEPRICE-COLLAPSE",
+        "type": "PLAN-ONLY",
+        "title": "[W-3 LANDMINE] checkDuplicatePriceHistory.ts collapses market_prices_history to 1 row/ticker/day when 50% safeguard doesn't trip (audit-checks, follow-on hardening candidate)",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "owner": "po",
+        "next_agent": "po",
+        "sprint": "FOLLOW-UP-HARDENING",
+        "supervised": false,
+        "created_at": "2026-07-14T21:40:00Z",
+        "created_by": "pm (W-3 landmine flagging, brief § 1.3)",
+        "note": "DISCOVERED DURING ALPHA-S2 ANALYSIS (brief § 1.3 — pre-existing live landmine, not created by this task). File: apps/mcp-server/src/scheduler/news-analysis/audit-checks/checkDuplicatePriceHistory.ts. Weekly dataAuditJob deletes every market_prices_history row except MAX(rowid) per (code, DATE(fetched_at)), collapsing entire day to ONE row/ticker. Guarded by 50%-of-rows safeguard (aborts + emits critical finding if dedup would delete >50%), which normally holds (~390 ticks/day → 99.7% > 50% → abort). BUT: partial VPS outage, new watchlist ticker, half-day holiday can drop tick volume below 50% threshold → DELETE executes → collapses that slice to 1 row, undermining ALPHA-S2's 'stop deleting irreplaceable ticks' goal. NOT FIXED HERE (scope creep, M-sized task separate concern). NOT deployed until intraday_ohlcv_5m is live + authoritative (this task + wave completion); at that point raw ticks become disposable → W-3's justification disappears → cleanest retire/simplify follows. Flagged for PO/backlog as follow-on hardening candidate. MUST BE PRESERVED: (1) intraday_ohlcv_5m goes live as archive first, (2) W-3 retiring/simplifying happens AFTER (not before), (3) DO NOT fix W-3 inline with ALPHA-S2.",
+        "action_guide": "After ALPHA-S2 + intraday_ohlcv_5m are live and verified: (1) Consider whether to retire W-3 entirely (raw ticks now disposable, audit no longer needed on raw layer), (2) If retained, harden the safeguard—raise collapse-risk threshold or add ticket-level volume-floor pre-check, (3) Monitor weekly audit logs for any real collapses during transition period"
       }
     ],
     "closed_sprints": [
@@ -9166,7 +9271,28 @@
       "last_updated_at": "2026-07-14T20:22:07Z",
       "last_updated_by": "dev-team (FIX-DAILY-FF closed done_verified; CI green; head idle)"
     },
-    "ready": [],
+    "ready": [
+      {
+        "id": "ALPHA-S2-SUB1-DDL",
+        "type": "subtask",
+        "title": "DDL: Add intraday_ohlcv_5m table + index to schema-market-data.ts",
+        "status": "READY",
+        "priority": "P1",
+        "size": "XS",
+        "zone": "apps/mcp-server/",
+        "owner": "developer",
+        "next_agent": "dev-mcp-server",
+        "sprint": "FLOW-PRICE-ALPHA-LOOP",
+        "parent": "ALPHA-S2-TICK-DOWNSAMPLE-5MIN",
+        "depends": [],
+        "blocks": [],
+        "supervised": false,
+        "created_at": "2026-07-14T21:40:00Z",
+        "created_by": "pm (ALPHA-S2 decomposition)",
+        "note": "CREATE TABLE intraday_ohlcv_5m(code, bucket_ts, open, high, low, close, volume, tick_count, compacted_at) with PK(code, bucket_ts) + index. See brief § 3. All codes from market_prices_history, NOT watchlist-only. Volume = MAX(volume) cumulative-to-date convention per daily_ohlcv, NOT delta.",
+        "acceptance_criteria": "Table created idempotently in schema-market-data.ts initMarketDataTables(), accepts INSERT OR REPLACE writes"
+      }
+    ],
     "review": [
       {
         "id": "TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST",
@@ -9696,10 +9822,10 @@
         "depends": [],
         "created_by": "po-option-a-flow-alpha-loop",
         "created_at": "2026-07-12T07:56:33Z",
-        "note": "ARCHIVE-NOW parallel track (gap #2 — irreplaceable data thrown away daily). VN intraday tick history is not purchasable; market_prices_history is only 24h rolling. DoD: create a permanent 5-min OHLCV bars table and a cron/job that compacts surviving ticks into 5-min bars before the 24h retention deletes them; idempotent, gap-tolerant, no dependence on market open. Forward-only preservation — every trading day of delay loses that day permanently. Brief roadmap step 2 + §5 archive-now. zone=multi -> architect splits.  [PO 2026-07-14 coordination_session e417ef1f] USER GO — supervised:false AUTHORIZED (explicit user selection via router AskUserQuestion; NOT a gate-jump). flow-alpha FULL launch — user directed LAUNCH EVERYTHING (all remaining waves incl. wave 6). This row un-parked; BOUNDED-1/pipeline-resume may pick it. Wave ordering stays enforced by priority + depends (NOT reordered). Zone/depends/safety notes PRESERVED. Do NOT re-park.",
+        "note": "ARCHIVE-NOW parallel track (gap #2 — irreplaceable data thrown away daily). VN intraday tick history is not purchasable; market_prices_history is only 24h rolling. DoD: create a permanent 5-min OHLCV bars table and a cron/job that compacts surviving ticks into 5-min bars before the 24h retention deletes them; idempotent, gap-tolerant, no dependence on market open. Forward-only preservation — every trading day of delay loses that day permanently. Brief roadmap step 2 + §5 archive-now. zone=multi -> architect splits.  [PO 2026-07-14 coordination_session e417ef1f] USER GO — supervised:false AUTHORIZED (explicit user selection via router AskUserQuestion; NOT a gate-jump). flow-alpha FULL launch — user directed LAUNCH EVERYTHING (all remaining waves incl. wave 6). This row un-parked; BOUNDED-1/pipeline-resume may pick it. Wave ordering stays enforced by priority + depends (NOT reordered). Zone/depends/safety notes PRESERVED. Do NOT re-park. [PM 2026-07-14T21:40Z] DECOMPOSED into 5 sequential subtasks: ALPHA-S2-SUB1-DDL, ALPHA-S2-SUB2-JOB-CRON, ALPHA-S2-SUB3-DOCS-CRON, ALPHA-S2-SUB4-TESTS, ALPHA-S2-SUB5-WATCHDOG-STRETCH (optional). W-3 LANDMINE flagged separately: FIX-W3-CHECKDUPLICATEPRICE-COLLAPSE (PO-owned PLAN-ONLY backlog). All subtasks zone=apps/mcp-server/, owner=developer, next_agent=dev-mcp-server, sprint=FLOW-PRICE-ALPHA-LOOP. Sequential depends-on chain enforces single-file serialization (schema, job, docs, tests). Subtask 5 (watchdog) optional stretch goal. Parent row preserved as epic-wrapper.",
         "supervised": false,
-        "updated_at": "2026-07-14T21:35:05Z",
-        "updated_by": "architect (SPRINT-S zone=multi split — resolved single-zone apps/mcp-server/)",
+        "updated_at": "2026-07-14T21:40:00Z",
+        "updated_by": "pm (ALPHA-S2 decomposition)",
         "promoted_at": "2026-07-14T21:01:26Z",
         "promoted_by": "dev-team (bounded-1 auto-pickup)",
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
@@ -9716,6 +9842,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-07-14T20:44:24Z",
-  "_updated_by": "po-tnb-c109-decision-journal"
+  "_updated_at": "2026-07-14T21:40:00Z",
+  "_updated_by": "pm (ALPHA-S2 decomposition)"
 }
