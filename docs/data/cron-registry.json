@@ -5,7 +5,7 @@
   "_definition": "schedulerFileCount = jobs[] array length (registered scheduler entries in this file); excludes orchestrators (jobs.ts, index.ts, cronConfig.ts, startScheduler.ts, startupHelpers.ts)",
   "_jq_ssot": "jq '.project.microservices[] | select(.id==\"mcp-server\") | .crons | length' docs/data/system-map.json",
   "lastUpdated": "2026-05-18-sprint1949",
-  "schedulerFileCount": 67,
+  "schedulerFileCount": 66,
   "jobs": [
     { "schedule": "*/15 min", "name": "intelligenceCycle", "desc": "Main engine: news+prices+cascade+alerts" },
     { "schedule": "*/30 min", "name": "predictionMarketPoll", "desc": "Polymarket fetch + signal detection" },

@@ -111,3 +111,15 @@ Verified: targeted brief 8-file list 86/86 pass; comprehensive 14-file foreign-f
 CI-red freeze: not pushed — committed locally on `main` per protocol, handing to qa.
 
 Zone health: tsc clean, 86/86 + 118/118 targeted/sweep pass, full-suite 103 fail/12 err all pre-existing/systemic (grepped+isolation-verified), toolCount=183 unchanged | HEALTHY.
+
+## 2026-07-15 — ALPHA-S2-SUB3-DOCS-CRON-CORRECTION (router RAW-verify defect fix) → DONE
+
+**Session:** 69b0312e-df43-43a9-9e0b-bddf66d374e3 (dev-team router correction on commit b4224e278)
+
+Router's RAW-verify caught scope creep in my own prior commit (b4224e278): SUB2 added exactly ONE new scheduler file (`intraday5mCompactorJob.ts`), so `cron-registry.json`'s hand-maintained `schedulerFileCount` should have moved 65→66 (+1), but I'd bumped it 65→67 (+2), silently absorbing an unrelated pre-existing off-by-one baseline drift (`schedulerFileCount`=65 vs `jobs[].length`=66, present before this subtask touched the file) under cover of the legitimate new-job bump. Two-file surgical fix: `cron-registry.json` `schedulerFileCount` 67→66 (kept the new `intraday5mCompactor` `jobs[]` entry — `jobs.length=67` correctly reflects one new job); `1190-pipeline-watchdog.test.ts`'s guard assertion `toBe(65)`→`toBe(66)`, renamed the `it()` title, appended a `BUMP 2026-07-15 (ALPHA-S2-SUB2-JOB-CRON)` comment in the same convention as the pre-existing `BUMP 2026-07-10` line (history preserved).
+
+Did NOT touch (per router's explicit exclusion list): `docs/data/system-map.json` (its 66→67 crons bump is a correct standalone +1, no test asserts it), `docs/standards/cron-jobs.md`, `docs/data/project-stats.json` (`cronJobCount` stays generator-maintained), or `FACTORY-SCHEDULER-job-table-registry.test.ts` (its 58→59/80→81 bumps were correct, untouched). Did not attempt to "fix" the underlying 65-vs-66 baseline offset itself — flagged in the decision journal as a separate PO-triage candidate per router's instruction, since identifying which historical scheduler-file addition under-counted needs a dedicated audit outside this correction's 2-file scope.
+
+Verified: `bun test src/__tests__/1190-pipeline-watchdog.test.ts` → **16 pass / 0 fail / 30 expect() calls**. `bun tsc --noEmit` (apps/mcp-server) → **exit 0**, zero diagnostic output.
+
+Zone health: tsc clean, 16/16 targeted pass (was 15/16 red on `schedulerFileCount===65` before this fix), `schedulerFileCount` now correctly reads 66 | HEALTHY. Committed on `main`, explicit pathspec only (2 code/doc files + notebook + decision journal), not pushed per protocol.
