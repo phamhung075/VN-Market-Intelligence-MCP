@@ -394,7 +394,7 @@
       "AUD-ND-1 REGRESSION SUSPECTED: mcp-server-1 SIGTERM-stopped ~14:30 06-01 while host healthy, culprit unidentified — verify detectors PLAN-ONLY; check system-auditor/cron logs. 4th host-danger candidate.",
       "tnb-c85 morning-dish fix DONE-PENDING-LIVE-VERIFY — confirm next morning fire 05:23Z publishes.",
       "1967b architect orchestration audit DEFERRED (REQ_1967 ready) — re-queue when FLEET-HOST-SAFETY closes.",
-      "FU-DEV-CAFEF-1 (awaiting USER greenlight): wire /proxy/article-body into push-news ingestion.",
+      "FU-DEV-CAFEF-1 GREENLIT 2026-07-14 (USER GO, coordination_session e417ef1f) — RESOLVED: minted as backlog row (SPRINT-S, apps/news-fetch/, P2, architect-first). Wire the working VPS /proxy/article-body endpoint into push-news ingestion so stored news rows carry full CafeF body text. Awaiting-USER-greenlight marker cleared.",
       "ARCH-DAILY-FOREIGN-FLOW-TABLE NOT R-1-complete (2026-07-12): read-side view-anchor gap — daily_ohlcv_with_flow is FROM daily_ohlcv LEFT JOIN daily_foreign_flow, so 5 Class-A sites still return 0 for a ticker before its OHLCV bar lands. FIX-DAILY-FF-VIEW-JOIN-ANCHOR minted (architect). Write-side R-1 closed by TASK_2002. Do NOT mark the sprint R-1-complete until the FIX lands + TASK_2005's 2 assertions pass RAW.",
       "flow-alpha wave-1 LAUNCHED (2026-07-13, USER GO coordination_session 69b0312e): explicit user greenlight received via the dev-team dispatcher — the gate the 07-12 re-park was holding for. supervised:true->false on ALPHA-S1-CANDLE-RECOVER/STARTUP-CANDLE-GUARD/OHLCV-BACKFILL-DONE-BUG (architect zone apps/mcp-server/ + depends + safety-notes preserved); top-level .head=in_progress/active=ALPHA-S1-CANDLE-RECOVER/next_agent=pm. This is NOT a gate-jump (distinct from the peer-PM 07-12 unpark PO reverted 19:45Z). PM: NO TASK_2xxx fan-out (each row S/atomic); dev-mcp-server runs CANDLE-RECOVER first. P0 target Mon 02:15Z."
     ]
@@ -615,8 +615,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-13T19:31:11Z",
-    "_updated_by": "po-s140-ultracode-audit-fixall-mint",
+    "_updated_at": "2026-07-14T20:29:05Z",
+    "_updated_by": "po-decision4-ccato-raise-bashgrant-denied",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -5166,7 +5166,13 @@
             "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#git-ci-publish-P2",
             "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#git-ci-publish-P8"
           ]
-        }
+        },
+        "note": "[PO 2026-07-14 DECISION-3 coordination_session e417ef1f] PARTIAL AUTHORIZATION (explicit user selection via router AskUserQuestion — NOT blanket). AUTHORIZED TO PROCEED: phase-1 = RC-VERIF + RC-CONVERGE ONLY — the orch-apply->orch-validate.mjs completion gate (require verification.raw_probe{tool,args,live_value_observed,observed_at} before DONE_VERIFIED) + the DEGRADED 8th StatusEnum value (honest_gap_reason) + the recurring-bug re-arm (re-encode convergence as a LIVE bug_class-fingerprint mechanism replacing the dead recurringBugEscalationFlag). Runs as a SUPERVISED architect-led cascade (design-first: architect TECH doc FIRST); supervised:true holds it OUT of the BOUNDED-1 auto-drainer — deliberate router/PO dispatch of the RC-VERIF+RC-CONVERGE scope ONLY. STILL USER-GATED — do NOT design/build/dispatch these without a FRESH explicit user go (this partial authorization is NOT a blanket one): RC-ORCHMONO (orch-cold-evict.sh backlog-lane eviction + orch-apply.sh HOT CEILING ~600KB gate), RC-GITSTATE (per-ticker stamping fix + gitignore pure-derived counters), RC-CEREMONY (SF-1 re-entrancy + shared tick-preflight-lib). OVERLAP: TE-T15 (cold-evict) sits in RC-ORCHMONO's territory — TE-T15 is annotated to DEFER to the still-gated RC-ORCHMONO decision; do NOT let either proceed independently.",
+        "supervised": true,
+        "next_agent": "architect",
+        "authorization": "PARTIAL: RC-VERIF+RC-CONVERGE authorized (supervised architect-led) 2026-07-14 e417ef1f; RC-ORCHMONO/RC-GITSTATE/RC-CEREMONY USER-GATED",
+        "updated_at": "2026-07-14T20:29:05Z",
+        "updated_by": "po (DECISION-3 phase-2 partial authorization — user selection e417ef1f)"
       },
       {
         "id": "P1-DETECTOR-CLOSURE-TASK-ARCHIVE",
@@ -6016,7 +6022,9 @@
         "supervised": true,
         "depends": [],
         "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-15",
-        "note": "EXECUTE LAST. SUPERVISED:true = held OUT of the BOUNDED-1 auto-drainer; router/PO manually dispatches with care. HIGHEST RISK — orch-state has a long corruption-history; ALL writes via scripts/orch-apply.sh + scripts/orch-cold-evict.sh conservation guards ONLY, QA-verified, never rushed. Extend cold-evict w/ 3 predicates (done[]>48h, closed_sprints[], active_sprints rows >10KB body->stub) + add HSC-3-style slice rule to po/qa flows. Do NOT hand-edit the hot file."
+        "note": "EXECUTE LAST. SUPERVISED:true = held OUT of the BOUNDED-1 auto-drainer; router/PO manually dispatches with care. HIGHEST RISK — orch-state has a long corruption-history; ALL writes via scripts/orch-apply.sh + scripts/orch-cold-evict.sh conservation guards ONLY, QA-verified, never rushed. Extend cold-evict w/ 3 predicates (done[]>48h, closed_sprints[], active_sprints rows >10KB body->stub) + add HSC-3-style slice rule to po/qa flows. Do NOT hand-edit the hot file.  [PO 2026-07-14 DECISION-3 coordination_session e417ef1f] DEFER to the still-USER-GATED RC-ORCHMONO decision (SYSREMAKE-P2-STRUCTURAL-REMAKE-ROUTE). TE-T15 (cold-evict terminal/wrapper task_board bloat) OVERLAPS RC-ORCHMONO's orch-cold-evict.sh backlog-lane-eviction + orch-apply.sh HOT-CEILING territory. Do NOT proceed independently — hold until the RC-ORCHMONO user gate opens so both cold-evict extensions are designed together (avoid conflicting orch-cold-evict.sh edits). Already supervised:true (out of the BOUNDED-1 drainer); this note is the explicit coordination gate. Phase-2 user selection e417ef1f authorized RC-VERIF+RC-CONVERGE ONLY — RC-ORCHMONO stays gated.",
+        "updated_at": "2026-07-14T20:29:05Z",
+        "updated_by": "po (DECISION-3 TE-T15 defer to gated RC-ORCHMONO — user selection e417ef1f)"
       },
       {
         "id": "TE-T29",
@@ -6140,8 +6148,10 @@
         "depends": [],
         "created_by": "po-option-a-flow-alpha-loop",
         "created_at": "2026-07-12T07:56:33Z",
-        "note": "ARCHIVE-NOW parallel track (gap #2 — irreplaceable data thrown away daily). VN intraday tick history is not purchasable; market_prices_history is only 24h rolling. DoD: create a permanent 5-min OHLCV bars table and a cron/job that compacts surviving ticks into 5-min bars before the 24h retention deletes them; idempotent, gap-tolerant, no dependence on market open. Forward-only preservation — every trading day of delay loses that day permanently. Brief roadmap step 2 + §5 archive-now. zone=multi -> architect splits.",
-        "supervised": true
+        "note": "ARCHIVE-NOW parallel track (gap #2 — irreplaceable data thrown away daily). VN intraday tick history is not purchasable; market_prices_history is only 24h rolling. DoD: create a permanent 5-min OHLCV bars table and a cron/job that compacts surviving ticks into 5-min bars before the 24h retention deletes them; idempotent, gap-tolerant, no dependence on market open. Forward-only preservation — every trading day of delay loses that day permanently. Brief roadmap step 2 + §5 archive-now. zone=multi -> architect splits.  [PO 2026-07-14 coordination_session e417ef1f] USER GO — supervised:false AUTHORIZED (explicit user selection via router AskUserQuestion; NOT a gate-jump). flow-alpha FULL launch — user directed LAUNCH EVERYTHING (all remaining waves incl. wave 6). This row un-parked; BOUNDED-1/pipeline-resume may pick it. Wave ordering stays enforced by priority + depends (NOT reordered). Zone/depends/safety notes PRESERVED. Do NOT re-park.",
+        "supervised": false,
+        "updated_at": "2026-07-14T20:29:05Z",
+        "updated_by": "po (DECISION-1 flow-alpha full GO — user selection e417ef1f)"
       },
       {
         "id": "ALPHA-S2-FOREIGN-FLOW-WRITE-RACE",
@@ -6157,8 +6167,10 @@
         "depends": [],
         "created_by": "po-option-a-flow-alpha-loop",
         "created_at": "2026-07-12T07:56:33Z",
-        "note": "RECONCILE 2026-07-12 (PO, coordination_session 69b0312e): PARTIALLY SUPERSEDED by ARCH-DAILY-FOREIGN-FLOW-TABLE / TASK_2002 (writer cutover, commit 3201c86cc). DEFERRED-WRITE-RACE HALF = DONE: this row title+DoD (\"rows persist even when the daily_ohlcv bar is not yet present, reconcile when the bar lands — no silent row loss\") is structurally satisfied. RAW-verified in apps/mcp-server/src/infrastructure/db/ohlcvForeignFlowStore.ts: writeForeignFlowToOhlcv now does UNCONDITIONAL INSERT ... ON CONFLICT(code,date) DO UPDATE into daily_foreign_flow with NO daily_ohlcv dependency; changes>=1 always, changes=0 impossible for a valid row. The daily foreign plane that ALPHA-S3 (divergence screen) depends on is therefore delivered by the daily-FF sprint (TASK_2000-2004), NOT by this parked row — ALPHA-S3 foreign-plane dependency is satisfied; architect may drop this from ALPHA-S3.depends at wave-3 launch. RESIDUAL SCOPE (sole remaining work) = INTRADAY GRANULARITY ONLY: TASK_2002 writer is per-(code,date) last-write-wins, so the 60s intraday snapshots still overwrite each other and only the day final cumulative value survives — intraday foreign-flow accumulation curve is still discarded. Preserving it (buffer/downsample the 60s foreign pushes into a foreign-flow intraday/5-min archive BEFORE the daily upsert collapses it) is NOT delivered by the daily-only sprint. This is the ARCHIVE-NOW analogue of sibling ALPHA-S2-TICK-DOWNSAMPLE-5MIN (price plane) — architect should consider CONSOLIDATING both intraday archives at wave-2 launch (same before-purge downsample pattern, adjacent plane). Note: intraday residual is NOT required by ALPHA-S3 (needs daily) — lower urgency than original P1. Likely SPRINT-S (archive-table build), not FIX-S. Original context: full-universe 60s foreign-flow pushes are the richest/freshest asset; gap #2 + ingestion-integrity kill-criterion #2. Brief roadmap step 2. zone=multi -> architect splits.",
-        "supervised": true
+        "note": "RECONCILE 2026-07-12 (PO, coordination_session 69b0312e): PARTIALLY SUPERSEDED by ARCH-DAILY-FOREIGN-FLOW-TABLE / TASK_2002 (writer cutover, commit 3201c86cc). DEFERRED-WRITE-RACE HALF = DONE: this row title+DoD (\"rows persist even when the daily_ohlcv bar is not yet present, reconcile when the bar lands — no silent row loss\") is structurally satisfied. RAW-verified in apps/mcp-server/src/infrastructure/db/ohlcvForeignFlowStore.ts: writeForeignFlowToOhlcv now does UNCONDITIONAL INSERT ... ON CONFLICT(code,date) DO UPDATE into daily_foreign_flow with NO daily_ohlcv dependency; changes>=1 always, changes=0 impossible for a valid row. The daily foreign plane that ALPHA-S3 (divergence screen) depends on is therefore delivered by the daily-FF sprint (TASK_2000-2004), NOT by this parked row — ALPHA-S3 foreign-plane dependency is satisfied; architect may drop this from ALPHA-S3.depends at wave-3 launch. RESIDUAL SCOPE (sole remaining work) = INTRADAY GRANULARITY ONLY: TASK_2002 writer is per-(code,date) last-write-wins, so the 60s intraday snapshots still overwrite each other and only the day final cumulative value survives — intraday foreign-flow accumulation curve is still discarded. Preserving it (buffer/downsample the 60s foreign pushes into a foreign-flow intraday/5-min archive BEFORE the daily upsert collapses it) is NOT delivered by the daily-only sprint. This is the ARCHIVE-NOW analogue of sibling ALPHA-S2-TICK-DOWNSAMPLE-5MIN (price plane) — architect should consider CONSOLIDATING both intraday archives at wave-2 launch (same before-purge downsample pattern, adjacent plane). Note: intraday residual is NOT required by ALPHA-S3 (needs daily) — lower urgency than original P1. Likely SPRINT-S (archive-table build), not FIX-S. Original context: full-universe 60s foreign-flow pushes are the richest/freshest asset; gap #2 + ingestion-integrity kill-criterion #2. Brief roadmap step 2. zone=multi -> architect splits.  [PO 2026-07-14 coordination_session e417ef1f] USER GO — supervised:false AUTHORIZED (explicit user selection via router AskUserQuestion; NOT a gate-jump). flow-alpha FULL launch — user directed LAUNCH EVERYTHING (all remaining waves incl. wave 6). This row un-parked; BOUNDED-1/pipeline-resume may pick it. Wave ordering stays enforced by priority + depends (NOT reordered). Zone/depends/safety notes PRESERVED. Do NOT re-park.",
+        "supervised": false,
+        "updated_at": "2026-07-14T20:29:05Z",
+        "updated_by": "po (DECISION-1 flow-alpha full GO — user selection e417ef1f)"
       },
       {
         "id": "ALPHA-S2-OMO-LIQUIDITY-CRON",
@@ -6174,8 +6186,10 @@
         "depends": [],
         "created_by": "po-option-a-flow-alpha-loop",
         "created_at": "2026-07-12T07:56:33Z",
-        "note": "ARCHIVE-NOW (gap #2). The macro-indicators /liquidity-state endpoint is live but NO scheduler calls it, so sbv_omo_daily accrues nothing and the built OMO-stress score stays null — OMO auction history is forward-only and not purchasable. DoD: a daily cron hits /liquidity-state and writes sbv_omo_daily; fail-loud if the endpoint/VPS is down (no fake-freshness). Blocks ALPHA-S4-REGIME-GATE-V1 (regime gate needs >=5 accrued auctions before the OMO leg is honest). Brief roadmap step 2. zone=multi -> architect splits.",
-        "supervised": true
+        "note": "ARCHIVE-NOW (gap #2). The macro-indicators /liquidity-state endpoint is live but NO scheduler calls it, so sbv_omo_daily accrues nothing and the built OMO-stress score stays null — OMO auction history is forward-only and not purchasable. DoD: a daily cron hits /liquidity-state and writes sbv_omo_daily; fail-loud if the endpoint/VPS is down (no fake-freshness). Blocks ALPHA-S4-REGIME-GATE-V1 (regime gate needs >=5 accrued auctions before the OMO leg is honest). Brief roadmap step 2. zone=multi -> architect splits.  [PO 2026-07-14 coordination_session e417ef1f] USER GO — supervised:false AUTHORIZED (explicit user selection via router AskUserQuestion; NOT a gate-jump). flow-alpha FULL launch — user directed LAUNCH EVERYTHING (all remaining waves incl. wave 6). This row un-parked; BOUNDED-1/pipeline-resume may pick it. Wave ordering stays enforced by priority + depends (NOT reordered). Zone/depends/safety notes PRESERVED. Do NOT re-park.",
+        "supervised": false,
+        "updated_at": "2026-07-14T20:29:05Z",
+        "updated_by": "po (DECISION-1 flow-alpha full GO — user selection e417ef1f)"
       },
       {
         "id": "ALPHA-S2-RAG-FTS-REBUILD-CRON",
@@ -6191,8 +6205,10 @@
         "depends": [],
         "created_by": "po-option-a-flow-alpha-loop",
         "created_at": "2026-07-12T07:56:33Z",
-        "note": "ARCHIVE-NOW (gap #4-adjacent — sentiment corpus quality). The rag-service FTS rebuild cron was never wired, so the hybrid retrieval's BM25 leg silently misses rows added since the last boot — degrading the sentiment input (rag_analyses) that feeds the divergence screen (ALPHA-S3). DoD: a daily cron rebuilds the FTS index on rag-service over the LanceDB rag_entries corpus; verify post-rebuild that recent rows are searchable via the BM25 leg. Brief roadmap step 2. zone=multi -> architect splits.",
-        "supervised": true
+        "note": "ARCHIVE-NOW (gap #4-adjacent — sentiment corpus quality). The rag-service FTS rebuild cron was never wired, so the hybrid retrieval's BM25 leg silently misses rows added since the last boot — degrading the sentiment input (rag_analyses) that feeds the divergence screen (ALPHA-S3). DoD: a daily cron rebuilds the FTS index on rag-service over the LanceDB rag_entries corpus; verify post-rebuild that recent rows are searchable via the BM25 leg. Brief roadmap step 2. zone=multi -> architect splits.  [PO 2026-07-14 coordination_session e417ef1f] USER GO — supervised:false AUTHORIZED (explicit user selection via router AskUserQuestion; NOT a gate-jump). flow-alpha FULL launch — user directed LAUNCH EVERYTHING (all remaining waves incl. wave 6). This row un-parked; BOUNDED-1/pipeline-resume may pick it. Wave ordering stays enforced by priority + depends (NOT reordered). Zone/depends/safety notes PRESERVED. Do NOT re-park.",
+        "supervised": false,
+        "updated_at": "2026-07-14T20:29:05Z",
+        "updated_by": "po (DECISION-1 flow-alpha full GO — user selection e417ef1f)"
       },
       {
         "id": "ALPHA-S3-DIVERGENCE-SCREEN-V1",
@@ -6212,8 +6228,10 @@
         ],
         "created_by": "po-option-a-flow-alpha-loop",
         "created_at": "2026-07-12T07:56:33Z",
-        "note": "THE core alpha deliverable (alpha lens #1 — 'nearly pure SQL'). Joins daily_ohlcv foreign columns + foreign_room_events (foreign z-score / foreignAccumZMarket via stock-price /price/foreign-accum-rank) x rag_analyses sentiment + mention_velocity x technical-analysis /ta/relative-strength, watchlist-scoped (33-34 tickers), emitting a small ranked set as a daily Telegram digest through the EXISTING alerts path (do not build a new delivery channel). DoD: a daily digest posts ranked divergence signals with honest nulls (no fabrication when a leg is thin). Depends on S1 (sane cross-section: candle present + backfill inserted-count) and S2 foreign-flow race fix (no dropped foreign rows). Needs dev-team PM/architect decomposition when picked. Brief roadmap step 3 + §3 Option A. zone=multi -> architect splits.",
-        "supervised": true
+        "note": "THE core alpha deliverable (alpha lens #1 — 'nearly pure SQL'). Joins daily_ohlcv foreign columns + foreign_room_events (foreign z-score / foreignAccumZMarket via stock-price /price/foreign-accum-rank) x rag_analyses sentiment + mention_velocity x technical-analysis /ta/relative-strength, watchlist-scoped (33-34 tickers), emitting a small ranked set as a daily Telegram digest through the EXISTING alerts path (do not build a new delivery channel). DoD: a daily digest posts ranked divergence signals with honest nulls (no fabrication when a leg is thin). Depends on S1 (sane cross-section: candle present + backfill inserted-count) and S2 foreign-flow race fix (no dropped foreign rows). Needs dev-team PM/architect decomposition when picked. Brief roadmap step 3 + §3 Option A. zone=multi -> architect splits.  [PO 2026-07-14 coordination_session e417ef1f] USER GO — supervised:false AUTHORIZED (explicit user selection via router AskUserQuestion; NOT a gate-jump). flow-alpha FULL launch — user directed LAUNCH EVERYTHING (all remaining waves incl. wave 6). This row un-parked; BOUNDED-1/pipeline-resume may pick it. Wave ordering stays enforced by priority + depends (NOT reordered). Zone/depends/safety notes PRESERVED. Do NOT re-park.",
+        "supervised": false,
+        "updated_at": "2026-07-14T20:29:05Z",
+        "updated_by": "po (DECISION-1 flow-alpha full GO — user selection e417ef1f)"
       },
       {
         "id": "ALPHA-S4-REGIME-GATE-V1",
@@ -6232,8 +6250,10 @@
         ],
         "created_by": "po-option-a-flow-alpha-loop",
         "created_at": "2026-07-12T07:56:33Z",
-        "note": "Top-down conditioning dial prepended to every divergence-screen output. Inputs: carry spread (sbv_rates x fred_series_daily), DXY-vs-30d-mean (commodity_prices_history), OMO stress (sbv_omo_daily, once >=5 auctions accrue from ALPHA-S2-OMO-LIQUIDITY-CRON). HARD honesty rule: exclude is_estimate fields (SBV config-fallback policy rates, interbank_1w) — the dial must be visibly 'partial' rather than silently include estimated inputs. DoD: each screen output carries a size-up / neutral / stand-down regime read derived only from non-estimate inputs. Depends on S2 OMO cron (data) + S3 (the surface it prepends to). Brief roadmap step 4. zone=multi -> architect splits.",
-        "supervised": true
+        "note": "Top-down conditioning dial prepended to every divergence-screen output. Inputs: carry spread (sbv_rates x fred_series_daily), DXY-vs-30d-mean (commodity_prices_history), OMO stress (sbv_omo_daily, once >=5 auctions accrue from ALPHA-S2-OMO-LIQUIDITY-CRON). HARD honesty rule: exclude is_estimate fields (SBV config-fallback policy rates, interbank_1w) — the dial must be visibly 'partial' rather than silently include estimated inputs. DoD: each screen output carries a size-up / neutral / stand-down regime read derived only from non-estimate inputs. Depends on S2 OMO cron (data) + S3 (the surface it prepends to). Brief roadmap step 4. zone=multi -> architect splits.  [PO 2026-07-14 coordination_session e417ef1f] USER GO — supervised:false AUTHORIZED (explicit user selection via router AskUserQuestion; NOT a gate-jump). flow-alpha FULL launch — user directed LAUNCH EVERYTHING (all remaining waves incl. wave 6). This row un-parked; BOUNDED-1/pipeline-resume may pick it. Wave ordering stays enforced by priority + depends (NOT reordered). Zone/depends/safety notes PRESERVED. Do NOT re-park.",
+        "supervised": false,
+        "updated_at": "2026-07-14T20:29:05Z",
+        "updated_by": "po (DECISION-1 flow-alpha full GO — user selection e417ef1f)"
       },
       {
         "id": "ALPHA-S5-TRUTH-LEDGER-BACKTEST",
@@ -6251,8 +6271,10 @@
         ],
         "created_by": "po-option-a-flow-alpha-loop",
         "created_at": "2026-07-12T07:56:33Z",
-        "note": "Closes the loop (gap #7 — outcome/calibration layer runs nightly but nothing converts grades into weights). DoD: a 'signal truth ledger' view over the already-running signal_outcomes / alerts / calibration_snapshots / backtest_runs ranks each signal class by realized T+24/48h hit-rate and 3d impact; run_backtest calibrates RSI/BB thresholds against the ~3y watchlist bars; losing alert classes are muted. Feeds the kill-criterion #1 measurement (n>=40 signals, 8-week window). Depends on S3 (signals must be flowing to accrue outcomes). Needs dev-team PM/architect decomposition. Brief roadmap step 5. zone=multi -> architect splits.",
-        "supervised": true
+        "note": "Closes the loop (gap #7 — outcome/calibration layer runs nightly but nothing converts grades into weights). DoD: a 'signal truth ledger' view over the already-running signal_outcomes / alerts / calibration_snapshots / backtest_runs ranks each signal class by realized T+24/48h hit-rate and 3d impact; run_backtest calibrates RSI/BB thresholds against the ~3y watchlist bars; losing alert classes are muted. Feeds the kill-criterion #1 measurement (n>=40 signals, 8-week window). Depends on S3 (signals must be flowing to accrue outcomes). Needs dev-team PM/architect decomposition. Brief roadmap step 5. zone=multi -> architect splits.  [PO 2026-07-14 coordination_session e417ef1f] USER GO — supervised:false AUTHORIZED (explicit user selection via router AskUserQuestion; NOT a gate-jump). flow-alpha FULL launch — user directed LAUNCH EVERYTHING (all remaining waves incl. wave 6). This row un-parked; BOUNDED-1/pipeline-resume may pick it. Wave ordering stays enforced by priority + depends (NOT reordered). Zone/depends/safety notes PRESERVED. Do NOT re-park.",
+        "supervised": false,
+        "updated_at": "2026-07-14T20:29:05Z",
+        "updated_by": "po (DECISION-1 flow-alpha full GO — user selection e417ef1f)"
       },
       {
         "id": "ALPHA-S6-OPTIONB-DECISION-GATE",
@@ -6263,7 +6285,7 @@
         "size": "S",
         "priority": "P3",
         "wave": 6,
-        "supervised": true,
+        "supervised": false,
         "zone": "docs/architecture-briefs/",
         "sprint": "FLOW-PRICE-ALPHA-LOOP",
         "depends": [
@@ -6271,7 +6293,10 @@
         ],
         "created_by": "po-option-a-flow-alpha-loop",
         "created_at": "2026-07-12T07:56:33Z",
-        "note": "PLAN-ONLY GATE, NOT buildable work — supervised:true so the dev-team BOUNDED-1 idle-capacity promote SKIPS it; it is a PO/human decision checkpoint + dedup anchor so the gate is not lost. Trip condition (both required): (a) pdf-extractor container has held healthy >=2 weeks; (b) Option A is producing scored signals (S3 digest live + S5 ledger accruing). When BOTH true, PO re-opens strategy: start the Option B major build (BCTC 328-row deferred_infra drain to 8+ quarters x 34 tickers, AGM multi-year backfill + de-hardcode the 33-ticker VPS list). Apply BCTC pivot-trigger (kill-criterion #3): if the extractor still can't hold 2 weeks health or deferred_infra can't drop below ~30% of the bctc_vps_queue -> downgrade Option B to vnstock-only fundamentals, reserve PEK for current-quarter filings. Brief roadmap step 6 + §5 + kill criteria. Do NOT decompose or dispatch until PO trips the gate."
+        "note": "PLAN-ONLY GATE, NOT buildable work — supervised:true so the dev-team BOUNDED-1 idle-capacity promote SKIPS it; it is a PO/human decision checkpoint + dedup anchor so the gate is not lost. Trip condition (both required): (a) pdf-extractor container has held healthy >=2 weeks; (b) Option A is producing scored signals (S3 digest live + S5 ledger accruing). When BOTH true, PO re-opens strategy: start the Option B major build (BCTC 328-row deferred_infra drain to 8+ quarters x 34 tickers, AGM multi-year backfill + de-hardcode the 33-ticker VPS list). Apply BCTC pivot-trigger (kill-criterion #3): if the extractor still can't hold 2 weeks health or deferred_infra can't drop below ~30% of the bctc_vps_queue -> downgrade Option B to vnstock-only fundamentals, reserve PEK for current-quarter filings. Brief roadmap step 6 + §5 + kill criteria. Do NOT decompose or dispatch until PO trips the gate.  [PO 2026-07-14 coordination_session e417ef1f] USER GO — supervised:false AUTHORIZED (explicit user selection via router AskUserQuestion; NOT a gate-jump). USER EXPLICITLY INCLUDED WAVE-6/OPTION-B IN THE GO (LAUNCH EVERYTHING). GATE CONVERTED to a normal sequenced row: it STILL sits LAST via P3 priority + depends:[ALPHA-S5-TRUTH-LEDGER-BACKTEST] (S6 becomes eligible ONLY after S5 completes; it does NOT jump the queue). The 'PLAN-ONLY GATE / supervised:true so BOUNDED-1 SKIPS it / Do NOT decompose or dispatch until PO trips the gate' text above is SUPERSEDED by this USER GO — when the pipeline reaches S6 (S5 done), proceed with the Option-B decision/build rather than stopping for a user gate. Zone/depends PRESERVED. Do NOT re-park.",
+        "gate_converted": "user-gate->normal-sequenced 2026-07-14 (USER GO e417ef1f); sequenced LAST via P3+depends:[ALPHA-S5-TRUTH-LEDGER-BACKTEST]",
+        "updated_at": "2026-07-14T20:29:05Z",
+        "updated_by": "po (DECISION-1 wave-6 gate->sequenced — user selection e417ef1f)"
       },
       {
         "id": "OPS-BCTC-REFINE-REPASS-NONBANK-5T",
@@ -6308,11 +6333,15 @@
         "status": "BACKLOG",
         "size": "S",
         "zone": "apps/mcp-server/",
-        "priority": "high",
+        "priority": "P0",
         "title": "Expose CCATO claim-truth-gate as a gateway-native MCP tool so no-Bash cowork narrative agents can enforce the hard gate before write without shell",
         "next_agent": "architect",
         "supervised": true,
-        "note": "PO triage 17:37Z from digest-predict bug-escalation (2x recur 2026-07-12, fingerprint 6856dd31). Fix path (b) gateway-native narrative_truth_gate MCP tool — preserves no-Bash cowork design, generalizes to 5 narrative agents (digest-predict/fb-market-poster/CHEF/market-watcher/alert-commander). SUPERVISED: needs architect-led planning (SPRINT-S architect->pm) but architect reserved for flow-alpha — held for deliberate dispatch; contention escalated to user. git-commit half folds into FIX-BCTC-ANALYST-STAGELOG-NOTIFY-NO-BASH (no dup mint). Full ACs in po.md commit 4e5c56e67."
+        "note": "PO triage 17:37Z from digest-predict bug-escalation (2x recur 2026-07-12, fingerprint 6856dd31). Fix path (b) gateway-native narrative_truth_gate MCP tool — preserves no-Bash cowork design, generalizes to 5 narrative agents (digest-predict/fb-market-poster/CHEF/market-watcher/alert-commander). SUPERVISED: needs architect-led planning (SPRINT-S architect->pm) but architect reserved for flow-alpha — held for deliberate dispatch; contention escalated to user. git-commit half folds into FIX-BCTC-ANALYST-STAGELOG-NOTIFY-NO-BASH (no dup mint). Full ACs in po.md commit 4e5c56e67.  [PO 2026-07-14 DECISION-4 coordination_session e417ef1f] PRIORITY RAISED high->P0 (USER-PRIORITIZED — user-directed top-priority, NOT an incident-P0). The digest-predict Bash-grant request is DENIED by user (explicit selection via router AskUserQuestion): digest-predict stays SHELL-LESS (Read/Write/Edit + gateway only) — no shell capability is granted to any narrative cowork agent. The claim-truth-gate capability need routes HERE instead: this gateway-native narrative_truth_gate MCP tool is the sanctioned LEAST-PRIVILEGE alternative. Dispatch this FIRST among the architect-led rows; supervised:true is kept (deliberate architect->pm dispatch — it is a design-first SPRINT-S), and the prior 'architect reserved for flow-alpha, held / contention escalated to user' hold is SUPERSEDED by this user prioritization.",
+        "prior_priority": "high",
+        "user_prioritized": "2026-07-14 e417ef1f — least-privilege alternative to DENIED digest-predict Bash-grant",
+        "updated_at": "2026-07-14T20:29:05Z",
+        "updated_by": "po (DECISION-4 CCATO priority raise + Bash-grant DENIED — user selection e417ef1f)"
       },
       {
         "id": "TASK_2005",
@@ -7339,6 +7368,22 @@
         "verification_gate": "RAW-live, REAL DATA (test-suite green does NOT count — PUSH-AUTONOMY-1 step 5). A Class-A live tool call via gateway ( mcp__gateway__call_tool(server=\"vn-market\", tool=\"marketWideForeignFlow\"|\"foreignFlow\", ...) ) returns the per-ticker foreign value for a ticker that HAS a daily_foreign_flow row but has NO daily_ohlcv bar for that same date (the exact FF-only row class the old anchored view dropped). GATE PASSES only when the live serving response contains that FF-only row's foreign value (non-null, plausibility-checked) — i.e. the 'chua tra so tung ma' symptom is gone against the LIVE deployed container. If no natural FF-only ticker exists at probe time, identify one from the live daily_foreign_flow vs daily_ohlcv key delta before probing.",
         "note": "Loop-closer for PUSH-AUTONOMY-1: origin/main pushed 2026-07-14 (29f92c5be..e9b9fba6b, 22 commits incl. fix d71f45949); CI GREEN on new head (gh run 29364129967 conclusion=success = ci_green_on_subsequent_push satisfied). Parent FIX-DAILY-FF-VIEW-JOIN-ANCHOR cascade complete: architect cacf5607f -> dev d71f45949 -> qa APPROVE 8e905c31d -> po APPROVED e591d1119. This row is the mandatory step-5 REAL-DATA serving verification: the SERVING layer changed (view is now bidirectional Shape A, DROP+CREATE at startup) so the running container MUST be rebuilt+redeployed (see precondition) before the gate can pass. Two-phase supervised cascade: (1) ops rebuild+deploy mcp-server, (2) qa RAW-live Class-A probe. blocks nothing. DO NOT close on test-suite green — live serving probe only.",
         "supervised_note": "Two-phase supervised cascade, NOT a BOUNDED-1 atomic dev pick: (1) next_agent=ops executes the rebuild+deploy precondition per OVERRIDE 2026-07-03; (2) owner=qa runs the RAW-live Class-A verification_gate against the deployed container. Router supervised dispatch — removed from idle auto-pickup (supervised:true)."
+      },
+      {
+        "id": "FU-DEV-CAFEF-1",
+        "type": "SPRINT-S",
+        "size": "S",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "zone": "apps/news-fetch/",
+        "next_agent": "architect",
+        "supervised": false,
+        "depends": [],
+        "created_by": "po (DECISION-2 CAFEF greenlight — user selection e417ef1f)",
+        "created_at": "2026-07-14T20:29:05Z",
+        "title": "Wire the working VPS /proxy/article-body endpoint (CafeF full article text) into the push-news ingestion pipeline so stored news rows carry full body text (not just the RSS ~500-char excerpt).",
+        "note": "GREENLIT 2026-07-14 (USER GO, coordination_session e417ef1f — explicit user selection via router AskUserQuestion). Converts the long-parked FU-DEV-CAFEF-1 follow-up (watch_items 'awaiting USER greenlight' since 2026-06-01; recon docs/vps-sources/cafef-article-body/recon.md) into real board work. Endpoint is LIVE + verified: VPS:8765/proxy/article-body?url= (article-body-fetcher.py; cafef 5000ch 200 OK, vneconomy 5000ch 200 OK — dev-vps-crawls notebook 2026-06-01). DoD: push-news ingestion (apps/news-fetch/) fetches full CafeF article body via /proxy/article-body per RSS item and persists it on the news row. architect designs FIRST: storage schema (a body/full-text column + migration), the per-article fetch fan-out policy (bounded, latency/rate-aware, must degrade honest-null when the proxy is down — NO fabrication, feedback_no_fake_data_real_fetch), and a backfill decision. Then dev implements. zone apps/news-fetch/ (owner dev-news-fetch per docs/data/system-map.json). Do NOT store the RSS ~500-char excerpt as if it were the full body.",
+        "verification_gate": "RAW-live per PUSH-AUTONOMY-1 culture: a REALLY-ingested news row in the live news store whose body/full-text column contains the FULL CafeF article text (materially longer than the RSS ~500-char excerpt), fetched via VPS:8765/proxy/article-body, confirmed by a direct read of a real stored row post-deploy — never a mocked/synthetic row."
       }
     ],
     "closed_sprints": [
@@ -9623,6 +9668,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-07-13T19:31:11Z",
-  "_updated_by": "po-s140-ultracode-audit-fixall-mint"
+  "_updated_at": "2026-07-14T20:29:05Z",
+  "_updated_by": "po-decision4-ccato-raise-bashgrant-denied"
 }
