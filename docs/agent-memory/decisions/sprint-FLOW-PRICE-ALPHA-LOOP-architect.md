@@ -86,3 +86,31 @@ only a view-level fix can flip them GREEN without editing the test.
 will flip red under Shape A unless dev-mcp-server updates it in the same commit. Also flagged a
 production footgun: `CREATE VIEW IF NOT EXISTS` is a no-op on the persisted named-volume DB —
 needs `DROP VIEW IF EXISTS` first or the fix never actually deploys.
+
+### STEP architect-S6 · architect · 2026-07-14T21:30:00Z
+**task-id:** ALPHA-S2-TICK-DOWNSAMPLE-5MIN
+**what-done:** Corrected task framing — RAW-read `pushPricesHandler.ts` proved the 24h purge is
+inline in the price-push hot path (rolling `now-24h` cutoff on every VPS push), NOT a separate
+timer, so the compaction job must run continuously/decoupled rather than "before a nightly job".
+Designed new `intraday_ohlcv_5m` table (reuses `ohlcvDailyAggregatorJob`'s exact OHLCV shape at
+5-min granularity, same cumulative-volume convention as `daily_ohlcv.volume`) + standalone 24/7
+cron (`*/5 * * * *`, zero market-hours gate) that always reprocesses the FULL surviving
+`market_prices_history` content (bounded ~24h by the existing purge) — idempotent UPSERT and
+gap-tolerant by construction, no watermark state needed; first invocation doubles as the
+backfill-of-surviving-ticks migration (no separate script).
+**what-considered:**
+- Inline compaction inside `handlePushPrices` immediately before its existing DELETE
+- Standalone decoupled cron reprocessing the whole table every tick (chosen)
+- Per-code watermark/incremental catch-up (rejected — unnecessary given the source's own 24h bound)
+**why-decision:** DoD literally asks for "a cron/job"; inline would add synchronous DB work to an
+already-fragile hot path (OHLCV write + signal detection + alerts) for zero correctness gain over
+a decoupled cron with wide safety margin against the purge's ≥24h horizon.
+**why-change:** Corrected board row `zone` from `"multi"` → `apps/mcp-server/` (brownfield proved
+single-zone; "multi" was a BOUNDED-1 routing placeholder). Flagged an independently-found live
+landmine: `checkDuplicatePriceHistory` (W-3 weekly audit) collapses `market_prices_history` to 1
+row/ticker/day whenever its 50%-safeguard doesn't trip — self-guarded today under normal tick
+volume but a real risk under partial-outage/low-volume days; routed to PO/backlog, not fixed here
+(distinct concern, would scope-creep this M task). Also cited prior corroborating incident (Task
+1804c) where `get_price_history` had to migrate off `market_prices_history` for the same root
+cause — independent proof this exact data-loss class already happened once.
+**Output:** `docs/architecture-briefs/2026-07-14-alpha-s2-tick-downsample-5min.md`
