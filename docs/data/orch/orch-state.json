@@ -374,9 +374,9 @@
     "status": "in_progress",
     "active_task_id": "ALPHA-S2-TICK-DOWNSAMPLE-5MIN",
     "next_agent": "dev-mcp-server",
-    "next_action": "dev-mcp-server: implement ALPHA-S2-SUB1-DDL — add intraday_ohlcv_5m table (PK code,bucket_ts; open/high/low/close REAL, volume=MAX cumulative convention, tick_count, compacted_at) + idx_intraday_5m_code_bucket to apps/mcp-server/src/infrastructure/db/schema-market-data.ts inside initMarketDataTables() per brief docs/architecture-briefs/2026-07-14-alpha-s2-tick-downsample-5min.md §3. First of 5 SEQUENTIAL subtasks (SUB2 depends SUB1). PRESERVE design decisions: full-row INSERT OR REPLACE (no writeOhlcvBatch scale-detection), volume=MAX(volume) same as daily_ohlcv. DDL-only this subtask; job/cron come in SUB2. On completion relay to qa. Router holds umbrella chain mutex task:ALPHA-S2-TICK-DOWNSAMPLE-5MIN across all subtask hops.",
-    "updated_at": "2026-07-14T21:50:05Z",
-    "updated_by": "dev-team (21:4XZ relay: pm decomposition RAW-verified -> dispatch dev-mcp-server for SUB1-DDL; parent marked epic-wrapper; SUB1 ready->in_progress)"
+    "next_action": "dev-mcp-server: implement ALPHA-S2-SUB2-JOB-CRON per brief docs/architecture-briefs/2026-07-14-alpha-s2-tick-downsample-5min.md §4/§5/§6. Create intraday5mCompactorJob.ts — standalone 24/7 */5 cron, NO market-hours gate (§4); group market_prices_history ticks into 5-min buckets (bucket_ts = 5-min-aligned START, ISO-8601 UTC) and UPSERT into intraday_ohlcv_5m via full-row INSERT OR REPLACE (open=first, high=max, low=min, close=last, volume=MAX(volume) cumulative per §1.2, tick_count=count, compacted_at=now); JS-grouping algorithm per §4. Register cron in cronConfig.ts + schedulerJobTable.ts; backfill = first invocation + startScheduler.ts one-shot (§5); compact ALL codes not just watchlist (§6). PRESERVE design: full-row INSERT OR REPLACE (NO writeOhlcvBatch scale-detection), volume=MAX same as daily_ohlcv (NOT delta). OUT-OF-SCOPE: do NOT touch pushPricesHandler.ts (§1.1 rolling-24h purge stays), do NOT fix W-3 checkDuplicatePriceHistory (§1.3 -> separate PO row), no new MCP read tool. Verify tsc green. Commit explicit-pathspec only (job + cronConfig + schedulerJobTable + startScheduler + Task Report + notebook), do NOT push, do NOT touch .head/.task_board, do NOT touch task:ALPHA-S2. Router holds umbrella chain mutex + pushes under commit-mutex. On completion relay to qa/SUB3.",
+    "updated_at": "2026-07-14T22:00:24Z",
+    "updated_by": "dev-team (22:00Z relay: SUB1-DDL RAW-verified GREEN [tsc/SQL/scope/brief §3] + pushed -> dispatch dev-mcp-server SUB2-JOB-CRON)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7408,28 +7408,6 @@
         "verification_gate": "read_telegram_reports cycle_id pairing shows either (a) single evening publish -> chef.md UTC-header fix lands + no dup, or (b) genuine dup -> folded to dedup cluster. done_verified requires the header-fix RAW-verified in a subsequent evening dish header carrying UTC date."
       },
       {
-        "id": "ALPHA-S2-SUB2-JOB-CRON",
-        "type": "subtask",
-        "title": "Compaction job + startup hook + cron registration (intraday5mCompactorJob, cronConfig, schedulerJobTable, startScheduler)",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "owner": "developer",
-        "next_agent": "dev-mcp-server",
-        "sprint": "FLOW-PRICE-ALPHA-LOOP",
-        "parent": "ALPHA-S2-TICK-DOWNSAMPLE-5MIN",
-        "depends": [
-          "ALPHA-S2-SUB1-DDL"
-        ],
-        "blocks": [],
-        "supervised": false,
-        "created_at": "2026-07-14T21:40:00Z",
-        "created_by": "pm (ALPHA-S2 decomposition)",
-        "note": "New intraday5mCompactorJob.ts: runIntraday5mCompactor(). SELECT market_prices_history, group by (code, 5-min bucket), aggregate open/high/low/close/volume/tick_count per brief § 4. Insert OR REPLACE into intraday_ohlcv_5m. Register in cronConfig.ts (*/5), schedulerJobTable.ts buildJobTable(). Startup call in startScheduler.ts (non-fatal). DESIGN DECISIONS TO PRESERVE: (1) ALL codes present, not watchlist-only, (2) no market-hours gate (*/5 unrestricted 24/7), (3) full table reprocess every run (idempotent, gap-tolerant), (4) volume=MAX cumulative, no scale-detection reuse, (5) backfill = first job invocation + startup one-shot, NO separate migration",
-        "acceptance_criteria": "Job idempotent (re-run produces byte-identical rows); gap-tolerant (accumulate 2+ buckets, single run catches all); no isVnTradingWindowUtc anywhere; startup call wired non-fatal"
-      },
-      {
         "id": "ALPHA-S2-SUB3-DOCS-CRON",
         "type": "subtask",
         "title": "Docs sync: cron-registry dual-update (docs/data/cron-registry.json, docs/data/system-map.json, docs/standards/cron-jobs.md)",
@@ -9268,8 +9246,8 @@
       "status": "in_progress",
       "active_task_id": "ALPHA-S2-TICK-DOWNSAMPLE-5MIN",
       "next_agent": "dev-mcp-server",
-      "last_updated_at": "2026-07-14T21:50:05Z",
-      "last_updated_by": "dev-team (ALPHA-S2 pm->dev SUB1-DDL relay)"
+      "last_updated_at": "2026-07-14T22:00:24Z",
+      "last_updated_by": "dev-team (ALPHA-S2 SUB1->SUB2 relay)"
     },
     "ready": [],
     "review": [
@@ -9812,7 +9790,7 @@
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
         "next_agent": "dev-mcp-server",
         "epic_wrapper": true,
-        "epic_note": "decomposed into SUB1..SUB5 (sequential depends-chain) + W-3 PO backlog row FIX-W3-CHECKDUPLICATEPRICE-COLLAPSE; parent held in_progress as epic-wrapper container, CLOSE on all-subtasks done_verified (epic-wrapper autoclose-sweep). 2026-07-14T21:50:05Z"
+        "epic_note": "SUB1-DDL DONE (dev-complete + router-verified, pushed 392c17f00); SUB2-JOB-CRON IN FLIGHT; SUB3-DOCS-CRON/SUB4-TESTS backlog on sequential depends-chain; SUB5-WATCHDOG-STRETCH optional (depends SUB2); W-3 FIX-W3-CHECKDUPLICATEPRICE-COLLAPSE = PO backlog. CLOSE epic-wrapper on SUB4 qa-green (feature gate). 2026-07-14T22:00:24Z"
       },
       {
         "id": "ALPHA-S2-SUB1-DDL",
@@ -9823,7 +9801,7 @@
         "size": "XS",
         "zone": "apps/mcp-server/",
         "owner": "developer",
-        "next_agent": "dev-mcp-server",
+        "next_agent": "qa",
         "sprint": "FLOW-PRICE-ALPHA-LOOP",
         "parent": "ALPHA-S2-TICK-DOWNSAMPLE-5MIN",
         "depends": [],
@@ -9834,7 +9812,36 @@
         "note": "CREATE TABLE intraday_ohlcv_5m(code, bucket_ts, open, high, low, close, volume, tick_count, compacted_at) with PK(code, bucket_ts) + index. See brief § 3. All codes from market_prices_history, NOT watchlist-only. Volume = MAX(volume) cumulative-to-date convention per daily_ohlcv, NOT delta.",
         "acceptance_criteria": "Table created idempotently in schema-market-data.ts initMarketDataTables(), accepts INSERT OR REPLACE writes",
         "claimed_at": "2026-07-14T21:50:05Z",
-        "claimed_by": "dev-team (SPRINT-S relay: ALPHA-S2 subtask 1/5)"
+        "claimed_by": "dev-team (SPRINT-S relay: ALPHA-S2 subtask 1/5)",
+        "dev_complete": true,
+        "dev_commit": "392c17f00d33683b1892c063d00bc2de8917b7e9",
+        "awaiting_epic_gate": true,
+        "router_verify": "2026-07-14T22:00:24Z RAW: git 392c17f00 scope=exactly 3 files (schema-market-data.ts +29 / sprint-doc / notebook), apps/ tree clean (0 peer files swept), was 1 unpushed. DDL matches brief §3 verbatim (PK code,bucket_ts; open/high/low/close REAL NOT NULL; volume REAL DEFAULT 0 with cumulative-to-date MAX(volume) comment NOT per-bar delta; tick_count; compacted_at; idx_intraday_5m_code_bucket code,bucket_ts DESC; both CREATE IF NOT EXISTS). Independent tsc=exit0. SQLite parse-check: DDL executes, idempotent re-run OK, PK enforces (INSERT OR REPLACE on same (code,bucket_ts) collapses to 1 row w/ updated volume). Out-of-scope untouched (compactor job / cronConfig / schedulerJobTable / startScheduler / pushPricesHandler / W-3).",
+        "dispatch_note": "SUB1-DDL dev-complete + router RAW-verified GREEN + pushed 392c17f00; held in in_progress under epic-wrapper, closes done_verified at SUB4 feature qa-gate. 2026-07-14T22:00:24Z"
+      },
+      {
+        "id": "ALPHA-S2-SUB2-JOB-CRON",
+        "type": "subtask",
+        "title": "Compaction job + startup hook + cron registration (intraday5mCompactorJob, cronConfig, schedulerJobTable, startScheduler)",
+        "status": "IN_PROGRESS",
+        "priority": "P1",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "owner": "developer",
+        "next_agent": "dev-mcp-server",
+        "sprint": "FLOW-PRICE-ALPHA-LOOP",
+        "parent": "ALPHA-S2-TICK-DOWNSAMPLE-5MIN",
+        "depends": [
+          "ALPHA-S2-SUB1-DDL"
+        ],
+        "blocks": [],
+        "supervised": false,
+        "created_at": "2026-07-14T21:40:00Z",
+        "created_by": "pm (ALPHA-S2 decomposition)",
+        "note": "New intraday5mCompactorJob.ts: runIntraday5mCompactor(). SELECT market_prices_history, group by (code, 5-min bucket), aggregate open/high/low/close/volume/tick_count per brief § 4. Insert OR REPLACE into intraday_ohlcv_5m. Register in cronConfig.ts (*/5), schedulerJobTable.ts buildJobTable(). Startup call in startScheduler.ts (non-fatal). DESIGN DECISIONS TO PRESERVE: (1) ALL codes present, not watchlist-only, (2) no market-hours gate (*/5 unrestricted 24/7), (3) full table reprocess every run (idempotent, gap-tolerant), (4) volume=MAX cumulative, no scale-detection reuse, (5) backfill = first job invocation + startup one-shot, NO separate migration",
+        "acceptance_criteria": "Job idempotent (re-run produces byte-identical rows); gap-tolerant (accumulate 2+ buckets, single run catches all); no isVnTradingWindowUtc anywhere; startup call wired non-fatal",
+        "claimed_at": "2026-07-14T22:00:24Z",
+        "claimed_by": "dev-team (SPRINT-S relay: ALPHA-S2 subtask 2/5)"
       }
     ]
   },
