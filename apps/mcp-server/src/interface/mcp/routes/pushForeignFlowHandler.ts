@@ -256,6 +256,21 @@ export async function handlePushForeignFlow(
 
       // Map valid items to WriteForeignFlowItem format by extracting from raw payload
       const ohlcvItems: WriteForeignFlowItem[] = [];
+      // ALPHA-S2-FF-SUB2: raw-tick archive rows, additive alongside ohlcvItems (SAME loop,
+      // SAME guarded extraction) — never instead of the two existing upserts (Step 5/6).
+      // foreign_room / holding_ratio come from normalizedItems (Step 3a), which this loop
+      // already indexes 1:1 with rawItems/ohlcvItems.
+      const historyItems: Array<{
+        code: string;
+        fetchedAt: string;
+        foreignBuyVol: number;
+        foreignSellVol: number;
+        putThroughVol: number;
+        foreignBuyValue: number | null;
+        foreignSellValue: number | null;
+        foreignRoom: number | null;
+        holdingRatio: number | null;
+      }> = [];
       for (let i = 0; i < normalizedItems.length; i++) {
         // Skip items that failed validation
         if (failedIndicesSet.has(i)) continue;
@@ -304,14 +319,38 @@ export async function handlePushForeignFlow(
               ? parseFloat(sellValueRaw)
               : null;
 
+        const code = typeof raw.code === "string" ? raw.code : String(raw.code ?? "");
+        const finalBuyValue = foreignBuyValue !== null && !isNaN(foreignBuyValue) ? foreignBuyValue : null;
+        const finalSellValue = foreignSellValue !== null && !isNaN(foreignSellValue) ? foreignSellValue : null;
+
         ohlcvItems.push({
-          code: typeof raw.code === "string" ? raw.code : String(raw.code ?? ""),
+          code,
           date: typeof raw.date === "string" && raw.date ? raw.date : todayUtc,
           foreignBuyVol: raw.foreignBuyVol,
           foreignSellVol: raw.foreignSellVol,
           putThroughVol: typeof raw.putThroughVol === "number" ? raw.putThroughVol : 0,
-          foreignBuyValue: foreignBuyValue !== null && !isNaN(foreignBuyValue) ? foreignBuyValue : null,
-          foreignSellValue: foreignSellValue !== null && !isNaN(foreignSellValue) ? foreignSellValue : null,
+          foreignBuyValue: finalBuyValue,
+          foreignSellValue: finalSellValue,
+        });
+
+        // ALPHA-S2-FF-SUB2: foreign_room / holding_ratio already computed onto
+        // normalizedItems[i] by Step 3a — same index, same source raw item.
+        const normalized = normalizedItems[i] as
+          | { foreign_room?: number | null; holding_ratio?: number | null; fetched_at?: string | null }
+          | undefined;
+        historyItems.push({
+          code,
+          fetchedAt:
+            typeof normalized?.fetched_at === "string" && normalized.fetched_at
+              ? normalized.fetched_at
+              : new Date().toISOString(),
+          foreignBuyVol: raw.foreignBuyVol,
+          foreignSellVol: raw.foreignSellVol,
+          putThroughVol: typeof raw.putThroughVol === "number" ? raw.putThroughVol : 0,
+          foreignBuyValue: finalBuyValue,
+          foreignSellValue: finalSellValue,
+          foreignRoom: typeof normalized?.foreign_room === "number" ? normalized.foreign_room : null,
+          holdingRatio: typeof normalized?.holding_ratio === "number" ? normalized.holding_ratio : null,
         });
       }
 
@@ -323,6 +362,45 @@ export async function handlePushForeignFlow(
       if (extractionErrors > 0) {
         log.warn("[push-foreign-flow] Step 6 extraction errors found", {
           count: extractionErrors,
+        });
+      }
+
+      // Step 6b (ALPHA-S2-FF-SUB2): additive raw-tick archive write into
+      // foreign_flow_history — best-effort, non-fatal, zero change to the two
+      // existing upserts above (Step 5 upsertForeignFlow / Step 6 writeForeignFlowToOhlcv).
+      // Own inner try/catch so a failure here can never regress those already-completed
+      // writes (matches this file's existing error-isolation convention line-for-line).
+      // Design SSOT: docs/architecture-briefs/2026-07-15-alpha-s2-foreign-flow-write-race-verdict.md §5
+      try {
+        if (historyItems.length > 0) {
+          const insertHistory = db.prepare(
+            `INSERT OR IGNORE INTO foreign_flow_history
+               (code, fetched_at, foreign_buy_vol, foreign_sell_vol, put_through_vol,
+                foreign_buy_value, foreign_sell_value, foreign_room, holding_ratio)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          );
+          for (const h of historyItems) {
+            insertHistory.run(
+              h.code,
+              h.fetchedAt,
+              h.foreignBuyVol,
+              h.foreignSellVol,
+              h.putThroughVol,
+              h.foreignBuyValue,
+              h.foreignSellValue,
+              h.foreignRoom,
+              h.holdingRatio,
+            );
+          }
+        }
+
+        // Rolling ~24h purge — mirrors pushPricesHandler.ts's own rolling-24h purge on
+        // market_prices_history exactly (same DELETE-by-cutoff idiom, hot-path-inline).
+        const historyCutoff = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+        db.prepare(`DELETE FROM foreign_flow_history WHERE fetched_at < ?`).run(historyCutoff);
+      } catch (historyErr) {
+        log.warn("[push-foreign-flow] foreign_flow_history write/purge failed (non-fatal)", {
+          error: historyErr instanceof Error ? historyErr.message : String(historyErr),
         });
       }
     } catch (ohlcvErr) {
