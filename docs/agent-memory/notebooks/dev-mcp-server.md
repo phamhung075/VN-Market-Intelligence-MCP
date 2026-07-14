@@ -1,5 +1,19 @@
 # dev-mcp-server -- Notebook
 
+## 2026-07-15 — ALPHA-S2-SUB4-TESTS (relay dev-hop, sequential 4/5) → returned to router
+
+**Session:** 69b0312e-df43-43a9-9e0b-bddf66d374e3 (router umbrella-chain relay `task:ALPHA-S2-TICK-DOWNSAMPLE-5MIN`; architect brief `docs/architecture-briefs/2026-07-14-alpha-s2-tick-downsample-5min.md` §8 subtask row 4 + §7 AC #3/#5/#8; SUB1-DDL `392c17f00` + SUB2-JOB-CRON `de8c49d67` + SUB3-DOCS-CRON `c60774ef8` all pushed, CI GREEN)
+
+New file `apps/mcp-server/src/__tests__/ALPHA-S2-intraday-5m-compactor.test.ts` (6 tests, 48 `expect()` calls), exercising `runIntraday5mCompactor(deps)`'s DI seam (`db`, `nowMsFn`) against an in-memory `bun:sqlite` DB seeded via `initMarketDataTables()` — read `intraday5mCompactorJob.ts` first to match its exact behavior rather than guessing: (1) 5-min UTC-aligned bucketing verbatim per brief §3-4 (open=first/high=max/low=min/close=last/volume=MAX-cumulative/tick_count=count), across two adjacent buckets for one code; (2) AC#3 idempotency — run twice unchanged, `toEqual` both the return value AND the full row set including `compacted_at` (fixed `nowMsFn` both runs → genuinely byte-identical, not just "same shape"); (3) AC#4 gap-tolerance — 5 ticks across 3 non-adjacent buckets with a deliberate 3-bucket-wide empty gap, single run correctly compacts all 3 populated buckets, none zero-filled; (4) AC#5 no-market-hours-dependence — empty `market_prices_history` → `{0,0,0}` result, no throw, no `isVnTradingWindowUtc()` call anywhere in the job under test; (5) all-codes scope (brief §6) — watchlist seeded with only `VCB`, ticks added for `VCB`+`ACB`(non-watchlist)+`VNINDEX`(index) → all 3 compacted, proving no watchlist filter; (6) AC#8 forward-preservation e2e regression — compacts ticks spanning a >24h-old bucket + a recent bucket, then applies a helper (`purgeOlderThan24h`) that mirrors `pushPricesHandler.ts`'s existing rolling-24h `DELETE FROM market_prices_history WHERE fetched_at < cutoff` verbatim (same SQL, cutoff pinned via test `nowMs` instead of the handler's real `Date.now()` for determinism) — asserts the old tick is gone from the source table but its archived 5m bar is untouched (`toEqual` byte-for-byte), then runs the compactor a SECOND time post-purge and confirms the now-source-less historical bucket still isn't erased (the job only inserts/replaces buckets it currently sees ticks for; it never deletes), genuinely tying both tables together end-to-end rather than testing either table in isolation.
+
+Did not touch `intraday5mCompactorJob.ts`, `schema-market-data.ts`, `pushPricesHandler.ts`, `cronConfig.ts`, or `schedulerJobTable.ts` — pure test-coverage addition, table DDL already live from SUB1.
+
+Verified: `bun test src/__tests__/ALPHA-S2-intraday-5m-compactor.test.ts` → **6 pass / 0 fail / 48 expect() calls**. `bun tsc --noEmit` → **exit 0**, zero diagnostic output. No-regression re-confirmation: `bun test src/__tests__/1190-pipeline-watchdog.test.ts src/__tests__/FACTORY-SCHEDULER-job-table-registry.test.ts` → **31 pass / 0 fail / 294 expect() calls** (both guard suites, SUB3's registry-count bumps still intact).
+
+Did not advance `.head`/`.task_board` or touch `task:ALPHA-S2-TICK-DOWNSAMPLE-5MIN` — router owns relay advancement. Committed on `main` (explicit pathspec: the new test file + this notebook), not pushed — router's cadence.
+
+Zone health: new suite 6/6 pass, tsc clean, both named guard-regression suites still 31/31 green | HEALTHY.
+
 ## 2026-07-15 — ALPHA-S2-SUB3-DOCS-CRON (relay dev-hop, sequential 3/5) → returned to router
 
 **Session:** 69b0312e-df43-43a9-9e0b-bddf66d374e3 (router umbrella-chain relay `task:ALPHA-S2-TICK-DOWNSAMPLE-5MIN`; architect brief `docs/architecture-briefs/2026-07-14-alpha-s2-tick-downsample-5min.md` §8 AC-7/§9; SUB1-DDL `392c17f00` + SUB2-JOB-CRON `de8c49d67` already landed)
