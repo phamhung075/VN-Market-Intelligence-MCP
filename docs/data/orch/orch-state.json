@@ -374,9 +374,9 @@
     "status": "in_progress",
     "active_task_id": "ALPHA-S2-TICK-DOWNSAMPLE-5MIN",
     "next_agent": "dev-mcp-server",
-    "next_action": "PM decomposition — architect brief docs/architecture-briefs/2026-07-14-alpha-s2-tick-downsample-5min.md § 9 5-subtask sequential split, all zone apps/mcp-server/ (corrected from stale board zone=\"multi\"). New intraday_ohlcv_5m table + 24/7 compaction cron, no market-hours gate, idempotent/gap-tolerant reprocessing of surviving market_prices_history ticks before the inline rolling-24h purge in pushPricesHandler.ts deletes them.",
-    "updated_at": "2026-07-14T21:40:00Z",
-    "updated_by": "pm (ALPHA-S2 decomposition)"
+    "next_action": "dev-mcp-server: implement ALPHA-S2-SUB1-DDL — add intraday_ohlcv_5m table (PK code,bucket_ts; open/high/low/close REAL, volume=MAX cumulative convention, tick_count, compacted_at) + idx_intraday_5m_code_bucket to apps/mcp-server/src/infrastructure/db/schema-market-data.ts inside initMarketDataTables() per brief docs/architecture-briefs/2026-07-14-alpha-s2-tick-downsample-5min.md §3. First of 5 SEQUENTIAL subtasks (SUB2 depends SUB1). PRESERVE design decisions: full-row INSERT OR REPLACE (no writeOhlcvBatch scale-detection), volume=MAX(volume) same as daily_ohlcv. DDL-only this subtask; job/cron come in SUB2. On completion relay to qa. Router holds umbrella chain mutex task:ALPHA-S2-TICK-DOWNSAMPLE-5MIN across all subtask hops.",
+    "updated_at": "2026-07-14T21:50:05Z",
+    "updated_by": "dev-team (21:4XZ relay: pm decomposition RAW-verified -> dispatch dev-mcp-server for SUB1-DDL; parent marked epic-wrapper; SUB1 ready->in_progress)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -9265,34 +9265,13 @@
       }
     ],
     "head": {
-      "status": "idle",
-      "active_task_id": null,
-      "next_agent": "none",
-      "last_updated_at": "2026-07-14T20:22:07Z",
-      "last_updated_by": "dev-team (FIX-DAILY-FF closed done_verified; CI green; head idle)"
+      "status": "in_progress",
+      "active_task_id": "ALPHA-S2-TICK-DOWNSAMPLE-5MIN",
+      "next_agent": "dev-mcp-server",
+      "last_updated_at": "2026-07-14T21:50:05Z",
+      "last_updated_by": "dev-team (ALPHA-S2 pm->dev SUB1-DDL relay)"
     },
-    "ready": [
-      {
-        "id": "ALPHA-S2-SUB1-DDL",
-        "type": "subtask",
-        "title": "DDL: Add intraday_ohlcv_5m table + index to schema-market-data.ts",
-        "status": "READY",
-        "priority": "P1",
-        "size": "XS",
-        "zone": "apps/mcp-server/",
-        "owner": "developer",
-        "next_agent": "dev-mcp-server",
-        "sprint": "FLOW-PRICE-ALPHA-LOOP",
-        "parent": "ALPHA-S2-TICK-DOWNSAMPLE-5MIN",
-        "depends": [],
-        "blocks": [],
-        "supervised": false,
-        "created_at": "2026-07-14T21:40:00Z",
-        "created_by": "pm (ALPHA-S2 decomposition)",
-        "note": "CREATE TABLE intraday_ohlcv_5m(code, bucket_ts, open, high, low, close, volume, tick_count, compacted_at) with PK(code, bucket_ts) + index. See brief § 3. All codes from market_prices_history, NOT watchlist-only. Volume = MAX(volume) cumulative-to-date convention per daily_ohlcv, NOT delta.",
-        "acceptance_criteria": "Table created idempotently in schema-market-data.ts initMarketDataTables(), accepts INSERT OR REPLACE writes"
-      }
-    ],
+    "ready": [],
     "review": [
       {
         "id": "TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST",
@@ -9831,7 +9810,31 @@
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
         "claimed_at": "2026-07-14T21:21:18Z",
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "pm"
+        "next_agent": "dev-mcp-server",
+        "epic_wrapper": true,
+        "epic_note": "decomposed into SUB1..SUB5 (sequential depends-chain) + W-3 PO backlog row FIX-W3-CHECKDUPLICATEPRICE-COLLAPSE; parent held in_progress as epic-wrapper container, CLOSE on all-subtasks done_verified (epic-wrapper autoclose-sweep). 2026-07-14T21:50:05Z"
+      },
+      {
+        "id": "ALPHA-S2-SUB1-DDL",
+        "type": "subtask",
+        "title": "DDL: Add intraday_ohlcv_5m table + index to schema-market-data.ts",
+        "status": "IN_PROGRESS",
+        "priority": "P1",
+        "size": "XS",
+        "zone": "apps/mcp-server/",
+        "owner": "developer",
+        "next_agent": "dev-mcp-server",
+        "sprint": "FLOW-PRICE-ALPHA-LOOP",
+        "parent": "ALPHA-S2-TICK-DOWNSAMPLE-5MIN",
+        "depends": [],
+        "blocks": [],
+        "supervised": false,
+        "created_at": "2026-07-14T21:40:00Z",
+        "created_by": "pm (ALPHA-S2 decomposition)",
+        "note": "CREATE TABLE intraday_ohlcv_5m(code, bucket_ts, open, high, low, close, volume, tick_count, compacted_at) with PK(code, bucket_ts) + index. See brief § 3. All codes from market_prices_history, NOT watchlist-only. Volume = MAX(volume) cumulative-to-date convention per daily_ohlcv, NOT delta.",
+        "acceptance_criteria": "Table created idempotently in schema-market-data.ts initMarketDataTables(), accepts INSERT OR REPLACE writes",
+        "claimed_at": "2026-07-14T21:50:05Z",
+        "claimed_by": "dev-team (SPRINT-S relay: ALPHA-S2 subtask 1/5)"
       }
     ]
   },
