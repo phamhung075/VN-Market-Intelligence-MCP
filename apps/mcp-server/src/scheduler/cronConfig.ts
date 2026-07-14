@@ -242,4 +242,10 @@ export const CRONS = {
    *  Sends WORK-channel alert when last successful run exceeds cadence × thresholdMultiplier.
    *  In-process 2h rate-limit prevents alert spam. Alert-only for long jobs; self-heal for quick jobs. */
   schedulerWatchdog:          Bun.env.CRON_SCHEDULER_WATCHDOG                       ?? '*/10 * * * *',
+  /** intraday5mCompactor — ALPHA-S2-TICK-DOWNSAMPLE-5MIN: compact market_prices_history
+   *  ticks into 5-min OHLCV bars (intraday_ohlcv_5m) every 5 min, 24/7 — NO market-hours
+   *  gate (brief §4 hard constraint). Same unrestricted every-5-min idiom as
+   *  vpsServiceHealth above. Cadence matches bucket width; wide safety margin against
+   *  the source table's own rolling ~24h purge horizon (pushPricesHandler.ts). */
+  intraday5mCompactor:        Bun.env.CRON_INTRADAY_5M_COMPACTOR                   ?? '*/5 * * * *',
 }

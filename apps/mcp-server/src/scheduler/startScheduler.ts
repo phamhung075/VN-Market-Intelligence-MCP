@@ -21,6 +21,7 @@ import { registerShutdownHook } from '../infrastructure/db/checkpoint.js'
 import { runDailyAuditIfStale } from './news-analysis/dataAuditJob.js'
 import { runOhlcvStartupProbe } from './market-data/ohlcvStartupProbe.js'
 import { runOhlcvCandlePresenceGuard } from './market-data/ohlcvCandleGuard.js'
+import { runIntraday5mCompactor } from './market-data/intraday5mCompactorJob.js'
 import { purgeStrandedSeedRows } from './market-data/allzeroOhlcvBackfill.js'
 import { runMorningBriefing } from './briefings/morningBriefingJob.js'
 import { runEveningSummary } from './briefings/eveningSummaryJob.js'
@@ -101,6 +102,18 @@ export function startScheduler() {
   // triggers recoverMissingOhlcvSession(). Fire-and-forget, same phase as the probe above.
   void runOhlcvCandlePresenceGuard().catch((err) => {
     log(`[ohlcv-candle-guard] startup guard error: ${err instanceof Error ? err.message : String(err)}`)
+  })
+
+  // ALPHA-S2-SUB2-JOB-CRON (2026-07-15) — startup one-shot compaction of
+  // market_prices_history ticks into intraday_ohlcv_5m. The job's steady-state
+  // algorithm already reprocesses the ENTIRE current content of the source table
+  // on every invocation, so this startup call IS the backfill of whatever ticks
+  // currently survive at deploy time (brief §5) — no separate migration script.
+  // Non-fatal by the same convention as every other startup repair in this file.
+  void runIntraday5mCompactor().then((r) => {
+    log(`[startup] intraday5mCompactor: buckets=${r.bucketsWritten} codes=${r.codesProcessed} ticks=${r.ticksScanned}`)
+  }).catch((err) => {
+    log(`[startup] intraday5mCompactor error (non-fatal): ${err instanceof Error ? err.message : String(err)}`)
   })
 
   // Startup CB reset — task 1404

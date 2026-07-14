@@ -74,6 +74,7 @@ import { runOhlcvHistoryBackfill } from './market-data/ohlcvHistoryBackfillJob.j
 import { priceUpdateWatchdog } from './market-data/priceUpdateWatchdogJob.js'
 import { runVpsHealthPolling } from './system/vpsServiceHealthJob.js'
 import { runVnIndexRefreshJob } from './market-data/vnIndexRefreshJob.js'
+import { runIntraday5mCompactor } from './market-data/intraday5mCompactorJob.js'
 import { runFreshnessSlaMonitorJob } from './system/freshnessSlaMonitorJob.js'
 import { macroIndicatorRefreshJob, runMarketEarningYieldJob, runCommodityTrackerRefreshJob, runSbvRatesRefreshJob } from './macro/index.js'
 import { runForeignFlowFetcherJobCron } from './market-data/foreignFlowFetcherJob.js'
@@ -575,6 +576,23 @@ export function buildJobTable(ctx: SchedulerJobTableCtx): JobTableEntry[] {
       runner: async () => {
         const result = await runVnIndexRefreshJob()
         return { rowsWritten: result.stored }
+      },
+    },
+
+    // Every 5 min, 24/7 — NO market-hours gate — intraday 5-min OHLCV compactor —
+    // ALPHA-S2-TICK-DOWNSAMPLE-5MIN (Sprint FLOW-PRICE-ALPHA-LOOP). Groups
+    // market_prices_history ticks into 5-min UTC-aligned bars and UPSERTs
+    // intraday_ohlcv_5m — ALL codes present in the source table (brief §6), not just
+    // watchlist. Archive-now compaction ahead of pushPricesHandler.ts's rolling ~24h
+    // purge (brief §1.1). Idempotent + gap-tolerant by construction (brief §2) — see
+    // docs/architecture-briefs/2026-07-14-alpha-s2-tick-downsample-5min.md.
+    {
+      name: 'intraday5mCompactorJob',
+      cron: CRONS.intraday5mCompactor,
+      options: { timezone: 'UTC' },
+      runner: async () => {
+        const result = await runIntraday5mCompactor()
+        return { rowsWritten: result.bucketsWritten }
       },
     },
 

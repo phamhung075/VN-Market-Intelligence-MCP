@@ -1,5 +1,21 @@
 # dev-mcp-server -- Notebook
 
+## 2026-07-14 — ALPHA-S2-SUB2-JOB-CRON (relay dev-hop, sequential 2/5) → returned to router
+
+**Session:** 69b0312e-df43-43a9-9e0b-bddf66d374e3 (router umbrella-chain relay `task:ALPHA-S2-TICK-DOWNSAMPLE-5MIN`; architect brief `docs/architecture-briefs/2026-07-14-alpha-s2-tick-downsample-5min.md` §4-6, SUB1-DDL already landed at commit `392c17f00`)
+
+New file `apps/mcp-server/src/scheduler/market-data/intraday5mCompactorJob.ts` exports `runIntraday5mCompactor()`: one bounded `SELECT ... FROM market_prices_history ORDER BY code, fetched_at ASC` scan (ALL codes, brief §6 — not watchlist-scoped like the daily aggregator), JS-grouped into 5-min UTC-aligned buckets (`Math.floor(ms/300_000)*300_000`), reduced to open=first/high=max/low=min/close=last/volume=MAX(volume, same cumulative-to-date convention as `daily_ohlcv.volume`, NOT a per-bar delta)/tick_count=count, then a full-row `INSERT OR REPLACE` per bucket inside one `db.transaction` (idiom borrowed from `predictionMarketJob.ts`'s `storeSnapshot`) — deliberately NOT routed through `writeOhlcvBatch` per brief §3 (prices are already VND-normalized once at write time; this job always recomputes the complete bucket, unlike `daily_ohlcv`'s partial-merge `ON CONFLICT`). Registered `intraday5mCompactor: '*/5 * * * *'` in `cronConfig.ts` (unrestricted 24/7, zero market-hours gate anywhere in the job — brief §4 hard constraint) + a `buildJobTable()` entry in `schedulerJobTable.ts` right after `vnIndexRefreshJob`. Wired a non-fatal fire-and-forget startup one-shot in `startScheduler.ts` right after `runOhlcvCandlePresenceGuard` — per brief §5 this call doubles as the backfill of whatever ticks survive at deploy time (the job's steady-state algorithm always reprocesses the full source table, so no separate migration script is needed).
+
+Strictly SUB2 scope: did NOT touch `schema-market-data.ts` (SUB1 already done), `pushPricesHandler.ts` (rolling ~24h purge untouched), or `checkDuplicatePriceHistory.ts` (separate PO backlog row, brief §1.3) — confirmed via scoped `git status --porcelain` on both files showing zero diff before and after. No new MCP tool (later subtask, brief §7).
+
+One deviation caught by `tsc` itself: a first comment draft in `cronConfig.ts` quoted the literal cron string `'*/5 * * * *'` inside a `/** ... */` JSDoc block — the embedded `*/` prematurely closed the comment, corrupting the rest of the file into malformed code (11 parse errors). Fixed by describing the cadence in prose instead (existing file convention — e.g. `vpsServiceHealth`'s comment — already avoids quoting raw cron strings inside block comments for exactly this reason).
+
+Verified: `pnpm --filter vn-market check` (`bun tsc --noEmit`) clean, zero output, exit 0.
+
+Did not advance `.head`/`.task_board` or touch `task:ALPHA-S2-TICK-DOWNSAMPLE-5MIN` — router owns relay advancement. Committed on `main` (explicit pathspec: new job file + `cronConfig.ts` + `schedulerJobTable.ts` + `startScheduler.ts` + this notebook + the sprint decision-journal entry), not pushed (router's cadence).
+
+Zone health: tsc clean, job matches brief §4-6 verbatim (algorithm/volume-convention/all-codes-scope/no-market-hours-gate/full-row-UPSERT all confirmed), zero deviation beyond the comment-syntax fix | HEALTHY.
+
 ## 2026-07-14 — ALPHA-S2-SUB1-DDL (relay dev-hop, DDL-only) → returned to router
 
 **Session:** 69b0312e-df43-43a9-9e0b-bddf66d374e3 (router umbrella-chain relay `task:ALPHA-S2-TICK-DOWNSAMPLE-5MIN`; architect brief `docs/architecture-briefs/2026-07-14-alpha-s2-tick-downsample-5min.md` §3, USER-GO, supervised=false)
