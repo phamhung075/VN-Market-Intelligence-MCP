@@ -183,6 +183,62 @@ export function initMarketDataTables(db: Database): void {
       ON daily_foreign_flow(code, date DESC);
   `);
 
+  // ── Foreign Flow History + Intraday 5-min Archive (ALPHA-S2-FF-SUB1-DDL) ──────
+  // Archive-now compaction target for the foreign-flow write path, which today
+  // collapses every 60s push directly into daily_foreign_flow/vnstock_trading_stats
+  // via unconditional last-write-wins upserts (no intraday curve preserved). See
+  // docs/architecture-briefs/2026-07-15-alpha-s2-foreign-flow-write-race-verdict.md
+  // §2/§4. STANDALONE from the price plane (intraday_ohlcv_5m) — distinct bounded
+  // context, distinct aggregation semantics (LAST-value-in-bucket, NOT OHLC).
+  //
+  // foreign_flow_history — raw ticks, append-only, mirrors market_prices_history's
+  // role for the price plane. Populated additively by pushForeignFlowHandler.ts
+  // (SUB2) alongside — not instead of — the existing upsertForeignFlow /
+  // writeForeignFlowToOhlcv calls. Rolling ~24h purge lives inline in that same
+  // handler (mirrors pushPricesHandler.ts's own rolling purge pattern).
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS foreign_flow_history (
+      code               TEXT NOT NULL,
+      fetched_at         TEXT NOT NULL,   -- ISO-8601, push-time timestamp
+      foreign_buy_vol    REAL,
+      foreign_sell_vol   REAL,
+      put_through_vol    REAL,
+      foreign_buy_value  REAL,
+      foreign_sell_value REAL,
+      foreign_room       REAL,
+      holding_ratio      REAL,
+      PRIMARY KEY (code, fetched_at)
+    );
+    CREATE INDEX IF NOT EXISTS idx_ffh_code_fetched
+      ON foreign_flow_history(code, fetched_at DESC);
+  `);
+
+  // intraday_foreign_flow_5m — 5-min compacted archive. LAST-value-in-bucket
+  // semantics (NOT OHLC min/max) — foreignBuyVol/foreignSellVol/foreignBuyValue/
+  // foreignSellValue are cumulative-for-the-day counters (same convention as
+  // daily_ohlcv.volume); foreign_room/holding_ratio are point-in-time gauges.
+  // Both cases: the chronologically LAST snapshot value in the bucket is correct.
+  // Populated by intradayForeignFlow5mCompactorJob.ts (SUB3).
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS intraday_foreign_flow_5m (
+      code               TEXT NOT NULL,
+      bucket_ts          TEXT NOT NULL,   -- ISO-8601 UTC, 5-min-aligned bucket START
+      foreign_buy_vol    REAL,
+      foreign_sell_vol   REAL,
+      foreign_net_vol    REAL,            -- computed: buy_vol - sell_vol, same convention as daily_foreign_flow
+      put_through_vol    REAL,
+      foreign_buy_value  REAL,
+      foreign_sell_value REAL,
+      foreign_room       REAL,
+      holding_ratio      REAL,
+      tick_count         INTEGER NOT NULL DEFAULT 0,
+      compacted_at       TEXT NOT NULL,
+      PRIMARY KEY (code, bucket_ts)
+    );
+    CREATE INDEX IF NOT EXISTS idx_iff5m_code_bucket
+      ON intraday_foreign_flow_5m(code, bucket_ts DESC);
+  `);
+
   // Backward-compatible read view: same column names as today's daily_ohlcv
   // foreign columns so every existing read site can migrate via a one-line
   // `FROM daily_ohlcv` -> `FROM daily_ohlcv_with_flow` rename (no query-shape
