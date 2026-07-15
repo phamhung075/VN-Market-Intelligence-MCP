@@ -2,6 +2,43 @@
 
 **Detected:** 2026-07-15T19:54Z by cowork-team dispatcher, RAW-verified post-spawn (slot=chef-evening, tick 19:45Z)
 **Status:** PLAN-ONLY — no fix attempted. Router/dispatcher does not implement.
+**Severity: HIGH — this is no longer hypothetical. A duplicate reached the user-facing MARKET channel.**
+
+## CONFIRMED OUTCOME (updated 2026-07-15T19:56Z)
+
+`get_market_message_digest({limit_days:1})` after the tick:
+
+```
+mcp-user  2 tin  ids: [932, 933]
+```
+
+**Two chef dishes published to MARKET for the same slot/date within ~3 minutes.**
+Before the marker was released there was one (id 932). The observed sequence:
+
+| Time (UTC) | Event |
+|---|---|
+| ~19:52 | my chef agent claims `published:chef-evening:2026-07-16`, publishes id **932** |
+| ~19:53 | my chef agent **releases** the marker (not instructed by chef.md) |
+| 19:53:28 | peer session `34a375e3-f7d7-41c6-befa-8c8a87b5497f` registers session-presence |
+| 19:53:46 | peer claims `intent:unified-agent:chef-evening` (router PRE-CLAIM, CLAUDE.md §2.5) |
+| ~19:54:0x | dispatcher `task_list_held({kind:"cowork-slot"})` → `count: 0` (marker free) |
+| 19:54:56 | peer's unified-agent claims the **freed** marker (`claimed_at: 1784145296`) |
+| ~19:55 | peer's agent publishes id **933** → duplicate |
+
+Had the marker stayed held (chef.md L85 design intent, TTL=100800s/28h), the peer's agent
+would have hit `claimed == false` → *"publish blocked — already published"* → EXIT without
+sending. **The release is the direct proximate cause of the duplicate.**
+
+### Secondary finding — election bypass
+
+The peer session dispatched chef-evening via the **router intent PRE-CLAIM** path
+(`intent:unified-agent:chef-evening`), not the cowork fire-election. The election lock
+`cron:cowork:2026-07-15T19:45Z` had already been released by this dispatcher at Step 6
+(normal exit path), so the election would not have blocked the peer either. The per-slot
+token `cowork-slot:chef-evening` was likewise already released per spawn-fanout.md's
+try/finally. That leaves the published marker as the ONLY guard spanning the publish
+window — which is exactly why releasing it is fatal. Triage should consider whether the
+router intent path should consult the cowork slot/election state at all.
 
 ## Raw evidence
 

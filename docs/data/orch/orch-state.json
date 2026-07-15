@@ -412,7 +412,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-15T19:55:45Z",
+    "_updated_at": "2026-07-15T19:57:56Z",
     "_updated_by": "cowork-team/dispatcher",
     "archive": [],
     "rows": [
@@ -446,8 +446,8 @@
         "from": "cowork-team",
         "to": "po",
         "type": "system-issue",
-        "summary": "unified-agent releases published marker after publish (RAW: task_list_held count=0, 28h TTL, 2min after claim) — chef.md never instructs release; FR-P2-7 MARKET double-publish gate defeated, chef-intraday (7x/day) most exposed",
-        "severity": "MED",
+        "summary": "CONFIRMED MARKET DOUBLE-PUBLISH (ids 932+933): unified-agent releases FR-P2-7 published marker after publish; peer session 34a375e3 re-dispatched chef-evening via router intent PRE-CLAIM, its agent claimed the freed marker at 19:54:56Z and published a 2nd dish to the user-facing channel",
+        "severity": "HIGH",
         "status": "NEW",
         "payload_ref": "docs/handoffs/2026-07-15-unified-agent-releases-published-marker.md"
       }
