@@ -1,6 +1,20 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-15 | **Cycle:** UC-RDL-P5 (dev-team BOUNDED-1 auto-pickup, mode=CLEAN, zone=cross-service/)
+**Last updated:** 2026-07-15 | **Cycle:** FIX-COWORK-PREFLIGHT-PRESENCE-CLAIM-GAP (router dispatch, zone=cross-service/scripts)
+
+## Session 2026-07-15 — FIX-COWORK-PREFLIGHT-PRESENCE-CLAIM-GAP (router dispatch, zone `cross-service/` = scripts/agents-flow/) — IN_PROGRESS→REVIEW
+
+**Task:** `scripts/agents-flow/cowork-tick-preflight.sh` Step 2 heartbeated `session-presence:<session>` without ever claiming it first, so a fresh session's tick-1 (no presence row exists yet) got `ok=false` → verdict `ERROR` → full LLM fallback — inverting `docs/agents/cowork-team/flow/main.md` Step 0b.1's already-correct claim-first/never-a-gate contract. Origin: `docs/handoffs/2026-07-15-cowork-preflight-presence-claim-gap.md` (signal `cow-20260715T184053`).
+
+**Actions taken:** Rewrote Step 2 to claim-first — `task_claim(session-presence:<session>, task_kind:"session-presence", owner_agent:"cowork-dispatcher", ttl_seconds:1800)`; if `claimed:false` and `current_holder.owner_client_session == session`, `task_heartbeat` renews TTL; proceeds unconditionally otherwise (peer-held or transport error). Removed both prior ERROR branches for presence. Updated header comment (L13 block). Test suite: rewrote old gating T3, added `T3-presence-fresh` / `T3-presence-reentrant` / `T3-presence-peer` (all assert SILENT, never ERROR), and tagged the stub's call-log with `task_kind`/`task_id` so tests can prove the presence claim never leaks into a `cowork-slot`-kind lock (exactly 1 `task_claim|cowork-slot` per run = the election only).
+
+**Verification:** `bash scripts/agents-flow/cowork-tick-preflight.test.sh` — 27/27 GREEN (was 20/20 baseline; net +7 across rewritten/new presence cases). `bash -n` syntax-clean on both files. Live-verified twice against the real MCP server with disposable dummy `CLAUDE_CODE_SESSION_ID`s — verdict `SILENT` both times (not `ERROR`); `task_list_held(task_kind="cowork-slot")` showed no orphaned row from either smoke session. Decision journal: `sprint-FIX-COWORK-PREFLIGHT-PRESENCE-CLAIM-GAP-developer.md`.
+
+**Board:** NOT moved by developer this cycle — router explicitly holds the IN_PROGRESS→REVIEW flip on return (task pre-claimed by router session, do-not-self-flip per dispatch instruction).
+
+**Scope discipline:** Touched only the two named files (`cowork-tick-preflight.sh`, `cowork-tick-preflight.test.sh`) + `docs/WORK.md` one-liner + this notebook + the decision journal. Did not touch the live-sourced script mid-tick (whole-file atomic Edit, no partial states). Did not chase the graphify incremental-update step this cycle — flagged, not silently skipped: `graphify-out/graph.json` is ~2 months stale project-wide, making a full `--update` disproportionate to a 2-line `WORK.md` touch on an `S`-size FIX; left for a dedicated doc-graph maintenance pass.
+
+Zone health: `scripts/agents-flow/` cowork preflight — presence contract now matches `main.md` Step 0b.1; no other drift observed | HEALTHY
 
 ## Session 2026-07-15 — UC-RDL-P5 (dev-team BOUNDED-1 auto-pickup, mode=CLEAN, zone `cross-service/`) — IN_PROGRESS→REVIEW
 
@@ -29,16 +43,3 @@ Zone health: root `CLAUDE.md` — step 2.5 de-bloated this cycle; no other drift
 **Scope discipline:** Touched ONLY the 6 named packages — did not touch `docs/agents/tools/list/*` (pointer targets already correct) or peer-dirty `docs/agents/alert-commander/flow/stage-signals.md` (out of scope, untouched). Did not flip REVIEW→DONE_VERIFIED (QA gate's job).
 
 Zone health: `docs/agents/tools/package/` — 6/6 high-cadence packages de-duplicated this cycle; no other drift observed | HEALTHY
-
-## Session 2026-07-13 — TE-T01 (dev-team BOUNDED-1 auto-pickup, mode=CLEAN, zone `multi`) — IN_PROGRESS→REVIEW
-
-**Task:** Token-economy audit T-01 (`docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md`) — apply the WU-2 script-first prompt-gating pattern (already shipped for dev-team's Job 1 hourly cron) to the cowork `*/15` master-cron `CronCreate` prompt, so SILENT/LOST_ELECTION/DEFER ticks (~80% of 96 fires/day) stop paying the 15,916-byte `main.md` read.
-
-**Actions taken:** Prompt-only edit in `.claude/skills/cron-cowork-team/SKILL.md` Step 2 — `CronCreate` prompt now runs `scripts/agents-flow/cowork-tick-preflight.sh` directly and branches on its JSON `.verdict`: SILENT/LOST_ELECTION/DEFER → done, no further reads; WORK → read `main.md` from `§ WORK continuation` (skip re-running Steps 0b/0b.3/0c/1-4b, per `main.md`'s own JUMP-TO table); ERROR → read `main.md` from **Step 0a** (not the file top — avoids re-invoking the already-errored script). Also fixed the stale WU-1 "prompt text UNCHANGED" note to reflect the WU-2 supersession. Zero change to `main.md`, cadence (`*/15 * * * *`), or the preflight script.
-
-**Verification:** File stays 148L (< 200L cap). `bash scripts/agents-flow/cowork-tick-preflight.test.sh` — 20/20 pass (script untouched, re-run to confirm no regression). Grep sweep found no test/script asserting the literal old prompt string. No TypeScript touched → no `bun test`/`tsc` applicable. Manual cross-check of new prompt verdict names + anchors against `main.md`'s Step 0 JUMP-TO table — verbatim match.
-
-**Board:** Moved `task_board.in_progress[TE-T01]` → `task_board.review[]` (status REVIEW, next_agent=qa) + `.head` updated, via `orch-apply.sh` (conservation OK, task_total unchanged at 507). Commits: `48c73f784` (SKILL.md prompt edit), `d9a850e95` (orch-state board move). Decision journal: `docs/agent-memory/decisions/2026-07-13-TE-T01.md`.
-
-**Scope discipline:** Did not touch `main.md`, the preflight script, or cadence — prompt-only per task constraint. Did not flip REVIEW→DONE_VERIFIED (QA gate's job). Did not run `/cron-cowork-team` re-arm (explicit POST-CLOSE router step, not mine).
-Zone health: `.claude/skills/` doc zone — no other drift observed this cycle | HEALTHY
