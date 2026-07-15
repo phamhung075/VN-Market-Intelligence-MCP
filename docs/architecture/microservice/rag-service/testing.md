@@ -37,6 +37,15 @@ Mocks: `VectorStorePort`, `EmbedderPort` (AsyncMock)
 - Deduplication: same article re-indexed multiple times
 - Schema verification: all fields preserved through storage
 
+## Unit Tests — RAG-FTS-BUILD-MEMORY-BOUND
+**File:** `apps/rag-service/__tests__/unit/test_rag_fts_build_memory_bound.py`
+
+- `LANCE_FTS_NUM_SHARDS`/`LANCE_FTS_PARTITION_SIZE` pinned to `"1"`/`"32"` on module import
+- `os.environ.setdefault()` semantics: an operator-provided value survives import (verified
+  in a fresh `subprocess` — module-level env pinning only runs once per process)
+- `_build_fts_index()` still performs exactly 2 `create_index()` calls (title, then summary)
+- `hybrid_search()` still returns real results after a bounded-config FTS build
+
 ## Run Commands
 ```bash
 cd apps/rag-service && python -m pytest

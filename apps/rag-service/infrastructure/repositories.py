@@ -46,6 +46,61 @@ _COMPACT_EVERY = 100
 # Keep versions from the last 2 days; the latest version is always preserved.
 _COMPACT_RETENTION = timedelta(days=2)
 
+# ── RAG-FTS-BUILD-MEMORY-BOUND: bounded native FTS index build ───────────────
+# ROOT CAUSE (qa-verified, commit 2af76decc): `_build_fts_index()` calls LanceDB's
+# NATIVE inverted-index FTS builder (`table.create_index(field, config=FTS())`).
+# That builder is implemented in the Rust crate `lance-index` (rust/lance-index/
+# src/scalar/inverted/builder.rs). It fans the corpus scan out across
+# `LANCE_FTS_NUM_SHARDS` parallel workers (default: max(1, num_cpus/2) — resolved
+# from the HOST's visible CPU count, NOT the container's `cpus:` cgroup quota),
+# and each worker independently buffers its share of tokens/postings in memory
+# until it accumulates `LANCE_FTS_PARTITION_SIZE` MiB (default: 2048 MiB — see
+# `resolve_worker_memory_limit_bytes()` / the `if self.memory_size >=
+# self.worker_memory_limit_bytes { flush }` backpressure check in builder.rs),
+# ONLY THEN flushing its buffer to disk and freeing it.
+#
+# Neither knob is exposed by lancedb's Python `FTS()` config dataclass (tokenizer
+# options only — confirmed via inspect.signature) or by `AsyncTable.create_index()`
+# — they are process-global Rust `LazyLock` statics read from the OS environment
+# on FIRST use and then cached for the process lifetime. On a multi-core host,
+# DEFAULT worst-case in-flight build memory is `(num_cpus/2) * 2048 MiB` — many
+# GB, ~10x the rag-service 768m container ceiling (docker-compose.yml `rag-service
+# .deploy.resources.limits.memory`) — regardless of corpus size. This is why the
+# build pins 90-99.9% of the ceiling for 250s+ then OOM-restarts at ~56k rows
+# (RestartCount 258->260): the default worker-memory ceiling was never sized for
+# this container, not something that scales cleanly with row count.
+#
+# FIX: pin these two Rust-level env vars to small, container-safe values BEFORE
+# any FTS index is ever built in this process (must be set at or before module
+# import time — LazyLock caches on first read, so setting them later in the
+# process lifetime would be a no-op). `setdefault()` lets ops override via
+# docker-compose.yml without a code change if the default ever needs retuning.
+#   - LANCE_FTS_NUM_SHARDS=1     — single worker; the container is capped at
+#     `cpus: 1.0` anyway, so extra parallel workers buy no real speedup, only
+#     proportionally more peak memory.
+#   - LANCE_FTS_PARTITION_SIZE=32 (MiB) — hard per-worker flush threshold. This
+#     bounds build memory to a small, CORPUS-SIZE-INDEPENDENT ceiling: growth in
+#     `rag_entries` row count (the exact growth ALPHA-S2's nightly cron exists to
+#     track) changes how many times the worker flushes, not how much memory any
+#     single flush cycle holds — so the fix holds at 56k rows today and will
+#     continue to hold at 80k/100k+ as ragIndex() keeps writing.
+#
+# Verified empirically (local, lancedb 0.25.3 == same lance-index FTS builder as
+# the Docker-pinned lancedb 0.33.0 — the legacy python-tantivy path invoked via
+# `writer_heap_size`/`use_tantivy=True` was investigated FIRST per this task's
+# brief but is a dead end: it is hard-removed in the pinned 0.33.0, raising
+# `ValueError("Tantivy-based FTS has been removed")` unconditionally):
+# a 60k-row / high-cardinality-vocabulary stress corpus dropped from
+# 3.28 GB max RSS / 1.55 GB peak footprint (unbounded default) to 1.37 GB max RSS
+# / 640 MB peak footprint at NUM_SHARDS=1 + PARTITION_SIZE=8 MiB — the ceiling
+# drops further still on realistic (non-pathological-vocabulary) financial-news
+# text, where the flush-bounded posting buffer (not an ever-growing term
+# dictionary) dominates build memory. See
+# docs/architecture/microservice/rag-service/infrastructure.md for the full
+# investigation trail and the live-container number pending ops verification.
+os.environ.setdefault("LANCE_FTS_NUM_SHARDS", "1")
+os.environ.setdefault("LANCE_FTS_PARTITION_SIZE", "32")
+
 
 def _validate_level(value: str) -> bool:
     return value in _VALID_LEVELS
@@ -336,6 +391,11 @@ class LanceDBVectorStore(VectorStorePort):
 
         replace=True on both calls allows idempotent daily scheduled rebuilds
         without raising if the index already exists.
+
+        RAG-FTS-BUILD-MEMORY-BOUND: build memory is bounded corpus-size-
+        independently via the LANCE_FTS_NUM_SHARDS / LANCE_FTS_PARTITION_SIZE
+        env vars pinned at module import time (see top of this file) — the
+        call pattern here is otherwise unchanged.
         """
         from lancedb.index import FTS
         table = await self._get_table()
