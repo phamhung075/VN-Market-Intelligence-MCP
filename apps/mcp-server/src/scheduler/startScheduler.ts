@@ -22,6 +22,7 @@ import { runDailyAuditIfStale } from './news-analysis/dataAuditJob.js'
 import { runOhlcvStartupProbe } from './market-data/ohlcvStartupProbe.js'
 import { runOhlcvCandlePresenceGuard } from './market-data/ohlcvCandleGuard.js'
 import { runIntraday5mCompactor } from './market-data/intraday5mCompactorJob.js'
+import { runIntradayForeignFlow5mCompactor } from './market-data/intradayForeignFlow5mCompactorJob.js'
 import { purgeStrandedSeedRows } from './market-data/allzeroOhlcvBackfill.js'
 import { runMorningBriefing } from './briefings/morningBriefingJob.js'
 import { runEveningSummary } from './briefings/eveningSummaryJob.js'
@@ -114,6 +115,16 @@ export function startScheduler() {
     log(`[startup] intraday5mCompactor: buckets=${r.bucketsWritten} codes=${r.codesProcessed} ticks=${r.ticksScanned}`)
   }).catch((err) => {
     log(`[startup] intraday5mCompactor error (non-fatal): ${err instanceof Error ? err.message : String(err)}`)
+  })
+
+  // ALPHA-S2-FF-SUB3-JOB-CRON (2026-07-15) — startup one-shot compaction of
+  // foreign_flow_history ticks into intraday_foreign_flow_5m. Same backfill-via-steady-state
+  // idiom as the price-plane compactor above — this startup call IS the backfill of whatever
+  // ticks currently survive at deploy time; no separate migration script. Non-fatal.
+  void runIntradayForeignFlow5mCompactor().then((r) => {
+    log(`[startup] intradayForeignFlow5mCompactor: buckets=${r.bucketsWritten} codes=${r.codesProcessed} ticks=${r.ticksScanned}`)
+  }).catch((err) => {
+    log(`[startup] intradayForeignFlow5mCompactor error (non-fatal): ${err instanceof Error ? err.message : String(err)}`)
   })
 
   // Startup CB reset — task 1404

@@ -75,6 +75,7 @@ import { priceUpdateWatchdog } from './market-data/priceUpdateWatchdogJob.js'
 import { runVpsHealthPolling } from './system/vpsServiceHealthJob.js'
 import { runVnIndexRefreshJob } from './market-data/vnIndexRefreshJob.js'
 import { runIntraday5mCompactor } from './market-data/intraday5mCompactorJob.js'
+import { runIntradayForeignFlow5mCompactor } from './market-data/intradayForeignFlow5mCompactorJob.js'
 import { runFreshnessSlaMonitorJob } from './system/freshnessSlaMonitorJob.js'
 import { macroIndicatorRefreshJob, runMarketEarningYieldJob, runCommodityTrackerRefreshJob, runSbvRatesRefreshJob } from './macro/index.js'
 import { runForeignFlowFetcherJobCron } from './market-data/foreignFlowFetcherJob.js'
@@ -592,6 +593,24 @@ export function buildJobTable(ctx: SchedulerJobTableCtx): JobTableEntry[] {
       options: { timezone: 'UTC' },
       runner: async () => {
         const result = await runIntraday5mCompactor()
+        return { rowsWritten: result.bucketsWritten }
+      },
+    },
+
+    // Every 5 min, 24/7 — NO market-hours gate — intraday 5-min FOREIGN-FLOW compactor —
+    // ALPHA-S2-FOREIGN-FLOW-WRITE-RACE (Sprint FLOW-PRICE-ALPHA-LOOP). Groups
+    // foreign_flow_history ticks into 5-min UTC-aligned buckets using LAST-value-in-bucket
+    // semantics (NOT OHLC — foreign flow columns are cumulative counters / point-in-time
+    // gauges, brief §2.3) and UPSERTs intraday_foreign_flow_5m — ALL codes present, standalone
+    // table/job from the price plane (distinct bounded context). Archive-now compaction ahead
+    // of pushForeignFlowHandler.ts's rolling ~24h purge (Step 6b). See
+    // docs/architecture-briefs/2026-07-15-alpha-s2-foreign-flow-write-race-verdict.md.
+    {
+      name: 'intradayForeignFlow5mCompactorJob',
+      cron: CRONS.intradayForeignFlow5mCompactor,
+      options: { timezone: 'UTC' },
+      runner: async () => {
+        const result = await runIntradayForeignFlow5mCompactor()
         return { rowsWritten: result.bucketsWritten }
       },
     },

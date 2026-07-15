@@ -32,6 +32,13 @@ Bun.env["DB_PATH"] = ":memory:";
  * (schedulerJobTable.ts) — a single legitimate new entry, not a duplicate
  * registration. Group C (bespoke, 22) is unaffected — the new job goes through
  * the generic loop, not registerBespokeJobs().
+ *
+ * BUMP 2026-07-15 (ALPHA-S2-FF-SUB3-JOB-CRON): 59→60 (Group A/B), 81→82 (Group D).
+ * Adds intradayForeignFlow5mCompactorJob.ts's `intradayForeignFlow5mCompactorJob`
+ * entry to buildJobTable()'s generic wrapRun table (schedulerJobTable.ts) — a
+ * single legitimate new entry (standalone foreign-flow archive compactor, distinct
+ * from the price-plane sibling above), not a duplicate registration. Group C
+ * (bespoke, 22) is unaffected.
  */
 
 import { describe, it, expect, mock, afterEach } from "bun:test";
@@ -64,11 +71,11 @@ const FAKE_DB = {} as Database;
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("FACTORY-SCHEDULER-job-table-registry — Group A: buildJobTable() shape", () => {
-  it("returns exactly 59 entries", async () => {
+  it("returns exactly 60 entries", async () => {
     const { buildJobTable } = await import("../scheduler/schedulerJobTable.js");
     const jobRunRepo = makeStubJobRunRepo();
     const table = buildJobTable({ db: FAKE_DB, jobRunRepo });
-    expect(table).toHaveLength(59);
+    expect(table).toHaveLength(60);
   });
 
   it("every entry has a unique name", async () => {
@@ -171,14 +178,14 @@ function installScheduleCronSpy(): { calls: CapturedCall[]; restore: () => void 
 }
 
 describe("FACTORY-SCHEDULER-job-table-registry — Group B: registerJobTable() generic loop", () => {
-  it("registers all 59 buildJobTable() entries via scheduleCron(j.cron, ..., j.options)", async () => {
+  it("registers all 60 buildJobTable() entries via scheduleCron(j.cron, ..., j.options)", async () => {
     const { calls } = installScheduleCronSpy();
     const { buildJobTable, registerJobTable } = await import("../scheduler/schedulerJobTable.js");
     const jobRunRepo = makeStubJobRunRepo();
     const table = buildJobTable({ db: FAKE_DB, jobRunRepo });
     registerJobTable(table, jobRunRepo);
 
-    expect(calls).toHaveLength(59);
+    expect(calls).toHaveLength(60);
     // Every registered cron expression corresponds 1:1 to a JOB_TABLE entry's cron.
     const expectedCrons = table.map((j) => j.cron).sort();
     const actualCrons = calls.map((c) => c.cron).sort();
@@ -237,7 +244,7 @@ describe("FACTORY-SCHEDULER-job-table-registry — Group C: registerBespokeJobs(
 });
 
 describe("FACTORY-SCHEDULER-job-table-registry — Group D: scheduler-boot smoke (registerJobTable + registerBespokeJobs together)", () => {
-  it("registers exactly 81 total scheduleCron calls — reproduces the pre-split registration count exactly", async () => {
+  it("registers exactly 82 total scheduleCron calls — reproduces the pre-split registration count exactly", async () => {
     // NOTE: cron EXPRESSION VALUES are not all unique across the 80 registrations (e.g.
     // CRONS.commodityTrackerRefresh intentionally shares '0 6 * * *' with
     // CRONS.macroIndicatorRefresh — kept as separate job registrations for independent
@@ -251,7 +258,7 @@ describe("FACTORY-SCHEDULER-job-table-registry — Group D: scheduler-boot smoke
     registerJobTable(buildJobTable(ctx), jobRunRepo);
     registerBespokeJobs(ctx);
 
-    expect(calls).toHaveLength(81);
+    expect(calls).toHaveLength(82);
   });
 });
 

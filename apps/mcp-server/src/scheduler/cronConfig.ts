@@ -248,4 +248,12 @@ export const CRONS = {
    *  vpsServiceHealth above. Cadence matches bucket width; wide safety margin against
    *  the source table's own rolling ~24h purge horizon (pushPricesHandler.ts). */
   intraday5mCompactor:        Bun.env.CRON_INTRADAY_5M_COMPACTOR                   ?? '*/5 * * * *',
+  /** intradayForeignFlow5mCompactor — ALPHA-S2-FOREIGN-FLOW-WRITE-RACE: compact
+   *  foreign_flow_history ticks into 5-min LAST-value-in-bucket archive
+   *  (intraday_foreign_flow_5m) every 5 min, 24/7 — NO market-hours gate, same
+   *  unrestricted idiom as intraday5mCompactor above. STANDALONE from the price
+   *  plane — distinct table, distinct job, distinct aggregation semantics
+   *  (LAST-value, not OHLC). Cadence matches bucket width; wide safety margin
+   *  against foreign_flow_history's own rolling ~24h purge (pushForeignFlowHandler.ts). */
+  intradayForeignFlow5mCompactor: Bun.env.CRON_INTRADAY_FOREIGN_FLOW_5M_COMPACTOR  ?? '*/5 * * * *',
 }
