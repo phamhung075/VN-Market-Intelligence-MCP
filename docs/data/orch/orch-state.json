@@ -371,12 +371,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "UC-DTL-P2",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of UC-DTL-P2 — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-15T19:52:45Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "UC-DTL-P2 DONE_VERIFIED (qa PASS 89/89 + selective-firing 4-verdict + DJ-GATE-1 193d9d16f). Cold-eviction now deterministic Step 5.5 every lock-winning tick. Pushed on green. Next dispatcher tick: clean preflight + BOUNDED-1 eval. Parked/peer-owned: UC-CCA-P3 P0 (cow-20260715T195545 published-marker pendulum — peer PO owns); UC-RDL-P4 (backlog supervised deliberate-start); RAG-FTS-BUILD-MEMORY-BOUND / ALPHA-S2-RAG-FTS-REBUILD-CRON (memory-bound, done_verified withheld). RUN-IDLE revival is partial — straggler ACTIVE sprints await dev-team-loop-P3 autoclose + FU-ORCH-HOT-SUB150-SPRINT-LIFECYCLE.",
+    "updated_at": "2026-07-15T20:18:22Z",
+    "updated_by": "dev-team (router: UC-DTL-P2 review->done_verified, qa PASS + DJ-GATE-1 closed; head idle)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -412,8 +412,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-15T20:11:18Z",
-    "_updated_by": "cowork-team/step0a-selfcheck",
+    "_updated_at": "2026-07-15T20:18:08Z",
+    "_updated_by": "cowork-team/spawn-verify",
     "archive": [],
     "rows": [
       {
@@ -435,7 +435,7 @@
         "from": "cowork-team",
         "to": "po",
         "type": "system-issue",
-        "summary": "cycle-snapshot-latest.json promotion never fires (8d stale, cycle_snapshot_promoted=false) — last_regime/last_volatility_level pinned unknown, adaptive-cadence loop dark; stale_warning=true on fresh emit pins pressure_mode=legacy",
+        "summary": "cycle-snapshot-latest promotion never fires (8d stale) — last_regime/volatility pinned unknown, adaptive cadence dark",
         "severity": "MED",
         "status": "NEW",
         "payload_ref": "docs/handoffs/2026-07-15-cycle-snapshot-latest-promotion-dark.md"
@@ -465,6 +465,17 @@
         "severity": "MED",
         "status": "NEW",
         "payload_ref": "docs/handoffs/2026-07-15-cowork-step0a-drain-starves-devteam.md"
+      },
+      {
+        "id": "cow-20260715T201730",
+        "ts": "2026-07-15T20:17:30Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "alert-commander self-edited its flow doc (notebook-only boundary); edit's same-shape claim FALSE — reverted",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": "docs/handoffs/2026-07-15-alert-commander-self-edits-flow-doc-out-of-boundary.md"
       }
     ],
     "last_triaged_at": "2026-07-15T20:06:07Z",
@@ -9848,14 +9859,71 @@
           ]
         },
         "router_close_note": "qa PASS + DJ-GATE-1 SATISFIED. Presence claim-first landed: cowork preflight Step 2 NEVER emits ERROR on presence claim/heartbeat outcome (peer-held + transport-error both proceed) — closes the presence-claim gap from origin_signal cow-20260715T184053. Push on green (PUSH-AUTONOMY-1). origin_signal flipped READ->RESOLVED this write."
+      },
+      {
+        "id": "UC-DTL-P2",
+        "type": "FIX",
+        "title": "Move terminal-bloat eviction into the deterministic tick-preflight script (runs every tick, any exit path)",
+        "status": "DONE_VERIFIED",
+        "priority": "P1",
+        "size": "M",
+        "zone": "cross-service/",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "CONFIRMED",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#dev-team-loop-P2",
+        "note": "Eviction currently rides an exit path that is skipped on some ticks. Port it into the deterministic tick-preflight script so it runs regardless of how the tick exits.",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "promoted_at": "2026-07-15T19:52:36Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-15T19:52:45Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "moved_at": "2026-07-15T20:13:19Z",
+        "moved_by": "dev-team (router: dev COMPLETE + RAW pre-check PASS; premise-correction verified vs brief L444; dispatching qa gate)",
+        "dev_result": {
+          "agent": "developer",
+          "verdict": "COMPLETE",
+          "commits": [
+            "83e0578ea",
+            "5cb56d425",
+            "a8e51b1f6"
+          ],
+          "origin_state": "peer-pushed to origin via c43fdf76a (PO triage cow-20260715T195545 committed on top on shared repo); board still IN_PROGRESS so two-key gate intact — done_verified NOT reached",
+          "raw_precheck": "PASS — (1) scope clean: 83e0578ea=preflight.sh+.test.sh only, 5cb56d425=post-cycle.md+WORK.md, a8e51b1f6=2 journal files; no peer-file sweep, orch-state.json NOT in any commit (no board self-flip). (2) board UC-DTL-P2 still IN_PROGRESS next_agent null. (3) CRUX: brief L444 verifier note verbatim '\\'EVERY tick\\' must mean every LOCK-WINNING tick ... must not run on SKIP (peer holds SF-1) or ERROR (lock state undefined)' — dev selective-firing deviation is CORRECT per authoritative detail_ref; router dispatch paraphrase (all 4 paths) was the error. (4) placement matches Change L438: Step 5.5 relocates post-cycle.md 4.2, demotes flow block to CANON-SCRIPT spec pointer. (5) DJ-GATE-1 marker present sprint-UC-DTL-P2-developer.md + mirror sprint-ULTRACODE-AUDIT-FIXALL-developer.md.",
+          "self_reported": "89/89 GREEN (55 baseline + 34 new T21-T31); regression cowork-tick-preflight.test.sh 27/27 + context-bloat-backstop.test.sh 2/2 green; all side-effects (orch-cold-evict.sh/orch-state-validate.sh/git commit) stubbed via overridable fns — zero live-repo writes in tests",
+          "pending_qa": "independent re-run: (1) bash scripts/agents-flow/dev-team-tick-preflight.test.sh -> expect 89/89, RAW count both numbers; (2) assert SELECTIVE firing per brief L444 — threshold-trip fixture x {RUN,RUN-IDLE}=fires, x {SKIP,ERROR}=NEVER fires (structural: SKIP/ERROR return before Step 5.5); (3) verify _step55_board_hygiene is a genuine choke-point before BOTH _emit_verdict calls; (4) verify post-cycle.md Step 4.2 demoted with NO behavior lost (DONE_N/DV_N/TERMINAL_SPRINT_N thresholds match post-cycle.md:45-61); (5) writes stay orch-cold-evict.sh->orch-apply ALLOW_SHRINK gated + commit-mutex + explicit-path git add preserved; (6) regression cowork+context-bloat suites green; (7) DJ-GATE-1 marker RAW-verify. tsc/mock-guard N/A (bash). On PASS -> done_verified + (already on origin, no push needed — confirm) + post-cycle."
+        },
+        "verified_at": "2026-07-15T20:18:22Z",
+        "verified_by": "qa (router-dispatched independent gate; PASS — all checks RAW-reproduced)",
+        "qa_result": {
+          "agent": "qa",
+          "verdict": "PASS",
+          "verified_at": "2026-07-15T20:18:22Z",
+          "tests": "dev-team-tick-preflight.test.sh 89 passed 0 failed (55 baseline + 34 new T21-T31)",
+          "selective_firing": "4-verdict RAW-confirmed: RUN=fires (T21), RUN-IDLE=fires (T23) on tripping fixture; SKIP=never (T25/T26), ERROR=never (T27/T28) on the IDENTICAL tripping fixture — selective by construction, matches brief L444",
+          "choke_point": "_step55_board_hygiene at dev-team-tick-preflight.sh:489 — after all ERROR returns (423/447/469) + SKIP returns (453/476), before both _emit_verdict (RUN-IDLE:492, RUN:497); unreachable-by-construction on SKIP/ERROR, no extra conditional",
+          "no_behavior_lost": "Step 5.5 jq predicate (script:334-351) line-for-line identical to pre-relocation post-cycle.md@83e0578ea^:41-51 (TERMINAL_SPRINT_N/SPRINT_GOAL_TERMINAL_N/DONE_N/DV_N, same TERMINAL_SET, same BCTC- carve-out); post-cycle.md now CANON-SCRIPT spec pointer",
+          "invariants": "explicit pathspec commits (no -A/-a); orch-cold-evict.sh -> orch-apply.sh ALLOW_SHRINK='orch-cold-evict.sh:scheduled-eviction' (line 657 unchanged); commit-mutex:main wraps evict+validate+commit; test stubs override all 3 side-effect seams — zero live-repo writes in suite",
+          "regression": "cowork-tick-preflight.test.sh 27/27; context-bloat-backstop.test.sh 2/2 (git log confirms zero history overlap — genuinely untouched)",
+          "dj_gate_1": "SATISFIED — sprint-UC-DTL-P2-qa.md marker present, committed 193d9d16f (explicit pathspec, only that file)",
+          "code_commits": [
+            "83e0578ea",
+            "5cb56d425",
+            "a8e51b1f6"
+          ]
+        },
+        "router_close_note": "UC-DTL-P2 (ULTRACODE-AUDIT-FIXALL) DONE_VERIFIED. Cold-eviction backstop relocated post-cycle.md Step 4.2 -> deterministic Step 5.5 in dev-team-tick-preflight.sh; now fires on EVERY lock-winning tick (RUN/RUN-IDLE), never on SKIP/ERROR per brief L444. Router RAW pre-check PASS (premise-correction verified: dev correctly followed detail_ref over router paraphrase) + qa independent PASS. Code on origin via peer c43fdf76a; qa journal 193d9d16f + board commit pushed on green. SCOPE NOTE: fully fixes issue-1 (unreachable backstop) — RUN-IDLE only partially revived; straggler-held ACTIVE sprints remain FU-ORCH-HOT-SUB150-SPRINT-LIFECYCLE + dev-team-loop-P3 (epic-wrapper autoclose) scope."
       }
     ],
     "head": {
       "status": "idle",
       "active_task_id": null,
       "next_agent": "router",
-      "last_updated_at": "2026-07-15T19:29:02Z",
-      "last_updated_by": "dev-team (FIX-COWORK-PREFLIGHT -> done_verified, qa PASS; origin_signal RESOLVED)"
+      "last_updated_at": "2026-07-15T20:18:22Z",
+      "last_updated_by": "dev-team (UC-DTL-P2 -> done_verified, qa PASS + DJ-GATE-1 closed)"
     },
     "ready": [],
     "review": [
@@ -10426,29 +10494,7 @@
     },
     "last_triaged_at": "2026-07-15T19:52:36Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "UC-DTL-P2",
-        "type": "FIX",
-        "title": "Move terminal-bloat eviction into the deterministic tick-preflight script (runs every tick, any exit path)",
-        "status": "IN_PROGRESS",
-        "priority": "P1",
-        "size": "M",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "CONFIRMED",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#dev-team-loop-P2",
-        "note": "Eviction currently rides an exit path that is skipped on some ticks. Port it into the deterministic tick-preflight script so it runs regardless of how the tick exits.",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "promoted_at": "2026-07-15T19:52:36Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-15T19:52:45Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
