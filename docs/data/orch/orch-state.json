@@ -8412,63 +8412,7 @@
         "closed_at": "2026-07-12T04:27:30Z"
       }
     ],
-    "done_verified": [
-      {
-        "id": "UC-CDC-P2",
-        "type": "FIX",
-        "title": "Port the stderr-separation fix into cowork-guaranteed-slot-firer.sh",
-        "status": "DONE_VERIFIED",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "CONFIRMED",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#cowork-dispatcher-cron-P2",
-        "note": "The guaranteed-slot firer mixes stderr into the JSON stdout the caller parses (same class already fixed elsewhere). Apply the stderr-separation redirect.",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "promoted_at": "2026-07-15T22:22:01Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-15T22:22:01Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
-        "moved_at": "2026-07-15T22:32:10Z",
-        "moved_by": "dev-team (router: dev COMPLETE + RAW pre-check PASS 4/4; premise-correction verified vs brief L183; dispatching qa gate)",
-        "dev_result": {
-          "agent": "developer",
-          "verdict": "COMPLETE",
-          "commits": [
-            "02ba4a635",
-            "32c9d1847"
-          ],
-          "origin_state": "on HEAD, unpushed (router pushes on green after qa PASS). board still IN_PROGRESS -> two-key gate intact, done_verified NOT reached.",
-          "raw_precheck": "PASS 4/4 — (1) scope clean: 02ba4a635=cowork-guaranteed-slot-firer.sh(+19)+.test.sh(+20) only, 32c9d1847=sprint-ULTRACODE-AUDIT-FIXALL-developer.md(+13) only; orch-state.json absent from both (no board self-flip); no peer-file sweep. (2) board UC-CDC-P2 still IN_PROGRESS, review=0/done_verified=0. (3) DJ-GATE-1: STEP developer-S3 task-id UC-CDC-P2 committed 32c9d1847. (4) PREMISE-CORRECTION: RAW diff confirms fix at _fire_one_slot() L183 (eval 2>&1 -> 2>\"$slot_err\" mktemp separation), NOT the L97 `tee` from my dispatch paraphrase; dev followed authoritative detail_ref (audit brief #cowork-dispatcher-cron-P2, 34 live errors incl missed chef-eod 2026-07-13T08:54Z) — correct deviation.",
-          "self_reported": "28/28 GREEN (baseline 25/25 + T13 new: stderr diagnostic + valid stdout JSON -> guaranteed slot still fires, no false non-JSON-output ERROR); shellcheck cowork-guaranteed-slot-firer.sh rc=0 clean; 2 pre-existing .test.sh findings (SC1091 info, SC2034 warn) confirmed on baseline; diff additive/scoped to matcher-capture block only.",
-          "pending_qa": "independent re-run: (1) bash scripts/agents-flow/cowork-guaranteed-slot-firer.test.sh -> expect 28/28, RAW-count BOTH numbers (baseline 25/25). (2) T13 specifically: stderr diagnostic + valid stdout JSON -> guaranteed slot fires, no false 'non-JSON output' ERROR. (3) clean-JSON-stdout proof: confirm raw=$(eval \"$SLOT_MATCHER_CMD\" 2>\"$slot_err\") — stderr NOT folded into the jq-parsed buffer; only stdout parsed. (4) shellcheck cowork-guaranteed-slot-firer.sh rc=0; confirm the 2 .test.sh findings (SC1091/SC2034) are baseline via git show HEAD~2:, not introduced. (5) premise-correction cross-check: L97 `tee` not on a command-substitution JSON path; L183 matcher-capture is the real bug (brief #cowork-dispatcher-cron-P2). (6) DJ-GATE-1 marker RAW-verify. (7) no regression to firing logic — diff scoped to matcher-capture block. tsc/mock-guard N/A (bash). On PASS -> done_verified + push on green (02ba4a635+32c9d1847 unpushed) + post-cycle. NO origin_signal to flip."
-        },
-        "verified_at": "2026-07-15T22:36:13Z",
-        "verified_by": "qa (router-dispatched independent gate; PASS — all checks RAW-reproduced)",
-        "qa_result": {
-          "agent": "qa",
-          "verdict": "PASS",
-          "verified_at": "2026-07-15T22:36:13Z",
-          "tests": "cowork-guaranteed-slot-firer.test.sh -> 28 passed 0 failed (baseline 25/25 + T13). T13 @L200-218: stub matcher emits cadence-skip stderr + valid stdout JSON in one invocation -> asserts exit=0, slot=chef-eod fires, no false 'non-JSON output' — all 3 sub-checks pass in RAW run.",
-          "clean_json_stdout": "cowork-guaranteed-slot-firer.sh:191-198 — slot_err=$(mktemp); raw=$(eval \"$SLOT_MATCHER_CMD\" 2>\"$slot_err\") captures stdout ONLY; exit!=0 path surfaces cat \"$slot_err\" in the log (not dropped) then rm -f; only raw feeds jq -c '[.slots[]?|select(.guaranteed==true)]' at L200 — stderr can no longer reach the parse.",
-          "premise_correction": "CONFIRMED — log(){ ...|tee... } (L97) called as a bare statement everywhere (grep '$(log ' -> 0 hits), never in a command substitution, so never on any JSON-parse path; matcher-capture (old L183, now L192) was the sole real bug, matching audit brief #cowork-dispatcher-cron-P2 (34 live errors incl missed chef-eod 2026-07-13T08:54Z). Dev correctly followed detail_ref over router paraphrase.",
-          "shellcheck": "cowork-guaranteed-slot-firer.sh rc=0 clean; .test.sh 2 findings (SC1091 info @L74, SC2034 warn @L193) byte-identical vs git show HEAD~2 baseline -> pre-existing, NOT introduced.",
-          "diff_scope": "additive/scoped to matcher-capture block only (git show 02ba4a635) — slot-iteration loop, cadence logic, _fire_one_slot calls untouched. No firing-logic regression.",
-          "dj_gate_1": "SATISFIED — dev STEP developer-S3 task-id UC-CDC-P2 (32c9d1847); qa STEP qa-S2 task-id UC-CDC-P2 PASS (d9625b555, explicit pathspec, no peer sweep).",
-          "code_commits": [
-            "02ba4a635",
-            "32c9d1847",
-            "d9625b555"
-          ]
-        },
-        "router_close_note": "UC-CDC-P2 (ULTRACODE-AUDIT-FIXALL) DONE_VERIFIED. Ported the FIX-COWORK-PREFLIGHT-DIAGNOSTIC-STDOUT-POLLUTION mktemp stderr-separation idiom into cowork-guaranteed-slot-firer.sh _fire_one_slot() — cadence-skip diagnostics from cowork-match-slots.js no longer corrupt the guaranteed-slot JSON parse (was silently dropping DUE slots as false 'non-JSON output' ERRORs, 34 live occurrences). Router RAW pre-check PASS 4/4 (premise-correction verified: dev correctly targeted L183 matcher-capture, not the router-paraphrased L97 tee) + qa independent PASS (28/28, clean-JSON-stdout proof, shellcheck rc=0, DJ-GATE-1 both journals). BOUNDED-1 idle-pickup shipped a confirmed size-S dependency-free code fix = product, not churn. Pushed on green."
-      }
-    ],
+    "done_verified": [],
     "head": {
       "status": "idle",
       "active_task_id": null,
