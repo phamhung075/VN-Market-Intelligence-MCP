@@ -77,6 +77,7 @@ import { runVnIndexRefreshJob } from './market-data/vnIndexRefreshJob.js'
 import { runIntraday5mCompactor } from './market-data/intraday5mCompactorJob.js'
 import { runIntradayForeignFlow5mCompactor } from './market-data/intradayForeignFlow5mCompactorJob.js'
 import { runSbvOmoLiquidityCron } from './macro/sbvOmoLiquidityCronJob.js'
+import { runRagFtsRebuildCron } from './rag/ragFtsRebuildCronJob.js'
 import { runFreshnessSlaMonitorJob } from './system/freshnessSlaMonitorJob.js'
 import { macroIndicatorRefreshJob, runMarketEarningYieldJob, runCommodityTrackerRefreshJob, runSbvRatesRefreshJob } from './macro/index.js'
 import { runForeignFlowFetcherJobCron } from './market-data/foreignFlowFetcherJob.js'
@@ -631,6 +632,25 @@ export function buildJobTable(ctx: SchedulerJobTableCtx): JobTableEntry[] {
       runner: async () => {
         const result = await runSbvOmoLiquidityCron()
         return { rowsWritten: result.persisted ? 1 : 0 }
+      },
+    },
+
+    // 20:15 UTC daily (03:15 VN next day) — RAG FTS index rebuild trigger —
+    // ALPHA-S2-RAG-FTS-REBUILD-CRON (Sprint FLOW-PRICE-ALPHA-LOOP). Triggers rag-service's
+    // POST /admin/rebuild-fts so the BM25 hybrid-search leg picks up every row indexed via
+    // ragIndex() since the last rebuild (DFR-P3's own design always intended this scheduled
+    // half to exist alongside the lazy-on-first-hybrid-query fallback). Pure trigger — zero
+    // local DB writes; the LanceDB FTS index mutation happens entirely server-side. Single-
+    // branch HARD-fail contract (no ambiguous partial-success state, unlike sbvOmoLiquidityCron):
+    // any non-2xx/network/90s-timeout error alerts BUG every time. See
+    // docs/architecture-briefs/2026-07-15-alpha-s2-rag-fts-rebuild-cron.md.
+    {
+      name: 'ragFtsRebuildCronJob',
+      cron: CRONS.ragFtsRebuildCron,
+      options: { timezone: 'UTC' },
+      runner: async () => {
+        const result = await runRagFtsRebuildCron()
+        return { rowsWritten: result.rebuilt ? 1 : 0 }
       },
     },
 

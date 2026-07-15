@@ -294,7 +294,11 @@ describe("cron-registry.json integrity", () => {
     // sbvOmoLiquidityCronJob.ts (src/scheduler/macro/) + its cron-registry.json entry
     // (daily trigger of macro-indicators POST /liquidity-state so sbv_omo_daily accrues —
     // pure trigger+observe, zero local DB writes).
-    expect(json.schedulerFileCount).toBe(68);
+    // BUMP 2026-07-15 (ALPHA-S2-RAG-FTS-REBUILD-CRON): 68 → 69 — added
+    // ragFtsRebuildCronJob.ts (src/scheduler/rag/) + its cron-registry.json entry (daily
+    // trigger of rag-service POST /admin/rebuild-fts so the BM25 hybrid-search leg picks up
+    // rows indexed since the last rebuild — pure trigger+observe, zero local DB writes).
+    expect(json.schedulerFileCount).toBe(69);
   });
 
   it("jobs array contains entry with name 'pipelineWatchdog'", () => {

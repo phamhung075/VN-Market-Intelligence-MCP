@@ -12,12 +12,14 @@ export {
   ragSearch,
   ragIndex,
   ragHealthCheck,
+  ragRebuildFts,
   type RagSearchRequest,
   type RagSearchResponse,
   type RagSearchResultDTO,
   type RagIndexRequest,
   type RagIndexResponse,
   type AnalysisInput,
+  type RagRebuildFtsResponse,
 } from "./ragHttpClient.js";
 
 // ── Legacy re-exports from _deprecated/ (tests + backward-compat — do not use in new code) ──

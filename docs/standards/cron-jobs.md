@@ -119,6 +119,23 @@ Env override: `CRON_ACCURACY_DIGEST` (default `0 7 * * *`)
 - Source: `apps/mcp-server/src/scheduler/macro/sbvOmoLiquidityCronJob.ts`
 - Design SSOT: `docs/architecture-briefs/2026-07-15-alpha-s2-omo-liquidity-cron.md`
 
+## RAG FTS Rebuild Cron (Trigger-Only)
+
+| Schedule | Job | Task |
+|----------|-----|------|
+| `15 20 * * *` (20:15 UTC daily, 03:15 VN next day) | `ragFtsRebuildCronJob` — triggers `POST /admin/rebuild-fts` on the rag-service microservice so the BM25 hybrid-search leg picks up rows indexed since the last rebuild | ALPHA-S2-RAG-FTS-REBUILD-CRON |
+
+- **Why:** `apps/rag-service/` (Python) already owns and unit-tests `POST /admin/rebuild-fts` (DFR-P3, AC-P3R-5, `__tests__/unit/test_dfr_p3_hybrid_search.py`), which rebuilds the LanceDB `title`+`summary` FTS indexes over `rag_entries` server-side. The DFR-P3 blueprint's own design ("Option C: lazy-on-first-hybrid-query + scheduled daily refresh") only ever shipped the lazy half — the scheduled half was never wired. This job closes that gap; zero new DDL / zero new tables / no `apps/rag-service/` code change.
+- **Zero local DB writes** — this job calls the new `ragRebuildFts()` client function (`infrastructure/rag/ragHttpClient.ts`, same fetch + `AbortSignal.timeout` convention as `ragSearch`/`ragIndex`) and never touches `market.db`. The LanceDB index mutation happens entirely server-side inside rag-service.
+- **Fail-loud contract (single branch — simpler than the OMO sibling):** `POST /admin/rebuild-fts` has no ambiguous partial-success state (200 `{"status":"ok"}` or raises/500s).
+  - HARD fail (non-2xx / network error / 90s timeout) → `sendTelegramBug()` + `logger.error`, **every** occurrence (dedup handled by the notifier's own 4h window).
+  - Success (`{"status":"ok"}`) → `logger.info`, no alert.
+- **90s deadline** (not the 8s used by `ragSearch`/`ragIndex`) — the DFR-P3 blueprint documents ~30-60s FTS build time at 14k+ rows; a tighter deadline would manufacture a false HARD-fail BUG alert every night for a legitimately slow-but-successful rebuild.
+- No startup one-shot — nothing to backfill; the index either needs rebuilding or the lazy-build fallback (`_fts_index_built` per-container flag) already covers it. Calling it twice on deploy would just re-trigger the same idempotent-effect rebuild.
+- Env override: `CRON_RAG_FTS_REBUILD` (default `15 20 * * *`)
+- Source: `apps/mcp-server/src/scheduler/rag/ragFtsRebuildCronJob.ts`
+- Design SSOT: `docs/architecture-briefs/2026-07-15-alpha-s2-rag-fts-rebuild-cron.md`
+
 ## Analysis Ownership (dedup policy)
 
 | Domain | Owner | Verifier | Notes |

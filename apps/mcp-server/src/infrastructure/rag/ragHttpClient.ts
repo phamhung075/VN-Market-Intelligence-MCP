@@ -183,6 +183,37 @@ export async function ragIndex(request: RagIndexRequest): Promise<RagIndexRespon
   return response.json() as Promise<RagIndexResponse>;
 }
 
+export interface RagRebuildFtsResponse {
+  status: string;
+  message: string;
+}
+
+/**
+ * Trigger a full FTS index rebuild on rag-service ('title' + 'summary' columns over rag_entries).
+ *
+ * DEADLINE NOTE (ALPHA-S2-RAG-FTS-REBUILD-CRON): the DFR-P3 blueprint documents ~30-60s build
+ * time at 14k+ rows (and the corpus has only grown since 2026-06-08) — do NOT reuse
+ * ragSearch/ragIndex's 8_000ms constant here. A too-tight deadline would manufacture a false
+ * HARD-fail BUG alert every night for a legitimately slow-but-successful rebuild.
+ *
+ * @returns RagRebuildFtsResponse with status + message
+ * @throws Error if the request fails or times out after 90 s
+ */
+export async function ragRebuildFts(): Promise<RagRebuildFtsResponse> {
+  const response = await fetch(`${RAG_SERVICE_URL}/admin/rebuild-fts`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    signal: AbortSignal.timeout(90_000),
+  });
+
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    throw new Error(`[ragHttpClient] rebuild-fts failed: ${response.status} ${text}`);
+  }
+
+  return response.json() as Promise<RagRebuildFtsResponse>;
+}
+
 /**
  * Health check for the RAG service.
  *

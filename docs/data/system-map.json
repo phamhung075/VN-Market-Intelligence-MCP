@@ -523,6 +523,11 @@
             "desc": "Daily 09:09 UTC (16:09 VN) trigger of macro-indicators POST /liquidity-state so sbv_omo_daily accrues server-side — pure trigger+observe, zero local DB writes. HARD fail alerts BUG every time; SOFT fail (legitimate no-auction day) logs a warning only (ALPHA-S2-OMO-LIQUIDITY-CRON)"
           },
           {
+            "name": "ragFtsRebuildCron",
+            "schedule": "15 20 * * *",
+            "desc": "Daily 20:15 UTC (03:15 VN next day) trigger of rag-service POST /admin/rebuild-fts so the BM25 hybrid-search leg picks up rows indexed since the last rebuild — pure trigger+observe, zero local DB writes (LanceDB FTS index mutation is entirely server-side). Single-branch HARD-fail contract: any non-2xx/network/90s-timeout error alerts BUG every time (ALPHA-S2-RAG-FTS-REBUILD-CRON)"
+          },
+          {
             "name": "systemAuditTier1",
             "schedule": "*/30 * * * *",
             "desc": "system-auditor Tier-1: container + health ping every 30 min"

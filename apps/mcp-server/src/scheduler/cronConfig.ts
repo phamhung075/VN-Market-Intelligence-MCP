@@ -263,4 +263,12 @@ export const CRONS = {
    *  OMO auction-result publish window. NOT weekday-gated (SBV soft-fails are non-alerting
    *  by design — a weekend/holiday run is a harmless logger.warn no-op). */
   sbvOmoLiquidityCron: Bun.env.CRON_SBV_OMO_LIQUIDITY ?? '9 9 * * *',
+  /** ragFtsRebuildCron — daily FTS index rebuild trigger on rag-service
+   *  (ALPHA-S2-RAG-FTS-REBUILD-CRON). Off-market UTC slot (VN market hours 02:00-08:59 UTC per
+   *  isVnMarketHoursUtc, same avoidance idiom as sbvOmoLiquidityCron), non-:00/:30 minute mark.
+   *  20:15 UTC daily (03:15 VN next day) — deep VN overnight, well after market close (08:59 UTC)
+   *  and well before next reopen (02:00 UTC), after the day's ragIndex() write volume has settled.
+   *  Slot verified free: hour-20 UTC already has sscCheck(:00), agmPlanRefresh(:30),
+   *  cascadeBacktest(:37) — :15 is unused. */
+  ragFtsRebuildCron: Bun.env.CRON_RAG_FTS_REBUILD ?? '15 20 * * *',
 }
