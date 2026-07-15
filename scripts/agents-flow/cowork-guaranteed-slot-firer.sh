@@ -178,13 +178,24 @@ _fire_one_slot() {
 # other match first — never aborts the loop early). ─────────────────────────
 run_firer() {
   local dry_run="${1:-false}"
-  local raw matcher_rc slots_json count i slot overall_rc=0 rc
+  local raw matcher_rc slots_json count i slot overall_rc=0 rc slot_err
 
-  raw=$(eval "$SLOT_MATCHER_CMD" 2>&1); matcher_rc=$?
+  # stdout (JSON contract) and stderr (diagnostics: cowork-match-slots.js
+  # cadence suppress/skip logs via console.error) are captured separately —
+  # folding stderr into the parsed buffer (old: `2>&1`) let an in-tick
+  # cadence-skip diagnostic corrupt the jq parse below and silently drop a
+  # DUE guaranteed slot as a false "non-JSON output" ERROR (see
+  # FIX-COWORK-PREFLIGHT-DIAGNOSTIC-STDOUT-POLLUTION, ported verbatim from
+  # cowork-tick-preflight.sh's Step 6 mktemp stderr-separation idiom). The
+  # exit!=0 error path still surfaces matcher stderr in the log message.
+  slot_err=$(mktemp)
+  raw=$(eval "$SLOT_MATCHER_CMD" 2>"$slot_err"); matcher_rc=$?
   if [ $matcher_rc -ne 0 ]; then
-    log "ERROR: slot matcher command failed (exit=$matcher_rc): $(printf '%s' "$raw" | tr '\n' ' ' | cut -c1-300)"
+    log "ERROR: slot matcher command failed (exit=$matcher_rc): $(printf '%s' "$raw" | tr '\n' ' ' | cut -c1-300) stderr: $(printf '%s' "$(cat "$slot_err")" | tr '\n' ' ' | cut -c1-300)"
+    rm -f "$slot_err"
     return 1
   fi
+  rm -f "$slot_err"
 
   slots_json=$(printf '%s' "$raw" | jq -c '[.slots[]? | select(.guaranteed == true)]' 2>/dev/null)
   if [ -z "$slots_json" ]; then

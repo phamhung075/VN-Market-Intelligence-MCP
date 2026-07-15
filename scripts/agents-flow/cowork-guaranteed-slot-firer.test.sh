@@ -197,6 +197,26 @@ CLI_OUT=$(SLOT_MATCHER_CMD='echo "{\"slots\":[{\"slot_id\":\"chef-morning\",\"tr
 check "T12 CLI --dry-run exit=0" "$([ "$CLI_RC" -eq 0 ] && echo true || echo false)"
 check "T12 CLI --dry-run never invokes claude" "$([ "$(call_count)" -eq 0 ] && echo true || echo false)"
 
+# ── T13: FIX-COWORK-PREFLIGHT-DIAGNOSTIC-STDOUT-POLLUTION regression — matcher
+# emits a stderr cadence-skip diagnostic (cowork-match-slots.js console.error
+# style) ALONGSIDE valid stdout JSON in the same invocation. Before the
+# stderr-separation fix (raw=$(eval ... 2>&1)), this diagnostic corrupted the
+# jq parse buffer and dropped a DUE guaranteed slot as a false "non-JSON
+# output" ERROR. Asserts the guaranteed slot still fires. ───────────────────
+reset_case
+STUB_MATCHER="$TMPDIR_TEST/stub-matcher-stderr-noise.sh"
+cat > "$STUB_MATCHER" <<'STUBEOF'
+#!/usr/bin/env bash
+echo "cadence skip: some-other-slot (not due yet)" >&2
+echo "{\"slots\":[{\"slot_id\":\"chef-eod\",\"trigger_prompt\":\"run docs/agents/unified-agent/flow/chef.md  slot=chef-eod\",\"guaranteed\":true}],\"drift_min\":0}"
+STUBEOF
+chmod +x "$STUB_MATCHER"
+export SLOT_MATCHER_CMD="$STUB_MATCHER"
+run_firer false; RC=$?
+check "T13 stderr-noise + valid stdout JSON — exit=0" "$([ "$RC" -eq 0 ] && echo true || echo false)"
+check "T13 stderr-noise — guaranteed slot still fires (stderr did not corrupt the JSON parse)" "$(grep -q 'slot=chef-eod' "$RECORD_FILE" && echo true || echo false)"
+check "T13 stderr-noise — no false 'non-JSON output' ERROR logged" "$(! grep -q 'non-JSON output' "$LOG_FILE_PATH" 2>/dev/null && echo true || echo false)"
+
 # ── Summary ────────────────────────────────────────────────────────────────────
 echo ""
 echo "Results: $PASS passed, $FAIL failed"
