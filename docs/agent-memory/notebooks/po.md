@@ -1,22 +1,20 @@
 # PO Notebook
 
-_Last: 2026-07-15T17:28Z (triage 2 dev-team signals: RAG corpus reverify + hybrid max_distance no-op)_
+_Last: 2026-07-15T19:02Z (dev-team triage: cowork preflight presence-claim signal + UC-RDL-P4 withhold adjudication)_
 
-## Tick 2026-07-15T17:28Z — dev-team signal triage (2 signals, degraded gateway/direct-bridge)
-Router hand-off, dev-team tick 17:07Z. Both signals apps/rag-service, from qa's RAG-FTS-BUILD-MEMORY-BOUND live-verify.
+## Tick 2026-07-15T19:02Z — signal cow-20260715T184053 + UC-RDL-P4 adjudication
+Router hand-off. Board RAW: ready 0 / in_prog 0 / review 25 / done_verified 45 / backlog 396; signal_queue 1 NEW.
 
-**Signal 1 — verify-followup (rag corpus repopulation scale reverify):**
-- Live-probed corpus myself: `GET :5002/embed/health` index_size=**297 rows now** vs **116 @ qa 16:01Z** verify (+181 in ~1.5h). Re-embed pipeline ALIVE ⇒ NOT stuck-at-116 ⇒ **NO new bug** for dev-rag-service.
-- 297 << ~56k representative scale ⇒ AC#1 (no-OOM at ~56k) re-run stays UN-testable ⇒ **TIME-GATED**, not a dispatch. Did NOT force a rebuild against the 116/297-row corpus.
-- **Disposition:** annotated existing `RAG-FTS-BUILD-MEMORY-BOUND` review row (`po_triage_note_reverify`) — STAYS review, done_verified WITHHELD, `blocked_on=rag-corpus-repopulation-to-representative-scale` UNCHANGED. Recorded the WITHHELD-lift gate = re-run AC#1 (POST /admin/rebuild-fts under 768m cgroup, docker stats peak-mem, 2x) once corpus ≈ representative scale → then unblock ALPHA-S2 deadline retune. No new/dup task minted.
+**Signal cow-20260715T184053 (cowork-team, system-issue, MED):** `cowork-tick-preflight.sh` Step 2 (~L127-138) `task_heartbeat`s `session-presence:<session>` WITHOUT ever `task_claim`ing it. Fresh session tick-1 (no presence row yet) → heartbeat ok=false → verdict=ERROR → return 1 → expensive LLM fallback. Inverts cowork-team/flow/main.md Step 0b.1 (presence is NEVER a gate) + reopens the exact cost TOKEN-ECONOMY-TICK-PREFLIGHT WU-1 removed (once per fresh session + once per >30min presence lapse). Deterministic, self-heals (ttl 1800>900 tick), non-blocking → cost/contract defect not outage. Reproduces scars feedback_chain_mutex_ttl_lapse (ok:false→re-CLAIM not heartbeat) + feedback_task_claim_held_lock_noop.
 
-**Signal 2 — tech-debt (hybrid max_distance no-op):**
-- PRE-EXISTING / non-blocking, NOT a regression (git show 619eea227 = 0 lines in search()/hybrid_search()). Default max_distance=0.8: hybrid=true returns hits, hybrid=false returns 0 for same query; hybrid distances cluster 0.0216–0.0242 ⇒ RRF fused-rank score under the distance key ⇒ max_distance a no-op in hybrid mode.
-- **Disposition:** minted `SPIKE-RAG-HYBRID-MAXDISTANCE-NOOP` (backlog, type SPIKE, P3, apps/rag-service/, dev, timebox 120). Semantics question: filter vector-leg distance vs keep RRF-under-distance-key. NOT urgent-dispatched → groom by rank.
+**UC-RDL-P4 withhold adjudication → decision (ii) fast standalone FIX:** NOT subsumed. UC-RDL-P4 = composite `dispatch_preflight` MCP tool for the ROUTER dispatch preflight (apps/mcp-server/, Phase A/A.5/B). The signal bug lives in a DIFFERENT flow/zone — the cowork TICK preflight bash (scripts/agents-flow/, cross-service). Even post-UC-RDL-P4 that bash keeps its own presence logic, and it's deliberately a single-bash-call token path (WU-1) that a heavier per-tick MCP round-trip would regress → composite tool is NOT its natural home. FIX priority > SPRINT-M, and the bug bleeds tokens NOW.
 
-**WRITE:** single `jq | orch-apply.sh` — Zod Stage0+1 PASS, conservation OK task_total 579→580 (+1 SPIKE), CAS clean. head untouched (idle/router). No locks touched (router-owned). RETURN to router = NOTHING (idle) — nothing needs immediate dispatch; both dispositions recorded on board.
+**Actions (single `jq | orch-apply.sh`; Zod Stage0+1 PASS, conservation task_total 580→581 +1 mint, CAS clean):**
+- Signal → status READ (triaged). Later flips READ→RESOLVED via FIX done_verified (origin_signal_id back-ref).
+- Minted `FIX-COWORK-PREFLIGHT-PRESENCE-CLAIM-GAP` — FIX, P1, size S, zone cross-service/, owner po, next_agent developer, **promotable** (BOUNDED-1-eligible: no supervised/children/deps, board next_agent non-empty). baseline_pass=true (ran cowork-tick-preflight.test.sh → 20/20 green pre-fix). origin_signal_id=cow-20260715T184053. AC = fresh-session→SILENT/WORK not ERROR + re-entrant→clean+TTL-renewed + presence transport-err non-gating + no cowork-slot leak; NOTE dev/qa must UPDATE test T3 (asserts old gating) + add fresh/re-entrant cases.
+- UC-RDL-P4 → `supervised:true` (stops BOUNDED-1 re-promote/re-withhold churn) + `po_adjudication` note; STAYS BACKLOG for deliberate SPRINT-M start (PO sprint-initiation authority). Cross-ref: when the composite tool is designed, honor claim-first/presence-never-a-gate + weigh cowork-tick migration; also SYSREMAKE-P2 RC-CEREMONY "shared tick-preflight-lib" would eventually re-home this preflight (compatible w/ the standalone contract fix).
+- `.head` untouched (idle→router; dev-team session 69b0312e owns it). No locks touched. RETURN = BATCH(1 FIX) to router for Step-3 direct dispatch.
 
 ## Carry-over
-- **NEXT (router/dev-team):** RAG-FTS-BUILD-MEMORY-BOUND WITHHELD until corpus organically re-populates to ~representative scale, then qa re-runs AC#1 at scale → then ALPHA-S2-RAG-FTS-REBUILD-CRON deadline-retune tail. Neither actionable now (wall-clock gate). SPIKE-RAG-HYBRID-MAXDISTANCE-NOOP sits in backlog for BOUNDED-1 grooming.
-- **Heads-up:** rag-service idle mem ~92% of 768m with ZERO FTS activity (tight margin — ALPHA-S2 retune input). Gateway /gateway 502 still USER-escalated (dashboard-managed --token tunnel, aggregator origin down).
-- **Prior carry (still open):** RC cascade = SEPARATE supervised dispatch (architect TECH doc first). FIX-BCTC-Q1-2026-STORED-PDF-INGEST-STALL-15T (supervised ops recon-first); FIX-MCP-TEST-SUITE-INTERVAL-TIMER-LEAK-TEARDOWN + ALPHA-S2-FF-SUB6-BUCKETING-HELPER (dev-mcp-server, non-gating).
+- **NEXT (router/dev-team):** dispatch FIX-COWORK-PREFLIGHT-PRESENCE-CLAIM-GAP (developer, cross-service bash + test update). Close-gate flips signal cow-20260715T184053 READ→RESOLVED on done_verified. UC-RDL-P4 awaits a DELIBERATE SPRINT-M kickoff (not idle auto-pickup) — coordinate UC-RDL-P1 lock-prefix landing first.
+- **Prior carry (still open):** RAG-FTS-BUILD-MEMORY-BOUND WITHHELD (corpus-scale wall-clock gate) → then ALPHA-S2-RAG-FTS-REBUILD-CRON retune. SYSREMAKE-P2 RC cascade = SEPARATE supervised architect-led dispatch (TECH doc first). Gateway /gateway 502 still USER-escalated (dashboard --token tunnel aggregator down). SPIKE-RAG-HYBRID-MAXDISTANCE-NOOP in backlog for grooming.

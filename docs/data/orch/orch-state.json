@@ -424,7 +424,7 @@
         "type": "system-issue",
         "summary": "preflight Step 2 heartbeats session-presence w/o claim — every fresh session tick-1 false-ERRORs into LLM fallback",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/handoffs/2026-07-15-cowork-preflight-presence-claim-gap.md"
       }
     ],
@@ -2597,6 +2597,29 @@
       }
     ],
     "backlog": [
+      {
+        "id": "UC-RDL-P4",
+        "type": "SPRINT-M",
+        "title": "Composite dispatch_preflight MCP tool: presence + orphan probe + roster + intent claim in ONE gateway call",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "L",
+        "zone": "apps/mcp-server/",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "CONFIRMED",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#router-dispatch-locking-P4",
+        "note": "Collapse the multi-call router preflight (Phase A/A.5/B) into one server-side dispatch_preflight tool to cut round-trips and race windows. Coordinate with UC-RDL-P1 (lock-prefix) landing first.",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "next_agent": "ba",
+        "withhold_note": "BOUNDED-1 auto-pickup withheld (SPRINT-M + overlaps NEW signal cow-20260715T184053 preflight presence-claim gap); routed to PO for adjudication",
+        "withheld_at": "2026-07-15T18:55:57Z",
+        "withheld_by": "dev-team (router withhold-gate)",
+        "supervised": true,
+        "po_adjudication": "PO adjudication 2026-07-15 (router withhold-gate): NOT subsumed. Signal cow-20260715T184053 bug lives in scripts/agents-flow/cowork-tick-preflight.sh (cowork-team TICK preflight, cross-service bash) -- a DIFFERENT flow/zone than UC-RDL-P4's ROUTER dispatch preflight composite MCP tool (apps/mcp-server/). Shipping FIX-COWORK-PREFLIGHT-PRESENCE-CLAIM-GAP standalone now (P1, promotable). UC-RDL-P4 stays BACKLOG, supervised:true -- a SPRINT-M is deliberate PO sprint-initiation authority, not BOUNDED-1 idle auto-dispatch (supervised:true stops the re-promote/re-withhold churn). When the composite dispatch_preflight tool is designed: honor the claim-first / presence-NEVER-a-gate contract (cowork-team/flow/main.md Step 0b.1), and evaluate whether the cowork tick preflight should migrate to it -- but note the cowork tick preflight is deliberately a single-bash-call token-economy path (TOKEN-ECONOMY-TICK-PREFLIGHT WU-1), so a heavier per-tick MCP round-trip may not be the right home. Coordinate with UC-RDL-P1 (lock-prefix) landing first. Related: SYSREMAKE-P2 RC-CEREMONY \"shared tick-preflight-lib\" would eventually re-home this preflight; the standalone contract fix is compatible with that later extraction.",
+        "po_adjudicated_at": "2026-07-15T19:02:35Z"
+      },
       {
         "id": "ALPHA-S2-RAG-FTS-REBUILD-CRON",
         "title": "Archive-now: daily FTS-rebuild cron on rag-service so the hybrid BM25 leg stops silently missing post-boot rows (FTS rebuild was never wired)",
@@ -6473,23 +6496,6 @@
         "status_note": "PLAN-ONLY low DEBT; ZERO runtime impact (Bun strips types; both scripts already ran live). scripts/migrations/ is outside the include globs of BOTH root tsconfig.json AND apps/mcp-server/tsconfig.json, so `pnpm --filter vn-market check` never type-checks it; any router/dev 'tsc-clean' claim on those scripts is false-clean-by-omission. Design choice (architect): (a) add scripts/migrations/ (or scripts/) to an existing tsconfig include OR a dedicated scripts tsconfig; OR (b) a standalone `tsc --noEmit` pass over scripts/ wired into the check/CI gate. Then fix the 3 QA-surfaced errors (isolated tsc 5.9.3): (1) discover-consolidated-bctc-pdf.ts:395 new Blob([pdfBytes]) — Uint8Array<ArrayBufferLike> not assignable to BlobPart (shipped commit 90c975415, HPG-DISCOVER); (2)+(3) reparse-bctc-reports.ts 2 pre-existing own errors (already shipped — confirms gap is directory-wide, not a single-task regression). AC: chosen tsc gate covers scripts/migrations/ AND all 3 errors resolved AND `pnpm check` (or the new pass) green."
       },
       {
-        "id": "UC-RDL-P4",
-        "type": "SPRINT-M",
-        "title": "Composite dispatch_preflight MCP tool: presence + orphan probe + roster + intent claim in ONE gateway call",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "L",
-        "zone": "apps/mcp-server/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "CONFIRMED",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#router-dispatch-locking-P4",
-        "note": "Collapse the multi-call router preflight (Phase A/A.5/B) into one server-side dispatch_preflight tool to cut round-trips and race windows. Coordinate with UC-RDL-P1 (lock-prefix) landing first.",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "next_agent": "ba"
-      },
-      {
         "id": "UC-DTL-P2",
         "type": "FIX",
         "title": "Move terminal-bloat eviction into the deterministic tick-preflight script (runs every tick, any exit path)",
@@ -7512,6 +7518,23 @@
         "created_at": "2026-07-15T17:28:38Z",
         "created_by": "po (dev-team tick 17:07Z signal triage — sig dev-team-20260715T160042Z-rag-hybrid-maxdistance-noop)",
         "note": "PRE-EXISTING / NON-BLOCKING tech-debt surfaced by qa during RAG-FTS-BUILD-MEMORY-BOUND live-verify. NOT a regression (git show 619eea227 = 0 lines changed in search()/hybrid_search()). Evidence: with default max_distance=0.8, hybrid=true returns results while hybrid=false returns 0 for the identical query; hybrid distance values cluster tight (0.0216-0.0242) consistent with an RRF fused-rank score under the distance key => max_distance effectively a no-op in hybrid mode. Not urgent-dispatched: groom by rank when rag-service has free capacity. Related: RAG-FTS-BUILD-MEMORY-BOUND (review), ALPHA-S2-RAG-FTS-REBUILD-CRON (backlog/BLOCKED)."
+      },
+      {
+        "id": "FIX-COWORK-PREFLIGHT-PRESENCE-CLAIM-GAP",
+        "type": "FIX",
+        "title": "cowork-tick-preflight.sh Step 2: claim-first presence, never gate (fresh-session false-ERROR into LLM fallback)",
+        "desc": "Fix scripts/agents-flow/cowork-tick-preflight.sh Step 2 (~L127-138): the script heartbeats the session-presence lock (task_heartbeat on session-presence:<session>) WITHOUT ever claiming it, so on a fresh session's first tick (no presence row exists yet) heartbeat returns ok=false -> verdict=ERROR -> return 1 -> the expensive LLM fallback runs. This inverts the cowork-team/flow/main.md Step 0b.1 contract (presence is NEVER a gate) and reopens the exact cost TOKEN-ECONOMY-TICK-PREFLIGHT WU-1 removed: ~80% of ticks collapse to one bash call, but this reopens the costly path once per fresh session AND once after any >30min presence lapse. Fix: mirror main.md Step 0b.1 -- task_claim(session-presence:<session>, task_kind=\"session-presence\", owner_agent=\"cowork-dispatcher\", ttl_seconds=1800, payload={...}); if claimed:false AND current_holder.owner_client_session==session_id then task_heartbeat; proceed regardless of outcome. Presence must NEVER emit ERROR -- reserve ERROR only for the election/transport failures that genuinely leave lock state undefined. Also update the script header line 13 to match the corrected contract. NOTE for dev/qa: existing test T3 (\"ERROR verdict (presence transport failure)\") asserts the OLD gating behavior and MUST be updated to the corrected non-gating contract; add new cases for fresh-session->SILENT/WORK and re-entrant->clean+TTL-renewed. Payload: docs/handoffs/2026-07-15-cowork-preflight-presence-claim-gap.md. Scars: feedback_chain_mutex_ttl_lapse_during_long_hop_reclaim (ok:false means re-CLAIM, not heartbeat), feedback_task_claim_held_lock_noop_use_heartbeat (claim-first-then-heartbeat-on-re-entry).",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "developer",
+        "created_at": "2026-07-15T19:02:35Z",
+        "created_by": "po",
+        "origin_signal_id": "cow-20260715T184053",
+        "baseline_pass": true,
+        "status_note": "AC: (1) fresh session (no prior presence row) tick-1 verdict = SILENT/WORK, NOT ERROR; (2) re-entrant tick same session -> still SILENT/WORK + presence TTL renewed; (3) simulated presence-tool transport error -> proceeds non-gating, does NOT emit ERROR; (4) task_list_held(kind=\"cowork-slot\") count:0 after each (no lock leak). baseline_pass=true (20/20 green pre-fix, verified 2026-07-15 via scripts/agents-flow/cowork-tick-preflight.test.sh). Fix loc: scripts/agents-flow/cowork-tick-preflight.sh ~L127-138 + header L13 + test T3 update. verification_gate=preflight_test_suite_green_including_new_fresh_session_and_reentrant_cases. origin_signal=cow-20260715T184053."
       }
     ],
     "closed_sprints": [
@@ -10318,8 +10341,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-15T18:16:28Z",
-    "last_triaged_by": "developer (UC-RDL-P5 review handoff)",
+    "last_triaged_at": "2026-07-15T19:02:35Z",
+    "last_triaged_by": "po (dev-team triage: signal cow-20260715T184053 + UC-RDL-P4 adjudication)",
     "in_progress": []
   },
   "_meta": {
