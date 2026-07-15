@@ -152,3 +152,23 @@ structural already, nothing to add there).
 **why-change:** Recommended AGAINST PM decomposing into a multi-subtask epic (unlike both wave-2
 siblings) — no DDL, no write-path touch, genuinely one atomic dev-mcp-server commit.
 **Output:** `docs/architecture-briefs/2026-07-15-alpha-s2-omo-liquidity-cron.md`
+
+### STEP architect-S9 · architect · 2026-07-15T05:10:00Z
+**task-id:** ALPHA-S2-RAG-FTS-REBUILD-CRON
+**what-done:** Scoped zone=multi FIX; RAW-verified `POST /admin/rebuild-fts` already exists +
+unit-tested on rag-service (DFR-P3); designed the missing mcp-server cron trigger only.
+**what-considered:**
+- Host rebuild logic in rag-service (new endpoint) vs mcp-server (reuse existing endpoint) —
+  endpoint already shipped DFR-P3 2026-06-08, gap is purely "nobody calls it on schedule"
+- Reuse `macroFetch<T>` (OMO's wrapper) vs extend `ragHttpClient.ts`'s own established
+  fetch+AbortSignal.timeout convention — chose extend (already 3 functions in that style, avoids
+  splitting call-site conventions for the same service)
+- Deadline sizing: DFR-P3 blueprint documents ~30-60s FTS build at 14k+ rows — rejected an
+  OMO-style 15s deadline as a false-BUG-alert footgun; set 90s
+**why-decision:** Zero rag-service code change needed at all — single dev-mcp-server commit closes
+the whole gap (new `ragRebuildFts()` client fn + new cron job + registration + 3 docs + 2
+test-count bumps), same "not multi-subtask epic" verdict as OMO for the identical reason.
+**why-change:** DoD's literal "recent rows searchable via BM25" claim is NOT provable by mcp-server
+unit tests alone (they only prove the trigger fires) — added an explicit live QA behavioral check
+(index→rebuild→search round trip against running containers) as a DoD item, not just unit coverage.
+**Output:** `docs/architecture-briefs/2026-07-15-alpha-s2-rag-fts-rebuild-cron.md`

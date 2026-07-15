@@ -1,8 +1,15 @@
 # Architect — Notebook
 
-**Last updated:** 2026-07-15 04:15 UTC | **Sprint:** FLOW-PRICE-ALPHA-LOOP
+**Last updated:** 2026-07-15 05:10 UTC | **Sprint:** FLOW-PRICE-ALPHA-LOOP
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-07-15T05:10Z — ALPHA-S2-RAG-FTS-REBUILD-CRON (zone=multi split, lean single-zone FIX, READY_FOR_PM)
+
+**Task:** dev-team BOUNDED-1 relay (chain-mutex held, coordination_session 69b0312e) — zone=multi board FIX: daily FTS-rebuild cron on rag-service so the hybrid BM25 leg stops silently missing post-boot rows (FTS rebuild was never wired).
+**Finding:** RAW-read `apps/rag-service/interface/handlers.py` — `POST /admin/rebuild-fts` (calls `vector_store._build_fts_index()`) already exists and is already unit-tested (`test_dfr_p3_hybrid_search.py`, AC-P3R-5), shipped by DFR-P3 2026-06-08. The DFR-P3 blueprint's own design chose "lazy-on-first-hybrid-query + scheduled daily refresh" (Option C) but only the lazy half ever shipped — the scheduled half (`deepFetchFtsRebuildJob.ts`, named explicitly in that blueprint) was never written. Zero rag-service code change needed: the entire gap is "nobody calls the endpoint on a schedule," identical in shape to the just-landed `ALPHA-S2-OMO-LIQUIDITY-CRON` sibling. Extended `ragHttpClient.ts`'s own established plain-fetch+`AbortSignal.timeout` convention (already used by `ragSearch`/`ragIndex`/`ragHealthCheck`) with a new `ragRebuildFts()` function rather than importing OMO's `macroFetch<T>` wrapper — avoids splitting the rag-service call-site style across two conventions. Caught a deadline-sizing footgun: DFR-P3's own blueprint documents ~30-60s FTS build time at 14k+ rows (growing) — an OMO-style 15s deadline would manufacture a false HARD-fail BUG alert every night for a legitimately slow-but-successful rebuild; set 90s instead. Fail-loud contract is single-branch (unlike OMO's HARD/SOFT split) since this endpoint has no ambiguous partial-success state. Flagged that mcp-server unit tests alone cannot prove the DoD's literal "recent rows searchable via BM25" claim (they only prove the trigger fires) — added an explicit live QA behavioral check (synthetic-token index → rebuild → hybrid search round trip against running containers) as a DoD item.
+**Output:** `docs/architecture-briefs/2026-07-15-alpha-s2-rag-fts-rebuild-cron.md` — problem framing, new `ragRebuildFts()` client fn + new `ragFtsRebuildCronJob.ts` design, single-branch fail-loud contract, `20:15 UTC daily` cadence choice (off VN-market-hours slot, free minute), 3-doc-registry + 2-test-count bump plan, 8 acceptance criteria incl. live BM25-freshness behavioral check, single-atomic-task PM recommendation.
+**Next:** pm — mint ONE atomic dev-mcp-server task (no subtask decomposition, no dev-rag-service hop); zone `apps/mcp-server/` (corrected from board's stale "multi").
 
 ## 2026-07-15T04:15Z — ALPHA-S2-OMO-LIQUIDITY-CRON (zone=multi split, lean single-file FIX, READY_FOR_PM)
 
@@ -18,18 +25,16 @@
 **Output:** `docs/architecture-briefs/2026-07-15-alpha-s2-foreign-flow-write-race-verdict.md` — FIX-half verification, `foreign_flow_history` + `intraday_foreign_flow_5m` DDL, additive write-path change spec, LAST-value compactor design, 6-subtask sequential split, 9 acceptance criteria, urgency downgrade (not required by ALPHA-S3).
 **Next:** pm — decompose into atomic dev-mcp-server tasks per §9 subtask table; zone `apps/mcp-server/` (corrected from board's stale "multi").
 
-## 2026-07-14T21:30Z — ALPHA-S2-TICK-DOWNSAMPLE-5MIN (SPRINT-S zone=multi split, READY_FOR_PM)
-
-**Task:** Board row routed architect (zone=multi unresolvable by zone-detect) — archive-now 5-min tick downsample: permanent OHLCV bars table + compaction cron populated from `market_prices_history` before the rolling 24h purge deletes surviving intraday ticks.
-**Finding:** RAW-read `pushPricesHandler.ts` — the "24h purge" is inline in the price-push hot path (rolling `now-24h` cutoff fired on every VPS push, not a separate timer); VPS pushes only during market hours so a full session's ticks can survive until the next trading day's first push. Reused `ohlcvDailyAggregatorJob`'s exact OHLCV aggregation shape at 5-min granularity (same cumulative-volume convention as `daily_ohlcv.volume` — no new semantics). Chose a standalone 24/7 cron (`*/5 * * * *`, zero market-hours gate) that always reprocesses the FULL surviving `market_prices_history` content (bounded ~24h by the existing purge) via idempotent UPSERT — gap-tolerant by construction, no watermark needed; first invocation doubles as the backfill migration. Flagged an independently-found live landmine (`checkDuplicatePriceHistory` W-3 weekly audit can collapse a day to 1 row/ticker when its 50%-safeguard doesn't trip) and cited prior corroborating incident (Task 1804c `get_price_history` migration) proving this data-loss class already happened once. Corrected board row `zone` "multi" → `apps/mcp-server/` (single-zone once analyzed).
-**Output:** `docs/architecture-briefs/2026-07-14-alpha-s2-tick-downsample-5min.md` — DDL, job design, cron registration plan, migration-free backfill argument, 5-subtask sequential split, 9 acceptance criteria.
-**Next:** pm — decompose into atomic dev-mcp-server tasks per §9 subtask table; zone `apps/mcp-server/` (single, corrected from board's stale "multi").
-
 ---
 
-## Archive (pre-2026-07-15T00:00Z)
+## Archive (pre-2026-07-15T04:15Z)
 
-[Older cycles archived to git history: FIX-DAILY-FF-VIEW-JOIN-ANCHOR (2026-07-13T21:00Z,
+[Older cycles archived to git history: ALPHA-S2-TICK-DOWNSAMPLE-5MIN (2026-07-14T21:30Z,
+SPRINT-S zone=multi split — permanent 5-min OHLCV bars table + compaction cron from
+`market_prices_history` before the rolling 24h purge deletes surviving ticks, reused
+`ohlcvDailyAggregatorJob`'s aggregation shape, standalone 24/7 cron no market-hours gate,
+idempotent UPSERT gap-tolerant backfill, flagged `checkDuplicatePriceHistory` W-3 data-loss
+landmine, 5-subtask split, READY_FOR_PM), FIX-DAILY-FF-VIEW-JOIN-ANCHOR (2026-07-13T21:00Z,
 CI-RED-29f92c5b merge-gate unblock — Shape A bidirectional view over Shape B read-site rewire,
 verified exact SQL against isolated `sqlite3 :memory:` scratch session, flagged companion
 `daily-foreign-flow-schema.test.ts` regression + `CREATE VIEW IF NOT EXISTS` no-op-on-persisted-DB
