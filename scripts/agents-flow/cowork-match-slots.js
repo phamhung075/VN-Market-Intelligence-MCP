@@ -7,7 +7,11 @@
 //   Empty slots → silent exit per flow Step 4.
 //
 // Modes:
-//   legacy   (default): pure cron-match, backward-compatible with pre-Phase-1 behaviour
+//   legacy   (default): cron-match + last_fired boundary dedup (UC-CDC-P3 — SSOT for the
+//            dispatcher, cowork-tick-preflight.sh, and cowork-guaranteed-slot-firer.sh: all
+//            three invoke this script/module and inherit the same suppression, no per-caller
+//            copies). A slot already fired at/after the current nominal cron-tick boundary
+//            is suppressed; null/malformed last_fired always fires (EC-3, conservative).
 //   adaptive (DWF-PHASE1): also evaluates cadence due-check per slot.policy_id; slots with
 //            policy_id=null fall through to legacy cron-match path unchanged.
 //
@@ -78,6 +82,46 @@ function snapToCronBoundary(lastFiredUnix, cron) {
   return Math.floor(lastFiredUnix / periodSeconds) * periodSeconds;
 }
 
+// isSuppressedByBoundaryDedup: UC-CDC-P3 — SSOT last_fired boundary dedup, shared by the
+// legacy cron-match path (both the pure-legacy branch and the cadence-unavailable fallback
+// below) so dispatcher/preflight/firer all inherit ONE suppression rule instead of three
+// divergent copies. Reuses snapToCronBoundary (no second boundary implementation).
+//
+// A slot is suppressed when it already fired at/after the current nominal cron-tick
+// boundary — i.e. snapToCronBoundary(nowUnix, cron) <= parsed(lastFired). This guards the
+// re-entrant-election double-spawn window (same tick, 2+ callers) without affecting
+// cross-boundary re-offer (next tick always re-qualifies).
+//
+// Backward-compat (matches adaptive EC-3 first-run precedent, lines ~215-226 below):
+//   lastFired == null        → never suppressed (first run always fires)
+//   lastFired unparseable    → never suppressed (conservative — fires)
+// exported for testing.
+function isSuppressedByBoundaryDedup(nowUnix, lastFired, cron) {
+  if (lastFired == null) return false;
+  const lastFiredUnix = new Date(lastFired).getTime() / 1000;
+  if (isNaN(lastFiredUnix)) return false; // malformed → conservative, still fires
+  const nominalTick = snapToCronBoundary(nowUnix, cron);
+  return lastFiredUnix >= nominalTick;
+}
+
+// legacyCandidates: builds the plain legacy slot-object shape with the boundary dedup
+// applied. Shared by both legacy return points in matchSlots() below (true legacy mode +
+// adaptive-mode's cadence-unavailable fallback) — one implementation, not two copies.
+function legacyCandidates(candidates, nowUnix) {
+  return candidates
+    .filter(sl => !isSuppressedByBoundaryDedup(nowUnix, sl.last_fired, sl.cron))
+    .map(sl => ({
+      slot_id:       sl.slot_id,
+      agent:         sl.agent,
+      flow_path:     sl.flow_path,
+      cron:          sl.cron,
+      trigger_prompt:sl.trigger_prompt,
+      guaranteed:    sl.guaranteed,
+      policy_id:     sl.policy_id != null ? sl.policy_id : null,
+      last_fired:    sl.last_fired != null ? sl.last_fired : null
+    }));
+}
+
 // cronMatches: exported for testing. Accepts cron string + optional time context object.
 // When ctx is omitted the function reads the system clock (production path).
 // ctx shape: { actualM, H, DOM, MON, DOW }  (all UTC, DOW 0=Sun..6=Sat)
@@ -115,7 +159,8 @@ function cronMatches(cron, ctx) {
 //   policyObj: object | null        // required for adaptive mode
 // }
 //
-// In legacy mode: pure cron-match, returns plain slot objects (backward compatible).
+// In legacy mode: cron-match + last_fired boundary dedup, returns plain slot objects
+//   (backward compatible: same shape as before UC-CDC-P3, only the filtered set changed).
 // In adaptive mode: for each cron-matched slot, additionally evaluates cadence due-check.
 //   Slots with policy_id=null → treated as legacy cron match; due_reason="cron".
 //   Slots with _cron_fallback result → treated as legacy cron match; due_reason="cron".
@@ -127,22 +172,19 @@ function matchSlots(schedule, ctx, options) {
   const pressureState= opts.pressureState || null;
   const policyObj    = opts.policyObj || null;
 
+  // nowUnix: real wall-clock seconds-since-epoch, aligned with how the CLI entrypoint (and
+  // therefore all 3 callers — dispatcher/preflight/firer, which all invoke this script with
+  // no ctx) derive "now". ctx.nowUnix is a TEST-ONLY override (production ctx is undefined,
+  // or — for adaptive-mode tests — never sets nowUnix, so behaviour there is unchanged).
+  const nowUnix = (ctx && typeof ctx.nowUnix === 'number') ? ctx.nowUnix : Date.now() / 1000;
+
   // Cron-matched candidate slots (always the first gate)
   const candidates = schedule.slots
     .filter(sl => sl.enabled && !sl._disabled_by && cronMatches(sl.cron, ctx));
 
   if (mode !== 'adaptive' || !pressureState || !policyObj) {
-    // Legacy mode: return raw cron-matched slots (no due_reason/cadence_minutes fields)
-    return candidates.map(sl => ({
-      slot_id:       sl.slot_id,
-      agent:         sl.agent,
-      flow_path:     sl.flow_path,
-      cron:          sl.cron,
-      trigger_prompt:sl.trigger_prompt,
-      guaranteed:    sl.guaranteed,
-      policy_id:     sl.policy_id != null ? sl.policy_id : null,
-      last_fired:    sl.last_fired != null ? sl.last_fired : null
-    }));
+    // Legacy mode: cron-matched slots with last_fired boundary dedup applied (UC-CDC-P3).
+    return legacyCandidates(candidates, nowUnix);
   }
 
   // Adaptive mode: require cadence-policy.js evaluator
@@ -152,23 +194,13 @@ function matchSlots(schedule, ctx, options) {
     evaluateCadence = cadenceModule.evaluateCadence;
     computeTiers    = cadenceModule.computeTiers;
   } catch (e) {
-    // Evaluator unavailable → fall back to legacy
+    // Evaluator unavailable → fall back to legacy (same boundary dedup applies)
     console.warn('[cowork-match-slots] WARN: cadence-policy.js unavailable, falling back to legacy mode:', e.message);
-    return candidates.map(sl => ({
-      slot_id:       sl.slot_id,
-      agent:         sl.agent,
-      flow_path:     sl.flow_path,
-      cron:          sl.cron,
-      trigger_prompt:sl.trigger_prompt,
-      guaranteed:    sl.guaranteed,
-      policy_id:     sl.policy_id != null ? sl.policy_id : null,
-      last_fired:    sl.last_fired != null ? sl.last_fired : null
-    }));
+    return legacyCandidates(candidates, nowUnix);
   }
 
   const { signal_backlog_tier, volatility_tier } = computeTiers(pressureState);
   const calendar_status = (pressureState && pressureState.calendar_status) || 'unknown';
-  const nowUnix = Date.now() / 1000; // seconds
 
   const results = [];
 
@@ -267,4 +299,4 @@ if (require.main === module) {
   process.stdout.write(JSON.stringify({ slots: hits, drift_min: driftMin }));
 }
 
-module.exports = { cronMatches, matchSlots, field, dowMatch, snapToCronBoundary };
+module.exports = { cronMatches, matchSlots, field, dowMatch, snapToCronBoundary, isSuppressedByBoundaryDedup };

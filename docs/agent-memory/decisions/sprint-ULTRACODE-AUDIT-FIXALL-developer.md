@@ -47,3 +47,31 @@ log errors incl. a missed chef-eod slot) names line 183's `SLOT_MATCHER_CMD` cap
 `log()`'s tee never feeds a command-substitution JSON parse in this file, confirmed by grep audit; the
 `2>&1` on the matcher eval is the only real stdout/stderr merge point feeding `jq` in this script.
 **why-change:** Fixed line 183 (not line 97) — same bug class, correct location; no new pattern invented.
+
+### STEP developer-S4 · developer · 2026-07-16T00:00:00Z
+**task-id:** UC-CDC-P3
+**what-done:** Added `isSuppressedByBoundaryDedup()` (reuses `snapToCronBoundary`, no 2nd boundary
+impl) to `cowork-match-slots.js`; applied via one shared `legacyCandidates()` helper at both legacy
+return points (pure-legacy branch L134-146 + cadence-unavailable fallback L155-166) — single SSOT
+inherited by dispatcher/preflight/firer (all 3 invoke this same script unmodified, confirmed by grep).
+Backward-compat preserved: `last_fired==null`/malformed → never suppressed (fires). 10 new tests
+(TC-15..19 legacy dedup via matchSlots + TC-20..23 direct unit tests on the helper); full suite
+26/26 GREEN; adaptive-mode tests (TC-9..14) unchanged and still pass. Corrected the false R3
+"lock persists across ticks" rationale in `slot-claim.md` (real mechanism = last_fired boundary
+dedup + published marker; the per-slot claim is released via try/finally right after each spawn).
+**what-considered:** Extending the dedup to the null-`policy_id` fallthrough inside true adaptive
+mode (~L184-191, pressureState/policyObj/cadence-module all live) — rejected: detail_ref's *Change*
+section scopes the fix strictly to "legacy branch (lines 134-145)" and cites the adaptive path's
+first-run precedent as the model to *preserve*, not extend; task's own hard constraint ("do NOT
+change adaptive-mode behavior") governs, and that fallthrough only runs when adaptive mode is
+genuinely active (not a fallback).
+**why-decision:** Router's paraphrase additionally named L155-165 (cadence-unavailable fallback) and
+L184-187 (null-policy_id fallthrough) as part of the bug. Detail_ref (authoritative) names only
+L134-145. L155-165 is a textually-identical duplicate of the legacy branch (same bug, reached only
+when `require('./cadence-policy.js')` throws — not "adaptive behavior"), so fixing it via the shared
+helper stays SSOT-aligned without contradicting detail_ref. L184-187 sits inside genuine adaptive
+evaluation — left unchanged per the explicit adaptive-mode-unchanged constraint; detail_ref does not
+scope there either. Also applied the detail_ref's explicit slot-claim.md correction even though the
+router's paraphrase said "likely none" for doc updates — detail_ref is authoritative on that file.
+**why-change:** No scope change from detail_ref for the core fix; added the doc correction detail_ref
+calls for that the paraphrase missed.

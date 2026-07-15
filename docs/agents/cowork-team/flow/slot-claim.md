@@ -1,4 +1,4 @@
-<!-- size-justification: 88L — Steps 4.6 + 4.6b: per-work-item idempotent token (suffix-free, TTL=180s) + leader heartbeat renewal. Child of main.md. -->
+<!-- size-justification: 90L — Steps 4.6 + 4.6b: per-work-item idempotent token (suffix-free, TTL=180s) + leader heartbeat renewal. Child of main.md. UC-CDC-P3 2026-07-16: corrected false R3 "lock persists across ticks" rationale, pointed at the real cross-tick dedup mechanism (+2L). -->
 
 <!-- decision: Step 4.6 REWRITTEN — DWF-DEV-CROSS-4 Phase 2 (R1 + R3 blocking).
   OLD: key = cowork-slot:<agent>:<nominal_tick>; TTL = 900s (stale after next tick).
@@ -7,7 +7,15 @@
   R3 rationale: A tick suffix (e.g. cowork-slot:chef-morning@2026-05-30T05:15:00Z) changes
   the lock key at each 15-min boundary. A peer session at the next tick acquires a fresh key
   for the same work — re-launching a job that is still running. Suffix-free key (slot_id only)
-  means the lock persists across ticks for as long as the job runs + renews.
+  closes that hole for the CURRENT dispatch window (a concurrent/re-entrant caller cannot get
+  a distinct key for the same in-flight spawn attempt).
+  CORRECTED (UC-CDC-P3, was: "the lock persists across ticks for as long as the job runs +
+  renews" — false; contradicted by the Release note below, this lock is released right after
+  each spawn attempt, TTL=180s). This per-slot claim does NOT provide cross-tick dedup.
+  Cross-tick dedup (stopping the SAME slot from re-firing on a later tick) is a separate
+  mechanism: last_fired boundary dedup in scripts/agents-flow/cowork-match-slots.js
+  (isSuppressedByBoundaryDedup — shared SSOT for dispatcher/preflight/firer) PLUS the
+  published-marker gate downstream. This lock's job is intra-window mutual exclusion only.
   KEY: cowork-slot:<slot_id> — slot_id is stable work identity (NOT agent name alone, because
   same-agent multi-slot fires must get DISTINCT locks per slot_id).
 

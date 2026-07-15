@@ -17,7 +17,7 @@ const schedPath = path.join(process.cwd(), 'docs/data/cowork-schedule.json');
 const sched = JSON.parse(fs.readFileSync(schedPath, 'utf8'));
 
 // This require must succeed — if the script does not export, we fail loud.
-const { cronMatches, matchSlots, snapToCronBoundary } = require(path.join(process.cwd(), 'scripts/agents-flow/cowork-match-slots.js'));
+const { cronMatches, matchSlots, snapToCronBoundary, isSuppressedByBoundaryDedup } = require(path.join(process.cwd(), 'scripts/agents-flow/cowork-match-slots.js'));
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -249,6 +249,110 @@ console.log('\nTC-14: matchSlots adaptive — 04:04:30Z last_fired, now 08:00:05
   const slots = matchSlots(minimalSched, ctx, { mode: 'adaptive', pressureState, policyObj });
   assert('slot IS in adaptive results (due via snap)', slots.length > 0, true);
   assert('due_reason is cadence', slots.length > 0 ? slots[0].due_reason : 'none', 'cadence');
+}
+
+// ---------------------------------------------------------------------------
+// TC-15..TC-19: legacy mode last_fired boundary dedup (UC-CDC-P3)
+// SSOT: isSuppressedByBoundaryDedup() inside cowork-match-slots.js, applied by
+// legacyCandidates() at BOTH legacy return points (pure-legacy branch + the
+// cadence-unavailable fallback) — the dispatcher, cowork-tick-preflight.sh, and
+// cowork-guaranteed-slot-firer.sh all invoke this same matcher, so they all inherit
+// this one dedup (no per-caller copies).
+//
+// ctx.nowUnix is a TEST-ONLY override (see cowork-match-slots.js matchSlots()) that
+// pins "now" so the boundary snap is fully deterministic — production ctx is always
+// undefined (real Date.now() used), and no adaptive-mode test/caller sets it, so
+// adaptive-mode behaviour is unaffected (confirmed by TC-14 still passing above).
+//
+// Slot uses CRON_15 ('*/15 2-8 * * 1-5'). At Monday 2026-05-18T02:15:30Z the nominal
+// tick boundary (snapToCronBoundary, 900s period) is 2026-05-18T02:15:00Z.
+// ---------------------------------------------------------------------------
+function legacySlotSched(lastFired) {
+  return {
+    slots: [{
+      slot_id:       'test-legacy-dedup',
+      cron:          CRON_15,
+      agent:         'test-agent',
+      flow_path:     'docs/agents/test/flow/main.md',
+      trigger_prompt:'run test',
+      guaranteed:    false,
+      enabled:       true,
+      policy_id:     null,
+      last_fired:    lastFired,
+    }]
+  };
+}
+
+const LEGACY_NOW_ISO = '2026-05-18T02:15:30Z'; // Monday, matches CRON_15 window
+const legacyCtx = Object.assign(ctxFromDate(utcDate(LEGACY_NOW_ISO)), {
+  nowUnix: utcDate(LEGACY_NOW_ISO).getTime() / 1000,
+});
+
+console.log('\nTC-15: legacy dedup — last_fired AT nominal tick boundary (02:15:00Z) → SUPPRESSED');
+{
+  const sched15 = legacySlotSched('2026-05-18T02:15:00Z'); // exact boundary
+  const slots = matchSlots(sched15, legacyCtx, { mode: 'legacy' });
+  assert('slot suppressed (0 results)', slots.length, 0);
+}
+
+console.log('\nTC-16: legacy dedup — last_fired AFTER nominal tick boundary (02:15:20Z, same tick) → SUPPRESSED');
+{
+  const sched15 = legacySlotSched('2026-05-18T02:15:20Z'); // already fired this tick
+  const slots = matchSlots(sched15, legacyCtx, { mode: 'legacy' });
+  assert('slot suppressed (0 results)', slots.length, 0);
+}
+
+console.log('\nTC-17: legacy dedup — last_fired BEFORE nominal tick boundary (02:00:00Z, previous tick) → FIRES');
+{
+  const sched15 = legacySlotSched('2026-05-18T02:00:00Z'); // previous */15 boundary
+  const slots = matchSlots(sched15, legacyCtx, { mode: 'legacy' });
+  assert('slot fires (1 result)', slots.length, 1);
+  assert('slot_id matches', slots.length > 0 ? slots[0].slot_id : 'none', 'test-legacy-dedup');
+}
+
+console.log('\nTC-18: legacy dedup — last_fired == null (first run, EC-3 backward-compat) → FIRES');
+{
+  const sched15 = legacySlotSched(null);
+  const slots = matchSlots(sched15, legacyCtx, { mode: 'legacy' });
+  assert('slot fires (1 result)', slots.length, 1);
+}
+
+console.log('\nTC-19: legacy dedup — malformed last_fired ("not-a-date") → FIRES (conservative)');
+{
+  const sched15 = legacySlotSched('not-a-date');
+  const slots = matchSlots(sched15, legacyCtx, { mode: 'legacy' });
+  assert('slot fires (1 result)', slots.length, 1);
+}
+
+// ---------------------------------------------------------------------------
+// TC-20..TC-23: isSuppressedByBoundaryDedup — direct unit tests
+// ---------------------------------------------------------------------------
+console.log('\nTC-20: isSuppressedByBoundaryDedup — last_fired AT boundary → true (suppressed)');
+{
+  const nowUnix = utcDate('2026-05-18T02:15:30Z').getTime() / 1000;
+  const result = isSuppressedByBoundaryDedup(nowUnix, '2026-05-18T02:15:00Z', CRON_15);
+  assert('at boundary => suppressed', result, true);
+}
+
+console.log('\nTC-21: isSuppressedByBoundaryDedup — last_fired BEFORE boundary → false (fires)');
+{
+  const nowUnix = utcDate('2026-05-18T02:15:30Z').getTime() / 1000;
+  const result = isSuppressedByBoundaryDedup(nowUnix, '2026-05-18T02:00:00Z', CRON_15);
+  assert('before boundary => not suppressed (fires)', result, false);
+}
+
+console.log('\nTC-22: isSuppressedByBoundaryDedup — null last_fired → false (fires, EC-3 first-run)');
+{
+  const nowUnix = utcDate('2026-05-18T02:15:30Z').getTime() / 1000;
+  const result = isSuppressedByBoundaryDedup(nowUnix, null, CRON_15);
+  assert('null last_fired => not suppressed (fires)', result, false);
+}
+
+console.log('\nTC-23: isSuppressedByBoundaryDedup — malformed last_fired → false (fires, conservative)');
+{
+  const nowUnix = utcDate('2026-05-18T02:15:30Z').getTime() / 1000;
+  const result = isSuppressedByBoundaryDedup(nowUnix, 'garbage', CRON_15);
+  assert('malformed last_fired => not suppressed (fires)', result, false);
 }
 
 // ---------------------------------------------------------------------------
