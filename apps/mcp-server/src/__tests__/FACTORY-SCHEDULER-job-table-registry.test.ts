@@ -52,9 +52,19 @@ Bun.env["DB_PATH"] = ":memory:";
  * generic wrapRun table (schedulerJobTable.ts) — a single legitimate new entry
  * (pure trigger+observe cron for rag-service's POST /admin/rebuild-fts, zero local
  * DB writes), not a duplicate registration. Group C (bespoke, 22) is unaffected.
+ *
+ * BUMP 2026-07-15 (ALPHA-S2-RAG-FTS-CRON-SAFETY-GATE): 62→61 (Group A/B default),
+ * 84→83 (Group D default). `ragFtsRebuildCronJob` is now gated behind a default-OFF
+ * `CRON_RAG_FTS_REBUILD_ENABLED` boolean flag (schedulerJobTable.ts) — with the flag
+ * unset/false, buildJobTable() OMITS the entry entirely (registration-time defusal,
+ * not a runtime no-op) so a stray mcp-server redeploy cannot arm the nightly 20:15 UTC
+ * rag-service OOM (RAG-FTS-BUILD-MEMORY-BOUND, parked BLOCKED — FTS rebuild can't
+ * complete at ~56k rows in the 768m rag-service cgroup) before the rag capacity fix
+ * lands. Flag=true reproduces the pre-gate 62/84 counts exactly (see new Group A2
+ * below). Group C (bespoke, 22) is unaffected.
  */
 
-import { describe, it, expect, mock, afterEach } from "bun:test";
+import { describe, it, expect, mock, beforeEach, afterEach } from "bun:test";
 import { writeFileSync, readFileSync, existsSync, unlinkSync, mkdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -79,16 +89,23 @@ function makeStubJobRunRepo(): IJobRunRepository & { calls: Array<{ name: string
 
 const FAKE_DB = {} as Database;
 
+// ALPHA-S2-RAG-FTS-CRON-SAFETY-GATE: reset the gate flag before every test in this file so
+// no test's explicit CRON_RAG_FTS_REBUILD_ENABLED='true' leaks into a sibling test's
+// "default" assertion (Bun runs a test file's suite in a single process).
+beforeEach(() => {
+  delete Bun.env["CRON_RAG_FTS_REBUILD_ENABLED"];
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Group A — buildJobTable() shape (pure function, no scheduleCron side effects)
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("FACTORY-SCHEDULER-job-table-registry — Group A: buildJobTable() shape", () => {
-  it("returns exactly 62 entries", async () => {
+  it("returns exactly 61 entries (default: CRON_RAG_FTS_REBUILD_ENABLED unset — ragFtsRebuildCronJob gated OFF, ALPHA-S2-RAG-FTS-CRON-SAFETY-GATE)", async () => {
     const { buildJobTable } = await import("../scheduler/schedulerJobTable.js");
     const jobRunRepo = makeStubJobRunRepo();
     const table = buildJobTable({ db: FAKE_DB, jobRunRepo });
-    expect(table).toHaveLength(62);
+    expect(table).toHaveLength(61);
   });
 
   it("every entry has a unique name", async () => {
@@ -161,6 +178,62 @@ describe("FACTORY-SCHEDULER-job-table-registry — Group A: buildJobTable() shap
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Group A2 — ALPHA-S2-RAG-FTS-CRON-SAFETY-GATE: CRON_RAG_FTS_REBUILD_ENABLED flag.
+// Registration-time defusal — flag unset/false OMITS ragFtsRebuildCronJob from
+// buildJobTable() entirely (not a runtime no-op), so a stray mcp-server redeploy
+// cannot arm the nightly 20:15 UTC rag-service OOM before RAG-FTS-BUILD-MEMORY-BOUND
+// (rag capacity fix) lands. Test-plan (a)/(b) from the task handoff.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("FACTORY-SCHEDULER-job-table-registry — Group A2: CRON_RAG_FTS_REBUILD_ENABLED gate", () => {
+  afterEach(() => {
+    delete Bun.env["CRON_RAG_FTS_REBUILD_ENABLED"];
+  });
+
+  it("(a) flag unset → buildJobTable() does NOT contain ragFtsRebuildCronJob", async () => {
+    delete Bun.env["CRON_RAG_FTS_REBUILD_ENABLED"];
+    const { buildJobTable } = await import("../scheduler/schedulerJobTable.js");
+    const jobRunRepo = makeStubJobRunRepo();
+    const table = buildJobTable({ db: FAKE_DB, jobRunRepo });
+    expect(table.find((j) => j.name === "ragFtsRebuildCronJob")).toBeUndefined();
+    expect(table).toHaveLength(61);
+  });
+
+  it("(a) flag explicitly 'false' → buildJobTable() does NOT contain ragFtsRebuildCronJob", async () => {
+    Bun.env["CRON_RAG_FTS_REBUILD_ENABLED"] = "false";
+    const { buildJobTable } = await import("../scheduler/schedulerJobTable.js");
+    const jobRunRepo = makeStubJobRunRepo();
+    const table = buildJobTable({ db: FAKE_DB, jobRunRepo });
+    expect(table.find((j) => j.name === "ragFtsRebuildCronJob")).toBeUndefined();
+    expect(table).toHaveLength(61);
+  });
+
+  it("(b) flag='true' → ragFtsRebuildCronJob IS registered with cron '15 20 * * *' and UTC tz", async () => {
+    Bun.env["CRON_RAG_FTS_REBUILD_ENABLED"] = "true";
+    const { buildJobTable } = await import("../scheduler/schedulerJobTable.js");
+    const jobRunRepo = makeStubJobRunRepo();
+    const table = buildJobTable({ db: FAKE_DB, jobRunRepo });
+    const entry = table.find((j) => j.name === "ragFtsRebuildCronJob");
+    expect(entry).toBeDefined();
+    expect(entry?.cron).toBe("15 20 * * *");
+    expect(entry?.cron).toBe(CRONS.ragFtsRebuildCron);
+    expect(entry?.options).toEqual({ timezone: "UTC" });
+    expect(table).toHaveLength(62);
+  });
+
+  it("(b) flag='true' → registerJobTable() actually schedules it (scheduleCron receives the cron expr)", async () => {
+    Bun.env["CRON_RAG_FTS_REBUILD_ENABLED"] = "true";
+    const { calls } = installScheduleCronSpy();
+    const { buildJobTable, registerJobTable } = await import("../scheduler/schedulerJobTable.js");
+    const jobRunRepo = makeStubJobRunRepo();
+    const table = buildJobTable({ db: FAKE_DB, jobRunRepo });
+    registerJobTable(table, jobRunRepo);
+    expect(calls).toHaveLength(62);
+    expect(calls.some((c) => c.cron === "15 20 * * *")).toBe(true);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Group B/C/D — registration wiring. scheduleCron is mocked so no real node-cron
 // tasks are created (matches the codebase-wide convention of never invoking
 // startScheduler() directly in tests — see 1430/1958a startup-catchup tests, which
@@ -191,14 +264,14 @@ function installScheduleCronSpy(): { calls: CapturedCall[]; restore: () => void 
 }
 
 describe("FACTORY-SCHEDULER-job-table-registry — Group B: registerJobTable() generic loop", () => {
-  it("registers all 62 buildJobTable() entries via scheduleCron(j.cron, ..., j.options)", async () => {
+  it("registers all 61 buildJobTable() entries via scheduleCron(j.cron, ..., j.options) (default: RAG FTS gate OFF)", async () => {
     const { calls } = installScheduleCronSpy();
     const { buildJobTable, registerJobTable } = await import("../scheduler/schedulerJobTable.js");
     const jobRunRepo = makeStubJobRunRepo();
     const table = buildJobTable({ db: FAKE_DB, jobRunRepo });
     registerJobTable(table, jobRunRepo);
 
-    expect(calls).toHaveLength(62);
+    expect(calls).toHaveLength(61);
     // Every registered cron expression corresponds 1:1 to a JOB_TABLE entry's cron.
     const expectedCrons = table.map((j) => j.cron).sort();
     const actualCrons = calls.map((c) => c.cron).sort();
@@ -257,13 +330,25 @@ describe("FACTORY-SCHEDULER-job-table-registry — Group C: registerBespokeJobs(
 });
 
 describe("FACTORY-SCHEDULER-job-table-registry — Group D: scheduler-boot smoke (registerJobTable + registerBespokeJobs together)", () => {
-  it("registers exactly 84 total scheduleCron calls — reproduces the pre-split registration count exactly", async () => {
+  it("registers exactly 83 total scheduleCron calls (default: RAG FTS gate OFF, ALPHA-S2-RAG-FTS-CRON-SAFETY-GATE)", async () => {
     // NOTE: cron EXPRESSION VALUES are not all unique across the registrations (e.g.
     // CRONS.commodityTrackerRefresh intentionally shares '0 6 * * *' with
     // CRONS.macroIndicatorRefresh — kept as separate job registrations for independent
     // cron_job_runs observability per TASK_1920c.md). Uniqueness of CRONS *keys* (not
-    // resolved string values) is covered by Group A (62 unique buildJobTable names) and
-    // Group C (22 specific bespoke CRONS keys asserted exactly).
+    // resolved string values) is covered by Group A (61 unique buildJobTable names, default
+    // gate-off) and Group C (22 specific bespoke CRONS keys asserted exactly).
+    const { calls } = installScheduleCronSpy();
+    const { buildJobTable, registerJobTable, registerBespokeJobs } = await import("../scheduler/schedulerJobTable.js");
+    const jobRunRepo = makeStubJobRunRepo();
+    const ctx = { db: FAKE_DB, jobRunRepo };
+    registerJobTable(buildJobTable(ctx), jobRunRepo);
+    registerBespokeJobs(ctx);
+
+    expect(calls).toHaveLength(83);
+  });
+
+  it("registers exactly 84 total scheduleCron calls when CRON_RAG_FTS_REBUILD_ENABLED='true' — reproduces the pre-gate registration count exactly", async () => {
+    Bun.env["CRON_RAG_FTS_REBUILD_ENABLED"] = "true";
     const { calls } = installScheduleCronSpy();
     const { buildJobTable, registerJobTable, registerBespokeJobs } = await import("../scheduler/schedulerJobTable.js");
     const jobRunRepo = makeStubJobRunRepo();
@@ -272,6 +357,7 @@ describe("FACTORY-SCHEDULER-job-table-registry — Group D: scheduler-boot smoke
     registerBespokeJobs(ctx);
 
     expect(calls).toHaveLength(84);
+    delete Bun.env["CRON_RAG_FTS_REBUILD_ENABLED"];
   });
 });
 

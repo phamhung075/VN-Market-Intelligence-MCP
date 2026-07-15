@@ -136,6 +136,18 @@ Env override: `CRON_ACCURACY_DIGEST` (default `0 7 * * *`)
 - Source: `apps/mcp-server/src/scheduler/rag/ragFtsRebuildCronJob.ts`
 - Design SSOT: `docs/architecture-briefs/2026-07-15-alpha-s2-rag-fts-rebuild-cron.md`
 
+**GATED OFF BY DEFAULT (ALPHA-S2-RAG-FTS-CRON-SAFETY-GATE, 2026-07-15):** this cron shipped
+(commit `35cc8cd56`) ahead of the rag-service capacity fix — an FTS rebuild at ~56k rows
+cannot complete inside rag-service's 768m cgroup, so an armed cron OOMs the service every
+night at 20:15 UTC. `schedulerJobTable.ts`'s `buildJobTable()` now reads
+`CRON_RAG_FTS_REBUILD_ENABLED` and OMITS the `ragFtsRebuildCronJob` entry entirely
+(registration-time defusal, not a runtime no-op) unless it is explicitly `'true'` — so a
+stray mcp-server redeploy cannot arm it. Do **NOT** disable via `CRON_RAG_FTS_REBUILD=''` —
+`cronConfig.ts` reads that value with `??`, which does not treat `''` as absent, and an
+empty cron expression crashes croner at boot. Stays OFF until
+`RAG-FTS-BUILD-MEMORY-BOUND` (rag capacity fix, parked BLOCKED) is verified fixed.
+- Env flag: `CRON_RAG_FTS_REBUILD_ENABLED` (default unset/`false` — job NOT registered; set `'true'` to register with `CRON_RAG_FTS_REBUILD`'s cron expression)
+
 ## Analysis Ownership (dedup policy)
 
 | Domain | Owner | Verifier | Notes |

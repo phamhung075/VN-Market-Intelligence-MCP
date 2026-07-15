@@ -129,6 +129,16 @@ export interface JobTableEntry {
 export function buildJobTable(ctx: SchedulerJobTableCtx): JobTableEntry[] {
   const { db } = ctx
 
+  // ALPHA-S2-RAG-FTS-CRON-SAFETY-GATE: default-OFF enable flag. ragFtsRebuildCronJob
+  // shipped (35cc8cd56) ahead of the rag-service capacity fix (RAG-FTS-BUILD-MEMORY-BOUND,
+  // parked BLOCKED) — FTS rebuild at ~56k rows OOMs the 768m rag-service cgroup on every
+  // nightly 20:15 UTC fire. Read fresh (not module-top-level) so tests can flip the env var
+  // between calls without re-importing the module. Do NOT gate via CRON_RAG_FTS_REBUILD=''
+  // (nullish-coalescing in cronConfig.ts ignores '' and an empty cron expr crashes croner at
+  // boot) — this explicit boolean is the only supported disable/enable mechanism. Stays false
+  // until RAG-FTS-BUILD-MEMORY-BOUND is verified fixed.
+  const ragFtsRebuildCronEnabled = (Bun.env.CRON_RAG_FTS_REBUILD_ENABLED ?? 'false').toLowerCase() === 'true'
+
   return [
     // 08:00 — Morning briefing (weekdays Mon-Fri only) — task 101
     {
@@ -644,15 +654,24 @@ export function buildJobTable(ctx: SchedulerJobTableCtx): JobTableEntry[] {
     // branch HARD-fail contract (no ambiguous partial-success state, unlike sbvOmoLiquidityCron):
     // any non-2xx/network/90s-timeout error alerts BUG every time. See
     // docs/architecture-briefs/2026-07-15-alpha-s2-rag-fts-rebuild-cron.md.
-    {
-      name: 'ragFtsRebuildCronJob',
-      cron: CRONS.ragFtsRebuildCron,
-      options: { timezone: 'UTC' },
-      runner: async () => {
-        const result = await runRagFtsRebuildCron()
-        return { rowsWritten: result.rebuilt ? 1 : 0 }
-      },
-    },
+    //
+    // ALPHA-S2-RAG-FTS-CRON-SAFETY-GATE (2026-07-15): gated behind CRON_RAG_FTS_REBUILD_ENABLED
+    // (default-OFF — see ragFtsRebuildCronEnabled above). Registration is entirely omitted
+    // (not just no-op'd) when the flag is unset/false, so a stray mcp-server redeploy cannot
+    // arm the nightly OOM before RAG-FTS-BUILD-MEMORY-BOUND (rag-service capacity fix) lands.
+    ...(ragFtsRebuildCronEnabled
+      ? [
+          {
+            name: 'ragFtsRebuildCronJob',
+            cron: CRONS.ragFtsRebuildCron,
+            options: { timezone: 'UTC' },
+            runner: async () => {
+              const result = await runRagFtsRebuildCron()
+              return { rowsWritten: result.rebuilt ? 1 : 0 }
+            },
+          },
+        ]
+      : []),
 
     // Every 30 min — Data freshness SLA monitor — task 234, Sprint 234
     // Checks signal source data freshness against SLA thresholds. Escalates to Alert
