@@ -32,7 +32,7 @@ Invoke via gateway: call_tool(server="vn-market", tool="<name>", arguments={...}
 |------|---------|-----------|
 | `compare_stocks` | Side-by-side comparison of multiple stocks | `tickers: string[], metrics?: string[]` |
 | `compare_financials` | Detailed financial comparison (peers, sectors, historical) | `ticker: string, comparison_type: "peers"\|"sector"\|"historical"` |
-| `get_sector_comparison` | Detailed metrics and rankings by sector | `ticker?: string, metric?: string` |
+| `get_sector_comparison` | Detailed metrics and rankings by sector | `code: string` (req, NOT `ticker`) — live-verified 2026-07-13: bare `ticker=` fails Zod "Required" on `code` |
 | `search_similar_context` | Find historical BCTC patterns with similar characteristics | `query: string, context: object, limit?: number` |
 
 ### Cash Flow Intelligence (Forensic Gate)
@@ -78,6 +78,7 @@ All monetary values in VND millions.
 | `get_fed_liquidity_spread` | Compute EFFR-IORB spread (carry cost proxy) | — |
 | `get_ism_subcomponents` | ISM Manufacturing PMI sub-components + regime signal | — |
 | `get_investment_clock_phase` | Investment clock cycle phase + pyramid tier match | `ticker?: string` |
+| `get_pyramid_tier` | Asset-pyramid tier classification (risk/liquidity tier match) | `asset_class: string` (req, snake_case — NOT `assetClass`; live-verified 2026-07-15: camelCase fails Zod "Required" on `asset_class`) |
 | `get_bond_maturity_calendar` | Bond maturity schedule for credit/maturity risk context | `ticker?: string, sector?: string` |
 
 ### Inter-Agent Communication

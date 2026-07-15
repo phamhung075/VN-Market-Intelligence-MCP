@@ -46,10 +46,10 @@ G-Bond regime check (Pillar 5.2):
 **2b. Historical BCTC context** `search_similar_context(query=<ticker>+" "+<quarter_summary>, k=3, recency_days=365)`
 
 **3. Insider + legal**
-`get_insider_signals()` | `get_legal_risk_signals()`
+`get_insider_signals(code)` — `code` is REQUIRED (string, per-ticker; live-verified 2026-07-13: bare `get_insider_signals()` fails Zod validation "Required" on `code`) | `get_legal_risk_signals()`
 
 **3b. Layer 8 — Investment Clock + Pyramid tier** (tnb-methodology.md §Layer-8)
-`get_investment_clock_phase()` | `get_pyramid_tier("equity")`
+`get_investment_clock_phase()` | `get_pyramid_tier(asset_class="equity")` — named snake_case param, NOT positional/camelCase (live-verified 2026-07-15: `{"assetClass": "equity"}` fails Zod "Required" on `asset_class`)
 
 **4. Chain validation**
 `get_open_chain_findings(minutes_back=30)` → BCTC confirm/contradict catalyst?
