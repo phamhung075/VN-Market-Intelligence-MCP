@@ -9589,11 +9589,11 @@
       }
     ],
     "head": {
-      "status": "idle",
-      "active_task_id": null,
-      "next_agent": "architect",
-      "last_updated_at": "2026-07-15T01:56:04Z",
-      "last_updated_by": "dev-team (ALPHA-S2-FF epic closed; WIP 0; await next-tick triage)"
+      "status": "in_progress",
+      "active_task_id": "ALPHA-S2-OMO-LIQUIDITY-CRON",
+      "next_agent": "pm",
+      "last_updated_at": "2026-07-15T04:15:00Z",
+      "last_updated_by": "dev-team (mirror-sync .task_board.head <- authoritative .head after ALPHA-S2-OMO architect scoping; dual-head drift repair)"
     },
     "ready": [],
     "review": [
