@@ -371,12 +371,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-COWORK-PREFLIGHT-PRESENCE-CLAIM-GAP",
-    "next_agent": "qa",
-    "next_action": "qa gate for FIX-COWORK-PREFLIGHT-PRESENCE-CLAIM-GAP (bash preflight + bash test, no deploy): re-run cowork-tick-preflight.test.sh (expect 27/27); assert fresh-session->SILENT/WORK not ERROR, re-entrant same-session->clean+TTL-renewed, exactly 1 task_claim|cowork-slot per run (no presence lock leak); header/semantics match claim-first; DJ-GATE-1 marker present. On PASS -> done_verified + push on green + close-gate flips origin_signal cow-20260715T184053 READ->RESOLVED.",
-    "updated_at": "2026-07-15T19:24:58Z",
-    "updated_by": "dev-team (router: FIX-COWORK-PREFLIGHT dev complete + RAW pre-check PASS, qa gate dispatched)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "FIX-COWORK-PREFLIGHT-PRESENCE-CLAIM-GAP DONE_VERIFIED (qa PASS 6/6 + DJ-GATE-1 closed 763e9e18c). Pushed on green. origin_signal cow-20260715T184053 READ->RESOLVED. Next dispatcher tick: clean preflight + BOUNDED-1 idle-pickup eval (backlog rank-1 UC-DTL-P2 still next_agent null -> needs groom; UC-RDL-P4 supervised deliberate-start). Parked: RAG-FTS-BUILD-MEMORY-BOUND / ALPHA-S2-RAG-FTS-REBUILD-CRON (memory-bound, done_verified withheld).",
+    "updated_at": "2026-07-15T19:29:02Z",
+    "updated_by": "dev-team (router: FIX-COWORK-PREFLIGHT review->done_verified, qa PASS + DJ-GATE-1; close-gate RESOLVED; head idle)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -424,8 +424,10 @@
         "type": "system-issue",
         "summary": "preflight Step 2 heartbeats session-presence w/o claim — every fresh session tick-1 false-ERRORs into LLM fallback",
         "severity": "MED",
-        "status": "READ",
-        "payload_ref": "docs/handoffs/2026-07-15-cowork-preflight-presence-claim-gap.md"
+        "status": "RESOLVED",
+        "payload_ref": "docs/handoffs/2026-07-15-cowork-preflight-presence-claim-gap.md",
+        "resolved_at": "2026-07-15T19:29:02Z",
+        "resolved_by": "dev-team (close-gate: FIX-COWORK-PREFLIGHT-PRESENCE-CLAIM-GAP done_verified, qa PASS)"
       }
     ],
     "last_triaged_at": "2026-07-03T19:49:38Z",
@@ -9748,14 +9750,62 @@
         "verified_at": "2026-07-15T18:24:40Z",
         "qa_report": "N/A (compact verdict, doc-only 1-file diff, no code touched)",
         "verify_note": "RAW-verified git show aef457f38 -- CLAUDE.md against all 5 brief ACs: (1) pointer to .claude/skills/dispatch-claim/SKILL.md present + covers Step0a/PhaseA/A.5/B (file exists, 495L, sections confirmed); (2) Phase B task_claim call content-identical (task_id, task_kind=intent, owner_agent, owner_client_session=$CLAUDE_CODE_SESSION_ID, ttl_seconds=600, payload) -- only reflowed 3 lines -> 1 line, no arg dropped/altered; (3) 3-outcome table now has all three branches incl the previously-MISSING re-entrant (claimed:false + current_holder.owner_client_session==$CLAUDE_CODE_SESSION_ID -> task_heartbeat, proceed, do NOT exit), matches SKILL.md:250-256 Pattern section verbatim; (4) grep -n redispatch_count CLAUDE.md returns nothing -- hardcode dropped, N_MAX=3 lives solely in dispatch-claim SKILL.md:329; (5) no semantic loss -- orphan-adoption probe (N_MAX, escalation, tree-hygiene DEFER DoD-P15-1), presence roster (Phase A.5), Step 0a session-presence all fully reachable via the SKILL pointer (verified sections present in SKILL.md). CLAUDE.md 74->62L confirmed via wc -l. DJ-GATE-1: developer journal entry present (sprint-ULTRACODE-AUDIT-FIXALL-developer.md STEP developer-S1) before this flip; qa journal entry written (sprint-ULTRACODE-AUDIT-FIXALL-qa.md STEP qa-S1). Doc-only change (CLAUDE.md), zero apps/ code touched -- bun test/tsc not applicable, DDD/security scan N/A. APPROVED."
+      },
+      {
+        "id": "FIX-COWORK-PREFLIGHT-PRESENCE-CLAIM-GAP",
+        "type": "FIX",
+        "title": "cowork-tick-preflight.sh Step 2: claim-first presence, never gate (fresh-session false-ERROR into LLM fallback)",
+        "desc": "Fix scripts/agents-flow/cowork-tick-preflight.sh Step 2 (~L127-138): the script heartbeats the session-presence lock (task_heartbeat on session-presence:<session>) WITHOUT ever claiming it, so on a fresh session's first tick (no presence row exists yet) heartbeat returns ok=false -> verdict=ERROR -> return 1 -> the expensive LLM fallback runs. This inverts the cowork-team/flow/main.md Step 0b.1 contract (presence is NEVER a gate) and reopens the exact cost TOKEN-ECONOMY-TICK-PREFLIGHT WU-1 removed: ~80% of ticks collapse to one bash call, but this reopens the costly path once per fresh session AND once after any >30min presence lapse. Fix: mirror main.md Step 0b.1 -- task_claim(session-presence:<session>, task_kind=\"session-presence\", owner_agent=\"cowork-dispatcher\", ttl_seconds=1800, payload={...}); if claimed:false AND current_holder.owner_client_session==session_id then task_heartbeat; proceed regardless of outcome. Presence must NEVER emit ERROR -- reserve ERROR only for the election/transport failures that genuinely leave lock state undefined. Also update the script header line 13 to match the corrected contract. NOTE for dev/qa: existing test T3 (\"ERROR verdict (presence transport failure)\") asserts the OLD gating behavior and MUST be updated to the corrected non-gating contract; add new cases for fresh-session->SILENT/WORK and re-entrant->clean+TTL-renewed. Payload: docs/handoffs/2026-07-15-cowork-preflight-presence-claim-gap.md. Scars: feedback_chain_mutex_ttl_lapse_during_long_hop_reclaim (ok:false means re-CLAIM, not heartbeat), feedback_task_claim_held_lock_noop_use_heartbeat (claim-first-then-heartbeat-on-re-entry).",
+        "status": "DONE_VERIFIED",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "qa",
+        "created_at": "2026-07-15T19:02:35Z",
+        "created_by": "po",
+        "origin_signal_id": "cow-20260715T184053",
+        "baseline_pass": true,
+        "status_note": "AC: (1) fresh session (no prior presence row) tick-1 verdict = SILENT/WORK, NOT ERROR; (2) re-entrant tick same session -> still SILENT/WORK + presence TTL renewed; (3) simulated presence-tool transport error -> proceeds non-gating, does NOT emit ERROR; (4) task_list_held(kind=\"cowork-slot\") count:0 after each (no lock leak). baseline_pass=true (20/20 green pre-fix, verified 2026-07-15 via scripts/agents-flow/cowork-tick-preflight.test.sh). Fix loc: scripts/agents-flow/cowork-tick-preflight.sh ~L127-138 + header L13 + test T3 update. verification_gate=preflight_test_suite_green_including_new_fresh_session_and_reentrant_cases. origin_signal=cow-20260715T184053.",
+        "claimed_at": "2026-07-15T19:12:31Z",
+        "claimed_by": "dev-team (router: Step-3 execute-dispatch of PO batch FIX; withhold-gate PASS — git-clean, depends null, next_agent developer)",
+        "moved_at": "2026-07-15T19:24:58Z",
+        "moved_by": "dev-team (router: dev complete + RAW pre-check PASS; dispatching qa gate)",
+        "dev_result": {
+          "agent": "developer",
+          "commits": [
+            "82d32238b",
+            "763e9e18c",
+            "9a0813c1d"
+          ],
+          "head": "9a0813c1d (origin/main behind — no push, router pushes on green)",
+          "raw_precheck": "PASS — git show 82d32238b: Step 2 claim-first task_claim(session-presence:<session>, task_kind=session-presence, owner_agent=cowork-dispatcher, owner_client_session, ttl 1800); heartbeat only on same-session re-entry; peer-held + transport-error both proceed unconditionally (presence NEVER emits ERROR). Header block updated. Commit scope clean: 82d32238b = only cowork-tick-preflight.sh + .test.sh (no peer-file sweep, no secrets).",
+          "self_reported": "full suite 27/27 GREEN (baseline 20/20); live smoke 2x real MCP -> verdict SILENT, no orphaned cowork-slot/presence rows",
+          "pending_qa": "independent re-run: bash cowork-tick-preflight.test.sh (expect 27/27); assert fresh-session->SILENT/WORK not ERROR; re-entrant same-session->clean+TTL renewed; exactly 1 task_claim|cowork-slot per run (no presence lock leak); header/semantics match claim-first; DJ-GATE-1 marker present in sprint-FIX-COWORK-PREFLIGHT-PRESENCE-CLAIM-GAP-developer.md"
+        },
+        "verified_at": "2026-07-15T19:29:02Z",
+        "verified_by": "qa (router-dispatched independent gate; PASS — 6/6 checks RAW-reproduced)",
+        "qa_result": {
+          "agent": "qa",
+          "verdict": "PASS",
+          "verified_at": "2026-07-15T19:29:02Z",
+          "checks": "1) bash cowork-tick-preflight.test.sh -> 27 passed 0 failed (baseline 20/20, +10/-3 T3 rewrite); 2) T3-presence-fresh: fresh claim -> verdict SILENT not ERROR (PASS); 3) T3-presence-reentrant: same-session -> task_heartbeat renews session-presence TTL, log_has_line confirmed (PASS); 4) no lock leak: log_count task_claim|cowork-slot == 1 (election only), session-presence claim never carries cowork-slot task_kind (PASS both cases); 5) header L13-17 + Step2 L131-153 match claim-first (task_claim first, heartbeat only when holder==session, peer/transport fall through unconditionally, NO presence ERROR branch); 6) DJ-GATE-1: sprint-FIX-COWORK-PREFLIGHT-PRESENCE-CLAIM-GAP-developer.md committed 763e9e18c (git show: 25-line add, task-id marker present)",
+          "raw": "git show 82d32238b --stat: only cowork-tick-preflight.sh (+39) + .test.sh (+95) — no peer-file sweep, no secrets. Test fixture used disposable session test-session-fixture-not-real (no live-presence interference).",
+          "code_commits": [
+            "82d32238b",
+            "763e9e18c",
+            "9a0813c1d"
+          ]
+        },
+        "router_close_note": "qa PASS + DJ-GATE-1 SATISFIED. Presence claim-first landed: cowork preflight Step 2 NEVER emits ERROR on presence claim/heartbeat outcome (peer-held + transport-error both proceed) — closes the presence-claim gap from origin_signal cow-20260715T184053. Push on green (PUSH-AUTONOMY-1). origin_signal flipped READ->RESOLVED this write."
       }
     ],
     "head": {
-      "status": "in_progress",
-      "active_task_id": "FIX-COWORK-PREFLIGHT-PRESENCE-CLAIM-GAP",
-      "next_agent": "qa",
-      "last_updated_at": "2026-07-15T19:24:58Z",
-      "last_updated_by": "dev-team (FIX-COWORK-PREFLIGHT -> review, qa gate dispatched)"
+      "status": "idle",
+      "active_task_id": null,
+      "next_agent": "router",
+      "last_updated_at": "2026-07-15T19:29:02Z",
+      "last_updated_by": "dev-team (FIX-COWORK-PREFLIGHT -> done_verified, qa PASS; origin_signal RESOLVED)"
     },
     "ready": [],
     "review": [
@@ -10305,39 +10355,6 @@
           "idle_baseline_flag": "rag-service idle mem already ~92% of 768m bound with ZERO FTS activity (tight margin, pre-existing, heads-up for ALPHA-S2 retune)."
         },
         "po_triage_note_reverify": "PO TRIAGE 2026-07-15T17:28:38Z (dev-team tick 17:07Z, sig dev-team-20260715T160042Z-rag-corpus-repopulation-scale-reverify): corpus RE-POPULATION CONFIRMED CLIMBING — live GET :5002/embed/health index_size=297 rows now vs 116 @ qa 16:01Z verify (+181 in ~1.5h). Re-embed pipeline ALIVE => NOT stuck-at-116, so NO new bug for dev-rag-service. BUT 297 << ~56k representative scale => AC#1 (no-OOM at ~56k) re-run stays UN-testable now: this row STAYS review, done_verified WITHHELD, blocked_on=rag-corpus-repopulation-to-representative-scale UNCHANGED (TIME-GATED on wall-clock, NOT a dispatch — do NOT force a rebuild against a 116/297-row corpus). GATE to lift WITHHELD (= signal action 2): once corpus ~= representative scale, re-run AC#1 (POST /admin/rebuild-fts under 768m cgroup, docker stats peak-mem, 2x), record real peak-mem => then unblock ALPHA-S2 deadline retune + BM25 round-trip. Heads-up carried: rag-service idle mem ~92% of 768m with ZERO FTS activity (tight margin — ALPHA-S2 retune input). Tech-debt spin-off (signal 2, hybrid max_distance no-op) minted separately as SPIKE-RAG-HYBRID-MAXDISTANCE-NOOP (backlog, P3, non-blocking)."
-      },
-      {
-        "id": "FIX-COWORK-PREFLIGHT-PRESENCE-CLAIM-GAP",
-        "type": "FIX",
-        "title": "cowork-tick-preflight.sh Step 2: claim-first presence, never gate (fresh-session false-ERROR into LLM fallback)",
-        "desc": "Fix scripts/agents-flow/cowork-tick-preflight.sh Step 2 (~L127-138): the script heartbeats the session-presence lock (task_heartbeat on session-presence:<session>) WITHOUT ever claiming it, so on a fresh session's first tick (no presence row exists yet) heartbeat returns ok=false -> verdict=ERROR -> return 1 -> the expensive LLM fallback runs. This inverts the cowork-team/flow/main.md Step 0b.1 contract (presence is NEVER a gate) and reopens the exact cost TOKEN-ECONOMY-TICK-PREFLIGHT WU-1 removed: ~80% of ticks collapse to one bash call, but this reopens the costly path once per fresh session AND once after any >30min presence lapse. Fix: mirror main.md Step 0b.1 -- task_claim(session-presence:<session>, task_kind=\"session-presence\", owner_agent=\"cowork-dispatcher\", ttl_seconds=1800, payload={...}); if claimed:false AND current_holder.owner_client_session==session_id then task_heartbeat; proceed regardless of outcome. Presence must NEVER emit ERROR -- reserve ERROR only for the election/transport failures that genuinely leave lock state undefined. Also update the script header line 13 to match the corrected contract. NOTE for dev/qa: existing test T3 (\"ERROR verdict (presence transport failure)\") asserts the OLD gating behavior and MUST be updated to the corrected non-gating contract; add new cases for fresh-session->SILENT/WORK and re-entrant->clean+TTL-renewed. Payload: docs/handoffs/2026-07-15-cowork-preflight-presence-claim-gap.md. Scars: feedback_chain_mutex_ttl_lapse_during_long_hop_reclaim (ok:false means re-CLAIM, not heartbeat), feedback_task_claim_held_lock_noop_use_heartbeat (claim-first-then-heartbeat-on-re-entry).",
-        "status": "REVIEW",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "owner": "po",
-        "next_agent": "qa",
-        "created_at": "2026-07-15T19:02:35Z",
-        "created_by": "po",
-        "origin_signal_id": "cow-20260715T184053",
-        "baseline_pass": true,
-        "status_note": "AC: (1) fresh session (no prior presence row) tick-1 verdict = SILENT/WORK, NOT ERROR; (2) re-entrant tick same session -> still SILENT/WORK + presence TTL renewed; (3) simulated presence-tool transport error -> proceeds non-gating, does NOT emit ERROR; (4) task_list_held(kind=\"cowork-slot\") count:0 after each (no lock leak). baseline_pass=true (20/20 green pre-fix, verified 2026-07-15 via scripts/agents-flow/cowork-tick-preflight.test.sh). Fix loc: scripts/agents-flow/cowork-tick-preflight.sh ~L127-138 + header L13 + test T3 update. verification_gate=preflight_test_suite_green_including_new_fresh_session_and_reentrant_cases. origin_signal=cow-20260715T184053.",
-        "claimed_at": "2026-07-15T19:12:31Z",
-        "claimed_by": "dev-team (router: Step-3 execute-dispatch of PO batch FIX; withhold-gate PASS — git-clean, depends null, next_agent developer)",
-        "moved_at": "2026-07-15T19:24:58Z",
-        "moved_by": "dev-team (router: dev complete + RAW pre-check PASS; dispatching qa gate)",
-        "dev_result": {
-          "agent": "developer",
-          "commits": [
-            "82d32238b",
-            "763e9e18c",
-            "9a0813c1d"
-          ],
-          "head": "9a0813c1d (origin/main behind — no push, router pushes on green)",
-          "raw_precheck": "PASS — git show 82d32238b: Step 2 claim-first task_claim(session-presence:<session>, task_kind=session-presence, owner_agent=cowork-dispatcher, owner_client_session, ttl 1800); heartbeat only on same-session re-entry; peer-held + transport-error both proceed unconditionally (presence NEVER emits ERROR). Header block updated. Commit scope clean: 82d32238b = only cowork-tick-preflight.sh + .test.sh (no peer-file sweep, no secrets).",
-          "self_reported": "full suite 27/27 GREEN (baseline 20/20); live smoke 2x real MCP -> verdict SILENT, no orphaned cowork-slot/presence rows",
-          "pending_qa": "independent re-run: bash cowork-tick-preflight.test.sh (expect 27/27); assert fresh-session->SILENT/WORK not ERROR; re-entrant same-session->clean+TTL renewed; exactly 1 task_claim|cowork-slot per run (no presence lock leak); header/semantics match claim-first; DJ-GATE-1 marker present in sprint-FIX-COWORK-PREFLIGHT-PRESENCE-CLAIM-GAP-developer.md"
-        }
       }
     ],
     "qa": [],
