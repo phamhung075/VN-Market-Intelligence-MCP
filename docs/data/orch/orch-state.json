@@ -412,8 +412,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-15T18:40:53Z",
-    "_updated_by": "cowork-team",
+    "_updated_at": "2026-07-15T19:55:45Z",
+    "_updated_by": "cowork-team/dispatcher",
     "archive": [],
     "rows": [
       {
@@ -428,6 +428,28 @@
         "payload_ref": "docs/handoffs/2026-07-15-cowork-preflight-presence-claim-gap.md",
         "resolved_at": "2026-07-15T19:29:02Z",
         "resolved_by": "dev-team (close-gate: FIX-COWORK-PREFLIGHT-PRESENCE-CLAIM-GAP done_verified, qa PASS)"
+      },
+      {
+        "id": "cow-20260715T195340",
+        "ts": "2026-07-15T19:53:40Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "cycle-snapshot-latest.json promotion never fires (8d stale, cycle_snapshot_promoted=false) — last_regime/last_volatility_level pinned unknown, adaptive-cadence loop dark; stale_warning=true on fresh emit pins pressure_mode=legacy",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": "docs/handoffs/2026-07-15-cycle-snapshot-latest-promotion-dark.md"
+      },
+      {
+        "id": "cow-20260715T195545",
+        "ts": "2026-07-15T19:55:45Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "unified-agent releases published marker after publish (RAW: task_list_held count=0, 28h TTL, 2min after claim) — chef.md never instructs release; FR-P2-7 MARKET double-publish gate defeated, chef-intraday (7x/day) most exposed",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": "docs/handoffs/2026-07-15-unified-agent-releases-published-marker.md"
       }
     ],
     "last_triaged_at": "2026-07-03T19:49:38Z",

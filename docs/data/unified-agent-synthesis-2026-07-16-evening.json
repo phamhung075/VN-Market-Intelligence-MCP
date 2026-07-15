@@ -1,0 +1,73 @@
+{
+  "metadata": {
+    "cycle_id": "evening-2026-07-15T19:45:00Z",
+    "dish_type": "evening",
+    "date_vn": "2026-07-16",
+    "timestamp_utc": "2026-07-15T19:50:41Z",
+    "quality_verdict": "degraded",
+    "layers_walked_summary": "partial — [gap:L2_US_macro_absent_no_gap_token] [gap:L3_VN_macro_incomplete] [gap:L4_partial_pillar_coverage] [gap:business_context_absent]"
+  },
+
+  "tnb_synthesis": {
+    "clock_phase": "transition",
+    "regime_state": "risk-off_carry_pressure",
+    "regime_confidence": "MEDIUM",
+    "us_macro_layer": "[gap:carry_regime_unavailable — macro is_estimate=true] Fed rate 5.33%, VND deposit 5%, term rate compression risk if Fed tightens further",
+    "vn_macro_layer": "USD/VND 26.070 (breached 25.500 level) → VND depreciation pressure, import cost inflation. Foreign block net-selling heaviest July (FPT, tech focus). Market sentiment z=0.376 (slightly positive) but professional net-selling divergence.",
+    "valuation_layer": "Equities CHEAP relative to deposit rates (8.2% yield vs 5%), but positioning risk high (24 new lows vs 1 new high). Phase: transition → fixed_income tier. Market hexagram Khiêm (Humility) signals balance, but signal NEGATIVE.",
+    "kinh_dich_state": "Quẻ 15 Khiêm (謙) — favorable for modest gains but negative signal within cycle; only hexagram with all 6 lines good"
+  },
+
+  "conviction_calls": [],
+
+  "sector_phases": [
+    {
+      "sector_vn": "technology",
+      "investment_phase": "distribution",
+      "pyramid_tier": "avoid",
+      "direction_this_cycle": "negative",
+      "note": "Foreign block net-selling heavily (FPT, VCI focus)"
+    },
+    {
+      "sector_vn": "banking",
+      "investment_phase": "transition",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "pressure",
+      "note": "USD/VND depreciation, carry regime unknown (estimate only)"
+    }
+  ],
+
+  "known_gaps": [
+    "[L6-gap: gold >$4,300 active — regime-drift risk: gold-driven phase override may lag actual risk-off reversal; flag as regime-drift until gold retraces below $4,300 or EFFR-IORB confirms liquidity tightening]",
+    "[gap:carry_regime_unavailable — macro is_estimate=true — do not compute spread from raw rate fields]",
+    "[gap:CPI_unavailable]",
+    "[gap:FX_reserves_unavailable]",
+    "[gap:business_context_unavailable — no bctc_signal_* or fundamental_* data this cycle]",
+    "[gap:volatility_breadth_limited — breadth history only 1 session, mclellan_osc unavailable]",
+    "[gap:insider_sentiment_insufficient — zero buy/sell transactions 90d window]"
+  ],
+
+  "causal_chains": [],
+
+  "clusters_summary": {
+    "qualified": 0,
+    "tickers_covered": [],
+    "sectors_covered": []
+  },
+
+  "market_context": {
+    "vn_index": 1280.5,
+    "vn_index_delta": -526.13,
+    "gold_usd_oz": 4068.3,
+    "usd_vnd": 26070,
+    "oil_usd": 85.08,
+    "volatility_regime": "NORMAL",
+    "gk_vol_20d_pct": 14.58,
+    "market_sentiment_z": 0.3757,
+    "new_52w_highs": 1,
+    "new_52w_lows": 24,
+    "hexagram": "Quẻ 15 Khiêm (謙)",
+    "hexagram_signal": "NEGATIVE",
+    "hexagram_confidence": 0.64
+  }
+}

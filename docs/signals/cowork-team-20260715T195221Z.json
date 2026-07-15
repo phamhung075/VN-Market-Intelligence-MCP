@@ -1,0 +1,49 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-15T19:52:21Z",
+    "matched_slots": [
+      "chef-evening"
+    ],
+    "won_slots": [
+      "chef-evening"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "chef-evening": "cron"
+    },
+    "cadence_minutes": {
+      "chef-evening": null
+    },
+    "last_fired_timestamp": "2026-07-15T19:51:28.361Z",
+    "last_fired_slots": [
+      "chef-evening"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "19:45",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 4,
+    "note": "legacy mode forced: pressure-state emitted_at age 30.8min > 20min staleness threshold at read time; emit_pressure_state returned stale_warning=true on fresh write. cycle_snapshot_promoted=false — cycle-snapshot-latest.json still dated 2026-07-07T19:47:26Z (8d stale); dispatcher wrote cycle-snapshot-19:50.json (actual fire HH:MM) while promotion appears keyed to nominal tick 19:45 — drift_min=3 mismatch suspected. Dispatcher self-corrected a malformed last_fired (BSD date %3N literal) before final write."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-15T19:52:21Z"
+}
