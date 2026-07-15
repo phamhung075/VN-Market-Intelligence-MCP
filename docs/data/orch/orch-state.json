@@ -371,12 +371,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "ALPHA-S2-RAG-FTS-CRON-SAFETY-GATE",
-    "next_agent": "qa",
-    "next_action": "qa verifying CRON-SAFETY-GATE (unit/mocked, no deploy): tsc --noEmit exit0, mock-guard PASS, flag-off omits ragFtsRebuildCronJob + flag-on registers cron 15 20 * * * {timezone UTC}, test-count guards rebaselined (62->61 / 84->83 + dedicated flag-on 84 test), docs note flag stays OFF until RAG-FTS-BUILD-MEMORY-BOUND verified. On PASS -> done_verified (blocks ALPHA-S2-RAG-FTS-REBUILD-CRON stays until parent).",
-    "updated_at": "2026-07-15T16:54:53Z",
-    "updated_by": "dev-team (router: CRON-SAFETY-GATE code complete+pushed d7e04b630, RAW pre-check PASS, qa gate dispatched)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "CRON-SAFETY-GATE DONE_VERIFIED (qa PASS 5/5 + DJ-GATE-1 closed, ab71bee08). rag-fts rebuild cron is on main but default-OFF (CRON_RAG_FTS_REBUILD_ENABLED unset) — non-deployment enforced. Parked: ALPHA-S2-RAG-FTS-REBUILD-CRON blocked on RAG-FTS-BUILD-MEMORY-BOUND (review, done_verified WITHHELD until rag corpus re-populates to ~56k rows + AC#1 scale re-run). Next dispatcher tick: clean preflight + BOUNDED-1 eval. Gateway /gateway 502 still USER-escalated (dashboard-managed --token tunnel, aggregator origin down).",
+    "updated_at": "2026-07-15T17:08:19Z",
+    "updated_by": "dev-team (router: CRON-SAFETY-GATE review->done_verified, qa PASS + DJ-GATE-1 SATISFIED; head idle)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -9635,14 +9635,70 @@
         "verified_by": "qa",
         "commit": "ae45fd0e7",
         "merge_gate": "APPROVED"
+      },
+      {
+        "id": "ALPHA-S2-RAG-FTS-CRON-SAFETY-GATE",
+        "title": "Gate ragFtsRebuildCron behind a default-OFF enable flag so a stray mcp-server redeploy cannot arm the nightly 20:15 UTC rag-service OOM before the rag capacity fix lands",
+        "owner": "developer",
+        "status": "DONE_VERIFIED",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "wave": 2,
+        "zone": "apps/mcp-server/",
+        "sprint": "FLOW-PRICE-ALPHA-LOOP",
+        "depends": [],
+        "created_by": "po-triage-alpha-s2-qa-block",
+        "created_at": "2026-07-15T04:55:19Z",
+        "next_agent": "qa",
+        "supervised": false,
+        "blocks": [
+          "ALPHA-S2-RAG-FTS-REBUILD-CRON"
+        ],
+        "note": "SAFETY / LATENT-LANDMINE DEFUSE. ragFtsRebuildCron code is ALREADY on origin/main (35cc8cd56) but the live mcp-server container predates it (deploy-pending). The moment ops redeploys mcp-server for ANY reason, this cron arms and will OOM-crash rag-service nightly at 20:15 UTC (per qa 2af76decc — rebuild can't complete at 56k rows in 768m; service-wide RAG/search outage each restart) — strictly worse than the silent BM25-staleness gap the cron fixes. This task makes the 'parked BLOCKED' disposition actually ENFORCE non-deployment: add an explicit enable flag (e.g. CRON_RAG_FTS_REBUILD_ENABLED, default false) gating registration of ragFtsRebuildCron in schedulerJobTable.ts so the job is NOT scheduled unless deliberately enabled. Do NOT disable via CRON_RAG_FTS_REBUILD='' — nullish-coalescing (??) ignores '' and an empty cron expr crashes croner at boot. RUN-NOW / INDEPENDENT — no dependency; MUST land before the next mcp-server redeploy. The flag is flipped ON only as the final step of unblocking ALPHA-S2 (after RAG-FTS-BUILD-MEMORY-BOUND verified). Not user-gated (code + env default; deploys via normal gated rebuild).",
+        "acceptance_criteria": "1. New default-false enable flag (e.g. CRON_RAG_FTS_REBUILD_ENABLED) gates ragFtsRebuildCron registration in schedulerJobTable.ts — with the flag unset/false, buildJobTable()/registerJobTable() do NOT schedule ragFtsRebuildCronJob (assert via the job-table registry test). 2. Flag=true path registers exactly as today (existing behavior preserved). 3. Do NOT disable via empty CRON_RAG_FTS_REBUILD (croner-crash trap documented in note). 4. Test-count guards (schedulerFileCount / job-table registry counts) updated consistently; tsc --noEmit exit 0; mock-guard PASS. 5. Docs (cron-jobs.md / cron-registry.json) note the flag + that it stays OFF until the ALPHA-S2 rag capacity fix is verified.",
+        "test_plan": "UNIT (mocked): (a) flag unset/false -> registerJobTable() does NOT contain ragFtsRebuildCronJob. (b) flag=true -> ragFtsRebuildCronJob registered with cron '15 20 * * *'. (c) tsc exit 0, mock-guard PASS. No live deploy needed (guard is registration-time).",
+        "promoted_at": "2026-07-15T16:21:31Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-15T16:21:31Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "moved_at": "2026-07-15T16:54:53Z",
+        "moved_by": "dev-team (router: dev-mcp-server complete; RAW pre-check PASS; dispatching qa gate)",
+        "dev_result": {
+          "agent": "dev-mcp-server",
+          "commits": [
+            "db921c52d",
+            "d7e04b630"
+          ],
+          "head_synced": "d7e04b630 == origin/main",
+          "raw_precheck": "flag CRON_RAG_FTS_REBUILD_ENABLED default-OFF (?? 'false' + === 'true') at schedulerJobTable.ts:140; conditional array-spread omits ragFtsRebuildCronJob at :662 when off; empty-string safe (=== 'true' => false, no croner boot-crash per AC#3)",
+          "self_reported": "tsc --noEmit exit 0; mock-guard PASS; job-table test 20/0 (284 expect); full suite 14629 pass / 49 pre-existing fail (grep: 0 ref schedulerJobTable/ragFts/CRON_RAG_FTS/FACTORY-SCHEDULER)",
+          "pending_qa": "independent: tsc exit0, mock-guard, flag-off omits + flag-on registers cron 15 20 * * *, test-count guards 62->61 & 84->83 (+flag-on 84 test), docs note flag OFF until RAG-FTS-BUILD-MEMORY-BOUND verified, regression-set unchanged"
+        },
+        "verified_at": "2026-07-15T17:08:19Z",
+        "verified_by": "qa (router-dispatched independent gate; PASS 5/5 ACs)",
+        "qa_result": {
+          "agent": "qa",
+          "verdict": "PASS",
+          "verified_at": "2026-07-15T17:08:19Z",
+          "acs": "5/5 PASS: flag-off omits ragFtsRebuildCronJob (len 61); flag-on registers cron '15 20 * * *' {timezone UTC} (len 62); empty-string safe (=== 'true' => false, no croner boot-crash); tsc --noEmit exit0 + mock-guard PASS + rebaselined count-guards; docs (cron-jobs.md/cron-registry.json/system-map.json) note flag stays OFF until RAG-FTS-BUILD-MEMORY-BOUND verified fixed",
+          "raw": "FACTORY-SCHEDULER test 20/20 (284 expect); 18-file keyword regression sample 197/197; 0 regressions; flag absent from docker-compose.yml (stays OFF live)",
+          "dj_gate_1": "SATISFIED — sprint-FLOW-PRICE-ALPHA-LOOP-qa.md STEP qa-S15 marker present, committed ab71bee08",
+          "code_commits": [
+            "db921c52d",
+            "d7e04b630"
+          ]
+        },
+        "router_close_note": "safety gate closed: rag-fts rebuild cron ships default-OFF so 'parked BLOCKED' enforces non-deployment. blocks[] target ALPHA-S2-RAG-FTS-REBUILD-CRON STAYS blocked on RAG-FTS-BUILD-MEMORY-BOUND (memory-bound task, done_verified withheld pending corpus re-population) — this completion does NOT arm the cron."
       }
     ],
     "head": {
-      "status": "in_progress",
-      "active_task_id": "ALPHA-S2-RAG-FTS-CRON-SAFETY-GATE",
-      "next_agent": "qa",
-      "last_updated_at": "2026-07-15T16:54:53Z",
-      "last_updated_by": "dev-team (CRON-SAFETY-GATE -> review, qa gate dispatched)"
+      "status": "idle",
+      "active_task_id": null,
+      "next_agent": "router",
+      "last_updated_at": "2026-07-15T17:08:19Z",
+      "last_updated_by": "dev-team (CRON-SAFETY-GATE -> done_verified, qa PASS + DJ-GATE-1 closed)"
     },
     "ready": [],
     "review": [
@@ -10190,47 +10246,6 @@
           "ac2": "hybrid-search no-regression PASS (git show 619eea227: commit touched only env pins + comments, 0 lines changed in search()/hybrid_search()).",
           "blocker": "AC#1 literally names the ~56k-row scale (reproduced 2x via docker stats during a live rebuild); live rag_entries=116 rows, rag_service.db absent. Expected-ephemeral post-VM-crash reset (RAG LanceDB rebuilds; not a market.db-class data loss) -> cannot certify memory-bound at failure scale until corpus re-populates.",
           "idle_baseline_flag": "rag-service idle mem already ~92% of 768m bound with ZERO FTS activity (tight margin, pre-existing, heads-up for ALPHA-S2 retune)."
-        }
-      },
-      {
-        "id": "ALPHA-S2-RAG-FTS-CRON-SAFETY-GATE",
-        "title": "Gate ragFtsRebuildCron behind a default-OFF enable flag so a stray mcp-server redeploy cannot arm the nightly 20:15 UTC rag-service OOM before the rag capacity fix lands",
-        "owner": "developer",
-        "status": "REVIEW",
-        "type": "FIX",
-        "size": "S",
-        "priority": "P1",
-        "wave": 2,
-        "zone": "apps/mcp-server/",
-        "sprint": "FLOW-PRICE-ALPHA-LOOP",
-        "depends": [],
-        "created_by": "po-triage-alpha-s2-qa-block",
-        "created_at": "2026-07-15T04:55:19Z",
-        "next_agent": "qa",
-        "supervised": false,
-        "blocks": [
-          "ALPHA-S2-RAG-FTS-REBUILD-CRON"
-        ],
-        "note": "SAFETY / LATENT-LANDMINE DEFUSE. ragFtsRebuildCron code is ALREADY on origin/main (35cc8cd56) but the live mcp-server container predates it (deploy-pending). The moment ops redeploys mcp-server for ANY reason, this cron arms and will OOM-crash rag-service nightly at 20:15 UTC (per qa 2af76decc — rebuild can't complete at 56k rows in 768m; service-wide RAG/search outage each restart) — strictly worse than the silent BM25-staleness gap the cron fixes. This task makes the 'parked BLOCKED' disposition actually ENFORCE non-deployment: add an explicit enable flag (e.g. CRON_RAG_FTS_REBUILD_ENABLED, default false) gating registration of ragFtsRebuildCron in schedulerJobTable.ts so the job is NOT scheduled unless deliberately enabled. Do NOT disable via CRON_RAG_FTS_REBUILD='' — nullish-coalescing (??) ignores '' and an empty cron expr crashes croner at boot. RUN-NOW / INDEPENDENT — no dependency; MUST land before the next mcp-server redeploy. The flag is flipped ON only as the final step of unblocking ALPHA-S2 (after RAG-FTS-BUILD-MEMORY-BOUND verified). Not user-gated (code + env default; deploys via normal gated rebuild).",
-        "acceptance_criteria": "1. New default-false enable flag (e.g. CRON_RAG_FTS_REBUILD_ENABLED) gates ragFtsRebuildCron registration in schedulerJobTable.ts — with the flag unset/false, buildJobTable()/registerJobTable() do NOT schedule ragFtsRebuildCronJob (assert via the job-table registry test). 2. Flag=true path registers exactly as today (existing behavior preserved). 3. Do NOT disable via empty CRON_RAG_FTS_REBUILD (croner-crash trap documented in note). 4. Test-count guards (schedulerFileCount / job-table registry counts) updated consistently; tsc --noEmit exit 0; mock-guard PASS. 5. Docs (cron-jobs.md / cron-registry.json) note the flag + that it stays OFF until the ALPHA-S2 rag capacity fix is verified.",
-        "test_plan": "UNIT (mocked): (a) flag unset/false -> registerJobTable() does NOT contain ragFtsRebuildCronJob. (b) flag=true -> ragFtsRebuildCronJob registered with cron '15 20 * * *'. (c) tsc exit 0, mock-guard PASS. No live deploy needed (guard is registration-time).",
-        "promoted_at": "2026-07-15T16:21:31Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-15T16:21:31Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "moved_at": "2026-07-15T16:54:53Z",
-        "moved_by": "dev-team (router: dev-mcp-server complete; RAW pre-check PASS; dispatching qa gate)",
-        "dev_result": {
-          "agent": "dev-mcp-server",
-          "commits": [
-            "db921c52d",
-            "d7e04b630"
-          ],
-          "head_synced": "d7e04b630 == origin/main",
-          "raw_precheck": "flag CRON_RAG_FTS_REBUILD_ENABLED default-OFF (?? 'false' + === 'true') at schedulerJobTable.ts:140; conditional array-spread omits ragFtsRebuildCronJob at :662 when off; empty-string safe (=== 'true' => false, no croner boot-crash per AC#3)",
-          "self_reported": "tsc --noEmit exit 0; mock-guard PASS; job-table test 20/0 (284 expect); full suite 14629 pass / 49 pre-existing fail (grep: 0 ref schedulerJobTable/ragFts/CRON_RAG_FTS/FACTORY-SCHEDULER)",
-          "pending_qa": "independent: tsc exit0, mock-guard, flag-off omits + flag-on registers cron 15 20 * * *, test-count guards 62->61 & 84->83 (+flag-on 84 test), docs note flag OFF until RAG-FTS-BUILD-MEMORY-BOUND verified, regression-set unchanged"
         }
       }
     ],
