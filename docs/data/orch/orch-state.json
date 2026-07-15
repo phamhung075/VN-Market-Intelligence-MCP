@@ -374,9 +374,9 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "router",
-    "next_action": "UC-CDC-P2 DONE_VERIFIED (qa PASS 28/28 + clean-JSON-stdout proof + DJ-GATE-1 dev 32c9d1847 / qa d9625b555). Pushed on green. Next dispatcher tick: clean preflight + BOUNDED-1 idle eval. Parked/peer-owned: UC-CCA-P3 P0 (published-marker pendulum — peer PO owns); FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING + FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE (PLAN-ONLY, await planning cycle); UC-RDL-P4 (backlog supervised deliberate-start); RAG-FTS-BUILD-MEMORY-BOUND / ALPHA-S2-RAG-FTS-REBUILD-CRON (memory-bound, done_verified withheld); ~25 review-lane rows; guard-released-when-work-ends architect umbrella (PO grooming flag). USER-GATED (out of router scope): MARKET #933 correction go/no-go.",
-    "updated_at": "2026-07-15T22:36:13Z",
-    "updated_by": "dev-team (router: UC-CDC-P2 review->done_verified, qa PASS + DJ-GATE-1 closed; head idle)"
+    "next_action": "UC-CDC-P3 DONE_VERIFIED (qa PASS 8/8 + DJ-GATE-1 dev 91d61fbe4 / qa 786f9e5f2). Legacy matcher now shares the adaptive boundary dedup — single SSOT across dispatcher/preflight/firer. Pushed on green. Next dispatcher tick: clean preflight + BOUNDED-1 idle eval. Parked/peer-owned: UC-CCA-P3 P0 (published-marker pendulum — peer PO owns); FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING + FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE (PLAN-ONLY, await planning cycle); UC-RDL-P4 (backlog supervised deliberate-start); RAG-FTS-BUILD-MEMORY-BOUND / ALPHA-S2-RAG-FTS-REBUILD-CRON (memory-bound, done_verified withheld); ~25 review-lane rows; guard-released-when-work-ends architect umbrella (PO grooming flag); 45 cowork-team quarantine files (FIX-DRAIN-QUARANTINE-NONROUTABLE-SIGNALS). USER-GATED (out of router scope): MARKET #933 correction go/no-go.",
+    "updated_at": "2026-07-15T23:08:17Z",
+    "updated_by": "dev-team (router: UC-CDC-P3 review->done_verified, qa PASS + DJ-GATE-1 closed; head idle)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6491,22 +6491,6 @@
         "status_note": "PLAN-ONLY low DEBT; ZERO runtime impact (Bun strips types; both scripts already ran live). scripts/migrations/ is outside the include globs of BOTH root tsconfig.json AND apps/mcp-server/tsconfig.json, so `pnpm --filter vn-market check` never type-checks it; any router/dev 'tsc-clean' claim on those scripts is false-clean-by-omission. Design choice (architect): (a) add scripts/migrations/ (or scripts/) to an existing tsconfig include OR a dedicated scripts tsconfig; OR (b) a standalone `tsc --noEmit` pass over scripts/ wired into the check/CI gate. Then fix the 3 QA-surfaced errors (isolated tsc 5.9.3): (1) discover-consolidated-bctc-pdf.ts:395 new Blob([pdfBytes]) — Uint8Array<ArrayBufferLike> not assignable to BlobPart (shipped commit 90c975415, HPG-DISCOVER); (2)+(3) reparse-bctc-reports.ts 2 pre-existing own errors (already shipped — confirms gap is directory-wide, not a single-task regression). AC: chosen tsc gate covers scripts/migrations/ AND all 3 errors resolved AND `pnpm check` (or the new pass) green."
       },
       {
-        "id": "UC-CDC-P3",
-        "type": "FIX",
-        "title": "Add last_fired boundary dedup to the matcher legacy mode (one SSOT dedup for dispatcher, preflight, firer)",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "CONFIRMED",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#cowork-dispatcher-cron-P3",
-        "note": "Legacy matcher mode lacks the last_fired boundary dedup the adaptive path has, so slots can double-fire. Add the same dedup; single SSOT across dispatcher/preflight/firer.",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po"
-      },
-      {
         "id": "UC-CCA-P3",
         "type": "SPRINT-S",
         "title": "PUBLISHED-MARKER LIFECYCLE — one marker-gate skill, publish-state-conditioned immunity; wire into the 6 copy-pasted gates (P0: caused CONFIRMED user-visible MARKET double-publish 2026-07-15 ids 932+933)",
@@ -8412,13 +8396,69 @@
         "closed_at": "2026-07-12T04:27:30Z"
       }
     ],
-    "done_verified": [],
+    "done_verified": [
+      {
+        "id": "UC-CDC-P3",
+        "type": "FIX",
+        "title": "Add last_fired boundary dedup to the matcher legacy mode (one SSOT dedup for dispatcher, preflight, firer)",
+        "status": "DONE_VERIFIED",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "CONFIRMED",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#cowork-dispatcher-cron-P3",
+        "note": "Legacy matcher mode lacks the last_fired boundary dedup the adaptive path has, so slots can double-fire. Add the same dedup; single SSOT across dispatcher/preflight/firer.",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "promoted_at": "2026-07-15T22:52:08Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-15T22:52:18Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "moved_at": "2026-07-15T23:04:24Z",
+        "moved_by": "dev-team (router: dev COMPLETE + RAW pre-check PASS 4/4; SSOT verified, slot-claim.md correction legit; dispatching qa gate)",
+        "dev_result": {
+          "agent": "developer",
+          "verdict": "COMPLETE",
+          "commits": [
+            "91d61fbe4"
+          ],
+          "origin_state": "on HEAD, unpushed (router pushes on green after qa PASS, together with this tick's board commit). board still IN_PROGRESS -> two-key gate intact, done_verified NOT reached.",
+          "raw_precheck": "PASS 4/4 — (1) scope clean: 91d61fbe4 = cowork-match-slots.js(+84)+.test.js(+106)+slot-claim.md(+12)+sprint-ULTRACODE-AUDIT-FIXALL-developer.md(+28) ONLY; orch-state.json absent (no board self-flip); ZERO .sh touched (SSOT in JS matcher); no peer sweep. (2) board UC-CDC-P3 still IN_PROGRESS, review=25/done_verified=0. (3) DJ-GATE-1: STEP developer-S4 task-id UC-CDC-P3 (journal L51-52). (4) SSOT: dispatcher/preflight(:64)/firer(:91) all default node cowork-match-slots.js; grep confirms neither .sh carries own last_fired logic -> inherit; isSuppressedByBoundaryDedup(L99)+legacyCandidates(L110) at BOTH legacy returns (L187 pure-legacy / L199 cadence-fallback), exported L302; adaptive null-policy fallthrough deliberately untouched. slot-claim.md R3 rationale correction = legit (false 'lock persists across ticks' contradicted Release-note TTL=180s release-after-spawn; redirected to real cross-tick dedup = matcher boundary dedup + published marker).",
+          "self_reported": "matcher 26/26 (16 baseline + 10 new TC-15..23: at-boundary suppressed / after-boundary suppressed / before-boundary fires / null fires / malformed fires + 4 direct unit); regression cowork-tick-preflight.test.sh 27/27 + cowork-guaranteed-slot-firer.test.sh 28/28; total 81/81. Adaptive TC-9..14 unchanged. shellcheck N/A (no .sh touched); sanity SC1091 info on unmodified callers = baseline.",
+          "pending_qa": "independent re-run: (1) node scripts/agents-flow/cowork-match-slots.test.js -> expect 26/26, RAW-count BOTH numbers (baseline 16). (2) legacy-dedup TCs: at/after nominal cron boundary with last_fired set -> slot SUPPRESSED; before-boundary / null / malformed last_fired -> slot FIRES (EC-3 backward-compat). (3) SSOT proof: isSuppressedByBoundaryDedup applied at BOTH legacy return points via shared legacyCandidates; NO copy in the 3 .sh callers (grep). (4) adaptive path UNCHANGED — TC-9..14 identical assertions; adaptive null-policy fallthrough (L184-191) not touched. (5) boundary reuse: dedup uses existing snapToCronBoundary, not a 2nd impl. (6) regression: cowork-tick-preflight.test.sh 27/27 + cowork-guaranteed-slot-firer.test.sh 28/28 (RAW). (7) slot-claim.md correction accurate — the per-slot claim really is released right after spawn (try/finally), so 'lock persists across ticks' was false; cross-tick dedup really is the matcher + published marker. (8) DJ-GATE-1 marker RAW-verify. tsc/mock-guard N/A (bash+node script, not the tsc-checked app). On PASS -> done_verified + push on green (91d61fbe4 unpushed + this tick's board commit) + post-cycle. NO origin_signal to flip."
+        },
+        "verified_at": "2026-07-15T23:08:17Z",
+        "verified_by": "qa (router-dispatched independent gate; PASS — 8/8 checks RAW-reproduced)",
+        "qa_result": {
+          "agent": "qa",
+          "verdict": "PASS",
+          "verified_at": "2026-07-15T23:08:17Z",
+          "tests": "cowork-match-slots.test.js -> 26 passed 0 failed (baseline 16 + 10 new TC-15..23). Legacy-dedup via matchSlots (TC-15..19): last_fired at boundary(02:15:00Z)/after(02:15:20Z) -> 0 results (suppressed); before(02:00:00Z)/null/malformed -> 1 result (fires, EC-3). TC-20..23 unit-test isSuppressedByBoundaryDedup directly, same 4 outcomes.",
+          "ssot_proof": "git show 91d61fbe4 --stat -> 4 files, ZERO .sh. 3 callers inherit: match-slots.md:23 runs the script; cowork-tick-preflight.sh:64 + cowork-guaranteed-slot-firer.sh:91 both default SLOT_MATCHER_CMD to node cowork-match-slots.js; none implements own last_fired/boundary filtering. isSuppressedByBoundaryDedup applied at BOTH legacy return points via shared legacyCandidates.",
+          "adaptive_unchanged": "git show 91d61fbe4 .js -> 6 hunks (header comment, helper insert, 2 legacy-return swaps, nowUnix relocation, module.exports); NO hunk touches evaluateCadence/cadence-due body (~L207-267) incl null-policy_id fallthrough. TC-9..14 pass with unchanged assertions.",
+          "boundary_reuse": "isSuppressedByBoundaryDedup (cowork-match-slots.js:103) calls existing snapToCronBoundary(nowUnix,cron) directly — no 2nd boundary impl.",
+          "regression": "cowork-tick-preflight.test.sh 27/27; cowork-guaranteed-slot-firer.test.sh 28/28 (both RAW-counted, match expected).",
+          "slot_claim_correction": "ACCURATE — corrected text ('per-slot claim does NOT provide cross-tick dedup; real mechanism = last_fired boundary dedup + published-marker gate') is internally consistent with the same doc's Release note (lock released after each spawn attempt via try/finally, TTL=180s). The old 'lock persists across ticks' was genuinely false.",
+          "shellcheck_tsc": "N/A explicit — no .sh touched; cowork-match-slots.js is a plain Node script outside tsconfig include ([src/**/*, *.ts]) and outside bun-test/mock-guard; its .test.js runs via plain node.",
+          "dj_gate_1": "SATISFIED — dev STEP developer-S4 task-id UC-CDC-P3 (91d61fbe4); qa STEP qa-S<n> task-id UC-CDC-P3 PASS (786f9e5f2, single-file pathspec +46, no peer sweep).",
+          "code_commits": [
+            "91d61fbe4",
+            "786f9e5f2"
+          ]
+        },
+        "router_close_note": "UC-CDC-P3 (ULTRACODE-AUDIT-FIXALL) DONE_VERIFIED. Added single-SSOT last_fired boundary dedup to the cowork matcher's LEGACY mode (adaptive already had it): isSuppressedByBoundaryDedup reuses snapToCronBoundary, applied via one shared legacyCandidates() at both legacy return points (pure-legacy + cadence-unavailable fallback). All 3 callers (dispatcher/preflight/firer) inherit — ZERO .sh copies. Legacy slots can no longer double-fire when multiple callers re-entrantly evaluate the same tick. Router RAW pre-check PASS 4/4 (SSOT verified, slot-claim.md R3 rationale correction = legit correct-deviation) + qa independent PASS 8/8 (legacy-dedup through matchSlots, regression 27/27+28/28, adaptive TC-9..14 unchanged, DJ-GATE-1 both). Bundled slot-claim.md fix corrects a false 'lock persists across ticks' comment -> real mechanism. BOUNDED-1 idle-pickup shipped a confirmed size-S dependency-free code fix = product, not churn. Pushed on green."
+      }
+    ],
     "head": {
       "status": "idle",
       "active_task_id": null,
       "next_agent": "router",
-      "last_updated_at": "2026-07-15T22:36:13Z",
-      "last_updated_by": "dev-team (UC-CDC-P2 -> done_verified, qa PASS + DJ-GATE-1 closed)"
+      "last_updated_at": "2026-07-15T23:08:17Z",
+      "last_updated_by": "dev-team (UC-CDC-P3 -> done_verified, qa PASS + DJ-GATE-1 closed)"
     },
     "ready": [],
     "review": [
@@ -8987,7 +9027,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-15T22:22:01Z",
+    "last_triaged_at": "2026-07-15T22:52:08Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": []
   },
