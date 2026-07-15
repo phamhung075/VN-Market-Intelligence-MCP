@@ -7500,6 +7500,22 @@
         "created_at": "2026-07-15T01:29:29Z",
         "created_by": "po (triage bctc-analyst bug-escalation 2026-07-15T01:07Z tick)",
         "source": "docs/signals/processed/bctc-analyst-20260715T003000Z.json"
+      },
+      {
+        "id": "SPIKE-RAG-HYBRID-MAXDISTANCE-NOOP",
+        "title": "hybrid-search max_distance is a no-op in hybrid mode — RRF fused-rank score reported under the distance key; decide intended semantics",
+        "owner": "developer",
+        "status": "BACKLOG",
+        "type": "SPIKE",
+        "mode": "spike",
+        "size": "S",
+        "priority": "P3",
+        "zone": "apps/rag-service/",
+        "timebox": 120,
+        "question": "In rag-service hybrid_search(), should max_distance filter on the vector-leg (embedding) distance, or is the current RRF-fused-rank-score-reported-under-the-distance-key intended? Decide semantics, then either wire max_distance onto the vector leg OR rename/document the key so callers are not misled.",
+        "created_at": "2026-07-15T17:28:38Z",
+        "created_by": "po (dev-team tick 17:07Z signal triage — sig dev-team-20260715T160042Z-rag-hybrid-maxdistance-noop)",
+        "note": "PRE-EXISTING / NON-BLOCKING tech-debt surfaced by qa during RAG-FTS-BUILD-MEMORY-BOUND live-verify. NOT a regression (git show 619eea227 = 0 lines changed in search()/hybrid_search()). Evidence: with default max_distance=0.8, hybrid=true returns results while hybrid=false returns 0 for the identical query; hybrid distance values cluster tight (0.0216-0.0242) consistent with an RRF fused-rank score under the distance key => max_distance effectively a no-op in hybrid mode. Not urgent-dispatched: groom by rank when rag-service has free capacity. Related: RAG-FTS-BUILD-MEMORY-BOUND (review), ALPHA-S2-RAG-FTS-REBUILD-CRON (backlog/BLOCKED)."
       }
     ],
     "closed_sprints": [
@@ -10246,7 +10262,8 @@
           "ac2": "hybrid-search no-regression PASS (git show 619eea227: commit touched only env pins + comments, 0 lines changed in search()/hybrid_search()).",
           "blocker": "AC#1 literally names the ~56k-row scale (reproduced 2x via docker stats during a live rebuild); live rag_entries=116 rows, rag_service.db absent. Expected-ephemeral post-VM-crash reset (RAG LanceDB rebuilds; not a market.db-class data loss) -> cannot certify memory-bound at failure scale until corpus re-populates.",
           "idle_baseline_flag": "rag-service idle mem already ~92% of 768m bound with ZERO FTS activity (tight margin, pre-existing, heads-up for ALPHA-S2 retune)."
-        }
+        },
+        "po_triage_note_reverify": "PO TRIAGE 2026-07-15T17:28:38Z (dev-team tick 17:07Z, sig dev-team-20260715T160042Z-rag-corpus-repopulation-scale-reverify): corpus RE-POPULATION CONFIRMED CLIMBING — live GET :5002/embed/health index_size=297 rows now vs 116 @ qa 16:01Z verify (+181 in ~1.5h). Re-embed pipeline ALIVE => NOT stuck-at-116, so NO new bug for dev-rag-service. BUT 297 << ~56k representative scale => AC#1 (no-OOM at ~56k) re-run stays UN-testable now: this row STAYS review, done_verified WITHHELD, blocked_on=rag-corpus-repopulation-to-representative-scale UNCHANGED (TIME-GATED on wall-clock, NOT a dispatch — do NOT force a rebuild against a 116/297-row corpus). GATE to lift WITHHELD (= signal action 2): once corpus ~= representative scale, re-run AC#1 (POST /admin/rebuild-fts under 768m cgroup, docker stats peak-mem, 2x), record real peak-mem => then unblock ALPHA-S2 deadline retune + BM25 round-trip. Heads-up carried: rag-service idle mem ~92% of 768m with ZERO FTS activity (tight margin — ALPHA-S2 retune input). Tech-debt spin-off (signal 2, hybrid max_distance no-op) minted separately as SPIKE-RAG-HYBRID-MAXDISTANCE-NOOP (backlog, P3, non-blocking)."
       }
     ],
     "qa": [],
@@ -10266,8 +10283,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-15T16:21:31Z",
-    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
+    "last_triaged_at": "2026-07-15T17:28:38Z",
+    "last_triaged_by": "po (dev-team tick 17:07Z signal triage: RAG-FTS review-note + hybrid-maxdistance SPIKE)",
     "in_progress": []
   },
   "_meta": {
