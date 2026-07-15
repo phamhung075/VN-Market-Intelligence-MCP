@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-15T05:12:41Z",
+    "matched_slots": [
+      "news-scout-sentiment"
+    ],
+    "won_slots": [
+      "news-scout-sentiment"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 7,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "news-scout-sentiment": "cadence"
+    },
+    "cadence_minutes": {
+      "news-scout-sentiment": 60
+    },
+    "last_fired_timestamp": "2026-07-15T05:11:55Z",
+    "last_fired_slots": [
+      "news-scout-sentiment"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "05:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 4,
+    "note": "05:00Z tick FIRE: news-scout-sentiment (gatherer-standard, cadence 60min, prior last_fired 2026-07-14T05:08Z → 24h+ stale → due). adaptive mode (pressure fresh at claim, emitted 04:52:31Z <20min). No calendar suppress (open); no freshness downgrade (backlog=4!=0 AND open); not CHEF. emit_pressure_state success, cycle_snapshot_promoted:false (host/container path split, benign — news-scout falls back to direct get_cycle_bootstrap), returned stale_warning:true -> next tick likely LEGACY. cycle-snapshot-05:10.json written host-side (bootstrap 9213B)."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-15T05:12:41Z",
+  "_processed": {
+    "fingerprint": "562aafa7a65f4d23b6ab85b916158634716ac681b305d7911a2e0941283a9e7d",
+    "processedAt": "2026-07-15T05:19:18Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

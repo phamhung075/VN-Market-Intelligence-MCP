@@ -1,0 +1,25 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "gateway-outage",
+  "priority": "P1",
+  "createdAt": "2026-07-15T05:33:29Z",
+  "payload": {
+    "tick": "2026-07-15T05:15Z",
+    "symptom": "vn-market MCP downstream hung at app layer — all tool calls time out (curl exit 28, 0 bytes received) over ~2min / 8 consecutive attempts",
+    "diagnosis": "TCP/TLS connect to zenmidi.com succeeds in 0.028s and base host HEAD returns 404 instantly (edge/Cloudflare UP); MCP POST to /vn-market/mcp accepts connection but never responds → application-layer hang of gateway or vn-market downstream, not a network outage. Matches known failure: gateway stale SSE after downstream restart / hung downstream container.",
+    "dispatcher_action": "ABORTED spawns this tick — no per-slot tokens claimed, no last_fired stamped (chef-morning + alert-commander-market re-fire on next healthy tick; guaranteed morning dish DEFERRED not lost). Fire-election lock cron:cowork:2026-07-15T05:15Z left to TTL auto-expire (~05:25Z, MCP release impossible).",
+    "remedy": "ops: docker ps / inspect gateway + proxy + vn-market containers; restart the hung service(s) to restore MCP transport (restart, not rebuild/swap). Escalate to user only if a gated/destructive action is required.",
+    "matched_slots_pre_abort": [
+      "chef-morning (guaranteed morning CHEF)",
+      "alert-commander-market"
+    ],
+    "chef_mutex_applied": true
+  },
+  "_processed": {
+    "fingerprint": "3b2dc875ad2d5ef09c2ae531187e1024e1c29a64ff33cb7e5a9e176a0f20dc8d",
+    "processedAt": "2026-07-15T05:51:58Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

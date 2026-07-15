@@ -371,12 +371,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "dev-team",
-    "next_action": "po triage COMPLETE — ALPHA-S2-RAG-FTS-REBUILD-CRON parked BLOCKED behind RAG-FTS-BUILD-MEMORY-BOUND (dev-rag-service, ROOT cause: bound _build_fts_index memory/time) + ALPHA-S2-RAG-FTS-CRON-SAFETY-GATE (dev-mcp-server, disarm cron until rag fix verified). in_progress now empty (WIP=0). Router: release umbrella mutex + jump:end — ALPHA-S2 no longer actively relaying.",
-    "updated_at": "2026-07-15T04:55:19Z",
-    "updated_by": "po (triage qa-BLOCK ALPHA-S2 -> parked BLOCKED + minted 2 blockers RAG-FTS-BUILD-MEMORY-BOUND + ALPHA-S2-RAG-FTS-CRON-SAFETY-GATE)"
+    "status": "in_progress",
+    "active_task_id": "RAG-FTS-BUILD-MEMORY-BOUND",
+    "next_agent": "qa",
+    "next_action": "HOLD — do NOT spawn qa yet. Code fix 619eea227 landed + unit-green (160/160), but AC#1/#2 LIVE-verify (768m rebuild x2, in-container peak-mem) is BLOCKED by a Docker Desktop host outage (~05:31Z; 9-svc stack down; gateway timing out). ops(a076b593) is recovering the stack. Router spawns qa ONLY after ops confirms the 9-service stack + gateway are healthy, then qa runs the live test_plan.",
+    "updated_at": "2026-07-15T06:21:01Z",
+    "updated_by": "dev-team (dev-rag-service DONE 619eea227 unit-green 160/160; HOLD qa live-verify on docker-outage; ops a076b593 recovering stack)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2621,29 +2621,6 @@
         ],
         "blocked_reason": "rag-service _build_fts_index() OOM-crashes 768m container at ~56254-row corpus (qa 2af76decc, reproduced 2/2); behavioral BM25 round-trip DoD unmeetable until RAG-FTS-BUILD-MEMORY-BOUND bounds the rebuild AND ALPHA-S2-RAG-FTS-CRON-SAFETY-GATE keeps the cron disarmed in the interim.",
         "po_triage_note": "PO DISPOSITION 2026-07-15: mcp-server code (35cc8cd56, AHEAD=0) is CLEAN + mergeable — NOT a code defect, so no fixer/dev-mcp-server round on THIS row. Remaining ALPHA-S2 scope is purely the mcp-server-side tail once its two blockers clear: (i) re-tune ragRebuildFts() 90s deadline to RAG-FTS-BUILD-MEMORY-BOUND's reported steady-state wall-time + margin (90s provably insufficient — 250s+ observed and climbing with corpus); (ii) flip ALPHA-S2-RAG-FTS-CRON-SAFETY-GATE enable flag ON; (iii) re-run the live BM25 nonce round-trip DoD (test_plan BEHAVIORAL a-e). DESIGN-PREMISE RE-SCOPE: brief 2026-07-15-alpha-s2-rag-fts-rebuild-cron.md sized against 14k rows; live corpus ~56k and GROWING — any fix must be corpus-size-INDEPENDENT (bigger mem limit or longer deadline alone = moving-target band-aid). Path #1 (ops mem-limit bump) intentionally NOT minted standalone: alone it does not unblock (250s>90s is memory-independent) and cannot be sized until RAG-FTS-BUILD-MEMORY-BOUND reports the footprint — folded into that task's DoD as a possible belt-and-suspenders."
-      },
-      {
-        "id": "RAG-FTS-BUILD-MEMORY-BOUND",
-        "title": "Bound rag-service _build_fts_index() memory + wall-time so the nightly FTS rebuild completes at ANY corpus size (currently OOM-crashes the 768m container at ~56k rows)",
-        "owner": "developer",
-        "status": "BACKLOG",
-        "type": "FIX",
-        "size": "M",
-        "priority": "P1",
-        "wave": 2,
-        "zone": "apps/rag-service/",
-        "sprint": "FLOW-PRICE-ALPHA-LOOP",
-        "depends": [],
-        "created_by": "po-triage-alpha-s2-qa-block",
-        "created_at": "2026-07-15T04:55:19Z",
-        "next_agent": "dev-rag-service",
-        "supervised": false,
-        "blocks": [
-          "ALPHA-S2-RAG-FTS-REBUILD-CRON"
-        ],
-        "note": "ROOT CAUSE of ALPHA-S2-RAG-FTS-REBUILD-CRON qa-BLOCK (qa 2af76decc, reproduced 2/2). _build_fts_index() (apps/rag-service/infrastructure/repositories.py:325-345) calls LanceDB-native create_index('title'/'summary', config=FTS(), replace=True) over the full rag_entries table; at the corpus's current ~56254 rows (4x the DFR-P3 14k-row design premise) the build pins memory 90-99.9% of the 768m cgroup ceiling (docker-compose.yml ~L159) for 250s+ then hard-restarts the container (RestartCount 258->260). Fix MUST be corpus-size-INDEPENDENT (the corpus only grows via ongoing ragIndex() writes — the exact growth this whole cron exists to keep the BM25 leg fresh against). START by investigating whether LanceDB FTS build at the pinned version (0.33.0 Docker / 0.25.3 local) exposes a bounded-memory / on-disk writer-heap config (e.g. writer_heap_size, with_position=False, Tantivy budget); if the native builder cannot be bounded below a sane ceiling, escalate findings with concrete fallbacks (modest ops-gated mem-limit bump as belt-and-suspenders, or a chunked/segmented rebuild). NOT user-gated (rag-service code; deploys via normal gated rebuild). NO active incident — cron is deploy-pending, rag-service stable-at-rest 26% idle; this is a pre-deploy capacity fix, not an outage.",
-        "acceptance_criteria": "1. POST /admin/rebuild-fts completes ({status:ok}) on the LIVE ~56k-row rag_entries corpus WITHOUT pinning the 768m cgroup ceiling — memory stays bounded regardless of corpus size (verify via docker stats during a live rebuild, reproduced 2x). 2. Report the completed rebuild's steady-state PEAK MEMORY + WALL-CLOCK time in the task report (this number sizes ALPHA-S2's deadline retune AND any ops mem-limit decision). 3. Investigate/document whether LanceDB FTS build at the pinned version supports a bounded-memory writer config; if not, escalate with concrete fallback options rather than silently raising the limit. 4. search()/hybrid_search() and the lazy _fts_index_built per-container fallback UNCHANGED. 5. Zero new tables/DDL.",
-        "test_plan": "LIVE (qa, post-fix): (a) confirm rag_entries index_size ~56k via /embed/health. (b) POST /admin/rebuild-fts directly — docker stats memory trace stays UNDER the 768m ceiling to completion, {status:ok} returned, reproduced 2x. (c) record peak-mem + elapsed. (d) POST /search hybrid:true returns sane RRF results — no regression. Then hand the recorded timing to ALPHA-S2 for its deadline retune + final BM25 round-trip."
       },
       {
         "id": "ALPHA-S2-RAG-FTS-CRON-SAFETY-GATE",
@@ -9684,11 +9661,11 @@
       }
     ],
     "head": {
-      "status": "idle",
-      "active_task_id": null,
-      "next_agent": "dev-team",
-      "last_updated_at": "2026-07-15T04:55:19Z",
-      "last_updated_by": "po (ALPHA-S2 qa-BLOCK triaged -> parked BLOCKED; 2 blockers minted)"
+      "status": "in_progress",
+      "active_task_id": "RAG-FTS-BUILD-MEMORY-BOUND",
+      "next_agent": "qa",
+      "last_updated_at": "2026-07-15T06:21:01Z",
+      "last_updated_by": "dev-team (RAG-FTS-BUILD-MEMORY-BOUND dev->qa, HOLD on docker-outage)"
     },
     "ready": [],
     "review": [
@@ -10205,7 +10182,37 @@
     },
     "last_triaged_at": "2026-07-15T03:20:06Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "RAG-FTS-BUILD-MEMORY-BOUND",
+        "title": "Bound rag-service _build_fts_index() memory + wall-time so the nightly FTS rebuild completes at ANY corpus size (currently OOM-crashes the 768m container at ~56k rows)",
+        "owner": "developer",
+        "status": "IN_PROGRESS",
+        "type": "FIX",
+        "size": "M",
+        "priority": "P1",
+        "wave": 2,
+        "zone": "apps/rag-service/",
+        "sprint": "FLOW-PRICE-ALPHA-LOOP",
+        "depends": [],
+        "created_by": "po-triage-alpha-s2-qa-block",
+        "created_at": "2026-07-15T04:55:19Z",
+        "next_agent": "qa",
+        "supervised": false,
+        "blocks": [
+          "ALPHA-S2-RAG-FTS-REBUILD-CRON"
+        ],
+        "note": "ROOT CAUSE of ALPHA-S2-RAG-FTS-REBUILD-CRON qa-BLOCK (qa 2af76decc, reproduced 2/2). _build_fts_index() (apps/rag-service/infrastructure/repositories.py:325-345) calls LanceDB-native create_index('title'/'summary', config=FTS(), replace=True) over the full rag_entries table; at the corpus's current ~56254 rows (4x the DFR-P3 14k-row design premise) the build pins memory 90-99.9% of the 768m cgroup ceiling (docker-compose.yml ~L159) for 250s+ then hard-restarts the container (RestartCount 258->260). Fix MUST be corpus-size-INDEPENDENT (the corpus only grows via ongoing ragIndex() writes — the exact growth this whole cron exists to keep the BM25 leg fresh against). START by investigating whether LanceDB FTS build at the pinned version (0.33.0 Docker / 0.25.3 local) exposes a bounded-memory / on-disk writer-heap config (e.g. writer_heap_size, with_position=False, Tantivy budget); if the native builder cannot be bounded below a sane ceiling, escalate findings with concrete fallbacks (modest ops-gated mem-limit bump as belt-and-suspenders, or a chunked/segmented rebuild). NOT user-gated (rag-service code; deploys via normal gated rebuild). NO active incident — cron is deploy-pending, rag-service stable-at-rest 26% idle; this is a pre-deploy capacity fix, not an outage.",
+        "acceptance_criteria": "1. POST /admin/rebuild-fts completes ({status:ok}) on the LIVE ~56k-row rag_entries corpus WITHOUT pinning the 768m cgroup ceiling — memory stays bounded regardless of corpus size (verify via docker stats during a live rebuild, reproduced 2x). 2. Report the completed rebuild's steady-state PEAK MEMORY + WALL-CLOCK time in the task report (this number sizes ALPHA-S2's deadline retune AND any ops mem-limit decision). 3. Investigate/document whether LanceDB FTS build at the pinned version supports a bounded-memory writer config; if not, escalate with concrete fallback options rather than silently raising the limit. 4. search()/hybrid_search() and the lazy _fts_index_built per-container fallback UNCHANGED. 5. Zero new tables/DDL.",
+        "test_plan": "LIVE (qa, post-fix): (a) confirm rag_entries index_size ~56k via /embed/health. (b) POST /admin/rebuild-fts directly — docker stats memory trace stays UNDER the 768m ceiling to completion, {status:ok} returned, reproduced 2x. (c) record peak-mem + elapsed. (d) POST /search hybrid:true returns sane RRF results — no regression. Then hand the recorded timing to ALPHA-S2 for its deadline retune + final BM25 round-trip.",
+        "started_at": "2026-07-15T05:20:30Z",
+        "started_by": "dev-team (BOUNDED-1 idle-pickup FIX-S; parent ALPHA-S2 blocked-on-this)",
+        "router_route_note": "dev-rag-service DONE 619eea227 (LANCE_FTS_NUM_SHARDS=1 + PARTITION_SIZE=32 module-import env pins, corpus-size-independent; unit 160/160, tsc OK). Live AC#1/#2 (768m rebuild x2 + in-container peak-mem) pending qa BUT blocked_on docker-outage-ops-recovery (ops a076b593). Local proxy: unbounded 3.28GB -> bounded 1.37GB max RSS. Ops-gated fallback if still tight: compose 768m->1024m (ops decides, not applied).",
+        "dev_commit": "619eea227",
+        "dev_completed_at": "2026-07-15T06:21:01Z",
+        "blocked_on": "docker-outage-ops-recovery"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
