@@ -86,6 +86,32 @@ after spawn by design, so the marker is the ONLY surviving guard for the content
 Prior art — this is the exact failure the gate was built to close:
 `docs/signals/cowork-chef-doublepublish-2026-06-30.md` (FIX-A → chef same-tick mutex).
 
+## ALREADY ON THE BOARD — do NOT mint a duplicate (added 2026-07-15T20:09Z, tick 20:00Z)
+
+Board probe at tick 20:00Z. This defect is **already specced**; it was never prioritized.
+Triage should **dedup-promote**, not mint:
+
+| Board row | Lane | Relevance |
+|---|---|---|
+| `FIX-CHEF-PUBLISHED-MARKER-RELEASE` | BACKLOG | **Exact defect.** "chef.md cleanup releases published:`<slot>`:`<date>` marker post-publish — defeats F…". Today it fired for real. This row is the fix. |
+| `FIX-CHEF-EVENING-DUP-DATE-MISLABEL-INVESTIGATE` | BACKLOG | Asks to "confirm/refute chef-evening **07-14** duplicate-publish". **Today's ids 932+933 CONFIRM the class.** This row can move from investigate → fix. |
+| `FU-CHEF-MARKER-INFLOW` | BACKLOG | chef.md self-enforces published-marker before send_telegram, per-cadence key. |
+| `UC-CCA-P3` | BACKLOG | One published-marker-gate skill with mandatory release-on-no-publish. Note: "release-on-no-publish" is the *correct* inverse — do not let it re-introduce release-on-publish. |
+
+**Recurrence count — this is a repeat, not a first sighting:**
+- 2026-06-30 — `cow-20260630T0515-chef-doublepublish` (RESOLVED, drove the same-tick CHEF mutex FIX-A)
+- 2026-07-14 — suspected, captured as the INVESTIGATE row above
+- 2026-07-15 — **CONFIRMED** (ids 932+933), this handoff
+
+Per `feedback_recurring_bug_escalation` (2+ occurrences → block), this warrants rank-1 banding
+rather than another BACKLOG parking.
+
+**Related prior signal (unverified fate):** `cowork-chefmarker-leak-2026-07-03T06:31:50Z`
+(the *inverse* mode — marker leaked when it should have been released) went `READ` and was
+cold-evicted to `docs/data/orch/archive/2026-07.json` with **no `origin_signal_id`
+back-reference on any board row**. `FU-CHEF-MARKER-INFLOW` / `UC-CCA-P3` cover that topic, so it
+may have been folded in without the back-ref — **not verified, do not assume it was dropped.**
+
 ## Suggested next step (po / dev-team triage)
 
 Confirm whether other cowork publishers (alert-commander, fb-market-poster, digest-predict)

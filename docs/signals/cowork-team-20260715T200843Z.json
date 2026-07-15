@@ -1,0 +1,61 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-15T20:08:43Z",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "news-scout-offhours": "cron",
+      "market-watcher-offhours": "cron",
+      "alert-commander-critical": "cron"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": null,
+      "market-watcher-offhours": null,
+      "alert-commander-critical": null
+    },
+    "last_fired_timestamp": "2026-07-15T20:08:10.699Z",
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "20:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 0,
+    "signal_backlog": 2,
+    "note": "legacy mode forced by stale_warning=true on a 14.7min-old pressure-state (age < 20min threshold) — AC-P1-6-3 unconditional fallback. cycle_snapshot_promoted=false for 2nd consecutive tick (snapshot written as cycle-snapshot-20:07.json, nominal tick 20:00) — reproduces open signal cow-20260715T195340. Signal drain: 2 NEW rows left NEW deliberately (to:po = cross-team, dev-team drains at :07; marking READ per main.md Step 0a would starve drain-signals.md:22 which filters status==NEW)."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-15T20:08:43Z"
+}
