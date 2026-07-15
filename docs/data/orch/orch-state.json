@@ -371,12 +371,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "RAG-FTS-BUILD-MEMORY-BOUND",
-    "next_agent": "qa",
-    "next_action": "HOLD (user-escalated 06:32Z) — do NOT spawn qa. Fix 619eea227 landed + unit-green 160/160; AC#1/#2 live-verify BLOCKED by Docker Desktop VM crash ~05:31Z. ops(a076b593) exhausted headless CLI recovery; daemon socket gone -> USER must restart Docker Desktop GUI. market_data UNTOUCHED. On daemon return: resume ops(a076b593) non-destructive 9-svc bring-up (~15-20min) + volume verify -> hand back -> router re-claims chain-mutex + spawns qa live test_plan.",
-    "updated_at": "2026-07-15T06:32Z",
-    "updated_by": "dev-team (ops a076b593 recovery COMPLETE->BLOCKED: Docker Desktop VM crash; headless CLI exhausted; user GUI restart required; escalated + daemon-return monitor armed)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "RAG-FTS code fix landed (619eea227) + qa-verified (fix deployed in running image, plumbing+no-regression PASS) but done_verified WITHHELD: AC#1 scale-claim un-testable at current 116-row corpus (expected-ephemeral post-recovery reset). Parent ALPHA-S2-RAG-FTS-REBUILD-CRON stays blocked (no real peak-mem number). 2 signals minted for PO triage: (1) rag-corpus-repopulation-liveness+scale-reverify chain, (2) hybrid max_distance no-op pre-existing backlog note. Gateway origin still USER-escalated (CF dashboard-managed tunnel, /gateway aggregator down).",
+    "updated_at": "2026-07-15T16:01:23Z",
+    "updated_by": "dev-team (RAG-FTS qa PASS-WITH-CAVEAT: in_progress->review, done_verified withheld pending scale re-verify; head idle; follow-ups routed to signals for PO)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -9661,11 +9661,11 @@
       }
     ],
     "head": {
-      "status": "in_progress",
-      "active_task_id": "RAG-FTS-BUILD-MEMORY-BOUND",
-      "next_agent": "qa",
-      "last_updated_at": "2026-07-15T06:32Z",
-      "last_updated_by": "dev-team (RAG-FTS qa HOLD escalated: user Docker Desktop restart required)"
+      "status": "idle",
+      "active_task_id": null,
+      "next_agent": "router",
+      "last_updated_at": "2026-07-15T16:01:23Z",
+      "last_updated_by": "dev-team (RAG-FTS -> review, done_verified gated on corpus scale re-run)"
     },
     "ready": [],
     "review": [
@@ -10161,6 +10161,59 @@
         "reflow_probe_0714": "pek reflow FAILED after ~21h — RAW @2026-07-13T22:23:14Z: pdf-extractor UNHEALTHY (FailingStreak=161, RestartCount=3, OOMKilled=false now, CPU 197% mem 2.26/2.5GiB=90% STABLE = grinding not hung). Logs: per-page 30-40min (page3=2066s, page4=4611s, page6=5504s) CPU PaddleOCR PP-StructureV2 on 33pp scanned HPG_2025_Q4.pdf; no page-checkpoint -> each of 3 restarts re-loaded models + restarted from page 1. Serving financial_reports.id=918a7abd net_revenue STILL -1264.657037 PARTIAL parsed_at 2026-06-07T10:27:16Z (NEVER written back). reflow_verify_pending cleared -> outcome FAILED.",
         "perf_escalation": "PERF-PEK-PER-PAGE-LATENCY (root-cause, PLAN-ONLY -> PO triage -> dev-pdf-extractor): CPU PaddleOCR table extraction 30-40 min/page => 33pp = ~18-25h, exceeds any practical/timeout window + no resume across restarts. Root-cause fixes (design, NOT retry): (1) page-level checkpoint/resume so restarts don't restart from page 1; (2) async/background extraction worker decoupled from HTTP healthcheck (FailingStreak=161 = single blocking worker starves /health -> restart churn); (3) page-chunk/streaming batching + bounded concurrency within 2.5GiB cap; (4) consider GPU/fast-path table detector or skip pure-OCR pages. OPS note (deferred, host stable no panic): runaway pek grinding 2 cores/2.26GiB indefinitely — recommend ops stop it pending fix. NOTE: FIX-PDFEXTRACTOR timeout fix is NOT the regression; this report exceeds current per-page throughput. Do NOT close FIX-PDFEXTRACTOR as done_verified on this report.",
         "dispatch_note": "reflow HARD-STOP resolved FAILED-PATHOLOGICAL -> PO backlog plan-only perf escalation. 2026-07-13T22:23:14Z"
+      },
+      {
+        "id": "RAG-FTS-BUILD-MEMORY-BOUND",
+        "title": "Bound rag-service _build_fts_index() memory + wall-time so the nightly FTS rebuild completes at ANY corpus size (currently OOM-crashes the 768m container at ~56k rows)",
+        "owner": "developer",
+        "status": "REVIEW",
+        "type": "FIX",
+        "size": "M",
+        "priority": "P1",
+        "wave": 2,
+        "zone": "apps/rag-service/",
+        "sprint": "FLOW-PRICE-ALPHA-LOOP",
+        "depends": [],
+        "created_by": "po-triage-alpha-s2-qa-block",
+        "created_at": "2026-07-15T04:55:19Z",
+        "next_agent": "po",
+        "supervised": false,
+        "blocks": [
+          "ALPHA-S2-RAG-FTS-REBUILD-CRON"
+        ],
+        "note": "ROOT CAUSE of ALPHA-S2-RAG-FTS-REBUILD-CRON qa-BLOCK (qa 2af76decc, reproduced 2/2). _build_fts_index() (apps/rag-service/infrastructure/repositories.py:325-345) calls LanceDB-native create_index('title'/'summary', config=FTS(), replace=True) over the full rag_entries table; at the corpus's current ~56254 rows (4x the DFR-P3 14k-row design premise) the build pins memory 90-99.9% of the 768m cgroup ceiling (docker-compose.yml ~L159) for 250s+ then hard-restarts the container (RestartCount 258->260). Fix MUST be corpus-size-INDEPENDENT (the corpus only grows via ongoing ragIndex() writes — the exact growth this whole cron exists to keep the BM25 leg fresh against). START by investigating whether LanceDB FTS build at the pinned version (0.33.0 Docker / 0.25.3 local) exposes a bounded-memory / on-disk writer-heap config (e.g. writer_heap_size, with_position=False, Tantivy budget); if the native builder cannot be bounded below a sane ceiling, escalate findings with concrete fallbacks (modest ops-gated mem-limit bump as belt-and-suspenders, or a chunked/segmented rebuild). NOT user-gated (rag-service code; deploys via normal gated rebuild). NO active incident — cron is deploy-pending, rag-service stable-at-rest 26% idle; this is a pre-deploy capacity fix, not an outage.",
+        "acceptance_criteria": "1. POST /admin/rebuild-fts completes ({status:ok}) on the LIVE ~56k-row rag_entries corpus WITHOUT pinning the 768m cgroup ceiling — memory stays bounded regardless of corpus size (verify via docker stats during a live rebuild, reproduced 2x). 2. Report the completed rebuild's steady-state PEAK MEMORY + WALL-CLOCK time in the task report (this number sizes ALPHA-S2's deadline retune AND any ops mem-limit decision). 3. Investigate/document whether LanceDB FTS build at the pinned version supports a bounded-memory writer config; if not, escalate with concrete fallback options rather than silently raising the limit. 4. search()/hybrid_search() and the lazy _fts_index_built per-container fallback UNCHANGED. 5. Zero new tables/DDL.",
+        "test_plan": "LIVE (qa, post-fix): (a) confirm rag_entries index_size ~56k via /embed/health. (b) POST /admin/rebuild-fts directly — docker stats memory trace stays UNDER the 768m ceiling to completion, {status:ok} returned, reproduced 2x. (c) record peak-mem + elapsed. (d) POST /search hybrid:true returns sane RRF results — no regression. Then hand the recorded timing to ALPHA-S2 for its deadline retune + final BM25 round-trip.",
+        "started_at": "2026-07-15T05:20:30Z",
+        "started_by": "dev-team (BOUNDED-1 idle-pickup FIX-S; parent ALPHA-S2 blocked-on-this)",
+        "router_route_note": "Docker RESOLVED (host-persistent ./data/live). Gateway origin down is a SEPARATE infra escalation to USER (CF dashboard-managed tunnel --token; aggregator process not running) and does NOT block this task — qa live-verify uses Bash/docker only (no gateway tool). Chain-mutex moot single-session/incident-authority. On qa done_verified: router RAW-verifies + closes.",
+        "dev_commit": "619eea227",
+        "dev_completed_at": "2026-07-15T06:21:01Z",
+        "docker_recovery": {
+          "resolved_at": "2026-07-15T15:26:26Z",
+          "commit": "5ba622eca",
+          "note": "host-persistent ./data/live bind-mount across 9 svcs; 12/12 containers healthy; market.db restored from .backups (integrity ok, 733k+ daily_ohlcv) + serving/writing from host disk (RAW-verified rows climbing + WAL mtime advancing)"
+        },
+        "qa_live_verify": {
+          "started_at": "2026-07-15T15:43:12Z",
+          "mode": "degraded-gateway-down-qa-bash-only",
+          "agent": "qa"
+        },
+        "gateway_infra": "SEPARATE USER escalation (does NOT block this task): zenmidi.com/gateway origin aggregator down; cloudflared tunnel is CF-dashboard-managed (--token, local config.yml is a no-op); needs user Cloudflare Zero-Trust dashboard action; ops diagnosis passes exhausted",
+        "blocked_on": "rag-corpus-repopulation-to-representative-scale",
+        "moved_at": "2026-07-15T16:01:23Z",
+        "moved_by": "dev-team (router: qa PASS-WITH-CAVEAT recorded; done_verified GATED on AC#1 scale re-run)",
+        "qa_result": {
+          "agent": "qa",
+          "verdict": "PASS-WITH-CAVEAT",
+          "verified_at": "2026-07-15T16:01:23Z",
+          "fix_deployed_in_running_image": true,
+          "fix_evidence": "grep in running container: LANCE_FTS_NUM_SHARDS=1 / LANCE_FTS_PARTITION_SIZE=32 live at repositories.py:101-102; image built 2026-07-15T15:14:08Z (not stale)",
+          "ac1": "2x POST /admin/rebuild-fts -> HTTP200 {status:ok}, OOMKilled=false, RestartCount=0, peak 92.7% of 768m bound, indices genuinely rebuilt (title_idx+summary_idx). CAVEAT: corpus only 116 rows so FTS-build mem delta over idle is ~4-5MiB -> NOT stress-tested at documented ~56k-row failure scale.",
+          "ac2": "hybrid-search no-regression PASS (git show 619eea227: commit touched only env pins + comments, 0 lines changed in search()/hybrid_search()).",
+          "blocker": "AC#1 literally names the ~56k-row scale (reproduced 2x via docker stats during a live rebuild); live rag_entries=116 rows, rag_service.db absent. Expected-ephemeral post-VM-crash reset (RAG LanceDB rebuilds; not a market.db-class data loss) -> cannot certify memory-bound at failure scale until corpus re-populates.",
+          "idle_baseline_flag": "rag-service idle mem already ~92% of 768m bound with ZERO FTS activity (tight margin, pre-existing, heads-up for ALPHA-S2 retune)."
+        }
       }
     ],
     "qa": [],
@@ -10182,37 +10235,7 @@
     },
     "last_triaged_at": "2026-07-15T03:20:06Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "RAG-FTS-BUILD-MEMORY-BOUND",
-        "title": "Bound rag-service _build_fts_index() memory + wall-time so the nightly FTS rebuild completes at ANY corpus size (currently OOM-crashes the 768m container at ~56k rows)",
-        "owner": "developer",
-        "status": "IN_PROGRESS",
-        "type": "FIX",
-        "size": "M",
-        "priority": "P1",
-        "wave": 2,
-        "zone": "apps/rag-service/",
-        "sprint": "FLOW-PRICE-ALPHA-LOOP",
-        "depends": [],
-        "created_by": "po-triage-alpha-s2-qa-block",
-        "created_at": "2026-07-15T04:55:19Z",
-        "next_agent": "qa",
-        "supervised": false,
-        "blocks": [
-          "ALPHA-S2-RAG-FTS-REBUILD-CRON"
-        ],
-        "note": "ROOT CAUSE of ALPHA-S2-RAG-FTS-REBUILD-CRON qa-BLOCK (qa 2af76decc, reproduced 2/2). _build_fts_index() (apps/rag-service/infrastructure/repositories.py:325-345) calls LanceDB-native create_index('title'/'summary', config=FTS(), replace=True) over the full rag_entries table; at the corpus's current ~56254 rows (4x the DFR-P3 14k-row design premise) the build pins memory 90-99.9% of the 768m cgroup ceiling (docker-compose.yml ~L159) for 250s+ then hard-restarts the container (RestartCount 258->260). Fix MUST be corpus-size-INDEPENDENT (the corpus only grows via ongoing ragIndex() writes — the exact growth this whole cron exists to keep the BM25 leg fresh against). START by investigating whether LanceDB FTS build at the pinned version (0.33.0 Docker / 0.25.3 local) exposes a bounded-memory / on-disk writer-heap config (e.g. writer_heap_size, with_position=False, Tantivy budget); if the native builder cannot be bounded below a sane ceiling, escalate findings with concrete fallbacks (modest ops-gated mem-limit bump as belt-and-suspenders, or a chunked/segmented rebuild). NOT user-gated (rag-service code; deploys via normal gated rebuild). NO active incident — cron is deploy-pending, rag-service stable-at-rest 26% idle; this is a pre-deploy capacity fix, not an outage.",
-        "acceptance_criteria": "1. POST /admin/rebuild-fts completes ({status:ok}) on the LIVE ~56k-row rag_entries corpus WITHOUT pinning the 768m cgroup ceiling — memory stays bounded regardless of corpus size (verify via docker stats during a live rebuild, reproduced 2x). 2. Report the completed rebuild's steady-state PEAK MEMORY + WALL-CLOCK time in the task report (this number sizes ALPHA-S2's deadline retune AND any ops mem-limit decision). 3. Investigate/document whether LanceDB FTS build at the pinned version supports a bounded-memory writer config; if not, escalate with concrete fallback options rather than silently raising the limit. 4. search()/hybrid_search() and the lazy _fts_index_built per-container fallback UNCHANGED. 5. Zero new tables/DDL.",
-        "test_plan": "LIVE (qa, post-fix): (a) confirm rag_entries index_size ~56k via /embed/health. (b) POST /admin/rebuild-fts directly — docker stats memory trace stays UNDER the 768m ceiling to completion, {status:ok} returned, reproduced 2x. (c) record peak-mem + elapsed. (d) POST /search hybrid:true returns sane RRF results — no regression. Then hand the recorded timing to ALPHA-S2 for its deadline retune + final BM25 round-trip.",
-        "started_at": "2026-07-15T05:20:30Z",
-        "started_by": "dev-team (BOUNDED-1 idle-pickup FIX-S; parent ALPHA-S2 blocked-on-this)",
-        "router_route_note": "ops(a076b593) recovery COMPLETE->BLOCKED 06:32Z: Docker Desktop VM hypervisor crash; ~75min headless CLI recovery exhausted (4x restart/VM rebuild/disk cleanup); daemon socket absent; requires USER GUI restart of Docker Desktop. Disk now 71% (ops freed from 91%); market_data volume UNTOUCHED, no data loss. Router escalated to user + armed daemon-return monitor.",
-        "dev_commit": "619eea227",
-        "dev_completed_at": "2026-07-15T06:21:01Z",
-        "blocked_on": "user-docker-desktop-gui-restart-required"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",

@@ -1,0 +1,24 @@
+{
+  "from": "dev-team",
+  "to": "po",
+  "type": "verify-followup",
+  "created_at": "2026-07-15T16:00:42Z",
+  "signal_id": "dev-team-20260715T160042Z-rag-corpus-repopulation-scale-reverify",
+  "severity": "P2",
+  "payload": {
+    "module": "apps/rag-service",
+    "title": "RAG corpus at 116 rows post-recovery (expected-ephemeral) — confirm re-populating, then re-run RAG-FTS AC#1 at scale",
+    "context": "qa RAG-FTS-BUILD-MEMORY-BOUND live-verify found rag_entries LanceDB table = 116 rows (rag_service.db absent). Documented pre-crash corpus ~56k rows. Per VM-crash recovery memory, RAG LanceDB embeddings are ephemeral-by-design and rebuild via ongoing ragIndex() writes (NOT a market.db-class loss). RAG-FTS memory-bound fix (619eea227) is deployed + plumbing/no-regression verified, but AC#1 (no-OOM at ~56k rows) is UN-testable at 116 rows -> RAG-FTS parked in review, done_verified withheld.",
+    "actions": [
+      "1. Confirm rag_entries row-count is CLIMBING (re-embed pipeline alive), not stuck at 116. If stuck -> re-embed pipeline is broken = new bug for dev-rag-service.",
+      "2. Once corpus is representative (>= a scale that exercises FTS build memory), re-run RAG-FTS AC#1 (POST /admin/rebuild-fts under 768m cgroup, docker-stats peak-mem, 2x) to finally close RAG-FTS-BUILD-MEMORY-BOUND + unblock ALPHA-S2-RAG-FTS-REBUILD-CRON with a real peak-mem number.",
+      "3. Heads-up: rag-service idle mem is already ~92% of the 768m bound with zero FTS activity — factor into any ops mem-limit decision."
+    ],
+    "blocks": [
+      "RAG-FTS-BUILD-MEMORY-BOUND(done_verified)",
+      "ALPHA-S2-RAG-FTS-REBUILD-CRON"
+    ],
+    "source_task": "RAG-FTS-BUILD-MEMORY-BOUND",
+    "verified_by": "qa (ad5d8842bab496ffe, degraded-mode bash-only)"
+  }
+}
