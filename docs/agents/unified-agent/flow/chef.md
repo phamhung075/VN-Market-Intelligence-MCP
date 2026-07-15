@@ -1,4 +1,4 @@
-<!-- size-justification: 654L — sequential 8-step dish-recipe decision framework (TNB 6-layer); telemetry extracted to chef-telemetry.md; dual-output Step 7 (MARKET plain-VI / WORK TNB-auditable) is one atomic responsibility; full change history in git log. -->
+<!-- size-justification: 724L — sequential 8-step dish-recipe decision framework (TNB 6-layer); telemetry extracted to chef-telemetry.md; dual-output Step 7 (MARKET plain-VI / WORK TNB-auditable) is one atomic responsibility; Step 7.5 QUALITY VERDICT GATE now checks all 5 required sub-checks (L2/L3/L4/BizCtx/gap-catalogue) as one deterministic block — splitting it would break the single-enforcement-point guarantee; full change history in git log. -->
 > Parent: [./main.md](./main.md)
 
 # Unified Agent — Chef Flow (TNB 6-Layer Recipe)
@@ -291,6 +291,18 @@ This entry must appear in the WORK [CHEF-DETAIL] Block B Layer 6 section. It may
 
 Apply fixes before Step 7. If a gap cannot be fixed (missing data) → flag explicitly in dish.
 
+<!-- AUTO-CURE c110 2026-07-15 (tran-ngoc-bau): F-L6-AUDIT-VISIBILITY-GAP — the notebook
+     "Layers walked" line (Step 8b) only ever surfaces the 5 Step-7.5 data-availability gap
+     tokens ([gap:L2_...]/[gap:L3_...]/[gap:L4_...]/[gap:business_context_...]/
+     [gap:L6_gap_catalogue_not_enumerated]) — it never carries the genuine `[L6-gap: ...]`
+     methodological-risk entries this step produces (single-pillar / inverted-causality /
+     source-risk / lagged-indicator / regime-drift). Three consecutive tran-ngoc-bau audit
+     cycles (c108, c109, c110), MCP-blocked and reading unified-agent.md as a file-proxy for
+     the WORK [CHEF-DETAIL] message, misdiagnosed this as chef "conflating" L6 into data-gap
+     tokens — the distinction was always present in this step, just invisible downstream. -->
+Store every `[L6-gap: ...]` entry emitted in this step into `$L6_GAP_TOKENS` (empty list if
+none this cycle). This list is carried to Step 8b for the notebook write.
+
 ---
 
 ## Step 6.5 — SYNTHESIZE (causal chain — mandatory before WRITE DISH)
@@ -466,9 +478,24 @@ The `[CHEF-DETAIL]` prefix is mandatory — it allows tran-ngoc-bau's audit flow
      a dish self-reports QUALITY:full while L2/L4/L6 are silently absent or partial.
      This gate is the single enforcement point for the quality verdict in ALL dish windows
      (morning / intraday / eod / evening). No path may write QUALITY:full without passing
-     all three sub-checks below. Mirrors EOD rigor into every path deterministically. -->
+     all five sub-checks below. Mirrors EOD rigor into every path deterministically. -->
+<!-- AUTO-CURE c108 2026-07-13 (tran-ngoc-bau) — FIX-CHEF-STEP75-L3-BIZCTX-FLOOR:
+     root cause confirmed by direct code read (chef.md pre-fix): this gate checked ONLY
+     L2 (sub-check a) and L4 (sub-check b) — it never checked L3 (VN macro: USD/VND+CPI+VIRA)
+     or business context (product/customer/ops/mgmt), despite both being required by
+     tnb-methodology.md and tnb-methodology-layers.md. This let dishes self-report
+     QUALITY:full while L3/CPI/VIRA and business context were silently absent —
+     confirmed on 2026-07-13's eod (08:56) and evening (19:49) dishes (both QUALITY:full,
+     neither cites CPI or VIRA/FX-reserves, neither cites business context), and matches
+     F9 (business-context absent, 10+ consecutive assessable dishes) and F4 (VIRA gap,
+     persisting many cycles) tracked in docs/agent-memory/notebooks/tran-ngoc-bau.md.
+     Adds sub-checks (c) and (d) below, mirroring sub-check (a)'s gap-token floor pattern
+     so a genuinely-unavailable source (VIRA scraper down; no bctc_signal_*/fundamental_*
+     data this cycle — see bctc-analyst BCTC-EXTRACT-QUALITY sprint, 14/16 filed tickers
+     currently serve-layer-blocked) still allows QUALITY:full as long as the gap is
+     explicitly tokened, not silently dropped. -->
 
-Before writing the notebook entry or the RETURN block, evaluate the following three sub-checks against the work performed in Steps 2–6 of this cycle:
+Before writing the notebook entry or the RETURN block, evaluate the following five sub-checks against the work performed in Steps 2–6 of this cycle:
 
 ```
 # Sub-check (a) — US macro layer (L2) presence
@@ -494,8 +521,39 @@ L4_PILLARS_OK = (lượng_tiền cited OR flagged_missing)
             AND (trien_vong_loi_nhuan cited OR flagged_missing)
             AND (rui_ro_dinh_gia cited OR flagged_missing)
 
-# Sub-check (c) — gap catalogue enumerated if any layer is partial/missing
+# Sub-check (c) — VN macro layer (L3) presence
+# MINIMUM FLOOR (AutoCure tran-ngoc-bau c108 2026-07-13 — FIX-CHEF-STEP75-L3-BIZCTX-FLOOR):
+# TNB Layer 3 requires three elements per tnb-methodology-layers.md: USD/VND vs 26,500
+# (source: MACRO_HEALTH.fx), CPI trend (source: MACRO_HEALTH.inflation.cpi_peaked), and
+# FX reserves via VIRA. USD/VND alone — cited as a raw level in nearly every dish — is only
+# 1 of 3 required elements and does NOT by itself satisfy the VN macro stack walk. CPI and
+# VIRA/FX-reserves are each individually satisfied by a cited value OR an explicit gap token
+# (VIRA scraper outage is a known, tracked upstream condition — see F4 in tran-ngoc-bau
+# notebook — so this floor does not block QUALITY:full when the gap is tokened honestly).
+L3_OK = (USD/VND level cited from MACRO_HEALTH.fx)
+        AND (CPI trend cited from MACRO_HEALTH.inflation.cpi_peaked
+             OR an explicit gap token was written, e.g. [gap:CPI_unavailable])
+        AND (FX reserves / VIRA cited
+             OR an explicit gap token was written,
+             e.g. [gap:VIRA_unavailable] or [gap:FX_reserves_unavailable])
+
+# Sub-check (d) — business context presence (product / customer / ops / management)
+# MINIMUM FLOOR (AutoCure tran-ngoc-bau c108 2026-07-13 — FIX-CHEF-STEP75-L3-BIZCTX-FLOOR):
+# tnb-methodology.md's foundational philosophy requires every investment thesis to be
+# anchored in the business behind the ticker, sourced from bctc_signal_* or fundamental_*
+# gatherer signals read in Step 0 GATHER. At least ONE ticker in the dish must cite ≥1
+# business-context field (product/customer/ops/management) OR the gap must be explicitly
+# flagged when no bctc_signal_*/fundamental_* data was available this cycle for any
+# watchlist ticker in the dish (a frequent, currently-tracked upstream condition — see
+# bctc-analyst BCTC-EXTRACT-QUALITY sprint).
+BIZ_CTX_OK = (≥1 ticker in the dish cites a product/customer/ops/management fact
+              sourced from a bctc_signal_* or fundamental_* signal read in Step 0)
+             OR (an explicit gap token was written, e.g. [gap:business_context_unavailable])
+
+# Sub-check (e) — gap catalogue enumerated if any layer is partial/missing
 ANY_LAYER_PARTIAL = (L2_OK relied on a gap token)
+                 OR (L3_OK relied on a gap token for CPI or VIRA/FX-reserves)
+                 OR (BIZ_CTX_OK relied on a gap token)
                  OR (NOT all 4 L4 pillars cited with data)
                  OR (any other layer scored PARTIAL/FAIL in this cycle)
 GAP_CATALOGUE_OK = (NOT ANY_LAYER_PARTIAL)
@@ -503,7 +561,7 @@ GAP_CATALOGUE_OK = (NOT ANY_LAYER_PARTIAL)
                     in the Block B WORK message sent in Step 7)
 
 # Verdict
-if L2_OK AND L4_PILLARS_OK AND GAP_CATALOGUE_OK:
+if L2_OK AND L3_OK AND L4_PILLARS_OK AND BIZ_CTX_OK AND GAP_CATALOGUE_OK:
   $QUALITY_VERDICT = "full"
   $CONVICTION_CAP  = (no additional cap)
   $LAYERS_WALKED_SUMMARY = "1-6 (full)"
@@ -513,13 +571,15 @@ else:
   # List every failed sub-check as a gap token for the notebook
   $FAILED_CHECKS = []
   if NOT L2_OK:           $FAILED_CHECKS.append("[gap:L2_US_macro_absent_no_gap_token]")
+  if NOT L3_OK:           $FAILED_CHECKS.append("[gap:L3_VN_macro_incomplete]")
   if NOT L4_PILLARS_OK:   $FAILED_CHECKS.append("[gap:L4_partial_pillar_coverage]")
+  if NOT BIZ_CTX_OK:      $FAILED_CHECKS.append("[gap:business_context_absent]")
   if NOT GAP_CATALOGUE_OK: $FAILED_CHECKS.append("[gap:L6_gap_catalogue_not_enumerated]")
   $LAYERS_WALKED_SUMMARY = "partial — " + join($FAILED_CHECKS, " ")
 ```
 
 **Enforcement rules (non-negotiable):**
-- `$QUALITY_VERDICT = "full"` requires ALL THREE sub-checks to be TRUE. A single FALSE forces `degraded`.
+- `$QUALITY_VERDICT = "full"` requires ALL FIVE sub-checks to be TRUE. A single FALSE forces `degraded`.
 - `$QUALITY_VERDICT` MUST be computed from the actual work performed this cycle, not narrated or assumed. If there is any doubt about whether a sub-check passed, treat it as FALSE.
 - When `$QUALITY_VERDICT = "degraded"`, conviction scores throughout the dish are retroactively capped at MEDIUM (this mirrors the EOD degraded-dish floor in Step 1 and the per-cluster LOW conviction rule in Step 6.5).
 - This gate fires for ALL `$DISH_TYPE` values (morning / intraday / eod / evening). There is no dish window exempt from the gate.
@@ -639,6 +699,7 @@ Step 1d — Build the new section (≤60L) in memory:
 - Clusters qualified: N
 - Tickers covered: [list]
 - Layers walked: <$LAYERS_WALKED_SUMMARY>   # from Step 7.5 gate — never hardcode "1-6"
+- L6 gap-catalogue tokens: <$L6_GAP_TOKENS or "none this cycle">   # AUTO-CURE c110 — surfaces genuine Step-6 [L6-gap:...] methodological entries, distinct from the L2/L3/L4/biz-ctx data-availability tokens above
 - Signals consumed: [IDs]
 - Dish published: YES | silent-exit
 - QUALITY: <$QUALITY_VERDICT>              # "full" or "degraded" — from Step 7.5 gate
