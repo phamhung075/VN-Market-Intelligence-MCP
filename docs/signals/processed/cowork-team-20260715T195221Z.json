@@ -45,5 +45,11 @@
     "note": "legacy mode forced: pressure-state emitted_at age 30.8min > 20min staleness threshold at read time; emit_pressure_state returned stale_warning=true on fresh write. cycle_snapshot_promoted=false — cycle-snapshot-latest.json still dated 2026-07-07T19:47:26Z (8d stale); dispatcher wrote cycle-snapshot-19:50.json (actual fire HH:MM) while promotion appears keyed to nominal tick 19:45 — drift_min=3 mismatch suspected. Dispatcher self-corrected a malformed last_fired (BSD date %3N literal) before final write."
   },
   "priority": "low",
-  "createdAt": "2026-07-15T19:52:21Z"
+  "createdAt": "2026-07-15T19:52:21Z",
+  "_processed": {
+    "fingerprint": "606dc256bf50960411f1c1f4298e14817ff7535f10cb96dd2e061278065ae675",
+    "processedAt": "2026-07-15T20:27:53Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

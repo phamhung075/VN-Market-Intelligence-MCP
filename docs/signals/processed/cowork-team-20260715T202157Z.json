@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-15T20:21:57Z",
+    "matched_slots": [
+      "tnb-audit"
+    ],
+    "won_slots": [
+      "tnb-audit"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/tran-ngoc-bau/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 4,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "tnb-audit": "cron"
+    },
+    "cadence_minutes": {
+      "tnb-audit": null
+    },
+    "last_fired_timestamp": "2026-07-15T20:21:40.417Z",
+    "last_fired_slots": [
+      "tnb-audit"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "20:15",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 0,
+    "signal_backlog": 3,
+    "note": "tnb-audit (guaranteed, daily cron 13 20 * * *). CAPABILITY MISMATCH observed pre-spawn: tran-ngoc-bau frontmatter grants Read/Edit/Write/Glob/Grep only — no MCP, no Bash — while its flow main.md:78 claims full MCP data access and lists Telegram MARKET dishes as input, WORK audit row + BUG escalation + notebook commit as outputs. All four need tools it lacks. Dispatcher passed an explicit tool-reality-check + no-fabrication instruction in the spawn prompt; awaiting agent report before filing (observe, do not pre-file). pressure_mode=legacy again (stale_warning=true on 11.7min-old state). 3 NEW to:po rows left NEW per cow-20260715T201118."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-15T20:21:57Z",
+  "_processed": {
+    "fingerprint": "b347f1d72784b0a86c315d66bf99034ab25a1158f9d12b3017d2427072b00bbe",
+    "processedAt": "2026-07-15T20:27:53Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

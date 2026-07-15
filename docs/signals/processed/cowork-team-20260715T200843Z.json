@@ -57,5 +57,11 @@
     "note": "legacy mode forced by stale_warning=true on a 14.7min-old pressure-state (age < 20min threshold) — AC-P1-6-3 unconditional fallback. cycle_snapshot_promoted=false for 2nd consecutive tick (snapshot written as cycle-snapshot-20:07.json, nominal tick 20:00) — reproduces open signal cow-20260715T195340. Signal drain: 2 NEW rows left NEW deliberately (to:po = cross-team, dev-team drains at :07; marking READ per main.md Step 0a would starve drain-signals.md:22 which filters status==NEW)."
   },
   "priority": "low",
-  "createdAt": "2026-07-15T20:08:43Z"
+  "createdAt": "2026-07-15T20:08:43Z",
+  "_processed": {
+    "fingerprint": "9fbdee1e7ff85e8029af61dc7a12b8235dc35537ecd80c170864a247a2928760",
+    "processedAt": "2026-07-15T20:27:53Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }
