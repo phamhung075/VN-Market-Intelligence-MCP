@@ -1,11 +1,11 @@
 {
   "metadata": {
-    "cycle_id": "evening-2026-07-15T19:45:00Z",
+    "cycle_id": "evening-2026-07-15T19:55:20Z",
     "dish_type": "evening",
     "date_vn": "2026-07-16",
-    "timestamp_utc": "2026-07-15T19:50:41Z",
+    "timestamp_utc": "2026-07-15T19:55:20Z",
     "quality_verdict": "degraded",
-    "layers_walked_summary": "partial — [gap:L2_US_macro_absent_no_gap_token] [gap:L3_VN_macro_incomplete] [gap:L4_partial_pillar_coverage] [gap:business_context_absent]"
+    "layers_walked_summary": "partial — [gap:L2_US_macro_partial] [gap:L4_partial_pillar_coverage] [gap:business_context_unavailable] [gap:carry_regime_unavailable]"
   },
 
   "tnb_synthesis": {

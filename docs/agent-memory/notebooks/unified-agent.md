@@ -1,6 +1,6 @@
 # Unified Agent — Notebook
 
-**Last updated:** 2026-07-15T19:50Z · **Cycle:** Chef Evening (19:45 UTC — 0 clusters, degraded)
+**Last updated:** 2026-07-15T19:55Z · **Cycle:** Chef Evening (19:55 UTC — 0 clusters, degraded, FII selling wave)
 
 ## Session: 2026-07-15 (intraday 11:27 UTC — current)
 
@@ -56,4 +56,20 @@
 - Gaps written: carry unavailable, CPI/VIRA missing, business context absent, gold >4.3k regime-drift warning
 - Dish published: YES (MARKET plain VI + WORK TNB degraded)
 - QUALITY: degraded (L2: carry regime unavailable, no PMI/EFFR; L3: partial; L4/BIZ_CTX: absent; L6: gaps enumerated)
+- Synthesis: docs/data/unified-agent-synthesis-2026-07-16-evening.json
+
+## Session: 2026-07-15 (evening 19:55 UTC)
+
+### Chef Dish — evening 19:55 UTC
+- Clusters qualified: 0
+- Tickers covered: none
+- Layers walked: partial — [gap:L2_US_macro_partial] [gap:L4_partial_pillar_coverage] [gap:business_context_unavailable] [gap:carry_regime_unavailable]
+- Signals consumed: 0 (bootstrap agent_signals empty; 13 open alerts noted but no cluster convergence)
+- Macro context: VN-Index 1280.5 (down -526pp); USD/VND 26,070; Gold 4,068.3 (+1.16%); Carry UNKNOWN (is_estimate=true, suppressed DSI-INV-1)
+- FII flow: Foreign net-sell 1,000B VND session, FPT primary target (-4.98%), tech sector distribution pressure
+- Kinh Dịch: Quẻ 15 Khiêm (謙 — Humility) — paradoxical: long-term favorable, near-term NEGATIVE signal
+- All watchlist MODERATE conviction (0.40–0.57 range), no high-conviction setups; recession macro with valuation cheap (8.2% yield vs 5% rate)
+- Dish published: YES (MARKET + WORK degraded regime-state update per evening floor rule)
+- QUALITY: degraded (L2: carry + US macro partial; L3: USD/VND only; L4: zero pillars; BIZ_CTX: absent; L6: gaps enumerated)
+- Conviction capped MEDIUM retroactively per degraded quality gate
 - Synthesis: docs/data/unified-agent-synthesis-2026-07-16-evening.json

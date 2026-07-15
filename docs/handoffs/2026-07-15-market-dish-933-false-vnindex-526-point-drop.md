@@ -40,6 +40,56 @@ harmful, independent of duplication.
 This raises UC-CCA-P3's stakes: its impact line should read *"caused a user-visible duplicate **that
 published a false ~29% index move**"*, not just *"double-publish"*.
 
+### 2a. CORRECTION 2026-07-15T20:55Z — "the duplicate is the corrupted one" is WRONG
+
+<!-- Corrected in place, not deleted: the reasoning error below is the point. -->
+
+The § 2 heading and the table's "clean" verdict for 932 imply the two dishes were built on
+**different data**, and that duplication is what let the bad figure through. **Both implications are
+false.** The synthesis file each run wrote is preserved in git, and they can be compared directly:
+
+| Run | cycle_id | wrote dish | `market_context.vn_index` | `vn_index_delta` |
+|---|---|---|---|---|
+| 1 (cowork-dispatched) | `evening-2026-07-15T19:45:00Z` (HEAD `f5b700ec1`) | **932** @19:52:17 | **1280.5** | **−526.13** |
+| 2 (peer-router) | `evening-2026-07-15T19:55:20Z` (working tree) | **933** @19:56:07 | **1280.5** | **−526.13** |
+
+`git show HEAD:docs/data/unified-agent-synthesis-2026-07-16-evening.json | jq .market_context` vs the
+working-tree copy — **byte-identical macro block**. Both runs also self-reported
+`quality_verdict: "degraded"`.
+
+**What this changes:**
+
+1. **932 is clean by narration accident, not by data.** It held the same false VN-Index and simply
+   did not quote it. It is not evidence of a healthy path.
+2. **Deduplication would NOT have prevented this.** With one evening dish instead of two, whether
+   the false figure reached users is a coin flip on how that run chose to narrate. `UC-CCA-P3` is
+   still P0 on its own merits, but **fixing it does not fix this.** These are two independent
+   defects, and § 6's ordering is what matters — the plausibility gate (item 3) is the one that
+   actually stops the false claim.
+3. **§ 3's sentence "Dish 932 evidently narrated from the former [tier-2]; 933 leaked the latter" is
+   retracted.** Neither dish ever saw a tier-2 VN-Index. The corruption sits upstream of both, in the
+   synthesis's own `market_context.vn_index` — which, despite sharing a name with
+   `get_market_context()` (that returns the real 1782.12 at `source_tier: 2`), is a **different
+   field built from the tier-4 macro path**. A name collision hid this.
+
+### 2b. NEW — run 2 CLOBBERED run 1's synthesis file (same double-dispatch, worse blast radius)
+
+Both runs write the **same path**, keyed `date_vn` + `dish_type` — **not** `cycle_id`:
+`docs/data/unified-agent-synthesis-2026-07-16-evening.json`.
+
+Run 1's synthesis survives **only because it was committed (`f5b700ec1`) before run 2 overwrote it**.
+Had the commit landed seconds later, run 1 would be unrecoverable and the § 2a comparison above —
+the evidence that corrects this very handoff — would not exist.
+
+This is the predicted failure. After the tnb-audit near-miss (where the **Edit** tool's stale-read
+check blocked a concurrent notebook clobber), the open question was what happens to an agent holding
+**Write**, which has no such check. `unified-agent` holds `Write`. This is the answer: **silent
+full-overwrite, no collision reported by either run.** Same day, same double-dispatch class, no luck
+of the editor to save it. See `2026-07-15-tnb-audit-double-dispatch-unreachable-marker-gate.md`.
+
+Cheap mitigation for triage to consider: key the synthesis filename by `cycle_id` (already in
+`metadata`), so concurrent runs cannot collide on one path.
+
 ## 3. Provenance of the bad number
 
 `docs/data/cycle-snapshot-20:21.json` → `macro_snapshot`:
@@ -61,8 +111,13 @@ Chef's own reasoning carried it verbatim — `docs/agent-memory/notebooks/unifie
 - L68: "Macro context: VN-Index 1280.5 (down -526pp)"
 
 Two source planes disagreed by 29% in the same cycle and nothing compared them:
-`market_context` (tier 2, 1782.12, real) vs `macro_snapshot` (tier 4, 1280.5, estimate). Dish 932
-evidently narrated from the former; 933 leaked the latter.
+`market_context` (tier 2, 1782.12, real) vs `macro_snapshot` (tier 4, 1280.5, estimate). ~~Dish 932
+evidently narrated from the former; 933 leaked the latter.~~
+
+> **RETRACTED (see § 2a).** The struck sentence was an inference, not a probe. Both runs' synthesis
+> carried the tier-4 value; **neither dish ever saw the tier-2 plane.** The two-planes-disagree
+> observation stands — the attribution of one dish to each plane does not. The word "evidently" was
+> doing the work a `git show` should have done.
 
 **`source_tier` is exactly the field that separates them** — the same field the reverted
 alert-commander "self-heal" would have discarded by reusing the snapshot's bare-string

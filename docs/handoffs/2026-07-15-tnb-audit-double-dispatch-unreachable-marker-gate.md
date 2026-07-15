@@ -84,6 +84,30 @@ retrying, and said so (notebook L71–73):
 
 Cost even in the clean case: one redundant full audit (~195K subagent tokens, 54 tool calls, ~14min).
 
+### 4a. The `Write`-path prediction is CONFIRMED — same class, same day, no editor to save it (added 20:56Z, tick 20:45Z)
+
+The bullet above ("`Write` is a full overwrite with no stale-read check … A collision on an overwrite
+path is silent") was a hypothetical when written. It is now observed — in **today's other**
+double-dispatch, the chef-evening one:
+
+Both chef runs wrote `docs/data/unified-agent-synthesis-2026-07-16-evening.json` — a path keyed
+`date_vn` + `dish_type`, **not** `cycle_id`. Run 2 (`evening-…T19:55:20Z`) silently overwrote run 1
+(`evening-…T19:45:00Z`). **Neither run reported a collision.** Run 1 is recoverable only because it
+had been committed (`f5b700ec1`) minutes earlier; `git show HEAD:<path>` vs the working tree is the
+only reason the two runs can be compared at all.
+
+`unified-agent` holds `Write`. So the two instances of this class on 2026-07-15 differ **only** by
+which tool the agent happened to use:
+
+| Instance | Tool on the collision path | Outcome |
+|---|---|---|
+| tnb-audit | `Edit` (optimistic-concurrency check) | collision **detected**, peer deferred, both audits preserved |
+| chef-evening | `Write` (no check) | collision **silent**, run 1 destroyed in the working tree |
+
+This closes § 4's open question. "No damage" in the tnb case was not the system working — it was the
+Edit tool, and the same class one hour earlier lost data precisely where that check was absent.
+Details: `2026-07-15-market-dish-933-false-vnindex-526-point-drop.md` § 2b.
+
 ## 5. Second confirmed instance of the router-intent-bypass class
 
 | Date | Slot | Agent | Guard state | Outcome |
