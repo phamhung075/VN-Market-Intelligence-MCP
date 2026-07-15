@@ -10,7 +10,11 @@
 # sprint-TOKEN-ECONOMY-TICK-PREFLIGHT-developer.md for deviations from the
 # brief's pseudocode, all in the "brownfield findings beat brief prose" sense):
 #   1. Compute TICK (floor UTC minute to 15-min boundary)
-#   2. Presence heartbeat (session-presence:<session>) — ERROR on ok=false
+#   2. Presence claim-first (session-presence:<session>) — mirrors
+#      docs/agents/cowork-team/flow/main.md Step 0b.1: claim, heartbeat only on
+#      re-entry by this same session. NEVER gates — proceeds regardless of
+#      claim/heartbeat outcome (ERROR is reserved for fire-election/transport
+#      failures below, not presence)
 #   3. Fire-time election claim (cron:cowork:<tick>, P3) — AF-1 backstop-defer
 #      gate on transport error; LOST_ELECTION when a peer session holds it
 #   4. claim_due_scheduled_tasks sweep — R2: verdict carries FULL task objects
@@ -124,19 +128,28 @@ run_preflight() {
   actual_minute=$current_minute
   drift_min=$(( actual_minute - boundary_minute ))
 
-  # ---- Step 2: presence heartbeat ----
-  local presence_args presence_result presence_rc presence_ok
-  presence_args=$(jq -n --arg tid "session-presence:$session_id" --arg sess "$session_id" '{task_id:$tid, owner_client_session:$sess}')
-  presence_result=$(mcp_call "task_heartbeat" "$presence_args" 2>&1); presence_rc=$?
-  if [ $presence_rc -ne 0 ]; then
-    _emit_verdict "ERROR" "$tick" "$drift_min" "[]" "[]" "0" "presence heartbeat transport error: $(_trunc "$presence_result")"
-    return 1
+  # ---- Step 2: presence claim-first — NEVER a gate (FIX-COWORK-PREFLIGHT-PRESENCE-CLAIM-GAP) ----
+  # Claim session-presence:<session> first. If already held by this same session,
+  # heartbeat renews the TTL. Any other outcome (peer-held, transport error on
+  # either call) is proceeded through unconditionally — presence must never
+  # produce an ERROR verdict; that verdict is reserved for the fire-election /
+  # transport failures handled in Step 3 onward.
+  local presence_args presence_result presence_rc presence_claimed presence_holder
+  presence_args=$(jq -n --arg tid "session-presence:$session_id" --arg sess "$session_id" \
+    --arg host "$(hostname 2>/dev/null || echo unknown)" \
+    '{task_id:$tid, task_kind:"session-presence", owner_agent:"cowork-dispatcher", owner_client_session:$sess, ttl_seconds:1800, payload:{agent_id:"cowork-dispatcher", host:$host}}')
+  presence_result=$(mcp_call "task_claim" "$presence_args" 2>&1); presence_rc=$?
+  if [ $presence_rc -eq 0 ]; then
+    presence_claimed=$(printf '%s' "$presence_result" | jq -r '.claimed // false' 2>/dev/null)
+    if [ "$presence_claimed" != "true" ]; then
+      presence_holder=$(printf '%s' "$presence_result" | jq -r '.current_holder.owner_client_session // empty' 2>/dev/null)
+      if [ "$presence_holder" = "$session_id" ]; then
+        mcp_call "task_heartbeat" "$(jq -n --arg tid "session-presence:$session_id" --arg sess "$session_id" '{task_id:$tid, owner_client_session:$sess}')" >/dev/null 2>&1
+      fi
+      # peer-held: proceed anyway — presence is informational, never a gate.
+    fi
   fi
-  presence_ok=$(printf '%s' "$presence_result" | jq -r '.ok // false' 2>/dev/null)
-  if [ "$presence_ok" != "true" ]; then
-    _emit_verdict "ERROR" "$tick" "$drift_min" "[]" "[]" "0" "presence heartbeat ok=false (lock not held or expired) — fallback runs full presence claim"
-    return 1
-  fi
+  # Transport error on the claim itself falls through here too — presence never gates.
 
   # ---- Step 3: fire-time election claim (P3 — cron:cowork:<tick>) ----
   local payload_str election_args election_result election_rc claimed holder_session

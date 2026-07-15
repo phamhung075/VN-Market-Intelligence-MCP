@@ -65,32 +65,45 @@ check() {
 source "$PREFLIGHT_SH"
 
 # ── Stub mcp_call — overrides the real function pulled in by the source above ──
-# Dispatch controlled by $STUB_PRESENCE / $STUB_ELECTION / $STUB_CLAIM_DUE /
-# $STUB_EMIT (set per-scenario below). Every call is appended to CALL_LOG_FILE
-# (NOT a plain var — run_preflight is invoked via `$(...)` command substitution,
-# a subshell, so a plain var write would not propagate back to this shell) so
-# tests can assert "task_release was/was not called".
+# Dispatch controlled by $STUB_PRESENCE_CLAIM / $STUB_PRESENCE_HB / $STUB_ELECTION /
+# $STUB_CLAIM_DUE / $STUB_EMIT (set per-scenario below). Every call is logged as
+# "<tool>|<task_kind>|<task_id>" to CALL_LOG_FILE (NOT a plain var — run_preflight
+# is invoked via `$(...)` command substitution, a subshell, so a plain var write
+# would not propagate back to this shell) so tests can assert which lock/kind a
+# call targeted — e.g. distinguishing the session-presence claim from the
+# cron:cowork election claim (both go through the same "task_claim" tool name).
 CALL_LOG_FILE="$TMPDIR_TEST/call-log.txt"
 mcp_call() {
   local tool="$1" args="${2:-}"
-  echo "$tool" >> "$CALL_LOG_FILE"
+  local log_kind log_tid
+  log_kind=$(printf '%s' "$args" | jq -r '.task_kind // empty' 2>/dev/null)
+  log_tid=$(printf '%s' "$args" | jq -r '.task_id // empty' 2>/dev/null)
+  echo "${tool}|${log_kind}|${log_tid}" >> "$CALL_LOG_FILE"
   case "$tool" in
     task_heartbeat)
       if [[ "$args" == *"cron:cowork:"* ]]; then
         echo '{"ok":true,"expires_at":9999999999}'; return 0
       fi
-      case "${STUB_PRESENCE:-ok}" in
+      case "${STUB_PRESENCE_HB:-ok}" in
         ok) echo '{"ok":true,"expires_at":9999999999}'; return 0 ;;
-        not_held) echo '{"ok":false}'; return 0 ;;
-        error) echo "simulated presence transport error" >&2; return 1 ;;
+        error) echo "simulated presence heartbeat transport error" >&2; return 1 ;;
       esac
       ;;
     task_claim)
-      case "${STUB_ELECTION:-won}" in
-        won) echo '{"claimed":true}'; return 0 ;;
-        lost_peer) echo '{"claimed":false,"current_holder":{"owner_client_session":"peer-session-xyz","owner_agent":"cowork-dispatcher"}}'; return 0 ;;
-        error) echo "simulated election transport error" >&2; return 1 ;;
-      esac
+      if [[ "$args" == *"session-presence:"* ]]; then
+        case "${STUB_PRESENCE_CLAIM:-claimed}" in
+          claimed) echo '{"claimed":true}'; return 0 ;;
+          reentrant_self) echo '{"claimed":false,"current_holder":{"owner_client_session":"'"$FAKE_SESSION"'","owner_agent":"cowork-dispatcher"}}'; return 0 ;;
+          reentrant_peer) echo '{"claimed":false,"current_holder":{"owner_client_session":"peer-session-xyz","owner_agent":"cowork-dispatcher"}}'; return 0 ;;
+          error) echo "simulated presence claim transport error" >&2; return 1 ;;
+        esac
+      else
+        case "${STUB_ELECTION:-won}" in
+          won) echo '{"claimed":true}'; return 0 ;;
+          lost_peer) echo '{"claimed":false,"current_holder":{"owner_client_session":"peer-session-xyz","owner_agent":"cowork-dispatcher"}}'; return 0 ;;
+          error) echo "simulated election transport error" >&2; return 1 ;;
+        esac
+      fi
       ;;
     claim_due_scheduled_tasks)
       case "${STUB_CLAIM_DUE:-empty}" in
@@ -111,11 +124,14 @@ mcp_call() {
 
 run_case() {
   # Resets scenario knobs to defaults before each test.
-  STUB_PRESENCE="ok"; STUB_ELECTION="won"; STUB_CLAIM_DUE="empty"; STUB_EMIT="ok"
+  STUB_PRESENCE_CLAIM="claimed"; STUB_PRESENCE_HB="ok"
+  STUB_ELECTION="won"; STUB_CLAIM_DUE="empty"; STUB_EMIT="ok"
   : > "$CALL_LOG_FILE"
 }
 
-log_has() { grep -qx "$1" "$CALL_LOG_FILE" 2>/dev/null && echo true || echo false; }
+log_has() { grep -q "^$1|" "$CALL_LOG_FILE" 2>/dev/null && echo true || echo false; }
+log_count() { grep -c "^$1|" "$CALL_LOG_FILE" 2>/dev/null || echo 0; }
+log_has_line() { grep -qF "$1" "$CALL_LOG_FILE" 2>/dev/null && echo true || echo false; }
 
 # ── T1: SILENT path — no slots, no one-shots, no NEW signals ─────────────────
 run_case
@@ -150,16 +166,51 @@ check "T2b WORK verdict via signal_queue" "$([ "$VERDICT" = "WORK" ] && echo tru
 check "T2b new_signals=1" "$([ "$NEW_SIGNALS" -eq 1 ] && echo true || echo false)"
 export ORCH_STATE_PATH="$TMPDIR_TEST/orch-no-signals.json"
 
-# ── T3: ERROR path — presence heartbeat transport failure ────────────────────
+# ── T3: presence NEVER gates — rewritten for FIX-COWORK-PREFLIGHT-PRESENCE-CLAIM-GAP.
+#     OLD behaviour (removed): a presence-tool transport failure emitted ERROR
+#     (gated the tick). NEW contract: same fault injection now proceeds through
+#     to the real verdict — presence is claim-first and is never a gate; ERROR
+#     is reserved for fire-election/transport failures elsewhere in the flow ──
 run_case
 export SLOT_MATCHER_CMD='echo "{\"slots\":[],\"drift_min\":0}"'
-STUB_PRESENCE="error"
+STUB_PRESENCE_CLAIM="error"
 OUT=$(run_preflight); RC=$?
 VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
-DETAIL=$(printf '%s' "$OUT" | jq -r '.detail')
-check "T3 ERROR verdict (presence transport failure)" "$([ "$VERDICT" = "ERROR" ] && echo true || echo false)"
-check "T3 ERROR exit=1" "$([ "$RC" -eq 1 ] && echo true || echo false)"
-check "T3 ERROR detail non-empty" "$([ -n "$DETAIL" ] && echo true || echo false)"
+check "T3 presence claim transport error -> verdict SILENT, NOT ERROR (was gating)" "$([ "$VERDICT" = "SILENT" ] && echo true || echo false)"
+check "T3 presence claim transport error -> exit=0 (SILENT)" "$([ "$RC" -eq 0 ] && echo true || echo false)"
+
+# ── T3-presence-fresh: fresh session (no prior session-presence row) — claim
+#     succeeds outright -> verdict SILENT/WORK, NEVER ERROR. This is the exact
+#     bug scenario from docs/handoffs/2026-07-15-cowork-preflight-presence-claim-gap.md ──
+run_case
+export SLOT_MATCHER_CMD='echo "{\"slots\":[],\"drift_min\":0}"'
+STUB_PRESENCE_CLAIM="claimed"
+OUT=$(run_preflight); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+check "T3-presence-fresh fresh-session claim -> verdict SILENT (not ERROR)" "$([ "$VERDICT" = "SILENT" ] && echo true || echo false)"
+check "T3-presence-fresh presence claim call made (task_kind=session-presence)" "$([ "$(log_count "task_claim|session-presence")" -eq 1 ] && echo true || echo false)"
+check "T3-presence-fresh no cowork-slot lock leak (exactly 1 cowork-slot claim = election only)" "$([ "$(log_count "task_claim|cowork-slot")" -eq 1 ] && echo true || echo false)"
+
+# ── T3-presence-reentrant: same session already holds session-presence — claim
+#     returns claimed:false + current_holder == this session -> heartbeat renews
+#     TTL, clean pass (never ERROR), and no cowork-slot lock leak from presence ──
+run_case
+export SLOT_MATCHER_CMD='echo "{\"slots\":[],\"drift_min\":0}"'
+STUB_PRESENCE_CLAIM="reentrant_self"
+OUT=$(run_preflight); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+check "T3-presence-reentrant re-entrant same-session -> verdict SILENT (not ERROR)" "$([ "$VERDICT" = "SILENT" ] && echo true || echo false)"
+check "T3-presence-reentrant heartbeat renews TTL (session-presence:$FAKE_SESSION)" "$(log_has_line "task_heartbeat||session-presence:$FAKE_SESSION")"
+check "T3-presence-reentrant no cowork-slot lock leak from presence" "$([ "$(log_count "task_claim|cowork-slot")" -eq 1 ] && echo true || echo false)"
+
+# ── T3-presence-peer: a peer session holds session-presence — still never gates ──
+run_case
+export SLOT_MATCHER_CMD='echo "{\"slots\":[],\"drift_min\":0}"'
+STUB_PRESENCE_CLAIM="reentrant_peer"
+OUT=$(run_preflight); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+check "T3-presence-peer peer-held presence -> verdict SILENT (not ERROR)" "$([ "$VERDICT" = "SILENT" ] && echo true || echo false)"
+check "T3-presence-peer no heartbeat sent for a peer-held lock (not this session)" "$([ "$(log_has_line "task_heartbeat||session-presence:$FAKE_SESSION")" = "false" ] && echo true || echo false)"
 
 # ── T3b: ERROR path — blind guard (mcpServers empty) ──────────────────────────
 run_case
