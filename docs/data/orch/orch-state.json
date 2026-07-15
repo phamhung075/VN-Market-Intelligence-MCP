@@ -371,12 +371,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "CRON-SAFETY-GATE DONE_VERIFIED (qa PASS 5/5 + DJ-GATE-1 closed, ab71bee08). rag-fts rebuild cron is on main but default-OFF (CRON_RAG_FTS_REBUILD_ENABLED unset) — non-deployment enforced. Parked: ALPHA-S2-RAG-FTS-REBUILD-CRON blocked on RAG-FTS-BUILD-MEMORY-BOUND (review, done_verified WITHHELD until rag corpus re-populates to ~56k rows + AC#1 scale re-run). Next dispatcher tick: clean preflight + BOUNDED-1 eval. Gateway /gateway 502 still USER-escalated (dashboard-managed --token tunnel, aggregator origin down).",
-    "updated_at": "2026-07-15T17:08:19Z",
-    "updated_by": "dev-team (router: CRON-SAFETY-GATE review->done_verified, qa PASS + DJ-GATE-1 SATISFIED; head idle)"
+    "status": "review",
+    "active_task_id": "UC-RDL-P5",
+    "next_agent": "qa",
+    "next_action": "UC-RDL-P5 (CLAUDE.md step 2.5 PRE-CLAIM shrink to pointer+3-outcome table) doc edit landed dev-self-verified (commit aef457f38), moved in_progress->review. QA to verify pointer references dispatch-claim SKILL correctly, table covers claimed/re-entrant/peer-collision, load-bearing dispatch semantics (owner_client_session, ttl=600, task_claim contract) preserved, then flip REVIEW->DONE_VERIFIED.",
+    "updated_at": "2026-07-15T18:16:28Z",
+    "updated_by": "developer (UC-RDL-P5 -> review, qa gate dispatched)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6461,22 +6461,6 @@
         "status_note": "PLAN-ONLY low DEBT; ZERO runtime impact (Bun strips types; both scripts already ran live). scripts/migrations/ is outside the include globs of BOTH root tsconfig.json AND apps/mcp-server/tsconfig.json, so `pnpm --filter vn-market check` never type-checks it; any router/dev 'tsc-clean' claim on those scripts is false-clean-by-omission. Design choice (architect): (a) add scripts/migrations/ (or scripts/) to an existing tsconfig include OR a dedicated scripts tsconfig; OR (b) a standalone `tsc --noEmit` pass over scripts/ wired into the check/CI gate. Then fix the 3 QA-surfaced errors (isolated tsc 5.9.3): (1) discover-consolidated-bctc-pdf.ts:395 new Blob([pdfBytes]) — Uint8Array<ArrayBufferLike> not assignable to BlobPart (shipped commit 90c975415, HPG-DISCOVER); (2)+(3) reparse-bctc-reports.ts 2 pre-existing own errors (already shipped — confirms gap is directory-wide, not a single-task regression). AC: chosen tsc gate covers scripts/migrations/ AND all 3 errors resolved AND `pnpm check` (or the new pass) green."
       },
       {
-        "id": "UC-RDL-P5",
-        "type": "CLEAN",
-        "title": "Shrink CLAUDE.md step 2.5 to a pointer + 3-outcome table incl the missing re-entrant branch",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "CONFIRMED",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#router-dispatch-locking-P5",
-        "note": "Step 2.5 PRE-CLAIM prose is bloated and omits the re-entrant (same-session) outcome branch. Replace with a pointer to dispatch-claim SKILL + a 3-outcome table (claimed / peer-collision / re-entrant).",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po"
-      },
-      {
         "id": "UC-RDL-P4",
         "type": "SPRINT-M",
         "title": "Composite dispatch_preflight MCP tool: presence + orphan probe + roster + intent claim in ONE gateway call",
@@ -9710,11 +9694,11 @@
       }
     ],
     "head": {
-      "status": "idle",
-      "active_task_id": null,
-      "next_agent": "router",
-      "last_updated_at": "2026-07-15T17:08:19Z",
-      "last_updated_by": "dev-team (CRON-SAFETY-GATE -> done_verified, qa PASS + DJ-GATE-1 closed)"
+      "status": "review",
+      "active_task_id": "UC-RDL-P5",
+      "next_agent": "qa",
+      "last_updated_at": "2026-07-15T18:16:28Z",
+      "last_updated_by": "developer (UC-RDL-P5 -> review, qa gate dispatched)"
     },
     "ready": [],
     "review": [
@@ -10264,6 +10248,39 @@
           "idle_baseline_flag": "rag-service idle mem already ~92% of 768m bound with ZERO FTS activity (tight margin, pre-existing, heads-up for ALPHA-S2 retune)."
         },
         "po_triage_note_reverify": "PO TRIAGE 2026-07-15T17:28:38Z (dev-team tick 17:07Z, sig dev-team-20260715T160042Z-rag-corpus-repopulation-scale-reverify): corpus RE-POPULATION CONFIRMED CLIMBING — live GET :5002/embed/health index_size=297 rows now vs 116 @ qa 16:01Z verify (+181 in ~1.5h). Re-embed pipeline ALIVE => NOT stuck-at-116, so NO new bug for dev-rag-service. BUT 297 << ~56k representative scale => AC#1 (no-OOM at ~56k) re-run stays UN-testable now: this row STAYS review, done_verified WITHHELD, blocked_on=rag-corpus-repopulation-to-representative-scale UNCHANGED (TIME-GATED on wall-clock, NOT a dispatch — do NOT force a rebuild against a 116/297-row corpus). GATE to lift WITHHELD (= signal action 2): once corpus ~= representative scale, re-run AC#1 (POST /admin/rebuild-fts under 768m cgroup, docker stats peak-mem, 2x), record real peak-mem => then unblock ALPHA-S2 deadline retune + BM25 round-trip. Heads-up carried: rag-service idle mem ~92% of 768m with ZERO FTS activity (tight margin — ALPHA-S2 retune input). Tech-debt spin-off (signal 2, hybrid max_distance no-op) minted separately as SPIKE-RAG-HYBRID-MAXDISTANCE-NOOP (backlog, P3, non-blocking)."
+      },
+      {
+        "id": "UC-RDL-P5",
+        "type": "CLEAN",
+        "title": "Shrink CLAUDE.md step 2.5 to a pointer + 3-outcome table incl the missing re-entrant branch",
+        "status": "REVIEW",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "CONFIRMED",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#router-dispatch-locking-P5",
+        "note": "Step 2.5 PRE-CLAIM prose is bloated and omits the re-entrant (same-session) outcome branch. Replace with a pointer to dispatch-claim SKILL + a 3-outcome table (claimed / peer-collision / re-entrant).",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "promoted_at": "2026-07-15T18:05:38Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-15T18:05:38Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "moved_at": "2026-07-15T18:16:28Z",
+        "moved_by": "developer (bounded-1 self-verified doc-only edit)",
+        "dev_result": {
+          "agent": "developer",
+          "commits": [
+            "aef457f38"
+          ],
+          "change_summary": "CLAUDE.md:7-26 (20L condensed Phase A/A.5/B pseudocode) replaced with 8-line pointer to .claude/skills/dispatch-claim/SKILL.md + Phase B task_claim call + 3-outcome table (claimed / re-entrant same-session / peer-collision). File 74->62 lines total; step 2.5 block 20->8 lines.",
+          "self_reported": "git diff confirms edit isolated to lines 7-26 of original; owner_client_session/ttl_seconds=600/task_claim contract + peer-collision EXIT wording preserved verbatim; hardcoded redispatch_count<3 dropped (N_MAX lives in dispatch-claim). Doc-only, no apps/ code touched -> no bun test/tsc applicable.",
+          "pending_qa": "independent: confirm CLAUDE.md still references dispatch-claim SKILL correctly, 3-outcome table covers claimed/re-entrant/peer-collision, no load-bearing semantics dropped (owner_client_session key, ttl, task_claim args)."
+        }
       }
     ],
     "qa": [],
@@ -10283,8 +10300,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-15T17:28:38Z",
-    "last_triaged_by": "po (dev-team tick 17:07Z signal triage: RAG-FTS review-note + hybrid-maxdistance SPIKE)",
+    "last_triaged_at": "2026-07-15T18:16:28Z",
+    "last_triaged_by": "developer (UC-RDL-P5 review handoff)",
     "in_progress": []
   },
   "_meta": {
