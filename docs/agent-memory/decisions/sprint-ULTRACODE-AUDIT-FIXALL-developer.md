@@ -34,3 +34,16 @@ forbids (peer already owns hygiene on SKIP; lock state undefined on ERROR).
 per the dispatch prompt) over the router's paraphrase — full reasoning in
 `docs/agent-memory/decisions/sprint-UC-DTL-P2-developer.md`.
 **why-change:** Corrected target script + scoped firing to RUN/RUN-IDLE only (documented deviation).
+
+### STEP developer-S3 · developer · 2026-07-15T22:26:00Z
+**task-id:** UC-CDC-P2
+**what-done:** Ported the mktemp stderr-separation idiom into `cowork-guaranteed-slot-firer.sh:183`
+run_firer (`raw=$(eval "$SLOT_MATCHER_CMD" 2>&1)` -> `2>"$slot_err"` mktemp file); added T13 regression
+(stderr diagnostic + valid stdout JSON, guaranteed slot still fires); 28/28 GREEN, shellcheck clean.
+**what-considered:** Router's inline text pointed at `log()`'s `tee` (line 97) as root cause; the
+linked architecture brief (cowork-dispatcher-cron-P2, Verifier-confirmed w/ 34 live "non-JSON output"
+log errors incl. a missed chef-eod slot) names line 183's `SLOT_MATCHER_CMD` capture instead.
+**why-decision:** Followed the brief (authoritative, evidence-verified) over the router's paraphrase —
+`log()`'s tee never feeds a command-substitution JSON parse in this file, confirmed by grep audit; the
+`2>&1` on the matcher eval is the only real stdout/stderr merge point feeding `jq` in this script.
+**why-change:** Fixed line 183 (not line 97) — same bug class, correct location; no new pattern invented.
