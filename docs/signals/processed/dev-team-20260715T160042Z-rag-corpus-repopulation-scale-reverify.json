@@ -20,5 +20,11 @@
     ],
     "source_task": "RAG-FTS-BUILD-MEMORY-BOUND",
     "verified_by": "qa (ad5d8842bab496ffe, degraded-mode bash-only)"
+  },
+  "_processed": {
+    "fingerprint": "698f8b889b40dce0a0a74d39f0fba74c11574f7e9d9dc40e52002999924245a7",
+    "processedAt": "2026-07-15T17:21:00Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }
