@@ -1,6 +1,20 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-13 | **Cycle:** TE-T04 (dev-team BOUNDED-1 auto-pickup, mode=CLEAN, zone=docs/agents/)
+**Last updated:** 2026-07-15 | **Cycle:** UC-RDL-P5 (dev-team BOUNDED-1 auto-pickup, mode=CLEAN, zone=cross-service/)
+
+## Session 2026-07-15 — UC-RDL-P5 (dev-team BOUNDED-1 auto-pickup, mode=CLEAN, zone `cross-service/`) — IN_PROGRESS→REVIEW
+
+**Task:** Ultracode audit P5 (`docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#router-dispatch-locking-P5`) — shrink CLAUDE.md step 2.5 PRE-CLAIM prose (20L condensed Phase A/A.5/B pseudocode) to a pointer + 3-outcome table, restoring the re-entrant (same-session) branch the condensed copy had silently dropped.
+
+**Actions taken:** Replaced CLAUDE.md:7-26 with an 8-line pointer to `.claude/skills/dispatch-claim/SKILL.md` (Step 0a + Phases A/A.5/B) + the Phase B `task_claim` call + a 3-row outcome table: claimed→spawn try/finally; re-entrant (`claimed:false` + `current_holder.owner_client_session == $CLAUDE_CODE_SESSION_ID`)→heartbeat+proceed (do NOT exit); peer collision (session mismatch)→log+`send_telegram(work)`+EXIT. Kept the load-bearing semantics intact: `owner_client_session` as sole ownership key, `ttl_seconds=600`, full `task_claim` arg contract, peer-collision EXIT wording verbatim. Dropped the hardcoded `redispatch_count<3` (N_MAX now lives solely in dispatch-claim, per brief).
+
+**Verification:** `CLAUDE.md` 74→62 total lines; step 2.5 block itself 20→8 lines. `git diff` confirmed the edit isolated to lines 7-26 of the original — items 1/2 (dispatch table + intent match) and item 3 (spawn) untouched. Doc-only change, no `apps/` code touched → no `bun test`/`tsc` applicable.
+
+**Board:** Moved `task_board.in_progress[UC-RDL-P5]` → `task_board.review[]` (status REVIEW, next_agent=qa) + `.head`/`.task_board.head` synced, via `orch-apply.sh` (conservation OK, task_total unchanged at 580). Commits: `aef457f38` (CLAUDE.md edit), `e06d4df47` (orch-state board move). Decision journal: `sprint-ULTRACODE-AUDIT-FIXALL-developer.md` STEP developer-S1.
+
+**Scope discipline:** Edited ONLY CLAUDE.md § "2.5 PRE-CLAIM" — left `.claude/skills/dispatch-claim/SKILL.md` untouched (pointer target; brief did not require editing it). Did not touch any peer-dirty files (cowork-team-*.json, notebooks, auditor-state, price_anomaly, signals.db). Did not flip REVIEW→DONE_VERIFIED (qa gate's job).
+
+Zone health: root `CLAUDE.md` — step 2.5 de-bloated this cycle; no other drift observed | HEALTHY
 
 ## Session 2026-07-13 — TE-T04 (dev-team BOUNDED-1 auto-pickup, mode=CLEAN, zone `docs/agents/`) — IN_PROGRESS→REVIEW
 
@@ -28,17 +42,3 @@ Zone health: `docs/agents/tools/package/` — 6/6 high-cadence packages de-dupli
 
 **Scope discipline:** Did not touch `main.md`, the preflight script, or cadence — prompt-only per task constraint. Did not flip REVIEW→DONE_VERIFIED (QA gate's job). Did not run `/cron-cowork-team` re-arm (explicit POST-CLOSE router step, not mine).
 Zone health: `.claude/skills/` doc zone — no other drift observed this cycle | HEALTHY
-
-## Session 2026-07-12 — FACTORY-NEWS-extract-rss-parse (router-dispatched, mode=FACTORY, zone=news-fetch) — IN_PROGRESS→REVIEW
-
-**Task:** Extract the shared RSS parse layer from `apps/news-fetch/src/infrastructure/scrapers/{reuters-rss.ts,bloomberg-rss.ts}` (~95% identical, 208L/209L) and collapse both scrapers onto it — behavior-preserving DRY refactor, per backlog-detail's own approach spec (`FACTORY-MAINTAINABILITY-2026-06` epic, po-authored, file name + exact signatures pre-specified).
-
-**Actions taken:** Created `apps/news-fetch/src/infrastructure/scrapers/rss-parse.ts` (115L) exporting `fetchRss(url,source,maxItems)` + `parseRssXml(xml,fetchedAt,maxItems,source)` + `extractTag` — the byte-identical fetch/parse/error-envelope logic both scrapers shared. Reduced `bloomberg-rss.ts` 209L→48L and `reuters-rss.ts` 208L→41L; each now only holds its literal RSS URL const (kept literal — `fix-reuters-url-bloomberg-timeout.test.ts` regex-matches `REUTERS_RSS_URL` in source text) + a 1-line delegating `fetchHeadlines()` + the `normalizeRfcDate` re-export (test back-compat). Net: 417L→204L (-51%) across the pair while adding the shared module.
-
-**Verification:** Baseline `bun test` 233 pass/6 skip/0 fail, `bun tsc --noEmit` clean (captured before touching code). Post-refactor: identical 233 pass/6 skip/0 fail, tsc clean, `bun run lint` clean, sandbox `--tier=all --module=news-fetch` 16/16 GREEN. Direct before/after proof: `git stash`'d back to pre-refactor code, ran the 3 scraper-specific unit test files (64 pass/0 fail, same `[reuters-rss]`/`[bloomberg-rss]` log lines) as ground truth, `git stash pop`, reran same 3 files post-refactor — identical 64 pass/0 fail/121 expect() calls.
-
-**Scope discipline:** Did not touch `docs/data/orch/orch-state.json` or `backlog-detail.json` (dispatcher-owned board/detail per task constraint) — router flips the board row. Did not touch `composition-root.ts` (only imports the two scraper classes; public API unchanged). DJ: `sprint-FLOW-PRICE-ALPHA-LOOP-developer.md` STEP developer-S4.
-
-Zone health: `apps/news-fetch/` scraper pair de-duplicated (flagged in the 2026-06-15 maintainability audit); no other drift observed this cycle | HEALTHY
-
-**Redeploy:** news-fetch is a docker-compose service — code change needs `docker compose up -d --build news-fetch` to reach the live container. NOT performed here (user/ops-gated); flagged for router/ops.
