@@ -7486,6 +7486,21 @@
           "orch-state head.next_action + ALPHA-S2-FF done_verified close notes"
         ],
         "note": "PLAN-ONLY intake at ALPHA-S2-FF epic close (WIP=0, head idle). Pre-existing background timer leak, NOT introduced by ALPHA-S2-FF. Bun v1.3.13 post-run panic is a separate known upstream instability surfacing AFTER results print — the leaked interval timers are the actionable root cause."
+      },
+      {
+        "id": "FIX-BCTC-Q1-2026-STORED-PDF-INGEST-STALL-15T",
+        "title": "15 watchlist tickers have Q1-2026 BCTC PDFs stored on VPS (06-07..06-13) but earnings-calendar shows QUA HAN + get_bctc_full empty — stored-PDF ingest/reconcile never ran (partial stall, distinct from refine-dispatch dormancy)",
+        "owner": "ops",
+        "status": "BACKLOG",
+        "zone": "multi",
+        "priority": "high",
+        "type": "FIX",
+        "depends": [],
+        "note": "Filed from bctc-analyst bug-escalation (docs/signals/processed/bctc-analyst-20260715T003000Z.json, discovered c088 cycle 2026-07-15T00:10Z slot bctc-analyst-slot-4). PO RAW-verified 2026-07-15T01:29Z via gateway call_tool: (a) list_stored_pdfs confirms ALL 15 tickers have a *_2026_Q1.pdf on the VPS (MSN_2026_Q1.pdf 06-13, PLX_2026_Q1.pdf + SAB_2026_Q1.pdf 06-07, etc.); (b) get_earnings_calendar reports QUA HAN (never-submitted) for all 15: DBC DGC DXG FRT GEX HUT KDC KDH MSN PDR PLX SAB SHB VJC VND; bctc-analyst separately confirmed get_bctc_full returns 'Chua co du lieu BCTC' for the 3 live samples MSN/SAB/PLX. SMOKING-GUN DIFFERENTIAL: 18 sibling tickers that ALSO have stored Q1-2026 PDFs ARE correctly marked DA NOP (BSR VCB VHM VIC VRE SSI VCI KBC NVL HPG DPM DIG VNM VIX EIB FPT + submission dates) => this is a PARTIAL ingest/announcement-reconcile stall on a 15-ticker cohort, NOT total dispatch dormancy. DEDUP: distinct from (1) the 14-ticker serve-layer-gap/CORRUPT-SKIP/PUB-5 blocked cluster already reported BUG msg 3406/3411, and (2) FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP which is total refine-dispatch dormancy since 07-04 (bctc_table_rows producer) — that row presupposes financial_reports PENDING rows exist; here get_bctc_full is EMPTY + calendar QUA HAN, so the failure is at an EARLIER layer (announcement-discovery / extract-enqueue / reingest), and 18 siblings reconciling rules out total dormancy. RECON-FIRST: ops diagnoses which layer stalled for exactly these 15 (why stored PDF not linked to a financial_reports row / not marked submitted) then does the operational reprocess; IF recon proves the same root cause as FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP => FOLD there, do NOT build a parallel durable trigger; IF a code defect in the extract/reconcile pipeline => spawn/hand to dev-mcp-server (or dev-pdf-extractor per layer). Root cause + fix declared out of bctc-analyst scope.",
+        "status_note": "AC (real-data gate, verification_gate=live_tool_reconcile): For all 15 tickers (DBC DGC DXG FRT GEX HUT KDC KDH MSN PDR PLX SAB SHB VJC VND) get_earnings_calendar(Q1-2026) no longer reports QUA HAN (shows DA NOP with a submission date) AND get_bctc_full returns non-empty structured_data for the 3 live-verified samples MSN/SAB/PLX — RAW-verified via gateway call_tool (raw tool output, not badges/status flags). Priority: high.",
+        "created_at": "2026-07-15T01:29:29Z",
+        "created_by": "po (triage bctc-analyst bug-escalation 2026-07-15T01:07Z tick)",
+        "source": "docs/signals/processed/bctc-analyst-20260715T003000Z.json"
       }
     ],
     "closed_sprints": [
