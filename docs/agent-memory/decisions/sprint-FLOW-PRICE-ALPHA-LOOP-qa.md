@@ -107,3 +107,12 @@
 - Re-run full bun test suite vs targeted+sweep — full suite hangs on documented pre-existing sla-monitor/reaper interval leak, unrelated; targeted+10-file sweep sufficient per dispatch instruction.
 **why-decision:** All 8 testable AC (§8) mapped to test/code-read, all PASS. AC#9 router-owned. Out-of-scope integrity confirmed (9 files only, zero domain/application, FIX-half untouched). DDD/security clean. APPROVE.
 **why-change:** No change from plan.
+
+### STEP qa-S13 · qa · 2026-07-15T03:01:10Z
+**task-id:** ALPHA-S2-OMO-LIQUIDITY-CRON
+**what-done:** Final relay hop (4/4). Read `sbvOmoLiquidityCronJob.ts` in full, confirmed all 3 fail-loud branches (HARD/SOFT/success) match brief §3 exactly via test-proven mocked notifyBug call counts + captured log lines. Confirmed `macroFetch`/`LiquidityStateResponseSchema` pre-date this commit via `git log` (reuse, not reinvention). RAW-ran new test (5/0/18) + both count-guards (16/0, 15/0) = 36/0. tsc exit 0, mock-guard PASS. `gen-project-stats.ts --dry-run` confirms toolCount/cronJobCount untouched.
+**what-considered:**
+- `it()` title stale at "=== 67" while asserting 68 — investigated via `git log -S`, confirmed title has never tracked the value since inception (43) across 6 prior bumps — pre-existing convention, not a new defect, non-blocking.
+- `system-map.json` crons length (69) vs `cron-registry.json` schedulerFileCount (68) — traced via `git show ae45fd0e7~1`, confirmed the +1 offset pre-dates this commit (68 vs 67) — pre-existing SSOT drift correctly preserved, not introduced.
+**why-decision:** DoD 1-9 all PASS, zero new DDL, reuse confirmed, 3-place doc registration consistent, DDD scan clean (scheduler/ composition-root importing infrastructure/ is established convention). APPROVED, DONE_VERIFIED.
+**why-change:** No change from plan.
