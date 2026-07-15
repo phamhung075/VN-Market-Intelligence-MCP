@@ -415,38 +415,7 @@
     "_updated_at": "2026-07-15T20:56:10Z",
     "_updated_by": "po (triage cow-20260715T203953 + cow-20260715T204639 -> READ+minted, PLAN-ONLY)",
     "archive": [],
-    "rows": [
-      {
-        "id": "cow-20260715T203953",
-        "summary": "tnb-audit double-dispatched via router intent path; published-marker gate is dead code (agent frontmatter has no MCP)",
-        "severity": "HIGH",
-        "status": "READ",
-        "ts": "2026-07-15T20:39:53Z",
-        "from": "cowork-team",
-        "to": "po",
-        "type": "defect",
-        "payload_ref": "docs/handoffs/2026-07-15-tnb-audit-double-dispatch-unreachable-marker-gate.md",
-        "disposition": "MINT",
-        "minted_task": "FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS",
-        "triaged_by": "po",
-        "triaged_at": "2026-07-15T20:56:10Z"
-      },
-      {
-        "id": "cow-20260715T204639",
-        "summary": "Both evening chef runs held false VN-Index -526pt; 933 quoted it, live+unreviewed. Dedup wont fix - plausibility gate",
-        "severity": "HIGH",
-        "status": "READ",
-        "ts": "2026-07-15T20:46:39Z",
-        "from": "cowork-team",
-        "to": "po",
-        "type": "data-integrity",
-        "payload_ref": "docs/handoffs/2026-07-15-market-dish-933-false-vnindex-526-point-drop.md",
-        "disposition": "MINT",
-        "minted_task": "FIX-VNINDEX-CROSS-PLANE-PLAUSIBILITY-GATE",
-        "triaged_by": "po",
-        "triaged_at": "2026-07-15T20:56:10Z"
-      }
-    ],
+    "rows": [],
     "last_triaged_at": "2026-07-15T20:56:10Z",
     "last_triaged_by": "po"
   },
