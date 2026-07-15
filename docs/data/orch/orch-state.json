@@ -373,10 +373,10 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "ALPHA-S2-OMO-LIQUIDITY-CRON",
-    "next_agent": "dev-mcp-server",
-    "next_action": "architect scoping complete — zone resolved multi->apps/mcp-server/, lean single-file FIX (no epic decomposition needed). Brief: docs/architecture-briefs/2026-07-15-alpha-s2-omo-liquidity-cron.md. pm to mint ONE atomic dev-mcp-server task.",
-    "updated_at": "2026-07-15T06:00:00Z",
-    "updated_by": "pm (retask: ALPHA-S2-OMO-LIQUIDITY-CRON next_agent->dev-mcp-server, DoD embedded)"
+    "next_agent": "qa",
+    "next_action": "qa: behavioral verify ALPHA-S2-OMO-LIQUIDITY-CRON impl commit ae45fd0e7 + DONE/merge-gate flip. Brief: docs/architecture-briefs/2026-07-15-alpha-s2-omo-liquidity-cron.md",
+    "updated_at": "2026-07-15T02:54:47Z",
+    "updated_by": "dev-team (RAW-verified dev-mcp-server ae45fd0e7 origin==local AHEAD=0, 36/36 targeted tests + tsc0, board/mutex untouched; advance next_agent dev-mcp-server->qa)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -9591,9 +9591,9 @@
     "head": {
       "status": "in_progress",
       "active_task_id": "ALPHA-S2-OMO-LIQUIDITY-CRON",
-      "next_agent": "dev-mcp-server",
-      "last_updated_at": "2026-07-15T06:00:00Z",
-      "last_updated_by": "pm (sync .task_board.head <- authoritative .head)"
+      "next_agent": "qa",
+      "last_updated_at": "2026-07-15T02:54:47Z",
+      "last_updated_by": "dev-team (sync .task_board.head <- .head; next_agent->qa)"
     },
     "ready": [],
     "review": [
@@ -10134,8 +10134,9 @@
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
         "claimed_at": "2026-07-15T01:54:35Z",
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "dev-mcp-server",
-        "router_route_note": "architect verdict: sbv_omo_daily write path already 100% shipped in apps/macro-indicators (P0-3-OMO-CURVE cd8cfcc2, idempotent, ParseOK-gated no-fake-data already structural). Gap is purely scheduling — new apps/mcp-server/ cron reuses macroFetch()+buildJobTable()+sendTelegramBug(), zero new tables/write-path. HARD-fail (transport down) always alerts BUG; SOFT-fail (200 OK, no auction that session) logs only (avoids false incidents on normal SBV cadence). Brief: docs/architecture-briefs/2026-07-15-alpha-s2-omo-liquidity-cron.md. Recommend PM mint ONE atomic dev-mcp-server task, not a multi-subtask epic."
+        "next_agent": "qa",
+        "router_route_note": "architect verdict: sbv_omo_daily write path already 100% shipped in apps/macro-indicators (P0-3-OMO-CURVE cd8cfcc2, idempotent, ParseOK-gated no-fake-data already structural). Gap is purely scheduling — new apps/mcp-server/ cron reuses macroFetch()+buildJobTable()+sendTelegramBug(), zero new tables/write-path. HARD-fail (transport down) always alerts BUG; SOFT-fail (200 OK, no auction that session) logs only (avoids false incidents on normal SBV cadence). Brief: docs/architecture-briefs/2026-07-15-alpha-s2-omo-liquidity-cron.md. Recommend PM mint ONE atomic dev-mcp-server task, not a multi-subtask epic.",
+        "dev_commit": "ae45fd0e7"
       }
     ]
   },
