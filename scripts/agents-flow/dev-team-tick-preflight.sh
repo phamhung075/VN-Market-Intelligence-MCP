@@ -41,6 +41,33 @@
 #      fresh => verdict RUN-IDLE — the LLM continuation skips Step 0a drain
 #      entirely (drain-signals.md branch lives in main.md, out of this
 #      script's scope — P1-IDLE-DEVTEAM-FLOW-BRANCH wires the read side).
+#   5.5. Board-hygiene / cold-eviction backstop (dev-team-loop-P2, sprint
+#      ULTRACODE-AUDIT-FIXALL task UC-DTL-P2). Runs unconditionally on every
+#      LOCK-WINNING tick — i.e. both the RUN and RUN-IDLE verdict branches
+#      below, evaluated right after Step 5's idle check and BEFORE either
+#      _emit_verdict call. This is a deterministic relocation of
+#      docs/agents/dev-team/flow/post-cycle.md's old Step 4.2 (CANON-SCRIPT:
+#      that doc section is now the SSOT spec, not the runtime path — see
+#      docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md
+#      #dev-team-loop-P2). Root cause fixed: post-cycle.md Step 4.2 was only
+#      reachable via Step 3 dispatch execution, so every "JUMP TO end" shortcut
+#      main.md takes (Session Gate, orphan-adoption, RUN-IDLE's own drain-skip,
+#      monitoring-only guard) bypassed it — done[]/done_verified[]/terminal
+#      sprints re-accumulated unchecked between busy ticks (dev-team-loop-I2).
+#      Placing the check here, before either verdict is emitted, guarantees it
+#      fires exactly once per lock-winning tick regardless of what the LLM
+#      continuation does afterward.
+#      Deliberately does NOT run on SKIP or ERROR (both `return` above this
+#      point in run_preflight): SKIP means a peer session holds SF-1 and is
+#      running its OWN full tick (including its own Step 5.5); re-running
+#      hygiene here would duplicate work and blow the SKIP-tick "<=2 tool
+#      calls" DoD referenced above. ERROR means lock state is undefined
+#      (transport/malformed-JSON on SF-1 or fire-election) — starting a
+#      second commit-mutex-guarded write while lock state is unknown is
+#      unsafe. See docs/agent-memory/decisions/sprint-UC-DTL-P2-developer.md
+#      for the full reasoning (this deviates from a literal "all 4 verdict
+#      paths" reading of the dispatch brief, in favor of the architecture
+#      brief's own verifier-vetted "every LOCK-WINNING tick" scope).
 #
 # Verdict JSON (one line, stdout): {verdict, tick, detail}.
 #   verdict ∈ RUN|RUN-IDLE|SKIP|ERROR.
@@ -72,6 +99,12 @@
 #   SIGNALS_DB_PATH  — signals.db path (default: $SIGNALS_DIR/signals.db).
 #   ORCH_STATE_PATH  — orch-state.json path (default: $PREFLIGHT_ROOT/docs/data/orch/orch-state.json).
 #     All four are Step 5 idle-check test seams — see dev-team-tick-preflight.test.sh.
+#     ORCH_STATE_PATH is ALSO read by Step 5.5 board-hygiene (same file, same SSOT
+#     path — no separate env var). Step 5.5's actual side-effecting calls
+#     (orch-cold-evict.sh / orch-state-validate.sh / git commit) are wrapped in the
+#     small overridable functions _step55_run_cold_evict / _step55_run_validate /
+#     _step55_git_commit_evict — the test harness replaces these wholesale so it
+#     NEVER shells out to the real scripts or touches the real git index.
 #
 # HARD CONSTRAINT: NEVER live-claim dev-team-cron-singleton or
 # cron:dev-team:* outside a real cron tick — these are PRODUCTION mutexes.
@@ -281,6 +314,108 @@ _step5_idle_check() {
   fi
 }
 
+# ── Step 5.5: board-hygiene / cold-eviction backstop (dev-team-loop-P2) ─────
+# CANON-SCRIPT for docs/agents/dev-team/flow/post-cycle.md § Step 4.2 (that
+# doc section is now the SSOT spec, not the runtime path). Ported verbatim
+# (threshold predicate + script invocations), with the doc's comment-annotated
+# tool calls (`# task_claim(...)`, `# task_release(...)`) turned into real
+# mcp_call invocations — same translation this whole script already performs
+# for SF-1/fire-election above.
+#
+# Pure jq/filesystem read for the threshold check (no mcp_call cost when the
+# threshold does not trip — mirrors _step5_idle_check's zero-cost design).
+_step55_board_hygiene() {
+  local session_id="$1"
+  local terminal_sprint_n sprint_goal_terminal_n done_n dv_n
+
+  # Terminal sprint statuses — SSOT: apps/mcp-server/src/infrastructure/orchStateSchema.ts
+  # TERMINAL_SET {DONE, DONE_VERIFIED, CANCELLED, DEFERRED, SKIPPED} — must match
+  # scripts/orch-cold-evict.sh $TERMINAL_SPRINT_STATUSES exactly (post-cycle.md:43-44).
+  terminal_sprint_n=$(jq '[.task_board.active_sprints[]? | select(
+    ((.status // "") | IN("DONE","DONE_VERIFIED","CANCELLED","DEFERRED","SKIPPED")) or
+    ((.status // "") | startswith("BCTC-"))
+  )] | length' "$ORCH_STATE_PATH" 2>/dev/null)
+  [[ "$terminal_sprint_n" =~ ^[0-9]+$ ]] || terminal_sprint_n=0
+
+  # sprint_goal.entries[] — SEPARATE array from active_sprints[], keyed by
+  # sprint_id not id (post-cycle.md:50-56 / FIX-SPRINT-GOAL-STATUS-DRIFT-EVICT).
+  sprint_goal_terminal_n=$(jq '[(.sprint_goal.entries // [])[]? | select(
+    .sprint_id != null and ((.status // "") | IN("DONE","DONE_VERIFIED","CANCELLED","DEFERRED","SKIPPED"))
+  )] | length' "$ORCH_STATE_PATH" 2>/dev/null)
+  [[ "$sprint_goal_terminal_n" =~ ^[0-9]+$ ]] || sprint_goal_terminal_n=0
+
+  done_n=$(jq '.task_board.done // [] | length' "$ORCH_STATE_PATH" 2>/dev/null)
+  [[ "$done_n" =~ ^[0-9]+$ ]] || done_n=0
+
+  dv_n=$(jq '.task_board.done_verified // [] | length' "$ORCH_STATE_PATH" 2>/dev/null)
+  [[ "$dv_n" =~ ^[0-9]+$ ]] || dv_n=0
+
+  if [ "$terminal_sprint_n" -gt 0 ] || [ "$sprint_goal_terminal_n" -gt 0 ] || [ "$done_n" -gt 10 ] || [ "$dv_n" -gt 0 ]; then
+    echo "[dev-team-preflight] Terminal bloat: sprints=$terminal_sprint_n sprint_goal=$sprint_goal_terminal_n done=$done_n done_verified=$dv_n — cold eviction" >&2
+    _step55_cold_evict_and_commit "$session_id"
+  fi
+  return 0
+}
+
+# ── Step 5.5 side-effecting sub-step: claim commit-mutex, evict, validate,
+# commit, release. task_id is the SAME canonical "commit-mutex:main" the
+# commit-mutex skill (.claude/skills/commit-mutex/SKILL.md) uses for every
+# other orch-state.json writer — a per-caller slug (as post-cycle.md's old
+# comment pseudocode suggested) would not actually mutex against other
+# writers of the same hot file, defeating the point of the lock.
+_step55_cold_evict_and_commit() {
+  local session_id="$1"
+  local mutex_id="commit-mutex:main"
+  local claim_args claim_result claimed
+
+  claim_args=$(jq -n --arg tid "$mutex_id" --arg sess "$session_id" \
+    --arg intent "dev-team-preflight Step 5.5 board-hygiene cold-evict" \
+    '{task_id:$tid, task_kind:"commit-mutex", owner_agent:"dev-team", owner_client_session:$sess, ttl_seconds:120, payload:({paths:["docs/data/orch/orch-state.json"], intent:$intent} | tojson)}')
+  claim_result=$(mcp_call "task_claim" "$claim_args" 2>&1)
+  claimed=$(printf '%s' "$claim_result" | jq -r '.claimed // false' 2>/dev/null)
+  if [ "$claimed" != "true" ]; then
+    echo "[dev-team-preflight] board-hygiene: commit-mutex not acquired (contended or unavailable) — skip this tick, retry next" >&2
+    return 0
+  fi
+
+  if ! _step55_run_cold_evict; then
+    echo "[dev-team-preflight] board-hygiene: orch-cold-evict.sh FAILED — skip commit, retry next tick" >&2
+    mcp_call "send_telegram" "$(jq -n --arg ch "bug" --arg msg "[dev-team] board-hygiene: orch-cold-evict.sh failed — cold eviction skipped, retry next tick" '{channel:$ch, message:$msg}')" >/dev/null 2>&1
+    mcp_call "task_release" "$(jq -n --arg tid "$mutex_id" --arg sess "$session_id" '{task_id:$tid, owner_client_session:$sess}')" >/dev/null 2>&1
+    return 0
+  fi
+
+  if ! _step55_run_validate; then
+    echo "[dev-team-preflight] board-hygiene: ABORT post-eviction validation failed — commit skipped" >&2
+    mcp_call "send_telegram" "$(jq -n --arg ch "bug" --arg msg "[dev-team] board-hygiene: post-eviction orch-state-validate.sh FAILED — commit skipped, hot file left as orch-cold-evict.sh wrote it" '{channel:$ch, message:$msg}')" >/dev/null 2>&1
+    mcp_call "task_release" "$(jq -n --arg tid "$mutex_id" --arg sess "$session_id" '{task_id:$tid, owner_client_session:$sess}')" >/dev/null 2>&1
+    return 0
+  fi
+
+  _step55_git_commit_evict
+
+  mcp_call "task_release" "$(jq -n --arg tid "$mutex_id" --arg sess "$session_id" '{task_id:$tid, owner_client_session:$sess}')" >/dev/null 2>&1
+  return 0
+}
+
+# ── Overridable side-effect seams (test harness replaces these wholesale —
+# see dev-team-tick-preflight.test.sh — NEVER exercised against the live repo).
+_step55_run_cold_evict() {
+  ORCH_STATE="$ORCH_STATE_PATH" bash "$ROOT/scripts/orch-cold-evict.sh"
+}
+
+_step55_run_validate() {
+  bash "$ROOT/scripts/orch-state-validate.sh" "$ORCH_STATE_PATH"
+}
+
+_step55_git_commit_evict() {
+  local yyyymm archive_path
+  yyyymm=$(date -u +%Y-%m)
+  archive_path="$ROOT/docs/data/orch/archive/${yyyymm}.json"
+  git -C "$ROOT" add "$ORCH_STATE_PATH" "$archive_path"
+  git -C "$ROOT" commit -m "chore(tasks): cold-evict terminal sprints/done lanes → archive/${yyyymm}.json"
+}
+
 run_preflight() {
   local session_id="${CLAUDE_CODE_SESSION_ID:-}"
   if [ -z "$session_id" ]; then
@@ -344,7 +479,16 @@ run_preflight() {
   # election_rc == 0: claimed (or re-entrant-renewed) — both locks HELD.
 
   # ---- Step 5: idle check (RUN path only, evaluated BEFORE Step 0a drain) ----
-  if [ "$(_step5_idle_check)" = "true" ]; then
+  local idle_result
+  idle_result=$(_step5_idle_check)
+
+  # ---- Step 5.5: board-hygiene / cold-eviction backstop (dev-team-loop-P2) ----
+  # Runs on EVERY lock-winning tick — both the RUN-IDLE and RUN branches below
+  # reach this line; SKIP/ERROR all `return` earlier in this function and never
+  # execute it. See function header comment for the full rationale.
+  _step55_board_hygiene "$session_id"
+
+  if [ "$idle_result" = "true" ]; then
     _emit_verdict "RUN-IDLE" "$tick" \
       "no docs/signals/*.json files, signals.db not stale (<=${IDLE_STALE_HOURS}h or absent), zero NEW signal_queue rows, task_board.active_sprints empty — both locks held, continue main.md at gcc-preflight but SKIP Step 0a drain-signals.md entirely"
     return 1

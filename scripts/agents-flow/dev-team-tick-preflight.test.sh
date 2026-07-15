@@ -68,6 +68,14 @@ echo '{"task_board":{"active_sprints":[]},"signal_queue":{"rows":[{"id":"s1","st
 touch "$TMPDIR_TEST/signals-stale.db"
 touch -t "$(date -v-2d +%Y%m%d%H%M 2>/dev/null || date -d '2 days ago' +%Y%m%d%H%M)" "$TMPDIR_TEST/signals-stale.db" 2>/dev/null
 
+# ── Step 5.5 board-hygiene fixtures (dev-team-loop-P2, task UC-DTL-P2) ───────
+# "trip-notidle": active_sprints non-empty (forces RUN, independent of the
+# idle-check fixtures above) AND done[] has 11 items (>10 threshold trips).
+echo '{"task_board":{"active_sprints":[{"id":"placeholder-sprint"}],"done":["d1","d2","d3","d4","d5","d6","d7","d8","d9","d10","d11"],"done_verified":[]},"signal_queue":{"rows":[]}}' > "$TMPDIR_TEST/orch-hygiene-trip-notidle.json"
+# "trip-idle": active_sprints EMPTY (idle-eligible) AND done[] has 11 items —
+# proves Step 5.5 fires on the RUN-IDLE branch too (both reach the same line).
+echo '{"task_board":{"active_sprints":[],"done":["d1","d2","d3","d4","d5","d6","d7","d8","d9","d10","d11"],"done_verified":[]},"signal_queue":{"rows":[]}}' > "$TMPDIR_TEST/orch-hygiene-trip-idle.json"
+
 # ── Stub mcp_call — overrides the real function pulled in by the source above ──
 # Dispatch controlled by $STUB_PRESENCE / $STUB_SF1 / $STUB_ELECTION (set per
 # scenario below). Every call is appended to CALL_LOG_FILE (NOT a plain var —
@@ -101,6 +109,12 @@ mcp_call() {
           iserror) echo "simulated tool error: isError=true: Tool xyz not found" >&2; return 1 ;;
           malformed) echo 'not-json{{{'; return 0 ;;
         esac
+      elif [[ "$args" == *"commit-mutex:main"* ]]; then
+        case "${STUB_MUTEX:-won}" in
+          won) echo '{"claimed":true}'; return 0 ;;
+          lost) echo '{"claimed":false,"current_holder":{"owner_client_session":"peer-session-xyz"}}'; return 0 ;;
+          error) echo "simulated commit-mutex transport error" >&2; return 1 ;;
+        esac
       else
         echo "unstubbed task_claim in test: $args" >&2; return 1
       fi
@@ -112,9 +126,27 @@ mcp_call() {
   esac
 }
 
+# ── Step 5.5 side-effect seams — stubbed wholesale so the test NEVER shells
+# out to the real orch-cold-evict.sh / orch-state-validate.sh / git commit
+# (see dev-team-tick-preflight.sh header comment on ORCH_STATE_PATH). Behavior
+# controlled by $STUB_COLD_EVICT_RC / $STUB_VALIDATE_RC (default: succeed).
+_step55_run_cold_evict() {
+  echo "_step55_run_cold_evict" >> "$CALL_LOG_FILE"
+  return "${STUB_COLD_EVICT_RC:-0}"
+}
+_step55_run_validate() {
+  echo "_step55_run_validate" >> "$CALL_LOG_FILE"
+  return "${STUB_VALIDATE_RC:-0}"
+}
+_step55_git_commit_evict() {
+  echo "_step55_git_commit_evict" >> "$CALL_LOG_FILE"
+  return 0
+}
+
 run_case() {
   # Resets scenario knobs to defaults before each test.
   STUB_PRESENCE="ok"; STUB_SF1="won"; STUB_ELECTION="won"
+  STUB_MUTEX="won"; STUB_COLD_EVICT_RC=0; STUB_VALIDATE_RC=0
   # Step 5 idle-check fixtures — default = deliberately NOT idle (isolates
   # T1-T12's RUN assertions from the live repo's docs/signals/ + orch-state.json).
   export SIGNALS_DIR="$TMPDIR_TEST/signals-nonempty"
@@ -323,6 +355,130 @@ OUT=$(run_preflight); RC=$?
 VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
 check "T20 SKIP(a) verdict unchanged for REAL peer hold" "$([ "$VERDICT" = "SKIP" ] && echo true || echo false)"
 check "T20 SKIP(a) does NOT call task_release (never held SF-1)" "$([ "$(log_has task_release)" = "false" ] && echo true || echo false)"
+
+# ── Step 5.5 board-hygiene tests (dev-team-loop-P2, task UC-DTL-P2) ──────────
+# Deliberate design (see dev-team-tick-preflight.sh Step 5.5 header comment +
+# docs/agent-memory/decisions/sprint-UC-DTL-P2-developer.md): hygiene fires on
+# every LOCK-WINNING tick (RUN + RUN-IDLE) when the threshold trips, and NEVER
+# fires on SKIP/ERROR (both return before Step 5.5 in run_preflight) — this is
+# the P2 architecture brief's own verifier-vetted scope ("every LOCK-WINNING
+# tick"), not a literal "fires on all 4 verdicts" reading.
+
+# ── T21: RUN + hygiene threshold trip (done[] len=11 > 10) — full success path ─
+run_case
+export ORCH_STATE_PATH="$TMPDIR_TEST/orch-hygiene-trip-notidle.json"
+OUT=$(run_preflight); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+check "T21 RUN verdict (hygiene trip does not change tick verdict)" "$([ "$VERDICT" = "RUN" ] && echo true || echo false)"
+check "T21 RUN exit=1" "$([ "$RC" -eq 1 ] && echo true || echo false)"
+check "T21 hygiene: cold-evict invoked" "$([ "$(log_has _step55_run_cold_evict)" = "true" ] && echo true || echo false)"
+check "T21 hygiene: validate invoked" "$([ "$(log_has _step55_run_validate)" = "true" ] && echo true || echo false)"
+check "T21 hygiene: git commit invoked" "$([ "$(log_has _step55_git_commit_evict)" = "true" ] && echo true || echo false)"
+check "T21 hygiene: commit-mutex claimed+released" "$([ "$(log_count task_release)" -ge 1 ] && echo true || echo false)"
+check "T21 hygiene: full success sends NO telegram (silent, like post-cycle.md original)" "$([ "$(log_has send_telegram)" = "false" ] && echo true || echo false)"
+
+# ── T22: RUN + NO hygiene trip (default fixture, done[] absent) — no-op ──────
+run_case
+OUT=$(run_preflight); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+check "T22 RUN verdict (no trip)" "$([ "$VERDICT" = "RUN" ] && echo true || echo false)"
+check "T22 hygiene: cold-evict NOT invoked (threshold not tripped)" "$([ "$(log_has _step55_run_cold_evict)" = "false" ] && echo true || echo false)"
+
+# ── T23: RUN-IDLE + hygiene threshold trip — Step 5.5 reaches the RUN-IDLE
+# branch too (same choke-point before either _emit_verdict call) ────────────
+run_case
+export SIGNALS_DIR="$TMPDIR_TEST/signals-empty"
+export SIGNALS_DB_PATH="$TMPDIR_TEST/does-not-exist-signals.db"
+export ORCH_STATE_PATH="$TMPDIR_TEST/orch-hygiene-trip-idle.json"
+OUT=$(run_preflight); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+check "T23 RUN-IDLE verdict (active_sprints empty, but done[] len=11 trips hygiene)" "$([ "$VERDICT" = "RUN-IDLE" ] && echo true || echo false)"
+check "T23 hygiene: cold-evict invoked on RUN-IDLE branch" "$([ "$(log_has _step55_run_cold_evict)" = "true" ] && echo true || echo false)"
+check "T23 hygiene: git commit invoked on RUN-IDLE branch" "$([ "$(log_has _step55_git_commit_evict)" = "true" ] && echo true || echo false)"
+
+# ── T24: RUN-IDLE + NO hygiene trip (T13's fixture — done[] absent) ─────────
+run_case
+export SIGNALS_DIR="$TMPDIR_TEST/signals-empty"
+export SIGNALS_DB_PATH="$TMPDIR_TEST/does-not-exist-signals.db"
+export ORCH_STATE_PATH="$TMPDIR_TEST/orch-idle.json"
+OUT=$(run_preflight); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+check "T24 RUN-IDLE verdict (no trip)" "$([ "$VERDICT" = "RUN-IDLE" ] && echo true || echo false)"
+check "T24 hygiene: cold-evict NOT invoked (threshold not tripped)" "$([ "$(log_has _step55_run_cold_evict)" = "false" ] && echo true || echo false)"
+
+# ── T25: SKIP path (a) — even with a hygiene-tripping fixture, Step 5.5 is
+# never reached (SF-1 lost to peer, returns before Step 5/5.5) ──────────────
+run_case
+STUB_SF1="lost_peer"
+export ORCH_STATE_PATH="$TMPDIR_TEST/orch-hygiene-trip-notidle.json"
+OUT=$(run_preflight); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+check "T25 SKIP(a) verdict" "$([ "$VERDICT" = "SKIP" ] && echo true || echo false)"
+check "T25 hygiene: cold-evict NOT invoked on SKIP(a) — peer's own tick owns hygiene" "$([ "$(log_has _step55_run_cold_evict)" = "false" ] && echo true || echo false)"
+
+# ── T26: SKIP path (b) — same, fire-election lost after SF-1 won ───────────
+run_case
+STUB_ELECTION="lost_peer"
+export ORCH_STATE_PATH="$TMPDIR_TEST/orch-hygiene-trip-notidle.json"
+OUT=$(run_preflight); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+check "T26 SKIP(b) verdict" "$([ "$VERDICT" = "SKIP" ] && echo true || echo false)"
+check "T26 hygiene: cold-evict NOT invoked on SKIP(b)" "$([ "$(log_has _step55_run_cold_evict)" = "false" ] && echo true || echo false)"
+
+# ── T27: ERROR path (SF-1 transport timeout) — lock state undefined, hygiene
+# must not run a second commit-mutex-guarded write on top of it ────────────
+run_case
+STUB_SF1="timeout"
+export ORCH_STATE_PATH="$TMPDIR_TEST/orch-hygiene-trip-notidle.json"
+OUT=$(run_preflight); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+check "T27 ERROR verdict" "$([ "$VERDICT" = "ERROR" ] && echo true || echo false)"
+check "T27 hygiene: cold-evict NOT invoked on ERROR (SF-1 timeout)" "$([ "$(log_has _step55_run_cold_evict)" = "false" ] && echo true || echo false)"
+
+# ── T28: ERROR path (fire-election isError) — same guarantee ────────────────
+run_case
+STUB_ELECTION="iserror"
+export ORCH_STATE_PATH="$TMPDIR_TEST/orch-hygiene-trip-notidle.json"
+OUT=$(run_preflight); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+check "T28 ERROR verdict" "$([ "$VERDICT" = "ERROR" ] && echo true || echo false)"
+check "T28 hygiene: cold-evict NOT invoked on ERROR (fire-election isError)" "$([ "$(log_has _step55_run_cold_evict)" = "false" ] && echo true || echo false)"
+
+# ── T29: commit-mutex contended — hygiene degrades gracefully (skip this
+# tick, retry next), does NOT crash and does NOT block the tick's own verdict ─
+run_case
+export ORCH_STATE_PATH="$TMPDIR_TEST/orch-hygiene-trip-notidle.json"
+STUB_MUTEX="lost"
+OUT=$(run_preflight); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+check "T29 RUN verdict still emitted despite commit-mutex contention" "$([ "$VERDICT" = "RUN" ] && echo true || echo false)"
+check "T29 hygiene: cold-evict NOT invoked (mutex not claimed)" "$([ "$(log_has _step55_run_cold_evict)" = "false" ] && echo true || echo false)"
+
+# ── T30: orch-cold-evict.sh fails — bug telegram, commit skipped, tick verdict
+# unaffected (non-blocking, matches post-cycle.md's original contract) ──────
+run_case
+export ORCH_STATE_PATH="$TMPDIR_TEST/orch-hygiene-trip-notidle.json"
+STUB_COLD_EVICT_RC=1
+OUT=$(run_preflight); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+check "T30 RUN verdict still emitted despite cold-evict failure" "$([ "$VERDICT" = "RUN" ] && echo true || echo false)"
+check "T30 hygiene: cold-evict invoked (attempted)" "$([ "$(log_has _step55_run_cold_evict)" = "true" ] && echo true || echo false)"
+check "T30 hygiene: validate NOT invoked after cold-evict failure" "$([ "$(log_has _step55_run_validate)" = "false" ] && echo true || echo false)"
+check "T30 hygiene: git commit NOT invoked after cold-evict failure" "$([ "$(log_has _step55_git_commit_evict)" = "false" ] && echo true || echo false)"
+check "T30 hygiene: sends bug telegram on cold-evict failure" "$([ "$(log_has send_telegram)" = "true" ] && echo true || echo false)"
+
+# ── T31: orch-state-validate.sh fails post-eviction — commit ABORTED, bug
+# telegram, tick verdict unaffected ──────────────────────────────────────────
+run_case
+export ORCH_STATE_PATH="$TMPDIR_TEST/orch-hygiene-trip-notidle.json"
+STUB_VALIDATE_RC=1
+OUT=$(run_preflight); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+check "T31 RUN verdict still emitted despite validation failure" "$([ "$VERDICT" = "RUN" ] && echo true || echo false)"
+check "T31 hygiene: cold-evict invoked" "$([ "$(log_has _step55_run_cold_evict)" = "true" ] && echo true || echo false)"
+check "T31 hygiene: validate invoked" "$([ "$(log_has _step55_run_validate)" = "true" ] && echo true || echo false)"
+check "T31 hygiene: git commit NOT invoked after validation failure" "$([ "$(log_has _step55_git_commit_evict)" = "false" ] && echo true || echo false)"
+check "T31 hygiene: sends bug telegram on validation failure" "$([ "$(log_has send_telegram)" = "true" ] && echo true || echo false)"
 
 # ── Summary ────────────────────────────────────────────────────────────────────
 echo ""
