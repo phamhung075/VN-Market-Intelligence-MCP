@@ -373,10 +373,10 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "ALPHA-S2-OMO-LIQUIDITY-CRON",
-    "next_agent": "pm",
+    "next_agent": "dev-mcp-server",
     "next_action": "architect scoping complete — zone resolved multi->apps/mcp-server/, lean single-file FIX (no epic decomposition needed). Brief: docs/architecture-briefs/2026-07-15-alpha-s2-omo-liquidity-cron.md. pm to mint ONE atomic dev-mcp-server task.",
-    "updated_at": "2026-07-15T04:15:00Z",
-    "updated_by": "architect (ALPHA-S2-OMO-LIQUIDITY-CRON scoping done, zone multi->apps/mcp-server/, next_agent->pm)"
+    "updated_at": "2026-07-15T06:00:00Z",
+    "updated_by": "pm (retask: ALPHA-S2-OMO-LIQUIDITY-CRON next_agent->dev-mcp-server, DoD embedded)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -9591,9 +9591,9 @@
     "head": {
       "status": "in_progress",
       "active_task_id": "ALPHA-S2-OMO-LIQUIDITY-CRON",
-      "next_agent": "pm",
-      "last_updated_at": "2026-07-15T04:15:00Z",
-      "last_updated_by": "dev-team (mirror-sync .task_board.head <- authoritative .head after ALPHA-S2-OMO architect scoping; dual-head drift repair)"
+      "next_agent": "dev-mcp-server",
+      "last_updated_at": "2026-07-15T06:00:00Z",
+      "last_updated_by": "pm (sync .task_board.head <- authoritative .head)"
     },
     "ready": [],
     "review": [
@@ -10125,16 +10125,16 @@
         "depends": [],
         "created_by": "po-option-a-flow-alpha-loop",
         "created_at": "2026-07-12T07:56:33Z",
-        "note": "ARCHIVE-NOW (gap #2). The macro-indicators /liquidity-state endpoint is live but NO scheduler calls it, so sbv_omo_daily accrues nothing and the built OMO-stress score stays null — OMO auction history is forward-only and not purchasable. DoD: a daily cron hits /liquidity-state and writes sbv_omo_daily; fail-loud if the endpoint/VPS is down (no fake-freshness). Blocks ALPHA-S4-REGIME-GATE-V1 (regime gate needs >=5 accrued auctions before the OMO leg is honest). Brief roadmap step 2. zone=multi -> architect splits.  [PO 2026-07-14 coordination_session e417ef1f] USER GO — supervised:false AUTHORIZED (explicit user selection via router AskUserQuestion; NOT a gate-jump). flow-alpha FULL launch — user directed LAUNCH EVERYTHING (all remaining waves incl. wave 6). This row un-parked; BOUNDED-1/pipeline-resume may pick it. Wave ordering stays enforced by priority + depends (NOT reordered). Zone/depends/safety notes PRESERVED. Do NOT re-park.",
+        "note": "RETASKED TO dev-mcp-server: NEW ONE ATOMIC TASK FOR IMPLEMENTATION\n\nDoD & Acceptance Criteria (from architect brief §6):\n1. runSbvOmoLiquidityCron() calls POST /liquidity-state via macroFetch with bounded deadline (15s suggested).\n2. HARD fail (transport/endpoint down, macroFetch returns ok:false) → sendTelegramBug() + logger.error, every time (dedup handled by notifier's existing 4h window, not re-implemented here).\n3. SOFT fail (HTTP 200 but omo.is_estimate===true, no row persisted) → logger.warn only, NO Telegram BUG alert (test: single-day soft-fail does NOT call mocked notifyBug).\n4. Success (omo.is_estimate===false) → logger.info, no alert, no local DB write of any kind (test: mocked DB handle receives zero write calls, confirms side-effect-free design).\n5. Zero new tables/DDL/schema in apps/mcp-server/ or apps/macro-indicators/.\n6. Cron + docs registered in 3 places: docs/data/cron-registry.json (.jobs[] + schedulerFileCount 67→68, ONE new file only), docs/data/system-map.json (mcp-server.crons[] new entry), docs/standards/cron-jobs.md (new section, same format as adjacent macro/compactor sections).\n7. apps/mcp-server/src/__tests__/1190-pipeline-watchdog.test.ts schedulerFileCount guard bumped 67→68 with dated BUMP comment (same convention as prior 4 bumps).\n8. docs/data/project-stats.json NOT hand-edited — confirm via 'bun scripts/gen-project-stats.ts --dry-run' they pick the change up on their own (same verification ALPHA-S2-FF-SUB4 did).\n9. Board zone already corrected multi→apps/mcp-server/ by architect.\n\nImplementation shape (from brief §4):\n- NEW FILE: apps/mcp-server/src/scheduler/macro/sbvOmoLiquidityCronJob.ts exporting runSbvOmoLiquidityCron(deps?)\n- cronConfig.ts entry: sbvOmoLiquidityCron: Bun.env.CRON_SBV_OMO_LIQUIDITY ?? '9 9 * * *' (09:09 UTC daily, not weekday-gated)\n- schedulerJobTable.ts registration: {name:'sbvOmoLiquidityCronJob', cron, options, runner} via buildJobTable() pattern (reuses ALPHA-S2-FF-SUB3/SUB4 pattern)\n- Reuses: macroFetch<T>() + LiquidityStateResponseSchema (both from existing get_vn_liquidity_state implementation) + sendTelegramBug()\n- NO startup one-shot call, NO new MCP tool, NO change to macro-indicators code\n- One unit test file: HARD-fail / SOFT-fail / success paths, mocked macroFetch+notifyBug\n- All in single commit with explicit pathspec (no peer notebooks/analysis-briefs swept)\n\nUnblocks: ALPHA-S4-REGIME-GATE-V1\nBrief: docs/architecture-briefs/2026-07-15-alpha-s2-omo-liquidity-cron.md\nPrior note: ARCHIVE-NOW (gap #2). The macro-indicators /liquidity-state endpoint is live but NO scheduler calls it, so sbv_omo_daily accrues nothing and the built OMO-stress score stays null — OMO auction history is forward-only and not purchasable. DoD: a daily cron hits /liquidity-state and writes sbv_omo_daily; fail-loud if the endpoint/VPS is down (no fake-freshness). Blocks ALPHA-S4-REGIME-GATE-V1 (regime gate needs >=5 accrued auctions before the OMO leg is honest). Brief roadmap step 2. zone=multi -> architect splits.  [PO 2026-07-14 coordination_session e417ef1f] USER GO — supervised:false AUTHORIZED (explicit user selection via router AskUserQuestion; NOT a gate-jump). flow-alpha FULL launch — user directed LAUNCH EVERYTHING (all remaining waves incl. wave 6). This row un-parked; BOUNDED-1/pipeline-resume may pick it. Wave ordering stays enforced by priority + depends (NOT reordered). Zone/depends/safety notes PRESERVED. Do NOT re-park.",
         "supervised": false,
-        "updated_at": "2026-07-15T04:15:00Z",
-        "updated_by": "architect (zone multi->apps/mcp-server/; lean single-file FIX, no epic decomposition)",
+        "updated_at": "2026-07-15T06:00:00Z",
+        "updated_by": "pm (retask: mint atomic dev-mcp-server task with DoD/acceptance criteria from architect brief)",
         "promoted_at": "2026-07-15T01:54:35Z",
         "promoted_by": "dev-team (bounded-1 auto-pickup)",
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
         "claimed_at": "2026-07-15T01:54:35Z",
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "pm",
+        "next_agent": "dev-mcp-server",
         "router_route_note": "architect verdict: sbv_omo_daily write path already 100% shipped in apps/macro-indicators (P0-3-OMO-CURVE cd8cfcc2, idempotent, ParseOK-gated no-fake-data already structural). Gap is purely scheduling — new apps/mcp-server/ cron reuses macroFetch()+buildJobTable()+sendTelegramBug(), zero new tables/write-path. HARD-fail (transport down) always alerts BUG; SOFT-fail (200 OK, no auction that session) logs only (avoids false incidents on normal SBV cadence). Brief: docs/architecture-briefs/2026-07-15-alpha-s2-omo-liquidity-cron.md. Recommend PM mint ONE atomic dev-mcp-server task, not a multi-subtask epic."
       }
     ]
