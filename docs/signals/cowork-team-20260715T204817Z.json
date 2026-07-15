@@ -1,0 +1,40 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "tick-telemetry",
+  "priority": "high",
+  "createdAt": "2026-07-15T20:48:17Z",
+  "payload": {
+    "tick": "2026-07-15T20:30Z",
+    "verdict": "WORK",
+    "drift_min": 3,
+    "slots_fired": [],
+    "one_shots": [],
+    "new_signals_at_preflight": 3,
+    "note": "WORK caused solely by 3 NEW to:po rows this dispatcher filed and correctly declined to drain (Step 0a would starve dev-team). First pure-waste tick. Receiver-set 3rd copy found at cowork-tick-preflight.sh:245.",
+    "filed": [
+      {
+        "id": "cow-20260715T203953",
+        "sev": "HIGH",
+        "what": "tnb-audit double-dispatched via router intent path; published-marker gate dead code (no MCP in frontmatter)"
+      },
+      {
+        "id": "cow-20260715T204639",
+        "sev": "HIGH",
+        "what": "MARKET dish 933 published false VN-Index -526pt; tier-4 estimate narrated as fact; live+unreviewed; work telegram sent"
+      }
+    ],
+    "proven": "Step 0a refusal validated — po drained all 3 NEW to:po rows (4ff41cb0c): 1 RESOLVED, 2 minted PLAN-ONLY. Removing po from receiver set is safe.",
+    "corrections": [
+      "capability gap is NOT new — TNB self-reported 14 cycles (c97-c110); P1 FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK owns it, and its mcp-call.sh remedy needs Bash which TNB also lacks",
+      "TNB claim both dishes cite 1280.5 is false — 932 clean, only 933",
+      "earlier deadlock/forever framing refuted — bounded ~22-28min by po drain",
+      "telemetry signals not pruned — moved to docs/signals/processed/ by f08a2ec19"
+    ],
+    "cycle_snapshot_promoted": false,
+    "commits": [
+      "bb0bbddcb",
+      "63913a62b"
+    ]
+  }
+}
