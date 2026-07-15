@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-15T02:39:43Z",
+    "matched_slots": [
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "alert-commander-market"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 7,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "alert-commander-market": null
+    },
+    "last_fired_timestamp": "2026-07-15T02:39:12Z",
+    "last_fired_slots": [
+      "alert-commander-market"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "02:30",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 4,
+    "note": "legacy mode (stale_warning:true, pressure emitted 02:24:15Z); single market-hours slot; cycle_snapshot_promoted:false persists (8-day-stale cycle-snapshot → owner-routed)"
+  },
+  "priority": "low",
+  "createdAt": "2026-07-15T02:39:43Z",
+  "_processed": {
+    "fingerprint": "5fd349a3859a335c6015a05ed80655a6a8e5a4134ea97976cd950bdc4ab7083b",
+    "processedAt": "2026-07-15T02:48:37Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
