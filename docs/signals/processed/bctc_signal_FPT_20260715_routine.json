@@ -1,0 +1,27 @@
+{
+  "ticker": "FPT",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "net_profit_delta_pct": null,
+  "product": "IT services, software exports, telecom (FPT Telecom), education (FPT Edu)",
+  "customer": "Enterprise IT buyers (VN + offshore), SME telecom subscribers",
+  "ops": "Operating profit margin 22.0% Q1-2026; Net Revenue 12,480 ty VND; ROE 6.2% quy (28.3% sector-tool); Net Debt/EBITDA 2.57x",
+  "mgmt": "Valuation FAIR (EY 7.25% vs 5% deposit, +2.25pp spread); B/S balanced (0% imbalance); ESC-4 non-operating share 2.0% (below 15% threshold, no manipulation flag)",
+  "esc3_status": "DATA-COVERAGE-LIMITED",
+  "coverage_guard_key": "esc-datacov:FPT:Q1-2026:ESC-3",
+  "quarters_returned": 2,
+  "esc4_result": "FALSE",
+  "esc5_result": "FALSE",
+  "kinh_dich": "Que 2 Khon, TRUNG TINH, GIU, do tin cay 38%",
+  "cycle_ts": "2026-07-15T00:10:09Z",
+  "signal_id": 9240,
+  "critic_score": 0.8,
+  "_processed": {
+    "fingerprint": "fbcbff317dc467efad62f6fca018c42876d17147c222cccdb50075665dbf5884",
+    "processedAt": "2026-07-15T01:19:09Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

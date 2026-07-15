@@ -1,0 +1,60 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "2026-07-15T00:11:02.433Z",
+  "payload": {
+    "nominal_tick": "2026-07-15T00:00Z",
+    "fire_time": "2026-07-15T00:11:02.433Z",
+    "drift_min": 7,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "pressure_mode": "adaptive",
+    "calendar_status": "closed",
+    "chef_mutex_applied": false,
+    "leader_lock": "acquired",
+    "matched": [
+      "bctc-analyst-slot-4",
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "won": [
+      "bctc-analyst-slot-4",
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md",
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "due_reasons": {
+      "bctc-analyst-slot-4": "cadence",
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence",
+      "alert-commander-critical": "cadence"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-4": 240,
+      "news-scout-offhours": 240,
+      "market-watcher-offhours": 240,
+      "alert-commander-critical": 240
+    },
+    "last_fired_timestamp": "2026-07-15T00:10:15.920Z",
+    "freshness_downgrade_applied": false,
+    "calendar_suppressed": [],
+    "signal_backlog": 4,
+    "dev_queue_depth": 5,
+    "host_headroom_mb": 4542
+  },
+  "_processed": {
+    "fingerprint": "d886fc78c24e2f59fb276e27b0a3b46217e1cec6956df90d238bc9506cc2e8ab",
+    "processedAt": "2026-07-15T01:19:09Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
