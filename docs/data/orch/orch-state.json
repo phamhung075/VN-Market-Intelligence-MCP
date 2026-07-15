@@ -374,9 +374,9 @@
     "status": "in_progress",
     "active_task_id": "RAG-FTS-BUILD-MEMORY-BOUND",
     "next_agent": "qa",
-    "next_action": "HOLD — do NOT spawn qa yet. Code fix 619eea227 landed + unit-green (160/160), but AC#1/#2 LIVE-verify (768m rebuild x2, in-container peak-mem) is BLOCKED by a Docker Desktop host outage (~05:31Z; 9-svc stack down; gateway timing out). ops(a076b593) is recovering the stack. Router spawns qa ONLY after ops confirms the 9-service stack + gateway are healthy, then qa runs the live test_plan.",
-    "updated_at": "2026-07-15T06:21:01Z",
-    "updated_by": "dev-team (dev-rag-service DONE 619eea227 unit-green 160/160; HOLD qa live-verify on docker-outage; ops a076b593 recovering stack)"
+    "next_action": "HOLD (user-escalated 06:32Z) — do NOT spawn qa. Fix 619eea227 landed + unit-green 160/160; AC#1/#2 live-verify BLOCKED by Docker Desktop VM crash ~05:31Z. ops(a076b593) exhausted headless CLI recovery; daemon socket gone -> USER must restart Docker Desktop GUI. market_data UNTOUCHED. On daemon return: resume ops(a076b593) non-destructive 9-svc bring-up (~15-20min) + volume verify -> hand back -> router re-claims chain-mutex + spawns qa live test_plan.",
+    "updated_at": "2026-07-15T06:32Z",
+    "updated_by": "dev-team (ops a076b593 recovery COMPLETE->BLOCKED: Docker Desktop VM crash; headless CLI exhausted; user GUI restart required; escalated + daemon-return monitor armed)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -9664,8 +9664,8 @@
       "status": "in_progress",
       "active_task_id": "RAG-FTS-BUILD-MEMORY-BOUND",
       "next_agent": "qa",
-      "last_updated_at": "2026-07-15T06:21:01Z",
-      "last_updated_by": "dev-team (RAG-FTS-BUILD-MEMORY-BOUND dev->qa, HOLD on docker-outage)"
+      "last_updated_at": "2026-07-15T06:32Z",
+      "last_updated_by": "dev-team (RAG-FTS qa HOLD escalated: user Docker Desktop restart required)"
     },
     "ready": [],
     "review": [
@@ -10207,10 +10207,10 @@
         "test_plan": "LIVE (qa, post-fix): (a) confirm rag_entries index_size ~56k via /embed/health. (b) POST /admin/rebuild-fts directly — docker stats memory trace stays UNDER the 768m ceiling to completion, {status:ok} returned, reproduced 2x. (c) record peak-mem + elapsed. (d) POST /search hybrid:true returns sane RRF results — no regression. Then hand the recorded timing to ALPHA-S2 for its deadline retune + final BM25 round-trip.",
         "started_at": "2026-07-15T05:20:30Z",
         "started_by": "dev-team (BOUNDED-1 idle-pickup FIX-S; parent ALPHA-S2 blocked-on-this)",
-        "router_route_note": "dev-rag-service DONE 619eea227 (LANCE_FTS_NUM_SHARDS=1 + PARTITION_SIZE=32 module-import env pins, corpus-size-independent; unit 160/160, tsc OK). Live AC#1/#2 (768m rebuild x2 + in-container peak-mem) pending qa BUT blocked_on docker-outage-ops-recovery (ops a076b593). Local proxy: unbounded 3.28GB -> bounded 1.37GB max RSS. Ops-gated fallback if still tight: compose 768m->1024m (ops decides, not applied).",
+        "router_route_note": "ops(a076b593) recovery COMPLETE->BLOCKED 06:32Z: Docker Desktop VM hypervisor crash; ~75min headless CLI recovery exhausted (4x restart/VM rebuild/disk cleanup); daemon socket absent; requires USER GUI restart of Docker Desktop. Disk now 71% (ops freed from 91%); market_data volume UNTOUCHED, no data loss. Router escalated to user + armed daemon-return monitor.",
         "dev_commit": "619eea227",
         "dev_completed_at": "2026-07-15T06:21:01Z",
-        "blocked_on": "docker-outage-ops-recovery"
+        "blocked_on": "user-docker-desktop-gui-restart-required"
       }
     ]
   },
