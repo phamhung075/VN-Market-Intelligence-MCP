@@ -98,3 +98,12 @@
 - DDD: grepped diff for new `import` lines (zero) + `git show --stat` (exactly 1 production file, infra/db layer) — confirms zero domain touch, no new ports, matches architect brief's own claim.
 **why-decision:** View SQL exact match to brief, companion R-1 test assertion diff exact match to brief's prescribed toBe(1)+foreign_buy_vol+comment fix, all RAW tests green, DDD clean, security clean (static DDL, no new env/secrets). APPROVED.
 **why-change:** No change from plan.
+
+### STEP qa-S12 · qa · 2026-07-15T00:35:00Z
+**task-id:** ALPHA-S2-FOREIGN-FLOW-WRITE-RACE
+**what-done:** Whole-epic merge-gate on trunk (HEAD 4491a1f2e, CI-green). RAW-ran new suite (6/0/51 expect) + own 10-file additive-regression sweep (97/0/272 expect, zero regressions to upsertForeignFlow/writeForeignFlowToOhlcv) + guard-rails (1190: 16/0, FACTORY-SCHEDULER: 15/0). tsc exit 0, mock-guard PASS.
+**what-considered:**
+- cron-registry.json `.jobs[]`=68 vs `schedulerFileCount`=67 — investigate as fresh drift vs trace full history: traced 4 commits back, confirmed jobs_len−schedulerFileCount=1 is a stable pre-existing invariant (not new), SUB4's +1 bump correct.
+- Re-run full bun test suite vs targeted+sweep — full suite hangs on documented pre-existing sla-monitor/reaper interval leak, unrelated; targeted+10-file sweep sufficient per dispatch instruction.
+**why-decision:** All 8 testable AC (§8) mapped to test/code-read, all PASS. AC#9 router-owned. Out-of-scope integrity confirmed (9 files only, zero domain/application, FIX-half untouched). DDD/security clean. APPROVE.
+**why-change:** No change from plan.
