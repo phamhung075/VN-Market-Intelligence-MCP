@@ -22,3 +22,15 @@ do NOT exit) is the authoritative source; table format keeps all 3 outcomes scan
 carries Step 0a/Phase A/A.5 detail without re-duplicating it in always-loaded CLAUDE.md context.
 **why-change:** No change from plan — applied brief's spec verbatim, kept owner_client_session/ttl/
 task_claim contract and peer-EXIT wording intact per brief's risk note.
+
+### STEP developer-S2 · developer · 2026-07-15T20:05:54Z
+**task-id:** UC-DTL-P2
+**what-done:** Added Step 5.5 board-hygiene to `dev-team-tick-preflight.sh` (relocates post-cycle.md
+Step 4.2 cold-eviction so it runs on every lock-winning tick); 34 new tests, 89/89 GREEN.
+**what-considered:** Router paraphrase named the wrong script (context-bloat-backstop.sh — unrelated
+file-line-cap governance) and asked for SKIP/ERROR firing, which the brief's own verifier explicitly
+forbids (peer already owns hygiene on SKIP; lock state undefined on ERROR).
+**why-decision:** Followed the architecture brief (authoritative "full acceptance criteria" source
+per the dispatch prompt) over the router's paraphrase — full reasoning in
+`docs/agent-memory/decisions/sprint-UC-DTL-P2-developer.md`.
+**why-change:** Corrected target script + scoped firing to RUN/RUN-IDLE only (documented deviation).
