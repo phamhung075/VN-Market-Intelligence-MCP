@@ -45,5 +45,11 @@
     "note": "signal_queue NEW=0 - po drained both cowork HIGH rows filed at 20:39/20:46, clearing the SILENT-gate coupling as predicted. Step 4.7 snapshot built via mcp-call.sh (bash transport) instead of routing the 14KB bootstrap payload through dispatcher context - same stage files, same jq assembly. LIVE PROBE: macro_snapshot.vnIndex is now null (was 1280.5 / delta -526.13 tier-4 at 20:21) - the field FLAPS rather than sitting on a stable fixture; passed to the spawned agent as a do-not-narrate gap. NO NEW ROW FILED - verified against the board first: cycle_snapshot_promoted=false (6th consecutive tick observed; cycle-snapshot-latest.json mtime 2026-07-07, .tick=19:45) is already owned by UC-SDF-P2 ('promotion silently dead since 2026-07-07 ... add market-hours staleness tripwire') and SPIKE-TICK-SNAPSHOT-DEADCODE-OR-REGRESSED; calendar_status=unknown is owned by UC-CDC-P1 ('break the circular unknown'). po's earlier dedup of cow-20260715T195340 to RESOLVED was correct. OBSERVATION for whoever picks up UC-SDF-P2: emit_pressure_state returned stale_warning=true this tick when called with the flow-specified args (last_regime='unknown' per telemetry.md Step 6.0, which is forced because the promotion target is dead); the prior tick's argument-less call returned stale_warning=false. If that link is real, the dead promotion permanently forces PRESSURE_MODE=legacy via AC-P1-6-3 - i.e. the DWF-PHASE1 adaptive cadence is switched off as a side effect, which is the same end-state FU-PRESSURE-EMIT-DARK (DONE) described. Not verified to the tool's source - do not treat as diagnosed."
   },
   "priority": "low",
-  "createdAt": "2026-07-15T21:06:58Z"
+  "createdAt": "2026-07-15T21:06:58Z",
+  "_processed": {
+    "fingerprint": "fa2e4c5678bce002eb783c0115a0e54a175cacc955ee461a7bdaa6f3ae8e90d1",
+    "processedAt": "2026-07-15T21:19:46Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

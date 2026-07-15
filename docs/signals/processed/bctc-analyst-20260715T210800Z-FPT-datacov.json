@@ -1,0 +1,28 @@
+{
+  "id": "bca-datacov-20260715T210800Z-FPT",
+  "ts": "2026-07-15T21:08:00Z",
+  "from": "bctc-analyst",
+  "to": "ops",
+  "type": "data-coverage-gap",
+  "summary": "ESC-3 DATA-COVERAGE-LIMITED: FPT Q1-2026 -- 2/4 quarters available",
+  "severity": "LOW",
+  "status": "NEW",
+  "payload_ref": null,
+  "payload": {
+    "trigger_id": "ESC-3",
+    "ticker": "FPT",
+    "quarter": "Q1-2026",
+    "quarters_returned": 2,
+    "quarters_required": 4,
+    "root_task": "BCTC-HIST-VPS-BACKFILL",
+    "note": "Multi-period accrual decomposition blocked by data coverage, not tool bug. No Opus deep-dive warranted. Re-check when quarters_returned >= 4. task_claim returned claimed:true this cycle for a guard whose prior expiry (2026-07-20T21:13:56Z per c088) was still future -- consistent with the host-reboot incident earlier today (docs/agent-memory/sessions/2026-07-15-incident-docker-vm-reboot-recovery.md) resetting in-memory task-lock state, not a re-emission bug.",
+    "guard_key": "esc-datacov:FPT:Q1-2026:ESC-3",
+    "guard_ttl_days": 8
+  },
+  "_processed": {
+    "fingerprint": "fb2e6b93d39c426f2d628a0aac265977ac4cd3ed360979d6c23beaebd96120a3",
+    "processedAt": "2026-07-15T21:19:46Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
