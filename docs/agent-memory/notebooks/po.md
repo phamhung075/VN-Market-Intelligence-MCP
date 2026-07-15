@@ -1,14 +1,16 @@
 # PO Notebook
 
-_Last: 2026-07-15T04:26Z (DIRECTED TASK — Phase-2 STRUCTURAL-REMAKE full user-authorization recorded; router coordination_session e417ef1f)_
+_Last: 2026-07-15T04:56Z (triage ALPHA-S2-RAG-FTS-REBUILD-CRON qa-BLOCK → parked BLOCKED + 2 blockers minted)_
 
-## Tick 2026-07-15T04:26Z — Phase-2 STRUCTURAL full authorization (DIRECTED, normal triage skipped)
-REAL user selection via router AskUserQuestion (~02:2xZ): "Authorize now" for the 3 previously user-gated RC items. With 2026-07-14 DECISION-3, the ENTIRE SYSREMAKE-P2-STRUCTURAL-REMAKE-ROUTE is now FULLY user-authorized. Design-first UNCHANGED: supervised architect-led, TECH doc FIRST, sequence RC-VERIF+RC-CONVERGE -> RC-ORCHMONO -> RC-GITSTATE -> RC-CEREMONY.
-- **ROUTE row:** authorization PARTIAL->FULL; note rewritten to DROP the "STILL USER-GATED / do NOT design/build/dispatch" text (no stale gate for any tick) while keeping BOTH decision-date provenance; stamped USER GO / NOT a gate-jump. supervised:true + next_agent:architect KEPT — the RC cascade launch is a SEPARATE deliberate dispatch, not this step.
-- **TE-T15:** ANNOTATION CHOICE = STAYS a distinct follow-up row sequenced AFTER/WITHIN RC-ORCHMONO (NOT pre-folded); overlap rule stands (both touch orch-cold-evict.sh); fold-vs-follow-up deferred to the architect's RC-ORCHMONO TECH doc (doesn't exist yet under design-first). Old DECISION-3 defer gate = RESOLVED.
-- **3rd marker reconciled:** `sprint_goal.entries[SYSTEMIC-REMAKE-P1].scope_out` "USER-GATED" -> "NOW FULLY USER-AUTHORIZED". watch_items / narrative / signal_queue / signal-files CLEAN. UC-GCP-P2/P8 = coordination pointers only, left unchanged.
-- **WRITES:** 3 atomic `jq | scripts/orch-apply.sh` (Zod Stage0+1 + conservation PASS; task_total 577=577 all three; no mints; CAS clean). Boundary honored: no architect dispatch, no supervised:false flip, `.head`/FIX-DAILY-FF/ALPHA untouched (ALPHA/head churn in the hot file = pre-existing loop state).
+## Tick 2026-07-15T04:56Z — ALPHA-S2 rag-FTS-rebuild-cron qa-BLOCK triage (router hand-off)
+qa RAW-block: mcp-server code 35cc8cd56 CLEAN + on origin/main (35/0 tests, tsc 0, mock-guard PASS) — NOT a code defect. Real blocker = rag-service `_build_fts_index()` OOM-crashes the 768m container at the corpus's current ~56k rows (4x the brief's 14k premise), 250s+ >> the cron's 90s deadline, RestartCount 258→260, reproduced 2/2. No active incident (cron deploy-pending; rag stable-at-rest 26%).
+- **Disposition:** ALPHA-S2 parked BLOCKED (in_progress→backlog), depends+blocked_by=[SAFETY-GATE, MEMORY-BOUND], next_agent stripped. in_progress now EMPTY (WIP=0). head→idle/active_task_id=null/next_agent=dev-team.
+- **Minted (both P1, sprint FLOW-PRICE-ALPHA-LOOP, wave 2):**
+  - `RAG-FTS-BUILD-MEMORY-BOUND` (dev-rag-service, apps/rag-service/) — ROOT cause: bound the FTS rebuild's memory+wall-time corpus-size-INDEPENDENTLY (investigate LanceDB bounded-writer config; report steady-state peak-mem+time). No dependency.
+  - `ALPHA-S2-RAG-FTS-CRON-SAFETY-GATE` (dev-mcp-server, apps/mcp-server/) — default-OFF enable flag gating cron registration so a stray mcp-server redeploy can't arm the nightly OOM. RUN-NOW/independent; flag flipped ON only as ALPHA-S2's final unblock step.
+- **Path calls:** #2 root fix = only corpus-independent fix (kept). #1 mem-limit bump (ops/user-gated) NOT minted standalone (doesn't unblock alone + unsizable now → folded into rootfix DoD). #3 deadline retune folded into ALPHA-S2 tail. #4 14k→56k premise re-scoped in-row.
+- **WRITE:** single `jq | orch-apply.sh` — Zod Stage0+1 PASS, conservation OK task_total 577→579 (+2 mints), CAS clean. No locks touched (router-owned).
 
 ## Carry-over
-- **NEXT (router/dev-team):** the RC cascade is now launchable as a SEPARATE deliberate supervised dispatch — architect writes the Phase-2 TECH doc FIRST, then sequenced RC-VERIF+RC-CONVERGE -> RC-ORCHMONO -> RC-GITSTATE -> RC-CEREMONY. Do NOT auto-drain via BOUNDED-1 (supervised:true).
-- **Prior carry (still open):** FIX-BCTC-Q1-2026-STORED-PDF-INGEST-STALL-15T (supervised ops recon-first); FIX-MCP-TEST-SUITE-INTERVAL-TIMER-LEAK-TEARDOWN + ALPHA-S2-FF-SUB6-BUCKETING-HELPER (dev-mcp-server, non-gating); FIX-PDFEXTRACTOR-TIER1-OCR-TIMEOUT PLAN-ONLY in review[].
+- **NEXT (router/dev-team):** ALPHA-S2 no longer actively relaying → router should release umbrella mutex + jump:end. Then drain the 2 new P1 blockers via peer dev-team (SAFETY-GATE is RUN-NOW; MEMORY-BOUND is the critical path). ALPHA-S2 auto-eligible again only when both deps done_verified.
+- **Prior carry (still open):** RC cascade launchable as SEPARATE supervised dispatch (architect TECH doc FIRST; RC-VERIF+CONVERGE→ORCHMONO→GITSTATE→CEREMONY; NOT BOUNDED-1 auto-drain). FIX-BCTC-Q1-2026-STORED-PDF-INGEST-STALL-15T (supervised ops recon-first); FIX-MCP-TEST-SUITE-INTERVAL-TIMER-LEAK-TEARDOWN + ALPHA-S2-FF-SUB6-BUCKETING-HELPER (dev-mcp-server, non-gating); FIX-PDFEXTRACTOR-TIER1-OCR-TIMEOUT PLAN-ONLY in review[].

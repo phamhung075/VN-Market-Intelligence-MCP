@@ -371,12 +371,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "ALPHA-S2-RAG-FTS-REBUILD-CRON",
-    "next_agent": "qa",
-    "next_action": "qa: behavioral-verify RAG-FTS rebuild cron — synthetic RAG entry -> pre-rebuild BM25 search miss -> POST /admin/rebuild-fts -> post-rebuild search HIT + confirm cron_job_runs row; flip DONE + merge-gate on PASS",
-    "updated_at": "2026-07-15T04:16:49Z",
-    "updated_by": "dev-team (ALPHA-S2-RAG-FTS-REBUILD-CRON dev-mcp-server->qa; code 35cc8cd56 RAW-verified on origin AHEAD=0, targeted 40/0 pass, 11 spec files match — qa behavioral-verifies live BM25 round-trip)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "dev-team",
+    "next_action": "po triage COMPLETE — ALPHA-S2-RAG-FTS-REBUILD-CRON parked BLOCKED behind RAG-FTS-BUILD-MEMORY-BOUND (dev-rag-service, ROOT cause: bound _build_fts_index memory/time) + ALPHA-S2-RAG-FTS-CRON-SAFETY-GATE (dev-mcp-server, disarm cron until rag fix verified). in_progress now empty (WIP=0). Router: release umbrella mutex + jump:end — ALPHA-S2 no longer actively relaying.",
+    "updated_at": "2026-07-15T04:55:19Z",
+    "updated_by": "po (triage qa-BLOCK ALPHA-S2 -> parked BLOCKED + minted 2 blockers RAG-FTS-BUILD-MEMORY-BOUND + ALPHA-S2-RAG-FTS-CRON-SAFETY-GATE)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2585,6 +2585,89 @@
       }
     ],
     "backlog": [
+      {
+        "id": "ALPHA-S2-RAG-FTS-REBUILD-CRON",
+        "title": "Archive-now: daily FTS-rebuild cron on rag-service so the hybrid BM25 leg stops silently missing post-boot rows (FTS rebuild was never wired)",
+        "owner": "developer",
+        "status": "BLOCKED",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "wave": 2,
+        "zone": "apps/mcp-server/",
+        "sprint": "FLOW-PRICE-ALPHA-LOOP",
+        "depends": [
+          "ALPHA-S2-RAG-FTS-CRON-SAFETY-GATE",
+          "RAG-FTS-BUILD-MEMORY-BOUND"
+        ],
+        "created_by": "po-option-a-flow-alpha-loop",
+        "created_at": "2026-07-12T07:56:33Z",
+        "note": "ARCHIVE-NOW (gap #4-adjacent — sentiment corpus quality). The rag-service FTS rebuild cron was never wired, so the hybrid retrieval's BM25 leg silently misses rows added since the last boot — degrading the sentiment input (rag_analyses) that feeds the divergence screen (ALPHA-S3). DoD: a daily cron rebuilds the FTS index on rag-service over the LanceDB rag_entries corpus; verify post-rebuild that recent rows are searchable via the BM25 leg. Brief roadmap step 2. zone=multi -> architect splits.  [PO 2026-07-14 coordination_session e417ef1f] USER GO — supervised:false AUTHORIZED (explicit user selection via router AskUserQuestion; NOT a gate-jump). flow-alpha FULL launch — user directed LAUNCH EVERYTHING (all remaining waves incl. wave 6). This row un-parked; BOUNDED-1/pipeline-resume may pick it. Wave ordering stays enforced by priority + depends (NOT reordered). Zone/depends/safety notes PRESERVED. Do NOT re-park.",
+        "supervised": false,
+        "updated_at": "2026-07-15T04:55:19Z",
+        "updated_by": "po (triage qa-BLOCK: parked BLOCKED behind RAG-FTS-BUILD-MEMORY-BOUND + ALPHA-S2-RAG-FTS-CRON-SAFETY-GATE; 14k->56k premise re-scoped; mcp-server code 35cc8cd56 clean/on-main, not a fixer defect)",
+        "promoted_at": "2026-07-15T03:20:06Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-15T03:20:06Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "acceptance_criteria": "1. New ragRebuildFts() client fn in ragHttpClient.ts (POST /admin/rebuild-fts, 90s deadline). 2. New ragFtsRebuildCronJob.ts with single-branch HARD-fail contract. 3. Cron registered in cronConfig.ts (15 20 * * * UTC), schedulerJobTable.ts, and 3 docs (cron-registry.json, system-map.json, cron-jobs.md). 4. Test-count bumps: 1190-pipeline-watchdog.test.ts (68→69), FACTORY-SCHEDULER-job-table-registry.test.ts (61→62, 83→84). 5. New test file ALPHA-S2-RAG-FTS-REBUILD-CRON.test.ts (3 paths: success, error, no-DB-import). 6. Zone corrected from multi to apps/mcp-server/ (single atomic task, no split).",
+        "test_plan": "UNIT (mocked): (a) rebuildFn resolves → notifyBug NOT called, rebuilt=true. (b) rebuildFn rejects → notifyBug called with detail, rebuilt=false. (c) source inspection: no DB/schema imports. BEHAVIORAL (QA live): (a) synthetic entry index. (b) pre-rebuild search. (c) manual rebuild or wait for 20:15 UTC cron. (d) post-rebuild search confirms BM25 hit (RRF-fused rank). (e) cron_job_runs row appears after fire.",
+        "qa_verdict": "BLOCKED",
+        "blocker": "rag-service _build_fts_index() OOM-crashes 768m container at ~56254-row corpus (4x design brief 14k premise); rebuild never completes within cron 90s deadline (observed 250s+, RestartCount 258->260, reproduced 2/2 by qa 2af76decc). mcp-server code 35cc8cd56 clean+mergeable+on-origin; NOT a fixer/dev-mcp-server defect. Behavioral DoD (BM25 round-trip) unmeetable until rag rebuild scales. Service stable-at-rest (cron NOT deployed) — no active incident.",
+        "blocked_by": [
+          "ALPHA-S2-RAG-FTS-CRON-SAFETY-GATE",
+          "RAG-FTS-BUILD-MEMORY-BOUND"
+        ],
+        "blocked_reason": "rag-service _build_fts_index() OOM-crashes 768m container at ~56254-row corpus (qa 2af76decc, reproduced 2/2); behavioral BM25 round-trip DoD unmeetable until RAG-FTS-BUILD-MEMORY-BOUND bounds the rebuild AND ALPHA-S2-RAG-FTS-CRON-SAFETY-GATE keeps the cron disarmed in the interim.",
+        "po_triage_note": "PO DISPOSITION 2026-07-15: mcp-server code (35cc8cd56, AHEAD=0) is CLEAN + mergeable — NOT a code defect, so no fixer/dev-mcp-server round on THIS row. Remaining ALPHA-S2 scope is purely the mcp-server-side tail once its two blockers clear: (i) re-tune ragRebuildFts() 90s deadline to RAG-FTS-BUILD-MEMORY-BOUND's reported steady-state wall-time + margin (90s provably insufficient — 250s+ observed and climbing with corpus); (ii) flip ALPHA-S2-RAG-FTS-CRON-SAFETY-GATE enable flag ON; (iii) re-run the live BM25 nonce round-trip DoD (test_plan BEHAVIORAL a-e). DESIGN-PREMISE RE-SCOPE: brief 2026-07-15-alpha-s2-rag-fts-rebuild-cron.md sized against 14k rows; live corpus ~56k and GROWING — any fix must be corpus-size-INDEPENDENT (bigger mem limit or longer deadline alone = moving-target band-aid). Path #1 (ops mem-limit bump) intentionally NOT minted standalone: alone it does not unblock (250s>90s is memory-independent) and cannot be sized until RAG-FTS-BUILD-MEMORY-BOUND reports the footprint — folded into that task's DoD as a possible belt-and-suspenders."
+      },
+      {
+        "id": "RAG-FTS-BUILD-MEMORY-BOUND",
+        "title": "Bound rag-service _build_fts_index() memory + wall-time so the nightly FTS rebuild completes at ANY corpus size (currently OOM-crashes the 768m container at ~56k rows)",
+        "owner": "developer",
+        "status": "BACKLOG",
+        "type": "FIX",
+        "size": "M",
+        "priority": "P1",
+        "wave": 2,
+        "zone": "apps/rag-service/",
+        "sprint": "FLOW-PRICE-ALPHA-LOOP",
+        "depends": [],
+        "created_by": "po-triage-alpha-s2-qa-block",
+        "created_at": "2026-07-15T04:55:19Z",
+        "next_agent": "dev-rag-service",
+        "supervised": false,
+        "blocks": [
+          "ALPHA-S2-RAG-FTS-REBUILD-CRON"
+        ],
+        "note": "ROOT CAUSE of ALPHA-S2-RAG-FTS-REBUILD-CRON qa-BLOCK (qa 2af76decc, reproduced 2/2). _build_fts_index() (apps/rag-service/infrastructure/repositories.py:325-345) calls LanceDB-native create_index('title'/'summary', config=FTS(), replace=True) over the full rag_entries table; at the corpus's current ~56254 rows (4x the DFR-P3 14k-row design premise) the build pins memory 90-99.9% of the 768m cgroup ceiling (docker-compose.yml ~L159) for 250s+ then hard-restarts the container (RestartCount 258->260). Fix MUST be corpus-size-INDEPENDENT (the corpus only grows via ongoing ragIndex() writes — the exact growth this whole cron exists to keep the BM25 leg fresh against). START by investigating whether LanceDB FTS build at the pinned version (0.33.0 Docker / 0.25.3 local) exposes a bounded-memory / on-disk writer-heap config (e.g. writer_heap_size, with_position=False, Tantivy budget); if the native builder cannot be bounded below a sane ceiling, escalate findings with concrete fallbacks (modest ops-gated mem-limit bump as belt-and-suspenders, or a chunked/segmented rebuild). NOT user-gated (rag-service code; deploys via normal gated rebuild). NO active incident — cron is deploy-pending, rag-service stable-at-rest 26% idle; this is a pre-deploy capacity fix, not an outage.",
+        "acceptance_criteria": "1. POST /admin/rebuild-fts completes ({status:ok}) on the LIVE ~56k-row rag_entries corpus WITHOUT pinning the 768m cgroup ceiling — memory stays bounded regardless of corpus size (verify via docker stats during a live rebuild, reproduced 2x). 2. Report the completed rebuild's steady-state PEAK MEMORY + WALL-CLOCK time in the task report (this number sizes ALPHA-S2's deadline retune AND any ops mem-limit decision). 3. Investigate/document whether LanceDB FTS build at the pinned version supports a bounded-memory writer config; if not, escalate with concrete fallback options rather than silently raising the limit. 4. search()/hybrid_search() and the lazy _fts_index_built per-container fallback UNCHANGED. 5. Zero new tables/DDL.",
+        "test_plan": "LIVE (qa, post-fix): (a) confirm rag_entries index_size ~56k via /embed/health. (b) POST /admin/rebuild-fts directly — docker stats memory trace stays UNDER the 768m ceiling to completion, {status:ok} returned, reproduced 2x. (c) record peak-mem + elapsed. (d) POST /search hybrid:true returns sane RRF results — no regression. Then hand the recorded timing to ALPHA-S2 for its deadline retune + final BM25 round-trip."
+      },
+      {
+        "id": "ALPHA-S2-RAG-FTS-CRON-SAFETY-GATE",
+        "title": "Gate ragFtsRebuildCron behind a default-OFF enable flag so a stray mcp-server redeploy cannot arm the nightly 20:15 UTC rag-service OOM before the rag capacity fix lands",
+        "owner": "developer",
+        "status": "BACKLOG",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "wave": 2,
+        "zone": "apps/mcp-server/",
+        "sprint": "FLOW-PRICE-ALPHA-LOOP",
+        "depends": [],
+        "created_by": "po-triage-alpha-s2-qa-block",
+        "created_at": "2026-07-15T04:55:19Z",
+        "next_agent": "dev-mcp-server",
+        "supervised": false,
+        "blocks": [
+          "ALPHA-S2-RAG-FTS-REBUILD-CRON"
+        ],
+        "note": "SAFETY / LATENT-LANDMINE DEFUSE. ragFtsRebuildCron code is ALREADY on origin/main (35cc8cd56) but the live mcp-server container predates it (deploy-pending). The moment ops redeploys mcp-server for ANY reason, this cron arms and will OOM-crash rag-service nightly at 20:15 UTC (per qa 2af76decc — rebuild can't complete at 56k rows in 768m; service-wide RAG/search outage each restart) — strictly worse than the silent BM25-staleness gap the cron fixes. This task makes the 'parked BLOCKED' disposition actually ENFORCE non-deployment: add an explicit enable flag (e.g. CRON_RAG_FTS_REBUILD_ENABLED, default false) gating registration of ragFtsRebuildCron in schedulerJobTable.ts so the job is NOT scheduled unless deliberately enabled. Do NOT disable via CRON_RAG_FTS_REBUILD='' — nullish-coalescing (??) ignores '' and an empty cron expr crashes croner at boot. RUN-NOW / INDEPENDENT — no dependency; MUST land before the next mcp-server redeploy. The flag is flipped ON only as the final step of unblocking ALPHA-S2 (after RAG-FTS-BUILD-MEMORY-BOUND verified). Not user-gated (code + env default; deploys via normal gated rebuild).",
+        "acceptance_criteria": "1. New default-false enable flag (e.g. CRON_RAG_FTS_REBUILD_ENABLED) gates ragFtsRebuildCron registration in schedulerJobTable.ts — with the flag unset/false, buildJobTable()/registerJobTable() do NOT schedule ragFtsRebuildCronJob (assert via the job-table registry test). 2. Flag=true path registers exactly as today (existing behavior preserved). 3. Do NOT disable via empty CRON_RAG_FTS_REBUILD (croner-crash trap documented in note). 4. Test-count guards (schedulerFileCount / job-table registry counts) updated consistently; tsc --noEmit exit 0; mock-guard PASS. 5. Docs (cron-jobs.md / cron-registry.json) note the flag + that it stays OFF until the ALPHA-S2 rag capacity fix is verified.",
+        "test_plan": "UNIT (mocked): (a) flag unset/false -> registerJobTable() does NOT contain ragFtsRebuildCronJob. (b) flag=true -> ragFtsRebuildCronJob registered with cron '15 20 * * *'. (c) tsc exit 0, mock-guard PASS. No live deploy needed (guard is registration-time)."
+      },
       {
         "id": "TASK17-FOREIGN-FLOW",
         "size": "S",
@@ -9601,11 +9684,11 @@
       }
     ],
     "head": {
-      "status": "in_progress",
-      "active_task_id": "ALPHA-S2-RAG-FTS-REBUILD-CRON",
-      "next_agent": "qa",
-      "last_updated_at": "2026-07-15T04:16:49Z",
-      "last_updated_by": "dev-team (ALPHA-S2-RAG-FTS-REBUILD-CRON dev->qa hop)"
+      "status": "idle",
+      "active_task_id": null,
+      "next_agent": "dev-team",
+      "last_updated_at": "2026-07-15T04:55:19Z",
+      "last_updated_by": "po (ALPHA-S2 qa-BLOCK triaged -> parked BLOCKED; 2 blockers minted)"
     },
     "ready": [],
     "review": [
@@ -10122,36 +10205,7 @@
     },
     "last_triaged_at": "2026-07-15T03:20:06Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "ALPHA-S2-RAG-FTS-REBUILD-CRON",
-        "title": "Archive-now: daily FTS-rebuild cron on rag-service so the hybrid BM25 leg stops silently missing post-boot rows (FTS rebuild was never wired)",
-        "owner": "developer",
-        "status": "IN_PROGRESS",
-        "type": "FIX",
-        "size": "S",
-        "priority": "P1",
-        "wave": 2,
-        "zone": "apps/mcp-server/",
-        "sprint": "FLOW-PRICE-ALPHA-LOOP",
-        "depends": [],
-        "created_by": "po-option-a-flow-alpha-loop",
-        "created_at": "2026-07-12T07:56:33Z",
-        "note": "ARCHIVE-NOW (gap #4-adjacent — sentiment corpus quality). The rag-service FTS rebuild cron was never wired, so the hybrid retrieval's BM25 leg silently misses rows added since the last boot — degrading the sentiment input (rag_analyses) that feeds the divergence screen (ALPHA-S3). DoD: a daily cron rebuilds the FTS index on rag-service over the LanceDB rag_entries corpus; verify post-rebuild that recent rows are searchable via the BM25 leg. Brief roadmap step 2. zone=multi -> architect splits.  [PO 2026-07-14 coordination_session e417ef1f] USER GO — supervised:false AUTHORIZED (explicit user selection via router AskUserQuestion; NOT a gate-jump). flow-alpha FULL launch — user directed LAUNCH EVERYTHING (all remaining waves incl. wave 6). This row un-parked; BOUNDED-1/pipeline-resume may pick it. Wave ordering stays enforced by priority + depends (NOT reordered). Zone/depends/safety notes PRESERVED. Do NOT re-park.",
-        "supervised": false,
-        "updated_at": "2026-07-14T20:29:05Z",
-        "updated_by": "po (DECISION-1 flow-alpha full GO — user selection e417ef1f)",
-        "promoted_at": "2026-07-15T03:20:06Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-15T03:20:06Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
-        "router_route_note": "dev-team (ALPHA-S2-RAG-FTS-REBUILD-CRON dev-mcp-server->qa; code 35cc8cd56 RAW-verified on origin AHEAD=0, targeted 40/0 pass, 11 spec files match — qa behavioral-verifies live BM25 round-trip)",
-        "acceptance_criteria": "1. New ragRebuildFts() client fn in ragHttpClient.ts (POST /admin/rebuild-fts, 90s deadline). 2. New ragFtsRebuildCronJob.ts with single-branch HARD-fail contract. 3. Cron registered in cronConfig.ts (15 20 * * * UTC), schedulerJobTable.ts, and 3 docs (cron-registry.json, system-map.json, cron-jobs.md). 4. Test-count bumps: 1190-pipeline-watchdog.test.ts (68→69), FACTORY-SCHEDULER-job-table-registry.test.ts (61→62, 83→84). 5. New test file ALPHA-S2-RAG-FTS-REBUILD-CRON.test.ts (3 paths: success, error, no-DB-import). 6. Zone corrected from multi to apps/mcp-server/ (single atomic task, no split).",
-        "test_plan": "UNIT (mocked): (a) rebuildFn resolves → notifyBug NOT called, rebuilt=true. (b) rebuildFn rejects → notifyBug called with detail, rebuilt=false. (c) source inspection: no DB/schema imports. BEHAVIORAL (QA live): (a) synthetic entry index. (b) pre-rebuild search. (c) manual rebuild or wait for 20:15 UTC cron. (d) post-rebuild search confirms BM25 hit (RRF-fused rank). (e) cron_job_runs row appears after fire."
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
@@ -10160,6 +10214,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-07-15T00:45:33Z",
-  "_updated_by": "po-alpha-s2-ff-followup-triage"
+  "_updated_at": "2026-07-15T04:55:19Z",
+  "_updated_by": "po (triage ALPHA-S2-RAG-FTS-REBUILD-CRON qa-BLOCK)"
 }
