@@ -25,3 +25,14 @@
 - Latent landmine: cron code is already on main → next mcp-server redeploy arms a nightly 20:15Z rag OOM → minted ALPHA-S2-RAG-FTS-CRON-SAFETY-GATE (dev-mcp-server, default-off enable flag, RUN-NOW/independent) so "parked BLOCKED" actually enforces non-deployment.
 **why-decision:** Deploying as-is = nightly service-wide RAG/search outage, strictly worse than the silent BM25-staleness gap it fixes; the fix must be corpus-size-independent, so root-cause (rag capacity) + a real disarm gate beat any band-aid. Re-scoped the brief's 14k premise → 56k+/growing.
 **why-change:** no change from qa's routing intent (architect/ops, not fixer) — refined it into 2 zoned, DAG-ordered backlog rows + a parked dependency instead of one vague hand-off.
+
+### STEP po-S3 · po · 2026-07-15T20:06:07Z
+**task-id:** UC-CCA-P3
+**what-done:** Escalated signal cow-20260715T195545 HIGH→CRITICAL on CONFIRMED user-visible MARKET double-publish (932+933); promoted UC-CCA-P3 → P0 umbrella, BLOCKED its 2 children onto it, minted 1 router row. No duplicate signal minted.
+**what-considered:**
+- Mint a new FIX row for the marker release — REJECTED: `FIX-CHEF-PUBLISHED-MARKER-RELEASE` already exists (BACKLOG since ~07-02, its own title records 2x sightings). Not a knowledge gap; 13d prioritisation starvation in a 395-row backlog.
+- Ship the S-size point patch (delete the release) as stop-the-bleeding — REJECTED: alone it REGRESSES the 07-03 leak (early Step-0.5 claim ⇒ silent exit leaves a marker asserting a phantom publish, suppressing next dish ≤28h).
+- Doc-only "NEVER release" line in chef.md — REJECTED: memory lesson `feedback_chef_leaks_published_marker_on_silent_exit` (auto-injected) says the OPPOSITE; two contradictory instructions ⇒ prose fix is non-deterministic by construction. That lesson, not any flow doc, is the traced release source.
+- Block-as-poison per recurring-bug rule — REJECTED per `feedback_recurring_detection_vs_recurring_failed_fix`: discriminator is completion artifacts, and ZERO fixes ever landed ⇒ rule says DISPATCH at P0.
+**why-decision:** The pendulum (07-02 dbl → 07-03 fix → 07-03 leak → 07-15 dbl) proves the halves oscillate when shipped apart, so they ship as ONE P0 unit. Deeper root cause than the release: marker claimed at chef.md L32, ~650L before send_telegram — claiming before the publish decision is what forces the conditional-release rule agents keep inverting. Recommended (non-binding) two-phase read-only-probe→late-claim, which removes the conditional entirely, + a code-enforced `^published:` guard at the single `releaseTask()` choke point since prose gates failed 3x.
+**why-change:** Task framed it as escalate-existing-row; kept that, but triage found the fix was already minted 3x — so the product problem is starvation/oscillation, not diagnosis. Rescoped UC-CCA-P3's own "release-on-no-publish" clause as insufficient (it encodes only the 07-03 half).

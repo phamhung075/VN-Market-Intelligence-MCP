@@ -412,8 +412,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-15T19:57:56Z",
-    "_updated_by": "cowork-team/dispatcher",
+    "_updated_at": "2026-07-15T20:06:07Z",
+    "_updated_by": "po",
     "archive": [],
     "rows": [
       {
@@ -447,12 +447,16 @@
         "to": "po",
         "type": "system-issue",
         "summary": "CONFIRMED MARKET DOUBLE-PUBLISH (ids 932+933): unified-agent releases FR-P2-7 published marker after publish; peer session 34a375e3 re-dispatched chef-evening via router intent PRE-CLAIM, its agent claimed the freed marker at 19:54:56Z and published a 2nd dish to the user-facing channel",
-        "severity": "HIGH",
-        "status": "NEW",
-        "payload_ref": "docs/handoffs/2026-07-15-unified-agent-releases-published-marker.md"
+        "severity": "CRITICAL",
+        "status": "READ",
+        "payload_ref": "docs/handoffs/2026-07-15-unified-agent-releases-published-marker.md",
+        "triaged_at": "2026-07-15T20:06:07Z",
+        "triaged_by": "po",
+        "routed_to": "UC-CCA-P3",
+        "triage_note": "PO TRIAGE 2026-07-15T20:06Z — ESCALATED MED->HIGH->CRITICAL. CONFIRMED user-visible double publish (MARKET ids 932+933). NO NEW ROW MINTED: root cause was ALREADY minted as FIX-CHEF-PUBLISHED-MARKER-RELEASE whose own title records 2x sightings on 2026-07-02 (chef-morning + chef-evening) — it has sat in a 395-row BACKLOG for 13 days. This is NOT a knowledge gap; it is PRIORITISATION STARVATION of a known S-size fix for an irreversible user-facing harm. Folded to umbrella UC-CCA-P3 (promoted P1->P0). Sighting count for this exact root cause: 07-02 x2 (CONFIRMED), 07-03 inverse leak-on-silent-exit (CONFIRMED), 07-14 (suspected, leaned refuted), 07-15 (CONFIRMED user-visible) = recurring FAILED-FIX class per feedback_recurring_bug_escalation. Discriminator per feedback_recurring_detection_vs_recurring_failed_fix: ZERO completion artifacts across all sightings — the fix has NEVER been implemented, so the rule says DISPATCH at P0, do NOT block as poison."
       }
     ],
-    "last_triaged_at": "2026-07-03T19:49:38Z",
+    "last_triaged_at": "2026-07-15T20:06:07Z",
     "last_triaged_by": "po"
   },
   "sprint_goal": {
@@ -659,8 +663,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-15T00:45:33Z",
-    "_updated_by": "po-alpha-s2-ff-followup-triage",
+    "_updated_at": "2026-07-15T20:06:07Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -2696,12 +2700,15 @@
         "id": "FU-CHEF-MARKER-INFLOW",
         "size": "S",
         "sprint": "COWORK-RELIABILITY",
-        "status": "BACKLOG",
+        "status": "BLOCKED",
         "title": "chef.md self-enforces published-marker before send_telegram, with per-cadence key granularity",
         "type": "FIX",
         "zone": "cross-service/",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-CHEF-MARKER-INFLOW",
-        "verify_note": "prior_status=DEFERRED"
+        "verify_note": "prior_status=DEFERRED",
+        "blocked_by": "UC-CCA-P3",
+        "blocked_at": "2026-07-15T20:06:07Z",
+        "blocked_reason": "PO 2026-07-15: PREREQUISITE half of the same fix (claim marker immediately before send_telegram = 07-03 defect #1, still unfixed). Must ship WITH the release-immunity half, not before/after it — see UC-CCA-P3 note for the 07-02 -> 07-03 -> 07-15 oscillation proof. Folded into UC-CCA-P3 (P0 umbrella)."
       },
       {
         "id": "BCTC-HIST-VCB-REFINE",
@@ -5104,11 +5111,14 @@
         "id": "FIX-CHEF-PUBLISHED-MARKER-RELEASE",
         "type": "FIX",
         "size": "S",
-        "status": "BACKLOG",
+        "status": "BLOCKED",
         "sprint": "COWORK-RELIABILITY",
         "zone": "cross-service/",
         "title": "chef.md cleanup releases published:<slot>:<date> marker post-publish — defeats FR-P2-7 dup-post gate (2x 2026-07-02: chef-morning + chef-evening)",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-CHEF-PUBLISHED-MARKER-RELEASE"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-CHEF-PUBLISHED-MARKER-RELEASE",
+        "blocked_by": "UC-CCA-P3",
+        "blocked_at": "2026-07-15T20:06:07Z",
+        "blocked_reason": "PO 2026-07-15: DO NOT implement standalone. This row scoped as remove-the-release. Implemented alone it REGRESSES the 07-03 leak: chef.md claims the marker at Step 0.5 BEFORE the publish decision, so deleting the release makes every silent/no-post exit leave a marker asserting a publish that never happened — suppressing the next legit dish for up to 28h on single-fire slots. Folded into UC-CCA-P3 (P0 umbrella) which fixes claim-timing + release-immunity together. Root cause CONFIRMED user-visible 2026-07-15 (MARKET ids 932+933) after this row sat in BACKLOG 13d since its own 07-02 2x sighting — starvation, not unknown-cause."
       },
       {
         "id": "FU-TCH-BCTC-COVERAGE",
@@ -6554,19 +6564,25 @@
       {
         "id": "UC-CCA-P3",
         "type": "SPRINT-S",
-        "title": "One published-marker-gate skill with mandatory release-on-no-publish; wire into the 6 copy-pasted marker gates",
+        "title": "PUBLISHED-MARKER LIFECYCLE — one marker-gate skill, publish-state-conditioned immunity; wire into the 6 copy-pasted gates (P0: caused CONFIRMED user-visible MARKET double-publish 2026-07-15 ids 932+933)",
         "status": "BACKLOG",
-        "priority": "P1",
+        "priority": "P0",
         "size": "M",
         "zone": "cross-service/",
         "sprint": "ULTRACODE-AUDIT-FIXALL",
         "source": "ultracode-audit-2026-07-12",
         "verdict": "CONFIRMED",
         "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#cowork-cycle-agents-P3",
-        "note": "6 agents copy-paste a publish-marker task_claim gate; several leak the marker/lock when nothing is published. Build one skill with a mandatory release-on-no-publish clause and wire all 6 in.",
+        "note": "P0-PROMOTED 2026-07-15T20:06Z by po from signal cow-20260715T195545 (CONFIRMED user-visible double publish, MARKET ids 932+933). UMBRELLA — folds FIX-CHEF-PUBLISHED-MARKER-RELEASE + FU-CHEF-MARKER-INFLOW; both set BLOCKED on this row. THEY MUST NOT SHIP INDEPENDENTLY — independent point patches provably OSCILLATE: 07-02 marker released post-publish -> double publish; 07-03 remediation said release-on-every-no-post-exit -> marker LEAKED on silent exit, suppressing legit dishes; 07-15 an agent complied with the 07-03 rule and released after a REAL publish -> double publish again. The two memory lessons feedback_chef_leaks_published_marker_on_silent_exit (release it!) and feedback-chef-releases-published-marker-enables-peer-double-publish (never release it!) are in DIRECT CONTRADICTION and are auto-injected into agent context — so ANY prose-only fix is non-deterministic by construction. ROOT CAUSE (deeper than the release itself): chef.md claims the marker at Step 0.5 line 32, ~650 lines and one full expensive gather/synthesis BEFORE send_telegram. Claiming before the publish decision is what forces a conditional-release rule, and agents get that conditional wrong in BOTH directions. Note the existing UC-CCA-P3 clause mandatory release-on-no-publish is INSUFFICIENT — it encodes the 07-03 half of the pendulum only. REQUIRED INVARIANT (the WHAT — architect/ba own the HOW): marker release-immunity MUST be a function of publish-state, not of agent prose. Publish SUCCEEDED -> marker is an immutable tombstone, TTL is the ONLY expiry path. Publish NOT attempted/failed -> marker must not survive. PO DESIGN RECOMMENDATION (non-binding, architect decides): two-phase gate — (1) early cheap READ-ONLY probe task_list_held(task_id=MARKER_KEY) at Step 0.5 to abort before burning the pipeline, claiming NOTHING so a leak is impossible; (2) task_claim immediately before send_telegram, claimed:false -> EXIT without sending, claimed:true -> send -> NEVER release. Late-claim makes conditional-release logic unnecessary while the early probe preserves the cost optimisation the current early-claim was reaching for. AC-CODE-GATE (assess, do not assume): prose gates have now failed 3x — evaluate a code-enforced backstop at the releaseTask() choke point in apps/mcp-server/src/interface/mcp/tools/system/coordinationTools.ts (single choke point, also guard task_force_release_orphan) refusing release of task_id matching ^published: . Prefer a task_id-prefix guard over a new task_kind enum value: published: markers and cron: election locks TODAY share task_kind cowork-slot with opposite semantics (dispatch-claim SKILL.md §3.1 table literally documents TTL never released vs explicit release at dispatch end for the same kind), and adding an enum member has a known drift class (feedback_preclaim_gate_taskkind_enum_drift: Zod enum + SQLite CHECK + call sites). ALSO IN SCOPE: chef.md Step 0.5 omits owner_client_session entirely — a violation of spawn-fanout.md L56 (REQUIRED, P1-FINAL TASK_1980) and an unfixed repeat of 07-03 defect #2. AC: (1) invariant holds for both single-fire (TTL 100800) and multi-fire (TTL=cadence) slots; (2) a silent/no-post exit leaves NO marker; (3) a successful publish leaves a marker no agent can release; (4) all 6 copy-pasted gates wired to the one skill; (5) RAW-verify via task_list_held after a real evening dish — marker MUST still be held.",
         "created_at": "2026-07-13T19:31:11Z",
         "created_by": "po",
-        "next_agent": "ba"
+        "next_agent": "ba",
+        "origin_signal_id": "cow-20260715T195545",
+        "folds": [
+          "FIX-CHEF-PUBLISHED-MARKER-RELEASE",
+          "FU-CHEF-MARKER-INFLOW"
+        ],
+        "supervised": true
       },
       {
         "id": "UC-CCA-P5",
@@ -7526,6 +7542,23 @@
         "created_at": "2026-07-15T17:28:38Z",
         "created_by": "po (dev-team tick 17:07Z signal triage — sig dev-team-20260715T160042Z-rag-hybrid-maxdistance-noop)",
         "note": "PRE-EXISTING / NON-BLOCKING tech-debt surfaced by qa during RAG-FTS-BUILD-MEMORY-BOUND live-verify. NOT a regression (git show 619eea227 = 0 lines changed in search()/hybrid_search()). Evidence: with default max_distance=0.8, hybrid=true returns results while hybrid=false returns 0 for the identical query; hybrid distance values cluster tight (0.0216-0.0242) consistent with an RRF fused-rank score under the distance key => max_distance effectively a no-op in hybrid mode. Not urgent-dispatched: groom by rank when rag-service has free capacity. Related: RAG-FTS-BUILD-MEMORY-BOUND (review), ALPHA-S2-RAG-FTS-REBUILD-CRON (backlog/BLOCKED)."
+      },
+      {
+        "id": "FIX-ROUTER-COWORK-SLOT-DEMAND-DISPATCH-BLIND",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "status": "BACKLOG",
+        "zone": "cross-service/",
+        "owner": "po",
+        "supervised": true,
+        "sprint": "COWORK-RELIABILITY",
+        "created_at": "2026-07-15T20:06:07Z",
+        "created_by": "po",
+        "origin_signal_id": "cow-20260715T195545",
+        "next_agent": "ba",
+        "title": "Router demand-dispatch of cowork slots is slot-tick-blind — intent: PRE-CLAIM grants false exclusivity; probe published:<slot>:<period> before spawn + never override a spawned agent window guard",
+        "note": "MINTED 2026-07-15T20:06Z by po from signal cow-20260715T195545. Hole 2 of 2 (hole 1 = UC-CCA-P3 marker lifecycle, P0). DEFENCE-IN-DEPTH, NOT the root cause: with a correct marker gate the 19:53Z router-spawned chef would have hit claimed:false and exited, so UC-CCA-P3 alone closes the double-publish. This row stops the wasted expensive run and the false-exclusivity signal. (1) NAMESPACE BLINDNESS: router Phase B PRE-CLAIM (CLAUDE.md §2.5) claims intent:<agent>:<intent-key>, a namespace disjoint from the cowork dispatcher cron:<flow>:<tick> election AND from its per-slot cowork-slot claims. claimed:true on an intent: key says NOTHING about whether that slot already fired this period — at 19:53Z it returned claimed:true while the 19:45Z tick had already published id 932. Fix: before demand-dispatching ANY cowork slot (unified-agent/chef, fb-market-poster, digest-predict, alert-commander, market-watcher), probe READ-ONLY task_list_held for published:<slot>:<period> and check git log for a recent chore(cowork): <slot> tick FIRE commit; either present -> report slot already fired at HH:MMZ and STOP without spawning. Read-only probe only — the router must NOT claim or release the publish marker. (2) OPERATOR FACTOR — DISCLOSED, NOT SUPPRESSED: the router spawned CHEF with do NOT re-derive the window and do NOT exit as outside-window, which disabled main.md outside-window EXIT. At 19:53Z (evening window 19:37 UTC) that guard would have caught the late invocation and prevented publish 933. It was the LAST layer still functioning and the router removed it. Rule to encode: an explicit user slot= request is a request to RUN the slot, not a licence to bypass slot dedup or window guards; NEVER instruct a spawned agent to skip a window/date guard; the guard would have stopped me is the guard WORKING. Off-window demand runs need PO authorisation, not router improvisation. Publishes are irreversible — a skipped dish is recoverable, a double post is not. Files: CLAUDE.md §2.5, .claude/skills/dispatch-claim/SKILL.md (§3.1 namespace table already documents the published/cron distinction but nothing makes the router consult it), .claude/skills/dispatch/SKILL.md. Lesson already in memory: feedback_router_demand_dispatch_cowork_slot_double_publish. AC: (1) router demand-dispatch of an already-fired slot STOPS without spawning and reports the prior fire time; (2) no router path instructs an agent to bypass a window/date guard; (3) probe is read-only — RAW-verify the marker is untouched after a blocked demand-dispatch."
       }
     ],
     "closed_sprints": [
