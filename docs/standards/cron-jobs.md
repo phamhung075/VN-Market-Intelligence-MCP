@@ -87,6 +87,21 @@ Env override: `CRON_ACCURACY_DIGEST` (default `0 7 * * *`)
 - Source: `apps/mcp-server/src/scheduler/market-data/intraday5mCompactorJob.ts`
 - Design SSOT: `docs/architecture-briefs/2026-07-14-alpha-s2-tick-downsample-5min.md`
 
+## Intraday 5-min Foreign-Flow Compaction (Archive-Now)
+
+| Schedule | Job | Task |
+|----------|-----|------|
+| `*/5 * * * *` (24/7, no market-hours gate) | `intradayForeignFlow5mCompactorJob` — compacts `foreign_flow_history` ticks into 5-min UTC-aligned buckets in `intraday_foreign_flow_5m` using LAST-value-in-bucket semantics (NOT OHLC — foreign flow columns are cumulative-to-date counters/point-in-time gauges, no open/high/low concept), ALL codes present, standalone table/job from the price plane (`intraday_ohlcv_5m`/`intraday5mCompactorJob`) — distinct bounded context | ALPHA-S2-FOREIGN-FLOW-WRITE-RACE |
+
+- **Why:** every 60s `/api/push-foreign-flow` push writes directly into the final per-day tables (`daily_foreign_flow`, `vnstock_trading_stats`) via unconditional last-write-wins upserts — no intraday curve was ever preserved. `pushForeignFlowHandler.ts` Step 6b additively appends each normalized item into `foreign_flow_history` (raw ticks) before this job compacts it into a permanent 5-min archive, ahead of that handler's own rolling ~24h purge.
+- Aggregation is LAST-non-null-value-wins per column (COALESCE-style — a payload missing a field mid-bucket does not blank out a previously-known value), NOT open/high/low/close. `foreign_net_vol` is computed at write time from the bucket's last-known buy/sell pair.
+- Idempotent full-row `INSERT OR REPLACE` every run (recomputes each bucket from all currently-surviving source ticks) — safe to re-run, gap-tolerant if a cycle is skipped.
+- Zero market-hours dependence by design — an empty `foreign_flow_history` table on weekends/holidays is a no-op, not an error.
+- Startup one-shot call wired in `startScheduler.ts` doubles as the backfill of ticks surviving at deploy time — no separate migration script.
+- Env override: `CRON_INTRADAY_FOREIGN_FLOW_5M_COMPACTOR` (default `*/5 * * * *`)
+- Source: `apps/mcp-server/src/scheduler/market-data/intradayForeignFlow5mCompactorJob.ts`
+- Design SSOT: `docs/architecture-briefs/2026-07-15-alpha-s2-foreign-flow-write-race-verdict.md`
+
 ## Analysis Ownership (dedup policy)
 
 | Domain | Owner | Verifier | Notes |

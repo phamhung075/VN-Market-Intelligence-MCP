@@ -513,6 +513,11 @@
             "desc": "Compacts market_prices_history ticks into intraday_ohlcv_5m 5-min bars, ALL codes, no market-hours gate — runs before the rolling 24h purge deletes surviving ticks (ALPHA-S2)"
           },
           {
+            "name": "intradayForeignFlow5mCompactor",
+            "schedule": "*/5 * * * *",
+            "desc": "Compacts foreign_flow_history ticks into intraday_foreign_flow_5m 5-min LAST-value-in-bucket buckets (NOT OHLC), ALL codes, no market-hours gate — standalone from the price plane, runs before the rolling 24h purge deletes surviving ticks (ALPHA-S2-FOREIGN-FLOW-WRITE-RACE)"
+          },
+          {
             "name": "systemAuditTier1",
             "schedule": "*/30 * * * *",
             "desc": "system-auditor Tier-1: container + health ping every 30 min"
