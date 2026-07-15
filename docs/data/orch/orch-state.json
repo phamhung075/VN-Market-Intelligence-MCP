@@ -371,12 +371,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "UC-RDL-P5 done_verified (qa PASS, all 5 ACs RAW-verified against git show aef457f38 -- CLAUDE.md; re-entrant branch confirmed present + correct). Next dispatcher tick: clean preflight + BOUNDED-1 eval / continue ULTRACODE-AUDIT-FIXALL drain.",
-    "updated_at": "2026-07-15T18:24:40Z",
-    "updated_by": "qa (UC-RDL-P5 review->done_verified)"
+    "status": "in_progress",
+    "active_task_id": "FIX-COWORK-PREFLIGHT-PRESENCE-CLAIM-GAP",
+    "next_agent": "developer",
+    "next_action": "developer implements FIX-COWORK-PREFLIGHT-PRESENCE-CLAIM-GAP: mirror cowork-team/flow/main.md Step 0b.1 claim-first-presence into scripts/agents-flow/cowork-tick-preflight.sh Step 2 (presence NEVER emits ERROR; reserve ERROR for election/transport) + update .test.sh (T3 rewrite: fresh-session->SILENT/WORK, re-entrant->clean+TTL-renewed, no cowork-slot lock leak). On dev complete -> qa gate -> done_verified (close-gate flips origin_signal cow-20260715T184053 READ->RESOLVED).",
+    "updated_at": "2026-07-15T19:12:31Z",
+    "updated_by": "dev-team (router: execute-dispatch PO batch FIX; WIP 0->1)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7518,23 +7518,6 @@
         "created_at": "2026-07-15T17:28:38Z",
         "created_by": "po (dev-team tick 17:07Z signal triage — sig dev-team-20260715T160042Z-rag-hybrid-maxdistance-noop)",
         "note": "PRE-EXISTING / NON-BLOCKING tech-debt surfaced by qa during RAG-FTS-BUILD-MEMORY-BOUND live-verify. NOT a regression (git show 619eea227 = 0 lines changed in search()/hybrid_search()). Evidence: with default max_distance=0.8, hybrid=true returns results while hybrid=false returns 0 for the identical query; hybrid distance values cluster tight (0.0216-0.0242) consistent with an RRF fused-rank score under the distance key => max_distance effectively a no-op in hybrid mode. Not urgent-dispatched: groom by rank when rag-service has free capacity. Related: RAG-FTS-BUILD-MEMORY-BOUND (review), ALPHA-S2-RAG-FTS-REBUILD-CRON (backlog/BLOCKED)."
-      },
-      {
-        "id": "FIX-COWORK-PREFLIGHT-PRESENCE-CLAIM-GAP",
-        "type": "FIX",
-        "title": "cowork-tick-preflight.sh Step 2: claim-first presence, never gate (fresh-session false-ERROR into LLM fallback)",
-        "desc": "Fix scripts/agents-flow/cowork-tick-preflight.sh Step 2 (~L127-138): the script heartbeats the session-presence lock (task_heartbeat on session-presence:<session>) WITHOUT ever claiming it, so on a fresh session's first tick (no presence row exists yet) heartbeat returns ok=false -> verdict=ERROR -> return 1 -> the expensive LLM fallback runs. This inverts the cowork-team/flow/main.md Step 0b.1 contract (presence is NEVER a gate) and reopens the exact cost TOKEN-ECONOMY-TICK-PREFLIGHT WU-1 removed: ~80% of ticks collapse to one bash call, but this reopens the costly path once per fresh session AND once after any >30min presence lapse. Fix: mirror main.md Step 0b.1 -- task_claim(session-presence:<session>, task_kind=\"session-presence\", owner_agent=\"cowork-dispatcher\", ttl_seconds=1800, payload={...}); if claimed:false AND current_holder.owner_client_session==session_id then task_heartbeat; proceed regardless of outcome. Presence must NEVER emit ERROR -- reserve ERROR only for the election/transport failures that genuinely leave lock state undefined. Also update the script header line 13 to match the corrected contract. NOTE for dev/qa: existing test T3 (\"ERROR verdict (presence transport failure)\") asserts the OLD gating behavior and MUST be updated to the corrected non-gating contract; add new cases for fresh-session->SILENT/WORK and re-entrant->clean+TTL-renewed. Payload: docs/handoffs/2026-07-15-cowork-preflight-presence-claim-gap.md. Scars: feedback_chain_mutex_ttl_lapse_during_long_hop_reclaim (ok:false means re-CLAIM, not heartbeat), feedback_task_claim_held_lock_noop_use_heartbeat (claim-first-then-heartbeat-on-re-entry).",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "owner": "po",
-        "next_agent": "developer",
-        "created_at": "2026-07-15T19:02:35Z",
-        "created_by": "po",
-        "origin_signal_id": "cow-20260715T184053",
-        "baseline_pass": true,
-        "status_note": "AC: (1) fresh session (no prior presence row) tick-1 verdict = SILENT/WORK, NOT ERROR; (2) re-entrant tick same session -> still SILENT/WORK + presence TTL renewed; (3) simulated presence-tool transport error -> proceeds non-gating, does NOT emit ERROR; (4) task_list_held(kind=\"cowork-slot\") count:0 after each (no lock leak). baseline_pass=true (20/20 green pre-fix, verified 2026-07-15 via scripts/agents-flow/cowork-tick-preflight.test.sh). Fix loc: scripts/agents-flow/cowork-tick-preflight.sh ~L127-138 + header L13 + test T3 update. verification_gate=preflight_test_suite_green_including_new_fresh_session_and_reentrant_cases. origin_signal=cow-20260715T184053."
       }
     ],
     "closed_sprints": [
@@ -9768,11 +9751,11 @@
       }
     ],
     "head": {
-      "status": "idle",
-      "active_task_id": null,
-      "next_agent": "router",
-      "last_updated_at": "2026-07-15T18:24:40Z",
-      "last_updated_by": "qa (UC-RDL-P5 review->done_verified)"
+      "status": "in_progress",
+      "active_task_id": "FIX-COWORK-PREFLIGHT-PRESENCE-CLAIM-GAP",
+      "next_agent": "developer",
+      "last_updated_at": "2026-07-15T19:12:31Z",
+      "last_updated_by": "dev-team (FIX-COWORK-PREFLIGHT execute-dispatch: backlog->in_progress)"
     },
     "ready": [],
     "review": [
@@ -10343,7 +10326,27 @@
     },
     "last_triaged_at": "2026-07-15T19:02:35Z",
     "last_triaged_by": "po (dev-team triage: signal cow-20260715T184053 + UC-RDL-P4 adjudication)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-COWORK-PREFLIGHT-PRESENCE-CLAIM-GAP",
+        "type": "FIX",
+        "title": "cowork-tick-preflight.sh Step 2: claim-first presence, never gate (fresh-session false-ERROR into LLM fallback)",
+        "desc": "Fix scripts/agents-flow/cowork-tick-preflight.sh Step 2 (~L127-138): the script heartbeats the session-presence lock (task_heartbeat on session-presence:<session>) WITHOUT ever claiming it, so on a fresh session's first tick (no presence row exists yet) heartbeat returns ok=false -> verdict=ERROR -> return 1 -> the expensive LLM fallback runs. This inverts the cowork-team/flow/main.md Step 0b.1 contract (presence is NEVER a gate) and reopens the exact cost TOKEN-ECONOMY-TICK-PREFLIGHT WU-1 removed: ~80% of ticks collapse to one bash call, but this reopens the costly path once per fresh session AND once after any >30min presence lapse. Fix: mirror main.md Step 0b.1 -- task_claim(session-presence:<session>, task_kind=\"session-presence\", owner_agent=\"cowork-dispatcher\", ttl_seconds=1800, payload={...}); if claimed:false AND current_holder.owner_client_session==session_id then task_heartbeat; proceed regardless of outcome. Presence must NEVER emit ERROR -- reserve ERROR only for the election/transport failures that genuinely leave lock state undefined. Also update the script header line 13 to match the corrected contract. NOTE for dev/qa: existing test T3 (\"ERROR verdict (presence transport failure)\") asserts the OLD gating behavior and MUST be updated to the corrected non-gating contract; add new cases for fresh-session->SILENT/WORK and re-entrant->clean+TTL-renewed. Payload: docs/handoffs/2026-07-15-cowork-preflight-presence-claim-gap.md. Scars: feedback_chain_mutex_ttl_lapse_during_long_hop_reclaim (ok:false means re-CLAIM, not heartbeat), feedback_task_claim_held_lock_noop_use_heartbeat (claim-first-then-heartbeat-on-re-entry).",
+        "status": "IN_PROGRESS",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "developer",
+        "created_at": "2026-07-15T19:02:35Z",
+        "created_by": "po",
+        "origin_signal_id": "cow-20260715T184053",
+        "baseline_pass": true,
+        "status_note": "AC: (1) fresh session (no prior presence row) tick-1 verdict = SILENT/WORK, NOT ERROR; (2) re-entrant tick same session -> still SILENT/WORK + presence TTL renewed; (3) simulated presence-tool transport error -> proceeds non-gating, does NOT emit ERROR; (4) task_list_held(kind=\"cowork-slot\") count:0 after each (no lock leak). baseline_pass=true (20/20 green pre-fix, verified 2026-07-15 via scripts/agents-flow/cowork-tick-preflight.test.sh). Fix loc: scripts/agents-flow/cowork-tick-preflight.sh ~L127-138 + header L13 + test T3 update. verification_gate=preflight_test_suite_green_including_new_fresh_session_and_reentrant_cases. origin_signal=cow-20260715T184053.",
+        "claimed_at": "2026-07-15T19:12:31Z",
+        "claimed_by": "dev-team (router: Step-3 execute-dispatch of PO batch FIX; withhold-gate PASS — git-clean, depends null, next_agent developer)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
