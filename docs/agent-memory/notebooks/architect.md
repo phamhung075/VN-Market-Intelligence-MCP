@@ -1,8 +1,22 @@
 # Architect — Notebook
 
-**Last updated:** 2026-07-14 21:30 UTC | **Sprint:** FLOW-PRICE-ALPHA-LOOP
+**Last updated:** 2026-07-15 04:15 UTC | **Sprint:** FLOW-PRICE-ALPHA-LOOP
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-07-15T04:15Z — ALPHA-S2-OMO-LIQUIDITY-CRON (zone=multi split, lean single-file FIX, READY_FOR_PM)
+
+**Task:** dev-team BOUNDED-1 relay (chain-mutex held, coordination_session 69b0312e) — zone=multi board FIX: gap #2, nothing calls macro-indicators `POST /liquidity-state` so `sbv_omo_daily` accrues nothing and the OMO-stress leg stays null; blocks `ALPHA-S4-REGIME-GATE-V1`.
+**Finding:** RAW-read `apps/macro-indicators` (Go) — the persist path is 100% already shipped (P0-3-OMO-CURVE, commit `cd8cfcc2`): `LiquidityStateUseCase.Execute()` already calls `omoDailyRepo.Persist()` as a write-on-fetch side effect of every `/liquidity-state` call, idempotent `ON CONFLICT(auction_date)`, and Persist is ONLY invoked when `omoInputs.ParseOK==true` — a parse failure already writes zero rows (no-fake-data invariant is structural, not something to build). The gap is purely "nobody calls the endpoint." Ruled out hosting the cron in `apps/macro-indicators/` itself: it's a pure-Go service with zero scheduler infra and a documented zero-secrets sandbox posture (no Telegram token — adding fail-loud alerting there would violate that or produce a silent stdout-only "alert"). `apps/mcp-server/` already owns every piece needed off-the-shelf: `macroFetch()` (the exact HTTP client `get_vn_liquidity_state`'s existing MCP tool already uses to call this endpoint), the `buildJobTable()`/`cronConfig.ts` scheduler registry (same pattern ALPHA-S2-FF-SUB3/SUB4 just used), and `sendTelegramBug()`. Designed a HARD-fail-vs-SOFT-fail split for the fail-loud contract: transport failure (`macroFetch` `ok:false`) always alerts BUG; a 200-OK-but-`omo.is_estimate=true` response (SBV published nothing that session — an already-modeled expected outcome, `DaysInWindow<5` honest partial sum) only logs a warning, not a BUG alert — avoids manufacturing false incidents out of normal SBV cadence (the `auditor_freshness_threshold_market_hours_blind` class). New job is side-effect-free on `market.db` (writes nothing itself — mcp-server only triggers + observes). Recommended AGAINST a multi-subtask epic (unlike both wave-2 siblings, which needed DDL + write-path touches) — this is genuinely one atomic dev-mcp-server commit.
+**Output:** `docs/architecture-briefs/2026-07-15-alpha-s2-omo-liquidity-cron.md` — zone-split rationale, confirmed-already-shipped `sbv_omo_daily` write path, HARD/SOFT fail-loud design, new `sbvOmoLiquidityCronJob.ts` (reuses `macroFetch`+`LiquidityStateResponseSchema`), `09:09 UTC daily` cadence choice, 9 acceptance criteria, single-atomic-task PM recommendation.
+**Next:** pm — mint ONE atomic dev-mcp-server task (no subtask decomposition); zone `apps/mcp-server/` (corrected from board's stale "multi").
+
+## 2026-07-15T00:00Z — ALPHA-S2-FOREIGN-FLOW-WRITE-RACE (SPRINT-S verdict, zone=multi split, READY_FOR_PM)
+
+**Task:** Router BOUNDED-1 relay (chain-mutex held by router) — PO reclassified board FIX row to architect: verify FIX-half claim (writeForeignFlowToOhlcv unconditional daily_foreign_flow upsert, commit 3201c86cc) and decide residual archive scope + consolidate-vs-standalone vs sibling ALPHA-S2-TICK-DOWNSAMPLE-5MIN.
+**Finding:** RAW-verified the FIX claim holds (`git show 3201c86cc --stat` + full read of `ohlcvForeignFlowStore.ts` — unconditional `ON CONFLICT DO UPDATE`, no `daily_ohlcv` dependency, `changes>=1` always). Residual is real: unlike the price plane, foreign flow has **no pre-existing raw-ticks table** — `pushForeignFlowHandler.ts` writes straight into `daily_foreign_flow` AND `vnstock_trading_stats` (`foreign_room`/`holding_ratio`) every 60s via unconditional per-push upserts, so both planes already collapse to last-value-wins with nothing left to retroactively downsample; building the archive requires an additive write-path touch (new raw-ticks INSERT alongside, not replacing, the two existing upserts) — the sibling never needed this. Also found the task title's "room" is not a misnomer: `upsertForeignFlow`'s own "last occurrence wins" dedup comment confirms `vnstock_trading_stats` suffers the identical collapse from the SAME normalized push payload — one new raw table covers both planes, not two. Recommended STANDALONE table+job from the price plane's `intraday_ohlcv_5m` (DDD bounded-context separation — foreign flow has no OHLC concept, LAST-value-in-bucket aggregation not min/max/first/last — reusing the sibling's table would reintroduce the exact `daily_ohlcv.foreign_*` coupling the sibling sprint (TASK_2002) just finished removing), while flagging one small cross-plane DRY win (shared 5-min bucketing helper) as optional.
+**Output:** `docs/architecture-briefs/2026-07-15-alpha-s2-foreign-flow-write-race-verdict.md` — FIX-half verification, `foreign_flow_history` + `intraday_foreign_flow_5m` DDL, additive write-path change spec, LAST-value compactor design, 6-subtask sequential split, 9 acceptance criteria, urgency downgrade (not required by ALPHA-S3).
+**Next:** pm — decompose into atomic dev-mcp-server tasks per §9 subtask table; zone `apps/mcp-server/` (corrected from board's stale "multi").
 
 ## 2026-07-14T21:30Z — ALPHA-S2-TICK-DOWNSAMPLE-5MIN (SPRINT-S zone=multi split, READY_FOR_PM)
 
@@ -11,25 +25,18 @@
 **Output:** `docs/architecture-briefs/2026-07-14-alpha-s2-tick-downsample-5min.md` — DDL, job design, cron registration plan, migration-free backfill argument, 5-subtask sequential split, 9 acceptance criteria.
 **Next:** pm — decompose into atomic dev-mcp-server tasks per §9 subtask table; zone `apps/mcp-server/` (single, corrected from board's stale "multi").
 
-## 2026-07-13T21:00Z — FIX-DAILY-FF-VIEW-JOIN-ANCHOR (CI-RED-29f92c5b merge-gate unblock, READY_FOR_DEV)
-
-**Task:** Router supervised cascade — `daily_ohlcv_with_flow` view anchored on `daily_ohlcv` (LEFT side) silently drops any `daily_foreign_flow`-only `(code,date)` whose OHLCV bar hasn't landed; 2 RED-by-design gate assertions in `daily-foreign-flow-integration.test.ts` (T-3 + R-1 elimination) block `bun test`/CI merge-gate on origin/main HEAD 29f92c5b. Decide Shape A (bidirectional view) vs Shape B (rewire 5 Class-A read sites).
-**Finding:** Shape B structurally disqualified — the 2 frozen gate assertions call `queryViewRow()` which queries `daily_ohlcv_with_flow` directly, not through any Class-A tool; only a view fix flips them green without touching the test. Verified Shape A's exact SQL (LEFT JOIN unchanged + UNION ALL anti-join on `daily_foreign_flow` for keys `daily_ohlcv` lacks) against an isolated `sqlite3 :memory:` scratch session — T-3, T-4 late-join (no dup rows), legacy-fallback, and `PRAGMA table_info` column-name parity all confirmed correct. Grepped every real `FROM daily_ohlcv_with_flow` site (exactly 5, matches task list) — none select price columns, so the "NULL-price blast radius" is actually near-zero for current consumers. Found a genuine regression the task didn't flag: `daily-foreign-flow-schema.test.ts`'s "R-1 view-level proof" test currently PASSES by asserting `rows.length===0` (documents the exact bug as correct) — will flip red under Shape A unless updated in the same commit. Flagged a production footgun: `CREATE VIEW IF NOT EXISTS` is a no-op against the persisted named-volume DB that already has the old view in `sqlite_master` — needs `DROP VIEW IF EXISTS` + unconditional `CREATE VIEW` or the fix never actually takes effect after deploy despite CI going green (fresh `:memory:` DB per test masks this).
-**Output:** `docs/architecture-briefs/2026-07-13-daily-ff-view-join-anchor.md` — exact view SQL, blast-radius audit of all 5 Class-A sites + full test-suite regression sweep, companion test-fix required in `daily-foreign-flow-schema.test.ts`, targeted+full test-run sequence.
-**Next:** dev-mcp-server — implement the view SQL swap + the companion schema-test assertion fix, in one commit; zone `apps/mcp-server/`.
-
-## 2026-07-13T20:00Z — UC-RDL-P1 lock-namespace adjudication (BOUNDED-1 pickup, REAL_DRIFT scoped + REJECT half, READY_FOR_DEV)
-
-**Task:** Ultracode-audit critic "lock-key drift" CRITICAL, fresh PO mint with no AC/design — adjudicate whether router outer-wrap `intent:<agent>:<intent-key>` (task_kind=intent) has drifted from live `task:<task_id>` locks, or is intentional two-tier design.
-**Finding:** Mint conflated two different SKILL.md sections. (A) `intent:` vs `task:` = intentional, NOT drift — server's 7-kind `task_kind` enum + `coordinationTools.ts` own format describe() + `tasksMdJanitorJob.ts` `KNOWN_LEGIT_PREFIXES` allowlist all treat `intent:` as a deliberately separate, board-row-less category; merging would break the router's per-agent-intent mutex. Empirically confirmed by this very dispatch: the lock held for this cycle was `task:UC-RDL-P1`, not `intent:architect:UC-RDL-P1`. (B) `sprint-task:` (documented in `dispatch-claim/SKILL.md` + `task-lock/SKILL.md`) vs `task:` (100% of live flows + server code) = REAL drift, already independently CONFIRMED by the 2026-07-12 ultracode audit's own verifier pass — zero live call sites ever construct `sprint-task:` as a task_id value; the SKILL's own "mismatch = no protection" warning is self-refuting given its own wrong example.
-**Output:** `docs/architecture-briefs/2026-07-13-uc-rdl-p1-lock-namespace-adjudication.md` — full A/B evidence split, corrected namespace table, exact line-level diffs for both SKILL.md files (doc-only, zero runtime risk, zero in-flight migration needed), 6 acceptance criteria including a guard AC that CLAUDE.md's intent: pattern must stay untouched.
-**Next:** agent-father — sole historical/current committer of both `dispatch-claim/SKILL.md` and `task-lock/SKILL.md` (verified via git log); doc-only fix, no zone/BUILD-STANDARD applies.
-
 ---
 
-## Archive (pre-2026-07-13T20:00Z)
+## Archive (pre-2026-07-15T00:00Z)
 
-[Older cycles archived to git history: FIX-PDFEXTRACTOR-TIER1-OCR-TIMEOUT (2026-07-13T00:00Z,
+[Older cycles archived to git history: FIX-DAILY-FF-VIEW-JOIN-ANCHOR (2026-07-13T21:00Z,
+CI-RED-29f92c5b merge-gate unblock — Shape A bidirectional view over Shape B read-site rewire,
+verified exact SQL against isolated `sqlite3 :memory:` scratch session, flagged companion
+`daily-foreign-flow-schema.test.ts` regression + `CREATE VIEW IF NOT EXISTS` no-op-on-persisted-DB
+footgun, READY_FOR_DEV), UC-RDL-P1 lock-namespace adjudication (2026-07-13T20:00Z,
+BOUNDED-1 pickup — `intent:` vs `task:` confirmed intentional two-tier design NOT drift, `sprint-task:`
+vs `task:` confirmed REAL drift already independently caught by 2026-07-12 ultracode audit, doc-only
+6-AC fix routed to agent-father as sole SKILL.md committer, READY_FOR_DEV), FIX-PDFEXTRACTOR-TIER1-OCR-TIMEOUT (2026-07-13T00:00Z,
 bounded design touch — async-reroute over sync-bump for silent BCTC OCR-timeout, reused existing
 `extractPdfText()`/`PDF_CONFIDENCE_HIGH_THRESHOLD` classifier, flagged `pdf_path` upsert must-fix
 risk, READY_FOR_DEV), ALPHA-S1-CANDLE-RECOVER + STARTUP-CANDLE-GUARD + OHLCV-BACKFILL-DONE-BUG (2026-07-12T19:28Z, wave-1 architect split — VPS-relay recovery + startup/cron candle guard + backfill-done insert-count verification, READY_FOR_PM), BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP (2026-07-10T19:20Z,

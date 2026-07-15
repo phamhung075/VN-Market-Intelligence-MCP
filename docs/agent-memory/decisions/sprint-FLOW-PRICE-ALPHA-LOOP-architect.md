@@ -114,3 +114,41 @@ volume but a real risk under partial-outage/low-volume days; routed to PO/backlo
 1804c) where `get_price_history` had to migrate off `market_prices_history` for the same root
 cause — independent proof this exact data-loss class already happened once.
 **Output:** `docs/architecture-briefs/2026-07-14-alpha-s2-tick-downsample-5min.md`
+
+### STEP architect-S7 · architect · 2026-07-15T00:00:00Z
+**task-id:** ALPHA-S2-FOREIGN-FLOW-WRITE-RACE
+**what-done:** RAW-verified FIX-half DONE (writeForeignFlowToOhlcv unconditional upsert,
+3201c86cc); scoped residual to intraday-curve archive; verdict SPRINT-S-BUILD, zone corrected
+multi->apps/mcp-server/.
+**what-considered:**
+- Reuse intraday_ohlcv_5m/compactor (sibling ALPHA-S2-TICK-DOWNSAMPLE-5MIN) vs standalone
+- Found NO raw-ticks table exists for foreign flow (unlike market_prices_history) — both
+  writers (upsertForeignFlow + writeForeignFlowToOhlcv) overwrite per-push, no source to
+  retroactively downsample; write-path touch is unavoidable here
+- Found "room"/holding_ratio (vnstock_trading_stats) suffers identical collapse from same
+  push payload — unify into ONE new raw table + ONE compactor, not per-writer duplication
+**why-decision:** STANDALONE table+job (own DDD bounded context, LAST-value-in-bucket semantics
+differ from OHLC, sibling's raw table has no foreign columns so reuse buys nothing); only
+cross-plane reuse worth taking is extracting the 5-min bucketing loop as a shared helper.
+**why-change:** Board's "consider consolidating" framing correct to weigh but rejected on
+DDD + semantics grounds, not a default no-op.
+
+### STEP architect-S8 · architect · 2026-07-15T04:15:00Z
+**task-id:** ALPHA-S2-OMO-LIQUIDITY-CRON
+**what-done:** Scoped zone=multi FIX to single zone `apps/mcp-server/`; confirmed `sbv_omo_daily`
+write path is already 100% shipped (P0-3-OMO-CURVE); designed a lean single-file trigger cron.
+**what-considered:**
+- Host cron in `apps/macro-indicators/` (Go, owns the persist) vs `apps/mcp-server/` (owns the
+  scheduler + Telegram + HTTP-client infra)
+- Go service is a documented zero-secrets sandbox (no Telegram token) with no scheduler at all —
+  hosting fail-loud alerting there would violate that constraint or be silent-stdout-only
+- HARD-fail (transport down, always alert) vs SOFT-fail (200 OK, no auction that session —
+  already-modeled expected outcome per `DaysInWindow<5`) — chose to alert only on the former to
+  avoid manufacturing false incidents out of normal SBV publish cadence
+**why-decision:** mcp-server already has `macroFetch()` (same client `get_vn_liquidity_state`'s MCP
+tool uses), `buildJobTable()`/`cronConfig.ts` registry, `sendTelegramBug()` — zero new primitives
+needed; macro-indicators' Persist() already only fires on ParseOK=true (no-fake-data invariant is
+structural already, nothing to add there).
+**why-change:** Recommended AGAINST PM decomposing into a multi-subtask epic (unlike both wave-2
+siblings) — no DDL, no write-path touch, genuinely one atomic dev-mcp-server commit.
+**Output:** `docs/architecture-briefs/2026-07-15-alpha-s2-omo-liquidity-cron.md`
