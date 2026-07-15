@@ -412,8 +412,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-15T21:28:37Z",
-    "_updated_by": "cowork-team dispatcher — bctc-analyst c089 post-spawn RAW verification",
+    "_updated_at": "2026-07-15T21:40:05Z",
+    "_updated_by": "cowork-team",
     "archive": [],
     "rows": [
       {
@@ -437,6 +437,17 @@
         "to": "po",
         "type": "data-integrity",
         "payload_ref": "docs/handoffs/2026-07-15-bctc-analyst-self-edit-correct-and-signal-filename-clobber.md"
+      },
+      {
+        "id": "cow-20260715T214005",
+        "summary": "P3 election lock released at Step 6 -> tick 21:30Z re-elected + ran 2x; router-namespace P1 fix does NOT cover it",
+        "severity": "MED",
+        "status": "NEW",
+        "ts": "2026-07-15T21:40:05Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "defect",
+        "payload_ref": "docs/handoffs/2026-07-15-cowork-tick-refire-election-lock-does-not-span-its-tick.md"
       }
     ],
     "last_triaged_at": "2026-07-15T20:56:10Z",
