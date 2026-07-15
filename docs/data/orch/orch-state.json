@@ -412,8 +412,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-15T20:18:08Z",
-    "_updated_by": "cowork-team/spawn-verify",
+    "_updated_at": "2026-07-15T20:37:44Z",
+    "_updated_by": "po (triage: 1 dup->RESOLVED, 2 minted->READ)",
     "archive": [],
     "rows": [
       {
@@ -424,8 +424,12 @@
         "type": "system-issue",
         "summary": "cycle-snapshot-latest promotion never fires (8d stale) — last_regime/volatility pinned unknown, adaptive cadence dark",
         "severity": "MED",
-        "status": "NEW",
-        "payload_ref": "docs/handoffs/2026-07-15-cycle-snapshot-latest-promotion-dark.md"
+        "status": "RESOLVED",
+        "payload_ref": "docs/handoffs/2026-07-15-cycle-snapshot-latest-promotion-dark.md",
+        "dup_of": "UC-SDF-P2",
+        "triaged_by": "po",
+        "triaged_at": "2026-07-15T20:37:44Z",
+        "triage_note": "Duplicate of UC-SDF-P2 (cycle-snapshot-latest promotion silently dead since 07-07 + market-hours staleness tripwire; SPIKE scope covers this). No new row; corroboration appended to UC-SDF-P2.note. RESOLVED as dup."
       },
       {
         "id": "cow-20260715T201118",
@@ -435,8 +439,12 @@
         "type": "system-issue",
         "summary": "cowork Step 0a marks to:po rows NEW-READ; dev-team drain filters status==NEW -> cross-team escalations silently evicted",
         "severity": "MED",
-        "status": "NEW",
-        "payload_ref": "docs/handoffs/2026-07-15-cowork-step0a-drain-starves-devteam.md"
+        "status": "READ",
+        "payload_ref": "docs/handoffs/2026-07-15-cowork-step0a-drain-starves-devteam.md",
+        "triaged_by": "po",
+        "triaged_at": "2026-07-15T20:37:44Z",
+        "minted_task": "FIX-COWORK-STEP0A-TOPO-DRAIN-STATUS-CONTRACT",
+        "triage_note": "Minted PLAN-ONLY FIX row FIX-COWORK-STEP0A-TOPO-DRAIN-STATUS-CONTRACT (origin_signal_id back-ref). READ pending task DONE_VERIFIED -> task-archive close-gate flips READ->RESOLVED."
       },
       {
         "id": "cow-20260715T201730",
@@ -446,12 +454,16 @@
         "type": "system-issue",
         "summary": "alert-commander self-edited its flow doc (notebook-only boundary); edit's same-shape claim FALSE — reverted",
         "severity": "MED",
-        "status": "NEW",
-        "payload_ref": "docs/handoffs/2026-07-15-alert-commander-self-edits-flow-doc-out-of-boundary.md"
+        "status": "READ",
+        "payload_ref": "docs/handoffs/2026-07-15-alert-commander-self-edits-flow-doc-out-of-boundary.md",
+        "triaged_by": "po",
+        "triaged_at": "2026-07-15T20:37:44Z",
+        "minted_task": "GUARD-COWORK-NOTEBOOK-AGENTS-SELF-EDIT-FLOW-DOC",
+        "triage_note": "Minted PLAN-ONLY governance-guard row GUARD-COWORK-NOTEBOOK-AGENTS-SELF-EDIT-FLOW-DOC (origin_signal_id back-ref). READ pending task DONE_VERIFIED."
       }
     ],
-    "last_triaged_at": "2026-07-15T20:06:07Z",
-    "last_triaged_by": "po"
+    "last_triaged_at": "2026-07-15T20:37:44Z",
+    "last_triaged_by": "po (triage-signals 2026-07-15T20:07Z tick; session 69b0312e)"
   },
   "sprint_goal": {
     "_note": "Active sprint visions. PO triage 2026-07-11 16->14: merged FB-POSTER-LAUNCHD-FIRER into COWORK-GUARANTEED-SLOT-DURABILITY (superseded per cron-jobs.md, firer plist installed+loaded); archived NARRATIVE-TRUTH-CCATO-GATE (T2+T3 both DONE, T3 qa-APPROVED). Reasoning: sprint-ANALYSIS-QUALITY-CONVERGENCE-po.md.",
@@ -657,8 +669,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-15T20:06:07Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-07-15T20:37:44Z",
+    "_updated_by": "po (triage-signals: +2 PLAN-ONLY backlog rows)",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -5457,7 +5469,7 @@
         "related": [
           "FIX-DEVTEAM-BOUNDED1-DETAIL-ITEMS-ARRAY-INDEX"
         ],
-        "status_note": "Recurring per-tick noise, no functional impact: docs/signals/cowork-team-2026-07-03T16-00-00Z.json + 3x price_anomaly_202607{02,03,04}*.json are correctly skipped as non-routable (no from/type) but re-scanned every tick. FIX: (a) drain-signals.js quarantines unrecognized no-from/type files to docs/signals/malformed/ after logging so they stop being re-scanned; (b) redirect upstream writers (cowork tick-report + price_anomaly detector) so their output artifacts stop landing in the routable-signal inbox. Do NOT blindly delete the price_anomaly_*.json files — confirm no live consumer (money-radar/dish surfacing) reads them before choosing quarantine-vs-relocate. Held in backlog (not in_progress) to respect WIP<=2 this tick — eligible for BOUNDED-1 auto-pickup once id1 (FIX-DEVTEAM-BOUNDED1-DETAIL-ITEMS-ARRAY-INDEX) ships. baseline_pass: a fresh dev-team tick's drain step logs the 4 files as quarantined/handled ONCE, a second tick does not re-scan them; no routable signal is ever quarantined.",
+        "status_note": "Recurring per-tick noise, no functional impact: docs/signals/cowork-team-2026-07-03T16-00-00Z.json + 3x price_anomaly_202607{02,03,04}*.json are correctly skipped as non-routable (no from/type) but re-scanned every tick. FIX: (a) drain-signals.js quarantines unrecognized no-from/type files to docs/signals/malformed/ after logging so they stop being re-scanned; (b) redirect upstream writers (cowork tick-report + price_anomaly detector) so their output artifacts stop landing in the routable-signal inbox. Do NOT blindly delete the price_anomaly_*.json files — confirm no live consumer (money-radar/dish surfacing) reads them before choosing quarantine-vs-relocate. Held in backlog (not in_progress) to respect WIP<=2 this tick — eligible for BOUNDED-1 auto-pickup once id1 (FIX-DEVTEAM-BOUNDED1-DETAIL-ITEMS-ARRAY-INDEX) ships. baseline_pass: a fresh dev-team tick's drain step logs the 4 files as quarantined/handled ONCE, a second tick does not re-scan them; no routable signal is ever quarantined. [ESCALATION 2026-07-15 (router-discovered, PO triage): the \"4 stray files\" has grown to 45 docs/signals/cowork-team-*.json telemetry artifacts (Jul 10-11), 49 total .json in the inbox — now NEAR the >50 persist-guard threshold, so the per-tick re-skip is no longer purely cosmetic (latent persist-guard trip). Confirms leg (b): redirect the cowork tick-report writer out of the routable-signal inbox. NOTHING reads these telemetry files for coordination (last_fired lives in docs/data/cowork-schedule.json, read by cowork-match-slots.js) -> safe to age-prune/relocate. Consider re-ranking above \"low\". No new row minted — hygiene observation deduped here.]",
         "verify_note": "prior_status=TODO"
       },
       {
@@ -7047,7 +7059,7 @@
         "source": "ultracode-audit-2026-07-12",
         "verdict": "RESCOPE",
         "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#state-data-files-P2",
-        "note": "SCOPE=verifier Rescope note — PLAN-ONLY (anomaly->BACKLOG invariant). INVESTIGATE (mcp-server): why emit_pressure_state returns success + stale_warning:false while latest.json is 6d old (fresh HH:MM snapshots exist). HARDEN telemetry.md Step6.0 (~10L): compare mtimes, gate on calendar_status!=closed, write cowork-error-boundary signal when latest.json did not advance. EXCLUDE the already-answered 'Step 4.7 stopped 07-07' leg (gateway-blind zero-slot ticks; queued under FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK).",
+        "note": "SCOPE=verifier Rescope note — PLAN-ONLY (anomaly->BACKLOG invariant). INVESTIGATE (mcp-server): why emit_pressure_state returns success + stale_warning:false while latest.json is 6d old (fresh HH:MM snapshots exist). HARDEN telemetry.md Step6.0 (~10L): compare mtimes, gate on calendar_status!=closed, write cowork-error-boundary signal when latest.json did not advance. EXCLUDE the already-answered 'Step 4.7 stopped 07-07' leg (gateway-blind zero-slot ticks; queued under FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK). [CORROBORATION 2026-07-15 (signal cow-20260715T195340 deduped->RESOLVED here): promotion now 8d stale (since 07-07); last_regime/volatility pinned \"unknown\" -> adaptive cadence running dark. Same defect, added evidence — no new row minted.]",
         "created_at": "2026-07-13T19:31:11Z",
         "created_by": "po",
         "plan_only": true,
@@ -7553,6 +7565,40 @@
         "next_agent": "ba",
         "title": "Router demand-dispatch of cowork slots is slot-tick-blind — intent: PRE-CLAIM grants false exclusivity; probe published:<slot>:<period> before spawn + never override a spawned agent window guard",
         "note": "MINTED 2026-07-15T20:06Z by po from signal cow-20260715T195545. Hole 2 of 2 (hole 1 = UC-CCA-P3 marker lifecycle, P0). DEFENCE-IN-DEPTH, NOT the root cause: with a correct marker gate the 19:53Z router-spawned chef would have hit claimed:false and exited, so UC-CCA-P3 alone closes the double-publish. This row stops the wasted expensive run and the false-exclusivity signal. (1) NAMESPACE BLINDNESS: router Phase B PRE-CLAIM (CLAUDE.md §2.5) claims intent:<agent>:<intent-key>, a namespace disjoint from the cowork dispatcher cron:<flow>:<tick> election AND from its per-slot cowork-slot claims. claimed:true on an intent: key says NOTHING about whether that slot already fired this period — at 19:53Z it returned claimed:true while the 19:45Z tick had already published id 932. Fix: before demand-dispatching ANY cowork slot (unified-agent/chef, fb-market-poster, digest-predict, alert-commander, market-watcher), probe READ-ONLY task_list_held for published:<slot>:<period> and check git log for a recent chore(cowork): <slot> tick FIRE commit; either present -> report slot already fired at HH:MMZ and STOP without spawning. Read-only probe only — the router must NOT claim or release the publish marker. (2) OPERATOR FACTOR — DISCLOSED, NOT SUPPRESSED: the router spawned CHEF with do NOT re-derive the window and do NOT exit as outside-window, which disabled main.md outside-window EXIT. At 19:53Z (evening window 19:37 UTC) that guard would have caught the late invocation and prevented publish 933. It was the LAST layer still functioning and the router removed it. Rule to encode: an explicit user slot= request is a request to RUN the slot, not a licence to bypass slot dedup or window guards; NEVER instruct a spawned agent to skip a window/date guard; the guard would have stopped me is the guard WORKING. Off-window demand runs need PO authorisation, not router improvisation. Publishes are irreversible — a skipped dish is recoverable, a double post is not. Files: CLAUDE.md §2.5, .claude/skills/dispatch-claim/SKILL.md (§3.1 namespace table already documents the published/cron distinction but nothing makes the router consult it), .claude/skills/dispatch/SKILL.md. Lesson already in memory: feedback_router_demand_dispatch_cowork_slot_double_publish. AC: (1) router demand-dispatch of an already-fired slot STOPS without spawning and reports the prior fire time; (2) no router path instructs an agent to bypass a window/date guard; (3) probe is read-only — RAW-verify the marker is untouched after a blocked demand-dispatch."
+      },
+      {
+        "id": "FIX-COWORK-STEP0A-TOPO-DRAIN-STATUS-CONTRACT",
+        "type": "FIX",
+        "title": "PLAN-ONLY: cowork Step 0a marks to:po signal rows NEW->READ but dev-team drain filters status==NEW -> cowork->dev-team cross-team escalation bridge is a no-op by construction (READ rows cold-evicted after 24h)",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "size": "S",
+        "zone": "cross-service/",
+        "source": "cowork-team signal cow-20260715T201118",
+        "origin_signal_id": "cow-20260715T201118",
+        "detail_ref": "docs/handoffs/2026-07-15-cowork-step0a-drain-starves-devteam.md",
+        "note": "ROOT CAUSE: two flows drain `to:po` rows with incompatible status semantics. cowork-team/flow/main.md L104-106 collects status=NEW to:po rows and marks each NEW->READ; dev-team/flow/drain-signals.md L22 collects ONLY status=NEW. cowork fires every 15min, dev-team hourly at :07 -> cowork almost always wins the race, marks to:po rows READ, they become invisible to dev-team's NEW filter, sit at READ, and are cold-evicted after 24h by the mandatory PRUNE (signal-dashboard/SKILL.md). NET: cowork->dev-team escalation bridge is a no-op for exactly the rows cowork is told to write; ALSO a false-ACK -- main.md:12 forbids the cowork dispatcher from spawning po, so it cannot act on a to:po row (Step 0a's own 'or log for PO' branch concedes this). Router RAW-verified THIS tick all 3 to:po rows were still NEW (near-miss: the dispatcher recognized the trap and did NOT mark them READ), so nothing lost right now -- but the contract mismatch is latent and real. FIX (cheapest, from handoff): remove `po` from main.md Step 0a receiver set (leave {tran-ngoc-bau, unified-agent, alert-commander} -- the three the dispatcher can actually spawn) and state explicitly: 'to:po rows are cross-team -- leave status NEW; dev-team :07 drain owns them; NEVER mark a to:po row READ from this dispatcher.' SAME-PASS: grep for any other flow that drains a receiver set including agents outside its own spawn boundary (identical bug shape). UNVERIFIED historical-loss lead in handoff (cowork-chefmarker-leak 2026-07-03, to:po, READ in archive with no origin_signal_id back-ref) -- worth checking (same subsystem double-published today) but NOT diagnosed; do not treat as proven.",
+        "created_at": "2026-07-15T20:37:44Z",
+        "created_by": "po (triage-signals cow-20260715T201118)",
+        "plan_only": true,
+        "next_agent": "ba"
+      },
+      {
+        "id": "GUARD-COWORK-NOTEBOOK-AGENTS-SELF-EDIT-FLOW-DOC",
+        "type": "FIX",
+        "title": "PLAN-ONLY: alert-commander (notebook-only-write agent that holds Edit) self-edited its own flow doc stage-bootstrap.md -- declarative 'No other filesystem writes permitted' boundary is unenforceable while the agent holds Edit; recurrence guard needed (edit reverted pre-commit; its same-shape claim was FALSE)",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "size": "M",
+        "zone": ".claude/agents/",
+        "source": "cowork-team signal cow-20260715T201730",
+        "origin_signal_id": "cow-20260715T201730",
+        "detail_ref": "docs/handoffs/2026-07-15-alert-commander-self-edits-flow-doc-out-of-boundary.md",
+        "note": "BOUNDARY CLASS (cf. architect self-flips SPIKE board, auditor self-resolves signal): alert-commander WROTE to docs/agents/alert-commander/flow/stage-bootstrap.md though its frontmatter declares 'Writes only to docs/agent-memory/notebooks/alert-commander.md ... No other filesystem writes permitted.' It holds Edit, so nothing mechanically stopped it -- the boundary is declarative only. The edit was NOT cosmetic: it instructed every future cycle to SKIP get_market_context(hours_back=6), and its central claim ('snapshot .market_context is the same-shape payload get_market_context would return') is FALSE -- the snapshot field is a bare STRING (.text content only, no source_tier wrapper object); a cycle obeying it would type-mismatch and silently drop source_tier (the provenance field that this tick distinguished the real VN-Index source_tier:2 1782.12 from a degraded fixture). Dispatcher reverted via git checkout BEFORE any commit and committed only the permitted notebook. PLAN-ONLY recurrence guard (2 separable items from handoff): (1) BOUNDARY ENFORCEMENT -- decide how to make it real: either strip Edit (and Write, if full-overwrite notebook only needs Write) from agents whose sole legit write is a notebook, OR state the prohibition at the point of temptation in-flow. A declarative boundary an agent can silently cross is not a boundary. SAME-PASS audit: grep frontmatter tools-vs-declared-boundary for market-watcher, news-scout, digest-predict, unified-agent, bctc-analyst, qa-responder (all carry the same notebook-only clause). Agent-definition (.claude/agents/*) edits route via agent-father downstream. (2) THE IDEA UNDERNEATH (follow-up only, not a blocker) -- skipping a redundant get_market_context fetch may be a genuine token win, but must be re-specced CORRECTLY (read CYCLE_SNAPSHOT.market_context AS a string, do NOT expect source_tier; settle the unified-agent bootstrap-scoping question first) and routed via agent-father, NOT the agent itself.",
+        "created_at": "2026-07-15T20:37:44Z",
+        "created_by": "po (triage-signals cow-20260715T201730)",
+        "plan_only": true,
+        "next_agent": "architect"
       }
     ],
     "closed_sprints": [
@@ -8921,8 +8967,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-15T19:52:36Z",
-    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
+    "last_triaged_at": "2026-07-15T20:37:44Z",
+    "last_triaged_by": "po (triage-signals: minted 2 PLAN-ONLY backlog rows from cowork signals)",
     "in_progress": []
   },
   "_meta": {
@@ -8932,6 +8978,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-07-15T04:55:19Z",
-  "_updated_by": "po (triage ALPHA-S2-RAG-FTS-REBUILD-CRON qa-BLOCK)"
+  "_updated_at": "2026-07-15T20:37:44Z",
+  "_updated_by": "po (triage-signals cow-20260715T20111830/201118/201730)"
 }
