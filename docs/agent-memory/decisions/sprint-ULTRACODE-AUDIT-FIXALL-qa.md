@@ -56,3 +56,49 @@ live test run, not the commit-message claims; the fix is minimal, additive, and 
 matcher-capture site the brief names (not the router's L97 paraphrase the developer already
 corrected in their own journal).
 **why-change:** No change from plan — all 7 router-specified checks passed on first RAW pass.
+
+### STEP qa-S3 · qa · 2026-07-16T01:20:00Z
+**task-id:** UC-CDC-P3
+**what-done:** RAW-reproduced all 8 required checks against commit `91d61fbe4` (HEAD, unpushed).
+(1) `node scripts/agents-flow/cowork-match-slots.test.js` → **26/26 passed, 0 failed** (baseline
+16, all TC-1..23 labels enumerated, no skips). (2) TC-15..19 assert legacy-dedup THROUGH `matchSlots`
+itself (not only the helper): last_fired AT boundary (02:15:00Z) → 0 results (suppressed); AFTER
+boundary same tick (02:15:20Z) → 0 results (suppressed); BEFORE boundary (02:00:00Z, prev tick) → 1
+result, slot_id matches (fires); `null` → 1 result (fires, EC-3); malformed `"not-a-date"` → 1 result
+(fires, conservative) — matches spec exactly; TC-20..23 additionally unit-test
+`isSuppressedByBoundaryDedup` directly. (3) `git show 91d61fbe4 --stat` → exactly 4 files, **zero
+`.sh` files touched**; grep of the 3 callers (`match-slots.md:23`, `cowork-tick-preflight.sh:64`,
+`cowork-guaranteed-slot-firer.sh:91`) shows each only constructs
+`SLOT_MATCHER_CMD="${SLOT_MATCHER_CMD:-node .../cowork-match-slots.js}"` (or, for match-slots.md,
+directly invokes the same script) — no caller has its own `last_fired`/boundary logic; all inherit
+the matcher's SSOT. (4) Adaptive-path diff-scope check: `git show 91d61fbe4` on the .js file has
+exactly 6 hunks — header comment, `isSuppressedByBoundaryDedup`+`legacyCandidates` insertion, the two
+legacy-return-point swaps, `nowUnix` relocation, and the `module.exports` line; the adaptive
+`evaluateCadence`/cadence-due-check body (~L207-267, incl. the null-`policy_id` fallthrough) has NO
+hunk touching it. TC-9..14 (snapToCronBoundary units + adaptive matchSlots) all PASS in the same run
+with identical assertions as pre-fix. (5) `isSuppressedByBoundaryDedup` body calls
+`snapToCronBoundary(nowUnix, cron)` directly (cowork-match-slots.js:103) — no second boundary
+implementation exists. (6) `bash scripts/agents-flow/cowork-tick-preflight.test.sh` → **27 passed, 0
+failed**; `bash scripts/agents-flow/cowork-guaranteed-slot-firer.test.sh` → **28 passed, 0 failed** —
+both match spec exactly, callers unaffected. (7) Read `slot-claim.md` post-diff + the "Release" note
+(L76-77 of the doc: "called after each spawn attempt (success OR failure) via try/finally... 180s TTL
+auto-frees after job completes") — the corrected text ("does NOT provide cross-tick dedup... real
+mechanism = last_fired boundary dedup + published-marker gate downstream") is internally consistent
+with this Release note; the correction is accurate, not a new misstatement. (8) DJ-GATE-1: grep-
+confirmed `STEP developer-S4` + `**task-id:** UC-CDC-P3` in
+`sprint-ULTRACODE-AUDIT-FIXALL-developer.md`. tsc/mock-guard: **N/A, explicit** — `tsconfig.json`
+`include` is `["src/**/*", "*.ts"]` only; `scripts/agents-flow/*.js` is a plain Node script outside
+the tsc-checked app and outside the bun-test/mock-guard surface (own `.test.js` harness via plain
+`node`, not `bun test`). Verdict: **PASS**.
+**what-considered:**
+- Trust the developer's self-reported "26/26, 27/27, 28/28" tallies without RAW-running — rejected
+  per gate mandate; ran all three suites myself, every tally matches exactly.
+- Treat the `.sh`-file caller inheritance claim as satisfied by reading only the developer's journal
+  prose — rejected; independently grepped all 3 callers to confirm none has a parallel
+  `last_fired`/boundary implementation of its own.
+**why-decision:** Every one of the 8 router-specified checks was independently reproduced against the
+live commit diff and live test runs (not the commit message or developer journal claims); the fix is
+correctly scoped to only the 2 legacy return points, reuses the existing boundary helper (no
+duplication), leaves the adaptive path's diff-hunks empty (confirmed via `--stat` hunk count), and the
+doc correction is verifiably true against the Release note in the same file.
+**why-change:** No change from plan — all 8 checks passed on first RAW pass.
