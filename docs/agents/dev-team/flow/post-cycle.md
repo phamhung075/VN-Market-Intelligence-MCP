@@ -1,3 +1,8 @@
+<!-- size-justification: 185L (65L overage) — Step 4/4.2/4.5/4.8/4.9 sub-flow: post-execution
+     checks, cold-eviction backstop (now CANON-SCRIPT spec pointer to dev-team-tick-preflight.sh
+     Step 5.5 — task UC-DTL-P2, 2026-07-15), compact-checkpoint, push-backstop fallback, and
+     cycle-elapsed announce are all distinct load-bearing sequential steps; splitting fragments
+     the post-cycle contract across files. -->
 # Dev Team — Step 4 & 4.5: Scan + Compact Checkpoint
 
 **Parent flow:** `docs/agents/dev-team/flow/main.md` (Step 4 / 4.5 dispatcher)
@@ -37,7 +42,17 @@ If exit 0: silent.
 
 ## Step 4.2 — Cold Eviction Backstop (HSC-6)
 
-Run after Step 4.1 exits cleanly. Checks for terminal sprints and bloated done lanes; evicts to cold if found. This ensures bloat never re-accumulates between pm/task-archive cycles.
+**CANON-SCRIPT (dev-team-loop-P2, task UC-DTL-P2, 2026-07-15):** this section is now the
+SSOT **spec**, not the runtime path. The logic below runs from
+`scripts/agents-flow/dev-team-tick-preflight.sh` Step 5.5 (`_step55_board_hygiene` /
+`_step55_cold_evict_and_commit`) on every lock-winning tick (RUN + RUN-IDLE verdicts),
+evaluated deterministically BEFORE the LLM-driven main.md body ever runs — so it is no
+longer skipped by main.md's Session-Gate / orphan-adoption / monitoring-only-guard
+"JUMP TO end" shortcuts, which is what made this backstop unreachable on idle ticks
+(dev-team-loop-I2). Edit this spec first, then update the script to match — never the
+reverse. See `docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#dev-team-loop-P2`.
+
+Below is the spec of record (Run after Step 4.1 exits cleanly. Checks for terminal sprints and bloated done lanes; evicts to cold if found. This ensures bloat never re-accumulates between pm/task-archive cycles):
 
 ```bash
 # Terminal sprint statuses — SSOT: apps/mcp-server/src/infrastructure/orchStateSchema.ts TERMINAL_SET
@@ -60,8 +75,11 @@ DV_N=$(jq '.task_board.done_verified | length' "$PROJECT_ROOT/docs/data/orch/orc
 
 if [ "$TERMINAL_SPRINT_N" -gt 0 ] || [ "$SPRINT_GOAL_TERMINAL_N" -gt 0 ] || [ "$DONE_N" -gt 10 ] || [ "$DV_N" -gt 0 ]; then
   echo "[dev-team/post-cycle] Terminal bloat: sprints=$TERMINAL_SPRINT_N sprint_goal=$SPRINT_GOAL_TERMINAL_N done=$DONE_N done_verified=$DV_N — cold eviction"
-  # Claim commit-mutex before running script
-  # task_claim(task_kind="commit-mutex", task_id="dev-team-evict-<slug>", owner_agent="dev-team", ttl_seconds=120)
+  # Claim commit-mutex before running script — task_id is the SAME canonical
+  # "commit-mutex:main" every other orch-state.json writer uses (a per-caller
+  # slug would not mutex against other writers of the same hot file; corrected
+  # 2026-07-15 alongside the Step 5.5 relocation, task UC-DTL-P2).
+  # task_claim(task_kind="commit-mutex", task_id="commit-mutex:main", owner_agent="dev-team", ttl_seconds=120)
   bash "$PROJECT_ROOT/scripts/orch-cold-evict.sh"
   # Validate gate (SHG-3): run after eviction script, before git commit
   bash "$PROJECT_ROOT/scripts/orch-state-validate.sh" "$PROJECT_ROOT/docs/data/orch/orch-state.json" \
@@ -69,7 +87,7 @@ if [ "$TERMINAL_SPRINT_N" -gt 0 ] || [ "$SPRINT_GOAL_TERMINAL_N" -gt 0 ] || [ "$
   YYYYMM=$(date -u +%Y-%m)
   git add docs/data/orch/orch-state.json "$PROJECT_ROOT/docs/data/orch/archive/${YYYYMM}.json"
   git commit -m "chore(tasks): cold-evict terminal sprints/done lanes → archive/${YYYYMM}.json"
-  # task_release(task_id: "dev-team-evict-<slug>")
+  # task_release(task_id: "commit-mutex:main")
 fi
 ```
 
