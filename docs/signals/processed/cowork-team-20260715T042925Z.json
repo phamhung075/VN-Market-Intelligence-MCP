@@ -1,0 +1,61 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-15T04:29:25Z",
+    "matched_slots": [
+      "chef-intraday",
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "chef-intraday",
+      "alert-commander-market"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 7,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "chef-intraday": "cron",
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "chef-intraday": null,
+      "alert-commander-market": null
+    },
+    "last_fired_timestamp": "2026-07-15T04:28:43Z",
+    "last_fired_slots": [
+      "chef-intraday",
+      "alert-commander-market"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "04:15",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 4,
+    "note": "market-hours fire tick=04:15Z: chef-intraday + alert-commander-market spawned (bg). VN-Index 1790.74 (-15.89, down); broad weakness FPT -2.84/VJC -2.48/GEX -2.45/VHM -2.34; news-scout #9270 chain_catalyst (~900 declines) live; oversold TA cluster (VIX/DBC/KDH/VRE RSI<30). Legacy mode (pressure stale_warning). tick-snapshot cycle-snapshot-04:26.json written; emit_pressure_state cycle_snapshot_promoted=false (latest.json not promoted; agents fall back to direct bootstrap — benign)."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-15T04:29:25Z",
+  "_processed": {
+    "fingerprint": "429e36b5748195126b6867d3a227f0b78c8e122a78198ba1028cee0e96f7bb9f",
+    "processedAt": "2026-07-15T04:53:10Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
