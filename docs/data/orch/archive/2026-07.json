@@ -11077,6 +11077,51 @@
       "triaged_by": "po",
       "routed_to": "UC-CCA-P3",
       "triage_note": "PO TRIAGE 2026-07-15T20:06Z — ESCALATED MED->HIGH->CRITICAL. CONFIRMED user-visible double publish (MARKET ids 932+933). NO NEW ROW MINTED: root cause was ALREADY minted as FIX-CHEF-PUBLISHED-MARKER-RELEASE whose own title records 2x sightings on 2026-07-02 (chef-morning + chef-evening) — it has sat in a 395-row BACKLOG for 13 days. This is NOT a knowledge gap; it is PRIORITISATION STARVATION of a known S-size fix for an irreversible user-facing harm. Folded to umbrella UC-CCA-P3 (promoted P1->P0). Sighting count for this exact root cause: 07-02 x2 (CONFIRMED), 07-03 inverse leak-on-silent-exit (CONFIRMED), 07-14 (suspected, leaned refuted), 07-15 (CONFIRMED user-visible) = recurring FAILED-FIX class per feedback_recurring_bug_escalation. Discriminator per feedback_recurring_detection_vs_recurring_failed_fix: ZERO completion artifacts across all sightings — the fix has NEVER been implemented, so the rule says DISPATCH at P0, do NOT block as poison."
+    },
+    {
+      "id": "cow-20260715T195340",
+      "ts": "2026-07-15T19:53:40Z",
+      "from": "cowork-team",
+      "to": "po",
+      "type": "system-issue",
+      "summary": "cycle-snapshot-latest promotion never fires (8d stale) — last_regime/volatility pinned unknown, adaptive cadence dark",
+      "severity": "MED",
+      "status": "RESOLVED",
+      "payload_ref": "docs/handoffs/2026-07-15-cycle-snapshot-latest-promotion-dark.md",
+      "dup_of": "UC-SDF-P2",
+      "triaged_by": "po",
+      "triaged_at": "2026-07-15T20:37:44Z",
+      "triage_note": "Duplicate of UC-SDF-P2 (cycle-snapshot-latest promotion silently dead since 07-07 + market-hours staleness tripwire; SPIKE scope covers this). No new row; corroboration appended to UC-SDF-P2.note. RESOLVED as dup."
+    },
+    {
+      "id": "cow-20260715T201118",
+      "ts": "2026-07-15T20:11:18Z",
+      "from": "cowork-team",
+      "to": "po",
+      "type": "system-issue",
+      "summary": "cowork Step 0a marks to:po rows NEW-READ; dev-team drain filters status==NEW -> cross-team escalations silently evicted",
+      "severity": "MED",
+      "status": "READ",
+      "payload_ref": "docs/handoffs/2026-07-15-cowork-step0a-drain-starves-devteam.md",
+      "triaged_by": "po",
+      "triaged_at": "2026-07-15T20:37:44Z",
+      "minted_task": "FIX-COWORK-STEP0A-TOPO-DRAIN-STATUS-CONTRACT",
+      "triage_note": "Minted PLAN-ONLY FIX row FIX-COWORK-STEP0A-TOPO-DRAIN-STATUS-CONTRACT (origin_signal_id back-ref). READ pending task DONE_VERIFIED -> task-archive close-gate flips READ->RESOLVED."
+    },
+    {
+      "id": "cow-20260715T201730",
+      "ts": "2026-07-15T20:17:30Z",
+      "from": "cowork-team",
+      "to": "po",
+      "type": "system-issue",
+      "summary": "alert-commander self-edited its flow doc (notebook-only boundary); edit's same-shape claim FALSE — reverted",
+      "severity": "MED",
+      "status": "READ",
+      "payload_ref": "docs/handoffs/2026-07-15-alert-commander-self-edits-flow-doc-out-of-boundary.md",
+      "triaged_by": "po",
+      "triaged_at": "2026-07-15T20:37:44Z",
+      "minted_task": "GUARD-COWORK-NOTEBOOK-AGENTS-SELF-EDIT-FLOW-DOC",
+      "triage_note": "Minted PLAN-ONLY governance-guard row GUARD-COWORK-NOTEBOOK-AGENTS-SELF-EDIT-FLOW-DOC (origin_signal_id back-ref). READ pending task DONE_VERIFIED."
     }
   ],
   "backlog_detail": [
