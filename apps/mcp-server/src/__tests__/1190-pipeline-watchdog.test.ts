@@ -290,7 +290,11 @@ describe("cron-registry.json integrity", () => {
     // BUMP 2026-07-15 (ALPHA-S2-FF-SUB4-DOCS-SYNC): 66 → 67 — added
     // intradayForeignFlow5mCompactorJob.ts (src/scheduler/market-data/) + its
     // cron-registry.json entry (intraday 5-min foreign-flow compactor, LAST-value-in-bucket).
-    expect(json.schedulerFileCount).toBe(67);
+    // BUMP 2026-07-15 (ALPHA-S2-OMO-LIQUIDITY-CRON): 67 → 68 — added
+    // sbvOmoLiquidityCronJob.ts (src/scheduler/macro/) + its cron-registry.json entry
+    // (daily trigger of macro-indicators POST /liquidity-state so sbv_omo_daily accrues —
+    // pure trigger+observe, zero local DB writes).
+    expect(json.schedulerFileCount).toBe(68);
   });
 
   it("jobs array contains entry with name 'pipelineWatchdog'", () => {

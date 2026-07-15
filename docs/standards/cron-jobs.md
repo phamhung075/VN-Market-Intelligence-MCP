@@ -102,6 +102,23 @@ Env override: `CRON_ACCURACY_DIGEST` (default `0 7 * * *`)
 - Source: `apps/mcp-server/src/scheduler/market-data/intradayForeignFlow5mCompactorJob.ts`
 - Design SSOT: `docs/architecture-briefs/2026-07-15-alpha-s2-foreign-flow-write-race-verdict.md`
 
+## SBV OMO Liquidity Cron (Trigger-Only)
+
+| Schedule | Job | Task |
+|----------|-----|------|
+| `9 9 * * *` (09:09 UTC daily, 16:09 VN, not weekday-gated) | `sbvOmoLiquidityCronJob` — triggers `POST /liquidity-state` on the macro-indicators microservice so `sbv_omo_daily` accrues today's row | ALPHA-S2-OMO-LIQUIDITY-CRON |
+
+- **Why:** `apps/macro-indicators/` (Go) already persists `sbv_omo_daily` as a write-on-fetch side effect of every `POST /liquidity-state` call (idempotent `ON CONFLICT(auction_date) DO UPDATE`, write ONLY when `omoInputs.ParseOK===true` — P0-3-OMO-CURVE, commit `cd8cfcc2`). The only gap was "nobody calls the endpoint on a schedule" — this job is a pure trigger, zero DDL / zero new tables.
+- **Zero local DB writes** — this job reuses `macroFetch<T>()` + `LiquidityStateResponseSchema` (both already exercised by the on-demand `get_vn_liquidity_state` MCP tool) and never touches `market.db`. The response's `omo_curve` (non-null) confirms server-side persistence; nothing for this job to get wrong on the data-integrity axis.
+- **Fail-loud contract (deliberately asymmetric):**
+  - HARD fail (`macroFetch` returns `ok:false` — transport/endpoint/VPS down) → `sendTelegramBug()` + `logger.error`, **every** occurrence (dedup handled by the notifier's own 4h window).
+  - SOFT fail (HTTP 200 but `omo.is_estimate===true` — SBV OMO parse degraded inside macro-indicators) → `logger.warn` ONLY, no Telegram BUG alert. Ambiguous outcome (may be a legitimate no-auction day) — elevating every occurrence to BUG would manufacture false incidents out of normal SBV publishing cadence.
+  - Success (`omo.is_estimate===false`) → `logger.info`, no alert.
+- No startup one-shot (unlike the two intraday compactors) — today's row either exists or it doesn't; calling the endpoint twice on deploy would just re-fetch the same idempotent row.
+- Env override: `CRON_SBV_OMO_LIQUIDITY` (default `9 9 * * *`)
+- Source: `apps/mcp-server/src/scheduler/macro/sbvOmoLiquidityCronJob.ts`
+- Design SSOT: `docs/architecture-briefs/2026-07-15-alpha-s2-omo-liquidity-cron.md`
+
 ## Analysis Ownership (dedup policy)
 
 | Domain | Owner | Verifier | Notes |

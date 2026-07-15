@@ -76,6 +76,7 @@ import { runVpsHealthPolling } from './system/vpsServiceHealthJob.js'
 import { runVnIndexRefreshJob } from './market-data/vnIndexRefreshJob.js'
 import { runIntraday5mCompactor } from './market-data/intraday5mCompactorJob.js'
 import { runIntradayForeignFlow5mCompactor } from './market-data/intradayForeignFlow5mCompactorJob.js'
+import { runSbvOmoLiquidityCron } from './macro/sbvOmoLiquidityCronJob.js'
 import { runFreshnessSlaMonitorJob } from './system/freshnessSlaMonitorJob.js'
 import { macroIndicatorRefreshJob, runMarketEarningYieldJob, runCommodityTrackerRefreshJob, runSbvRatesRefreshJob } from './macro/index.js'
 import { runForeignFlowFetcherJobCron } from './market-data/foreignFlowFetcherJob.js'
@@ -612,6 +613,24 @@ export function buildJobTable(ctx: SchedulerJobTableCtx): JobTableEntry[] {
       runner: async () => {
         const result = await runIntradayForeignFlow5mCompactor()
         return { rowsWritten: result.bucketsWritten }
+      },
+    },
+
+    // 09:09 UTC daily (16:09 VN) — SBV OMO liquidity cron — ALPHA-S2-OMO-LIQUIDITY-CRON
+    // (Sprint FLOW-PRICE-ALPHA-LOOP). Triggers macro-indicators' POST /liquidity-state so
+    // sbv_omo_daily accrues (the Go service already persists on every call when
+    // omoInputs.ParseOK===true — this job is a pure trigger, zero local DB writes). HARD
+    // fail (macroFetch ok:false) alerts BUG every time; SOFT fail (omo.is_estimate===true)
+    // logs a warning only (avoids manufacturing false incidents out of normal SBV
+    // no-auction-day cadence). See
+    // docs/architecture-briefs/2026-07-15-alpha-s2-omo-liquidity-cron.md.
+    {
+      name: 'sbvOmoLiquidityCronJob',
+      cron: CRONS.sbvOmoLiquidityCron,
+      options: { timezone: 'UTC' },
+      runner: async () => {
+        const result = await runSbvOmoLiquidityCron()
+        return { rowsWritten: result.persisted ? 1 : 0 }
       },
     },
 

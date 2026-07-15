@@ -256,4 +256,11 @@ export const CRONS = {
    *  (LAST-value, not OHLC). Cadence matches bucket width; wide safety margin
    *  against foreign_flow_history's own rolling ~24h purge (pushForeignFlowHandler.ts). */
   intradayForeignFlow5mCompactor: Bun.env.CRON_INTRADAY_FOREIGN_FLOW_5M_COMPACTOR  ?? '*/5 * * * *',
+  /** sbvOmoLiquidityCron — daily trigger of macro-indicators POST /liquidity-state so
+   *  sbv_omo_daily accrues (ALPHA-S2-OMO-LIQUIDITY-CRON). Off-market UTC slot (market hours
+   *  are 02:00-08:59 UTC per isVnMarketHoursUtc), non-:00/:30 minute mark. 09:09 UTC daily
+   *  (16:09 VN) — ~1h after VN market close (15:00 VN), generous buffer past SBV's same-day
+   *  OMO auction-result publish window. NOT weekday-gated (SBV soft-fails are non-alerting
+   *  by design — a weekend/holiday run is a harmless logger.warn no-op). */
+  sbvOmoLiquidityCron: Bun.env.CRON_SBV_OMO_LIQUIDITY ?? '9 9 * * *',
 }

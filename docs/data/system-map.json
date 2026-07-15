@@ -518,6 +518,11 @@
             "desc": "Compacts foreign_flow_history ticks into intraday_foreign_flow_5m 5-min LAST-value-in-bucket buckets (NOT OHLC), ALL codes, no market-hours gate — standalone from the price plane, runs before the rolling 24h purge deletes surviving ticks (ALPHA-S2-FOREIGN-FLOW-WRITE-RACE)"
           },
           {
+            "name": "sbvOmoLiquidityCron",
+            "schedule": "9 9 * * *",
+            "desc": "Daily 09:09 UTC (16:09 VN) trigger of macro-indicators POST /liquidity-state so sbv_omo_daily accrues server-side — pure trigger+observe, zero local DB writes. HARD fail alerts BUG every time; SOFT fail (legitimate no-auction day) logs a warning only (ALPHA-S2-OMO-LIQUIDITY-CRON)"
+          },
+          {
             "name": "systemAuditTier1",
             "schedule": "*/30 * * * *",
             "desc": "system-auditor Tier-1: container + health ping every 30 min"
