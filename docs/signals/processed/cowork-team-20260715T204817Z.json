@@ -36,5 +36,11 @@
       "bb0bbddcb",
       "63913a62b"
     ]
+  },
+  "_processed": {
+    "fingerprint": "cf90580e5607d51b934b5d06104948057e0c97a9363ac7da5ca0d6d919253816",
+    "processedAt": "2026-07-15T20:50:09Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

@@ -4,5 +4,11 @@
   "type": "bug-escalation",
   "payload": "[tran-ngoc-bau] c110 Bootstrap Step 0c: gateway wrapper unavailable in this session (mode A — no mcp__gateway__*/mcp__claude_ai_gateway__*/mcp__semble__* function bound at all, verified LIVE this session by inspecting own tool schema, not inferred from notebook history per fail-loud-protocol.md anti-hallucination rule). 14th consecutive tnb-audit cycle (c97-c110) with zero MCP surface (F-MCP-SUBAGENT-SYSTEMIC). Per bootstrap.md gateway-down protocol complying STRICTLY this cycle: sending BUG + EXIT, NOT reconstructing narrative layer-walk from unified-agent.md notebook hearsay (matches c109 'session A' precedent). Phase 0.5/1-5 all SKIPPED by policy. GROUND-TRUTH findings (via cowork-schedule.json dispatcher state + orch-state.json backlog, not agent self-report hearsay): (1) chef-morning.last_fired stuck at 2026-07-14T05:26:30Z - did NOT fire today 2026-07-15 (confirmed Wed/weekday) - NEW miss, first since tracking resumed. (2) chef-eod.last_fired stuck at 2026-07-13T08:55:03Z - now missing 2 full consecutive weekdays (07-14 AND 07-15) - escalates c109's F-CHEF-EOD-DORMANT-0714 from 'NEW 1-day miss, watch' to CONFIRMED RECURRING, meets c109's own stated reopen-threshold for F-CHEF-GUARANTEED-SLOT-DORMANCY class. Only 1-of-3 guaranteed chef dishes fired today (chef-evening only, 19:51Z) - worse than c109's 2/3. (3) FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK (P1) confirmed still status=BACKLOG in orch-state.json, unchanged since PO's own c109 escalation (tnb_escalation.at=2026-07-14T20:41:08Z) - 1 cycle/~1 day with zero movement on PO's own P1 mint - recommend promotion not re-diagnosis. Previous handoff ACK confirmed: c109 WAS ACK'd by PO 2026-07-14T20:41Z - review debt cleared. Dashboard inbox confirmed empty (0 rows to==tran-ngoc-bau).",
   "priority": "high",
-  "createdAt": "2026-07-15T20:21:40Z"
+  "createdAt": "2026-07-15T20:21:40Z",
+  "_processed": {
+    "fingerprint": "5321468fa6c17a6407e78efd121fc225292e2bc46f5a4540d05f02f451b371c2",
+    "processedAt": "2026-07-15T20:50:09Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }
