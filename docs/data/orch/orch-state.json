@@ -412,35 +412,43 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-15T20:46:39Z",
-    "_updated_by": "cowork-team/tick-20:30Z",
+    "_updated_at": "2026-07-15T20:56:10Z",
+    "_updated_by": "po (triage cow-20260715T203953 + cow-20260715T204639 -> READ+minted, PLAN-ONLY)",
     "archive": [],
     "rows": [
       {
         "id": "cow-20260715T203953",
         "summary": "tnb-audit double-dispatched via router intent path; published-marker gate is dead code (agent frontmatter has no MCP)",
         "severity": "HIGH",
-        "status": "NEW",
+        "status": "READ",
         "ts": "2026-07-15T20:39:53Z",
         "from": "cowork-team",
         "to": "po",
         "type": "defect",
-        "payload_ref": "docs/handoffs/2026-07-15-tnb-audit-double-dispatch-unreachable-marker-gate.md"
+        "payload_ref": "docs/handoffs/2026-07-15-tnb-audit-double-dispatch-unreachable-marker-gate.md",
+        "disposition": "MINT",
+        "minted_task": "FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS",
+        "triaged_by": "po",
+        "triaged_at": "2026-07-15T20:56:10Z"
       },
       {
         "id": "cow-20260715T204639",
-        "summary": "MARKET dish 933 (the duplicate) published false 'VN-Index mat 526 diem' — tier-4 estimate artifact; live+unreviewed",
+        "summary": "Both evening chef runs held false VN-Index -526pt; 933 quoted it, live+unreviewed. Dedup wont fix - plausibility gate",
         "severity": "HIGH",
-        "status": "NEW",
+        "status": "READ",
         "ts": "2026-07-15T20:46:39Z",
         "from": "cowork-team",
         "to": "po",
         "type": "data-integrity",
-        "payload_ref": "docs/handoffs/2026-07-15-market-dish-933-false-vnindex-526-point-drop.md"
+        "payload_ref": "docs/handoffs/2026-07-15-market-dish-933-false-vnindex-526-point-drop.md",
+        "disposition": "MINT",
+        "minted_task": "FIX-VNINDEX-CROSS-PLANE-PLAUSIBILITY-GATE",
+        "triaged_by": "po",
+        "triaged_at": "2026-07-15T20:56:10Z"
       }
     ],
-    "last_triaged_at": "2026-07-15T20:37:44Z",
-    "last_triaged_by": "po (triage-signals 2026-07-15T20:07Z tick; session 69b0312e)"
+    "last_triaged_at": "2026-07-15T20:56:10Z",
+    "last_triaged_by": "po"
   },
   "sprint_goal": {
     "_note": "Active sprint visions. PO triage 2026-07-11 16->14: merged FB-POSTER-LAUNCHD-FIRER into COWORK-GUARANTEED-SLOT-DURABILITY (superseded per cron-jobs.md, firer plist installed+loaded); archived NARRATIVE-TRUTH-CCATO-GATE (T2+T3 both DONE, T3 qa-APPROVED). Reasoning: sprint-ANALYSIS-QUALITY-CONVERGENCE-po.md.",
@@ -646,8 +654,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-15T20:37:44Z",
-    "_updated_by": "po (triage-signals: +2 PLAN-ONLY backlog rows)",
+    "_updated_at": "2026-07-15T20:56:10Z",
+    "_updated_by": "po (mint 2 PLAN-ONLY: dispatch-mutex-bypass + vnindex-plausibility-gate)",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -5386,7 +5394,8 @@
           ],
           "stale": "promoted 2026-07-08, still BACKLOG 6 days / 13+ cycles. supervised handling applies (bounded-1 5th-hole class); promotion left to router/dev-team adjudication — PLAN-ONLY triage does not self-promote.",
           "source": "docs/handoffs/tnb-audit-latest.md"
-        }
+        },
+        "toolset_partition_corroboration_20260715T2056Z": "[po 2026-07-15T20:56Z, corroboration from cow-20260715T203953] TOOLSET PARTITION — do NOT close as done without it. The prescribed remedy (scripts/agents-flow/mcp-call.sh curl-bypass) is a BASH script, but tran-ngoc-bau frontmatter grants Read,Edit,Write,Glob,Grep — NO Bash and NO MCP. The curl-bypass is UNEXECUTABLE for the very agent that has filed F-MCP-SUBAGENT-SYSTEMIC 14 consecutive cycles (c97-c110). Whoever picks this up MUST partition affected cowork agents by what they actually hold: (a) has Bash, no MCP -> mcp-call.sh works as specced; (b) has NEITHER (tran-ngoc-bau) -> needs a frontmatter grant (mcp__gateway__call_tool and/or Bash) from AGENT-FATHER, or the flow re-specced to its real toolset, or the dispatcher claims the published marker on its behalf pre-spawn. Consequence now confirmed CONCURRENCY-SAFETY not just data-access: tnb main.md:39-41 published-marker gate (its ONLY dedup) has NEVER executed => it silently disarmed the guard that would have blocked today's tnb-audit double-dispatch."
       },
       {
         "id": "FIX-VERIFY-DEPLOY-SHA-BENIGN-DRIFT",
@@ -6565,7 +6574,8 @@
           "FIX-CHEF-PUBLISHED-MARKER-RELEASE",
           "FU-CHEF-MARKER-INFLOW"
         ],
-        "supervised": true
+        "supervised": true,
+        "impact_enrichment_20260715T2056Z": "[po 2026-07-15T20:56Z, corroboration from cow-20260715T204639 — owner/priority/next_agent UNCHANGED] IMPACT-LINE ENRICHMENT: the double-publish was NOT a benign repeat. RAW-verified against live MARKET store: id 932 (19:52:17) cites no index number and is narratively consistent with the real -1.36%; id 933 (19:56:07, the DUPLICATE) published a FALSE 'VN-Index mat 526 diem' (~29% crash), contradicting both reality and its own predecessor. So the marker-release defect let a SECOND, WORSE dish through — publishing 933 was strictly harmful independent of duplication. UC-CCA-P3 impact should read 'caused a user-visible duplicate THAT PUBLISHED A FALSE ~29% INDEX MOVE', not just 'double-publish'. The correctness/plausibility root cause is tracked separately in FIX-VNINDEX-CROSS-PLANE-PLAUSIBILITY-GATE."
       },
       {
         "id": "UC-CCA-P5",
@@ -7576,6 +7586,38 @@
         "created_by": "po (triage-signals cow-20260715T201730)",
         "plan_only": true,
         "next_agent": "architect"
+      },
+      {
+        "id": "FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS",
+        "type": "FIX",
+        "title": "COWORK DISPATCH — router intent PRE-CLAIM and the cowork slot dispatcher share NO task_id namespace, so task_claim is a no-op mutex across paths; a peer router session double-dispatches a cowork slot agent while the cowork dispatcher's own instance still runs it (2nd confirmed instance same tick 2026-07-15: chef-evening 932+933 double-publish + tnb-audit dual c110 audit)",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "M",
+        "zone": "cross-service/",
+        "plan_only": true,
+        "next_agent": "ba",
+        "created_at": "2026-07-15T20:56:10Z",
+        "created_by": "po",
+        "origin_signal_id": "cow-20260715T203953",
+        "detail_ref": "docs/handoffs/2026-07-15-tnb-audit-double-dispatch-unreachable-marker-gate.md",
+        "note": "ENABLER (new — no existing row covers it; the two per-slot guard bugs are separate). ROOT CAUSE: router CLAUDE.md/dispatch-claim §2.5 PRE-CLAIM keys on intent:<agent>:<intent-key> while cowork keys on cowork-slot:<slot> / cron:cowork:<tick> / published:<slot>:<periodKey> — DIFFERENT namespaces, so task_claim cannot collide across the two dispatch paths (no-op mutex by construction) and neither path consults the other. 2 CONFIRMED instances same tick 2026-07-15 (feedback_recurring_bug_escalation 2+ => rank-1-band candidate): (a) chef-evening/unified-agent -> MARKET double-publish ids 932+933; (b) tnb-audit/tran-ngoc-bau -> 2 concurrent full c110 audits, clobber avoided ONLY by the Edit stale-read check (the Write path has none => silent-clobber risk). CHEAPEST CORRECT FIX (ba/architect own HOW): router §2.5 PRE-CLAIM for a cowork-slot agent MUST also probe cowork-slot:<slot_id> and/or published:<slot>:<periodKey> before dispatch, OR key both paths on ONE shared task_id namespace so they collide by construction. Rule: do NOT dispatch a cowork slot agent via the intent path while the cowork dispatcher owns that slot. Distinct from UC-CCA-P3 (marker lifecycle) and FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK (capability gap) — this is the cross-path coordination hole that ENABLED both. PLAN-ONLY."
+      },
+      {
+        "id": "FIX-VNINDEX-CROSS-PLANE-PLAUSIBILITY-GATE",
+        "type": "FIX",
+        "title": "VN-INDEX PLAUSIBILITY GATE — a tier-4 is_estimate macro_snapshot.vnIndex (1280.5) with prevFetchedAt:null produced a bogus -526.13 'delta' that reached MARKET as fact (dish 933, false ~29% crash); no same-cycle cross-plane check vs tier-2 market_context (1782.12, real -1.36%)",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "plan_only": true,
+        "next_agent": "ba",
+        "created_at": "2026-07-15T20:56:10Z",
+        "created_by": "po",
+        "origin_signal_id": "cow-20260715T204639",
+        "detail_ref": "docs/handoffs/2026-07-15-market-dish-933-false-vnindex-526-point-drop.md",
+        "note": "DATA-INTEGRITY / user-facing (HIGH). ROOT CAUSE: get_macro_snapshot served vnIndex=1280.5 (source_tier=4, is_estimate=true) with vnIndexDelta=-526.13 computed against prevFetchedAt=null — a delta with NO baseline. Two source planes disagreed ~29% in one cycle and nothing compared them: market_context (tier-2, 1782.12, real -1.36%) vs macro_snapshot (tier-4, 1280.5, estimate). No existing row covers 'a tier-4 estimate reached MARKET as fact with no plausibility gate' (UC-CCA-P3 owns the DUPLICATION/delivery, NOT the correctness). FIX (2 parts, ba/architect own HOW): (1) a delta computed against prevFetchedAt:null MUST NOT be emitted — it is not a delta; (2) same-cycle cross-plane check macro_snapshot.vnIndex vs market_context tier-2 diverging >5% MUST gap-token, never narrate (precedent BAL-1f / FU-DE-SERVE-HONEST implausible-value guard; feedback_nonzero_values_need_plausibility_check). UPSTREAM root-cause probe FIRST: CI-FRESH-01-FIX (is vnIndexRefresh alive every 5min mkt hours?) — if the refresh is dead, EVERY downstream macro_snapshot consumer reads the tier-4 fallback, not just chef. Companion narration-side guard belongs in unified-agent chef flow (secondary). PLAN-ONLY. The LIVE user-facing dish 933 needs a SEPARATE retraction escalation (see po_result) — this row is the durable code fix only; it does not remediate the already-delivered message."
       }
     ],
     "closed_sprints": [
@@ -8944,8 +8986,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-15T20:37:44Z",
-    "last_triaged_by": "po (triage-signals: minted 2 PLAN-ONLY backlog rows from cowork signals)",
+    "last_triaged_at": "2026-07-15T20:56:10Z",
+    "last_triaged_by": "po",
     "in_progress": []
   },
   "_meta": {
@@ -8955,6 +8997,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-07-15T20:37:44Z",
-  "_updated_by": "po (triage-signals cow-20260715T20111830/201118/201730)"
+  "_updated_at": "2026-07-15T20:56:10Z",
+  "_updated_by": "po (cowork signal triage: 2 PLAN-ONLY mints)"
 }
