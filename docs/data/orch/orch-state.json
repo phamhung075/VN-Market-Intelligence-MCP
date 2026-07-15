@@ -412,10 +412,22 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-10T08:50:40Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-07-15T18:40:53Z",
+    "_updated_by": "cowork-team",
     "archive": [],
-    "rows": [],
+    "rows": [
+      {
+        "id": "cow-20260715T184053",
+        "ts": "2026-07-15T18:40:53Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "preflight Step 2 heartbeats session-presence w/o claim — every fresh session tick-1 false-ERRORs into LLM fallback",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": "docs/handoffs/2026-07-15-cowork-preflight-presence-claim-gap.md"
+      }
+    ],
     "last_triaged_at": "2026-07-03T19:49:38Z",
     "last_triaged_by": "po"
   },
