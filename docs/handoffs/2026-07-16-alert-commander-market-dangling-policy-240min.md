@@ -63,7 +63,45 @@ Only the market slot is harmed. Its stated purpose (decision journal L22) is *"C
 
 - **No missed alert has been demonstrated.** The slot is event-driven with all-condition (AND) gates and silent exit is normal and correct (decision journal L27). A suppressed *tick* is not a suppressed *alert*. This handoff establishes **exposure/latency**, not proven loss: a position-danger event can now go unsurfaced for up to 4 h instead of ≤15 min.
 - **Whether any real event fell in a gap is unknown** and would need a cross-check of alert-eligible events against the fire windows since 2026-07-03.
-- **The adaptive/legacy interaction is unverified here.** Per `reference_isstale_stale_warning_forces_legacy`, a stale pressure emit forces *legacy* (fixed-cron) mode, which would bypass the policy and restore 15 min. Tick 02:15Z ran **adaptive** (`isStale=false`, emit age 11.2 min), so the 240 gate is live now. **Hypothesis worth checking, not asserted:** healing the emitter (`FU-PRESSURE-EMIT-DARK`, lane `done`) may be what *activated* this degradation, meaning it would have been masked whenever the emitter was dark. Triage should confirm before building on it.
+- ~~**The adaptive/legacy interaction is unverified here.**~~ **CONFIRMED 2026-07-16T03:33Z — see § Confirmed: the defect is intermittent and inverted, below.** The hypothesis this section originally flagged as unasserted ("healing the emitter may be what *activated* this degradation") is now established by code path + an observed mode flip. It is no longer speculative.
+
+## Confirmed 2026-07-16T03:33Z — the defect is INTERMITTENT and INVERTED (tick 03:30Z, WORK)
+
+The 03:30Z tick fired `alert-commander-market` at only **~85 min elapsed** — impossible under the 240-min gate documented above. That apparent contradiction is the confirmation, not a refutation.
+
+**Mechanism, from code:**
+
+- `scripts/agents-flow/cowork-match-slots.js:288` — `if (!isStale(pressureState, threshold))` → **adaptive**; stale → **legacy**.
+- `:171` — `const mode = opts.mode || 'legacy'` (legacy is the default).
+- `:185` — the legacy branch returns `legacyCandidates(...)` and **never consults `policyObj`**. Cron-match + `last_fired` boundary dedup only.
+- `docs/agents/cowork-team/flow/pressure-read.md:37-43` — Step 4.2 downgrades `PRESSURE_MODE` to `legacy` when `isStale`, and Steps 4.3/4.4/4.5 each carry an explicit *"Only runs if `PRESSURE_MODE = adaptive`"* gate.
+
+**Therefore:**
+
+| `stale_warning` | `isStale` | mode | cadence source | effective | verdict |
+|---|---|---|---|---|---|
+| `true` | true | **legacy** | cron `*/15` | **15 min** | ✅ correct |
+| `false` | false | **adaptive** | `policy_id` → dangling → AC-P1-1-3 | **240 min** | ⚠️ 16× degraded |
+
+**The market-alert path silently degrades 16× exactly when the pressure telemetry reports healthy, and self-heals when the telemetry goes stale.** That inversion is why this survived undetected since 2026-07-03 — it is invisible in precisely the windows an operator would consider the system to be working.
+
+**Observed flip (not inferred):**
+
+| tick | `stale_warning` | mode | `alert-commander-market` |
+|---|---|---|---|
+| 02:15Z | `false` | adaptive | suppressed (240 gate) |
+| 02:30 / 02:45 / 03:00 / 03:15Z | `false` | adaptive | suppressed — 5 consecutive silent ticks |
+| **03:30Z** | **`true`** | **legacy** | **fired** — 02:07:38Z → 03:33Z = **85 min gap on a 15-min slot** |
+
+At 03:33Z: `stale_warning: true`, `emitted_at: 2026-07-16T03:18:30.971Z`. **Age was only ~15 min — so age is not the trigger; the `stale_warning` flag short-circuits the `isStale` OR** (cf. `reference_isstale_stale_warning_forces_legacy`).
+
+**Independent corroboration from verdict *shape*, not reasoning:** this tick's `slots[]` carry no `due_reason` / `cadence_minutes` (the legacy plain-object shape, matcher `:162`), whereas the 02:15Z telemetry recorded `due_reasons={chef-intraday:"cadence"}` + `cadence_minutes={chef-intraday:120}` (the adaptive shape, `:168`). The two ticks are structurally different objects. This is data that existed before the hypothesis and was not selected to fit it.
+
+**Consequences for triage:**
+
+1. **Severity is not reduced by intermittency — it is complicated by it.** The slot is correct only while telemetry is broken. Fixing `FU-PRESSURE-EMIT-DARK`-class emitter health *worsens* the alert path until the policy is authored.
+2. **A fix verified during a stale window will look like it works and prove nothing.** Any DV test must pin `stale_warning=false` (adaptive) or it will exercise the legacy path and pass vacuously.
+3. This also means the slot has been oscillating between 15 min and 240 min since 07-03 depending on emitter health, so **do not expect a clean "it never fired" signature in the history** — expect an irregular one.
 
 ## Prior art checked — nothing to dedup against
 
