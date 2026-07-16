@@ -371,12 +371,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "idle — CI-RED-da847805-FIX promoted done_verified (CI green on new sha 456851797)",
-    "updated_at": "2026-07-16T09:30:06Z",
-    "updated_by": "dev-team (promote CI-RED-da847805-FIX)"
+    "status": "in_progress",
+    "active_task_id": "UC-SDF-P4",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of UC-SDF-P4 — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-16T12:24:25Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6536,23 +6536,6 @@
         "supervised_reason": "[po 2026-07-16T11:59:19Z] 3rd BOUNDED-1 tick churn converged. next_agent=agent-father is a MAINTENANCE-LANE on-demand-only agent (dev-team main.md L12) that zone-detect (cross-service/ => Tier-3 developer) CANNOT route to; idle auto-launch would mis-route factory work to a generic developer. supervised:true withholds it from BOUNDED-1 so the next tick picks a dev-routable P1 (UC-SDF-P4/UC-GCP-P2/UC-GCP-P4->developer, UC-MDH-P1->dev-mcp-server). Deliberate on-demand dispatch of agent-father (task:on-demand:agent-father:<date> mutex-wrap) only; on execution reconcile that the row cites system-auditor init.md but the flow dir has only main.md/tier1-probe.md. Durable class fix tracked by FIX-DEVTEAM-BOUNDED1-MAINTLANE-NEXTAGENT-GATE."
       },
       {
-        "id": "UC-SDF-P4",
-        "type": "FIX",
-        "title": "Close the legacy-file prune hole in drain-signals.js + one-time scripted purge of ~1,400 unstamped processed files",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "M",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "CONFIRMED",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#state-data-files-P4",
-        "note": "drain-signals.js prunes only stamped processed files, leaking ~1,400 unstamped ones. Extend the prune predicate and run a one-time scripted purge (script in scripts/, not /tmp).",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "next_agent": "developer"
-      },
-      {
         "id": "UC-SDF-P3",
         "type": "CLEAN",
         "title": "Delete NOTE_SIGNALS_DB_DRAIN.md (or rewrite as a 3-line pointer to the live drain)",
@@ -9030,9 +9013,32 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-16T07:34:36Z",
+    "last_triaged_at": "2026-07-16T12:24:25Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "UC-SDF-P4",
+        "type": "FIX",
+        "title": "Close the legacy-file prune hole in drain-signals.js + one-time scripted purge of ~1,400 unstamped processed files",
+        "status": "IN_PROGRESS",
+        "priority": "P1",
+        "size": "M",
+        "zone": "cross-service/",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "CONFIRMED",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#state-data-files-P4",
+        "note": "drain-signals.js prunes only stamped processed files, leaking ~1,400 unstamped ones. Extend the prune predicate and run a one-time scripted purge (script in scripts/, not /tmp).",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "next_agent": "developer",
+        "promoted_at": "2026-07-16T12:24:25Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-16T12:24:25Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
