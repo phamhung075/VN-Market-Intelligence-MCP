@@ -371,12 +371,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "UC-CCA-P5 DONE_VERIFIED (news-scout exec-proof ordering FIX shipped). PO triage tick 03:37Z: triaged signal_queue cow-20260716T031800 (alert-commander-market dangling policy_id -> AC-P1-1-3 240min vs specified 15min, 16x degradation, adaptive-path-only + inverted: degrades only when pressure telemetry healthy) -> minted FIX-COWORK-CADENCE-DANGLING-POLICY-ID to BACKLOG (zone cross-service/, HIGH, RAW-verified). NOT auto-executed this tick per BOUNDED-1 withhold (peer-dirty tree: many uncommitted peer notebooks/analysis-briefs). Program picks up on clean tree. Then BOUNDED-1 idle eval. Parked/peer-owned: UC-CCA-P3 P0 (published-marker pendulum — peer PO owns); FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING + FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE (PLAN-ONLY); UC-RDL-P4 (backlog supervised deliberate-start); RAG-FTS-BUILD-MEMORY-BOUND / ALPHA-S2-RAG-FTS-REBUILD-CRON (memory-bound, dv withheld); ~25 review-lane rows; ~45 cowork-team + price_anomaly null-schema quarantine files (FIX-DRAIN-QUARANTINE-NONROUTABLE-SIGNALS). USER-GATED (out of router scope): MARKET #933 correction go/no-go.",
-    "updated_at": "2026-07-16T03:55:37Z",
-    "updated_by": "po (dev-team triage: minted FIX-COWORK-CADENCE-DANGLING-POLICY-ID to backlog from cow-20260716T031800; signal NEW->READ; BOUNDED-1 withhold on peer-dirty tree, head idle)"
+    "status": "in_progress",
+    "active_task_id": "UC-ASL-P2",
+    "next_agent": "ba",
+    "next_action": "BOUNDED-1 auto-pickup claim of UC-ASL-P2 — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-16T04:23:13Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6515,23 +6515,6 @@
         "impact_enrichment_20260715T2056Z": "[po 2026-07-15T20:56Z, corroboration from cow-20260715T204639 — owner/priority/next_agent UNCHANGED] IMPACT-LINE ENRICHMENT: the double-publish was NOT a benign repeat. RAW-verified against live MARKET store: id 932 (19:52:17) cites no index number and is narratively consistent with the real -1.36%; id 933 (19:56:07, the DUPLICATE) published a FALSE 'VN-Index mat 526 diem' (~29% crash), contradicting both reality and its own predecessor. So the marker-release defect let a SECOND, WORSE dish through — publishing 933 was strictly harmful independent of duplication. UC-CCA-P3 impact should read 'caused a user-visible duplicate THAT PUBLISHED A FALSE ~29% INDEX MOVE', not just 'double-publish'. The correctness/plausibility root cause is tracked separately in FIX-VNINDEX-CROSS-PLANE-PLAUSIBILITY-GATE."
       },
       {
-        "id": "UC-ASL-P2",
-        "type": "SPRINT-S",
-        "title": "One blessed emit script replaces the 6 copy-pasted EMIT SEQUENCE blocks + durable BUG-dedup ledger",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "M",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "CONFIRMED",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#auditor-signal-loop-P2",
-        "note": "Auditor has 6 divergent EMIT SEQUENCE copies and in-memory BUG dedup that resets per run. Extract one emit script (scripts/emit-audit-signal.sh) with a durable dedup ledger.",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "next_agent": "ba"
-      },
-      {
         "id": "UC-ASL-P1",
         "type": "FIX",
         "title": "Fix the self-defeating T2/T3 auditor gate: gate on the PREVIOUS subagent heartbeat; move tier-2/3 heartbeat authorship into the subagent end-of-cycle",
@@ -9047,9 +9030,32 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-16T01:31:44Z",
-    "last_triaged_by": "po (dev-team tick 2026-07-16T01:07Z — signal_queue triage cow-20260716T002226/005400/012331)",
-    "in_progress": []
+    "last_triaged_at": "2026-07-16T04:23:13Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
+    "in_progress": [
+      {
+        "id": "UC-ASL-P2",
+        "type": "SPRINT-S",
+        "title": "One blessed emit script replaces the 6 copy-pasted EMIT SEQUENCE blocks + durable BUG-dedup ledger",
+        "status": "IN_PROGRESS",
+        "priority": "P1",
+        "size": "M",
+        "zone": "cross-service/",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "CONFIRMED",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#auditor-signal-loop-P2",
+        "note": "Auditor has 6 divergent EMIT SEQUENCE copies and in-memory BUG dedup that resets per run. Extract one emit script (scripts/emit-audit-signal.sh) with a durable dedup ledger.",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "next_agent": "ba",
+        "promoted_at": "2026-07-16T04:23:13Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-16T04:23:13Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
