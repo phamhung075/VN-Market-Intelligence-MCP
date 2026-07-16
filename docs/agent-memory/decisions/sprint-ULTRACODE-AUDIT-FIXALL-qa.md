@@ -163,3 +163,44 @@ stale-heartbeat→SPAWN branch. No process.env/secrets/eval-of-external-data/unq
 - commit scope — diffed e3f2b5a94..f691ad44d: exactly 7 files, zero overlap with 109 pre-existing dirty peer files
 **why-decision:** All 4 mandated caveats verified against RAW diff, not summary; dead branch now reachable (T31/T32 pass on real code path).
 **why-change:** no change from plan — APPROVED.
+
+### STEP qa-S7 · qa · 2026-07-16T16:07:38Z
+**task-id:** UC-CRITIC-GATEWAY-CONTRACT-DRIFT
+**what-done:** RAW-verified fixer commit `2ec39e96c` (mechanical doc-only rename
+`mcp__claude_ai_gateway__` -> `mcp__gateway__` across 8 files). (1)
+`grep -rn claude_ai_gateway` over all 8 target files (gateway-call-contract.md, mcp-tools.md,
+task-lock-protocol.md, guide-agent-definition-frontmatter.md, REQ_DYN-WF-FOUNDATION.md,
+quality-checklist.json, .claude/skills/task-lock/SKILL.md, tran-ngoc-bau/flow/bootstrap.md) ->
+exactly 1 hit: `gateway-call-contract.md:16` (`- \`server\` MUST be exactly \`"vn-market"\` — NOT
+\`"claude.ai gateway"\` / \`"claude_ai_gateway"\` / ...`) — confirmed by direct read this is the
+bad-server-VALUE exclusion list for the `server=` argument, NOT a tool-prefix, correct to keep
+verbatim. (2) `jq empty docs/data/quality-checklist.json` exit 0. (3)
+`git show --name-only --format= 2ec39e96c | grep -E '^(apps|packages|scripts)/'` -> zero matches,
+confirmed doc-only (9 files touched, all under docs/ or .claude/skills/, incl. the fixer's own
+decision doc). (4) Read `gateway-call-contract.md` L10-20 directly — L13 now shows the canonical
+`mcp__gateway__call_tool(server="vn-market", tool="<bare_name>", arguments={...})` block. All 4
+validations PASS.
+**what-considered:**
+- Trust the fixer's self-reported "8/8 files clean" claim as sufficient — rejected: RAW-verify
+  standing rule, ran the literal grep/jq/git-show myself against the current file contents, not
+  the fixer's summary.
+- Whether the surviving `claude_ai_gateway` hit at L16 was itself a residual drift bug — rejected
+  after reading full context: it's a deliberately-listed bad server-STRING value (paired with
+  `vnmarket`/`vn_market`), not the tool-prefix drift this task existed to fix; removing it would
+  delete a legitimate guard, not close a gap.
+- Promote via one combined orch-apply.sh transform (lane move + both heads + 2 SPIKE note edits)
+  vs 3 sequential calls — chose one transform: single CAS window, single conservation check,
+  fewer race opportunities on the hot file.
+**why-decision:** Grep/jq/git-show output matched the gate's EXPECTED values exactly (1 line,
+exit 0, 0 code paths); no residual `claude_ai_gateway` tool-prefix anywhere in the 8-file set.
+**why-change:** No change from plan — promoted `UC-CRITIC-GATEWAY-CONTRACT-DRIFT`
+`review[]`->`done_verified[]` (status=DONE_VERIFIED, qa_note/qa_verified_at/qa_verified_by added)
+via `jq | scripts/orch-apply.sh` — validator PASS, conservation PASS (task_total live=542
+candidate=542, signal_total 0=0). Both `.head` and `.task_board.head` set to matching idle shape
+(status idle, active_task_id null, next_agent router). POST-SHIP PM-ACTION (pre-approved
+architect+pm): struck the P9 bullet ("gateway tool-name drift in INV-GATEWAY-1") from
+`UC-RDL-UNVERIFIED-BATCH`'s note (count 9->8 remaining proposals) and the P12 bullet ("fix stale
+wrapper name in TNB bootstrap") from `UC-CCA-UNVERIFIED-BATCH`'s note (count 8->7 remaining
+proposals) — both rows remain `type:SPIKE` in `backlog[]`, zero task rows removed, each note
+annotated with a one-line struck-trail pointing at this commit. Did NOT push (router's job on
+completion notification).
