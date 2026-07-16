@@ -1,0 +1,114 @@
+{
+  "metadata": {
+    "cycle_id": "intraday-2026-07-15T02:15:00Z",
+    "dish_type": "intraday",
+    "date_vn": "2026-07-15",
+    "timestamp_utc": "2026-07-15T02:15:00Z",
+    "quality_verdict": "degraded",
+    "layers_walked_summary": "partial — [gap:L2_US_macro_absent_no_gap_token] [gap:L3_VN_macro_incomplete] [gap:CPI_unavailable] [gap:VIRA_unavailable] [gap:business_context_unavailable]"
+  },
+
+  "tnb_synthesis": {
+    "clock_phase": "slowdown",
+    "regime_state": "carry-unwind",
+    "regime_confidence": "MEDIUM",
+    "us_macro_layer": "[gap: US macro unavailable — no PMI/EFFR data to confirm Fed tightening transmission]",
+    "vn_macro_layer": "USD/VND=26,070 (above 25,000 threshold) signals carry regime deterioration; carry spread 1.38pp NEUTRAL suggests SBV holding at 5% sticky rate while FII faces carry unwind pressure. [gap: CPI trend unavailable]. [gap: VIRA/FX reserves unavailable].",
+    "valuation_layer": "Real estate (VHM/VIC/KDH/PDR): 1.5/4 pillars aligned (money supply tight via carry regime, capital cost high at 5% SBV, earnings outlook clouded, valuation risk elevated from FII selling). Phase: slowdown/defensive. DBC/SHB: similar pillar gaps, mixed technical oversold + insider buying signals."
+  },
+
+  "conviction_calls": [
+    {
+      "ticker": "VHM",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Portfolio 0.49 MODERATE with Sư (7) positive hexagram offset by sector carry unwind; oversold TA (RSI floor) but FII exit pressure dominant."
+    },
+    {
+      "ticker": "VIC",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Portfolio 0.55 highest among RE tickers but Kinh Dịch Tập Khảm BAN (bearish reversal) contradicts momentum; sector headwinds override technical rebound."
+    },
+    {
+      "ticker": "VRE",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 1,
+      "rationale_one_liner": "Oversold floor (RSI 26.9) + Tập Khảm BAN hexagram; wait for carry stabilization before accumulation."
+    },
+    {
+      "ticker": "DBC",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 1,
+      "rationale_one_liner": "Insider leadership accumulation (1M share buyback) bullish signal but portfolio conviction 0.43-0.44 MODERATE; ta_oversold (RSI 24.3) on weak conviction baseline."
+    },
+    {
+      "ticker": "SHB",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 1,
+      "rationale_one_liner": "Banking sector hit by carry unwind; SHB oversold (RSI 29.4) but portfolio WEAK 0.38-0.42 with Tập Khảm BAN hexagram; CMC institutional buying does not offset macro headwinds."
+    }
+  ],
+
+  "sector_phases": [
+    {
+      "sector_vn": "bất động sản",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "negative",
+      "rationale": "FII net-sell pressure from carry regime deterioration (USD/VND 26,070); sector-wide price_drop alerts + ta_oversold floors; valuation appears cheap but earnings outlook clouded."
+    },
+    {
+      "sector_vn": "ngân hàng",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "defensive",
+      "direction_this_cycle": "negative",
+      "rationale": "Carry unwind creates margin pressure; SBV rate sticky at 5% reduces deposit growth catalyst; foreign investors liquidating positions despite institutional buying (CMC on SHB)."
+    },
+    {
+      "sector_vn": "nông nghiệp",
+      "investment_phase": "transition",
+      "pyramid_tier": "neutral",
+      "direction_this_cycle": "mixed",
+      "rationale": "DBC ta_oversold (RSI 24.3) but insider leadership accumulation = mixed signal; no clear macro driver for sector."
+    }
+  ],
+
+  "known_gaps": [
+    "[gap: L2_US_macro_absent_no_gap_token — no PMI/EFFR data to confirm US tightening transmission]",
+    "[gap: L3_VN_macro_incomplete — USD/VND confirmed but CPI trend and VIRA/FX reserves status unavailable]",
+    "[gap: business_context_unavailable — no BCTC_signal_* or fundamental_* data this cycle for RE sector earnings depth]",
+    "[L6: Oversold TA without earnings catalyst — KDH/VRE/PDR hitting RSI floors after price_drop alerts; reversal potential capped by macro headwinds (carry unwind)]"
+  ],
+
+  "causal_chains": [
+    "USD carry pressure (26.070 VND/USD, above 25,000 threshold) → foreign investors withdraw from real estate + banking (high-rate sensitivity) → ta_oversold across KDH, VRE, PDR (RSI 24-29) + simultaneous sector price_drop alerts on VHM, VIC, KBC → watchlist caught in FII carry unwind; DBC ta_oversold (RSI 24.3) with leadership accumulation news = mixed signal (insider step-in vs. technical weakness)."
+  ],
+
+  "clusters_summary": {
+    "qualified": 3,
+    "tickers_covered": ["VHM", "VIC", "VRE", "KDH", "PDR", "KBC", "DXG", "NVL", "DIG", "DBC", "SHB", "VCB", "BID"],
+    "sectors_covered": ["real_estate", "agriculture", "banking"],
+    "signal_count_by_type": {
+      "price_drop": 9,
+      "ta_oversold": 8,
+      "news_mention": 3,
+      "price_surge": 1
+    }
+  },
+
+  "quality_verdict_detail": {
+    "L2_us_macro_check": "FAIL — no PMI or EFFR-IORB values cited; carry spread cited but insufficient per Step 7.5 (source_tier-3 proxy, not substantive US macro stack)",
+    "L3_vn_macro_check": "FAIL — USD/VND confirmed but CPI trend missing + VIRA/FX reserves unavailable; 1 of 3 required elements",
+    "L4_pillars_check": "PARTIAL — 1.5 of 4 pillars cited (money_supply=tight via carry, capital_cost=high, earnings=unavailable, valuation_risk=elevated); <2/4 threshold",
+    "biz_context_check": "FAIL — no BCTC_signal_* or fundamental_* signals read for real estate sector this cycle",
+    "gap_catalogue_check": "PASS — gaps explicitly enumerated in Layer 6 output",
+    "conviction_cap_retroactive": true,
+    "conviction_cap_level": "MEDIUM"
+  }
+}

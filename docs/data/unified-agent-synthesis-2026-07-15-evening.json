@@ -1,0 +1,76 @@
+{
+  "metadata": {
+    "cycle_id": "evening-2026-07-14T19:49:19Z",
+    "dish_type": "evening",
+    "date_vn": "2026-07-15",
+    "timestamp_utc": "2026-07-14T19:49:19Z",
+    "quality_verdict": "degraded",
+    "layers_walked_summary": "partial — [gap:L3_VN_macro_incomplete] [gap:L2_US_macro_relies_on_carry_proxy]"
+  },
+
+  "tnb_synthesis": {
+    "clock_phase": "transition",
+    "regime_state": "carry-stress-with-sectoral-divergence",
+    "regime_confidence": "MEDIUM",
+    "us_macro_layer": "Brent crude +1.44% (oil at $85.19, neutral band), carry regime neutral (1.38pp spread stable over 3-month horizon). [gap: US PMI not available this cycle]",
+    "vn_macro_layer": "USD/VND at 26,070 (depreciation pressure, 540bp above neutral 25,500 level) creates FII carry unwind risk. [gap: CPI trend not available this cycle] [gap: VIRA/FX-reserves unavailable]",
+    "valuation_layer": "Real estate: earning yield 6.04% vs 5% deposit (fairly valued). Energy: Brent-driven, vol regime LOW. Both clusters show conviction MEDIUM due to macro uncertainty and conflicting technical signals."
+  },
+
+  "conviction_calls": [
+    {
+      "ticker": "BSR",
+      "conviction_level": "MEDIUM",
+      "direction": "BUY",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Brent +1.44% → volume spike (2.8x) + momentum decile 9 → energy sector play (entry 27,200 VND); but oil in neutral band, not ultra-bullish"
+    },
+    {
+      "ticker": "VHM",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Momentum decile 10 (+56.2%) contradicts FII net-sell + USD/VND carry stress; conviction capped by macro headwind"
+    },
+    {
+      "ticker": "VIC",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Momentum decile 10 (+73%) but forex-driven FII exit continues; conflicting signals cap thesis strength at MEDIUM"
+    }
+  ],
+
+  "sector_phases": [
+    {
+      "sector_vn": "dầu khí",
+      "investment_phase": "expansion",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "positive"
+    },
+    {
+      "sector_vn": "bất động sản",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "negative"
+    }
+  ],
+
+  "known_gaps": [
+    "[gap:L3_VN_macro_incomplete] — CPI trend and VIRA/FX-reserves unavailable",
+    "[gap:L2_US_macro_relies_on_carry_proxy] — carry spread cited; PMI/EFFR-IORB not available",
+    "[gap:business_context_unavailable] — no BCTC/fundamental signals ingested this cycle",
+    "[gap:macro_health_missing_for_US_PMI] — US manufacturing PMI data not in cycle bootstrap"
+  ],
+
+  "causal_chains": [
+    "Brent +1.44% → VN oil sector demand → BSR volume +2.8x → momentum leader decile 9 → MEDIUM conviction entry (energy play, not corporate alpha)",
+    "USD/VND 26,070 (carry stress) → FII room uncertain → real estate net-sell signal → VHM/VIC momentum contradicts macro → conviction capped MEDIUM (divergence flag)"
+  ],
+
+  "clusters_summary": {
+    "qualified": 2,
+    "tickers_covered": ["BSR", "VHM", "VIC"],
+    "sectors_covered": ["dầu khí", "bất động sản"]
+  }
+}

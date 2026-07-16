@@ -1,0 +1,142 @@
+{
+  "metadata": {
+    "cycle_id": "chef-morning-20260713T052100Z",
+    "dish_type": "morning",
+    "date_vn": "2026-07-13",
+    "timestamp_utc": "2026-07-13T05:21:00Z",
+    "quality_verdict": "degraded",
+    "layers_walked_summary": "partial — [gap:L2_US_macro_PMI_absent] [gap:L4_partial_pillar_coverage] [gap:L4_valuation_incomplete] [gap:foreign_room_unavailable]"
+  },
+
+  "tnb_synthesis": {
+    "clock_phase": "transition",
+    "regime_state": "risk-off",
+    "regime_confidence": "MEDIUM",
+    "us_macro_layer": "EFFR 3.62% signals tight Fed posture; carry spread 1.38pp NEUTRAL (is_estimate=false), neither attracting nor repelling FII flow. US PMI data unavailable.",
+    "vn_macro_layer": "USD/VND 26,080 >25,500 threshold documents FX depreciation pressure. Foreign room data unavailable. Market sentiment z-score -0.80 (bearish).",
+    "valuation_layer": "Banking sector: EPS tailwind confirmed (impact 9, tier 3), valuation attractive (yield CHEAP 8.2% vs 5% deposit), but COC neutral and money supply data absent. Real estate: all 4 pillars negative, sector wholesale retreat -1.25%."
+  },
+
+  "conviction_calls": [
+    {
+      "ticker": "VCB",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Banking EPS tailwind + attractive valuation vs Fed tight carry + negative macro hexagram + tech breakdown = cautious accumulation, cap MEDIUM per vol_regime LOW"
+    },
+    {
+      "ticker": "BID",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Same banking thesis as VCB; conviction 0.52 per portfolio aligns with macro-micro tension"
+    },
+    {
+      "ticker": "EIB",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Banking sector peer; EPS growth but oversold (RSI 29.4) awaiting reversal on volume confirmation"
+    },
+    {
+      "ticker": "VHM",
+      "conviction_level": "LOW",
+      "direction": "SELL",
+      "pillars_aligned_count": 0,
+      "rationale_one_liner": "Real estate contraction: all 4 pillars negative, sector -1.25%, technical cascade (BB break), conviction 0.54 portfolio assessment"
+    },
+    {
+      "ticker": "VRE",
+      "conviction_level": "LOW",
+      "direction": "SELL",
+      "pillars_aligned_count": 0,
+      "rationale_one_liner": "Real estate peer in deeper decline -3.42%, oversold RSI 29.2, awaiting capitulation flush before recovery"
+    },
+    {
+      "ticker": "BSR",
+      "conviction_level": "MEDIUM",
+      "direction": "BUY",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Oil resilience: Brent +1.14%, BSR +1.37%, sector +1.17% provides selective energy support despite market selloff"
+    }
+  ],
+
+  "sector_phases": [
+    {
+      "sector_vn": "Ngân hàng",
+      "investment_phase": "transition",
+      "pyramid_tier": "defensive",
+      "direction_this_cycle": "mixed",
+      "rationale": "Bullish EPS catalyst (impact 9, tier 3) contradicted by FII outflow + negative macro hexagram (Khiêm 15, TIÊU CỰC) + compressed volatility regime"
+    },
+    {
+      "sector_vn": "Bất động sản",
+      "investment_phase": "contraction",
+      "pyramid_tier": "cash",
+      "direction_this_cycle": "negative",
+      "rationale": "All 4 pillars absent/negative; sector -1.25%, wholesale technical breakdown (8 tickers Bollinger Band fracture), VIC news catalyst contradicted by -1.48% drop"
+    },
+    {
+      "sector_vn": "Công nghệ",
+      "investment_phase": "expansion",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "mixed",
+      "rationale": "Dragon Capital tier 3 expansion thesis (100% upside potential) vs sector -0.76% performance; FPT +0.28% insufficient to confirm thesis; requires earnings delivery post-Q2"
+    },
+    {
+      "sector_vn": "Dầu khí",
+      "investment_phase": "recovery",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "positive",
+      "rationale": "Brent +1.14% commodity support; BSR +1.37% confirms; sector +1.17% = isolated bright spot amid market selloff"
+    }
+  ],
+
+  "known_gaps": [
+    "[L1-gap: PMI/CPI trends unavailable — macro health incomplete]",
+    "[L2-gap: US PMI/consumer sentiment absent; EFFR-IORB sufficient floor per Step 75 but context incomplete]",
+    "[L4-gap: money supply (M2) absent — pillar count 2.5/4 banking, 0/4 real estate]",
+    "[L4-gap: valuation pillar (relative P/E vs sector) unavailable — cannot assess vs-peer positioning]",
+    "[L4-gap: foreign room utilization null across watchlist — cannot assess FII exhaustion/flow risk]",
+    "[L5-gap: macro hexagram Khiêm (15) at 64% confidence; per-ticker hexagrams low confidence 48-56%]",
+    "[L6-gap: single-pillar banking EPS thesis without M2 context; Dragon Capital tech tier 3 single source without FII corroboration]",
+    "[L6-gap: gold $4,068 <$4,300 threshold — no drift check needed; but bearish macro hexagram hào -1.00 + negative sentiment z=-0.80 compound risk]",
+    "[L6-gap: oversold signals (HPG RSI 29, EIB 29.4, VRE 29.2) invite reversal but require volume confirmation absent this cycle]"
+  ],
+
+  "causal_chains": [
+    "Fed 3.62% tight carry (1.38pp NEUTRAL vs SBV 5%) + USD/VND 26,080 depreciation → Banking sector technical breakdown (Bollinger Band breaks on VCB, BID, EIB) despite strong EPS growth catalyst (impact 9) → FII outflow contradicts macro-micro earnings optimism",
+    "Dragon Capital tech expansion thesis (tier 3, impact 9) contradicted by tech sector -0.76% performance (FPT +0.28% only) → macro-micro divergence signals euphoria on earnings not yet supported by accumulation",
+    "Quẻ Khiêm (15) TIÊU CỰC (64% confidence) + market hexagram hào macro=-1.00, VN-Index=-0.72 → broad risk-off tone → contradicts bullish earnings narrative, cap conviction MEDIUM retroactively",
+    "Brent oil +1.14% → BSR +1.37%, PLX resilient despite market selloff → selective value in energy; oil sole bright spot in negative hexagram hào structure"
+  ],
+
+  "clusters_summary": {
+    "qualified": 4,
+    "tickers_covered": ["VCB", "BID", "EIB", "SHB", "VHM", "VRE", "VIC", "PDR", "KBC", "KDH", "NVL", "BSR", "PLX"],
+    "sectors_covered": ["banking", "real_estate", "technology", "oil_gas"],
+    "cluster_detail": [
+      {
+        "name": "Banking convergence",
+        "signals": ["chain_catalyst EPS growth (impact 9)", "technical breakdown (Bollinger Band fractures)", "oversold signals (EIB RSI 29.4)", "FII outflow pressure"],
+        "tickers": ["VCB", "BID", "EIB", "SHB"]
+      },
+      {
+        "name": "Real estate pressure",
+        "signals": ["technical cascade (8 tickers BB breaks)", "sector -1.25%", "divergence from earnings optimism (VIC news catalyst -1.48% drop)"],
+        "tickers": ["VHM", "VRE", "VIC", "PDR", "KBC", "KDH", "NVL"]
+      },
+      {
+        "name": "Macro-micro tension",
+        "signals": ["bullish earnings (Dragon Capital tech, banking EPS)", "bearish macro (hexagram TIÊU CỰC, sentiment z=-0.80)", "negative technical confirmation (VN-Index -1.48%)"],
+        "tickers": ["market-wide"]
+      },
+      {
+        "name": "Oil resilience",
+        "signals": ["Brent +1.14%", "sector +1.17%", "BSR +1.37% individual strength"],
+        "tickers": ["BSR", "PLX"]
+      }
+    ]
+  }
+}

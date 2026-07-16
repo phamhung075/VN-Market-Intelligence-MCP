@@ -1,0 +1,83 @@
+{
+  "metadata": {
+    "cycle_id": "intraday-20260714T0425Z",
+    "dish_type": "intraday",
+    "date_vn": "2026-07-14",
+    "timestamp_utc": "2026-07-14T04:25:00Z",
+    "quality_verdict": "degraded",
+    "layers_walked_summary": "partial — [gap:L2_US_macro_PMI_absent] [gap:L3_CPI_unavailable] [gap:L3_VIRA_unavailable] [gap:business_context_unavailable]"
+  },
+  "tnb_synthesis": {
+    "clock_phase": "transition",
+    "regime_state": "risk-off mixed with commodity momentum",
+    "regime_confidence": "MEDIUM",
+    "us_macro_layer": "EFFR-IORB data unavailable; carry proxy (1.38pp NEUTRAL) insufficient per Step 7.5. [gap:L2_US_macro_PMI_absent].",
+    "vn_macro_layer": "USD/VND 26,070 (>25,500 carry pressure). CPI trend unavailable [gap:CPI_unavailable]. FX reserves VIRA unavailable [gap:VIRA_unavailable]. Gold 4023.3 USD risk-off signal.",
+    "valuation_layer": "Oil/Gas: Brent +5.62% momentum; 3/4 pillars aligned. Real Estate: Carry pressure; 2/4 pillars. Banking: Mixed; 2/4 pillars."
+  },
+  "conviction_calls": [
+    {
+      "ticker": "PLX",
+      "conviction_level": "MEDIUM-HIGH",
+      "direction": "BUY",
+      "pillars_aligned_count": 3,
+      "rationale_one_liner": "Oil sector momentum (Brent +5.6%) + Kinh Dịch Thăng (46) MUA 87%; capped by L4 carry-proxy incompleteness and LOW vol regime."
+    },
+    {
+      "ticker": "BSR",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 3,
+      "rationale_one_liner": "Price +5.05% volume spike 2.8x; Kinh Dịch Kiển (39) BAN conflicts bullish price. Capped MEDIUM—L5 divergence + carry uncertainty."
+    },
+    {
+      "ticker": "VIC",
+      "conviction_level": "MEDIUM",
+      "direction": "SELL",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Real estate carry pressure; Kinh Dịch Khôn (2) MUA contradicted by -3.84% price. Macro headwind dominates."
+    },
+    {
+      "ticker": "VHM",
+      "conviction_level": "MEDIUM",
+      "direction": "SELL",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Real estate carry pressure; Kinh Dịch Sư (7) HOLD aligns with -2.94% price. L3 macro gaps prevent higher conviction."
+    }
+  ],
+  "sector_phases": [
+    {
+      "sector_vn": "dầu khí",
+      "investment_phase": "expansion",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "positive"
+    },
+    {
+      "sector_vn": "bất động sản",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "negative"
+    },
+    {
+      "sector_vn": "ngân hàng",
+      "investment_phase": "transition",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "mixed"
+    }
+  ],
+  "known_gaps": [
+    "[gap:L2_US_macro_PMI_absent]",
+    "[gap:L3_CPI_unavailable]",
+    "[gap:L3_VIRA_unavailable]",
+    "[gap:business_context_unavailable]"
+  ],
+  "causal_chains": [
+    "Brent crude surge (+5.62%) → global energy recovery → oil/gas sector bullish → BSR/PLX strength. Parallel: gold spike 4023.3 USD → risk-off → FII net-sell VN carry → real estate VIC/VHM pressure.",
+    "USD/VND 26,070 (>25,500) → carry spread deteriorating → FII flow divergence (oil short-term buyers vs banking unwind) → mixed sector phase transition."
+  ],
+  "clusters_summary": {
+    "qualified": 3,
+    "tickers_covered": ["PLX", "BSR", "VIC", "VHM"],
+    "sectors_covered": ["dầu khí", "bất động sản", "ngân hàng"]
+  }
+}

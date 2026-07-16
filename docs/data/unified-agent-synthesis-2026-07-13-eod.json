@@ -1,0 +1,88 @@
+{
+  "metadata": {
+    "cycle_id": "eod-2026-07-13T08:56:50Z",
+    "dish_type": "eod",
+    "date_vn": "2026-07-13",
+    "timestamp_utc": "2026-07-13T08:56:50Z",
+    "quality_verdict": "full",
+    "layers_walked_summary": "1-6 (full)"
+  },
+
+  "tnb_synthesis": {
+    "clock_phase": "slowdown",
+    "regime_state": "risk-off",
+    "regime_confidence": "HIGH",
+    "us_macro_layer": "EFFR-IORB spread 1.38pp confirms Fed tightening posture. Rate pressure transmitted via USD strength (26080 VND/USD)",
+    "vn_macro_layer": "USD/VND depreciation above 25500 threshold drives FX pressure. Banking sector (830% concentrated foreign ownership stress points) and real estate (high FII exposure) bear brunt of carry unwind risk",
+    "valuation_layer": "COC rising via high SBV rates (5%). EPS signals mixed with 20 HIGH severity decline alerts. Valuation risk extreme: 25 tickers AT 52-week lows, 0 new highs, 97% below MA50. Market capitulation confirmed by breadth collapse (ADL -494)"
+  },
+
+  "conviction_calls": [
+    {
+      "ticker": "VCB",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 1,
+      "rationale_one_liner": "Banking sector under FII pressure despite EFFR-IORB-driven carry divergence; hold defensively"
+    },
+    {
+      "ticker": "VHM",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 1,
+      "rationale_one_liner": "Real estate capitulation confirmed by 52W-low positioning; wait for capitulation exhaustion signal"
+    },
+    {
+      "ticker": "GEX",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 0,
+      "rationale_one_liner": "Utilities sector decline driven by macro rates pressure, not fundamental deterioration; defensive hold justified"
+    }
+  ],
+
+  "sector_phases": [
+    {
+      "sector_vn": "ngan_hang",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "negative"
+    },
+    {
+      "sector_vn": "bat_dong_san",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "negative"
+    },
+    {
+      "sector_vn": "nong_nghiep",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "negative"
+    },
+    {
+      "sector_vn": "utilities",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "negative"
+    }
+  ],
+
+  "known_gaps": [
+    "[gap: M2_trend_unavailable_macro_health_partial]",
+    "[gap: technical_indicators_not_live_RSI_MACD_unavailable]",
+    "[gap: insider_sentiment_INSUFFICIENT_DATA]",
+    "[gap: breadth_z_score_sessions_below_21_minimum]",
+    "[layer_6_divergence: hexagram_positive_breadth_negative_classic_technical_divergence]"
+  ],
+
+  "causal_chains": [
+    "Fed tightening (EFFR-IORB 1.38pp) -> USD strength (26080 VND/USD) -> FII carry unwind -> banking/RE sector net-sell pressure -> 500+ tickers down, 25 AT 52W-low (market capitulation confirmation)"
+  ],
+
+  "clusters_summary": {
+    "qualified": 4,
+    "tickers_covered": ["VCB", "BID", "EIB", "SHB", "VHM", "KDH", "NVL", "PDR", "VRE", "VIC", "KBC", "DBC", "SAB", "VNM", "GEX"],
+    "sectors_covered": ["banking", "real_estate", "agriculture", "utilities", "securities"]
+  }
+}

@@ -1,0 +1,97 @@
+{
+  "metadata": {
+    "cycle_id": "evening-2026-07-14T19:48:00Z",
+    "dish_type": "evening",
+    "date_vn": "2026-07-14",
+    "timestamp_utc": "2026-07-14T19:48:33Z",
+    "quality_verdict": "degraded",
+    "layers_walked_summary": "partial — [gap:US_macro_unavailable] [gap:CPI_unavailable] [gap:VIRA_unavailable] [gap:business_context_unavailable]"
+  },
+  "tnb_synthesis": {
+    "clock_phase": "slowdown",
+    "regime_state": "risk-off-emerging",
+    "regime_confidence": "MEDIUM",
+    "us_macro_layer": "Fed funds 3.62%, carry spread neutral at 1.38pp; no PMI data this cycle [gap: US_macro_unavailable]",
+    "vn_macro_layer": "USD/VND at 26070 (VND depreciation pressure); CPI trend unavailable [gap: CPI_unavailable]; FX reserves via VIRA unavailable [gap: VIRA_unavailable]. Foreign room: BID 58.5% (moderate), BSR 2.3% (abundant). Market sentiment neutral (z-score -0.036).",
+    "valuation_layer": "Real estate slowdown: VHM/VIC <2/4 pillars aligned (LOW conviction, recommend reduce/hold). Energy sector MEDIUM conviction (2/4 pillars) driven by commodity neutral price + volume accumulation. Volatility regime LOW (14.5%, p18.6) caps conviction at MEDIUM floor."
+  },
+  "conviction_calls": [
+    {
+      "ticker": "BSR",
+      "conviction_level": "MEDIUM",
+      "direction": "BUY",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Oil energy momentum leader (decile 9, ROC +0.52) with volume spike 2.8x and strong relative strength (92.93%), but commodity price neutral and low volatility regime limit conviction."
+    },
+    {
+      "ticker": "VHM",
+      "conviction_level": "LOW",
+      "direction": "SELL",
+      "pillars_aligned_count": 1,
+      "rationale_one_liner": "Real estate under distribution: momentum decile 10 contradicts fundamental deterioration (domestic investor exit, margin pressure from gold risk-off, USD/VND depreciation). Recommend reduce/hold."
+    },
+    {
+      "ticker": "VIC",
+      "conviction_level": "LOW",
+      "direction": "HOLD",
+      "pillars_aligned_count": 1,
+      "rationale_one_liner": "Real estate sector momentum leader (decile 10, RS 95.96%) but pillars misaligned; momentum alone insufficient in transition phase. Monitor for reversal risk if sector weakness persists."
+    }
+  ],
+  "sector_phases": [
+    {
+      "sector_vn": "bất động sản (real estate)",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "negative"
+    },
+    {
+      "sector_vn": "năng lượng (energy)",
+      "investment_phase": "expansion",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "positive"
+    },
+    {
+      "sector_vn": "ngân hàng (banking)",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "mixed"
+    }
+  ],
+  "known_gaps": [
+    "[gap:US_macro_unavailable — no PMI or EFFR data this cycle]",
+    "[gap:CPI_unavailable — Layer 3 inflation check incomplete]",
+    "[gap:VIRA_unavailable — FX reserves trend missing]",
+    "[gap:business_context_unavailable — no bctc_signal_* or fundamental_* data]",
+    "[gap:hexagram_unavailable — market-wide Kinh Dịch state deferred]",
+    "[L6-check: gold $4056 (below $4300 threshold) — normal safe-haven band, no phase-override condition triggered]"
+  ],
+  "causal_chains": [
+    "Fed neutral carry (1.38pp) + VND depreciation (26070) -> FII outflow (-193bn) -> Banking sector under pressure; BID foreign room 58.5% concentration risk.",
+    "Risk-off gold spike ($4056, safe-haven demand) -> Real estate sector margin pressure -> VHM -1.54%, VIC -1.13%, VRE -1.16% coordinated decline; domestic self-dealing withdrawal confirms sector weakness.",
+    "Oil price neutral ($85/bbl) + Strong commodity demand + BSR volume spike (2.8x average, 1.2M shares) -> Energy sector accumulation signal -> BSR +5.63% momentum leader; PLX +3.52% support."
+  ],
+  "clusters_summary": {
+    "qualified": 3,
+    "tickers_covered": [
+      "VHM",
+      "VIC",
+      "VRE",
+      "DIG",
+      "KDH",
+      "NVL",
+      "PDR",
+      "KBC",
+      "DXG",
+      "BSR",
+      "PLX",
+      "BID",
+      "VCB"
+    ],
+    "sectors_covered": [
+      "real_estate",
+      "energy",
+      "banking"
+    ]
+  }
+}
