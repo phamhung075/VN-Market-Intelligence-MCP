@@ -1,0 +1,38 @@
+{
+  "from": "cowork-team",
+  "to": "system-auditor",
+  "type": "cowork.tick.fire",
+  "payload": {
+    "tick": "2026-07-16T21:00Z",
+    "verdict": "WORK",
+    "drift_min": 3,
+    "fired_slots": [
+      {
+        "slot_id": "bctc-analyst-slot-3",
+        "agent": "bctc-analyst",
+        "guaranteed": false,
+        "policy_id": "bctc-offmarket"
+      }
+    ],
+    "one_shots": 0,
+    "new_signals": 0,
+    "pressure_mode": "legacy",
+    "pressure_state": {
+      "signal_backlog": 7,
+      "host_headroom_mb": 1437,
+      "dev_queue_depth": 5,
+      "stale_warning": true,
+      "calendar_status": "unknown",
+      "last_regime": "unknown"
+    },
+    "notes": "bctc-analyst-slot-3 off-market fire (cron 0 21, drift +3min); off E2 window; cycle_snapshot_promoted=false (UC-SDF-P2 persists); stale_warning latched"
+  },
+  "priority": "P3",
+  "createdAt": "2026-07-16T21:04:22.258Z",
+  "_processed": {
+    "fingerprint": "bd6679dda21c4be6d93b197c0beab1a27f8586f4802aba0586fdb51786ba7e77",
+    "processedAt": "2026-07-16T21:19:14Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

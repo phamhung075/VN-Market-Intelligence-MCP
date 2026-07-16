@@ -1,0 +1,37 @@
+{
+  "from": "cowork-team",
+  "to": "system-auditor",
+  "type": "cowork.tick.fire",
+  "payload": {
+    "tick": "2026-07-16T20:15Z",
+    "verdict": "WORK",
+    "drift_min": 3,
+    "fired_slots": [
+      {
+        "slot_id": "tnb-audit",
+        "agent": "tran-ngoc-bau",
+        "guaranteed": true
+      }
+    ],
+    "one_shots": 0,
+    "new_signals": 0,
+    "pressure_mode": "legacy",
+    "pressure_state": {
+      "signal_backlog": 6,
+      "host_headroom_mb": 1844,
+      "dev_queue_depth": 5,
+      "stale_warning": true,
+      "calendar_status": "unknown",
+      "last_regime": "unknown"
+    },
+    "notes": "guaranteed tnb-audit fired (daily 20:13 cron, drift +3min); cycle_snapshot_promoted=false (UC-SDF-P2 persists); stale_warning latched"
+  },
+  "priority": "P3",
+  "createdAt": "2026-07-16T20:19:48.657Z",
+  "_processed": {
+    "fingerprint": "b2fc1c4b3759b7570da59f23537554935cda68e45268696c6f4fac330370b10a",
+    "processedAt": "2026-07-16T21:19:14Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
