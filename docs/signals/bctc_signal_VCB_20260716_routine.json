@@ -1,0 +1,23 @@
+{
+  "ticker": "VCB",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Corporate and retail banking, trade finance, bancassurance cross-sell",
+  "customer": "Large corporate borrowers, SOE-linked clients, urban retail depositors/borrowers",
+  "ops": "Operating margin 80.9% (bank structure); ROE 4.21%q (16.7% sector-tool, below sector median 17.6%); EY spread +2.09pp FAIR vs deposit-rate cost of capital",
+  "mgmt": "Financials byte-identical vs prior cycle since first full-data serve 2026-07-15; balance sheet 0.37% imbalance (within 0.5% tolerance, plausible minority-interest gap)",
+  "esc_gate": {
+    "esc_1": "FALSE",
+    "esc_2": "PASS (0.37% imbalance)",
+    "esc_3": "DATA-COVERAGE-LIMITED (3/4 quarters, guard held)",
+    "esc_4": "FALSE (non_operating_share -21.4%, bank pre-provision structure, not a one-off flag)",
+    "esc_5": "FALSE (get_bctc_refined empty)"
+  },
+  "kinhdich": { "hexagram": "Que 8 - Ty", "trend": "THUAN LOI", "signal": "GIU", "confidence_pct": 100 },
+  "sector_comparison": { "pe": 14.1, "pe_median": 9.0, "pb": 2.2, "pb_median": 1.5, "roe_pct": 16.7, "roe_median_pct": 17.6 },
+  "notes": "Valuation premium (PE +57%, PB +45% vs peers BID/CTG/MBB) against below-median ROE -> neutral direction on posted signal. charter_capital null -> balance-sheet-first-read and insider signals skipped (DATA-GAP, not assumed).",
+  "cycle_id": "20260716-0000",
+  "fetchedAt": "2026-07-16T00:12:00Z"
+}
