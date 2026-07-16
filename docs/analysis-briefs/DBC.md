@@ -1,7 +1,6 @@
 # DBC — Analysis Ledger 2026
 
 **Exchange**: HOSE  
-**Sector**: Agriculture
 
 ## [Report Analyzer] Fundamentals & Valuation
 

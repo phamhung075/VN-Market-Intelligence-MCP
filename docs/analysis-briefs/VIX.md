@@ -1,7 +1,6 @@
 # VIX — Analysis Ledger 2026
 
 **Exchange**: HOSE  
-**Sector**: Securities
 
 ## [Report Analyzer] Fundamentals & Valuation
 

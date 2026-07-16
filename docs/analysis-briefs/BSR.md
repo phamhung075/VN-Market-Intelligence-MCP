@@ -1,7 +1,6 @@
 # BSR — Analysis Ledger 2026
 
 **Exchange**: UPCOM  
-**Sector**: Oil & Gas
 
 ## [Report Analyzer] Fundamentals & Valuation
 
