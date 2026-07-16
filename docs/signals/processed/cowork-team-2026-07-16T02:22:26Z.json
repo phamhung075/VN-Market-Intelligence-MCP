@@ -4,11 +4,17 @@
   "type": "cowork-fire",
   "payload": {
     "fire_time": "2026-07-16T02:22:26Z",
-    "matched_slots": ["chef-intraday"],
-    "won_slots": ["chef-intraday"],
+    "matched_slots": [
+      "chef-intraday"
+    ],
+    "won_slots": [
+      "chef-intraday"
+    ],
     "held_by_other": [],
     "all_held": false,
-    "spawned": ["docs/agents/unified-agent/flow/chef.md"],
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
     "silent": false,
     "drift_min": 3,
     "errors": [],
@@ -18,10 +24,16 @@
     "suppressed_cadence": [],
     "downgraded": [],
     "chef_mutex_applied": false,
-    "due_reasons": { "chef-intraday": "cadence" },
-    "cadence_minutes": { "chef-intraday": 120 },
+    "due_reasons": {
+      "chef-intraday": "cadence"
+    },
+    "cadence_minutes": {
+      "chef-intraday": 120
+    },
     "last_fired_timestamp": "2026-07-16T02:22:19Z",
-    "last_fired_slots": ["chef-intraday"],
+    "last_fired_slots": [
+      "chef-intraday"
+    ],
     "last_fired_write_errors": null,
     "classification": "FIRE",
     "reason": "spawned",
@@ -33,5 +45,11 @@
     "note": "CHEF mutex NOT applied: only chef-intraday matched, no guaranteed CHEF sibling in MATCHES (mutex requires BOTH present). Cadence independently re-verified via cadence-policy.js evaluateCadence: elapsed 1310.7min vs interval 120min, DUE — not taken from the preflight matcher on trust. computeTiers: signal_backlog_tier=medium (backlog 4), volatility_tier=low from last_volatility_level=unknown (dead-field bug reproducing; owned by UC-SDF-P2). isStale=false (emit age 11.2min < 20min, stale_warning=false) -> adaptive. Published marker published:chef-intraday:2026-07-16 confirmed ABSENT in task_list_held before spawn — dedup layer would NOT have blocked a bad post; only the agent's judgment + DATA GUARD stood between it and MARKET. MAJOR SELF-CORRECTION THIS TICK: the dispatcher's own 07-15 handoff sections 8/8.1 (commit 04469f5dd, ~15 min before this tick) claim vnIndexDelta is a 'null-baseline artifact' that 'must not be emitted'. THAT IS FALSE and is now retracted. Three probes 02:05/02:19:52/02:20:34 back-solve the baseline to a STABLE 1782.12 (= 2026-07-15 close); alert-commander's 07-15 notebook readings (04:10 1788.52/d-18.11; 04:30 1791.6/d-15.03; 20:09 1280.5/d-526.13) all back-solve to a STABLE 1806.63 (= 07-14 close). Baseline rolls daily => vnIndexDelta = current - prior_session_close, CORRECT. prevFetchedAt=null is a COSMETIC reporting gap (baseline timestamp unsurfaced), not a missing baseline. dish-933's -526.13 root cause was solely the tier-4 ESTIMATE poisoning the vnIndex INPUT (1280.5 vs real ~1806 close) — arithmetic never broken; that input bug is FIXED (vnIndex now tier-1, verified live/moving 1782.12->1776.30->1776.24, resolving the sections 8 'frozen vs live' ambiguity in favour of LIVE). Consequence: BA-FIX-MACRO-SNAPSHOT-DELTAS-NULL's premise ('VNIndex delta IS computed using daily_ohlcv prev-session close') is TRUE — sections 8 wrongly called it falsified; that handoff was right all along, and its real scope (oil/gold/usdVnd deltas ALL null, directions 'unknown') is confirmed still broken. alert-commander's notebook DATA GUARD #2 (committed 04469f5dd) is WRONG in the same way and now self-applies every cycle — it gap-tokens TRUE information. Sections 8/8.1 retraction + notebook guard correction to follow this tick. Root error: inferred a mechanism from ONE observation (delta=0 + prevFetchedAt=null) where delta=0 was the degenerate case of baseline==current (index genuinely sat at prior close 5min after open); two extra probes falsified it in 40s. CHEF spawned with a CORRECTED guard: cite vnIndex + delta (sound); do NOT cite carry.regime (UNKNOWN/null/20d-stale/tier-4, DSI-INV-1), yield label (tier-4 estimated inputs), or oil/gold/usdVnd deltas (genuinely null). Presence row session-presence:<this session> still absent — FIX-COWORK-PRESENCE-CLAIM-PAYLOAD-OBJECT-VS-STRING [P2] unfixed; not hand-propped."
   },
   "priority": "low",
-  "createdAt": "2026-07-16T02:22:26Z"
+  "createdAt": "2026-07-16T02:22:26Z",
+  "_processed": {
+    "fingerprint": "6ef56c865621bbe9ab9c3a467b38afa8ab58b63e38474c566caf8af1017c33a7",
+    "processedAt": "2026-07-16T02:49:55Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }
