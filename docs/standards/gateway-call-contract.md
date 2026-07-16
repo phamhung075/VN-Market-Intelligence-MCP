@@ -10,7 +10,7 @@
 ## 1. MCP Gateway — Server String
 
 ```
-mcp__claude_ai_gateway__call_tool(server="vn-market", tool="<bare_name>", arguments={...})
+mcp__gateway__call_tool(server="vn-market", tool="<bare_name>", arguments={...})
 ```
 
 - `server` MUST be exactly `"vn-market"` — NOT `"claude.ai gateway"` / `"claude_ai_gateway"` / `"vnmarket"` / `"vn_market"`.
@@ -27,9 +27,9 @@ Gateway meta-tools are called DIRECTLY (not via `call_tool`):
 
 | Meta-tool | Correct call |
 |---|---|
-| `search_tools` | `mcp__claude_ai_gateway__search_tools(keyword="<intent>")` |
-| `list_server_tools` | `mcp__claude_ai_gateway__list_server_tools(server="vn-market")` |
-| `list_servers` | `mcp__claude_ai_gateway__list_servers()` |
+| `search_tools` | `mcp__gateway__search_tools(keyword="<intent>")` |
+| `list_server_tools` | `mcp__gateway__list_server_tools(server="vn-market")` |
+| `list_servers` | `mcp__gateway__list_servers()` |
 
 NEVER pass `search_tools` or `list_server_tools` as `tool=` inside `call_tool(server="vn-market", ...)` — they are not vn-market downstream tools.
 
@@ -91,7 +91,7 @@ This is a concurrency artifact, not a tool bug.
 
 ## 6. Degraded Mode — Gateway-Blind Session
 
-**Load when:** `mcp__claude_ai_gateway__*` / `mcp__gateway__*` tools are categorically absent from your own tool binding this session — a recurring session-transport gap (not a config defect; see `feedback_local_cowork_subagents_gateway_blind.md`), root-caused (client-side, CLI MCP-connection lifecycle, no repo fix possible) in `docs/architecture-briefs/2026-07-08-gateway-blind-cli-handshake-spike.md`.
+**Load when:** `mcp__gateway__*` tools are categorically absent from your own tool binding this session — a recurring session-transport gap (not a config defect; see `feedback_local_cowork_subagents_gateway_blind.md`), root-caused (client-side, CLI MCP-connection lifecycle, no repo fix possible) in `docs/architecture-briefs/2026-07-08-gateway-blind-cli-handshake-spike.md`.
 
 ### 6a. Self-diagnosis — inspect your own tool schema, never trust memory
 

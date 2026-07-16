@@ -25,7 +25,7 @@
 
 Full call-contract spec (server string, meta-tool vs downstream, task_id type, send_telegram enum, stale-read guard) → **`docs/standards/gateway-call-contract.md`** (SSOT).
 
-Quick reference: `mcp__claude_ai_gateway__call_tool(server="vn-market", tool="<bare_name>", arguments={...})`
+Quick reference: `mcp__gateway__call_tool(server="vn-market", tool="<bare_name>", arguments={...})`
 
 ---
 

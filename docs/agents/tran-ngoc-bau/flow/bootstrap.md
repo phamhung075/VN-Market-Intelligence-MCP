@@ -27,7 +27,7 @@ If `docs/handoffs/tnb-audit-latest.md` exists, check for `## PO ACK` section at 
 
 > **Gateway-down handling — two failure modes:**
 >
-> **(A) call_tool wrapper absent or transport error** — `mcp__claude_ai_gateway__call_tool` is not present in this session, or the call itself returns a connection/transport error (not an application-level status). This is most likely a **stale cron session** (session born before or during an MCP reload; tools never refreshed), NOT a fleet outage. Send BUG: `"gateway wrapper unavailable in this session — likely stale session, recommend session reload"`. EXIT. Do NOT claim the gateway or infrastructure is down.
+> **(A) call_tool wrapper absent or transport error** — `mcp__gateway__call_tool` is not present in this session, or the call itself returns a connection/transport error (not an application-level status). This is most likely a **stale cron session** (session born before or during an MCP reload; tools never refreshed), NOT a fleet outage. Send BUG: `"gateway wrapper unavailable in this session — likely stale session, recommend session reload"`. EXIT. Do NOT claim the gateway or infrastructure is down.
 >
 > **(B) Gateway reachable, `get_system_status` reports infrastructure DOWN** — gateway responded but the status payload contains real failures. Send BUG with the status detail. EXIT.
 >

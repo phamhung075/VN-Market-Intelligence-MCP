@@ -2344,7 +2344,7 @@
           "question": "Does the mcp-gateway correctly forward list_server_tools for vn-market server?",
           "metric": "list_server_tools('vn-market') returns >= 157 tools",
           "expected": ">=157 tools",
-          "recheck_how": "mcp__claude_ai_gateway__list_server_tools(server='vn-market') → count",
+          "recheck_how": "mcp__gateway__list_server_tools(server='vn-market') → count",
           "status": "PASS",
           "severity": "WARN",
           "zone_owner": "ops",

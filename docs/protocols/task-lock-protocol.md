@@ -159,7 +159,7 @@ After any sprint that adds/modifies MCP tools or coordination logic, **before** 
 
 1. Run `docker compose up -d --build <affected-service>` — OR document in the sprint-close signal why no rebuild is required (e.g. doc-only change).
 2. Verify the container reports `Up <minutes>` (not hours) and `healthy` via `docker compose ps`.
-3. Call each new/modified tool against the live gateway via `mcp__claude_ai_gateway__call_tool` and record the actual response in the sprint-close signal.
+3. Call each new/modified tool against the live gateway via `mcp__gateway__call_tool` and record the actual response in the sprint-close signal.
 4. Only then populate the **Container-rebuild SHA** and **Gateway-tools-callable date** columns in the Phase Availability table above and mark the phase shipped.
 
 Smoke against the developer's local build or against a container older than the latest relevant commit is **not** a valid sign-off.

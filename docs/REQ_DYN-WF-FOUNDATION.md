@@ -131,7 +131,7 @@ is_trading_day(date?: string /* ISO 8601 YYYY-MM-DD, defaults to today VN time *
 
 **Acceptance criteria:**
 
-- AC-P0-3-1: `is_trading_day(date="2025-01-27")` returns `is_trading_day: false, session_status: "holiday"` (Tết Nguyên Đán 2025 — known VN national holiday). Verified via gateway wrapper `mcp__claude_ai_gateway__call_tool(server="vn-market", tool="is_trading_day", arguments={date:"2025-01-27"})`.
+- AC-P0-3-1: `is_trading_day(date="2025-01-27")` returns `is_trading_day: false, session_status: "holiday"` (Tết Nguyên Đán 2025 — known VN national holiday). Verified via gateway wrapper `mcp__gateway__call_tool(server="vn-market", tool="is_trading_day", arguments={date:"2025-01-27"})`.
 - AC-P0-3-2: `is_trading_day(date="2025-01-04")` returns `is_trading_day: true, session_status: "open"` (a known HOSE trading day).
 - AC-P0-3-3: `is_trading_day(date="2025-01-11")` returns `is_trading_day: false, session_status: "weekend"` (a Saturday).
 - AC-P0-3-4: The tool is read-only — it writes nothing to the database.
@@ -329,7 +329,7 @@ This behavior is a known architectural limitation of the process-level session d
 | NFR-5 | No new SQLite audit-growth table for PressureState. Single-row JSON only. | P0 | Infrastructure |
 | NFR-6 | No new `task_claim` kind enum value. Use `cowork-slot` for both leader lock and per-work-item tokens. | P2 | Application |
 | NFR-7 | `commit-mutex:main` stays the single default commit mutex. No per-zone commit lanes in this sprint. | P2 | Infrastructure |
-| NFR-8 | MCP tools accessed only via `mcp__claude_ai_gateway__call_tool` wrapper (bare tool names). Never `mcp__vn-market__*`. | P0+P2 | Interface |
+| NFR-8 | MCP tools accessed only via `mcp__gateway__call_tool` wrapper (bare tool names). Never `mcp__vn-market__*`. | P0+P2 | Interface |
 | NFR-9 | All structural data queried from `docs/data/system-map.json` via jq — never hardcoded values in code. | P0 | Infrastructure |
 | NFR-10 | Phase 1 (adaptive cadence) does NOT start until Phase 2 cutover is QA-signed-off stable (DWF-QA gate). | P2 | Application |
 

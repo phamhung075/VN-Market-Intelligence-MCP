@@ -166,7 +166,7 @@ Lifted to router scope (Phase 4 / Sprint 1962c → TASK_1977 router lift).
 **Ruling:** 2026-06-07, WF-3 spike. See `docs/protocols/dev-star-gateway-binding.md`.
 
 `task_claim`, `task_heartbeat`, `task_release`, and `commit-mutex:main` calls all require
-`mcp__claude_ai_gateway__call_tool`. Dev-*/qa/ba/pm/architect **specialist** sub-agents do NOT
+`mcp__gateway__call_tool`. Dev-*/qa/ba/pm/architect **specialist** sub-agents do NOT
 have this tool in their spawned tool surface (package omission, not an inheritance bug).
 
 **Invariant (enforced):**

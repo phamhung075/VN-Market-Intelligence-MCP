@@ -20,9 +20,9 @@ model: <model>                      # haiku|sonnet|opus
 
 | Family | Typical tools |
 |--------|--------------|
-| Cowork (analysis) | `Read, Write, mcp__claude_ai_gateway__call_tool` |
+| Cowork (analysis) | `Read, Write, mcp__gateway__call_tool` |
 | Dev team (code) | `Read, Edit, Write, Glob, Grep, Bash` |
-| Dev + MCP | `Read, Edit, Write, Glob, Grep, Bash, mcp__claude_ai_gateway__call_tool` |
+| Dev + MCP | `Read, Edit, Write, Glob, Grep, Bash, mcp__gateway__call_tool` |
 | Read-only analysis | `Read, Glob, Grep` |
 
 **Model selection:**
