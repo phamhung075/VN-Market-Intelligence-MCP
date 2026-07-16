@@ -192,6 +192,42 @@ function cleanup(dir) {
 }
 
 // ---------------------------------------------------------------------------
+// UC-SDF-P4 (FIX-DRAIN-SIGNALS-LEGACY-PRUNE-HOLE) — legacy/unstamped processed/ files
+// fall back to file mtime for pruning. Before this fix, a file with no
+// _processed.processedAt (and no top-level processedAt) was NEVER pruned regardless of
+// age — this regression guard asserts the mtime fallback now ages such files out, while
+// still leaving stamped/recent files untouched.
+// ---------------------------------------------------------------------------
+{
+  const h = makeHarness();
+  const sigDir = path.join(h, 'docs/signals');
+  const procDir = path.join(sigDir, 'processed');
+  fs.mkdirSync(procDir, { recursive: true });
+  const scriptPath = path.join(h, 'scripts/agents-flow/drain-signals.js');
+
+  const oldLegacy = path.join(procDir, 'legacy-old.json');
+  const freshLegacy = path.join(procDir, 'legacy-fresh.json');
+  const stampedOld = path.join(procDir, 'stamped-old.json'); // stamped + old → pruned by existing field-compare rule (unchanged)
+  fs.writeFileSync(oldLegacy, JSON.stringify({ from: 'x', type: 'y' })); // no _processed block at all
+  fs.writeFileSync(freshLegacy, JSON.stringify({ from: 'x', type: 'y' }));
+  fs.writeFileSync(stampedOld, JSON.stringify({ from: 'x', type: 'y', _processed: { processedAt: '2026-06-01T00:00:00Z' } }));
+
+  const eightDaysAgoSec = (Date.now() - 8 * 864e5) / 1000;
+  fs.utimesSync(oldLegacy, eightDaysAgoSec, eightDaysAgoSec); // backdate mtime past the 7-day cutoff
+
+  execFileSync('node', [scriptPath], { encoding: 'utf8' }); // empty inbox — exercises prune step only
+
+  assert('UC-SDF-P4 legacy file (no stamp) older than mtime cutoff IS pruned', fs.existsSync(oldLegacy), false);
+  assert('UC-SDF-P4 legacy file (no stamp) within mtime cutoff is NOT pruned', fs.existsSync(freshLegacy), true);
+  assert('UC-SDF-P4 stamped+old file still pruned by unchanged field-compare rule', fs.existsSync(stampedOld), false);
+
+  // Idempotency — second run is a no-op on the survivor, no error.
+  execFileSync('node', [scriptPath], { encoding: 'utf8' });
+  assert('UC-SDF-P4 idempotent re-run: fresh legacy file still survives', fs.existsSync(freshLegacy), true);
+  cleanup(h);
+}
+
+// ---------------------------------------------------------------------------
 // Summary
 // ---------------------------------------------------------------------------
 const total = passed + failed;

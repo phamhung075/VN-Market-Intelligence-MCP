@@ -150,10 +150,17 @@ if (newFingerprints.length > 0) {
 
 let pruned = 0;
 for (const pf of fs.readdirSync(PROC).filter(f => f.endsWith('.json'))) {
+  const ppath = path.join(PROC, pf);
   try {
-    const pj = JSON.parse(fs.readFileSync(path.join(PROC, pf), 'utf8'));
-    const pa = pj._processed?.processedAt ?? pj.processedAt;
-    if (pa && pa < cutoffIso) { fs.unlinkSync(path.join(PROC, pf)); pruned++; }
+    const pj = JSON.parse(fs.readFileSync(ppath, 'utf8'));
+    // FIX-DRAIN-SIGNALS-LEGACY-PRUNE-HOLE (UC-SDF-P4, 2026-07-16): legacy/unstamped files
+    // (no _processed.processedAt AND no top-level processedAt) never carried either field,
+    // so `pa` was undefined and the guard below silently skipped them forever — unbounded
+    // accumulation (~1,283 files). Fall back to file mtime, converted to the SAME dash-ISO
+    // shape as cutoffIso so the comparison stays a straight string compare. Scoped to this
+    // file-plane prune ONLY — does NOT touch the DB-side epoch-seconds fix above.
+    const pa = pj._processed?.processedAt ?? pj.processedAt ?? new Date(fs.statSync(ppath).mtimeMs).toISOString().replace(/\.\d+Z$/, 'Z');
+    if (pa && pa < cutoffIso) { fs.unlinkSync(ppath); pruned++; }
   } catch { /* leave unparseable files alone */ }
 }
 

@@ -1,4 +1,4 @@
-<!-- size-justification: 131L — signal drain SSOT (mandatory-persist guard, 0a-D cross-team inbox drain, 0a-0..3 fingerprint+route logic, routing table). All sections are load-bearing; no safe extraction without losing trigger→action traceability. BGFAN-1 2026-06-07: header comment added (+2L). CANON-SCRIPT 2026-06-07: scripts/agents-flow/drain-signals.js pointer (+3L). CI-HEALTH-FIX-BRIDGE 2026-06-08: ci_red routing row added (+2L). FIX-DRAIN-SIGNALS-DEDUP-PRUNE-STRCOMPARE 2026-06-28: dash-ISO format + epoch-seconds prune + FAIL-LOUD fence (+3L). FIX-BCTC-ANALYST-ESCALATION-DISPATCH-NO-BASH 2026-07-02: 0a-1 tags pendingSignals with source="file" so ESC-DISPATCH can branch on row origin (+2L). -->
+<!-- size-justification: 150L — signal drain SSOT (mandatory-persist guard, 0a-D cross-team inbox drain, 0a-0..3 fingerprint+route logic, routing table). All sections are load-bearing; no safe extraction without losing trigger→action traceability. BGFAN-1 2026-06-07: header comment added (+2L). CANON-SCRIPT 2026-06-07: scripts/agents-flow/drain-signals.js pointer (+3L). CI-HEALTH-FIX-BRIDGE 2026-06-08: ci_red routing row added (+2L). FIX-DRAIN-SIGNALS-DEDUP-PRUNE-STRCOMPARE 2026-06-28: dash-ISO format + epoch-seconds prune + FAIL-LOUD fence (+3L). FIX-BCTC-ANALYST-ESCALATION-DISPATCH-NO-BASH 2026-07-02: 0a-1 tags pendingSignals with source="file" so ESC-DISPATCH can branch on row origin (+2L). FIX-DRAIN-SIGNALS-LEGACY-PRUNE-HOLE (task UC-SDF-P4) 2026-07-16: legacy/unstamped-file mtime-fallback prune rule + scripts/audits/purge-legacy-processed-signals.sh one-time-purge pointer (+19L). -->
 # Dev Team — Step 0a: Drain `docs/signals/`
 
 <!-- BGFAN-1: this file delegates spawn to drain-esc-dispatch.md (ESC-DISPATCH) which carries run_in_background=true. No direct Agent() call here. Canonical rule → docs/protocols/agent-chaining-protocol.md § Background Spawn Mandate -->
@@ -105,6 +105,25 @@ cutoff_epoch=$(( $(date -u +%s) - 604800 ))
 sqlite3 docs/signals/signals.db "DELETE FROM signals_processed WHERE CAST(strftime('%s', processed_at) AS INTEGER) < ${cutoff_epoch};"
 ```
 Delete `docs/signals/processed/` files with `processedAt` (field value, dash-ISO) older than 7 days — field compare, not mtime, correct as-is.
+
+**Legacy/unstamped-file fallback (FIX-DRAIN-SIGNALS-LEGACY-PRUNE-HOLE, task UC-SDF-P4, 2026-07-16):**
+Files with no `_processed.processedAt` (and no top-level `processedAt`) were previously NEVER pruned by
+the field-compare rule above — they accumulate unbounded (~1,283 legacy files found in
+`docs/signals/processed/` before this fix). Fallback: when neither field is present/non-null, compare file
+**mtime** (`fs.statSync(...).mtimeMs`) against the same 7-day cutoff. mtime is a defensible proxy here
+because `processed/` files are written exactly once at drain time and never rewritten afterward. This
+fallback applies ONLY to the file-plane prune in this section — it does NOT touch or weaken the DB-plane
+epoch-seconds `strftime('%s', processed_at)` comparison above, which stays a strict field compare against
+dash-ISO `processed_at` (do not reintroduce the STRCOMPARE bug by mixing formats there).
+
+**One-time purge (already-accumulated legacy backlog):** `scripts/audits/purge-legacy-processed-signals.sh`
+— idempotent, re-runnable; `--dry-run` (default) prints the qualifying count + sample with no deletes;
+`--live` `git rm`s the qualifying files. A file qualifies ONLY if BOTH unstamped (no
+`_processed.processedAt`/`processedAt`) AND mtime older than the 7-day cutoff; stamped or recent files are
+never touched; unparseable JSON is skipped (left alone), matching the drain script's own catch-block
+contract. Run once to catch up the backlog so the next routine drain tick's new mtime-fallback prune
+doesn't `unlinkSync` ~1,283 tracked files in one shot and leave a mass-dirty tree.
+
 **FAIL-LOUD fence:** after INSERT + prune, if `inserted > 0` and `COUNT(*) ≤ count-before-insert` → log `FAIL-LOUD` + exit 1 (INSERT or prune regression).
 **Canonical script:** `scripts/agents-flow/drain-signals.js` (shipped 2026-06-07) implements §0a-1 + §0a-2 and MUST stay in sync with this spec. Edit the spec first, then the script.
 
