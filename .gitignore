@@ -17,7 +17,7 @@ dist/
 .claire/
 **/reports/*-evening.json
 **/__pycache__/
-docs/agent-memory/sessions/preflight-lsof-*.log
+docs/agent-memory/sessions/*.log
 apps/*/server
 # compiled sandbox runners (build artifacts — rebuilt from cmd/sandbox sources)
 apps/technical-analysis/sandbox
@@ -59,3 +59,7 @@ docs/data/commit-mutex.json
 
 # Rolling operational telemetry (cap 200, helper recreates) — must survive fleet git reset --hard (FIX-DB-INTEGRITY-TRAIL-GITRESET-DATALOSS)
 docs/data/db-integrity-history.json
+
+# machine-state plane debris (UC-GCP-P2 / git-ci-publish-P2 2026-07-16) — test-run scratch state, never source
+.test-notebook-prune-debug/
+/scratchpad_*.txt
