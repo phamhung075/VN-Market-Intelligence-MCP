@@ -1,0 +1,30 @@
+{
+  "from": "dev-team",
+  "to": "po",
+  "type": "recurring-bug",
+  "priority": "high",
+  "createdAt": "2026-07-16T14:40:00Z",
+  "payload": {
+    "module": "scripts/agents-flow/dev-team-tick-preflight.sh",
+    "function": "_step55_git_commit_evict",
+    "line": 415,
+    "title": "Cold-evict bare `git commit` sweeps a concurrent worker's staged index (shared-index race) — corrupts commit hygiene + pushes unverified in-flight code",
+    "defect": "_step55_git_commit_evict() does `git add \"$ORCH_STATE_PATH\" \"$archive_path\"` (correctly scoped) then a BARE `git commit -m` with NO pathspec. A bare commit commits the ENTIRE staged index, not just the two files this function staged. When any other process (a dev-team-spawned worker mid-commit) has already `git add`/`git rm`'d its files but not yet run its own `git commit`, the cold-evict's bare commit greedily captures those staged files too.",
+    "observed_incident": {
+      "commit": "11c35c0a8",
+      "labelled": "chore(tasks): cold-evict terminal sprints/done lanes",
+      "actually_contained": "the legitimate orch-state.json cold-evict PLUS dev-mcp-server's in-flight UC-MDH-P1 staged work: apps/mcp-server/src/__tests__/1300b-agent-memory-update-tools.test.ts (+50), apps/mcp-server/src/interface/mcp/tools/system/agentMemoryUpdateTools.ts (+8), 3 test-artifact .md deletions, ~84 sessions/*.md pollution deletions",
+      "downstream_effect": "the swept commit was pushed (tsc passed via pre-push hook, but dev-mcp-server had NOT yet run its own `bun test` gate) -> CI run 29508457885 on HEAD 36807df9 went RED on the `bun test` job (ci-red-36807df9-20260716145632.json). The red is OWNED by the still-in-flight UC-MDH-P1 (dev-mcp-server will fix-forward); this signal is for the ROOT CAUSE, not the transient red."
+    },
+    "root_cause_fix": "Change the cold-evict commit to an EXPLICIT PATHSPEC so it can never capture concurrently-staged worker files: `git -C \"$ROOT\" commit -m \"...\" -- \"$ORCH_STATE_PATH\" \"$archive_path\"`. Both paths are plain modifications (no renames/deletions), so the pathspec-commit (worktree-not-index) weakness does not apply here. Add a post-commit assertion that the commit's name-only set equals exactly {orch-state.json, archive/<yyyymm>.json}, else emit a bug telegram. This is the cold-evict sibling of the drain-commit pathspec fix already tracked under the po-s143 ULTRACODE-AUDIT-FIXALL mint (drain-signals.md `git add -u` scoping, rows ~235-237) — SAME class, DIFFERENT commit path; coordinate but do not dedup as identical.",
+    "recommended_owner": "dev-mcp-server or developer (scripts/ zone); route via PO triage",
+    "verification_gate": "after fix: simulate a worker staging a file in a throwaway repo, run the cold-evict commit, assert the worker's staged file is NOT in the resulting commit and remains staged in the index.",
+    "reported_by_session": "69b0312e-df43-43a9-9e0b-bddf66d374e3"
+  },
+  "_processed": {
+    "fingerprint": "52fd45c1f9643697fc084ac1adb2c7d9065adb97e5c86278e264ae7102cc3df7",
+    "processedAt": "2026-07-16T15:20:57Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

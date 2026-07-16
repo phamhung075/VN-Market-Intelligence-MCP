@@ -4,37 +4,71 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "IT services and software exports, telecom (FPT Telecom broadband/pay-TV), education (FPT Edu)",
-  "customer": "Enterprise IT buyers (VN + offshore/Japan-US export base), SME/retail telecom subscribers, students",
-  "ops": "Gross margin 34.0%, operating margin 22.0%; ROE 6.17%q (28.3% sector-tool, above sector median 10.6%); EY spread +2.25pp FAIR vs deposit-rate cost of capital",
-  "mgmt": "Financials byte-identical for 9+ consecutive cycles (2026-07-11..07-16) — no restatement, no correction; balance sheet passes 0% imbalance check each cycle",
+  "product": "Software exports/IT services (FPT Software), telecom & broadband (FPT Telecom), education (FPT Edu)",
+  "customer": "Enterprise IT buyers (VN + offshore Japan/US/APAC), SME/retail telecom & broadband subscribers",
+  "ops": "Q1-2026 gross margin 34.0%, operating margin 22.0%, ROE 6.17%q (28.3% annualized, above sector median 10.6%); OCF -2,847.8 ty VND (capex-heavy investing quarter, FCF -3,436.9 ty); D/E 0.40x",
+  "mgmt": "FY guidance historically met 3 consecutive quarters; H1-2026 pretax profit +18.1% YoY per company press release (2026-07-16), but market commentary flags Q2 revenue deceleration and stock at lowest since late 2023",
+  "valuation": {
+    "pe": 13.8,
+    "pe_vs_sector_median": -20,
+    "pb": 3.6,
+    "pb_vs_sector_median": 136,
+    "earning_yield_pct": 7.25,
+    "max_deposit_rate_pct": 5,
+    "ey_spread_pct": 2.25,
+    "verdict": "FAIR"
+  },
+  "balance_sheet_check": {
+    "imbalance_pct": 0,
+    "verdict": "PASS"
+  },
   "esc_gate": {
-    "esc_1": "FALSE",
-    "esc_2": "PASS (0% imbalance)",
-    "esc_3": "DATA-COVERAGE-LIMITED (2/4 quarters, guard held)",
-    "esc_4": "FALSE (non_operating_share 2.0%)",
-    "esc_5": "FALSE (get_bctc_refined empty)"
+    "esc1_accounting_manipulation": "FALSE",
+    "esc2_balance_sheet": "PASS",
+    "esc3_ocf_ni_divergence": "DATA-COVERAGE-LIMITED",
+    "esc3_quarters_returned": 2,
+    "esc3_coverage_guard_key": "esc-datacov:FPT:Q1-2026:ESC-3",
+    "esc3_coverage_guard_held": true,
+    "esc4_non_operating_share_pct": 2,
+    "esc4_result": "FALSE",
+    "esc5_refined_confidence": "FALSE",
+    "esc5_note": "get_bctc_refined empty for FPT_2026_Q1"
   },
   "kinhdich": {
-    "hexagram": "Que 2 - Khon",
-    "trend": "TRUNG TINH",
-    "signal": "THAN TRONG",
-    "confidence_pct": 13
+    "hexagram": "Que 23 - Bac",
+    "trend": "BAT LOI",
+    "signal": "GIU (tieu cuc)",
+    "confidence_pct": 25,
+    "prior_2_cycles": "Que 2 Khon THAN TRONG 13% (unchanged c089-c090)",
+    "note": "REVERSAL WATCH: 3rd consecutive cycle deteriorating (Khon GIU 38% -> Khon THAN TRONG 13% x2 -> Bac GIU-tieu-cuc 25%); corroborated by sentiment trend (GIAM slope -0.30, 9 bearish/2 bullish 30d), foreign net selling (-143K cp, weaker than sector), and 2026-07-16 news re Q2 revenue slowdown / 2-year price low. Fundamentals (Q1 BCTC) still FAIR/above-median ROE but lag the deteriorating real-time signal."
   },
-  "sector_comparison": {
-    "pe": 13.8,
-    "pe_median": 17.3,
-    "pb": 3.6,
-    "pb_median": 1.5,
-    "roe_pct": 28.3,
-    "roe_median_pct": 10.6
+  "insider_signals": "No significant insider activity (get_insider_signals)",
+  "legal_risk": "None for FPT this cycle (1 unrelated PC1/Rox Energy item, non-watchlist)",
+  "chain_validation": {
+    "findings_30min": 0
   },
-  "notes": "Sentiment trend GIAM slope -0.40 r2~0.20 (30d, 17 entries) coincides with khoi-ngoai sell-pressure news alerts; weighted higher-confidence fundamentals over weak/low-confidence KD signal.",
-  "cycle_id": "20260716-0000",
-  "fetchedAt": "2026-07-16T00:12:00Z",
+  "trick_summary": null,
+  "trick_confidence": "none",
+  "trick_pass_versions": [],
+  "trick_skip_reason": "No row-level OCR tool resolvable this session - capability gap, unchanged since c081",
+  "signal_posted": {
+    "id": 8288,
+    "to": "alert-commander",
+    "direction": "neutral",
+    "critic_score": 0.8
+  },
+  "evidence_fragment": {
+    "id": 257,
+    "evidence_type": "bctc_roe_ratio",
+    "direction": "bullish",
+    "magnitude": 0.3,
+    "confidence": 0.6
+  },
+  "cycle_id": "20260716-1500",
+  "generated_at": "2026-07-16T15:12:00Z",
   "_processed": {
-    "fingerprint": "f6347b867a19409bdece2b5ed2da47a9f4052c3385adbb4f2e491375fe99991c",
-    "processedAt": "2026-07-16T01:20:24Z",
+    "fingerprint": "e9a0f02fb2a262aa9173f63f087b1fc46bcc0c5bd5b6416cf4d367e525e53a6c",
+    "processedAt": "2026-07-16T15:20:57Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

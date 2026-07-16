@@ -4,37 +4,72 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Corporate and retail banking, trade finance, bancassurance cross-sell",
-  "customer": "Large corporate borrowers, SOE-linked clients, urban retail depositors/borrowers",
-  "ops": "Operating margin 80.9% (bank structure); ROE 4.21%q (16.7% sector-tool, below sector median 17.6%); EY spread +2.09pp FAIR vs deposit-rate cost of capital",
-  "mgmt": "Financials byte-identical vs prior cycle since first full-data serve 2026-07-15; balance sheet 0.37% imbalance (within 0.5% tolerance, plausible minority-interest gap)",
+  "product": "Corporate & retail banking, trade finance, bancassurance, FX/treasury (state-owned commercial bank, largest by market cap)",
+  "customer": "Corporate borrowers, SOEs, retail depositors/borrowers, correspondent-bank FX flows",
+  "ops": "Q1-2026 operating margin 80.9% (bank pre-provision structure), ROE 4.21%q (16.7% annualized, below sector median 17.6%); OCF/NI ratio 1.37x (healthy); D/E not meaningful for bank",
+  "mgmt": "Consistent capital-adequacy discipline; premium valuation (PE +57%, PB +45% vs peers) reflects perceived quality/scarcity premium despite below-median ROE this quarter",
+  "valuation": {
+    "pe": 14.1,
+    "pe_vs_sector_median": 57,
+    "pb": 2.2,
+    "pb_vs_sector_median": 45,
+    "earning_yield_pct": 7.09,
+    "max_deposit_rate_pct": 5,
+    "ey_spread_pct": 2.09,
+    "verdict": "FAIR"
+  },
+  "balance_sheet_check": {
+    "imbalance_pct": 0.37,
+    "verdict": "PASS"
+  },
   "esc_gate": {
-    "esc_1": "FALSE",
-    "esc_2": "PASS (0.37% imbalance)",
-    "esc_3": "DATA-COVERAGE-LIMITED (3/4 quarters, guard held)",
-    "esc_4": "FALSE (non_operating_share -21.4%, bank pre-provision structure, not a one-off flag)",
-    "esc_5": "FALSE (get_bctc_refined empty)"
+    "esc1_accounting_manipulation": "FALSE",
+    "esc2_balance_sheet": "PASS",
+    "esc3_ocf_ni_divergence": "DATA-COVERAGE-LIMITED",
+    "esc3_quarters_returned": 3,
+    "esc3_coverage_guard_key": "esc-datacov:VCB:Q1-2026:ESC-3",
+    "esc3_coverage_guard_held": true,
+    "esc4_non_operating_share_pct": -21.4,
+    "esc4_result": "FALSE",
+    "esc4_note": "Negative - bank pre-provision operating-profit structure, not a one-off flag",
+    "esc5_refined_confidence": "FALSE",
+    "esc5_note": "get_bctc_refined empty for VCB_2026_Q1"
   },
   "kinhdich": {
-    "hexagram": "Que 8 - Ty",
+    "hexagram": "Que 16 - Du",
     "trend": "THUAN LOI",
-    "signal": "GIU",
-    "confidence_pct": 100
+    "signal": "THAN TRONG (tich cuc)",
+    "confidence_pct": 50,
+    "prior_cycle": "Que 8 Ty THUAN LOI GIU 100% (c089-c090)",
+    "note": "Signal downgraded from GIU/100% to THAN TRONG/50% - still positive trend but lower confidence this cycle."
   },
-  "sector_comparison": {
-    "pe": 14.1,
-    "pe_median": 9,
-    "pb": 2.2,
-    "pb_median": 1.5,
-    "roe_pct": 16.7,
-    "roe_median_pct": 17.6
+  "insider_signals": "Skipped - charter_capital null, no outstandingShares/market-cap base (DATA-GAP not assumed)",
+  "legal_risk": "None for VCB this cycle (1 unrelated PC1/Rox Energy item, non-watchlist)",
+  "chain_validation": {
+    "findings_30min": 0
   },
-  "notes": "Valuation premium (PE +57%, PB +45% vs peers BID/CTG/MBB) against below-median ROE -> neutral direction on posted signal. charter_capital null -> balance-sheet-first-read and insider signals skipped (DATA-GAP, not assumed).",
-  "cycle_id": "20260716-0000",
-  "fetchedAt": "2026-07-16T00:12:00Z",
+  "trick_summary": null,
+  "trick_confidence": "none",
+  "trick_pass_versions": [],
+  "trick_skip_reason": "No row-level OCR tool resolvable this session - capability gap, unchanged since c081",
+  "signal_posted": {
+    "id": 8289,
+    "to": "alert-commander",
+    "direction": "neutral",
+    "critic_score": 0.8
+  },
+  "evidence_fragment": {
+    "id": 258,
+    "evidence_type": "bctc_roe_ratio",
+    "direction": "bullish",
+    "magnitude": 0.3,
+    "confidence": 0.6
+  },
+  "cycle_id": "20260716-1500",
+  "generated_at": "2026-07-16T15:12:00Z",
   "_processed": {
-    "fingerprint": "e85e3e3970ed6c52b4a740082347140b8b248bd56e5b4e350fe4c9ecb155160a",
-    "processedAt": "2026-07-16T01:20:24Z",
+    "fingerprint": "f888339361710d291c251b03b104f7db8c08f21fef0bb0ada3ace283881b0912",
+    "processedAt": "2026-07-16T15:20:57Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

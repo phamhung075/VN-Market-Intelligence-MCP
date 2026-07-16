@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-16T15:06:08.833Z",
+    "matched_slots": [
+      "bctc-analyst-slot-1"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-1"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "bctc-analyst-slot-1": "cron"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-1": null
+    },
+    "last_fired_timestamp": "2026-07-16T15:04:14.719Z",
+    "last_fired_slots": [
+      "bctc-analyst-slot-1"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "15:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 4,
+    "note": "WORK tick 15:00Z. Corrected preflight invocation (`;`+$? not `&&`) validated in production — RC=1=WORK printed cleanly, the case the old chain swallowed at 14:00Z. Single slot bctc-analyst-slot-1 (daily bctc-offmarket, last fired 07-13) spawned run_in_background; token claimed+released clean. devq/signal_backlog from pressure-state read @14:48Z (emit recomputes server-side); dev_head not probed this tick. WATCH: emit_pressure_state response flipped stale_warning:true again (benign oscillation, self-cleared on prior ticks). OBSERVABILITY: no docs/signals/cowork-team-2026-07-16T*.json telemetry files found on disk for earlier today's FIRE ticks — investigating whether prior FIRE telemetry is being swept/committed-away or was never written; not blocking this write."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-16T15:06:08.833Z",
+  "_processed": {
+    "fingerprint": "19996540c15cb36bed0ba75a423801e94d3208d44a464daa930d8415c3066649",
+    "processedAt": "2026-07-16T15:20:57Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
