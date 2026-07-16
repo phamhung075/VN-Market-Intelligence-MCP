@@ -108,3 +108,14 @@ fixtures; T31/32 added (stale/never→SPAWN). 91/91 GREEN.
 **why-decision:** Verifier's 4 caveats load-bearing (flag trap, test regression, register.md no-op,
 TE-T06 non-collision) — followed verbatim; Write not Edit, diff-verified.
 **why-change:** No change from plan.
+
+### STEP developer-S7 · developer · 2026-07-16T13:05:14Z
+**task-id:** UC-SDF-P4
+**what-done:** Fixed drain-signals.js §0a-2 legacy-file prune hole (mtime fallback); ran
+purge-legacy-processed-signals.sh, purging 1,280 unstamped processed/ files. Resumed stalled worker.
+**what-considered:**
+- Prior worker's uncommitted spec+script drafts — verified vs live data (not trusted blind), adopted.
+- My duplicate test block vs prior worker's pre-existing one — kept theirs (more thorough), deleted mine.
+**why-decision:** Smoke-tested against a scratch copy of the real inbox+processed/+DB before commit —
+confirms FAIL-LOUD/routing/prune correctness without risking live signals or scope violations.
+**why-change:** None; code fix + purge shipped same change-set per brief (avoids next-tick mass-unlink).
