@@ -119,3 +119,23 @@ purge-legacy-processed-signals.sh, purging 1,280 unstamped processed/ files. Res
 **why-decision:** Smoke-tested against a scratch copy of the real inbox+processed/+DB before commit —
 confirms FAIL-LOUD/routing/prune correctness without risking live signals or scope violations.
 **why-change:** None; code fix + purge shipped same change-set per brief (avoids next-tick mass-unlink).
+
+### STEP developer-S8 · developer · 2026-07-16T13:40:37Z
+**task-id:** UC-GCP-P2
+**what-done:** `git rm --cached` signals.db + 15 churn logs; widened .gitignore session-log rule +
+debris patterns; edited drain-signals.md persist-guard to drop signals.db from the commit-path list.
+**what-considered:**
+- Blanket `git rm --cached sessions/*.log` (per brief) — rejected: would also untrack frozen
+  incident-evidence logs (nit in brief). Verified tracked files are immune to a matching ignore
+  rule (check-ignore: not-ignored with index, ignored with --no-index) — kept evidence logs tracked,
+  no negation pattern needed.
+- Single vs split commit — single: brief's own Risk note requires the .gitignore edit + rm --cached
+  land together (pathspec-drops-deletion lesson).
+**why-decision:** Verified `git add docs/signals/signals.db` exits 1 pre-fix (reproduces the exact
+failure the task describes), confirming the drain-signals.md edit is load-bearing, not cosmetic.
+**why-change:** Self-caught mid-task: first commit (`git commit -m ... -- <pathspec>`) silently
+no-op'd the rm --cached deletions — pathspec-commit re-syncs the index from the CURRENT WORKING
+TREE for listed paths, undoing `--cached` deletions still present on disk. Caught via post-commit
+`git ls-files` + `git diff HEAD~1 HEAD` (both showed no change). Corrective commit re-ran
+`git rm --cached` + committed with a bare `git commit -m` (no trailing pathspec) since the index was
+independently verified to contain only this task's paths.

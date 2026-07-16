@@ -1,6 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-16 | **Cycle:** UC-ASL-P1 (sprint ULTRACODE-AUDIT-FIXALL, auditor-signal-loop-P1)
+**Last updated:** 2026-07-16 | **Cycle:** UC-GCP-P2 (sprint ULTRACODE-AUDIT-FIXALL, git-ci-publish-P2)
 
 ## Session 2026-07-16 — UC-ASL-P1 (dev-team router dispatch via BOUNDED-1 idle-capacity pickup, zone `cross-service/`) — IN_PROGRESS→REVIEW
 
@@ -30,16 +30,16 @@ Zone health: `scripts/agents-flow/` + `docs/agents/system-auditor/` — Tier-2/3
 
 Zone health: `scripts/agents-flow/` cowork preflight — presence contract now matches `main.md` Step 0b.1; no other drift observed | HEALTHY
 
-## Session 2026-07-15 — UC-RDL-P5 (dev-team BOUNDED-1 auto-pickup, mode=CLEAN, zone `cross-service/`) — IN_PROGRESS→REVIEW
+## Session 2026-07-16 — UC-GCP-P2 (dev-team BOUNDED-1 auto-pickup, zone `cross-service/`) — IN_PROGRESS→REVIEW
 
-**Task:** Ultracode audit P5 (`docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#router-dispatch-locking-P5`) — shrink CLAUDE.md step 2.5 PRE-CLAIM prose (20L condensed Phase A/A.5/B pseudocode) to a pointer + 3-outcome table, restoring the re-entrant (same-session) branch the condensed copy had silently dropped.
+**Task:** `git-ci-publish-P2` (CONFIRMED) — signals.db + runtime logs + test debris were tracked and churned the tree every dev-team tick (228+ signals.db commits, ~20 preflight-lsof logs tracked despite an existing but too-narrow ignore rule).
 
-**Actions taken:** Replaced CLAUDE.md:7-26 with an 8-line pointer to `.claude/skills/dispatch-claim/SKILL.md` (Step 0a + Phases A/A.5/B) + the Phase B `task_claim` call + a 3-row outcome table: claimed→spawn try/finally; re-entrant (`claimed:false` + `current_holder.owner_client_session == $CLAUDE_CODE_SESSION_ID`)→heartbeat+proceed (do NOT exit); peer collision (session mismatch)→log+`send_telegram(work)`+EXIT. Kept the load-bearing semantics intact: `owner_client_session` as sole ownership key, `ttl_seconds=600`, full `task_claim` arg contract, peer-collision EXIT wording verbatim. Dropped the hardcoded `redispatch_count<3` (N_MAX now lives solely in dispatch-claim, per brief).
+**Actions taken:** `git rm --cached docs/signals/signals.db` (*.db rule already covers it going forward) + 5 churn session logs (fb-daily-firer(.error).log, fleet-push(.error).log, pm.log) + 13 preflight-lsof-*.log. Widened `.gitignore:20` `preflight-lsof-*.log` → `docs/agent-memory/sessions/*.log`. Deliberately did NOT rm --cached the frozen incident-evidence logs (headlock-h1-live-evidence-*, indexlock-race-evidence-*, ops-1912*) per the audit's own non-blocking nit — verified `git check-ignore` reports a tracked file as NOT ignored (with index consulted) even though the pattern textually matches, so no negation pattern was needed. Appended `.test-notebook-prune-debug/` + `/scratchpad_*.txt` debris patterns. Edited `drain-signals.md` MANDATORY-PERSIST-GUARD to drop `signals.db` from the commit-path list (kept the mtime freshness check) — verified `git add docs/signals/signals.db` exits 1 pre-fix, confirming the edit is load-bearing.
 
-**Verification:** `CLAUDE.md` 74→62 total lines; step 2.5 block itself 20→8 lines. `git diff` confirmed the edit isolated to lines 7-26 of the original — items 1/2 (dispatch table + intent match) and item 3 (spawn) untouched. Doc-only change, no `apps/` code touched → no `bun test`/`tsc` applicable.
+**Verification:** `scripts/agents-flow/drain-signals.test.js` 15/15 PASS (unaffected fixture suite — script never git-adds the DB). `bun tsc --noEmit` clean. Pre-push hook tsc OK, pushed `40727dc17..c34b7fcc9`. Self-caught a pathspec-commit bug mid-task: first commit (`git commit -m ... -- <pathspec>`) silently re-synced the index from the CURRENT WORKING TREE for the listed deletion paths, undoing the `--cached` removals (still on disk); caught via `git ls-files` + `git diff HEAD~1 HEAD` showing zero change. Corrective commit re-ran `git rm --cached` + committed with a bare `git commit -m` (index independently verified scoped to only this task's paths first).
 
-**Board:** Moved `task_board.in_progress[UC-RDL-P5]` → `task_board.review[]` (status REVIEW, next_agent=qa) + `.head`/`.task_board.head` synced, via `orch-apply.sh` (conservation OK, task_total unchanged at 580). Commits: `aef457f38` (CLAUDE.md edit), `e06d4df47` (orch-state board move). Decision journal: `sprint-ULTRACODE-AUDIT-FIXALL-developer.md` STEP developer-S1.
+**Board:** Moved `task_board.in_progress[UC-GCP-P2]` → `task_board.review[]` (status REVIEW, next_agent=qa) + `.head`/`.task_board.head` synced to idle, via `orch-apply.sh` (conservation OK, task_total unchanged at 543). Commits: `476c331d4` (gitignore+flow-doc), `c34b7fcc9` (corrective untrack). Decision journal: `sprint-ULTRACODE-AUDIT-FIXALL-developer.md` STEP developer-S8.
 
-**Scope discipline:** Edited ONLY CLAUDE.md § "2.5 PRE-CLAIM" — left `.claude/skills/dispatch-claim/SKILL.md` untouched (pointer target; brief did not require editing it). Did not touch any peer-dirty files (cowork-team-*.json, notebooks, auditor-state, price_anomaly, signals.db). Did not flip REVIEW→DONE_VERIFIED (qa gate's job).
+**Scope discipline:** Touched only `.gitignore`, `docs/agents/dev-team/flow/drain-signals.md`, and the 15 rm --cached deletions. Did NOT touch `tool-usage-stats.json`/`coverage-state.json` (SYSREMAKE-P2 RC-GITSTATE's scope) or any of the 40+ peer-dirty files already in the tree (cowork notebooks, analysis-briefs, session logs, orch-state.json edits from other agents).
 
-Zone health: root `CLAUDE.md` — step 2.5 de-bloated this cycle; no other drift observed | HEALTHY
+Zone health: repo-root git-state plane — signals.db + churn logs now correctly untracked; drain path verified intact | HEALTHY
