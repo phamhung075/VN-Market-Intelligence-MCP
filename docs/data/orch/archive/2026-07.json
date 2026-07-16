@@ -8841,6 +8841,19 @@
       "claimed_at": "2026-07-16T07:34:36Z",
       "claimed_by": "dev-team (bounded-1 auto-pickup)",
       "status_note": "qa APPROVED (commit 099281619); router RAW re-verified: auditor-tier1-probe.test.sh 91/91 GREEN (independent re-run), QA commit clean (2 QA docs, no code/orch-state/self-flip), dirty tree 109 unchanged. Promoted review->done_verified."
+    },
+    {
+      "id": "CI-RED-da847805-FIX",
+      "title": "CI-RED-da847805-FIX — CI RED: bun test (013-rag-retriever.test.ts native segfault, apps/mcp-server _deprecated RAG)",
+      "owner": "po",
+      "status": "DONE_VERIFIED",
+      "zone": "apps/mcp-server/",
+      "created_at": "2026-07-16T08:55:06Z",
+      "status_note": "AC: gh run list --branch main --limit 3 shows conclusion=success for a push AFTER da847805231d0252ed6e092a4f5b4f7d678fed67 (verification_gate=ci_green_on_subsequent_push; same-sha re-run does NOT count). Priority: high. Failing jobs: bun test. Root: whole-file crash of apps/mcp-server/src/__tests__/013-rag-retriever.test.ts — bun 1.3.13 native segfault (reproduced 2x in CI + 3x local), no surfaced assertion; imports src/infrastructure/rag/_deprecated/{vectorstore,retriever}.js (LanceDB native addon). Non-causal to commit da847805 (orch promotion + 2 QA docs; test code byte-identical to green parent 00000074). _deprecated RAG infra referenced ONLY by tests — zero production imports → quarantine (skip) or stabilize the native-crash test. ZONE apps/mcp-server (NOT dev-rag-service: that owns apps/rag-service Python only). || DONE_VERIFIED 2026-07-16T09:30:06Z: router RAW re-verified — CI run 29486509712 conclusion=success on fix sha 456851797 (genuine new-sha descendant of red da847805, not a re-run); serving HEAD 19c062508 also CI-green (run 29486752445); qa VERDICT APPROVED (commit 500770477) independently confirmed dead-code deletion has zero prod imports + security guards live in apps/rag-service/infrastructure/repositories.py. Fix: dev-mcp-server 456851797 deleted _deprecated LanceDB RAG dead code + 5 segfaulting test files.",
+      "claimed_at": "2026-07-16T09:02:03Z",
+      "claimed_by": "dev-team (dispatch CI-RED-da847805-FIX)",
+      "assigned_to": "69b0312e-df43-43a9-9e0b-bddf66d374e3",
+      "review_note": "dev-mcp-server FIX: deleted rag/_deprecated/{embeddings,vectorstore,retriever}.ts (dead code — zero prod imports repo-wide-grep-confirmed, PO-blessed disposition) + their 5 tests (011/012/013/135/security-sql-injection) that imported the crashing @lancedb/lancedb native addon. Fixed 2 orphaned barrels (rag/index.ts, infrastructure/index.ts) that re-exported the deleted symbols (zero consumers, tsc-verified clean). Updated docs/architecture/microservice/mcp-server/infrastructure.md stale ref. tsc clean; 32/32 pass on direct rag-consumer sibling tests; repo-wide grep confirms zero remaining _deprecated/@lancedb refs in any test. Pushed 456851797 (parent c735fe8e3) — CI run https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/29486509712 (bun test job) is the RAW verification gate — watch for conclusion=success on THIS sha before promoting DONE_VERIFIED."
     }
   ],
   "closed_sprints": [
