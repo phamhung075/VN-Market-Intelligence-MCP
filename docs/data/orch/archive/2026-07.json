@@ -11407,6 +11407,43 @@
       "to": "po",
       "type": "defect",
       "payload_ref": "docs/handoffs/2026-07-15-cowork-tick-refire-election-lock-does-not-span-its-tick.md"
+    },
+    {
+      "id": "cow-20260716T002226",
+      "summary": "coverage-state.json cross-agent LOST UPDATE (_ssot blob, market-watcher write silently reverted by news-scout same tick) + RETRACTS 3 in-flight premises: legacy matcher DOES dedup (UC-CDC-P3) so re-fire blast radius overstated - re-scope FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE P1; GUARD strip-Write fix would break signal routing + coverage rotation (confirmed live); dish 933 unreviewed premise FALSIFIED",
+      "severity": "MED",
+      "status": "RESOLVED",
+      "ts": "2026-07-16T00:22:26Z",
+      "from": "cowork-team",
+      "to": "po",
+      "type": "defect",
+      "payload_ref": "docs/handoffs/2026-07-16-coverage-state-cross-agent-lost-update-and-three-premise-corrections.md",
+      "disposition": "TRIAGED 2026-07-16T01:31:44Z by po. MINTED FIX-COVERAGE-STATE-CROSS-AGENT-LOST-UPDATE (P2, cross-service, BACKLOG) for the real _ssot lost-update race. Applied 3 retractions: (1) downgraded FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE P1->P2 (legacy matcher DOES dedup; coupling-hazard rationale falsified); (2) GUARD strip-Write DO-NOT-PURSUE recorded on the new coverage-state FIX note (breaks signal routing + coverage rotation, confirmed live); (3) dish #933 unreviewed premise FALSIFIED — carried on NO board row (searched note/status_note/desc), no board edit needed, dropped."
+    },
+    {
+      "id": "cow-20260716T005400",
+      "summary": "DUPLICATE→FOLD INTO UC-SDF-P2 (do NOT triage as new). UC-SDF-P2 \"Diagnose promotion dead since 07-07\" + handoff 2026-07-15-cycle-snapshot-latest-promotion-dark.md already own this; I re-derived it unaware. Row retained ONLY for 3 advances: (1) DIAGNOSIS CLOSED — 07-15 hypothesis marked UNVERIFIED is now CONFIRMED at source: emitPressureStateTool.ts joins cycle-snapshot-${tickHHMM}.json with tickHHMM from tick_id, while tick-snapshot.md:40,43 names by FILE_TICK=$(date -u +%H:%M) actual fire time → diverge under drift. That IS the UC-SDF-P2 ask. (2) key has NO date → a 43-day-old 06-03 00:00 file is read and aged past 4h → stale:true, which is why the miss is SILENT not just absent; 102 files accrued. (3) SCOPE-BREAKER: regime_status/volatility_level have NO WRITER since the 2026-06-05 EMIT-DARK-RECURRING refactor (last emitted 06-03; only 12 June files + 1 test fixture carry them; live snapshot has no carry block). Both handoffs claim promotion-dark pins last_regime=unknown — FALSE. Fixing promotion alone leaves adaptive loop dark forever. UC-SDF-P2 as scoped is INSUFFICIENT.",
+      "severity": "INFO",
+      "status": "RESOLVED",
+      "ts": "2026-07-16T00:54:00Z",
+      "from": "cowork-team",
+      "to": "po",
+      "type": "diagnosis",
+      "payload_ref": "docs/handoffs/2026-07-16-cycle-snapshot-promotion-dark-9-days-adaptive-cadence-never-runs.md",
+      "note": "folds into UC-SDF-P2; not a new defect",
+      "disposition": "TRIAGED 2026-07-16T01:31:44Z by po. Self-annotated DUPLICATE — FOLDED into UC-SDF-P2 (no new task). Added 3 advances to UC-SDF-P2 scope (diagnosis CONFIRMED at source; no-date snapshot key -> silent stale miss; SCOPE-BREAKER regime_status/volatility_level NO WRITER since 06-05) and WIDENED UC-SDF-P2 (size M->L) to include restoring the regime_status/volatility_level writer."
+    },
+    {
+      "id": "cow-20260716T012331",
+      "summary": "FIX-COWORK-PREFLIGHT-PRESENCE-CLAIM-GAP (82d32238b, done_verified, qa PASS 6/6) is a SILENT NO-OP — presence lock never lands. RAW-verified: session-presence:<cowork session> absent from task_list_held on 2 consecutive ticks while dev-team peer row present+heartbeating; manual task_claim with STRING payload -> claimed:true (lock was genuinely absent, tool+read both fine). ROOT: cowork-tick-preflight.sh:140 passes payload as a jq OBJECT {agent_id,host}; line 157-158 election claim correctly serializes via jq -cn --arg payload (STRING) 18 lines below. Contract is STRING (CLAUDE.md:8; every held row stores payload as string). Object fails validation -> presence_rc!=0 -> the whole if-block incl. re-entry heartbeat is skipped -> swallowed by \"presence never gates\". ONE-LINE FIX (mirror Step 3). WHY QA WENT GREEN: all 3 presence tests assert the VERDICT (SILENT not ERROR) against a mocked mcp_call, never that the lock lands — and \"never gates\" is precisely what makes a dead claim unobservable. Fix traded a LOUD false-ERROR for a SILENT no-op; old bug announced itself every fresh session, new state is invisible. ASKS: (1) one-line payload fix (2) add assertion \"after preflight, session-presence:<session> IS held\" (3) reopen/follow-on — done_verified against a mechanism that never worked (4) class sweep: grep all task_claim sites for payload:{} object literals. Impact bounded: presence is advisory, nothing mispublished; cost is cross-session roster blindness.",
+      "severity": "MED",
+      "status": "RESOLVED",
+      "ts": "2026-07-16T01:23:31Z",
+      "from": "cowork-team",
+      "to": "po",
+      "type": "defect",
+      "payload_ref": "docs/handoffs/2026-07-16-preflight-presence-claim-payload-object-vs-string-silent-noop.md",
+      "disposition": "TRIAGED 2026-07-16T01:31:44Z by po. REOPENED as FIX-COWORK-PRESENCE-CLAIM-PAYLOAD-OBJECT-VS-STRING (P2, cross-service, BACKLOG) — RAW-verified at source (cowork-tick-preflight.sh:140 payload OBJECT vs :156-158 STRING). Row carries all 4 asks (one-line payload fix, lock-lands test assertion, reopen tracking, class-sweep for payload:{} literals)."
     }
   ],
   "backlog_detail": [
