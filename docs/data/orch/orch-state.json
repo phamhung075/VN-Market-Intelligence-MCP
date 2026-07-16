@@ -412,15 +412,15 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-16T05:27:00Z",
-    "_updated_by": "cowork-team",
+    "_updated_at": "2026-07-16T06:53:10Z",
+    "_updated_by": "dev-team (0a-D drain, tick 2026-07-16T06:37Z)",
     "archive": [],
     "rows": [
       {
         "id": "cow-20260716T043200",
         "summary": "SEQUENCING HAZARD: UC-SDF-P2 (cycle-snapshot key-unification / residue prune) and FIX-COWORK-CADENCE-DANGLING-POLICY-ID are COUPLED and neither row says so. stale_warning is a residue-file artifact, not emitter health: mode(T) <- does cycle-snapshot-<nominal HH:MM of T-1>.json exist and is it >4h old. Landing UC-SDF-P2 or pruning the ~110 residue files flips EVERY tick to adaptive fleet-wide, which activates the dangling 240min policy gate and degrades the market-alert path 16x (15min -> 240min). UC-SDF-P2 reads as harmless disk/key hygiene. FIX: author alert-commander-market(15) + alert-commander-critical(240) in cadence-policy.json FIRST, or land both changes together. Also falsifies the promotion handoff §3 (adaptive DOES run on slot-bearing ticks: 04:00Z tick was adaptive + spawned 3 — git show edcc4c66a^).",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "ts": "2026-07-16T04:33:57Z",
         "from": "cowork-team",
         "to": "po",
@@ -431,7 +431,7 @@
         "id": "cow-20260716T052700",
         "summary": "CHEF MUTEX IS DEFEATABLE AND THE FIX REQUEST WAS LOST IN ROUTING (2nd observed occurrence: 07-14, 07-16). pressure-cadence.md Step 4.5c still computes the mutex via `echo \"$SCHEDULE\" | jq` (x2: L140-141, L144-145, L149). cowork-schedule.json slot chef-intraday stores trigger_prompt with an escaped \\n (valid JSON); under zsh echo expands it to a REAL newline -> jq \"control characters must be escaped\" parse error -> G_ARR/NG_ARR empty -> HAS_G/HAS_NG empty -> else-branch -> CHEF_MUTEX_APPLIED=false -> BOTH chef-morning AND chef-intraday spawn unified-agent -> DOUBLE MARKET PUBLISH. Fails SILENTLY (errors to stderr, logic falls through). This is exactly the regression FIX-COWORK-CHEF-SAMETICK-MUTEX / cowork-chef-doublepublish-2026-06-30 exists to prevent. FIRES on the daily 05:15Z coincidence tick (chef-morning \"15 5 * * 1-5\" guaranteed + chef-intraday \"13 2-8 * * 1-5\" within +/-2min drift) — hit again today 2026-07-16T05:15Z. Only avoided because the dispatcher read a memory and computed the mutex file-direct; a dispatcher following the doc literally double-posts to users. WHY UNTRACKED: the 07-14 fix request was attached as a custom payload sub-field (payload.robustness_note_for_dev_team) on a type=cowork-fire TELEMETRY signal, now archived verbatim at docs/signals/processed/cowork-team-20260714T052659Z.json. dev-team drain-signals.md DOES read docs/signals/, but routes by envelope (to/type) and fingerprints into signals.db — a custom sub-field on a telemetry-type signal is archived unread. No board row was ever minted; board grep on the 4.5c/echo/newline surface returns nothing (filter asserted against a known row). FIX: switch 4.5c to file-direct jq (`jq -c ... docs/data/cowork-schedule.json`) + `jq -n --argjson` bound params — never echo a JSON payload. Verified working both 07-14 and 07-16: G=[chef-morning,chef-eod,chef-evening] NG=[chef-intraday] -> mutex_applied=true -> one dish. SECOND-ORDER: audit whether other flows route fix requests via custom payload sub-fields instead of .signal_queue.rows[] — that channel silently drops them.",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "ts": "2026-07-16T05:27:00Z",
         "from": "cowork-team",
         "to": "po",
@@ -5011,7 +5011,8 @@
         "priority": "low",
         "zone": "docs/agents/cowork-team/flow/",
         "sprint": null,
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#SPIKE-TICK-SNAPSHOT-DEADCODE-OR-REGRESSED"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#SPIKE-TICK-SNAPSHOT-DEADCODE-OR-REGRESSED",
+        "note": "[PO signal cow-20260716T043200, 2026-07-16] SEQUENCING GUARD — DO NOT land cycle-snapshot key-unification / residue-file prune ALONE. Pruning the ~110 gitignored cycle-snapshot-<HH:MM>.json residue files flips every cowork tick to stale_warning=false -> adaptive fleet-wide, which activates the 240-min dangling-policy gate and degrades the alert-commander-market path 16x (15min->240min). Per handoff docs/handoffs/2026-07-16-cycle-snapshot-promotion-dark-9-days-adaptive-cadence-never-runs.md §4-NEW-2/§4-NEW-3 the coupling is 3-way + a 4th unit: (1) unify the snapshot key + put a date in it; (2) author the missing cadence-policy rows (alert-commander-market 15min + alert-commander-critical 240min + gatherer open/half_day tiers); (3) WIRE calendar_status to the existing vnTradingCalendar oracle (isVnTradingDay) — it is structurally latched at 'unknown' so newly-authored open/half_day rows are otherwise unreachable; (4) restore a writer for regime_status/volatility_level (dropped in the 2026-06-05 refactor) + a test that fails when the reader's source field has no writer. Land as ONE change set. Couples with UC-SDF-P2 + FIX-COWORK-CADENCE-DANGLING-POLICY-ID (both tracked in backlog-detail.json)."
       },
       {
         "id": "FIX-VPS-SSC-INSIDER-502",
@@ -7332,7 +7333,7 @@
         "created_at": "2026-07-14T20:41:08Z",
         "created_by": "po-tnb-c109-triage",
         "origin": "docs/handoffs/tnb-audit-latest.md#F-CHEF-EVENING-DUPLICATE-DATE-MISLABEL",
-        "note": "PLAN-ONLY (anomaly->BACKLOG bridge, project_anomaly_task_bridge). SUSPECTED, MCP-blocked at audit time. TWO components: (1) DATE-MISLABEL [genuinely new/untracked]: unified-agent.md top entry headed 'Session: 2026-07-15 (evening — current)' @19:49 UTC sits 1 min above a 'Session: 2026-07-14 (evening)' @19:48 UTC entry; 19:49UTC+7h = 02:49 VN on 07-15 => VN-local date leaked into the session header instead of UTC (premise-date-error class, feedback_premise_date_error_survives_agent_chain). Fix: chef.md must stamp UTC date in session/notebook headers, never VN-local. (2) DUP-PUBLISH [likely REFUTED — verify cheaply, do NOT re-litigate the dedup mechanism]: PO RAW-verified docs/data/cowork-schedule.json chef-evening.last_fired = single 2026-07-14T19:48:44.480Z matching ONLY the 19:48 entry, NOT the 19:49 entry — a genuine 2nd scheduled fire would have bumped last_fired, so this leans to a notebook mislabel/manual write, not a real double MARKET publish. CONFIRM step: one read_telegram_reports cycle_id pairing of the two [CHEF-DETAIL] WORK messages once MCP restored — IF a real duplicate MARKET post is found, fold to the EXISTING dedup cluster (FIX-CHEF-PUBLISHED-MARKER-RELEASE / FU-CHEF-MARKER-INFLOW / UC-CCA-P3) and do NOT duplicate that work here; this row's own deliverable is the UTC-date-header fix.",
+        "note": "PLAN-ONLY (anomaly->BACKLOG bridge, project_anomaly_task_bridge). SUSPECTED, MCP-blocked at audit time. TWO components: (1) DATE-MISLABEL [genuinely new/untracked]: unified-agent.md top entry headed 'Session: 2026-07-15 (evening — current)' @19:49 UTC sits 1 min above a 'Session: 2026-07-14 (evening)' @19:48 UTC entry; 19:49UTC+7h = 02:49 VN on 07-15 => VN-local date leaked into the session header instead of UTC (premise-date-error class, feedback_premise_date_error_survives_agent_chain). Fix: chef.md must stamp UTC date in session/notebook headers, never VN-local. (2) DUP-PUBLISH [likely REFUTED — verify cheaply, do NOT re-litigate the dedup mechanism]: PO RAW-verified docs/data/cowork-schedule.json chef-evening.last_fired = single 2026-07-14T19:48:44.480Z matching ONLY the 19:48 entry, NOT the 19:49 entry — a genuine 2nd scheduled fire would have bumped last_fired, so this leans to a notebook mislabel/manual write, not a real double MARKET publish. CONFIRM step: one read_telegram_reports cycle_id pairing of the two [CHEF-DETAIL] WORK messages once MCP restored — IF a real duplicate MARKET post is found, fold to the EXISTING dedup cluster (FIX-CHEF-PUBLISHED-MARKER-RELEASE / FU-CHEF-MARKER-INFLOW / UC-CCA-P3) and do NOT duplicate that work here; this row's own deliverable is the UTC-date-header fix. | [PO TNB-c110 2026-07-16] Component 2 (chef-evening double-publish) CONFIRMED real (MARKET ids 932+933, RAW-verified) and folded to UC-CCA-P3 — this row is now SCOPED TO COMPONENT 1 ONLY: chef.md UTC-date-header fix (stamp UTC date, never VN-local, in session/notebook headers).",
         "verification_gate": "read_telegram_reports cycle_id pairing shows either (a) single evening publish -> chef.md UTC-header fix lands + no dup, or (b) genuine dup -> folded to dedup cluster. done_verified requires the header-fix RAW-verified in a subsequent evening dish header carrying UTC date."
       },
       {
@@ -7685,6 +7686,45 @@
         "origin_signal_id": "cow-20260716T031800",
         "status_note": "AC: (1) evaluateCadence('alert-commander-market', ...) resolves to interval_minutes:15 via an authored policy (RAW-run, not badge). (2) A NEW unresolvable-policy_id DV/test asserts fail-loud OR cron-fallback (NOT 240) AND MUST pin stale_warning=false so the adaptive branch (cowork-match-slots.js:288) is actually exercised — a stale window exercises legacy cron and passes vacuously (handoff Consequence #2). AC-P1-1-3's existing DV only covers unmatched-rule; a new AC is required or the fix regresses. (3) Dangling-ref sweep: [.slots[].policy_id]-[.policies[].policy_id] == [] (today alert-commander-market + alert-commander-critical dangle; critical is benign since 240 intent coincides — market is the only harmed slot). Partial regression of completed FIX-ALERT-COMMANDER-DEAD-NO-SLOT (2026-07-03, HIGH) whose decision journal named the policies but the sprint never authored cadence-policy.json. Handoff: docs/handoffs/2026-07-16-alert-commander-market-dangling-policy-240min.md. Files: docs/data/cadence-policy.json, scripts/agents-flow/cadence-policy.js (:71 safe default), scripts/agents-flow/cowork-match-slots.js (:288 adaptive/legacy branch). Baseline CI GREEN on b9cfe58b2. RAW-verified 03:55Z: grep alert-commander cadence-policy.json=0; policy_id diff=[alert-commander-critical,alert-commander-market].",
         "verify_note": "prior_status=BACKLOG (minted by po dev-team triage tick 2026-07-16T03:37Z from signal cow-20260716T031800; BOUNDED-1 withhold on peer-dirty tree — leave for program pickup on clean tree)"
+      },
+      {
+        "id": "FIX-COWORK-CHEF-MUTEX-ECHO-JQ-DEFEAT",
+        "title": "CHEF same-tick mutex DEFEATABLE: pressure-cadence.md Step 4.5c uses echo \"$SCHEDULE\"|jq — zsh expands the escaped \\n in chef-intraday trigger_prompt to a real newline -> jq control-char parse error -> G_ARR/NG_ARR empty -> CHEF_MUTEX_APPLIED=false -> chef-morning + chef-intraday BOTH spawn -> DOUBLE MARKET PUBLISH; fails silently",
+        "type": "FIX",
+        "priority": "P1",
+        "status": "BACKLOG",
+        "zone": "cross-service/",
+        "owner": "po",
+        "created_by": "po-devteam-triage-20260716T0637",
+        "source": "cow-20260716T052700",
+        "note": "RECURRING (2nd occurrence 07-14 + 07-16T05:15Z; recurring-bug-escalation -> FIX this triage). Root: docs/agents/cowork-team/flow/pressure-cadence.md L137,140-141,144-145,149. Prior lesson feedback_cowork_chef_mutex_echo_jq_mangles_escaped_newline exists but the doc is STILL vulnerable — the fix never landed in the doc (or regressed). 07-16 only avoided a double-post because the dispatcher computed the mutex file-direct from memory; a dispatcher following the doc LITERALLY double-posts to users. FIX: replace echo-a-JSON-payload with file-direct jq -c ... docs/data/cowork-schedule.json + jq -n --argjson bound params; ideally EXTRACT the mutex to a tested scripts/ helper (per CLAUDE.md script-persistence) instead of shell-in-markdown. DISTINCT vector from UC-CCA-P3 (published-marker lifecycle) and FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS (router intent namespace). AC: on the 05:15Z coincidence tick a literal doc-follower fires exactly 1 CHEF dish; add a regression guard that cowork-schedule.json round-trips through the mutex membership check without echo corruption. SECOND-ORDER (fold, do not re-mint): audit whether other flows route fix requests via custom payload sub-fields instead of .signal_queue.rows[] — this fix request itself was silently dropped on 07-14 as payload.robustness_note_for_dev_team.",
+        "created_at": "2026-07-16T07:07:00Z"
+      },
+      {
+        "id": "FIX-VNINDEX-ESTIMATE-IMPLAUSIBLE-DELTA-GATE",
+        "title": "VN-Index estimate cites implausible delta (1280.5 / -526pp ~29% move) with no plausibility gate — tier-4 fallback estimate (is_estimate=true, prevFetchedAt=null) emits a wrong-but-non-null vnIndexDelta that chef dishes publish to MARKET uncaught; add a plausibility bound on the vnIndex delta",
+        "type": "FIX",
+        "priority": "P2",
+        "status": "BACKLOG",
+        "zone": "apps/macro-indicators/",
+        "owner": "po",
+        "created_by": "po-tnb-c110-triage-20260716",
+        "source": "docs/handoffs/tnb-audit-latest.md#F-VNINDEX-ESTIMATE-IMPLAUSIBLE-DELTA",
+        "note": "TNB c110 NEW finding (MED-HIGH, data-integrity, affects MARKET-published chef dishes). Needs a BA spec for the plausibility bound (threshold + suppress-vs-flag decision); mirror the existing gold >$4,300 regime-drift check in chef.md Step 6. Producer-side root: macro-indicators vnIndex estimate/delta path emits -526.13 against a tier-4 fallback level (1280.5 vs live ~1806). RAW: docs/data/cycle-snapshot-20:21.json macro_snapshot.vnIndex=1280.5, vnIndex_is_estimate=true, vnIndex_source_tier=4, vnIndexDelta=-526.13. DISTINCT from BA-FIX-MACRO-SNAPSHOT-DELTAS-NULL (null oil/gold/usdVnd deltas) — this is a wrong-but-non-null vnIndex delta. Route via BA spec (not a direct FIX).",
+        "created_at": "2026-07-16T07:07:00Z"
+      },
+      {
+        "id": "CLEAN-COWORK-DISPATCHER-TELEMETRY-DRAIN-DIR",
+        "title": "cowork-dispatcher per-tick telemetry snapshots ({tick,verdict,drift_min,matched_slots,...}) are written into docs/signals/ where the drain script skips them as non-signal-shape — ~50 accumulate and keep the drain inbox pinned near the 50-file MANDATORY-DRAIN threshold every tick; redirect telemetry to a non-drain dir (or self-prune) + sweep old price_anomaly_*.json",
+        "type": "CLEAN",
+        "priority": "low",
+        "status": "BACKLOG",
+        "zone": "docs/agents/cowork-team/flow/",
+        "owner": "po",
+        "created_by": "po-devteam-triage-20260716T0637",
+        "source": "devteam-dispatcher-hygiene-20260716T0637",
+        "note": "PLAN-ONLY capture (peer-produced files — NOT to be deleted autonomously). Recurring drain-pressure: per-tick cowork-team-<ISO>.json telemetry + stale price_anomaly_*.json (07-02/03/04/13) sit in docs/signals/ and the drain skips them as non-signal shape, so the inbox stays near the 50-file cap. FIX: cowork-team flow (telemetry.md / main.md Step 6 emit) should write per-tick telemetry to a non-drain directory (e.g. docs/data/cowork-telemetry/ or docs/signals/telemetry/ excluded from the drain glob) and/or prune its own snapshots; sweep the 4 old price_anomaly files. 10 of the residue files are git-tracked — dev must reconcile .gitignore too.",
+        "created_at": "2026-07-16T07:07:00Z"
       }
     ],
     "closed_sprints": [

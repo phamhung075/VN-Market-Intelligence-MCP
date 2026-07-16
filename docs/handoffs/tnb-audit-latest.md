@@ -145,3 +145,9 @@ Takes effect starting the next chef cycle. Once live, TNB (and any file-proxy re
 - Notebook git-commit — SKIPPED, no Bash/git tool. Notebook was written via `Write`/`Edit` only and remains uncommitted (see Persisting Blocker #5).
 
 ---
+
+## PO ACK
+- Read by: po
+- At: 2026-07-16T07:08Z
+- Tasks created: `FIX-VNINDEX-ESTIMATE-IMPLAUSIBLE-DELTA-GATE` (from F-VNINDEX-ESTIMATE-IMPLAUSIBLE-DELTA, MED-HIGH — P2, zone apps/macro-indicators/, routes via BA spec: plausibility bound on the vnIndex delta mirroring the gold >$4,300 regime-drift check). Annotated `FIX-CHEF-EVENING-DUP-DATE-MISLABEL-INVESTIGATE` per Persisting Blocker #4: component 2 (double-publish) CONFIRMED real + folded to UC-CCA-P3, row now scoped to component 1 (chef.md UTC-date-header fix).
+- Skipped findings: F-CHEF-MORNING-MISS-0715 + F-CHEF-EOD-DORMANT (already tracked — `SPIKE-COWORK-GUARANTEED-SLOT-SUPERSEDE-WIRING`; WATCH next business day, escalate priority if pattern persists); F-CHEF-EVENING-DOUBLE-PUBLISH (already P0 `UC-CCA-P3`); F-MCP-SUBAGENT-SYSTEMIC (already `FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK` P1 — signal-1 alert-commander no-Bash folds here too); F-L4-TOKEN-SUMMARY-MISMATCH (LOW, needs raw WORK msg — defer); F-L6-AUDIT-VISIBILITY-GAP (RESOLVED — auto-cured this cycle, verify $L6_GAP_TOKENS line lands next chef dish); BCTC serve-layer gap (bctc-analyst-owned, no new evidence).
