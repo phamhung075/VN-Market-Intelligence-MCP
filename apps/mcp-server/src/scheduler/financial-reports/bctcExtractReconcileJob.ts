@@ -31,6 +31,17 @@
  *      Under cap          → stays 'pek_triggered', reconcile_attempts++,
  *        uniform re-fire policy (see below).
  *
+ * ── Emission circuit breaker (FIX-BCTC-RECONCILE-EMISSION-CIRCUIT-BREAKER) ──
+ * The per-row fail-loud BUG above is emitted individually ONLY when this
+ * run's exhausted-row count stays below RECONCILE_DORMANCY_ROW_THRESHOLD AND
+ * the shared PEK producer (bctc_layout_units) is fresh. Once either signal
+ * indicates systemic dormancy (many rows exhausting together, or the
+ * producer hasn't written anything in RECONCILE_PRODUCER_STALE_DAYS), every
+ * exhausted row this run is folded into ONE run-summary BUG instead — see
+ * the constants + the post-loop "Circuit breaker" block below. The
+ * enrich_failed status transition itself is NEVER gated by this — only the
+ * notification shape changes.
+ *
  * ── Re-fire-vs-passive decision (QA-flagged open point, resolved here) ──────
  * ADOPTED: uniform "always re-fire triggerPekExtractionForReport() on every
  * still-zero reconciliation pass" — bounded by the SAME MAX_RECONCILE_ATTEMPTS
@@ -108,6 +119,40 @@ export const MAX_RECONCILE_ATTEMPTS = 8;
 
 /** Default max items per run. */
 const DEFAULT_BATCH_SIZE = 20;
+
+/**
+ * Systemic-dormancy circuit breaker — FIX-BCTC-RECONCILE-EMISSION-CIRCUIT-BREAKER.
+ *
+ * Without this breaker, a systemic outage (PEK/pdf-extractor pipeline down,
+ * or the whole producer path dormant) manifests as EVERY exhausted row in a
+ * batch firing its own fail-loud Telegram BUG — a 76+ report storm (~1 dup /
+ * 30-min tick), each burning a full router→PO archive cycle (churn without
+ * convergence). The breaker does NOT change the per-row data-integrity path
+ * (updateEnrichFailed.run still commits for every exhausted row, every pass,
+ * unconditionally) — it only changes how the notification is SHAPED once the
+ * failure looks systemic rather than isolated:
+ *   - >= this many rows exhausted in a single run, OR
+ *   - the shared producer (bctc_layout_units, written by the PEK pipeline)
+ *     hasn't landed ANY row in RECONCILE_PRODUCER_STALE_DAYS
+ * → collapse the whole run's exhausted-row set into ONE run-summary BUG
+ * instead of one-per-row. Below threshold with a healthy producer, today's
+ * per-row fail-loud emission is unchanged (isolated one-offs stay isolated).
+ */
+export const RECONCILE_DORMANCY_ROW_THRESHOLD = parseInt(
+  Bun.env["BCTC_RECONCILE_DORMANCY_ROW_THRESHOLD"] ?? "3",
+  10,
+);
+
+/**
+ * Producer-freshness staleness window (days). If the PEK pipeline hasn't
+ * written a single bctc_layout_units row in this long, the whole extraction
+ * producer is presumed dormant — treat ALL of this run's exhausted rows as
+ * one systemic incident regardless of count.
+ */
+export const RECONCILE_PRODUCER_STALE_DAYS = parseInt(
+  Bun.env["BCTC_RECONCILE_PRODUCER_STALE_DAYS"] ?? "2",
+  10,
+);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Concurrency guard
@@ -308,6 +353,19 @@ export async function runBctcExtractReconcileJob(opts: {
       `UPDATE bctc_vps_queue SET reconcile_attempts = reconcile_attempts + 1, last_attempt = datetime('now') WHERE id = ?`,
     );
 
+    // ── Circuit-breaker accumulator — FIX-BCTC-RECONCILE-EMISSION-CIRCUIT-
+    //    BREAKER. Exhausted rows are NOT bugged inline anymore; collected
+    //    here so the post-loop breaker decision (see below the loop) can see
+    //    the WHOLE run's incidence count before choosing per-row vs.
+    //    one-summary emission shape. ─────────────────────────────────────────
+    const exhaustedRows: Array<{
+      ticker: string;
+      sortKey: string;
+      reportId: string | undefined;
+      attempts: number;
+      bugMsg: string;
+    }> = [];
+
     // ── 2. Reconcile each row ─────────────────────────────────────────────────
     for (const row of rows) {
       result.itemsProcessed++;
@@ -385,7 +443,10 @@ export async function runBctcExtractReconcileJob(opts: {
 
       const nextAttempt = row.reconcile_attempts + 1;
 
-      // ── Attempts exhausted → enrich_failed (terminal, fail-loud) ───────────
+      // ── Attempts exhausted → enrich_failed (terminal). Status transition
+      //    commits unconditionally, every pass, for every exhausted row — the
+      //    circuit breaker below only changes how the NOTIFICATION is
+      //    shaped, it never touches this write. ───────────────────────────────
       if (nextAttempt >= MAX_RECONCILE_ATTEMPTS) {
         updateEnrichFailed.run(row.id);
         result.enrichFailed++;
@@ -407,17 +468,17 @@ export async function runBctcExtractReconcileJob(opts: {
           cap: MAX_RECONCILE_ATTEMPTS,
         });
 
-        const effectiveSendBug = deps.sendBugFn ?? defaultSendBug;
-        try {
-          await effectiveSendBug(bugMsg);
-        } catch (notifyErr) {
-          // Bug notification errors must NEVER block the fail-loud status
-          // transition — updateEnrichFailed.run() above already committed.
-          logger.warn("[bctcExtractReconcile] sendBugFn threw (non-fatal to fail-loud)", {
-            ticker: row.action_code,
-            error: notifyErr instanceof Error ? notifyErr.message : String(notifyErr),
-          });
-        }
+        // Emission deferred to the post-loop circuit-breaker decision (see
+        // "Circuit breaker" block below the loop) — collecting here rather
+        // than sending here is what lets the breaker see the WHOLE run's
+        // incidence count before choosing per-row vs. run-summary shape.
+        exhaustedRows.push({
+          ticker: row.action_code,
+          sortKey,
+          reportId: reportRow?.id,
+          attempts: nextAttempt,
+          bugMsg,
+        });
         continue;
       }
 
@@ -462,6 +523,87 @@ export async function runBctcExtractReconcileJob(opts: {
           sortKey,
           attempt: nextAttempt,
         });
+      }
+    }
+
+    // ── Circuit breaker — collapse systemic dormancy into ONE run-summary
+    //    BUG instead of one-per-row (FIX-BCTC-RECONCILE-EMISSION-CIRCUIT-
+    //    BREAKER). Tripped by EITHER signal:
+    //      (a) row-count — this run alone exhausted >=
+    //          RECONCILE_DORMANCY_ROW_THRESHOLD rows.
+    //      (b) freshness — the shared PEK producer (bctc_layout_units)
+    //          hasn't landed ANY row in RECONCILE_PRODUCER_STALE_DAYS —
+    //          presumed dormant, so every exhausted row this run shares one
+    //          root cause regardless of how many there are.
+    //    Below threshold with a healthy producer, behavior is UNCHANGED:
+    //    each exhausted row still fires its own fail-loud BUG (genuine
+    //    isolated one-offs must not be muted). ────────────────────────────────
+    if (exhaustedRows.length > 0) {
+      let producerStale = false;
+      try {
+        const freshnessRow = db
+          .query<{ isStale: number }, [number]>(
+            `SELECT (MAX(extracted_at) IS NOT NULL
+                     AND MAX(extracted_at) < datetime('now', '-' || ? || ' days')) AS isStale
+             FROM bctc_layout_units`,
+          )
+          .get(RECONCILE_PRODUCER_STALE_DAYS);
+        producerStale = !!freshnessRow?.isStale;
+      } catch (err) {
+        logger.warn("[bctcExtractReconcile] producer-freshness check failed (treated as not-stale)", {
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+
+      const countTripped = exhaustedRows.length >= RECONCILE_DORMANCY_ROW_THRESHOLD;
+      const breakerTripped = countTripped || producerStale;
+      const effectiveSendBug = deps.sendBugFn ?? defaultSendBug;
+
+      if (breakerTripped) {
+        const signals: string[] = [];
+        if (countTripped) {
+          signals.push(
+            `${exhaustedRows.length} rows exhausted this run >= threshold ${RECONCILE_DORMANCY_ROW_THRESHOLD}`,
+          );
+        }
+        if (producerStale) {
+          signals.push(
+            `producer dormant — MAX(bctc_layout_units.extracted_at) older than ${RECONCILE_PRODUCER_STALE_DAYS}d (no fresh PEK output)`,
+          );
+        }
+
+        const summaryMsg =
+          `[bctcExtractReconcile] RECONCILE CIRCUIT BREAKER TRIPPED — run-summary ` +
+          `(per-row BUGs suppressed, systemic dormancy detected): ` +
+          `${exhaustedRows.length} row(s) exhausted to enrich_failed this run — ` +
+          `${exhaustedRows.map((r) => `${r.ticker} ${r.sortKey}`).join(", ")}. ` +
+          `Shared symptom: 0 rows across bctc_layout_units/bctc_table_rows/bctc_md_tables ` +
+          `after cap ${MAX_RECONCILE_ATTEMPTS} reconciliation passes (each row; all queue rows ` +
+          `independently marked enrich_failed — this notification change does not affect that write). ` +
+          `Dormancy signal(s): ${signals.join(" AND ")}. ` +
+          `Action: investigate the shared pdf-extractor/PEK pipeline — this is a systemic ` +
+          `incident, do NOT triage these rows one-by-one.`;
+
+        try {
+          await effectiveSendBug(summaryMsg);
+        } catch (notifyErr) {
+          logger.warn("[bctcExtractReconcile] run-summary sendBugFn threw (non-fatal)", {
+            error: notifyErr instanceof Error ? notifyErr.message : String(notifyErr),
+          });
+        }
+      } else {
+        for (const r of exhaustedRows) {
+          try {
+            await effectiveSendBug(r.bugMsg);
+          } catch (notifyErr) {
+            // Bug notification errors must NEVER block the fail-loud status
+            // transition — updateEnrichFailed.run() already committed per-row above.
+            logger.warn("[bctcExtractReconcile] sendBugFn threw (non-fatal to fail-loud)", {
+              ticker: r.ticker,
+              error: notifyErr instanceof Error ? notifyErr.message : String(notifyErr),
+            });
+          }
+        }
       }
     }
 

@@ -38,6 +38,8 @@ import { ensureFinancialReportShellRow } from "../application/usecases/bctc/ensu
 import {
   runBctcExtractReconcileJob,
   MAX_RECONCILE_ATTEMPTS,
+  RECONCILE_DORMANCY_ROW_THRESHOLD,
+  RECONCILE_PRODUCER_STALE_DAYS,
   type BctcExtractReconcileDeps,
 } from "../scheduler/financial-reports/bctcExtractReconcileJob.js";
 
@@ -114,6 +116,22 @@ function seedMdTable(db: Database, reportId: string): void {
       (report_id, md_tables_json, ocr_as_markdown, table_count, page_count)
     VALUES (?, '[]', '# doc', 1, 1)
   `).run(reportId);
+}
+
+/**
+ * Seeds a bctc_layout_units row with a backdated extracted_at — used ONLY to
+ * simulate a dormant PEK producer for the circuit-breaker freshness signal.
+ * quarantined=0 is irrelevant here (the freshness check is a global
+ * MAX(extracted_at) over the whole table, not scoped by report_id or
+ * quarantine status) — reportId can be an unrelated probe id, never touching
+ * any queue row's own success check.
+ */
+function seedStaleLayoutUnit(db: Database, reportId: string, daysAgo: number): void {
+  db.prepare(`
+    INSERT INTO bctc_layout_units
+      (report_id, unit_id, schema_page, page_numbers_json, quarantined, extracted_at)
+    VALUES (?, 'probe-unit', 1, '[1]', 0, datetime('now', '-' || ? || ' days'))
+  `).run(reportId, daysAgo);
 }
 
 function makeDeps(overrides: Partial<BctcExtractReconcileDeps> = {}): BctcExtractReconcileDeps {
@@ -357,6 +375,125 @@ describe("bctcExtractReconcileJob", () => {
 
     const row = getQueueRow(testDb, "GAS", 2025, "Q4");
     expect(row?.status).toBe("enrich_failed");
+  });
+
+  // ── Emission circuit breaker — FIX-BCTC-RECONCILE-EMISSION-CIRCUIT-BREAKER ─
+
+  it("exports RECONCILE_DORMANCY_ROW_THRESHOLD and RECONCILE_PRODUCER_STALE_DAYS as positive integers", () => {
+    expect(RECONCILE_DORMANCY_ROW_THRESHOLD).toBeGreaterThan(0);
+    expect(Number.isInteger(RECONCILE_DORMANCY_ROW_THRESHOLD)).toBe(true);
+    expect(RECONCILE_PRODUCER_STALE_DAYS).toBeGreaterThan(0);
+    expect(Number.isInteger(RECONCILE_PRODUCER_STALE_DAYS)).toBe(true);
+  });
+
+  it("below dormancy threshold with a healthy producer → per-row BUGs unchanged (no regression on isolated one-offs)", async () => {
+    // Two isolated exhausted rows in one run — strictly below
+    // RECONCILE_DORMANCY_ROW_THRESHOLD (default 3) — must NOT trip the breaker.
+    const tickers = ["AAA", "BBB"];
+    expect(tickers.length).toBeLessThan(RECONCILE_DORMANCY_ROW_THRESHOLD);
+
+    for (const t of tickers) {
+      insertPekTriggeredRow(testDb, t, 2025, "Q4", { reconcileAttempts: MAX_RECONCILE_ATTEMPTS - 1 });
+      await seedShellRow(testDb, t, 2025, "Q4");
+    }
+    // No bctc_layout_units rows anywhere → MAX(extracted_at) is NULL → producer
+    // freshness check is NOT stale (no data ≠ stale data).
+
+    const bugCalls: string[] = [];
+    const deps = makeDeps({ sendBugFn: async (msg) => { bugCalls.push(msg); } });
+
+    const result = await runBctcExtractReconcileJob({ db: testDb, deps });
+    expect(result.enrichFailed).toBe(2);
+    expect(bugCalls).toHaveLength(2);
+    expect(bugCalls.some((m) => m.includes("AAA"))).toBe(true);
+    expect(bugCalls.some((m) => m.includes("BBB"))).toBe(true);
+    // Per-row shape preserved — not the run-summary breaker message.
+    for (const m of bugCalls) {
+      expect(m).toContain("RECONCILE EXHAUSTED");
+      expect(m).not.toContain("CIRCUIT BREAKER TRIPPED");
+    }
+
+    for (const t of tickers) {
+      const row = getQueueRow(testDb, t, 2025, "Q4");
+      expect(row?.status).toBe("enrich_failed");
+    }
+  });
+
+  it("row-count breaker: M >= threshold exhausted rows in one run → exactly 1 sendBug call (run-summary shape)", async () => {
+    const tickers = ["CCC", "DDD", "EEE", "FFF"].slice(0, RECONCILE_DORMANCY_ROW_THRESHOLD);
+    expect(tickers.length).toBeGreaterThanOrEqual(RECONCILE_DORMANCY_ROW_THRESHOLD);
+
+    for (const t of tickers) {
+      insertPekTriggeredRow(testDb, t, 2025, "Q4", { reconcileAttempts: MAX_RECONCILE_ATTEMPTS - 1 });
+      await seedShellRow(testDb, t, 2025, "Q4");
+    }
+    // No bctc_layout_units rows anywhere → producer freshness stays healthy;
+    // isolates this test to the row-count signal only.
+
+    const bugCalls: string[] = [];
+    const deps = makeDeps({ sendBugFn: async (msg) => { bugCalls.push(msg); } });
+
+    const result = await runBctcExtractReconcileJob({ db: testDb, deps });
+    expect(result.enrichFailed).toBe(tickers.length);
+
+    expect(bugCalls).toHaveLength(1);
+    const summary = bugCalls[0]!;
+    expect(summary).toContain("CIRCUIT BREAKER TRIPPED");
+    expect(summary).toContain(String(tickers.length));
+    expect(summary).toContain(String(MAX_RECONCILE_ATTEMPTS));
+    for (const t of tickers) {
+      expect(summary).toContain(t);
+    }
+
+    for (const t of tickers) {
+      const row = getQueueRow(testDb, t, 2025, "Q4");
+      expect(row?.status).toBe("enrich_failed");
+    }
+  });
+
+  it("freshness breaker: dormant producer alone (row count BELOW threshold) → exactly 1 sendBug call (run-summary shape)", async () => {
+    insertPekTriggeredRow(testDb, "GGG", 2025, "Q4", { reconcileAttempts: MAX_RECONCILE_ATTEMPTS - 1 });
+    await seedShellRow(testDb, "GGG", 2025, "Q4");
+    // Only 1 exhausted row this run — strictly below RECONCILE_DORMANCY_ROW_THRESHOLD.
+    expect(1).toBeLessThan(RECONCILE_DORMANCY_ROW_THRESHOLD);
+
+    // Simulate a dormant PEK producer: no fresh row landed in
+    // RECONCILE_PRODUCER_STALE_DAYS — unrelated probe report_id, never
+    // touching GGG's own (still-zero) success check.
+    seedStaleLayoutUnit(testDb, "unrelated-probe-report-id", RECONCILE_PRODUCER_STALE_DAYS + 1);
+
+    const bugCalls: string[] = [];
+    const deps = makeDeps({ sendBugFn: async (msg) => { bugCalls.push(msg); } });
+
+    const result = await runBctcExtractReconcileJob({ db: testDb, deps });
+    expect(result.enrichFailed).toBe(1);
+
+    expect(bugCalls).toHaveLength(1);
+    const summary = bugCalls[0]!;
+    expect(summary).toContain("CIRCUIT BREAKER TRIPPED");
+    expect(summary).toContain("GGG");
+    expect(summary).toContain("producer dormant");
+
+    const row = getQueueRow(testDb, "GGG", 2025, "Q4");
+    expect(row?.status).toBe("enrich_failed");
+  });
+
+  it("freshness breaker does NOT trip when the producer has landed a row recently (below row-count threshold)", async () => {
+    insertPekTriggeredRow(testDb, "HHH", 2025, "Q4", { reconcileAttempts: MAX_RECONCILE_ATTEMPTS - 1 });
+    await seedShellRow(testDb, "HHH", 2025, "Q4");
+
+    // Fresh (default extracted_at = now) unrelated probe row → producer is healthy.
+    seedStaleLayoutUnit(testDb, "unrelated-fresh-probe-report-id", 0);
+
+    const bugCalls: string[] = [];
+    const deps = makeDeps({ sendBugFn: async (msg) => { bugCalls.push(msg); } });
+
+    const result = await runBctcExtractReconcileJob({ db: testDb, deps });
+    expect(result.enrichFailed).toBe(1);
+
+    expect(bugCalls).toHaveLength(1);
+    expect(bugCalls[0]).toContain("RECONCILE EXHAUSTED");
+    expect(bugCalls[0]).not.toContain("CIRCUIT BREAKER TRIPPED");
   });
 
   // ── report_id re-derivation ──────────────────────────────────────────────
