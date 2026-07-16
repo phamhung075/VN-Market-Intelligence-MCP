@@ -27,6 +27,15 @@ afterAll(() => {
 });
 
 // Helper to build a minimal deps object for the cycle with all non-peer steps no-op
+//
+// macroFetchFn / vnstockSyncFn: CI-RED-e23a8b6a-FIX — this file mocked the
+// peer-sync path (syncSectorPeersFn) but left step A2 (macro/commodity Yahoo
+// Finance + SBV fetch) and step A3 (vnstock sync) un-stubbed, so every
+// runIntelligenceCycle() call here hit REAL outbound network. That passes in
+// local isolation (reachable network) but fails in CI's network-restricted
+// runner, bumping `errors` and breaking `expect(result!.errors).toBe(0)`.
+// Same idiom as NO_NET_BASE_DEPS in 106-intelligence-cycle.test.ts /
+// 1294-macro-spam-fix.test.ts (CI-RED-8081e584-FIX round 2).
 function buildBaseDeps(overrides: Record<string, unknown> = {}) {
   return {
     pollNewsFn: async () => ({ fetched: 0, inserted: 0, duplicates: 0, alerts: 0, errors: 0 }),
@@ -37,6 +46,8 @@ function buildBaseDeps(overrides: Record<string, unknown> = {}) {
     readUnnotifiedAlertsFn: async () => [],
     markAlertNotifiedFn: async () => {},
     getRecentAlertHistoryFn: async () => [],
+    macroFetchFn: async () => {},
+    vnstockSyncFn: async () => {},
     ...overrides,
   };
 }
