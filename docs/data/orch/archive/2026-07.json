@@ -8819,6 +8819,28 @@
       "completed_by": "qa",
       "qa_reviewed_at": "2026-07-09T08:56:21Z",
       "qa_note": "RAW-verified: commit 6f054ea3a touched exactly the 8 claimed files (git show --stat); f511c1d39 touched exactly orch-state.json; both present on origin/main (f511c1d39 IS origin/main HEAD). STEP ops-Sn grep confirms sequential S1-S6, no gaps/dupes; pre-existing duplicate-S2 bug fix confirmed via before/after diff (old S1 relocate-stock-catalog->S3, old S2 extract-computeDecision->S4, old S2 split-repositories->S6). 3 offender files confirmed genuinely absent from disk + git ls-files + repo-wide find. Brief section 5 DoD items 3-4 text confirmed verbatim-satisfied (runbook footnote + commit-boundary ops zone row + STEP ops-Sn enforcement line + 3 offenders folded). agent-father-S5 journal + notebook (85L, under 200L) confirmed. Board handoff f511c1d39 coherent: review lane, next_agent=qa, head synced (status=review, active_task_id unchanged, next_agent=qa). NON-BLOCKING gap noted: runbook Step 4/4b Commit-Gate Invariant has no direct hook in ops flow files (init.md/handlers.md/docker.md) -- enforcement relies entirely on the pre-existing PO/developer dispatch-prompt citation of the runbook Microservice Code-Change Close Gate heading (developer/flow/microservice-main.md:162, po/flow/sprint-signoff.md:13), not on ops own bootstrapped knowledge list. Acceptable for THIS task literal DoD (section 5 items 3-4 only require the doc text, not flow-file wiring) and mirrors the same enforcement model as the agents-architect Brief-Commit Invariant it is modeled on (self-attested, not code-gated) -- flagging for a possible future hardening task, not a blocker here."
+    },
+    {
+      "id": "UC-ASL-P1",
+      "type": "FIX",
+      "title": "Fix the self-defeating T2/T3 auditor gate: gate on the PREVIOUS subagent heartbeat; move tier-2/3 heartbeat authorship into the subagent end-of-cycle",
+      "status": "DONE_VERIFIED",
+      "priority": "P1",
+      "size": "S",
+      "zone": "cross-service/",
+      "sprint": "ULTRACODE-AUDIT-FIXALL",
+      "source": "ultracode-audit-2026-07-12",
+      "verdict": "CONFIRMED",
+      "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#auditor-signal-loop-P1",
+      "note": "The tier-2/3 gate reads a heartbeat the same run just wrote, so it never blocks. Gate on the prior-cycle subagent heartbeat and author the heartbeat in the subagent end-of-cycle.",
+      "created_at": "2026-07-13T19:31:11Z",
+      "created_by": "po",
+      "promoted_at": "2026-07-16T07:34:36Z",
+      "promoted_by": "dev-team (bounded-1 auto-pickup)",
+      "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+      "claimed_at": "2026-07-16T07:34:36Z",
+      "claimed_by": "dev-team (bounded-1 auto-pickup)",
+      "status_note": "qa APPROVED (commit 099281619); router RAW re-verified: auditor-tier1-probe.test.sh 91/91 GREEN (independent re-run), QA commit clean (2 QA docs, no code/orch-state/self-flip), dirty tree 109 unchanged. Promoted review->done_verified."
     }
   ],
   "closed_sprints": [

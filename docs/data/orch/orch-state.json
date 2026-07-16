@@ -8417,30 +8417,7 @@
         "closed_at": "2026-07-12T04:27:30Z"
       }
     ],
-    "done_verified": [
-      {
-        "id": "UC-ASL-P1",
-        "type": "FIX",
-        "title": "Fix the self-defeating T2/T3 auditor gate: gate on the PREVIOUS subagent heartbeat; move tier-2/3 heartbeat authorship into the subagent end-of-cycle",
-        "status": "DONE_VERIFIED",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "CONFIRMED",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#auditor-signal-loop-P1",
-        "note": "The tier-2/3 gate reads a heartbeat the same run just wrote, so it never blocks. Gate on the prior-cycle subagent heartbeat and author the heartbeat in the subagent end-of-cycle.",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "promoted_at": "2026-07-16T07:34:36Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-16T07:34:36Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "status_note": "qa APPROVED (commit 099281619); router RAW re-verified: auditor-tier1-probe.test.sh 91/91 GREEN (independent re-run), QA commit clean (2 QA docs, no code/orch-state/self-flip), dirty tree 109 unchanged. Promoted review->done_verified."
-      }
-    ],
+    "done_verified": [],
     "head": {
       "status": "idle",
       "active_task_id": null,
