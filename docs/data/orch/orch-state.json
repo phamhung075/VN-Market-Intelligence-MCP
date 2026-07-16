@@ -371,11 +371,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-07-16T14:56:13Z",
-    "updated_by": "dev-mcp-server (UC-MDH-P1 → REVIEW)"
+    "status": "in_progress",
+    "active_task_id": "UC-CRITIC-GATEWAY-CONTRACT-DRIFT",
+    "next_agent": "ba",
+    "next_action": "BOUNDED-1 auto-pickup claim of UC-CRITIC-GATEWAY-CONTRACT-DRIFT — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-16T15:26:17Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7140,24 +7141,6 @@
         "supervised": true
       },
       {
-        "id": "UC-CRITIC-GATEWAY-CONTRACT-DRIFT",
-        "type": "FIX",
-        "title": "HIGH-RISK: SSOT drift on the most-called primitive — CLAUDE.md mandates mcp__gateway__call_tool while gateway-call-contract.md mandates mcp__claude_ai_gateway__call_tool",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "CRITIC",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#completeness-critic",
-        "note": "The doc that exists to close 6 gateway call-error classes itself contains error-class #7: two different tool-binding prefixes for the same gateway (CLAUDE.md:50 vs gateway-call-contract.md:13,30-32). Reconcile to the ONE binding the live MCP client actually registers (determine empirically in a session where the gateway is UP), fix the loser doc, and audit §6 degraded-mode gateway-blind de-escalation rules. FIRST-HAND: this PO session hit gateway-blind — BOTH prefixes returned 'no such tool available' (server unreachable), so live-binding determination requires a healthy-gateway session.",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "plan_only": false,
-        "next_agent": "ba"
-      },
-      {
         "id": "UC-CRITIC-UNAUDITED-LANES-BATCH",
         "type": "SPIKE",
         "title": "Completeness-critic un-audited lanes batch (6): agent .md dual-copy, ops/incident flows, refine_bctc_md, VPS crawler, dev-* zone dispatch, tree-map DAG",
@@ -9034,9 +9017,33 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-16T14:26:55Z",
+    "last_triaged_at": "2026-07-16T15:26:17Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "UC-CRITIC-GATEWAY-CONTRACT-DRIFT",
+        "type": "FIX",
+        "title": "HIGH-RISK: SSOT drift on the most-called primitive — CLAUDE.md mandates mcp__gateway__call_tool while gateway-call-contract.md mandates mcp__claude_ai_gateway__call_tool",
+        "status": "IN_PROGRESS",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "CRITIC",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#completeness-critic",
+        "note": "The doc that exists to close 6 gateway call-error classes itself contains error-class #7: two different tool-binding prefixes for the same gateway (CLAUDE.md:50 vs gateway-call-contract.md:13,30-32). Reconcile to the ONE binding the live MCP client actually registers (determine empirically in a session where the gateway is UP), fix the loser doc, and audit §6 degraded-mode gateway-blind de-escalation rules. FIRST-HAND: this PO session hit gateway-blind — BOTH prefixes returned 'no such tool available' (server unreachable), so live-binding determination requires a healthy-gateway session.",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "plan_only": false,
+        "next_agent": "ba",
+        "promoted_at": "2026-07-16T15:26:17Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-16T15:26:17Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
