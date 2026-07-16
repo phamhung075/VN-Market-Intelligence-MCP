@@ -8997,6 +8997,30 @@
       "qa_verified_at": "2026-07-16T19:41:25Z",
       "qa_verified_by": "qa",
       "qa_report": "reports/TASK_REPORT_FR-OBS-01-FIX.md"
+    },
+    {
+      "id": "CI-RED-b51fbe13-FIX",
+      "title": "CI-RED-b51fbe13-FIX — CI RED: bun test (BSD3 brief sector-drift guard)",
+      "owner": "po",
+      "status": "DONE_VERIFIED",
+      "type": "FIX",
+      "zone": "cross-service/",
+      "created_at": "2026-07-16T20:03:05Z",
+      "files": [
+        "docs/analysis-briefs/BSR.md",
+        "docs/analysis-briefs/VIX.md",
+        "docs/analysis-briefs/DBC.md",
+        "apps/mcp-server/src/__tests__/BSD3-brief-sector-drift.test.ts"
+      ],
+      "origin_signal_id": "8a0a02371423de8cc179b9a00e25bdea45cfc228dda2aab55afb012643c5ced0",
+      "status_note": "AC: gh run list --branch main --limit 3 shows conclusion=success for a push AFTER b51fbe1304ddfa51a21c7d346e44ccf4226b5cbb (verification_gate=ci_green_on_subsequent_push). Priority: high. Failing job: bun test (src/__tests__/BSD3-brief-sector-drift.test.ts, 1 fail / 14452 pass). ROOT CAUSE: docs/analysis-briefs/{BSR,VIX,DBC}.md (added in commit ebbfda6a5 by report-analyzer) each carry a legacy '**Sector**:' line the BSD3 drift-guard forbids (sector SSOT = WATCHLIST_SEED domain field, never the brief). NOT flaky — reproduced deterministically locally (throws on BSR.md). FIX: remove the '**Sector**:' line from all 3 briefs (every other brief already complies; canonical template docs/references/analysis-ledger-template.md carries none). VERIFY: cd apps/mcp-server && bun test src/__tests__/BSD3-brief-sector-drift.test.ts must be 4/4 green, then full bun test green, then push. ci_red fingerprint=8a0a02371423de8cc179b9a00e25bdea45cfc228dda2aab55afb012643c5ced0 (MUST record on close else signal re-drains). No code generator re-emits the line, so line-removal is definitive; the BSD3 guard test is the structural recurrence-prevention.",
+      "updated_at": "2026-07-16T21:26:25Z",
+      "updated_by": "po",
+      "commit_sha": "320cb1d76",
+      "pushed": true,
+      "close_note": "CLOSED 2026-07-16T21:26:25Z (po triage tick 2026-07-16T21:07Z). Gate ci_green_on_subsequent_push SATISFIED — RAW-verified: b51fbe1304ddfa51a21c7d346e44ccf4226b5cbb is ancestor of HEAD 1f9fbf52b; FIX commit a757051e96871c73ae79115b5c69edea2ffaf0cc landed ([CI-RED-b51fbe13-FIX] drop forbidden **Sector** line from BSR/VIX/DBC, BSD3 guard); gh run list --branch main shows CI conclusion=success on 320cb1d76 (run 29532453232) and 7b13612e8 (run 29535011678) — both pushes AFTER b51fbe13 and after the FIX commit. ci_red fingerprint=8a0a02371423de8cc179b9a00e25bdea45cfc228dda2aab55afb012643c5ced0 recorded (prevents signal re-drain). No code generator re-emits the line; BSD3 guard test is the structural recurrence-prevention.",
+      "closed_by": "po",
+      "closed_at": "2026-07-16T21:26:25Z"
     }
   ],
   "closed_sprints": [
