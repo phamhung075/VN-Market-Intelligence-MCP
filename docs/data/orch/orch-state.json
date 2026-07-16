@@ -371,11 +371,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-07-16T20:32:06Z",
-    "updated_by": "developer"
+    "status": "in_progress",
+    "updated_at": "2026-07-16T23:28:19Z",
+    "updated_by": "dev-team",
+    "active_task_id": "FIX-BCTC-RECONCILE-EMISSION-CIRCUIT-BREAKER",
+    "next_agent": "dev-mcp-server",
+    "note": "dev-mcp-server working FIX-BCTC-RECONCILE-EMISSION-CIRCUIT-BREAKER (AC-3 emission circuit-breaker)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -8410,30 +8411,7 @@
       "updated_at": "2026-07-16T19:41:25Z",
       "updated_by": "qa"
     },
-    "ready": [
-      {
-        "id": "FIX-BCTC-RECONCILE-EMISSION-CIRCUIT-BREAKER",
-        "type": "FIX",
-        "mode": "fix",
-        "status": "READY",
-        "priority": "P0",
-        "size": "S",
-        "plan_only": false,
-        "zone": "mcp-server-scheduler",
-        "owner": "dev-mcp-server",
-        "next_agent": "dev-mcp-server",
-        "timebox": 90,
-        "depends": [],
-        "parent": "SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD",
-        "derived_from": "SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD",
-        "title": "Circuit-breaker for bctcExtractReconcileJob fail-loud emission: detect systemic producer-dormancy in a single reconcile run and batch/summarize/suppress the per-(ticker*quarter) RECONCILE-EXHAUSTED reports into ONE run-summary BUG instead of one terminal report per row (satisfies AC-3 of SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD).",
-        "note": "SPLIT FROM SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD AC-3, minted by PO report-triage tick 2026-07-16T22:37Z per the SPIKE's explicit 'MINT A FOLLOW-UP FIX, do not fix inline' + converge_note fast-track directive. INDEPENDENTLY SHIPPABLE: does NOT depend on AC-1 (infra-rollback verify) or AC-2 (dormancy root-cause diagnosis) — it only needs to detect systemic producer-dormancy and change the emission SHAPE, not fix the producer. WHY (RAW): bctcExtractReconcileJob walked the whole multi-quarter watchlist backlog (now back into 2024 quarters) marking each row enrich_failed (cap MAX_RECONCILE_ATTEMPTS=8) and emitting ONE fail-loud Telegram BUG per (ticker*quarter) = a 76+ report storm that continues ~1 dup/30-min tick (5 reconcile-exhausted dups across the last 3 router ticks; 2 this tick), each burning a full router->PO archive cycle = churn-without-convergence. EXACT EMISSION SITE: apps/mcp-server/src/scheduler/financial-reports/bctcExtractReconcileJob.ts, the `if (nextAttempt >= MAX_RECONCILE_ATTEMPTS)` terminal block (~lines 388-424) — currently `await effectiveSendBug(bugMsg)` fires once PER exhausted row inside the per-row loop. SCOPE = that one file (single-file change; add a run-level aggregator + dormancy predicate). DO-NOT-RE-MINT / DEDUP: distinct from FIX-AGENT-SIGNALS-IDENTICAL-DUP-EMISSION (agent_signals table dedup, different producer) and from FIX-BCTC-Q1-2026-STORED-PDF-INGEST-STALL-15T (stored-PDF ingest/announcement-reconcile stall, an earlier layer). This row does NOT touch the enrich_failed status transition itself (fail-loud state must still commit) — it changes only the NOTIFICATION shape.",
-        "status_note": "AC (verification_gate=code+behavioral, RAW not badges): (1) Within a single bctcExtractReconcileJob run, when the run exhausts >= K rows to enrich_failed (systemic-dormancy threshold, default K=3, make it a named const/env) OR global producer freshness is stale (MAX(bctc_layout_units.extracted_at) older than N days, default N=2), the job MUST NOT emit one fail-loud BUG per (ticker*quarter); it MUST instead emit exactly ONE run-summary BUG that lists the affected ticker*quarter set + total enrichFailed count + the shared symptom (0 rows / cap 8) + the dormancy signal that tripped the breaker. (2) Below the threshold (isolated failures, producer healthy), preserve today's per-row fail-loud emission unchanged (no regression on genuine one-off failures). (3) The enrich_failed status transition (updateEnrichFailed.run) still commits for every exhausted row regardless of emission shape — no data-integrity change. (4) Unit test: a run with M>=K synthetic exhausted rows produces exactly 1 sendBug call (assert call count == 1 with the summary shape); a run with <K produces per-row calls as before. VERIFY: `bun test apps/mcp-server/src/__tests__/bctc-extract-reconcile-job.test.ts` green + new breaker test green. Priority P0 — this is the churn-stopper for the accelerating report-storm; ship ahead of AC-1/AC-2 per SPIKE converge_note.",
-        "created_at": "2026-07-16T22:57:00Z",
-        "created_by": "po-report-triage-20260716T2237Z",
-        "source": "SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD (AC-3 decomposition)"
-      }
-    ],
+    "ready": [],
     "review": [
       {
         "id": "TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST",
@@ -9108,7 +9086,34 @@
     },
     "last_triaged_at": "2026-07-16T18:56:22Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-BCTC-RECONCILE-EMISSION-CIRCUIT-BREAKER",
+        "type": "FIX",
+        "mode": "fix",
+        "status": "IN_PROGRESS",
+        "priority": "P0",
+        "size": "S",
+        "plan_only": false,
+        "zone": "mcp-server-scheduler",
+        "owner": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "timebox": 90,
+        "depends": [],
+        "parent": "SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD",
+        "derived_from": "SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD",
+        "title": "Circuit-breaker for bctcExtractReconcileJob fail-loud emission: detect systemic producer-dormancy in a single reconcile run and batch/summarize/suppress the per-(ticker*quarter) RECONCILE-EXHAUSTED reports into ONE run-summary BUG instead of one terminal report per row (satisfies AC-3 of SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD).",
+        "note": "SPLIT FROM SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD AC-3, minted by PO report-triage tick 2026-07-16T22:37Z per the SPIKE's explicit 'MINT A FOLLOW-UP FIX, do not fix inline' + converge_note fast-track directive. INDEPENDENTLY SHIPPABLE: does NOT depend on AC-1 (infra-rollback verify) or AC-2 (dormancy root-cause diagnosis) — it only needs to detect systemic producer-dormancy and change the emission SHAPE, not fix the producer. WHY (RAW): bctcExtractReconcileJob walked the whole multi-quarter watchlist backlog (now back into 2024 quarters) marking each row enrich_failed (cap MAX_RECONCILE_ATTEMPTS=8) and emitting ONE fail-loud Telegram BUG per (ticker*quarter) = a 76+ report storm that continues ~1 dup/30-min tick (5 reconcile-exhausted dups across the last 3 router ticks; 2 this tick), each burning a full router->PO archive cycle = churn-without-convergence. EXACT EMISSION SITE: apps/mcp-server/src/scheduler/financial-reports/bctcExtractReconcileJob.ts, the `if (nextAttempt >= MAX_RECONCILE_ATTEMPTS)` terminal block (~lines 388-424) — currently `await effectiveSendBug(bugMsg)` fires once PER exhausted row inside the per-row loop. SCOPE = that one file (single-file change; add a run-level aggregator + dormancy predicate). DO-NOT-RE-MINT / DEDUP: distinct from FIX-AGENT-SIGNALS-IDENTICAL-DUP-EMISSION (agent_signals table dedup, different producer) and from FIX-BCTC-Q1-2026-STORED-PDF-INGEST-STALL-15T (stored-PDF ingest/announcement-reconcile stall, an earlier layer). This row does NOT touch the enrich_failed status transition itself (fail-loud state must still commit) — it changes only the NOTIFICATION shape.",
+        "status_note": "AC (verification_gate=code+behavioral, RAW not badges): (1) Within a single bctcExtractReconcileJob run, when the run exhausts >= K rows to enrich_failed (systemic-dormancy threshold, default K=3, make it a named const/env) OR global producer freshness is stale (MAX(bctc_layout_units.extracted_at) older than N days, default N=2), the job MUST NOT emit one fail-loud BUG per (ticker*quarter); it MUST instead emit exactly ONE run-summary BUG that lists the affected ticker*quarter set + total enrichFailed count + the shared symptom (0 rows / cap 8) + the dormancy signal that tripped the breaker. (2) Below the threshold (isolated failures, producer healthy), preserve today's per-row fail-loud emission unchanged (no regression on genuine one-off failures). (3) The enrich_failed status transition (updateEnrichFailed.run) still commits for every exhausted row regardless of emission shape — no data-integrity change. (4) Unit test: a run with M>=K synthetic exhausted rows produces exactly 1 sendBug call (assert call count == 1 with the summary shape); a run with <K produces per-row calls as before. VERIFY: `bun test apps/mcp-server/src/__tests__/bctc-extract-reconcile-job.test.ts` green + new breaker test green. Priority P0 — this is the churn-stopper for the accelerating report-storm; ship ahead of AC-1/AC-2 per SPIKE converge_note.",
+        "created_at": "2026-07-16T22:57:00Z",
+        "created_by": "po-report-triage-20260716T2237Z",
+        "source": "SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD (AC-3 decomposition)",
+        "claimed_at": "2026-07-16T23:28:19Z",
+        "claimed_by": "router",
+        "dispatched_at": "2026-07-16T23:28:19Z",
+        "dispatch_note": "Router deliberate dispatch tick 2026-07-16T23:07Z: PO-pre-approved READY/P0 AC-3 circuit-breaker (ship ahead of AC-1/AC-2 per SPIKE converge_note); dep-free single-file scope apps/mcp-server/src/scheduler/financial-reports/bctcExtractReconcileJob.ts. Deadlock-resolve: was parked in ready[] (unstamped -> BOUNDED-1 unclaimable, WIP=1 self-gate)."
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
