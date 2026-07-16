@@ -7644,6 +7644,28 @@
         "detail_ref": "docs/agents/dev-team/flow/main.md#Step-0b",
         "title": "dev-team flow Step 0b BOUNDED-1 idle-pickup runs BEFORE Step 1 PO triage with NO 'pendingSignals empty' guard — when head is idle AND a promotable backlog row exists AND pendingSignals is non-empty, BOUNDED-1's JUMP-TO-execute preempts PO triage and DROPS already-consumed file-drained signals (moved to processed/, fingerprinted)",
         "note": "MINTED 2026-07-16 by po — latent hazard flagged by router this tick (router HELD BOUNDED-1 manually to avoid the drop). Add a precondition to the BOUNDED-1 WIP gate in docs/agents/dev-team/flow/main.md Step 0b: do NOT JUMP-TO-execute when pendingSignals[] is non-empty (or when signal_queue has NEW rows to=po) — let Step 1 PO triage run first so drained signals are dispositioned, not dropped. Low priority (mitigated today by router discretion; only fires on the specific idle+promotable+pending-signals coincidence). AC: with head idle + a promotable backlog row + a non-empty pendingSignals[], the flow routes to Step 1 PO triage FIRST (no signal drop), and BOUNDED-1 idle-eval runs only after triage."
+      },
+      {
+        "id": "FIX-AGENTBOOTSTRAP-EAGER-EXECSYNC-COLDSTART",
+        "type": "FIX",
+        "priority": "P2",
+        "size": "M",
+        "status": "BACKLOG",
+        "zone": "apps/mcp-server/",
+        "title": "agentBootstrap buildToolNameMap() singleton blocks on execSync git rev-parse -> cascading TDZ flake on 1299b + real cold-start risk (SPIKE item #1)",
+        "detail": "SPIKE item #1 — the HIGH-severity follow-up that was dropped when items #2/#3/#4 were minted 2026-07-10 (FIX-CYCLEJOB-1294-FOLLOWUP-SWEEP, FIX-RAG-TEMPORAL-DECAY-TEST-JITTER, CI-PERFILE-STRUCTURAL-MITIGATION all exist; this one never got a row). Root cause of the recurring CI RED on 1299b-skill-gated-bootstrap.test.ts, re-observed this tick: CI run 29464553988 @ head 571818c2d = 14498 pass / 1 fail, delta since last GREEN 25cb69031 is 4 docs/chore/orch-state commits with ZERO product code; local isolated repro 9/9 pass 549ms. Mechanism: agentBootstrap.ts:358 `const toolNameMap = buildToolNameMap()` eagerly + synchronously probes ~107 tool-registration fns at module top-level; registerAgentMemoryTools -> getProjectRoot() runs blocking execSync('git rev-parse --show-toplevel') (projectRoot.ts:16). Under CPU starvation the git fork stalls past bun's 5s per-test timeout; the mid-flight-errored ES module instance is then permanently TDZ-poisoned ('Cannot access toolNameMap before initialization'), cascading to every remaining test in the file (6/9 failed in worst reproduced run, 11/24 runs under contention per SPIKE). Also a genuine production cold-start latency risk: server.ts:40 imports agentBootstrap on the live MCP boot path and ~30 test files import it transitively (this is the 'rotating failing file' blast radius). FIX options: remove the subprocess from the eval path -> memoize project-root via import.meta.dir walk-up (no git spawn), OR make registerAgentMemoryTools' project-root resolution lazy (resolve at tool-invocation, not at the registration probe). AC: no execSync on the module-eval path + cold-start non-regression guard + all ~107 tool names resolve + 1299b 9/9 green + ~30 agentBootstrap-importer tests green. PLAN-ONLY backlog for BOUNDED-1 — do NOT dispatch this tick.",
+        "files": [
+          "apps/mcp-server/src/interface/mcp/bootstrap/agentBootstrap.ts",
+          "apps/mcp-server/src/infrastructure/projectRoot.ts"
+        ],
+        "baseline_pass": true,
+        "related": [
+          "docs/spikes/SPIKE_CI-PERFILE-ISOLATION-FLAKE.md",
+          "docs/signals/processed/ci-red-571818c2-20260716014951.json"
+        ],
+        "created_by": "po-triage-20260716T0158Z",
+        "verify_note": "repeat-flaker: SPIKE reproduced 11/24 under contention + re-observed CI RED this tick. Router suggested P3 grooming; SPIKE rated HIGH (production boot path + ~30-file blast radius + recurring triage cost) -> PO minted P2 as PLAN-ONLY backlog.",
+        "created_at": "2026-07-16T02:01:00Z"
       }
     ],
     "closed_sprints": [
