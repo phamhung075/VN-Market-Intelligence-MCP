@@ -371,12 +371,12 @@
     }
   ],
   "head": {
-    "active_task_id": null,
-    "next_action": "idle — UC-ASL-P1 promoted done_verified; awaiting next tick",
-    "next_agent": "router",
-    "status": "idle",
-    "updated_at": "2026-07-16T08:02:45Z",
-    "updated_by": "dev-team (UC-ASL-P1 promoted done_verified)"
+    "status": "in_progress",
+    "active_task_id": "CI-RED-da847805-FIX",
+    "next_agent": "dev-mcp-server",
+    "next_action": "dev-mcp-server: quarantine/stabilize 013-rag-retriever.test.ts bun native segfault (_deprecated RAG, tests-only); verify CI bun-test green on a NEW-sha push (same-sha re-run does not count).",
+    "updated_at": "2026-07-16T09:02:03Z",
+    "updated_by": "dev-team (dispatch CI-RED-da847805-FIX)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -412,10 +412,22 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-16T06:53:10Z",
-    "_updated_by": "dev-team (0a-D drain, tick 2026-07-16T06:37Z)",
+    "_updated_at": "2026-07-16T09:01:25Z",
+    "_updated_by": "cowork-dispatcher",
     "archive": [],
-    "rows": [],
+    "rows": [
+      {
+        "id": "cowork-chef-eod-nonpublish-20260716T0845Z",
+        "summary": "chef-eod EOD dish did NOT publish (unified-agent bailed steps 2-8) + published:chef-eod:2026-07-16 marker leaked as false tombstone. RAW-verified 2 planes (no MARKET post >=08:45Z; no synthesis/notebook). Marker blocks manual retry until 07-17.",
+        "severity": "WARN",
+        "status": "NEW",
+        "ts": "2026-07-16T09:01:25Z",
+        "from": "cowork-team/dispatcher",
+        "to": "po",
+        "type": "diagnosis",
+        "payload_ref": "docs/handoffs/2026-07-16-chef-eod-nonpublish-and-marker-leak.md"
+      }
+    ],
     "last_triaged_at": "2026-07-15T20:56:10Z",
     "last_triaged_by": "po"
   },
@@ -7686,15 +7698,6 @@
         "source": "devteam-dispatcher-hygiene-20260716T0637",
         "note": "PLAN-ONLY capture (peer-produced files — NOT to be deleted autonomously). Recurring drain-pressure: per-tick cowork-team-<ISO>.json telemetry + stale price_anomaly_*.json (07-02/03/04/13) sit in docs/signals/ and the drain skips them as non-signal shape, so the inbox stays near the 50-file cap. FIX: cowork-team flow (telemetry.md / main.md Step 6 emit) should write per-tick telemetry to a non-drain directory (e.g. docs/data/cowork-telemetry/ or docs/signals/telemetry/ excluded from the drain glob) and/or prune its own snapshots; sweep the 4 old price_anomaly files. 10 of the residue files are git-tracked — dev must reconcile .gitignore too.",
         "created_at": "2026-07-16T07:07:00Z"
-      },
-      {
-        "id": "CI-RED-da847805-FIX",
-        "title": "CI-RED-da847805-FIX — CI RED: bun test (013-rag-retriever.test.ts native segfault, apps/mcp-server _deprecated RAG)",
-        "owner": "po",
-        "status": "BACKLOG",
-        "zone": "apps/mcp-server/",
-        "created_at": "2026-07-16T08:55:06Z",
-        "status_note": "AC: gh run list --branch main --limit 3 shows conclusion=success for a push AFTER da847805231d0252ed6e092a4f5b4f7d678fed67 (verification_gate=ci_green_on_subsequent_push; same-sha re-run does NOT count). Priority: high. Failing jobs: bun test. Root: whole-file crash of apps/mcp-server/src/__tests__/013-rag-retriever.test.ts — bun 1.3.13 native segfault (reproduced 2x in CI + 3x local), no surfaced assertion; imports src/infrastructure/rag/_deprecated/{vectorstore,retriever}.js (LanceDB native addon). Non-causal to commit da847805 (orch promotion + 2 QA docs; test code byte-identical to green parent 00000074). _deprecated RAG infra referenced ONLY by tests — zero production imports → quarantine (skip) or stabilize the native-crash test. ZONE apps/mcp-server (NOT dev-rag-service: that owns apps/rag-service Python only)."
       }
     ],
     "closed_sprints": [
@@ -8428,11 +8431,11 @@
     ],
     "done_verified": [],
     "head": {
-      "status": "idle",
-      "active_task_id": null,
-      "next_agent": "router",
-      "last_updated_at": "2026-07-16T08:02:45Z",
-      "last_updated_by": "dev-team (UC-ASL-P1 promoted done_verified)"
+      "status": "in_progress",
+      "active_task_id": "CI-RED-da847805-FIX",
+      "next_agent": "dev-mcp-server",
+      "last_updated_at": "2026-07-16T09:02:03Z",
+      "last_updated_by": "dev-team (dispatch CI-RED-da847805-FIX)"
     },
     "ready": [],
     "review": [
@@ -9003,7 +9006,21 @@
     },
     "last_triaged_at": "2026-07-16T07:34:36Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "CI-RED-da847805-FIX",
+        "title": "CI-RED-da847805-FIX — CI RED: bun test (013-rag-retriever.test.ts native segfault, apps/mcp-server _deprecated RAG)",
+        "owner": "po",
+        "status": "IN_PROGRESS",
+        "zone": "apps/mcp-server/",
+        "created_at": "2026-07-16T08:55:06Z",
+        "status_note": "AC: gh run list --branch main --limit 3 shows conclusion=success for a push AFTER da847805231d0252ed6e092a4f5b4f7d678fed67 (verification_gate=ci_green_on_subsequent_push; same-sha re-run does NOT count). Priority: high. Failing jobs: bun test. Root: whole-file crash of apps/mcp-server/src/__tests__/013-rag-retriever.test.ts — bun 1.3.13 native segfault (reproduced 2x in CI + 3x local), no surfaced assertion; imports src/infrastructure/rag/_deprecated/{vectorstore,retriever}.js (LanceDB native addon). Non-causal to commit da847805 (orch promotion + 2 QA docs; test code byte-identical to green parent 00000074). _deprecated RAG infra referenced ONLY by tests — zero production imports → quarantine (skip) or stabilize the native-crash test. ZONE apps/mcp-server (NOT dev-rag-service: that owns apps/rag-service Python only).",
+        "next_agent": "dev-mcp-server",
+        "claimed_at": "2026-07-16T09:02:03Z",
+        "claimed_by": "dev-team (dispatch CI-RED-da847805-FIX)",
+        "assigned_to": "69b0312e-df43-43a9-9e0b-bddf66d374e3"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
