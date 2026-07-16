@@ -233,4 +233,15 @@ orch-state: `UC-MDH-P1` IN_PROGRESS→REVIEW, `.head`→idle/qa via `scripts/orc
 **why-change:** Root cause one layer deeper than the mint note implied (already-PASS badge was for the empty-response edge case only).
 
 **Verified:** targeted `bun test src/__tests__/240-bctc-full.test.ts src/__tests__/1982-quality-burndown-CHIJ.test.ts` → 38 pass/0 fail (3 new FR-DEGRADE-01 tests: stale-flagged/fresh/no-push-log). `bun tsc --noEmit` exit 0. Full-suite bg run reds (1518 foreign-flow timeouts, 1407b coverage-map `market_messages`) are the pre-existing flaky class already documented at S20 — zero hits on bctcFullTools/240-bctc-full/1982-quality-burndown in either run.
+
+### STEP dev-mcp-server-S22 · dev-mcp-server · 2026-07-16T19:00:00Z
+**task-id:** FR-OBS-01-FIX
+**what-done:** `runBctcOverdueCheck` now sends an explicit WORK-channel Telegram message (new injectable `opts.sendWorkAlertFn`, default `sendTelegramWork`) whenever its batch `alerts` insert is a genuinely new row (`info.changes > 0`).
+**what-considered:**
+- Trust the existing "dispatched via Alert Commander pipeline" code comment vs RAW-verify the actual channel — RAW-verify: `notifyTelegramAlert` (`telegram.ts:592`) routes ALL high/critical severities to BUG, never WORK; confirmed by direct read, not the comment.
+- Re-route the shared `notifyTelegramAlert` pipeline itself to WORK for this signal type vs add a direct, independent WORK send in the job — direct send: re-routing the shared function would change behavior for every OTHER high/critical alert type (price_drop/volume_spike/etc.) sharing that pipeline; sibling `bctcBatchSweepJob.ts` already sets the precedent of a job sending its own WORK status directly.
+**why-decision:** AC is literally "does it alert WORK" — before this fix the honest answer was NO (mis-channeled to BUG); the fix must make WORK dispatch true without touching unrelated alert types.
+**why-change:** No code-comment claim contradicted; the comment was accurate for "some Telegram channel" but silent on WHICH one — this fix closes that specific gap.
+
+**Verified:** extended `316-bctc-overdue-check.test.ts` with 3 new tests (overdue→WORK send; not-overdue→no send; same-week re-run→no re-send) — 11/11 pass in-file; 26/26 across `1358a`/`1303i`/`1050` siblings. `bun tsc --noEmit` exit 0. Full-suite: 14575 pass/40 skip/46 fail — zero overlap with changed files (same pre-existing flaky class documented at S20/S21). Scheduler cron.schedule count A/B via git-stash: 3→3 unchanged; tool count 183 unaffected (no tool/cron added/removed).
 **Simplicity gate:** PASS — Q1 reuses existing SLA-check variable (no new abstraction), Q2 n/a, Q3 n/a, Q4 closes a real serve-path gap (debt reduction, not addition).

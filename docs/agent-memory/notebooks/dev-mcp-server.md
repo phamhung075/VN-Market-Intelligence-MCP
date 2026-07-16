@@ -1,17 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-07-16 — CI-RED-da847805-FIX (dev-team dispatch, FIX) → REVIEW, returned to router
-
-**Session:** 69b0312e-df43-43a9-9e0b-bddf66d374e3 (dev-team dispatch; task claimed/held by dispatcher; flipped `CI-RED-da847805-FIX` IN_PROGRESS→REVIEW + `.head`→idle via `scripts/orch-apply.sh`, did NOT self-promote DONE_VERIFIED)
-
-Root: `013-rag-retriever.test.ts` whole-file-crashed bun 1.3.13 (native segfault, no surfaced assertion) because it (+ siblings 011/012/135/security-sql-injection) imported `infrastructure/rag/_deprecated/{embeddings,vectorstore,retriever}.ts`, whose module-level `@lancedb/lancedb` native-addon import crashes on load. Repo-wide grep confirmed `_deprecated/` was tests-only (zero production imports) — PO-blessed disposition: delete outright (dead-code removal, preferred over `.skip`-quarantine). Deleted the 3 `_deprecated/*.ts` files + the 5 test files that imported them. This orphaned 2 barrels' re-export blocks (`rag/index.ts`, top-level `infrastructure/index.ts`) — both confirmed zero-consumer via repo-wide grep, so removed those blocks too (kept `tsc` clean) rather than leaving dangling imports. Updated the one stale doc line (`docs/architecture/microservice/mcp-server/infrastructure.md`) pointing at the deleted `rag/vectorstore.ts`. The deleted vectorstore's SQL-injection guards (`sanitizeFilterValue`/`validateActionCode`/`validateLevel`) are superseded — rag-service's Python `infrastructure/repositories.py` already re-implements identical `_sanitize`/`_validate_action_code` guards for the live LanceDB boundary; confirmed via grep before deleting, no unique security coverage lost. Left `@lancedb/lancedb` in `package.json` untouched (removing needs `bun install`+lockfile regen — unverifiable locally, out of scope for a RED-fix; flagged as an optional follow-up only).
-
-Verified: `bun tsc --noEmit` exit 0. Repo-wide grep: zero remaining `rag/_deprecated` or `@lancedb/lancedb` refs in any test file. Direct rag-consumer siblings (`p2-f-rag-http-rewire`, `1335-news-pipeline-rag-insert`, `ddd-1b-rag-http-client`, `1107-rag-recency-weight`, `ALPHA-S2-RAG-FTS-REBUILD-CRON`, `1840a-rag-wiring`): **32/32 pass**. Local `bun test` on the deleted crash file itself cannot be re-run (that was the segfault) — per task constraints the real gate is CI `bun test` green on the new sha (same-sha re-run does not count).
-
-Committed `456851797` (parent `c735fe8e3`, 11 files: 8 deletions + 3 edits — explicit pathspec, no `-A`), pushed. CI run to watch: `https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/29486509712` (bun test job). Flipped orch-state `CI-RED-da847805-FIX`→REVIEW, `.head`→idle/next_agent=qa (RAW-verify the new-sha CI run before DONE_VERIFIED).
-
-Zone health: tsc clean, 32/32 targeted rag-consumer siblings pass, dead-code net removal (-1719/+18 lines) | HEALTHY.
-
 ## 2026-07-16 — UC-MDH-P1 (dev-team dispatch, FIX) → REVIEW, returned to router
 
 **Session:** 69b0312e-df43-43a9-9e0b-bddf66d374e3 (dev-team dispatch; flipped `UC-MDH-P1` IN_PROGRESS→REVIEW + `.head`→idle via `scripts/orch-apply.sh`)
@@ -37,3 +25,17 @@ Verified: targeted `bun test src/__tests__/240-bctc-full.test.ts src/__tests__/1
 Committed `00dca96fe` (explicit pathspec: `bctcFullTools.ts` + `240-bctc-full.test.ts`). Flipped orch-state `FR-DEGRADE-01-FIX`→REVIEW, `.head`→idle/next_agent=qa.
 
 Zone health: tsc clean, 38/38 targeted pass (3 new), no tool/scheduler count change (handler-internals-only edit) | HEALTHY.
+
+## 2026-07-16 — FR-OBS-01-FIX (dev-team dispatch, FIX) → REVIEW, returned to router
+
+**Session:** 69b0312e-df43-43a9-9e0b-bddf66d374e3 (dev-team dispatch; flipped `FR-OBS-01-FIX` IN_PROGRESS→REVIEW + `.head`→idle via `scripts/orch-apply.sh`)
+
+Root-cause (sibling of FR-DEGRADE-01-FIX, same audit batch, signal `qc-FR-OBS-01-4005`): `bctcOverdueCheckJob` only inserts a batch `alerts` row (severity=high) and relies on the shared HIGH/CRITICAL dispatch (`intelligenceCycleJob` Step E → `notifyTelegramAlert`), which routes ALL high/critical severities to BUG by design — never WORK. So the AC question was answered NO before this fix: mis-channeled, not silently swallowed. Confirmed by direct read of `telegram.ts` (`notifyTelegramAlert` → `coreSend("bug", ...)`), corroborated by the sibling precedent `bctcBatchSweepJob.ts`, which already posts its own status directly to WORK via `sendTelegramWork`.
+
+Fix: `runBctcOverdueCheck` now sends an explicit WORK-channel message (new injectable `opts.sendWorkAlertFn`, default `sendTelegramWork`) whenever the batch insert is a genuinely NEW row (`info.changes > 0` — the existing per-week dedup id already prevents re-firing, no separate cooldown needed). The `alerts` row is unchanged (still feeds `get_alerts`/cascade). Updated stale "Alert Commander" doc comments in `schedulerJobTable.ts` + `financial-reports.md`.
+
+Verified: extended `316-bctc-overdue-check.test.ts` with 3 tests (overdue→WORK send; not-overdue→no send; same-week re-run→no re-send) — 11/11 pass. Targeted incl. `1358a`/`1303i`/`1050` siblings: 26/26 pass. `bun tsc --noEmit` exit 0. Full-suite: 14575 pass/40 skip/46 fail — zero overlap with changed files (pre-existing flaky class: vps_push_log/insider-tx/OCR-cache/foreign-flow timeouts + 1 deprecated-folder test). Scheduler cron.schedule count A/B via git-stash: 3→3 unchanged; tool count 183 unaffected.
+
+Committed `<SHA>` (explicit pathspec: `bctcOverdueCheckJob.ts` + `schedulerJobTable.ts` + `316-bctc-overdue-check.test.ts` + `financial-reports.md`). Flipped orch-state `FR-OBS-01-FIX`→REVIEW, `.head`→idle/next_agent=qa.
+
+Zone health: tsc clean, 11/11 targeted pass (3 new), scheduler/tool counts unchanged (added 1 direct Telegram send, no new job/tool) | HEALTHY.

@@ -7,12 +7,27 @@
  *   - the deadline was crossed more than `overdueDaysThreshold` days ago
  *     (default 3).
  *
- * Slice 2 (this revision): the inserted alert row uses severity = "high" so
- * it is automatically picked up by `readUnnotifiedAlerts()` and dispatched to
- * the user Chat Channel by the existing Alert Commander pipeline (no new
- * Telegram code is added — the deterministic id provides cooldown/dedup).
+ * Slice 2: the inserted alert row uses severity = "high" so it is
+ * automatically picked up by `readUnnotifiedAlerts()` and dispatched by the
+ * existing intelligence-cycle Step E pipeline. That pipeline's
+ * `notifyTelegramAlert()` routes ALL high/critical severities to the BUG
+ * channel (report → dev triage) — it never reaches WORK. Relying on it alone
+ * left the "BCTC overdue" observability signal invisible to WORK-channel
+ * consumers (FR-OBS-01 quality-recheck WARN, 2026-06-10:
+ * "read_telegram_reports shows bctc-analyst alerts but no explicit overdue
+ * WORK alert from job").
  *
- * Slice 3 will register a daily cron entry in `src/scheduler/jobs.ts`.
+ * Slice 4 (FR-OBS-01-FIX, this revision): in addition to the `alerts` row
+ * (kept — other consumers such as `get_alerts` and the cascade chain below
+ * still read it), this job now sends an explicit WORK-channel Telegram
+ * message via `sendTelegramWork()` whenever a NEW batch alert is inserted
+ * (i.e. `info.changes > 0` — the existing per-week dedup id already prevents
+ * this from re-firing more than once per 7-day epoch, so no separate cooldown
+ * is needed). Mirrors the precedent in `bctcBatchSweepJob.ts`, which posts its
+ * own start/completion status to WORK. The send is injectable via
+ * `opts.sendWorkAlertFn` for tests; production defaults to `sendTelegramWork`.
+ *
+ * Slice 3 registered the daily cron entry in `src/scheduler/schedulerJobTable.ts`.
  *
  * Idempotency:
  *   The alert id is deterministic — `bctc-overdue:<CODE>:<YEAR>:<Q>:<UTC-DAY>`
@@ -48,6 +63,12 @@ interface RunOptions {
   overdueDaysThreshold?: number;
   /** Injectable nowMs for recovery dedup guard (tests only) */
   nowMsFn?: () => number;
+  /**
+   * Injectable WORK-channel Telegram sender (FR-OBS-01-FIX). Defaults to
+   * `sendTelegramWork` in production. Override in tests to assert the
+   * overdue→WORK-alert path without a real Telegram call.
+   */
+  sendWorkAlertFn?: (message: string) => Promise<boolean>;
 }
 
 interface RunResult {
@@ -271,7 +292,31 @@ export async function runBctcOverdueCheck(opts: RunOptions = {}): Promise<RunRes
         JSON.stringify(affectedActions),
         message,
       );
-      if ((info.changes ?? 0) > 0) alertsInserted += 1;
+      if ((info.changes ?? 0) > 0) {
+        alertsInserted += 1;
+
+        // FR-OBS-01-FIX: explicitly alert the WORK channel. The generic
+        // HIGH/CRITICAL `alerts` pipeline (intelligenceCycleJob Step E →
+        // notifyTelegramAlert) routes exclusively to BUG, never WORK — so
+        // without this direct send the overdue signal never reached WORK.
+        // Guarded by `info.changes > 0` so this fires only for a genuinely
+        // NEW batch (the alertId's weekly epoch already dedups re-runs).
+        const sendWorkAlert =
+          opts.sendWorkAlertFn ??
+          (async (msg: string) => {
+            const { sendTelegramWork } = await import(
+              "../../infrastructure/notifiers/telegram.js"
+            );
+            return sendTelegramWork(msg, { parseMode: "" });
+          });
+        try {
+          await sendWorkAlert(`[bctc-overdue] ${message}`);
+        } catch (workErr) {
+          logger.warn("[bctcOverdueCheck] WORK channel alert send failed (non-fatal)", {
+            error: workErr instanceof Error ? workErr.message : String(workErr),
+          });
+        }
+      }
     } catch (err) {
       logger.warn("[bctcOverdueCheck] batch alert insert failed", {
         error: err instanceof Error ? err.message : String(err),

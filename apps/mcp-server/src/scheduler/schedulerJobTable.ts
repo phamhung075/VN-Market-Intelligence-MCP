@@ -347,8 +347,10 @@ export function buildJobTable(ctx: SchedulerJobTableCtx): JobTableEntry[] {
     },
 
     // Daily 09:00 GMT+7 — BCTC overdue check (task 1018 slice 3).
-    // Inserted alerts (severity=high) flow through readUnnotifiedAlerts -> existing Alert
-    // Commander Telegram dispatch. Deterministic per-day id keeps cooldown/dedup intact.
+    // Inserted alerts (severity=high) still flow through readUnnotifiedAlerts -> the
+    // intelligence-cycle Step E pipeline, but that pipeline routes to BUG, not WORK.
+    // FR-OBS-01-FIX: the job itself also sends an explicit WORK-channel Telegram
+    // message on each NEW batch insert. Deterministic per-week id keeps cooldown/dedup intact.
     {
       name: 'bctcOverdueCheckJob',
       cron: CRONS.bctcOverdueCheck,

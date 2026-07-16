@@ -94,6 +94,73 @@ describe("runBctcOverdueCheck (Task 1018 slice 1)", () => {
     expect(unnotified[0]!.id).toMatch(/^bctc-overdue:batch:2025:Q4:/);
   });
 
+  // ── FR-OBS-01-FIX ──────────────────────────────────────────────────────────
+  // The generic HIGH/CRITICAL `alerts` dispatch (intelligenceCycleJob Step E →
+  // notifyTelegramAlert) routes exclusively to the BUG channel — it never
+  // reaches WORK. These tests prove the job's OWN explicit WORK-channel send.
+
+  it("FR-OBS-01: sends an explicit WORK-channel alert when a stock is overdue", async () => {
+    db.run("INSERT INTO watchlist (code, domain) VALUES ('FPT', 'general')");
+
+    const workMessages: string[] = [];
+    const result = await runBctcOverdueCheck({
+      db,
+      now: new Date("2026-04-05T03:00:00Z"),
+      sendWorkAlertFn: async (msg) => {
+        workMessages.push(msg);
+        return true;
+      },
+    });
+
+    expect(result.alertsInserted).toBe(1);
+    // Exactly one WORK-channel send, mentioning the overdue ticker.
+    expect(workMessages.length).toBe(1);
+    expect(workMessages[0]).toContain("FPT");
+    expect(workMessages[0]).toContain("Q4-2025");
+  });
+
+  it("FR-OBS-01: does NOT send a WORK-channel alert when nothing is overdue", async () => {
+    db.run("INSERT INTO watchlist (code, domain) VALUES ('VNM', 'general')");
+    db.run(
+      "INSERT INTO financial_reports (action_code, period_year, period_quarter, published_at) VALUES ('VNM', 2025, 4, '2026-03-15T00:00:00Z')",
+    );
+
+    const workMessages: string[] = [];
+    const result = await runBctcOverdueCheck({
+      db,
+      now: new Date("2026-04-10T03:00:00Z"),
+      sendWorkAlertFn: async (msg) => {
+        workMessages.push(msg);
+        return true;
+      },
+    });
+
+    expect(result.alertsInserted).toBe(0);
+    expect(workMessages.length).toBe(0);
+  });
+
+  it("FR-OBS-01: does NOT re-send the WORK-channel alert on a same-week re-run (dedup)", async () => {
+    db.run("INSERT INTO watchlist (code, domain) VALUES ('FPT', 'general')");
+
+    const workMessages: string[] = [];
+    const sendWorkAlertFn = async (msg: string) => {
+      workMessages.push(msg);
+      return true;
+    };
+
+    const day1 = new Date("2026-04-05T03:00:00Z");
+    const first = await runBctcOverdueCheck({ db, now: day1, sendWorkAlertFn });
+    expect(first.alertsInserted).toBe(1);
+    expect(workMessages.length).toBe(1);
+
+    // Same 7-day epoch — insertAlert is a no-op (info.changes === 0), so no
+    // second WORK send should fire.
+    const day2 = new Date("2026-04-06T03:00:00Z");
+    const second = await runBctcOverdueCheck({ db, now: day2, sendWorkAlertFn });
+    expect(second.alertsInserted).toBe(0);
+    expect(workMessages.length).toBe(1);
+  });
+
   it("does NOT alert when overdue by less than the threshold (default 3 days)", async () => {
     db.run("INSERT INTO watchlist (code, domain) VALUES ('VCB', 'banking')");
 

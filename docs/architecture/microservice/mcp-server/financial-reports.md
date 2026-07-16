@@ -24,7 +24,7 @@ Individual tool signatures: `docs/agents/tools/list/<tool>.md`
 
 | Job | Cadence | Purpose |
 |-----|---------|---------|
-| `bctcOverdueCheckJob` | Daily | Alert on overdue BCTC filings (threshold from earnings calendar) |
+| `bctcOverdueCheckJob` | Daily | Alert on overdue BCTC filings (threshold from earnings calendar). Inserts a batch `alerts` row (severity=high, per-week dedup id) AND sends an explicit WORK-channel Telegram message on each NEW batch (FR-OBS-01-FIX) — the shared HIGH/CRITICAL `alerts` dispatch (intelligenceCycleJob Step E → `notifyTelegramAlert`) routes exclusively to BUG, never WORK, so this direct send is required for the signal to actually reach WORK. |
 | `bctcReparseJob` | On-demand / 6h | Re-parse previously stored PDFs with improved extractor |
 | `bctcPdfPullJob` | `*/30 * * * *` | Downloads PDFs from VPS cache, upserts `financial_reports` shell row, fires async `/pek-extract` table-extraction trigger, marks `bctc_vps_queue.status='pek_triggered'` (FIX-BCTC-D3B) |
 | `bctcExtractReconcileJob` | `5,35 * * * *` | Resolves `pek_triggered` rows to `done`/`enrich_failed` by checking `bctc_layout_units`/`bctc_table_rows`/`bctc_md_tables` row counts once PEK has had runway; bounded re-fire via `MAX_RECONCILE_ATTEMPTS` (FIX-BCTC-D3C-RECONCILE-JOB) |
