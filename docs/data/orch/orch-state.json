@@ -374,9 +374,8 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "router",
-    "next_action": "REVIEW handoff: FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE — qa gate next (jq-only BOUNDED-1 disposition-gate fix, 12/12 verifier PASS).",
-    "updated_at": "2026-07-16T17:39:02Z",
-    "updated_by": "developer"
+    "updated_at": "2026-07-16T17:50:44Z",
+    "updated_by": "qa (FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE done_verified)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -623,8 +622,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-15T20:56:10Z",
-    "_updated_by": "po (mint 2 PLAN-ONLY: dispatch-mutex-bypass + vnindex-plausibility-gate)",
+    "_updated_at": "2026-07-16T17:50:56Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -7655,6 +7654,44 @@
         "detail_ref": "docs/handoffs/2026-07-16-chef-eod-nonpublish-and-marker-leak.md",
         "origin_signal_id": "cowork-chef-eod-nonpublish-20260716T0845Z",
         "note": "[po 2026-07-16T11:59:56Z] EXECUTION-DETERMINISM root cause distinct from the marker leak (marker leak = UC-CCA-P3). unified-agent gathered chef.md Steps 0-1 (16 tool calls, 107k tokens, 116s) then BAILED before publishing, returning a scope-clarification meta-narrative ('given the complexity of implementing all 8 steps... I need to clarify the scope', 'Steps 2-8 remain'). chef.md HAS a degraded/evening floor rule that publishes even on thin data (morning + 07-15 evening dishes both published YES) — the agent OVERRODE its own deterministic floor. FIRST observed occurrence (prior-art grep: no existing board/handoff row) — this row is the durable anchor so a 2nd occurrence escalates per feedback_recurring_bug_escalation (2+ -> block). Owner is a maintenance-lane agent (agent-father owns agent .md/flow determinism; cowork-refactory-expert is a co-candidate) => supervised:true + on-demand deliberate dispatch ONLY (do NOT let BOUNDED-1 idle-auto-launch a maintenance-lane row — the exact UC-ASL-P6 hazard). AC: chef.md cannot exit between Step 1 and publish without either (a) publishing the degraded-floor dish or (b) a code-enforced explicit abort that RELEASES any claimed marker; a plan-only spec first (determinism guard / anti-bail assertion in the flow). Not a P0: once-daily EOD, near-identical dish id 952 @ 07:27Z already covered EOD-ish state, blast radius LOW."
+      },
+      {
+        "id": "SPIKE-EVIDENCE-SCORE-CACHE-FRAGMENT-DECOUPLE",
+        "type": "SPIKE",
+        "status": "BACKLOG",
+        "priority": "high",
+        "plan_only": true,
+        "mode": "spike",
+        "timebox": 120,
+        "zone": "apps/mcp-server/",
+        "owner": "po",
+        "next_agent": "architect",
+        "title": "SPIKE — get_evidence_summary emits '(no fragments found)' despite fragmentCount 1-6 + byte-identical stale cross-ticker scores: evidence_scores cache decoupled from live evidence_fragments (prune vs cache-staleness)",
+        "question": "Why does get_evidence_summary return '(no fragments found)' for 8 watchlist tickers whose scoreRow.fragmentCount is 1-6, with byte-identical cross-sector scores (CTG=MBB=VPB=0.7500 @06-30; GVR=GAS=0.7565 @05-27) and stale score_date (05-18..06-30) that contradict live technicals? Determine root class: (a) fragments TTL-pruned AFTER the score was computed, vs (b) evidence_scores cache never recomputed/invalidated. Recommend whether get_evidence_summary should reconcile scoreRow.fragmentCount against the live SELECT and fail-loud/flag instead of silently emitting a stale score with an empty fragment body.",
+        "evidence": "Code: apps/mcp-server/src/interface/mcp/tools/macro/evidenceTools.ts — scoreRow=getLatestEvidenceScore(evidence_scores cache) L192 supplies bullish/bearish/neutral + fragmentCount; fragments=live SELECT FROM evidence_fragments L214-222 = decoupled source; L301 prints cached fragmentCount; L318-319 prints '(no fragments found)' when live SELECT empty. This is NOT the shipped FR-1.1 LR-lookup fix (commit 24d1a4b5a; BA-PREDICTION-EVIDENCE-REVIVAL DONE_VERIFIED b557b3a1b) which fixed direction/horizon, not score/fragment consistency. Affected: GVR/BSR/GAS/VEA (bullish>0.6), CTG/MBB/VPB (bearish), POW. Live technicals CONTRADICT bearish MBB/VPB (VPB momentum decile10 LEADER, RS 75.93 STRONG). Historically isolated to BSR (05-18 stale, carry-over since 07-12), now widened to 8 tickers on the 33->58 watchlist expansion.",
+        "byproduct": "Doc-heal: docs/agents/tools/list/get_evidence_summary.md documents param 'thesis_id' but live tool requires 'stock' (confirmed across 58 calls) — fix as a byproduct while touching this tool.",
+        "deliverable": "Findings doc: prune-vs-cache-staleness verdict + evidence_scores recompute/invalidation cadence probe + get_evidence_summary reconciliation/fail-loud recommendation.",
+        "source": "digest-predict cowork NO-OP 2026-07-16 (0 claims, calibration DEGRADING); notebook Known-patterns [MOI 07-16]. Routed via PO triage=digest-datagap-triage (session 0db23f02-8daf-4823-9b66-557848f0a2e5).",
+        "created_at": "2026-07-16T17:50:39Z",
+        "created_by": "po",
+        "baseline_pass": true
+      },
+      {
+        "id": "FIX-BCTC-VALIDATION-GATE-NONBANK-ZERO-SCALE",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "medium",
+        "plan_only": true,
+        "zone": "apps/mcp-server/",
+        "owner": "po",
+        "next_agent": "architect",
+        "title": "FIX (plan-only) — get_bctc_full validation_status='passed' on corrupt NON-BANK data: POW Q1/2026 total_assets=0, VEA 2025-Q4 EBITDA scale-error (~5.3M bn VND) both report 'Validation: passed'. Gate is a soft label, not a hard-block for zero/scale anomalies.",
+        "desc": "Generalize the bank-scoped truthful-validation_status principle to NON-BANK forms. Sibling: TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST AC-6 ('validation_status reflects hard-block not soft label') is BANK B02-TCTD-scoped and BLOCKED (sequenced after W2+W4). Architect: confirm whether the W5 AC-6 fix generalizes to non-bank (fold this in) or non-bank needs separate gate hardening. Gate must hard-block/flag total_assets=0 and out-of-scale EBITDA/ratios so corrupt scalars cannot pass to downstream consumers (digest-predict claim_text, chef/MARKET). Data-source side is separately tracked: SPIKE-BCTC-VEA-Q4-2025-SOURCE-PROBE (VEA Q4 source discovery); POW Q1/2026 total_assets=0 is a distinct NEW corrupt-extraction instance with no existing row.",
+        "deliverable": "Gate hardening (or explicit W5-fold verdict) + regression asserting corrupt zero/scale scalars flip validation_status to failed/flagged for non-bank forms.",
+        "source": "digest-predict cowork NO-OP 2026-07-16 (finding #4); notebook Known-patterns [MOI 07-16]. Routed via PO triage=digest-datagap-triage (session 0db23f02-8daf-4823-9b66-557848f0a2e5).",
+        "created_at": "2026-07-16T17:50:56Z",
+        "created_by": "po",
+        "baseline_pass": true
       }
     ],
     "closed_sprints": [
@@ -8356,14 +8393,47 @@
         "closed_at": "2026-07-12T04:27:30Z"
       }
     ],
-    "done_verified": [],
+    "done_verified": [
+      {
+        "id": "FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE",
+        "type": "FIX",
+        "title": "BOUNDED-1 promote: generalize is_plan_only + is_non_dev_next_agent_unrouted to read EFFECTIVE (board-OR-detail) disposition — close the inline-board-field-with-no-detail-entry leak (subsumes MAINTLANE-NEXTAGENT-GATE)",
+        "status": "DONE_VERIFIED",
+        "priority": "P1",
+        "size": "M",
+        "zone": "cross-service/",
+        "next_agent": "qa",
+        "supervised": null,
+        "created_at": "2026-07-16T17:02:01Z",
+        "created_by": "po (autolaunch_safety_hold adjudication, dev-team 16:37Z)",
+        "source": "dev-team autolaunch_safety_hold signal (dedup_key autolaunch_safety_hold:GUARD-COWORK-NOTEBOOK-AGENTS-SELF-EDIT-FLOW-DOC:architect-nextagent-nonroutable-v1)",
+        "origin_signal_id": "dev-team-20260716T162729Z-autolaunch-safety-hold-guard-cowork-nb-selfedit",
+        "subsumes": [
+          "FIX-DEVTEAM-BOUNDED1-MAINTLANE-NEXTAGENT-GATE"
+        ],
+        "file": "scripts/devteam-backlog-promote-bounded1.jq",
+        "status_note": "Implemented: effective_plan_only (board-OR-detail, mirrors effective_supervised) + effective_next_agent (detail-first/board-fallback, mirrors effective_owner) in scripts/devteam-backlog-promote-bounded1.jq; is_plan_only/is_non_dev_next_agent_unrouted now delegate to them, dropping the old board-next_agent-empty precondition. One dev-role-pattern check subsumes FIX-DEVTEAM-BOUNDED1-MAINTLANE-NEXTAGENT-GATE (kept supervised:true/SUPERSEDED-BY, not dispatched separately). Verifier scripts/audits/devteam-bounded1-detail-disposition-gate-verify.sh extended (AC-8 live-discovered + AC-9/AC-10 synthetic, AC-6 fixture corrected) 12/12 PASS. Direct proof: isolated fixtures of the 4 named P1 leak rows + all 8 UC-*-UNVERIFIED-BATCH rows (supervised stripped) confirmed promoted pre-fix, withheld post-fix. Updated docs/agents/dev-team/flow/main.md gate descriptions. DJ: sprint-FLOW-PRICE-ALPHA-LOOP-developer.md STEP developer-S5. jq-only change, no tsc/bun test applicable.",
+        "promoted_at": "2026-07-16T17:23:06Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-16T17:23:06Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "completed_at": "2026-07-16T17:39:02Z",
+        "completed_by": "developer",
+        "reviewed_at": "2026-07-16T17:39:02Z",
+        "reviewed_by": "developer",
+        "qa_verdict": "APPROVED",
+        "qa_verified_at": "2026-07-16T17:50:44Z",
+        "qa_verified_by": "qa",
+        "qa_report": "reports/TASK_REPORT_FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE.md"
+      }
+    ],
     "head": {
       "status": "idle",
       "active_task_id": null,
       "next_agent": "router",
-      "next_action": "REVIEW handoff: FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE — qa gate next (jq-only BOUNDED-1 disposition-gate fix, 12/12 verifier PASS).",
-      "updated_at": "2026-07-16T17:39:02Z",
-      "updated_by": "developer"
+      "updated_at": "2026-07-16T17:50:44Z",
+      "updated_by": "qa (FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE done_verified)"
     },
     "ready": [],
     "review": [
@@ -9019,35 +9089,6 @@
         "developer_completed_at": "2026-07-16T14:56:13Z",
         "developer_completed_by": "dev-mcp-server (UC-MDH-P1, dev-team bounded-1 pickup)",
         "review_note": "agentMemoryUpdateTools.ts:189 (registration-time, already function-scope) memoryDir now = process.env.AGENT_MEMORY_ROOT ?? resolve(getProjectRoot(),...docs/agent-memory). 1300b test beforeEach mkdtemps + sets env BEFORE registerAgentMemoryUpdateTools(); afterEach rm+unset; new regression test asserts zero new files under real sessions/. Purged pollution BY MD5 CLASS re-enumerated live (102 files, not brief stale 93): 36 ops(a003f0cc)+34 developer(35d6330b)+32 qa(35cdf1f8), 84 git rm (tracked) + 18 rm (untracked), plus 3 tracked test-artifact files (issues/patterns/modules test-*.md). Verified: 1300b file 14/14 pass x2 standalone; full bun test run1 14569 pass/46 fail, run2 14568 pass/47 fail -- zero 1300b/agent-memory hits in either fail list (pre-existing flaky class: vps_push_log/insider-tx/OCR-cache/foreign-flow timeouts). git status --porcelain docs/agent-memory/ clean of new files after both full runs. pnpm --filter vn-market check (tsc) exit 0. NOTE: staged+verified exact 89-file set (87 deletions+2 edits) before the 2 full-suite verification runs; a peer dev-team-router housekeeping tick committed during that window (11c35c0a8 chore(tasks): cold-evict...) and its bare git commit -m absorbed the shared index incl. my staged files -- verified via git diff-tree --name-status that commit contains EXACTLY my intended 89 files + the peer own orch-state.json change, no revert/no extra/no missing, HEAD==origin/main (already pushed). Content correct, only that commit message/trailer does not reference UC-MDH-P1 -- did not amend shared-main history mid-peer-activity (forbidden), documented in decision journal + notebook instead. qa: confirm sandbox test 14/14 pass, confirm zero docs/agent-memory/ pollution regrowth, confirm code diff at 11c35c0a8 matches detail_ref rescope note, promote to done_verified."
-      },
-      {
-        "id": "FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE",
-        "type": "FIX",
-        "title": "BOUNDED-1 promote: generalize is_plan_only + is_non_dev_next_agent_unrouted to read EFFECTIVE (board-OR-detail) disposition — close the inline-board-field-with-no-detail-entry leak (subsumes MAINTLANE-NEXTAGENT-GATE)",
-        "status": "REVIEW",
-        "priority": "P1",
-        "size": "M",
-        "zone": "cross-service/",
-        "next_agent": "qa",
-        "supervised": null,
-        "created_at": "2026-07-16T17:02:01Z",
-        "created_by": "po (autolaunch_safety_hold adjudication, dev-team 16:37Z)",
-        "source": "dev-team autolaunch_safety_hold signal (dedup_key autolaunch_safety_hold:GUARD-COWORK-NOTEBOOK-AGENTS-SELF-EDIT-FLOW-DOC:architect-nextagent-nonroutable-v1)",
-        "origin_signal_id": "dev-team-20260716T162729Z-autolaunch-safety-hold-guard-cowork-nb-selfedit",
-        "subsumes": [
-          "FIX-DEVTEAM-BOUNDED1-MAINTLANE-NEXTAGENT-GATE"
-        ],
-        "file": "scripts/devteam-backlog-promote-bounded1.jq",
-        "status_note": "Implemented: effective_plan_only (board-OR-detail, mirrors effective_supervised) + effective_next_agent (detail-first/board-fallback, mirrors effective_owner) in scripts/devteam-backlog-promote-bounded1.jq; is_plan_only/is_non_dev_next_agent_unrouted now delegate to them, dropping the old board-next_agent-empty precondition. One dev-role-pattern check subsumes FIX-DEVTEAM-BOUNDED1-MAINTLANE-NEXTAGENT-GATE (kept supervised:true/SUPERSEDED-BY, not dispatched separately). Verifier scripts/audits/devteam-bounded1-detail-disposition-gate-verify.sh extended (AC-8 live-discovered + AC-9/AC-10 synthetic, AC-6 fixture corrected) 12/12 PASS. Direct proof: isolated fixtures of the 4 named P1 leak rows + all 8 UC-*-UNVERIFIED-BATCH rows (supervised stripped) confirmed promoted pre-fix, withheld post-fix. Updated docs/agents/dev-team/flow/main.md gate descriptions. DJ: sprint-FLOW-PRICE-ALPHA-LOOP-developer.md STEP developer-S5. jq-only change, no tsc/bun test applicable.",
-        "promoted_at": "2026-07-16T17:23:06Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-16T17:23:06Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "completed_at": "2026-07-16T17:39:02Z",
-        "completed_by": "developer",
-        "reviewed_at": "2026-07-16T17:39:02Z",
-        "reviewed_by": "developer"
       }
     ],
     "qa": [],
@@ -9078,6 +9119,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-07-16T11:59:56Z",
-  "_updated_by": "po (triage 11:37Z: mint maint-lane-gate + chef-bail FIX rows)"
+  "_updated_at": "2026-07-16T17:50:56Z",
+  "_updated_by": "po"
 }

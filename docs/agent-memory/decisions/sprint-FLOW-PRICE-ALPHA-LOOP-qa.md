@@ -135,3 +135,12 @@
 - No decision-journal entry existed under this task-id pre-dispatch (dispatcher gave focused 5-AC brief, DJ-GATE-1 skipped) — flagged as caveat, closing now per router follow-up.
 **why-decision:** All 5 dispatch ACs independently PASS (not trusting dev's self-reported numbers): flag-off omission, flag-on exact reproduction, empty-string safety, tsc/mock-guard/test-count internal consistency, docs updated. PASS.
 **why-change:** No change from plan — router accepted verdict, this entry only closes the DJ-GATE-1 gap.
+
+### STEP qa-S16 · qa · 2026-07-16T18:10:00Z
+**task-id:** FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE
+**what-done:** RAW-ran `devteam-bounded1-detail-disposition-gate-verify.sh` myself (not trusting dev badge) — 12/12 PASS exit 0, incl. new AC-8/AC-9 (leak closed) + AC-6/AC-10/control (no over-block). Read full `.jq` diff: confirmed `is_non_dev_next_agent_unrouted` drops the old "board next_agent empty" precondition, both predicates delegate to `effective_plan_only`/`effective_next_agent` (board-OR-detail / detail-first-board-fallback), and `$detail_items[.id]` object-index is the pre-existing shape-defensive `from_entries`-keyed map — matches `effective_owner` style, no array-mis-index risk.
+**what-considered:**
+- Re-deriving the 4 named P1 leak rows + UC-*-UNVERIFIED-BATCH from scratch vs trusting dev's cited isolated-fixture proof in the commit body — accepted dev's cited proof as sufficient given the verifier's own AC-8 is live-discovered (no hardcoded ID) and independently reproduces the same class.
+- jq-only change, no tsc/bun test/DDD/mock-guard surface (no TS/Go touched) — Smart-Skip applies, ran only the dedicated verifier.
+**why-decision:** DJ-GATE-1 pre-check: developer-S5 entry present in this sprint's developer journal with matching task-id. All raw checks green, scope matches commit-stat exactly (7 files), no over-block regression. APPROVE.
+**why-change:** No change from plan.
