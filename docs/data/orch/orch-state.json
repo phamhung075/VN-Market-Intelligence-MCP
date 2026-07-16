@@ -374,8 +374,8 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "router",
-    "updated_at": "2026-07-16T19:41:25Z",
-    "updated_by": "qa"
+    "updated_at": "2026-07-16T20:32:06Z",
+    "updated_by": "developer"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -622,8 +622,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-16T17:50:56Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-07-16T21:00:34Z",
+    "_updated_by": "po-report-triage-20260716",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -7674,21 +7674,29 @@
         "baseline_pass": true
       },
       {
-        "id": "CI-RED-b51fbe13-FIX",
-        "title": "CI-RED-b51fbe13-FIX — CI RED: bun test (BSD3 brief sector-drift guard)",
-        "owner": "po",
+        "id": "SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD",
+        "type": "SPIKE",
+        "mode": "spike",
         "status": "BACKLOG",
-        "type": "FIX",
-        "zone": "cross-service/",
-        "created_at": "2026-07-16T20:03:05Z",
-        "files": [
-          "docs/analysis-briefs/BSR.md",
-          "docs/analysis-briefs/VIX.md",
-          "docs/analysis-briefs/DBC.md",
-          "apps/mcp-server/src/__tests__/BSD3-brief-sector-drift.test.ts"
+        "priority": "high",
+        "size": "M",
+        "plan_only": true,
+        "zone": "multi",
+        "owner": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "timebox": 180,
+        "title": "SPIKE (plan-only): BCTC structured-extraction pipeline DORMANT since mid-June (RAW: bctc_layout_units frozen 2026-06-10, bctc_table_rows frozen 2026-06-30) despite FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION DONE_VERIFIED 07-10 — bctcExtractReconcileJob then mass-terminalized the ENTIRE multi-quarter watchlist backlog (Q4/Q3/Q2/Q1-2025) as enrich_failed overnight 07-15 20:05Z->07-16 07:15Z, emitting 76 fail-loud RECONCILE-EXHAUSTED reports (report-storm). Determine WHY extraction is dormant + add an emission circuit-breaker.",
+        "question": "Why is the BCTC structured-extraction layer producing nothing since mid-June despite the DONE_VERIFIED 07-10 wiring fix, and why did bctcExtractReconcileJob mass-terminalize the whole watchlist backlog in one overnight sweep? Did an infra event (DB restore / VM-rebuild / named-volume swap) between 07-12 and 07-16 revert the fix's effects and reset queue rows to pending?",
+        "detail": "PO report-triage 2026-07-16T21:00Z. RAW-verified readonly on live named-volume market.db (docker exec vn-market-intelligence-mcp-mcp-server-1 bun): (1) all 12 Q4-2025 flood tickers (DBC/DXG/FRT/GEX/KDC/KDH/MSN/PDR/SAB/VIX/VJC/VND) exist in financial_reports as Q4-2025 with text_status=COMPLETE + pdf_path SET but LAYOUT=0 / TABLE_ROWS=0 / refine_status=PENDING and NO bctc_vps_queue row remaining (enrich_failed Q4-2025 queue count now 0). text_status=COMPLETE+pdf_path SET => discovery/fetch/OCR-text layers ALL healthy; the failure is purely at PEK-layout + agentic-refine structured extraction. This DEFINITIVELY rules out source-outage/VPS-down/DNS. (2) GLOBAL freshness: MAX(bctc_layout_units.extracted_at)=2026-06-10, MAX(bctc_table_rows.extracted_at)=2026-06-30 => nothing extracted for ~5wk/~2.5wk. These maxes are OLDER than SPIKE-BCTC-TABLEROWS-FROZEN-HOLLOW-DONE's 07-12 readings (that spike RAW-read layout_units growing to 07-12/1829 rows + table_rows 07-08/4091) => a DATA-LOSS/ROLLBACK event between 07-12 and 07-16 is strongly implied (cf. memory: VM-rebuild DESTROYS named volumes->restore; gateway/volume swaps). (3) bctcExtractReconcileJob walked the whole watchlist backlog backwards Q4->Q3->Q2->Q1-2025 overnight (07-15 20:05Z->07-16 07:15Z, ~1 ticker/30min) marking each enrich_failed (cap-8) and emitting ONE fail-loud telegram report per ticker*quarter = 76-report storm (PO archived all 121 overnight reports 3358-3478 as duplicate this tick to stop the re-surface churn; ACK path via process_telegram_report/markProcessed CONFIRMED working). DO-NOT-RE-TREAD (cross-ref, do not re-investigate): FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION (DONE_VERIFIED 07-10 — the wiring; THIS spike asks why it is not PRODUCING in current prod, not to re-design it); SPIKE-BCTC-TABLEROWS-FROZEN-HOLLOW-DONE (hollow-done + refine-cron dormancy F4/F5); FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP (table_rows producer durable backstop — the refine half); FIX-BCTC-D3C-FOLLOW-UP-RESET-ATTEMPTS (Arm-2 7d recycle re-exhausts because reconcile_attempts not zeroed — the per-row recycle mechanism); SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY (cadence guard). NET-NEW value = (a) infra rollback verification, (b) why extraction dormant since mid-June despite DONE_VERIFIED fix (cron registered+firing? PEK producing? fix effect reverted by rollback?), (c) a report-storm circuit-breaker so bctcExtractReconcileJob cannot emit one fail-loud per ticker*quarter against a systemically-dormant producer.",
+        "ac": "(AC-1 infra, route ops sub-question) verify whether a DB restore / VM-rebuild / named-volume swap occurred 07-12..07-16 (check .backups timestamps, launchd/compose history, market.db mtime vs extraction maxes) and whether it reverted the DONE_VERIFIED extraction data + reset queue rows to pending. (AC-2) RAW-establish why the structured-extraction pipeline (PEK layout + agentic-refine) has produced nothing since mid-June despite FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION DONE_VERIFIED: is the extraction cron registered and firing in current prod? is /pek-extract producing bctc_layout_units? is the refine trigger dormant (fold to FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP if same root)? (AC-3) design a circuit-breaker for bctcExtractReconcileJob's fail-loud emission (batch/summarize/suppress when producer is systemically dormant, not one report per ticker*quarter) — MINT A FOLLOW-UP FIX, do not fix inline. OUTPUT=findings doc docs/spikes/SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD.md.",
+        "related": [
+          "FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP",
+          "FIX-BCTC-D3C-FOLLOW-UP-RESET-ATTEMPTS",
+          "SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY"
         ],
-        "origin_signal_id": "8a0a02371423de8cc179b9a00e25bdea45cfc228dda2aab55afb012643c5ced0",
-        "status_note": "AC: gh run list --branch main --limit 3 shows conclusion=success for a push AFTER b51fbe1304ddfa51a21c7d346e44ccf4226b5cbb (verification_gate=ci_green_on_subsequent_push). Priority: high. Failing job: bun test (src/__tests__/BSD3-brief-sector-drift.test.ts, 1 fail / 14452 pass). ROOT CAUSE: docs/analysis-briefs/{BSR,VIX,DBC}.md (added in commit ebbfda6a5 by report-analyzer) each carry a legacy '**Sector**:' line the BSD3 drift-guard forbids (sector SSOT = WATCHLIST_SEED domain field, never the brief). NOT flaky — reproduced deterministically locally (throws on BSR.md). FIX: remove the '**Sector**:' line from all 3 briefs (every other brief already complies; canonical template docs/references/analysis-ledger-template.md carries none). VERIFY: cd apps/mcp-server && bun test src/__tests__/BSD3-brief-sector-drift.test.ts must be 4/4 green, then full bun test green, then push. ci_red fingerprint=8a0a02371423de8cc179b9a00e25bdea45cfc228dda2aab55afb012643c5ced0 (MUST record on close else signal re-drains). No code generator re-emits the line, so line-removal is definitive; the BSD3 guard test is the structural recurrence-prevention."
+        "created_at": "2026-07-16T21:00:34Z",
+        "created_by": "po-report-triage-20260716",
+        "verify_note": "PLAN-ONLY. RAW-verified readonly probe of live market.db this tick. Prior-art cross-referenced: does not re-mint FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION (done) nor the refine/recycle rows; net-new = infra-rollback verify + dormancy-in-prod + report-storm circuit-breaker."
       }
     ],
     "closed_sprints": [
@@ -9052,6 +9060,27 @@
         "developer_completed_at": "2026-07-16T14:56:13Z",
         "developer_completed_by": "dev-mcp-server (UC-MDH-P1, dev-team bounded-1 pickup)",
         "review_note": "agentMemoryUpdateTools.ts:189 (registration-time, already function-scope) memoryDir now = process.env.AGENT_MEMORY_ROOT ?? resolve(getProjectRoot(),...docs/agent-memory). 1300b test beforeEach mkdtemps + sets env BEFORE registerAgentMemoryUpdateTools(); afterEach rm+unset; new regression test asserts zero new files under real sessions/. Purged pollution BY MD5 CLASS re-enumerated live (102 files, not brief stale 93): 36 ops(a003f0cc)+34 developer(35d6330b)+32 qa(35cdf1f8), 84 git rm (tracked) + 18 rm (untracked), plus 3 tracked test-artifact files (issues/patterns/modules test-*.md). Verified: 1300b file 14/14 pass x2 standalone; full bun test run1 14569 pass/46 fail, run2 14568 pass/47 fail -- zero 1300b/agent-memory hits in either fail list (pre-existing flaky class: vps_push_log/insider-tx/OCR-cache/foreign-flow timeouts). git status --porcelain docs/agent-memory/ clean of new files after both full runs. pnpm --filter vn-market check (tsc) exit 0. NOTE: staged+verified exact 89-file set (87 deletions+2 edits) before the 2 full-suite verification runs; a peer dev-team-router housekeeping tick committed during that window (11c35c0a8 chore(tasks): cold-evict...) and its bare git commit -m absorbed the shared index incl. my staged files -- verified via git diff-tree --name-status that commit contains EXACTLY my intended 89 files + the peer own orch-state.json change, no revert/no extra/no missing, HEAD==origin/main (already pushed). Content correct, only that commit message/trailer does not reference UC-MDH-P1 -- did not amend shared-main history mid-peer-activity (forbidden), documented in decision journal + notebook instead. qa: confirm sandbox test 14/14 pass, confirm zero docs/agent-memory/ pollution regrowth, confirm code diff at 11c35c0a8 matches detail_ref rescope note, promote to done_verified."
+      },
+      {
+        "id": "CI-RED-b51fbe13-FIX",
+        "title": "CI-RED-b51fbe13-FIX — CI RED: bun test (BSD3 brief sector-drift guard)",
+        "owner": "po",
+        "status": "REVIEW",
+        "type": "FIX",
+        "zone": "cross-service/",
+        "created_at": "2026-07-16T20:03:05Z",
+        "files": [
+          "docs/analysis-briefs/BSR.md",
+          "docs/analysis-briefs/VIX.md",
+          "docs/analysis-briefs/DBC.md",
+          "apps/mcp-server/src/__tests__/BSD3-brief-sector-drift.test.ts"
+        ],
+        "origin_signal_id": "8a0a02371423de8cc179b9a00e25bdea45cfc228dda2aab55afb012643c5ced0",
+        "status_note": "AC: gh run list --branch main --limit 3 shows conclusion=success for a push AFTER b51fbe1304ddfa51a21c7d346e44ccf4226b5cbb (verification_gate=ci_green_on_subsequent_push). Priority: high. Failing job: bun test (src/__tests__/BSD3-brief-sector-drift.test.ts, 1 fail / 14452 pass). ROOT CAUSE: docs/analysis-briefs/{BSR,VIX,DBC}.md (added in commit ebbfda6a5 by report-analyzer) each carry a legacy '**Sector**:' line the BSD3 drift-guard forbids (sector SSOT = WATCHLIST_SEED domain field, never the brief). NOT flaky — reproduced deterministically locally (throws on BSR.md). FIX: remove the '**Sector**:' line from all 3 briefs (every other brief already complies; canonical template docs/references/analysis-ledger-template.md carries none). VERIFY: cd apps/mcp-server && bun test src/__tests__/BSD3-brief-sector-drift.test.ts must be 4/4 green, then full bun test green, then push. ci_red fingerprint=8a0a02371423de8cc179b9a00e25bdea45cfc228dda2aab55afb012643c5ced0 (MUST record on close else signal re-drains). No code generator re-emits the line, so line-removal is definitive; the BSD3 guard test is the structural recurrence-prevention.",
+        "updated_at": "2026-07-16T20:32:06Z",
+        "updated_by": "developer",
+        "commit_sha": "320cb1d76",
+        "pushed": true
       }
     ],
     "qa": [],
