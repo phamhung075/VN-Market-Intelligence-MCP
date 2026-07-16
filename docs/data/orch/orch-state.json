@@ -371,12 +371,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "UC-ASL-P2",
-    "next_agent": "qa",
-    "next_action": "fixer applied AC-3 fix (commit f1bcf63a; dispatcher RAW-verified: emit 49/49 x2 + context-bloat 2/2; line 232 -> signal_feedback, line 328 CATEGORY_TYPE untouched; 3-file pathspec, no foreign sweep). qa RE-GATE: re-run the LIVE UNMOCKED repro that caught the bug -- call post_agent_signal via gateway with signal_type=signal_feedback and category data_stale, confirm no invalid_enum_value and the E-3 signal_queue row appends -- the mocked harness alone cannot prove the production fix. Re-confirm AC-1..AC-6 all PASS, re-run both harnesses (49/49 + 2/2), DDD/injection re-check. If PASS return VERDICT APPROVED; dispatcher promotes UC-ASL-P2 + 4 children to done_verified and pushes green. Do NOT self-advance head, do NOT self-promote parent.",
-    "updated_at": "2026-07-16T06:21:11Z",
-    "updated_by": "dev-team (relay advance fixer->qa, UC-ASL-P2; AC-3 fix f1bcf63a RAW-verified 49/49+2/2, re-gate round 1)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "UC-ASL-P2 DONE_VERIFIED (qa RE-GATE round 2 APPROVED, AC-3 fix f1bcf63a). Tick idle — next cron tick runs preflight + drain + BOUNDED-1.",
+    "updated_at": "2026-07-16T06:35:24Z",
+    "updated_by": "dev-team (UC-ASL-P2 promoted done_verified; tick 20260716T041809Z idle)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -8478,13 +8478,129 @@
         "closed_at": "2026-07-12T04:27:30Z"
       }
     ],
-    "done_verified": [],
+    "done_verified": [
+      {
+        "id": "UC-ASL-P2",
+        "type": "SPRINT-S",
+        "title": "One blessed emit script replaces the 6 copy-pasted EMIT SEQUENCE blocks + durable BUG-dedup ledger",
+        "status": "DONE_VERIFIED",
+        "priority": "P1",
+        "size": "M",
+        "zone": "scripts/ (root + agents-flow/) + docs/agents/system-auditor/ + docs/references/ (doc-pointer only)",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "CONFIRMED",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#auditor-signal-loop-P2",
+        "note": "Auditor has 6 divergent EMIT SEQUENCE copies and in-memory BUG dedup that resets per run. Extract one emit script (scripts/emit-audit-signal.sh) with a durable dedup ledger.",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "promoted_at": "2026-07-16T06:35:24Z",
+        "promoted_by": "dev-team (dispatcher promote qa-APPROVED)",
+        "promotion_note": "qa RE-GATE round 2 APPROVED (reports/TASK_REPORT_UC-ASL-P2.md + BA-spec Review Record, commit b338c8a1b). AC-3 enum fix f1bcf63a live-verified by qa: real emit-audit-signal.sh --category-type data_stale + db_integrity_breach against real gateway both OK exit 0, E-3 rows appended+read-back, then cleaned up (conservation preserved). Dispatcher RAW-verified: emit 49/49 + context-bloat 2/2, line 232->signal_feedback, line 328 CATEGORY_TYPE intact. Children DEV-1..DEV-4 DONE_VERIFIED. AC-1..AC-6 PASS.",
+        "claimed_at": "2026-07-16T04:23:13Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "ba_spec_complete": true,
+        "ba_handoff": "docs/handoffs/UC-ASL-P2-BA-spec.md",
+        "ba_completed_at": "2026-07-16T04:29:42Z",
+        "architect_review_complete": true,
+        "architect_handoff": "docs/handoffs/UC-ASL-P2-BA-spec.md",
+        "architect_completed_at": "2026-07-16T04:43:23Z",
+        "arch_ratify_1": "CONFIRMED delete (not repoint) context-bloat-backstop.sh:185-203",
+        "arch_ratify_2": "resolved — ledger value amended to {ts,sev}, severity-rank bypass on escalation",
+        "arch_ratify_3": "ZONE pinned scripts/+docs/agents/system-auditor/ (generic developer, not apps/<service>/)",
+        "children": [
+          {
+            "id": "UC-ASL-P2-DEV-1",
+            "type": "TASK",
+            "title": "Author scripts/emit-audit-signal.sh with DDD layers + ledger + severity-rank bypass + test harness",
+            "status": "DONE_VERIFIED",
+            "priority": "P1",
+            "size": "M",
+            "zone": "scripts/ (root + agents-flow/)",
+            "parent_id": "UC-ASL-P2",
+            "sprint": "ULTRACODE-AUDIT-FIXALL",
+            "detail": "Interface: named-arg parser (--check-id, --category-type, --severity, --summary, --detail-json, --from-agent [default system-auditor], --to-agent [default po], --e3-only, --no-telegram). Application: E-1 post_agent_signal via mcp-call.sh (fail-loud), dedup ledger check, E-2 send_telegram (7-day window), severity-rank bypass on escalation. Infrastructure: ledger read/write {dedup_key: {ts, sev}}, tmp+mv atomic, E-3 signal-row append via orch-apply.sh + POST-WRITE read-back, CAS-retry up to 3× (rc=2 retries, rc=1|3 aborts). Test harness for all paths.",
+            "depends_on": [],
+            "created_at": "2026-07-16T04:50:00Z",
+            "created_by": "pm",
+            "done_at": "2026-07-16T05:15:00Z",
+            "done_by": "developer",
+            "test_result": "48/48 pass — scripts/emit-audit-signal.test.sh",
+            "commit": "a1bb6ee48"
+          },
+          {
+            "id": "UC-ASL-P2-DEV-2",
+            "type": "TASK",
+            "title": "Replace 4 EMIT SEQUENCE sites in docs/agents/system-auditor/flow/main.md",
+            "status": "DONE_VERIFIED",
+            "priority": "P1",
+            "size": "M",
+            "zone": "docs/agents/system-auditor/",
+            "parent_id": "UC-ASL-P2",
+            "sprint": "ULTRACODE-AUDIT-FIXALL",
+            "detail": "Replace sites 1–4 (lines 292–328, 592–628, 412–416, 344) with script calls: main.md:292–328 (Tier-2 data_stale, full E-1+E-2+E-3), :592–628 (Tier-3 db_integrity_breach, full E-1+E-2+E-3), :412–416 (D-IMPROVE, --e3-only no E-1/E-2), :344 (D-BCTC-EVAL, --e3-only + preserve distinct unconditional WORK post at :336–340). Use Write tool (not Edit) to avoid multiline-strip bug. Verify with git diff.",
+            "depends_on": [
+              "UC-ASL-P2-DEV-1"
+            ],
+            "created_at": "2026-07-16T04:50:00Z",
+            "created_by": "pm",
+            "done_at": "2026-07-16T05:20:00Z",
+            "done_by": "developer",
+            "commit": "35d408423"
+          },
+          {
+            "id": "UC-ASL-P2-DEV-3",
+            "type": "TASK",
+            "title": "Replace 2 EMIT SEQUENCE sites in docs/agents/system-auditor/flow/tier1-probe.md",
+            "status": "DONE_VERIFIED",
+            "priority": "P1",
+            "size": "S",
+            "zone": "docs/agents/system-auditor/",
+            "parent_id": "UC-ASL-P2",
+            "sprint": "ULTRACODE-AUDIT-FIXALL",
+            "detail": "Replace sites 5–6 (lines 139–171, 86–108) with script calls: tier1-probe.md:139–171 (general A-xx signal_feedback, full E-1+E-2+E-3), :86–108 (A-20 event-loop stall signal_feedback, E-1+E-3+read-back, E-2 folded into shared routing at :157). Use Write tool (not Edit). Verify with git diff.",
+            "depends_on": [
+              "UC-ASL-P2-DEV-1"
+            ],
+            "created_at": "2026-07-16T04:50:00Z",
+            "created_by": "pm",
+            "done_at": "2026-07-16T05:20:00Z",
+            "done_by": "developer",
+            "commit": "35d408423"
+          },
+          {
+            "id": "UC-ASL-P2-DEV-4",
+            "type": "TASK",
+            "title": "Dead-reference cleanup: delete old ledger, dead gate, update doc pointers",
+            "status": "DONE_VERIFIED",
+            "priority": "P1",
+            "size": "S",
+            "zone": "scripts/ + docs/references/",
+            "parent_id": "UC-ASL-P2",
+            "sprint": "ULTRACODE-AUDIT-FIXALL",
+            "detail": "Delete docs/data/system-auditor-known-issues.json (223 lines, stale since 2026-05-01, zero flow files read it). Delete scripts/agents-flow/context-bloat-backstop.sh:185–203 (dead fingerprint-suppression gate, 0 matching fingerprints ever fired, ARCH-RATIFY-1 confirmed) + header comment at :24. Update docs/references/tree-map.md:252/:407 and docs/references/bundles/bundle-architect.md:74/:94 to describe docs/data/auditor-dedup-ledger.json instead. Verify no remaining refs to system-auditor-known-issues.json.",
+            "depends_on": [
+              "UC-ASL-P2-DEV-2",
+              "UC-ASL-P2-DEV-3"
+            ],
+            "created_at": "2026-07-16T04:50:00Z",
+            "created_by": "pm",
+            "done_at": "2026-07-16T05:24:00Z",
+            "done_by": "developer",
+            "commit": "319e4f40c"
+          }
+        ],
+        "pm_decomposition_complete": true,
+        "decomposed_at": "2026-07-16T04:50:00Z",
+        "decomposed_by": "pm"
+      }
+    ],
     "head": {
-      "status": "in_progress",
-      "active_task_id": "UC-ASL-P2",
-      "next_agent": "qa",
-      "last_updated_at": "2026-07-16T06:21:11Z",
-      "last_updated_by": "dev-team (relay advance fixer->qa)"
+      "status": "idle",
+      "active_task_id": null,
+      "next_agent": "router",
+      "last_updated_at": "2026-07-16T06:35:24Z",
+      "last_updated_by": "dev-team (UC-ASL-P2 promoted done_verified)"
     },
     "ready": [],
     "review": [
@@ -9055,124 +9171,7 @@
     },
     "last_triaged_at": "2026-07-16T04:23:13Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "UC-ASL-P2",
-        "type": "SPRINT-S",
-        "title": "One blessed emit script replaces the 6 copy-pasted EMIT SEQUENCE blocks + durable BUG-dedup ledger",
-        "status": "IN_PROGRESS",
-        "priority": "P1",
-        "size": "M",
-        "zone": "scripts/ (root + agents-flow/) + docs/agents/system-auditor/ + docs/references/ (doc-pointer only)",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "CONFIRMED",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#auditor-signal-loop-P2",
-        "note": "Auditor has 6 divergent EMIT SEQUENCE copies and in-memory BUG dedup that resets per run. Extract one emit script (scripts/emit-audit-signal.sh) with a durable dedup ledger.",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "next_agent": "pm",
-        "promoted_at": "2026-07-16T04:23:13Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-16T04:23:13Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "ba_spec_complete": true,
-        "ba_handoff": "docs/handoffs/UC-ASL-P2-BA-spec.md",
-        "ba_completed_at": "2026-07-16T04:29:42Z",
-        "architect_review_complete": true,
-        "architect_handoff": "docs/handoffs/UC-ASL-P2-BA-spec.md",
-        "architect_completed_at": "2026-07-16T04:43:23Z",
-        "arch_ratify_1": "CONFIRMED delete (not repoint) context-bloat-backstop.sh:185-203",
-        "arch_ratify_2": "resolved — ledger value amended to {ts,sev}, severity-rank bypass on escalation",
-        "arch_ratify_3": "ZONE pinned scripts/+docs/agents/system-auditor/ (generic developer, not apps/<service>/)",
-        "children": [
-          {
-            "id": "UC-ASL-P2-DEV-1",
-            "type": "TASK",
-            "title": "Author scripts/emit-audit-signal.sh with DDD layers + ledger + severity-rank bypass + test harness",
-            "status": "DONE",
-            "priority": "P1",
-            "size": "M",
-            "zone": "scripts/ (root + agents-flow/)",
-            "parent_id": "UC-ASL-P2",
-            "sprint": "ULTRACODE-AUDIT-FIXALL",
-            "detail": "Interface: named-arg parser (--check-id, --category-type, --severity, --summary, --detail-json, --from-agent [default system-auditor], --to-agent [default po], --e3-only, --no-telegram). Application: E-1 post_agent_signal via mcp-call.sh (fail-loud), dedup ledger check, E-2 send_telegram (7-day window), severity-rank bypass on escalation. Infrastructure: ledger read/write {dedup_key: {ts, sev}}, tmp+mv atomic, E-3 signal-row append via orch-apply.sh + POST-WRITE read-back, CAS-retry up to 3× (rc=2 retries, rc=1|3 aborts). Test harness for all paths.",
-            "depends_on": [],
-            "created_at": "2026-07-16T04:50:00Z",
-            "created_by": "pm",
-            "done_at": "2026-07-16T05:15:00Z",
-            "done_by": "developer",
-            "test_result": "48/48 pass — scripts/emit-audit-signal.test.sh",
-            "commit": "a1bb6ee48"
-          },
-          {
-            "id": "UC-ASL-P2-DEV-2",
-            "type": "TASK",
-            "title": "Replace 4 EMIT SEQUENCE sites in docs/agents/system-auditor/flow/main.md",
-            "status": "DONE",
-            "priority": "P1",
-            "size": "M",
-            "zone": "docs/agents/system-auditor/",
-            "parent_id": "UC-ASL-P2",
-            "sprint": "ULTRACODE-AUDIT-FIXALL",
-            "detail": "Replace sites 1–4 (lines 292–328, 592–628, 412–416, 344) with script calls: main.md:292–328 (Tier-2 data_stale, full E-1+E-2+E-3), :592–628 (Tier-3 db_integrity_breach, full E-1+E-2+E-3), :412–416 (D-IMPROVE, --e3-only no E-1/E-2), :344 (D-BCTC-EVAL, --e3-only + preserve distinct unconditional WORK post at :336–340). Use Write tool (not Edit) to avoid multiline-strip bug. Verify with git diff.",
-            "depends_on": [
-              "UC-ASL-P2-DEV-1"
-            ],
-            "created_at": "2026-07-16T04:50:00Z",
-            "created_by": "pm",
-            "done_at": "2026-07-16T05:20:00Z",
-            "done_by": "developer",
-            "commit": "35d408423"
-          },
-          {
-            "id": "UC-ASL-P2-DEV-3",
-            "type": "TASK",
-            "title": "Replace 2 EMIT SEQUENCE sites in docs/agents/system-auditor/flow/tier1-probe.md",
-            "status": "DONE",
-            "priority": "P1",
-            "size": "S",
-            "zone": "docs/agents/system-auditor/",
-            "parent_id": "UC-ASL-P2",
-            "sprint": "ULTRACODE-AUDIT-FIXALL",
-            "detail": "Replace sites 5–6 (lines 139–171, 86–108) with script calls: tier1-probe.md:139–171 (general A-xx signal_feedback, full E-1+E-2+E-3), :86–108 (A-20 event-loop stall signal_feedback, E-1+E-3+read-back, E-2 folded into shared routing at :157). Use Write tool (not Edit). Verify with git diff.",
-            "depends_on": [
-              "UC-ASL-P2-DEV-1"
-            ],
-            "created_at": "2026-07-16T04:50:00Z",
-            "created_by": "pm",
-            "done_at": "2026-07-16T05:20:00Z",
-            "done_by": "developer",
-            "commit": "35d408423"
-          },
-          {
-            "id": "UC-ASL-P2-DEV-4",
-            "type": "TASK",
-            "title": "Dead-reference cleanup: delete old ledger, dead gate, update doc pointers",
-            "status": "DONE",
-            "priority": "P1",
-            "size": "S",
-            "zone": "scripts/ + docs/references/",
-            "parent_id": "UC-ASL-P2",
-            "sprint": "ULTRACODE-AUDIT-FIXALL",
-            "detail": "Delete docs/data/system-auditor-known-issues.json (223 lines, stale since 2026-05-01, zero flow files read it). Delete scripts/agents-flow/context-bloat-backstop.sh:185–203 (dead fingerprint-suppression gate, 0 matching fingerprints ever fired, ARCH-RATIFY-1 confirmed) + header comment at :24. Update docs/references/tree-map.md:252/:407 and docs/references/bundles/bundle-architect.md:74/:94 to describe docs/data/auditor-dedup-ledger.json instead. Verify no remaining refs to system-auditor-known-issues.json.",
-            "depends_on": [
-              "UC-ASL-P2-DEV-2",
-              "UC-ASL-P2-DEV-3"
-            ],
-            "created_at": "2026-07-16T04:50:00Z",
-            "created_by": "pm",
-            "done_at": "2026-07-16T05:24:00Z",
-            "done_by": "developer",
-            "commit": "319e4f40c"
-          }
-        ],
-        "pm_decomposition_complete": true,
-        "decomposed_at": "2026-07-16T04:50:00Z",
-        "decomposed_by": "pm"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
