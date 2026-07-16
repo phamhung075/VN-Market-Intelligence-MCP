@@ -231,6 +231,39 @@ That guard is a hand-written prompt string covering **one agent on one tick** �
 fb-market-poster fire on other ticks with no such guard and read the same field. § 6.3's plausibility
 gate remains the only durable fix.
 
+### 8.1 — `dataSource` is NOT the discriminator. Do not build the § 6.3/6.4 guard on it.
+
+Contributed by alert-commander's 02:08Z cycle (notebook DATA GUARD #2), and it corrects a trap this
+handoff itself sets. **Top-level `dataSource: "estimate"` describes the carry / investment-clock
+composite — not the `vnIndex` field.** It reads `"estimate"` on *both* payloads below, so it
+discriminates nothing:
+
+| | 07-15 20:21Z (poisoned) | 07-16 02:05Z (tier-1 real) |
+|---|---|---|
+| `dataSource` (top-level) | `"estimate"` | `"estimate"` ← **unchanged, useless as a gate** |
+| `vnIndex_is_estimate` | true | **false** |
+| `vnIndex_source_tier` | 4 | **1** |
+
+§ 3 and § 6.2 above cite `dataSource=estimate` alongside the per-field flags as if they were one
+signal. They are not. A guard keyed on top-level `dataSource` would suppress **every** payload
+including today's genuinely-live 1782.12, and a reader who trusts it concludes vnIndex is permanently
+an estimate. **The authoritative per-field discriminators are `vnIndex_is_estimate` and
+`vnIndex_source_tier`** — and for § 6.4 specifically, the discriminator is neither of those but
+`prevFetchedAt == null`, which is orthogonal to all three and is the reason today's value is
+simultaneously tier-1-correct and delta-broken.
+
+**Provenance, stated honestly:** this is *not* independent corroboration of § 8. The dispatcher's
+spawn prompt told the agent about the null-baseline artifact, so the agent restating it is my own
+claim echoing back. What is genuinely the agent's is the `dataSource` disambiguation above. Its
+second `get_macro_snapshot` (~1 min after mine, same tool) returning the same values rules out a
+transient in my read — nothing stronger.
+
+**The guard held, once.** alert-commander exited SILENT (0 fired, 7 suppressed, no `send_telegram`),
+gap-tokened the VN-Index delta rather than narrating it, and promoted the rule into its own standing
+notebook guard — so it now self-applies without a dispatcher prompt. That is one agent, self-taught,
+by luck of being the one spawned on the tick I happened to probe. CHEF and fb-market-poster still
+carry no such guard. Unchanged: § 6.3 is the only durable fix.
+
 ## 7. Dispatcher actions taken
 
 - RAW-verified against MARKET; corrected TNB's claim (§ 4). Filed one signal row to po.
