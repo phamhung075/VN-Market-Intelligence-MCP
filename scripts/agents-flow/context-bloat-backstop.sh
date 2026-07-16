@@ -18,12 +18,6 @@
 # See docs/memory/feedback_ctxbloat_breach_on_live_sprint_file_defer.md +
 # docs/memory/feedback_auditor_false_positive_destructive.md.
 #
-# FINGERPRINT SUPPRESSION: before emitting the breach signal (this hook's file-bus
-# write is the equivalent of a post_agent_signal call — no MCP tool is invoked here,
-# see Performance contract below), the script consults the SAME fingerprint-suppression
-# pattern used by docs/data/system-auditor-known-issues.json — a still-open (non-
-# "resolved") fingerprint already tracked there suppresses re-emission.
-#
 # Input contract: PostToolUse hook JSON received on STDIN.
 #   { "tool_name": "Write", "tool_input": { "file_path": "..." }, ... }
 #
@@ -180,26 +174,6 @@ EXISTING_SIGNAL=$(find "$SIGNALS_DIR" -maxdepth 1 -name "${SIGNAL_STEM_PREFIX}-*
 if [ -n "$EXISTING_SIGNAL" ]; then
   # An unprocessed signal already exists for this file — avoid duplicate
   exit 0
-fi
-
-# --- FINGERPRINT SUPPRESSION: known-issues.json gate BEFORE the emit call below ---
-# Reuses the docs/data/system-auditor-known-issues.json fingerprint-suppression pattern:
-# a fingerprint already tracked there and still open (status != "resolved") is a KNOWN
-# issue — do not re-emit a duplicate breach signal for it. This read MUST happen (and
-# does happen, textually and at runtime) BEFORE the signal-emit block below, which is
-# this hook's post_agent_signal-equivalent (file-bus write; no MCP tool invoked here —
-# see Performance contract at top of file).
-KNOWN_ISSUES_FILE="$PROJECT_ROOT/docs/data/system-auditor-known-issues.json"
-FINGERPRINT="context_bloat:${REL_PATH}"
-
-if [ -f "$KNOWN_ISSUES_FILE" ]; then
-  SUPPRESSED=$(jq -r --arg fp "$FINGERPRINT" \
-    '[.issues[]? | select(.fingerprint == $fp and ((.status // "open") != "resolved"))] | length' \
-    "$KNOWN_ISSUES_FILE" 2>/dev/null || echo 0)
-  if [ "${SUPPRESSED:-0}" -gt 0 ] 2>/dev/null; then
-    # Known, still-open fingerprint already tracked — suppress duplicate emission
-    exit 0
-  fi
 fi
 
 # --- BREACH DETECTED → emit maintenance signal to file bus (post_agent_signal-equivalent) ---

@@ -249,7 +249,7 @@ CLAUDE.md (root — always loaded)
 │
 ├── docs/data/system-map.json (structural SSOT — services, agents, tools, crons, zones, channels, data_sources, watchlist — query via jq; skill: .claude/skills/system-map-query/SKILL.md)
 │
-├── docs/data/system-auditor-known-issues.json (dedup state: fingerprints of reported issues — volatile)
+├── docs/data/auditor-dedup-ledger.json (BUG-dedup state: {dedup_key: {ts, sev}}, 7-day self-pruning, script-managed by scripts/emit-audit-signal.sh — volatile)
 │
 ├── docs/data/code-janitor-known-findings.json (dedup state: fingerprints of known code findings — volatile)
 │
@@ -404,7 +404,7 @@ docs/agents/dev-team/flow/drain-signals.md (parent — 116L)
 | `docs/data/cron-registry.json` | Developer | After adding/removing scheduler — also update system-map.json |
 | `docs/data/stock-classification.json` | Market-Analyst / PO | Watchlist change → also update system-map.json watchlist[] |
 | `docs/data/project-stats.json` | PM / System-Auditor | Sprint start/end, test count change (sprint-volatile state only) |
-| `docs/data/system-auditor-known-issues.json` | System-Auditor | Each audit run |
+| `docs/data/auditor-dedup-ledger.json` | `scripts/emit-audit-signal.sh` (sole writer) | Each E-2 (`send_telegram`) dedup send/bypass — tmp+mv atomic, NOT via orch-apply.sh |
 | `docs/data/code-janitor-known-findings.json` | Code-Janitor | Each janitor run |
 | `mcp.config.json` | Developer | Threshold tuning |
 | `docs/policies/dev-standards.md` | Developer / Architect | After adding coding standards or layer rules |
