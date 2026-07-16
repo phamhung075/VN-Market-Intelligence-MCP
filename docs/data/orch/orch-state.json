@@ -371,12 +371,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "UC-CCA-P5",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of UC-CCA-P5 — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-16T00:53:52Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "UC-CCA-P5 DONE_VERIFIED — news-scout exec-proof ordering FIX shipped (qa PASS + pushed). Next dispatcher tick: clean preflight + Step 1 PO triage of queued signal_queue defect cow-20260716T002226 (coverage-state.json cross-agent lost-update: market-watcher _ssot write reverted by news-scout same tick + 3 premise retractions — deferred this tick because BOUNDED-1 held the WIP slot) THEN BOUNDED-1 idle eval. Parked/peer-owned: UC-CCA-P3 P0 (published-marker pendulum — peer PO owns); FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING + FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE (PLAN-ONLY; latter re-scoped off P1 per cow-20260716T002226); UC-RDL-P4 (backlog supervised deliberate-start); RAG-FTS-BUILD-MEMORY-BOUND / ALPHA-S2-RAG-FTS-REBUILD-CRON (memory-bound, dv withheld); ~25 review-lane rows; ~45 cowork-team + price_anomaly null-schema quarantine files (FIX-DRAIN-QUARANTINE-NONROUTABLE-SIGNALS). USER-GATED (out of router scope): MARKET #933 correction go/no-go.",
+    "updated_at": "2026-07-16T01:09:38Z",
+    "updated_by": "dev-team (router: UC-CCA-P5 review->done_verified, qa PASS + push on green; head idle)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -412,7 +412,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-15T21:40:05Z",
+    "_updated_at": "2026-07-16T01:07:01Z",
     "_updated_by": "cowork-team",
     "archive": [],
     "rows": [
@@ -429,14 +429,15 @@
       },
       {
         "id": "cow-20260716T005400",
-        "summary": "cycle-snapshot promotion DARK 9 days (latest frozen 2026-07-07): freshness gate reads cycle-snapshot-<tick_id HH:MM> but dispatcher writes <snapshot-time HH:MM> -> mismatch under drift; key has NO date so a 43-day-old 00:00 file is aged past 4h -> stale:true -> Gate1 forces legacy -> DWF-PHASE1 adaptive cadence NEVER runs on slot-bearing ticks (only on silent ones). 4th filename-keyed-by-time instance today. 101 stale snapshot files.",
-        "severity": "MED",
+        "summary": "DUPLICATE→FOLD INTO UC-SDF-P2 (do NOT triage as new). UC-SDF-P2 \"Diagnose promotion dead since 07-07\" + handoff 2026-07-15-cycle-snapshot-latest-promotion-dark.md already own this; I re-derived it unaware. Row retained ONLY for 3 advances: (1) DIAGNOSIS CLOSED — 07-15 hypothesis marked UNVERIFIED is now CONFIRMED at source: emitPressureStateTool.ts joins cycle-snapshot-${tickHHMM}.json with tickHHMM from tick_id, while tick-snapshot.md:40,43 names by FILE_TICK=$(date -u +%H:%M) actual fire time → diverge under drift. That IS the UC-SDF-P2 ask. (2) key has NO date → a 43-day-old 06-03 00:00 file is read and aged past 4h → stale:true, which is why the miss is SILENT not just absent; 102 files accrued. (3) SCOPE-BREAKER: regime_status/volatility_level have NO WRITER since the 2026-06-05 EMIT-DARK-RECURRING refactor (last emitted 06-03; only 12 June files + 1 test fixture carry them; live snapshot has no carry block). Both handoffs claim promotion-dark pins last_regime=unknown — FALSE. Fixing promotion alone leaves adaptive loop dark forever. UC-SDF-P2 as scoped is INSUFFICIENT.",
+        "severity": "INFO",
         "status": "NEW",
         "ts": "2026-07-16T00:54:00Z",
         "from": "cowork-team",
         "to": "po",
-        "type": "defect",
-        "payload_ref": "docs/handoffs/2026-07-16-cycle-snapshot-promotion-dark-9-days-adaptive-cadence-never-runs.md"
+        "type": "diagnosis",
+        "payload_ref": "docs/handoffs/2026-07-16-cycle-snapshot-promotion-dark-9-days-adaptive-cadence-never-runs.md",
+        "note": "folds into UC-SDF-P2; not a new defect"
       }
     ],
     "last_triaged_at": "2026-07-15T20:56:10Z",
@@ -8403,13 +8404,65 @@
         "closed_at": "2026-07-12T04:27:30Z"
       }
     ],
-    "done_verified": [],
+    "done_verified": [
+      {
+        "id": "UC-CCA-P5",
+        "type": "FIX",
+        "title": "Fix news-scout exec-proof ordering: notebook settled-write BEFORE the gate, gate BEFORE log_agent_work(completed)+WORK ping",
+        "status": "DONE_VERIFIED",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "CONFIRMED",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#cowork-cycle-agents-P5",
+        "note": "news-scout logs completion + pings WORK before its truth-gate and settled notebook write, so a failed gate still reports done. Reorder: notebook settled-write -> gate -> log_agent_work(completed)+WORK.",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "promoted_at": "2026-07-16T00:51:20Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-16T00:53:52Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "moved_at": "2026-07-16T01:05:52Z",
+        "moved_by": "dev-team (router: dev COMPLETE + RAW pre-check PASS; doc-only flow reorder; dispatching independent qa gate)",
+        "dev_result": {
+          "agent": "developer",
+          "verdict": "COMPLETE",
+          "commits": [
+            "181a16142",
+            "5fc6b41b5"
+          ],
+          "origin_state": "on HEAD, unpushed. HEAD 5 ahead of origin/main (12f7c1d1c): 8be69d2e4 cold-evict + 12885e887 peer cowork-handoff + 181a16142 fix + 5fc6b41b5 journal + (this review-move board commit at close). board still IN_PROGRESS at dispatch -> two-key gate intact.",
+          "raw_precheck": "PASS — (1) scope: 181a16142 = stage-log-notify.md ONLY (+34/-32); 5fc6b41b5 = journal ONLY (+21). No orch-state (no self-flip); no product/peer sweep; scoped git status empty. (2) board still IN_PROGRESS, review=25/dv=0. (3) DJ-GATE-1: journal task-id UC-CCA-P5 + STEP developer-S5 + commit 181a16142. (4) reordered doc: §4 notebook settled-write -> §5 exec-proof gate (PASS->Step 6) -> §6 log_agent_work(completed) -> WORK ping.",
+          "self_reported": "Reordered docs/agents/news-scout/flow/stage-log-notify.md so notebook settled-write (AC-3, §4) runs before exec-proof gate (§5) before log_agent_work(completed)+WORK ping (§6-8), fixing the structurally-unsatisfiable EXEC_PROOF_1 (NOTEBOOK_TS>=CYCLE_START_UTC read the prior cycle's header at gate time) and the false-completion race. Matches market-watcher's working order. cycle.md unchanged (points at sub-flow, declares no internal step order). No scripts/ copy of the sequence (grep confirmed).",
+          "pending_qa": "INDEPENDENT doc-correctness review (no product code -> NOT a CI/test gate): (1) RAW-read stage-log-notify.md, confirm order §4 notebook settled-write -> §5 exec-proof gate -> §6 log_agent_work(completed) -> WORK ping. (2) Confirm exec-proof-gate skill EP-1/EP-2 (NOTEBOOK_TS>=CYCLE_START_UTC) is now SATISFIABLE with the write preceding the gate. (3) Confirm gate PASS/FAIL cross-refs point at the correct (renumbered) Step 6, no dangling 3e/4b labels. (4) Confirm cycle.md needs no matching change + no scripts/ copy of the sequence exists. (5) Cross-check vs market-watcher cycle.md working pattern. (6) DJ-GATE-1 marker RAW-verify. On PASS -> push on green (PUSH-AUTONOMY-1; pre-push hook = tsc, trivially clean for doc-only) -> done_verified. NO origin_signal to flip (backlog-minted)."
+        },
+        "verified_at": "2026-07-16T01:09:38Z",
+        "verified_by": "qa (router-dispatched independent gate, agent a590442c) — PASS + successful push (pre-push tsc green)",
+        "qa_result": {
+          "agent": "qa",
+          "verdict": "PASS",
+          "verified_at": "2026-07-16T01:09:38Z",
+          "review_type": "doc-correctness (flow-doc reorder; no product code / no unit test -> NOT a CI gate)",
+          "checks": "6/6 RAW: (1) order §4 notebook settled-write -> §5 exec-proof gate -> §6 log_agent_work(completed) -> §8 WORK ping (final); (2) gate cross-refs On PASS->Step6 / On FAIL->exit correct, no dangling 3e/4b labels; (3) exec-proof-gate SKILL.md EP-1 reads newest ## cNNN heading TS, EP-2 requires >=CYCLE_START_UTC -> now SATISFIABLE since §4 write precedes §5 gate; (4) matches market-watcher cycle.md write->gate->ping shape (coverage-state sub-placement diff is brief-authorized per S5 journal); (5) news-scout cycle.md is outer Stage-4/5 dispatch label only, no internal order, no scripts/ copy of sequence (grep confirmed); (6) DJ-GATE-1 STEP developer-S5 task-id UC-CCA-P5 cites 181a16142.",
+          "dj_gate_1": "SATISFIED — sprint-ULTRACODE-AUDIT-FIXALL-developer.md STEP developer-S5, task-id UC-CCA-P5, commit 181a16142.",
+          "code_commits": [
+            "181a16142",
+            "5fc6b41b5"
+          ]
+        },
+        "router_close_note": "UC-CCA-P5 DONE_VERIFIED. developer reordered docs/agents/news-scout/flow/stage-log-notify.md so the AC-3 notebook settled-write (§4) precedes the exec-proof gate (§5) precedes log_agent_work(completed)+WORK ping (§6/§8) — closing the structurally-unsatisfiable EXEC_PROOF_1 (gate previously read the prior cycle's ## cNNN header) and the false-completion race (completed fired before the notebook was settled-written). Router RAW pre-check PASS (scope=stage-log-notify.md + DJ-GATE-1 journal only, no self-flip, no peer sweep) + INDEPENDENT qa gate PASS (6/6). Pushed on green (pre-push tsc clean, doc-only). NO origin_signal (BOUNDED-1 backlog-minted). news-scout exec-proof gate is now runtime-correct."
+      }
+    ],
     "head": {
       "status": "idle",
       "active_task_id": null,
       "next_agent": "router",
-      "last_updated_at": "2026-07-16T00:31:00Z",
-      "last_updated_by": "dev-team (CI-RED-e23a8b6a-FIX -> done_verified, CI green on e16e2f2b6)"
+      "last_updated_at": "2026-07-16T01:09:38Z",
+      "last_updated_by": "dev-team (UC-CCA-P5 -> done_verified, news-scout exec-proof reorder shipped)"
     },
     "ready": [],
     "review": [
@@ -8980,29 +9033,7 @@
     },
     "last_triaged_at": "2026-07-16T00:51:20Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "UC-CCA-P5",
-        "type": "FIX",
-        "title": "Fix news-scout exec-proof ordering: notebook settled-write BEFORE the gate, gate BEFORE log_agent_work(completed)+WORK ping",
-        "status": "IN_PROGRESS",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "CONFIRMED",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#cowork-cycle-agents-P5",
-        "note": "news-scout logs completion + pings WORK before its truth-gate and settled notebook write, so a failed gate still reports done. Reorder: notebook settled-write -> gate -> log_agent_work(completed)+WORK.",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "promoted_at": "2026-07-16T00:51:20Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-16T00:53:52Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
