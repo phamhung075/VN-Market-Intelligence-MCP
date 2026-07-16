@@ -10,6 +10,16 @@
 # to `pnpm --filter vn-market check` which runs tsc from apps/mcp-server
 # where tsconfig.json is valid and src/ exists.
 #
+# PATH-FILTER (UC-GCP-P4, 2026-07-16): the full tsc alone measures ~94s wall-
+# clock — longer than the commit-mutex TTL=90s — so EVERY push (even a
+# doc/notebook/orch-state-only push, ~68% of commits) held the mutex past
+# expiry and let a peer task_claim win mid-push. Skip the tsc when the push
+# range touches no code path. Code-touching set: apps/**, packages/**,
+# scripts/**/*.{ts,tsx,js,mjs,json} plus root package.json / pnpm-lock.yaml /
+# pnpm-workspace.yaml (dependency changes affect tsc). docs/ is excluded.
+# Fail-open: any `git diff` failure (remote sha absent locally) or a brand-new
+# branch (zero remote sha) always runs the FULL tsc — never skips.
+#
 # Install: ./scripts/git-hooks/install.sh  (symlinks into .git/hooks/)
 # Bypass (NOT recommended, equivalent to --no-verify which is forbidden):
 #   PRE_PUSH_SKIP_TSC=1 git push
@@ -26,6 +36,46 @@ cd "$REPO_ROOT"
 
 if ! command -v pnpm >/dev/null 2>&1; then
   echo "[pre-push] WARN: pnpm not on PATH — skipping tsc check"
+  exit 0
+fi
+
+ZERO_SHA="0000000000000000000000000000000000000000"
+# apps/**, packages/**, scripts/**/*.{ts,tsx,js,mjs,json} (docs/ excluded), OR
+# root package.json / pnpm-lock.yaml / pnpm-workspace.yaml (dep changes affect tsc).
+CODE_TOUCHING_REGEX='^(apps|packages|scripts)/.*\.(ts|tsx|js|mjs|json)$|^(package\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml)$'
+
+needs_tsc=0
+# shellcheck disable=SC2034  # remote_ref documents the 4-field stdin protocol; unused by design
+while read -r local_ref local_sha remote_ref remote_sha; do
+  [ -z "$local_ref" ] && continue
+
+  # Branch delete: local sha is all-zeros — nothing being pushed, skip this line.
+  if [ "$local_sha" = "$ZERO_SHA" ]; then
+    continue
+  fi
+
+  # New branch / no upstream (zero remote sha) — no diff base to compute, run FULL tsc.
+  if [ "$remote_sha" = "$ZERO_SHA" ]; then
+    echo "[pre-push] new branch (no remote sha) on $local_ref — full tsc required"
+    needs_tsc=1
+    continue
+  fi
+
+  # Fail-open (a): guard the diff so a non-zero exit (e.g. remote sha not present
+  # locally) never hits the bare `set -e` abort — route straight to full tsc instead.
+  if ! changed_paths="$(git diff --name-only "${remote_sha}..${local_sha}" 2>/dev/null)"; then
+    echo "[pre-push] WARN: git diff failed for ${remote_sha}..${local_sha} — fail-open to full tsc"
+    needs_tsc=1
+    continue
+  fi
+
+  if printf '%s\n' "$changed_paths" | grep -qE "$CODE_TOUCHING_REGEX"; then
+    needs_tsc=1
+  fi
+done
+
+if [ "$needs_tsc" = "0" ]; then
+  echo "[pre-push] no code paths in range — skipping tsc"
   exit 0
 fi
 
