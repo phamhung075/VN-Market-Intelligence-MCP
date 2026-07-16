@@ -1,20 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-16 | **Cycle:** UC-GCP-P4 (sprint ULTRACODE-AUDIT-FIXALL, git-ci-publish-P4)
-
-## Session 2026-07-15 — FIX-COWORK-PREFLIGHT-PRESENCE-CLAIM-GAP (router dispatch, zone `cross-service/` = scripts/agents-flow/) — IN_PROGRESS→REVIEW
-
-**Task:** `scripts/agents-flow/cowork-tick-preflight.sh` Step 2 heartbeated `session-presence:<session>` without ever claiming it first, so a fresh session's tick-1 (no presence row exists yet) got `ok=false` → verdict `ERROR` → full LLM fallback — inverting `docs/agents/cowork-team/flow/main.md` Step 0b.1's already-correct claim-first/never-a-gate contract. Origin: `docs/handoffs/2026-07-15-cowork-preflight-presence-claim-gap.md` (signal `cow-20260715T184053`).
-
-**Actions taken:** Rewrote Step 2 to claim-first — `task_claim(session-presence:<session>, task_kind:"session-presence", owner_agent:"cowork-dispatcher", ttl_seconds:1800)`; if `claimed:false` and `current_holder.owner_client_session == session`, `task_heartbeat` renews TTL; proceeds unconditionally otherwise (peer-held or transport error). Removed both prior ERROR branches for presence. Updated header comment (L13 block). Test suite: rewrote old gating T3, added `T3-presence-fresh` / `T3-presence-reentrant` / `T3-presence-peer` (all assert SILENT, never ERROR), and tagged the stub's call-log with `task_kind`/`task_id` so tests can prove the presence claim never leaks into a `cowork-slot`-kind lock (exactly 1 `task_claim|cowork-slot` per run = the election only).
-
-**Verification:** `bash scripts/agents-flow/cowork-tick-preflight.test.sh` — 27/27 GREEN (was 20/20 baseline; net +7 across rewritten/new presence cases). `bash -n` syntax-clean on both files. Live-verified twice against the real MCP server with disposable dummy `CLAUDE_CODE_SESSION_ID`s — verdict `SILENT` both times (not `ERROR`); `task_list_held(task_kind="cowork-slot")` showed no orphaned row from either smoke session. Decision journal: `sprint-FIX-COWORK-PREFLIGHT-PRESENCE-CLAIM-GAP-developer.md`.
-
-**Board:** NOT moved by developer this cycle — router explicitly holds the IN_PROGRESS→REVIEW flip on return (task pre-claimed by router session, do-not-self-flip per dispatch instruction).
-
-**Scope discipline:** Touched only the two named files (`cowork-tick-preflight.sh`, `cowork-tick-preflight.test.sh`) + `docs/WORK.md` one-liner + this notebook + the decision journal. Did not touch the live-sourced script mid-tick (whole-file atomic Edit, no partial states). Did not chase the graphify incremental-update step this cycle — flagged, not silently skipped: `graphify-out/graph.json` is ~2 months stale project-wide, making a full `--update` disproportionate to a 2-line `WORK.md` touch on an `S`-size FIX; left for a dedicated doc-graph maintenance pass.
-
-Zone health: `scripts/agents-flow/` cowork preflight — presence contract now matches `main.md` Step 0b.1; no other drift observed | HEALTHY
+**Last updated:** 2026-07-16 | **Cycle:** FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE (sprint FLOW-PRICE-ALPHA-LOOP)
 
 ## Session 2026-07-16 — UC-GCP-P2 (dev-team BOUNDED-1 auto-pickup, zone `cross-service/`) — IN_PROGRESS→REVIEW
 
@@ -43,3 +29,17 @@ Zone health: repo-root git-state plane — signals.db + churn logs now correctly
 **Scope discipline:** Touched ONLY `scripts/git-hooks/pre-push` (sole in-scope file) + `docs/WORK.md` one-liner + this notebook + decision journal. Shell-only hook edit, no `.ts` touched — no tsc/full-suite run needed per the task's own verification bar. Did not touch commit-mutex TTL/SKILL.md — the residual code-touching-push mutex-overrun (~94s > 90s TTL) is an explicit out-of-scope follow-up per the brief.
 
 Zone health: `scripts/git-hooks/` pre-push tsc gate — path-filter live, escape hatch + no-pnpm WARN branches intact; no other drift observed | HEALTHY
+
+## Session 2026-07-16 — FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE (dev-team lead, cross-service/, subsumes FIX-DEVTEAM-BOUNDED1-MAINTLANE-NEXTAGENT-GATE) — IN_PROGRESS→REVIEW
+
+**Task:** `is_plan_only`/`is_non_dev_next_agent_unrouted` in `scripts/devteam-backlog-promote-bounded1.jq` read ONLY `$detail_items[.id]` (backlog-detail.json), while `effective_owner` was already generalized 2026-07-13 to board-OR-detail. A board row carrying `plan_only`/`next_agent` inline with NO detail entry slipped every gate — RAW dry-run confirmed 28 leaked rows (4 P1 incl. `GUARD-COWORK-NOTEBOOK-AGENTS-SELF-EDIT-FLOW-DOC` next_agent=architect; all 8 `UC-*-UNVERIFIED-BATCH` next_agent=ba).
+
+**Actions taken:** Added `effective_plan_only` (board-OR-detail, mirrors `effective_supervised`) and `effective_next_agent` (detail-first/board-fallback, mirrors `effective_owner`); `is_plan_only`/`is_non_dev_next_agent_unrouted` now delegate to them, dropping the old "board next_agent empty" precondition. Updated header gate-block (`EFFECTIVE-DISPOSITION GATE` section) + `docs/agents/dev-team/flow/main.md` gate descriptions. Extended `scripts/audits/devteam-bounded1-detail-disposition-gate-verify.sh`: AC-8 (live-discovered, no hardcoded IDs — inline non-dev board next_agent, no detail entry), AC-9 (synthetic — inline board plan_only:true, no detail entry), AC-10 (synthetic control — inline dev-role next_agent, no detail entry); corrected AC-6's fixture (`next_agent` "architect"→"developer" — the new gate now correctly catches "architect" so it can't serve as an "already-routed" filler anymore).
+
+**Verification:** Full verifier 12/12 assertions PASS (AC-1..AC-10 + control). Direct proof: isolated fixtures of the 4 named P1 leak rows + all 8 `UC-*-UNVERIFIED-BATCH` rows (supervised stamp stripped to isolate the NEW gate from the pre-existing stopgap) resolved NOT-promoted post-fix (all 12 were confirmed promotable pre-fix). jq syntax validated (`-f` dry-parse on minimal fixture). No hardcoded task-id literals (grep-clean).
+
+**Board:** Moving `task_board.in_progress[FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE]` → `task_board.review[]` (status REVIEW, next_agent=qa) + `.head` synced to idle, via `orch-apply.sh`.
+
+**Scope discipline:** Touched only `scripts/devteam-backlog-promote-bounded1.jq`, `scripts/audits/devteam-bounded1-detail-disposition-gate-verify.sh`, `docs/agents/dev-team/flow/main.md` + this notebook + decision journal. Did not touch the sibling `FIX-DEVTEAM-BOUNDED1-MAINTLANE-NEXTAGENT-GATE` backlog row (already PO-held supervised:true / SUPERSEDED-BY note) or any of the ~90 unrelated peer-dirty files in the tree.
+
+Zone health: `scripts/devteam-backlog-promote-bounded1.jq` BOUNDED-1 disposition gates — plan_only + next_agent now board-OR-detail effective, no known inline-no-detail leak class remaining | HEALTHY
