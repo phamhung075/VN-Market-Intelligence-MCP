@@ -2,6 +2,12 @@
 
 **task-id:** CI-RED-e23a8b6a-FIX
 
+**commit:** `13ad27fa2` — test(mcp-server): CI-RED-e23a8b6a-FIX align 2 stale/flaky
+tests with committed infra. (Note: that commit's message omitted the required
+`Claude-Session` trailer by mistake; recorded here in this follow-up commit
+instead of amending, per this task's strict "new commits only, never amend"
+rule.)
+
 ## What
 
 `bun test` on main HEAD `e23a8b6a5` was RED: 3 fail across 2 test files (test-suite +
