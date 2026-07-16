@@ -1,6 +1,0 @@
-COMMAND     PID  USER   FD   TYPE DEVICE SIZE/OFF     NODE NAME
-com.apple 51247 admin *892r   REG    1,4        0 29083538 .git/HEAD.lock
----
--rw-r--r--  1 admin  staff  0 13 mai 04:03:53 2026 .git/HEAD.lock
----
-ts=20260513T023613Z age=1940s size=0B git_pids=none holder=Docker_VM_pid51247

@@ -1,7 +1,0 @@
-=== c59 PREFLIGHT lsof capture 20260513T003620Z ===
-COMMAND     PID  USER   FD   TYPE DEVICE SIZE/OFF     NODE NAME
-com.apple 51247 admin *375r   REG    1,4        0 29073751 .git/HEAD.lock
----
--rw-r--r--  1 admin  staff  0 13 mai 02:03:40 2026 .git/HEAD.lock
----stat---
-16777220 29073751 -rw-r--r-- 1 admin staff 0 0 "May 13 02:03:40 2026" "May 13 02:03:40 2026" "May 13 02:03:40 2026" "May 13 02:03:40 2026" 4096 0 0 .git/HEAD.lock

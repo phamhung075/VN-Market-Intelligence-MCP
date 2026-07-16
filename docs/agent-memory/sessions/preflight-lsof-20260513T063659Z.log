@@ -1,3 +1,0 @@
-COMMAND     PID  USER   FD   TYPE DEVICE SIZE/OFF     NODE NAME
-com.apple 51247 admin *053r   REG    1,4        0 29126252 .git/HEAD.lock
--rw-r--r--  1 admin  staff  0 13 mai 08:05:31 2026 .git/HEAD.lock

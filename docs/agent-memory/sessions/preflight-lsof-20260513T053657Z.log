@@ -1,6 +1,0 @@
-COMMAND     PID  USER   FD   TYPE DEVICE SIZE/OFF     NODE NAME
-com.apple 51247 admin *632r   REG    1,4        0 29122402 .git/HEAD.lock
----
--rw-r--r--  1 admin  staff  0 13 mai 07:23:38 2026 .git/HEAD.lock
----
-age=805s size=0B pid_alive=false cycle=c64-tick
