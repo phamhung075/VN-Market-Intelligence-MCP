@@ -900,9 +900,20 @@ export function registerBctcFullTools(
 
       // FR-DEGRADE-01 FIX: detect bctc VPS proxy staleness before serving.
       // SLA = 2 days. When the last successful BCTC push is beyond SLA, inject
-      // unavailable flag even when returning empty so callers know the reason.
+      // a staleness flag — both for the "no data at all" branch below AND for
+      // the normal "last-known-good row exists" success branch further down.
+      //
+      // Root-cause note (re-check 2026-07-16): the original 815ccaed fix only
+      // wired bctcVpsStaleSince into the `!latestRow` (no data) branch. The far
+      // more common production case — a financial_reports row DOES exist but the
+      // VPS bctc push pipeline has stopped updating it — fell through to the
+      // success path with the last-known-good data served completely UNFLAGGED
+      // (silently stale, not an error, but not honestly labeled either — exactly
+      // the failure mode FR-DEGRADE-01 forbids). bctcVpsStaleAgeHours/Since are
+      // now also threaded into the success-path JSON + text output below.
       const BCTC_VPS_SLA_HOURS = 48;
       let bctcVpsStaleSince: string | null = null;
+      let bctcVpsStaleAgeHours: number | null = null;
       try {
         const lastBctcPush = db
           .prepare<{ pushed_at: string }, []>(
@@ -917,6 +928,7 @@ export function registerBctcFullTools(
           const ageHours = (Date.now() - pushAt.getTime()) / 3_600_000;
           if (ageHours > BCTC_VPS_SLA_HOURS) {
             bctcVpsStaleSince = pushAt.toISOString();
+            bctcVpsStaleAgeHours = ageHours;
           }
         }
         // If no push record at all, we cannot assert staleness — treat as unknown.
@@ -956,6 +968,7 @@ export function registerBctcFullTools(
                     unavailable: true,
                     reason: "vps_stale",
                     stale_since: bctcVpsStaleSince,
+                    stale_age_hours: bctcVpsStaleAgeHours,
                     message: `BCTC VPS proxy stale (last ok push: ${bctcVpsStaleSince}, SLA=${BCTC_VPS_SLA_HOURS}h). Chưa có dữ liệu BCTC cho ${upperCode}.`,
                   }),
                 },
@@ -1202,7 +1215,18 @@ export function registerBctcFullTools(
         const comparisonSection = buildComparisonSection(db, upperCode, latestRow, bankForm);
         const sentimentSection = buildSentimentSection(db, upperCode);
 
-        const textOutput = [summarySection, "", comparisonSection, "", sentimentSection].join("\n");
+        // FR-DEGRADE-01 FIX: append an explicit human-readable staleness note when
+        // the VPS bctc push pipeline is beyond SLA — the data below is still the
+        // last-known-good row (never withheld/errored), just honestly labeled.
+        const staleNote =
+          bctcVpsStaleSince !== null
+            ? [
+                "",
+                `[FR-DEGRADE-01] Dữ liệu BCTC là dữ liệu gần nhất đã biết (last-known-good) — VPS bctc push cuối cùng: ${bctcVpsStaleSince} (${bctcVpsStaleAgeHours!.toFixed(1)}h trước, SLA=${BCTC_VPS_SLA_HOURS}h). Có thể chưa phản ánh báo cáo mới nhất.`,
+              ]
+            : [];
+
+        const textOutput = [summarySection, "", comparisonSection, "", sentimentSection, ...staleNote].join("\n");
 
         // ── FIX-D: structured_data block ─────────────────────────────────
         // All numeric values are recomputed on read (latestRow has already been
@@ -1325,6 +1349,12 @@ export function registerBctcFullTools(
                 refine_status: latestRow.refine_status,
                 source_tier: 2,
                 fetchedAt: latestRow.published_at,
+                // FR-DEGRADE-01 FIX: explicit machine-readable freshness flag — the
+                // caller can surface `stale` (boolean) without parsing stale_since.
+                // false/null when the VPS bctc push pipeline is within SLA.
+                stale: bctcVpsStaleSince !== null,
+                stale_since: bctcVpsStaleSince,
+                stale_age_hours: bctcVpsStaleAgeHours,
               }),
             },
           ],

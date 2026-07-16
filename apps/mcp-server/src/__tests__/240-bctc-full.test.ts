@@ -1036,3 +1036,112 @@ describe("FIX-D — structured_data block in get_bctc_full", () => {
     expect(textSummary).toContain("ROE");
   });
 });
+
+// ── FR-DEGRADE-01 — stale-but-flagged when last-known-good data exists ───────
+//
+// Root-cause gap (re-check 2026-07-16, signal qc-FR-DEGRADE-01-4004): the
+// original 815ccaed fix wired the VPS bctc staleness signal (vps_push_log SLA
+// check) into ONLY the "no financial_reports row at all" branch. The far more
+// common production scenario — a financial_reports row DOES exist
+// (last-known-good) but the VPS bctc push pipeline has stopped delivering
+// fresh reports — fell through to the ordinary success path and was served
+// completely UNFLAGGED (silently stale, not an error — exactly the forbidden
+// failure mode: "return stale-but-flagged data rather than error/crash", the
+// "flagged" half was missing). This describe proves the success path now
+// surfaces an explicit machine-readable `stale`/`stale_since`/`stale_age_hours`
+// flag on content[1] plus a human-readable note on content[0] — and that the
+// tool never throws/crashes; it degrades gracefully by continuing to serve
+// the last-known-good data.
+describe("FR-DEGRADE-01 — get_bctc_full degrades gracefully when VPS bctc push is stale (data present)", () => {
+  let db: Database;
+
+  beforeEach(() => {
+    db = makeDb();
+    // vps_push_log is queried via a try/catch in bctcFullTools.ts (optional
+    // table — absent in most other describes in this file). Create it here
+    // so the staleness-detection path is actually exercised.
+    db.run(`CREATE TABLE IF NOT EXISTS vps_push_log (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      service TEXT, items_count INTEGER, status TEXT, error_msg TEXT,
+      duration_ms INTEGER, pushed_at TEXT DEFAULT (datetime('now')),
+      truncation_detected INTEGER, schema_errors_count INTEGER,
+      failed_item_indices TEXT, parse_time_ms INTEGER, validation_time_ms INTEGER,
+      db_time_ms INTEGER, vps_response_size_bytes INTEGER, circuit_breaker_state TEXT
+    )`);
+  });
+
+  function insertStaleBctcPush(daysAgo: number): void {
+    db.prepare(
+      `INSERT INTO vps_push_log (service, items_count, status, pushed_at)
+       VALUES ('bctc', 0, 'ok', datetime('now', '-' || ? || ' days'))`,
+    ).run(daysAgo);
+  }
+
+  function insertFreshBctcPush(): void {
+    db.prepare(
+      `INSERT INTO vps_push_log (service, items_count, status, pushed_at)
+       VALUES ('bctc', 12, 'ok', datetime('now'))`,
+    ).run();
+  }
+
+  it("returns last-known-good data WITH stale=true + stale_since + stale_age_hours when VPS bctc push exceeds 48h SLA (never errors/throws)", async () => {
+    const id = insertFinancialRow(db, {
+      action_code: "VCB",
+      net_revenue: 45_200_000,
+      net_profit: 8_100_000,
+      equity_total: 180_000_000,
+      total_assets: 1_800_000_000,
+    });
+    insertTableRow(db, id, "balance_sheet", 0);
+    insertRefinedUnit(db, id);
+    insertStaleBctcPush(3); // 72h ago > 48h SLA
+
+    const server = makeServer(db);
+    const result = await callToolFull(server, "get_bctc_full", { code: "VCB" });
+
+    // Never throws / never returns a bare error — still the full report served.
+    expect(result.content[0]!.text).toContain("=== BCTC SUMMARY: VCB ===");
+
+    // Human-readable staleness note surfaced in the text output.
+    expect(result.content[0]!.text).toContain("FR-DEGRADE-01");
+
+    // Machine-readable flag in the structured JSON block (content[1]).
+    const parsed = JSON.parse(result.content[1]!.text) as Record<string, unknown>;
+    expect(parsed["stale"]).toBe(true);
+    expect(typeof parsed["stale_since"]).toBe("string");
+    expect(parsed["stale_age_hours"] as number).toBeGreaterThan(48);
+
+    // Underlying financial data is still served (last-known-good, not withheld).
+    const sd = parsed["structured_data"] as Record<string, unknown>;
+    expect(sd["net_profit"]).toBe(8_100_000);
+  });
+
+  it("stale=false and stale_since=null when the VPS bctc push is within the 48h SLA", async () => {
+    const id = insertFinancialRow(db, { action_code: "FPT" });
+    insertTableRow(db, id, "balance_sheet", 0);
+    insertRefinedUnit(db, id);
+    insertFreshBctcPush();
+
+    const server = makeServer(db);
+    const result = await callToolFull(server, "get_bctc_full", { code: "FPT" });
+
+    const parsed = JSON.parse(result.content[1]!.text) as Record<string, unknown>;
+    expect(parsed["stale"]).toBe(false);
+    expect(parsed["stale_since"]).toBeNull();
+    expect(result.content[0]!.text).not.toContain("FR-DEGRADE-01");
+  });
+
+  it("no vps_push_log rows at all → stale=false (cannot assert staleness — fail-open, not a crash)", async () => {
+    const id = insertFinancialRow(db, { action_code: "MSN" });
+    insertTableRow(db, id, "balance_sheet", 0);
+    insertRefinedUnit(db, id);
+    // Table exists but has zero rows — no push record to compare against.
+
+    const server = makeServer(db);
+    const result = await callToolFull(server, "get_bctc_full", { code: "MSN" });
+
+    const parsed = JSON.parse(result.content[1]!.text) as Record<string, unknown>;
+    expect(parsed["stale"]).toBe(false);
+    expect(parsed["stale_since"]).toBeNull();
+  });
+});
