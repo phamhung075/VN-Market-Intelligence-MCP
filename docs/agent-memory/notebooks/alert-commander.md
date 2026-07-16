@@ -1,9 +1,9 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-07-16 04:07 UTC (from live tool `fetchedAt`; no Bash/`date` source this session) | **Sprint:** idle (no jq/Bash this session — defaulted per fallback rule)
+**Last updated:** 2026-07-16 04:26 UTC (from live tool `fetchedAt`; no Bash/`date` source this session) | **Sprint:** idle (no jq/Bash this session — defaulted per fallback rule)
 
 > Prior cycles archived → `docs/archive/notebooks/alert-commander-2026-05-22.md`
-> AC-2b prune (this cycle): dropped 1 oldest sub-block (20:09 UTC, 2026-07-15, slot=alert-commander-critical, market CLOSED silent-exit) from "This session" — accumulator was at 5 sub-blocks (over the ≥4 cap) after appending 04:00–04:07 UTC 2026-07-16. Content preserved in git history of this file.
+> AC-2b prune (this cycle): dropped 1 oldest sub-block (00:05–00:09 UTC, 2026-07-16, slot=alert-commander-critical, market CLOSED silent-exit) from "This session" — accumulator was at 5 sub-blocks (over the ≥4 cap) after appending 04:2x UTC 2026-07-16. Content preserved in git history of this file.
 
 ## Current state
 
@@ -11,7 +11,7 @@
 **DATA GUARD (standing, 2026-07-16):** macro_snapshot `vnIndex`/`vnIndexDelta` can be a TIER-4 estimate-vs-no-baseline artifact when `dataSource="estimate"`/`source_tier=4` — the 2026-07-15 20:09 UTC tick emitted vnIndex=1280.5/delta=-526.13 (real VN-Index was ~1782) which reached MARKET as a false ~29% crash claim (chef dish 933 — not alert-commander's channel/fix, unified-agent/chef scope). STANDING RULE: gap-token vnIndex/vnIndexDelta whenever `dataSource=estimate`/`source_tier=4`/`vnIndex_is_estimate=true` — never narrate/publish.
 **~~DATA GUARD #2~~ RETRACTED 2026-07-16T02:25Z by dispatcher — the rule was WRONG. Do not re-adopt it.** It said `vnIndexDelta` is a "missing baseline" artifact and to gap-token whenever `prevFetchedAt=null`. Since `prevFetchedAt` is ALWAYS null, that rule permanently suppressed a **correct** field. **The truth: `vnIndexDelta = current − prior_session_close`, and it is correct.** Baseline back-solves to a stable 1782.12 across all 2026-07-16 probes (= 07-15 close) and a stable 1806.63 across all 07-15 probes (= 07-14 close) — including your own 04:10Z (1788.52/−18.11) and 04:30Z (1791.6/−15.03) readings. It rolls daily; it is real. `prevFetchedAt=null` is a cosmetic gap (the baseline's timestamp isn't surfaced), NOT a missing baseline. The 02:08Z `delta=0`/`"flat"` was **a real flat reading** — the index genuinely sat on the prior close 5 min after open. Provenance: the dispatcher fed you this false claim in the 02:00Z spawn prompt; you adopted it correctly. The error is the dispatcher's, not yours. Full correction → `docs/handoffs/2026-07-15-market-dish-933-false-vnindex-526-point-drop.md` § 8.2.
 **STILL TRUE and worth keeping from that cycle:** top-level `dataSource="estimate"` refers to the carry/investment-clock composite, NOT the vnIndex field — do not conflate them. vnIndex is tier-1 and safe to cite, as is its delta.
-**Vol/Liquidity:** vol_regime=LOW (gk_vol_20d_pct=14.78%, rv_20d_percentile=0.225, drawdown_252d=16.38%, as of 04:07 UTC 07-16) | OMO=NULL (honest-NULL, HTML parse gap) | interbank_1w=NULL (VPS unreachable, 100% packet loss) — no liquidity-stress signal
+**Vol/Liquidity:** vol_regime=LOW (gk_vol_20d_pct=14.81%, rv_20d_percentile=0.218, drawdown_252d=16.38%, as of 04:25 UTC 07-16) | OMO=NULL (honest-NULL, HTML parse gap) | interbank_1w=NULL (VPS unreachable, 100% packet loss) — no liquidity-stress signal
 **Last fired:** CTG `legal_risk` CRITICAL 04:30 UTC 2026-07-15 (verdict `f33a49fb-ef16-45dc-820a-2ac8b772496b` pending, no duplicate) — nothing fired since; 04:00–04:07 UTC 07-16 cycle also silent.
 **Reputation watch:** CTG/FPT/MWG all 35.0/deteriorating (unchanged across cycles) — informational only, none crisis-tier (`get_crisis_early_warning` reported 0 crisis signals, reputation<50 is context not a firing gate).
 
@@ -28,15 +28,6 @@
 - **Step 4a-pre CLAIM-TRUTH GATE needs Bash** (`scripts/narrative-truth-gate.sh`) — unavailable this session again. Per `claim-truth-gate/SKILL.md` time-sensitivity override + alert-policy "never suppress legal risk": if this recurs on a CRITICAL fire, proceed on literal tool-sourced text only, log the gap. `SPRINT-CCATO-TRUTHGATE-MCP-NATIVE` already minted 2026-07-12 to fix architecturally.
 
 ## This session
-
-### Alert Cycle (00:05–00:09 UTC, 2026-07-16) — cowork tick, slot=alert-commander-critical, market CLOSED
-- **Status:** SILENT-EXIT (firing gate not met) — gateway SIGHTED this cycle (Read/Write/Edit/MCP-gateway only, no Bash — standing pattern continues).
-- **Regime:** NEUTRAL (fallback) | Carry: UNKNOWN (carrySpread=null, `fetched_at_source`=2026-06-26, 20 days stale) | Pivot window: inactive (0 events).
-- **Market (shared tick-snapshot `cycle-snapshot-00:05.json` reused):** VN-Index GAPPED per DATA GUARD #1 (dataSource=estimate/source_tier=4/vnIndex=1280.5/delta=-526.13 — NOT narrated/published). Brent 85.55 (+16.60%, tier-1) | Gold 4,065.7 (+1.09%, tier-1) | USD/VND 26,070 (tier-1) — market CLOSED. Vol regime NORMAL (14.58%, rv_20d_percentile=0.254, drawdown_252d=16.38%). Liquidity: OMO=NULL/interbank_1w=NULL, unchanged reasons.
-- **Signals (4 addressed, all urgent_news):** ids=8131-8134 freshness-sla-monitor SLA-breach noise, no stockCode → SUPPRESSED all 4. `record_signal_outcome` called for all 4. No `legal_risk`, `verified_chain`, `crisis_velocity`, or qualifying `chain_catalyst`.
-- **position-danger 0/3** | **watchlist-opportunity 0/4** | **CRITICAL overrides 0**.
-- **Fired:** 0 | Suppressed: 4 | log_agent_work id=1526
-- `get_foreign_room` SKIPPED (recurring token-budget overflow, filed via `submit_feedback` 2026-07-04, not re-probed).
 
 ### Alert Cycle (02:08 UTC, 2026-07-16) — cowork tick, slot=alert-commander-market, market OPEN
 - **Status:** SILENT-EXIT (firing gate not met) — gateway SIGHTED this cycle (Read/Write/Edit/MCP-gateway only, no Bash — standing pattern continues).
@@ -74,6 +65,17 @@
 - `get_foreign_room` SKIPPED (recurring token-budget overflow, filed via `submit_feedback` 2026-07-04, not re-probed).
 - No `send_telegram` call this cycle (MARKET or WORK) — silent exit per `no_cycle_headers: true`; PUBLISHED-MARKER GATE not invoked (nothing to publish).
 
+### Alert Cycle (04:24–04:26 UTC, 2026-07-16) — cowork tick, slot=alert-commander-market, market OPEN
+- **Status:** SILENT-EXIT (firing gate not met) — gateway SIGHTED this cycle (Read/Write/Edit/MCP-gateway only, no Bash — standing pattern continues).
+- **Regime:** NEUTRAL (fallback, macro_snapshot JSON shape still has no literal REGIME text line) | Carry: `signals.carry.regime`=UNKNOWN, carrySpread=null, `fetched_at_source`=2026-06-26 (20 days stale, source_tier=4) — not cited per DSI-INV-1. | Pivot window: inactive (`get_macro_calendar` status=unavailable, is_estimate=true, 0 events).
+- **Market:** VN-Index 1,765.74 (tier-1/live, `vnIndex_is_estimate`=false, `vnIndex_source_tier`=1, Δ-16.38 down — cite-safe per dispatcher DATA GUARD retraction) | Brent 84.79 (level only, delta null/unknown) | Gold 4,039.2 (level only, delta null/unknown) | USD/VND 26,070 (level only, delta null/unknown) — OPEN. Vol regime LOW (gk_vol_20d_pct=14.81%, rv_20d_percentile=0.218, drawdown_252d=16.38%). Liquidity: OMO net_outstanding=NULL (honest-NULL, HTML parse gap) | interbank_1w=NULL (VPS unreachable, 100% packet loss) — unchanged reasons.
+- **Intraday moves (bus signals, market-watcher, created 04:08 UTC, informational — none cleared 5% singleDayDrop threshold):** PDR -4.74% (RSI 18.6, severely oversold), KDH -4.62% (RSI 18.7, severely oversold), VCI -4.24% (RSI 26.1, oversold). `get_alerts(type="price")` → "Không có cảnh báo nào đang hoạt động" (0 active price alerts, stopLossHit=false) — none of the 3 price_anomaly signals confirmed via `get_alerts` per Signal Matrix table, so no CRITICAL action; no low-confidence primary signal this cycle to validate via Step 3b override (no stock_code match).
+- **Signals (6 addressed):** id=8202 (VCI), id=8204 (KDH), id=8205 (PDR) — `price_anomaly` from market-watcher, not confirmed via `get_alerts` (0 active) → SUPPRESSED all 3. id=8203 `chain_catalyst` "Q2 earnings surge signals profit recovery" (tech/logistics, no ticker) regime_adj_score=7→conf≈0.70 < NEUTRAL threshold 0.75 → SUPPRESSED. id=8206 `chain_catalyst` "VN-Index breaks 1800 support — sector-wide selloff" (market-wide, no `affected_stocks` ticker) regime_adj_score=6→conf≈0.60 < 0.75 → SUPPRESSED (also fails position-danger's per-ticker gate regardless). id=8207 `chain_catalyst` "Global growth outlook cloudy — emerging market volatility" (macro/global, no ticker) regime_adj_score=6→conf≈0.60 < 0.75 → SUPPRESSED. `record_signal_outcome` called for all 6. No `legal_risk` (`get_legal_risk_signals(days=1,hours_back=6)` → none), no `verified_chain` (`get_agent_signals` → "Không có tín hiệu mới"), no `crisis_velocity` (`get_crisis_early_warning` → 0 crisis signals; reputation CTG/FPT/MWG all 35.0/deteriorating, unchanged, informational only). 3x freshness-sla-monitor `urgent_news` (ids 8192/8193/8196) re-surfaced in `get_agent_signals` query but already suppressed in prior cycles (03:37 and 04:00–04:07 UTC) — not re-processed/re-recorded this cycle.
+- **position-danger 0/3** (no active price alerts, stopLossHit=false; max intraday move PDR -4.74% < 5%) | **watchlist-opportunity 0/4** (no kinhDichSignal=BUY candidate surfaced) | **CRITICAL overrides 0** (legal_risk=0, verified_chain=0, crisis_velocity=0, chain_catalyst=0 qualifying — all 3 below regime threshold).
+- **Fired:** 0 | Suppressed: 6 | log_agent_work id=1532
+- `get_foreign_room` SKIPPED (recurring token-budget overflow, filed via `submit_feedback` 2026-07-04, not re-probed).
+- No `send_telegram` call this cycle (MARKET or WORK) — silent exit per `no_cycle_headers: true`; PUBLISHED-MARKER GATE not invoked (nothing to publish).
+
 ## Carry-over for next cycle
 
 - **DATA GUARD #1 (standing):** macro_snapshot `vnIndex`/`vnIndexDelta` reached MARKET as a false ~29% crash claim on 2026-07-15 (dish 933, `dataSource=estimate`/`source_tier=4`, vnIndex=1280.5/delta=-526.13 vs real VN-Index ~1782) — not alert-commander's channel to correct (unified-agent/chef's scheduled dish, per `not_my_job`). Rule: gap-token vnIndex/vnIndexDelta whenever `dataSource=estimate`/`source_tier=4`.
@@ -84,4 +86,4 @@
 - `get_macro_snapshot` schema: still no literal "Global Liquidity: X" text line — REGIME falls back to NEUTRAL every cycle. Flag to dev-team/architect: long-standing gap.
 - `get_foreign_room` token-budget overflow: filed via `submit_feedback` 2026-07-04. Still no fix landed. Continuing to SKIP-and-suppress, not re-filing every cycle.
 - `get_macro_calendar` still `status=unavailable`, `is_estimate=true`, 0 events. pivot_window_active reliably false, no macro-calendar data source live yet.
-- **PROCESS GAP (recurring):** no Bash/git tool this session (Read/Write/Edit/MCP-gateway only) — this notebook write cannot be committed by this agent; needs a git-capable session/agent to pick up. Gateway itself WAS sighted this cycle (bootstrap/signals/log_agent_work all completed normally) — only the git-commit step is blocked. Uncommitted across 03:37 UTC and 04:00–04:07 UTC 07-16 cycles: notebook (this file) only — no MARKET/WORK sends either cycle (silent exit), no verdict write, nothing else pending.
+- **PROCESS GAP (recurring):** no Bash/git tool this session (Read/Write/Edit/MCP-gateway only) — this notebook write cannot be committed by this agent; needs a git-capable session/agent to pick up. Gateway itself WAS sighted this cycle (bootstrap/signals/log_agent_work all completed normally) — only the git-commit step is blocked. Uncommitted across 03:37 UTC, 04:00–04:07 UTC, and 04:24–04:26 UTC 07-16 cycles: notebook (this file) only — no MARKET/WORK sends any cycle (silent exit), no verdict write, nothing else pending.

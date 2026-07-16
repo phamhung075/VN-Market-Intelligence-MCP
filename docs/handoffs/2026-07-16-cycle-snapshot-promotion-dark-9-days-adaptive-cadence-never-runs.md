@@ -178,6 +178,67 @@ investigators (07-15 and me) both stopped one layer too early: `unknown` is over
 being dark *would* produce it, so both of us stopped when we found a sufficient cause and never
 checked whether it was the *operative* one. Cf. `feedback_composite_score_masks_dead_detector_pruned_table`.
 
+## 4-NEW-2. FALSIFIED 2026-07-16T04:30Z — §3's headline claim is wrong. Adaptive DOES run on slot-bearing ticks, and the predicate has a ONE-TICK LAG.
+
+Added by the cowork dispatcher at tick 04:15Z — the **third** independent re-derivation of this
+document (07-15 → 07-16T00:50 → me). I found nothing in §§1-3 that was not already here, including
+the same zsh `--include=*.ts` false-negative in §8. Two things below are additive; everything else
+I "discovered" is folded already. Filed as an append, not a new handoff.
+
+**§3 asserts:**
+
+> **Adaptive mode runs only when it has nothing to do.** Every tick that actually fans out agents
+> falls back to legacy. DWF-PHASE1's Steps 4.3–4.5 … are inert in production on every slot-bearing tick.
+
+**Counterexample — tick 04:00Z, from committed evidence written before this claim was tested**
+(`git show edcc4c66a^:docs/signals/cowork-team-2026-07-16T04-07-10Z.json`):
+
+```
+pressure_mode = adaptive
+silent        = false
+spawned       = 3 agents   (news-scout-offhours, market-watcher-offhours, alert-commander-critical)
+suppressed_cadence = ["alert-commander-market"]
+```
+
+A slot-bearing tick that ran **adaptive** and fanned out three agents. And it was not idling: adaptive
+is what applied the 240-min gate that **suppressed `alert-commander-market`** — the consequential
+scheduling decision in `2026-07-16-alert-commander-market-dangling-policy-240min.md`. Steps 4.3–4.5
+are not inert; they are **intermittently live and made a degrading decision on this tick**.
+
+**Why §3 went wrong — the predicate has a one-tick lag.** Step 4.2 reads the `pressure-state.json`
+written by the **previous** tick's Step 6.0 emit (emit is the last step of a tick). So:
+
+> **mode(T) ← does a residue `cycle-snapshot-<nominal HH:MM of T-1>.json` exist and is it >4h old**
+
+Slot-bearing-ness of T is irrelevant. Verified both directions, same hour:
+
+| tick T | reads emit of | residue at that key | `stale_warning` | mode(T) | slots fired |
+|---|---|---|---|---|---|
+| 04:00Z | 03:45 | `cycle-snapshot-03:45.json` **absent** | false | **adaptive** | **3** ← falsifies §3 |
+| 04:15Z | 04:00 | `cycle-snapshot-04:00.json` **present, 6 Jun (40d)** | true | **legacy** | 2 |
+
+§4's predicate ("*does a file exist at `cycle-snapshot-<tickHHMM>.json`, and is it >4h old*") is the
+correct one and already contradicts §3 — this document disagrees with itself between §3 and §4. §4 is
+right. The slot-bearing↔legacy correlation in §4's 7-emit sample is **coincidental**: residue files
+cluster at minutes where past ticks happened to fire, and those cluster near nominal boundaries.
+
+**Consequences for triage (sharpen UC-SDF-P2, do not rescope it):**
+
+1. **Severity framing changes.** "Adaptive is uniformly dark" (§3) invites "then it's harmless, ship
+   the key fix whenever." The truth is worse to reason about: adaptive is **non-deterministically
+   live**, gated by which ~110 gitignored junk files (back to 27 May) happen to sit at a nominal
+   boundary. Behaviour depends on filesystem residue, not on system state.
+2. **§4-NEW's conclusion survives intact and is unaffected** — `regime_status` has zero writers since
+   06-05, so `computeTiers` still degrades to `volatility_tier=low` on the adaptive ticks that *do*
+   run. Both work-units are still needed.
+3. **Pruning the residue files is not just disk hygiene (§6.3) — it is a behaviour change.** Deleting
+   them flips every tick to `stale_warning=false` → adaptive **everywhere**, which silently activates
+   the 240-min dangling-policy gate on `alert-commander-market` fleet-wide. **Prune and author the
+   missing policies in the same change, or the prune alone degrades the alert path 16×.** Sequencing
+   matters; these two backlog rows are coupled and neither says so.
+
+<!-- Corrects this doc's §3 and, in the sibling handoff, its "emitter health" framing. -->
+
 ## 5. Why this went unseen — the flag is read as a mode hint, not as a detector
 
 `stale_warning:true` is consumed only to pick `legacy`, which is believed harmless. Nothing treats it

@@ -1,0 +1,40 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-16T04:32:00Z",
+    "matched_slots": ["chef-intraday", "alert-commander-market"],
+    "won_slots": ["chef-intraday", "alert-commander-market"],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": { "chef-intraday": "cron", "alert-commander-market": "cron" },
+    "cadence_minutes": { "chef-intraday": null, "alert-commander-market": null },
+    "last_fired_timestamp": "2026-07-16T04:24:41.029Z",
+    "last_fired_slots": ["chef-intraday", "alert-commander-market"],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "04:15",
+    "leader_lock": "acquired",
+    "dev_head": "idle",
+    "devq": 5,
+    "signal_backlog": 4,
+    "note": "LEGACY mode this tick (pressure-state stale_warning=true from the 04:00 tick's emit). PRE-REGISTERED PREDICTION RESOLVED ON THE OPPOSITE BRANCH, 2nd consecutive tick: at 04:00Z I stated in advance that mode would flip and alert-commander-market would fire on cron */15; it matched at 40min elapsed (last_fired 03:35:10Z). Legacy verdict shape confirmed independently of reasoning — slots[] carry no due_reason/cadence_minutes (matcher :162 plain-object shape). CHEF mutex evaluated false (chef-intraday guaranteed=false present, no guaranteed CHEF sibling in MATCHES) -> no drop. STEP 4.7 EXECUTED THIS TICK (last tick it was skipped): used scripts/agents-flow/mcp-call.sh to redirect get_cycle_bootstrap + get_macro_snapshot straight to the stage files, so the 60+ line payloads never transited the LLM context and there was zero transcription risk — the concern that drove last tick's skip. Wrote cycle-snapshot-04:23.json (13056B, live prices, DBC 17.250 +0.29% @04:22). tick-snapshot.md's premise 'pure bash cannot call MCP' is false — mcp-call.sh exists and the preflight already uses it. RECOVERY NOTE: the preflight verdict JSON was truncated by the dispatcher's own `tail -5`; shell state does not persist so slots[] was lost. Re-running the side-effecting preflight is forbidden, so slots[] was recovered by re-invoking cowork-match-slots.js ALONE after verifying (a) it is read-only (zero writes/MCP/network), (b) nominal tick identical — matcher snaps floor(actualM/15)*15 so 04:18 and 04:19 both resolve 04:15, (c) pressure-state frozen since 04:06:38Z, (d) last_fired frozen pre-spawn. Same inputs -> same output; only drift_min differed (3->5, cosmetic). LOCK-RELEASE NEAR-MISS: first task_release used key cron:cowork:2026-07-16T04:15:00Z and returned {ok:true, released:0}; that ok:true was NOT a TTL expiry but a KEY MISMATCH — preflight L127 builds the tick as %Y-%m-%dT%H:%MZ with NO seconds. task_list_held confirmed cron:cowork:2026-07-16T04:15Z still held; released:1 on the correct key. released:0 is ambiguous (expired vs wrong-key) and must be disambiguated with task_list_held, never trusted. SIGNAL QUEUE: 0 NEW, rows[] length 0 — verified NOT a clobber. git shows PO triaged cow-20260716T031800 into board row FIX-COWORK-CADENCE-DANGLING-POLICY-ID (4be6f7412, rows 1->1) and cold-evict archived the READ row to docs/data/orch/archive/2026-07.json (3d5a15073). Stale signal_queue._updated_at=03:18:00Z is cold-evict not bumping metadata — benign. INVESTIGATION WAS A DUPLICATE, stated plainly: chased cycle_snapshot_promoted=false (last tick's unasserted open item) to root cause, then the mandatory prior-art grep found docs/handoffs/2026-07-16-cycle-snapshot-promotion-dark-9-days-adaptive-cadence-never-runs.md — which ITSELF opens with a box admitting it re-derived the 07-15 handoff. I am the THIRD investigator down this path; §§1-3 already hold the key mismatch, the no-date-in-key residue collision, and the stale_warning=promoteResult.stale chain. Even hit the identical zsh --include=*.ts false-negative logged in its §8. Filed as an APPEND, no new handoff, no new board row (UC-SDF-P2 + SPIKE-TICK-SNAPSHOT-DEADCODE-OR-REGRESSED already cover it). TWO ADDITIVE FINDINGS: (1) that handoff's §3 headline 'Adaptive mode runs only when it has nothing to do; every tick that fans out agents falls back to legacy' is FALSIFIED by committed pre-existing evidence — git show edcc4c66a^ of the 04:00Z telemetry shows pressure_mode=adaptive, silent=false, spawned=3, and that adaptive tick is precisely what applied the 240 gate suppressing alert-commander-market; Steps 4.3-4.5 are not inert, they are intermittently live and made a degrading decision. (2) the predicate has a ONE-TICK LAG both prior investigators missed: Step 4.2 reads the pressure-state written by tick T-1's Step 6.0 emit, so mode(T) <- residue at nominal(T-1), independent of T's slot-bearing-ness; verified both directions this hour (04:00 read 03:45 emit, 03:45 file absent -> adaptive; 04:15 read 04:00 emit, 04:00 file present 6-Jun 40d -> legacy). The §3 slot-bearing<->legacy correlation is coincidental — residue clusters near nominal boundaries. COUPLING HAZARD (new, filed to po): pruning the ~110 residue files or landing UC-SDF-P2's key-unification flips every tick to adaptive fleet-wide, which ACTIVATES the dangling-policy 240 gate and degrades the market-alert path 16x. UC-SDF-P2 reads as harmless hygiene and does not mention FIX-COWORK-CADENCE-DANGLING-POLICY-ID; they are coupled and must be sequenced (author the two missing policies first, or land both together). CORRECTED MY OWN HANDOFF: 2026-07-16-alert-commander-market-dangling-policy-240min.md attributed the mode flip to 'pressure telemetry health' and told triagers that fixing FU-PRESSURE-EMIT-DARK-class emitter health would worsen the alert path. Wrong — the emitter is healthy and emits every tick; stale_warning is a filesystem-residue artifact. Mechanism table and blast radius stand; causal story and that triage line corrected in place. AGENTS: chef-intraday published a MARKET dish, quality DEGRADED, conviction capped MEDIUM, 3 clusters (banking oversold, real-estate weakness, securities weakness), gaps enumerated honestly (L2 carry, L3 CPI/VIRA, business context). alert-commander SILENT EXIT — correct (0/3 position-danger, 0/4 opportunity, 0 critical; max move PDR -4.74% < 5% threshold). alert-commander reports its notebook uncommitted for the 3rd consecutive cycle (no Bash/git in its toolset) and escalated to bug channel + dropped docs/signals/alert-commander-2026-07-16T04-27-00Z-no-bash-tool.json; dispatcher is git-capable and picked the notebook up in this tick's commit. BA-FIX-MACRO-SNAPSHOT-DELTAS-NULL premise re-verified TRUE a 4th time (oil/gold/usdVnd deltas all null in this tick's own snapshot) — still no board row. Zero token leaks: 2 slots claimed ttl=180, 2 released post-spawn, P3 released on the correct key."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-16T04:32:00Z"
+}

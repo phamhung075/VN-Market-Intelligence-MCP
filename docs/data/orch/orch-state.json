@@ -373,10 +373,10 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "UC-ASL-P2",
-    "next_agent": "ba",
-    "next_action": "BOUNDED-1 auto-pickup claim of UC-ASL-P2 — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-16T04:23:13Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "next_agent": "architect",
+    "next_action": "BA spec done (docs/handoffs/UC-ASL-P2-BA-spec.md); architect: technical design + resolve ARCH-RATIFY-1/2/3 + pin ZONE, then handoff pm",
+    "updated_at": "2026-07-16T04:33:54Z",
+    "updated_by": "dev-team (relay advance ba->architect, UC-ASL-P2)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -412,10 +412,22 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-16T03:18:00Z",
+    "_updated_at": "2026-07-16T04:33:57Z",
     "_updated_by": "cowork-team",
     "archive": [],
-    "rows": [],
+    "rows": [
+      {
+        "id": "cow-20260716T043200",
+        "summary": "SEQUENCING HAZARD: UC-SDF-P2 (cycle-snapshot key-unification / residue prune) and FIX-COWORK-CADENCE-DANGLING-POLICY-ID are COUPLED and neither row says so. stale_warning is a residue-file artifact, not emitter health: mode(T) <- does cycle-snapshot-<nominal HH:MM of T-1>.json exist and is it >4h old. Landing UC-SDF-P2 or pruning the ~110 residue files flips EVERY tick to adaptive fleet-wide, which activates the dangling 240min policy gate and degrades the market-alert path 16x (15min -> 240min). UC-SDF-P2 reads as harmless disk/key hygiene. FIX: author alert-commander-market(15) + alert-commander-critical(240) in cadence-policy.json FIRST, or land both changes together. Also falsifies the promotion handoff §3 (adaptive DOES run on slot-bearing ticks: 04:00Z tick was adaptive + spawned 3 — git show edcc4c66a^).",
+        "severity": "MED",
+        "status": "NEW",
+        "ts": "2026-07-16T04:33:57Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "diagnosis",
+        "payload_ref": "docs/handoffs/2026-07-16-cycle-snapshot-promotion-dark-9-days-adaptive-cadence-never-runs.md"
+      }
+    ],
     "last_triaged_at": "2026-07-15T20:56:10Z",
     "last_triaged_by": "po"
   },
@@ -8457,11 +8469,11 @@
     ],
     "done_verified": [],
     "head": {
-      "status": "idle",
-      "active_task_id": null,
-      "next_agent": "router",
-      "last_updated_at": "2026-07-16T03:55:37Z",
-      "last_updated_by": "po (triage cow-20260716T031800 -> FIX-COWORK-CADENCE-DANGLING-POLICY-ID minted BACKLOG, head idle)"
+      "status": "in_progress",
+      "active_task_id": "UC-ASL-P2",
+      "next_agent": "architect",
+      "last_updated_at": "2026-07-16T04:33:54Z",
+      "last_updated_by": "dev-team (relay advance ba->architect)"
     },
     "ready": [],
     "review": [

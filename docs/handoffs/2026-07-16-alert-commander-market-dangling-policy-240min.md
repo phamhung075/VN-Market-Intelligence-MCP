@@ -83,7 +83,38 @@ The 03:30Z tick fired `alert-commander-market` at only **~85 min elapsed** — i
 | `true` | true | **legacy** | cron `*/15` | **15 min** | ✅ correct |
 | `false` | false | **adaptive** | `policy_id` → dangling → AC-P1-1-3 | **240 min** | ⚠️ 16× degraded |
 
-**The market-alert path silently degrades 16× exactly when the pressure telemetry reports healthy, and self-heals when the telemetry goes stale.** That inversion is why this survived undetected since 2026-07-03 — it is invisible in precisely the windows an operator would consider the system to be working.
+~~**The market-alert path silently degrades 16× exactly when the pressure telemetry reports healthy, and self-heals when the telemetry goes stale.**~~ **← CAUSAL STORY CORRECTED 2026-07-16T04:30Z. See § CORRECTION below. The mechanism table above is intact; the "telemetry health" reading of `stale_warning` is wrong.**
+
+### 🔧 CORRECTION 2026-07-16T04:30Z — `stale_warning` has nothing to do with emitter health
+
+Written by the same dispatcher that authored this handoff, after reading the emitter at source
+(`apps/mcp-server/src/interface/mcp/tools/system/emitPressureStateTool.ts`).
+
+**`stale_warning` is not a telemetry-health signal.** It is assigned `stale_warning: promoteResult.stale`,
+and `promoteCycleSnapshot` returns:
+
+| condition | return | ⇒ `stale_warning` | ⇒ mode of the NEXT tick |
+|---|---|---|---|
+| `cycle-snapshot-<tickHHMM>.json` **absent** (L233) | `{promoted:false, stale:false}` | `false` | adaptive |
+| present but content >4h old (L260-263) | `{promoted:false, **stale:true**}` | `true` | **legacy** |
+| present and fresh (L270) | `{promoted:true, stale:false}` | `false` | adaptive |
+
+The emitter has been **healthy and emitting on every tick** throughout. What flips the flag is whether a
+**residue junk file** happens to sit at that tick's nominal `HH:MM` — there are ~110 of them, gitignored
+and never pruned, dating to 27 May. The dispatcher writes `cycle-snapshot-$(date -u +%H:%M).json` (actual
+fire time, e.g. `04:23`) while the gate reads `tick_id`'s `HH:MM` (nominal, e.g. `04:15`), so they agree
+only at zero drift and the gate has never once opened the file this dispatcher wrote. Full root cause and
+prior art: `docs/handoffs/2026-07-16-cycle-snapshot-promotion-dark-9-days-adaptive-cadence-never-runs.md`
+(+ backlog `UC-SDF-P2`, `SPIKE-TICK-SNAPSHOT-DEADCODE-OR-REGRESSED`).
+
+**What this handoff got right and keeps:** the 240-min degradation, the adaptive-only inversion, the
+`isStale` OR short-circuit, the observed flips, and the whole § Blast radius. Every row of the mechanism
+table above still holds — `stale_warning:true` ⇒ legacy ⇒ 15 min; `false` ⇒ adaptive ⇒ 240 min.
+
+**What was wrong:** *why* the flag flips. I read "stale telemetry" as "the emitter is unhealthy" and never
+opened the emitter. It is a filesystem-residue artifact. Same error class as the two retractions earlier
+this session — I explained an observation from the plane I was already looking at
+(`feedback_internal_consistency_is_not_corroboration_check_the_other_plane`).
 
 **Observed flip (not inferred):**
 
@@ -99,7 +130,7 @@ At 03:33Z: `stale_warning: true`, `emitted_at: 2026-07-16T03:18:30.971Z`. **Age 
 
 **Consequences for triage:**
 
-1. **Severity is not reduced by intermittency — it is complicated by it.** The slot is correct only while telemetry is broken. Fixing `FU-PRESSURE-EMIT-DARK`-class emitter health *worsens* the alert path until the policy is authored.
+1. **Severity is not reduced by intermittency — it is complicated by it.** The slot is correct only on ticks that fall back to legacy. ~~Fixing `FU-PRESSURE-EMIT-DARK`-class emitter health *worsens* the alert path until the policy is authored.~~ **CORRECTED 04:30Z — emitter health is irrelevant (see § CORRECTION above); the emitter is healthy.** The real coupling is: **pruning the ~110 residue `cycle-snapshot-<HH:MM>.json` files, or landing UC-SDF-P2's key-unification, flips every tick to adaptive and thereby activates this 240-min gate fleet-wide.** Either change silently degrades the market-alert path 16× unless the two missing policies are authored in the *same* change. `UC-SDF-P2` reads as harmless disk/key hygiene and does not mention this row; **they are coupled and must be sequenced — author the policies first, or land both together.**
 2. **A fix verified during a stale window will look like it works and prove nothing.** Any DV test must pin `stale_warning=false` (adaptive) or it will exercise the legacy path and pass vacuously.
 3. This also means the slot has been oscillating between 15 min and 240 min since 07-03 depending on emitter health, so **do not expect a clean "it never fired" signature in the history** — expect an irregular one.
 
