@@ -371,12 +371,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "UC-ASL-P2 DONE_VERIFIED (qa RE-GATE round 2 APPROVED, AC-3 fix f1bcf63a). Tick idle — next cron tick runs preflight + drain + BOUNDED-1.",
-    "updated_at": "2026-07-16T06:35:24Z",
-    "updated_by": "dev-team (UC-ASL-P2 promoted done_verified; tick 20260716T041809Z idle)"
+    "status": "in_progress",
+    "active_task_id": "UC-ASL-P1",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of UC-ASL-P1 — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-16T07:34:36Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6516,22 +6516,6 @@
         "impact_enrichment_20260715T2056Z": "[po 2026-07-15T20:56Z, corroboration from cow-20260715T204639 — owner/priority/next_agent UNCHANGED] IMPACT-LINE ENRICHMENT: the double-publish was NOT a benign repeat. RAW-verified against live MARKET store: id 932 (19:52:17) cites no index number and is narratively consistent with the real -1.36%; id 933 (19:56:07, the DUPLICATE) published a FALSE 'VN-Index mat 526 diem' (~29% crash), contradicting both reality and its own predecessor. So the marker-release defect let a SECOND, WORSE dish through — publishing 933 was strictly harmful independent of duplication. UC-CCA-P3 impact should read 'caused a user-visible duplicate THAT PUBLISHED A FALSE ~29% INDEX MOVE', not just 'double-publish'. The correctness/plausibility root cause is tracked separately in FIX-VNINDEX-CROSS-PLANE-PLAUSIBILITY-GATE."
       },
       {
-        "id": "UC-ASL-P1",
-        "type": "FIX",
-        "title": "Fix the self-defeating T2/T3 auditor gate: gate on the PREVIOUS subagent heartbeat; move tier-2/3 heartbeat authorship into the subagent end-of-cycle",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "CONFIRMED",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#auditor-signal-loop-P1",
-        "note": "The tier-2/3 gate reads a heartbeat the same run just wrote, so it never blocks. Gate on the prior-cycle subagent heartbeat and author the heartbeat in the subagent end-of-cycle.",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po"
-      },
-      {
         "id": "UC-ASL-P6",
         "type": "CLEAN",
         "title": "Purge the DASHBOARD.md phantom protocol from the auditor flow; align SKILL.md hot-path write text with the orch-apply contract",
@@ -8326,68 +8310,6 @@
         "zone": "qa"
       },
       {
-        "id": "FIX-CLOSEGATE-STEP4-ATOMIC-HANDOFF-SCRIPT",
-        "type": "FIX",
-        "title": "Mint scripts/ops-closegate-handoff.jq (atomic .head+board write) + wire it into docs/protocols/docker-deployment-runbook.md § Close Gate as the new Step 4b",
-        "owner": "po",
-        "status": "DONE",
-        "priority": "high",
-        "size": "S",
-        "zone": "cross-service/",
-        "recurring": true,
-        "created_at": "2026-07-09T07:29:23Z",
-        "created_by": "agents-architect",
-        "architecture_brief": "docs/architecture-briefs/2026-07-09-closegate-step4-atomic-handoff.md",
-        "note": "Brief §2.1: generalized, parameterized scripts/ops-closegate-handoff.jq mirroring scripts/devteam-backlog-claim-bounded1.jq / scripts/router-d1-claim.jq precedent — inputs --arg task_id/from_lane/next_agent/now; forwards the board row's next_agent in the SAME jq expression as a CONDITIONAL .head sync (if .head.active_task_id == $task_id then .head.next_agent/.updated_at/.updated_by sync else . end — never an unconditional .head overwrite, .head can legitimately point at a different in-flight task while ops closes this one). No hardcoded task-id/lane literals (grep-verifiable). Runbook § Close Gate table gets the currently-missing 'Step 4b: forward to qa via the script' row — replaces every future ad hoc terminal jq one-liner. Suggested owner split: scripts/ authoring (developer or ops) vs. docs/protocols/docker-deployment-runbook.md edit (agent-father zone per .claude/skills/commit-boundary/SKILL.md) — PO's call whether to keep as one task or split. DoD in brief §5 items 1-2.",
-        "next_agent": "qa",
-        "detail_ref": "docs/architecture-briefs/2026-07-09-closegate-step4-atomic-handoff.md",
-        "status_note": "Architect brief docs/architecture-briefs/2026-07-09-closegate-step4-atomic-handoff.md §2.1. Mint scripts/ops-closegate-handoff.jq: parameterized (--arg task_id/from_lane/next_agent/now); ONE jq expr sets row.next_agent AND CONDITIONALLY .head.next_agent/updated_at/updated_by ONLY if .head.active_task_id==task_id (never blind-stomp an unrelated .head); error() if row absent (no silent no-op); NO hardcoded task-id/lane literals (grep-verifiable, per devteam-backlog-claim-bounded1.jq invariant). Add runbook § Close Gate Step-4b table row citing the script + invocation. FAST-TRACK (architect brief = spec, skip ba/pm). AC: brief §5.1+§5.2. Doc/script-only, no rebuild. Triaged po-S16 tick.",
-        "triaged_at": "2026-07-09T07:47:30Z",
-        "triaged_by": "po",
-        "claimed_at": "2026-07-09T07:59:30Z",
-        "claimed_by": "router (dispatch developer)",
-        "implementation_note": "scripts/ops-closegate-handoff.jq minted + docs/protocols/docker-deployment-runbook.md § Close-gate Step 4b row added. 3 manual scratch-copy scenarios (row+head match / row-only-head-untouched / absent-row error) + real orch-validate.mjs PASS on candidate output. Journal: sprint-SYSTEMIC-REMAKE-P1-developer.md STEP developer-S8. Scope split: commit-gate footnote (§2.2) + STEP ops-Sn enforcement (§2.3) deferred to follow-on FIX-CLOSEGATE-STEP4-COMMIT-JOURNAL-DISCIPLINE (agent-father). RESUBMIT 2026-07-09T08:22:19Z (developer-S9): docs/protocols/docker-deployment-runbook.md Step-4b table-cell fix applied for qa's CHANGES_REQUESTED finding — invocation moved out of the GFM table cell into a fenced bash code block directly below the table (real unescaped shell pipe); cell text now just points to the block. Verified: exact invocation string present raw via grep -F with a real |, zero remaining backslash-escaped pipes in the file, all 9 raw table lines have exactly 4 pipe-delimited columns (table still parses). scripts/ops-closegate-handoff.jq untouched (qa already confirmed 0 changes needed there). Journal: sprint-SYSTEMIC-REMAKE-P1-developer.md STEP developer-S9.",
-        "reviewed_at": "2026-07-09T08:04:40Z",
-        "moved_by": "developer",
-        "qa_verdict": "PASS",
-        "qa_note": "RE-REVIEW PASS. Extracted the fenced-bash Step-4b invocation raw from docker-deployment-runbook.md line 131 via sed (not retyped): real unescaped shell pipe confirmed (json | bash substring found via grep -o). grep -n '\\\\|' whole-file returns zero matches (no escaped pipes remain). GFM table (lines 118-126, header+separator+7 rows) parses consistently: 4 pipe chars / 3 columns (Step/Actor/Action) on every row, code-span-aware parse (Python script tracking backtick state) confirms structural consistency unchanged from pre-fix table shape. Ran the extracted invocation for real: bash -x against a scratch copy of orch-state.json (ORCH_APPLY_LIVE_FILE_OVERRIDE env var override, live file never touched, md5 unchanged before/after) with fake TASK_ID -- trace shows genuine 2-stage pipe (jq ... | bash scripts/orch-apply.sh as separate commands), jq's own error() logic fired (task_id not found, expected/fine per fake id) -> orch-apply.sh received empty stdin and cleanly aborted (exit 3, no write) -- NOT the old exit-2 signature. Reproduced the ORIGINAL bug for contrast using the pre-fix backslash-pipe shape on the same scratch file: confirmed it fails exactly as previously diagnosed (jq receives literal | and bash and scripts/orch-apply.sh as extra positional file args -> Could not open file | / Could not open file bash -> exit 2). Additionally ran a full positive-path end-to-end test (synthetic scratch row + matching head.active_task_id) -- pipe completed successfully end to end, jq wrote next_agent=qa on the row AND head.next_agent/updated_at/updated_by synced, orch-validate.mjs Stage0+1 PASS, orch-apply.sh exit 0 -- all confirmed only against the scratch fixture, live file byte-identical throughout (md5 846ccac7015ef47bda405f79cd34416b unchanged). scripts/ops-closegate-handoff.jq confirmed untouched since commit b80d14d39 (git log/diff empty) -- the commit already PASSED in the prior qa-S36 review. Fix commit 690cb304e is doc-only (docker-deployment-runbook.md, +7/-1L) -- no apps/* touched, no rebuild needed, no ops Close Gate applicable. Terminal state: review[] -> done[] (FIX-type, no-ops-step precedent: FIX-SPRINT-GOAL-STATUS-DRIFT-EVICT, qa closes review->done directly on PASS).",
-        "qa_reviewed_at": "2026-07-09T08:31:59Z",
-        "completed_at": "2026-07-09T08:31:59Z",
-        "completed_by": "qa"
-      },
-      {
-        "id": "FIX-CLOSEGATE-STEP4-COMMIT-JOURNAL-DISCIPLINE",
-        "type": "FIX",
-        "title": "Codify ops Close Gate step-ends-only-on-commit invariant + STEP ops-Sn decision-journal filename enforcement; fold 3 existing one-off-filename offenders",
-        "owner": "po",
-        "status": "DONE",
-        "priority": "high",
-        "size": "S",
-        "zone": "cross-service/",
-        "recurring": true,
-        "created_at": "2026-07-09T07:29:23Z",
-        "created_by": "agents-architect",
-        "architecture_brief": "docs/architecture-briefs/2026-07-09-closegate-step4-atomic-handoff.md",
-        "note": "Brief §2.2+§2.3: (a) ops's Step 4/4b is not complete until ITS OWN commit lands (notebook + sprint-<sprint_id>-ops.md journal + orch-state.json diff, explicit-path git add/commit/show-verify — modeled on agents-architect's own Brief-Commit Invariant); Step-4 RETURN block must carry the resulting commit SHA, a report without one is INCOMPLETE (router/PO committing ops's artifacts is a defect to report, not a recovery path — happened twice already, commits f4afa0e03/b907a8ea6). Add an ops row to .claude/skills/commit-boundary/SKILL.md's per-agent zone table scoped to exactly those 3 paths. (b) enforce the decision-journal skill's own SPRINT_ID resolution / STEP ops-Sn append pattern for the Close Gate journal entry — a one-off dated filename is never correct. Fold these 3 existing offenders into sprint-SYSTEMIC-REMAKE-P1-ops.md's STEP ops-Sn sequence (content is legitimate, just filed under the wrong name — migrate, do not delete): docs/agent-memory/decisions/2026-07-08-FACTORY-INTERFACE-FINALIZEBCTC-OPS-CLOSE-GATE.md, docs/agent-memory/decisions/2026-07-08-FACTORY-DOMAIN-EXTRACT-BCTC-PARSING-LIB-OPS-CLOSE-GATE.md, docs/agent-memory/decisions/2026-07-09-FACTORY-FRONTEND-SPLIT-DASHBOARD-OPS-CLOSE-GATE.md. Owner: agent-father (docs/protocols/ + docs/agents/ops/flow/ + .claude/skills/commit-boundary/SKILL.md all fall in its declared zone). DoD in brief §5 items 3-4.",
-        "next_agent": "qa",
-        "detail_ref": "docs/architecture-briefs/2026-07-09-closegate-step4-atomic-handoff.md",
-        "status_note": "Architect brief §2.2+§2.3. (2.2) Runbook commit-gate footnote — Step 4/4b NOT complete until ops own commit lands; a router/PO cleanup-commit of ops uncommitted Close-Gate artifacts = defect to report, not a recovery path (3rd recurrence→escalate) — plus add an ops row to .claude/skills/commit-boundary/SKILL.md zone table scoped to exactly docs/agent-memory/notebooks/ops.md + docs/agent-memory/decisions/sprint-<id>-ops.md + docs/data/orch/orch-state.json. (2.3) Runbook (or docs/agents/ops/flow/docker.md) STEP ops-Sn journal-filename enforcement line; FOLD (migrate, do NOT delete) the 3 one-off offenders (2026-07-08-FACTORY-INTERFACE-FINALIZEBCTC-OPS-CLOSE-GATE.md, 2026-07-08-FACTORY-DOMAIN-EXTRACT-BCTC-PARSING-LIB-OPS-CLOSE-GATE.md, 2026-07-09-FACTORY-FRONTEND-SPLIT-DASHBOARD-OPS-CLOSE-GATE.md) into sprint-SYSTEMIC-REMAKE-P1-ops.md STEP ops-Sn. agent-father zone (docs/agents/, .claude/skills/, docs/agent-memory/, docs/protocols/). AC brief §5.3+§5.4. Doc-only, no rebuild. Triaged po-S16 tick.",
-        "depends_on": [
-          "FIX-CLOSEGATE-STEP4-ATOMIC-HANDOFF-SCRIPT"
-        ],
-        "triaged_at": "2026-07-09T07:47:30Z",
-        "triaged_by": "po",
-        "claimed_at": "2026-07-09T08:35:26Z",
-        "claimed_by": "router (dispatch agent-father)",
-        "moved_by": "agent-father",
-        "moved_at": "2026-07-09T08:51:19Z",
-        "implementation_note": "Doc/skill/memory landed by agent-father, commit 6f054ea3a: runbook Step 4/4b Commit-Gate Invariant + STEP ops-Sn enforcement + commit-boundary ops zone row + 3 offenders folded into sprint-SYSTEMIC-REMAKE-P1-ops.md. AC brief §5.3+§5.4 satisfied.",
-        "qa_verdict": "PASS",
-        "completed_by": "qa",
-        "qa_reviewed_at": "2026-07-09T08:56:21Z",
-        "qa_note": "RAW-verified: commit 6f054ea3a touched exactly the 8 claimed files (git show --stat); f511c1d39 touched exactly orch-state.json; both present on origin/main (f511c1d39 IS origin/main HEAD). STEP ops-Sn grep confirms sequential S1-S6, no gaps/dupes; pre-existing duplicate-S2 bug fix confirmed via before/after diff (old S1 relocate-stock-catalog->S3, old S2 extract-computeDecision->S4, old S2 split-repositories->S6). 3 offender files confirmed genuinely absent from disk + git ls-files + repo-wide find. Brief section 5 DoD items 3-4 text confirmed verbatim-satisfied (runbook footnote + commit-boundary ops zone row + STEP ops-Sn enforcement line + 3 offenders folded). agent-father-S5 journal + notebook (85L, under 200L) confirmed. Board handoff f511c1d39 coherent: review lane, next_agent=qa, head synced (status=review, active_task_id unchanged, next_agent=qa). NON-BLOCKING gap noted: runbook Step 4/4b Commit-Gate Invariant has no direct hook in ops flow files (init.md/handlers.md/docker.md) -- enforcement relies entirely on the pre-existing PO/developer dispatch-prompt citation of the runbook Microservice Code-Change Close Gate heading (developer/flow/microservice-main.md:162, po/flow/sprint-signoff.md:13), not on ops own bootstrapped knowledge list. Acceptable for THIS task literal DoD (section 5 items 3-4 only require the doc text, not flow-file wiring) and mirrors the same enforcement model as the agents-architect Brief-Commit Invariant it is modeled on (self-attested, not code-gated) -- flagging for a possible future hardening task, not a blocker here."
-      },
-      {
         "id": "CI-RED-1a8c1bff-FIX",
         "title": "CI-RED-1a8c1bff-FIX — CI RED bun test (3 files: 1190 schedulerFileCount, FACTORY-SCHEDULER job-table, 1352a async-extraction-race)",
         "type": "FIX",
@@ -9070,9 +8992,31 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-16T04:23:13Z",
+    "last_triaged_at": "2026-07-16T07:34:36Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "UC-ASL-P1",
+        "type": "FIX",
+        "title": "Fix the self-defeating T2/T3 auditor gate: gate on the PREVIOUS subagent heartbeat; move tier-2/3 heartbeat authorship into the subagent end-of-cycle",
+        "status": "IN_PROGRESS",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "CONFIRMED",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#auditor-signal-loop-P1",
+        "note": "The tier-2/3 gate reads a heartbeat the same run just wrote, so it never blocks. Gate on the prior-cycle subagent heartbeat and author the heartbeat in the subagent end-of-cycle.",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "promoted_at": "2026-07-16T07:34:36Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-16T07:34:36Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
