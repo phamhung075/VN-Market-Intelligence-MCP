@@ -412,7 +412,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-16T01:07:01Z",
+    "_updated_at": "2026-07-16T01:23:31Z",
     "_updated_by": "cowork-team",
     "archive": [],
     "rows": [
@@ -420,24 +420,38 @@
         "id": "cow-20260716T002226",
         "summary": "coverage-state.json cross-agent LOST UPDATE (_ssot blob, market-watcher write silently reverted by news-scout same tick) + RETRACTS 3 in-flight premises: legacy matcher DOES dedup (UC-CDC-P3) so re-fire blast radius overstated - re-scope FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE P1; GUARD strip-Write fix would break signal routing + coverage rotation (confirmed live); dish 933 unreviewed premise FALSIFIED",
         "severity": "MED",
-        "status": "NEW",
+        "status": "RESOLVED",
         "ts": "2026-07-16T00:22:26Z",
         "from": "cowork-team",
         "to": "po",
         "type": "defect",
-        "payload_ref": "docs/handoffs/2026-07-16-coverage-state-cross-agent-lost-update-and-three-premise-corrections.md"
+        "payload_ref": "docs/handoffs/2026-07-16-coverage-state-cross-agent-lost-update-and-three-premise-corrections.md",
+        "disposition": "TRIAGED 2026-07-16T01:31:44Z by po. MINTED FIX-COVERAGE-STATE-CROSS-AGENT-LOST-UPDATE (P2, cross-service, BACKLOG) for the real _ssot lost-update race. Applied 3 retractions: (1) downgraded FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE P1->P2 (legacy matcher DOES dedup; coupling-hazard rationale falsified); (2) GUARD strip-Write DO-NOT-PURSUE recorded on the new coverage-state FIX note (breaks signal routing + coverage rotation, confirmed live); (3) dish #933 unreviewed premise FALSIFIED — carried on NO board row (searched note/status_note/desc), no board edit needed, dropped."
       },
       {
         "id": "cow-20260716T005400",
         "summary": "DUPLICATE→FOLD INTO UC-SDF-P2 (do NOT triage as new). UC-SDF-P2 \"Diagnose promotion dead since 07-07\" + handoff 2026-07-15-cycle-snapshot-latest-promotion-dark.md already own this; I re-derived it unaware. Row retained ONLY for 3 advances: (1) DIAGNOSIS CLOSED — 07-15 hypothesis marked UNVERIFIED is now CONFIRMED at source: emitPressureStateTool.ts joins cycle-snapshot-${tickHHMM}.json with tickHHMM from tick_id, while tick-snapshot.md:40,43 names by FILE_TICK=$(date -u +%H:%M) actual fire time → diverge under drift. That IS the UC-SDF-P2 ask. (2) key has NO date → a 43-day-old 06-03 00:00 file is read and aged past 4h → stale:true, which is why the miss is SILENT not just absent; 102 files accrued. (3) SCOPE-BREAKER: regime_status/volatility_level have NO WRITER since the 2026-06-05 EMIT-DARK-RECURRING refactor (last emitted 06-03; only 12 June files + 1 test fixture carry them; live snapshot has no carry block). Both handoffs claim promotion-dark pins last_regime=unknown — FALSE. Fixing promotion alone leaves adaptive loop dark forever. UC-SDF-P2 as scoped is INSUFFICIENT.",
         "severity": "INFO",
-        "status": "NEW",
+        "status": "RESOLVED",
         "ts": "2026-07-16T00:54:00Z",
         "from": "cowork-team",
         "to": "po",
         "type": "diagnosis",
         "payload_ref": "docs/handoffs/2026-07-16-cycle-snapshot-promotion-dark-9-days-adaptive-cadence-never-runs.md",
-        "note": "folds into UC-SDF-P2; not a new defect"
+        "note": "folds into UC-SDF-P2; not a new defect",
+        "disposition": "TRIAGED 2026-07-16T01:31:44Z by po. Self-annotated DUPLICATE — FOLDED into UC-SDF-P2 (no new task). Added 3 advances to UC-SDF-P2 scope (diagnosis CONFIRMED at source; no-date snapshot key -> silent stale miss; SCOPE-BREAKER regime_status/volatility_level NO WRITER since 06-05) and WIDENED UC-SDF-P2 (size M->L) to include restoring the regime_status/volatility_level writer."
+      },
+      {
+        "id": "cow-20260716T012331",
+        "summary": "FIX-COWORK-PREFLIGHT-PRESENCE-CLAIM-GAP (82d32238b, done_verified, qa PASS 6/6) is a SILENT NO-OP — presence lock never lands. RAW-verified: session-presence:<cowork session> absent from task_list_held on 2 consecutive ticks while dev-team peer row present+heartbeating; manual task_claim with STRING payload -> claimed:true (lock was genuinely absent, tool+read both fine). ROOT: cowork-tick-preflight.sh:140 passes payload as a jq OBJECT {agent_id,host}; line 157-158 election claim correctly serializes via jq -cn --arg payload (STRING) 18 lines below. Contract is STRING (CLAUDE.md:8; every held row stores payload as string). Object fails validation -> presence_rc!=0 -> the whole if-block incl. re-entry heartbeat is skipped -> swallowed by \"presence never gates\". ONE-LINE FIX (mirror Step 3). WHY QA WENT GREEN: all 3 presence tests assert the VERDICT (SILENT not ERROR) against a mocked mcp_call, never that the lock lands — and \"never gates\" is precisely what makes a dead claim unobservable. Fix traded a LOUD false-ERROR for a SILENT no-op; old bug announced itself every fresh session, new state is invisible. ASKS: (1) one-line payload fix (2) add assertion \"after preflight, session-presence:<session> IS held\" (3) reopen/follow-on — done_verified against a mechanism that never worked (4) class sweep: grep all task_claim sites for payload:{} object literals. Impact bounded: presence is advisory, nothing mispublished; cost is cross-session roster blindness.",
+        "severity": "MED",
+        "status": "RESOLVED",
+        "ts": "2026-07-16T01:23:31Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "defect",
+        "payload_ref": "docs/handoffs/2026-07-16-preflight-presence-claim-payload-object-vs-string-silent-noop.md",
+        "disposition": "TRIAGED 2026-07-16T01:31:44Z by po. REOPENED as FIX-COWORK-PRESENCE-CLAIM-PAYLOAD-OBJECT-VS-STRING (P2, cross-service, BACKLOG) — RAW-verified at source (cowork-tick-preflight.sh:140 payload OBJECT vs :156-158 STRING). Row carries all 4 asks (one-line payload fix, lock-lands test assertion, reopen tracking, class-sweep for payload:{} literals)."
       }
     ],
     "last_triaged_at": "2026-07-15T20:56:10Z",
@@ -6982,10 +6996,10 @@
       {
         "id": "UC-SDF-P2",
         "type": "SPIKE",
-        "title": "Diagnose: cycle-snapshot-latest.json promotion silently dead since 2026-07-07 while ticks ran; add market-hours staleness tripwire",
+        "title": "Diagnose+FIX: cycle-snapshot promotion dead since 07-07 (tickHHMM-vs-FILE_TICK filename divergence) + WIDEN to restore regime_status/volatility_level writer (no writer since 06-05) + market-hours staleness tripwire",
         "status": "BACKLOG",
         "priority": "P2",
-        "size": "M",
+        "size": "L",
         "zone": "multi",
         "sprint": "ULTRACODE-AUDIT-FIXALL",
         "source": "ultracode-audit-2026-07-12",
@@ -7000,7 +7014,9 @@
         "next_agent": "ba",
         "related": [
           "FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK"
-        ]
+        ],
+        "po_fold_widen_2026-07-16": "FOLDED signal cow-20260716T005400 (self-annotated DUPLICATE, no new task minted) — 3 RAW-confirmed advances added to scope: (a) DIAGNOSIS CLOSED — the 07-15 UNVERIFIED hypothesis is CONFIRMED AT SOURCE: emitPressureStateTool.ts joins cycle-snapshot-${tickHHMM}.json using tickHHMM derived from tick_id, while tick-snapshot.md:40,43 names the file by FILE_TICK=actual fire time (date -u +%H:%M) -> the two diverge under jitter/drift, so the join misses. (b) the snapshot key has NO date component -> a 43-day-old (06-03 00:00) file can be read and aged past 4h -> stale:true, which is why the miss is SILENT not merely absent; 102 stale files accrued. (c) SCOPE-BREAKER: regime_status/volatility_level have had NO WRITER since the 2026-06-05 EMIT-DARK-RECURRING refactor (last emitted 06-03; only 12 June files + 1 test fixture carry them; live snapshot has no carry block) -> BOTH promotion-dark handoffs' claim that 'promotion-dark pins last_regime=unknown' is FALSE, and fixing promotion ALONE leaves the adaptive loop dark FOREVER. UC-SDF-P2 as previously scoped is INSUFFICIENT -> WIDENED: scope now MUST include restoring a writer for regime_status/volatility_level (in addition to the promotion filename-key fix + the market-hours staleness tripwire). size M->L. Still plan_only (anomaly->BACKLOG invariant); ba/architect own HOW.",
+        "folded_signal": "cow-20260716T005400"
       },
       {
         "id": "UC-GCP-P1",
@@ -7598,7 +7614,7 @@
         "id": "FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE",
         "type": "FIX",
         "size": "S",
-        "priority": "P1",
+        "priority": "P2",
         "status": "BACKLOG",
         "zone": "cross-service/",
         "owner": "po",
@@ -7610,7 +7626,62 @@
         "origin_signal_id": "cow-20260715T214005",
         "detail_ref": "docs/handoffs/2026-07-15-cowork-tick-refire-election-lock-does-not-span-its-tick.md",
         "title": "COWORK DISPATCH — the P3 fire-election lock cron:cowork:<TICK> is released at end of Step 6, so a re-fire of the SAME nominal tick (arriving after that release window) finds the key free, RE-ELECTS a leader and RE-RUNS the tick. CONFIRMED live 2026-07-15T21:30Z (task_release returned released:1 TWICE on the same key, one session). DISTINCT from FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS (peer/two-path/two-session) — this is single-session self-refire; a namespace merge does NOT prevent it.",
-        "note": "MINTED 2026-07-15 by po from signal cow-20260715T214005 (defect, MED). ROOT CAUSE: telemetry.md ~L79-93 releases cron:cowork:<TICK> at the END of Step 6 on every exit path -- correct as a leader-lock (must not outlive the tick) but its lifetime is [tick start, tick end], so a re-fire of the same tick that ARRIVES AFTER the release finds the key free and wins. There is NO other per-tick guard and NO re-fire suppression at all. PROOF: released:1 twice on cron:cowork:2026-07-15T21:30Z, same session (pass1 preflight drift 0 / pass2 drift 5, same nominal tick, same tick_id) -- release only reports released:1 if the lock was held, so it was claimed->released->re-claimed->re-released for one tick. WHY THE P1 ROW DOES NOT COVER IT (material triage finding): FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS is scoped to router-intent-path vs cowork-slot dispatcher = TWO paths, TWO sessions; THIS instance has no peer and no router -- one session re-entering its OWN tick, same key legitimately released in between, so unifying the namespaces changes nothing. THIRD member of the recurring 'guard released when the work ends' class (feedback_recurring_bug_escalation 2+ -> block): #1 published:<slot>:<key> post-publish -> MARKET dup 932+933 (UC-CCA-P3, P0, peer-owned); #2 cowork-slot:<slot_id> right-after-spawn (FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS, P1); #3 THIS cron:cowork:<TICK> at Step 6. Same invariant already established for the chef marker: published=>TOMBSTONE, never release. CHEAPEST CORRECT FIX (ba/architect own HOW): the preflight already computes the nominal tick and already reads pressure-state.json -> compare pressure_state.tick_id == nominal_tick => this tick already ran => SILENT/SUPPRESS, BEFORE the election. One comparison in the script; it would have caught this instance. CAVEAT: emit happens at Step 6, so a tick that DIES before Step 6 is not tombstoned and MUST re-run (desired behaviour, not a bug). COUPLING HAZARD (the real reason it is worth a row despite today's zero damage): guard #3 fails exactly when ticks run long, and long ticks ALSO push pressure-state past its staleness threshold -> legacy mode -> the mode with NO last_fired dedup (feedback_cowork_matcher_legacy_no_lastfired_dedup); the condition that triggers the re-fire is the same condition that removes the only remaining backstop. BLAST RADIUS on a slot-bearing tick = INFERRED, NOT observed (this instance slots:[] one_shots:[], zero harm) -- someone MUST probe before acting (force a same-tick re-fire on a slot-bearing tick in a sandbox, or read the matcher legacy branch for a last_fired comparison). Files: cowork preflight script + docs/agents/cowork-team/flow/telemetry.md (~L79-93, ~L92 comment already anticipates re-entrancy only as a reason the RELEASE no-ops). AC: (1) a re-fire of an already-completed nominal tick is SUPPRESSED before the election (no re-elect, no re-run); (2) a tick that died before Step 6 still re-runs; (3) RAW-verify a forced same-tick re-fire on a slot-bearing tick spawns 0 duplicate agents."
+        "note": "MINTED 2026-07-15 by po from signal cow-20260715T214005 (defect, MED). ROOT CAUSE: telemetry.md ~L79-93 releases cron:cowork:<TICK> at the END of Step 6 on every exit path -- correct as a leader-lock (must not outlive the tick) but its lifetime is [tick start, tick end], so a re-fire of the same tick that ARRIVES AFTER the release finds the key free and wins. There is NO other per-tick guard and NO re-fire suppression at all. PROOF: released:1 twice on cron:cowork:2026-07-15T21:30Z, same session (pass1 preflight drift 0 / pass2 drift 5, same nominal tick, same tick_id) -- release only reports released:1 if the lock was held, so it was claimed->released->re-claimed->re-released for one tick. WHY THE P1 ROW DOES NOT COVER IT (material triage finding): FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS is scoped to router-intent-path vs cowork-slot dispatcher = TWO paths, TWO sessions; THIS instance has no peer and no router -- one session re-entering its OWN tick, same key legitimately released in between, so unifying the namespaces changes nothing. THIRD member of the recurring 'guard released when the work ends' class (feedback_recurring_bug_escalation 2+ -> block): #1 published:<slot>:<key> post-publish -> MARKET dup 932+933 (UC-CCA-P3, P0, peer-owned); #2 cowork-slot:<slot_id> right-after-spawn (FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS, P1); #3 THIS cron:cowork:<TICK> at Step 6. Same invariant already established for the chef marker: published=>TOMBSTONE, never release. CHEAPEST CORRECT FIX (ba/architect own HOW): the preflight already computes the nominal tick and already reads pressure-state.json -> compare pressure_state.tick_id == nominal_tick => this tick already ran => SILENT/SUPPRESS, BEFORE the election. One comparison in the script; it would have caught this instance. CAVEAT: emit happens at Step 6, so a tick that DIES before Step 6 is not tombstoned and MUST re-run (desired behaviour, not a bug). COUPLING HAZARD (the real reason it is worth a row despite today's zero damage): guard #3 fails exactly when ticks run long, and long ticks ALSO push pressure-state past its staleness threshold -> legacy mode -> the mode with NO last_fired dedup (feedback_cowork_matcher_legacy_no_lastfired_dedup); the condition that triggers the re-fire is the same condition that removes the only remaining backstop. BLAST RADIUS on a slot-bearing tick = INFERRED, NOT observed (this instance slots:[] one_shots:[], zero harm) -- someone MUST probe before acting (force a same-tick re-fire on a slot-bearing tick in a sandbox, or read the matcher legacy branch for a last_fired comparison). Files: cowork preflight script + docs/agents/cowork-team/flow/telemetry.md (~L79-93, ~L92 comment already anticipates re-entrancy only as a reason the RELEASE no-ops). AC: (1) a re-fire of an already-completed nominal tick is SUPPRESSED before the election (no re-elect, no re-run); (2) a tick that died before Step 6 still re-runs; (3) RAW-verify a forced same-tick re-fire on a slot-bearing tick spawns 0 duplicate agents.",
+        "po_retraction_2026-07-16": "RE-SCOPED OFF P1 per signal cow-20260716T002226 (RAW-confirmed by reporter). The row's COUPLING HAZARD rationale (long ticks -> pressure-state stale -> legacy mode with NO last_fired dedup) is FALSIFIED: the legacy matcher DOES dedup (UC-CDC-P3; ref MEMORY reference_isstale + feedback_cowork_matcher_legacy_no_lastfired_dedup is NAME-OBSOLETE — legacy dedups). With the legacy backstop intact, a same-tick re-fire's blast radius on a slot-bearing tick is bounded, not open. Downgraded P1->P2. Still a real defect (guard #3 'lock released when work ends' class; single-session self-refire) and worth the tombstone fix, but not the P1 it was minted as. plan_only retained."
+      },
+      {
+        "id": "FIX-COVERAGE-STATE-CROSS-AGENT-LOST-UPDATE",
+        "type": "FIX",
+        "size": "M",
+        "priority": "P2",
+        "status": "BACKLOG",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "ba",
+        "plan_only": true,
+        "sprint": "COWORK-RELIABILITY",
+        "created_at": "2026-07-16T01:31:44Z",
+        "created_by": "po (triage-signals cow-20260716T002226)",
+        "origin_signal_id": "cow-20260716T002226",
+        "detail_ref": "docs/handoffs/2026-07-16-coverage-state-cross-agent-lost-update-and-three-premise-corrections.md",
+        "title": "coverage-state.json cross-agent LOST UPDATE — market-watcher writes the _ssot blob, news-scout silently reverts it the SAME tick (last-write-wins clobber on a shared docs/data file, no read-modify-write coordination between the two agent flows)",
+        "note": "MINTED 2026-07-16 by po from signal cow-20260716T002226 (defect, MED), RAW-confirmed by reporter. Real cross-agent write race: two agents (market-watcher, news-scout) both write docs/data/coverage-state.json's _ssot blob within one tick with no compare-and-swap / read-merge -> the second writer clobbers the first's update (lost update). ba/architect own HOW; candidate directions: (i) serialize the two writers behind a shared coverage-state write helper that does read-modify-merge (not full-doc overwrite), or (ii) split the _ssot blob so each agent owns disjoint keys, or (iii) a lightweight CAS on coverage-state like orch-apply's mtime guard. DO-NOT-PURSUE (retraction 2, cow-20260716T002226, confirmed LIVE): the previously-floated 'GUARD strip-Write' fix (stripping/blocking the Write of the _ssot blob) would BREAK signal routing + coverage rotation — do NOT go down that path. AC: (1) a tick where market-watcher and news-scout both touch coverage-state._ssot preserves BOTH agents' contributions (no silent revert); (2) RAW-verify by forcing both writes in one tick and reading the resulting _ssot; (3) signal routing + coverage rotation still function (regression check)."
+      },
+      {
+        "id": "FIX-COWORK-PRESENCE-CLAIM-PAYLOAD-OBJECT-VS-STRING",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P2",
+        "status": "BACKLOG",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "dev-team",
+        "plan_only": true,
+        "sprint": "COWORK-RELIABILITY",
+        "created_at": "2026-07-16T01:31:44Z",
+        "created_by": "po (triage-signals cow-20260716T012331)",
+        "origin_signal_id": "cow-20260716T012331",
+        "detail_ref": "docs/handoffs/2026-07-16-preflight-presence-claim-payload-object-vs-string-silent-noop.md",
+        "reopens": "FIX-COWORK-PREFLIGHT-PRESENCE-CLAIM-GAP (commit 82d32238b, was done_verified w/ qa PASS 6/6, since cold-evicted)",
+        "title": "REOPEN — FIX-COWORK-PREFLIGHT-PRESENCE-CLAIM-GAP is a SILENT NO-OP: the session-presence lock never lands. cowork-tick-preflight.sh:140 passes the presence claim payload as a jq OBJECT {agent_id,host}; the task_claim contract is a STRING (CLAUDE.md:8). Object fails validation -> presence_rc!=0 -> the whole if-block incl. re-entry heartbeat is skipped, swallowed by 'presence never gates'.",
+        "note": "MINTED 2026-07-16 by po from signal cow-20260716T012331 (defect, MED), RAW-verified at source THIS tick: line 140 emits payload:{agent_id:...,host:$host} (OBJECT); the Step 3 election claim at :156-158 correctly serializes payload_str via jq -cn then passes --arg payload \"$payload_str\" (STRING). done_verified against a mechanism that never worked. WHY QA WENT GREEN: all 3 presence tests assert the VERDICT (SILENT-not-ERROR) against a mocked mcp_call — never that the lock actually lands; 'presence never gates' is precisely what makes a dead claim unobservable. Peer handoff on this exact bug: docs/handoffs/2026-07-16-preflight-presence-claim-payload-object-vs-string-silent-noop.md (commit 92f0babf2). ASKS/AC: (1) one-line payload fix — serialize the presence payload to a STRING mirroring :156-158 (payload_str=$(jq -cn ...); --arg payload); (2) ADD a test assertion that AFTER preflight runs, session-presence:<session> IS actually held (query task_list_held), not merely that the verdict is SILENT; (3) reopen/follow-on tracking — prior close was against a no-op; (4) CLASS-SWEEP: grep all task_claim call sites for payload:{...} OBJECT literals (should all be STRING). Impact BOUNDED (presence is advisory; nothing mispublished; only cost = cross-session roster blindness) -> real but NOT P0."
+      },
+      {
+        "id": "FIX-DEVTEAM-BOUNDED1-PENDINGSIGNALS-EMPTY-GUARD",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P3",
+        "status": "BACKLOG",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "dev-team",
+        "plan_only": true,
+        "sprint": "COWORK-RELIABILITY",
+        "created_at": "2026-07-16T01:31:44Z",
+        "created_by": "po (dev-team router flow-ordering observation, tick 2026-07-16T01:07Z)",
+        "detail_ref": "docs/agents/dev-team/flow/main.md#Step-0b",
+        "title": "dev-team flow Step 0b BOUNDED-1 idle-pickup runs BEFORE Step 1 PO triage with NO 'pendingSignals empty' guard — when head is idle AND a promotable backlog row exists AND pendingSignals is non-empty, BOUNDED-1's JUMP-TO-execute preempts PO triage and DROPS already-consumed file-drained signals (moved to processed/, fingerprinted)",
+        "note": "MINTED 2026-07-16 by po — latent hazard flagged by router this tick (router HELD BOUNDED-1 manually to avoid the drop). Add a precondition to the BOUNDED-1 WIP gate in docs/agents/dev-team/flow/main.md Step 0b: do NOT JUMP-TO-execute when pendingSignals[] is non-empty (or when signal_queue has NEW rows to=po) — let Step 1 PO triage run first so drained signals are dispositioned, not dropped. Low priority (mitigated today by router discretion; only fires on the specific idle+promotable+pending-signals coincidence). AC: with head idle + a promotable backlog row + a non-empty pendingSignals[], the flow routes to Step 1 PO triage FIRST (no signal drop), and BOUNDED-1 idle-eval runs only after triage."
       }
     ],
     "closed_sprints": [
@@ -8979,8 +9050,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-16T00:51:20Z",
-    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
+    "last_triaged_at": "2026-07-16T01:31:44Z",
+    "last_triaged_by": "po (dev-team tick 2026-07-16T01:07Z — signal_queue triage cow-20260716T002226/005400/012331)",
     "in_progress": []
   },
   "_meta": {
