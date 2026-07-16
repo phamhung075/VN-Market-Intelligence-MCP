@@ -139,3 +139,19 @@ TREE for listed paths, undoing `--cached` deletions still present on disk. Caugh
 `git ls-files` + `git diff HEAD~1 HEAD` (both showed no change). Corrective commit re-ran
 `git rm --cached` + committed with a bare `git commit -m` (no trailing pathspec) since the index was
 independently verified to contain only this task's paths.
+
+### STEP developer-S9 · developer · 2026-07-16T14:06:22Z
+**task-id:** UC-GCP-P4
+**what-done:** Added a stdin ref-range path filter to `scripts/git-hooks/pre-push`: computes
+`git diff --name-only <remote>..<local>` per line, skips full tsc only if NO line matches
+`^(apps|packages|scripts)/.*\.(ts|tsx|js|mjs|json)$|^(package.json|pnpm-lock.yaml|pnpm-workspace.yaml)$`.
+**what-considered:**
+- `break` on first code-touching line vs draining full stdin — chose drain-all (no break) since git
+  pre-push can pass multiple ref lines and an unconsumed stdin tail risks a SIGPIPE on large pushes.
+- Two-dot `git diff A..B` literal token (matches spec text) vs space-separated args — kept `A..B` for
+  spec-traceability; behaviourally identical.
+**why-decision:** All 4 mandatory hardenings verifier-required (fail-open on diff failure, skip
+all-zero local-sha delete lines, ANY-line-triggers-full-tsc, root package.json/pnpm-lock/
+pnpm-workspace in the code-touching set) map 1:1 to spec items (a)-(d) — implemented verbatim, no
+simplification.
+**why-change:** No change from plan; scope stayed inside the single named file per the boundary.

@@ -1,20 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-16 | **Cycle:** UC-GCP-P2 (sprint ULTRACODE-AUDIT-FIXALL, git-ci-publish-P2)
-
-## Session 2026-07-16 — UC-ASL-P1 (dev-team router dispatch via BOUNDED-1 idle-capacity pickup, zone `cross-service/`) — IN_PROGRESS→REVIEW
-
-**Task:** Ultracode audit `auditor-signal-loop-P1` (CONFIRMED) — system-auditor's Tier-2/3 SKIP-SPAWN gate was self-defeating: `run_tiered_probe()` computed heartbeat age from a timestamp `run_probe()` had JUST written on the same green pass, so age was always ~0, SKIP-SPAWN was unconditional on green, and the "ALL_GREEN + stale heartbeat → SPAWN" branch was dead code since ~2026-07-04 (T2/T3 audits — B-xx freshness, C-01..C-16, D-*, anomaly-task-bridge — silently stopped running).
-
-**Actions taken:** `run_tiered_probe()` now reads `docs/data/auditor-tier<N>-last-healthy.json` BEFORE calling `run_probe()`, computing freshness from that PRE-EXISTING value. `run_probe()` gained an explicit `suppress_heartbeat` positional-flag param (NOT `HEARTBEAT_FILE=/dev/null` — would break mktemp for non-root callers, downgrading every green run to FAILURE, the opposite bug); tier 2/3 calls pass it, so this shell pre-gate no longer authors the heartbeat file itself. `docs/agents/system-auditor/flow/main.md` end-of-cycle (after notebook-commit, before P3 fire-election release) gained a tmp+mv atomic heartbeat write for AUDIT_TIER ∈ {2,3} — the subagent write is now the SOLE authorship path.
-
-**Verification:** `bash scripts/agents-flow/auditor-tier1-probe.test.sh` 91/91 GREEN (was 65; +26: T16/T17/T20/T22 rewritten to pre-seed heartbeat fixtures since self-write is gone, T31/T32 added proving the previously-dead "ALL_GREEN + stale heartbeat → SPAWN" branch is now reachable). `main.md` diff confirmed as an exact 12-line insertion (Write used, not Edit, per the known multiline-strip harness bug; diff-verified after). Decision journal: `sprint-ULTRACODE-AUDIT-FIXALL-developer.md` STEP developer-S6.
-
-**Board:** Moving `task_board.in_progress[UC-ASL-P1]` → `task_board.review[]` (status REVIEW, next_agent=qa) + `.head` synced, via `orch-apply.sh`.
-
-**Scope discipline:** Touched ONLY the 3 assigned files (`auditor-tier1-probe.sh`, `auditor-tier1-probe.test.sh`, `system-auditor/flow/main.md`) + `docs/WORK.md` one-liner + this notebook + decision journal. Verified `register.md` Job 3/4 prompts need no edit (output field names unchanged) and `TE-T06` (pending 787L main.md split) is still BACKLOG — no live collision. Graphify incremental update NOT run this cycle — no Skill-invocation tool available in this dispatch context; `graphify-out/graph.json` already ~2mo stale project-wide independent of this task.
-
-Zone health: `scripts/agents-flow/` + `docs/agents/system-auditor/` — Tier-2/3 heartbeat authorship now correctly split shell-pregate vs subagent; no other drift observed | HEALTHY
+**Last updated:** 2026-07-16 | **Cycle:** UC-GCP-P4 (sprint ULTRACODE-AUDIT-FIXALL, git-ci-publish-P4)
 
 ## Session 2026-07-15 — FIX-COWORK-PREFLIGHT-PRESENCE-CLAIM-GAP (router dispatch, zone `cross-service/` = scripts/agents-flow/) — IN_PROGRESS→REVIEW
 
@@ -43,3 +29,17 @@ Zone health: `scripts/agents-flow/` cowork preflight — presence contract now m
 **Scope discipline:** Touched only `.gitignore`, `docs/agents/dev-team/flow/drain-signals.md`, and the 15 rm --cached deletions. Did NOT touch `tool-usage-stats.json`/`coverage-state.json` (SYSREMAKE-P2 RC-GITSTATE's scope) or any of the 40+ peer-dirty files already in the tree (cowork notebooks, analysis-briefs, session logs, orch-state.json edits from other agents).
 
 Zone health: repo-root git-state plane — signals.db + churn logs now correctly untracked; drain path verified intact | HEALTHY
+
+## Session 2026-07-16 — UC-GCP-P4 (dev-team BOUNDED-1 auto-pickup, zone `cross-service/`) — IN_PROGRESS→REVIEW
+
+**Task:** `git-ci-publish-P4` (CONFIRMED) — every push (even doc/notebook/orch-state-only, ~68% of commits) paid the full `pnpm --filter vn-market check` tsc (~94s wall-clock, over the commit-mutex 90s TTL), stranding the fleet on unrelated red and letting a peer `task_claim` win mid-push.
+
+**Actions taken:** `scripts/git-hooks/pre-push` now loops ALL stdin ref lines, computes `git diff --name-only <remote>..<local>` per line, and skips the full tsc only if NO line matches `^(apps|packages|scripts)/.*\.(ts|tsx|js|mjs|json)$` or root `package.json`/`pnpm-lock.yaml`/`pnpm-workspace.yaml` (docs/ excluded). All 4 mandatory hardenings: (a) fail-open full tsc if `git diff` fails, guarded inside an `if` so it never hits the bare `set -e` abort; (b) all-zero local-sha (branch-delete) lines skipped; (c) ANY code-touching line across multiple stdin refs forces full tsc (drains all stdin, no early break); (d) root dependency files added to the code-touching set. Zero-remote-sha (new branch) always runs full tsc.
+
+**Verification:** `bash -n` + `shellcheck` clean (one SC2034 on the intentionally-unused `remote_ref` field silenced inline — documents the 4-field stdin protocol). 9 simulated stdin scenarios against a throwaway repo + fake-pnpm stub: doc-only→skip/no-call, code-touching→full-tsc/call, fail-open (bogus remote sha)→full-tsc, new-branch (zero remote sha)→full-tsc, branch-delete (zero local sha)→skip, multi-line doc+code→full-tsc (ANY-rule), `PRE_PUSH_SKIP_TSC=1`→skip untouched, no-pnpm-on-PATH→WARN untouched, root `package.json`→full-tsc. All matched spec.
+
+**Board:** Moving `task_board.in_progress[UC-GCP-P4]` → `task_board.review[]` (status REVIEW, next_agent=qa) + `.head`/`.task_board.head` synced to idle, via `orch-apply.sh`.
+
+**Scope discipline:** Touched ONLY `scripts/git-hooks/pre-push` (sole in-scope file) + `docs/WORK.md` one-liner + this notebook + decision journal. Shell-only hook edit, no `.ts` touched — no tsc/full-suite run needed per the task's own verification bar. Did not touch commit-mutex TTL/SKILL.md — the residual code-touching-push mutex-overrun (~94s > 90s TTL) is an explicit out-of-scope follow-up per the brief.
+
+Zone health: `scripts/git-hooks/` pre-push tsc gate — path-filter live, escape hatch + no-pnpm WARN branches intact; no other drift observed | HEALTHY
