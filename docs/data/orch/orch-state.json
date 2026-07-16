@@ -8416,6 +8416,29 @@
         "qa_verified_at": "2026-07-16T17:50:44Z",
         "qa_verified_by": "qa",
         "qa_report": "reports/TASK_REPORT_FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE.md"
+      },
+      {
+        "id": "FR-DEGRADE-01-FIX",
+        "priority": "normal",
+        "size": "S",
+        "status": "DONE_VERIFIED",
+        "title": "Fix FR-DEGRADE-01: If VPS BCTC endpoint is unavailable, does the system return stale-but-flagged data rather than error/crash",
+        "type": "fix",
+        "zone": "dev-mcp-server",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FR-DEGRADE-01-FIX",
+        "promoted_at": "2026-07-16T17:58:30Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "claimed_at": "2026-07-16T17:58:30Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "developer_completed_at": "2026-07-16T18:16:07Z",
+        "developer_completed_by": "dev-mcp-server (FR-DEGRADE-01-FIX, dev-team bounded-1 pickup)",
+        "review_note": "Root-cause gap: 815ccaed (2026-06-10, signal qc-FR-DEGRADE-01-4004) only wired the VPS bctc SLA-staleness check into the no-financial_reports-row branch. RAW-verified get_bctc_full success path (report row exists, last-known-good) served completely UNFLAGGED when the VPS bctc push exceeded the 48h SLA. Fix: threaded already-computed bctcVpsStaleSince (+ new bctcVpsStaleAgeHours) into the success-path response -- content[1] JSON gains stale(bool)/stale_since/stale_age_hours, content[0] text gains a human [FR-DEGRADE-01] note. Added 3 tests in 240-bctc-full.test.ts (stale-flagged never-throws / fresh-push / no-push-log fail-open). Verified: targeted bun test 240-bctc-full.test.ts + 1982-quality-burndown-CHIJ.test.ts = 38 pass/0 fail; bun tsc --noEmit exit 0. Full-suite bg reds (1518 foreign-flow timeouts, 1407b coverage-map market_messages) confirmed pre-existing flaky class (vps_push_log/insider-tx/OCR-cache/foreign-flow, documented at UC-MDH-P1/S20) -- zero overlap with changed files. Commits: 00dca96fe (code+test), 22050845b (memory). qa: RAW-verify stale flag is actually served (not just unit-asserted) -- re-run targeted suite, confirm content[1].stale/stale_since/stale_age_hours present when vps_push_log bctc row is >48h stale and financial_reports row exists; confirm content[0] text carries the FR-DEGRADE-01 note; then promote to done_verified.",
+        "qa_verdict": "APPROVED",
+        "qa_verified_at": "2026-07-16T18:24:26Z",
+        "qa_verified_by": "qa",
+        "qa_report": "reports/TASK_REPORT_FR-DEGRADE-01-FIX.md"
       }
     ],
     "head": {
@@ -9079,25 +9102,6 @@
         "developer_completed_at": "2026-07-16T14:56:13Z",
         "developer_completed_by": "dev-mcp-server (UC-MDH-P1, dev-team bounded-1 pickup)",
         "review_note": "agentMemoryUpdateTools.ts:189 (registration-time, already function-scope) memoryDir now = process.env.AGENT_MEMORY_ROOT ?? resolve(getProjectRoot(),...docs/agent-memory). 1300b test beforeEach mkdtemps + sets env BEFORE registerAgentMemoryUpdateTools(); afterEach rm+unset; new regression test asserts zero new files under real sessions/. Purged pollution BY MD5 CLASS re-enumerated live (102 files, not brief stale 93): 36 ops(a003f0cc)+34 developer(35d6330b)+32 qa(35cdf1f8), 84 git rm (tracked) + 18 rm (untracked), plus 3 tracked test-artifact files (issues/patterns/modules test-*.md). Verified: 1300b file 14/14 pass x2 standalone; full bun test run1 14569 pass/46 fail, run2 14568 pass/47 fail -- zero 1300b/agent-memory hits in either fail list (pre-existing flaky class: vps_push_log/insider-tx/OCR-cache/foreign-flow timeouts). git status --porcelain docs/agent-memory/ clean of new files after both full runs. pnpm --filter vn-market check (tsc) exit 0. NOTE: staged+verified exact 89-file set (87 deletions+2 edits) before the 2 full-suite verification runs; a peer dev-team-router housekeeping tick committed during that window (11c35c0a8 chore(tasks): cold-evict...) and its bare git commit -m absorbed the shared index incl. my staged files -- verified via git diff-tree --name-status that commit contains EXACTLY my intended 89 files + the peer own orch-state.json change, no revert/no extra/no missing, HEAD==origin/main (already pushed). Content correct, only that commit message/trailer does not reference UC-MDH-P1 -- did not amend shared-main history mid-peer-activity (forbidden), documented in decision journal + notebook instead. qa: confirm sandbox test 14/14 pass, confirm zero docs/agent-memory/ pollution regrowth, confirm code diff at 11c35c0a8 matches detail_ref rescope note, promote to done_verified."
-      },
-      {
-        "id": "FR-DEGRADE-01-FIX",
-        "priority": "normal",
-        "size": "S",
-        "status": "REVIEW",
-        "title": "Fix FR-DEGRADE-01: If VPS BCTC endpoint is unavailable, does the system return stale-but-flagged data rather than error/crash",
-        "type": "fix",
-        "zone": "dev-mcp-server",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FR-DEGRADE-01-FIX",
-        "promoted_at": "2026-07-16T17:58:30Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "claimed_at": "2026-07-16T17:58:30Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
-        "developer_completed_at": "2026-07-16T18:16:07Z",
-        "developer_completed_by": "dev-mcp-server (FR-DEGRADE-01-FIX, dev-team bounded-1 pickup)",
-        "review_note": "Root-cause gap: 815ccaed (2026-06-10, signal qc-FR-DEGRADE-01-4004) only wired the VPS bctc SLA-staleness check into the no-financial_reports-row branch. RAW-verified get_bctc_full success path (report row exists, last-known-good) served completely UNFLAGGED when the VPS bctc push exceeded the 48h SLA. Fix: threaded already-computed bctcVpsStaleSince (+ new bctcVpsStaleAgeHours) into the success-path response -- content[1] JSON gains stale(bool)/stale_since/stale_age_hours, content[0] text gains a human [FR-DEGRADE-01] note. Added 3 tests in 240-bctc-full.test.ts (stale-flagged never-throws / fresh-push / no-push-log fail-open). Verified: targeted bun test 240-bctc-full.test.ts + 1982-quality-burndown-CHIJ.test.ts = 38 pass/0 fail; bun tsc --noEmit exit 0. Full-suite bg reds (1518 foreign-flow timeouts, 1407b coverage-map market_messages) confirmed pre-existing flaky class (vps_push_log/insider-tx/OCR-cache/foreign-flow, documented at UC-MDH-P1/S20) -- zero overlap with changed files. Commits: 00dca96fe (code+test), 22050845b (memory). qa: RAW-verify stale flag is actually served (not just unit-asserted) -- re-run targeted suite, confirm content[1].stale/stale_since/stale_age_hours present when vps_push_log bctc row is >48h stale and financial_reports row exists; confirm content[0] text carries the FR-DEGRADE-01 note; then promote to done_verified."
       }
     ],
     "qa": [],

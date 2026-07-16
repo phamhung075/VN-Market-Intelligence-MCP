@@ -144,3 +144,12 @@
 - jq-only change, no tsc/bun test/DDD/mock-guard surface (no TS/Go touched) — Smart-Skip applies, ran only the dedicated verifier.
 **why-decision:** DJ-GATE-1 pre-check: developer-S5 entry present in this sprint's developer journal with matching task-id. All raw checks green, scope matches commit-stat exactly (7 files), no over-block regression. APPROVE.
 **why-change:** No change from plan.
+
+### STEP qa-S17 · qa · 2026-07-16T18:25:00Z
+**task-id:** FR-DEGRADE-01-FIX
+**what-done:** DJ-GATE-1 pre-check: dev-mcp-server journal entry present for this task-id — proceed. RAW re-ran `bun test 240-bctc-full.test.ts 1982-quality-burndown-CHIJ.test.ts` myself (not trusting dev's 38/0 claim) → 38 pass/0 fail confirmed live. Read the 3 new tests: stale-flagged case asserts `stale=true`+`stale_since` string+`stale_age_hours>48` on content[1] AND `FR-DEGRADE-01` note on content[0] AND underlying `net_profit` still served (never withheld) — fresh-push and no-push-log cases both assert fail-open `stale=false`. `bun tsc --noEmit` exit 0. Code-reviewed diff: stale fields threaded into the ordinary data-present success path (textOutput staleNote + structured_data.stale/stale_since/stale_age_hours), not only the no-data branch; try/catch around vps_push_log query is empty-catch fail-open (missing table → stays null → stale=false), matches DS-DEGRADE-01 `{stale, stale_since, source}` convention.
+**what-considered:**
+- Full `bun test` re-run vs Smart-Skip (test+source pair, no new domain/MCP tool/cross-service) — Smart-Skip: targeted suite + tsc + mock-guard sufficient; confirmed known flaky files (1518-foreign-flow, 1407b-coverage-map) share zero overlap with the 2 changed files (bctcFullTools.ts, 240-bctc-full.test.ts).
+- mock-guard on the changed production file only (no fabricated-data pattern risk elsewhere in scope) — PASS exit 0.
+**why-decision:** All gate checks green: tests raw-confirmed (not badge-trusted), tsc clean, mock-guard PASS, DDD/security scan clean (no infra/application import, no process.env, no secrets, parameterized SQL unchanged), no arch concern (pure bugfix threading existing computed values into an existing success path, no new tool/domain/cross-service). APPROVE — promote to done_verified.
+**why-change:** No change from plan.
