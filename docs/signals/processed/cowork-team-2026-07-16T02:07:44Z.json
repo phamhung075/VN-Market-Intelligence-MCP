@@ -4,11 +4,17 @@
   "type": "cowork-fire",
   "payload": {
     "fire_time": "2026-07-16T02:07:44Z",
-    "matched_slots": ["alert-commander-market"],
-    "won_slots": ["alert-commander-market"],
+    "matched_slots": [
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "alert-commander-market"
+    ],
     "held_by_other": [],
     "all_held": false,
-    "spawned": ["docs/agents/alert-commander/flow/main.md"],
+    "spawned": [
+      "docs/agents/alert-commander/flow/main.md"
+    ],
     "silent": false,
     "drift_min": 3,
     "errors": [],
@@ -18,10 +24,16 @@
     "suppressed_cadence": [],
     "downgraded": [],
     "chef_mutex_applied": false,
-    "due_reasons": { "alert-commander-market": "cadence" },
-    "cadence_minutes": { "alert-commander-market": 240 },
+    "due_reasons": {
+      "alert-commander-market": "cadence"
+    },
+    "cadence_minutes": {
+      "alert-commander-market": 240
+    },
     "last_fired_timestamp": "2026-07-16T02:07:38Z",
-    "last_fired_slots": ["alert-commander-market"],
+    "last_fired_slots": [
+      "alert-commander-market"
+    ],
     "last_fired_write_errors": null,
     "classification": "FIRE",
     "reason": "spawned",
@@ -33,5 +45,11 @@
     "note": "First fan-out tick of the session. alert-commander-market cadence-due: elapsed 21.59h vs 240min cadence (last_fired 2026-07-15T04:28:43Z) — independently re-verified against cadence-policy.js evaluateCadence, not taken from the preflight matcher on trust. Step 4.7 tick-snapshot DELIBERATELY SKIPPED: writer names the file from unrounded `date -u +%H:%M` (would be 02:07) while readers round to the nearest 5-min slot (cycle-bootstrap/SKILL.md:58) — a guaranteed miss that only adds to the ~102-file orphan pile (02:13, 02:21, 02:39 are prior instances of exactly this). Agent uses its documented Step -1 fallback; step contract explicitly permits this (\"Do NOT block spawns\"). Owned by SPIKE-TICK-SNAPSHOT-DEADCODE-OR-REGRESSED [BACKLOG] — not re-filed. computeTiers returned volatility_tier=low derived from last_volatility_level=unknown, i.e. the dead-field bug reproducing live; confirms UC-SDF-P2 (widened M->L this cycle) is the right owner. Macro: tier-4 estimate, carry.regime=UNKNOWN suppressed per DSI-INV-1 with fetched_at_source=2026-06-26 (20d stale); vnIndex 1782.12 IS tier-1 live but vnIndexDelta=0/flat is a NULL-baseline artifact (prevFetchedAt=null), not a real flat market — DATA GUARD passed to the agent covering both. Prior tier-4 vnIndex poison (1280.5/-526.13) is RESOLVED. Presence row session-presence:<this session> expired ~01:50:49Z unrenewed — FIX-COWORK-PRESENCE-CLAIM-PAYLOAD-OBJECT-VS-STRING [P2] reproducing as predicted; not hand-propped."
   },
   "priority": "low",
-  "createdAt": "2026-07-16T02:07:44Z"
+  "createdAt": "2026-07-16T02:07:44Z",
+  "_processed": {
+    "fingerprint": "b10984d40fa6f66f2960e8b03c8a05c487ed171496313fecff912c6cfe135efc",
+    "processedAt": "2026-07-16T02:20:36Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }
