@@ -22,6 +22,13 @@ Extract from latest period: `total_assets`, `total_liabilities`, `equity` (vốn
 `charter_capital` (vốn điều lệ), `receivables`, `investment_property`.
 Also pull `market_cap_billion` from rapid-market-cap-screen output (no extra call needed).
 
+**Callers without a pre-computed `market_cap_billion` (e.g. bctc-analyst, whose cron never overlaps
+VN market hours 02:00–08:59 UTC so a live price is often structurally unobtainable):** derive
+`market_cap = charter_capital / 10,000-VND par-value shares × current price` when a watchlist price
+IS available this cycle. When price is N/A (no live quote this cycle) → do NOT fabricate/estimate a
+price. Mark `asset_coverage`/`pb_ratio` as `DATA-GAP` for Steps 2–3 and fall back to
+`charter_capital_ratio` (Step 5) + sector-tool PB as the qualification basis instead.
+
 ### Step 2 — Asset coverage ratio (T-2 step 1)
 
 ```
