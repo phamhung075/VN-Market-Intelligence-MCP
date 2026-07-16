@@ -722,6 +722,18 @@ can never be skipped by construction — and stages/commits ONLY the explicit pa
 Convention: `docs/policies/commit-convention.md` § Notebook Commits
 Script: `scripts/auditor-notebook-commit.sh` (pointer per `docs/policies/dev-standards.md` § Script Persistence).
 
+**Tier-2/3 Heartbeat Write (auditor-signal-loop-P1, 2026-07-16 — closes the self-defeating T2/T3 SKIP-SPAWN gate):**
+When this cycle's `AUDIT_TIER` is `2` or `3` (Tier-1 is untouched — it keeps its own `_write_heartbeat` inside `scripts/agents-flow/auditor-tier1-probe.sh`), atomically record that a REAL audit just completed, so `scripts/agents-flow/auditor-tier1-probe.sh --tier=$AUDIT_TIER`'s pre-spawn gate can compute freshness against THIS timestamp on the next tick, instead of a value that pre-gate would otherwise have to mint itself. Runs unconditionally every Tier-2/3 cycle — independent of the Notebook Append Gate above, since a genuine ALL_GREEN cycle with nothing new to write to the notebook is still a REAL completed audit and must still refresh freshness. Tmp+mv atomic write (never a raw `>` truncate-write) — same pattern as the probe script's own `_write_heartbeat`:
+```bash
+if [ "$AUDIT_TIER" = "2" ] || [ "$AUDIT_TIER" = "3" ]; then
+  HB_FILE="$PROJECT_ROOT/docs/data/auditor-tier${AUDIT_TIER}-last-healthy.json"
+  HB_TMP="$(mktemp "${HB_FILE}.tmp.XXXXXX" 2>/dev/null)" && \
+    jq -n --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '{last_healthy_at:$ts}' > "$HB_TMP" 2>/dev/null && \
+    [ -s "$HB_TMP" ] && chmod 644 "$HB_TMP" 2>/dev/null && mv -f "$HB_TMP" "$HB_FILE" 2>/dev/null
+  [ -f "$HB_FILE" ] || { rm -f "$HB_TMP" 2>/dev/null; log "[system-auditor] WARN: tier-${AUDIT_TIER} heartbeat write FAILED — next tick's pre-gate will see a stale/missing heartbeat and correctly SPAWN"; }
+fi
+```
+
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
 
 **P3 Fire-Election Release (TASK_1994 — mandatory, runs here after notebook write + commit):**

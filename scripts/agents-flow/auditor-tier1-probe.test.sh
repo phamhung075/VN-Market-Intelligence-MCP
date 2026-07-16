@@ -301,11 +301,17 @@ check "T15 heartbeat health_3001 == PASS after recovery" "$([ "$(jq -r '.checks.
 TIER2_HEARTBEAT="$TMPDIR_TEST/auditor-tier2-fixture.json"
 TIER3_HEARTBEAT="$TMPDIR_TEST/auditor-tier3-fixture.json"
 
-# ── T16: Tier-2 idle steady-state — invoked twice with NO underlying
-# DB/heartbeat delta between calls → BOTH calls return SKIP-SPAWN, exit 0
-# (no subagent spawn, no commit — this function makes no such calls ever).
+# ── T16: Tier-2 idle steady-state — auditor-signal-loop-P1: heartbeat
+# authorship moved to the system-auditor subagent's own end-of-cycle write,
+# so this fixture must be PRE-SEEDED (simulating a real audit that already
+# completed) before either call. Invoked twice with NO underlying delta
+# between calls → BOTH calls return SKIP-SPAWN, exit 0 (no subagent spawn, no
+# commit — this function makes no such calls ever), and the fixture file
+# itself is left byte-identical (this script never re-authors it).
 run_case
 rm -f "$TIER2_HEARTBEAT"
+jq -n --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '{last_healthy_at:$ts}' > "$TIER2_HEARTBEAT"
+TIER2_SEEDED_LH=$(jq -r '.last_healthy_at' "$TIER2_HEARTBEAT")
 OUT_T16A=$(HEARTBEAT_FILE_PATH="$TIER2_HEARTBEAT" run_tiered_probe 2); RC_T16A=$?
 OUT_T16B=$(HEARTBEAT_FILE_PATH="$TIER2_HEARTBEAT" run_tiered_probe 2); RC_T16B=$?
 V16A=$(printf '%s' "$OUT_T16A" | jq -r '.verdict')
@@ -317,10 +323,14 @@ check "T16 tier2 call B exit=0" "$([ "$RC_T16B" -eq 0 ] && echo true || echo fal
 check "T16 tier2 output carries tier:2" "$([ "$(printf '%s' "$OUT_T16B" | jq -r '.tier')" = "2" ] && echo true || echo false)"
 check "T16 tier2 checks_verdict == ALL_GREEN under the hood" "$([ "$(printf '%s' "$OUT_T16B" | jq -r '.checks_verdict')" = "ALL_GREEN" ] && echo true || echo false)"
 check "T16 tier2 fresh_threshold_minutes == 480 (2x4h cadence)" "$([ "$(printf '%s' "$OUT_T16B" | jq -r '.fresh_threshold_minutes')" = "480" ] && echo true || echo false)"
+check "T16 tier2 output last_healthy_at == the SEEDED (real-audit) timestamp, not a self-minted one" "$([ "$(printf '%s' "$OUT_T16B" | jq -r '.last_healthy_at')" = "$TIER2_SEEDED_LH" ] && echo true || echo false)"
+check "T16 tier2 fixture file left UNTOUCHED by this script (authorship belongs to subagent only)" "$([ "$(jq -r '.last_healthy_at' "$TIER2_HEARTBEAT")" = "$TIER2_SEEDED_LH" ] && echo true || echo false)"
 
-# ── T17: Tier-3 idle steady-state — same shape, 2880min (2x24h) threshold ────
+# ── T17: Tier-3 idle steady-state — same shape, 2880min (2x24h) threshold,
+# same pre-seeding requirement as T16 ─────────────────────────────────────────
 run_case
 rm -f "$TIER3_HEARTBEAT"
+jq -n --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '{last_healthy_at:$ts}' > "$TIER3_HEARTBEAT"
 OUT_T17A=$(HEARTBEAT_FILE_PATH="$TIER3_HEARTBEAT" run_tiered_probe 3); RC_T17A=$?
 OUT_T17B=$(HEARTBEAT_FILE_PATH="$TIER3_HEARTBEAT" run_tiered_probe 3); RC_T17B=$?
 check "T17 tier3 call A verdict == SKIP-SPAWN" "$([ "$(printf '%s' "$OUT_T17A" | jq -r '.verdict')" = "SKIP-SPAWN" ] && echo true || echo false)"
@@ -346,11 +356,16 @@ OUT_T19=$(run_tiered_probe 9); RC_T19=$?
 check "T19 invalid tier verdict == ERROR" "$([ "$(printf '%s' "$OUT_T19" | jq -r '.verdict')" = "ERROR" ] && echo true || echo false)"
 check "T19 invalid tier exit=2" "$([ "$RC_T19" -eq 2 ] && echo true || echo false)"
 
-# ── T20: tier isolation — tier2 and tier3 heartbeat fixtures never collide ──
+# ── T20: tier isolation — tier2 and tier3 heartbeat fixtures never collide.
+# auditor-signal-loop-P1: this script no longer authors either file (that's
+# now the subagent's job), so TIER2_HEARTBEAT is pre-seeded here (simulating
+# a real Tier-2 audit already on disk) purely to prove run_tiered_probe(2)
+# reads/reports from ITS OWN tier path only and never touches TIER3_HEARTBEAT.
 run_case
 rm -f "$TIER2_HEARTBEAT" "$TIER3_HEARTBEAT"
+jq -n --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '{last_healthy_at:$ts}' > "$TIER2_HEARTBEAT"
 HEARTBEAT_FILE_PATH="$TIER2_HEARTBEAT" run_tiered_probe 2 >/dev/null
-check "T20 tier2 writes ONLY its own heartbeat file" "$([ -f "$TIER2_HEARTBEAT" ] && [ ! -f "$TIER3_HEARTBEAT" ] && echo true || echo false)"
+check "T20 tier2 reads/reports ONLY its own heartbeat fixture; tier3 fixture never created" "$([ -f "$TIER2_HEARTBEAT" ] && [ ! -f "$TIER3_HEARTBEAT" ] && echo true || echo false)"
 
 # ── T21: AC3 regression proof — tier defaults to 1, --tier=1 explicit path
 # calls run_probe() directly (same function T1-T15 already exercise above),
@@ -397,6 +412,11 @@ STUBEOF
 chmod +x "$CLI_TMPDIR/bin/docker" "$CLI_TMPDIR/bin/curl" "$CLI_TMPDIR/bin/df"
 CLI_HEARTBEAT="$CLI_TMPDIR/auditor-tier2-cli-fixture.json"
 rm -f "$CLI_HEARTBEAT"
+# auditor-signal-loop-P1: pre-seed the fixture (simulates a real Tier-2 audit
+# already recorded by the subagent) — the CLI subprocess no longer authors
+# this file itself for tier 2/3.
+jq -n --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '{last_healthy_at:$ts}' > "$CLI_HEARTBEAT"
+CLI_SEEDED_LH=$(jq -r '.last_healthy_at' "$CLI_HEARTBEAT")
 
 CLI_OUT1=$(PATH="$CLI_TMPDIR/bin:$PATH" SYSTEM_MAP_PATH="$FIXTURE_MAP" LAUNCHD_DIR_PATH="$LAUNCHD_EMPTY_DIR" HEARTBEAT_FILE_PATH="$CLI_HEARTBEAT" bash "$PROBE_SH" --tier=2); CLI_RC1=$?
 CLI_OUT2=$(PATH="$CLI_TMPDIR/bin:$PATH" SYSTEM_MAP_PATH="$FIXTURE_MAP" LAUNCHD_DIR_PATH="$LAUNCHD_EMPTY_DIR" HEARTBEAT_FILE_PATH="$CLI_HEARTBEAT" bash "$PROBE_SH" --tier=2); CLI_RC2=$?
@@ -409,6 +429,7 @@ check "T22 CLI call 1 verdict == SKIP-SPAWN" "$([ "$(printf '%s' "$CLI_OUT1" | j
 check "T22 CLI call 1 exit=0" "$([ "$CLI_RC1" -eq 0 ] && echo true || echo false)"
 check "T22 CLI call 2 (no delta) verdict == SKIP-SPAWN" "$([ "$(printf '%s' "$CLI_OUT2" | jq -r '.verdict')" = "SKIP-SPAWN" ] && echo true || echo false)"
 check "T22 CLI call 2 exit=0" "$([ "$CLI_RC2" -eq 0 ] && echo true || echo false)"
+check "T22 CLI fixture file left UNTOUCHED across both calls (authorship belongs to subagent only)" "$([ "$(jq -r '.last_healthy_at' "$CLI_HEARTBEAT")" = "$CLI_SEEDED_LH" ] && echo true || echo false)"
 
 # ── T23: CLI-level AC3 regression — no flag and --tier=1 both produce the
 # original 3-field verdict via a REAL subprocess invocation ─────────────────
@@ -561,6 +582,40 @@ CLI_OUT_LAUNCHD_FAULT=$(PATH="$CLI_TMPDIR/bin:$PATH" SYSTEM_MAP_PATH="$FIXTURE_M
 check "T30 CLI injected-fault (real subprocess) — FAILURE verdict" "$([ "$(printf '%s' "$CLI_OUT_LAUNCHD_FAULT" | jq -r '.verdict')" = "FAILURE" ] && echo true || echo false)"
 check "T30 CLI injected-fault (real subprocess) — exit=1" "$([ "$CLI_RC_LAUNCHD_FAULT" -eq 1 ] && echo true || echo false)"
 check "T30 CLI injected-fault (real subprocess) — detail names missing label" "$([[ "$(printf '%s' "$CLI_OUT_LAUNCHD_FAULT" | jq -r '.detail')" == *"com.vn-market.cowork-guaranteed-slot-firer"* ]] && echo true || echo false)"
+
+# ══════════════════════════════════════════════════════════════════════════════
+# auditor-signal-loop-P1 — the previously-DEAD "ALL_GREEN + stale heartbeat →
+# SPAWN" branch is now reachable and meaningful (closes auditor-signal-loop-I1)
+# ══════════════════════════════════════════════════════════════════════════════
+
+# ── T31: green checks + a STALE pre-existing heartbeat (older than the
+# tier's own freshness threshold) → verdict SPAWN, exit 1. Before this fix,
+# run_probe() minted a fresh timestamp on every green pass and age was
+# computed from that SAME just-written value — age was always ~0 and this
+# branch could never fire. Proves: checks_verdict is genuinely ALL_GREEN
+# (the shell checks pass) yet the cron-facing verdict is still SPAWN because
+# no REAL Tier-2 audit authored a fresh heartbeat recently.
+run_case
+STALE_TIER2="$TMPDIR_TEST/auditor-tier2-stale-fixture.json"
+jq -n --arg ts "2020-01-01T00:00:00Z" '{last_healthy_at:$ts}' > "$STALE_TIER2"
+OUT_T31=$(HEARTBEAT_FILE_PATH="$STALE_TIER2" run_tiered_probe 2); RC_T31=$?
+check "T31 tier2 ALL_GREEN checks + STALE heartbeat -> verdict SPAWN (dead branch now reachable)" "$([ "$(printf '%s' "$OUT_T31" | jq -r '.verdict')" = "SPAWN" ] && echo true || echo false)"
+check "T31 tier2 ALL_GREEN checks + STALE heartbeat -> exit=1" "$([ "$RC_T31" -eq 1 ] && echo true || echo false)"
+check "T31 tier2 ALL_GREEN checks + STALE heartbeat -> checks_verdict still ALL_GREEN (shell checks genuinely pass)" "$([ "$(printf '%s' "$OUT_T31" | jq -r '.checks_verdict')" = "ALL_GREEN" ] && echo true || echo false)"
+check "T31 tier2 ALL_GREEN checks + STALE heartbeat -> heartbeat_age_minutes > fresh_threshold_minutes" "$([ "$(printf '%s' "$OUT_T31" | jq -r '.heartbeat_age_minutes')" -gt "$(printf '%s' "$OUT_T31" | jq -r '.fresh_threshold_minutes')" ] && echo true || echo false)"
+check "T31 tier2 ALL_GREEN checks + STALE heartbeat -> does NOT rewrite the stale fixture" "$([ "$(jq -r '.last_healthy_at' "$STALE_TIER2")" = "2020-01-01T00:00:00Z" ] && echo true || echo false)"
+
+# ── T32: green checks + NO pre-existing heartbeat at all (bootstrap /
+# never-audited case) → treated as stale, verdict SPAWN, exit 1 — a first
+# real Tier-3 audit must run before this gate can ever SKIP-SPAWN.
+run_case
+NEVER_TIER3="$TMPDIR_TEST/auditor-tier3-never-fixture.json"
+rm -f "$NEVER_TIER3"
+OUT_T32=$(HEARTBEAT_FILE_PATH="$NEVER_TIER3" run_tiered_probe 3); RC_T32=$?
+check "T32 tier3 ALL_GREEN checks + NO prior heartbeat -> verdict SPAWN" "$([ "$(printf '%s' "$OUT_T32" | jq -r '.verdict')" = "SPAWN" ] && echo true || echo false)"
+check "T32 tier3 ALL_GREEN checks + NO prior heartbeat -> exit=1" "$([ "$RC_T32" -eq 1 ] && echo true || echo false)"
+check "T32 tier3 ALL_GREEN checks + NO prior heartbeat -> last_healthy_at == \"never\"" "$([ "$(printf '%s' "$OUT_T32" | jq -r '.last_healthy_at')" = "never" ] && echo true || echo false)"
+check "T32 tier3 ALL_GREEN checks + NO prior heartbeat -> does NOT create the fixture file" "$([ ! -f "$NEVER_TIER3" ] && echo true || echo false)"
 
 # ── Summary ────────────────────────────────────────────────────────────────────
 echo ""

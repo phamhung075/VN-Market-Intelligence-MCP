@@ -82,16 +82,29 @@
 # heartbeat file. This is the exact pre-existing Tier-1 behavior, untouched.
 #
 # `--tier=2`/`--tier=3`: routes through run_tiered_probe() instead, which
-# reuses run_probe()'s SAME 6 checks + heartbeat write (against a
-# tier-specific heartbeat file, docs/data/auditor-tier<N>-last-healthy.json,
-# same HEARTBEAT_FILE_PATH test-seam override — see _heartbeat_file_for_tier)
-# and additionally applies, INSIDE the script, the SAME ALL_GREEN +
-# fresh-heartbeat pre-spawn gate that today only exists as LLM narration in
-# cron-detect-loop/SKILL.md Job 2 (the "passive-health-masking guard"). This
-# makes the skip-spawn decision for Tier-2/3 deterministic and testable —
-# evaluated BEFORE the cron would ever launch the system-auditor subagent
-# (not merely before commit) — so a no-delta re-invocation short-circuits to
-# SKIP-SPAWN and launches nothing. Output contract for tier 2/3:
+# reuses run_probe()'s SAME 6 checks (against a tier-specific heartbeat file,
+# docs/data/auditor-tier<N>-last-healthy.json, same HEARTBEAT_FILE_PATH
+# test-seam override — see _heartbeat_file_for_tier) and additionally
+# applies, INSIDE the script, the SAME ALL_GREEN + fresh-heartbeat pre-spawn
+# gate that today only exists as LLM narration in cron-detect-loop/SKILL.md
+# Job 2 (the "passive-health-masking guard"). This makes the skip-spawn
+# decision for Tier-2/3 deterministic and testable — evaluated BEFORE the
+# cron would ever launch the system-auditor subagent (not merely before
+# commit) — so a no-delta re-invocation short-circuits to SKIP-SPAWN and
+# launches nothing.
+#
+# auditor-signal-loop-P1 (2026-07-16): the tier-specific heartbeat file is now
+# read-only from this script's point of view — run_probe()'s write is
+# suppressed for tier 2/3 (see run_probe()'s "suppress_heartbeat" arg) and
+# freshness is computed from the PRE-EXISTING value read before run_probe()
+# runs, never from a timestamp this pass is about to mint itself. Authorship
+# of docs/data/auditor-tier<N>-last-healthy.json for tier 2/3 belongs solely
+# to the system-auditor subagent's own end-of-cycle write on a REAL completed
+# audit (docs/agents/system-auditor/flow/main.md) — this was the fix for the
+# self-defeating gate where age was always ~0 because it was computed from a
+# value this same pre-gate had just written, making SKIP-SPAWN unconditional
+# on green and the "ALL_GREEN + stale heartbeat → SPAWN" branch dead code.
+# Output contract for tier 2/3 (unchanged):
 #   {tier, checks_verdict: ALL_GREEN|FAILURE (raw 5-check result),
 #    verdict: SKIP-SPAWN|SPAWN (the cron-facing decision),
 #    detail, last_healthy_at, fresh_threshold_minutes, heartbeat_age_minutes}
@@ -255,7 +268,22 @@ _write_heartbeat() {
   mv -f "$tmp" "$HEARTBEAT_FILE" 2>/dev/null
 }
 
+# auditor-signal-loop-P1 (2026-07-16): optional first positional arg — pass
+# the literal string "suppress_heartbeat" to skip the _write_heartbeat call
+# below ENTIRELY (no mktemp/jq/mv attempted at all) instead of attempting-
+# then-discarding a write. Used exclusively by run_tiered_probe() for tier
+# 2/3, where heartbeat AUTHORSHIP belongs solely to the system-auditor
+# subagent's own end-of-cycle write on a completed REAL audit (see
+# docs/agents/system-auditor/flow/main.md), never to this deterministic shell
+# pre-gate. Tier-1's direct callers (cron LLM, this script's own `--tier=1`/
+# no-flag path, and every pre-existing test) pass no argument and are
+# completely unaffected — identical write-on-green behavior as before.
+# Deliberately NOT implemented as HEARTBEAT_FILE=/dev/null: _write_heartbeat's
+# mktemp/jq would try to create /dev/null.tmp.* inside /dev, fail for any
+# non-root caller, and silently downgrade every green run to FAILURE→SPAWN —
+# the OPPOSITE of the intended effect.
 run_probe() {
+  local suppress_heartbeat="${1:-}"
   local prev_healthy="" out rc failures="" checks_json ts
   local st_docker="PASS" st_h3000="PASS" st_h3001="PASS" st_disk="PASS" st_mem="PASS" st_launchd="PASS"
 
@@ -284,12 +312,14 @@ run_probe() {
 
   if [ -z "$failures" ]; then
     ts=$(_now_iso)
-    if ! _write_heartbeat "$ts" "$checks_json"; then
-      jq -n --arg v "FAILURE" \
-        --arg d "all 6 checks passed but heartbeat write FAILED ($HEARTBEAT_FILE) — never claim green without a verified write" \
-        --arg lh "${prev_healthy:-never}" \
-        '{verdict:$v, detail:$d, last_healthy_at:$lh}'
-      return 1
+    if [ "$suppress_heartbeat" != "suppress_heartbeat" ]; then
+      if ! _write_heartbeat "$ts" "$checks_json"; then
+        jq -n --arg v "FAILURE" \
+          --arg d "all 6 checks passed but heartbeat write FAILED ($HEARTBEAT_FILE) — never claim green without a verified write" \
+          --arg lh "${prev_healthy:-never}" \
+          '{verdict:$v, detail:$d, last_healthy_at:$lh}'
+        return 1
+      fi
     fi
     jq -n --arg v "ALL_GREEN" \
       --arg d "all 6 checks passed (docker_ps, health_3000, health_3001, disk, mem_creep, launchd_agents)" \
@@ -354,19 +384,34 @@ _heartbeat_age_minutes() {
   echo $(( (now - epoch) / 60 ))
 }
 
-# Tier 2/3 entry point: reuses run_probe()'s SAME 5 checks + heartbeat write
-# (against a tier-specific file — see _heartbeat_file_for_tier), then applies
-# the ALL_GREEN + fresh-heartbeat pre-spawn gate INSIDE the script (Tier-1
-# leaves this to the cron LLM narration in cron-detect-loop/SKILL.md Job 2;
-# here it is deterministic and testable). `local HEARTBEAT_FILE=` below
-# shadows the global for the duration of this call ONLY — bash dynamic
-# scoping means run_probe() (called from inside this function) sees the
-# tier-specific path, while every other caller of run_probe() (the tier-1
-# path) is completely unaffected.
+# Tier 2/3 entry point: reuses run_probe()'s SAME 6 checks (against a
+# tier-specific file — see _heartbeat_file_for_tier), then applies the
+# ALL_GREEN + fresh-heartbeat pre-spawn gate INSIDE the script (Tier-1 leaves
+# this to the cron LLM narration in cron-detect-loop/SKILL.md Job 2; here it
+# is deterministic and testable). `local HEARTBEAT_FILE=` below shadows the
+# global for the duration of this call ONLY — bash dynamic scoping means
+# run_probe() (called from inside this function) sees the tier-specific
+# path, while every other caller of run_probe() (the tier-1 path) is
+# completely unaffected.
+#
+# auditor-signal-loop-P1 (2026-07-16, closes auditor-signal-loop-I1): the
+# heartbeat file is READ-ONLY from this function's perspective. Freshness is
+# computed from the PRE-EXISTING last_healthy_at read BEFORE run_probe() runs
+# (captured into pre_existing_lh below); run_probe() itself is called with
+# "suppress_heartbeat" so it never writes this file for tier 2/3 — only the
+# system-auditor subagent's own end-of-cycle write (on a REAL completed
+# audit) ever updates docs/data/auditor-tier<N>-last-healthy.json. Previously
+# run_probe() wrote a fresh timestamp on every green pass AND that same
+# just-written value was used to compute age — age was always ~0, making
+# SKIP-SPAWN unconditional on green and the "ALL_GREEN + stale heartbeat →
+# SPAWN" branch below unreachable dead code. That branch is now reachable:
+# real shell checks can be ALL_GREEN while the pre-existing heartbeat is
+# stale (no real audit ran recently), correctly forcing SPAWN.
 run_tiered_probe() {
   local tier="$1"
   local threshold_min heartbeat_path inner_out inner_rc
-  local checks_verdict detail lh age_min="" spawn_verdict exit_code age_json
+  local checks_verdict detail age_min="" spawn_verdict exit_code age_json
+  local pre_existing_lh=""
 
   threshold_min=$(_fresh_threshold_minutes_for_tier "$tier") || {
     jq -n --arg d "invalid --tier value (must be 1, 2, or 3): $tier" \
@@ -377,13 +422,20 @@ run_tiered_probe() {
   heartbeat_path="$(_heartbeat_file_for_tier "$tier")"
   local HEARTBEAT_FILE="$heartbeat_path"
 
-  inner_out=$(run_probe); inner_rc=$?
+  # (a) Read the PRE-EXISTING heartbeat BEFORE calling run_probe() — this is
+  # the last REAL audit's timestamp, never a value this pass is about to mint.
+  [ -f "$heartbeat_path" ] && pre_existing_lh=$(jq -r '.last_healthy_at // empty' "$heartbeat_path" 2>/dev/null)
+
+  # (b) Shell checks still run in full (checks_verdict reflects them exactly
+  # as before); "suppress_heartbeat" stops the inner call from writing
+  # $HEARTBEAT_FILE — see run_probe()'s header comment for why this is an
+  # explicit flag arg, not HEARTBEAT_FILE=/dev/null.
+  inner_out=$(run_probe "suppress_heartbeat"); inner_rc=$?
   checks_verdict=$(printf '%s' "$inner_out" | jq -r '.verdict // empty' 2>/dev/null)
   detail=$(printf '%s' "$inner_out" | jq -r '.detail // empty' 2>/dev/null)
-  lh=$(printf '%s' "$inner_out" | jq -r '.last_healthy_at // empty' 2>/dev/null)
 
   if [ "$checks_verdict" = "ALL_GREEN" ]; then
-    age_min=$(_heartbeat_age_minutes "$lh") || age_min=""
+    age_min=$(_heartbeat_age_minutes "$pre_existing_lh") || age_min=""
     if [[ "$age_min" =~ ^[0-9]+$ ]] && [ "$age_min" -le "$threshold_min" ]; then
       spawn_verdict="SKIP-SPAWN"; exit_code=0
     else
@@ -400,7 +452,7 @@ run_tiered_probe() {
   fi
 
   jq -n --argjson tier "$tier" --arg checks_verdict "${checks_verdict:-FAILURE}" --arg verdict "$spawn_verdict" \
-    --arg detail "$detail" --arg lh "${lh:-never}" --argjson threshold "$threshold_min" --argjson age "$age_json" \
+    --arg detail "$detail" --arg lh "${pre_existing_lh:-never}" --argjson threshold "$threshold_min" --argjson age "$age_json" \
     '{tier:$tier, checks_verdict:$checks_verdict, verdict:$verdict, detail:$detail, last_healthy_at:$lh, fresh_threshold_minutes:$threshold, heartbeat_age_minutes:$age}'
   return $exit_code
 }
