@@ -374,9 +374,9 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "router",
-    "next_action": "UC-CCA-P5 DONE_VERIFIED — news-scout exec-proof ordering FIX shipped (qa PASS + pushed). Next dispatcher tick: clean preflight + Step 1 PO triage of queued signal_queue defect cow-20260716T002226 (coverage-state.json cross-agent lost-update: market-watcher _ssot write reverted by news-scout same tick + 3 premise retractions — deferred this tick because BOUNDED-1 held the WIP slot) THEN BOUNDED-1 idle eval. Parked/peer-owned: UC-CCA-P3 P0 (published-marker pendulum — peer PO owns); FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING + FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE (PLAN-ONLY; latter re-scoped off P1 per cow-20260716T002226); UC-RDL-P4 (backlog supervised deliberate-start); RAG-FTS-BUILD-MEMORY-BOUND / ALPHA-S2-RAG-FTS-REBUILD-CRON (memory-bound, dv withheld); ~25 review-lane rows; ~45 cowork-team + price_anomaly null-schema quarantine files (FIX-DRAIN-QUARANTINE-NONROUTABLE-SIGNALS). USER-GATED (out of router scope): MARKET #933 correction go/no-go.",
-    "updated_at": "2026-07-16T01:09:38Z",
-    "updated_by": "dev-team (router: UC-CCA-P5 review->done_verified, qa PASS + push on green; head idle)"
+    "next_action": "UC-CCA-P5 DONE_VERIFIED (news-scout exec-proof ordering FIX shipped). PO triage tick 03:37Z: triaged signal_queue cow-20260716T031800 (alert-commander-market dangling policy_id -> AC-P1-1-3 240min vs specified 15min, 16x degradation, adaptive-path-only + inverted: degrades only when pressure telemetry healthy) -> minted FIX-COWORK-CADENCE-DANGLING-POLICY-ID to BACKLOG (zone cross-service/, HIGH, RAW-verified). NOT auto-executed this tick per BOUNDED-1 withhold (peer-dirty tree: many uncommitted peer notebooks/analysis-briefs). Program picks up on clean tree. Then BOUNDED-1 idle eval. Parked/peer-owned: UC-CCA-P3 P0 (published-marker pendulum — peer PO owns); FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING + FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE (PLAN-ONLY); UC-RDL-P4 (backlog supervised deliberate-start); RAG-FTS-BUILD-MEMORY-BOUND / ALPHA-S2-RAG-FTS-REBUILD-CRON (memory-bound, dv withheld); ~25 review-lane rows; ~45 cowork-team + price_anomaly null-schema quarantine files (FIX-DRAIN-QUARANTINE-NONROUTABLE-SIGNALS). USER-GATED (out of router scope): MARKET #933 correction go/no-go.",
+    "updated_at": "2026-07-16T03:55:37Z",
+    "updated_by": "po (dev-team triage: minted FIX-COWORK-CADENCE-DANGLING-POLICY-ID to backlog from cow-20260716T031800; signal NEW->READ; BOUNDED-1 withhold on peer-dirty tree, head idle)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -424,7 +424,7 @@
         "type": "system-issue",
         "summary": "alert-commander-market dangling policy_id -> 240min cadence vs specified 15min (16x degradation)",
         "severity": "HIGH",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/handoffs/2026-07-16-alert-commander-market-dangling-policy-240min.md"
       }
     ],
@@ -7678,6 +7678,19 @@
         "created_by": "po-triage-20260716T0158Z",
         "verify_note": "repeat-flaker: SPIKE reproduced 11/24 under contention + re-observed CI RED this tick. Router suggested P3 grooming; SPIKE rated HIGH (production boot path + ~30-file blast radius + recurring triage cost) -> PO minted P2 as PLAN-ONLY backlog.",
         "created_at": "2026-07-16T02:01:00Z"
+      },
+      {
+        "id": "FIX-COWORK-CADENCE-DANGLING-POLICY-ID",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "high",
+        "owner": "po",
+        "zone": "cross-service/",
+        "title": "FIX: cowork-matcher silently absorbs a dangling policy_id as the AC-P1-1-3 240min safe default — alert-commander-market runs 240min vs specified 15min (16x degradation, adaptive path only, inverted). Instance: author alert-commander-market(interval_minutes 15) + alert-commander-critical(240) in cadence-policy.json. Class: fail-loud validate that every cowork-schedule.json policy_id resolves to a rule at load; distinguish policy-not-found (config error -> cron fallback per FR-P1-2) from unmatched-rule-in-real-policy (240 genuinely safe). Add [.slots[].policy_id]-[.policies[].policy_id] diff==[] as a standing check.",
+        "created_at": "2026-07-16T03:55:37Z",
+        "origin_signal_id": "cow-20260716T031800",
+        "status_note": "AC: (1) evaluateCadence('alert-commander-market', ...) resolves to interval_minutes:15 via an authored policy (RAW-run, not badge). (2) A NEW unresolvable-policy_id DV/test asserts fail-loud OR cron-fallback (NOT 240) AND MUST pin stale_warning=false so the adaptive branch (cowork-match-slots.js:288) is actually exercised — a stale window exercises legacy cron and passes vacuously (handoff Consequence #2). AC-P1-1-3's existing DV only covers unmatched-rule; a new AC is required or the fix regresses. (3) Dangling-ref sweep: [.slots[].policy_id]-[.policies[].policy_id] == [] (today alert-commander-market + alert-commander-critical dangle; critical is benign since 240 intent coincides — market is the only harmed slot). Partial regression of completed FIX-ALERT-COMMANDER-DEAD-NO-SLOT (2026-07-03, HIGH) whose decision journal named the policies but the sprint never authored cadence-policy.json. Handoff: docs/handoffs/2026-07-16-alert-commander-market-dangling-policy-240min.md. Files: docs/data/cadence-policy.json, scripts/agents-flow/cadence-policy.js (:71 safe default), scripts/agents-flow/cowork-match-slots.js (:288 adaptive/legacy branch). Baseline CI GREEN on b9cfe58b2. RAW-verified 03:55Z: grep alert-commander cadence-policy.json=0; policy_id diff=[alert-commander-critical,alert-commander-market].",
+        "verify_note": "prior_status=BACKLOG (minted by po dev-team triage tick 2026-07-16T03:37Z from signal cow-20260716T031800; BOUNDED-1 withhold on peer-dirty tree — leave for program pickup on clean tree)"
       }
     ],
     "closed_sprints": [
@@ -8476,8 +8489,8 @@
       "status": "idle",
       "active_task_id": null,
       "next_agent": "router",
-      "last_updated_at": "2026-07-16T01:09:38Z",
-      "last_updated_by": "dev-team (UC-CCA-P5 -> done_verified, news-scout exec-proof reorder shipped)"
+      "last_updated_at": "2026-07-16T03:55:37Z",
+      "last_updated_by": "po (triage cow-20260716T031800 -> FIX-COWORK-CADENCE-DANGLING-POLICY-ID minted BACKLOG, head idle)"
     },
     "ready": [],
     "review": [
