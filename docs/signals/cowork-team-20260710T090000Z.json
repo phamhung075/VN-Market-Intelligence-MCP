@@ -1,0 +1,24 @@
+{
+  "tick": "2026-07-10T09:00Z",
+  "verdict": "WORK",
+  "drift_min": 1,
+  "matched_slots": ["refine-bctc-slot-1"],
+  "new_signals": 0,
+  "severity": "MEDIUM",
+  "classification": {
+    "refine-bctc-slot-1": {
+      "pattern": "never-configured",
+      "trigger_id": null,
+      "_superseded_by": null,
+      "guaranteed": false,
+      "parallel_group": "bctc-refine",
+      "note": "NEW slot family this session — refine_bctc_md agent, cron 0 9 * * * (policy_id=bctc-offmarket), first occurrence today. THIRD undeliverable sub-pattern observed this session (trigger_id:null AND _superseded_by:null — no backstop ever configured, distinct from deprecated-backstop where _superseded_by is explicitly set to cowork-dispatcher). Falls under NO_BACKSTOP_SLOTS per Step 5.0 discriminator (trigger_id==null OR _superseded_by!=null) regardless of the distinction — same undeliverable-gateway-blind outcome."
+    }
+  },
+  "market_hours_note": "alert-commander-market did NOT match this tick — 09:00Z falls outside cron range 2-8 (hour=9), confirming the 28-consecutive-tick streak (02:00Z-08:45Z) ended as expected.",
+  "chef_mutex_note": "not applicable — no chef-group slot matched",
+  "gateway_blind_status": "unresolved — native mcp__gateway__call_tool still absent; routed via mcp_call bash bypass, functioning normally",
+  "guaranteed_miss_count_session": 8,
+  "stale_warning_note": "absent this tick — cumulative tally 27 true / 47 absent over 74 WORK ticks",
+  "action": "no dispatch — slot undeliverable-gateway-blind (never-configured pattern), no telegram escalation (not guaranteed)"
+}

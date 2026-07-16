@@ -1,0 +1,43 @@
+{
+  "tick": "2026-07-10T08:00Z",
+  "verdict": "WORK",
+  "drift_min": 1,
+  "matched_slots": ["news-scout-offhours", "market-watcher-offhours", "alert-commander-market", "alert-commander-critical"],
+  "new_signals": 0,
+  "severity": "MEDIUM",
+  "classification": {
+    "news-scout-offhours": {
+      "pattern": "deprecated-backstop",
+      "trigger_id": null,
+      "_superseded_by": "cowork-dispatcher",
+      "guaranteed": false,
+      "note": "off-hours cadence 0 */4 * * * — new slot family at the 08:00Z VN-market-hours boundary tick."
+    },
+    "market-watcher-offhours": {
+      "pattern": "deprecated-backstop",
+      "trigger_id": null,
+      "_superseded_by": "cowork-dispatcher",
+      "guaranteed": false,
+      "note": "off-hours cadence 0 */4 * * * — new slot family at the 08:00Z VN-market-hours boundary tick."
+    },
+    "alert-commander-market": {
+      "pattern": "deprecated-backstop",
+      "trigger_id": null,
+      "_superseded_by": "cowork-dispatcher",
+      "guaranteed": false,
+      "note": "25th and final consecutive tick this session (02:00Z through 08:00Z) — market-hours cadence */15 2-8 * * 1-5 window closes after this tick."
+    },
+    "alert-commander-critical": {
+      "pattern": "deprecated-backstop",
+      "trigger_id": null,
+      "_superseded_by": "cowork-dispatcher",
+      "guaranteed": false,
+      "note": "new slot this session — 4-hourly cadence 0 */4 * * *, first occurrence today."
+    }
+  },
+  "chef_mutex_note": "not applicable — no chef-group slot matched",
+  "gateway_blind_status": "unresolved — native mcp__gateway__call_tool still absent; routed via mcp_call bash bypass, functioning normally",
+  "guaranteed_miss_count_session": 7,
+  "stale_warning_note": "true this tick — cumulative tally 26 true / 44 absent over 70 WORK ticks",
+  "action": "no dispatch — all 4 slots undeliverable-gateway-blind, no telegram escalation (none guaranteed)"
+}

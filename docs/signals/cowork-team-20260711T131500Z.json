@@ -1,0 +1,18 @@
+{
+  "tick": "2026-07-11T13:15Z",
+  "verdict": "WORK",
+  "drift_min": 1,
+  "matched_slots": ["fb-weekend"],
+  "new_signals": 0,
+  "signal_drain": {},
+  "severity": "HIGH",
+  "classification": {
+    "fb-weekend": "never-had-cloud-backstop pattern (trigger_id:null, _superseded_by:cowork-dispatcher) — NO_BACKSTOP/undeliverable-gateway-blind, guaranteed:true — GUARANTEED-SLOT MISS"
+  },
+  "chef_mutex_note": "not applicable — no chef-group slots matched",
+  "gateway_blind_status": "unresolved — native mcp__gateway__call_tool still absent; routed via mcp_call bash bypass, functioning normally",
+  "guaranteed_miss_count_session": 13,
+  "escalation_note": "fb-weekend (agent=fb-market-poster, cron 13:13 UTC Sat/Sun, last_fired 2026-07-04T13:19:41Z) is one of the 4 slots confirmed in FIX-COWORK-STEP5-BACKSTOP-TRUSTS-STALE-TRIGGER-STATUS (docs/signals/processed/cowork-step5-stale-trigger-status-20260708T212952Z.json) to have NEVER had a real cloud RemoteTrigger — this cowork-dispatcher session is its sole delivery path. On 2026-07-04 (last occurrence) the identical slot spawned successfully because the session was not gateway-blind that tick (docs/signals/processed/cowork-team-20260704T132001Z.json). Today's miss is a direct instance of the still-open root cause documented in docs/signals/processed/repair-cowork-guaranteed-slot-durability-20260707T203223Z.json (session-scoped dispatcher + gateway-blind = no delivery path for never-backstopped guaranteed slots). Telegram sent to work channel.",
+  "stale_warning_note": "ABSENT this tick — cumulative tally 39 true / 61 absent over 100 WORK ticks",
+  "action": "fb-weekend (guaranteed:true) matched, classified undeliverable via never-had-cloud-backstop pattern under SESSION_BLIND — elevated to HIGH, guaranteed_miss_count incremented 12→13, telegram sent to work channel, no signal queue rows to drain"
+}

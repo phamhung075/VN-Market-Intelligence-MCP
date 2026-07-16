@@ -1,0 +1,17 @@
+{
+  "tick": "2026-07-10T11:00Z",
+  "verdict": "WORK",
+  "drift_min": 1,
+  "matched_slots": ["refine-bctc-slot-3"],
+  "new_signals": 0,
+  "signal_drain": {},
+  "severity": "LOW",
+  "classification": {
+    "refine-bctc-slot-3": "never-configured pattern (trigger_id:null, _superseded_by:null) — same as refine-bctc-slot-1 at 09:00Z — NO_BACKSTOP/undeliverable-gateway-blind, non-guaranteed, log-only, no telegram"
+  },
+  "chef_mutex_note": "not applicable — no chef-group slots matched",
+  "gateway_blind_status": "unresolved — native mcp__gateway__call_tool still absent; routed via mcp_call bash bypass, functioning normally",
+  "guaranteed_miss_count_session": 9,
+  "stale_warning_note": "absent this tick — cumulative tally 27 true / 55 absent over 82 WORK ticks",
+  "action": "refine-bctc-slot-3 classified undeliverable (never-configured pattern), non-guaranteed so log-only — no signal queue rows to drain this tick (new_signals=0)"
+}

@@ -1,0 +1,30 @@
+{
+  "tick": "2026-07-10T08:45Z",
+  "verdict": "WORK",
+  "drift_min": 1,
+  "matched_slots": ["chef-eod", "alert-commander-market"],
+  "new_signals": 0,
+  "severity": "HIGH",
+  "classification": {
+    "chef-eod": {
+      "pattern": "superseded-despite-trigger-id",
+      "trigger_id": "trig_01NS8j25rYt4meXVqHyRsVNn",
+      "_superseded_by": "cowork-dispatcher",
+      "guaranteed": true,
+      "note": "GUARANTEED SLOT MISS. Second occurrence this session of the superseded-despite-trigger-id pattern (chef-morning at 05:15Z was the first). RECURRING: chef-eod also missed at 08:45Z on 2026-07-09 (prior session). 2nd consecutive day, same slot, same exact tick. Combined with chef-morning's identical 2-day recurrence, this confirms a SYSTEMIC pattern across two distinct guaranteed CHEF slots, not isolated gateway-blind noise."
+    },
+    "alert-commander-market": {
+      "pattern": "deprecated-backstop",
+      "trigger_id": null,
+      "_superseded_by": "cowork-dispatcher",
+      "guaranteed": false,
+      "note": "28th consecutive tick this session (02:00Z through 08:45Z) — final market-hours cadence tick before window closes at 09:00Z."
+    }
+  },
+  "chef_mutex_note": "not applicable — chef-eod matched alone (no non-guaranteed chef-group sibling in same tick)",
+  "escalation_note": "chef-eod guaranteed slot undeliverable — telegram sent to WORK channel. Session guaranteed-miss count incremented 7 -> 8. Recurring same-slot/same-time miss (2nd consecutive day), matching the identical pattern already seen on chef-morning (05:15Z). Escalated beyond a telegram note this time: filed formal BACKLOG signal cowork-recurring-guaranteed-miss-20260710T0847Z (type=repair_task_request, severity=HIGH, to=po) in docs/data/orch/orch-state.json .signal_queue.rows[] via scripts/orch-apply.sh, recommending architect review of the guaranteed-slot backstop trigger dispatch path — trigger_id presence alone does not guarantee delivery when _superseded_by is set.",
+  "gateway_blind_status": "unresolved — native mcp__gateway__call_tool still absent; routed via mcp_call bash bypass, functioning normally",
+  "guaranteed_miss_count_session": 8,
+  "stale_warning_note": "true this tick — cumulative tally 27 true / 46 absent over 73 WORK ticks",
+  "action": "telegram escalation sent (chef-eod guaranteed miss) + formal BACKLOG signal filed for systemic 2-slot recurring pattern; alert-commander-market withheld (non-guaranteed)"
+}

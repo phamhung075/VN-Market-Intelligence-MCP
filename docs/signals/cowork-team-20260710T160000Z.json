@@ -1,0 +1,20 @@
+{
+  "tick": "2026-07-10T16:00Z",
+  "verdict": "WORK",
+  "drift_min": 1,
+  "matched_slots": ["news-scout-offhours", "market-watcher-offhours", "market-watcher-eod", "alert-commander-critical"],
+  "new_signals": 0,
+  "signal_drain": {},
+  "severity": "LOW",
+  "classification": {
+    "news-scout-offhours": "deprecated-backstop pattern (trigger_id:null, _superseded_by:cowork-dispatcher) — NO_BACKSTOP/undeliverable-gateway-blind, non-guaranteed, log-only",
+    "market-watcher-offhours": "deprecated-backstop pattern (trigger_id:null, _superseded_by:cowork-dispatcher) — NO_BACKSTOP/undeliverable-gateway-blind, non-guaranteed, log-only",
+    "market-watcher-eod": "deprecated-backstop pattern (trigger_id:null, _superseded_by:cowork-dispatcher) — NO_BACKSTOP/undeliverable-gateway-blind, non-guaranteed, log-only",
+    "alert-commander-critical": "deprecated-backstop pattern (trigger_id:null, _superseded_by:cowork-dispatcher) — NO_BACKSTOP/undeliverable-gateway-blind, non-guaranteed, log-only"
+  },
+  "chef_mutex_note": "not applicable — no chef-group slots matched",
+  "gateway_blind_status": "unresolved — native mcp__gateway__call_tool still absent; routed via mcp_call bash bypass, functioning normally. Note: 15:30Z tick hit a transient MCP transport timeout (ERROR verdict, curl exit=28) — resolved by 15:45Z, one-off, no pattern.",
+  "guaranteed_miss_count_session": 9,
+  "stale_warning_note": "PRESENT (true) this tick — cumulative tally 30 true / 56 absent over 86 WORK ticks",
+  "action": "4 cadence-based slots (news-scout, market-watcher x2, alert-commander-critical) matched, all classified undeliverable via deprecated-backstop pattern, all non-guaranteed so log-only — no telegram, no signal queue rows to drain"
+}

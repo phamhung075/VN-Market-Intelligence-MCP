@@ -1,0 +1,22 @@
+{
+  "tick": "2026-07-10T05:30Z",
+  "verdict": "WORK",
+  "drift_min": 1,
+  "matched_slots": ["alert-commander-market"],
+  "new_signals": 0,
+  "severity": "MEDIUM",
+  "classification": {
+    "alert-commander-market": {
+      "pattern": "deprecated-backstop",
+      "trigger_id": null,
+      "_superseded_by": "cowork-dispatcher",
+      "guaranteed": false,
+      "note": "15th consecutive tick this session (02:00Z through 05:30Z) — sustained streak during VN market hours cadence */15 2-8 * * 1-5."
+    }
+  },
+  "chef_mutex_note": "not applicable — no chef-group slot matched",
+  "gateway_blind_status": "unresolved — native mcp__gateway__call_tool still absent; routed via mcp_call bash bypass, functioning normally",
+  "guaranteed_miss_count_session": 7,
+  "stale_warning_note": "absent this tick — cumulative tally 22 true / 38 absent over 60 WORK ticks",
+  "action": "no dispatch — slot undeliverable-gateway-blind, no telegram escalation (not guaranteed)"
+}

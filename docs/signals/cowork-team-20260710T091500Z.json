@@ -1,0 +1,24 @@
+{
+  "tick": "2026-07-10T09:15Z",
+  "verdict": "WORK",
+  "drift_min": 1,
+  "matched_slots": ["fb-daily"],
+  "new_signals": 0,
+  "severity": "HIGH",
+  "classification": {
+    "fb-daily": {
+      "pattern": "deprecated-backstop",
+      "trigger_id": null,
+      "_superseded_by": "cowork-dispatcher",
+      "guaranteed": true,
+      "parallel_group": "fb-poster",
+      "note": "GUARANTEED SLOT MISS. RECURRING: fb-daily also missed at 09:15Z on 2026-07-09 (prior session). 2nd consecutive day, same slot, same exact tick. THIRD distinct guaranteed slot this session to show the 2-day recurring miss (after chef-morning 05:15Z and chef-eod 08:45Z) — and the FIRST not in the chef parallel_group, proving the root cause is dispatcher-wide across all guaranteed slots, not CHEF-specific."
+    }
+  },
+  "chef_mutex_note": "not applicable — no chef-group slot matched",
+  "gateway_blind_status": "unresolved — native mcp__gateway__call_tool still absent; routed via mcp_call bash bypass, functioning normally",
+  "guaranteed_miss_count_session": 9,
+  "stale_warning_note": "absent this tick — cumulative tally 27 true / 48 absent over 75 WORK ticks",
+  "escalation_note": "fb-daily guaranteed slot undeliverable — telegram sent to WORK channel framing this as scope expansion (3rd guaranteed slot, first outside chef group). Filed formal BACKLOG signal cowork-recurring-guaranteed-miss-scope-expansion-20260710T0917Z (type=repair_task_request, severity=HIGH, to=po) referencing the prior signal cowork-recurring-guaranteed-miss-20260710T0847Z (already READ/triaged by po) — recommending architect treat this as a single dispatcher-level defect, not 3 separate per-slot issues.",
+  "action": "telegram escalation sent (fb-daily guaranteed miss) + formal BACKLOG scope-expansion signal filed"
+}

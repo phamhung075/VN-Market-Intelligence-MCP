@@ -1,0 +1,17 @@
+{
+  "tick": "2026-07-10T10:45Z",
+  "verdict": "WORK",
+  "drift_min": 1,
+  "matched_slots": [],
+  "new_signals": 1,
+  "signal_drain": {
+    "cowork-recurring-guaranteed-miss-scope-expansion-20260710T0917Z": "still NEW, still addressed to po, out of dispatcher spawn scope — left unactioned again this tick, awaiting PO triage (~1h28m since filed at 09:17Z, 6th consecutive tick unactioned)"
+  },
+  "severity": "LOW",
+  "classification": {},
+  "chef_mutex_note": "not applicable — no slots matched",
+  "gateway_blind_status": "unresolved — native mcp__gateway__call_tool still absent; routed via mcp_call bash bypass, functioning normally",
+  "guaranteed_miss_count_session": 9,
+  "stale_warning_note": "absent this tick — cumulative tally 27 true / 54 absent over 81 WORK ticks",
+  "action": "no matched slots — signal queue checked, 1 NEW row present but addressed to po (out of scope), left for PO triage"
+}

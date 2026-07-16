@@ -1,0 +1,31 @@
+{
+  "tick": "2026-07-10T05:15Z",
+  "verdict": "WORK",
+  "drift_min": 1,
+  "matched_slots_raw": ["chef-morning", "chef-intraday", "alert-commander-market"],
+  "chef_mutex_note": "APPLIED — chef-morning (guaranteed) + chef-intraday (non-guaranteed) coincided in same tick. Per Step 4.5c (FIX-COWORK-CHEF-SAMETICK-MUTEX), chef-intraday dropped from MATCHES; only chef-morning retained for chef parallel_group.",
+  "matched_slots_effective": ["chef-morning", "alert-commander-market"],
+  "new_signals": 0,
+  "severity": "HIGH",
+  "classification": {
+    "chef-morning": {
+      "pattern": "superseded-despite-trigger-id",
+      "trigger_id": "trig_01FdUF4YWg8TqpXVnBLC7GYj",
+      "_superseded_by": "cowork-dispatcher",
+      "guaranteed": true,
+      "note": "GUARANTEED SLOT MISS. First occurrence this session of the superseded-despite-trigger-id pattern (trigger_id present but _superseded_by non-null still marks it undeliverable). RECURRING: chef-morning also missed at 05:15Z on 2026-07-09 (prior session). 2nd consecutive day, same slot, same exact tick — flagged as a recurring pattern warranting architect review of the gateway-blind backstop wiring for this specific trigger."
+    },
+    "alert-commander-market": {
+      "pattern": "deprecated-backstop",
+      "trigger_id": null,
+      "_superseded_by": "cowork-dispatcher",
+      "guaranteed": false,
+      "note": "14th consecutive tick this session (02:00Z through 05:15Z)."
+    }
+  },
+  "escalation_note": "chef-morning guaranteed slot undeliverable — telegram sent to WORK channel. Session guaranteed-miss count incremented 6 -> 7. Recurring same-slot/same-time miss (2nd consecutive day) — recommend BACKLOG signal for architect attention per recurring-bug escalation policy.",
+  "gateway_blind_status": "unresolved — native mcp__gateway__call_tool still absent; routed via mcp_call bash bypass, functioning normally",
+  "guaranteed_miss_count_session": 7,
+  "stale_warning_note": "absent this tick — cumulative tally 22 true / 37 absent over 59 WORK ticks",
+  "action": "telegram escalation sent (chef-morning guaranteed miss); alert-commander-market withheld (non-guaranteed)"
+}
