@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-16T14:08:31.059Z",
+    "matched_slots": [
+      "refine-bctc-slot-2"
+    ],
+    "won_slots": [
+      "refine-bctc-slot-2"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/refine_bctc_md/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 4,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "refine-bctc-slot-2": "cron"
+    },
+    "cadence_minutes": {
+      "refine-bctc-slot-2": null
+    },
+    "last_fired_timestamp": "2026-07-16T14:07:09.083Z",
+    "last_fired_slots": [
+      "refine-bctc-slot-2"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "14:00",
+    "leader_lock": "acquired",
+    "dev_head": "active",
+    "devq": 0,
+    "signal_backlog": 0,
+    "note": "WORK tick recovered read-only after && chain swallowed WORK verdict JSON (exit 1). Preflight side-effects verified intact: election lock held by this session, one_shots=[] (nothing orphaned), matcher re-run (side-effect-free) recovered the single due slot refine-bctc-slot-2 (cron 0 14, last_fired 07-13). Agent spawned+completed clean: oldest pending MBB_2026_Q1.pdf page_count=0 matched cover-letter skip pattern, reported to WORK, exited. WATCH: page_count=0 skip could mask an unpopulated-page-count real Q1 statement vs a genuine thin cover — one observation, not chased from dispatcher."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-16T14:08:31.059Z",
+  "_processed": {
+    "fingerprint": "759d3c7622ae3e592607a8bfcaebeda4dc8ea6ca72d01db04227274aff5347e5",
+    "processedAt": "2026-07-16T14:22:02Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
