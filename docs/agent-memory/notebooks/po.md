@@ -1,17 +1,16 @@
 # PO Notebook
 
-_Last: 2026-07-16T07:08Z (dev-team triage 06:37Z — 2 new cowork signals → 1 recurring FIX minted (launch-candidate) + 1 sequencing-guard annotated; TNB c110 ACK → 1 FIX; head idle WIP 0)_
+_Last: 2026-07-16T08:55Z (dev-team triage 08:37Z — ci_red HIGH → 1 fresh FIX minted w/ zone-correction; cowork-fire telemetry → no mint (dedup existing CLEAN row))_
 
-## Tick 2026-07-16T07:08Z — 4 signals + TNB c110 + telegram
-Board pre backlog 403→406, review 25, qa/inprog/ready 0, WIP 0, head idle. One atomic orch-apply (Zod Stage0+1 PASS, conservation 541→544 +3, CAS clean). Tree heavily peer-dirty.
+## Tick 2026-07-16T08:55Z — 2 signals (ci_red HIGH + cowork-fire low)
+Board pre: backlog 405→406, review 25, ready/inprog/qa 0, WIP 0, head idle. One atomic orch-apply (Zod Stage0+1 PASS, conservation 541→542 +1, CAS clean). Tree heavily peer-dirty (~109 files) → committed orch-state + notebook explicit paths only.
 
-- **cow-…052700 CHEF same-tick mutex echo|jq defeat → MINT `FIX-COWORK-CHEF-MUTEX-ECHO-JQ-DEFEAT` (P1 cross-service/) + LAUNCH-CANDIDATE.** RECURRING (07-14 + 07-16T05:15Z), MARKET double-publish. pressure-cadence.md 4.5c `echo "$SCHEDULE"|jq` corrupts escaped \n in chef-intraday trigger_prompt → G_ARR/NG_ARR empty → mutex off → both chef slots spawn. Distinct from UC-CCA-P3 (marker) + ROUTER-INTENT-MUTEX-BYPASS. recurring-bug-escalation → FIX now.
-- **cow-…043200 cycle-snapshot/adaptive-cadence sequencing → PLAN-ONLY ANNOTATE (no mint, handoff says none).** Coupling 3-way+writer (handoff §4-NEW-2/3): prune ~110 residue → adaptive fleet-wide → 240min dangling gate → alert-commander-market 16x degrade. GUARD note added to SPIKE-TICK-SNAPSHOT-DEADCODE-OR-REGRESSED; couples UC-SDF-P2 + FIX-COWORK-CADENCE-DANGLING-POLICY-ID (mine, 03:37Z).
-- **Signal-1 alert-commander no-Bash (HIGH) → FOLD, no mint.** Self-heals via peer commits e055f2be2/1451a619b; same class as F-MCP-SUBAGENT-SYSTEMIC → FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK (P1). gateway-present/Bash-absent variant.
-- **TNB c110 → MINT `FIX-VNINDEX-ESTIMATE-IMPLAUSIBLE-DELTA-GATE` (P2 apps/macro-indicators/, via BA spec) + narrow FIX-CHEF-EVENING-DUP to component-1.** Rest already-tracked (see handoff ACK).
-- **BCTC/OHLCV telegram flood → NO mint (re-confirm 03:37Z).** Reconcile-exhausted every ticker×quarter = KNOWN (ENRICHER-OLD-QUARTERS, HIST-VPS-BACKFILL, QUEUE-MAXAGE-GATE, 1345B-REPORT-BATCH). Recommend router prioritize FIX-BCTC-QUEUE-MAXAGE-GATE (stops live flood).
-- **Hygiene → MINT `CLEAN-COWORK-DISPATCHER-TELEMETRY-DRAIN-DIR` (low).** ~50 peer telemetry files pin drain inbox. Review lane 25 = genuine REVIEW awaiting QA (qa=0) → recommend router QA sweep, not a stall.
+- **ci_red da847805 (HIGH) → MINT `CI-RED-da847805-FIX` (FIX, zone apps/mcp-server/, BACKLOG).** origin/main HEAD RED on `bun test`; sole failing file `apps/mcp-server/src/__tests__/013-rag-retriever.test.ts` (14486 pass/1 fail). Router evidence: REPRODUCIBLE (2x CI same-sha rerun + 3x local) → NOT flaky; whole-file crash, no assertion = bun 1.3.13 native segfault (LanceDB addon in `src/infrastructure/rag/_deprecated/`). Non-causal to commit (orch+2 QA docs; test byte-identical to green parent 00000074).
+  - **ZONE CORRECTION (evidence discipline):** router suggested `dev-rag-service`, but that agent is Python-only (`apps/rag-service/` scope). The failing test + its imports are 100% inside `apps/mcp-server/`; `rag/_deprecated/` is referenced ONLY by tests (grep: zero production imports). → zone `apps/mcp-server/` (dev-mcp-server), disposition = quarantine/skip the dead-code native-crash test.
+  - Dedup clean: 3 existing REVIEW CI-RED rows (FXFLOOR-OVERCLAMP, FOREIGN-FLOW-BULLETIN, FOREIGN-FLOW-COVERAGE) all macro/foreign-flow assertions — unrelated. Fresh mint per router.
+  - Gate: ci_green on subsequent NEW-sha push (same-sha rerun does NOT count).
+- **cowork-fire 08:28:35Z (low) → NO mint.** errors:[], classification FIRE, chef+alert-commander spawned. Note "chef-intraday silent-exit 0 clusters" = legit (no data cluster to post). legacy-mode via stale_warning:true = known (reference_isstale). Telemetry-drain already tracked: existing BACKLOG `CLEAN-COWORK-DISPATCHER-TELEMETRY-DRAIN-DIR` (45 cowork-team-*.json pinned). Dedup → skip.
 
 ## Carry-over
-- **RETURN: BATCH([FIX-COWORK-CHEF-MUTEX-ECHO-JQ-DEFEAT]).** BOUNDED-1 tree heavily peer-dirty → dispatcher likely defers actual launch to clean-tree tick; row durable regardless. VN-Index FIX + CLEAN = backlog only, NOT launch candidates.
-- **Process note:** fix-requests routed via custom payload sub-fields (not .signal_queue.rows[]) drop silently — this CHEF fix itself lost 07-14 as payload.robustness_note. Folded into CHEF FIX AC, not separately minted.
+- **RETURN: BATCH([CI-RED-da847805-FIX]).** FIX → dispatcher routes direct-to-Step-3, zone apps/mcp-server/. baseline_pass=false (CI currently RED). Tree heavily peer-dirty → dispatcher may defer live launch to clean-tree tick; backlog row durable regardless.
+- **Note for dev:** `013/012/011/135-rag-*` + `security-sql-injection` tests all import `rag/_deprecated/` (native LanceDB). If quarantining, check sibling tests for same segfault class before green-declaring.
