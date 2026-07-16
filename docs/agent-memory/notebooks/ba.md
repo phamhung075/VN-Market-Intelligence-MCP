@@ -1,6 +1,14 @@
 # BA — Notebook
 
-**Last updated:** 2026-07-11 | **Sprint:** ANALYSIS-QUALITY-CONVERGENCE
+**Last updated:** 2026-07-16 | **Sprint:** ULTRACODE-AUDIT-FIXALL
+
+## UC-ASL-P2 · 2026-07-16
+
+Spec complete. REQ file: `docs/handoffs/UC-ASL-P2-BA-spec.md`. Zero PO blockers. NEXT: architect.
+
+BOUNDED-1 idle-pickup relay (dev-team promoted from backlog, WIP was 0). Task: extract one blessed `scripts/emit-audit-signal.sh` replacing 6 copy-pasted EMIT SEQUENCE blocks across `docs/agents/system-auditor/flow/main.md` (:292-328 Tier-2 data_stale, :592-628 Tier-3 db_integrity_breach, :412-416 D-IMPROVE E-3-only, :344 D-BCTC-EVAL E-3-only) and `tier1-probe.md` (:139-171 general A-xx, :86-108 A-20) + a durable BUG-dedup ledger (`docs/data/auditor-dedup-ledger.json`, flat `{dedup_key: last_sent_ts}`, 7d self-pruning, tmp+mv atomic write — NOT routed through `orch-apply.sh`, that wrapper's scope is orch-state.json only). Verified real inter-copy drift live (signal_type disagrees: `data_stale`/`db_integrity_breach` vs `signal_feedback` — separately tracked as I3, out of scope here, script must pass the literal through, never auto-correct it). Confirmed sites 3/4 (D-IMPROVE/D-BCTC-EVAL) never had E-1/E-2 today — script needs an E-3-only mode so consolidation doesn't introduce new Telegram spam or change D-BCTC-EVAL's distinct unconditional WORK-channel post. Confirmed `docs/data/system-auditor-known-issues.json` (223L, stale since 2026-05-01) is safe to delete — 0 flow files read it; recommended deleting (not repointing) `context-bloat-backstop.sh`'s dead fingerprint-suppression gate rather than repointing it at the new ledger, since the two fingerprint namespaces (`context_bloat:<path>` vs `<type>:<id>:<check_id>`) are semantically unrelated. Flagged 3 architect-ratify items (not PO blockers): dead-gate deletion vs repoint, severity-escalation-inside-dedup-window bypass rule, and ZONE — none of the 8 touched files are `apps/<service>/` (all `scripts/`/`docs/agents/system-auditor/`/`docs/references/`), so recommended architect narrow the dispatched `cross-service/` zone label to `scripts/ + docs/agents/system-auditor/` for PM's parallel-dispatch zone-isolation check.
+
+Decision journal (task_id: UC-ASL-P2): see `docs/agent-memory/decisions/sprint-ULTRACODE-AUDIT-FIXALL-ba.md`.
 
 ## BA-ANALYSIS-QUALITY-CONVERGENCE · 2026-07-11
 
