@@ -3,7 +3,7 @@
 **Sprint:** ULTRACODE-AUDIT-FIXALL
 **Title:** One blessed emit script replaces the 6 copy-pasted EMIT SEQUENCE blocks + durable BUG-dedup ledger
 **Children:** UC-ASL-P2-DEV-1 (a1bb6ee48), DEV-2/DEV-3 (35d408423), DEV-4 (319e4f40c)
-**QA round:** 1 (first QA pass, no prior CHANGES_REQUESTED round)
+**QA round:** 2 (re-gate after fixer commit `f1bcf63a3` — round-1 AC-3 blocking issue below is RESOLVED, see round-2 addendum at bottom of this report)
 
 ## Changed
 - `scripts/emit-audit-signal.sh` (new, 487L) + `scripts/emit-audit-signal.test.sh` (new, 265L, 48 checks)
@@ -72,5 +72,28 @@ Sites 3/4 (`--e3-only`, E-1 skipped by design) and sites 5/6 in `tier1-probe.md`
 - `send_telegram` usage (`channel:"bug"`) verified against the live schema (`apps/mcp-server/.../telegramTools.ts:36-37`, `z.enum(["market","work","bug"])`) — compliant.
 - bash 3.2-safety confirmed: no `mapfile`, no associative arrays, only `case`/indexed-array/jq lookups.
 
-## Verdict
+## Verdict (round 1)
 **CHANGES_REQUESTED.** Did not promote UC-ASL-P2 or its children to `done_verified`. Did not touch `docs/data/orch/orch-state.json` / `.task_board` / `.head`. Did not commit/push production code. Did not merge. Recommend bounce to **fixer** (round 1) for the bounded `_run_e1()` fix described above; flag to **architect** in parallel that FR-2's `signal_type=$category_type` directive itself needs a one-line correction in the BA-spec/architect-brief record so future readers don't re-introduce the same conflation.
+
+---
+
+## Round 2 addendum — RE-GATE after fixer commit `f1bcf63a3`
+
+**Fix:** `scripts/emit-audit-signal.sh:232` changed `--arg st "$CATEGORY_TYPE"` → `--arg st "signal_feedback"` (option (a) from round 1's recommended-fix menu — 100% legacy-behavior match). Line 328 (`--arg type "$CATEGORY_TYPE"`, the E-3 row's free-form `type` field) is untouched — re-confirmed via grep, no regression. Fixer also added `e1_signal_type_is signal_feedback` test assertion (T1) and appended an FR-2 correction note to the BA-spec.
+
+**Harnesses (RAW-reproduced):** `scripts/emit-audit-signal.test.sh` **49/49** (48 round-1 checks + fixer's new enum-pin assertion). `scripts/agents-flow/context-bloat-backstop.test.sh` **2/2**.
+
+**LIVE UNMOCKED repro (the decisive check — the mocked harness's `mcp_call()` stub cannot see this class of bug):**
+- Sanity check: direct `post_agent_signal` call with `signal_type:"data_stale"` still → `MCP error -32602 invalid_enum_value` (confirms the enum gate is real, unchanged, not a fluke of round 1).
+- Ran the real, unmocked `scripts/emit-audit-signal.sh` against the real gateway AND the live `docs/data/orch/orch-state.json` (not a scratch copy this round — `--no-telegram` used so E-1 still fires for real while E-2/ledger is skipped, avoiding synthetic BUG-channel noise):
+  - `--category-type data_stale --check-id B-04` → `[emit-signal] OK no-telegram id=sys-20260716T062418-3847 check_id=B-04`, exit 0. Independently read-back via `jq`: row present, `type:"data_stale"`.
+  - `--category-type db_integrity_breach --check-id C-02` → `[emit-signal] OK no-telegram id=sys-20260716T062429-158b check_id=C-02`, exit 0. Independently read-back: row present, `type:"db_integrity_breach"`.
+- Both the exact 2 sites that regressed in round 1 (Tier-2 `data_stale`, Tier-3 `db_integrity_breach`) now succeed end-to-end (E-1 + E-3 + read-back), zero `ABORT` markers.
+- **Cleanup:** both synthetic rows removed via `orch-apply.sh` (conservation check passed, signal_total 4→2). `git diff docs/data/orch/orch-state.json` empty post-cleanup — live SSOT restored byte-identical, conservation preserved.
+
+**AC-1..AC-6:** all re-confirmed PASS (AC-1 fail-loud marker intact, AC-2 harness T1-T4 green, AC-3 now PASS via harness AND live repro, AC-4/AC-5 unchanged from round 1 — re-verified via grep, AC-6 marker format + live production confirmed this round).
+
+**DDD/injection re-check:** full-file re-read — all jq/mcp_call bodies bound-param (`--arg`/`--argjson`) only, `orch-apply.sh` invoked solely inside `_e3_write_row` (E-3), ledger tmp+mv never routed through `orch-apply.sh`, no `eval`/`process.env`/hardcoded secrets. No new findings vs round 1.
+
+## Verdict (round 2)
+**APPROVED.** All 6 ACs pass, both harnesses green (49/49, 2/2), live unmocked repro clean for both previously-regressed category types, no regression at line 328, production orch-state.json conservation preserved (test artifacts fully cleaned up, verified via empty `git diff`). QA did not self-advance `.head`/`.task_board`, did not promote UC-ASL-P2 or its 4 children to `done_verified`, did not merge/push/release `task:UC-ASL-P2` — dispatcher owns promotion + push per RE-GATE guardrails.

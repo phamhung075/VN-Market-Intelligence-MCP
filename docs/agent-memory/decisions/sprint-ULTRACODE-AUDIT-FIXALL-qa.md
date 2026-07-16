@@ -128,3 +128,24 @@ alerts in production — a severe availability regression the sprint exists to p
 the (correctly-scoped, network-free) mocked test suite.
 **why-change:** Escalation beyond routine — found a P0 blocking defect the mocked harness cannot see;
 did not promote board, did not touch orch-state.json/.head, did not push.
+
+### STEP qa-S5 · qa · 2026-07-16T08:24:00Z
+**task-id:** UC-ASL-P2
+**what-done:** RE-GATE round 2 of fixer commit f1bcf63a3 (line 232 -> hardcoded "signal_feedback").
+RAW-ran both harnesses (49/49, 2/2); ran the LIVE unmocked script against the real gateway + live
+orch-state.json with both regressed category-types (data_stale, db_integrity_breach) via --no-telegram
+-> both OK, E-3 row appended, independently read-back-verified, then cleaned up via orch-apply.sh
+(git diff empty post-cleanup, conservation preserved). Re-confirmed AC-1..AC-6 + DDD/injection re-check.
+**what-considered:**
+- Trust the fixer's own RAW-verification claim (dispatcher head note) as sufficient — rejected: the
+  exact defect class (mock blind spot) that caused round-1's bug is the reason a second independent
+  live repro is mandatory, not optional, per dispatch instructions.
+- Reuse a scratch orch-state.json copy for E-3 (round-1 style) vs write+cleanup on the live file —
+  chose live file + cleanup: proves the production write path end-to-end (orch-apply.sh CAS+
+  conservation+read-back), not just the E-1 transport; dispatcher's own guardrail text anticipated
+  this ("clean up any test signal rows you create").
+**why-decision:** 2 independent live invocations (data_stale + db_integrity_breach) both succeeded with
+zero ABORT markers, row read-back confirmed both times, sanity-reconfirmed the enum is still genuinely
+closed (raw call still rejects), and cleanup left orch-state.json byte-identical to pre-repro state —
+this is the decisive, non-mockable proof the round-1 defect is closed.
+**why-change:** No change from plan — fix matched recommended option (a) exactly; all checks green.

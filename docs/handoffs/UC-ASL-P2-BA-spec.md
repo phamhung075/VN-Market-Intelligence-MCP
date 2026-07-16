@@ -273,4 +273,28 @@ The pre-refactor code hardcoded `"signal_type": "signal_feedback"` at every E-1 
 
 **VERDICT: CHANGES_REQUESTED.** Board NOT promoted to `done_verified` (task + 4 children left as-is). `orch-state.json`/`.head` untouched by QA. No merge, no push.
 
+---
+
+## [QA] Review Record — RE-GATE round 2 — APPROVED
+
+**QA session:** 2026-07-16T08:24Z · Task Report: `reports/TASK_REPORT_UC-ASL-P2.md` · DJ: `docs/agent-memory/decisions/sprint-ULTRACODE-AUDIT-FIXALL-qa.md` §qa-S5
+
+**Fix under re-gate:** commit `f1bcf63a3` — `scripts/emit-audit-signal.sh:232` now hardcodes `--arg st "signal_feedback"` for E-1's `signal_type` transport arg; line 328's `--arg type "$CATEGORY_TYPE"` for the E-3 row's free-form `type` field is unchanged (verified by grep, no regression).
+
+**LIVE UNMOCKED repro (decisive check, mandatory — mocked harness alone cannot prove this):**
+1. Sanity re-confirm the enum is genuinely closed: direct `mcp_call post_agent_signal` with `signal_type:"data_stale"` → still `MCP error -32602 invalid_enum_value` (unchanged — proves this is a real, live Zod gate, not a fluke).
+2. Ran the REAL (unmocked) `scripts/emit-audit-signal.sh` against the REAL gateway + the LIVE `docs/data/orch/orch-state.json`, `--no-telegram` (E-1 still fires; only E-2/ledger skipped — avoids BUG-channel spam from a synthetic test signal):
+   - `--category-type data_stale --check-id B-04` → `[emit-signal] OK no-telegram id=sys-20260716T062418-3847 check_id=B-04`, rc=0. Row read-back independently confirmed: `{"id":"sys-20260716T062418-3847",...,"type":"data_stale",...}` present in `.signal_queue.rows[]`.
+   - `--category-type db_integrity_breach --check-id C-02` → `[emit-signal] OK no-telegram id=sys-20260716T062429-158b check_id=C-02`, rc=0. Row read-back independently confirmed: `{"id":"sys-20260716T062429-158b",...,"type":"db_integrity_breach",...}` present.
+   - Both: no `invalid_enum_value`, no `ABORT e1-failed` — E-1 now succeeds for exactly the 2 sites that broke in round 1.
+3. **Cleanup:** removed both test rows via `jq '.signal_queue.rows |= map(select(...))' | orch-apply.sh` (conservation check: signal_total live=4→candidate=2, task_total unchanged 542=542, `[orch-apply] OK`). Post-cleanup `git diff docs/data/orch/orch-state.json` is **empty** — live SSOT byte-identical to pre-repro state, the 2 pre-existing rows (`cow-20260716T043200`, `cow-20260716T052700`) untouched.
+
+**Harnesses (RAW-reproduced):** `scripts/emit-audit-signal.test.sh` **49/49** (48 + the fixer's new T1 `e1_signal_type_is signal_feedback` assertion, closing the exact mock blind spot that hid AC-3 in round 1). `scripts/agents-flow/context-bloat-backstop.test.sh` **2/2**.
+
+**AC-1..AC-6 re-confirmed:** AC-1 (script executable, sources `mcp-call.sh`, fail-loud `ABORT e1-failed` marker present) PASS. AC-2 (T1/T2/T3/T4 dedup+escalation-bypass) PASS via harness. AC-3 (every call appends + read-back passes) PASS — harness T1-T12 AND live repro above (2 independent live invocations, both real gateway + real orch-state.json). AC-4 (6 flow-file sites replaced with script calls) PASS — `grep -n emit-audit-signal.sh` hits all 6 former site line ranges in `main.md`/`tier1-probe.md`. AC-5 (dead-reference cleanup) PASS — `docs/data/system-auditor-known-issues.json` absent from disk; zero refs in `tree-map.md`/`bundle-architect.md`/`context-bloat-backstop.sh` (both doc files now point at `auditor-dedup-ledger.json`; dead gate :185-203 confirmed removed, `EXISTING_SIGNAL` guard at :175-183 intact). AC-6 (grep-able `[emit-signal]` marker from a live/dry-run invocation) PASS — both live repro lines above.
+
+**DDD-layering + injection-safety re-check:** full-file re-read of `scripts/emit-audit-signal.sh` (487L) — every `jq`/`mcp_call`/`orch-apply.sh` body built via `jq -n --arg`/`--argjson` bound params only (`_run_e1`, `_send_bug_telegram`, `_send_orphan_bug_telegram`, `_build_row_json`, `_ledger_upsert`, `_e3_write_row`); zero string-concatenated jq filters; no `eval`; no `process.env`/hardcoded-secret hits. `orch-apply.sh` invoked ONLY inside `_e3_write_row` (E-3) — confirmed via grep, single call site. Ledger read/write (`_ledger_write`) confirmed tmp+mv same-directory, never routed through `orch-apply.sh` (Hard Constraint 3 intact). Fail-loud structurally confirmed: `_run_e1 || return 1` short-circuit, `_e3_write_row` aborts loud on rc=1/3/cas-exhausted/readback-failure.
+
+**VERDICT: APPROVED.** All 6 ACs pass, both harnesses green (49/49, 2/2), live unmocked repro clean on both regressed sites (`data_stale`, `db_integrity_breach`), no regression on line 328, conservation preserved (test rows cleaned, `git diff` empty on `orch-state.json`). Per dispatcher instruction: QA does NOT self-advance `.head`/`.task_board`, does NOT promote UC-ASL-P2 or its 4 children to `done_verified`, does NOT merge/push/release `task:UC-ASL-P2` — dispatcher owns promotion + push after this verdict.
+
 
