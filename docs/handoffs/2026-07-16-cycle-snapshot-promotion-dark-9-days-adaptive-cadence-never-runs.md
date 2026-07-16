@@ -239,6 +239,78 @@ cluster at minutes where past ticks happened to fire, and those cluster near nom
 
 <!-- Corrects this doc's §3 and, in the sibling handoff, its "emitter health" framing. -->
 
+## 4-NEW-3. ADDITIVE 2026-07-16T05:00Z — the 240-min symptom is OVER-DETERMINED. `calendar_status` is structurally latched at `"unknown"`, and that second sufficient cause is tracked by nothing.
+
+**Found from a live adaptive tick, not a re-derivation.** Tick 05:00Z ran `pressure_mode=adaptive` AND
+fanned out (`news-scout-sentiment`, `spawned=1`) — a second falsification of §3's headline, and unlike
+§4-NEW-2's (which was archival, from `git show edcc4c66a^`) this one was observed live, in-flight.
+
+**The finding:** `pressure-state.calendar_status` can never hold anything but `"unknown"`.
+
+| Writer | What it supplies | Evidence |
+|---|---|---|
+| dispatcher Step 6.0 | `CALENDAR_STATUS from Step 4.3` — which Step 4.3 **read from pressure-state** | `pressure-read.md:65`, `telemetry.md:16` |
+| preflight SILENT path | `"unknown"` hardcoded safe default | `cowork-tick-preflight.sh:27` — *"emit_pressure_state with last-known values (R3: `unknown` safe default)"* |
+| `emit_pressure_state` | `args.calendar_status ?? "unknown"` — echoes the caller | `emitPressureStateTool.ts:387` |
+
+The dispatcher reads the field from pressure-state and writes the same value back; the preflight writes
+`"unknown"`. **No component derives it from a calendar.** Scan scope: `grep -rn --include='*.ts'
+--include='*.js' 'calendar_status' apps/ scripts/` → 29 refs, every one a read or an echo. Consumers:
+`cowork-match-slots.js:203`, `cadence-policy.js:58`.
+
+**The oracle already exists and is wired to everything except this consumer.**
+`domain/services/vnTradingCalendar.ts` (`isVnTradingDay`) is live and used by `ohlcvCandleGuard.ts`,
+`macro/evidenceTools.ts`, and `startScheduler.ts`; it is even exposed as an MCP tool
+(`isTradingDayTool.ts` — *"embedded VN calendar — no network, no DB writes"*). The cowork adaptive path
+never calls it. **The fix is wiring one existing call, not building a calendar.**
+
+**Blast radius — three adaptive gates are structurally inert, not intermittently dark:**
+
+| Gate | Condition | Reachable? |
+|---|---|---|
+| 4.3 calendar suppression | `CALENDAR_STATUS in ["holiday","weekend"]` | **never** — `"unknown"` → conservative no-op (AC-P1-4-2) |
+| 4.4 `evaluateCadence` | first-match on `calendar_status` | **only the last row** — `gatherer-standard/unknown/*/*` → 240 |
+| 4.5 freshness downgrade | requires `calendar_status in ["holiday","weekend"]` | **never** fires |
+
+For `gatherer-standard` the entire tiered table — `open/high`→30, `open/medium`→60, `open/low/high`→60,
+`open/low/low`→240, `half_day`→60, `holiday`→480, `weekend`→480 — is **unreachable**. Only
+`unknown/*/*`→240 can ever match. Observed live this tick: `news-scout-sentiment` got
+`cadence_minutes=240`.
+
+**THIS IS THE OVER-DETERMINATION TRAP — and note it bites in the opposite direction from §4-NEW.**
+The 240-min symptom has **two independent sufficient causes**:
+
+| # | Cause | Tracked by |
+|---|---|---|
+| (a) | dangling `policy_id` → `evaluateCadence` unmatched → default `interval_minutes=240` | `FIX-COWORK-CADENCE-DANGLING-POLICY-ID` |
+| (b) | `calendar_status` latched `"unknown"` → first-match hits `unknown/*/*` → 240 | **nothing** |
+
+For `news-scout-sentiment` this tick **(b) was operative, not (a)** — its `policy_id` (`gatherer-standard`)
+resolves fine (8 policy rows present) and it still got 240, via the unknown row. **Fixing (a) alone
+leaves every gatherer latched at 240 forever.**
+
+**This corrects my own coupling hazard** (filed 04:32Z as `cow-20260716T043200`, which points at this
+handoff): I told po to *"author the two missing policies first, or land both together."* That sequencing
+is necessary but **not sufficient** — with `calendar_status` latched, newly-authored `open`/`half_day`
+policy rows would themselves be unreachable. Wiring `calendar_status` belongs in the same change set.
+
+**Honest limits.**
+- Scan scope was `apps/` + `scripts/`, extensions `.ts`/`.js`/`.sh`. A writer outside that scope would
+  not have been seen. (The first attempt at this scan aborted vacuously on unquoted `--include=*.ts`
+  under zsh — the identical false-negative logged in §8. It reported nothing and would have "confirmed"
+  this finding for free. The 29-ref count is the assert that the re-run actually executed.)
+- I did **not** verify what `is_trading_day` returns today, nor that `vnTradingCalendar` covers VN
+  holidays correctly — only that the wiring is absent.
+- The claim "under `open` this slot would have gotten 60" is **not** asserted: it depends on
+  server-computed `signal_backlog=5` (tier `medium`), which diverges from the 1 `NEW` row actually in
+  `.signal_queue.rows[]`. If the true backlog is 1 (tier `low` + volatility `low`), `open` also yields
+  240. The divergence is noted, not chased. What *is* established is that only one row of the table is
+  reachable at all.
+- Whether 4.3/4.5 are *desirable* once live is a product call (po), not settled here.
+
+**No new board row.** This rides `cow-20260716T043200`, still `NEW` for po's drain at the time of
+writing (05:09:57Z) — a competing row would make po triage the same surface twice.
+
 ## 5. Why this went unseen — the flag is read as a mode hint, not as a detector
 
 `stale_warning:true` is consumed only to pick `legacy`, which is believed harmless. Nothing treats it
