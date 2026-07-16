@@ -373,10 +373,10 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "UC-ASL-P2",
-    "next_agent": "fixer",
-    "next_action": "qa CHANGES_REQUESTED (AC-3 prod-fail, RAW-verified): scripts/emit-audit-signal.sh:232 _run_e1 feeds --category-type into post_agent_signal signal_type (closed Zod enum, apps/mcp-server/src/infrastructure/db/agentSignalStore.ts:39-51); data_stale + db_integrity_breach are NOT enum members -> E-1 invalid_enum_value -> ABORT e1-failed -> E-3 row never appended for Tier-2 (main.md:298) + Tier-3 (main.md:592). FIX: set E-1 signal_type=\"signal_feedback\" (valid enum, legacy-match) at line 232; LEAVE line 328 (--arg type=$CATEGORY_TYPE, E-3 row) untouched so granular category survives; add test assertion in emit-audit-signal.test.sh pinning E-1 signal_type to a valid enum (closes mock blind spot); append 1-line FR-2 correction note to BA-spec.md. Re-run both harnesses (48/48 + 2/2). Do NOT push, do NOT advance head, do NOT self-promote parent.",
-    "updated_at": "2026-07-16T06:11:35Z",
-    "updated_by": "dev-team (relay advance qa->fixer, UC-ASL-P2; qa CHANGES_REQUESTED AC-3 enum-mismatch, RAW-verified by dispatcher)"
+    "next_agent": "qa",
+    "next_action": "fixer applied AC-3 fix (commit f1bcf63a; dispatcher RAW-verified: emit 49/49 x2 + context-bloat 2/2; line 232 -> signal_feedback, line 328 CATEGORY_TYPE untouched; 3-file pathspec, no foreign sweep). qa RE-GATE: re-run the LIVE UNMOCKED repro that caught the bug -- call post_agent_signal via gateway with signal_type=signal_feedback and category data_stale, confirm no invalid_enum_value and the E-3 signal_queue row appends -- the mocked harness alone cannot prove the production fix. Re-confirm AC-1..AC-6 all PASS, re-run both harnesses (49/49 + 2/2), DDD/injection re-check. If PASS return VERDICT APPROVED; dispatcher promotes UC-ASL-P2 + 4 children to done_verified and pushes green. Do NOT self-advance head, do NOT self-promote parent.",
+    "updated_at": "2026-07-16T06:21:11Z",
+    "updated_by": "dev-team (relay advance fixer->qa, UC-ASL-P2; AC-3 fix f1bcf63a RAW-verified 49/49+2/2, re-gate round 1)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -8482,9 +8482,9 @@
     "head": {
       "status": "in_progress",
       "active_task_id": "UC-ASL-P2",
-      "next_agent": "fixer",
-      "last_updated_at": "2026-07-16T06:11:35Z",
-      "last_updated_by": "dev-team (relay advance qa->fixer)"
+      "next_agent": "qa",
+      "last_updated_at": "2026-07-16T06:21:11Z",
+      "last_updated_by": "dev-team (relay advance fixer->qa)"
     },
     "ready": [],
     "review": [
