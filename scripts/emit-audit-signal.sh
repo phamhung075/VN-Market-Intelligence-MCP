@@ -297,13 +297,25 @@ _check_dedup_and_maybe_send() {
 }
 
 _gen_row_id() {
-  local now_ts="$1" compact
+  local now_ts="$1" compact suffix
   # NOTE: delete-set argument must not start with '-' — some tr
   # implementations (BSD/macOS) misparse a leading '-' as an option flag
   # regardless of the preceding `-d`. ':-' (colon first) is portable.
   compact=$(printf '%s' "$now_ts" | tr -d ':-')
   compact="${compact%Z}"
-  printf '%s-%s' "${FROM_AGENT:0:3}" "$compact"
+  # 4-hex-digit disambiguator: whole-second timestamp granularity alone is
+  # NOT collision-safe — two `emit-audit-signal.sh` invocations from the
+  # same --from-agent landing in the same wall-clock second (routine under
+  # real orch-apply.sh subprocess latency; confirmed empirically: 3/6
+  # iterations collided in a tight back-to-back loop, UC-ASL-P2 QA bounce
+  # 2026-07-16) previously produced two DIFFERENT signal-queue rows sharing
+  # an IDENTICAL id, breaking the row-identity assumption the POST-WRITE
+  # read-back (and any future ACK/CLOSE-by-id) depends on. $RANDOM is a
+  # portable bash 3.2+ builtin (0-32767, PID+time seeded) — deliberately
+  # NOT using sub-second date precision (macOS BSD `date` has no reliable
+  # %N, see feedback_bsd_date_3n_literal_corrupts_iso8601.md).
+  suffix=$(printf '%04x' $((RANDOM % 65536)))
+  printf '%s-%s-%s' "${FROM_AGENT:0:3}" "$compact" "$suffix"
 }
 
 _build_row_json() {
