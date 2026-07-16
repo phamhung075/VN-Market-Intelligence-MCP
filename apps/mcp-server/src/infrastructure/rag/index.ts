@@ -2,9 +2,12 @@
  * RAG — barrel export
  *
  * G5a/G5b (P2-F): Legacy LanceDB implementations (embeddings.ts, vectorstore.ts, retriever.ts)
- * moved to _deprecated/ — rag-service (port 5002) is now the single LanceDB writer (R-1 resolved).
- * Active exports: ragHttpClient (HTTP boundary to rag-service).
- * Legacy re-exports preserved via _deprecated/ paths for backward-compat until tests are migrated.
+ * were moved to _deprecated/ when rag-service (port 5002) became the single LanceDB writer
+ * (R-1 resolved). _deprecated/ was tests-only (zero production imports, confirmed by repo-wide
+ * grep) and has since been deleted as dead-code removal (CI-RED-da847805-FIX) — its module-level
+ * `@lancedb/lancedb` native-addon import was crashing `bun test` (native segfault, not a logic
+ * assertion) whenever any test file loaded it. Active exports: ragHttpClient (HTTP boundary to
+ * rag-service) only.
  */
 
 // ── Active HTTP client (G5b canonical path) ──────────────────────────────────
@@ -21,28 +24,3 @@ export {
   type AnalysisInput,
   type RagRebuildFtsResponse,
 } from "./ragHttpClient.js";
-
-// ── Legacy re-exports from _deprecated/ (tests + backward-compat — do not use in new code) ──
-export {
-  embed,
-  embedBatch,
-  cosineSimilarity,
-  getEmbeddingPipeline,
-  buildBctcEmbeddingText,
-} from "./_deprecated/embeddings.js";
-
-export {
-  initVectorStore,
-  insertVector,
-  searchSimilar,
-  closeVectorStore,
-  type VectorEntry,
-  type SearchResult,
-  type SearchFilters,
-} from "./_deprecated/vectorstore.js";
-
-export {
-  searchContext,
-  insertAnalysis,
-  type SearchOptions,
-} from "./_deprecated/retriever.js";

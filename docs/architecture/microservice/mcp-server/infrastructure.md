@@ -345,7 +345,7 @@ confirmed byte-identical.
 - **Resilient fetcher:** `resilientFetcher.ts` (retry + timeout + fallback)
 - **Telegram notifier:** `notifiers/telegram.ts`
 - **Telegram command router:** `notifiers/telegramCommands.ts` (+ `notifiers/telegram/`) — see below
-- **RAG vector store:** `rag/vectorstore.ts` (LanceDB)
+- **RAG HTTP client:** `rag/ragHttpClient.ts` — HTTP boundary to rag-service (port 5002), the single LanceDB writer (G5b, R-1 resolved). Legacy direct-LanceDB `rag/_deprecated/{embeddings,vectorstore,retriever}.ts` (tests-only, zero production imports) deleted as dead-code removal (CI-RED-da847805-FIX) — its native `@lancedb/lancedb` addon import was crashing `bun test` on load.
 
 ### Telegram Command Router (`notifiers/telegramCommands.ts` + `notifiers/telegram/`)
 
