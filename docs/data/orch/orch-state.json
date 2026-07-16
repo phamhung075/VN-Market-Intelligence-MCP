@@ -371,12 +371,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "CI-RED-e23a8b6a-FIX",
-    "next_agent": "qa",
-    "next_action": "qa gate for CI-RED-e23a8b6a-FIX (test-suite only, NO deploy): re-run CI's canonical `bash scripts/ci-per-file-isolation.sh 16` -> FAILED FILES banner must NOT list 1336-named-volume-config or 278-cycle-peer-sync (orig CI run 29458200230 failed on exactly those 2). Re-run any SIGILL-flagged file individually to separate host Bun-JIT noise from real reds. Target 2-file run = 13/0. Confirm 293-ocr-fallback + BSD3-brief-sector are CI-invisible local artifacts (not regressions). tsc --noEmit clean. DJ-GATE-1 marker. On PASS -> push on green (e1faf7f74 + 13ad27fa2 + 01cd7796c + board commit) -> done_verified GATED on ci_green_on_subsequent_push (CI success on SHA != e23a8b6a5, subsequent tick). Flip origin_signal CI-RED-e23a8b6a -> processed at close.",
-    "updated_at": "2026-07-16T00:11:51Z",
-    "updated_by": "dev-team (router: CI-RED-e23a8b6a-FIX dev COMPLETE + RAW pre-check PASS, qa gate dispatched)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "CI-RED-e23a8b6a-FIX DONE_VERIFIED — CI green on subsequent push (RAW gh run 29461250939 success, SHA e16e2f2b6 != e23a8b6a5). Main is CI-green. origin_signal CI-RED-e23a8b6a recorded processed (signals_processed fingerprint ccefcc44... + file archived to docs/signals/processed/). Next dispatcher tick: clean preflight + BOUNDED-1 idle eval — UC-CCA-P5 (news-scout exec-proof ordering FIX) now UNPARKED (was withheld only until main green). Parked/peer-owned: UC-CCA-P3 P0 (published-marker pendulum — peer PO owns); FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING + FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE (PLAN-ONLY); UC-RDL-P4 (backlog supervised deliberate-start); RAG-FTS-BUILD-MEMORY-BOUND / ALPHA-S2-RAG-FTS-REBUILD-CRON (memory-bound, dv withheld); ~25 review-lane rows; guard-released-when-work-ends architect umbrella (PO grooming flag); ~45 cowork-team + price_anomaly null-schema quarantine files (FIX-DRAIN-QUARANTINE-NONROUTABLE-SIGNALS). USER-GATED (out of router scope): MARKET #933 correction go/no-go.",
+    "updated_at": "2026-07-16T00:31:00Z",
+    "updated_by": "dev-team (router: CI-RED-e23a8b6a-FIX review->done_verified, ci_green_on_subsequent_push satisfied; head idle)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -8408,13 +8408,75 @@
         "closed_at": "2026-07-12T04:27:30Z"
       }
     ],
-    "done_verified": [],
+    "done_verified": [
+      {
+        "id": "CI-RED-e23a8b6a-FIX",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P0",
+        "status": "DONE_VERIFIED",
+        "zone": "apps/mcp-server/",
+        "owner": "po",
+        "next_agent": "qa",
+        "plan_only": false,
+        "baseline_pass": false,
+        "sprint": null,
+        "created_at": "2026-07-15T23:27:24Z",
+        "created_by": "po (triage-signals CI-RED-e23a8b6a)",
+        "origin_signal_id": "CI-RED-e23a8b6a",
+        "detail_ref": null,
+        "title": "CI-RED-e23a8b6a-FIX — CI RED: bun test (3 fail / 14496 pass). Stale 1336 named-volume test vs deliberate host bind-mount revert 5ba622eca + non-hermetic 278 macro-fetch. Gate: ci_green_on_subsequent_push.",
+        "note": "MINTED 2026-07-15T23:27Z by po from ci_red signal docs/signals/ci-red-e23a8b6a-20260715232135.json (check_id CI-RED-e23a8b6a, run 29458200230). CI RED on 6 consecutive main HEADs (6ee302341@22:02 -> e23a8b6a5@23:19 UTC), ONLY the 'bun test' job (all Go/py lint green). Deterministic, NOT flaky. bun test = 14496 pass / 51 skip / 3 fail across 2 files.\n\nROOT CAUSE (po reproduced locally 2026-07-15T23:25Z via: cd apps/mcp-server && bun test src/__tests__/1336-named-volume-config.test.ts src/__tests__/278-cycle-peer-sync.test.ts):\n\n(A) 1336-named-volume-config.test.ts -- 2 of 3 tests FAIL, reproduces 100% locally. STALE TEST vs a deliberate infra revert. Commit 5ba622eca (2026-07-15 17:21 'fix(infra): bind-mount market data to host disk instead of Docker named volume') intentionally swapped all 9 data services from `market_data:/app/data` (named volume) back to `./data/live:/app/data` (host bind-mount) because a VM rebuild after a hypervisor crash DESTROYED the named volume and wiped live data (only host backup survived). That commit did NOT update this test, which still asserts (i) `market_data:` + `driver: local` at top level [FAIL -- compose now only declares pek_model_cache + bctc-page-images], (ii) 9x `- market_data:/app/data` refs [FAIL -- 0 refs]. Its 3rd assertion 'no ./data:/app/data bind-mount remaining' PASSES only by accident (regex `- \\./data:/app/data`; real mount is `./data/live:/app/data`) and is now semantically wrong too. Same CONFIG-DRIFT class the last commit to this file already fixed once (8a387aad2 'fix(ci/batch4): C-CD CONFIG-DRIFT -- rewrite 7 stale assertions').\n\n(B) 278-cycle-peer-sync.test.ts -- PASSES in local isolation (10/10) but is the CI-only 3rd failure. Test-isolation defect: it injects mocks for the peer-sync path but leaves the macro/commodity/SBV network fetch UN-stubbed -- run logs show real outbound yahooFinance + SBV calls. Locally network is up so errors=0 and the `expect(result!.errors).toBe(0)` market-hours assertions pass; in CI's network-restricted runner the un-stubbed fetch fails, bumps errors, and breaks an errors=0 assertion. Env/network-sensitivity leak, not a product bug.\n\nSCOPE for dev-mcp-server (zone apps/mcp-server/ -- this is a test-suite + compose-alignment fix, NOT a product/code regression):\n1. 1336: rewrite the stale named-volume assertions to assert the CURRENT deliberate host bind-mount architecture (`- ./data/live:/app/data` on the 9 data services; no `market_data` named volume) and update the file-header rationale. Recommendation: align test -> committed reality per 5ba622eca + MEMORY 'VM-rebuild DESTROYS named volumes'.\n2. 278: make the test hermetic -- stub the macro/commodity/SBV fetch (the un-injected cycle step) so the errors=0 assertions are independent of CI network reachability.\nFLAG (follow-up, NOT this task): bind-mount reintroduces the macOS Virtualization torn-SHM SQLite-corruption risk that 1336 originally fixed (container-stop holds fd on market.db-shm across the VM boundary). Resolving durability-vs-corruption is an architect infra decision, out of scope for CI-green.\n\nVERIFICATION GATE = ci_green_on_subsequent_push. DONE-eligible ONLY when `gh run list --branch main --limit 5` shows conclusion=success for a CI run on a HEAD SHA DIFFERENT from e23a8b6a5cd13a7fe2dab02dde40e425b65fcbdb (the failing HEAD). Priority high (P0 -- red main blocking the fleet). Do NOT touch product code -- test-suite + docker-compose-alignment only.\n",
+        "claimed_at": "2026-07-15T23:31:27Z",
+        "claimed_by": "dev-team (router: Step 3 directed FIX dispatch — PO-minted CI-red fix; red main blocking fleet, takes single WIP slot)",
+        "moved_at": "2026-07-16T00:11:51Z",
+        "moved_by": "dev-team (router: dev COMPLETE + RAW pre-check PASS; CI-blocker triage resolved via RAW gh run log; dispatching qa gate)",
+        "dev_result": {
+          "agent": "dev-mcp-server",
+          "verdict": "COMPLETE",
+          "commits": [
+            "13ad27fa2",
+            "01cd7796c"
+          ],
+          "origin_state": "on HEAD, unpushed. HEAD 3 ahead of origin/main (e23a8b6a5): e1faf7f74 preflight board cold-evict + 13ad27fa2 test-align + 01cd7796c journal. board still IN_PROGRESS -> two-key gate intact, done_verified NOT reached.",
+          "raw_precheck": "PASS — (1) scope: 13ad27fa2 = 1336-named-volume-config.test.ts(+56/-21)+278-cycle-peer-sync.test.ts(+11)+journal(+80); 01cd7796c = journal(+6). 2 test files + journal ONLY; orch-state absent (no self-flip); no product/peer sweep; scoped git status empty. (2) board still IN_PROGRESS, review=25/dv=0. (3) DJ-GATE-1: journal task-id CI-RED-e23a8b6a-FIX + commit 13ad27fa2; trailer-omission on 13ad27fa2 logged + follow-up 01cd7796c (not amend). (4) CI-BLOCKER: orig CI run 29458200230 FAILED FILES(2) = 1336+278 EXACTLY (RAW gh log); dev fixed precisely those. 293-ocr-fallback + BSD3-brief-sector are CI-INVISIBLE (293 absent from CI failure set; BSR.md untracked) -> not blockers, not DoD.",
+          "self_reported": "2-file target run `bun test src/__tests__/1336... src/__tests__/278...` = 13 pass / 0 fail / 29 expect. Full canonical `bash scripts/ci-per-file-isolation.sh` (P=16 and P=4): neither target file in failed lists; host Illegal-instruction:4 (Bun-JIT SIGILL) noise on unrelated files, each re-run individually = pass. tsc --noEmit clean exit 0. 293/BSD3 genuinely red LOCALLY only.",
+          "pending_qa": "INDEPENDENT re-run with CI's real command (CI runs the isolation script, NOT bare bun test): (1) `bash scripts/ci-per-file-isolation.sh 16` -> confirm FAILED FILES banner does NOT list 1336-named-volume-config or 278-cycle-peer-sync (both now pass). Distinguish host Bun-JIT SIGILL noise from real reds by re-running any flagged file individually (as dev did). (2) target 2-file run RAW-count = 13/0. (3) confirm 293-ocr-fallback + BSD3-brief-sector are CI-invisible (293 not in orig CI FAILED FILES(2); BSR.md `git ls-files` empty) -> NOT regressions, NOT blockers. (4) `bun tsc --noEmit` from apps/mcp-server = clean. (5) DJ-GATE-1 marker RAW-verify. On PASS -> push on green (3 commits: e1faf7f74 board-evict + 13ad27fa2 + 01cd7796c + this tick's board commit) -> done_verified GATED on ci_green_on_subsequent_push (CI conclusion=success on a SHA != e23a8b6a5 — a subsequent tick since CI lands minutes post-push). origin_signal CI-RED-e23a8b6a flipped processed at close."
+        },
+        "verified_at": "2026-07-16T00:31:00Z",
+        "verified_by": "qa (router-dispatched independent gate) + ci_green_on_subsequent_push (RAW gh run 29461250939 success)",
+        "qa_result": {
+          "agent": "qa",
+          "verdict": "PASS",
+          "verified_at": "2026-07-16T00:31:00Z",
+          "tests": "Target 2-file run `bun test src/__tests__/1336-named-volume-config.test.ts src/__tests__/278-cycle-peer-sync.test.ts` = 13 pass / 0 fail. CI canonical `bash scripts/ci-per-file-isolation.sh 16`: neither 1336-named-volume-config nor 278-cycle-peer-sync in the FAILED FILES banner; residual flagged files re-run individually = pass (host Bun-JIT SIGILL noise, not real reds). tsc --noEmit clean exit 0.",
+          "ci_green_proof": "gh run 29461250939 -> conclusion=success, status=completed, workflowName=CI, headSha=e16e2f2b6e336cf204f1d924fbff4da28f4f9e4d (!= failing HEAD e23a8b6a5cd13a7fe2dab02dde40e425b65fcbdb). Original RED run 29458200230 banner FAILED FILES(2) = 1336-named-volume-config + 278-cycle-peer-sync EXACTLY; dev fixed precisely those two -> CI green on the subsequent push. verification_gate ci_green_on_subsequent_push SATISFIED.",
+          "scope_invisible_reds": "293-ocr-fallback-pipeline.test.ts (host un-stubbed-async timeout + SIGILL, GREEN on CI isolation harness, absent from orig CI FAILED FILES(2)) and BSD3-brief-sector-drift.test.ts (asserts docs/analysis-briefs/BSR.md which is UNTRACKED -> absent on CI fresh checkout) are CI-INVISIBLE local artifacts, NOT regressions, NOT in DoD. 293 logged as a non-blocking grooming candidate for PO (same un-stubbed-async class as the 278 fix).",
+          "dj_gate_1": "SATISFIED — dev journal sprint-CI-RED-e23a8b6a-FIX-dev-mcp-server.md L3 task-id CI-RED-e23a8b6a-FIX + L5 commit 13ad27fa2 (trailer-omission transparently logged, follow-up 01cd7796c not amend); qa PASS block appended, journal commit e16e2f2b6.",
+          "code_commits": [
+            "13ad27fa2",
+            "01cd7796c",
+            "e16e2f2b6"
+          ]
+        },
+        "origin_signal_close": {
+          "origin_signal_id": "CI-RED-e23a8b6a",
+          "status": "processed",
+          "fingerprint": "ccefcc447cd89879504d78c340d64b411550f5b559adeb81941171c48875e07d",
+          "dedup_key": "ci_red:e23a8b6a5cd13a7fe2dab02dde40e425b65fcbdb:bun test",
+          "processed_by": "dev-team",
+          "processed_at": "2026-07-16T00:31:00Z",
+          "method": "signals_processed INSERT OR IGNORE + signal file git-mv'd to docs/signals/processed/ (non-recursive drain glob -> never re-read)"
+        },
+        "router_close_note": "CI-RED-e23a8b6a-FIX DONE_VERIFIED. dev-mcp-server rewrote 1336-named-volume-config.test.ts (stale named-volume -> committed host bind-mount ./data/live per 5ba622eca) + 278-cycle-peer-sync.test.ts (stub un-injected macro/commodity/SBV fetch -> CI-network-independent errors=0) — the EXACT 2 files origin CI run 29458200230 failed on. Router RAW pre-check PASS (scope clean, no self-flip, DJ-GATE-1 present, CI-blocker triage resolved via RAW gh failed-files banner) + INDEPENDENT qa PASS + ci_green_on_subsequent_push RAW-confirmed (run 29461250939 success on e16e2f2b6 != e23a8b6a5). Pushed on green. origin_signal recorded processed (fingerprint dedup + file archived). Main is CI-green -> BOUNDED-1 idle-pickup re-enabled; UC-CCA-P5 unparks."
+      }
+    ],
     "head": {
-      "status": "in_progress",
-      "active_task_id": "CI-RED-e23a8b6a-FIX",
-      "next_agent": "qa",
-      "last_updated_at": "2026-07-16T00:11:51Z",
-      "last_updated_by": "dev-team (CI-RED-e23a8b6a-FIX -> review, qa gate dispatched)"
+      "status": "idle",
+      "active_task_id": null,
+      "next_agent": "router",
+      "last_updated_at": "2026-07-16T00:31:00Z",
+      "last_updated_by": "dev-team (CI-RED-e23a8b6a-FIX -> done_verified, CI green on e16e2f2b6)"
     },
     "ready": [],
     "review": [
@@ -8964,41 +9026,6 @@
           "idle_baseline_flag": "rag-service idle mem already ~92% of 768m bound with ZERO FTS activity (tight margin, pre-existing, heads-up for ALPHA-S2 retune)."
         },
         "po_triage_note_reverify": "PO TRIAGE 2026-07-15T17:28:38Z (dev-team tick 17:07Z, sig dev-team-20260715T160042Z-rag-corpus-repopulation-scale-reverify): corpus RE-POPULATION CONFIRMED CLIMBING — live GET :5002/embed/health index_size=297 rows now vs 116 @ qa 16:01Z verify (+181 in ~1.5h). Re-embed pipeline ALIVE => NOT stuck-at-116, so NO new bug for dev-rag-service. BUT 297 << ~56k representative scale => AC#1 (no-OOM at ~56k) re-run stays UN-testable now: this row STAYS review, done_verified WITHHELD, blocked_on=rag-corpus-repopulation-to-representative-scale UNCHANGED (TIME-GATED on wall-clock, NOT a dispatch — do NOT force a rebuild against a 116/297-row corpus). GATE to lift WITHHELD (= signal action 2): once corpus ~= representative scale, re-run AC#1 (POST /admin/rebuild-fts under 768m cgroup, docker stats peak-mem, 2x), record real peak-mem => then unblock ALPHA-S2 deadline retune + BM25 round-trip. Heads-up carried: rag-service idle mem ~92% of 768m with ZERO FTS activity (tight margin — ALPHA-S2 retune input). Tech-debt spin-off (signal 2, hybrid max_distance no-op) minted separately as SPIKE-RAG-HYBRID-MAXDISTANCE-NOOP (backlog, P3, non-blocking)."
-      },
-      {
-        "id": "CI-RED-e23a8b6a-FIX",
-        "type": "FIX",
-        "size": "S",
-        "priority": "P0",
-        "status": "REVIEW",
-        "zone": "apps/mcp-server/",
-        "owner": "po",
-        "next_agent": "qa",
-        "plan_only": false,
-        "baseline_pass": false,
-        "sprint": null,
-        "created_at": "2026-07-15T23:27:24Z",
-        "created_by": "po (triage-signals CI-RED-e23a8b6a)",
-        "origin_signal_id": "CI-RED-e23a8b6a",
-        "detail_ref": null,
-        "title": "CI-RED-e23a8b6a-FIX — CI RED: bun test (3 fail / 14496 pass). Stale 1336 named-volume test vs deliberate host bind-mount revert 5ba622eca + non-hermetic 278 macro-fetch. Gate: ci_green_on_subsequent_push.",
-        "note": "MINTED 2026-07-15T23:27Z by po from ci_red signal docs/signals/ci-red-e23a8b6a-20260715232135.json (check_id CI-RED-e23a8b6a, run 29458200230). CI RED on 6 consecutive main HEADs (6ee302341@22:02 -> e23a8b6a5@23:19 UTC), ONLY the 'bun test' job (all Go/py lint green). Deterministic, NOT flaky. bun test = 14496 pass / 51 skip / 3 fail across 2 files.\n\nROOT CAUSE (po reproduced locally 2026-07-15T23:25Z via: cd apps/mcp-server && bun test src/__tests__/1336-named-volume-config.test.ts src/__tests__/278-cycle-peer-sync.test.ts):\n\n(A) 1336-named-volume-config.test.ts -- 2 of 3 tests FAIL, reproduces 100% locally. STALE TEST vs a deliberate infra revert. Commit 5ba622eca (2026-07-15 17:21 'fix(infra): bind-mount market data to host disk instead of Docker named volume') intentionally swapped all 9 data services from `market_data:/app/data` (named volume) back to `./data/live:/app/data` (host bind-mount) because a VM rebuild after a hypervisor crash DESTROYED the named volume and wiped live data (only host backup survived). That commit did NOT update this test, which still asserts (i) `market_data:` + `driver: local` at top level [FAIL -- compose now only declares pek_model_cache + bctc-page-images], (ii) 9x `- market_data:/app/data` refs [FAIL -- 0 refs]. Its 3rd assertion 'no ./data:/app/data bind-mount remaining' PASSES only by accident (regex `- \\./data:/app/data`; real mount is `./data/live:/app/data`) and is now semantically wrong too. Same CONFIG-DRIFT class the last commit to this file already fixed once (8a387aad2 'fix(ci/batch4): C-CD CONFIG-DRIFT -- rewrite 7 stale assertions').\n\n(B) 278-cycle-peer-sync.test.ts -- PASSES in local isolation (10/10) but is the CI-only 3rd failure. Test-isolation defect: it injects mocks for the peer-sync path but leaves the macro/commodity/SBV network fetch UN-stubbed -- run logs show real outbound yahooFinance + SBV calls. Locally network is up so errors=0 and the `expect(result!.errors).toBe(0)` market-hours assertions pass; in CI's network-restricted runner the un-stubbed fetch fails, bumps errors, and breaks an errors=0 assertion. Env/network-sensitivity leak, not a product bug.\n\nSCOPE for dev-mcp-server (zone apps/mcp-server/ -- this is a test-suite + compose-alignment fix, NOT a product/code regression):\n1. 1336: rewrite the stale named-volume assertions to assert the CURRENT deliberate host bind-mount architecture (`- ./data/live:/app/data` on the 9 data services; no `market_data` named volume) and update the file-header rationale. Recommendation: align test -> committed reality per 5ba622eca + MEMORY 'VM-rebuild DESTROYS named volumes'.\n2. 278: make the test hermetic -- stub the macro/commodity/SBV fetch (the un-injected cycle step) so the errors=0 assertions are independent of CI network reachability.\nFLAG (follow-up, NOT this task): bind-mount reintroduces the macOS Virtualization torn-SHM SQLite-corruption risk that 1336 originally fixed (container-stop holds fd on market.db-shm across the VM boundary). Resolving durability-vs-corruption is an architect infra decision, out of scope for CI-green.\n\nVERIFICATION GATE = ci_green_on_subsequent_push. DONE-eligible ONLY when `gh run list --branch main --limit 5` shows conclusion=success for a CI run on a HEAD SHA DIFFERENT from e23a8b6a5cd13a7fe2dab02dde40e425b65fcbdb (the failing HEAD). Priority high (P0 -- red main blocking the fleet). Do NOT touch product code -- test-suite + docker-compose-alignment only.\n",
-        "claimed_at": "2026-07-15T23:31:27Z",
-        "claimed_by": "dev-team (router: Step 3 directed FIX dispatch — PO-minted CI-red fix; red main blocking fleet, takes single WIP slot)",
-        "moved_at": "2026-07-16T00:11:51Z",
-        "moved_by": "dev-team (router: dev COMPLETE + RAW pre-check PASS; CI-blocker triage resolved via RAW gh run log; dispatching qa gate)",
-        "dev_result": {
-          "agent": "dev-mcp-server",
-          "verdict": "COMPLETE",
-          "commits": [
-            "13ad27fa2",
-            "01cd7796c"
-          ],
-          "origin_state": "on HEAD, unpushed. HEAD 3 ahead of origin/main (e23a8b6a5): e1faf7f74 preflight board cold-evict + 13ad27fa2 test-align + 01cd7796c journal. board still IN_PROGRESS -> two-key gate intact, done_verified NOT reached.",
-          "raw_precheck": "PASS — (1) scope: 13ad27fa2 = 1336-named-volume-config.test.ts(+56/-21)+278-cycle-peer-sync.test.ts(+11)+journal(+80); 01cd7796c = journal(+6). 2 test files + journal ONLY; orch-state absent (no self-flip); no product/peer sweep; scoped git status empty. (2) board still IN_PROGRESS, review=25/dv=0. (3) DJ-GATE-1: journal task-id CI-RED-e23a8b6a-FIX + commit 13ad27fa2; trailer-omission on 13ad27fa2 logged + follow-up 01cd7796c (not amend). (4) CI-BLOCKER: orig CI run 29458200230 FAILED FILES(2) = 1336+278 EXACTLY (RAW gh log); dev fixed precisely those. 293-ocr-fallback + BSD3-brief-sector are CI-INVISIBLE (293 absent from CI failure set; BSR.md untracked) -> not blockers, not DoD.",
-          "self_reported": "2-file target run `bun test src/__tests__/1336... src/__tests__/278...` = 13 pass / 0 fail / 29 expect. Full canonical `bash scripts/ci-per-file-isolation.sh` (P=16 and P=4): neither target file in failed lists; host Illegal-instruction:4 (Bun-JIT SIGILL) noise on unrelated files, each re-run individually = pass. tsc --noEmit clean exit 0. 293/BSD3 genuinely red LOCALLY only.",
-          "pending_qa": "INDEPENDENT re-run with CI's real command (CI runs the isolation script, NOT bare bun test): (1) `bash scripts/ci-per-file-isolation.sh 16` -> confirm FAILED FILES banner does NOT list 1336-named-volume-config or 278-cycle-peer-sync (both now pass). Distinguish host Bun-JIT SIGILL noise from real reds by re-running any flagged file individually (as dev did). (2) target 2-file run RAW-count = 13/0. (3) confirm 293-ocr-fallback + BSD3-brief-sector are CI-invisible (293 not in orig CI FAILED FILES(2); BSR.md `git ls-files` empty) -> NOT regressions, NOT blockers. (4) `bun tsc --noEmit` from apps/mcp-server = clean. (5) DJ-GATE-1 marker RAW-verify. On PASS -> push on green (3 commits: e1faf7f74 board-evict + 13ad27fa2 + 01cd7796c + this tick's board commit) -> done_verified GATED on ci_green_on_subsequent_push (CI conclusion=success on a SHA != e23a8b6a5 — a subsequent tick since CI lands minutes post-push). origin_signal CI-RED-e23a8b6a flipped processed at close."
-        }
       }
     ],
     "qa": [],
