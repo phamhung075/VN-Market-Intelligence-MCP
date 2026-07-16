@@ -371,12 +371,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "UC-SDF-P4",
-    "next_agent": "developer",
-    "next_action": "resume UC-SDF-P4 — re-dispatched after prior worker stalled (redispatch_count=1)",
-    "updated_at": "2026-07-16T12:55:53Z",
-    "updated_by": "dev-team (UC-SDF-P4 dead-worker re-dispatch)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "updated_at": "2026-07-16T13:07:42Z",
+    "updated_by": "developer (UC-SDF-P4 → REVIEW)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -8440,12 +8439,11 @@
     ],
     "done_verified": [],
     "head": {
-      "status": "in_progress",
-      "active_task_id": "UC-SDF-P4",
-      "next_agent": "developer",
-      "next_action": "resume UC-SDF-P4 — re-dispatched after prior worker stalled (redispatch_count=1)",
-      "updated_at": "2026-07-16T12:55:53Z",
-      "updated_by": "dev-team (UC-SDF-P4 dead-worker re-dispatch)"
+      "status": "idle",
+      "active_task_id": null,
+      "next_agent": "router",
+      "updated_at": "2026-07-16T13:07:42Z",
+      "updated_by": "developer (UC-SDF-P4 → REVIEW)"
     },
     "ready": [],
     "review": [
@@ -8995,6 +8993,34 @@
           "idle_baseline_flag": "rag-service idle mem already ~92% of 768m bound with ZERO FTS activity (tight margin, pre-existing, heads-up for ALPHA-S2 retune)."
         },
         "po_triage_note_reverify": "PO TRIAGE 2026-07-15T17:28:38Z (dev-team tick 17:07Z, sig dev-team-20260715T160042Z-rag-corpus-repopulation-scale-reverify): corpus RE-POPULATION CONFIRMED CLIMBING — live GET :5002/embed/health index_size=297 rows now vs 116 @ qa 16:01Z verify (+181 in ~1.5h). Re-embed pipeline ALIVE => NOT stuck-at-116, so NO new bug for dev-rag-service. BUT 297 << ~56k representative scale => AC#1 (no-OOM at ~56k) re-run stays UN-testable now: this row STAYS review, done_verified WITHHELD, blocked_on=rag-corpus-repopulation-to-representative-scale UNCHANGED (TIME-GATED on wall-clock, NOT a dispatch — do NOT force a rebuild against a 116/297-row corpus). GATE to lift WITHHELD (= signal action 2): once corpus ~= representative scale, re-run AC#1 (POST /admin/rebuild-fts under 768m cgroup, docker stats peak-mem, 2x), record real peak-mem => then unblock ALPHA-S2 deadline retune + BM25 round-trip. Heads-up carried: rag-service idle mem ~92% of 768m with ZERO FTS activity (tight margin — ALPHA-S2 retune input). Tech-debt spin-off (signal 2, hybrid max_distance no-op) minted separately as SPIKE-RAG-HYBRID-MAXDISTANCE-NOOP (backlog, P3, non-blocking)."
+      },
+      {
+        "id": "UC-SDF-P4",
+        "type": "FIX",
+        "title": "Close the legacy-file prune hole in drain-signals.js + one-time scripted purge of ~1,400 unstamped processed files",
+        "status": "REVIEW",
+        "priority": "P1",
+        "size": "M",
+        "zone": "cross-service/",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "CONFIRMED",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#state-data-files-P4",
+        "note": "drain-signals.js prunes only stamped processed files, leaking ~1,400 unstamped ones. Extend the prune predicate and run a one-time scripted purge (script in scripts/, not /tmp).",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "next_agent": "qa",
+        "promoted_at": "2026-07-16T12:24:25Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-16T12:24:25Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "redispatch_count": 1,
+        "redispatched_at": "2026-07-16T12:55:53Z",
+        "resume_note": "dead-worker re-dispatch 12:37Z — prior developer stalled ~22min silent (partial: 86-line purge script created; drain-signals.js code fix + spec update NOT done, no commit). Fresh developer resumes.",
+        "developer_completed_at": "2026-07-16T13:07:42Z",
+        "developer_completed_by": "developer (UC-SDF-P4 resume, redispatch_count=1)",
+        "review_note": "Code fix: drain-signals.js §0a-2 mtime fallback for legacy/unstamped processed/ files (spec-first in drain-signals.md); regression test added, 15/15 pass. One-time purge: scripts/audits/purge-legacy-processed-signals.sh — dry-run count 1280 == live deletion count 1280, 2nd run idempotent no-op, inbox untouched. Smoke-tested against isolated scratch copy of the real 49-file inbox + 200-file processed/ backdrop + real signals.db — no FAIL-LOUD, routing/dedup unaffected. Commits: 64cd7edf9 (code+spec+test), b087d30a0 (purge script), plus 1280 processed/ deletions in 64cd7edf9."
       }
     ],
     "qa": [],
@@ -9016,33 +9042,7 @@
     },
     "last_triaged_at": "2026-07-16T12:24:25Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "UC-SDF-P4",
-        "type": "FIX",
-        "title": "Close the legacy-file prune hole in drain-signals.js + one-time scripted purge of ~1,400 unstamped processed files",
-        "status": "IN_PROGRESS",
-        "priority": "P1",
-        "size": "M",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "CONFIRMED",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#state-data-files-P4",
-        "note": "drain-signals.js prunes only stamped processed files, leaking ~1,400 unstamped ones. Extend the prune predicate and run a one-time scripted purge (script in scripts/, not /tmp).",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "next_agent": "developer",
-        "promoted_at": "2026-07-16T12:24:25Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-16T12:24:25Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "redispatch_count": 1,
-        "redispatched_at": "2026-07-16T12:55:53Z",
-        "resume_note": "dead-worker re-dispatch 12:37Z — prior developer stalled ~22min silent (partial: 86-line purge script created; drain-signals.js code fix + spec update NOT done, no commit). Fresh developer resumes."
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
