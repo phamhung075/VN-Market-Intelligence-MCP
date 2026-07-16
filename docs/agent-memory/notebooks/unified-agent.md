@@ -1,6 +1,21 @@
 # Unified Agent — Notebook
 
-**Last updated:** 2026-07-16T04:25Z · **Cycle:** Chef Intraday (04:25 UTC — 3 clusters, degraded, banking/RE convergence + risk-off + carry unknown)
+**Last updated:** 2026-07-16T05:24Z · **Cycle:** Chef Morning (05:23 UTC — 4 clusters, degraded, banking convergence + FII pressure + carry unknown)
+
+## Session: 2026-07-16 (morning 05:23 UTC)
+
+### Chef Dish — morning 05:23 UTC
+- Clusters qualified: 4 (VCB+BID banking convergence ta_oversold+BB; VCI securities -4.91% oversold; FPT tech -2.54% news signal)
+- Tickers covered: VCB, BID, VCI, EIB, FPT
+- Layers walked: partial — [gap:L2_US_macro_absent_no_gap_token] [gap:L3_VN_macro_incomplete] [gap:business_context_unavailable]
+- L6 gap-catalogue tokens: [L6-gap: level-reporting-only in TA signals, add state transition evidence]
+- Signals consumed: 20 open alerts (14x BB-breakout, 4x oversold, 2x news); agent_signals=empty
+- Macro: VN-Index 1765.97 (-16.15 pts); USD/VND 26,070 (carry UNKNOWN is_estimate=true); Gold 4,037.2 risk-off; Vol LOW (12.9% 20d); Sentiment z=+0.31 neutral
+- Kinh Dịch: Quẻ 15 Khiêm (謙) — favorable framework, TIÊU CỰC signal, 64% confidence
+- Conviction: All MODERATE (0.48-0.56) capped at MEDIUM per degraded quality gate
+- Phase: [phase: transition] [tier: fixed_income] — Carry unavailable, FII pressure USD/VND, Banking sector distribution confirmed
+- Dish published: YES (MARKET plain VI + WORK TNB degraded floor)
+- QUALITY: degraded (L2: carry unavailable; L3: CPI/VIRA gaps; BIZ_CTX: absent; conviction capped MEDIUM)
 
 ## Session: 2026-07-16 (intraday 04:25 UTC)
 
