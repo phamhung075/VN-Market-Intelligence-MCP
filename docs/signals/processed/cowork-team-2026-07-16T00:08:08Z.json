@@ -63,5 +63,11 @@
     "note": "4-way offhours fan-out. macro_snapshot STILL serving tier-4 estimate vnIndex=1280.5 dataSource=estimate vnIndexDelta=-526.13 (the dish-933 artifact, unchanged ~4h later; fetchedAt fresh 00:05:32Z but value dead -> CI-FRESH-01-FIX likely live root cause). Cross-plane auto-check impossible this tick: market closed, tier-2 market_context carries no VN-Index figure. Gap-token guard injected into all 4 spawn prompts, hardened for alert-commander (MARKET publisher) incl. published-marker TOMBSTONE reminder. signals.carry.fetched_at_source=2026-06-26 (20d stale)."
   },
   "priority": "low",
-  "createdAt": "2026-07-16T00:08:08Z"
+  "createdAt": "2026-07-16T00:08:08Z",
+  "_processed": {
+    "fingerprint": "90f414288aabcca073e8289c98dad26beb0ec0d5607bf92df431fb063d180ebe",
+    "processedAt": "2026-07-16T01:20:24Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }
