@@ -454,7 +454,7 @@
       "depends_on": null,
       "enabled": true,
       "policy_id": "alert-commander-market",
-      "last_fired": "2026-07-15T04:28:43Z",
+      "last_fired": "2026-07-16T02:07:38Z",
       "trigger_id": null,
       "_note": "Event-driven: position-danger (3-condition) or watchlist-opportunity (4-condition). Evaluates every 15min during market hours, exits silently if neither condition fires.",
       "_superseded_by": "cowork-dispatcher",

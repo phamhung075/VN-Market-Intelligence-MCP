@@ -178,6 +178,59 @@ No row covers "a tier-4 estimate reached MARKET as fact with no plausibility gat
    `feedback_composite_score_masks_dead_detector_pruned_table`.
 4. **A delta against `prevFetchedAt: null` must not be emitted at all** — it is not a delta.
 
+## 8. UPDATE 2026-07-16T02:10Z — the artifact MUTATED: loud → silent. § 6.4 just got harder to catch.
+
+Re-probed live at tick 02:00Z (`get_macro_snapshot`, VN market open). **The tier-4 vnIndex poison is
+gone; § 6.4 is not.**
+
+| field | 2026-07-15 20:21Z (§ 3) | 2026-07-16 02:05Z (now) |
+|---|---|---|
+| `vnIndex` | 1280.5 | **1782.12** |
+| `vnIndex_is_estimate` | true | **false** |
+| `vnIndex_source_tier` | 4 | **1** |
+| `vnIndexDelta` | **−526.13** | **0** |
+| `vnIndexDirection` | (n/a) | **"flat"** |
+| `prevFetchedAt` | **null** | **null** ← unchanged |
+
+**What was fixed:** the estimate path. `vnIndex` now serves a real tier-1 level, not the 1280.5
+fallback. Whatever `CI-FRESH-01-FIX` (§ 5) was tracking appears to be healthy — worth confirming
+before that row is worked, it may already be closable.
+
+**What was NOT fixed — and is now worse to detect.** `prevFetchedAt` is *still* null and a delta is
+*still* emitted against it. § 6.4 said such a delta "must not be emitted at all"; it is still emitted.
+Only its **value** changed, because the subtrahend changed:
+
+- **Yesterday:** real 1782.12 − estimate 1280.5 → `−526.13` → narrated as a 29% crash → **absurd on
+  its face, and that absurdity is the only reason it was caught.**
+- **Today:** the estimate is gone, so the arithmetic collapses to `0` → `direction: "flat"` →
+  **perfectly plausible, and therefore invisible.** "VN-Index đi ngang" reads as a finding. It is not
+  a finding; it is *no baseline*, wearing a finding's clothes.
+
+This is the same trade as `FIX-COWORK-PRESENCE-CLAIM-PAYLOAD-OBJECT-VS-STRING`: a loud failure
+replaced by a silent one, with the underlying mechanism untouched. Fixing the *input* (tier-4 → tier-1)
+without fixing the *guard* (§ 6.4) did not make the system correct — it made it quiet. Cf.
+`feedback_passive_health_masks_dead_data`.
+
+**Triage consequence — § 6.4 should rise, not fall, now that § 6.2 looks done.** The natural read
+("vnIndex is tier-1 again, this is resolved") is wrong and is the trap. A `0`/`flat` from a null
+baseline is indistinguishable from a genuinely unchanged index, so no future reviewer will spot it by
+eye the way 933 was spotted. **Ambiguity note, unresolved and cheap to settle:** 1782.12 is
+byte-identical to yesterday's 20:00Z ground truth. At 5 minutes into a session that opens near prior
+close this is expected — but it is *also* what a frozen value looks like. `prevFetchedAt: null` means
+the snapshot cannot tell you which. Settle it before assuming the level is live.
+
+**No row minted** (prior-art grep run first per `feedback_file_prior_art_check_before_minting_row`):
+§ 6.4 of this handoff already owns the fix, and `BA-FIX-MACRO-SNAPSHOT-DELTAS-NULL` (2026-06-24,
+S2-DATA-HONESTY) — which has **no board row** — explicitly assumes "The VNIndex delta IS computed
+(using `daily_ohlcv` prev-session close)". That premise is false as of this probe and should be
+corrected when either item is picked up.
+
+**Interim protection is per-tick and manual.** The 02:00Z dispatcher passed alert-commander an
+explicit DATA GUARD (do not state a VN-Index daily move; `delta=0/flat` is a null-baseline artifact).
+That guard is a hand-written prompt string covering **one agent on one tick** — CHEF and
+fb-market-poster fire on other ticks with no such guard and read the same field. § 6.3's plausibility
+gate remains the only durable fix.
+
 ## 7. Dispatcher actions taken
 
 - RAW-verified against MARKET; corrected TNB's claim (§ 4). Filed one signal row to po.
