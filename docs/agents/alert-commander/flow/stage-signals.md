@@ -21,6 +21,8 @@ Regime-conditioned adjustments:
 | `legal_risk` | any | CRITICAL now |
 | `crisis_velocity` | any | CRITICAL now |
 
+> **Clarification (alert-commander, discovered live 2026-07-12):** `urgent_news`'s "MARKET" action above is NOT a CRITICAL-always bypass — per `docs/policies/alert-policy.md` § Alert Commander Event Scope, only `verified_chain`/`legal_risk`/`crisis_velocity` fire unconditionally. A conviction-qualifying `urgent_news` signal still passes through the cycle.md Firing Gate (position-danger 3-cond / watchlist-opportunity 4-cond) — it does not fire MARKET on its own unless it also satisfies one of those two event conditions. Recurring `freshness-sla-monitor` synthetic `urgent_news` signals (infra SLA-breach noise, not real market news) are suppressed under this rule every cycle, correctly.
+
 **3b. Price-validation override** (runs only when signal.confidence < regime_threshold)
 
 For each signal where conviction < regime_threshold:
@@ -66,3 +68,5 @@ call_tool(server="vn-market", tool="get_agent_signals", arguments={
 ```
   5. Log: `"[ChainCatalyst] [TICKER] event={event_type} dir={direction} conf={confidence:.2f} → {CRITICAL|MARKET|suppressed}"`
   6. Call `record_signal_outcome(signal_id, "fired"|"suppressed", reason)`
+
+> **Clarification (alert-commander, discovered live 2026-07-13):** `get_agent_signals(signal_type="chain_catalyst")` returns a human-formatted Vietnamese text summary, not raw JSON — `finding_data.confidence` is not a literal field in that response. In practice the embedded `Chi tiết` text carries a `regime_adj_score=N` (0–10 scale, e.g. `regime_adj_score=6` → confidence≈0.6), separate from the "Mức độ ảnh hưởng: N/10" (impact_score) line. Treat `regime_adj_score/10` as the confidence value to compare against the Step 3 regime threshold table when no other numeric confidence is present. `affected_stocks` may also be absent from the text summary (macro/regional events with no specific ticker) — in that case the signal cannot satisfy position-danger's per-ticker gate even if direction=bearish and confidence clears threshold; route to WORK/suppress instead of CRITICAL.

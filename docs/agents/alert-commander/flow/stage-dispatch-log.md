@@ -35,6 +35,8 @@ Pre-send: `get_market_snapshot()` — divergence > 5% → discard, max 2 attempt
 - > 3 pending → `send_alert_digest(alerts=[], channel="market")`
 - ≤ 3 → `send_telegram(channel="market", message=<alert_text>)` per alert — format: `docs/standards/alert-message-format.md` (Vietnamese, full diacritics)
 
+> **Clarification (alert-commander, discovered live 2026-07-15):** `alert-message-format.md`'s 5-section narrative (up to 1,350 graphemes) predates the Sprint 1949 event-only redesign and conflicts with it. For this agent's actual firing model, the binding format constraint is `urgent_format_max_chars: 140` (agent `init.md` + `alert-policy.md` § Alert Commander Event Scope, both more recent/specific SSOT) — compose a single-line ≤140-char Vietnamese urgent message, NOT the 5-section narrative. Treat `alert-message-format.md` as scoped to any legacy/non-event-only HIGH/CRITICAL digest path only.
+
 Append regime caveat to each MARKET alert (Vietnamese):
 - `TIGHTENING` + bullish signal:
   `"Lưu ý: Tín hiệu mua trong môi trường thắt chặt (TIGHTENING). Thiên thời bất lợi — yêu cầu xác nhận chuỗi cao hơn."`

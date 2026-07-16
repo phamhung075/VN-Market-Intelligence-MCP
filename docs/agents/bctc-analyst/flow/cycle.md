@@ -86,6 +86,8 @@ Set session variable `CYCLE_MODE`:
 
 For each ticker in RELEASE_TICKERS or ROUTINE_TICKERS, invoke the balance-sheet-first-read skill BEFORE deep BCTC extraction in stage-analyze.md. Capture outputs: `asset_coverage`, `pb_ratio`, `intangible_premium`, `charter_capital_ratio`, `balance_flags[]`. Pass these fields forward to subsequent stage-analyze steps for qualification checks.
 
+**bctc-analyst-specific note (2026-07-15):** this agent's flow does not run `rapid-market-cap-screen` — no pre-computed `market_cap_billion` input exists. Derive it from `charter_capital / 10,000-VND par-value shares × current price` using fields already returned by `get_bctc_full(code)` + watchlist price. If `charter_capital` is null in the response → skip the skill for that ticker and log a DATA-GAP (do not fabricate a market cap).
+
 ## Step 5a — Management Track Record (triggered by governance YELLOW)
 
 → skill: `.claude/skills/management-track-record/SKILL.md`
