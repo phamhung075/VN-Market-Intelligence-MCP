@@ -373,10 +373,10 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "UC-CRITIC-GATEWAY-CONTRACT-DRIFT",
-    "next_agent": "ba",
-    "next_action": "BOUNDED-1 auto-pickup claim of UC-CRITIC-GATEWAY-CONTRACT-DRIFT — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-16T15:26:17Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "next_agent": "architect",
+    "next_action": "BA spec complete (docs/handoffs/UC-CRITIC-GATEWAY-CONTRACT-DRIFT-BA-spec.md, zero PO blockers) — architect to reconcile docs/standards/gateway-call-contract.md (L13,30-32,94) + 5 adjacent live docs to mcp__gateway__call_tool per fix table.",
+    "updated_at": "2026-07-16T15:35:18Z",
+    "updated_by": "ba"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -9036,12 +9036,15 @@
         "created_at": "2026-07-13T19:31:11Z",
         "created_by": "po",
         "plan_only": false,
-        "next_agent": "ba",
+        "next_agent": "architect",
         "promoted_at": "2026-07-16T15:26:17Z",
         "promoted_by": "dev-team (bounded-1 auto-pickup)",
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
         "claimed_at": "2026-07-16T15:26:17Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "ba_spec_complete": true,
+        "ba_handoff": "docs/handoffs/UC-CRITIC-GATEWAY-CONTRACT-DRIFT-BA-spec.md",
+        "ba_completed_at": "2026-07-16T15:35:18Z"
       }
     ]
   },
