@@ -117,3 +117,40 @@ DONE: BA spec complete, requirements written, zero PO blockers.
 NEXT: architect — reconcile `docs/standards/gateway-call-contract.md` (+ 5 adjacent live docs) to `mcp__gateway__call_tool`, per fix table above.
 HANDOFF: docs/handoffs/UC-CRITIC-GATEWAY-CONTRACT-DRIFT-BA-spec.md
 PIPELINE: continue
+
+---
+
+## [Architect] Brownfield Findings
+
+**Zone:** cross-service/ — no `apps/<service>/` file is touched anywhere in this task; every target is `docs/`, `.claude/skills/`, or `docs/agents/<agent>/flow/` (agent-facing contract/skill docs, not application code). Confirmed board row `UC-CRITIC-GATEWAY-CONTRACT-DRIFT.zone` already carries this label — no correction needed.
+
+**Verified paths (RAW re-read at HEAD, byte-exact, all 6 BA-cited lines confirmed — zero discrepancies found):**
+- `docs/standards/gateway-call-contract.md:13,30,31,32,94` — confirmed. L94 currently reads the dual-prefix form `` `mcp__claude_ai_gateway__*` / `mcp__gateway__*` `` and must collapse to the single canonical prefix (not delete the sentence, just the stale half).
+- `docs/standards/mcp-tools.md:28` — confirmed.
+- `docs/protocols/task-lock-protocol.md:162` — confirmed.
+- `docs/guides/guide-agent-definition-frontmatter.md:23,25` — confirmed (BA's spec said "23,25"; both are table rows, verified present at those exact lines).
+- `docs/REQ_DYN-WF-FOUNDATION.md:134,332` — confirmed.
+- `docs/data/quality-checklist.json:2347` (`recheck_how` field) — confirmed via direct line read.
+- FR-3 §6 audit pass (L92-115) — re-read in full: §6b's workaround matrix and §6d's de-escalation rule are prose-generic ("gateway meta-tools", no hardcoded prefix); L107's `mcp_call_gateway_meta` discussion is a different call surface (raw JSON-RPC bash bridge, not the tool-binding prefix) and correctly out of scope. **Ratified: only L94 needs a fix, pass is not silently skipped nor over-edited.**
+
+**Reuse patterns:** N/A — pure find/replace across existing docs, no new interfaces, no code.
+
+**Design decisions — ruling on BA's 3 open questions:**
+
+1. **Batch-or-separate (I11/I14) → RULE: FOLD IN.** Traced both IDs past BA's citation: `router-dispatch-locking-I11`/`P9` and `cowork-cycle-agents-I14`/`P12` in `docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md` (lines 115/299-307 and 864/1012-1018) are **already tracked** — as sub-bullets inside two live `BACKLOG` SPIKE rows: `UC-RDL-UNVERIFIED-BATCH` (9-item PLAN-ONLY umbrella, `next_agent: ba`) and `UC-CCA-UNVERIFIED-BATCH` (8-item PLAN-ONLY umbrella, `next_agent: ba`). Both require a full BA-spike-then-decompose cycle before ANY of their bullets ship — heavy overhead for a 1-line mechanical fix identical in class to the 6 already batched into this task. Folding in costs near-zero marginal risk (same prefix-swap, zero design decisions) and avoids duplicate future verification work. Add to fix table:
+   - `.claude/skills/task-lock/SKILL.md:169` — `mcp__claude_ai_gateway__call_tool` → `mcp__gateway__call_tool`.
+   - `docs/agents/tran-ngoc-bau/flow/bootstrap.md:30` — same.
+   **PM action required post-ship (not architect's to execute):** update `UC-RDL-UNVERIFIED-BATCH.note` to drop "P9 (gateway tool-name drift in INV-GATEWAY-1)" from its 9-item list (→ 8 remaining) and `UC-CCA-UNVERIFIED-BATCH.note` to drop "P12 (fix stale wrapper name in TNB bootstrap)" (→ 7 remaining), via `scripts/orch-apply.sh`, so a future BA spike on either batch doesn't re-investigate already-shipped work. Do NOT edit the frozen `2026-07-12-ultracode-workflow-improvement-audit.md` brief itself — it is evidence text (§2 exclusion applies).
+2. **Settings symmetry → RULE: LEAVE AS-IS, no edit.** `.claude/settings.local.json` is globally gitignored (`~/.config/git/ignore:1:**/.claude/settings.local.json`) — zero commit surface exists in this repo for it regardless of ruling. Global `~/.claude/settings.json` is outside repo control entirely. `defaultMode:"auto"` already covers the functional gap (confirmed live — this session's `mcp__gateway__call_tool` calls work despite the stale ACL entry). Flag stands for the user/ops if explicit symmetry is ever wanted; no action item for this task.
+3. **Historical exclusion → RULE: RATIFIED as specified.** Spot-checked the frozen audit brief (confirmed genuinely evidence-text, matches §2's own reasoning) and the `po-decisions.md` rolling-log edge case (append-only, no retroactive edit needed). BA's ~40-file exclusion list stands unchanged — no exceptions found.
+
+**DDD layer:** interface (all FR-1/FR-2/fold-in files are agent-facing contract/skill docs — call-surface spec, not domain logic). FR-4 is N/A (process constraint, zero CLAUDE.md edits, reconfirmed: CLAUDE.md's `mcp__gateway__call_tool` already correct, untouched). FR-5 is infrastructure (permission ACL) but explicitly not actioned per ruling above.
+
+**Risk flags:**
+- Mechanical find/replace across 8 files (6 BA + 2 folded-in) — low risk, but each edit MUST use an exact old_string match (not a blind sed-all) since `docs/standards/gateway-call-contract.md:94` requires a *collapse* (delete stale half of a dual-mention), not a straight 1:1 swap — a naive global regex replace would incorrectly leave `` `mcp__gateway__*` / `mcp__gateway__*` `` (duplicated) instead of the single collapsed form.
+- Post-edit verification required: `grep -rn "claude_ai_gateway" <8 files>` must return zero hits across all 8 after edits, before flipping this task off IN_PROGRESS.
+- No test strategy needed — BUILD-STANDARD: not-applicable (doc-only, no executable code, no new interfaces).
+
+**BUILD-STANDARD:** not-applicable (BUG-FIX/doc-reconciliation, in-zone, no new primitives) — matches BA's classification, ratified.
+
+**Scan clean:** true ✓ — all 8 target files independently re-verified at HEAD this cycle; zero discrepancies from BA's spec found.

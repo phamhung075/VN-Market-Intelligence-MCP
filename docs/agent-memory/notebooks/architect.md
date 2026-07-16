@@ -1,8 +1,15 @@
 # Architect — Notebook
 
-**Last updated:** 2026-07-16 04:40 UTC | **Sprint:** ULTRACODE-AUDIT-FIXALL
+**Last updated:** 2026-07-16 15:44 UTC | **Sprint:** ULTRACODE-AUDIT-FIXALL
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-07-16T15:44Z — UC-CRITIC-GATEWAY-CONTRACT-DRIFT (zone=cross-service/, dev-team relay, READY_FOR_PM)
+
+**Task:** dev-team relay (BOUNDED-1 auto-pickup, coordination_session 69b0312e) — reconcile `docs/standards/gateway-call-contract.md`'s stale `mcp__claude_ai_gateway__call_tool` prefix (L13,30-32,94) + 5 adjacent live docs to the canonical `mcp__gateway__call_tool` per BA's git-archaeology determination (commit `775e2d8ee` fleet-wide rename, `.mcp.json` registers only `"gateway"`).
+**Finding:** RAW re-verified all 6 BA-cited file:line targets byte-exact at HEAD, zero discrepancies. Ratified FR-3's §6 audit pass (only L94 needs the fix; §6b/§6d are prose-generic, L107's raw-JSON-RPC bridge is a genuinely different call surface). Resolved BA's 3 open questions: (1) folded `router-dispatch-locking-I11`/`cowork-cycle-agents-I14` into this task after discovering they're not bare unfiled findings — they're already sub-bullets P9/P12 inside two live 8-9 item PLAN-ONLY `BACKLOG` SPIKE rows (`UC-RDL-UNVERIFIED-BATCH`, `UC-CCA-UNVERIFIED-BATCH`) that would otherwise wait on a full future BA-spike cycle for a 1-line mechanical fix; flagged PM to strike those 2 bullets from the batch rows' notes post-ship to prevent duplicate re-investigation (never edit the frozen audit brief itself). (2) Ruled settings-symmetry (FR-5) leave-as-is — `.claude/settings.local.json` is globally gitignored (zero commit surface exists regardless), global `~/.claude/settings.json` is out-of-repo, `defaultMode:"auto"` already covers the gap live. (3) Ratified BA's ~40-file historical exclusion list unchanged. Total fix set: 8 files (6 BA + 2 folded-in), all 1-line prefix swaps except L94's dual-mention collapse.
+**Output:** `[Architect] Brownfield Findings` appended to `docs/handoffs/UC-CRITIC-GATEWAY-CONTRACT-DRIFT-BA-spec.md` — verified paths, DDD layer (interface), risk flags (exact-match edits not blind sed, post-edit zero-grep verification gate), BUILD-STANDARD: not-applicable.
+**Next:** pm — decompose into dev task(s) for the 8-file fix set; zone `cross-service/`; propagate the PM-action note (strike P9/P12 from the 2 batch rows post-ship).
 
 ## 2026-07-16T04:40Z — UC-ASL-P2 (zone=scripts/+docs/agents/system-auditor/, generic developer, READY_FOR_PM)
 
