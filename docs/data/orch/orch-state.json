@@ -373,10 +373,10 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "UC-ASL-P2",
-    "next_agent": "architect",
-    "next_action": "BA spec done (docs/handoffs/UC-ASL-P2-BA-spec.md); architect: technical design + resolve ARCH-RATIFY-1/2/3 + pin ZONE, then handoff pm",
-    "updated_at": "2026-07-16T04:33:54Z",
-    "updated_by": "dev-team (relay advance ba->architect, UC-ASL-P2)"
+    "next_agent": "pm",
+    "next_action": "Architect design complete (docs/handoffs/UC-ASL-P2-BA-spec.md § [Architect] Brownfield Findings); pm: decompose into atomic dev tasks, zone scripts/+docs/agents/system-auditor/",
+    "updated_at": "2026-07-16T04:43:23Z",
+    "updated_by": "architect (UC-ASL-P2 design complete)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -9052,7 +9052,7 @@
         "status": "IN_PROGRESS",
         "priority": "P1",
         "size": "M",
-        "zone": "cross-service/",
+        "zone": "scripts/ (root + agents-flow/) + docs/agents/system-auditor/ + docs/references/ (doc-pointer only)",
         "sprint": "ULTRACODE-AUDIT-FIXALL",
         "source": "ultracode-audit-2026-07-12",
         "verdict": "CONFIRMED",
@@ -9060,7 +9060,7 @@
         "note": "Auditor has 6 divergent EMIT SEQUENCE copies and in-memory BUG dedup that resets per run. Extract one emit script (scripts/emit-audit-signal.sh) with a durable dedup ledger.",
         "created_at": "2026-07-13T19:31:11Z",
         "created_by": "po",
-        "next_agent": "architect",
+        "next_agent": "pm",
         "promoted_at": "2026-07-16T04:23:13Z",
         "promoted_by": "dev-team (bounded-1 auto-pickup)",
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
@@ -9068,7 +9068,13 @@
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
         "ba_spec_complete": true,
         "ba_handoff": "docs/handoffs/UC-ASL-P2-BA-spec.md",
-        "ba_completed_at": "2026-07-16T04:29:42Z"
+        "ba_completed_at": "2026-07-16T04:29:42Z",
+        "architect_review_complete": true,
+        "architect_handoff": "docs/handoffs/UC-ASL-P2-BA-spec.md",
+        "architect_completed_at": "2026-07-16T04:43:23Z",
+        "arch_ratify_1": "CONFIRMED delete (not repoint) context-bloat-backstop.sh:185-203",
+        "arch_ratify_2": "resolved — ledger value amended to {ts,sev}, severity-rank bypass on escalation",
+        "arch_ratify_3": "ZONE pinned scripts/+docs/agents/system-auditor/ (generic developer, not apps/<service>/)"
       }
     ]
   },

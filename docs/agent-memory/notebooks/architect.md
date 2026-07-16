@@ -1,8 +1,15 @@
 # Architect — Notebook
 
-**Last updated:** 2026-07-15 05:10 UTC | **Sprint:** FLOW-PRICE-ALPHA-LOOP
+**Last updated:** 2026-07-16 04:40 UTC | **Sprint:** ULTRACODE-AUDIT-FIXALL
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-07-16T04:40Z — UC-ASL-P2 (zone=scripts/+docs/agents/system-auditor/, generic developer, READY_FOR_PM)
+
+**Task:** dev-team BOUNDED-1 relay (coordination_session 69b0312e) — BA-specced sprint: one blessed `scripts/emit-audit-signal.sh` replacing 6 copy-pasted EMIT SEQUENCE blocks in `docs/agents/system-auditor/flow/main.md`/`tier1-probe.md` + durable `docs/data/auditor-dedup-ledger.json` BUG-dedup ledger.
+**Finding:** Re-verified all 6 copy sites + precedent files line-exact at HEAD (`mcp-call.sh`'s `mcp_call()` exit contract, `auditor-notebook-commit.sh`'s bash-3.2-safe named-arg style, `orch-apply.sh:33-39`'s 0/1/2/3 exit contract already matches FR-5's CAS-retry-on-2-only design with zero gap). Confirmed `context-bloat-backstop.sh:185-203`'s known-issues.json fingerprint gate is genuinely dead (0 matching fingerprints ever, separate from its own live `EXISTING_SIGNAL` dedup at :175-183) — ratified DELETE not repoint (ARCH-RATIFY-1). Resolved the severity-escalation-inside-dedup-window bypass rule (ARCH-RATIFY-2) by amending the ledger value from a bare timestamp to `{ts, sev}` (still flat, no history array) with a 3-level severity-rank normalization internal to the script only — this was the minimum schema change needed to make BA's own EC-4 recommendation implementable; a no-op would leave a worsening CRITICAL re-alert muted up to 7 days, the exact "passive health masks" anti-pattern class. Picked one explicit `--e3-only` flag (not inference from omitted args) to resolve FR-6's self-flagged ambiguity for the D-IMPROVE/D-BCTC-EVAL sites. Pinned ZONE away from the dispatched `cross-service/` label — none of the 8 touched files are `apps/<service>/`, precedent for non-apps zone naming already exists (`TOKEN-ECONOMY-TICK-PREFLIGHT`'s `root (docs/agents+.claude/skills+scripts)`, `TASK_FIX-I-A`'s `vps-scripts/`). Flagged one new risk not in the BA spec: unlocked ledger read-modify-write race across concurrent same-tick Tier-2/Tier-3 invocations — accepted as bounded (worst case: one redundant Telegram send, never a lost E-1/E-3), matches the sibling `auditor-tier1/2-last-healthy.json` writers' already-accepted tradeoff.
+**Output:** `[Architect] Brownfield Findings` appended to `docs/handoffs/UC-ASL-P2-BA-spec.md` — full script contract (named-flag parser, `--e3-only`/`--no-telegram` split), CAS-retry loop shape (plain 3-iteration re-invoke, no rebuild logic needed since jq re-reads live file per call), amended ledger shape + severity-rank bypass rule + new `OK-escalation-bypass` marker, DDD layer map, test strategy (new `emit-audit-signal.test.sh` + flow-doc git-diff verify), BUILD-STANDARD: not-applicable.
+**Next:** pm — decompose into atomic dev tasks (script + ledger; flow-doc replacement x2; dead-reference cleanup x3 files); zone `scripts/ + docs/agents/system-auditor/` (corrected from board's dispatched `cross-service/`).
 
 ## 2026-07-15T05:10Z — ALPHA-S2-RAG-FTS-REBUILD-CRON (zone=multi split, lean single-zone FIX, READY_FOR_PM)
 
@@ -18,18 +25,16 @@
 **Output:** `docs/architecture-briefs/2026-07-15-alpha-s2-omo-liquidity-cron.md` — zone-split rationale, confirmed-already-shipped `sbv_omo_daily` write path, HARD/SOFT fail-loud design, new `sbvOmoLiquidityCronJob.ts` (reuses `macroFetch`+`LiquidityStateResponseSchema`), `09:09 UTC daily` cadence choice, 9 acceptance criteria, single-atomic-task PM recommendation.
 **Next:** pm — mint ONE atomic dev-mcp-server task (no subtask decomposition); zone `apps/mcp-server/` (corrected from board's stale "multi").
 
-## 2026-07-15T00:00Z — ALPHA-S2-FOREIGN-FLOW-WRITE-RACE (SPRINT-S verdict, zone=multi split, READY_FOR_PM)
-
-**Task:** Router BOUNDED-1 relay (chain-mutex held by router) — PO reclassified board FIX row to architect: verify FIX-half claim (writeForeignFlowToOhlcv unconditional daily_foreign_flow upsert, commit 3201c86cc) and decide residual archive scope + consolidate-vs-standalone vs sibling ALPHA-S2-TICK-DOWNSAMPLE-5MIN.
-**Finding:** RAW-verified the FIX claim holds (`git show 3201c86cc --stat` + full read of `ohlcvForeignFlowStore.ts` — unconditional `ON CONFLICT DO UPDATE`, no `daily_ohlcv` dependency, `changes>=1` always). Residual is real: unlike the price plane, foreign flow has **no pre-existing raw-ticks table** — `pushForeignFlowHandler.ts` writes straight into `daily_foreign_flow` AND `vnstock_trading_stats` (`foreign_room`/`holding_ratio`) every 60s via unconditional per-push upserts, so both planes already collapse to last-value-wins with nothing left to retroactively downsample; building the archive requires an additive write-path touch (new raw-ticks INSERT alongside, not replacing, the two existing upserts) — the sibling never needed this. Also found the task title's "room" is not a misnomer: `upsertForeignFlow`'s own "last occurrence wins" dedup comment confirms `vnstock_trading_stats` suffers the identical collapse from the SAME normalized push payload — one new raw table covers both planes, not two. Recommended STANDALONE table+job from the price plane's `intraday_ohlcv_5m` (DDD bounded-context separation — foreign flow has no OHLC concept, LAST-value-in-bucket aggregation not min/max/first/last — reusing the sibling's table would reintroduce the exact `daily_ohlcv.foreign_*` coupling the sibling sprint (TASK_2002) just finished removing), while flagging one small cross-plane DRY win (shared 5-min bucketing helper) as optional.
-**Output:** `docs/architecture-briefs/2026-07-15-alpha-s2-foreign-flow-write-race-verdict.md` — FIX-half verification, `foreign_flow_history` + `intraday_foreign_flow_5m` DDL, additive write-path change spec, LAST-value compactor design, 6-subtask sequential split, 9 acceptance criteria, urgency downgrade (not required by ALPHA-S3).
-**Next:** pm — decompose into atomic dev-mcp-server tasks per §9 subtask table; zone `apps/mcp-server/` (corrected from board's stale "multi").
-
 ---
 
-## Archive (pre-2026-07-15T04:15Z)
+## Archive (pre-2026-07-15T05:10Z)
 
-[Older cycles archived to git history: ALPHA-S2-TICK-DOWNSAMPLE-5MIN (2026-07-14T21:30Z,
+[Older cycles archived to git history: ALPHA-S2-FOREIGN-FLOW-WRITE-RACE (2026-07-15T00:00Z,
+SPRINT-S verdict, zone=multi split — verified FIX-half claim (writeForeignFlowToOhlcv
+unconditional daily_foreign_flow upsert, commit 3201c86cc) holds, designed standalone
+`foreign_flow_history`+`intraday_foreign_flow_5m` DDL and LAST-value compactor (DDD
+bounded-context separation from the price-plane sibling table), 6-subtask split, READY_FOR_PM),
+ALPHA-S2-TICK-DOWNSAMPLE-5MIN (2026-07-14T21:30Z,
 SPRINT-S zone=multi split — permanent 5-min OHLCV bars table + compaction cron from
 `market_prices_history` before the rolling 24h purge deletes surviving ticks, reused
 `ohlcvDailyAggregatorJob`'s aggregation shape, standalone 24/7 cron no market-hours gate,
