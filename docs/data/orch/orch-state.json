@@ -373,10 +373,10 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "UC-ASL-P2",
-    "next_agent": "qa",
-    "next_action": "developer complete: 4 children DEV-1..DEV-4 DONE — emit-audit-signal.sh + test (48/48), 6-site EMIT SEQUENCE replacement (main.md + tier1-probe.md), dead-ref cleanup (known-issues.json + dead gate), row-id collision race fixed (e35634fd7). qa: run full gate — verify BA-spec AC-1..AC-6, re-run scripts/emit-audit-signal.test.sh (expect 48/48) + scripts/agents-flow/context-bloat-backstop.test.sh (2/2), DDD/injection review of emit-audit-signal.sh, then promote UC-ASL-P2 + 4 children to done_verified",
-    "updated_at": "2026-07-16T05:50:26Z",
-    "updated_by": "dev-team (relay advance developer->qa, UC-ASL-P2; tests 48/48+2/2 RAW-verified by dispatcher)"
+    "next_agent": "fixer",
+    "next_action": "qa CHANGES_REQUESTED (AC-3 prod-fail, RAW-verified): scripts/emit-audit-signal.sh:232 _run_e1 feeds --category-type into post_agent_signal signal_type (closed Zod enum, apps/mcp-server/src/infrastructure/db/agentSignalStore.ts:39-51); data_stale + db_integrity_breach are NOT enum members -> E-1 invalid_enum_value -> ABORT e1-failed -> E-3 row never appended for Tier-2 (main.md:298) + Tier-3 (main.md:592). FIX: set E-1 signal_type=\"signal_feedback\" (valid enum, legacy-match) at line 232; LEAVE line 328 (--arg type=$CATEGORY_TYPE, E-3 row) untouched so granular category survives; add test assertion in emit-audit-signal.test.sh pinning E-1 signal_type to a valid enum (closes mock blind spot); append 1-line FR-2 correction note to BA-spec.md. Re-run both harnesses (48/48 + 2/2). Do NOT push, do NOT advance head, do NOT self-promote parent.",
+    "updated_at": "2026-07-16T06:11:35Z",
+    "updated_by": "dev-team (relay advance qa->fixer, UC-ASL-P2; qa CHANGES_REQUESTED AC-3 enum-mismatch, RAW-verified by dispatcher)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -8482,9 +8482,9 @@
     "head": {
       "status": "in_progress",
       "active_task_id": "UC-ASL-P2",
-      "next_agent": "qa",
-      "last_updated_at": "2026-07-16T05:50:26Z",
-      "last_updated_by": "dev-team (relay advance developer->qa)"
+      "next_agent": "fixer",
+      "last_updated_at": "2026-07-16T06:11:35Z",
+      "last_updated_by": "dev-team (relay advance qa->fixer)"
     },
     "ready": [],
     "review": [
