@@ -1,0 +1,49 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-16T06:37:19.758Z",
+    "matched_slots": [
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "alert-commander-market"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "alert-commander-market": null
+    },
+    "last_fired_timestamp": "2026-07-16T06:37:04.745Z",
+    "last_fired_slots": [
+      "alert-commander-market"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "06:30",
+    "leader_lock": "acquired",
+    "dev_head": "in_progress",
+    "devq": 5,
+    "signal_backlog": 5,
+    "note": "LEGACY tick — first fan-out in 5 ticks. PRE-REGISTERED PREDICTION RESOLVED ON THE FALSIFYING BRANCH, and this time with INDEPENDENT CORROBORATION. At 06:15Z I stated in advance that 06:30Z would be LEGACY, deriving it from a named mechanism: the 06:15 emit keys promoteCycleSnapshot on cycle-snapshot-06:15.json, which exists at 1056h (>> 4h SNAPSHOT_MAX_STALENESS_MS) -> {promoted:false,stale:true} -> stale_warning=true -> 06:30 reads it -> legacy. Every link confirmed: the 06:15 emit returned stale_warning:true in its own output BEFORE the consuming tick ran. Two INDEPENDENT channels agree on the mode this tick, which the previous 4 ticks could not provide (slots:[] made the fingerprint unavailable): (1) isStale() called on the real function = true; (2) the slot-shape fingerprint — verdict slots[0] carries NO due_reason and NO cadence_minutes (matcher :162 legacy plain-object shape; :168 adaptive would add both). Channel 2 does not depend on my reasoning at all. MECHANISM NOW CLOSED END-TO-END: pressure-cadence.md gates Steps 4.4/4.5 on PRESSURE_MODE=='adaptive', so legacy sets CADENCE_MATCHES = raw MATCHES with NO filtering — the dangling-policy 240-min gate is BYPASSED, which is exactly why alert-commander-market fired at 71.1min elapsed here and was suppressed on the 5 adaptive ticks before it. The slot's policy_id='alert-commander-market' remains dangling (absent from cadence-policy.json, which holds only gatherer-standard/chef-intraday/bctc-offmarket). RESIDUE FACTORY IDENTIFIED (additive to UC-SDF-P2, NOT a new row): Step 4.7 keys its write on FILE_TICK=06:38 = ACTUAL clock (06:36 this tick), while promoteCycleSnapshot looks up the NOMINAL tick from tick_id (06:30). So every fan-out tick drops a junk snapshot at its drift offset that no emit will ever look for — this is the generator of the 103->104 residue files, and explains why only ~18 sit on nominal boundaries (those came from drift_min=0 ticks). The 06:30 nominal file this emit DID find is 336h old -> stale:true -> 06:45Z will be LEGACY too (mechanically derived from the post-emit file, not guessed). This sharpens cow-20260716T043200's coupling hazard with a live number: the ONLY reason the market-alert path fires at all today is 44-day-old junk; pruning residue or landing UC-SDF-P2's key unification (which reads as harmless hygiene) leaves the 240 gate holding every tick and takes this path dark. Sequencing with FIX-COWORK-CADENCE-DANGLING-POLICY-ID is mandatory, and per handoff 4-NEW-3 that is still NOT SUFFICIENT — calendar_status is structurally latched at 'unknown' (no component derives it; the vnTradingCalendar oracle exists and is wired to everything except this consumer), so newly-authored open/half_day policy rows would themselves be unreachable. THREE SHELL TRAPS FIRED ON ME THIS TICK, ALL CAUGHT, ALL THE SAME FAMILY (a green that was never computed): (1) the CHEF-mutex jq died with 'Cannot index array with string slots' and my next echo printed the reassuring conclusion 'not satisfied => no drop' for free — recomputed properly (guaranteed=0, non_guaranteed=1, chef_slots=0 => mutex false, jq rc=0 asserted); (2) a Step 6.1 control pattern at 06:15Z returned 0 matches, making my 'no signal file' check vacuous — re-ran against a known-existing file (04-3*=1) before trusting the zero; (3) an unquoted glob in the stage-cleanup check aborted under zsh yet still printed '0 remaining' — reverified with find + a control. Conclusions survived all three, but only because they were recomputed, not because they were right. AGENT: alert-commander spawned background with the published-marker gate contract (published:alert-commander-market:<VN date>, ttl 100800, tombstone — explicitly instructed NOT to release after publish per the PENDULUM invariant) and pointed at the shared snapshot cycle-snapshot-06:36.json (13053B, live, real tickers). Event-only slot: silent exit is a correct outcome and the agent was told not to pad. SIGNAL QUEUE: 2 rows, both to=po, both preserved NEW — never marked READ from this dispatcher (drain-starves-devteam handoff 2026-07-15). Those 2 rows are also what forces WORK every 15min via cowork-tick-preflight.sh:246's SILENT-gate receiver set — 5 tick bodies burned so far; fix is dropping po from main.md:104 + preflight:245, tracked by FIX-COWORK-STEP0A-TOPO-DRAIN-STATUS-CONTRACT. Zero token leaks: slot token claimed ttl=180 + released (probe-confirmed 0), P3 released on the key READ FROM THE STORE never reconstructed."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-16T06:37:19.758Z"
+}
