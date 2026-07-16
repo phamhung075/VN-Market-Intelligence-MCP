@@ -186,7 +186,13 @@ const UpdateMemoryFileSchema = {
 };
 
 export function registerAgentMemoryUpdateTools(server: McpServer): void {
-  const memoryDir = resolve(getProjectRoot(), "docs/agent-memory");
+  // Registration-time resolution (NOT module-level): allows test callers to
+  // sandbox writes by setting AGENT_MEMORY_ROOT in beforeEach BEFORE calling
+  // this function. A module-level `const` would bind the env value at ESM
+  // import time — before any beforeEach hook runs — making the sandbox a
+  // silent no-op (false-green: tests pass, real docs/agent-memory/ still
+  // gets written). Unset in production, so prod behavior is unchanged.
+  const memoryDir = process.env.AGENT_MEMORY_ROOT ?? resolve(getProjectRoot(), "docs/agent-memory");
 
   // ─────────────────────────────────────────────────────────────────────────
   // Tool 1: append_session_record
