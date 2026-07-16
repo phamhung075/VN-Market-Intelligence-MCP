@@ -3,7 +3,9 @@
 # Regression verifier for FIX-DEVTEAM-BOUNDED1-DETAIL-DISPOSITION-GATE (2026-07-12)
 # + its 3rd sibling FIX-DEVTEAM-BOUNDED1-PLAN-ONLY-GATE (2026-07-12)
 # + its 4th sibling FIX-DEVTEAM-BOUNDED1-DETAIL-NEXTAGENT-NONDEV-GATE (2026-07-12)
-# + its 5th sibling FIX-DEVTEAM-BOUNDED1-NONDEV-OWNER-BOARD-FALLBACK-GATE (2026-07-13).
+# + its 5th sibling FIX-DEVTEAM-BOUNDED1-NONDEV-OWNER-BOARD-FALLBACK-GATE (2026-07-13)
+# + its 6th sibling FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE
+#   (2026-07-16, subsumes FIX-DEVTEAM-BOUNDED1-MAINTLANE-NEXTAGENT-GATE).
 # Brief: this fix (scripts/devteam-backlog-promote-bounded1.jq AC-1..AC-7) —
 # see docs/agents/dev-team/flow/main.md § Idle-capacity backlog pickup (BOUNDED-1).
 #
@@ -65,6 +67,35 @@
 #            depends_on block, no plan_only, no non-dev-next_agent+null-
 #            board-next_agent block) IS still promoted — proves the new
 #            gates do not over-block.
+#   AC-8: a row whose BOARD `.next_agent` is INLINE a non-dev deliberate
+#         agent (architect/ba/pm/...) AND has NO backlog-detail.json entry
+#         at all is NEVER auto-promoted — this is the exact shape
+#         FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE
+#         (2026-07-16) closes (previously slipped every gate: e.g. live
+#         GUARD-COWORK-NOTEBOOK-AGENTS-SELF-EDIT-FLOW-DOC,
+#         next_agent=architect, no detail entry, pre-fix). Live proof rows
+#         discovered dynamically (no hardcoded IDs) — any task_board.backlog[]
+#         row whose `.id` is absent from backlog-detail.json `.items[]` and
+#         whose inline `.next_agent` does not match the dev-role pattern.
+#   AC-9: a row whose BOARD `.plan_only` is INLINE `true` (no
+#         backlog-detail.json entry at all) is NEVER auto-promoted — closes
+#         the equivalent board-only-plan_only class the same 2026-07-16 fix
+#         closes. SYNTHETIC (no live row currently carries an inline board
+#         `plan_only:true` with no matching detail entry).
+#   AC-10: a row with NO backlog-detail.json entry, whose inline board
+#          `.next_agent` = "developer" (a dev-role value) IS still promoted
+#          — proves the generalized effective_next_agent() (2026-07-16) does
+#          not over-block a genuinely dev-routable row. SYNTHETIC control.
+#
+#   NOTE (2026-07-16): AC-6's fixture `next_agent` value was corrected from
+#   "architect" to "developer". Under the PRE-fix NON-DEV-NEXT_AGENT gate,
+#   next_agent's VALUE was irrelevant to the OWNER gate's board-fallback
+#   check (only presence/absence mattered — the old next_agent gate never
+#   looked at a board-only next_agent at all). The new EFFECTIVE-DISPOSITION
+#   gate (AC-8 above) now correctly withholds ANY non-dev next_agent value,
+#   including "architect" — so AC-6 must use a dev-role value to isolate the
+#   OWNER gate's board-fallback behavior without also (correctly) tripping
+#   the next_agent gate.
 #
 # READ-ONLY: never writes back to the live orch-state.json/backlog-detail.json
 # (no orch-apply.sh call anywhere) — all fixtures are synthetic copies in a
@@ -142,12 +173,45 @@ run_promote_picked_id_with_detail() {
 
 make_synthetic_ac6_state() {
   # $1 = output path. Case-b fixture: no backlog-detail entry, non-dev BOARD
-  # owner, but a NON-EMPTY board next_agent (already correctly routed) ->
-  # must still be promoted (board-fallback must not over-block).
+  # owner, but a NON-EMPTY dev-role board next_agent (already correctly
+  # routed) -> must still be promoted (owner gate's board-fallback must not
+  # over-block). NOTE (2026-07-16): next_agent uses "developer" (dev-role),
+  # NOT "architect" — see the AC-6 fixture-correction note in the file
+  # header: a non-dev next_agent value like "architect" is now (correctly)
+  # caught by the generalized effective_next_agent() gate (AC-8), so it can
+  # no longer serve as an "already correctly routed" filler value here.
   jq -n '
     { task_board: {
         backlog: [ { id: "ZZ-SYNTH-AC6-NONDEV-OWNER-ROUTED", status: "BACKLOG",
-                      priority: "P0", owner: "po", next_agent: "architect" } ],
+                      priority: "P0", owner: "po", next_agent: "developer" } ],
+        ready: [], in_progress: [], qa: [], review: [], done: [], done_verified: []
+      } }
+  ' > "$1"
+}
+
+make_synthetic_ac9_state() {
+  # $1 = output path. AC-9: no backlog-detail entry, board-INLINE
+  # `plan_only:true` -> must NEVER be promoted (effective_plan_only's
+  # board-OR-detail OR-check must catch a board-only true just as it catches
+  # a detail-only true).
+  jq -n '
+    { task_board: {
+        backlog: [ { id: "ZZ-SYNTH-AC9-BOARD-PLAN-ONLY", status: "BACKLOG",
+                      priority: "P0", plan_only: true, next_agent: null } ],
+        ready: [], in_progress: [], qa: [], review: [], done: [], done_verified: []
+      } }
+  ' > "$1"
+}
+
+make_synthetic_ac10_state() {
+  # $1 = output path. AC-10 control: no backlog-detail entry, board-INLINE
+  # `next_agent:"developer"` (dev-role) -> must still be promoted — proves
+  # effective_next_agent()'s board-fallback does not over-block a genuinely
+  # dev-routable row.
+  jq -n '
+    { task_board: {
+        backlog: [ { id: "ZZ-SYNTH-AC10-DEV-NEXTAGENT-ROUTED", status: "BACKLOG",
+                      priority: "P0", next_agent: "developer" } ],
         ready: [], in_progress: [], qa: [], review: [], done: [], done_verified: []
       } }
   ' > "$1"
@@ -271,6 +335,24 @@ jq -r --slurpfile did "$WORK/detail-ids.json" '
   | $rid
 ' "$STATE" > "$WORK/ac5-pool.txt"
 
+# AC-8 pool (board-only, NOT keyed off backlog-detail.json): rows with NO
+# detail entry at all, whose BOARD-level `.next_agent` is INLINE non-dev.
+# FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE (2026-07-16),
+# 6th sibling. Owner/plan_only are intentionally left unconstrained here
+# (with next_agent non-empty, the OWNER gate's board-empty-next_agent
+# precondition is never met, so it cannot confound this pool regardless of
+# owner value) — attribution is to the next_agent gate specifically.
+jq -r --slurpfile did "$WORK/detail-ids.json" '
+  ($did[0]) as $dids
+  | .task_board.backlog[]?
+  | select(.next_agent != null and (.next_agent|type)=="string" and .next_agent != "")
+  | select((.next_agent | test("^dev(-|$)|^developer$"; "i")) | not)
+  | select((.plan_only // false) != true)
+  | .id as $rid
+  | select(($dids | index($rid)) == null)
+  | $rid
+' "$STATE" > "$WORK/ac8-pool.txt"
+
 pick_first_ac1() {
   while IFS= read -r id; do
     [ -z "$id" ] && continue
@@ -342,17 +424,37 @@ pick_first_ac5() {
   return 1
 }
 
+pick_first_ac8() {
+  # ac8-pool.txt is already board-only-filtered (non-empty inline non-dev
+  # next_agent, no detail entry, board plan_only not true); still requires
+  # board_inline_clean to exclude rows gated by an UNRELATED sibling gate
+  # (supervised/children/depends_on/depends/blocked_by) so a failure here is
+  # attributable ONLY to the effective_next_agent (2026-07-16) gate. Does
+  # NOT check board_next_agent_empty — by construction these rows have a
+  # non-empty inline next_agent (that is the whole point of this fixture).
+  while IFS= read -r id; do
+    [ -z "$id" ] && continue
+    if [ "$(board_backlog_status_ok "$id")" = "true" ] \
+       && [ "$(board_inline_clean "$id")" = "true" ]; then
+      echo "$id"; return 0
+    fi
+  done < "$WORK/ac8-pool.txt"
+  return 1
+}
+
 AC1_ID=""
 AC2_ID=""
 AC3_ID=""
 AC4_ID=""
 AC5_ID=""
+AC8_ID=""
 CONTROL_ID=""
 AC1_ID=$(pick_first_ac1) || true
 AC2_ID=$(pick_first_ac2) || true
 AC3_ID=$(pick_first_ac3) || true
 AC4_ID=$(pick_first_ac4) || true
 AC5_ID=$(pick_first_ac5) || true
+AC8_ID=$(pick_first_ac8) || true
 CONTROL_ID=$(pick_first_control) || true
 
 if [ -n "$AC1_ID" ]; then
@@ -453,6 +555,43 @@ if [ "$AC7B_PICKED" = "ZZ-SYNTH-AC7B-DETAIL-WINS-REV" ]; then
   echo "[PASS] AC-7b (synthetic): detail owner (dev-role) wins over non-dev board owner — still promoted (picked='$AC7B_PICKED')"
 else
   echo "[FAIL] AC-7b regression (synthetic): detail owner (dev-role) did NOT win over non-dev board owner — row was NOT promoted"
+  FAIL=1
+fi
+
+if [ -n "$AC8_ID" ]; then
+  make_isolated_fixture "$AC8_ID" "$WORK/ac8.json"
+  PICKED=$(run_promote_picked_id "$WORK/ac8.json")
+  if [ "$PICKED" = "$AC8_ID" ]; then
+    echo "[FAIL] AC-8 regression: no-detail-entry inline-non-dev-board-next_agent row $AC8_ID WAS promoted"
+    FAIL=1
+  else
+    echo "[PASS] AC-8: no-detail-entry inline-non-dev-board-next_agent row $AC8_ID NOT promoted (picked='${PICKED:-<none>}')"
+  fi
+else
+  echo "[SKIP] AC-8: no eligible no-detail-entry inline-non-dev-board-next_agent fixture candidate in live data"
+fi
+
+# AC-9: SYNTHETIC (no live row currently carries an inline board
+# plan_only:true with no matching detail entry). Board-INLINE plan_only:true,
+# no detail entry -> must NEVER be promoted.
+make_synthetic_ac9_state "$WORK/ac9.json"
+AC9_PICKED=$(run_promote_picked_id "$WORK/ac9.json")
+if [ "$AC9_PICKED" = "ZZ-SYNTH-AC9-BOARD-PLAN-ONLY" ]; then
+  echo "[FAIL] AC-9 regression (synthetic): no-detail-entry board-inline plan_only:true row WAS promoted"
+  FAIL=1
+else
+  echo "[PASS] AC-9 (synthetic): no-detail-entry board-inline plan_only:true row NOT promoted (picked='${AC9_PICKED:-<none>}')"
+fi
+
+# AC-10: SYNTHETIC control. No detail entry, board-INLINE next_agent:
+# "developer" (dev-role) -> must still be promoted (effective_next_agent's
+# board-fallback does not over-block a genuinely dev-routable row).
+make_synthetic_ac10_state "$WORK/ac10.json"
+AC10_PICKED=$(run_promote_picked_id "$WORK/ac10.json")
+if [ "$AC10_PICKED" = "ZZ-SYNTH-AC10-DEV-NEXTAGENT-ROUTED" ]; then
+  echo "[PASS] AC-10 (synthetic): no-detail-entry dev-role board next_agent row IS still promoted (picked='$AC10_PICKED')"
+else
+  echo "[FAIL] AC-10 regression (synthetic): no-detail-entry dev-role board next_agent row was NOT promoted (picked='${AC10_PICKED:-<none>}')"
   FAIL=1
 fi
 

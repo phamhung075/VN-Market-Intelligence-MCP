@@ -53,22 +53,28 @@
 #     board row carries no `next_agent` would otherwise be mis-routed to the
 #     generic `developer` zone-detect placeholder; held for router-adjudicated
 #     dispatch instead.
-#   - not a detail-authoritative plan_only row (FIX-DEVTEAM-BOUNDED1-PLAN-
-#     ONLY-GATE, 2026-07-12) — see "PLAN-ONLY GATE" section below. A row
-#     whose backlog-detail.json entry carries `plan_only:true` is a
-#     plan-first / architect-recon ask, not an autonomous code-fix, and is
-#     never auto-promoted here regardless of its board-layer status.
-#   - not a non-dev detail next_agent + null-board-next_agent row
-#     (FIX-DEVTEAM-BOUNDED1-DETAIL-NEXTAGENT-NONDEV-GATE, 2026-07-12) — see
-#     "NON-DEV-NEXT_AGENT GATE" section below. A row whose detail-authoritative
-#     `next_agent` names a deliberate non-dev specialist (architect/ba/pm/
-#     ops*/po/qa/agent-father/agents-architect/system-auditor/...) AND whose
-#     board row carries no `next_agent` would otherwise be mis-routed to the
-#     generic `developer` zone-detect placeholder; held for router-adjudicated
-#     dispatch instead. Sibling of the NON-DEV-OWNER gate above but keys off
-#     `next_agent` instead of `owner` — catches rows whose detail `owner` is
-#     absent/empty (owner gate silent) but whose detail `next_agent` already
-#     names the real non-dev handler.
+#   - not an effective plan_only row (board-OR-detail) (FIX-DEVTEAM-BOUNDED1-
+#     PLAN-ONLY-GATE, 2026-07-12; generalized to board-OR-detail by
+#     FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE,
+#     2026-07-16) — see "EFFECTIVE-DISPOSITION GATE" section below. A row
+#     whose INLINE board `.plan_only` OR its backlog-detail.json entry carries
+#     `plan_only:true` is a plan-first / architect-recon ask, not an
+#     autonomous code-fix, and is never auto-promoted here regardless of
+#     which location carries the flag.
+#   - not a non-dev EFFECTIVE next_agent row (board-OR-detail, detail-first)
+#     (FIX-DEVTEAM-BOUNDED1-DETAIL-NEXTAGENT-NONDEV-GATE, 2026-07-12;
+#     generalized to detail-first/board-fallback by
+#     FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE,
+#     2026-07-16, which also SUBSUMES FIX-DEVTEAM-BOUNDED1-MAINTLANE-
+#     NEXTAGENT-GATE) — see "EFFECTIVE-DISPOSITION GATE" section below. A row
+#     whose EFFECTIVE `next_agent` (backlog-detail.json entry if present-
+#     non-empty, ELSE the board row's own inline `next_agent`) names a
+#     deliberate non-dev specialist or maintenance-lane agent (architect/ba/
+#     pm/ops*/po/qa/agent-father/agents-architect/system-auditor/
+#     code-janitor/...) — i.e. does not match the dev-role pattern
+#     `^dev(-|$)|^developer$` — is never auto-promoted here; held for
+#     router-adjudicated dispatch instead. Sibling of the NON-DEV-OWNER gate
+#     above but keys off `next_agent` instead of `owner`.
 #   - ordered by priority_rank ascending (0=highest: P0/critical,
 #     1: P1/high, 2: P2/medium/normal, 3: P3/low, 9: missing/unrecognized —
 #     priority values in the wild are a messy mix of "P0".."P3" and
@@ -274,6 +280,56 @@
 #   - Conservative default: absent/null/empty detail `next_agent`, OR a
 #     dev-role detail `next_agent`, OR a non-empty board `next_agent` = NOT
 #     gated (promotable) — preserves baseline behavior for the common case.
+#   [PRE-2026-07-16 semantics; SUPERSEDED — see EFFECTIVE-DISPOSITION GATE
+#    below, which drops condition 2 and reads next_agent detail-first/
+#    board-fallback instead of detail-only.]
+#
+# EFFECTIVE-DISPOSITION GATE (FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-
+# BOARD-FALLBACK-GATE, 2026-07-16):
+# root cause — the PLAN-ONLY and NON-DEV-NEXT_AGENT gates above (is_plan_only
+# / is_non_dev_next_agent_unrouted) read ONLY `$detail_items[.id]`
+# (backlog-detail.json), whereas effective_owner() (used by the NON-DEV-OWNER
+# gate) was ALREADY generalized on 2026-07-13
+# (FIX-DEVTEAM-BOUNDED1-NONDEV-OWNER-BOARD-FALLBACK-GATE) to read the
+# EFFECTIVE value (detail-authoritative, board-fallback). A board row
+# carrying `plan_only:true` or a non-dev `next_agent` INLINE but with NO
+# backlog-detail.json entry at all therefore slipped both gates. Confirmed by
+# RAW dry-run: 28 promotable backlog rows leaked (4 P1:
+# GUARD-COWORK-NOTEBOOK-AGENTS-SELF-EDIT-FLOW-DOC next_agent=architect;
+# FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS /
+# FIX-VNINDEX-CROSS-PLANE-PLAUSIBILITY-GATE /
+# FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING next_agent=ba; 17 P2, 7 P3 incl.
+# all UC-*-UNVERIFIED-BATCH ba rows). This gate closes both classes:
+#   - `effective_plan_only($detail_items)` — mirrors effective_supervised's
+#     OR-based precedence (no `.detail_ref` precondition): a row is
+#     effectively plan_only if EITHER the inline board `.plan_only` OR
+#     `$detail_items[.id].plan_only` is exactly `true`. `is_plan_only()` now
+#     delegates to this function (previously read
+#     `$detail_items[.id].plan_only` only, ignoring an inline board flag with
+#     no matching detail entry).
+#   - `effective_next_agent($detail_items)` — mirrors effective_owner's
+#     detail-FIRST / board-FALLBACK precedence: `$detail_items[.id].next_agent`
+#     if present-and-non-empty (detail-authoritative), ELSE the board-level
+#     `.next_agent` (fallback), ELSE `""` (conservative default).
+#     `is_non_dev_next_agent_unrouted()` now gates whenever this EFFECTIVE
+#     value is present-and-non-empty AND does NOT match the dev-role pattern
+#     `^dev(-|$)|^developer$` (case-insensitive) — i.e. not zone-detect-
+#     routable. The prior version's extra "AND board next_agent is empty"
+#     clause is REMOVED: that clause is exactly why an inline board
+#     `next_agent` naming a non-dev agent, with no detail entry at all (e.g.
+#     GUARD-COWORK-NOTEBOOK-AGENTS-SELF-EDIT-FLOW-DOC, next_agent=architect),
+#     previously slipped through.
+#   - A single dev-role-pattern check subsumes BOTH the architect/ba/pm/
+#     agents-architect class AND the on-demand maintenance roster
+#     (agent-father/system-auditor/code-janitor/claude-manager-helper/
+#     cowork-refactory-expert/idea-forge/...) — this SUBSUMES the in-flight
+#     FIX-DEVTEAM-BOUNDED1-MAINTLANE-NEXTAGENT-GATE (held supervised:true,
+#     status_note SUPERSEDED-BY this gate; do NOT dispatch it separately).
+#   - Fail-toward-safety invariant unchanged: these gates only REMOVE rows
+#     from idle auto-pickup eligibility; deliberate router/PO/architect
+#     dispatch of a gated row is entirely unaffected; a genuinely dev-routable
+#     row (effective next_agent matching the dev-role pattern) stays
+#     promotable.
 #
 # Mutation (single row only):
 #   backlog[] -> ready[] ; status BACKLOG/TODO -> READY ; stamp promoted_at /
@@ -442,41 +498,67 @@ def is_non_dev_owner_unrouted($detail_items):
         end
     end;
 
-# Detail-authoritative plan_only disposition for a candidate row (`.` = the
-# backlog row object). FIX-DEVTEAM-BOUNDED1-PLAN-ONLY-GATE, 2026-07-12 — see
-# "PLAN-ONLY GATE" header comment above. Looked up purely by `.id` (no
-# `.detail_ref` precondition), same precedence pattern as
-# is_detail_deferred/is_non_dev_owner_unrouted. Conservative default:
-# absent/null detail `plan_only` (or no matching detail entry) = NOT
-# plan-only (promotable).
-def is_plan_only($detail_items):
-  if (.id == null) then false
-  else
-    ($detail_items[.id].plan_only) as $po
-    | ($po == true)
-  end;
+# Effective plan_only flag for a candidate row (`.` = the backlog row
+# object). FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE,
+# 2026-07-16 — see "EFFECTIVE-DISPOSITION GATE" header comment above. Mirrors
+# effective_supervised's OR-based precedence (no `.detail_ref` precondition):
+# a row is effectively plan_only if EITHER the inline board `.plan_only` OR
+# `$detail_items[.id].plan_only` is exactly `true` — never require both.
+# Conservative default: absent/null plan_only in BOTH places = NOT plan-only
+# (promotable).
+def effective_plan_only($detail_items):
+  (.plan_only == true)
+    or ( (.id != null) and (($detail_items[.id].plan_only // false) == true) );
 
-# Non-dev detail next_agent + null board next_agent for a candidate row
-# (`.` = the backlog row object). FIX-DEVTEAM-BOUNDED1-DETAIL-NEXTAGENT-
-# NONDEV-GATE, 2026-07-12 — see "NON-DEV-NEXT_AGENT GATE" header comment
-# above. Sibling of is_non_dev_owner_unrouted but keys off `next_agent`
-# instead of `owner` — same structure/precedence, different field. Gated
-# ONLY when BOTH conditions hold; conservative default (absent/empty detail
-# next_agent, dev-role detail next_agent, or a non-empty board next_agent) =
-# NOT gated (promotable).
+# Effective plan_only disposition gate for a candidate row (`.` = the
+# backlog row object). FIX-DEVTEAM-BOUNDED1-PLAN-ONLY-GATE, 2026-07-12 —
+# EXTENDED by FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE,
+# 2026-07-16 to delegate to effective_plan_only() (board-OR-detail) instead
+# of reading `$detail_items[.id].plan_only` alone — see
+# "EFFECTIVE-DISPOSITION GATE" header comment above.
+def is_plan_only($detail_items):
+  effective_plan_only($detail_items);
+
+# Effective next_agent for a candidate row (`.` = the backlog row object).
+# FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE, 2026-07-16
+# — see "EFFECTIVE-DISPOSITION GATE" header comment above. Mirrors
+# effective_owner's detail-FIRST / board-FALLBACK precedence (no
+# `.detail_ref` precondition):
+#   1. `$detail_items[.id].next_agent` if present-and-non-empty
+#      (detail-authoritative), ELSE
+#   2. the board-level `.next_agent` (fallback — only reached when detail is
+#      silent/absent), ELSE
+#   3. `""` (conservative default — absent/empty in BOTH places).
+def effective_next_agent($detail_items):
+  (if (.id != null) then $detail_items[.id].next_agent else null end) as $detail_na
+  | if ($detail_na != null) and (($detail_na | type) == "string") and ($detail_na != "") then
+      $detail_na
+    else
+      (.next_agent // "")
+    end;
+
+# Non-dev EFFECTIVE next_agent (detail-authoritative, board-fallback) for a
+# candidate row (`.` = the backlog row object).
+# FIX-DEVTEAM-BOUNDED1-DETAIL-NEXTAGENT-NONDEV-GATE, 2026-07-12 — EXTENDED /
+# GENERALIZED by FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-
+# GATE, 2026-07-16 (see "EFFECTIVE-DISPOSITION GATE" header comment above,
+# which also SUBSUMES FIX-DEVTEAM-BOUNDED1-MAINTLANE-NEXTAGENT-GATE). The
+# prior version additionally required the BOARD row's `.next_agent` to be
+# null/empty before gating — that extra clause is REMOVED here: a row is now
+# gated whenever effective_next_agent() (detail-first, board-fallback) is
+# present-and-non-empty AND does NOT match the dev-role pattern
+# `^dev(-|$)|^developer$` (case-insensitive) — i.e. it is not zone-detect-
+# routable. Sibling of is_non_dev_owner_unrouted but keys off `next_agent`
+# instead of `owner`. Conservative default: absent/empty effective
+# next_agent, OR a dev-role effective next_agent = NOT gated (promotable).
 def is_non_dev_next_agent_unrouted($detail_items):
-  if (.id == null) then false
-  else
-    ($detail_items[.id].next_agent) as $dna
-    | ( ($dna != null) and (($dna | type) == "string") and ($dna != "") ) as $dna_present
-    | if ($dna_present | not) then false
-      else
-        ($dna | test("^dev(-|$)|^developer$"; "i")) as $is_dev_next_agent
-        | if $is_dev_next_agent then false
-          else ((.next_agent // "") == "")
-          end
-      end
-  end;
+  (effective_next_agent($detail_items)) as $na
+  | ( (($na | type) == "string") and ($na != "") ) as $na_present
+  | if ($na_present | not) then false
+    else
+      ($na | test("^dev(-|$)|^developer$"; "i")) as $is_dev_next_agent
+      | (if $is_dev_next_agent then false else true end)
+    end;
 
 if (wip >= 1) then
   .   # BOUNDED-1 GATE: WIP>=1 — refuse to promote (no-op, idempotent re-run-safe)
