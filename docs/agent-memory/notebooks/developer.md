@@ -1,6 +1,20 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-15 | **Cycle:** FIX-COWORK-PREFLIGHT-PRESENCE-CLAIM-GAP (router dispatch, zone=cross-service/scripts)
+**Last updated:** 2026-07-16 | **Cycle:** UC-ASL-P1 (sprint ULTRACODE-AUDIT-FIXALL, auditor-signal-loop-P1)
+
+## Session 2026-07-16 — UC-ASL-P1 (dev-team router dispatch via BOUNDED-1 idle-capacity pickup, zone `cross-service/`) — IN_PROGRESS→REVIEW
+
+**Task:** Ultracode audit `auditor-signal-loop-P1` (CONFIRMED) — system-auditor's Tier-2/3 SKIP-SPAWN gate was self-defeating: `run_tiered_probe()` computed heartbeat age from a timestamp `run_probe()` had JUST written on the same green pass, so age was always ~0, SKIP-SPAWN was unconditional on green, and the "ALL_GREEN + stale heartbeat → SPAWN" branch was dead code since ~2026-07-04 (T2/T3 audits — B-xx freshness, C-01..C-16, D-*, anomaly-task-bridge — silently stopped running).
+
+**Actions taken:** `run_tiered_probe()` now reads `docs/data/auditor-tier<N>-last-healthy.json` BEFORE calling `run_probe()`, computing freshness from that PRE-EXISTING value. `run_probe()` gained an explicit `suppress_heartbeat` positional-flag param (NOT `HEARTBEAT_FILE=/dev/null` — would break mktemp for non-root callers, downgrading every green run to FAILURE, the opposite bug); tier 2/3 calls pass it, so this shell pre-gate no longer authors the heartbeat file itself. `docs/agents/system-auditor/flow/main.md` end-of-cycle (after notebook-commit, before P3 fire-election release) gained a tmp+mv atomic heartbeat write for AUDIT_TIER ∈ {2,3} — the subagent write is now the SOLE authorship path.
+
+**Verification:** `bash scripts/agents-flow/auditor-tier1-probe.test.sh` 91/91 GREEN (was 65; +26: T16/T17/T20/T22 rewritten to pre-seed heartbeat fixtures since self-write is gone, T31/T32 added proving the previously-dead "ALL_GREEN + stale heartbeat → SPAWN" branch is now reachable). `main.md` diff confirmed as an exact 12-line insertion (Write used, not Edit, per the known multiline-strip harness bug; diff-verified after). Decision journal: `sprint-ULTRACODE-AUDIT-FIXALL-developer.md` STEP developer-S6.
+
+**Board:** Moving `task_board.in_progress[UC-ASL-P1]` → `task_board.review[]` (status REVIEW, next_agent=qa) + `.head` synced, via `orch-apply.sh`.
+
+**Scope discipline:** Touched ONLY the 3 assigned files (`auditor-tier1-probe.sh`, `auditor-tier1-probe.test.sh`, `system-auditor/flow/main.md`) + `docs/WORK.md` one-liner + this notebook + decision journal. Verified `register.md` Job 3/4 prompts need no edit (output field names unchanged) and `TE-T06` (pending 787L main.md split) is still BACKLOG — no live collision. Graphify incremental update NOT run this cycle — no Skill-invocation tool available in this dispatch context; `graphify-out/graph.json` already ~2mo stale project-wide independent of this task.
+
+Zone health: `scripts/agents-flow/` + `docs/agents/system-auditor/` — Tier-2/3 heartbeat authorship now correctly split shell-pregate vs subagent; no other drift observed | HEALTHY
 
 ## Session 2026-07-15 — FIX-COWORK-PREFLIGHT-PRESENCE-CLAIM-GAP (router dispatch, zone `cross-service/` = scripts/agents-flow/) — IN_PROGRESS→REVIEW
 
@@ -29,17 +43,3 @@ Zone health: `scripts/agents-flow/` cowork preflight — presence contract now m
 **Scope discipline:** Edited ONLY CLAUDE.md § "2.5 PRE-CLAIM" — left `.claude/skills/dispatch-claim/SKILL.md` untouched (pointer target; brief did not require editing it). Did not touch any peer-dirty files (cowork-team-*.json, notebooks, auditor-state, price_anomaly, signals.db). Did not flip REVIEW→DONE_VERIFIED (qa gate's job).
 
 Zone health: root `CLAUDE.md` — step 2.5 de-bloated this cycle; no other drift observed | HEALTHY
-
-## Session 2026-07-13 — TE-T04 (dev-team BOUNDED-1 auto-pickup, mode=CLEAN, zone `docs/agents/`) — IN_PROGRESS→REVIEW
-
-**Task:** Token-economy audit T-04 (`docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md` § T-04) — strip the `## Example Invocation` tail (100-170L each) from the 6 highest-cadence cowork tool packages (market-watcher/news-scout/alert-commander/unified-agent/qa-responder/digest-predict) — every cron fire re-loads the full package, and 40-55% of each was a verbose second copy of examples already lazy-loadable per-tool in `docs/agents/tools/list/<tool>.md`.
-
-**Actions taken:** Deleted the entire `## Example Invocation` section from all 6 packages, replacing each with the brief's exact 1-line pointer: "Per-tool params + worked example → `docs/agents/tools/list/<tool_name>.md` (lazy-load only when calling an unfamiliar tool)". Left every `## Tools — <agent>` table, Signal Types, Channel Permissions, Task-Lock, and Related Documentation section untouched.
-
-**Verification:** `wc -l` before→after: market-watcher 290→160, news-scout 249→148, alert-commander 211→141, unified-agent 287→175, qa-responder 317→151, digest-predict 349→188 (near brief's projected ranges). `git diff --stat` shows exactly 6 insertions total (the 6 pointer lines) across all 6 files — no table/section content altered. Row-count check (`grep -c "| \`"`) confirms tool tables byte-identical pre/post: 28/22/26/44/20/48 rows unchanged per file. `grep -c "Example Invocation"` = 0 post-edit. This also resolves the brief's flagged drift bug: market-watcher's deleted example passed `get_price_history` a `tickers: [...]` array while the tool table + `tools/list/get_price_history.md` both document a single `code: string` param — `tools/list/get_price_history.md` was already correct (zero diff, no edit needed). Docs-only, no `apps/` code touched → no `bun test`/`tsc` applicable.
-
-**Board:** Moved `task_board.in_progress[TE-T04]` → `task_board.review[]` (status REVIEW, next_agent=qa) + `.head` synced, via `orch-apply.sh` (conservation OK, task_total unchanged at 507). Commits: `2c29f8e73` (6 package edits), `30f8a3c77` (orch-state board move). Decision journal: `sprint-TOKEN-ECONOMY-AUDIT-developer.md` STEP developer-S4.
-
-**Scope discipline:** Touched ONLY the 6 named packages — did not touch `docs/agents/tools/list/*` (pointer targets already correct) or peer-dirty `docs/agents/alert-commander/flow/stage-signals.md` (out of scope, untouched). Did not flip REVIEW→DONE_VERIFIED (QA gate's job).
-
-Zone health: `docs/agents/tools/package/` — 6/6 high-cadence packages de-duplicated this cycle; no other drift observed | HEALTHY

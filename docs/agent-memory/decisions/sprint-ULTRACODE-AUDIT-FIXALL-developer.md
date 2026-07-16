@@ -96,3 +96,15 @@ checkable and closes the false-completion race where log_agent_work(completed)+W
 before the notebook existed for this cycle.
 **why-change:** No change from plan — cycle.md required zero edits (no internal order declared there,
 confirmed by full read); only stage-log-notify.md touched, no scripts/ copy of this sequence exists.
+
+### STEP developer-S6 · developer · 2026-07-16T07:48:07Z
+**task-id:** UC-ASL-P1
+**what-done:** run_tiered_probe() reads tier-N heartbeat BEFORE run_probe("suppress_heartbeat") (new
+flag param); main.md end-of-cycle adds tmp+mv heartbeat write for tier 2/3. T16/17/20/22 pre-seed
+fixtures; T31/32 added (stale/never→SPAWN). 91/91 GREEN.
+**what-considered:**
+- HEARTBEAT_FILE=/dev/null — rejected: mktemp targets /dev/null.tmp.*, fails non-root, opposite bug.
+- Leave T16/17/22 unchanged — rejected: no self-write means 2nd call regresses to SPAWN.
+**why-decision:** Verifier's 4 caveats load-bearing (flag trap, test regression, register.md no-op,
+TE-T06 non-collision) — followed verbatim; Write not Edit, diff-verified.
+**why-change:** No change from plan.
