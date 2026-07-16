@@ -1,0 +1,21 @@
+{
+  "from": "context-bloat-backstop-hook",
+  "to": "claude-manager-helper",
+  "type": "context_bloat_breach",
+  "priority": "high",
+  "createdAt": "2026-07-16T15:56:01Z",
+  "payload": {
+    "file": ".claude/skills/task-lock/SKILL.md",
+    "line_count": 283,
+    "cap": 200,
+    "class": "skill-file",
+    "overage": 83,
+    "action_required": "prune_or_split"
+  },
+  "_processed": {
+    "fingerprint": "f8d34af6d75dfbc8a49808918817ec2760aba3a2848809105149c105a51f7d11",
+    "processedAt": "2026-07-16T15:57:45Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
