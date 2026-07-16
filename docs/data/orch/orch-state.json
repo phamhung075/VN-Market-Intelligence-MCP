@@ -6541,7 +6541,8 @@
         "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#auditor-signal-loop-P6",
         "note": "auditor main.md/init.md/tier1-probe.md mandate a phantom docs/handoffs/DASHBOARD.md with no live consumer, and signal-dashboard SKILL teaches bare temp-then-rename contradicting orch-apply.sh. Purge phantom refs; align write text to orch-apply CAS.",
         "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po"
+        "created_by": "po",
+        "next_agent": "agent-father"
       },
       {
         "id": "UC-SDF-P4",
@@ -6557,7 +6558,8 @@
         "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#state-data-files-P4",
         "note": "drain-signals.js prunes only stamped processed files, leaking ~1,400 unstamped ones. Extend the prune predicate and run a one-time scripted purge (script in scripts/, not /tmp).",
         "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po"
+        "created_by": "po",
+        "next_agent": "developer"
       },
       {
         "id": "UC-SDF-P3",
@@ -6608,7 +6610,8 @@
         "created_by": "po",
         "related": [
           "SYSREMAKE-P2-STRUCTURAL-REMAKE-ROUTE"
-        ]
+        ],
+        "next_agent": "developer"
       },
       {
         "id": "UC-GCP-P4",
@@ -6624,7 +6627,8 @@
         "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#git-ci-publish-P4",
         "note": "Every push (even doc/notebook-only) pays a full tsc, stranding the fleet on unrelated red. Path-filter the pre-push hook: run tsc only when the push touches code paths.",
         "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po"
+        "created_by": "po",
+        "next_agent": "developer"
       },
       {
         "id": "UC-RDL-P7",
@@ -6861,7 +6865,8 @@
         "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P1",
         "note": "SCOPE=verifier Rescope note. Inject AGENT_MEMORY_ROOT at registration-time (agentMemoryUpdateTools.ts:189) NOT module-level (module-level const binds at import -> false-green no-op). beforeEach mkdtemp + set env BEFORE register; afterEach rm + delete env; add a regression assert (no new sessions/ file). Purge pollution BY MD5 CLASS (93 byte-identical stubs today, re-enumerate) + 3 test-artifact files. bun test twice + pnpm check. Test-only behavior; prod unchanged but ships in mcp-server -> ops-gated swap.",
         "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po"
+        "created_by": "po",
+        "next_agent": "dev-mcp-server"
       },
       {
         "id": "UC-MDH-P2",
