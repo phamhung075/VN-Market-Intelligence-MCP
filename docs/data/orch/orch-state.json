@@ -374,8 +374,8 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "router",
-    "updated_at": "2026-07-16T13:07:42Z",
-    "updated_by": "developer (UC-SDF-P4 → REVIEW)"
+    "updated_at": "2026-07-16T13:40:37Z",
+    "updated_by": "developer (UC-GCP-P2 → REVIEW)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6567,26 +6567,6 @@
         "created_by": "po"
       },
       {
-        "id": "UC-GCP-P2",
-        "type": "FIX",
-        "title": "Untrack machine-written state (signals.db, runtime logs, test debris) + gitignore policy for the machine-state plane",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "CONFIRMED",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#git-ci-publish-P2",
-        "note": "signals.db + runtime logs + test debris are tracked and churn the tree every tick. git rm --cached (*.db already in .gitignore) + add the log/debris patterns, AND edit drain-signals.md MANDATORY-PERSIST-GUARD so the next drain does not try to `git add` the now-ignored signals.db (git refuses ignored paths -> exit1). COORDINATE with SYSREMAKE-P2 RC-GITSTATE (owns tool-usage-stats.json/coverage-state.json) so the two gitignore migrations do not collide; supersedes REJECTED state-data-files-P5.",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "related": [
-          "SYSREMAKE-P2-STRUCTURAL-REMAKE-ROUTE"
-        ],
-        "next_agent": "developer"
-      },
-      {
         "id": "UC-GCP-P4",
         "type": "FIX",
         "title": "Path-filter the pre-push tsc hook: skip full tsc for pushes touching no code",
@@ -8442,8 +8422,8 @@
       "status": "idle",
       "active_task_id": null,
       "next_agent": "router",
-      "updated_at": "2026-07-16T13:07:42Z",
-      "updated_by": "developer (UC-SDF-P4 → REVIEW)"
+      "updated_at": "2026-07-16T13:40:37Z",
+      "updated_by": "developer (UC-GCP-P2 → REVIEW)"
     },
     "ready": [],
     "review": [
@@ -9021,6 +9001,34 @@
         "developer_completed_at": "2026-07-16T13:07:42Z",
         "developer_completed_by": "developer (UC-SDF-P4 resume, redispatch_count=1)",
         "review_note": "Code fix: drain-signals.js §0a-2 mtime fallback for legacy/unstamped processed/ files (spec-first in drain-signals.md); regression test added, 15/15 pass. One-time purge: scripts/audits/purge-legacy-processed-signals.sh — dry-run count 1280 == live deletion count 1280, 2nd run idempotent no-op, inbox untouched. Smoke-tested against isolated scratch copy of the real 49-file inbox + 200-file processed/ backdrop + real signals.db — no FAIL-LOUD, routing/dedup unaffected. Commits: 64cd7edf9 (code+spec+test), b087d30a0 (purge script), plus 1280 processed/ deletions in 64cd7edf9."
+      },
+      {
+        "id": "UC-GCP-P2",
+        "type": "FIX",
+        "title": "Untrack machine-written state (signals.db, runtime logs, test debris) + gitignore policy for the machine-state plane",
+        "status": "REVIEW",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "CONFIRMED",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#git-ci-publish-P2",
+        "note": "signals.db + runtime logs + test debris are tracked and churn the tree every tick. git rm --cached (*.db already in .gitignore) + add the log/debris patterns, AND edit drain-signals.md MANDATORY-PERSIST-GUARD so the next drain does not try to `git add` the now-ignored signals.db (git refuses ignored paths -> exit1). COORDINATE with SYSREMAKE-P2 RC-GITSTATE (owns tool-usage-stats.json/coverage-state.json) so the two gitignore migrations do not collide; supersedes REJECTED state-data-files-P5.",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "related": [
+          "SYSREMAKE-P2-STRUCTURAL-REMAKE-ROUTE"
+        ],
+        "next_agent": "qa",
+        "promoted_at": "2026-07-16T13:28:08Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-16T13:28:17Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "developer_completed_at": "2026-07-16T13:40:37Z",
+        "developer_completed_by": "developer (UC-GCP-P2, dev-team bounded-1 pickup)",
+        "review_note": "Untracked docs/signals/signals.db (git rm --cached; *.db rule .gitignore:7 already applies) + 5 churn session logs (fb-daily-firer(.error).log, fleet-push(.error).log, pm.log) + 13 preflight-lsof-*.log (widened .gitignore:20 preflight-lsof-*.log -> docs/agent-memory/sessions/*.log). Deliberately kept frozen incident-evidence logs tracked (headlock-h1-live-evidence-*, indexlock-race-evidence-*, ops-1912*) per audit non-blocking nit -- verified git only suppresses the ignore rule for already-tracked paths (check-ignore: not-ignored with index, ignored with --no-index), so no negation pattern needed. Appended .test-notebook-prune-debug/ + /scratchpad_*.txt debris patterns. Edited docs/agents/dev-team/flow/drain-signals.md MANDATORY-PERSIST-GUARD to drop signals.db from the commit-path list (kept mtime freshness check) -- verified `git add docs/signals/signals.db` exits 1 pre-fix (git refuses ignored paths), confirming the fix is load-bearing. Scope boundary respected: tool-usage-stats.json + coverage-state.json (SYSREMAKE-P2 RC-GITSTATE) untouched. Self-caught + corrected a pathspec-commit bug mid-task (first commit 476c331d4 silently no-op-d the rm --cached deletions via `git commit -- <pathspec>` re-syncing from worktree; corrective commit c34b7fcc9 fixed it with a bare `git commit -m`, verified via git ls-files + HEAD~1..HEAD diff). Verified: drain-signals.test.js 15/15 PASS (unaffected fixture suite), `bun tsc --noEmit` clean, pre-push hook tsc OK, pushed 40727dc17..c34b7fcc9. DJ-GATE-1: sprint-ULTRACODE-AUDIT-FIXALL-developer.md. qa: verify .gitignore + drain-signals.md diffs match detail_ref git-ci-publish-P2 acceptance (a/b/c), confirm signals.db + the 15 log files stay on disk but untracked, confirm no peer-dirty file was swept, promote to done_verified."
       }
     ],
     "qa": [],
@@ -9040,7 +9048,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-16T12:24:25Z",
+    "last_triaged_at": "2026-07-16T13:28:08Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": []
   },
