@@ -412,15 +412,15 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-16T09:01:25Z",
-    "_updated_by": "cowork-dispatcher",
+    "_updated_at": "2026-07-16T11:50:30Z",
+    "_updated_by": "dev-team",
     "archive": [],
     "rows": [
       {
         "id": "cowork-chef-eod-nonpublish-20260716T0845Z",
         "summary": "chef-eod EOD dish did NOT publish (unified-agent bailed steps 2-8) + published:chef-eod:2026-07-16 marker leaked as false tombstone. RAW-verified 2 planes (no MARKET post >=08:45Z; no synthesis/notebook). Marker blocks manual retry until 07-17.",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "ts": "2026-07-16T09:01:25Z",
         "from": "cowork-team/dispatcher",
         "to": "po",
