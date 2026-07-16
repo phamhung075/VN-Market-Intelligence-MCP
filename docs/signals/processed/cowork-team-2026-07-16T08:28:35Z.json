@@ -1,0 +1,61 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-16T08:28:35Z",
+    "matched_slots": [
+      "chef-intraday",
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "chef-intraday",
+      "alert-commander-market"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "chef-intraday": "cron",
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "chef-intraday": null,
+      "alert-commander-market": null
+    },
+    "last_fired_timestamp": "2026-07-16T08:26:51.177Z",
+    "last_fired_slots": [
+      "chef-intraday",
+      "alert-commander-market"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "08:15",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 0,
+    "signal_backlog": 5,
+    "note": "legacy mode (pressure-state stale_warning:true, isStale Gate 1) — cadence gates bypassed; 2 cron-matched slots fired. chef-intraday silent-exit 0 clusters (per-window marker VN-hour-15 claimed, no MARKET post). alert-commander-market in-flight. cycle_snapshot_promoted:false (UC-SDF-P2 nominal-vs-actual key). dev_head/devq not probed."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-16T08:28:35Z",
+  "_processed": {
+    "fingerprint": "20a3427bc4fe6d180caab85e1c58ad3287e76cbb93fb7d4b33fac88dd7d599e7",
+    "processedAt": "2026-07-16T08:48:49Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
