@@ -192,3 +192,17 @@
 **Simplicity gate:** PASS — Q1 scope clean (single-branch contract, no extra flags), Q2 no single-use abstractions (deps interface mirrors S17's DI convention), Q3 senior-test clean, Q4 ratio <50% overhead.
 
 Committed `35cc8cd56`, pushed on green (PUSH-AUTONOMY-1) — `origin/main == HEAD`, pre-push `tsc OK`.
+
+### STEP dev-mcp-server-S19 · dev-mcp-server · 2026-07-16T09:17:00Z
+**task-id:** CI-RED-da847805-FIX
+**what-done:** Deleted `rag/_deprecated/{embeddings,vectorstore,retriever}.ts` (dead code — repo-wide grep confirmed zero prod imports) + its 5 test files (011/012/013/135/security-sql-injection) whose module-level `@lancedb/lancedb` addon import segfaults bun 1.3.13. Fixed 2 orphaned barrels (`rag/index.ts`, `infrastructure/index.ts`) re-exporting the deleted symbols to zero consumers. Updated stale doc ref.
+**what-considered:**
+- `.skip`-quarantine the crashing test vs delete `_deprecated/` outright — deletion, PO's preferred disposition (dead code, reduces debt vs masking crash)
+- Keep `@lancedb/lancedb` npm dep in package.json vs remove it too — kept: removing needs `bun install`+lockfile regen, unverifiable locally, out of scope for a RED-fix; noted as optional follow-up only
+**why-decision:** repo-wide grep proved zero production consumers of `_deprecated/` AND of both orphaned barrels' deleted export blocks; rag-service's Python `_sanitize`/`_validate_action_code` already supersede the deleted SQL-injection-guard tests — no unique coverage lost.
+**why-change:** No deviation — matches PO's stated disposition exactly.
+
+**Verified:** `bun tsc --noEmit` exit 0. Repo-wide grep: zero remaining `rag/_deprecated` or `@lancedb/lancedb` refs in any test file. Direct rag-consumer siblings (p2-f-rag-http-rewire, 1335-news-pipeline-rag-insert, ddd-1b-rag-http-client, 1107-rag-recency-weight, ALPHA-S2-RAG-FTS-REBUILD-CRON, 1840a-rag-wiring): 32/32 pass. Local `bun test` on the deleted file itself cannot be re-run (that was the crash) — real gate is CI on the new sha.
+**Simplicity gate:** PASS — Q1 net code removal (no new abstractions), Q2 n/a, Q3 n/a (deletion), Q4 debt reduced not added.
+
+Committed `456851797` (parent `c735fe8e3`), pushed — pre-push `tsc OK`. orch-state: `CI-RED-da847805-FIX` IN_PROGRESS→REVIEW, `.head`→idle/qa via `scripts/orch-apply.sh`. CI run to watch: `https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/29486509712` (bun test job, in progress at write time).
