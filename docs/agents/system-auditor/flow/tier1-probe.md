@@ -84,28 +84,15 @@ From `PROBE_OUT` `--- health endpoints ---` section:
 3. **HTTP 000 significance:** in-container HTTP 000 means the event loop is wedged (uvicorn not accepting connections from within the network namespace). This was THE discriminating signal in the A-20 saga — host-side proxies/ports can return 200 while the container event loop is stalled. `000` counts as a fail probe.
 
 4. **Emit on A-20 FAIL:**
+   ```bash
+   bash scripts/emit-audit-signal.sh \
+     --check-id "A-20" \
+     --category-type "signal_feedback" \
+     --severity "WARN" \
+     --summary "pdf-extractor A-20 multi-probe {pass_count}/3 — event-loop stall suspected" \
+     --detail-json '{"title":"A-20 FAIL: pdf-extractor event-loop stall","detail":"pdf-extractor multi-probe failed: {pass_count}/3 probes passed — event-loop stall suspected","service_id":"pdf-extractor","dedup_key":"microservice_degraded:pdf-extractor:A-20"}'
    ```
-   call_tool(server="vn-market", tool="post_agent_signal", arguments={
-     "from_agent": "system-auditor",
-     "to_agent": "po",
-     "signal_type": "signal_feedback",
-     "payload": {
-       "title": "A-20 FAIL: pdf-extractor event-loop stall",
-       "detail": "pdf-extractor multi-probe failed: {pass_count}/3 probes passed — event-loop stall suspected",
-       "check_id": "A-20",
-       "service_id": "pdf-extractor",
-       "severity": "WARN",
-       "dedup_key": "microservice_degraded:pdf-extractor:A-20"
-     }
-   })
-   ```
-   Signal row in orch-state.json `.signal_queue.rows[]` (atomic write, `.signal_queue.rows += [$row]` — NEVER `.signal_queue[N]`):
-   ```json
-   {"id": "sau-{ts}", "ts": "{ISO-UTC}", "from": "system-auditor", "to": "po", "type": "signal_feedback",
-    "summary": "pdf-extractor A-20 multi-probe {pass_count}/3 — event-loop stall suspected",
-    "severity": "HIGH", "status": "NEW", "payload_ref": null}
-   ```
-   After write: POST-WRITE READ-BACK per general E-3 pattern above — assert row id in `.signal_queue.rows[]`; FAIL LOUD + BUG telegram if absent.
+   Paste the verbatim `[emit-signal] OK|SKIP-dedup|OK-escalation-bypass|ABORT ...` marker line into the notebook — this IS the E-1 + E-2 (dedup+Telegram, no longer shared with the general A-xx routing below — each site is now a self-contained script call) + E-3 (signal-row append + POST-WRITE read-back) sequence; the script performs all three internally, including the ANTI-SKIP BUG-channel Telegram on any E-3 write/read-back failure.
 
 5. **Log all three probe results** verbatim in the notebook `### RAW-PROBE:` block for evidence trail.
 
@@ -137,35 +124,15 @@ call_tool(server="vn-market", tool="get_cron_health", arguments={})
 Cross-reference any service reported DOWN with the `--- docker ps -a ---` lines in `PROBE_OUT`.
 
 ## Emit per failure
-```
-call_tool(server="vn-market", tool="post_agent_signal", arguments={
-  "from_agent": "system-auditor",
-  "to_agent": "po",
-  "signal_type": "signal_feedback",
-  "payload": {
-    "title": "<A-xx> FAIL: <service_id>",
-    "detail": "<what failed — cite RAW-PROBE line>",
-    "check_id": "<A-xx>",
-    "service_id": "<id>",
-    "zone": "<zone from system-map>",
-    "zone_owner": "<specialist from zones>",
-    "severity": "CRITICAL|WARN|INFO",
-    "dedup_key": "microservice_degraded:<service_id>:<check_id>"
-  }
-})
-```
-Routing: severity ≥ WARN AND dedup_key not seen last 7d → `send_telegram(channel="bug", message="[system-auditor] {severity}: {summary} — see DASHBOARD.md")`. Always append DASHBOARD.md row for WARN/CRITICAL.
-
-**Step E-3 — SIGNAL ROW (mandatory, runs after E-1, no skip path):**
-Append row to `docs/data/orch/orch-state.json .signal_queue.rows[]` per signal-dashboard SKILL § WRITE (atomic write, MUST use `.signal_queue.rows += [$row]` — NEVER `.signal_queue[N]`):
-```json
-{"id": "sau-{ts}", "ts": "{ISO-UTC}", "from": "system-auditor", "to": "po", "type": "signal_feedback", "summary": "{check_id} FAIL: {service_id} — {severity}", "severity": "{CRITICAL|HIGH|MED}", "status": "NEW", "payload_ref": null}
-```
-**POST-WRITE READ-BACK (mandatory — kills false-green):** After atomic write, assert:
+**EMIT SEQUENCE — single blessed script call (UC-ASL-P2 — replaces the
+old copy-pasted 3-step E-1/E-2/E-3 pseudocode; full contract + markers:
+`scripts/emit-audit-signal.sh` header comment):**
 ```bash
-FOUND=$(jq --arg id "sau-{ts}" '[ .signal_queue.rows[] | select(.id == $id) ] | length' docs/data/orch/orch-state.json 2>/dev/null)
-[ "${FOUND:-0}" -lt 1 ] && echo "[SIGNAL-ROW-ASSERT] FAIL: row NOT in .signal_queue.rows[] — orphan key bug" && <emit BUG telegram> && exit 1
-echo "[SIGNAL-ROW-ASSERT] OK: row confirmed in .signal_queue.rows[]"
+bash scripts/emit-audit-signal.sh \
+  --check-id "<A-xx>" \
+  --category-type "signal_feedback" \
+  --severity "<CRITICAL|WARN|INFO>" \
+  --summary "<A-xx> FAIL: <service_id> — <severity>" \
+  --detail-json '{"title":"<A-xx> FAIL: <service_id>","detail":"<what failed — cite RAW-PROBE line>","service_id":"<id>","zone":"<zone from system-map>","zone_owner":"<specialist from zones>","dedup_key":"microservice_degraded:<service_id>:<A-xx>"}'
 ```
-If FOUND=0 → FAIL LOUD. NEVER log "row written" without this check passing.
-**ANTI-SKIP:** write failure (file locked, jq error) → log `"[SIGNAL-ROW] FAILED: {error}"` + BUG-channel Telegram — do NOT silently continue without the row.
+Paste the verbatim `[emit-signal] OK|SKIP-dedup|OK-escalation-bypass|ABORT ...` marker line into the notebook — this IS the E-1 + E-2 (dedup+Telegram) + E-3 (signal-row append + POST-WRITE read-back) sequence; the script performs all three internally, including the ANTI-SKIP BUG-channel Telegram on any E-3 write/read-back failure. Always append DASHBOARD.md row for WARN/CRITICAL (separate artifact, unaffected by this script call).

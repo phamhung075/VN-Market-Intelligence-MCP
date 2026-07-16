@@ -289,43 +289,18 @@ db.close();
 - NOTE: `deferred_infra` (historical HIST-VPS-BACKFILL, sources gone) and `blocked_pdf_extractor` (Q1-2026 gated on A-20 architect fix) are explicitly excluded — these are non-actionable by design.
 
 ### Emit per stale source (severity ≥ WARN)
-**EMIT SEQUENCE — all three steps are MANDATORY, no step is optional:**
-
-Step E-1: `post_agent_signal` — live contract (from_agent + to_agent + signal_type enum + payload):
-```
-call_tool(server="vn-market", tool="post_agent_signal", arguments={
-  "from_agent": "system-auditor",
-  "to_agent": "po",
-  "signal_type": "signal_feedback",
-  "payload": {
-    "title": "data_stale: <source_id> (<B-xx>)",
-    "detail": "<source_id> stale <elapsed_hours>h (expected cadence <expected_cadence_hours>h, last fetch <last_fetch_ts>)",
-    "check_id": "<B-xx>",
-    "source_id": "<id>",
-    "category": "<category>",
-    "last_fetch_ts": "<ISO-8601>",
-    "expected_cadence_hours": "<from system-map>",
-    "elapsed_hours": "<computed>",
-    "zone_owner": "dev-mcp-server",
-    "severity": "CRITICAL|WARN|INFO",
-    "dedup_key": "data_stale:<source_id>:<check_id>"
-  }
-})
-```
-Step E-2: `send_telegram(channel="bug", ...)` (dedup 7d per dedup_key, severity ≥ WARN).
-Step E-3 — SIGNAL ROW (mandatory, same call as E-1, no skip path):
-Append row to `docs/data/orch/orch-state.json .signal_queue.rows[]` per signal-dashboard SKILL § WRITE (atomic write, MUST use `.signal_queue.rows += [$row]` — NEVER `.signal_queue[N]`):
-```json
-{"id": "sau-{ts}", "ts": "{ISO-UTC}", "from": "system-auditor", "to": "po", "type": "data_stale", "summary": "{source_id} stale {elapsed_hours}h (check {check_id})", "severity": "{CRITICAL|HIGH|MED}", "status": "NEW", "payload_ref": null}
-```
-**POST-WRITE READ-BACK (mandatory — kills false-green):** After atomic write, run:
+**EMIT SEQUENCE — single blessed script call (UC-ASL-P2 — replaces the
+old copy-pasted 3-step E-1/E-2/E-3 pseudocode; full contract + markers:
+`scripts/emit-audit-signal.sh` header comment):**
 ```bash
-FOUND=$(jq --arg id "sau-{ts}" '[ .signal_queue.rows[] | select(.id == $id) ] | length' docs/data/orch/orch-state.json 2>/dev/null)
-[ "${FOUND:-0}" -lt 1 ] && echo "[SIGNAL-ROW-ASSERT] FAIL: row NOT in .signal_queue.rows[] — orphan key bug" && <emit BUG telegram> && exit 1
-echo "[SIGNAL-ROW-ASSERT] OK: row confirmed in .signal_queue.rows[]"
+bash scripts/emit-audit-signal.sh \
+  --check-id "<B-xx>" \
+  --category-type "data_stale" \
+  --severity "<CRITICAL|WARN|INFO>" \
+  --summary "<source_id> stale <elapsed_hours>h (check <B-xx>)" \
+  --detail-json '{"title":"data_stale: <source_id> (<B-xx>)","detail":"<source_id> stale <elapsed_hours>h (expected cadence <expected_cadence_hours>h, last fetch <last_fetch_ts>)","source_id":"<id>","category":"<category>","last_fetch_ts":"<ISO-8601>","expected_cadence_hours":"<from system-map>","elapsed_hours":"<computed>","zone_owner":"dev-mcp-server","dedup_key":"data_stale:<source_id>:<B-xx>"}'
 ```
-If check absent or FOUND=0 → FAIL LOUD. NEVER log "row written" without this check passing.
-**ANTI-SKIP:** if the orch-state write fails (file locked, jq error), log `"[SIGNAL-ROW] FAILED: {error}"` and emit BUG-channel Telegram — do NOT silently continue without the row.
+Paste the verbatim `[emit-signal] OK|SKIP-dedup|OK-escalation-bypass|ABORT ...` marker line into the notebook — this IS the E-1 (`post_agent_signal`) + E-2 (`send_telegram`, 7d dedup, severity-rank escalation bypass) + E-3 (signal-row append + POST-WRITE read-back, CAS-retry ×3) sequence; the script performs all three internally, including the ANTI-SKIP BUG-channel Telegram on any E-3 write/read-back failure. `ABORT ...` → do NOT count this source toward `signals_posted` in the OUTPUT-CONTRACT line.
 
 ---
 
@@ -341,7 +316,17 @@ Example: `[BCTC-EVAL] FPT Q4-2025: stage 3 green→yellow (vn_diacritic_ratio dr
 
 Status semantics: red = hard fail, yellow = soft warning, green = pass.
 
-Also append row to `docs/data/orch/orch-state.json .signal_queue.rows[]` per signal-dashboard skill § WRITE (atomic write, MUST use `.signal_queue.rows += [$row]` — NEVER `.signal_queue[N]`) for any report showing `overall_status = "red"` or any new `"yellow"`. After each append, run the POST-WRITE READ-BACK self-check per signal-dashboard SKILL § WRITE — if row id absent from `.signal_queue.rows[]` → FAIL LOUD + BUG telegram.
+Also, for any report showing `overall_status = "red"` or any new `"yellow"`, append a signal row (UC-ASL-P2 — `--e3-only` mode: no E-1/E-2, matches today's behavior exactly; the distinct unconditional WORK-channel delta post above stays untouched, separate from this row-write):
+```bash
+bash scripts/emit-audit-signal.sh \
+  --check-id "BCTC-EVAL-<ticker>-<period>" \
+  --category-type "bctc_eval_delta" \
+  --severity "<HIGH|MED>" \
+  --summary "<ticker> <period>: stage <N> <stage_name> <old_status>→<new_status>" \
+  --detail-json '{}' \
+  --e3-only
+```
+Paste the verbatim `[emit-signal] OK e3-only ...` (or `ABORT ...`) marker line into the notebook — this IS the signal-row append + POST-WRITE read-back (same anti-false-green check as all E-3 blocks, now enforced inside the script).
 
 After sweep, **hold the snapshot in memory** (compact: `{report_id, ticker, period, overall_status, stage_statuses, computed_at}` per entry) — it will be written as the `BCTC-EVAL-SNAPSHOT:` block inside the end-of-cycle settled notebook write (AC-3). Do NOT write the notebook here. If endpoint returns non-200 → log `[D-BCTC-EVAL] endpoint unavailable — skipping sweep`, set snapshot=nil, continue (non-fatal).
 
@@ -409,11 +394,19 @@ Also inspect the Tier-2 stale-source findings emitted above: any source with `se
      FAIL-LOUD-SKIP if `target_files` is empty — log `"[D-IMPROVE] SKIP {id}: target_files empty"`, continue.
 
   c. Write `docs/improvement-proposals/IMP-{YYYYMMDD}-{slug}.md` (path-explicit).
-     Append row to `docs/data/orch/orch-state.json .signal_queue.rows[]` per signal-dashboard SKILL § WRITE (atomic write, MUST use `.signal_queue.rows += [$row]` — NEVER `.signal_queue[N]`):
-     ```json
-     {"id": "{id}", "ts": "{ts}", "from": "system-auditor", "to": "po", "type": "improvement_proposal", "summary": "{summary ≤120 chars}", "severity": "INFO", "status": "NEW", "payload_ref": "{proposal-path}"}
+     Signal-row append (UC-ASL-P2 — `--e3-only` mode: no E-1/E-2, matches
+     today's behavior exactly; full contract: `scripts/emit-audit-signal.sh`
+     header comment):
+     ```bash
+     bash scripts/emit-audit-signal.sh \
+       --check-id "{id}" \
+       --category-type "improvement_proposal" \
+       --severity "INFO" \
+       --summary "{summary ≤120 chars}" \
+       --detail-json '{}' \
+       --e3-only
      ```
-     **POST-WRITE READ-BACK (mandatory):** assert row `{id}` is in `.signal_queue.rows[]` after write; if absent → FAIL LOUD + BUG telegram (same pattern as all E-3 blocks).
+     Paste the verbatim `[emit-signal] OK e3-only ...` (or `ABORT ...`) marker line into the notebook — this IS the signal-row append + POST-WRITE read-back (same anti-false-green check as all E-3 blocks, now enforced inside the script). NOTE: the script's generic row shape sets `payload_ref: null` (proposal traceability lives in the `docs/improvement-proposals/IMP-{id}.md` doc itself, filed at step c above, not in the dashboard row) and auto-derives the row `id` from `--from-agent` — it no longer literally equals `{id}`.
      **Commit (mutex-guarded):** → skill: `.claude/skills/commit-mutex/SKILL.md`
      own_paths: [`docs/improvement-proposals/IMP-{YYYYMMDD}-{slug}.md`, `docs/data/orch/orch-state.json`]
      intent: `"chore(improve): D-IMPROVE emit {id}"`
@@ -590,42 +583,18 @@ call_tool(server="vn-market", tool="get_alerts", arguments={limit: 100})
 Cross-reference results with C-08 (orphaned alerts). BCTC coverage (C-03/C-04) verified via DB queries above.
 
 ### Emit per failing check (severity ≥ WARN)
-**EMIT SEQUENCE — all three steps are MANDATORY, no step is optional:**
-
-Step E-1: `post_agent_signal` — live contract (from_agent + to_agent + signal_type enum + payload):
-```
-call_tool(server="vn-market", tool="post_agent_signal", arguments={
-  "from_agent": "system-auditor",
-  "to_agent": "po",
-  "signal_type": "signal_feedback",
-  "payload": {
-    "title": "db_integrity_breach: <table> (<C-xx>)",
-    "detail": "<description> — actual=<n>, expected=<n>",
-    "check_id": "<C-xx>",
-    "db_id": "<db from system-map>",
-    "table": "<table>",
-    "actual_value": "<n>",
-    "expected_value": "<n>",
-    "zone_owner": "<specialist from zones>",
-    "severity": "CRITICAL|WARN",
-    "dedup_key": "db_integrity_breach:<table>:<check_id>"
-  }
-})
-```
-Step E-2: `send_telegram(channel="bug", ...)` (dedup 7d per dedup_key).
-Step E-3 — SIGNAL ROW (mandatory, runs immediately after E-1, no skip path):
-Append row to `docs/data/orch/orch-state.json .signal_queue.rows[]` per signal-dashboard SKILL § WRITE (atomic write, MUST use `.signal_queue.rows += [$row]` — NEVER `.signal_queue[N]`):
-```json
-{"id": "sau-{ts}", "ts": "{ISO-UTC}", "from": "system-auditor", "to": "po", "type": "db_integrity_breach", "summary": "{table} check {check_id} failed (actual={actual_value})", "severity": "{CRITICAL|HIGH}", "status": "NEW", "payload_ref": null}
-```
-**POST-WRITE READ-BACK (mandatory — kills false-green):** After atomic write, run:
+**EMIT SEQUENCE — single blessed script call (UC-ASL-P2 — replaces the
+old copy-pasted 3-step E-1/E-2/E-3 pseudocode; full contract + markers:
+`scripts/emit-audit-signal.sh` header comment):**
 ```bash
-FOUND=$(jq --arg id "sau-{ts}" '[ .signal_queue.rows[] | select(.id == $id) ] | length' docs/data/orch/orch-state.json 2>/dev/null)
-[ "${FOUND:-0}" -lt 1 ] && echo "[SIGNAL-ROW-ASSERT] FAIL: row NOT in .signal_queue.rows[] — orphan key bug" && <emit BUG telegram> && exit 1
-echo "[SIGNAL-ROW-ASSERT] OK: row confirmed in .signal_queue.rows[]"
+bash scripts/emit-audit-signal.sh \
+  --check-id "<C-xx>" \
+  --category-type "db_integrity_breach" \
+  --severity "<CRITICAL|WARN>" \
+  --summary "<table> check <C-xx> failed (actual=<actual_value>)" \
+  --detail-json '{"title":"db_integrity_breach: <table> (<C-xx>)","detail":"<description> — actual=<n>, expected=<n>","db_id":"<db from system-map>","table":"<table>","actual_value":"<n>","expected_value":"<n>","zone_owner":"<specialist from zones>","dedup_key":"db_integrity_breach:<table>:<C-xx>"}'
 ```
-If check absent or FOUND=0 → FAIL LOUD. NEVER log "row written" without this check passing.
-**ANTI-SKIP:** if the orch-state write fails (file locked, jq error), log `"[SIGNAL-ROW] FAILED: {error}"` and emit BUG-channel Telegram — do NOT silently continue without the row.
+Paste the verbatim `[emit-signal] OK|SKIP-dedup|OK-escalation-bypass|ABORT ...` marker line into the notebook — this IS the E-1 + E-2 + E-3 sequence; the script performs all three internally, including the ANTI-SKIP BUG-channel Telegram on any E-3 write/read-back failure. `ABORT ...` → do NOT count this check toward `signals_posted` in the OUTPUT-CONTRACT line.
 
 ### Tier-3 Roll-Up Signal
 ```
