@@ -149,3 +149,17 @@ zero ABORT markers, row read-back confirmed both times, sanity-reconfirmed the e
 closed (raw call still rejects), and cleanup left orch-state.json byte-identical to pre-repro state —
 this is the decisive, non-mockable proof the round-1 defect is closed.
 **why-change:** No change from plan — fix matched recommended option (a) exactly; all checks green.
+
+### STEP qa-S6 · qa · 2026-07-16T09:58:00Z
+**task-id:** UC-ASL-P1
+**what-done:** Independently re-ran `auditor-tier1-probe.test.sh` (91/91 green); RAW-diffed
+ba1524e9f — confirmed `suppress_heartbeat` is a real positional-arg flag (not
+`HEARTBEAT_FILE=/dev/null`), `run_tiered_probe()` reads `pre_existing_lh` before calling
+`run_probe("suppress_heartbeat")`, system-auditor/flow/main.md end-of-cycle authors the tier-2/3
+heartbeat (tmp+mv, gated `AUDIT_TIER∈{2,3}`), T31/T32 exercise the previously-dead
+stale-heartbeat→SPAWN branch. No process.env/secrets/eval-of-external-data/unquoted expansion.
+**what-considered:**
+- register.md (cron-detect-loop) — confirmed no edit needed: exit-code/JSON contract unchanged
+- commit scope — diffed e3f2b5a94..f691ad44d: exactly 7 files, zero overlap with 109 pre-existing dirty peer files
+**why-decision:** All 4 mandated caveats verified against RAW diff, not summary; dead branch now reachable (T31/T32 pass on real code path).
+**why-change:** no change from plan — APPROVED.
