@@ -34,3 +34,9 @@ Insider: no activity | Brief action: Reduce | Anomaly: YES (4.33% single-day dro
 **[Market Watcher] 16:07 UTC**
 Close: 13,200 VND | Change: -0.38% daily | RSI: N/A | Volume: 10.42M (-25.8% avg) | YoY: N/A | Regime: NEUTRAL
 Insider: no activity | Brief action: Watch | Anomaly: NO (recovery within tight range; sector stabilization pattern)
+
+## EOD 2026-07-16
+
+**[Market Watcher] 16:08 UTC**
+Close: 12.650 VND | Change: +6.75% daily | RSI: N/A | Volume: High FII buying (~4M shares) | YoY: N/A | Regime: NEUTRAL
+Insider: no activity | Brief action: Watch — FII accumulation on real estate dip; external capital inflow positive signal

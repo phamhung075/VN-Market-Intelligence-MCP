@@ -17,6 +17,9 @@ RAM/Chip price strength forecast positive for margin expansion + 48T VND cash de
 ### 2026-05-09
 NEUTRAL Shark fund 28T VND holding announcement — significant institutional stake signal | YoY: Sustained positive positioning from Apr 27
 
+### 2026-07-15
+BULLISH Bach Hoa Xanh daily store expansion (3.5 units/day system-wide) accelerates retail growth footprint | YoY: Sustained positive momentum from May
+
 ## [Market Watcher] Price, Volume, Technicals
 2026-05-18 16:00 | Close: 79.000 VND | RSI: N/A | Vol: N/A | YoY: N/A | Anomaly: -3.66% largest EOD loser, retail weakness in TIGHTENING regime
 2026-06-01 08:59 | Close: 79,100 VND (+3.67%) | RSI: N/A | Vol: N/A | YoY: N/A | Note: Bullish retail momentum vs sector (+0.25% avg)

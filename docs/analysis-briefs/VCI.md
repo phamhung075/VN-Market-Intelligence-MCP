@@ -5,6 +5,7 @@
 
 ## [News Scout] Headlines & Sentiment
 2026-07-03 | Securities issuance macro support — national policy tailwind for securities sector (4/10 cascade from macro) | YoY: Positive policy environment
+2026-07-15 | BEARISH Market-wide downside (900+ stocks declining) pressures securities sector sentiment amid profit-taking | YoY: Reversal from July 3 policy support
 
 ## [Market Watcher] Price, Volume, Technicals
 2026-05-12 16:00 | Close: 25,500 VND | RSI: N/A | Vol: 6.73M (145% avg) | YoY: N/A

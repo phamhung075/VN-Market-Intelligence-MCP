@@ -13,6 +13,7 @@
 ## [News Scout] Headlines & Sentiment
 2026-07-01 | Q2 earnings forecast bullish (9/10) — analyst consensus upgrades 68 companies including BID; banking sector tailwind | YoY: N/A
 2026-07-02 | Q2 earnings consensus strong (9/10) + FED/macro easing context — banking exposure to policy softening | YoY: N/A
+2026-07-15 | NEUTRAL CTG chairman prosecution creates temporary banking sector headwind; broader earnings strength sustained | YoY: Earnings momentum from July 2 preserved
 
 ---
 
@@ -42,3 +43,4 @@ Banking sector pressure continuing. Moderate decline, watch for support levels.
 
 ## [Market Watcher] EOD Updates
 2026-07-02 16:00 | Close: 42,550 VND | RSI: 52 | Vol: 2.98M (-8.5% avg) | YoY: +1.8% | Regime: Neutral
+2026-07-16 16:08 | Close: 39.300 VND | Change: -0.51% daily | RSI: N/A | Volume: Standard | YoY: N/A | Regime: NEUTRAL | Brief action: Hold — Banking sector showing FII rotation to FDI-sensitive names amid Q2 earnings strength

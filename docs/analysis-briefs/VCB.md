@@ -55,3 +55,7 @@ Signal: fundamental_validation #7942 | Confidence: 0.75 | Critic: 0.8
 2026-07-02 16:00 | Close: 62,100 VND | RSI: 48 | Vol: 2.74M (-3.2% avg) | YoY: +2.5% | Regime: Neutral
 
 2026-07-04 16:00 | Close: 62,000 VND (-0.16%) | RSI: 51.9 | Vol: 2.60M (42.2% of band) | YoY: -0.32% | Trend: Neutral, MA5 near MA20 22,260 vs 61,685; MACD bullish histogram +73; price 66.6% of BB band. Monitor support at MA50 61,698. Regime: NEUTRAL
+
+2026-07-13 16:00 | Close: 59.400 VND | RSI: 33.9 | Vol: 5820000 (71.4% avg) | YoY: -12.3% | Status: Oversold (BB-20.7%), banking sector weakness from rate cycle, hold
+
+2026-07-16 16:08 | Close: 59.400 VND | Change: +0.34% daily | RSI: N/A | Volume: Standard | YoY: N/A | Regime: NEUTRAL | Brief action: Hold — VCB stabilizing after Q2 earnings beat; banking sector recovery on policy outlook

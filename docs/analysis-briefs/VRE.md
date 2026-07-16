@@ -11,3 +11,5 @@
 2026-05-14 16:00 | Close: 34,150 VND | RSI: N/A(16c) | Vol: 706.8K (N/A% avg) | YoY: N/A
 2026-06-03 16:00 | Close: 30.050 VND | RSI: N/A | Vol: N/A | YoY: -35.4% | Action: Watch — real estate REIT distress cluster (VRE/VIC/NVL -3~4%)
 2026-06-04 16:00 | Close: 31.100 VND | RSI: N/A | Vol: 3.98M | YoY: -10.25% (30d) | Anomaly: +3.49% recovery bounce, sector stabilizing
+
+2026-07-13 16:00 | Close: 25.450 VND | RSI: 29.2 | Vol: 8900000 (101.2% avg) | YoY: -22.1% | Status: Oversold (BB-20.1%), high volume selloff, sector headwinds persist, reduce exposure

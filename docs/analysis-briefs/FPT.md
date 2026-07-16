@@ -45,3 +45,14 @@ Close: 72,500 VND | Daily: -0.55% | RSI: 42 | Volume: 5.69M (+2.1% avg) | YoY: -
 
 **[Market Watcher] 16:05 UTC**
 Close: 72,300 VND | Daily: -0.28% | RSI: N/A | Volume: 7.49M (103.3% avg) | YoY: -4.99% | Trend: Consolidating below MA5 72,409; MACD mixed, BB lower band 70,200 support. Tech sector headwinds persist (30d return -4.99%). Sentiment: Neutral | Brief action: Hold, monitor MA support | Regime: NEUTRAL
+
+## EOD 2026-07-13
+
+**[Market Watcher] 16:16 UTC**
+Close: 70.900 VND | Daily: +0.42% | RSI: 42.7 | Volume: 3240000 (78.5% avg) | YoY: 8.7% | Status: Tech sector resilience, +0.42% vs market -1.8%, earnings strength, hold, accumulate on dips | Regime: NEUTRAL
+
+## EOD 2026-07-16
+
+**[Market Watcher] 16:08 UTC**
+Close: 68.000 VND | Change: +1.80% daily | RSI: N/A | Volume: Standard | YoY: N/A | Regime: NEUTRAL
+Brief action: Hold — Tech sector positive despite Q2 revenue headwinds; AI narrative recovery supporting sector

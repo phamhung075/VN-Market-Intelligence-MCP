@@ -44,3 +44,4 @@ Action: Reduce / Monitor support levels
 
 ## [Market Watcher] EOD Updates
 2026-07-02 16:00 | Close: 150,400 VND | RSI: 55 | Vol: 2.22M (-12.3% avg) | YoY: +0.8% | Sentiment: Neutral | Brief action: Hold (modest daily gain, real estate sector stable) | Regime: NEUTRAL
+2026-07-16 16:08 | Close: 142.800 VND | Change: +5.00% daily | RSI: N/A | Volume: High FII buying | YoY: N/A | Regime: NEUTRAL | Brief action: Watch — real estate sector recovery led by FII accumulation on Vingroup group
