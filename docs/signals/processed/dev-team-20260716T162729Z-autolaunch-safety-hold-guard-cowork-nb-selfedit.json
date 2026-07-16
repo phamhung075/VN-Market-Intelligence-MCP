@@ -1,0 +1,43 @@
+{
+  "from": "dev-team",
+  "to": "po",
+  "type": "autolaunch_safety_hold",
+  "severity": "medium",
+  "dedup_key": "autolaunch_safety_hold:GUARD-COWORK-NOTEBOOK-AGENTS-SELF-EDIT-FLOW-DOC:architect-nextagent-nonroutable-v1",
+  "created_at": "2026-07-16T16:27:29Z",
+  "payload": {
+    "withheld_task_id": "GUARD-COWORK-NOTEBOOK-AGENTS-SELF-EDIT-FLOW-DOC",
+    "tick": "2026-07-16T16:07Z",
+    "mechanism": "7th (predicted un-named) — non-null, non-zone-routable BOARD next_agent + NO backlog-detail entry + PLAN-ONLY expressed only in the unstructured title. Sibling of the 6th mechanism (maintenance-lane next_agent) but the target here is dev-core 'architect', which the in-flight FIX-DEVTEAM-BOUNDED1-MAINTLANE-NEXTAGENT-GATE does NOT cover (architect is not in the maintenance roster).",
+    "board_row": {
+      "status": "BACKLOG",
+      "priority": "P1",
+      "type": "FIX",
+      "size": "M",
+      "zone": ".claude/agents/",
+      "owner": null,
+      "next_agent": "architect",
+      "supervised": null,
+      "created_by": "po (triage-signals cow-20260715T201730)",
+      "title": "PLAN-ONLY: alert-commander (notebook-only-write agent that holds Edit) self-edited its own flow doc stage-bootstrap.md -- declarative 'No other filesystem writes permitted' boundary is unenforceable while the agent holds Edit; recurrence guard needed (edit reverted pre-commit; its same-shape claim was FALSE)"
+    },
+    "detail_entry": "ABSENT — no backlog-detail.json .items[] entry for this id (verified: .items is an array, no element with .id==this row).",
+    "why_withheld": [
+      "GROUND 1 (sufficient alone): PLAN-ONLY design task per the title — designing a recurrence guard for an unenforceable declarative write-boundary is architect judgment, not an autonomous self-contained dev code-fix. BOUNDED-1 idle auto-pickup is for committed, self-contained dev fixes.",
+      "GROUND 2 (sufficient alone): next_agent='architect' is not zone-detect-routable. The BOUNDED-1->execute-tier path re-derives the specialist from ZONE (main.md L512/L519); zone-detect (.claude/skills/zone-detect/SKILL.md) yields only dev-<svc> (needs apps/<svc>/ zone) or 'developer' (Tier-3). zone '.claude/agents/' has no apps/<svc>/ match -> Tier-3 'developer' misroute -> an architect PLAN-ONLY design task would launch as a dev code-fix."
+    ],
+    "why_gates_silent": "board next_agent='architect' is NON-NULL, so the NON-DEV-NEXT_AGENT gate (a0c56d989, fires only when board next_agent is null/empty) stays silent. No backlog-detail entry, so the plan_only / DEFERRED* / non-dev-owner / non-dev-next_agent DETAIL gates all read nothing and stay silent. PLAN-ONLY lives only in the unstructured title string, which no gate parses. Result: dry-run promote picks this row (ready[]=[this]).",
+    "po_options": [
+      "(a) STOPGAP (recommended, ends churn now): stamp supervised:true on GUARD-COWORK-NOTEBOOK-AGENTS-SELF-EDIT-FLOW-DOC only -> removes it from idle auto-pickup so next tick's BOUNDED-1 picks a genuinely dev-routable band row; then deliberate architect dispatch for the PLAN-ONLY guard design.",
+      "(b) DURABLE (recommended durable): rather than a 6th sibling select(), fold into the consolidation directive — one is_detail_non_autodispatchable predicate that withholds ANY effective board-OR-detail next_agent that is NOT zone-detect-routable (not developer / dev-<svc>), covering architect/ba/pm/agents-architect AND the maintenance roster in one check. This subsumes the in-flight FIX-DEVTEAM-BOUNDED1-MAINTLANE-NEXTAGENT-GATE scope.",
+      "(c) MINIMAL: add a backlog-detail entry for this row with plan_only:true (+ owner/next_agent=architect) so the EXISTING plan_only gate catches it — closes this one row but not the class."
+    ],
+    "router_state": "WITHHELD. Live docs/data/orch/orch-state.json UNTOUCHED (dry-run to scratchpad only, never via orch-apply.sh). No specialist spawned. head remains idle/router. SF-1 + fire-election for tick 2026-07-16T16:07Z released at Session Exit. PO re-spawn skipped this tick (only otherwise-pending input is a non-actionable cowork-fire telemetry record; this hold signal makes next tick's inputs non-identical and drains to PO then)."
+  },
+  "_processed": {
+    "fingerprint": "6cac679aaaa46b003ed789b7ee4324234c4066c9f333f4c087480a3a80f14086",
+    "processedAt": "2026-07-16T16:50:17Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
