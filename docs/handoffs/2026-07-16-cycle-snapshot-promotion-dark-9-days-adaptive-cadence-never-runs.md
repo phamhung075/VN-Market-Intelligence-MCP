@@ -1,9 +1,39 @@
 # cycle-snapshot promotion has been DARK for 9 days — the freshness gate false-positives on fresh data, and adaptive cadence never runs on the ticks that matter
 
+> ## ⚠️ 2026-07-16T01:05Z — THIS WAS LARGELY ALREADY KNOWN. Read this box before the body.
+>
+> **This document is NOT a discovery. It re-derives work that already existed**, filed ~5 h earlier
+> and tracked in the backlog. I wrote the body below unaware of all three:
+>
+> | Prior art | Status | Overlap |
+> |---|---|---|
+> | `docs/handoffs/2026-07-15-cycle-snapshot-latest-promotion-dark.md` (committed `f5b700ec1`, 19:51Z) | filed | Same root, same consequence, same `stale_warning`→legacy compounding |
+> | `UC-SDF-P2` — *"Diagnose: cycle-snapshot-latest.json promotion silently dead since 2026-07-07"* | **BACKLOG** | Literally this |
+> | `SPIKE-TICK-SNAPSHOT-DEADCODE-OR-REGRESSED` — *"stale since 06-17 — genuinely inert"* | **BACKLOG** | Same surface |
+>
+> **Signal row `cow-20260716T005400` has been downgraded MED→INFO, type `defect`→`diagnosis`, and
+> re-pointed to fold into UC-SDF-P2.** Do not triage it as a new defect. Second time in one session
+> I minted a row without a pick-time backlog pre-verify (cf. the `FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE`
+> P1 minted this morning on an already-fixed premise) — `project_bounded1_first_pickup_stale_backlog_hygiene_debt`.
+>
+> **What survives as genuinely additive — three things:**
+> 1. **The diagnosis UC-SDF-P2 asks for is now CLOSED.** The 07-15 handoff explicitly says *"Do not
+>    treat the hypothesis as diagnosed… the tool's promotion source path was not read."* I read it.
+>    §2 below confirms it at source: the gate joins `cycle-snapshot-${tickHHMM}.json` with `tickHHMM`
+>    from `tick_id`; `tick-snapshot.md:40,43` names by `FILE_TICK=$(date -u +%H:%M)` — actual fire
+>    time. They agree only at zero drift. **Hypothesis → confirmed.**
+> 2. **The no-date-in-key bug (§2 Bug 2)** — nobody else had this. It is why the miss is *silent*
+>    rather than merely absent: a 43-day-old `00:00` file is found and aged past 4 h.
+> 3. **§4-NEW below — a scope-breaker that falsifies BOTH handoffs.**
+>
+> **What the 07-15 handoff has that I lacked:** it *answers* my §7 "not measured: what else reads
+> `-latest.json`". Its §30-31 enumerates them — cowork agents read `cycle-snapshot-<HH:MM>.json`, not
+> `-latest.json` (`.claude/skills/cycle-bootstrap/SKILL.md:59`). **Published market content is not
+> serving stale data.** My §7 open item is closed, and the blast radius is *smaller* than I implied.
+
 **Detected:** 2026-07-16T00:50Z by the cowork-team dispatcher, chasing an unexplained `stale_warning`
 pattern across 7 consecutive emits.
-**Status:** PLAN-ONLY. **Severity: MED-HIGH** — a shipped feature (DWF-PHASE1 adaptive cadence) is
-inert in production and the flag that would reveal it reads as a routine mode hint.
+**Status:** PLAN-ONLY. **Severity: MED-HIGH → INFO/diagnosis** (duplicate; folds into UC-SDF-P2).
 
 ## 1. CONFIRMED — `cycle-snapshot-latest.json` has not been promoted since 2026-07-07
 
@@ -91,6 +121,62 @@ That memory (15 days old; its own reminder warns code claims may be outdated) st
 
 The memory's **primary** claim is verified and still true: `isStale()` is an OR and Gate 1
 short-circuits (`cadence-policy.js:120-132`). Only the mechanism paragraph is false.
+
+## 4-NEW. SCOPE-BREAKER — fixing promotion will NOT restore the adaptive loop. Both handoffs are wrong about this.
+
+Discovered 01:05Z, after the body above was written. **This is the one part of this document that is
+not duplicate work, and it invalidates the fix scope of UC-SDF-P2 as currently written.**
+
+Both handoffs assert the same causal chain. The 07-15 one (§42-44):
+
+> Because promotion never fires, both [`last_regime`, `last_volatility_level`] are pinned to
+> `"unknown"` every tick… **The adaptive-cadence feedback loop is structurally dark.**
+
+Mine (§7) said the same, softer: "`last_regime: unknown` … consistent with `telemetry.md:19-20`
+sourcing from it." **We both attributed `unknown` to the promotion outage. That is wrong.**
+
+`telemetry.md:19-20` tells the dispatcher to read `regime_status` / `volatility_level` from
+`cycle-snapshot-latest.json`. **Nothing writes those fields.** Raw evidence:
+
+```
+grep -rn "regime_status" --include='*.ts' --include='*.js' --include='*.go' --include='*.md'  (excl. docs/data/)
+  → docs/agents/cowork-team/flow/telemetry.md:19          ← READER (this contract)
+  → docs/handoffs/DWF-DEV-CROSS-3.md:63                   ← READER
+  → docs/handoffs/2026-07-15-…-promotion-dark.md:39       ← READER
+  → apps/mcp-server/src/__tests__/emit-pressure-state.test.ts:744   ← TEST FIXTURE
+  (zero writers)
+```
+
+On disk, **12 of 102** snapshots carry `regime_status` — and every one is from a single window:
+
+| | created_at | regime_status |
+|---|---|---|
+| 12 files (`05:00`…`00:00`) | **2026-06-02 → 06-03** | `FII_OUTFLOW_RISK` |
+| every file since, incl. live `00:05` (written 6 min ago) and `-latest` | 2026-06-05 → **2026-07-16** | **absent** |
+
+The live snapshot has **no `macro_snapshot.signals.carry` block at all** — the nested
+`carry.regime` the old top-level field was derived from is gone too, so the data cannot even be
+re-sourced from a nested path.
+
+**Date of regression: 2026-06-05.** `tick-snapshot.md:4` records it —
+`EMIT-DARK-RECURRING 2026-06-05: cycle-snapshot-latest.json promotion moved to telemetry.md Step 6`.
+The last snapshot carrying `regime_status` is 06-03; the refactor is 06-05. **That refactor moved
+promotion and dropped the two fields from the writer, and the reader contract was never updated.**
+
+**Consequence for triage:** `last_regime` and `last_volatility_level` have been structurally pinned to
+`"unknown"` for **~6 weeks** — three days *before* the 07-07 promotion freeze, and for reasons
+entirely independent of it. Land UC-SDF-P2's key-unification fix and `computeTiers` still derives
+`volatility_tier = low` unconditionally; the adaptive loop stays dark. **UC-SDF-P2 as scoped is
+insufficient — it needs a second work-unit: restore a writer for `regime_status`/`volatility_level`
+(or repoint the reader at whatever now carries regime), and add a test that fails when the reader's
+source field has no writer.** The existing test at `emit-pressure-state.test.ts:744` *constructs*
+`regime_status` in its fixture, so it passes against a schema production never produces — which is
+exactly why 6 weeks passed unnoticed.
+
+This is a **third** independent bug stacked under the same symptom, and the reason two separate
+investigators (07-15 and me) both stopped one layer too early: `unknown` is over-determined. Promotion
+being dark *would* produce it, so both of us stopped when we found a sufficient cause and never
+checked whether it was the *operative* one. Cf. `feedback_composite_score_masks_dead_detector_pruned_table`.
 
 ## 5. Why this went unseen — the flag is read as a mode hint, not as a detector
 
