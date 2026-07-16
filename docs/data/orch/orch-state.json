@@ -373,10 +373,10 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "UC-CRITIC-GATEWAY-CONTRACT-DRIFT",
-    "next_agent": "fixer",
-    "next_action": "PM decomposition complete — single atomic doc-edit task. fixer applies mcp__claude_ai_gateway__ → mcp__gateway__ across 8 files (row.next_action holds the file:line map + L94 collapse note). POST-VERIFY: grep -rn claude_ai_gateway <8 files> must return 0. POST-SHIP PM-action: strike P9/P12 bullets from UC-RDL/UC-CCA SPIKE notes.",
-    "updated_at": "2026-07-16T15:53:06Z",
-    "updated_by": "dev-team (relay head-sync pm→fixer)"
+    "next_agent": "qa",
+    "next_action": "QA validation: RAW-verify all 8 target files reconciled to mcp__gateway__ (grep -rn claude_ai_gateway over the 8 files must return only the L16 do-NOT-use server-string exclusion in gateway-call-contract.md, nothing else); confirm quality-checklist.json valid JSON; confirm no code paths touched. On pass promote UC-CRITIC-GATEWAY-CONTRACT-DRIFT REVIEW→done_verified. POST-SHIP PM-ACTION (after done_verified): strike P9 bullet from UC-RDL-UNVERIFIED-BATCH note + P12 from UC-CCA-UNVERIFIED-BATCH note via orch-apply.sh.",
+    "updated_at": "2026-07-16T16:02:08Z",
+    "updated_by": "dev-team (relay head-sync fixer→qa; top-level authoritative head)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -8338,11 +8338,12 @@
     ],
     "done_verified": [],
     "head": {
-      "status": "idle",
-      "active_task_id": null,
-      "next_agent": "router",
-      "updated_at": "2026-07-16T14:56:13Z",
-      "updated_by": "dev-mcp-server (UC-MDH-P1 → REVIEW)"
+      "status": "in_progress",
+      "active_task_id": "UC-CRITIC-GATEWAY-CONTRACT-DRIFT",
+      "next_agent": "qa",
+      "next_action": "QA validation: verify all 8 target files updated (gateway-call-contract.md L13,30-32,94-collapse; mcp-tools.md L28; task-lock-protocol.md L162; guide-agent-definition-frontmatter.md L23,25; REQ_DYN-WF-FOUNDATION.md L134,332; quality-checklist.json L2347; task-lock/SKILL.md L169; tran-ngoc-bau/bootstrap.md L30). POST-SHIP PM-ACTION: strike P9/P12 from UC-RDL-UNVERIFIED-BATCH/UC-CCA-UNVERIFIED-BATCH notes.",
+      "updated_at": "2026-07-16T15:57:21Z",
+      "updated_by": "fixer"
     },
     "ready": [],
     "review": [
@@ -8998,6 +8999,37 @@
         "developer_completed_at": "2026-07-16T14:56:13Z",
         "developer_completed_by": "dev-mcp-server (UC-MDH-P1, dev-team bounded-1 pickup)",
         "review_note": "agentMemoryUpdateTools.ts:189 (registration-time, already function-scope) memoryDir now = process.env.AGENT_MEMORY_ROOT ?? resolve(getProjectRoot(),...docs/agent-memory). 1300b test beforeEach mkdtemps + sets env BEFORE registerAgentMemoryUpdateTools(); afterEach rm+unset; new regression test asserts zero new files under real sessions/. Purged pollution BY MD5 CLASS re-enumerated live (102 files, not brief stale 93): 36 ops(a003f0cc)+34 developer(35d6330b)+32 qa(35cdf1f8), 84 git rm (tracked) + 18 rm (untracked), plus 3 tracked test-artifact files (issues/patterns/modules test-*.md). Verified: 1300b file 14/14 pass x2 standalone; full bun test run1 14569 pass/46 fail, run2 14568 pass/47 fail -- zero 1300b/agent-memory hits in either fail list (pre-existing flaky class: vps_push_log/insider-tx/OCR-cache/foreign-flow timeouts). git status --porcelain docs/agent-memory/ clean of new files after both full runs. pnpm --filter vn-market check (tsc) exit 0. NOTE: staged+verified exact 89-file set (87 deletions+2 edits) before the 2 full-suite verification runs; a peer dev-team-router housekeeping tick committed during that window (11c35c0a8 chore(tasks): cold-evict...) and its bare git commit -m absorbed the shared index incl. my staged files -- verified via git diff-tree --name-status that commit contains EXACTLY my intended 89 files + the peer own orch-state.json change, no revert/no extra/no missing, HEAD==origin/main (already pushed). Content correct, only that commit message/trailer does not reference UC-MDH-P1 -- did not amend shared-main history mid-peer-activity (forbidden), documented in decision journal + notebook instead. qa: confirm sandbox test 14/14 pass, confirm zero docs/agent-memory/ pollution regrowth, confirm code diff at 11c35c0a8 matches detail_ref rescope note, promote to done_verified."
+      },
+      {
+        "id": "UC-CRITIC-GATEWAY-CONTRACT-DRIFT",
+        "type": "FIX",
+        "title": "HIGH-RISK: SSOT drift on the most-called primitive — CLAUDE.md mandates mcp__gateway__call_tool while gateway-call-contract.md mandates mcp__claude_ai_gateway__call_tool",
+        "status": "REVIEW",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "CRITIC",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#completeness-critic",
+        "note": "The doc that exists to close 6 gateway call-error classes itself contains error-class #7: two different tool-binding prefixes for the same gateway (CLAUDE.md:50 vs gateway-call-contract.md:13,30-32). Reconcile to the ONE binding the live MCP client actually registers (determine empirically in a session where the gateway is UP), fix the loser doc, and audit §6 degraded-mode gateway-blind de-escalation rules. FIRST-HAND: this PO session hit gateway-blind — BOTH prefixes returned 'no such tool available' (server unreachable), so live-binding determination requires a healthy-gateway session.",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "plan_only": false,
+        "next_agent": "qa",
+        "promoted_at": "2026-07-16T15:26:17Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-16T15:26:17Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "ba_spec_complete": true,
+        "ba_handoff": "docs/handoffs/UC-CRITIC-GATEWAY-CONTRACT-DRIFT-BA-spec.md",
+        "ba_completed_at": "2026-07-16T15:35:18Z",
+        "architect_reviewed": true,
+        "architect_handoff": "docs/handoffs/UC-CRITIC-GATEWAY-CONTRACT-DRIFT-BA-spec.md",
+        "architect_completed_at": "2026-07-16T15:45:36Z",
+        "architect_note": "Ratified BA fix table (6 files) + folded in I11/I14 (2 files, already tracked as P9/P12 inside UC-RDL-UNVERIFIED-BATCH/UC-CCA-UNVERIFIED-BATCH — PM to strike those bullets post-ship). 8-file fix set total, BUILD-STANDARD: not-applicable. Settings-symmetry (FR-5) ruled leave-as-is, no action.",
+        "next_action": "Decomposition complete: single atomic doc-edit task. 8-file fix set (6 BA + 2 folded I11/I14): mcp__claude_ai_gateway__ → mcp__gateway__ in gateway-call-contract.md(L13,30-32,94-collapse), mcp-tools.md(L28), task-lock-protocol.md(L162), guide-agent-definition-frontmatter.md(L23,25), REQ_DYN-WF-FOUNDATION.md(L134,332), quality-checklist.json(L2347), task-lock/SKILL.md(L169), tran-ngoc-bau/bootstrap.md(L30). POST-VERIFY: grep -rn claude_ai_gateway <8 files> must return 0. POST-SHIP PM-ACTION: strike P9/P12 from UC-RDL-UNVERIFIED-BATCH/UC-CCA-UNVERIFIED-BATCH notes via orch-apply.sh."
       }
     ],
     "qa": [],
@@ -9019,39 +9051,7 @@
     },
     "last_triaged_at": "2026-07-16T15:26:17Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "UC-CRITIC-GATEWAY-CONTRACT-DRIFT",
-        "type": "FIX",
-        "title": "HIGH-RISK: SSOT drift on the most-called primitive — CLAUDE.md mandates mcp__gateway__call_tool while gateway-call-contract.md mandates mcp__claude_ai_gateway__call_tool",
-        "status": "IN_PROGRESS",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "CRITIC",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#completeness-critic",
-        "note": "The doc that exists to close 6 gateway call-error classes itself contains error-class #7: two different tool-binding prefixes for the same gateway (CLAUDE.md:50 vs gateway-call-contract.md:13,30-32). Reconcile to the ONE binding the live MCP client actually registers (determine empirically in a session where the gateway is UP), fix the loser doc, and audit §6 degraded-mode gateway-blind de-escalation rules. FIRST-HAND: this PO session hit gateway-blind — BOTH prefixes returned 'no such tool available' (server unreachable), so live-binding determination requires a healthy-gateway session.",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "plan_only": false,
-        "next_agent": "fixer",
-        "promoted_at": "2026-07-16T15:26:17Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-16T15:26:17Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "ba_spec_complete": true,
-        "ba_handoff": "docs/handoffs/UC-CRITIC-GATEWAY-CONTRACT-DRIFT-BA-spec.md",
-        "ba_completed_at": "2026-07-16T15:35:18Z",
-        "architect_reviewed": true,
-        "architect_handoff": "docs/handoffs/UC-CRITIC-GATEWAY-CONTRACT-DRIFT-BA-spec.md",
-        "architect_completed_at": "2026-07-16T15:45:36Z",
-        "architect_note": "Ratified BA fix table (6 files) + folded in I11/I14 (2 files, already tracked as P9/P12 inside UC-RDL-UNVERIFIED-BATCH/UC-CCA-UNVERIFIED-BATCH — PM to strike those bullets post-ship). 8-file fix set total, BUILD-STANDARD: not-applicable. Settings-symmetry (FR-5) ruled leave-as-is, no action.",
-        "next_action": "Decomposition complete: single atomic doc-edit task. 8-file fix set (6 BA + 2 folded I11/I14): mcp__claude_ai_gateway__ → mcp__gateway__ in gateway-call-contract.md(L13,30-32,94-collapse), mcp-tools.md(L28), task-lock-protocol.md(L162), guide-agent-definition-frontmatter.md(L23,25), REQ_DYN-WF-FOUNDATION.md(L134,332), quality-checklist.json(L2347), task-lock/SKILL.md(L169), tran-ngoc-bau/bootstrap.md(L30). POST-VERIFY: grep -rn claude_ai_gateway <8 files> must return 0. POST-SHIP PM-ACTION: strike P9/P12 from UC-RDL-UNVERIFIED-BATCH/UC-CCA-UNVERIFIED-BATCH notes via orch-apply.sh."
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
