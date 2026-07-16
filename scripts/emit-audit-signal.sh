@@ -229,7 +229,7 @@ _run_e1() {
   e1_args=$(jq -n \
     --arg from "$FROM_AGENT" \
     --arg to "$TO_AGENT" \
-    --arg st "$CATEGORY_TYPE" \
+    --arg st "signal_feedback" \
     --argjson payload "$payload" \
     '{from_agent:$from, to_agent:$to, signal_type:$st, payload:$payload}')
 

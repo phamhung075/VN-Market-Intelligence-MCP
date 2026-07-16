@@ -80,6 +80,14 @@ call_count_for() {
   echo "${n:-0}"
 }
 
+e1_signal_type_is() {
+  local expected="$1"
+  local actual
+  # Extract the signal_type value from the last post_agent_signal call in the log
+  actual=$(grep '"signal_type"' "$CALL_LOG" 2>/dev/null | tail -1 | grep -o ': "[^"]*"' | cut -d'"' -f2)
+  [ "$actual" = "$expected" ]
+}
+
 reset_case() {
   : > "$CALL_LOG"
   MCP_CALL_FAIL_TOOL=""
@@ -102,6 +110,7 @@ RC=$?
 ROW_ID=$(printf '%s' "$OUT" | grep -o 'id=[^ ]*$' | cut -d= -f2)
 check "T1 fresh-key exit=0" "$([ "$RC" -eq 0 ] && echo true || echo false)"
 check "T1 fresh-key marker OK" "$(printf '%s' "$OUT" | grep -q '^\[emit-signal\] OK dedup_key=' && echo true || echo false)"
+check "T1 fresh-key E-1 signal_type is valid enum (not raw category_type)" "$(e1_signal_type_is signal_feedback && echo true || echo false)"
 check "T1 fresh-key post_agent_signal called once" "$([ "$(call_count_for post_agent_signal)" -eq 1 ] && echo true || echo false)"
 check "T1 fresh-key send_telegram called once" "$([ "$(call_count_for send_telegram)" -eq 1 ] && echo true || echo false)"
 check "T1 fresh-key ledger written" "$([ -f "$SCRATCH_LEDGER" ] && echo true || echo false)"
