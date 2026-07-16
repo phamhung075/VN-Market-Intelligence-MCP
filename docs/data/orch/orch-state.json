@@ -622,8 +622,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-16T21:00:34Z",
-    "_updated_by": "po-report-triage-20260716",
+    "_updated_at": "2026-07-16T22:07:00Z",
+    "_updated_by": "po-report-triage-20260716T2207Z",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -7678,7 +7678,7 @@
         "type": "SPIKE",
         "mode": "spike",
         "status": "BACKLOG",
-        "priority": "high",
+        "priority": "P0",
         "size": "M",
         "plan_only": true,
         "zone": "multi",
@@ -7696,7 +7696,9 @@
         ],
         "created_at": "2026-07-16T21:00:34Z",
         "created_by": "po-report-triage-20260716",
-        "verify_note": "PLAN-ONLY. RAW-verified readonly probe of live market.db this tick. Prior-art cross-referenced: does not re-mint FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION (done) nor the refine/recycle rows; net-new = infra-rollback verify + dormancy-in-prod + report-storm circuit-breaker."
+        "verify_note": "PLAN-ONLY. RAW-verified readonly probe of live market.db this tick. Prior-art cross-referenced: does not re-mint FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION (done) nor the refine/recycle rows; net-new = infra-rollback verify + dormancy-in-prod + report-storm circuit-breaker.",
+        "converge_note": "PO report-triage 2026-07-16T22:07Z: 3rd RECONCILE-EXHAUSTED duplicate in 2 ticks (3480 VND 2024-Q2, 3481 BSR 2024-Q1, 3482 VIX 2024-Q2). bctcExtractReconcileJob has now walked BACK INTO 2024 quarters => the backlog it is grinding is deep, so the flood is UNBOUNDED (~1 fail-loud report / 30-min tick), each forcing a full router->PO spawn just to archive one duplicate = churn-without-convergence. ESCALATED priority high->P0 to make this the next-worked item. FAST-TRACK AC-3 (bctcExtractReconcileJob emission circuit-breaker) as the FIRST, independently-shippable deliverable AHEAD of the AC-1 infra-rollback verify and AC-2 dormancy-root-cause diagnosis: the circuit-breaker is the ONLY lever that stops the per-tick report-storm churn and it does NOT depend on the diagnosis outcome (it only needs to detect systemic producer-dormancy and batch/summarize/suppress, not one fail-loud per ticker*quarter). AC-1/AC-2 remain in-scope but MUST NOT gate the churn-stopper. Split AC-3 into the follow-up FIX immediately (SPIKE already says 'MINT A FOLLOW-UP FIX') rather than waiting for the full diagnosis timebox.",
+        "converge_by": "po-report-triage-20260716T2207Z"
       }
     ],
     "closed_sprints": [
