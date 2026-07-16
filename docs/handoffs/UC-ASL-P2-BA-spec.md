@@ -249,4 +249,28 @@ Per `.claude/skills/zone-detect/SKILL.md` Tier-2 inference: "Files span >1 zone 
 
 **Scan clean:** true ✓
 
+---
+
+## [QA] Review Record — CHANGES_REQUESTED (round 1)
+
+**QA session:** 2026-07-16T07:50:00Z · Task Report: `reports/TASK_REPORT_UC-ASL-P2.md` · DJ: `docs/agent-memory/decisions/sprint-ULTRACODE-AUDIT-FIXALL-qa.md` §qa-S4
+
+**Tests (RAW-reproduced):** `scripts/emit-audit-signal.test.sh` 48/48, run 6x, 0 flake. `scripts/agents-flow/context-bloat-backstop.test.sh` 2/2. AC-1/AC-2/AC-4/AC-5/AC-6 confirmed PASS.
+
+**AC-3 BLOCKING (file:line):** `scripts/emit-audit-signal.sh:232` — `--arg st "$CATEGORY_TYPE"` feeds `signal_type:$st` into the `post_agent_signal` MCP call. This directly implements this spec's own **FR-2** ("`signal_type=$category_type`") and the Architect's design decision 1, both of which conflate two different fields:
+- the E-3 signal-queue row's free-form `type` field (unconstrained), vs
+- `post_agent_signal`'s `signal_type` **argument**, a closed Zod enum (`apps/mcp-server/src/infrastructure/db/agentSignalStore.ts:39-50`): `urgent_news | price_anomaly | cross_validate | suppress | chain_catalyst | fundamental_validation | price_confirmation | verified_chain | signal_feedback | legal_risk | verified_decision`. Neither `data_stale` nor `db_integrity_breach` is a member.
+
+The pre-refactor code hardcoded `"signal_type": "signal_feedback"` at every E-1 call site (a valid enum member) precisely to avoid this — `--category-type`'s semantic label was previously used ONLY in the E-3 row's `type` field, never as the E-1 transport arg.
+
+**Live-verified, twice:** (1) direct gateway call with `signal_type:"data_stale"` → `MCP error -32602 invalid_enum_value`. (2) the real (unmocked) `scripts/emit-audit-signal.sh`, run against a scratch `orch-state.json` copy, with `main.md:296-302`'s exact site-1 args → `[emit-signal] ABORT e1-failed ...`, `signal_queue.rows` count unchanged (E-3 never reached, per `run_emit_signal`'s `_run_e1 || return 1` short-circuit at script:458).
+
+**Blast radius:** `main.md:298` (Tier-2 `data_stale`) and `main.md:592` (Tier-3 `db_integrity_breach`) — the two highest-frequency audit categories — lose 100% of their signal-queue row + Telegram alert on every real invocation. Sites 3/4 (`--e3-only`, E-1 skipped) and `tier1-probe.md` sites 5/6 (`--category-type "signal_feedback"`, valid enum member, unchanged from legacy) are unaffected.
+
+**Recommended fix (bounded, mechanical — no redesign of FR-3/FR-4/FR-5/CAS-retry/ledger needed):** decouple the two fields inside `_run_e1()` — either (a) hardcode `signal_type: "signal_feedback"` unconditionally for the E-1 transport call (= 100% legacy-behavior match), or (b) add a separate `--signal-type` CLI arg (default `signal_feedback`) so `--category-type` continues to feed only the E-3 row's `type` field + `detail_json` categorization, unchanged.
+
+**Spec note (for BA/architect, not a PO blocker):** FR-2's own wording ("`signal_type=$category_type`") should be corrected in this spec so the conflation isn't re-taught on a future read.
+
+**VERDICT: CHANGES_REQUESTED.** Board NOT promoted to `done_verified` (task + 4 children left as-is). `orch-state.json`/`.head` untouched by QA. No merge, no push.
+
 

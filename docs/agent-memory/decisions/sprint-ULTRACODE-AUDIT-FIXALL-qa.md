@@ -102,3 +102,29 @@ correctly scoped to only the 2 legacy return points, reuses the existing boundar
 duplication), leaves the adaptive path's diff-hunks empty (confirmed via `--stat` hunk count), and the
 doc correction is verifiably true against the Release note in the same file.
 **why-change:** No change from plan — all 8 checks passed on first RAW pass.
+
+### STEP qa-S4 · qa · 2026-07-16T07:50:00Z
+**task-id:** UC-ASL-P2
+**what-done:** RAW-ran `emit-audit-signal.test.sh` 6x (48/48 every time) + `context-bloat-backstop.test.sh`
+(2/2); AC-1/2/4/5/6 all confirmed via diff-review + live grep. Found AC-3 BLOCKING regression: script:232
+feeds `--category-type` (`data_stale`/`db_integrity_breach`) into `post_agent_signal`'s `signal_type` arg,
+a closed Zod enum (agentSignalStore.ts:39-50) that does NOT contain either value — live-probed via real
+gateway call, confirmed `MCP error -32602 invalid_enum_value`; then ran the real (unmocked) script against
+a scratch orch-state copy with main.md's exact site-1 args — `ABORT e1-failed`, signal_queue.rows
+count unchanged (2→2), proving E-3 never reached. Sites 3/4 (`--e3-only`) and tier1-probe.md sites 5/6
+(`signal_feedback`, valid enum member) unaffected. Root cause: FR-2/architect-design-1 conflated the E-3
+row's free-form `type` field with E-1's enum-constrained `signal_type` arg; legacy code hardcoded
+`signal_feedback` for E-1 precisely to avoid this. Verdict: **CHANGES_REQUESTED**.
+**what-considered:**
+- Trust the 48/48 mocked-harness green as sufficient for AC-3 — rejected: `mcp_call()` is stubbed to
+  always succeed regardless of `signal_type`, structurally blind to a real enum-validation rejection;
+  ran the real transport instead (2 independent live calls: raw probe + full unmocked script run).
+- Treat as a developer implementation bug routed straight to fixer only — rejected the "fixer-only"
+  framing: root cause is FR-2's own literal wording, faithfully implemented; flagged to both fixer
+  (bounded mechanical fix) and architect (spec correction) so the record doesn't re-teach the same bug.
+**why-decision:** Static enum read + one live gateway call + one live full-script dry-run (3
+independent, corroborating checks) proves sites 1/2 lose 100% of their signal-queue rows + Telegram
+alerts in production — a severe availability regression the sprint exists to prevent, not caught by
+the (correctly-scoped, network-free) mocked test suite.
+**why-change:** Escalation beyond routine — found a P0 blocking defect the mocked harness cannot see;
+did not promote board, did not touch orch-state.json/.head, did not push.
