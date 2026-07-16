@@ -1,17 +1,5 @@
 # QA — Notebook
 
-## cycle-459 · 2026-07-16 · CI-RED-da847805-FIX — APPROVED (RAW-verified, router promotes)
-
-Gate: `gh run view 29486509712 --json conclusion,headSha,jobs` → `conclusion:"success"`, `headSha` byte-matches fix commit `456851797`, `bun test` job individually `success` (completed 09:19:02Z). `git merge-base --is-ancestor da847805231d0252ed6e092a4f5b4f7d678fed67 456851797...` confirms NEW sha downstream of red, not a same-sha re-run.
-
-Dead-code claim RAW-checked (not badge-trusted): repo-wide grep for real `import`/`require` statements (not comments) referencing `_deprecated`/`@lancedb/lancedb` in `apps/mcp-server/src/**` = zero. Two textual false-leads ruled out: `checkLancedbDrift.ts` (unrelated audit-check, DI'd count fn, doesn't import the deleted module) and `_deprecated/fetchers/reuters.ts` (different unrelated subsystem). `rag/_deprecated/` dir confirmed deleted (`ls` → no such file). `apps/rag-service/` (port 5002, Python) confirmed sole live LanceDB path via `ragHttpClient.ts` base URL + `lancedb` imports in `repositories.py`/`config.py`/tests.
-
-Highest-risk check — security coverage for the deleted `security-sql-injection.test.ts`: read `apps/rag-service/infrastructure/repositories.py:105-134` directly, confirmed `_validate_level`/`_validate_action_code`/`_sanitize` are real live functions applied inside `LanceDBVectorStore`'s query-building path (the active LanceDB boundary) — same guard class as the deleted TS functions, coverage not lost, just relocated to the live boundary.
-
-Own corroboration (non-blocking, cheap): `bun test` on 6 direct rag-consumer sibling files = 40 pass/0 fail/86 expect, zero segfault; own `bun tsc --noEmit` exit 0; `git show --stat 456851797` = exactly 11 files matching dev's described scope 1:1.
-
-VERDICT: APPROVED. Did NOT self-promote review→done_verified (router's job per gate instructions) — did not touch `orch-state.json`/`.task_board`. Task Report: `reports/TASK_REPORT_CI-RED-da847805-FIX.md`. DJ: `sprint-CI-RED-da847805-FIX-qa.md` §qa-S1.
-
 ## cycle-460 · 2026-07-16 · UC-CRITIC-GATEWAY-CONTRACT-DRIFT — PASS, DONE_VERIFIED (doc-only mechanical rename)
 
 RAW-verified fixer commit `2ec39e96c` (mechanical doc-only rename `mcp__claude_ai_gateway__`→`mcp__gateway__`, 8 target files + 1 fixer decision doc, 9 total). `grep -rn claude_ai_gateway` over the 8 target files → exactly 1 hit, `gateway-call-contract.md:16` — the bad-server-**VALUE** exclusion list for the `server=` argument (paired with `vnmarket`/`vn_market`), read in full context, NOT a tool-prefix and correct to keep verbatim. `jq empty quality-checklist.json` exit 0. `git show --name-only 2ec39e96c | grep -E '^(apps|packages|scripts)/'` → zero matches, confirmed zero code paths touched. Read `gateway-call-contract.md` L10-20 directly: L13 now shows the canonical `mcp__gateway__call_tool(server="vn-market", tool="<bare_name>", arguments={...})` block. All 4 gate validations PASS.
@@ -27,3 +15,13 @@ Code-reviewed the diff directly (not just the tests): the pre-existing `bctcVpsS
 Full-suite background reds (1518-foreign-flow timeouts, 1407b-coverage-map `market_messages`) confirmed zero file overlap with the 2 changed files (`bctcFullTools.ts`, `240-bctc-full.test.ts`) — known pre-existing flaky class, not blocking.
 
 VERDICT: APPROVED, DONE_VERIFIED. Board row moved `task_board.review[]`→`done_verified[]` via `jq`+`scripts/orch-apply.sh` (conservation preserved). `.head`/`.task_board.head` kept idle (was already idle). Committed+pushed (carries the 3 unpushed dev commits `00dca96fe`/`22050845b`/`ef60d2964` FF). Task Report: `reports/TASK_REPORT_FR-DEGRADE-01-FIX.md`. DJ: `sprint-FLOW-PRICE-ALPHA-LOOP-qa.md` §qa-S17.
+
+## cycle-462 · 2026-07-16 · FR-OBS-01-FIX — APPROVED, DONE_VERIFIED (mis-channeled alert now hits WORK)
+
+RAW re-ran dev-mcp-server commit `7ce61568e` myself (not trusting 11/0): `bun test 316-bctc-overdue-check.test.ts` = 11 pass/0 fail/39 expect(); also re-ran the 3 cited siblings (1358a/1303i/1050) together = 37 pass/0 fail/116 expect() across 4 files, corroborating the "26/26 across siblings" claim. `bun tsc --noEmit` exit 0. `mock-guard.sh --files bctcOverdueCheckJob.ts schedulerJobTable.ts` PASS.
+
+Read the diff directly: `alerts` insert (`insertAlert.run`) byte-identical pre/post-fix — still feeds `get_alerts` + cascade chain. New WORK-channel send sits INSIDE the same `info.changes>0` guard that gated the alert insert itself (per-week dedup id — 3rd new test proves no double-fire on same-week re-run). `telegram.ts` (home of the shared BUG-only `notifyTelegramAlert`, telegram.ts:592) is NOT in the changed-file list — confirmed `git show --stat` — so the shared HIGH/CRITICAL BUG dispatch for every other alert type is provably untouched, zero regression. `schedulerJobTable.ts` diff confirmed comment-only (cron registration object untouched).
+
+Full-suite: did not re-run 14575 tests (Smart-Skip — scheduler bugfix, no new domain/tool/cross-service); `grep -rl "bctcOverdueCheckJob\|schedulerJobTable" src/__tests__/` against the flaky-class name patterns (vps_push_log/insider-tx/OCR-cache/foreign-flow) → zero matches, structurally corroborating dev's zero-overlap claim.
+
+VERDICT: APPROVED, DONE_VERIFIED. Board row moved `task_board.review[]`→`done_verified[]` via `jq`+`scripts/orch-apply.sh` (conservation preserved). `.head`/`.task_board.head` kept idle. Task Report: `reports/TASK_REPORT_FR-OBS-01-FIX.md`. DJ: `sprint-FLOW-PRICE-ALPHA-LOOP-qa.md` §qa-S18.

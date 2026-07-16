@@ -153,3 +153,12 @@
 - mock-guard on the changed production file only (no fabricated-data pattern risk elsewhere in scope) — PASS exit 0.
 **why-decision:** All gate checks green: tests raw-confirmed (not badge-trusted), tsc clean, mock-guard PASS, DDD/security scan clean (no infra/application import, no process.env, no secrets, parameterized SQL unchanged), no arch concern (pure bugfix threading existing computed values into an existing success path, no new tool/domain/cross-service). APPROVE — promote to done_verified.
 **why-change:** No change from plan.
+
+### STEP qa-S18 · qa · 2026-07-16T19:40:00Z
+**task-id:** FR-OBS-01-FIX
+**what-done:** DJ-GATE-1 pre-check: dev-mcp-server journal §dev-mcp-server-S22 carries this task-id — proceed. RAW re-ran `bun test 316-bctc-overdue-check.test.ts` myself (not trusting dev's 11/0 claim) → 11 pass/0 fail confirmed live; also RAW re-ran the 3 cited sibling files (1358a/1303i/1050) together = 37 pass/0 fail/116 expect() across 4 files, corroborating dev's "26/26 across siblings" claim. `bun tsc --noEmit` exit 0. `mock-guard.sh` PASS.
+**what-considered:**
+- Re-running the full 14575-test suite vs Smart-Skip (targeted+sibling+tsc+mock-guard) — Smart-Skip: scheduler-layer bugfix, no new domain/MCP tool/cross-service; grepped `bctcOverdueCheckJob|schedulerJobTable` against the flaky-class test files (vps_push_log/insider-tx/OCR-cache/foreign-flow) → zero matches, structurally corroborating dev's "zero overlap" claim without a multi-minute full run.
+- Trusting the commit-message root-cause narrative vs reading the actual diff — read `git show 7ce61568e` directly: confirmed the `alerts` insert line is byte-identical (regression-safe, cascade chain intact), the new WORK send sits inside the SAME `info.changes>0` guard, and `telegram.ts` (home of the shared BUG-only `notifyTelegramAlert`) is NOT in the changed-file list — so the shared HIGH/CRITICAL BUG dispatch for every other alert type is provably untouched.
+**why-decision:** All checks green and RAW-confirmed (not badge-trusted): tests pass, tsc clean, mock-guard PASS, DDD/security clean, `schedulerJobTable.ts` diff confirmed comment-only (cron registration untouched), no arch concern. APPROVE — promote to done_verified.
+**why-change:** No change from plan.
