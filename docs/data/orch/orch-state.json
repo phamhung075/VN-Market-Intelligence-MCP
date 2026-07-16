@@ -373,10 +373,10 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "UC-ASL-P1",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of UC-ASL-P1 — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-16T07:34:36Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "next_agent": "qa",
+    "next_action": "developer complete (UC-ASL-P1): Tier-2/3 heartbeat authorship moved to system-auditor subagent end-of-cycle; shell pre-gate reads pre-existing heartbeat before its own checks. 91/91 GREEN. qa: verify against detail_ref auditor-signal-loop-P1, re-run scripts/agents-flow/auditor-tier1-probe.test.sh, confirm dead branch now reachable (T31/T32), promote to done_verified.",
+    "updated_at": "2026-07-16T07:52:48Z",
+    "updated_by": "developer (UC-ASL-P1 impl complete -> REVIEW)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -8973,6 +8973,29 @@
           "idle_baseline_flag": "rag-service idle mem already ~92% of 768m bound with ZERO FTS activity (tight margin, pre-existing, heads-up for ALPHA-S2 retune)."
         },
         "po_triage_note_reverify": "PO TRIAGE 2026-07-15T17:28:38Z (dev-team tick 17:07Z, sig dev-team-20260715T160042Z-rag-corpus-repopulation-scale-reverify): corpus RE-POPULATION CONFIRMED CLIMBING — live GET :5002/embed/health index_size=297 rows now vs 116 @ qa 16:01Z verify (+181 in ~1.5h). Re-embed pipeline ALIVE => NOT stuck-at-116, so NO new bug for dev-rag-service. BUT 297 << ~56k representative scale => AC#1 (no-OOM at ~56k) re-run stays UN-testable now: this row STAYS review, done_verified WITHHELD, blocked_on=rag-corpus-repopulation-to-representative-scale UNCHANGED (TIME-GATED on wall-clock, NOT a dispatch — do NOT force a rebuild against a 116/297-row corpus). GATE to lift WITHHELD (= signal action 2): once corpus ~= representative scale, re-run AC#1 (POST /admin/rebuild-fts under 768m cgroup, docker stats peak-mem, 2x), record real peak-mem => then unblock ALPHA-S2 deadline retune + BM25 round-trip. Heads-up carried: rag-service idle mem ~92% of 768m with ZERO FTS activity (tight margin — ALPHA-S2 retune input). Tech-debt spin-off (signal 2, hybrid max_distance no-op) minted separately as SPIKE-RAG-HYBRID-MAXDISTANCE-NOOP (backlog, P3, non-blocking)."
+      },
+      {
+        "id": "UC-ASL-P1",
+        "type": "FIX",
+        "title": "Fix the self-defeating T2/T3 auditor gate: gate on the PREVIOUS subagent heartbeat; move tier-2/3 heartbeat authorship into the subagent end-of-cycle",
+        "status": "REVIEW",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "CONFIRMED",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#auditor-signal-loop-P1",
+        "note": "The tier-2/3 gate reads a heartbeat the same run just wrote, so it never blocks. Gate on the prior-cycle subagent heartbeat and author the heartbeat in the subagent end-of-cycle.",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "promoted_at": "2026-07-16T07:34:36Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-16T07:34:36Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "status_note": "developer complete: run_tiered_probe() reads tier-N heartbeat BEFORE run_probe(\"suppress_heartbeat\") (new explicit flag, not /dev/null); system-auditor/flow/main.md end-of-cycle now authors the tier-2/3 heartbeat (tmp+mv, after notebook-commit, before P3 release). auditor-tier1-probe.test.sh 91/91 GREEN (T16/17/20/22 updated to pre-seed fixtures; T31/32 new, prove stale-heartbeat->SPAWN branch reachable). Commits ba1524e9f (fix) + b2bdea828 (memory). DJ-GATE-1: sprint-ULTRACODE-AUDIT-FIXALL-developer.md STEP developer-S6. qa: verify diagnosis fix matches brief detail_ref, re-run test suite, confirm no other auditor-tier1-probe.sh callers broken, promote to done_verified."
       }
     ],
     "qa": [],
@@ -8994,29 +9017,7 @@
     },
     "last_triaged_at": "2026-07-16T07:34:36Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "UC-ASL-P1",
-        "type": "FIX",
-        "title": "Fix the self-defeating T2/T3 auditor gate: gate on the PREVIOUS subagent heartbeat; move tier-2/3 heartbeat authorship into the subagent end-of-cycle",
-        "status": "IN_PROGRESS",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "CONFIRMED",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#auditor-signal-loop-P1",
-        "note": "The tier-2/3 gate reads a heartbeat the same run just wrote, so it never blocks. Gate on the prior-cycle subagent heartbeat and author the heartbeat in the subagent end-of-cycle.",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "promoted_at": "2026-07-16T07:34:36Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-16T07:34:36Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
