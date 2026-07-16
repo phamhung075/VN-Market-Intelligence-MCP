@@ -8974,6 +8974,29 @@
       "qa_verified_at": "2026-07-16T18:24:26Z",
       "qa_verified_by": "qa",
       "qa_report": "reports/TASK_REPORT_FR-DEGRADE-01-FIX.md"
+    },
+    {
+      "id": "FR-OBS-01-FIX",
+      "priority": "normal",
+      "size": "S",
+      "status": "DONE_VERIFIED",
+      "title": "Fix FR-OBS-01: Does bctcOverdueCheck alert WORK channel when BCTC PDFs are overdue",
+      "type": "fix",
+      "zone": "dev-mcp-server",
+      "detail_ref": "docs/data/orch/archive/backlog-detail.json#FR-OBS-01-FIX",
+      "promoted_at": "2026-07-16T18:56:22Z",
+      "promoted_by": "dev-team (bounded-1 auto-pickup)",
+      "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+      "claimed_at": "2026-07-16T18:56:22Z",
+      "claimed_by": "dev-team (bounded-1 auto-pickup)",
+      "next_agent": "qa",
+      "developer_completed_at": "2026-07-16T19:26:42Z",
+      "developer_completed_by": "dev-mcp-server (FR-OBS-01-FIX, dev-team bounded-1 pickup)",
+      "review_note": "Root-cause: bctcOverdueCheckJob only inserted a batch `alerts` row (severity=high) and relied on the shared HIGH/CRITICAL dispatch (intelligenceCycleJob Step E -> notifyTelegramAlert), which routes ALL high/critical severities to BUG (telegram.ts:592) -- never WORK. RAW-verified by direct read (not the stale in-file comment claiming \"Alert Commander pipeline\" dispatch). AC answer before this fix: NO -- mis-channeled to BUG, not silently swallowed. Fix: runBctcOverdueCheck now sends an explicit WORK-channel Telegram message (new injectable opts.sendWorkAlertFn, default sendTelegramWork) whenever the batch alert insert is a genuinely NEW row (info.changes > 0 -- existing per-week dedup id already prevents re-firing within the same 7-day epoch). The `alerts` row insert is unchanged (still feeds get_alerts + cascade chain). Mirrors sibling precedent bctcBatchSweepJob.ts (posts its own status directly to WORK). Extended 316-bctc-overdue-check.test.ts with 3 tests: overdue->WORK send, not-overdue->no send, same-week re-run->no re-send (dedup) -- 11/11 pass in-file, 26/26 across 1358a/1303i/1050 siblings. bun tsc --noEmit exit 0. Full-suite bg run: 14575 pass/40 skip/46 fail -- zero overlap with changed files (pre-existing flaky class already documented at UC-MDH-P1/FR-DEGRADE-01-FIX: vps_push_log/insider-tx/OCR-cache/foreign-flow timeouts + 1 deprecated-folder test). Scheduler cron.schedule count A/B via git-stash: 3->3 unchanged; tool count 183 unaffected (no tool/cron added/removed). Commit: 7ce61568e (code+test+docs). qa: RAW-verify the WORK-channel send actually fires by re-running the 3 new tests + confirm sendWorkAlertFn call args contain the overdue ticker/quarter; confirm notifyTelegramAlert's BUG-only routing is unchanged (no regression to other alert types sharing that pipeline); then promote to done_verified.",
+      "qa_verdict": "APPROVED",
+      "qa_verified_at": "2026-07-16T19:41:25Z",
+      "qa_verified_by": "qa",
+      "qa_report": "reports/TASK_REPORT_FR-OBS-01-FIX.md"
     }
   ],
   "closed_sprints": [
