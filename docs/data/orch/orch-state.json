@@ -373,10 +373,10 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "UC-ASL-P2",
-    "next_agent": "pm",
-    "next_action": "Architect design complete (docs/handoffs/UC-ASL-P2-BA-spec.md § [Architect] Brownfield Findings); pm: decompose into atomic dev tasks, zone scripts/+docs/agents/system-auditor/",
-    "updated_at": "2026-07-16T04:43:23Z",
-    "updated_by": "architect (UC-ASL-P2 design complete)"
+    "next_agent": "developer",
+    "next_action": "PM decomposition complete (4 children DEV-1..DEV-4, DAG DEV-1->DEV-2/DEV-3->DEV-4). developer: implement in dep order per docs/handoffs/UC-ASL-P2-PM-decomposition.md + BA-spec.md; zone scripts/+docs/agents/system-auditor/+docs/references/ (generic developer)",
+    "updated_at": "2026-07-16T04:53:32Z",
+    "updated_by": "dev-team (relay advance pm->developer, UC-ASL-P2)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -8471,9 +8471,9 @@
     "head": {
       "status": "in_progress",
       "active_task_id": "UC-ASL-P2",
-      "next_agent": "pm",
-      "last_updated_at": "2026-07-16T04:46:36Z",
-      "last_updated_by": "dev-team (relay advance architect->pm, mirror sync, UC-ASL-P2)"
+      "next_agent": "developer",
+      "last_updated_at": "2026-07-16T04:53:32Z",
+      "last_updated_by": "dev-team (relay advance pm->developer)"
     },
     "ready": [],
     "review": [
