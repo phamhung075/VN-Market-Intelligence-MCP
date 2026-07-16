@@ -1,6 +1,22 @@
 # PO Notebook
 
-_Last: 2026-07-16T22:07Z (dev-team Step-1 triage — archived 1 BCTC reconcile-exhausted dup; ESCALATED the storm SPIKE high->P0 + fast-track circuit-breaker)_
+_Last: 2026-07-16T22:37Z (dev-team tick — CLOSED the AC-3 execution gap: minted FIX-BCTC-RECONCILE-EMISSION-CIRCUIT-BREAKER (READY/P0) from the SPIKE; storm now has a dev-pickup path)_
+
+## Tick 2026-07-16T22:37Z — MINT the missing AC-3 FIX (execution path for the storm)
+
+### THE GAP (router RAW-verified, why I was spawned)
+- Last tick (22:07Z) I DIRECTED fast-tracking AC-3 (bctcExtractReconcileJob emission circuit-breaker) but only escalated the SPIKE priority + wrote a `converge_note` — I never MINTED an actionable row. Grep of all lanes confirmed: only `SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD` [BACKLOG/P0/**plan_only**] existed. A plan_only SPIKE is NOT dev-pickable and BOUNDED-1 cannot promote a nonexistent row → the storm had NO execution path and was ACCELERATING (5 reconcile-exhausted dups / 3 ticks; 2 this tick; router already archived 3483 DGC + 3484 DIG as duplicate this tick). Perpetual archival with no shippable fix = the churn.
+
+### PRIOR-ART FIRST (grep board + handoffs before minting)
+- Board-wide id/title scan for AC-3/circuit/emission/reconcile/dormant: only false-positives — `FIX-AGENT-SIGNALS-IDENTICAL-DUP-EMISSION` (agent_signals dedup, DIFFERENT producer — explicitly do-not-remint), `FIX-BCTC-Q1-2026-STORED-PDF-INGEST-STALL-15T` (stored-PDF ingest stall, EARLIER layer), `FIX-POSTCYCLE-STEP45-NB-WRITE-AC3` (a different SPIKE's notebook-writepath AC-3). Handoffs: only `TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md` (the DONE wiring) + `TASK_1404-cb-fix.md` (foreign-flow CB, different subsystem). ZERO rows derived-from the SPIKE. => No genuine AC-3 FIX existed. MINTED.
+
+### MINTED — FIX-BCTC-RECONCILE-EMISSION-CIRCUIT-BREAKER (READY / P0 / mcp-server-scheduler / dev-mcp-server / plan_only:false / size S)
+- Scope = ONE file: `apps/mcp-server/src/scheduler/financial-reports/bctcExtractReconcileJob.ts` — RAW-located the exact emission site: the `if (nextAttempt >= MAX_RECONCILE_ATTEMPTS)` terminal block (~L388-424) fires `await effectiveSendBug(bugMsg)` once PER exhausted (ticker*quarter) row inside the per-row loop. AC = when a single run exhausts >= K rows (default 3) OR producer freshness stale (MAX(bctc_layout_units.extracted_at) > N days, default 2), emit exactly ONE run-summary BUG instead of one-per-row; below threshold keep today's per-row fail-loud (no regression); enrich_failed status transition still commits (no data change); unit test asserts call-count==1 on M>=K. Zone `mcp-server-scheduler` = precise & in-use (same as FACTORY-SCHEDULER-split-bctcReparseJob). Independently shippable — NOT gated on AC-1/AC-2.
+- Chose **READY** (not BACKLOG): emission site precisely located + AC concrete/single-file/self-contained + P0 churn-stopper → fully ready-to-work, put it directly in dev's path. Owner=dev-mcp-server (dev-owner), depends=[] → passes BOUNDED-1 withhold checks; dispatcher gates actual launch on git-clean.
+- Linked bidirectionally: FIX `parent`+`derived_from` = SPIKE; SPIKE gains `ac3_followup`=FIX id + `ac3_followup_by` (AC-3 visibly satisfied on the SPIKE face).
+
+### WRITE
+- One atomic `jq --slurpfile nr | bash scripts/orch-apply.sh`: append FIX to `.task_board.ready` + add `ac3_followup`/`ac3_followup_by` to the SPIKE row. Zod Stage0+1 PASS; conservation task_total 542->543 (+1 exactly); CAS clean. Post: `orch-state-validate.sh` exit 0; ready 0->1, backlog 403 unchanged, review 29 unchanged; `.head` untouched (idle->router). NO commit/push (router sweeps).
 
 ## Tick 2026-07-16T22:07Z — 1 BCTC dup archived + convergence escalation
 
