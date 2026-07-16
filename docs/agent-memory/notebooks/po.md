@@ -1,18 +1,15 @@
 # PO Notebook
 
-_Last: 2026-07-16T02:01Z (dev-team :37 triage — 1 ci_red → FLAKY-DISMISSED + fingerprint-recorded; 1 SPIKE-gap mint; head idle)_
+_Last: 2026-07-16T03:37Z (dev-team triage — 1 HIGH cowork signal → minted FIX-COWORK-CADENCE-DANGLING-POLICY-ID BACKLOG; head idle)_
 
-## Tick 2026-07-16T01:37Z — 1 ci_red signal (flaky) + repeat-flaker gap mint
-Board RAW pre: backlog 402, wip 0, review 25, signal_queue 0. Pending = EXACTLY ONE ci_red (docs/signals/ci-red-571818c2-20260716014951.json, untracked, post-drain). Head left idle both keys (active=null, next_agent=router). One sqlite write (signals.db) + one `jq --slurpfile|orch-apply.sh` (Zod Stage0+1 PASS, conservation 540→541, CAS clean). Peer-dirty (cowork-*/price_anomaly quarantine, auditor/coverage/schedule, session logs, briefs) NOT swept.
+## Tick 2026-07-16T03:37Z — 1 HIGH system-issue signal → FIX minted (BACKLOG, not executed)
+Board RAW pre: backlog 403, wip 0, review 25, signal_queue = EXACTLY ONE NEW (cow-20260716T031800). CI GREEN b9cfe58b2. Peer-dirty tree (cowork-* quarantine, auditor/coverage/schedule, session logs, briefs) NOT swept. One `jq --slurpfile|orch-apply.sh` (Zod Stage0+1 PASS, conservation 541→542, CAS clean).
 
-**ci_red CI-RED-571818c2 → FLAKY-DISMISSED, no code-FIX.** RAW (router, accepted decisive): run 29464553988 @ 571818c2d (==origin/main) = 14498 pass/1 fail; sole fail 1299b-skill-gated-bootstrap.test.ts; delta since GREEN 25cb69031 = 4 docs/chore/orch-state commits, ZERO product code; local isolated repro 9/9 pass 549ms. → CI-runner nondeterminism, not a regression. Nothing to fix.
+**cow-20260716T031800 (alert-commander-market dangling policy_id) → MINT FIX, RAW-verified — NOT auditor-FP.** Independently confirmed every claimed link: `grep alert-commander cadence-policy.json`=0; policy_id diff `[.slots]-[.policies]`=[alert-commander-critical, alert-commander-market]; `cadence-policy.js:71` returns 240 on no-match; `cowork-match-slots.js:288` `if(!isStale)`→adaptive (the inversion). Market slot cron `*/15` but adaptive path resolves dangling id → 240min (16x). Critical slot benign (240 intent coincides). Defect is INTERMITTENT+INVERTED: degrades only when pressure telemetry healthy (adaptive), self-heals when stale (legacy cron). Partial regression of completed FIX-ALERT-COMMANDER-DEAD-NO-SLOT (07-03 HIGH). No board dup (router + my own scan confirm; neighbors DUP-MARKET-WATCHER=cron-overlap, LASTFIRED-DECOUPLE=same-family/diff-mechanism).
 
-**Re-drain prevented (fingerprint rule):** (a) INSERT OR IGNORE fp e62ede57 → signals_processed (result=flaky-dismissed, id 2837) + wal_checkpoint TRUNCATE; (b) mv untracked signal → docs/signals/processed/ (drain glob non-recursive → definitive).
-
-**Repeat-flaker = YES → minted SPIKE item #1 gap.** SPIKE_CI-PERFILE-ISOLATION-FLAKE already diagnosed 1299b (11/24 under CPU contention) = blocking execSync in agentBootstrap.ts:358 eager buildToolNameMap() singleton → TDZ-poison cascade + prod cold-start risk. 07-10 triage minted items #2/#3/#4 but DROPPED #1. Minted `FIX-AGENTBOOTSTRAP-EAGER-EXECSYNC-COLDSTART` (FIX/P2/M/apps/mcp-server/, BACKLOG, plan-only). P2 not router's P3 — SPIKE rated HIGH (boot path + recurring cost); P0/P1 rejected (recurring detection, CI completes).
+**Minted `FIX-COWORK-CADENCE-DANGLING-POLICY-ID`** (FIX/high/zone cross-service/, origin_signal_id back-ref, status BACKLOG). Instance fix = author 2 policies; class fix = fail-loud validate every policy_id resolves at load, distinguish not-found (config err→cron per FR-P1-2) from unmatched-rule (240 safe). AC pins: DV MUST set stale_warning=false or it exercises legacy and passes vacuously. Signal NEW→READ (RESOLVED on DV via origin_signal_id).
 
 ## Carry-over
-- **RETURN to router: NOTHING execute-ready.** The 1 mint is PLAN-ONLY BACKLOG for BOUNDED-1. Flaky dismissal + fingerprint-record is terminal.
-- **Standard inputs — NO mint:** telegram status=new = recurring BCTC/OHLCV cluster (1345b skips, reconcile-exhausted Q3/Q4 wave ~20 tickers, ZERO-URL-ALERT, OHLCV-backfill crash) ALL covered — esp. FIX-TELEGRAM-REPORT-ACK-STATUS-STOP-RESURFACE (they re-surface forever, no ack tool → re-triage = dup risk). ZERO-URL + OHLCV-backfill = ops/VPS infra → surfaced to router, out of dev-dispatcher scope.
-- **Last-tick 4 mints (NOT mine this tick, for BOUNDED-1):** FIX-COVERAGE-STATE-CROSS-AGENT-LOST-UPDATE, FIX-COWORK-PRESENCE-CLAIM-PAYLOAD-OBJECT-VS-STRING, FIX-DEVTEAM-BOUNDED1-PENDINGSIGNALS-EMPTY-GUARD, UC-SDF-P2 widen.
+- **RETURN to router: BATCH([1 FIX]) but recommend BACKLOG (do NOT execute this tick) — BOUNDED-1 withhold on peer-dirty tree.** WIP slot free (in_progress 0) but tree dirty → program picks up on clean tree. head idle both keys.
+- **Standard inputs — NO mint:** telegram status=new = recurring BCTC/OHLCV cluster (1345b skips, reconcile-exhausted Q3/Q4 ~30 tickers, ZERO-URL, OHLCV-backfill crash) ALL covered/known; ZERO-URL+backfill = ops/VPS infra, out of dev-dispatcher scope.
 - **Parked (peer-owned):** UC-CCA-P3 P0 (published-marker pendulum); MARKET #933 (USER-GATED, out of router scope).
