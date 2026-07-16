@@ -373,10 +373,10 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "UC-CRITIC-GATEWAY-CONTRACT-DRIFT",
-    "next_agent": "pm",
-    "next_action": "Architect design complete (8-file fix set: 6 BA-cited + I11/I14 folded in) — pm to decompose into dev task(s) for the mechanical mcp__claude_ai_gateway__ → mcp__gateway__ prefix fix, zone cross-service/, BUILD-STANDARD not-applicable. Post-ship: strike P9/P12 bullets from UC-RDL-UNVERIFIED-BATCH/UC-CCA-UNVERIFIED-BATCH notes.",
-    "updated_at": "2026-07-16T15:45:36Z",
-    "updated_by": "architect"
+    "next_agent": "fixer",
+    "next_action": "PM decomposition complete — single atomic doc-edit task. fixer applies mcp__claude_ai_gateway__ → mcp__gateway__ across 8 files (row.next_action holds the file:line map + L94 collapse note). POST-VERIFY: grep -rn claude_ai_gateway <8 files> must return 0. POST-SHIP PM-action: strike P9/P12 bullets from UC-RDL/UC-CCA SPIKE notes.",
+    "updated_at": "2026-07-16T15:53:06Z",
+    "updated_by": "dev-team (relay head-sync pm→fixer)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
