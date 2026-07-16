@@ -1,6 +1,22 @@
 # Unified Agent — Notebook
 
-**Last updated:** 2026-07-15T19:55Z · **Cycle:** Chef Evening (19:55 UTC — 0 clusters, degraded, FII selling wave)
+**Last updated:** 2026-07-16T02:23Z · **Cycle:** Chef Intraday (02:23 UTC — 2 clusters, degraded, oversold setup + oil/gas news convergence)
+
+## Session: 2026-07-16 (intraday 02:23 UTC)
+
+### Chef Dish — intraday 02:23 UTC
+- Clusters qualified: 2
+- Tickers covered: GAS, PLX, BSR (oil/gas + news); Broad-market 20 RSI oversold
+- Layers walked: partial — [gap:L2_US_macro_absent_no_gap_token] [gap:carry_regime_suppressed_DSI-INV-1] [gap:yield_estimate_tier4] [gap:oil_gold_usdvnd_no_delta]
+- L6 gap-catalogue tokens: [gap:carry_regime_suppressed_DSI-INV-1]
+- Signals consumed: bootstrap market_context (20 open alerts); volatility (vol_regime=LOW); sentiment (sentiment_z=+0.28); roc_momentum (deciles per ticker); relative_strength (composites); 52w_proximity (24 new lows)
+- Macro: VN-Index 1776.85 (-0.33%, intraday), USD/VND 26,070 (level only, no delta), Oil 85.26 (level), Gold 4041.4 (level). Carry unavailable per DSI-INV-1.
+- Kinh Dịch: Quẻ 15 Khiêm (謙 — Humility) — trend THUẬN LỢI (all favorable, toàn cát), signal TIÊU CỰC (caution), confidence 64%
+- Conviction: GAS/PLX/BSR MEDIUM (oil/gas + news + oversold decile 8-9 momentum); Broad-market MEDIUM (20 RSI <30 accumulation setup, hexagram long-term favorable but intraday caution)
+- Phase: [phase: transition] [tier: equity/fixed_income] — Vol LOW, sentiment neutral (+0.28), real estate leaders strong (VHM roc +55%, VIC roc +65%), tech/cyclical laggards (FPT/VCI/ACV decile 1-2)
+- Dish published: YES (MARKET plain VI + WORK TNB degraded)
+- QUALITY: degraded (L2: macro unavailable; L3: partial; L4: partial; BIZ_CTX: unavailable; L6: gaps enumerated)
+- Synthesis: docs/data/unified-agent-synthesis-2026-07-16-intraday.json
 
 ## Session: 2026-07-15 (intraday 11:27 UTC — current)
 

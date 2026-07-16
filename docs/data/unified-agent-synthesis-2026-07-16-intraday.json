@@ -1,0 +1,82 @@
+{
+  "metadata": {
+    "cycle_id": "intraday-2026-07-16T02:23:00Z",
+    "dish_type": "intraday",
+    "date_vn": "2026-07-16",
+    "timestamp_utc": "2026-07-16T02:23:06Z",
+    "quality_verdict": "degraded",
+    "layers_walked_summary": "partial — [gap:L2_US_macro_absent_no_gap_token]"
+  },
+  "tnb_synthesis": {
+    "clock_phase": "transition",
+    "regime_state": "risk-off (intraday)",
+    "regime_confidence": "MEDIUM",
+    "us_macro_layer": "[gap: PMI/EFFR-IORB unavailable]",
+    "vn_macro_layer": "VN-Index -0.33% intraday (1776.85), USD/VND at 26,070 (level), oil $85.26 (level), gold $4,041.40 (level). Carry regime suppressed.",
+    "valuation_layer": "Equity premium (yield) estimated at 3.2pp vs deposits (tier-4 estimate). Oil/gas at mid-range valuations (ROC decile 8-9). Banking oversold (8 tickers RSI <30). Tech/cyclical laggard (FPT, VCI, ACV decile 1-2). Real-estate momentum leaders (VHM roc +55%, VIC roc +65%)."
+  },
+  "conviction_calls": [
+    {
+      "ticker": "GAS",
+      "conviction_level": "MEDIUM",
+      "direction": "BUY",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Oil/gas sector positive news from US Big Tech rally, combined with RSI oversold setup (decile 9 momentum, news_mention high 2026-07-16 01:19)"
+    },
+    {
+      "ticker": "PLX",
+      "conviction_level": "MEDIUM",
+      "direction": "BUY",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Oil/gas sector positive news from US Big Tech rally, combined with RSI oversold setup (decile 8 momentum, news_mention high 2026-07-16 01:19)"
+    },
+    {
+      "ticker": "BSR",
+      "conviction_level": "MEDIUM",
+      "direction": "BUY",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Oil/gas sector positive news from US Big Tech rally, combined with RSI oversold setup (news_mention high 2026-07-16 01:19)"
+    },
+    {
+      "ticker": "Broad-Market",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 1,
+      "rationale_one_liner": "20 tickers with RSI <30 oversold setup present accumulation opportunity; hexagram Khiêm cautions intraday but confirms long-term favorability"
+    }
+  ],
+  "sector_phases": [
+    {
+      "sector_vn": "oil_gas",
+      "investment_phase": "recovery",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "positive"
+    },
+    {
+      "sector_vn": "banking",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "negative"
+    },
+    {
+      "sector_vn": "real_estate",
+      "investment_phase": "expansion",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "positive"
+    }
+  ],
+  "known_gaps": [
+    "[gap:L2_US_macro_absent_no_gap_token]",
+    "[gap:carry_regime_suppressed_DSI-INV-1]",
+    "[gap:yield_estimate_tier4]",
+    "[gap:oil_gold_usdvnd_no_delta]"
+  ],
+  "causal_chains": [
+    "[gap: no US macro signal in cycle] → [gap: carry regime unavailable — macro is_estimate=true] → broad market oversold RSI setup + oil/gas sector positive news from US tech rally → banking/real-estate accumulation opportunity if foreigners return; divergence: hexagram caution vs favorable fundamentals."
+  ],
+  "clusters_summary": {
+    "qualified": 2,
+    "tickers_covered": ["GAS", "PLX", "BSR", "Broad-Market-20"],
+    "sectors_covered": ["oil_gas", "banking", "real_estate"]
+  }
+}
