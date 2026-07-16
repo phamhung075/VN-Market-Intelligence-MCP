@@ -52,3 +52,11 @@
 - Leaving AC-6 fixture's `next_agent:"architect"` unchanged and treating the resulting FAIL as an acceptable/expected side effect — rejected: the task's own root-cause is "next_agent=architect should be withheld", so a test still expecting a promote on that exact value would be asserting the bug, not the fix; corrected the fixture value instead of the code.
 **why-decision:** Verifier prior to fix (9 assertions) reproduced the exact 208-row pre-fix candidate leak (grep-diffed against the 4 named P1 rows + 8 UC-*-UNVERIFIED-BATCH ba rows cited in the PO root-cause); post-fix all 12 assertions (AC-1..AC-10 + control) PASS, and direct isolated-fixture probes on the 12 originally-cited live rows (supervised stripped) all resolve to NOT-promoted.
 **why-change:** No change from PO's fix-spec; AC-6 fixture value correction is a test-hygiene fix flagged inline in the verifier's own header/comments, not a scope change.
+
+### STEP developer-S6 · developer · 2026-07-16T20:16:11Z
+**task-id:** CI-RED-b51fbe13-FIX
+**what-done:** Deleted the single `**Sector**:` line from BSR.md/VIX.md/DBC.md (docs/analysis-briefs/) — the 3 files ebbfda6a5 added with a legacy field the BSD3-brief-sector-drift.test.ts structural guard forbids (sector SSOT lives in WATCHLIST_SEED domain, never the brief body).
+**what-considered:**
+- only path: root-cause pre-verified by PO (local repro), guard test itself correct/not touched — pure data-line removal, no code/generator change needed.
+**why-decision:** Baseline repro confirmed BSR.md as sole failure (3 pass/1 fail); after 3-line deletions test is 4/4 green; every other brief + canonical template already lack the field, so removal is definitive (no re-emission source).
+**why-change:** No change from PO fix-spec.
