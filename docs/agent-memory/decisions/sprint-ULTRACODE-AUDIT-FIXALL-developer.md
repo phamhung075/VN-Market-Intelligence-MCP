@@ -75,3 +75,24 @@ scope there either. Also applied the detail_ref's explicit slot-claim.md correct
 router's paraphrase said "likely none" for doc updates — detail_ref is authoritative on that file.
 **why-change:** No scope change from detail_ref for the core fix; added the doc correction detail_ref
 calls for that the paraphrase missed.
+
+### STEP developer-S5 · developer · 2026-07-16T01:01:31Z
+**task-id:** UC-CCA-P5
+**what-done:** Reordered `docs/agents/news-scout/flow/stage-log-notify.md` to notebook settled-write
+(Step 4) -> exec-proof gate (Step 5) -> log_agent_work open/close (Step 6) -> coverage-state (Step 7)
+-> WORK ping (Step 8), renumbering away the old 3e/4/4b labels; commit `181a16142`.
+**what-considered:**
+- Leave coverage-state (Step 7) before the gate to mirror market-watcher exactly — rejected: brief's
+  own *Change* spec places it after the log_agent_work pair and calls the market-watcher-vs-here
+  difference a harmless deviation; matching the brief's exact stated order over-rides the sibling's
+  ordering since the brief text is the authoritative acceptance criteria for this task.
+- Drop the log_agent_work "running" open call or relocate it earlier in the cycle — rejected: out of
+  scope; the open/close pair must stay adjacent (close needs the open call's returned log_id) and
+  moving only the pair (not splitting it) satisfies the required order with a minimal diff.
+**why-decision:** exec-proof-gate SKILL.md EP-1/EP-2 reads NOTEBOOK_TS from the newest `## cNNN` heading
+and requires it `>= CYCLE_START_UTC`; with the gate before the write this was structurally
+unsatisfiable (always the prior cycle's timestamp) — moving the settled-write first makes EXEC_PROOF_1
+checkable and closes the false-completion race where log_agent_work(completed)+WORK ping could fire
+before the notebook existed for this cycle.
+**why-change:** No change from plan — cycle.md required zero edits (no internal order declared there,
+confirmed by full read); only stage-log-notify.md touched, no scripts/ copy of this sequence exists.
