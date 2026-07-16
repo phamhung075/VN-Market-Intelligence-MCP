@@ -11444,6 +11444,17 @@
       "type": "defect",
       "payload_ref": "docs/handoffs/2026-07-16-preflight-presence-claim-payload-object-vs-string-silent-noop.md",
       "disposition": "TRIAGED 2026-07-16T01:31:44Z by po. REOPENED as FIX-COWORK-PRESENCE-CLAIM-PAYLOAD-OBJECT-VS-STRING (P2, cross-service, BACKLOG) — RAW-verified at source (cowork-tick-preflight.sh:140 payload OBJECT vs :156-158 STRING). Row carries all 4 asks (one-line payload fix, lock-lands test assertion, reopen tracking, class-sweep for payload:{} literals)."
+    },
+    {
+      "id": "cow-20260716T031800",
+      "ts": "2026-07-16T03:18:00Z",
+      "from": "cowork-team",
+      "to": "dev-team",
+      "type": "system-issue",
+      "summary": "alert-commander-market dangling policy_id -> 240min cadence vs specified 15min (16x degradation)",
+      "severity": "HIGH",
+      "status": "READ",
+      "payload_ref": "docs/handoffs/2026-07-16-alert-commander-market-dangling-policy-240min.md"
     }
   ],
   "backlog_detail": [

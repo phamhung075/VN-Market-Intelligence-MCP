@@ -415,19 +415,7 @@
     "_updated_at": "2026-07-16T03:18:00Z",
     "_updated_by": "cowork-team",
     "archive": [],
-    "rows": [
-      {
-        "id": "cow-20260716T031800",
-        "ts": "2026-07-16T03:18:00Z",
-        "from": "cowork-team",
-        "to": "dev-team",
-        "type": "system-issue",
-        "summary": "alert-commander-market dangling policy_id -> 240min cadence vs specified 15min (16x degradation)",
-        "severity": "HIGH",
-        "status": "READ",
-        "payload_ref": "docs/handoffs/2026-07-16-alert-commander-market-dangling-policy-240min.md"
-      }
-    ],
+    "rows": [],
     "last_triaged_at": "2026-07-15T20:56:10Z",
     "last_triaged_by": "po"
   },
