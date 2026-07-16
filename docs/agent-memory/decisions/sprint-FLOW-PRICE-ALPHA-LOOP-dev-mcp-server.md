@@ -206,3 +206,19 @@ Committed `35cc8cd56`, pushed on green (PUSH-AUTONOMY-1) — `origin/main == HEA
 **Simplicity gate:** PASS — Q1 net code removal (no new abstractions), Q2 n/a, Q3 n/a (deletion), Q4 debt reduced not added.
 
 Committed `456851797` (parent `c735fe8e3`), pushed — pre-push `tsc OK`. orch-state: `CI-RED-da847805-FIX` IN_PROGRESS→REVIEW, `.head`→idle/qa via `scripts/orch-apply.sh`. CI run to watch: `https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/29486509712` (bun test job, in progress at write time).
+
+### STEP dev-mcp-server-S20 · dev-mcp-server · 2026-07-16T14:54:09Z
+**task-id:** UC-MDH-P1
+**what-done:** `agentMemoryUpdateTools.ts:189` registration-time `memoryDir` now reads `process.env.AGENT_MEMORY_ROOT ?? resolve(getProjectRoot(), ...)`. Test `beforeEach` mkdtemp+set env BEFORE `registerAgentMemoryUpdateTools`, `afterEach` rm+unset; added regression test asserting zero new files under real `sessions/`. Purged pollution BY MD5 CLASS re-enumerated live (not the brief's stale count): 102 files = 36 ops(`a003f0cc`)+34 dev(`35d6330b`)+32 qa(`35cdf1f8`), 84 tracked (`git rm`) + 18 untracked (`rm`), plus 3 tracked test-artifact files (issues/patterns/modules).
+**what-considered:**
+- Module-level const vs registration-time (function-scope) env read — registration-time, per rescope note: module-level binds at ESM import (before `beforeEach`), silent false-green no-op.
+- Hardcode the brief's "93/94" stub count vs re-enumerate live — re-enumerated (102, +3/day drift confirmed vs brief's 93 three days prior).
+**why-decision:** Confirmed via direct read that `registerAgentMemoryUpdateTools` already resolves `memoryDir` at function scope (called inside `beforeEach`, after env is set) — env-var injection there sandboxes both tools with one line, no module restructuring needed.
+**why-change:** No deviation from rescope.
+
+**Verified:** `bun test src/__tests__/1300b-...test.ts` → 14 pass/0 fail (both runs). Full `bun test` run 1: 14569 pass/40 skip/46 fail; run 2: 14568 pass/40 skip/47 fail — zero `1300b`/`agent-memory` hits in either fail list (pre-existing flaky class: vps_push_log/insider-tx/OCR-cache/foreign-flow timeouts, ±1 flip between runs). Zero new untracked files under `docs/agent-memory/` after either full run (confirmed via `git status --porcelain`). `pnpm --filter vn-market check` (tsc) exit 0.
+**Simplicity gate:** PASS — Q1 single env-var fallback line, Q2 n/a, Q3 n/a, Q4 pure debt reduction (102 file deletions).
+
+**Concurrent-commit race (self-caught, not self-caused):** staged (`git rm`×87 tracked + `git add`×2 edits) and verified `git diff --cached --name-status` == exact intended 89-file set BEFORE running the two full-suite `bun test` passes (~17min). While those ran, a peer dev-team-router housekeeping tick (same coordination_session, different concurrent flow) committed under an unrelated message `11c35c0a8 "chore(tasks): cold-evict terminal sprints/done lanes"` — its bare `git commit -m` (no pathspec, correctly) picked up whatever was in the shared index at that moment, which included my already-staged 89 files. Verified via `git diff-tree --name-status -r 11c35c0a8` that the commit contains EXACTLY my intended 89-file set (87 deletions + 2 edits) plus the peer's own `orch-state.json` cold-evict change — nothing extra, nothing missing, no revert. `HEAD == origin/main` (already pushed by that tick). Content is correct; only the commit message/trailer attribution is off (no `UC-MDH-P1`, no `Claude-Session:` trailer on that specific commit) — did not amend/rewrite (forbidden on shared main with concurrent peers still committing); documented here + in RETURN block instead. No further `git commit` needed for the code+deletions — `git diff HEAD` on both changed files is empty.
+
+orch-state: `UC-MDH-P1` IN_PROGRESS→REVIEW, `.head`→idle/qa via `scripts/orch-apply.sh`.
