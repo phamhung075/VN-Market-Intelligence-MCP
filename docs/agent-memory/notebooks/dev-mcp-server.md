@@ -1,19 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-07-15 — ALPHA-S2-RAG-FTS-CRON-SAFETY-GATE (dev-team dispatch, atomic FIX) → returned to router
-
-**Session:** 69b0312e-df43-43a9-9e0b-bddf66d374e3 (dev-team dispatch; MCP gateway degraded/502 all task — no `send_telegram`/MCP calls made, pure TS + mocked-unit-test task; did NOT claim/release the umbrella lock or touch `.head`/`.task_board` per explicit dispatch instruction)
-
-The live mcp-server container predates `ragFtsRebuildCron` (`35cc8cd56`) — the moment ops redeploys for any reason, the cron arms and OOMs rag-service's 768m cgroup nightly at 20:15 UTC (FTS rebuild can't complete at ~56k rows, `RAG-FTS-BUILD-MEMORY-BOUND`, parked BLOCKED). `buildJobTable()` (`schedulerJobTable.ts`) now reads a new boolean `CRON_RAG_FTS_REBUILD_ENABLED` (default unset/false) and OMITS the `ragFtsRebuildCronJob` entry from the returned table entirely (registration-time defusal via conditional array-spread `...(enabled ? [{...}] : [])`, read fresh inside `buildJobTable()` per-call so tests can flip the env var without re-importing) — a stray redeploy cannot arm it. Flag=`'true'` reproduces prior behavior exactly (cron `'15 20 * * *'`, `{timezone:'UTC'}`). Deliberately did NOT gate via empty `CRON_RAG_FTS_REBUILD=''` — `cronConfig.ts` reads it with `??`, which does not treat `''` as absent, and an empty cron expression crashes croner at boot.
-
-`FACTORY-SCHEDULER-job-table-registry.test.ts`: added Group A2 (4 new tests — flag unset/`'false'` omits the entry + asserts 61-length table; flag=`'true'` registers it with cron `'15 20 * * *'`+`{timezone:'UTC'}` + asserts 62-length; `registerJobTable()` actually schedules it) and rebaselined the pre-existing count guards for the new default (Group A/B 62→61, Group D 84→83 when unset) plus a dedicated flag=`'true'` Group D test reproducing the old 84-count exactly. `schedulerFileCount` stays 69 (no file added/removed — registration-only gate). Docs (`cron-jobs.md`, `cron-registry.json`, `system-map.json`) note the flag and that it stays OFF until `RAG-FTS-BUILD-MEMORY-BOUND` is verified fixed.
-
-Verified: `bun tsc --noEmit` exit 0. `mock-guard.sh --files` on both changed src files → PASS. `bun test src/__tests__/FACTORY-SCHEDULER-job-table-registry.test.ts` → **20 pass / 0 fail / 284 expect() calls**. `bun test` on the sibling `ALPHA-S2-RAG-FTS-REBUILD-CRON.test.ts` + `1190-pipeline-watchdog.test.ts` → 20 pass / 0 fail (unaffected, `schedulerFileCount` assertion untouched by this task). Full `bun test` (1207 files): **14629 pass / 40 skip / 49 fail**, then the documented Bun v1.3.13 crash-at-teardown — grepped the full 49-line fail list: zero reference `schedulerJobTable`/`ragFts`/`CRON_RAG_FTS`/`FACTORY-SCHEDULER`; same long-documented pre-existing fail class (`vps_push_log`/insider-tx/5000ms-timeout-under-load/`_deprecated/1302-technical-indicators`).
-
-Did NOT flip `.task_board`/`.head` — router owns board flip + QA gate per explicit dispatch instruction. Committed `db921c52d` on `main` (explicit pathspec: `schedulerJobTable.ts` + `FACTORY-SCHEDULER-job-table-registry.test.ts` + `cron-jobs.md` + `cron-registry.json` + `system-map.json`), separate notebook commit, pushed on green (PUSH-AUTONOMY-1).
-
-Zone health: tsc clean, 20/20 targeted pass, full-suite fail-count did not increase from this change (grepped, zero overlap) | HEALTHY.
-
 ## 2026-07-16 — CI-RED-da847805-FIX (dev-team dispatch, FIX) → REVIEW, returned to router
 
 **Session:** 69b0312e-df43-43a9-9e0b-bddf66d374e3 (dev-team dispatch; task claimed/held by dispatcher; flipped `CI-RED-da847805-FIX` IN_PROGRESS→REVIEW + `.head`→idle via `scripts/orch-apply.sh`, did NOT self-promote DONE_VERIFIED)
@@ -37,3 +23,17 @@ Verified: standalone `bun test` on the 1300b file → 14 pass/0 fail (both runs)
 Concurrent-commit race (self-caught, not self-caused): staged + verified the exact 89-file set (87 deletions + 2 edits) before the ~17min two-full-suite verification window; a peer dev-team-router housekeeping tick committed during that window (`11c35c0a8` "chore(tasks): cold-evict terminal sprints/done lanes", bare `git commit -m`, no pathspec) and absorbed the shared index, including my staged files. Verified via `git diff-tree --name-status -r 11c35c0a8` the commit contains exactly my intended 89 files + the peer's own `orch-state.json` change — no revert, nothing extra/missing, `HEAD == origin/main` (already pushed). Content correct; only that commit's message/trailer doesn't reference `UC-MDH-P1` — did not amend shared-main history mid-peer-activity, documented here instead. No residual `git commit` needed for code+deletions (`git diff HEAD` on both changed files is empty).
 
 Zone health: tsc clean, 1300b suite 14/14 pass ×2, full-suite fail-count unchanged from pre-existing baseline (grepped, zero overlap), 102-file memory-tree pollution cleared | HEALTHY.
+
+## 2026-07-16 — FR-DEGRADE-01-FIX (dev-team dispatch, FIX) → REVIEW, returned to router
+
+**Session:** 69b0312e-df43-43a9-9e0b-bddf66d374e3 (dev-team dispatch; flipped `FR-DEGRADE-01-FIX` IN_PROGRESS→REVIEW + `.head`→idle via `scripts/orch-apply.sh`)
+
+Root-cause gap in `get_bctc_full` (`bctcFullTools.ts`): the 2026-06-10 fix (`815ccaed`, signal `qc-FR-DEGRADE-01-4004`, quality-checklist status=PASS) only wired the VPS bctc SLA-staleness check into the "no `financial_reports` row at all" branch. RAW-verified the far more common production case — a report row DOES exist (last-known-good) but the VPS bctc push pipeline has stopped delivering fresh reports — fell through to the ordinary success path completely UNFLAGGED (silently-stale, not an error, but the AC explicitly forbids unflagged stale data). Threaded the already-computed `bctcVpsStaleSince` (+ new `bctcVpsStaleAgeHours`) into the success-path response: content[1] structured JSON gains `stale`(bool)/`stale_since`/`stale_age_hours`; content[0] text gains a human `[FR-DEGRADE-01]` note. Also added `stale_age_hours` to the pre-existing no-data branch for shape consistency.
+
+Added 3 tests to `240-bctc-full.test.ts` (describe `FR-DEGRADE-01 — get_bctc_full degrades gracefully when VPS bctc push is stale (data present)`): stale-flagged when push >48h old (never throws, still serves last-known-good), fresh-push → `stale=false`, no-push-log-rows → `stale=false` (fail-open, not a crash).
+
+Verified: targeted `bun test src/__tests__/240-bctc-full.test.ts src/__tests__/1982-quality-burndown-CHIJ.test.ts` → **38 pass / 0 fail**. `bun tsc --noEmit` exit 0. Full-suite bg run reds (1518 foreign-flow timeouts, 1407b coverage-map `market_messages`) confirmed as the pre-existing flaky class already documented in the S20/UC-MDH-P1 journal entry (`vps_push_log`/insider-tx/OCR-cache/foreign-flow) — zero overlap with the changed files.
+
+Committed `00dca96fe` (explicit pathspec: `bctcFullTools.ts` + `240-bctc-full.test.ts`). Flipped orch-state `FR-DEGRADE-01-FIX`→REVIEW, `.head`→idle/next_agent=qa.
+
+Zone health: tsc clean, 38/38 targeted pass (3 new), no tool/scheduler count change (handler-internals-only edit) | HEALTHY.
