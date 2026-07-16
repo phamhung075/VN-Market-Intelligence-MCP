@@ -4,8 +4,16 @@
   "type": "cowork-fire",
   "payload": {
     "fire_time": "2026-07-16T04:07:10Z",
-    "matched_slots": ["news-scout-offhours", "market-watcher-offhours", "alert-commander-critical"],
-    "won_slots": ["news-scout-offhours", "market-watcher-offhours", "alert-commander-critical"],
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
     "held_by_other": [],
     "all_held": false,
     "spawned": [
@@ -19,7 +27,9 @@
     "pressure_mode": "adaptive",
     "calendar_status": "unknown",
     "suppressed_calendar": [],
-    "suppressed_cadence": ["alert-commander-market"],
+    "suppressed_cadence": [
+      "alert-commander-market"
+    ],
     "downgraded": [],
     "chef_mutex_applied": false,
     "due_reasons": {
@@ -33,7 +43,11 @@
       "alert-commander-critical": 240
     },
     "last_fired_timestamp": "2026-07-16T04:06:30.000Z",
-    "last_fired_slots": ["news-scout-offhours", "market-watcher-offhours", "alert-commander-critical"],
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
     "last_fired_write_errors": null,
     "classification": "FIRE",
     "reason": "spawned",
@@ -45,5 +59,11 @@
     "note": "ADAPTIVE mode this tick (pressure-state stale_warning=false, emitted_at=03:48:43Z ~13min < 20min threshold -> isStale=false). PRE-REGISTERED PREDICTION RESOLVED for signal cow-20260716T031800 [HIGH] (handoff docs/handoffs/2026-07-16-alert-commander-market-dangling-policy-240min.md). At tick 03:45Z I stated in advance that 04:00Z would be the first tick where the two modes DISAGREE about alert-commander-market, and named the branch each predicts: legacy fires (cron */15 matches 04:00 Thu, elapsed 25min > 15min boundary dedup), adaptive suppresses (dangling policy_id -> AC-P1-1-3 default 240min, elapsed 25min < 240min). OUTCOME: adaptive mode + alert-commander-market ABSENT from matcher output = the adaptive/suppressed branch. This is a prediction made BEFORE the observation, not a post-hoc fit. BENIGN-ROW CONFIRMATION: alert-commander-critical fired with cadence_minutes=240 — its policy_id 'alert-commander-critical' is EQUALLY dangling (grep -c alert-commander docs/data/cadence-policy.json -> 0) but its specified intent is also 240, so the AC-P1-1-3 default silently coincides with correct. Exactly the blast-radius table's benign row proving itself: the same defect is harmless on one slot and 16x degrading on its sibling, purely by coincidence of intended interval. OSCILLATION CONTINUES: emit_pressure_state at 04:06:38Z returned stale_warning=true -> tick 04:15Z will be LEGACY -> alert-commander-market will fire on cron */15. The flag is flipping roughly tick-to-tick, so the slot alternates 15min/240min governance. Step 4.7 tick-snapshot SKIPPED this tick (dispatcher declined to hand-transcribe the 60+ line bootstrap payload into a stage file — transcription slip would silently corrupt a file 3 agents read as data; documented fallback is zero-blocker, agents call get_cycle_bootstrap directly). Consequence: cycle_snapshot_promoted=false. NOT ASSERTED: whether promotion has been chronically false or is only false because of this skip — single observation, no history probed, do NOT read as a defect without checking prior ticks. MACRO RE-VERIFY (fresh probe 04:05:20Z): vnIndex=1764.53 tier-1 not-estimate, vnIndexDelta=-17.59, baseline back-solves to 1782.12 = the 07-15 close, identical operand to every prior probe -> the 02:25Z retraction of the false DATA GUARD #2 is reconfirmed, delta field is CORRECT. oilUsdDelta/goldUsdDelta/usdVndDelta ALL still null with direction='unknown' -> BA-FIX-MACRO-SNAPSHOT-DELTAS-NULL premise remains TRUE and unfixed (still no board row). Spawn prompts used the STANDARD template with NO dispatcher-injected data guidance — deliberate: injecting an unverified claim into a spawn prompt is precisely the vector that poisoned alert-commander's notebook at 02:00Z, and prompt-level guards are suggestions not controls. Agents' own flows + committed notebook carry-over hold the standing guards. Zero token leaks: 3 claimed ttl=180, 3 released post-spawn."
   },
   "priority": "low",
-  "createdAt": "2026-07-16T04:07:10Z"
+  "createdAt": "2026-07-16T04:07:10Z",
+  "_processed": {
+    "fingerprint": "5a1fdc9ee01a4ac63e2ddc6b6064241f84fd90a10fd0a2f9319c793d610ab598",
+    "processedAt": "2026-07-16T04:18:46Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }
