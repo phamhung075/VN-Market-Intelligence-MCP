@@ -2,48 +2,7 @@
 
 # News Scout — Stage 4–5: Session Log, WORK Notify, Batch 2
 
-**Step 3e — Exec-proof gate** → skill: `.claude/skills/exec-proof-gate/SKILL.md`
-
-```
-Inputs:
-  CYCLE_START_UTC    = <captured at bootstrap Step 0 via cycle-bootstrap skill>
-  NOTEBOOK_PATH      = docs/agent-memory/notebooks/news-scout.md
-  FETCH_RESULT_COUNT = fetched_articles.length (from stage-fetch.md Step 1 result)
-  FETCH_MACRO_TS     = macro_snapshot.fetchedAt (from stage-bootstrap.md Step 0b)
-  AGENT_ID           = "news-scout"
-```
-
-On PASS → continue to log_agent_work(completed) below.
-On FAIL → skill exits; do not continue to Step 4.
-
----
-
-**4. Session log**
-
-> Invariant: timestamp = current UTC, never future, never speculative. NEVER write entries for cycles that have not fired yet. If unsure of current time: call `get_cycle_bootstrap` to refresh time anchor before writing log.
-
-```
-# Step 1 — open work log (returns id)
-call_tool(server="vn-market", tool="log_agent_work", arguments={
-  "agent_name": "news-scout",
-  "status": "running",
-  "action": "news-scout-cycle",
-  "context": { "items": N, "impacts": M, "signals_fired": X, "regime": "<REGIME>" }
-})
-# → { "id": <log_id> }
-
-# Step 2 — close work log (required: agent_name, id, status)
-call_tool(server="vn-market", tool="log_agent_work", arguments={
-  "agent_name": "news-scout",
-  "id": "<log_id from step 1>",
-  "status": "completed",
-  "action": "news-scout-cycle",
-  "context": { "items": N, "impacts": M, "signals_fired": X, "regime": "<REGIME>" },
-  "signal_ids": ["<signal_id_1>"]
-})
-```
-
-**Settled-write invariant (AC-3): compose ≤200L body entirely in memory, then land in ONE Write/Edit. Never append-then-trim.**
+**4. Notebook settled-write (AC-3)** — compose ≤200L body entirely in memory, then land in ONE Write/Edit. Never append-then-trim.
 
 Step 1 — Read full `docs/agent-memory/notebooks/news-scout.md` into memory.
 Step 2 — Identify preamble (before first `^## `) and all `^## ` section boundaries.
@@ -69,7 +28,50 @@ NB_LINES=$(wc -l < docs/agent-memory/notebooks/news-scout.md | tr -d ' ')
 > Notebook is written (appended) to disk every cycle. Git commit is deferred to market-watcher eod.md batch commit at market close (L-7, 1968b2). Off-hours cycles retain their own per-cycle commit.
 > Recovery if EOD missed: `docs/protocols/head-lock-self-cure.md`.
 
-**4b. Coverage-state update** (atomic write, after notebook append):
+---
+
+**5. Exec-proof gate** → skill: `.claude/skills/exec-proof-gate/SKILL.md`
+
+```
+Inputs:
+  CYCLE_START_UTC    = <captured at bootstrap Step 0 via cycle-bootstrap skill>
+  NOTEBOOK_PATH      = docs/agent-memory/notebooks/news-scout.md
+  FETCH_RESULT_COUNT = fetched_articles.length (from stage-fetch.md Step 1 result)
+  FETCH_MACRO_TS     = macro_snapshot.fetchedAt (from stage-bootstrap.md Step 0b)
+  AGENT_ID           = "news-scout"
+```
+
+On PASS → continue to Step 6 (session log — log_agent_work) below.
+On FAIL → skill exits; do not continue to Step 6.
+
+---
+
+**6. Session log**
+
+> Invariant: timestamp = current UTC, never future, never speculative. NEVER write entries for cycles that have not fired yet. If unsure of current time: call `get_cycle_bootstrap` to refresh time anchor before writing log.
+
+```
+# Step 1 — open work log (returns id)
+call_tool(server="vn-market", tool="log_agent_work", arguments={
+  "agent_name": "news-scout",
+  "status": "running",
+  "action": "news-scout-cycle",
+  "context": { "items": N, "impacts": M, "signals_fired": X, "regime": "<REGIME>" }
+})
+# → { "id": <log_id> }
+
+# Step 2 — close work log (required: agent_name, id, status)
+call_tool(server="vn-market", tool="log_agent_work", arguments={
+  "agent_name": "news-scout",
+  "id": "<log_id from step 1>",
+  "status": "completed",
+  "action": "news-scout-cycle",
+  "context": { "items": N, "impacts": M, "signals_fired": X, "regime": "<REGIME>" },
+  "signal_ids": ["<signal_id_1>"]
+})
+```
+
+**7. Coverage-state update** (atomic write, after notebook append):
 ```
 for each ticker analyzed this cycle (both event-driven AND sweep-forced):
   set COVERAGE_STATE.tickers[ticker].last_covered_news_scout = <current UTC ISO-8601>
@@ -81,7 +83,7 @@ Atomic write:
   mv docs/data/coverage-state.json.tmp docs/data/coverage-state.json
 ```
 
-**5. WORK channel** (ULTRA tier — inter-agent status ping per `.claude/skills/caveman/SKILL.md`)
+**8. WORK channel** (ULTRA tier — inter-agent status ping per `.claude/skills/caveman/SKILL.md`)
 
 ```
 call_tool(server="vn-market", tool="send_telegram", arguments={
