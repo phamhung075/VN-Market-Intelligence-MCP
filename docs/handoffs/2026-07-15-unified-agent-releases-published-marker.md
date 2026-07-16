@@ -112,6 +112,35 @@ cold-evicted to `docs/data/orch/archive/2026-07.json` with **no `origin_signal_i
 back-reference on any board row**. `FU-CHEF-MARKER-INFLOW` / `UC-CCA-P3` cover that topic, so it
 may have been folded in without the back-ref — **not verified, do not assume it was dropped.**
 
+## Counter-observation 2026-07-16T02:36Z — chef-intraday RETAINED the marker (1 sample, does NOT prove fixed)
+
+Dispatcher tick 02:30Z (SILENT), `task_list_held({})` unfiltered, ~14 min after the 02:22Z
+chef-intraday fire that published MARKET id **936**:
+
+```json
+{"task_id":"published:chef-intraday:2026-07-16:02","task_kind":"cowork-slot",
+ "owner_agent":"unified-agent","claimed_at":1784168556,
+ "expires_at":"2026-07-16T03:22:36.000Z","ttl_seconds":3600}
+```
+
+**The agent published AND kept the marker held** — i.e. it satisfied the invariant this handoff
+is about (`published ⇒ marker retained, TTL is the only expiry path`). The multi-fire branch
+(`chef.md` L60-67) picked the per-window key + 3600s TTL correctly, matching
+FIX-CHEF-INTRADAY-MARKER-CADENCE.
+
+**This is ONE observation and it does not establish that `FIX-CHEF-PUBLISHED-MARKER-RELEASE`
+is fixed.** It cannot distinguish between:
+- (a) the release behavior was corrected, and
+- (b) the release is improvised agent-side and non-deterministic — today it simply didn't improvise.
+
+The 19:52Z chef-evening incident above took the *single-fire* branch (L68-71); this sample took
+the *multi-fire* branch. **Different code path ⇒ this sample carries no information about the
+path that actually failed.** Do not let it downgrade the row's banding.
+
+What it *is* good for: it answers part of the "next step" question below for one publisher/branch
+pair, and it gives triage a known-good comparison case. Whoever picks up the row should diff the
+two branches' post-publish cleanup rather than treat either observation as the general behavior.
+
 ## Suggested next step (po / dev-team triage)
 
 Confirm whether other cowork publishers (alert-commander, fb-market-poster, digest-predict)
