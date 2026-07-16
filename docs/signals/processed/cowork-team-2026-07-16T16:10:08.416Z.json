@@ -1,0 +1,73 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-16T16:10:08.416Z",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "market-watcher-eod",
+      "alert-commander-critical"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "market-watcher-eod",
+      "alert-commander-critical"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence",
+      "market-watcher-eod": "cadence",
+      "alert-commander-critical": "cadence"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": 240,
+      "market-watcher-offhours": 240,
+      "market-watcher-eod": 240,
+      "alert-commander-critical": 240
+    },
+    "last_fired_timestamp": "2026-07-16T16:08:49.343Z",
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "market-watcher-eod",
+      "alert-commander-critical"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "16:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 4,
+    "note": "4-slot WORK fan-out (adaptive; stale_warning false, age ~11min<20). Step4b collision WARNING emitted for agent=market-watcher x2 slots (market-watcher-offhours + market-watcher-eod) — both spawned per R3, distinct slot_id locks, each owns its own published-marker gate. market-watcher-eod last_fired was 3-day-stale (2026-07-13T16:15:42Z) — EOD coverage gap closed this tick. last_fired batch write succeeded on 2nd attempt: 1st attempt hit jq needle-eval bug ($won|index(.slot_id) evaluated .slot_id against $won array) — failed to .tmp only, no corruption, schedule intact; fixed by binding .slot_id as $sid first. market-watcher-offhours subagent already completed clean (0 anomalies, offhours). emit_pressure_state success; cycle_snapshot_promoted:false (UC-SDF-P2); stale_warning oscillated true post-emit (benign, self-clears)."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-16T16:10:08.416Z",
+  "_processed": {
+    "fingerprint": "bca8fabf50bce406d05ae28d8f0af15de080eb3cf59e035aa09222b5dd397083",
+    "processedAt": "2026-07-16T16:19:31Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
