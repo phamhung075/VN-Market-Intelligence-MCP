@@ -8398,7 +8398,32 @@
         "closed_at": "2026-07-12T04:27:30Z"
       }
     ],
-    "done_verified": [],
+    "done_verified": [
+      {
+        "id": "CI-RED-b51fbe13-FIX",
+        "title": "CI-RED-b51fbe13-FIX — CI RED: bun test (BSD3 brief sector-drift guard)",
+        "owner": "po",
+        "status": "DONE_VERIFIED",
+        "type": "FIX",
+        "zone": "cross-service/",
+        "created_at": "2026-07-16T20:03:05Z",
+        "files": [
+          "docs/analysis-briefs/BSR.md",
+          "docs/analysis-briefs/VIX.md",
+          "docs/analysis-briefs/DBC.md",
+          "apps/mcp-server/src/__tests__/BSD3-brief-sector-drift.test.ts"
+        ],
+        "origin_signal_id": "8a0a02371423de8cc179b9a00e25bdea45cfc228dda2aab55afb012643c5ced0",
+        "status_note": "AC: gh run list --branch main --limit 3 shows conclusion=success for a push AFTER b51fbe1304ddfa51a21c7d346e44ccf4226b5cbb (verification_gate=ci_green_on_subsequent_push). Priority: high. Failing job: bun test (src/__tests__/BSD3-brief-sector-drift.test.ts, 1 fail / 14452 pass). ROOT CAUSE: docs/analysis-briefs/{BSR,VIX,DBC}.md (added in commit ebbfda6a5 by report-analyzer) each carry a legacy '**Sector**:' line the BSD3 drift-guard forbids (sector SSOT = WATCHLIST_SEED domain field, never the brief). NOT flaky — reproduced deterministically locally (throws on BSR.md). FIX: remove the '**Sector**:' line from all 3 briefs (every other brief already complies; canonical template docs/references/analysis-ledger-template.md carries none). VERIFY: cd apps/mcp-server && bun test src/__tests__/BSD3-brief-sector-drift.test.ts must be 4/4 green, then full bun test green, then push. ci_red fingerprint=8a0a02371423de8cc179b9a00e25bdea45cfc228dda2aab55afb012643c5ced0 (MUST record on close else signal re-drains). No code generator re-emits the line, so line-removal is definitive; the BSD3 guard test is the structural recurrence-prevention.",
+        "updated_at": "2026-07-16T21:26:25Z",
+        "updated_by": "po",
+        "commit_sha": "320cb1d76",
+        "pushed": true,
+        "close_note": "CLOSED 2026-07-16T21:26:25Z (po triage tick 2026-07-16T21:07Z). Gate ci_green_on_subsequent_push SATISFIED — RAW-verified: b51fbe1304ddfa51a21c7d346e44ccf4226b5cbb is ancestor of HEAD 1f9fbf52b; FIX commit a757051e96871c73ae79115b5c69edea2ffaf0cc landed ([CI-RED-b51fbe13-FIX] drop forbidden **Sector** line from BSR/VIX/DBC, BSD3 guard); gh run list --branch main shows CI conclusion=success on 320cb1d76 (run 29532453232) and 7b13612e8 (run 29535011678) — both pushes AFTER b51fbe13 and after the FIX commit. ci_red fingerprint=8a0a02371423de8cc179b9a00e25bdea45cfc228dda2aab55afb012643c5ced0 recorded (prevents signal re-drain). No code generator re-emits the line; BSD3 guard test is the structural recurrence-prevention.",
+        "closed_by": "po",
+        "closed_at": "2026-07-16T21:26:25Z"
+      }
+    ],
     "head": {
       "status": "idle",
       "active_task_id": null,
@@ -9060,27 +9085,6 @@
         "developer_completed_at": "2026-07-16T14:56:13Z",
         "developer_completed_by": "dev-mcp-server (UC-MDH-P1, dev-team bounded-1 pickup)",
         "review_note": "agentMemoryUpdateTools.ts:189 (registration-time, already function-scope) memoryDir now = process.env.AGENT_MEMORY_ROOT ?? resolve(getProjectRoot(),...docs/agent-memory). 1300b test beforeEach mkdtemps + sets env BEFORE registerAgentMemoryUpdateTools(); afterEach rm+unset; new regression test asserts zero new files under real sessions/. Purged pollution BY MD5 CLASS re-enumerated live (102 files, not brief stale 93): 36 ops(a003f0cc)+34 developer(35d6330b)+32 qa(35cdf1f8), 84 git rm (tracked) + 18 rm (untracked), plus 3 tracked test-artifact files (issues/patterns/modules test-*.md). Verified: 1300b file 14/14 pass x2 standalone; full bun test run1 14569 pass/46 fail, run2 14568 pass/47 fail -- zero 1300b/agent-memory hits in either fail list (pre-existing flaky class: vps_push_log/insider-tx/OCR-cache/foreign-flow timeouts). git status --porcelain docs/agent-memory/ clean of new files after both full runs. pnpm --filter vn-market check (tsc) exit 0. NOTE: staged+verified exact 89-file set (87 deletions+2 edits) before the 2 full-suite verification runs; a peer dev-team-router housekeeping tick committed during that window (11c35c0a8 chore(tasks): cold-evict...) and its bare git commit -m absorbed the shared index incl. my staged files -- verified via git diff-tree --name-status that commit contains EXACTLY my intended 89 files + the peer own orch-state.json change, no revert/no extra/no missing, HEAD==origin/main (already pushed). Content correct, only that commit message/trailer does not reference UC-MDH-P1 -- did not amend shared-main history mid-peer-activity (forbidden), documented in decision journal + notebook instead. qa: confirm sandbox test 14/14 pass, confirm zero docs/agent-memory/ pollution regrowth, confirm code diff at 11c35c0a8 matches detail_ref rescope note, promote to done_verified."
-      },
-      {
-        "id": "CI-RED-b51fbe13-FIX",
-        "title": "CI-RED-b51fbe13-FIX — CI RED: bun test (BSD3 brief sector-drift guard)",
-        "owner": "po",
-        "status": "REVIEW",
-        "type": "FIX",
-        "zone": "cross-service/",
-        "created_at": "2026-07-16T20:03:05Z",
-        "files": [
-          "docs/analysis-briefs/BSR.md",
-          "docs/analysis-briefs/VIX.md",
-          "docs/analysis-briefs/DBC.md",
-          "apps/mcp-server/src/__tests__/BSD3-brief-sector-drift.test.ts"
-        ],
-        "origin_signal_id": "8a0a02371423de8cc179b9a00e25bdea45cfc228dda2aab55afb012643c5ced0",
-        "status_note": "AC: gh run list --branch main --limit 3 shows conclusion=success for a push AFTER b51fbe1304ddfa51a21c7d346e44ccf4226b5cbb (verification_gate=ci_green_on_subsequent_push). Priority: high. Failing job: bun test (src/__tests__/BSD3-brief-sector-drift.test.ts, 1 fail / 14452 pass). ROOT CAUSE: docs/analysis-briefs/{BSR,VIX,DBC}.md (added in commit ebbfda6a5 by report-analyzer) each carry a legacy '**Sector**:' line the BSD3 drift-guard forbids (sector SSOT = WATCHLIST_SEED domain field, never the brief). NOT flaky — reproduced deterministically locally (throws on BSR.md). FIX: remove the '**Sector**:' line from all 3 briefs (every other brief already complies; canonical template docs/references/analysis-ledger-template.md carries none). VERIFY: cd apps/mcp-server && bun test src/__tests__/BSD3-brief-sector-drift.test.ts must be 4/4 green, then full bun test green, then push. ci_red fingerprint=8a0a02371423de8cc179b9a00e25bdea45cfc228dda2aab55afb012643c5ced0 (MUST record on close else signal re-drains). No code generator re-emits the line, so line-removal is definitive; the BSD3 guard test is the structural recurrence-prevention.",
-        "updated_at": "2026-07-16T20:32:06Z",
-        "updated_by": "developer",
-        "commit_sha": "320cb1d76",
-        "pushed": true
       }
     ],
     "qa": [],
@@ -9111,6 +9115,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-07-16T17:50:56Z",
+  "_updated_at": "2026-07-16T21:26:25Z",
   "_updated_by": "po"
 }
