@@ -4,72 +4,57 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Corporate & retail banking, trade finance, bancassurance, FX/treasury (state-owned commercial bank, largest by market cap)",
-  "customer": "Corporate borrowers, SOEs, retail depositors/borrowers, correspondent-bank FX flows",
-  "ops": "Q1-2026 operating margin 80.9% (bank pre-provision structure), ROE 4.21%q (16.7% annualized, below sector median 17.6%); OCF/NI ratio 1.37x (healthy); D/E not meaningful for bank",
-  "mgmt": "Consistent capital-adequacy discipline; premium valuation (PE +57%, PB +45% vs peers) reflects perceived quality/scarcity premium despite below-median ROE this quarter",
-  "valuation": {
+  "product": "Ngân hàng thương mại quốc doanh — tín dụng bán lẻ/doanh nghiệp, tài trợ thương mại, bancassurance",
+  "customer": "Khách hàng cá nhân đô thị, doanh nghiệp lớn/SOE, đối tác bancassurance",
+  "ops": "ROE 4.21%q/16.7%năm (sector-tool) — dưới trung vị ngành 17.6%; cấu trúc lợi nhuận trước dự phòng của ngân hàng quốc doanh khiến non-operating share âm (-21.4%), không phải một-lần bất thường",
+  "mgmt": "Định giá PE 14.1x (+57% premium) / PB 2.2x (+45% premium) so với BID/CTG/MBB dù ROE thấp hơn — thị trường trả premium cho chất lượng tài sản/thương hiệu, không theo ROE hiện tại. KD Quẻ Dự(16) THẬN TRỌNG 50% ổn định, sentiment 30d TĂNG nhẹ (mẫu nhỏ, 5 tin)",
+  "financials": {
+    "net_revenue_bn": 17421,
+    "net_profit_bn": 9462.1,
+    "roe_q_pct": 4.21,
+    "roe_sector_tool_pct": 16.7,
+    "roe_sector_median_pct": 17.6,
     "pe": 14.1,
-    "pe_vs_sector_median": 57,
     "pb": 2.2,
-    "pb_vs_sector_median": 45,
-    "earning_yield_pct": 7.09,
-    "max_deposit_rate_pct": 5,
-    "ey_spread_pct": 2.09,
-    "verdict": "FAIR"
-  },
-  "balance_sheet_check": {
-    "imbalance_pct": 0.37,
-    "verdict": "PASS"
+    "ey_spread_pp": 2.09,
+    "valuation_verdict": "FAIR"
   },
   "esc_gate": {
-    "esc1_accounting_manipulation": "FALSE",
-    "esc2_balance_sheet": "PASS",
-    "esc3_ocf_ni_divergence": "DATA-COVERAGE-LIMITED",
+    "esc1_accounting_manipulation": false,
+    "esc2_balance_sheet_imbalance_pct": 0.37,
+    "esc3_status": "DATA-COVERAGE-LIMITED",
     "esc3_quarters_returned": 3,
     "esc3_coverage_guard_key": "esc-datacov:VCB:Q1-2026:ESC-3",
-    "esc3_coverage_guard_held": true,
     "esc4_non_operating_share_pct": -21.4,
-    "esc4_result": "FALSE",
-    "esc4_note": "Negative - bank pre-provision operating-profit structure, not a one-off flag",
-    "esc5_refined_confidence": "FALSE",
-    "esc5_note": "get_bctc_refined empty for VCB_2026_Q1"
+    "esc5_refined_confidence": "FALSE (no refined units for report_id)"
   },
   "kinhdich": {
-    "hexagram": "Que 16 - Du",
+    "hexagram": "Dự (16)",
+    "signal": "THẬN TRỌNG (tích cực)",
     "trend": "THUAN LOI",
-    "signal": "THAN TRONG (tich cuc)",
-    "confidence_pct": 50,
-    "prior_cycle": "Que 8 Ty THUAN LOI GIU 100% (c089-c090)",
-    "note": "Signal downgraded from GIU/100% to THAN TRONG/50% - still positive trend but lower confidence this cycle."
+    "confidence_pct": 50
   },
-  "insider_signals": "Skipped - charter_capital null, no outstandingShares/market-cap base (DATA-GAP not assumed)",
-  "legal_risk": "None for VCB this cycle (1 unrelated PC1/Rox Energy item, non-watchlist)",
-  "chain_validation": {
-    "findings_30min": 0
+  "sentiment_30d": {
+    "direction": "TĂNG",
+    "slope": 0.5,
+    "bullish_count": 4,
+    "bearish_count": 0,
+    "sample_note": "small sample, 5 entries"
   },
-  "trick_summary": null,
-  "trick_confidence": "none",
-  "trick_pass_versions": [],
-  "trick_skip_reason": "No row-level OCR tool resolvable this session - capability gap, unchanged since c081",
-  "signal_posted": {
-    "id": 8289,
-    "to": "alert-commander",
-    "direction": "neutral",
-    "critic_score": 0.8
-  },
-  "evidence_fragment": {
-    "id": 258,
-    "evidence_type": "bctc_roe_ratio",
-    "direction": "bullish",
-    "magnitude": 0.3,
-    "confidence": 0.6
-  },
-  "cycle_id": "20260716-1500",
-  "generated_at": "2026-07-16T15:12:00Z",
+  "insider": "Skipped — charter_capital null (no outstandingShares base), DATA-GAP not assumed",
+  "legal_risk": "none (PC1/Rox Energy item is non-watchlist, unrelated)",
+  "regime": "NEUTRAL",
+  "carry_regime": "NEUTRAL",
+  "max_deposit_rate_pct": 5,
+  "signal_bus_id": 8307,
+  "critic_score": 0.8,
+  "evidence_fragment_id": 264,
+  "generated_at": "2026-07-16T18:14:00Z",
+  "slot": "bctc-analyst-slot-2",
+  "cycle": "c092",
   "_processed": {
-    "fingerprint": "f888339361710d291c251b03b104f7db8c08f21fef0bb0ada3ace283881b0912",
-    "processedAt": "2026-07-16T15:20:57Z",
+    "fingerprint": "4503bfd2c594ef0762648806941a2fcb8d1a82648ccb05f95e79b6e567f1e210",
+    "processedAt": "2026-07-16T18:50:59Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

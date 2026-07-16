@@ -1,0 +1,57 @@
+{
+  "from": "cowork-dispatcher",
+  "to": "system-auditor",
+  "type": "cowork_tick_fire",
+  "payload": {
+    "tick": "2026-07-16T17:30Z",
+    "nominal_tick": "17:30",
+    "classification": "FIRE",
+    "reason": "spawned",
+    "matched_slots": [
+      "digest-daily"
+    ],
+    "won_slots": [
+      "digest-daily"
+    ],
+    "last_fired_slots": [
+      "digest-daily"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/digest-predict/flow/daily-predict.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "digest-daily": "cron"
+    },
+    "cadence_minutes": {
+      "digest-daily": null
+    },
+    "last_fired_timestamp": "2026-07-16T17:35:01.883Z",
+    "last_fired_write_errors": null,
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 5,
+    "host_headroom_mb": 2710,
+    "cycle_snapshot_promoted": false,
+    "note": "Single-slot fan-out digest-daily (digest-predict, guaranteed daily cron 30 17). last_fired advanced 2026-07-13T17:39:02.066Z -> 2026-07-16T17:35:01.883Z (3-day gap closed; slot missed 07-14/07-15 fires — recurring daily-slot missed-coverage shape, self-healed this fire). Step 4.7 tick-snapshot SKIPPED (single non-amortizing consumer; zero-blocker fallback to direct get_cycle_bootstrap; token-economy). No collision (single slot). pressure fresh (age ~28s, stale_warning false) -> adaptive; guaranteed slot fires on cron regardless of mode. cycle_snapshot_promoted false persists (UC-SDF-P2). calendar_status structurally latched unknown; regime/volatility dark."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-16T17:35:48.087Z",
+  "_processed": {
+    "fingerprint": "ea5fc1472b96111a69cffbaf18f5ba9455965409443713f53d550e5ae77e53e4",
+    "processedAt": "2026-07-16T17:55:20Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

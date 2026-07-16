@@ -4,71 +4,55 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Software exports/IT services (FPT Software), telecom & broadband (FPT Telecom), education (FPT Edu)",
-  "customer": "Enterprise IT buyers (VN + offshore Japan/US/APAC), SME/retail telecom & broadband subscribers",
-  "ops": "Q1-2026 gross margin 34.0%, operating margin 22.0%, ROE 6.17%q (28.3% annualized, above sector median 10.6%); OCF -2,847.8 ty VND (capex-heavy investing quarter, FCF -3,436.9 ty); D/E 0.40x",
-  "mgmt": "FY guidance historically met 3 consecutive quarters; H1-2026 pretax profit +18.1% YoY per company press release (2026-07-16), but market commentary flags Q2 revenue deceleration and stock at lowest since late 2023",
-  "valuation": {
+  "product": "Xuất khẩu phần mềm, tích hợp hệ thống CNTT, viễn thông (FPT Telecom), giáo dục (FPT Edu)",
+  "customer": "Doanh nghiệp CNTT trong nước và offshore, thuê bao viễn thông bán lẻ, sinh viên FPT Edu",
+  "ops": "Biên gộp 34.0%, biên hoạt động 22.0% — mảng xuất khẩu phần mềm dẫn dắt biên cao, viễn thông kéo biên hỗn hợp xuống; ROE 6.17%q/28.3%năm (sector-tool), EY 7.25% FAIR (+2.25pp so với lãi suất tiết kiệm 5%)",
+  "mgmt": "H1-2026 lợi nhuận trước thuế công bố +18.1% YoY, 14 dự án ký mới (3.600 tỷ); song KD hexagram Quẻ Bác(23) GIU tiêu cực ổn định 4 chu kỳ liên tiếp (25% conf, không đổi), sentiment 30d GIẢM (slope -0.30), khối ngoại bán ròng yếu hơn ngành — theo dõi tiếp",
+  "financials": {
+    "net_revenue_bn": 12480,
+    "net_profit_bn": 2476.8,
+    "roe_q_pct": 6.17,
+    "roe_sector_tool_pct": 28.3,
     "pe": 13.8,
-    "pe_vs_sector_median": -20,
     "pb": 3.6,
-    "pb_vs_sector_median": 136,
-    "earning_yield_pct": 7.25,
-    "max_deposit_rate_pct": 5,
-    "ey_spread_pct": 2.25,
-    "verdict": "FAIR"
-  },
-  "balance_sheet_check": {
-    "imbalance_pct": 0,
-    "verdict": "PASS"
+    "ey_spread_pp": 2.25,
+    "valuation_verdict": "FAIR"
   },
   "esc_gate": {
-    "esc1_accounting_manipulation": "FALSE",
-    "esc2_balance_sheet": "PASS",
-    "esc3_ocf_ni_divergence": "DATA-COVERAGE-LIMITED",
+    "esc1_accounting_manipulation": false,
+    "esc2_balance_sheet_imbalance_pct": 0,
+    "esc3_status": "DATA-COVERAGE-LIMITED",
     "esc3_quarters_returned": 2,
     "esc3_coverage_guard_key": "esc-datacov:FPT:Q1-2026:ESC-3",
-    "esc3_coverage_guard_held": true,
     "esc4_non_operating_share_pct": 2,
-    "esc4_result": "FALSE",
-    "esc5_refined_confidence": "FALSE",
-    "esc5_note": "get_bctc_refined empty for FPT_2026_Q1"
+    "esc5_refined_confidence": "FALSE (no refined units for report_id)"
   },
   "kinhdich": {
-    "hexagram": "Que 23 - Bac",
+    "hexagram": "Bác (23)",
+    "signal": "GIU (tiêu cực)",
     "trend": "BAT LOI",
-    "signal": "GIU (tieu cuc)",
-    "confidence_pct": 25,
-    "prior_2_cycles": "Que 2 Khon THAN TRONG 13% (unchanged c089-c090)",
-    "note": "REVERSAL WATCH: 3rd consecutive cycle deteriorating (Khon GIU 38% -> Khon THAN TRONG 13% x2 -> Bac GIU-tieu-cuc 25%); corroborated by sentiment trend (GIAM slope -0.30, 9 bearish/2 bullish 30d), foreign net selling (-143K cp, weaker than sector), and 2026-07-16 news re Q2 revenue slowdown / 2-year price low. Fundamentals (Q1 BCTC) still FAIR/above-median ROE but lag the deteriorating real-time signal."
+    "confidence_pct": 25
   },
-  "insider_signals": "No significant insider activity (get_insider_signals)",
-  "legal_risk": "None for FPT this cycle (1 unrelated PC1/Rox Energy item, non-watchlist)",
-  "chain_validation": {
-    "findings_30min": 0
+  "sentiment_30d": {
+    "direction": "GIẢM",
+    "slope": -0.3,
+    "bullish_count": 2,
+    "bearish_count": 9
   },
-  "trick_summary": null,
-  "trick_confidence": "none",
-  "trick_pass_versions": [],
-  "trick_skip_reason": "No row-level OCR tool resolvable this session - capability gap, unchanged since c081",
-  "signal_posted": {
-    "id": 8288,
-    "to": "alert-commander",
-    "direction": "neutral",
-    "critic_score": 0.8
-  },
-  "evidence_fragment": {
-    "id": 257,
-    "evidence_type": "bctc_roe_ratio",
-    "direction": "bullish",
-    "magnitude": 0.3,
-    "confidence": 0.6
-  },
-  "cycle_id": "20260716-1500",
-  "generated_at": "2026-07-16T15:12:00Z",
+  "insider": "Không có tín hiệu giao dịch nội bộ đáng kể",
+  "legal_risk": "none (PC1/Rox Energy item is non-watchlist, unrelated)",
+  "regime": "NEUTRAL",
+  "carry_regime": "NEUTRAL",
+  "max_deposit_rate_pct": 5,
+  "signal_bus_id": 8306,
+  "critic_score": 0.8,
+  "evidence_fragment_id": 263,
+  "generated_at": "2026-07-16T18:14:00Z",
+  "slot": "bctc-analyst-slot-2",
+  "cycle": "c092",
   "_processed": {
-    "fingerprint": "e9a0f02fb2a262aa9173f63f087b1fc46bcc0c5bd5b6416cf4d367e525e53a6c",
-    "processedAt": "2026-07-16T15:20:57Z",
+    "fingerprint": "1463574dd55dada485e8dd08e1cca88bfebcda29dba73d6ce4f7da9166553259",
+    "processedAt": "2026-07-16T18:50:59Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
