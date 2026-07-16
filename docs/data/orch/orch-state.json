@@ -9036,7 +9036,7 @@
         "created_at": "2026-07-13T19:31:11Z",
         "created_by": "po",
         "plan_only": false,
-        "next_agent": "pm",
+        "next_agent": "fixer",
         "promoted_at": "2026-07-16T15:26:17Z",
         "promoted_by": "dev-team (bounded-1 auto-pickup)",
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
@@ -9048,7 +9048,8 @@
         "architect_reviewed": true,
         "architect_handoff": "docs/handoffs/UC-CRITIC-GATEWAY-CONTRACT-DRIFT-BA-spec.md",
         "architect_completed_at": "2026-07-16T15:45:36Z",
-        "architect_note": "Ratified BA fix table (6 files) + folded in I11/I14 (2 files, already tracked as P9/P12 inside UC-RDL-UNVERIFIED-BATCH/UC-CCA-UNVERIFIED-BATCH — PM to strike those bullets post-ship). 8-file fix set total, BUILD-STANDARD: not-applicable. Settings-symmetry (FR-5) ruled leave-as-is, no action."
+        "architect_note": "Ratified BA fix table (6 files) + folded in I11/I14 (2 files, already tracked as P9/P12 inside UC-RDL-UNVERIFIED-BATCH/UC-CCA-UNVERIFIED-BATCH — PM to strike those bullets post-ship). 8-file fix set total, BUILD-STANDARD: not-applicable. Settings-symmetry (FR-5) ruled leave-as-is, no action.",
+        "next_action": "Decomposition complete: single atomic doc-edit task. 8-file fix set (6 BA + 2 folded I11/I14): mcp__claude_ai_gateway__ → mcp__gateway__ in gateway-call-contract.md(L13,30-32,94-collapse), mcp-tools.md(L28), task-lock-protocol.md(L162), guide-agent-definition-frontmatter.md(L23,25), REQ_DYN-WF-FOUNDATION.md(L134,332), quality-checklist.json(L2347), task-lock/SKILL.md(L169), tran-ngoc-bau/bootstrap.md(L30). POST-VERIFY: grep -rn claude_ai_gateway <8 files> must return 0. POST-SHIP PM-ACTION: strike P9/P12 from UC-RDL-UNVERIFIED-BATCH/UC-CCA-UNVERIFIED-BATCH notes via orch-apply.sh."
       }
     ]
   },
