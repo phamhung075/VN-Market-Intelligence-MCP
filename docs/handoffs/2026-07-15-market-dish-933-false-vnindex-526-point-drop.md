@@ -369,10 +369,47 @@ Not deleted, edited, or review-labelled — outward-facing, the user's call (sam
 |---|---|---|
 | "giảm nhẹ 0.3%", VN-Index 1776.85 | −5.88 vs prior close 1782.12 = −0.33% | ✅ **correct** |
 | "20 mã… RSI < 30" | 16 `ta_oversold` in the alert store; ~18 incl. msg 934 TA signals (D2D, PPC) | ⚠️ minor overcount |
-| **"giá dầu cũng tăng thêm"** *(oil rising further)* | `oilUsdDelta: null`, `oilUsdDirection: "unknown"`; Brent 85.47 (02:08) → 85.26 (02:20); briefing 934 shows Brent **↓**; **CHEF's own synthesis JSON says `oil $85.26 (level)`** | ❌ **FALSE — and self-refuted** |
-| "tin tức tích cực từ Mỹ (Big Tech tăng)" | **NOT VERIFIED — see below. Do not treat as established.** | ⚠️ **unverified** |
+| ~~**"giá dầu cũng tăng thêm"**~~ | ~~`oilUsdDelta: null`… **self-refuted**~~ | 🔴 **VERDICT RETRACTED 2026-07-16T04:12Z — I WAS WRONG. See § 8.3-R below.** |
+| "tin tức tích cực từ Mỹ (Big Tech tăng)" | **VERIFIED 2026-07-16T04:12Z** — `get_analysis_history(level="global")`: `[GLOBAL] 2026-07-16T01:19 \| bullish \| impact 10.0/10 up` — *"Chứng khoán Mỹ «xanh» nhờ cổ phiếu Big Tech, giá dầu tăng thêm"*. Source exists, predates the dish by 64 min. | ✅ **sourced — my "unverified" is withdrawn** |
 
-### The oil claim — airtight, and the agent's own artifact is the witness
+### 🔴 § 8.3-R — RETRACTION 2026-07-16T04:12Z. The oil claim was NOT false. My verdict was wrong, and the reasoning below is refuted. Read this before anything under it.
+
+**What I asserted:** *"giá dầu cũng tăng thêm"* is ❌ FALSE and *self-refuted*; "three internal artifacts say `level`, one published dish says `rising`… **the agent knew**"; *"no external evidence is needed to convict this"*; the claim is **"airtight."**
+
+**What is actually true:** CHEF was quoting a real news headline that predates the dish by 64 minutes.
+
+`get_analysis_history({fromDate:"2026-07-16", level:"global"})`, executed 04:12Z:
+
+```
+[GLOBAL] 2026-07-16T01:19 | bullish | impact 10.0/10 up
+  Chứng khoán Mỹ "xanh" nhờ cổ phiếu Big Tech, giá dầu tăng thêm
+```
+
+| | text |
+|---|---|
+| Article headline (01:19) | "Chứng khoán Mỹ «xanh» nhờ cổ phiếu Big Tech, **giá dầu tăng thêm**" |
+| CHEF's dish (02:23:26Z) | "**giá dầu cũng tăng thêm**" |
+
+That is a near-verbatim lift — the only edit is inserting *cũng* ("also"). **The prose was not rendering the macro layer's `oil $85.26 (level)` as "rising." It was citing the news layer**, which is what a market dish is supposed to do. The two layers were never in contradiction: the macro layer correctly said `(level)` because `oilUsdDelta` is null; the news layer said oil rose. Different sources, different referents (VN-session Brent tick vs. the overnight Wall Street session the article describes).
+
+**Every load-bearing element of my argument fails:**
+
+- ~~"self-refuted"~~ — no self-contradiction. Two layers, two referents.
+- ~~"the agent knew"~~ — an imputation of intent with no support. Withdrawn unreservedly.
+- ~~"no external evidence is needed to convict"~~ — external evidence is exactly what refutes the conviction. I declared the outside irrelevant and was wrong *because* I did not look.
+- ~~"airtight"~~ — it was the least sound claim on the page, and I marked it the most certain.
+
+**How I got here — the same error twice in one day, in the same document.** § 8.2 retracts a false root-cause built from ONE `get_macro_snapshot` reading. § 8.3 is the identical failure one section later: I read ONE data plane (macro deltas null → "oil is flat-to-down"), found an alarming reading, and never checked the news plane sitting in the same bootstrap payload. Cf. `feedback_single_observation_degenerate_case_read_as_broken_mechanism`. **The tell was present and I ignored it:** an argument whose stated strength is that it needs no external check is an argument that has *not been externally checked*. Treat "airtight / no external evidence needed" as a stop signal, not a flourish.
+
+**Escalation debt:** this false verdict was sent to the `work` channel **twice** and carried in a committed handoff. A correction goes to `work` at 04:13Z. Anyone who read the earlier escalation should treat the oil row as withdrawn.
+
+### 🔴 CONSEQUENCE FOR § 6.3's PROPOSED GATE — it would have false-positived here
+
+The gate specced below ("compare outgoing prose against the synthesis JSON's own gap tokens; no direction/move claim may be published when the matching `*Delta` is null") **would have blocked this legitimate, correctly-sourced sentence.** `oilUsdDelta` was null *and* the dish said "tăng thêm" *and* the claim was properly attributable to a global-tier bullish article. A gate keyed only on macro gap tokens cannot see the news layer, so it fires on exactly the case where the agent did the right thing.
+
+**Do not implement § 6.3 as written.** Any pre-send gate must resolve the claim's *source layer* before flagging — a direction word backed by a cited news/global-tier analysis row is not a gap violation. Otherwise the fix trains agents to stop citing news, which is worse than the defect. This does not vacate § 6.3 entirely: msg 933's tier-4 `vnIndex` estimate is a different, still-open case where no news source existed. Gate that one on its own evidence.
+
+### ~~The oil claim — airtight, and the agent's own artifact is the witness~~ (REFUTED — retained verbatim below as the record of the error; do not act on it)
 
 **The spawn prompt said, verbatim:** *"`oilUsdDelta`, `goldUsdDelta`, `usdVndDelta` — ALL null, all
 directions `"unknown"`. These genuinely have no baseline. Do NOT state a move/direction for oil, gold,
