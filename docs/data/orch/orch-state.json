@@ -374,9 +374,9 @@
     "status": "in_progress",
     "active_task_id": "UC-SDF-P4",
     "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of UC-SDF-P4 — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-16T12:24:25Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "next_action": "resume UC-SDF-P4 — re-dispatched after prior worker stalled (redispatch_count=1)",
+    "updated_at": "2026-07-16T12:55:53Z",
+    "updated_by": "dev-team (UC-SDF-P4 dead-worker re-dispatch)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -8440,11 +8440,12 @@
     ],
     "done_verified": [],
     "head": {
-      "status": "idle",
-      "active_task_id": null,
-      "next_agent": "router",
-      "last_updated_at": "2026-07-16T09:30:06Z",
-      "last_updated_by": "dev-team (promote CI-RED-da847805-FIX)"
+      "status": "in_progress",
+      "active_task_id": "UC-SDF-P4",
+      "next_agent": "developer",
+      "next_action": "resume UC-SDF-P4 — re-dispatched after prior worker stalled (redispatch_count=1)",
+      "updated_at": "2026-07-16T12:55:53Z",
+      "updated_by": "dev-team (UC-SDF-P4 dead-worker re-dispatch)"
     },
     "ready": [],
     "review": [
@@ -9036,7 +9037,10 @@
         "promoted_by": "dev-team (bounded-1 auto-pickup)",
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
         "claimed_at": "2026-07-16T12:24:25Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "redispatch_count": 1,
+        "redispatched_at": "2026-07-16T12:55:53Z",
+        "resume_note": "dead-worker re-dispatch 12:37Z — prior developer stalled ~22min silent (partial: 86-line purge script created; drain-signals.js code fix + spec update NOT done, no commit). Fresh developer resumes."
       }
     ]
   },
