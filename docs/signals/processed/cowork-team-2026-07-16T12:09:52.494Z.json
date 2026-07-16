@@ -1,0 +1,67 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-16T12:09:52.494Z",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence",
+      "alert-commander-critical": "cadence"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": 240,
+      "market-watcher-offhours": 240,
+      "alert-commander-critical": 240
+    },
+    "last_fired_timestamp": "2026-07-16T12:08:31.926Z",
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "12:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 0,
+    "signal_backlog": 4,
+    "note": "3 off-hours gatherers fired (0 */4 cadence, due at 12:00 from 08:08 last_fired). Step 4.7 tick-snapshot DEFERRED (non-blocking; agents fall back to get_cycle_bootstrap). emit returned stale_warning=true — next tick isStale Gate1 will select legacy mode (conservative). chef-eod to:po row triaged to READ by dev-team between ticks."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-16T12:09:52.494Z",
+  "_processed": {
+    "fingerprint": "4d7e32fe1a0bead0a0637fb91d40d6a80413e2e931f4af218e1bca991b2ff7f5",
+    "processedAt": "2026-07-16T12:18:38Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

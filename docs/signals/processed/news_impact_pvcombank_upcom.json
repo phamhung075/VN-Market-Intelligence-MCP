@@ -1,0 +1,36 @@
+{
+  "signal_id": "news-impact-pvcombank-upcom-20260716",
+  "source_agent": "news-scout",
+  "signal_type": "news_impact",
+  "created_at": "2026-07-16T12:09:30Z",
+  "event_type": "market_event",
+  "headline": "Chuẩn bị đưa 900 triệu cổ phiếu lên UPCoM, PVcomBank kinh doanh ra sao trong quý I?",
+  "impact_score": 10,
+  "direction": "bullish",
+  "confidence": 0.71,
+  "affected_sectors": [
+    "banking",
+    "securities"
+  ],
+  "affected_stocks": [
+    "BID",
+    "EIB",
+    "MBB",
+    "ACB",
+    "CTG",
+    "VPB",
+    "VCB",
+    "SHB"
+  ],
+  "summary": "PVcomBank gearing up for 900M share UPCoM listing — positive for banking sector and securities exchanges. Market-wide bullish cascade expected.",
+  "regime_applied": "NEUTRAL",
+  "regime_multiplier": 1,
+  "ttl_minutes": 1440,
+  "chain_id": "chain-1784203763214-cfl36x",
+  "_processed": {
+    "fingerprint": "c1fd64299ddd77ae474101683417c0605f2349b370d9b043309d3c877d677dd3",
+    "processedAt": "2026-07-16T12:18:38Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "signal_id": "news-impact-foreign-inflow-20260716",
+  "source_agent": "news-scout",
+  "signal_type": "chain_catalyst",
+  "created_at": "2026-07-16T12:09:35Z",
+  "event_type": "capital_flow",
+  "headline": "Thêm một thế lực 'tung tiền' mua cổ phiếu Việt phiên tăng điểm",
+  "impact_score": 9,
+  "direction": "bullish",
+  "confidence": 0.67,
+  "affected_sectors": [
+    "securities",
+    "banking",
+    "real_estate"
+  ],
+  "summary": "Foreign capital actively buying Vietnamese equities amid market recovery. Positive signal for FII inflow sentiment.",
+  "regime_applied": "NEUTRAL",
+  "regime_multiplier": 1,
+  "ttl_minutes": 1440,
+  "chain_id": "chain-1784203765341-7lby14",
+  "hot_money_risk": false,
+  "_processed": {
+    "fingerprint": "98451c5101a152f9d4f370ea2ac133721088289d81cd7e5164f19c06f9bdb67f",
+    "processedAt": "2026-07-16T12:18:38Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
