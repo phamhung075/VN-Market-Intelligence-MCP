@@ -9099,7 +9099,7 @@
             "id": "UC-ASL-P2-DEV-2",
             "type": "TASK",
             "title": "Replace 4 EMIT SEQUENCE sites in docs/agents/system-auditor/flow/main.md",
-            "status": "TODO",
+            "status": "DONE",
             "priority": "P1",
             "size": "M",
             "zone": "docs/agents/system-auditor/",
@@ -9110,13 +9110,16 @@
               "UC-ASL-P2-DEV-1"
             ],
             "created_at": "2026-07-16T04:50:00Z",
-            "created_by": "pm"
+            "created_by": "pm",
+            "done_at": "2026-07-16T05:20:00Z",
+            "done_by": "developer",
+            "commit": "35d408423"
           },
           {
             "id": "UC-ASL-P2-DEV-3",
             "type": "TASK",
             "title": "Replace 2 EMIT SEQUENCE sites in docs/agents/system-auditor/flow/tier1-probe.md",
-            "status": "TODO",
+            "status": "DONE",
             "priority": "P1",
             "size": "S",
             "zone": "docs/agents/system-auditor/",
@@ -9127,7 +9130,10 @@
               "UC-ASL-P2-DEV-1"
             ],
             "created_at": "2026-07-16T04:50:00Z",
-            "created_by": "pm"
+            "created_by": "pm",
+            "done_at": "2026-07-16T05:20:00Z",
+            "done_by": "developer",
+            "commit": "35d408423"
           },
           {
             "id": "UC-ASL-P2-DEV-4",
