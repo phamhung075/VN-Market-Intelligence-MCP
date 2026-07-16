@@ -6525,7 +6525,8 @@
           "FU-CHEF-MARKER-INFLOW"
         ],
         "supervised": true,
-        "impact_enrichment_20260715T2056Z": "[po 2026-07-15T20:56Z, corroboration from cow-20260715T204639 — owner/priority/next_agent UNCHANGED] IMPACT-LINE ENRICHMENT: the double-publish was NOT a benign repeat. RAW-verified against live MARKET store: id 932 (19:52:17) cites no index number and is narratively consistent with the real -1.36%; id 933 (19:56:07, the DUPLICATE) published a FALSE 'VN-Index mat 526 diem' (~29% crash), contradicting both reality and its own predecessor. So the marker-release defect let a SECOND, WORSE dish through — publishing 933 was strictly harmful independent of duplication. UC-CCA-P3 impact should read 'caused a user-visible duplicate THAT PUBLISHED A FALSE ~29% INDEX MOVE', not just 'double-publish'. The correctness/plausibility root cause is tracked separately in FIX-VNINDEX-CROSS-PLANE-PLAUSIBILITY-GATE."
+        "impact_enrichment_20260715T2056Z": "[po 2026-07-15T20:56Z, corroboration from cow-20260715T204639 — owner/priority/next_agent UNCHANGED] IMPACT-LINE ENRICHMENT: the double-publish was NOT a benign repeat. RAW-verified against live MARKET store: id 932 (19:52:17) cites no index number and is narratively consistent with the real -1.36%; id 933 (19:56:07, the DUPLICATE) published a FALSE 'VN-Index mat 526 diem' (~29% crash), contradicting both reality and its own predecessor. So the marker-release defect let a SECOND, WORSE dish through — publishing 933 was strictly harmful independent of duplication. UC-CCA-P3 impact should read 'caused a user-visible duplicate THAT PUBLISHED A FALSE ~29% INDEX MOVE', not just 'double-publish'. The correctness/plausibility root cause is tracked separately in FIX-VNINDEX-CROSS-PLANE-PLAUSIBILITY-GATE.",
+        "recurrence_20260716T1155Z": "[po 2026-07-16T11:59:19Z, corroboration from signal_queue cowork-chef-eod-nonpublish-20260716T0845Z; owner/priority/next_agent UNCHANGED] 4th real-world confirmation of the published-marker lifecycle defect, ABORT-AFTER-CLAIM variant: chef-eod claimed published:chef-eod:2026-07-16 at Step 0.5 then BAILED pre-publish (unified-agent returned scope-clarification meta-narrative), leaving a FALSE TOMBSTONE (task_list_held owner unified-agent, TTL 100800s, expires 2026-07-17T12:52:43Z) with NO MARKET post at/after 08:45Z and NO synthesis/notebook artifact (RAW-verified 2 planes). This is EXACTLY the class UC-CCA-P3 fixes: the two-phase gate (early READ-ONLY probe claiming NOTHING; task_claim only immediately before send_telegram) makes a mid-flow bail leave NO marker by construction, satisfying AC(2). Blast radius LOW (once-daily key; tomorrow uses 2026-07-17 key; marker auto-expires 07-17). Reinforces P0. Handoff: docs/handoffs/2026-07-16-chef-eod-nonpublish-and-marker-leak.md. Distinct execution-determinism root cause (agent bail) tracked separately in FIX-CHEF-MIDFLOW-BAIL-DETERMINISM."
       },
       {
         "id": "UC-ASL-P6",
@@ -6542,7 +6543,9 @@
         "note": "auditor main.md/init.md/tier1-probe.md mandate a phantom docs/handoffs/DASHBOARD.md with no live consumer, and signal-dashboard SKILL teaches bare temp-then-rename contradicting orch-apply.sh. Purge phantom refs; align write text to orch-apply CAS.",
         "created_at": "2026-07-13T19:31:11Z",
         "created_by": "po",
-        "next_agent": "agent-father"
+        "next_agent": "agent-father",
+        "supervised": true,
+        "supervised_reason": "[po 2026-07-16T11:59:19Z] 3rd BOUNDED-1 tick churn converged. next_agent=agent-father is a MAINTENANCE-LANE on-demand-only agent (dev-team main.md L12) that zone-detect (cross-service/ => Tier-3 developer) CANNOT route to; idle auto-launch would mis-route factory work to a generic developer. supervised:true withholds it from BOUNDED-1 so the next tick picks a dev-routable P1 (UC-SDF-P4/UC-GCP-P2/UC-GCP-P4->developer, UC-MDH-P1->dev-mcp-server). Deliberate on-demand dispatch of agent-father (task:on-demand:agent-father:<date> mutex-wrap) only; on execution reconcile that the row cites system-auditor init.md but the flow dir has only main.md/tier1-probe.md. Durable class fix tracked by FIX-DEVTEAM-BOUNDED1-MAINTLANE-NEXTAGENT-GATE."
       },
       {
         "id": "UC-SDF-P4",
@@ -7703,6 +7706,36 @@
         "source": "devteam-dispatcher-hygiene-20260716T0637",
         "note": "PLAN-ONLY capture (peer-produced files — NOT to be deleted autonomously). Recurring drain-pressure: per-tick cowork-team-<ISO>.json telemetry + stale price_anomaly_*.json (07-02/03/04/13) sit in docs/signals/ and the drain skips them as non-signal shape, so the inbox stays near the 50-file cap. FIX: cowork-team flow (telemetry.md / main.md Step 6 emit) should write per-tick telemetry to a non-drain directory (e.g. docs/data/cowork-telemetry/ or docs/signals/telemetry/ excluded from the drain glob) and/or prune its own snapshots; sweep the 4 old price_anomaly files. 10 of the residue files are git-tracked — dev must reconcile .gitignore too.",
         "created_at": "2026-07-16T07:07:00Z"
+      },
+      {
+        "id": "FIX-DEVTEAM-BOUNDED1-MAINTLANE-NEXTAGENT-GATE",
+        "type": "FIX",
+        "title": "BOUNDED-1 promote: add MAINTENANCE-LANE-NEXT_AGENT gate — withhold any row whose effective board-OR-detail next_agent names an on-demand maintenance-lane agent (agent-father/agents-architect/system-auditor/claude-manager-helper/code-janitor/cowork-refactory-expert/idea-forge)",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "size": "S",
+        "zone": "cross-service/",
+        "next_agent": "developer",
+        "created_at": "2026-07-16T11:59:56Z",
+        "created_by": "po",
+        "detail_ref": "docs/signals/processed/dev-team-20260716T112423Z-autolaunch-safety-hold-uc-asl-p6-maintlane.json",
+        "note": "[po 2026-07-16T11:59:56Z] DURABLE CLASS FIX for the UC-ASL-P6 3-tick churn (autolaunch_safety_hold, dedup_key autolaunch_safety_hold:UC-ASL-P6:maint-lane-v2). ROOT: scripts/devteam-backlog-promote-bounded1.jq has a NON-DEV-NEXT_AGENT gate that only fires when BOTH detail.next_agent is non-dev AND the board next_agent is null; a row whose BOARD next_agent names a maintenance-lane agent (non-null) promotes cleanly and is then mis-routed by zone-detect (which only yields dev-<service> or Tier-3 developer, never a maintenance agent). FIX: add a gate that withholds any candidate whose EFFECTIVE next_agent (board OR backlog-detail) is in the maintenance-lane roster, since those are on-demand-only (dev-team main.md L12, mutex-wrap required) and neither zone-detect-routable nor safe to idle-auto-launch. AC: (1) a BACKLOG row with next_agent in the maintenance roster is NOT promoted by a BOUNDED-1 tick (dry-run: ready[] stays empty for that row); (2) a control row with next_agent=developer/dev-<service> still promotes; (3) roster sourced from docs/data/system-map.json .project.agents (maintenance lane) + dev-team main.md L12 — NOT hardcoded inline; (4) also covers agents-architect-owned design rows. This closes the class so no future maintenance-lane-next_agent row needs a hand-stamped supervised:true stopgap. Immediate acute case already converged via supervised:true on UC-ASL-P6."
+      },
+      {
+        "id": "FIX-CHEF-MIDFLOW-BAIL-DETERMINISM",
+        "type": "FIX",
+        "title": "unified-agent aborts chef.md mid-flow ('needs scope clarification') instead of executing deterministic steps 2-8 — anti-bail / degraded-floor determinism guard (1st observed 2026-07-16 chef-eod)",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "size": "S",
+        "zone": "cross-service/",
+        "next_agent": "agent-father",
+        "supervised": true,
+        "created_at": "2026-07-16T11:59:56Z",
+        "created_by": "po",
+        "detail_ref": "docs/handoffs/2026-07-16-chef-eod-nonpublish-and-marker-leak.md",
+        "origin_signal_id": "cowork-chef-eod-nonpublish-20260716T0845Z",
+        "note": "[po 2026-07-16T11:59:56Z] EXECUTION-DETERMINISM root cause distinct from the marker leak (marker leak = UC-CCA-P3). unified-agent gathered chef.md Steps 0-1 (16 tool calls, 107k tokens, 116s) then BAILED before publishing, returning a scope-clarification meta-narrative ('given the complexity of implementing all 8 steps... I need to clarify the scope', 'Steps 2-8 remain'). chef.md HAS a degraded/evening floor rule that publishes even on thin data (morning + 07-15 evening dishes both published YES) — the agent OVERRODE its own deterministic floor. FIRST observed occurrence (prior-art grep: no existing board/handoff row) — this row is the durable anchor so a 2nd occurrence escalates per feedback_recurring_bug_escalation (2+ -> block). Owner is a maintenance-lane agent (agent-father owns agent .md/flow determinism; cowork-refactory-expert is a co-candidate) => supervised:true + on-demand deliberate dispatch ONLY (do NOT let BOUNDED-1 idle-auto-launch a maintenance-lane row — the exact UC-ASL-P6 hazard). AC: chef.md cannot exit between Step 1 and publish without either (a) publishing the degraded-floor dish or (b) a code-enforced explicit abort that RELEASES any claimed marker; a plan-only spec first (determinism guard / anti-bail assertion in the flow). Not a P0: once-daily EOD, near-identical dish id 952 @ 07:27Z already covered EOD-ish state, blast radius LOW."
       }
     ],
     "closed_sprints": [
@@ -9020,6 +9053,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-07-15T20:56:10Z",
-  "_updated_by": "po (cowork signal triage: 2 PLAN-ONLY mints)"
+  "_updated_at": "2026-07-16T11:59:56Z",
+  "_updated_by": "po (triage 11:37Z: mint maint-lane-gate + chef-bail FIX rows)"
 }
