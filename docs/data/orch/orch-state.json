@@ -371,12 +371,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-16T17:23:06Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "REVIEW handoff: FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE — qa gate next (jq-only BOUNDED-1 disposition-gate fix, 12/12 verifier PASS).",
+    "updated_at": "2026-07-16T17:39:02Z",
+    "updated_by": "developer"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -8361,9 +8361,9 @@
       "status": "idle",
       "active_task_id": null,
       "next_agent": "router",
-      "next_action": "UC-CRITIC-GATEWAY-CONTRACT-DRIFT done_verified (gateway prefix drift reconciled, doc-only, 2ec39e96c); P9/P12 struck from UC-RDL/UC-CCA-UNVERIFIED-BATCH SPIKE notes.",
-      "updated_at": "2026-07-16T16:07:38Z",
-      "updated_by": "qa"
+      "next_action": "REVIEW handoff: FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE — qa gate next (jq-only BOUNDED-1 disposition-gate fix, 12/12 verifier PASS).",
+      "updated_at": "2026-07-16T17:39:02Z",
+      "updated_by": "developer"
     },
     "ready": [],
     "review": [
@@ -9019,6 +9019,35 @@
         "developer_completed_at": "2026-07-16T14:56:13Z",
         "developer_completed_by": "dev-mcp-server (UC-MDH-P1, dev-team bounded-1 pickup)",
         "review_note": "agentMemoryUpdateTools.ts:189 (registration-time, already function-scope) memoryDir now = process.env.AGENT_MEMORY_ROOT ?? resolve(getProjectRoot(),...docs/agent-memory). 1300b test beforeEach mkdtemps + sets env BEFORE registerAgentMemoryUpdateTools(); afterEach rm+unset; new regression test asserts zero new files under real sessions/. Purged pollution BY MD5 CLASS re-enumerated live (102 files, not brief stale 93): 36 ops(a003f0cc)+34 developer(35d6330b)+32 qa(35cdf1f8), 84 git rm (tracked) + 18 rm (untracked), plus 3 tracked test-artifact files (issues/patterns/modules test-*.md). Verified: 1300b file 14/14 pass x2 standalone; full bun test run1 14569 pass/46 fail, run2 14568 pass/47 fail -- zero 1300b/agent-memory hits in either fail list (pre-existing flaky class: vps_push_log/insider-tx/OCR-cache/foreign-flow timeouts). git status --porcelain docs/agent-memory/ clean of new files after both full runs. pnpm --filter vn-market check (tsc) exit 0. NOTE: staged+verified exact 89-file set (87 deletions+2 edits) before the 2 full-suite verification runs; a peer dev-team-router housekeeping tick committed during that window (11c35c0a8 chore(tasks): cold-evict...) and its bare git commit -m absorbed the shared index incl. my staged files -- verified via git diff-tree --name-status that commit contains EXACTLY my intended 89 files + the peer own orch-state.json change, no revert/no extra/no missing, HEAD==origin/main (already pushed). Content correct, only that commit message/trailer does not reference UC-MDH-P1 -- did not amend shared-main history mid-peer-activity (forbidden), documented in decision journal + notebook instead. qa: confirm sandbox test 14/14 pass, confirm zero docs/agent-memory/ pollution regrowth, confirm code diff at 11c35c0a8 matches detail_ref rescope note, promote to done_verified."
+      },
+      {
+        "id": "FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE",
+        "type": "FIX",
+        "title": "BOUNDED-1 promote: generalize is_plan_only + is_non_dev_next_agent_unrouted to read EFFECTIVE (board-OR-detail) disposition — close the inline-board-field-with-no-detail-entry leak (subsumes MAINTLANE-NEXTAGENT-GATE)",
+        "status": "REVIEW",
+        "priority": "P1",
+        "size": "M",
+        "zone": "cross-service/",
+        "next_agent": "qa",
+        "supervised": null,
+        "created_at": "2026-07-16T17:02:01Z",
+        "created_by": "po (autolaunch_safety_hold adjudication, dev-team 16:37Z)",
+        "source": "dev-team autolaunch_safety_hold signal (dedup_key autolaunch_safety_hold:GUARD-COWORK-NOTEBOOK-AGENTS-SELF-EDIT-FLOW-DOC:architect-nextagent-nonroutable-v1)",
+        "origin_signal_id": "dev-team-20260716T162729Z-autolaunch-safety-hold-guard-cowork-nb-selfedit",
+        "subsumes": [
+          "FIX-DEVTEAM-BOUNDED1-MAINTLANE-NEXTAGENT-GATE"
+        ],
+        "file": "scripts/devteam-backlog-promote-bounded1.jq",
+        "status_note": "Implemented: effective_plan_only (board-OR-detail, mirrors effective_supervised) + effective_next_agent (detail-first/board-fallback, mirrors effective_owner) in scripts/devteam-backlog-promote-bounded1.jq; is_plan_only/is_non_dev_next_agent_unrouted now delegate to them, dropping the old board-next_agent-empty precondition. One dev-role-pattern check subsumes FIX-DEVTEAM-BOUNDED1-MAINTLANE-NEXTAGENT-GATE (kept supervised:true/SUPERSEDED-BY, not dispatched separately). Verifier scripts/audits/devteam-bounded1-detail-disposition-gate-verify.sh extended (AC-8 live-discovered + AC-9/AC-10 synthetic, AC-6 fixture corrected) 12/12 PASS. Direct proof: isolated fixtures of the 4 named P1 leak rows + all 8 UC-*-UNVERIFIED-BATCH rows (supervised stripped) confirmed promoted pre-fix, withheld post-fix. Updated docs/agents/dev-team/flow/main.md gate descriptions. DJ: sprint-FLOW-PRICE-ALPHA-LOOP-developer.md STEP developer-S5. jq-only change, no tsc/bun test applicable.",
+        "promoted_at": "2026-07-16T17:23:06Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-16T17:23:06Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "completed_at": "2026-07-16T17:39:02Z",
+        "completed_by": "developer",
+        "reviewed_at": "2026-07-16T17:39:02Z",
+        "reviewed_by": "developer"
       }
     ],
     "qa": [],
@@ -9038,35 +9067,9 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-16T17:23:06Z",
-    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE",
-        "type": "FIX",
-        "title": "BOUNDED-1 promote: generalize is_plan_only + is_non_dev_next_agent_unrouted to read EFFECTIVE (board-OR-detail) disposition — close the inline-board-field-with-no-detail-entry leak (subsumes MAINTLANE-NEXTAGENT-GATE)",
-        "status": "IN_PROGRESS",
-        "priority": "P1",
-        "size": "M",
-        "zone": "cross-service/",
-        "next_agent": "developer",
-        "supervised": null,
-        "created_at": "2026-07-16T17:02:01Z",
-        "created_by": "po (autolaunch_safety_hold adjudication, dev-team 16:37Z)",
-        "source": "dev-team autolaunch_safety_hold signal (dedup_key autolaunch_safety_hold:GUARD-COWORK-NOTEBOOK-AGENTS-SELF-EDIT-FLOW-DOC:architect-nextagent-nonroutable-v1)",
-        "origin_signal_id": "dev-team-20260716T162729Z-autolaunch-safety-hold-guard-cowork-nb-selfedit",
-        "subsumes": [
-          "FIX-DEVTEAM-BOUNDED1-MAINTLANE-NEXTAGENT-GATE"
-        ],
-        "file": "scripts/devteam-backlog-promote-bounded1.jq",
-        "status_note": "ROOT CAUSE: in scripts/devteam-backlog-promote-bounded1.jq the disposition gates is_plan_only() (~L452) and is_non_dev_next_agent_unrouted() (~L467) read ONLY $detail_items[.id] (backlog-detail.json), whereas effective_owner() (~L418) was ALREADY generalized (2026-07-13, FIX-DEVTEAM-BOUNDED1-NONDEV-OWNER-BOARD-FALLBACK-GATE) to read the EFFECTIVE value (detail-authoritative, board-fallback). A board row carrying plan_only/next_agent INLINE but with NO detail entry therefore slips every gate. Confirmed by RAW dry-run: 28 promotable backlog rows leak (4 P1: GUARD-... next_agent=architect, FIX-COWORK-DISPATCH-... / FIX-VNINDEX-CROSS-PLANE / FIX-COWORK-SIGNAL next_agent=ba; 17 P2, 7 P3 incl. all UC-*-UNVERIFIED-BATCH ba rows). FIX (mirror effective_owner's detail-first/board-fallback idiom): (1) effective_plan_only($d): board .plan_only==true OR $d[.id].plan_only==true -> replace is_plan_only detail-only read. (2) effective_next_agent($d): $d[.id].next_agent if present-nonempty ELSE board .next_agent; is_non_dev_next_agent_unrouted gates when effective_next_agent is present-nonempty AND does NOT match ^dev(-|$)|^developer$ (i.e. not zone-detect-routable) -- DROP the current 'AND board next_agent is empty' clause (that clause is exactly why next_agent=architect slips: it required board next_agent EMPTY). One check covers architect/ba/pm/agents-architect AND the maintenance roster (agent-father/system-auditor/code-janitor/...), subsuming FIX-DEVTEAM-BOUNDED1-MAINTLANE-NEXTAGENT-GATE. Fail-toward-safety: only REMOVE from idle auto-pickup; deliberate router/PO dispatch unaffected; dev-routable rows unchanged. AC/verification_gate: post-fix promote dry-run (jq -f scripts/devteam-backlog-promote-bounded1.jq --slurpfile detail docs/data/orch/archive/backlog-detail.json against live orch-state, WIP=0) MUST NOT promote GUARD-COWORK-NOTEBOOK-AGENTS-SELF-EDIT-FLOW-DOC / FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS / FIX-VNINDEX-CROSS-PLANE-PLAUSIBILITY-GATE / FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING / any UC-*-UNVERIFIED-BATCH row, and MUST still promote a genuinely dev-routable row. Add header gate-block + inline asserts: synthetic {next_agent:'architect', no detail} withheld; {next_agent:'developer'} promotable; {inline plan_only:true, no detail} withheld. Update the header gate list. Once green, the 4 supervised:true stopgap stamps become belt-and-suspenders.",
-        "promoted_at": "2026-07-16T17:23:06Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-16T17:23:06Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "last_triaged_at": "2026-07-16T17:39:02Z",
+    "last_triaged_by": "developer",
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
