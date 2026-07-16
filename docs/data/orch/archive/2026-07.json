@@ -11570,6 +11570,28 @@
       "severity": "HIGH",
       "status": "READ",
       "payload_ref": "docs/handoffs/2026-07-16-alert-commander-market-dangling-policy-240min.md"
+    },
+    {
+      "id": "cow-20260716T043200",
+      "summary": "SEQUENCING HAZARD: UC-SDF-P2 (cycle-snapshot key-unification / residue prune) and FIX-COWORK-CADENCE-DANGLING-POLICY-ID are COUPLED and neither row says so. stale_warning is a residue-file artifact, not emitter health: mode(T) <- does cycle-snapshot-<nominal HH:MM of T-1>.json exist and is it >4h old. Landing UC-SDF-P2 or pruning the ~110 residue files flips EVERY tick to adaptive fleet-wide, which activates the dangling 240min policy gate and degrades the market-alert path 16x (15min -> 240min). UC-SDF-P2 reads as harmless disk/key hygiene. FIX: author alert-commander-market(15) + alert-commander-critical(240) in cadence-policy.json FIRST, or land both changes together. Also falsifies the promotion handoff §3 (adaptive DOES run on slot-bearing ticks: 04:00Z tick was adaptive + spawned 3 — git show edcc4c66a^).",
+      "severity": "MED",
+      "status": "READ",
+      "ts": "2026-07-16T04:33:57Z",
+      "from": "cowork-team",
+      "to": "po",
+      "type": "diagnosis",
+      "payload_ref": "docs/handoffs/2026-07-16-cycle-snapshot-promotion-dark-9-days-adaptive-cadence-never-runs.md"
+    },
+    {
+      "id": "cow-20260716T052700",
+      "summary": "CHEF MUTEX IS DEFEATABLE AND THE FIX REQUEST WAS LOST IN ROUTING (2nd observed occurrence: 07-14, 07-16). pressure-cadence.md Step 4.5c still computes the mutex via `echo \"$SCHEDULE\" | jq` (x2: L140-141, L144-145, L149). cowork-schedule.json slot chef-intraday stores trigger_prompt with an escaped \\n (valid JSON); under zsh echo expands it to a REAL newline -> jq \"control characters must be escaped\" parse error -> G_ARR/NG_ARR empty -> HAS_G/HAS_NG empty -> else-branch -> CHEF_MUTEX_APPLIED=false -> BOTH chef-morning AND chef-intraday spawn unified-agent -> DOUBLE MARKET PUBLISH. Fails SILENTLY (errors to stderr, logic falls through). This is exactly the regression FIX-COWORK-CHEF-SAMETICK-MUTEX / cowork-chef-doublepublish-2026-06-30 exists to prevent. FIRES on the daily 05:15Z coincidence tick (chef-morning \"15 5 * * 1-5\" guaranteed + chef-intraday \"13 2-8 * * 1-5\" within +/-2min drift) — hit again today 2026-07-16T05:15Z. Only avoided because the dispatcher read a memory and computed the mutex file-direct; a dispatcher following the doc literally double-posts to users. WHY UNTRACKED: the 07-14 fix request was attached as a custom payload sub-field (payload.robustness_note_for_dev_team) on a type=cowork-fire TELEMETRY signal, now archived verbatim at docs/signals/processed/cowork-team-20260714T052659Z.json. dev-team drain-signals.md DOES read docs/signals/, but routes by envelope (to/type) and fingerprints into signals.db — a custom sub-field on a telemetry-type signal is archived unread. No board row was ever minted; board grep on the 4.5c/echo/newline surface returns nothing (filter asserted against a known row). FIX: switch 4.5c to file-direct jq (`jq -c ... docs/data/cowork-schedule.json`) + `jq -n --argjson` bound params — never echo a JSON payload. Verified working both 07-14 and 07-16: G=[chef-morning,chef-eod,chef-evening] NG=[chef-intraday] -> mutex_applied=true -> one dish. SECOND-ORDER: audit whether other flows route fix requests via custom payload sub-fields instead of .signal_queue.rows[] — that channel silently drops them.",
+      "severity": "MED",
+      "status": "READ",
+      "ts": "2026-07-16T05:27:00Z",
+      "from": "cowork-team",
+      "to": "po",
+      "type": "diagnosis",
+      "payload_ref": "docs/agents/cowork-team/flow/pressure-cadence.md"
     }
   ],
   "backlog_detail": [
