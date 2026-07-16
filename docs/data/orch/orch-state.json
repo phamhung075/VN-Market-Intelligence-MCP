@@ -371,11 +371,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-07-16T17:50:44Z",
-    "updated_by": "qa (FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE done_verified)"
+    "status": "in_progress",
+    "active_task_id": "FR-DEGRADE-01-FIX",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FR-DEGRADE-01-FIX — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-16T17:58:30Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -3060,16 +3061,6 @@
         "type": "fix",
         "zone": "qa",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#SYS-TEST-01-FIX"
-      },
-      {
-        "id": "FR-DEGRADE-01-FIX",
-        "priority": "normal",
-        "size": "S",
-        "status": "BACKLOG",
-        "title": "Fix FR-DEGRADE-01: If VPS BCTC endpoint is unavailable, does the system return stale-but-flagged data rather than error/crash",
-        "type": "fix",
-        "zone": "dev-mcp-server",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FR-DEGRADE-01-FIX"
       },
       {
         "id": "FR-OBS-01-FIX",
@@ -9108,9 +9099,25 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-16T17:39:02Z",
-    "last_triaged_by": "developer",
-    "in_progress": []
+    "last_triaged_at": "2026-07-16T17:58:30Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
+    "in_progress": [
+      {
+        "id": "FR-DEGRADE-01-FIX",
+        "priority": "normal",
+        "size": "S",
+        "status": "IN_PROGRESS",
+        "title": "Fix FR-DEGRADE-01: If VPS BCTC endpoint is unavailable, does the system return stale-but-flagged data rather than error/crash",
+        "type": "fix",
+        "zone": "dev-mcp-server",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FR-DEGRADE-01-FIX",
+        "promoted_at": "2026-07-16T17:58:30Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "claimed_at": "2026-07-16T17:58:30Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
