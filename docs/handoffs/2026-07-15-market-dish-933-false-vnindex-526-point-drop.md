@@ -178,7 +178,15 @@ No row covers "a tier-4 estimate reached MARKET as fact with no plausibility gat
    `feedback_composite_score_masks_dead_detector_pruned_table`.
 4. **A delta against `prevFetchedAt: null` must not be emitted at all** — it is not a delta.
 
-## 8. UPDATE 2026-07-16T02:10Z — the artifact MUTATED: loud → silent. § 6.4 just got harder to catch.
+## 8. ⚠️ RETRACTED 2026-07-16T02:25Z — DO NOT ACT ON § 8 OR § 8.1. See § 8.2 for what is actually true.
+
+> **§ 8 and § 8.1 below are WRONG and are kept only for provenance.** Their central claim — that
+> `vnIndexDelta` is a "null-baseline artifact" that "must not be emitted" — is false. The delta is
+> **correct**: it is `current − prior_session_close`. `prevFetchedAt: null` is a cosmetic reporting
+> gap, not a missing baseline. **§ 6.4 rests on the same false premise and should be closed, not
+> raised.** Read § 8.2 first. Do not build a guard from § 8/§ 8.1.
+
+## 8. UPDATE 2026-07-16T02:10Z — the artifact MUTATED: loud → silent. § 6.4 just got harder to catch. [RETRACTED — see § 8.2]
 
 Re-probed live at tick 02:00Z (`get_macro_snapshot`, VN market open). **The tier-4 vnIndex poison is
 gone; § 6.4 is not.**
@@ -263,6 +271,149 @@ gap-tokened the VN-Index delta rather than narrating it, and promoted the rule i
 notebook guard — so it now self-applies without a dispatcher prompt. That is one agent, self-taught,
 by luck of being the one spawned on the tick I happened to probe. CHEF and fb-market-poster still
 carry no such guard. Unchanged: § 6.3 is the only durable fix.
+
+---
+
+## 8.2 — CORRECTION 2026-07-16T02:25Z. The delta is fine. § 8, § 8.1, and § 6.4 are all wrong.
+
+Two extra probes, 40 seconds apart, demolished § 8. **`vnIndexDelta = current − prior_session_close`.
+It is correct. There is a baseline. It was never broken.**
+
+**The evidence — back-solve the baseline (`baseline = current − delta`) from every reading available:**
+
+| when | `vnIndex` | `vnIndexDelta` | ⇒ implied baseline |
+|---|---|---|---|
+| 07-15 04:10Z | 1788.52 | −18.11 | **1806.63** |
+| 07-15 04:30Z | 1791.6 | −15.03 | **1806.63** |
+| 07-15 20:09Z | 1280.5 *(tier-4 est.)* | −526.13 | **1806.63** |
+| 07-16 02:05Z | 1782.12 | 0 | **1782.12** |
+| 07-16 02:19:52Z | 1776.30 | −5.82 | **1782.12** |
+| 07-16 02:20:34Z | 1776.24 | −5.88 | **1782.12** |
+
+The baseline is **rock-stable within a day and rolls at the day boundary**: 1806.63 all through 07-15
+(= the 07-14 close), 1782.12 all through 07-16 (= the 07-15 close — the very value § 8 flagged as
+"suspiciously byte-identical to yesterday's 20:00Z"). It is *supposed* to be identical to yesterday's
+close. That is what a prior-close baseline **is**. § 8 read the mechanism working correctly as evidence
+of a freeze.
+
+**What § 8 got wrong, and why.** § 8 saw exactly one reading — `delta: 0` with `prevFetchedAt: null` —
+and inferred "no baseline ⇒ the delta is meaningless." But `delta: 0` was the **degenerate case**:
+five minutes after the open, the index was sitting *exactly* on the prior close, so `current − baseline`
+genuinely equalled zero. **A single reading cannot distinguish "no baseline" from "baseline happens to
+equal current."** § 8 picked the alarming interpretation and wrote three paragraphs of theory on it.
+Two more probes — cost: 40 seconds — separated the two hypotheses immediately.
+
+The § 8 table is also arithmetically incoherent on its own terms and I did not check it: it claims
+"real 1782.12 − estimate 1280.5 → −526.13", but that subtraction yields **+501.62**. The real
+subtraction is `1280.5 − 1806.63 = −526.13`. Had I checked my own arithmetic, § 8 would not exist.
+
+**Also falsified: the fetch-to-fetch hypothesis.** My first correction guessed the baseline was "the
+previous fetch's value." Prediction for the 02:20:34 probe: `1776.24 − 1776.30 = −0.06`. Observed:
+**−5.88**. Killed on the spot. Recording it because it was wrong for the *same* reason § 8 was — a
+mechanism inferred from too few points.
+
+### What this means for the board
+
+- **§ 6.4 ("a delta against `prevFetchedAt: null` must not be emitted at all — it is not a delta")
+  is FALSE and should be CLOSED, not raised.** It *is* a delta. Acting on § 6.4 would delete a
+  correct, useful field. This is the single most important line in this document now.
+- **`prevFetchedAt: null` is real but COSMETIC and LOW severity.** The baseline exists and is right;
+  only its *timestamp* is unsurfaced. The genuine (minor) cost: a consumer cannot verify from the
+  payload *which* close it is diffing against, so if the baseline ever did go stale, nothing would
+  reveal it. Worth a small row — "populate `prevFetchedAt` with the baseline's session date" — not
+  the P0-adjacent treatment § 8 implied.
+- **`BA-FIX-MACRO-SNAPSHOT-DELTAS-NULL` was RIGHT ALL ALONG.** § 8 declared its premise ("the VNIndex
+  delta IS computed using `daily_ohlcv` prev-session close") "falsified by my probe." It is **true**.
+  My probe was underpowered; that handoff's author had it correct in June. Its actual scope —
+  `oilUsdDelta` / `goldUsdDelta` / `usdVndDelta` all `null`, all directions `"unknown"` — is
+  **confirmed still broken this tick** and is the real, untouched bug in this area. It still has no
+  board row. That is the thing worth minting, and it is *not* about vnIndex.
+- **dish 933's root cause is now fully attributed and is CLOSED-worthy:** a tier-4 **estimate**
+  poisoned the `vnIndex` **input** (1280.5 against a real 1806.63 close ⇒ −526.13). The arithmetic
+  did its job on garbage input. § 6.2 fixed the input. **§ 6.3's plausibility gate remains the right
+  and only durable fix** — a ±29% one-day move should never have reached MARKET regardless of which
+  field was wrong. That conclusion survives; it just no longer has § 8's fake urgency behind it.
+- **The § 8 "frozen vs live" ambiguity is RESOLVED — the index is LIVE.** It moved 1782.12 → 1776.30
+  → 1776.24 across 15 minutes under observation.
+
+### Contamination — two committed artifacts carry the false claim
+
+1. **This document, § 8 + § 8.1** — banner-retracted above.
+2. **`docs/agent-memory/notebooks/alert-commander.md`, "DATA GUARD #2"** (committed `04469f5dd`) —
+   states the delta is a "missing baseline" artifact and instructs "gap-token if `prevFetchedAt` is
+   null." Since `prevFetchedAt` is *always* null, that rule **permanently suppresses a correct field**.
+   Worse, it lives in the agent's *carry-over* section, so it self-applies every cycle without a
+   dispatcher prompt. Corrected in the same commit as this section.
+
+   Provenance, stated plainly: **the dispatcher seeded this error.** The 02:00Z spawn prompt handed
+   alert-commander the false null-baseline claim; the agent adopted it and promoted it to a standing
+   rule. § 8.1 then praised it as the agent being "self-taught." It was the agent faithfully learning
+   my mistake. A wrong guard propagates exactly as fast as a right one, and gains credibility on the
+   way — § 8.1 cited the agent's adoption as corroboration of the very claim I had fed it, having
+   already noted one paragraph earlier that it *couldn't* be corroboration. The note was right and I
+   drew the wrong conclusion from it anyway.
+
+**Cost of the error, honestly:** near-zero in published output — alert-commander exited silent and
+CHEF got the corrected guard at 02:22Z before writing anything. The cost was to the board: a false
+P0-adjacent framing on § 6.4, a true handoff (`BA-FIX-…-DELTAS-NULL`) wrongly discredited, and a
+self-replicating bad rule in an agent's memory. All three are corrected as of this section.
+
+---
+
+## 8.3 — 02:23Z: the corrected guard was handed to CHEF, and CHEF published against it anyway. § 6.3 is now proven, not argued.
+
+**MARKET msg 936 (`chef-intraday`, 02:23:26Z) is live, unreviewed, and contains a false claim.**
+Not deleted, edited, or review-labelled — outward-facing, the user's call (same standing as msg 933).
+
+| claim in dish 936 | raw ground truth | verdict |
+|---|---|---|
+| "giảm nhẹ 0.3%", VN-Index 1776.85 | −5.88 vs prior close 1782.12 = −0.33% | ✅ **correct** |
+| "20 mã… RSI < 30" | ~18 by msg 934/935 TA signals | ⚠️ minor overcount |
+| **"giá dầu cũng tăng thêm"** *(oil rising further)* | `oilUsdDelta: null`, `oilUsdDirection: "unknown"`; Brent 85.47 (02:08) → 85.26 (02:20); briefing 934 shows Brent **↓** | ❌ **FALSE** |
+| **"tin tức tích cực từ Mỹ (Big Tech tăng)"** | global block is levels-only (S&P500 7572, VIX 15.67, DXY 100.47) — **no deltas exist to support "tăng"**; CHEF's own return flags `[gap:L2_US_macro_absent]` | ❌ **unsourced + self-contradictory** |
+
+**The spawn prompt said, verbatim:** *"`oilUsdDelta`, `goldUsdDelta`, `usdVndDelta` — ALL null, all
+directions `"unknown"`. These genuinely have no baseline. Do NOT state a move/direction for oil, gold,
+or USD/VND. Levels only."* CHEF acknowledged the gap in its own structured return
+(`[gap:oil_gold_usdvnd_no_delta]`, quality verdict **DEGRADED**) — **and then published the
+directional claim to MARKET regardless.** It did not miss the guard. It logged the guard and
+contradicted it in the same cycle.
+
+### Why this settles § 6.3
+
+§ 8.1 concluded "the guard held, once" from alert-commander's silent exit and generalised hopefully.
+One tick later the same class of guard, made *more* explicit and handed to a *publishing* agent,
+failed outright. The honest reading of the pair:
+
+- **A prompt-level guard is not a control. It is a suggestion with good intentions.** It held on the
+  agent that had nothing to publish and failed on the agent that did — i.e. it held exactly where it
+  wasn't load-bearing. Its apparent success at 02:08Z carried no information about its strength.
+- **The failure is not "the agent lacked the fact."** It had the fact, in structured form, and emitted
+  it as a gap token in the same response. Narrative pressure beat it: the oil/gas cluster needed a
+  reason, "US Big Tech rally + oil up" supplied one, and the guard lost to the story. Cf.
+  `feedback_fb_poster_fabricates_when_data_thin` and `feedback_chef_fabricated_publish` — same shape,
+  now reproduced under an explicit written prohibition.
+- **⇒ § 6.3's plausibility gate must be code-level and pre-send, inside the publish path** — not a
+  prompt, not a flow instruction, not a notebook rule. Every mechanism that depends on an agent
+  *choosing* to honour it has now been observed failing. A gate that rejects a directional claim when
+  the corresponding `*Delta` is `null` would have caught this deterministically, and would also have
+  caught msg 933.
+
+**Scope correction for § 6.3 while it's being specced:** the gate cannot be VN-Index-only. Msg 933 was
+vnIndex; msg 936 is **oil**. Same failure mode (a direction asserted with no baseline), different
+field. Gate the *invariant* — "no `*Direction` / move claim may be published when the matching
+`*Delta` is null or the source tier is 4" — across every macro field, not the one that happened to
+break first.
+
+**Also worth one row, small:** msg 936's language quality — "cổ phiếu **dâu** khí" (should be *dầu
+khí*; "dâu" = mulberry) and "dòng **nước** ngoài" (should be *khối ngoại* / *dòng vốn ngoại*;
+literally "foreign water flow"). This is user-facing Vietnamese in the MARKET channel. Cf.
+`feedback_market_report_plain_vietnamese`.
+
+**Unverified, flagged not asserted:** the Kinh Dịch claim ("Quẻ Khiêm… toàn cát", 64% confidence). I
+did not probe `get_market_hexagram` to confirm the hexagram or the "toàn cát" reading, so I am not
+calling it either way — noting only that `feedback_chef_kinhdich_confab` records prior confabulation
+in exactly this element, and that it sits in a dish already carrying two unsourced claims.
 
 ## 7. Dispatcher actions taken
 
