@@ -9080,7 +9080,7 @@
             "id": "UC-ASL-P2-DEV-1",
             "type": "TASK",
             "title": "Author scripts/emit-audit-signal.sh with DDD layers + ledger + severity-rank bypass + test harness",
-            "status": "TODO",
+            "status": "DONE",
             "priority": "P1",
             "size": "M",
             "zone": "scripts/ (root + agents-flow/)",
@@ -9089,7 +9089,11 @@
             "detail": "Interface: named-arg parser (--check-id, --category-type, --severity, --summary, --detail-json, --from-agent [default system-auditor], --to-agent [default po], --e3-only, --no-telegram). Application: E-1 post_agent_signal via mcp-call.sh (fail-loud), dedup ledger check, E-2 send_telegram (7-day window), severity-rank bypass on escalation. Infrastructure: ledger read/write {dedup_key: {ts, sev}}, tmp+mv atomic, E-3 signal-row append via orch-apply.sh + POST-WRITE read-back, CAS-retry up to 3× (rc=2 retries, rc=1|3 aborts). Test harness for all paths.",
             "depends_on": [],
             "created_at": "2026-07-16T04:50:00Z",
-            "created_by": "pm"
+            "created_by": "pm",
+            "done_at": "2026-07-16T05:15:00Z",
+            "done_by": "developer",
+            "test_result": "48/48 pass — scripts/emit-audit-signal.test.sh",
+            "commit": "a1bb6ee48"
           },
           {
             "id": "UC-ASL-P2-DEV-2",
