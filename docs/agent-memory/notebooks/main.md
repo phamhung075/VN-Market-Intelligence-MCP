@@ -1,6 +1,12 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-17T09:37Z (dev-team tick 2026-07-17T0937Z — dev-mcp-server FIX-OHLCV completion RAW-verified + work-lock released; FIX-CHEF dispatch deferred, chef.md live peer-dirty)
+**Written:** 2026-07-17T10:07Z (dev-team tick 2026-07-17T1007Z — CI red = flaky 1255-alert-off-hours-send 1st-obs, rerun+classified; FIX-CHEF still deferred chef.md peer-dirty; idle otherwise)
+
+## cycle-20260717T1007Z — CI red = FLAKY (1255-alert-off-hours-send, 1st obs) confirmed via code-identical green baseline → rerun+classified; idle otherwise
+
+- **CI RED on HEAD 94e441f91 (run 29571932557, `bun test` per-file-isolation, 14466 pass/40 skip/1 fail) = FLAKY, NOT regression — definitively**: single failing file `src/__tests__/1255-alert-off-hours-send.test.ts`. My HEAD = docs/signals-only commits (`a9cc9e795`+`94e441f91`) atop `e85bba0ee` ⇒ code BYTE-IDENTICAL; `e85bba0ee` CI run 29571338269 = **SUCCESS** (1255 passed there @09:49Z, also off-hours). Same code green-then-red ⇒ flaky (per-file-isolation order/timing class); docs commits cannot break a code test. **1st obs of 1255** (distinct from tracked 1404-cb + vnstock-3statement flaky WATCHes). Actions: `gh run rerun --failed 29571932557` (restore green + stop re-emit); classified ci_red signal → processed/ w/ fingerprint + `FLAKY_NOT_REGRESSION` disposition (NO PO escalation — [re-emit clobbers triage], [ci_red close records fingerprint]); **NO DEFLAKE mint** (1-obs, recurring-bug 2+ rule). **WATCH: 2nd obs 1255-alert-off-hours-send → mint DEFLAKE-1255-ALERT-OFF-HOURS-SEND → dev-alert-engine.**
+- **FIX-CHEF-MIDFLOW-BAIL-DETERMINISM (P1) dispatch STILL DEFERRED**: `docs/agents/unified-agent/flow/chef.md` STILL git-dirty (tran-ngoc-bau AUTO-CURE c111 uncommitted by its owner) ⇒ collision gate unmet ([ONE owner]). Bug self-heals daily (fresh `chef-eod:2026-07-18` key) ⇒ no urgency. Gate unchanged: chef.md clean + capacity clear. Row stays backlog P1/supervised/agent-father.
+- **Idle otherwise**: drain inbox empty (no new signal, db=183); head idle/router (unchanged since 09:48Z FIX-OHLCV review-flip) → pipeline-resume no-trigger; BOUNDED-1 no-fire (WIP=ready17+ip1=18); `list_unresolved=[]` + `read_telegram_reports(new)`=none → no PO spawn ([skip re-spawn empty inputs]). FIX-OHLCV still in review awaiting qa (review lane 30). SPIKE-BCTC-...-ENRICHFAIL-FLOOD in_progress (owner ops), 2nd-half close deferred. Committed ci-red classification (1 processed) + notebook only; ALL live peer files (chef.md, 8 peer notebooks, synthesis×3, coverage/schedule, handoff, social) untouched.
 
 ## cycle-20260717T0937Z — dev-mcp-server FIX-OHLCV completion RAW-verified → work-lock released (→qa review); FIX-CHEF dispatch DEFERRED (chef.md live peer-dirty)
 
@@ -185,11 +191,3 @@
 - **Post-cycle:** mock-guard same known `stub.sbv.vn` `_test.go` FP, no new signal. No non-main branches, telegram still empty.
 - **Cold eviction:** `DONE_N=15>10` triggered again, no-op (`New items to cold: 0`, byte-identical diff, `task_total` conservation `466→466`) — 2nd consecutive no-op since the one genuine eviction 3 ticks ago; still the normal resting state.
 - **Push-backstop:** both guards pass (no rebase/merge/index.lock, 0 commit-mutex held), `ahead=9` (unchanged — no commits this tick), still under threshold=20 — silent no-op.
-
-## cycle-20260710T2337Z — skip-PO-respawn applied, refined interpretation of "board unchanged"
-
-- **Preflight RUN** (tick 2337Z). GCC-PREFLIGHT clean. Drain-signals 0 new (1 stale file pruned, db_count 163→162). CI green, no signal.
-- **Skip-PO-respawn applied**, with a refinement worth recording: 17min elapsed since PO's real triage commit `5cbcf2453` (well within guard) — but `git diff --stat 5cbcf2453 HEAD -- orch-state.json` was NOT empty this time (39 lines changed) because the router's own Step 4.2 cold-eviction from the *same* prior tick landed after PO's commit. Correctly interpreted this as still "board unchanged" in the substantive sense (no new backlog/ready/in_progress/signal activity — only router's own housekeeping move of terminal items to archive, which PO doesn't own and wouldn't re-triage differently). WIP now: ready=1, in_progress=1 (only legit `OPS-BCTC-REFINE-REPASS-NONBANK-5T`), done=15, done_verified=0 (both dropped from last tick's post-eviction numbers, confirming that eviction genuinely landed).
-- **Post-cycle:** mock-guard same known FP, no new signal. No non-main branches, telegram still empty.
-- **Cold eviction:** `DONE_N=15>10` triggered again, back to no-op (`New items to cold: 0`, byte-identical diff) — the one genuine eviction 2 ticks ago fully drained what was actually ready to move; this confirms the no-op state is the *normal* resting state between genuine terminal-work landings, not evidence of anything stuck.
-- **Push-backstop:** `ahead=8`, still under threshold=20 — silent no-op.
