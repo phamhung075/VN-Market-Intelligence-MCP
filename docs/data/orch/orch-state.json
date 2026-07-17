@@ -2528,6 +2528,34 @@
             "note": "SEQUENTIAL: hard gate on CONTAM-10-WRITER-H deployed. Dry-run → human review → live repair → post-verify + gateway probe. Must NOT run before writer leak fixed (re-contamination risk from backfill poller)."
           }
         ]
+      },
+      {
+        "id": "SPRINT-CCATO-TRUTHGATE-MCP-NATIVE",
+        "type": "SPRINT-S",
+        "status": "ACTIVE",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "priority": "P0",
+        "title": "Expose CCATO claim-truth-gate as a gateway-native MCP tool so no-Bash cowork narrative agents can enforce the hard gate before write without shell",
+        "next_agent": null,
+        "supervised": true,
+        "note": "PO triage 17:37Z from digest-predict bug-escalation (2x recur 2026-07-12, fingerprint 6856dd31). Fix path (b) gateway-native narrative_truth_gate MCP tool — preserves no-Bash cowork design, generalizes to 5 narrative agents (digest-predict/fb-market-poster/CHEF/market-watcher/alert-commander). SUPERVISED: needs architect-led planning (SPRINT-S architect->pm) but architect reserved for flow-alpha — held for deliberate dispatch; contention escalated to user. git-commit half folds into FIX-BCTC-ANALYST-STAGELOG-NOTIFY-NO-BASH (no dup mint). Full ACs in po.md commit 4e5c56e67.  [PO 2026-07-14 DECISION-4 coordination_session e417ef1f] PRIORITY RAISED high->P0 (USER-PRIORITIZED — user-directed top-priority, NOT an incident-P0). The digest-predict Bash-grant request is DENIED by user (explicit selection via router AskUserQuestion): digest-predict stays SHELL-LESS (Read/Write/Edit + gateway only) — no shell capability is granted to any narrative cowork agent. The claim-truth-gate capability need routes HERE instead: this gateway-native narrative_truth_gate MCP tool is the sanctioned LEAST-PRIVILEGE alternative. Dispatch this FIRST among the architect-led rows; supervised:true is kept (deliberate architect->pm dispatch — it is a design-first SPRINT-S), and the prior 'architect reserved for flow-alpha, held / contention escalated to user' hold is SUPERSEDED by this user prioritization.",
+        "prior_priority": "high",
+        "user_prioritized": "2026-07-14 e417ef1f — least-privilege alternative to DENIED digest-predict Bash-grant",
+        "updated_at": "2026-07-17T04:53:14ZZ",
+        "updated_by": "pm (decompose brief e22251c36, session e417ef1f-0c73-48ec-9c91-417e07f16288)",
+        "brief_ref": "docs/architecture-briefs/2026-07-17-ccato-truthgate-mcp-native.md (commit e22251c36)",
+        "brief_status": "DESIGN_PHASE_COMPLETE",
+        "subtasks": [
+          "CCATO-MCP-T1-DOMAIN-ENGINE",
+          "CCATO-MCP-T2-CLAIM-MAP-LOADER",
+          "CCATO-MCP-T3-PROBE-ADAPTERS",
+          "CCATO-MCP-T4-SIGNAL-WRITER",
+          "CCATO-MCP-T5-USECASE",
+          "CCATO-MCP-T6-TOOL-REGISTRATION",
+          "CCATO-MCP-T7-SKILL-DUAL-PATH",
+          "CCATO-MCP-T8-DOD-HARNESS"
+        ]
       }
     ],
     "archive": [
@@ -6178,22 +6206,6 @@
         "title": "Push-delivery 5xx error-rate alert (alert-engine consuming mcp-server /metrics) — detect CF-tunnel push outage in ~10min not 69h; from INFRA-CLOUDFLARE RCA (docs/incidents/2026-07-04-cloudflare-tunnel-push-delivery-outage-rca.md); PO confirm priority + single-FIX vs ba->architect split"
       },
       {
-        "id": "SPRINT-CCATO-TRUTHGATE-MCP-NATIVE",
-        "type": "SPRINT-S",
-        "status": "BACKLOG",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "priority": "P0",
-        "title": "Expose CCATO claim-truth-gate as a gateway-native MCP tool so no-Bash cowork narrative agents can enforce the hard gate before write without shell",
-        "next_agent": "architect",
-        "supervised": true,
-        "note": "PO triage 17:37Z from digest-predict bug-escalation (2x recur 2026-07-12, fingerprint 6856dd31). Fix path (b) gateway-native narrative_truth_gate MCP tool — preserves no-Bash cowork design, generalizes to 5 narrative agents (digest-predict/fb-market-poster/CHEF/market-watcher/alert-commander). SUPERVISED: needs architect-led planning (SPRINT-S architect->pm) but architect reserved for flow-alpha — held for deliberate dispatch; contention escalated to user. git-commit half folds into FIX-BCTC-ANALYST-STAGELOG-NOTIFY-NO-BASH (no dup mint). Full ACs in po.md commit 4e5c56e67.  [PO 2026-07-14 DECISION-4 coordination_session e417ef1f] PRIORITY RAISED high->P0 (USER-PRIORITIZED — user-directed top-priority, NOT an incident-P0). The digest-predict Bash-grant request is DENIED by user (explicit selection via router AskUserQuestion): digest-predict stays SHELL-LESS (Read/Write/Edit + gateway only) — no shell capability is granted to any narrative cowork agent. The claim-truth-gate capability need routes HERE instead: this gateway-native narrative_truth_gate MCP tool is the sanctioned LEAST-PRIVILEGE alternative. Dispatch this FIRST among the architect-led rows; supervised:true is kept (deliberate architect->pm dispatch — it is a design-first SPRINT-S), and the prior 'architect reserved for flow-alpha, held / contention escalated to user' hold is SUPERSEDED by this user prioritization.",
-        "prior_priority": "high",
-        "user_prioritized": "2026-07-14 e417ef1f — least-privilege alternative to DENIED digest-predict Bash-grant",
-        "updated_at": "2026-07-14T20:29:05Z",
-        "updated_by": "po (DECISION-4 CCATO priority raise + Bash-grant DENIED — user selection e417ef1f)"
-      },
-      {
         "id": "TASK_2005",
         "type": "DEVELOPMENT",
         "title": "SUBTASK-DAILY-FF-6: integration test + behavioral gate (R-1 elimination proof)",
@@ -8249,7 +8261,134 @@
       "updated_at": "2026-07-17T03:28:39Z",
       "updated_by": "router (stale-head reconcile to idle; SPIKE parked deferred ~09:05Z; tick 03:07Z)"
     },
-    "ready": [],
+    "ready": [
+      {
+        "id": "CCATO-MCP-T1-DOMAIN-ENGINE",
+        "type": "IMPL-XS",
+        "status": "READY",
+        "size": "XS",
+        "zone": "mcp-server",
+        "priority": "P0",
+        "title": "Port pure scan/classify/quarter-resolver to domain/services/narrativeTruthGate/* + unit tests",
+        "depends": [],
+        "next_agent": "dev-mcp-server",
+        "supervised": false,
+        "updated_at": "2026-07-17T04:53:14ZZ",
+        "updated_by": "pm (decompose SPRINT-CCATO-TRUTHGATE-MCP-NATIVE)"
+      },
+      {
+        "id": "CCATO-MCP-T2-CLAIM-MAP-LOADER",
+        "type": "IMPL-XS",
+        "status": "READY",
+        "size": "XS",
+        "zone": "mcp-server",
+        "priority": "P0",
+        "title": "infrastructure/fileStore/claimToolMapLoader.ts",
+        "depends": [],
+        "next_agent": "dev-mcp-server",
+        "supervised": false,
+        "updated_at": "2026-07-17T04:53:14ZZ",
+        "updated_by": "pm (decompose SPRINT-CCATO-TRUTHGATE-MCP-NATIVE)"
+      },
+      {
+        "id": "CCATO-MCP-T3-PROBE-ADAPTERS",
+        "type": "IMPL-XS",
+        "status": "READY",
+        "size": "XS",
+        "zone": "mcp-server",
+        "priority": "P0",
+        "title": "infrastructure/probes/narrativeTruthProbeAdapters.ts (5 adapters, incl. reports.ts extraction)",
+        "depends": [
+          "CCATO-MCP-T1-DOMAIN-ENGINE"
+        ],
+        "next_agent": "dev-mcp-server",
+        "supervised": false,
+        "updated_at": "2026-07-17T04:53:14ZZ",
+        "updated_by": "pm (decompose SPRINT-CCATO-TRUTHGATE-MCP-NATIVE)"
+      },
+      {
+        "id": "CCATO-MCP-T4-SIGNAL-WRITER",
+        "type": "IMPL-XS",
+        "status": "READY",
+        "size": "XS",
+        "zone": "mcp-server",
+        "priority": "P0",
+        "title": "infrastructure/signals/narrativeContradictionSignalWriter.ts",
+        "depends": [],
+        "next_agent": "dev-mcp-server",
+        "supervised": false,
+        "updated_at": "2026-07-17T04:53:14ZZ",
+        "updated_by": "pm (decompose SPRINT-CCATO-TRUTHGATE-MCP-NATIVE)"
+      },
+      {
+        "id": "CCATO-MCP-T5-USECASE",
+        "type": "IMPL-XS",
+        "status": "READY",
+        "size": "XS",
+        "zone": "mcp-server",
+        "priority": "P0",
+        "title": "application/usecases/runNarrativeTruthGate.ts orchestration",
+        "depends": [
+          "CCATO-MCP-T1-DOMAIN-ENGINE",
+          "CCATO-MCP-T2-CLAIM-MAP-LOADER",
+          "CCATO-MCP-T3-PROBE-ADAPTERS",
+          "CCATO-MCP-T4-SIGNAL-WRITER"
+        ],
+        "next_agent": "dev-mcp-server",
+        "supervised": false,
+        "updated_at": "2026-07-17T04:53:14ZZ",
+        "updated_by": "pm (decompose SPRINT-CCATO-TRUTHGATE-MCP-NATIVE)"
+      },
+      {
+        "id": "CCATO-MCP-T6-TOOL-REGISTRATION",
+        "type": "IMPL-XS",
+        "status": "READY",
+        "size": "XS",
+        "zone": "mcp-server",
+        "priority": "P0",
+        "title": "interface/mcp/tools/system/narrativeTruthGateTool.ts + registry.ts + gen-tool-registry.ts",
+        "depends": [
+          "CCATO-MCP-T5-USECASE"
+        ],
+        "next_agent": "dev-mcp-server",
+        "supervised": false,
+        "updated_at": "2026-07-17T04:53:14ZZ",
+        "updated_by": "pm (decompose SPRINT-CCATO-TRUTHGATE-MCP-NATIVE)"
+      },
+      {
+        "id": "CCATO-MCP-T7-SKILL-DUAL-PATH",
+        "type": "IMPL-XS",
+        "status": "READY",
+        "size": "XS",
+        "zone": "mcp-server",
+        "priority": "P0",
+        "title": "Update .claude/skills/claim-truth-gate/SKILL.md + 5 flow-file invocation swaps",
+        "depends": [
+          "CCATO-MCP-T6-TOOL-REGISTRATION"
+        ],
+        "next_agent": "dev-mcp-server",
+        "supervised": false,
+        "updated_at": "2026-07-17T04:53:14ZZ",
+        "updated_by": "pm (decompose SPRINT-CCATO-TRUTHGATE-MCP-NATIVE)"
+      },
+      {
+        "id": "CCATO-MCP-T8-DOD-HARNESS",
+        "type": "IMPL-XS",
+        "status": "READY",
+        "size": "XS",
+        "zone": "mcp-server",
+        "priority": "P0",
+        "title": "Integration test suite replaying §5.2 (a)-(e)",
+        "depends": [
+          "CCATO-MCP-T5-USECASE",
+          "CCATO-MCP-T6-TOOL-REGISTRATION"
+        ],
+        "next_agent": "dev-mcp-server",
+        "supervised": false,
+        "updated_at": "2026-07-17T04:53:14ZZ",
+        "updated_by": "pm (decompose SPRINT-CCATO-TRUTHGATE-MCP-NATIVE)"
+      }
+    ],
     "review": [
       {
         "id": "TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST",
