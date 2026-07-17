@@ -12210,6 +12210,17 @@
       "to": "po",
       "type": "diagnosis",
       "payload_ref": "docs/handoffs/2026-07-16-chef-eod-nonpublish-and-marker-leak.md"
+    },
+    {
+      "id": "refine-backlog-pagecount-zero-20260717",
+      "summary": "[refine] BCTC refine backlog 100% stalled — 25/25 pending rows page_count=0 → every real filing skipped as cover-letter (page_count<=4); upstream raster/window unpopulated despite text COMPLETE. RECURRING 2 ticks (09:00Z+11:00Z). po→dev-pdf-extractor.",
+      "severity": "WARN",
+      "status": "READ",
+      "ts": "2026-07-17T11:08:54.765Z",
+      "from": "cowork-team/refine-stall-escalation",
+      "to": "po",
+      "type": "refine_pipeline_stall",
+      "payload_ref": "docs/handoffs/2026-07-17-refine-backlog-page-count-zero-total-stall.md"
     }
   ],
   "backlog_detail": [

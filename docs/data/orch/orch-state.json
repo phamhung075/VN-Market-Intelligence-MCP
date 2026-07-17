@@ -414,19 +414,7 @@
     "_updated_at": "2026-07-17T12:21:04Z",
     "_updated_by": "dev-team (0a-D drain: refine-stall consumed→pendingSignals→PO)",
     "archive": [],
-    "rows": [
-      {
-        "id": "refine-backlog-pagecount-zero-20260717",
-        "summary": "[refine] BCTC refine backlog 100% stalled — 25/25 pending rows page_count=0 → every real filing skipped as cover-letter (page_count<=4); upstream raster/window unpopulated despite text COMPLETE. RECURRING 2 ticks (09:00Z+11:00Z). po→dev-pdf-extractor.",
-        "severity": "WARN",
-        "status": "READ",
-        "ts": "2026-07-17T11:08:54.765Z",
-        "from": "cowork-team/refine-stall-escalation",
-        "to": "po",
-        "type": "refine_pipeline_stall",
-        "payload_ref": "docs/handoffs/2026-07-17-refine-backlog-page-count-zero-total-stall.md"
-      }
-    ],
+    "rows": [],
     "last_triaged_at": "2026-07-15T20:56:10Z",
     "last_triaged_by": "po"
   },
