@@ -1,0 +1,49 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "2026-07-17T14:06:05.360Z",
+  "payload": {
+    "tick": "2026-07-17T14:00Z",
+    "classification": "FIRE",
+    "pressure_mode": "legacy",
+    "calendar_status": "unknown",
+    "won_slots": [
+      "refine-bctc-slot-2"
+    ],
+    "spawned": [
+      {
+        "slot_id": "refine-bctc-slot-2",
+        "agent": "refine_bctc_md",
+        "flow_path": "docs/agents/refine_bctc_md/flow/main.md",
+        "outcome": "cover-letter-skip",
+        "detail": "picked MBB_2026_Q1.pdf (page_count=0) -> matched TICKER_YEAR_Qn page_count<=4 skip pattern -> clean skip + WORK-channel report + exit"
+      }
+    ],
+    "errors": [],
+    "chef_mutex_applied": false,
+    "tick_snapshot_skipped": true,
+    "tick_snapshot_skip_reason": "single won slot (|WON|==1)",
+    "cycle_snapshot_promoted": false,
+    "last_fired_writes": [
+      {
+        "slot_id": "refine-bctc-slot-2",
+        "from": "2026-07-16T14:07:09.083Z",
+        "to": "2026-07-17T14:05:17.364Z",
+        "status": "WRITE_OK",
+        "slots_len": 23
+      }
+    ],
+    "refine_stall_reconfirmed": {
+      "note": "page_count=0 head-row stall persists — MBB_2026_Q1 re-skipped as cover-letter (now seen 09:00Z/11:00Z/14:00Z). NOT re-escalated: already owned by po (row refine-backlog-pagecount-zero-20260717 drained NEW->READ between 12:15Z-12:30Z).",
+      "handoff": "docs/handoffs/2026-07-17-refine-backlog-page-count-zero-total-stall.md"
+    }
+  },
+  "_processed": {
+    "fingerprint": "7a7abb5e1d0d7f9bf4c20181743e6d7010968daea95cf1f1e2f6532f718d9cb8",
+    "processedAt": "2026-07-17T14:19:07Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
