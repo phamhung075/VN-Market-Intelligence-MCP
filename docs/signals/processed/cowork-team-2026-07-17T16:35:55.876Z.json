@@ -1,0 +1,50 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "2026-07-17T16:35:55.876Z",
+  "payload": {
+    "tick": "2026-07-17T16:30Z",
+    "verdict": "WORK",
+    "drift_min": 3,
+    "spawned": [
+      {
+        "slot_id": "refine-bctc-slot-4",
+        "agent": "refine_bctc_md",
+        "due_reason": "cron"
+      }
+    ],
+    "one_shots": [],
+    "signal_queue_drained": 0,
+    "gates": {
+      "calendar_suppression": [],
+      "freshness_downgrade_applied": [],
+      "chef_mutex_applied": false,
+      "collision_warning": []
+    },
+    "tick_snapshot_skipped": true,
+    "tick_snapshot_reason": "single slot (|WON|==1)",
+    "last_fired_writes": [
+      {
+        "slot_id": "refine-bctc-slot-4",
+        "pre": "2026-07-16T16:36:39.530Z",
+        "post": "2026-07-17T16:35:11.681Z",
+        "status": "WRITE_OK",
+        "verify": "POST==NOW"
+      }
+    ],
+    "pressure_emit": {
+      "success": true,
+      "cycle_snapshot_promoted": false,
+      "mode": "adaptive"
+    },
+    "agent_result": "clean-skip: MBB_2026_Q1.pdf (page_count=0) matched cover-letter pattern; 3rd re-observation of refine-backlog stall (handoff 2026-07-17-refine-backlog-page-count-zero-total-stall.md already escalated to po at 11:00Z — no new handoff minted)"
+  },
+  "_processed": {
+    "fingerprint": "748be21630bd5da08f0c2923ddde806765ede19aa2c8512fae4b7f1d9c38c199",
+    "processedAt": "2026-07-17T16:48:06Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
