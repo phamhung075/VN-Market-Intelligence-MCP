@@ -1,6 +1,12 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-17T06:16Z (dev-team tick 2026-07-17T0607Z — 4th consecutive idle; stable holding pattern until ~09:05Z SPIKE-close; router did NOT dispatch ready-17)
+**Written:** 2026-07-17T06:52Z (dev-team tick 2026-07-17T0637Z — CI flake classified vnstock-3statement 1st-obs NOT dispatched; otherwise idle 5th)
+
+## cycle-20260717T0637Z — CI flake classified (vnstock-3statement, 1st obs, NOT dispatched); still idle otherwise
+
+- **ci-health-probe emitted ci_red** on `c28932513` (run 29559748162): `bun test` 14457 pass / 1 fail, file `src/__tests__/vnstock-3statement.test.ts` under per-file-isolation. **Classified FLAKY, not a regression**: my HEAD commit is docs-only, and CI on byte-identical test code (last code change f4f5ce65e) ran **GREEN(5df003fb)→GREEN(c05dfa10)→RED(c2893251)** — 2 greens then 1 red refutes deterministic-break (H2); confirms flaky (H1). Per-file-isolation is a known flaky class here (4 tracked DEFLAKE rows), but this file is NOT one of them → **1st flake obs**.
+- **Router actions (no dispatch, no PO spawn)**: (1) `gh run rerun --failed 29559748162` to restore green + stop re-emission; (2) classified the ci_red signal → processed/ with disposition + fingerprint (run/head/file/pass-skip-fail) so it does NOT falsely escalate to PO as a real incident (`[ci_red can be flaky — confirm before blame]`, `[re-emit clobbers triage]`); (3) NOT minted a DEFLAKE row — 1 obs only (`[recurring bug 2+→block]`). **WATCH: 2nd flake obs of vnstock-3statement → mint DEFLAKE-VNSTOCK-3STATEMENT.**
+- **Otherwise idle** (5th tick): head idle (untouched 04:23:44Z) → pipeline-resume no-trigger; BOUNDED-1 no-fire (WIP=ready17+ip1=18); ready=17 pm-owned (unchanged) → not dispatched (ONE-owner); SPIKE parked ~09:05Z (now ~06:50Z, market open). 1 benign cowork-fire drained (errors:0) → no spawn. Committed signals-hygiene (2 processed) + notebook. Locks released at exit.
 
 ## cycle-20260717T0607Z — 4th consecutive idle; stable holding pattern until ~09:05Z SPIKE-close (terse to avoid churn)
 
