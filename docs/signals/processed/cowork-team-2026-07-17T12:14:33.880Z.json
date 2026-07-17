@@ -1,0 +1,70 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-17T12:14:33.880Z",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence",
+      "alert-commander-critical": "cadence"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": 240,
+      "market-watcher-offhours": 240,
+      "alert-commander-critical": 240
+    },
+    "last_fired_timestamp": "2026-07-17T12:09:17.697Z",
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "last_fired_write_errors": "INCIDENT+RECOVERED: initial multi-slot last_fired jq used $won|index(.slot_id) (needle evaluated against $won array, not map element) -> transform errored -> empty stdout -> jq-empty guard passed empty TMP -> mv clobbered cowork-schedule.json to 0 bytes. RECOVERED: git show HEAD (23 slots, committed 2026-07-16T21:32Z) restored, then 4 confirmed today-fires re-applied with correctly-bound needle (.slot_id as $sid) + structural validation (.slots|length>=23, not jq empty). Side effect: ~19 other slots last_fired reverted to 07-16 committed values (safe: monotonic-forward advance + per-slot claim tokens + published-marker gates + agent coverage guards prevent double-fire/double-publish).",
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "12:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 5,
+    "tick_snapshot_skipped": true,
+    "cycle_snapshot_promoted": false,
+    "stale_warning_after_emit": true,
+    "note": "12:00Z FIRE: 3 off-hours 4-hourly slots (news-scout/market-watcher/alert-commander) all spawned + completed (news-scout SHIPPED 6 signals; market-watcher COMPLETE 2 tickers, VNM dup self-suppressed; alert-commander SILENT no firing event). tick-snapshot skipped (JSON re-emission malformation risk on zero-blocker optimization; agents fell back to direct get_cycle_bootstrap). Schedule corruption during last_fired write fully recovered from HEAD (see last_fired_write_errors). emit_pressure_state returned stale_warning=true (cycle-snapshot dark-promote gap UC-SDF-P2) -> next tick legacy mode. Drain-only to:po refine-stall row untouched (standing rule)."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-17T12:14:33.880Z",
+  "_processed": {
+    "fingerprint": "b81788d03fdeed0734a346916b383aa62b9b9dabac5bb72c603697d769cb411c",
+    "processedAt": "2026-07-17T12:21:19Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
