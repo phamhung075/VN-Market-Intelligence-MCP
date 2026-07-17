@@ -634,8 +634,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-17T12:00:00Z",
-    "_updated_by": "pm (decompose SYSREMAKE-P2-STRUCTURAL-REMAKE-ROUTE Leg-1, session e417ef1f)",
+    "_updated_at": "2026-07-17T11:54:54Z",
+    "_updated_by": "po (mint DEFLAKE-VNSTOCK-3STATEMENT — scoped recurring-flaky triage)",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -7657,6 +7657,49 @@
         "supervised_by": "po-scoped-triage-20260717",
         "supervised_note": "PLAN-ONLY / anomaly->BACKLOG. ops-owned infra FIX, null next_agent, no backlog-detail entry -> removed from BOUNDED-1 idle auto-pickup (code non-dev-owner gate is detail-blind, would mis-route to a developer placeholder). Do NOT dispatch; groom+schedule after ops confirms PEK re-seed.",
         "plan_only": true
+      },
+      {
+        "id": "DEFLAKE-VNSTOCK-3STATEMENT",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "low",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "next_agent": "dev-mcp-server",
+        "title": "De-flake vnstock-3statement.test.ts — CI per-file-isolation transient (2+ obs recurring-bug escalation): same-code green→red twice, never a regression",
+        "desc": "apps/mcp-server/src/__tests__/vnstock-3statement.test.ts intermittently fails under CI per-file-isolation `bun test` while passing locally/full-suite. TWICE the failing HEAD was byte-identical in non-test code to a GREEN baseline (range diffs were docs/notebook/orch-state/signal only, ZERO non-test code) => same-code-green-then-red = per-file-isolation non-determinism, NOT a regression. Suspected shared-state root: the file mutates the global DB_PATH env at module-load time (lines 16-17), drives a process-global DB singleton via closeDb()/initDatabase() in beforeEach, and carries an `?isolate=vnstock3stmt` query-bust import to dodge the mock.module cache poison stubbed by test 1466 (in-file comment lines 20-24). Any of these leaking across the isolate/worker boundary can flip pass<->fail depending on file order / worker assignment. Router already ran `gh run rerun --failed 29576568819` to restore the transient green; THIS row is the DURABLE fix so the rerun toil stops.",
+        "ac": "AC-1 Root-cause: identify the exact shared-state / order / timing dependency that makes this file non-deterministic in per-file-isolation `bun test` — candidates: (a) module-load-time DB_PATH env mutation (lines 16-17) leaking to sibling files that share the Bun worker, (b) the closeDb()/initDatabase() process-global DB singleton lifecycle, (c) the mock.module cache poison from test 1466 that the `?isolate=vnstock3stmt` query-bust currently papers over. State which interleaving/worker-assignment reproduces the flake. AC-2 Fix determinism at the source: isolate this file's DB state so it neither depends on nor leaks global/module-load state (e.g. per-test fresh DB + env scoped and restored in teardown that cannot poison siblings). Do NOT merely add retries / test.retry / rerun-on-fail. AC-3 If the 1466 mock.module cache poison is the shared cause, fix it at source so the `?isolate=` query-bust workaround is no longer load-bearing. AC-4 RAW-verify: run the file in per-file-isolation mode >=20x (and interleaved with the sibling that shares its worker) with 0 failures, and confirm the full `bun test` suite stays green — attach run output. Prior-art: no existing backlog/ready/in_progress/review/qa row for vnstock-3statement (router-checked 2026-07-17). Follow the established DEFLAKE-* de-flake convention (cf. DEFLAKE-1187-POLLNEWS-DEAD-PATH).",
+        "evidence": [
+          "docs/signals/processed/ci-red-c2893251-20260717064818.json",
+          "docs/signals/processed/ci-red-00e3c4b1-20260717114821.json"
+        ],
+        "code_under_test": [
+          "apps/mcp-server/src/__tests__/vnstock-3statement.test.ts",
+          "apps/mcp-server/src/infrastructure/db/vnstockStore.js",
+          "apps/mcp-server/src/infrastructure/db/schema.js"
+        ],
+        "obs": [
+          {
+            "n": 1,
+            "tick": "0637Z",
+            "ci_run": "c2893251",
+            "run_id": 29559748162,
+            "head": "c28932513c491d5eb5765a2c4469c426eba9b81c",
+            "disposition": "1st-obs classified-flaky-not-escalated"
+          },
+          {
+            "n": 2,
+            "tick": "1137Z",
+            "ci_run": "00e3c4b1",
+            "run_id": 29576568819,
+            "head": "00e3c4b164709d1b1148676131f4aacaba84a46c",
+            "disposition": "2nd-obs ESCALATED-TO-PO"
+          }
+        ],
+        "source": "recurring CI-flaky escalation (2+ obs) routed by dev-team-router; scoped PO triage 2026-07-17",
+        "created_at": "2026-07-17T11:54:54Z",
+        "created_by": "po-scoped-triage-20260717",
+        "baseline_pass": true
       }
     ],
     "closed_sprints": [
@@ -9484,6 +9527,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-07-17T03:04:26Z",
-  "_updated_by": "po-scoped-triage-20260717 (SPIKE-BCTC-EXTRACTION-DORMANT refine-fold + volume-presence-guard mint)"
+  "_updated_at": "2026-07-17T11:54:54Z",
+  "_updated_by": "po (mint DEFLAKE-VNSTOCK-3STATEMENT — scoped recurring-flaky triage)"
 }
