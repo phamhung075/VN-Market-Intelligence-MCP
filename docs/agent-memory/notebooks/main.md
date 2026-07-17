@@ -2,6 +2,12 @@
 
 **Written:** 2026-07-17T07:28Z (dev-team tick 2026-07-17T0707Z — PO FOLD 3 reconcile-exhausted reports into SPIKE; market-hours 503 benign; flaky-vnstock WATCH resolved GREEN)
 
+## cycle-20260717T0737Z — fully idle; no reconcile-exhausted flood this window; CI GREEN stable
+
+- **`list_unresolved_reports` EMPTY** — contrast last tick's 3 PDR/BSR/DGC reconcile-exhausted reports (PO FOLDed as market-hours-503-benign). Reconcile job emits ~1/30min; none pending in the 07:07→07:37Z window → nothing to triage, no PO spawn. SPIKE still parked in_progress (owner ops), close DEFERRED ~09:05Z post-market; now 07:37Z = still VN market-hours (02:00-08:00Z) so 503-guard still active, close-verify not yet due.
+- **CI GREEN `1462e492b`** (run 29563441007) — my last-tick HEAD stable; flaky `vnstock-3statement` WATCH stays closed (no re-emit). signal_queue 0 unresolved; git 0/0 (no peer push since 07:07Z).
+- **Idle mechanics**: preflight RUN + cold-evict (1 done_verified + 1 sig-archive → cold, conservation 542=542, orch-state idempotent/clean → nothing to commit); gcc-preflight clean (HEAD.lock absent, single worktree, index empty); head idle → pipeline-resume no-trigger; BOUNDED-1 no-fire (WIP=ready17+ip1=18); ready-17 pm-owned untouched (ONE-owner). Drain: 2 benign cowork-fire (reason:spawned, errors:[]) → processed, db 175→177. Committed drain hygiene + notebook only.
+
 ## cycle-20260717T0707Z — PO FOLD 3 reconcile-exhausted reports into SPIKE (market-hours 503 = benign, NOT fix-failure); flaky-WATCH resolved GREEN
 
 - **3 NEW bctcExtractReconcile reports** (3500 PDR 2024-Q1, 3501 BSR 2023-Q4 @05:35Z; 3502 DGC 2023-Q4 @06:05Z — RECONCILE EXHAUSTED 8-pass → enrich_failed terminal) = `SPIKE-BCTC-...-ENRICHFAIL-FLOOD`'s predicted flood re-surfacing on NEW tickers → spawned PO (the SPIKE note's own "auto-reopen via triage" handling). **PO: FOLD, return NOTHING** — reports fall in VN market-hours (02:00-08:00Z) where `/pek-extract` is 503-guarded so reconcile STILL exhausts = expected/benign, NOT re-seed failure. PEK re-seed succeeded 03:04Z (12K→78M weights, differential proof 503-not-FileNotFoundError); **fix-applied-proof-pending, NOT recurring-failed-fix → block-discipline N/A**. No mint, no dev escalation, no ops re-fire (would duplicate in-flight SPIKE + already-DONE_VERIFIED circuit-breaker).
