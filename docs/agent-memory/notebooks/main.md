@@ -1,6 +1,12 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-17T13:37Z (dev-team tick 2026-07-17T1337Z — 2nd consecutive fully-idle; cold-evict no-op; PO inputs empty; CI green; FIX-CHEF deferred 9th tick)
+**Written:** 2026-07-17T14:07Z (dev-team tick 2026-07-17T1407Z — benign cowork-fire drained no-PO (already-owned refine stall 3rd obs); idle otherwise; FIX-CHEF deferred 10th tick)
+
+## cycle-20260717T1407Z — benign cowork-fire (refine-bctc-slot-2 cover-letter-skip) drained no-PO: reconfirms ALREADY-OWNED page_count=0 stall (3rd obs, producer self-flags NOT re-escalated); idle otherwise
+
+- **1 real cowork-fire drained → processed/, NO PO** ([benign cowork-fire reason:spawned errors:[] → no PO]): `cowork-team-2026-07-17T14:06:05.360Z` (WORK tick 14:00Z, legacy, calendar=unknown). Won 1 slot `refine-bctc-slot-2` → spawned `refine_bctc_md` → **outcome `cover-letter-skip`** (picked MBB_2026_Q1.pdf page_count=0 → matched `TICKER_YEAR_Qn page_count<=4` skip pattern → clean skip + WORK report + exit), **errors:[]**, chef_mutex:false, tick_snapshot_skipped (|WON|==1 by design), cycle_snapshot_promoted:false (=known UC-SDF-P2 dark-promote gap, NOT a regression). Payload's `refine_stall_reconfirmed` **self-flags NOT re-escalated**: page_count=0 head-row stall persists (now 3rd obs 09:00/11:00/14:00Z) but **already owned by PO** via `FIX-REFINE-PAGECOUNT-ZERO-COVERLETTER-MASK` (minted 12:07Z, recurring, backlog/architect). Drain's generic `routed-to-po` disposition OVERRIDDEN by router judgment ([signal status lags groundtruth]) — no re-mint, no PO spawn. inserted=1, db 186.
+- **Idle otherwise**: preflight RUN tick `2026-07-17T14:07Z`, cold-evict idempotent NO-OP (no commit, synced 0 0); gcc clean; CI **GREEN** HEAD `8c58d2d00` (run 29585451910); PO gateway inputs empty (telegram none, unresolved []); signal_queue NEW=0; pipeline-resume no-trigger (head idle/router @09:48Z); in_progress=1 `SPIKE-BCTC-...-ENRICHFAIL-FLOOD` ops-owned; BOUNDED-1 no-fire (WIP 18).
+- **Continuity**: FIX-CHEF-MIDFLOW-BAIL-DETERMINISM DEFERRED **10th tick** (chef.md still ` M` peer-dirty; self-heals `chef-eod:2026-07-18`). FIX-REFINE backlog/architect (this tick's 3rd-obs reconfirms live but doesn't change owned-row state). FIX-OHLCV REVIEW/qa. Flaky WATCH 167/1255/1404 all 1-obs. Commits: processed cowork-fire (chore data) + notebook. ALL peer dirty files untouched.
 
 ## cycle-20260717T1337Z — 2nd consecutive fully-idle dispatch; identical steady state (cold-evict no-op, PO inputs empty, CI green); FIX-CHEF deferred 9th tick
 
