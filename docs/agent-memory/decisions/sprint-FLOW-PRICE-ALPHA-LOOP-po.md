@@ -56,3 +56,12 @@
 - Skip the execution-bail (1st occurrence, could be LLM noise) — REJECTED: chef.md HAS a degraded-floor rule the agent overrode; minting the anchor row now lets a 2nd occurrence escalate per feedback_recurring_bug_escalation.
 **why-decision:** Two distinct roots need two distinct owners; the marker root is already P0-owned, the bail root needs a durable first-occurrence anchor. Both are maintenance-lane ⇒ supervised, deliberate-dispatch only.
 **why-change:** No change from the handoff's own two-issue split.
+
+### STEP po-S6 · po · 2026-07-17T17:24Z
+**task-id:** FIX-OHLCV-DEPTH-ALERT-HONEST-GAP-SUPPRESS
+**what-done:** Folded Telegram report 3505 (analysis-agent OHLCV-BACKFILL "no completion report / VPS-crash suspected") as `duplicate` — RAW-verified FALSE alarm, 3rd recurrence of the report-3504 class; already covered by in-REVIEW FIX. No mint, no ops route, head untouched.
+**what-considered:**
+- Route-to-ops (report says "Manual VPS investigation required") — REJECTED: 3-plane RAW-verify all green — VPS proxy prices ok/0-err/not-stale, `vn-price-fetch` alive (polled 2m ago, idle=market-closed), pipeline backfill queue pending=false + last-completed 2026-07-17T15:50:13, HPG/VCB serving a fresh 07-17 bar, ~766-row depth TA-ready fleet-wide. Nothing to investigate; VPS healthy.
+- Mint a new dev FIX — REJECTED: identical mechanism/emitter to report 3504 (08:37Z) which already produced FIX-OHLCV-DEPTH-ALERT-HONEST-GAP-SUPPRESS (REVIEW, owner=dev-mcp-server, next=qa). Emitter still fires because that fix is pre-deploy; the rows=0/low tickers (BDI/JSH/SIS/VDC/DLC) are exactly the honest-gap delisted codes that FIX targets, not crash evidence. Minting would duplicate an owned row.
+**why-decision:** Ground truth contradicts the report's prose (poller force-closed the queue row at retry=5 with bars_inserted=NULL; work completed). Correct disposition of a false alarm covered by an in-review fix = fold `duplicate`, keep it out of the unresolved pool so it stops re-triggering triage each tick.
+**why-change:** No change from dispatcher's fold-first hypothesis; RAW-verify confirmed it.
