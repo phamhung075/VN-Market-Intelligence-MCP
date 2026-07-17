@@ -1,6 +1,12 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-17T03:12Z (dev-team tick 2026-07-17T0237Z — SPIKE-BCTC-DORMANT AC-2 remediation + PO disposition, compact-checkpoint offload)
+**Written:** 2026-07-17T03:22Z (dev-team tick 2026-07-17T0307Z — idle dispatch; stale dual-head reconciled → idle, SPIKE parked deferred ~09:05Z)
+
+## cycle-20260717T0307Z — idle dispatch tick; reconciled stale dual-head → idle (SPIKE parked, deferred ~09:05Z)
+
+- **Preflight RUN** (SF-1 + fire-election held; CANON cold-evict fired at Step 5.5: 1 done_verified + 1 signal-archive → cold, conservation 528=528 — no post-cycle re-run). Drain: all 50 top-level `docs/signals/*.json` are non-signal-shape state files (44 `cowork-team-*` telemetry 07-03..11, 5 `price_anomaly`, 1 already-resolved mcp-outage) → `drain-signals.js` SKIPs them by design (already backlogged as `CLEAN-SIGNALS-DIR-NONSIGNAL-ARTIFACTS`; 2 processed pruned, db=173). 0 `signal_queue` NEW, 0 orphan-signals. CI **GREEN** on `ca3645a9d`. No new/unresolved Telegram reports → **skipped PO re-spawn** (identical empty inputs, memory-guided).
+- **KEY — stale dual-head reconcile**: top-level `.head` still read `in_progress / next_agent=ops` while `.task_board.head` read idle. `next_agent=ops` was a COMPLETED-WORK RESIDUAL — ops PEK re-seed finished + recorded in `ac2_remediation` at 03:04Z last tick; the 02:37Z disposition jq bumped `.head.updated_by` but never cleared `status`/`next_agent`, so pipeline-resume would re-spawn ops **every 30-min tick for ~6h** (identical inputs, market open until 08:00Z → `/pek-extract` 503 guard, nothing to do). SPIKE's only remaining work is the DEFERRED post-market ~09:05Z router RAW-verify, NOT an ops spawn. Reset BOTH heads → idle (commit `6a3308d65` + `scripts/router-reconcile-stale-head-idle-spike-deferred.jq`); SPIKE stays honestly parked in `in_progress` with its PO-authorized close-on-ops-confirm disposition intact. BOUNDED-1 correctly skipped (WIP=1, parked SPIKE holds the slot).
+- **Post-cycle**: mock-guard same known `stub.sbv.vn` `_test.go` HARD-FAIL FP (`FIX-MOCKGUARD-SCOPE-EXCLUDE-TESTGO` tracked — no duplicate signal). Push-backstop ahead=0 (pushed inline). SPIKE close remains self-verifying: reconcile-exhausted flood re-surfaces if the fix failed (auto-reopen via triage), else a future post-09:05Z tick RAW-verifies `bctc_layout_units` MAX past 06-10 + rows land → flips done_verified per PO pre-authorized sign-off.
 
 ## cycle-20260717T0237Z — SPIKE-BCTC-EXTRACTION-DORMANT root-caused to a SECOND wiped volume; PEK re-seeded (crash eliminated), refine folded, durable volume-guard minted
 
