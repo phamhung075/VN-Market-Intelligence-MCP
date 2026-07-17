@@ -9383,6 +9383,26 @@
       "completed_by": "qa",
       "qa_reviewed_at": "2026-07-10T20:58:47Z",
       "qa_note": "APPROVED, DONE. Router already independently RAW-verified diff/commit-provenance/CI-green-on-pushed-HEAD (run 29122457852, headSha 0d9226a91 differs from failing 1a8c1bffb) — did not re-derive. Scrutinized item 3 (1352a done->pek_triggered, the one real regression-test-semantics risk): read bctcPdfPullJob.ts full source — updatePekTriggered.run() still fires strictly AFTER await deps.triggerExtraction(...) resolves; A-1s mid-flight statusDuringExtraction===pending assertion is UNCHANGED by this diff and would fail if the await were ever dropped — the original 1352a race guard is genuinely still live, not weakened. Read bctc-extract-reconcile-job.test.ts in full: counted exactly 14 it() cases (not trusted from paraphrase) covering pek_triggered->done (3 independent per-table paths + quarantine-exclusion negative case) and pek_triggered->enrich_failed (exhausted-attempts/unresolved-report_id/sendBugFn-throws-non-fatal) — matches the 14 cases claim exactly; this file was already independently QA-approved in a prior cycle (own notebook cycle-431, FIX-BCTC-D3C-RECONCILE-JOB, done_verified). Confirmed commit 43f4c8a22 adds exactly ONE bctcExtractReconcileJob registration to schedulerJobTable.ts (grep count 2 = 1 import + 1 table entry, no duplicate) — justifies all 3 count bumps (64->65,57->58,79->80). Re-ran all 4 files fresh myself: 53 pass/0 fail (39 touched + 14 reconcile, matches claims exactly). tsc clean. DDD/security scan run despite Smart-Skip eligibility: only pre-existing test-layer infra/application imports (legal for __tests__), zero process.env outside test cleanup, zero secrets; mock-guard.sh confirms 0 production files in diff (Smart-Skip premise holds). VERDICT: sound root-cause fix, not a rationalization weakening coverage — the 1352a race-condition contract is unchanged and still exercised, only the terminal-state label was updated to match an already-shipped, already-QA-approved status model (D3B/D3C). DJ-GATE-1: no separate dev-mcp-server sprint DJ file (same accepted class as CI-RED-06043b3c-FIX precedent, po point (C)) — satisfied via QAs own task-id-stamped entry, sprint-CI-RED-1a8c1bff-FIX-qa.md STEP qa-S1, per the decision-journal skills own pre-verdict mandate. verification_gate=ci_green_on_subsequent_push satisfied (router-observed + independently re-run locally)."
+    },
+    {
+      "id": "CLEAN-STALE-INPROGRESS-P5SELFHEAL-L2FRESHNESS",
+      "size": "S",
+      "status": "DONE",
+      "title": "Close 2 stale in_progress[] rows: FIX-L2-FRESHNESS-DATAASOF-FIELDS (shipped a384497a3, never flipped) + FIX-SCHEMA-DRIFT-P5-SELFHEAL (abandoned direction, detail_ref already says REWORK/do-not-redispatch)",
+      "type": "CLEAN",
+      "zone": "docs/data/orch/",
+      "owner": "po",
+      "priority": "normal",
+      "depends": [],
+      "note": "Discovered 2026-07-10T21:07Z dev-team cron tick during routine WIP inspection — 2 of 3 in_progress[] rows had owner:null, updated_at:null, no live task_list_held lock. (1) FIX-L2-FRESHNESS-DATAASOF-FIELDS: commit a384497a3 (2026-06-27) diff-confirmed to add data_asof to all 5 handlers named in that row's own verification_gate, 20 passing tests, tsc clean, rows_no_asof 8->2 — commit message says \"Closes FIX-L2-FRESHNESS-DATAASOF-FIELDS\" but board row was never flipped, sat in_progress 13 days. (2) FIX-SCHEMA-DRIFT-P5-SELFHEAL: its own backlog-detail.json record already carries status REWORK with explicit po-S19 2026-06-09 note \"do NOT re-dispatch it (direction abandoned)\" — successor chain P6->P7->P8 has since closed twice more (P8-IMPL disproven+freed, commit efbab47b6), this ancestor stub was never reconciled, sat in_progress >1 month. Both silently consumed WIP capacity, blocking BOUNDED-1 idle-capacity pickup from claiming real backlog work (WIP=ready+in_progress already >=1 due to these 2 dead slots). Router did not flip either row itself — AC-sufficiency (row 1) and direction-abandonment confirmation (row 2) are po judgment calls, matching precedent commits 755c761a8 and efbab47b6. Also worth a systemic note: task_board (thin) vs detail_ref (archive/backlog-detail.json, authoritative) can silently desync with no reconciliation sweep — same failure shape as [[feedback_epic_wrapper_closeout_gap_no_auto_revisit]] but for plain (non-wrapper) rows whose implementation closed out-of-band.",
+      "created_at": "2026-07-10T21:23:05Z",
+      "created_by": "router",
+      "source": "router discovery during routine dev-team cron tick WIP inspection, 2026-07-10T21:07Z, RAW-verified via git log/git show/archive-detail cross-check before minting",
+      "done_verified": true,
+      "resolution": "executed 2026-07-11 by po-s142: FIX-L2-FRESHNESS-DATAASOF-FIELDS in_progress->done_verified (shipped a384497a3, gate RAW-verified) + FIX-SCHEMA-DRIFT-P5-SELFHEAL in_progress->done/abandoned (direction abandoned per 755c761a8/efbab47b6). in_progress WIP 3->1, freeing 2 dead slots that were starving BOUNDED-1 idle-capacity pickup.",
+      "updated_at": "2026-07-10T23:25:07Z",
+      "updated_by": "po",
+      "completed_by": "po"
     }
   ],
   "closed_sprints": [
