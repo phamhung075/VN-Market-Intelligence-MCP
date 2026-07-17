@@ -1,0 +1,110 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "2026-07-17T16:09:13.247Z",
+  "payload": {
+    "tick": "2026-07-17T16:00Z",
+    "classification": "FIRE",
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "market-watcher-eod",
+      "alert-commander-critical"
+    ],
+    "spawned": [
+      {
+        "slot_id": "news-scout-offhours",
+        "agent": "news-scout",
+        "flow_path": "docs/agents/news-scout/flow/main.md",
+        "outcome": "spawned_background"
+      },
+      {
+        "slot_id": "market-watcher-offhours",
+        "agent": "market-watcher",
+        "flow_path": "docs/agents/market-watcher/flow/main.md",
+        "outcome": "spawned_background"
+      },
+      {
+        "slot_id": "market-watcher-eod",
+        "agent": "market-watcher",
+        "flow_path": "docs/agents/market-watcher/flow/main.md",
+        "outcome": "spawned_background"
+      },
+      {
+        "slot_id": "alert-commander-critical",
+        "agent": "alert-commander",
+        "flow_path": "docs/agents/alert-commander/flow/main.md",
+        "outcome": "spawned_background"
+      }
+    ],
+    "errors": [],
+    "gates": {
+      "freshness_downgrade": {
+        "applied": [],
+        "reason": "3-cond AND gate false: last_regime=unknown(T) AND signal_backlog==0(F, was 5) AND calendar in [holiday,weekend](F, unknown)"
+      },
+      "calendar_suppression": {
+        "applied": [],
+        "reason": "calendar_status=unknown -> no suppression"
+      },
+      "chef_mutex_applied": false,
+      "collision_warning": {
+        "agent": "market-watcher",
+        "slots": [
+          "market-watcher-offhours",
+          "market-watcher-eod"
+        ],
+        "action": "WARNING_ONLY_R3_multi_slot_allowed_both_fired"
+      }
+    },
+    "tick_snapshot_skipped": true,
+    "tick_snapshot_skip_reason": "multi-slot(4) would normally write cycle-snapshot; skipped — faithful staging-file materialization not reliable from dispatcher ctx (6KB market_context w/ truncated previews); zero-blocker per flow, agents fall back to direct get_cycle_bootstrap",
+    "cycle_snapshot_promoted": false,
+    "last_fired_writes": [
+      {
+        "slot_id": "news-scout-offhours",
+        "from": "2026-07-17T12:09:17.697Z",
+        "to": "2026-07-17T16:08:34.822Z",
+        "status": "WRITE_OK",
+        "slots_len": 23
+      },
+      {
+        "slot_id": "market-watcher-offhours",
+        "from": "2026-07-17T12:09:17.697Z",
+        "to": "2026-07-17T16:08:34.822Z",
+        "status": "WRITE_OK",
+        "slots_len": 23
+      },
+      {
+        "slot_id": "market-watcher-eod",
+        "from": "2026-07-16T16:08:49.343Z",
+        "to": "2026-07-17T16:08:34.822Z",
+        "status": "WRITE_OK",
+        "slots_len": 23
+      },
+      {
+        "slot_id": "alert-commander-critical",
+        "from": "2026-07-17T12:09:17.697Z",
+        "to": "2026-07-17T16:08:34.822Z",
+        "status": "WRITE_OK",
+        "slots_len": 23
+      }
+    ],
+    "last_fired_note": "first attempt no-op'd (zsh 'for x in $STR' did not word-split -> matched 0 slots, schedule unchanged/valid); corrected same-tick with explicit zsh array iteration -> all 4 advanced",
+    "pressure_emit": {
+      "success": true,
+      "cycle_snapshot_promoted": false,
+      "stale_warning_after": true
+    }
+  },
+  "_processed": {
+    "fingerprint": "884e1c249206b7421d6e9a9ae8457d3ceb9ace9832a1af7507bd390624c4bf9e",
+    "processedAt": "2026-07-17T16:18:07Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
