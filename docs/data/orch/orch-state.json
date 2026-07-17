@@ -8339,25 +8339,6 @@
         "zone": "qa"
       },
       {
-        "id": "CI-RED-1a8c1bff-FIX",
-        "title": "CI-RED-1a8c1bff-FIX — CI RED bun test (3 files: 1190 schedulerFileCount, FACTORY-SCHEDULER job-table, 1352a async-extraction-race)",
-        "type": "FIX",
-        "priority": "P1",
-        "status": "DONE",
-        "zone": "apps/mcp-server/",
-        "origin_signal_id": "ci-red-1a8c1bff-20260710201719",
-        "created_at": "2026-07-10T20:24:22Z",
-        "detail_ref": null,
-        "status_note": "Fixed all 3 CI-red files (PO-reproduced, deterministic): (1) 1190-pipeline-watchdog.test.ts schedulerFileCount 64->65 — cron-registry.json literal was stale, live value already 65. (2) FACTORY-SCHEDULER-job-table-registry.test.ts 57->58 (Group A/B) + 79->80 (Group D). (1)+(2) both trace to the SAME legit cause: commit 43f4c8a22 (D3C, landed earlier same day) added bctcExtractReconcileJob.ts to schedulerJobTable.ts generic wrapRun table — verified single registration, no dupe, system-map.json mirror already lists it; NOT caused by the server.ts split-refactor commits as initially suspected. (3) 1352a-async-extraction-race.test.ts A-1/A-2 done->pek_triggered — investigated not blind-patched: FIX-BCTC-D3B-GATE-PEK-TRIGGERED-STATUS intentionally removed the old synchronous done/enrich_failed gate (sync check after fire-and-forget 202 is structurally guaranteed 0-rows); bctcExtractReconcileJob.ts (D3C) is documented sole successor reconciling pek_triggered->done/enrich_failed out-of-band (already covered by bctc-extract-reconcile-job.test.ts 14 cases). Test asserted a superseded model, not a real regression. All 3 files verified standalone+together (39 pass/0 fail), tsc clean. Pushed 0d9226a91; fresh CI run 29122457852 conclusion=success (bun test job green) on headSha 0d9226a9115561ef3d29ff880d5e08c0d94704c2, differs from failing 1a8c1bffb13ddfc096338c4f346e6e6d139d7947 — verification_gate satisfied.",
-        "next_agent": "qa",
-        "updated_at": "2026-07-10T20:58:47Z",
-        "updated_by": "qa",
-        "qa_verdict": "APPROVED",
-        "completed_by": "qa",
-        "qa_reviewed_at": "2026-07-10T20:58:47Z",
-        "qa_note": "APPROVED, DONE. Router already independently RAW-verified diff/commit-provenance/CI-green-on-pushed-HEAD (run 29122457852, headSha 0d9226a91 differs from failing 1a8c1bffb) — did not re-derive. Scrutinized item 3 (1352a done->pek_triggered, the one real regression-test-semantics risk): read bctcPdfPullJob.ts full source — updatePekTriggered.run() still fires strictly AFTER await deps.triggerExtraction(...) resolves; A-1s mid-flight statusDuringExtraction===pending assertion is UNCHANGED by this diff and would fail if the await were ever dropped — the original 1352a race guard is genuinely still live, not weakened. Read bctc-extract-reconcile-job.test.ts in full: counted exactly 14 it() cases (not trusted from paraphrase) covering pek_triggered->done (3 independent per-table paths + quarantine-exclusion negative case) and pek_triggered->enrich_failed (exhausted-attempts/unresolved-report_id/sendBugFn-throws-non-fatal) — matches the 14 cases claim exactly; this file was already independently QA-approved in a prior cycle (own notebook cycle-431, FIX-BCTC-D3C-RECONCILE-JOB, done_verified). Confirmed commit 43f4c8a22 adds exactly ONE bctcExtractReconcileJob registration to schedulerJobTable.ts (grep count 2 = 1 import + 1 table entry, no duplicate) — justifies all 3 count bumps (64->65,57->58,79->80). Re-ran all 4 files fresh myself: 53 pass/0 fail (39 touched + 14 reconcile, matches claims exactly). tsc clean. DDD/security scan run despite Smart-Skip eligibility: only pre-existing test-layer infra/application imports (legal for __tests__), zero process.env outside test cleanup, zero secrets; mock-guard.sh confirms 0 production files in diff (Smart-Skip premise holds). VERDICT: sound root-cause fix, not a rationalization weakening coverage — the 1352a race-condition contract is unchanged and still exercised, only the terminal-state label was updated to match an already-shipped, already-QA-approved status model (D3B/D3C). DJ-GATE-1: no separate dev-mcp-server sprint DJ file (same accepted class as CI-RED-06043b3c-FIX precedent, po point (C)) — satisfied via QAs own task-id-stamped entry, sprint-CI-RED-1a8c1bff-FIX-qa.md STEP qa-S1, per the decision-journal skills own pre-verdict mandate. verification_gate=ci_green_on_subsequent_push satisfied (router-observed + independently re-run locally)."
-      },
-      {
         "id": "CLEAN-STALE-INPROGRESS-P5SELFHEAL-L2FRESHNESS",
         "size": "S",
         "status": "DONE",
