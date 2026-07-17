@@ -373,9 +373,9 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD",
-    "next_agent": "dev-mcp-server",
-    "updated_at": "2026-07-17T02:51:07Z",
-    "updated_by": "router (AC-1 corruption corroborated contained/non-serving, no restore; AC-2 dev-mcp-server in flight; tick 2026-07-17T02:37Z)"
+    "next_agent": "ops",
+    "updated_at": "2026-07-17T02:59Z",
+    "updated_by": "router (AC-2 root-caused: PEK pek_model_cache volume-wipe primary + refine-fold; dispatched ops PEK re-seed + PO fold; tick 2026-07-17T02:37Z)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -8235,9 +8235,9 @@
     "head": {
       "status": "idle",
       "active_task_id": null,
-      "next_agent": "router",
-      "updated_at": "2026-07-17T01:09:07Z",
-      "updated_by": "dev-mcp-server (FIX-BCTC-RECONCILE-EMISSION-CIRCUIT-BREAKER duplicate-dispatch closeout — see task status_note)"
+      "next_agent": "ops",
+      "updated_at": "2026-07-17T02:59Z",
+      "updated_by": "router (AC-2 root-caused PEK volume-wipe + refine-fold; ops re-seed + PO fold dispatched)"
     },
     "ready": [],
     "review": [
@@ -8923,8 +8923,8 @@
         "priority": "P0",
         "size": "M",
         "zone": "multi",
-        "owner": "dev-mcp-server",
-        "next_agent": "dev-mcp-server",
+        "owner": "ops",
+        "next_agent": "ops",
         "timebox": 180,
         "title": "SPIKE (plan-only): BCTC structured-extraction pipeline DORMANT since mid-June (RAW: bctc_layout_units frozen 2026-06-10, bctc_table_rows frozen 2026-06-30) despite FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION DONE_VERIFIED 07-10 — bctcExtractReconcileJob then mass-terminalized the ENTIRE multi-quarter watchlist backlog (Q4/Q3/Q2/Q1-2025) as enrich_failed overnight 07-15 20:05Z->07-16 07:15Z, emitting 76 fail-loud RECONCILE-EXHAUSTED reports (report-storm). Determine WHY extraction is dormant + add an emission circuit-breaker.",
         "question": "Why is the BCTC structured-extraction layer producing nothing since mid-June despite the DONE_VERIFIED 07-10 wiring fix, and why did bctcExtractReconcileJob mass-terminalize the whole watchlist backlog in one overnight sweep? Did an infra event (DB restore / VM-rebuild / named-volume swap) between 07-12 and 07-16 revert the fix's effects and reset queue rows to pending?",
@@ -8998,6 +8998,19 @@
           "agent": "dev-mcp-server",
           "assist": "dev-pdf-extractor",
           "scope": "dormant-producer diagnostic READ-ONLY"
+        },
+        "ac2_finding": {
+          "by": "dev-mcp-server AC-2; router git-verified commit 60bdca243 (doc-only, +115L, no code/peer sweep)",
+          "at": "2026-07-17T02:59Z",
+          "verdict": "ROOT CAUSE FOUND — two independent dormant producers feeding bctcExtractReconcileJob 3-way OR success check; neither satisfied since ~06-30 => mass enrich_failed sweep + report-duplicate flood",
+          "crons_ok": "bctcPdfPullJob(*/30) + bctcExtractReconcileJob(5,35) both registered + firing status=success every tick (RAW cron_job_runs) — NOT a liveness/registration problem",
+          "pek_cause": "/pek-extract crashes EVERY call: FileNotFoundError doclayout_yolo_ft.pt — pek_model_cache named volume EMPTY (du 12K, stray yolo/settings.yaml only), wiped by SAME 2026-07-15 VM-rebuild that destroyed market_data (AC-1), never re-seeded",
+          "pek_fix": "ops re-run scripts/pek-fetch-weights.sh (idempotent; commit e418d606d; brief docs/architecture-briefs/2026-05-27-pek-weights-provisioning.md) + verify post-fetch /pek-extract logs successful model load; HF/ModelScope reachable now; low-risk populate-empty-volume, NOT a destructive swap",
+          "refine_cause": "agentic-refine half still dormant (bctc_refined_units MAX 2026-06-30; refine_status PENDING 181 vs 151 at 07-12) — pre-existing session-scoped-trigger fragility",
+          "refine_disposition": "FOLD into FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP (backlog, unshipped) — NO new mint; PO to groom",
+          "dispatch": "ops => PEK volume re-seed (convergence lever); PO => fold refine half + SPIKE disposition",
+          "unverified": "refine-bctc-slot-1 armed-vs-inert; PaddleOCR lazy-download weights presence; exact crash->rebuild->fix minute sequencing",
+          "doc": "docs/spikes/SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD.md @60bdca243"
         }
       }
     ]
