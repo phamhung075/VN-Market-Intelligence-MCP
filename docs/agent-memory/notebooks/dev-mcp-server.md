@@ -1,33 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-07-16 — FR-DEGRADE-01-FIX (dev-team dispatch, FIX) → REVIEW, returned to router
-
-**Session:** 69b0312e-df43-43a9-9e0b-bddf66d374e3 (dev-team dispatch; flipped `FR-DEGRADE-01-FIX` IN_PROGRESS→REVIEW + `.head`→idle via `scripts/orch-apply.sh`)
-
-Root-cause gap in `get_bctc_full` (`bctcFullTools.ts`): the 2026-06-10 fix (`815ccaed`, signal `qc-FR-DEGRADE-01-4004`, quality-checklist status=PASS) only wired the VPS bctc SLA-staleness check into the "no `financial_reports` row at all" branch. RAW-verified the far more common production case — a report row DOES exist (last-known-good) but the VPS bctc push pipeline has stopped delivering fresh reports — fell through to the ordinary success path completely UNFLAGGED (silently-stale, not an error, but the AC explicitly forbids unflagged stale data). Threaded the already-computed `bctcVpsStaleSince` (+ new `bctcVpsStaleAgeHours`) into the success-path response: content[1] structured JSON gains `stale`(bool)/`stale_since`/`stale_age_hours`; content[0] text gains a human `[FR-DEGRADE-01]` note. Also added `stale_age_hours` to the pre-existing no-data branch for shape consistency.
-
-Added 3 tests to `240-bctc-full.test.ts` (describe `FR-DEGRADE-01 — get_bctc_full degrades gracefully when VPS bctc push is stale (data present)`): stale-flagged when push >48h old (never throws, still serves last-known-good), fresh-push → `stale=false`, no-push-log-rows → `stale=false` (fail-open, not a crash).
-
-Verified: targeted `bun test src/__tests__/240-bctc-full.test.ts src/__tests__/1982-quality-burndown-CHIJ.test.ts` → **38 pass / 0 fail**. `bun tsc --noEmit` exit 0. Full-suite bg run reds (1518 foreign-flow timeouts, 1407b coverage-map `market_messages`) confirmed as the pre-existing flaky class already documented in the S20/UC-MDH-P1 journal entry (`vps_push_log`/insider-tx/OCR-cache/foreign-flow) — zero overlap with the changed files.
-
-Committed `00dca96fe` (explicit pathspec: `bctcFullTools.ts` + `240-bctc-full.test.ts`). Flipped orch-state `FR-DEGRADE-01-FIX`→REVIEW, `.head`→idle/next_agent=qa.
-
-Zone health: tsc clean, 38/38 targeted pass (3 new), no tool/scheduler count change (handler-internals-only edit) | HEALTHY.
-
-## 2026-07-16 — FR-OBS-01-FIX (dev-team dispatch, FIX) → REVIEW, returned to router
-
-**Session:** 69b0312e-df43-43a9-9e0b-bddf66d374e3 (dev-team dispatch; flipped `FR-OBS-01-FIX` IN_PROGRESS→REVIEW + `.head`→idle via `scripts/orch-apply.sh`)
-
-Root-cause (sibling of FR-DEGRADE-01-FIX, same audit batch, signal `qc-FR-OBS-01-4005`): `bctcOverdueCheckJob` only inserts a batch `alerts` row (severity=high) and relies on the shared HIGH/CRITICAL dispatch (`intelligenceCycleJob` Step E → `notifyTelegramAlert`), which routes ALL high/critical severities to BUG by design — never WORK. So the AC question was answered NO before this fix: mis-channeled, not silently swallowed. Confirmed by direct read of `telegram.ts` (`notifyTelegramAlert` → `coreSend("bug", ...)`), corroborated by the sibling precedent `bctcBatchSweepJob.ts`, which already posts its own status directly to WORK via `sendTelegramWork`.
-
-Fix: `runBctcOverdueCheck` now sends an explicit WORK-channel message (new injectable `opts.sendWorkAlertFn`, default `sendTelegramWork`) whenever the batch insert is a genuinely NEW row (`info.changes > 0` — the existing per-week dedup id already prevents re-firing, no separate cooldown needed). The `alerts` row is unchanged (still feeds `get_alerts`/cascade). Updated stale "Alert Commander" doc comments in `schedulerJobTable.ts` + `financial-reports.md`.
-
-Verified: extended `316-bctc-overdue-check.test.ts` with 3 tests (overdue→WORK send; not-overdue→no send; same-week re-run→no re-send) — 11/11 pass. Targeted incl. `1358a`/`1303i`/`1050` siblings: 26/26 pass. `bun tsc --noEmit` exit 0. Full-suite: 14575 pass/40 skip/46 fail — zero overlap with changed files (pre-existing flaky class: vps_push_log/insider-tx/OCR-cache/foreign-flow timeouts + 1 deprecated-folder test). Scheduler cron.schedule count A/B via git-stash: 3→3 unchanged; tool count 183 unaffected.
-
-Committed `<SHA>` (explicit pathspec: `bctcOverdueCheckJob.ts` + `schedulerJobTable.ts` + `316-bctc-overdue-check.test.ts` + `financial-reports.md`). Flipped orch-state `FR-OBS-01-FIX`→REVIEW, `.head`→idle/next_agent=qa.
-
-Zone health: tsc clean, 11/11 targeted pass (3 new), scheduler/tool counts unchanged (added 1 direct Telegram send, no new job/tool) | HEALTHY.
-
 ## 2026-07-16 — FIX-BCTC-RECONCILE-EMISSION-CIRCUIT-BREAKER (dev-team dispatch, FIX) → REVIEW, returned to router
 
 **Session:** 69b0312e-df43-43a9-9e0b-bddf66d374e3 (dev-team dispatch; flipped `FIX-BCTC-RECONCILE-EMISSION-CIRCUIT-BREAKER` IN_PROGRESS→REVIEW + `.head`→idle via `scripts/orch-apply.sh`)
@@ -43,3 +15,23 @@ Added 4 tests to `bctc-extract-reconcile-job.test.ts`: below-threshold isolated 
 Committed `e5a70ab44` (code: `bctcExtractReconcileJob.ts` + `bctc-extract-reconcile-job.test.ts`) + `ce2456122` (docs: `financial-reports.md` scheduler-jobs row + invariant #8) — both pushed to `origin/main`. Flipped orch-state `FIX-BCTC-RECONCILE-EMISSION-CIRCUIT-BREAKER`→REVIEW (`4c7f6b0ae`), `.head`→idle/next_agent=router, row's own `next_agent`=qa.
 
 Zone health: tsc clean, 19/19 targeted pass (4 new breaker tests), full-suite 14581/45 fail (zero overlap, pre-existing flaky class), tool count 183 unaffected, scheduler job-table count 61 unaffected (probe-doc drift flagged, not a regression) | HEALTHY.
+
+## 2026-07-17 — SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD AC-2 (dev-team dispatch, SPIKE read-only) → findings doc, returned to router
+
+**Session:** 69b0312e-df43-43a9-9e0b-bddf66d374e3. AC-2 only (AC-1 ops-CLEAR, AC-3 already DONE_VERIFIED). RAW-confirmed both bctc crons (`bctcPdfPullJob`/`bctcExtractReconcileJob`) fire exactly on schedule, zero errors — NOT a cron-liveness bug. Traced the real stall via `docker logs pdf-extractor`: every `/pek-extract` call throws `FileNotFoundError` on `doclayout_yolo_ft.pt` — the `pek_model_cache` named Docker volume (SEPARATE from `market_data`, which AC-1/ops already fixed) was wiped empty by the same 2026-07-15 VM-rebuild and never re-seeded. A committed idempotent remedy already exists (`scripts/pek-fetch-weights.sh`, from a 2026-05-27 architect brief that hit this identical class once before) and is currently unblocked (HF/ModelScope reachable, verified live). Separately reconfirmed agentic-refine (`bctc_table_rows`) is still dormant (13d, 181 PENDING) — recommended FOLD into existing `FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP`, no re-mint. No DB writes, no extraction fired (SPIKE read-only constraint). Findings: `docs/spikes/SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD.md`, committed `60bdca243` (doc only, explicit path — tree dirty with peer churn, did not sweep).
+
+## 2026-07-17 — FIX-OHLCV-DEPTH-ALERT-HONEST-GAP-SUPPRESS (dev-team dispatch, FIX) → REVIEW, returned to router
+
+**Session:** 69b0312e-df43-43a9-9e0b-bddf66d374e3 (dev-team dispatch; flipped `FIX-OHLCV-DEPTH-ALERT-HONEST-GAP-SUPPRESS` IN_PROGRESS→REVIEW + `.head`→idle via `scripts/orch-apply.sh`)
+
+PO RAW-verified the recurring (2+) OHLCV-BACKFILL BUG-channel escalation ("no completion report...manual VPS investigation required", re-firing ~every 6-7h) as a false alarm — data is healthy (756k+ rows, VNINDEX 766 bars, queue 0 pending). Root cause: 2 compounding bugs in the null/depth-shortfall retry ladder. (1) `ohlcvBackfillHandler.ts` step-2 treated ANY empty-body ack (`bars_pushed_total` null) as a crash unconditionally — but this is exactly what `ohlcv-backfill-poll.sh`'s own unconditional "regardless of exit code" trailing POST sends, often right after a real completion already closed a different row. (2) step-3's depth-shortfall re-queue + the scheduler's own `ohlcvHistoryBackfillJob.ts` gapTickers depth-gap trigger never excluded permanently-empty/long-delisted codes (RAW-verified: BDI/DLC/JSH/SIS/VDC — 0 bars ever or years-stale), which can never reach either depth floor and so re-triggered forever.
+
+Fix: new pure domain predicate `isHonestGapCode` (`domain/services/market-data/ohlcvGapClassifier.ts` — 0 bars, or newest bar stale >=30d; data-driven, never a hardcoded ticker list; VNINDEX NEVER exempted — a stalled benchmark index is a real failure). Both call sites now compute the honest-gap-aware shallow-code list ONCE (shared between the step-2 null cross-check and the step-3 re-queue, so they can't disagree) and exclude honest-gap watchlist codes from triggering a re-queue/escalation. `bars_inserted` UPDATE now uses `COALESCE` (never clobbers a real count back to NULL).
+
+Added 9 new tests across 2 files (`FIX-OHLCV-DEPTH-ALERT-HONEST-GAP-SUPPRESS-{handler,scheduler}.test.ts`): honest-gap-only shortfall → no re-queue/escalate (retry_count=0 and =5 cases); empty-body ack after a real successful close with real depth healthy → no false escalation; 2 regression controls (genuine fresh shortfall still re-queues; VNINDEX at 0 bars never honest-gap-exempt). Updated 2 pre-existing artifacts whose content encoded the OLD (buggy) assumption: `1360-ohlcv-backfill-queue.test.ts` TC-6 (was asserting null=ALWAYS-crash "regardless of depth" — now asserts no false re-queue when real depth is healthy) and `market-data.md` invariants #9/#10.
+
+Verified: all 9 new tests green; `ohlcv-backfill-done-subtask-b.test.ts` (BT-1..BT-8) + `OHLCV-BACKFILL-P0.test.ts` unchanged/green; `1360-ohlcv-backfill-queue.test.ts` 9/9 green post-update. `bun tsc --noEmit` exit 0. Full suite: 14594 pass/40 skip/41 fail/46150 expect — zero OHLCV-backfill/honest-gap hits in the fail list (same pre-existing flaky class as prior cycles, confirmed via git-stash baseline). Tool count 183 / cronJobCount 2 identical before/after (git-stash diff). Server startup probed on PORT=3999 (port 3000 is the live container — EADDRINUSE, left untouched, no deploy performed) — clean boot, no import errors.
+
+Committed `<SHA>` (code: `ohlcvBackfillHandler.ts` + `ohlcvHistoryBackfillJob.ts` + new `ohlcvGapClassifier.ts` + `1360-ohlcv-backfill-queue.test.ts` + 2 new test files) + `<SHA>` (docs: `market-data.md`). Flipped orch-state `FIX-OHLCV-DEPTH-ALERT-HONEST-GAP-SUPPRESS`→REVIEW, `.head`→idle/next_agent=router, row's own `next_agent`=qa.
+
+Zone health: tsc clean, 9/9 new tests pass + all pre-existing OHLCV-backfill suites green, full-suite 14594/41 fail (zero overlap, pre-existing flaky class), tool count 183 / scheduler unaffected | HEALTHY.
