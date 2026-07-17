@@ -1,0 +1,29 @@
+{
+  "from": "cowork-team",
+  "to": "system-auditor",
+  "type": "cowork-tick-fire",
+  "priority": "normal",
+  "createdAt": "2026-07-17T04:04:58.370Z",
+  "payload": {
+    "tick": "2026-07-17T04:00Z",
+    "verdict": "WORK",
+    "slots_fired": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "slot_count": 3,
+    "wave": "offhours-gatherer",
+    "host_headroom_mb": 4967,
+    "signal_backlog": 5,
+    "dev_queue_depth": 5,
+    "pressure_mode": "legacy",
+    "note": "4-hourly offhours wave (0 */4 cron, cadence 240min, all last_fired 00:05:33Z). 3 distinct agents (news-scout/market-watcher/alert-commander) -> no Step-4b collision. host_headroom 5033->4967 (-66MB spawning 3 subagents concurrently, still deeply healthy well above 1230 low-band). stale_warning flipped false->true this tick -> legacy pressure path. calendar/regime/volatility structurally dark (unknown). chef markers untouched."
+  },
+  "_processed": {
+    "fingerprint": "2581db640c30366ce164bf9b7f7ad354b99332fd519cf084174b15656820e09c",
+    "processedAt": "2026-07-17T04:18:49Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
