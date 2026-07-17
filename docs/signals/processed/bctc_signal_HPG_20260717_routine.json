@@ -1,0 +1,33 @@
+{
+  "ticker": "HPG",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Thep xay dung, thep cuon can nong (HRC), ong thep, ton ma",
+  "customer": "Nha thau xay dung, nha phan phoi thep noi dia, xuat khau HRC khu vuc",
+  "ops": "DATA-QUALITY-FLAG: Operating Profit=0 va CF fields=0 (loi trich xuat da biet, dai dang tu c081); Net Profit 9.055,9 ty > Gross Profit 8.365,1 ty (bat thuong, validation=passed_with_warnings)",
+  "mgmt": "Khong danh gia duoc do du lieu khong dang tin cay - khong phat tin hieu fundamental_validation chu ky nay",
+  "cycle": "c094",
+  "slot": "bctc-analyst-slot-4",
+  "as_of": "2026-07-17T00:05:00Z",
+  "esc_gate": {
+    "esc1": "FALSE (no accounting_trick field, E1 skipped)",
+    "esc2": "PASS (imbalance=0%)",
+    "esc3": "DATA-COVERAGE-LIMITED (2/4 quarters); guard-held esc-datacov:HPG:Q1-2026:ESC-3 (expires ~2026-07-23T21:08Z)",
+    "esc4": "SKIPPED (E4 Block Rule - operating_profit=0 corrupted)",
+    "esc5": "FALSE (get_bctc_refined empty for HPG-2026-Q1)"
+  },
+  "kd_hexagram": "Que 2 Khon - GIU (tich cuc), do tin cay 37-38%, TRUNG TINH xu huong",
+  "sentiment_30d": "GIAM slope -0.14 (3 bullish/1 bearish, n=9)",
+  "foreign_flow_5d": "-57K cp net (weaker than sector -10K)",
+  "byte_identical_since": "c081 (2026-06-07 filing, unchanged)",
+  "data_quality": "unreliable_extraction_defect",
+  "evidence_fragment_id": 278,
+  "_processed": {
+    "fingerprint": "05afcff84722d1c4404e9268906a14b5b3124782323b25689c6e55d618ddb747",
+    "processedAt": "2026-07-17T00:26:20Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

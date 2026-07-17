@@ -1,0 +1,33 @@
+{
+  "ticker": "FPT",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Xuat khau phan mem, dich vu CNTT tich hop, vien thong (FPT Telecom), giao duc (FPT Edu)",
+  "customer": "Doanh nghiep mua dich vu CNTT (VN + nuoc ngoai), thue bao vien thong SME/ca nhan",
+  "ops": "Bien loi nhuan gop 34.0%, hoat dong 22.0%; ROE quy 6.17% (28.3% sector-tool); EY spread +2.25pp -> FAIR",
+  "mgmt": "PR cong ty cong bo LNTT 6 thang dau nam tang 18.1% YoY + 14 du an thang thau (3.600 ty); phan ky voi gia co phieu roi vung thap nhat tu 2023",
+  "cycle": "c094",
+  "slot": "bctc-analyst-slot-4",
+  "as_of": "2026-07-17T00:05:00Z",
+  "esc_gate": {
+    "esc1": "FALSE (no accounting_trick field, E1 skipped)",
+    "esc2": "PASS (imbalance=0%)",
+    "esc3": "DATA-COVERAGE-LIMITED (2/4 quarters); guard-held esc-datacov:FPT:Q1-2026:ESC-3 (expires ~2026-07-23T21:08Z)",
+    "esc4": "FALSE (non_operating_share=2.0%)",
+    "esc5": "FALSE (get_bctc_refined empty for FPT-2026-Q1)"
+  },
+  "kd_hexagram": "Que 23 Bac - GIU (tieu cuc), do tin cay 25% - STABLE 4th consecutive cycle (c091-c094)",
+  "sentiment_30d": "GIAM slope -0.30 (2 bullish/9 bearish, n=23)",
+  "foreign_flow_5d": "-143K cp net (weaker than sector +278.7K)",
+  "byte_identical_since": "c079 (2026-05-24 filing, unchanged)",
+  "fundamental_validation_signal_id": 8336,
+  "evidence_fragment_id": 277,
+  "_processed": {
+    "fingerprint": "e50768e2055013f934f34321d275ddcabb8c8196d742b27aa7a0b8e32c55132e",
+    "processedAt": "2026-07-17T00:26:20Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
