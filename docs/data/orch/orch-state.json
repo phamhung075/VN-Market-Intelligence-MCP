@@ -371,11 +371,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD",
-    "next_agent": "ops",
-    "updated_at": "2026-07-17T03:10Z",
-    "updated_by": "router (PO disposition recorded: close-on-ops-confirm; PEK proof deferred ~09:05Z; refine folded; volume-presence guard minted PLAN-ONLY; tick 2026-07-17T02:37Z complete)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "updated_at": "2026-07-17T03:28:39Z",
+    "updated_by": "router (stale-head reconcile: SPIKE next_agent=ops was completed-work residual — ops PEK re-seed done+recorded ac2_remediation; SPIKE parked in_progress awaiting DEFERRED post-market ~09:05Z RAW-verify proof, not an ops spawn; head->idle stops per-tick ops re-spawn loop; tick 2026-07-17T03:07Z)",
+    "note": "SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD parked in_progress; close DEFERRED to post-market ~09:05Z bctcExtractReconcileJob run (close_predicate + pending_proof in in_progress[0].disposition/ac2_remediation). Self-verifying: reconcile-exhausted report flood re-surfaces if fix failed (auto-reopen via triage); if fix worked flood stops. A future post-09:05Z tick RAW-verifies bctc_layout_units MAX advances past 2026-06-10 + new rows land, then flips SPIKE done_verified per PO pre-authorized sign-off."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -8267,9 +8268,9 @@
     "head": {
       "status": "idle",
       "active_task_id": null,
-      "next_agent": "ops",
-      "updated_at": "2026-07-17T03:10Z",
-      "updated_by": "router (PO disposition close-on-ops-confirm recorded; tick 02:37Z complete)"
+      "next_agent": null,
+      "updated_at": "2026-07-17T03:28:39Z",
+      "updated_by": "router (stale-head reconcile to idle; SPIKE parked deferred ~09:05Z; tick 03:07Z)"
     },
     "ready": [],
     "review": [
