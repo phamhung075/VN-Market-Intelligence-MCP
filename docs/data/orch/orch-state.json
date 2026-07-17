@@ -371,13 +371,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-OHLCV-DEPTH-ALERT-HONEST-GAP-SUPPRESS",
-    "next_agent": "dev-mcp-server",
-    "next_action": "run docs/agents/dev-mcp-server/flow/main.md — implement FIX-OHLCV-DEPTH-ALERT-HONEST-GAP-SUPPRESS per PO spec (both emitters honest-gap-aware); on green flip in_progress->review + reset head idle",
-    "updated_at": "2026-07-17T09:06:35Z",
-    "updated_by": "dev-team(router) — dispatch FIX-OHLCV-DEPTH-ALERT-HONEST-GAP-SUPPRESS to dev-mcp-server (PO-triaged report 3504 false-alarm, tick 2026-07-17T08:37Z)",
-    "note": "FIX in flight (owner dev-mcp-server, backgrounded). SPIKE-BCTC...ENRICHFAIL-FLOOD close-verify remains a separate ~09:05Z tick concern; this head reflects the OHLCV FIX dispatch only."
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "updated_at": "2026-07-17T09:48:49Z",
+    "updated_by": "dev-mcp-server (FIX-OHLCV-DEPTH-ALERT-HONEST-GAP-SUPPRESS review-flip)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -8350,13 +8348,11 @@
     ],
     "done_verified": [],
     "head": {
-      "status": "in_progress",
-      "active_task_id": "FIX-OHLCV-DEPTH-ALERT-HONEST-GAP-SUPPRESS",
-      "next_agent": "dev-mcp-server",
-      "next_action": "run docs/agents/dev-mcp-server/flow/main.md — implement FIX-OHLCV-DEPTH-ALERT-HONEST-GAP-SUPPRESS per PO spec (both emitters honest-gap-aware); on green flip in_progress->review + reset head idle",
-      "updated_at": "2026-07-17T09:06:35Z",
-      "updated_by": "dev-team(router) — dispatch FIX-OHLCV-DEPTH-ALERT-HONEST-GAP-SUPPRESS to dev-mcp-server (PO-triaged report 3504 false-alarm, tick 2026-07-17T08:37Z)",
-      "note": "FIX in flight (owner dev-mcp-server, backgrounded). SPIKE-BCTC...ENRICHFAIL-FLOOD close-verify remains a separate ~09:05Z tick concern; this head reflects the OHLCV FIX dispatch only."
+      "status": "idle",
+      "active_task_id": null,
+      "next_agent": "router",
+      "updated_at": "2026-07-17T09:48:49Z",
+      "updated_by": "dev-mcp-server (FIX-OHLCV-DEPTH-ALERT-HONEST-GAP-SUPPRESS review-flip)"
     },
     "ready": [
       {
@@ -9295,6 +9291,32 @@
         "developer_completed_at": "2026-07-16T14:56:13Z",
         "developer_completed_by": "dev-mcp-server (UC-MDH-P1, dev-team bounded-1 pickup)",
         "review_note": "agentMemoryUpdateTools.ts:189 (registration-time, already function-scope) memoryDir now = process.env.AGENT_MEMORY_ROOT ?? resolve(getProjectRoot(),...docs/agent-memory). 1300b test beforeEach mkdtemps + sets env BEFORE registerAgentMemoryUpdateTools(); afterEach rm+unset; new regression test asserts zero new files under real sessions/. Purged pollution BY MD5 CLASS re-enumerated live (102 files, not brief stale 93): 36 ops(a003f0cc)+34 developer(35d6330b)+32 qa(35cdf1f8), 84 git rm (tracked) + 18 rm (untracked), plus 3 tracked test-artifact files (issues/patterns/modules test-*.md). Verified: 1300b file 14/14 pass x2 standalone; full bun test run1 14569 pass/46 fail, run2 14568 pass/47 fail -- zero 1300b/agent-memory hits in either fail list (pre-existing flaky class: vps_push_log/insider-tx/OCR-cache/foreign-flow timeouts). git status --porcelain docs/agent-memory/ clean of new files after both full runs. pnpm --filter vn-market check (tsc) exit 0. NOTE: staged+verified exact 89-file set (87 deletions+2 edits) before the 2 full-suite verification runs; a peer dev-team-router housekeeping tick committed during that window (11c35c0a8 chore(tasks): cold-evict...) and its bare git commit -m absorbed the shared index incl. my staged files -- verified via git diff-tree --name-status that commit contains EXACTLY my intended 89 files + the peer own orch-state.json change, no revert/no extra/no missing, HEAD==origin/main (already pushed). Content correct, only that commit message/trailer does not reference UC-MDH-P1 -- did not amend shared-main history mid-peer-activity (forbidden), documented in decision journal + notebook instead. qa: confirm sandbox test 14/14 pass, confirm zero docs/agent-memory/ pollution regrowth, confirm code diff at 11c35c0a8 matches detail_ref rescope note, promote to done_verified."
+      },
+      {
+        "id": "FIX-OHLCV-DEPTH-ALERT-HONEST-GAP-SUPPRESS",
+        "title": "OHLCV backfill R-5 escalation false-alarm — make BOTH emitters honest-gap-aware (data healthy; noise-only)",
+        "type": "FIX",
+        "size": "S",
+        "status": "REVIEW",
+        "priority": "medium",
+        "zone": "apps/mcp-server/src/interface/mcp/routes/ohlcvBackfillHandler.ts",
+        "sprint": null,
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-OHLCV-DEPTH-ALERT-HONEST-GAP-SUPPRESS",
+        "desc": "PO-triaged report 3504 (tick 2026-07-17T08:37Z) — RAW-verified FALSE alarm: OHLCV data healthy (756K rows, MAX date=today, 927 codes fresh today, 51/58 watchlist at 500+ bars, VNINDEX 766), queue 0 pending. Recurring 2+: queue rows 497@2026-07-16T18:32Z + 505@2026-07-17T07:35Z both hit retry_count=5 with bars_inserted=NULL. Fix BOTH emitters: (1) step-2 null-accounting in ohlcvBackfillHandler.ts — an empty-body idempotent poll POST closing a pending row must NOT be misread as script-crashed/manual-VPS-investigation when depth is healthy; cross-check the serving plane before escalating and record MAX bars_inserted, never overwrite a real count with null. (2) step-3 depth-shortfall + the scheduler depth-gap trigger in ohlcvHistoryBackfillJob.ts — exclude permanently-empty/delisted honest-gap codes (0 bars after N confirmed-empty fetches; BDI/DLC/JSH/SIS/VDC) from the re-queue trigger so the queue stops re-seeding forever. CORRECTION vs original row text: BDI/DLC/JSH/SIS/VDC are IN the watchlist (RAW-verified), not non-watchlist. Suppress-only, not data-recovery.",
+        "next_agent": "qa",
+        "owner": "dev-mcp-server",
+        "files": [
+          "apps/mcp-server/src/interface/mcp/routes/ohlcvBackfillHandler.ts",
+          "apps/mcp-server/src/scheduler/market-data/ohlcvHistoryBackfillJob.ts"
+        ],
+        "verification_gate": "unit/integration: (a) delisted-only shortfall => NO new done=0 re-queue AND NO BUG escalation; (b) empty-body POST after a successful count POST => NO false no-completion escalation while depth>=252. Keep OHLCV-BACKFILL / ALPHA-S1-OHLCV-BACKFILL-DONE-BUG tests green.",
+        "promotion_note": "tick 2026-07-17T08:37Z: PO-triaged report 3504 (list_unresolved) — RAW-verified false-alarm; promoted existing backlog row (no duplicate mint) + dispatched to dev-mcp-server",
+        "promoted_at": "2026-07-17T09:06:35Z",
+        "promoted_by": "dev-team(router)",
+        "dispatched_at": "2026-07-17T09:06:35Z",
+        "developer_completed_at": "2026-07-17T09:48:49Z",
+        "developer_completed_by": "dev-mcp-server (FIX-OHLCV-DEPTH-ALERT-HONEST-GAP-SUPPRESS)",
+        "review_note": "Fixed BOTH emitters per PO spec. (1) ohlcvBackfillHandler.ts step-2 null-accounting: an empty-body ack (bars_pushed_total=null) no longer treated as a crash unconditionally -- cross-checks the honest-gap-aware serving-plane shallow-code list (shared with step-3) before escalating; bars_inserted UPDATE uses COALESCE (never clobbers a real count to NULL). (2) step-3 depth-shortfall re-queue + the scheduler ohlcvHistoryBackfillJob.ts gapTickers trigger both exclude permanently-empty/long-delisted honest-gap codes via new pure predicate isHonestGapCode (domain/services/market-data/ohlcvGapClassifier.ts: 0 bars, or newest bar stale >=30d -- data-driven, never a hardcoded ticker list; VNINDEX never exempted). Added 9 new tests (FIX-OHLCV-DEPTH-ALERT-HONEST-GAP-SUPPRESS-{handler,scheduler}.test.ts): honest-gap-only shortfall -> no re-queue/escalate at retry_count=0 and =5; empty-body ack after a real successful close with real depth healthy -> no false escalation; 2 regression controls (genuine shortfall still re-queues; VNINDEX at 0 bars never honest-gap-exempt). Updated 1360-ohlcv-backfill-queue.test.ts TC-6 (old assertion encoded the buggy null=ALWAYS-crash-regardless-of-depth assumption this fix corrects) + market-data.md invariants #9/#10. Verified: all 9 new + pre-existing OHLCV-BACKFILL/ALPHA-S1-OHLCV-BACKFILL-DONE-BUG suites green; bun tsc --noEmit exit 0; full suite 14594 pass/40 skip/41 fail, zero OHLCV-backfill hits in fail list (pre-existing flaky class, git-stash-confirmed); tool count 183/cronJobCount 2 unchanged. Commits: 876f07874 (code+tests), 2477cfba7 (docs). qa: RAW-verify against the live serving DB that report 3504-class BUG stops re-firing and daily_ohlcv depth stays healthy; re-run the two new test files + BT-1..BT-8 + OHLCV-BACKFILL-P0."
       }
     ],
     "qa": [],
@@ -9465,29 +9487,6 @@
             "no_action": "no new dev row minted; ops NOT re-fired (would duplicate in-flight SPIKE)."
           }
         }
-      },
-      {
-        "id": "FIX-OHLCV-DEPTH-ALERT-HONEST-GAP-SUPPRESS",
-        "title": "OHLCV backfill R-5 escalation false-alarm — make BOTH emitters honest-gap-aware (data healthy; noise-only)",
-        "type": "FIX",
-        "size": "S",
-        "status": "IN_PROGRESS",
-        "priority": "medium",
-        "zone": "apps/mcp-server/src/interface/mcp/routes/ohlcvBackfillHandler.ts",
-        "sprint": null,
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-OHLCV-DEPTH-ALERT-HONEST-GAP-SUPPRESS",
-        "desc": "PO-triaged report 3504 (tick 2026-07-17T08:37Z) — RAW-verified FALSE alarm: OHLCV data healthy (756K rows, MAX date=today, 927 codes fresh today, 51/58 watchlist at 500+ bars, VNINDEX 766), queue 0 pending. Recurring 2+: queue rows 497@2026-07-16T18:32Z + 505@2026-07-17T07:35Z both hit retry_count=5 with bars_inserted=NULL. Fix BOTH emitters: (1) step-2 null-accounting in ohlcvBackfillHandler.ts — an empty-body idempotent poll POST closing a pending row must NOT be misread as script-crashed/manual-VPS-investigation when depth is healthy; cross-check the serving plane before escalating and record MAX bars_inserted, never overwrite a real count with null. (2) step-3 depth-shortfall + the scheduler depth-gap trigger in ohlcvHistoryBackfillJob.ts — exclude permanently-empty/delisted honest-gap codes (0 bars after N confirmed-empty fetches; BDI/DLC/JSH/SIS/VDC) from the re-queue trigger so the queue stops re-seeding forever. CORRECTION vs original row text: BDI/DLC/JSH/SIS/VDC are IN the watchlist (RAW-verified), not non-watchlist. Suppress-only, not data-recovery.",
-        "next_agent": "dev-mcp-server",
-        "owner": "dev-mcp-server",
-        "files": [
-          "apps/mcp-server/src/interface/mcp/routes/ohlcvBackfillHandler.ts",
-          "apps/mcp-server/src/scheduler/market-data/ohlcvHistoryBackfillJob.ts"
-        ],
-        "verification_gate": "unit/integration: (a) delisted-only shortfall => NO new done=0 re-queue AND NO BUG escalation; (b) empty-body POST after a successful count POST => NO false no-completion escalation while depth>=252. Keep OHLCV-BACKFILL / ALPHA-S1-OHLCV-BACKFILL-DONE-BUG tests green.",
-        "promotion_note": "tick 2026-07-17T08:37Z: PO-triaged report 3504 (list_unresolved) — RAW-verified false-alarm; promoted existing backlog row (no duplicate mint) + dispatched to dev-mcp-server",
-        "promoted_at": "2026-07-17T09:06:35Z",
-        "promoted_by": "dev-team(router)",
-        "dispatched_at": "2026-07-17T09:06:35Z"
       }
     ]
   },
