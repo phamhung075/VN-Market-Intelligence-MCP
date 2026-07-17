@@ -374,8 +374,8 @@
     "status": "in_progress",
     "active_task_id": "SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD",
     "next_agent": "dev-mcp-server",
-    "updated_at": "2026-07-17T02:45:58Z",
-    "updated_by": "router (AC-1 clear -> dispatch AC-2 dev-mcp-server; corruption corroboration to ops; tick 2026-07-17T02:07Z)"
+    "updated_at": "2026-07-17T02:51:07Z",
+    "updated_by": "router (AC-1 corruption corroborated contained/non-serving, no restore; AC-2 dev-mcp-server in flight; tick 2026-07-17T02:37Z)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -8990,7 +8990,7 @@
           "serving_db": "data/live/market.db host bind-mount (SUPERSEDES named-volume memory)",
           "extraction_maxes": "layout_units 06-10 / table_rows 06-30 / md_tables 05-26 (== July-1 backup; producer dormant since ~06-30)",
           "restore_rec_disposition": "REJECTED premature+wrong-remedy: corruption unconfirmed on serving plane (readonly->WAL-blind false-positive class); July-1 restore would DESTROY ~2.5wk live writes (live 380MB>backup 378MB) AND leaves same frozen extraction; fresher host copy market.db.backup 07-16 exists if ever warranted",
-          "corruption_corroboration": "PENDING ops WAL-aware serving-file re-probe — do NOT surface user-gated restore until confirmed"
+          "corruption_corroboration": "RESOLVED (ops WAL-aware serving-file re-probe): corruption REAL but CONTAINED in non-extraction trees 97/151/152/234/247 — extraction rootpages 28/30/38 clean + all readable; /health ok; NOT serving-affecting; predates live DB (present in 07-16 backup too, inherited from 07-13 incident + 07-01 restore). NO RESTORE, NO user action. AC-1 FULLY CLEAR."
         },
         "ac2_dispatched": {
           "by": "router",
