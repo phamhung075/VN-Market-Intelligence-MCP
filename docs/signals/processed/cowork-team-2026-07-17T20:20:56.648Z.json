@@ -1,0 +1,46 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-17T20:20:32Z",
+    "nominal_tick": "2026-07-17T20:15Z",
+    "drift_min": 3,
+    "matched_slots": [
+      "tnb-audit"
+    ],
+    "won_slots": [
+      "tnb-audit"
+    ],
+    "spawned": [
+      "docs/agents/tran-ngoc-bau/flow/main.md"
+    ],
+    "silent": false,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "last_fired_timestamp": "2026-07-17T20:20:22.372Z",
+    "last_fired_slots": [
+      "tnb-audit"
+    ],
+    "last_fired_write_errors": [],
+    "tick_snapshot_skipped": true,
+    "tick_snapshot_reason": "single-slot (|WON|==1)",
+    "signal_backlog": 6,
+    "note": "single-slot guaranteed tnb-audit (cron 13 20) — TNB 6-layer audit of today's chef dish; legacy mode (stale_warning persists); parallel_group=audit so CHEF-mutex no-op"
+  },
+  "priority": "low",
+  "createdAt": "2026-07-17T20:20:56.648Z",
+  "_processed": {
+    "fingerprint": "47eb4cc13d791c105e2a274cc7da3816d1190a672d8b22e2d9336d3f7406a04c",
+    "processedAt": "2026-07-17T20:48:39Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
