@@ -374,8 +374,8 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "router",
-    "updated_at": "2026-07-17T00:38:01Z",
-    "updated_by": "po (CLUSTER-G *-FIX convergence)"
+    "updated_at": "2026-07-17T01:09:07Z",
+    "updated_by": "dev-mcp-server (FIX-BCTC-RECONCILE-EMISSION-CIRCUIT-BREAKER duplicate-dispatch closeout — see task status_note)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -8487,25 +8487,15 @@
         "closed_at": "2026-07-17T00:38:01Z",
         "closed_by": "po (dev-team triage 2026-07-17T00:07Z — CLUSTER-G *-FIX convergence, no code)",
         "verify_note": "no-op: CLUSTER-G *-FIX parallel of a phase-4 PASS/INFO reclassification (sprint-QUALITY-BURNDOWN-phase4-verdict.md). Underlying check already PASS/INFO — no code required. Batch-converged to stop one-row-per-tick BOUNDED-1 churn."
-      }
-    ],
-    "head": {
-      "status": "idle",
-      "active_task_id": null,
-      "next_agent": "router",
-      "updated_at": "2026-07-17T00:38:01Z",
-      "updated_by": "po (CLUSTER-G *-FIX convergence)"
-    },
-    "ready": [
+      },
       {
         "id": "FIX-BCTC-RECONCILE-EMISSION-CIRCUIT-BREAKER",
         "priority": "P0",
         "size": "S",
-        "status": "READY",
+        "status": "DONE_VERIFIED",
         "type": "fix",
         "zone": "mcp-server-scheduler",
         "owner": "dev-mcp-server",
-        "next_agent": "dev-mcp-server",
         "plan_only": false,
         "depends": [],
         "parent": "SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD",
@@ -8514,9 +8504,25 @@
         "detail": "AC-3 of SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD (independently shippable; does NOT gate on AC-1 infra-verify / AC-2 dormancy-diagnosis). ONE file: apps/mcp-server/src/scheduler/financial-reports/bctcExtractReconcileJob.ts. Emission site: the `if (nextAttempt >= MAX_RECONCILE_ATTEMPTS)` terminal block (~L388-424) fires effectiveSendBug once per exhausted ticker*quarter inside the per-row loop => unbounded report flood (~1 fail-loud/30-min tick) forcing a router->PO spawn per duplicate archive (churn-without-convergence). AC: run-level dormancy predicate (>=K exhausted rows, default K=3, OR MAX(bctc_layout_units.extracted_at) stale > N days, default N=2) => emit exactly ONE run-summary BUG; below threshold keep per-row fail-loud (no regression); enrich_failed transition still commits (no data-integrity change); unit test asserts sendBug call-count==1 when M>=K.",
         "verify_note": "RESTORED 2026-07-17T00:07Z tick: original mint (po-report-triage-20260716T2237Z, committed journal ea9872474) landed only in an uncommitted working tree that a later peer op reverted; the ready-lane row was lost while SPIKE.ac3_followup survived => dangling FK. This re-apply faithfully restores the committed READY/P0 decision and heals the dangling reference. Confirmed absent from all lanes before restore (idempotent).",
         "restored_at": "2026-07-17T00:38:01Z",
-        "restored_by": "po (dev-team triage 2026-07-17T00:07Z — recover lost ea9872474 mint)"
+        "restored_by": "po (dev-team triage 2026-07-17T00:07Z — recover lost ea9872474 mint)",
+        "claimed_at": "2026-07-17T00:57:39Z",
+        "claimed_by": "dev-team (router deliberate dispatch of PO-restored P0 storm-fix)",
+        "completed_at": "2026-07-17T01:05:56Z",
+        "completed_by": "dev-mcp-server",
+        "status_note": "DUPLICATE-DISPATCH DISCOVERED — this board row is a RESURRECTED DUPLICATE of a task already fully shipped in an EARLIER cycle, not new/pending work. Full prior lifecycle (git-verified): minted po-report-triage-20260716T2237Z -> dispatched 18c8668f2 -> implemented+committed e5a70ab44 (code+test) + ce2456122 (docs), both pushed to origin/main -> reviewed 4c7f6b0ae -> QA RAW-verified + promoted done_verified 5b3783f30 (verified_by=qa, verified_at=2026-07-17T00:08:52Z) -> cold-evicted to docs/data/orch/archive/2026-07.json by 04ba446f6. PO's later 'recover lost FIX-BCTC ready-mint' pass (commit 9dae10376, 2026-07-17T00:48Z) misdiagnosed the dangling SPIKE.ac3_followup FK as a lost/reverted mint (it checked ready[]=empty but did NOT check archive/2026-07.json, where the completed record already lived) and re-added this id as a fresh READY/in_progress row, which router then re-dispatched to this session. RAW re-verified this session with ZERO new code changes: pnpm --filter vn-market check (bun tsc --noEmit) exit 0; targeted bun test src/__tests__/bctc-extract-reconcile-job.test.ts 19 pass/0 fail (incl sendBugFn toHaveLength(1) row-count-breaker assertion) — identical result to the original S23/QA verification, confirming no drift. Closing DIRECTLY to done_verified (not routing through review->qa again) to avoid re-verification churn on already-verified work — the exact churn-without-convergence anti-pattern this fix exists to prevent. Canonical record: docs/data/orch/archive/2026-07.json (search FIX-BCTC-RECONCILE-EMISSION-CIRCUIT-BREAKER). Flagging for PO: the archive-lookup gap in the lost-mint-recovery heuristic (ready[]-only check) risks repeat false-positive resurrections of other archived tasks; SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD.ac3_followup pointer is NOT actually dangling, just archived — left untouched, PO's to correct.",
+        "verified_by": "dev-mcp-server (duplicate-dispatch self-close)",
+        "verified_at": "2026-07-17T01:09:07Z"
       }
     ],
+    "head": {
+      "status": "in_progress",
+      "active_task_id": "FIX-BCTC-RECONCILE-EMISSION-CIRCUIT-BREAKER",
+      "next_agent": "dev-mcp-server",
+      "next_action": "Router deliberate dispatch: PO-restored P0 FIX-BCTC-RECONCILE-EMISSION-CIRCUIT-BREAKER — BOUNDED-1 cannot claim a non-bounded1-stamped ready row under the WIP>=1 promote guard, so it would otherwise strand. dispatcher-wrap then JUMP TO execute; zone-detect resolves final specialist from zone/files.",
+      "updated_at": "2026-07-17T00:57:39Z",
+      "updated_by": "dev-team (router deliberate dispatch)"
+    },
+    "ready": [],
     "review": [
       {
         "id": "TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST",
