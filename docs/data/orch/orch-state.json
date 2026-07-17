@@ -7514,40 +7514,6 @@
         "baseline_pass": true
       },
       {
-        "id": "SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD",
-        "type": "SPIKE",
-        "mode": "spike",
-        "status": "BACKLOG",
-        "priority": "P0",
-        "size": "M",
-        "plan_only": true,
-        "zone": "multi",
-        "owner": "dev-mcp-server",
-        "next_agent": "dev-mcp-server",
-        "timebox": 180,
-        "title": "SPIKE (plan-only): BCTC structured-extraction pipeline DORMANT since mid-June (RAW: bctc_layout_units frozen 2026-06-10, bctc_table_rows frozen 2026-06-30) despite FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION DONE_VERIFIED 07-10 — bctcExtractReconcileJob then mass-terminalized the ENTIRE multi-quarter watchlist backlog (Q4/Q3/Q2/Q1-2025) as enrich_failed overnight 07-15 20:05Z->07-16 07:15Z, emitting 76 fail-loud RECONCILE-EXHAUSTED reports (report-storm). Determine WHY extraction is dormant + add an emission circuit-breaker.",
-        "question": "Why is the BCTC structured-extraction layer producing nothing since mid-June despite the DONE_VERIFIED 07-10 wiring fix, and why did bctcExtractReconcileJob mass-terminalize the whole watchlist backlog in one overnight sweep? Did an infra event (DB restore / VM-rebuild / named-volume swap) between 07-12 and 07-16 revert the fix's effects and reset queue rows to pending?",
-        "detail": "PO report-triage 2026-07-16T21:00Z. RAW-verified readonly on live named-volume market.db (docker exec vn-market-intelligence-mcp-mcp-server-1 bun): (1) all 12 Q4-2025 flood tickers (DBC/DXG/FRT/GEX/KDC/KDH/MSN/PDR/SAB/VIX/VJC/VND) exist in financial_reports as Q4-2025 with text_status=COMPLETE + pdf_path SET but LAYOUT=0 / TABLE_ROWS=0 / refine_status=PENDING and NO bctc_vps_queue row remaining (enrich_failed Q4-2025 queue count now 0). text_status=COMPLETE+pdf_path SET => discovery/fetch/OCR-text layers ALL healthy; the failure is purely at PEK-layout + agentic-refine structured extraction. This DEFINITIVELY rules out source-outage/VPS-down/DNS. (2) GLOBAL freshness: MAX(bctc_layout_units.extracted_at)=2026-06-10, MAX(bctc_table_rows.extracted_at)=2026-06-30 => nothing extracted for ~5wk/~2.5wk. These maxes are OLDER than SPIKE-BCTC-TABLEROWS-FROZEN-HOLLOW-DONE's 07-12 readings (that spike RAW-read layout_units growing to 07-12/1829 rows + table_rows 07-08/4091) => a DATA-LOSS/ROLLBACK event between 07-12 and 07-16 is strongly implied (cf. memory: VM-rebuild DESTROYS named volumes->restore; gateway/volume swaps). (3) bctcExtractReconcileJob walked the whole watchlist backlog backwards Q4->Q3->Q2->Q1-2025 overnight (07-15 20:05Z->07-16 07:15Z, ~1 ticker/30min) marking each enrich_failed (cap-8) and emitting ONE fail-loud telegram report per ticker*quarter = 76-report storm (PO archived all 121 overnight reports 3358-3478 as duplicate this tick to stop the re-surface churn; ACK path via process_telegram_report/markProcessed CONFIRMED working). DO-NOT-RE-TREAD (cross-ref, do not re-investigate): FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION (DONE_VERIFIED 07-10 — the wiring; THIS spike asks why it is not PRODUCING in current prod, not to re-design it); SPIKE-BCTC-TABLEROWS-FROZEN-HOLLOW-DONE (hollow-done + refine-cron dormancy F4/F5); FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP (table_rows producer durable backstop — the refine half); FIX-BCTC-D3C-FOLLOW-UP-RESET-ATTEMPTS (Arm-2 7d recycle re-exhausts because reconcile_attempts not zeroed — the per-row recycle mechanism); SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY (cadence guard). NET-NEW value = (a) infra rollback verification, (b) why extraction dormant since mid-June despite DONE_VERIFIED fix (cron registered+firing? PEK producing? fix effect reverted by rollback?), (c) a report-storm circuit-breaker so bctcExtractReconcileJob cannot emit one fail-loud per ticker*quarter against a systemically-dormant producer.",
-        "ac": "(AC-1 infra, route ops sub-question) verify whether a DB restore / VM-rebuild / named-volume swap occurred 07-12..07-16 (check .backups timestamps, launchd/compose history, market.db mtime vs extraction maxes) and whether it reverted the DONE_VERIFIED extraction data + reset queue rows to pending. (AC-2) RAW-establish why the structured-extraction pipeline (PEK layout + agentic-refine) has produced nothing since mid-June despite FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION DONE_VERIFIED: is the extraction cron registered and firing in current prod? is /pek-extract producing bctc_layout_units? is the refine trigger dormant (fold to FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP if same root)? (AC-3) design a circuit-breaker for bctcExtractReconcileJob's fail-loud emission (batch/summarize/suppress when producer is systemically dormant, not one report per ticker*quarter) — MINT A FOLLOW-UP FIX, do not fix inline. OUTPUT=findings doc docs/spikes/SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD.md.",
-        "related": [
-          "FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP",
-          "FIX-BCTC-D3C-FOLLOW-UP-RESET-ATTEMPTS",
-          "SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY"
-        ],
-        "created_at": "2026-07-16T21:00:34Z",
-        "created_by": "po-report-triage-20260716",
-        "verify_note": "PLAN-ONLY. RAW-verified readonly probe of live market.db this tick. Prior-art cross-referenced: does not re-mint FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION (done) nor the refine/recycle rows; net-new = infra-rollback verify + dormancy-in-prod + report-storm circuit-breaker.",
-        "converge_note": "PO report-triage 2026-07-16T22:07Z: 3rd RECONCILE-EXHAUSTED duplicate in 2 ticks (3480 VND 2024-Q2, 3481 BSR 2024-Q1, 3482 VIX 2024-Q2). bctcExtractReconcileJob has now walked BACK INTO 2024 quarters => the backlog it is grinding is deep, so the flood is UNBOUNDED (~1 fail-loud report / 30-min tick), each forcing a full router->PO spawn just to archive one duplicate = churn-without-convergence. ESCALATED priority high->P0 to make this the next-worked item. FAST-TRACK AC-3 (bctcExtractReconcileJob emission circuit-breaker) as the FIRST, independently-shippable deliverable AHEAD of the AC-1 infra-rollback verify and AC-2 dormancy-root-cause diagnosis: the circuit-breaker is the ONLY lever that stops the per-tick report-storm churn and it does NOT depend on the diagnosis outcome (it only needs to detect systemic producer-dormancy and batch/summarize/suppress, not one fail-loud per ticker*quarter). AC-1/AC-2 remain in-scope but MUST NOT gate the churn-stopper. Split AC-3 into the follow-up FIX immediately (SPIKE already says 'MINT A FOLLOW-UP FIX') rather than waiting for the full diagnosis timebox.",
-        "converge_by": "po-report-triage-20260716T2207Z",
-        "ac3_followup": "FIX-BCTC-RECONCILE-EMISSION-CIRCUIT-BREAKER",
-        "ac3_followup_by": "po-report-triage-20260716T2237Z",
-        "ac3_followup_status": "done_verified",
-        "ac3_followup_resolved_to": "docs/data/orch/archive/2026-07.json",
-        "ac3_followup_resolved_at": "2026-07-17T01:23:19Z",
-        "ac3_followup_resolved_by": "po-scoped-triage-20260717",
-        "ac3_followup_resolved_note": "RESOLVED-TO-ARCHIVE — do NOT resurrect. ac3_followup FIX-BCTC-RECONCILE-EMISSION-CIRCUIT-BREAKER completed its full lifecycle (impl e5a70ab44 -> review 4c7f6b0ae -> qa 5b3783f30 verified_at=2026-07-17T00:08:52Z -> cold-evict 04ba446f6) and its canonical DONE_VERIFIED record lives in docs/data/orch/archive/2026-07.json (also transiently in live done_verified[] pending next cold-evict). This FK is NOT dangling — it resolves to the archived done_verified record. A ready[]-only lost-mint recovery scan misreads it as a lost mint (false resurrection commit 9dae10376 caused a no-op ~164k-token dev cycle). Lost-mint recovery MUST skip this FK. Root-cause hardening tracked by FIX-PO-LOSTMINT-RECOVERY-ARCHIVE-SCAN-GUARD."
-      },
-      {
         "id": "FIX-PO-LOSTMINT-RECOVERY-ARCHIVE-SCAN-GUARD",
         "type": "FIX",
         "mode": null,
@@ -8273,7 +8239,68 @@
       "updated_at": "2026-07-17T01:09:07Z",
       "updated_by": "dev-mcp-server (FIX-BCTC-RECONCILE-EMISSION-CIRCUIT-BREAKER duplicate-dispatch closeout — see task status_note)"
     },
-    "ready": [],
+    "ready": [
+      {
+        "id": "SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD",
+        "type": "SPIKE",
+        "mode": "spike",
+        "status": "READY",
+        "priority": "P0",
+        "size": "M",
+        "zone": "multi",
+        "owner": "ops",
+        "next_agent": "ops",
+        "timebox": 180,
+        "title": "SPIKE (plan-only): BCTC structured-extraction pipeline DORMANT since mid-June (RAW: bctc_layout_units frozen 2026-06-10, bctc_table_rows frozen 2026-06-30) despite FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION DONE_VERIFIED 07-10 — bctcExtractReconcileJob then mass-terminalized the ENTIRE multi-quarter watchlist backlog (Q4/Q3/Q2/Q1-2025) as enrich_failed overnight 07-15 20:05Z->07-16 07:15Z, emitting 76 fail-loud RECONCILE-EXHAUSTED reports (report-storm). Determine WHY extraction is dormant + add an emission circuit-breaker.",
+        "question": "Why is the BCTC structured-extraction layer producing nothing since mid-June despite the DONE_VERIFIED 07-10 wiring fix, and why did bctcExtractReconcileJob mass-terminalize the whole watchlist backlog in one overnight sweep? Did an infra event (DB restore / VM-rebuild / named-volume swap) between 07-12 and 07-16 revert the fix's effects and reset queue rows to pending?",
+        "detail": "PO report-triage 2026-07-16T21:00Z. RAW-verified readonly on live named-volume market.db (docker exec vn-market-intelligence-mcp-mcp-server-1 bun): (1) all 12 Q4-2025 flood tickers (DBC/DXG/FRT/GEX/KDC/KDH/MSN/PDR/SAB/VIX/VJC/VND) exist in financial_reports as Q4-2025 with text_status=COMPLETE + pdf_path SET but LAYOUT=0 / TABLE_ROWS=0 / refine_status=PENDING and NO bctc_vps_queue row remaining (enrich_failed Q4-2025 queue count now 0). text_status=COMPLETE+pdf_path SET => discovery/fetch/OCR-text layers ALL healthy; the failure is purely at PEK-layout + agentic-refine structured extraction. This DEFINITIVELY rules out source-outage/VPS-down/DNS. (2) GLOBAL freshness: MAX(bctc_layout_units.extracted_at)=2026-06-10, MAX(bctc_table_rows.extracted_at)=2026-06-30 => nothing extracted for ~5wk/~2.5wk. These maxes are OLDER than SPIKE-BCTC-TABLEROWS-FROZEN-HOLLOW-DONE's 07-12 readings (that spike RAW-read layout_units growing to 07-12/1829 rows + table_rows 07-08/4091) => a DATA-LOSS/ROLLBACK event between 07-12 and 07-16 is strongly implied (cf. memory: VM-rebuild DESTROYS named volumes->restore; gateway/volume swaps). (3) bctcExtractReconcileJob walked the whole watchlist backlog backwards Q4->Q3->Q2->Q1-2025 overnight (07-15 20:05Z->07-16 07:15Z, ~1 ticker/30min) marking each enrich_failed (cap-8) and emitting ONE fail-loud telegram report per ticker*quarter = 76-report storm (PO archived all 121 overnight reports 3358-3478 as duplicate this tick to stop the re-surface churn; ACK path via process_telegram_report/markProcessed CONFIRMED working). DO-NOT-RE-TREAD (cross-ref, do not re-investigate): FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION (DONE_VERIFIED 07-10 — the wiring; THIS spike asks why it is not PRODUCING in current prod, not to re-design it); SPIKE-BCTC-TABLEROWS-FROZEN-HOLLOW-DONE (hollow-done + refine-cron dormancy F4/F5); FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP (table_rows producer durable backstop — the refine half); FIX-BCTC-D3C-FOLLOW-UP-RESET-ATTEMPTS (Arm-2 7d recycle re-exhausts because reconcile_attempts not zeroed — the per-row recycle mechanism); SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY (cadence guard). NET-NEW value = (a) infra rollback verification, (b) why extraction dormant since mid-June despite DONE_VERIFIED fix (cron registered+firing? PEK producing? fix effect reverted by rollback?), (c) a report-storm circuit-breaker so bctcExtractReconcileJob cannot emit one fail-loud per ticker*quarter against a systemically-dormant producer.",
+        "ac": "(AC-1 infra, route ops sub-question) verify whether a DB restore / VM-rebuild / named-volume swap occurred 07-12..07-16 (check .backups timestamps, launchd/compose history, market.db mtime vs extraction maxes) and whether it reverted the DONE_VERIFIED extraction data + reset queue rows to pending. (AC-2) RAW-establish why the structured-extraction pipeline (PEK layout + agentic-refine) has produced nothing since mid-June despite FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION DONE_VERIFIED: is the extraction cron registered and firing in current prod? is /pek-extract producing bctc_layout_units? is the refine trigger dormant (fold to FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP if same root)? (AC-3) design a circuit-breaker for bctcExtractReconcileJob's fail-loud emission (batch/summarize/suppress when producer is systemically dormant, not one report per ticker*quarter) — MINT A FOLLOW-UP FIX, do not fix inline. OUTPUT=findings doc docs/spikes/SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD.md.",
+        "related": [
+          "FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP",
+          "FIX-BCTC-D3C-FOLLOW-UP-RESET-ATTEMPTS",
+          "SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY"
+        ],
+        "created_at": "2026-07-16T21:00:34Z",
+        "created_by": "po-report-triage-20260716",
+        "verify_note": "PLAN-ONLY. RAW-verified readonly probe of live market.db this tick. Prior-art cross-referenced: does not re-mint FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION (done) nor the refine/recycle rows; net-new = infra-rollback verify + dormancy-in-prod + report-storm circuit-breaker.",
+        "converge_note": "PO report-triage 2026-07-16T22:07Z: 3rd RECONCILE-EXHAUSTED duplicate in 2 ticks (3480 VND 2024-Q2, 3481 BSR 2024-Q1, 3482 VIX 2024-Q2). bctcExtractReconcileJob has now walked BACK INTO 2024 quarters => the backlog it is grinding is deep, so the flood is UNBOUNDED (~1 fail-loud report / 30-min tick), each forcing a full router->PO spawn just to archive one duplicate = churn-without-convergence. ESCALATED priority high->P0 to make this the next-worked item. FAST-TRACK AC-3 (bctcExtractReconcileJob emission circuit-breaker) as the FIRST, independently-shippable deliverable AHEAD of the AC-1 infra-rollback verify and AC-2 dormancy-root-cause diagnosis: the circuit-breaker is the ONLY lever that stops the per-tick report-storm churn and it does NOT depend on the diagnosis outcome (it only needs to detect systemic producer-dormancy and batch/summarize/suppress, not one fail-loud per ticker*quarter). AC-1/AC-2 remain in-scope but MUST NOT gate the churn-stopper. Split AC-3 into the follow-up FIX immediately (SPIKE already says 'MINT A FOLLOW-UP FIX') rather than waiting for the full diagnosis timebox.",
+        "converge_by": "po-report-triage-20260716T2207Z",
+        "ac3_followup": "FIX-BCTC-RECONCILE-EMISSION-CIRCUIT-BREAKER",
+        "ac3_followup_by": "po-report-triage-20260716T2237Z",
+        "ac3_followup_status": "done_verified",
+        "ac3_followup_resolved_to": "docs/data/orch/archive/2026-07.json",
+        "ac3_followup_resolved_at": "2026-07-17T01:23:19Z",
+        "ac3_followup_resolved_by": "po-scoped-triage-20260717",
+        "ac3_followup_resolved_note": "RESOLVED-TO-ARCHIVE — do NOT resurrect. ac3_followup FIX-BCTC-RECONCILE-EMISSION-CIRCUIT-BREAKER completed its full lifecycle (impl e5a70ab44 -> review 4c7f6b0ae -> qa 5b3783f30 verified_at=2026-07-17T00:08:52Z -> cold-evict 04ba446f6) and its canonical DONE_VERIFIED record lives in docs/data/orch/archive/2026-07.json (also transiently in live done_verified[] pending next cold-evict). This FK is NOT dangling — it resolves to the archived done_verified record. A ready[]-only lost-mint recovery scan misreads it as a lost mint (false resurrection commit 9dae10376 caused a no-op ~164k-token dev cycle). Lost-mint recovery MUST skip this FK. Root-cause hardening tracked by FIX-PO-LOSTMINT-RECOVERY-ARCHIVE-SCAN-GUARD.",
+        "kickoff": {
+          "by": "po-scoped-triage-20260717T0228Z",
+          "at": "2026-07-17T02:28:03Z",
+          "dev_team_tick": "2026-07-17T02:07Z",
+          "decision": "(a) SPRINT-KICKOFF — promote plan_only BACKLOG -> ready[] (dispatchable); single lane-move, no mint, no conservation change.",
+          "reason": "recurring-bug-2+ escalation: reconcile-exhausted duplicate reports arriving ~1/tick (3480 VND, 3481 BSR, 3482 VIX-Q2, 3494 SHB, 3495 VIX-Q1) = churn-without-convergence treadmill. AC-3 circuit-breaker already DONE_VERIFIED+archived; AC-1+AC-2 are now the ONLY convergence lever. Fleet idle (in_progress=0, ready=0, head idle) => no WIP gate blocks scheduling this top-priority P0. Per CLAUDE.md fix-root-cause-not-recurrent-symptom.",
+          "ordered_ac_dispatch": {
+            "AC-1": {
+              "owner": "ops",
+              "order": 1,
+              "gate": "critical-path FIRST — cheapest, highest-information; a confirmed data-loss finding short-circuits AC-2",
+              "scope": "infra-rollback verify 07-12..07-16: .backups mtimes, launchd/compose history, market.db mtime vs extraction maxes. RAW evidence in SPIKE detail: bctc_layout_units max REGRESSED to 2026-06-10 and bctc_table_rows max to 2026-06-30 — OLDER than SPIKE-BCTC-TABLEROWS-FROZEN-HOLLOW-DONE 07-12 readings => a named-volume rollback / VM-rebuild / restore between 07-12..07-16 is strongly implied. If confirmed: data-loss incident, remedy = RESTORE from .backups (ops/user-gated per feedback_vm_rebuild_destroys_named_volumes)."
+            },
+            "AC-2": {
+              "owner": "dev-mcp-server",
+              "assist": "dev-pdf-extractor (PEK-layout sub-probe)",
+              "order": 2,
+              "depends_on": "AC-1",
+              "scope": "RAW-establish why PEK-layout + agentic-refine produced nothing since mid-June: is the extraction cron registered+firing in current prod? is /pek-extract producing bctc_layout_units? is the refine trigger dormant => FOLD into FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP (live backlog row) if same root. Output: findings doc docs/spikes/SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD.md + fold recommendation."
+            },
+            "AC-3": {
+              "status": "DONE_VERIFIED",
+              "note": "FIX-BCTC-RECONCILE-EMISSION-CIRCUIT-BREAKER (circuit-breaker) shipped + archived docs/data/orch/archive/2026-07.json — do NOT re-mint / resurrect (see ac3_followup_resolved_note; lost-mint recovery must skip this FK)."
+            }
+          },
+          "wip_note": "12 sprint_goal.entries marked active but the dev fleet is idle at this tick (no in_progress/ready task); this is the single top-priority P0 root, so kickoff does not breach WIP."
+        }
+      }
+    ],
     "review": [
       {
         "id": "TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST",

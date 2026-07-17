@@ -1,24 +1,22 @@
 # PO Notebook
 
-_Last: 2026-07-17T02:02Z (dev-team tick — triaged 2 analysis-agent reports; both accept-as-known/duplicate under existing rows; NO mint, NO board write)_
+_Last: 2026-07-17T02:28Z (dev-team tick — triaged report 3495 + drained cowork telemetry; SPRINT-KICKOFF of P0 root SPIKE — 1 board lane-move, 0 mint)_
 
-## Tick 2026-07-17T02:02Z — Triage reports 3493 + 3494 → both duplicate, disposed
+## Tick 2026-07-17T02:28Z — 3495 duplicate + KICKOFF SPIKE-BCTC-EXTRACTION-DORMANT (decision a)
 
-### PRIOR-ART FIRST (grep board + processed-signals + handoffs BEFORE any mint)
-- Board id-scan (orch-state all lanes): `SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD` [BACKLOG/P0/dev-mcp-server/plan_only] = root for BOTH; `FIX-BCTC-1345B-REPORT-BATCH` [BACKLOG/P3] = the `[BCTC-1345b]` emission-batch/dedup row; `FIX-BCTC-RECONCILE-EMISSION-CIRCUIT-BREAKER` (shipped+qa-verified this cycle, head closeout 01:09Z dev-mcp-server) = the emission breaker; `SPIKE-BCTC-CONVICTION-COMPOSITE-DRAG-PERFECT-FINANCIAL` = NOT a match (that is financial=1.00 drag; 3493 is financial=0.10 empty).
-- My own Carry-over (22:07Z) STANDING instruction: "Keep archiving reconcile-exhausted as resolution=duplicate under the SPIKE until circuit-breaker ships." It shipped; 3494 is now the single run-summary emission (working as designed), NOT per-row spam.
+### PRIOR-ART FIRST (grepped board ALL lanes + processed-signals + my carry-over BEFORE any write)
+- Root row = `SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD` [was backlog[386]/P0/plan_only, owner dev-mcp-server]. AC-3 (circuit-breaker `FIX-BCTC-RECONCILE-EMISSION-CIRCUIT-BREAKER`) already DONE_VERIFIED+archived (2026-07.json) — do NOT resurrect. Only AC-1 (infra-rollback) + AC-2 (dormancy) live.
+- No competing infra-rollback/restore/named-volume row exists (grep matched only incidental substrings). Durable fix `FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP` (backlog[281]) still parked, NOT in-flight. No dormancy/extraction row in review[]/in_progress — root genuinely un-worked.
 
-### DISPOSITION — both accept-as-known / duplicate, NO new task
-- **3493** [BCTC-1345b] MSN 2023-Q4 conviction skipped (composite=0.10, financial=0.10). financial=0.10 = empty/missing structured financials → same root as the DORMANT-extraction SPIKE (P0); the emission itself is the `[BCTC-1345b]` batch tracked by FIX-BCTC-1345B-REPORT-BATCH (P3). Per-ticker OCR-corruption FIX = symptom-chasing → NOT minted. process_telegram_report(3493, duplicate, delete=true) → processed:true, msg 3554 deleted.
-- **3494** [bctcExtractReconcile] SHB 2024-Q1 RECONCILE EXHAUSTED, 0 rows/8 passes, enrich_failed terminal. Emission = EMISSION-CIRCUIT-BREAKER working as designed (one run-summary). Underlying 0-row = the DORMANT-extraction SPIKE (P0). Per-ticker pdf-extractor FIX = symptom-chasing against a systemic P0 → NOT minted. process_telegram_report(3494, duplicate, delete=true) → processed:true, msg 3555 deleted.
-- Post: read_telegram_reports(status="new") = "Không có báo cáo mới" (empty). Churn stopped.
+### DISPOSITIONS
+- **3495** [bctcExtractReconcile] VIX 2024-Q1 RECONCILE EXHAUSTED 0-rows/8-passes enrich_failed = SAME class as 3494 SHB (last tick), 3480/3481/3482 — symptom of the dormant-producer P0. process_telegram_report(3495, duplicate, delete=true) → processed:true, msg 3556 deleted. status=new now empty.
+- **Drained signal** cowork-team-…02:04:41.903Z → to:system-auditor type:cowork-tick-fire = cowork dispatcher heartbeat telemetry (slots_fired alert-commander-market, headroom 3316MB, pressure primary). Already `_processed` (routed-to-po) + moved to processed/. system-auditor is NOT a routable dev target → mis-addressed telemetry. Non-actionable, dismissed. NO board write.
 
-### BOARD — NO write (deliberate)
-- No lane-move warranted (both duplicate existing rows); write contract forbids status-only, so I wrote nothing. conservation untouched. No orch-state-validate needed.
-- DEFERRED (not self-scheduled): `SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD` (P0) is the real root and sits plan_only in backlog — plan-only spikes stay in backlog until a proper sprint-kickoff schedules AC-1 (infra-rollback verify) + AC-2 (dormancy diagnosis). Not bare-promoting; recommend router/next PO kick it off.
-- Grooming SKIPPED: 3 BLOCKED→ops review rows + 9 no-owner review rows need ops/lane-specific decisions I can't safely drive this tick; tree also dirty with ~11 cowork churn files (not mine) — no sweep.
+### DECISION (a) SPRINT-KICKOFF — recurring-bug-2+ escalation, fleet idle, no deferral gate
+- 2nd+ reconcile-exhausted duplicate in consecutive ticks = churn-without-convergence treadmill; AC-3 done, so AC-1+AC-2 are the ONLY convergence lever. Fleet idle (in_progress=0, ready=0, head idle) → no WIP gate. Deferral (b) rejected: no concrete gate (no dep, no ops/user gate — the infra probe IS what determines if a gate exists).
+- BOARD write (jq | orch-apply.sh): lane-move backlog→ready[], status=READY, del(plan_only), owner/next_agent=ops, +.kickoff{ordered_ac_dispatch}. AC-1=ops (order 1, critical-path: RAW evidence shows extraction maxes REGRESSED 07-12→07-16 ⇒ named-volume rollback strongly implied; if confirmed ⇒ RESTORE .backups). AC-2=dev-mcp-server +dev-pdf-extractor assist (order 2, depends_on AC-1; fold to REFINE-DURABLE-TRIGGER-BACKSTOP if refine-trigger dormant). Validator PASS, conservation task_total 527=527 (lane-move, 0 mint), head untouched idle/router. Decision record = the .kickoff annotation (not marking DONE/REVIEW → no separate decision_journal entry).
 
 ## Carry-over
-- BATCH = 2 reports disposed (duplicate), 0 mint, 0 board write, notebook only. Commit MY path only (po.md); did NOT touch pre-existing-dirty po-decisions.md or cowork churn files.
-- STANDING: reconcile-exhausted + [BCTC-1345b] conviction-skip reports keep arriving until the DORMANT extraction root (P0 SPIKE) is fixed → keep archiving as resolution=duplicate under the SPIKE. Root fix is the only convergence.
-- Circuit-breaker shipped this cycle → future reconcile runs should emit ONE run-summary (like 3494), not per-row floods. Watch that the emission stays batched.
+- SPIKE now READY/ops in ready[] — router will dispatch ops for AC-1 next. Watch: ops finishes AC-1 → MUST hand AC-2 to dev-mcp-server (encoded in .kickoff.ordered_ac_dispatch). If AC-1 finds a named-volume wipe → data-loss incident, ops/user-gated RESTORE from .backups (feedback_vm_rebuild_destroys_named_volumes).
+- Reconcile-exhausted duplicates keep arriving ~1/tick until AC-1/AC-2 converge → keep archiving as duplicate under the SPIKE; the kickoff is the convergence step. Do NOT re-mint SPIKE-BCTC-*/FIX-BCTC-* or resurrect the archived circuit-breaker.
+- Committed MY paths only (orch-state.json + po.md); did NOT touch peer cowork churn or clean po-decisions.md.
