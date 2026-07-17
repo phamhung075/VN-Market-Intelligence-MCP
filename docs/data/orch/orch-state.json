@@ -9427,6 +9427,21 @@
           "concern": "bctcExtractReconcileJob marks queue rows enrich_failed=TERMINAL after 8 passes during the market-hours PEK-503 window (SAB report_id 1f6cbffe-7383-4be2-85bd-676a5183c5ae, VND report_id 11d8b60f-69e8-4f7e-8e3c-034d44249c70, + earlier VJC/DBC/VIX/SHB/BSR cluster). Reports advise manual /api/trigger-pek-extract re-fire once root cause fixed => terminal rows may NOT auto-retry after PEK resumes post-market.",
           "verify_at_close": "post-market ~09:05Z close must ALSO confirm the terminal enrich_failed BACKLOG rows re-extract (bctc_layout_units gains rows for the failed 2024-Q1 tickers), NOT ONLY that MAX(extracted_at) advances + fresh PDFs land. Else FALSE-GREEN: close goes green off new PDFs while the ~2-day dormancy backlog stays permanently enrich_failed. If terminal rows do not auto-recover, an ops manual re-fire is required BEFORE flipping done_verified.",
           "scope": "verification-rigor addition to PO close-on-ops-confirm (no-false-green); NOT a decision override, NOT a re-dispatch — head stays idle, SPIKE stays parked until the deferred proof."
+        },
+        "post_reseed_flood": {
+          "by": "po-report-triage-20260717T0707Z",
+          "at": "2026-07-17T07:26:24Z",
+          "dev_team_tick": "2026-07-17T07:07Z",
+          "disposition": "FOLD (no new mint). Same reconcile-exhausted / dormant-producer failure class as this SPIKE. Root cause already diagnosed (ac2_finding: pek_model_cache wiped by 07-15 VM-rebuild) and remediated (ac2_remediation: PEK re-seed 03:04Z, differential proof /pek-extract 503 not FileNotFoundError). Escalating a new dev-pdf-extractor fix would duplicate in-flight work; block-discipline (recurring 2+) does NOT apply because this is fix-applied-proof-pending, not recurring-failed-fix.",
+          "reports_folded": [
+            "3500 PDR 2024-Q1 report_id 8fd1d0f3-72e3-42ff-9b43-923f118689a6 @2026-07-17T05:35:02Z",
+            "3501 BSR 2023-Q4 report_id 8948a864-9c0d-4315-88c2-87cce67faada @2026-07-17T05:35:02Z",
+            "3502 DGC 2023-Q4 report_id 2c5e1d70-705c-413f-ac89-583df5cb12b5 @2026-07-17T06:05:02Z"
+          ],
+          "hygiene": "all 3 process_telegram_report resolution=duplicate; telegram msgs 3561/3562/3563 deleted; list_unresolved_reports now EMPTY.",
+          "expected_benign_rationale": "reports 05:35Z/06:05Z fall inside VN market-hours 02:00-08:00Z where /pek-extract is 503 market_open-guarded and cannot extract; reconcile attempts during market hours STILL exhaust to enrich_failed. This is NOT evidence the PEK re-seed failed. reconcile job is grinding deep 2023-2024 backlog (~1 report/30min tick).",
+          "close_verify_ADD": "The pending_proof 09:05Z close-verify MUST also confirm these 3 specific terminal enrich_failed rows recover (PDR 2024-Q1, BSR 2023-Q4, DGC 2023-Q4), not only SAB/VND + new-rows (extends close_caveat: verify terminal enrich_failed backlog recovery).",
+          "circuit_breaker_observation": "AC-3 FIX-BCTC-RECONCILE-EMISSION-CIRCUIT-BREAKER is DONE_VERIFIED+archived, yet post-reseed reconcile still emits ONE fail-loud report per ticker*quarter (3500/3501/3502). Either the breaker's systemic-dormancy heuristic does not treat market-hours-503 as dormant, or it is not deployed to the running mcp-server/analysis-agent. IF the flood persists PAST the 09:05Z post-close proof (producer resumes + rows land yet reports keep emitting one-per-ticker), escalate a breaker deployment/heuristic FIX. Do NOT mint pre-proof (would be churn)."
         }
       }
     ]
