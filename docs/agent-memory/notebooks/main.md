@@ -1,6 +1,13 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-17T05:21Z (dev-team tick 2026-07-17T0507Z — idle; ready-lane 0→17 by PO/pm 2 sprints, router did NOT dispatch, ONE-owner)
+**Written:** 2026-07-17T05:50Z (dev-team tick 2026-07-17T0537Z — 3rd consecutive idle; resolved conservation computed-not-stored; router did NOT dispatch ready-17, ONE-owner)
+
+## cycle-20260717T0537Z — 3rd consecutive idle; resolved conservation-field "absence" (computed-not-stored) to stop future re-probe
+
+- **Idle, no dispatch/spawn** — identical state to 0507Z: ready=17 (`CCATO-MCP-T1..8` next=dev-mcp-server + `SYSREMAKE-P2-T1..9`), ALL `promoted_by/promoted_at=none` → not bounded-1-stamped, dispatcher has NO mechanism to claim → PO/pm-owned, ONE-owner, left untouched. head idle (`next_agent=null`, untouched since 04:23:44Z) → pipeline-resume no-trigger. BOUNDED-1 no-fire (WIP=ready17+ip1=18). SPIKE parked (owner ops, deferred ~09:05Z; now 05:48Z, market open) — not due.
+- **1 benign `cowork-fire` drained** (`cowork-team-2026-07-17T05:26:22.888Z`: 2-slot chef-morning+alert-commander-market, `errors:[]`, reason=spawned, headroom 4293MB, CHEF same-tick mutex working) → mechanically "routed-to-po" but telemetry only → NO PO spawn. CI GREEN `5df003fb6` (run 29557200809). Inbox 51→50 (50 non-signal state files remain — CLEAN-SIGNALS-DIR backlog).
+- **RESOLVED conservation "absence"** (prevents recurring 3-probe investigation): orch-state.json has NO stored `.conservation`/`.task_total` key — by DESIGN. Totals are COMPUTED at write-time by `orch-conservation-check.mjs` (orch-apply Stage-2 magnitude circuit-breaker), never persisted. Prior memory "task_total 527→542" = the checker's computed magnitude, not a stored field. Invariant IS enforced on every write; `jq .conservation.task_total`→null is expected/correct. Future ticks: do NOT re-investigate as a regression.
+- Carried unchanged: dangling untracked `scripts/router-mint-d0b-supplement-exclude-relabel-ids.jq` (D0 provenance-gap, still pending PO). Committed drain hygiene (1 processed cowork-fire add). SF-1 + fire-election released at exit.
 
 ## cycle-20260717T0507Z — idle dispatch; ready-lane filled to 17 by PO/pm (2 fresh sprints) — router correctly did NOT dispatch (ONE-owner)
 
