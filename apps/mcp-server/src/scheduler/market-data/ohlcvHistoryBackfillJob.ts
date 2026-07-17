@@ -30,6 +30,7 @@
 import type { Database } from "bun:sqlite";
 import { logger } from "../../infrastructure/logger.js";
 import { writeOhlcvBatch } from "../../application/usecases/ohlcvWriteService.js";
+import { isHonestGapCode } from "../../domain/services/market-data/ohlcvGapClassifier.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants
@@ -389,15 +390,41 @@ export async function runOhlcvHistoryBackfill(
   // If any ticker is below the 2yr target, insert a done=0 trigger row so VPS
   // will run fetch-ohlcv-backfill.sh (DAYS=730) on its next poll cycle.
   // Tests always inject fetchFn → this block is skipped in test context.
+  //
+  // FIX-OHLCV-DEPTH-ALERT-HONEST-GAP-SUPPRESS: a permanently-empty or
+  // long-delisted watchlist code (0 bars ever, or newest bar stale for
+  // HONEST_GAP_STALE_DAYS+) can NEVER reach HISTORY_TARGET_BARS — left
+  // unfiltered it re-triggered this VPS queue on every single cron cycle
+  // forever. Excluded from the trigger via the data-driven isHonestGapCode
+  // predicate (never a hardcoded ticker list). VNINDEX is exempt from this
+  // exclusion — it is a mandatory always-traded benchmark; a stalled VNINDEX
+  // is a real pipeline failure, never an honest gap.
   if (!deps?.fetchFn) {
     try {
-      const depthStmt = db.prepare<{ n: number }, [string]>(
-        "SELECT COUNT(*) as n FROM daily_ohlcv WHERE code=?",
+      const depthStmt = db.prepare<{ n: number; maxDate: string | null }, [string]>(
+        "SELECT COUNT(*) as n, MAX(date) as maxDate FROM daily_ohlcv WHERE code=?",
       );
+      const todayIso = new Date().toISOString().slice(0, 10);
+      const honestGapCodes: string[] = [];
       const gapTickers = allCodes.filter((code) => {
-        const cnt = depthStmt.get(code)?.n ?? 0;
-        return cnt < HISTORY_TARGET_BARS;
+        const row = depthStmt.get(code);
+        const cnt = row?.n ?? 0;
+        if (cnt >= HISTORY_TARGET_BARS) return false;
+        if (
+          code !== VNINDEX_CODE &&
+          isHonestGapCode({ count: cnt, maxDate: row?.maxDate ?? null }, todayIso)
+        ) {
+          honestGapCodes.push(code);
+          return false;
+        }
+        return true;
       });
+      if (honestGapCodes.length > 0) {
+        logger.info(
+          `[ohlcvHistoryBackfill] excluded ${honestGapCodes.length} honest-gap code(s) from depth-gap trigger (permanently thin/delisted, never re-queued)`,
+          { sample: honestGapCodes.slice(0, 5) },
+        );
+      }
       if (gapTickers.length > 0) {
         db.prepare(
           "INSERT INTO ohlcv_backfill_queue(queued_at) VALUES (datetime('now'))",
@@ -408,8 +435,12 @@ export async function runOhlcvHistoryBackfill(
         );
       } else {
         logger.info(
-          "[ohlcvHistoryBackfill] all tickers at target depth — no VPS trigger needed",
-          { tickers: allCodes.length, target: HISTORY_TARGET_BARS },
+          "[ohlcvHistoryBackfill] all non-honest-gap tickers at target depth — no VPS trigger needed",
+          {
+            tickers: allCodes.length,
+            target: HISTORY_TARGET_BARS,
+            honestGapExcluded: honestGapCodes.length,
+          },
         );
       }
     } catch (triggerErr) {

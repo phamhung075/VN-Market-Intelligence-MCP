@@ -51,6 +51,25 @@
  * poller's documented "regardless of exit code" unblock contract; the fix re-queues via a new
  * row rather than gating the original row's `done`. Design: docs/handoffs/ALPHA-S1-architect-design.md §3.
  *
+ * FIX-OHLCV-DEPTH-ALERT-HONEST-GAP-SUPPRESS (2026-07-17): the R-5 retry ladder above was
+ * re-firing a false "no completion / manual VPS investigation" BUG roughly every cron cycle.
+ * Two compounding root causes, both fixed here:
+ *   (1) step-2 null-accounting misread an empty-body idempotent ack (the poll script's own
+ *       unconditional "regardless of exit code" trailing POST — vps-scripts/ohlcv-backfill-poll.sh
+ *       lines ~71-77) as a crash, even when the serving-plane depth was actually healthy. Fixed:
+ *       the null case now cross-checks the same honest-gap-aware shallow-code list computed for
+ *       step 3 before escalating/re-queuing — a benign trailing ack while real (non-honest-gap)
+ *       coverage is >= the floor is logged and ignored, not treated as "no completion report."
+ *   (2) step-3's depth-shortfall re-queue (and the scheduler's own gapTickers depth-gap trigger in
+ *       ohlcvHistoryBackfillJob.ts) never excluded permanently-empty/long-delisted "honest gap"
+ *       codes (RAW-verified: BDI, DLC, JSH, SIS, VDC — 0 bars ever or years-stale), which can NEVER
+ *       reach the depth floor and so re-triggered the queue forever. Fixed via the data-driven
+ *       isHonestGapCode predicate (domain/services/market-data/ohlcvGapClassifier.ts) — NEVER a
+ *       hardcoded ticker list, and NEVER applied to VNINDEX (always-traded benchmark; a stalled
+ *       VNINDEX is a real failure, not an honest gap).
+ * This is a SUPPRESS-ONLY fix (stop the false alarm + the forever-requeue) — the underlying OHLCV
+ * data is healthy; no VPS-side change is required or made.
+ *
  * DI contract: db + log are injected by the caller (server.ts handleRequest).
  * No getDb() calls here.
  */
@@ -64,6 +83,7 @@ import {
   writeOhlcvBatch,
   type OhlcvWriteRow,
 } from "../../../application/usecases/ohlcvWriteService.js";
+import { isHonestGapCode } from "../../../domain/services/market-data/ohlcvGapClassifier.js";
 
 type Logger = ReturnType<typeof createLogger>;
 
@@ -226,20 +246,80 @@ export async function handleOhlcvBackfillDone(
     //    documented "regardless of exit code" so the systemd oneshot never blocks — the
     //    ALPHA-S1-OHLCV-BACKFILL-DONE-BUG fix re-queues via a NEW row (step 2 below)
     //    instead of gating this flip, preserving that unblock contract exactly.
+    //    FIX-OHLCV-DEPTH-ALERT-HONEST-GAP-SUPPRESS: COALESCE so a real non-null count
+    //    already recorded on this row can never be clobbered back to NULL.
     const closeResult = db
-      .prepare("UPDATE ohlcv_backfill_queue SET done = 1, bars_inserted = ? WHERE done = 0")
+      .prepare("UPDATE ohlcv_backfill_queue SET done = 1, bars_inserted = COALESCE(?, bars_inserted) WHERE done = 0")
       .run(barsPushedTotal);
     log.info("[ohlcv-backfill-done] marked done", { barsPushedTotal, rowsClosed: closeResult.changes });
+
+    // FIX-OHLCV-DEPTH-ALERT-HONEST-GAP-SUPPRESS: compute the honest-gap-aware shallow
+    // code list ONCE, up front — shared by the step-2 null cross-check below AND the
+    // step-3 depth-shortfall re-queue further below, so the two can never disagree about
+    // what counts as a real (recoverable) shortfall vs. a permanently-empty/long-delisted
+    // "honest gap" code (RAW-verified example set: BDI, DLC, JSH, SIS, VDC). VNINDEX is
+    // NEVER honest-gap-excluded — it is a mandatory always-traded benchmark.
+    const DEPTH_FLOOR = 252;
+    const shallowCodes: { code: string; cnt: number }[] = [];
+    let watchlistCount = 0;
+    let vnindexDepth = 0;
+    let honestGapExcludedCount = 0;
+    let depthProbeOk = true;
+    try {
+      const todayIso = new Date().toISOString().slice(0, 10);
+      const depthRows = db.prepare<{ code: string; cnt: number; maxDate: string | null }, []>(`
+        SELECT w.code, COUNT(d.code) AS cnt, MAX(d.date) AS maxDate
+        FROM watchlist w
+        LEFT JOIN daily_ohlcv d ON d.code = w.code
+        GROUP BY w.code
+      `).all();
+      watchlistCount = depthRows.length;
+
+      // FR-B2: check VNINDEX depth separately (not in watchlist; required by TA svc for RS)
+      const vnidxRow = db.prepare<{ cnt: number }, []>(
+        "SELECT COUNT(*) AS cnt FROM daily_ohlcv WHERE code = 'VNINDEX'"
+      ).get();
+      vnindexDepth = vnidxRow?.cnt ?? 0;
+
+      for (const r of depthRows) {
+        if (r.cnt >= DEPTH_FLOOR) continue;
+        if (isHonestGapCode({ count: r.cnt, maxDate: r.maxDate }, todayIso)) {
+          honestGapExcludedCount++;
+          continue;
+        }
+        shallowCodes.push({ code: r.code, cnt: r.cnt });
+      }
+      if (vnindexDepth < DEPTH_FLOOR) {
+        shallowCodes.push({ code: "VNINDEX", cnt: vnindexDepth });
+      }
+    } catch (depthErr) {
+      // Depth probe is advisory — being unable to verify serving-plane health means we
+      // also cannot rule out a real crash, so the null-case check below falls back to
+      // the conservative (pre-fix) behavior rather than silently assuming health.
+      depthProbeOk = false;
+      log.warn("[ohlcv-backfill-done] depth probe failed (non-fatal)", {
+        error: depthErr instanceof Error ? depthErr.message : String(depthErr),
+      });
+    }
 
     // 2. ALPHA-S1-OHLCV-BACKFILL-DONE-BUG — inserted-count verification (fail-loud, not a
     //    silent success). closeResult.changes > 0 means THIS call is the one that actually
     //    closed a pending row (not a redundant idempotent ack finding nothing pending).
-    //    barsPushedTotal===null (no authoritative report ever landed — fetch-ohlcv-backfill.sh
-    //    likely crashed/DNS-failed before its own POST) or ===0 (script ran but the universe
-    //    fetch genuinely inserted nothing) are both real failure states — reuse the existing
-    //    R-5 retry/escalate ladder (same cap, same escalation shape) rather than a new one.
+    //    barsPushedTotal===0 (script ran but the universe fetch genuinely inserted nothing)
+    //    is always a real failure state.
+    //    FIX-OHLCV-DEPTH-ALERT-HONEST-GAP-SUPPRESS: barsPushedTotal===null used to be
+    //    treated identically to a genuine crash unconditionally — but an empty-body ack is
+    //    exactly what ohlcv-backfill-poll.sh's own unconditional "regardless of exit code"
+    //    trailing POST sends, which can fire right after fetch-ohlcv-backfill.sh's own
+    //    completion POST already recorded a real bars_pushed_total on a different
+    //    (re-queued) row. Cross-check the serving plane (shallowCodes, honest-gap-excluded)
+    //    before crying crash: only escalate the null case when a REAL (non-honest-gap)
+    //    shortfall exists or the probe itself failed.
     let insertVerificationFailed = false;
-    if (closeResult.changes > 0 && (barsPushedTotal === null || barsPushedTotal === 0)) {
+    if (
+      closeResult.changes > 0 &&
+      (barsPushedTotal === 0 || (barsPushedTotal === null && (!depthProbeOk || shallowCodes.length > 0)))
+    ) {
       insertVerificationFailed = true;
       const lastRow = db
         .prepare<{ retry_count: number }, []>(
@@ -272,40 +352,25 @@ export async function handleOhlcvBackfillDone(
           reason,
         });
       }
+    } else if (closeResult.changes > 0 && barsPushedTotal === null) {
+      log.info(
+        "[ohlcv-backfill-done] empty-body ack ignored — serving-plane depth healthy (non-honest-gap coverage >= floor), not treated as a crash",
+        { watchlist_count: watchlistCount, vnindex_depth: vnindexDepth, honest_gap_excluded: honestGapExcludedCount },
+      );
     }
 
-    // 3. Depth probe — verify watchlist code coverage against 252-bar floor
-    //    FR-B2: also verify VNINDEX depth (benchmark ticker — not in watchlist table)
+    // 3. Depth probe — verify watchlist+VNINDEX code coverage against the 252-bar floor,
+    //    excluding honest-gap codes (shallowCodes computed once above, before step 2).
     //    Skipped when step 2 already re-queued/escalated this cycle — a depth-shortfall
     //    diagnostic is meaningless when the underlying run couldn't be verified to have
     //    inserted anything, and running both would double-fire (duplicate re-queue row +
     //    duplicate Telegram alert for the same underlying event).
-    const DEPTH_FLOOR = 252;
-    if (!insertVerificationFailed) try {
-      const depthRows = db.prepare<{ code: string; cnt: number }, []>(`
-        SELECT w.code, COUNT(d.code) AS cnt
-        FROM watchlist w
-        LEFT JOIN daily_ohlcv d ON d.code = w.code
-        GROUP BY w.code
-      `).all();
-
-      // FR-B2: check VNINDEX depth separately (not in watchlist; required by TA svc for RS)
-      const vnidxRow = db.prepare<{ cnt: number }, []>(
-        "SELECT COUNT(*) AS cnt FROM daily_ohlcv WHERE code = 'VNINDEX'"
-      ).get();
-      const vnindexDepth = vnidxRow?.cnt ?? 0;
-
-      const shallowCodes: { code: string; cnt: number }[] = depthRows.filter(
-        (r) => r.cnt < DEPTH_FLOOR,
-      );
-      if (vnindexDepth < DEPTH_FLOOR) {
-        shallowCodes.push({ code: "VNINDEX", cnt: vnindexDepth });
-      }
-
+    if (!insertVerificationFailed && depthProbeOk) try {
       if (shallowCodes.length === 0) {
-        log.info("[ohlcv-backfill-done] depth verified: all watchlist tickers >=252 bars", {
-          watchlist_count: depthRows.length,
+        log.info("[ohlcv-backfill-done] depth verified: all non-honest-gap watchlist/VNINDEX codes >=252 bars", {
+          watchlist_count: watchlistCount,
           vnindex_depth: vnindexDepth,
+          honest_gap_excluded: honestGapExcludedCount,
         });
       } else {
         const shallowList = shallowCodes.map((r) => `${r.code}:${r.cnt}`).join(", ");
@@ -313,6 +378,7 @@ export async function handleOhlcvBackfillDone(
           shallow_count: shallowCodes.length,
           codes: shallowList,
           depth_floor: DEPTH_FLOOR,
+          honest_gap_excluded: honestGapExcludedCount,
         });
 
         // Retry-storm cap check (R-5): read retry_count of last done row
@@ -344,10 +410,10 @@ export async function handleOhlcvBackfillDone(
           });
         }
       }
-    } catch (depthErr) {
-      // Depth probe is advisory — do not fail the HTTP response if probe fails
-      log.warn("[ohlcv-backfill-done] depth probe failed (non-fatal)", {
-        error: depthErr instanceof Error ? depthErr.message : String(depthErr),
+    } catch (depthActionErr) {
+      // Depth-based re-queue/escalate is advisory — do not fail the HTTP response if it errors
+      log.warn("[ohlcv-backfill-done] depth-based re-queue/escalate failed (non-fatal)", {
+        error: depthActionErr instanceof Error ? depthActionErr.message : String(depthActionErr),
       });
     }
 
