@@ -1,0 +1,40 @@
+{
+  "from": "ci-health-probe",
+  "to": "po",
+  "type": "ci_red",
+  "priority": "high",
+  "createdAt": "2026-07-17T06:48:18Z",
+  "dedup_key": "ci_red:c28932513c491d5eb5765a2c4469c426eba9b81c:bun test",
+  "payload": {
+    "check_id": "CI-RED-c2893251",
+    "head_sha": "c28932513c491d5eb5765a2c4469c426eba9b81c",
+    "run_id": 29559748162,
+    "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/29559748162",
+    "conclusion": "failure",
+    "failing_jobs": [
+      {
+        "name": "bun test",
+        "conclusion": "failure",
+        "jobId": 87819476285
+      }
+    ],
+    "fingerprint": "e21f73cc13c07e4c1493a000083f8fa54a8c4875a6cc5003ff85b12ddcf130cd",
+    "zone_owner": "dev-team (CI fix)",
+    "summary": "CI RED on main HEAD c28932513c491d5eb5765a2c4469c426eba9b81c: bun test",
+    "suggested_sprint_class": "FIX",
+    "verification_gate": "ci_green_on_subsequent_push"
+  },
+  "_processed": {
+    "processedBy": "dev-team-router",
+    "processedAt": "2026-07-17T06:44Z",
+    "result": "classified-flaky-not-escalated",
+    "disposition": "FLAKY per-file-isolation. CI history on byte-identical test code (last code change f4f5ce65e, well before): 5df003fb GREEN, c05dfa10 GREEN, c2893251 RED (1/14457, file src/__tests__/vnstock-3statement.test.ts). GREEN-GREEN-RED ⇒ not deterministic (H2 refuted); flaky (H1). 1st flake obs of this file — NOT among the 4 tracked DEFLAKE rows. Not dispatched (1 obs, docs-only HEAD, code-identical to prior green). Re-run triggered to restore green. Watch: 2nd obs → mint DEFLAKE-VNSTOCK-3STATEMENT.",
+    "fingerprint": {
+      "run_id": 29559748162,
+      "head": "c28932513",
+      "failing_file": "src/__tests__/vnstock-3statement.test.ts",
+      "failing_job": "bun test",
+      "pass_skip_fail": "14457/40/1"
+    }
+  }
+}
