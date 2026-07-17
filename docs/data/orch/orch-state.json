@@ -371,12 +371,13 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "updated_at": "2026-07-17T04:23:44Z",
-    "updated_by": "router (added no-false-green close_caveat to SPIKE: verify terminal enrich_failed backlog recovery at ~09:05Z close, not just new-rows; head stays idle; tick 2026-07-17T04:07Z)",
-    "note": "SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD parked in_progress; close DEFERRED to post-market ~09:05Z bctcExtractReconcileJob run (close_predicate + pending_proof in in_progress[0].disposition/ac2_remediation). Self-verifying: reconcile-exhausted report flood re-surfaces if fix failed (auto-reopen via triage); if fix worked flood stops. A future post-09:05Z tick RAW-verifies bctc_layout_units MAX advances past 2026-06-10 + new rows land, then flips SPIKE done_verified per PO pre-authorized sign-off."
+    "status": "in_progress",
+    "active_task_id": "FIX-OHLCV-DEPTH-ALERT-HONEST-GAP-SUPPRESS",
+    "next_agent": "dev-mcp-server",
+    "next_action": "run docs/agents/dev-mcp-server/flow/main.md — implement FIX-OHLCV-DEPTH-ALERT-HONEST-GAP-SUPPRESS per PO spec (both emitters honest-gap-aware); on green flip in_progress->review + reset head idle",
+    "updated_at": "2026-07-17T09:06:35Z",
+    "updated_by": "dev-team(router) — dispatch FIX-OHLCV-DEPTH-ALERT-HONEST-GAP-SUPPRESS to dev-mcp-server (PO-triaged report 3504 false-alarm, tick 2026-07-17T08:37Z)",
+    "note": "FIX in flight (owner dev-mcp-server, backgrounded). SPIKE-BCTC...ENRICHFAIL-FLOOD close-verify remains a separate ~09:05Z tick concern; this head reflects the OHLCV FIX dispatch only."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6382,17 +6383,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-TECHANALYSIS-delete-orphaned-ts-service"
       },
       {
-        "id": "FIX-OHLCV-DEPTH-ALERT-HONEST-GAP-SUPPRESS",
-        "title": "OHLCV depth-shortfall R-5 alert re-fires forever on permanently-shallow non-watchlist honest-gap codes (BDI/DLC/JSH/SIS/VDC) — make the emitter honest-gap-aware",
-        "type": "FIX",
-        "size": "S",
-        "status": "BACKLOG",
-        "priority": "low",
-        "zone": "apps/mcp-server/src/interface/mcp/routes/ohlcvBackfillHandler.ts",
-        "sprint": null,
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-OHLCV-DEPTH-ALERT-HONEST-GAP-SUPPRESS"
-      },
-      {
         "id": "FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK",
         "title": "Retrofit gateway-blind-affected cowork agent flows with scripts/agents-flow/mcp-call.sh curl-bypass fallback",
         "type": "FIX",
@@ -8342,11 +8332,13 @@
     ],
     "done_verified": [],
     "head": {
-      "status": "idle",
-      "active_task_id": null,
-      "next_agent": null,
-      "updated_at": "2026-07-17T03:28:39Z",
-      "updated_by": "router (stale-head reconcile to idle; SPIKE parked deferred ~09:05Z; tick 03:07Z)"
+      "status": "in_progress",
+      "active_task_id": "FIX-OHLCV-DEPTH-ALERT-HONEST-GAP-SUPPRESS",
+      "next_agent": "dev-mcp-server",
+      "next_action": "run docs/agents/dev-mcp-server/flow/main.md — implement FIX-OHLCV-DEPTH-ALERT-HONEST-GAP-SUPPRESS per PO spec (both emitters honest-gap-aware); on green flip in_progress->review + reset head idle",
+      "updated_at": "2026-07-17T09:06:35Z",
+      "updated_by": "dev-team(router) — dispatch FIX-OHLCV-DEPTH-ALERT-HONEST-GAP-SUPPRESS to dev-mcp-server (PO-triaged report 3504 false-alarm, tick 2026-07-17T08:37Z)",
+      "note": "FIX in flight (owner dev-mcp-server, backgrounded). SPIKE-BCTC...ENRICHFAIL-FLOOD close-verify remains a separate ~09:05Z tick concern; this head reflects the OHLCV FIX dispatch only."
     },
     "ready": [
       {
@@ -9304,8 +9296,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-17T04:45:43Z",
-    "last_triaged_by": "po (TOKEN-ECONOMY rerank — elevate 27 remaining TE rows; session 258270ae)",
+    "last_triaged_at": "2026-07-17T09:06:35Z",
+    "last_triaged_by": "dev-team(router)",
     "in_progress": [
       {
         "id": "SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD",
@@ -9455,6 +9447,29 @@
             "no_action": "no new dev row minted; ops NOT re-fired (would duplicate in-flight SPIKE)."
           }
         }
+      },
+      {
+        "id": "FIX-OHLCV-DEPTH-ALERT-HONEST-GAP-SUPPRESS",
+        "title": "OHLCV backfill R-5 escalation false-alarm — make BOTH emitters honest-gap-aware (data healthy; noise-only)",
+        "type": "FIX",
+        "size": "S",
+        "status": "IN_PROGRESS",
+        "priority": "medium",
+        "zone": "apps/mcp-server/src/interface/mcp/routes/ohlcvBackfillHandler.ts",
+        "sprint": null,
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-OHLCV-DEPTH-ALERT-HONEST-GAP-SUPPRESS",
+        "desc": "PO-triaged report 3504 (tick 2026-07-17T08:37Z) — RAW-verified FALSE alarm: OHLCV data healthy (756K rows, MAX date=today, 927 codes fresh today, 51/58 watchlist at 500+ bars, VNINDEX 766), queue 0 pending. Recurring 2+: queue rows 497@2026-07-16T18:32Z + 505@2026-07-17T07:35Z both hit retry_count=5 with bars_inserted=NULL. Fix BOTH emitters: (1) step-2 null-accounting in ohlcvBackfillHandler.ts — an empty-body idempotent poll POST closing a pending row must NOT be misread as script-crashed/manual-VPS-investigation when depth is healthy; cross-check the serving plane before escalating and record MAX bars_inserted, never overwrite a real count with null. (2) step-3 depth-shortfall + the scheduler depth-gap trigger in ohlcvHistoryBackfillJob.ts — exclude permanently-empty/delisted honest-gap codes (0 bars after N confirmed-empty fetches; BDI/DLC/JSH/SIS/VDC) from the re-queue trigger so the queue stops re-seeding forever. CORRECTION vs original row text: BDI/DLC/JSH/SIS/VDC are IN the watchlist (RAW-verified), not non-watchlist. Suppress-only, not data-recovery.",
+        "next_agent": "dev-mcp-server",
+        "owner": "dev-mcp-server",
+        "files": [
+          "apps/mcp-server/src/interface/mcp/routes/ohlcvBackfillHandler.ts",
+          "apps/mcp-server/src/scheduler/market-data/ohlcvHistoryBackfillJob.ts"
+        ],
+        "verification_gate": "unit/integration: (a) delisted-only shortfall => NO new done=0 re-queue AND NO BUG escalation; (b) empty-body POST after a successful count POST => NO false no-completion escalation while depth>=252. Keep OHLCV-BACKFILL / ALPHA-S1-OHLCV-BACKFILL-DONE-BUG tests green.",
+        "promotion_note": "tick 2026-07-17T08:37Z: PO-triaged report 3504 (list_unresolved) — RAW-verified false-alarm; promoted existing backlog row (no duplicate mint) + dispatched to dev-mcp-server",
+        "promoted_at": "2026-07-17T09:06:35Z",
+        "promoted_by": "dev-team(router)",
+        "dispatched_at": "2026-07-17T09:06:35Z"
       }
     ]
   },
