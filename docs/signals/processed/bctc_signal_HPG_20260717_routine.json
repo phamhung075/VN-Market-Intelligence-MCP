@@ -4,49 +4,51 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Steel manufacturing (construction steel, HRC), agriculture feed, real-estate industrial-park development",
-  "customer": "Domestic construction contractors/distributors, export steel buyers, agri-feed distributors",
-  "ops": "KNOWN EXTRACTION DEFECT: Operating Profit=0 and CF fields=0 while Net Profit 9,055.9ty > Gross Profit 8,365.1ty — non-operating income mis-extraction, data unreliable for margin analysis this cycle",
-  "mgmt": "PE 14.2x -57% disc vs sector median 32.6x, PB 1.7x +93% prem, ROE 12.7% sector-tool vs 2.9% median — valuation read is directionally favorable but blocked by corrupted P&L extraction; no bullish signal posted pending clean data",
-  "valuation_verdict": "DATA-QUALITY-BLOCKED",
-  "roe_pct": 6.48,
-  "balance_sheet_check": {
-    "imbalance_pct": 0,
-    "result": "PASS"
+  "product": "Thép xây dựng, thép cuộn cán nóng (HRC), ống thép, tôn mạ",
+  "customer": "Nhà thầu xây dựng, nhà phân phối thép, doanh nghiệp cơ khí/công nghiệp trong nước và xuất khẩu",
+  "ops": "DATA-GAP: Operating Profit=0 và CF fields=0 (lỗi trích xuất đã biết) — Net Profit 9.055,9 tỷ VND > Gross Profit 8.365,1 tỷ VND (validation flag: possible non-operating income). ROE 6.48%/quý (12.7% chuẩn hoá năm, trên median ngành 2.9%)",
+  "mgmt": "Không đánh giá được — dữ liệu vận hành (operating profit/cash flow) bị hỏng ở tầng trích xuất, không đủ tin cậy để đánh giá năng lực điều hành chu kỳ này",
+  "valuation": {
+    "pe": 14.2,
+    "pb": 1.7,
+    "roe_pct": 6.48,
+    "roe_sector_annualized_pct": 12.7,
+    "sector_median_pe": 32.6,
+    "sector_median_pb": 0.9,
+    "sector_median_roe_pct": 2.9,
+    "valuation_verdict": "data_unreliable_no_verdict"
   },
   "esc_gate": {
-    "ESC-1": "FALSE",
-    "ESC-2": "FALSE (0.0% imbalance)",
-    "ESC-3": "DATA-COVERAGE-LIMITED (2/4 quarters)",
+    "ESC-1": "FALSE (no trick-pass findings — passes not run)",
+    "ESC-2": "FALSE (balance-sheet imbalance 0.00%)",
+    "ESC-3": "DATA-COVERAGE-LIMITED (2/4 quarters returned) — guard held (own-lineage, no reap)",
     "ESC-4": "SKIPPED (E4 Block Rule — operating_profit=0 corrupted)",
-    "ESC-5": "FALSE (refined units empty)",
-    "escalation_status": "no_escalation",
-    "coverage_guard_key": "esc-datacov:HPG:Q1-2026:ESC-3",
-    "coverage_guard_held": true
+    "ESC-5": "FALSE (get_bctc_refined empty for HPG_2026_Q1)",
+    "escalation_status": "no_escalation"
   },
-  "kinhdich": {
-    "que": "2 - Khon",
-    "trend": "TRUNG TINH",
-    "signal": "GIU",
-    "confidence_pct": 38
-  },
-  "sentiment_30d": {
-    "direction": "ON DINH",
+  "sentiment_trend": {
+    "window_days": 30,
+    "entries": 10,
+    "direction": "ỔN ĐỊNH",
     "slope": -0.04,
     "bullish": 4,
-    "bearish": 1,
-    "entries": 10
+    "bearish": 1
   },
-  "insider": "skipped — charter_capital null (cannot derive outstandingShares)",
-  "trick_summary": null,
-  "trick_confidence": "none",
-  "trick_pass_versions": [],
-  "source_confidence_pct": 80,
-  "as_of": "2026-07-17T15:06:00Z",
-  "data_quality_note": "No fundamental_validation signal posted this cycle — P&L/CF extraction unreliable (unchanged since c081)",
+  "insider_signals": "no significant activity",
+  "kinhdich": {
+    "que": "Quẻ 2 - Khôn",
+    "trend": "TRUNG TÍNH",
+    "signal": "GIỮ",
+    "confidence_pct": 38
+  },
+  "data_quality_note": "Known extraction defect since c081 — no fundamental_validation signal posted (unreliable data), evidence fragment recorded on ROE only",
+  "evidence_fragment_id": 308,
+  "cycle_id": "20260717-1800",
+  "posted_signal_id": null,
+  "ts": "2026-07-17T18:15:00Z",
   "_processed": {
-    "fingerprint": "d6148779ef54fa0f18b08573a946709b20d743668e78391b7e69729aa63b76f4",
-    "processedAt": "2026-07-17T15:18:14Z",
+    "fingerprint": "c0b2928b9537a20d9a9886f13a9c0e7a5f0b4ba2f65148a4502c129cfe0969ae",
+    "processedAt": "2026-07-17T18:20:03Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
