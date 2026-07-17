@@ -1,0 +1,49 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "2026-07-17T15:05:35.040Z",
+  "payload": {
+    "tick": "2026-07-17T15:00Z",
+    "classification": "FIRE",
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "won_slots": [
+      "bctc-analyst-slot-1"
+    ],
+    "spawned": [
+      {
+        "slot_id": "bctc-analyst-slot-1",
+        "agent": "bctc-analyst",
+        "flow_path": "docs/agents/bctc-analyst/flow/main.md",
+        "outcome": "spawned_background",
+        "detail": "off-market BCTC analysis cycle (cron 0 15 * * *), backgrounded per BGFAN-1; E2 market-window guard N/A at 15:00Z (off-market)"
+      }
+    ],
+    "errors": [],
+    "chef_mutex_applied": false,
+    "tick_snapshot_skipped": true,
+    "cycle_snapshot_promoted": false,
+    "last_fired_writes": [
+      {
+        "slot_id": "bctc-analyst-slot-1",
+        "from": "2026-07-16T15:04:14.719Z",
+        "to": "2026-07-17T15:04:59.643Z",
+        "status": "WRITE_OK",
+        "slots_len": 23
+      }
+    ],
+    "pressure_emit": {
+      "success": true,
+      "cycle_snapshot_promoted": false,
+      "stale_warning_after": true
+    }
+  },
+  "_processed": {
+    "fingerprint": "42d0838f8119af5971cf3432daa4745a09c5507a2ced7dae5dcb0da3d97d0e86",
+    "processedAt": "2026-07-17T15:18:14Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
