@@ -1,0 +1,56 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-17T09:09:26.393Z",
+    "matched_slots": [
+      "refine-bctc-slot-1"
+    ],
+    "won_slots": [
+      "refine-bctc-slot-1"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/refine_bctc_md/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "refine-bctc-slot-1": "cron"
+    },
+    "cadence_minutes": {
+      "refine-bctc-slot-1": null
+    },
+    "last_fired_timestamp": "2026-07-17T09:07:46.961Z",
+    "last_fired_slots": [
+      "refine-bctc-slot-1"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "09:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 5,
+    "host_headroom_mb": 1239,
+    "note": "Legacy mode (stale_warning:true at Step 4.2 read); server re-flagged false after 09:07:56Z emit -> next tick likely adaptive. Single non-guaranteed slot refine-bctc-slot-1 cron-due (0 9 * * *), last_fired 07-16T09:08:49Z->07-17T09:07:46.961Z. refine_bctc_md completed CLEAN SKIP: oldest pending row MBB_2026_Q1.pdf page_count=0 matched cover-letter pattern (TICKER_YEAR_Qn <=4pg), reported to WORK, exited. No chef slot in MATCHES -> CHEF mutex no-op. tick-snapshot skipped (sole slot is non-market consumer) -> cycle_snapshot_promoted:false (UC-SDF-P2 dark-promote, tracked, not regressed). Signal drain no-op (0 NEW rows). published:chef-eod:2026-07-17 leaked marker still held -> NOT released (standing rule); already escalated to po via handoff+signal+telegram."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-17T09:09:26.393Z",
+  "_processed": {
+    "fingerprint": "1a2facbc280c5211e87e8b1a8642cba16db5a896b3253f38c6470170110623b5",
+    "processedAt": "2026-07-17T09:20:39Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
