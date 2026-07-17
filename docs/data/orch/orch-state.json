@@ -8515,12 +8515,11 @@
       }
     ],
     "head": {
-      "status": "in_progress",
-      "active_task_id": "FIX-BCTC-RECONCILE-EMISSION-CIRCUIT-BREAKER",
-      "next_agent": "dev-mcp-server",
-      "next_action": "Router deliberate dispatch: PO-restored P0 FIX-BCTC-RECONCILE-EMISSION-CIRCUIT-BREAKER — BOUNDED-1 cannot claim a non-bounded1-stamped ready row under the WIP>=1 promote guard, so it would otherwise strand. dispatcher-wrap then JUMP TO execute; zone-detect resolves final specialist from zone/files.",
-      "updated_at": "2026-07-17T00:57:39Z",
-      "updated_by": "dev-team (router deliberate dispatch)"
+      "status": "idle",
+      "active_task_id": null,
+      "next_agent": "router",
+      "updated_at": "2026-07-17T01:09:07Z",
+      "updated_by": "dev-mcp-server (FIX-BCTC-RECONCILE-EMISSION-CIRCUIT-BREAKER duplicate-dispatch closeout — see task status_note)"
     },
     "ready": [],
     "review": [
