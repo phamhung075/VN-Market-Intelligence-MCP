@@ -1,6 +1,12 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-17T03:22Z (dev-team tick 2026-07-17T0307Z — idle dispatch; stale dual-head reconciled → idle, SPIKE parked deferred ~09:05Z)
+**Written:** 2026-07-17T04:24Z (dev-team tick 2026-07-17T0407Z — SPIKE flood reports disposed + no-false-green close_caveat added)
+
+## cycle-20260717T0407Z — SPIKE flood reports disposed; added no-false-green close_caveat (terminal-backlog recovery)
+
+- **2 new reconcile-exhausted reports** (3498 SAB / 3499 VND, both 2024-Q1, `enrich_failed=TERMINAL`, 04:05Z) = residual SPIKE flood → disposed `duplicate` (claim→process→delete msgs 3559/3560). Skipped PO re-investigation (in-flight SPIKE root, fix applied, proof deferred ~09:05Z). Also drained + skipped 1 benign `cowork-tick-fire` telemetry (→system-auditor; 4-hourly offhours wave, headroom 4967MB) — 2nd such heartbeat, no harm (PO not spawned), no mint.
+- **KEY — no-false-green close_caveat added to SPIKE row** (`bfae2fa68`, `scripts/spike-add-close-caveat-terminal-backlog-recovery.jq`): the reports' own text ("enrich_failed terminal" + "consider manual /api/trigger-pek-extract re-fire once fixed") flags that rows terminally-failed during the market-hours PEK-503 window may NOT auto-retry post-market. Caveat directs the ~09:05Z close to ALSO confirm the terminal backlog RE-EXTRACTS (bctc_layout_units gains rows for the failed 2024-Q1 tickers), not just that MAX(extracted_at) advances + fresh PDFs land — else FALSE-GREEN off new PDFs while the ~2-day dormancy backlog stays permanently failed (→ ops manual re-fire before done_verified). TIGHTENS PO close-on-ops-confirm (not an override); head stays idle (no re-dispatch). Grounded in report text, framed as a verify-directive (retry logic not yet probed).
+- Preflight cold-evict no-op (done=14 plain-DONE not evictable, done_verified=0, orch not dirty). CI GREEN on `7ef4b825b`. Heads idle (last-tick reconcile holding — no ops re-spawn). Drain hygiene committed `5a91f32cb`.
 
 ## cycle-20260717T0307Z — idle dispatch tick; reconciled stale dual-head → idle (SPIKE parked, deferred ~09:05Z)
 
