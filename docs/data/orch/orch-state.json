@@ -374,8 +374,8 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": null,
-    "updated_at": "2026-07-17T03:28:39Z",
-    "updated_by": "router (stale-head reconcile: SPIKE next_agent=ops was completed-work residual — ops PEK re-seed done+recorded ac2_remediation; SPIKE parked in_progress awaiting DEFERRED post-market ~09:05Z RAW-verify proof, not an ops spawn; head->idle stops per-tick ops re-spawn loop; tick 2026-07-17T03:07Z)",
+    "updated_at": "2026-07-17T04:23:44Z",
+    "updated_by": "router (added no-false-green close_caveat to SPIKE: verify terminal enrich_failed backlog recovery at ~09:05Z close, not just new-rows; head stays idle; tick 2026-07-17T04:07Z)",
     "note": "SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD parked in_progress; close DEFERRED to post-market ~09:05Z bctcExtractReconcileJob run (close_predicate + pending_proof in in_progress[0].disposition/ac2_remediation). Self-verifying: reconcile-exhausted report flood re-surfaces if fix failed (auto-reopen via triage); if fix worked flood stops. A future post-09:05Z tick RAW-verifies bctc_layout_units MAX advances past 2026-06-10 + new rows land, then flips SPIKE done_verified per PO pre-authorized sign-off."
   },
   "narrative": {
@@ -9061,6 +9061,13 @@
           "close_predicate": "post-market ~09:05Z bctcExtractReconcileJob run: bctc_layout_units MAX advances past 2026-06-10 AND new rows land => a dev-team tick after ~09:05Z RAW-verifies serving-plane + flips SPIKE to done_verified (executing PO's pre-authorized sign-off, NOT router self-cert). Self-verifying: if fix worked the reconcile-exhausted report flood stops; if not it re-surfaces + anomaly detector re-flags.",
           "refine_half": "folded -> FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP.spike_fold_20260717 (PENDING regressed 151->181, 3rd+ recurrence of session-scoped-CronCreate-dormancy class, priority high, schedule immediately after PEK resumes; sole remaining convergence lever for refined bctc_table_rows)",
           "durable_guard": "FIX-INFRA-CRITICAL-VOLUME-PRESENCE-HEALTHCHECK minted PLAN-ONLY backlog (ops, high, supervised) — same 2026-07-15 VM-rebuild wiped TWO volumes (market_data + pek_model_cache), only one caught; guard asserts producer-critical volumes contain REQUIRED CONTENT (not just mount/du>0), boot+periodic, fail-loud, optionally auto-invokes scripts/pek-fetch-weights.sh; manifest SSOT-driven"
+        },
+        "close_caveat": {
+          "by": "router (tick 2026-07-17T04:07Z; from disposed dup reports 3498 SAB / 3499 VND, both 2024-Q1 enrich_failed=terminal)",
+          "at": "2026-07-17T04:23:44Z",
+          "concern": "bctcExtractReconcileJob marks queue rows enrich_failed=TERMINAL after 8 passes during the market-hours PEK-503 window (SAB report_id 1f6cbffe-7383-4be2-85bd-676a5183c5ae, VND report_id 11d8b60f-69e8-4f7e-8e3c-034d44249c70, + earlier VJC/DBC/VIX/SHB/BSR cluster). Reports advise manual /api/trigger-pek-extract re-fire once root cause fixed => terminal rows may NOT auto-retry after PEK resumes post-market.",
+          "verify_at_close": "post-market ~09:05Z close must ALSO confirm the terminal enrich_failed BACKLOG rows re-extract (bctc_layout_units gains rows for the failed 2024-Q1 tickers), NOT ONLY that MAX(extracted_at) advances + fresh PDFs land. Else FALSE-GREEN: close goes green off new PDFs while the ~2-day dormancy backlog stays permanently enrich_failed. If terminal rows do not auto-recover, an ops manual re-fire is required BEFORE flipping done_verified.",
+          "scope": "verification-rigor addition to PO close-on-ops-confirm (no-false-green); NOT a decision override, NOT a re-dispatch — head stays idle, SPIKE stays parked until the deferred proof."
         }
       }
     ]
