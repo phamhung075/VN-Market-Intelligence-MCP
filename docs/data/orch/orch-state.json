@@ -7540,7 +7540,30 @@
         "converge_note": "PO report-triage 2026-07-16T22:07Z: 3rd RECONCILE-EXHAUSTED duplicate in 2 ticks (3480 VND 2024-Q2, 3481 BSR 2024-Q1, 3482 VIX 2024-Q2). bctcExtractReconcileJob has now walked BACK INTO 2024 quarters => the backlog it is grinding is deep, so the flood is UNBOUNDED (~1 fail-loud report / 30-min tick), each forcing a full router->PO spawn just to archive one duplicate = churn-without-convergence. ESCALATED priority high->P0 to make this the next-worked item. FAST-TRACK AC-3 (bctcExtractReconcileJob emission circuit-breaker) as the FIRST, independently-shippable deliverable AHEAD of the AC-1 infra-rollback verify and AC-2 dormancy-root-cause diagnosis: the circuit-breaker is the ONLY lever that stops the per-tick report-storm churn and it does NOT depend on the diagnosis outcome (it only needs to detect systemic producer-dormancy and batch/summarize/suppress, not one fail-loud per ticker*quarter). AC-1/AC-2 remain in-scope but MUST NOT gate the churn-stopper. Split AC-3 into the follow-up FIX immediately (SPIKE already says 'MINT A FOLLOW-UP FIX') rather than waiting for the full diagnosis timebox.",
         "converge_by": "po-report-triage-20260716T2207Z",
         "ac3_followup": "FIX-BCTC-RECONCILE-EMISSION-CIRCUIT-BREAKER",
-        "ac3_followup_by": "po-report-triage-20260716T2237Z"
+        "ac3_followup_by": "po-report-triage-20260716T2237Z",
+        "ac3_followup_status": "done_verified",
+        "ac3_followup_resolved_to": "docs/data/orch/archive/2026-07.json",
+        "ac3_followup_resolved_at": "2026-07-17T01:23:19Z",
+        "ac3_followup_resolved_by": "po-scoped-triage-20260717",
+        "ac3_followup_resolved_note": "RESOLVED-TO-ARCHIVE — do NOT resurrect. ac3_followup FIX-BCTC-RECONCILE-EMISSION-CIRCUIT-BREAKER completed its full lifecycle (impl e5a70ab44 -> review 4c7f6b0ae -> qa 5b3783f30 verified_at=2026-07-17T00:08:52Z -> cold-evict 04ba446f6) and its canonical DONE_VERIFIED record lives in docs/data/orch/archive/2026-07.json (also transiently in live done_verified[] pending next cold-evict). This FK is NOT dangling — it resolves to the archived done_verified record. A ready[]-only lost-mint recovery scan misreads it as a lost mint (false resurrection commit 9dae10376 caused a no-op ~164k-token dev cycle). Lost-mint recovery MUST skip this FK. Root-cause hardening tracked by FIX-PO-LOSTMINT-RECOVERY-ARCHIVE-SCAN-GUARD."
+      },
+      {
+        "id": "FIX-PO-LOSTMINT-RECOVERY-ARCHIVE-SCAN-GUARD",
+        "type": "FIX",
+        "mode": null,
+        "status": "BACKLOG",
+        "priority": "high",
+        "size": "S",
+        "plan_only": true,
+        "zone": "docs/agents/po/",
+        "owner": "po",
+        "next_agent": "po",
+        "title": "FIX (plan-only): lost-mint recovery heuristic only scans ready[] — a task that finishes its lifecycle and is cold-evicted to archive/*.json while a sibling row still points at it via FK (e.g. SPIKE.ac3_followup) looks dangling to a ready[]-only scan -> false resurrection of a duplicate in_progress row (instance: commit 9dae10376 resurrected FIX-BCTC-RECONCILE-EMISSION-CIRCUIT-BREAKER, router dispatched dev-mcp-server, full no-op ~164k-token cycle on already-done_verified work).",
+        "detail": "Detector false-positive in the PO lost-mint / dangling-FK recovery step. The recovery decision in commit 9dae10376 checked ONLY .task_board.ready[] for the SPIKE's ac3_followup target, found ready[] empty, and concluded the mint was lost -> re-added the id as a fresh READY/in_progress row. It did NOT check docs/data/orch/archive/2026-07.json (nor done/done_verified/review lanes), where the completed DONE_VERIFIED record already lived (verified_by=qa, verified_at=2026-07-17T00:08:52Z; lifecycle e5a70ab44->4c7f6b0ae->5b3783f30->cold-evict 04ba446f6). Note: this recovery is currently emergent PO judgment, NOT a codified script/flow-doc step — so the fix is to codify a FK-resolution guard.",
+        "ac": "AC-1: before resurrecting any task as a dangling-FK / lost-mint recovery, resolve the FK target across ALL of: live lanes ready/in_progress/review/qa/done/done_verified AND every docs/data/orch/archive/*.json record. AC-2: if the FK target resolves to ANY done/done_verified/archived record, DO NOT resurrect — treat the FK as resolved-to-archive (skip). AC-3: only resurrect when the target is absent from live lanes AND absent from all archives. AC-4: codify as a reusable resolver (scripts/po-recovery-fk-resolve.jq or equivalent) + a rule in the PO recovery/reconcile flow-doc, and register it in docs/agents/po/flow/scripts-registry.md. AC-5: guard is idempotent and covers arbitrary sibling FK fields (ac3_followup and any *_followup / parent / derived_from pointer used for recovery). Prior-art cross-ref: no existing backlog row covers this archive-scan gap (checked all lanes 2026-07-17).",
+        "created_at": "2026-07-17T01:23:19Z",
+        "created_by": "po-scoped-triage-20260717",
+        "verify_note": "PLAN-ONLY, minted by scoped PO report-triage 2026-07-17T01:23Z after router RAW-verified the no-op resurrection cycle (commit 9dae10376). Immediate re-recurrence for THIS instance already neutralized by annotating SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD.ac3_followup as resolved-to-archive same tick; this row hardens the CLASS so other archived tasks with sibling FKs are not falsely resurrected. Detector-FP fix (high-value per project norms)."
       }
     ],
     "closed_sprints": [
