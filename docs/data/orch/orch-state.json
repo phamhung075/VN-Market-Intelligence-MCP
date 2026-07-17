@@ -6993,31 +6993,6 @@
         "next_agent": "ba"
       },
       {
-        "id": "VERIFY-FIX-DAILY-FF-VIEW-JOIN-ANCHOR-REALDATA",
-        "type": "VERIFY",
-        "title": "RAW-live real-data verify of FIX-DAILY-FF-VIEW-JOIN-ANCHOR: Class-A serving tool must return the foreign value for an FF-only ticker (daily_foreign_flow row present, NO daily_ohlcv bar for that date) — the exact row class the old daily_ohlcv_with_flow view dropped",
-        "status": "BACKLOG",
-        "priority": "high",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "owner": "qa",
-        "next_agent": "ops",
-        "supervised": true,
-        "parent": "FIX-DAILY-FF-VIEW-JOIN-ANCHOR",
-        "depends": [
-          "FIX-DAILY-FF-VIEW-JOIN-ANCHOR"
-        ],
-        "blocks": [],
-        "sprint": "ARCH-DAILY-FOREIGN-FLOW-TABLE",
-        "source": "PUSH-AUTONOMY-1 step 5 (docs/policies/dev-standards.md § Push Policy — Autonomous Push Gate)",
-        "created_at": "2026-07-14T20:09:28Z",
-        "created_by": "po (router session e417ef1f — post-push REALDATA verify mint)",
-        "precondition": "SINGLE-SERVICE REBUILD+DEPLOY of mcp-server BEFORE this gate can be evaluated — the fix DROP+CREATEs view daily_ohlcv_with_flow (now Shape A bidirectional, UNION ALL both key planes) at mcp-server startup, so the fix does NOT serve until the live container is rebuilt+restarted. Command (executed by ops per OVERRIDE 2026-07-03 — NO user gate): docker compose build mcp-server && docker compose up -d --no-deps mcp-server . CLASSIFIER-DENY FALLBACK: if the permission classifier denies the docker deploy even via ops ONCE, do NOT retry — surface the exact command to the user as: ! docker compose build mcp-server && docker compose up -d --no-deps mcp-server",
-        "verification_gate": "RAW-live, REAL DATA (test-suite green does NOT count — PUSH-AUTONOMY-1 step 5). A Class-A live tool call via gateway ( mcp__gateway__call_tool(server=\"vn-market\", tool=\"marketWideForeignFlow\"|\"foreignFlow\", ...) ) returns the per-ticker foreign value for a ticker that HAS a daily_foreign_flow row but has NO daily_ohlcv bar for that same date (the exact FF-only row class the old anchored view dropped). GATE PASSES only when the live serving response contains that FF-only row's foreign value (non-null, plausibility-checked) — i.e. the 'chua tra so tung ma' symptom is gone against the LIVE deployed container. If no natural FF-only ticker exists at probe time, identify one from the live daily_foreign_flow vs daily_ohlcv key delta before probing.",
-        "note": "Loop-closer for PUSH-AUTONOMY-1: origin/main pushed 2026-07-14 (29f92c5be..e9b9fba6b, 22 commits incl. fix d71f45949); CI GREEN on new head (gh run 29364129967 conclusion=success = ci_green_on_subsequent_push satisfied). Parent FIX-DAILY-FF-VIEW-JOIN-ANCHOR cascade complete: architect cacf5607f -> dev d71f45949 -> qa APPROVE 8e905c31d -> po APPROVED e591d1119. This row is the mandatory step-5 REAL-DATA serving verification: the SERVING layer changed (view is now bidirectional Shape A, DROP+CREATE at startup) so the running container MUST be rebuilt+redeployed (see precondition) before the gate can pass. Two-phase supervised cascade: (1) ops rebuild+deploy mcp-server, (2) qa RAW-live Class-A probe. blocks nothing. DO NOT close on test-suite green — live serving probe only.",
-        "supervised_note": "Two-phase supervised cascade, NOT a BOUNDED-1 atomic dev pick: (1) next_agent=ops executes the rebuild+deploy precondition per OVERRIDE 2026-07-03; (2) owner=qa runs the RAW-live Class-A verification_gate against the deployed container. Router supervised dispatch — removed from idle auto-pickup (supervised:true)."
-      },
-      {
         "id": "FU-DEV-CAFEF-1",
         "type": "SPRINT-S",
         "size": "S",
