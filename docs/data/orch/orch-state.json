@@ -9436,12 +9436,24 @@
           "reports_folded": [
             "3500 PDR 2024-Q1 report_id 8fd1d0f3-72e3-42ff-9b43-923f118689a6 @2026-07-17T05:35:02Z",
             "3501 BSR 2023-Q4 report_id 8948a864-9c0d-4315-88c2-87cce67faada @2026-07-17T05:35:02Z",
-            "3502 DGC 2023-Q4 report_id 2c5e1d70-705c-413f-ac89-583df5cb12b5 @2026-07-17T06:05:02Z"
+            "3502 DGC 2023-Q4 report_id 2c5e1d70-705c-413f-ac89-583df5cb12b5 @2026-07-17T06:05:02Z",
+            "3503 GEX 2023-Q4 report_id 48909a9a-c1d1-45bd-9eaf-3b75c6ae0510 @2026-07-17T08:06:03Z"
           ],
           "hygiene": "all 3 process_telegram_report resolution=duplicate; telegram msgs 3561/3562/3563 deleted; list_unresolved_reports now EMPTY.",
           "expected_benign_rationale": "reports 05:35Z/06:05Z fall inside VN market-hours 02:00-08:00Z where /pek-extract is 503 market_open-guarded and cannot extract; reconcile attempts during market hours STILL exhaust to enrich_failed. This is NOT evidence the PEK re-seed failed. reconcile job is grinding deep 2023-2024 backlog (~1 report/30min tick).",
           "close_verify_ADD": "The pending_proof 09:05Z close-verify MUST also confirm these 3 specific terminal enrich_failed rows recover (PDR 2024-Q1, BSR 2023-Q4, DGC 2023-Q4), not only SAB/VND + new-rows (extends close_caveat: verify terminal enrich_failed backlog recovery).",
-          "circuit_breaker_observation": "AC-3 FIX-BCTC-RECONCILE-EMISSION-CIRCUIT-BREAKER is DONE_VERIFIED+archived, yet post-reseed reconcile still emits ONE fail-loud report per ticker*quarter (3500/3501/3502). Either the breaker's systemic-dormancy heuristic does not treat market-hours-503 as dormant, or it is not deployed to the running mcp-server/analysis-agent. IF the flood persists PAST the 09:05Z post-close proof (producer resumes + rows land yet reports keep emitting one-per-ticker), escalate a breaker deployment/heuristic FIX. Do NOT mint pre-proof (would be churn)."
+          "circuit_breaker_observation": "AC-3 FIX-BCTC-RECONCILE-EMISSION-CIRCUIT-BREAKER is DONE_VERIFIED+archived, yet post-reseed reconcile still emits ONE fail-loud report per ticker*quarter (3500/3501/3502). Either the breaker's systemic-dormancy heuristic does not treat market-hours-503 as dormant, or it is not deployed to the running mcp-server/analysis-agent. IF the flood persists PAST the 09:05Z post-close proof (producer resumes + rows land yet reports keep emitting one-per-ticker), escalate a breaker deployment/heuristic FIX. Do NOT mint pre-proof (would be churn).",
+          "producer_resumption_proof": {
+            "by": "po-report-triage-20260717T0826Z (dev-team tick 2026-07-17T08:07Z)",
+            "at": "2026-07-17T08:26:54Z",
+            "report": "3503 GEX 2023-Q4 reconcile-exhausted @08:06:03Z — 6min post-close straggler; router escalated to disambiguate pre-close-503-straggler vs post-guard-dormant-producer",
+            "verdict": "FOLD (duplicate) — SAME CLASS as 07:07Z PDR/BSR/DGC batch; GEX 8 passes ran pre-08:00Z under 503 market-open guard then exhausted+emitted 6min after close. Producer RAW-confirmed ALIVE post-close.",
+            "pek_extract": "POST /pek-extract = 202 Accepted (guard lifted post-08:00Z VN close); live logs show active page-by-page extraction of FRT_2023_Q4. NOT 503, NOT FileNotFoundError.",
+            "serving_plane": "bctc_layout_units MAX(extracted_at)=2026-07-17 08:20:21 — ADVANCED past 2026-06-10 close-predicate. 78 fresh rows in last 3h (report fad6ab7a, units_stored=78, push_layout OK). RAW via bun:sqlite market.db readonly.",
+            "container_health_note": "pdf-extractor-1 = Up 5h (unhealthy) is BENIGN: healthcheck curl hangs/timeouts under extraction CPU load; /health endpoint itself returns 200 OK in live logs. Not a dead producer.",
+            "close_status": "FIRST HALF of close_predicate (MAX advances past 2026-06-10 + new rows land) PRE-PROVEN at 08:20Z ahead of ~09:05Z tick. SECOND HALF (terminal enrich_failed backlog PDR/BSR/DGC/GEX recovers) STILL PENDING → SPIKE stays in_progress; no false green.",
+            "no_action": "no new dev row minted; ops NOT re-fired (would duplicate in-flight SPIKE)."
+          }
         }
       }
     ]
