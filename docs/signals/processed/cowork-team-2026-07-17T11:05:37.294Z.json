@@ -1,0 +1,34 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "tick_id": "2026-07-17T11:00:00Z",
+    "won_slots": [
+      "refine-bctc-slot-3"
+    ],
+    "spawned": [
+      "refine_bctc_md flow (docs/agents/refine_bctc_md/flow/main.md) — slot refine-bctc-slot-3, background"
+    ],
+    "pressure_mode": "adaptive",
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "refine-bctc-slot-3": "cron"
+    },
+    "cadence_minutes": {
+      "refine-bctc-slot-3": null
+    },
+    "classification": "FIRE",
+    "tick_snapshot_skipped": true,
+    "cycle_snapshot_promoted": false,
+    "note": "WORK tick 11:00Z, adaptive mode. Single non-guaranteed bctc-offmarket slot fired via _cron_fallback (calendar=unknown). Signal drain no-op (0 NEW). CHEF mutex no-op (no chef slot). Tick-snapshot SKIP (single slot) → cycle_snapshot_promoted:false is the tracked UC-SDF-P2 dark-promote gap, not a regression. Slot token claimed+released. last_fired advanced 07-16T11:07:51.428Z→07-17T11:05:10.275Z. Refine worker owns its own get_bctc_pending_refine pick + cover-letter skip logic. published:chef-eod:2026-07-17 leaked marker (prior tick) remains held/untouched per standing rule."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-17T11:05:37.294Z",
+  "_processed": {
+    "fingerprint": "1bd39d841388e9768d7e28c44a21d5508e5591efffafbbea7bb55be0c48615a5",
+    "processedAt": "2026-07-17T11:18:50Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
