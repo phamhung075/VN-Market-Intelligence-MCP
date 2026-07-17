@@ -1,22 +1,22 @@
 # PO Notebook
 
-_Last: 2026-07-17T02:28Z (dev-team tick — triaged report 3495 + drained cowork telemetry; SPRINT-KICKOFF of P0 root SPIKE — 1 board lane-move, 0 mint)_
+_Last: 2026-07-17T04:47Z (router dispatch intent:po:close-verify-ff-realdata — closed 1 supervised verify row backlog→done_verified; 0 mint)_
 
-## Tick 2026-07-17T02:28Z — 3495 duplicate + KICKOFF SPIKE-BCTC-EXTRACTION-DORMANT (decision a)
+## Tick 2026-07-17T04:47Z — CLOSE VERIFY-FIX-DAILY-FF-VIEW-JOIN-ANCHOR-REALDATA (DONE_VERIFIED)
 
-### PRIOR-ART FIRST (grepped board ALL lanes + processed-signals + my carry-over BEFORE any write)
-- Root row = `SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD` [was backlog[386]/P0/plan_only, owner dev-mcp-server]. AC-3 (circuit-breaker `FIX-BCTC-RECONCILE-EMISSION-CIRCUIT-BREAKER`) already DONE_VERIFIED+archived (2026-07.json) — do NOT resurrect. Only AC-1 (infra-rollback) + AC-2 (dormancy) live.
-- No competing infra-rollback/restore/named-volume row exists (grep matched only incidental substrings). Durable fix `FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP` (backlog[281]) still parked, NOT in-flight. No dormancy/extraction row in review[]/in_progress — root genuinely un-worked.
+### SINGLE FOCUSED CLOSE (router pre-RAW-verified; do NOT re-probe)
+- Row was `backlog[]` status BACKLOG supervised:true (removed from idle auto-pickup) — PUSH-AUTONOMY-1 step-5 real-data serving verify, terminal step of FIX-DAILY-FF-VIEW-JOIN-ANCHOR cascade (architect cacf5607f → dev d71f45949 → qa 8e905c31d → po e591d1119).
+- Gate = RAW-live REAL-DATA serving (test-green does NOT count). Ops probe 2026-07-17T04:45Z, router RAW-verified trail. Evidence commit **b76343903**, 158L ops.md log § "VERIFY-FIX-DAILY-FF-VIEW-JOIN-ANCHOR-REALDATA: RAW-Live Class-A Serving Probe". Verdict PASS.
+- RAW value: `SELECT * FROM daily_ohlcv_with_flow WHERE code='DAG' AND date='2026-07-17'` → 1 row (old anchored view=0); price cols NULL (honest, no OHLCV bar); foreign_buy/sell/net_vol=0 (REAL not NULL); updated_at=2026-07-17T04:39:56.590Z. Coverage view 766 vs daily_ohlcv 763 → diff 3 = exact FF-only set DAG/SMA/STG. Class-A get_market_foreign_flow queries view OK.
 
-### DISPOSITIONS
-- **3495** [bctcExtractReconcile] VIX 2024-Q1 RECONCILE EXHAUSTED 0-rows/8-passes enrich_failed = SAME class as 3494 SHB (last tick), 3480/3481/3482 — symptom of the dormant-producer P0. process_telegram_report(3495, duplicate, delete=true) → processed:true, msg 3556 deleted. status=new now empty.
-- **Drained signal** cowork-team-…02:04:41.903Z → to:system-auditor type:cowork-tick-fire = cowork dispatcher heartbeat telemetry (slots_fired alert-commander-market, headroom 3316MB, pressure primary). Already `_processed` (routed-to-po) + moved to processed/. system-auditor is NOT a routable dev target → mis-addressed telemetry. Non-actionable, dismissed. NO board write.
+### BOARD WRITE (jq -f | orch-apply.sh — ONE transform, touched ONLY this row)
+- backlog 388→387, done_verified 0→1. status DONE_VERIFIED, supervised:false, embedded `.verification.raw_probe{tool,args,live_value_observed,observed_at}` + verdict PASS + evidence_commit b76343903.
+- Validator Stage0+1 PASS; conservation task_total 528=528 (pure move); .head + all other lanes byte-identical (diff confirmed); SPIKE-BCTC-DORMANT + ALPHA/supervised rows untouched.
 
-### DECISION (a) SPRINT-KICKOFF — recurring-bug-2+ escalation, fleet idle, no deferral gate
-- 2nd+ reconcile-exhausted duplicate in consecutive ticks = churn-without-convergence treadmill; AC-3 done, so AC-1+AC-2 are the ONLY convergence lever. Fleet idle (in_progress=0, ready=0, head idle) → no WIP gate. Deferral (b) rejected: no concrete gate (no dep, no ops/user gate — the infra probe IS what determines if a gate exists).
-- BOARD write (jq | orch-apply.sh): lane-move backlog→ready[], status=READY, del(plan_only), owner/next_agent=ops, +.kickoff{ordered_ac_dispatch}. AC-1=ops (order 1, critical-path: RAW evidence shows extraction maxes REGRESSED 07-12→07-16 ⇒ named-volume rollback strongly implied; if confirmed ⇒ RESTORE .backups). AC-2=dev-mcp-server +dev-pdf-extractor assist (order 2, depends_on AC-1; fold to REFINE-DURABLE-TRIGGER-BACKSTOP if refine-trigger dormant). Validator PASS, conservation task_total 527=527 (lane-move, 0 mint), head untouched idle/router. Decision record = the .kickoff annotation (not marking DONE/REVIEW → no separate decision_journal entry).
+### CAVEAT (recorded on row, NO new backlog row — PO judgment)
+- get_foreign_flow(code='DAG') → "No data available" for the zero-volume FF-only row. Plausibly by-design zero-vol filtering in that per-ticker tool. View-level + Class-A aggregate proof satisfies the gate; individual-ticker drill-down of FF-only zero-vol rows UNPROVEN. Low severity, likely correct-by-design → caveat on closed row, not a dedicated mint.
 
 ## Carry-over
-- SPIKE now READY/ops in ready[] — router will dispatch ops for AC-1 next. Watch: ops finishes AC-1 → MUST hand AC-2 to dev-mcp-server (encoded in .kickoff.ordered_ac_dispatch). If AC-1 finds a named-volume wipe → data-loss incident, ops/user-gated RESTORE from .backups (feedback_vm_rebuild_destroys_named_volumes).
-- Reconcile-exhausted duplicates keep arriving ~1/tick until AC-1/AC-2 converge → keep archiving as duplicate under the SPIKE; the kickoff is the convergence step. Do NOT re-mint SPIKE-BCTC-*/FIX-BCTC-* or resurrect the archived circuit-breaker.
-- Committed MY paths only (orch-state.json + po.md); did NOT touch peer cowork churn or clean po-decisions.md.
+- Row is DONE_VERIFIED terminal; PUSH-AUTONOMY-1 loop for FIX-DAILY-FF-VIEW-JOIN-ANCHOR fully closed. Do NOT re-open or re-probe.
+- If a future consumer needs per-ticker FF-only drill-down and hits get_foreign_flow "No data available", the caveat on the closed row is the pointer — confirm by-design vs bug THEN (only if bug) mint.
+- Committed MY paths only (orch-state.json + po.md + decisions/sprint-ARCH-DAILY-FOREIGN-FLOW-TABLE-po.md). Did NOT touch peer po sessions' held rows (uc-audit-priority-bump, elevate-token-economy-sprint).
