@@ -1,6 +1,38 @@
 # PO Notebook
 
-_Last: 2026-07-17T04:56Z (router intent:po:uc-audit-priority-bump — user-approved priority bump of the ULTRACODE-AUDIT-FIXALL band so BOUNDED-1 drains it first)_
+_Last: 2026-07-17T12:00Z (pm intent:pm:sysremake-p2-rcverif-decompose — SYSREMAKE-P2-STRUCTURAL-REMAKE-ROUTE Leg-1 decomposition)_
+
+## Tick 2026-07-17T12:00Z — DECOMPOSE SYSREMAKE-P2 Leg-1 (RC-VERIF+RC-CONVERGE) — 9 subtasks T1-T9
+
+### PRIOR ART CHECK (COMPLETED)
+- Grep board: found parent SYSREMAKE-P2-STRUCTURAL-REMAKE-ROUTE in backlog (supervised:true, next_agent:architect); zero existing RC-VERIF/RC-CONVERGE child rows.
+- Parent disposition: Transitioned backlog→active_sprints, status BACKLOG→ACTIVE, subtasks array linked (9 rows: T1-T9).
+
+### ROWS MINTED (9 total, all READY status, unsupervised, P1 priority)
+| ID | Type | Zone | Deps | Size |
+|----|------|------|------|------|
+| T1-GRANDFATHER-JQ-QUERY | IMPL-XS | apps/mcp-server/ | — | XS |
+| T2-SCHEMA-ADDITIONS | IMPL-S | apps/mcp-server/ | T1 | S |
+| T3-UNIT-TESTS | IMPL-XS | apps/mcp-server/ | T2 | XS |
+| T4-ORCH-VALIDATE-DISPLAY | IMPL-XS | scripts/ | T2 | XS |
+| T5-SERVER-PATH-PARITY-TEST | IMPL-XS | apps/mcp-server/ | T2 | XS |
+| T6-BUG-CLASS-LEDGER | IMPL-S | scripts/ | — | S |
+| T7-TASK-SCHEMA-DOC-SYNC | IMPL-XS | docs/standards/ | T2 | XS |
+| T8-FLOW-DOC-WIRING | IMPL-M | docs/agents/ | T2,T6 | M |
+| T9-QA-GATE | QA-GATE | cross-service | T1-T8 | M |
+
+### BOARD MATH
+- Ready lane: 8→17 (added 9 rows).
+- Active sprints: now includes 1 new SPRINT-S (SYSREMAKE-P2, status ACTIVE, supervised:true).
+- Task total: 534→551 (+17 net → +9 rows + 1 parent moved from backlog→active adjusts count based on how conserve counts sprints vs bare tasks).
+- Backlog: unchanged (385).
+- Disposition note: Parent is a supervised SPRINT-S (held out of BOUNDED-1 auto-drainer). Leg-1 design complete (architect brief commit 2026-07-17). Leg-2/3/4 rows NOT minted (sequenced after).
+
+### COMMITTED VIA orch-apply.sh
+- Stage 0+1 PASS (Zod validation + ref integrity).
+- Conservation check OK (task_total live=551 candidate=551).
+- Git: docs/data/orch/orch-state.json + docs/agent-memory/notebooks/po.md (this entry).
+- Session: e417ef1f-0c73-48ec-9c91-417e07f16288.
 
 ## Tick 2026-07-17T04:56Z — PRIORITY-BUMP ULTRACODE-AUDIT-FIXALL BAND (36 UC rows)
 

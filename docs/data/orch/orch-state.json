@@ -623,8 +623,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-17T03:04:26Z",
-    "_updated_by": "po-scoped-triage-20260717 (SPIKE refine-fold + mint FIX-INFRA-CRITICAL-VOLUME-PRESENCE-HEALTHCHECK PLAN-ONLY)",
+    "_updated_at": "2026-07-17T12:00:00Z",
+    "_updated_by": "pm (decompose SYSREMAKE-P2-STRUCTURAL-REMAKE-ROUTE Leg-1, session e417ef1f)",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -2555,6 +2555,191 @@
           "CCATO-MCP-T6-TOOL-REGISTRATION",
           "CCATO-MCP-T7-SKILL-DUAL-PATH",
           "CCATO-MCP-T8-DOD-HARNESS"
+        ]
+      },
+      {
+        "id": "SYSREMAKE-P2-STRUCTURAL-REMAKE-ROUTE",
+        "type": "SPRINT-S",
+        "status": "ACTIVE",
+        "size": "S",
+        "zone": "multi",
+        "priority": "P1",
+        "title": "Phase-2 structural-remake ROUTE (design-first, architect TECH doc FIRST): RC-VERIF+RC-CONVERGE (extend orch-apply.sh->orch-validate.mjs Zod .superRefine to require verification.raw_probe{tool,args,live_value_observed,observed_at} before DONE_VERIFIED + add DEGRADED 8th StatusEnum value w/ honest_gap_reason + re-encode convergence as LIVE bug_class-fingerprint mechanism replacing dead recurringBugEscalationFlag) -> RC-ORCHMONO (orch-cold-evict.sh backlog-lane eviction + orch-apply.sh HOT CEILING ~600KB gate) -> RC-GITSTATE (per-ticker stamping fix + gitignore pure-derived counters) -> RC-CEREMONY (SF-1 re-entrancy + shared tick-preflight-lib).",
+        "next_agent": null,
+        "supervised": true,
+        "note": "[PO 2026-07-15 coordination_session e417ef1f] USER GO — FULL AUTHORIZATION. This sprint mints Leg-1 (RC-VERIF+RC-CONVERGE) subtasks: T1-T9 per architecture brief §9. Leg-1 design complete (architect TECH doc 2026-07-17-sysremake-p2-rcverif-rcconverge.md commit 2026-07-17). Sequence: T1→T2 serial (grandfather must exist before gate). T3/T4/T5 parallel (consume T2). T6 independent. T7 after T2. T8 needs T2+T6. T9 gates all. See brief §9 for full dependency DAG.",
+        "tasks": [
+          {
+            "id": "SYSREMAKE-P2-T1-GRANDFATHER-JQ-QUERY",
+            "type": "IMPL-XS",
+            "status": "READY",
+            "size": "XS",
+            "zone": "apps/mcp-server/",
+            "priority": "P1",
+            "title": "Run grandfather-id jq query (§2.5) against LIVE hot file at implementation time",
+            "depends": [],
+            "next_agent": "developer",
+            "supervised": false,
+            "note": "Must run immediately before T2, not days later — the set can grow between brief-authoring and implementation.",
+            "updated_at": "2026-07-17T12:00:00Z",
+            "updated_by": "pm (decompose SYSREMAKE-P2 Leg-1, session e417ef1f)"
+          },
+          {
+            "id": "SYSREMAKE-P2-T2-SCHEMA-ADDITIONS",
+            "type": "IMPL-S",
+            "status": "READY",
+            "size": "S",
+            "zone": "apps/mcp-server/",
+            "priority": "P1",
+            "title": "Add RawProbeSchema/VerificationSchema, verification/bug_class fields, DEGRADED StatusEnum, LANE_ALLOWED_STATUSES entries, extend root .superRefine() (§2.1-§2.4)",
+            "depends": [
+              "SYSREMAKE-P2-T1-GRANDFATHER-JQ-QUERY"
+            ],
+            "next_agent": "developer",
+            "supervised": false,
+            "note": "Core schema change — embed frozen grandfather-id set from T1.",
+            "updated_at": "2026-07-17T12:00:00Z",
+            "updated_by": "pm (decompose SYSREMAKE-P2 Leg-1, session e417ef1f)"
+          },
+          {
+            "id": "SYSREMAKE-P2-T3-UNIT-TESTS",
+            "type": "IMPL-XS",
+            "status": "READY",
+            "size": "XS",
+            "zone": "apps/mcp-server/",
+            "priority": "P1",
+            "title": "Unit tests V1-V5, D1-D2, T1 in orchStateSchema.test.ts (§6)",
+            "depends": [
+              "SYSREMAKE-P2-T2-SCHEMA-ADDITIONS"
+            ],
+            "next_agent": "developer",
+            "supervised": false,
+            "note": "Follow existing M1..M4/E1..E2 naming convention in the same file.",
+            "updated_at": "2026-07-17T12:00:00Z",
+            "updated_by": "pm (decompose SYSREMAKE-P2 Leg-1, session e417ef1f)"
+          },
+          {
+            "id": "SYSREMAKE-P2-T4-ORCH-VALIDATE-DISPLAY",
+            "type": "IMPL-XS",
+            "status": "READY",
+            "size": "XS",
+            "zone": "scripts/",
+            "priority": "P1",
+            "title": "orch-validate.mjs STATUS_ENUM_DISPLAY update + test-orch-validate-ac.mjs AC-5 (§6)",
+            "depends": [
+              "SYSREMAKE-P2-T2-SCHEMA-ADDITIONS"
+            ],
+            "next_agent": "developer",
+            "supervised": false,
+            "updated_at": "2026-07-17T12:00:00Z",
+            "updated_by": "pm (decompose SYSREMAKE-P2 Leg-1, session e417ef1f)"
+          },
+          {
+            "id": "SYSREMAKE-P2-T5-SERVER-PATH-PARITY-TEST",
+            "type": "IMPL-XS",
+            "status": "READY",
+            "size": "XS",
+            "zone": "apps/mcp-server/",
+            "priority": "P1",
+            "title": "Server-path parity test (writeOrchStateAtomic fabrication-rejection, §6)",
+            "depends": [
+              "SYSREMAKE-P2-T2-SCHEMA-ADDITIONS"
+            ],
+            "next_agent": "developer",
+            "supervised": false,
+            "note": "Proves §1's single-source claim structurally.",
+            "updated_at": "2026-07-17T12:00:00Z",
+            "updated_by": "pm (decompose SYSREMAKE-P2 Leg-1, session e417ef1f)"
+          },
+          {
+            "id": "SYSREMAKE-P2-T6-BUG-CLASS-LEDGER",
+            "type": "IMPL-S",
+            "status": "READY",
+            "size": "S",
+            "zone": "scripts/",
+            "priority": "P1",
+            "title": "scripts/bug-class-recurrence-check.sh + bug-class-recurrence-check.test.sh (§3.3)",
+            "depends": [],
+            "next_agent": "developer",
+            "supervised": false,
+            "note": "Independent of T1-T5; RC-CONVERGE is schema-independent except for reading bug_class/DONE_VERIFIED fields T2 adds.",
+            "updated_at": "2026-07-17T12:00:00Z",
+            "updated_by": "pm (decompose SYSREMAKE-P2 Leg-1, session e417ef1f)"
+          },
+          {
+            "id": "SYSREMAKE-P2-T7-TASK-SCHEMA-DOC-SYNC",
+            "type": "IMPL-XS",
+            "status": "READY",
+            "size": "XS",
+            "zone": "docs/standards/",
+            "priority": "P1",
+            "title": "docs/standards/task-schema.md status table sync (7→13 values) + verification/bug_class docs (§2.6)",
+            "depends": [
+              "SYSREMAKE-P2-T2-SCHEMA-ADDITIONS"
+            ],
+            "next_agent": "developer",
+            "supervised": false,
+            "note": "Doc-only, pre-existing drift, opportunistic fix while the file is the governance reference.",
+            "updated_at": "2026-07-17T12:00:00Z",
+            "updated_by": "pm (decompose SYSREMAKE-P2 Leg-1, session e417ef1f)"
+          },
+          {
+            "id": "SYSREMAKE-P2-T8-FLOW-DOC-WIRING",
+            "type": "IMPL-M",
+            "status": "READY",
+            "size": "M",
+            "zone": "docs/agents/",
+            "priority": "P1",
+            "title": "Flow-doc wiring: qa/fixer/pm/po flows + verification.raw_probe before DONE_VERIFIED, DEGRADED+honest_gap, auto-lift (§3.4, §2.7) (agent-father owned)",
+            "depends": [
+              "SYSREMAKE-P2-T2-SCHEMA-ADDITIONS",
+              "SYSREMAKE-P2-T6-BUG-CLASS-LEDGER"
+            ],
+            "next_agent": "agent-father",
+            "supervised": false,
+            "note": "Per parent brief §5 ownership table — thin flow-doc/persona edits only, not architect/developer territory.",
+            "updated_at": "2026-07-17T12:00:00Z",
+            "updated_by": "pm (decompose SYSREMAKE-P2 Leg-1, session e417ef1f)"
+          },
+          {
+            "id": "SYSREMAKE-P2-T9-QA-GATE",
+            "type": "QA-GATE",
+            "status": "READY",
+            "size": "M",
+            "zone": "cross-service",
+            "priority": "P1",
+            "title": "QA gate: run T3/T5/T6 test suites + orch-validate AC-1..AC-5 + orch-apply wrapper tests (§6)",
+            "depends": [
+              "SYSREMAKE-P2-T1-GRANDFATHER-JQ-QUERY",
+              "SYSREMAKE-P2-T2-SCHEMA-ADDITIONS",
+              "SYSREMAKE-P2-T3-UNIT-TESTS",
+              "SYSREMAKE-P2-T4-ORCH-VALIDATE-DISPLAY",
+              "SYSREMAKE-P2-T5-SERVER-PATH-PARITY-TEST",
+              "SYSREMAKE-P2-T6-BUG-CLASS-LEDGER",
+              "SYSREMAKE-P2-T7-TASK-SCHEMA-DOC-SYNC",
+              "SYSREMAKE-P2-T8-FLOW-DOC-WIRING"
+            ],
+            "next_agent": "qa",
+            "supervised": false,
+            "note": "Standard merge gate, RAW-verify not badges.",
+            "updated_at": "2026-07-17T12:00:00Z",
+            "updated_by": "pm (decompose SYSREMAKE-P2 Leg-1, session e417ef1f)"
+          }
+        ],
+        "brief_ref": "docs/architecture-briefs/2026-07-17-sysremake-p2-rcverif-rcconverge.md",
+        "brief_status": "DESIGN_PHASE_COMPLETE",
+        "updated_at": "2026-07-17T12:00:00Z",
+        "updated_by": "pm (decompose SYSREMAKE-P2 Leg-1, session e417ef1f)",
+        "subtasks": [
+          "SYSREMAKE-P2-T1-GRANDFATHER-JQ-QUERY",
+          "SYSREMAKE-P2-T2-SCHEMA-ADDITIONS",
+          "SYSREMAKE-P2-T3-UNIT-TESTS",
+          "SYSREMAKE-P2-T4-ORCH-VALIDATE-DISPLAY",
+          "SYSREMAKE-P2-T5-SERVER-PATH-PARITY-TEST",
+          "SYSREMAKE-P2-T6-BUG-CLASS-LEDGER",
+          "SYSREMAKE-P2-T7-TASK-SCHEMA-DOC-SYNC",
+          "SYSREMAKE-P2-T8-FLOW-DOC-WIRING",
+          "SYSREMAKE-P2-T9-QA-GATE"
         ]
       }
     ],
@@ -6270,30 +6455,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-BACKLOG-TERMINAL-ROW-DRIFT-EVICT-BLIND"
       },
       {
-        "id": "SYSREMAKE-P2-STRUCTURAL-REMAKE-ROUTE",
-        "title": "Phase-2 structural-remake ROUTE (design-first, architect TECH doc FIRST): RC-VERIF+RC-CONVERGE (extend orch-apply.sh->orch-validate.mjs Zod .superRefine to require verification.raw_probe{tool,args,live_value_observed,observed_at} before DONE_VERIFIED + add DEGRADED 8th StatusEnum value w/ honest_gap_reason + re-encode convergence as LIVE bug_class-fingerprint mechanism replacing dead recurringBugEscalationFlag) -> RC-ORCHMONO (orch-cold-evict.sh backlog-lane eviction + orch-apply.sh HOT CEILING ~600KB gate) -> RC-GITSTATE (per-ticker stamping fix + gitignore pure-derived counters) -> RC-CEREMONY (SF-1 re-entrancy + shared tick-preflight-lib).",
-        "status": "BACKLOG",
-        "zone": "multi",
-        "type": "FIX",
-        "priority": "high",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#SYSREMAKE-P2-STRUCTURAL-REMAKE-ROUTE",
-        "audit_ref": {
-          "audit": "ultracode-2026-07-12",
-          "verdict": "coordinate RC-GITSTATE with UC-GCP-P2 + UC-GCP-P8",
-          "note": "RC-GITSTATE owns tool-usage-stats.json/coverage-state.json gitignore. UC-GCP-P2 untracks signals.db+logs+debris; UC-GCP-P8 stranded-state-sweep skips modules/*.json (RC-GITSTATE-owned). When RC-GITSTATE untracks a path it drops out of porcelain and the sweep needs no change.",
-          "refs": [
-            "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#git-ci-publish-P2",
-            "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#git-ci-publish-P8"
-          ]
-        },
-        "note": "[PO 2026-07-15 coordination_session e417ef1f] USER GO — explicit user selection via router AskUserQuestion; NOT a gate-jump. FULL AUTHORIZATION of the ENTIRE Phase-2 structural-remake route. PROVENANCE (both decision dates preserved): RC-VERIF + RC-CONVERGE authorized 2026-07-14 (DECISION-3, session e417ef1f) — the orch-apply->orch-validate.mjs completion gate (require verification.raw_probe{tool,args,live_value_observed,observed_at} before DONE_VERIFIED) + the DEGRADED 8th StatusEnum value (honest_gap_reason) + the recurring-bug re-arm (re-encode convergence as a LIVE bug_class-fingerprint mechanism replacing the dead recurringBugEscalationFlag). RC-ORCHMONO (orch-cold-evict.sh backlog-lane eviction + orch-apply.sh HOT CEILING ~600KB gate), RC-GITSTATE (per-ticker stamping fix + gitignore pure-derived counters — coordinate with UC-GCP-P2/UC-GCP-P8 per audit_ref), RC-CEREMONY (SF-1 re-entrancy + shared tick-preflight-lib) authorized 2026-07-15 (same session, router AskUserQuestion). Runs as a SUPERVISED architect-led cascade (design-first: architect TECH doc FIRST); supervised:true holds it OUT of the BOUNDED-1 auto-drainer — deliberate router/PO dispatch. Sequence per title: RC-VERIF+RC-CONVERGE -> RC-ORCHMONO -> RC-GITSTATE -> RC-CEREMONY. OVERLAP: TE-T15 (cold-evict) sits in RC-ORCHMONO's territory — TE-T15 stays sequenced AFTER/WITHIN RC-ORCHMONO; do NOT let either proceed independently (the overlap coordination rule STANDS; only the blocking USER GATE is now resolved).",
-        "supervised": true,
-        "next_agent": "architect",
-        "authorization": "FULL: all RC items authorized — RC-VERIF+RC-CONVERGE 2026-07-14 (DECISION-3) + RC-ORCHMONO/RC-GITSTATE/RC-CEREMONY 2026-07-15, explicit user selection via router AskUserQuestion session e417ef1f. Supervised architect-led, design-first (architect TECH doc FIRST), sequenced per title: RC-VERIF+RC-CONVERGE -> RC-ORCHMONO -> RC-GITSTATE -> RC-CEREMONY.",
-        "updated_at": "2026-07-15T04:26:28Z",
-        "updated_by": "po (FULL authorization — entire Phase-2 route; user selection via router AskUserQuestion e417ef1f 2026-07-15)"
-      },
-      {
         "id": "P1-DETECTOR-CLOSURE-TASK-ARCHIVE",
         "title": "RC-DETECTOR §1.2: pm/flow/task-archive.md — on DONE_VERIFIED w/ origin_signal_id, flip signal_queue row READ->RESOLVED",
         "status": "BACKLOG",
@@ -8471,6 +8632,162 @@
         "supervised": false,
         "updated_at": "2026-07-17T04:53:14ZZ",
         "updated_by": "pm (decompose SPRINT-CCATO-TRUTHGATE-MCP-NATIVE)"
+      },
+      {
+        "id": "SYSREMAKE-P2-T1-GRANDFATHER-JQ-QUERY",
+        "type": "IMPL-XS",
+        "status": "READY",
+        "size": "XS",
+        "zone": "apps/mcp-server/",
+        "priority": "P1",
+        "title": "Run grandfather-id jq query (§2.5) against LIVE hot file at implementation time",
+        "depends": [],
+        "next_agent": "developer",
+        "supervised": false,
+        "note": "Must run immediately before T2, not days later — the set can grow between brief-authoring and implementation.",
+        "updated_at": "2026-07-17T12:00:00Z",
+        "updated_by": "pm (decompose SYSREMAKE-P2 Leg-1, session e417ef1f)"
+      },
+      {
+        "id": "SYSREMAKE-P2-T2-SCHEMA-ADDITIONS",
+        "type": "IMPL-S",
+        "status": "READY",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "priority": "P1",
+        "title": "Add RawProbeSchema/VerificationSchema, verification/bug_class fields, DEGRADED StatusEnum, LANE_ALLOWED_STATUSES entries, extend root .superRefine() (§2.1-§2.4)",
+        "depends": [
+          "SYSREMAKE-P2-T1-GRANDFATHER-JQ-QUERY"
+        ],
+        "next_agent": "developer",
+        "supervised": false,
+        "note": "Core schema change — embed frozen grandfather-id set from T1.",
+        "updated_at": "2026-07-17T12:00:00Z",
+        "updated_by": "pm (decompose SYSREMAKE-P2 Leg-1, session e417ef1f)"
+      },
+      {
+        "id": "SYSREMAKE-P2-T3-UNIT-TESTS",
+        "type": "IMPL-XS",
+        "status": "READY",
+        "size": "XS",
+        "zone": "apps/mcp-server/",
+        "priority": "P1",
+        "title": "Unit tests V1-V5, D1-D2, T1 in orchStateSchema.test.ts (§6)",
+        "depends": [
+          "SYSREMAKE-P2-T2-SCHEMA-ADDITIONS"
+        ],
+        "next_agent": "developer",
+        "supervised": false,
+        "note": "Follow existing M1..M4/E1..E2 naming convention in the same file.",
+        "updated_at": "2026-07-17T12:00:00Z",
+        "updated_by": "pm (decompose SYSREMAKE-P2 Leg-1, session e417ef1f)"
+      },
+      {
+        "id": "SYSREMAKE-P2-T4-ORCH-VALIDATE-DISPLAY",
+        "type": "IMPL-XS",
+        "status": "READY",
+        "size": "XS",
+        "zone": "scripts/",
+        "priority": "P1",
+        "title": "orch-validate.mjs STATUS_ENUM_DISPLAY update + test-orch-validate-ac.mjs AC-5 (§6)",
+        "depends": [
+          "SYSREMAKE-P2-T2-SCHEMA-ADDITIONS"
+        ],
+        "next_agent": "developer",
+        "supervised": false,
+        "updated_at": "2026-07-17T12:00:00Z",
+        "updated_by": "pm (decompose SYSREMAKE-P2 Leg-1, session e417ef1f)"
+      },
+      {
+        "id": "SYSREMAKE-P2-T5-SERVER-PATH-PARITY-TEST",
+        "type": "IMPL-XS",
+        "status": "READY",
+        "size": "XS",
+        "zone": "apps/mcp-server/",
+        "priority": "P1",
+        "title": "Server-path parity test (writeOrchStateAtomic fabrication-rejection, §6)",
+        "depends": [
+          "SYSREMAKE-P2-T2-SCHEMA-ADDITIONS"
+        ],
+        "next_agent": "developer",
+        "supervised": false,
+        "note": "Proves §1's single-source claim structurally.",
+        "updated_at": "2026-07-17T12:00:00Z",
+        "updated_by": "pm (decompose SYSREMAKE-P2 Leg-1, session e417ef1f)"
+      },
+      {
+        "id": "SYSREMAKE-P2-T6-BUG-CLASS-LEDGER",
+        "type": "IMPL-S",
+        "status": "READY",
+        "size": "S",
+        "zone": "scripts/",
+        "priority": "P1",
+        "title": "scripts/bug-class-recurrence-check.sh + bug-class-recurrence-check.test.sh (§3.3)",
+        "depends": [],
+        "next_agent": "developer",
+        "supervised": false,
+        "note": "Independent of T1-T5; RC-CONVERGE is schema-independent except for reading bug_class/DONE_VERIFIED fields T2 adds.",
+        "updated_at": "2026-07-17T12:00:00Z",
+        "updated_by": "pm (decompose SYSREMAKE-P2 Leg-1, session e417ef1f)"
+      },
+      {
+        "id": "SYSREMAKE-P2-T7-TASK-SCHEMA-DOC-SYNC",
+        "type": "IMPL-XS",
+        "status": "READY",
+        "size": "XS",
+        "zone": "docs/standards/",
+        "priority": "P1",
+        "title": "docs/standards/task-schema.md status table sync (7→13 values) + verification/bug_class docs (§2.6)",
+        "depends": [
+          "SYSREMAKE-P2-T2-SCHEMA-ADDITIONS"
+        ],
+        "next_agent": "developer",
+        "supervised": false,
+        "note": "Doc-only, pre-existing drift, opportunistic fix while the file is the governance reference.",
+        "updated_at": "2026-07-17T12:00:00Z",
+        "updated_by": "pm (decompose SYSREMAKE-P2 Leg-1, session e417ef1f)"
+      },
+      {
+        "id": "SYSREMAKE-P2-T8-FLOW-DOC-WIRING",
+        "type": "IMPL-M",
+        "status": "READY",
+        "size": "M",
+        "zone": "docs/agents/",
+        "priority": "P1",
+        "title": "Flow-doc wiring: qa/fixer/pm/po flows + verification.raw_probe before DONE_VERIFIED, DEGRADED+honest_gap, auto-lift (§3.4, §2.7) (agent-father owned)",
+        "depends": [
+          "SYSREMAKE-P2-T2-SCHEMA-ADDITIONS",
+          "SYSREMAKE-P2-T6-BUG-CLASS-LEDGER"
+        ],
+        "next_agent": "agent-father",
+        "supervised": false,
+        "note": "Per parent brief §5 ownership table — thin flow-doc/persona edits only, not architect/developer territory.",
+        "updated_at": "2026-07-17T12:00:00Z",
+        "updated_by": "pm (decompose SYSREMAKE-P2 Leg-1, session e417ef1f)"
+      },
+      {
+        "id": "SYSREMAKE-P2-T9-QA-GATE",
+        "type": "QA-GATE",
+        "status": "READY",
+        "size": "M",
+        "zone": "cross-service",
+        "priority": "P1",
+        "title": "QA gate: run T3/T5/T6 test suites + orch-validate AC-1..AC-5 + orch-apply wrapper tests (§6)",
+        "depends": [
+          "SYSREMAKE-P2-T1-GRANDFATHER-JQ-QUERY",
+          "SYSREMAKE-P2-T2-SCHEMA-ADDITIONS",
+          "SYSREMAKE-P2-T3-UNIT-TESTS",
+          "SYSREMAKE-P2-T4-ORCH-VALIDATE-DISPLAY",
+          "SYSREMAKE-P2-T5-SERVER-PATH-PARITY-TEST",
+          "SYSREMAKE-P2-T6-BUG-CLASS-LEDGER",
+          "SYSREMAKE-P2-T7-TASK-SCHEMA-DOC-SYNC",
+          "SYSREMAKE-P2-T8-FLOW-DOC-WIRING"
+        ],
+        "next_agent": "qa",
+        "supervised": false,
+        "note": "Standard merge gate, RAW-verify not badges.",
+        "updated_at": "2026-07-17T12:00:00Z",
+        "updated_by": "pm (decompose SYSREMAKE-P2 Leg-1, session e417ef1f)"
       }
     ],
     "review": [
