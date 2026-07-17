@@ -6672,6 +6672,12 @@
           "by": "po-tnb-c109-triage",
           "datum": "F-CHEF-EOD-DORMANT-0714 (HIGH): chef-eod guaranteed slot did NOT fire 2026-07-14 (last_fired stuck 2026-07-13T08:55:03Z, cron 45 8 * * 1-5). RAW-verified in docs/data/cowork-schedule.json: chef-eod _superseded_by=cowork-dispatcher (same undeliverable-supersede symptom this SPIKE tracks). NARROWING vs 07-09/07-10 3-slot miss: today ONLY chef-eod missed — chef-morning (05:26Z) + chef-evening (19:48Z) both fired. chef-eod carries depends_on=foreignFlowAlertJob:08:13:UTC (24-min upstream gate) — plausible dependency-chain stall, ops/dev diagnosis not TNB's. Delivery-side mitigation OPS-COWORK-GUARANTEED-SLOT-INSTALL is in review[] (launchd firer) — this SPIKE remains the root-cause investigation.",
           "source": "docs/handoffs/tnb-audit-latest.md#F-CHEF-EOD-DORMANT-0714"
+        },
+        "tnb_recurrence_c112": {
+          "at": "2026-07-17T20:57:55Z",
+          "by": "po-tnb-c112-triage",
+          "datum": "F-CHEF-EOD-DORMANT-0717 (HIGH) — tnb c112: chef-eod is now 4th CONSECUTIVE business-day unhealthy (07-14 dormant, 07-15 dormant, 07-16 phantom-fire, 07-17 dormant-signature-again), alternating between 2 distinct failure modes. RECONCILIATION (deeper peer-session source, cross-plane): 07-17's stale last_fired (stuck 2026-07-16T08:52:50.457Z) is NOT true non-dispatch — the agent DID claim the publish marker (08:50:19Z) + bootstrap (08:50:24Z), gathered Steps 0-1 (22 tool calls / 144.6k tok), then bailed pre-publish, LEAKING the marker (published:chef-eod:2026-07-17) as a false tombstone. So 07-17 belongs to the FIX-CHEF-MIDFLOW-BAIL-DETERMINISM class (P1, recurring recurrence_count=2, supervised, next_agent=agent-father) + the FIX-COWORK-LASTFIRED-DECOUPLE-FROM-DELIVERY false-green class, NOT this dispatcher-wide SPIKE. This SPIKE still owns the TRUE non-dispatch mode (07-14/07-15). tnb recommends priority review on escalating recurrence; PO HOLDS priority=high (already) + supervised — do NOT auto-promote (this is the root-cause investigation, not a live same-day fix; the two agent-side modes are already max-escalated on their own P1 rows).",
+          "source": "docs/handoffs/tnb-audit-latest.md#F-CHEF-EOD-DORMANT-0717"
         }
       },
       {
@@ -7372,7 +7378,15 @@
         "supervised": true,
         "supervised_at": "2026-07-16T17:02:01Z",
         "supervised_by": "po (autolaunch_safety_hold adjudication, dev-team 16:37Z)",
-        "supervised_note": "BOUNDED-1 stopgap: plan_only design/spec ask with a non-dev board next_agent that leaks past the detail-only promote gates (inline plan_only + no backlog-detail entry). Held from idle auto-pickup so BOUNDED-1 reaches genuinely dev-routable rows. Deliberate router/ba/architect dispatch is UNAFFECTED. Durable structural fix: FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE (once shipped this stamp is belt-and-suspenders)."
+        "supervised_note": "BOUNDED-1 stopgap: plan_only design/spec ask with a non-dev board next_agent that leaks past the detail-only promote gates (inline plan_only + no backlog-detail entry). Held from idle auto-pickup so BOUNDED-1 reaches genuinely dev-routable rows. Deliberate router/ba/architect dispatch is UNAFFECTED. Durable structural fix: FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE (once shipped this stamp is belt-and-suspenders).",
+        "tnb_intraday_symptom": {
+          "at": "2026-07-17T20:57:55Z",
+          "by": "po-tnb-c112-triage",
+          "datum": "F-INTRADAY-SYNTHESIS-STALE-MULTIFIRE (MED) — tnb c112, 2026-07-17: NEW symptom variant of THIS root (synthesis file docs/data/unified-agent-synthesis-<DATE>-<SLOT>.json not cycle_id-keyed). unified-agent-synthesis-2026-07-17-intraday.json on disk reflects ONLY the FIRST same-day intraday cycle (cycle_id intraday-2026-07-17T04:13:00Z); the later 14:13Z cycle (VNM/HCM/VNH/BID, 4 clusters) that the notebook cites writing to the SAME filename NEVER LANDED — FIRST-WRITE-WINS, the INVERSE of this row's documented last-write-clobber (chef synthesis run2 clobbered run1). Confirms the same-path collision yields UNDEFINED/inconsistent write semantics across dish types (chef-evening overwrites correctly across its 2-pass day; intraday appears first-write-wins). Creates an audit blind spot for the latest same-day intraday content on any file-proxy audit.",
+          "ac_refinement": "The cycle_id-keying fix MUST guarantee BOTH same-day intraday cycles land on their own path + stay independently queryable REGARDLESS of write-order semantics. Append AC: any day with 2+ non-silent intraday fires surfaces every non-silent cycle's synthesis on disk (no first-write-wins drop, no last-write-clobber).",
+          "disposition": "FOLD not re-mint — subsumed by this row's cycle_id-keying fix (scope already lists unified-agent-synthesis-<DATE>-<SLOT>.json + the chef/unified-agent writer).",
+          "source": "docs/handoffs/tnb-audit-latest.md#F-INTRADAY-SYNTHESIS-STALE-MULTIFIRE"
+        }
       },
       {
         "id": "FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE",
@@ -7715,6 +7729,23 @@
         "created_at": "2026-07-17T12:28:34Z",
         "created_by": "po",
         "note": "RECURRING 2 ticks (2026-07-17 09:00Z slot refine-bctc-slot-1 + 11:00Z slot refine-bctc-slot-3), same poison head MBB_2026_Q1. RAW @11:07Z: get_bctc_pending_refine(limit:25) = 25/25 rows page_count=0 + windows=[] with text_status=COMPLETE (real multi-page filings: VIC/VHM/VRE/MWG/VPB/MBB/SSI/HCM/VCI/DPM/REE/POW/PPC/NKG/HSG/TCH/KBC/NVL). Cover-letter skip rule page_count<=4 then skips EVERY real filing as a CL -> backlog drains zero, each cron reports a clean skip (silent). PO ROOT-CAUSE CORRECTION (dispatcher raster-stage hypothesis FALSIFIED): page_count & windows are query-DERIVED in apps/mcp-server getBctcPendingRefineTool.ts (page_count=MAX(page_number) FROM pdf_extracted_text WHERE filename=basename(pdf_path) @L227-238; windows via fetchAllPageTexts @L242-287). page_count=0 WITH text_status=COMPLETE => pdf_extracted_text has 0 per-page rows under basename(pdf_path) = WRITE-KEY/JOIN-KEY mismatch, NOT a raster stage that never ran. FIRST PROBE: SELECT DISTINCT filename FROM pdf_extracted_text for these report_ids -> are rows stored under a different filename than basename(pdf_path)? DEFECT#2 (masking, silent-stall): page_count<=4 CL-skip treats 0=missing identically to 1..4=genuine short CL; fix must treat page_count==0 as MISSING -> fail-loud/route-to-source, NEVER classify as cover-letter (cf feedback_passive_health_masks_dead_data). NOTE: literal page_count<=4 skip NOT found in TS/PY nor grepped flow docs -> architect must localize (likely refine subagent flow / fleet-cron refine path). ZONE=multi: architect split across (a) mcp-server derivation-query keying, (b) pdf_extracted_text write-key source (pdf-extractor push / route handler), (c) refine-flow CL skip heuristic. AC: (1) get_bctc_pending_refine head for a real filing (VIC/VHM/MWG) returns page_count>4 + non-empty windows; (2) a genuinely-missing-page-data row is classified MISSING/fail-loud, page_count==0 NEVER skipped as cover-letter; (3) refine head advances / backlog drains across 2 consecutive refine ticks (no re-skip of same head)."
+      },
+      {
+        "id": "FIX-CHEF-USDVND-THRESHOLD-NUMERIC-DRIFT-GATE",
+        "title": "chef dish USD/VND threshold citation drifts across dishes (25,000 / 25,500 / 26,110-vs-25000) — deterministic numeric-literal assertion/gate, not more prose",
+        "type": "FIX",
+        "priority": "P3",
+        "status": "BACKLOG",
+        "plan_only": true,
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "ba",
+        "supervised": true,
+        "created_at": "2026-07-17T20:57:55Z",
+        "created_by": "po-tnb-c112-triage",
+        "origin": "docs/handoffs/tnb-audit-latest.md#F-USDVND-THRESHOLD-VALUE-INCONSISTENT",
+        "note": "PLAN-ONLY (anomaly->BACKLOG bridge, project_anomaly_task_bridge). ROOT CAUSE (tnb c112, root-cause depth): LLM NARRATIVE DRIFT toward a historically-familiar round number ('25,000' = VND's 2023 'vượt mốc 25,000' media milestone), NOT a text-instruction defect — chef.md Step 2/3 instructions are ALREADY textually correct (25,500 / 26,500) and NO hardcoded '25000' constant exists in macro-health-read/SKILL.md (FX is direction-only) or apps/mcp-server/src, so a prose-only fix is REDUNDANT. RECURRING: the '25,000' variant recurs across >=5 dish instances over 3 days (07-13, 07-15, 07-17 x2), not just today — crosses feedback_recurring_bug_escalation (2+). USER-FACING: the wrong FX threshold ships to MARKET output. PREREQUISITE (do this FIRST): reconcile the CANONICAL FX threshold value — the reference docs THEMSELVES disagree (docs/agents/tran-ngoc-bau/... main.md audit table cites 26,500; tnb-methodology-layers.md cites 25,500) — before any gate can assert against it. FIX (per tnb rec): a deterministic numeric-literal assertion/gate on the FX-threshold citation in chef dish output (validate the cited USD/VND threshold == the reconciled SSOT value; flag/correct drift), NOT more prose. OWNER CHAIN: ba spec (resolve canonical value + gate contract) -> architect/agent-father for gate placement (co-candidate: claim-truth-gate-style check in the publish path, or a post-generation output lint). supervised:true — do NOT let BOUNDED-1 idle-auto-launch (needs the reconciliation+spec first). AC: (1) the canonical FX threshold value is reconciled to ONE SSOT across main.md audit table + tnb-methodology-layers.md + chef.md Step 2/3; (2) a deterministic check rejects/flags any dish citing an FX threshold that diverges from that SSOT value; (3) the '25,000' narrative-drift variant no longer publishes to MARKET (RAW-verified on a subsequent dish).",
+        "verification_gate": "A subsequent chef dish cites the reconciled canonical FX threshold value verbatim AND the deterministic gate flags/corrects an injected off-canon value; done_verified requires the '25,000' drift variant absent from MARKET output across a full audit cycle."
       }
     ],
     "closed_sprints": [
@@ -9523,6 +9554,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-07-17T11:54:54Z",
-  "_updated_by": "po (mint DEFLAKE-VNSTOCK-3STATEMENT — scoped recurring-flaky triage)"
+  "_updated_at": "2026-07-17T20:57:55Z",
+  "_updated_by": "po-tnb-c112-triage"
 }

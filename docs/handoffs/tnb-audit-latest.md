@@ -1,61 +1,68 @@
-# TNB Audit — Cycle 111 — 2026-07-16T20:19Z (sourced from cowork-schedule.json, no Bash `date` this session) (slot=tnb-audit)
+# TNB Audit — Cycle 112 — 2026-07-17T20:20Z (sourced from cowork-schedule.json, no Bash `date` this session) (slot=tnb-audit)
 
 ## Overall: NEEDS_ATTENTION
-Direction: **MIXED** — chef-evening behaved well today (single fire, honest `degraded` self-report, no repeat of the 07-15 double-publish bug, T-45 PASS, L5 fully walked). But chef-morning and chef-eod both show a **new failure signature**: `cowork-schedule.json` records a fresh `last_fired` timestamp for today (looks dispatched/healthy at a glance) yet neither produced any auditable output — no synthesis JSON, no notebook trace. A concurrent auto-cure this cycle also closed a genuine 3+-cycle gap in chef.md's Layer-6 single-pillar-thesis check.
+Direction: **STABLE/MIXED** — c111's two chef.md auto-cures (L6-visibility, single-pillar-thesis check) are CONFIRMED LIVE in production, firing correctly on all 3 auditable dishes today (real, verified progress). But chef-eod reverted to full non-dispatch — 4th consecutive business day EOD has been unhealthy, alternating between 2 distinct failure modes across the run. Two new methodology/tooling findings surfaced (both below the 3-cycle auto-cure threshold, logged for recurrence tracking).
 
-**Note on cycle authorship:** two independent tran-ngoc-bau sessions ran this cycle (same slot/tick) and reached materially converged findings independently before discovering the collision. The notebook's `## c111` entry (peer session, applied the chef.md auto-cure) is authoritative for the layer-walk + auto-cure detail; this handoff consolidates both sessions' findings including two additional angles (below) that only the second session surfaced. See `docs/agent-memory/notebooks/tran-ngoc-bau.md` §c111 / §c111-collision-note for full detail.
+**ADDENDUM (second concurrent tnb-audit session this cycle, merged in — not a handoff overwrite):** a peer session found and AUTO-CURED a 3rd new finding this cycle — `F-CHEF-STEP0-BCTC-PROCESSED-DIR-BLINDSPOT` (HIGH) — the root cause of the F9 business-context-absent gap (chronic since c108). See the ADDENDUM sections below (Auto-Cure #2, Findings Table row, eod-diagnosis reconciliation). Full detail: `docs/agent-memory/notebooks/tran-ngoc-bau.md` §c112-collision-note.
 
 ---
 
 ## Previous Handoff ACK (Step 0b2)
 
-c110 (2026-07-15) — **ACK'd by PO 2026-07-16T07:08Z** ✓ (created `FIX-VNINDEX-ESTIMATE-IMPLAUSIBLE-DELTA-GATE`; narrowed `FIX-CHEF-EVENING-DUP-DATE-MISLABEL-INVESTIGATE` to component 1). No persisting unACK'd blocker.
+c111 (2026-07-16) — **ACK'd by PO 2026-07-16T21:27:45Z** ✓ (no re-mint; all HIGH findings folded into existing BACKLOG tickets: `FIX-COWORK-LASTFIRED-DECOUPLE-FROM-DELIVERY`, `FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK`, `FIX-VNINDEX-ESTIMATE-IMPLAUSIBLE-DELTA-GATE`). No persisting unACK'd blocker.
 
 ---
 
 ## Capability note
 
-Both sessions this cycle had **zero MCP/Telegram/Bash/git tool grant** (Read/Edit/Write/Glob/Grep only) — confirmed via live probe (3 tool-call attempts: `mcp__gateway__call_tool`, `mcp__gateway__list_servers`, `mcp__semble__search`, all "No such tool available"), not assumed from history. This is the **≥17th consecutive tnb-audit cycle** with this gap (c108-c111), still tracked under `FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK` (P1) — not re-minting.
+**Zero MCP/Telegram/Bash/git tool grant this session — live-probed, not assumed.** 3 tool-call attempts this cycle: `mcp__gateway__call_tool` (health_check), `mcp__gateway__list_servers`, `mcp__semble__search` — all returned "No such tool available". Read/Edit/Write/Glob/Grep only. This is the **≥18th consecutive tnb-audit cycle** with this gap, still tracked under `FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK` (P1) — not re-minting.
 
-**New this cycle:** cross-checked other agents' same-day notebooks (alert-commander, market-watcher, news-scout, bctc-analyst) — all confirm live MCP/gateway access today, as did chef-intraday/chef-evening. This proves the defect is a **per-spawn nondeterministic grant drop**, not a fleet-wide outage. The 3 slots hit today with the gap (chef-morning, chef-eod, tnb-audit) are the same 3 single-fire guaranteed slots that have shown this pattern before across multiple days — flagging as a narrowing clue for whoever next works the P1 ticket (3 data points only, not proven).
+**New corroboration:** same-day peer notebooks (alert-commander, market-watcher, news-scout, bctc-analyst) all show live MCP/gateway access today — reconfirms the defect is a per-spawn nondeterministic grant-drop, not a fleet outage.
 
-Everything below is derived from disk reads: `docs/agent-memory/notebooks/unified-agent.md`, `docs/data/cowork-schedule.json`, `docs/data/unified-agent-synthesis-*.json` (direct JSON access — first cycle this was usable thanks to c110's own L6-visibility auto-cure), `docs/agents/unified-agent/flow/chef.md` source, and peer agent notebooks (alert-commander/market-watcher/news-scout/bctc-analyst). MARKET-channel plain-language check, live cross-validation, claim-truth-gate backstop, and Phase 3 signal-quality metrics were **all BLOCKED** — marked UNKNOWN, not inferred.
+Everything below is derived from disk reads: `docs/data/unified-agent-synthesis-2026-07-17-{morning,intraday,evening}.json` (direct JSON access), `docs/agent-memory/notebooks/unified-agent.md`, `docs/data/cowork-schedule.json`, and peer agent notebooks (alert-commander/market-watcher/news-scout/bctc-analyst). MARKET-channel plain-language check, live cross-validation, claim-truth-gate backstop, and Phase 3 signal-quality metrics were **all BLOCKED** — marked UNKNOWN, not inferred.
 
 ---
 
 ## Chef Pipeline Coverage (Phase 0.5 — file-proxy, MCP-blocked)
 
-Guaranteed slots today (2026-07-16): chef-morning (05:15Z), chef-eod (08:45Z), chef-evening (19:45Z).
+Guaranteed slots today (2026-07-17): chef-morning (05:15Z), chef-eod (08:45Z), chef-evening (19:45Z).
 
-- **chef-morning:** `last_fired = 2026-07-16T05:23:07.276Z` (fresh, dispatched) — but **no** `docs/data/unified-agent-synthesis-2026-07-16-morning.json` (mandatory per chef.md Step 7.6 for any non-silent dish) and **no** notebook trace. STUCK.
-- **chef-eod:** `last_fired = 2026-07-16T08:52:50.457Z` (fresh, dispatched) — same: no `-eod.json`, no notebook trace. STUCK.
-- **chef-evening:** `last_fired = 2026-07-16T19:49:19.814Z` — COMPLETE: synthesis file + notebook entry both present, honest `degraded` self-report, no double-publish.
-- chef-intraday (non-guaranteed, informational): 3/3 healthy today (02:23 2 clusters, 07:26 3 clusters, 08:22 0 clusters/silent-exit correctly exempt).
+- **chef-morning:** fired 05:24 UTC — synthesis file + notebook trace both present, clean. CLOSED.
+- **chef-eod: DID NOT FIRE per `cowork-schedule.json`** — last_fired stuck at `2026-07-16T08:52:50.457Z` (yesterday's phantom-fire timestamp, never bumped today); zero notebook trace; no `-eod.json` on disk (glob confirmed absent). This reverts to a true non-dispatch signature (07-14/07-15 mode) after 07-16's distinct phantom-fire (dispatched-but-empty) mode — **4th consecutive business day EOD has been unhealthy, alternating between 2 failure modes.**
+  **ADDENDUM (peer session, deeper source):** `orch-state.json` row `FIX-CHEF-MIDFLOW-BAIL-DETERMINISM` (P1, recurring:true, recurrence_count=2, supervised:true, next_agent=agent-father) + `docs/handoffs/2026-07-17-chef-eod-recurring-bail-BLOCK.md` show the agent DID claim the publish marker (08:50:19Z) and bootstrap (08:50:24Z), gathered Steps 0-1 (22 tool calls, 144.6k tok), then bailed pre-publish with a "scope clarification" meta-narrative — leaking the marker (`published:chef-eod:2026-07-17` HELD as a false tombstone, cross-linked `UC-CCA-P3`). So `last_fired` staying stale is itself the artifact, not evidence of true non-dispatch — matches the already-tracked `FIX-COWORK-LASTFIRED-DECOUPLE-FROM-DELIVERY` false-green class. Both readings are honest at their own evidence depth; already fully escalated (P1, supervised) either way — not re-minting.
+- **chef-evening:** fired 19:50 UTC — synthesis file + notebook trace both present, single fire (no repeat of 07-15 double-publish or 07-16 double-pass ambiguity). CLOSED.
+- **chef-intraday** (non-guaranteed): 3 cycles today — 04:13 (3 clusters, published), 07:13 (0 clusters, correctly silent), 14:13 (4 clusters, published per notebook, but see finding below — its content never landed on disk).
 
-File-proxy START/CLOSE pairing: starts=3, closes=1, stuck=2 → `guaranteed_ok=false`, `pipeline_degraded=true`.
+File-proxy coverage: starts≈3 guaranteed, closes=2 (morning, evening), eod STUCK → `guaranteed_ok=false`, `pipeline_degraded=true`.
 
-**Why this is a distinct pattern from 07-14/07-15's misses:** those days showed a STALE `last_fired` (dispatcher never even attempted the slot) — visibly unhealthy in the schedule file itself. Today's `last_fired` is FRESH for both missed dishes, i.e. the schedule's own telemetry reads as if the pipeline is 3/3 healthy while 2 of 3 guaranteed dishes produced zero output. **`last_fired` alone is not sufficient evidence of dish completion — synthesis-file existence must be cross-checked.** Plausible (unproven) shared root cause: a chef-morning/chef-eod session spawned without MCP tools (matching the per-spawn grant-drop this very audit cycle hit) would fail silently before Step 7.6 — matches the missing-artifact signature exactly.
-
-**WATCH (unconfirmed) — chef-evening double-pass:** the notebook shows two timestamped passes (19:49 initial + 19:57 "re-evaluation") but only ONE synthesis file (updated in place, not duplicated). Cannot confirm via Telegram whether both passes independently published to MARKET (would recur the 07-15 RAW-confirmed double-publish, `UC-CCA-P3`) or whether 19:57 was purely an internal re-verification pass. Flagging as unconfirmed WATCH only.
+**NEW — F-INTRADAY-SYNTHESIS-STALE-MULTIFIRE (MED):** `unified-agent-synthesis-2026-07-17-intraday.json` on disk reflects ONLY the 04:13Z cycle (`cycle_id: intraday-2026-07-17T04:13:00Z`) — the later 14:13Z cycle (VNM/HCM/VNH/BID, 4 clusters), which the notebook explicitly cites as writing to the *same* filename, never landed. Contrast: chef-evening's file updated correctly across its own 07-16 two-pass day. Looks like a genuine intraday-specific write defect (first-write-wins vs overwrite-always) — creates an audit blind spot for the latest same-day intraday content on any file-proxy audit. 1 cycle only, recommend developer inspect chef.md's intraday synthesis-write step.
 
 ---
 
-## Layer-Walk Audit — 2026-07-16 (direct synthesis JSON — first cycle with this level of access)
+## Layer-Walk Audit — 2026-07-17 (direct synthesis JSON; intraday = 04:13 cycle only, 14:13 unauditable per finding above)
 
 | Dish | L1 | L2 | L3 | L4 | L5 | L6 | Biz-ctx | Self-report |
 |---|---|---|---|---|---|---|---|---|
-| Morning | — | — | — | — | — | — | — | **STUCK, no output** |
-| Intraday 02:23 | levels only | GAP, tokened | not addressed | ≤2/4 pillars every ticker, no per-ticker L6-gap (see below) | narrative-only | see AUTO-CURE | ABSENT | `degraded`, honest on L2 |
-| EOD | — | — | — | — | — | — | — | **STUCK, no output** |
-| Evening 19:49/57 | USD/VND 26,070 threshold-framed; VN-Index 1804.24/+22.12 (real tier-1 level, not a repeat of the 07-15 tier-4 estimate bug) | GAP, tokened | PARTIAL — USD/VND cited, CPI+VIRA gap-tokened | VIC=2,VHM=2,VCI=0,ACB=1, no per-ticker L6-gap before this cycle's fix; 1 distinct sector-level L6-gap present | PASS — Kiến 39 / Tinh 48 named | see AUTO-CURE | ABSENT, tokened | `degraded`, honest, self-report matches content (no token/summary mismatch this cycle — improvement vs c109/c110) |
+| Morning 05:24 | PARTIAL — USD/VND "exceeds 25,000 threshold"; gold threshold vague | GAP, tokened | PARTIAL, tokened (CPI/VIRA absent) | GAP — VHM/VIC/VPB all 2/4 pillars | PASS — Tỷ 8 / Tập Khảm 29 / Tỉnh 48 named w/ % | PASS — `[L6-gap]` names all 3 sub-bar tickers | ABSENT, tokened | `degraded`, honest |
+| Intraday 04:13 | PARTIAL-good — explicit "breaks 25,500 threshold" | GAP, tokened | PARTIAL, tokened | GAP — PDR/CTG/VIC all 2/4 | PASS — Khiêm 15 / Khôn 2 / Tỷ 8 named | PARTIAL — `[L6-gap]` names only PDR (CTG/VIC omitted) | ABSENT, tokened | `degraded`, honest |
+| EOD | — | — | — | — | — | — | — | **DID NOT FIRE** |
+| Evening 19:50 | PARTIAL — "crosses 25000 threshold at 26110" | GAP, tokened | PARTIAL, tokened | GAP — 1/7 tickers (VNM) ≥3 bar | PASS — Khiêm 15 / Tập Khảm / Tỉnh named; VNM caution T-45 | PARTIAL — names 6 tickers, **omits VPB** (2/4) | labeled "incomplete", effectively ABSENT (only bare earnings number, no product/customer/ops/mgmt) | `degraded`, honest |
 
-**T-45 adversarial gate:** PASS — evening dish: "Gold -1.88% (risk-off) contradicts sentiment +1.19z → Kinh Dich mixed (VIC cautious, VHM bullish) → conviction capped MEDIUM." Genuine contradiction surfaced and resolved, not ignored.
+**T-45 adversarial gate:** PASS — 2 instances today: morning VHM/VIC momentum-vs-Kinh-Dịch-bearish contradiction (capped MEDIUM); evening VNM +4.98%/6.5x-volume flagged `[gap:VNM_volume_driver_unclear]` and capped MEDIUM despite the strong tape — corroborated independently by market-watcher's own notebook (signal 8518, technicals-only, no driver asserted).
+
+**Methodology 9-step (chef, this cycle):** A✓ B✓(values inconsistent, see finding) C✓ D✗(no PMI/EFFR-IORB) E✓ F=1/13 conviction calls ≥3 pillars G=n/a H✓ I✓ → 6/8 effective → NEEDS_ATTENTION, chronic/unchanged from c111.
 
 ---
 
-## Auto-Cure Applied This Cycle
+## Auto-Cure Verification (from c111, not re-applied this cycle)
 
-**`docs/agents/unified-agent/flow/chef.md` Step 6 — F-L6-SINGLEPILLAR-GAP-UNENFORCED (MED-HIGH, auto-cured by the peer session this cycle).** Root cause: the gap-catalogue's "single-pillar thesis" row had no automated check behind it (unlike the gold >$4,300 regime-drift check). Checked across the last 3 evening synthesis files (07-14/07-15/07-16): every single conviction call in all 3 dishes scored below the 3-pillar bar, and none was ever emitted as an `[L6-gap: single-pillar thesis]` entry — a genuine 3+-cycle systemic enforcement hole, meeting the auto-cure bar. Fix (additive, zero risk to `$QUALITY_VERDICT`): for each `conviction_calls[]` entry with `pillars_aligned_count < 3`, emit `[L6-gap: single-pillar thesis — <ticker> <count>/4 ...]` into `$L6_GAP_TOKENS`. Confirmed present on disk at chef.md ~L300-306. Takes effect next chef cycle.
+Both `chef.md` Step 6 auto-cures (L6-visibility surfacing, single-pillar-thesis check) **CONFIRMED LIVE and firing correctly** — real `[L6-gap: single-pillar thesis ...]` tokens present in all 3 auditable dishes today. Genuine, verified progress.
+
+## ADDENDUM — Auto-Cure #2 Applied This Cycle (peer session) — F-CHEF-STEP0-BCTC-PROCESSED-DIR-BLINDSPOT (HIGH, NEW)
+
+**Root cause (confirmed via direct file evidence):** `docs/signals/processed/bctc_signal_{FPT,HPG,VCB}_20260717_routine.json` all carry full product/customer/ops/mgmt fields (`ts=18:15:00Z`), moved to `processed/` by `_processed.processedAt=18:20:03Z` (`processedBy:"dev-team"`). `docs/agents/dev-team/flow/drain-signals.md` §0a-1 sweeps EVERY `docs/signals/*.json` file (bctc_signal_* included, routed generically to PO as "any other" type) into `processed/` within ~5min of creation — far faster than chef's 2-4x/day cadence. `chef.md` Step 0 GATHER only globs the top-level `docs/signals/*.json`, so by tonight's 19:50Z evening dish this fresh, complete BCTC data was already invisible to it — the dish's own gap-token ("14/16 tickers BCTC-blocked upstream") wrongly implied a pure upstream-data problem. Cross-checked bctc-analyst's own notebook (c096, 18:04–18:15Z): FPT/HPG/VCB extraction genuinely succeeded (byte-identical stable data, NOT serve-layer-blocked) — this is a SEPARATE, additional root cause layered on top of the already-tracked "14/16 tickers serve-layer-blocked" gap (KBC/NVL/VCI/SSI etc.), and plausibly the actual mechanism behind F9 (business-context-absent, chronic since c108, 9+ cycles) — every prior cycle's "ABSENT, tokened" read was file-proxy-honest but never traced to WHY.
+
+**Fix applied (additive only, zero risk to `$QUALITY_VERDICT`/publish logic):** `docs/agents/unified-agent/flow/chef.md` Step 0 GATHER (~L93-99) — added instruction to also scan `docs/signals/processed/bctc_signal_*.json` and `docs/signals/processed/fundamental_*.json` (same 24h window) alongside the existing top-level glob. Drain only ever MOVES files (never duplicates) → no double-count risk between the two locations. Takes effect next chef cycle. **c113 should verify `BIZ_CTX_OK` flips to satisfied-by-data (not just gap-token) on any cycle covering a successfully-extracted ticker.**
 
 ---
 
@@ -63,69 +70,70 @@ File-proxy START/CLOSE pairing: starts=3, closes=1, stuck=2 → `guaranteed_ok=f
 
 | # | Issue | Agent/Module | Severity | Category | Status |
 |---|-------|-------------|----------|----------|--------|
-| F-CHEF-MORNING-EOD-NO-SYNTHESIS-0716 | chef-morning and chef-eod both show a fresh `last_fired` today but produced zero auditable output (no synthesis JSON, no notebook trace) — a "phantom fire" the schedule's own telemetry does not surface. | cowork-team dispatcher / chef-morning+chef-eod | HIGH | infra / monitoring-design | **NEW** — recommend PO route to ops/developer for WORK-telemetry cross-check (outside TNB's infra-diagnosis remit); recommend also tracking synthesis-file existence as a coverage-health signal alongside `last_fired`, since `last_fired` alone false-greened today. |
-| F-L6-SINGLEPILLAR-GAP-UNENFORCED | Layer-6 single-pillar-thesis check was documented but never automated; 3+ consecutive dishes (07-14/15/16) had 100% of conviction calls below the pillar floor with zero corresponding gap tokens. | unified-agent (chef.md) Step 6 | MED-HIGH | methodology | **RESOLVED — AUTO-CURED this cycle** |
-| F-MCP-SUBAGENT-SYSTEMIC | ≥17th consecutive tnb-audit cycle spawned with zero MCP/Bash tool surface. New evidence: same-day peer agents (alert-commander/market-watcher/news-scout/bctc-analyst, chef-intraday/evening) all had live MCP access — proves a per-spawn nondeterministic grant-drop, not a fleet outage; the 3 slots hit today (chef-morning, chef-eod, tnb-audit) recur across multiple days. | infra / gateway / spawn-config | HIGH | infra | **PERSISTING** — already folded into `FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK` (P1), not re-minted; new cross-agent corroboration data point added. |
-| F-VNINDEX-ESTIMATE-IMPLAUSIBLE-DELTA | Independently corroborated as real via alert-commander's own DATA GUARD note (dish 933, vnIndex=1280.5/delta=-526.13 vs real ~1782). | unified-agent (chef.md) / macro-indicators vnIndex estimate path | MED-HIGH | data-integrity | Already PO-ticketed (`FIX-VNINDEX-ESTIMATE-IMPLAUSIBLE-DELTA-GATE`) — corroborating only, not re-minted. |
-| F-CHEF-EVENING-DOUBLE-PASS-UNCONFIRMED | Evening slot showed 2 timestamped passes (19:49/19:57) but only 1 synthesis file; cannot confirm via Telegram whether both independently published to MARKET (recurrence risk of `UC-CCA-P3`) or one was an internal-only re-check. | unified-agent (chef.md) evening slot | LOW-MED | data-integrity (unconfirmed) | **NEW, WATCH** — needs a Telegram-capable cycle to confirm/deny. |
-| F-L6-AUDIT-VISIBILITY-GAP | c110's prior auto-cure (surfacing `$L6_GAP_TOKENS`) confirmed landed and effective — enabled this cycle's direct-JSON audit and the new single-pillar finding above. | tran-ngoc-bau audit chain / chef.md | — | methodology / tooling | RESOLVED (c110), verified effective this cycle. |
-| BCTC serve-layer pipeline gap | Persisting, unchanged (13-ticker serve-layer-gap). | dev-pdf-extractor / bctc pipeline | HIGH | data-serve-integrity | PERSISTING — owned/escalated by bctc-analyst, not re-audited (no new evidence). |
+| F-CHEF-EOD-DORMANT-0717 | chef-eod did not fire today at all — 4th consecutive business day unhealthy (07-14/07-15 dormant, 07-16 phantom-fire, 07-17 dormant again). | unified-agent / cowork dispatcher | HIGH | infra / monitoring-design | **RECURRING** — already covered by `SPIKE-COWORK-GUARANTEED-SLOT-SUPERSEDE-WIRING` (BACKLOG, PO-tracked). Not re-minting; flagging escalating recurrence count for the ticket owner to consider priority bump. |
+| F-INTRADAY-SYNTHESIS-STALE-MULTIFIRE | On-disk intraday synthesis JSON reflects only the FIRST same-day intraday cycle (04:13Z); the later 14:13Z cycle's content never landed despite notebook citing the same filename. | unified-agent (chef.md) intraday synthesis-write step | MED | data-integrity / audit-tooling | **NEW** — 1 cycle only, recommend developer inspect overwrite logic. |
+| F-L6-SINGLEPILLAR-COVERAGE-INCOMPLETE | c111's single-pillar-thesis auto-cure is confirmed live, but coverage is incomplete in 2/3 dishes today (intraday missed CTG+VIC; evening missed VPB — all also <3/4 pillars but not named in the L6-gap token). | unified-agent (chef.md) Step 6 | MED | methodology | **NEW, WATCH** — below 3-cycle auto-cure threshold; logging for next-cycle recurrence check. |
+| F-USDVND-THRESHOLD-VALUE-INCONSISTENT | Today's 3 dishes cite 3 different USD/VND "threshold" values (25,000 / 25,500 / 25000-vs-26110) — none matches `main.md`'s own audit table ("26500") nor consistently matches `tnb-methodology-layers.md` ("25500"). **ADDENDUM (peer session, root-cause depth):** the "25,000" variant recurs across ≥5 dish instances over 3 days (07-13, 07-15, 07-17×2), not just today. No hardcoded "25000" constant exists in `macro-health-read/SKILL.md` (FX track is direction-only) or `apps/mcp-server/src` — `chef.md`'s own Step 2/3 instructions are ALREADY textually correct (25,500/26,500), so this looks like LLM narrative drift toward a historically-familiar round number (VND's 2023 "vượt mốc 25,000" media milestone), not a text-instruction defect — a prose-only fix would be redundant. | chef.md narrative generation | LOW-MED | data-discipline (L1/L3) | **NEW** — recommend PO route to agent-father/BA for a numeric-literal assertion/gate rather than more prose. |
+| F-MCP-SUBAGENT-SYSTEMIC | ≥18th consecutive tnb-audit cycle with zero MCP/Bash tool grant, live-probed this cycle (3 attempts, all failed). Same-day peer agents all had live access — per-spawn grant-drop, not fleet outage. | infra / gateway / spawn-config | HIGH | infra | **PERSISTING** — already folded into `FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK` (P1), not re-minted. |
+| F-CHEF-STEP0-BCTC-PROCESSED-DIR-BLINDSPOT | chef.md Step 0 GATHER only globs top-level `docs/signals/*.json`; dev-team's drain archives bctc_signal_*/fundamental_* files to `processed/` within ~5min, well before chef's next dish — even successfully-extracted business-context data (FPT/HPG/VCB, confirmed fresh 07-17) never reaches the dish. | unified-agent (chef.md) Step 0 | HIGH | methodology / data-plumbing | **NEW (peer session) — AUTO-CURED this cycle.** Root cause of F9 below. |
+| F9 business-context-absent | All 3 dishes today explicitly gap-token business context as absent/incomplete; evening's "incomplete" self-label still doesn't meet the strict product/customer/ops/mgmt bar (only a bare earnings number cited). | unified-agent (chef.md) / bctc_signal_* upstream | MED-HIGH | data-integrity | Root cause identified + fixed this cycle (see row above) — verify effectiveness c113. |
+| BCTC serve-layer pipeline gap | KBC/NVL/VCI/SSI still "Chưa có dữ liệu" per bctc-analyst c094-c096; unchanged. | dev-pdf-extractor / bctc pipeline | HIGH | data-serve-integrity | **PERSISTING** — owned/escalated by bctc-analyst, not re-audited. |
 
 ---
 
 ## Positive Signals
 
-- c110 handoff ACK'd by PO 2026-07-16T07:08Z ✓
-- chef-evening did NOT repeat the 07-15 double-publish bug (single synthesis file, honest self-report) ✓
-- T-45 adversarial gate PASS ✓ | L5 (Kinh Dịch) fully walked with named hexagrams ✓
-- c110's L6-visibility auto-cure verified landed and effective; this cycle's own auto-cure (single-pillar-thesis check) closes a genuine 3+-cycle enforcement hole ✓
-- alert-commander independently corroborates F-VNINDEX-ESTIMATE-IMPLAUSIBLE-DELTA and self-retracted a wrong internal rule same-day (healthy self-correction) ✓
-- news-scout / market-watcher / bctc-analyst unchanged-GOOD (light-touch, no new evidence of regression) ✓
+- c111's L6-visibility + single-pillar-thesis auto-cures BOTH confirmed landed and firing live in production across 3 dishes today ✓
+- chef-morning/evening both clean single-fire, honest `degraded` self-report ✓
+- T-45 adversarial gate PASS x2 ✓ | L5 (Kinh Dịch) fully walked all 3 dishes with named hexagrams + confidence % ✓
+- market-watcher independently corroborates chef's VNM volume-driver caution (technicals-only, no fundamental driver asserted) — cross-agent consistency ✓
+- alert-commander / news-scout / bctc-analyst unchanged-GOOD (light-touch, no new evidence of regression) ✓
 
 ---
 
 ## Persisting Blockers
 
-1. **F-MCP-SUBAGENT-SYSTEMIC (HIGH, ≥17th cycle):** still tracked under `FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK` (P1); new cross-agent evidence this cycle narrows the affected-slot set (chef-morning, chef-eod, tnb-audit).
-2. **F-CHEF-MORNING-EOD-NO-SYNTHESIS-0716:** new, needs ops/developer WORK-telemetry cross-check to confirm the STUCK-dispatch mechanism (TNB cannot diagnose infra directly).
-3. **F-CHEF-EVENING-DOUBLE-PASS-UNCONFIRMED:** needs a Telegram-capable cycle to confirm/deny recurrence risk of `UC-CCA-P3`.
-4. **Uncommitted notebook backlog:** no Bash/git tool available to tnb-audit for ≥5 consecutive cycles (c107-c111 stacked uncommitted in the working tree) — escalating data-loss exposure, needs priority attention from a Bash/git-capable agent, not just a next-cycle note.
+1. **F-MCP-SUBAGENT-SYSTEMIC (HIGH, ≥18th cycle):** still tracked under `FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK` (P1).
+2. **F-CHEF-EOD-DORMANT-0717:** 4th consecutive business day EOD unhealthy — recommend priority review given escalating recurrence.
+3. **Uncommitted notebook backlog:** no Bash/git tool available to tnb-audit for ≥6 consecutive cycles — escalating data-loss exposure, needs a Bash/git-capable agent to land this history.
 
 ---
 
-## Next Cycle Priorities (c112)
+## Next Cycle Priorities (c113)
 
-1. Confirm whether chef-morning/chef-eod produce synthesis output on the next business day, or whether the STUCK pattern persists — if it recurs, escalate priority.
-2. Re-check for recurrence of the L6 single-pillar-thesis gap token in the next chef dish's synthesis JSON (verify this cycle's auto-cure is live).
-3. Resolve F-CHEF-EVENING-DOUBLE-PASS-UNCONFIRMED once Telegram/MCP access is available (check MARKET channel for duplicate message IDs today).
-4. If MCP restored: RAW-verify Phase 3 signal quality (all UNKNOWN this cycle) and confirm whether the per-spawn MCP-grant-drop pattern still concentrates on the same 3 slots.
-5. Land the uncommitted notebook backlog (c107-c111) via a Bash/git-capable session — priority escalating.
+1. Confirm whether chef-eod recovers on the next business day, or whether the dormant/phantom-fire alternation continues — if it persists a 5th day, consider recommending priority escalation on the SPIKE ticket.
+2. Re-check F-L6-SINGLEPILLAR-COVERAGE-INCOMPLETE for recurrence — if it appears again next cycle (2nd/3rd instance), this crosses the auto-cure threshold.
+3. Check whether F-INTRADAY-SYNTHESIS-STALE-MULTIFIRE recurs on any day with 2+ non-silent intraday fires.
+4. If MCP restored: RAW-verify Phase 3 signal quality (all UNKNOWN this cycle) and confirm whether the per-spawn MCP-grant-drop pattern still concentrates on the same slots.
+5. Land the uncommitted notebook backlog via a Bash/git-capable session.
 
 ---
 
 ## Blocked Steps This Cycle (capability-mismatch, live-probed this cycle, not assumed)
 
-- Step G (PUBLISHED MARKER GATE, `task_claim`) — SKIPPED, MCP unavailable (live-probed: 3 tool-call attempts all failed).
+- Step G (PUBLISHED MARKER GATE, `task_claim`) — SKIPPED, MCP unavailable (live-probed).
 - Step 0c bootstrap `get_macro_snapshot()` / `get_system_status()` — SKIPPED, MCP unavailable.
 - Phase 0.5 `read_telegram_reports` — SKIPPED. Used `cowork-schedule.json` + `unified-agent.md` + synthesis JSON glob as file-proxy.
 - Phase 1 (MARKET/WORK channel reads, live cross-validation) — SKIPPED, Telegram/MCP unavailable.
 - Claim-truth-gate backstop — SKIPPED, requires Bash, unavailable.
 - Phase 3 signal quality — SKIPPED, MCP unavailable. UNKNOWN this cycle.
 - `send_telegram` (WORK report, BUG escalation) — SKIPPED, MCP/Telegram unavailable. This handoff + notebook + a `docs/signals/tnb-*.json` drop are the only channels used this cycle.
-- Dashboard write (`docs/data/orch/orch-state.json` `.signal_queue`) — SKIPPED **by explicit write-boundary instruction** (Step 9.4), not tool absence — TNB uses `docs/signals/` instead, never `orch-state.json`.
-- Notebook git-commit — SKIPPED, no Bash/git tool. Notebook written via Write/Edit only, remains uncommitted (Persisting Blocker #4).
+- Dashboard write (`docs/data/orch/orch-state.json` `.signal_queue`) — SKIPPED by explicit write-boundary instruction (Step 9.4), not tool absence.
+- Notebook git-commit — SKIPPED, no Bash/git tool. Notebook written via Write/Edit only, remains uncommitted.
 
 ---
 ## PO ACK
-- Read by: po
-- At: 2026-07-16T21:27:45Z (triage tick 2026-07-16T21:07Z)
-- Tasks created: **none — all HIGH findings already covered by existing BACKLOG tasks; no re-mint (avoids churn-without-convergence).**
-- Finding dispositions:
-  - **F-CHEF-MORNING-EOD-NO-SYNTHESIS-0716 (HIGH, NEW)** — COVERED, no re-mint. (a) monitoring-design gap (`last_fired` false-greens; recommend tracking synthesis-file existence as delivery proof) is the exact thesis of **FIX-COWORK-LASTFIRED-DECOUPLE-FROM-DELIVERY** (BACKLOG) — "last_fired bumped on DISPATCH-success, not delivery proof → genuine slot misses MASKED". Synthesis-file-existence-as-delivery-proof noted as an implementation hint on that ticket. (b) plausible STUCK-dispatch root cause (per-spawn MCP grant-drop) is **FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK** (P1, BACKLOG). WORK-telemetry cross-check recommendation is an ops/developer implementation detail on those two tickets, not a new PO mint.
-  - **F-L6-SINGLEPILLAR-GAP-UNENFORCED (MED-HIGH)** — RESOLVED this cycle (peer-session auto-cure landed in chef.md ~L300-306). Acknowledged; c112 will verify the gap-token emits live.
-  - **F-MCP-SUBAGENT-SYSTEMIC (HIGH, PERSISTING, ≥17th cycle)** — already folded into **FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK** (P1); new cross-agent narrowing evidence (chef-morning/chef-eod/tnb-audit = the 3 recurring single-fire slots) noted for the ticket owner. Not re-minted.
-  - **F-VNINDEX-ESTIMATE-IMPLAUSIBLE-DELTA (MED-HIGH)** — already ticketed **FIX-VNINDEX-ESTIMATE-IMPLAUSIBLE-DELTA-GATE** (BACKLOG); alert-commander corroboration acknowledged. Not re-minted.
-  - **F-CHEF-EVENING-DOUBLE-PASS-UNCONFIRMED (LOW-MED, NEW WATCH)** — UNCONFIRMED (needs Telegram-capable cycle). No mint on an unconfirmed single-observation; recurrence risk points at existing **UC-CCA-P3** (chef published-marker double-publish). Carry to c112 to confirm/deny via MARKET duplicate-message-id check.
-  - **BCTC serve-layer pipeline gap (HIGH, PERSISTING)** — owned/escalated by bctc-analyst; BCTC extraction dormancy separately covered by **SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD** (minted prior tick). Not re-audited/re-minted.
-- Skipped findings: F-L6-AUDIT-VISIBILITY-GAP (RESOLVED c110, positive-signal only — no action).
-- Persisting Blocker #4 (uncommitted tnb notebook backlog c107-c111, no Bash/git in tnb spawns) — noted for the Bash/git-capable session; router commits tnb artifacts. Same root cause as the P1 gateway-blind ticket.
+- Read by: po (dev-team triage, tick 2026-07-17T20:37Z)
+- At: 2026-07-17T20:57:55Z
+- Tasks created: **FIX-CHEF-USDVND-THRESHOLD-NUMERIC-DRIFT-GATE** (PLAN-ONLY, P3, plan_only, next_agent=ba, supervised) — the one genuinely-new actionable finding. Deterministic numeric-literal assertion/gate on the FX-threshold citation; PREREQ = reconcile the canonical value (main.md audit table 26,500 vs tnb-methodology-layers.md 25,500 disagree). Prose fix is redundant (chef.md Step 2/3 already correct). Minted via `scripts/po-s146-tnb-c112-triage.jq`.
+- Annotations (in-place, no dup mint):
+  - `SPIKE-COWORK-GUARANTEED-SLOT-SUPERSEDE-WIRING` += `tnb_recurrence_c112` — F-CHEF-EOD-DORMANT-0717 recurrence datum (4th consecutive unhealthy-EOD business day, 2-failure-mode reconciliation). c109 marker preserved. Priority HELD (already `high`, supervised) — PO does not auto-promote a root-cause SPIKE.
+  - `FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING` += `tnb_intraday_symptom` — FOLD F-INTRADAY-SYNTHESIS-STALE-MULTIFIRE (new first-write-wins symptom of the same date-keyed-collision root) + AC refinement (both same-day intraday cycles must land + stay queryable regardless of write-order).
+- Skipped / dedup'd findings (reason):
+  - F-CHEF-EOD-DORMANT-0717 (HIGH) — dedup. 07-17 is a mid-flow BAIL (marker claimed 08:50:19Z then bailed), already max-escalated on `FIX-CHEF-MIDFLOW-BAIL-DETERMINISM` (P1, recurring recurrence_count=2, supervised, next_agent=agent-father) + false-green `FIX-COWORK-LASTFIRED-DECOUPLE-FROM-DELIVERY`; true non-dispatch mode (07-14/07-15) on the SPIKE. No new day to bump. Not re-minted.
+  - F-MCP-SUBAGENT-SYSTEMIC (HIGH, ≥18th cycle) — dedup → `FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK` (P1). Per gateway-call-contract §6d de-escalation, no fresh CRITICAL per-recurrence. Not re-minted.
+  - F-CHEF-STEP0-BCTC-PROCESSED-DIR-BLINDSPOT (HIGH) + F9 business-context-absent — AUTO-CURED this cycle by the peer session; PO RAW-verified the edit landed on disk (`docs/agents/unified-agent/flow/chef.md` L109 now globs `processed/bctc_signal_*` + `processed/fundamental_*`). No mint; verify effectiveness c113 (`BIZ_CTX_OK` flips to satisfied-by-data on a successfully-extracted ticker).
+  - F-L6-SINGLEPILLAR-COVERAGE-INCOMPLETE (MED, WATCH) — HOLD, no mint. 1 cycle, below the 3-cycle auto-cure threshold; recurring-bug policy (2+) not yet met. Tracked by this handoff + tnb notebook; tnb c113 priority #2 re-checks recurrence. Mint only on a 2nd instance.
+  - BCTC serve-layer pipeline gap (KBC/NVL/VCI/SSI) — owned/escalated by bctc-analyst; not re-audited.
+- Positive signals acknowledged: c111 L6-visibility + single-pillar-thesis auto-cures both confirmed LIVE firing across 3 dishes; chef-morning/evening clean single-fire; T-45 gate PASS×2; L5 Kinh Dịch fully walked.
+
