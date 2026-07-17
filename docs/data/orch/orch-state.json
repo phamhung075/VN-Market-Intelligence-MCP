@@ -411,15 +411,15 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-17T11:08:54.765Z",
-    "_updated_by": "cowork-team/refine-stall-escalation",
+    "_updated_at": "2026-07-17T12:21:04Z",
+    "_updated_by": "dev-team (0a-D drain: refine-stall consumed→pendingSignals→PO)",
     "archive": [],
     "rows": [
       {
         "id": "refine-backlog-pagecount-zero-20260717",
         "summary": "[refine] BCTC refine backlog 100% stalled — 25/25 pending rows page_count=0 → every real filing skipped as cover-letter (page_count<=4); upstream raster/window unpopulated despite text COMPLETE. RECURRING 2 ticks (09:00Z+11:00Z). po→dev-pdf-extractor.",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "ts": "2026-07-17T11:08:54.765Z",
         "from": "cowork-team/refine-stall-escalation",
         "to": "po",
@@ -7700,6 +7700,23 @@
         "created_at": "2026-07-17T11:54:54Z",
         "created_by": "po-scoped-triage-20260717",
         "baseline_pass": true
+      },
+      {
+        "id": "FIX-REFINE-PAGECOUNT-ZERO-COVERLETTER-MASK",
+        "type": "FIX",
+        "title": "BCTC refine backlog 100% stalled — 25/25 pending page_count=0+windows=[] (text_status=COMPLETE) mis-skipped as cover-letter; page_count is query-derived (pdf_extracted_text filename-key mismatch), NOT a raster failure",
+        "zone": "multi",
+        "status": "BACKLOG",
+        "priority": "high",
+        "size": "M",
+        "recurring": true,
+        "next_agent": "architect",
+        "source": "cowork-team/refine-stall-escalation (09:00Z+11:00Z ticks)",
+        "origin_signal_id": "refine-backlog-pagecount-zero-20260717",
+        "detail_ref": "docs/handoffs/2026-07-17-refine-backlog-page-count-zero-total-stall.md",
+        "created_at": "2026-07-17T12:28:34Z",
+        "created_by": "po",
+        "note": "RECURRING 2 ticks (2026-07-17 09:00Z slot refine-bctc-slot-1 + 11:00Z slot refine-bctc-slot-3), same poison head MBB_2026_Q1. RAW @11:07Z: get_bctc_pending_refine(limit:25) = 25/25 rows page_count=0 + windows=[] with text_status=COMPLETE (real multi-page filings: VIC/VHM/VRE/MWG/VPB/MBB/SSI/HCM/VCI/DPM/REE/POW/PPC/NKG/HSG/TCH/KBC/NVL). Cover-letter skip rule page_count<=4 then skips EVERY real filing as a CL -> backlog drains zero, each cron reports a clean skip (silent). PO ROOT-CAUSE CORRECTION (dispatcher raster-stage hypothesis FALSIFIED): page_count & windows are query-DERIVED in apps/mcp-server getBctcPendingRefineTool.ts (page_count=MAX(page_number) FROM pdf_extracted_text WHERE filename=basename(pdf_path) @L227-238; windows via fetchAllPageTexts @L242-287). page_count=0 WITH text_status=COMPLETE => pdf_extracted_text has 0 per-page rows under basename(pdf_path) = WRITE-KEY/JOIN-KEY mismatch, NOT a raster stage that never ran. FIRST PROBE: SELECT DISTINCT filename FROM pdf_extracted_text for these report_ids -> are rows stored under a different filename than basename(pdf_path)? DEFECT#2 (masking, silent-stall): page_count<=4 CL-skip treats 0=missing identically to 1..4=genuine short CL; fix must treat page_count==0 as MISSING -> fail-loud/route-to-source, NEVER classify as cover-letter (cf feedback_passive_health_masks_dead_data). NOTE: literal page_count<=4 skip NOT found in TS/PY nor grepped flow docs -> architect must localize (likely refine subagent flow / fleet-cron refine path). ZONE=multi: architect split across (a) mcp-server derivation-query keying, (b) pdf_extracted_text write-key source (pdf-extractor push / route handler), (c) refine-flow CL skip heuristic. AC: (1) get_bctc_pending_refine head for a real filing (VIC/VHM/MWG) returns page_count>4 + non-empty windows; (2) a genuinely-missing-page-data row is classified MISSING/fail-loud, page_count==0 NEVER skipped as cover-letter; (3) refine head advances / backlog drains across 2 consecutive refine ticks (no re-skip of same head)."
       }
     ],
     "closed_sprints": [
