@@ -1,0 +1,27 @@
+{
+  "from": "cowork-team",
+  "to": "system-auditor",
+  "type": "cowork-tick-fire",
+  "priority": "normal",
+  "createdAt": "2026-07-17T02:19:51.574Z",
+  "payload": {
+    "tick": "2026-07-17T02:15Z",
+    "verdict": "WORK",
+    "slots_fired": [
+      "chef-intraday"
+    ],
+    "slot_count": 1,
+    "wave": "intraday-chef-dish",
+    "host_headroom_mb": 3015,
+    "signal_backlog": 5,
+    "dev_queue_depth": 5,
+    "pressure_mode": "legacy",
+    "note": "chef-intraday cadence-due (120min) VN market OPEN; single-slot fan-out, no collision. host_headroom 3316->3015MB (chef spawn + prior alert-commander subagent churn, still healthy well above low-band). stale_warning flipped true this tick -> legacy pressure path forced. calendar/regime/volatility still structurally dark (unknown). chef-intraday multi-fire per-window marker owned by spawned agent claim-first, NOT dispatcher."
+  },
+  "_processed": {
+    "fingerprint": "4589fe41eb0f2869cfa9a19c850422d1694211730e817c087c51c448c48ff9da",
+    "processedAt": "2026-07-17T02:51:47Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
