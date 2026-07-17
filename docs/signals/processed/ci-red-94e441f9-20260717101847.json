@@ -1,0 +1,41 @@
+{
+  "from": "ci-health-probe",
+  "to": "po",
+  "type": "ci_red",
+  "priority": "high",
+  "createdAt": "2026-07-17T10:18:47Z",
+  "dedup_key": "ci_red:94e441f9183aa98696da91051693b76a2266687e:bun test",
+  "payload": {
+    "check_id": "CI-RED-94e441f9",
+    "head_sha": "94e441f9183aa98696da91051693b76a2266687e",
+    "run_id": 29571932557,
+    "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/29571932557",
+    "conclusion": "failure",
+    "failing_jobs": [
+      {
+        "name": "bun test",
+        "conclusion": "failure",
+        "jobId": 87857522744
+      }
+    ],
+    "fingerprint": "b8b2125ecf8c391430b41e468a8c23609f90eba0bf788da1cac7b7d10f68b93c",
+    "zone_owner": "dev-team (CI fix)",
+    "summary": "CI RED on main HEAD 94e441f9183aa98696da91051693b76a2266687e: bun test",
+    "suggested_sprint_class": "FIX",
+    "verification_gate": "ci_green_on_subsequent_push"
+  },
+  "_disposition": {
+    "classification": "FLAKY_NOT_REGRESSION",
+    "failing_file": "src/__tests__/1255-alert-off-hours-send.test.ts",
+    "ci_mode": "per-file-isolation",
+    "fail_summary": "14466 pass / 40 skip / 1 fail",
+    "evidence": "HEAD 94e441f91 = docs/signals-only commits (a9cc9e795 signals + 94e441f91 notebook) on top of e85bba0ee; CODE byte-identical to e85bba0ee whose CI run 29571338269 was SUCCESS (1255 passed there @09:49Z off-hours). Same code green-then-red = flaky, NOT regression. Docs commits cannot break a code test.",
+    "obs_count": 1,
+    "first_obs": true,
+    "action": "gh run rerun --failed 29571932557 (restore green + stop re-emit); NO PO escalation; NO DEFLAKE mint (1-obs, recurring-bug 2+ rule)",
+    "watch": "2nd obs of 1255-alert-off-hours-send.test.ts => mint DEFLAKE-1255-ALERT-OFF-HOURS-SEND + dispatch dev-alert-engine",
+    "processedBy": "dev-team",
+    "processedAt": "2026-07-17T10:21:52Z",
+    "result": "classified-flaky-no-escalation"
+  }
+}
