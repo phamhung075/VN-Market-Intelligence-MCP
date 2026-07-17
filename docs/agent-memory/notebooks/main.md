@@ -1,6 +1,11 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-17T15:07Z (dev-team tick 2026-07-17T1507Z — 4 real signals drained ALL folded no-PO (3 bctc routine incl HPG data-qual-block=owned-SPIKE, 1 benign cowork-fire); idle otherwise; FIX-CHEF deferred 12th tick)
+**Written:** 2026-07-17T15:37Z (dev-team tick 2026-07-17T1537Z — fully-idle dispatch: drain no-op db190, PO inputs empty, CI green; FIX-CHEF deferred 13th tick)
+
+## cycle-20260717T1537Z — fully-idle dispatch; drain no-op (inbox all envelope-less state files, db190), PO inputs empty, CI green; FIX-CHEF deferred 13th tick
+
+- **Idle mechanics**: preflight RUN tick `2026-07-17T15:37Z`; gcc clean (no HEAD.lock, single worktree @`1a030d78e` = last tick's notebook commit, prune empty, synced 0 0); drain **NO-OP** (inbox only envelope-less cowork-team snapshots + price_anomaly + mcp-endpoint-outage — all skipped by design, inserted=0, db **190** unchanged — no new cowork-fire this tick, the 15:05Z one was drained last tick 1507Z); orphan-adoption 0 (`task_list_held` orphan-signal/dev-team = 0); CI **GREEN** HEAD `1a030d78e` (run 29591794953, = last tick's notebook commit); PO inputs ALL empty (signal_queue NEW=0, telegram "Không có báo cáo mới", ask-queue []) → **no PO spawn**; pipeline-resume no-trigger (head idle/router @09:48Z, updated_by dev-mcp-server FIX-OHLCV review-flip); in_progress=1 `SPIKE-BCTC-...-ENRICHFAIL-FLOOD` ops-owned P0; BOUNDED-1 withheld (tree git-dirty ~14 peer files; sole in_progress is ops-owned, no dev-resume candidate). Board unchanged: backlog 386, ready 17, in_progress 1, review 30, done 13, active_sprints 8.
+- **Continuity unchanged**: FIX-CHEF-MIDFLOW-BAIL-DETERMINISM DEFERRED **13th tick** (chef.md still ` M` peer-dirty, tran-ngoc-bau AUTO-CURE uncommitted by owner; supervised ⇒ never BOUNDED-1-eligible; self-heals `chef-eod:2026-07-18`). FIX-REFINE-PAGECOUNT-ZERO backlog/architect (awaits decompose, zone=multi). FIX-OHLCV REVIEW/qa. HPG data-quality WATCH (op_profit=0, 1-obs, downstream of ops-owned SPIKE) — mint DATA-QUALITY row only if re-blocks on a later off-market cycle AFTER SPIKE closes uncovered. Flaky WATCH 167/1255/1404 all 1-obs. Only commit this tick: this notebook. ALL ~14 peer dirty files untouched.
 
 ## cycle-20260717T1507Z — 4 real signals drained, ALL folded no-PO: 3 bctc routine (FPT/VCB FAIR, HPG data-quality-blocked=owned-SPIKE corroboration) + 1 benign cowork-fire; idle otherwise
 
