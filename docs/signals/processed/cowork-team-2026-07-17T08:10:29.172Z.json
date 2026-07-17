@@ -1,0 +1,67 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-17T08:10:29.172Z",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence",
+      "alert-commander-critical": "cadence"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": 240,
+      "market-watcher-offhours": 240,
+      "alert-commander-critical": 240
+    },
+    "last_fired_timestamp": "2026-07-17T08:09:31.013Z",
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "08:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 5,
+    "note": "adaptive mode; off-hours 4h gatherer+alert batch (0 */4 * * *) due at 08:00 boundary, last_fired 04:04:30.497Z snap->04:00 elapsed>=14400s. 3 distinct agents (news-scout/market-watcher/alert-commander) no collision; CHEF mutex N/A (no chef slots in MATCHES); calendar=unknown->no suppression; freshness-downgrade N/A (signal_backlog=5, not 0). tick-snapshot <HH:MM> file NOT written this tick (non-blocking optimization; agents fall back to get_cycle_bootstrap in own contexts). emit cycle_snapshot_promoted=false + stale_warning=true -> next tick likely legacy (UC-SDF-P2 dark-promote persists). Market OPEN VN-Index 1787.45 (-16.79/-0.93%), gold BULLISH 4000.4, USDVND BEARISH 26090, carry NEUTRAL 1.37pp."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-17T08:10:29.172Z",
+  "_processed": {
+    "fingerprint": "faf03a04c6ef2b07d6af4b23f55c6f9300413fcb7c0eade3bdc23a7010dc8eea",
+    "processedAt": "2026-07-17T08:18:25Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
