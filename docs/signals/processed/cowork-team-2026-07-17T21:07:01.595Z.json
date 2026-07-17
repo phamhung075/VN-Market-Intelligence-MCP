@@ -1,0 +1,52 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-17T21:06:27Z",
+    "nominal_tick": "2026-07-17T21:00Z",
+    "drift_min": 3,
+    "matched_slots": [
+      "bctc-analyst-slot-3"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-3"
+    ],
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md"
+    ],
+    "silent": false,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "due_reasons": {
+      "bctc-analyst-slot-3": "cron"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-3": null
+    },
+    "last_fired_timestamp": "2026-07-17T21:06:27.093Z",
+    "last_fired_slots": [
+      "bctc-analyst-slot-3"
+    ],
+    "last_fired_write_errors": [],
+    "tick_snapshot_skipped": true,
+    "tick_snapshot_reason": "single-slot (|WON|==1)",
+    "signal_backlog": 8,
+    "note": "single-slot non-guaranteed bctc-analyst-slot-3 (cron 0 21, bctc-offmarket) off-market financial analysis; adaptive mode (stale_warning=false at read time, emitted_at age ~14min); bctc-offmarket+unknown-calendar => _cron_fallback so cadence gate passthrough due_reason=cron; parallel_group=bctc-analyst so CHEF-mutex no-op; bctc is not a MARKET publisher so no published-marker gate"
+  },
+  "priority": "low",
+  "createdAt": "2026-07-17T21:07:01.595Z",
+  "_processed": {
+    "fingerprint": "955b89c27875b8bf7d1dee54246c3e6292b8a0eda8890537d4168625446e2e25",
+    "processedAt": "2026-07-17T21:19:23Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
