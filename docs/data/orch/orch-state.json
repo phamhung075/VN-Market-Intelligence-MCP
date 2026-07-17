@@ -374,8 +374,8 @@
     "status": "in_progress",
     "active_task_id": "SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD",
     "next_agent": "ops",
-    "updated_at": "2026-07-17T02:59Z",
-    "updated_by": "router (AC-2 root-caused: PEK pek_model_cache volume-wipe primary + refine-fold; dispatched ops PEK re-seed + PO fold; tick 2026-07-17T02:37Z)"
+    "updated_at": "2026-07-17T03:04Z",
+    "updated_by": "router (AC-2 PEK re-seed APPLIED+pre-verified: crash eliminated, weights 40.7MB present; final producer proof deferred to post-market ~09:05Z reconcile; refine-fold via PO)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -622,8 +622,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-16T22:07:00Z",
-    "_updated_by": "po-report-triage-20260716T2207Z",
+    "_updated_at": "2026-07-17T03:04:26Z",
+    "_updated_by": "po-scoped-triage-20260717 (SPIKE refine-fold + mint FIX-INFRA-CRITICAL-VOLUME-PRESENCE-HEALTHCHECK PLAN-ONLY)",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -5563,7 +5563,17 @@
         "source": "docs/spikes/SPIKE-BCTC-TABLEROWS-FROZEN-HOLLOW-DONE.md",
         "supervised": true,
         "supervised_by": "po-groom-20260713T0937Z",
-        "supervised_note": "ops-owned FIX, null next_agent, no backlog-detail entry -> code non-dev-owner gate is detail-blind. Supervised dispatch to ops; removed from BOUNDED-1 idle auto-pickup (would mis-route to developer placeholder)."
+        "supervised_note": "ops-owned FIX, null next_agent, no backlog-detail entry -> code non-dev-owner gate is detail-blind. Supervised dispatch to ops; removed from BOUNDED-1 idle auto-pickup (would mis-route to developer placeholder).",
+        "spike_fold_20260717": {
+          "by": "po-scoped-triage-20260717",
+          "at": "2026-07-17T03:04:26Z",
+          "from_spike": "SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD",
+          "action": "FOLD refine-half dormancy into this durable-trigger backstop row — NO new mint (per AC-2 refine_disposition).",
+          "evidence": "AC-2 RAW (dev-mcp-server, commit 60bdca243): the agentic-refine producer is STILL dormant — bctc_refined_units MAX=2026-06-30 (no refined row in ~2.5wk) and refine_status PENDING has REGRESSED to 181 (was 151 at the 2026-07-12 SPIKE-BCTC-TABLEROWS-FROZEN-HOLLOW-DONE filing). Crons bctcPdfPullJob(*/30) + bctcExtractReconcileJob(5,35) fire status=success every tick (RAW cron_job_runs) => liveness/registration is NOT the gap; the session-scoped refine DISPATCH trigger this row already tracks is. Confirms the fragility is live and worsening.",
+          "user_visible_symptom": "This dormant refine producer (jointly with the now-being-reseeded PEK-layout half) starved bctcExtractReconcileJob's 3-way OR success check, so overnight 2026-07-15 20:05Z->07-16 07:15Z it mass-terminalized the WHOLE Q4/Q3/Q2/Q1-2025 (walking back into 2024) watchlist backlog as enrich_failed and emitted a 76+ fail-loud RECONCILE-EXHAUSTED report flood (121 duplicate reports 3358-3478 archived). The report-storm itself is already suppressed by the shipped FIX-BCTC-RECONCILE-EMISSION-CIRCUIT-BREAKER; THIS row is the durable fix for the underlying refine-producer dormancy that CAUSED the flood.",
+          "recurrence": "3rd+ observed instance of the identical session-scoped-CronCreate-dormancy defect class: 2026-06-27 BCTC-REFINE-STALL-RETRIGGER, 2026-07-12 SPIKE-BCTC-TABLEROWS-FROZEN-HOLLOW-DONE, 2026-07-16/17 this SPIKE.",
+          "scope_confirm": "Existing AC (1)-(4) remain correct and sufficient; this fold only adds fresh 07-17 corroboration. Once ops re-seeds pek_model_cache and /pek-extract resumes, THIS row is the SOLE remaining convergence lever for refined bctc_table_rows serving-data production. PO recommendation: schedule immediately after ops confirms PEK extraction resumes."
+        }
       },
       {
         "id": "TE-T08",
@@ -7530,6 +7540,28 @@
         "created_at": "2026-07-17T01:23:19Z",
         "created_by": "po-scoped-triage-20260717",
         "verify_note": "PLAN-ONLY, minted by scoped PO report-triage 2026-07-17T01:23Z after router RAW-verified the no-op resurrection cycle (commit 9dae10376). Immediate re-recurrence for THIS instance already neutralized by annotating SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD.ac3_followup as resolved-to-archive same tick; this row hardens the CLASS so other archived tasks with sibling FKs are not falsely resurrected. Detector-FP fix (high-value per project norms)."
+      },
+      {
+        "id": "FIX-INFRA-CRITICAL-VOLUME-PRESENCE-HEALTHCHECK",
+        "title": "Post-rebuild critical-volume PRESENCE healthcheck: fail-loud (and where safe auto-reseed) when a producer-critical named/model-cache volume is empty, so a VM-rebuild cannot silently re-empty pek_model_cache (or any manifest volume) without alerting — the 2026-07-15 rebuild wiped TWO volumes (market_data + pek_model_cache) and only market_data was caught",
+        "owner": "ops",
+        "status": "BACKLOG",
+        "zone": "infra",
+        "priority": "high",
+        "type": "FIX",
+        "depends": [],
+        "note": "Filed from SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD (AC-1+AC-2, 2026-07-17). ROOT GAP: the 2026-07-15 hypervisor VM crash/rebuild destroyed TWO named volumes — market_data AND pek_model_cache. market_data was CAUGHT and recovered same day (commit 5ba622eca: July-1 host backup restored + all 9 services switched to ./data/live bind-mount). pek_model_cache was NOT caught: left EMPTY (du 12K, only stray yolo/settings.yaml; doclayout_yolo_ft.pt gone) and stayed empty ~2 days, silently crashing EVERY /pek-extract call (FileNotFoundError) => PEK-layout producer dormant. Nothing alerted on the empty volume; the gap only surfaced ~2 days later via a downstream 76+ RECONCILE-EXHAUSTED report FLOOD when bctcExtractReconcileJob mass-terminalized the watchlist backlog it could not enrich. Presence must assert CONTENT (the specific required weights), not merely that the mount exists / du>0. AC (proposed, ops/architect to refine): (1) a durable session-independent (launchd-class, mirror com.vn-market.cowork-guaranteed-slot-firer.plist) healthcheck asserts every producer-critical volume/model-cache contains its REQUIRED artifacts — for pek_model_cache: doclayout_yolo_ft.pt (+ PaddleOCR weights) present and loadable, not just non-empty; (2) the critical-volume manifest (volume -> required files -> re-seed script) is enumerated from an SSOT (docs/data/system-map.json or a dedicated manifest), NEVER hardcoded per NO-HARDCODE standing; (3) on missing/empty, emit ONE fail-loud bug-channel alert that NAMES the committed idempotent recovery (scripts/pek-fetch-weights.sh, commit e418d606d, brief docs/architecture-briefs/2026-05-27-pek-weights-provisioning.md) and, where safe+idempotent, auto-invokes it (populate-empty-volume is low-risk, NOT a destructive swap); (4) fire on boot/post-rebuild AND on a periodic cadence so a future silent wipe is caught in minutes not days; (5) RAW-verify by emptying a scratch volume and confirming the alert (and optional auto-reseed) fires. Scope guard: this is the DURABLE cross-cutting infra guard; it does NOT replace the in-flight ops one-shot PEK re-seed (restores current prod) nor the refine-producer durable fix FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP (a different producer). PLAN-ONLY: do NOT dispatch — schedule after ops confirms /pek-extract resumes.",
+        "created_at": "2026-07-17T03:04:26Z",
+        "created_by": "po-scoped-triage-20260717",
+        "source": "docs/spikes/SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD.md",
+        "related": [
+          "SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD",
+          "FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP"
+        ],
+        "supervised": true,
+        "supervised_by": "po-scoped-triage-20260717",
+        "supervised_note": "PLAN-ONLY / anomaly->BACKLOG. ops-owned infra FIX, null next_agent, no backlog-detail entry -> removed from BOUNDED-1 idle auto-pickup (code non-dev-owner gate is detail-blind, would mis-route to a developer placeholder). Do NOT dispatch; groom+schedule after ops confirms PEK re-seed.",
+        "plan_only": true
       }
     ],
     "closed_sprints": [
@@ -8236,8 +8268,8 @@
       "status": "idle",
       "active_task_id": null,
       "next_agent": "ops",
-      "updated_at": "2026-07-17T02:59Z",
-      "updated_by": "router (AC-2 root-caused PEK volume-wipe + refine-fold; ops re-seed + PO fold dispatched)"
+      "updated_at": "2026-07-17T03:04Z",
+      "updated_by": "router (AC-2 PEK re-seed applied+pre-verified; final proof deferred to ~09:05Z; refine-fold via PO)"
     },
     "ready": [],
     "review": [
@@ -8912,8 +8944,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-17T00:30:13Z",
-    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
+    "last_triaged_at": "2026-07-17T03:04:26Z",
+    "last_triaged_by": "po-scoped-triage-20260717",
     "in_progress": [
       {
         "id": "SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD",
@@ -9011,6 +9043,15 @@
           "dispatch": "ops => PEK volume re-seed (convergence lever); PO => fold refine half + SPIKE disposition",
           "unverified": "refine-bctc-slot-1 armed-vs-inert; PaddleOCR lazy-download weights presence; exact crash->rebuild->fix minute sequencing",
           "doc": "docs/spikes/SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD.md @60bdca243"
+        },
+        "ac2_remediation": {
+          "by": "ops (PEK re-seed) + router docker-exec RAW spot-check corroborated",
+          "at": "2026-07-17T03:04Z",
+          "pek_reseed": "SUCCESS — pek_model_cache 12K→78M; doclayout_yolo_ft.pt present 40,709,302 bytes at /app/PDF-Extract-Kit/models/Layout/YOLO/ + HF-cache blob (router-confirmed); pdf-extractor container Up healthy after plain restart",
+          "crash_fixed": "DIFFERENTIAL PROOF — /pek-extract now returns HTTP 503 market_open guard (VN 02:00-08:00Z) INSTEAD of pre-fix FileNotFoundError; PekEngineAdapter imports clean. Crash root cause eliminated.",
+          "restart": "plain single-service docker restart pdf-extractor-1 (allowed); NO rebuild/force-recreate/swap; topology preserved",
+          "pending_proof": "FINAL producer-resumption proof DEFERRED to post-market-close: next bctcExtractReconcileJob run ~09:05Z 2026-07-17 (after 08:00Z VN close). SUCCESS PREDICATE: MAX(extracted_at) in bctc_layout_units advances past 2026-06-10 AND new rows land. A dev-team tick after ~09:05Z RAW-verifies serving-plane + closes the PEK half. NOT marked un-dormant until rows land (no false green).",
+          "refine_half": "unchanged — folding into FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP (PO disposition in flight)"
         }
       }
     ]
@@ -9022,6 +9063,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-07-16T21:26:25Z",
-  "_updated_by": "po"
+  "_updated_at": "2026-07-17T03:04:26Z",
+  "_updated_by": "po-scoped-triage-20260717 (SPIKE-BCTC-EXTRACTION-DORMANT refine-fold + volume-presence-guard mint)"
 }
