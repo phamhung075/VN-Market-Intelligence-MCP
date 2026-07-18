@@ -6,31 +6,31 @@
   "beat_miss": null,
   "product": "IT services, software exports, telecom (FPT Telecom), education (FPT Edu)",
   "customer": "Enterprise IT buyers (VN + offshore), SME telecom subscribers",
-  "ops": "Net revenue 12,480 tỷ, operating margin 22.0%; ROE 6.17%q (28.3% ngành, TREN MEDIAN); EY 7.25% FAIR +2.25pp so lãi suất tiền gửi; OCF/NI âm do CAPEX/đầu tư kỳ này",
-  "mgmt": "B/S cân đối 0% lệch; không phát hiện dấu hiệu thao túng lợi nhuận; KD Quẻ 8 Tỷ/THUẬN LỢI 100% (hào Bác ẩn — surface reversal kéo dài nhiều chu kỳ, tiếp tục thận trọng)",
+  "ops": "Net revenue 12,480 tỷ VND, net profit 2,476.8 tỷ VND, ROE 6.17%q (28.3% annualized); PE 13.8x -20% sector discount, PB 3.6x +136% premium; EY spread +2.25pp FAIR",
+  "mgmt": "KD Quẻ 8 Tỷ/THUẬN LỢI held 6 consecutive cycles (Hỗ quẻ Bác persists — hidden internal contradiction); sentiment softening slightly negative (-0.18 slope, n=24, 2 bull/9 bear)",
+  "cycle_id": "20260718-1800",
+  "balance_sheet_check": {
+    "imbalance_pct": 0,
+    "result": "PASS"
+  },
   "esc_gate": {
-    "esc1": false,
-    "esc2_imbalance_pct": 0,
-    "esc3_status": "DATA-COVERAGE-LIMITED",
-    "esc3_quarters_returned": 2,
-    "esc4_non_operating_share_pct": 2,
-    "esc5": false,
-    "escalation_status": null,
-    "coverage_guard_key": "esc-datacov:FPT:Q1-2026:ESC-3",
-    "coverage_guard_held": true
+    "esc1_accounting_trick": "FALSE",
+    "esc2_balance_sheet": "PASS (0%)",
+    "esc3_ocf_ni_divergence": "DATA-COVERAGE-LIMITED (2/4 quarters)",
+    "esc4_related_party_oneoff": "FALSE (non_operating_share 2.0%)",
+    "esc5_refine_confidence": "FALSE (no refined units)",
+    "escalation_status": "no_escalation"
   },
-  "sentiment_30d": {
-    "direction": "GIẢM",
-    "slope": -0.18,
-    "bull": 2,
-    "bear": 9,
-    "n": 24
-  },
-  "fundamental_validation_signal_id": 8581,
-  "generated_at": "2026-07-18T15:10:00Z",
+  "trick_pass_status": "E3_CACHE_HIT — unchanged since c081 (byte-identical fundamentals)",
+  "insider_signals": "no significant activity",
+  "legal_risk": "none for FPT this cycle",
+  "chain_findings_30min": 0,
+  "alert_commander_signal_id": 8591,
+  "critic_score": 0.8,
+  "fetchedAt": "2026-07-18T18:05:12Z",
   "_processed": {
-    "fingerprint": "3b04f3c0a5ef20c456bfd959b30f4d982de8f1804de47de9924a7657ea22a6a3",
-    "processedAt": "2026-07-18T15:26:37Z",
+    "fingerprint": "6b45bf1fc0d35f4c319d9a80f5d6749d2edc8d2f920cfe5b78335bde0fcee5b0",
+    "processedAt": "2026-07-18T18:18:32Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

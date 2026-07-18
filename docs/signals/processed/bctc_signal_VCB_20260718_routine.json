@@ -4,33 +4,33 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Ngân hàng bán buôn + bán lẻ — cho vay, tài trợ thương mại, bancassurance, FX",
-  "customer": "Doanh nghiệp nhà nước, tập đoàn lớn, khách hàng cá nhân gửi tiết kiệm/vay vốn",
-  "ops": "NI 9.462,1 tỷ; ROE 4.21%q (16.7% dưới median ngành 17.6%); PE 14.1x premium +57%, PB 2.2x premium +45% so ngành; B/S lệch 0.37% (trong ngưỡng)",
-  "mgmt": "Cơ cấu ngân hàng khiến lợi nhuận ngoài HĐKD âm -21.4% (không bất thường, đặc thù ngành); KD Quẻ 15 Khiêm/THUẬN LỢI 100% (hào Giải — sạch, ổn định)",
+  "product": "Commercial banking — corporate lending, retail lending, trade finance, treasury",
+  "customer": "State-linked corporates, retail depositors, SME/trade-finance clients",
+  "ops": "Net interest income 17,421 tỷ VND, net profit 9,462.1 tỷ VND, ROE 4.21%q (16.7% annualized, below sector median 17.6%); PE 14.1x +57% sector premium, PB 2.2x +45% premium",
+  "mgmt": "KD Quẻ 15 Khiêm/THUẬN LỢI held 6 consecutive cycles (Hỗ quẻ Giải, clean reversal); sentiment reversed to GIẢM (-0.20 slope, n=7, 5 bull/0 bear — recency-weighted regression artifact, not a raw-count contradiction, stable vs prior cycle)",
+  "cycle_id": "20260718-1800",
+  "balance_sheet_check": {
+    "imbalance_pct": 0.37,
+    "result": "PASS"
+  },
   "esc_gate": {
-    "esc1": false,
-    "esc2_imbalance_pct": 0.37,
-    "esc3_status": "DATA-COVERAGE-LIMITED",
-    "esc3_quarters_returned": 3,
-    "esc4_non_operating_share_pct": -21.4,
-    "esc5": false,
-    "escalation_status": null,
-    "coverage_guard_key": "esc-datacov:VCB:Q1-2026:ESC-3",
-    "coverage_guard_held": true
+    "esc1_accounting_trick": "FALSE",
+    "esc2_balance_sheet": "PASS (0.37%)",
+    "esc3_ocf_ni_divergence": "DATA-COVERAGE-LIMITED (3/4 quarters)",
+    "esc4_related_party_oneoff": "FALSE (non_operating_share -21.4%, bank structure — operating profit exceeds pretax due to non-operating charges)",
+    "esc5_refine_confidence": "FALSE (no refined units)",
+    "escalation_status": "no_escalation"
   },
-  "sentiment_30d": {
-    "direction": "GIẢM",
-    "slope": -0.2,
-    "bull": 5,
-    "bear": 0,
-    "n": 7
-  },
-  "fundamental_validation_signal_id": 8582,
-  "generated_at": "2026-07-18T15:10:00Z",
+  "trick_pass_status": "E3_CACHE_HIT — unchanged since c081 (byte-identical fundamentals)",
+  "insider_signals": "formally skipped (charter_capital null)",
+  "legal_risk": "none for VCB this cycle",
+  "chain_findings_30min": 0,
+  "alert_commander_signal_id": 8592,
+  "critic_score": 0.8,
+  "fetchedAt": "2026-07-18T18:05:12Z",
   "_processed": {
-    "fingerprint": "5d786bbd8f6b2a369a1446ed8eb8a32109c311f2ea0a024b6dfce81bbc151164",
-    "processedAt": "2026-07-18T15:26:37Z",
+    "fingerprint": "3f05e999569de04b43ea9a83212cd2055afc6db02020bc516ef920dad6c4294b",
+    "processedAt": "2026-07-18T18:18:32Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

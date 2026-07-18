@@ -1,0 +1,43 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "2026-07-18T18:05:09.967Z",
+  "payload": {
+    "matched_slots": [
+      "bctc-analyst-slot-2"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-2"
+    ],
+    "last_fired_slots": [
+      "bctc-analyst-slot-2"
+    ],
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md"
+    ],
+    "drift_min": 3,
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "chef_mutex_applied": false,
+    "due_reasons": [
+      "cron"
+    ],
+    "cadence_minutes": [
+      null
+    ],
+    "last_fired_timestamp": "2026-07-18T18:04:35.377Z",
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "18:00",
+    "dev_queue_depth": 5,
+    "signal_backlog": 6
+  },
+  "_processed": {
+    "fingerprint": "3423188738dee03b35b778ea9e54244e331e8c53f3e5c07be5b12f7cc69a72ee",
+    "processedAt": "2026-07-18T18:18:32Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

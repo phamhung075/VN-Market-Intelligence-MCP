@@ -4,34 +4,33 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Thép xây dựng, thép cuộn cán nóng (HRC), ống thép, tôn mạ",
-  "customer": "Nhà thầu xây dựng, doanh nghiệp gia công thép trong nước, khách hàng xuất khẩu",
-  "ops": "Doanh thu 52.900,8 tỷ (+); ROE 12.7%/6.48%q TREN MEDIAN ngành (2.9%); LƯU Ý: Operating Profit=0 và CF=0 là lỗi trích xuất dữ liệu đã biết (net_profit 9.055,9 tỷ > gross_profit 8.365,1 tỷ) — không phản ánh đúng thực trạng vận hành",
-  "mgmt": "PE 14.2x discount -57% so ngành, PB 1.7x premium +93%; KD Quẻ 2 Khôn TRUNG TÍNH 37-38%; dữ liệu không đáng tin cậy đủ để phát tín hiệu fundamental_validation",
+  "product": "Steel manufacturing (construction steel, HRC), agriculture, real estate side businesses",
+  "customer": "Construction contractors, steel distributors, industrial fabricators",
+  "ops": "Net revenue 52,900.8 tỷ VND, net profit 9,055.9 tỷ VND — data quality caveat: Operating Profit=0 and CF=0 (known extraction defect, NI exceeds Gross Profit); PE 14.2x -57% sector discount, PB 1.7x +93% premium, ROE 12.7%/6.48%q",
+  "mgmt": "KD Quẻ 2 Khôn TRUNG TÍNH 37-38% confidence — stable, no directional conviction; sentiment ỔN ĐỊNH (slope -0.04, n=10, 4 bull/1 bear)",
+  "cycle_id": "20260718-1800",
+  "balance_sheet_check": {
+    "imbalance_pct": 0,
+    "result": "PASS"
+  },
   "esc_gate": {
-    "esc1": false,
-    "esc2_imbalance_pct": 0,
-    "esc3_status": "DATA-COVERAGE-LIMITED",
-    "esc3_quarters_returned": 2,
-    "esc4_status": "SKIPPED (E4 Block Rule — operating_profit=0 corrupted)",
-    "esc5": false,
-    "escalation_status": null,
-    "coverage_guard_key": "esc-datacov:HPG:Q1-2026:ESC-3",
-    "coverage_guard_held": true
+    "esc1_accounting_trick": "FALSE",
+    "esc2_balance_sheet": "PASS (0%)",
+    "esc3_ocf_ni_divergence": "DATA-COVERAGE-LIMITED (2/4 quarters)",
+    "esc4_related_party_oneoff": "SKIPPED (E4 Block Rule — operating_profit=0 corrupted, formula would be meaningless)",
+    "esc5_refine_confidence": "FALSE (no refined units)",
+    "escalation_status": "no_escalation"
   },
-  "sentiment_30d": {
-    "direction": "ỔN ĐỊNH",
-    "slope": -0.04,
-    "bull": 4,
-    "bear": 1,
-    "n": 10
-  },
-  "fundamental_validation_signal_id": null,
-  "data_quality_note": "unreliable extraction (Operating Profit/CF = 0) — no fundamental_validation signal posted this cycle, consistent with prior cycles",
-  "generated_at": "2026-07-18T15:10:00Z",
+  "trick_pass_status": "E3_CACHE_HIT — unchanged since c081 (byte-identical fundamentals)",
+  "insider_signals": "no significant activity",
+  "legal_risk": "none for HPG this cycle",
+  "chain_findings_30min": 0,
+  "alert_commander_signal_id": null,
+  "data_quality_note": "No fundamental_validation signal posted to alert-commander — data unreliable (Operating Profit/CF extraction defect), consistent with prior cycles c081-c099",
+  "fetchedAt": "2026-07-18T18:05:12Z",
   "_processed": {
-    "fingerprint": "2aedbb7d07153870b7711fb642a20c839eaf6338384e83041016641aa55c9f8f",
-    "processedAt": "2026-07-18T15:26:37Z",
+    "fingerprint": "c94c314fd4723bc81fdb86bb57ad93dcefb87cfd6d5063b21c93080739f66eca",
+    "processedAt": "2026-07-18T18:18:32Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
