@@ -1,0 +1,15 @@
+{
+  "from": "tran-ngoc-bau",
+  "to": "po",
+  "type": "audit-handoff",
+  "payload": "docs/handoffs/tnb-audit-latest.md",
+  "priority": "high",
+  "createdAt": "2026-07-18T20:20:00Z",
+  "summary": "TNB c113: NEEDS_ATTENTION. c112 biz-ctx auto-cure verified NEGATIVE (fix present, data in-window, still unused). L6 single-pillar token regressed (0/0 tokens vs all 7 tickers under bar). Weekend coverage correctly carved out. Notebook collision this cycle destroyed the c110-collision-note section (uncommitted-file risk realized) — recovered verbatim, see F-TNB-NOTEBOOK-COLLISION-DATA-LOSS.",
+  "_processed": {
+    "fingerprint": "c46dd3f4dbef8378cbf840c3ab0216d7d4560fc084b97967c393902728acf1fa",
+    "processedAt": "2026-07-18T20:50:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

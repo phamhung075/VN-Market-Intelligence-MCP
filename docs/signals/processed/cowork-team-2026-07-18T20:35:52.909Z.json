@@ -1,0 +1,45 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "created_at": "2026-07-18T20:35:52.909Z",
+  "payload": {
+    "matched": [],
+    "won": [],
+    "last_fired_slots": [],
+    "spawned": [],
+    "drift_min": 4,
+    "pressure_mode": "legacy",
+    "calendar": "unknown",
+    "chef_mutex_applied": false,
+    "due_reasons": [],
+    "cadence_minutes": [],
+    "last_fired_timestamp": null,
+    "classification": "NO_FANOUT",
+    "reason": "signal-driven WORK: 2 dev-team improvement_proposals to:po left untouched for dev-team lane; no cowork slot/one-shot due",
+    "nominal_tick": "20:30",
+    "dev_queue_depth": 5,
+    "signal_backlog": 6,
+    "signals_observed": [
+      {
+        "id": "t4p1-001",
+        "to": "po",
+        "type": "improvement_proposal",
+        "severity": "LOW"
+      },
+      {
+        "id": "t4p1-002",
+        "to": "po",
+        "type": "improvement_proposal",
+        "severity": "MED"
+      }
+    ]
+  },
+  "_processed": {
+    "fingerprint": "8489320f5017a06d114a874596d57b12cdb4f27848c219c7de77b6bd719eab69",
+    "processedAt": "2026-07-18T20:50:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
