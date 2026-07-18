@@ -411,11 +411,11 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-17T12:21:04Z",
-    "_updated_by": "dev-team (0a-D drain: refine-stall consumed→pendingSignals→PO)",
+    "_updated_at": "2026-07-18T01:00:41Z",
+    "_updated_by": "po (closed routed-to-po chef-eod-recurring-bail escalation; substantive board triage already applied 2026-07-17T09:28:15Z on FIX-CHEF-MIDFLOW-BAIL-DETERMINISM escalation + UC-CCA-P3 abort-path AC)",
     "archive": [],
     "rows": [],
-    "last_triaged_at": "2026-07-15T20:56:10Z",
+    "last_triaged_at": "2026-07-18T01:00:41Z",
     "last_triaged_by": "po"
   },
   "sprint_goal": {
@@ -7590,7 +7590,9 @@
         "prior_handoff": "docs/handoffs/2026-07-16-chef-eod-nonpublish-and-marker-leak.md",
         "related": [
           "UC-CCA-P3"
-        ]
+        ],
+        "updated_at": "2026-07-18T01:00:41Z",
+        "priority_verdict_20260718": "[po 2026-07-18T01:00:41Z — closing routed-to-po escalation signal cowork-team-2026-07-17T08:55:25.573Z (routed 2026-07-17T09:20:39Z; signal_queue.last_triaged_at had lagged at 2026-07-15T20:56Z, feedback_signal_row_status_lags_groundtruth)] RECURRENCE-POLICY VERDICT (feedback_recurring_bug_escalation 2+): HOLD P1 — do NOT promote to P0. Rationale: recurrence of an UNIMPLEMENTED backlog fix = starvation, NOT a deployed-fix regression (feedback_recurring_detection_vs_recurring_failed_fix, backlog-pending is-not deployed-fix-regression); blast radius BOUNDED and self-healing (07-17 leak self-expires 2026-07-18T12:50:19Z; 07-18 is Saturday so no EOD cron today; next EOD Mon 07-20 uses fresh key published:chef-eod:2026-07-20, NOT blocked; morning dish partial cover). Row already correctly recurring:true, recurrence_count=2, escalated P2->P1 at 2026-07-17T09:28:15Z, dispatch-NEXT and supervised (agent-father on-demand — do NOT BOUNDED-1 idle-auto-launch, UC-ASL-P6 hazard). P0 stays reserved for the harmful false-publish class UC-CCA-P3. No priority change: substantive triage was already applied 2026-07-17T09:28:15Z (this row escalation + UC-CCA-P3 abort-path AC extension); this tick only closes the signal_queue routing-loop bookkeeping that lagged ground truth."
       },
       {
         "id": "SPIKE-EVIDENCE-SCORE-CACHE-FRAGMENT-DECOUPLE",
