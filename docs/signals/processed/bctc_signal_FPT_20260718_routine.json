@@ -6,31 +6,42 @@
   "beat_miss": null,
   "product": "IT services, software exports, telecom (FPT Telecom), education (FPT Edu)",
   "customer": "Enterprise IT buyers (VN + offshore), SME telecom subscribers",
-  "ops": "Net revenue 12,480 tỷ VND, net profit 2,476.8 tỷ VND, ROE 6.17%q (28.3% annualized); PE 13.8x -20% sector discount, PB 3.6x +136% premium; EY spread +2.25pp FAIR",
-  "mgmt": "KD Quẻ 8 Tỷ/THUẬN LỢI held 6 consecutive cycles (Hỗ quẻ Bác persists — hidden internal contradiction); sentiment softening slightly negative (-0.18 slope, n=24, 2 bull/9 bear)",
-  "cycle_id": "20260718-1800",
-  "balance_sheet_check": {
-    "imbalance_pct": 0,
-    "result": "PASS"
+  "ops": "Software exports gross margin 34.0%, operating margin 22.0%, NI margin 19.8%; ROE 6.17% quý / 28.3% năm hóa",
+  "mgmt": "EY 7.25% FAIR (+2.25pp vs deposit rate); consistent ROE delivery; KD Quẻ 8 Tỷ THUẬN LỢI 100% stable 7 consecutive cycles",
+  "valuation": {
+    "pe": 13.8,
+    "pe_vs_sector": "-20% discount",
+    "pb": 3.6,
+    "pb_vs_sector": "+136% premium",
+    "ey_spread_pct": 2.25,
+    "verdict": "FAIR"
   },
   "esc_gate": {
-    "esc1_accounting_trick": "FALSE",
-    "esc2_balance_sheet": "PASS (0%)",
-    "esc3_ocf_ni_divergence": "DATA-COVERAGE-LIMITED (2/4 quarters)",
-    "esc4_related_party_oneoff": "FALSE (non_operating_share 2.0%)",
-    "esc5_refine_confidence": "FALSE (no refined units)",
-    "escalation_status": "no_escalation"
+    "esc1": "FALSE",
+    "esc2": "PASS (0% imbalance)",
+    "esc3": "DATA-COVERAGE-LIMITED",
+    "esc3_quarters_returned": 2,
+    "esc4": "FALSE (2.0% non_operating_share)",
+    "esc5": "FALSE (refined empty)",
+    "coverage_guard_key": "esc-datacov:FPT:Q1-2026:ESC-3",
+    "coverage_guard_held": true
   },
-  "trick_pass_status": "E3_CACHE_HIT — unchanged since c081 (byte-identical fundamentals)",
-  "insider_signals": "no significant activity",
-  "legal_risk": "none for FPT this cycle",
-  "chain_findings_30min": 0,
-  "alert_commander_signal_id": 8591,
-  "critic_score": 0.8,
-  "fetchedAt": "2026-07-18T18:05:12Z",
+  "kinhdich": {
+    "que": "8 Tỷ",
+    "xu_huong": "THUẬN LỢI",
+    "confidence_pct": 100,
+    "cycles_stable": 7
+  },
+  "sentiment_30d": {
+    "n": 24,
+    "slope": -0.18,
+    "direction": "GIẢM"
+  },
+  "fundamental_validation_signal_id": 8601,
+  "ts": "2026-07-18T21:15:00Z",
   "_processed": {
-    "fingerprint": "6b45bf1fc0d35f4c319d9a80f5d6749d2edc8d2f920cfe5b78335bde0fcee5b0",
-    "processedAt": "2026-07-18T18:18:32Z",
+    "fingerprint": "10a43206478ba5fdf9657a11749e14dfa2011d8c156e575b2952901f982bc2c6",
+    "processedAt": "2026-07-18T21:18:38Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

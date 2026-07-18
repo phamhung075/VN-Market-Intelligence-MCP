@@ -4,33 +4,42 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Steel manufacturing (construction steel, HRC), agriculture, real estate side businesses",
-  "customer": "Construction contractors, steel distributors, industrial fabricators",
-  "ops": "Net revenue 52,900.8 tỷ VND, net profit 9,055.9 tỷ VND — data quality caveat: Operating Profit=0 and CF=0 (known extraction defect, NI exceeds Gross Profit); PE 14.2x -57% sector discount, PB 1.7x +93% premium, ROE 12.7%/6.48%q",
-  "mgmt": "KD Quẻ 2 Khôn TRUNG TÍNH 37-38% confidence — stable, no directional conviction; sentiment ỔN ĐỊNH (slope -0.04, n=10, 4 bull/1 bear)",
-  "cycle_id": "20260718-1800",
-  "balance_sheet_check": {
-    "imbalance_pct": 0,
-    "result": "PASS"
+  "product": "Steel production (long steel, HRC/CRC), integrated value chain from iron ore to finished products",
+  "customer": "Construction contractors, manufacturers, export markets",
+  "ops": "DATA-QUALITY GAP: Operating Profit=0, CF=0 in extracted data (known extraction defect since c081) — Net Profit 9,055.9 tỷ exceeds Gross Profit 8,365.1 tỷ, implausible on its face",
+  "mgmt": "No fundamental_validation signal posted this cycle — data unreliable pending clean re-extraction; PE 14.2x -57% discount, PB 1.7x +93% premium vs sector (unverified given data gap)",
+  "valuation": {
+    "pe": 14.2,
+    "pe_vs_sector": "-57% discount",
+    "pb": 1.7,
+    "pb_vs_sector": "+93% premium",
+    "verdict": "UNRELIABLE_DATA"
   },
   "esc_gate": {
-    "esc1_accounting_trick": "FALSE",
-    "esc2_balance_sheet": "PASS (0%)",
-    "esc3_ocf_ni_divergence": "DATA-COVERAGE-LIMITED (2/4 quarters)",
-    "esc4_related_party_oneoff": "SKIPPED (E4 Block Rule — operating_profit=0 corrupted, formula would be meaningless)",
-    "esc5_refine_confidence": "FALSE (no refined units)",
-    "escalation_status": "no_escalation"
+    "esc1": "FALSE",
+    "esc2": "PASS (0% imbalance)",
+    "esc3": "DATA-COVERAGE-LIMITED",
+    "esc3_quarters_returned": 2,
+    "esc4": "SKIPPED (operating_profit=0, known extraction defect — E4 block rule)",
+    "esc5": "FALSE (refined empty)",
+    "coverage_guard_key": "esc-datacov:HPG:Q1-2026:ESC-3",
+    "coverage_guard_held": true
   },
-  "trick_pass_status": "E3_CACHE_HIT — unchanged since c081 (byte-identical fundamentals)",
-  "insider_signals": "no significant activity",
-  "legal_risk": "none for HPG this cycle",
-  "chain_findings_30min": 0,
-  "alert_commander_signal_id": null,
-  "data_quality_note": "No fundamental_validation signal posted to alert-commander — data unreliable (Operating Profit/CF extraction defect), consistent with prior cycles c081-c099",
-  "fetchedAt": "2026-07-18T18:05:12Z",
+  "kinhdich": {
+    "que": "2 Khôn",
+    "xu_huong": "TRUNG TÍNH",
+    "confidence_pct": 38
+  },
+  "sentiment_30d": {
+    "n": 10,
+    "slope": -0.04,
+    "direction": "ỔN ĐỊNH"
+  },
+  "fundamental_validation_signal_id": null,
+  "ts": "2026-07-18T21:15:00Z",
   "_processed": {
-    "fingerprint": "c94c314fd4723bc81fdb86bb57ad93dcefb87cfd6d5063b21c93080739f66eca",
-    "processedAt": "2026-07-18T18:18:32Z",
+    "fingerprint": "1e48b655cbcc11a0437d570d2879f3cac06ae3c72d029854e081988c893bfa1a",
+    "processedAt": "2026-07-18T21:18:38Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
