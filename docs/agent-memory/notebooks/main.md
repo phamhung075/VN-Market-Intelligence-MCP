@@ -1,6 +1,6 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-18T12:07Z
+**Written:** 2026-07-18T12:37Z
 
 
 
@@ -18,6 +18,14 @@
 
 
 
+
+
+## cycle-20260718T1237Z — fully-idle steady-state (10th consecutive post-dispatch); CI GREEN 90b8693da; index.lock clean this tick; all PO-channels empty; inbox flat at 56 (no new signal)
+
+- **Quiescence holds**: report 3506 [OHLCV-BACKFILL] terminal `wontfix` (PO 0737Z fold-benign weekend FP, a97122d78) — telegram "Không có báo cáo mới" (no re-surface), unresolved=[], signal_queue NEW=0 → **Step-1 SKIPPED**. Carry-over WATCH intact: backfill non-report recurs on a TRADING day AND real daily_ohlcv gap → obs #2 → ops-vps-fetch backlog row (not before; do NOT re-triage terminal 3506).
+- **CI GREEN `90b8693da`** (my 1207Z push — CI run 29644135731 + rag-lint 29644135695 both success) → 1383-macro-alert-dispatch flake did NOT recur (still 1-obs; no recurrence on 1faf69498/2bbd643a9/719cc9fa6/47a84f4e9/4e3e13231/90b8693da); prior "verify 90b8693da CI" continuity item CLOSED green. 2nd independent obs → mint DEFLAKE via PO. Prior-tick transient index.lock did NOT recur this tick (preflight git-status clean) — confirms it was a one-off concurrent-git collision, not a persistent lock.
+- **Idle mechanics**: preflight RUN tick `2026-07-18T12:37Z` (SF-1+fire-election `cron:dev-team:2026-07-18T12:37Z` held+heartbeated 1784378878, RC=1 known noise); cold-evict **IDEMPOTENT** (542=542; `git diff --quiet orch-state.json`=CLEAN, benign 1-to-evict-yet-clean oddity persists → NO orch commit); gcc clean (no HEAD.lock, single worktree @`90b8693da`, synced 0/0); drain **NO-OP** (inbox **56** flat vs 1207Z, **0 envelope-bearing** RAW-verified — no new cowork-fire this tick; newest still 12:07 signal, cowork-system artifact, left untouched per intent-path double-dispatch guard). orphan-signal=0 (own 3 heartbeated locks: fire-election exp 12:57:58Z / presence exp 13:17:57Z / SF-1 exp 14:17:58Z). BOUNDED-1 n/a (WIP=ready17+in_progress1=**18**≥1); pipeline-resume no-trigger (head idle). Board **387/17/1/30** (done11). head idle/next=router. in_progress=1 `SPIKE-BCTC-…-ENRICHFAIL-FLOOD` ops P0.
+- **Continuity**: chef-eod loop CLOSED (73c3e10b9) — do NOT re-spawn PO on chef-eod; `FIX-CHEF-MIDFLOW-BAIL` HELD P1/agent-father supervised; trip-wire **Mon 07-20** (07-18 Sat + 07-19 Sun idle, cron `45 8 * * 1-5` no weekend run; leaked 07-17 marker self-expired ~12:50Z). Peer tree unchanged (~18 mod + 12 untracked incl stray `coverage-state.json.tmp` + cowork 04:06/08:06/09:07/11:06/12:07) — ALL peer/worker/cowork, untouched; chef.md still ` M`; do NOT mass-delete untracked state. FIX-CHEF-USDVND/ba, FIX-REFINE-PAGECOUNT/architect, FIX-OHLCV REVIEW/qa, 1299b P1 obs2 (no flake), UC-CCA-P3 P0/ba covered. Commit this tick: dispatcher notebook ONLY.
 
 ## cycle-20260718T1207Z — fully-idle steady-state (9th consecutive post-dispatch); CI GREEN 4e3e13231; transient index.lock self-cleared; all PO-channels empty; inbox→56 (new 12:07 cowork-fire, envelope-less, untouched)
 
@@ -184,10 +192,3 @@
 
 - **4th consecutive fully-idle (2137Z/2207Z/2237Z all zero external event)**: preflight RUN tick `2026-07-17T22:37Z` (SF-1+fire-election `cron:dev-team:2026-07-17T22:37Z` held; RC=1 known noise); cold-evict IDEMPOTENT (conservation 542=542, New-to-cold 0, no commit); gcc clean (no HEAD.lock, single worktree, synced 0 0 @`5cbd735f6`, orch tracked-diff empty); drain NO-OP (inbox 51 all envelope-less frozen-floor, no cowork-fire/tnb/report, inserted=0, db=**199**); CI GREEN `5cbd735f6` (run 29617555143, no ci_red, no 1299b flake); signal_queue NEW=0; orphan-signal=0 (only own 3 held locks); telegram "Không có báo cáo mới"; unresolved=[] → NO PO spawn, Step-1 SKIPPED. BOUNDED-1 n/a (WIP=ready17+in_progress1=**18**≥1); pipeline-resume no-trigger (head idle/next=router); in_progress=1 `SPIKE-BCTC-…-ENRICHFAIL-FLOOD` ops-owned P0. Board 387/17/1/30.
 - **Continuity**: **FIX-CHEF-MIDFLOW-BAIL DEFERRED 27th tick** — chef.md STILL ` M` peer-dirty at 22:37Z (chef-eod:2026-07-18 self-heal cron NOT yet fired/cleaned it; watch for clean chef.md next ticks); supervised⇒never BOUNDED-1. Inbox-hygiene HOLDING (floor 51<65, frozen envelope-less class intact since 20260711T131500Z; coverage-state.json.tmp still 1 instance). FIX-CHEF-USDVND backlog/ba plan-only. FIX-REFINE backlog/architect. FIX-OHLCV REVIEW/qa. 1299b/FIX-AGENTBOOTSTRAP P1 obs2 (no flake). Flaky WATCH 167/1255/1404 1-obs. Commit this tick: dispatcher notebook only (cold-evict idempotent, drain no-op). ALL ~20 peer dirty files untouched.
-
-## cycle-20260717T2207Z — 3rd consecutive fully-idle tick; NO enveloped signal (drain no-op); all PO-channels empty; CI GREEN 9e28ef754; cold-evict IDEMPOTENT (no commit); FIX-CHEF-MIDFLOW deferred 26th tick
-
-- **Fully idle (3rd consecutive: 2107Z fold-only, 2137Z + 2207Z zero-event)**: drain NO-OP (inbox 51 all envelope-less frozen-floor, no cowork-fire/tnb/report); inserted=0 pruned=0 db=**199**; signal_queue NEW=0; orphan-signal `task_list_held(orphan-signal,dev-team)`=0 (only own 3 held locks fire-election/SF-1/presence); telegram "Không có báo cáo mới"; `list_unresolved_reports`=[] → NO PO spawn, Step-1 SKIPPED. Overnight low-activity window (22:07Z UTC, local 07-18 rollover).
-- **Preflight/gcc**: RUN tick `2026-07-17T22:07Z` (SF-1+fire-election `cron:dev-team:2026-07-17T22:07Z` held; RC=1 known cold-evict/git-status stdout noise, verdict authoritative); cold-evict **IDEMPOTENT** (conservation 542=542, New-to-cold 0, orch tracked-diff empty → NO commit — contrast 2137Z ddbf0ac8a non-idempotent); gcc clean (no HEAD.lock, single worktree @`9e28ef754`, synced 0 0); CI **GREEN** HEAD `9e28ef754` (run 29615993426, no ci_red, no 1299b flake).
-- **BOUNDED-1 not eligible** (WIP=ready17+in_progress1=**18**≥1); pipeline-resume no-trigger (head idle/next=router); in_progress=1 `SPIKE-BCTC-…-ENRICHFAIL-FLOOD` ops-owned P0. Board: 387/17/1/30.
-- **Continuity**: **FIX-CHEF-MIDFLOW-BAIL DEFERRED 26th tick** — chef.md STILL ` M` peer-dirty at 22:07Z (chef-eod:2026-07-18 self-heal cron has NOT yet fired/cleaned it; watch for clean chef.md next ticks); supervised⇒never BOUNDED-1. Inbox-hygiene HOLDING (floor 51<65, frozen envelope-less class intact since 20260711T131500Z; coverage-state.json.tmp still 1 instance). FIX-CHEF-USDVND backlog/ba plan-only. FIX-REFINE backlog/architect. FIX-OHLCV REVIEW/qa. 1299b/FIX-AGENTBOOTSTRAP P1 obs2 (no flake). Flaky WATCH 167/1255/1404 1-obs. Commit this tick: dispatcher notebook only (no cold-evict/signals commit). ALL ~20 peer dirty files untouched.
