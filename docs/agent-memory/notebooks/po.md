@@ -1,29 +1,30 @@
 # PO Notebook
 
-_Last: 2026-07-18T07:53Z (triage tick — OHLCV-BACKFILL report 3506 FOLD BENIGN weekend-FP)_
+_Last: 2026-07-18T16:56Z (triage tick — MINT plan-only P2 for recurring golangci config-verify CI flake)_
 
-## Tick 2026-07-18T07:53Z — FOLD BENIGN: telegram 3506 [OHLCV-BACKFILL] weekend false-positive
+## Tick 2026-07-18T16:56Z — MINT PLAN-ONLY: FIX-CI-GOLANGCI-CONFIG-VERIFY-NETWORK-FLAKE (P2, cross-service/)
 
 ### Trigger
-- NEW telegram report id=3506 (msg 3571, from analysis-agent, normal): "fetch-ohlcv-backfill.sh likely crashed/DNS-failed before reporting — poller force-closed the queue row, after 5 retries. Manual VPS investigation required." Today = Sat 2026-07-18 (VN market CLOSED weekend).
+- Router-detected recurring CI flake. Signature(RAW): `[.golangci.yml] validate: compile schema: failing loading "…golangci.v2.0.jsonschema.json": context deadline exceeded`. 2 obs, identical sig: 8419b9c49@12:37Z + d2034d456@16:07Z (run 29651771448, Stock-Price + Macro Go-Lint jobs).
 
-### RAW-verify (did NOT trust report text)
-- get_market_snapshot: breadth.date=2026-07-17 → last session = Fri 07-17. Sat 07-18 weekend, no session to fetch.
-- get_price_history VCB + SSI: both gapless + fresh, latest candle 2026-07-17. Full week 07-13..07-17 present. No missing session, no stale/zero OHLCV. Served data complete through last trading day.
-- Ground truth contradicts "manual VPS investigation required": NO data loss. Backfill fetch on a closed-market weekend has nothing to fetch → benign crash/DNS blip, not a data outage.
+### RAW-verify (did NOT trust router alone)
+- Root at SOURCE: `.github/workflows/ci.yml` — all 6 Go-lint jobs `uses: golangci/golangci-lint-action@v7.0.0`, `version: v2.0`. v7 auto-runs `config verify` → LIVE fetch of golangci-lint.run v2 jsonschema → intermittent timeout. Origin commit dd79f8118 (v6→v7 bump).
+- NOT code regression: obs#2 push docs-only; .golangci.yml + Go code byte-identical to b9e9877c6 which passed FULL CI; config passed 6 consecutive runs. External-host flake confirmed.
+- Prior art CLEAN: independent grep board/handoffs/signals (golangci|config verify|jsonschema|lint flake) = 0 existing row. Backlog CI ids all unrelated (FACTORY-GUARD-CI-*, CI-PERFILE, verify-deploy-sha).
 
-### Prior-art / dedup (clean)
-- Board lanes backlog/ready/qa/in_progress/review: 0 rows matching ohlcv|backfill|vps|fetch. in_progress[0]=SPIKE-BCTC-EXTRACTION-DORMANT (unrelated, WIP=1). Head idle.
-- docs/signals/: no ohlcv|backfill signal file. Handoffs 2026-07-17 chef-eod-bail + refine-page-count both unrelated. No duplicate to mint.
+### Decision — MINT (not WATCH); PLAN-ONLY
+- 2 identical-sig obs + deterministic RAW-confirmed mechanism ⇒ not degenerate single-obs; recurring-bug 2+→track. Forward risk = false-red a real CODE push → red-prepush-strands-fleet (not cosmetic). ⇒ track, don't WATCH.
+- Priority P2: non-blocking NOW (obs#2 red stranded nothing) but strands-real-push risk > cosmetic; CI-infra not live-serving ⇒ not P0/P1.
+- Zone cross-service/ (NOT router's dev-mcp-server hint): fix is repo-root ci.yml, not apps/mcp-server/ → generic developer per CLAUDE.md.
+- Candidate approaches for ba/architect: (a) skip config-verify step, (b) vendor/pin schema local [RECOMMEND], (c) retry/allow-failure [weakest].
 
-### Disposition — FOLD BENIGN, no mint, no ops route
-- Single transient observation on a weekend (the "5 retries" = retries of one fetch job, NOT 5 independent staleness observations). Recurring-bug policy needs 2+ independent obs → NOT triggered. Market-hours/weekend-blind FP class (feedback_auditor_freshness_threshold_market_hours_blind).
-- NO backlog row (anomaly→BACKLOG is plan-only, but there is no actionable anomaly — data is fresh). NO ops-vps route (nothing to investigate; served OHLCV complete). WATCH only.
-- Telegram 3506: claim_telegram_report(claimant=po) → process_telegram_report(resolution=wontfix). Removed from new + unresolved; won't re-surface.
+### Board write (via orch-apply.sh gate)
+- Minted FIX-CI-GOLANGCI-CONFIG-VERIFY-NETWORK-FLAKE → backlog[] (P2, size S, plan_only:true, next_agent:ba). Zod PASS, conservation +1 (542→543). backlog 387→388; ready 17 / in_progress 1 / head idle UNCHANGED = NO dispatch. Idempotent (re-run delta 0).
 
 ### Return to dispatcher
-- NOTHING (idle EXIT). No BATCH. .head untouched. orch-state NOT written (no task).
+- Row minted, PLAN-ONLY. No BATCH dispatch. .head untouched. Report id+P2+cross-service/ba to router.
 
 ## Carry-over
-- WATCH: fetch-ohlcv-backfill.sh non-report / poller force-close. This is obs #1 (benign, weekend). If it RECURS on a TRADING day AND produces an actual daily_ohlcv gap (probe get_price_history for a missing last session), that = obs #2 on real data → escalate to ops-vps-fetch via a backlog row then, NOT before. Do not mint on weekend-only recurrences.
-- Session: 69b0312e-df43-43a9-9e0b-bddf66d374e3 (dev-team dispatcher). Committed MY path only. Did NOT push.
+- WATCH-fold from prior tick still stands: fetch-ohlcv-backfill.sh weekend non-report is obs#1 benign; escalate only on a TRADING-day recurrence with a real daily_ohlcv gap.
+- FIX-CI-GOLANGCI-CONFIG-VERIFY-NETWORK-FLAKE is BACKLOG plan-only — promote to ready only when a coding slot frees (WIP<cap) via normal groom; do NOT re-mint on a 3rd obs, annotate the existing row instead.
+- Session: 69b0312e-df43-43a9-9e0b-bddf66d374e3 (dev-team dispatcher). Committed MY paths only (orch-state mint + notebook + journal). Did NOT push (fleet-push launchd timer owns push).

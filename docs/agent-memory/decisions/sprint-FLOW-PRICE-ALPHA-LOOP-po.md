@@ -65,3 +65,14 @@
 - Mint a new dev FIX — REJECTED: identical mechanism/emitter to report 3504 (08:37Z) which already produced FIX-OHLCV-DEPTH-ALERT-HONEST-GAP-SUPPRESS (REVIEW, owner=dev-mcp-server, next=qa). Emitter still fires because that fix is pre-deploy; the rows=0/low tickers (BDI/JSH/SIS/VDC/DLC) are exactly the honest-gap delisted codes that FIX targets, not crash evidence. Minting would duplicate an owned row.
 **why-decision:** Ground truth contradicts the report's prose (poller force-closed the queue row at retry=5 with bars_inserted=NULL; work completed). Correct disposition of a false alarm covered by an in-review fix = fold `duplicate`, keep it out of the unresolved pool so it stops re-triggering triage each tick.
 **why-change:** No change from dispatcher's fold-first hypothesis; RAW-verify confirmed it.
+
+### STEP po-S7 · po · 2026-07-18T16:56Z
+**task-id:** FIX-CI-GOLANGCI-CONFIG-VERIFY-NETWORK-FLAKE
+**what-done:** Minted a PLAN-ONLY P2 backlog FIX (zone cross-service/, next_agent=ba) for the recurring golangci-lint-action v7 `config verify` live-schema-fetch timeout that false-reds CI; NO dispatch (WIP=18 over cap; anomaly→BACKLOG invariant). Head untouched.
+**what-considered:**
+- WATCH (2 obs, non-blocking now) — REJECTED: not a degenerate single-obs — 2 identical-signature obs + a DETERMINISTIC root RAW-confirmed at source (ci.yml uses action@v7.0.0 on all 6 Go-lint jobs; v7 fetches golangci-lint.run/…v2.0.jsonschema.json live). Recurring-bug 2+→track (feedback_recurring_bug_escalation). Forward risk = false-red a real CODE push → red-prepush-strands-fleet. Not cosmetic ⇒ track, don't WATCH.
+- Dispatch a dev now — REJECTED: WIP ready17+in_progress1=18 ≥ cap; anomaly→BACKLOG is PLAN-ONLY by invariant. ba/architect own final HOW.
+- Priority P3 — REJECTED: false-red on a code push can strand a real change (above cosmetic). P0/P1 — REJECTED: non-blocking now (obs#2 red was docs-only, stranded nothing), CI-infra not live-serving. P2 fits.
+- Zone dev-mcp-server (router hint) — REJECTED: fix lives in repo-root .github/workflows/ci.yml, not apps/mcp-server/ → cross-service/ per CLAUDE.md (routes to generic developer).
+**why-decision:** Independent grep (board/handoffs/signals) = 0 prior row; mechanism confirmed at source, forward risk real ⇒ mint a lean plan-only row so a real fix (vendor/pin schema local, or skip verify) is scheduled without stranding a live dev slot.
+**why-change:** Adopted router root-cause + candidate approaches; overrode router's zone hint (cross-service/, not dev-mcp-server) after confirming the file is repo-root.
