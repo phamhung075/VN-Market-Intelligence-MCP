@@ -1,6 +1,6 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-18T08:37Z
+**Written:** 2026-07-18T09:07Z
 
 
 
@@ -11,6 +11,14 @@
 
 
 
+
+
+## cycle-20260718T0907Z — fully-idle steady-state (3rd consecutive post-dispatch); CI GREEN b74797518; all PO-channels empty; inbox→54 (new 09:07 cowork-fire, envelope-less, untouched)
+
+- **Quiescence holds**: report 3506 [OHLCV-BACKFILL] terminal `wontfix` (PO 0737Z fold-benign weekend FP, a97122d78) — telegram "Không có báo cáo mới" (no re-surface), unresolved=[], signal_queue NEW=0 `last_triaged` 07-18T01:00:41Z po → **Step-1 SKIPPED**. Carry-over WATCH intact: backfill non-report recurs on a TRADING day AND real daily_ohlcv gap → obs #2 → ops-vps-fetch backlog row (not before; do NOT re-triage terminal 3506).
+- **CI GREEN `b74797518`** (my 0837Z push — CI run 29638147518 + rag-lint 29638147529 both success) → 1383-macro-alert-dispatch flake did NOT recur (still 1-obs; no recurrence on d7ef1bf6f/a97122d78/f918d2e79/b74797518); prior "verify b74797518 CI" continuity item CLOSED green. 2nd independent obs → mint DEFLAKE via PO.
+- **Idle mechanics**: preflight RUN tick `2026-07-18T09:07Z` (SF-1+fire-election `cron:dev-team:2026-07-18T09:07Z` held+heartbeated 1784366277, RC=1 known noise); cold-evict **IDEMPOTENT** (542=542; `git diff --quiet orch-state.json`=CLEAN, benign 1-to-evict-yet-clean oddity persists → NO orch commit); gcc clean (no HEAD.lock, single worktree @`b74797518`, synced 0/0); drain **NO-OP** (inbox **54** ↑1 vs 0837Z, **0 envelope-bearing** RAW-verified — NEW untracked `cowork-team-2026-07-18T09:07:01.201Z.json` = `cowork-fire`/`to:dev-team`/`priority:low`/envelope-less = cowork-system artifact, NOT a dev-team drain item; left untouched per intent-path double-dispatch guard). orphan-signal=0 (own 3 heartbeated locks: fire-election exp 09:27:57Z / presence exp 09:47:56Z / SF-1 exp 10:47:57Z). BOUNDED-1 n/a (WIP=ready17+in_progress1=**18**≥1); pipeline-resume no-trigger (head idle). Board **387/17/1/30** (done11). head idle/next=router. in_progress=1 `SPIKE-BCTC-…-ENRICHFAIL-FLOOD` ops P0.
+- **Continuity**: chef-eod loop CLOSED (73c3e10b9) — do NOT re-spawn PO on chef-eod; `FIX-CHEF-MIDFLOW-BAIL` HELD P1/agent-father supervised; trip-wire **Mon 07-20** (07-18 Sat + 07-19 Sun idle, cron `45 8 * * 1-5` no weekend run; leaked 07-17 marker self-expired ~12:50Z). Peer tree unchanged (~18 mod incl alert-commander/flow, tools/list, chef flow, VNM brief, coverage-state/cowork-schedule + 11 untracked incl stray `coverage-state.json.tmp` + cowork 04:06/08:06/09:07) — ALL peer/worker/cowork, untouched; chef.md still ` M`; do NOT mass-delete untracked state. FIX-CHEF-USDVND/ba, FIX-REFINE-PAGECOUNT/architect, FIX-OHLCV REVIEW/qa, 1299b P1 obs2 (no flake), UC-CCA-P3 P0/ba covered. Commit this tick: dispatcher notebook ONLY.
 
 ## cycle-20260718T0837Z — fully-idle steady-state; CI GREEN f918d2e79 (0807Z push verified); OHLCV-BACKFILL report 3506 stays TERMINAL; all PO-channels empty
 
