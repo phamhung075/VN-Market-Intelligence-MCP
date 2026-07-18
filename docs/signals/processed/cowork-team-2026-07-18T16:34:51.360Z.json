@@ -1,0 +1,54 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "2026-07-18T16:34:51.360Z",
+  "payload": {
+    "matched_slots": [
+      "refine-bctc-slot-4"
+    ],
+    "won_slots": [
+      "refine-bctc-slot-4"
+    ],
+    "last_fired_slots": [
+      "refine-bctc-slot-4"
+    ],
+    "spawned": [
+      "docs/agents/refine_bctc_md/flow/main.md"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "refine-bctc-slot-4": "cron"
+    },
+    "cadence_minutes": {
+      "refine-bctc-slot-4": null
+    },
+    "last_fired_timestamp": "2026-07-18T16:34:23.807Z",
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "16:30",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 6,
+    "note": "Saturday off-market refine-bctc-slot-4 (BCTC OCR refine leaf worker, cron 30 16 * * *). Adaptive gate chain: calendar unknown -> no-suppress; cron pass-through (cadence_minutes null); parallel_group bctc-refine != chef -> CHEF mutex no-op. Single slot: tick-snapshot SKIP, claimed+spawned+released. Multi-line trigger_prompt (get_bctc_pending_refine limit:1, oldest pending, cover-letter skip) passed verbatim to leaf worker."
+  },
+  "_processed": {
+    "fingerprint": "ee17954d90ec01cf192f593343fedd9ebc9225e3450ae3298647ac67d94ed40e",
+    "processedAt": "2026-07-18T16:48:22Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
