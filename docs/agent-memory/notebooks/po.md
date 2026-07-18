@@ -1,30 +1,30 @@
 # PO Notebook
 
-_Last: 2026-07-18T16:56Z (triage tick — MINT plan-only P2 for recurring golangci config-verify CI flake)_
+_Last: 2026-07-18T19:38Z (triage tick — MINT SPRINT-XS Tier-4 D-FLEET LANE-B prerequisite, non-blocking)_
 
-## Tick 2026-07-18T16:56Z — MINT PLAN-ONLY: FIX-CI-GOLANGCI-CONFIG-VERIFY-NETWORK-FLAKE (P2, cross-service/)
+## Tick 2026-07-18T19:38Z — MINT: CWO-T4-P0-TUSTATS-PERAGENT (P3, size XS, apps/mcp-server/)
 
 ### Trigger
-- Router-detected recurring CI flake. Signature(RAW): `[.golangci.yml] validate: compile schema: failing loading "…golangci.v2.0.jsonschema.json": context deadline exceeded`. 2 obs, identical sig: 8419b9c49@12:37Z + d2034d456@16:07Z (run 29651771448, Stock-Price + Macro Go-Lint jobs).
+- agents-architect brief `2026-07-18-cron-workflow-optimize-tier4-fleet-audit.md` §2c + §8 Phase-0, handoff signal `cron-workflow-optimize-tier4-fleet-audit-20260718T192722Z.json`. Note: "raise it to po/pm as SPRINT-XS for dev-mcp-server; do NOT attempt directly" — LANE-B, out of agent-father's apps/** zone.
 
-### RAW-verify (did NOT trust router alone)
-- Root at SOURCE: `.github/workflows/ci.yml` — all 6 Go-lint jobs `uses: golangci/golangci-lint-action@v7.0.0`, `version: v2.0`. v7 auto-runs `config verify` → LIVE fetch of golangci-lint.run v2 jsonschema → intermittent timeout. Origin commit dd79f8118 (v6→v7 bump).
-- NOT code regression: obs#2 push docs-only; .golangci.yml + Go code byte-identical to b9e9877c6 which passed FULL CI; config passed 6 consecutive runs. External-host flake confirmed.
-- Prior art CLEAN: independent grep board/handoffs/signals (golangci|config verify|jsonschema|lint flake) = 0 existing row. Backlog CI ids all unrelated (FACTORY-GUARD-CI-*, CI-PERFILE, verify-deploy-sha).
+### RAW-verify (did NOT trust brief alone)
+- Confirmed no caller-identity channel exists: `grep _callerAgent apps/mcp-server/src` = 0 hits. All 3 cited files exist (perCallCounterStore.ts 1731B, server.ts 70KB, trackSessionToolUsageJob.ts). Prior art = TSU-DEV-U1 (`docs/handoffs/TASK_TSU-DEV-U1.md`) built exactly this substrate — this extends it (compound key + error counter + byAgent schema).
+- Current stats schema is global-only: `{generatedAt,uniqueTools,toolCounts}`, gen'd 8h by trackSessionToolUsageJob. No agent dimension anywhere in path (gateway dials fresh SSE per call, drops it — root cause TSU-DEV-U1).
+- No board-row collision (grep tool-usage/callerAgent/byAgent over board = 0 rows).
 
-### Decision — MINT (not WATCH); PLAN-ONLY
-- 2 identical-sig obs + deterministic RAW-confirmed mechanism ⇒ not degenerate single-obs; recurring-bug 2+→track. Forward risk = false-red a real CODE push → red-prepush-strands-fleet (not cosmetic). ⇒ track, don't WATCH.
-- Priority P2: non-blocking NOW (obs#2 red stranded nothing) but strands-real-push risk > cosmetic; CI-infra not live-serving ⇒ not P0/P1.
-- Zone cross-service/ (NOT router's dev-mcp-server hint): fix is repo-root ci.yml, not apps/mcp-server/ → generic developer per CLAUDE.md.
-- Candidate approaches for ba/architect: (a) skip config-verify step, (b) vendor/pin schema local [RECOMMEND], (c) retry/allow-failure [weakest].
+### Decision — MINT backlog row, P3, NOT immediate BATCH
+- Priority P3 (low): brief §2c says pilot runs in tool-usage-stats DEGRADED mode (global-only, gap-labeled) — NOT a blocker. Only the §7-G5 graduation gate for a future permanent-cron-cadence ask. Must not jump live P0 rows (UC-CCA-P3, UC-RDL-P1).
+- size XS honors "SPRINT-XS" framing; type SPRINT-S (nearest valid batch enum; XS not a type). 5 files, single domain, additive/back-compat each.
+- zone apps/mcp-server/ (single, NOT multi): the 2 docs/standards files document THIS server's own tool-call contract; dev-mcp-server owns the unit.
+- Encoded MANDATORY QA gate-proof in note: inject wrong-agentId call, prove NO silent misattribution (anchors: wrong-arg=silent-always-false, no-fake-data).
 
 ### Board write (via orch-apply.sh gate)
-- Minted FIX-CI-GOLANGCI-CONFIG-VERIFY-NETWORK-FLAKE → backlog[] (P2, size S, plan_only:true, next_agent:ba). Zod PASS, conservation +1 (542→543). backlog 387→388; ready 17 / in_progress 1 / head idle UNCHANGED = NO dispatch. Idempotent (re-run delta 0).
+- Appended CWO-T4-P0-TUSTATS-PERAGENT → backlog[] (P3, XS, next_agent:ba). Zod+dupkey PASS, conservation +1 (543→544). Fixed a `mcp/mcp/server.ts` path typo pre-apply.
 
 ### Return to dispatcher
-- Row minted, PLAN-ONLY. No BATCH dispatch. .head untouched. Report id+P2+cross-service/ba to router.
+- Row minted, non-blocking follow-up. No BATCH dispatch, .head untouched. Routes normal dev-team chain BA→architect→pm→dev-mcp-server→qa in priority order when a coding slot frees.
 
 ## Carry-over
-- WATCH-fold from prior tick still stands: fetch-ohlcv-backfill.sh weekend non-report is obs#1 benign; escalate only on a TRADING-day recurrence with a real daily_ohlcv gap.
-- FIX-CI-GOLANGCI-CONFIG-VERIFY-NETWORK-FLAKE is BACKLOG plan-only — promote to ready only when a coding slot frees (WIP<cap) via normal groom; do NOT re-mint on a 3rd obs, annotate the existing row instead.
-- Session: 69b0312e-df43-43a9-9e0b-bddf66d374e3 (dev-team dispatcher). Committed MY paths only (orch-state mint + notebook + journal). Did NOT push (fleet-push launchd timer owns push).
+- CWO-T4-P0-TUSTATS-PERAGENT is BACKLOG P3 — promote to ready only when WIP<cap AND a permanent-Tier-4-cron ask is imminent (G5). Do NOT re-mint; annotate existing row. Pilot Run #1 legitimately runs WITHOUT this (degraded mode) — don't treat its absence as a pilot blocker.
+- FIX-CI-GOLANGCI-CONFIG-VERIFY-NETWORK-FLAKE still BACKLOG plan-only P2 (prior tick) — promote via normal groom; don't re-mint on 3rd obs.
+- Session: 95ab3ca8-b51f-4863-b8a6-95d5f33d2a2c (po triage). Commit MY paths only (orch-state mint + notebook + journal). Do NOT push (fleet-push launchd timer owns push).

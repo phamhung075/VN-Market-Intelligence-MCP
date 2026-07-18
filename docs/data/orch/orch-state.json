@@ -622,8 +622,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-17T11:54:54Z",
-    "_updated_by": "po (mint DEFLAKE-VNSTOCK-3STATEMENT — scoped recurring-flaky triage)",
+    "_updated_at": "2026-07-18T19:38:43Z",
+    "_updated_by": "po (mint CWO-T4-P0-TUSTATS-PERAGENT — Tier-4 D-FLEET LANE-B prerequisite, non-blocking quality follow-up)",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -7764,6 +7764,23 @@
         "next_agent": "ba",
         "source": "router-anomaly-2026-07-18",
         "origin": "recurring CI flake (2 obs identical signature; run 29651771448)"
+      },
+      {
+        "id": "CWO-T4-P0-TUSTATS-PERAGENT",
+        "type": "SPRINT-S",
+        "title": "Per-agent tool-usage-stats.json: thread optional _callerAgent through MCP handler-proxy; compound key ${agentId}:${toolName} + error counter; additive byAgent output schema",
+        "status": "BACKLOG",
+        "priority": "P3",
+        "size": "XS",
+        "zone": "apps/mcp-server/",
+        "sprint": "CRON-WORKFLOW-OPTIMIZE",
+        "source": "cron-workflow-optimize-tier4-fleet-audit-2026-07-18",
+        "verdict": "CONFIRMED",
+        "detail_ref": "docs/architecture-briefs/2026-07-18-cron-workflow-optimize-tier4-fleet-audit.md",
+        "note": "SPRINT-XS (size XS). LANE-B prerequisite for the Tier-4 D-FLEET fleet-audit dimension (brief §2c + §8 Phase 0). Redesign the global-only tool-usage-stats.json schema ({generatedAt,uniqueTools,toolCounts}) to a per-agent breakdown so system-auditor Tier-4 can score agent-level tool-call precision instead of global counts. SCOPE (5 files, additive/back-compat, builds on TSU-DEV-U1 substrate): (1) apps/mcp-server/src/interface/mcp/server.ts handler-proxy reads optional arguments._callerAgent, defaults 'unknown', stripped before forwarding to tool business logic; (2) apps/mcp-server/src/infrastructure/telemetry/perCallCounterStore.ts compound key ${agentId}:${toolName} + NEW error counter (increment on handler throw — no error tracking exists today); (3) apps/mcp-server/src/scheduler/system/trackSessionToolUsageJob.ts additive schema — KEEP top-level generatedAt/uniqueTools/toolCounts for existing readers, ADD byAgent:{'<agent-id>':{toolCounts,errorCounts}}; (4) docs/standards/mcp-tools.md + docs/standards/gateway-call-contract.md document the optional _callerAgent convention (absent = agentId 'unknown', never breaks existing callers). QA GATE-PROOF (MANDATORY before trusted, per brief §2c.4 / 2026-05-27 §5): inject a deliberate wrong-agentId call and prove it does NOT silently misattribute to the wrong bucket (anchors: wrong-arg=silent-always-false, no-fake-data). VERIFIED LIVE (architect + PO 2026-07-18): no caller-identity channel exists anywhere in this path — grep _callerAgent apps/mcp-server/src = 0 hits; all 3 cited files exist. NOT A BLOCKER for the Tier-4 pilot (Phase 1, parallel) which runs in tool-usage-stats degraded mode (global-only, gap-labeled). This is the §7 G5 graduation-gate requirement — full byAgent coverage must ship + be exercised in Pilot Run #2 before any permanent-cron-cadence ask reaches PO. Route: normal dev-team chain BA -> architect -> pm -> dev-mcp-server -> qa.",
+        "created_at": "2026-07-18T19:38:27Z",
+        "created_by": "po",
+        "next_agent": "ba"
       }
     ],
     "closed_sprints": [

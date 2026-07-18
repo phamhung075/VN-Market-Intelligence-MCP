@@ -76,3 +76,13 @@
 - Zone dev-mcp-server (router hint) — REJECTED: fix lives in repo-root .github/workflows/ci.yml, not apps/mcp-server/ → cross-service/ per CLAUDE.md (routes to generic developer).
 **why-decision:** Independent grep (board/handoffs/signals) = 0 prior row; mechanism confirmed at source, forward risk real ⇒ mint a lean plan-only row so a real fix (vendor/pin schema local, or skip verify) is scheduled without stranding a live dev slot.
 **why-change:** Adopted router root-cause + candidate approaches; overrode router's zone hint (cross-service/, not dev-mcp-server) after confirming the file is repo-root.
+
+### STEP po-S1 · po · 2026-07-18T19:39:23Z
+**task-id:** CWO-T4-P0-TUSTATS-PERAGENT
+**what-done:** Triaged agents-architect brief §2c/§8-Phase0 into a SPRINT-XS backlog row (P3, size XS, zone apps/mcp-server/) routed BA→architect→pm→dev-mcp-server→qa.
+**what-considered:**
+- P0/P1 (jump queue) vs P3 (low) — chose P3: brief §2c explicitly says pilot runs in degraded mode, not a blocker; it is only the §7-G5 graduation gate for a future permanent-cron ask.
+- Immediate BATCH spawn vs backlog-append — chose append: non-urgent, must not jump the live P0 rows (UC-CCA-P3, UC-RDL-P1).
+- zone apps/mcp-server/ (single) vs multi — chose single: the 2 docs/standards files document this server's own tool-call contract; dev-mcp-server owns the unit.
+**why-decision:** Real, verified (grep _callerAgent=0 hits, 3 cited files exist), well-scoped additive/back-compat code work, but explicitly non-blocking — P3 backlog is the correct disposition.
+**why-change:** no change from architect's Phase-0 scoping; encoded the mandatory QA gate-proof (wrong-agentId no-misattribution) into the row note.
