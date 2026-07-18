@@ -411,8 +411,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-18T01:00:41Z",
-    "_updated_by": "po (closed routed-to-po chef-eod-recurring-bail escalation; substantive board triage already applied 2026-07-17T09:28:15Z on FIX-CHEF-MIDFLOW-BAIL-DETERMINISM escalation + UC-CCA-P3 abort-path AC)",
+    "_updated_at": "2026-07-18T20:56:16Z",
+    "_updated_by": "po",
     "archive": [],
     "rows": [
       {
@@ -423,8 +423,9 @@
         "type": "improvement_proposal",
         "summary": "Notebook schema standardization needed (2/45 structured, 43/45 free-form)",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": "docs/improvement-proposals/IMP-20260718-agents-architect-notebook-schema-standardization.md"
+        "status": "triaged",
+        "payload_ref": "docs/improvement-proposals/IMP-20260718-agents-architect-notebook-schema-standardization.md",
+        "disposition": "FOLD (low-sev cosmetic). LANE-C notebook-schema-standardization: telemetry-parsing friction only, no reliability/coverage/correctness impact -- Tier-4 rollup already degrades gracefully via friction-token grep. A fleet-wide 45-agent ## Metrics retrofit (agent flows + identity files + dev-standards) is high blast-radius churn for a LOW-severity benefit (churn-without-convergence guardrail, project_systemic_review_0704). PO 5-field critique + verdict written into docs/improvement-proposals/IMP-20260718-agents-architect-notebook-schema-standardization.md; the low-cost slice (a ## Metrics doc-template in dev-standards.md for NEW agents, no retrofit) noted there as an opportunistic agents-architect improvement, not a tracked dev row. No mint, no dispatch."
       },
       {
         "id": "t4p1-002",
@@ -434,12 +435,13 @@
         "type": "improvement_proposal",
         "summary": "Tool-usage-stats.json missing per-agent attribution (byAgent key) — Phase 0 prerequisite",
         "severity": "MED",
-        "status": "NEW",
-        "payload_ref": "docs/improvement-proposals/IMP-20260718-dev-mcp-server-tool-usage-byagent-redesign.md"
+        "status": "triaged",
+        "payload_ref": "docs/improvement-proposals/IMP-20260718-dev-mcp-server-tool-usage-byagent-redesign.md",
+        "disposition": "DEDUP -> CWO-T4-P0-TUSTATS-PERAGENT (already BACKLOG, P3, na=ba, zone apps/mcp-server/). Same byAgent tool-usage-attribution scope (LANE-B), same Tier-4 brief source. NOT re-minted; CWO-T4 stamped origin_signal_id=t4p1-002 for task-archive READ->RESOLVED back-flip. No dispatch (WIP over cap)."
       }
     ],
-    "last_triaged_at": "2026-07-18T01:00:41Z",
-    "last_triaged_by": "po"
+    "last_triaged_at": "2026-07-18T20:56:16Z",
+    "last_triaged_by": "po (TNB-c113 + t4p1 triage: t4p1-001 FOLD low-sev cosmetic; t4p1-002 DEDUP->CWO-T4-P0-TUSTATS-PERAGENT; both NEW->triaged)"
   },
   "sprint_goal": {
     "_note": "Active sprint visions. PO triage 2026-07-11 16->14: merged FB-POSTER-LAUNCHD-FIRER into COWORK-GUARANTEED-SLOT-DURABILITY (superseded per cron-jobs.md, firer plist installed+loaded); archived NARRATIVE-TRUTH-CCATO-GATE (T2+T3 both DONE, T3 qa-APPROVED). Reasoning: sprint-ANALYSIS-QUALITY-CONVERGENCE-po.md.",
@@ -645,8 +647,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-18T19:38:43Z",
-    "_updated_by": "po (mint CWO-T4-P0-TUSTATS-PERAGENT — Tier-4 D-FLEET LANE-B prerequisite, non-blocking quality follow-up)",
+    "_updated_at": "2026-07-18T20:56:16Z",
+    "_updated_by": "po (TNB-c113 + t4p1 signal_queue triage: minted 3 PLAN-ONLY backlog rows [FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING P1, GUARD-NOTEBOOK-CONCURRENT-EDIT-COLLISION-DATA-LOSS P2, FIX-CHEF-L6-TOKEN-PERSISTENCE-RECURRING P3]; dedup-annotated CWO-T4 + mislabel rows; no dispatch, WIP over cap)",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -7141,7 +7143,7 @@
         "created_at": "2026-07-14T20:41:08Z",
         "created_by": "po-tnb-c109-triage",
         "origin": "docs/handoffs/tnb-audit-latest.md#F-CHEF-EVENING-DUPLICATE-DATE-MISLABEL",
-        "note": "PLAN-ONLY (anomaly->BACKLOG bridge, project_anomaly_task_bridge). SUSPECTED, MCP-blocked at audit time. TWO components: (1) DATE-MISLABEL [genuinely new/untracked]: unified-agent.md top entry headed 'Session: 2026-07-15 (evening — current)' @19:49 UTC sits 1 min above a 'Session: 2026-07-14 (evening)' @19:48 UTC entry; 19:49UTC+7h = 02:49 VN on 07-15 => VN-local date leaked into the session header instead of UTC (premise-date-error class, feedback_premise_date_error_survives_agent_chain). Fix: chef.md must stamp UTC date in session/notebook headers, never VN-local. (2) DUP-PUBLISH [likely REFUTED — verify cheaply, do NOT re-litigate the dedup mechanism]: PO RAW-verified docs/data/cowork-schedule.json chef-evening.last_fired = single 2026-07-14T19:48:44.480Z matching ONLY the 19:48 entry, NOT the 19:49 entry — a genuine 2nd scheduled fire would have bumped last_fired, so this leans to a notebook mislabel/manual write, not a real double MARKET publish. CONFIRM step: one read_telegram_reports cycle_id pairing of the two [CHEF-DETAIL] WORK messages once MCP restored — IF a real duplicate MARKET post is found, fold to the EXISTING dedup cluster (FIX-CHEF-PUBLISHED-MARKER-RELEASE / FU-CHEF-MARKER-INFLOW / UC-CCA-P3) and do NOT duplicate that work here; this row's own deliverable is the UTC-date-header fix. | [PO TNB-c110 2026-07-16] Component 2 (chef-evening double-publish) CONFIRMED real (MARKET ids 932+933, RAW-verified) and folded to UC-CCA-P3 — this row is now SCOPED TO COMPONENT 1 ONLY: chef.md UTC-date-header fix (stamp UTC date, never VN-local, in session/notebook headers).",
+        "note": "PLAN-ONLY (anomaly->BACKLOG bridge, project_anomaly_task_bridge). SUSPECTED, MCP-blocked at audit time. TWO components: (1) DATE-MISLABEL [genuinely new/untracked]: unified-agent.md top entry headed 'Session: 2026-07-15 (evening — current)' @19:49 UTC sits 1 min above a 'Session: 2026-07-14 (evening)' @19:48 UTC entry; 19:49UTC+7h = 02:49 VN on 07-15 => VN-local date leaked into the session header instead of UTC (premise-date-error class, feedback_premise_date_error_survives_agent_chain). Fix: chef.md must stamp UTC date in session/notebook headers, never VN-local. (2) DUP-PUBLISH [likely REFUTED — verify cheaply, do NOT re-litigate the dedup mechanism]: PO RAW-verified docs/data/cowork-schedule.json chef-evening.last_fired = single 2026-07-14T19:48:44.480Z matching ONLY the 19:48 entry, NOT the 19:49 entry — a genuine 2nd scheduled fire would have bumped last_fired, so this leans to a notebook mislabel/manual write, not a real double MARKET publish. CONFIRM step: one read_telegram_reports cycle_id pairing of the two [CHEF-DETAIL] WORK messages once MCP restored — IF a real duplicate MARKET post is found, fold to the EXISTING dedup cluster (FIX-CHEF-PUBLISHED-MARKER-RELEASE / FU-CHEF-MARKER-INFLOW / UC-CCA-P3) and do NOT duplicate that work here; this row's own deliverable is the UTC-date-header fix. | [PO TNB-c110 2026-07-16] Component 2 (chef-evening double-publish) CONFIRMED real (MARKET ids 932+933, RAW-verified) and folded to UC-CCA-P3 — this row is now SCOPED TO COMPONENT 1 ONLY: chef.md UTC-date-header fix (stamp UTC date, never VN-local, in session/notebook headers). | [PO TNB-c113 2026-07-18] CORROBORATED (clean reproduction): the 07-18T19:45Z evening dish persisted as unified-agent-synthesis-2026-07-19-evening.json (RAW-verified on disk, mtime 18 jul 21:51). Line-level root cause pinpointed by TNB: chef.md Step 7.6 L631 CYCLE_DATE=YYYY-MM-DD(VN date of execution) applied literally to the FILEPATH -> a UTC-executed dish gets a VN-next-day filename. Scope confirms Component 1 (UTC-date-header) but WIDENS it: the fix must stamp UTC date in the synthesis FILEPATH too, not only session/notebook headers.",
         "verification_gate": "read_telegram_reports cycle_id pairing shows either (a) single evening publish -> chef.md UTC-header fix lands + no dup, or (b) genuine dup -> folded to dedup cluster. done_verified requires the header-fix RAW-verified in a subsequent evening dish header carrying UTC date."
       },
       {
@@ -7800,9 +7802,61 @@
         "source": "cron-workflow-optimize-tier4-fleet-audit-2026-07-18",
         "verdict": "CONFIRMED",
         "detail_ref": "docs/architecture-briefs/2026-07-18-cron-workflow-optimize-tier4-fleet-audit.md",
-        "note": "SPRINT-XS (size XS). LANE-B prerequisite for the Tier-4 D-FLEET fleet-audit dimension (brief §2c + §8 Phase 0). Redesign the global-only tool-usage-stats.json schema ({generatedAt,uniqueTools,toolCounts}) to a per-agent breakdown so system-auditor Tier-4 can score agent-level tool-call precision instead of global counts. SCOPE (5 files, additive/back-compat, builds on TSU-DEV-U1 substrate): (1) apps/mcp-server/src/interface/mcp/server.ts handler-proxy reads optional arguments._callerAgent, defaults 'unknown', stripped before forwarding to tool business logic; (2) apps/mcp-server/src/infrastructure/telemetry/perCallCounterStore.ts compound key ${agentId}:${toolName} + NEW error counter (increment on handler throw — no error tracking exists today); (3) apps/mcp-server/src/scheduler/system/trackSessionToolUsageJob.ts additive schema — KEEP top-level generatedAt/uniqueTools/toolCounts for existing readers, ADD byAgent:{'<agent-id>':{toolCounts,errorCounts}}; (4) docs/standards/mcp-tools.md + docs/standards/gateway-call-contract.md document the optional _callerAgent convention (absent = agentId 'unknown', never breaks existing callers). QA GATE-PROOF (MANDATORY before trusted, per brief §2c.4 / 2026-05-27 §5): inject a deliberate wrong-agentId call and prove it does NOT silently misattribute to the wrong bucket (anchors: wrong-arg=silent-always-false, no-fake-data). VERIFIED LIVE (architect + PO 2026-07-18): no caller-identity channel exists anywhere in this path — grep _callerAgent apps/mcp-server/src = 0 hits; all 3 cited files exist. NOT A BLOCKER for the Tier-4 pilot (Phase 1, parallel) which runs in tool-usage-stats degraded mode (global-only, gap-labeled). This is the §7 G5 graduation-gate requirement — full byAgent coverage must ship + be exercised in Pilot Run #2 before any permanent-cron-cadence ask reaches PO. Route: normal dev-team chain BA -> architect -> pm -> dev-mcp-server -> qa.",
+        "note": "SPRINT-XS (size XS). LANE-B prerequisite for the Tier-4 D-FLEET fleet-audit dimension (brief §2c + §8 Phase 0). Redesign the global-only tool-usage-stats.json schema ({generatedAt,uniqueTools,toolCounts}) to a per-agent breakdown so system-auditor Tier-4 can score agent-level tool-call precision instead of global counts. SCOPE (5 files, additive/back-compat, builds on TSU-DEV-U1 substrate): (1) apps/mcp-server/src/interface/mcp/server.ts handler-proxy reads optional arguments._callerAgent, defaults 'unknown', stripped before forwarding to tool business logic; (2) apps/mcp-server/src/infrastructure/telemetry/perCallCounterStore.ts compound key ${agentId}:${toolName} + NEW error counter (increment on handler throw — no error tracking exists today); (3) apps/mcp-server/src/scheduler/system/trackSessionToolUsageJob.ts additive schema — KEEP top-level generatedAt/uniqueTools/toolCounts for existing readers, ADD byAgent:{'<agent-id>':{toolCounts,errorCounts}}; (4) docs/standards/mcp-tools.md + docs/standards/gateway-call-contract.md document the optional _callerAgent convention (absent = agentId 'unknown', never breaks existing callers). QA GATE-PROOF (MANDATORY before trusted, per brief §2c.4 / 2026-05-27 §5): inject a deliberate wrong-agentId call and prove it does NOT silently misattribute to the wrong bucket (anchors: wrong-arg=silent-always-false, no-fake-data). VERIFIED LIVE (architect + PO 2026-07-18): no caller-identity channel exists anywhere in this path — grep _callerAgent apps/mcp-server/src = 0 hits; all 3 cited files exist. NOT A BLOCKER for the Tier-4 pilot (Phase 1, parallel) which runs in tool-usage-stats degraded mode (global-only, gap-labeled). This is the §7 G5 graduation-gate requirement — full byAgent coverage must ship + be exercised in Pilot Run #2 before any permanent-cron-cadence ask reaches PO. Route: normal dev-team chain BA -> architect -> pm -> dev-mcp-server -> qa. | [PO TNB/t4p1 triage 2026-07-18T20:56:16Z] DEDUP anchor for signal_queue row t4p1-002 (system-auditor Tier-4 pilot #1, MED improvement_proposal, same byAgent-attribution scope, LANE-B). t4p1-002 marked triaged; NOT re-minted -- this row is its canonical home. origin_signal_id stamped for task-archive READ->RESOLVED back-flip.",
         "created_at": "2026-07-18T19:38:27Z",
         "created_by": "po",
+        "next_agent": "ba",
+        "origin_signal_id": "t4p1-002"
+      },
+      {
+        "id": "FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING",
+        "type": "FIX",
+        "title": "chef.md gathers processed/bctc_signal_* biz-context (c112 auto-cure) but never plumbs it into per-ticker conviction_calls rationale — BIZ_CTX_OK still evaluates false; wire GATHER->Steps 4-7.5",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "zone": "cross-service/",
+        "owner": "po",
+        "supervised": true,
+        "created_at": "2026-07-18T20:56:16Z",
+        "created_by": "po-tnb-c113-triage",
+        "origin": "docs/handoffs/tnb-audit-latest.md",
+        "origin_signal_id": "tnb-20260718T2020Z",
+        "note": "PLAN-ONLY (anomaly->BACKLOG bridge, project_anomaly_task_bridge; WIP over cap, no dispatch). TNB c113 verified NEGATIVE: c112's Step-0 GATHER glob-widening (read docs/signals/processed/bctc_signal_*/fundamental_*) IS present in chef.md (L109-113) and fresh complete VCB/FPT/HPG business-context data existed on disk hours before the 07-18 evening dish -- yet the dish persisted [gap:business_context_absent] in known_gaps[] (RAW-verified in unified-agent-synthesis-2026-07-19-evening.json) and VCB's conviction_calls rationale ('Banking sector mixed: earnings growth offsets deposit-source tightness') cites only generic sector language, NOT a product/customer/ops/mgmt fact traceable to a gathered bctc_signal_* field. Root cause: the c112 fix reaches WHERE to look (Step 0 gather) but not HOW gathered fields flow into the per-ticker narrative at Steps 4-7.5, so BIZ_CTX_OK (chef.md L584-586) never sees a qualifying cite. BA to TRACE the GATHER->conviction_calls wiring: is the drop at Step 4 (thesis build), 5 (portfolio_conviction merge), or 6 (per-ticker rationale)? Deliverable: an explicit chef.md instruction that injects >=1 gathered biz-context field into >=1 ticker's rationale when such a signal was read this cycle, so the gate passes on data not only via gap-token. DISTINCT from FIX-CHEF-STEP0-BCTC-PROCESSED-DIR-BLINDSPOT (the WHERE auto-cure, already landed) and FIX-CHEF-STEP75-L3-BIZCTX-FLOOR (the gate itself, c108).",
+        "verification_gate": "A subsequent chef evening/morning dish persists known_gaps[] WITHOUT [gap:business_context_absent] AND >=1 conviction_calls[] rationale cites a product/customer/ops/mgmt fact traceable to a bctc_signal_*/fundamental_* signal read that cycle (RAW-verify the synthesis JSON, not the notebook self-report).",
+        "next_agent": "ba"
+      },
+      {
+        "id": "GUARD-NOTEBOOK-CONCURRENT-EDIT-COLLISION-DATA-LOSS",
+        "type": "FIX",
+        "title": "Concurrent tnb-audit Edit collision on the uncommitted tran-ngoc-bau.md notebook DESTROYED the historical c110-collision-note section (data-loss risk REALIZED, recovered verbatim) — collision-safe append primitive / write-guard",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "zone": "cross-service/",
+        "owner": "po",
+        "supervised": true,
+        "created_at": "2026-07-18T20:56:16Z",
+        "created_by": "po-tnb-c113-triage",
+        "origin": "docs/handoffs/tnb-audit-latest.md",
+        "origin_signal_id": "tnb-20260718T2020Z",
+        "note": "PLAN-ONLY (anomaly->BACKLOG bridge; WIP over cap, no dispatch). TNB c113: two concurrent tnb-audit sessions on the SAME tick both ran plain Edit(old_string/new_string anchored on a header line) against the uncommitted docs/agent-memory/notebooks/tran-ngoc-bau.md; the second edit's insertion consumed+removed the pre-existing ## c110-collision-note section. RAW-verified: c113-collision-note (notebook L187-191) documents the incident + verbatim recovery; notebook is git-TRACKED but currently uncommitted (git status ' M'), so the loss window is unbounded across cycles. FIRST realized instance of the long-standing 'uncommitted notebook backlog' risk. DURABLE FIX (architect to design): a collision-safe, position-independent append primitive for notebook writes (append-only marker/section-id, NOT header-anchored Edit) so two concurrent same-file writes cannot silently drop a section. LINK: the cheaper mitigation -- per-cycle git-commit to bound the loss window to 1 cycle -- is downstream of the tnb-audit no-Bash/git-grant root cause already tracked under FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK (P1); this row covers the collision-safety PRIMITIVE specifically, which is distinct (a same-cycle concurrent collision can drop a section even WITH per-cycle commits). Related-but-distinct: GUARD-COWORK-NOTEBOOK-AGENTS-SELF-EDIT-FLOW-DOC (self-edit boundary), FIX-AGENT-NOTEBOOK-UUID-PROVENANCE (UUID leak).",
+        "verification_gate": "Design lands a position-independent notebook-append primitive; a forced two-concurrent-writer test on a fixture notebook preserves BOTH sections (no dropped section). done_verified requires the collision-loss class demonstrably closed, not just documented.",
+        "next_agent": "architect"
+      },
+      {
+        "id": "FIX-CHEF-L6-TOKEN-PERSISTENCE-RECURRING",
+        "type": "FIX",
+        "title": "L6 single-pillar-thesis gap-token persistence to synthesis JSON non-convergent across c111-c113 (3 manifestations despite 2 auto-cures) — isolation-first: persist-step bug vs narrative-gen miss",
+        "status": "BACKLOG",
+        "priority": "P3",
+        "zone": "cross-service/",
+        "owner": "po",
+        "supervised": true,
+        "created_at": "2026-07-18T20:56:16Z",
+        "created_by": "po-tnb-c113-triage",
+        "origin": "docs/handoffs/tnb-audit-latest.md",
+        "origin_signal_id": "tnb-20260718T2020Z",
+        "note": "PLAN-ONLY (anomaly->BACKLOG bridge; WIP over cap, no dispatch). RECURRING CLASS crossing the 2+ escalation threshold (feedback_recurring_bug_escalation): L6 gap-token persistence has failed to converge across 3 cycles DESPITE 2 applied auto-cures -- c111 intraday-vs-evening inconsistency; c112 partial-ticker-naming; c113 TOTAL omission from persisted JSON. RAW-verified c113: unified-agent-synthesis-2026-07-19-evening.json known_gaps[] carries an [L6-gap: gold...] regime token but NO single-pillar-thesis token, despite VCB pillars_aligned_count=2 and 0/7 tickers >=3 pillars (textbook single/thin-pillar trigger) AND the agent's own notebook claiming the token fired. This is a recurring FAILED-fix (auto-cures did not close it), NOT a never-attempted detection -- so more same-shape auto-cure is the wrong move; needs a deterministic persist-assertion. ISOLATION-FIRST (blocks the fix; do NOT dispatch a code fix before this, per feedback_isolation_probe_before_cluster_triage): c114 tnb-audit Next-Cycle-Priority #1 will RAW-verify whether the [L6-gap: single-pillar] token was actually SENT to WORK -- resolving persist-step bug (token generated, dropped on JSON write) vs narrative-generation miss (token never generated). BA specs the deterministic assertion only AFTER c114 isolates the layer.",
+        "verification_gate": "After c114 isolation: chef.md gains a deterministic assertion that when a single/thin-pillar thesis condition holds this cycle, the [L6-gap: single-pillar...] token is present in BOTH the WORK message AND the persisted known_gaps[]; RAW-verified across 2 consecutive triggering dishes.",
         "next_agent": "ba"
       }
     ],

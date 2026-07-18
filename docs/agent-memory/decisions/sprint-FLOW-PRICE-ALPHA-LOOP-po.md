@@ -86,3 +86,14 @@
 - zone apps/mcp-server/ (single) vs multi — chose single: the 2 docs/standards files document this server's own tool-call contract; dev-mcp-server owns the unit.
 **why-decision:** Real, verified (grep _callerAgent=0 hits, 3 cited files exist), well-scoped additive/back-compat code work, but explicitly non-blocking — P3 backlog is the correct disposition.
 **why-change:** no change from architect's Phase-0 scoping; encoded the mandatory QA gate-proof (wrong-agentId no-misattribution) into the row note.
+
+### STEP po-S9 · po · 2026-07-18T20:56:16Z
+**task-id:** FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING (+ 2 co-minted; t4p1-001/002 signal triage)
+**what-done:** RAW-verified TNB-c113 findings + 2 signal_queue rows; minted 3 PLAN-ONLY backlog rows (no dispatch, WIP>cap), dedup'd t4p1-002→CWO-T4, folded t4p1-001 + F-L2.
+**what-considered:**
+- t4p1-002: re-mint vs dedup — dedup: CWO-T4-P0-TUSTATS-PERAGENT already covers identical byAgent scope; stamped origin_signal_id for archive back-flip.
+- t4p1-001: mint retrofit vs fold — fold: LOW-sev cosmetic, 45-agent retrofit = churn + HIGH false-green (presence≠plausibility); approved only fwd-looking dev-standards template.
+- F-L6: fix-row now vs isolation-first — isolation-first: root cause (persist-step vs narrative-gen) unresolved until c114 probe; minted as investigation, not premature code fix.
+- F-BIZCTX: fold vs mint — mint P1: verified NEGATIVE (dish persisted [gap:business_context_absent] despite gathered data), genuine new HIGH, na=ba to trace GATHER→conviction wiring.
+**why-decision:** anomaly→BACKLOG PLAN-ONLY (WIP=18≥cap1); mint only genuinely-new+RAW-verified findings, dedup/fold the rest to avoid board churn.
+**why-change:** router named 2 mint candidates; added a 3rd (F-L6) on recurring-class escalation (3 cycles, 2 failed auto-cures) but scoped it isolation-first to respect isolation-probe-before-fix.

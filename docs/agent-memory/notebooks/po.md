@@ -1,33 +1,24 @@
 # PO Notebook
 
-_Last: 2026-07-18T19:38Z (triage tick — MINT SPRINT-XS Tier-4 D-FLEET LANE-B prerequisite, non-blocking)_
+_Last: 2026-07-18T20:56Z (triage tick — TNB-c113 + t4p1 signal_queue: 3 PLAN-ONLY mints, 2 dedup/fold, no dispatch)_
 
-## Tick 2026-07-18T19:38Z — MINT: CWO-T4-P0-TUSTATS-PERAGENT (P3, size XS, apps/mcp-server/)
+## Tick 2026-07-18T20:56Z — TNB-c113 + signal_queue triage (anomaly→BACKLOG PLAN-ONLY, WIP=18≥cap1, no dispatch)
 
-### Trigger
-- agents-architect brief `2026-07-18-cron-workflow-optimize-tier4-fleet-audit.md` §2c + §8 Phase-0, handoff signal `cron-workflow-optimize-tier4-fleet-audit-20260718T192722Z.json`. Note: "raise it to po/pm as SPRINT-XS for dev-mcp-server; do NOT attempt directly" — LANE-B, out of agent-father's apps/** zone.
+### signal_queue (both NEW→triaged via orch-apply.sh gate)
+- t4p1-002 (MED, byAgent tool-usage) → DEDUP to CWO-T4-P0-TUSTATS-PERAGENT (already BACKLOG P3 na=ba, same scope). NOT re-minted; stamped CWO-T4.origin_signal_id=t4p1-002 for archive READ→RESOLVED back-flip.
+- t4p1-001 (LOW, notebook-schema std, LANE-C) → FOLD. 5-field PO critique+verdict written into proposal doc. Blanket 45-agent retrofit = high churn for cosmetic + HIGH false-green (presence≠plausibility, gameable via empty template). Approved only fwd-looking dev-standards template (no retrofit, no dev row).
 
-### RAW-verify (did NOT trust brief alone)
-- Confirmed no caller-identity channel exists: `grep _callerAgent apps/mcp-server/src` = 0 hits. All 3 cited files exist (perCallCounterStore.ts 1731B, server.ts 70KB, trackSessionToolUsageJob.ts). Prior art = TSU-DEV-U1 (`docs/handoffs/TASK_TSU-DEV-U1.md`) built exactly this substrate — this extends it (compound key + error counter + byAgent schema).
-- Current stats schema is global-only: `{generatedAt,uniqueTools,toolCounts}`, gen'd 8h by trackSessionToolUsageJob. No agent dimension anywhere in path (gateway dials fresh SSE per call, drops it — root cause TSU-DEV-U1).
-- No board-row collision (grep tool-usage/callerAgent/byAgent over board = 0 rows).
+### TNB-c113 findings (RAW-verified each on disk — did NOT trust the summary)
+- F-BIZCTX (HIGH, NEW) → MINT FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING P1 na=ba. Verified NEGATIVE: 07-18 dish (synthesis-2026-07-19-evening.json) persisted [gap:business_context_absent] + VCB rationale cites only generic sector language despite c112 gather-glob present (chef.md L109-113) + data on disk. WHERE fixed, HOW (gather→conviction narrative Steps 4-7.5) not.
+- F-TNB-NOTEBOOK-COLLISION (MED-HIGH, NEW, REALIZED) → MINT GUARD-NOTEBOOK-CONCURRENT-EDIT-COLLISION-DATA-LOSS P2 na=architect. Verified c113-collision-note (notebook L187-191); notebook git-tracked but uncommitted. Durable = collision-safe append primitive; commit-cadence mitigation is downstream of FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK P1.
+- F-L6 (MED, WATCH-escalating 3cy) → MINT FIX-CHEF-L6-TOKEN-PERSISTENCE-RECURRING P3 na=ba, ISOLATION-FIRST (blocks fix until c114 probe: persist-step vs narrative-gen). Recurring FAILED-fix (2 auto-cures non-convergent) crossing 2+ threshold — but no premature code fix before isolation.
+- DEDUP/annotate: mislabel row (FIX-CHEF-EVENING-DUP-DATE-MISLABEL) += c113 L631 root cause + filepath-scope widening; midflow P1 unchanged (Mon 07-20 3rd-recur test); MCP-systemic→gateway-blind P1; BCTC serve-layer→bctc-analyst-owned.
+- FOLD: F-L2-GAPTOKEN (single-instance WATCH, 2nd→auto-cure); weekend chef-morning/eod absence (benign by design).
 
-### Decision — MINT backlog row, P3, NOT immediate BATCH
-- Priority P3 (low): brief §2c says pilot runs in tool-usage-stats DEGRADED mode (global-only, gap-labeled) — NOT a blocker. Only the §7-G5 graduation gate for a future permanent-cron-cadence ask. Must not jump live P0 rows (UC-CCA-P3, UC-RDL-P1).
-- size XS honors "SPRINT-XS" framing; type SPRINT-S (nearest valid batch enum; XS not a type). 5 files, single domain, additive/back-compat each.
-- zone apps/mcp-server/ (single, NOT multi): the 2 docs/standards files document THIS server's own tool-call contract; dev-mcp-server owns the unit.
-- Encoded MANDATORY QA gate-proof in note: inject wrong-agentId call, prove NO silent misattribution (anchors: wrong-arg=silent-always-false, no-fake-data).
-
-### Board write (via orch-apply.sh gate)
-- Appended CWO-T4-P0-TUSTATS-PERAGENT → backlog[] (P3, XS, next_agent:ba). Zod+dupkey PASS, conservation +1 (543→544). Fixed a `mcp/mcp/server.ts` path typo pre-apply.
-
-### Return to dispatcher
-- Row minted, non-blocking follow-up. No BATCH dispatch, .head untouched. Routes normal dev-team chain BA→architect→pm→dev-mcp-server→qa in priority order when a coding slot frees.
-
-### Dedup drain (same-cycle follow-up)
-- agent-father raced the SAME router batch, dropped duplicate signal `agent-father-tier4-phase0-toolstats-backlog-20260718T194216Z.json` (to:po, brief_complete, §2c/§8) requesting the identical Phase-0 work. Dispatch race, not a new request. Drained → `docs/signals/processed/…-dup-of-CWO-T4-P0-TUSTATS-PERAGENT` (git mv R100, committed c222d7b4c). NO second row minted. Verified my mint 433ea4420 + row survived agent-father's interleaved Phase-1 commit 89943bd5b (no clobber).
+### Writes (all via orch-apply.sh gate — Zod+dupkey+conservation PASS)
+- task_board: +3 rows (task_total 544→547), CWO-T4 + mislabel annotated. signal_queue: 2 triaged, last_triaged_at bumped. WORK telegram sent. TNB handoff ACK'd. proposal-doc critique written.
 
 ## Carry-over
-- CWO-T4-P0-TUSTATS-PERAGENT is BACKLOG P3 — promote to ready only when WIP<cap AND a permanent-Tier-4-cron ask is imminent (G5). Do NOT re-mint; annotate existing row. Pilot Run #1 legitimately runs WITHOUT this (degraded mode) — don't treat its absence as a pilot blocker.
-- FIX-CI-GOLANGCI-CONFIG-VERIFY-NETWORK-FLAKE still BACKLOG plan-only P2 (prior tick) — promote via normal groom; don't re-mint on 3rd obs.
-- Session: 95ab3ca8-b51f-4863-b8a6-95d5f33d2a2c (po triage). Commit MY paths only (orch-state mint + notebook + journal). Do NOT push (fleet-push launchd timer owns push).
+- 3 new rows PLAN-ONLY BACKLOG — promote via normal groom when WIP<cap; do NOT re-mint. F-L6 blocked on c114 isolation probe (persist vs narrative) — do NOT dispatch a code fix before that resolves.
+- CWO-T4-P0-TUSTATS-PERAGENT still P3 BACKLOG (prior tick) — degraded-mode pilot is fine, not a blocker.
+- Session: 69b0312e-df43-43a9-9e0b-bddf66d374e3 (po triage). Commit MY scoped paths only; do NOT push (fleet-push launchd timer owns push).
