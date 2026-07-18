@@ -1,0 +1,37 @@
+{
+  "ticker": "FPT",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "IT services, software exports, telecom (FPT Telecom), education (FPT Edu)",
+  "customer": "Enterprise IT buyers (VN + offshore), SME telecom subscribers",
+  "ops": "Net revenue 12,480 tỷ, operating margin 22.0%; ROE 6.17%q (28.3% ngành, TREN MEDIAN); EY 7.25% FAIR +2.25pp so lãi suất tiền gửi; OCF/NI âm do CAPEX/đầu tư kỳ này",
+  "mgmt": "B/S cân đối 0% lệch; không phát hiện dấu hiệu thao túng lợi nhuận; KD Quẻ 8 Tỷ/THUẬN LỢI 100% (hào Bác ẩn — surface reversal kéo dài nhiều chu kỳ, tiếp tục thận trọng)",
+  "esc_gate": {
+    "esc1": false,
+    "esc2_imbalance_pct": 0,
+    "esc3_status": "DATA-COVERAGE-LIMITED",
+    "esc3_quarters_returned": 2,
+    "esc4_non_operating_share_pct": 2,
+    "esc5": false,
+    "escalation_status": null,
+    "coverage_guard_key": "esc-datacov:FPT:Q1-2026:ESC-3",
+    "coverage_guard_held": true
+  },
+  "sentiment_30d": {
+    "direction": "GIẢM",
+    "slope": -0.18,
+    "bull": 2,
+    "bear": 9,
+    "n": 24
+  },
+  "fundamental_validation_signal_id": 8581,
+  "generated_at": "2026-07-18T15:10:00Z",
+  "_processed": {
+    "fingerprint": "3b04f3c0a5ef20c456bfd959b30f4d982de8f1804de47de9924a7657ea22a6a3",
+    "processedAt": "2026-07-18T15:26:37Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

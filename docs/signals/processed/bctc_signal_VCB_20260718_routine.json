@@ -1,0 +1,37 @@
+{
+  "ticker": "VCB",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Ngân hàng bán buôn + bán lẻ — cho vay, tài trợ thương mại, bancassurance, FX",
+  "customer": "Doanh nghiệp nhà nước, tập đoàn lớn, khách hàng cá nhân gửi tiết kiệm/vay vốn",
+  "ops": "NI 9.462,1 tỷ; ROE 4.21%q (16.7% dưới median ngành 17.6%); PE 14.1x premium +57%, PB 2.2x premium +45% so ngành; B/S lệch 0.37% (trong ngưỡng)",
+  "mgmt": "Cơ cấu ngân hàng khiến lợi nhuận ngoài HĐKD âm -21.4% (không bất thường, đặc thù ngành); KD Quẻ 15 Khiêm/THUẬN LỢI 100% (hào Giải — sạch, ổn định)",
+  "esc_gate": {
+    "esc1": false,
+    "esc2_imbalance_pct": 0.37,
+    "esc3_status": "DATA-COVERAGE-LIMITED",
+    "esc3_quarters_returned": 3,
+    "esc4_non_operating_share_pct": -21.4,
+    "esc5": false,
+    "escalation_status": null,
+    "coverage_guard_key": "esc-datacov:VCB:Q1-2026:ESC-3",
+    "coverage_guard_held": true
+  },
+  "sentiment_30d": {
+    "direction": "GIẢM",
+    "slope": -0.2,
+    "bull": 5,
+    "bear": 0,
+    "n": 7
+  },
+  "fundamental_validation_signal_id": 8582,
+  "generated_at": "2026-07-18T15:10:00Z",
+  "_processed": {
+    "fingerprint": "5d786bbd8f6b2a369a1446ed8eb8a32109c311f2ea0a024b6dfce81bbc151164",
+    "processedAt": "2026-07-18T15:26:37Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "2026-07-18T08:06:04.795Z",
+  "payload": {
+    "tick": "2026-07-18T08:00Z",
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "due_reasons": {
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence",
+      "alert-commander-critical": "cadence"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": 240,
+      "market-watcher-offhours": 240,
+      "alert-commander-critical": 240
+    },
+    "last_fired_timestamp": "2026-07-18T08:05:32.358Z",
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "last_fired_write_errors": null,
+    "tick_snapshot_skipped": true,
+    "tick_snapshot_reason": "|WON|=3>1 but skipped shared-snapshot write — ~5KB market_context round-trip fidelity risk; agents fall back to direct get_cycle_bootstrap (zero-blocker)",
+    "signal_backlog": 6,
+    "note": "0 */4 gatherer wave, ADAPTIVE mode (stale_warning:false, emitted_at 07:48:33Z age ~12min<20). Gate chain: 4.3 calendar unknown->no suppress; 4.4 all 3 cadence-240 due (last_fired 04:05:59Z snaps 04:00:00Z, elapsed 14400s>=14400s); 4.5 freshness AND fails (backlog=6!=0); 4.5c parallel_groups gatherers/gatherers/alerts none-chef->mutex no-op. signal_queue drain=0, one_shots=0."
+  },
+  "_processed": {
+    "fingerprint": "ad1528fe2dba75fe20f2a3969a9df20a02fd5a04348899cd15dce46857e64ae9",
+    "processedAt": "2026-07-18T15:26:37Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,68 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "2026-07-18T12:07:18Z",
+  "payload": {
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence",
+      "alert-commander-critical": "cadence"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": 240,
+      "market-watcher-offhours": 240,
+      "alert-commander-critical": 240
+    },
+    "last_fired_timestamp": "2026-07-18T12:06:40.116Z",
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "12:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 6,
+    "tick_snapshot_skipped": false,
+    "tick_snapshot_reason": "multi won slot (|WON|==3) — wrote docs/data/cycle-snapshot-12:05.json (16240 bytes)",
+    "note": "ADAPTIVE mode (pressure emitted_at 11:48:32Z age~15m<20, stale_warning:false, cadence-policy valid). 3-slot 0*/4 gatherer wave. 4.3 calendar=unknown no-suppress; 4.4 all due cadence 240min (snap 08:00Z, elapsed 240min); 4.5 freshness AND-gate FAILS (signal_backlog=6 not 0, calendar not weekend/holiday) no downgrade; 4.5c CHEF no-op (no chef slots). signal_queue drain 0. All 3 claimed:true, spawned bg, released:1 each, last_fired 08:05:32Z->12:06:40.116Z (23 slots, POST==NOW). Post-emit server recomputed stale_warning:true."
+  },
+  "_processed": {
+    "fingerprint": "9fe17499a35f2d574e8c0e0db9f3e673bb7a4e71d054e7d1d7819a3425b1cddd",
+    "processedAt": "2026-07-18T15:26:37Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

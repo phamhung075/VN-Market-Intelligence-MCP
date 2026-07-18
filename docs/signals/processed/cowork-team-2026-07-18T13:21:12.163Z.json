@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-18T13:21:12.163Z",
+    "matched_slots": [
+      "fb-weekend"
+    ],
+    "won_slots": [
+      "fb-weekend"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/fb-market-poster/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "fb-weekend": "cron"
+    },
+    "cadence_minutes": {
+      "fb-weekend": null
+    },
+    "last_fired_timestamp": "2026-07-18T13:20:42.193Z",
+    "last_fired_slots": [
+      "fb-weekend"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "13:15",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 6,
+    "note": "fb-weekend guaranteed slot (fb-market-poster, cron '13 13 * * 6,0') fired on Saturday 2026-07-18; adaptive mode (stale_warning:false, emitted_at 13:03:34Z age~16m<20). policy_id=null pass-through (due_reason=cron); calendar=unknown no-suppress; freshness AND-gate fails (backlog=6); not a chef slot (parallel_group=fb-poster) so CHEF mutex no-op. Single WON slot -> tick-snapshot skipped. last_fired 2026-07-04T13:19:41Z (14d gap; agent has been session-less on weekends) -> 13:20:42.193Z. emit_pressure_state success:true emitted_at 13:20:48.209Z."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-18T13:21:12.163Z",
+  "_processed": {
+    "fingerprint": "c9712081f80066788969adac64776c79b22fcdb4dbc3db119b0cc9a13631e72a",
+    "processedAt": "2026-07-18T15:26:37Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

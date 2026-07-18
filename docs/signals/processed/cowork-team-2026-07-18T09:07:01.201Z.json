@@ -1,0 +1,57 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-18T09:07:01.201Z",
+    "matched_slots": [
+      "refine-bctc-slot-1"
+    ],
+    "won_slots": [
+      "refine-bctc-slot-1"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/refine_bctc_md/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "refine-bctc-slot-1": "cron"
+    },
+    "cadence_minutes": {
+      "refine-bctc-slot-1": null
+    },
+    "last_fired_timestamp": "2026-07-18T09:06:18.869Z",
+    "last_fired_slots": [
+      "refine-bctc-slot-1"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "09:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 6,
+    "tick_snapshot_skipped": true,
+    "tick_snapshot_reason": "|WON|==1 single-slot; agent falls back to get_cycle_bootstrap",
+    "note": "Single-slot bctc-refine fire. LEGACY mode (stale_warning:true at 09:00Z read, pressure emitted_at 08:48:32.488Z). refine-bctc-slot-1 cron '0 9' daily, last_fired 2026-07-16T09:08:49.851Z -> today's 09:00Z occurrence genuinely due (legacy passes raw cron match, no adaptive gate). CHEF mutex no-op (parallel_group=bctc-refine). Spawned agent returned SKIPPED (MBB_2026_Q1.pdf cover-letter pattern, page_count=0) — spawn succeeded, no double-fire risk (last_fired advanced + published-marker gate downstream)."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-18T09:07:01.201Z",
+  "_processed": {
+    "fingerprint": "8b60f07caed9efaaef14ef4d825d683c262c97a79311a1a9bbba67550be27a6f",
+    "processedAt": "2026-07-18T15:26:37Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "2026-07-18T15:05:17.642Z",
+  "payload": {
+    "matched_slots": [
+      "bctc-analyst-slot-1"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-1"
+    ],
+    "last_fired_slots": [
+      "bctc-analyst-slot-1"
+    ],
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "bctc-analyst-slot-1": "cron"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-1": null
+    },
+    "last_fired_timestamp": "2026-07-18T15:04:39.074Z",
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "15:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 6,
+    "note": "Saturday 15:00Z WORK — single non-guaranteed slot bctc-analyst-slot-1 (bctc off-market slot 1/4, cron 0 15 * * *). ADAPTIVE mode (pressure-state stale_warning:false, age ~15min<20 at decision time). calendar_status unknown -> conservative no-suppress (AC-P1-4-2). Preflight-resolved cron pass-through (due_reason cron, cadence null). parallel_group bctc-analyst -> CHEF mutex no-op. Single slot -> no collision, tick-snapshot skip. E2 in-cycle guard is agent-internal (now 15:04Z not in VN market window [02:00,08:00)Z)."
+  },
+  "_processed": {
+    "fingerprint": "8ba105043f5913d0b2c826e6731105d8e00311e9fc6bbdc13d619b5a42fd3336",
+    "processedAt": "2026-07-18T15:26:37Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
