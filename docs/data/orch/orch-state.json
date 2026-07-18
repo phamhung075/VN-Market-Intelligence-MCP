@@ -414,7 +414,30 @@
     "_updated_at": "2026-07-18T01:00:41Z",
     "_updated_by": "po (closed routed-to-po chef-eod-recurring-bail escalation; substantive board triage already applied 2026-07-17T09:28:15Z on FIX-CHEF-MIDFLOW-BAIL-DETERMINISM escalation + UC-CCA-P3 abort-path AC)",
     "archive": [],
-    "rows": [],
+    "rows": [
+      {
+        "id": "t4p1-001",
+        "ts": "2026-07-18T20:22:44Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "improvement_proposal",
+        "summary": "Notebook schema standardization needed (2/45 structured, 43/45 free-form)",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": "docs/improvement-proposals/IMP-20260718-agents-architect-notebook-schema-standardization.md"
+      },
+      {
+        "id": "t4p1-002",
+        "ts": "2026-07-18T20:22:44Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "improvement_proposal",
+        "summary": "Tool-usage-stats.json missing per-agent attribution (byAgent key) — Phase 0 prerequisite",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": "docs/improvement-proposals/IMP-20260718-dev-mcp-server-tool-usage-byagent-redesign.md"
+      }
+    ],
     "last_triaged_at": "2026-07-18T01:00:41Z",
     "last_triaged_by": "po"
   },

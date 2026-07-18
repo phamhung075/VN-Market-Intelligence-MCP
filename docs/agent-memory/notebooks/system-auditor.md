@@ -1,3 +1,19 @@
+## c397 · 2026-07-18T20:22:44Z
+### Audit Run Tier-4-PILOT (20:22–20:30 UTC 2026-07-18)
+- Tier: 4 (PILOT, on-demand) | Data sources: 4 (notebooks, orch-state, tool-stats, disposition)
+- FA-1: Fleet notebooks rollup — 45 files glob, 2 structured, 43 free-form
+- FA-2: Cooperation metrics — task_board 448 total, lanes: backlog=389, ready=17, in_progress=1, review=30, done=11
+- FA-3: Tool usage (degraded) — byAgent key absent, global counts only (5 unique tools, 5 calls)
+- FA-4: Accuracy/disposition — no verdict data this cycle, disposition proxy available in signal_queue
+- FA-5: Findings synthesis — 4 candidates (2 routable, 2 ALL_GREEN), 2 proposals emitted to signal_queue
+- Anomalies: 0 critical findings | Status: FLEET_GREEN
+- Tier-4 pilot runs: 1
+
+## d4-auto · 2026-07-18T03:00:00.767Z
+D4 candidates: none
+
+## d4-auto · 2026-07-17T03:00:01.046Z
+D4 candidates: none
 
 ## d4-auto · 2026-07-16T03:00:01.558Z
 D4 candidates: none
