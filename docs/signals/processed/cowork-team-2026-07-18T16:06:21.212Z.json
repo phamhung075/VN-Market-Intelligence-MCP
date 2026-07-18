@@ -1,0 +1,66 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "2026-07-18T16:06:21.212Z",
+  "payload": {
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence",
+      "alert-commander-critical": "cadence"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": 240,
+      "market-watcher-offhours": 240,
+      "alert-commander-critical": 240
+    },
+    "last_fired_timestamp": "2026-07-18T16:05:34.071Z",
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "16:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 6,
+    "note": "Saturday off-market 0 */4 gatherer wave (news-scout-offhours + market-watcher-offhours) + alert-commander-critical. Adaptive gate chain: calendar unknown -> no-suppress; preflight-resolved cadence 240min all due (last_fired 12:06Z, elapsed ~239min); non-chef parallel_groups (gatherers/alerts) -> CHEF mutex no-op. 3 slots claimed+spawned+released, |WON|>1 shared cycle-snapshot written."
+  },
+  "_processed": {
+    "fingerprint": "d3d12cf57abf59d1950ae14a9f84a7c5b08bc4dab5f10d584bb99faa27908cfa",
+    "processedAt": "2026-07-18T16:18:29Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
