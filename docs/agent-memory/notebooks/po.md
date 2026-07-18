@@ -1,27 +1,29 @@
 # PO Notebook
 
-_Last: 2026-07-17T19:33Z (dev-team triage tick — ci_red CI-RED-77c07cc7 flaky-dismiss)_
+_Last: 2026-07-18T07:53Z (triage tick — OHLCV-BACKFILL report 3506 FOLD BENIGN weekend-FP)_
 
-## Tick 2026-07-17T19:33Z — FLAKY-DISMISS ci_red CI-RED-77c07cc7 (1299b, 2nd obs), no re-mint
+## Tick 2026-07-18T07:53Z — FOLD BENIGN: telegram 3506 [OHLCV-BACKFILL] weekend false-positive
 
 ### Trigger
-- ONE pendingSignal = ci_red (ci-health-probe, `docs/signals/ci-red-77c07cc7-20260717192055.json`, untracked/post-drain). Run 29605330359, HEAD 77c07cc71, job "bun test". All other PO-inputs empty. Head idle, WIP 0, backlog 386.
+- NEW telegram report id=3506 (msg 3571, from analysis-agent, normal): "fetch-ohlcv-backfill.sh likely crashed/DNS-failed before reporting — poller force-closed the queue row, after 5 retries. Manual VPS investigation required." Today = Sat 2026-07-18 (VN market CLOSED weekend).
 
-### RAW-verify (independent — did NOT trust router)
-- `git diff f845eb6fd..77c07cc71 --name-only` = ONLY `docs/agent-memory/notebooks/main.md` (parent IS f845eb6fd) → tested tree byte-identical.
-- gh: f845eb6fd run 29603867657 SUCCESS + 4 prior main commits SUCCESS. Run 29605330359 (non-stale) = 14466 pass / 1 fail, sole FAILEDFILE `1299b-skill-gated-bootstrap.test.ts`. Same code green→red = FLAKY, not regression.
+### RAW-verify (did NOT trust report text)
+- get_market_snapshot: breadth.date=2026-07-17 → last session = Fri 07-17. Sat 07-18 weekend, no session to fetch.
+- get_price_history VCB + SSI: both gapless + fresh, latest candle 2026-07-17. Full week 07-13..07-17 present. No missing session, no stale/zero OHLCV. Served data complete through last trading day.
+- Ground truth contradicts "manual VPS investigation required": NO data loss. Backfill fetch on a closed-market weekend has nothing to fetch → benign crash/DNS blip, not a data outage.
 
-### Disposition — FLAKY-DISMISS, no code-FIX, no new DEFLAKE mint
-- Router premise WRONG: 1299b is NOT 1st-obs. Already dismissed once (CI-RED-571818c2, 07-16) + already has root-cause row `FIX-AGENTBOOTSTRAP-EAGER-EXECSYNC-COLDSTART` (SPIKE item #1). This = 2nd ci_red obs of that tracked bug.
-- NO DEFLAKE mint (prior-art dedup — that row already covers it; contrast DEFLAKE-VNSTOCK-3STATEMENT which had NO prior row). Recurring DETECTION of un-fixed known bug, not a failed fix → no P0.
-- Instead bumped existing row P2→P1 + `ci_red_recurrence{obs_count:2}` annotation (churn-cap: do NOT re-bump). orch-apply Stage0+1 PASS, conservation 543=543, backlog 386 unchanged.
+### Prior-art / dedup (clean)
+- Board lanes backlog/ready/qa/in_progress/review: 0 rows matching ohlcv|backfill|vps|fetch. in_progress[0]=SPIKE-BCTC-EXTRACTION-DORMANT (unrelated, WIP=1). Head idle.
+- docs/signals/: no ohlcv|backfill signal file. Handoffs 2026-07-17 chef-eod-bail + refine-page-count both unrelated. No duplicate to mint.
 
-### Re-drain prevention (MANDATORY — ci-red-close-fingerprint rule)
-- Verified sha256("ci_red:77c07cc71…:bun test")==payload.fp `63fba0b43e12…`. INSERT OR IGNORE into signals_processed (result=flaky-dismissed, processed_by=po, DB 197→198 row 2921) + wal_checkpoint → probe re-emit blocked. Appended `_disposition` + `mv` signal → processed/ → drain re-route blocked. Both post-verified.
+### Disposition — FOLD BENIGN, no mint, no ops route
+- Single transient observation on a weekend (the "5 retries" = retries of one fetch job, NOT 5 independent staleness observations). Recurring-bug policy needs 2+ independent obs → NOT triggered. Market-hours/weekend-blind FP class (feedback_auditor_freshness_threshold_market_hours_blind).
+- NO backlog row (anomaly→BACKLOG is plan-only, but there is no actionable anomaly — data is fresh). NO ops-vps route (nothing to investigate; served OHLCV complete). WATCH only.
+- Telegram 3506: claim_telegram_report(claimant=po) → process_telegram_report(resolution=wontfix). Removed from new + unresolved; won't re-surface.
 
 ### Return to dispatcher
-- NOTHING (idle EXIT). No dispatchable BATCH; P1 row is plan-only. `.head` untouched.
+- NOTHING (idle EXIT). No BATCH. .head untouched. orch-state NOT written (no task).
 
 ## Carry-over
-- 1299b flake will keep recurring (per-tick triage cost) until FIX-AGENTBOOTSTRAP-EAGER-EXECSYNC-COLDSTART (now P1) is executed. Do NOT re-bump priority on future recurrences (already P1, churn-capped); do NOT mint a new row — annotate obs_count on the existing row only. If ever a NON-docs-only commit goes red on 1299b, that's a genuine regression → mint then.
-- Session: 69b0312e-df43-43a9-9e0b-bddf66d374e3 (dev-team dispatcher). Committed MY paths only. Did NOT push.
+- WATCH: fetch-ohlcv-backfill.sh non-report / poller force-close. This is obs #1 (benign, weekend). If it RECURS on a TRADING day AND produces an actual daily_ohlcv gap (probe get_price_history for a missing last session), that = obs #2 on real data → escalate to ops-vps-fetch via a backlog row then, NOT before. Do not mint on weekend-only recurrences.
+- Session: 69b0312e-df43-43a9-9e0b-bddf66d374e3 (dev-team dispatcher). Committed MY path only. Did NOT push.
