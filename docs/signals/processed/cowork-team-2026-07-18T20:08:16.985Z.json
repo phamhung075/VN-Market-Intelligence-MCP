@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "2026-07-18T20:08:16.985Z",
+  "payload": {
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "drift_min": 3,
+    "pressure_mode": "legacy",
+    "calendar_status": "unknown",
+    "chef_mutex_applied": false,
+    "due_reasons": [
+      "cron",
+      "cron",
+      "cron"
+    ],
+    "cadence_minutes": [
+      null,
+      null,
+      null
+    ],
+    "last_fired_timestamp": "2026-07-18T20:08:00.290Z",
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "20:00",
+    "dev_queue_depth": 5,
+    "signal_backlog": 7
+  },
+  "_processed": {
+    "fingerprint": "966ef11a9e64ea281d388a78d3ae04f0afe3ae9a80978412d900140abb584057",
+    "processedAt": "2026-07-18T20:18:54Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
