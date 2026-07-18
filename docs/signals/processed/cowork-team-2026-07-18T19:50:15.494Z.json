@@ -1,0 +1,43 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "2026-07-18T19:50:15.494Z",
+  "payload": {
+    "matched_slots": [
+      "chef-evening"
+    ],
+    "won_slots": [
+      "chef-evening"
+    ],
+    "last_fired_slots": [
+      "chef-evening"
+    ],
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "drift_min": 3,
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "chef_mutex_applied": false,
+    "due_reasons": [
+      "cron"
+    ],
+    "cadence_minutes": [
+      null
+    ],
+    "last_fired_timestamp": "2026-07-18T19:49:59.212Z",
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "19:45",
+    "dev_queue_depth": 5,
+    "signal_backlog": 6
+  },
+  "_processed": {
+    "fingerprint": "1e360108943e0765f78a0b0e18dd0ac21316c4d733c9aaa26f504a429ceb8acb",
+    "processedAt": "2026-07-18T19:51:47Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

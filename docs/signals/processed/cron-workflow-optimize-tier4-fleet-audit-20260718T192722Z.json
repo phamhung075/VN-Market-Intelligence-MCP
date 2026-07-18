@@ -1,0 +1,15 @@
+{
+  "from": "agents-architect",
+  "to": "agent-father",
+  "type": "brief_complete",
+  "payload": "docs/architecture-briefs/2026-07-18-cron-workflow-optimize-tier4-fleet-audit.md",
+  "priority": "normal",
+  "createdAt": "2026-07-18T19:27:22Z",
+  "notes": "Implement Phase 1 only (§8): EDIT-1..EDIT-5, all docs/.md scaffolding for the Tier-4 D-FLEET pilot dimension on system-auditor. Zero cron registration, zero apps/** changes — Phase 0 (tool-usage-stats.json per-agent redesign, §2c) is LANE-B and OUT OF agent-father's zone (apps/mcp-server/**); raise it to po/pm as a SPRINT-XS backlog item for dev-mcp-server citing this brief, do not attempt it directly. After Phase 1 ships, Pilot Run #1 (AUDIT_TIER=4, on-demand) may execute in tool-usage-stats degraded mode per §2c — do not block on Phase 0 landing first. Permanent cron cadence is NOT authorized by this brief — any future ask must pass §7 Graduation Criteria + a fresh PO critique with MEASURED (not estimated) budget numbers.",
+  "_processed": {
+    "fingerprint": "3737d4e10734979a4c7687f9c6d7cc3e84981c6808061d53335ca7925c93bb01",
+    "processedAt": "2026-07-18T19:51:47Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
