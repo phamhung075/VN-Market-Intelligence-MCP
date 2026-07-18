@@ -24,6 +24,9 @@ _Last: 2026-07-18T19:38Z (triage tick — MINT SPRINT-XS Tier-4 D-FLEET LANE-B p
 ### Return to dispatcher
 - Row minted, non-blocking follow-up. No BATCH dispatch, .head untouched. Routes normal dev-team chain BA→architect→pm→dev-mcp-server→qa in priority order when a coding slot frees.
 
+### Dedup drain (same-cycle follow-up)
+- agent-father raced the SAME router batch, dropped duplicate signal `agent-father-tier4-phase0-toolstats-backlog-20260718T194216Z.json` (to:po, brief_complete, §2c/§8) requesting the identical Phase-0 work. Dispatch race, not a new request. Drained → `docs/signals/processed/…-dup-of-CWO-T4-P0-TUSTATS-PERAGENT` (git mv R100, committed c222d7b4c). NO second row minted. Verified my mint 433ea4420 + row survived agent-father's interleaved Phase-1 commit 89943bd5b (no clobber).
+
 ## Carry-over
 - CWO-T4-P0-TUSTATS-PERAGENT is BACKLOG P3 — promote to ready only when WIP<cap AND a permanent-Tier-4-cron ask is imminent (G5). Do NOT re-mint; annotate existing row. Pilot Run #1 legitimately runs WITHOUT this (degraded mode) — don't treat its absence as a pilot blocker.
 - FIX-CI-GOLANGCI-CONFIG-VERIFY-NETWORK-FLAKE still BACKLOG plan-only P2 (prior tick) — promote via normal groom; don't re-mint on 3rd obs.
