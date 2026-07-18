@@ -1,0 +1,72 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-18T00:09:56.527Z",
+    "nominal_tick": "2026-07-18T00:00Z",
+    "drift_min": 3,
+    "matched_slots": [
+      "bctc-analyst-slot-4",
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-4",
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md",
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "due_reasons": {
+      "bctc-analyst-slot-4": "cron",
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence",
+      "alert-commander-critical": "cadence"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-4": null,
+      "news-scout-offhours": 240,
+      "market-watcher-offhours": 240,
+      "alert-commander-critical": 240
+    },
+    "last_fired_timestamp": "2026-07-18T00:09:10.573Z",
+    "last_fired_slots": [
+      "bctc-analyst-slot-4",
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "last_fired_write_errors": null,
+    "tick_snapshot_skipped": true,
+    "tick_snapshot_reason": "|WON|=4 but shared-snapshot write deferred — round-trip fidelity risk on ~5KB market_context; agents fall back to direct get_cycle_bootstrap (zero blocker)",
+    "signal_backlog": 6,
+    "note": "00:00Z multi-slot fire: bctc-offmarket 0-0 cron coincided with the 0-*/4 gatherer wave (news-scout/market-watcher/alert-commander). ADAPTIVE mode (stale_warning=false at read, emitted_at 23:48:32Z age ~12min). Gate chain: 4.3 calendar=unknown no-suppress; 4.4 bctc-offmarket+unknown => _cron_fallback cron passthrough, 3 gatherers cadence-240 due; 4.5 freshness 3-cond AND fails (backlog=6!=0); 4.5c parallel_groups bctc-analyst/gatherers/alerts none=chef => CHEF-mutex no-op. All 4 claimed:true (no peer collision), released:1. bctc is not a MARKET publisher; the 3 gatherers/alert own their own published-marker gates."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-18T00:09:56.527Z",
+  "_processed": {
+    "fingerprint": "b8c902e35f58fbb95d3f04d7a60fe278697c8e442cf46b7d93136f91f437595b",
+    "processedAt": "2026-07-18T00:18:20Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
