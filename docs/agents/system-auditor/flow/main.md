@@ -1,4 +1,4 @@
-<!-- size-justification: ~787L — three-tier dispatcher; Tier-1 detail extracted to tier1-probe.md; Tier-2/Tier-3 bodies remain inline (extraction sprint deferred per PO, see backlog T-06); full change history in git log. -->
+<!-- size-justification: ~787L — three-tier dispatcher; Tier-1 detail extracted to tier1-probe.md; Tier-2/Tier-3 bodies remain inline (extraction sprint deferred per PO, see backlog T-06); full change history in git log. +2L: TIER=4 PILOT row added to AUDIT_TIER extraction + Tier Dispatch tables (2026-07-18), per brief docs/architecture-briefs/2026-07-18-cron-workflow-optimize-tier4-fleet-audit.md §8 EDIT-2 — dispatches to handlers.md §Step D-FLEET, own one-off claim, bypasses §Step 0d tick-boundary election. -->
 # System Auditor — Main Flow
 
 ## PLAN-ONLY INVARIANT — NO DESTRUCTIVE OPS (AUD-ND-1)
@@ -64,6 +64,7 @@ Scan the spawn prompt verbatim for the token `AUDIT_TIER=<value>`. Extract the i
 - Found `AUDIT_TIER=1` → set AUDIT_TIER=1
 - Found `AUDIT_TIER=2` → set AUDIT_TIER=2
 - Found `AUDIT_TIER=3` → set AUDIT_TIER=3
+- Found `AUDIT_TIER=4` → set AUDIT_TIER=4 (**PILOT ONLY** — manual invocation only; never present in any cron config; see brief `docs/architecture-briefs/2026-07-18-cron-workflow-optimize-tier4-fleet-audit.md` §5)
 - Not found or unrecognized value → **default AUDIT_TIER=3** (log: `"[TIER-DISPATCH] AUDIT_TIER not set — defaulting to 3"`)
 
 The extracted tier value MUST propagate to:
@@ -74,6 +75,7 @@ The extracted tier value MUST propagate to:
 - **TIER=1** → run §Tier-1 Runtime Ping only → skip all other steps → notebook (label: Tier-1, gated — see §Notebook Append Gate) → RETURN
 - **TIER=2** → run §Tier-2 Freshness Sweep only → skip all other steps → notebook (label: Tier-2, gated — see §Notebook Append Gate) → RETURN
 - **TIER=3** → run §Tier-1 + §Existing Doc/Memory Audit (steps 1–6) + §Tier-3 DB Integrity → notebook (label: Tier-3, gated — see §Notebook Append Gate) → RETURN
+- **TIER=4** → **PILOT ONLY, manual invocation — not present in any cron config.** Skip §Step 0d Fire-Time Election below (tier-4 pilot uses its own one-off `pilot-run-<N>` claim inside the handler instead — see `docs/agents/system-auditor/handlers.md` §Step D-FLEET Trigger, not the tick-boundary election) → run §Step D-FLEET handler (`docs/agents/system-auditor/handlers.md` §Step D-FLEET) only → skip all other steps → notebook (label: Tier-4-PILOT, gated — see §Notebook Append Gate) → RETURN
 
 ---
 

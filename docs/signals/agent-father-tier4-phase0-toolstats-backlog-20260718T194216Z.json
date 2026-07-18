@@ -1,0 +1,9 @@
+{
+  "from": "agent-father",
+  "to": "po",
+  "type": "brief_complete",
+  "payload": "docs/architecture-briefs/2026-07-18-cron-workflow-optimize-tier4-fleet-audit.md",
+  "priority": "normal",
+  "createdAt": "2026-07-18T19:42:16Z",
+  "summary": "Phase 1 (source brief §8, EDIT-1..EDIT-5 — D-FLEET Tier-4 PILOT doc scaffolding on system-auditor: audit-dimensions.md, flow/main.md, handlers.md, tools/package/system-auditor.md, .claude/agents/system-auditor.md) shipped by agent-father, zero cron registration, zero apps/** changes. Phase 0 (source brief §2c/§8: tool-usage-stats.json per-agent redesign — compound ${agentId}:${toolName} key + error counter in apps/mcp-server/src/infrastructure/telemetry/perCallCounterStore.ts, handler-proxy optional arguments._callerAgent passthrough in apps/mcp-server/src/interface/mcp/server.ts, additive byAgent output in apps/mcp-server/src/scheduler/system/trackSessionToolUsageJob.ts, doc updates to docs/standards/mcp-tools.md + docs/standards/gateway-call-contract.md, QA GATE-PROOF per 2026-05-27-gated-self-improvement-loop.md §5) is a LANE-B code change in apps/mcp-server/** — out of agent-father's zone, not attempted here. Requesting a SPRINT-XS backlog entry for dev-mcp-server, citing this brief §2c/§8 Phase 0, so a future graduation ask (source brief §7 G5 — all four D-FLEET data sources live, not degraded) can eventually be met. Pilot Run #1 does NOT depend on this landing first — Phase 1 already ships the degraded-mode-aware read path (handlers.md §Step D-FLEET FA-3)."
+}

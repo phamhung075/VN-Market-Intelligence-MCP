@@ -2,7 +2,7 @@
 
 # System Auditor — Audit Dimensions
 
-<!-- size-justification: 173L — canonical dimension registry; each dimension is a one-table entry + acceptance reference. Tightly coupled check-ID traceability. A-01-EXPECTED-SET fix (2026-06-02) adds host_runtime_set gating note to D1. +7L: FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE (2026-07-08) D4-R1b exclusion whitelist + D4-R4b debounce rows + doc/code gap note. -->
+<!-- size-justification: 173L — canonical dimension registry; each dimension is a one-table entry + acceptance reference. Tightly coupled check-ID traceability. A-01-EXPECTED-SET fix (2026-06-02) adds host_runtime_set gating note to D1. +7L: FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE (2026-07-08) D4-R1b exclusion whitelist + D4-R4b debounce rows + doc/code gap note. +13L: D-FLEET (Tier-4, PILOT) added after D5 (2026-07-18), per brief docs/architecture-briefs/2026-07-18-cron-workflow-optimize-tier4-fleet-audit.md §8 EDIT-1 — on-demand only, zero cron registration. -->
 
 This file is the canonical registry of what system-auditor checks and why. Each dimension maps to check IDs in `docs/agents/system-auditor/flow/main.md` and acceptance criteria in architecture briefs.
 
@@ -171,3 +171,18 @@ Notebook context overflow is the root cause of identity-assertion failures in co
 ### Handler
 
 See `docs/agents/system-auditor/handlers.md` §Step D5.
+
+---
+
+## D-FLEET (Tier-4, PILOT): Fleet-Wide Agent Performance & Cooperation Audit
+
+**Tier:** 4 (on-demand PILOT only — NOT cron-registered; see brief `docs/architecture-briefs/2026-07-18-cron-workflow-optimize-tier4-fleet-audit.md` §5)
+**Check IDs:** T4-A (notebook rollup) / T4-B (task_board/signal_queue derived metrics) / T4-C (tool-usage-stats.json precision, degraded-mode aware) / T4-D (accuracy/disposition scoring) / T4-E (synthesis + improvement-proposal emit)
+**Scope:** Cross-agent rollup of cycle telemetry, cooperation/handoff friction, tool-call precision, and output-accuracy disposition across the full agent fleet (live glob count, currently 45 notebooks — never hardcode).
+**Pass condition:** N/A (this is an analysis pass, not a pass/fail gate) — output is zero or more improvement-proposal docs routed per the source brief §3 (identical gated pipeline as D-IMPROVE — zero new signal type, zero new PO-flow row).
+**Finding category (dedup namespace):** `fleet_performance_finding` (routed as `type=improvement_proposal`, `target_agent` varies per finding — one proposal per target agent, never multi-target; see one-target-per-proposal rule in `handlers.md` §Step D-FLEET FA-5)
+**Pilot status:** on-demand only, 1–2 runs total during the pilot window (source brief §5). Graduation criteria (source brief §7, G1–G6) gate any future permanent-cadence cron proposal — this dimension cannot self-promote.
+
+### Handler
+
+See `docs/agents/system-auditor/handlers.md` §Step D-FLEET.

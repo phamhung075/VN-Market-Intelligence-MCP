@@ -100,3 +100,32 @@
 - Commit `18885ff50`, explicit pathspec, exactly the 2 target files — none of the ~89 dirty peer
   files in the tree were staged.
 - Decision journal: `docs/agent-memory/decisions/sprint-ULTRACODE-AUDIT-FIXALL-agent-father.md` S1.
+
+### Edit (system-auditor) 19:44 — 2026-07-18 D-FLEET Tier-4 PILOT scaffolding (brief docs/architecture-briefs/2026-07-18-cron-workflow-optimize-tier4-fleet-audit.md §8, signal cron-workflow-optimize-tier4-fleet-audit-20260718T192722Z.json)
+- Change: Phase 1 ONLY (EDIT-1..EDIT-5) — new "D-FLEET (Tier-4, PILOT)" audit dimension bolted onto
+  system-auditor: notebook cycle-telemetry rollup (FA-1), task_board/signal_queue derived
+  cooperation metrics read-only (FA-2), tool-usage-stats.json read degraded-mode aware (FA-3),
+  alert/prediction accuracy generalization via already-generic tools (FA-4), synthesis + existing
+  D-IMPROVE emit pipeline reuse (FA-5), notebook append + pilot-run counter (FA-6). On-demand PILOT
+  only — zero `cronConfig.ts` entry, zero always-on cadence.
+- Files modified: 5 — `docs/agents/system-auditor/audit-dimensions.md` (new D-FLEET section after
+  D5), `docs/agents/system-auditor/flow/main.md` (AUDIT_TIER=4 extraction row + Tier Dispatch row,
+  explicit note to skip Step 0d tick-election for tier-4), `docs/agents/system-auditor/handlers.md`
+  (new `## Step D-FLEET` handler, Trigger + FA-1..FA-6 + failure modes + not-in-scope), `docs/agents/
+  tools/package/system-auditor.md` (Tier-4 read-scope note + 3 new MCP tool rows: get_prediction_
+  accuracy, create_prediction_claim, get_alert_accuracy — verified live in `docs/agents/tools/list/`
+  before citing), `.claude/agents/system-auditor.md` (single additive description clause).
+- Cascade: none — no rename, no `inter_agent` change, no roster/CLAUDE.md/dispatch entry (pilot is
+  manually invoked, same mechanism as existing Tier-1/2/3 spawns).
+- Validation: 5/5 — YAML frontmatter untouched/valid, all cross-referenced paths resolve (`§Step
+  D-FLEET` in handlers.md exists, brief path exists), size-justification comments updated on all 3
+  edited `.md` files with line-count deltas, tool names cross-checked against `docs/agents/tools/
+  list/*.md` (all 3 exist), zero `apps/**` touched.
+- Decision: brief explicitly hard-boundaries this task to Phase 1 (docs only) — Phase 0 (tool-usage-
+  stats.json per-agent redesign, `apps/mcp-server/**`) is LANE-B, constitutionally forbidden to
+  agent-father (same boundary as D4's `dev-mcp-server` note). Raised Phase 0 to po as a SPRINT-XS
+  backlog request via `docs/signals/agent-father-tier4-phase0-toolstats-backlog-20260718T194216Z.json`
+  (type=brief_complete, same payload path, citing §2c/§8 — reuses po's existing `brief_complete`
+  triage-signals.md row rather than inventing a new signal type). Pilot Run #1 explicitly documented
+  as executable in tool-usage-stats degraded mode (FA-3) — not gated on Phase 0 landing first, per
+  the launching signal's own instruction.

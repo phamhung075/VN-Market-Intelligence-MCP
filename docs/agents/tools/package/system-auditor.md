@@ -14,6 +14,8 @@
 | Grep | Search logs for errors, warnings, anomalies |
 | Bash | READ-ONLY health probes ONLY. Permitted: docker ps, docker inspect, docker stats --no-stream, docker logs --since, docker events (read), docker exec mcp-server <sqlite3/curl/ls/which/tesseract>, curl -sf (health endpoints), df -h, free -h. FORBIDDEN: docker stop, docker kill, docker rm, docker restart, docker compose down, docker compose up, kill, pkill, killall, rm -rf <any live dir>. Violation = abort cycle, send_telegram(bug, "PLAN-ONLY violation aborted: <command>"). |
 
+**Tier-4 read scope (PILOT, on-demand — see D-FLEET, `docs/agents/system-auditor/audit-dimensions.md`):** additionally reads `docs/agent-memory/notebooks/*.md` (ALL agent notebooks, not just system-auditor's own — read-only, fleet cycle-telemetry rollup) and `docs/agent-memory/modules/tool-usage-stats.json` (degraded-mode aware — an absent `byAgent` key is NOT an error, see `handlers.md` §Step D-FLEET FA-3). This does NOT expand the write boundary below — Tier-4 adds zero new write targets.
+
 ## MCP Tools
 
 All called via `call_tool(server="vn-market", tool="<name>", arguments={...})`.
@@ -29,6 +31,9 @@ All called via `call_tool(server="vn-market", tool="<name>", arguments={...})`.
 | get_macro_snapshot | 2 | Macro indicator freshness check → Dimension B |
 | get_sla_status | 2 | Freshness SLA alignment validation |
 | get_alerts | 3 | Cross-table consistency — alerts vs agent_signals → C-08 |
+| get_prediction_accuracy | 4 | Price-checkable non-alert output scoring → Dimension D-FLEET T4-D |
+| create_prediction_claim | 4 | Log a prediction claim for a non-alert-fired signal → Dimension D-FLEET T4-D |
+| get_alert_accuracy | 4 | Cross-check alert-sourced outputs already scoreable today → Dimension D-FLEET T4-D |
 | post_agent_signal | all | Emit typed audit signals: system_health_report, microservice_degraded, data_stale, db_integrity_breach |
 | send_telegram | all | BUG channel alert (severity ≥ WARN, new anomaly, dedup 7d) |
 
@@ -69,6 +74,15 @@ call_tool(server="vn-market", tool="get_sla_status", arguments={})
 
 # Orphaned alerts cross-check
 call_tool(server="vn-market", tool="get_alerts", arguments={limit: 100})
+
+# Tier-4 D-FLEET: price-checkable non-alert output scoring
+call_tool(server="vn-market", tool="get_prediction_accuracy", arguments={...})
+
+# Tier-4 D-FLEET: log a prediction claim for a non-alert-fired signal
+call_tool(server="vn-market", tool="create_prediction_claim", arguments={...})
+
+# Tier-4 D-FLEET: cross-check alert-sourced outputs already scoreable today
+call_tool(server="vn-market", tool="get_alert_accuracy", arguments={...})
 
 # System status rollup
 call_tool(server="vn-market", tool="get_system_status", arguments={})
