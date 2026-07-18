@@ -1,0 +1,54 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "2026-07-18T17:34:45.205Z",
+  "payload": {
+    "matched_slots": [
+      "digest-daily"
+    ],
+    "won_slots": [
+      "digest-daily"
+    ],
+    "last_fired_slots": [
+      "digest-daily"
+    ],
+    "spawned": [
+      "docs/agents/digest-predict/flow/main.md"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "digest-daily": "cron"
+    },
+    "cadence_minutes": {
+      "digest-daily": null
+    },
+    "last_fired_timestamp": "2026-07-18T17:34:20.628Z",
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "17:30",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 6,
+    "note": "digest-daily GUARANTEED slot (digest-predict daily calibration + portfolio thesis, cron 30 17 * * *). Adaptive gate chain: guaranteed -> never calendar-suppressed (calendar unknown anyway); policy_id null -> cron pass-through; parallel_group digest != chef -> CHEF mutex no-op. Single slot: tick-snapshot SKIP, claimed+spawned+released. Note: trigger_prompt runs flow/main.md while flow_path field is flow/daily-predict.md; both exist (verified)."
+  },
+  "_processed": {
+    "fingerprint": "d09fa4caf0248838eff809e52d40bf24db0f6819a900ebbe362e0fb5ad518f4a",
+    "processedAt": "2026-07-18T17:48:30Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
