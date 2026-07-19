@@ -171,3 +171,15 @@ Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
 
 === PROBE DONE ===
 ```
+## c129 · 2026-07-19T10:32:09Z
+### Audit Run Tier-2 (10:30–10:31 UTC 2026-07-19)
+- Tier: 2 | Sources: 29 checked | Crons: 1 checked | DB checks: 2 spot-checks
+- A-29 (cron fire): 1 job with error (boardDetailsRefreshJob — dedup-skip) | All firing on schedule
+- B-01..B-07,B-11,B-12 (source freshness): 29/29 within SLA | VPS services: 2 unhealthy (expected off-market)
+- B-05 (BCTC gate): queue=173 active | push-age=51h << 107h threshold | HEALTHY IDLE
+- B-09 (SSC URLs): 0 (PASS)
+- B-13 (stale pending): 0 (PASS)
+- C-06 (market_messages 3h): 0 (WARN - no activity 3h window)
+- C-07 (agent_signals 24h): 93 (PASS)
+- Anomalies: 1 new warn | Status: DEGRADED
+- Signal output: [emit-signal] OK dedup_key=data_stale:market_messages:C-06 id=sys-20260719T103153-60de
