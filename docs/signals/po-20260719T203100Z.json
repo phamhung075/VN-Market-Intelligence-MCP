@@ -1,0 +1,46 @@
+{
+  "from": "po",
+  "to": "agent-father",
+  "type": "agent-definition-cascade-request",
+  "priority": "high",
+  "createdAt": "2026-07-19T20:31:00Z",
+  "summary": "FOLD INTO YOUR LIVE tran-ngoc-bau GRANT PASS — sibling defect in .claude/agents/unified-agent.md, DIFFERENT mechanism. tran-ngoc-bau = MISSING tools: grant (no mcp__gateway__call_tool). unified-agent = tool GRANTED but description FORBIDS the write. One fix does NOT cover both. Row: GAP-CHEF-SYNTHESIS-A-FLOW-PERSIST (P1, REVIEW->BACKLOG, next_agent=agent-father).",
+  "payload": {
+    "task_id": "GAP-CHEF-SYNTHESIS-A-FLOW-PERSIST",
+    "coordination_session": "bfa71244-a29a-4d41-872a-c69d5a033043",
+    "origin": "tran-ngoc-bau cycle 114 handoff (docs/handoffs/tnb-audit-latest.md) + po RAW re-verification",
+    "defect_class": "un-cascaded capability change (agent-md factory rule violation)",
+    "root_cause": {
+      "grant_line": ".claude/agents/unified-agent.md L5 — 'tools: Read, Write, Edit, mcp__gateway__call_tool' — Write IS granted",
+      "contradicting_line": ".claude/agents/unified-agent.md L4 (description, added 2026-05-19 commit 807680935) — 'Writes only to docs/agent-memory/notebooks/unified-agent.md (cycle log, full overwrite). No other filesystem writes permitted.'",
+      "flow_requirement": "docs/agents/unified-agent/flow/chef.md Step 7.6 (added 2026-07-10 commit 7320e4f50) instructs Write(docs/data/unified-agent-synthesis-{CYCLE_DATE}-{SLOT_ID}.json)",
+      "bootstrap_gap": "docs/agents/unified-agent/init.md declares no write allowlist covering docs/data/ — its memory: block lists the notebook only",
+      "why_intermittent": "worker is model:haiku; a self-contradictory system prompt resolves non-deterministically. Explains c111-c114 divergent symptoms that 2 auto-cures failed to converge."
+    },
+    "evidence": {
+      "fired": "chef-evening 2026-07-19T19:50:29Z per docs/data/cowork-schedule.json .last_fired; dish published to MARKET",
+      "missing_artifact": "docs/data/unified-agent-synthesis-2026-07-20-evening.json ABSENT (CYCLE_DATE=VN date; 19:50Z = 02:50 VN 07-20); zero files in docs/data/ carry a 2026-07-19 mtime",
+      "self_report": "docs/agent-memory/notebooks/unified-agent.md 2026-07-19 entry reads 'Synthesis: JSON output attempted (tool limitation)' — PERMISSION language, not a tool error",
+      "not_a_capability_outage": "the same cycle's mcp__gateway__call_tool publish path worked (dish reached MARKET)",
+      "prior_instance": "2026-07-17 intraday 14:13Z run also wrote no JSON, and its notebook cited a path whose content belongs to the 04:13Z run (metadata.cycle_id=intraday-2026-07-17T04:13:00Z, mtime 04:21Z)"
+    },
+    "acceptance_criteria": [
+      "1. .claude/agents/unified-agent.md description explicitly authorizes docs/data/unified-agent-synthesis-<DATE>-<SLOT>.json, replacing the absolute 'No other filesystem writes permitted' clause",
+      "2. docs/agents/unified-agent/init.md carries the matching write allowlist so bootstrap and agent-def agree",
+      "3. RAW-verify on the next live dish that the expected-path file exists with non-empty conviction_calls[] and sector_phases[] — prose is not proof",
+      "4. Do NOT flip DONE_VERIFIED on a single successful cycle — defect is intermittent; require 3 consecutive clean dishes"
+    ],
+    "do_not": [
+      "Do NOT treat this as a missing tools: grant — Write is already present; editing the tools: line fixes nothing",
+      "Do NOT assume the tran-ngoc-bau fix covers this one — absent-tool vs present-but-forbidden are different mechanisms",
+      "Do NOT open a competing dispatch — fold into the live pass"
+    ],
+    "related_rows": {
+      "FIX-CHEF-L6-TOKEN-PERSISTENCE-RECURRING": "set BLOCKED, depends_on this row — do not dispatch before it lands or the L6 investigation will yield a false narrative-gen verdict",
+      "FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING": "P1, annotated — chef synthesis filenames are date_vn+dish_type keyed, so intraday cycles collide and the expected path is not deterministically computable",
+      "FIX-CHEF-EVENING-DUP-DATE-MISLABEL-INVESTIGATE": "P2 — owns the VN-vs-UTC date-labelling half"
+    },
+    "rows_minted": 0,
+    "note": "ZERO new rows minted. Recurring class escalated in place per feedback_recurring_bug_escalation; the review row that shipped Step 7.6 was rejected rather than supplemented."
+  }
+}
