@@ -1,6 +1,6 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-19T02:07Z
+**Written:** 2026-07-19T02:37Z
 
 
 
@@ -46,6 +46,15 @@
 
 
 
+
+
+## cycle-20260719T0237Z — fully-idle (0 routable, PO channels dry, no dispatch); CI GREEN 8c6e1355e; cowork-telemetry WATCH holds obs#1; overnight quiescence
+
+- **Fully idle**: preflight RUN tick `2026-07-19T02:37Z` (SF-1 + fire-election `cron:dev-team:2026-07-19T02:37Z` + presence held+heartbeated, RC=1 noise); cold-evict IDEMPOTENT (547=547, signal_total=2 triaged, ORCH_CLEAN=yes, benign 1-to-evict-yet-clean oddity); gcc clean (no HEAD/index.lock, single worktree @`8c6e1355e`, synced 0/0, no live git procs); drain RAN (inbox 52, all non-routable skipped, 0 routable, inserted=0, pruned_files=0, db_count=230 flat); orphan-adoption 0; all 3 PO channels dry (telegram "Không có báo cáo mới", unresolved=[], signal_queue NEW=0 rows=2 triaged) → Step-1 SKIPPED.
+- **CI GREEN `8c6e1355e`** (my 0207Z drain-prune+notebook push — CI + rag-lint both success) → config-verify + 1299b both passed. No new flake obs.
+- **cowork-emitter format WATCH → HOLDS obs#1**: inbox 52, `cowork-team-2026-07-19*` still 1 (the 00:05 envelope-less telemetry snapshot); no 2nd emission → no escalation. Escalate PO only on obs#2.
+- **Idle mechanics**: BOUNDED-1 n/a (WIP=ready17+in_progress1=18≥1); pipeline-resume no-trigger (head idle/next=router). Board **392/17/1/30** (done11) unchanged. in_progress=1 `SPIKE-BCTC-…-ENRICHFAIL-FLOOD` ops P0.
+- **Continuity + WATCH (unchanged)**: cowork-telemetry format obs#1 (escalate on obs#2). 1299b + config-verify flakes tracked (no action). OHLCV-BACKFILL post-deploy tripwire LIVE. 3 PO rows awaiting groom (BIZCTX-wiring P1/ba, NOTEBOOK-COLLISION P2/architect, L6-TOKEN P3/ba). CWO-T4 backlog na=ba. chef-eod loop CLOSED (73c3e10b9); FIX-CHEF-MIDFLOW-BAIL HELD P1/agent-father; 3rd-bail trip-wire **Mon 07-20** (Sun 07-19 idle, cron `45 8 * * 1-5`). HPG DATA-QUALITY WATCH. FIX-CHEF-USDVND/ba, FIX-REFINE-PAGECOUNT/architect, FIX-OHLCV REVIEW/qa, UC-CCA-P3 P0/ba covered. Inbox-hygiene WATCH HOLDING (floor 52<65). Peer tree untouched (chef.md ` M`, coverage-state.json.tmp stray, synthesis 07-17/19, fb-post, 2 handoffs, price_anomaly 07-17, cowork-00:05 telemetry). Commit this tick: dispatcher notebook ONLY (drain moved nothing).
 
 ## cycle-20260719T0207Z — fully-idle (0 routable, PO channels dry, no dispatch); drain PRUNED 1 aged processed/ file (7d); CI GREEN 7d3d23ffc; cowork-telemetry WATCH holds obs#1
 
@@ -184,11 +193,3 @@
 - **All 3 PO channels dry → Step-1 SKIPPED**: telegram "Không có báo cáo mới", unresolved=[], signal_queue NEW=0. All 4 drained signals folded ⇒ no PO spawn.
 - **Idle mechanics**: preflight RUN tick `2026-07-18T18:07Z` (SF-1 + fire-election `cron:dev-team:2026-07-18T18:07Z` + presence held+heartbeated, RC=1 known noise); cold-evict IDEMPOTENT (543=543, ORCH_CLEAN=yes, benign 1-to-evict-yet-clean oddity); gcc clean (no HEAD/index.lock, single worktree @`f4f85e20d`, synced 0/0, no live git procs); orphan-adoption 0. BOUNDED-1 n/a (WIP=ready17+in_progress1=18≥1); pipeline-resume no-trigger (head idle/next=router). Board **388/17/1/30** (done11) unchanged. in_progress=1 `SPIKE-BCTC-…-ENRICHFAIL-FLOOD` ops P0.
 - **Continuity + WATCH**: config-verify flake ~50%-freq tracked P2 (no re-mint; groomer prioritize on WIP-free). **Inbox-hygiene WATCH (carried)**: 51 non-routable = ~44 frozen cowork-team snapshots (frozen since 20260711T131500Z, static historical wart) + 6 price_anomaly (~1/day accretion) + 1 mcp-outage. Escalation trigger: NEW envelope-less cowork-team dated ≥07-12 (live regression → PO) OR inbox >65 (price_anomaly accretion → mint plan-only INBOX-HYGIENE purge via PO). Until then WATCH; never unilateral mass-delete. chef-eod loop CLOSED (73c3e10b9); FIX-CHEF-MIDFLOW-BAIL HELD P1/agent-father; 3rd-bail trip-wire **Mon 07-20**. OHLCV-BACKFILL WATCH (report 3506 terminal wontfix). FIX-CHEF-USDVND/ba, FIX-REFINE-PAGECOUNT/architect, FIX-OHLCV REVIEW/qa, 1299b P1 obs2, UC-CCA-P3 P0/ba covered. Peer tree untouched. Commits this tick: drain (4 processed/) + dispatcher notebook.
-
-## cycle-20260718T1737Z — 1 benign cowork-fire (17:34Z digest-daily) drained → processed/ folded no-PO; idle otherwise; CI GREEN abbc85c80 (config-verify 2nd green since the d2034d456 red — flake intermittent)
-
-- **1 routable cowork-fire drained → processed/, folded NO-PO**: `cowork-team-2026-07-18T17:34:45.205Z.json` (type=cowork-fire, priority=low, won_slots `[digest-daily]`, no action) — daily EOD digest cadence telemetry (digest-daily→digest-predict guaranteed cron). inserted=1, db_count 212→**213**, pruned_files=0. 51 non-routable state files left. Router judgment: telemetry fold, not an actionable type.
-- **CI GREEN `abbc85c80`** (my 1707Z notebook+PO-mint-sweep push — CI run 29653745621 + rag-lint 29653745625 both success) → golangci `config verify` passed again = **2nd consecutive green since the d2034d456 red** (210cb167d, abbc85c80). Confirms the config-verify net-fetch flake is INTERMITTENT, tracked by P2 row `FIX-CI-GOLANGCI-CONFIG-VERIFY-NETWORK-FLAKE` (backlog, next=ba, cross-service/). Do NOT re-mint on recurrence — annotate the existing row.
-- **All 3 PO channels dry → Step-1 SKIPPED**: telegram "Không có báo cáo mới", unresolved=[], signal_queue NEW=0. Only drained signal (cowork-fire) folded ⇒ no PO spawn.
-- **Idle mechanics**: preflight RUN tick `2026-07-18T17:37Z` (SF-1 + fire-election `cron:dev-team:2026-07-18T17:37Z` + presence held+heartbeated, RC=1 known noise); cold-evict IDEMPOTENT (543=543, ORCH_CLEAN=yes, benign 1-to-evict-yet-git-clean oddity persists → NO orch commit); gcc clean (no HEAD/index.lock, single worktree @`abbc85c80`, **synced 0/0** — last tick's PO-mint sweep landed, ahead-by-1 resolved; no live git procs); orphan-adoption 0. BOUNDED-1 n/a (WIP=ready17+in_progress1=18≥1); pipeline-resume no-trigger (head idle/next=router). Board **388/17/1/30** (done11) unchanged. in_progress=1 `SPIKE-BCTC-…-ENRICHFAIL-FLOOD` ops P0.
-- **Continuity + debt**: config-verify flake = tracked P2 row (intermittent reds expected on pushes until fix lands — never block docs pushes on them; no re-mint). 51 non-routable inbox state files still candidate FUTURE PLAN-ONLY prune via PO (never unilateral). chef-eod loop CLOSED (73c3e10b9); `FIX-CHEF-MIDFLOW-BAIL` HELD P1/agent-father; 3rd-bail trip-wire **Mon 07-20** (07-18 Sat+07-19 Sun, cron `45 8 * * 1-5`). OHLCV-BACKFILL WATCH intact (report 3506 terminal wontfix). HPG DATA-QUALITY WATCH. FIX-CHEF-USDVND/ba, FIX-REFINE-PAGECOUNT/architect, FIX-OHLCV REVIEW/qa, 1299b P1 obs2, UC-CCA-P3 P0/ba covered. Peer tree untouched (chef.md ` M`, coverage-state.json.tmp stray, synthesis-07-17 trio, fb-post 07-17/18, 2 handoffs, price_anomaly 07-17) — do NOT mass-delete. Commits this tick: drain (1 processed/) + dispatcher notebook.
