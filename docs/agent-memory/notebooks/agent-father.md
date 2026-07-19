@@ -1,63 +1,5 @@
 # Agent Father — Notebook
 
-## 2026-07-08T20:05Z — FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE (router-dispatched, 6th+ recurrence)
-
-- Task assumed the D4 predicate lives in system-auditor's agent-interpreted flow — router asked me
-  to confirm rather than assume. It does NOT: `flow/main.md` Tier-3 pass never reads `handlers.md`
-  (zero grep hits for "D4"). D4's REAL live execution is the compiled cron job
-  `apps/mcp-server/src/scheduler/system/tasksMdJanitorJob.ts` (`runTasksMdJanitorJob`, wired in
-  `startScheduler.ts`, fires daily 03:00Z) — `handlers.md`/`audit-dimensions.md` are that code's
-  cited spec-of-record, not its execution path. Zone owner for `apps/**` = `dev-mcp-server`;
-  agent-father is forbidden from writing production `.ts`.
-- What I DID (in-zone): rewrote `docs/agents/system-auditor/handlers.md` (Steps R-1b exclusion
-  whitelist + live-concurrent-session guard, R-4b 2-cycle debounce via the notebook's own
-  `D4 candidates:` ledger line — no new state file, since system-auditor may write only its
-  notebook + signal_queue) and `docs/agents/system-auditor/audit-dimensions.md` (D4-R1b/R4b rows +
-  corrected AC-2/AC-3) per the row's own fully-specified `debounce_and_exclusion_spec` +
-  `scope_widened`/`class_b_folded`/`recur_20260703T0300` notes. Both files now carry an
-  IMPLEMENTATION NOTE flagging the doc/code gap explicitly.
-- Verified against REAL production data (not a unit test): live `coordination.db` dump
-  (docker exec bun:sqlite) showed 7 currently-held sprint-task locks generating the exact
-  2026-07-08T03:00Z noise batch — 5× `esc-datacov:{ACB,HPG,GVR,HVN,MBB}:Q1-2026:ESC-3`,
-  `dev-team-cron-singleton`, `cron:dev-team:2026-07-08T02:37Z` — cross-checked against the 14 live
-  `sau-d4-*` rows in `orch-state.json .signal_queue.rows[]`. Applied the documented exclusion
-  patterns (`esc-datacov:*`, `*-singleton`, `cron:*`) against all 7 real IDs: 100% excluded.
-  Negative control (`FACTORY-INTERFACE-sequential-confidence-05-mask`, `TASK_1996`,
-  `IND-P1-ROC-MOMENTUM`) confirmed NOT over-broadly excluded — genuine task IDs still evaluated.
-- Also found a pre-existing, unrelated doc/code drift while tracing: `handlers.md`'s own
-  size-justification comment already claimed an "expired:false filter" D4 false-positive fix was
-  applied to Step R-1, but the live code's `listHeld()` calls
-  `listHeldTasks({ kind: "sprint-task" })` with NO `expired` argument at all — the doc-claimed fix
-  was never carried into code. Flagged inline in both docs for whoever picks up the code task.
-- NOT done (out of zone, honest BLOCKED not false-green): did not touch
-  `apps/mcp-server/src/scheduler/system/tasksMdJanitorJob.ts` (production code, forbidden) and did
-  not flip the `orch-state.json .task_board` row to DONE_VERIFIED (`docs/data/orch/orch-state.json`
-  is excluded from agent-father's commit zone per FU-AGENT-FATHER-ORCH-SCOPE — task_board writes
-  are router/pm's job). The recurring noise will NOT stop until a `dev-mcp-server` code task ports
-  Steps R-1b/R-4b into `tasksMdJanitorJob.ts`. Reported BLOCKED (partial) to router with the exact
-  target file/function and verified fixture list for a fast pickup.
-- Decision journal: `docs/agent-memory/decisions/sprint-SYSTEMIC-REMAKE-P1-agent-father.md` S3.
-
-## 2026-07-08T21:45Z — FIX-COWORK-STEP5-BACKSTOP-TRUSTS-STALE-TRIGGER-STATUS (dev-team dispatch, brief `docs/architecture-briefs/2026-07-08-cowork-step5-stale-trigger-status.md`)
-
-- Implemented architect brief §3.1+§3.2 verbatim: `spawn-fanout.md` Step 5.0 `BACKSTOP_SLOTS`/`NO_BACKSTOP_SLOTS`
-  re-keyed off dead `trigger_status=="active"` (never resynced post-2026-06-22/23 cloud RemoteTrigger retirement)
-  onto live-maintained `_superseded_by==null`; `cowork-schedule.json` split the 9 stale `"active"` slots into
-  2 non-overlapping classes — 5 real-trigger slots → `"superseded"` interim value (chef-morning/eod/evening,
-  digest-sunday, tnb-audit — distinct from `F1-CLOUD-TRIGGER-DECOMMISSION`'s own gated `"decommissioned"` flip,
-  no scope overlap), 4 never-had-a-real-trigger slots → `trigger_status` field removed outright (fb-daily,
-  fb-weekend, alert-commander-market/critical).
-- All 6 brief §5 DoD checks RAW-verified via jq/grep: L14-15 read `_superseded_by`; zero slots left with
-  `trigger_status=="active"`; the 5 real-trigger slots all `"superseded"`; the 4 never-had-one slots all
-  `has("trigger_status")==false`; `jq empty` valid; the 2 remaining `trigger_status` refs outside spawn-fanout.md
-  (`cowork-master-cron-runbook.md`, `cron-cowork-team.md`) confirmed prose/historical, not executable.
-- Board update (`orch-state.json` mint/next_agent=qa): NOT done by me — my own `commit_zone.excluded`
-  (init.md) + commit-boundary SKILL.md zone table bar agent-father from `orch-state.json` outside the one
-  signal-queue DONE-mark exception (checked: no `signal_queue` row exists for this signal, exception N/A).
-  Task text offered "you/PO" as the board-update owner; deferred to that alternative rather than overriding
-  my own explicit, currently-enforced zone boundary on a launching agent's instruction (FU-AGENT-FATHER-ORCH-SCOPE).
-- Decision journal: `docs/agent-memory/decisions/sprint-SYSTEMIC-REMAKE-P1-agent-father.md` S4.
-
 ## 2026-07-09T08:46Z — FIX-CLOSEGATE-STEP4-COMMIT-JOURNAL-DISCIPLINE (router-dispatched, brief docs/architecture-briefs/2026-07-09-closegate-step4-atomic-handoff.md §2.2+§2.3)
 
 - Task: 2 recurring-bug fixes at ops's Close Gate Step 4/4b handoff (router had to discover+commit
@@ -129,6 +71,45 @@
   triage-signals.md row rather than inventing a new signal type). Pilot Run #1 explicitly documented
   as executable in tool-usage-stats degraded mode (FA-3) — not gated on Phase 0 landing first, per
   the launching signal's own instruction.
+
+### Edit (unified-agent) 22:5x — 2026-07-19 fix-chef-write-boundary (router-dispatched, PO signal
+docs/signals/po-20260719T203100Z.json, GAP-CHEF-SYNTHESIS-A-FLOW-PERSIST)
+- Sibling defect to the same-day TNB grant fix — DIFFERENT mechanism per PO's explicit framing:
+  tool was already granted (`Write` in `.claude/agents/unified-agent.md` L5) but forbidden by a
+  contradicting L4 description ("Writes only to ... notebook ... No other filesystem writes
+  permitted", added 2026-05-19) that never cascaded when `chef.md` Step 7.6 (2026-07-10) added the
+  `docs/data/unified-agent-synthesis-*.json` write. `model:haiku` resolved the self-contradiction
+  non-deterministically → intermittent self-refusal ("tool limitation") even while the same cycle's
+  `send_telegram` publish succeeded — matches PO's evidence, did not re-verify independently (out of
+  agent-father's zone to run a live cowork cycle).
+- Fixed: (1) `.claude/agents/unified-agent.md` L4 description now explicitly authorizes
+  `docs/data/unified-agent-synthesis-<DATE_VN>-<SLOT_ID>.json` alongside the notebook, mirroring the
+  existing `bctc-analyst.md`/`fb-market-poster.md` "No other filesystem writes permitted except X"
+  pattern rather than inventing new phrasing. (2) `docs/agents/unified-agent/init.md` cascades the
+  matching allowlist (capabilities/responsibilities/constraints/boundary_rules) — bootstrap
+  previously had zero `docs/data/` allowlist. (3) `chef.md` Step 7.6: added an AUTHORIZATION comment
+  at the write call site itself (closes the self-refusal vector where the model actually decides),
+  and pinned `CYCLE_DATE = WORK_DATE` (Step 0.5's single Asia/Ho_Chi_Minh value, computed once)
+  instead of re-deriving "VN date of cycle execution" fresh in Step 7.6 — root cause of the observed
+  filename inconsistency (07-17 evening UTC-leaning vs 07-18 VN-leaning; 07-14 19:50Z run emitted
+  both `-07-14` and `-07-15` 25s apart). Naming stays `date_vn+dish_type` per
+  `FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING` (P1 backlog, ba-owned cycle_id-keying follow-on) —
+  did NOT implement cycle_id-keying myself, that row's structural fix is out of this task's scope.
+- Also carried 2 previously-stranded `chef.md` auto-cures found dirty in the working tree at task
+  start (tran-ngoc-bau c111 single-pillar L6-gap check, `FIX-CHEF-STEP0-BCTC-PROCESSED-DIR-BLINDSPOT`
+  dual-directory signal read) into the same commit — both already RAW-verified present/landed by
+  TNB c113 per `orch-state.json`, same precedent as `bb0bbddcb`; did not touch any of the other ~30
+  unrelated dirty files in the tree (notebooks, synthesis JSONs, signals from live peer sessions).
+- Report-only, not fixed (explicitly out of scope, PO said "report don't fix"): 2026-07-17 14:13Z
+  notebook entry cited `unified-agent-synthesis-2026-07-17-intraday.json` but that file's
+  `metadata.cycle_id` belongs to the earlier 04:13Z run — the notebook "Synthesis: <path>" line is
+  not a persistence receipt; PO already tracks this under `FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING`.
+- Verification note: no live chef cycle ran during this task (agent-father cannot invoke cowork
+  cycles) — PO's AC #3/#4 (RAW-verify next live dish; require 3 consecutive clean dishes before
+  DONE_VERIFIED) are for the next tran-ngoc-bau audit cycle to close, not this pass.
+- Commit `04dd12a23`, pushed (origin/main was already caught up on PO's `232cc1126`/`25a1af583` and
+  my own prior `2617a511c` — verified via `merge-base --is-ancestor` before pushing, no force).
+- Decision journal: none minted (task explicitly said board state already handled, no re-litigation).
 
 ### Edit (tran-ngoc-bau) 20:33 — 2026-07-19 fix-tnb-tool-grant (router-dispatched, task fix-tnb-tool-grant)
 - Change: `.claude/agents/tran-ngoc-bau.md` line 5 frontmatter `tools:` was `Read, Edit, Write, Glob,
