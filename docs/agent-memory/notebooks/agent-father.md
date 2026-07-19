@@ -129,3 +129,57 @@
   triage-signals.md row rather than inventing a new signal type). Pilot Run #1 explicitly documented
   as executable in tool-usage-stats degraded mode (FA-3) — not gated on Phase 0 landing first, per
   the launching signal's own instruction.
+
+### Edit (tran-ngoc-bau) 20:33 — 2026-07-19 fix-tnb-tool-grant (router-dispatched, task fix-tnb-tool-grant)
+- Change: `.claude/agents/tran-ngoc-bau.md` line 5 frontmatter `tools:` was `Read, Edit, Write, Glob,
+  Grep` — zero MCP grant, while all 6 of its own sub-flows hard-require `mcp__gateway__call_tool`
+  (PUBLISHED MARKER GATE `task_claim`+`get_week_period` in main.md is a mandatory hard gate;
+  `read_telegram_reports`/`send_telegram`/`get_macro_snapshot`/`get_system_status`/`get_market_snapshot`/
+  `compare_financials`/`get_price_history`/`get_sector_comparison`/`get_agent_signals`/
+  `get_signal_effectiveness`/`get_alert_accuracy`/`log_agent_work` across bootstrap.md, audit-market.md,
+  audit-chef-coverage.md, audit-signals.md, auto-cure-and-handoff.md). Added `mcp__gateway__call_tool`
+  to the frontmatter — matches the exact grant pattern of all 6 correctly-provisioned cowork peers
+  (unified-agent, market-watcher, alert-commander, news-scout, bctc-analyst, digest-predict all carry
+  `Read, Write, Edit, mcp__gateway__call_tool`); kept `Glob`+`Grep` (peer-divergent by design — TNB is
+  the only cowork agent whose flow enumerates ALL other agents' notebooks, main.md Step 3
+  `Glob: docs/agent-memory/notebooks/*.md`, a genuine, distinct need). Did NOT add `Bash` — RAW-verified
+  this is NOT a TNB-specific gap: `bctc-analyst.md`/`market-watcher.md` notebooks explicitly self-document
+  "no Bash tool this session ... notebook git-commit deferred to next Bash-capable process" as an
+  established, universal, ~c078+ precedent across every cowork agent (idea-forge, market-analyst,
+  qa-responder, digest-predict, alert-commander confirmed same pattern); git log confirms a separate
+  drain/router process commits these notebooks on the agents' own behalf (`bb0bbddcb` "...on TNB's
+  behalf"). Granting Bash to TNB alone would create fleet asymmetry, not fix one — router's task framing
+  on this one point was corrected, not applied as stated.
+- Files modified: 3 — `.claude/agents/tran-ngoc-bau.md` (frontmatter tools line), `docs/agents/tools/
+  package/tran-ngoc-bau.md` (added missing `get_week_period` row; corrected stale "Task-Lock ... Phase 2
+  Ready, not yet active in cycle.md" note — `task_claim` has been an active mandatory gate in main.md
+  since the PUBLISHED MARKER GATE was added), `docs/agent-memory/notebooks/tran-ngoc-bau.md` (appended a
+  CORRECTION entry after c114 — `F-MCP-SUBAGENT-SYSTEMIC` as logged c108-c114 was a static, 100%-
+  reproducible frontmatter gap, not "per-spawn nondeterministic grant-drop"; historical c108-c114 entries
+  left untouched).
+- Cascade: none — no rename, no `inter_agent` change, roster/dispatch table entries for tran-ngoc-bau
+  carry no tool list (verified via grep, nothing to sync there).
+- Validation: 5/5 — YAML frontmatter still valid (name/color/description/tools/model all present),
+  tool package now matches frontmatter grant, no `apps/**` touched, TNB's own write-boundary
+  (notebook + handoffs + docs/signals only) unchanged, no Bash added (verified against 5 peer
+  cowork-agent notebooks before deciding).
+- Audit of other agents (task part d — reported, NOT fixed this pass): (1) FLEET-WIDE, already
+  self-documented, not newly discovered: `commit-mutex` skill's `git add`/`git commit` steps and
+  `claim-truth-gate` skill's `bash scripts/narrative-truth-gate.sh` step both require Bash, but every
+  cowork peer with `mcp__gateway__call_tool` (alert-commander, market-watcher, news-scout, bctc-analyst,
+  digest-predict, unified-agent, idea-forge, market-analyst, qa-responder) carries NO Bash — only
+  `fb-market-poster`, `ops`, `po`, `system-auditor` do. `digest-predict`'s notebook already has an open
+  ask to dev-team on whether to grant Bash fleet-wide — not duplicating. (2) `idea-forge` (`tools: Read,
+  Glob, Grep` — no Write, no Edit, no mcp__gateway__call_tool) and `market-analyst` (`tools: Read, Glob,
+  Grep, mcp__gateway__call_tool` — no Write, no Edit) both have flow files (`main.md`) that instruct a
+  notebook `git add`/`git commit` step presupposing a prior Write/Edit the frontmatter never grants —
+  same class of mismatch as TNB's, but LOWER severity/urgency: both notebooks are stale since 2026-05-20
+  ("no session recorded") — these agents appear dormant/not in active cowork cadence, unlike TNB which
+  fires daily and had a live, growing audit backlog. Not fixed this pass (task scope = TNB only;
+  flagging for a follow-up review.md pass or explicit dispatch).
+- Decision: guide ref `guide-agent-definition.md` §5.1 (frontmatter tools must match flow-file tool
+  calls) + `.claude/skills/agent-md-factory/SKILL.md` P-1/P-2/Q-1 (SSOT, no duplication) — reconciled the
+  grant against the actual 6 sub-flow contracts rather than blind-copying a peer's list; task-lock
+  skill's own INV-GATEWAY-1 note confirms dev-team-tier agents (agent-father included) intentionally
+  lack `mcp__gateway__call_tool` — this fix is scoped to cowork-tier tran-ngoc-bau only, no analogous
+  change made to agent-father's own grant.

@@ -20,6 +20,7 @@ Complete index → `docs/agents/tools/list/INDEX.md`
 
 | Tool | Purpose |
 |------|---------|
+| `get_week_period` | Canonical week period (weekLabel/periodKey) — PUBLISHED MARKER GATE dedup key, main.md Step G-1, mandatory before Dispatch |
 | `read_telegram_reports` | Read MARKET/BUG messages for quality audit |
 | `get_unreviewed_market_messages` | Find messages not yet quality-checked |
 | `review_market_message` | Label message as signal/noise after audit |
@@ -126,9 +127,12 @@ Lifecycle recipe (2 calls, id round-trip) → `docs/agents/tools/list/log_agent_
 | **work** | Yes | Quality reports, improvement proposals |
 | **bug** | Yes | Quality escalations only |
 
-## Task-Lock Coordination Tools (Phase 2 Ready)
+## Task-Lock Coordination Tools
 
-Tool ready — flow-level claim/heartbeat wiring lands in Phase 2/3 (not yet active in cycle.md).
+`task_claim` is ACTIVE — main.md's PUBLISHED MARKER GATE (Step G-2, weekly dedup mutex on `tnb-audit`)
+is a mandatory hard gate that runs before Dispatch on every cycle. `task_heartbeat`/`task_release`/
+`task_list_held` remain available for future exclusive-work locking (not yet wired beyond the
+publish-marker gate).
 
 | Tool | Purpose | Key Params |
 |------|---------|-----------|

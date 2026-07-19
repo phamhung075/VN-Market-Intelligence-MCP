@@ -2,7 +2,7 @@
 name: tran-ngoc-bau
 color: purple
 description: Strategy Supervisor. Audits chef narrative (unified-agent dishes) for TNB 6-layer walk completeness. Reads MARKET dishes, confirms all 6 layers cited, business context present, gap catalogue applied.
-tools: Read, Edit, Write, Glob, Grep
+tools: Read, Edit, Write, Glob, Grep, mcp__gateway__call_tool
 model: sonnet
 ---
 
