@@ -66,5 +66,32 @@ signals genuine defects to `orch-state.json .signal_queue.rows[]` → dev-team. 
 high-frequency complement to Tier-3's daily deep DB integrity. Same agent (system-auditor),
 same signal contract; detection-only (read-only DB; fixes flow through dev-team).
 
+## Manual Tier-4 Pilot Invocation (D-FLEET, on-demand only)
+
+**NOT a cron.** Never register via `CronCreate`, never add to `cronConfig.ts` or any cron
+config. `docs/agents/system-auditor/flow/main.md:67` states `AUDIT_TIER=4` is "PILOT ONLY —
+manual invocation only; never present in any cron config."
+
+- **Invocation pattern** (spawn `system-auditor`, one-off, user/PO/agents-architect triggered):
+  ```
+  Launch subagent (subagent_type=system-auditor). Read and execute docs/agents/system-auditor/flow/main.md
+  AUDIT_TIER=4
+  MCP: https://zenmidi.com/vn-market/mcp
+  ```
+
+**Authoritative specs (do not re-derive — read these before invoking):**
+- `docs/agents/system-auditor/handlers.md` §Step D-FLEET — full FA-1..FA-6 execution spec
+  (notebook rollup, task_board/signal_queue metrics, tool-usage-stats read, accuracy/disposition
+  scoring, proposal synthesis, notebook append + pilot-run counter).
+- `docs/agents/system-auditor/audit-dimensions.md` — D-FLEET dimension entry (check IDs T4-A..T4-E,
+  scope, dedup namespace).
+- `docs/architecture-briefs/2026-07-18-cron-workflow-optimize-tier4-fleet-audit.md` §5 (pilot
+  cadence + trigger/claim spec) and §7 (G1–G6 graduation criteria — conditions under which this
+  might eventually become a real cron; PO-gated, cannot self-promote).
+
+**Per-run counter:** run number `N` is read from the `Tier-4 pilot runs: N` line in the most recent
+`Tier-4-PILOT` entry in `docs/agent-memory/notebooks/system-auditor.md` — increment for the next
+manual run. Pilot Run #1 already executed 2026-07-18 (commit `791f3fcb2`, `Tier-4 pilot runs: 1`).
+
 ## Manage
 `CronList` | `CronDelete <id>`
