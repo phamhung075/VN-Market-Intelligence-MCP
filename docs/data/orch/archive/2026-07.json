@@ -9403,6 +9403,19 @@
       "updated_at": "2026-07-10T23:25:07Z",
       "updated_by": "po",
       "completed_by": "po"
+    },
+    {
+      "id": "FIX-MARKET-WATCHER-NARRATE-NOT-EXECUTE-GUARD",
+      "title": "market-watcher-offhours narrate-not-execute (2nd confirmed) — harden flow docs with execute-not-narrate guard",
+      "status": "DONE",
+      "zone": "cross-service/",
+      "priority": "normal",
+      "type": "UNBLOCK",
+      "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MARKET-WATCHER-NARRATE-NOT-EXECUTE-GUARD",
+      "owner": "agent-father",
+      "status_note": "Verified PO root-cause hypothesis: market-watcher no_self_abort (init.md) covered only notebook-append self-refusal, narrower than unified-agent chef.md Gate-fired contract; market-watcher had no procedural anti-narration guard in its own executing flow. Hardened 3 files: init.md no_self_abort broadened to explicit forbidden-output list (plan-as-future-actions, English self-abort, mid-flow stop short of terminal action); main.md Step -1 execute-not-narrate preamble added (dispatcher, all modes); cycle.md Execution contract preamble added (Step 0-GW through 5b mandatory, no third path). Decision journal: docs/agent-memory/decisions/sprint-ANALYSIS-QUALITY-CONVERGENCE-agent-father.md. Verification gate is behavioral (next offhours cycle) — not verifiable in this dispatch.",
+      "created_at": "2026-07-12T04:19:36Z",
+      "closed_at": "2026-07-12T04:27:30Z"
     }
   ],
   "closed_sprints": [
