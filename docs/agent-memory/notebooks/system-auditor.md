@@ -1,3 +1,17 @@
+## c407 · 2026-07-19T21:42:12Z
+### Audit Run Tier-1 (21:40–21:42 UTC 2026-07-19)
+- Tier: 1 | Services: 12 checked | Health: 5 probed | 1 continuing finding
+- A-01 to A-11 (container status): 12/12 UP (host_runtime_set SSOT) — all containers present
+- A-12 to A-19 (health endpoints): 4/5 OK — api-gateway RECOVERED (was WARN 30min ago), pdf-extractor CURL_ERR (continuing)
+- A-20 (pdf-extractor multi-probe): 0/3 FAIL — event loop wedged, all probes HTTP 000 (continuing from last cycle)
+- A-21 (restart count): mcp-server=0 PASS (62m uptime since restart at 20:39Z)
+- A-30 (memory): mcp-server=24.91% < 85% PASS
+- A-32 (disk): 36% < 85% PASS
+- **KEY FINDING — api-gateway**: Transient failure RESOLVED. Was WARN 30min ago (sys-20260719T211240-4569), now PASS. No escalation needed.
+- **Continuing issue — pdf-extractor**: Event-loop stall persists (probes 0/3), container unhealthy (49m uptime). Dedup-skip (sys-20260719T211249-1440, recurring, needs code fix per context).
+- Anomalies: 0 new | 1 dedup-skipped (pdf-extractor) | Status: HEALTHY (api-gateway recovered; all remaining issues are known duplicates)
+- Signal output: No new signals | [DEDUP-SKIP] microservice_degraded:pdf-extractor:A-20 | [TRANSIENT-RESOLVED] microservice_degraded:api-gateway:A-04
+
 ## c406 · 2026-07-19T21:10:37Z
 ### Audit Run Tier-1 (21:10–21:12 UTC 2026-07-19)
 - Tier: 1 | Services: 12 checked | Health: 5 probed | 2 findings
