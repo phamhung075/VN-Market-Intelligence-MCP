@@ -438,10 +438,22 @@
         "status": "triaged",
         "payload_ref": "docs/improvement-proposals/IMP-20260718-dev-mcp-server-tool-usage-byagent-redesign.md",
         "disposition": "DEDUP -> CWO-T4-P0-TUSTATS-PERAGENT (already BACKLOG, P3, na=ba, zone apps/mcp-server/). Same byAgent tool-usage-attribution scope (LANE-B), same Tier-4 brief source. NOT re-minted; CWO-T4 stamped origin_signal_id=t4p1-002 for task-archive READ->RESOLVED back-flip. No dispatch (WIP over cap)."
+      },
+      {
+        "id": "sys-20260719T074117-22be",
+        "ts": "2026-07-19T07:41:17Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-21 WARN: mcp-server RestartCount=7 (threshold: 2)",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD — false positive (recurring cumulative-RestartCount-misread-as-crashloop class). RAW-verified 3x @2026-07-19T07:51Z: container vn-market-intelligence-mcp-mcp-server-1 Running=true Health=healthy; gateway served live tool calls this tick; RestartCount=7 is CUMULATIVE since Created 2026-07-15 (~4d), current instance StartedAt 2026-07-18T15:56:50Z = 16h continuous healthy uptime (NOT a live crashloop); all restarts clean LastExitCode=0 OOMKilled=false (NOT OOM — contrast genuine 07-02 episode w/ mem-collapse 95->15%); mem oscillating 90.32->85.63% of the already-landed 3GB cap (not monotonic climb). Precedent: rag-service=100 + prior mcp-server A-21 all RAW-verified cumulative-counter FP. NO mint, NOT route-to-ops (healthy, no live outage, 3GB cap mitigation already landed). 2 PLAN-ONLY notes (no mint): (a) auditor A-21 predicate-drift — system-auditor A-21 tier reads cumulative docker .RestartCount vs tight threshold=2, whereas mcp-server OWN restartCadenceAlertJob.ts already does it right (windowed WINDOW_HOURS + crash-filtered, returns 0 for clean restarts); A-21 should adopt windowed/crash-only OR honor auditor-dedup-ledger board-tracked DEDUP (rag=100 precedent) — candidate auditor-predicate-tune. (b) mem WATCH 85-90% of 3GB cap matches known parked FIX-MCP-MEMORY-CODE-LEAK (already backlogged, not new)."
       }
     ],
-    "last_triaged_at": "2026-07-18T20:56:16Z",
-    "last_triaged_by": "po (TNB-c113 + t4p1 triage: t4p1-001 FOLD low-sev cosmetic; t4p1-002 DEDUP->CWO-T4-P0-TUSTATS-PERAGENT; both NEW->triaged)"
+    "last_triaged_at": "2026-07-19T07:54:21Z",
+    "last_triaged_by": "po (A-21 mcp-server RestartCount=7 triage: RAW-verified 3x healthy+16h uptime+clean exits+cumulative-counter => FOLD false-positive; sys-20260719T074117-22be NEW->triaged; report 3508 wontfix+deleted; NO mint, NOT route-to-ops)"
   },
   "sprint_goal": {
     "_note": "Active sprint visions. PO triage 2026-07-11 16->14: merged FB-POSTER-LAUNCHD-FIRER into COWORK-GUARANTEED-SLOT-DURABILITY (superseded per cron-jobs.md, firer plist installed+loaded); archived NARRATIVE-TRUTH-CCATO-GATE (T2+T3 both DONE, T3 qa-APPROVED). Reasoning: sprint-ANALYSIS-QUALITY-CONVERGENCE-po.md.",
