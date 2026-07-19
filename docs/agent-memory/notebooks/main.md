@@ -1,6 +1,6 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-19T05:07Z
+**Written:** 2026-07-19T05:37Z
 
 
 
@@ -52,6 +52,15 @@
 
 
 
+
+
+## cycle-20260719T0537Z — fully-idle (0 routable, PO channels dry, no dispatch); CI GREEN 90176484b; cowork-telemetry WATCH holds obs#1; overnight quiescence
+
+- **Fully idle**: preflight RUN tick `2026-07-19T05:37Z` (terse verdict-only; SF-1 + fire-election `cron:dev-team:2026-07-19T05:37Z` + presence held+heartbeated, RC=1; cold-evict IDEMPOTENT, no self-commit); gcc clean (no HEAD/index.lock, single worktree @`90176484b`, synced 0/0, no live git procs); ORCH_CLEAN=yes; drain RAN (inbox 52, all non-routable skipped, 0 routable, inserted=0, pruned=0, db_count=223 flat); orphan-adoption 0; all 3 PO channels dry (telegram "Không có báo cáo mới", unresolved=[], signal_queue NEW=0 rows=2 triaged) → Step-1 SKIPPED.
+- **CI GREEN `90176484b`** (my 0507Z notebook push — CI + rag-lint both success) → config-verify + 1299b both passed. No new flake obs.
+- **cowork-emitter format WATCH → HOLDS obs#1**: inbox 52, `cowork-team-2026-07-19*` still 1 (00:05 envelope-less telemetry); no 2nd emission → no escalation. Escalate PO only on obs#2.
+- **Idle mechanics**: BOUNDED-1 n/a (WIP=ready17+in_progress1=18≥1); pipeline-resume no-trigger (head idle/next=router). Board **392/17/1/30** (done 10) unchanged. in_progress=1 `SPIKE-BCTC-…-ENRICHFAIL-FLOOD` ops P0.
+- **Continuity + WATCH (unchanged)**: cowork-telemetry format obs#1 (escalate on obs#2). 1299b + config-verify flakes tracked. OHLCV-BACKFILL post-deploy tripwire LIVE. 3 PO rows awaiting groom (BIZCTX-wiring P1/ba, NOTEBOOK-COLLISION P2/architect, L6-TOKEN P3/ba). CWO-T4 backlog na=ba. chef-eod loop CLOSED (73c3e10b9); FIX-CHEF-MIDFLOW-BAIL HELD P1/agent-father; 3rd-bail trip-wire **Mon 07-20** (Sun 07-19 idle, cron `45 8 * * 1-5`). HPG DATA-QUALITY WATCH. FIX-CHEF-USDVND/ba, FIX-REFINE-PAGECOUNT/architect, FIX-OHLCV REVIEW/qa, UC-CCA-P3 P0/ba covered. Inbox-hygiene WATCH HOLDING (floor 52<65). Peer tree untouched (chef.md ` M`, system-auditor.md ` M`, coverage-state.json.tmp stray, synthesis 07-17/19, fb-post, 2 handoffs, price_anomaly 07-17, cowork-00:05 telemetry). Commit this tick: dispatcher notebook ONLY (drain moved nothing).
 
 ## cycle-20260719T0507Z — fully-idle (0 routable, PO channels dry, no dispatch); CI GREEN 2997bac1b; cold-evict archival landed clean; cowork-telemetry WATCH holds obs#1
 
@@ -181,12 +190,3 @@
 - **Idle mechanics**: BOUNDED-1 n/a (WIP=ready17+in_progress1=18≥1); pipeline-resume no-trigger (head idle/next=router). Board **392/17/1/30** (done11) unchanged. in_progress=1 `SPIKE-BCTC-…-ENRICHFAIL-FLOOD` ops P0.
 - **Inbox-hygiene WATCH (HOLDING)**: floor 51<65; envelope-less cowork frozen since 20260711T131500Z; price_anomaly ~1/day (07-17T1608 unchanged). Triggers unchanged: new envelope-less snapshot ≥07-12 OR inbox >65 → mint plan-only INBOX-HYGIENE via PO. Never unilateral mass-delete.
 - **Continuity**: config-verify flake tracked P2 (~50% intermittent, no re-mint). 3 new PO rows awaiting groom (BIZCTX-wiring P1 = chef biz-ctx unused despite c112 fix; NOTEBOOK-COLLISION guard P2 = realized data-loss; L6-TOKEN P3 isolation-first blocked on c114). CWO-T4 backlog na=ba. chef-eod loop CLOSED (73c3e10b9); FIX-CHEF-MIDFLOW-BAIL HELD P1/agent-father; 3rd-bail trip-wire **Mon 07-20** (07-18 Sat+07-19 Sun, cron `45 8 * * 1-5`). OHLCV-BACKFILL WATCH (report 3506 terminal wontfix). HPG DATA-QUALITY WATCH. FIX-CHEF-USDVND/ba, FIX-REFINE-PAGECOUNT/architect, FIX-OHLCV REVIEW/qa, 1299b P1 obs2, UC-CCA-P3 P0/ba covered. Peer tree untouched (chef.md ` M`, coverage-state.json.tmp stray, synthesis 07-17/19, fb-post 07-17/18, 2 handoffs, price_anomaly 07-17) — do NOT mass-delete. Commit this tick: dispatcher notebook ONLY (drain moved nothing).
-
-## cycle-20260718T2107Z — 4 routable drained ALL fold no-PO (3 bctc routine FPT/HPG/VCB 21:00Z cycle + cowork-fire bctc-analyst-slot-3); PO channels dry; CI GREEN 4d2ae2a88; PO triage 9cd274f6e swept
-
-- **4 routable signals drained → processed/, ALL fold no-PO**: (a/b/c) `bctc_signal_{FPT,HPG,VCB}_20260718_routine.json` — bctc-analyst 21:00Z off-market cycle (cron 0 15,18,21,0), ALL `signal_type:bctc_signal, mode:routine, escalation_status:null, esc1/esc4/esc5 null` (fresh cycle — inserted not dedup-skipped vs the 18:00Z batch). HPG esc4=null (clean, no operating_profit block this cycle). Still downstream of ops-owned SPIKE-BCTC-…-ENRICHFAIL-FLOOD + HPG DATA-QUALITY WATCH → FOLD, no re-mint. (d) `cowork-team-…21:05:14Z.json` cowork-fire won_slots `[bctc-analyst-slot-3]` no action → telemetry fold. inserted=4, db_count 224→**228**, pruned 0.
-- **All 3 PO channels dry → Step-1 SKIPPED**: telegram "Không có báo cáo mới", unresolved=[], signal_queue NEW=0 (rows=2 both triaged last tick: t4p1-001 FOLD, t4p1-002 DEDUP→CWO-T4). All 4 drained folded ⇒ no PO spawn.
-- **CI GREEN `4d2ae2a88`** (my 2037Z push — CI + rag-lint both success) → config-verify passed. Flake tally now ~5R/10 (…a0ff71226 R obs#6 → 4d2ae2a88 G). Tracked P2, intermittent, no action.
-- **PO triage `9cd274f6e` swept**: last tick PO minted 3 rows (FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING P1/ba, GUARD-NOTEBOOK-CONCURRENT-EDIT-COLLISION-DATA-LOSS P2/architect, FIX-CHEF-L6-TOKEN-PERSISTENCE-RECURRING P3/ba) + triaged signal_queue, committed 9cd274f6e local/unpushed. This tick my push carries it to origin (all data/docs, "gate only red CODE"). task_total baseline now **547**, backlog **392**.
-- **Idle mechanics**: preflight RUN tick `2026-07-18T21:07Z` (SF-1 + fire-election `cron:dev-team:2026-07-18T21:07Z` + presence held+heartbeated, RC=1 noise); cold-evict IDEMPOTENT (547=547, signal_total=2 triaged, ORCH_CLEAN=yes); gcc clean (no HEAD/index.lock, single worktree @`9cd274f6e` ahead-1, no live procs); orphan-adoption 0. BOUNDED-1 n/a (WIP=ready17+in_progress1=18≥1); pipeline-resume no-trigger (head idle/next=router). Board **392/17/1/30** (done11). in_progress=1 `SPIKE-BCTC-…-ENRICHFAIL-FLOOD` ops P0.
-- **Continuity + debt**: 3 new PO-minted rows awaiting groom (BIZCTX-wiring P1 = chef biz-ctx unused despite c112 fix; NOTEBOOK-COLLISION guard P2 = realized data-loss; L6-TOKEN P3 isolation-first blocked on c114). config-verify flake tracked P2 (~50%, no re-mint). CWO-T4 backlog na=ba. Inbox-hygiene WATCH HOLDING (floor 51<65; the 21:00Z bctc + cowork are ENVELOPED, normal). chef-eod trip-wire **Mon 07-20**. FIX-CHEF-MIDFLOW-BAIL P1/agent-father, FIX-CHEF-USDVND/ba, FIX-REFINE/architect, FIX-OHLCV REVIEW/qa, 1299b P1 obs2, UC-CCA-P3 P0/ba covered. Peer tree untouched (chef.md ` M`, coverage-state.json.tmp stray, synthesis 07-17/19, fb-post, 2 handoffs). Commits this tick: drain (4 processed/) + notebook (+ 9cd274f6e swept).
