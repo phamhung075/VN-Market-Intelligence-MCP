@@ -1,18 +1,18 @@
-## c401 · 2026-07-19T09:10:57Z
-### Audit Run Tier-1 (09:00–09:10 UTC 2026-07-19)
+## c402 · 2026-07-19T10:11:40Z
+### Audit Run Tier-1 (10:00–10:11 UTC 2026-07-19)
 - Tier: 1 | Services: 12 checked | Health: 5 probed | 2 warnings
 - A-01 to A-11 (container status): 12/12 UP/healthy (all host_runtime_set)
 - A-12 to A-20 (health endpoints): 5/5 OK
 - A-20 (pdf-extractor multi-probe): 3/3 PASS
 - A-21 (restart count): WARN (mcp-server=7 > 2) — [RAW-PROBE L14] — [dedup-skip 7d]
-- A-30 (memory): WARN (93.14% >= 85% threshold) — [RAW-PROBE L22]
+- A-30 (memory): WARN (97.65% >= 85% threshold) — [RAW-PROBE L22]
 - A-32 (disk): 34% < 85% PASS — [RAW-PROBE L25]
 - Anomalies: 0 new (both dedup-skipped) | Status: DEGRADED
-- Signal output: [emit-signal] SKIP-dedup A-21 id=sys-20260719T091047-4818 | [emit-signal] SKIP-dedup A-30 id=sys-20260719T091053-03c1
+- Signal output: [emit-signal] SKIP-dedup A-21 id=sys-20260719T101149-792a | [emit-signal] SKIP-dedup A-30 id=sys-20260719T101150-46cb
 
 ### RAW-PROBE:
 ```
-=== AUDITOR PROBE 2026-07-19T09:10:24Z ===
+=== AUDITOR PROBE 2026-07-19T10:12:03Z ===
 
 --- docker ps -a ---
 NAMES                                             STATUS                  IMAGE                                           CREATED
@@ -21,8 +21,8 @@ vn-market-intelligence-mcp-frontend-1             Up 3 days (healthy)     vn-mar
 vn-market-intelligence-mcp-api-gateway-1          Up 3 days (healthy)     vn-market-intelligence-mcp-api-gateway          3 days ago
 vn-market-intelligence-mcp-flaresolverr-1         Up 3 days (healthy)     ghcr.io/flaresolverr/flaresolverr:latest        3 days ago
 vn-market-intelligence-mcp-news-fetch-1           Up 3 days (healthy)     vn-market-intelligence-mcp-news-fetch           3 days ago
-vn-market-intelligence-mcp-mcp-server-1           Up 17 hours (healthy)   vn-market-intelligence-mcp-mcp-server           3 days ago
-vn-market-intelligence-mcp-rag-service-1          Up 29 hours (healthy)   vn-market-intelligence-mcp-rag-service          3 days ago
+vn-market-intelligence-mcp-mcp-server-1           Up 18 hours (healthy)   vn-market-intelligence-mcp-mcp-server           3 days ago
+vn-market-intelligence-mcp-rag-service-1          Up 30 hours (healthy)   vn-market-intelligence-mcp-rag-service          3 days ago
 vn-market-intelligence-mcp-macro-indicators-1     Up 3 days (healthy)     vn-market-intelligence-mcp-macro-indicators     3 days ago
 vn-market-intelligence-mcp-pdf-extractor-1        Up 2 days (healthy)     vn-market-intelligence-mcp-pdf-extractor        3 days ago
 vn-market-intelligence-mcp-technical-analysis-1   Up 3 days (healthy)     vn-market-intelligence-mcp-technical-analysis   3 days ago
@@ -41,7 +41,7 @@ vn-market-intelligence-mcp-kinh-dich-service-1    Up 3 days (healthy)     vn-mar
 Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=7
 
 --- memory pressure ---
-Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=93.14% MemUsage=2.794GiB / 3GiB
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=97.51% MemUsage=2.925GiB / 3GiB
 
 --- disk df -h / ---
 Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
