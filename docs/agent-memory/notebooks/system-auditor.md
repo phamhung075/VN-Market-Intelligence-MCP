@@ -1,3 +1,23 @@
+## c409 · 2026-07-19T22:31:26Z
+### Audit Run Tier-2 (22:30–22:32 UTC 2026-07-19)
+- Tier: 2 | Sources: 28 checked | VPS proxy: 4/4 OK | Cron jobs: 44 healthy
+- A-29 cron fire gap: 0 gaps (all critical jobs within cadence)
+- B-01..B-07 (per-source freshness): all sources within SLA thresholds
+- B-09 (BCTC URL shape): 0 SSC portal issues (PASS)
+- B-13 (stale pending BCTC): 0 rows >72h (PASS)
+- B-05 (BCTC healthy-idle): 74 actionable rows, VPS host UP → gate does not apply (normal idle state)
+- C-06 (market_messages 3h): 1 (PASS)
+- C-07 (agent_signals 24h): 68 (PASS)
+- VPS proxy status: news/sbv/bctc/prices all OK; prices off-hours by design
+- Rate limits: 11/11 sources ready (no exhaustion)
+- Anomalies: 0 new (all stale-by-design issues remain dedup-skipped per carry-forward)
+- Status: HEALTHY
+
+**CARRY-FORWARD CONTEXT:**
+- Market data baseline (2026-07-01) remains intentionally stale by design — NOT signaled
+- pdf-extractor event-loop wedge (sys-20260719T211249-1440) — dedup-skip continues (recurring, needs code fix)
+- bctcReparseJob: long-running batch (started 20:39Z), not a fire-gap issue — monitoring only
+
 ## c408 · 2026-07-19T22:10:40Z
 ### Audit Run Tier-1 (22:10–22:12 UTC 2026-07-19)
 - Tier: 1 | Services: 12 checked | Health: 5 probed | 0 new findings
