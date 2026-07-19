@@ -7011,7 +7011,19 @@
         "architect_recon": "heap snapshot diff over ~1h under load; identify the growing retainer. Suspects: unbounded in-memory cache (signal/dashboard/market caches), event-listener accumulation, gateway proxy per-call downstream connection/session handling (dialed-on-demand but possibly not released), retained large payloads",
         "verification_gate_refined": "heap profile shows the retainer fixed AND mem stays flat (<+/-5pt) over a 6h soak under normal load (supersedes the prior <50%/72h gate)"
       },
-      "interim_mitigation": "periodic mcp-server rebuild/restart cron (~every 6h) to keep mem under ~70% until the leak is fixed — single-service `docker compose build mcp-server && up -d --no-deps mcp-server` (preserve peers per feedback_rebuild_recreate_destroys_peers). Router has SURFACED this interim option to the user; USER decides whether to arm the cron."
+      "interim_mitigation": "periodic mcp-server rebuild/restart cron (~every 6h) to keep mem under ~70% until the leak is fixed — single-service `docker compose build mcp-server && up -d --no-deps mcp-server` (preserve peers per feedback_rebuild_recreate_destroys_peers). Router has SURFACED this interim option to the user; USER decides whether to arm the cron.",
+      "corroboration_20260719T08Z": {
+        "observed_by": "po",
+        "at": "2026-07-19T08:24:29Z",
+        "trigger": "system-auditor A-30 WARN MemPerc=97.80% — telegram report 3509 (msg 3574, analysis-agent @08:11:04Z) + signal_queue row sys-20260719T081104-59eb",
+        "high_water_mark": "97.80% of 3GiB cap @2026-07-19T08:11:04Z (new HWM; prior-tick band 85.63-90.32%)",
+        "raw_trajectory_6probe_65s": "89.16 -> 91.98 -> 92.00 -> 91.89(dip) -> 93.01 -> 92.05(dip) of 3GiB cap @08:20-08:22Z; MemUsage 2.675-2.79GiB / 3GiB",
+        "verdict": "OSCILLATING-HIGH GC-sawtooth, NOT monotonic-climb-to-OOM. GC reclaimed 97.80%->89.16% (8.6pt) between report-capture and first probe; two intra-window reclamation dips (samples 4 & 6); OOMKilled=false; container Running/healthy 16h continuous uptime (StartedAt 2026-07-18T15:56:50Z). GC ceiling NOT breached => no imminent OOM.",
+        "baseline_creep_note": "sawtooth baseline low rose 85.63%->89.16% over ~30min (~7pt/h) = the KNOWN slow leak, ~16h into rebuild-headroom cycle (historical headroom 6-8h on old 2GiB cap; 3GB cap bought more). Same mechanism as corroboration_20260626T15Z, NOT a new leak.",
+        "disposition": "FOLD to this row, no new mint (dedup: report 3509 resolution=duplicate; signal sys-20260719T081104-59eb NEW->triaged). NOT route-to-ops: GC still reclaims below cap, no live outage — gateway served router tool-calls this tick. Interim mitigation (user-gated periodic rebuild cron, already surfaced) is the lever if baseline creep persists.",
+        "escalation_tripwire_next_tick": "flip to ops-escalate ONLY if next probe shows GC ceiling lost (baseline low >~93% with NO reclamation dips across all samples, OR peak sustained >97% with no reclaim) OR OOMKilled=true.",
+        "auditor_predicate_note_planonly": "A-30 threshold=85% instantaneous MemPerc is too tight for a service that runs a GC sawtooth 85-93% and peaks ~97.8% while GC reclaims fine — fires on nearly every sawtooth peak (analogous to A-21 cumulative-counter FP). Candidate auditor-predicate-tune (PLAN-ONLY, no mint): raise threshold to ~95% AND/OR gate on loss-of-reclamation (N consecutive samples above threshold with no dip = monotonic climb) or OOMKilled, not a single snapshot."
+      }
     },
     {
       "id": "FIX-CHEF-PUBLISHED-MARKER-RELEASE",

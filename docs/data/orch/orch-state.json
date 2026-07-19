@@ -411,7 +411,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-18T20:56:16Z",
+    "_updated_at": "2026-07-19T08:24:29Z",
     "_updated_by": "po",
     "archive": [],
     "rows": [
@@ -450,10 +450,34 @@
         "status": "triaged",
         "payload_ref": null,
         "disposition": "FOLD — false positive (recurring cumulative-RestartCount-misread-as-crashloop class). RAW-verified 3x @2026-07-19T07:51Z: container vn-market-intelligence-mcp-mcp-server-1 Running=true Health=healthy; gateway served live tool calls this tick; RestartCount=7 is CUMULATIVE since Created 2026-07-15 (~4d), current instance StartedAt 2026-07-18T15:56:50Z = 16h continuous healthy uptime (NOT a live crashloop); all restarts clean LastExitCode=0 OOMKilled=false (NOT OOM — contrast genuine 07-02 episode w/ mem-collapse 95->15%); mem oscillating 90.32->85.63% of the already-landed 3GB cap (not monotonic climb). Precedent: rag-service=100 + prior mcp-server A-21 all RAW-verified cumulative-counter FP. NO mint, NOT route-to-ops (healthy, no live outage, 3GB cap mitigation already landed). 2 PLAN-ONLY notes (no mint): (a) auditor A-21 predicate-drift — system-auditor A-21 tier reads cumulative docker .RestartCount vs tight threshold=2, whereas mcp-server OWN restartCadenceAlertJob.ts already does it right (windowed WINDOW_HOURS + crash-filtered, returns 0 for clean restarts); A-21 should adopt windowed/crash-only OR honor auditor-dedup-ledger board-tracked DEDUP (rag=100 precedent) — candidate auditor-predicate-tune. (b) mem WATCH 85-90% of 3GB cap matches known parked FIX-MCP-MEMORY-CODE-LEAK (already backlogged, not new)."
+      },
+      {
+        "id": "sys-20260719T081102-4ff3",
+        "ts": "2026-07-19T08:11:02Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-21 WARN: mcp-server RestartCount=7 (>2 threshold)",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "DEDUP/FOLD (no re-investigation — evidence unchanged from prior FOLD sys-20260719T074117-22be @07:54Z). system-auditor re-emitted the SAME cumulative-RestartCount=7 finding; auditor-dedup-ledger tracks microservice_degraded:mcp-server:A-21. RAW re-confirmed this tick: RestartCount=7 is CUMULATIVE, current instance StartedAt 2026-07-18T15:56:50Z = 16h continuous healthy uptime (NOT a live crashloop), OOMKilled=false, Running/healthy; gateway served live router tool-calls this tick. NO mint, NOT route-to-ops. PLAN-ONLY (unchanged): A-21 should adopt windowed/crash-only predicate (mcp-server restartCadenceAlertJob.ts already does) OR honor the board-tracked DEDUP ledger to stop re-emitting."
+      },
+      {
+        "id": "sys-20260719T081104-59eb",
+        "ts": "2026-07-19T08:11:04Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-30 WARN: mcp-server MemPerc=97.80% (>=85% threshold)",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD — OSCILLATING-HIGH GC-sawtooth, NOT monotonic-climb-to-OOM. RAW-verified 6 probes/65s @08:20-08:22Z: 89.16->91.98->92.00->91.89(dip)->93.01->92.05(dip) of 3GiB cap; GC reclaimed report-peak 97.80% (@08:11) -> 89.16% = 8.6pt drop; two intra-window reclamation dips; OOMKilled=false; container Running/healthy 16h uptime (StartedAt 2026-07-18T15:56:50Z). GC ceiling NOT breached => no imminent OOM => NOT route-to-ops (gateway served router tool-calls this tick, no live outage). DEDUP to FIX-MCP-MEMORY-CODE-LEAK (BACKLOG/high/apps/mcp-server; 3GB cap mitigation already landed) — 97.80% HWM + trajectory recorded in backlog-detail corroboration_20260719T08Z; report 3509 resolution=duplicate, msg 3574 deleted. NO new mint. Baseline creep 85.63->89.16% over ~30min = the known slow leak, ~16h into rebuild-headroom cycle; next-tick tripwire = escalate ONLY if GC ceiling lost (baseline >~93% no-dip / peak sustained >97%) or OOMKilled=true. PLAN-ONLY: A-30 threshold=85% too tight for a GC-sawtooth-near-cap service (fires every sawtooth peak, A-21-class FP) — candidate predicate-tune (raise to ~95% and/or gate on loss-of-reclamation, not a single snapshot)."
       }
     ],
-    "last_triaged_at": "2026-07-19T07:54:21Z",
-    "last_triaged_by": "po (A-21 mcp-server RestartCount=7 triage: RAW-verified 3x healthy+16h uptime+clean exits+cumulative-counter => FOLD false-positive; sys-20260719T074117-22be NEW->triaged; report 3508 wontfix+deleted; NO mint, NOT route-to-ops)"
+    "last_triaged_at": "2026-07-19T08:24:29Z",
+    "last_triaged_by": "po (A-30 mem + A-21 re-emit triage @08:24Z: RAW-verified 6-probe/65s mem trajectory = GC-sawtooth 89-93% oscillating, reclaimed 97.80%->89% 8.6pt, OOMKilled=false, 16h healthy => A-30 FOLD/dedup->FIX-MCP-MEMORY-CODE-LEAK (HWM 97.80% recorded in backlog-detail), report 3509 duplicate+deleted; A-21 re-emit DEDUP/FOLD (evidence unchanged, ledger-tracked). NO mint, NOT route-to-ops. 2 rows NEW->triaged.)"
   },
   "sprint_goal": {
     "_note": "Active sprint visions. PO triage 2026-07-11 16->14: merged FB-POSTER-LAUNCHD-FIRER into COWORK-GUARANTEED-SLOT-DURABILITY (superseded per cron-jobs.md, firer plist installed+loaded); archived NARRATIVE-TRUTH-CCATO-GATE (T2+T3 both DONE, T3 qa-APPROVED). Reasoning: sprint-ANALYSIS-QUALITY-CONVERGENCE-po.md.",
