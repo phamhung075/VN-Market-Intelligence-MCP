@@ -1,0 +1,31 @@
+{
+  "ticker": "VCB",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "product": "Retail and corporate banking, trade finance, bancassurance cross-sell",
+  "customer": "Large corporates, SME borrowers, retail depositors nationwide",
+  "ops": "Net interest income 17,421ty; ROE 4.21%q/16.7% (below 17.6% sector median); PE 14.1x +57% premium, PB 2.2x +45% premium vs peers",
+  "mgmt": "Fundamentals byte-identical 8th consecutive cycle; KD Que 15 Khiem THUAN LOI 100% confidence sustained; sentiment reversal (GIAM -0.20/n=7) stable across 3+ cycles, fundamentals unaffected",
+  "escalation_status": "no_escalation",
+  "esc3_status": "DATA-COVERAGE-LIMITED",
+  "coverage_guard_key": "esc-datacov:VCB:Q1-2026:ESC-3",
+  "quarters_returned": 3,
+  "balance_sheet_check": "PASS (0.37% imbalance)",
+  "esc4_non_operating_share": -0.214,
+  "esc4_note": "bank structure — negative share, FALSE",
+  "esc5_refined_confidence": "FALSE (no refined units)",
+  "kinhdich": "Que 15 Khiem, THUAN LOI, 100% confidence",
+  "sentiment_30d": {
+    "entries": 7,
+    "slope": -0.2,
+    "direction": "GIAM"
+  },
+  "fetched_at": "2026-07-19T00:07:00Z",
+  "_processed": {
+    "fingerprint": "e38094d7cc46ae98acbbdaf630f9b9effd5ecf732b03ea2ae2329346041314e7",
+    "processedAt": "2026-07-19T00:18:23Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

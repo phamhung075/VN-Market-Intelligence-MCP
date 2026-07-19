@@ -1,0 +1,31 @@
+{
+  "ticker": "HPG",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "product": "Steel manufacturing (construction steel, HRC), agriculture, real estate side businesses",
+  "customer": "Construction contractors, steel distributors, industrial/manufacturing buyers",
+  "ops": "Operating Profit=0 / CF=0 (known extraction defect) — NI 9,055.9ty exceeds Gross Profit 8,365.1ty, unreliable data; ROE 12.7%/6.48%q vs sector",
+  "mgmt": "Data quality issue persists unchanged since c081; no fundamental_validation signal posted this cycle due to unreliable extraction",
+  "escalation_status": "no_escalation",
+  "esc3_status": "DATA-COVERAGE-LIMITED",
+  "coverage_guard_key": "esc-datacov:HPG:Q1-2026:ESC-3",
+  "quarters_returned": 2,
+  "balance_sheet_check": "PASS (0% imbalance)",
+  "esc4_non_operating_share": null,
+  "esc4_status": "SKIPPED (E4 Block Rule, operating_profit=0)",
+  "esc5_refined_confidence": "FALSE (no refined units)",
+  "kinhdich": "Que 2 Khon, TRUNG TINH, 37-38% confidence",
+  "sentiment_30d": {
+    "entries": 8,
+    "slope": 0.04,
+    "direction": "ON DINH"
+  },
+  "fetched_at": "2026-07-19T00:07:00Z",
+  "_processed": {
+    "fingerprint": "a637a2f5c096e30eca4b0eca2bcf1cc090d4f135148f4685fad66c733da16f8a",
+    "processedAt": "2026-07-19T00:18:23Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
