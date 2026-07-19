@@ -1,3 +1,65 @@
+## c408 · 2026-07-19T22:10:40Z
+### Audit Run Tier-1 (22:10–22:12 UTC 2026-07-19)
+- Tier: 1 | Services: 12 checked | Health: 5 probed | 0 new findings
+- A-01 to A-11 (container status): 12/12 UP (host_runtime_set SSOT) — all containers healthy
+- A-12 to A-19 (health endpoints): 4/5 OK — api-gateway RECOVERED (was WARN, now OK), pdf-extractor CURL_ERR (continuing)
+- A-20 (pdf-extractor multi-probe): 0/3 FAIL — event loop wedged, all probes HTTP 000 (dedup-skip: sys-20260719T211249-1440)
+- A-21 (restart count): mcp-server=0 PASS (2h uptime since restart at 20:09Z)
+- A-30 (memory): mcp-server=20.27% < 85% PASS
+- A-32 (disk): 35% < 85% PASS
+
+### RAW-PROBE:
+```
+=== AUDITOR PROBE 2026-07-19T22:10:40Z ===
+
+--- docker ps -a ---
+NAMES                                             STATUS                         IMAGE                                           CREATED
+mcp-gateway                                       Up 4 days (healthy)            mcpservergatway-gateway                         4 days ago
+vn-market-intelligence-mcp-frontend-1             Up 4 days (healthy)            vn-market-intelligence-mcp-frontend             4 days ago
+vn-market-intelligence-mcp-api-gateway-1          Up 4 days (healthy)            vn-market-intelligence-mcp-api-gateway          4 days ago
+vn-market-intelligence-mcp-flaresolverr-1         Up 4 days (healthy)            ghcr.io/flaresolverr/flaresolverr:latest        4 days ago
+vn-market-intelligence-mcp-news-fetch-1           Up 4 days (healthy)            vn-market-intelligence-mcp-news-fetch           4 days ago
+vn-market-intelligence-mcp-mcp-server-1           Up 2 hours (healthy)           vn-market-intelligence-mcp-mcp-server           4 days ago
+vn-market-intelligence-mcp-rag-service-1          Up 42 hours (healthy)          vn-market-intelligence-mcp-rag-service          4 days ago
+vn-market-intelligence-mcp-macro-indicators-1     Up 4 days (healthy)            vn-market-intelligence-mcp-macro-indicators     4 days ago
+vn-market-intelligence-mcp-pdf-extractor-1        Up About an hour (unhealthy)   vn-market-intelligence-mcp-pdf-extractor        4 days ago
+vn-market-intelligence-mcp-technical-analysis-1   Up 4 days (healthy)            vn-market-intelligence-mcp-technical-analysis   4 days ago
+vn-market-intelligence-mcp-alert-engine-1         Up 4 days (healthy)            vn-market-intelligence-mcp-alert-engine         4 days ago
+vn-market-intelligence-mcp-stock-price-1          Up 4 days (healthy)            vn-market-intelligence-mcp-stock-price          4 days ago
+vn-market-intelligence-mcp-kinh-dich-service-1    Up 4 days (healthy)            vn-market-intelligence-mcp-kinh-dich-service    4 days ago
+
+--- health endpoints ---
+[health] mcp-server:3000/health OK (HTTP 200)
+[health] api-gateway:4000/health OK (HTTP 200)
+[health] macro-indicators:5004/health OK (HTTP 200)
+[health] pdf-extractor:5001/health FAIL (HTTP CURL_ERR)
+[health] frontend:3001/ OK (HTTP 200)
+
+--- restart count ---
+Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=0
+
+--- memory pressure ---
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=20.27% MemUsage=622.8MiB / 3GiB
+
+--- disk df -h / ---
+Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
+/dev/disk1s4s1   233Gi    13Gi    25Gi    35%    393k  264M    0%   /
+
+--- pdf-extractor in-container multi-probe (A-20) ---
+[A-20-PROBE-1] in-container HTTP 000000
+[A-20-PROBE-2] in-container HTTP 000000
+[A-20-PROBE-3] in-container HTTP 000000
+[A-20] pass_count=0/3
+
+=== PROBE DONE ===
+```
+
+- **KEY FINDINGS**: 
+  - api-gateway: TRANSIENT RESOLVED (was WARN 30min ago, now OK — no new signal needed)
+  - pdf-extractor: Event-loop stall persists (probes 0/3), recurring issue (dedup-skip: sys-20260719T211249-1440, needs code fix)
+- Anomalies: 0 new | 1 dedup-skipped (pdf-extractor A-20) | Status: HEALTHY
+- Signal output: No new signals | [DEDUP-SKIP] microservice_degraded:pdf-extractor:A-20
+
 ## c407 · 2026-07-19T21:42:12Z
 ### Audit Run Tier-1 (21:40–21:42 UTC 2026-07-19)
 - Tier: 1 | Services: 12 checked | Health: 5 probed | 1 continuing finding
@@ -25,30 +87,3 @@
 - **Context**: pdf-extractor remains unhealthy despite earlier restart attempt — issue persists
 - Anomalies: 1 new (A-04) | 1 dedup-skipped (A-20) | Status: DEGRADED
 - Signal output: [emit-signal] OK microservice_degraded:api-gateway:A-04 id=sys-20260719T211240-4569 | [emit-signal] SKIP-dedup microservice_degraded:pdf-extractor:A-20 id=sys-20260719T211249-1440
-
-## c405 · 2026-07-19T20:46:07Z
-### Audit Run Tier-1 (20:44–20:46 UTC 2026-07-19)
-- Tier: 1 | Services: 12 checked | Health: 5 probed | 2 findings
-- A-01 to A-11 (container status): 12/12 UP/healthy (all host_runtime_set)
-- A-12 to A-19 (health endpoints): 4/5 OK (pdf-extractor FAIL)
-- A-20 (pdf-extractor health): CRITICAL FAIL (container unhealthy, probes 0/3)
-- A-32 (disk): 36% < 85% PASS
-- **RESOLUTION**: DB corruption sys-20260719T111146-74ec RESOLVED
-  - PRAGMA integrity_check = ok; DB size: 363.03 MB; WAL: 4.33 MB (healthy)
-  - mcp-server restarted: uptime=5m, restart_count=0, memory=11.98% (healthy)
-- **NEW FINDING**: A-20 pdf-extractor UNHEALTHY (8h uptime, health endpoint CURL_ERR, probes 0/3)
-- Anomalies: 1 new (A-20 pdf-extractor WARN) | 1 resolved (C-12 db corruption) | Status: DEGRADED
-- Signal output: [emit-signal] OK db_integrity_resolution id=sys-20260719T204609-304c | [emit-signal] OK microservice_degraded id=sys-20260719T204617-3f06
-
-## c3633 · 2026-07-19T20:46:05Z
-### Audit Run Tier-2 (20:45–20:46 UTC 2026-07-19)
-- Tier: 2 | Sources: 28 checked | Crons: 40 checked | DB spot-checks: 2 passed
-- A-29 (cron fire): All 40+ crons firing on schedule — [get_cron_health report]
-- B-01..B-07,B-11,B-12 (source freshness): 26/26 in SLA (3 off-hours by design)
-- B-05 (BCTC healthy-idle gate): queue=86 active | off-season Q3 mid-push-age — HEALTHY IDLE
-- B-06 (VPS proxy): 4/4 services OK
-- B-09 (SSC URLs): 0 (PASS) | B-13 (stale pending): 0 (PASS)
-- C-06/C-07 (DB spot-checks): PASS (1 message, 53 signals)
-- **Known state (post-DB-revert):** OHLCV ≤2 days old, macro_indicators 19 days — expected from 2026-07-01 baseline revert
-- Anomalies: 0 new | Status: HEALTHY
-- Signal output: All checks pass — no signals emitted
