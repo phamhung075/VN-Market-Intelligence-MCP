@@ -1,3 +1,17 @@
+## c406 · 2026-07-19T21:10:37Z
+### Audit Run Tier-1 (21:10–21:12 UTC 2026-07-19)
+- Tier: 1 | Services: 12 checked | Health: 5 probed | 2 findings
+- A-01 to A-11 (container status): 12/12 UP (host_runtime_set SSOT) — all containers present
+- A-12 to A-19 (health endpoints): 3/5 OK — api-gateway CURL_ERR (NEW), pdf-extractor CURL_ERR (continuing)
+- A-20 (pdf-extractor multi-probe): 0/3 FAIL — event loop wedged, all probes returned HTTP 000 (continuing)
+- A-21 (restart count): mcp-server=0 PASS (31m uptime post-recovery)
+- A-30 (memory): mcp-server=25.46% < 85% PASS
+- A-32 (disk): 35% < 85% PASS
+- **Findings**: 1 new (A-04 api-gateway WARN) + 1 continuing (A-20 pdf-extractor WARN, dedup-skipped)
+- **Context**: pdf-extractor remains unhealthy despite earlier restart attempt — issue persists
+- Anomalies: 1 new (A-04) | 1 dedup-skipped (A-20) | Status: DEGRADED
+- Signal output: [emit-signal] OK microservice_degraded:api-gateway:A-04 id=sys-20260719T211240-4569 | [emit-signal] SKIP-dedup microservice_degraded:pdf-extractor:A-20 id=sys-20260719T211249-1440
+
 ## c405 · 2026-07-19T20:46:07Z
 ### Audit Run Tier-1 (20:44–20:46 UTC 2026-07-19)
 - Tier: 1 | Services: 12 checked | Health: 5 probed | 2 findings
@@ -24,13 +38,3 @@
 - **Known state (post-DB-revert):** OHLCV ≤2 days old, macro_indicators 19 days — expected from 2026-07-01 baseline revert
 - Anomalies: 0 new | Status: HEALTHY
 - Signal output: All checks pass — no signals emitted
-
-## c404 · 2026-07-19T11:10:43Z
-### Audit Run Tier-1 (11:00–11:10 UTC 2026-07-19)
-- Tier: 1 | Services: 12 checked | Health: 5 probed | 1 critical
-- A-01 to A-11 (container status): 12/12 UP/healthy
-- A-12 to A-20 (health endpoints): 5/5 OK
-- A-20 (pdf-extractor multi-probe): 3/3 PASS
-- **CRITICAL**: boardDetailsRefreshJob persistent database corruption — "database disk image is malformed" — 0/5 success rate
-- Anomalies: 1 critical (DB corruption) | Status: CRITICAL
-- Signal output: [emit-signal] OK dedup_key=database_corruption:market.db id=sys-20260719T111146-74ec
