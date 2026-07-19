@@ -1,4 +1,4 @@
-<!-- size-justification: 724L — sequential 8-step dish-recipe decision framework (TNB 6-layer); telemetry extracted to chef-telemetry.md; dual-output Step 7 (MARKET plain-VI / WORK TNB-auditable) is one atomic responsibility; Step 7.5 QUALITY VERDICT GATE now checks all 5 required sub-checks (L2/L3/L4/BizCtx/gap-catalogue) as one deterministic block — splitting it would break the single-enforcement-point guarantee; full change history in git log. -->
+<!-- size-justification: 812L — sequential 8-step dish-recipe decision framework (TNB 6-layer); telemetry extracted to chef-telemetry.md; dual-output Step 7 (MARKET plain-VI / WORK TNB-auditable) is one atomic responsibility; Step 7.5 QUALITY VERDICT GATE checks all 5 required sub-checks (L2/L3/L4/BizCtx/gap-catalogue) as one deterministic block; Step 7.6 persist-JSON write-authorization + CYCLE_DATE-pin comments are load-bearing anti-recurrence guards, not changelog — splitting any of these would break the single-enforcement-point guarantee; full change history in git log. -->
 > Parent: [./main.md](./main.md)
 
 # Unified Agent — Chef Flow (TNB 6-Layer Recipe)
@@ -92,11 +92,32 @@ Call `get_cycle_bootstrap(agent_name="unified-agent")` first. The response inclu
 
 Read all `docs/signals/*.json` with `mtime` within last 24h (or since last dish logged in notebook).
 
+<!-- AUTO-CURE 2026-07-17 (tran-ngoc-bau) — FIX-CHEF-STEP0-BCTC-PROCESSED-DIR-BLINDSPOT:
+     Root cause confirmed by direct evidence: docs/agents/dev-team/flow/drain-signals.md §0a-1
+     moves EVERY docs/signals/*.json file (bctc_signal_* included) to docs/signals/processed/
+     within minutes of creation (observed 2026-07-17: bctc_signal_{FPT,HPG,VCB}_20260717_routine.json
+     created ts=18:15Z, drained+moved processedAt=18:20Z — 5min gap), a cadence far faster than
+     chef's 2-4x/day dish schedule. By the time ANY chef dish fires after the drain, fresh
+     bctc_signal_*/fundamental_* files are already archived and invisible to a docs/signals/*.json-
+     only glob — even on cycles where bctc-analyst's extraction SUCCEEDED (not serve-layer-blocked).
+     DISTINCT from and additional to the already-tracked "14/16 tickers serve-layer-blocked"
+     upstream data gap (BCTC-EXTRACT-QUALITY sprint, bctc-analyst-owned) — that explains missing
+     DATA; this explains why even SUCCESSFULLY EXTRACTED data (FPT/HPG/VCB 07-17, full
+     product/customer/ops/mgmt fields present on disk before tonight's evening dish) never reaches
+     the dish. Additive fix only, zero risk to QUALITY_VERDICT/publish logic: drain only ever MOVES
+     files (never duplicates), so no double-count risk between the two locations. -->
+Also read `docs/signals/processed/bctc_signal_*.json` and `docs/signals/processed/fundamental_*.json`
+with `ts` (or `_processed.processedAt`) within the same last-24h window — dev-team's signal drain
+(`docs/agents/dev-team/flow/drain-signals.md`) typically archives these into `processed/` within
+minutes of creation, well before chef's next scheduled dish; the top-level glob alone structurally
+misses them on every cycle after the first hour.
+
 Collect file groups:
 - `price_anomaly_*` — from market-watcher
 - `news_impact_*` — from news-scout
-- `bctc_signal_*` — from bctc-analyst (merged agent; was financial-analyst)
-- `fundamental_*` — from report-analyzer [TRANSITION: dual-accept `signal_type == "bctc_signal" OR signal_type == "fundamental"` during soak window H-18→H-19; remove `fundamental` branch after H-19 archive]
+- `bctc_signal_*` — from bctc-analyst (merged agent; was financial-analyst) — check BOTH
+  `docs/signals/` and `docs/signals/processed/` (see AUTO-CURE note above)
+- `fundamental_*` — from report-analyzer [TRANSITION: dual-accept `signal_type == "bctc_signal" OR signal_type == "fundamental"` during soak window H-18→H-19; remove `fundamental` branch after H-19 archive] — check BOTH locations, same as bctc_signal_*
 
 Supplementary calls (all OPTIONAL — failure/absence is NOT a blocker):
 - `get_market_hexagram()` — market-wide Kinh Dịch state. **501 / tool-not-found = expected; treat as `market_hexagram=unavailable`.** Per memory `feedback_chef_kinhdich_confab`: per-ticker hexagrams come from `get_portfolio_conviction` (Step 5), NOT this call. A 501 here does NOT mean hexagram data is absent.
@@ -288,6 +309,20 @@ If gold price is >$4,300 AND gold is cited as a safe-haven / phase-override sign
 [L6-gap: gold >$4,300 active — regime-drift risk: gold-driven phase override may lag actual risk-off reversal; flag as regime-drift until gold retraces below $4,300 or EFFR-IORB confirms liquidity tightening]
 ```
 This entry must appear in the WORK [CHEF-DETAIL] Block B Layer 6 section. It may be omitted from the MARKET plain-VI message.
+
+<!-- AUTO-CURE c111 2026-07-16 (tran-ngoc-bau): F-L6-SINGLEPILLAR-GAP-UNENFORCED — the
+     "Single-pillar thesis" row has existed in the gap-catalogue table above since inception,
+     but (unlike the gold >$4,300 check) no automated check ever compared it against the
+     `pillars_aligned_count` field already computed per ticker in Step 4. Confirmed recurring
+     3+ consecutive evening dishes: 07-14 (BSR 2/4, VHM 1/4, VIC 1/4), 07-15 (BSR/VHM/VIC all
+     2/4), 07-16 (VIC 2/4, VHM 2/4, VCI 0/4, ACB 1/4) — EVERY conviction call in all 3 dishes
+     scored below the 3-pillar bar and NONE was ever cited as an explicit L6 gap entry. -->
+**Single-pillar thesis check (mandatory for every conviction call):**
+For each entry in `conviction_calls[]` (Step 4), if `pillars_aligned_count < 3`, add this explicit L6 gap entry to the dish (one per under-threshold ticker):
+```
+[L6-gap: single-pillar thesis — <ticker> <pillars_aligned_count>/4 pillars aligned; per tnb-methodology-valuation.md Layer 6, add the missing pillars or state "insufficient data — cannot confirm"]
+```
+This entry must appear in the WORK [CHEF-DETAIL] Block B Layer 6 section and be added to `$L6_GAP_TOKENS` (same list Step 6 already carries to Step 8b). It may be omitted from the MARKET plain-VI message. Does not change `$QUALITY_VERDICT` or the conviction score itself — pure gap-catalogue disclosure, same risk profile as the gold-threshold check above.
 
 Apply fixes before Step 7. If a gap cannot be fixed (missing data) → flag explicitly in dish.
 
@@ -589,13 +624,30 @@ else:
 
 ## Step 7.6 — PERSIST SYNTHESIS (JSON output — machine-queryable store)
 
+<!-- AUTHORIZATION (GAP-CHEF-SYNTHESIS-A-FLOW-PERSIST, agent-father 2026-07-19): the .claude/agents/unified-agent.md
+     description now explicitly authorizes this exact write pattern (docs/data/unified-agent-synthesis-*.json)
+     alongside the notebook. The Write tool IS available and this path IS in-scope — do not self-refuse this
+     step as a permission conflict; that was a real, now-fixed contradiction between the agent-def L4 description
+     and this step, not a tool limitation. -->
+
 After the quality verdict gate (Step 7.5) completes, persist the synthesized TNB 6-layer analysis to a machine-queryable JSON file. This enables frontend queries and downstream tools to access the structured conviction/sector/regime/gap data without parsing Telegram prose or notebooks.
 
-**File path:**
+**File path — CYCLE_DATE is PINNED to Step 0.5's value, never recomputed here:**
+<!-- FIX (GAP-CHEF-SYNTHESIS-A-FLOW-PERSIST, agent-father 2026-07-19): confirmed root cause of the
+     filename inconsistency (07-17 evening wrote -2026-07-17 i.e. UTC-leaning, 07-18 wrote -2026-07-19
+     i.e. VN-leaning, and the 07-14 19:50Z run wrote BOTH -07-14 and -07-15 25s apart) was this step
+     independently re-deriving "VN date of cycle execution" from scratch with no pinned source, so
+     different cycles/agents resolved it differently. Fix: reuse WORK_DATE verbatim — the ONE value
+     Step 0.5 already computes exactly once per cycle via `TZ="Asia/Ho_Chi_Minh" date +%Y-%m-%d`
+     (Asia/Ho_Chi_Minh is the single named timezone for this value, for the whole cycle). Do NOT call
+     `date` again in this step. Naming stays "date_vn+dish_type" per FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING
+     (P1 backlog, ba-owned) — that row's structural follow-on is cycle_id-keying the filename entirely;
+     this fix only makes the existing date_vn component deterministic, it does not add cycle_id. -->
 ```
-CYCLE_DATE = YYYY-MM-DD (VN date of cycle execution)
-SLOT_ID = <dish_type> (morning | intraday | eod | evening)
-FILEPATH = docs/data/unified-agent-synthesis-{CYCLE_DATE}-{SLOT_ID}.json
+CYCLE_DATE = WORK_DATE        # verbatim reuse of Step 0.5's value — Asia/Ho_Chi_Minh calendar date,
+                               # computed ONCE per cycle. Never recompute/re-derive it in this step.
+SLOT_ID    = <dish_type> (morning | intraday | eod | evening)
+FILEPATH   = docs/data/unified-agent-synthesis-{CYCLE_DATE}-{SLOT_ID}.json
 ```
 
 Example: `docs/data/unified-agent-synthesis-2026-07-03-eod.json`

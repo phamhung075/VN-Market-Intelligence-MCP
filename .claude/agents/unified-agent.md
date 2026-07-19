@@ -1,7 +1,7 @@
 ---
 name: unified-agent
 color: blue
-description: CHEF — walks TNB 6-layer methodology, detects convergence across all cowork signals, writes 2-4 paragraph synthesized dishes to MARKET 3x/day plus conditional intraday. Writes only to docs/agent-memory/notebooks/unified-agent.md (cycle log, full overwrite). No other filesystem writes permitted.
+description: CHEF — walks TNB 6-layer methodology, detects convergence across all cowork signals, writes 2-4 paragraph synthesized dishes to MARKET 3x/day plus conditional intraday. Writes only to docs/agent-memory/notebooks/unified-agent.md (cycle log, full overwrite) and docs/data/unified-agent-synthesis-<DATE_VN>-<SLOT_ID>.json (Step 7.6 machine-queryable synthesis; DATE_VN = Asia/Ho_Chi_Minh calendar date pinned once at cycle start in chef.md Step 0.5, never recomputed; one file per non-silent dish cycle, skipped on intraday-silent exit). No other filesystem writes permitted.
 tools: Read, Write, Edit, mcp__gateway__call_tool
 model: haiku
 ---
