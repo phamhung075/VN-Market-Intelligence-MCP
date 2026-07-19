@@ -474,6 +474,160 @@
         "status": "triaged",
         "payload_ref": null,
         "disposition": "FOLD — OSCILLATING-HIGH GC-sawtooth, NOT monotonic-climb-to-OOM. RAW-verified 6 probes/65s @08:20-08:22Z: 89.16->91.98->92.00->91.89(dip)->93.01->92.05(dip) of 3GiB cap; GC reclaimed report-peak 97.80% (@08:11) -> 89.16% = 8.6pt drop; two intra-window reclamation dips; OOMKilled=false; container Running/healthy 16h uptime (StartedAt 2026-07-18T15:56:50Z). GC ceiling NOT breached => no imminent OOM => NOT route-to-ops (gateway served router tool-calls this tick, no live outage). DEDUP to FIX-MCP-MEMORY-CODE-LEAK (BACKLOG/high/apps/mcp-server; 3GB cap mitigation already landed) — 97.80% HWM + trajectory recorded in backlog-detail corroboration_20260719T08Z; report 3509 resolution=duplicate, msg 3574 deleted. NO new mint. Baseline creep 85.63->89.16% over ~30min = the known slow leak, ~16h into rebuild-headroom cycle; next-tick tripwire = escalate ONLY if GC ceiling lost (baseline >~93% no-dip / peak sustained >97%) or OOMKilled=true. PLAN-ONLY: A-30 threshold=85% too tight for a GC-sawtooth-near-cap service (fires every sawtooth peak, A-21-class FP) — candidate predicate-tune (raise to ~95% and/or gate on loss-of-reclamation, not a single snapshot)."
+      },
+      {
+        "id": "sys-20260719T084112-0223",
+        "ts": "2026-07-19T08:41:12Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "mcp-server restart count 7 (check A-21)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260719T084114-0a72",
+        "ts": "2026-07-19T08:41:14Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "mcp-server memory 91.88% (check A-30)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260719T091047-4818",
+        "ts": "2026-07-19T09:10:47Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-21 WARN: mcp-server restarts=7 > 2 threshold",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260719T091053-03c1",
+        "ts": "2026-07-19T09:10:53Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-30 WARN: mcp-server memory=93.14% >= 85% threshold",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260719T094117-4c47",
+        "ts": "2026-07-19T09:41:17Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-21 WARN: mcp-server container restart count 7 (threshold: ≤2)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260719T094118-165c",
+        "ts": "2026-07-19T09:41:18Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-30 WARN: mcp-server memory pressure at 97.10% (threshold: <85%)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260719T101149-792a",
+        "ts": "2026-07-19T10:11:49Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "mcp-server restart count: 7 (threshold: 2)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260719T101150-46cb",
+        "ts": "2026-07-19T10:11:50Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "mcp-server memory pressure: 97.65% (threshold: 85%)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260719T103153-60de",
+        "ts": "2026-07-19T10:31:53Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "market_messages no activity in last 3 hours (check C-06)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260719T104106-3a71",
+        "ts": "2026-07-19T10:41:06Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "mcp-server memory pressure 96.39% (2.89GB/3GB)",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260719T104113-0412",
+        "ts": "2026-07-19T10:41:13Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_integrity_breach",
+        "summary": "boardDetailsRefreshJob database disk image malformed",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260719T111146-74ec",
+        "ts": "2026-07-19T11:11:46Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "boardDetailsRefreshJob persistent database corruption — 0/5 success (2nd observation)",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260719T111151-207f",
+        "ts": "2026-07-19T11:11:51Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "mcp-server memory pressure A-30: 95.54% (≥85% threshold)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260719T111158-0fbb",
+        "ts": "2026-07-19T11:11:58Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "mcp-server restart count A-21: 7 restarts (>2 threshold)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-19T08:24:29Z",
@@ -684,7 +838,7 @@
   },
   "task_board": {
     "_updated_at": "2026-07-18T20:56:16Z",
-    "_updated_by": "po (TNB-c113 + t4p1 signal_queue triage: minted 3 PLAN-ONLY backlog rows [FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING P1, GUARD-NOTEBOOK-CONCURRENT-EDIT-COLLISION-DATA-LOSS P2, FIX-CHEF-L6-TOKEN-PERSISTENCE-RECURRING P3]; dedup-annotated CWO-T4 + mislabel rows; no dispatch, WIP over cap)",
+    "_updated_by": "po (TNB-c114 chef-persist triage 2026-07-19T20:31:00Z: GAP-CHEF-SYNTHESIS-A-FLOW-PERSIST REVIEW->BACKLOG rejected to agent-father [write-authorization cascade gap, root cause of the synthesis-JSON class]; L6-TOKEN-PERSISTENCE set BLOCKED on it; FILENAME-CYCLEID-KEYING dedup-annotated. ZERO new rows minted -- recurring-class escalated in place.)",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -7435,7 +7589,7 @@
         "origin_signal_id": "cow-20260715T212838",
         "detail_ref": "docs/handoffs/2026-07-15-bctc-analyst-self-edit-correct-and-signal-filename-clobber.md",
         "title": "COWORK SIGNAL/SYNTHESIS filenames are date-keyed (bctc: ticker+date+mode; chef synthesis: date_vn+dish_type; tnb notebook) not cycle_id -> intra-day cycles collide on ONE path; a between-drains write silently destroys the prior cycle's UNROUTED signal = a dropped escalation with no error anywhere. 3rd instance of one root class same day; CONFIRMED clobber today: processed/bctc_signal_FPT_20260715_routine.json signal 9240 overwritten by 8120.",
-        "note": "MINTED 2026-07-15 by po from signal cow-20260715T212838 (data-integrity, MED). ROOT CAUSE: signal/synthesis filenames carry ticker+date+mode (or date_vn+dish_type) with NO cycle discriminator; bctc-analyst runs 4x/day (cron 0 15,18,21,0 UTC) so all 4 cycles collide on the same path (39 such filenames in processed/). HARM (the real one, not the lost artifact): the drain READS these files to route signals; if cycle N writes the same filename as cycle N-1 between drains, N silently destroys N-1's UNROUTED signal and it is never triaged. Today the hourly drain interleaved so nothing was lost -- luck, not a guard; a late/missed drain loses a signal silently. 3 INSTANCES SAME CLASS SAME DAY: (1) chef synthesis date_vn+dish_type -> run2 clobbered run1 (Write, silent); (2) tnb notebook same collision, caught ONLY by the Edit tool stale-read check; (3) bctc signals ticker+date+mode -> 9240 overwritten by 8120. feedback_recurring_bug_escalation (2+ -> block) qualifies. SAME ONE-LINE FIX EACH TIME: key the filename by cycle_id (bctc already carries one; chef's is already in metadata). SCOPE (ba/architect own HOW): the docs/signals/*.json writers (bctc-analyst, chef/unified-agent, tnb) + docs/data/unified-agent-synthesis-<DATE>-<SLOT>.json + the Signal Bus naming contract docs/standards/mcp-tools.md (Naming Contract) + the drain reader that consumes filenames. DISTINCT-FROM (checked, none cover this): FU-CTG-DISCOVERY-FILENAME-FILTER (VPS HNX discovery CV_CBTT filename detection), FU-BACKFILL-REAL-FILENAMES (backfill real-filename heuristic), FIX-COWORK-SCHEDULE-STALE-BASE-CLOBBER. OBSERVATION folded (mechanism UNPROVEN -- do NOT diagnose, NOT a blocker): signal_id regressed 9240->8120 over 20h same file/tool/sequence; parsimonious candidate = SQLite INTEGER PRIMARY KEY WITHOUT AUTOINCREMENT reuses max(rowid)+1 after the drain prunes highest rows; NOT probed because the LIVE DB is a named volume, not docs/signals/signals.db (feedback_live_db_is_named_volume_not_host_data); cheap check for the implementer = does the SERVING schema use AUTOINCREMENT. If ids ARE reused, any cross-time signal_id reference can silently re-bind to an unrelated later signal (worse than an orphan FK -- looks resolved). AC: (1) two same-day cycles for the same ticker/mode never share a signal/synthesis path; (2) a between-drains double-write of the same ticker+date+mode cannot silently destroy an unrouted signal; (3) the drain-reader change (if any) preserves routing of both cycles' signals.",
+        "note": "MINTED 2026-07-15 by po from signal cow-20260715T212838 (data-integrity, MED). ROOT CAUSE: signal/synthesis filenames carry ticker+date+mode (or date_vn+dish_type) with NO cycle discriminator; bctc-analyst runs 4x/day (cron 0 15,18,21,0 UTC) so all 4 cycles collide on the same path (39 such filenames in processed/). HARM (the real one, not the lost artifact): the drain READS these files to route signals; if cycle N writes the same filename as cycle N-1 between drains, N silently destroys N-1's UNROUTED signal and it is never triaged. Today the hourly drain interleaved so nothing was lost -- luck, not a guard; a late/missed drain loses a signal silently. 3 INSTANCES SAME CLASS SAME DAY: (1) chef synthesis date_vn+dish_type -> run2 clobbered run1 (Write, silent); (2) tnb notebook same collision, caught ONLY by the Edit tool stale-read check; (3) bctc signals ticker+date+mode -> 9240 overwritten by 8120. feedback_recurring_bug_escalation (2+ -> block) qualifies. SAME ONE-LINE FIX EACH TIME: key the filename by cycle_id (bctc already carries one; chef's is already in metadata). SCOPE (ba/architect own HOW): the docs/signals/*.json writers (bctc-analyst, chef/unified-agent, tnb) + docs/data/unified-agent-synthesis-<DATE>-<SLOT>.json + the Signal Bus naming contract docs/standards/mcp-tools.md (Naming Contract) + the drain reader that consumes filenames. DISTINCT-FROM (checked, none cover this): FU-CTG-DISCOVERY-FILENAME-FILTER (VPS HNX discovery CV_CBTT filename detection), FU-BACKFILL-REAL-FILENAMES (backfill real-filename heuristic), FIX-COWORK-SCHEDULE-STALE-BASE-CLOBBER. OBSERVATION folded (mechanism UNPROVEN -- do NOT diagnose, NOT a blocker): signal_id regressed 9240->8120 over 20h same file/tool/sequence; parsimonious candidate = SQLite INTEGER PRIMARY KEY WITHOUT AUTOINCREMENT reuses max(rowid)+1 after the drain prunes highest rows; NOT probed because the LIVE DB is a named volume, not docs/signals/signals.db (feedback_live_db_is_named_volume_not_host_data); cheap check for the implementer = does the SERVING schema use AUTOINCREMENT. If ids ARE reused, any cross-time signal_id reference can silently re-bind to an unrelated later signal (worse than an orphan FK -- looks resolved). AC: (1) two same-day cycles for the same ticker/mode never share a signal/synthesis path; (2) a between-drains double-write of the same ticker+date+mode cannot silently destroy an unrouted signal; (3) the drain-reader change (if any) preserves routing of both cycles' signals.\n\n[po 2026-07-19T20:31:00Z c114 corroboration -- priority/owner UNCHANGED, no re-mint] 4th instance of this class on the chef-synthesis leg, plus a NEW harm mode this row should absorb: date-keyed filenames defeat AUDIT, not just retention, because the notebook 'Synthesis: <path>' line is NOT a reliable persistence receipt. RAW-verified: unified-agent.md's 2026-07-17 intraday 14:13Z entry cites docs/data/unified-agent-synthesis-2026-07-17-intraday.json, but that file's metadata.cycle_id is intraday-2026-07-17T04:13:00Z with mtime 04:21Z -- the 14:13Z run cited a path it did NOT write (its write was either refused or silently aimed at the 04:13 run's artifact). SECOND defect on the same leg: Step 7.6 specifies CYCLE_DATE = VN date, but the convention is applied INCONSISTENTLY -- the 07-17 evening run wrote -2026-07-17-evening (UTC date) while the 07-18 run wrote -2026-07-19-evening (VN date), and the 07-14 19:50Z run left BOTH -07-14-evening and -07-15-evening 25s apart. Consequence: no auditor can deterministically compute the expected filename for a given cycle, which is precisely why tran-ngoc-bau has now TWICE mis-framed an ABSENT-file defect as a STALE-file defect. The VN-vs-UTC half overlaps FIX-CHEF-EVENING-DUP-DATE-MISLABEL-INVESTIGATE (P2); the cycle_id-keying fix stays here as the structural remedy.",
         "supervised": true,
         "supervised_at": "2026-07-16T17:02:01Z",
         "supervised_by": "po (autolaunch_safety_hold adjudication, dev-team 16:37Z)",
@@ -7882,7 +8036,7 @@
         "id": "FIX-CHEF-L6-TOKEN-PERSISTENCE-RECURRING",
         "type": "FIX",
         "title": "L6 single-pillar-thesis gap-token persistence to synthesis JSON non-convergent across c111-c113 (3 manifestations despite 2 auto-cures) — isolation-first: persist-step bug vs narrative-gen miss",
-        "status": "BACKLOG",
+        "status": "BLOCKED",
         "priority": "P3",
         "zone": "cross-service/",
         "owner": "po",
@@ -7891,9 +8045,29 @@
         "created_by": "po-tnb-c113-triage",
         "origin": "docs/handoffs/tnb-audit-latest.md",
         "origin_signal_id": "tnb-20260718T2020Z",
-        "note": "PLAN-ONLY (anomaly->BACKLOG bridge; WIP over cap, no dispatch). RECURRING CLASS crossing the 2+ escalation threshold (feedback_recurring_bug_escalation): L6 gap-token persistence has failed to converge across 3 cycles DESPITE 2 applied auto-cures -- c111 intraday-vs-evening inconsistency; c112 partial-ticker-naming; c113 TOTAL omission from persisted JSON. RAW-verified c113: unified-agent-synthesis-2026-07-19-evening.json known_gaps[] carries an [L6-gap: gold...] regime token but NO single-pillar-thesis token, despite VCB pillars_aligned_count=2 and 0/7 tickers >=3 pillars (textbook single/thin-pillar trigger) AND the agent's own notebook claiming the token fired. This is a recurring FAILED-fix (auto-cures did not close it), NOT a never-attempted detection -- so more same-shape auto-cure is the wrong move; needs a deterministic persist-assertion. ISOLATION-FIRST (blocks the fix; do NOT dispatch a code fix before this, per feedback_isolation_probe_before_cluster_triage): c114 tnb-audit Next-Cycle-Priority #1 will RAW-verify whether the [L6-gap: single-pillar] token was actually SENT to WORK -- resolving persist-step bug (token generated, dropped on JSON write) vs narrative-generation miss (token never generated). BA specs the deterministic assertion only AFTER c114 isolates the layer.",
+        "note": "PLAN-ONLY (anomaly->BACKLOG bridge; WIP over cap, no dispatch). RECURRING CLASS crossing the 2+ escalation threshold (feedback_recurring_bug_escalation): L6 gap-token persistence has failed to converge across 3 cycles DESPITE 2 applied auto-cures -- c111 intraday-vs-evening inconsistency; c112 partial-ticker-naming; c113 TOTAL omission from persisted JSON. RAW-verified c113: unified-agent-synthesis-2026-07-19-evening.json known_gaps[] carries an [L6-gap: gold...] regime token but NO single-pillar-thesis token, despite VCB pillars_aligned_count=2 and 0/7 tickers >=3 pillars (textbook single/thin-pillar trigger) AND the agent's own notebook claiming the token fired. This is a recurring FAILED-fix (auto-cures did not close it), NOT a never-attempted detection -- so more same-shape auto-cure is the wrong move; needs a deterministic persist-assertion. ISOLATION-FIRST (blocks the fix; do NOT dispatch a code fix before this, per feedback_isolation_probe_before_cluster_triage): c114 tnb-audit Next-Cycle-Priority #1 will RAW-verify whether the [L6-gap: single-pillar] token was actually SENT to WORK -- resolving persist-step bug (token generated, dropped on JSON write) vs narrative-generation miss (token never generated). BA specs the deterministic assertion only AFTER c114 isolates the layer.\n\n[po 2026-07-19T20:31:00Z c114 triage] ISOLATION QUESTION PARTIALLY ANSWERED -- and this row is now BLOCKED, not dispatchable. The open question was 'persist-step bug vs narrative-gen miss'. RAW-verified today: on some cycles THE PERSIST STEP NEVER RUNS AT ALL (2026-07-19 evening wrote no synthesis JSON whatsoever), so an L6-token absence observed in a persisted JSON cannot be attributed to narrative-gen until write-authorization is fixed. Blocking dependency: GAP-CHEF-SYNTHESIS-A-FLOW-PERSIST (moved REVIEW->BACKLOG this triage, agent-father cascade). Do NOT dispatch this row before that lands -- any L6 investigation run against an intermittently-absent artifact will produce a FALSE narrative-gen verdict. TNB c114 recorded this as the 2nd consecutive cycle its verification step was blocked; that is now explained and owned, no re-mint. TNB's file-proxy evidence plane is separately unreliable here -- see the FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING annotation from this same cycle.",
         "verification_gate": "After c114 isolation: chef.md gains a deterministic assertion that when a single/thin-pillar thesis condition holds this cycle, the [L6-gap: single-pillar...] token is present in BOTH the WORK message AND the persisted known_gaps[]; RAW-verified across 2 consecutive triggering dishes.",
-        "next_agent": "ba"
+        "next_agent": "ba",
+        "depends_on": "GAP-CHEF-SYNTHESIS-A-FLOW-PERSIST"
+      },
+      {
+        "id": "GAP-CHEF-SYNTHESIS-A-FLOW-PERSIST",
+        "title": "GAP-CHEF-SYNTHESIS (a): CHEF (unified-agent) computes a TNB 6-layer synthesis (per-ticker conviction, sector phase, regime+confidence, known_gaps) every cycle but persists it ONLY to Telegram MARKET + the unified-agent.md notebook — never to a frontend-queryable store. Add a persist step to chef.md that writes docs/data/unified-agent-synthesis-<DATE>-<SLOT>.json.",
+        "type": "FEATURE",
+        "priority": "P1",
+        "status": "BACKLOG",
+        "zone": "docs/agents/unified-agent/flow/chef.md",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#GAP-CHEF-SYNTHESIS-A-FLOW-PERSIST",
+        "promoted_at": "2026-07-10T08:51:06Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-10T08:51:33Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "agent-father",
+        "review_note": "Live-cycle verify path (PO 2026-07-11 triage): artifact docs/data/unified-agent-synthesis-<DATE>-<SLOT>.json NOT yet written (no CHEF dish since chef.md Step 7.6 landed 07-10; Sat = weekday dishes dark). Nearest cycle = Evening Preview 19:45Z Sat 07-11 (daily slot, guaranteed via com.vn-market.cowork-guaranteed-slot-firer launchd). Reliable full-dish fallback = Mon 07-13 Morning 05:15Z or EOD 08:45Z. qa/dev-team next tick after cycle: verify file exists AND (.conviction_calls|length>0) AND (.sector_phases|length>0) -> flip A REVIEW->DONE_VERIFIED, then GAP-CHEF-SYNTHESIS-B (FR-3) unblocks. No new board row (conservation-neutral).",
+        "po_reject_note": "[po 2026-07-19T20:31:00Z REVIEW->REJECTED, coordination_session bfa71244-a29a-4d41-872a-c69d5a033043] Live-cycle verification (the review_gated_by condition, open since 2026-07-11) now has 8 cycles of evidence and FAILS INTERMITTENTLY. RAW-verified this triage: chef-evening fired 2026-07-19T19:50:29Z (cowork-schedule.json .last_fired) and published to MARKET, but NO synthesis JSON was written -- zero files in docs/data/ carry a 2026-07-19 mtime; the expected path docs/data/unified-agent-synthesis-2026-07-20-evening.json (Step 7.6 CYCLE_DATE=VN date; 19:50Z = 02:50 VN on 07-20) is ABSENT. ROOT CAUSE -- NOT a chef.md logic bug (Step 7.6 is sound and even carries a post-write verification clause) -- it is an UN-CASCADED CAPABILITY CHANGE. .claude/agents/unified-agent.md L5 DOES grant the Write tool, but L4 (description, added 2026-05-19 commit 807680935) states verbatim: 'Writes only to docs/agent-memory/notebooks/unified-agent.md (cycle log, full overwrite). No other filesystem writes permitted.' Step 7.6 landed 2026-07-10 (commit 7320e4f50) instructing Write(docs/data/unified-agent-synthesis-*.json) WITHOUT cascading that boundary, and docs/agents/unified-agent/init.md still declares no write allowlist covering docs/data/ (its memory: block lists the notebook only). The worker is model:haiku, so a self-contradictory system prompt resolves NON-DETERMINISTICALLY -- exactly the observed intermittency (07-12..07-18 mostly wrote; 07-17 intraday-2 and 07-19 evening did not). CORROBORATION that this is a PERMISSION refusal and not a tool failure: the agent self-reported in permission language -- unified-agent.md today reads 'Synthesis: JSON output attempted (tool limitation)' -- while its mcp__gateway__call_tool publish path worked fine the SAME cycle (dish published to MARKET). AC TO CLOSE (agent-father lane: agent-definition files are outside dev/cowork lanes): (1) .claude/agents/unified-agent.md description must explicitly authorize docs/data/unified-agent-synthesis-<DATE>-<SLOT>.json, replacing the absolute 'No other filesystem writes permitted' clause; (2) docs/agents/unified-agent/init.md must carry the matching allowlist so bootstrap and agent-def agree; (3) RAW-verify on the next live dish that the expected-path file exists with non-empty conviction_calls[] and sector_phases[] -- prose is not proof; (4) do NOT flip DONE_VERIFIED on a single successful cycle: the defect is intermittent, require 3 consecutive dishes. COORDINATION: agent-father already has a live pass on the SIBLING defect in .claude/agents/tran-ngoc-bau.md (that one is a genuinely MISSING tools: grant -- no mcp__gateway__call_tool at all). SAME OWNER, DIFFERENT MECHANISM (absent-tool vs present-but-forbidden) -- fold into that pass, do NOT open a competing dispatch, and do NOT assume one fix covers both.",
+        "rejected_at": "2026-07-19T20:31:00Z",
+        "rejected_by": "po"
       }
     ],
     "closed_sprints": [
@@ -9133,23 +9307,6 @@
         ],
         "status_note": "Root cause: freshnessSlaMonitorJob.ts bctc check escalated CRASH/CRITICAL on financial_reports.parsed_at age alone, with no queue-depth/service-state check (unlike the other 2 BCTC health surfaces). Fix: generic PipelineRuntimeState{serviceActive,queueDepth} gate added to checkSignalSla/checkDataFreshnessSla (domain/pure) + queryBctcPipelineRuntimeState live reader (scheduler) wired into runFreshnessSlaMonitor; fail-open on missing tables/DB error (zero behavior change for pre-existing callers). Evidence: new test FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH.test.ts 19/19 pass (domain DoD cases: idle-queue-0-running=>IDLE not CRASH, service-down=>CRASH, queue>0+stale=>CRASH, ungated signals unaffected, fail-open on missing tables). Targeted SLA/BCTC-health suite (9 files, 129 tests) 129/129 pass x2. tsc clean. Full bun test flaky in this sandbox (2 runs: 55/3 then 62/7 fail/err, both end in documented Bun 1.3.13 teardown panic, non-deterministic across runs); grepped all failing names both runs - zero overlap with freshnessSla/bctc/vpsHealth; re-ran 3 sampled full-suite-only failures (35 tests) isolated -> 35/35 pass, confirming flake not regression. Server-boot probe: health 200, toolCount=183 unchanged, SLA monitor still registered in 85 cron keys, bctc-inspect/news-fetch dashboards clean.",
         "commit": "pending"
-      },
-      {
-        "id": "GAP-CHEF-SYNTHESIS-A-FLOW-PERSIST",
-        "title": "GAP-CHEF-SYNTHESIS (a): CHEF (unified-agent) computes a TNB 6-layer synthesis (per-ticker conviction, sector phase, regime+confidence, known_gaps) every cycle but persists it ONLY to Telegram MARKET + the unified-agent.md notebook — never to a frontend-queryable store. Add a persist step to chef.md that writes docs/data/unified-agent-synthesis-<DATE>-<SLOT>.json.",
-        "type": "FEATURE",
-        "priority": "P1",
-        "status": "REVIEW",
-        "zone": "docs/agents/unified-agent/flow/chef.md",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#GAP-CHEF-SYNTHESIS-A-FLOW-PERSIST",
-        "promoted_at": "2026-07-10T08:51:06Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-10T08:51:33Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "cowork-refactory-expert",
-        "review_note": "Live-cycle verify path (PO 2026-07-11 triage): artifact docs/data/unified-agent-synthesis-<DATE>-<SLOT>.json NOT yet written (no CHEF dish since chef.md Step 7.6 landed 07-10; Sat = weekday dishes dark). Nearest cycle = Evening Preview 19:45Z Sat 07-11 (daily slot, guaranteed via com.vn-market.cowork-guaranteed-slot-firer launchd). Reliable full-dish fallback = Mon 07-13 Morning 05:15Z or EOD 08:45Z. qa/dev-team next tick after cycle: verify file exists AND (.conviction_calls|length>0) AND (.sector_phases|length>0) -> flip A REVIEW->DONE_VERIFIED, then GAP-CHEF-SYNTHESIS-B (FR-3) unblocks. No new board row (conservation-neutral).",
-        "review_gated_by": "live-cycle-verification"
       },
       {
         "id": "OPS-COWORK-GUARANTEED-SLOT-INSTALL",

@@ -97,3 +97,14 @@
 - F-BIZCTX: fold vs mint — mint P1: verified NEGATIVE (dish persisted [gap:business_context_absent] despite gathered data), genuine new HIGH, na=ba to trace GATHER→conviction wiring.
 **why-decision:** anomaly→BACKLOG PLAN-ONLY (WIP=18≥cap1); mint only genuinely-new+RAW-verified findings, dedup/fold the rest to avoid board churn.
 **why-change:** router named 2 mint candidates; added a 3rd (F-L6) on recurring-class escalation (3 cycles, 2 failed auto-cures) but scoped it isolation-first to respect isolation-probe-before-fix.
+
+### STEP po-S10 · po · 2026-07-19T20:31:00Z
+**task-id:** GAP-CHEF-SYNTHESIS-A-FLOW-PERSIST (REVIEW→BACKLOG reject; + 2 annotated)
+**what-done:** RAW-verified TNB-c114 chef-persist finding, root-caused it to a write-AUTHORIZATION cascade gap (not a write bug), rejected the review row to agent-father; ZERO new rows minted.
+**what-considered:**
+- Adopt TNB's ask (broaden L6 row to "trace Step 7.6 write reliability") — REJECTED: chases a non-existent bug. Step 7.6 logic is sound + has a post-write verify clause; the write is REFUSED, not failed.
+- Mint a new FIX row for the synthesis-JSON class — REJECTED: `GAP-CHEF-SYNTHESIS-A-FLOW-PERSIST` (the row that SHIPPED Step 7.6 on 07-10) is still in review[] gated on live-cycle-verification since 07-11 and was never signed off. Its ACs are demonstrably unmet → reject in place, conservation-neutral (546→546).
+- Diagnose as tool-grant gap like tran-ngoc-bau — REFUTED: `.claude/agents/unified-agent.md` L5 DOES grant Write. Defect is L4's "No other filesystem writes permitted" (2026-05-19) contradicting Step 7.6 (2026-07-10) + init.md carrying no docs/data/ allowlist. Absent-tool vs present-but-forbidden = different mechanism, same agent-father owner → fold into live pass, do not duplicate.
+- Mint a filename-determinism row — REJECTED: FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING (P1) already names "chef synthesis: date_vn+dish_type"; annotated with the new audit-plane harm instead.
+**why-decision:** model:haiku + self-contradictory system prompt ⇒ non-deterministic refusal, which uniquely explains the c111–c114 intermittency that 2 auto-cures failed to converge; agent self-reported in permission language ("tool limitation") while its MCP publish path worked the same cycle.
+**why-change:** router asked me to keep grant-mismatch and persistence-bug separate — evidence resolved it to grant-side only, so the persistence-bug branch was closed rather than carried; L6 row set BLOCKED on the cascade fix to stop a false narrative-gen verdict.
