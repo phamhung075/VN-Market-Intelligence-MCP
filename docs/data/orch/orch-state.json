@@ -411,8 +411,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-19T08:24:29Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-07-20T00:52:49Z",
+    "_updated_by": "po-signalqueue-triage-20260720",
     "archive": [],
     "rows": [
       {
@@ -483,8 +483,11 @@
         "type": "microservice_degraded",
         "summary": "mcp-server restart count 7 (check A-21)",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD — known-FP re-emit churn. A-30 memory-pressure is the mem-pct-denominator falsespike class (feedback_auditor_memory_pct_denominator_falsespike); A-21 restart-count=7 is cumulative/not-increasing (stale). Real mcp-server memory/restart concerns already tracked by backlog FIX-MCP-MEMORY-CODE-LEAK + OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN. No new mint, no restart (churn-without-convergence guardrail).",
+        "triaged_at": "2026-07-20T00:52:49Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260719T084114-0a72",
@@ -494,8 +497,11 @@
         "type": "microservice_degraded",
         "summary": "mcp-server memory 91.88% (check A-30)",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD — known-FP re-emit churn. A-30 memory-pressure is the mem-pct-denominator falsespike class (feedback_auditor_memory_pct_denominator_falsespike); A-21 restart-count=7 is cumulative/not-increasing (stale). Real mcp-server memory/restart concerns already tracked by backlog FIX-MCP-MEMORY-CODE-LEAK + OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN. No new mint, no restart (churn-without-convergence guardrail).",
+        "triaged_at": "2026-07-20T00:52:49Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260719T091047-4818",
@@ -505,8 +511,11 @@
         "type": "signal_feedback",
         "summary": "A-21 WARN: mcp-server restarts=7 > 2 threshold",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD — known-FP re-emit churn. A-30 memory-pressure is the mem-pct-denominator falsespike class (feedback_auditor_memory_pct_denominator_falsespike); A-21 restart-count=7 is cumulative/not-increasing (stale). Real mcp-server memory/restart concerns already tracked by backlog FIX-MCP-MEMORY-CODE-LEAK + OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN. No new mint, no restart (churn-without-convergence guardrail).",
+        "triaged_at": "2026-07-20T00:52:49Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260719T091053-03c1",
@@ -516,8 +525,11 @@
         "type": "signal_feedback",
         "summary": "A-30 WARN: mcp-server memory=93.14% >= 85% threshold",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD — known-FP re-emit churn. A-30 memory-pressure is the mem-pct-denominator falsespike class (feedback_auditor_memory_pct_denominator_falsespike); A-21 restart-count=7 is cumulative/not-increasing (stale). Real mcp-server memory/restart concerns already tracked by backlog FIX-MCP-MEMORY-CODE-LEAK + OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN. No new mint, no restart (churn-without-convergence guardrail).",
+        "triaged_at": "2026-07-20T00:52:49Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260719T094117-4c47",
@@ -527,8 +539,11 @@
         "type": "signal_feedback",
         "summary": "A-21 WARN: mcp-server container restart count 7 (threshold: ≤2)",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD — known-FP re-emit churn. A-30 memory-pressure is the mem-pct-denominator falsespike class (feedback_auditor_memory_pct_denominator_falsespike); A-21 restart-count=7 is cumulative/not-increasing (stale). Real mcp-server memory/restart concerns already tracked by backlog FIX-MCP-MEMORY-CODE-LEAK + OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN. No new mint, no restart (churn-without-convergence guardrail).",
+        "triaged_at": "2026-07-20T00:52:49Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260719T094118-165c",
@@ -538,8 +553,11 @@
         "type": "signal_feedback",
         "summary": "A-30 WARN: mcp-server memory pressure at 97.10% (threshold: <85%)",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD — known-FP re-emit churn. A-30 memory-pressure is the mem-pct-denominator falsespike class (feedback_auditor_memory_pct_denominator_falsespike); A-21 restart-count=7 is cumulative/not-increasing (stale). Real mcp-server memory/restart concerns already tracked by backlog FIX-MCP-MEMORY-CODE-LEAK + OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN. No new mint, no restart (churn-without-convergence guardrail).",
+        "triaged_at": "2026-07-20T00:52:49Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260719T101149-792a",
@@ -549,8 +567,11 @@
         "type": "signal_feedback",
         "summary": "mcp-server restart count: 7 (threshold: 2)",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD — known-FP re-emit churn. A-30 memory-pressure is the mem-pct-denominator falsespike class (feedback_auditor_memory_pct_denominator_falsespike); A-21 restart-count=7 is cumulative/not-increasing (stale). Real mcp-server memory/restart concerns already tracked by backlog FIX-MCP-MEMORY-CODE-LEAK + OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN. No new mint, no restart (churn-without-convergence guardrail).",
+        "triaged_at": "2026-07-20T00:52:49Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260719T101150-46cb",
@@ -560,8 +581,11 @@
         "type": "signal_feedback",
         "summary": "mcp-server memory pressure: 97.65% (threshold: 85%)",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD — known-FP re-emit churn. A-30 memory-pressure is the mem-pct-denominator falsespike class (feedback_auditor_memory_pct_denominator_falsespike); A-21 restart-count=7 is cumulative/not-increasing (stale). Real mcp-server memory/restart concerns already tracked by backlog FIX-MCP-MEMORY-CODE-LEAK + OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN. No new mint, no restart (churn-without-convergence guardrail).",
+        "triaged_at": "2026-07-20T00:52:49Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260719T103153-60de",
@@ -571,8 +595,11 @@
         "type": "data_stale",
         "summary": "market_messages no activity in last 3 hours (check C-06)",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "CLOSE — market-hours-blind FP (feedback_auditor_freshness_threshold_market_hours_blind). 2026-07-19 = Sunday, VN market closed; market_messages 3h inactivity at 10:31Z is expected weekend quiet, not a data outage. Stale/benign.",
+        "triaged_at": "2026-07-20T00:52:49Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260719T104106-3a71",
@@ -582,8 +609,11 @@
         "type": "microservice_degraded",
         "summary": "mcp-server memory pressure 96.39% (2.89GB/3GB)",
         "severity": "CRITICAL",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD — known-FP re-emit churn. A-30 memory-pressure is the mem-pct-denominator falsespike class (feedback_auditor_memory_pct_denominator_falsespike); A-21 restart-count=7 is cumulative/not-increasing (stale). Real mcp-server memory/restart concerns already tracked by backlog FIX-MCP-MEMORY-CODE-LEAK + OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN. No new mint, no restart (churn-without-convergence guardrail).",
+        "triaged_at": "2026-07-20T00:52:49Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260719T104113-0412",
@@ -593,8 +623,11 @@
         "type": "db_integrity_breach",
         "summary": "boardDetailsRefreshJob database disk image malformed",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "RESOLVED — boardDetailsRefreshJob market.db corruption self-resolved 2026-07-19T20:46:09Z (PRAGMA integrity_check=ok, INFO row sys-...204609-304c). Recurring Docker-virt SQLite corruption CLASS (now 3rd occurrence) tracked by backlog SPIKE-SQLITE-DOCKER-VIRT-CORRUPTION-HARDENING (recurring_bug_count 2->3 this triage). Closed as resolved; durable hardening stays PLAN-ONLY on the SPIKE.",
+        "triaged_at": "2026-07-20T00:52:49Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260719T111146-74ec",
@@ -604,8 +637,11 @@
         "type": "signal_feedback",
         "summary": "boardDetailsRefreshJob persistent database corruption — 0/5 success (2nd observation)",
         "severity": "CRITICAL",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "RESOLVED — boardDetailsRefreshJob market.db corruption self-resolved 2026-07-19T20:46:09Z (PRAGMA integrity_check=ok, INFO row sys-...204609-304c). Recurring Docker-virt SQLite corruption CLASS (now 3rd occurrence) tracked by backlog SPIKE-SQLITE-DOCKER-VIRT-CORRUPTION-HARDENING (recurring_bug_count 2->3 this triage). Closed as resolved; durable hardening stays PLAN-ONLY on the SPIKE.",
+        "triaged_at": "2026-07-20T00:52:49Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260719T111151-207f",
@@ -615,8 +651,11 @@
         "type": "signal_feedback",
         "summary": "mcp-server memory pressure A-30: 95.54% (≥85% threshold)",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD — known-FP re-emit churn. A-30 memory-pressure is the mem-pct-denominator falsespike class (feedback_auditor_memory_pct_denominator_falsespike); A-21 restart-count=7 is cumulative/not-increasing (stale). Real mcp-server memory/restart concerns already tracked by backlog FIX-MCP-MEMORY-CODE-LEAK + OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN. No new mint, no restart (churn-without-convergence guardrail).",
+        "triaged_at": "2026-07-20T00:52:49Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260719T111158-0fbb",
@@ -626,32 +665,175 @@
         "type": "signal_feedback",
         "summary": "mcp-server restart count A-21: 7 restarts (>2 threshold)",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD — known-FP re-emit churn. A-30 memory-pressure is the mem-pct-denominator falsespike class (feedback_auditor_memory_pct_denominator_falsespike); A-21 restart-count=7 is cumulative/not-increasing (stale). Real mcp-server memory/restart concerns already tracked by backlog FIX-MCP-MEMORY-CODE-LEAK + OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN. No new mint, no restart (churn-without-convergence guardrail).",
+        "triaged_at": "2026-07-20T00:52:49Z",
+        "triaged_by": "po"
+      },
+      {
+        "id": "sys-20260719T204609-304c",
+        "ts": "2026-07-19T20:46:09Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_integrity_resolved",
+        "summary": "Database corruption resolved — market.db PRAGMA integrity_check = ok",
+        "severity": "INFO",
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "RESOLVED — boardDetailsRefreshJob market.db corruption self-resolved 2026-07-19T20:46:09Z (PRAGMA integrity_check=ok, INFO row sys-...204609-304c). Recurring Docker-virt SQLite corruption CLASS (now 3rd occurrence) tracked by backlog SPIKE-SQLITE-DOCKER-VIRT-CORRUPTION-HARDENING (recurring_bug_count 2->3 this triage). Closed as resolved; durable hardening stays PLAN-ONLY on the SPIKE.",
+        "triaged_at": "2026-07-20T00:52:49Z",
+        "triaged_by": "po"
+      },
+      {
+        "id": "sys-20260719T204617-3f06",
+        "ts": "2026-07-19T20:46:17Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "pdf-extractor health endpoint failing — container shows unhealthy status",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "COLLAPSE (append-always dup of ONE recurring condition). pdf-extractor /health blocked during active /extract = event-loop stall; A-20 multi-probe 0/3. Tracked by existing backlog PDF-AVAIL-02-FIX (enriched this triage: root-cause=worker-timeout / event-loop isolation / separate health-server port; 5 obs 2026-07-19T20:46Z..2026-07-20T00:46Z; recurring_bug_count=5). PLAN-ONLY, no new mint (prior-art). DO NOT restart — a re-restart re-wedges on the next long PDF (symptom, not root).",
+        "triaged_at": "2026-07-20T00:52:49Z",
+        "triaged_by": "po"
+      },
+      {
+        "id": "sys-20260719T211240-4569",
+        "ts": "2026-07-19T21:12:40Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "api-gateway A-04 FAIL: health endpoint unreachable (CURL_ERR)",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "PLAN-ONLY investigation filed. Dashboard-tier health CURL_ERR flapping (frontend:3001 A-12 + api-gateway:4000 A-04/A-13) while MCP serving path healthy => isolated to dashboard tier, not the data plane. NEW backlog SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP: isolate real-outage vs probe-config/timeout FP (known class feedback_auditor_health3001_probe_timeout_tight; CURL_ERR=transport, not HTTP-5xx) before any fix. Do NOT restart.",
+        "triaged_at": "2026-07-20T00:52:49Z",
+        "triaged_by": "po"
+      },
+      {
+        "id": "sys-20260719T211249-1440",
+        "ts": "2026-07-19T21:12:49Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "pdf-extractor A-20 multi-probe FAIL: 0/3 probes passed — event-loop stall suspected",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "COLLAPSE (append-always dup of ONE recurring condition). pdf-extractor /health blocked during active /extract = event-loop stall; A-20 multi-probe 0/3. Tracked by existing backlog PDF-AVAIL-02-FIX (enriched this triage: root-cause=worker-timeout / event-loop isolation / separate health-server port; 5 obs 2026-07-19T20:46Z..2026-07-20T00:46Z; recurring_bug_count=5). PLAN-ONLY, no new mint (prior-art). DO NOT restart — a re-restart re-wedges on the next long PDF (symptom, not root).",
+        "triaged_at": "2026-07-20T00:52:49Z",
+        "triaged_by": "po"
+      },
+      {
+        "id": "sys-20260719T224141-6c18",
+        "ts": "2026-07-19T22:41:41Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "api-gateway:4000/health FAIL — CURL_ERR (A-04)",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "PLAN-ONLY investigation filed. Dashboard-tier health CURL_ERR flapping (frontend:3001 A-12 + api-gateway:4000 A-04/A-13) while MCP serving path healthy => isolated to dashboard tier, not the data plane. NEW backlog SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP: isolate real-outage vs probe-config/timeout FP (known class feedback_auditor_health3001_probe_timeout_tight; CURL_ERR=transport, not HTTP-5xx) before any fix. Do NOT restart.",
+        "triaged_at": "2026-07-20T00:52:49Z",
+        "triaged_by": "po"
+      },
+      {
+        "id": "sys-20260719T224150-3d0c",
+        "ts": "2026-07-19T22:41:50Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall suspected",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "COLLAPSE (append-always dup of ONE recurring condition). pdf-extractor /health blocked during active /extract = event-loop stall; A-20 multi-probe 0/3. Tracked by existing backlog PDF-AVAIL-02-FIX (enriched this triage: root-cause=worker-timeout / event-loop isolation / separate health-server port; 5 obs 2026-07-19T20:46Z..2026-07-20T00:46Z; recurring_bug_count=5). PLAN-ONLY, no new mint (prior-art). DO NOT restart — a re-restart re-wedges on the next long PDF (symptom, not root).",
+        "triaged_at": "2026-07-20T00:52:49Z",
+        "triaged_by": "po"
+      },
+      {
+        "id": "sys-20260719T234143-684c",
+        "ts": "2026-07-19T23:41:43Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "frontend:3001 A-12 FAIL: health endpoint CURL_ERR",
+        "severity": "INFO",
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "PLAN-ONLY investigation filed. Dashboard-tier health CURL_ERR flapping (frontend:3001 A-12 + api-gateway:4000 A-04/A-13) while MCP serving path healthy => isolated to dashboard tier, not the data plane. NEW backlog SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP: isolate real-outage vs probe-config/timeout FP (known class feedback_auditor_health3001_probe_timeout_tight; CURL_ERR=transport, not HTTP-5xx) before any fix. Do NOT restart.",
+        "triaged_at": "2026-07-20T00:52:49Z",
+        "triaged_by": "po"
+      },
+      {
+        "id": "sys-20260720T001204-7808",
+        "ts": "2026-07-20T00:12:04Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall suspected",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "COLLAPSE (append-always dup of ONE recurring condition). pdf-extractor /health blocked during active /extract = event-loop stall; A-20 multi-probe 0/3. Tracked by existing backlog PDF-AVAIL-02-FIX (enriched this triage: root-cause=worker-timeout / event-loop isolation / separate health-server port; 5 obs 2026-07-19T20:46Z..2026-07-20T00:46Z; recurring_bug_count=5). PLAN-ONLY, no new mint (prior-art). DO NOT restart — a re-restart re-wedges on the next long PDF (symptom, not root).",
+        "triaged_at": "2026-07-20T00:52:49Z",
+        "triaged_by": "po"
+      },
+      {
+        "id": "sys-20260720T003558-21ab",
+        "ts": "2026-07-20T00:35:58Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "documentation_size_breach",
+        "summary": "orch-state.json sprint_goal.entries=16 exceeds cap of 15",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "RESOLVED this triage — TASK 2 archived the completed sprint_goal vision QUE-REFERENCE-PAGE (route apps/frontend/app/routes/dashboard.kinh-dich-reference.tsx shipped, 9489B, renders 64 que from que-descriptions-detail.generated; successor KINHDICH-HOVER-DETAIL treats it as already-existing). sprint_goal.entries 16->15, now within cap 15.",
+        "triaged_at": "2026-07-20T00:52:49Z",
+        "triaged_by": "po"
+      },
+      {
+        "id": "sys-20260720T004628-7e09",
+        "ts": "2026-07-20T00:46:28Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-13 FAIL: api-gateway health endpoint CURL_ERR — probe failed",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "PLAN-ONLY investigation filed. Dashboard-tier health CURL_ERR flapping (frontend:3001 A-12 + api-gateway:4000 A-04/A-13) while MCP serving path healthy => isolated to dashboard tier, not the data plane. NEW backlog SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP: isolate real-outage vs probe-config/timeout FP (known class feedback_auditor_health3001_probe_timeout_tight; CURL_ERR=transport, not HTTP-5xx) before any fix. Do NOT restart.",
+        "triaged_at": "2026-07-20T00:52:49Z",
+        "triaged_by": "po"
+      },
+      {
+        "id": "sys-20260720T004634-6b62",
+        "ts": "2026-07-20T00:46:34Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-20 FAIL: pdf-extractor multi-probe 0/3 — event-loop stall suspected",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "COLLAPSE (append-always dup of ONE recurring condition). pdf-extractor /health blocked during active /extract = event-loop stall; A-20 multi-probe 0/3. Tracked by existing backlog PDF-AVAIL-02-FIX (enriched this triage: root-cause=worker-timeout / event-loop isolation / separate health-server port; 5 obs 2026-07-19T20:46Z..2026-07-20T00:46Z; recurring_bug_count=5). PLAN-ONLY, no new mint (prior-art). DO NOT restart — a re-restart re-wedges on the next long PDF (symptom, not root).",
+        "triaged_at": "2026-07-20T00:52:49Z",
+        "triaged_by": "po"
       }
     ],
-    "last_triaged_at": "2026-07-19T08:24:29Z",
-    "last_triaged_by": "po (A-30 mem + A-21 re-emit triage @08:24Z: RAW-verified 6-probe/65s mem trajectory = GC-sawtooth 89-93% oscillating, reclaimed 97.80%->89% 8.6pt, OOMKilled=false, 16h healthy => A-30 FOLD/dedup->FIX-MCP-MEMORY-CODE-LEAK (HWM 97.80% recorded in backlog-detail), report 3509 duplicate+deleted; A-21 re-emit DEDUP/FOLD (evidence unchanged, ledger-tracked). NO mint, NOT route-to-ops. 2 rows NEW->triaged.)"
+    "last_triaged_at": "2026-07-20T00:52:49Z",
+    "last_triaged_by": "po"
   },
   "sprint_goal": {
-    "_note": "Active sprint visions. PO triage 2026-07-11 16->14: merged FB-POSTER-LAUNCHD-FIRER into COWORK-GUARANTEED-SLOT-DURABILITY (superseded per cron-jobs.md, firer plist installed+loaded); archived NARRATIVE-TRUTH-CCATO-GATE (T2+T3 both DONE, T3 qa-APPROVED). Reasoning: sprint-ANALYSIS-QUALITY-CONVERGENCE-po.md.",
-    "_updated_at": "2026-07-12T07:56:33Z",
-    "_updated_by": "po",
+    "_note": "Active sprint visions. PO triage 2026-07-20 16->15: archived QUE-REFERENCE-PAGE (SHIPPED — route apps/frontend/app/routes/dashboard.kinh-dich-reference.tsx exists 9489B, renders all 64 que from que-descriptions-detail.generated; successor sprint KINHDICH-HOVER-DETAIL scope_out treats the reference page + its deep-link as already-existing; 0 orphan refs in task_board lanes; not in active_sprints). PREV: Active sprint visions. PO triage 2026-07-11 16->14: merged FB-POSTER-LAUNCHD-FIRER into COWORK-GUARANTEED-SLOT-DURABILITY (superseded per cron-jobs.md, firer plist installed+loaded); archived NARRATIVE-TRUTH-CCATO-GATE (T2+T3 both DONE, T3 qa-APPROVED). Reasoning: sprint-ANALYSIS-QUALITY-CONVERGENCE-po.md.",
+    "_updated_at": "2026-07-20T00:52:49Z",
+    "_updated_by": "po-sprintgoal-archive-20260720",
     "entries": [
-      {
-        "created_at": "2026-06-12T15:13:17Z",
-        "created_by": "po",
-        "data_foundation": "VERIFIED by PO 2026-06-12: apps/kinh-dich-service/dashboard/que-reference.js = 64 entries, each with name/chinese/upper/lower/upperElement/lowerElement/coreMeaning.vi/marketTrend/marketTrendLabel.vi/stateInterpretation.vi/favorable.vi/warning.vi/phases[6]. Codegen scripts/gen-que-descriptions.ts currently emits ONLY coreMeaning+marketTrendLabel (2 fields, PO-Q3 tooltip scope). Generated -> apps/frontend/app/lib/que-descriptions.generated.ts. Shared component apps/frontend/app/components/QueName.tsx exists. Route convention = Remix file-based (routes/dashboard.<name>.tsx). Nav SSOT = TopNav.tsx ANALYST_NAV/NAV_ITEMS.",
-        "priority": "medium",
-        "scope_in": "(1) CODEGEN EXTENSION (PO-Q1 ruling): scripts/gen-que-descriptions.ts emits a FULLER field set for the reference page beyond the 2-field tooltip set — full set = name, chinese, upper/lower trigram + upperElement/lowerElement, coreMeaning.vi, marketTrendLabel.vi, stateInterpretation.vi, favorable.vi, warning.vi, and the 6-entry phases[] (hao lines: action/outcome + vi gloss). Architect rules the exact emitted shape (single richer generated type, or a second detail-scoped generated file — keep the existing 2-field tooltip set intact so QueName tooltip ruling PO-Q3 is NOT regressed). NEVER hardcode the 64 texts — all text traces to apps/kinh-dich-service/dashboard/que-reference.js SSOT through codegen. (2) NEW PAGE (PO-Q2 ruling): route apps/frontend/app/routes/dashboard.kinh-dich-reference.tsx (Remix file-route convention, mirrors dashboard.kinh-dich-signals.tsx); nav entry added to the TopNav SSOT (ANALYST_NAV in apps/frontend/app/components/TopNav.tsx) label plain-Vietnamese e.g. \"Tra cuu Kinh Dich\"; renders all 64 que as cards/list with number+name+chinese char + full Vietnamese detail; client-side search/filter by que name or number; plain-Vietnamese for non-technical reader. (3) DEEP-LINK (PO-Q3-page ruling): the existing QueName tooltip MAY deep-link to this reference page anchored to the hexagram (e.g. /dashboard/kinh-dich-reference#que-<id>) — OPTIONAL, low-risk, include only if it does not regress the tooltip; architect rules.",
-        "scope_out": "NOT authoring any new hexagram interpretation text (SSOT already has all 64 Vietnamese descriptions). NOT redesigning kinh-dich market logic or get_portfolio_conviction. NOT touching kinh-dich-service Go code — que-reference.js is a generated read-only artifact input. NOT changing the QueName 2-field tooltip behavior/contract from PO-Q3 (tooltip stays as-is; only optional additive deep-link). NOT a new server endpoint unless architect proves codegen path insufficient (codegen-from-static-file is the proven QUE-TOOLTIP-DRY pattern — prefer it).",
-        "sprint_id": "QUE-REFERENCE-PAGE",
-        "status": "OPEN",
-        "success_metric": "QA loads the LIVE rebuilt frontend, navigates via the new nav entry to /dashboard/kinh-dich-reference, sees ALL 64 hexagrams each with full plain-Vietnamese detail (core meaning, state interpretation, favorable, warning, market trend, 6 hao phases), uses search/filter to find a que by name and by number, and confirms via grep that the 64 texts are NOT hardcoded in the page (they trace to que-descriptions.generated.* which traces to the kinh-dich-service SSOT). QueName 2-field tooltip still works unregressed. Ship completion, not a slice.",
-        "vision": "ONE Kinh Dich reference page on the frontend that shows the detailed plain-Vietnamese description of ALL 64 hexagrams (que) — a browsable encyclopedia, served from the kinh-dich-service SSOT, NEVER hardcoded. User request (verbatim): \"Kinh Dich i need one page for description detail all que\".",
-        "wip_rule": "dev-frontend WIP=2 discipline. FE-CORPEVENTS-TICKER-FILTER is in BACKLOG (PM decomposing now) and dev-frontend in_progress=0. RULE: architect + pm stages of this sprint run NOW in parallel (no frontend WIP impact). The dev-frontend IMPL task is SEQUENCED behind FE-CORPEVENTS-TICKER-FILTER per WIP=2 — dev-frontend picks up the reference-page impl only after FE-CORPEVENTS-TICKER-FILTER clears in_progress. Mirrors QUE-TOOLTIP-DRY wip_rule precedent.",
-        "zone": "multi"
-      },
       {
         "ba_status": "spec_complete",
         "created_at": "2026-06-14T07:10:12Z",
@@ -837,8 +1019,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-18T20:56:16Z",
-    "_updated_by": "po (TNB-c114 chef-persist triage 2026-07-19T20:31:00Z: GAP-CHEF-SYNTHESIS-A-FLOW-PERSIST REVIEW->BACKLOG rejected to agent-father [write-authorization cascade gap, root cause of the synthesis-JSON class]; L6-TOKEN-PERSISTENCE set BLOCKED on it; FILENAME-CYCLEID-KEYING dedup-annotated. ZERO new rows minted -- recurring-class escalated in place.)",
+    "_updated_at": "2026-07-20T00:52:49Z",
+    "_updated_by": "po-triage-20260720",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -4568,7 +4750,10 @@
         "title": "Fix PDF-AVAIL-02: Does pdf-extractor /health respond within 5s even during an active /extract job (event-loop fix)",
         "type": "fix",
         "zone": "ops",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#PDF-AVAIL-02-FIX"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#PDF-AVAIL-02-FIX",
+        "supervised": true,
+        "recurring_bug_count": 5,
+        "po_recurrence_triage_20260720": "RECURRENCE (PO signal-queue triage 2026-07-20): pdf-extractor A-20 event-loop-stall recurred 5x 2026-07-19T20:46Z..2026-07-20T00:46Z (health endpoint unhealthy + multi-probe 0/3). Root-cause hypothesis: the /health server shares the extraction event loop / the worker times out during long PDFs; durable fix = isolate the health server onto a separate thread/process/port so /health answers <5s during an active /extract. DO NOT restart (a re-restart re-wedges on the next long PDF). Zone-hint: this is CODE work in apps/pdf-extractor/ (current zone=ops = deploy angle only). recurring-bug-escalation (2+ -> durable fix) flag raised; supervised:true set to block BOUNDED-1 idle auto-pickup. PLAN-ONLY, no dispatch this triage."
       },
       {
         "id": "RAG-SERVICE-AVAIL-01-FIX",
@@ -7261,12 +7446,13 @@
         "question": "Two market.db SQLITE_CORRUPT incidents (2026-04-25, 2026-07-13) with NO app-code regression (image SHA 1c5845d64406 unchanged 42h) point to a Docker-virtualization-layer corruption class, not an application invariant violation. Corruption on 07-13 spread across UNRELATED page ranges (pages 107935-107973; Trees 8772/57970/57984/49348) — a low-level FS/virt fault, not localized telemetry damage. QUESTION: what is the most probable root cause — (a) concurrent exec-write from a peer container + Docker virt race, (b) WAL-checkpoint timing vulnerability, (c) Docker named-volume sync under concurrent load — and which hardening option is feasible/proportionate: (1) per-transaction write-lock coordination across containers, (2) WAL-checkpoint synchronization gate before peer exec-writes, (3) periodic PRAGMA integrity_check health gate with alert-on-FAIL, (4) backup-cadence tightening / SQLite replication? Deliverable: a findings/design doc addressing the root-cause hypothesis + hardening feasibility. Ops will NOT attempt application workarounds without architecture guidance (recurring-bug escalation = human decision required).",
         "note": "RECURRING-BUG ESCALATION per standing rule (2+ occurrences -> durable fix; feedback_recurring_bug_escalation). Signal: docs/signals/processed/20260713T175200Z-sqlite-corruption-recurring-docker-virt.json (ops commit c932e476a). Occurrence 1: 2026-04-25T~14:30Z (market.db.corrupt-* backups in volume). Occurrence 2: 2026-07-13T15:42-17:51Z SQLITE_CORRUPT restart-loop in mcp-server (reapZombieJobRuns UPDATE crashed on cron_job_runs). Recovery: DB swap from 04:30Z backup (integrity_check=ok), container healthy post-swap, ~11h data loss, 07-13 OHLCV refetched via VPS cron. Concurrent-activity suspect: dev-team peer BOUNDED-1 (HPG-DISCOVER-CONSOLIDATED-PDF, 15:29Z) may have exec-written the live DB during the 15:41-15:44Z corruption window. FORENSIC UPDATE: the 15:14Z rag-service restart earlier logged as a corruption-window suspect is now explained by the rag-service-1 restart loop (see DIAGNOSE-RAG-SERVICE-RESTART-LOOP) — that link is WEAKENED, not a corruption trigger. PLAN-ONLY: architect assessment only — NO inline fix. supervised:true keeps BOUNDED-1 from idle-picking this board-inline (no backlog-detail entry) row.",
         "signal_ref": "docs/signals/processed/20260713T175200Z-sqlite-corruption-recurring-docker-virt.json",
-        "recurring_bug_count": 2,
+        "recurring_bug_count": 3,
         "related": [
           "DIAGNOSE-RAG-SERVICE-RESTART-LOOP"
         ],
         "created_at": "2026-07-13T16:12:44Z",
-        "created_by": "po-reconcile-20260713T1612Z (recurring-bug escalation route)"
+        "created_by": "po-reconcile-20260713T1612Z (recurring-bug escalation route)",
+        "po_recurrence_triage_20260720": "3rd OCCURRENCE (PO signal-queue triage 2026-07-20): boardDetailsRefreshJob market.db 'database disk image malformed' 2026-07-19T10:41Z, escalated to CRITICAL persistent 0/5 at 11:11Z, then SELF-RESOLVED 2026-07-19T20:46:09Z (PRAGMA integrity_check=ok). Same Docker-virt SQLite corruption class as the 2026-04-25 + 2026-07-13 incidents. recurring_bug_count 2->3. Caution: an auditor self-resolved 'green' is not a durable fix (feedback_auditor_self_resolves_signal_false_green) — the durable hardening question in this SPIKE stands. PLAN-ONLY."
       },
       {
         "id": "DIAGNOSE-RAG-SERVICE-RESTART-LOOP",
@@ -8068,6 +8254,32 @@
         "po_reject_note": "[po 2026-07-19T20:31:00Z REVIEW->REJECTED, coordination_session bfa71244-a29a-4d41-872a-c69d5a033043] Live-cycle verification (the review_gated_by condition, open since 2026-07-11) now has 8 cycles of evidence and FAILS INTERMITTENTLY. RAW-verified this triage: chef-evening fired 2026-07-19T19:50:29Z (cowork-schedule.json .last_fired) and published to MARKET, but NO synthesis JSON was written -- zero files in docs/data/ carry a 2026-07-19 mtime; the expected path docs/data/unified-agent-synthesis-2026-07-20-evening.json (Step 7.6 CYCLE_DATE=VN date; 19:50Z = 02:50 VN on 07-20) is ABSENT. ROOT CAUSE -- NOT a chef.md logic bug (Step 7.6 is sound and even carries a post-write verification clause) -- it is an UN-CASCADED CAPABILITY CHANGE. .claude/agents/unified-agent.md L5 DOES grant the Write tool, but L4 (description, added 2026-05-19 commit 807680935) states verbatim: 'Writes only to docs/agent-memory/notebooks/unified-agent.md (cycle log, full overwrite). No other filesystem writes permitted.' Step 7.6 landed 2026-07-10 (commit 7320e4f50) instructing Write(docs/data/unified-agent-synthesis-*.json) WITHOUT cascading that boundary, and docs/agents/unified-agent/init.md still declares no write allowlist covering docs/data/ (its memory: block lists the notebook only). The worker is model:haiku, so a self-contradictory system prompt resolves NON-DETERMINISTICALLY -- exactly the observed intermittency (07-12..07-18 mostly wrote; 07-17 intraday-2 and 07-19 evening did not). CORROBORATION that this is a PERMISSION refusal and not a tool failure: the agent self-reported in permission language -- unified-agent.md today reads 'Synthesis: JSON output attempted (tool limitation)' -- while its mcp__gateway__call_tool publish path worked fine the SAME cycle (dish published to MARKET). AC TO CLOSE (agent-father lane: agent-definition files are outside dev/cowork lanes): (1) .claude/agents/unified-agent.md description must explicitly authorize docs/data/unified-agent-synthesis-<DATE>-<SLOT>.json, replacing the absolute 'No other filesystem writes permitted' clause; (2) docs/agents/unified-agent/init.md must carry the matching allowlist so bootstrap and agent-def agree; (3) RAW-verify on the next live dish that the expected-path file exists with non-empty conviction_calls[] and sector_phases[] -- prose is not proof; (4) do NOT flip DONE_VERIFIED on a single successful cycle: the defect is intermittent, require 3 consecutive dishes. COORDINATION: agent-father already has a live pass on the SIBLING defect in .claude/agents/tran-ngoc-bau.md (that one is a genuinely MISSING tools: grant -- no mcp__gateway__call_tool at all). SAME OWNER, DIFFERENT MECHANISM (absent-tool vs present-but-forbidden) -- fold into that pass, do NOT open a competing dispatch, and do NOT assume one fix covers both.",
         "rejected_at": "2026-07-19T20:31:00Z",
         "rejected_by": "po"
+      },
+      {
+        "id": "SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP",
+        "type": "SPIKE",
+        "mode": "spike",
+        "plan_only": true,
+        "supervised": true,
+        "owner": "architect",
+        "next_agent": "architect",
+        "zone": "cross-service/",
+        "size": "S",
+        "priority": "normal",
+        "timebox": 120,
+        "status": "BACKLOG",
+        "title": "SPIKE (architect, plan-only): dashboard-tier health CURL_ERR flapping — frontend:3001 (A-12) + api-gateway:4000 (A-04/A-13) intermittently fail the auditor health probe while the MCP serving path stays healthy. Isolate real-outage vs probe-config/timeout FP before any fix.",
+        "question": "The system-auditor flapped CURL_ERR on the dashboard serving tier (frontend :3001 A-12; api-gateway :4000 A-04/A-13) across 2026-07-19T21:12Z..2026-07-20T00:46Z, while the MCP serving path (gateway->vn-market) stayed healthy — the fragility is isolated to the dashboard tier, not the data plane. QUESTION: are these CURL_ERR real serving outages (container down / managed-tunnel or aggregator drop — cf. gateway 502 --token tunnel class) or auditor probe-side false positives (probe timeout too tight — cf. feedback_auditor_health3001_probe_timeout_tight; CURL_ERR = connection/timeout transport error, not an HTTP 5xx)? Isolation-probe-first: independently curl :3001 and :4000/health from the auditor host with a realistic timeout AND from inside the container before concluding real-vs-FP. Deliverable: findings doc classifying each check (A-12/A-04/A-13) as real-outage | probe-FP with the proportionate remediation. Do NOT restart anything — a restart both masks a probe-FP and re-wedges a real event-loop stall.",
+        "note": "PLAN-ONLY (anomaly->BACKLOG bridge). COLLAPSED from 4 append-always signal_queue rows (api-gateway A-04 x2: sys-20260719T211240-4569 / sys-20260719T224141-6c18; frontend:3001 A-12: sys-20260719T234143-684c; api-gateway A-13: sys-20260720T004628-7e09). Corroboration it may be probe-side: MCP serving path healthy same window; CURL_ERR is transport not HTTP-5xx. Prior-art checked — no existing backlog row covers the frontend/api-gateway health-probe flap class (FIX-DEPTHTHIN-B is a /ta path-rewrite, unrelated). supervised:true blocks BOUNDED-1 idle auto-pickup.",
+        "verification_gate": "Findings doc classifies A-12/A-04/A-13 as real-outage vs probe-FP with host+in-container curl evidence; if real, a proportionate tier-durability fix is specced; if FP, the auditor probe timeout/target is the fix. No infra action taken during the SPIKE.",
+        "created_at": "2026-07-20T00:52:49Z",
+        "created_by": "po-signalqueue-triage-20260720",
+        "origin_signal_ids": [
+          "sys-20260719T211240-4569",
+          "sys-20260719T224141-6c18",
+          "sys-20260719T234143-684c",
+          "sys-20260720T004628-7e09"
+        ]
       }
     ],
     "closed_sprints": [
@@ -9826,6 +10038,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-07-17T20:57:55Z",
-  "_updated_by": "po-tnb-c112-triage"
+  "_updated_at": "2026-07-20T00:52:49Z",
+  "_updated_by": "po-triage-20260720"
 }
