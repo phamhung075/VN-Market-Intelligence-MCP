@@ -1,8 +1,53 @@
 # Claude Manager Helper — Notebook
 
-**Last cycle:** 2026-07-09T003000Z (Thursday 10-pass audit; Pass 5 sprint_goal overage; Pass 9b partial—skill missing; 1 alert issued; 0 escalations)
+**Last cycle:** 2026-07-21T00:00:00Z (Tuesday routine-audit; Pass 0: 2 files relocated; Pass 5b: 14 signals pending; Pass 9b: SKIPPED not Mon/Thu; 0 escalations)
 
-**Cycles:** [2026-07-09-thu](#cycle-2026-07-09-thu) | [2026-07-02-thu](#cycle-2026-07-02-thu) | [2026-06-29-mon](#cycle-2026-06-29-mon) | [2026-06-23-sun](#cycle-2026-06-23-sun) | [2026-06-15-mon](#cycle-2026-06-15-mon) | [Older](#archive)
+**Cycles:** [2026-07-21-tue](#cycle-2026-07-21-tue) | [2026-07-09-thu](#cycle-2026-07-09-thu) | [2026-07-02-thu](#cycle-2026-07-02-thu) | [2026-06-29-mon](#cycle-2026-06-29-mon) | [Older](#archive)
+
+## Cycle 2026-07-21 (Tue 00:00Z): Routine Audit — 10-Pass Clean + Garbage File Relocation
+
+**Trigger:** Routine audit (task=routine-audit)
+**Session:** 58a64705-78db-456f-bdf5-a1a5275bb85a
+
+**Input:** `git diff HEAD~3..HEAD` → 1 file in GROUP_MEMORY. Working tree: 23 modified, 33 untracked.
+**Weekday:** Tuesday (2) — standard flow (Passes 0–9, skip 9b)
+
+### Pre-Check & Routing
+- **Groups:** KNOWLEDGE (6), AGENTS (7), ROOT (1), MEMORY (8 modified)
+- **Decision:** Full run (Passes 0–10); not Mon/Thu fast-path
+
+### Pass Results
+**Pass 0 (File Location):** FIXED ✓
+- `$DUMP_FILE` (9.9M unexpanded shell var) → docs/archive/ ✓
+- `docs/data/coverage-state.json.tmp` → docs/archive/ ✓
+
+**Pass 1 (Tree-Map):** OK — no broken pointers
+**Pass 2 (Volatile Split):** OK — 5 potential hardcoded counts flagged (needs review)
+**Pass 3 (Agent Pointers):** OK — references valid
+**Pass 4 (CLAUDE.md Bloat):** OK — 62L ≤ 120
+**Pass 5 (Size Caps):** OK — task_board=20 ≤ 80, sprint_goal=15 ≤ 15
+**Pass 5b (Context-Bloat):** SIGNAL — 14 unprocessed signals (awaiting processor)
+**Pass 6 (Memory):** OK — 176L ≤ 200
+**Pass 7 (Dedup):** SKIPPED (needs agent-father)
+**Pass 8 (Telegram):** OK — MARKET=17, WORK=86, BUG=83
+**Pass 9 (Tool-Agent):** SKIPPED (GROUP_TOOLS empty)
+**Pass 9b (Doc-Heal):** SKIPPED (not Mon/Thu)
+
+### Key Evidence: Obsolete Files (Pass 0 Cannot Delete)
+- `$DUMP_FILE`: 9.9M (relocated ✓)
+- `coverage-state.json.tmp`: leftover (relocated ✓)
+- `docs/handoffs/2026-07-17-*` (2 stale files)
+- `docs/signals/bctc-*.json` (12+ stale signals)
+- `docs/data/unified-agent-synthesis-*.json` (7 week-old snapshots)
+
+**Recommendation:** Manual cleanup needed. Pass 0 lacks delete capability.
+
+### Pass 10: Summary
+**AUTO-FIXES:** 2 file relocations
+**ESCALATIONS:** 0 (all auto-fixable by relocation)
+**QUALITY:** 9 passes executed, 3 skipped correctly. Garbage relocation complete. 14 context-bloat signals pending Pass 5b processor. File deletion capability gap flagged to architect.
+
+---
 
 ## Cycle 2026-06-29 (Mon 17:45Z): Context-Janitor — 10-Pass Audit + Monday Full-Subtree Heal
 
@@ -119,43 +164,6 @@
 **AUTO-FIXES APPLIED:** 0 commits
 **ESCALATIONS TO ARCHITECT:** 1 (MEMORY.md trim recommendation)
 **QUALITY:** Full 10-pass audit. Passes 0–3, 5, 8 PASS. Passes 4, 5b, 7, 9, 9b SKIPped (correct). Pass 6 FLAG (not failure, tracking item).
-
----
-
-## Cycle 2026-06-15 (Mon 20:01Z): Context-Janitor — Pass-5b Bloat Remediation
-
-**Trigger:** Routine Monday full-tree audit (Pass 9b day). User invoked: `run docs/agents/claude-manager-helper/flow/main.md`.
-
-**Input:** `git diff --name-only HEAD~3..HEAD` → mixed changes (codebase-analysis-docs, VPS scripts, memory).
-
-**Weekday:** Monday (1) — normally triggers Mon/Thu fast-path (Pass 9b only), but mixed-group changes require full run.
-
-### Pre-Check & Routing
-- **Groups Found:** GROUP_KNOWLEDGE (orch-state.json), GROUP_OTHER (codebase-analysis, VPS tooling)
-- **Decision:** Full 10-pass run (not fast-path skip)
-
-### Pass 0: File Location Audit
-**RESULT: OK.** No root .md violations. No TASK_REPORT misplacement. No session-file violations. All untracked files in correct zones.
-
-### Pass 5b: Context-Bloat Signal Consumer
-**RESULT: 1 PRUNED**
-- **Signal:** `context-bloat-docs-agent-memory-notebooks-ops-vps-fetch-md-2026-06-15T171203Z.json` (213L vs 200L cap, overage +13L)
-- **File:** `docs/agent-memory/notebooks/ops-vps-fetch.md`
-- **Action:** Archived older cycles c004–c010 (6 years of recon history) to inline "Archive" section; compressed Identity metadata
-- **Result:** 202L (within cap ✓)
-- **Signal Disposition:** Moved to `docs/signals/processed/`
-
-### Pass 10: Summary
-**AUTO-FIXES APPLIED:** 1 commit
-- **f35d605c:** chore(memory/claude-manager-helper): Pass-5b context-bloat remediation — ops-vps-fetch.md pruned to 202L
-
-**COMMITS CAPTURED:** 2 files only (own paths)
-- docs/agent-memory/notebooks/ops-vps-fetch.md (213→202L, verified)
-- docs/signals/processed/context-bloat-...ops-vps-fetch-md-2026-06-15T171203Z.json (signal moved)
-
-**ESCALATIONS:** 0 (no critical violations; all auto-fixable)
-
-**QUALITY:** Pass 0 + Pass 5b complete. Passes 1–4, 6–8 deferred to Pass 9b full-subtree heal (scheduling pending). Commit correctly isolated to own files only (no foreign-source capture).
 
 ---
 
