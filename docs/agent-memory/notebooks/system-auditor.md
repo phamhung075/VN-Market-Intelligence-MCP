@@ -1,3 +1,62 @@
+## c845 · 2026-07-20T23:42:55Z
+### Audit Run Tier-1 (23:40:46 UTC 2026-07-20)
+- Tier: 1 | Services: 13 checked | Health: 5 probed
+- A-01 to A-11 (container status): 13/13 UP (all deployed and running)
+- A-12 to A-19 (health endpoints): 4/5 OK — pdf-extractor CURL_ERR (A-20 override)
+- A-20 (pdf-extractor multi-probe): 0/3 FAIL — event loop stall (all probes HTTP 000)
+- A-21 (restart count): mcp-server=1 PASS (≤2 threshold)
+- A-30 (memory): mcp-server=63.96% PASS (trend: 55.89%→64.65%(peak)→63.96%, receding)
+- A-32 (disk): 35% < 85% PASS
+- Anomalies: 0 new | 2 dedup-skipped | Status: DEGRADED (persistent)
+
+### RAW-PROBE:
+```
+=== AUDITOR PROBE 2026-07-20T23:40:46Z ===
+
+--- docker ps -a ---
+mcp-gateway Up 5 days (healthy)
+vn-market-intelligence-mcp-frontend-1 Up 5 days (healthy)
+vn-market-intelligence-mcp-api-gateway-1 Up 5 days (healthy)
+vn-market-intelligence-mcp-flaresolverr-1 Up 5 days (healthy)
+vn-market-intelligence-mcp-news-fetch-1 Up 5 days (healthy)
+vn-market-intelligence-mcp-mcp-server-1 Up 18 hours (healthy)
+vn-market-intelligence-mcp-rag-service-1 Up 2 days (healthy)
+vn-market-intelligence-mcp-macro-indicators-1 Up 5 days (healthy)
+vn-market-intelligence-mcp-pdf-extractor-1 Up 27 hours (unhealthy)
+vn-market-intelligence-mcp-technical-analysis-1 Up 5 days (healthy)
+vn-market-intelligence-mcp-alert-engine-1 Up 5 days (healthy)
+vn-market-intelligence-mcp-stock-price-1 Up 5 days (healthy)
+vn-market-intelligence-mcp-kinh-dich-service-1 Up 5 days (healthy)
+
+--- health endpoints ---
+[health] mcp-server:3000/health OK (HTTP 200)
+[health] api-gateway:4000/health OK (HTTP 200)
+[health] macro-indicators:5004/health OK (HTTP 200)
+[health] pdf-extractor:5001/health FAIL (HTTP CURL_ERR)
+[health] frontend:3001/ OK (HTTP 200)
+
+--- restart count ---
+Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=1
+
+--- memory pressure ---
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=63.96% MemUsage=1.919GiB / 3GiB
+
+--- disk df -h / ---
+Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
+/dev/disk1s4s1   233Gi    13Gi    25Gi    35%    393k  266M    0%   /
+
+--- pdf-extractor in-container multi-probe (A-20) ---
+[A-20-PROBE-1] in-container HTTP 000000
+[A-20-PROBE-2] in-container HTTP 000000
+[A-20-PROBE-3] in-container HTTP 000000
+[A-20] pass_count=0/3
+
+=== PROBE DONE ===
+```
+
+**Signals appended:**
+- A-11 (SKIP-dedup) id=sys-20260720T234219-7ec2 dedup_key=microservice_degraded:pdf-extractor:A-11 last_sent=2026-07-20T02:11:41Z
+- A-20 (SKIP-dedup) id=sys-20260720T234225-28ab dedup_key=microservice_degraded:pdf-extractor:A-20 last_sent=2026-07-19T20:46:16Z
 
 ## c438 · 2026-07-20T22:43:25Z
 ### Audit Run Tier-1 (22:41:21–22:43:25 UTC 2026-07-20)
