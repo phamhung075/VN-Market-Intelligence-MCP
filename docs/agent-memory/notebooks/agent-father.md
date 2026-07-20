@@ -164,3 +164,24 @@ docs/signals/po-20260719T203100Z.json, GAP-CHEF-SYNTHESIS-A-FLOW-PERSIST)
   skill's own INV-GATEWAY-1 note confirms dev-team-tier agents (agent-father included) intentionally
   lack `mcp__gateway__call_tool` — this fix is scoped to cowork-tier tran-ngoc-bau only, no analogous
   change made to agent-father's own grant.
+
+### Edit (claude-manager-helper flow) 23:15 — 2026-07-20 FIX-CMH-OBSOLETE-FILE-CLEANUP (router-dispatched,
+brief docs/handoffs/2026-07-20-obsolete-file-cleanup-janitor-pass.md)
+- Task: janitor Pass 0 was relocating obsolete garbage ($DUMP_FILE 10MB, coverage-state.json.tmp) into
+  `docs/archive/` — a committable, non-gitignored path. Two-fold fix: new Pass 0b (quarantine-first
+  delete, allow-list opt-in, dry-run default) + Pass 0 disposition-gate (excludes pattern-A/B matches
+  from relocation instead of `mv`-ing them into `docs/archive/`).
+- Shipped: `scripts/audits/clean-obsolete-files.sh` (bash 3.2-portable, tracked-file guard + grace-period
+  guard + realpath traversal guard + bounded dir allow-list; `docs/signals/*.json` DETECT-ONLY —
+  >50 top-level emits DRAIN-BEHIND BUG, never deletes — that lifecycle stays owned by dev-team
+  drain-signals.md). New policy SSOT `docs/policies/obsolete-file-cleanup.md`. `docs/data/.trash/`
+  gitignored. Script logic verified against an isolated scratch fixture repo (tracked-guard, grace-guard,
+  forbidden-subtree, live quarantine, idempotent rerun, same-day collision, DRAIN-BEHIND threshold,
+  self-purge age-gate) — all passed. `--dry-run` also confirmed against the live tree: both named live
+  targets detected as candidates, 0 tracked files listed.
+- Left as-is: live quarantine of the two named targets deferred to the first real Pass 0b cron tick
+  (per router instruction, not executed this pass). AC1b (Pass 0's prose-driven disposition fix) is not
+  mechanically unit-testable by agent-father — needs a live claude-manager-helper run to confirm
+  behaviorally; the fix text was authored to unambiguously gate the `mv` step.
+- Commit: `78a72116f` (5 files: flow main.md, new policy, new script, .gitignore, dev-standards.md
+  pointer) via commit-mutex, local only, no push.
