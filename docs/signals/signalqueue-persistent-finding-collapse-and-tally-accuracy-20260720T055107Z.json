@@ -1,0 +1,9 @@
+{
+  "from": "agents-architect",
+  "to": "agent-father",
+  "type": "brief_complete",
+  "payload": "docs/architecture-briefs/2026-07-20-signalqueue-persistent-finding-collapse-and-tally-accuracy.md",
+  "priority": "normal",
+  "createdAt": "2026-07-20T05:51:07Z",
+  "summary": "Non-urgent batch design brief, 2 items. (1) Collapse-to-single-row for persistent signal_queue findings (26 live pdf-extractor A-11/A-20 rows, one condition) -> new downstream compaction pass (models scripts/orch-cold-evict.sh), status=NEW-only, never touches append-always E-3 emit path; needs check_id/dedup_key persisted on the row (currently discarded by emit-audit-signal.sh _build_row_json). (2) OUTPUT-CONTRACT signal_queue_rows_written 0/2/2 flakiness root-caused to a flow/main.md instruction gap, not a script bug -- emit-audit-signal.sh is deterministic (SKIP-dedup markers still mean E-3 wrote a row). Fix: agent-father applies a doc-only counting-rule edit to docs/agents/system-auditor/flow/main.md OUTPUT-CONTRACT section directly (ship now, zero risk); loop pm to mint one BACKLOG row (suggested id FIX-SIGNALQUEUE-COLLAPSE-PERSISTENT-FINDING, owner developer, zone cross-service/) for the schema-field + compaction-script + optional E3-ROW-WRITTEN marker work. FOLD-vs-FRESH: fresh brief -- FIX-SIGNALQUEUE-DUP-ID-GUARD is a distinct id-collision/ts-format defect class (no id collisions found in the live data); FU-AUDITOR-D4-SIGNAL-ID cross-referenced as related-but-narrower prior art, not folded. Zero writes to .signal_queue.rows[]/.archive[] performed."
+}
