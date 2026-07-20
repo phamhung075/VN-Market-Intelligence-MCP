@@ -1,15 +1,5 @@
 # agents-architect — Notebook
 
-## 2026-07-11T07:45:55Z
-
-**Brief:** `docs/architecture-briefs/2026-07-11-analysis-quality-convergence-lanes.md`
-
-ANALYSIS-QUALITY-CONVERGENCE (BA handoff, 7 FRs) split into 6 lanes: A=FR-1+FR-2 (cowork-refactory-expert, atomic CHEF-leg+gate-ext requirement flagged — not in BA's NFRs, load-bearing add), B=FR-5/C=FR-4 (both ALREADY EXIST as `CCATO-T3-FLOW-WIRING-6PT`/`CCATO-T2-CLAIM-TRUTH-SKILL` BACKLOG rows from sprint NARRATIVE-TRUTH-CCATO-GATE — pm dispatches those, does not re-mint), D=FR-3 (dev-mcp-server+dev-frontend split specced, still hard-gated on `GAP-CHEF-SYNTHESIS-A-FLOW-PERSIST` REVIEW→DONE_VERIFIED), E=FR-7 recon SPIKE (fully specced in brief §6, architect did NOT write orch-state.json — task's explicit write-boundary constraint overrides BA cascade-table phrasing "architect mints"; pm executes via orch-apply.sh), F=FR-6 passthrough. Critical collision flagged: `IND-P1-MOMENTUM-CONSUMER-WIRING` (BACKLOG, held_by:po-s135) is SUPERSEDED by FR-1's fresh §0.4 matrix (stale row targets alert-commander/TNB, over-assigns foreign_accum_rank, wrongly excludes market-analyst) — pm must supersede-and-close or merge-in-place, not dispatch as-is. Resolved BA's one open item: bctc-analyst insider_sentiment anchor = stage-analyze.md E1+E3 pre-pass fetch + stage-consolidate.md Step 5 citation.
-
-**Signal dropped:** `docs/signals/analysis-quality-convergence-lanes-20260711T074555Z.json` → pm
-
----
-
 ## 2026-07-18T19:34:15Z
 
 **Brief:** `docs/architecture-briefs/2026-07-18-cron-workflow-optimize-tier4-fleet-audit.md`
@@ -27,3 +17,13 @@ CRON-WORKFLOW-OPTIMIZE: designed Tier-4 "D-FLEET" fleet-performance/cooperation 
 Batched non-urgent design: (1) collapse 26 live append-always pdf-extractor A-11/A-20 rows (one persistent condition) → new downstream compaction pass modeled on `orch-cold-evict.sh`, status=NEW-only (frozen once triaged), never touches append-always E-3 emit path; found `check_id`/`dedup_key` are never persisted onto the row today (`emit-audit-signal.sh` discards them) — schema-blocker for any collapse design. (2) OUTPUT-CONTRACT `signal_queue_rows_written` 0/2/2 flakiness root-caused to a `flow/main.md` instruction gap, NOT a script bug — `emit-audit-signal.sh` is deterministic (a `SKIP-dedup` marker still means E-3 wrote a row; only `ABORT` means it didn't). Fix: doc-only counting-rule edit (agent-father, ship now) + optional `E3-ROW-WRITTEN` marker (developer, batched with the schema work). FOLD-vs-FRESH: fresh — `FIX-SIGNALQUEUE-DUP-ID-GUARD` is a distinct id-collision/ts-format class (no id collisions found live); `FU-AUDITOR-D4-SIGNAL-ID` cross-referenced as related-but-narrower prior art, not folded, not mutated.
 
 **Signal dropped:** `docs/signals/signalqueue-persistent-finding-collapse-and-tally-accuracy-20260720T055107Z.json` → agent-father
+
+---
+
+## 2026-07-20T22:29:51Z
+
+**Brief:** `docs/architecture-briefs/2026-07-21-global-geopolitical-signal-coverage.md`
+
+GLOBAL-GEOPOLITICAL-SIGNAL-COVERAGE: 2026-07-20 war/trade-war VN selloff (44up/263down) surfaced zero global-cause coverage in any cowork agent — root cause (b) schema/flow gap, no event category models "war/geopolitical" anywhere. Split into LANE A (6 doc-only items, agent-father, ZERO code dependency — found `event_type:"trade_war"` already live+server-accepted, unused only for lack of a trigger rule, so LANE A ships a functionally complete pipeline today, not a dormant contract): news-scout dedicated-Reuters-slice (stage-fetch.md) + Geopolitical/War dispatch block (stage-signals.md) + alert-commander no-ticker carve-out (stage-signals.md, with a field-precision correction — carve-out must key off top-level `stock_code` omission, NOT `finding_data.affected_stocks` which is schema-required non-empty `min(1)` and never surfaces to alert-commander's text-rendering path) + CHEF US-stack 4th element/L2_OK extension + CHEF 5th convergence rule + new `docs/policies/data-sources-coverage.md`. LANE B (PO backlog, dev-mcp-server): geopolitical domain-tag + `geopolitical_conflict` enum + detector (bundle, mirrors legalRiskDetector.ts pattern) + new US-equity-index/VIX tool (no existing tool surfaces S&P/Nasdaq/VIX). LANE C: ops probe of `news-fetch`/Reuters reachability — dated unresolved carry-over (dev-mainserver-crawls notebook, 2026-06-08, 43d stale) is a material dependency for LANE A's real-world value.
+
+**Signal dropped:** `docs/signals/global-geopolitical-signal-coverage-20260720T222951Z.json` → agent-father

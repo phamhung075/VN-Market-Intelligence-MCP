@@ -1,0 +1,9 @@
+{
+  "from": "agents-architect",
+  "to": "agent-father",
+  "type": "brief_complete",
+  "payload": "docs/architecture-briefs/2026-07-21-global-geopolitical-signal-coverage.md",
+  "priority": "high",
+  "summary": "LANE A doc-only fix (6 items, zero code dependency) closes 2026-07-20 war/trade-war blind spot by wiring news-scout/alert-commander/CHEF to the already-live event_type=trade_war enum value. LANE B (news domain-tag + geopolitical_conflict enum + US-equity-index tool) and LANE C (news-fetch/reuters ops probe) route to PO backlog per brief §6.",
+  "createdAt": "2026-07-20T22:29:51Z"
+}
