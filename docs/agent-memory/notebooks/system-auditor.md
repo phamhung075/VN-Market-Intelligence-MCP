@@ -1,18 +1,19 @@
-## c419 · 2026-07-20T03:40:54Z
-### Audit Run Tier-1 (03:40:54–03:40:54 UTC 2026-07-20)
+## c420 · 2026-07-20T04:10:39Z
+### Audit Run Tier-1 (04:10:39–04:10:39 UTC 2026-07-20)
 - Tier: 1 | Services: 13 checked | Health: 5 probed | 2 findings (0 new + 2 dedup-skipped)
 - A-01 to A-11 (container status): 13/13 UP, pdf-extractor UNHEALTHY (dedup: microservice_degraded:pdf-extractor:A-11 last=2026-07-20T02:11:41Z)
 - A-12 to A-19 (health endpoints): 4/5 OK — pdf-extractor CURL_ERR (dedup)
 - A-20 (pdf-extractor multi-probe): 0/3 FAIL — event loop stall (dedup: microservice_degraded:pdf-extractor:A-20 last=2026-07-19T20:46:16Z)
-- A-21 (restart count): mcp-server=0 PASS (7h+ uptime)
-- A-30 (memory): mcp-server=47.01% < 85% PASS
-- A-32 (disk): 36% < 85% PASS
-- System status: 7h+ uptime, 1 half-open circuit (polymarket 14 failures), crons healthy
+- A-21 (restart count): mcp-server=0 PASS (8h+ uptime)
+- A-30 (memory): mcp-server=55.00% < 85% PASS
+- A-32 (disk): 35% < 85% PASS
+- System status: 8h+ uptime, 1 half-open circuit (polymarket 15 failures), crons healthy
 - Anomalies: 0 new | 2 dedup-skipped (A-11, A-20) | Status: DEGRADED (ongoing pdf-extractor event loop stall)
+- Signals emitted: A-11 (SKIP-dedup id=sys-20260720T041150-6ae0), A-20 (SKIP-dedup id=sys-20260720T041157-2a15)
 
 ### RAW-PROBE:
 ```
-=== AUDITOR PROBE 2026-07-20T03:40:54Z ===
+=== AUDITOR PROBE 2026-07-20T04:10:39Z ===
 
 --- docker ps -a ---
 NAMES                                             STATUS                   IMAGE                                           CREATED
@@ -21,7 +22,7 @@ vn-market-intelligence-mcp-frontend-1             Up 4 days (healthy)      vn-ma
 vn-market-intelligence-mcp-api-gateway-1          Up 4 days (healthy)      vn-market-intelligence-mcp-api-gateway          4 days ago
 vn-market-intelligence-mcp-flaresolverr-1         Up 4 days (healthy)      ghcr.io/flaresolverr/flaresolverr:latest        4 days ago
 vn-market-intelligence-mcp-news-fetch-1           Up 4 days (healthy)      vn-market-intelligence-mcp-news-fetch           4 days ago
-vn-market-intelligence-mcp-mcp-server-1           Up 7 hours (healthy)     vn-market-intelligence-mcp-mcp-server           4 days ago
+vn-market-intelligence-mcp-mcp-server-1           Up 8 hours (healthy)     vn-market-intelligence-mcp-mcp-server           4 days ago
 vn-market-intelligence-mcp-rag-service-1          Up 2 days (healthy)      vn-market-intelligence-mcp-rag-service          4 days ago
 vn-market-intelligence-mcp-macro-indicators-1     Up 4 days (healthy)      vn-market-intelligence-mcp-macro-indicators     4 days ago
 vn-market-intelligence-mcp-pdf-extractor-1        Up 7 hours (unhealthy)   vn-market-intelligence-mcp-pdf-extractor        4 days ago
@@ -41,11 +42,11 @@ vn-market-intelligence-mcp-kinh-dich-service-1    Up 4 days (healthy)      vn-ma
 Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=0
 
 --- memory pressure ---
-Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=47.01% MemUsage=1.41GiB / 3GiB
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=55.00% MemUsage=1.65GiB / 3GiB
 
 --- disk df -h / ---
 Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
-/dev/disk1s4s1   233Gi    13Gi    24Gi    36%    393k  252M    0%   /
+/dev/disk1s4s1   233Gi    13Gi    25Gi    35%    393k  262M    0%   /
 
 --- pdf-extractor in-container multi-probe (A-20) ---
 [A-20-PROBE-1] in-container HTTP 000000
@@ -56,17 +57,14 @@ Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
 === PROBE DONE ===
 ```
 
-## d4-auto · 2026-07-20T03:00:01.237Z
-D4 candidates: none
-
-## c418 · 2026-07-20T02:40:37Z
-### Audit Run Tier-1 (02:40:37–02:40:37 UTC 2026-07-20)
-- Tier: 1 | Services: 12 checked | Health: 5 probed | 2 findings (0 new + 2 dedup-skipped)
-- A-01 to A-11 (container status): 12/12 UP, pdf-extractor UNHEALTHY (dedup: microservice_degraded:pdf-extractor:A-11 last=2026-07-20T02:11:41Z)
+## c419 · 2026-07-20T03:40:54Z
+### Audit Run Tier-1 (03:40:54–03:40:54 UTC 2026-07-20)
+- Tier: 1 | Services: 13 checked | Health: 5 probed | 2 findings (0 new + 2 dedup-skipped)
+- A-01 to A-11 (container status): 13/13 UP, pdf-extractor UNHEALTHY (dedup: microservice_degraded:pdf-extractor:A-11 last=2026-07-20T02:11:41Z)
 - A-12 to A-19 (health endpoints): 4/5 OK — pdf-extractor CURL_ERR (dedup)
-- A-20 (pdf-extractor multi-probe): 0/3 FAIL — event loop stall (HTTP 000 all 3 probes, dedup: microservice_degraded:pdf-extractor:A-20 last=2026-07-19T20:46:16Z)
-- A-21 (restart count): mcp-server=0 PASS (6h+ uptime)
-- A-30 (memory): mcp-server=61.79% < 85% PASS
+- A-20 (pdf-extractor multi-probe): 0/3 FAIL — event loop stall (dedup: microservice_degraded:pdf-extractor:A-20 last=2026-07-19T20:46:16Z)
+- A-21 (restart count): mcp-server=0 PASS (7h+ uptime)
+- A-30 (memory): mcp-server=47.01% < 85% PASS
 - A-32 (disk): 36% < 85% PASS
-- System status: 6h+ uptime, 1 half-open circuit (polymarket 12 failures), all crons healthy
+- System status: 7h+ uptime, 1 half-open circuit (polymarket 14 failures), crons healthy
 - Anomalies: 0 new | 2 dedup-skipped (A-11, A-20) | Status: DEGRADED (ongoing pdf-extractor event loop stall)
