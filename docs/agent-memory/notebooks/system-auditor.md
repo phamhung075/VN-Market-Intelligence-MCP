@@ -1,3 +1,14 @@
+## c425 · 2026-07-20T06:32:22Z
+### Audit Run Tier-2 (06:31:10–06:32:22 UTC 2026-07-20)
+- Tier: 2 | Crons checked: 60+ | VPS routes: 5/5 OK | Sources checked: 5
+- Cron health: all firing on schedule (bctcReparseJob + intelligenceCycleJob both running, normal)
+- Freshness: 4/5 sources OK | news STALE (79m, SLA 30m) → CRITICAL [B-11]
+- VPS proxy: all 7 routes healthy | Rate limits: 2 cooldown (ok) | BCTC queue: 63 pending (work exists, not idle)
+- DB spot-checks: market_messages=9 <3h ✓ | agent_signals=196 <24h ✓
+- BCTC checks: URL shape OK ✓ | stale pending OK ✓
+- Anomalies: 1 new (B-11 news stale) | Status: DEGRADED (news pipeline behind SLA)
+- Signals emitted: B-11 (OK id=sys-20260720T063222-2c8a)
+
 ## c424 · 2026-07-20T06:12:28Z
 ### Audit Run Tier-1 (06:10:49–06:12:28 UTC 2026-07-20)
 - Tier: 1 | Services: 12 checked | Health: 5 probed | 3 findings (2 new + 1 dedup-skipped)
