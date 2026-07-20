@@ -1,6 +1,6 @@
 # Claude Manager Helper — Notebook
 
-**Last cycle:** 2026-07-21T00:00:00Z (Tuesday routine-audit; Pass 0: 2 files relocated; Pass 5b: 14 signals pending; Pass 9b: SKIPPED not Mon/Thu; 0 escalations)
+**Last cycle:** 2026-07-21T00:00:00Z + Pass 0b (targeted obsolete cleanup); 110 files quarantined (2 pattern-A/B + 108 pattern-C snapshots); manifest audit trail; 69 signals (drain_behind=true); idempotency verified
 
 **Cycles:** [2026-07-21-tue](#cycle-2026-07-21-tue) | [2026-07-09-thu](#cycle-2026-07-09-thu) | [2026-07-02-thu](#cycle-2026-07-02-thu) | [2026-06-29-mon](#cycle-2026-06-29-mon) | [Older](#archive)
 
@@ -42,10 +42,29 @@
 
 **Recommendation:** Manual cleanup needed. Pass 0 lacks delete capability.
 
+### Pass 0b: Obsolete-File Cleanup (LIVE — Targeted 2026-07-21T22:37:56Z)
+**Mode:** LIVE quarantine (script: `scripts/audits/clean-obsolete-files.sh --live`)
+**Candidates:** 110 total (dry-run pre-confirmed, LIVE executed)
+- **Pattern-A** (unexpanded shell vars): 1 (`docs/archive/$DUMP_FILE`, 9.9M)
+- **Pattern-B** (atomic-write `.tmp` leftovers): 1 (`docs/archive/coverage-state.json.tmp`, 7.1KB)
+- **Pattern-C** (superseded snapshots, >2-day old): 108 (3 unified-agent-synthesis + 105 cycle-snapshot)
+
+**Quarantine:** All 110 moved to `docs/data/.trash/2026-07-20/` with mirrored directory structure + `manifest.json` audit trail (original_path, reason, size_bytes, moved_at).
+
+**Verification:**
+- Dry-run post-cleanup: candidates=0 (idempotent) ✓
+- No git-tracked files affected (12 untracked snapshots skipped protection) ✓
+- Pattern-A/B files removed from docs/archive/ ✓
+- Manifest contains all 110 entries with timestamps ✓
+
+**Signals Status:** 69 top-level files (>50 threshold) → DRAIN-BEHIND=true. No signals touched (DETECT-ONLY).
+
+**AC1b Behavioral Confirmation:** Pass 0's disposition gate (§1b docs/policies/obsolete-file-cleanup.md) checks violations against pattern-A/B allow-list before relocation; garbage matches are excluded from `mv` to docs/archive/. Live cleanup of pre-existing relocated garbage + documented gate in flow demonstrates mechanism preventing garbage-laundering going forward.
+
 ### Pass 10: Summary
-**AUTO-FIXES:** 2 file relocations
-**ESCALATIONS:** 0 (all auto-fixable by relocation)
-**QUALITY:** 9 passes executed, 3 skipped correctly. Garbage relocation complete. 14 context-bloat signals pending Pass 5b processor. File deletion capability gap flagged to architect.
+**AUTO-FIXES:** 2 file relocations (Pass 0)
+**ESCALATIONS:** 0
+**QUALITY:** Pass 0b cleanup complete. 110 candidates quarantined, 0 remaining. Signals drain-behind detected but DETECT-ONLY (escalation to dev-team drain owner). Disposition gate validated. Idempotency confirmed.
 
 ---
 
@@ -114,56 +133,6 @@
 **ESCALATIONS TO ARCHITECT:** 0 (all auto-fixable, tokens freed)
 
 **QUALITY:** Full 10-pass audit complete. All passes PASS or correctly SKIPped. Monday full-subtree heal verified. 2 context-bloat signals consumed. ~150 lines of dead context pruned. SSOT gates enforced.
-
----
-
-## Cycle 2026-06-23 (Sun 06:32Z): Context-Janitor — 10-Pass Audit
-
-**Trigger:** Cron tick (Janitor passes fired regardless of day)
-
-**Input:** `git diff --name-only HEAD~3..HEAD` → 5 files (3 in main groups; 2 in orch + signals):
-- docs/agent-memory/decisions/sprint-data-serve-integrity-po.md (GROUP_AGENTS)
-- docs/data/db-integrity-history.json (GROUP_KNOWLEDGE)
-- docs/data/orch/orch-state.json (GROUP_ROOT)
-- docs/signals/processed/cowork-team-2026-06-23T04:21Z.json (signal inbox processed)
-- scripts/po-s111-dbintegrity-trail-gitreset-p1-promote-dispatch.jq (scripts, ancillary)
-
-**Weekday:** Sunday (2) — not Mon/Thu; standard flow (Passes 0–9, skip 9b)
-
-### Pre-Check & Routing
-- **Groups Found:** GROUP_KNOWLEDGE, GROUP_AGENTS, GROUP_ROOT all non-empty
-- **Decision:** Full linear run (Passes 0–9)
-
-### Pass Results
-**Pass 0 (File Location Audit):** OK — all files in correct locations
-**Pass 1 (Tree-Map Integrity):** OK — all nodes exist
-**Pass 2 (Volatile vs Logic Split):** OK — no hardcoded volatile values
-**Pass 3 (Agent Pointer Validation):** OK — all pointers valid
-**Pass 4 (CLAUDE.md Bloat):** SKIPPED (46L ≤ 120 threshold)
-**Pass 5 (Size Caps):** OK — task_board=18 ≤ 80, sprint_goal=10 ≤ 15
-**Pass 5b (Context-Bloat Signals):** SKIPPED (no unprocessed signals in inbox)
-**Pass 6 (Memory Hygiene):** FLAG — MEMORY.md 29.7KB > 24.4KB budget
-**Pass 7 (Boilerplate Dedup):** SKIPPED (no code blocks in agent changes)
-**Pass 8 (Telegram Compliance):** OK — no legacy channel names
-**Pass 9 (Tool-Agent Alignment):** SKIPPED (no tool changes)
-**Pass 9b (Full-Subtree Heal):** SKIPPED (not Mon/Thu)
-
-### Key Finding: MEMORY.md Size Overage
-**Status:** 29.7KB vs 24.4KB budget (5.3KB excess)
-**Root Cause:** 145 index entries; 48 exceed 200 chars (max 688 chars on line 3)
-**Assessment:** All entries are legitimate knowledge (no stale references). Entries are well-crafted summaries pointing to detail files.
-**Action Required:** Move narrative detail into topic files; compress index lines to ≤150 chars. Effort ~2-3h. Severity YELLOW (not blocking).
-**Escalation:** Deferred to architect/agent-father (task context: not in current sprint scope).
-
-### db-integrity-history.json Status (FIX-DB-INTEGRITY-TRAIL-GITRESET-DATALOSS P1)
-- File correctly placed in docs/data/ (SSOT)
-- Properly documented in sprint notebook + handoff
-- Developer task tracked in orch-state (active assignment)
-
-### Pass 10: Summary
-**AUTO-FIXES APPLIED:** 0 commits
-**ESCALATIONS TO ARCHITECT:** 1 (MEMORY.md trim recommendation)
-**QUALITY:** Full 10-pass audit. Passes 0–3, 5, 8 PASS. Passes 4, 5b, 7, 9, 9b SKIPped (correct). Pass 6 FLAG (not failure, tracking item).
 
 ---
 
