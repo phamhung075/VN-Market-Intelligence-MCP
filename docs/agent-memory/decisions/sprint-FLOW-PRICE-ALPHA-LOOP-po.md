@@ -108,3 +108,14 @@
 - Mint a filename-determinism row — REJECTED: FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING (P1) already names "chef synthesis: date_vn+dish_type"; annotated with the new audit-plane harm instead.
 **why-decision:** model:haiku + self-contradictory system prompt ⇒ non-deterministic refusal, which uniquely explains the c111–c114 intermittency that 2 auto-cures failed to converge; agent self-reported in permission language ("tool limitation") while its MCP publish path worked the same cycle.
 **why-change:** router asked me to keep grant-mismatch and persistence-bug separate — evidence resolved it to grant-side only, so the persistence-bug branch was closed rather than carried; L6 row set BLOCKED on the cascade fix to stop a false narrative-gen verdict.
+
+### STEP po-S11 · po · 2026-07-20T22:11:26Z
+**task-id:** FIX-CMH-OBSOLETE-FILE-CLEANUP (BACKLOG mint + design brief → agent-father)
+**what-done:** Scoped user request "add clean obsolete file to system audit cron" to a Pass 0b on claude-manager-helper (cron 77876d96); minted 1 CLEAN backlog row + design-brief handoff; conservation 553→554 OK.
+**what-considered:**
+- Owner = system-auditor vs claude-manager-helper — chose CMH: it owns Pass 0 relocation and is the mutating janitor; system-auditor is read-only.
+- Let the pass delete stale `docs/signals/*.json` (router's evidence listed them) — REJECTED: signal lifecycle is already owned by dev-team drain-signals.md (move→processed/→7d prune). Deleting there races the drain and risks undrained-signal data loss. Made signals DETECT-ONLY (>50 ⇒ DRAIN-BEHIND BUG flag).
+- Blind `rm` of untracked garbage — REJECTED for a quarantine-first design (move to gitignored `.trash/<date>/` + manifest, dry-run default, allow-list opt-in per pattern, tracked-file guard).
+- Full BA/architect chain — REJECTED: contained hygiene edit (flow + policy + coupled audits script), fully specified in brief → single implementer agent-father.
+**why-decision:** deletion is destructive; the only defensible design bounds it by explicit allow-list (unexpanded-var names, aged `*.tmp`, superseded synthesis snapshots) + hard NEVER invariants + quarantine recovery window, and defers all signal retention to the existing drain owner.
+**why-change:** router suggested deleting stale signals directly; I narrowed that to detect-only after confirming drain-signals.md is the canonical retention owner (prevents a second, racing lifecycle owner).

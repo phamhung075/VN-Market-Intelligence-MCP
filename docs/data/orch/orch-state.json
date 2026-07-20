@@ -1044,6 +1044,292 @@
         "severity": "HIGH",
         "status": "NEW",
         "payload_ref": "docs/signals/po-20260720T052606Z.json"
+      },
+      {
+        "id": "sys-20260720T054158-2b57",
+        "ts": "2026-07-20T05:41:58Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-11 FAIL: pdf-extractor — UNHEALTHY (event loop stall)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260720T054204-28c5",
+        "ts": "2026-07-20T05:42:04Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-20 FAIL: pdf-extractor multi-probe 0/3 — event-loop stall suspected",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260720T061203-12b0",
+        "ts": "2026-07-20T06:12:03Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall suspected",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260720T061210-7a99",
+        "ts": "2026-07-20T06:12:10Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "api-gateway A-12 FAIL: health endpoint unreachable",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260720T061215-2b62",
+        "ts": "2026-07-20T06:12:15Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "pdf-extractor A-13 FAIL: health endpoint unreachable",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260720T063222-2c8a",
+        "ts": "2026-07-20T06:32:22Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "news stale 79m (check B-11)",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260720T064208-2fba",
+        "ts": "2026-07-20T06:42:08Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-13 FAIL: pdf-extractor health endpoint unreachable (CURL_ERR)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260720T064214-2283",
+        "ts": "2026-07-20T06:42:14Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-20 FAIL: pdf-extractor multi-probe 0/3 — event-loop stall",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260720T071212-53b5",
+        "ts": "2026-07-20T07:12:12Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-13 FAIL: pdf-extractor health endpoint unreachable (CURL_ERR)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260720T071219-0f5e",
+        "ts": "2026-07-20T07:12:19Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-20 FAIL: pdf-extractor event-loop stall — 0/3 in-container probes passed",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260720T074205-694a",
+        "ts": "2026-07-20T07:42:05Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "api-gateway health endpoint unreachable (A-13)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260720T074207-3c21",
+        "ts": "2026-07-20T07:42:07Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall suspected",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260720T081149-25bd",
+        "ts": "2026-07-20T08:11:49Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-13 FAIL: api-gateway health CURL_ERR",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260720T081151-08aa",
+        "ts": "2026-07-20T08:11:51Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-20 FAIL: pdf-extractor event-loop stall 0/3",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260720T084212-3955",
+        "ts": "2026-07-20T08:42:12Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall suspected",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260720T091146-4065",
+        "ts": "2026-07-20T09:11:46Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall suspected",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260720T091152-1159",
+        "ts": "2026-07-20T09:11:52Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "api-gateway health endpoint unreachable (CURL_ERR)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260720T094235-23e5",
+        "ts": "2026-07-20T09:42:35Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall suspected",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260720T101156-1520",
+        "ts": "2026-07-20T10:11:56Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260720T101203-69a1",
+        "ts": "2026-07-20T10:12:03Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "api-gateway:4000/health CURL_ERR — flapping",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260720T101211-78cf",
+        "ts": "2026-07-20T10:12:11Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "mcp-server memory elevated watch: 58.46% (trend: 45.34→47.86→54.82→58.46%)",
+        "severity": "INFO",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260720T104332-1347",
+        "ts": "2026-07-20T10:43:32Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall suspected",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260720T220825-19be",
+        "ts": "2026-07-20T22:08:25Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-11 FAIL: pdf-extractor — health endpoint FAIL (HTTP CURL_ERR)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260720T220831-4fbd",
+        "ts": "2026-07-20T22:08:31Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-20 FAIL: pdf-extractor multi-probe 0/3 — event-loop stall suspected",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260720T221412-64ae",
+        "ts": "2026-07-20T22:14:12Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "api-gateway A-12 FAIL: health endpoint unreachable (CURL_ERR)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260720T221416-0e97",
+        "ts": "2026-07-20T22:14:16Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall suspected",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-20T00:52:49Z",
@@ -1239,8 +1525,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-20T00:52:49Z",
-    "_updated_by": "po-triage-20260720",
+    "_updated_at": "2026-07-20T22:11:26Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -8586,6 +8872,18 @@
         "created_by": "po",
         "source": "router RAW-verify of chef-morning 2026-07-20 dish (docs/data/unified-agent-synthesis-2026-07-20-morning.json); PO triage 2026-07-20T05:26Z",
         "note": "docs/data/unified-agent-synthesis-2026-07-20-morning.json causal_chains[0] contains French 'malgre' plus non-words 'chubb', 'ce vao', 'bieng', 'ticuc', and bare 'to' where an arrow was intended. Violates the plain-Vietnamese output policy (feedback_market_report_plain_vietnamese, feedback_language_boundary). SCOPE — MEASURED, NOT ASSUMED: grep across ALL docs/data/unified-agent-synthesis-*.json returns exactly ONE file with these tokens, so this is a one-off generation defect, NOT a recurring class; priority is medium on that basis. The separate 'queh' for 'que' in the notebook is plain diacritic-stripping and appears in other cycles too — cosmetic, distinct from this garble. UNVERIFIED, DO NOT OVERCLAIM: causal_chains lives in the internal synthesis artifact. Whether this text reached the MARKET Telegram message was NOT verified — the MARKET post is composed as separate plain-VI prose. Establish user-visible impact before treating this as a public-facing incident. AC: a cheap lint on the synthesis JSON narrative fields (non-VN/non-EN token detector) so the next occurrence is caught at write time rather than by a router spot-check."
+      },
+      {
+        "id": "FIX-CMH-OBSOLETE-FILE-CLEANUP",
+        "title": "Context Janitor obsolete-file cleanup: add Pass 0b (quarantine-first delete, allow-list, dry-run) + fix Pass 0 disposition (stop relocating garbage into committable docs/archive/)",
+        "owner": "agent-father",
+        "status": "BACKLOG",
+        "zone": "cross-service",
+        "type": "CLEAN",
+        "size": "S",
+        "priority": "medium",
+        "detail_ref": "docs/handoffs/2026-07-20-obsolete-file-cleanup-janitor-pass.md",
+        "created_at": "2026-07-20T22:11:26Z"
       }
     ],
     "closed_sprints": [

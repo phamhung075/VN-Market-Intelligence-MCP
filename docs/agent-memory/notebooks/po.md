@@ -1,24 +1,24 @@
 # PO Notebook
 
-_Last: 2026-07-20T00:52Z (bounded triage — signal_queue drain 25→0 + sprint_goal cap 16→15; 1 PLAN-ONLY mint, ZERO dev dispatch)_
+_Last: 2026-07-20T22:11Z (feature scope — obsolete-file cleanup pass for Context Janitor; 1 CLEAN mint + design brief → agent-father; ZERO code)_
 
-## Tick 2026-07-20T00:52Z — signal_queue drain + sprint_goal cap breach
+## Tick 2026-07-20T22:11Z — "add clean obsolete file to system audit cron"
 
-Router-directed bounded triage after Tier-3 auditor. All writes via `orch-apply.sh` (Zod + conservation + CAS PASS). Commit `74464df28` (orch-state only, explicit path). Prior-art grepped before any mint.
+Router-directed feature scope. Verified live garbage (`$DUMP_FILE` 10MB unexpanded-var dump, `*.json.tmp`, stale synthesis snapshots) with RAW probes before scoping. Minted 1 backlog row via `orch-apply.sh` (conservation 553→554 PASS). Prior-art grepped: no existing obsolete-cleanup task; `CLEAN-SIGNALS-DIR-NONSIGNAL-ARTIFACTS` is a distinct drain-side relocation task.
 
-**TASK 1 — 25 NEW → triaged (0 remaining), 5 clusters, 1 new PLAN-ONLY mint:**
-- **COLLAPSE 5** pdf-extractor A-20 event-loop-stall dups → existing `PDF-AVAIL-02-FIX` (enriched: root-cause worker-timeout / event-loop isolation / separate health-server port; recurring_bug_count=5; **supervised:true** set to block BOUNDED-1; do-NOT-restart — re-restart re-wedges the next long PDF). No mint.
-- **FOLD 11** mcp-server A-21/A-30 mem/restart = known-FP re-emit churn (mem-pct-denominator falsespike; restart-count 7 cumulative/stale). Already tracked by `FIX-MCP-MEMORY-CODE-LEAK` + `OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN`. No mint.
-- **RESOLVED 3** boardDetailsRefreshJob market.db corruption (self-resolved 20:46Z integrity_check=ok) → recurring Docker-virt class `SPIKE-SQLITE-DOCKER-VIRT-CORRUPTION-HARDENING` count 2→3.
-- **CLOSE 1** market_messages data_stale — 07-19 Sun weekend, market-hours-blind FP.
-- **PLAN-ONLY MINT 1:** `SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP` (cross-service/, supervised) collapsing 4 frontend:3001 A-12 + api-gateway:4000 A-04/A-13 CURL_ERR flaps. MCP serving path healthy ⇒ isolate real-outage vs probe-FP first (health-probe-timeout FP class); no infra action.
-
-**TASK 2 — sprint_goal.entries 16→15 (≤ cap 15):** archived SHIPPED `QUE-REFERENCE-PAGE` (route apps/frontend/app/routes/dashboard.kinh-dich-reference.tsx exists 9489B, renders 64 que; successor KINHDICH-HOVER-DETAIL treats it as existing; 0 orphan refs in task_board lanes).
+**MINT — `FIX-CMH-OBSOLETE-FILE-CLEANUP` (CLEAN/S, → agent-father):**
+Add `Pass 0b: Obsolete-File Cleanup` to claude-manager-helper (cron `77876d96` Mon/Thu). Design brief: `docs/handoffs/2026-07-20-obsolete-file-cleanup-janitor-pass.md`.
+- Owner = CMH (mutating janitor, owns Pass 0 relocation), NOT system-auditor (read-only prober).
+- **TWO-FOLD (coordinator input):** (1) new Pass 0b delete pass; (2) fix Pass 0 — it currently RELOCATES garbage into `docs/archive/` (NOT gitignored, holds legit tracked docs) = 10MB `$DUMP_FILE` + `coverage-state.json.tmp` moved root→archive, still committable (latent `git add -A` sweep risk). Pass 0 must exclude pattern-A/B garbage from relocation.
+- **Allow-list delete only:** (A) unexpanded-var filenames `$*`, (B) aged `*.tmp`, (C) superseded synthesis/cycle snapshots past keep-window. Scan scope incl. `docs/archive/` (tracked-guard protects legit docs). Opt-in per pattern.
+- **Quarantine-first:** move → gitignored `docs/data/.trash/<date>/` + manifest, dry-run default, `--live` gated; NO blind `rm`. Self-purge after 7d.
+- **Hard NEVER:** git-tracked files; `.git/.claude/node_modules/apps/packages/.backups`; <grace-age; path-traversal. Idempotent. Do NOT blanket-ignore `docs/archive/` (tracked legit docs) — fix disposition instead.
+- Deliverables: flow Pass 0b + Pass 0 disposition fix + `docs/policies/obsolete-file-cleanup.md` SSOT + `scripts/audits/clean-obsolete-files.sh` + `.gitignore` `.trash/`.
 
 ## Carry-over
-- **A-30 TRIPWIRE (STANDING):** the FOLD above holds ONLY while GC ceiling intact — escalate to ops if baseline >~93% no-dip OR peak sustained >97% no-reclaim OR OOMKilled=true.
-- **agent-father COORDINATION:** `unified-agent.md` = present-but-forbidden Write; `tran-ngoc-bau.md` = missing tools grant. Same owner, different mechanism — fold, don't assume one fix covers both.
-- **DO NOT flip GAP-CHEF-SYNTHESIS-A DONE_VERIFIED on one good cycle** — intermittent; require 3 consecutive dishes with non-empty conviction_calls[]+sector_phases[].
-- **Audit-plane distrust (STANDING):** notebook `Synthesis: <path>` ≠ persistence receipt; verify by mtime, not citation.
-- **pdf-extractor + dashboard-tier are PLAN-ONLY** — filed, NOT dispatched; router/user gates execution. supervised:true on both blocks idle auto-pickup.
-- Session f4ca241d (router coord). Committed MY scoped path only; did NOT push.
+- **KEY BOUNDARY (STANDING):** signal-file retention is OWNED by dev-team `drain-signals.md` (move→processed/→7d prune + purge-legacy script). The cleanup pass is DETECT-ONLY on `docs/signals/*.json` — >50 ⇒ DRAIN-BEHIND BUG flag, never delete. Do NOT create a second racing lifecycle owner.
+- Stale `bctc_signal_*_20260719_*` in tree today = drain-behind symptom, not janitor targets.
+- **A-30 TRIPWIRE (STANDING):** mcp-server mem FOLD holds only while GC ceiling intact — escalate ops if baseline >93% no-dip / peak >97% no-reclaim / OOMKilled.
+- **DO NOT flip GAP-CHEF-SYNTHESIS-A DONE_VERIFIED** on one good cycle — need 3 consecutive non-empty conviction_calls[]+sector_phases[].
+- pdf-extractor + dashboard-tier PLAN-ONLY (supervised:true blocks idle auto-pickup).
+- Session 58a64705 (router coord). Committed MY scoped paths only; did NOT push.
