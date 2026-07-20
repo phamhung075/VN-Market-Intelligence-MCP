@@ -1,6 +1,6 @@
 # Developer Standards
 
-<!-- size-justification: 140L — unified developer reference: code search tools, test patterns, DDD rules, TypeScript conventions, naming. All read together at sprint start to set context; splitting into tool-guide + test-patterns + naming-rules fragments the unified "how we code" standard. SCRIPT-PERSIST 2026-06-07: Script Persistence section incl. maintenance clause (+15L, user directive). SYSREMAKE-P2-DEVTEAM-BACKLOG-PICKUP-BOUNDED1 2026-07-04: CANONICAL pointer for the dev-team idle-capacity backlog pickup scripts (+11L). PUSH-AUTONOMY-1 2026-07-14: Autonomous Push Gate section (+16L, user directive — push on 100% green, no user action, post-push real-data verify task). -->
+<!-- size-justification: 140L — unified developer reference: code search tools, test patterns, DDD rules, TypeScript conventions, naming. All read together at sprint start to set context; splitting into tool-guide + test-patterns + naming-rules fragments the unified "how we code" standard. SCRIPT-PERSIST 2026-06-07: Script Persistence section incl. maintenance clause (+15L, user directive). SYSREMAKE-P2-DEVTEAM-BACKLOG-PICKUP-BOUNDED1 2026-07-04: CANONICAL pointer for the dev-team idle-capacity backlog pickup scripts (+11L). PUSH-AUTONOMY-1 2026-07-14: Autonomous Push Gate section (+16L, user directive — push on 100% green, no user action, post-push real-data verify task). FIX-CMH-OBSOLETE-FILE-CLEANUP 2026-07-20: CANONICAL pointer for scripts/audits/clean-obsolete-files.sh (+8L). -->
 
 ## Script Persistence — scripts/, never /tmp
 
@@ -15,6 +15,15 @@ Any script useful for the work or reusable later MUST be saved to `scripts/` —
 | Anything else reusable | `scripts/` |
 
 After saving: **update the owning flow/skill doc with a canonical pointer** (`node scripts/...` usage line) so future agents discover it instead of rewriting it. Pattern: `docs/agents/dev-team/flow/drain-signals.md` §0a-1 "CANONICAL SCRIPT".
+
+**CANONICAL: Obsolete-file cleanup (FIX-CMH-OBSOLETE-FILE-CLEANUP)**
+```bash
+scripts/audits/clean-obsolete-files.sh              # --dry-run default, no deletes
+scripts/audits/clean-obsolete-files.sh --live        # quarantines to docs/data/.trash/<date>/, never rm's
+```
+Allow-list-driven, quarantine-first janitor cleanup (unexpanded-shell-var names, aged atomic-write `.tmp`
+leftovers, superseded per-cycle snapshots). Owning flow: `docs/agents/claude-manager-helper/flow/main.md`
+§ Pass 0b. Policy SSOT: `docs/policies/obsolete-file-cleanup.md`.
 
 **CANONICAL: OHLCV unit contamination repair (CONTAM-6)**
 ```bash

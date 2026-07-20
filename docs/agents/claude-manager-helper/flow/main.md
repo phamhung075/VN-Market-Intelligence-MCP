@@ -1,4 +1,4 @@
-<!-- size-justification: 172L — 10-pass audit dispatcher with JUMP-TO anchors per pass + Mon/Thu Pass-9b gate + Pass 5b context-bloat signal consumer; each pass body is a ≤8-line SKIP-IF stub, splitting per pass would explode file count for no gain. +1L: FIX-CMH-NOTEBOOK-WRITE-SELFCAP-200L APPEND class annotation. -->
+<!-- size-justification: 194L — 10-pass audit dispatcher with JUMP-TO anchors per pass + Mon/Thu Pass-9b gate + Pass 5b context-bloat signal consumer; each pass body is a ≤8-line SKIP-IF stub, splitting per pass would explode file count for no gain. +1L: FIX-CMH-NOTEBOOK-WRITE-SELFCAP-200L APPEND class annotation. FIX-CMH-OBSOLETE-FILE-CLEANUP 2026-07-20: new Pass 0b (always-runs sibling of Pass 0, calls scripts/audits/clean-obsolete-files.sh — quarantine-first delete) + Pass 0 disposition-gate fix (stop relocating pattern-A/B garbage into committable docs/archive/) + Pass 10 report line (+22L). Still under the flow-file's non-agent-specific 200L soft ceiling used elsewhere in this repo (agent-notebook/skill-file class); no split point below this — each pass is a single load-bearing SKIP-IF/ALWAYS-RUNS stub. -->
 # Claude Manager Helper — Main Flow (10 Passes)
 
 **Tools:** `docs/agents/tools/package/claude-manager-helper.md`
@@ -55,7 +55,28 @@ find . -name "TASK_REPORT_*.md" -not -path "./reports/*" -not -path "./.claude/w
 find apps/mcp-server -name "*.md" -not -path "*/node_modules/*" -not -name "README.md"
 find . -name "*-session*.md" -not -path "./.claude/*"
 ```
-For each violation → move to correct location per `docs/policies/docs-organization.md` → log in Pass 10 report.
+**Disposition gate (FIX-CMH-OBSOLETE-FILE-CLEANUP §1b):** before `mv`-ing a violation, check it against the
+pattern-A/B allow-list in `docs/policies/obsolete-file-cleanup.md` § 2 (unexpanded-shell-var names,
+`*.tmp`/`*.json.tmp` leftovers). A match is **excluded from relocation** — leave it at its current path for
+Pass 0b to quarantine. NEVER `mv` pure garbage into `docs/archive/` or any other committable path (it is
+NOT gitignored — that just launders garbage from one committable location to another). Only genuine
+misplacements (not allow-list matches) are relocated per `docs/policies/docs-organization.md` → log in
+Pass 10 report.
+
+<!-- jump:pass-0b -->
+## Pass 0b: Obsolete-File Cleanup (ALWAYS runs — not skippable, sibling of Pass 0)
+Quarantine-first delete for allow-listed garbage (unexpanded-shell-var names, aged atomic-write `.tmp`
+leftovers, superseded per-cycle snapshots). Policy SSOT: `docs/policies/obsolete-file-cleanup.md`.
+**Canonical script** (SSOT: `docs/policies/dev-standards.md` § Script Persistence):
+```bash
+scripts/audits/clean-obsolete-files.sh   # dry-run by default — deletes nothing, prints candidate report
+```
+`--live` (or env `OBSOLETE_CLEANUP_LIVE=1`) moves candidates into `docs/data/.trash/<date>/` with a
+`manifest.json` audit trail — never a blind `rm`; a `--dry-run` flag always wins over the env. **Signals
+boundary:** `docs/signals/*.json` is DETECT-ONLY here — the script never deletes or moves them; >50
+top-level files emits a DRAIN-BEHIND BUG notice for the dev-team drain owner
+(`docs/agents/dev-team/flow/drain-signals.md`) instead of touching the directory. Log candidate/moved/
+drain-behind counts in Pass 10.
 
 <!-- jump:pass-1 -->
 ## Pass 1: Tree-Map Integrity
@@ -131,6 +152,7 @@ After git-diff passes complete (or directly when reached via Mon/Thu fast-path),
 ```
 Pre-check:      N groups (or "no changes — exited" / "Mon/Thu fast-path → pass-9b only")
 Pass 0 Location:   OK | N moved (file → correct path) | SKIPPED (fast-path)
+Pass 0b Obsolete:  OK | N candidates | M quarantined | DRAIN-BEHIND:<Y|N> | SKIPPED (fast-path)
 Pass 1 Tree-map:   OK | SKIPPED | N fixed
 Pass 2 JSON drift: OK | SKIPPED | N updated
 Pass 3 Dangling:   OK | SKIPPED | N repaired

@@ -63,3 +63,7 @@ docs/data/db-integrity-history.json
 # machine-state plane debris (UC-GCP-P2 / git-ci-publish-P2 2026-07-16) — test-run scratch state, never source
 .test-notebook-prune-debug/
 /scratchpad_*.txt
+
+# obsolete-file cleanup quarantine (FIX-CMH-OBSOLETE-FILE-CLEANUP 2026-07-20) — Pass 0b
+# --live target: scripts/audits/clean-obsolete-files.sh moves candidates here, never rm's directly.
+docs/data/.trash/
