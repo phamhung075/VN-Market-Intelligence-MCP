@@ -1,4 +1,4 @@
-<!-- size-justification: 154L — stage 3 sub-flow; carries 3 distinct signal schemas (legal_risk / urgent_news / chain_catalyst) each with dedup logic, confidence tables, and exact call_tool payloads; schemas are non-factorizable without breaking the dedup contract -->
+<!-- size-justification: ~235L — stage 3 sub-flow; carries 4 distinct signal schemas (legal_risk / urgent_news / chain_catalyst / geopolitical-war dispatch) each with dedup logic, confidence/classification tables, and exact call_tool payloads; schemas are non-factorizable without breaking the dedup contract -->
 > Parent: [./cycle.md](./cycle.md)
 
 # News Scout — Stage 3: Post Signals
@@ -136,6 +136,32 @@ payload.detail += " | FAKE-FDI-RISK: loss-cover injection — cross-check BCTC f
 
 Route as a WORK/context signal to unified-agent; do NOT post as bullish FDI to MARKET channel.
 Corroborate by checking `trade-fx-pressure-decomp` margin_trap_flag (electronics assemblers with sub-1 margin are primary candidates).
+
+---
+
+### Geopolitical / War Signal Dispatch (NEW)
+
+Geopolitical conflict / war / trade-war event detected in article (global or VN-relevant) →
+
+**Trigger condition:**
+Article text (title or body) matches ANY of the WAR_GEOPOLITICAL_KEYWORDS: `war`, `chiến tranh`, `xung đột`, `trade war`, `chiến tranh thương mại`, `tariff`, `thuế quan`, `sanctions`, `cấm vận`, `military strike`, `tấn công quân sự` — AND the story carries plausible VN-market relevance (global equity index move, commodity/FX shock, or explicit VN trade/export mention). Filter out pure domestic-politics stories with no plausible market linkage.
+
+> Interim, doc-only detection: manual keyword self-check by the agent while reading fetched article text — no server-side detector exists yet (tracked LANE B code work, see `docs/architecture-briefs/2026-07-21-global-geopolitical-signal-coverage.md` §3 B2). This trigger is always available regardless of tool/server state.
+
+**Step 1 — Dedup check:** reuse the existing Inter-cycle dedup gate + Cross-sibling dedup gate at the top of this file (`SELF_SIGNALS_CACHE` / `SIBLING_WINDOW_CACHE`, keyed on `event_type` + title normalization) — no new dedup mechanism needed, this trigger only adds a classification rule on top of the existing gate.
+
+**Step 2 — Classify `event_type` (interim mapping, pending LANE B enum extension):**
+
+| Story shape | `event_type` (today) | Note |
+|---|---|---|
+| Explicit trade/tariff/sanctions angle | `trade_war` | Ships today — already a valid server-accepted enum value (`ChainCatalystFindingDataSchema`), zero code dependency |
+| Pure military/conflict event, no explicit trade angle | `macro` | Interim catch-all only — append `[geopolitical:war — awaiting dedicated event_type]` to `payload.detail` so the semantic gap is honest, not silently mis-tagged |
+
+Once LANE B ships a dedicated `geopolitical_conflict` enum value, both branches switch to it in a follow-up doc edit (not part of this brief — tracked as a LANE A follow-up gated on LANE B, see brief §4).
+
+**Step 3 — Post signal:** use the existing `chain_catalyst` template below ("Crisis / macro catalyst"). For a genuine market-wide event (no single company affected):
+- `finding_data.affected_stocks` is schema-required non-empty (`min(1)`) — populate with the watchlist tickers most exposed to global risk-off (high-beta / high-FII-ownership names), NOT an empty array (the schema will reject an empty array).
+- **Omit the top-level `stock_code` argument entirely** — this is the field alert-commander's downstream routing actually reads for its per-ticker gate (see `docs/agents/alert-commander/flow/stage-signals.md`'s field-precision correction). Do not conflate this with `finding_data.affected_stocks`.
 
 ---
 

@@ -1,31 +1,5 @@
 # Agent Father — Notebook
 
-## 2026-07-09T08:46Z — FIX-CLOSEGATE-STEP4-COMMIT-JOURNAL-DISCIPLINE (router-dispatched, brief docs/architecture-briefs/2026-07-09-closegate-step4-atomic-handoff.md §2.2+§2.3)
-
-- Task: 2 recurring-bug fixes at ops's Close Gate Step 4/4b handoff (router had to discover+commit
-  ops's uncommitted board+journal artifacts twice — `f4afa0e03`, `b907a8ea6`) + 3 one-off decision-
-  journal filenames.
-- (2.2) `docs/protocols/docker-deployment-runbook.md`: new `§ Step 4/4b Commit-Gate Invariant` —
-  modeled verbatim on agents-architect's own Brief-Commit Invariant (`handlers.md`): explicit-path
-  `git add`/`commit`/`git show` self-verify of ops's 3 Close-Gate paths; Step-4 RETURN/report MUST
-  carry the commit SHA or is INCOMPLETE; a router/PO cleanup-commit flagged as a defect to report,
-  not a recovery path; 3rd recurrence → escalate. `.claude/skills/commit-boundary/SKILL.md` zone
-  table: added `ops` row scoped to exactly `notebooks/ops.md` + `decisions/sprint-<id>-ops.md` +
-  `orch-state.json` (Close-Gate board+head write only).
-- (2.3) Same runbook section: STEP ops-Sn / decision-journal `SPRINT_ID`-resolution enforcement
-  line. Folded the 3 named one-off files into `sprint-SYSTEMIC-REMAKE-P1-ops.md` as `STEP
-  ops-S1/S2/S5` (chronological insert by their own timestamps) — surfaced + fixed a pre-existing
-  duplicate-`S2` numbering bug in that file (relocate-stock-catalog S1→S3, extract-computeDecision
-  S2→S4, split-repositories S2→S6). Originals deleted post-fold (content preserved, not lost).
-- Board update (`orch-state.json` in_progress→review + `.head` sync): attempted via
-  `scripts/orch-apply.sh` (clean isolated diff, orch-validate PASS) then REVERTED — task text
-  explicitly asked for it, but my own `commit_zone.excluded` (init.md) bars `orch-state.json` from
-  agent-father commits outside the ONE named signal-queue-DONE-mark exception (task_board writes
-  are not that exception), matching the S4 precedent of deferring board writes to po/router rather
-  than overriding my own zone boundary on a launching agent's instruction. Reported the exact
-  validated jq transform for router/po to re-run + commit.
-- Decision journal: `docs/agent-memory/decisions/sprint-SYSTEMIC-REMAKE-P1-agent-father.md` S5.
-
 ## 2026-07-13T20:15Z — UC-RDL-P1 lock-namespace doc fix (router-dispatched, brief docs/architecture-briefs/2026-07-13-uc-rdl-p1-lock-namespace-adjudication.md)
 
 - Doc-only fix: `.claude/skills/dispatch-claim/SKILL.md` (Canonical Namespace table L39 + §Sprint-Task
@@ -185,3 +159,35 @@ brief docs/handoffs/2026-07-20-obsolete-file-cleanup-janitor-pass.md)
   behaviorally; the fix text was authored to unambiguously gate the `mv` step.
 - Commit: `78a72116f` (5 files: flow main.md, new policy, new script, .gitignore, dev-standards.md
   pointer) via commit-mutex, local only, no push.
+
+### Edit (news-scout / alert-commander / unified-agent) — 2026-07-21 LANE A global-geopolitical-signal-coverage (router-dispatched, brief docs/architecture-briefs/2026-07-21-global-geopolitical-signal-coverage.md §2, signal docs/signals/global-geopolitical-signal-coverage-20260720T222951Z.json)
+- Task: 6-item doc-only fix (LANE A, zero code dependency) closing the 2026-07-20 war/trade-war
+  selloff blind spot by wiring the already-live `event_type=trade_war` enum value through 3 agents.
+- A1 `docs/agents/news-scout/flow/stage-fetch.md`: split Stage 1 fetch — dropped `reuters` from the
+  shared 3-source call, added dedicated `1a.` call (`sources:["reuters"], limit:10`), non-fatal.
+- A2 `docs/agents/news-scout/flow/stage-signals.md`: new "Geopolitical/War Signal Dispatch" block
+  (WAR_GEOPOLITICAL_KEYWORDS trigger, interim `trade_war`/`macro` classification, `stock_code` must
+  be OMITTED not just `affected_stocks` populated) + bumped stale size-justification comment (154L→
+  ~235L, 3→4 schemas).
+- A3 `docs/agents/alert-commander/flow/stage-signals.md`: appended market-wide geopolitical advisory
+  carve-out. Field-precision correction from the brief applied verbatim — carve-out keys off the
+  top-level `stock_code` argument being omitted, NOT `finding_data.affected_stocks` emptiness (schema
+  `min(1)`, never surfaced to `formatSignalLines` — keying on it would make the carve-out unreachable).
+- A4/A5 `docs/agents/unified-agent/flow/chef.md`: Step 3 US-stack 4th element (geopolitical event
+  flag) + Step 7.5 `L2_OK` 3rd OR-branch + comment update; Step 1 convergence table 5th rule
+  (geopolitical/war convergence — single `trade_war` signal alone qualifies a cluster).
+- A6 new `docs/policies/data-sources-coverage.md` (28L, ≤50L DoD) — source-coverage policy, prior-art
+  confirmed absent before create.
+- Drift vs brief: none — all 6 files matched the brief's cited line numbers/text exactly; no
+  adaptation needed. `chef.md`'s L1 size-justification comment (still reads 812L) left untouched per
+  brief's explicit instruction (actual now 819L, +7L — brief itself only estimated "no comment update
+  needed", not exact).
+- Not in scope (explicitly deferred, per brief §3/§4/PO-backlog note): LANE B (B1 domain-tag enum,
+  B2 `geopolitical_conflict` enum+detector, B4 US-equity-index tool — `apps/mcp-server/src/domain/`,
+  dev-mcp-server owned) and LANE C (news-fetch/Reuters ops probe — ops owned). Not touched, not
+  mine to mint backlog rows for (brief's own NEXT/PO-BACKLOG note already routes these).
+- Session: no `mcp__gateway__call_tool` binding in this spawn (INV-GATEWAY-1, confirmed by repeat
+  tool-call failure) — no task_claim/task_release attempted; commit-boundary's no-gateway-binding
+  solo-operation path applied instead (`orch-state.json .head.status=idle`, no contention).
+- Signal consumed: moved to `docs/signals/processed/global-geopolitical-signal-coverage-20260720T222951Z.json`.
+- Commit: pending (this entry written pre-commit; SHA reported in RETURN block of this task).

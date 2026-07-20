@@ -152,6 +152,7 @@ Group signals by ticker, then by sector.
 | Sector convergence | ≥3 signals (any type) targeting tickers in the same sector in same 24h window |
 | Macro-micro contradiction | A macro signal contradicts the micro signal for a watchlist ticker (e.g. TIGHTENING regime + active BUY alert on VCB) |
 | Extreme individual signal | Any signal with `severity=CRITICAL` OR any TA reading outside 2-sigma (RSI < 15 or > 85) — **CHEF may only apply the RSI sub-clause when `get_technical_indicators` was called THIS cycle and returned a numeric RSI value; absent that call, apply `severity=CRITICAL` criterion only** |
+| Geopolitical/war convergence (NEW) | Any signal with `event_type` in `[geopolitical_conflict*, trade_war, war]` qualifies as a cluster regardless of ticker/sector count — a single war/trade-war `chain_catalyst` is sufficient to trigger Steps 2-8 even with 0 other signals converging. `*` `geopolitical_conflict` is LANE B; `trade_war` already qualifies today with zero code dependency. |
 
 **Intraday gate:** if `$DISH_TYPE == intraday` AND 0 clusters qualify →
 emit SILENT Telemetry per `docs/agents/unified-agent/flow/chef-telemetry.md § SILENT Telemetry`
@@ -195,6 +196,7 @@ Mark any level-reporting-only gap in the draft for Layer 6 fix.
 - Manufacturing PMI (above/below 50 + direction)
 - Consumer sentiment (trend)
 - Fed rate + EFFR-IORB spread (tightening/easing posture)
+- Global risk sentiment / geopolitical event flag (NEW) — from news-scout `chain_catalyst` signals with `event_type` in `[trade_war, geopolitical_conflict*, macro]` carrying a war/geopolitical marker in `payload.detail` (see `docs/agents/news-scout/flow/stage-signals.md` § Geopolitical/War Signal Dispatch). If ≥1 such signal is open on the bus this cycle (`get_open_chain_findings` or bootstrap signal cache), cite it explicitly: event summary + direction + confidence. If none present, satisfy this element with an explicit gap token `[gap:geopolitical_event_absent]` — absence of war/geopolitical signals is a valid, common state, not a failure. `*` `geopolitical_conflict` is LANE B; `trade_war`/`macro`-tagged war items already flow today.
 
 **VN stack:**
 - USD/VND vs 26,500 level (carry posture) — source: MACRO_HEALTH.fx
@@ -538,16 +540,21 @@ Before writing the notebook entry or the RETURN block, evaluate the following fi
 # "Substantively walked" requires at least ONE of the following concrete US macro elements:
 #   - US PMI value cited (ideally with sub-components) from get_macro_snapshot Step 3
 #   - EFFR–IORB spread cited with a numeric value from get_macro_snapshot Step 3
+#   - A global risk sentiment / geopolitical event cited in Step 3 (NEW 4th US-stack
+#     element — event summary + direction/confidence, per LANE A brief
+#     docs/architecture-briefs/2026-07-21-global-geopolitical-signal-coverage.md §2 A4)
 # Carry trade spread alone (e.g. "carry 1.37pp NEUTRAL") is NOT sufficient —
 # it is a source_tier-3 derived proxy of the US/VN rate differential and does NOT
 # represent a US macro stack walk (PMI, consumer sentiment, Fed liquidity plumbing).
-# If neither PMI nor EFFR-IORB data is available (macro_health unavailable), an
-# explicit gap token is REQUIRED — write [gap:macro_health_missing] or
-# [gap:US_macro_unavailable] in the Block B WORK message and in the L6 gap catalogue.
+# If neither PMI, EFFR-IORB, nor a geopolitical event signal is available (macro_health
+# unavailable AND no open chain_catalyst geopolitical signal), an explicit gap token is
+# REQUIRED — write [gap:macro_health_missing], [gap:US_macro_unavailable], or
+# [gap:geopolitical_event_absent] in the Block B WORK message and in the L6 gap catalogue.
 L2_OK = (US PMI value cited in Step 3 with a numeric data point)
         OR (EFFR-IORB spread cited in Step 3 with a numeric value)
+        OR (a global risk sentiment / geopolitical event cited in Step 3, per the NEW 4th US-stack element — event summary + direction/confidence)
         OR (at least one explicit gap token was written for L2,
-            e.g. [gap:macro_health_missing] or [gap:US_macro_unavailable])
+            e.g. [gap:macro_health_missing], [gap:US_macro_unavailable], or [gap:geopolitical_event_absent])
 
 # Sub-check (b) — all 4 valuation pillars named (L4)
 # Each pillar must be either cited with data OR explicitly flagged missing in Step 4
