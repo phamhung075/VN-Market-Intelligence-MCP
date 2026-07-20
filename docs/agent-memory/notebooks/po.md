@@ -1,24 +1,23 @@
 # PO Notebook
 
-_Last: 2026-07-20T22:11Z (feature scope — obsolete-file cleanup pass for Context Janitor; 1 CLEAN mint + design brief → agent-father; ZERO code)_
+_Last: 2026-07-20T22:44Z (LANE-B backlog intake — geopolitical/US-equity signal coverage; 2 FEAT mints, dev-mcp-server; ZERO code, plan-only)_
 
-## Tick 2026-07-20T22:11Z — "add clean obsolete file to system audit cron"
+## Tick 2026-07-20T22:44Z — LANE B of global-geopolitical-signal-coverage brief
 
-Router-directed feature scope. Verified live garbage (`$DUMP_FILE` 10MB unexpanded-var dump, `*.json.tmp`, stale synthesis snapshots) with RAW probes before scoping. Minted 1 backlog row via `orch-apply.sh` (conservation 553→554 PASS). Prior-art grepped: no existing obsolete-cleanup task; `CLEAN-SIGNALS-DIR-NONSIGNAL-ARTIFACTS` is a distinct drain-side relocation task.
+Router-directed backlog intake. Source brief: `docs/architecture-briefs/2026-07-21-global-geopolitical-signal-coverage.md` §3. Context: 2026-07-20 war/trade-war VN selloff (44 up/263 down) missed by all cowork agents — no geopolitical/war/US-equity signal category. LANE A doc-fix already live (47c703fca, `trade_war` enum server-accepted). LANE B = code-layer precision/completeness.
 
-**MINT — `FIX-CMH-OBSOLETE-FILE-CLEANUP` (CLEAN/S, → agent-father):**
-Add `Pass 0b: Obsolete-File Cleanup` to claude-manager-helper (cron `77876d96` Mon/Thu). Design brief: `docs/handoffs/2026-07-20-obsolete-file-cleanup-janitor-pass.md`.
-- Owner = CMH (mutating janitor, owns Pass 0 relocation), NOT system-auditor (read-only prober).
-- **TWO-FOLD (coordinator input):** (1) new Pass 0b delete pass; (2) fix Pass 0 — it currently RELOCATES garbage into `docs/archive/` (NOT gitignored, holds legit tracked docs) = 10MB `$DUMP_FILE` + `coverage-state.json.tmp` moved root→archive, still committable (latent `git add -A` sweep risk). Pass 0 must exclude pattern-A/B garbage from relocation.
-- **Allow-list delete only:** (A) unexpanded-var filenames `$*`, (B) aged `*.tmp`, (C) superseded synthesis/cycle snapshots past keep-window. Scan scope incl. `docs/archive/` (tracked-guard protects legit docs). Opt-in per pattern.
-- **Quarantine-first:** move → gitignored `docs/data/.trash/<date>/` + manifest, dry-run default, `--live` gated; NO blind `rm`. Self-purge after 7d.
-- **Hard NEVER:** git-tracked files; `.git/.claude/node_modules/apps/packages/.backups`; <grace-age; path-traversal. Idempotent. Do NOT blanket-ignore `docs/archive/` (tracked legit docs) — fix disposition instead.
-- Deliverables: flow Pass 0b + Pass 0 disposition fix + `docs/policies/obsolete-file-cleanup.md` SSOT + `scripts/audits/clean-obsolete-files.sh` + `.gitignore` `.trash/`.
+**Prior-art: FRESH.** Both target ids + `geopolitical` (0 hits) absent from ALL board lanes + cold storage/archive. `war`/`global` grep hits were incidental substrings (`aWARe`, `gap`); `macro` hits are the pre-existing VN-MACRO-TOOLING rows (FRED/calendar/commodity/ISM) — none touch US-equity indices. Matches brief §1 verdict.
+
+**2 MINTS → `.task_board.backlog[]` (orch-apply.sh, conservation 554→556 PASS; commit d0618b6f0, pushed):**
+- `FEAT-NEWS-GEOPOLITICAL-CLASSIFICATION` (SPRINT-S, **high**, dev-mcp-server, zone apps/mcp-server/, next=ba) — B1+B2 bundle: `'geopolitical'` DomainType (SHARED root bctc-schema.ts → compiler-forced exhaustiveness on Record<DomainType,…> incl DOMAIN_KEYWORD_MAP + VN label map) + `'geopolitical_conflict'` event_type enum + NEW pure-domain `geopoliticalRiskDetector.ts` (mirror legalRiskDetector). Scope reserved: ship detector WITHOUT MCP-tool wrapper (matches chain_catalyst pattern). Follow-up (agent-father, gated on ship): switch interim trade_war/macro → geopolitical_conflict in 4 LANE-A flow docs.
+- `FEAT-MACRO-US-EQUITY-INDEX-TOOL` (SPRINT-S, **medium**, dev-mcp-server, zone apps/mcp-server/, next=ba) — B4: extend macroTools.ts Yahoo fetch with ^GSPC/^IXIC/^VIX + tool-doc. Gate: market-watcher US_EQUITY_SIGNAL wiring is OUT OF SCOPE until tool ships (future follow-up).
+
+**Priority rationale:** both independent, no ordering dep (brief §5). ROW1=high (precision upgrade directly sharpening the live incident-response pipeline; pure domain, zero I/O, low-risk). ROW2=medium (tool alone changes no agent output until the gated wiring follow-up). Plan-only — dev chain NOT started (sprint capacity not signalled; rows-on-board = deliverable).
 
 ## Carry-over
-- **KEY BOUNDARY (STANDING):** signal-file retention is OWNED by dev-team `drain-signals.md` (move→processed/→7d prune + purge-legacy script). The cleanup pass is DETECT-ONLY on `docs/signals/*.json` — >50 ⇒ DRAIN-BEHIND BUG flag, never delete. Do NOT create a second racing lifecycle owner.
-- Stale `bctc_signal_*_20260719_*` in tree today = drain-behind symptom, not janitor targets.
+- **KEY BOUNDARY (STANDING):** signal-file retention OWNED by dev-team `drain-signals.md`; cleanup pass is DETECT-ONLY. Do NOT create a second lifecycle owner.
 - **A-30 TRIPWIRE (STANDING):** mcp-server mem FOLD holds only while GC ceiling intact — escalate ops if baseline >93% no-dip / peak >97% no-reclaim / OOMKilled.
 - **DO NOT flip GAP-CHEF-SYNTHESIS-A DONE_VERIFIED** on one good cycle — need 3 consecutive non-empty conviction_calls[]+sector_phases[].
+- `FIX-CMH-OBSOLETE-FILE-CLEANUP` (07-20) minted → agent-father; brief `docs/handoffs/2026-07-20-obsolete-file-cleanup-janitor-pass.md`.
 - pdf-extractor + dashboard-tier PLAN-ONLY (supervised:true blocks idle auto-pickup).
-- Session 58a64705 (router coord). Committed MY scoped paths only; did NOT push.
+- Session c106f5a6 (router coord). Committed MY scoped paths only (orch-state.json by explicit path); pushed main.
