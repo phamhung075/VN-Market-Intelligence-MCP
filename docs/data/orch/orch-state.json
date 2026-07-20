@@ -1330,6 +1330,50 @@
         "severity": "WARN",
         "status": "NEW",
         "payload_ref": null
+      },
+      {
+        "id": "sys-20260720T223241-4460",
+        "ts": "2026-07-20T22:32:41Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "bctc-discover VPS service unhealthy, push age 21.1h with active queue (183 items)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260720T223248-02e8",
+        "ts": "2026-07-20T22:32:48Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "sbv-vps VPS service unhealthy (uptime only 1h 14m, consecutive restart cycles)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260720T224218-7459",
+        "ts": "2026-07-20T22:42:18Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-12 FAIL: api-gateway health endpoint unreachable (HTTP CURL_ERR)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260720T224224-6396",
+        "ts": "2026-07-20T22:42:24Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-20 FAIL: pdf-extractor event-loop stall — multi-probe 0/3 passed",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-20T00:52:49Z",
@@ -8884,6 +8928,58 @@
         "priority": "medium",
         "detail_ref": "docs/handoffs/2026-07-20-obsolete-file-cleanup-janitor-pass.md",
         "created_at": "2026-07-20T22:11:26Z"
+      },
+      {
+        "id": "FEAT-NEWS-GEOPOLITICAL-CLASSIFICATION",
+        "title": "Bundle B1+B2: 'geopolitical' DomainType tag + 'geopolitical_conflict' event_type enum + pure-domain geopoliticalRiskDetector (precision upgrade over the interim trade_war/macro LANE-A tagging that shipped 2026-07-21)",
+        "owner": "dev-mcp-server",
+        "status": "BACKLOG",
+        "zone": "apps/mcp-server/",
+        "type": "SPRINT-S",
+        "priority": "high",
+        "size": "S",
+        "next_agent": "ba",
+        "created_at": "2026-07-20T22:44:40Z",
+        "created_by": "po",
+        "source": "docs/architecture-briefs/2026-07-21-global-geopolitical-signal-coverage.md §3 (B1+B2, batching recommendation §3); LANE B of the 2026-07-20 war/trade-war VN-selloff blind-spot brief. LANE A doc-layer fix already live (commit 47c703fca — trade_war enum server-accepted). PO backlog intake 2026-07-21.",
+        "desc": "B1 (closes R2): add 'geopolitical' to the DomainType union in apps/mcp-server/bctc-schema.ts — a SHARED root-level schema (repo-wide visible, also consumed by the BCTC extraction pipeline, NOT news-only); additive union-member append. TS compiler forces exhaustiveness on every Record<DomainType,...> site — update DOMAIN_KEYWORD_MAP in newsNormalizer.ts (~L147, add a war/chien tranh/xung dot/tariff/thue quan/sanctions/cam van keyword list) and the Vietnamese display-label map (~L830). Pure domain service, zero I/O (newsNormalizer.ts header forbids importing from application/ or infrastructure/). B2 (closes R3 code-part): add 'geopolitical_conflict' to ChainCatalystFindingDataSchema.event_type z.enum (signalTypes.ts:91-98) AND the matching TS union comment (signalTypes.ts:28-35); create NEW pure-domain service apps/mcp-server/src/domain/services/geopoliticalRiskDetector.ts mirroring legalRiskDetector.ts exactly (regex PatternEntry[] array, e.g. /chien tranh/i, /trade war/i, /tariff/i mirroring LEGAL_PATTERNS at legalRiskDetector.ts:60-75; returns a GeopoliticalRiskSignal analogous to LegalRiskSignal; zero imports from infrastructure//application/, no I/O, no async).",
+        "files": [
+          "apps/mcp-server/bctc-schema.ts (DomainType union ~L25-45 — SHARED root schema)",
+          "apps/mcp-server/src/domain/services/newsNormalizer.ts (DOMAIN_KEYWORD_MAP ~L147 + VN display-label map ~L830)",
+          "apps/mcp-server/src/domain/signals/signalTypes.ts (ChainCatalystFindingDataSchema.event_type enum L91-98 + TS union comment L28-35)",
+          "apps/mcp-server/src/domain/services/geopoliticalRiskDetector.ts (NEW — mirror legalRiskDetector.ts)",
+          "apps/mcp-server/src/domain/services/geopoliticalRiskDetector.test.ts (NEW — mirror legalRiskDetector.test.ts pattern-match unit tests)"
+        ],
+        "scope_decision": "RESERVED TO PO/dev-team AT IMPLEMENTATION TIME (brief §3 B2). Recommendation: ship the pure-domain detector WITHOUT an MCP tool wrapper initially — matches the existing chain_catalyst pattern where trade_war/macro/crisis have NO dedicated server-side detector tool (news-scout self-classifies via LLM judgment; only legal_risk has get_legal_risk_signals). A get_geopolitical_risk_signals tool can be added later only if server-side corroboration of the LLM's self-classification proves necessary. Default = domain service only, no tool wrapper.",
+        "followup_note": "Post-B2 doc follow-up (SEPARATE task, routes to agent-father when this row ships, NOT part of this row): a small doc edit switches the interim trade_war/macro event_type values in the 4 LANE-A flow docs (news-scout/flow/stage-signals.md, alert-commander/flow/stage-signals.md, unified-agent/flow/chef.md ×2) to geopolitical_conflict where semantically more precise (brief §5 step 5).",
+        "verification_gate": "bun test full suite green — the TS compiler exhaustiveness check catches any Record<DomainType,...> site missed by the union append (safety net, not manual hunting). New geopoliticalRiskDetector.test.ts mirrors legalRiskDetector's pattern-match unit-test structure (no I/O). (brief §7 item 8)",
+        "acceptance": "'geopolitical' present in DomainType union + DOMAIN_KEYWORD_MAP + VN label map; 'geopolitical_conflict' present in ChainCatalystFindingDataSchema.event_type enum + TS union comment; geopoliticalRiskDetector.ts exists as a pure-domain service mirroring legalRiskDetector; full bun test suite green.",
+        "depends": [],
+        "note": "DDD: pure domain layer, zero I/O — isolated, low-risk. bctc-schema.ts is a SHARED root schema so the change is repo-wide-visible but purely additive. Independent of FEAT-MACRO-US-EQUITY-INDEX-TOOL (no ordering dependency, brief §5). B1+B2 bundled into ONE row per brief §3 batching recommendation — both touch apps/mcp-server/src/domain/ news/signal classification surface, same reviewer context, similar small additive no-I/O effort."
+      },
+      {
+        "id": "FEAT-MACRO-US-EQUITY-INDEX-TOOL",
+        "title": "B4: extend get_macro_snapshot Yahoo Finance fetch with ^GSPC (S&P 500), ^IXIC (Nasdaq), ^VIX — closes the US-equity-index causal-feed gap (no MCP tool surfaces these today; existing macro proxies only capture derivative FX/rate/commodity effects, never the causal event)",
+        "owner": "dev-mcp-server",
+        "status": "BACKLOG",
+        "zone": "apps/mcp-server/",
+        "type": "SPRINT-S",
+        "priority": "medium",
+        "size": "S",
+        "next_agent": "ba",
+        "created_at": "2026-07-20T22:44:40Z",
+        "created_by": "po",
+        "source": "docs/architecture-briefs/2026-07-21-global-geopolitical-signal-coverage.md §3 B4 (closes R7); LANE B of the 2026-07-20 war/trade-war VN-selloff blind-spot brief. PO backlog intake 2026-07-21.",
+        "desc": "Extend the existing Yahoo Finance fetch in macroTools.ts (already pulling Brent/Gold/DXY/US10Y per get_macro_snapshot.md) to add ^GSPC (S&P 500), ^IXIC (Nasdaq), ^VIX symbols — same proven Yahoo Finance HTTP client, per-source try/catch isolation. Confirmed via live tool doc + code trace: NO existing tool surfaces these today. Update the tool doc in the SAME task (standard dev-team practice for a tool-signature change).",
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/macro/macroTools.ts (extend existing Yahoo Finance fetch — same client already pulling Brent/Gold/DXY/US10Y)",
+          "docs/agents/tools/list/get_macro_snapshot.md (tool-doc update, same task)"
+        ],
+        "gate_note": "GATES a future LANE-A follow-up (EXPLICITLY OUT OF SCOPE for this row): when this tool ships, a separate brief/agent-father task wires a US_EQUITY_SIGNAL variable into docs/agents/market-watcher/flow/cycle.md (Step 0b regime-extraction skill + Step 2), mirroring the existing DXY_SIGNAL/US10Y_SIGNAL pattern at cycle.md L34-35 & L86-87. That downstream doc wiring is genuinely blocked on the tool existing first (unlike the fail-soft LANE-A items) — do NOT attempt it in this row.",
+        "verification_gate": "get_macro_snapshot() live call returns ^GSPC/^IXIC/^VIX values in the [COMMODITY PRICES]-equivalent (or a new) section; degrades gracefully via independent per-source try/catch (matching the existing per-source isolation pattern) if Yahoo Finance is unreachable. (brief §7 item 9)",
+        "acceptance": "get_macro_snapshot() live call surfaces S&P 500 / Nasdaq / VIX numeric values; per-source isolation preserved (one symbol failing does not blank the others); tool doc updated to list the new symbols.",
+        "depends": [],
+        "note": "DDD: infrastructure-layer bounded extension of an existing tool (proven Yahoo Finance HTTP client — same client used for existing symbols) + macro domain formatting. NOT a new microservice. No build dependency; independent of FEAT-NEWS-GEOPOLITICAL-CLASSIFICATION (brief §5). Value note: shipping this tool alone does not yet change any agent output — its user-facing effect arrives with the gated market-watcher wiring follow-up above; hence medium priority vs the geopolitical-classification row which directly sharpens the live incident-response pipeline."
       }
     ],
     "closed_sprints": [
