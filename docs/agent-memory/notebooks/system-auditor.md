@@ -1,4 +1,21 @@
 
+## c437 · 2026-07-20T22:33:02Z
+### Audit Run Tier-2 (22:30:27–22:33:02 UTC 2026-07-20)
+- Tier: 2 | Crons: 91 monitored (all healthy) | Sources: 28 checked | VPS: 4 routes
+- Cron fire check (A-29): all on-schedule, no gaps > 2× cadence
+- Per-source fetch freshness (B-01..B-12):
+  - VPS proxy health: 4/4 routes nominal; **CRITICAL: vn-bctc-fetch unhealthy**, **WARN: vn-sbv-fetch unhealthy**
+  - Rate limits (B-12): all sources ready (0% critical)
+  - DB spot checks (C-06, C-07): PASS (0 messages 3h / 296 signals 24h — market closed 05:31 VN)
+  - BCTC queue (B-05/B-13): 183 pending items with 21.1h push-age, service unhealthy
+- BCTC-EVAL-SNAPSHOT: 10 red, 11 yellow (MBB/HVN/HPG/GVR/FPT red; POW/VCB/VNM/EIB/SHB/DHG/DIG/BSR/ACB yellow)
+- Anomalies: 2 new (B-05 bctc service, B-07 sbv service) | 0 dedup-skipped
+- Status: DEGRADED (VPS services unhealthy)
+
+**Signals appended:**
+- B-05 (NEW) id=sys-20260720T223241-4460 dedup_key=data_stale:bctc-discover:B-05
+- B-07 (NEW) id=sys-20260720T223248-02e8 dedup_key=data_stale:sbv-vps:B-07
+
 ## c436 · 2026-07-20T22:14:22Z
 ### Audit Run Tier-1 (22:12:44–22:14:22 UTC 2026-07-20)
 - Tier: 1 | Services: 12 checked | Health: 5 probed
