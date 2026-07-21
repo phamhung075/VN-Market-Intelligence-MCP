@@ -187,3 +187,50 @@
 - Fix the gate to match my 15:37Z narrowing, and unblock the ingest-stall row separately
 **why-decision:** 13/16 tickers need an ingest owned by a DIFFERENT row (filed 07-15, next_agent NULL, 6 days idle), so the old gate made row A unsatisfiable by its own owner — a guaranteed churn loop; the mechanism half is fully testable with zero ingest dependency, and gate arm (b2) is a genuinely unfixed defect the shipped guard misses.
 **why-change:** Router asked only to reconcile the gate; the cohort probe went further — harm (a) "overwrote good financials" has ZERO confirmed instances across all 16, so I re-pointed the gate at the transition that actually occurred (absent -> manufactured zero-row).
+
+### STEP po-S154 · po · 2026-07-21T17:24:33Z
+**task-id:** FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD
+**what-done:** Parent -> BLOCKED in backlog (next_agent pm->po, depends=[HOOK,SKILLS]); promoted both children backlog->ready.
+**what-considered:**
+- Leave parent READY/next_agent=pm — rejected: dispatcher re-spawns pm, duplicate decomposition
+- Delete next_agent — rejected: that is the orphan signature that idled the predecessor 6 weeks
+- Leave children in backlog — rejected: pm left them BACKLOG in a 409-row lane, they would never dispatch
+**why-decision:** Parent must track not dispatch; children carry the work and were fully specced, so promotion is the actual unblock.
+**why-change:** Router deferred lane disposition to PO; children promotion was not in the brief but the decomposition stalls without it.
+
+### STEP po-S155 · po · 2026-07-21T17:24:33Z
+**task-id:** FIX-ORCHSTATE-UPDATED-AT-WRITE-PATH
+**what-done:** Traced the ready-lane asymmetry to root cause and minted a P0 write-path FIX, no backfill.
+**what-considered:**
+- Backfill from git/mtime — rejected outright, signal's explicit do-not; fabricated ts is worse than null
+- Patch the 30+ ad-hoc jq transforms — rejected: same omission recurs on transform #31
+- Stamp diff-based in scripts/orch-apply.sh — chosen
+**why-decision:** orch-apply.sh is the single mandatory gated write path and has zero updated_at handling; schema has it .optional() so omission validates clean. Fixing the chokepoint makes omission structurally impossible.
+**why-change:** Signal asked PO to find WHY; the asymmetry resolved (ready lane populated by coincidence of recently-touched transforms, not by a correct path).
+
+### STEP po-S156 · po · 2026-07-21T17:24:33Z
+**task-id:** FIX-BCTC-PENDING-REFINE-HEAD-OF-LINE-FAILED-ROW
+**what-done:** Ratified option (b) — exclude FAILED rows with zero unprocessed windows — and minted P0.
+**what-considered:**
+- (a) exclude all FAILED — rejected: strands transiently-failed reports with real remaining work, converts head-of-line bug into silent data loss
+- (c) fix in slot prompts — rejected: pushes a data-layer invariant into N prompt strings, drifts on next slot
+- (b) exclude FAILED-with-zero-remaining — chosen
+**why-decision:** (b) fixes it once at the query and preserves retry; both refine slots are currently perpetual no-ops reporting successful fires.
+**why-change:** no change from plan.
+
+### STEP po-S157 · po · 2026-07-21T17:24:33Z
+**what-done:** Minted 2 SPIKEs (cowork drain body; saturated count-threshold gate sweep) rather than fixes.
+**what-considered:**
+- Fix the cowork drain directly — rejected: 3 candidate causes need 3 different fixes, wrong one looks green and changes nothing
+- Fix the two saturated gates in isolation — rejected: 2 instances in 1 tick in unrelated subsystems is a class
+**why-decision:** Diagnosis must precede fix where the cause is genuinely undetermined; class sweep where the shape recurs.
+**why-change:** no change from plan — router recommended the sweep, PO scoped it to inventory-only so fixes stay independently verifiable.
+
+### STEP po-S158 · po · 2026-07-21T17:24:33Z
+**what-done:** Closed news-scout from_agent=null HIGH as NOT-A-DEFECT; minted the real (smaller) fail-open bug instead; annotated prior-art row.
+**what-considered:**
+- Build the all-producers mode as filed — rejected: mode already ships and was verified live (94 rows)
+- Mint nothing — rejected: the non-fatal branch turning transport failure into SIBLING_WINDOW_CACHE=[] is a genuine fail-open
+- Mint a new all-producers row — rejected: FIX-AGENTSIGNALS-ALLPRODUCERS-NULLSTRIP already exists, annotated instead
+**why-decision:** Prior-art grep before minting; the escalation was wrong-rooted but exposed a different, real defect one layer up.
+**why-change:** no change from plan.
