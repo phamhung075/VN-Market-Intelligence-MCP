@@ -156,3 +156,24 @@ DONE: BA spec complete for fix_spec(a)+(c)/AC1+AC3. fix_spec(b)/AC2 explicitly f
 NEXT: po — resolve Q1, then architect (brownfield design + file-level ratification of FR-1..FR-8, DDD layer confirmation, ruling on the FR-5/`backlog+BLOCKED` architect-decidable calls).
 HANDOFF: docs/handoffs/FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD-BA-spec.md
 PIPELINE: continue (supervised — do not auto-advance past PO)
+
+---
+
+## [Architect] Brownfield Findings
+
+- **Zone:** multi (`apps/mcp-server/`, flow-docs) — matches BA header, no split needed.
+- **Full design + all 3 ruled architect-decidable calls:** `docs/architecture-briefs/2026-07-22-fix-orphan-adoption-board-state-guard-design.md` (read this — not re-duplicated here).
+- **Ruling summary (detail in brief §2-4):**
+  1. **FR-5 board-flip bundle → BUNDLE NOW**, same commit as FR-4, sharing ONE lane-resolution pass (new `scripts/agents-flow/resolve-task-lane-by-id.jq`) across the router probe, the dev-team read-guard, AND the board-flip write — not three independently-drifting copies.
+  2. **`backlog+BLOCKED` → TERMINAL** (no active carve-out). Grounded in a live example already on the board (`TASK_2005`: in_progress→backlog+BLOCKED on a new `depends_on`) showing the real operational meaning is "paused pending an external precondition," not "resume automatically." Asymmetric safety cost (wrong-active risks repeat of the MATERIALIZED incident; wrong-terminal only delays via the existing depends_on-gated promote script) breaks the tie.
+  3. **I10 → batched into the fix_spec(b) successor, fixed FIRST as a hard precondition** of that row's heartbeat-loop deliverable (cannot heartbeat a lock with a session key never bound at claim time). **New finding, widens BA's I10 scope:** `execute-tier.md:64`'s finally-release call ALSO omits the required `owner_client_session` param (not just the `:42-48` claim call) — both must move together. Full 4-step ordering (I10 → TTL/heartbeat → doc-sync incl. a 4th site BA didn't cite, `fail-loud-protocol.md:71` — → INV-GATEWAY-1 cleanup) in brief §4 for PM to encode as ordered sub-tasks, not a flat list.
+- **DDD layers:** BA's per-FR assignments ratified without change (brief §1) — infrastructure/db for `coordinationStore.ts`, interface for both the mcp tool registration and all flow-doc changes, zero domain-layer touch confirmed.
+- **File-level design (FR-1/FR-2):** two-statement UPDATE pattern for `ttl_seconds`/`payload_patch` (not a combined CTE); null-session ladder as a SELECT-then-conditional-mutate branch mirroring `releaseOrphanTask()` at `coordinationStore.ts:864-900`, gated on the ROW's own `owner_client_session IS NULL` (not a caller-supplied flag) so NFR-1's anti-theft invariant cannot be bypassed by a caller lying about `task_kind`. Detail in brief §5.
+- **Scan clean:** true — verified `coordinationStore.ts` (heartbeatTask/releaseTask/releaseOrphanTask, lines 711-923), `coordinationTools.ts` (task_heartbeat/task_release/task_force_release_orphan registrations, lines 150-335), `orchStateSchema.ts` (`LANE_ALLOWED_STATUSES`/`TERMINAL_SET`, lines 40-64 + 416-424), `dispatch-claim/SKILL.md` (Orphan-Adoption Probe, lines 150-421), `dev-team/flow/main.md` Step 0a-B (lines 280-414), `execute-tier.md` (lines 20-68) — all BA line citations confirmed accurate at HEAD; no drift found between spec and code.
+- **BUILD-STANDARD:** not-applicable (bug-fix/refactor, in-zone, no new primitives).
+
+## RETURN
+DONE: Technical design complete — 3 architect-decidable calls ruled, DDD layers ratified, file-level design confirmed for FR-1/FR-2, 1 new brownfield finding surfaced (execute-tier.md:64).
+NEXT: pm — decompose FR-1..FR-8 (this ticket) + mint fix_spec(b)/AC2 successor row per PO Option B and brief §4 ordering.
+HANDOFF: docs/architecture-briefs/2026-07-22-fix-orphan-adoption-board-state-guard-design.md
+PIPELINE: continue (supervised — SUPERVISED HOLD after architect; do not auto-dispatch pm without supervisor go-ahead)

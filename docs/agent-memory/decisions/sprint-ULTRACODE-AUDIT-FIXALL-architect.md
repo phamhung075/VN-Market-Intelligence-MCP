@@ -15,6 +15,16 @@
 **why-decision:** Empirical live evidence (this cycle's own dispatch lock was `task:UC-RDL-P1`, not `intent:architect:...`) plus server-code enum/allowlist proof outweighs the mint's prose framing — REJECT the intent:/task: merge, CONFIRM the sprint-task:/task: doc fix (already independently verified in the 07-12 audit's own verifier pass).
 **why-change:** Mint conflated two SKILL.md sections (generic Phase B intent: pattern vs Sprint-Task Outer Wrap section) into one claim; scoped the fix to the section that's actually wrong.
 
+### STEP architect-S4 · architect · 2026-07-21T23:57:05Z
+**task-id:** FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD
+**what-done:** Ruled the 3 architect-decidable calls BA deferred (FR-5 bundle, backlog+BLOCKED classification, I10 batching); ratified DDD layers + FR-1/FR-2 file-level design; wrote blueprint.
+**what-considered:**
+- FR-5: bundle now (shared resolver, same commit) vs spin `dev-team-loop-I9` standalone — chose bundle: identical defects, same file/lines, not container-rebuild-gated, and un-bundling would leave FR-4's widened guard produce zero-board-trace adoptions.
+- backlog+BLOCKED: route to active (symmetric with in_progress+BLOCKED) vs terminal — chose terminal, grounded in a live board example (TASK_2005 in_progress→backlog+BLOCKED on new depends_on) showing the real meaning is "paused pending external precondition," plus asymmetric safety cost (wrong-active risks the MATERIALIZED incident repeating; wrong-terminal only delays, self-heals via existing promote gate).
+- I10: leave for successor to fix in any order vs sequence as hard precondition — chose precondition-first: successor's own heartbeat-loop deliverable cannot function without I10's owner_client_session binding landing first at the same claim call; also found the :64 release call shares the same defect (BA only flagged :42-48).
+**why-decision:** Each call resolved by grounding in live evidence (line-exact code read, a real board row, the Zod-required-field schema) rather than the abstract framing alone — matches the standing "ratify BA's judgment call with independent verification" pattern from S2/S3.
+**why-change:** No change from BA's scope — all 3 were explicitly flagged as architect-owned engineering calls, not PO/business calls.
+
 ### STEP architect-S2 · architect · 2026-07-16T04:40:00Z
 **task-id:** UC-ASL-P2
 **what-done:** Verified BA's 6 copy-site inventory + all cited precedent files (mcp-call.sh, auditor-notebook-commit.sh, orch-apply.sh exit codes, context-bloat-backstop.sh's actual dead-gate boundary) line-exact at HEAD; resolved the 3 ARCH-RATIFY items and the 2 items BA explicitly deferred (CAS-retry loop shape, E-3-only mode flag); wrote design to handoff.

@@ -1,8 +1,15 @@
 # Architect — Notebook
 
-**Last updated:** 2026-07-21 22:36 UTC | **Sprint:** FLOW-PRICE-ALPHA-LOOP
+**Last updated:** 2026-07-21 23:57 UTC | **Sprint:** ULTRACODE-AUDIT-FIXALL
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-07-21T23:57Z — FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD (zone=multi, P0 supervised, plan_only, design-only)
+
+**Task:** BA spec (8 FR/3 NFR/8 EC) + PO Q1 ruling (Option B — this ticket closes fix_spec(a)+(c)/AC1+AC3, fix_spec(b)/AC2 spins a new supervised successor row) — rule 3 architect-decidable calls, then blueprint.
+**Finding:** Widened BA's I10 finding — `execute-tier.md:64`'s finally-release call also omits the required `owner_client_session` param (BA only flagged the `:42-48` claim call); `owner_client_session` is a non-optional Zod field on both `task_claim` and `task_release`, so the dispatcher-side sprint-task lock lifecycle in `execute-tier.md` looks non-functional end-to-end as literally written. Live-grepped 12 backlog+BLOCKED rows on the board; one (`TASK_2005`) has a decision-journal-documented cause (in_progress→backlog+BLOCKED on a new `depends_on`) grounding the backlog+BLOCKED ruling in real system behavior, not abstraction.
+**Output:** `docs/architecture-briefs/2026-07-22-fix-orphan-adoption-board-state-guard-design.md` — FR-5 board-flip bundled into FR-4's commit via ONE shared `resolve-task-lane-by-id.jq` resolver (router probe + dev-team read-guard + board-flip write, not 3 drifting copies); `backlog+BLOCKED` ruled TERMINAL (asymmetric safety cost, in_progress+BLOCKED not symmetric since it resumes downstream of PO/BA scoping, backlog+BLOCKED would bypass triage entirely); I10 batched into the fix_spec(b) successor as a hard PRECONDITION (not just adjacent bundle) of that row's heartbeat-loop deliverable, 4-step ordering specified (I10 fix → TTL/heartbeat-loop → doc-sync incl. a 4th site BA didn't cite, `fail-loud-protocol.md:71` → INV-GATEWAY-1 dead-call cleanup). DDD layers ratified unchanged from BA. Appended Brownfield Findings to BA-spec handoff. BUILD-STANDARD: not-applicable.
+**Next:** pm — decompose FR-1..FR-8 into atomic dev tasks + mint the fix_spec(b)/AC2 successor row per PO Option B + brief §4 ordering. SUPERVISED HOLD recorded on board — do not auto-dispatch pm without supervisor go-ahead.
 
 ## 2026-07-21T22:36Z — UNBLOCK-DEVTEAM-DISPATCH-GATE-STAGING-DEADLOCK (zone=cross-service/, S4 direct-spawn, implemented directly)
 
@@ -18,18 +25,14 @@
 **Output:** Built Supervised-Lane Sweep (SLS) — `scripts/devteam-backlog-promote-supervised-lane-sweep.jq` + `scripts/devteam-backlog-claim-supervised-lane-sweep.jq`, wired into `docs/agents/dev-team/flow/main.md` § Supervised-Lane Sweep (spends the pre-existing, named-but-unused 2nd WIP≤2 slot; additive `dispatch_lane` stamp, never clears supervised/plan_only; spawns the resolved specialist directly, bypassing zone-detect's dev-only routing). Acceptance instrument `scripts/audits/bounded1-supervised-lane-report.sh` run live: 16/16 rows resolved, 0 dispatch-lane=none. Corrected the false comment at all 5 sites in the promote script. New scripts dry-run verified (Zod-valid, conservation-neutral, idempotent) against a scratch copy — never run against the live board (dev-team's job next tick).
 **Next:** dev-team/QA — verify SLS fires correctly on a live idle-fallthrough tick before flipping REVIEW→DONE_VERIFIED; zone cross-service/.
 
-## 2026-07-21T18:02Z — DESIGN-COWORK-FANOUT-PRODUCER-CONSUMER-ORDERING (zone=cross-service/, P1, supervised design-first, READY_FOR_PM)
-
-**Task:** PO explicitly declined to pre-select (a) two-phase producer/consumer wave, (b) bounded consumer re-read, or (c) accept-and-document — a genuine latency/complexity tradeoff, PO's call to make. Market-facing: alert-commander read an empty bus at 16:10-16:15Z and exited silently (correctly, per its own evidence) while co-dispatched market-watcher-offhours posted price_anomaly (GAS -6.98%, BSR -6.49%, GEX -5.16%) at ~16:17Z. Folded in R3 (match-slots.md Step 4b WARN-never-block — market-watcher double-fired against the same 08:32 close).
-**Finding:** `last_fired` is stamped at spawn time not completion time (`last-fired.md` Step 5b) — falsifies a "consumer re-derives co-dispatch by re-running cowork-match-slots.js after the fact" design (the producer's last_fired is already boundary-suppressed by then). Found `won_slots` is knowable correctly at Step 4.7 (after slot-claim finalizes it, before spawn) and already reaches every cowork agent via the shared `cycle-bootstrap/SKILL.md` tick-snapshot read — zero new plumbing, `spawn-fanout.md`'s prompt template untouched. `schedule_task` (#169) already exists, is public, already routes COWORK targets through cowork-team's existing one-shot sweeper — but `alert_commander`'s SKILL_MANIFEST entry doesn't grant it (real prerequisite gap, verified against `apps/mcp-server/src/interface/mcp/bootstrap/agentBootstrap.ts:115-139`, not optional). Root-caused R3 to `market-watcher/flow/main.md` deriving sub-flow from wall-clock time and discarding the `slot=` the dispatcher already sends in its spawn prompt — a late EOD-slot fire silently loses `eod.md`'s ledger+signal-file deliverable (bigger than duplicate compute); kept `match-slots.md` Step 4b WARN-only (dispatcher can't know "same trading-day close" without leaking domain knowledge into the generic scheduler — DDD boundary). Flagged, not fixed: `unified-agent/flow/main.md` has the identical wall-clock-only dispatch pattern — same root-cause class, out of this row's boundary.
-**Output:** `docs/architecture-briefs/2026-07-21-cowork-fanout-producer-consumer-ordering.md` — chose a bounded async `schedule_task` recheck (not literally (a)/(b)/(c) as worded; PO invited a better option if one existed) over a synchronous in-session wait, gated on `won_slots.parallel_group=="gatherers"` AND `IS_RECHECK!=true` (real discriminator, not unconditional — zero cost on quiet ticks, bounded to exactly one extra spawn on qualifying ticks, never a poll loop); `producer_settle_wait_seconds` config field (1200s, from the observed 17min worst case + margin) added to cowork-schedule.json rather than hardcoded; explicit market-watcher slot-routing fix for R3; 8-row PM decomposition (T1-T8) with dependency/zone map; digest-daily signal (`cowork-team-20260721T174200Z-digestdaily-flowpath-bypasses-dedup-gate.json`) confirmed orthogonal — different field (flow_path vs trigger_prompt), different parallel_group, flagged only as same-file-region proximity for whoever picks it up next. BUILD-STANDARD: not-applicable.
-**Next:** pm — decompose T1-T8 per brief §9; zone cross-service/ (`docs/agents/cowork-team/`, `docs/agents/alert-commander/`, `docs/agents/market-watcher/`, `.claude/skills/cycle-bootstrap/`, `docs/data/cowork-schedule.json`, one array-literal grant in `apps/mcp-server/src/interface/mcp/bootstrap/agentBootstrap.ts`).
-
 ---
 
 ## Archive (pre-2026-07-21T22:36Z)
 
-[Older cycles archived to git history: FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD (2026-07-21T17:05Z,
+[Older cycles archived to git history: DESIGN-COWORK-FANOUT-PRODUCER-CONSUMER-ORDERING (2026-07-21T18:02Z,
+zone=cross-service/, P1 supervised design-first — bounded async schedule_task recheck gated on
+won_slots.parallel_group=="gatherers", market-watcher R3 slot-routing fix, 8-row T1-T8 PM decomposition,
+READY_FOR_PM), FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD (2026-07-21T17:05Z,
 zone=multi cross-service/, P0 router-escalated — universal `scripts/git-hooks/pre-commit` pathspec-
 scoped-commit guard + commit-mutex/commit-boundary Layer-1 fix, empirically proved via scratch git
 repo, READY_FOR_PM), SYSREMAKE-P2-STRUCTURAL-REMAKE-ROUTE leg 1: RC-VERIF+RC-CONVERGE
