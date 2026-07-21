@@ -2,6 +2,63 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c360 · 2026-07-21T01:12:40Z
+### Audit Run Tier-1 (01:10–01:12 UTC 2026-07-21)
+- Tier: 1 | Services: 12 checked | Health: 5 probed
+- A-01 to A-11 (container status): 12/12 UP (all deployed and healthy) [RAW-PROBE L4-16]
+- A-12 (pdf-extractor health): CURL_ERR — endpoint down [RAW-PROBE L40], overridden by A-20
+- A-20 (pdf-extractor multi-probe): 0/3 FAIL — HTTP 000 event-loop stall [RAW-PROBE L85-92], dedup-skip
+- A-21 (restart count): mcp-server=1 PASS [RAW-PROBE L56-57]
+- A-30 (memory): mcp-server=92.53% WARN [RAW-PROBE L62-63], dedup-skip
+- A-32 (disk): 35% < 85% PASS [RAW-PROBE L67]
+- Anomalies: 0 new | 2 dedup-skipped (A-20, A-30) | Status: DEGRADED (persistent)
+
+### RAW-PROBE:
+```
+=== AUDITOR PROBE 2026-07-21T01:10:42Z ===
+
+--- docker ps -a ---
+NAMES                                             STATUS                    IMAGE                                           CREATED
+mcp-gateway                                       Up 5 days (healthy)       mcpservergatway-gateway                         5 days ago
+vn-market-intelligence-mcp-frontend-1             Up 5 days (healthy)       vn-market-intelligence-mcp-frontend             5 days ago
+vn-market-intelligence-mcp-api-gateway-1          Up 5 days (healthy)       vn-market-intelligence-mcp-api-gateway          5 days ago
+vn-market-intelligence-mcp-flaresolverr-1         Up 5 days (healthy)       ghcr.io/flaresolverr/flaresolverr:latest        5 days ago
+vn-market-intelligence-mcp-news-fetch-1           Up 5 days (healthy)       vn-market-intelligence-mcp-news-fetch           5 days ago
+vn-market-intelligence-mcp-mcp-server-1           Up 19 hours (healthy)     vn-market-intelligence-mcp-mcp-server           5 days ago
+vn-market-intelligence-mcp-rag-service-1          Up 2 days (healthy)       vn-market-intelligence-mcp-rag-service          5 days ago
+vn-market-intelligence-mcp-macro-indicators-1     Up 5 days (healthy)       vn-market-intelligence-mcp-macro-indicators     5 days ago
+vn-market-intelligence-mcp-pdf-extractor-1        Up 28 hours (unhealthy)   vn-market-intelligence-mcp-pdf-extractor        5 days ago
+vn-market-intelligence-mcp-technical-analysis-1   Up 5 days (healthy)       vn-market-intelligence-mcp-technical-analysis   5 days ago
+vn-market-intelligence-mcp-alert-engine-1         Up 5 days (healthy)       vn-market-intelligence-mcp-alert-engine         5 days ago
+vn-market-intelligence-mcp-stock-price-1          Up 5 days (healthy)       vn-market-intelligence-mcp-stock-price          5 days ago
+vn-market-intelligence-mcp-kinh-dich-service-1    Up 5 days (healthy)       vn-market-intelligence-mcp-kinh-dich-service    5 days ago
+
+--- health endpoints ---
+[health] mcp-server:3000/health OK (HTTP 200)
+[health] api-gateway:4000/health OK (HTTP 200)
+[health] macro-indicators:5004/health OK (HTTP 200)
+[health] pdf-extractor:5001/health FAIL (HTTP CURL_ERR)
+[health] frontend:3001/ OK (HTTP 200)
+
+--- restart count ---
+Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=1
+
+--- memory pressure ---
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=92.53% MemUsage=2.776GiB / 3GiB
+
+--- disk df -h / ---
+Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
+/dev/disk1s4s1   233Gi    13Gi    25Gi    35%    393k  263M    0%   /
+
+--- pdf-extractor in-container multi-probe (A-20) ---
+[A-20-PROBE-1] in-container HTTP 000000
+[A-20-PROBE-2] in-container HTTP 000000
+[A-20-PROBE-3] in-container HTTP 000000
+[A-20] pass_count=0/3
+
+=== PROBE DONE ===
+```
+
 ## c848 · 2026-07-21T00:44:16Z
 ### Audit Run Tier-1 (00:42–00:44 UTC 2026-07-21)
 - Tier: 1 | Services: 12 checked | Health: 5 probed
