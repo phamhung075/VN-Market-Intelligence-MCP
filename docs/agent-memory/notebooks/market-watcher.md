@@ -1,45 +1,48 @@
 # Market Watcher — Notebook
-**Last updated:** 2026-07-21 16:13 UTC | **Sprint:** 2026-Q3
+**Last updated:** 2026-07-21 16:16 UTC | **Sprint:** 2026-Q3
 
 ## Carry-over
-EOD slot had not fired since 2026-07-17T16:08Z (4-day gap; 07-18/19 weekend, 07-20 and 07-21 EOD missed). This cycle was the first EOD pass since then — treated as first pass, no delta-vs-yesterday assumptions made.
+- **SLOT OVERLAP (new, needs dispatcher look):** the EOD cycle wrote its ledger + `docs/signals/price_anomaly_20260721T1613.json` at 16:13 UTC while this offhours cycle was mid-run (started 16:09 UTC). Two market-watcher cycles processed the *same* 08:32 closing prices ~4 min apart. Dispatcher routed 16:09 to `offhours` because EOD window is 16:00±5 and the EOD slot itself fired late (~16:08–16:13). Not a data error — but two cycles per close is wasted work; worth a cadence fix.
+- EOD slot had a 4-day gap (last fire 2026-07-17) and self-recovered today.
 
-## Cycle (EOD, 16:13 UTC)
-- Tickers processed: 6 (mover set, per prior EOD precedent of notable-movers-only, not all 58)
-- Ledger: 6 written, 0 failed — `DIG.md` created from template, `GEX.md` Market Watcher section added (was absent)
-- Signal file: `docs/signals/price_anomaly_20260721T1613.json` (6 tickers, JSON validated via jq)
-- Regime: NEUTRAL | carry NEUTRAL | yield FAIRLY_VALUED | VN-Index 1730.56 (-12.95)
+## Cycle (offhours, 16:09–16:16 UTC)
+- Stocks: 10 | Anomalies: 2 (>2.5σ) | Volume spikes: 1 | Chain confirms: 0
+- Regime: NEUTRAL (fallback — see WARN) | DXY: unavailable | US10Y: unavailable | fx_pressure: [] | pe_risk: []
+- `[WARN] regime fallback: NEUTRAL (macro_snapshot JSON shape has no REGIME field)` — known schema gap, not an agent error
+- Offhours floor applied: sigma 2.0→2.5σ, volume 2.0→2.5x
+- Sweep forced: DXG, KDH, NVL (all last covered 2026-07-18T08:06Z, 80h stale) — all sub-threshold, no signal emitted (log-only, per flow)
 
-### Headline finding — crude/equity divergence
-Brent +2.71% to $91.41, yet Dầu khí sector **-6.05% in one session** — worst sector by 2×, next worst Công nghệ -2.79%.
-GAS -6.98% (RSI 29.3, **4.0× avg volume**, below lower BB), BSR -6.49% (RSI 37.8), PLX -4.81% (RSI 28.7).
-Economically coherent for BSR (refiner crack spread) and PLX (distributor with administratively capped retail price vs rising crude input — corroborating news: petrol station fined for unauthorised price rise). GAS (upstream) is the least explained leg.
-**Not** asserted as a validated causal chain — `get_open_chain_findings` returned zero market chains this cycle.
+### Anomalies emitted (bus → alert-commander)
+- **GAS** -6.98% = 2.89σ (30d SD 2.42%), volume 4.02x → signal id 8680
+- **D2D** -3.30% = 2.51σ (30d SD 1.32%), volume 1.46x, at 52w low → signal id 8681
+- Near-miss, not emitted: PLX 2.44σ, GEX 1.86σ, BSR 1.80σ, FPT 1.94σ, DIG 1.38σ, DXG 1.48σ
 
-### Volume splits the selloff into two regimes
-- **Capitulation (heavy turnover):** GAS 402%, DIG 191%, PLX 151%, BSR 147% of 21d avg
-- **Grinding decline (avg-or-below turnover):** GEX 87%, FPT 98%
-GEX is the standout risk: RSI 19.9 (most extreme oversold on watchlist), -28.06% over 30d, second consecutive heavy down day — but **no capitulation volume**, so no exhaustion signal. Recorded as "avoid", not "buy the dip".
+### Dedup note — GAS double-coverage
+GAS at this same close was already written to the EOD signal *file* at 16:13. AutoCure c47 off-hours guard was checked against the **bus** (`get_agent_signals`, 24h → zero market-watcher rows). Emitted anyway because the consumers differ: the EOD file feeds CHEF/unified-agent; alert-commander had received **no** GAS price_anomaly today. Flagging that the c47 guard text says "generated a signal" without distinguishing file-vs-bus lanes — ambiguous, and I resolved it by consumer. D2D was absent from the EOD set, so it is unambiguously net-new.
 
-## Incidents
-- **vn-market MCP server restarted mid-cycle ~16:10:03 UTC** — uptime 14h34m → 8s, all circuit breakers reset. Six parallel `get_technical_indicators`/`get_market_snapshot` calls were in flight at that exact instant and all returned `connection refused`. Causal link plausible (known over-parallel host-starvation failure mode) but **unproven** — could equally be an independent restart. Mitigation applied: every subsequent call this cycle was serial; zero further failures. Worth a dev look if the pattern repeats.
-- YoY unavailable: neither `get_ticker_intelligence` nor `get_price_history(30d)` expose a YoY field. Written as `null`, **not estimated**. A 365-day pull was deliberately deferred rather than re-load a just-restarted server.
+### Headline — crude/equity divergence persists
+Brent +2.71% to $91.41 yet Dầu khí sector **-6.05%/1d**, worst of 17 sectors (next: Công nghệ -2.79%). GAS is the least-explained leg: still momentum decile 10 on 60d ROC (+20.3%) while breaking down intraday. Recorded as observation — `get_open_chain_findings(15m)` returned only news-scout rows (2 bearish `chain_catalyst` unattributed + 1 DIG `urgent_news`), no market chain to confirm against.
 
-## Metrics (cycle 2026-07-21 16:13 UTC)
+### Breadth is the real story
+26 new 52w lows vs **0** new highs; only 5.6% of watchlist above MA50, 8.3% above MA200; ADL -316. Volatility term structure inverting: rv_10d 18.76% > rv_20d 14.73% > rv_60d 13.70% (regime still labelled NORMAL at 32.9th pct). 9 of 10 tickers priced returned `Tổng thể: GIẢM` with 0/4 bullish indicators; only NVL was neutral.
+
+## Data gaps (honest — probed, not assumed)
+- `get_insider_sentiment`: null, `INSUFFICIENT_DATA: no valid buy/sell transactions in 90d window`
+- `get_vn_liquidity_state`: OMO null (`OMO HTML parse: no add/absorb rows found`), interbank_1w null (`dttktt.sbv.gov.vn unreachable from VPS`), SJC gold gap 0 (no SJC crawler row) → T-27 gap direction **unreadable**, not claimed
+- `cny_vnd_rate` = 0 → T-28 `cny_coupling_active` **indeterminate**; no VND-stress call made either way
+- `get_breadth_thrust`: mclellan_osc / summation / zweig / breadth_z all null (`sessions_below_21`, only 3 sessions accrued)
+- Rapid-market-cap screen: both anomaly tickers pass the 500B size gate (GAS 176,387B, D2D 870B); valuation bands **UNAVAILABLE** — no BCTC rows for either, so no SKIP-EXPENSIVE could fire
+- MACRO_HEALTH ran DEGRADED: production/consumption/inflation/investment tracks all `is_estimate=true`
+- T-20 oil→CPI: Brent +2σ above 30d mean (open HIGH macro alert) → `cpi_pressure_imminent=true` flagged, no lag assumed
+
+## Metrics (cycle 2026-07-21 16:16 UTC)
 | Field | Value |
 |---|---|
 | cycles_run | 1 |
-| items_fetched | 6 |
-| signals_emitted | 1 (price_anomaly, 6 tickers) |
-| ledger_written | 6 |
-| ledger_failed | 0 |
-| insider_probes | 6 (all "no activity", all probed not assumed) |
-| gateway_restarts_observed | 1 |
+| items_fetched | 10 |
+| signals_emitted | 2 |
+| signals_suppressed | 0 |
+| evidence_fragments_recorded | 20 (ids 324–346; 10x momentum_5d + 10x momentum_20d) |
+| sweep_tickers_forced | 3 |
+| coverage_state_updated | yes |
 | exit_status | complete |
-
-## Cycle (offhours, 12:05 UTC)
-- Stocks scanned: 3 (sweep rotation) | Anomalies: 0 (>2.5σ floor) | Volume spikes: 0 | Chain confirms: 0
-- Regime: NEUTRAL | Volatility: NORMAL (rv_20d=14.73%, percentile 32.86%)
-- Sweep forced: KBC (65h stale), HUT (65h stale), DIG (65h stale) — all below threshold floor
-- Market status: CLOSED (outside 02:00–08:59 UTC) — prices stale as of 08:32 UTC
-- Breadth: Weak (ADL=-316, 25 new lows, 0 new highs, pct_above_ma200=8.3%)

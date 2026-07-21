@@ -1,8 +1,8 @@
 {
   "_schema": "v1",
   "_ssot": true,
-  "_updated_by": "news-scout",
-  "_updated_at": "2026-07-21T16:14:14Z",
+  "_updated_by": "market-watcher",
+  "_updated_at": "2026-07-21T16:16:49Z",
   "_eod_completed": "2026-07-11T16:06:30Z",
   "tickers": {
     "VNM": {
@@ -11,7 +11,7 @@
     },
     "FPT": {
       "last_covered_news_scout": "2026-07-21T16:14:14Z",
-      "last_covered_market_watcher": "2026-07-21T08:04:22Z"
+      "last_covered_market_watcher": "2026-07-21T16:16:49Z"
     },
     "VCB": {
       "last_covered_news_scout": "2026-07-21T16:14:14Z",
@@ -55,15 +55,15 @@
     },
     "DIG": {
       "last_covered_news_scout": "2026-07-21T16:14:14Z",
-      "last_covered_market_watcher": "2026-07-21T12:05:00Z"
+      "last_covered_market_watcher": "2026-07-21T16:16:49Z"
     },
     "DXG": {
       "last_covered_news_scout": "2026-07-21T16:14:14Z",
-      "last_covered_market_watcher": "2026-07-18T08:06:08Z"
+      "last_covered_market_watcher": "2026-07-21T16:16:49Z"
     },
     "KDH": {
       "last_covered_news_scout": "2026-07-21T16:14:14Z",
-      "last_covered_market_watcher": "2026-07-18T08:06:08Z"
+      "last_covered_market_watcher": "2026-07-21T16:16:49Z"
     },
     "PDR": {
       "last_covered_news_scout": "2026-07-21T16:14:14Z",
@@ -71,7 +71,7 @@
     },
     "NVL": {
       "last_covered_news_scout": "2026-07-21T16:14:14Z",
-      "last_covered_market_watcher": "2026-07-18T08:06:08Z"
+      "last_covered_market_watcher": "2026-07-21T16:16:49Z"
     },
     "VRE": {
       "last_covered_news_scout": "2026-07-21T16:14:14Z",
@@ -79,7 +79,7 @@
     },
     "D2D": {
       "last_covered_news_scout": "2026-07-21T16:14:14Z",
-      "last_covered_market_watcher": "2026-07-21T04:05:00Z"
+      "last_covered_market_watcher": "2026-07-21T16:16:49Z"
     },
     "MSN": {
       "last_covered_news_scout": "2026-07-21T16:14:14Z",
@@ -103,7 +103,7 @@
     },
     "GAS": {
       "last_covered_news_scout": "2026-07-21T16:14:14Z",
-      "last_covered_market_watcher": "2026-07-21T08:04:22Z"
+      "last_covered_market_watcher": "2026-07-21T16:16:49Z"
     },
     "SSI": {
       "last_covered_news_scout": "2026-07-21T16:14:14Z",
@@ -131,15 +131,15 @@
     },
     "GEX": {
       "last_covered_news_scout": "2026-07-21T16:14:14Z",
-      "last_covered_market_watcher": "2026-07-20T08:06:00Z"
+      "last_covered_market_watcher": "2026-07-21T16:16:49Z"
     },
     "BSR": {
       "last_covered_news_scout": "2026-07-21T16:14:14Z",
-      "last_covered_market_watcher": "2026-07-21T08:04:22Z"
+      "last_covered_market_watcher": "2026-07-21T16:16:49Z"
     },
     "PLX": {
       "last_covered_news_scout": "2026-07-21T16:14:14Z",
-      "last_covered_market_watcher": "2026-07-18T08:06:08Z"
+      "last_covered_market_watcher": "2026-07-21T16:16:49Z"
     },
     "DAG": {
       "last_covered_news_scout": "2026-07-21T16:14:14Z",
