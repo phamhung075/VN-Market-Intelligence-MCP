@@ -1,0 +1,69 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "2026-07-21T16:11:00Z",
+  "payload": {
+    "fire_time": "2026-07-21T16:11:00Z",
+    "nominal_tick": "16:00",
+    "drift_min": 6,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "silent": false,
+    "matched_slots": ["news-scout-offhours", "market-watcher-offhours", "market-watcher-eod", "alert-commander-critical"],
+    "won_slots": ["news-scout-offhours", "market-watcher-offhours", "market-watcher-eod", "alert-commander-critical"],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "errors": [],
+    "leader_lock": "acquired",
+    "election_lock_id": "cron:cowork:2026-07-21T16:00Z",
+    "session_blind": false,
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence",
+      "market-watcher-eod": "cadence",
+      "alert-commander-critical": "cadence"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": 240,
+      "market-watcher-offhours": 240,
+      "market-watcher-eod": 240,
+      "alert-commander-critical": 240
+    },
+    "last_fired_timestamp": "2026-07-21T16:09:45.000Z",
+    "last_fired_slots": ["news-scout-offhours", "market-watcher-offhours", "market-watcher-eod", "alert-commander-critical"],
+    "last_fired_write_errors": null,
+    "collision_warning": "agent_id=market-watcher matched 2 slots (market-watcher-offhours, market-watcher-eod) — both spawned per R3; WORK telegram sent",
+    "drain": {
+      "ran": true,
+      "mandatory_guard": "inbox 53 > 50",
+      "inserted": 0,
+      "db_count": 215
+    },
+    "emit_pressure_state": {
+      "success": true,
+      "emitted_at": "2026-07-21T16:10:07.781Z",
+      "cycle_snapshot_promoted": false,
+      "stale_warning": true
+    },
+    "note": "ENVELOPE COMPLIANCE: this file is deliberately written to the enveloped schema {from,to,type,payload,priority,createdAt} that telemetry.md line 5 declares an INVARIANT. The 47 pre-existing docs/signals/cowork-team-*.json files are FLAT and are therefore skipped by drain-signals.js:77 forever, which is what pins the inbox above the >50 mandatory-drain guard. Tracked: cow-20260721T153000 (refines CLEAN-COWORK-DISPATCHER-TELEMETRY-DRAIN-DIR, ready/P1). Confirmed empirically at 15:46:27Z when an enveloped cowork file drained to processed/ while all 47 flat ones did not.",
+    "observations": [
+      "cycle_snapshot_promoted=false for the 5th consecutive tick. WRITER-SIDE CONFIRMATION this tick: tick-snapshot.md Step 4.7 bash uses `date -u +%H:%M` and wrote docs/data/cycle-snapshot-16:08.json (wall-clock), while the promoter looks for the nominal 15-min floor 16:00. Exactly the root cause already filed as cow-20260721T151500 — not re-filed.",
+      "stale_warning flipped to true on this emit (was false at 15:54:19Z). Per pressure-read.md Step 4.2 AC-P1-6-3 this forces PRESSURE_MODE=legacy on the next tick regardless of emitted_at age. Recording as an observation, not a defect — likely downstream of the snapshot-promotion failure keeping state from refreshing.",
+      "market-watcher-eod last_fired was 2026-07-17T16:08:34Z despite cron '0 16 * * 1-5' — it did not fire on Mon 07-20 (a weekday). Not investigated this tick and NOT filed; flagged here only so a later pass can check whether the 16:00 tick was missed on 07-20 or the slot was gated. Do not treat as a confirmed missed-fire without checking."
+    ]
+  }
+}
