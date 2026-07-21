@@ -1,0 +1,95 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "2026-07-21T16:40:00Z",
+  "payload": {
+    "tick": "2026-07-21T16:30Z",
+    "nominal_tick": "16:30",
+    "fire_time": "2026-07-21T16:40:00Z",
+    "drift_min": 6,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "silent": false,
+    "preflight_verdict": "WORK",
+    "preflight_rc": 1,
+    "preflight_rc_note": "RC=1 does not imply failure on this script — the one-line JSON verdict is authoritative (known and-chain exit-code behaviour).",
+    "session_blind": false,
+    "leader_lock": "acquired",
+    "election_lock_id": "cron:cowork:2026-07-21T16:30Z",
+    "matched_slots": ["refine-bctc-slot-4"],
+    "won_slots": ["refine-bctc-slot-4"],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": ["docs/agents/refine_bctc_md/flow/main.md"],
+    "errors": [],
+    "one_shots": [],
+    "pressure_mode": "adaptive",
+    "pressure_freshness": "emitted_at=2026-07-21T16:24:56.229Z, age~11.8min < 20min threshold, stale_warning=false → adaptive (isStale is OR of flag and age; both clean this tick)",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": { "refine-bctc-slot-4": "cron" },
+    "cadence_minutes": { "refine-bctc-slot-4": null },
+    "cadence_note": "policy_id=bctc-offmarket + calendar_status=unknown → _cron_fallback=true, so cron governs and the slot stays due. The _cron_fallback branch is evaluated BEFORE the interval_minutes==null suppression branch — order matters; a reordering would silently suppress every bctc slot on unknown/open/half_day.",
+    "last_fired_timestamp": "2026-07-21T16:39:38Z",
+    "last_fired_slots": ["refine-bctc-slot-4"],
+    "last_fired_write_errors": null,
+    "last_fired_prior_value": "2026-07-19T16:34:33.974Z",
+    "last_fired_gap_note": "Prior stamp was 07-19, not 07-20, for a daily '30 16 * * *' slot — the 07-20 fire never happened. Consistent with the already-known 07-20 master-cron gap (remedy is operational: re-arm crons after session restart). NOT filed as a defect row.",
+    "last_fired_write_guard": "slot count 23→23 and JSON re-validated after write — needle-clobber guard per known jq multi-slot hazard.",
+    "devq": 5,
+    "signal_backlog": 8,
+    "drain": {
+      "ran": true,
+      "mandatory_guard": "inbox 57 > 50",
+      "inbox_before": 57,
+      "inbox_after": 54,
+      "inserted": 3,
+      "routed": [
+        "2026-07-21T162233Z-drain-predicate-price-anomaly-family.json -> routed-to-po",
+        "cowork-team-20260721T162324Z-fanout-ordering-and-siblingdedup-correction.json -> routed-to-po",
+        "cowork-team-20260721T162500Z.json -> routed-to-po"
+      ],
+      "db_count": 220,
+      "skipped_non_signal_shape": 54,
+      "skip_breakdown": "47 cowork-team-*.json + 7 price_anomaly_*.json",
+      "payload_ref_repoint": "FIRST PRODUCTION FIRE of FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE — 1 signal_queue row repointed (cow-20260721T162324) when its payload file moved to processed/. VERIFIED: repointed ref resolves on disk, and a queue-wide sweep found ZERO dangling payload_refs across all 160 rows. The fix works as designed.",
+      "orch_apply": "Stage 0 + Stage 1 PASS; conservation OK (task_total 562=562, signal_total 160=160); applied."
+    },
+    "signal_queue": {
+      "depth": 160,
+      "cap": 200,
+      "filed_this_tick": [],
+      "filed_this_tick_reason": "NOTHING NEW TO FILE — every candidate this tick was already covered by open prior art. This is a legitimate outcome, not a skipped step."
+    },
+    "step_0a_routing": {
+      "cowork_addressed_new_rows": 2,
+      "rows": [
+        "po-20260720T052606 (to=unified-agent, HIGH, ~35h NEW) — LEFT AT NEW. No unified-agent slot matched this tick, so it was not routed; flipping NEW→READ would clear a HIGH no agent acted on. Rot already tracked as cow-20260721T144500.",
+        "cow-20260721T162324 (to=po, MED, filed by cowork-team last tick) — LEFT AT NEW. Dispatcher must not mark its own row READ on PO's behalf; that would be a false-green on its own escalation."
+      ]
+    },
+    "emit_pressure_state": {
+      "success": true,
+      "emitted_at": "2026-07-21T16:39:48.596Z",
+      "cycle_snapshot_promoted": false,
+      "consecutive_false": 7
+    },
+    "prior_art_checked_not_filed": [
+      "cycle_snapshot_promoted=false (7th consecutive). This tick was a SHARPER case than prior ones: a snapshot (cycle-snapshot-16:39.json) existed on disk 42s BEFORE the emit and promotion still declined — ruling out 'no snapshot to promote'. Independently derived mechanism: the writer names the file by wall-clock minute (date -u +%H:%M = 16:39) while the promoter keys the NOMINAL tick (16:30), so they can only match at drift=0, and this dispatcher never fires at drift=0. That is IDENTICAL to the root cause already recorded in cow-20260721T151500 (status=READ), whose payload also covers the downstream degradation. Corroboration, not a new finding. NOT FILED. Confirmed consequence still live: cycle-snapshot-latest.json is dated 2026-07-07 (14 days stale) while 15:08/16:08/16:39 snapshots sit unpromoted beside it.",
+      "Envelope/drain-floor defect — already cow-20260721T153000. One NEW concrete instance found and SELF-ATTRIBUTED: docs/signals/cowork-team-20260721T152400Z.json (tick 15:15Z) is FLAT (top-level tick/classification/drain/... with no from/to/type/payload), so it will never drain and is now a permanent inbox resident. It was written by a cowork-team dispatcher tick in THIS session before the envelope invariant was applied; dispatcher output from 16:25Z onward is enveloped and does drain. Recorded as an instance of the open row, NOT re-filed.",
+      "market-watcher-eod / refine-bctc 07-20 fire gap — operational remedy (re-arm crons), not a code defect. Already reasoned in prior tick telemetry.",
+      "price_anomaly_*.json skip family — filed independently by a developer agent at 16:22:33Z with the sharper framing (those files carry actionable market signal no agent ever receives). Drained to PO this tick. NOT duplicated."
+    ],
+    "tick_snapshot": {
+      "written": "docs/data/cycle-snapshot-16:39.json (14784 bytes)",
+      "method": "payloads fetched straight to stage files via the shared scripts/agents-flow/mcp-call.sh helper (invoked under bash -c, since the zsh Bash tool cannot source it) rather than round-tripping ~12KB through dispatcher context",
+      "assembled": "market_context len=10964, macro_snapshot keys=fetchedAt,source_tier,text; staging files cleaned via trap EXIT"
+    },
+    "envelope_note": "Written to the enveloped schema {from,to,type,payload,priority,createdAt} per telemetry.md line 5 INVARIANT so this file actually drains instead of joining the 54-file skip floor."
+  }
+}

@@ -419,7 +419,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-21T16:23:24Z",
+    "_updated_at": "2026-07-21T16:45:00Z",
     "_updated_by": "cowork-team",
     "archive": [],
     "rows": [
@@ -2821,6 +2821,17 @@
         "severity": "MED",
         "status": "NEW",
         "payload_ref": "docs/signals/processed/cowork-team-20260721T162324Z-fanout-ordering-and-siblingdedup-correction.json"
+      },
+      {
+        "id": "cow-20260721T164500",
+        "ts": "2026-07-21T16:45:00Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "HEAD-OF-LINE BLOCK: get_bctc_pending_refine serves fully-FAILED finalized POW report at result[0] — both refine slots re-pick it forever, 4 PENDING reports starved behind it (verified live post-finalization)",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": "docs/signals/cowork-team-20260721T164500Z-refine-queue-head-of-line-block.json"
       }
     ],
     "last_triaged_at": "2026-07-21T15:28:00Z",
@@ -3016,8 +3027,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-21T16:40:14Z",
-    "_updated_by": "qa-20260721-review-pass",
+    "_updated_at": "2026-07-21T16:43:22Z",
+    "_updated_by": "qa-regate-round2",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -11256,7 +11267,12 @@
         "qa_reviewed_by": "qa",
         "qa_blocking_issue": "scripts/agents-flow/drain-signals.js:243 (commit 84096f617) -- repointPayloadRefs()'s jq computeCandidate() execFileSync call has NO maxBuffer override. Live docs/data/orch/orch-state.json is already 1,114,264 bytes, > Node execFileSync default maxBuffer (1,048,576 bytes). REPRODUCED LIVE in an isolated mkdtemp harness built from the exact REVIEWED commit (84096f617), against a >1MB fixture matching the live file's real size: jq throws ENOBUFS, is caught, and is SILENTLY SWALLOWED (console.error WARN + return, drain exits 0) -- payload_ref stays dangling at the pre-move path, and orch-validate.mjs Stage 1c then fails exit 2 on the next fleet write. This is the EXACT defect class (fleet-wide orch-apply block via dangling payload_ref) the row exists to close, reproduced via a size-triggered path instead of zero-awareness. Also contradicts the developer's own review_note design rationale (fail-loud, not swallowed -- silently swallowing reproduces the exact bug being fixed). GOOD NEWS: a candidate fix already exists UNCOMMITTED in the working tree at the same path (adds maxBuffer:64MB to the jq execFileSync call + converts this catch block to FAIL-LOUD process.exit(1) + a new ENOBUFS regression test scenario) -- independently re-run: 22/22 pass including the new scenario. developer: verify that uncommitted diff, then commit it (scripts/agents-flow/drain-signals.js + drain-signals.test.js only, explicit pathspec -- do not sweep orch-state.json), then re-request qa.",
         "qa_test_suite_result": "QA FINAL VERIFICATION 2026-07-21 (post developer_enobufs_followup_20260721T1622Z): confirmed content lives in HEAD despite 2 unrelated bare-commit disturbances (84096f617 router-authored \"fix(auditor-tier1)\", 0e28eed23 cowork-tick \"chore(cowork): tick 16:15Z\" -- both swept in this fix under unrelated messages; verified via `git show <sha> --stat` + `git log -p -- drain-signals.js`, content not tree-cleanliness). Own suite: node scripts/agents-flow/drain-signals.test.js 22/22 PASS (direct run, matches router bun-test result). 3 independent QA checks beyond re-running the suite: (a) benign-branch check -- seeded orch-state.json with a signal_queue row pointing at an UNRELATED (non-moved) file; drain exits 0, stderr \"no signal_queue rows referenced moved files\", orch-state.json byte-identical before/after -- confirms !result.changed still returns quietly, not swallowed into FAIL-LOUD. (b) RED-before non-tautology check -- built a temp copy of drain-signals.js with maxBuffer stripped from the jq execFileSync call (simulating pre-fix HEAD), ran the SAME >1MB ENOBUFS fixture (1,300,576 bytes, confirmed >1,048,576) against it in an isolated harness (never touched live orch-state.json): drain exits 1, stderr \"FAIL-LOUD: payload_ref repoint jq computation failed... spawnSync jq ENOBUFS\", payload_ref stayed at pre-move path (dangling) -- then re-ran the identical fixture against live HEAD drain-signals.js: exit 0, payload_ref correctly repointed to processed/ path. Confirms the fixture genuinely exceeds the default maxBuffer and the assertion would genuinely fail without the fix -- not vacuous. (c) caller-reachability check -- grepped docs/agents/dev-team/flow/{main.md,drain-signals.md} for the invocation site: script is run via Bash tool by the dev-team specialist per drain-signals.md line 86; main.md line 56 declares \".claude/skills/cowork-error-boundary/SKILL.md\" as the error boundary for the WHOLE flow file (\"If ANY tool call fails after 1 retry: BUG telegram + signal drop + EXIT\") -- a non-zero Bash exit is a tool-call failure under this convention, so process.exit(1) is NOT silently swallowed by the caller. VERDICT: APPROVED.",
-        "qa_blocking_issue_resolved": true
+        "qa_blocking_issue_resolved": true,
+        "qa_reviewed_against_sha": "0e28eed23",
+        "fix_landed_sha": "0e28eed23",
+        "qa_regate_round2_by": "qa",
+        "qa_regate_round2_at": "2026-07-21T16:43:22Z",
+        "qa_regate_round2_note": "RE-GATE ROUND 2 (independent, session f4ca241d, ): re-ran full drain-signals.test.js suite in a fresh isolated mkdtemp harness at HEAD -> 22/22 PASS (matches prior verdict, not trusted blind). Confirmed ENOBUFS regression fixture non-vacuity directly (1,300,576 bytes > Node default maxBuffer 1,048,576). Independently re-reproduced the pre-fix negative-control (commit 64cd7edf9) in a fresh isolated harness -> payload_ref stays dangling post-move, orch-validate Stage 1c exit 2 (confirmed live, not from the prior narrative). Confirmed at HEAD: drain-signals.js:240 JQ_MAX_BUFFER=64MB, :243 maxBuffer wired into execFileSync, :252-261 jq-computation-failure path is FAIL-LOUD process.exit(1) (the exact round-1 CHANGES_REQUESTED gap) -- not a silent return. Confirmed bound --argjson jq injection-safety, skip-when-no-match no-op (byte-identical, no orch-apply call), and CAS-retry structural match to orch-apply.sh contract (exit 2 = retry) via direct code read + orch-apply.sh cross-reference. Live docs/data/orch/orch-state.json (1,132,123 bytes) re-validated: bun scripts/orch-validate.mjs exit 0, 12 top-level keys intact. Row was ALREADY promoted review[]->done_verified[] qa_verdict=APPROVED by a prior pass (qa_reviewed_at 16:40:14Z, task_board._updated_by=qa-20260721-review-pass) before this round-2 dispatch began -- this write only ADDS the structured SHA-traceability fields the router requested; verdict/status left untouched (independently corroborated, not re-decided)."
       }
     ],
     "head": {

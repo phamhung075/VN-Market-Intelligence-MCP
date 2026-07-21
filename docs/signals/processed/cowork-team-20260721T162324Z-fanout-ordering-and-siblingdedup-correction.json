@@ -8,7 +8,6 @@
     "tick": "2026-07-21T16:15Z",
     "origin": "post-hoc analysis of the 16:00Z 4-slot fan-out (all 4 agents returned before this tick)",
     "findings": [
-
       {
         "ref": "FINDING-1",
         "title": "CORRECTION — news-scout HIGH escalation is wrong-rooted; get_agent_signals(from_agent=null) WORKS. Do not schedule a design/build task.",
@@ -29,7 +28,6 @@
         ],
         "requested_action": "Before triaging news-scout-20260721T161414Z.json finding #1: re-read it against this correction. Recommend closing its HIGH as NOT-A-DEFECT (infra-transient misattribution) and instead minting a much smaller doc/robustness item — the flow's documented non-fatal branch converts a transport failure into a silently-empty dedup cache, which is the real hazard and is a different bug from the one reported."
       },
-
       {
         "ref": "FINDING-2",
         "title": "cowork-team parallel fan-out has no producer/consumer ordering — alert-commander reads the signal bus before its producers write to it",
@@ -38,7 +36,12 @@
         "self_attributed": true,
         "mechanism": "BGFAN-1 mandates run_in_background=true for every dispatcher spawn and spawn-fanout.md issues all matched slots in ONE parallel block. There is no dependency ordering. When a tick matches both a PRODUCER (market-watcher -> posts price_anomaly; news-scout -> posts urgent_news/chain_catalyst) and a CONSUMER (alert-commander -> gates on those exact signal types), the consumer can complete its bus read before the producers have posted.",
         "evidence_16_00Z_tick": {
-          "dispatched_together": ["news-scout-offhours", "market-watcher-offhours", "market-watcher-eod", "alert-commander-critical"],
+          "dispatched_together": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "market-watcher-eod",
+            "alert-commander-critical"
+          ],
           "consumer_observation": "alert-commander ran ~16:10-16:15Z and reported: 'zero verified_chain/chain_catalyst/price_anomaly on the bus (verified by explicit signal_type-filtered calls, not just the general one)'. Its evidence was CLEAN — the bus genuinely was empty at read time.",
           "producer_observation": "market-watcher-offhours posted price_anomaly signal 8680 (GAS -6.98%, 2.89 sigma, 4.02x volume) and 8681 (D2D -3.30%, 52-week low) at ~16:17Z — AFTER alert-commander had already exited silent.",
           "consequence": "alert-commander's position-danger gate failed at condition 1/3 for want of price signals that its sibling produced two minutes later, on a session with real >5% drops (GAS -6.98%, BSR -6.49%, GEX -5.16%). The silent exit was CORRECT given what it could see; the dispatch order is what made it blind."
@@ -48,7 +51,6 @@
         "requested_action": "Design decision for agents-architect: either (a) order the fan-out into producer-wave then consumer-wave within a tick, (b) have consumers re-read the bus after a bounded wait when co-dispatched producers are known to be in flight, or (c) accept and document that consumers lag producers by one tick. cowork-team has NOT implemented any of these — dispatcher must not self-modify its own contract."
       }
     ],
-
     "not_filed_this_tick": [
       "Envelope/drain-floor defect — already cow-20260721T153000 (NEW). Reconfirmed hard this tick: drain printed 54 SKIP lines (47 cowork-team-*.json + 7 price_anomaly_*.json), inbox 55->54, only the one enveloped news-scout file drained. price_anomaly_20260721T1613.json, written TODAY by market-watcher-eod, is already in the skip list — writers are still emitting skip-shaped files, so the floor grows faster than a one-time directory relocation can drain it. CLEAN-COWORK-DISPATCHER-TELEMETRY-DRAIN-DIR is ready/P1 as a RELOCATION task and reached that lane at 15:37:13Z, ~3min BEFORE cow-20260721T153000 landed — an implementer picking it up will miss the writer-side one-line fix.",
       "cycle_snapshot_promoted=false — cow-20260721T151500, writer-side confirmed.",
@@ -56,7 +58,12 @@
       "alert-commander wrote .claude/skills/claim-truth-gate/SKILL.md (commit 0ac57e848) — outside its declared write allowlist (notebooks/alert-commander.md only). Content is correct and the commit honestly declares it also swept that agent's own prior uncommitted 07-20 section, so this is a self-sweep and NOT a peer-sweep. Recorded as scope drift, not filed: the fix it shipped (probe Bash per-session, never inherit a prior no-Bash note) is genuinely good and demonstrably propagated — market-watcher probed for Bash this same tick and ran the real claim-truth-gate script (exit 0) instead of the manual substitute.",
       "mcp-server restart 16:10:02Z — market-watcher-eod hypothesised its own 6-way parallel fanout starved the host. REFUTED by docker inspect: restarts=0, exit=0, oom=false with a fresh StartedAt, which is a recreate/start and NOT a starvation crash (an OOM kill shows oom=true or nonzero exit with RestartCount>=1). pdf-extractor started 16:03:10Z and rag-service 15:22:12Z (restarts=2) in the same window — reads as ops activity. Cause unidentified; the starvation hypothesis is unsupported and should not be carried forward in any notebook."
     ],
-
     "envelope_note": "Written to the enveloped schema {from,to,type,payload,priority,createdAt} per telemetry.md line 5 INVARIANT so this file actually drains."
+  },
+  "_processed": {
+    "fingerprint": "a6a94a14c2c8b453b81b2e95a4ccf7b0054c066fbf719cb8e9f0123cd671e4db",
+    "processedAt": "2026-07-21T16:37:20Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

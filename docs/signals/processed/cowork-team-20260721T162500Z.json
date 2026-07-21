@@ -37,7 +37,9 @@
       "depth_before": 159,
       "depth_after": 160,
       "cap": 200,
-      "filed": ["cow-20260721T162324"],
+      "filed": [
+        "cow-20260721T162324"
+      ],
       "read_back_verified": true,
       "payload_ref_resolves": true
     },
@@ -56,5 +58,11 @@
     },
     "findings_filed": "cow-20260721T162324 -> docs/signals/cowork-team-20260721T162324Z-fanout-ordering-and-siblingdedup-correction.json (2 findings: [1] CORRECTION, news-scout HIGH from_agent=null claim disproved live + at source, time-critical because that escalation drained to PO this same tick; [2] cowork fan-out has no producer/consumer ordering — self-attributed dispatcher defect from the 16:00Z tick)",
     "envelope_note": "Enveloped per telemetry.md line 5 INVARIANT so this file drains instead of pinning the inbox floor."
+  },
+  "_processed": {
+    "fingerprint": "926a802f6ce5b31175d777084bf7baf364dcd8712b74cf8d50a60ef37409d640",
+    "processedAt": "2026-07-21T16:37:20Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }
