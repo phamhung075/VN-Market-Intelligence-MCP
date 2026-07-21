@@ -55,5 +55,11 @@
     ],
     "router_did_not": "mint any board row, reopen either cancelled row, delete or relocate any stuck file, edit the drain script or its flow doc, touch FIX-PRICE-ANOMALY-DISH-SIGNAL-ENVELOPE, or run Step 1 PO triage (a po agent was live on another task at tick time — see deferral note).",
     "deferred_this_tick": "Step 1 PO triage and 0a-D signal_queue row consumption were both DEFERRED, not skipped. 3 NEW rows (po-20260720T052606, cow-20260721T162324, cow-20260721T164500) were deliberately left at status=NEW rather than marked READ, because marking them READ without an actual triage would strand them in a consumed-but-unprocessed state. 0a-D-PRUNE also deferred to avoid a CAS race with the live po writing orch-state."
+  },
+  "_processed": {
+    "fingerprint": "60747f8a394017bc589e092fb92ce03417ec4a238ab16f0e09b5d7d8c495f314",
+    "processedAt": "2026-07-21T17:07:07Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

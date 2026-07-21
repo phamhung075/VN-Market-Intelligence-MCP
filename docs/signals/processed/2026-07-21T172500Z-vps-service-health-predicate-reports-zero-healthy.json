@@ -18,5 +18,11 @@
       "do_not_over_correct": "This does NOT clear the underlying symptom. bctc genuinely reads Stale=YES, last push 2026-07-20T01:26:41Z, 0 pushes in 24h, and a trigger_bctc_vps_fetch across 15 tickers produced no data change. Stale data plane with a live service is a real unexplained problem — it is simply not a service outage, and it is not owned by an infrastructure team. Whoever picks this up must not close the ingest question on the strength of this refutation."
     },
     "router_did_not": "mint a board row, restart or touch any service, or modify the health tool."
+  },
+  "_processed": {
+    "fingerprint": "5e0070e978799d692aa8da80898b2693ee5aa3b782fd7fbcf837b58828366d6a",
+    "processedAt": "2026-07-21T17:07:07Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }
