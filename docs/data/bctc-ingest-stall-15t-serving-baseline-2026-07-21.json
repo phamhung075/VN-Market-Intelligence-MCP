@@ -1,0 +1,52 @@
+{
+  "_purpose": "FIRST serving-plane baseline for the FIX-BCTC-Q1-2026-STORED-PDF-INGEST-STALL-15T cohort. Captured BEFORE any reprocess so the post-fix delta is measurable. The absence of this baseline is the documented root cause of a full day of churn on 2026-07-21: the 2026-07-15 census sampled get_bctc_full for only 3 of 15 tickers (MSN/SAB/PLX) and classified the other 12 on the CALENDAR plane only, so 'did the reparse regress these or were they always empty' was unanswerable, and QA, router and PO each argued it from calendar data or from absence of records. Do NOT delete this file when the row closes — it is the reference point for any future regression claim on this cohort.",
+  "_provenance": "Captured by ops agent 2026-07-21T16:49Z via live gateway call_tool get_bctc_full(code, 2026, \"Q1\") per ticker (raw tool output, not badges or status flags). Persisted to the repo by router 2026-07-21T17:2xZ — the agent had written it only to a session-scoped scratchpad that dies with the session.",
+  "_corroboration": "Independently cross-checked by router against QA's separate probe of the overlapping 16-ticker reparse cohort earlier the same day. The two probes agree exactly on every shared ticker: same 6 absent (DBC KDC MSN SAB SHB VND), same 7 corrupt (DGC DXG FRT GEX KDH PDR VJC). They differ only on CTG and D2D, which are not members of this 15-ticker cohort. Two independent measurements, one agreement — this baseline is corroborated, not single-sourced.",
+  "timestamp": "2026-07-21T16:49:00Z",
+  "task_id": "FIX-BCTC-Q1-2026-STORED-PDF-INGEST-STALL-15T",
+  "phase": "BASELINE-PRE-REPROCESS",
+  "probe": "get_bctc_full(code, year=2026, quarter=\"Q1\") — quarter is the STRING \"Q1\"; an integer silently fails Zod validation",
+  "baseline": {
+    "15_ticker_cohort": {
+      "DBC": {"mode": "1_ABSENT", "result": "Chưa có dữ liệu BCTC"},
+      "DGC": {"mode": "2_CORRUPT", "result": "total_assets=0 — OCR extraction failure"},
+      "DXG": {"mode": "2_CORRUPT", "result": "total_assets=0 — OCR extraction failure"},
+      "FRT": {"mode": "2_CORRUPT", "result": "total_assets=0 — OCR extraction failure"},
+      "GEX": {"mode": "2_CORRUPT", "result": "total_assets=0 — OCR extraction failure"},
+      "HUT": {"mode": "1_ABSENT", "result": "Chưa có dữ liệu BCTC", "note": "NATURAL CONTROL — on the ingest-stall list but never touched by the reparse batch"},
+      "KDC": {"mode": "1_ABSENT", "result": "Chưa có dữ liệu BCTC"},
+      "KDH": {"mode": "2_CORRUPT", "result": "total_assets=0 — OCR extraction failure"},
+      "MSN": {"mode": "1_ABSENT", "result": "Chưa có dữ liệu BCTC"},
+      "PDR": {"mode": "2_CORRUPT", "result": "total_assets=0 — OCR extraction failure"},
+      "PLX": {"mode": "1_ABSENT", "result": "Chưa có dữ liệu BCTC", "note": "NATURAL CONTROL — on the ingest-stall list but never touched by the reparse batch"},
+      "SAB": {"mode": "1_ABSENT", "result": "Chưa có dữ liệu BCTC"},
+      "SHB": {"mode": "1_ABSENT", "result": "Chưa có dữ liệu BCTC"},
+      "VJC": {"mode": "2_CORRUPT", "result": "total_assets=0 — OCR extraction failure"},
+      "VND": {"mode": "1_ABSENT", "result": "Chưa có dữ liệu BCTC"}
+    },
+    "summary": {
+      "mode_1_absent_count": 8,
+      "mode_1_absent_tickers": ["DBC", "HUT", "KDC", "MSN", "PLX", "SAB", "SHB", "VND"],
+      "mode_2_corrupt_count": 7,
+      "mode_2_corrupt_tickers": ["DGC", "DXG", "FRT", "GEX", "KDH", "PDR", "VJC"],
+      "total": 15,
+      "serving_ok_count": 0,
+      "natural_controls": "HUT ABSENT, PLX ABSENT — both in the same state as the reparse-touched members. The ingest-stall mechanism ALONE reproduces the absent state with zero reparse involvement.",
+      "stored_pdfs_verified": "all 15 have *_2026_Q1.pdf on the VPS, stored 2026-06-07..06-14"
+    }
+  },
+  "d2d_status": {
+    "ticker": "D2D",
+    "stored_pdf": "D2D_2026_Q1.pdf",
+    "size": "11.6 MB",
+    "stored_date": "2026-06-07",
+    "serving_result": "Chưa có dữ liệu BCTC",
+    "disposition": "STAYS WITH OPS-BCTC-REFINE-REPASS-NONBANK-5T — cohort NOT widened to 16, per PO directive"
+  },
+  "_reprocess_status": {
+    "attempted": "2026-07-21T16:59:32Z, trigger_bctc_vps_fetch for all 15",
+    "outcome": "no data change observed post-trigger",
+    "cause": "OPEN — NOT diagnosed. The ops agent reported this as 'VPS BCTC service down 39+ hours' and escalated to the bug channel; router refuted that specific diagnosis (see _router_correction) but the underlying 'no BCTC data flowing' observation stands and is still unexplained.",
+    "_router_correction": "The 'service down' verdict does not survive a direct probe. get_vps_service_health shows vn-bctc-fetch with VPS uptime 2d 3h 25m — the service has been running continuously THROUGH the entire claimed 39h outage window. The 'unhealthy' flag it was based on is not a reliable liveness signal: vn-news-fetch carries the SAME 'unhealthy' flag while its push log shows successful pushes at 15:00, 15:31, 16:00, 16:30 and 17:00 the same day, and Response(ms) reads 0 for ALL FIVE services including the two reported 'idle' — a uniform 0 is a dead probe field, not a measured timeout. Push-age is likewise not a liveness signal for BCTC: pushes are event-driven on the filing calendar, so staleness is expected when no new filing exists (see memory feedback_bctc_lastpush_age_misread_as_crash, which documents this exact misread firing 12x/day as a false P0). What is TRUE: the bctc proxy row reads Status=ok, Stale=YES, last push 2026-07-20T01:26:41Z, 1 item, 0 pushes in 24h. Stale data plane, live service. The real blocker is somewhere between the stored PDFs and the serving layer, and has NOT been located."
+  }
+}
