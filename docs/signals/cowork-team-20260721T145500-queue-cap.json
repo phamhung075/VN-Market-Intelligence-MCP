@@ -1,0 +1,22 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "system-issue",
+  "payload": {
+    "finding": "signal_queue.rows[] will hit its 200-row cap in under 24h and the PRUNE path cannot relieve it, because the dominant terminal status in live use ('triaged', 144/148 rows) is not in the eviction criteria.",
+    "measured_at": "2026-07-21T14:55Z",
+    "current": {"rows": 148, "cap": 200, "headroom": 52},
+    "growth_rows_per_day": {"2026-07-18": 2, "2026-07-19": 24, "2026-07-20": 56, "2026-07-21": 66},
+    "projection": "at ~60 rows/day, cap is reached 2026-07-22",
+    "root_cause": {
+      "prune_criteria": "signal-dashboard SKILL.md PRUNE evicts status IN (READ, RESOLVED, SUPERSEDED) AND ts older than 24h",
+      "live_status_histogram": {"NEW": 2, "READ": 2, "triaged": 144},
+      "eligible_now": 0,
+      "gap": "'triaged' is a terminal status written by PO triage but absent from the eviction criteria, so 97% of rows are permanently unevictable. The skill's guidance ('if approaching limit without PRUNE running, call script immediately') is a dead end here — the script is a provable no-op."
+    },
+    "verified": "scripts/orch-cold-evict.sh contains no git operations (safe to run); it was NOT run this tick because 0 rows are eligible and a needless atomic write risked a CAS collision with a concurrently-writing dev-team peer.",
+    "requested": "PO decide: (a) add 'triaged' to the PRUNE eviction criteria in signal-dashboard SKILL.md + orch-cold-evict.sh, or (b) collapse 'triaged' into 'RESOLVED' at PO-triage write time, or (c) raise the cap with a documented retention policy."
+  },
+  "priority": "high",
+  "createdAt": "2026-07-21T14:55:00Z"
+}
