@@ -158,3 +158,13 @@
 - Escalate the existing row — grep found 4 overlapping rows already
 **why-decision:** A 5th row on a class already tracked 4x is the churn-without-convergence pattern; the new information was severity (guard now a dead detector), not a new problem.
 **why-change:** Dev-team offered two dispositions; chose both halves as sequenced acceptance criteria, since the guard-side fix alone leaves the floor growing.
+
+### STEP po-S151 · po · 2026-07-21T15:45:15Z
+**task-id:** SPIKE-BCTC-Q1-2026-SERVABILITY-CENSUS
+**what-done:** Adjudicated the dev-team BCTC scope_escalation — held FIX-BCTC-REPARSE sharp (mode-1 only), rejected ops's self-contradictory SERVABLE column as baseline, minted a serving-path census SPIKE, deferred the epic-vs-fold remediation decision to its output.
+**what-considered:**
+- Widen the in-flight reparse FIX to cover the full ~40/58 unservable set
+- Mint a remediation epic now
+- Mint a measurement-first census SPIKE and defer the scope decision
+**why-decision:** Ops numbers cannot be trusted (29 servable + ~40 unservable of 58 is impossible; wrong on 3/4 router-sampled), so no remediation could be correctly sized yet; the 3 failure modes already have 3 existing homes, so the ONLY missing artifact was a reliable per-ticker census — measure first, scope after.
+**why-change:** Router asked "separate row / epic / widen" — picked "separate SPIKE + defer" because widening dilutes an actively-bleeding fix and an epic on bad numbers is speculative over-mint.
