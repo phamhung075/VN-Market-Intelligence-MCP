@@ -10,14 +10,21 @@
     "drift_min": 7,
     "verdict": "WORK",
     "election": "WON (cron:cowork:2026-07-21T20:15Z)",
-    "matched_slots": ["tnb-audit"],
-    "won_slots": ["tnb-audit"],
-    "spawned": ["docs/agents/tran-ngoc-bau/flow/main.md"],
-    "last_fired_written": {"tnb-audit": "2026-07-19T20:19:31.548Z -> 2026-07-21T20:24:10.000Z"},
+    "matched_slots": [
+      "tnb-audit"
+    ],
+    "won_slots": [
+      "tnb-audit"
+    ],
+    "spawned": [
+      "docs/agents/tran-ngoc-bau/flow/main.md"
+    ],
+    "last_fired_written": {
+      "tnb-audit": "2026-07-19T20:19:31.548Z -> 2026-07-21T20:24:10.000Z"
+    },
     "one_shots": [],
     "signal_queue_new": 1,
     "errors": [],
-
     "finding_1_tnb_audit_DAILY_slot_is_gated_by_a_WEEKLY_marker_key": {
       "claim": "tran-ngoc-bau/flow/main.md Step G-2 keys its duplicate-publish mutex on WEEK_PERIOD.periodKey (a 7-day date range, e.g. 2026-07-20/2026-07-26) with ttl_seconds=691200 (~8 days). The slot it guards fires DAILY: cowork-schedule.json tnb-audit cron='13 20 * * *', dish_type='daily_audit', guaranteed=true.",
       "mechanism": "First successful claim in a given week holds the key for ~8 days. Every subsequent DAILY run that week hits `if PUBLISH_CLAIM.claimed != true` and EXITs with 'DONE: duplicate-publish blocked | PIPELINE: complete | QUALITY: full'. A daily audit degrades to weekly, and the exit string reports it as a COMPLETE, FULL-QUALITY run — so the degradation is invisible to anything reading pipeline status.",
@@ -28,9 +35,36 @@
       "fix_direction_PLAN_ONLY": "If the audit is meant to be daily, key on the VN calendar date (published:tnb-audit:<DATE_VN>) with a ~26h TTL, matching the sibling gatherer slots. If it is meant to be weekly, the cron and dish_type are wrong, not the key. These are opposite fixes — decide the intended cadence FIRST. Owner: po/agents-architect, not the dispatcher.",
       "severity": "MED — silent cadence degradation with a success-shaped exit string; contained to one guaranteed audit slot."
     },
-
     "memory_correction": "feedback_router_intent_path_double_dispatches_cowork_slots asserts tran-ngoc-bau has no call_tool and its marker gate is dead code. Verified false as of 2026-07-21T20:22Z. The generalizable lesson in that memory (a gate written in a tool the agent doesn't hold is dead code) still stands and was independently re-confirmed this evening on alert-commander; only the tran-ngoc-bau instance has been remediated.",
-
-    "double_dispatch_check": "No published:tnb-audit:* marker held and no peer intent:tran-ngoc-bau:* claim in the unfiltered lock list at spawn time, so this is not a repeat of the 2026-07-15 instance-2 double-dispatch. Peer session 8f3a5999 (the 19:50Z chef-evening pre-dispatcher) has a session-presence row expiring 20:20:18Z and held no cowork intent."
-  }
+    "double_dispatch_check": "No published:tnb-audit:* marker held and no peer intent:tran-ngoc-bau:* claim in the unfiltered lock list at spawn time, so this is not a repeat of the 2026-07-15 instance-2 double-dispatch. Peer session 8f3a5999 (the 19:50Z chef-evening pre-dispatcher) has a session-presence row expiring 20:20:18Z and held no cowork intent.",
+    "tick_2_20260721T2030Z": {
+      "tick": "2026-07-21T20:30Z",
+      "fire_time": "2026-07-21T20:36:46Z",
+      "drift_min": 6,
+      "verdict": "WORK",
+      "election": "WON (cron:cowork:2026-07-21T20:30Z)",
+      "matched_slots": [],
+      "won_slots": [],
+      "spawned": [],
+      "one_shots": [],
+      "errors": [],
+      "signal_queue_new": 1,
+      "last_fired_written": "SKIPPED — WON_SLOTS empty (last-fired.md:14 scopes the write to own spawns)",
+      "telemetry_file": "NOT minted — folded into this existing artifact instead. 0 slots/0 spawns/0 errors; a new file would add to the docs/signals floor that CLEAN-COWORK-DISPATCHER-TELEMETRY-DRAIN-DIR [P1] exists to drain."
+    },
+    "finding_2_ONE_STUCK_NEW_ROW_DEFEATS_THE_ENTIRE_PREFLIGHT_SILENT_FAST_PATH": {
+      "claim": "cowork-tick-preflight.sh's SILENT gate is `slots empty AND one_shots empty AND signal_queue NEW == 0` (script header line 25). A single permanently-NEW signal_queue row therefore forces verdict=WORK on EVERY tick, including ticks with nothing whatsoever to dispatch.",
+      "observed": "Tick 2026-07-21T20:30Z returned verdict=WORK with slots=0, one_shots=0, new_signals=1. There was no work. The full LLM continuation path ran anyway.",
+      "the_stuck_row": "po-20260720T052606 (ts 2026-07-20T05:26:06Z, to=unified-agent, type=methodology-flag, severity=HIGH). Queue histogram: 75 rows = 1 NEW + 73 triaged + 1 RETRACTED. It is the ONLY NEW row and has been for 39.2h.",
+      "why_it_is_stuck": "unified-agent has no signal_queue reader, so the row is undeliverable; PO recorded it as LEFT NEW deliberately (po-s148). That decision is defensible on its own terms — the row should not be marked READ by an agent that never read it. The cost was almost certainly not foreseen: it silently disables a token-economy optimization in a different subsystem.",
+      "cost": "The preflight's stated purpose (main.md:49-51) is 'on the common SILENT/WORK path this replaces the LLM-narrated Steps 0a-4b entirely (~80% of ticks are silent off-hours/no-due-work; this cuts that to one bash call + a short JSON reply)'. With a permanently-NEW row that ~80% saving is zero. Every no-work tick pays the full LLM path.",
+      "quantification_refused": "39.2h is 157 wall-clock */15 ticks, but executed ticks are FEWER and NOT derivable — the dispatcher only fires while a live CLI session exists and 07-20 had no session from ~09:15Z onward (project_cowork_guaranteed_slot_needs_live_cli_session). Reporting 157 as the cost would be the same last_fired-style overclaim that file already documents. The mechanism is certain; the magnitude is not measured here.",
+      "same_class_as": "feedback_dispatcher_telemetry_writes_deadlock_inbox_backlog_guard and feedback_composite_score_masks_dead_detector_pruned_table — a gate whose input has a permanent floor above/below its threshold stops discriminating while still reporting that it fired. Third instance of this family in this subsystem.",
+      "fix_direction_PLAN_ONLY": "Do NOT resolve this by flipping the row to READ — that launders an undelivered signal and is exactly what PO refused. Candidates: (a) make the SILENT gate count only rows that are ROUTABLE this tick (addressed to an agent with a due slot), so an undeliverable row stops forcing WORK; (b) give the queue a terminal UNDELIVERABLE status distinct from NEW, so a known-dead row leaves the NEW population without being falsely marked read; (c) fix delivery to unified-agent, which closes the root cause and is already owned. Owner: po/agents-architect. The dispatcher must not unilaterally change queue semantics.",
+      "severity": "MED — no incorrect output, pure waste; but it is a self-inflicted, permanently-on cost with a single-row cause."
+    },
+    "RC_1_PUZZLE_RESOLVED": "Prior ticks recorded 'PREFLIGHT_RC=1 observed alongside verdict WORK' as anomalous. It is not. cowork-tick-preflight.sh header line 32: 'Exit code: 0 = SILENT (no LLM read needed). 1 = WORK|LOST_ELECTION|DEFER|ERROR'. RC=1 is the DOCUMENTED code for WORK. Dispatching on verdict rather than RC was correct, but the RC was never an anomaly and should stop being reported as one."
+  },
+  "_amended_at": "2026-07-21T20:38Z",
+  "_amendment_note": "Tick 20:30Z folded in (0 slots, no new file minted). finding_2 added: one stuck NEW row defeats the preflight SILENT fast-path. RC=1 puzzle resolved from the script header."
 }
