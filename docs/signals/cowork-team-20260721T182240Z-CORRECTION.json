@@ -1,0 +1,58 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "correction",
+  "priority": "HIGH",
+  "createdAt": "2026-07-21T18:22:40Z",
+  "payload": {
+    "corrects": "docs/signals/cowork-team-20260721T181107Z.json finding OVERNIGHT-GAP-1, committed as 73768ec87",
+    "issued_by": "same author, same session, ~15 min later, self-caught before anyone acted on it",
+
+    "WHAT_WAS_WRONG": {
+      "claim_as_published": "'Exactly 5 DAILY slots missed 07-20, all 5 in 00:30-04:00 GMT+7. Band-shaped, not slot-shaped.'",
+      "error_1_count": "WRONG. >=7 slots missed, not 5. bctc-analyst-slot-1 (15:00Z) and slot-4 (00:00Z) also missed and were invisible to my query.",
+      "error_2_shape": "WRONG. Not a band. The session was alive ~07:15-11:15 Paris on 07-20 and dead from ~11:15 onward through the night. Loss starts mid-DAY, not in unattended overnight hours.",
+      "error_3_timezone": "WRONG CLOCK. I converted to GMT+7 because user memory records GMT+7 — but that is the VN MARKET timezone. The host is Europe/Paris (CEST, UTC+2, verified via readlink /etc/localtime). Every local time in the original finding is 5 hours off."
+    },
+
+    "CORRECTED_FINDING": {
+      "ran_on_0720": [
+        "chef-morning     05:15Z = 07:15 Paris  (synthesis file on disk)",
+        "chef-intraday    08:15Z = 10:15 Paris  (synthesis file on disk)",
+        "chef-eod         08:45Z = 10:45 Paris  (synthesis file on disk)",
+        "fb-daily         09:15Z = 11:15 Paris  (docs/social/fb-post-2026-07-20.md)"
+      ],
+      "missed_on_0720": [
+        "bctc-analyst-slot-1  15:00Z = 17:00 Paris",
+        "digest-daily         17:30Z = 19:30 Paris",
+        "bctc-analyst-slot-2  18:00Z = 20:00 Paris",
+        "chef-evening         19:45Z = 21:45 Paris",
+        "tnb-audit            20:13Z = 22:13 Paris",
+        "bctc-analyst-slot-3  21:00Z = 23:00 Paris",
+        "bctc-analyst-slot-4  00:00Z = 02:00 Paris (07-21)"
+      ],
+      "so_what": "ALL FOUR bctc passes were lost on 07-20, plus the chef evening dish, digest, and the TNB audit. That is a materially bigger loss than the original finding reported, and it reframes the fix: the exposure window opens when a laptop closes at midday, not at some overnight boundary. OPS-COWORK-GUARANTEED-SLOT-INSTALL [REVIEW] is worth more than my first number implied."
+    },
+
+    "HOW_I_GOT_IT_WRONG_methodological": {
+      "root_cause": "I concluded from whichever single evidence plane I had just queried, and published before triangulating. Three planes, two of which CANNOT answer this question:",
+      "plane_1_last_fired_CANNOT": "Single scalar, self-erasing. slot-1 and slot-4 fired again on 07-21 and overwrote their own 07-20 evidence. This is why I saw 5 instead of 7.",
+      "plane_2_git_log_census_CANNOT": "git log --name-only misses UNTRACKED files entirely. The chef synthesis JSONs and fb-post-2026-07-20.md that disprove my second hypothesis were sitting untracked on disk, invisible to every git query I ran. A git census measures COMMIT activity, not AGENT activity, and in this repo those diverge badly.",
+      "plane_3_filesystem_CAN": "find docs -name '*2026-07-20*' -o -name '*20260720*'. Dated output artifacts are per-run and non-overwriting, so they are the only durable per-day record of what executed. This should have been the FIRST query; it would have given the right answer in one step.",
+      "the_caveat_that_did_not_save_me": "My original finding contained a correctly-worded caveat ('5 is a LOWER BOUND, not a census; last_fired is a single scalar'). I wrote the true caveat and a false headline in the same document and shipped both. A disclosed limitation does not protect a reader who is handed an overclaiming headline next to it. If the evidence supports only a lower bound, the HEADLINE must state the bound.",
+      "for_po": "Treat this as a process finding about me, not only a data correction. No row requested."
+    },
+
+    "SIDE_FINDINGS_this_tick_no_rows_minted": {
+      "bctc_filename_collision_CONFIRMED_harm_nil": "bctc-analyst-slot-1 (15:09Z) and slot-2 (18:09Z) both emit mode=routine on the same date, so they share one filename per ticker: bctc_signal_{TICKER}_{YYYYMMDD}_{mode}.json has no slot/cycle discriminator. slot-2 overwrote slot-1's files today. Harm this cycle is NIL — git diff is empty, content byte-identical (E3 cache-hit, fundamentals unchanged). NOT ASSERTED that data was lost. The risk is real when data does move between passes: the agent itself reported KD hexagram readings churned for 2-3 cycles after the 07-20 selloff, and during such churn the later pass would silently erase the earlier pass's distinct view. Slots 1/2/3 all share a date+mode key; only slot-4 rolls the date. ALREADY OWNED by FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING [BACKLOG] which names this exact template. No row minted.",
+      "bctc_frontmatter_underdeclares_write_surface": "bctc-analyst's frontmatter says 'Writes only to docs/agent-memory/notebooks/bctc-analyst.md ... No other filesystem writes permitted except analysis-briefs on mode=release and cache.' Its own flow contradicts this in at least two places: init.md:16/22/79/81/145 + stage-analyze.md:114 mandate docs/signals/bctc_signal_*.json emission, and stage-log-notify.md:66 mandates doc-self-heal (this cycle it correctly edited docs/agents/tools/package/bctc-analyst.md). The AGENT behaved correctly per its flow; the DESCRIPTION is stale. Consequence is concrete: boundary auditing against the frontmatter yields a false breach every cycle — I nearly filed one against this agent before checking the flow. No prior-art row found. NOT minting given 3 NEW rows already await triage; PO to mint if it agrees.",
+      "doc_self_heal_verified_good": "The agent's doc self-heal was checked at source, not accepted: one-line diff correcting get_insider_signals params, live-verified that bare {code} succeeds. Correct and useful. Committed on its behalf."
+    },
+
+    "bctc_cycle_outcome": {
+      "slot": "bctc-analyst-slot-2, cycle c108, mode=routine",
+      "committed_on_agent_behalf": "agent frontmatter grants no Bash/git — dispatcher commits its output, same pattern as digest-predict last tick",
+      "notebook_lines": "32 (agent self-reported 33 — trivial drift, noted not filed)"
+    }
+  }
+}

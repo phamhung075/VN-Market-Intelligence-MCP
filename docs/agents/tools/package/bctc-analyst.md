@@ -67,7 +67,7 @@ All monetary values in VND millions.
 |------|---------|-----------|
 | `get_watchlist` | Current watchlist tickers and metadata | — |
 | `get_kinhdich_reading` | Hexagram reading for specific stock | `code: string` (NOT `ticker`) |
-| `get_insider_signals` | Insider trading activity and positions | `code: string` (req), `outstandingShares: number` (req), `windowDays?: number` |
+| `get_insider_signals` | Insider trading activity and positions | `code: string` (req) — live-verified 2026-07-21: bare `{code}` succeeds ("no significant insider activity" text response); `outstandingShares`/`windowDays` are NOT required despite prior doc claim |
 | `get_legal_risk_signals` | Legal/prosecution/tax penalty risks | — |
 | `get_open_chain_findings` | Findings from impact chain analysis (cross-validation) | — |
 | `get_macro_snapshot` | Macro regime snapshot for REGIME detection | `source?: string, regimeType?: string` |
