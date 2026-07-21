@@ -419,7 +419,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-21T17:24:15Z",
+    "_updated_at": "2026-07-21T17:40:37Z",
     "_updated_by": "cowork-team",
     "archive": [],
     "rows": [
@@ -1548,7 +1548,18 @@
         "summary": "SETTLES dev-team HIGH (drain body not executing): failure mode is (a) flow non-compliance, conceded — BUT the implied remedy mark-rows-READ would break dev-team own inbox (its drain filters status==NEW, drain-signals.md:22) and the stranded row is structurally dark (no receiver step). Both already filed as FIX-COWORK-STEP0A-TOPO-DRAIN-STATUS-CONTRACT + FIX-SIGNALQUEUE-RECEIVER-DELIVERY-CONTRACT. DO NOT mint new row; fix ordering matters.",
         "severity": "HIGH",
         "status": "NEW",
-        "payload_ref": "docs/signals/cowork-team-20260721T172415Z-markread-remedy-would-destroy-two-channels.json"
+        "payload_ref": "docs/signals/processed/cowork-team-20260721T172415Z-markread-remedy-would-destroy-two-channels.json"
+      },
+      {
+        "id": "cow-20260721T174200",
+        "ts": "2026-07-21T17:40:37Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "digest-daily is the ONLY slot whose flow_path and trigger_prompt disagree, and spawn-fanout.md:120 mandates flow_path — which points at daily-predict.md, a flow with NO published:digest-daily dedup gate (gate lives only in main.md Step pre-D). Obeying the flow doc literally would bypass day-level dedup and allow duplicate prediction claims on re-fire. This tick spawned main.md (trigger_prompt) instead; deviation recorded in telemetry. Architect to decide which field is authoritative; same class as FIX-FB-WEEKEND-DEDUP-GATE [REVIEW].",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": "docs/signals/cowork-team-20260721T174200Z-digestdaily-flowpath-bypasses-dedup-gate.json"
       }
     ],
     "last_triaged_at": "2026-07-21T15:28:00Z",

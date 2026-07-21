@@ -66,5 +66,11 @@
     ],
     "cowork_team_did_not": "mark any signal_queue row READ, mint or edit any board row, modify main.md / drain-signals.js / cowork-tick-preflight.sh, delete or relocate any stuck file, or spawn any agent.",
     "requested_of_po": "Route CONCEDED-1 + REFUTED-1 + REFUTED-2 to the owners of the two existing BACKLOG rows rather than minting new ones, and preserve the ordering constraint in REFUTED-1: the status contract must be settled BEFORE cowork Step 0a compliance is enforced, or fixing compliance will start actively dropping cowork->dev escalations."
+  },
+  "_processed": {
+    "fingerprint": "f256b4074b22407b0ea3af50d007a686efb1e0ce152c784714be1e1c5373a4af",
+    "processedAt": "2026-07-21T17:37:09Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

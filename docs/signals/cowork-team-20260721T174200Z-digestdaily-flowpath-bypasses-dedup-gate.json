@@ -1,0 +1,44 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "system-issue",
+  "priority": "MED",
+  "createdAt": "2026-07-21T17:42:00Z",
+  "payload": {
+    "tick": "2026-07-21T17:30Z",
+    "title": "digest-daily is the only slot where flow_path and trigger_prompt disagree, and the documented spawn rule picks the one that bypasses the daily dedup gate.",
+    "found_how": "Not a sweep — noticed while executing the spawn for this tick and verified before spawning, because the preflight surfaced both fields and they did not match.",
+    "findings": [
+      {
+        "ref": "CONFIRMED-1",
+        "severity": "MED",
+        "claim": "Following spawn-fanout.md literally would spawn a flow with no day-level dedup gate.",
+        "evidence": [
+          "docs/agents/cowork-team/flow/spawn-fanout.md:120 — 'prompt: \"run <slot.flow_path>  slot=<slot.slot_id>\"'. trigger_prompt is not mentioned anywhere in that file.",
+          "docs/data/cowork-schedule.json digest-daily: flow_path = docs/agents/digest-predict/flow/daily-predict.md, trigger_prompt = 'run docs/agents/digest-predict/flow/main.md  slot=digest-daily'. The two disagree.",
+          "docs/agents/digest-predict/flow/main.md Step pre-D holds the ONLY published:digest-daily:<UTC_DATE> claim (TTL 86400s), and routes onward to daily-predict.md at :142.",
+          "docs/agents/digest-predict/flow/daily-predict.md contains NO such gate — grep for published:digest-daily / dedup returns only :134, a git commit-mutex. Positive control: the same grep pattern matched the file's 144 lines, so the empty result is a real absence, not a broken query."
+        ],
+        "consequence": "A dispatcher that obeys spawn-fanout.md enters daily-predict.md directly, skipping Step pre-D. Cron re-fire, session restart, or dispatcher double-fire on the same UTC day then produces duplicate prediction claims — exactly what FEAT-PREDICTION-CLAIMS-DAILY-CADENCE built the gate to stop."
+      },
+      {
+        "ref": "SCOPE-1",
+        "severity": "INFO",
+        "detail": "Checked all 23 slots: for every other slot the path inside trigger_prompt equals flow_path. digest-daily is the sole divergence, so this is a single-row data defect, not a schema-wide drift. Which field is stale is NOT asserted — resolving that is the architect's call, and it decides the fix direction (correct the schedule row, or teach spawn-fanout.md to prefer trigger_prompt when present)."
+      },
+      {
+        "ref": "CORROBORATION-1",
+        "severity": "INFO",
+        "detail": "Same defect class already recognised elsewhere in the fleet: FIX-FB-WEEKEND-DEDUP-GATE [REVIEW] — 'Add the MISSING period-keyed publish-once dedup gate to the FB weekend sub-flows'. Both are 'sub-flow entered directly, publish-once gate lives only in the parent'. Worth deciding once for both rather than twice."
+      },
+      {
+        "ref": "OBSERVED-1",
+        "severity": "LOW",
+        "detail": "digest-daily last_fired was 2026-07-19T17:34:44Z against cron '30 17 * * *', so the 2026-07-20T17:30Z fire did not happen — one missing day. Cause NOT determined (could be no dispatcher session alive at that tick, a lost election, or a suppressed match). Flagging only; a single gap is not yet a pattern."
+      }
+    ],
+    "action_taken_this_tick": "Spawned docs/agents/digest-predict/flow/main.md (the trigger_prompt target), NOT flow_path, so the dedup gate ran. Deviation from spawn-fanout.md is deliberate and recorded in the tick telemetry (docs/signals/cowork-team-20260721T173930Z.json).",
+    "cowork_team_did_not": "edit cowork-schedule.json slot definitions, edit spawn-fanout.md, mint or edit any board row, or mark any signal_queue row READ.",
+    "requested_of_po": "Route to architect to decide which field is authoritative, and fold in FIX-FB-WEEKEND-DEDUP-GATE if the answer generalises. Until then the dispatcher will keep preferring trigger_prompt when the two disagree, since that is the safe side of the fork."
+  }
+}
