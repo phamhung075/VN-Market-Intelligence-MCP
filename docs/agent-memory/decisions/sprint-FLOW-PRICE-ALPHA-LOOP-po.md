@@ -131,3 +131,30 @@
 - Mint a backlog for the 2 single-occurrence B-02/B-06 data_stale rows — REJECTED: never re-emitted across ~16 cycles → self-resolved transient (single obs ≠ mechanism).
 **why-decision:** predicate-tune (A-30 loss-of-reclamation/OOMKilled gate; A-12 debounce; A-21 windowed) + dedup-suppression stops the FP re-emission AT SOURCE while the hard_constraint PRESERVES the E-3 append-always ledger (never skip a genuine anomaly) and genuine_tripwire keeps real OOM firing.
 **why-change:** detection-only per constraints — I dispose (drain/fold/mint), I do NOT deploy; pdf-extractor rebuild + mcp-server restart stay user-gated and were NOT recommended as my action.
+
+### STEP po-S148 · po · 2026-07-21T14:51:20Z
+**task-id:** FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP
+**what-done:** Minted after verifying bctc-analyst's 4-cycle escalation on 4 independent planes (file-bus, Telegram BCTC-1345b, get_bctc_full DGC=corrupt, get_earnings_calendar=16 flipped NGAY NOP).
+**what-considered:**
+- Fold onto an existing BCTC row (12+ adjacent rows exist)
+- Mint new — no row covers the ACTIVE reprocess writing back corrupt data + a falsified filing date
+**why-decision:** Adjacent rows are remediation-of-victims or validation-gate gaps; none targets the running writer. Folding would have left the bleed untracked while repairs got re-corrupted.
+**why-change:** Escalated beyond the dispatcher's brief, which flagged only the 2 dashboard signals; the file-bus escalations were the larger finding.
+
+### STEP po-S149 · po · 2026-07-21T14:56:33Z
+**task-id:** FIX-OHLCV-HISTORY-PLANE-EMPTY-LIVE-PLANE-HEALTHY
+**what-done:** Verified digest-predict's Sunday report live on Tuesday mid-session before minting: correlation 0 codes (worse than the reported 2) while get_market_snapshot returned full healthy data.
+**what-considered:**
+- Skip as weekend artifact (report was Sunday-dated, market closed)
+- Mint — live re-test during market hours ruled the artifact out and showed worsening
+**why-decision:** The market-hours re-test is what separated a real regression from the known market-hours-blind FP class; without it this was a plausible skip.
+**why-change:** no change from plan
+
+### STEP po-S150 · po · 2026-07-21T14:51:20Z
+**task-id:** CLEAN-COWORK-DISPATCHER-TELEMETRY-DRAIN-DIR
+**what-done:** Escalated in place (low→high) + absorbed 2 duplicate rows to archive as CANCELLED; also repaired a dangling payload_ref that was hard-blocking every orch-state write, and minted FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE.
+**what-considered:**
+- Mint a new row for the dev-team follow-up as asked
+- Escalate the existing row — grep found 4 overlapping rows already
+**why-decision:** A 5th row on a class already tracked 4x is the churn-without-convergence pattern; the new information was severity (guard now a dead detector), not a new problem.
+**why-change:** Dev-team offered two dispositions; chose both halves as sequenced acceptance criteria, since the guard-side fix alone leaves the floor growing.

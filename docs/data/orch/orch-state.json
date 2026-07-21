@@ -411,8 +411,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-21T14:46:09Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-07-21T14:56:00Z",
+    "_updated_by": "cowork-team",
     "archive": [],
     "rows": [
       {
@@ -1100,7 +1100,8 @@
         "summary": "STOP pasting the literal gold >$4,300 L6 token — false in 5 dishes; compute the comparison from live gold instead",
         "severity": "HIGH",
         "status": "NEW",
-        "payload_ref": "docs/signals/po-20260720T052606Z.json"
+        "payload_ref": "docs/signals/processed/po-20260720T052606Z.json",
+        "po_ref_repair_20260721": "payload_ref repointed top-level -> processed/ (PO Step 0-SIG triage 2026-07-21T14:51:20Z). This tick's own drain (commit 0ab70d437, 14:47:59Z) moved the payload file to processed/ but left this row's ref at the old path. Row is still status=NEW, severity=HIGH, to=unified-agent: content NOT triaged by PO (not addressed to PO) — only the broken reference repaired so the addressee can still read it. File content verified present at the new path (2368 bytes). Root cause minted as FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE."
       },
       {
         "id": "sys-20260720T054158-2b57",
@@ -2495,6 +2496,28 @@
         "severity": "WARN",
         "status": "READ",
         "payload_ref": null
+      },
+      {
+        "id": "cow-20260721T144500",
+        "ts": "2026-07-21T14:55:00Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "signal-dashboard routes to unified-agent+alert-commander but neither flow drains signal_queue - HIGH flag dark 33h",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": "docs/signals/cowork-team-20260721T144500-inbox-gap.json"
+      },
+      {
+        "id": "cow-20260721T145500",
+        "ts": "2026-07-21T14:56:00Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "signal_queue 148/200 +60/day, cap in <24h; prune cannot relieve - 144 triaged rows not in eviction criteria",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": "docs/signals/cowork-team-20260721T145500-queue-cap.json"
       }
     ],
     "last_triaged_at": "2026-07-21T14:41:51Z",
@@ -4704,6 +4727,43 @@
         "sprint": "MARKET-INDICATOR-DEPTH-P0",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#IND-P1-MOMENTUM-CONSUMER-WIRING",
         "verify_note": "CANCELLED: Superseded by FR-1-CHEF-LEG-FR-2-ATOMIC + FR-1-REMAINING-5-FLOWS. FR-1's BA §0.4 matrix excludes alert-commander/tran-ngoc-bau, defers get_foreign_accum_rank everywhere, and includes market-analyst (stale prior exclusion note now resolved per BA §0.5). See architecture brief §3."
+      },
+      {
+        "id": "CLEAN-SIGNALS-DIR-NONSIGNAL-ARTIFACTS",
+        "title": "Relocate 3 non-signal artifacts out of docs/signals/ + teach signal-drain to archive from/type-less files (stop per-tick re-skip)",
+        "status": "CANCELLED",
+        "zone": "cross-service",
+        "type": "CLEAN",
+        "size": "S",
+        "priority": "low",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#CLEAN-SIGNALS-DIR-NONSIGNAL-ARTIFACTS",
+        "superseded_by": "CLEAN-COWORK-DISPATCHER-TELEMETRY-DRAIN-DIR",
+        "archived_at": "2026-07-21T14:51:20Z",
+        "po_close_20260721": "CANCELLED as duplicate (PO Step 0-SIG triage 2026-07-21T14:51:20Z). Same root class, stale scope: this row says 3 non-signal artifacts; live count is 52. Its drain-side half (teach signal-drain to archive from/type-less files) is folded into the canonical row acceptance criteria (3)+(4). No work lost."
+      },
+      {
+        "id": "FIX-DRAIN-QUARANTINE-NONROUTABLE-SIGNALS",
+        "status": "CANCELLED",
+        "title": "drain-signals re-skips 4 non-routable stray files every tick — quarantine + confirm writer output dir",
+        "owner": "dev-team",
+        "type": "FIX",
+        "zone": "cross-service/",
+        "size": "S",
+        "priority": "low",
+        "supervised": false,
+        "created_at": "2026-07-09T14:02:56Z",
+        "created_by": "po-triage-20260709T1337Z",
+        "files": [
+          "scripts/agents-flow/drain-signals.js"
+        ],
+        "related": [
+          "FIX-DEVTEAM-BOUNDED1-DETAIL-ITEMS-ARRAY-INDEX"
+        ],
+        "status_note": "Recurring per-tick noise, no functional impact: docs/signals/cowork-team-2026-07-03T16-00-00Z.json + 3x price_anomaly_202607{02,03,04}*.json are correctly skipped as non-routable (no from/type) but re-scanned every tick. FIX: (a) drain-signals.js quarantines unrecognized no-from/type files to docs/signals/malformed/ after logging so they stop being re-scanned; (b) redirect upstream writers (cowork tick-report + price_anomaly detector) so their output artifacts stop landing in the routable-signal inbox. Do NOT blindly delete the price_anomaly_*.json files — confirm no live consumer (money-radar/dish surfacing) reads them before choosing quarantine-vs-relocate. Held in backlog (not in_progress) to respect WIP<=2 this tick — eligible for BOUNDED-1 auto-pickup once id1 (FIX-DEVTEAM-BOUNDED1-DETAIL-ITEMS-ARRAY-INDEX) ships. baseline_pass: a fresh dev-team tick's drain step logs the 4 files as quarantined/handled ONCE, a second tick does not re-scan them; no routable signal is ever quarantined. [ESCALATION 2026-07-15 (router-discovered, PO triage): the \"4 stray files\" has grown to 45 docs/signals/cowork-team-*.json telemetry artifacts (Jul 10-11), 49 total .json in the inbox — now NEAR the >50 persist-guard threshold, so the per-tick re-skip is no longer purely cosmetic (latent persist-guard trip). Confirms leg (b): redirect the cowork tick-report writer out of the routable-signal inbox. NOTHING reads these telemetry files for coordination (last_fired lives in docs/data/cowork-schedule.json, read by cowork-match-slots.js) -> safe to age-prune/relocate. Consider re-ranking above \"low\". No new row minted — hygiene observation deduped here.]",
+        "verify_note": "prior_status=TODO",
+        "superseded_by": "CLEAN-COWORK-DISPATCHER-TELEMETRY-DRAIN-DIR",
+        "archived_at": "2026-07-21T14:51:20Z",
+        "po_close_20260721": "CANCELLED as duplicate (PO Step 0-SIG triage 2026-07-21T14:51:20Z). Same root class, stale scope: this row says 4 non-routable stray files; live count is 52. Both halves (quarantine + confirm writer output dir) are folded into the canonical row acceptance criteria (1)+(4). No work lost."
       }
     ],
     "backlog": [
@@ -6023,7 +6083,8 @@
         "type": "FIX",
         "zone": "apps/mcp-server/",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#BCTC-ENRICHER-OLD-QUARTERS",
-        "verify_note": "prior_status=DEFERRED"
+        "verify_note": "prior_status=DEFERRED",
+        "po_scope_note_20260721": "SCOPE MAY BE BROADER THAN THIS ROW'S TITLE (PO triage 2026-07-21T14:51:20Z, folded not re-minted). Telegram BCTC-ZERO-URL-ALERT 2026-07-19T15:15:07Z reports 2 consecutive enricher cycles returning 0 URLs for ALL tickers (itemsProcessed=1 urlsPopulated=0) with an ACTIVE earnings window confirmed — i.e. not confined to the pre-Q4-2025 quarters this row is scoped to. Whoever picks this up: first determine whether the all-tickers zero is the same discovery-source defect widened, or a separate outage of discoverHosePdfUrls()/VPS. Do NOT assume the old-quarters framing still bounds it. NOT independently re-verified live this triage (single Telegram plane only) — treat as a lead, not a confirmed fact."
       },
       {
         "id": "FU-RAPID-SKILLS-RESIDUAL",
@@ -6426,7 +6487,8 @@
         "recurring_bug_count": 6,
         "po_recurrence_triage_20260720": "RECURRENCE (PO signal-queue triage 2026-07-20): pdf-extractor A-20 event-loop-stall recurred 5x 2026-07-19T20:46Z..2026-07-20T00:46Z (health endpoint unhealthy + multi-probe 0/3). Root-cause hypothesis: the /health server shares the extraction event loop / the worker times out during long PDFs; durable fix = isolate the health server onto a separate thread/process/port so /health answers <5s during an active /extract. DO NOT restart (a re-restart re-wedges on the next long PDF). Zone-hint: this is CODE work in apps/pdf-extractor/ (current zone=ops = deploy angle only). recurring-bug-escalation (2+ -> durable fix) flag raised; supervised:true set to block BOUNDED-1 idle auto-pickup. PLAN-ONLY, no dispatch this triage.",
         "po_recurrence_triage_20260721": "HIGH-WATER RECURRENCE (PO signal-drain 2026-07-21T02:52:42Z): pdf-extractor A-11/A-12/A-13/A-20 event-loop stall now PERSISTENT ~30h+ CONTINUOUS (container 'Up but unhealthy' 27h->30h; ~49 signal_queue rows 2026-07-20T01:12..2026-07-21T02:41). Data-plane corroboration: C-11 pdf_documents 0-completed/48h (real, beyond the broken predicate). GENUINE degradation, NOT an FP. recurring_bug_count 5->6. ESCALATION DECISION: durable code fix now WARRANTED. zone corrected ops->apps/pdf-extractor (isolate /health server onto a separate thread/process/port so it answers <5s during an active /extract). PO recommends router route PDF-AVAIL-02-FIX to dev-pdf-extractor as a SUPERVISED dispatch (supervised:true retained to block BOUNDED-1 blind idle pickup). DO NOT restart (re-wedges on next long PDF); no user-gated container action taken. priority normal->high.",
-        "po_corroboration_20260721_pm": "HIGH-WATER CORROBORATION (PO converge-drain po-s147 2026-07-21T14:23:45Z): +26 more A-11/A-15/A-20 pdf-extractor event-loop-stall rows this session 2026-07-21T03:11Z..14:12Z (0/3 multi-probe, HTTP 000). SAME continuous outage — recurring_bug_count HELD at 6 (same episode, not a new one). Fix COMMITTED c78839c6c; DEPLOY user-gated (PO cannot authorize the rebuild). VPS-side B-06 '3/5 down' @06:33Z = single-occurrence VPS view of the same wedge (not re-emitted). DO NOT restart (re-wedges on next long PDF). Detection-only — no infra action."
+        "po_corroboration_20260721_pm": "HIGH-WATER CORROBORATION (PO converge-drain po-s147 2026-07-21T14:23:45Z): +26 more A-11/A-15/A-20 pdf-extractor event-loop-stall rows this session 2026-07-21T03:11Z..14:12Z (0/3 multi-probe, HTTP 000). SAME continuous outage — recurring_bug_count HELD at 6 (same episode, not a new one). Fix COMMITTED c78839c6c; DEPLOY user-gated (PO cannot authorize the rebuild). VPS-side B-06 '3/5 down' @06:33Z = single-occurrence VPS view of the same wedge (not re-emitted). DO NOT restart (re-wedges on next long PDF). Detection-only — no infra action.",
+        "po_corroboration_20260721_1451": "CORROBORATION ONLY, no re-mint (PO Step 0-SIG triage 2026-07-21T14:51:20Z). Dashboard signal sys-20260721T144253-1153 (A-20 multi-probe 0/3, 14:42:53Z) is the SAME continuous outage already recorded at 14:23:45Z — recurring_bug_count HELD at 6, not bumped. IMPORTANT STANDING STATE: the code fix is COMMITTED (c78839c6c, 2026-07-21T05:11Z, offload background-task OCR to worker threads) but NOT DEPLOYED — the pdf-extractor rebuild is user-gated and PO cannot authorize it. Consequence to expect: the auditor will keep emitting A-20 every Tier-1 cycle INDEFINITELY until that rebuild happens, and those re-emits are NOT new information. Do not read continued A-20 signals as the fix having failed — the fix has not yet run anywhere. Verification of c78839c6c can only begin after deploy."
       },
       {
         "id": "RAG-SERVICE-AVAIL-01-FIX",
@@ -8153,16 +8215,6 @@
         "verify_note": "prior_status=TODO"
       },
       {
-        "id": "CLEAN-SIGNALS-DIR-NONSIGNAL-ARTIFACTS",
-        "title": "Relocate 3 non-signal artifacts out of docs/signals/ + teach signal-drain to archive from/type-less files (stop per-tick re-skip)",
-        "status": "BACKLOG",
-        "zone": "cross-service",
-        "type": "CLEAN",
-        "size": "S",
-        "priority": "low",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#CLEAN-SIGNALS-DIR-NONSIGNAL-ARTIFACTS"
-      },
-      {
         "id": "FIX-MOMENTUM-HANDLER-EMPTY-FOREIGN-ACCUM-CODES",
         "status": "BACKLOG",
         "type": "FIX",
@@ -8523,27 +8575,6 @@
         "created_by": "po",
         "note": "PLAN-ONLY tracking/dedup anchor (held supervised=true so BOUNDED-1 idle-capacity promote skips it; the fix is already MANDATED by docs/protocols/docker-deployment-runbook.md Step 2/4 — this row exists so the residual state is not lost and a recurrence has a dedup anchor). Surfaced + triaged at FACTORY-SCHEDULER-split-dataAuditJob po Step-6 close (STEP po-S19). NON-BLOCKING on that close: qa proved deployed==committed via container-vs-HEAD MD5 byte-identical on all 20 touched + 3 wiring files, and po re-verified zero post-build drift via git diff 7b62f73e7..HEAD -- apps/mcp-server/src/scheduler/ (EMPTY) + HEAD==origin/main — STRONGER evidence than the SHA label. ROOT CAUSE: ops's ops-S8 rebuild (2026-07-09T13:24:30Z) ran a bare 'docker compose build mcp-server' WITHOUT --build-arg GIT_SHA=$(git rev-parse HEAD), unlike ops-S4/S5/S6/S7 which all carried the flag + an explicit '| 4 | SHA gate | PASS |' journal row (ops-S8 has neither). SYMPTOM (po-reproduced first-hand): bash scripts/verify-deploy-sha.sh mcp-server -> 'ERROR: SHA drift detected. deployed=unknown expected=ac8d51bc4...' EXIT 1; live vn-market-intelligence-mcp-mcp-server-1 has no vn.market.git_sha label. LATENT: every future SHA-gate check on mcp-server returns deployed=unknown until the next rebuild-with-flag reacquires the label. FIX: on the next mcp-server rebuild (any task), run the full mandated sequence 'docker compose build --build-arg GIT_SHA=$(git rev-parse HEAD) mcp-server && docker compose up -d --no-deps mcp-server && bash scripts/verify-deploy-sha.sh mcp-server' (MUST exit 0) — this both restores traceability and reacquires the label; no dedicated rebuild needed if a normal mcp-server deploy is imminent. NOT a dup of FIX-VERIFY-DEPLOY-SHA-BENIGN-DRIFT (that is the script being too strict on ancestor-with-doc-drift; this is an absent label from a skipped flag). Ref: docs/agent-memory/decisions/sprint-SYSTEMIC-REMAKE-P1-po.md STEP po-S19; sprint-SYSTEMIC-REMAKE-P1-ops.md STEP ops-S8.",
         "created_at": "2026-07-09T11:53:21Z"
-      },
-      {
-        "id": "FIX-DRAIN-QUARANTINE-NONROUTABLE-SIGNALS",
-        "status": "BACKLOG",
-        "title": "drain-signals re-skips 4 non-routable stray files every tick — quarantine + confirm writer output dir",
-        "owner": "dev-team",
-        "type": "FIX",
-        "zone": "cross-service/",
-        "size": "S",
-        "priority": "low",
-        "supervised": false,
-        "created_at": "2026-07-09T14:02:56Z",
-        "created_by": "po-triage-20260709T1337Z",
-        "files": [
-          "scripts/agents-flow/drain-signals.js"
-        ],
-        "related": [
-          "FIX-DEVTEAM-BOUNDED1-DETAIL-ITEMS-ARRAY-INDEX"
-        ],
-        "status_note": "Recurring per-tick noise, no functional impact: docs/signals/cowork-team-2026-07-03T16-00-00Z.json + 3x price_anomaly_202607{02,03,04}*.json are correctly skipped as non-routable (no from/type) but re-scanned every tick. FIX: (a) drain-signals.js quarantines unrecognized no-from/type files to docs/signals/malformed/ after logging so they stop being re-scanned; (b) redirect upstream writers (cowork tick-report + price_anomaly detector) so their output artifacts stop landing in the routable-signal inbox. Do NOT blindly delete the price_anomaly_*.json files — confirm no live consumer (money-radar/dish surfacing) reads them before choosing quarantine-vs-relocate. Held in backlog (not in_progress) to respect WIP<=2 this tick — eligible for BOUNDED-1 auto-pickup once id1 (FIX-DEVTEAM-BOUNDED1-DETAIL-ITEMS-ARRAY-INDEX) ships. baseline_pass: a fresh dev-team tick's drain step logs the 4 files as quarantined/handled ONCE, a second tick does not re-scan them; no routable signal is ever quarantined. [ESCALATION 2026-07-15 (router-discovered, PO triage): the \"4 stray files\" has grown to 45 docs/signals/cowork-team-*.json telemetry artifacts (Jul 10-11), 49 total .json in the inbox — now NEAR the >50 persist-guard threshold, so the per-tick re-skip is no longer purely cosmetic (latent persist-guard trip). Confirms leg (b): redirect the cowork tick-report writer out of the routable-signal inbox. NOTHING reads these telemetry files for coordination (last_fired lives in docs/data/cowork-schedule.json, read by cowork-match-slots.js) -> safe to age-prune/relocate. Consider re-ranking above \"low\". No new row minted — hygiene observation deduped here.]",
-        "verify_note": "prior_status=TODO"
       },
       {
         "id": "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
@@ -9612,16 +9643,26 @@
       },
       {
         "id": "CLEAN-COWORK-DISPATCHER-TELEMETRY-DRAIN-DIR",
-        "title": "cowork-dispatcher per-tick telemetry snapshots ({tick,verdict,drift_min,matched_slots,...}) are written into docs/signals/ where the drain script skips them as non-signal-shape — ~50 accumulate and keep the drain inbox pinned near the 50-file MANDATORY-DRAIN threshold every tick; redirect telemetry to a non-drain dir (or self-prune) + sweep old price_anomaly_*.json",
+        "title": "docs/signals/ has a PERMANENT 52-file non-drainable floor (46 cowork-dispatcher telemetry + 6 price_anomaly) — DEAD-LOCKS the drain MANDATORY-PERSIST-GUARD (count>50) so it can never signal a real backlog again; redirect telemetry writer out of the signal inbox + purge the floor",
         "type": "CLEAN",
-        "priority": "low",
+        "priority": "high",
         "status": "BACKLOG",
-        "zone": "docs/agents/cowork-team/flow/",
+        "zone": "cross-service/",
         "owner": "po",
         "created_by": "po-devteam-triage-20260716T0637",
         "source": "devteam-dispatcher-hygiene-20260716T0637",
         "note": "PLAN-ONLY capture (peer-produced files — NOT to be deleted autonomously). Recurring drain-pressure: per-tick cowork-team-<ISO>.json telemetry + stale price_anomaly_*.json (07-02/03/04/13) sit in docs/signals/ and the drain skips them as non-signal shape, so the inbox stays near the 50-file cap. FIX: cowork-team flow (telemetry.md / main.md Step 6 emit) should write per-tick telemetry to a non-drain directory (e.g. docs/data/cowork-telemetry/ or docs/signals/telemetry/ excluded from the drain glob) and/or prune its own snapshots; sweep the 4 old price_anomaly files. 10 of the residue files are git-tracked — dev must reconcile .gitignore too.",
-        "created_at": "2026-07-16T07:07:00Z"
+        "created_at": "2026-07-16T07:07:00Z",
+        "size": "S",
+        "supervised": true,
+        "po_triage_20260721_pm": "SEVERITY ESCALATION (PO Step 0-SIG triage 2026-07-21T14:51:20Z, dev-team cron tick 14:37Z). Original row (2026-07-16) said telemetry keeps the inbox pinned NEAR the 50-file threshold. It is no longer near — it is PERMANENTLY OVER, and the guard is now a DEAD DETECTOR. RAW-VERIFIED on both planes this triage, NOT taken from the dispatcher summary: (1) docs/agents/dev-team/flow/drain-signals.md:7 counts `ls docs/signals/*.json | wc -l` with NO signal-shape filter; (2) scripts/agents-flow/drain-signals.js:78 logs 'SKIP non-signal shape ... leaving in inbox' — the skip path never removes or quarantines, so the floor is monotonic; (3) live count = 52 files, of which 52/52 are non-signal-shape (46 cowork-team-*.json + 6 price_anomaly_*.json) and ZERO are real signals. Net effect: the guard reads TRIPPED on a 100%-garbage inbox every tick, so a genuine signal backlog can never raise it again. A guard that always fires is worse than no guard — it is false assurance. Root-cause fix is writer-side (stop emitting dispatcher state files into the signal inbox) per CLAUDE.md detect-then-reduce-debt; making the guard count only signal-shaped files is the SECOND half, not a substitute — without the writer fix the floor keeps growing. priority low->high. Absorbed 2 duplicate rows.",
+        "absorbed_duplicates": [
+          "CLEAN-SIGNALS-DIR-NONSIGNAL-ARTIFACTS",
+          "FIX-DRAIN-QUARANTINE-NONROUTABLE-SIGNALS"
+        ],
+        "related_not_duplicate": "FIX-PRICE-ANOMALY-DISH-SIGNAL-ENVELOPE — kept SEPARATE: that row is real data-loss (anomaly:true detections reach no consumer), not inbox hygiene. Sweeping the 6 price_anomaly files here must NOT be read as closing it.",
+        "acceptance": "(1) cowork-dispatcher telemetry no longer written to docs/signals/ (writer redirected to a non-drain dir or self-pruning); (2) accumulated 46 cowork-team-*.json swept out of docs/signals/; (3) MANDATORY-PERSIST-GUARD counts only signal-shaped (from+type) files; (4) drain skip path quarantines rather than leaving files in inbox.",
+        "verification_gate": "`ls docs/signals/*.json | wc -l` returns < 50 on a tick with no pending real signals, AND a synthetic 51-real-signal inbox still trips the guard. Both checked live, not from flow-doc prose."
       },
       {
         "id": "FIX-DEVTEAM-BOUNDED1-MAINTLANE-NEXTAGENT-GATE",
@@ -10146,7 +10187,94 @@
           "project_systemic_review_0704_churn_without_convergence"
         ],
         "recurring_bug_count": 3,
-        "note": "Minted on the explicit router CONVERGE directive (3rd+ consecutive-tick re-emit; PO recorded these plan-only twice prior and did NOT mint — this converge mint ends that cycle). supervised:true blocks BOUNDED-1 idle auto-pickup; owner=architect designs the predicate + dedup-suppression across the auditor flow-doc thresholds + any mcp-server health-job code, then agent-father/dev implements. PO does NOT write the predicate code. Detection-only — no deploy."
+        "note": "Minted on the explicit router CONVERGE directive (3rd+ consecutive-tick re-emit; PO recorded these plan-only twice prior and did NOT mint — this converge mint ends that cycle). supervised:true blocks BOUNDED-1 idle auto-pickup; owner=architect designs the predicate + dedup-suppression across the auditor flow-doc thresholds + any mcp-server health-job code, then agent-father/dev implements. PO does NOT write the predicate code. Detection-only — no deploy.",
+        "po_corroboration_20260721_1451": "CORROBORATION (PO Step 0-SIG triage 2026-07-21T14:51:20Z). Dashboard signal sys-20260721T144300-1e9e (A-30 mcp-server memory 91.19%, 14:43:00Z) re-emitted ~20 min AFTER this converge row was minted at 14:23:45Z, with 91.19% sitting inside the documented 85-93% GC-sawtooth band this row exists to stop firing on. Nth-instance confirmation of the exact FP class in scope item 1; folded, NOT re-minted. No recurring_bug_count bump (same unchanged condition, same session)."
+      },
+      {
+        "id": "FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "high",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "po",
+        "supervised": true,
+        "created_at": "2026-07-21T14:51:20Z",
+        "created_by": "po-step0sig-triage-20260721T1451Z",
+        "title": "drain-signals.js moves docs/signals/*.json to processed/ without updating signal_queue.rows[].payload_ref — dangling ref HARD-BLOCKS every orch-state write fleet-wide (validator Stage 1c) and strands the addressee's payload",
+        "problem": "scripts/agents-flow/drain-signals.js has ZERO awareness of orch-state .signal_queue — grep confirms it never references signal_queue or payload_ref anywhere. It moves inbox files to processed/ purely on the file plane. Any signal_queue row whose payload_ref points at a top-level docs/signals/ path therefore dangles the moment that file drains. Two distinct harms: (a) BOARD-WIDE WRITE BLOCK — scripts/orch-validate.mjs Stage 1c hard-fails on a dangling payload_ref, so EVERY agent's orch-apply write aborts until a human/agent manually repairs the ref; this is a fleet-wide stall triggered by routine drain hygiene. (b) STRANDED ESCALATION — the addressee following payload_ref gets a 404 with no error anywhere.",
+        "evidence": "LIVE INSTANCE 2026-07-21: this tick's own drain (commit 0ab70d437, 14:47:59Z) moved docs/signals/po-20260720T052606Z.json to processed/. signal_queue row id=po-20260720T052606 (to=unified-agent, type=methodology-flag, severity=HIGH, status=NEW — never read by its addressee) still carried payload_ref=docs/signals/po-20260720T052606Z.json. Discovered because it aborted THIS PO triage's own orch-apply write. Repaired in the same write (ref repointed to processed/, content verified present, 2368 bytes, status left NEW and content untriaged since PO is not the addressee).",
+        "mechanism_not_single_observation": "Verified structurally in code, not inferred from the one instance: drain-signals.js contains no signal_queue/payload_ref handling at all, so this is guaranteed for every file-bus row with a payload_ref, not a fluke. Only 1 row was exposed today because most signal_queue rows are auditor-emitted with inline payloads and no payload_ref; the blast radius grows as file-bus to:<agent> routing is used more.",
+        "acceptance": "drain-signals.js (or the drain flow step) rewrites signal_queue.rows[].payload_ref from docs/signals/X.json to docs/signals/processed/X.json for every file it moves, in the same commit as the move. Rows already RESOLVED/archived may be skipped; NEW/READ rows MUST be repointed.",
+        "verification_gate": "Synthetic: seed a docs/signals/<f>.json + a signal_queue row with payload_ref to it, run the drain, then assert (1) the file is in processed/, (2) the row's payload_ref points at the processed/ path, and (3) `node scripts/orch-validate.mjs` exits 0. All three checked live — a green validator alone is NOT sufficient (an unreferenced row also validates green).",
+        "refs": [
+          "feedback_auditor_signal_write_orphan_key",
+          "feedback_orphan_signal_immune_and_adoption_no_board_guard",
+          "feedback_cowork_signal_filename_cycleid_keying"
+        ],
+        "note": "supervised:true blocks BOUNDED-1 idle auto-pickup. Distinct from UC-GCP-P3 (that row is about the drain COMMIT dropping deletions via pathspec; this row is about the orch-state REFERENCE not following the move). Distinct from CLEAN-COWORK-DISPATCHER-TELEMETRY-DRAIN-DIR (inbox floor hygiene)."
+      },
+      {
+        "id": "FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "high",
+        "size": "M",
+        "zone": "apps/mcp-server",
+        "owner": "po",
+        "supervised": true,
+        "created_at": "2026-07-21T14:51:20Z",
+        "created_by": "po-step0sig-triage-20260721T1451Z",
+        "title": "ACTIVE + SPREADING: an unattended same-day BCTC reprocess/reparse batch is corrupting reports (total_assets=0) AND flipping their NGAY NOP filing date to today — 16 watchlist tickers hit over 07-19..07-20, unresolved ~27h, still expanding",
+        "problem": "Something is re-running extraction over already-ingested BCTC reports and writing back BOTH (a) corrupt financials (total_assets=0, confidence forced to 0%, 'OCR extraction failure') and (b) a NGAY NOP (filing date) of the reprocess day. Harm (b) is the more dangerous half and is user-facing: these Q1-2026 reports had HAN NOP deadlines of 30/04/2026 and 15/05/2026, so they are 2+ MONTHS overdue — but get_earnings_calendar now renders them as 'DA NOP' with a July filing date instead of 'QUA HAN'. The calendar is therefore actively misinforming: genuinely-delinquent filers display as freshly-filed, and downstream consumers treat a reprocessed-and-corrupted row as a NEW filing worth analysing. Harm (a) then makes every derived ratio unservable for those tickers.",
+        "evidence_four_planes": [
+          "PLANE 1 file-bus: bctc-analyst escalated 4 consecutive times (20260719T151400Z, 20260719T180932Z, 20260719T211100Z, 20260721T000600Z), each cycle naming MORE tickers — 4 -> 6 -> 8 -> 16. All 4 still status=NEW, unresolved ~27h at triage time.",
+          "PLANE 2 Telegram: BCTC-1345b low-financial-confidence conviction-skips flooded WORK 2026-07-19 for an overlapping ticker set (KDH, D2D, CTG, NKG, DIG, SAB, FRT, DXG, VCI, HUT) — independent emitter, same victims.",
+          "PLANE 3 data (live, this triage): get_bctc_full(DGC, 2026, Q1) returns '[CORRUPT DATA - SKIP] total_assets=0 (zero or negative - OCR extraction failure), Confidence 0% (forced)'. Confirms harm (a) directly rather than via agent report.",
+          "PLANE 4 data (live, this triage): get_earnings_calendar shows EXACTLY 16 Q1-2026 rows with NGAY NOP in 2026-07-19/07-20 — 07-19: CTG D2D DGC FRT GEX KDC SAB VCB VJC VND (10); 07-20: DBC DXG KDH MSN PDR SHB (6). Matches bctc-analyst's cumulative count of 16 exactly. Confirms harm (b) directly."
+        ],
+        "investigation_start": "apps/mcp-server/src/scheduler/financial-reports/bctcReparseJob.ts is the prime suspect (it is the scheduled job that re-runs extraction over existing reports). Establish FIRST: what triggered it on 07-19 and 07-20, why it selects already-ingested reports, and why the write-back path sets ngay_nop to the processing date rather than preserving the original filing date. NOT-YET-VERIFIED: PO did not confirm bctcReparseJob is the actual writer — that attribution is a hypothesis from the job's role, and the fix must not start by assuming it.",
+        "two_part_fix": "(1) STOP THE BLEED — halt/gate the unattended reprocess so no further tickers are corrupted (it added 8 tickers between the 3rd and 4th escalation and may still be running). (2) DURABLE — the write-back must NEVER overwrite ngay_nop with the processing date, and must NEVER replace good stored financials with a zero/failed extraction (write only on successful extraction; on failure keep the prior good row and flag).",
+        "remediation_note": "Re-extraction of the 16 already-corrupted reports is REMEDIATION, tracked separately — do not conflate. Sequence it AFTER part (1), otherwise repaired rows get re-corrupted on the next batch. Related existing rows (adjacent, NOT duplicates): FIX-BCTC-VALIDATION-GATE-NONBANK-ZERO-SCALE (why validation_status='passed' fails to catch total_assets=0 — the missing safety net for harm (a)), OPS-BCTC-REFINE-REPASS-NONBANK-5T and W5-FU-CTG-REFINE-96e36139 (per-report remediation), SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY (07-10 reparse cadence guard — opposite direction, guard BLOCKING a reparse; may share the cadence-control surface).",
+        "acceptance": "(1) No BCTC report's ngay_nop is ever written from the processing date — it is sourced from the filing itself and is immutable on reprocess. (2) A failed/zero extraction never overwrites a previously-good stored report. (3) The 16 affected tickers show their TRUE filing status in get_earnings_calendar (QUA HAN where genuinely overdue), not a July flip.",
+        "verification_gate": "Live, both planes, on a business day AFTER the fix deploys: (a) get_earnings_calendar for the 16 tickers shows no NGAY NOP equal to the run date and delinquent filers read QUA HAN; (b) get_bctc_full for 3 previously-corrupt tickers returns servable data with non-zero total_assets. A green re-extract alone is NOT sufficient — must also show no NEW ticker acquired a same-day NGAY NOP over 3 consecutive daily cycles (proves the batch is actually stopped, not just that the victims were repaired).",
+        "refs": [
+          "feedback_no_fake_data_real_fetch",
+          "feedback_nonzero_values_need_plausibility_check",
+          "feedback_bctc_push_ok_masks_stale_ocr_reflow",
+          "feedback_ops_db_timestamp_falsification_to_bypass_guard",
+          "project_data_serve_integrity"
+        ],
+        "note": "supervised:true blocks BOUNDED-1 idle auto-pickup. PO did NOT restart or touch any container/job this triage (detection only, and any halt of a live scheduled job is an ops/user-gated action). This is the highest-severity item in the 2026-07-21T14:37Z tick: it is the only finding that is ACTIVELY DESTROYING data on a recurring daily cadence rather than sitting static."
+      },
+      {
+        "id": "FIX-OHLCV-HISTORY-PLANE-EMPTY-LIVE-PLANE-HEALTHY",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "high",
+        "size": "M",
+        "zone": "apps/mcp-server",
+        "owner": "po",
+        "supervised": true,
+        "created_at": "2026-07-21T14:51:20Z",
+        "created_by": "po-step0sig-triage-20260721T1451Z",
+        "title": "Price-HISTORY plane is dead while the LIVE plane is fully healthy — get_correlation_matrix returns 0 stocks / 0 pairs (was 33/496 a week ago); every history-dependent feature is silently degraded behind a green-looking dashboard",
+        "problem": "Two data planes have diverged. The LIVE plane is fine — get_market_snapshot returns real prices, VN-Index 1730.56, full breadth (100/187/71), 23092bn turnover, source vndirect. The HISTORY plane returns nothing — get_correlation_matrix(30d) reports 'Cổ phiếu phân tích: 0 | Cặp tương quan: 0' with 'Không đủ dữ liệu lịch sử giá'. Because the live plane is healthy, dashboards and passive health checks look green while every history-dependent feature (correlation, sector rotation, 5d/weekly summaries, TA indicators, alert accuracy) is quietly serving nothing. This is the passive-health-masks-dead-data class.",
+        "evidence": "REPORTED (Telegram, digest-predict 2026-07-19T13:55:48Z): correlation matrix 2 codes / 0 pairs vs 33 codes / 496 pairs the prior week; get_market_summary(weekly) and get_sector_rotation return '5d: N/A' or 'no price data' for all 32 watchlist codes; get_alert_accuracy(30d) total alerts collapsed ~961 -> 314. digest-predict explicitly declined to self-diagnose and asked dev-team to check the daily_ohlcv/price-history pipeline. VERIFIED INDEPENDENTLY BY PO 2026-07-21T14:56Z (live, not from the report): get_correlation_matrix now returns 0 codes / 0 pairs — WORSE than the reported 2, and measured on a Tuesday DURING market hours, which rules out the weekend/market-closed artifact that would otherwise explain a Sunday-dated report. Same minute, get_market_snapshot(FPT,VCB,HPG) returned complete healthy live data — isolating the failure to the history plane specifically.",
+        "trend_note": "33 codes -> 2 codes (07-19) -> 0 codes (07-21) is a WORSENING trajectory, not a static gap. Whatever prunes/blocks history is still acting.",
+        "possible_misattribution_to_check": "FIX-DEPTHTHIN-B-GATEWAY-TA-PATH-REWRITE currently attributes missing dashboard TA indicators (MA/RSI/MACD) to an api-gateway path-rewrite bug. TA indicators are history-dependent, so they would ALSO be empty from this root cause with a perfectly correct gateway path. Re-check that row against this finding before spending effort on the gateway path — it may be a symptom filed as a cause. Explicitly NOT asserting it is wrong; asserting it must be re-tested once history is restored.",
+        "investigation_start": "Distinguish THREE candidates before fixing, they need opposite fixes: (a) daily_ohlcv genuinely has no/insufficient rows in the 30d window (write/backfill failure or an over-aggressive purge — note the existing OHLCV startup-purge-vs-backfill-seeder defect class); (b) rows exist but the read query's date window or code filter is broken (e.g. a date-format/strcompare bug, the known SQLite ISO8601 strcompare class); (c) rows exist but were pruned by an integrity/constraint sweep (CLEAN-OHLCV-INTEGRITY-RESIDUE-REPAIR touches 835 constraint-violation rows — confirm it did not remove far more than intended). Start by counting daily_ohlcv rows per code in the last 30 calendar days directly, THROUGH THE RUNTIME (not a host CLI read of a different DB file).",
+        "acceptance": "get_correlation_matrix returns a stock count and pair count in line with the watchlist (order of the prior 33 codes / 496 pairs, not 0), and get_market_summary(weekly) / get_sector_rotation return real 5d values instead of 'N/A' / 'no price data', on a normal trading day.",
+        "verification_gate": "Live tool calls on a trading day, checked on BOTH planes together: history tools non-empty AND get_market_snapshot still healthy (guards against a 'fix' that repairs history by breaking or re-seeding the live path with fabricated rows). Also re-run get_alert_accuracy(30d) and confirm the count recovers toward the ~961 baseline rather than staying at ~314. A single non-zero correlation result is NOT sufficient — require 2 consecutive trading days.",
+        "refs": [
+          "feedback_passive_health_masks_dead_data",
+          "feedback_same_db_tools_diverge_rowcount",
+          "feedback_host_cli_integrity_check_false_ok_verify_through_runtime",
+          "feedback_ohlcv_startup_purge_defeated_by_backfill_seeder",
+          "feedback_sqlite_iso8601_datetime_strcompare_bypass",
+          "project_indicator_program_gated_on_ohlcv_depth"
+        ],
+        "note": "supervised:true blocks BOUNDED-1 idle auto-pickup. Detection-only this triage — PO ran read-only tool calls, touched no data. Gates the indicator program (project_indicator_program_gated_on_ohlcv_depth depends on OHLCV depth), so this blocks more than it appears to on its own."
       }
     ],
     "closed_sprints": [
