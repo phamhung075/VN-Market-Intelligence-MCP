@@ -19,9 +19,16 @@
 #        duplicated here — single SSOT. Closes the empirically live-exploitable
 #        full-doc-collapse class (commit de595a44) — see
 #        docs/architecture-briefs/2026-07-10-auditor-orchstate-conservation-guard.md
-#     5. CAS-mtime guard: mtime captured before stdin-read; re-checked before
+#     5. Diff-based updated_at stamping via bun scripts/orch-stamp-updated-at.mjs
+#        (task: FIX-ORCHSTATE-UPDATED-AT-WRITE-PATH) — runs AFTER Stage 0/1
+#        validation (so it never interferes with the raw-text dup-key scan)
+#        and stamps task_board row updated_at ONLY on rows whose content
+#        (excluding updated_at itself) differs from the live file. NEVER
+#        duplicated here — single SSOT. NO backfill of existing null rows —
+#        see the script's own header for the full diff-unit rationale.
+#     6. CAS-mtime guard: mtime captured before stdin-read; re-checked before
 #        rename. Mismatch → ABORT with exit 2 so caller can retry.
-#     6. Atomic rename: temp → live file
+#     7. Atomic rename: temp → live file
 #
 # CALL PATTERN (canonical — minimal churn over existing jq idiom):
 #   jq '<filter>' docs/data/orch/orch-state.json | scripts/orch-apply.sh
@@ -33,6 +40,8 @@
 # EXIT CODES:
 #   0  = success (candidate atomically applied to live file)
 #   1  = validation failed (dup-key / schema violation / dangling refs)
+#        OR updated_at stamping failed (I/O error on an already-validated
+#        candidate — should not occur in practice)
 #        OR conservation check failed (candidate's task_total/signal_total
 #        dropped below FLOOR_RATIO of the live value) — live file left UNTOUCHED
 #   2  = CAS mtime mismatch — concurrent writer detected; caller should retry
@@ -132,6 +141,28 @@ validation_output=$(bun "${REPO_ROOT}/scripts/orch-validate.mjs" "${TMP}" 2>&1) 
 }
 # Print any pass-message or coherence warnings (non-blocking; informational)
 [[ -n "${validation_output}" ]] && printf '%s\n' "${validation_output}" >&2
+
+# ─── Stage 1.5: Diff-based updated_at stamping ───────────────────────────────
+# REUSE bun scripts/orch-stamp-updated-at.mjs — do NOT duplicate this logic.
+# Runs AFTER Stage 0/1 (the raw-text dup-key scan MUST see the untouched
+# candidate bytes — stamping here would silently collapse a duplicate key
+# via JSON.parse before Stage 0 ever saw it).
+# Stamps task_board row `updated_at` ONLY on rows whose content changed
+# versus the live file (id-keyed, updated_at itself excluded from the diff —
+# see the script header for the full rationale, including the deliberate
+# lane-agnostic diff-unit choice). Rewrites TMP in place; never touches
+# LIVE_FILE. TaskSchema is .passthrough() so an added/updated `updated_at`
+# string can never fail the schema that already passed above — no
+# re-validation needed.
+# Task: FIX-ORCHSTATE-UPDATED-AT-WRITE-PATH.
+NOW_TS=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+stamp_output=$(bun "${REPO_ROOT}/scripts/orch-stamp-updated-at.mjs" "${LIVE_FILE}" "${TMP}" "${NOW_TS}" 2>&1) || {
+  stamp_exit=$?
+  printf '%s\n' "${stamp_output}" >&2
+  printf '[orch-apply] ABORTED: updated_at stamping exit %s — live file untouched\n' "${stamp_exit}" >&2
+  exit 1
+}
+[[ -n "${stamp_output}" ]] && printf '%s\n' "${stamp_output}" >&2
 
 # ─── Stage 2: Conservation circuit-breaker ───────────────────────────────────
 # REUSE bun scripts/orch-conservation-check.mjs — do NOT duplicate this logic.

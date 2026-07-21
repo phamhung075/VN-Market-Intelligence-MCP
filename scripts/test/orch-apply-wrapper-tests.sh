@@ -449,6 +449,135 @@ fi
 assert_real_live_unchanged "SHRINK-ALLOWED"
 
 # =============================================================================
+# UPDATED_AT STAMPING TESTS (FIX-ORCHSTATE-UPDATED-AT-WRITE-PATH)
+# =============================================================================
+# scripts/orch-apply.sh had ZERO timestamp handling — updated_at on task_board
+# rows was stamped only by whichever ad-hoc jq caller happened to remember.
+# Covers the Stage 1.5 diff-based stamp (scripts/orch-stamp-updated-at.mjs):
+#   STAMP-CHANGED   — a row whose content actually changed gets a fresh
+#                     updated_at, even though the caller's filter never
+#                     mentions a timestamp.
+#   STAMP-SIBLING   — an untouched sibling row's existing updated_at
+#                     (including an existing null) is left byte-for-byte alone.
+#   STAMP-NEWROW    — a brand-new row (no live counterpart by id) is treated
+#                     as changed and gets stamped.
+#   STAMP-IDEMPOTENT — re-applying an unchanged candidate a second time does
+#                     NOT re-stamp (proves the stamp field is excluded from
+#                     its own change predicate — no feedback loop / churn).
+# =============================================================================
+STAMP_LIVE="$FIXTURE_DIR/stamp-live.json"
+
+jq -n '{
+  "_meta": {"schema":"v4","ssot":true,"updated_at":"2026-06-01T00:00:00Z","updated_by":"fixture"},
+  "head": {"status":"idle","active_task_id":null,"next_agent":null},
+  "task_board": {
+    "backlog": [
+      {"id":"STAMP-A","status":"BACKLOG","title":"original title"},
+      {"id":"STAMP-B","status":"BACKLOG","title":"sibling untouched","updated_at":"2026-06-01T00:00:00Z"},
+      {"id":"STAMP-C","status":"BACKLOG","title":"sibling never stamped"}
+    ],
+    "active_sprints": []
+  },
+  "signal_queue": {"_updated_at":"2026-06-01T00:00:00Z","_updated_by":"fixture","rows":[]}
+}' > "$STAMP_LIVE"
+
+# ─────────────────────────────────────────────────────────────────────────
+# STAMP-CHANGED + STAMP-SIBLING — mutate ONLY STAMP-A's title; the filter
+# never mentions updated_at or any timestamp.
+# ─────────────────────────────────────────────────────────────────────────
+STAMP_CANDIDATE_1=$(jq '(.task_board.backlog[] | select(.id=="STAMP-A")) |= (. + {title:"mutated title"})' "$STAMP_LIVE")
+
+EXIT_STAMP_1=0
+printf '%s' "$STAMP_CANDIDATE_1" \
+  | ORCH_APPLY_LIVE_FILE_OVERRIDE="$STAMP_LIVE" bash "$APPLY_SH" 2>/dev/null \
+  || EXIT_STAMP_1=$?
+
+if [ "$EXIT_STAMP_1" -eq 0 ]; then
+  pass "STAMP-CHANGED — mutated-row candidate accepted — exit 0"
+else
+  fail "STAMP-CHANGED — expected exit 0, got $EXIT_STAMP_1"
+fi
+
+STAMP_A_UPDATED_AT=$(jq -r '.task_board.backlog[] | select(.id=="STAMP-A") | .updated_at' "$STAMP_LIVE")
+if [ -n "$STAMP_A_UPDATED_AT" ] && [ "$STAMP_A_UPDATED_AT" != "null" ]; then
+  pass "STAMP-CHANGED — STAMP-A.updated_at stamped non-null ($STAMP_A_UPDATED_AT)"
+else
+  fail "STAMP-CHANGED — STAMP-A.updated_at expected non-null, got '$STAMP_A_UPDATED_AT'"
+fi
+
+STAMP_B_UPDATED_AT=$(jq -r '.task_board.backlog[] | select(.id=="STAMP-B") | .updated_at' "$STAMP_LIVE")
+if [ "$STAMP_B_UPDATED_AT" = "2026-06-01T00:00:00Z" ]; then
+  pass "STAMP-SIBLING — untouched STAMP-B.updated_at unchanged"
+else
+  fail "STAMP-SIBLING — untouched STAMP-B.updated_at expected baseline, got '$STAMP_B_UPDATED_AT'"
+fi
+
+STAMP_C_UPDATED_AT=$(jq -r '.task_board.backlog[] | select(.id=="STAMP-C") | .updated_at' "$STAMP_LIVE")
+if [ "$STAMP_C_UPDATED_AT" = "null" ]; then
+  pass "STAMP-SIBLING — untouched STAMP-C.updated_at stays null (no backfill)"
+else
+  fail "STAMP-SIBLING — untouched STAMP-C.updated_at expected null, got '$STAMP_C_UPDATED_AT'"
+fi
+
+assert_real_live_unchanged "STAMP-CHANGED"
+
+# ─────────────────────────────────────────────────────────────────────────
+# STAMP-NEWROW — append a brand-new row (no id-matching row in the live
+# file); it must be treated as changed and stamped.
+# ─────────────────────────────────────────────────────────────────────────
+STAMP_CANDIDATE_NEW=$(jq '.task_board.backlog += [{"id":"STAMP-NEW","status":"BACKLOG","title":"brand new row"}]' "$STAMP_LIVE")
+
+EXIT_STAMP_NEW=0
+printf '%s' "$STAMP_CANDIDATE_NEW" \
+  | ORCH_APPLY_LIVE_FILE_OVERRIDE="$STAMP_LIVE" bash "$APPLY_SH" 2>/dev/null \
+  || EXIT_STAMP_NEW=$?
+
+if [ "$EXIT_STAMP_NEW" -eq 0 ]; then
+  pass "STAMP-NEWROW — new-row candidate accepted — exit 0"
+else
+  fail "STAMP-NEWROW — expected exit 0, got $EXIT_STAMP_NEW"
+fi
+
+STAMP_NEW_UPDATED_AT=$(jq -r '.task_board.backlog[] | select(.id=="STAMP-NEW") | .updated_at' "$STAMP_LIVE")
+if [ -n "$STAMP_NEW_UPDATED_AT" ] && [ "$STAMP_NEW_UPDATED_AT" != "null" ]; then
+  pass "STAMP-NEWROW — STAMP-NEW.updated_at stamped non-null ($STAMP_NEW_UPDATED_AT)"
+else
+  fail "STAMP-NEWROW — STAMP-NEW.updated_at expected non-null, got '$STAMP_NEW_UPDATED_AT'"
+fi
+
+assert_real_live_unchanged "STAMP-NEWROW"
+
+# ─────────────────────────────────────────────────────────────────────────
+# STAMP-IDEMPOTENT — re-apply the CURRENT fixture content unchanged (a
+# no-op filter: `.`). No row's content differs from live -> zero rows
+# should be re-stamped, including STAMP-A (must NOT bump past its
+# just-landed timestamp from STAMP-CHANGED above).
+# ─────────────────────────────────────────────────────────────────────────
+STAMP_A_BEFORE_IDEMPOTENT="$STAMP_A_UPDATED_AT"
+
+sleep 1  # force a distinct wall-clock second so a false re-stamp is detectable
+
+EXIT_STAMP_IDEMPOTENT=0
+jq '.' "$STAMP_LIVE" \
+  | ORCH_APPLY_LIVE_FILE_OVERRIDE="$STAMP_LIVE" bash "$APPLY_SH" 2>/dev/null \
+  || EXIT_STAMP_IDEMPOTENT=$?
+
+if [ "$EXIT_STAMP_IDEMPOTENT" -eq 0 ]; then
+  pass "STAMP-IDEMPOTENT — unchanged candidate accepted — exit 0"
+else
+  fail "STAMP-IDEMPOTENT — expected exit 0, got $EXIT_STAMP_IDEMPOTENT"
+fi
+
+STAMP_A_AFTER_IDEMPOTENT=$(jq -r '.task_board.backlog[] | select(.id=="STAMP-A") | .updated_at' "$STAMP_LIVE")
+if [ "$STAMP_A_AFTER_IDEMPOTENT" = "$STAMP_A_BEFORE_IDEMPOTENT" ]; then
+  pass "STAMP-IDEMPOTENT — STAMP-A.updated_at NOT re-stamped on unchanged re-apply"
+else
+  fail "STAMP-IDEMPOTENT — STAMP-A.updated_at churned: before='$STAMP_A_BEFORE_IDEMPOTENT' after='$STAMP_A_AFTER_IDEMPOTENT'"
+fi
+
+assert_real_live_unchanged "STAMP-IDEMPOTENT"
+
+# =============================================================================
 # Summary
 # =============================================================================
 TOTAL=$((PASS+FAIL))

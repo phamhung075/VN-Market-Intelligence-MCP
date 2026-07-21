@@ -93,7 +93,8 @@ bash scripts/fb-data-integrity-gate.sh <post-file> [YYYY-MM-DD] [snapshot-json-f
 # Exit 3 = usage error (empty stdin / live file missing).
 # Owning task: SSOT-W1-ORCH-APPLY-WRAPPER; validator wired: bun scripts/orch-validate.mjs (same SSOT);
 #   conservation guard wired: bun scripts/orch-conservation-check.mjs (FIX-ORCHSTATE-CONSERVATION-
-#   GUARD-CIRCUIT-BREAKER — see canonical entry below)
+#   GUARD-CIRCUIT-BREAKER — see canonical entry below); updated_at stamp wired:
+#   bun scripts/orch-stamp-updated-at.mjs (FIX-ORCHSTATE-UPDATED-AT-WRITE-PATH — see canonical entry below)
 # Routed writers: po-s*/router-*.jq apply idiom, scripts/orch-backlog-stub.sh,
 #   scripts/orch-cold-evict.sh, dev-team WF-1 head-reset, signal-dashboard WRITE/READ/PRUNE,
 #   pm/flow/main.md task-status writes, po/sprint-signoff.md, developer/fixer/qa WF-1 STOP-RELEASE,
@@ -101,6 +102,34 @@ bash scripts/fb-data-integrity-gate.sh <post-file> [YYYY-MM-DD] [snapshot-json-f
 # Integration test (exit-code 0/1/2/3 + live-UNCHANGED guarantee): bash scripts/test/orch-apply-wrapper-tests.sh
 # Writer audit (all ~290/tick sites categorized): docs/signals/orch-state-writer-audit.json
 ```
+
+**CANONICAL: Orch-state diff-based updated_at stamping (FIX-ORCHSTATE-UPDATED-AT-WRITE-PATH)**
+```bash
+# Standalone invocation (usually called internally by orch-apply.sh Stage 1.5 — rarely called directly):
+bun scripts/orch-stamp-updated-at.mjs <liveFilePath> <candidateFilePath> <nowIso>
+# Mutates <candidateFilePath> IN PLACE. Exit 0 = stamped (0+ rows). Exit 3 = usage/I-O error.
+```
+Root cause (fixed): `scripts/orch-apply.sh` had zero timestamp handling — task_board row
+`updated_at` was stamped only by whichever of the 30+ ad-hoc jq callers happened to remember it,
+leaving most rows permanently `null` (TaskSchema uses `.passthrough()`, so omitting it always
+validated clean). Fix stamps at the write path, diff-based: for every row (id-keyed — `id` is a
+required TaskSchema field, unique across all lanes), compares candidate content against the live
+row with the same id, **excluding `updated_at` itself** (so the stamp can never feed back into its
+own change predicate — idempotent, does not churn on re-apply of unchanged content). Changed or
+brand-new (no live counterpart) rows get `updated_at = now`; unchanged rows — including their
+existing `null` — are left byte-for-byte alone. **NO backfill** of the pre-existing null rows from
+git history or file mtime (a synthesised timestamp is worse than a null one — falsifies staleness
+sweeps and the audit trail); they age out naturally as rows are genuinely touched.
+Diff unit is **lane-agnostic**: a row moved between lanes with byte-identical field content is not
+itself treated as "changed" (real lane moves almost always change `status`, which orch-validate.mjs
+Stage 1b's `checkLaneCoherence()` requires to match the lane anyway — that IS content, and IS
+caught; the one exception is a status value legal in more than one lane, e.g. `BLOCKED` moved
+between `backlog`/`review` with nothing else touched — a rare pure-bookkeeping relocation).
+Runs in `scripts/orch-apply.sh` Stage 1.5, AFTER Stage 0/1 schema validation (so it never
+interferes with the raw-text duplicate-key scan, which must see the untouched candidate bytes) and
+BEFORE Stage 2 conservation check / CAS-mtime rename.
+Test coverage: `bash scripts/test/orch-apply-wrapper-tests.sh` (STAMP-CHANGED / STAMP-SIBLING /
+STAMP-NEWROW / STAMP-IDEMPOTENT cases).
 
 **CANONICAL: Orch-state conservation circuit-breaker (FIX-ORCHSTATE-CONSERVATION-GUARD-CIRCUIT-BREAKER)**
 ```bash
