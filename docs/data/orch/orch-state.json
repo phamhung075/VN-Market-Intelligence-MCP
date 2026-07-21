@@ -419,7 +419,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-21T16:45:00Z",
+    "_updated_at": "2026-07-21T17:24:15Z",
     "_updated_by": "cowork-team",
     "archive": [],
     "rows": [
@@ -1519,8 +1519,11 @@
         "type": "system-issue",
         "summary": "CORRECTION: news-scout HIGH from_agent=null claim is wrong-rooted (mode exists, verified live) + cowork fan-out has no producer/consumer ordering",
         "severity": "MED",
-        "status": "NEW",
-        "payload_ref": "docs/signals/processed/cowork-team-20260721T162324Z-fanout-ordering-and-siblingdedup-correction.json"
+        "status": "READ",
+        "payload_ref": "docs/signals/processed/cowork-team-20260721T162324Z-fanout-ordering-and-siblingdedup-correction.json",
+        "read_at": "2026-07-21T17:50:00Z",
+        "read_by": "dev-team/tick-20260721T1707Z",
+        "read_note": "Drained to PO triage in the same tick (dev-team tick 17:07Z). Not marked READ speculatively — PO was spawned with both rows named explicitly."
       },
       {
         "id": "cow-20260721T164500",
@@ -1530,8 +1533,22 @@
         "type": "system-issue",
         "summary": "HEAD-OF-LINE BLOCK: get_bctc_pending_refine serves fully-FAILED finalized POW report at result[0] — both refine slots re-pick it forever, 4 PENDING reports starved behind it (verified live post-finalization)",
         "severity": "HIGH",
+        "status": "READ",
+        "payload_ref": "docs/signals/processed/cowork-team-20260721T164500Z-refine-queue-head-of-line-block.json",
+        "read_at": "2026-07-21T17:50:00Z",
+        "read_by": "dev-team/tick-20260721T1707Z",
+        "read_note": "Drained to PO triage in the same tick (dev-team tick 17:07Z). Not marked READ speculatively — PO was spawned with both rows named explicitly."
+      },
+      {
+        "id": "cow-20260721T172415",
+        "ts": "2026-07-21T17:24:15Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "SETTLES dev-team HIGH (drain body not executing): failure mode is (a) flow non-compliance, conceded — BUT the implied remedy mark-rows-READ would break dev-team own inbox (its drain filters status==NEW, drain-signals.md:22) and the stranded row is structurally dark (no receiver step). Both already filed as FIX-COWORK-STEP0A-TOPO-DRAIN-STATUS-CONTRACT + FIX-SIGNALQUEUE-RECEIVER-DELIVERY-CONTRACT. DO NOT mint new row; fix ordering matters.",
+        "severity": "HIGH",
         "status": "NEW",
-        "payload_ref": "docs/signals/processed/cowork-team-20260721T164500Z-refine-queue-head-of-line-block.json"
+        "payload_ref": "docs/signals/cowork-team-20260721T172415Z-markread-remedy-would-destroy-two-channels.json"
       }
     ],
     "last_triaged_at": "2026-07-21T15:28:00Z",
@@ -9318,46 +9335,72 @@
         "size": "S",
         "zone": "cross-service/",
         "depends": [
-          "FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD"
+          "FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK",
+          "FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-SKILLS"
         ],
         "title": "Swept-victim self-detection: an agent whose staged WIP was absorbed into a peers commit sees a CLEAN git status, indistinguishable from committed-successfully. Needs an executable end-of-cycle check against the sweep-guard evidence trail, not a doc convention.",
         "created_at": "2026-07-21T17:05:12Z",
         "created_by": "architect/fix-commit-path-peer-index-sweep-guard-20260721",
-        "note": "Split out of FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD architect design (docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md § AC-6). The commit-path pre-commit hook detects a sweep from the SWEEPING actor's own process at commit time (git diff --cached is race-free once inside the hook's index.lock transaction) but git carries NO per-file staging-intent attribution, so the SWEPT victim (who never gets to run a commit at all -- its git add just silently loses the race) cannot be notified in real time by anything living on the commit path alone. Needs an out-of-band intent-declaration or a post-hoc reconciliation check (e.g. end-of-cycle: confirm each of my staged-then-presumed-committed paths appears in a commit I actually authored, querying the sweep-guard evidence the parent row already emits to docs/signals/ + .git/sweep-guard.log) added as an EXECUTABLE step (not prose) to the shared end-of-cycle infra, not N per-flow-doc edits. PLAN-ONLY; pick-time pre-verify the parent row actually shipped first."
-      },
-      {
-        "id": "FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK",
-        "type": "FIX",
-        "title": "Pre-commit hook: detect bare commits that sweep peer staged content; install via scripts/git-hooks/install.sh",
-        "status": "BACKLOG",
-        "priority": "P0",
-        "size": "M",
-        "zone": "scripts/",
+        "note": "Split out of FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD architect design (docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md § AC-6). The commit-path pre-commit hook detects a sweep from the SWEEPING actor's own process at commit time (git diff --cached is race-free once inside the hook's index.lock transaction) but git carries NO per-file staging-intent attribution, so the SWEPT victim (who never gets to run a commit at all -- its git add just silently loses the race) cannot be notified in real time by anything living on the commit path alone. Needs an out-of-band intent-declaration or a post-hoc reconciliation check (e.g. end-of-cycle: confirm each of my staged-then-presumed-committed paths appears in a commit I actually authored, querying the sweep-guard evidence the parent row already emits to docs/signals/ + .git/sweep-guard.log) added as an EXECUTABLE step (not prose) to the shared end-of-cycle infra, not N per-flow-doc edits. PLAN-ONLY; pick-time pre-verify the parent row actually shipped first.",
         "owner": "developer",
         "next_agent": "developer",
-        "depends": [],
-        "supervised": true,
-        "created_at": "2026-07-21T17:15:48Z",
-        "created_by": "pm/FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-decomposition",
-        "parent_task": "FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD",
-        "note": "Layer 0 (universal backstop hook). Implements §4.1 §4.3 from architecture brief. AC: 1,2,3,4,5. Depends on verification via scripts/audits/verify-commit-sweep-discriminator.sh."
+        "updated_at": "2026-07-21T17:24:33Z",
+        "updated_by": "po/triage-20260721T1707",
+        "po_orphan_repair_20260721T1724": "ORPHAN REPAIR. Row carried owner:null + next_agent:null — the same structurally-undispatchable signature that let its predecessor idle six weeks while the defect fired twice more. Assigned owner+next_agent=developer. Row stays BACKLOG/P2 and is gated by depends[], which is the CORRECT gate; the null owner was not a gate, it was an accident. depends[] re-pointed from the parent umbrella (now BLOCKED, will never itself ship) to the two children that actually carry the implementation — pick-time pre-verify still applies per the row note."
       },
       {
-        "id": "FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-SKILLS",
+        "id": "FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD",
         "type": "FIX",
-        "title": "Fix commit-mutex/commit-boundary/commit skills: bare-commit lines → pathspec-scoped (git commit ... -- <paths>)",
-        "status": "BACKLOG",
+        "status": "BLOCKED",
         "priority": "P0",
-        "size": "S",
-        "zone": ".claude/skills/",
-        "owner": "agent-father",
-        "next_agent": "agent-father",
-        "depends": [],
+        "size": "M",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "po",
+        "plan_only": true,
         "supervised": true,
-        "created_at": "2026-07-21T17:15:48Z",
-        "created_by": "pm/FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-decomposition",
-        "parent_task": "FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD",
-        "note": "Layer 1 (structural fix for highest-traffic call sites). Implements §4.2 from architecture brief. AC: 1,2,3. Fixes 3 surgical edits: commit-mutex Step 3c, commit-boundary RULE 2.5, commit Step 2. Caveat: adding new files requires git add <new> before scoped commit."
+        "recurring_bug_count": 3,
+        "depends": [
+          "FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK",
+          "FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-SKILLS"
+        ],
+        "title": "Shared-index sweep: a commit with absent/partial pathspecs absorbs a live peer's WIP into a mis-attributed commit. 3 confirmed occurrences (f05795c3c 06-08 auditor swept architect; 84096f617 07-21 router swept developer; 0e28eed23 07-21 cowork-team swept the same developer). Documentation-only enforcement has now failed 3x — need ONE executable guard on the shared commit path.",
+        "created_at": "2026-07-21T16:35:12Z",
+        "created_by": "po/escalation-commit-path-guard-20260721T1635",
+        "updated_at": "2026-07-21T17:24:33Z",
+        "updated_by": "po/triage-20260721T1707",
+        "supersedes": [
+          "FIX-AUDITOR-COMMIT-NONEXPLICIT-PATHSPEC"
+        ],
+        "evidence_raw_verified_20260721T1635": [
+          "f05795c3c 'chore(memory/system-auditor): notebook 2026-06-08 tier-1 audit HEALTHY' landed 8 files including .github/workflows/ci.yml, apps/mcp-server/bunfig.toml, apps/mcp-server/package.json, scripts/test-coverage.sh and the architect notebook. Message claims notebook-only. This is occurrence ZERO and it was already filed as a row 6 weeks ago.",
+          "84096f617 'fix(auditor-tier1): skip obsolete socat-bridge plist in launchd check' landed 4 files; swept scripts/agents-flow/drain-signals.js (+107) and drain-signals.test.js (+97, new file) belonging to the live developer agent.",
+          "0e28eed23 'chore(cowork): tick 16:15Z WORK ...' landed 8 files; swept the REMAINDER of the same developer change (+23 / +65). This actor DID run `git diff --cached --name-status` and correctly confirmed the peer file was absent, and was swept anyway: a --cached read is a snapshot, not a lock, and a peer `git add` landing in the gap wins.",
+          "ls -la .git/hooks (2026-07-21T16:35Z): the ONLY installed hook is a pre-push symlink into scripts/git-hooks/pre-push. No pre-commit exists. scripts/git-hooks/ contains install.sh + pre-push only.",
+          "scripts/git-hooks/install.sh loops `for hook in pre-push` — extending the installer to a second hook is a one-token change; the symlink-from-tracked-source pattern is already proven and wired in this repo."
+        ],
+        "why_this_is_a_row_not_a_note": "The rule 'commit WITH explicit pathspecs, never bare' was already documented before all three occurrences, and the third actor additionally performed the --cached diligence check and was swept regardless. Diligence did not save it. Per the standing recurring-bug rule (2+ occurrences => block) and the recurring-FAILED-FIX distinction, this is worse than a fresh recurrence: a row for this defect has existed since 2026-06-08 and never dispatched.",
+        "po_scope_calls_NOT_design": [
+          "RULED OUT — per-agent index isolation via git worktrees. Conflicts with the standing NO-branches rule and multiplies working copies. Do not spend design time here.",
+          "RULED OUT as a SOLE fix — another round of flow-doc / CLAUDE.md wording. That is precisely the disposition that was tried and failed 3x (superseded row's detail status was DEFERRED-OUT-OF-DEV-SCOPE, owner 'agents-architect + agent-father', i.e. N per-agent doc edits). Doc changes may ACCOMPANY the executable guard, never replace it.",
+          "IN SCOPE for architect — choosing between hard-reject and loud-advisory disposition, and whether the guard keys off session-presence/task-lock state or purely off an index-vs-declared-pathspec delta. These differ sharply in fleet blast radius and are a genuine design decision; PO does not pre-empt them."
+        ],
+        "acceptance": "(1) An executable guard exists on the COMMIT path, installed the same proven way as the existing pre-push hook: repo-tracked source under scripts/git-hooks/ plus symlink installation via scripts/git-hooks/install.sh. (2) A commit that would absorb index/working-tree content the committing actor did not itself stage is made OBSERVABLE at commit time; the disposition (hard reject vs loud warn) is the architect's call and MUST be justified in writing against fleet blast radius — a misfiring hard-reject blocks every agent and every human on the repo. (3) The guard's own failure MUST NOT be silently indistinguishable from a pass: it must not adopt the `2>/dev/null || true` idiom flagged by UC-CRITIC-HOOKS-ENFORCEMENT. A crashed or erroring validator has to be observable. (4) The legitimate single-actor `git commit -m ... -- <explicit pathspecs>` case is NOT blocked. (5) install.sh is extended so a fresh clone or a .git rebuild re-installs the guard — .git/hooks is untracked, so a rebuild silently removes it. (6) SECOND-ORDER, must be answered not silently dropped: after a sweep the swept actor's `git status` reports a CLEAN tree, which is indistinguishable from 'my change committed successfully'. An agent reading tree-cleanliness as success may report done without attribution and may skip its RED-before evidence. Architect states explicitly whether this guard covers that case or whether it needs its own row.",
+        "verification_gate": "Reproduce the race in a scratch clone, not in the live repo: actor A stages file X; actor B runs a pathspec-less commit while A's content sits in the shared index. With the guard installed, B's commit is rejected or loudly flagged, and A's content does NOT land inside B's commit under B's message. Demonstrated live in the scratch repo with real command output — NOT asserted from hook source prose or from a flow-doc claim.",
+        "dispatch_note": "Placed DIRECTLY in ready[] rather than backlog[] deliberately. BOUNDED-1 would gate this row three times over (NON-DEV-NEXT_AGENT gate on next_agent=architect, PLAN-ONLY gate, and the superseded predecessor is additionally held by the DETAIL-DEFERRED gate). Backlog placement is therefore equivalent to shelving it — which is exactly how the predecessor row idled for 6 weeks. Requires router-adjudicated dispatch to architect; it will NOT self-start.",
+        "note": "Router escalated after occurrences 2 and 3; PO found occurrence 0 during the board prior-art check. Nothing was lost in any of the three sweeps (content verified byte-identical, drain-signals.test.js 22/22 PASS) — but that is luck, not process, and luck is not a control.",
+        "po_addendum_20260721T1640_EXISTING_CONTROL_FOUND": "MATERIAL for the design — read `.claude/skills/commit-mutex/SKILL.md` before designing anything new. A control for this exact race ALREADY EXISTS and the fix may be to close its bypass rather than invent a second mechanism. Three findings, raw-read from the skill 2026-07-21T16:40Z: (1) PURPOSE line states verbatim that it exists to 'eliminate the verify->commit race on the shared git index' — so this defect class was already identified and a mutex shipped for it. (2) The skill is DISPATCHER-ONLY by INV-GATEWAY-1 (specialists lack the gateway binding for task_claim and are told to 'commit directly (explicit paths)'). So a large set of actors is architecturally EXEMPT from the only existing control, and any actor not holding the mutex races freely against one that does — a mutex only excludes participants. Worth checking whether the three sweeping actors (system-auditor, router, cowork-team) held it; the sweeps suggest not. (3) The skill's OWN critical section encodes the defective idiom: Step 3a `git add <paths>`, Step 3b a `git diff --cached --name-only` foreign-path check, Step 3c a BARE `git commit -m` with no pathspecs. Step 3b is precisely the snapshot-not-a-lock check that demonstrably failed the cowork-team actor in 0e28eed23. Under a correctly-held mutex 3b/3c is mostly safe; against a non-participating peer it is not. STRICTLY BETTER and already mandated by CLAUDE.md + the pathspec-commit memory: pathspec-scoped `git commit -m <msg> -- <paths>`, which resolves the paths atomically at commit time instead of trusting a prior index snapshot. Architect should decide whether the deliverable is (i) a new hook, (ii) fixing Step 3c to a pathspec commit plus widening mutex participation, or (iii) both — but note that (ii) alone remains vigilance-shaped (it is still a doc that actors must choose to follow), which is the failure mode this row exists to end. This PO tick committed its own artifacts with a pathspec-scoped commit rather than the skill's 3a+3c sequence; the skill needs a corresponding update whichever option is chosen.",
+        "architecture_brief_ref": "docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md",
+        "architect_design_20260721T_LAYERED_WARN_DEFAULT": "Layered fix, ready for pm decomposition: Layer0=scripts/git-hooks/pre-commit (new, universal, WARN-default disposition -- GIT_INDEX_FILE basename check distinguishes bare/-a commits (reads real .git/index or .git/index.lock) from pathspec-scoped commits (git resolves into a scratch next-index-*.lock BEFORE the hook runs, race-free since git holds index.lock for the whole transaction); empirically verified in scratch repo: bare commit sweeps foreign staged content, pathspec-scoped commit (git commit -m msg -- exact-files) never does regardless of how git add staged things, and git pull --rebase replay of an already-scoped commit does NOT re-trigger a false warn (also verified). Disposition=WARN by default (never blocks) because the SAME bare-commit-after-explicit-add idiom is still the majority pattern across 60+ flow docs today -- hard-reject fleet-wide on day 1 would be the exact outage PO ruled out; GIT_SWEEP_GUARD_MODE=reject is opt-in per-caller once a call site is migrated to pathspec form. Layer1=fix the 3 already-existing skills bare-commit lines (commit-mutex Step 3c, commit-boundary, commit SKILL.md Step 2) to pathspec-scoped commit -- this is the actual structural fix, hook is the universal backstop beneath it since commit-mutex is dispatcher-only (INV-GATEWAY-1) and cannot reach specialists. Layer2=followup flow-doc sweep (not this row). Observability: loud stderr banner naming swept files + local .git/sweep-guard.log + best-effort docs/signals/*.json bug-escalation write (bash+jq only, zero MCP/network dependency, reuses the SAME live fail-loud-protocol.md convention PO/triage-signals already consumes) -- never the 2>/dev/null||true anti-pattern (UC-CRITIC-HOOKS-ENFORCEMENT); internal guard errors (unrecognized GIT_INDEX_FILE shape) fail-open+loud, mirroring commit-mutex own C-2/C-2b precedent. AC-6 second-order harm: sweeper-side detection covered (this row); swept-victim-side self-detection is NOT closed by a commit-path hook (git carries no per-file staging attribution) -- needs its own row, minted as FIX-COMMIT-SWEEP-VICTIM-SELF-DETECT depends-on this row. Duplicate FIX-AUDITOR-COMMIT-NONEXPLICIT-PATHSPEC supersession ENDORSED + strengthened: verified empirically that pathspec-scoped commit ignores foreign content regardless of how broadly git add staged (even git add -A), so fixing the commit line subsumes the non-explicit-git-add concern the duplicate targeted. next_agent=pm (not developer) because deliverable spans 3 zones outside any single specialist (scripts/git-hooks/ = developer zone per UC-GCP-P4 precedent, .claude/skills/ = agent-father declared zone, orch-state board bookkeeping = router/pm) -- PM must dispatch scripts/git-hooks/pre-commit as an EXPLICIT supervised subtask carrying this brief spec, NOT an unattended zone-detect Tier-3 pickup, closing PO stated concern all the way down the chain.",
+        "verification_harness_ref": "scripts/audits/verify-commit-sweep-discriminator.sh — reproduces C1 (bare commit sweeps peer) + C2 (pathspec commit immune, GIT_INDEX_FILE basename discriminates). Router-run 2026-07-21, VERDICT PASS on git 2.49.0. Re-run before implementing; a FAIL means the brief design premise no longer holds on the installed git.",
+        "decomposed_into": [
+          "FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK",
+          "FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-SKILLS"
+        ],
+        "decomposed_at": "2026-07-21T17:20:00Z",
+        "decomposed_by": "pm/FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-decomposition",
+        "router_note_20260721T1740": "PM decomposition COMPLETE (commit c73307325) but this parent still carries next_agent=pm — a future dispatcher reading next_agent would re-spawn pm and risk a duplicate decomposition. Router did NOT change status/next_agent (lane disposition is PO's call, and next_agent is optional-not-nullable in the schema). PO: decide whether this parent moves to a holding lane pending its two children, or stays READY as a tracking row. Children carry owner+next_agent+supervised=true and are independently dispatchable now.",
+        "po_lane_disposition_20260721T1724": "LANE DECISION (router deferred this to PO). Parent was ready/P0 still carrying next_agent=pm AFTER pm had already decomposed it — a dispatcher reading next_agent would re-spawn pm and produce a duplicate decomposition. Resolved as: status READY->BLOCKED, lane ready->backlog (out of the dispatchable lane), depends=[HOOK,SKILLS], next_agent pm->po. next_agent is set to po rather than deleted DELIBERATELY: an absent next_agent is the exact structurally-undispatchable signature that let FIX-AUDITOR-COMMIT-NONEXPLICIT-PATHSPEC idle six weeks, so the parent stays addressed to PO for closeout once both children reach DONE_VERIFIED. This row now tracks, it does not dispatch."
       }
     ],
     "closed_sprints": [
@@ -10303,54 +10346,44 @@
         "po_cowork_signal_triage_20260721T16": "TRIAGE of cow-20260721T153000 (MED, cowork-team) — root cause CONFIRMED at the mechanism level, but TWO of the signal's claims are CORRECTED and its recommended fix is INSUFFICIENT ALONE (PO signal-drain 2026-07-21T16:xxZ, RAW-verified). CONFIRMED: the drain skip is shape-driven, and scripts/agents-flow/drain-signals.js:77 is the exact predicate — a file is skipped iff it is an array OR has NONE of from/source/type/signal_type; line 78 logs 'leaving in inbox' and never moves or unlinks. Live shape census: all 47 top-level cowork-team-*.json are flat (0 enveloped), while 121 of 125 cowork files already in processed/ ARE enveloped — shape predicts drain success almost perfectly. So this row's acceptance clause (1) (redirect/fix the telemetry writer) is the right root-cause fix and is already correctly specified. CORRECTION 1 — the signal's '96 files/day of pure accretion at */15' is NOT supported and should not be used to size the work: the stuck floor is 43/47 a single stale 2026-07-10..07-11 batch, and cowork telemetry has drained NORMALLY since 07-14 (14 on 07-14, 14 on 07-15, 29 on 07-16, 31 on 07-17, 19 on 07-18, 5 on 07-21 all reached processed/). Exactly ONE flat file accreted on 07-21. Real accretion of NON-drainable files is ~1/week, not 96/day. The Step 6.1 skip-on-silent condition may still be worth honoring, but it is a hygiene nit, not a 96/day flood — do not prioritize it as one. CORRECTION 2 — the signal frames Option A as a one-line writer change that 'makes existing prune machinery work'. It does not, for the files that already exist: because the skip path never removes anything, the 47 accumulated files are permanently inert regardless of what the writer does from now on. The one-time sweep (this row's acceptance clause 2) is therefore REQUIRED, not optional, and is the ONLY clause that actually clears the >50 guard today (47 removed leaves ~6, well under the threshold). Writer fix prevents recurrence; sweep restores the detector. SCOPE NOTE for the implementer: the drain needs only ONE of from/source/type/signal_type, so the minimal unblock is narrower than the full envelope — but emit the full enveloped schema per docs/agents/cowork-team/flow/telemetry.md:5 anyway, since that INVARIANT is what the processed/ corpus already follows. NO NEW ROW MINTED: acceptance clauses (1)(2)(3)(4) on this row already cover the writer fix, the sweep, the shape-aware guard count, and quarantining. Signal RESOLVED into this row. Also acknowledged: the cowork dispatcher RETRACTED cow-20260721T152500 this tick after finding it had queried .task_board.rows[], a key that does not exist — correct self-catch of the empty-read-as-evidence class; no action needed."
       },
       {
-        "id": "FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD",
+        "id": "FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK",
         "type": "FIX",
+        "title": "Pre-commit hook: detect bare commits that sweep peer staged content; install via scripts/git-hooks/install.sh",
         "status": "READY",
         "priority": "P0",
         "size": "M",
-        "zone": "cross-service/",
-        "owner": "architect",
-        "next_agent": "pm",
-        "plan_only": true,
-        "supervised": true,
-        "recurring_bug_count": 3,
+        "zone": "scripts/",
+        "owner": "developer",
+        "next_agent": "developer",
         "depends": [],
-        "title": "Shared-index sweep: a commit with absent/partial pathspecs absorbs a live peer's WIP into a mis-attributed commit. 3 confirmed occurrences (f05795c3c 06-08 auditor swept architect; 84096f617 07-21 router swept developer; 0e28eed23 07-21 cowork-team swept the same developer). Documentation-only enforcement has now failed 3x — need ONE executable guard on the shared commit path.",
-        "created_at": "2026-07-21T16:35:12Z",
-        "created_by": "po/escalation-commit-path-guard-20260721T1635",
-        "updated_at": "2026-07-21T17:05:12Z",
-        "updated_by": "architect/fix-commit-path-peer-index-sweep-guard-20260721",
-        "supersedes": [
-          "FIX-AUDITOR-COMMIT-NONEXPLICIT-PATHSPEC"
-        ],
-        "evidence_raw_verified_20260721T1635": [
-          "f05795c3c 'chore(memory/system-auditor): notebook 2026-06-08 tier-1 audit HEALTHY' landed 8 files including .github/workflows/ci.yml, apps/mcp-server/bunfig.toml, apps/mcp-server/package.json, scripts/test-coverage.sh and the architect notebook. Message claims notebook-only. This is occurrence ZERO and it was already filed as a row 6 weeks ago.",
-          "84096f617 'fix(auditor-tier1): skip obsolete socat-bridge plist in launchd check' landed 4 files; swept scripts/agents-flow/drain-signals.js (+107) and drain-signals.test.js (+97, new file) belonging to the live developer agent.",
-          "0e28eed23 'chore(cowork): tick 16:15Z WORK ...' landed 8 files; swept the REMAINDER of the same developer change (+23 / +65). This actor DID run `git diff --cached --name-status` and correctly confirmed the peer file was absent, and was swept anyway: a --cached read is a snapshot, not a lock, and a peer `git add` landing in the gap wins.",
-          "ls -la .git/hooks (2026-07-21T16:35Z): the ONLY installed hook is a pre-push symlink into scripts/git-hooks/pre-push. No pre-commit exists. scripts/git-hooks/ contains install.sh + pre-push only.",
-          "scripts/git-hooks/install.sh loops `for hook in pre-push` — extending the installer to a second hook is a one-token change; the symlink-from-tracked-source pattern is already proven and wired in this repo."
-        ],
-        "why_this_is_a_row_not_a_note": "The rule 'commit WITH explicit pathspecs, never bare' was already documented before all three occurrences, and the third actor additionally performed the --cached diligence check and was swept regardless. Diligence did not save it. Per the standing recurring-bug rule (2+ occurrences => block) and the recurring-FAILED-FIX distinction, this is worse than a fresh recurrence: a row for this defect has existed since 2026-06-08 and never dispatched.",
-        "po_scope_calls_NOT_design": [
-          "RULED OUT — per-agent index isolation via git worktrees. Conflicts with the standing NO-branches rule and multiplies working copies. Do not spend design time here.",
-          "RULED OUT as a SOLE fix — another round of flow-doc / CLAUDE.md wording. That is precisely the disposition that was tried and failed 3x (superseded row's detail status was DEFERRED-OUT-OF-DEV-SCOPE, owner 'agents-architect + agent-father', i.e. N per-agent doc edits). Doc changes may ACCOMPANY the executable guard, never replace it.",
-          "IN SCOPE for architect — choosing between hard-reject and loud-advisory disposition, and whether the guard keys off session-presence/task-lock state or purely off an index-vs-declared-pathspec delta. These differ sharply in fleet blast radius and are a genuine design decision; PO does not pre-empt them."
-        ],
-        "acceptance": "(1) An executable guard exists on the COMMIT path, installed the same proven way as the existing pre-push hook: repo-tracked source under scripts/git-hooks/ plus symlink installation via scripts/git-hooks/install.sh. (2) A commit that would absorb index/working-tree content the committing actor did not itself stage is made OBSERVABLE at commit time; the disposition (hard reject vs loud warn) is the architect's call and MUST be justified in writing against fleet blast radius — a misfiring hard-reject blocks every agent and every human on the repo. (3) The guard's own failure MUST NOT be silently indistinguishable from a pass: it must not adopt the `2>/dev/null || true` idiom flagged by UC-CRITIC-HOOKS-ENFORCEMENT. A crashed or erroring validator has to be observable. (4) The legitimate single-actor `git commit -m ... -- <explicit pathspecs>` case is NOT blocked. (5) install.sh is extended so a fresh clone or a .git rebuild re-installs the guard — .git/hooks is untracked, so a rebuild silently removes it. (6) SECOND-ORDER, must be answered not silently dropped: after a sweep the swept actor's `git status` reports a CLEAN tree, which is indistinguishable from 'my change committed successfully'. An agent reading tree-cleanliness as success may report done without attribution and may skip its RED-before evidence. Architect states explicitly whether this guard covers that case or whether it needs its own row.",
-        "verification_gate": "Reproduce the race in a scratch clone, not in the live repo: actor A stages file X; actor B runs a pathspec-less commit while A's content sits in the shared index. With the guard installed, B's commit is rejected or loudly flagged, and A's content does NOT land inside B's commit under B's message. Demonstrated live in the scratch repo with real command output — NOT asserted from hook source prose or from a flow-doc claim.",
-        "dispatch_note": "Placed DIRECTLY in ready[] rather than backlog[] deliberately. BOUNDED-1 would gate this row three times over (NON-DEV-NEXT_AGENT gate on next_agent=architect, PLAN-ONLY gate, and the superseded predecessor is additionally held by the DETAIL-DEFERRED gate). Backlog placement is therefore equivalent to shelving it — which is exactly how the predecessor row idled for 6 weeks. Requires router-adjudicated dispatch to architect; it will NOT self-start.",
-        "note": "Router escalated after occurrences 2 and 3; PO found occurrence 0 during the board prior-art check. Nothing was lost in any of the three sweeps (content verified byte-identical, drain-signals.test.js 22/22 PASS) — but that is luck, not process, and luck is not a control.",
-        "po_addendum_20260721T1640_EXISTING_CONTROL_FOUND": "MATERIAL for the design — read `.claude/skills/commit-mutex/SKILL.md` before designing anything new. A control for this exact race ALREADY EXISTS and the fix may be to close its bypass rather than invent a second mechanism. Three findings, raw-read from the skill 2026-07-21T16:40Z: (1) PURPOSE line states verbatim that it exists to 'eliminate the verify->commit race on the shared git index' — so this defect class was already identified and a mutex shipped for it. (2) The skill is DISPATCHER-ONLY by INV-GATEWAY-1 (specialists lack the gateway binding for task_claim and are told to 'commit directly (explicit paths)'). So a large set of actors is architecturally EXEMPT from the only existing control, and any actor not holding the mutex races freely against one that does — a mutex only excludes participants. Worth checking whether the three sweeping actors (system-auditor, router, cowork-team) held it; the sweeps suggest not. (3) The skill's OWN critical section encodes the defective idiom: Step 3a `git add <paths>`, Step 3b a `git diff --cached --name-only` foreign-path check, Step 3c a BARE `git commit -m` with no pathspecs. Step 3b is precisely the snapshot-not-a-lock check that demonstrably failed the cowork-team actor in 0e28eed23. Under a correctly-held mutex 3b/3c is mostly safe; against a non-participating peer it is not. STRICTLY BETTER and already mandated by CLAUDE.md + the pathspec-commit memory: pathspec-scoped `git commit -m <msg> -- <paths>`, which resolves the paths atomically at commit time instead of trusting a prior index snapshot. Architect should decide whether the deliverable is (i) a new hook, (ii) fixing Step 3c to a pathspec commit plus widening mutex participation, or (iii) both — but note that (ii) alone remains vigilance-shaped (it is still a doc that actors must choose to follow), which is the failure mode this row exists to end. This PO tick committed its own artifacts with a pathspec-scoped commit rather than the skill's 3a+3c sequence; the skill needs a corresponding update whichever option is chosen.",
-        "architecture_brief_ref": "docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md",
-        "architect_design_20260721T_LAYERED_WARN_DEFAULT": "Layered fix, ready for pm decomposition: Layer0=scripts/git-hooks/pre-commit (new, universal, WARN-default disposition -- GIT_INDEX_FILE basename check distinguishes bare/-a commits (reads real .git/index or .git/index.lock) from pathspec-scoped commits (git resolves into a scratch next-index-*.lock BEFORE the hook runs, race-free since git holds index.lock for the whole transaction); empirically verified in scratch repo: bare commit sweeps foreign staged content, pathspec-scoped commit (git commit -m msg -- exact-files) never does regardless of how git add staged things, and git pull --rebase replay of an already-scoped commit does NOT re-trigger a false warn (also verified). Disposition=WARN by default (never blocks) because the SAME bare-commit-after-explicit-add idiom is still the majority pattern across 60+ flow docs today -- hard-reject fleet-wide on day 1 would be the exact outage PO ruled out; GIT_SWEEP_GUARD_MODE=reject is opt-in per-caller once a call site is migrated to pathspec form. Layer1=fix the 3 already-existing skills bare-commit lines (commit-mutex Step 3c, commit-boundary, commit SKILL.md Step 2) to pathspec-scoped commit -- this is the actual structural fix, hook is the universal backstop beneath it since commit-mutex is dispatcher-only (INV-GATEWAY-1) and cannot reach specialists. Layer2=followup flow-doc sweep (not this row). Observability: loud stderr banner naming swept files + local .git/sweep-guard.log + best-effort docs/signals/*.json bug-escalation write (bash+jq only, zero MCP/network dependency, reuses the SAME live fail-loud-protocol.md convention PO/triage-signals already consumes) -- never the 2>/dev/null||true anti-pattern (UC-CRITIC-HOOKS-ENFORCEMENT); internal guard errors (unrecognized GIT_INDEX_FILE shape) fail-open+loud, mirroring commit-mutex own C-2/C-2b precedent. AC-6 second-order harm: sweeper-side detection covered (this row); swept-victim-side self-detection is NOT closed by a commit-path hook (git carries no per-file staging attribution) -- needs its own row, minted as FIX-COMMIT-SWEEP-VICTIM-SELF-DETECT depends-on this row. Duplicate FIX-AUDITOR-COMMIT-NONEXPLICIT-PATHSPEC supersession ENDORSED + strengthened: verified empirically that pathspec-scoped commit ignores foreign content regardless of how broadly git add staged (even git add -A), so fixing the commit line subsumes the non-explicit-git-add concern the duplicate targeted. next_agent=pm (not developer) because deliverable spans 3 zones outside any single specialist (scripts/git-hooks/ = developer zone per UC-GCP-P4 precedent, .claude/skills/ = agent-father declared zone, orch-state board bookkeeping = router/pm) -- PM must dispatch scripts/git-hooks/pre-commit as an EXPLICIT supervised subtask carrying this brief spec, NOT an unattended zone-detect Tier-3 pickup, closing PO stated concern all the way down the chain.",
-        "verification_harness_ref": "scripts/audits/verify-commit-sweep-discriminator.sh — reproduces C1 (bare commit sweeps peer) + C2 (pathspec commit immune, GIT_INDEX_FILE basename discriminates). Router-run 2026-07-21, VERDICT PASS on git 2.49.0. Re-run before implementing; a FAIL means the brief design premise no longer holds on the installed git.",
-        "decomposed_into": [
-          "FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK",
-          "FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-SKILLS"
-        ],
-        "decomposed_at": "2026-07-21T17:20:00Z",
-        "decomposed_by": "pm/FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-decomposition",
-        "router_note_20260721T1740": "PM decomposition COMPLETE (commit c73307325) but this parent still carries next_agent=pm — a future dispatcher reading next_agent would re-spawn pm and risk a duplicate decomposition. Router did NOT change status/next_agent (lane disposition is PO's call, and next_agent is optional-not-nullable in the schema). PO: decide whether this parent moves to a holding lane pending its two children, or stays READY as a tracking row. Children carry owner+next_agent+supervised=true and are independently dispatchable now."
+        "supervised": true,
+        "created_at": "2026-07-21T17:15:48Z",
+        "created_by": "pm/FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-decomposition",
+        "parent_task": "FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD",
+        "note": "Layer 0 (universal backstop hook). Implements §4.1 §4.3 from architecture brief. AC: 1,2,3,4,5. Depends on verification via scripts/audits/verify-commit-sweep-discriminator.sh.",
+        "updated_at": "2026-07-21T17:24:33Z",
+        "updated_by": "po/triage-20260721T1707",
+        "po_promote_20260721T1724": "PROMOTED backlog->ready (PO Step-1 triage). pm decomposed the parent into these two children but left them in the 409-row backlog lane with status BACKLOG, so no dispatcher would ever pick them — the decomposition would have stalled silently. Both rows are fully specced (owner, next_agent, zone, size, AC refs into docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md, supervised:true) and the design load-bearing claim was independently reproduced by router at scripts/audits/verify-commit-sweep-discriminator.sh (VERDICT PASS, git 2.49.0). Nothing further gates them."
+      },
+      {
+        "id": "FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-SKILLS",
+        "type": "FIX",
+        "title": "Fix commit-mutex/commit-boundary/commit skills: bare-commit lines → pathspec-scoped (git commit ... -- <paths>)",
+        "status": "READY",
+        "priority": "P0",
+        "size": "S",
+        "zone": ".claude/skills/",
+        "owner": "agent-father",
+        "next_agent": "agent-father",
+        "depends": [],
+        "supervised": true,
+        "created_at": "2026-07-21T17:15:48Z",
+        "created_by": "pm/FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-decomposition",
+        "parent_task": "FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD",
+        "note": "Layer 1 (structural fix for highest-traffic call sites). Implements §4.2 from architecture brief. AC: 1,2,3. Fixes 3 surgical edits: commit-mutex Step 3c, commit-boundary RULE 2.5, commit Step 2. Caveat: adding new files requires git add <new> before scoped commit.",
+        "updated_at": "2026-07-21T17:24:33Z",
+        "updated_by": "po/triage-20260721T1707",
+        "po_promote_20260721T1724": "PROMOTED backlog->ready (PO Step-1 triage). pm decomposed the parent into these two children but left them in the 409-row backlog lane with status BACKLOG, so no dispatcher would ever pick them — the decomposition would have stalled silently. Both rows are fully specced (owner, next_agent, zone, size, AC refs into docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md, supervised:true) and the design load-bearing claim was independently reproduced by router at scripts/audits/verify-commit-sweep-discriminator.sh (VERDICT PASS, git 2.49.0). Nothing further gates them."
       }
     ],
     "review": [

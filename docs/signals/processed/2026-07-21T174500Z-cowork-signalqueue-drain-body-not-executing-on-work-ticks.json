@@ -28,5 +28,11 @@
       "residual_uncertainty_do_not_skip": "Router did NOT determine WHICH failure mode this is, and the distinction changes the fix. Candidates: (a) the WORK-continuation drain body is narrated but not executed — there is an existing memory for exactly this failure shape in cowork (feedback_cowork_spawn_narrates_not_executes); (b) the drain ran and the mark-READ write failed or was lost to a CAS race; (c) the drain is skipped when the tick's slot work is non-empty, i.e. slots crowd out step 1. Whoever picks this up should determine which BEFORE changing anything — (a) is a flow-compliance problem, (b) is a write-path problem, (c) is an ordering problem, and a fix aimed at the wrong one will look green and change nothing."
     },
     "router_did_not": "mark any signal_queue row READ, mint a board row, edit the cowork flow or its preflight script, or spawn cowork-team."
+  },
+  "_processed": {
+    "fingerprint": "2c0d5e3307ff22f2304024b2a4184d69e7a99df8095fa5e2a0fa199496875caa",
+    "processedAt": "2026-07-21T17:22:00Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }
