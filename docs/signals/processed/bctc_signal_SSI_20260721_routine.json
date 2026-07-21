@@ -11,7 +11,7 @@
   "financials": {
     "pe": 14.6,
     "pb": 1.9,
-    "roe_pct": 14.0,
+    "roe_pct": 14,
     "ey_spread_pp": 1.85,
     "valuation_verdict": "FAIR"
   },
@@ -20,5 +20,11 @@
   "trick_summary": null,
   "trick_confidence": "none",
   "cycle_id": "c107",
-  "cycle_ts_utc": "2026-07-21T15:09:59Z"
+  "cycle_ts_utc": "2026-07-21T15:09:59Z",
+  "_processed": {
+    "fingerprint": "1045cbbb355d5054f1ac2ea5d26fd5bff4d55524d54150b9920bb1d71d4f23b2",
+    "processedAt": "2026-07-21T15:23:58Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

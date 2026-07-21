@@ -45,5 +45,11 @@
     "note": "bctc-offmarket _cron_fallback on calendar_status=unknown; slot last fired 2026-07-19T15:04Z (07-20 tick missed - cron unarmed). emit_pressure_state returned cycle_snapshot_promoted=false; cycle-snapshot-latest.json stale since 2026-07-07T19:47Z - filed separately."
   },
   "priority": "low",
-  "createdAt": "2026-07-21T15:10:07Z"
+  "createdAt": "2026-07-21T15:10:07Z",
+  "_processed": {
+    "fingerprint": "b91655a9c4553a865cb8d61f2062aac1a3c4b926ca8c3932e84f448368536214",
+    "processedAt": "2026-07-21T15:23:58Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

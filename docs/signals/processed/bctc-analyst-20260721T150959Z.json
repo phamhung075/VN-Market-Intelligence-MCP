@@ -11,7 +11,12 @@
   "payload": {
     "cycle_id": "c107",
     "slot": "bctc-analyst-slot-1 (15:00 UTC)",
-    "newly_confirmed_blocked": ["NVL", "SSI", "VCI", "HCM"],
+    "newly_confirmed_blocked": [
+      "NVL",
+      "SSI",
+      "VCI",
+      "HCM"
+    ],
     "verification_method": "get_bctc_full(code) returned literal 'Chưa có dữ liệu BCTC' for all 4 despite calendar status ĐÃ NỘP (NVL filed 2026-06-08, SSI/VCI/HCM filed 2026-06-07) — checked docs/analysis-briefs/{TICKER}.md, no prior ledger entry for any of the 4",
     "downgrade_action": "All 4 downgraded to routine bctc_signal using get_sector_comparison ratios only — no ledger write, no fabrication (per reprocess-vs-new-filing guard 2026-07-19)",
     "prior_chain": [
@@ -24,5 +29,11 @@
     "get_recent_fixes_check": "get_recent_fixes(10) still stale — latest fix 2026-05-12 (HEADLOCK), no matching fix for reparse/blocked-data pipeline gap",
     "root_task_hint": "Same root cause class as BCTC-HIST-VPS-BACKFILL / reparse pipeline — filing-status calendar flips to ĐÃ NỘP before the parsed financial_reports row is actually written/queryable",
     "note": "All 4 tickers still serve plausible get_sector_comparison PE/PB/ROE ratios — evidence fragments recorded from those ratios (ids 315-321), no BCTC-parsed figures fabricated"
+  },
+  "_processed": {
+    "fingerprint": "d4e55fa7789285fefac7bbb0eafe20164b0970a3139d5570e75e240d08295580",
+    "processedAt": "2026-07-21T15:23:58Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

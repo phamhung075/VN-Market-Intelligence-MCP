@@ -20,5 +20,11 @@
   "trick_summary": null,
   "trick_confidence": "none",
   "cycle_id": "c107",
-  "cycle_ts_utc": "2026-07-21T15:09:59Z"
+  "cycle_ts_utc": "2026-07-21T15:09:59Z",
+  "_processed": {
+    "fingerprint": "0b7d3c9990a72f1c8326c9693f7d54824d36397ba06d10fc13da7eba1d135462",
+    "processedAt": "2026-07-21T15:23:58Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

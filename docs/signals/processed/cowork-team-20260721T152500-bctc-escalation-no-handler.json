@@ -8,7 +8,6 @@
   "severity": "LOW",
   "status": "RETRACTED",
   "summary": "RETRACTED — the claimed bctc escalation routing gap does not exist. Original finding was built on a wrong-path jq query that returned empty. No PO action required.",
-
   "retraction": {
     "verdict": "FALSE POSITIVE — withdraw in full.",
     "what_i_claimed": "bctc-analyst's 'bctc-data-quality-anomaly' escalations had no dispatch handler; 5 HIGH escalations over 3 days produced 0 board rows and 0 signal_queue rows; the cluster grew 4 -> ~21 tickers unattended.",
@@ -29,7 +28,6 @@
       "drain_routing_observed": "2026-07-21T15:24Z drain: 15 rows inserted, every one reported routed-to-po, including bctc_signal_{SSI,VCB,VCI}_20260721_routine.json. db_count=213."
     }
   },
-
   "my_error": {
     "primary": "Queried `.task_board.rows[]?` — `.task_board` has no `rows` key. Its actual keys are: active_sprints, archive, backlog, closed_sprints, done, done_verified, head, in_progress, qa, ready, review, last_triaged_at, last_triaged_by. The `?` operator suppressed the type error and yielded an empty stream, which I read as 'zero matching rows exist'.",
     "secondary": "Ran `jq '.task_board|keys[]' | head`, which truncated the key list at 10 entries and hid `in_progress` — the one key that held the row. I then enumerated keys from that truncated list and again found nothing, which felt like corroboration but was the same omission repeated.",
@@ -37,19 +35,16 @@
     "compounding_factor": "Both failures were output truncation (`?` swallowing an error, `head` cutting a key list). Earlier in the same tick I also lost the preflight verdict line to `tail -5`. Truncation manufactured a conclusion three times in one session.",
     "what_would_have_caught_it": "Grepping the raw file for the literal defect name before minting. `grep -o '\"[^\"]*REPARSE[^\"]*\"' orch-state.json` surfaced the row instantly and needs no knowledge of the schema. Prior-art discipline (feedback_file_prior_art_check_before_minting_row) says to grep the board before minting — I checked prior art with the same broken jq path instead of a path-independent search, so the prior-art check inherited the bug."
   },
-
   "residual_signal": {
     "is_there_anything_left": "No defect. One observation, non-actionable.",
     "observation": "signal_queue genuinely contains 0 rows sourced from bctc-analyst. That is by design, not a gap: bctc-analyst has no Bash tool, so it emits docs/signals/*.json files; drain-signals.js routes them to PO and the DB; PO triage mints board rows. That path demonstrably worked — the board row exists and is in progress.",
     "recommendation": "None. Do not open work off this row."
   },
-
   "correct_state_of_the_underlying_issue": {
     "owner": "dev-mcp-server (active)",
     "router_action": "None required. bctc-analyst should keep escalating — its signals are landing.",
     "note_for_future_ticks": "When bctc-analyst reports 'no dev-team fix landed yet' and get_recent_fixes is stale, that is consistent with a fix IN PROGRESS, not an unrouted escalation. get_recent_fixes lists landed fixes only; it is not a proxy for whether work is staffed."
   },
-
   "provenance": {
     "original_finding": "cowork-team router, post-tick verification of bctc-analyst c107",
     "retracted_by": "cowork-team router, tick 2026-07-21T15:15Z, after task_list_held surfaced the live dev-team sprint lock on the very defect I claimed was unrouted",
@@ -58,5 +53,11 @@
       "cow-20260721T145500 — signal_queue cap pressure (independent, still valid)",
       "cow-20260721T144500 — signal-dashboard HIGH flags dark (independent, still valid)"
     ]
+  },
+  "_processed": {
+    "fingerprint": "9427ece0f3c041797c64c3ed67704f9c80a1e299294604ff262df993aaa055d8",
+    "processedAt": "2026-07-21T15:38:08Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

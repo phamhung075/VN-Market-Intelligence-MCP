@@ -6,8 +6,19 @@
     "finding": "signal_queue rows addressed to unified-agent and alert-commander are structurally undeliverable — neither agent flow contains any signal_queue / signal-dashboard / inbox read step.",
     "evidence": {
       "receivers_table": ".claude/skills/signal-dashboard/SKILL.md lists po, tran-ngoc-bau, unified-agent, alert-commander as valid 'to' values",
-      "agents_referencing_signal_dashboard": ["code-janitor","cowork-team","dev-team","pm","po","system-auditor","tran-ngoc-bau"],
-      "missing_drain": ["unified-agent","alert-commander"],
+      "agents_referencing_signal_dashboard": [
+        "code-janitor",
+        "cowork-team",
+        "dev-team",
+        "pm",
+        "po",
+        "system-auditor",
+        "tran-ngoc-bau"
+      ],
+      "missing_drain": [
+        "unified-agent",
+        "alert-commander"
+      ],
       "grep_scope": "docs/agents/unified-agent/flow/ — 10 flow files present, zero matches for signal-dashboard|signal_queue|inbox",
       "dispatcher_does_not_deliver": "spawn-fanout.md Step 5 spawn prompt template is 'run <flow_path> slot=<slot_id>' — carries no signal payload, so main.md Step 0a 'route to matching agent slot at Step 5' is unimplemented for these two agents"
     },
@@ -26,5 +37,11 @@
     "requested": "PO decide owner: (a) add a signal-dashboard READ step to unified-agent + alert-commander flows, or (b) make spawn-fanout pass matched NEW rows into the spawn prompt, or (c) remove both from the receivers table if delivery is not intended."
   },
   "priority": "high",
-  "createdAt": "2026-07-21T14:45:00Z"
+  "createdAt": "2026-07-21T14:45:00Z",
+  "_processed": {
+    "fingerprint": "0a8fb67943aadb3c67e2635db3982e1e24f15c7b340bc1f3cc169325dd857973",
+    "processedAt": "2026-07-21T15:23:58Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

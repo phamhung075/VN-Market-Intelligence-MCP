@@ -33,5 +33,11 @@
     "recommendation": "Sequence with the line-776 fixed-filename proposal rather than patching one side: a fixed cycle-snapshot-current.json removes the shared-clock coupling entirely. If patching in place instead, floor FILE_TICK to the 15-min boundary in tick-snapshot.md so both sides derive the same key. Router did NOT edit either file — dev-team owns both.",
     "filed_by": "cowork-team dispatcher, tick 2026-07-21T15:00Z",
     "no_new_board_row": "prior-art check found SPIKE-TICK-SNAPSHOT-DEADCODE-OR-REGRESSED already in BACKLOG; this payload answers it instead of duplicating it"
+  },
+  "_processed": {
+    "fingerprint": "5aae028675d6f403de559f0bda98cb2e743fd8fb6f6a28172fd4220d1dadffe0",
+    "processedAt": "2026-07-21T15:23:58Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

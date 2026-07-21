@@ -1,0 +1,46 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "system-issue",
+  "priority": "medium",
+  "createdAt": "2026-07-21T15:40:00Z",
+  "payload": {
+    "finding": "The permanently-tripped drain guard has a narrower and cheaper root cause than currently recorded: cowork-team telemetry files are written with FLAT root-level fields, violating the enveloped-schema INVARIANT that telemetry.md itself declares. They are not inherently non-routable — they are malformed.",
+
+    "refines_not_duplicates": {
+      "existing_row": "CLEAN-COWORK-DISPATCHER-TELEMETRY-DRAIN-DIR",
+      "existing_status": "PLAN-ONLY, escalated low->high by PO at 2026-07-21T14:51:20Z ('the guard is now a DEAD DETECTOR')",
+      "premise_being_corrected": "Existing rows describe these files as 'correctly skipped as non-routable (no from/type)' and prescribe a writer-side RELOCATION (new directory + .gitignore reconciliation for 10 git-tracked files). That treats the missing from/type as by-design.",
+      "what_is_actually_true": "docs/agents/cowork-team/flow/telemetry.md line 5 states: 'INVARIANT: enveloped schema {from, to, type, payload, priority, createdAt}. NEVER flat root-level fields.' The dispatcher has never honored it. The files are contract violations, not legitimate non-signals.",
+      "sibling_rows_unaffected": ["FIX-DRAIN-QUARANTINE-NONROUTABLE-SIGNALS", "FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE", "FIX-SIGNALQUEUE-RECEIVER-DELIVERY-CONTRACT"]
+    },
+
+    "evidence": {
+      "envelope_compliance_scan": "47 of 47 docs/signals/cowork-team-*.json files are FLAT. enveloped=0, flat=47. Measured this tick by testing has(\"from\") and has(\"type\") on every file.",
+      "sample_flat_keys": "cowork-team-20260721T152400Z.json top-level keys: action, all_held, chef_mutex_applied, classification, corrections_this_tick, drain, drift_min, election_lock_id, emit_pressure_state, emitted_at, emitted_by, errors, ... — note 'emitted_by' where the contract requires 'from'.",
+      "drain_acceptance_predicate": "scripts/agents-flow/drain-signals.js:77 — skip iff (Array.isArray(j) || (j.from == null && j.source == null && j.type == null && j.signal_type == null)). Presence of ANY ONE of from/source/type/signal_type is sufficient to route.",
+      "therefore": "A telemetry file written to the documented envelope satisfies the predicate on 'from' alone. It would drain to docs/signals/processed/ and then fall under the existing 7-day prune. The inbox floor becomes self-clearing with no new directory and no .gitignore work.",
+      "self_implicating": "The dispatcher wrote cowork-team-20260721T152400Z.json (flat) during the 15:15Z tick. That file is itself in the 47 and is itself skipped every tick. This signal's own companion file is deliberately written ENVELOPED as a demonstration — it will drain normally."
+    },
+
+    "second_defect_found_same_scan": {
+      "what": "Step 6.1 of telemetry.md says: SKIP the docs/signals/ write if silent==true AND spawned[] empty AND errors[] empty. The 15:15Z tick was silent with no spawns and no errors, and the dispatcher wrote the file anyway.",
+      "impact": "Every silent tick that writes telemetry adds one permanent file to a floor PO escalated to HIGH the same day. At */15 that is up to 96 files/day of pure accretion.",
+      "corrected_behavior_this_tick": "The 15:30Z tick is silent/no-spawn/no-error, so per contract NO telemetry file was written. This companion file is a signal payload, not tick telemetry.",
+      "scope_note": "Whether past silent-tick telemetry should be retro-swept is a PO call, not a dispatcher call. The 47 files are peer-produced and 10 are git-tracked — NOT deleted autonomously, per the standing note on the existing row."
+    },
+
+    "requested_decision": {
+      "question": "Which writer-side fix lands on CLEAN-COWORK-DISPATCHER-TELEMETRY-DRAIN-DIR?",
+      "option_a_envelope": "Make the dispatcher emit the documented envelope ({from:'cowork-team', to:'dev-team', type:'cowork-fire', payload:{...}}). Files drain and auto-prune. No relocation, no .gitignore change. Smallest diff; also closes the contract violation.",
+      "option_b_relocate": "Move telemetry out of the routable inbox as currently planned. Still needs .gitignore reconciliation for the 10 tracked files.",
+      "option_c_both": "Envelope now (stops the bleeding this tick), relocate later if telemetry is judged to not belong in a signal inbox at all on design grounds.",
+      "dispatcher_recommendation": "Option C. Option A alone is a one-line writer change that makes the EXISTING prune machinery work, and it is strictly required anyway because the envelope is already a documented invariant being violated. Relocation is then a design cleanup rather than a bug fix.",
+      "also_needs_deciding": "Enforce Step 6.1's silent-skip condition — the accretion rate matters more than the backlog."
+    },
+
+    "not_claimed": "No assertion that relocation is wrong, that the 47 files are safe to delete, or that this fully explains the inbox floor. The 6 price_anomaly_*.json files are a separate producer and are NOT covered by the envelope fix.",
+
+    "verification_method": "Raw file scan + direct read of the drain predicate at scripts/agents-flow/drain-signals.js:77 and the invariant at docs/agents/cowork-team/flow/telemetry.md:5. Prior art checked path-independently by grepping orch-state.json for literal row ids and finding-text before minting, per feedback_file_prior_art_check_before_minting_row."
+  }
+}

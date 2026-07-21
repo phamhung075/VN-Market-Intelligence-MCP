@@ -4,27 +4,51 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Steel manufacturing (construction steel, HRC), agriculture and real estate side businesses",
-  "customer": "Construction contractors, steel distributors, industrial fabricators (domestic + export)",
-  "ops": "Operating Profit=0 / CF=0 known extraction defect persists (NI 9,055.9 ty > Gross Profit 8,365.1 ty, non-operating-income artefact); ESC-4 SKIPPED as a result",
-  "mgmt": "ROE 6.48%q (12.7% vs sector median 2.9%, above), PE 14.2x -57% sector discount, PB 1.7x +93% premium; data unreliable for earnings-quality verdict, no fundamental_validation posted",
-  "kinhdich": {
-    "quai": "Que 2 - Khon",
-    "trend": "TRUNG TINH",
-    "confidence_pct": 13,
-    "note": "confidence dropped sharply from prior 37-38% baseline, same hexagram"
+  "product": "Steel production (construction steel, hot-rolled coil/HRC), pig iron, agricultural feed",
+  "customer": "Construction contractors, steel fabricators, export buyers",
+  "ops": "Gross margin 15.8% (Rev 52,900.8 tỷ, GP 8,365.1 tỷ); ROE 6.5%q / 12.7% ann above sector median 2.9%; KNOWN EXTRACTION DEFECT — Operating Profit reported 0 while NI 9,055.9 tỷ exceeds Gross Profit (validation warning: possible non-operating income), data unreliable for margin/ESC-4 analysis",
+  "mgmt": "PE 14.2x -57% deep sector discount; foreign flow +314K shares net (5d), stronger than sector avg +5K — no fundamental_validation posted this cycle due to data reliability gap",
+  "financials": {
+    "net_revenue_bn_vnd": 52900.8,
+    "net_profit_bn_vnd": 9055.9,
+    "roe_quarterly_pct": 6.5,
+    "roe_annualized_pct": 12.7,
+    "pe": 14.2,
+    "pb": 1.7,
+    "valuation_verdict": "FAIR"
   },
   "esc_gate": {
-    "esc2": "PASS 0%",
-    "esc3": "DATA-COVERAGE-LIMITED 2/4Q guard-held",
-    "esc4": "SKIPPED (operating_profit=0)",
-    "esc5": "FALSE (no refined units)"
+    "esc1": "FALSE (cached, byte-identical)",
+    "esc2_balance_sheet_imbalance_pct": 0,
+    "esc3_status": "DATA-COVERAGE-LIMITED",
+    "esc3_quarters_returned": 2,
+    "esc4_result": "SKIPPED (operating_profit=0, known extraction defect)",
+    "esc5_result": "FALSE (bctc_refined_units empty)",
+    "escalation_status": "no_escalation"
   },
-  "cycle_ref": "20260721-0000",
-  "generatedAt": "2026-07-21T00:10:00Z",
+  "kinhdich": {
+    "hexagram": "Quẻ 23 Bác",
+    "trend": "BAT LOI",
+    "confidence_pct": 25,
+    "note": "Changed from Quẻ 2 Khôn (c106, 13% conf) — confidence rising but still low; negative bias"
+  },
+  "trick_summary": null,
+  "trick_confidence": "none",
+  "trick_pass_versions": [
+    "balance-sheet-v1",
+    "pl-v1",
+    "cashflow-v1",
+    "rpt-v1",
+    "footnote-v1",
+    "segment-v1"
+  ],
+  "e3_cache": "HIT — byte-identical vs c081-c106, all 6 passes skipped",
+  "insider": "no significant activity",
+  "cycle_id": "c107",
+  "cycle_ts_utc": "2026-07-21T15:09:59Z",
   "_processed": {
-    "fingerprint": "83944a7d004ef3ed19e3960babd10cbc7123d1199bc78d713054acbfd06d5aae",
-    "processedAt": "2026-07-21T14:46:44Z",
+    "fingerprint": "53314dc2740517ab5f3ca229f90226c99bc36881d03dab57ecb66847ba292493",
+    "processedAt": "2026-07-21T15:23:58Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
