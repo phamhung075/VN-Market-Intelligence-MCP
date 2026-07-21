@@ -29,7 +29,22 @@
 **why-change:**
 No change from the architecture brief's own §9 decomposition plan — all 8 tasks (T1–T8) are minted exactly as brief named them, with dependencies as brief specified. The only adaptation: explicit tier sequencing (tier 1 = T6; tier 1b = T1/T5; tier 2 = T2; tier 2b = T3/T4; tier 3 = T7; tier 4 = T8) to honor PO's sequencing directive that T6 ships first. No scope creep, no task merging, no scope-hold violations (row's standing: "does NOT own get_alerts(type=price) detector question; FIX-ALERT-SCAN-REJECT-STUB-BAR-P0 remains un-refiled"). Scope hold REAFFIRMED.
 
+**post-decomposition-corrections-applied-20260721T1832Z:**
+
+1. **Owner and next_agent assignment (blocking fix):** All 8 task rows initially lacked owner/next_agent fields. zone-detect skill cannot resolve non-apps/* zones to anything but generic "developer" placeholder, leaving dev-team unable to dispatch T6 (flow-doc fix, not code) and T8 (QA, not developer) to the right specialist. Set explicit assignments:
+   - T1, T2, T4, T5, T6, T7: owner="developer", next_agent="developer" (flow/config/skill work, let dev-team route by zone)
+   - T3: owner="dev-mcp-server", next_agent="dev-mcp-server" (code work, Tier-1 routable by zone)
+   - T8: owner="qa", next_agent="qa" (QA work, not routable by zone-detect, must be explicit)
+
+2. **WIP count correction (blocking restatement):** Initial report stated "1 in_progress (parent), within limit of 2 max concurrent." Actual state: **2 in_progress at cap**
+   - DESIGN-COWORK-FANOUT-PRODUCER-CONSUMER-ORDERING (this row, added by decomposition)
+   - SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD (ops, created 2026-07-16T21:00:34Z, in_progress for 5 days)
+   - **Dispatch readiness:** Nothing can enter in_progress until one row clears. Subtasks remain in ready lane (correct), but dev-team cannot dispatch any into in_progress until one of the two in_progress rows graduates to done/review.
+   - **Convention vs. Invariant:** head.wip and head.wip_max are both null in live orch-state — the "limit of 2" is convention per standing dev-team protocol, not an encoded invariant in the schema.
+
+3. **Stale-gate observation (non-blocking, for PO escalation):** The ops SPIKE row (BCTC-EXTRACTION-DORMANT) has `created_at: 2026-07-16T21:00:34Z` but **no `updated_at` field at all**. Main.md:491's stale-crash reset logic (age comparison, `now - updated_at > threshold`) cannot fire on a row with no updated_at timestamp — the gate is permanently disabled for that row. This is the sixth instance of this failure class found this session (others: tier-1 heartbeat freshness gate dead, plus three on SPIKE-SATURATED-COUNT-THRESHOLD-GATES-SWEEP row itself). Belong on SPIKE-SATURATED-COUNT-THRESHOLD-GATES-SWEEP for PO triage, not this row's scope. Noted for context only.
+
 **additional-context:**
 - Signal evidence: `docs/signals/dev-team-20260721T181610Z-signals-inbox-undeliverable-floor.json` (HIGH, to po, at time of writing) corroborates R3 from a second plane: price_anomaly_v1 file dated 2026-07-21T16:13Z describes the same selloff (GAS -6.98%, RSI 29.3), and its own market_context.note reads "First EOD pass since 2026-07-17 — slot did not fire for 4 days (17th, 20th, 21st EOD gap; 18-19 weekend)." That signal also carries undeliverable files (no from/type fields) — a separate problem unfixed by reordering alone (different strand, address separately via signal-shape enum or inbox structure redesign, not in this row).
-- WIP status: 1 in_progress (this row), 0 at-limit before decomposition, so no blocker from WIP enforcement (limit is 2 concurrent In Progress).
+- Price_anomaly_v1 writer unconfirmed: Router grep found no source writer, only docs. Likely market-watcher eod.md per dish_window field + R3 overlap (inference, not verified). Correctly un-minted per "confirm writer at source first" standard.
 - Handoff file naming: consistent with codebase pattern (DESIGN-COWORK-FANOUT-T<N>-<kebab-summary>).
