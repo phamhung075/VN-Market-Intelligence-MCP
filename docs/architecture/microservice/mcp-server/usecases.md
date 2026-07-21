@@ -84,6 +84,35 @@ No test regressions: `src/__tests__/FIX-BCTC-D1-STABILIZE-REPORT-ID.test.ts`
 (scalar UPSERT still applies on a genuinely better re-parse) and
 `src/__tests__/1196-bctc-reparse-pipeline.test.ts` pass unchanged.
 
+**FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP arm (b2) (2026-07-21,
+po_acceptance_reconciliation_20260721T1649):** PO's full 16-ticker cohort
+audit found ZERO confirmed good→corrupt transitions (arm b1, above) —
+the actual observed transition was ABSENT → manufactured zero-row: the
+guard above only ever evaluated when an existing row's `total_assets > 0`,
+so for a ticker with NO stored row at all the condition never fired and a
+`total_assets<=0` row was inserted anyway. Fix: the guard in `storeReport()`
+now evaluates `report.balanceSheet.totalAssets <= 0` UNCONDITIONALLY — a
+failed/partial extraction refuses to write whether that means preserving an
+existing good row (b1) or leaving the ticker ABSENT with NO row created at
+all (b2, `get_bctc_full` keeps returning "Chưa có dữ liệu BCTC" rather than
+"[CORRUPT DATA — SKIP] total_assets=0"). Proven via RED-before/GREEN-after
+against a forced partial-failure extraction (balance-sheet section stripped,
+other statements intact — confidence lands >0, so the pre-existing 1196
+all-zero-confidence guard does not already cover it) with zero ingest
+dependency. Test: `src/__tests__/FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP.test.ts`
+AC-2b.
+**Scope decision — `tryNewsChainFallback()` NOT extended to arm (b2):**
+tried and reverted. That writer's `balanceSheet.totalAssets` is hardcoded to
+`0` on every call (never a real figure), so an unconditional `<=0` guard
+there blocks 100% of its writes — it broke the still-active
+`1294b-bctc-fallback.test.ts` feature suite (4 tests) and
+`FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN.test.ts` (2 tests). That writer is
+also currently production-unreachable (`enableBctcFallback` defaults
+`false` and no live caller sets it `true` — grep-verified), so it is not
+part of the 16-ticker incident's actual write-back path. Left as a known,
+reported gap for a follow-up scope decision (see the matching note under
+`fetchParseAndStoreBctc.ts` below) rather than folded into this task.
+
 ### bctc/ensureFinancialReportShellRow.ts
 
 **FIX-BCTC-D2-ENSURE-SHELL-ROW (2026-07-10):** idempotent upsert that ensures a
@@ -150,6 +179,18 @@ re-run after a first fallback write (`total_assets` already 0, not `> 0`)
 is unaffected — the guard only blocks overwriting a row that was already
 servable. Test: `src/__tests__/FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN.test.ts`
 (unchanged, still passes — its re-run scenario starts from `total_assets=0`).
+**Arm (b2) NOT applied here (2026-07-21):** the same "no-prior-row" fix
+shipped in `storeReport()` (arm b2, above) was tried against this writer too
+and reverted — since `totalAssets` is hardcoded `0` on every single call, an
+unconditional guard here refuses 100% of writes, which broke the
+still-active `1294b-bctc-fallback.test.ts` suite (4 tests) and this file's
+own `FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN.test.ts` (2 tests) that
+legitimately exercise a first-ever fallback write succeeding. This writer is
+also currently unreachable from any live caller (`enableBctcFallback`
+defaults `false`, never set `true` outside tests — grep-verified across
+`apps/mcp-server/src`), so it is not part of the 16-ticker incident's actual
+write-back path. Known open gap, intentionally left for a separate scope
+decision rather than folded into FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP.
 
 ### discoverBctcPdfUrlBrowser.ts / discoverBctcPdfUrlDirectApi.ts
 PDF discovery strategies (browser scraping vs direct API)

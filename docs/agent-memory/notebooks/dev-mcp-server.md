@@ -1,9 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-07-17 — SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD AC-2 (dev-team dispatch, SPIKE read-only) → findings doc, returned to router
-
-**Session:** 69b0312e-df43-43a9-9e0b-bddf66d374e3. AC-2 only (AC-1 ops-CLEAR, AC-3 already DONE_VERIFIED). RAW-confirmed both bctc crons (`bctcPdfPullJob`/`bctcExtractReconcileJob`) fire exactly on schedule, zero errors — NOT a cron-liveness bug. Traced the real stall via `docker logs pdf-extractor`: every `/pek-extract` call throws `FileNotFoundError` on `doclayout_yolo_ft.pt` — the `pek_model_cache` named Docker volume (SEPARATE from `market_data`, which AC-1/ops already fixed) was wiped empty by the same 2026-07-15 VM-rebuild and never re-seeded. A committed idempotent remedy already exists (`scripts/pek-fetch-weights.sh`, from a 2026-05-27 architect brief that hit this identical class once before) and is currently unblocked (HF/ModelScope reachable, verified live). Separately reconfirmed agentic-refine (`bctc_table_rows`) is still dormant (13d, 181 PENDING) — recommended FOLD into existing `FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP`, no re-mint. No DB writes, no extraction fired (SPIKE read-only constraint). Findings: `docs/spikes/SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD.md`, committed `60bdca243` (doc only, explicit path — tree dirty with peer churn, did not sweep).
-
 ## 2026-07-17 — FIX-OHLCV-DEPTH-ALERT-HONEST-GAP-SUPPRESS (dev-team dispatch, FIX) → REVIEW, returned to router
 
 **Session:** 69b0312e-df43-43a9-9e0b-bddf66d374e3 (dev-team dispatch; flipped `FIX-OHLCV-DEPTH-ALERT-HONEST-GAP-SUPPRESS` IN_PROGRESS→REVIEW + `.head`→idle via `scripts/orch-apply.sh`)
@@ -33,3 +29,19 @@ New test `FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP.test.ts` (6 cases) — 
 Committed `25ae59a36` (code: `parseBctcReport.ts` + `fetchParseAndStoreBctc.ts` + `bctc/newsChainFallback.ts` + `composition-root.ts` + new test + `usecases.md`). **Deploy note: requires an mcp-server image rebuild — not live yet.** Flipped orch-state row IN_PROGRESS→REVIEW, `.head`→idle/next_agent=router.
 
 Zone health: tsc clean, 78/78 targeted BCTC tests pass (incl. 6 new RED→GREEN), full-suite pre-existing-flake class only (confirmed via stash A/B), tool count 183 unaffected | HEALTHY.
+
+## 2026-07-21 — FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP arm (b2) (router dispatch, revised gate) → REVIEW, returned to router
+
+**Session:** 4ae45b71-6dbf-4623-ab62-f388d14d2c85. Gate revised 16:49Z (po_acceptance_reconciliation_20260721T1649): PO audited all 16 tickers and found ZERO confirmed good→corrupt transitions — the real transition is ABSENT→manufactured zero-row, which the prior round's guard misses because it only fires when `existingGoodRow.total_assets>0`. Dispatched narrowly on this arm (b2) only; explicitly forbidden from touching the ingest-stall remediation (13/16 tickers owned by FIX-BCTC-Q1-2026-STORED-PDF-INGEST-STALL-15T, CTG by W5-FU-CTG-REFINE-96e36139, D2D by OPS-BCTC-REFINE-REPASS-NONBANK-5T).
+
+Fix: `storeReport()` (`parseBctcReport.ts`) guard now evaluates `report.balanceSheet.totalAssets<=0` UNCONDITIONALLY (was `existingGoodRow && ... && <=0`) — refuses the write whether it would clobber a good row (b1, unchanged) or CREATE a fresh corrupt row where none existed (b2, the new fix). RED-before proven via `git stash push` on just the 2 source files (test changes kept) — both new (b2) assertions failed against pre-fix code exactly as predicted (manufactured `total_assets=0` row for a no-prior-row ticker); `git stash pop` restored the fix, GREEN after (7/7 pass).
+
+**Scope-drift caught and reverted:** first attempt also extended the same unconditional guard to `tryNewsChainFallback()` (bctc/newsChainFallback.ts) since it shares the identical `existingGoodRow`-gated pattern and always hardcodes `total_assets=0`. That broke 6 pre-existing tests (`1294b-bctc-fallback.test.ts` ×4, `FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN.test.ts` ×2) that legitimately exercise a first-ever fallback write succeeding. Reverted that half cleanly (`git checkout --`) — confirmed that writer is currently unreachable from any live caller (`enableBctcFallback` defaults `false`, never set `true` outside tests, grep-verified) and is not part of the 16-ticker incident's actual write-back path. Left as a documented, reported gap (`usecases.md`, both call sites) rather than folded in — this is exactly the scope-drift pattern the dispatch warned against.
+
+Not scored on `get_earnings_calendar` QUA HAN per explicit router/PO instruction (corrupted discriminator, 13/15 already green from the ingest-stall cohort regardless of this fix).
+
+Verified: targeted BCTC suite (`FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP`, `FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN`, `1294b-bctc-fallback`, `FIX-BCTC-D1-STABILIZE-REPORT-ID`) 20/20 pass. `bun tsc --noEmit` exit 0. Full suite: 14601 pass / 41 fail / 46300 expect — all 41 pre-existing, unrelated (telegram/vps-push/insider-tx/foreign-flow/technical-indicators, mostly 5000ms-timeout network flake), zero BCTC/financial_reports hits (name-checked against the fail list). Tool count 183 / cronJobCount 2 unaffected (zero scheduler/tool files touched).
+
+Committed (explicit pathspecs, verified via `git show --name-status`): code `parseBctcReport.ts` + test `FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP.test.ts` + doc `usecases.md`. Flipped orch-state row IN_PROGRESS→REVIEW, `.head`→idle/next_agent=router.
+
+Zone health: tsc clean, 20/20 targeted BCTC tests pass (incl. 2 new RED→GREEN for arm b2), full-suite pre-existing-flake class only (zero BCTC overlap), tool count 183 unaffected | HEALTHY.

@@ -20,14 +20,37 @@ Bun.env["DB_PATH"] = ":memory:";
  *   AC-1: `published_at` is immutable after the first insert — a re-parse
  *         (even one that supplies a fresh/different published date) never
  *         changes the stored value.
- *   AC-2: a failed/corrupt extraction (total_assets <= 0) never overwrites a
- *         previously-good stored report (existing total_assets > 0) — the
- *         write is skipped entirely and the existing good row survives
- *         byte-for-byte.
+ *   AC-2 (arm b1): a failed/corrupt extraction (total_assets <= 0) never
+ *         overwrites a previously-good stored report (existing
+ *         total_assets > 0) — the write is skipped entirely and the
+ *         existing good row survives byte-for-byte.
  *   AC-3 (non-regression): a genuinely BETTER re-parse (new total_assets > 0,
  *         same or different value) still updates the servable scalar columns
- *         normally — the guard only blocks total_assets<=0 clobbering
- *         total_assets>0, not ordinary re-parse-with-good-data.
+ *         normally — the guard only blocks total_assets<=0 writes, not
+ *         ordinary re-parse-with-good-data.
+ *
+ * AC-2b (arm b2, po_acceptance_reconciliation_20260721T1649, revised
+ * 2026-07-21T16:49Z) — parseBctcReport.ts::storeReport() ONLY: a failed/
+ * corrupt extraction (total_assets <= 0) for a ticker with NO PRIOR STORED
+ * REPORT never CREATES a new row — the ticker stays ABSENT ("Chưa có dữ
+ * liệu BCTC"), never a total_assets=0 row. This is the arm the original
+ * guard MISSED (it only ever evaluated `existingGoodRow && ...`, so with no
+ * existing row the condition never fired) and the ONLY transition PO
+ * confirmed as actually observed in the 16-ticker cohort: ABSENT ->
+ * manufactured zero-row, not good -> corrupt. Scoped to storeReport() only
+ * — this is the writer bctcReparseJob's pipeline always exercises
+ * (bctcReparseJob -> fetchParseAndStoreBctc -> parseBctcReport ->
+ * storeReport runs unconditionally on every reparse). The sibling
+ * tryNewsChainFallback() writer shares the same total_assets=0 fingerprint
+ * in principle, but is currently production-unreachable
+ * (`enableBctcFallback` defaults false and is never set true outside
+ * tests — grep-verified) and extending the same unconditional guard there
+ * was tried and reverted: it breaks the still-active
+ * 1294b-bctc-fallback.test.ts feature suite (4 tests) and
+ * FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN.test.ts (2 tests). Left as a
+ * known, reported gap for a follow-up scope decision rather than folded in
+ * here — see AC-1/normal-path test below in the tryNewsChainFallback()
+ * describe block, unchanged from before this task.
  */
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import { parseBctcReport } from "../application/usecases/parseBctcReport.js";
@@ -216,6 +239,32 @@ describe("FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP — parseBctcReport.ts:
     expect(after.parsed_at).toBe(before.parsed_at);
   });
 
+  it("AC-2b (arm b2, po_acceptance_reconciliation_20260721T1649): a partial-failure parse for a ticker with NO PRIOR STORED REPORT does NOT create a new row — stays ABSENT", async () => {
+    // This is the arm the ORIGINAL guard MISSED and the only transition PO
+    // confirmed as actually observed in the 16-ticker cohort: ABSENT ->
+    // manufactured zero-row (not good -> corrupt, which AC-2 above already
+    // covers). No prior insert for this actionCode/period — existingGoodRow
+    // is null, so the pre-fix guard condition (`existingGoodRow && ...`)
+    // never evaluated and the corrupt row sailed through the INSERT.
+    const NO_PRIOR_ACTION_CODE = "NGAYNOP3";
+    const noPriorPeriod = period(NO_PRIOR_ACTION_CODE);
+
+    expect(readRow(NO_PRIOR_ACTION_CODE, noPriorPeriod.sortKey)).toBeNull();
+
+    await parseBctcReport({
+      rawText: partialFailureText(), // total_assets computes to 0, confidence > 0 (not the 1196 all-zero guard)
+      actionCode: NO_PRIOR_ACTION_CODE,
+      period: noPriorPeriod,
+      publishedAt: new Date().toISOString(),
+      _telegramBugFn: async () => true,
+    });
+
+    // No row is created at all — the ticker stays ABSENT, exactly like
+    // get_bctc_full's "Chưa có dữ liệu BCTC" branch (row === null), never a
+    // total_assets<=0 row that would trip "[CORRUPT DATA — SKIP]" at serve time.
+    expect(readRow(NO_PRIOR_ACTION_CODE, noPriorPeriod.sortKey)).toBeNull();
+  });
+
   it("AC-1 (reprocess immutability): a normal re-parse with GOOD data and a caller-supplied fresh published date still does NOT change published_at", async () => {
     const before = readRow(ACTION_CODE, P.sortKey)!;
 
@@ -377,6 +426,20 @@ describe("FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP — bctc/newsChainFallb
   });
 
   it("AC-1/normal path: fallback DOES write (and is immutable on re-run) when no prior good row exists", async () => {
+    // Scope note (po_acceptance_reconciliation_20260721T1649, revised
+    // 2026-07-21T16:49Z): arm (b2) — "no prior row -> never manufacture a
+    // corrupt row" — is fixed for parseBctcReport.ts::storeReport() above
+    // (the actual live write path: bctcReparseJob -> fetchParseAndStoreBctc
+    // -> parseBctcReport -> storeReport always runs on every reparse). This
+    // writer (tryNewsChainFallback) is a SEPARATE, currently
+    // production-unreachable path — `enableBctcFallback` defaults false and
+    // is never set true anywhere outside tests (grep-verified), so it is
+    // NOT part of the 16-ticker incident's write-back path. Extending the
+    // same unconditional (b2) guard here was tried and reverted: it breaks
+    // the still-active 1294b-bctc-fallback.test.ts feature suite (4 tests)
+    // and FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN.test.ts (2 tests) — a real
+    // scope-widening tradeoff, not this row's mechanism. Left as a known,
+    // reported gap for a follow-up decision rather than folded in here.
     const OTHER_ACTION_CODE = "NGAYNOPNC2";
     const db = getDb();
     const db2Signals = () => {

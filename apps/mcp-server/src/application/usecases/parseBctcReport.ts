@@ -315,17 +315,31 @@ async function storeReport(
     )
     .get(report.actionCode, report.period.sortKey);
 
-  if (
-    existingGoodRow &&
-    existingGoodRow.total_assets != null &&
-    existingGoodRow.total_assets > 0 &&
-    report.balanceSheet.totalAssets <= 0
-  ) {
-    const blockMsg =
-      `[BCTC] Reparse write BLOCKED for ${report.actionCode} ${report.period.sortKey}: ` +
-      `new extraction total_assets=${report.balanceSheet.totalAssets} would overwrite a ` +
-      `previously-good stored report (total_assets=${existingGoodRow.total_assets}). ` +
-      `Existing row preserved untouched — flagged for manual review, NOT re-extracted.`;
+  // po_acceptance_reconciliation_20260721T1649 (arm b2): the guard above only
+  // ever fired when a previously-good row ALREADY existed (arm b1 — good ->
+  // corrupt). It never evaluates when NO row exists for this
+  // (action_code, sort_key) at all, so a failed/partial extraction for a
+  // ticker with no prior stored report sailed straight through the INSERT
+  // below and MANUFACTURED a brand-new total_assets<=0 row where none
+  // existed — the ONLY transition PO confirmed as actually observed across
+  // the 16-ticker cohort (ABSENT -> manufactured zero-row, not good ->
+  // corrupt). Fix: evaluate totalAssets<=0 UNCONDITIONALLY — a failed
+  // extraction must never persist a corrupt row, whether that means
+  // preserving existing good data (b1) or leaving the ticker ABSENT (b2).
+  if (report.balanceSheet.totalAssets <= 0) {
+    const hadExistingGoodRow =
+      existingGoodRow != null &&
+      existingGoodRow.total_assets != null &&
+      existingGoodRow.total_assets > 0;
+    const blockMsg = hadExistingGoodRow
+      ? `[BCTC] Reparse write BLOCKED for ${report.actionCode} ${report.period.sortKey}: ` +
+        `new extraction total_assets=${report.balanceSheet.totalAssets} would overwrite a ` +
+        `previously-good stored report (total_assets=${existingGoodRow!.total_assets}). ` +
+        `Existing row preserved untouched — flagged for manual review, NOT re-extracted.`
+      : `[BCTC] Write BLOCKED for ${report.actionCode} ${report.period.sortKey}: ` +
+        `extraction total_assets=${report.balanceSheet.totalAssets} (failed/zero extraction) and ` +
+        `no prior stored report exists for this ticker — refusing to CREATE a new corrupt row. ` +
+        `Report stays ABSENT ("Chưa có dữ liệu BCTC") — flagged for manual review, NOT inserted.`;
     logger.warn(blockMsg);
     if (telegramBugFn) {
       await telegramBugFn(blockMsg).catch(() => {});
@@ -333,7 +347,7 @@ async function storeReport(
       const { sendTelegramBug } = await import("../../infrastructure/notifiers/telegram.js");
       await sendTelegramBug(blockMsg).catch(() => {});
     }
-    return; // NO WRITE — the existing good row is left completely untouched.
+    return; // NO WRITE — either the existing good row is untouched, or no row is created at all.
   }
 
   const stmt = db.prepare(`
