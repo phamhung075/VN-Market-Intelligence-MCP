@@ -9324,6 +9324,40 @@
         "created_at": "2026-07-21T17:05:12Z",
         "created_by": "architect/fix-commit-path-peer-index-sweep-guard-20260721",
         "note": "Split out of FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD architect design (docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md § AC-6). The commit-path pre-commit hook detects a sweep from the SWEEPING actor's own process at commit time (git diff --cached is race-free once inside the hook's index.lock transaction) but git carries NO per-file staging-intent attribution, so the SWEPT victim (who never gets to run a commit at all -- its git add just silently loses the race) cannot be notified in real time by anything living on the commit path alone. Needs an out-of-band intent-declaration or a post-hoc reconciliation check (e.g. end-of-cycle: confirm each of my staged-then-presumed-committed paths appears in a commit I actually authored, querying the sweep-guard evidence the parent row already emits to docs/signals/ + .git/sweep-guard.log) added as an EXECUTABLE step (not prose) to the shared end-of-cycle infra, not N per-flow-doc edits. PLAN-ONLY; pick-time pre-verify the parent row actually shipped first."
+      },
+      {
+        "id": "FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK",
+        "type": "FIX",
+        "title": "Pre-commit hook: detect bare commits that sweep peer staged content; install via scripts/git-hooks/install.sh",
+        "status": "BACKLOG",
+        "priority": "P0",
+        "size": "M",
+        "zone": "scripts/",
+        "owner": "developer",
+        "next_agent": "developer",
+        "depends": [],
+        "supervised": true,
+        "created_at": "2026-07-21T17:15:48Z",
+        "created_by": "pm/FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-decomposition",
+        "parent_task": "FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD",
+        "note": "Layer 0 (universal backstop hook). Implements §4.1 §4.3 from architecture brief. AC: 1,2,3,4,5. Depends on verification via scripts/audits/verify-commit-sweep-discriminator.sh."
+      },
+      {
+        "id": "FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-SKILLS",
+        "type": "FIX",
+        "title": "Fix commit-mutex/commit-boundary/commit skills: bare-commit lines → pathspec-scoped (git commit ... -- <paths>)",
+        "status": "BACKLOG",
+        "priority": "P0",
+        "size": "S",
+        "zone": ".claude/skills/",
+        "owner": "agent-father",
+        "next_agent": "agent-father",
+        "depends": [],
+        "supervised": true,
+        "created_at": "2026-07-21T17:15:48Z",
+        "created_by": "pm/FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-decomposition",
+        "parent_task": "FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD",
+        "note": "Layer 1 (structural fix for highest-traffic call sites). Implements §4.2 from architecture brief. AC: 1,2,3. Fixes 3 surgical edits: commit-mutex Step 3c, commit-boundary RULE 2.5, commit Step 2. Caveat: adding new files requires git add <new> before scoped commit."
       }
     ],
     "closed_sprints": [
