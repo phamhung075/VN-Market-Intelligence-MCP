@@ -411,8 +411,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-21T15:23:32Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-07-21T15:28:00Z",
+    "_updated_by": "po-signalqueue-triage-20260721",
     "archive": [],
     "rows": [
       {
@@ -423,9 +423,11 @@
         "type": "improvement_proposal",
         "summary": "Notebook schema standardization needed (2/45 structured, 43/45 free-form)",
         "severity": "LOW",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": "docs/improvement-proposals/IMP-20260718-agents-architect-notebook-schema-standardization.md",
-        "disposition": "FOLD (low-sev cosmetic). LANE-C notebook-schema-standardization: telemetry-parsing friction only, no reliability/coverage/correctness impact -- Tier-4 rollup already degrades gracefully via friction-token grep. A fleet-wide 45-agent ## Metrics retrofit (agent flows + identity files + dev-standards) is high blast-radius churn for a LOW-severity benefit (churn-without-convergence guardrail, project_systemic_review_0704). PO 5-field critique + verdict written into docs/improvement-proposals/IMP-20260718-agents-architect-notebook-schema-standardization.md; the low-cost slice (a ## Metrics doc-template in dev-standards.md for NEW agents, no retrofit) noted there as an opportunistic agents-architect improvement, not a tracked dev row. No mint, no dispatch."
+        "disposition": "FOLD (low-sev cosmetic). LANE-C notebook-schema-standardization: telemetry-parsing friction only, no reliability/coverage/correctness impact -- Tier-4 rollup already degrades gracefully via friction-token grep. A fleet-wide 45-agent ## Metrics retrofit (agent flows + identity files + dev-standards) is high blast-radius churn for a LOW-severity benefit (churn-without-convergence guardrail, project_systemic_review_0704). PO 5-field critique + verdict written into docs/improvement-proposals/IMP-20260718-agents-architect-notebook-schema-standardization.md; the low-cost slice (a ## Metrics doc-template in dev-standards.md for NEW agents, no retrofit) noted there as an opportunistic agents-architect improvement, not a tracked dev row. No mint, no dispatch.",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "t4p1-002",
@@ -435,9 +437,11 @@
         "type": "improvement_proposal",
         "summary": "Tool-usage-stats.json missing per-agent attribution (byAgent key) — Phase 0 prerequisite",
         "severity": "MED",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": "docs/improvement-proposals/IMP-20260718-dev-mcp-server-tool-usage-byagent-redesign.md",
-        "disposition": "DEDUP -> CWO-T4-P0-TUSTATS-PERAGENT (already BACKLOG, P3, na=ba, zone apps/mcp-server/). Same byAgent tool-usage-attribution scope (LANE-B), same Tier-4 brief source. NOT re-minted; CWO-T4 stamped origin_signal_id=t4p1-002 for task-archive READ->RESOLVED back-flip. No dispatch (WIP over cap)."
+        "disposition": "DEDUP -> CWO-T4-P0-TUSTATS-PERAGENT (already BACKLOG, P3, na=ba, zone apps/mcp-server/). Same byAgent tool-usage-attribution scope (LANE-B), same Tier-4 brief source. NOT re-minted; CWO-T4 stamped origin_signal_id=t4p1-002 for task-archive READ->RESOLVED back-flip. No dispatch (WIP over cap).",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260719T074117-22be",
@@ -447,9 +451,11 @@
         "type": "signal_feedback",
         "summary": "A-21 WARN: mcp-server RestartCount=7 (threshold: 2)",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
-        "disposition": "FOLD — false positive (recurring cumulative-RestartCount-misread-as-crashloop class). RAW-verified 3x @2026-07-19T07:51Z: container vn-market-intelligence-mcp-mcp-server-1 Running=true Health=healthy; gateway served live tool calls this tick; RestartCount=7 is CUMULATIVE since Created 2026-07-15 (~4d), current instance StartedAt 2026-07-18T15:56:50Z = 16h continuous healthy uptime (NOT a live crashloop); all restarts clean LastExitCode=0 OOMKilled=false (NOT OOM — contrast genuine 07-02 episode w/ mem-collapse 95->15%); mem oscillating 90.32->85.63% of the already-landed 3GB cap (not monotonic climb). Precedent: rag-service=100 + prior mcp-server A-21 all RAW-verified cumulative-counter FP. NO mint, NOT route-to-ops (healthy, no live outage, 3GB cap mitigation already landed). 2 PLAN-ONLY notes (no mint): (a) auditor A-21 predicate-drift — system-auditor A-21 tier reads cumulative docker .RestartCount vs tight threshold=2, whereas mcp-server OWN restartCadenceAlertJob.ts already does it right (windowed WINDOW_HOURS + crash-filtered, returns 0 for clean restarts); A-21 should adopt windowed/crash-only OR honor auditor-dedup-ledger board-tracked DEDUP (rag=100 precedent) — candidate auditor-predicate-tune. (b) mem WATCH 85-90% of 3GB cap matches known parked FIX-MCP-MEMORY-CODE-LEAK (already backlogged, not new)."
+        "disposition": "FOLD — false positive (recurring cumulative-RestartCount-misread-as-crashloop class). RAW-verified 3x @2026-07-19T07:51Z: container vn-market-intelligence-mcp-mcp-server-1 Running=true Health=healthy; gateway served live tool calls this tick; RestartCount=7 is CUMULATIVE since Created 2026-07-15 (~4d), current instance StartedAt 2026-07-18T15:56:50Z = 16h continuous healthy uptime (NOT a live crashloop); all restarts clean LastExitCode=0 OOMKilled=false (NOT OOM — contrast genuine 07-02 episode w/ mem-collapse 95->15%); mem oscillating 90.32->85.63% of the already-landed 3GB cap (not monotonic climb). Precedent: rag-service=100 + prior mcp-server A-21 all RAW-verified cumulative-counter FP. NO mint, NOT route-to-ops (healthy, no live outage, 3GB cap mitigation already landed). 2 PLAN-ONLY notes (no mint): (a) auditor A-21 predicate-drift — system-auditor A-21 tier reads cumulative docker .RestartCount vs tight threshold=2, whereas mcp-server OWN restartCadenceAlertJob.ts already does it right (windowed WINDOW_HOURS + crash-filtered, returns 0 for clean restarts); A-21 should adopt windowed/crash-only OR honor auditor-dedup-ledger board-tracked DEDUP (rag=100 precedent) — candidate auditor-predicate-tune. (b) mem WATCH 85-90% of 3GB cap matches known parked FIX-MCP-MEMORY-CODE-LEAK (already backlogged, not new).",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260719T081102-4ff3",
@@ -459,9 +465,11 @@
         "type": "signal_feedback",
         "summary": "A-21 WARN: mcp-server RestartCount=7 (>2 threshold)",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
-        "disposition": "DEDUP/FOLD (no re-investigation — evidence unchanged from prior FOLD sys-20260719T074117-22be @07:54Z). system-auditor re-emitted the SAME cumulative-RestartCount=7 finding; auditor-dedup-ledger tracks microservice_degraded:mcp-server:A-21. RAW re-confirmed this tick: RestartCount=7 is CUMULATIVE, current instance StartedAt 2026-07-18T15:56:50Z = 16h continuous healthy uptime (NOT a live crashloop), OOMKilled=false, Running/healthy; gateway served live router tool-calls this tick. NO mint, NOT route-to-ops. PLAN-ONLY (unchanged): A-21 should adopt windowed/crash-only predicate (mcp-server restartCadenceAlertJob.ts already does) OR honor the board-tracked DEDUP ledger to stop re-emitting."
+        "disposition": "DEDUP/FOLD (no re-investigation — evidence unchanged from prior FOLD sys-20260719T074117-22be @07:54Z). system-auditor re-emitted the SAME cumulative-RestartCount=7 finding; auditor-dedup-ledger tracks microservice_degraded:mcp-server:A-21. RAW re-confirmed this tick: RestartCount=7 is CUMULATIVE, current instance StartedAt 2026-07-18T15:56:50Z = 16h continuous healthy uptime (NOT a live crashloop), OOMKilled=false, Running/healthy; gateway served live router tool-calls this tick. NO mint, NOT route-to-ops. PLAN-ONLY (unchanged): A-21 should adopt windowed/crash-only predicate (mcp-server restartCadenceAlertJob.ts already does) OR honor the board-tracked DEDUP ledger to stop re-emitting.",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260719T081104-59eb",
@@ -471,9 +479,11 @@
         "type": "signal_feedback",
         "summary": "A-30 WARN: mcp-server MemPerc=97.80% (>=85% threshold)",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
-        "disposition": "FOLD — OSCILLATING-HIGH GC-sawtooth, NOT monotonic-climb-to-OOM. RAW-verified 6 probes/65s @08:20-08:22Z: 89.16->91.98->92.00->91.89(dip)->93.01->92.05(dip) of 3GiB cap; GC reclaimed report-peak 97.80% (@08:11) -> 89.16% = 8.6pt drop; two intra-window reclamation dips; OOMKilled=false; container Running/healthy 16h uptime (StartedAt 2026-07-18T15:56:50Z). GC ceiling NOT breached => no imminent OOM => NOT route-to-ops (gateway served router tool-calls this tick, no live outage). DEDUP to FIX-MCP-MEMORY-CODE-LEAK (BACKLOG/high/apps/mcp-server; 3GB cap mitigation already landed) — 97.80% HWM + trajectory recorded in backlog-detail corroboration_20260719T08Z; report 3509 resolution=duplicate, msg 3574 deleted. NO new mint. Baseline creep 85.63->89.16% over ~30min = the known slow leak, ~16h into rebuild-headroom cycle; next-tick tripwire = escalate ONLY if GC ceiling lost (baseline >~93% no-dip / peak sustained >97%) or OOMKilled=true. PLAN-ONLY: A-30 threshold=85% too tight for a GC-sawtooth-near-cap service (fires every sawtooth peak, A-21-class FP) — candidate predicate-tune (raise to ~95% and/or gate on loss-of-reclamation, not a single snapshot)."
+        "disposition": "FOLD — OSCILLATING-HIGH GC-sawtooth, NOT monotonic-climb-to-OOM. RAW-verified 6 probes/65s @08:20-08:22Z: 89.16->91.98->92.00->91.89(dip)->93.01->92.05(dip) of 3GiB cap; GC reclaimed report-peak 97.80% (@08:11) -> 89.16% = 8.6pt drop; two intra-window reclamation dips; OOMKilled=false; container Running/healthy 16h uptime (StartedAt 2026-07-18T15:56:50Z). GC ceiling NOT breached => no imminent OOM => NOT route-to-ops (gateway served router tool-calls this tick, no live outage). DEDUP to FIX-MCP-MEMORY-CODE-LEAK (BACKLOG/high/apps/mcp-server; 3GB cap mitigation already landed) — 97.80% HWM + trajectory recorded in backlog-detail corroboration_20260719T08Z; report 3509 resolution=duplicate, msg 3574 deleted. NO new mint. Baseline creep 85.63->89.16% over ~30min = the known slow leak, ~16h into rebuild-headroom cycle; next-tick tripwire = escalate ONLY if GC ceiling lost (baseline >~93% no-dip / peak sustained >97%) or OOMKilled=true. PLAN-ONLY: A-30 threshold=85% too tight for a GC-sawtooth-near-cap service (fires every sawtooth peak, A-21-class FP) — candidate predicate-tune (raise to ~95% and/or gate on loss-of-reclamation, not a single snapshot).",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260719T084112-0223",
@@ -483,11 +493,13 @@
         "type": "microservice_degraded",
         "summary": "mcp-server restart count 7 (check A-21)",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "FOLD — known-FP re-emit churn. A-30 memory-pressure is the mem-pct-denominator falsespike class (feedback_auditor_memory_pct_denominator_falsespike); A-21 restart-count=7 is cumulative/not-increasing (stale). Real mcp-server memory/restart concerns already tracked by backlog FIX-MCP-MEMORY-CODE-LEAK + OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN. No new mint, no restart (churn-without-convergence guardrail).",
         "triaged_at": "2026-07-20T00:52:49Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260719T084114-0a72",
@@ -497,11 +509,13 @@
         "type": "microservice_degraded",
         "summary": "mcp-server memory 91.88% (check A-30)",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "FOLD — known-FP re-emit churn. A-30 memory-pressure is the mem-pct-denominator falsespike class (feedback_auditor_memory_pct_denominator_falsespike); A-21 restart-count=7 is cumulative/not-increasing (stale). Real mcp-server memory/restart concerns already tracked by backlog FIX-MCP-MEMORY-CODE-LEAK + OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN. No new mint, no restart (churn-without-convergence guardrail).",
         "triaged_at": "2026-07-20T00:52:49Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260719T091047-4818",
@@ -511,11 +525,13 @@
         "type": "signal_feedback",
         "summary": "A-21 WARN: mcp-server restarts=7 > 2 threshold",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "FOLD — known-FP re-emit churn. A-30 memory-pressure is the mem-pct-denominator falsespike class (feedback_auditor_memory_pct_denominator_falsespike); A-21 restart-count=7 is cumulative/not-increasing (stale). Real mcp-server memory/restart concerns already tracked by backlog FIX-MCP-MEMORY-CODE-LEAK + OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN. No new mint, no restart (churn-without-convergence guardrail).",
         "triaged_at": "2026-07-20T00:52:49Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260719T091053-03c1",
@@ -525,11 +541,13 @@
         "type": "signal_feedback",
         "summary": "A-30 WARN: mcp-server memory=93.14% >= 85% threshold",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "FOLD — known-FP re-emit churn. A-30 memory-pressure is the mem-pct-denominator falsespike class (feedback_auditor_memory_pct_denominator_falsespike); A-21 restart-count=7 is cumulative/not-increasing (stale). Real mcp-server memory/restart concerns already tracked by backlog FIX-MCP-MEMORY-CODE-LEAK + OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN. No new mint, no restart (churn-without-convergence guardrail).",
         "triaged_at": "2026-07-20T00:52:49Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260719T094117-4c47",
@@ -539,11 +557,13 @@
         "type": "signal_feedback",
         "summary": "A-21 WARN: mcp-server container restart count 7 (threshold: ≤2)",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "FOLD — known-FP re-emit churn. A-30 memory-pressure is the mem-pct-denominator falsespike class (feedback_auditor_memory_pct_denominator_falsespike); A-21 restart-count=7 is cumulative/not-increasing (stale). Real mcp-server memory/restart concerns already tracked by backlog FIX-MCP-MEMORY-CODE-LEAK + OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN. No new mint, no restart (churn-without-convergence guardrail).",
         "triaged_at": "2026-07-20T00:52:49Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260719T094118-165c",
@@ -553,11 +573,13 @@
         "type": "signal_feedback",
         "summary": "A-30 WARN: mcp-server memory pressure at 97.10% (threshold: <85%)",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "FOLD — known-FP re-emit churn. A-30 memory-pressure is the mem-pct-denominator falsespike class (feedback_auditor_memory_pct_denominator_falsespike); A-21 restart-count=7 is cumulative/not-increasing (stale). Real mcp-server memory/restart concerns already tracked by backlog FIX-MCP-MEMORY-CODE-LEAK + OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN. No new mint, no restart (churn-without-convergence guardrail).",
         "triaged_at": "2026-07-20T00:52:49Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260719T101149-792a",
@@ -567,11 +589,13 @@
         "type": "signal_feedback",
         "summary": "mcp-server restart count: 7 (threshold: 2)",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "FOLD — known-FP re-emit churn. A-30 memory-pressure is the mem-pct-denominator falsespike class (feedback_auditor_memory_pct_denominator_falsespike); A-21 restart-count=7 is cumulative/not-increasing (stale). Real mcp-server memory/restart concerns already tracked by backlog FIX-MCP-MEMORY-CODE-LEAK + OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN. No new mint, no restart (churn-without-convergence guardrail).",
         "triaged_at": "2026-07-20T00:52:49Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260719T101150-46cb",
@@ -581,11 +605,13 @@
         "type": "signal_feedback",
         "summary": "mcp-server memory pressure: 97.65% (threshold: 85%)",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "FOLD — known-FP re-emit churn. A-30 memory-pressure is the mem-pct-denominator falsespike class (feedback_auditor_memory_pct_denominator_falsespike); A-21 restart-count=7 is cumulative/not-increasing (stale). Real mcp-server memory/restart concerns already tracked by backlog FIX-MCP-MEMORY-CODE-LEAK + OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN. No new mint, no restart (churn-without-convergence guardrail).",
         "triaged_at": "2026-07-20T00:52:49Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260719T103153-60de",
@@ -595,11 +621,13 @@
         "type": "data_stale",
         "summary": "market_messages no activity in last 3 hours (check C-06)",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "CLOSE — market-hours-blind FP (feedback_auditor_freshness_threshold_market_hours_blind). 2026-07-19 = Sunday, VN market closed; market_messages 3h inactivity at 10:31Z is expected weekend quiet, not a data outage. Stale/benign.",
         "triaged_at": "2026-07-20T00:52:49Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260719T104106-3a71",
@@ -609,11 +637,13 @@
         "type": "microservice_degraded",
         "summary": "mcp-server memory pressure 96.39% (2.89GB/3GB)",
         "severity": "CRITICAL",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "FOLD — known-FP re-emit churn. A-30 memory-pressure is the mem-pct-denominator falsespike class (feedback_auditor_memory_pct_denominator_falsespike); A-21 restart-count=7 is cumulative/not-increasing (stale). Real mcp-server memory/restart concerns already tracked by backlog FIX-MCP-MEMORY-CODE-LEAK + OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN. No new mint, no restart (churn-without-convergence guardrail).",
         "triaged_at": "2026-07-20T00:52:49Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260719T104113-0412",
@@ -623,11 +653,13 @@
         "type": "db_integrity_breach",
         "summary": "boardDetailsRefreshJob database disk image malformed",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "RESOLVED — boardDetailsRefreshJob market.db corruption self-resolved 2026-07-19T20:46:09Z (PRAGMA integrity_check=ok, INFO row sys-...204609-304c). Recurring Docker-virt SQLite corruption CLASS (now 3rd occurrence) tracked by backlog SPIKE-SQLITE-DOCKER-VIRT-CORRUPTION-HARDENING (recurring_bug_count 2->3 this triage). Closed as resolved; durable hardening stays PLAN-ONLY on the SPIKE.",
         "triaged_at": "2026-07-20T00:52:49Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260719T111146-74ec",
@@ -637,11 +669,13 @@
         "type": "signal_feedback",
         "summary": "boardDetailsRefreshJob persistent database corruption — 0/5 success (2nd observation)",
         "severity": "CRITICAL",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "RESOLVED — boardDetailsRefreshJob market.db corruption self-resolved 2026-07-19T20:46:09Z (PRAGMA integrity_check=ok, INFO row sys-...204609-304c). Recurring Docker-virt SQLite corruption CLASS (now 3rd occurrence) tracked by backlog SPIKE-SQLITE-DOCKER-VIRT-CORRUPTION-HARDENING (recurring_bug_count 2->3 this triage). Closed as resolved; durable hardening stays PLAN-ONLY on the SPIKE.",
         "triaged_at": "2026-07-20T00:52:49Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260719T111151-207f",
@@ -651,11 +685,13 @@
         "type": "signal_feedback",
         "summary": "mcp-server memory pressure A-30: 95.54% (≥85% threshold)",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "FOLD — known-FP re-emit churn. A-30 memory-pressure is the mem-pct-denominator falsespike class (feedback_auditor_memory_pct_denominator_falsespike); A-21 restart-count=7 is cumulative/not-increasing (stale). Real mcp-server memory/restart concerns already tracked by backlog FIX-MCP-MEMORY-CODE-LEAK + OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN. No new mint, no restart (churn-without-convergence guardrail).",
         "triaged_at": "2026-07-20T00:52:49Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260719T111158-0fbb",
@@ -665,11 +701,13 @@
         "type": "signal_feedback",
         "summary": "mcp-server restart count A-21: 7 restarts (>2 threshold)",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "FOLD — known-FP re-emit churn. A-30 memory-pressure is the mem-pct-denominator falsespike class (feedback_auditor_memory_pct_denominator_falsespike); A-21 restart-count=7 is cumulative/not-increasing (stale). Real mcp-server memory/restart concerns already tracked by backlog FIX-MCP-MEMORY-CODE-LEAK + OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN. No new mint, no restart (churn-without-convergence guardrail).",
         "triaged_at": "2026-07-20T00:52:49Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260719T204609-304c",
@@ -679,11 +717,13 @@
         "type": "db_integrity_resolved",
         "summary": "Database corruption resolved — market.db PRAGMA integrity_check = ok",
         "severity": "INFO",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "RESOLVED — boardDetailsRefreshJob market.db corruption self-resolved 2026-07-19T20:46:09Z (PRAGMA integrity_check=ok, INFO row sys-...204609-304c). Recurring Docker-virt SQLite corruption CLASS (now 3rd occurrence) tracked by backlog SPIKE-SQLITE-DOCKER-VIRT-CORRUPTION-HARDENING (recurring_bug_count 2->3 this triage). Closed as resolved; durable hardening stays PLAN-ONLY on the SPIKE.",
         "triaged_at": "2026-07-20T00:52:49Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260719T204617-3f06",
@@ -693,11 +733,13 @@
         "type": "microservice_degraded",
         "summary": "pdf-extractor health endpoint failing — container shows unhealthy status",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "COLLAPSE (append-always dup of ONE recurring condition). pdf-extractor /health blocked during active /extract = event-loop stall; A-20 multi-probe 0/3. Tracked by existing backlog PDF-AVAIL-02-FIX (enriched this triage: root-cause=worker-timeout / event-loop isolation / separate health-server port; 5 obs 2026-07-19T20:46Z..2026-07-20T00:46Z; recurring_bug_count=5). PLAN-ONLY, no new mint (prior-art). DO NOT restart — a re-restart re-wedges on the next long PDF (symptom, not root).",
         "triaged_at": "2026-07-20T00:52:49Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260719T211240-4569",
@@ -707,11 +749,13 @@
         "type": "signal_feedback",
         "summary": "api-gateway A-04 FAIL: health endpoint unreachable (CURL_ERR)",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "PLAN-ONLY investigation filed. Dashboard-tier health CURL_ERR flapping (frontend:3001 A-12 + api-gateway:4000 A-04/A-13) while MCP serving path healthy => isolated to dashboard tier, not the data plane. NEW backlog SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP: isolate real-outage vs probe-config/timeout FP (known class feedback_auditor_health3001_probe_timeout_tight; CURL_ERR=transport, not HTTP-5xx) before any fix. Do NOT restart.",
         "triaged_at": "2026-07-20T00:52:49Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260719T211249-1440",
@@ -721,11 +765,13 @@
         "type": "signal_feedback",
         "summary": "pdf-extractor A-20 multi-probe FAIL: 0/3 probes passed — event-loop stall suspected",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "COLLAPSE (append-always dup of ONE recurring condition). pdf-extractor /health blocked during active /extract = event-loop stall; A-20 multi-probe 0/3. Tracked by existing backlog PDF-AVAIL-02-FIX (enriched this triage: root-cause=worker-timeout / event-loop isolation / separate health-server port; 5 obs 2026-07-19T20:46Z..2026-07-20T00:46Z; recurring_bug_count=5). PLAN-ONLY, no new mint (prior-art). DO NOT restart — a re-restart re-wedges on the next long PDF (symptom, not root).",
         "triaged_at": "2026-07-20T00:52:49Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260719T224141-6c18",
@@ -735,11 +781,13 @@
         "type": "microservice_degraded",
         "summary": "api-gateway:4000/health FAIL — CURL_ERR (A-04)",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "PLAN-ONLY investigation filed. Dashboard-tier health CURL_ERR flapping (frontend:3001 A-12 + api-gateway:4000 A-04/A-13) while MCP serving path healthy => isolated to dashboard tier, not the data plane. NEW backlog SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP: isolate real-outage vs probe-config/timeout FP (known class feedback_auditor_health3001_probe_timeout_tight; CURL_ERR=transport, not HTTP-5xx) before any fix. Do NOT restart.",
         "triaged_at": "2026-07-20T00:52:49Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260719T224150-3d0c",
@@ -749,11 +797,13 @@
         "type": "microservice_degraded",
         "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall suspected",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "COLLAPSE (append-always dup of ONE recurring condition). pdf-extractor /health blocked during active /extract = event-loop stall; A-20 multi-probe 0/3. Tracked by existing backlog PDF-AVAIL-02-FIX (enriched this triage: root-cause=worker-timeout / event-loop isolation / separate health-server port; 5 obs 2026-07-19T20:46Z..2026-07-20T00:46Z; recurring_bug_count=5). PLAN-ONLY, no new mint (prior-art). DO NOT restart — a re-restart re-wedges on the next long PDF (symptom, not root).",
         "triaged_at": "2026-07-20T00:52:49Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260719T234143-684c",
@@ -763,11 +813,13 @@
         "type": "signal_feedback",
         "summary": "frontend:3001 A-12 FAIL: health endpoint CURL_ERR",
         "severity": "INFO",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "PLAN-ONLY investigation filed. Dashboard-tier health CURL_ERR flapping (frontend:3001 A-12 + api-gateway:4000 A-04/A-13) while MCP serving path healthy => isolated to dashboard tier, not the data plane. NEW backlog SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP: isolate real-outage vs probe-config/timeout FP (known class feedback_auditor_health3001_probe_timeout_tight; CURL_ERR=transport, not HTTP-5xx) before any fix. Do NOT restart.",
         "triaged_at": "2026-07-20T00:52:49Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260720T001204-7808",
@@ -777,11 +829,13 @@
         "type": "signal_feedback",
         "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall suspected",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "COLLAPSE (append-always dup of ONE recurring condition). pdf-extractor /health blocked during active /extract = event-loop stall; A-20 multi-probe 0/3. Tracked by existing backlog PDF-AVAIL-02-FIX (enriched this triage: root-cause=worker-timeout / event-loop isolation / separate health-server port; 5 obs 2026-07-19T20:46Z..2026-07-20T00:46Z; recurring_bug_count=5). PLAN-ONLY, no new mint (prior-art). DO NOT restart — a re-restart re-wedges on the next long PDF (symptom, not root).",
         "triaged_at": "2026-07-20T00:52:49Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260720T003558-21ab",
@@ -791,11 +845,13 @@
         "type": "documentation_size_breach",
         "summary": "orch-state.json sprint_goal.entries=16 exceeds cap of 15",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "RESOLVED this triage — TASK 2 archived the completed sprint_goal vision QUE-REFERENCE-PAGE (route apps/frontend/app/routes/dashboard.kinh-dich-reference.tsx shipped, 9489B, renders 64 que from que-descriptions-detail.generated; successor KINHDICH-HOVER-DETAIL treats it as already-existing). sprint_goal.entries 16->15, now within cap 15.",
         "triaged_at": "2026-07-20T00:52:49Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260720T004628-7e09",
@@ -805,11 +861,13 @@
         "type": "signal_feedback",
         "summary": "A-13 FAIL: api-gateway health endpoint CURL_ERR — probe failed",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "PLAN-ONLY investigation filed. Dashboard-tier health CURL_ERR flapping (frontend:3001 A-12 + api-gateway:4000 A-04/A-13) while MCP serving path healthy => isolated to dashboard tier, not the data plane. NEW backlog SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP: isolate real-outage vs probe-config/timeout FP (known class feedback_auditor_health3001_probe_timeout_tight; CURL_ERR=transport, not HTTP-5xx) before any fix. Do NOT restart.",
         "triaged_at": "2026-07-20T00:52:49Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260720T004634-6b62",
@@ -819,11 +877,13 @@
         "type": "signal_feedback",
         "summary": "A-20 FAIL: pdf-extractor multi-probe 0/3 — event-loop stall suspected",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "COLLAPSE (append-always dup of ONE recurring condition). pdf-extractor /health blocked during active /extract = event-loop stall; A-20 multi-probe 0/3. Tracked by existing backlog PDF-AVAIL-02-FIX (enriched this triage: root-cause=worker-timeout / event-loop isolation / separate health-server port; 5 obs 2026-07-19T20:46Z..2026-07-20T00:46Z; recurring_bug_count=5). PLAN-ONLY, no new mint (prior-art). DO NOT restart — a re-restart re-wedges on the next long PDF (symptom, not root).",
         "triaged_at": "2026-07-20T00:52:49Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260720T011200-765f",
@@ -833,11 +893,13 @@
         "type": "signal_feedback",
         "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall suspected",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
         "triaged_at": "2026-07-21T02:52:42Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260720T011202-0770",
@@ -847,11 +909,13 @@
         "type": "signal_feedback",
         "summary": "pdf-extractor A-12 health endpoint FAIL — CURL_ERR",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
         "triaged_at": "2026-07-21T02:52:42Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260720T014143-5aaf",
@@ -861,11 +925,13 @@
         "type": "signal_feedback",
         "summary": "pdf-extractor:5001/health FAIL (CURL_ERR)",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
         "triaged_at": "2026-07-21T02:52:42Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260720T014150-4b95",
@@ -875,11 +941,13 @@
         "type": "signal_feedback",
         "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall suspected",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
         "triaged_at": "2026-07-21T02:52:42Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260720T021141-5dbd",
@@ -889,11 +957,13 @@
         "type": "microservice_degraded",
         "summary": "A-11 FAIL: pdf-extractor — container unhealthy",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
         "triaged_at": "2026-07-21T02:52:42Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260720T021148-2228",
@@ -903,11 +973,13 @@
         "type": "microservice_degraded",
         "summary": "A-20 FAIL: pdf-extractor multi-probe 0/3 — event-loop stall suspected",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
         "triaged_at": "2026-07-21T02:52:42Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260720T024157-4a99",
@@ -917,11 +989,13 @@
         "type": "signal_feedback",
         "summary": "pdf-extractor container unhealthy (status: unhealthy after restart)",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
         "triaged_at": "2026-07-21T02:52:42Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260720T024205-67f9",
@@ -931,11 +1005,13 @@
         "type": "signal_feedback",
         "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall suspected",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
         "triaged_at": "2026-07-21T02:52:42Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260720T031143-3e52",
@@ -945,11 +1021,13 @@
         "type": "signal_feedback",
         "summary": "A-11: pdf-extractor container unhealthy",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
         "triaged_at": "2026-07-21T02:52:42Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260720T031148-72e2",
@@ -959,11 +1037,13 @@
         "type": "signal_feedback",
         "summary": "A-12: pdf-extractor health endpoint failed",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
         "triaged_at": "2026-07-21T02:52:42Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260720T031153-23e5",
@@ -973,11 +1053,13 @@
         "type": "signal_feedback",
         "summary": "A-20: pdf-extractor multi-probe 0/3 event-loop stall",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
         "triaged_at": "2026-07-21T02:52:42Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260720T034158-2bb4",
@@ -987,11 +1069,13 @@
         "type": "signal_feedback",
         "summary": "pdf-extractor A-11 FAIL: container unhealthy",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
         "triaged_at": "2026-07-21T02:52:42Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260720T034204-2597",
@@ -1001,11 +1085,13 @@
         "type": "signal_feedback",
         "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
         "triaged_at": "2026-07-21T02:52:42Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260720T041150-6ae0",
@@ -1015,11 +1101,13 @@
         "type": "signal_feedback",
         "summary": "pdf-extractor A-11 UNHEALTHY — container health check failing",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
         "triaged_at": "2026-07-21T02:52:42Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260720T041157-2a15",
@@ -1029,11 +1117,13 @@
         "type": "signal_feedback",
         "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall suspected",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
         "triaged_at": "2026-07-21T02:52:42Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260720T044149-0fc4",
@@ -1043,11 +1133,13 @@
         "type": "microservice_degraded",
         "summary": "pdf-extractor UNHEALTHY container status (A-11)",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
         "triaged_at": "2026-07-21T02:52:42Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260720T044154-10bf",
@@ -1057,11 +1149,13 @@
         "type": "microservice_degraded",
         "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall suspected",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
         "triaged_at": "2026-07-21T02:52:42Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260720T051146-57b1",
@@ -1071,11 +1165,13 @@
         "type": "signal_feedback",
         "summary": "A-11 FAIL: pdf-extractor container unhealthy",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
         "triaged_at": "2026-07-21T02:52:42Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260720T051156-789e",
@@ -1085,11 +1181,13 @@
         "type": "signal_feedback",
         "summary": "A-20 FAIL: pdf-extractor multi-probe 0/3 passes — event-loop stall suspected",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
         "triaged_at": "2026-07-21T02:52:42Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "po-20260720T052606",
@@ -1111,11 +1209,13 @@
         "type": "signal_feedback",
         "summary": "A-11 FAIL: pdf-extractor — UNHEALTHY (event loop stall)",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
         "triaged_at": "2026-07-21T02:52:42Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260720T054204-28c5",
@@ -1125,11 +1225,13 @@
         "type": "signal_feedback",
         "summary": "A-20 FAIL: pdf-extractor multi-probe 0/3 — event-loop stall suspected",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
         "triaged_at": "2026-07-21T02:52:42Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260720T061203-12b0",
@@ -1139,11 +1241,13 @@
         "type": "signal_feedback",
         "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall suspected",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
         "triaged_at": "2026-07-21T02:52:42Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260720T061210-7a99",
@@ -1153,11 +1257,13 @@
         "type": "signal_feedback",
         "summary": "api-gateway A-12 FAIL: health endpoint unreachable",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "FOLD -> SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP. api-gateway:4000 / frontend:3001 health CURL_ERR flapping while MCP serving path stays healthy; correlates with mcp-server memory sawtooth. Isolate real-outage vs probe-timeout FP (spike, plan-only). No mint.",
         "triaged_at": "2026-07-21T02:52:42Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260720T061215-2b62",
@@ -1167,11 +1273,13 @@
         "type": "signal_feedback",
         "summary": "pdf-extractor A-13 FAIL: health endpoint unreachable",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
         "triaged_at": "2026-07-21T02:52:42Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260720T063222-2c8a",
@@ -1181,11 +1289,13 @@
         "type": "data_stale",
         "summary": "news stale 79m (check B-11)",
         "severity": "CRITICAL",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "FOLD -> FIX-AUDITOR-B11-NEWS-FRESHNESS-LAYER-SPLIT. news stale 79m single-window phantom CRITICAL; B-11 conflates raw-fetch freshness with analysis cadence. Known FP. No mint.",
         "triaged_at": "2026-07-21T02:52:42Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260720T064208-2fba",
@@ -1195,11 +1305,13 @@
         "type": "signal_feedback",
         "summary": "A-13 FAIL: pdf-extractor health endpoint unreachable (CURL_ERR)",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
         "triaged_at": "2026-07-21T02:52:42Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260720T064214-2283",
@@ -1209,11 +1321,13 @@
         "type": "signal_feedback",
         "summary": "A-20 FAIL: pdf-extractor multi-probe 0/3 — event-loop stall",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
         "triaged_at": "2026-07-21T02:52:42Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260720T071212-53b5",
@@ -1223,11 +1337,13 @@
         "type": "signal_feedback",
         "summary": "A-13 FAIL: pdf-extractor health endpoint unreachable (CURL_ERR)",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
         "triaged_at": "2026-07-21T02:52:42Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260720T071219-0f5e",
@@ -1237,11 +1353,13 @@
         "type": "signal_feedback",
         "summary": "A-20 FAIL: pdf-extractor event-loop stall — 0/3 in-container probes passed",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
         "triaged_at": "2026-07-21T02:52:42Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260720T074205-694a",
@@ -1251,11 +1369,13 @@
         "type": "microservice_degraded",
         "summary": "api-gateway health endpoint unreachable (A-13)",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "FOLD -> SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP. api-gateway:4000 / frontend:3001 health CURL_ERR flapping while MCP serving path stays healthy; correlates with mcp-server memory sawtooth. Isolate real-outage vs probe-timeout FP (spike, plan-only). No mint.",
         "triaged_at": "2026-07-21T02:52:42Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260720T074207-3c21",
@@ -1265,11 +1385,13 @@
         "type": "microservice_degraded",
         "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall suspected",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
         "triaged_at": "2026-07-21T02:52:42Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260720T081149-25bd",
@@ -1279,11 +1401,13 @@
         "type": "signal_feedback",
         "summary": "A-13 FAIL: api-gateway health CURL_ERR",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "FOLD -> SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP. api-gateway:4000 / frontend:3001 health CURL_ERR flapping while MCP serving path stays healthy; correlates with mcp-server memory sawtooth. Isolate real-outage vs probe-timeout FP (spike, plan-only). No mint.",
         "triaged_at": "2026-07-21T02:52:42Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260720T081151-08aa",
@@ -1293,11 +1417,13 @@
         "type": "signal_feedback",
         "summary": "A-20 FAIL: pdf-extractor event-loop stall 0/3",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
         "triaged_at": "2026-07-21T02:52:42Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260720T084212-3955",
@@ -1307,11 +1433,13 @@
         "type": "signal_feedback",
         "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall suspected",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
         "triaged_at": "2026-07-21T02:52:42Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260720T091146-4065",
@@ -1321,11 +1449,13 @@
         "type": "signal_feedback",
         "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall suspected",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
         "triaged_at": "2026-07-21T02:52:42Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260720T091152-1159",
@@ -1335,11 +1465,13 @@
         "type": "signal_feedback",
         "summary": "api-gateway health endpoint unreachable (CURL_ERR)",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "FOLD -> SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP. api-gateway:4000 / frontend:3001 health CURL_ERR flapping while MCP serving path stays healthy; correlates with mcp-server memory sawtooth. Isolate real-outage vs probe-timeout FP (spike, plan-only). No mint.",
         "triaged_at": "2026-07-21T02:52:42Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260720T094235-23e5",
@@ -1349,11 +1481,13 @@
         "type": "signal_feedback",
         "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall suspected",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
         "triaged_at": "2026-07-21T02:52:42Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260720T101156-1520",
@@ -1363,11 +1497,13 @@
         "type": "microservice_degraded",
         "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
         "triaged_at": "2026-07-21T02:52:42Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260720T101203-69a1",
@@ -1377,11 +1513,13 @@
         "type": "microservice_degraded",
         "summary": "api-gateway:4000/health CURL_ERR — flapping",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "FOLD -> SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP. api-gateway:4000 / frontend:3001 health CURL_ERR flapping while MCP serving path stays healthy; correlates with mcp-server memory sawtooth. Isolate real-outage vs probe-timeout FP (spike, plan-only). No mint.",
         "triaged_at": "2026-07-21T02:52:42Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260720T101211-78cf",
@@ -1391,11 +1529,13 @@
         "type": "microservice_degraded",
         "summary": "mcp-server memory elevated watch: 58.46% (trend: 45.34→47.86→54.82→58.46%)",
         "severity": "INFO",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "FOLD -> FIX-MCP-MEMORY-CODE-LEAK (#294). Benign GC sawtooth (58->75->93->92%) dipped back to 16.08% PASS by 02:41Z router-verified — OOMKilled / 93-no-dip / 97-sustained tripwire NOT tripped. Dedup, no mint.",
         "triaged_at": "2026-07-21T02:52:42Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260720T104332-1347",
@@ -1405,11 +1545,13 @@
         "type": "signal_feedback",
         "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall suspected",
         "severity": "WARN",
-        "status": "triaged",
+        "status": "RESOLVED",
         "payload_ref": null,
         "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
         "triaged_at": "2026-07-21T02:52:42Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_by": "po-signalqueue-triage-20260721",
+        "resolved_at": "2026-07-21T15:28:00Z"
       },
       {
         "id": "sys-20260720T220825-19be",
@@ -2505,8 +2647,13 @@
         "type": "system-issue",
         "summary": "signal-dashboard routes to unified-agent+alert-commander but neither flow drains signal_queue - HIGH flag dark 33h",
         "severity": "HIGH",
-        "status": "NEW",
-        "payload_ref": "docs/signals/cowork-team-20260721T144500-inbox-gap.json"
+        "status": "READ",
+        "payload_ref": "docs/signals/processed/cowork-team-20260721T144500-inbox-gap.json",
+        "triaged_by": "po",
+        "triaged_at": "2026-07-21T15:28:00Z",
+        "backlog_task_id": "FIX-SIGNALQUEUE-RECEIVER-DELIVERY-CONTRACT",
+        "origin_signal_id": "cow-20260721T144500",
+        "triage_note": "[po 2026-07-21] DRAIN-ROUTING gap VERIFIED: unified-agent + alert-commander in signal-dashboard receivers table but neither flow drains the queue. Minted FIX-SIGNALQUEUE-RECEIVER-DELIVERY-CONTRACT (architect). Casualty po-20260720T052606 LEFT NEW; its gold-predicate content tracked by SPIKE-CTG-FALSE-PRESENCE-BLINDSPOT."
       },
       {
         "id": "cow-20260721T145500",
@@ -2516,8 +2663,13 @@
         "type": "system-issue",
         "summary": "signal_queue 148/200 +60/day, cap in <24h; prune cannot relieve - 144 triaged rows not in eviction criteria",
         "severity": "HIGH",
-        "status": "NEW",
-        "payload_ref": "docs/signals/cowork-team-20260721T145500-queue-cap.json"
+        "status": "READ",
+        "payload_ref": "docs/signals/processed/cowork-team-20260721T145500-queue-cap.json",
+        "triaged_by": "po",
+        "triaged_at": "2026-07-21T15:28:00Z",
+        "backlog_task_id": "FIX-SIGNALQUEUE-DUP-ID-GUARD",
+        "origin_signal_id": "cow-20260721T145500",
+        "triage_note": "[po 2026-07-21] CAPACITY/eviction-gap VERIFIED: 'triaged' absent from TERMINAL_SIGNAL_STATUSES so 144 rows unevictable. Cap=200 is SOFT (no code enforcement) -> no imminent crash. Durable fix FOLDED into FIX-SIGNALQUEUE-DUP-ID-GUARD. RELIEF: aged(>24h) triaged->RESOLVED for routine cold-evict."
       },
       {
         "id": "cow-20260721T151500",
@@ -2528,7 +2680,7 @@
         "summary": "SPIKE-TICK-SNAPSHOT answered: promoter keys nominal tick HH:MM, writer keys wall-clock - match only at drift=0",
         "severity": "MED",
         "status": "NEW",
-        "payload_ref": "docs/signals/cowork-team-20260721T151500-snapshot-promotion-rootcause.json"
+        "payload_ref": "docs/signals/processed/cowork-team-20260721T151500-snapshot-promotion-rootcause.json"
       },
       {
         "id": "sys-20260721T151232-54c9",
@@ -2558,10 +2710,11 @@
         "from": "cowork-team",
         "to": "po",
         "type": "routing-gap",
-        "severity": "HIGH",
-        "status": "NEW",
-        "summary": "bctc escalation type has no dispatch handler - 5 HIGH escalations over 3 days, 0 board rows, 0 queue rows; cluster 4->21 tickers",
-        "payload_ref": "docs/signals/cowork-team-20260721T152500-bctc-escalation-no-handler.json"
+        "severity": "LOW",
+        "status": "RETRACTED",
+        "summary": "RETRACTED false-positive - defect IS tracked as FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP (IN_PROGRESS, head active task); my jq used a nonexistent .task_board.rows path",
+        "payload_ref": "docs/signals/cowork-team-20260721T152500-bctc-escalation-no-handler.json",
+        "retracted_at": "2026-07-21T15:27:00Z"
       },
       {
         "id": "devteam-20260721T152332-bctcscope",
@@ -2575,8 +2728,8 @@
         "payload_ref": null
       }
     ],
-    "last_triaged_at": "2026-07-21T14:41:51Z",
-    "last_triaged_by": "po-auditor-datastale-fp-triage"
+    "last_triaged_at": "2026-07-21T15:28:00Z",
+    "last_triaged_by": "po-signalqueue-triage-20260721"
   },
   "sprint_goal": {
     "_note": "Active sprint visions. PO triage 2026-07-20 16->15: archived QUE-REFERENCE-PAGE (SHIPPED — route apps/frontend/app/routes/dashboard.kinh-dich-reference.tsx exists 9489B, renders all 64 que from que-descriptions-detail.generated; successor sprint KINHDICH-HOVER-DETAIL scope_out treats the reference page + its deep-link as already-existing; 0 orphan refs in task_board lanes; not in active_sprints). PREV: Active sprint visions. PO triage 2026-07-11 16->14: merged FB-POSTER-LAUNCHD-FIRER into COWORK-GUARANTEED-SLOT-DURABILITY (superseded per cron-jobs.md, firer plist installed+loaded); archived NARRATIVE-TRUTH-CCATO-GATE (T2+T3 both DONE, T3 qa-APPROVED). Reasoning: sprint-ANALYSIS-QUALITY-CONVERGENCE-po.md.",
@@ -5191,7 +5344,8 @@
         "priority_bumped_at": "2026-07-17T04:54:03Z",
         "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
         "supervised": true,
-        "deploy_gate": "user-approved-off-market"
+        "deploy_gate": "user-approved-off-market",
+        "po_triage_20260721_orch_sentinel": "URGENCY + RESCOPE REC (orch-sentinel closeout, refreshed post po-s148 2026-07-21T15:36:18Z). LIVE: signal_queue 154 rows — 73 still non-canonical 'triaged' (47%); 71 were just relieved triaged->RESOLVED by peer po-s148 (5b6c459b5) in this same window. 'triaged' is NOT cold-evictable (prune accepts only READ/RESOLVED/SUPERSEDED; po-s137/po-s138 confirm RESOLVED is the terminal, NOT TRIAGED) so the residual 73 keep growing until the EMITTER is fixed. The po-s148 relief is a REACTIVE bulk-canonicalize pass = proof the ROOT CAUSE (PO triage scripts writing 'triaged') is unfixed and forces periodic manual relief. REC: this row bundles a DEPLOY-FREE half (note parts 1-3: stop scripts emitting non-canonical status / triage-signals 'mark DONE'->RESOLVED-with-no-row-guard) + a DEPLOY-GATED half (part 5: Zod enum-tighten needs mcp-server rebuild). SPLIT the deploy-free half out and land it ahead of the deploy window so the emitter stops writing 'triaged' and no future po-s148-style bulk relief is needed. Kept HELD/supervised — NOT promoted (would strand blocked). No duplicate — single owner of enum canonicalization."
       },
       {
         "id": "UC-MDH-P2",
@@ -8504,7 +8658,8 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-SIGNALQUEUE-DUP-ID-GUARD",
         "supervised": true,
         "verify_note": "prior_status=TODO",
-        "scope_extension_20260721": "SCOPE FOLD — improvement_proposal home (PO converge-drain po-s147 2026-07-21T14:23:45Z): route the auditor signal_queue COLLAPSE-to-single-upserted/last-seen-bumped row (for persistent findings, instead of N append-always NEW→po rows) + the auditor [OUTPUT-CONTRACT] rows_written SELF-TALLY-FIX (non-deterministic 0-when-actually-2 — feedback_auditor_signalqueue_append_always_telegram_only_dedup) into this row's scope. NON-URGENT: data is correct; the append-always E-3 ledger contract is PRESERVED (never skip row-minting) — only persistent-finding rows collapse/upsert for queue readability + PO triage load, and the self-report count is made honest. Route as improvement_proposal to agents-architect at implementation."
+        "scope_extension_20260721": "SCOPE FOLD — improvement_proposal home (PO converge-drain po-s147 2026-07-21T14:23:45Z): route the auditor signal_queue COLLAPSE-to-single-upserted/last-seen-bumped row (for persistent findings, instead of N append-always NEW→po rows) + the auditor [OUTPUT-CONTRACT] rows_written SELF-TALLY-FIX (non-deterministic 0-when-actually-2 — feedback_auditor_signalqueue_append_always_telegram_only_dedup) into this row's scope. NON-URGENT: data is correct; the append-always E-3 ledger contract is PRESERVED (never skip row-minting) — only persistent-finding rows collapse/upsert for queue readability + PO triage load, and the self-report count is made honest. Route as improvement_proposal to agents-architect at implementation.",
+        "scope_extension_20260721b": "SCOPE FOLD (PO po-signalqueue-triage-20260721, dispositioning cow-20260721T145500 CAPACITY): cold-eviction cannot relieve signal_queue because the dominant live terminal status 'triaged' (144/152) is absent from TERMINAL_SIGNAL_STATUSES (scripts/orch-cold-evict.sh:87) AND from the signal-dashboard SKILL PRUNE criteria. DURABLE FIX (architect/ba pick one): (a) stop writing the non-canonical 'triaged' status at PO-triage write time - write RESOLVED (canonical + evictable) per NEW->READ->RESOLVED, OR (b) add 'triaged' to TERMINAL_SIGNAL_STATUSES + SKILL PRUNE criteria. SECOND DEFECT: orch-cold-evict.sh signal-row predicate is STATUS-ONLY - it ignores the '24h older' age gate SKILL.md:90 documents, so it prematurely evicts fresh READ rows (breaks origin_signal_id auto-RESOLVE, P1-DETECTOR-CLOSURE-TASK-ARCHIVE); reconcile doc-vs-code by adding the age gate. CONTEXT: the 200-cap is SOFT - appendSignalQueueRow + SignalQueueSchema.rows enforce NO hard cap (SKILL.md:104 doc-only), so no imminent append failure, only hot-file bloat. Complements this row's existing collapse-to-single-row (growth-side) fold. IMMEDIATE RELIEF already applied 2026-07-21: aged(>24h) triaged rows normalized -> RESOLVED for the routine cold-evict hook."
       },
       {
         "id": "FIX-AUDITOR-B05-BCTC-FRESHNESS-LAYER-SPLIT",
@@ -9697,29 +9852,6 @@
         "created_at": "2026-07-16T07:07:00Z"
       },
       {
-        "id": "CLEAN-COWORK-DISPATCHER-TELEMETRY-DRAIN-DIR",
-        "title": "docs/signals/ has a PERMANENT 52-file non-drainable floor (46 cowork-dispatcher telemetry + 6 price_anomaly) — DEAD-LOCKS the drain MANDATORY-PERSIST-GUARD (count>50) so it can never signal a real backlog again; redirect telemetry writer out of the signal inbox + purge the floor",
-        "type": "CLEAN",
-        "priority": "high",
-        "status": "BACKLOG",
-        "zone": "cross-service/",
-        "owner": "po",
-        "created_by": "po-devteam-triage-20260716T0637",
-        "source": "devteam-dispatcher-hygiene-20260716T0637",
-        "note": "PLAN-ONLY capture (peer-produced files — NOT to be deleted autonomously). Recurring drain-pressure: per-tick cowork-team-<ISO>.json telemetry + stale price_anomaly_*.json (07-02/03/04/13) sit in docs/signals/ and the drain skips them as non-signal shape, so the inbox stays near the 50-file cap. FIX: cowork-team flow (telemetry.md / main.md Step 6 emit) should write per-tick telemetry to a non-drain directory (e.g. docs/data/cowork-telemetry/ or docs/signals/telemetry/ excluded from the drain glob) and/or prune its own snapshots; sweep the 4 old price_anomaly files. 10 of the residue files are git-tracked — dev must reconcile .gitignore too.",
-        "created_at": "2026-07-16T07:07:00Z",
-        "size": "S",
-        "supervised": true,
-        "po_triage_20260721_pm": "SEVERITY ESCALATION (PO Step 0-SIG triage 2026-07-21T14:51:20Z, dev-team cron tick 14:37Z). Original row (2026-07-16) said telemetry keeps the inbox pinned NEAR the 50-file threshold. It is no longer near — it is PERMANENTLY OVER, and the guard is now a DEAD DETECTOR. RAW-VERIFIED on both planes this triage, NOT taken from the dispatcher summary: (1) docs/agents/dev-team/flow/drain-signals.md:7 counts `ls docs/signals/*.json | wc -l` with NO signal-shape filter; (2) scripts/agents-flow/drain-signals.js:78 logs 'SKIP non-signal shape ... leaving in inbox' — the skip path never removes or quarantines, so the floor is monotonic; (3) live count = 52 files, of which 52/52 are non-signal-shape (46 cowork-team-*.json + 6 price_anomaly_*.json) and ZERO are real signals. Net effect: the guard reads TRIPPED on a 100%-garbage inbox every tick, so a genuine signal backlog can never raise it again. A guard that always fires is worse than no guard — it is false assurance. Root-cause fix is writer-side (stop emitting dispatcher state files into the signal inbox) per CLAUDE.md detect-then-reduce-debt; making the guard count only signal-shaped files is the SECOND half, not a substitute — without the writer fix the floor keeps growing. priority low->high. Absorbed 2 duplicate rows.",
-        "absorbed_duplicates": [
-          "CLEAN-SIGNALS-DIR-NONSIGNAL-ARTIFACTS",
-          "FIX-DRAIN-QUARANTINE-NONROUTABLE-SIGNALS"
-        ],
-        "related_not_duplicate": "FIX-PRICE-ANOMALY-DISH-SIGNAL-ENVELOPE — kept SEPARATE: that row is real data-loss (anomaly:true detections reach no consumer), not inbox hygiene. Sweeping the 6 price_anomaly files here must NOT be read as closing it.",
-        "acceptance": "(1) cowork-dispatcher telemetry no longer written to docs/signals/ (writer redirected to a non-drain dir or self-pruning); (2) accumulated 46 cowork-team-*.json swept out of docs/signals/; (3) MANDATORY-PERSIST-GUARD counts only signal-shaped (from+type) files; (4) drain skip path quarantines rather than leaving files in inbox.",
-        "verification_gate": "`ls docs/signals/*.json | wc -l` returns < 50 on a tick with no pending real signals, AND a synthetic 51-real-signal inbox still trips the guard. Both checked live, not from flow-doc prose."
-      },
-      {
         "id": "FIX-DEVTEAM-BOUNDED1-MAINTLANE-NEXTAGENT-GATE",
         "type": "FIX",
         "title": "BOUNDED-1 promote: add MAINTENANCE-LANE-NEXT_AGENT gate — withhold any row whose effective board-OR-detail next_agent names an on-demand maintenance-lane agent (agent-father/agents-architect/system-auditor/claude-manager-helper/code-janitor/cowork-refactory-expert/idea-forge)",
@@ -10297,6 +10429,37 @@
           "project_indicator_program_gated_on_ohlcv_depth"
         ],
         "note": "supervised:true blocks BOUNDED-1 idle auto-pickup. Detection-only this triage — PO ran read-only tool calls, touched no data. Gates the indicator program (project_indicator_program_gated_on_ohlcv_depth depends on OHLCV depth), so this blocks more than it appears to on its own."
+      },
+      {
+        "id": "FIX-SIGNALQUEUE-RECEIVER-DELIVERY-CONTRACT",
+        "title": "PLAN-ONLY: signal-dashboard receivers-table lists unified-agent + alert-commander as valid 'to' targets but NEITHER flow has an inbox/signal-dashboard READ step -> rows addressed to them are structurally undeliverable (dark); spawn-fanout.md Step 5 spawn prompt carries no signal payload. Architect decide: (a) add inbox READ step to both flows, (b) make spawn-fanout deliver matched NEW rows, or (c) remove both from the receivers table.",
+        "status": "BACKLOG",
+        "owner": "po",
+        "zone": "cross-service/",
+        "next_agent": "architect",
+        "priority": "high",
+        "plan_only": true,
+        "created_at": "2026-07-21T15:28:00Z",
+        "created_by": "po-signalqueue-triage-20260721",
+        "origin_signal_id": "cow-20260721T144500",
+        "sibling_of": "FIX-COWORK-STEP0A-TOPO-DRAIN-STATUS-CONTRACT",
+        "status_note": "AC: every receiver in .claude/skills/signal-dashboard/SKILL.md Receivers table either (1) has a live inbox drain step in its flow OR (2) is removed from the table - no 'to' value may be a structural no-op. Evidence: docs/signals/cowork-team-20260721T144500-inbox-gap.json. Live casualty: po-20260720T052606 (HIGH CHEF-L6-GOLD-FALSE-PREDICATE, to=unified-agent, dark 33h+, LEFT NEW deliberately). Sibling FIX-COWORK-STEP0A-TOPO-DRAIN-STATUS-CONTRACT covers the po->dev-team NEW/READ filter mismatch - design the full receiver-delivery contract together. The casualty's false gold predicate is separately tracked by SPIKE-CTG-FALSE-PRESENCE-BLINDSPOT."
+      },
+      {
+        "id": "CLEAN-REGISTER-ORCH-SENTINEL-TREEMAP-SYSMAP",
+        "type": "CLEAN",
+        "title": "Register orch-sentinel in the 2 remaining SSOT files: docs/references/tree-map.md Write-Ownership (2 rows) + docs/data/system-map.json project.agents[] entry (dispatch table + roster already landed in dd9e38a52)",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "size": "S",
+        "zone": "multi",
+        "owner": "po",
+        "supervised": true,
+        "created_at": "2026-07-21T15:32:18Z",
+        "created_by": "po/orch-sentinel-closeout-20260721",
+        "source": "docs/architecture-briefs/2026-07-21-orchestration-health-agent.md #7 — agent-father flagged 2 edits outside its commit zone",
+        "note": "agent-father completed the standard 3 registration locations (roster/dispatch/notebook-write OVERWRITE class) in dd9e38a52 but flagged 2 edits it cannot own. EDIT A (owner: Architect / claude-manager-helper per tree-map.md Write-Ownership catch-all) — add 2 rows to docs/references/tree-map.md Write-Ownership table: (1) docs/agent-memory/notebooks/orch-sentinel.md owner=orch-sentinel trigger=each-cycle; (2) docs/data/orch-sentinel-scorecard.md owner=orch-sentinel trigger=each-cycle. EDIT B (owner: Developer / PM / System-Auditor per tree-map ownership of system-map.json) — add orch-sentinel to docs/data/system-map.json project.agents[]: id=orch-sentinel, type=agent, cadence weekly-FULL(Sun 03:1x)+daily-LITE. Both trivial adds; exact text pre-derived in brief #208-210 so executor does not re-derive. Split by owner or execute as one multi-edit — router's call.",
+        "acceptance": "grep orch-sentinel docs/references/tree-map.md returns 2 write-ownership rows AND jq .project.agents[]|select(.id==\"orch-sentinel\") docs/data/system-map.json is non-empty."
       }
     ],
     "closed_sprints": [
@@ -11211,6 +11374,34 @@
         "note": "Standard merge gate, RAW-verify not badges.",
         "updated_at": "2026-07-17T12:00:00Z",
         "updated_by": "pm (decompose SYSREMAKE-P2 Leg-1, session e417ef1f)"
+      },
+      {
+        "id": "CLEAN-COWORK-DISPATCHER-TELEMETRY-DRAIN-DIR",
+        "title": "docs/signals/ has a PERMANENT 52-file non-drainable floor (46 cowork-dispatcher telemetry + 6 price_anomaly) — DEAD-LOCKS the drain MANDATORY-PERSIST-GUARD (count>50) so it can never signal a real backlog again; redirect telemetry writer out of the signal inbox + purge the floor",
+        "type": "CLEAN",
+        "priority": "P1",
+        "status": "READY",
+        "zone": "cross-service/",
+        "owner": "po",
+        "created_by": "po-devteam-triage-20260716T0637",
+        "source": "devteam-dispatcher-hygiene-20260716T0637",
+        "note": "PLAN-ONLY capture (peer-produced files — NOT to be deleted autonomously). Recurring drain-pressure: per-tick cowork-team-<ISO>.json telemetry + stale price_anomaly_*.json (07-02/03/04/13) sit in docs/signals/ and the drain skips them as non-signal shape, so the inbox stays near the 50-file cap. FIX: cowork-team flow (telemetry.md / main.md Step 6 emit) should write per-tick telemetry to a non-drain directory (e.g. docs/data/cowork-telemetry/ or docs/signals/telemetry/ excluded from the drain glob) and/or prune its own snapshots; sweep the 4 old price_anomaly files. 10 of the residue files are git-tracked — dev must reconcile .gitignore too.",
+        "created_at": "2026-07-16T07:07:00Z",
+        "size": "S",
+        "supervised": true,
+        "po_triage_20260721_pm": "SEVERITY ESCALATION (PO Step 0-SIG triage 2026-07-21T14:51:20Z, dev-team cron tick 14:37Z). Original row (2026-07-16) said telemetry keeps the inbox pinned NEAR the 50-file threshold. It is no longer near — it is PERMANENTLY OVER, and the guard is now a DEAD DETECTOR. RAW-VERIFIED on both planes this triage, NOT taken from the dispatcher summary: (1) docs/agents/dev-team/flow/drain-signals.md:7 counts `ls docs/signals/*.json | wc -l` with NO signal-shape filter; (2) scripts/agents-flow/drain-signals.js:78 logs 'SKIP non-signal shape ... leaving in inbox' — the skip path never removes or quarantines, so the floor is monotonic; (3) live count = 52 files, of which 52/52 are non-signal-shape (46 cowork-team-*.json + 6 price_anomaly_*.json) and ZERO are real signals. Net effect: the guard reads TRIPPED on a 100%-garbage inbox every tick, so a genuine signal backlog can never raise it again. A guard that always fires is worse than no guard — it is false assurance. Root-cause fix is writer-side (stop emitting dispatcher state files into the signal inbox) per CLAUDE.md detect-then-reduce-debt; making the guard count only signal-shaped files is the SECOND half, not a substitute — without the writer fix the floor keeps growing. priority low->high. Absorbed 2 duplicate rows.",
+        "absorbed_duplicates": [
+          "CLEAN-SIGNALS-DIR-NONSIGNAL-ARTIFACTS",
+          "FIX-DRAIN-QUARANTINE-NONROUTABLE-SIGNALS"
+        ],
+        "related_not_duplicate": "FIX-PRICE-ANOMALY-DISH-SIGNAL-ENVELOPE — kept SEPARATE: that row is real data-loss (anomaly:true detections reach no consumer), not inbox hygiene. Sweeping the 6 price_anomaly files here must NOT be read as closing it.",
+        "acceptance": "(1) cowork-dispatcher telemetry no longer written to docs/signals/ (writer redirected to a non-drain dir or self-pruning); (2) accumulated 46 cowork-team-*.json swept out of docs/signals/; (3) MANDATORY-PERSIST-GUARD counts only signal-shaped (from+type) files; (4) drain skip path quarantines rather than leaving files in inbox.",
+        "verification_gate": "`ls docs/signals/*.json | wc -l` returns < 50 on a tick with no pending real signals, AND a synthetic 51-real-signal inbox still trips the guard. Both checked live, not from flow-doc prose.",
+        "next_agent": "developer",
+        "depends": [],
+        "updated_at": "2026-07-21T15:32:18Z",
+        "updated_by": "po/orch-sentinel-closeout-20260721",
+        "po_promote_20260721_orch_sentinel": "PROMOTED backlog->ready (orch-sentinel closeout triage). RATIONALE: recurring per-tick DEAD-DETECTOR — the >50 drain MANDATORY-PERSIST-GUARD reads TRIPPED on a 100%-garbage inbox (live 52/52 docs/signals/*.json lack from/to/type) every dev-team tick, so a genuine signal backlog can never raise it again (false assurance). Per PO priority order recurring bugs rank first; row is fully specced (acceptance + verification_gate + precise fix sites). SAFE HALVES dispatchable now (no peer-data delete): (1) redirect cowork telemetry writer out of docs/signals/; (2) MANDATORY-PERSIST-GUARD counts only signal-shaped files. Only the one-time 46-file sweep touches peer-produced files -> supervised:true retained so router adjudicates that step."
       }
     ],
     "review": [
