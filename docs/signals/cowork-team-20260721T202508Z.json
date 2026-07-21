@@ -1,0 +1,36 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "dispatcher_telemetry",
+  "priority": "P2",
+  "createdAt": "2026-07-21T20:25:08Z",
+  "payload": {
+    "tick": "2026-07-21T20:15Z",
+    "fire_time": "2026-07-21T20:21:45Z",
+    "drift_min": 7,
+    "verdict": "WORK",
+    "election": "WON (cron:cowork:2026-07-21T20:15Z)",
+    "matched_slots": ["tnb-audit"],
+    "won_slots": ["tnb-audit"],
+    "spawned": ["docs/agents/tran-ngoc-bau/flow/main.md"],
+    "last_fired_written": {"tnb-audit": "2026-07-19T20:19:31.548Z -> 2026-07-21T20:24:10.000Z"},
+    "one_shots": [],
+    "signal_queue_new": 1,
+    "errors": [],
+
+    "finding_1_tnb_audit_DAILY_slot_is_gated_by_a_WEEKLY_marker_key": {
+      "claim": "tran-ngoc-bau/flow/main.md Step G-2 keys its duplicate-publish mutex on WEEK_PERIOD.periodKey (a 7-day date range, e.g. 2026-07-20/2026-07-26) with ttl_seconds=691200 (~8 days). The slot it guards fires DAILY: cowork-schedule.json tnb-audit cron='13 20 * * *', dish_type='daily_audit', guaranteed=true.",
+      "mechanism": "First successful claim in a given week holds the key for ~8 days. Every subsequent DAILY run that week hits `if PUBLISH_CLAIM.claimed != true` and EXITs with 'DONE: duplicate-publish blocked | PIPELINE: complete | QUALITY: full'. A daily audit degrades to weekly, and the exit string reports it as a COMPLETE, FULL-QUALITY run — so the degradation is invisible to anything reading pipeline status.",
+      "why_it_is_live_only_now": "Memory feedback_router_intent_path_double_dispatches_cowork_slots recorded this gate as DEAD CODE — tran-ngoc-bau's frontmatter granted only Read/Edit/Write/Glob/Grep, so a call_tool gate could never execute. That memory is now STALE: .claude/agents/tran-ngoc-bau.md:5 currently reads `tools: Read, Edit, Write, Glob, Grep, mcp__gateway__call_tool`. The gate became executable at some point after the 2026-07-19 run.",
+      "corroboration_that_it_never_ran_before": "task_list_held({}) unfiltered at 20:22Z returned 17 locks with ZERO published:tnb-audit:* among them. last_fired was 2026-07-19T20:19:31Z, well inside an 8-day TTL — had the 07-19 run claimed its marker, the lock would still be live today. Its absence is positive evidence the gate did not execute then. Positive control: published:digest-sunday:2026-07-13/2026-07-19 IS present in the same list with the same ~8-day TTL shape, so the query can and does return week-keyed markers.",
+      "not_asserted": "I have NOT observed this fire. The agent spawned at 20:23Z is still running; whether it claims published:tnb-audit:2026-07-20/2026-07-26 is unconfirmed. The mechanism is read off the flow doc and the schedule row, not off a runtime observation. The dispatcher's spawn prompt explicitly asked the agent to report the gate outcome and the exact PUBLISH_TASK_ID — confirm from that return before scoping any fix.",
+      "second_defect_same_callsite": "The task_claim at main.md:41-46 passes task_id/task_kind/owner_agent/ttl_seconds but NOT owner_client_session. Whether that weakens release-by-session or re-entrancy here is NOT determined and is a separate question from the key-granularity bug.",
+      "fix_direction_PLAN_ONLY": "If the audit is meant to be daily, key on the VN calendar date (published:tnb-audit:<DATE_VN>) with a ~26h TTL, matching the sibling gatherer slots. If it is meant to be weekly, the cron and dish_type are wrong, not the key. These are opposite fixes — decide the intended cadence FIRST. Owner: po/agents-architect, not the dispatcher.",
+      "severity": "MED — silent cadence degradation with a success-shaped exit string; contained to one guaranteed audit slot."
+    },
+
+    "memory_correction": "feedback_router_intent_path_double_dispatches_cowork_slots asserts tran-ngoc-bau has no call_tool and its marker gate is dead code. Verified false as of 2026-07-21T20:22Z. The generalizable lesson in that memory (a gate written in a tool the agent doesn't hold is dead code) still stands and was independently re-confirmed this evening on alert-commander; only the tran-ngoc-bau instance has been remediated.",
+
+    "double_dispatch_check": "No published:tnb-audit:* marker held and no peer intent:tran-ngoc-bau:* claim in the unfiltered lock list at spawn time, so this is not a repeat of the 2026-07-15 instance-2 double-dispatch. Peer session 8f3a5999 (the 19:50Z chef-evening pre-dispatcher) has a session-presence row expiring 20:20:18Z and held no cowork intent."
+  }
+}
