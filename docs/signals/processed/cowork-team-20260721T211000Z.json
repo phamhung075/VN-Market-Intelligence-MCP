@@ -18,12 +18,17 @@
     "suppressed_cadence": [],
     "downgraded": [],
     "chef_mutex_applied": false,
-    "due_reasons": { "bctc-analyst-slot-3": "cron" },
-    "cadence_minutes": { "bctc-analyst-slot-3": null },
+    "due_reasons": {
+      "bctc-analyst-slot-3": "cron"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-3": null
+    },
     "last_fired_timestamp": "2026-07-21T21:08:19.269Z",
-    "last_fired_slots": ["bctc-analyst-slot-3"],
+    "last_fired_slots": [
+      "bctc-analyst-slot-3"
+    ],
     "last_fired_write_errors": null,
-
     "dispatch_record": {
       "slot": "bctc-analyst-slot-3",
       "agent": "bctc-analyst",
@@ -34,7 +39,6 @@
       "published_marker_precheck": "No published:bctc-analyst-slot-3:* marker held at spawn time (9 cowork-slot locks enumerated). Slot was NOT blocked — contrast with finding_1/tnb-audit.",
       "token": "cowork-slot:bctc-analyst-slot-3 claimed TTL=180s, released ok=true after spawn (try/finally)."
     },
-
     "finding_7_calendar_detector_has_emitted_ONLY_unknown_since_2026_07_16": {
       "severity": "HIGH",
       "symptom_CONFIRMED": "Across 99 historical calendar_status observations in docs/signals telemetry: unknown=65, open=18, off_market=9, closed=7. Date-bucketed, the picture is not a mix — it is a cutover. open/closed appear ONLY on 2026-07-15. off_market appears ONLY 2026-06-05..06-07. Every observation on 07-16, 07-17, 07-18 and 07-21 is 'unknown'. ~5 days, zero real values.",
@@ -44,7 +48,6 @@
       "caveat_on_my_own_evidence": "4 of the 07-21 'unknown' observations are my own emits this session. But 07-16/17/18 (28/17/15 observations) predate this session entirely, so the pattern is not an artifact of my ticks.",
       "owner": "po → route to whoever owns pressure-state emission / cadence foundation (DWF-PHASE1)."
     },
-
     "finding_8_producer_consumer_value_domain_mismatch_on_calendar_status": {
       "severity": "MED — mostly latent TODAY, but it is a live landmine",
       "verified_in_code": "scripts/agents-flow/cadence-policy.js:70-71 — unmatched lookup returns { interval_minutes: 240, _cron_fallback: false }, commented 'safe default (AC-P1-1-3)'.",
@@ -54,10 +57,15 @@
       "the_deeper_smell": "A 'safe default' that silently substitutes a different cadence is not a fallback, it is a second policy with no name and no owner. It should log or fail loud on an unrecognised calendar_status rather than absorb it.",
       "claim_NOT_made": "I did NOT execute snapToCronBoundary, so I am not stating the precise fire/suppress outcome per slot under the 240-min default. That depends on cron-period snapping I have not run."
     },
-
     "method_note_two_broken_queries_caught_by_controls": {
       "1": "grep with unquoted --include=*.js globs was eaten by zsh (known trap) and returned 'no matches found'. Requoted; control then returned 135 files.",
       "2": "My first framing of finding_8 was heading for a filing as a live defect. Date-bucketing the observations before writing killed it — off_market/closed are historical. One cheap discriminator turned a wrong headline into the correct (and more serious) finding_7. Count, then bucket by time, THEN conclude."
     }
+  },
+  "_processed": {
+    "fingerprint": "b458c9070889357aaf442b1fdb24d45ea2951c0e8ed2cc5c0036918fc7f3e81b",
+    "processedAt": "2026-07-21T21:16:31Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

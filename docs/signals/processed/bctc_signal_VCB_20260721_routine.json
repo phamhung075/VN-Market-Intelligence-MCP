@@ -4,53 +4,37 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Retail and corporate banking, trade finance, treasury",
+  "product": "Retail and corporate banking, trade finance, FX",
   "customer": "State-linked corporates, retail depositors, SME lending",
-  "ops": "ROE 4.21%q/16.7% below 17.6% sector median; OCF/NI ratio 1.37x healthy (3/4 quarters coverage)",
-  "mgmt": "Sentiment TANG +0.50 holds 5th consecutive cycle; conservative loan-loss provisioning reduces PBT below operating profit (bank structure, not one-off manipulation)",
-  "fundamentals": {
-    "net_revenue_bn": 17421,
-    "net_profit_bn": 9462.1,
-    "roe_pct": 4.21,
-    "pe": 14.1,
-    "pb": 2.2,
-    "sector_pe_median": 9,
-    "ey_spread_pp": null,
-    "valuation_verdict": "PREMIUM"
-  },
+  "ops": "Operating profit 80.9% of revenue; ROE 4.2% quarterly; PE 14.1x PREMIUM vs sector (9.0x); B/S imbalance 0.37% (within tolerance)",
+  "mgmt": "Fundamentals byte-identical since 2026-07-19 filing; KD que Phuc hexagram (favorable) stable 2 consecutive cycles after 07-20 selloff churn",
+  "cycle_ts": "2026-07-21T21:09:00Z",
+  "cycle_id": "20260721-2100",
+  "slot": "bctc-analyst-slot-3",
+  "ey_spread_pct": 2.1,
+  "valuation_verdict": "FAIR",
+  "roe_pct": 4.21,
+  "balance_sheet_imbalance_pct": 0.37,
   "esc_gate": {
-    "esc1": false,
-    "esc2": {
-      "result": "PASS",
-      "imbalance_pct": 0.37
-    },
-    "esc3": {
-      "result": "DATA-COVERAGE-LIMITED",
-      "quarters_returned": 3,
-      "guard_held": true,
-      "guard_expires_at": 1784840939
-    },
-    "esc4": {
-      "result": false,
-      "non_operating_share_pct": -21.4,
-      "note": "bank structure - loan-loss provisioning, not one-off gain dressing"
-    },
-    "esc5": {
-      "result": false,
-      "note": "no refined units found for report_id"
-    }
+    "esc1": "FALSE",
+    "esc2": "PASS (imbalance 0.37%)",
+    "esc3": "DATA-COVERAGE-LIMITED (3/4 quarters, guard held expires_at=1784840939)",
+    "esc4": "FALSE (non_operating_share -21.4% — bank structural, not one-off)",
+    "esc5": "FALSE (no refined units)",
+    "escalation_status": "no_escalation"
   },
   "kinhdich": {
-    "hexagram": "Que 24 Phuc",
+    "hexagram": "Phuc (24)",
     "trend": "THUAN LOI",
     "confidence_pct": 100,
-    "note": "unchanged vs c107 - stabilized after selloff"
+    "cycles_stable": 2
   },
-  "cycle": "c108",
-  "ts": "2026-07-21T18:15:00Z",
+  "fundamental_validation_signal_id": 8701,
+  "critic_score": 0.8,
+  "evidence_fragment_id": 357,
   "_processed": {
-    "fingerprint": "3c1720675a8dd431d12b894f0bf3f2492dda18732f753b9bb9fe4e0555dd7e42",
-    "processedAt": "2026-07-21T18:15:18Z",
+    "fingerprint": "29d3a4f5494fe404d1c67394a08209edb9d662efbe8a6ccf26515f7601ee7b00",
+    "processedAt": "2026-07-21T21:16:31Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

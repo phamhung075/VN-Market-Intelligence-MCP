@@ -4,52 +4,33 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Steel manufacturing (long/flat steel, HRC), construction materials",
-  "customer": "Domestic construction sector, export steel buyers",
-  "ops": "Gross margin 15.8%; Operating Profit and CF shown as 0 in extraction — KNOWN BCTC extraction defect (NI 9,055.9ty > Gross Profit 8,365.1ty), not a genuine operational signal",
-  "mgmt": "Data reliability caveat carried unchanged across cycles: do not treat NI/ROE as clean given known extraction defect; no fundamental_validation posted this cycle for that reason",
-  "fundamentals": {
-    "net_revenue_bn": 52900.8,
-    "net_profit_bn": 9055.9,
-    "roe_pct": 6.48,
-    "pe": 14.2,
-    "pb": 1.7,
-    "sector_pe_median": 32.6,
-    "valuation_verdict": "FAIR",
-    "data_quality_flag": "operating_profit_zero_extraction_defect"
-  },
+  "product": "Steel production (construction steel, HRC), industrial park development",
+  "customer": "Domestic construction contractors, industrial/infrastructure buyers",
+  "ops": "Gross margin 15.8%; ROE 6.5% quarterly; Operating Profit field reported 0 (known extraction defect, not a real business condition)",
+  "mgmt": "Fundamentals byte-identical since 2026-06-07 filing; KD que Bac hexagram (unfavorable) stable 2 consecutive cycles after 07-20 selloff churn",
+  "cycle_ts": "2026-07-21T21:09:00Z",
+  "cycle_id": "20260721-2100",
+  "slot": "bctc-analyst-slot-3",
+  "roe_pct": 6.48,
+  "balance_sheet_imbalance_pct": 0,
   "esc_gate": {
-    "esc1": false,
-    "esc2": {
-      "result": "PASS",
-      "imbalance_pct": 0
-    },
-    "esc3": {
-      "result": "DATA-COVERAGE-LIMITED",
-      "quarters_returned": 2,
-      "guard_held": true,
-      "guard_expires_at": 1784840939
-    },
-    "esc4": {
-      "result": "SKIPPED",
-      "reason": "operating_profit=0 known extraction defect, ratio meaningless"
-    },
-    "esc5": {
-      "result": false,
-      "note": "no refined units found for report_id"
-    }
+    "esc1": "FALSE",
+    "esc2": "PASS (imbalance 0.0%)",
+    "esc3": "DATA-COVERAGE-LIMITED (2/4 quarters, guard held expires_at=1784840939)",
+    "esc4": "SKIPPED (operating_profit=0 known extraction defect — formula undefined)",
+    "esc5": "FALSE (no refined units)",
+    "escalation_status": "no_escalation"
   },
   "kinhdich": {
-    "hexagram": "Que 23 Bac",
+    "hexagram": "Bac (23)",
     "trend": "BAT LOI",
     "confidence_pct": 25,
-    "note": "unchanged vs c107 - stabilized"
+    "cycles_stable": 2
   },
-  "cycle": "c108",
-  "ts": "2026-07-21T18:15:00Z",
+  "evidence_fragment_id": 356,
   "_processed": {
-    "fingerprint": "e3d19d70cec3fb316bf839e0d8759897ebfdacf3297aa19b9fe512c0261fec41",
-    "processedAt": "2026-07-21T18:15:18Z",
+    "fingerprint": "74ff0cbefabbc67990e077ee9ad199ef7ac6508bc6715255935f893291639a1c",
+    "processedAt": "2026-07-21T21:16:31Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

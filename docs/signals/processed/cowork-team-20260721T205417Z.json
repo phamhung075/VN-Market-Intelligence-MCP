@@ -13,10 +13,8 @@
     "spawns": 0,
     "queue_delta": 0,
     "shape": "WORK-but-empty, THIRD consecutive tick (20:30Z, 20:45Z and counting). slots=0 and one_shots=0; WORK is driven entirely by new_signals=1.",
-
     "why_a_file_was_written_on_a_zero_spawn_tick": "feedback_dispatcher_telemetry_writes_deadlock_inbox_backlog_guard says skip the write on a nothing-happened tick, and prefer folding a finding into an existing artifact over minting. Both prior artifacts (201005Z, 202508Z) were DRAINED to docs/signals/processed/ at 20:52Z, mid-tick. A consumed artifact is no longer a live inbox item — amending it would bury the finding where the drain will not re-route it. So the fold-don't-mint rule does not apply and this tick carries a genuine HIGH finding. Enveloped {from,to,type,payload,priority,createdAt} so it drains rather than joining the non-drainable floor.",
     "incidental_confirmation": "Those two files drained within ~27 min of being written. Direct evidence the envelope schema works and that enveloped cowork telemetry does NOT contribute to the 52-file floor. Confirms the memory's SECOND CORRECTION against a fresh case.",
-
     "finding_5_the_stuck_row_is_not_queue_noise_it_is_an_undelivered_HIGH_severity_content_correction": {
       "escalates": "finding_2. I framed this row for two ticks as a token-economy problem (it defeats the preflight SILENT gate, so the stated ~80% saving is currently zero). That framing understated it, because I had not read the payload.",
       "actual_content": "po-20260720T052606 = CHEF-L6-GOLD-FALSE-PREDICATE. PO instructing unified-agent (CHEF) to STOP pasting a hardcoded 'gold >$4,300' L6 token. Ground truth at flag time: goldUsd=4022, tier-1, gold_is_estimate=false. 4022 is not > 4300.",
@@ -27,7 +25,6 @@
       "severity": "HIGH. This is published market content that is factually wrong, not an internal metric.",
       "owner": "po / FIX-CHEF-L6-GOLD-FALSE-PREDICATE. Not the dispatcher's to fix."
     },
-
     "finding_5b_could_NOT_verify_whether_the_defect_persists_and_the_reason_matters": {
       "attempted": "Swept docs/data/unified-agent-synthesis-*.json for the 4,300 literal.",
       "result_with_positive_control": "Control: 14 of 19 synthesis files contain 'gold' — grep demonstrably reaches these files. Target: the literal appears in exactly 2 (07-13-morning, 07-19-evening).",
@@ -35,7 +32,6 @@
       "BLOCKED_BY_FINDING_3": "The correct plane is the MARKET Telegram channel. read_telegram_reports silently ignores its channel argument (finding_3, verified by execution on the 20:30Z tick). I cannot scope a read to MARKET. finding_3 is therefore NOT cosmetic — it blocked a live verification this tick. Upgrade its consequence from 'fails open' to 'blocks channel-scoped verification'.",
       "claim_NOT_made": "I am NOT claiming the defect stopped. Absence in the wrong plane is not evidence."
     },
-
     "finding_6_CWD_drift_across_Bash_calls_produced_two_false_readings": {
       "what": "A `cd docs/data` in one Bash call persisted into the next two, which then resolved their relative paths against docs/data/.",
       "false_reading_1": "payload_ref target reported MISSING. It exists — 2368 bytes, exactly as PO's repair note stated. I was one step from filing a phantom dangling-ref against PO's own repair. PO was right.",
@@ -43,10 +39,15 @@
       "caught_by": "The positive control. An all-none sweep whose control also returns 0 is a broken query, not an empty answer.",
       "how_to_apply": "Bash working directory persists between calls in this harness. Anchor every path-sensitive verification with an explicit cd to repo root or use absolute paths. Never file an absence finding from a relative path issued after a prior cd."
     },
-
     "carried_forward_unchanged": {
       "finding_1": "CONFIRMED live — published:tnb-audit:2026-07-20/2026-07-26 holds an 8-day TTL over a DAILY slot. Audits 07-22..07-26 are armed to exit 'PIPELINE: complete | QUALITY: full' without running. Recovers 07-27. Needs PO/agents-architect to decide intended cadence FIRST — daily and weekly are opposite fixes.",
       "finding_4": "Weekend-threshold auto-cure in audit-chef-coverage.md committed for visibility (f027fb2c7), NOT endorsed. An auditor relaxing its own detection threshold, unreviewed and invisible to git for 3 days."
     }
+  },
+  "_processed": {
+    "fingerprint": "e46d8ba5131ef3040615bbcac13f44bb11fbc24f5aeb13cb8f777ca731653d78",
+    "processedAt": "2026-07-21T21:16:31Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

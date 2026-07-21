@@ -5,51 +5,36 @@
   "mode": "routine",
   "beat_miss": null,
   "product": "IT services, software exports, telecom (FPT Telecom), education (FPT Edu)",
-  "customer": "Enterprise IT buyers (VN + offshore export markets), SME telecom subscribers",
-  "ops": "Gross margin 34.0%, operating margin 22.0%; OCF -2,847.8ty this quarter (working-capital build, not core margin erosion) vs Q4 OCF +4,108.5ty",
-  "mgmt": "ROE 6.17%q/28.3% annualized, EY 7.25% FAIR +2.25pp vs 5% deposit rate, 12th consecutive cycle byte-identical/stable filing",
-  "fundamentals": {
-    "net_revenue_bn": 12480,
-    "net_profit_bn": 2476.8,
-    "roe_pct": 6.17,
-    "pe": 13.8,
-    "pb": 3.6,
-    "sector_pe_median": 17.3,
-    "ey_spread_pp": 2.25,
-    "valuation_verdict": "FAIR"
-  },
+  "customer": "Enterprise IT buyers (VN + offshore), SME telecom subscribers",
+  "ops": "Operating margin 22.0% Q1; ROE 6.2% quarterly; D/E 0.40x; PE 13.8x DISCOUNT vs sector (17.3x)",
+  "mgmt": "Fundamentals byte-identical since 2026-05-24 filing (30 cycles); KD que Khiem hexagram stable 2 consecutive cycles after 07-20 selloff churn",
+  "cycle_ts": "2026-07-21T21:09:00Z",
+  "cycle_id": "20260721-2100",
+  "slot": "bctc-analyst-slot-3",
+  "ey_spread_pct": 2.2,
+  "valuation_verdict": "FAIR",
+  "roe_pct": 6.17,
+  "balance_sheet_imbalance_pct": 0,
   "esc_gate": {
-    "esc1": false,
-    "esc2": {
-      "result": "PASS",
-      "imbalance_pct": 0
-    },
-    "esc3": {
-      "result": "DATA-COVERAGE-LIMITED",
-      "quarters_returned": 2,
-      "guard_held": true,
-      "guard_expires_at": 1784840925
-    },
-    "esc4": {
-      "result": false,
-      "non_operating_share_pct": 2
-    },
-    "esc5": {
-      "result": false,
-      "note": "no refined units found for report_id"
-    }
+    "esc1": "FALSE",
+    "esc2": "PASS (imbalance 0.0%)",
+    "esc3": "DATA-COVERAGE-LIMITED (2/4 quarters, guard held expires_at=1784840925)",
+    "esc4": "FALSE (non_operating_share 2.0%)",
+    "esc5": "FALSE (no refined units)",
+    "escalation_status": "no_escalation"
   },
   "kinhdich": {
-    "hexagram": "Que 15 Khiem",
+    "hexagram": "Khiem (15)",
     "trend": "THUAN LOI",
     "confidence_pct": 100,
-    "note": "unchanged vs c107 - first stable reading after 3-cycle post-selloff volatility"
+    "cycles_stable": 2
   },
-  "cycle": "c108",
-  "ts": "2026-07-21T18:15:00Z",
+  "fundamental_validation_signal_id": 8700,
+  "critic_score": 0.8,
+  "evidence_fragment_id": 355,
   "_processed": {
-    "fingerprint": "1e3aacbba02714620c189dae27d3cb74683ffa69c98d4f84808cee726a23b9f9",
-    "processedAt": "2026-07-21T18:15:18Z",
+    "fingerprint": "950ac2e2c87582672e36f5990a1e85724bd4d54fdabd4cada06a3aa434e0eacb",
+    "processedAt": "2026-07-21T21:16:31Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
