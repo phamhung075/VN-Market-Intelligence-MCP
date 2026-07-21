@@ -79,7 +79,7 @@ AC-5 is a BLOCKING gate. If the composed body exceeds 200L after Step 1, the age
 
 | Class | Agents | Contract | Cap |
 |---|---|---|---|
-| OVERWRITE | po (≤50L), market-watcher (≤80L) | Full-file replace each cycle; preamble + 1 section only | Template IS cap; post-write wc guard |
+| OVERWRITE | po (≤50L), market-watcher (≤80L), orch-sentinel (≤80L) | Full-file replace each cycle; preamble + 1 section only | Template IS cap; post-write wc guard |
 | APPEND | unified-agent/CHEF, news-scout, bctc-analyst, agents-architect, digest-predict, fb-market-poster, system-auditor, ops, ops-vps-fetch, ops-mainserver-fetch, developer, dev-technical-analysis, dev-macro-indicators, dev-mcp-server, dev-stock-price, dev-kinh-dich, dev-frontend, dev-pdf-extractor, dev-rag-service, dev-alert-engine, dev-api-gateway, dev-vps-crawls, dev-mainserver-crawls, qa, claude-manager-helper, pm, fixer, tran-ngoc-bau, code-janitor, ba, agent-father, alert-commander, architect, qa-responder, cowork-refactory-expert, market-analyst, idea-forge | AC-2 retention + AC-3 settled-write + AC-2b intra-prune + AC-5 wc gate | ≤200L file; ≤60L/section |
 
 `po` uses OVERWRITE (single-session state); CHEF/developer use APPEND (rolling history). Not a contradiction.

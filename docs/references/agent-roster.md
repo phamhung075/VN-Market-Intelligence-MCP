@@ -36,6 +36,7 @@ Count → `docs/data/project-stats.json#analysisAgentCount`. Files live in `.cla
 | Idea Forge | `idea-forge.md` | Brainstorm, refine, expand ideas | Sonnet |
 | Cowork Refactory Expert | `cowork-refactory-expert.md` | Rewrite/update Cowork agent .md files | Sonnet |
 | System Auditor | `system-auditor.md` | Health audit: memory, DB, docs sync, anomaly detection | Sonnet |
+| Orch Sentinel | `orch-sentinel.md` | Orchestration-health meta-audit: signal-wiring throughput, verification coverage, auditor blind spots, capability utilization (observe, report — never fixes) | Sonnet |
 | Claude Manager Helper | `claude-manager-helper.md` | Context janitor: CLAUDE.md slim, docs sync, memory hygiene | Sonnet |
 | Code Janitor | `code-janitor.md` | DRY auditor cron (every 3h): duplicate ticker maps, hard-coded arrays, magic numbers, schema duplication | Haiku |
 | **Code Simplifier** | **plugin-provided** (`code-simplifier@claude-plugins-official`) | On-demand clarity/consistency/maintainability pass on recently-modified code; quality-only, no bug hunting; complements code-janitor (DRY) and /code-review (bugs); invoke post-QA-green or on user request | Sonnet |

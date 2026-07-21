@@ -1,51 +1,5 @@
 # Agent Father — Notebook
 
-## 2026-07-13T20:15Z — UC-RDL-P1 lock-namespace doc fix (router-dispatched, brief docs/architecture-briefs/2026-07-13-uc-rdl-p1-lock-namespace-adjudication.md)
-
-- Doc-only fix: `.claude/skills/dispatch-claim/SKILL.md` (Canonical Namespace table L39 + §Sprint-Task
-  Outer Wrap L267-284) and `.claude/skills/task-lock/SKILL.md` (L29) documented the sprint-task
-  chain-mutex `task_id` VALUE prefix as `sprint-task:<id>`; 100% of live flows + server code use
-  `task:<id>`. Corrected both to `task:<id>`; `task_kind` stays `"sprint-task"` (id-prefix and kind
-  are different axes — did not rename the enum). Also reworded the L269 intro sentence in the same
-  section for internal consistency (not explicitly line-cited in the brief but directly adjacent to
-  the two named edits — same file/section, no scope creep).
-- Rejected touching `docs/handoffs/TASK_1979-p1-af-4-task-lock-skill-rebind.md` (a completed
-  historical handoff also containing the old string) — out of the brief's named scope (two SKILL.md
-  files only); left L492 provenance prose in dispatch-claim untouched per brief instruction; verified
-  `CLAUDE.md`'s `intent:` pattern (Phase B) unchanged (that merge was adjudicated a false positive).
-- Commit `18885ff50`, explicit pathspec, exactly the 2 target files — none of the ~89 dirty peer
-  files in the tree were staged.
-- Decision journal: `docs/agent-memory/decisions/sprint-ULTRACODE-AUDIT-FIXALL-agent-father.md` S1.
-
-### Edit (system-auditor) 19:44 — 2026-07-18 D-FLEET Tier-4 PILOT scaffolding (brief docs/architecture-briefs/2026-07-18-cron-workflow-optimize-tier4-fleet-audit.md §8, signal cron-workflow-optimize-tier4-fleet-audit-20260718T192722Z.json)
-- Change: Phase 1 ONLY (EDIT-1..EDIT-5) — new "D-FLEET (Tier-4, PILOT)" audit dimension bolted onto
-  system-auditor: notebook cycle-telemetry rollup (FA-1), task_board/signal_queue derived
-  cooperation metrics read-only (FA-2), tool-usage-stats.json read degraded-mode aware (FA-3),
-  alert/prediction accuracy generalization via already-generic tools (FA-4), synthesis + existing
-  D-IMPROVE emit pipeline reuse (FA-5), notebook append + pilot-run counter (FA-6). On-demand PILOT
-  only — zero `cronConfig.ts` entry, zero always-on cadence.
-- Files modified: 5 — `docs/agents/system-auditor/audit-dimensions.md` (new D-FLEET section after
-  D5), `docs/agents/system-auditor/flow/main.md` (AUDIT_TIER=4 extraction row + Tier Dispatch row,
-  explicit note to skip Step 0d tick-election for tier-4), `docs/agents/system-auditor/handlers.md`
-  (new `## Step D-FLEET` handler, Trigger + FA-1..FA-6 + failure modes + not-in-scope), `docs/agents/
-  tools/package/system-auditor.md` (Tier-4 read-scope note + 3 new MCP tool rows: get_prediction_
-  accuracy, create_prediction_claim, get_alert_accuracy — verified live in `docs/agents/tools/list/`
-  before citing), `.claude/agents/system-auditor.md` (single additive description clause).
-- Cascade: none — no rename, no `inter_agent` change, no roster/CLAUDE.md/dispatch entry (pilot is
-  manually invoked, same mechanism as existing Tier-1/2/3 spawns).
-- Validation: 5/5 — YAML frontmatter untouched/valid, all cross-referenced paths resolve (`§Step
-  D-FLEET` in handlers.md exists, brief path exists), size-justification comments updated on all 3
-  edited `.md` files with line-count deltas, tool names cross-checked against `docs/agents/tools/
-  list/*.md` (all 3 exist), zero `apps/**` touched.
-- Decision: brief explicitly hard-boundaries this task to Phase 1 (docs only) — Phase 0 (tool-usage-
-  stats.json per-agent redesign, `apps/mcp-server/**`) is LANE-B, constitutionally forbidden to
-  agent-father (same boundary as D4's `dev-mcp-server` note). Raised Phase 0 to po as a SPRINT-XS
-  backlog request via `docs/signals/agent-father-tier4-phase0-toolstats-backlog-20260718T194216Z.json`
-  (type=brief_complete, same payload path, citing §2c/§8 — reuses po's existing `brief_complete`
-  triage-signals.md row rather than inventing a new signal type). Pilot Run #1 explicitly documented
-  as executable in tool-usage-stats degraded mode (FA-3) — not gated on Phase 0 landing first, per
-  the launching signal's own instruction.
-
 ### Edit (unified-agent) 22:5x — 2026-07-19 fix-chef-write-boundary (router-dispatched, PO signal
 docs/signals/po-20260719T203100Z.json, GAP-CHEF-SYNTHESIS-A-FLOW-PERSIST)
 - Sibling defect to the same-day TNB grant fix — DIFFERENT mechanism per PO's explicit framing:
@@ -159,6 +113,56 @@ brief docs/handoffs/2026-07-20-obsolete-file-cleanup-janitor-pass.md)
   behaviorally; the fix text was authored to unambiguously gate the `mv` step.
 - Commit: `78a72116f` (5 files: flow main.md, new policy, new script, .gitignore, dev-standards.md
   pointer) via commit-mutex, local only, no push.
+
+### Create (orch-sentinel) 15:40 — 2026-07-21 (router-dispatched, brief
+docs/architecture-briefs/2026-07-21-orchestration-health-agent.md §7, signal
+docs/signals/orchestration-health-agent-20260721T150023Z.json from agents-architect)
+- Type: cowork-closest-fit but system-auditor-SHAPED per brief §7 precedent-mirror column — did NOT
+  use the plain `create.md` cowork template verbatim (no `cycle.md`; 4 split dimension sub-flows +
+  shared `emit-scorecard.md` end-of-cycle, mirroring `docs/agents/system-auditor/flow/tier1-probe.md`'s
+  split-child pattern, confirmed neither Error-Boundary nor RETURN block required in split children).
+- Files created (13): `.claude/agents/orch-sentinel.md`, `docs/agents/orch-sentinel/init.md`,
+  `docs/agents/orch-sentinel/flow/{main,dim-oh1-feedback-loop,dim-oh2-verification-coverage,
+  dim-oh3-auditor-blindspot,dim-oh4-capability-utilization,emit-scorecard}.md`,
+  `docs/agents/orch-sentinel/audit-dimensions.md`, `docs/agents/tools/package/orch-sentinel.md`,
+  `docs/agent-memory/notebooks/orch-sentinel.md` (OVERWRITE class seed, ≤80L), `docs/data/orch-sentinel-
+  scorecard.md` (zero-state shell + `OH-STATE` block), `.claude/commands/crons/cron-orch-sentinel.md`
+  (2 CronCreate entries, FULL/LITE, both → `main.md`, report-only — no CronCreate armed this cycle).
+- Registration DONE (in-zone + factory-guide-assigned): `.claude/skills/dispatch/SKILL.md` row added
+  (confirmed via live tree-map.md Write Ownership table — no explicit row exists for this file, and
+  `register-agent.md` Step 8 assigns it to agent-father as standard; also within commit_zone.allowed).
+  `docs/references/agent-roster.md` row added under Dev Team (system-auditor's actual section, not
+  Analysis Team) — file is NOT in the literal `commit_zone.allowed` list but git-log-verified prior
+  precedent (`1713390ab` keep-sweep) confirms agent-father has committed to this file before; treated
+  the init.md zone table as illustrative, not exhaustive. `CLAUDE.md` routing-table step is MOOT — the
+  live file no longer carries an Agent Routing table (superseded by dispatch/SKILL.md SSOT per
+  `agent-roster.md` L160) — zero action needed, not a skip.
+  Also added `orch-sentinel (≤80L)` to `.claude/skills/notebook-write/SKILL.md` AC-6 OVERWRITE-class
+  table (SSOT-accuracy fix — the brief's write contract cites this table by name; it must actually list
+  the agent).
+- Registration PENDING (verified NOT mine — 2 items brief §7 flags + 1 more found during the same
+  ownership check): (1) `docs/references/tree-map.md` Write Ownership — brief wants 2 new rows
+  (`docs/agent-memory/notebooks/orch-sentinel.md` + `docs/data/orch-sentinel-scorecard.md`, owner:
+  orch-sentinel) — file falls under the tree-map's own `docs/{policies,protocols,standards,references}/
+  *.md (all others)` catch-all → owner: **Architect / claude-manager-helper**; also never named in my
+  own factory guide (register-agent.md's 3 standard locations do not include tree-map.md — this ask is
+  brief-specific, beyond standard). (2) `docs/data/system-map.json` `project.agents[]` orch-sentinel
+  entry — explicitly EXCLUDED in my own `init.md` `commit_zone.excluded`, AND tree-map's Write Ownership
+  row for this exact file names **Developer / PM / System-Auditor** — did not hand-edit.
+- Signal consumed: `git mv docs/signals/orchestration-health-agent-20260721T150023Z.json
+  docs/signals/processed/` (same pattern as prior `global-geopolitical-signal-coverage` consume).
+- Validation: 7/7 (Step 9) — frontmatter valid (name/color/description/tools/model), main.md +
+  emit-scorecard.md carry Error Boundary pointer + RETURN block (split-children correctly omit both,
+  precedent-matched against tier1-probe.md having neither), tool package exists, notebook seed exists
+  (15L, well under 80L cap), all 15 `knowledge.always_load`/`lazy_load` paths verified to resolve on
+  disk, `flow.default` resolves, agent appears in roster + dispatch (CLAUDE.md N/A per above).
+- Decision: brief §0 already adjudicated new-agent-vs-system-auditor-tier-bolt-on (OH-3 self-audit
+  conflict-of-interest) — not re-litigated here, out of agent-father's remit to re-open an
+  agents-architect design call. Color `orange` picked from the guide's fixed enum
+  (`orange|green|red|cyan|yellow|purple|blue`) — lightly used (2 prior agents), distinct from
+  system-auditor's `yellow`. Cron cadence/fire-election/write-contract copied verbatim from brief §3/§4
+  — zero deviation found needed. Did NOT arm/register any `CronCreate` — router's explicit instruction
+  + brief's own PO-mandatory-critique-gate note (§6) — reported PENDING, owner: router/PO.
 
 ### Edit (news-scout / alert-commander / unified-agent) — 2026-07-21 LANE A global-geopolitical-signal-coverage (router-dispatched, brief docs/architecture-briefs/2026-07-21-global-geopolitical-signal-coverage.md §2, signal docs/signals/global-geopolitical-signal-coverage-20260720T222951Z.json)
 - Task: 6-item doc-only fix (LANE A, zero code dependency) closing the 2026-07-20 war/trade-war

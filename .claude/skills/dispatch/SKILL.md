@@ -40,6 +40,7 @@ description: >
 | queue / triage — **what should we work on?** | `po` | `main` | Scoping / prioritization |
 | queue / track — **what's planned & where is it?** | `pm` | `main` | Mechanics / status |
 | system health / audit (observe, report) | `system-auditor` | `main` | Periodic anomaly detection; produces a report — no fixes |
+| orchestration wiring / loop coverage audit (observe, report) | `orch-sentinel` | `main` | Recurring meta-audit of the 4-loop coordination fabric itself (signal wiring, verification coverage, auditor blind spots, tool-capability utilization) — distinct from system-auditor's infra/data/DB health scope |
 | service down / latency / pipeline failure (react, fix) | `ops` | `main` | Active incident response |
 | DRY violations / hardcoded values | `code-janitor` | `main` | Static dedup sweep |
 | update cowork agents | `cowork-refactory-expert` | `main` | Rewrite/refresh cowork .md files |
