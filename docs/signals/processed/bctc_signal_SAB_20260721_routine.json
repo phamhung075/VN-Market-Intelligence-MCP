@@ -4,16 +4,24 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Beer and beverage manufacturing (Sabeco), leading domestic beer brands",
-  "customer": "Mass-market retail and HORECA (bars/restaurants/hotels) beverage consumers",
-  "ops": "get_bctc_full returns Chua co du lieu BCTC -- same-day reprocess/reparse pattern per cycle.md guard, not a genuine new filing; no prior release ledger entry (file does not exist)",
-  "mgmt": "Sector-comparison plane still serving: PE 13.1x +48% premium, PB 2.7x +69% premium, ROE 19.9% above sector median (15.5%); valuation FAIR (EY spread +2.63pp)",
-  "data_quality_flag": "reprocess-no-data, downgraded per Step 0c guard, see docs/signals/bctc-analyst-20260721T000600Z.json",
-  "cycle_ref": "20260721-0000",
-  "generatedAt": "2026-07-21T00:10:00Z",
+  "product": "Beer and beverage manufacturing (Sabeco)",
+  "customer": "Retail/HORECA beverage consumers domestic + export",
+  "ops": "BCTC data unavailable (\"Chua co du lieu\" despite DA NOP status filed 2026-07-19) — sector-comparison ratios only: PE 13.1x +48% premium, ROE 19.9% above sector median",
+  "mgmt": "No ledger track record available — blocked-cluster BCTC pipeline gap; dual-status ticker (has price/sector data, no BCTC extraction) since c107",
+  "fundamentals": {
+    "bctc_status": "Chua co du lieu",
+    "pe": 13.1,
+    "pb": 2.7,
+    "roe_pct": 19.9,
+    "sector_pe_median": 8.9,
+    "valuation_verdict": "PREMIUM/FAIR"
+  },
+  "downgrade_reason": "get_bctc_full returns 'Chua co du lieu' despite DA NOP filing on record — routine sector-comparison-only signal, no fabrication, no ledger write",
+  "cycle": "c108",
+  "ts": "2026-07-21T18:15:00Z",
   "_processed": {
-    "fingerprint": "7d7e98f3a4a1b358aac72569f3dd3b8e7e3fd549eece474acc57f7d941cf33c5",
-    "processedAt": "2026-07-21T14:46:44Z",
+    "fingerprint": "db3e1279b29508f4b55a075ed0e0101e3c107c62634554fe8ab6aac006533440",
+    "processedAt": "2026-07-21T18:15:18Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

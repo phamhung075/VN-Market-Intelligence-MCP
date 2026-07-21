@@ -24,7 +24,6 @@
     "errors": [],
     "new_signals_at_drain": 3,
     "drain_action": "READ-and-route only; NO status flips (unchanged standing position from cow-20260721T172415 ordering constraint — flipping to:po rows to READ would blind dev-team's NEW-filtered drain)",
-
     "OVERNIGHT-GAP-1": {
       "claim": "The 2026-07-20 dispatcher gap is NOT slot-specific and NOT a namespace/dedup defect. Exactly 5 DAILY slots missed their 07-20 fire; all 5 fall in the 00:30-04:00 GMT+7 (17:30-21:00Z) band.",
       "closes": "OBSERVED-1 from tick 17:30Z telemetry (digest-daily 07-20 fire missing, cause not determined). Cause now determined; it was never digest-daily-specific.",
@@ -42,7 +41,6 @@
       "rows_minted": "NONE — deliberately. Prior art already owns this: OPS-COWORK-GUARANTEED-SLOT-INSTALL [REVIEW] (launchd firer, session-independent) and FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP [BACKLOG]. A fix is already in flight. What this telemetry adds is the measured blast radius, which those rows did not have.",
       "for_po": "This quantifies what OPS-COWORK-GUARANTEED-SLOT-INSTALL is worth: an unattended overnight costs at minimum the entire 00:30-04:00 GMT+7 band, every night. Two of the five are bctc-analyst passes and one is the chef evening dish."
     },
-
     "DELIVERY-DEAD-END-1": {
       "severity": "HIGH — time-critical, deadline 2026-07-21T19:45Z",
       "claim": "Signal row po-20260720T052606 (HIGH, to=unified-agent, ~37h old) is STRUCTURALLY UNDELIVERABLE, now confirmed at source rather than inferred.",
@@ -53,5 +51,11 @@
       "for_po_action_required": "The systemic row will not land in 95 minutes. If the false gold token is to be stopped for tonight, it needs an out-of-band edit to the unified-agent flow/template by agent-father or cowork-refactory-expert. The cowork dispatcher CANNOT do this: (a) router-only, never implement; (b) team boundary forbids spawning dev-team agents from this dispatcher. Escalating, not acting.",
       "not_asserted": "Whether the literal token is hardcoded in a flow doc vs re-derived per cycle. I did not open the chef flow to check — that determines whether a template edit is even the right fix, and it is the fixer's call, not mine."
     }
+  },
+  "_processed": {
+    "fingerprint": "cee54e96e628cb23824952909844355b89673bed030381acdc614b2ef94ef8ea",
+    "processedAt": "2026-07-21T18:15:18Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

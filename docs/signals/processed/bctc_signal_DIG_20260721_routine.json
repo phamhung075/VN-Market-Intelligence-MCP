@@ -1,0 +1,28 @@
+{
+  "ticker": "DIG",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Real estate development (residential, industrial parks)",
+  "customer": "Retail homebuyers, industrial tenants",
+  "ops": "BCTC data unavailable (\"Chua co du lieu\" despite DA NOP status filed 2026-06-13) — sector-comparison ratios only: PE 14.9x -23% discount, ROE 7.3% above sector median",
+  "mgmt": "No ledger track record available — blocked-cluster BCTC pipeline gap, not a confirmed governance issue",
+  "fundamentals": {
+    "bctc_status": "Chua co du lieu",
+    "pe": 14.9,
+    "pb": 1.2,
+    "roe_pct": 7.3,
+    "sector_pe_median": 19.3,
+    "valuation_verdict": "DISCOUNT"
+  },
+  "downgrade_reason": "get_bctc_full returns 'Chua co du lieu' despite DA NOP filing on record — routine sector-comparison-only signal, no fabrication, no ledger write",
+  "cycle": "c108",
+  "ts": "2026-07-21T18:15:00Z",
+  "_processed": {
+    "fingerprint": "8766e118b0a9d6e71d5195a7e2eda1419d4e33507784f8fda439a8b05e1be6c6",
+    "processedAt": "2026-07-21T18:15:18Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

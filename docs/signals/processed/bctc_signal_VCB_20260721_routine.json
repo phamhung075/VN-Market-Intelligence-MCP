@@ -4,52 +4,53 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Retail and corporate banking, lending, deposit-taking, bancassurance cross-sell",
-  "customer": "Retail depositors, corporate borrowers, SOE relationship banking clients",
-  "ops": "Net interest income 17,421 tỷ; Operating Profit margin 80.9%; ROE 4.21%q / 16.7% ann below 17.6% sector median; OCF/NI ratio 1.37x healthy (OCF 12,944.9 tỷ vs NI 9,462.1 tỷ)",
-  "mgmt": "PE 14.1x +57% premium, PB 2.2x +45% premium — market pays up for perceived safety despite below-median ROE; sentiment TĂNG +0.50 holds 4th consecutive cycle",
-  "financials": {
-    "net_revenue_bn_vnd": 17421,
-    "net_profit_bn_vnd": 9462.1,
-    "roe_quarterly_pct": 4.21,
-    "roe_annualized_pct": 16.7,
+  "product": "Retail and corporate banking, trade finance, treasury",
+  "customer": "State-linked corporates, retail depositors, SME lending",
+  "ops": "ROE 4.21%q/16.7% below 17.6% sector median; OCF/NI ratio 1.37x healthy (3/4 quarters coverage)",
+  "mgmt": "Sentiment TANG +0.50 holds 5th consecutive cycle; conservative loan-loss provisioning reduces PBT below operating profit (bank structure, not one-off manipulation)",
+  "fundamentals": {
+    "net_revenue_bn": 17421,
+    "net_profit_bn": 9462.1,
+    "roe_pct": 4.21,
     "pe": 14.1,
     "pb": 2.2,
-    "valuation_verdict": "FAIR (bank structure, EY comparison caveats apply)"
+    "sector_pe_median": 9,
+    "ey_spread_pp": null,
+    "valuation_verdict": "PREMIUM"
   },
   "esc_gate": {
-    "esc1": "FALSE (cached, byte-identical)",
-    "esc2_balance_sheet_imbalance_pct": 0.37,
-    "esc3_status": "DATA-COVERAGE-LIMITED",
-    "esc3_quarters_returned": 3,
-    "esc4_non_operating_share_pct": -21.4,
-    "esc4_result": "FALSE (bank structure — financial income is core operating revenue, negative sign is a structural artifact not a manipulation signal)",
-    "esc5_result": "FALSE (bctc_refined_units empty)",
-    "escalation_status": "no_escalation"
+    "esc1": false,
+    "esc2": {
+      "result": "PASS",
+      "imbalance_pct": 0.37
+    },
+    "esc3": {
+      "result": "DATA-COVERAGE-LIMITED",
+      "quarters_returned": 3,
+      "guard_held": true,
+      "guard_expires_at": 1784840939
+    },
+    "esc4": {
+      "result": false,
+      "non_operating_share_pct": -21.4,
+      "note": "bank structure - loan-loss provisioning, not one-off gain dressing"
+    },
+    "esc5": {
+      "result": false,
+      "note": "no refined units found for report_id"
+    }
   },
   "kinhdich": {
-    "hexagram": "Quẻ 24 Phục",
+    "hexagram": "Que 24 Phuc",
     "trend": "THUAN LOI",
     "confidence_pct": 100,
-    "note": "3rd distinct hexagram across c105-c107 (Khiêm→Sư→Phục) — elevated volatility post 2026-07-20 selloff tracking FPT's instability pattern"
+    "note": "unchanged vs c107 - stabilized after selloff"
   },
-  "trick_summary": null,
-  "trick_confidence": "none",
-  "trick_pass_versions": [
-    "balance-sheet-v1",
-    "pl-v1",
-    "cashflow-v1",
-    "rpt-v1",
-    "footnote-v1",
-    "segment-v1"
-  ],
-  "e3_cache": "HIT — byte-identical vs c089-c106, all 6 passes skipped",
-  "insider": "no significant activity",
-  "cycle_id": "c107",
-  "cycle_ts_utc": "2026-07-21T15:09:59Z",
+  "cycle": "c108",
+  "ts": "2026-07-21T18:15:00Z",
   "_processed": {
-    "fingerprint": "a8f516cf6792c9745cefa9e6a06b8f59e25e9084f27da82355ab10b2a6b44bc2",
-    "processedAt": "2026-07-21T15:23:58Z",
+    "fingerprint": "3c1720675a8dd431d12b894f0bf3f2492dda18732f753b9bb9fe4e0555dd7e42",
+    "processedAt": "2026-07-21T18:15:18Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

@@ -1,0 +1,28 @@
+{
+  "ticker": "VIX",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Brokerage, margin lending, securities underwriting",
+  "customer": "Retail and institutional trading clients",
+  "ops": "BCTC data unavailable (\"Chua co du lieu\" despite DA NOP status filed 2026-06-14) — sector-comparison ratios only: PE 5.5x -63% discount, ROE 28.9% well above sector median",
+  "mgmt": "No ledger track record available — blocked-cluster BCTC pipeline gap",
+  "fundamentals": {
+    "bctc_status": "Chua co du lieu",
+    "pe": 5.5,
+    "pb": 1.4,
+    "roe_pct": 28.9,
+    "sector_pe_median": 14.6,
+    "valuation_verdict": "DISCOUNT"
+  },
+  "downgrade_reason": "get_bctc_full returns 'Chua co du lieu' despite DA NOP filing on record — routine sector-comparison-only signal, no fabrication, no ledger write",
+  "cycle": "c108",
+  "ts": "2026-07-21T18:15:00Z",
+  "_processed": {
+    "fingerprint": "85031c50e017862e6d3d4ad2ba288eb94b450e0e24b771f7ae92e440f0cc2211",
+    "processedAt": "2026-07-21T18:15:18Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
