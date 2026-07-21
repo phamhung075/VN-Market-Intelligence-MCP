@@ -1534,6 +1534,17 @@
         "triaged_by": "cowork-team/signal-triage-2130Z",
         "triaged_home": "FIX-MCP-MEMORY-CODE-LEAK",
         "drain_note": "9th A-30 re-emit; live-probe FOLD (88.31%, GC-sawtooth band, VmHWM>VmRSS, OOMKilled=false, 0 restarts/21h). Folded as corroboration to FIX-MCP-MEMORY-CODE-LEAK. Auditor-calibration fix tracked separately as cowork-20260721T214255Z-a30-converge."
+      },
+      {
+        "id": "sys-20260721T231131-1585",
+        "ts": "2026-07-21T23:11:31Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-30 WARN: mcp-server memory pressure 95.30%",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-21T19:29:49Z",
