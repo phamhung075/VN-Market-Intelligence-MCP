@@ -381,3 +381,32 @@
 - escalate the existing row that already owns the root cause
 **why-decision:** Prior-art check found this row already names the disjoint-namespace root cause AND the cheapest-correct-fix; a new row would duplicate it. P0 corrects a priority inversion (enabler ranked below its own P0 symptom UC-CCA-P3), not damage-this-time — this occurrence caused zero harm.
 **why-change:** Operative blocker is dispatch not priority (plan_only+supervised held it 6 days); kept supervised:true and issued a PO dispatch directive instead of clearing the guard.
+
+### STEP po-S1 · po · 2026-07-21T21:07:54Z
+**task-id:** FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN
+**what-done:** Answered the review-drain ownership question by promoting the 9-day-old row that already owned it, after retracting my own prior "no row owns that".
+**what-considered:**
+- Mint a new review-drain row (my last cycle implied none existed)
+- Declare review-drain deliberately unowned this cycle
+- Promote the existing row + fix the reason it was unreachable
+**why-decision:** Board grep found FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN with a correct root cause since 07-12; it was not unowned, it was quarantined (supervised+plan_only). Minting would have duplicated; declaring it unowned would have repeated a false claim.
+**why-change:** Prior cycle asserted an ownership gap without grepping — corrected in-row.
+
+### STEP po-S2 · po · 2026-07-21T21:07:54Z
+**task-id:** FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER
+**what-done:** Promoted the quarantine row out of the quarantine it describes; retracted my own 16:01Z choice to leave it "deliberately an instance of its own class".
+**what-considered:**
+- Keep the self-referential placement as a demonstration
+- Mint a fresh row from this tick's 17-row measurement
+- Promote + retract, no mint
+**why-decision:** The self-reference guaranteed non-execution: 5h zero dispatch, and I re-derived the identical finding from an unrelated entry point and nearly duplicated it. A finding needing rediscovery to get attention is not tracked.
+**why-change:** Retains supervised:true — the deliberate path was the missing piece, not the guard; clearing supervised for auto-pickup is explicitly forbidden.
+
+### STEP po-S3 · po · 2026-07-21T21:07:54Z
+**task-id:** FIX-COWORK-LASTFIRED-DECOUPLE-FROM-DELIVERY
+**what-done:** Refuted TNB's "the last_fired write isn't landing" diagnosis and folded the inverse-direction evidence into the existing row instead of minting.
+**what-considered:**
+- Mint a scheduler-metadata-write-bug row per TNB's recommendation
+- Fold into the existing last_fired row
+**why-decision:** There is no failing write — 07-20 was a genuine miss and 07-21 fired via the router path, which never writes last_fired (commit 62cf2eab8). Binding last_fired to delivery proof fixes both directions with one change; a second row would split one fix across two owners.
+**why-change:** TNB recommended agent-father/ops investigate a nonexistent write bug — rejected.
