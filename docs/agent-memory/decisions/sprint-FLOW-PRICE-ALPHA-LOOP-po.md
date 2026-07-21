@@ -234,3 +234,52 @@
 - Mint a new all-producers row — rejected: FIX-AGENTSIGNALS-ALLPRODUCERS-NULLSTRIP already exists, annotated instead
 **why-decision:** Prior-art grep before minting; the escalation was wrong-rooted but exposed a different, real defect one layer up.
 **why-change:** no change from plan.
+
+### STEP po-S159 · po · 2026-07-21T18:15:48Z
+**task-id:** FIX-ORCHSTATE-UPDATED-AT-WRITE-PATH
+**what-done:** Waived updated_by from the orch-apply.sh chokepoint and amended acceptance (1) in the same write.
+**what-considered:**
+- [a] accept narrowed scope + amend text — chosen mechanism
+- [b] mint follow-up threading caller identity — rejected: mandatory param on 30+ call sites, a forgotten token hard-aborts the board's ONE write path
+- [c] drop as unattainable + record why — chosen substance
+**why-decision:** Verified at source that per-row updated_by has ZERO readers (projectTask omits it; the dashboard's "Updated By" is head.updated_by; it is not in TaskSchema, only .passthrough(); all 30+ scripts/ hits are writers). Stamping it would also OVERWRITE 44 rows of rich caller attribution. updated_at is derivable at the chokepoint from clock+diff; updated_by is not — fabricating it is the falsification class the row's own do_not_over_correct bans.
+**why-change:** Router declined to waive and escalated; waiving written acceptance is PO authority.
+
+### STEP po-S160 · po · 2026-07-21T18:15:48Z
+**task-id:** FIX-ORCHSTATE-UPDATED-AT-WRITE-PATH
+**what-done:** Ruled the disclosed lane-agnostic diff residue ACCEPTED, no follow-up.
+**what-considered:**
+- Accept as correct semantics — chosen
+- Mint a follow-up to stamp pure lane moves — rejected: would make an untouched row look freshly worked
+**why-decision:** updated_at serves "when did this row's SUBSTANCE last change"; a byte-identical relocation is not a substance change. Stamping it reintroduces in miniature the false-negative this row was minted to kill.
+**why-change:** no change from plan.
+
+### STEP po-S161 · po · 2026-07-21T18:15:48Z
+**task-id:** FIX-BCTC-NEWSCHAIN-FALLBACK-ZEROS-WRITE-TARGET
+**what-done:** Minted the one recommended row (HIGH, plan_only, next_agent=ba) with the product question answered by a reductio.
+**what-considered:**
+- Guard arm (b2) like storeReport() — rejected: proven to make the function a total no-op
+- Fold into the parent row — rejected: PO scope-hold stands, QA and router both declined for that reason
+- Mint plan_only to ba — chosen
+**why-decision:** Re-read the file: totalAssets:0 at line 307 is a hardcoded literal and the ONLY assignment. With arm (b1) already blocking good-row overwrites, adding (b2) blocks 100% of writes — a guard that makes its own subject unreachable proves the WRITE TARGET is wrong, not the guard. Code's own comment at 254-259 already concedes it.
+**why-change:** Filed HIGH not P0 — enableBctcFallback defaults false, recorded AS the containment.
+
+### STEP po-S162 · po · 2026-07-21T18:15:48Z
+**task-id:** DESIGN-COWORK-FANOUT-PRODUCER-CONSUMER-ORDERING
+**what-done:** Accepted architect's deviation from my (a)/(b)/(c), folded R3, released to pm with T6-first sequencing.
+**what-considered:**
+- Accept bounded-async variant of (b) — chosen
+- Insist on a literal option — rejected: both brownfield facts verified true at source, they rule the literals out
+- Mint a separate R3 row — rejected: already decomposed as T6/T7, would split one root cause across two owners
+**why-decision:** Verified last-fired.md:10 (AC-P1-7-1, stamped at spawn not completion) and market-watcher/main.md:10-14 (wall-clock only, discards slot=). T6 sequenced first because it is market-facing DATA LOSS, has no dependency on T1-T5, and T3 is blocked behind the qa full-suite run anyway.
+**why-change:** My options_for_architect explicitly did not pre-select; a better option was found.
+
+### STEP po-S163 · po · 2026-07-21T18:15:48Z
+**task-id:** SPIKE-COWORK-DRAIN-BODY-NOT-EXECUTING-ON-WORK-TICKS
+**what-done:** Closed DONE (acceptance met) and folded remediation onto FIX-COWORK-STEP0A-TOPO-DRAIN-STATUS-CONTRACT.
+**what-considered:**
+- Dispatch as filed — rejected: pure churn, question already settled
+- Mint a fix row — rejected: two existing BACKLOG rows own it, cowork-team requested fold-in
+- Close + fold — chosen
+**why-decision:** Acceptance was "findings doc names WHICH of (a)/(b)/(c)"; cowork-team answered (a) and router verified it at source (drain-signals.js:6 puts READ-marking out of script scope), not on the accused's self-report. Carried forward the blocking ordering constraint and the po-20260720T052606 live probe so closure drops nothing.
+**why-change:** Answer landed at 17:25:44Z, after the batch was formed.
