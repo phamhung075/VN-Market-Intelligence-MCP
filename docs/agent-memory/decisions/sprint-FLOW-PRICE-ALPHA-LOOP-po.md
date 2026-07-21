@@ -362,3 +362,22 @@
 - Mark terminal only where disposition is durably captured elsewhere
 **why-decision:** Verified at source that drain-signals.md 0a-D collects only status=NEW, so a blanket mark would sever dev-team's inbox — but leaving triaged rows NEW guarantees infinite re-drain, so the durable-capture test is the only rule that satisfies both.
 **why-change:** Found a second failure mode the escalation did not raise: 73 live rows carry an out-of-vocabulary 'triaged' status that the PRUNE predicate can never evict; used the canonical RESOLVED token and widened the row's scope.
+
+### STEP po-S37 · po · 2026-07-21T20:38:23Z
+**task-id:** FIX-CADENCE-TNB-AUDIT-WEEKLY-MARKER-BLOCKS-DAILY-CRON
+**what-done:** Minted P1 row: re-key tnb-audit published-marker from ISO-week to daily; routed agent-father.
+**what-considered:**
+- (a) re-key to daily published:tnb-audit:<YYYY-MM-DD> ttl 100800
+- (b) confirm weekly intended, fix "daily audit" language in init.md/main.md
+- (c) add a release valve for held-marker-without-handoff
+**why-decision:** 4 sources say daily (init cron, cowork-schedule.json runtime SSOT dish_type=daily_audit, main.md 3-daily-dish target, daily c113/114/115 series) vs 1 (spawn-fanout weekly list) whose origin is a traceable copy of digest-predict, a Sunday-only cron. Cadence/key mismatch => key is wrong, not the cron. Rejected (c): UC-CCA-P3 proves release valves oscillate; daily key makes release moot.
+**why-change:** Router premise "8 days no work product" falsified mid-cycle — c115 handoff landed 20:30Z, so impact is 5 lost daily audits, not a blackout; severity set P1 not P0.
+
+### STEP po-S38 · po · 2026-07-21T20:38:23Z
+**task-id:** FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS
+**what-done:** Escalated existing row P1->P0, appended 3rd-occurrence evidence, directed deliberate ba dispatch.
+**what-considered:**
+- mint new P1 root-cause row as router asked
+- escalate the existing row that already owns the root cause
+**why-decision:** Prior-art check found this row already names the disjoint-namespace root cause AND the cheapest-correct-fix; a new row would duplicate it. P0 corrects a priority inversion (enabler ranked below its own P0 symptom UC-CCA-P3), not damage-this-time — this occurrence caused zero harm.
+**why-change:** Operative blocker is dispatch not priority (plan_only+supervised held it 6 days); kept supervised:true and issued a PO dispatch directive instead of clearing the guard.
