@@ -1543,6 +1543,32 @@
         "type": "signal_feedback",
         "summary": "A-30 WARN: mcp-server memory pressure 95.30%",
         "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_at": "2026-07-21T23:26:34Z",
+        "triaged_by": "cowork-team/a30-discriminator-2315Z",
+        "triaged_home": "cowork-20260721T232634Z-a30-mcp-oom-escalate",
+        "drain_note": "discriminator ESCALATE (first non-FP): 8/8 samples 96.26-96.70%, 0 reclamation dips over 140s, VmRSS ~2.86GiB near 3GiB cap, restart_count 0. Loss of reclamation -> escalated to ops as cowork-20260721T232634Z-a30-mcp-oom-escalate."
+      },
+      {
+        "id": "cowork-20260721T232634Z-a30-mcp-oom-escalate",
+        "ts": "2026-07-21T23:26:34Z",
+        "from": "cowork-team",
+        "to": "ops",
+        "type": "escalation",
+        "summary": "A-30 mcp-server memory: discriminator ESCALATE (first non-FP). 8/8 samples 96.26-96.70%, 0 reclamation dips/140s, VmRSS ~2.86GiB near 3GiB cap, uptime ~7h restart_count 0 (not-yet-OOMKilled). Loss of reclamation = imminent OOM. ASK: ops assess proactive CLEAN restart before disruptive OOM-kill (caveat OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN); prioritize root FIX-MCP-MEMORY-CODE-LEAK.",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": "scripts/audits/verify-a30-mcp-memory-reclamation.sh"
+      },
+      {
+        "id": "sys-20260721T234132-3f03",
+        "ts": "2026-07-21T23:41:32Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-30 memory pressure 96.98% — GC sawtooth (dedup candidate)",
+        "severity": "WARN",
         "status": "NEW",
         "payload_ref": null
       }
