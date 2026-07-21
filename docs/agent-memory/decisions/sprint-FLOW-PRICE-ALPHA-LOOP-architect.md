@@ -200,4 +200,40 @@ of the fleet cannot reach.
 **why-change:** AC-6 (swept-victim self-detection) is NOT closed by this design — git carries no
 per-file staging attribution, so a commit-path hook can only ever see the sweeper's side. Minted
 `FIX-COMMIT-SWEEP-VICTIM-SELF-DETECT` (backlog, depends on this row) rather than silently dropping it.
+
+### STEP architect-S11 · architect · 2026-07-21T17:55:56Z
+**task-id:** DESIGN-COWORK-FANOUT-PRODUCER-CONSUMER-ORDERING
+**what-done:** PO explicitly declined to pre-select (a)/(b)/(c). Brownfield-verified `last_fired` is
+stamped at spawn time not completion time (`last-fired.md` Step 5b) — this falsifies a "consumer
+re-derives co-dispatch by re-running cowork-match-slots.js itself" design I initially favored, since
+the producer's `last_fired` is already boundary-suppressed by the time alert-commander would check.
+Found `won_slots` can instead be captured correctly at Step 4.7 (after slot-claim finalizes it,
+before spawn) and threaded through the ALREADY-shared `cycle-bootstrap/SKILL.md` tick-snapshot read
+every cowork agent uses — zero new plumbing, zero `spawn-fanout.md` prompt-template edit needed.
+Chose a bounded async `schedule_task` recheck (not literally (a)/(b)/(c) as worded) over a
+synchronous in-session wait: `schedule_task` (#169) is already public MCP infra wired through
+cowork-team's existing one-shot sweeper; a 15-20min synchronous wait inside alert-commander's own
+session was the actually-costly reading of PO's option (b). Root-caused R3 to
+`market-watcher/flow/main.md` deriving sub-flow from wall-clock time and discarding the `slot=` the
+dispatcher already sends — a late EOD-slot fire silently loses `eod.md`'s ledger+signal-file
+deliverable, not just duplicates compute. Kept `match-slots.md` Step 4b WARN-only (DDD: dispatcher
+cannot know "same trading-day close" without leaking domain knowledge into the generic scheduler).
+**what-considered:**
+- (a) two-phase producer/consumer wave — rejected: requires the dispatcher to block on background-
+  spawn completion, contradicts BGFAN-1's explicit independence design, risks the 600s fire-election
+  TTL lapsing mid-tick (precedented failure class elsewhere in this fleet).
+- (b) as literally worded (consumer re-reads after a bounded wait) — the synchronous form is
+  expensive per-tick even when quiet; the correct-cost version is async (schedule_task), not sleep.
+- (c) accept and document — rejected as sole answer: row is explicitly market-facing (real >5%
+  drops missed this session); "accept" turns a fixable ~20min gap into a ≤4h one.
+- Flipping match-slots.md Step 4b WARN→BLOCK for R3 — rejected: breaks the file's own documented
+  legitimate-multi-dish case and can't discriminate "duplicate" from "different" without domain
+  knowledge the dispatch layer shouldn't hold.
+**why-decision:** `schedule_task` + the tick-snapshot's `won_slots` field give a real discriminator
+(fires only when a co-dispatched gatherer is known AND the bus read was genuinely empty AND this
+isn't already a recheck) at near-zero cost on the common quiet-tick case — the property this
+session's other 3 findings showed missing from several other guards.
+**why-change:** Found (not fixed, flagged only) that `unified-agent/flow/main.md` has the identical
+wall-clock-only dispatch pattern as market-watcher's — same root-cause class, out of this row's
+boundary, noted for a follow-up sweep rather than chased here.
 **Output:** `docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md`
