@@ -1,0 +1,52 @@
+{
+  "emitted_by": "cowork-team",
+  "emitted_at": "2026-07-21T15:24:20Z",
+  "tick": "2026-07-21T15:15Z",
+  "drift_min": 8,
+  "action": "no-fire",
+  "classification": "SILENT",
+  "reason": "no slot matched the 15:15Z tick window (±2min); zero one-shots due",
+  "leader_lock": "acquired",
+  "election_lock_id": "cron:cowork:2026-07-21T15:15Z",
+  "matched_slots": [],
+  "won_slots": [],
+  "held_by_other": [],
+  "one_shots": [],
+  "all_held": false,
+  "chef_mutex_applied": false,
+  "session_blind": false,
+  "errors": [],
+  "drain": {
+    "ran": true,
+    "mandatory_guard": "inbox 67 > 50",
+    "inserted": 15,
+    "pruned_files": 0,
+    "db_count": 213,
+    "routing_observed": "all drained rows reported routed-to-po"
+  },
+  "emit_pressure_state": {
+    "success": true,
+    "emitted_at": "2026-07-21T15:24:08.475Z",
+    "cycle_snapshot_promoted": false,
+    "note": "3rd consecutive false — consistent with cow-20260721T151500 root cause (writer keys wall-clock HH:MM, reader keys nominal 15-min floor). Only cycle-snapshot-15:08.json exists; reader sought 15:15. Not a new defect."
+  },
+  "corrections_this_tick": {
+    "cow-20260721T152500": {
+      "outcome": "RETRACTED in full — false positive, severity HIGH -> LOW, status NEW -> RETRACTED",
+      "why": "Claimed bctc escalations were unrouted with 0 board rows. Queried .task_board.rows[]? — that key does not exist (lanes are backlog/in_progress/ready/review/qa/done/done_verified/archive). The defect is live as FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP: IN_PROGRESS, priority high, owner dev-mcp-server, and head.active_task_id, with dev-team holding a sprint lock since 15:04:42Z.",
+      "no_residual_defect": true
+    },
+    "dangling_payload_refs": {
+      "trigger": "This tick's own drain moved 3 cowork payloads to processed/, dangling their refs and hard-blocking orch-state writes at validator Stage 1c",
+      "action": "Repaired refs to processed/ paths in the same transaction as the retraction (convention precedent: po-20260720T052606Z.json)",
+      "prior_art": "FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE — BACKLOG, priority high, owner po, zone cross-service/. Already tracked; NOT re-filed.",
+      "no_new_row": true
+    }
+  },
+  "signals_filed_this_tick": 0,
+  "followups_open": [
+    "cow-20260721T151500 — snapshot promotion root cause (spike answered; reconfirmed 3rd time this tick)",
+    "cow-20260721T145500 — signal_queue cap pressure (now 154/200)",
+    "cow-20260721T144500 — signal-dashboard HIGH flags dark"
+  ]
+}
