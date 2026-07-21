@@ -172,3 +172,32 @@ test-count bumps), same "not multi-subtask epic" verdict as OMO for the identica
 unit tests alone (they only prove the trigger fires) — added an explicit live QA behavioral check
 (index→rebuild→search round trip against running containers) as a DoD item, not just unit coverage.
 **Output:** `docs/architecture-briefs/2026-07-15-alpha-s2-rag-fts-rebuild-cron.md`
+
+### STEP architect-S10 · architect · 2026-07-21T17:05:00Z
+**task-id:** FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD
+**what-done:** Router-escalated P0 (recurring_bug_count=3), placed directly in ready[]. Empirically
+proved in a scratch repo (not asserted) that `git commit -m msg -- <exact files>` structurally
+excludes foreign staged content even after `git add -A`, that `$GIT_INDEX_FILE`'s basename
+(`index`/`index.lock` vs `next-index-*.lock`) race-freely distinguishes bare from pathspec-scoped
+commits inside a pre-commit hook, and that rebase-replay does not false-positive. Designed a
+universal `scripts/git-hooks/pre-commit` (WARN default) + Layer-1 fix to commit-mutex/commit-
+boundary/commit's own bare-commit lines.
+**what-considered:**
+- Reject-by-default vs warn-by-default — rejected reject-default: bare-commit-after-add is still
+  the majority idiom across 60+ flow docs today, so a hard-reject default would block most fleet
+  commits on day 1, the exact outage PO ruled out. Opt-in `GIT_SWEEP_GUARD_MODE=reject` instead.
+- `.head.wip>=2` as a REJECT corroboration signal (precedent: commit-boundary's own R-HANDOFF) —
+  rejected: live-verified value is `null`, not actively written by any orch-apply transform,
+  referenced in exactly one narrow-scope skill. Building a trigger on it would be "empty≠evidence."
+- next_agent=pm vs developer vs agent-father — rejected single-owner: deliverable spans 3 zones
+  (scripts/git-hooks/, .claude/skills/, orch-state board) no one specialist's declared zone covers
+  (agent-father's own commit_zone explicitly excludes scripts/). PM decomposes cross-zone per
+  architect's own standard contract; agreed with PO's rejection of raw next_agent=developer.
+**why-decision:** A hook beneath the OS `git commit` call is the only control INV-GATEWAY-1 cannot
+architecturally exempt anyone from (commit-mutex is dispatcher-only) — universalizing the existing
+control means fixing it structurally at that layer, not routing more traffic through a skill most
+of the fleet cannot reach.
+**why-change:** AC-6 (swept-victim self-detection) is NOT closed by this design — git carries no
+per-file staging attribution, so a commit-path hook can only ever see the sweeper's side. Minted
+`FIX-COMMIT-SWEEP-VICTIM-SELF-DETECT` (backlog, depends on this row) rather than silently dropping it.
+**Output:** `docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md`

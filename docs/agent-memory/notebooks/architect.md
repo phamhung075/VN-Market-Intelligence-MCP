@@ -1,8 +1,15 @@
 # Architect — Notebook
 
-**Last updated:** 2026-07-17 05:15 UTC | **Sprint:** SYSTEMIC-REMAKE-P2
+**Last updated:** 2026-07-21 17:05 UTC | **Sprint:** FLOW-PRICE-ALPHA-LOOP
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-07-21T17:05Z — FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD (zone=multi cross-service/, P0 router-escalated recurring_bug_count=3, PLAN-ONLY, READY_FOR_PM)
+
+**Task:** Router-escalated P0, placed directly in ready[] to bypass BOUNDED-1's non-dev-next_agent/plan-only/superseded-predecessor gates. 3 verified occurrences of a shared-index sweep: a `git commit` with absent/partial pathspecs commits the index as it stood at commit time, absorbing a live peer's staged WIP. `.claude/skills/commit-mutex/SKILL.md` — the one existing control for this race — was verified to contain the exact defective idiom in its own critical section (Step 3b `git diff --cached` snapshot check, Step 3c bare `git commit`).
+**Finding:** Empirically proved (scratch git repo, not asserted) that `git commit -m msg -- <exact files>` structurally excludes foreign staged content regardless of how broadly `git add` staged beforehand (even `git add -A`), because git resolves the pathspec into a scratch `next-index-*.lock` BEFORE invoking pre-commit — and that a pre-commit hook can race-freely tell BARE from SCOPED commits via `$GIT_INDEX_FILE`'s basename, since the hook runs inside git's own index-lock transaction. Also verified `git pull --rebase` replay of an already-scoped commit does NOT re-trigger a false warning (rebase never touches the live index for path resolution), and found+rejected `.head.wip` as a REJECT-tier corroboration signal (live value `null`, not actively written anywhere — would have repeated the empty≠evidence mistake). Found a real, unaddressed residual: directory/dot pathspecs (`-- .` / `-- dir/`) route through the SAME safe-looking scratch-index code path but still sweep siblings — none of the 3 real occurrences used this form, so scoped out of the mechanical gate and handled by policy instead (exact-files-only convention). Confirmed commit-mutex's "DISPATCHER-ONLY" (INV-GATEWAY-1) scope claim raw — most of the fleet cannot reach it at all, making a git hook (beneath the OS `git commit` call, unbypassable by any MCP-binding gap) the only universalizing option, not a bigger mutex. Verified `FIX-AUDITOR-COMMIT-NONEXPLICIT-PATHSPEC`'s existing supersession and strengthened it: pathspec-scoped commit subsumes the non-explicit-`git add` root cause that row targeted.
+**Output:** `docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md` — universal `scripts/git-hooks/pre-commit` (WARN-default, opt-in `GIT_SWEEP_GUARD_MODE=reject`, explicit blast-radius trade-off written out) + Layer-1 fix to commit-mutex/commit-boundary/commit's own bare-commit lines + `install.sh` wiring (AC-5) + 3-channel observability (stderr/`.git/sweep-guard.log`/`docs/signals/` bug-escalation, zero MCP dependency, never `2>/dev/null||true`) + explicit AC-6 scoping (sweeper-side closed, victim-side NOT closed — minted `FIX-COMMIT-SWEEP-VICTIM-SELF-DETECT` backlog P2 depends-on this row) + cross-zone file table for PM decomposition. BUILD-STANDARD: not-applicable.
+**Next:** pm — decompose into a developer subtask (`scripts/git-hooks/pre-commit`+test, brief §4.1/§8 spec attached verbatim, explicit supervised handoff not zone-detect auto-pickup) + an agent-father subtask (3 skill-file fixes, brief §4.2) + board close-out; zone multi (`scripts/git-hooks/` + `.claude/skills/` + `docs/data/orch/orch-state.json`).
 
 ## 2026-07-17T05:15Z — SYSREMAKE-P2-STRUCTURAL-REMAKE-ROUTE leg 1: RC-VERIF+RC-CONVERGE (zone=multi, P0 authorized route, supervised design-first, READY_FOR_PM)
 
@@ -18,18 +25,14 @@
 **Output:** `docs/architecture-briefs/2026-07-17-ccato-truthgate-mcp-native.md` — DDD layer map (domain/services/narrativeTruthGate, infrastructure/{fileStore,probes,signals}, application/usecases, interface/mcp/tools/system), tool I/O contract (GATE_VERDICT text marker, not isError-on-business-FAIL), rejected-alternatives record, 5-step verification gate incl. side-by-side bash-vs-TS fixture parity hard AC + PUSH-AUTONOMY-1 REALDATA gate, 6 risks (R-4 = the `reports.ts` extraction), 8-task decomposition (CCATO-MCP-T1..T8). BUILD-STANDARD: lean.
 **Next:** pm — decompose CCATO-MCP-T1..T8 into dev-mcp-server task cards per the brief's dependency order; zone `apps/mcp-server/`.
 
-## 2026-07-16T15:44Z — UC-CRITIC-GATEWAY-CONTRACT-DRIFT (zone=cross-service/, dev-team relay, READY_FOR_PM)
-
-**Task:** dev-team relay (BOUNDED-1 auto-pickup, coordination_session 69b0312e) — reconcile `docs/standards/gateway-call-contract.md`'s stale `mcp__claude_ai_gateway__call_tool` prefix (L13,30-32,94) + 5 adjacent live docs to the canonical `mcp__gateway__call_tool` per BA's git-archaeology determination (commit `775e2d8ee` fleet-wide rename, `.mcp.json` registers only `"gateway"`).
-**Finding:** RAW re-verified all 6 BA-cited file:line targets byte-exact at HEAD, zero discrepancies. Ratified FR-3's §6 audit pass (only L94 needs the fix; §6b/§6d are prose-generic, L107's raw-JSON-RPC bridge is a genuinely different call surface). Resolved BA's 3 open questions: (1) folded `router-dispatch-locking-I11`/`cowork-cycle-agents-I14` into this task after discovering they're not bare unfiled findings — they're already sub-bullets P9/P12 inside two live 8-9 item PLAN-ONLY `BACKLOG` SPIKE rows (`UC-RDL-UNVERIFIED-BATCH`, `UC-CCA-UNVERIFIED-BATCH`) that would otherwise wait on a full future BA-spike cycle for a 1-line mechanical fix; flagged PM to strike those 2 bullets from the batch rows' notes post-ship to prevent duplicate re-investigation (never edit the frozen audit brief itself). (2) Ruled settings-symmetry (FR-5) leave-as-is — `.claude/settings.local.json` is globally gitignored (zero commit surface exists regardless), global `~/.claude/settings.json` is out-of-repo, `defaultMode:"auto"` already covers the gap live. (3) Ratified BA's ~40-file historical exclusion list unchanged. Total fix set: 8 files (6 BA + 2 folded-in), all 1-line prefix swaps except L94's dual-mention collapse.
-**Output:** `[Architect] Brownfield Findings` appended to `docs/handoffs/UC-CRITIC-GATEWAY-CONTRACT-DRIFT-BA-spec.md` — verified paths, DDD layer (interface), risk flags (exact-match edits not blind sed, post-edit zero-grep verification gate), BUILD-STANDARD: not-applicable.
-**Next:** pm — decompose into dev task(s) for the 8-file fix set; zone `cross-service/`; propagate the PM-action note (strike P9/P12 from the 2 batch rows post-ship).
-
 ---
 
-## Archive (pre-2026-07-16T15:44Z)
+## Archive (pre-2026-07-17T04:47Z)
 
-[Older cycles archived to git history: UC-ASL-P2 (2026-07-16T04:40Z, zone=scripts/+docs/agents/system-auditor/ —
+[Older cycles archived to git history: UC-CRITIC-GATEWAY-CONTRACT-DRIFT (2026-07-16T15:44Z,
+zone=cross-service/, dev-team relay — reconciled `docs/standards/gateway-call-contract.md` stale
+`mcp__claude_ai_gateway__call_tool` prefix, 8-file 1-line fix set (6 BA-cited + 2 folded-in from
+sub-bullets of live BACKLOG SPIKE rows), READY_FOR_PM), UC-ASL-P2 (2026-07-16T04:40Z, zone=scripts/+docs/agents/system-auditor/ —
 one blessed `scripts/emit-audit-signal.sh` replacing 6 copy-pasted EMIT SEQUENCE blocks, durable
 `docs/data/auditor-dedup-ledger.json` BUG-dedup ledger with {ts,sev} severity-rank escalation-bypass,
 ratified context-bloat-backstop.sh known-issues.json fingerprint gate DELETE (dead), READY_FOR_PM),
