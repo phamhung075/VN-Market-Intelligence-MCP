@@ -389,10 +389,10 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
-    "next_agent": "po",
-    "next_action": "BA spec complete (docs/handoffs/FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD-BA-spec.md). PO must resolve Q1 (ticket-closure sequencing across the deliberate (a)+(c)-now/(b)-residual split) before architect. supervised/plan_only preserved — do not clear.",
-    "updated_at": "2026-07-21T23:02:09Z",
-    "updated_by": "ba"
+    "next_agent": "architect",
+    "next_action": "PO Q1 RULING (Option B): fix_spec(b)/AC2 residual → NEW explicitly-linked supervised backlog row (pm); THIS ticket (a)+(c)/AC1+AC3 closes after land + QA-verify. HARD closure gate: this row may NOT flip DONE until the successor row EXISTS on the board (neutralizes silent-drop). Architect: review BA spec (docs/handoffs/FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD-BA-spec.md) + this ruling, then rule FR-5 bundle / backlog+BLOCKED classification / I10 batching before pm decomposition. supervised+plan_only preserved — do not clear.",
+    "updated_at": "2026-07-21T23:23:03Z",
+    "updated_by": "po"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -12121,15 +12121,24 @@
         "promoted_by": "dev-team (supervised-lane sweep)",
         "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='ba' (priority_rank=0); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
         "dispatch_lane": "ba",
-        "updated_at": "2026-07-21T23:02:09Z",
+        "updated_at": "2026-07-21T23:23:27Z",
         "claimed_at": "2026-07-21T22:47:59Z",
         "claimed_by": "dev-team (supervised-lane sweep)",
         "plan_only": true,
         "ba_spec_complete": true,
         "ba_handoff": "docs/handoffs/FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD-BA-spec.md",
         "ba_completed_at": "2026-07-21T23:02:09Z",
-        "next_agent": "po",
-        "status_note": "BA spec complete for fix_spec(a)+(c)/AC1+AC3 (P3 RESCOPE). 1 PO blocker: ticket-closure sequencing vs fix_spec(b)/AC2 residual (execute-tier.md:42-64, deliberately not implemented this wave). See handoff."
+        "next_agent": "architect",
+        "status_note": "PO Q1 RESOLVED (Option B). Next: architect (review spec + ruling; rule FR-5 bundle / backlog+BLOCKED / I10 batching) → pm decomposition. Closure of this row gated on fix_spec(b)/AC2 successor row existing. supervised+plan_only preserved.",
+        "po_ruling": {
+          "q1": "B",
+          "decision": "PM spins a NEW explicitly-linked supervised backlog row for fix_spec(b)/AC2 (sprint-task TTL/heartbeat, execute-tier.md:42-64). THIS ticket implements + closes fix_spec(a)+(c)/AC1+AC3 after land + QA-verify.",
+          "closure_gate": "HARD PRECONDITION: this P0 row may NOT flip DONE until the fix_spec(b)/AC2 successor row EXISTS on the board. Neutralizes the silent-drop risk BA flagged in spec §3.",
+          "successor_requirements": "Successor inherits supervised:true + P0; cross-refs predecessor=FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD; carries spec §3 absorbed P2 impl-notes verbatim (execute-tier.md:42-64 TTL raise + heartbeat-loop placement, developer/qa flow INV-GATEWAY-1 dead-lock deletion, dev-team-loop-I10 owner_client_session cross-ref) + audit_ref lineage (ultracode-2026-07-12 router-dispatch-locking-P2-absorbed).",
+          "rationale": "B dominates A once closure is gated on successor existence: keeps no false-IN_PROGRESS P0 blocking the WIP lane for a not-yet-decomposed wave; decouples the two independent deploy/QA cycles ((a)+(c) is container-rebuild-gated + addresses the MATERIALIZED incident, (b) is prophylactic flow-doc/TTL with its own I10/INV-GATEWAY-1 deps); a first-class tracked successor row IS the anti-silent-drop mechanism (better than an open parent that itself risks the epic-wrapper closeout gap).",
+          "ruled_by": "po",
+          "ruled_at": "2026-07-21T23:23:03Z"
+        }
       }
     ]
   },
