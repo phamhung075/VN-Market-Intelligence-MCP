@@ -41,5 +41,11 @@
       "how_to_apply": "Decide mint-vs-fold at WRITE time, not after. If a finding arrives post-write, mint — do not attempt to reopen a file the drain may already own.",
       "the_generalization": "A read that confirms a file is live is only valid for as long as nothing else owns the path. This is a TOCTOU on the drain, the same shape as the git-index TOCTOU already recorded."
     }
+  },
+  "_processed": {
+    "fingerprint": "ed7eaa770232a9a8714615e9778c4f57f31fa50756415604db3cfb0f191dee70",
+    "processedAt": "2026-07-21T21:48:02Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

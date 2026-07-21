@@ -430,8 +430,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-21T21:46:38Z",
-    "_updated_by": "cowork-team-2130Z-gold-delivery-gap",
+    "_updated_at": "2026-07-21T21:51:08Z",
+    "_updated_by": "dev-team/drain-0a-D-20260721T2149",
     "archive": [],
     "rows": [
       {
@@ -1544,7 +1544,7 @@
         "to": "po",
         "type": "converge_recommendation",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "summary": "A-30 CONVERGE (auditor calibration — NOT the memory fix): 9 mcp-server memory WARN re-emits in ~21h (00:12->21:11Z), ALL FOLD. Live-probe verified benign GC-sawtooth: 88.31% now, band 85-93%, VmHWM(2807316)>VmRSS(2721908)=reclaim already occurred, OOMKilled=false, 0 restarts/21h. The recurrence is the DETECTOR, not memory — folding rows to FIX-MCP-MEMORY-CODE-LEAK (po-s147) drains symptoms but never stops emission. FIX: (a) retune A-30 to fire only on OOMKilled OR >93%-no-dip OR >97%-sustained — ready-made predicate is scripts/audits/verify-a30-mcp-memory-reclamation.sh tripwire; (b) add signal_queue dedup-suppression for A-30 (currently append-always). Re-routed from cowork telemetry (last tick, PO does not read docs/signals) to the tracked queue.",
         "payload_ref": "scripts/audits/verify-a30-mcp-memory-reclamation.sh"
       },
@@ -1555,7 +1555,7 @@
         "to": "po",
         "type": "delivery_gap",
         "severity": "HIGH",
-        "status": "NEW",
+        "status": "READ",
         "summary": "DELIVERY-GAP (evidence-backed): HIGH methodology-flag po-20260720T052606 (STOP false gold >4300usd L6 token -> unified-agent) still NEW after 40h. unified-agent ran 6 synthesis cycles since (07-20 morning->07-21 evening) yet NONE consumed it — the flag is structurally undeliverable. Cause is one of: (a) dispatcher Step-5 does not inject NEW signal_queue rows into the cowork spawn prompt; or (b) unified-agent cron fires independently of this dispatcher and does not read its inbound signal_queue at cycle start. Consequence: the false gold token may persist in PUBLISHED MARKET dishes. Needs PO+agent-father: audit the cowork-signal->agent delivery path (spawn-fanout.md Step 5 vs unified chef.md inbox-read) and confirm/scrub the false token in live dishes. This row is why every cowork tick stays WORK not SILENT.",
         "payload_ref": null
       }
