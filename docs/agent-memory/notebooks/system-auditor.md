@@ -1,21 +1,21 @@
 # System Auditor — Notebook
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
-## c388 · 2026-07-21T04:13:03Z
-### Audit Run Tier-1 (04:11–04:13 UTC 2026-07-21)
+## c389 · 2026-07-21T05:11:48Z
+### Audit Run Tier-1 (05:10–05:11 UTC 2026-07-21)
 - Tier: 1 | Services: 12 checked | Health: 5 probed
 - A-01 to A-11 (container status): 12/12 UP, 1 unhealthy (pdf-extractor) [RAW-PROBE L2-14]
 - A-12 (frontend health): OK — PASS [RAW-PROBE L26]
 - A-15 (pdf-extractor health): CURL_ERR endpoint, dedup-skip (last_sent=2026-07-21T02:41:42Z)
 - A-20 (pdf-extractor multi-probe): 0/3 FAIL — HTTP 000 event-loop wedge, dedup-skip (last_sent=2026-07-21T03:41:45Z)
 - A-21 (restart count): mcp-server=2 PASS [RAW-PROBE L45]
-- A-30 (memory): mcp-server=26.94% PASS [RAW-PROBE L48]
+- A-30 (memory): mcp-server=36.32% PASS [RAW-PROBE L48]
 - A-32 (disk): 35% < 85% PASS [RAW-PROBE L52]
 - Anomalies: 0 new | 2 dedup-skipped (A-15, A-20) | Status: DEGRADED
 
 ### RAW-PROBE:
 ```
-=== AUDITOR PROBE 2026-07-21T04:11:14Z ===
+=== AUDITOR PROBE 2026-07-21T05:10:45Z ===
 
 --- docker ps -a ---
 NAMES                                             STATUS                    IMAGE                                           CREATED
@@ -24,10 +24,10 @@ vn-market-intelligence-mcp-frontend-1             Up 5 days (healthy)       vn-m
 vn-market-intelligence-mcp-api-gateway-1          Up 5 days (healthy)       vn-market-intelligence-mcp-api-gateway          5 days ago
 vn-market-intelligence-mcp-flaresolverr-1         Up 5 days (healthy)       ghcr.io/flaresolverr/flaresolverr:latest        5 days ago
 vn-market-intelligence-mcp-news-fetch-1           Up 5 days (healthy)       vn-market-intelligence-mcp-news-fetch           5 days ago
-vn-market-intelligence-mcp-mcp-server-1           Up 3 hours (healthy)      vn-market-intelligence-mcp-mcp-server           5 days ago
+vn-market-intelligence-mcp-mcp-server-1           Up 4 hours (healthy)      vn-market-intelligence-mcp-mcp-server           5 days ago
 vn-market-intelligence-mcp-rag-service-1          Up 3 days (healthy)       vn-market-intelligence-mcp-rag-service          5 days ago
 vn-market-intelligence-mcp-macro-indicators-1     Up 5 days (healthy)       vn-market-intelligence-mcp-macro-indicators     5 days ago
-vn-market-intelligence-mcp-pdf-extractor-1        Up 31 hours (unhealthy)   vn-market-intelligence-mcp-pdf-extractor        5 days ago
+vn-market-intelligence-mcp-pdf-extractor-1        Up 32 hours (unhealthy)   vn-market-intelligence-mcp-pdf-extractor        5 days ago
 vn-market-intelligence-mcp-technical-analysis-1   Up 5 days (healthy)       vn-market-intelligence-mcp-technical-analysis   5 days ago
 vn-market-intelligence-mcp-alert-engine-1         Up 5 days (healthy)       vn-market-intelligence-mcp-alert-engine         5 days ago
 vn-market-intelligence-mcp-stock-price-1          Up 5 days (healthy)       vn-market-intelligence-mcp-stock-price          5 days ago
@@ -44,7 +44,7 @@ vn-market-intelligence-mcp-kinh-dich-service-1    Up 5 days (healthy)       vn-m
 Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=2
 
 --- memory pressure ---
-Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=26.94% MemUsage=827.5MiB / 3GiB
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=36.32% MemUsage=1.089GiB / 3GiB
 
 --- disk df -h / ---
 Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
@@ -59,8 +59,20 @@ Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
 === PROBE DONE ===
 ```
 
-[emit-signal] SKIP-dedup dedup_key=microservice_degraded:pdf-extractor:A-20 last_sent=2026-07-21T03:41:45Z id=sys-20260721T041225-6b52
-[emit-signal] SKIP-dedup dedup_key=microservice_degraded:pdf-extractor:A-15 last_sent=2026-07-21T02:41:42Z id=sys-20260721T041242-16e5
+[emit-signal] SKIP-dedup dedup_key=microservice_degraded:pdf-extractor:A-15 last_sent=2026-07-21T02:41:42Z id=sys-20260721T051137-4687
+[emit-signal] SKIP-dedup dedup_key=microservice_degraded:pdf-extractor:A-20 last_sent=2026-07-21T03:41:45Z id=sys-20260721T051144-7ea3
+
+## c388 · 2026-07-21T04:13:03Z
+### Audit Run Tier-1 (04:11–04:13 UTC 2026-07-21)
+- Tier: 1 | Services: 12 checked | Health: 5 probed
+- A-01 to A-11 (container status): 12/12 UP, 1 unhealthy (pdf-extractor) [RAW-PROBE L2-14]
+- A-12 (frontend health): OK — PASS [RAW-PROBE L26]
+- A-15 (pdf-extractor health): CURL_ERR endpoint, dedup-skip (last_sent=2026-07-21T02:41:42Z)
+- A-20 (pdf-extractor multi-probe): 0/3 FAIL — HTTP 000 event-loop wedge, dedup-skip (last_sent=2026-07-21T03:41:45Z)
+- A-21 (restart count): mcp-server=2 PASS [RAW-PROBE L45]
+- A-30 (memory): mcp-server=26.94% PASS [RAW-PROBE L48]
+- A-32 (disk): 35% < 85% PASS [RAW-PROBE L52]
+- Anomalies: 0 new | 2 dedup-skipped (A-15, A-20) | Status: DEGRADED
 
 ## c387 · 2026-07-21T03:43:02Z
 ### Audit Run Tier-1 (03:40–03:41 UTC 2026-07-21)
@@ -98,34 +110,3 @@ D4 candidates: none
 - B-13 (stale pending BCTC): PASS — 0 rows >72h
 - C-06, C-07 (DB spot checks): PASS — 4 messages 3h, 335 signals 24h
 - Anomalies: 1 new (B-06 VPS health) | 0 dedup-skipped | Status: WARN
-
-## c362 · 2026-07-21T02:12:03Z
-### Audit Run Tier-1 (02:10–02:12 UTC 2026-07-21)
-- Tier: 1 | Services: 12 checked | Health: 5 probed
-- A-01 to A-11 (container status): 12/12 UP (all deployed and healthy) [RAW-PROBE L4-16]
-- A-12 (frontend health): OK — recovered from CURL_ERR [RAW-PROBE L45]
-- A-12 (pdf-extractor health): CURL_ERR endpoint (known) [RAW-PROBE L41], dedup-skip
-- A-20 (pdf-extractor multi-probe): 0/3 FAIL — HTTP 000 event-loop stall [RAW-PROBE L55-58], dedup-skip
-- A-21 (restart count): mcp-server=2 PASS [RAW-PROBE L47]
-- A-30 (memory): mcp-server=16.08% PASS [RAW-PROBE L50-51]
-- A-32 (disk): 35% < 85% PASS [RAW-PROBE L54]
-- Anomalies: 0 new | 2 dedup-skipped (A-12, A-20) | Status: DEGRADED
-
-## c361 · 2026-07-21T01:40:55Z
-### Audit Run Tier-1 (01:40–01:41 UTC 2026-07-21)
-- Tier: 1 | Services: 12 checked | Health: 5 probed
-- A-01 to A-11 (container status): 12/12 UP (all deployed and healthy)
-- A-12 (frontend health): CURL_ERR endpoint — NEW WARN signal
-- A-20 (pdf-extractor multi-probe): 0/3 FAIL — HTTP 000 event-loop stall, dedup-skip
-- A-21 (restart count): mcp-server=2 PASS
-- Anomalies: 1 new (A-12 frontend) | 1 dedup-skipped (A-20) | Status: DEGRADED
-
-## c360 · 2026-07-21T01:12:40Z
-### Audit Run Tier-1 (01:10–01:12 UTC 2026-07-21)
-- Tier: 1 | Services: 12 checked | Health: 5 probed
-- A-01 to A-11 (container status): 12/12 UP (all deployed and healthy)
-- A-12 (pdf-extractor health): CURL_ERR — endpoint down
-- A-20 (pdf-extractor multi-probe): 0/3 FAIL — HTTP 000 event-loop stall, dedup-skip
-- A-21 (restart count): mcp-server=1 PASS
-- A-30 (memory): mcp-server=92.53% WARN, dedup-skip
-- Anomalies: 0 new | 2 dedup-skipped (A-20, A-30) | Status: DEGRADED
