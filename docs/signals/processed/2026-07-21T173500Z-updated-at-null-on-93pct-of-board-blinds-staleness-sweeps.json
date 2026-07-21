@@ -30,5 +30,11 @@
     },
     "do_not_over_correct": "Do NOT mass-backfill updated_at from git history or from file mtime to make the field look populated. A fabricated timestamp is worse than a null one — null at least reads as 'unknown', whereas a synthesised value would make the staleness sweeps confidently wrong and would falsify the audit trail. Fix the write path first; decide separately and explicitly whether historical rows get a documented backfill or stay null.",
     "router_did_not": "mint a board row, modify any task row, backfill any timestamp, or change any predicate."
+  },
+  "_processed": {
+    "fingerprint": "914a0d9e78dc149696653d480a4baaf175d9a3f7920e7e5ca0702be3637af60c",
+    "processedAt": "2026-07-21T17:15:40Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }
