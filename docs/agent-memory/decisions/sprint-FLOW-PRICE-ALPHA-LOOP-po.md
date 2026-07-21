@@ -119,3 +119,15 @@
 - Full BA/architect chain — REJECTED: contained hygiene edit (flow + policy + coupled audits script), fully specified in brief → single implementer agent-father.
 **why-decision:** deletion is destructive; the only defensible design bounds it by explicit allow-list (unexpanded-var names, aged `*.tmp`, superseded synthesis snapshots) + hard NEVER invariants + quarantine recovery window, and defers all signal retention to the existing drain owner.
 **why-change:** router suggested deleting stale signals directly; I narrowed that to detect-only after confirming drain-signals.md is the canonical retention owner (prevents a second, racing lifecycle owner).
+
+### STEP po-S12 · po · 2026-07-21T14:24:48Z
+**task-id:** FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE (converge mint) + signal_queue drain (40 rows NEW→triaged)
+**what-done:** Drained 40 NEW system-auditor→po rows (po-s147, orch-apply conservation 556→557 OK): folded 26 A-20/A-11/A-15→PDF-AVAIL-02-FIX, 7 A-12→SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP (+7 origin ids), 5 A-30→FIX-MCP-MEMORY-CODE-LEAK as corroboration (NO dup mint); minted 1 converge predicate-tune fix; folded queue-collapse+tally into FIX-SIGNALQUEUE-DUP-ID-GUARD.
+**what-considered:**
+- Fold the A-cluster an Nth time (no mint) — REJECTED: ~30 cycles this session, past the 3rd-tick convergence bar → churn-without-convergence; router spawned with explicit CONVERGE directive.
+- Mint the predicate-tune as an improvement_proposal doc — REJECTED: board already tracks auditor-predicate fixes as backlog FIX rows (FIX-AUDITOR-C11-*, -TASKBOARD-OVERFLOW-*); consistency + concrete verification gate ⇒ backlog FIX, owner=architect.
+- Escalate A-30 to ops / recommend restart — REJECTED: 5 samples 94.43→88.81% reclaimed-from-peak, in 85–93% band, no OOM, tripwire untripped; restart destroys trajectory evidence for zero OOM benefit.
+- Sweep the 41st NEW row (po→unified-agent methodology-flag) — REJECTED: not system-auditor→po; different flow, left NEW.
+- Mint a backlog for the 2 single-occurrence B-02/B-06 data_stale rows — REJECTED: never re-emitted across ~16 cycles → self-resolved transient (single obs ≠ mechanism).
+**why-decision:** predicate-tune (A-30 loss-of-reclamation/OOMKilled gate; A-12 debounce; A-21 windowed) + dedup-suppression stops the FP re-emission AT SOURCE while the hard_constraint PRESERVES the E-3 append-always ledger (never skip a genuine anomaly) and genuine_tripwire keeps real OOM firing.
+**why-change:** detection-only per constraints — I dispose (drain/fold/mint), I do NOT deploy; pdf-extractor rebuild + mcp-server restart stay user-gated and were NOT recommended as my action.

@@ -1,23 +1,24 @@
 # PO Notebook
 
-_Last: 2026-07-20T22:44Z (LANE-B backlog intake — geopolitical/US-equity signal coverage; 2 FEAT mints, dev-mcp-server; ZERO code, plan-only)_
+_Last: 2026-07-21T14:24Z (CONVERGE drain — 40 auditor-FP rows folded, 1 predicate-tune mint; detection-only)_
 
-## Tick 2026-07-20T22:44Z — LANE B of global-geopolitical-signal-coverage brief
+## Tick 2026-07-21T14:24Z — Consolidating signal-queue drain + CONVERGE mint
 
-Router-directed backlog intake. Source brief: `docs/architecture-briefs/2026-07-21-global-geopolitical-signal-coverage.md` §3. Context: 2026-07-20 war/trade-war VN selloff (44 up/263 down) missed by all cowork agents — no geopolitical/war/US-equity signal category. LANE A doc-fix already live (47c703fca, `trade_war` enum server-accepted). LANE B = code-layer precision/completeness.
+Router CONVERGE directive. signal_queue accreted to 41 NEW (triaged frozen 102). One recurring FP cluster re-emitting every ~30min Tier-1 cycle all session with unchanged evidence, past the 3rd-tick convergence bar.
 
-**Prior-art: FRESH.** Both target ids + `geopolitical` (0 hits) absent from ALL board lanes + cold storage/archive. `war`/`global` grep hits were incidental substrings (`aWARe`, `gap`); `macro` hits are the pre-existing VN-MACRO-TOOLING rows (FRED/calendar/commodity/ISM) — none touch US-equity indices. Matches brief §1 verdict.
+**DRAIN (po-s147, orch-apply conservation 556→557 OK, idempotent re-run = delta 0):** 40 NEW system-auditor→po rows → `triaged`, folded to EXISTING homes as corroboration (dedup, NO dup mint):
+- 26 A-20/A-11/A-15 pdf-extractor wedge → **PDF-AVAIL-02-FIX** (`po_corroboration_20260721_pm`; fix committed c78839c6c, DEPLOY user-gated; recurring_bug_count HELD 6 = same episode).
+- 7 A-12 frontend/api-gateway CURL_ERR flap → **SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP** (+7 origin ids → 11; strengthens probe-FP hypothesis; transport-not-5xx, MCP path healthy).
+- 5 A-30 mcp-server mem 94.43→90.58→88.38→88.53→88.81% → **FIX-MCP-MEMORY-CODE-LEAK** (reclaimed-from-peak, in 85–93% band, no OOM, tripwire untripped — NO ops escalation, NO restart).
+- 2 B-02/B-06 data_stale (foreign-flow / VPS 3/5) → single-occurrence, never re-emitted → self-resolved transient (no mint).
+- 41st NEW (po→unified-agent methodology-flag) = NOT system-auditor→po → left NEW (different flow).
 
-**2 MINTS → `.task_board.backlog[]` (orch-apply.sh, conservation 554→556 PASS; commit d0618b6f0, pushed):**
-- `FEAT-NEWS-GEOPOLITICAL-CLASSIFICATION` (SPRINT-S, **high**, dev-mcp-server, zone apps/mcp-server/, next=ba) — B1+B2 bundle: `'geopolitical'` DomainType (SHARED root bctc-schema.ts → compiler-forced exhaustiveness on Record<DomainType,…> incl DOMAIN_KEYWORD_MAP + VN label map) + `'geopolitical_conflict'` event_type enum + NEW pure-domain `geopoliticalRiskDetector.ts` (mirror legalRiskDetector). Scope reserved: ship detector WITHOUT MCP-tool wrapper (matches chain_catalyst pattern). Follow-up (agent-father, gated on ship): switch interim trade_war/macro → geopolitical_conflict in 4 LANE-A flow docs.
-- `FEAT-MACRO-US-EQUITY-INDEX-TOOL` (SPRINT-S, **medium**, dev-mcp-server, zone apps/mcp-server/, next=ba) — B4: extend macroTools.ts Yahoo fetch with ^GSPC/^IXIC/^VIX + tool-doc. Gate: market-watcher US_EQUITY_SIGNAL wiring is OUT OF SCOPE until tool ships (future follow-up).
+**CONVERGE mint:** `FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE` → backlog (high, owner=architect, zone=multi, supervised, plan-only). Predicate-tune: A-30 gate loss-of-reclamation/OOMKilled not single snapshot; A-12 debounce/flap-suppress; A-21 windowed/crash-only; dedup-ledger SUPPRESSES re-emission. `hard_constraint` PRESERVES E-3 append-always ledger (never skip a genuine anomaly); `genuine_tripwire_preserved` keeps real OOM/sustained-outage firing.
 
-**Priority rationale:** both independent, no ordering dep (brief §5). ROW1=high (precision upgrade directly sharpening the live incident-response pipeline; pure domain, zero I/O, low-risk). ROW2=medium (tool alone changes no agent output until the gated wiring follow-up). Plan-only — dev chain NOT started (sprint capacity not signalled; rows-on-board = deliverable).
+**FOLD:** queue collapse-to-single-row + rows_written self-tally-fix → **FIX-SIGNALQUEUE-DUP-ID-GUARD** (`scope_extension_20260721`, improvement_proposal home, non-urgent, data correct).
 
 ## Carry-over
-- **KEY BOUNDARY (STANDING):** signal-file retention OWNED by dev-team `drain-signals.md`; cleanup pass is DETECT-ONLY. Do NOT create a second lifecycle owner.
-- **A-30 TRIPWIRE (STANDING):** mcp-server mem FOLD holds only while GC ceiling intact — escalate ops if baseline >93% no-dip / peak >97% no-reclaim / OOMKilled.
-- **DO NOT flip GAP-CHEF-SYNTHESIS-A DONE_VERIFIED** on one good cycle — need 3 consecutive non-empty conviction_calls[]+sector_phases[].
-- `FIX-CMH-OBSOLETE-FILE-CLEANUP` (07-20) minted → agent-father; brief `docs/handoffs/2026-07-20-obsolete-file-cleanup-janitor-pass.md`.
-- pdf-extractor + dashboard-tier PLAN-ONLY (supervised:true blocks idle auto-pickup).
-- Session c106f5a6 (router coord). Committed MY scoped paths only (orch-state.json by explicit path); pushed main.
+- **A-30 TRIPWIRE (STANDING):** escalate ops ONLY on OOMKilled / baseline >93% no-dip / peak >97% no-reclaim. 85–93% sawtooth = FOLD. Never set a session-local trigger below the documented band.
+- **APPEND-ALWAYS CONTRACT (STANDING):** signal_queue is an E-3 observation ledger; NEVER instruct auditor to skip row-minting for recurring findings. Only Telegram/BUG is 7d-deduped. Distrust auditor `rows_written` — jq the delta.
+- pdf-extractor rebuild + mcp-server restart/mem-bump are USER-GATED — PO disposes (drain/fold/mint), never deploys.
+- Detection-only findings this tick; no infra action taken. Committed scoped paths only (orch-state by explicit path). PUSH HELD — fleet-push timer.

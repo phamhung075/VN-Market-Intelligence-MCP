@@ -411,8 +411,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-20T00:52:49Z",
-    "_updated_by": "po-signalqueue-triage-20260720",
+    "_updated_at": "2026-07-21T14:23:45Z",
+    "_updated_by": "po-s147-auditor-fp-converge-drain",
     "archive": [],
     "rows": [
       {
@@ -833,8 +833,11 @@
         "type": "signal_feedback",
         "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall suspected",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260720T011202-0770",
@@ -844,8 +847,11 @@
         "type": "signal_feedback",
         "summary": "pdf-extractor A-12 health endpoint FAIL — CURL_ERR",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260720T014143-5aaf",
@@ -855,8 +861,11 @@
         "type": "signal_feedback",
         "summary": "pdf-extractor:5001/health FAIL (CURL_ERR)",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260720T014150-4b95",
@@ -866,8 +875,11 @@
         "type": "signal_feedback",
         "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall suspected",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260720T021141-5dbd",
@@ -877,8 +889,11 @@
         "type": "microservice_degraded",
         "summary": "A-11 FAIL: pdf-extractor — container unhealthy",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260720T021148-2228",
@@ -888,8 +903,11 @@
         "type": "microservice_degraded",
         "summary": "A-20 FAIL: pdf-extractor multi-probe 0/3 — event-loop stall suspected",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260720T024157-4a99",
@@ -899,8 +917,11 @@
         "type": "signal_feedback",
         "summary": "pdf-extractor container unhealthy (status: unhealthy after restart)",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260720T024205-67f9",
@@ -910,8 +931,11 @@
         "type": "signal_feedback",
         "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall suspected",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260720T031143-3e52",
@@ -921,8 +945,11 @@
         "type": "signal_feedback",
         "summary": "A-11: pdf-extractor container unhealthy",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260720T031148-72e2",
@@ -932,8 +959,11 @@
         "type": "signal_feedback",
         "summary": "A-12: pdf-extractor health endpoint failed",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260720T031153-23e5",
@@ -943,8 +973,11 @@
         "type": "signal_feedback",
         "summary": "A-20: pdf-extractor multi-probe 0/3 event-loop stall",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260720T034158-2bb4",
@@ -954,8 +987,11 @@
         "type": "signal_feedback",
         "summary": "pdf-extractor A-11 FAIL: container unhealthy",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260720T034204-2597",
@@ -965,8 +1001,11 @@
         "type": "signal_feedback",
         "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260720T041150-6ae0",
@@ -976,8 +1015,11 @@
         "type": "signal_feedback",
         "summary": "pdf-extractor A-11 UNHEALTHY — container health check failing",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260720T041157-2a15",
@@ -987,8 +1029,11 @@
         "type": "signal_feedback",
         "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall suspected",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260720T044149-0fc4",
@@ -998,8 +1043,11 @@
         "type": "microservice_degraded",
         "summary": "pdf-extractor UNHEALTHY container status (A-11)",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260720T044154-10bf",
@@ -1009,8 +1057,11 @@
         "type": "microservice_degraded",
         "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall suspected",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260720T051146-57b1",
@@ -1020,8 +1071,11 @@
         "type": "signal_feedback",
         "summary": "A-11 FAIL: pdf-extractor container unhealthy",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260720T051156-789e",
@@ -1031,8 +1085,11 @@
         "type": "signal_feedback",
         "summary": "A-20 FAIL: pdf-extractor multi-probe 0/3 passes — event-loop stall suspected",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
       },
       {
         "id": "po-20260720T052606",
@@ -1053,8 +1110,11 @@
         "type": "signal_feedback",
         "summary": "A-11 FAIL: pdf-extractor — UNHEALTHY (event loop stall)",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260720T054204-28c5",
@@ -1064,8 +1124,11 @@
         "type": "signal_feedback",
         "summary": "A-20 FAIL: pdf-extractor multi-probe 0/3 — event-loop stall suspected",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260720T061203-12b0",
@@ -1075,8 +1138,11 @@
         "type": "signal_feedback",
         "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall suspected",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260720T061210-7a99",
@@ -1086,8 +1152,11 @@
         "type": "signal_feedback",
         "summary": "api-gateway A-12 FAIL: health endpoint unreachable",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP. api-gateway:4000 / frontend:3001 health CURL_ERR flapping while MCP serving path stays healthy; correlates with mcp-server memory sawtooth. Isolate real-outage vs probe-timeout FP (spike, plan-only). No mint.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260720T061215-2b62",
@@ -1097,8 +1166,11 @@
         "type": "signal_feedback",
         "summary": "pdf-extractor A-13 FAIL: health endpoint unreachable",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260720T063222-2c8a",
@@ -1108,8 +1180,11 @@
         "type": "data_stale",
         "summary": "news stale 79m (check B-11)",
         "severity": "CRITICAL",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> FIX-AUDITOR-B11-NEWS-FRESHNESS-LAYER-SPLIT. news stale 79m single-window phantom CRITICAL; B-11 conflates raw-fetch freshness with analysis cadence. Known FP. No mint.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260720T064208-2fba",
@@ -1119,8 +1194,11 @@
         "type": "signal_feedback",
         "summary": "A-13 FAIL: pdf-extractor health endpoint unreachable (CURL_ERR)",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260720T064214-2283",
@@ -1130,8 +1208,11 @@
         "type": "signal_feedback",
         "summary": "A-20 FAIL: pdf-extractor multi-probe 0/3 — event-loop stall",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260720T071212-53b5",
@@ -1141,8 +1222,11 @@
         "type": "signal_feedback",
         "summary": "A-13 FAIL: pdf-extractor health endpoint unreachable (CURL_ERR)",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260720T071219-0f5e",
@@ -1152,8 +1236,11 @@
         "type": "signal_feedback",
         "summary": "A-20 FAIL: pdf-extractor event-loop stall — 0/3 in-container probes passed",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260720T074205-694a",
@@ -1163,8 +1250,11 @@
         "type": "microservice_degraded",
         "summary": "api-gateway health endpoint unreachable (A-13)",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP. api-gateway:4000 / frontend:3001 health CURL_ERR flapping while MCP serving path stays healthy; correlates with mcp-server memory sawtooth. Isolate real-outage vs probe-timeout FP (spike, plan-only). No mint.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260720T074207-3c21",
@@ -1174,8 +1264,11 @@
         "type": "microservice_degraded",
         "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall suspected",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260720T081149-25bd",
@@ -1185,8 +1278,11 @@
         "type": "signal_feedback",
         "summary": "A-13 FAIL: api-gateway health CURL_ERR",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP. api-gateway:4000 / frontend:3001 health CURL_ERR flapping while MCP serving path stays healthy; correlates with mcp-server memory sawtooth. Isolate real-outage vs probe-timeout FP (spike, plan-only). No mint.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260720T081151-08aa",
@@ -1196,8 +1292,11 @@
         "type": "signal_feedback",
         "summary": "A-20 FAIL: pdf-extractor event-loop stall 0/3",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260720T084212-3955",
@@ -1207,8 +1306,11 @@
         "type": "signal_feedback",
         "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall suspected",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260720T091146-4065",
@@ -1218,8 +1320,11 @@
         "type": "signal_feedback",
         "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall suspected",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260720T091152-1159",
@@ -1229,8 +1334,11 @@
         "type": "signal_feedback",
         "summary": "api-gateway health endpoint unreachable (CURL_ERR)",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP. api-gateway:4000 / frontend:3001 health CURL_ERR flapping while MCP serving path stays healthy; correlates with mcp-server memory sawtooth. Isolate real-outage vs probe-timeout FP (spike, plan-only). No mint.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260720T094235-23e5",
@@ -1240,8 +1348,11 @@
         "type": "signal_feedback",
         "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall suspected",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260720T101156-1520",
@@ -1251,8 +1362,11 @@
         "type": "microservice_degraded",
         "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260720T101203-69a1",
@@ -1262,8 +1376,11 @@
         "type": "microservice_degraded",
         "summary": "api-gateway:4000/health CURL_ERR — flapping",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP. api-gateway:4000 / frontend:3001 health CURL_ERR flapping while MCP serving path stays healthy; correlates with mcp-server memory sawtooth. Isolate real-outage vs probe-timeout FP (spike, plan-only). No mint.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260720T101211-78cf",
@@ -1273,8 +1390,11 @@
         "type": "microservice_degraded",
         "summary": "mcp-server memory elevated watch: 58.46% (trend: 45.34→47.86→54.82→58.46%)",
         "severity": "INFO",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> FIX-MCP-MEMORY-CODE-LEAK (#294). Benign GC sawtooth (58->75->93->92%) dipped back to 16.08% PASS by 02:41Z router-verified — OOMKilled / 93-no-dip / 97-sustained tripwire NOT tripped. Dedup, no mint.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260720T104332-1347",
@@ -1284,8 +1404,11 @@
         "type": "signal_feedback",
         "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall suspected",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260720T220825-19be",
@@ -1295,8 +1418,11 @@
         "type": "signal_feedback",
         "summary": "A-11 FAIL: pdf-extractor — health endpoint FAIL (HTTP CURL_ERR)",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260720T220831-4fbd",
@@ -1306,8 +1432,11 @@
         "type": "signal_feedback",
         "summary": "A-20 FAIL: pdf-extractor multi-probe 0/3 — event-loop stall suspected",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260720T221412-64ae",
@@ -1317,8 +1446,11 @@
         "type": "signal_feedback",
         "summary": "api-gateway A-12 FAIL: health endpoint unreachable (CURL_ERR)",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP. api-gateway:4000 / frontend:3001 health CURL_ERR flapping while MCP serving path stays healthy; correlates with mcp-server memory sawtooth. Isolate real-outage vs probe-timeout FP (spike, plan-only). No mint.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260720T221416-0e97",
@@ -1328,8 +1460,11 @@
         "type": "signal_feedback",
         "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall suspected",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260720T223241-4460",
@@ -1339,8 +1474,11 @@
         "type": "data_stale",
         "summary": "bctc-discover VPS service unhealthy, push age 21.1h with active queue (183 items)",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> FIX-AUDITOR-B05-BCTC-FRESHNESS-LAYER-SPLIT. bctc-discover VPS unhealthy, push-age 21.1h within out-of-season quarterly SLA (event-driven source); B-05 applies a continuous-24h SLA to the raw quarterly push layer = phantom. Service-health, not data-gap. No mint.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260720T223248-02e8",
@@ -1350,8 +1488,11 @@
         "type": "data_stale",
         "summary": "sbv-vps VPS service unhealthy (uptime only 1h 14m, consecutive restart cycles)",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> VPS-FRESH-02-FIX. sbv-vps proxy unhealthy / restart-cycling; tracked under sbv-vps 24h stale-threshold FIX. VPS zone = ops/dev-vps-crawls. No mint.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260720T224218-7459",
@@ -1361,8 +1502,11 @@
         "type": "signal_feedback",
         "summary": "A-12 FAIL: api-gateway health endpoint unreachable (HTTP CURL_ERR)",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP. api-gateway:4000 / frontend:3001 health CURL_ERR flapping while MCP serving path stays healthy; correlates with mcp-server memory sawtooth. Isolate real-outage vs probe-timeout FP (spike, plan-only). No mint.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260720T224224-6396",
@@ -1372,12 +1516,937 @@
         "type": "signal_feedback",
         "summary": "A-20 FAIL: pdf-extractor event-loop stall — multi-probe 0/3 passed",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
+      },
+      {
+        "id": "sys-20260720T234219-7ec2",
+        "ts": "2026-07-20T23:42:19Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-11 FAIL: pdf-extractor — container unhealthy (27h, Up but unhealthy)",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
+      },
+      {
+        "id": "sys-20260720T234225-28ab",
+        "ts": "2026-07-20T23:42:25Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-20 FAIL: pdf-extractor multi-probe 0/3 — event-loop stall suspected",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
+      },
+      {
+        "id": "sys-20260721T001218-7a0a",
+        "ts": "2026-07-21T00:12:18Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "api-gateway A-12 FAIL: health endpoint CURL_ERR",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP. api-gateway:4000 / frontend:3001 health CURL_ERR flapping while MCP serving path stays healthy; correlates with mcp-server memory sawtooth. Isolate real-outage vs probe-timeout FP (spike, plan-only). No mint.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
+      },
+      {
+        "id": "sys-20260721T001223-2210",
+        "ts": "2026-07-21T00:12:23Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall suspected",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
+      },
+      {
+        "id": "sys-20260721T001228-69ce",
+        "ts": "2026-07-21T00:12:28Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "mcp-server A-30: memory 75.14% exceeds 68% threshold",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> FIX-MCP-MEMORY-CODE-LEAK (#294). Benign GC sawtooth (58->75->93->92%) dipped back to 16.08% PASS by 02:41Z router-verified — OOMKilled / 93-no-dip / 97-sustained tripwire NOT tripped. Dedup, no mint.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
+      },
+      {
+        "id": "sys-20260721T003757-4d71",
+        "ts": "2026-07-21T00:37:57Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_integrity_breach",
+        "summary": "financial_reports: 11 low-confidence extractions (check C-04)",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD (observation). financial_reports 11 low-confidence extractions = expected low-conf handling path (reference_low_confidence_handling); accumulation is downstream of the pdf-extractor outage (no new completions). Not a new bug. No mint. (2 identical rows deduped.)",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
+      },
+      {
+        "id": "sys-20260721T003758-3207",
+        "ts": "2026-07-21T00:37:58Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_integrity_breach",
+        "summary": "financial_reports: 11 low-confidence extractions (check C-04)",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD (observation). financial_reports 11 low-confidence extractions = expected low-conf handling path (reference_low_confidence_handling); accumulation is downstream of the pdf-extractor outage (no new completions). Not a new bug. No mint. (2 identical rows deduped.)",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
+      },
+      {
+        "id": "sys-20260721T003809-5a0e",
+        "ts": "2026-07-21T00:38:09Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_integrity_breach",
+        "summary": "market_messages: 0 messages in last 3 hours (check C-06)",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> FIX-AUDITOR-C06-OFFMARKET-RECALIBRATE (+ FIX-MARKET-MESSAGES-TIMESTAMP-FORMAT). market_messages 0/3h fired 00:38Z (~07:38 GMT+7 pre-market quiet window) + TEXT-timestamp strcompare false-empty. Known FP. No mint.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
+      },
+      {
+        "id": "sys-20260721T003810-2b02",
+        "ts": "2026-07-21T00:38:10Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_integrity_breach",
+        "summary": "alerts: 1 orphaned alert in last 24h (check C-08)",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD (observation). alerts 1 orphaned alert/24h — single-instance, WARN, below actionable threshold. Watch; revisit only if count climbs. No mint.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
+      },
+      {
+        "id": "sys-20260721T003811-4f7b",
+        "ts": "2026-07-21T00:38:11Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_integrity_breach",
+        "summary": "pdf_documents: 0 completed in last 48h (check C-11)",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> FIX-AUDITOR-C11-PDFX-STATUS-PREDICATE (broken predicate: status=done never exists + ISO-8601 vs datetime strcompare bypass = always false-fails) AND corroborates PDF-AVAIL-02-FIX data-plane (0 PDFs complete while extractor wedged 30h+). No mint.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
+      },
+      {
+        "id": "sys-20260721T004400-5ee6",
+        "ts": "2026-07-21T00:44:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "api-gateway:4000 health endpoint unreachable (CURL_ERR)",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP. api-gateway:4000 / frontend:3001 health CURL_ERR flapping while MCP serving path stays healthy; correlates with mcp-server memory sawtooth. Isolate real-outage vs probe-timeout FP (spike, plan-only). No mint.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
+      },
+      {
+        "id": "sys-20260721T004405-4a96",
+        "ts": "2026-07-21T00:44:05Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "pdf-extractor event-loop stall: 0/3 probes passed (HTTP 000)",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
+      },
+      {
+        "id": "sys-20260721T004411-780c",
+        "ts": "2026-07-21T00:44:11Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "mcp-server memory at 93.59% of 3GB (trend: escalating)",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> FIX-MCP-MEMORY-CODE-LEAK (#294). Benign GC sawtooth (58->75->93->92%) dipped back to 16.08% PASS by 02:41Z router-verified — OOMKilled / 93-no-dip / 97-sustained tripwire NOT tripped. Dedup, no mint.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
+      },
+      {
+        "id": "sys-20260721T011149-5c4a",
+        "ts": "2026-07-21T01:11:49Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall suspected",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
+      },
+      {
+        "id": "sys-20260721T011156-17f2",
+        "ts": "2026-07-21T01:11:56Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "mcp-server A-30 memory pressure 92.53% (limit 85%)",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> FIX-MCP-MEMORY-CODE-LEAK (#294). Benign GC sawtooth (58->75->93->92%) dipped back to 16.08% PASS by 02:41Z router-verified — OOMKilled / 93-no-dip / 97-sustained tripwire NOT tripped. Dedup, no mint.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
+      },
+      {
+        "id": "sys-20260721T014155-174c",
+        "ts": "2026-07-21T01:41:55Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-12 FAIL: frontend health endpoint — HTTP CURL_ERR",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP. api-gateway:4000 / frontend:3001 health CURL_ERR flapping while MCP serving path stays healthy; correlates with mcp-server memory sawtooth. Isolate real-outage vs probe-timeout FP (spike, plan-only). No mint.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
+      },
+      {
+        "id": "sys-20260721T014201-1664",
+        "ts": "2026-07-21T01:42:01Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-20 FAIL: pdf-extractor multi-probe 0/3 — event-loop stall suspected",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
+      },
+      {
+        "id": "sys-20260721T021149-0936",
+        "ts": "2026-07-21T02:11:49Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
+      },
+      {
+        "id": "sys-20260721T021156-7873",
+        "ts": "2026-07-21T02:11:56Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "pdf-extractor A-12 health endpoint FAIL — CURL_ERR",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
+      },
+      {
+        "id": "sys-20260721T023233-60fe",
+        "ts": "2026-07-21T02:32:33Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "vn-bctc-fetch VPS service unhealthy",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> FIX-AUDITOR-HEALTHCHECK-FALSE-UNHEALTHY-NONHTTP-SERVICES. vn-bctc-fetch = pure-bash systemd timer (no HTTP port) -> permanent false UNHEALTHY badge. Data within 147h out-of-season SLA (last push ~25h). Service-health probe FP, not data-staleness. No mint.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
+      },
+      {
+        "id": "sys-20260721T024141-3c14",
+        "ts": "2026-07-21T02:41:41Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "pdf-extractor container health failed (status: unhealthy, 30h uptime)",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
+      },
+      {
+        "id": "sys-20260721T024143-0eec",
+        "ts": "2026-07-21T02:41:43Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "pdf-extractor:5001/health endpoint unreachable (CURL_ERR)",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
+      },
+      {
+        "id": "sys-20260721T024144-5391",
+        "ts": "2026-07-21T02:41:44Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "pdf-extractor A-20 multi-probe 0/3 pass — event-loop wedged",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> PDF-AVAIL-02-FIX (recurring, supervised). pdf-extractor A-11/A-12/A-13/A-20 event-loop stall + container-unhealthy PERSISTENT ~30h+ continuous (2026-07-20T01:12..2026-07-21T02:41). GENUINE degradation, not FP. High-water corroboration + escalation-to-durable-code-fix recorded on backlog row (po_recurrence_triage_20260721). No restart (re-wedges on next long PDF); no user-gated container action.",
+        "triaged_at": "2026-07-21T02:52:42Z",
+        "triaged_by": "po"
+      },
+      {
+        "id": "sys-20260721T031138-141a",
+        "ts": "2026-07-21T03:11:38Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall suspected",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_at": "2026-07-21T14:23:45Z",
+        "triaged_by": "po-s147-auditor-fp-converge-drain",
+        "triaged_home": "PDF-AVAIL-02-FIX",
+        "drain_note": "recurring auditor FP / known-tracked finding folded to PDF-AVAIL-02-FIX as corroboration (dedup, no new backlog mint). po-s147 converge drain."
+      },
+      {
+        "id": "sys-20260721T031143-17f5",
+        "ts": "2026-07-21T03:11:43Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "frontend A-12 FAIL: health endpoint CURL_ERR",
+        "severity": "INFO",
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_at": "2026-07-21T14:23:45Z",
+        "triaged_by": "po-s147-auditor-fp-converge-drain",
+        "triaged_home": "SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP",
+        "drain_note": "recurring auditor FP / known-tracked finding folded to SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP as corroboration (dedup, no new backlog mint). po-s147 converge drain."
+      },
+      {
+        "id": "sys-20260721T034143-2d83",
+        "ts": "2026-07-21T03:41:43Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "frontend health endpoint CURL_ERR (check A-12)",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_at": "2026-07-21T14:23:45Z",
+        "triaged_by": "po-s147-auditor-fp-converge-drain",
+        "triaged_home": "SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP",
+        "drain_note": "recurring auditor FP / known-tracked finding folded to SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP as corroboration (dedup, no new backlog mint). po-s147 converge drain."
+      },
+      {
+        "id": "sys-20260721T034145-493a",
+        "ts": "2026-07-21T03:41:45Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "pdf-extractor event-loop stalled — HTTP 000 (check A-20)",
+        "severity": "CRITICAL",
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_at": "2026-07-21T14:23:45Z",
+        "triaged_by": "po-s147-auditor-fp-converge-drain",
+        "triaged_home": "PDF-AVAIL-02-FIX",
+        "drain_note": "recurring auditor FP / known-tracked finding folded to PDF-AVAIL-02-FIX as corroboration (dedup, no new backlog mint). po-s147 converge drain."
+      },
+      {
+        "id": "sys-20260721T041225-6b52",
+        "ts": "2026-07-21T04:12:25Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall suspected",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_at": "2026-07-21T14:23:45Z",
+        "triaged_by": "po-s147-auditor-fp-converge-drain",
+        "triaged_home": "PDF-AVAIL-02-FIX",
+        "drain_note": "recurring auditor FP / known-tracked finding folded to PDF-AVAIL-02-FIX as corroboration (dedup, no new backlog mint). po-s147 converge drain."
+      },
+      {
+        "id": "sys-20260721T041242-16e5",
+        "ts": "2026-07-21T04:12:42Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-15 FAIL: pdf-extractor health endpoint unreachable",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_at": "2026-07-21T14:23:45Z",
+        "triaged_by": "po-s147-auditor-fp-converge-drain",
+        "triaged_home": "PDF-AVAIL-02-FIX",
+        "drain_note": "recurring auditor FP / known-tracked finding folded to PDF-AVAIL-02-FIX as corroboration (dedup, no new backlog mint). po-s147 converge drain."
+      },
+      {
+        "id": "sys-20260721T044149-461f",
+        "ts": "2026-07-21T04:41:49Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "pdf-extractor health endpoint unreachable (A-15)",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_at": "2026-07-21T14:23:45Z",
+        "triaged_by": "po-s147-auditor-fp-converge-drain",
+        "triaged_home": "PDF-AVAIL-02-FIX",
+        "drain_note": "recurring auditor FP / known-tracked finding folded to PDF-AVAIL-02-FIX as corroboration (dedup, no new backlog mint). po-s147 converge drain."
+      },
+      {
+        "id": "sys-20260721T044155-7aaf",
+        "ts": "2026-07-21T04:41:55Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "pdf-extractor event-loop stall detected (A-20 multi-probe)",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_at": "2026-07-21T14:23:45Z",
+        "triaged_by": "po-s147-auditor-fp-converge-drain",
+        "triaged_home": "PDF-AVAIL-02-FIX",
+        "drain_note": "recurring auditor FP / known-tracked finding folded to PDF-AVAIL-02-FIX as corroboration (dedup, no new backlog mint). po-s147 converge drain."
+      },
+      {
+        "id": "sys-20260721T051137-4687",
+        "ts": "2026-07-21T05:11:37Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-15 FAIL: pdf-extractor health endpoint unreachable (HTTP CURL_ERR)",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_at": "2026-07-21T14:23:45Z",
+        "triaged_by": "po-s147-auditor-fp-converge-drain",
+        "triaged_home": "PDF-AVAIL-02-FIX",
+        "drain_note": "recurring auditor FP / known-tracked finding folded to PDF-AVAIL-02-FIX as corroboration (dedup, no new backlog mint). po-s147 converge drain."
+      },
+      {
+        "id": "sys-20260721T051144-7ea3",
+        "ts": "2026-07-21T05:11:44Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-20 FAIL: pdf-extractor event-loop stall (0/3 probes passed)",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_at": "2026-07-21T14:23:45Z",
+        "triaged_by": "po-s147-auditor-fp-converge-drain",
+        "triaged_home": "PDF-AVAIL-02-FIX",
+        "drain_note": "recurring auditor FP / known-tracked finding folded to PDF-AVAIL-02-FIX as corroboration (dedup, no new backlog mint). po-s147 converge drain."
+      },
+      {
+        "id": "sys-20260721T054134-1fd2",
+        "ts": "2026-07-21T05:41:34Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-12 FAIL: api-gateway health endpoint unreachable (CURL_ERR)",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_at": "2026-07-21T14:23:45Z",
+        "triaged_by": "po-s147-auditor-fp-converge-drain",
+        "triaged_home": "SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP",
+        "drain_note": "recurring auditor FP / known-tracked finding folded to SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP as corroboration (dedup, no new backlog mint). po-s147 converge drain."
+      },
+      {
+        "id": "sys-20260721T054221-5597",
+        "ts": "2026-07-21T05:42:21Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-15 FAIL: pdf-extractor health endpoint unreachable (CURL_ERR)",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_at": "2026-07-21T14:23:45Z",
+        "triaged_by": "po-s147-auditor-fp-converge-drain",
+        "triaged_home": "PDF-AVAIL-02-FIX",
+        "drain_note": "recurring auditor FP / known-tracked finding folded to PDF-AVAIL-02-FIX as corroboration (dedup, no new backlog mint). po-s147 converge drain."
+      },
+      {
+        "id": "sys-20260721T054222-6172",
+        "ts": "2026-07-21T05:42:22Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-20 FAIL: pdf-extractor multi-probe — event-loop stall (0/3 passes)",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_at": "2026-07-21T14:23:45Z",
+        "triaged_by": "po-s147-auditor-fp-converge-drain",
+        "triaged_home": "PDF-AVAIL-02-FIX",
+        "drain_note": "recurring auditor FP / known-tracked finding folded to PDF-AVAIL-02-FIX as corroboration (dedup, no new backlog mint). po-s147 converge drain."
+      },
+      {
+        "id": "sys-20260721T063301-43cf",
+        "ts": "2026-07-21T06:33:01Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "foreign-flow stale 202min (B-02)",
+        "severity": "CRITICAL",
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_at": "2026-07-21T14:23:45Z",
+        "triaged_by": "po-s147-auditor-fp-converge-drain",
+        "triaged_home": "transient-self-resolved",
+        "drain_note": "single-occurrence data_stale @06:33Z, NOT re-emitted across ~16 subsequent Tier-1 cycles → self-resolved transient (B-06 loosely corroborates the pdf-extractor/VPS degradation window). No mint (resolved transient)."
+      },
+      {
+        "id": "sys-20260721T063307-62d9",
+        "ts": "2026-07-21T06:33:07Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "VPS services unhealthy: 3/5 down (B-06)",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_at": "2026-07-21T14:23:45Z",
+        "triaged_by": "po-s147-auditor-fp-converge-drain",
+        "triaged_home": "transient-self-resolved",
+        "drain_note": "single-occurrence data_stale @06:33Z, NOT re-emitted across ~16 subsequent Tier-1 cycles → self-resolved transient (B-06 loosely corroborates the pdf-extractor/VPS degradation window). No mint (resolved transient)."
+      },
+      {
+        "id": "sys-20260721T064141-5423",
+        "ts": "2026-07-21T06:41:41Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "pdf-extractor A-11 FAIL: container unhealthy status",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_at": "2026-07-21T14:23:45Z",
+        "triaged_by": "po-s147-auditor-fp-converge-drain",
+        "triaged_home": "PDF-AVAIL-02-FIX",
+        "drain_note": "recurring auditor FP / known-tracked finding folded to PDF-AVAIL-02-FIX as corroboration (dedup, no new backlog mint). po-s147 converge drain."
+      },
+      {
+        "id": "sys-20260721T064146-3c46",
+        "ts": "2026-07-21T06:41:46Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall suspected",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_at": "2026-07-21T14:23:45Z",
+        "triaged_by": "po-s147-auditor-fp-converge-drain",
+        "triaged_home": "PDF-AVAIL-02-FIX",
+        "drain_note": "recurring auditor FP / known-tracked finding folded to PDF-AVAIL-02-FIX as corroboration (dedup, no new backlog mint). po-s147 converge drain."
+      },
+      {
+        "id": "sys-20260721T064152-1453",
+        "ts": "2026-07-21T06:41:52Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "frontend A-12 FAIL: health endpoint unreachable (HTTP CURL_ERR)",
+        "severity": "INFO",
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_at": "2026-07-21T14:23:45Z",
+        "triaged_by": "po-s147-auditor-fp-converge-drain",
+        "triaged_home": "SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP",
+        "drain_note": "recurring auditor FP / known-tracked finding folded to SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP as corroboration (dedup, no new backlog mint). po-s147 converge drain."
+      },
+      {
+        "id": "sys-20260721T071130-1c22",
+        "ts": "2026-07-21T07:11:30Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall suspected",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_at": "2026-07-21T14:23:45Z",
+        "triaged_by": "po-s147-auditor-fp-converge-drain",
+        "triaged_home": "PDF-AVAIL-02-FIX",
+        "drain_note": "recurring auditor FP / known-tracked finding folded to PDF-AVAIL-02-FIX as corroboration (dedup, no new backlog mint). po-s147 converge drain."
+      },
+      {
+        "id": "sys-20260721T074140-6ec7",
+        "ts": "2026-07-21T07:41:40Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall suspected",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_at": "2026-07-21T14:23:45Z",
+        "triaged_by": "po-s147-auditor-fp-converge-drain",
+        "triaged_home": "PDF-AVAIL-02-FIX",
+        "drain_note": "recurring auditor FP / known-tracked finding folded to PDF-AVAIL-02-FIX as corroboration (dedup, no new backlog mint). po-s147 converge drain."
+      },
+      {
+        "id": "sys-20260721T081202-1bab",
+        "ts": "2026-07-21T08:12:02Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall suspected",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_at": "2026-07-21T14:23:45Z",
+        "triaged_by": "po-s147-auditor-fp-converge-drain",
+        "triaged_home": "PDF-AVAIL-02-FIX",
+        "drain_note": "recurring auditor FP / known-tracked finding folded to PDF-AVAIL-02-FIX as corroboration (dedup, no new backlog mint). po-s147 converge drain."
+      },
+      {
+        "id": "sys-20260721T084140-2d4b",
+        "ts": "2026-07-21T08:41:40Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "pdf-extractor event-loop stall detected (check A-20)",
+        "severity": "CRITICAL",
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_at": "2026-07-21T14:23:45Z",
+        "triaged_by": "po-s147-auditor-fp-converge-drain",
+        "triaged_home": "PDF-AVAIL-02-FIX",
+        "drain_note": "recurring auditor FP / known-tracked finding folded to PDF-AVAIL-02-FIX as corroboration (dedup, no new backlog mint). po-s147 converge drain."
+      },
+      {
+        "id": "sys-20260721T091219-684e",
+        "ts": "2026-07-21T09:12:19Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-12 FAIL: frontend:3001 health endpoint unreachable (CURL_ERR)",
+        "severity": "INFO",
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_at": "2026-07-21T14:23:45Z",
+        "triaged_by": "po-s147-auditor-fp-converge-drain",
+        "triaged_home": "SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP",
+        "drain_note": "recurring auditor FP / known-tracked finding folded to SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP as corroboration (dedup, no new backlog mint). po-s147 converge drain."
+      },
+      {
+        "id": "sys-20260721T091226-578a",
+        "ts": "2026-07-21T09:12:26Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-20 FAIL: pdf-extractor event-loop stall (0/3 multi-probe PASS)",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_at": "2026-07-21T14:23:45Z",
+        "triaged_by": "po-s147-auditor-fp-converge-drain",
+        "triaged_home": "PDF-AVAIL-02-FIX",
+        "drain_note": "recurring auditor FP / known-tracked finding folded to PDF-AVAIL-02-FIX as corroboration (dedup, no new backlog mint). po-s147 converge drain."
+      },
+      {
+        "id": "sys-20260721T094200-2cae",
+        "ts": "2026-07-21T09:42:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "api-gateway health check FAIL (HTTP CURL_ERR) check A-12",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_at": "2026-07-21T14:23:45Z",
+        "triaged_by": "po-s147-auditor-fp-converge-drain",
+        "triaged_home": "SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP",
+        "drain_note": "recurring auditor FP / known-tracked finding folded to SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP as corroboration (dedup, no new backlog mint). po-s147 converge drain."
+      },
+      {
+        "id": "sys-20260721T101144-7e1c",
+        "ts": "2026-07-21T10:11:44Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall suspected",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_at": "2026-07-21T14:23:45Z",
+        "triaged_by": "po-s147-auditor-fp-converge-drain",
+        "triaged_home": "PDF-AVAIL-02-FIX",
+        "drain_note": "recurring auditor FP / known-tracked finding folded to PDF-AVAIL-02-FIX as corroboration (dedup, no new backlog mint). po-s147 converge drain."
+      },
+      {
+        "id": "sys-20260721T104145-0606",
+        "ts": "2026-07-21T10:41:45Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall suspected",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_at": "2026-07-21T14:23:45Z",
+        "triaged_by": "po-s147-auditor-fp-converge-drain",
+        "triaged_home": "PDF-AVAIL-02-FIX",
+        "drain_note": "recurring auditor FP / known-tracked finding folded to PDF-AVAIL-02-FIX as corroboration (dedup, no new backlog mint). po-s147 converge drain."
+      },
+      {
+        "id": "sys-20260721T111159-22e6",
+        "ts": "2026-07-21T11:11:59Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall (KNOWN PDF-AVAIL-02)",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_at": "2026-07-21T14:23:45Z",
+        "triaged_by": "po-s147-auditor-fp-converge-drain",
+        "triaged_home": "PDF-AVAIL-02-FIX",
+        "drain_note": "recurring auditor FP / known-tracked finding folded to PDF-AVAIL-02-FIX as corroboration (dedup, no new backlog mint). po-s147 converge drain."
+      },
+      {
+        "id": "sys-20260721T114143-01c7",
+        "ts": "2026-07-21T11:41:43Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall persists (KNOWN PDF-AVAIL-02-FIX)",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_at": "2026-07-21T14:23:45Z",
+        "triaged_by": "po-s147-auditor-fp-converge-drain",
+        "triaged_home": "PDF-AVAIL-02-FIX",
+        "drain_note": "recurring auditor FP / known-tracked finding folded to PDF-AVAIL-02-FIX as corroboration (dedup, no new backlog mint). po-s147 converge drain."
+      },
+      {
+        "id": "sys-20260721T121206-39c4",
+        "ts": "2026-07-21T12:12:06Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-30 WARN: mcp-server memory 94.43% (>= 85% threshold)",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_at": "2026-07-21T14:23:45Z",
+        "triaged_by": "po-s147-auditor-fp-converge-drain",
+        "triaged_home": "FIX-MCP-MEMORY-CODE-LEAK",
+        "drain_note": "recurring auditor FP / known-tracked finding folded to FIX-MCP-MEMORY-CODE-LEAK as corroboration (dedup, no new backlog mint). po-s147 converge drain."
+      },
+      {
+        "id": "sys-20260721T121212-71e0",
+        "ts": "2026-07-21T12:12:12Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-20 WARN: pdf-extractor event-loop stall (0/3 probes passed)",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_at": "2026-07-21T14:23:45Z",
+        "triaged_by": "po-s147-auditor-fp-converge-drain",
+        "triaged_home": "PDF-AVAIL-02-FIX",
+        "drain_note": "recurring auditor FP / known-tracked finding folded to PDF-AVAIL-02-FIX as corroboration (dedup, no new backlog mint). po-s147 converge drain."
+      },
+      {
+        "id": "sys-20260721T124212-7cef",
+        "ts": "2026-07-21T12:42:12Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "mcp-server memory pressure A-30 90.58% (high, within GC-sawtooth band 85-93%)",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_at": "2026-07-21T14:23:45Z",
+        "triaged_by": "po-s147-auditor-fp-converge-drain",
+        "triaged_home": "FIX-MCP-MEMORY-CODE-LEAK",
+        "drain_note": "recurring auditor FP / known-tracked finding folded to FIX-MCP-MEMORY-CODE-LEAK as corroboration (dedup, no new backlog mint). po-s147 converge drain."
+      },
+      {
+        "id": "sys-20260721T124220-4a57",
+        "ts": "2026-07-21T12:42:20Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall (KNOWN PDF-AVAIL-02-FIX)",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_at": "2026-07-21T14:23:45Z",
+        "triaged_by": "po-s147-auditor-fp-converge-drain",
+        "triaged_home": "PDF-AVAIL-02-FIX",
+        "drain_note": "recurring auditor FP / known-tracked finding folded to PDF-AVAIL-02-FIX as corroboration (dedup, no new backlog mint). po-s147 converge drain."
+      },
+      {
+        "id": "sys-20260721T131200-4359",
+        "ts": "2026-07-21T13:12:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall suspected",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_at": "2026-07-21T14:23:45Z",
+        "triaged_by": "po-s147-auditor-fp-converge-drain",
+        "triaged_home": "PDF-AVAIL-02-FIX",
+        "drain_note": "recurring auditor FP / known-tracked finding folded to PDF-AVAIL-02-FIX as corroboration (dedup, no new backlog mint). po-s147 converge drain."
+      },
+      {
+        "id": "sys-20260721T131202-52c1",
+        "ts": "2026-07-21T13:12:02Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "mcp-server A-30 memory 88.38% — elevated but within GC-sawtooth band",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_at": "2026-07-21T14:23:45Z",
+        "triaged_by": "po-s147-auditor-fp-converge-drain",
+        "triaged_home": "FIX-MCP-MEMORY-CODE-LEAK",
+        "drain_note": "recurring auditor FP / known-tracked finding folded to FIX-MCP-MEMORY-CODE-LEAK as corroboration (dedup, no new backlog mint). po-s147 converge drain."
+      },
+      {
+        "id": "sys-20260721T134147-7b2f",
+        "ts": "2026-07-21T13:41:47Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall suspected",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_at": "2026-07-21T14:23:45Z",
+        "triaged_by": "po-s147-auditor-fp-converge-drain",
+        "triaged_home": "PDF-AVAIL-02-FIX",
+        "drain_note": "recurring auditor FP / known-tracked finding folded to PDF-AVAIL-02-FIX as corroboration (dedup, no new backlog mint). po-s147 converge drain."
+      },
+      {
+        "id": "sys-20260721T134152-6df8",
+        "ts": "2026-07-21T13:41:52Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "mcp-server A-30 Memory 88.53% (GC-sawtooth band)",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_at": "2026-07-21T14:23:45Z",
+        "triaged_by": "po-s147-auditor-fp-converge-drain",
+        "triaged_home": "FIX-MCP-MEMORY-CODE-LEAK",
+        "drain_note": "recurring auditor FP / known-tracked finding folded to FIX-MCP-MEMORY-CODE-LEAK as corroboration (dedup, no new backlog mint). po-s147 converge drain."
+      },
+      {
+        "id": "sys-20260721T141203-40b0",
+        "ts": "2026-07-21T14:12:03Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "api-gateway:4000/health endpoint unreachable (A-12)",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_at": "2026-07-21T14:23:45Z",
+        "triaged_by": "po-s147-auditor-fp-converge-drain",
+        "triaged_home": "SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP",
+        "drain_note": "recurring auditor FP / known-tracked finding folded to SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP as corroboration (dedup, no new backlog mint). po-s147 converge drain."
+      },
+      {
+        "id": "sys-20260721T141213-26f0",
+        "ts": "2026-07-21T14:12:13Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall suspected",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_at": "2026-07-21T14:23:45Z",
+        "triaged_by": "po-s147-auditor-fp-converge-drain",
+        "triaged_home": "PDF-AVAIL-02-FIX",
+        "drain_note": "recurring auditor FP / known-tracked finding folded to PDF-AVAIL-02-FIX as corroboration (dedup, no new backlog mint). po-s147 converge drain."
+      },
+      {
+        "id": "sys-20260721T141218-70cb",
+        "ts": "2026-07-21T14:12:18Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "mcp-server memory at 88.81% (A-30, within GC-sawtooth band)",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_at": "2026-07-21T14:23:45Z",
+        "triaged_by": "po-s147-auditor-fp-converge-drain",
+        "triaged_home": "FIX-MCP-MEMORY-CODE-LEAK",
+        "drain_note": "recurring auditor FP / known-tracked finding folded to FIX-MCP-MEMORY-CODE-LEAK as corroboration (dedup, no new backlog mint). po-s147 converge drain."
       }
     ],
-    "last_triaged_at": "2026-07-20T00:52:49Z",
-    "last_triaged_by": "po"
+    "last_triaged_at": "2026-07-21T14:23:45Z",
+    "last_triaged_by": "po-s147-auditor-fp-converge-drain"
   },
   "sprint_goal": {
     "_note": "Active sprint visions. PO triage 2026-07-20 16->15: archived QUE-REFERENCE-PAGE (SHIPPED — route apps/frontend/app/routes/dashboard.kinh-dich-reference.tsx exists 9489B, renders all 64 que from que-descriptions-detail.generated; successor sprint KINHDICH-HOVER-DETAIL scope_out treats the reference page + its deep-link as already-existing; 0 orphan refs in task_board lanes; not in active_sprints). PREV: Active sprint visions. PO triage 2026-07-11 16->14: merged FB-POSTER-LAUNCHD-FIRER into COWORK-GUARANTEED-SLOT-DURABILITY (superseded per cron-jobs.md, firer plist installed+loaded); archived NARRATIVE-TRUTH-CCATO-GATE (T2+T3 both DONE, T3 qa-APPROVED). Reasoning: sprint-ANALYSIS-QUALITY-CONVERGENCE-po.md.",
@@ -5294,16 +6363,18 @@
       },
       {
         "id": "PDF-AVAIL-02-FIX",
-        "priority": "normal",
+        "priority": "high",
         "size": "S",
         "status": "BACKLOG",
         "title": "Fix PDF-AVAIL-02: Does pdf-extractor /health respond within 5s even during an active /extract job (event-loop fix)",
         "type": "fix",
-        "zone": "ops",
+        "zone": "apps/pdf-extractor",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#PDF-AVAIL-02-FIX",
         "supervised": true,
-        "recurring_bug_count": 5,
-        "po_recurrence_triage_20260720": "RECURRENCE (PO signal-queue triage 2026-07-20): pdf-extractor A-20 event-loop-stall recurred 5x 2026-07-19T20:46Z..2026-07-20T00:46Z (health endpoint unhealthy + multi-probe 0/3). Root-cause hypothesis: the /health server shares the extraction event loop / the worker times out during long PDFs; durable fix = isolate the health server onto a separate thread/process/port so /health answers <5s during an active /extract. DO NOT restart (a re-restart re-wedges on the next long PDF). Zone-hint: this is CODE work in apps/pdf-extractor/ (current zone=ops = deploy angle only). recurring-bug-escalation (2+ -> durable fix) flag raised; supervised:true set to block BOUNDED-1 idle auto-pickup. PLAN-ONLY, no dispatch this triage."
+        "recurring_bug_count": 6,
+        "po_recurrence_triage_20260720": "RECURRENCE (PO signal-queue triage 2026-07-20): pdf-extractor A-20 event-loop-stall recurred 5x 2026-07-19T20:46Z..2026-07-20T00:46Z (health endpoint unhealthy + multi-probe 0/3). Root-cause hypothesis: the /health server shares the extraction event loop / the worker times out during long PDFs; durable fix = isolate the health server onto a separate thread/process/port so /health answers <5s during an active /extract. DO NOT restart (a re-restart re-wedges on the next long PDF). Zone-hint: this is CODE work in apps/pdf-extractor/ (current zone=ops = deploy angle only). recurring-bug-escalation (2+ -> durable fix) flag raised; supervised:true set to block BOUNDED-1 idle auto-pickup. PLAN-ONLY, no dispatch this triage.",
+        "po_recurrence_triage_20260721": "HIGH-WATER RECURRENCE (PO signal-drain 2026-07-21T02:52:42Z): pdf-extractor A-11/A-12/A-13/A-20 event-loop stall now PERSISTENT ~30h+ CONTINUOUS (container 'Up but unhealthy' 27h->30h; ~49 signal_queue rows 2026-07-20T01:12..2026-07-21T02:41). Data-plane corroboration: C-11 pdf_documents 0-completed/48h (real, beyond the broken predicate). GENUINE degradation, NOT an FP. recurring_bug_count 5->6. ESCALATION DECISION: durable code fix now WARRANTED. zone corrected ops->apps/pdf-extractor (isolate /health server onto a separate thread/process/port so it answers <5s during an active /extract). PO recommends router route PDF-AVAIL-02-FIX to dev-pdf-extractor as a SUPERVISED dispatch (supervised:true retained to block BOUNDED-1 blind idle pickup). DO NOT restart (re-wedges on next long PDF); no user-gated container action taken. priority normal->high.",
+        "po_corroboration_20260721_pm": "HIGH-WATER CORROBORATION (PO converge-drain po-s147 2026-07-21T14:23:45Z): +26 more A-11/A-15/A-20 pdf-extractor event-loop-stall rows this session 2026-07-21T03:11Z..14:12Z (0/3 multi-probe, HTTP 000). SAME continuous outage — recurring_bug_count HELD at 6 (same episode, not a new one). Fix COMMITTED c78839c6c; DEPLOY user-gated (PO cannot authorize the rebuild). VPS-side B-06 '3/5 down' @06:33Z = single-occurrence VPS view of the same wedge (not re-emitted). DO NOT restart (re-wedges on next long PDF). Detection-only — no infra action."
       },
       {
         "id": "RAG-SERVICE-AVAIL-01-FIX",
@@ -7093,7 +8164,8 @@
         "title": "Fix mcp-server runtime memory leak: accumulates 87% in 12h despite fresh start at 5%",
         "type": "FIX",
         "zone": "apps/mcp-server",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MCP-MEMORY-CODE-LEAK"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MCP-MEMORY-CODE-LEAK",
+        "po_corroboration_20260721": "CORROBORATION / high-water (PO converge-drain po-s147 2026-07-21T14:23:45Z): 5 A-30 mcp-server MemPerc samples this session 94.43→90.58→88.38→88.53→88.81% — reclaimed from peak, WITHIN the documented 85–93% GC-sawtooth band, NO OOM, tripwire UNtripped (no OOMKilled, no >93%-no-dip, no >97%-sustained). Benign leak episode already tracked here → NO new mint. DO NOT escalate to ops; DO NOT recommend a restart (would destroy trajectory evidence for zero OOM-risk benefit — feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn)."
       },
       {
         "id": "FIX-CHEF-PUBLISHED-MARKER-RELEASE",
@@ -7272,7 +8344,8 @@
         "zone": "cross-service/",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-SIGNALQUEUE-DUP-ID-GUARD",
         "supervised": true,
-        "verify_note": "prior_status=TODO"
+        "verify_note": "prior_status=TODO",
+        "scope_extension_20260721": "SCOPE FOLD — improvement_proposal home (PO converge-drain po-s147 2026-07-21T14:23:45Z): route the auditor signal_queue COLLAPSE-to-single-upserted/last-seen-bumped row (for persistent findings, instead of N append-always NEW→po rows) + the auditor [OUTPUT-CONTRACT] rows_written SELF-TALLY-FIX (non-deterministic 0-when-actually-2 — feedback_auditor_signalqueue_append_always_telegram_only_dedup) into this row's scope. NON-URGENT: data is correct; the append-always E-3 ledger contract is PRESERVED (never skip row-minting) — only persistent-finding rows collapse/upsert for queue readability + PO triage load, and the self-report count is made honest. Route as improvement_proposal to agents-architect at implementation."
       },
       {
         "id": "FIX-AUDITOR-B05-BCTC-FRESHNESS-LAYER-SPLIT",
@@ -8830,8 +9903,16 @@
           "sys-20260719T211240-4569",
           "sys-20260719T224141-6c18",
           "sys-20260719T234143-684c",
-          "sys-20260720T004628-7e09"
-        ]
+          "sys-20260720T004628-7e09",
+          "sys-20260721T031143-17f5",
+          "sys-20260721T034143-2d83",
+          "sys-20260721T054134-1fd2",
+          "sys-20260721T064152-1453",
+          "sys-20260721T091219-684e",
+          "sys-20260721T094200-2cae",
+          "sys-20260721T141203-40b0"
+        ],
+        "po_corroboration_20260721": "CORROBORATION (PO converge-drain po-s147 2026-07-21T14:23:45Z): +7 more A-12 frontend:3001 / api-gateway:4000 CURL_ERR health-probe flaps this session 03:11Z..14:12Z, still CURL_ERR (transport error, NOT HTTP-5xx) while the MCP serving path (gateway→vn-market) stayed healthy every tick → strengthens the probe-side-FP hypothesis this SPIKE exists to isolate. 7 origin ids appended. Still plan-only, supervised."
       },
       {
         "id": "FIX-CHEF-L6-GOLD-FALSE-PREDICATE",
@@ -8980,6 +10061,40 @@
         "acceptance": "get_macro_snapshot() live call surfaces S&P 500 / Nasdaq / VIX numeric values; per-source isolation preserved (one symbol failing does not blank the others); tool doc updated to list the new symbols.",
         "depends": [],
         "note": "DDD: infrastructure-layer bounded extension of an existing tool (proven Yahoo Finance HTTP client — same client used for existing symbols) + macro domain formatting. NOT a new microservice. No build dependency; independent of FEAT-NEWS-GEOPOLITICAL-CLASSIFICATION (brief §5). Value note: shipping this tool alone does not yet change any agent output — its user-facing effect arrives with the gated market-watcher wiring follow-up above; hence medium priority vs the geopolitical-classification row which directly sharpens the live incident-response pipeline."
+      },
+      {
+        "id": "FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "high",
+        "size": "M",
+        "zone": "multi",
+        "owner": "architect",
+        "next_agent": "architect",
+        "plan_only": true,
+        "supervised": true,
+        "created_at": "2026-07-21T14:23:45Z",
+        "created_by": "po-s147-auditor-fp-converge-drain",
+        "title": "FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE — tune system-auditor health-check predicates so benign A-12/A-21/A-30 conditions stop re-emitting as fresh NEW→po signals every Tier-1 cycle (churn-without-convergence stopper)",
+        "problem": "A-12/A-20/A-30 (+A-21) re-emit as fresh NEW system-auditor→po signal_queue rows EVERY ~30min Tier-1 cycle all session with unchanged evidence — ~40 NEW rows accreted this session over ~30 cycles, well past the 3rd-consecutive-tick convergence bar. Folding an Nth time = churn-without-convergence. This mint STOPS the FP re-emission at the DETECTION source.",
+        "scope": [
+          "A-30 (mcp-server MemPerc): raise the WARN threshold above the documented 85–93% GC-sawtooth band AND gate on LOSS-OF-RECLAMATION / OOMKilled — NOT a single MemPerc snapshot. Model on the multi-probe reclamation check (07-19 RAW verify: 6 probes/65s caught GC dips). A benign in-band sawtooth must produce NO anomaly row.",
+          "A-12/A-04/A-13 (frontend:3001 / api-gateway:4000 health CURL_ERR): DEBOUNCE / flap-suppress — require N-consecutive failed probes before classifying a CURL_ERR (transport error, not HTTP-5xx) as a degradation. A single transient transport flap must not route a NEW→po signal.",
+          "A-21 (mcp-server RestartCount): WINDOWED / crash-only — RestartCount is CUMULATIVE-since-creation, not a crashloop. Model on mcp-server's own restartCadenceAlertJob.ts (rate-in-window, LastExitCode/OOMKilled gate).",
+          "dedup-ledger SUPPRESSES RE-EMISSION: for a finding whose dedup_key already holds an open ledger entry AND a tracked backlog home exists, the auditor must NOT re-route it as a fresh actionable NEW→po signal each cycle — bump a last-seen/high-water field on the existing row instead."
+        ],
+        "hard_constraint": "PRESERVE the E-3 append-always observation-ledger contract (docs/agents/system-auditor/init.md:38 / flow/main.md:632 — 'Always append to signal_queue regardless of dedup'). This fix reduces FALSE-POSITIVE firing + collapses persistent-finding re-emission; it must NEVER instruct the auditor to skip minting a GENUINE new anomaly (feedback_auditor_signalqueue_append_always_telegram_only_dedup). The queue collapse-to-single-row + rows_written tally readability part is SEPARATE — folded into FIX-SIGNALQUEUE-DUP-ID-GUARD (non-urgent).",
+        "genuine_tripwire_preserved": "A-30 MUST still fire on OOMKilled=true OR mem >~93% baseline with NO reclamation dips across all samples OR peak sustained >97% with no reclaim (mcp-server OOM = fleet-wide gateway outage). A-12 MUST still fire on a sustained (debounced) real outage. A-20 pdf-extractor wedge is a GENUINE persistent finding (tracked PDF-AVAIL-02-FIX) — NOT in scope to suppress its detection, only to collapse its re-emission.",
+        "acceptance": "After the tune: a full Tier-1 cycle with mcp-server mem in-band (85–93% sawtooth, reclaiming) + a single transient A-12 CURL_ERR + cumulative-but-stable A-21 RestartCount produces ZERO new NEW→po signal_queue rows for those checks, WHILE a synthetic OOMKilled / >97%-no-reclaim / N-consecutive-A-12-fail still emits.",
+        "verification_gate": "≥3 consecutive live Tier-1 cycles show 0 new A-12/A-21/A-30 NEW→po rows in signal_queue (jq delta) AND a synthetic OOMKilled/sustained-no-reclaim probe still emits an A-30 anomaly. Detection-only fix — NO deploy/restart of any monitored service by this task.",
+        "refs": [
+          "feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn",
+          "feedback_auditor_signalqueue_append_always_telegram_only_dedup",
+          "feedback_recurring_bug_escalation",
+          "project_systemic_review_0704_churn_without_convergence"
+        ],
+        "recurring_bug_count": 3,
+        "note": "Minted on the explicit router CONVERGE directive (3rd+ consecutive-tick re-emit; PO recorded these plan-only twice prior and did NOT mint — this converge mint ends that cycle). supervised:true blocks BOUNDED-1 idle auto-pickup; owner=architect designs the predicate + dedup-suppression across the auditor flow-doc thresholds + any mcp-server health-job code, then agent-father/dev implements. PO does NOT write the predicate code. Detection-only — no deploy."
       }
     ],
     "closed_sprints": [
@@ -10738,6 +11853,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-07-20T05:26:06Z",
+  "_updated_at": "2026-07-21T02:52:42Z",
   "_updated_by": "po"
 }
