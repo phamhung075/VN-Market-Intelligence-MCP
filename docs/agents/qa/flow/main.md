@@ -1,4 +1,4 @@
-<!-- size-justification: 227L — atomic QA gate flow with JUMP-TO dispatch + BCTC eval hard-gate + mock-production guard (pipeline / approved / changes-requested / architect-review / clean / emergency); TDD/DDD/security/eval/mock-guard checklist steps are tightly sequential and cannot decompose without losing gate ordering; mandatory decision-journal per-task step at verdict routing. +11L: WF-1 error-boundary STOP-RELEASE block (AC-WF1-3). +4L: WF-3 INV-GATEWAY-1 annotations. +1L: FIX-QA-NOTEBOOK-WRITE-SELFCAP-200L APPEND class annotation. -->
+<!-- size-justification: 227L — atomic QA gate flow with JUMP-TO dispatch + BCTC eval hard-gate + mock-production guard (pipeline / approved / changes-requested / architect-review / clean / emergency); TDD/DDD/security/eval/mock-guard checklist steps are tightly sequential and cannot decompose without losing gate ordering; mandatory decision-journal per-task step at verdict routing. +11L: WF-1 error-boundary STOP-RELEASE block (AC-WF1-3). +4L: WF-3 INV-GATEWAY-1 annotations. +1L: FIX-QA-NOTEBOOK-WRITE-SELFCAP-200L APPEND class annotation. UNBLOCK-DEVTEAM-DISPATCH-GATE-STAGING-DEADLOCK 2026-07-22: +42L — Direct-Commit Verify entry point (verify-committed/-approved/-changes), the hard qa-side prerequisite for dev-team's Review-Lane QA-Drain (every one of its 32 live source rows has branch:null, incompatible with the `pipeline` JUMP-TO's git-checkout precondition); additive only, `pipeline`/`approved`/`changes-requested` unchanged. -->
 # QA — Main Flow
 
 **Tools:** `docs/agents/tools/package/qa.md`
@@ -52,6 +52,7 @@ JUMP-TO convention → skill: `.claude/skills/jump-to/SKILL.md`
 |---|---|
 | Normal Step-3 QA (post-dev handoff) | `pipeline` |
 | Step-2 CLEAN spawn (branch cleanup) | run inline CLEAN one-liner in Role section, then JUMP TO `end` |
+| dev-team Review-Lane QA-Drain spawn (`mode=verify-committed` in spawn context) | `verify-committed` |
 | Pipeline result: all green, no arch impact | `approved` |
 | Pipeline result: issues found (round < 2) | `changes-requested` |
 | Pipeline result: arch concern (new domain/MCP tool/cross-service) | `architect-review` |
@@ -145,6 +146,51 @@ verdict: APPROVED | CHANGES_REQUESTED
 - file.ts:42 — exact issue
 ```
 **Full** (new tool/domain service/security): test results, DDD, security, code quality, blockers, merge commit.
+
+<!-- jump:verify-committed -->
+## Direct-Commit Verify (dev-team Review-Lane QA-Drain rows, `branch:null`)
+
+UNBLOCK-DEVTEAM-DISPATCH-GATE-STAGING-DEADLOCK (architect, 2026-07-22) — the qa-side HARD PREREQUISITE for `docs/agents/dev-team/flow/main.md` § Review-Lane QA-Drain (folds `FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN`). Every row that drain claims carries `branch: null` — committed straight to `main` via the FIX direct-execute path, never on a `task/NNN-*` branch, often with no `docs/handoffs/TASK_NNN.md` at all (grep-verified 2026-07-21: all 32 live `review[]` rows). The normal `pipeline` JUMP-TO's first line (`git checkout task/NNN-kebab-description`) cannot run against these — using it here guarantee-fails the spawn. Additive entry point only; `pipeline`/`approved`/`changes-requested` are unchanged.
+
+**Input:** the row's own `task_board.qa[]` entry — self-contained (`id`, `commit`, `files[]`, `review_note`/`status_note`, `owner`): `jq --arg id "<task_id>" '.task_board.qa[] | select(.id==$id)' docs/data/orch/orch-state.json`. No handoff-file requirement.
+
+**Verify (no checkout — QA already runs on `main`):**
+```bash
+# 1. Refuse prose-only trust (feedback_router_verify_raw_not_badges) — require a concrete commit ref:
+[ -n "$COMMIT" ] && [ "$COMMIT" != "pending" ] && [ "$COMMIT" != "null" ] || ISSUE="no commit reference to verify"
+
+# 2. Commit must be real and on main's ancestry:
+git merge-base --is-ancestor "$COMMIT" main || ISSUE="$COMMIT not found in main ancestry"
+
+# 3. Commit must touch the row's own claimed files (if `.files[]` present):
+git show --stat "$COMMIT" | grep -qF "<each files[] entry>"   # each must appear, else ISSUE
+
+# 4. Re-run REAL verification — never trust the row's own review_note prose alone:
+bun test <touched test file(s) inferred from files[], else targeted zone suite>
+bun tsc --noEmit
+bash scripts/audits/mock-guard.sh --files "<touched production (non-test) files, if any>"
+```
+No `ISSUE` set AND all checks pass → JUMP TO `vc-approved`. Any `ISSUE` or failing check → JUMP TO `vc-changes`.
+
+→ journal (MANDATORY): skill `.claude/skills/decision-journal/SKILL.md` § Write Entry [task_id: "<id>"]
+
+<!-- jump:vc-approved -->
+**verify-committed-approved:** append `[QA] Review Record (direct-commit verify)` — since there is no handoff file, append to the row's own `status_note` field instead of `docs/handoffs/TASK_NNN.md`. Flip `status: QA -> DONE_VERIFIED`, move `.task_board.qa[] -> .task_board.done_verified[]`, IN THE SAME `orch-apply.sh` write (status-flip = lane-move MUST, `execute-tier.md` § MUST — CANONICAL:SSOT-STATUSFLIP-LANEMOVE). No merge/push/branch-delete step — the work is already on `main`.
+```
+## RETURN
+DONE: Task <id> verified against main HEAD commit <commit> — no branch/merge needed (already on main)
+NEXT: pm | mark done, unblock downstream
+PIPELINE: continue
+```
+
+<!-- jump:vc-changes -->
+**verify-committed-changes:** append the failing check(s)/`ISSUE` to the row's `status_note` (file:line where applicable). Move `.task_board.qa[] -> .task_board.review[]` (back to review, status `QA -> REVIEW`), stamp `redispatch_count += 1` (mirrors the dead-worker resume convention already live on board rows, e.g. `UC-SDF-P4`'s `redispatch_count`/`resume_note`). Route to the row's own `owner` field, NOT `fixer` — there is no task branch for a fixer to work on; the owner must apply a NEW direct commit.
+```
+## RETURN
+DONE: Direct-commit verify failed for <id> — see status_note for issues
+NEXT: <row's own .owner field, e.g. developer/dev-<zone>/ba> | apply a new direct commit fixing the listed issues
+PIPELINE: continue
+```
 
 ## Approval
 

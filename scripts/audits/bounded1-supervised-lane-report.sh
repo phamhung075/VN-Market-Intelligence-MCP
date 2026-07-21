@@ -48,6 +48,24 @@
 #     conflating them here would fail the gate on a defect this task was
 #     never scoped to fix.
 #
+# NOT THE DoD/ACCEPTANCE GATE for dispatch reachability (2026-07-22 —
+# UNBLOCK-DEVTEAM-DISPATCH-GATE-STAGING-DEADLOCK): this script tests LANE
+# RESOLUTION ONLY — it does not, and was never designed to, prove the
+# promote/claim scripts that use that resolution are ever actually
+# reachable by the flow's own firing gate. It shipped GREEN (16/16 resolved)
+# on 2026-07-21 for FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER while that
+# fix's own gate `(ready+in_progress) < 2` was permanently false against
+# the live board — a false-green on the wrong claim. The satisfiability
+# instrument is scripts/audits/devteam-dispatch-gate-satisfiability.sh
+# (builds a live-shaped saturated fixture and asserts the gates FIRE and
+# DRAIN). This script remains correct and useful for what it actually
+# tests (lane resolution) and is kept for that purpose.
+#
+# jq defs below now `include "scripts/lib/devteam-eligibility"` (migrated
+# 2026-07-22, consolidating a 3rd hand-copied set of the same predicates —
+# see that file's header for the design-principle rationale, adopted from
+# SPIKE-BOUNDED1-ELIGIBILITY-CONTRACT-REVIEW).
+#
 # Usage: bash scripts/audits/bounded1-supervised-lane-report.sh
 # Exit 0 = every supervised+plan_only row has a resolved dispatch lane.
 # Exit 1 = at least one supervised+plan_only row has dispatch-lane=none.
@@ -70,40 +88,7 @@ NOW_ISO=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 jq -c '[.project.agents[] | {id, type}]' "$SYSMAP" > "$WORK/roster.json"
 
 JQ_DEFS='
-  def as_dep_array:
-    if . == null then []
-    elif (type == "string") then [.]
-    elif (type == "array") then .
-    else [] end;
-
-  def priority_rank:
-    ((.priority // "") | ascii_downcase) as $p
-    | if   ($p | test("^p0$|^critical$"))              then 0
-      elif ($p | test("^p1$|^high$"))                  then 1
-      elif ($p | test("^p2$|^med(ium)?$|^normal$"))    then 2
-      elif ($p | test("^p3$|^low$"))                   then 3
-      else 9
-      end;
-
-  def effective_supervised($detail_items):
-    (.supervised == true)
-      or ( (.id != null) and ($detail_items[.id].supervised // false) == true );
-
-  def effective_plan_only($detail_items):
-    (.plan_only == true)
-      or ( (.id != null) and (($detail_items[.id].plan_only // false) == true) );
-
-  def effective_owner($detail_items):
-    (if (.id != null) then $detail_items[.id].owner else null end) as $detail_owner
-    | if ($detail_owner != null) and (($detail_owner | type) == "string") and ($detail_owner != "") then
-        $detail_owner
-      else (.owner // "") end;
-
-  def effective_next_agent($detail_items):
-    (if (.id != null) then $detail_items[.id].next_agent else null end) as $detail_na
-    | if ($detail_na != null) and (($detail_na | type) == "string") and ($detail_na != "") then
-        $detail_na
-      else (.next_agent // "") end;
+  include "scripts/lib/devteam-eligibility";
 
   def dispatch_lane($detail_items; $roster_map):
     (effective_next_agent($detail_items)) as $na
@@ -138,11 +123,7 @@ jq -c \
   --slurpfile detail "$DETAIL" \
   --slurpfile roster "$WORK/roster.json" \
   "$JQ_DEFS"'
-  (($detail[0].items // []) as $raw_items
-    | if ($raw_items | type) == "object" then $raw_items
-      else ($raw_items | map(select(.id != null) | {key: .id, value: .}) | from_entries)
-      end
-  ) as $detail_items
+  (detail_items_from($detail)) as $detail_items
   | ($roster[0] | map({(.id): .type}) | add) as $roster_map
   | [ .task_board.backlog[]
     | select((. | effective_supervised($detail_items)) and (. | effective_plan_only($detail_items)))
@@ -155,11 +136,7 @@ jq -c \
   --slurpfile detail "$DETAIL" \
   --slurpfile roster "$WORK/roster.json" \
   "$JQ_DEFS"'
-  (($detail[0].items // []) as $raw_items
-    | if ($raw_items | type) == "object" then $raw_items
-      else ($raw_items | map(select(.id != null) | {key: .id, value: .}) | from_entries)
-      end
-  ) as $detail_items
+  (detail_items_from($detail)) as $detail_items
   | ($roster[0] | map({(.id): .type}) | add) as $roster_map
   | [ .task_board.backlog[]
     | select((. | effective_supervised($detail_items)) or (. | effective_plan_only($detail_items)))

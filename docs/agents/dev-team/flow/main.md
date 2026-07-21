@@ -1,4 +1,4 @@
-<!-- size-justification: 697L — thin dispatcher; PREFLIGHT script-first gate + JUMP-TO table route Steps 0a/0a.5/3/4 to sub-flows; Steps 0b/1/2 (session-gate, PO triage, planning matrix) too small to extract; full change history in git log. -->
+<!-- size-justification: 868L — thin dispatcher; PREFLIGHT script-first gate + JUMP-TO table route Steps 0a/0a.5/3/4 to sub-flows; Steps 0b/1/2 (session-gate, PO triage, planning matrix) too small to extract; full change history in git log. UNBLOCK-DEVTEAM-DISPATCH-GATE-STAGING-DEADLOCK 2026-07-22: +113L — Ready-Lane Consumer + Review-Lane QA-Drain sections (2 new idle-fallthrough pickup lanes, mirroring BOUNDED-1/SLS's existing inline shape; extracting to a sub-flow would break the single linear head-idle fall-through chain BOUNDED-1→SLS→RLC→QA-Drain that makes same-tick `.head`-collision-freedom provable by control-flow inspection alone). -->
 <!-- BGFAN-1: ALL Agent spawns from THIS dispatcher MUST use run_in_background=true. Canonical rule + rationale → docs/protocols/agent-chaining-protocol.md § Background Spawn Mandate. Background ≠ parallel: gated chain (po→ba→…→qa) still serializes on completion notification; independent tier tasks fan out concurrently. Commit-mutex serialization unchanged. -->
 # Dev Team — Cron Orchestration Flow (Thin Dispatcher)
 
@@ -497,8 +497,10 @@ head_updated_at   =$(printf '%s' "$HEAD" | jq -r '.updated_at')
 
 Runs ONLY on the head-idle fall-through above (`head.status == "idle"` or `head` missing/v1), BEFORE PO triage is spawned. Fixes the root-cause gap SYSREMAKE-P2-DEVTEAM-BACKLOG-PICKUP-BOUNDED1: with `ready[]=0` and `in_progress[]=0`, nothing previously promoted or claimed a plain BACKLOG/TODO row — the backlog pile was inert to unattended automation (PO triage only self-initiates NEW sprints off signals/Telegram, it never sweeps plain backlog[] rows). BOUNDED-1 caps this lane at ONE task in flight — user-gated 2026-07-04; do NOT raise past 1 for this lane (the existing WIP≤2 invariant below is the separate, human/router-supervised dispatch budget).
 
+**WIP FORMULA (corrected 2026-07-22, UNBLOCK-DEVTEAM-DISPATCH-GATE-STAGING-DEADLOCK):** WIP is `.task_board.in_progress` length ONLY — a pure concurrency count. `ready[]` is a STAGING queue (promoted-but-not-yet-claimed work, including rows placed there by other sources — PM/architect decomposition, PO triage, the Supervised-Lane Sweep, the Ready-Lane Consumer below), never concurrency. The prior formula `(ready|length)+(in_progress|length)` let a saturated `ready[]` (36 rows live 2026-07-21, mostly PM epic-decomposition children this gate had no way to drain — see the Ready-Lane Consumer below) permanently evaluate `WIP<1` as false even when `in_progress==0` — instance 9 on the count-threshold-gate class, deadlocking BOTH this gate and the Supervised-Lane Sweep's gate simultaneously. Root cause + fix: `docs/agent-memory/decisions/sprint-UNBLOCK-DEVTEAM-DISPATCH-GATE-DEADLOCK-po.md`. DoD/regression instrument (tests gate SATISFIABILITY on a live-shaped saturated fixture, not lane resolution): `scripts/audits/devteam-dispatch-gate-satisfiability.sh`.
+
 ```bash
-WIP=$(jq '(.task_board.ready|length)+(.task_board.in_progress|length)' docs/data/orch/orch-state.json)
+WIP=$(jq '.task_board.in_progress|length' docs/data/orch/orch-state.json)
 if [ "$WIP" -lt 1 ]; then
   NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
   jq --arg now "$NOW" \
@@ -528,10 +530,12 @@ FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER (architect, 2026-07-21). Runs immediatel
 
 **Problem this closes:** rows carrying BOTH `effective_supervised == true` AND `effective_plan_only == true` are correctly withheld from BOUNDED-1 (by design — a deliberate-dispatch, not-an-autonomous-fix class) but scripts/devteam-backlog-promote-bounded1.jq's own comments claimed they "still launch normally via the router-adjudicated path (Step 1 PO triage / manual dispatch)". CONFIRMED FALSE 2026-07-21: neither `docs/agents/po/flow/main.md` (PO's own pre-checks/No-Task-Guard read `.task_board` for blocked/pending/in-progress work and Telegram reports — never a priority-ordered sweep of `backlog[]` for supervised/plan_only rows) nor this file (before this fix) ever dispatched that set. Result: P0 rows idled 6+ days (`FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS`) purely because the promised destination did not exist. Root-cause confirmation: `scripts/po-signaldrain-20260721T16-bctcscope-cowork-loopclosure.jq` (the PO signal-drain that minted this very task) states it explicitly in its own `question` field.
 
-**Fix — SLS spends the SECOND slot of the pre-existing WIP≤2 invariant** (`docs/agents/dev-team/flow/main.md` § Invariants) — NOT a new budget. BOUNDED-1's own header comment already names this slot: *"[WIP≤2] is the existing, separate router/PO WIP budget for supervised/manual dispatch; this auto-pickup lane [BOUNDED-1] is bounded independently and more conservatively [WIP<1]"*. SLS is the automated writer for that previously-named-but-never-used slot.
+**Fix — SLS spends the SECOND slot of the pre-existing WIP≤2 invariant** (`docs/agents/dev-team/flow/main.md` § Invariants) — NOT a new budget. BOUNDED-1's own header comment already names this slot: *"[WIP≤2] is the existing, separate router/PO WIP budget for supervised/manual dispatch; this auto-pickup lane [BOUNDED-1] is bounded independently and more conservatively [WIP<1]"*. SLS is the automated writer for that previously-named-but-never-used slot. The Ready-Lane Consumer immediately below shares this SAME slot (a 2nd/3rd writer, not a 3rd budget).
+
+**WIP2 FORMULA (corrected 2026-07-22, UNBLOCK-DEVTEAM-DISPATCH-GATE-STAGING-DEADLOCK):** same fix as BOUNDED-1's WIP above — `.task_board.in_progress` length ONLY, never `ready[]`. The pre-fix formula `(ready|length)+(in_progress|length)` was 37 against the live board on the exact day this sweep shipped (ready=36, in_progress=1), so `WIP2<2` was false from the moment this section was written — this sweep was dead on arrival despite its own acceptance instrument (`scripts/audits/bounded1-supervised-lane-report.sh`, lane-resolution only) showing green. See `docs/agent-memory/decisions/sprint-UNBLOCK-DEVTEAM-DISPATCH-GATE-DEADLOCK-po.md` and the satisfiability instrument `scripts/audits/devteam-dispatch-gate-satisfiability.sh`.
 
 ```bash
-WIP2=$(jq '(.task_board.ready|length)+(.task_board.in_progress|length)' docs/data/orch/orch-state.json)
+WIP2=$(jq '.task_board.in_progress|length' docs/data/orch/orch-state.json)
 if [ "$WIP2" -lt 2 ]; then
   NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
   jq --arg now "$NOW" \
@@ -542,7 +546,7 @@ if [ "$WIP2" -lt 2 ]; then
     docs/data/orch/orch-state.json | bash "$PROJECT_ROOT/scripts/orch-apply.sh" || true
   sls_head_status=$(jq -r '.head.status' docs/data/orch/orch-state.json)
 fi
-# WIP2>=2, or nothing eligible in the supervised+plan_only quarantine -> fall through unchanged, continue to Session Gate / Step 1 PO triage
+# WIP2>=2, or nothing eligible in the supervised+plan_only quarantine -> fall through unchanged, continue to the Ready-Lane Consumer below
 ```
 
 If `sls_head_status = "in_progress"` (a row was claimed this tick):
@@ -574,7 +578,111 @@ else:
 - **Promote** (`scripts/devteam-backlog-promote-supervised-lane-sweep.jq`): selects the SINGLE top-priority row from `.task_board.backlog[]` where `status ∈ {BACKLOG, TODO}` AND `effective_supervised == true` AND `effective_plan_only == true` (the exact doubly-gated class, same board-OR-detail / detail-first-board-fallback `effective_*` precedence as BOUNDED-1 — no forked logic) AND NOT an epic wrapper AND `depends_on` is eligible AND NOT detail-DEFERRED*. Resolves `dispatch_lane` = `effective_next_agent` if non-empty, ELSE `effective_owner` if non-empty, ELSE `"developer"` (defensive fallback only — every live row resolves to a real specialist today, verified by the report script below). Stamps the promoted row with `promoted_at`/`promoted_by="dev-team (supervised-lane sweep)"`/`promotion_note`/`dispatch_lane` — **`supervised`/`plan_only` are carried through UNCHANGED** (still `true`); this is an ADDITIVE lane assignment, never a gate-clear. No-op if nothing eligible.
 - **Claim** (`scripts/devteam-backlog-claim-supervised-lane-sweep.jq`): moves the swept ready row → in_progress, sets `.head.next_agent` to the row's own already-resolved `dispatch_lane` field DIRECTLY (never a `"developer"` fallback-of-last-resort — unlike BOUNDED-1's claim script, because the promote step already did that resolution). No-op if nothing SLS-stamped is waiting in `ready[]`.
 - Both writes go through `scripts/orch-apply.sh` ONLY (Zod + dup-key gated, CAS-guarded, atomic rename) — NEVER raw `mv`/`cp`/`>`/full-doc overwrite. Idempotency + Zod-schema + conservation dry-run verified 2026-07-21 (scratch-copy replay, never against the live file).
-- **Acceptance / regression instrument:** `scripts/audits/bounded1-supervised-lane-report.sh` — read-only, run live, lists every supervised+plan_only row with its resolved `dispatch_lane` and age in days; exits 1 if any such row's lane is unresolved (`none`). Also prints (informational, non-gating) the wider supervised-XOR-plan_only set for visibility into the residual NON-DEV-OWNER/NON-DEV-NEXT_AGENT-only gap noted above.
+- **Acceptance / regression instrument:** `scripts/audits/bounded1-supervised-lane-report.sh` — read-only, run live, lists every supervised+plan_only row with its resolved `dispatch_lane` and age in days; exits 1 if any such row's lane is unresolved (`none`). Also prints (informational, non-gating) the wider supervised-XOR-plan_only set for visibility into the residual NON-DEV-OWNER/NON-DEV-NEXT_AGENT-only gap noted above. **This instrument tests LANE RESOLUTION only, not gate satisfiability** — it shipped green while this sweep's own firing gate was dead (see WIP2 note above). The satisfiability instrument is `scripts/audits/devteam-dispatch-gate-satisfiability.sh`.
+
+---
+
+### Ready-Lane Consumer (RLC)
+
+UNBLOCK-DEVTEAM-DISPATCH-GATE-STAGING-DEADLOCK (architect, 2026-07-22), PO ruling item (2). Runs immediately after the Supervised-Lane Sweep block above, still inside the same head-idle fall-through, still BEFORE Step 1 PO triage — reached ONLY when SLS did NOT claim+dispatch this tick. Control flow guarantees `.head` is still idle whenever this block runs (same argument as SLS's own placement after BOUNDED-1).
+
+**Problem this closes:** `ready[]` holds rows from three sources — BOUNDED-1's own promote script, SLS's own promote script, and PM/architect decomposition (epic children minted DIRECTLY into `ready[]`, never through either promote script — e.g. `CCATO-MCP-T1..T8`, `SYSREMAKE-P2-T1..T9`, `DESIGN-COWORK-FANOUT-T1..T8`, 25 rows live 2026-07-21, all carrying a resolved inline `next_agent`). BOUNDED-1's and SLS's own CLAIM scripts each only claim rows stamped with their OWN `promoted_by` marker — the third source has neither marker and was therefore **never claimable by anything**: not by BOUNDED-1/SLS (marker mismatch), not by PO triage (`po/flow/main.md` never sweeps `ready[]` by priority), not by any other step in this file. RLC is the missing generic consumer.
+
+Shares the SAME WIP≤2 budget as SLS (`.task_board.in_progress` length ONLY, per the corrected formula above) — a 3rd writer of the same named slot, not a new budget.
+
+```bash
+WIP3=$(jq '.task_board.in_progress|length' docs/data/orch/orch-state.json)
+if [ "$WIP3" -lt 2 ]; then
+  NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+  jq --arg now "$NOW" \
+    --slurpfile detail "$PROJECT_ROOT/docs/data/orch/archive/backlog-detail.json" \
+    -f "$PROJECT_ROOT/scripts/devteam-backlog-claim-ready-lane-consumer.jq" \
+    docs/data/orch/orch-state.json | bash "$PROJECT_ROOT/scripts/orch-apply.sh" || true
+  rlc_head_status=$(jq -r '.head.status' docs/data/orch/orch-state.json)
+fi
+# WIP3>=2, or nothing eligible in ready[] -> fall through unchanged, continue to the Review-Lane QA-Drain below
+```
+
+If `rlc_head_status = "in_progress"` (a row was claimed this tick):
+```
+# Dispatcher-wrap (mirrors SLS/S4 UNBLOCK) then spawn the RESOLVED specialist DIRECTLY.
+# Do NOT "JUMP TO execute" — same rationale as SLS: the claimed row's next_agent is
+# already resolved (dev-* or non-dev-*), and zone-detect's dev-only Tier-3 fallback
+# would silently discard that resolution.
+bare_task_id = head.active_task_id
+resume_key   = "task:" + bare_task_id
+outer_claim  = call_tool(server="vn-market", tool="task_claim", arguments={
+  task_id: resume_key, task_kind: "sprint-task",
+  owner_agent: "dev-team", owner_client_session: $CLAUDE_CODE_SESSION_ID,   // REQUIRED
+  ttl_seconds: 3600,
+  payload: "{\"site\":\"RLC\",\"spawning\":\"" + head.next_agent + "\"}"
+})
+if not outer_claim.claimed:
+  log "[dev-team] RLC SKIP " + bare_task_id + " — held by peer session"
+  # fall through to Step 1 (do NOT spawn)
+else:
+  try:
+    Agent(head.next_agent, context... + head.next_action, run_in_background=true)   # (background) — BGFAN-1
+  finally:
+    call_tool(server="vn-market", tool="task_release", arguments={ task_id: resume_key, owner_client_session: $CLAUDE_CODE_SESSION_ID })
+  JUMP TO end   # RLC dispatch queued this tick; do not also fall through to PO triage in the same tick
+```
+
+- **Claim** (`scripts/devteam-backlog-claim-ready-lane-consumer.jq`): single script, no promote half needed (candidates are already in `ready[]`). Picks the top-priority (priority_rank, FIFO tiebreak) `ready[]` row where `status ∈ {READY, TODO}` AND NOT supervised AND NOT plan_only AND NOT an epic wrapper AND `depends_on` is satisfied (cross-lane DONE_VERIFIED-only — LOAD-BEARING: the epic children carry real sequential `depends_on` chains onto their own siblings, e.g. `SYSREMAKE-P2-T9-QA-GATE` depends on 8 other T-rows; without this gate RLC would dispatch a child before its parent lands) AND NOT detail-DEFERRED* AND carries a resolved `effective_next_agent` or `effective_owner`. Moves `ready[] -> in_progress[]`, sets `.head.next_agent` to the resolved lane directly (no `"developer"` fabrication — a row with no resolvable next_agent/owner is simply not a candidate). No-op if nothing eligible.
+- Write goes through `scripts/orch-apply.sh` ONLY. Idempotency + Zod-schema + conservation dry-run verified 2026-07-22 (scratch-copy replay against the live board — confirmed it correctly excludes rows with unsatisfied `depends_on`, e.g. `CCATO-MCP-T3` before `CCATO-MCP-T1` is `DONE_VERIFIED`, and correctly excludes supervised P0 rows despite higher raw priority).
+- **Acceptance instrument:** `scripts/audits/devteam-dispatch-gate-satisfiability.sh` (shared with BOUNDED-1/SLS/QA-Drain — see below).
+
+---
+
+### Review-Lane QA-Drain
+
+UNBLOCK-DEVTEAM-DISPATCH-GATE-STAGING-DEADLOCK (architect, 2026-07-22), PO ruling item (3) — FOLDS `FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN` (backlog since 2026-07-12; this section + its scripts ARE that row's own SUGGESTED REMEDY, implemented). Runs immediately after the Ready-Lane Consumer block above, still inside the same head-idle fall-through, still BEFORE Step 1 PO triage — reached ONLY when RLC did NOT claim+dispatch this tick.
+
+**Problem this closes:** `review[]` is a WRITE-ONLY lane in this flow — every developer DONE pushes a row INTO `review[]`; grep-confirmed (2026-07-12, re-confirmed 2026-07-21) nothing anywhere in `docs/agents/dev-team/flow/*.md` or `docs/agents/po/flow/main.md` ever scans `.task_board.review[]` for a stranded row whose inline qa dispatch never ran (dev session died, host wedge, etc). Live 2026-07-21: 32 review rows, 10+ with `next_agent=='qa'` and `qa[]==0`, oldest frozen 11+ days.
+
+**HARD PREREQUISITE (do not treat as separable — PO AC):** every live `review[]` row carries `branch: null` (grep-verified, all 32) — committed straight to `main` by the FIX direct-execute path, never on a `task/NNN-*` branch. QA's normal `pipeline` JUMP-TO requires `git checkout task/NNN-*` (`docs/agents/qa/flow/main.md` line ~113) and CANNOT run against these rows. This is why `docs/agents/qa/flow/main.md` now carries an additive `verify-committed` JUMP-TO entry (§ Direct-Commit Verify) — QA-drain-claimed rows MUST be spawned in that mode, never the normal `pipeline` mode.
+
+Dedicated `qa[] < 1` cap (NOT the shared WIP≤2 in_progress budget above) — per the row's own 2026-07-12 SUGGESTED REMEDY and because this lane moves rows into a different board lane entirely.
+
+```bash
+QA_WIP=$(jq '.task_board.qa|length' docs/data/orch/orch-state.json)
+if [ "$QA_WIP" -lt 1 ]; then
+  NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+  jq --arg now "$NOW" \
+    --slurpfile detail "$PROJECT_ROOT/docs/data/orch/archive/backlog-detail.json" \
+    -f "$PROJECT_ROOT/scripts/devteam-review-claim-qa-drain.jq" \
+    docs/data/orch/orch-state.json | bash "$PROJECT_ROOT/scripts/orch-apply.sh" || true
+  qadrain_head_status=$(jq -r '.head.status' docs/data/orch/orch-state.json)
+fi
+# QA_WIP>=1, or nothing eligible in review[] -> fall through unchanged, continue to Session Gate / Step 1 PO triage
+```
+
+If `qadrain_head_status = "in_progress"` (a row was claimed this tick):
+```
+bare_task_id = head.active_task_id
+resume_key   = "task:" + bare_task_id
+outer_claim  = call_tool(server="vn-market", tool="task_claim", arguments={
+  task_id: resume_key, task_kind: "sprint-task",
+  owner_agent: "dev-team", owner_client_session: $CLAUDE_CODE_SESSION_ID,   // REQUIRED
+  ttl_seconds: 3600,
+  payload: "{\"site\":\"QA-DRAIN\",\"spawning\":\"qa\"}"
+})
+if not outer_claim.claimed:
+  log "[dev-team] QA-DRAIN SKIP " + bare_task_id + " — held by peer session"
+else:
+  try:
+    # Spawn qa with mode=verify-committed (head.next_action already carries this instruction).
+    # Do NOT spawn qa's normal pipeline mode — this row has no task branch/handoff to check out.
+    Agent("qa", context... + head.next_action + " mode=verify-committed", run_in_background=true)
+  finally:
+    call_tool(server="vn-market", tool="task_release", arguments={ task_id: resume_key, owner_client_session: $CLAUDE_CODE_SESSION_ID })
+  JUMP TO end
+```
+
+- **Claim** (`scripts/devteam-review-claim-qa-drain.jq`): picks the OLDEST (by `updated_at // reviewed_at // created_at`, missing timestamp treated as oldest — age-ordered, NOT priority-ordered, per the row's own remedy) `review[]` row where `status == "REVIEW"` (excludes BLOCKED — negative control) AND `effective_next_agent == "qa"` (PRIMARY set only; the null/non-qa subset is a different, not-yet-covered owner-triage class, surfaced non-silently by the report script below, never silently treated as fine). Moves `review[] -> qa[]`, status `REVIEW -> QA`, sets `.head.next_agent = "qa"` directly.
+- Write goes through `scripts/orch-apply.sh` ONLY. Idempotency + Zod-schema + conservation dry-run verified 2026-07-22.
+- **Visibility instrument (non-gating):** `scripts/audits/devteam-review-lane-drain-report.sh` — read-only; PRIMARY table = the auto-dispatched set above; SECONDARY table = the null/non-qa `next_agent` subset (PO/architect triage queue, per PO AC(1) — never silently dropped).
+- **Acceptance instrument:** `scripts/audits/devteam-dispatch-gate-satisfiability.sh` — shared with BOUNDED-1/SLS/RLC; asserts this lane's gate FIRES and DRAINS (`review[]` shrinks, `qa[]` grows) against the live-shaped saturated fixture (review≈32).
 
 ---
 
@@ -720,11 +828,16 @@ Covers: post-execution checks (4.0–4.1), Compact Checkpoint (4.5), doc self-he
 - `scripts/devteam-backlog-promote-bounded1.jq` + `scripts/devteam-backlog-claim-bounded1.jq` — generalized (no hardcoded task IDs), idempotent BOUNDED-1 backlog→ready→in_progress pickup for the Idle-capacity backlog pickup step above (SYSREMAKE-P2-DEVTEAM-BACKLOG-PICKUP-BOUNDED1); promote applies a depends_on eligibility gate (FIX-DEVTEAM-BOUNDED1-DEPENDS-ON-GATE, 2026-07-08) plus the detail-DEFERRED / non-dev-owner / plan-only / non-dev-next_agent gates (FIX-DEVTEAM-BOUNDED1-DETAIL-DISPOSITION-GATE + FIX-DEVTEAM-BOUNDED1-PLAN-ONLY-GATE + FIX-DEVTEAM-BOUNDED1-DETAIL-NEXTAGENT-NONDEV-GATE, 2026-07-12; plan-only + non-dev-next_agent generalized to effective board-OR-detail by FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE, 2026-07-16, subsuming FIX-DEVTEAM-BOUNDED1-MAINTLANE-NEXTAGENT-GATE) — see step description above. Usage: `jq --arg now "$NOW" --slurpfile detail docs/data/orch/archive/backlog-detail.json -f scripts/devteam-backlog-promote-bounded1.jq docs/data/orch/orch-state.json | bash scripts/orch-apply.sh` then the claim script the same way (claim script unchanged, no `--slurpfile` needed).
 - `scripts/audits/devteam-bounded1-detail-disposition-gate-verify.sh` — read-only regression verifier for the FIX-DEVTEAM-BOUNDED1-DETAIL-DISPOSITION-GATE + PLAN-ONLY-GATE + DETAIL-NEXTAGENT-NONDEV-GATE + EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE gates above; builds synthetic/dynamic single-row fixtures from live `docs/data/orch/orch-state.json` + `backlog-detail.json` data (discovered dynamically where possible, no hardcoded task IDs; never writes back, no `orch-apply.sh` call) and asserts a detail-DEFERRED* row, a non-dev-owner+null-next_agent row, a plan_only row (board-inline or detail), a non-dev-next_agent row (board-inline or detail, with or without a null board next_agent), are NEVER promoted while a clean/dev-routable row still is. Usage: `bash scripts/audits/devteam-bounded1-detail-disposition-gate-verify.sh` (exit 0 = pass).
 - `scripts/devteam-backlog-promote-supervised-lane-sweep.jq` + `scripts/devteam-backlog-claim-supervised-lane-sweep.jq` — generalized (no hardcoded task IDs), idempotent Supervised-Lane Sweep (SLS) backlog→ready→in_progress pickup for the doubly-gated `effective_supervised == true AND effective_plan_only == true` class (FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER, 2026-07-21) — see § Supervised-Lane Sweep above. Promote resolves + stamps `dispatch_lane` (`effective_next_agent` → `effective_owner` → `"developer"`) WITHOUT clearing `supervised`/`plan_only`; claim sets `.head.next_agent` to that resolved lane directly (no zone-detect indirection). Shares the pre-existing WIP≤2 invariant's second slot with human/router dispatch — never raises it. Usage: `jq --arg now "$NOW" --slurpfile detail docs/data/orch/archive/backlog-detail.json -f scripts/devteam-backlog-promote-supervised-lane-sweep.jq docs/data/orch/orch-state.json | bash scripts/orch-apply.sh` then the claim script the same way (no `--slurpfile` needed).
-- `scripts/audits/bounded1-supervised-lane-report.sh` — read-only acceptance/regression instrument for FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER; replays the same `effective_supervised`/`effective_plan_only`/`effective_owner`/`effective_next_agent` predicates against live data, lists every supervised+plan_only backlog row with its resolved `dispatch_lane` + age in days, and exits 1 if any such row's lane is `none`. Secondary (non-gating) section lists the wider supervised-XOR-plan_only set for visibility. Usage: `bash scripts/audits/bounded1-supervised-lane-report.sh` (exit 0 = pass).
+- `scripts/audits/bounded1-supervised-lane-report.sh` — read-only acceptance/regression instrument for FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER; replays the same `effective_supervised`/`effective_plan_only`/`effective_owner`/`effective_next_agent` predicates against live data, lists every supervised+plan_only backlog row with its resolved `dispatch_lane` + age in days, and exits 1 if any such row's lane is `none`. Secondary (non-gating) section lists the wider supervised-XOR-plan_only set for visibility. Usage: `bash scripts/audits/bounded1-supervised-lane-report.sh` (exit 0 = pass). **Tests LANE RESOLUTION only — NOT gate satisfiability**; see the satisfiability instrument below.
+- `scripts/lib/devteam-eligibility.jq` — UNBLOCK-DEVTEAM-DISPATCH-GATE-STAGING-DEADLOCK (2026-07-22): shared `include`-able eligibility/detail-resolution predicate library (`effective_supervised`, `effective_plan_only`, `effective_owner`, `effective_next_agent`, `effective_depends_on`/`deps_satisfied`/`dep_status_map`, `is_epic_wrapper`, `is_detail_deferred`, `is_non_dev_owner_unrouted`, `is_non_dev_next_agent_unrouted`, `priority_rank`, `wip_in_progress`, `resolved_dispatch_lane`, `is_bounded1_eligible`, `detail_items_from`) consolidating what was previously 3 independently hand-copied def sets (`devteam-backlog-promote-bounded1.jq`, `devteam-backlog-promote-supervised-lane-sweep.jq`, `bounded1-supervised-lane-report.sh`) per the design principle adopted from SPIKE-BOUNDED1-ELIGIBILITY-CONTRACT-REVIEW. `include "scripts/lib/devteam-eligibility";` resolves relative to CWD — every caller in this repo already runs from the project root (verified empirically, jq 1.8.1). Used by BOUNDED-1's, SLS's, RLC's, and QA-Drain's scripts plus both report scripts below.
+- `scripts/devteam-backlog-claim-ready-lane-consumer.jq` — Ready-Lane Consumer (RLC), UNBLOCK-DEVTEAM-DISPATCH-GATE-STAGING-DEADLOCK (2026-07-22) — see § Ready-Lane Consumer above. Claims the top-priority `ready[]` row (any source — BOUNDED-1/SLS/PM-decomposition) carrying a resolved next_agent/owner, not supervised/plan_only/epic-wrapper, `depends_on`-satisfied. Usage: `jq --arg now "$NOW" --slurpfile detail docs/data/orch/archive/backlog-detail.json -f scripts/devteam-backlog-claim-ready-lane-consumer.jq docs/data/orch/orch-state.json | bash scripts/orch-apply.sh`.
+- `scripts/devteam-review-claim-qa-drain.jq` — Review-Lane QA-Drain, UNBLOCK-DEVTEAM-DISPATCH-GATE-STAGING-DEADLOCK (2026-07-22), FOLDS FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN — see § Review-Lane QA-Drain above. Age-ordered claim of the oldest `review[]` row with `status==REVIEW && next_agent=='qa'`, moves review[]→qa[]. Usage: `jq --arg now "$NOW" --slurpfile detail docs/data/orch/archive/backlog-detail.json -f scripts/devteam-review-claim-qa-drain.jq docs/data/orch/orch-state.json | bash scripts/orch-apply.sh`.
+- `scripts/audits/devteam-review-lane-drain-report.sh` — read-only visibility instrument (non-gating) for the Review-Lane QA-Drain's PRIMARY (auto-dispatched, `next_agent=='qa'`) vs SECONDARY (null/non-qa `next_agent`, PO/architect triage queue — PO AC(1), never silently dropped) split. Usage: `bash scripts/audits/devteam-review-lane-drain-report.sh [STALE_DAYS=3]`.
+- `scripts/audits/devteam-dispatch-gate-satisfiability.sh` — **THE DoD/acceptance instrument for UNBLOCK-DEVTEAM-DISPATCH-GATE-STAGING-DEADLOCK.** Builds a live-shaped saturated fixture (pads to ready≈36/review≈32 if the live board has already drained, forces in_progress=1) and replays the REAL promote/claim scripts end-to-end, asserting each gate FIRES and DRAINS (row counts move between lanes) — not lane-resolution. Includes a negative control (in_progress padded to the WIP≤2 cap — confirms SLS/RLC would not be invoked). Usage: `bash scripts/audits/devteam-dispatch-gate-satisfiability.sh` (exit 0 = pass; never writes to the live file).
 
 ## Invariants
 
-- WIP ≤ 2 | `docs/data/orch/orch-state.json` `.task_board.active_sprints[].tasks` count ≤ 80 per sprint | project-stats.json updated each sprint
+- WIP ≤ 2 (`.task_board.in_progress` length ONLY — corrected 2026-07-22, UNBLOCK-DEVTEAM-DISPATCH-GATE-STAGING-DEADLOCK; `ready[]`/`review[]` are staging lanes, never counted toward concurrency) | `docs/data/orch/orch-state.json` `.task_board.active_sprints[].tasks` count ≤ 80 per sprint | project-stats.json updated each sprint
 - Docker restart: after final sprint merge only
 - Branch deleted by QA post-merge
 - Notify WORK at: fix shipped | sprint complete | blocker resolved | idle

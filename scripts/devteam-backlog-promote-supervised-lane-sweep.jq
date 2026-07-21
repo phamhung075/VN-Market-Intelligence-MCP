@@ -29,8 +29,12 @@
 #   - candidate lane: .task_board.backlog[]
 #   - status in {BACKLOG, TODO} (mirrors BOUNDED-1's own status filter)
 #   - effective_supervised == true AND effective_plan_only == true (board-OR-
-#     detail precedence, identical defs to devteam-backlog-promote-bounded1.jq
-#     — no forked logic)
+#     detail precedence — scripts/lib/devteam-eligibility.jq, no forked logic;
+#     consolidated 2026-07-22 by UNBLOCK-DEVTEAM-DISPATCH-GATE-STAGING-
+#     DEADLOCK per the SPIKE-BOUNDED1-ELIGIBILITY-CONTRACT-REVIEW design
+#     principle — this file previously carried its OWN copy of every
+#     effective_* predicate below, duplicated a 3rd time in
+#     scripts/audits/bounded1-supervised-lane-report.sh)
 #   - not an epic wrapper (effective_children, same def as BOUNDED-1)
 #   - depends_on eligible (effective_depends_on / deps_satisfied, same def
 #     and same cross-lane DONE_VERIFIED-only satisfaction rule as BOUNDED-1)
@@ -41,28 +45,29 @@
 #     one-at-a-time discipline)
 #
 # dispatch_lane resolution (the "assign a real lane" requirement):
-#   effective_next_agent(detail-first, board-fallback) if present-and-non-
-#   empty, ELSE effective_owner(detail-first, board-fallback) if present-and-
-#   non-empty, ELSE "developer" (same Tier-3 generic fallback zone-detect
-#   itself uses — a legitimate, real, general-purpose lane, never "none").
-#   Verified live 2026-07-21 (scripts/audits/bounded1-supervised-lane-
-#   report.sh): every one of the 16 live supervised+plan_only rows resolves
-#   to a real, non-fallback lane (ba/architect/po/ops/dev-rag-service) — the
-#   "developer" fallback exists for defensive completeness, not because any
-#   live row needs it today.
+#   resolved_dispatch_lane($detail_items) — effective_next_agent if present,
+#   ELSE effective_owner if present, ELSE "developer" (same Tier-3 generic
+#   fallback zone-detect itself uses). Verified live 2026-07-21 (scripts/
+#   audits/bounded1-supervised-lane-report.sh): every one of the 16 live
+#   supervised+plan_only rows resolves to a real, non-fallback lane.
 #
 # Concurrency: shares the pre-existing WIP<=2 invariant
 # (docs/agents/dev-team/flow/main.md § Invariants) with BOUNDED-1 — NOT a
-# new budget. BOUNDED-1's own header comment already names this: "[WIP<=2]
-# is the existing, separate router/PO WIP budget for supervised/manual
-# dispatch; this auto-pickup lane [BOUNDED-1] is bounded independently and
-# more conservatively [WIP<1]". This script's caller (dev-team/flow/main.md
-# § Supervised-Lane Sweep) gates on a FRESH WIP<2 read taken AFTER BOUNDED-1's
-# own promote+claim pair has already run and (if it fired) already
+# new budget. WIP2 is now `.task_board.in_progress|length` ONLY (formula
+# corrected 2026-07-22, UNBLOCK-DEVTEAM-DISPATCH-GATE-STAGING-DEADLOCK — the
+# pre-fix `(ready|length)+(in_progress|length)` formula counted ready[] as
+# concurrency, which let a saturated ready[] permanently starve this gate;
+# see docs/agent-memory/decisions/sprint-UNBLOCK-DEVTEAM-DISPATCH-GATE-
+# DEADLOCK-po.md). This script's caller (dev-team/flow/main.md § Supervised-
+# Lane Sweep) gates on a FRESH WIP2 read taken AFTER BOUNDED-1's own
+# promote+claim pair has already run and (if it fired) already
 # JUMP-TO-execute'd away — so this script's invocation only ever happens on
 # BOUNDED-1's own no-op/fallthrough path, when head is still idle. No `.head`
 # collision is possible by construction (see caller comment for the
-# control-flow argument).
+# control-flow argument). The Ready-Lane Consumer (see
+# scripts/devteam-backlog-claim-ready-lane-consumer.jq) runs immediately
+# after this block on the same shared budget and the same idle-fallthrough
+# discipline.
 #
 # Mutation (single row only, ADDITIVE — never clears supervised/plan_only):
 #   backlog[] -> ready[] ; status BACKLOG/TODO -> READY ; stamp promoted_at /
@@ -76,7 +81,8 @@
 # NO hardcoded task-id literals anywhere in this file (grep-verified, mirrors
 # BOUNDED-1's own discipline).
 #
-# Usage (ALWAYS through the orch-apply.sh gate — never raw mv/cp/>):
+# Usage (ALWAYS through the orch-apply.sh gate — never raw mv/cp/>; ALWAYS
+# invoked from the project root):
 #   NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 #   jq --arg now "$NOW" \
 #     --slurpfile detail docs/data/orch/archive/backlog-detail.json \
@@ -87,94 +93,9 @@
 # inserted immediately after the BOUNDED-1 Idle-capacity backlog pickup
 # block, on the same head-idle fall-through, before Step 1 PO triage.
 
-def as_dep_array:
-  if . == null then []
-  elif (type == "string") then [.]
-  elif (type == "array") then .
-  else [] end;
+include "scripts/lib/devteam-eligibility";
 
-def priority_rank:
-  ((.priority // "") | ascii_downcase) as $p
-  | if   ($p | test("^p0$|^critical$"))              then 0
-    elif ($p | test("^p1$|^high$"))                  then 1
-    elif ($p | test("^p2$|^med(ium)?$|^normal$"))    then 2
-    elif ($p | test("^p3$|^low$"))                   then 3
-    else 9
-    end;
-
-def effective_supervised($detail_items):
-  (.supervised == true)
-    or ( (.id != null) and ($detail_items[.id].supervised // false) == true );
-
-def effective_plan_only($detail_items):
-  (.plan_only == true)
-    or ( (.id != null) and (($detail_items[.id].plan_only // false) == true) );
-
-def effective_children($detail_items):
-  (.children | as_dep_array) as $inline
-  | if ($inline | length) > 0 then $inline
-    elif (.id != null) then ($detail_items[.id].children | as_dep_array)
-    else [] end;
-
-def is_epic_wrapper($detail_items):
-  (effective_children($detail_items) | length) > 0;
-
-def is_detail_deferred($detail_items):
-  if (.id == null) then false
-  else
-    ($detail_items[.id].status) as $ds
-    | if ($ds == null) or (($ds | type) != "string") then false
-      else ($ds | ascii_downcase | startswith("deferred"))
-      end
-  end;
-
-def effective_depends_on($detail_items):
-  ((.depends_on | as_dep_array) + (.depends | as_dep_array) + (.blocked_by | as_dep_array)) as $inline
-  | if ($inline | length) > 0 then $inline
-    elif (.detail_ref != null) then
-      (($detail_items[.id].depends_on | as_dep_array) + ($detail_items[.id].depends | as_dep_array) + ($detail_items[.id].blocked_by | as_dep_array))
-    else [] end;
-
-def dep_status_map:
-  . as $doc
-  | ["backlog", "ready", "in_progress", "qa", "review", "done", "done_verified"] as $lanes
-  | reduce $lanes[] as $lane
-      ( {}
-      ; . + ( [ ($doc.task_board[$lane] // [])[]
-                | select(.id != null)
-                | { key: .id, value: .status }
-              ] | from_entries )
-      );
-
-def deps_satisfied($detail_items; $status_map):
-  effective_depends_on($detail_items) as $deps
-  | ($deps | length) == 0
-    or ( [ $deps[] | ($status_map[.] // "MISSING") ] | all(. == "DONE_VERIFIED") );
-
-def effective_owner($detail_items):
-  (if (.id != null) then $detail_items[.id].owner else null end) as $detail_owner
-  | if ($detail_owner != null) and (($detail_owner | type) == "string") and ($detail_owner != "") then
-      $detail_owner
-    else (.owner // "") end;
-
-def effective_next_agent($detail_items):
-  (if (.id != null) then $detail_items[.id].next_agent else null end) as $detail_na
-  | if ($detail_na != null) and (($detail_na | type) == "string") and ($detail_na != "") then
-      $detail_na
-    else (.next_agent // "") end;
-
-def resolved_dispatch_lane($detail_items):
-  (effective_next_agent($detail_items)) as $na
-  | (effective_owner($detail_items)) as $ow
-  | if ($na | length) > 0 then $na
-    elif ($ow | length) > 0 then $ow
-    else "developer" end;
-
-(($detail[0].items // []) as $raw_items
-  | if ($raw_items | type) == "object" then $raw_items
-    else ($raw_items | map(select(.id != null) | {key: .id, value: .}) | from_entries)
-    end
-) as $detail_items
+(detail_items_from($detail)) as $detail_items
 | dep_status_map as $status_map
 | ( [ .task_board.backlog
     | to_entries[]
