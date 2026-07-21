@@ -78,3 +78,12 @@
 - Skip step (2) too since step (1) is blocked — rejected: step (2) is independent of step (1) (drain-side, not writer-side), squarely in scripts/ (my zone), and the router only forbade doing step (3) before step (1), not step (2).
 **why-decision:** Zone-check is Step 0 of my own flow; a flow doc executed by an LLM agent at runtime is categorically different from Bun/TS production code my TDD mandate is built for, and the dispatch table is unambiguous on ownership.
 **why-change:** Re-ordered per router (step 1 urgent) but step 1 could not land in this session; annotated the board row (`developer_progress_20260721T1953`) so PO/router can re-route next_agent to agent-father. Step (3) intentionally not done — router scope forbids it before (1) ships.
+
+### STEP developer-S9 · developer · 2026-07-21T20:20:00Z
+**task-id:** FIX-DRAIN-TEST-HARNESS-ORCH-HELPER-COPY-LIST
+**what-done:** `drain-signals.test.js` `makeOrchRefHarness()` fixed-array copy list replaced with `deriveOrchApplyHelpers()` — regex-scans `orch-apply.sh`'s own source for `${REPO_ROOT}/scripts/<name>.<ext>` invocations at test-run time, plus `scripts/orch-apply.sh` itself, into the sandbox copy set.
+**what-considered:**
+- Static one-line append of `orch-stamp-updated-at.mjs` only — rejected: AC4 explicitly required a durable fix, and a hand-maintained parallel list re-arms the identical trap for the next helper orch-apply.sh grows.
+- Derive by parsing invocation lines (chosen) vs. asserting-and-failing if a referenced script is absent from a still-hand-written list — chose derive: strictly fewer moving parts, self-updating, zero maintenance burden going forward.
+**why-decision:** Confirmed via grep that every orch-apply.sh helper invocation follows the identical `bun "${REPO_ROOT}/scripts/<name>.<ext>"` idiom (3/3 current helpers); the regex captures exactly that pattern and throws loud if it ever matches zero (regex-staleness self-detection).
+**why-change:** No change from PO's acceptance criteria; ran the full suite genuinely (no truncated copy) per AC2/AC3 — 28/28 pass, all 13 previously-dark assertions execute and pass, none fixed silently (none needed fixing).

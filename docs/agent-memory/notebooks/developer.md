@@ -1,24 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-21 | **Cycle:** CLEAN-COWORK-DISPATCHER-TELEMETRY-DRAIN-DIR (router-directed)
-
-## Session 2026-07-21 — FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE (router-directed, scripts/, recurring_bug_count=4) — REVIEW
-
-**Task:** `repointPayloadRefs()`'s jq `execFileSync` call (drain-signals.js:233) had no `maxBuffer`; jq's `{doc,changed}` output re-emits the whole orch-state doc, which crossed Node's default 1,048,576-byte cap the moment the live file passed 1,109,434 bytes — `ENOBUFS` thrown every run since, caught, and reported as a "non-fatal" WARN, so the shipped repoint fix has been silently dead in production. Same catch also mis-classified a genuine computation failure as equivalent to "nothing to repoint."
-
-**Actions taken:** Added explicit `maxBuffer: 64MB` (comment cites measured numbers + row id) to the jq `execFileSync` call. Reclassified the catch at 240-245 from silent `WARN`+`return` to `FAIL-LOUD`+`process.exit(1)`, matching the existing FAIL-LOUD pattern at lines ~268/272; left the genuinely-benign `!result.changed` branch untouched. Grepped `scripts/agents-flow/` for other `execFileSync`/`spawnSync` reading orch-state.json (or any file that can grow past 1MB) without `maxBuffer` — none found; every other call either queries a small sqlite3 aggregate or (the orch-apply.sh invocation) never echoes the doc back to stdout.
-
-**Verification (RED-before, twice):** (1) natural TDD order — new `drain-signals.test.js` ENOBUFS scenario (isolated harness, >1MB orch-state.json fixture padded via schema-safe `dashboard_section_cache`, never the live SSOT) against the then-current unfixed code: 21/22 pass, 1 FAIL (`spawnSync jq ENOBUFS` swallowed, payload_ref left dangling). (2) `git stash push --keep-index` on `drain-signals.js` only (test file kept) reproduced the identical 21/22 failure against the reverted file. After the fix, both re-runs: 22/22 GREEN. Live orch-state.json currently 1,112,468 bytes — 64MB maxBuffer gives ~57x headroom.
-
-**Also emitted (not fixed, per instruction):** `docs/signals/2026-07-21T162233Z-drain-predicate-price-anomaly-family.json` to `po` — drain's non-routable-shape predicate never matches `price_anomaly_v1` (7 files stranded in inbox, one live/minutes-old carrying real VN-Index/sector data); PO's earlier "cowork-team telemetry only" characterization of the drain-skip blast radius is incomplete. Scope adjudication left to PO — no board row minted, task not widened.
-
-**Router mid-task note:** router's own `git add -A` + `git commit -m` swept an unrelated pre-existing HEAD state (commit `84096f617`, already containing the pre-maxBuffer shipped code — not my edits, I had not yet touched either file at that point) into an auditor commit. No work of mine was lost; RED evidence above was captured entirely after that point, against the then-current HEAD content.
-
-**Board:** `task_board.backlog[FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE]` → REVIEW, next_agent=qa, via `orch-apply.sh`.
-
-**Scope discipline:** Touched only `scripts/agents-flow/drain-signals.js`, `scripts/agents-flow/drain-signals.test.js`, this notebook, decision journal, + the new po-addressed signal file. Did not touch the price_anomaly predicate itself, did not touch live `docs/data/orch/orch-state.json`.
-
-Zone health: `scripts/agents-flow/drain-signals.js` payload_ref repoint path — now buffer-safe past 1MB + FAIL-LOUD on genuine computation failure; price_anomaly drain-skip family flagged to PO as a distinct, unfixed gap | HEALTHY (repoint) / KNOWN-GAP (price_anomaly, PO-owned)
+**Last updated:** 2026-07-21 | **Cycle:** FIX-DRAIN-TEST-HARNESS-ORCH-HELPER-COPY-LIST (PO-directed)
 
 ## Session 2026-07-21 — FIX-ORCHSTATE-UPDATED-AT-WRITE-PATH (router-directed, scripts/, P0) — task_board.ready (untouched, router-owned)
 
@@ -53,3 +35,17 @@ Zone health: `scripts/orch-apply.sh` — write-path timestamp gap closed at the 
 **Scope discipline:** Touched only the two drain-signals.js/test.js files, the board-row annotation, this notebook, decision journal. Did not touch `docs/agents/cowork-team/flow/telemetry.md`, did not `git rm` the artifacts, did not widen beyond the router's 3-step scope.
 
 Zone health: `scripts/agents-flow/drain-signals.js` unparseable-skip path now loud | HEALTHY. Writer-side atomic-write fix | BLOCKED, needs `agent-father` re-route.
+
+## Session 2026-07-21 — FIX-DRAIN-TEST-HARNESS-ORCH-HELPER-COPY-LIST (PO-directed, P0 unblocker, cross-service/) — REVIEW
+
+**Task:** `drain-signals.test.js` `makeOrchRefHarness()`'s hardcoded copy list (`['orch-apply.sh','orch-validate.mjs','orch-conservation-check.mjs']`) never got `orch-stamp-updated-at.mjs` added when commit `a5d079663` wired it into `orch-apply.sh` — the sandboxed `orch-apply.sh` called a file that wasn't there, crashing the whole node process at the first `makeOrchRefHarness()` call (line 273), darkening all 13 assertions after it. Same defect the prior CLEAN-COWORK-DISPATCHER session (above) already hit and worked around via a truncated file copy.
+
+**Actions taken:** Replaced the fixed array with `deriveOrchApplyHelpers()` — regex-scans `orch-apply.sh`'s own source (`\$\{REPO_ROOT\}/scripts/<name>.<ext>`) at test-run time and copies whatever it finds, plus `orch-apply.sh` itself. Self-updating: the next helper `orch-apply.sh` grows is picked up automatically, no second list to remember. Throws loud if the regex ever matches 0 (staleness self-detection).
+
+**Verification:** Ran the FULL, untruncated suite end-to-end: 28/28 PASS, 0 fail, exit 0 (previously crashed after assertion 15/28). All 13 previously-dark assertions now execute — 3 FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE gates + 4 ENOBUFS + 6 unparseable-loud (written last session against a truncated copy, never actually run until now) — all PASS, no regression found in any of them.
+
+**Board:** `task_board.ready[FIX-DRAIN-TEST-HARNESS-ORCH-HELPER-COPY-LIST]` → `review`, `dev_result`+`dev_completed_at` set, via `orch-apply.sh`.
+
+**Scope discipline:** Touched only `drain-signals.test.js`, board row, this notebook, decision journal. Did not touch `orch-apply.sh`/other helper scripts (no behavior change needed there) — root-cause fix confined to the test harness.
+
+Zone health: `scripts/agents-flow/drain-signals.test.js` orch-helper sandbox copy — now derives from source instead of a hand-maintained list | HEALTHY
