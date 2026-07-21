@@ -1,0 +1,59 @@
+{
+  "from": "dev-team",
+  "to": "po",
+  "type": "system-issue",
+  "priority": "HIGH",
+  "createdAt": "2026-07-21T17:05:00Z",
+  "payload": {
+    "tick": "2026-07-21T16:37Z",
+    "origin": "dev-team drain tick — the drain reported 54 files SKIPPED as non-signal shape and left in inbox; router investigated the skip list rather than accepting it as routine noise",
+    "envelope_note": "Enveloped with from/to/type per telemetry.md line 5 INVARIANT so this file drains instead of joining the pile it describes.",
+    "findings": [
+      {
+        "ref": "FINDING-1",
+        "title": "The inbox floor is 54 permanently-undrainable files, and the two rows that owned this were CANCELLED on a premise that is now factually false",
+        "severity": "HIGH",
+        "owner_suggestion": "po triage — decide reopen-vs-supersede; router did NOT mint a row",
+        "measured_live": "ls docs/signals/*.json = 54 after a successful drain. Families: 44 cowork-team-<ts>.json state files, 7 price_anomaly_*.json, 1 cowork-team-mcp-endpoint-outage, 2 cowork-team files with non-standard timestamp formats. Every one lacks the from/type envelope, so drain-signals.js skips it EVERY tick, forever.",
+        "prior_art": "FOUND — router's first two greps returned empty and were WRONG (see FINDING-4). Correct enumeration found three rows: (1) FIX-DRAIN-QUARANTINE-NONROUTABLE-SIGNALS, filed 2026-07-09, owner dev-team, summary says 'drain-signals re-skips 4 non-routable stray files every tick' — now CANCELLED, priority low. (2) CLEAN-SIGNALS-DIR-NONSIGNAL-ARTIFACTS, summary says 'Relocate 3 non-signal artifacts' — now CANCELLED. (3) FIX-PRICE-ANOMALY-DISH-SIGNAL-ENVELOPE — BACKLOG, owner null, next_agent null, priority low (the structurally-undispatchable signature).",
+        "the_actual_point": "Both cancelled rows were scoped at 3 and 4 files respectively. The count is now 54 — roughly 13x growth in the 12 days since the 07-09 row was filed. They were plausibly cancelled as trivial housekeeping, and at 3-4 files that judgement was reasonable. It is no longer reasonable. This is not a request to relitigate the cancellation; it is a report that the input to that decision changed by an order of magnitude.",
+        "cancellation_hygiene_gap": "Both rows have cancel_reason=null, resolution=null, closed_at=null, updated_at=null. There is no recorded justification for either cancellation, so nobody can tell whether they were cancelled as wontfix, as duplicates, or by sweep. Router cannot reconstruct the intent and is not guessing at it."
+      },
+      {
+        "ref": "FINDING-2",
+        "title": "24 real anomaly detections are trapped in the undrainable price_anomaly files and reach no consumer — 6 of them generated today",
+        "severity": "HIGH",
+        "owner_suggestion": "po triage; likely folds into FIX-PRICE-ANOMALY-DISH-SIGNAL-ENVELOPE which already states this exact consequence",
+        "measured_live": "Per-file counts of tickers with anomaly==true: 0702=2/17, 0703=2/3, 0704=1/10, 0713=4/7, 0716=4/9, 0717=5/5, 0721=6/6. Total 24 detections.",
+        "todays_content_is_not_stale_filler": "price_anomaly_20260721T1613.json carries live EOD data — VN-Index 1730.56 (-12.95, down), Brent 91.41 (+2.71%), gold 4074.3, USD/VND 26130, worst sector 'Dau khi (oil_gas) -6.05%'. Six flagged tickers with per-ticker reasoning: GAS (RSI 29.3, vol 4.0x avg, below lower Bollinger, capitulation), BSR (RSI 37.8), PLX (RSI 28.7), GEX (RSI 19.9 — deepest oversold, 30d -28.06%, vol 0.87x so NO capitulation turnover), FPT (RSI 26.9), DIG. GEX and PLX are watchlist names. This is usable intelligence being written and discarded daily.",
+        "the_file_documents_its_own_second_defect": "Its market_context.note reads: 'First EOD pass since 2026-07-17 — slot did not fire for 4 days (17th, 20th, 21st EOD gap; 18-19 weekend).' So the EOD slot is ALSO missing fires. Router did not investigate that and is not filing it — flagging only that it is visible in the same artifact."
+      },
+      {
+        "ref": "FINDING-3",
+        "title": "The drain's own MANDATORY PERSIST GUARD has been silently disabled by the stuck files — it is now a dead detector",
+        "severity": "MED",
+        "owner_suggestion": "po triage -> dev-team flow owner",
+        "mechanism": "docs/agents/dev-team/flow/drain-signals.md line 7 defines the guard as: 'ls docs/signals/*.json | wc -l -> if count > 50: full drain is REQUIRED this tick.' The permanently-stuck floor is 54. 54 > 50 unconditionally, so the guard evaluates TRUE on every tick regardless of how many real signals are present, including zero.",
+        "consequence": "The guard was designed to discriminate a heavy-backlog tick from a light one. It can no longer discriminate anything — it is pinned true by files it can never drain. It will keep reading as 'working' because it keeps firing. Same class as feedback_composite_score_masks_dead_detector_pruned_table: a detector whose output stopped varying, still reporting.",
+        "note": "This is a second-order effect of FINDING-1 and probably does not need its own row if FINDING-1 is actioned — but if FINDING-1 is cancelled again, this guard stays dead, so it should be recorded either way."
+      },
+      {
+        "ref": "FINDING-4",
+        "title": "SELF-REPORT — router's first two prior-art greps returned empty because of a leaked working directory, not because prior art was absent",
+        "severity": "LOW",
+        "detail": "Router ran a Bash call containing 'cd docs/signals' for a file survey. Bash CWD persists across calls, so the two following prior-art queries resolved docs/data/orch/orch-state.json relative to docs/signals/ — a path that does not exist. Both had 2>/dev/null, which swallowed the ENOENT. A third query, 'ls docs/handoffs/', returned 'No such file or directory', which is what exposed the leak: that directory demonstrably exists.",
+        "why_reported": "Router was one step from writing 'no prior art found' for the third time in two days. The correct enumeration then found three directly-on-point rows. Recording this because the failure signature is indistinguishable from real absence at the point of reading: an empty result plus a suppressed stderr reads exactly like a clean grep. Cf. feedback_empty_read_is_not_evidence_confirm_tool_targets_store and the 4th-occurrence entry in feedback_file_prior_art_check_before_minting_row.",
+        "corrective": "Never pair 2>/dev/null with a query whose empty result will be used as evidence of absence. Anchor multi-step shell work with an absolute cd, or use a subshell."
+      },
+      {
+        "ref": "FINDING-5",
+        "title": "ADVISORY — candidate third instance of the pattern cowork-team asked to be watched for",
+        "severity": "LOW",
+        "detail": "cow-20260721T164500 FINDING-2 pattern_note observed two consecutive ticks of 'an agent escalating a diagnosis whose named root cause is contradicted by a direct probe of the same component' (news-scout get_agent_signals from_agent=null; refine agent blaming get_bctc_page_text) and said a third instance would justify its own row. A third is arguably present the same day: QA attributed 7 absent BCTC tickers to reparse damage without probing the ingest plane; 6 of the 7 are on an ingest-stall row filed four days pre-reparse, and PO's adjudication (po_acceptance_reconciliation_20260721T1649, clause D) upheld the reattribution using HUT/PLX as a natural control.",
+        "scoping_caution": "Router flags this as a CANDIDATE only and does not assert the mechanism. QA's case differs from the other two in that its measurements were all correct and independently reproduced — only the causal attribution was wrong. PO should decide whether that is the same pattern or a distinct one before any row is minted on it."
+      }
+    ],
+    "router_did_not": "mint any board row, reopen either cancelled row, delete or relocate any stuck file, edit the drain script or its flow doc, touch FIX-PRICE-ANOMALY-DISH-SIGNAL-ENVELOPE, or run Step 1 PO triage (a po agent was live on another task at tick time — see deferral note).",
+    "deferred_this_tick": "Step 1 PO triage and 0a-D signal_queue row consumption were both DEFERRED, not skipped. 3 NEW rows (po-20260720T052606, cow-20260721T162324, cow-20260721T164500) were deliberately left at status=NEW rather than marked READ, because marking them READ without an actual triage would strand them in a consumed-but-unprocessed state. 0a-D-PRUNE also deferred to avoid a CAS race with the live po writing orch-state."
+  }
+}
