@@ -29,9 +29,17 @@
 #     scripts/orch-apply.sh header)
 #   - effective_supervised != true (FIX-DEVTEAM-BOUNDED1-SUPERVISED-FLAG-GATE,
 #     2026-07-09) — see "SUPERVISED GATE" section below. The Phase-1
-#     supervised set (held for router-adjudicated dispatch, see .head.note
-#     in the live doc) is NEVER auto-promoted by this script, regardless of
-#     which of the two possible locations carries the flag.
+#     supervised set (see .head.note in the live doc) is NEVER auto-promoted
+#     by this script, regardless of which of the two possible locations
+#     carries the flag. A row that is ALSO effective_plan_only is instead
+#     picked up by the Supervised-Lane Sweep (SLS) —
+#     scripts/devteam-backlog-promote-supervised-lane-sweep.jq — see
+#     docs/agents/dev-team/flow/main.md § Supervised-Lane Sweep and
+#     FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER (2026-07-21). Prior to that fix
+#     this file claimed such rows "still launch normally via the router-
+#     adjudicated path" — that was FALSE, no such path existed anywhere
+#     (confirmed live; root cause of 6+ day idle P0 rows — see
+#     scripts/po-signaldrain-20260721T16-bctcscope-cowork-loopclosure.jq).
 #   - not an epic wrapper (FIX-DEVTEAM-BOUNDED1-EPIC-WRAPPER-GATE, 2026-07-10)
 #     — see "EPIC-WRAPPER GATE" section below. Rows carrying a non-empty
 #     children[] array (inline or detail-authoritative) are decomposition
@@ -51,8 +59,11 @@
 #     section below. A row whose detail-authoritative owner names a
 #     deliberate-launch, non-dev agent (po/ops/architect/etc.) AND whose
 #     board row carries no `next_agent` would otherwise be mis-routed to the
-#     generic `developer` zone-detect placeholder; held for router-adjudicated
-#     dispatch instead.
+#     generic `developer` zone-detect placeholder; if ALSO effective_plan_only
+#     it is picked up by the Supervised-Lane Sweep (see the SUPERVISED GATE
+#     note above); otherwise it is a tracked residual gap (no dedicated sweep
+#     lane yet — surfaced by scripts/audits/bounded1-supervised-lane-report.sh's
+#     SECONDARY section, not silently assumed-covered).
 #   - not an effective plan_only row (board-OR-detail) (FIX-DEVTEAM-BOUNDED1-
 #     PLAN-ONLY-GATE, 2026-07-12; generalized to board-OR-detail by
 #     FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE,
@@ -72,9 +83,11 @@
 #     deliberate non-dev specialist or maintenance-lane agent (architect/ba/
 #     pm/ops*/po/qa/agent-father/agents-architect/system-auditor/
 #     code-janitor/...) — i.e. does not match the dev-role pattern
-#     `^dev(-|$)|^developer$` — is never auto-promoted here; held for
-#     router-adjudicated dispatch instead. Sibling of the NON-DEV-OWNER gate
-#     above but keys off `next_agent` instead of `owner`.
+#     `^dev(-|$)|^developer$` — is never auto-promoted here; if ALSO
+#     effective_plan_only it is picked up by the Supervised-Lane Sweep (see
+#     the SUPERVISED GATE note above), otherwise it is a tracked residual gap
+#     (same caveat as the NON-DEV-OWNER gate). Sibling of the NON-DEV-OWNER
+#     gate above but keys off `next_agent` instead of `owner`.
 #   - ordered by priority_rank ascending (0=highest: P0/critical,
 #     1: P1/high, 2: P2/medium/normal, 3: P3/low, 9: missing/unrecognized —
 #     priority values in the wild are a messy mix of "P0".."P3" and
@@ -218,9 +231,14 @@
 #     2. the BOARD row's `.next_agent` is null/absent/empty (a dev-owned or
 #        already-next_agent-stamped row is NOT gated by this rule).
 #   - Scoped to THIS unattended BOUNDED-1 idle-pickup lane only — it does not
-#     ban owner-scoped rows globally; they still launch normally via the
-#     router-adjudicated path (Step 1 PO triage / manual dispatch), this gate
-#     only removes them from idle auto-pickup eligibility.
+#     ban owner-scoped rows globally, but there is no separate "router-
+#     adjudicated path" that automatically dispatches them either (that claim
+#     was FALSE — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER, 2026-07-21). A
+#     row gated here that is ALSO effective_plan_only is picked up by the
+#     Supervised-Lane Sweep (docs/agents/dev-team/flow/main.md § Supervised-
+#     Lane Sweep); otherwise it only loses idle auto-pickup eligibility and
+#     remains a tracked residual gap (scripts/audits/bounded1-supervised-lane-
+#     report.sh SECONDARY section).
 #   - Conservative default: absent/empty detail owner, OR a dev-role owner,
 #     OR a non-empty board `next_agent` = NOT gated (promotable) — preserves
 #     baseline behavior for the common case.
@@ -246,9 +264,15 @@
 #     preserves baseline behavior for the common case, same fail-open-toward-
 #     promotable default as `is_detail_deferred`.
 #   - Fail-toward-safety invariant: this gate only REMOVES rows from idle
-#     auto-pickup eligibility; deliberate router/architect/PO dispatch of a
-#     plan_only row is entirely unaffected — it still launches normally via
-#     the router-adjudicated path (Step 1 PO triage / manual dispatch).
+#     auto-pickup eligibility. A row gated here that is ALSO
+#     effective_supervised is picked up by the Supervised-Lane Sweep
+#     (scripts/devteam-backlog-promote-supervised-lane-sweep.jq — see
+#     FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER, 2026-07-21, which replaced the
+#     PRIOR (false) claim that such rows "still launch normally via the
+#     router-adjudicated path" — no such path existed). A plan_only row that
+#     is NOT also supervised remains a tracked residual gap for deliberate
+#     architect/PO dispatch (scripts/audits/bounded1-supervised-lane-
+#     report.sh SECONDARY section surfaces it).
 #
 # NON-DEV-NEXT_AGENT GATE (FIX-DEVTEAM-BOUNDED1-DETAIL-NEXTAGENT-NONDEV-GATE,
 # 2026-07-12):

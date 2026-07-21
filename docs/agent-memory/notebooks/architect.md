@@ -1,8 +1,15 @@
 # Architect — Notebook
 
-**Last updated:** 2026-07-21 18:02 UTC | **Sprint:** FLOW-PRICE-ALPHA-LOOP
+**Last updated:** 2026-07-21 21:32 UTC | **Sprint:** FLOW-PRICE-ALPHA-LOOP
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-07-21T21:32Z — FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER (zone=cross-service/, P=high, size=M, REVIEW)
+
+**Task:** PO-triaged direct FIX dispatch (router-relayed). `scripts/devteam-backlog-promote-bounded1.jq` claimed rows gated by supervised/plan_only "still launch normally via the router-adjudicated path" — confirm-or-refute, and if false, build the missing sweeper without clearing the gate flags.
+**Finding:** CONFIRMED FALSE — grepped every dispatch entry point (`po/flow/main.md` pre-checks, `dev-team/flow/main.md` Step 1) and found no priority-ordered sweep of `task_board.backlog[]` for supervised/plan_only rows anywhere; the PO signal-drain that minted this task already says so in its own `question` field. Live replay of the promote script's own `effective_supervised`/`effective_plan_only` predicates found 16 rows doubly-gated (supervised AND plan_only), 7 P0/P1, oldest 18 days.
+**Output:** Built Supervised-Lane Sweep (SLS) — `scripts/devteam-backlog-promote-supervised-lane-sweep.jq` + `scripts/devteam-backlog-claim-supervised-lane-sweep.jq`, wired into `docs/agents/dev-team/flow/main.md` § Supervised-Lane Sweep (spends the pre-existing, named-but-unused 2nd WIP≤2 slot; additive `dispatch_lane` stamp, never clears supervised/plan_only; spawns the resolved specialist directly, bypassing zone-detect's dev-only routing). Acceptance instrument `scripts/audits/bounded1-supervised-lane-report.sh` run live: 16/16 rows resolved, 0 dispatch-lane=none. Corrected the false comment at all 5 sites in the promote script. New scripts dry-run verified (Zod-valid, conservation-neutral, idempotent) against a scratch copy — never run against the live board (dev-team's job next tick).
+**Next:** dev-team/QA — verify SLS fires correctly on a live idle-fallthrough tick before flipping REVIEW→DONE_VERIFIED; zone cross-service/.
 
 ## 2026-07-21T18:02Z — DESIGN-COWORK-FANOUT-PRODUCER-CONSUMER-ORDERING (zone=cross-service/, P1, supervised design-first, READY_FOR_PM)
 
@@ -18,18 +25,14 @@
 **Output:** `docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md` — universal `scripts/git-hooks/pre-commit` (WARN-default, opt-in `GIT_SWEEP_GUARD_MODE=reject`, explicit blast-radius trade-off written out) + Layer-1 fix to commit-mutex/commit-boundary/commit's own bare-commit lines + `install.sh` wiring (AC-5) + 3-channel observability (stderr/`.git/sweep-guard.log`/`docs/signals/` bug-escalation, zero MCP dependency, never `2>/dev/null||true`) + explicit AC-6 scoping (sweeper-side closed, victim-side NOT closed — minted `FIX-COMMIT-SWEEP-VICTIM-SELF-DETECT` backlog P2 depends-on this row) + cross-zone file table for PM decomposition. BUILD-STANDARD: not-applicable.
 **Next:** pm — decompose into a developer subtask (`scripts/git-hooks/pre-commit`+test, brief §4.1/§8 spec attached verbatim, explicit supervised handoff not zone-detect auto-pickup) + an agent-father subtask (3 skill-file fixes, brief §4.2) + board close-out; zone multi (`scripts/git-hooks/` + `.claude/skills/` + `docs/data/orch/orch-state.json`).
 
-## 2026-07-17T05:15Z — SYSREMAKE-P2-STRUCTURAL-REMAKE-ROUTE leg 1: RC-VERIF+RC-CONVERGE (zone=multi, P0 authorized route, supervised design-first, READY_FOR_PM)
-
-**Task:** Router-directed design-first dispatch (coordination_session e417ef1f, intent:architect:sysremake-p2-rcverif-techdoc) — FIRST leg only of the fully-authorized SYSREMAKE-P2 route (RC-VERIF+RC-CONVERGE authorized 2026-07-14 DECISION-3; full route re-confirmed 2026-07-15). Design the orch-apply->orch-validate.mjs completion gate (verification.raw_probe before DONE_VERIFIED) + DEGRADED 8th... 13th StatusEnum value + bug_class/fingerprint convergence replacing the dead recurringBugEscalationFlag.
-**Finding:** Verified all 4 live orch-state write paths (orch-apply.sh->orch-validate.mjs CLI, orchStateStore.ts writeOrchStateAtomic server-path, PreToolUse Claude hook, bash shim) import the SAME `orchStateSchema.ts` object directly — zero duplication risk IF the new gate lives in the schema's existing root `.superRefine()` rather than a new standalone export. Found and flagged (not fixed, out of leg scope) the EXACT drift class already live: `checkLaneCoherence()`/`checkRefIntegrity()` are standalone exports called only by orch-validate.mjs — `orchStateStore.ts::writeOrchStateAtomic()` does NOT call either (source comment admits `checkRefIntegrity` "deliberately excluded"). Live jq evidence: 0/33 currently-DONE_VERIFIED rows (24 active_sprints + 9 closed_sprints stubs) carry `verification.raw_probe` — a naive unconditional gate would brick the hot file (844,325 bytes live) on the very next write; backfilling those 33 rows would itself be the exact fabrication RC-VERIF exists to prevent. Designed a frozen, closed grandfather-ID allowlist instead (never grows; self-expires as rows cold-evict out of the hot file's purview). Confirmed the field shape `{tool,args,live_value_observed,observed_at}` is already an informal PO convention (docs/agent-memory/notebooks/po.md 2026-07-17 DAILY-FF close) — this leg formalizes an already-live pattern, not a new invention. Confirmed DEGRADED must stay OUT of TERMINAL_SET (needs PO eyes, would otherwise be silently cold-evicted — F8-TRUST-EQUALS-SILENCE anti-pattern) and verified zero downstream code changes needed (orch-cold-evict.sh's hardcoded bash-literal TERMINAL_SET copy, task-archive.md, BOUNDED-1 promote/claim filters all structurally exclude DEGRADED by construction). For RC-CONVERGE, rejected folding a `.convergence_ledger` section into orch-state.json (would work against this SAME route's own later RC-ORCHMONO/RC-GITSTATE goals of shrinking/de-churning that file) in favor of a sidecar `docs/data/bug-class-convergence-ledger.json`, mirroring the `auditor-dedup-ledger.json` pattern that shipped literally 1 day earlier (UC-ASL-P2) — reusable `_ledger_read/_write/_prune_and_lookup` shape, 30-day window, count-based (not severity-rank) escalation.
-**Output:** `docs/architecture-briefs/2026-07-17-sysremake-p2-rcverif-rcconverge.md` — brownfield validation-point map (§1), concrete Zod schema/superRefine code (§2), migration/grandfather strategy with live evidence (§2.5), lane-coherence + TERMINAL_SET decisions (§2.3-2.4), RC-CONVERGE sidecar ledger design + auto-lift re-arm wiring (§3), full StatusEnum consumer ripple audit (§4), 6 risk flags incl. 2 flagged-not-fixed pre-existing drift risks, test strategy continuing the file's own M1..M4/E1..E2 naming convention (§6), coordination pointers for RC-ORCHMONO/TE-T15/RC-GITSTATE/RC-CEREMONY (§7, NOT designed), 9-task PM decomposition with explicit dependency/zone/owner mapping (§9). BUILD-STANDARD: not-applicable (bug-fix/hardening class).
-**Next:** pm — decompose T1-T9 into dev-mcp-server/agent-father/qa task cards per the brief's dependency order; zone multi (apps/mcp-server/ + scripts/ + docs/agents/ + docs/standards/).
-
 ---
 
-## Archive (pre-2026-07-17T05:15Z)
+## Archive (pre-2026-07-21T21:32Z)
 
-[Older cycles archived to git history: SPRINT-CCATO-TRUTHGATE-MCP-NATIVE (2026-07-17T04:47Z,
+[Older cycles archived to git history: SYSREMAKE-P2-STRUCTURAL-REMAKE-ROUTE leg 1: RC-VERIF+RC-CONVERGE
+(2026-07-17T05:15Z, zone=multi, P0 authorized route — orch-apply->orch-validate.mjs completion gate
+design + DEGRADED StatusEnum value + bug_class/fingerprint convergence ledger, frozen grandfather-ID
+allowlist to avoid bricking the hot file, 9-task PM decomposition, READY_FOR_PM), SPRINT-CCATO-TRUTHGATE-MCP-NATIVE (2026-07-17T04:47Z,
 zone=apps/mcp-server/, P0 user-prioritized — ported `scripts/narrative-truth-gate.sh` CCATO engine
 into native MCP tool `narrative_truth_gate`, DDD layer map domain/services/narrativeTruthGate +
 infrastructure/{fileStore,probes,signals}, GATE_VERDICT text marker not isError-on-business-FAIL,

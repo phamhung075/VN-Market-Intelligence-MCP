@@ -237,3 +237,36 @@ session's other 3 findings showed missing from several other guards.
 wall-clock-only dispatch pattern as market-watcher's — same root-cause class, out of this row's
 boundary, noted for a follow-up sweep rather than chased here.
 **Output:** `docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md`
+
+### STEP architect-S12 · architect · 2026-07-21T21:30:40Z
+**task-id:** FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER
+**what-done:** Confirmed the "router-adjudicated path" claim in
+`scripts/devteam-backlog-promote-bounded1.jq` was FALSE (no sweep of
+`backlog[]` existed in `po/flow/main.md` or `dev-team/flow/main.md`); built
+the missing sweeper (Supervised-Lane Sweep) + its acceptance instrument.
+**what-considered:**
+- Clear `supervised`/`plan_only` for auto-pickup — REJECTED per explicit
+  router constraint (disables the gate instead of building the lane).
+- Report-only fix (option b: HELD disposition + aging report) — insufficient
+  alone; "assigned dispatch lane" in the AC implies a real destination, not
+  just visibility.
+- Full sweeper (option a) reusing the existing S4 UNBLOCK dispatch block +
+  the pre-existing WIP≤2 slot the BOUNDED-1 comment already named but never
+  wired — chosen: minimal new surface, DRY (no new dispatch primitive), and
+  closes the exact false-comment gap at its source.
+**why-decision:** SLS claims must NOT `JUMP TO execute` (zone-detect only
+resolves dev-*/developer) — spawn `head.next_agent` directly, mirroring the
+already-proven S2 resume / S4 UNBLOCK pattern, so a non-dev lane (architect/
+ba/po/ops) survives dispatch instead of being silently re-routed.
+**why-change:** Scoped acceptance script's PASS/FAIL gate to the literal
+`supervised AND plan_only` class (matches the problem statement's "15 rows"
+framing exactly, 16 live) rather than the broader supervised-XOR-plan_only
+superset (78 rows, 4 unresolved) — that broader set is a distinct,
+pre-existing mint-time owner/next_agent gap, out of this task's scope;
+surfaced informationally (non-gating) instead of silently dropped.
+**Output:** `scripts/audits/bounded1-supervised-lane-report.sh` (run live,
+0/16 unresolved) + `scripts/devteam-backlog-promote-supervised-lane-sweep.jq`
++ `scripts/devteam-backlog-claim-supervised-lane-sweep.jq` (dry-run verified:
+Zod-valid, conservation-neutral, idempotent, correct priority ordering) +
+`docs/agents/dev-team/flow/main.md` § Supervised-Lane Sweep + comment fixes
+in `scripts/devteam-backlog-promote-bounded1.jq`.
