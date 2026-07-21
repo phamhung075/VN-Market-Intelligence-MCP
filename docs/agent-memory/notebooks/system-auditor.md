@@ -2,6 +2,18 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c162 · 2026-07-21T02:32:42Z
+### Audit Run Tier-2 (02:31–02:32 UTC 2026-07-21)
+- Tier: 2 | Cron jobs: 70+ checked | Sources: 7 checked | VPS: 5 probed
+- A-29 (cron fire gaps): PASS — all major jobs running, no gaps
+- B-01 to B-07, B-11, B-12 (data freshness): PASS — prices, news, sbv, forex all fresh
+- B-06 (VPS service health): WARN — vn-bctc-fetch unhealthy (NEW)
+- B-09 (BCTC URLs): PASS — 0 SSC portal URLs in queue
+- B-13 (stale pending BCTC): PASS — 0 rows >72h
+- C-06, C-07 (DB spot checks): PASS — 4 messages 3h, 335 signals 24h
+- Anomalies: 1 new (B-06 VPS health) | 0 dedup-skipped | Status: WARN
+
+
 ## c362 · 2026-07-21T02:12:03Z
 ### Audit Run Tier-1 (02:10–02:12 UTC 2026-07-21)
 - Tier: 1 | Services: 12 checked | Health: 5 probed
