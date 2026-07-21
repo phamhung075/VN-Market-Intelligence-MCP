@@ -39,10 +39,17 @@ WEEK_PERIOD = call_tool(server="vn-market", tool="get_week_period", arguments={}
 PUBLISH_TASK_ID = "published:tnb-audit:" + WEEK_PERIOD.periodKey
 
 PUBLISH_CLAIM = call_tool(server="vn-market", tool="task_claim", arguments={
-  task_id:     PUBLISH_TASK_ID,
-  task_kind:   "cowork-slot",
-  owner_agent: "tran-ngoc-bau",
-  ttl_seconds: 691200    # ~8 days — weekly slot (spawn-fanout.md)
+  task_id:              PUBLISH_TASK_ID,
+  task_kind:            "cowork-slot",
+  owner_agent:          "tran-ngoc-bau",
+  owner_client_session: $CLAUDE_CODE_SESSION_ID,   # REQUIRED — task_claim schema (P1-FINAL TASK_1980);
+                                                    # live-confirmed 2026-07-21 (c115): omitting this field
+                                                    # fails with a zod validation error before any lock is
+                                                    # attempted, on the FIRST real invocation of this gate
+                                                    # (all prior c97-c114 cycles skipped it — MCP was unbound
+                                                    # in tran-ngoc-bau's frontmatter until the 2026-07-19
+                                                    # agent-father fix, so this schema gap was never hit live)
+  ttl_seconds:          691200    # ~8 days — weekly slot (spawn-fanout.md)
 })
 
 if PUBLISH_CLAIM.claimed != true:
