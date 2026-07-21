@@ -1,0 +1,87 @@
+{
+  "from": "news-scout",
+  "to": ["unified-agent", "alert-commander"],
+  "type": "news_impact",
+  "timestamp": "2026-07-21T20:09:52Z",
+  "cycle_id": "news-scout-offhours-20260721T20:00Z",
+  "summary": "Off-hours analysis (market closed, 20:00 UTC). 30 articles processed. Sector themes: PNJ liquidity crisis (gold mining), real estate weakness (-2.04% avg), banking headwinds (-0.81% avg). International: US-Iran war impact on oil (neutral), tariff news (geopolitical). Macro regime: Gold BULLISH (safe-haven), USDVND BEARISH (VND pressure), equities fairly valued.",
+  "signals": [
+    {
+      "id": "news-scout-20260721-pnj-liquidity",
+      "signal_type": "urgent_news",
+      "severity": "medium",
+      "stock_code": "PNJ",
+      "event_type": "liquidity_risk",
+      "direction": "bearish",
+      "impact_score": 7.5,
+      "title": "PNJ CEO admits liquidity pressure amid diamond crisis buyback commitments",
+      "payload": {
+        "headline": "CEO PNJ thừa nhận chịu áp lực thanh khoản, cổ phiếu thủng đáy 5 năm",
+        "detail": "Multiple articles (7 total) spanning 08:11–17:22 UTC document PNJ liquidity squeeze: CEO admits cash pressure, P-Lab suspends certifications, diamond buyback plan commitments, stock at 5-year lows. Pattern suggests operational/financial stress.",
+        "source": "cafef.vn",
+        "categories": ["gold_mining", "corporate_stress"],
+        "confidence": 0.85
+      },
+      "dedup_key": "pnj:liquidity:20260721",
+      "suppressed_by_intra_session": false,
+      "suppressed_by_sibling": false
+    },
+    {
+      "id": "news-scout-20260721-realestate-sector",
+      "signal_type": "chain_catalyst",
+      "severity": "medium",
+      "stock_codes": ["DIG", "D2D", "DXG", "PDR", "KDH", "VRE", "VHM"],
+      "event_type": "sector_weakness",
+      "direction": "bearish",
+      "impact_score": 7.0,
+      "affected_sector": "real_estate",
+      "title": "Real estate sector synchronized decline: 9 large-caps down -2.04% average",
+      "payload": {
+        "headline": "Ngành Bất động sản giảm đồng loạt (9 mã, TB -2.04%)",
+        "detail": "Sector-wide pressure: DIG -3.56%, D2D -3.30%, DXG -3.08%, PDR -2.36%, NLG -1.69%. Alerts flagged as HIGH. Likely triggered by macro (rates, FDI uncertainty) or sector-specific (policy changes, project delays). Cross-check with BCTC analyst for causality.",
+        "macro_regime": "NEUTRAL_CARRY, FAIRLY_VALUED_EQUITIES, BEARISH_USDVND_PRESSURE",
+        "confidence": 0.80
+      },
+      "dedup_key": "realestate:sector_weakness:20260721",
+      "suppressed_by_intra_session": false,
+      "suppressed_by_sibling": false
+    },
+    {
+      "id": "news-scout-20260721-vic-rally",
+      "signal_type": "urgent_news",
+      "severity": "low",
+      "stock_code": "VIC",
+      "event_type": "insider_accumulation",
+      "direction": "bullish",
+      "impact_score": 8.0,
+      "title": "VIC: Proprietary traders accumulate on index strength, insider buying signal",
+      "payload": {
+        "headline": "Tự doanh CTCK gom mạnh cổ phiếu Vingroup phiên Index 'bay' 13 điểm",
+        "detail": "Proprietary stock traders (Tự doanh CTCK) aggressively accumulated VIC during +13 point index rally. Typical bullish insider signal. Time: 10:30 UTC (mid-morning market hours). Magnitude: >100B gom.",
+        "source": "cafef.vn",
+        "categories": ["real_estate", "corporate_action"],
+        "confidence": 0.75
+      },
+      "dedup_key": "vic:insider_accumulation:20260721",
+      "suppressed_by_intra_session": false,
+      "suppressed_by_sibling": false
+    }
+  ],
+  "metrics": {
+    "articles_fetched": 30,
+    "articles_processed": 30,
+    "sources": ["cafef", "vnexpress", "vneconomy", "reuters"],
+    "signals_emitted": 3,
+    "signals_suppressed": 0,
+    "high_severity_count": 0,
+    "medium_severity_count": 2,
+    "low_severity_count": 1,
+    "market_status": "CLOSED (outside 02:00–08:59 UTC Mon-Fri)",
+    "macro_regime_detected": "MIXED (Gold BULLISH, USDVND BEARISH, Carry NEUTRAL, Equities FAIRLY_VALUED)"
+  },
+  "routing": {
+    "to_unified_agent": ["chain_catalyst signals for macro context, sector dedup"],
+    "to_alert_commander": ["urgent_news PNJ liquidity, VIC insider accumulation — filter by watchlist"],
+    "to_market_channel": "NO — news-scout never sends to MARKET (policy: alert-commander + unified-agent only)"
+  }
+}
