@@ -10663,9 +10663,9 @@
         "created_at": "2026-07-21T18:30:00Z",
         "depends": [],
         "note": "Root-cause fix for R3: late-firing market-watcher-eod loses eod.md deliverable. Design brief §5. PO sequencing: T6 ships first — market-facing DATA LOSS not latency.",
-        "updated_at": "2026-07-21T18:32:22Z",
-        "owner": "developer",
-        "next_agent": "developer"
+        "updated_at": "2026-07-21T18:36:43Z",
+        "owner": "agent-father",
+        "next_agent": "agent-father"
       },
       {
         "id": "DESIGN-COWORK-FANOUT-T1-TICK-SNAPSHOT-WON-SLOTS",
@@ -10678,9 +10678,9 @@
         "created_at": "2026-07-21T18:30:00Z",
         "depends": [],
         "note": "Capture co-dispatched producer slots for cycle-bootstrap. Design brief §4.1. Parallel with T6.",
-        "updated_at": "2026-07-21T18:32:22Z",
-        "owner": "developer",
-        "next_agent": "developer"
+        "updated_at": "2026-07-21T18:36:43Z",
+        "owner": "agent-father",
+        "next_agent": "agent-father"
       },
       {
         "id": "DESIGN-COWORK-FANOUT-T5-COWORK-SCHEDULE-CONFIG",
@@ -10743,9 +10743,9 @@
           "DESIGN-COWORK-FANOUT-T3-ALERT-COMMANDER-SCHEDULE-TASK-GRANT"
         ],
         "note": "Parse slot=/recheck= params, call schedule_task on empty bus with co-producers. Design brief §4.3. Tier 2b after T2, T3.",
-        "updated_at": "2026-07-21T18:32:22Z",
-        "owner": "developer",
-        "next_agent": "developer"
+        "updated_at": "2026-07-21T18:36:43Z",
+        "owner": "agent-father",
+        "next_agent": "agent-father"
       },
       {
         "id": "DESIGN-COWORK-FANOUT-T7-MATCH-SLOTS-CLARIFY",
@@ -10760,9 +10760,9 @@
           "DESIGN-COWORK-FANOUT-T6-MARKET-WATCHER-SLOT-ROUTING"
         ],
         "note": "R3 fold-in: doc-only clarifying comment. Design brief §5. Optional, low-priority. Tier 3 after T6.",
-        "updated_at": "2026-07-21T18:32:22Z",
-        "owner": "developer",
-        "next_agent": "developer"
+        "updated_at": "2026-07-21T18:36:43Z",
+        "owner": "agent-father",
+        "next_agent": "agent-father"
       },
       {
         "id": "DESIGN-COWORK-FANOUT-T8-QA-TEST-STRATEGY",

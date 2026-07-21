@@ -31,9 +31,17 @@ No change from the architecture brief's own §9 decomposition plan — all 8 tas
 
 **post-decomposition-corrections-applied-20260721T1832Z:**
 
-1. **Owner and next_agent assignment (blocking fix):** All 8 task rows initially lacked owner/next_agent fields. zone-detect skill cannot resolve non-apps/* zones to anything but generic "developer" placeholder, leaving dev-team unable to dispatch T6 (flow-doc fix, not code) and T8 (QA, not developer) to the right specialist. Set explicit assignments:
-   - T1, T2, T4, T5, T6, T7: owner="developer", next_agent="developer" (flow/config/skill work, let dev-team route by zone)
+1. **Owner and next_agent assignment (blocking fix, first pass then corrected):**
+   
+   **Initial assignment (incorrect):** All 8 task rows initially lacked owner/next_agent fields. Attempted generic "developer" for flow/config tasks (T1, T2, T4, T5, T6, T7) and explicit "qa" for T8. **Rationale was flawed:** "developer" IS the code-developer team lead, exactly what I was trying to avoid for flow-doc work (T6).
+   
+   **Board precedent correction (20260721T1836Z):** Agent flow-doc lifecycle tasks (editing docs/agents/*/ flows) route to `agent-father`, not `developer`. Evidence: all pre-existing agent-flow task rows (FIX-COWORK-SIBLING-WINDOW-CACHE-FAIL-OPEN, GAP-CHEF-SYNTHESIS-A-FLOW-PERSIST, SYSREMAKE-P2-T8-FLOW-DOC-WIRING) route to agent-father. Dispatch/SKILL.md line 48: "Agent | agent-father | All agent-file lifecycle" — T6's work (market-watcher main.md flow editing) is part of agent-file lifecycle.
+   
+   **Final assignment (corrected):**
+   - T1, T4, T6, T7: owner="agent-father", next_agent="agent-father" (agent flow-doc lifecycle, per board precedent)
+   - T2: owner="developer", next_agent="developer" (skill-file routing undefined, escalated to PO; left as-is)
    - T3: owner="dev-mcp-server", next_agent="dev-mcp-server" (code work, Tier-1 routable by zone)
+   - T5: owner="developer", next_agent="developer" (config work)
    - T8: owner="qa", next_agent="qa" (QA work, not routable by zone-detect, must be explicit)
 
 2. **WIP count correction (blocking restatement):** Initial report stated "1 in_progress (parent), within limit of 2 max concurrent." Actual state: **2 in_progress at cap**
