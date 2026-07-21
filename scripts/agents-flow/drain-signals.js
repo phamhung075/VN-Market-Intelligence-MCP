@@ -91,7 +91,19 @@ for (const base of files) {
   const fp_path = path.join(SIG, base);
   const raw = fs.readFileSync(fp_path, 'utf8');
   let j;
-  try { j = JSON.parse(raw); } catch (e) { report.push(`${base} → SKIP unparseable: ${e.message}`); continue; }
+  try { j = JSON.parse(raw); } catch (e) {
+    // po_addendum_zerobyte(b) / CLEAN-COWORK-DISPATCHER-TELEMETRY-DRAIN-DIR: an unparseable
+    // (0-byte or truncated-write) file is a WRITER DEFECT, not routine inbox traffic — it must
+    // be loud and immediately visible, distinguishable from the benign "SKIP non-signal shape"
+    // path below (which fires on well-formed JSON that simply lacks from/type). Before this
+    // fix it only landed in the batched `report` array printed once at the end (stdout),
+    // indistinguishable in prominence from routine "routed-to-po" lines. console.error (stderr,
+    // same channel as every other diagnostic in this file) so it never pollutes the stdout
+    // golden-report regression guard (AC7) while still surfacing on every run, immediately.
+    console.error(`[drain-signals] WARN unparseable JSON: ${base} — ${e.message} (0-byte or truncated write; file left in inbox, will re-warn every tick until removed at source)`);
+    report.push(`${base} → SKIP unparseable: ${e.message}`);
+    continue;
+  }
 
   // Non-routable-shape guard: skip state files / non-signal JSON dropped in inbox by accident.
   // A routable signal must have at least one of: from/source OR type/signal_type.

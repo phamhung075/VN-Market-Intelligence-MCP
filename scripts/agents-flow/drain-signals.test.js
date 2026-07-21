@@ -388,6 +388,42 @@ function makeOrchRefHarness() {
 }
 
 // ---------------------------------------------------------------------------
+// CLEAN-COWORK-DISPATCHER-TELEMETRY-DRAIN-DIR / po_addendum_zerobyte(b) — unparseable
+// (0-byte / truncated-write) files must log LOUDLY, distinguishable from the benign
+// "SKIP non-signal shape" path (which fires on well-formed JSON that simply lacks
+// from/type — e.g. a plain state dump). Before this fix, a JSON.parse() failure only
+// pushed a line into the batched `report` array (stdout, printed once at the very end,
+// indistinguishable in prominence from routine "routed-to-po" success lines). A truncated
+// write from a mid-write crash therefore left no immediate, loud trace — only a easy-to-miss
+// line buried among dozens of benign ones, forever (the drain never removes it).
+// ---------------------------------------------------------------------------
+{
+  const h = makeHarness();
+  const sigDir = path.join(h, 'docs/signals');
+  const scriptPath = path.join(h, 'scripts/agents-flow/drain-signals.js');
+
+  // Zero-byte file — the exact live shape (cowork-team-*.json truncated mid-write).
+  fs.writeFileSync(path.join(sigDir, 'cowork-team-zero.json'), '');
+  // Well-formed JSON, benign shape (no from/type) — must NOT trigger the loud unparseable WARN.
+  fs.writeFileSync(path.join(sigDir, 'benign-state.json'), JSON.stringify({ foo: 'bar' }));
+
+  const run = spawnSync('node', [scriptPath], { encoding: 'utf8' });
+  assert('unparseable-loud: drain process does not crash on a 0-byte file', run.status, 0);
+  assert('unparseable-loud: stderr carries an immediate WARN for the 0-byte file',
+    /\[drain-signals\] WARN unparseable JSON: cowork-team-zero\.json/.test(run.stderr), true);
+  assert('unparseable-loud: benign non-signal-shape file does NOT trigger the unparseable WARN',
+    /WARN unparseable JSON: benign-state\.json/.test(run.stderr), false);
+  assert('unparseable-loud: benign non-signal-shape file still logs its OWN distinct skip line',
+    /\[drain-signals\] SKIP non-signal shape: benign-state\.json/.test(run.stdout), true);
+  assert('unparseable-loud: 0-byte file is left in place (drain never deletes unparseable files)',
+    fs.existsSync(path.join(sigDir, 'cowork-team-zero.json')), true);
+  assert('unparseable-loud: golden report line for the 0-byte file is unchanged (stdout)',
+    /cowork-team-zero\.json → SKIP unparseable/.test(run.stdout), true);
+
+  cleanup(h);
+}
+
+// ---------------------------------------------------------------------------
 // Summary
 // ---------------------------------------------------------------------------
 const total = passed + failed;
