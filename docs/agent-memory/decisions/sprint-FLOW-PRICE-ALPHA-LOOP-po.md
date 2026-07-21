@@ -168,3 +168,12 @@
 - Mint a measurement-first census SPIKE and defer the scope decision
 **why-decision:** Ops numbers cannot be trusted (29 servable + ~40 unservable of 58 is impossible; wrong on 3/4 router-sampled), so no remediation could be correctly sized yet; the 3 failure modes already have 3 existing homes, so the ONLY missing artifact was a reliable per-ticker census — measure first, scope after.
 **why-change:** Router asked "separate row / epic / widen" — picked "separate SPIKE + defer" because widening dilutes an actively-bleeding fix and an epic on bad numbers is speculative over-mint.
+
+### STEP po-S152 · po · 2026-07-21T15:54:05Z
+**task-id:** SPIKE-BCTC-Q1-2026-SERVABILITY-CENSUS
+**what-done:** Adjudicated the router scope_correction (devteam-…154949) — narrowed the census SPIKE to only group-3 {NVL,SSI,VCI,HCM}+completeness (groups 1+2 already classified), recorded the 6-day-idle as an instance of the known 4-loop stall (no new mint), and set pdf-extractor recovery as the verification-gate sequencing long pole.
+**what-considered:**
+- Mint a new row for group-3 + a new row for the 6-day-idle loop defect + an epic
+- Fold group-3 into the existing SPIKE, log the idle as corroboration, annotate sequencing — no new mint
+**why-decision:** Group-3 is 4 tickers (a row is overkill), the idle defect is already tracked by the 4-loop audit (a 5th mint = churn), and the verification-gate argument only needs a sequencing note — three annotations beat three mints.
+**why-change:** Correction narrowed the original open-ended ask into 3 concrete questions; answered each with the minimum durable artifact.
