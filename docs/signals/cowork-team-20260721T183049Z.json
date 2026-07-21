@@ -1,0 +1,82 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "tick_telemetry",
+  "priority": "HIGH",
+  "createdAt": "2026-07-21T18:30:49Z",
+  "payload": {
+    "tick": "2026-07-21T18:15Z",
+    "verdict": "WORK",
+    "drift_min": 11,
+    "slots_matched": [],
+    "spawned": [],
+    "one_shots": [],
+    "errors": [],
+    "classification": "DRAIN_ONLY — zero slots; WORK triggered by 3 NEW signal_queue rows",
+    "DRAIN_DECISION": {
+      "action": "READ-and-route WITHOUT status flip",
+      "rows_left_NEW": [
+        "po-20260720T052606",
+        "cow-20260721T172415",
+        "cow-20260721T174200"
+      ],
+      "why": "po/flow/main.md:66 scans for status==NEW rows and marks READ itself. Flipping NEW->READ here would delete all 3 from POs inbox before PO ever triaged them. main.md Step 0a mandates the flip unconditionally; obeying it destroys the escalation. FIX-COWORK-STEP0A-TOPO-DRAIN-STATUS-CONTRACT firing live, 2nd time.",
+      "NOT_a_new_row": true
+    },
+    "GOLD_L6_CENSUS": {
+      "corrects_row": "FIX-CHEF-L6-GOLD-FALSE-PREDICATE",
+      "correction": "Row title says 5 published dishes carry a numerically false claim. Artifact census says 3, not 5.",
+      "live_gold_usd": 4073.4,
+      "live_gold_tier": 1,
+      "live_gold_is_estimate": false,
+      "threshold": 4300,
+      "DEFECTIVE_3": [
+        {
+          "dish": "2026-07-13-evening",
+          "text": "gold 4006.4 >$4300 active",
+          "mode": "self-contradictory: quotes live 4006.4 then asserts >4300"
+        },
+        {
+          "dish": "2026-07-19-evening",
+          "text": "gold >$4,300 active — gold 4018.8 nearing psychological 4100-4300 zone",
+          "mode": "self-contradictory: header pasted, body truthful"
+        },
+        {
+          "dish": "2026-07-20-morning",
+          "text": "gold >$4300 active — regime-drift risk ... until gold retraces below $4300",
+          "mode": "PURE TEMPLATE PASTE — verbatim chef.md:311, no live price anywhere. Worst of the three."
+        }
+      ],
+      "CORRECT_2_do_not_regex_these_away": [
+        {
+          "dish": "2026-07-13-morning",
+          "text": "gold $4,068 <$4,300 threshold — no drift check needed",
+          "why": "computed from live gold and stated the negative correctly"
+        },
+        {
+          "dish": "2026-07-14-evening",
+          "text": "gold $4056 (below $4300 threshold) — no phase-override condition triggered",
+          "why": "correct evaluation"
+        }
+      ],
+      "AC_IMPLICATION": "A fix that strips the >$4,300 token everywhere would DELETE two correct L6 evaluations. Defect is the template at chef.md:311 whose emitted string asserts its own precondition — pasting is indistinguishable from evaluating. Fix = deterministic numeric gate (same pattern as FIX-CHEF-USDVND-THRESHOLD-NUMERIC-DRIFT-GATE), NOT token removal.",
+      "TREND": "degrading — the 2 correct dishes are the OLDEST (07-13-morning, 07-14-evening); the pure paste is the NEWEST (07-20-morning)",
+      "RATE": "3 of 18 synthesis files. Intermittent, not every dish.",
+      "NOT_ASSERTED": "that chef-evening 19:45Z will paste it. Last 4 dishes (07-20-intraday, 07-20-eod, 07-21-morning, 07-21-intraday) are CLEAN. Earlier framing as a 73-minute emergency was inherited from po-20260720T052606 without checking the artifact plane; it does not survive checking."
+    },
+    "PREMISE_RECHECK": {
+      "row": "po-20260720T052606",
+      "row_claim": "STOP pasting the literal gold >$4,300 — false in 5 dishes; compute the comparison from live gold instead",
+      "verdict": "PARTLY WRONG, 37h after filing. (a) count is 3 not 5. (b) remedy compute-from-live-gold is ALREADY implemented — 4 of 5 dishes quote a live price, two state the negative correctly. Residual defect is narrower than the row describes.",
+      "still_true": "gold 4073.40 < 4300, so the token is false whenever emitted today"
+    },
+    "DISPATCHABILITY": {
+      "finding": "BOTH gold rows are priority=high with next_agent=null in backlog[] — the structurally-undispatchable signature that left FIX-AUDITOR-COMMIT-NONEXPLICIT-PATHSPEC stalled six weeks while its bug fired twice more.",
+      "rows": [
+        "FIX-CHEF-L6-GOLD-FALSE-PREDICATE",
+        "SPIKE-CTG-FALSE-PRESENCE-BLINDSPOT"
+      ],
+      "ask": "PO: set next_agent on both, or promote to ready[]. No new row needed — this is the whole ask."
+    }
+  }
+}
