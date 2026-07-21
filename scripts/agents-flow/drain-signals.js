@@ -2,9 +2,21 @@
 // Canonical drain helper for docs/agents/dev-team/flow/drain-signals.md §0a-1 + §0a-2.
 // Drains docs/signals/*.json → fingerprint dedup vs signals.db → processed/ + DB INSERT → 7-day prune.
 // DRAIN-INJECTION-SAFE: payload fields never touch a shell command line (sqlite3 fed via stdin, SQL built with '' escaping).
-// Scope: file drain ONLY. Queue-row drain (§0a-D) and the commit stay in the flow (dispatcher duties).
+// Scope: file drain + signal_queue.rows[].payload_ref repoint (FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE,
+//   2026-07-21 — see below). Queue-row READ-marking (§0a-D) and the flow's own commit stay in the flow
+//   (dispatcher duties) — this script's orch-state write is a SEPARATE, self-contained orch-apply.sh
+//   write, gated + committed independently of the flow's §0a-D-PRUNE commit.
 // Usage: node scripts/agents-flow/drain-signals.js   (run from anywhere; repo root derived from script location)
 // First shipped 2026-06-07 after the bash one-liner equivalent wedged (zero-CPU hang, nested-quote eval).
+//
+// FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE (2026-07-21): this script used to move docs/signals/*.json →
+// processed/ with ZERO awareness of orch-state.json .signal_queue — any row whose payload_ref pointed
+// at a file this script moved would dangle, hard-failing scripts/orch-validate.mjs Stage 1c on the
+// NEXT orch-apply write, fleet-wide, for ANY agent (recurred 4x live 2026-07-21). Fix: after the file
+// move loop, rewrite every signal_queue.rows[].payload_ref that pointed at a moved file to its new
+// processed/ location, in a dedicated orch-apply.sh-gated write (Zod schema + conservation + CAS —
+// same gate every other orch-state writer goes through). Test: scripts/agents-flow/drain-signals.test.js
+// "FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE" scenario (isolated harness, never touches the live orch-state.json).
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
@@ -16,6 +28,11 @@ const PROC = path.join(SIG, 'processed');
 const DB = path.join(SIG, 'signals.db');
 const NOW = new Date().toISOString().replace(/\.\d+Z$/, 'Z');
 const PROCESSED_BY = process.env.DRAIN_PROCESSED_BY || 'dev-team';
+// ORCH_APPLY_LIVE_FILE_OVERRIDE reused from scripts/orch-apply.sh's own convention (test-only override —
+// see scripts/orch-cold-evict.sh / scripts/orch-backlog-stub.sh precedent). No-op in production: both
+// this script and orch-apply.sh independently default to the identical canonical live path.
+const ORCH_STATE = process.env.ORCH_APPLY_LIVE_FILE_OVERRIDE || path.join(ROOT, 'docs/data/orch/orch-state.json');
+const ORCH_APPLY_SH = path.join(ROOT, 'scripts', 'orch-apply.sh');
 
 // GATE-B recurrence-count subcommand (FIX-DRAINESC-SEVERITY-RECURRENCE-GATE, 2026-07-04).
 // Read-only bootstrap safety-net query for drain-esc-dispatch.md GATE-B Tier 2 (used ONLY when
@@ -64,6 +81,11 @@ const files = fs.readdirSync(SIG).filter(f => f.endsWith('.json')).sort();
 const stmts = [];
 const newFingerprints = [];
 const report = [];
+// FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE: old repo-relative path ("docs/signals/X.json") -> new
+// repo-relative path ("docs/signals/processed/X.json" or "...-replay.json") for every file this
+// run actually moves. Fed into repointPayloadRefs() after the loop to keep signal_queue.rows[]
+// .payload_ref in sync with the move, in the same operation.
+const movedRefs = {};
 
 for (const base of files) {
   const fp_path = path.join(SIG, base);
@@ -102,6 +124,10 @@ for (const base of files) {
       `INSERT OR IGNORE INTO signals_processed (fingerprint, from_agent, to_agent, type, priority, payload, created_at, processed_at, processed_by, result, source_filename) VALUES ('${fingerprint}','${sqlEsc(from)}','${sqlEsc(to)}','${sqlEsc(type)}','${sqlEsc(priority)}','${sqlEsc(payload)}','${sqlEsc(createdAt)}','${NOW}','${sqlEsc(PROCESSED_BY)}','${result}','${sqlEsc(base)}');`
     );
   }
+
+  // Record the move for the payload_ref repoint pass below (both branches move the file away
+  // from its original inbox path — replay dupes still dangle any ref pointing at the original).
+  movedRefs[`docs/signals/${base}`] = `docs/signals/${path.relative(SIG, dest).split(path.sep).join('/')}`;
 
   // Dual-record write: filesystem move is SSOT; DB INSERT is non-fatal (spec §0a-1)
   j._processed = { fingerprint, processedAt: NOW, processedBy: PROCESSED_BY, result };
@@ -167,3 +193,82 @@ for (const pf of fs.readdirSync(PROC).filter(f => f.endsWith('.json'))) {
 console.log(report.join('\n') || '[drain-signals] inbox empty — nothing to drain');
 console.log(`inserted=${stmts.length} pruned_files=${pruned}`);
 console.log('db_count=' + execFileSync('sqlite3', [DB, 'SELECT COUNT(*) FROM signals_processed;'], { encoding: 'utf8' }).trim());
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE — payload_ref repoint (same operation as the move)
+// ─────────────────────────────────────────────────────────────────────────────
+// All diagnostics below go to stderr (console.error) ONLY — never stdout — so this
+// section is a no-op w.r.t. the golden-stdout regression guard in drain-signals.test.js
+// (AC7) and every other pre-existing caller that parses this script's stdout report.
+if (Object.keys(movedRefs).length > 0) {
+  repointPayloadRefs(movedRefs);
+}
+
+function repointPayloadRefs(map) {
+  if (!fs.existsSync(ORCH_STATE)) {
+    console.error(`[drain-signals] payload_ref repoint SKIP: orch-state.json not found at ${ORCH_STATE}`);
+    return;
+  }
+
+  // jq filter: for every signal_queue.rows[] entry whose payload_ref (fragment stripped)
+  // matches a key in $map, rewrite it to the mapped processed/ path (fragment preserved).
+  // Emits {doc, changed} so the caller can skip the write entirely when nothing matched
+  // (e.g. this run's moved files are unreferenced by any row — the common case).
+  const filter = `
+    (.signal_queue.rows // []) as $origRows
+    | ([$origRows[] | select(.payload_ref? != null and ($map[(.payload_ref | split("#")[0])] // null) != null)] | length) as $changed
+    | (if $changed > 0 then
+         .signal_queue.rows |= map(
+           if (.payload_ref? != null) then
+             (.payload_ref | split("#")) as $parts
+             | ($map[$parts[0]] // null) as $newPath
+             | if $newPath != null then .payload_ref = ($newPath + (if $parts[1] != null then "#" + $parts[1] else "" end)) else . end
+           else . end
+         )
+       else . end) as $newDoc
+    | {doc: $newDoc, changed: $changed}
+  `;
+
+  const computeCandidate = () => {
+    const out = execFileSync('jq', ['--argjson', 'map', JSON.stringify(map), filter, ORCH_STATE], { encoding: 'utf8' });
+    return JSON.parse(out);
+  };
+
+  const MAX_CAS_RETRIES = 3;
+  for (let attempt = 1; attempt <= MAX_CAS_RETRIES; attempt++) {
+    let result;
+    try {
+      result = computeCandidate();
+    } catch (e) {
+      console.error(`[drain-signals] WARN: payload_ref repoint jq computation failed (non-fatal, orch-state.json untouched): ${e.message}`);
+      return;
+    }
+    if (!result.changed) {
+      console.error(attempt === 1
+        ? '[drain-signals] payload_ref repoint: no signal_queue rows referenced moved files — orch-state.json untouched'
+        : '[drain-signals] payload_ref repoint: rows already repointed by a concurrent writer — orch-state.json untouched');
+      return;
+    }
+    const candidate = JSON.stringify(result.doc, null, 2) + '\n';
+    try {
+      // ORCH_APPLY_LIVE_FILE_OVERRIDE forwarded explicitly — required whenever ORCH_STATE is
+      // itself an override (test isolation); a no-op in production (both default identically).
+      execFileSync('bash', [ORCH_APPLY_SH], {
+        input: candidate,
+        encoding: 'utf8',
+        env: { ...process.env, ORCH_APPLY_LIVE_FILE_OVERRIDE: ORCH_STATE },
+      });
+      console.error(`[drain-signals] payload_ref repoint: ${result.changed} signal_queue row(s) repointed -> ${ORCH_STATE}`);
+      return;
+    } catch (e) {
+      if (e.status === 2 && attempt < MAX_CAS_RETRIES) {
+        console.error(`[drain-signals] payload_ref repoint: orch-apply.sh CAS mismatch (attempt ${attempt}/${MAX_CAS_RETRIES}) - retrying`);
+        continue;
+      }
+      console.error(`[drain-signals] FAIL-LOUD: payload_ref repoint orch-apply.sh write failed (exit ${e.status}) - ${result.changed} row(s) still reference moved file(s); orch-validate Stage 1c will hard-block the NEXT fleet orch-apply write until this is repaired.\n${e.stdout || ''}${e.stderr || ''}`);
+      process.exit(1);
+    }
+  }
+  console.error(`[drain-signals] FAIL-LOUD: payload_ref repoint CAS retry limit (${MAX_CAS_RETRIES}) exceeded — concurrent orch-state writer; orch-state.json untouched, refs still dangling`);
+  process.exit(1);
+}

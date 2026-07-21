@@ -228,6 +228,103 @@ function cleanup(dir) {
 }
 
 // ---------------------------------------------------------------------------
+// FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE — verification gate (row: docs/data/orch/orch-state.json
+// task_board.backlog, id FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE).
+//
+// Fully self-contained harness: on top of the usual drain-signals.js + signals.db isolation,
+// this ALSO copies the read-only orch-apply.sh / orch-validate.mjs / orch-conservation-check.mjs
+// gate chain + orchStateSchema.ts (node_modules SYMLINKED, never copied) into the same isolated
+// tmp root, so the REAL, unmodified validator/conservation-guard gate runs end-to-end against an
+// ISOLATED TEMP COPY of orch-state.json seeded inside this harness. The LIVE
+// docs/data/orch/orch-state.json is NEVER read or written by this scenario — the harness's own
+// orch-state.json lives only under its own mkdtemp root and is deleted by cleanup(h) below.
+//
+// Asserts all 3 gate conditions live (a green validator ALONE is not sufficient — see row):
+//   (1) the seeded file is now in processed/
+//   (2) the row's payload_ref was rewritten to the processed/ path
+//   (3) the REAL scripts/orch-validate.mjs (bun — see its own #!/usr/bin/env bun shebang;
+//       plain node cannot import its .ts schema dependency) exits 0 against the harness copy
+// ---------------------------------------------------------------------------
+function makeOrchRefHarness() {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'drain-orchref-test-'));
+  fs.mkdirSync(path.join(dir, 'scripts/agents-flow'), { recursive: true });
+  fs.mkdirSync(path.join(dir, 'docs/signals'), { recursive: true });
+  fs.mkdirSync(path.join(dir, 'docs/data/orch'), { recursive: true });
+  fs.mkdirSync(path.join(dir, 'apps/mcp-server/src/infrastructure'), { recursive: true });
+
+  fs.copyFileSync(SRC_SCRIPT, path.join(dir, 'scripts/agents-flow/drain-signals.js'));
+  for (const rel of ['scripts/orch-apply.sh', 'scripts/orch-validate.mjs', 'scripts/orch-conservation-check.mjs']) {
+    fs.copyFileSync(path.join(REPO_ROOT, rel), path.join(dir, rel));
+  }
+  fs.copyFileSync(
+    path.join(REPO_ROOT, 'apps/mcp-server/src/infrastructure/orchStateSchema.ts'),
+    path.join(dir, 'apps/mcp-server/src/infrastructure/orchStateSchema.ts'),
+  );
+  // Symlink (never copy) node_modules so `zod` resolves for the copied orchStateSchema.ts —
+  // both the root and the apps/mcp-server-local node_modules dirs bun's resolver will walk to.
+  fs.symlinkSync(path.join(REPO_ROOT, 'node_modules'), path.join(dir, 'node_modules'));
+  fs.symlinkSync(path.join(REPO_ROOT, 'apps/mcp-server/node_modules'), path.join(dir, 'apps/mcp-server/node_modules'));
+
+  execFileSync('sqlite3', [path.join(dir, 'docs/signals/signals.db'), SCHEMA]);
+  return dir;
+}
+
+{
+  const h = makeOrchRefHarness();
+  const sigDir = path.join(h, 'docs/signals');
+  const orchStatePath = path.join(h, 'docs/data/orch/orch-state.json');
+  const scriptPath = path.join(h, 'scripts/agents-flow/drain-signals.js');
+  const validatePath = path.join(h, 'scripts/orch-validate.mjs');
+
+  // Seed synthetic signal file directly in the harness inbox (never the live docs/signals/).
+  const sigFile = {
+    from: 'test-harness', to: 'po', type: 'gate-verify', priority: 'LOW',
+    createdAt: '2026-07-21T00:00:00Z', payload: { note: 'FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE gate' },
+  };
+  fs.writeFileSync(path.join(sigDir, 'gate-verify-signal.json'), JSON.stringify(sigFile));
+
+  // Seed the ISOLATED TEMP COPY of orch-state.json — minimal-but-schema-valid fixture (head +
+  // empty task_board + one signal_queue row whose payload_ref points at the seeded file above).
+  const orchStateFixture = {
+    head: { status: 'idle', active_task_id: null, next_agent: null },
+    task_board: { backlog: [], active_sprints: [] },
+    signal_queue: {
+      _updated_at: '2026-07-21T00:00:00Z',
+      _updated_by: 'test-harness',
+      rows: [
+        { id: 'gate-verify-row', summary: 'gate verify', severity: 'LOW', status: 'NEW', payload_ref: 'docs/signals/gate-verify-signal.json' },
+      ],
+      archive: [],
+    },
+  };
+  fs.writeFileSync(orchStatePath, JSON.stringify(orchStateFixture, null, 2));
+
+  execFileSync('node', [scriptPath], { encoding: 'utf8' }); // run the drain (isolated harness only)
+
+  // Assertion 1 — seeded file now in processed/
+  assert('FIX-DRAIN-PAYLOADREF gate (1) file moved to processed/', fs.existsSync(path.join(sigDir, 'processed/gate-verify-signal.json')), true);
+
+  // Assertion 2 — row's payload_ref repointed to the processed/ path, in the isolated copy only
+  const finalOrch = JSON.parse(fs.readFileSync(orchStatePath, 'utf8'));
+  const row = finalOrch.signal_queue.rows.find((r) => r.id === 'gate-verify-row');
+  assert('FIX-DRAIN-PAYLOADREF gate (2) payload_ref repointed', row && row.payload_ref, 'docs/signals/processed/gate-verify-signal.json');
+
+  // Assertion 3 — the REAL validator (bun, per its shebang) exits 0 against the harness copy
+  let validateOk = false;
+  let validateErr = '';
+  try {
+    execFileSync('bun', [validatePath, orchStatePath], { encoding: 'utf8' });
+    validateOk = true;
+  } catch (e) {
+    validateErr = (e.stderr || e.message || '').toString();
+  }
+  assert('FIX-DRAIN-PAYLOADREF gate (3) orch-validate.mjs exits 0', validateOk, true);
+  if (!validateOk) console.log(`        orch-validate stderr: ${validateErr}`);
+
+  cleanup(h);
+}
+
+// ---------------------------------------------------------------------------
 // Summary
 // ---------------------------------------------------------------------------
 const total = passed + failed;

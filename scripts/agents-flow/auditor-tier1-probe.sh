@@ -229,8 +229,13 @@ _check_mem_creep() {
 # file (never a hardcoded label list) — a new plist dropped into launchd/
 # is covered automatically, zero script edits, same "no hardcode" pattern
 # as the guaranteed-slot firer's matcher-driven design.
+#
+# OBSOLETE agents (kept in launchd/ for rollback reference only, not loaded in live system):
+#   - com.vn-market.socat-bridge — RESOLVED 2026-06-06 per OPERATOR-ALERT-SOCAT-FIX.md
+#     api-gateway Docker container now owns port :4000; socat band-aid was temporary fix
 _check_launchd_agents() {
   local dir="$LAUNCHD_DIR" plist label lc_out bad=""
+  local obsolete_labels="com.vn-market.socat-bridge"
   if [ ! -d "$dir" ]; then
     echo "launchd source dir not found: $dir"
     return 1
@@ -244,6 +249,10 @@ _check_launchd_agents() {
     [ -e "$plist" ] || continue
     label=$(awk '/<key>Label<\/key>/{getline; gsub(/.*<string>|<\/string>.*/,""); print; exit}' "$plist" 2>/dev/null)
     [ -z "$label" ] && continue
+    # Skip obsolete agents (kept in repo for rollback reference, not loaded in live system)
+    case "$label" in
+      $obsolete_labels) continue ;;
+    esac
     if ! printf '%s\n' "$lc_out" | grep -q "$label"; then
       bad="${bad}${label}(not-loaded) "
     fi
