@@ -1,0 +1,24 @@
+{
+  "ticker": "NVL",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Real estate development (residential townships, resort/tourism projects)",
+  "customer": "Homebuyers, condo/resort investors, institutional JV partners",
+  "ops": "get_bctc_full(NVL) returns 'Chưa có dữ liệu' despite ĐÃ NỘP status (filed 2026-06-08) — BLOCKED-CLUSTER data gap; downgraded to sector-comparison ratios only, no ledger write, no fabrication",
+  "mgmt": "PE 19.3x +20% premium, PB 0.8x -36% discount, ROE 4.2% below sector median 7.3%; foreign flow +8K shares net stronger than sector",
+  "financials": {
+    "pe": 19.3,
+    "pb": 0.8,
+    "roe_pct": 4.2,
+    "ey_spread_pp": 0.18,
+    "valuation_verdict": "EXPENSIVE"
+  },
+  "data_quality": "BLOCKED (Chưa có dữ liệu vs ĐÃ NỘP calendar status) — part of expanding blocked-cluster tracked since c089",
+  "kinhdich": null,
+  "trick_summary": null,
+  "trick_confidence": "none",
+  "cycle_id": "c107",
+  "cycle_ts_utc": "2026-07-21T15:09:59Z"
+}

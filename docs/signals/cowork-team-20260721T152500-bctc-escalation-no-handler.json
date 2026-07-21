@@ -1,0 +1,80 @@
+{
+  "id": "cow-20260721T152500-payload",
+  "ts": "2026-07-21T15:25:00Z",
+  "from": "cowork-team",
+  "to": "po",
+  "type": "routing-gap",
+  "severity": "HIGH",
+  "summary": "bctc-analyst escalation type 'bctc-data-quality-anomaly' has no dispatch handler — 5 HIGH escalations over 3 days drained to processed/ with zero board rows and zero signal_queue rows",
+
+  "finding": {
+    "claim": "The bctc-analyst blocked-cluster escalation path is absorbing, not routing. Signals are correctly written, correctly drained, and then folded with no actor assigned.",
+    "not_a_dev_team_negligence_issue": "Dev-team never declined the work — it was never presented as work."
+  },
+
+  "evidence_raw": {
+    "escalations_emitted": [
+      "docs/signals/processed/bctc-analyst-20260719T151400Z.json (1st: CTG/D2D/FRT/VCB)",
+      "docs/signals/processed/bctc-analyst-20260719T180932Z.json (2nd: +DGC/KDC)",
+      "docs/signals/processed/bctc-analyst-20260719T211100Z.json (3rd: +VJC/VND)",
+      "docs/signals/processed/bctc-analyst-20260721T000600Z.json (4th: +8 tickers, batch doubled 8->16)",
+      "docs/signals/bctc-analyst-20260721T150959Z.json (5th, c107: +NVL/SSI/VCI/HCM, undrained at time of writing)"
+    ],
+    "all_four_prior_confirmed_in_processed": true,
+    "signal_queue_rows_from_bctc": 0,
+    "signal_queue_probe": "jq '.signal_queue.rows[] | select((.from//\"\")|test(\"bctc\";\"i\"))' -> empty",
+    "task_board_rows_matching": 0,
+    "task_board_probe": "jq over .task_board.rows[] matching /blocked-cluster|reparse|reprocess|Chưa có dữ liệu|bctc.*data.*gap/i -> empty",
+    "get_recent_fixes_10": "latest fix 2026-05-12 (HEADLOCK) — no reparse/blocked-data fix has landed"
+  },
+
+  "root_cause": {
+    "mechanism": "drain-signals.js moves any routable file (has from/source/type/signal_type) to processed/ and DB-inserts it. Dispatch judgment then runs at the dev-team layer against an actionable-type allowlist. 'bctc-data-quality-anomaly' is not a member of that allowlist.",
+    "allowlist_members_known": [
+      "ci_red",
+      "repair_task_request",
+      "esc-deep-dive-request",
+      "brief_complete",
+      "audit-handoff",
+      "zone_missing_tier3",
+      "improvement_proposal_lane_b"
+    ],
+    "handler_checked": "docs/agents/dev-team/flow/drain-esc-dispatch.md handles esc-deep-dive-request (spawns bctc-analyst opus deep-dive). It does not branch on bctc-data-quality-anomaly.",
+    "consequence": "Drain reports success, file lands in processed/, DB row exists — every observable says 'handled'. Nothing spawns. The failure is silent by construction, same class as the emitPressureStateTool existsSync miss in cow-20260721T151500."
+  },
+
+  "blast_radius": {
+    "tickers_affected_est": "~21 (16 corruption/reprocess + NVL/SSI/VCI/HCM blocked-data + KBC long-standing)",
+    "growth_rate": "4 -> 21 tickers across 3 days; cluster expanded at every one of the 5 escalations",
+    "data_integrity": "NOT corrupted — bctc-analyst correctly refuses to fabricate, downgrades to get_sector_comparison ratios only, writes no ledger entry. Cost is coverage loss, not bad data.",
+    "severity_rationale": "HIGH on trajectory, not on current damage. The detector is working perfectly and reporting into a void; the cluster grows unattended."
+  },
+
+  "recurrence_class": {
+    "occurrences": 5,
+    "policy": "recurring 2+ -> block/escalate",
+    "distinction": "This is NOT 'recurring detection of a known bug' and NOT 'a fix that keeps failing'. No fix was ever attempted, because the work item was never minted. Treat as a routing defect, not a BCTC-pipeline defect."
+  },
+
+  "two_defects_do_not_conflate": {
+    "A_routing": "bctc-data-quality-anomaly has no handler -> this row. Fix is in the dispatch layer.",
+    "B_pipeline": "filing-status calendar flips to ĐÃ NỘP before the parsed financial_reports row is queryable -> the actual BCTC bug the 5 escalations describe. Needs its own board row once A stops swallowing it.",
+    "sequencing": "Fixing B without A means the 6th escalation vanishes the same way. Fix A first, or mint B manually this once."
+  },
+
+  "recommendation": {
+    "owner": "po",
+    "action": "PO decides: (1) add bctc-data-quality-anomaly to the dev-team actionable-type allowlist, or (2) route it via signal_queue instead of loose files so the queue drain picks it up. Then mint the pipeline board row for defect B with the 5-escalation history attached.",
+    "router_did_not_implement": "Dispatcher team boundary — cowork-team never spawns dev-team agents and never edits task_board directly. Filed as signal_queue row only.",
+    "related_rows": [
+      "cow-20260721T144500 — signal-dashboard HIGH flags dark; different leg (queue readers), same theme of write-only escalation paths",
+      "cow-20260721T145500 — signal_queue 152/200, cap pressure; relevant if PO chooses option (2)"
+    ]
+  },
+
+  "provenance": {
+    "discovered_by": "cowork-team router during post-tick verification of bctc-analyst c107 (slot bctc-analyst-slot-1, 15:00Z fire)",
+    "method": "raw jq probes against docs/data/orch/orch-state.json + filesystem trace of the 4 prior escalation files; no badge or self-report trusted",
+    "prior_art_checked": "task_board and signal_queue both searched before minting — no existing row covers the routing gap"
+  }
+}

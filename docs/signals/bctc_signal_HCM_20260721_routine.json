@@ -1,0 +1,24 @@
+{
+  "ticker": "HCM",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Brokerage, investment banking, margin lending",
+  "customer": "Retail and institutional equity investors",
+  "ops": "get_bctc_full(HCM) returns 'Chưa có dữ liệu' despite ĐÃ NỘP status (filed 2026-06-07) — BLOCKED-CLUSTER data gap; downgraded to sector-comparison ratios only, no ledger write, no fabrication",
+  "mgmt": "PE 17.8x +41% premium, ROE 9.4% below sector median 11.3%; foreign flow -26K shares net — weakest in securities sector",
+  "financials": {
+    "pe": 17.8,
+    "pb": 1.9,
+    "roe_pct": 9.4,
+    "ey_spread_pp": 0.62,
+    "valuation_verdict": "EXPENSIVE"
+  },
+  "data_quality": "BLOCKED (Chưa có dữ liệu vs ĐÃ NỘP calendar status) — newly confirmed this cycle via rotation touch",
+  "kinhdich": null,
+  "trick_summary": null,
+  "trick_confidence": "none",
+  "cycle_id": "c107",
+  "cycle_ts_utc": "2026-07-21T15:09:59Z"
+}

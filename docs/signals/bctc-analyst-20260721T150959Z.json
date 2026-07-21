@@ -1,0 +1,28 @@
+{
+  "id": "bca-20260721T150959Z",
+  "ts": "2026-07-21T15:09:59Z",
+  "from": "bctc-analyst",
+  "to": "dev-team",
+  "type": "bctc-data-quality-anomaly",
+  "summary": "BLOCKED-CLUSTER EXPANDED (5th UPDATE): NVL/SSI/VCI/HCM confirmed 'Chưa có dữ liệu' via get_bctc_full despite ĐÃ NỘP calendar status — cluster now ~17-18 tickers, no dev-team fix landed yet",
+  "severity": "HIGH",
+  "status": "NEW",
+  "payload_ref": null,
+  "payload": {
+    "cycle_id": "c107",
+    "slot": "bctc-analyst-slot-1 (15:00 UTC)",
+    "newly_confirmed_blocked": ["NVL", "SSI", "VCI", "HCM"],
+    "verification_method": "get_bctc_full(code) returned literal 'Chưa có dữ liệu BCTC' for all 4 despite calendar status ĐÃ NỘP (NVL filed 2026-06-08, SSI/VCI/HCM filed 2026-06-07) — checked docs/analysis-briefs/{TICKER}.md, no prior ledger entry for any of the 4",
+    "downgrade_action": "All 4 downgraded to routine bctc_signal using get_sector_comparison ratios only — no ledger write, no fabrication (per reprocess-vs-new-filing guard 2026-07-19)",
+    "prior_chain": [
+      "bctc-analyst-20260719T151400Z.json (initial: CTG/D2D/FRT/VCB reprocess pattern)",
+      "bctc-analyst-20260719T180932Z.json (2nd UPDATE: +DGC/KDC)",
+      "bctc-analyst-20260719T211100Z.json (3rd UPDATE: +VJC/VND)",
+      "bctc-analyst-20260721T000600Z.json (4th UPDATE: +GEX/SAB/DBC/DXG/KDH/MSN/PDR/SHB — batch doubled 8→16 tickers)"
+    ],
+    "cumulative_affected_tickers_est": "16 corruption/reprocess + 4 new blocked-data (NVL/SSI/VCI/HCM) + KBC (long-standing, pre-existing) = ~21 tickers with a data pipeline gap between filing-status flip and actual parsed report availability",
+    "get_recent_fixes_check": "get_recent_fixes(10) still stale — latest fix 2026-05-12 (HEADLOCK), no matching fix for reparse/blocked-data pipeline gap",
+    "root_task_hint": "Same root cause class as BCTC-HIST-VPS-BACKFILL / reparse pipeline — filing-status calendar flips to ĐÃ NỘP before the parsed financial_reports row is actually written/queryable",
+    "note": "All 4 tickers still serve plausible get_sector_comparison PE/PB/ROE ratios — evidence fragments recorded from those ratios (ids 315-321), no BCTC-parsed figures fabricated"
+  }
+}

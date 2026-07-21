@@ -1,0 +1,44 @@
+{
+  "ticker": "FPT",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "IT services, software exports, telecom (FPT Telecom), education (FPT Edu)",
+  "customer": "Enterprise IT buyers (VN + offshore), SME telecom subscribers, students/families (FPT Edu)",
+  "ops": "Operating margin 22.0% quarterly (Rev 12,480 tỷ, NI 2,476.8 tỷ); ROE 6.17%q / 28.3% ann; EY 7.25% FAIR +2.25pp vs 5% deposit rate; OCF/NI -1.15x (negative OCF -2,847.8 tỷ this quarter)",
+  "mgmt": "PE 13.8x -20% sector discount despite ROE above sector median 10.6% — consistent multi-cycle valuation gap (c079-c107); no insider activity flagged",
+  "financials": {
+    "net_revenue_bn_vnd": 12480,
+    "net_profit_bn_vnd": 2476.8,
+    "roe_quarterly_pct": 6.17,
+    "roe_annualized_pct": 28.3,
+    "pe": 13.8,
+    "pb": 3.6,
+    "ey_spread_pp": 2.25,
+    "valuation_verdict": "FAIR"
+  },
+  "esc_gate": {
+    "esc1": "FALSE (cached, byte-identical)",
+    "esc2_balance_sheet_imbalance_pct": 0,
+    "esc3_status": "DATA-COVERAGE-LIMITED",
+    "esc3_quarters_returned": 2,
+    "esc4_non_operating_share_pct": 2.0,
+    "esc4_result": "FALSE",
+    "esc5_result": "FALSE (bctc_refined_units empty)",
+    "escalation_status": "no_escalation"
+  },
+  "kinhdich": {
+    "hexagram": "Quẻ 15 Khiêm",
+    "trend": "THUAN LOI",
+    "confidence_pct": 100,
+    "note": "3rd distinct hexagram across c105-c107 (Tỷ→Du→Khiêm) — elevated volatility post 2026-07-20 selloff, not yet a confirmed stable read"
+  },
+  "trick_summary": null,
+  "trick_confidence": "none",
+  "trick_pass_versions": ["balance-sheet-v1", "pl-v1", "cashflow-v1", "rpt-v1", "footnote-v1", "segment-v1"],
+  "e3_cache": "HIT — byte-identical vs c079-c106, all 6 passes skipped",
+  "insider": "no significant activity",
+  "cycle_id": "c107",
+  "cycle_ts_utc": "2026-07-21T15:09:59Z"
+}
