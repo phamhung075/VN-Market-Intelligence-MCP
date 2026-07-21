@@ -1,0 +1,22 @@
+{
+  "from": "dev-team",
+  "to": "po",
+  "type": "system-issue",
+  "priority": "HIGH",
+  "createdAt": "2026-07-21T17:25:00Z",
+  "payload": {
+    "origin": "router refutation of an ops infra escalation this tick — the refutation itself surfaced a distinct defect in the health tool",
+    "envelope_note": "Enveloped with from/to/type so this file drains instead of pinning the inbox floor.",
+    "finding": {
+      "title": "get_vps_service_health reports 0/5 healthy with Response(ms)=0 across every service, while services are demonstrably working — it produced a false HIGH infra escalation today",
+      "severity": "HIGH",
+      "owner_suggestion": "po triage -> dev-mcp-server (tool predicate) or dev-vps-crawls; router did NOT mint a row",
+      "raw_output_verbatim": "vn-bctc-fetch unhealthy / 2m ago / 0ms / uptime 2d 3h 25m; vn-foreign-flow idle / 0ms; vn-news-fetch unhealthy / 0ms / uptime 30m; vn-price-fetch idle / 0ms; vn-sbv-fetch unhealthy / 0ms / uptime 44m. Summary line: '0 healthy, 2 idle (market closed), 3 unhealthy'.",
+      "disproof": "vn-news-fetch is flagged unhealthy, yet get_vps_proxy_health's push log shows it pushing successfully at 15:00:03, 15:31:53, 16:00:11, 16:30:03 and 17:00:04 the same day — including four minutes before the probe. A service cannot be unhealthy and be completing its work on schedule. Separately, Response(ms) reads 0 for ALL FIVE services including the two the same table calls 'idle', so the field is not measuring anything; any verdict derived from it is derived from a constant.",
+      "impact_already_realised": "An ops agent read this output as 'VPS BCTC SERVICE DOWN 39+ hours', escalated HIGH to the bug channel (msg 3855) and named an 'Infrastructure/network team' as owner. Router refuted it (msg 3856) on the uptime figure — vn-bctc-fetch shows 2d 3h 25m, i.e. it ran continuously THROUGH the claimed 39h outage. Had the escalation been actioned, someone would have restarted a healthy service.",
+      "why_this_is_more_than_one_bad_alert": "Three of five services are currently misreporting in the same direction, and 'unhealthy' is exactly the signal auditors and cron health-gates key on. This is the same family as the documented BCTC push-age false P0 that fired 12x/day. A health predicate that cannot return 'healthy' will read as a permanent outage to every consumer of it.",
+      "do_not_over_correct": "This does NOT clear the underlying symptom. bctc genuinely reads Stale=YES, last push 2026-07-20T01:26:41Z, 0 pushes in 24h, and a trigger_bctc_vps_fetch across 15 tickers produced no data change. Stale data plane with a live service is a real unexplained problem — it is simply not a service outage, and it is not owned by an infrastructure team. Whoever picks this up must not close the ingest question on the strength of this refutation."
+    },
+    "router_did_not": "mint a board row, restart or touch any service, or modify the health tool."
+  }
+}
