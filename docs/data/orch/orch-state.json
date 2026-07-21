@@ -411,8 +411,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-21T14:56:00Z",
-    "_updated_by": "cowork-team",
+    "_updated_at": "2026-07-21T15:23:32Z",
+    "_updated_by": "dev-team",
     "archive": [],
     "rows": [
       {
@@ -2518,6 +2518,61 @@
         "severity": "HIGH",
         "status": "NEW",
         "payload_ref": "docs/signals/cowork-team-20260721T145500-queue-cap.json"
+      },
+      {
+        "id": "cow-20260721T151500",
+        "ts": "2026-07-21T15:15:00Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "SPIKE-TICK-SNAPSHOT answered: promoter keys nominal tick HH:MM, writer keys wall-clock - match only at drift=0",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": "docs/signals/cowork-team-20260721T151500-snapshot-promotion-rootcause.json"
+      },
+      {
+        "id": "sys-20260721T151232-54c9",
+        "ts": "2026-07-21T15:12:32Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall suspected",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260721T151241-28d6",
+        "ts": "2026-07-21T15:12:41Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "mcp-server A-30 memory 99.75% (≥85% threshold)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "cow-20260721T152500",
+        "ts": "2026-07-21T15:25:00Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "routing-gap",
+        "severity": "HIGH",
+        "status": "NEW",
+        "summary": "bctc escalation type has no dispatch handler - 5 HIGH escalations over 3 days, 0 board rows, 0 queue rows; cluster 4->21 tickers",
+        "payload_ref": "docs/signals/cowork-team-20260721T152500-bctc-escalation-no-handler.json"
+      },
+      {
+        "id": "devteam-20260721T152332-bctcscope",
+        "ts": "2026-07-21T15:23:32Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "scope_escalation",
+        "summary": "BCTC 2026-Q1 unservable set is far wider than the 16 tickers scoped on FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP. Router spot-checked the ops classification through the SERVING path (get_bctc_full), not the DB plane: NVL, SSI and HCM all return \"Chua co du lieu BCTC\" despite ops listing all three as SERVABLE; FPT holds up (Validation passed, Confidence 81%). Three of four sampled servable entries are wrong, so that column is unreliable as a baseline. Ops own figures also self-contradict: it lists 29 tickers as servable while reporting ~40 unservable of 58 total, which cannot both be true. THREE distinct failure modes are now distinguished, where earlier passes saw only one: (1) row exists with total_assets=0, surfaced as CORRUPT DATA SKIP; (2) row absent entirely; (3) row present and non-zero in the DB but gated at the API by validation-failed / low-confidence. Modes 2 and 3 are indistinguishable to any caller — both render as \"Chua co du lieu\" — so a DB-side count cannot measure user-visible damage and an API-side count cannot separate cause. If the ~40 of 58 figure is closer to right, roughly two thirds of the watchlist has no servable Q1-2026 financials, which is a scope decision sitting above the current FIX row rather than inside it. Router did NOT mint a board row (PO owns minting), did NOT re-spawn ops a third time, and did NOT widen the in-flight dev task. Requesting PO scope adjudication: whether this becomes a separate row, an epic, or a widening of the existing FIX. Evidence is router-verified through the serving path, live at 2026-07-21T15:2xZ.",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-21T14:41:51Z",
