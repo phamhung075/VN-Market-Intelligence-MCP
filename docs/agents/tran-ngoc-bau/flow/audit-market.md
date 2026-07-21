@@ -7,6 +7,8 @@
 **Step 1a — Read MARKET channel (plain-language check)**
 `read_telegram_reports(channel="market", limit=10)` → last 10 MARKET messages
 
+> **KNOWN DEFECT (confirmed c115, 2026-07-21 — F-TNB-READTELEGRAMREPORTS-CHANNEL-PARAM-NOOP):** `read_telegram_reports` has no `channel` parameter — it silently ignores the argument and always returns the BUG-only `telegram_reports` backlog, regardless of value passed. MARKET dish content is not retrievable this way (chef's MARKET send never sets the internal `persist` param `get_unreviewed_market_messages` would need). Skip straight to file-proxy (`unified-agent.md` notebook + `unified-agent-synthesis-*.json`) — do not retry this call expecting different results. See `docs/handoffs/tnb-audit-latest.md` c115.
+
 For each MARKET message check:
 - [ ] Vietnamese diacritics present (no mojibake, no missing marks)
 - [ ] Message is plain Vietnamese prose — no inline citations (`#ID`, `price_anomaly_*`), no `[gap:]` markers, no metadata block
@@ -16,6 +18,8 @@ For each MARKET message check:
 
 **Step 1b — Read WORK channel for analyst detail (layer-walk audit)**
 `read_telegram_reports(channel="work", limit=20)` → filter messages starting with `[CHEF-DETAIL]`
+
+> **KNOWN DEFECT (confirmed c115, same as Step 1a above):** WORK-channel messages are explicitly "Not persisted (ephemeral)" per `send_telegram.md` — this call structurally cannot retrieve `[CHEF-DETAIL]` content. Use `unified-agent-synthesis-*.json` (Step 6.5/7 RAW content) as the substitute source for the layer-walk checks below.
 
 For each `[CHEF-DETAIL]` message (one per dish — Morning / EOD / Evening), check:
 - [ ] Message structure follows `docs/standards/alert-message-format.md`
