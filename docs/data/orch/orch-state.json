@@ -419,7 +419,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-21T17:40:37Z",
+    "_updated_at": "2026-07-21T17:47:47Z",
     "_updated_by": "cowork-team",
     "archive": [],
     "rows": [
@@ -1556,10 +1556,12 @@
         "from": "cowork-team",
         "to": "po",
         "type": "system-issue",
-        "summary": "digest-daily is the ONLY slot whose flow_path and trigger_prompt disagree, and spawn-fanout.md:120 mandates flow_path — which points at daily-predict.md, a flow with NO published:digest-daily dedup gate (gate lives only in main.md Step pre-D). Obeying the flow doc literally would bypass day-level dedup and allow duplicate prediction claims on re-fire. This tick spawned main.md (trigger_prompt) instead; deviation recorded in telemetry. Architect to decide which field is authoritative; same class as FIX-FB-WEEKEND-DEDUP-GATE [REVIEW].",
-        "severity": "MED",
+        "summary": "REGRADED MED->HIGH (composition, same tick): digest-daily is the ONLY slot whose flow_path and trigger_prompt disagree, and spawn-fanout.md:120 mandates flow_path -> daily-predict.md, which has NO published:digest-daily dedup gate (gate lives only in main.md Step pre-D). Separately, at 17:41:24Z a peer session claimed intent:digest-predict:digest-daily while this dispatch was in flight — instance 3 of FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS (namespace split makes task_claim a no-op across router/cowork paths). The published marker is the ONLY guard spanning the work window; the flow_path fork removes it. Two open BACKLOG rows individually survivable, jointly leave zero guard. NOT asserted: whether the peer spawned (peer intent lock still held at 17:46Z past agent completion — unresolved). DO NOT mint a new row; grade the two existing rows together with this one.",
+        "severity": "HIGH",
         "status": "NEW",
-        "payload_ref": "docs/signals/cowork-team-20260721T174200Z-digestdaily-flowpath-bypasses-dedup-gate.json"
+        "payload_ref": "docs/signals/processed/cowork-team-20260721T174200Z-digestdaily-flowpath-bypasses-dedup-gate.json",
+        "regraded_at": "2026-07-21T17:47:47Z",
+        "regraded_by": "cowork-team"
       }
     ],
     "last_triaged_at": "2026-07-21T15:28:00Z",
@@ -3737,7 +3739,8 @@
         "completed_at": "2026-06-19T11:30:00Z",
         "completed_by": "architect",
         "closed_by": "dev-team-tick-20260619T103058Z",
-        "closed_at": "2026-06-19T11:30:00Z"
+        "closed_at": "2026-06-19T11:30:00Z",
+        "updated_at": "2026-07-21T17:44:00Z"
       },
       {
         "id": "ARCH-HEADLESS-GATEWAY-COWORK-NOPOST",
@@ -10552,7 +10555,7 @@
         "supervised": false,
         "created_at": "2026-07-21T17:24:33Z",
         "created_by": "po/triage-20260721T1707",
-        "updated_at": "2026-07-21T17:24:33Z",
+        "updated_at": "2026-07-21T17:41:59Z",
         "updated_by": "po/triage-20260721T1707",
         "po_rationale_20260721T1724": "TWO independent instances of this exact shape were found in ONE dev-team tick (2026-07-21T17:07Z), by different routes, in unrelated subsystems. That is what justifies a class sweep rather than two isolated fixes. A threshold whose input has a floor above it is strictly WORSE than no gate: it is false assurance, and it reports success every time it fires.",
         "confirmed_instance_1": "dev-team drain guard — docs/agents/dev-team/flow/drain-signals.md:7 fires on `ls docs/signals/*.json | wc -l > 50`, against a permanent structural inbox floor of 54 undrainable files (46 cowork-team state files, 7 price_anomaly, 1 outage). Confirmed structural: unchanged by a SUCCESSFUL drain in the same tick. Already owned by CLEAN-COWORK-DISPATCHER-TELEMETRY-DRAIN-DIR (ready/P1) — DO NOT re-mint or re-fix, cite it as instance 1 only.",
@@ -10560,7 +10563,11 @@
         "scope": "Enumerate count/threshold predicates in docs/agents/**/flow/*.md, scripts/agents-flow/*.sh, scripts/*.sh and cron/scheduler configs. For each: identify the input set, determine whether it has a floor (undrainable/immortal/monotonic members), and compare that floor to the threshold. Report gates where floor >= threshold (SATURATED, always fires) and — the mirror case, worth catching in the same pass — gates where the input can never reach the threshold (DEAD, never fires).",
         "explicitly_not_in_scope": "Do NOT fix instances 1 and 2; they have owners. Do NOT change any gate found by this sweep — output is the inventory plus a per-gate severity call. Fixes are separate rows so each can be verified independently.",
         "acceptance": "Findings doc listing every count-threshold gate examined with: file:line, threshold, input set, measured or reasoned floor/ceiling, and verdict SATURATED / DEAD / HEALTHY. Include the gates that came back HEALTHY — a sweep that only reports hits cannot be distinguished from a sweep that stopped early.",
-        "generalisation_to_test": "Worth stating explicitly in the findings: a gate is only meaningful if its input can actually cross the threshold in BOTH directions. If any such gate is found to lack a regression test asserting that, say so — that is the durable fix for the class."
+        "generalisation_to_test": "Worth stating explicitly in the findings: a gate is only meaningful if its input can actually cross the threshold in BOTH directions. If any such gate is found to lack a regression test asserting that, say so — that is the durable fix for the class.",
+        "router_finding_dead_gate": "ROUTER 2026-07-21T17:41:58Z — THIRD INSTANCE, and it is a DEAD gate rather than a saturated one, which this row explicitly asks for. scripts/agents-flow/auditor-tier1-probe.sh: on the TIER-1 path run_probe() is called with NO suppress_heartbeat argument (line 295 takes it as the first positional; line 324 writes the heartbeat unless it equals that literal). So the probe WRITES docs/data/auditor-tier1-last-healthy.json on ALL_GREEN, and the cron LLM prompt then reads that same file back and computes an age of ~0 every time. The prompt branch [ALL_GREEN but heartbeat age over 60min] is therefore UNREACHABLE. On the FAILURE path it is redundant instead, because verdict=FAILURE already triggers the spawn by itself. Net: the freshness guard contributes nothing on tier 1 in either verdict state. Router observed it live — probe wrote 17:39:55Z, computed age 0 min, at 2026-07-21T17:41:58Z.",
+        "router_finding_fix_pattern_already_exists": "DO NOT DESIGN A NEW REMEDY — the exact fix already exists in the SAME FILE for tiers 2/3, shipped 2026-07-16 as auditor-signal-loop-P1. That change suppresses the run_probe heartbeat write for tier 2/3 and computes freshness from the PRE-EXISTING value captured BEFORE run_probe runs. The header of that file (lines ~96-118) names the defect in the same terms this row uses: age was always ~0 because it was computed from a value this same pre-gate had just written, making SKIP-SPAWN unconditional on green and the [ALL_GREEN + stale heartbeat -> SPAWN] branch dead code. Tier 1 was deliberately left 100% unchanged (line 80) and so still carries it.",
+        "router_scope_boundary": "Router did NOT determine whether tier 1 needs this guard at all. Tier 1 runs 6 live checks every tick, so its green is not passive in the way tier 2/3 green is. The honest options are: [a] port the tier-2/3 suppression to tier 1, or [b] delete the branch from the cron prompt as genuinely unnecessary and stop implying a check that does not happen. That is a design call for whoever works this row, not a router call. What is NOT acceptable is leaving a prompt instruction that reads as a live safety gate while being unreachable.",
+        "router_healthy_gate_positive_control": "POSITIVE CONTROL, per this row requirement to list healthy gates so the sweep is distinguishable from one that stopped early: the tier-1 heartbeat WRITE condition itself is healthy and NOT saturated — the script writes only on ALL_GREEN, downgrades to FAILURE if the write itself fails (never claims green without a verified write), and leaves the file untouched on FAILURE so age genuinely grows. Router verified this BEFORE going looking for the defect, so the finding is not the product of a search that only reports hits."
       },
       {
         "id": "DESIGN-COWORK-FANOUT-PRODUCER-CONSUMER-ORDERING",
