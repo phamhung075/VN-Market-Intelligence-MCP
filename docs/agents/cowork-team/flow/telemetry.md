@@ -1,4 +1,4 @@
-<!-- size-justification: 90L — Step 6 + call_tool emit_pressure_state (EMIT-DARK-v2 Option C) + conditional signal write + Error Guard. Child of main.md. -->
+<!-- size-justification: 153L — Step 6 + call_tool emit_pressure_state (EMIT-DARK-v2 Option C) + conditional signal write (atomic temp+validate+rename, CLEAN-COWORK-DISPATCHER-TELEMETRY-DRAIN-DIR step 1) + Error Guard (same atomic pattern). Child of main.md. -->
 
 ## Step 6 — Write telemetry signal + emit pressure state
 
@@ -31,7 +31,21 @@ if [[ "$SILENT" == "true" ]] && [[ -z "$SPAWNED" ]] && [[ -z "$ERRORS" ]]; then
 fi
 
 mkdir -p docs/signals
-cat > docs/signals/cowork-team-${ISO}.json <<EOF
+
+# ATOMIC-WRITE-GUARD (CLEAN-COWORK-DISPATCHER-TELEMETRY-DRAIN-DIR step 1): write to a
+# hidden temp path first, validate it (non-empty AND parseable JSON), THEN rename onto
+# the final path. A session interruption mid-heredoc only ever touches TMP — FINAL is
+# never created until validation passes, so a 0-byte/truncated artifact can never land
+# at the path the drain reads. TMP never ends in ".json" and starts with "." so it is
+# invisible to every `docs/signals/*.json` glob (drain, MANDATORY-PERSIST-GUARD count)
+# even if a kill mid-write leaves it behind.
+FINAL="docs/signals/cowork-team-${ISO}.json"
+TMP="docs/signals/.cowork-team-${ISO}.json.tmp.$$"
+
+# Sweep stale temp files (>60min old) left by any prior interrupted run.
+find docs/signals -maxdepth 1 -name '.cowork-team-*.tmp.*' -mmin +60 -delete 2>/dev/null || true
+
+cat > "$TMP" <<EOF
 {
   "from": "cowork-team",
   "to": "dev-team",
@@ -70,6 +84,12 @@ cat > docs/signals/cowork-team-${ISO}.json <<EOF
   "createdAt": "${ISO}"
 }
 EOF
+
+if [[ -s "$TMP" ]] && jq empty "$TMP" >/dev/null 2>&1; then
+  mv "$TMP" "$FINAL"
+else
+  echo "[cowork-team] WARN telemetry write failed validation (empty or invalid JSON) — tick ${ISO} produced NO signal file at ${FINAL}; bad artifact retained at ${TMP} for forensic review (auto-swept after 60min)" >&2
+fi
 ```
 
 ---
@@ -101,9 +121,22 @@ Wrap Steps 3–5 in try/catch. On any unhandled error:
 ```bash
 ISO=${NOW_ISO}
 mkdir -p docs/signals
-cat > docs/signals/cowork-team-${ISO}-error.json <<EOF
+
+# ATOMIC-WRITE-GUARD — same temp+validate+rename pattern as Step 6.1. This path fires
+# precisely when the tick is already failing, i.e. when interruption is MOST likely,
+# so it needs the guard at least as much as the happy-path writer.
+FINAL="docs/signals/cowork-team-${ISO}-error.json"
+TMP="docs/signals/.cowork-team-${ISO}-error.json.tmp.$$"
+
+cat > "$TMP" <<EOF
 {"from":"cowork-team","to":"po","type":"dispatcher-error","payload":{"error":"<message>","step":"<N>"},"createdAt":"${ISO}"}
 EOF
+
+if [[ -s "$TMP" ]] && jq empty "$TMP" >/dev/null 2>&1; then
+  mv "$TMP" "$FINAL"
+else
+  echo "[cowork-team] WARN error-signal write failed validation (empty or invalid JSON) — tick ${ISO} produced NO error signal file at ${FINAL}; bad artifact retained at ${TMP} for forensic review" >&2
+fi
 ```
 
 `send_telegram(channel="work", message="[cowork-team] ERROR ${ISO} — <message> (step <N>)")`
