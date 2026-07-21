@@ -398,6 +398,7 @@ docs/agents/dev-team/flow/drain-signals.md (parent — 116L)
 | File | Maintained by | Trigger |
 |------|--------------|---------|
 | `docs/agent-memory/decisions/sprint-*.md` | All task-executing agents | Per step, accumulated during sprint; pm archives at sprint close |
+| `docs/agent-memory/notebooks/orch-sentinel.md` | orch-sentinel | Cycle log, full overwrite, ≤80L |
 | `docs/signals/signals.db` | dev-team flow (Step 0a) — sole writer; all other agents read-only | Each drain cycle (INSERT + DELETE prune) |
 | `docs/data/system-map.json` | Developer / PM / System-Auditor | Service/agent/zone/channel/source/watchlist change — primary SSOT |
 | `docs/data/tool-registry.json` | Developer | After adding/removing MCP tool — also update system-map.json |
@@ -406,6 +407,7 @@ docs/agents/dev-team/flow/drain-signals.md (parent — 116L)
 | `docs/data/project-stats.json` | PM / System-Auditor | Sprint start/end, test count change (sprint-volatile state only) |
 | `docs/data/auditor-dedup-ledger.json` | `scripts/emit-audit-signal.sh` (sole writer) | Each E-2 (`send_telegram`) dedup send/bypass — tmp+mv atomic, NOT via orch-apply.sh |
 | `docs/data/code-janitor-known-findings.json` | Code-Janitor | Each janitor run |
+| `docs/data/orch-sentinel-scorecard.md` | orch-sentinel | Regenerated in full each run |
 | `mcp.config.json` | Developer | Threshold tuning |
 | `docs/policies/dev-standards.md` | Developer / Architect | After adding coding standards or layer rules |
 | `docs/policies/commit-convention.md` | Developer / Architect | Commit format change |
