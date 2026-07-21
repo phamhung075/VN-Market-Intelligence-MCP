@@ -371,11 +371,11 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-07-17T09:48:49Z",
-    "updated_by": "dev-mcp-server (FIX-OHLCV-DEPTH-ALERT-HONEST-GAP-SUPPRESS review-flip)"
+    "status": "in_progress",
+    "active_task_id": "FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP",
+    "next_agent": "dev-mcp-server",
+    "updated_at": "2026-07-21T15:04:30Z",
+    "updated_by": "dev-team (router dispatch tick 2026-07-21T14:37Z)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -10215,39 +10215,6 @@
         "note": "supervised:true blocks BOUNDED-1 idle auto-pickup. Distinct from UC-GCP-P3 (that row is about the drain COMMIT dropping deletions via pathspec; this row is about the orch-state REFERENCE not following the move). Distinct from CLEAN-COWORK-DISPATCHER-TELEMETRY-DRAIN-DIR (inbox floor hygiene)."
       },
       {
-        "id": "FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP",
-        "type": "FIX",
-        "status": "BACKLOG",
-        "priority": "high",
-        "size": "M",
-        "zone": "apps/mcp-server",
-        "owner": "po",
-        "supervised": true,
-        "created_at": "2026-07-21T14:51:20Z",
-        "created_by": "po-step0sig-triage-20260721T1451Z",
-        "title": "ACTIVE + SPREADING: an unattended same-day BCTC reprocess/reparse batch is corrupting reports (total_assets=0) AND flipping their NGAY NOP filing date to today — 16 watchlist tickers hit over 07-19..07-20, unresolved ~27h, still expanding",
-        "problem": "Something is re-running extraction over already-ingested BCTC reports and writing back BOTH (a) corrupt financials (total_assets=0, confidence forced to 0%, 'OCR extraction failure') and (b) a NGAY NOP (filing date) of the reprocess day. Harm (b) is the more dangerous half and is user-facing: these Q1-2026 reports had HAN NOP deadlines of 30/04/2026 and 15/05/2026, so they are 2+ MONTHS overdue — but get_earnings_calendar now renders them as 'DA NOP' with a July filing date instead of 'QUA HAN'. The calendar is therefore actively misinforming: genuinely-delinquent filers display as freshly-filed, and downstream consumers treat a reprocessed-and-corrupted row as a NEW filing worth analysing. Harm (a) then makes every derived ratio unservable for those tickers.",
-        "evidence_four_planes": [
-          "PLANE 1 file-bus: bctc-analyst escalated 4 consecutive times (20260719T151400Z, 20260719T180932Z, 20260719T211100Z, 20260721T000600Z), each cycle naming MORE tickers — 4 -> 6 -> 8 -> 16. All 4 still status=NEW, unresolved ~27h at triage time.",
-          "PLANE 2 Telegram: BCTC-1345b low-financial-confidence conviction-skips flooded WORK 2026-07-19 for an overlapping ticker set (KDH, D2D, CTG, NKG, DIG, SAB, FRT, DXG, VCI, HUT) — independent emitter, same victims.",
-          "PLANE 3 data (live, this triage): get_bctc_full(DGC, 2026, Q1) returns '[CORRUPT DATA - SKIP] total_assets=0 (zero or negative - OCR extraction failure), Confidence 0% (forced)'. Confirms harm (a) directly rather than via agent report.",
-          "PLANE 4 data (live, this triage): get_earnings_calendar shows EXACTLY 16 Q1-2026 rows with NGAY NOP in 2026-07-19/07-20 — 07-19: CTG D2D DGC FRT GEX KDC SAB VCB VJC VND (10); 07-20: DBC DXG KDH MSN PDR SHB (6). Matches bctc-analyst's cumulative count of 16 exactly. Confirms harm (b) directly."
-        ],
-        "investigation_start": "apps/mcp-server/src/scheduler/financial-reports/bctcReparseJob.ts is the prime suspect (it is the scheduled job that re-runs extraction over existing reports). Establish FIRST: what triggered it on 07-19 and 07-20, why it selects already-ingested reports, and why the write-back path sets ngay_nop to the processing date rather than preserving the original filing date. NOT-YET-VERIFIED: PO did not confirm bctcReparseJob is the actual writer — that attribution is a hypothesis from the job's role, and the fix must not start by assuming it.",
-        "two_part_fix": "(1) STOP THE BLEED — halt/gate the unattended reprocess so no further tickers are corrupted (it added 8 tickers between the 3rd and 4th escalation and may still be running). (2) DURABLE — the write-back must NEVER overwrite ngay_nop with the processing date, and must NEVER replace good stored financials with a zero/failed extraction (write only on successful extraction; on failure keep the prior good row and flag).",
-        "remediation_note": "Re-extraction of the 16 already-corrupted reports is REMEDIATION, tracked separately — do not conflate. Sequence it AFTER part (1), otherwise repaired rows get re-corrupted on the next batch. Related existing rows (adjacent, NOT duplicates): FIX-BCTC-VALIDATION-GATE-NONBANK-ZERO-SCALE (why validation_status='passed' fails to catch total_assets=0 — the missing safety net for harm (a)), OPS-BCTC-REFINE-REPASS-NONBANK-5T and W5-FU-CTG-REFINE-96e36139 (per-report remediation), SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY (07-10 reparse cadence guard — opposite direction, guard BLOCKING a reparse; may share the cadence-control surface).",
-        "acceptance": "(1) No BCTC report's ngay_nop is ever written from the processing date — it is sourced from the filing itself and is immutable on reprocess. (2) A failed/zero extraction never overwrites a previously-good stored report. (3) The 16 affected tickers show their TRUE filing status in get_earnings_calendar (QUA HAN where genuinely overdue), not a July flip.",
-        "verification_gate": "Live, both planes, on a business day AFTER the fix deploys: (a) get_earnings_calendar for the 16 tickers shows no NGAY NOP equal to the run date and delinquent filers read QUA HAN; (b) get_bctc_full for 3 previously-corrupt tickers returns servable data with non-zero total_assets. A green re-extract alone is NOT sufficient — must also show no NEW ticker acquired a same-day NGAY NOP over 3 consecutive daily cycles (proves the batch is actually stopped, not just that the victims were repaired).",
-        "refs": [
-          "feedback_no_fake_data_real_fetch",
-          "feedback_nonzero_values_need_plausibility_check",
-          "feedback_bctc_push_ok_masks_stale_ocr_reflow",
-          "feedback_ops_db_timestamp_falsification_to_bypass_guard",
-          "project_data_serve_integrity"
-        ],
-        "note": "supervised:true blocks BOUNDED-1 idle auto-pickup. PO did NOT restart or touch any container/job this triage (detection only, and any halt of a live scheduled job is an ops/user-gated action). This is the highest-severity item in the 2026-07-21T14:37Z tick: it is the only finding that is ACTIVELY DESTROYING data on a recurring daily cadence rather than sitting static."
-      },
-      {
         "id": "FIX-OHLCV-HISTORY-PLANE-EMPTY-LIVE-PLANE-HEALTHY",
         "type": "FIX",
         "status": "BACKLOG",
@@ -12023,6 +11990,43 @@
             "no_action": "no new dev row minted; ops NOT re-fired (would duplicate in-flight SPIKE)."
           }
         }
+      },
+      {
+        "id": "FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP",
+        "type": "FIX",
+        "status": "IN_PROGRESS",
+        "priority": "high",
+        "size": "M",
+        "zone": "apps/mcp-server",
+        "owner": "dev-mcp-server",
+        "supervised": true,
+        "created_at": "2026-07-21T14:51:20Z",
+        "created_by": "po-step0sig-triage-20260721T1451Z",
+        "title": "ACTIVE + SPREADING: an unattended same-day BCTC reprocess/reparse batch is corrupting reports (total_assets=0) AND flipping their NGAY NOP filing date to today — 16 watchlist tickers hit over 07-19..07-20, unresolved ~27h, still expanding",
+        "problem": "Something is re-running extraction over already-ingested BCTC reports and writing back BOTH (a) corrupt financials (total_assets=0, confidence forced to 0%, 'OCR extraction failure') and (b) a NGAY NOP (filing date) of the reprocess day. Harm (b) is the more dangerous half and is user-facing: these Q1-2026 reports had HAN NOP deadlines of 30/04/2026 and 15/05/2026, so they are 2+ MONTHS overdue — but get_earnings_calendar now renders them as 'DA NOP' with a July filing date instead of 'QUA HAN'. The calendar is therefore actively misinforming: genuinely-delinquent filers display as freshly-filed, and downstream consumers treat a reprocessed-and-corrupted row as a NEW filing worth analysing. Harm (a) then makes every derived ratio unservable for those tickers.",
+        "evidence_four_planes": [
+          "PLANE 1 file-bus: bctc-analyst escalated 4 consecutive times (20260719T151400Z, 20260719T180932Z, 20260719T211100Z, 20260721T000600Z), each cycle naming MORE tickers — 4 -> 6 -> 8 -> 16. All 4 still status=NEW, unresolved ~27h at triage time.",
+          "PLANE 2 Telegram: BCTC-1345b low-financial-confidence conviction-skips flooded WORK 2026-07-19 for an overlapping ticker set (KDH, D2D, CTG, NKG, DIG, SAB, FRT, DXG, VCI, HUT) — independent emitter, same victims.",
+          "PLANE 3 data (live, this triage): get_bctc_full(DGC, 2026, Q1) returns '[CORRUPT DATA - SKIP] total_assets=0 (zero or negative - OCR extraction failure), Confidence 0% (forced)'. Confirms harm (a) directly rather than via agent report.",
+          "PLANE 4 data (live, this triage): get_earnings_calendar shows EXACTLY 16 Q1-2026 rows with NGAY NOP in 2026-07-19/07-20 — 07-19: CTG D2D DGC FRT GEX KDC SAB VCB VJC VND (10); 07-20: DBC DXG KDH MSN PDR SHB (6). Matches bctc-analyst's cumulative count of 16 exactly. Confirms harm (b) directly."
+        ],
+        "investigation_start": "apps/mcp-server/src/scheduler/financial-reports/bctcReparseJob.ts is the prime suspect (it is the scheduled job that re-runs extraction over existing reports). Establish FIRST: what triggered it on 07-19 and 07-20, why it selects already-ingested reports, and why the write-back path sets ngay_nop to the processing date rather than preserving the original filing date. NOT-YET-VERIFIED: PO did not confirm bctcReparseJob is the actual writer — that attribution is a hypothesis from the job's role, and the fix must not start by assuming it.",
+        "two_part_fix": "(1) STOP THE BLEED — halt/gate the unattended reprocess so no further tickers are corrupted (it added 8 tickers between the 3rd and 4th escalation and may still be running). (2) DURABLE — the write-back must NEVER overwrite ngay_nop with the processing date, and must NEVER replace good stored financials with a zero/failed extraction (write only on successful extraction; on failure keep the prior good row and flag).",
+        "remediation_note": "Re-extraction of the 16 already-corrupted reports is REMEDIATION, tracked separately — do not conflate. Sequence it AFTER part (1), otherwise repaired rows get re-corrupted on the next batch. Related existing rows (adjacent, NOT duplicates): FIX-BCTC-VALIDATION-GATE-NONBANK-ZERO-SCALE (why validation_status='passed' fails to catch total_assets=0 — the missing safety net for harm (a)), OPS-BCTC-REFINE-REPASS-NONBANK-5T and W5-FU-CTG-REFINE-96e36139 (per-report remediation), SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY (07-10 reparse cadence guard — opposite direction, guard BLOCKING a reparse; may share the cadence-control surface).",
+        "acceptance": "(1) No BCTC report's ngay_nop is ever written from the processing date — it is sourced from the filing itself and is immutable on reprocess. (2) A failed/zero extraction never overwrites a previously-good stored report. (3) The 16 affected tickers show their TRUE filing status in get_earnings_calendar (QUA HAN where genuinely overdue), not a July flip.",
+        "verification_gate": "Live, both planes, on a business day AFTER the fix deploys: (a) get_earnings_calendar for the 16 tickers shows no NGAY NOP equal to the run date and delinquent filers read QUA HAN; (b) get_bctc_full for 3 previously-corrupt tickers returns servable data with non-zero total_assets. A green re-extract alone is NOT sufficient — must also show no NEW ticker acquired a same-day NGAY NOP over 3 consecutive daily cycles (proves the batch is actually stopped, not just that the victims were repaired).",
+        "refs": [
+          "feedback_no_fake_data_real_fetch",
+          "feedback_nonzero_values_need_plausibility_check",
+          "feedback_bctc_push_ok_masks_stale_ocr_reflow",
+          "feedback_ops_db_timestamp_falsification_to_bypass_guard",
+          "project_data_serve_integrity"
+        ],
+        "note": "supervised:true blocks BOUNDED-1 idle auto-pickup. PO did NOT restart or touch any container/job this triage (detection only, and any halt of a live scheduled job is an ops/user-gated action). This is the highest-severity item in the 2026-07-21T14:37Z tick: it is the only finding that is ACTIVELY DESTROYING data on a recurring daily cadence rather than sitting static.",
+        "next_agent": "dev-mcp-server",
+        "updated_at": "2026-07-21T15:04:30Z",
+        "updated_by": "dev-team (router-adjudicated dispatch, tick 2026-07-21T14:37Z)",
+        "dispatch_note": "Router-adjudicated dispatch of a supervised:true row — the supervised gate is scoped to the unattended BOUNDED-1 idle-pickup lane only (docs/policies/dev-standards.md), not to this PO-BATCH path. Part (1) stop-the-bleed routed to ops (attempt through the front door; the ops/user-gated label on this row carries NO recorded classifier denial, and per feedback_container_swaps_user_gated a gate without denial evidence is a false gate). Part (2) durable write-back fix routed to dev-mcp-server."
       }
     ]
   },
