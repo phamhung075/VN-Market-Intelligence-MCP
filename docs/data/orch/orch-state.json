@@ -411,8 +411,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-21T15:28:00Z",
-    "_updated_by": "po-signalqueue-triage-20260721",
+    "_updated_at": "2026-07-21T15:49:49Z",
+    "_updated_by": "dev-team",
     "archive": [],
     "rows": [
       {
@@ -2679,8 +2679,11 @@
         "type": "system-issue",
         "summary": "SPIKE-TICK-SNAPSHOT answered: promoter keys nominal tick HH:MM, writer keys wall-clock - match only at drift=0",
         "severity": "MED",
-        "status": "NEW",
-        "payload_ref": "docs/signals/processed/cowork-team-20260721T151500-snapshot-promotion-rootcause.json"
+        "status": "READ",
+        "payload_ref": "docs/signals/processed/cowork-team-20260721T151500-snapshot-promotion-rootcause.json",
+        "disposition": "FOLD -> SPIKE-TICK-SNAPSHOT-DEADCODE-OR-REGRESSED (spike ANSWERED, no new board row — cowork confirmed prior-art). Root cause: writer keys FILE_TICK off WALL-CLOCK minute (tick-snapshot.md:40) vs reader keys NOMINAL 15-min floor (emitPressureStateTool.ts:359) -> promotion succeeds only when drift_min rounds to 0 (line-233 existsSync silent miss, stale:false). NEITHER dead nor regressed -> RE-FIX, do not remove. Blast radius MODERATE (telemetry degrades to 'unknown' -> conservative defaults; no stale prices acted on, <=7min gate rejects). Recommend sequencing with the line-776 fixed-filename cycle-snapshot-current.json proposal (removes shared-clock coupling at root) over an in-place FILE_TICK floor patch. Respect the SPIKE SEQUENCING GUARD: land as ONE change set with cadence-policy rows + calendar_status oracle wiring (couples UC-SDF-P2, FIX-COWORK-CADENCE-DANGLING-POLICY-ID). dev-team owns both files.",
+        "read_by": "po-signaldrain-20260721T1537Z",
+        "read_at": "2026-07-21T15:45:29Z"
       },
       {
         "id": "sys-20260721T151232-54c9",
@@ -2690,8 +2693,11 @@
         "type": "signal_feedback",
         "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall suspected",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "READ",
+        "payload_ref": null,
+        "disposition": "FOLD -> PDF-AVAIL-02-FIX (existing home; A-20 pdf-extractor event-loop stall during active /extract). SAME continuous outage already recorded at PDF-AVAIL-02-FIX po_corroboration_20260721_1451; recurring_bug_count HELD at 6 (same episode). Code fix COMMITTED c78839c6c but NOT DEPLOYED (pdf-extractor rebuild user-gated) — auditor re-emits A-20 every Tier-1 cycle until deploy; NOT new information, NOT the fix having failed. FP-reemit convergence tracked by FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE. NO restart (re-wedges on next long PDF).",
+        "read_by": "po-signaldrain-20260721T1537Z",
+        "read_at": "2026-07-21T15:45:29Z"
       },
       {
         "id": "sys-20260721T151241-28d6",
@@ -2701,8 +2707,11 @@
         "type": "signal_feedback",
         "summary": "mcp-server A-30 memory 99.75% (≥85% threshold)",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "READ",
+        "payload_ref": null,
+        "disposition": "FOLD -> FIX-MCP-MEMORY-CODE-LEAK (benign-but-elevated, NO new mint). Router-verified this cycle: 18-sample x12s window mcp-server 95.39-99.99% GC sawtooth WITH reclamation dips, VmHWM 2.95GiB > current VmRSS 2.77GiB, OOMKilled=false, gateway serving. Band crept up ~6pt (floor 95.39% vs historical 89.2%); rag-service co-pinned 99.8%. Genuine tripwire (OOMKilled / >93%-no-reclaim / >97%-sustained) UNtripped. FP-reemit convergence tracked by FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE (already commissioned, next=architect). NO ops escalation, NO restart/rebuild (user-gated).",
+        "read_by": "po-signaldrain-20260721T1537Z",
+        "read_at": "2026-07-21T15:45:29Z"
       },
       {
         "id": "cow-20260721T152500",
@@ -2713,7 +2722,7 @@
         "severity": "LOW",
         "status": "RETRACTED",
         "summary": "RETRACTED false-positive - defect IS tracked as FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP (IN_PROGRESS, head active task); my jq used a nonexistent .task_board.rows path",
-        "payload_ref": "docs/signals/cowork-team-20260721T152500-bctc-escalation-no-handler.json",
+        "payload_ref": "docs/signals/processed/cowork-team-20260721T152500-bctc-escalation-no-handler.json",
         "retracted_at": "2026-07-21T15:27:00Z"
       },
       {
@@ -2723,6 +2732,64 @@
         "to": "po",
         "type": "scope_escalation",
         "summary": "BCTC 2026-Q1 unservable set is far wider than the 16 tickers scoped on FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP. Router spot-checked the ops classification through the SERVING path (get_bctc_full), not the DB plane: NVL, SSI and HCM all return \"Chua co du lieu BCTC\" despite ops listing all three as SERVABLE; FPT holds up (Validation passed, Confidence 81%). Three of four sampled servable entries are wrong, so that column is unreliable as a baseline. Ops own figures also self-contradict: it lists 29 tickers as servable while reporting ~40 unservable of 58 total, which cannot both be true. THREE distinct failure modes are now distinguished, where earlier passes saw only one: (1) row exists with total_assets=0, surfaced as CORRUPT DATA SKIP; (2) row absent entirely; (3) row present and non-zero in the DB but gated at the API by validation-failed / low-confidence. Modes 2 and 3 are indistinguishable to any caller — both render as \"Chua co du lieu\" — so a DB-side count cannot measure user-visible damage and an API-side count cannot separate cause. If the ~40 of 58 figure is closer to right, roughly two thirds of the watchlist has no servable Q1-2026 financials, which is a scope decision sitting above the current FIX row rather than inside it. Router did NOT mint a board row (PO owns minting), did NOT re-spawn ops a third time, and did NOT widen the in-flight dev task. Requesting PO scope adjudication: whether this becomes a separate row, an epic, or a widening of the existing FIX. Evidence is router-verified through the serving path, live at 2026-07-21T15:2xZ.",
+        "severity": "HIGH",
+        "status": "READ",
+        "payload_ref": null,
+        "disposition": "SCOPE ADJUDICATION: do NOT widen the in-flight FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP (kept sharp = mode-1 reparse-corruption stop-the-bleed + durable write-back, 16-ticker verification UNCHANGED). Ops SERVABLE/UNSERVABLE classification REJECTED as baseline — self-contradictory (29 servable + ~40 unservable of 58 is impossible) and wrong on 3/4 router-sampled (NVL/SSI/HCM empty through serving path despite 'SERVABLE'; FPT holds, 81% conf). The 3 failure modes already have 3 existing homes: mode-1(total_assets=0)->FIX-BCTC-REPARSE(in flight); mode-2(row absent)->FIX-BCTC-Q1-2026-STORED-PDF-INGEST-STALL-15T; mode-3(present-but-API-gated)->FIX-BCTC-VALIDATION-GATE-NONBANK-ZERO-SCALE. What NO row covered = the true cross-watchlist SCOPE + a reliable per-ticker mode census -> MINTED SPIKE-BCTC-Q1-2026-SERVABILITY-CENSUS (through the serving path). Epic-vs-fold remediation decision DEFERRED to that census (no speculative remediation mint on unreliable ops numbers). FLAG: SSI/NVL were 'correctly DA NOP' siblings on 07-15 but unservable on 07-21 — possible mode-1 spread beyond the 16 named; census must resolve. NO ops re-spawn, NO container action (user-gated).",
+        "read_by": "po-signaldrain-20260721T1537Z",
+        "read_at": "2026-07-21T15:45:29Z"
+      },
+      {
+        "id": "cow-20260721T153000",
+        "ts": "2026-07-21T15:40:00Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "Drain-guard floor root cause is narrower: 47/47 cowork telemetry files violate telemetry.md enveloped-schema INVARIANT",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": "docs/signals/processed/cowork-team-20260721T153000-telemetry-envelope-violation.json"
+      },
+      {
+        "id": "sys-20260721T154233-68d8",
+        "ts": "2026-07-21T15:42:33Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall suspected",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260721T154239-695f",
+        "ts": "2026-07-21T15:42:39Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "mcp-server A-30 memory 98.70% (spike from sawtooth)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260721T154251-4eb8",
+        "ts": "2026-07-21T15:42:51Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "api-gateway health endpoint FAIL (HTTP CURL_ERR)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "devteam-20260721T154949-bctcscopecorr",
+        "ts": "2026-07-21T15:49:49Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "scope_correction",
+        "summary": "CORRECTION + REFINEMENT of devteam-20260721T152332-bctcscope (router self-correction, not a retraction). That escalation asked PO to adjudicate the scope of the BCTC 2026-Q1 unservable set WITHOUT citing existing board prior art. That was a prior-art-check failure on the router's part per feedback_file_prior_art_check_before_minting_row. The evidence in the original row stands; its framing as an open unknown was wrong.\n\nWHAT WAS MISSED: FIX-BCTC-Q1-2026-STORED-PDF-INGEST-STALL-15T already exists (BACKLOG, priority high, owner ops, PO RAW-verified 2026-07-15T01:29Z, untouched for 6 days). It covers 15 tickers - DBC DGC DXG FRT GEX HUT KDC KDH MSN PDR PLX SAB SHB VJC VND - that have a stored *_2026_Q1.pdf on the VPS, report QUA HAN in get_earnings_calendar, and return \"Chua co du lieu BCTC\" from get_bctc_full because stored-PDF ingest/reconcile never ran. That is precisely the mode-2/mode-3 slice the escalation described as unattributed.\n\nREVISED DECOMPOSITION of the unservable set - at least THREE groups, not one undifferentiated ~40:\n(1) ~16 tickers, mode 1, row exists holding total_assets=0 - FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP, IN_PROGRESS, owner dev-mcp-server, live now.\n(2) 15 tickers, stored PDF never ingested - FIX-BCTC-Q1-2026-STORED-PDF-INGEST-STALL-15T, BACKLOG, owner ops, IDLE 6 DAYS. This is the actionable finding: a high-priority raw-verified row with a named owner has sat undispatched while the same symptom was being re-investigated from scratch elsewhere.\n(3) NVL, SSI, VCI, HCM - router-verified unservable through get_bctc_full this tick, and present in NEITHER (1) nor (2). Genuinely unclassified. This is the only part still needing scope adjudication.\n\nNEW INFRASTRUCTURE EVIDENCE, discovered same tick, material to all three groups: pdf-extractor is DOWN and has been for approximately 21 hours. docker reports \"Up 43 hours (unhealthy)\" with Health.FailingStreak=2544 and healthcheck \"exceeded timeout (30s)\". Corroborated independently through a second plane: api-gateway /health at localhost:4000/health returns HTTP 200 with body {\"status\":\"degraded\",\"pdf\":\"down\"} and pdf latency 2001ms, all 8 other services \"ok\". Board row PDF-AVAIL-02-FIX (BACKLOG, high, supervised=true, NO OWNER) describes exactly this symptom - whether pdf-extractor /health responds within 5s during an active /extract job, an event-loop fix. It is unowned and undispatched.\n\nCAUSAL CAUTION, explicitly not claimed: the ingest-stall row predates this outage by 6 days, so the outage cannot be its original cause. Router does NOT claim pdf-extractor being down explains the unservable set. What IS claimed is narrower and verifiable: while pdf-extractor is down, no BCTC ingest or reparse remediation can be verified end-to-end through the serving path, so any fix landed during the outage carries an unverifiable verification gate. Sequencing matters for that reason alone.\n\nREQUESTED PO DECISIONS, narrowed from the original open-ended ask: (a) does group (3) become its own row or fold into an epic with (1) and (2); (b) why did a high-priority raw-verified row with owner=ops sit 6 days undispatched - that is a loop-closure defect worth its own look, independent of BCTC; (c) dispatch order for PDF-AVAIL-02-FIX relative to the two BCTC rows, given the verification-gate argument above.\n\nRouter did NOT mint any row, did NOT widen the in-flight dev task, and did NOT dispatch ops for the pdf-extractor outage pending this adjudication. Verified this tick 2026-07-21T15:4xZ via docker inspect, docker port, direct curl to localhost:4000/health, and get_bctc_full spot-checks.",
         "severity": "HIGH",
         "status": "NEW",
         "payload_ref": null
@@ -2921,8 +2988,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-20T22:11:26Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-07-21T15:45:15Z",
+    "_updated_by": "po-signaldrain-20260721T1537Z",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -6697,7 +6764,8 @@
         "po_recurrence_triage_20260720": "RECURRENCE (PO signal-queue triage 2026-07-20): pdf-extractor A-20 event-loop-stall recurred 5x 2026-07-19T20:46Z..2026-07-20T00:46Z (health endpoint unhealthy + multi-probe 0/3). Root-cause hypothesis: the /health server shares the extraction event loop / the worker times out during long PDFs; durable fix = isolate the health server onto a separate thread/process/port so /health answers <5s during an active /extract. DO NOT restart (a re-restart re-wedges on the next long PDF). Zone-hint: this is CODE work in apps/pdf-extractor/ (current zone=ops = deploy angle only). recurring-bug-escalation (2+ -> durable fix) flag raised; supervised:true set to block BOUNDED-1 idle auto-pickup. PLAN-ONLY, no dispatch this triage.",
         "po_recurrence_triage_20260721": "HIGH-WATER RECURRENCE (PO signal-drain 2026-07-21T02:52:42Z): pdf-extractor A-11/A-12/A-13/A-20 event-loop stall now PERSISTENT ~30h+ CONTINUOUS (container 'Up but unhealthy' 27h->30h; ~49 signal_queue rows 2026-07-20T01:12..2026-07-21T02:41). Data-plane corroboration: C-11 pdf_documents 0-completed/48h (real, beyond the broken predicate). GENUINE degradation, NOT an FP. recurring_bug_count 5->6. ESCALATION DECISION: durable code fix now WARRANTED. zone corrected ops->apps/pdf-extractor (isolate /health server onto a separate thread/process/port so it answers <5s during an active /extract). PO recommends router route PDF-AVAIL-02-FIX to dev-pdf-extractor as a SUPERVISED dispatch (supervised:true retained to block BOUNDED-1 blind idle pickup). DO NOT restart (re-wedges on next long PDF); no user-gated container action taken. priority normal->high.",
         "po_corroboration_20260721_pm": "HIGH-WATER CORROBORATION (PO converge-drain po-s147 2026-07-21T14:23:45Z): +26 more A-11/A-15/A-20 pdf-extractor event-loop-stall rows this session 2026-07-21T03:11Z..14:12Z (0/3 multi-probe, HTTP 000). SAME continuous outage — recurring_bug_count HELD at 6 (same episode, not a new one). Fix COMMITTED c78839c6c; DEPLOY user-gated (PO cannot authorize the rebuild). VPS-side B-06 '3/5 down' @06:33Z = single-occurrence VPS view of the same wedge (not re-emitted). DO NOT restart (re-wedges on next long PDF). Detection-only — no infra action.",
-        "po_corroboration_20260721_1451": "CORROBORATION ONLY, no re-mint (PO Step 0-SIG triage 2026-07-21T14:51:20Z). Dashboard signal sys-20260721T144253-1153 (A-20 multi-probe 0/3, 14:42:53Z) is the SAME continuous outage already recorded at 14:23:45Z — recurring_bug_count HELD at 6, not bumped. IMPORTANT STANDING STATE: the code fix is COMMITTED (c78839c6c, 2026-07-21T05:11Z, offload background-task OCR to worker threads) but NOT DEPLOYED — the pdf-extractor rebuild is user-gated and PO cannot authorize it. Consequence to expect: the auditor will keep emitting A-20 every Tier-1 cycle INDEFINITELY until that rebuild happens, and those re-emits are NOT new information. Do not read continued A-20 signals as the fix having failed — the fix has not yet run anywhere. Verification of c78839c6c can only begin after deploy."
+        "po_corroboration_20260721_1451": "CORROBORATION ONLY, no re-mint (PO Step 0-SIG triage 2026-07-21T14:51:20Z). Dashboard signal sys-20260721T144253-1153 (A-20 multi-probe 0/3, 14:42:53Z) is the SAME continuous outage already recorded at 14:23:45Z — recurring_bug_count HELD at 6, not bumped. IMPORTANT STANDING STATE: the code fix is COMMITTED (c78839c6c, 2026-07-21T05:11Z, offload background-task OCR to worker threads) but NOT DEPLOYED — the pdf-extractor rebuild is user-gated and PO cannot authorize it. Consequence to expect: the auditor will keep emitting A-20 every Tier-1 cycle INDEFINITELY until that rebuild happens, and those re-emits are NOT new information. Do not read continued A-20 signals as the fix having failed — the fix has not yet run anywhere. Verification of c78839c6c can only begin after deploy.",
+        "po_corroboration_20260721_1537": "CORROBORATION ONLY, no re-mint (PO signal-drain 2026-07-21T15:37Z, folds A-20 sys-20260721T151232-54c9). SAME continuous outage already recorded at po_corroboration_20260721_1451 (14:51:20Z) — recurring_bug_count HELD at 6, not bumped (same episode). Code fix COMMITTED c78839c6c; DEPLOY still user-gated (pdf-extractor rebuild) — auditor re-emits A-20 every Tier-1 cycle until deploy; those re-emits are NOT new information and NOT the fix having failed (it has not run anywhere yet). FP-reemit convergence tracked by FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE. DO NOT restart (re-wedges on next long PDF)."
       },
       {
         "id": "RAG-SERVICE-AVAIL-01-FIX",
@@ -8478,7 +8546,8 @@
         "type": "FIX",
         "zone": "apps/mcp-server",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MCP-MEMORY-CODE-LEAK",
-        "po_corroboration_20260721": "CORROBORATION / high-water (PO converge-drain po-s147 2026-07-21T14:23:45Z): 5 A-30 mcp-server MemPerc samples this session 94.43→90.58→88.38→88.53→88.81% — reclaimed from peak, WITHIN the documented 85–93% GC-sawtooth band, NO OOM, tripwire UNtripped (no OOMKilled, no >93%-no-dip, no >97%-sustained). Benign leak episode already tracked here → NO new mint. DO NOT escalate to ops; DO NOT recommend a restart (would destroy trajectory evidence for zero OOM-risk benefit — feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn)."
+        "po_corroboration_20260721": "CORROBORATION / high-water (PO converge-drain po-s147 2026-07-21T14:23:45Z): 5 A-30 mcp-server MemPerc samples this session 94.43→90.58→88.38→88.53→88.81% — reclaimed from peak, WITHIN the documented 85–93% GC-sawtooth band, NO OOM, tripwire UNtripped (no OOMKilled, no >93%-no-dip, no >97%-sustained). Benign leak episode already tracked here → NO new mint. DO NOT escalate to ops; DO NOT recommend a restart (would destroy trajectory evidence for zero OOM-risk benefit — feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn).",
+        "po_corroboration_20260721_1537": "HIGH-WATER CORROBORATION (PO signal-drain 2026-07-21T15:37Z, folds A-30 sys-20260721T151241-28d6). Router-verified 18-sample x12s window: mcp-server MemPerc 95.39-99.99% GC sawtooth WITH reclamation dips; band crept up ~6pt this session (floor 95.39% vs historical 89.2%). VmHWM 2.95GiB > current VmRSS 2.77GiB (high-water above current = reclaim happening), OOMKilled=false, gateway serving, rag-service co-pinned 99.8%. Genuine tripwire (OOMKilled / >93%-no-reclaim-across-all-samples / >97%-sustained) UNtripped -> benign-but-elevated. NO new mint. DO NOT escalate to ops; DO NOT restart/rebuild (user-gated; would destroy trajectory evidence). FP re-emission of this same in-band condition tracked by FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE (already commissioned, next=architect)."
       },
       {
         "id": "FIX-CHEF-PUBLISHED-MARKER-RELEASE",
@@ -10399,7 +10468,9 @@
           "feedback_orphan_signal_immune_and_adoption_no_board_guard",
           "feedback_cowork_signal_filename_cycleid_keying"
         ],
-        "note": "supervised:true blocks BOUNDED-1 idle auto-pickup. Distinct from UC-GCP-P3 (that row is about the drain COMMIT dropping deletions via pathspec; this row is about the orch-state REFERENCE not following the move). Distinct from CLEAN-COWORK-DISPATCHER-TELEMETRY-DRAIN-DIR (inbox floor hygiene)."
+        "note": "supervised:true blocks BOUNDED-1 idle auto-pickup. Distinct from UC-GCP-P3 (that row is about the drain COMMIT dropping deletions via pathspec; this row is about the orch-state REFERENCE not following the move). Distinct from CLEAN-COWORK-DISPATCHER-TELEMETRY-DRAIN-DIR (inbox floor hygiene).",
+        "recurring_bug_count": 3,
+        "po_recurrence_escalation_20260721T1537": "RECURRING-BUG ESCALATION (2+ -> BLOCK, PO signal-drain 2026-07-21T15:37Z). This dangling-payload_ref-on-drain has now HARD-BLOCKED / threatened orch-state writes 3x within ~1h per router observation (14:51Z first repair, ~15:2xZ, and re-flagged this drain). The unshipped code fix is now treated as BLOCKING — every fleet orch-apply write can abort on routine drain hygiene until drain-signals.js repoints signal_queue.rows[].payload_ref in the same commit as the file move. Priority HELD at high (already high; board has no higher enum) — the BLOCKING status is carried in the PO notebook carry-over. HONEST OBSERVATION: this drain's OWN first orch-apply write did NOT hard-block — all signal_queue payload_refs resolved OK and orch-validate Stage 0+1 PASSED on the live file at drain start, so no in-write repoint was needed this cycle; recurring_bug_count=3 reflects the standing unshipped defect + router's cross-cycle recurrence assertion, not a block observed in this write."
       },
       {
         "id": "FIX-OHLCV-HISTORY-PLANE-EMPTY-LIVE-PLANE-HEALTHY",
@@ -10460,6 +10531,34 @@
         "source": "docs/architecture-briefs/2026-07-21-orchestration-health-agent.md #7 — agent-father flagged 2 edits outside its commit zone",
         "note": "agent-father completed the standard 3 registration locations (roster/dispatch/notebook-write OVERWRITE class) in dd9e38a52 but flagged 2 edits it cannot own. EDIT A (owner: Architect / claude-manager-helper per tree-map.md Write-Ownership catch-all) — add 2 rows to docs/references/tree-map.md Write-Ownership table: (1) docs/agent-memory/notebooks/orch-sentinel.md owner=orch-sentinel trigger=each-cycle; (2) docs/data/orch-sentinel-scorecard.md owner=orch-sentinel trigger=each-cycle. EDIT B (owner: Developer / PM / System-Auditor per tree-map ownership of system-map.json) — add orch-sentinel to docs/data/system-map.json project.agents[]: id=orch-sentinel, type=agent, cadence weekly-FULL(Sun 03:1x)+daily-LITE. Both trivial adds; exact text pre-derived in brief #208-210 so executor does not re-derive. Split by owner or execute as one multi-edit — router's call.",
         "acceptance": "grep orch-sentinel docs/references/tree-map.md returns 2 write-ownership rows AND jq .project.agents[]|select(.id==\"orch-sentinel\") docs/data/system-map.json is non-empty."
+      },
+      {
+        "id": "SPIKE-BCTC-Q1-2026-SERVABILITY-CENSUS",
+        "type": "SPIKE",
+        "status": "BACKLOG",
+        "priority": "high",
+        "size": "M",
+        "zone": "apps/mcp-server",
+        "owner": "po",
+        "next_agent": "architect",
+        "plan_only": true,
+        "supervised": true,
+        "origin_signal_id": "devteam-20260721T152332-bctcscope",
+        "title": "SPIKE: measure the TRUE per-watchlist-ticker Q1-2026 BCTC servability through the SERVING path (get_bctc_full) — ops SERVABLE/UNSERVABLE classification is self-contradictory (29 servable + ~40 unservable of 58) and wrong on 3/4 router-sampled; produce a reliable census + per-ticker 3-mode breakdown to decide whether remediation needs an epic",
+        "question": "For every watchlist ticker, what does get_bctc_full(2026,Q1) actually return, and for each unservable one which of the 3 modes applies: (1) row present total_assets=0 CORRUPT SKIP, (2) row absent entirely, (3) row present non-zero in DB but API-gated by validation-failed/low-confidence? What is the true unservable count vs the ~40/58 estimate? Does the SSI/NVL servable(07-15)->unservable(07-21) regression prove the mode-1 reparse-corruption is spreading beyond the 16 named tickers?",
+        "method": "Probe BOTH planes per ticker: (a) SERVING plane get_bctc_full via gateway call_tool (user-visible truth); (b) DB plane row-existence + total_assets + validation_status/confidence to separate mode-2 (absent) from mode-3 (present-but-gated) which are indistinguishable to any caller. Cross-join to get_earnings_calendar NGAY NOP state. Do NOT trust the ops SERVABLE column as baseline (self-contradictory + wrong on 3/4 sampled).",
+        "deliverable": "findings doc: per-ticker census table (ticker -> serving result -> mode 1/2/3) + true unservable count + explicit epic-vs-fold recommendation routing each mode to its existing home (mode-1 -> FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP, mode-2 -> FIX-BCTC-Q1-2026-STORED-PDF-INGEST-STALL-15T, mode-3 -> FIX-BCTC-VALIDATION-GATE-NONBANK-ZERO-SCALE) or a NEW row only if the census reveals a 4th mode / genuine uncovered scope gap.",
+        "scope_decision": "The remediation epic-vs-multiple-FIXes decision is DEFERRED to this census output. PO did NOT mint speculative remediation rows on ops's unreliable figures, and did NOT widen the in-flight reparse FIX. This SPIKE is the missing MEASUREMENT the scope decision waits on.",
+        "timebox": 180,
+        "refs": [
+          "feedback_same_db_tools_diverge_rowcount",
+          "feedback_remediation_overclaims_derived_layer",
+          "feedback_empty_read_is_not_evidence_confirm_tool_targets_store",
+          "project_data_serve_integrity"
+        ],
+        "note": "Minted from dev-team scope_escalation devteam-20260721T152332-bctcscope (router-verified through the serving path, live 2026-07-21T15:2xZ). Prior-art checked: the 3 mode-homes already exist (FIX-BCTC-REPARSE / FIX-BCTC-Q1-2026-STORED-PDF-INGEST-STALL-15T / FIX-BCTC-VALIDATION-GATE-NONBANK-ZERO-SCALE); only the cross-watchlist census/measurement was missing — that is all this mints (no over-mint of remediation). supervised:true blocks BOUNDED-1 idle auto-pickup.",
+        "created_at": "2026-07-21T15:45:15Z",
+        "created_by": "po-signaldrain-20260721T1537Z"
       }
     ],
     "closed_sprints": [
@@ -12272,7 +12371,8 @@
         "next_agent": "dev-mcp-server",
         "updated_at": "2026-07-21T15:04:30Z",
         "updated_by": "dev-team (router-adjudicated dispatch, tick 2026-07-21T14:37Z)",
-        "dispatch_note": "Router-adjudicated dispatch of a supervised:true row — the supervised gate is scoped to the unattended BOUNDED-1 idle-pickup lane only (docs/policies/dev-standards.md), not to this PO-BATCH path. Part (1) stop-the-bleed routed to ops (attempt through the front door; the ops/user-gated label on this row carries NO recorded classifier denial, and per feedback_container_swaps_user_gated a gate without denial evidence is a false gate). Part (2) durable write-back fix routed to dev-mcp-server."
+        "dispatch_note": "Router-adjudicated dispatch of a supervised:true row — the supervised gate is scoped to the unattended BOUNDED-1 idle-pickup lane only (docs/policies/dev-standards.md), not to this PO-BATCH path. Part (1) stop-the-bleed routed to ops (attempt through the front door; the ops/user-gated label on this row carries NO recorded classifier denial, and per feedback_container_swaps_user_gated a gate without denial evidence is a false gate). Part (2) durable write-back fix routed to dev-mcp-server.",
+        "po_scope_adjudication_20260721T1537": "SCOPE HELD SHARP (PO signal-drain 2026-07-21T15:37Z, adjudicating dev-team escalation devteam-20260721T152332-bctcscope). This row stays bounded to the mode-1 reparse-corruption mechanism (total_assets=0 + ngay_nop->processing-date flip) + its durable write-back fix; the 16-ticker acceptance/verification_gate is UNCHANGED. Do NOT widen it to the broad servability problem. The cross-watchlist true-scope census is spun out to SPIKE-BCTC-Q1-2026-SERVABILITY-CENSUS; the epic-vs-fold remediation decision is DEFERRED to that census. WATCH-SPREAD: router found SSI/NVL — listed as 'correctly DA NOP' siblings on 07-15 in FIX-BCTC-Q1-2026-STORED-PDF-INGEST-STALL-15T — now return 'Chua co du lieu' through get_bctc_full at 15:2xZ; consistent with this row's 'still expanding' concern, i.e. the batch may have corrupted previously-servable tickers beyond the 16. Ops SERVABLE column is unreliable (self-contradictory 29+~40>58) — do not baseline on it."
       }
     ]
   },
@@ -12283,6 +12383,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-07-21T14:41:51Z",
-  "_updated_by": "po-auditor-datastale-fp-triage"
+  "_updated_at": "2026-07-21T15:45:29Z",
+  "_updated_by": "po-signaldrain-20260721T1537Z"
 }
