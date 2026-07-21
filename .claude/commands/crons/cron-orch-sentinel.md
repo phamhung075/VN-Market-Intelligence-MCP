@@ -20,7 +20,7 @@ router/PO-gated action, reported as PENDING in agent-father's RETURN block.**
 
 ## MODE=FULL — Weekly Deep Sweep (Sunday, VN market fully closed)
 
-- **cron**: `15 3 * * 0` (03:15 UTC Sunday = 10:15 VN Sunday)
+- **cron**: `18 3 * * 0` (03:18 UTC Sunday = 10:18 VN Sunday)
 - **recurring**: true
 - **durable**: true
 - **prompt**:
@@ -30,14 +30,15 @@ router/PO-gated action, reported as PENDING in agent-father's RETURN block.**
   MCP: https://zenmidi.com/vn-market/mcp
   ```
 - **Dimensions run:** OH-1 + OH-2 + OH-3 + OH-4
-- **Rationale:** Sunday = VN market fully closed (zero market-hours collision risk). Clean slot — no
-  other fleet cron scheduled at this boundary.
+- **Rationale:** Sunday = VN market fully closed (zero market-hours collision risk). `:18` stays off
+  the `15,45 * * * *` db-data-integrity slots (that cron spawns its own system-auditor Claude
+  subagent) and off all other fixed fleet minutes (`:00/:07/:12/:15/:27/:30/:37/:42/:45/:57`).
 
 ---
 
 ## MODE=LITE — Daily Plumbing Check (before VN market open)
 
-- **cron**: `45 1 * * *` (01:45 UTC daily = 08:45 VN, before 09:00 VN market open)
+- **cron**: `48 1 * * *` (01:48 UTC daily = 08:48 VN, before 09:00 VN market open)
 - **recurring**: true
 - **durable**: true
 - **prompt**:
@@ -49,8 +50,9 @@ router/PO-gated action, reported as PENDING in agent-father's RETURN block.**
 - **Dimensions run:** OH-1 only (fastest-moving dimension — signal_queue/task_board plumbing; OH-2/3/4
   track doc/code/registry state that changes on a weekly-or-slower cadence, so running them daily is
   pure token cost with zero new signal)
-- **Rationale:** Scheduled 15min before system-auditor Tier-3 (`0 2 * * *`) to avoid host-load stacking
-  at the same boundary.
+- **Rationale:** Scheduled 12min before system-auditor Tier-3 (`0 2 * * *`) and off the
+  `15,45 * * * *` db-data-integrity slots (that cron spawns its own system-auditor Claude subagent),
+  avoiding host-load stacking at either boundary.
 
 ---
 
@@ -58,7 +60,7 @@ router/PO-gated action, reported as PENDING in agent-father's RETURN block.**
 
 Full line-itemed template (RAM/disk/tick-cost/model-rationale) → brief §6. Summary: zero new Docker
 service, zero incremental resident RAM (on-demand session, same as system-auditor/agents-architect),
-2 Claude sessions/week (1 FULL + 7 LITE), model=sonnet (OH-2/OH-3 require doc-parsing + coverage-gap
+8 Claude sessions/week (1 FULL + 7 LITE), model=sonnet (OH-2/OH-3 require doc-parsing + coverage-gap
 judgment, not pure numeric threshold comparison).
 
 ## No Manual/On-Demand Mode for v1
