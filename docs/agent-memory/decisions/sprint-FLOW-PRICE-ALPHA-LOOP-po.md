@@ -283,3 +283,33 @@
 - Close + fold — chosen
 **why-decision:** Acceptance was "findings doc names WHICH of (a)/(b)/(c)"; cowork-team answered (a) and router verified it at source (drain-signals.js:6 puts READ-marking out of script scope), not on the accused's self-report. Carried forward the blocking ordering constraint and the po-20260720T052606 live probe so closure drops nothing.
 **why-change:** Answer landed at 17:25:44Z, after the batch was formed.
+
+### STEP po-S164 · po · 2026-07-21T18:45:38Z
+**task-id:** GUARD-PRICE-ANOMALY-BYPATH-DISH-CONTRACT
+**what-done:** Disproved the "price_anomaly reaches nobody" premise at source; CANCELLED the envelope row, carved price_anomaly out of the CLEAN row's sweep/quarantine clauses, minted the contract row.
+**what-considered:**
+- Envelope + routing row (as signal asked) — REJECTED: drain would then MOVE files to processed/, out of Chef's top-level-only glob (chef.md:116). Would have CREATED the data loss it was meant to prevent.
+- Relocate out of docs/signals/ — REJECTED: same regression, Chef reads that exact path.
+- Document + protect the existing by-path contract — CHOSEN.
+**why-decision:** Writer (market-watcher/flow/eod.md:29) and consumer (unified-agent/flow/chef.md:116) both exist and are wired; the contract is stated in eod.md:15/:61 and market-watcher/init.md:119-121. Prior greps excluded .md, but flow docs ARE the executable source here, so "no writer found" was a search artifact.
+**why-change:** Signal asked for a WHERE-does-it-go decision; the answer was already decided and already working, so the row became protect-and-document rather than build.
+
+### STEP po-S165 · po · 2026-07-21T18:44:02Z
+**task-id:** DESIGN-COWORK-FANOUT-T2-CYCLE-BOOTSTRAP-EXTRACTION
+**what-done:** Ruled the routing class by ARTIFACT CLASS not directory; applied to 21 rows (14 docs/agents/, 4 .claude/skills/, T12+T32 prose-in-multi, T2).
+**what-considered:**
+- Hand-patch T2 only — REJECTED: leaves 13+ rows to reproduce the same mis-route.
+- Directory-based rule — REJECTED: T17/T28/T31 emit .md but are codegen/hook code; directory alone mis-classifies them.
+- Artifact-class rule (prose an agent executes -> agent-father) — CHOSEN.
+**why-decision:** Root cause is zone-detect resolving ONLY dev-<svc>/developer with no path to agent-father, so any unrouted docs/agents/ row falls to the generic developer placeholder. Precedent existed for SKILL.md->agent-father (dev-team-20260716T102429Z signal).
+**why-change:** Intended side effect: agent-father fails the ^dev(-|$)|^developer$ pattern, so BOUNDED-1's NON-DEV-NEXT_AGENT gate now withholds these from idle auto-pickup. That is correct, not a bug to fix.
+
+### STEP po-S166 · po · 2026-07-21T18:46:26Z
+**task-id:** SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD
+**what-done:** Moved in_progress -> ready/TODO + supervised:true, freeing the board's binding WIP constraint; logged instance 6 on the saturated-gates sweep; encoded head.wip_max=2.
+**what-considered:**
+- Unblock in place — REJECTED: asserts progress not evidenced in 5 days.
+- Reassign — REJECTED: hands a cold SPIKE to a new owner without re-triage.
+- Move out of in_progress — CHOSEN.
+**why-decision:** Row had NO updated_at at all, so the age-based stale-reset (dev-team/flow/main.md:491) was structurally unreachable for exactly the row that needed it; WIP 2/2 meant nothing could enter. Moving it frees the slot and forces deliberate re-dispatch.
+**why-change:** Left head.wip null/computed while storing wip_max, per the standing computed-not-stored conservation rule.
