@@ -1,4 +1,4 @@
-<!-- size-justification: 230L (110L overage) — complete acquire/critical-section/release protocol with 6 backoff-retry entries, fail-closed C-2/C-2b enum-drift paths, jitter formula, foreign-restore rule, Step 3d-PUSH rebase-retry guard (bounded 2-attempt + conflict-abort semantics), release protocol, and code-paste wiring template. All steps load-bearing and executed in sequence; backoff table and push guard are data/code (not prose) and cannot be abbreviated. Split would break protocol documentation contract (single reference point for dispatcher-only rule enforcement). -->
+<!-- size-justification: 240L (120L overage) — complete acquire/critical-section/release protocol with 6 backoff-retry entries, fail-closed C-2/C-2b enum-drift paths, jitter formula, foreign-restore rule, pathspec-scoped commit guard (FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-SKILLS), Step 3d-PUSH rebase-retry guard (bounded 2-attempt + conflict-abort semantics), release protocol, and code-paste wiring template. All steps load-bearing and executed in sequence; backoff table and push guard are data/code (not prose) and cannot be abbreviated. Split would break protocol documentation contract (single reference point for dispatcher-only rule enforcement). -->
 # Skill: commit-mutex
 
 > **INV-GATEWAY-1 (enforced 2026-06-07):** This skill is DISPATCHER-ONLY. Dev-*/qa/ba/pm/architect
@@ -108,6 +108,11 @@ STAGED=$(git diff --cached --name-only)
 #   send_telegram(channel="bug", "[<agent>] commit-mutex: foreign-path abort — <foreign-path>")
 
 # 3c. Commit (only if verify is clean — STAGED == own-paths)
+# PATHSPEC-SCOPED — never bare. Git resolves <path1> <path2> ... atomically at
+# commit time (its own scratch index, race-free), so a peer's `git add` landing
+# in the gap after 3b's snapshot can NEVER be swept into this commit even if it
+# is present in the shared index. Reuse the EXACT same paths passed to 3a —
+# never a directory or `.` (FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-SKILLS).
 git commit -m "$(cat <<'EOF'
 <type>(<scope>): <task-id> <summary>
 
@@ -117,7 +122,7 @@ Sprint: <sprint>
 Task: <task-id>
 AC: <criterion>
 EOF
-)"
+)" -- <path1> <path2> ...
 
 # 3d-PUSH. Attempt push. If non-fast-forward: rebase once and retry.
 # MAX 2 total push attempts. Abort on conflict; never auto-resolve.
@@ -226,7 +231,7 @@ Protocol:
    - claimed=false WITH current_holder → backoff (exp+jitter, 6 retries, ~125s max) → give-up → bug-telegram → SKIP
 2. git add <exact own_paths only>
 3. git diff --cached --name-only → if foreign: git restore --staged <foreign> only → re-check
-4. git commit -m heredoc
+4. git commit -m heredoc -- <exact own_paths only, same list as step 2 — never bare, never dir/.>
 5. git push origin main → if non-fast-forward: git pull --rebase origin main && git push origin main
    - rebase conflict → git rebase --abort → bug-telegram → commit stays local-only
    - push2 fail → bug-telegram → commit stays local-only

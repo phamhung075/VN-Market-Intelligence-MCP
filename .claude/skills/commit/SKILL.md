@@ -46,7 +46,11 @@ Group all modified/untracked files into logical categories. Skip `.DS_Store` —
 
 For each non-empty category:
 1. `git add <explicit file paths — never git add -A or git add .>`
-2. Commit using HEREDOC:
+2. Commit using HEREDOC, with the SAME explicit paths from step 1 as a pathspec on
+   the commit line itself — never bare, never a directory or `.` pathspec. A bare
+   commit absorbs whatever else is currently staged (e.g. a concurrent peer's
+   `git add`); a pathspec commit resolves atomically at commit time and ignores it
+   (FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-SKILLS):
 
 ```bash
 git commit -m "$(cat <<'EOF'
@@ -54,7 +58,7 @@ git commit -m "$(cat <<'EOF'
 
 Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
 EOF
-)"
+)" -- <same explicit file paths staged in step 1>
 ```
 
 ## Step 3 — Push to main
@@ -99,6 +103,7 @@ fi
 
 - Never commit `.DS_Store` or secrets
 - Never use `git add -A` or `git add .` — always stage files explicitly by path
+- Never commit bare — always pass the SAME explicit paths from Step 1 to the commit line itself as `-- <paths>` (Step 2)
 - Never skip hooks (`--no-verify`)
 - Use HEREDOC for all commit messages
 - Prefer many focused commits over one large commit

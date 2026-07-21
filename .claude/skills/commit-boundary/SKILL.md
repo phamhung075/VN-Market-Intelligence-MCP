@@ -1,12 +1,14 @@
 ---
 name: commit-boundary
-description: "Three-rule explicit-stage discipline for maintenance-lane agents (pm, agents-architect, agent-father) plus ops's Close Gate Step 4/4b commit-gate. SSOT for commit boundary enforcement. Absorbs FU-ARCHITECT-MUTEX-BINDING + FU-AGENT-FATHER-ORCH-SCOPE."
-version: "2026-07-09"
+description: "Explicit-stage discipline for maintenance-lane agents (pm, agents-architect, agent-father) plus ops's Close Gate Step 4/4b commit-gate. SSOT for commit boundary enforcement. Absorbs FU-ARCHITECT-MUTEX-BINDING + FU-AGENT-FATHER-ORCH-SCOPE."
+version: "2026-07-21"
 ---
+
+<!-- size-justification: 140L (20L overage) — RULE 1-4 explicit-stage/zone-check/pathspec-commit/raw-verify/push discipline plus per-agent zone table and R-HANDOFF mutex-gap protocol; all load-bearing, read together as the single commit-boundary reference for gateway-unbound agents. FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-SKILLS 2026-07-21: added RULE 2.5 pathspec-scoped-commit sub-rule (+24L, closes the RULE 2 snapshot-not-lock TOCTOU gap). -->
 
 # Commit Boundary Discipline
 
-Apply these THREE RULES in order before every `git commit`. No exceptions.
+Apply these RULES in order before every `git commit`. No exceptions.
 
 ## RULE 1 — EXPLICIT STAGE ONLY
 
@@ -42,6 +44,31 @@ git restore --staged <intruder-file>
 | agent-father | `docs/agents/` · `docs/agent-memory/` (any notebook) · `.claude/skills/` · `.claude/agents/` | `docs/data/orch/orch-state.json` · `apps/` · `docs/data/system-map.json` |
 | pm | `docs/data/orch/orch-state.json` (task board + sprint sections) · `docs/agent-memory/notebooks/pm.md` | `docs/architecture-briefs/` · `apps/` · other agents' notebooks |
 | ops | `docs/agent-memory/notebooks/ops.md` · `docs/agent-memory/decisions/sprint-<id>-ops.md` · `docs/data/orch/orch-state.json` (Close Gate Step 4/4b board+head write only) | `docs/architecture-briefs/` · `apps/` · other agents' notebooks — scope is exactly these 3 paths per `docs/protocols/docker-deployment-runbook.md` § Step 4/4b Commit-Gate Invariant |
+
+## RULE 2.5 — PATHSPEC-SCOPED COMMIT (the commit line itself)
+
+RULE 2's `git diff --cached --name-only` check is a snapshot, not a lock: a peer's `git add`
+can land in the gap between that check and the commit that follows, and a bare `git commit`
+absorbs whatever the shared index holds at that instant — not what RULE 2 observed
+(FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-SKILLS). Close this by passing the SAME explicit
+paths from RULE 1 as a pathspec on the commit line itself, never bare:
+
+```bash
+# CORRECT — pathspec resolved atomically at commit time, immune to a peer's
+# concurrent git add regardless of what else sits in the shared index
+git commit -m "$(cat <<'EOF'
+<type>(<scope>): <summary>
+EOF
+)" -- <same explicit paths staged in RULE 1>
+
+# FORBIDDEN
+git commit -m "..."                 # bare — sweeps everything currently staged
+git commit -m "..." -- docs/        # directory pathspec — NOT safe, still sweeps siblings
+git commit -m "..." -- .            # dot pathspec — NOT safe, same as above
+```
+
+RULE 3's post-hoc `git show`/`git reset --soft` backstop below is kept as defense-in-depth,
+not replaced — this rule closes the race at the source; RULE 3 catches anything unforeseen.
 
 ## RULE 3 — RAW SELF-VERIFY (after git commit)
 
@@ -97,19 +124,19 @@ fi
 ```
 task_claim(task_kind="commit-mutex", task_id="pm-commit-<slug>",
   owner_agent="pm", ttl_seconds=120)
-→ apply RULE 1-3
+→ apply RULE 1-3 (incl. 2.5)
 → task_release_or_expire after git show --name-only self-verify passes
 ```
 
 **agents-architect + agent-father** (no gateway binding — mutex physically unreachable):
 
 - Solo operation (orch-state.head.wip ≤ 1 OR agent's task is the only active dev activity):
-  → commit directly, applying RULE 1-3. No extra signaling needed.
+  → commit directly, applying RULE 1-3 (incl. 2.5). No extra signaling needed.
 
 - Contention risk (orch-state.head.wip = 2 AND a dev-team task is concurrently active):
   → write signal row to orch-state.signal_queue:
     `{type: "commit-handoff-request", from: "<agent>", to: "router",
       summary: "staging <N files>; request mutex window"}`
   → WAIT for router ack: `{type: "commit-handoff-ack", from: "router", to: "<agent>"}`
-  → commit (RULE 1-3 still applies), then signal:
+  → commit (RULE 1-3 (incl. 2.5) still applies), then signal:
     `{type: "commit-handoff-release", from: "<agent>", to: "router"}`
