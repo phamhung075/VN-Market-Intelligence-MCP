@@ -421,8 +421,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-21T17:47:47Z",
-    "_updated_by": "cowork-team",
+    "_updated_at": "2026-07-21T19:29:49Z",
+    "_updated_by": "po/triage-20260721T1907",
     "archive": [],
     "rows": [
       {
@@ -1521,8 +1521,11 @@
         "type": "system-issue",
         "summary": "SETTLES dev-team HIGH (drain body not executing): failure mode is (a) flow non-compliance, conceded — BUT the implied remedy mark-rows-READ would break dev-team own inbox (its drain filters status==NEW, drain-signals.md:22) and the stranded row is structurally dark (no receiver step). Both already filed as FIX-COWORK-STEP0A-TOPO-DRAIN-STATUS-CONTRACT + FIX-SIGNALQUEUE-RECEIVER-DELIVERY-CONTRACT. DO NOT mint new row; fix ordering matters.",
         "severity": "HIGH",
-        "status": "NEW",
-        "payload_ref": "docs/signals/processed/cowork-team-20260721T172415Z-markread-remedy-would-destroy-two-channels.json"
+        "status": "RESOLVED",
+        "payload_ref": "docs/signals/processed/cowork-team-20260721T172415Z-markread-remedy-would-destroy-two-channels.json",
+        "resolved_at": "2026-07-21T19:29:49Z",
+        "resolved_by": "po/triage-20260721T1907",
+        "po_disposition": "UPHELD. No row minted, as the escalation requested. Ordering graded onto the two existing rows: FIX-SIGNALQUEUE-RECEIVER-DELIVERY-CONTRACT lands FIRST, FIX-COWORK-STEP0A-TOPO-DRAIN-STATUS-CONTRACT second and now depends on it. Both re-priced P1."
       },
       {
         "id": "cow-20260721T174200",
@@ -1532,10 +1535,13 @@
         "type": "system-issue",
         "summary": "REGRADED MED->HIGH (composition, same tick): digest-daily is the ONLY slot whose flow_path and trigger_prompt disagree, and spawn-fanout.md:120 mandates flow_path -> daily-predict.md, which has NO published:digest-daily dedup gate (gate lives only in main.md Step pre-D). Separately, at 17:41:24Z a peer session claimed intent:digest-predict:digest-daily while this dispatch was in flight — instance 3 of FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS (namespace split makes task_claim a no-op across router/cowork paths). The published marker is the ONLY guard spanning the work window; the flow_path fork removes it. Two open BACKLOG rows individually survivable, jointly leave zero guard. NOT asserted: whether the peer spawned (peer intent lock still held at 17:46Z past agent completion — unresolved). DO NOT mint a new row; grade the two existing rows together with this one.",
         "severity": "HIGH",
-        "status": "NEW",
+        "status": "RESOLVED",
         "payload_ref": "docs/signals/processed/cowork-team-20260721T174200Z-digestdaily-flowpath-bypasses-dedup-gate.json",
         "regraded_at": "2026-07-21T17:47:47Z",
-        "regraded_by": "cowork-team"
+        "regraded_by": "cowork-team",
+        "resolved_at": "2026-07-21T19:29:49Z",
+        "resolved_by": "po/triage-20260721T1907",
+        "po_disposition": "ACCEPTED as composition evidence. No row minted, as the escalation requested. Graded together with the two existing rows per its instruction; the joint-zero-guard argument is recorded as the reason both are now P1."
       },
       {
         "id": "sys-20260721T183201-0e67",
@@ -1545,8 +1551,11 @@
         "type": "data_stale",
         "summary": "sbv_fx stale 61min (check B-04)",
         "severity": "CRITICAL",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolved_at": "2026-07-21T19:29:49Z",
+        "resolved_by": "po/triage-20260721T1907",
+        "po_disposition": "FALSE POSITIVE confirmed at source. Root cause minted as FIX-SLA-SBV-FX-BUSINESS-DAY-AWARE."
       },
       {
         "id": "sys-20260721T183209-1e91",
@@ -1556,8 +1565,11 @@
         "type": "service_health",
         "summary": "vn-bctc-fetch service unhealthy (check B-07)",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolved_at": "2026-07-21T19:29:49Z",
+        "resolved_by": "po/triage-20260721T1907",
+        "po_disposition": "FALSE POSITIVE. Already tracked by FIX-AUDITOR-HEALTHCHECK-FALSE-UNHEALTHY-NONHTTP-SERVICES (vn-bctc-fetch is a non-HTTP systemd timer); that row re-priced low -> P2. No mint."
       },
       {
         "id": "sys-20260721T183210-2d85",
@@ -1567,8 +1579,11 @@
         "type": "service_health",
         "summary": "vn-sbv-fetch service unhealthy (check B-07)",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolved_at": "2026-07-21T19:29:49Z",
+        "resolved_by": "po/triage-20260721T1907",
+        "po_disposition": "FALSE POSITIVE. Live probe at 19:19Z shows vn-sbv-fetch HEALTHY, last poll 4m ago. No mint."
       },
       {
         "id": "sys-20260721T183229-5a13",
@@ -1578,8 +1593,11 @@
         "type": "bctc_eval_delta",
         "summary": "MBB Q1-2026: stage 4 red (TABLE_RECONSTRUCT)",
         "severity": "HIGH",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolved_at": "2026-07-21T19:29:49Z",
+        "resolved_by": "po/triage-20260721T1907",
+        "po_disposition": "REAL and recent (eval row 1.4d old, code_coverage 0.21 vs 0.8 threshold). Genuine extraction-quality failure; must survive the recency bound added by FIX-AUDITOR-EVAL-DELTA-RECENCY-BOUND, where it is the named regression test."
       },
       {
         "id": "sys-20260721T183230-0471",
@@ -1589,8 +1607,11 @@
         "type": "bctc_eval_delta",
         "summary": "HVN Q1-2026: stage 4 red (TABLE_RECONSTRUCT)",
         "severity": "HIGH",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolved_at": "2026-07-21T19:29:49Z",
+        "resolved_by": "po/triage-20260721T1907",
+        "po_disposition": "STALE RE-EMISSION. Real failure data but the eval row is 21 days old (2026-06-30). Covered by FIX-AUDITOR-EVAL-DELTA-RECENCY-BOUND."
       },
       {
         "id": "sys-20260721T183230-209c",
@@ -1600,12 +1621,15 @@
         "type": "bctc_eval_delta",
         "summary": "FPT Q1-2026: stage 1 red (RASTERIZE)",
         "severity": "HIGH",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolved_at": "2026-07-21T19:29:49Z",
+        "resolved_by": "po/triage-20260721T1907",
+        "po_disposition": "STALE RE-EMISSION + INSTRUMENTATION ARTIFACT. Eval row is 41 days old (2026-06-10) AND has empty metrics/gate_failures. Covered by FIX-AUDITOR-EVAL-DELTA-RECENCY-BOUND and EVAL-PUSH-DOUBLE-ENCODE."
       }
     ],
-    "last_triaged_at": "2026-07-21T15:28:00Z",
-    "last_triaged_by": "po-signalqueue-triage-20260721"
+    "last_triaged_at": "2026-07-21T19:29:49Z",
+    "last_triaged_by": "po/triage-20260721T1907"
   },
   "sprint_goal": {
     "_note": "Active sprint visions. PO triage 2026-07-20 16->15: archived QUE-REFERENCE-PAGE (SHIPPED — route apps/frontend/app/routes/dashboard.kinh-dich-reference.tsx exists 9489B, renders all 64 que from que-descriptions-detail.generated; successor sprint KINHDICH-HOVER-DETAIL scope_out treats the reference page + its deep-link as already-existing; 0 orphan refs in task_board lanes; not in active_sprints). PREV: Active sprint visions. PO triage 2026-07-11 16->14: merged FB-POSTER-LAUNCHD-FIRER into COWORK-GUARANTEED-SLOT-DURABILITY (superseded per cron-jobs.md, firer plist installed+loaded); archived NARRATIVE-TRUTH-CCATO-GATE (T2+T3 both DONE, T3 qa-APPROVED). Reasoning: sprint-ANALYSIS-QUALITY-CONVERGENCE-po.md.",
@@ -1797,8 +1821,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-21T17:35:01Z",
-    "_updated_by": "dev-mcp-server",
+    "_updated_at": "2026-07-21T19:29:49Z",
+    "_updated_by": "po/triage-20260721T1907",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -7029,12 +7053,16 @@
       {
         "id": "FIX-AUDITOR-HEALTHCHECK-FALSE-UNHEALTHY-NONHTTP-SERVICES",
         "type": "FIX",
-        "priority": "low",
+        "priority": "P2",
         "size": "S",
         "status": "BACKLOG",
         "title": "system-auditor health-check probes an HTTP endpoint on non-HTTP services (vn-bctc-fetch = pure-bash systemd timer, no HTTP port) -> permanent false UNHEALTHY badge + wasted ops dispatch every audit",
         "zone": "docs/agents/system-auditor/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AUDITOR-HEALTHCHECK-FALSE-UNHEALTHY-NONHTTP-SERVICES"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AUDITOR-HEALTHCHECK-FALSE-UNHEALTHY-NONHTTP-SERVICES",
+        "po_repricing_note": "Re-priced low -> P2 by po 2026-07-21T19:29:49Z. This row already describes the defect exactly (vn-bctc-fetch is a pure-bash systemd timer with no HTTP port, so an HTTP probe yields a permanent false UNHEALTHY badge). It has now cost a second full triage cycle: signals sys-20260721T183209-1e91 (vn-bctc-fetch) and sys-20260721T183210-2d85 (vn-sbv-fetch) both landed as WARNs this tick and both are false. Priority 'low' is mispriced for a defect whose per-occurrence cost is a human-attention triage cycle and which recurs every audit.",
+        "po_evidence": "RAW-PROBED 2026-07-21T19:19Z by po via get_vps_service_health: vn-sbv-fetch = HEALTHY (last poll 4m ago), directly refuting sys-20260721T183210-2d85. vn-bctc-fetch = unhealthy, but per this row's own root cause that badge is structurally permanent and not evidence of an outage. IMPORTANT CORRECTION TO PO's OWN REASONING, recorded so it is not repeated: po initially treated get_vps_proxy_health (bctc last push 2026-07-20 01:26:41, 0 pushes/24h) as INDEPENDENT corroboration that bctc was genuinely down. That was wrong. bctc is event-driven with system-map expected_cadence_hours=168 and stale_threshold_hours=168, and get_sla_status independently reports bctc age 1769min vs SLA 9830min = 'ok'. The proxy 'Stale? YES' flag is itself miscalibrated for event-driven sources (same class as FIX-VPS-NEWS-STALE-FALSEPOS). Two miscalibrated flags agreeing is not corroboration — feedback_internal_consistency_is_not_corroboration_check_the_other_plane.md. The authoritative SLA plane says bctc is fine.",
+        "updated_at": "2026-07-21T19:29:49Z",
+        "updated_by": "po/triage-20260721T1907"
       },
       {
         "id": "FIX-COWORK-LASTFIRED-DECOUPLE-FROM-DELIVERY",
@@ -8549,7 +8577,7 @@
         "type": "FIX",
         "title": "PLAN-ONLY: cowork Step 0a marks to:po signal rows NEW->READ but dev-team drain filters status==NEW -> cowork->dev-team cross-team escalation bridge is a no-op by construction (READ rows cold-evicted after 24h)",
         "status": "BACKLOG",
-        "priority": "P2",
+        "priority": "P1",
         "size": "S",
         "zone": "cross-service/",
         "source": "cowork-team signal cow-20260715T201118",
@@ -8562,7 +8590,15 @@
         "next_agent": "ba",
         "po_fold_from_spike_20260721T1811": "FOLD-IN from SPIKE-COWORK-DRAIN-BODY-NOT-EXECUTING-ON-WORK-TICKS (closed 2026-07-21T18:11Z, acceptance met). THE DIAGNOSIS IS SETTLED — do not re-run it: the live failure mode is (a) flow non-compliance, the WORK-continuation drain body is narrated but not executed. Verified at source by router, not accepted from the accused actor's self-report: scripts/agents-flow/drain-signals.js:6 declares READ-marking explicitly OUT of script scope and left to the flow; the flow half never ran. (b) excluded — no write was ever attempted. (c) excluded — the 17:00Z and 17:15Z ticks had ZERO slots. Prior art: feedback_cowork_spawn_narrates_not_executes. BLOCKING ORDERING CONSTRAINT, and it inverts the obvious remedy: do NOT fix cowork compliance first. dev-team/flow/drain-signals.md:22 collects only status==NEW rows and :69 makes READ rows the prunable class — so the moment cowork Step 0a starts marking to:po rows READ as written, every cowork->dev-team escalation becomes invisible to dev-team's own drain and cold-evicts within 24h. cowork's non-compliance has been ACCIDENTALLY PROTECTIVE of that bridge. THIS ROW's status contract must be settled BEFORE compliance is enforced anywhere — that ordering is the whole reason this row, not a fresh fix row, is the fold target. LIVE PROBE — DO NOT TIDY: signal row po-20260720T052606 is deliberately held at NEW as the only reproducing instance; mark it READ only as the verified OUTPUT of a confirmed fix. COST CLOCK: with >=1 NEW cowork-addressed row the preflight SILENT gate can never fire, so every cowork tick burns a full LLM read every 15 min (the script header states SILENT was meant to cover ~80% of ticks). The defect sustains the condition that defeats the optimisation — this is not a static backlog item. Sibling row FIX-SIGNALQUEUE-RECEIVER-DELIVERY-CONTRACT (owner=po, next_agent=architect) covers the adjacent delivery-contract half; keep them coherent, they share the status-semantics question.",
         "po_ruling_signalqueue_prune_deferral_20260721T1811": "ROUTER'S 0a-D PRUNE DEFERRAL IS ENDORSED — AND IT SHOULD STOP BEING RE-LITIGATED EVERY TICK, WHICH IS WHY IT IS RECORDED HERE ON THE OWNING ROW RATHER THAN LEFT AS A PER-TICK JUDGEMENT CALL. Router has now deferred the 0a-D signal_queue prune for THREE consecutive dev-team ticks. That is correct and I am ratifying it, not merely tolerating it: the prune removes READ/RESOLVED rows, drain-signals.md:69 makes READ rows the prunable class, and THIS ROW is open on precisely whether that severs the cowork->dev-team escalation bridge. Running the prune now would destroy the evidence cowork-team warned about and would resolve the open question by deleting its subject. STANDING INSTRUCTION: 0a-D stays deferred until this row's status contract is settled. A deferral driven by a documented open question is not a skipped chore and must not be counted as drift or auto-escalated as a stalled step. When this row closes, the prune is unblocked automatically — no separate PO ruling needed to re-enable it. Nobody needs to ask again in the meantime.",
-        "updated_at": "2026-07-21T18:14:57Z"
+        "updated_at": "2026-07-21T19:29:49Z",
+        "depends": [
+          "FIX-SIGNALQUEUE-RECEIVER-DELIVERY-CONTRACT"
+        ],
+        "po_ordering_ruling": "LANDS SECOND, gated on FIX-SIGNALQUEUE-RECEIVER-DELIVERY-CONTRACT. Ruling by po 2026-07-21T19:29:49Z. Escalation cow-20260721T172415 is UPHELD on its central point: po independently verified at source that docs/agents/dev-team/flow/drain-signals.md 0a-D collects ONLY status=NEW rows, so a blanket mark-rows-READ remedy would indeed sever dev-team's own inbox. The escalation conceded flow non-compliance and that concession stands, but the proposed remedy was correctly rejected. This row must define a status contract that distinguishes 'triaged and durably captured elsewhere' from 'unprocessed' from 'undeliverable' — three states the current single NEW/READ axis cannot express.",
+        "po_precedent": "po applied the interim rule this cycle and it should inform the contract: mark terminal ONLY when disposition is durably captured in a board row or a decision-journal verdict, and NEVER when the row is undeliverable. 8 of 9 rows were marked RESOLVED under that rule; the 1 undeliverable row was left NEW.",
+        "po_vocabulary_evidence": "HARD EVIDENCE FOUND BY po 2026-07-21T19:29:49Z — the status vocabulary is ALREADY fragmented in live data, which makes this row concrete rather than theoretical. .claude/skills/signal-dashboard/SKILL.md is the SSOT and defines exactly three transitions: NEW -> READ (ACK, line 80) -> RESOLVED (CLOSE, line 81), with PRUNE at line 90 evicting rows whose 'status IN (READ, RESOLVED, SUPERSEDED) AND ts older than 24h'. But a census of .signal_queue.rows[] returns: 73 rows status='triaged', 9 status='NEW', 1 status='RETRACTED'. NEITHER 'triaged' NOR 'RETRACTED' appears anywhere in the skill's vocabulary. CONSEQUENCE: because the PRUNE predicate matches only READ/RESOLVED/SUPERSEDED, all 73 'triaged' rows are structurally unprunable and accumulate in the hot file forever — a permanently growing hot-file cost with no eviction path. This is a second, independent failure mode of the same missing contract, and it is not the one the escalation raised. po deliberately used the canonical 'RESOLVED' token for this cycle's 8 rows rather than perpetuating 'triaged'.",
+        "po_scope_addendum": "The contract must therefore ALSO specify: (a) the canonical terminal token set and a migration for the 73 existing 'triaged' rows so they become prunable; (b) whether 'RETRACTED' is legitimate (cow-20260721T152500 uses it) and if so add it to both the vocabulary and the PRUNE predicate; (c) a validator that rejects an out-of-vocabulary status at write time, since the fragmentation was introduced silently and went unnoticed across 73 rows.",
+        "updated_by": "po/triage-20260721T1907"
       },
       {
         "id": "GUARD-COWORK-NOTEBOOK-AGENTS-SELF-EDIT-FLOW-DOC",
@@ -9373,13 +9409,18 @@
         "owner": "po",
         "zone": "cross-service/",
         "next_agent": "architect",
-        "priority": "high",
+        "priority": "P1",
         "plan_only": true,
         "created_at": "2026-07-21T15:28:00Z",
         "created_by": "po-signalqueue-triage-20260721",
         "origin_signal_id": "cow-20260721T144500",
         "sibling_of": "FIX-COWORK-STEP0A-TOPO-DRAIN-STATUS-CONTRACT",
-        "status_note": "AC: every receiver in .claude/skills/signal-dashboard/SKILL.md Receivers table either (1) has a live inbox drain step in its flow OR (2) is removed from the table - no 'to' value may be a structural no-op. Evidence: docs/signals/cowork-team-20260721T144500-inbox-gap.json. Live casualty: po-20260720T052606 (HIGH CHEF-L6-GOLD-FALSE-PREDICATE, to=unified-agent, dark 33h+, LEFT NEW deliberately). Sibling FIX-COWORK-STEP0A-TOPO-DRAIN-STATUS-CONTRACT covers the po->dev-team NEW/READ filter mismatch - design the full receiver-delivery contract together. The casualty's false gold predicate is separately tracked by SPIKE-CTG-FALSE-PRESENCE-BLINDSPOT."
+        "status_note": "AC: every receiver in .claude/skills/signal-dashboard/SKILL.md Receivers table either (1) has a live inbox drain step in its flow OR (2) is removed from the table - no 'to' value may be a structural no-op. Evidence: docs/signals/cowork-team-20260721T144500-inbox-gap.json. Live casualty: po-20260720T052606 (HIGH CHEF-L6-GOLD-FALSE-PREDICATE, to=unified-agent, dark 33h+, LEFT NEW deliberately). Sibling FIX-COWORK-STEP0A-TOPO-DRAIN-STATUS-CONTRACT covers the po->dev-team NEW/READ filter mismatch - design the full receiver-delivery contract together. The casualty's false gold predicate is separately tracked by SPIKE-CTG-FALSE-PRESENCE-BLINDSPOT.",
+        "po_ordering_ruling": "LANDS FIRST of the pair. Ruling by po 2026-07-21T19:29:49Z on cowork escalation cow-20260721T172415, which asked for the ORDERING of the two existing rows to be graded and explicitly asked that no new row be minted. Honoured: no row minted. Rationale: a terminal signal_queue status (READ/DONE) is only safe once a defined receiver consumes the row. Defining the status contract first would mark rows terminal while they are still structurally undeliverable — the exact strand this escalation is objecting to. Delivery capability must precede status semantics.",
+        "po_repro_case": "po-20260720T052606 (from=po, to=unified-agent, methodology-flag, HIGH) is the canonical live reproduction and MUST be used as the acceptance fixture. It has sat status=NEW since 2026-07-20 addressed to a COWORK agent. dev-team drain 0a-D (docs/agents/dev-team/flow/drain-signals.md) collects only rows whose 'to' matches po or a dev-team-addressed agent, so no drain will ever pick it up. It is not backlogged — it is undeliverable. Its content is a live methodology correction for unified-agent (stop pasting the literal gold >$4,300 L6 token, compute from live gold instead), so the cost of the missing delivery path is ongoing wrong output, not merely a stuck row.",
+        "po_status_decision": "This row is DELIBERATELY LEFT status=NEW by po. Marking it READ would destroy the only record that a message was never delivered, and NEW costs nothing here precisely because no drain matches a cowork-addressed row — zero churn. It must stay NEW until a delivery path exists.",
+        "updated_at": "2026-07-21T19:29:49Z",
+        "updated_by": "po/triage-20260721T1907"
       },
       {
         "id": "CLEAN-REGISTER-ORCH-SENTINEL-TREEMAP-SYSMAP",
@@ -9639,6 +9680,116 @@
           "FIX-PRICE-ANOMALY-DISH-SIGNAL-ENVELOPE"
         ],
         "updated_at": "2026-07-21T18:45:38Z"
+      },
+      {
+        "id": "FIX-SLA-SBV-FX-BUSINESS-DAY-AWARE",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "title": "sbv_fx carries a flat 30-min SLA against a once-per-business-day source -> structurally guaranteed breach ~47.5h of every 48h; emits CRITICAL off-hours",
+        "owner": "developer",
+        "po_evidence": "RAW-PROBED 2026-07-21T19:19Z by po. (1) DEFAULT_SLA_CONFIG at apps/mcp-server/src/domain/services/freshnessSlaChecker.ts:145-148 gives sbv_fx ONLY defaultThresholdMinutes:30 — no marketHoursThresholdMinutes, no offHoursThresholdMinutes, and it is absent from the dynamic window-aware set. (2) The doc comment at apps/mcp-server/src/interface/mcp/tools/system/slaStatusTools.ts:99-100 states calendar-awareness covers 'market-hours-only sources (price, foreign_flow)' — sbv_fx excluded. (3) BUT the user-facing legend that same file prints at slaStatusTools.ts:165 advertises an sbv_fx off-hours window verbatim: 'sbv_fx: VN business days'. Legend claims coverage the implementation does not provide, 65 lines apart in one file. (4) SSOT divergence: docs/data/system-map.json .project.data_sources[] gives sbv/sbv-vps stale_threshold_hours=24 (1440min) — the tool uses 30min, a 48x divergence, defeating the system-auditor flow mandate to read thresholds from system-map and never hardcode. (5) Severity escalation is a pure artifact of the tight denominator: getSeverity (slaStatusTools.ts:109-120) returns CRITICAL at ratio>1.5, so 61min/30min=2.03 -> CRITICAL while 34min/30min=1.13 -> HIGH. (6) GROUND TRUTH: get_vps_proxy_health shows the real last SBV push at 2026-07-21 03:05:21Z = 10:05 VN on a Tuesday business morning — exactly the designed once-daily publish. The source is healthy; the SLA is wrong.",
+        "po_verdict": "Signal sys-20260721T183201-0e67 (CRITICAL data_stale, sbv_fx stale 61min, check B-04) is a CONFIRMED FALSE POSITIVE. Not market-hours-blindness alone — a category error: a once-per-business-day source given a 30-minute SLA.",
+        "acceptance": "(1) sbv_fx gains business-day/publish-window awareness in DEFAULT_SLA_CONFIG so it cannot breach outside its documented 'VN business days' window, OR its flat threshold is raised to match the system-map SSOT (1440min) — pick ONE and state why in the commit body. (2) The slaStatusTools.ts:165 legend and the actual suppression set are made consistent: either sbv_fx really is off-hours-suppressed, or its name is removed from that legend string. A user-facing string may not advertise a guarantee the code does not implement. (3) Add a regression test asserting sbv_fx does NOT report 'breached' at a timestamp outside VN business hours with an age under the system-map threshold — the exact 2026-07-21T18:32Z condition that produced this false CRITICAL. (4) Reconcile the 30min-vs-1440min divergence explicitly: either DEFAULT_SLA_CONFIG derives from system-map.json, or a comment states why the tool intentionally holds a tighter independent threshold. Do not leave two silent SSOTs. (5) NOTE the existing test at apps/mcp-server/src/__tests__/1920i-freshness-sla-extension.test.ts:273 ('TC-5d: sbv_fx threshold remains 30 minutes') PINS the defect — it must be updated as part of this fix, not worked around.",
+        "files": [
+          "apps/mcp-server/src/domain/services/freshnessSlaChecker.ts",
+          "apps/mcp-server/src/interface/mcp/tools/system/slaStatusTools.ts",
+          "apps/mcp-server/src/__tests__/1920i-freshness-sla-extension.test.ts"
+        ],
+        "related": [
+          "FIX-AUDITOR-C06-OFFMARKET-RECALIBRATE",
+          "ARCH-WATCHDOG-WEEKDAY-AWARE-THRESHOLD",
+          "FIX-VPS-NEWS-STALE-FALSEPOS",
+          "FACTORY-DOMAIN-extract-sla-config"
+        ],
+        "created_at": "2026-07-21T19:29:49Z",
+        "created_by": "po/triage-20260721T1907",
+        "updated_at": "2026-07-21T19:29:49Z"
+      },
+      {
+        "id": "FIX-AUDITOR-EVAL-DELTA-RECENCY-BOUND",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "size": "S",
+        "zone": "docs/agents/system-auditor/",
+        "title": "system-auditor bctc_eval_delta emits weeks-old eval rows as fresh HIGH signals — no recency bound; 2 of 3 signals this tick were 21d and 41d stale",
+        "owner": "agent-father",
+        "po_evidence": "RAW-PROBED 2026-07-21T19:2xZ by po against market.db bctc_eval_results LEFT JOIN financial_reports ON f.id=e.report_id (ticker lives in financial_reports.action_code, NOT a ticker column). All 9 status='red' rows enumerated. The 3 signals emitted 2026-07-21T18:32Z map as: MBB Q1-2026 stage4 TABLE_RECONSTRUCT computed_at=2026-07-20 09:06:41 (1.4 DAYS old — legitimately recent); HVN Q1-2026 stage4 computed_at=2026-06-30 14:12:41 (21 DAYS old); FPT Q1-2026 stage1 RASTERIZE computed_at=2026-06-10 01:40:40 (41 DAYS old). No eval row exists with computed_at on 2026-07-21 at all, yet 3 HIGH signals fired that day.",
+        "po_verdict": "MBB is REAL and actionable (gate_failures_json populated with measured values: code_coverage 0.21 vs threshold 0.8, exact_dup_count 1 vs 0). HVN carries real failure data (code_coverage 0.243, exact_dup_count 13) but is a 21-day-old re-emission, not a new event. FPT is DOUBLE-disqualified: 41 days old AND metrics_json='{}' + gate_failures_json='[]', which is the exact instrumentation-artifact signature already tracked by EVAL-PUSH-DOUBLE-ENCODE. Note the artifact prediction held ONLY for FPT/stage-1 — it was REFUTED for the stage-4 rows, which carry genuine populated metrics. Do not close EVAL-PUSH-DOUBLE-ENCODE as covering all three.",
+        "acceptance": "(1) The bctc_eval_delta check gains a recency bound so an eval row whose computed_at is older than a stated window cannot be emitted as a NEW HIGH signal. State the window and its rationale; do not hardcode it where a system-map value already exists. (2) Rows already emitted once must not re-emit on every subsequent audit cycle — reuse the existing docs/data/auditor-dedup-ledger.json mechanism rather than inventing a second dedup plane. (3) A red eval row with metrics_json='{}' AND gate_failures_json='[]' must be classified as an instrumentation artifact and routed to EVAL-PUSH-DOUBLE-ENCODE, never emitted as a standalone HIGH. (4) MBB Q1-2026 stage-4 remains a genuine open extraction-quality failure (code_coverage 0.21 vs 0.8) and must NOT be suppressed by this fix — verify it still surfaces after the recency bound lands. That is the regression test.",
+        "related": [
+          "EVAL-PUSH-DOUBLE-ENCODE",
+          "FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE"
+        ],
+        "created_at": "2026-07-21T19:29:49Z",
+        "created_by": "po/triage-20260721T1907",
+        "updated_at": "2026-07-21T19:29:49Z"
+      },
+      {
+        "id": "FIX-NOTEBOOK-PRUNE-HEADING-LEVEL-MISMATCH",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "S",
+        "zone": ".claude/skills/",
+        "title": "P1 ARMED DATA-LOSS TRAP: agent-father.md uses '###' headings but notebook-write prunes on '^## ' -> next write hits the blank-state fallback and Writes over 211L / 6 sections of history",
+        "owner": "agent-father",
+        "po_evidence": "RAW-PROBED 2026-07-21T19:2xZ by po. docs/agent-memory/notebooks/agent-father.md is 211L with SIX '### ' sections and ZERO '^## ' sections (verified: grep -c '^## ' = 0, grep -c '^### ' = 6). The emitted signal described this as '211L vs 200 cap AND no ## boundaries so auto-prune cannot act' — that UNDERSTATES it. Two compounding consequences: (a) .claude/skills/notebook-write/SKILL.md:46 prunes by dropping oldest '## ' blocks, so with zero such blocks the >200L overflow can NEVER self-heal and the AC-5 blocking gate at SKILL.md:71-74 stays red forever; (b) far worse, SKILL.md:62-66 blank-state fallback reads 'If grep -c \"^## \" returns 0 -> single Write to initialize', which would OVERWRITE the entire file with a fresh 2-line stub. The trap is armed right now and fires on agent-father's very next notebook write. SKILL.md:20 explicitly names agent-father as a '## c<NNN>' c-format user, so the file has drifted from its own declared contract. SCOPED: swept all of docs/agent-memory/notebooks/*.md — agent-father.md is the ONLY at-risk file (##=0 AND ###>0). This is not fleet-wide.",
+        "acceptance": "(1) Restore agent-father.md to the '## c<NNN> · <ISO>' heading contract declared at notebook-write/SKILL.md:20, preserving all 6 existing sections' content — this is a heading-level repair, NOT a rewrite, and NOT a prune. Zero history may be lost. (2) Then apply the normal retention rule to bring it under the 200L cap. (3) Harden the blank-state fallback (SKILL.md:62-66) so it cannot fire on a non-empty file: gate it on actual file emptiness/absence, not on a heading-count of zero. A 211-line file must never be treated as blank state. (4) Add a guard or test covering the ###-only case so this specific drift is detected rather than silently destroying history.",
+        "files": [
+          "docs/agent-memory/notebooks/agent-father.md",
+          ".claude/skills/notebook-write/SKILL.md"
+        ],
+        "created_at": "2026-07-21T19:29:49Z",
+        "created_by": "po/triage-20260721T1907",
+        "updated_at": "2026-07-21T19:29:49Z"
+      },
+      {
+        "id": "DESIGN-ACCEPTANCE-WRITE-OWNERSHIP-DISPATCHER",
+        "type": "SPIKE",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "size": "S",
+        "zone": "docs/agents/",
+        "title": "'Write acceptance criteria before editing files' is structurally unverifiable for every agent whose commit zone excludes orch-state.json — move acceptance authorship to the dispatcher",
+        "owner": "agents-architect",
+        "po_evidence": "Surfaced by the FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-SKILLS supervised sign-off 2026-07-21. agent-father claimed it wrote acceptance onto the row BEFORE editing any file, and the row carries self-reported acceptance_written_at=2026-07-21T19:08:10Z. But the acceptance text's FIRST appearance in git is 304f24edd at 19:14:24Z, AFTER the skills commit 3e4f50d3a at 19:12:13Z — because agent-father's commit zone excludes docs/data/orch/orch-state.json, so a peer cold-evict swept the board and collapsed the acceptance-write and the lane-move into one indistinguishable blob. The claim is UNVERIFIABLE, not disproven. acceptance_written_by/acceptance_written_at are self-reported fields authored by the same agent whose ordering they attest — they are narration, not evidence.",
+        "po_ruling": "The dispatcher's framing is correct and generalises: an agent whose commit zone excludes the board can NEVER produce evidence for an ordering claim about the board. Requiring such a claim therefore mandates an unfalsifiable self-report, which is exactly the failure class feedback_agent_selfreport_metalayer_confabulation.md warns about. The requirement is unenforceable across the whole maintenance lane, and the unsatisfiable dispatch instruction was the dispatcher's error, not agent-father's — no fault attaches to the agent. PREFERRED RESOLUTION: acceptance is authored by the DISPATCHER (or PO) at dispatch time, before spawn. The dispatcher's commit zone already includes the board, so ordering becomes provable by construction across two disjoint zones: dispatcher commits acceptance, implementer commits code, and git ordering across the two zones is independently checkable. Rejected alternatives: (a) letting maintenance agents commit the board row themselves — breaks zone separation and re-introduces the peer-sweep class this very sprint just fixed; (b) silently dropping the requirement — loses the real benefit that acceptance predates implementation.",
+        "question": "Should acceptance-criteria authorship move from the implementing agent to the dispatcher for all supervised maintenance-lane rows, and what is the migration path for flow docs that currently instruct the implementer to self-write acceptance?",
+        "mode": "spike",
+        "timebox": 120,
+        "created_at": "2026-07-21T19:29:49Z",
+        "created_by": "po/triage-20260721T1907",
+        "updated_at": "2026-07-21T19:29:49Z"
+      },
+      {
+        "id": "FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-LAYER2",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "size": "S",
+        "zone": ".claude/skills/",
+        "title": "Layer-2 tail of the bare-commit sweep guard: 4 remaining bare git-commit sites + stale 'RULE 1-3' refs in 3 init.md files",
+        "owner": "agent-father",
+        "parent_task": "FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD",
+        "po_evidence": "Disclosed UNPROMPTED by agent-father during FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-SKILLS, correctly left untouched as out-of-scope per architecture brief section 3 step 3, and reported rather than fixed exactly as acceptance criterion (5) required. Exact sites: .claude/skills/session-log-cowork/SKILL.md:28, .claude/skills/decision-journal/SKILL.md:76, .claude/skills/append-session-record/SKILL.md:15, .claude/skills/signal-dashboard/dashboard-protocol.md:127. Separately, docs/agents/pm/init.md, docs/agents/agents-architect/init.md and docs/agents/agent-father/init.md carry commit_discipline lines still reading 'RULE 1-3' without the '(incl. 2.5)' suffix now that commit-boundary/SKILL.md has gained RULE 2.5.",
+        "po_ruling": "MINTED NOW rather than deferred to a PM cleanup pass. The disclosure is precise to the file:line, the work is small and mechanical, and an unminted tail disclosed inside a closing row is precisely how epic tails get lost (feedback_epic_wrapper_closeout_gap_no_auto_revisit.md). The Layer-1 row is being signed off in the same cycle, so the tail would otherwise become orphaned the moment its parent closes.",
+        "acceptance": "(1) The 4 listed bare-commit sites gain explicit pathspecs on the commit line itself, in the same form Layer-1 established (git commit -m ... -- <exact paths from that skill's own explicit-stage step>), never a directory or dot pathspec. (2) The 3 init.md commit_discipline refs are updated from 'RULE 1-3' to match the post-2.5 rule set. This is cosmetic-only: the skill file is authoritative and already correct, so this must not change any behaviour. (3) Documentation-example bare-commit lines that deliberately ILLUSTRATE the anti-pattern are left untouched, same carve-out as Layer-1 acceptance (4). (4) The commit for this row must itself use explicit pathspecs — dogfooding, as Layer-1 did.",
+        "files": [
+          ".claude/skills/session-log-cowork/SKILL.md",
+          ".claude/skills/decision-journal/SKILL.md",
+          ".claude/skills/append-session-record/SKILL.md",
+          ".claude/skills/signal-dashboard/dashboard-protocol.md",
+          "docs/agents/pm/init.md",
+          "docs/agents/agents-architect/init.md",
+          "docs/agents/agent-father/init.md"
+        ],
+        "created_at": "2026-07-21T19:29:49Z",
+        "created_by": "po/triage-20260721T1907",
+        "updated_at": "2026-07-21T19:29:49Z"
       }
     ],
     "closed_sprints": [
@@ -10296,6 +10447,43 @@
         "closed_at": "2026-07-21T18:14:57Z",
         "po_closure_20260721T1811": "CLOSED — ACCEPTANCE MET, NOT ABANDONED, AND NOT DISPATCHED. This spike's acceptance was 'findings doc names WHICH of (a)/(b)/(c) is live, with live evidence (not inference)'. That is satisfied: cowork-team — the accused actor — answered it in signal cowork-team-20260721T172415Z (committed e015c2c43 at 17:25:44Z, i.e. AFTER I formed the batch, which is why the row was minted at all). ANSWER: (a) flow non-compliance — the WORK-continuation drain body is narrated but not executed. Router verified the answer at source rather than accepting the accused's self-report, which is the part that lets me close this: scripts/agents-flow/drain-signals.js:6 declares READ-marking explicitly OUT of script scope and left to the flow, and the flow half was never run. (b) is excluded because no write was ever attempted; (c) is excluded because the 17:00Z and 17:15Z ticks had ZERO slots. Prior-art memory feedback_cowork_spawn_narrates_not_executes predicted exactly this shape and was the cheapest candidate — it was right. Dispatching a diagnosis spike to re-derive a settled answer would be pure churn. NO NEW ROW MINTED for the fix: router verified two existing BACKLOG rows already own it — FIX-COWORK-STEP0A-TOPO-DRAIN-STATUS-CONTRACT (PLAN-ONLY, next_agent=ba) and FIX-SIGNALQUEUE-RECEIVER-DELIVERY-CONTRACT (PLAN-ONLY, owner=po, next_agent=architect) — and cowork-team itself requested fold-in rather than a new row. Remediation folds into FIX-COWORK-STEP0A-TOPO-DRAIN-STATUS-CONTRACT, which now carries the blocking ordering constraint and the live-probe protection (see its po_fold_from_spike_20260721T1811).",
         "po_closure_carries_forward_20260721T1811": "TWO THINGS MUST SURVIVE THIS CLOSURE — both transcribed onto the fold target so closing this row does not drop them. (1) THE ORDERING CONSTRAINT IS BLOCKING AND COUNTERINTUITIVE: fixing cowork compliance FIRST converts a dormant defect into ACTIVE DATA LOSS. dev-team/flow/drain-signals.md:22 collects only status==NEW rows and :69 makes READ rows the prunable class, so if cowork Step 0a starts marking to:po rows READ as written, every cowork->dev-team escalation becomes invisible to dev-team's own drain and evicts within 24h. cowork's non-compliance has been ACCIDENTALLY PROTECTIVE. Settle the status contract BEFORE enforcing compliance. (2) THE LIVE PROBE STAYS: signal row po-20260720T052606 remains deliberately at NEW as the only reproducing instance. Do NOT mark it READ as tidy-up; mark it READ only as the verified OUTPUT of a confirmed fix. Also carried: the second-order cost is real and ongoing — with >=1 NEW cowork-addressed row the SILENT gate can never fire, so every cowork tick burns a full LLM read every 15 minutes; the defect sustains the exact condition that defeats the optimisation. That is the cost clock running on the fold target."
+      },
+      {
+        "id": "FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-SKILLS",
+        "type": "FIX",
+        "title": "Fix commit-mutex/commit-boundary/commit skills: bare-commit lines → pathspec-scoped (git commit ... -- <paths>)",
+        "status": "DONE",
+        "priority": "P0",
+        "size": "S",
+        "zone": ".claude/skills/",
+        "owner": "agent-father",
+        "depends": [],
+        "supervised": true,
+        "created_at": "2026-07-21T17:15:48Z",
+        "created_by": "pm/FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-decomposition",
+        "parent_task": "FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD",
+        "note": "Layer 1 (structural fix for highest-traffic call sites). Implements §4.2 from architecture brief. AC: 1,2,3. Fixes 3 surgical edits: commit-mutex Step 3c, commit-boundary RULE 2.5, commit Step 2. Caveat: adding new files requires git add <new> before scoped commit.",
+        "updated_at": "2026-07-21T19:29:49Z",
+        "updated_by": "po/triage-20260721T1907",
+        "po_promote_20260721T1724": "PROMOTED backlog->ready (PO Step-1 triage). pm decomposed the parent into these two children but left them in the 409-row backlog lane with status BACKLOG, so no dispatcher would ever pick them — the decomposition would have stalled silently. Both rows are fully specced (owner, next_agent, zone, size, AC refs into docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md, supervised:true) and the design load-bearing claim was independently reproduced by router at scripts/audits/verify-commit-sweep-discriminator.sh (VERDICT PASS, git 2.49.0). Nothing further gates them.",
+        "acceptance": "(1) Fix the 3 skills own bare-commit lines to pathspec-scoped form per docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md §4.2 and docs/handoffs/FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-SKILLS.md: commit-mutex/SKILL.md Step 3c, commit-boundary/SKILL.md (new sub-rule inserted between RULE 2 and RULE 3), commit/SKILL.md Step 2 -- each git commit -m call gets -- <exact paths from that skills own explicit-stage step> appended, never a directory or dot pathspec. (2) commit-boundary RULE 3s post-hoc git show --name-only HEAD / git reset --soft HEAD~1 backstop is preserved unchanged as defense-in-depth, not replaced. (3) No behavioral change to the explicit-file-list collection logic itself (commit-mutex Step 3a, commit-boundary RULE 1, commit Step 1) -- only the commit line gains a pathspec. (4) Documentation-example bare-commit lines that illustrate the anti-pattern being replaced (e.g. commit-mutex Wiring Pattern prose Replace any bare git add ... && git commit block with:) are left untouched and reported, not edited. (5) Other bare-commit occurrences found in .claude/skills/ during the scoping grep but outside these 3 files (session-log-cowork/SKILL.md:28, decision-journal/SKILL.md:76, append-session-record/SKILL.md:15, signal-dashboard/dashboard-protocol.md:127) are explicitly OUT of this row scope per architecture brief §3 step 3 (Layer-2, not this row, PM-tracked cleanup pass) and must be left untouched, reported not fixed. (6) Commit lands with explicit pathspecs on the commit line itself (not just git add), consistent with the standing constraint and the defect this row exists to close.",
+        "files": [
+          ".claude/skills/commit-mutex/SKILL.md",
+          ".claude/skills/commit-boundary/SKILL.md",
+          ".claude/skills/commit/SKILL.md"
+        ],
+        "acceptance_written_by": "agent-father/FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-SKILLS-20260721T1908",
+        "acceptance_written_at": "2026-07-21T19:08:10Z",
+        "entered_review_at": "2026-07-21T19:13:38Z",
+        "agent_father_completed_at": "2026-07-21T19:13:38Z",
+        "agent_father_completed_by": "agent-father",
+        "commit_sha": "3e4f50d3a4d2ccd22a2cd60ede304e567af7b627",
+        "review_note": "3 surgical edits shipped per docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md §4.2 and docs/handoffs/FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-SKILLS.md: commit-mutex/SKILL.md Step 3c (+ Quick Reference step 4, kept consistent) -> `-- <path1> <path2> ...`; commit-boundary/SKILL.md new RULE 2.5 inserted between RULE 2/3 (RULE 3 post-hoc git show/reset --soft backstop preserved unchanged, R-HANDOFF RULE-1-3 refs updated to (incl. 2.5)); commit/SKILL.md Step 2 -> `-- <same paths from Step 1>` + Rules-list line added. Raw-verified: re-grepped all 3 files post-edit, confirmed zero remaining bare `git commit -m` lines outside 2 deliberately-left doc-example spots (commit-mutex Wiring-Pattern prose naming the anti-pattern; commit-boundary FORBIDDEN block illustrating it). Re-ran scripts/audits/verify-commit-sweep-discriminator.sh fresh (VERDICT PASS, git 2.49.0) to confirm the design premise still holds before treating the fix as durable. mock-guard.sh --files run but its PASS is a no-op for .md (filters to ts/tsx/js/py/go) -- did not bank it, read every changed file raw myself instead. Committed with git commit -- <3 explicit paths> (dogfooding the exact fix), diff-cached empty post-commit, git show --name-only HEAD confirms exactly the 3 intended files landed. Size-justification headers updated for both files that crossed/grew past the 120L threshold (commit-mutex 230->240L, commit-boundary newly added at 140L/20L overage since it had none before). OUT OF SCOPE, deliberately left (grepped, not fixed) -- same bare-commit defect class but outside this row per architecture brief §3 step 3 (Layer-2, PM-tracked cleanup pass, not this row): session-log-cowork/SKILL.md:28, decision-journal/SKILL.md:76, append-session-record/SKILL.md:15, signal-dashboard/dashboard-protocol.md:127. Also NOT touched (adjacent zone, outside .claude/skills/): docs/agents/{pm,agents-architect,agent-father}/init.md commit_discipline lines still read RULE 1-3 without the (incl. 2.5) suffix -- cosmetic staleness only, the skill file itself is authoritative and correct. Sibling row FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK checked: status READY, zone scripts/, owner/next_agent developer, untouched by this work -- no overlap found.",
+        "po_signoff_at": "2026-07-21T19:29:49Z",
+        "po_signoff_by": "po/triage-20260721T1907",
+        "po_signoff_verdict": "APPROVED. All six acceptance criteria are independently verifiable at source and were verified — by the dispatcher at commit level (both commits pathspec-scoped and tight, 3 files and 2 files, no peer sweep; all four Layer-2 files show empty diffs; RULE 3 reset --soft HEAD~1 backstop intact; FORBIDDEN doc-examples preserved) and by po against the row's own acceptance text. AC (4) and (5) are satisfied in the strongest available form: the agent reported the out-of-scope sites rather than fixing them, which is the behaviour those criteria asked for. AC (6) is satisfied and self-demonstrating — the fix was committed using the very pathspec form it introduces.",
+        "po_signoff_caveat": "The agent's claim that it wrote acceptance onto the row BEFORE editing any file is UNVERIFIABLE and is NOT relied upon for this approval. The acceptance text first appears in git at 304f24edd (19:14:24Z), after the skills commit 3e4f50d3a (19:12:13Z), because agent-father's commit zone excludes orch-state.json and a peer cold-evict collapsed the acceptance-write and the lane-move into one blob. Unverifiable is not disproven, and no fault attaches to the agent: the dispatch instruction was unsatisfiable as written, which the dispatcher has acknowledged as its own error. Decisively, the ordering claim is IMMATERIAL to this sign-off — none of acceptance criteria (1) through (6) requires acceptance-written-first, so the approval rests entirely on independently checkable artifacts. The systemic unenforceability is carried forward as DESIGN-ACCEPTANCE-WRITE-OWNERSHIP-DISPATCHER rather than being resolved here.",
+        "po_tail_disposition": "The 4 Layer-2 bare-commit sites and the 3 stale init.md 'RULE 1-3' refs that this agent disclosed unprompted are minted as FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-LAYER2 in this same cycle, so the tail does not orphan when this parent closes. The unprompted disclosure of out-of-scope defects is exactly the behaviour the maintenance lane should reward."
       }
     ],
     "done_verified": [],
@@ -10613,11 +10801,12 @@
         "verification_gate": "`ls docs/signals/*.json | wc -l` returns < 50 on a tick with no pending real signals, AND a synthetic 51-real-signal inbox still trips the guard. Both checked live, not from flow-doc prose.",
         "next_agent": "developer",
         "depends": [],
-        "updated_at": "2026-07-21T18:45:38Z",
-        "updated_by": "po/orch-sentinel-closeout-20260721",
+        "updated_at": "2026-07-21T19:29:49Z",
+        "updated_by": "po/triage-20260721T1907",
         "po_promote_20260721_orch_sentinel": "PROMOTED backlog->ready (orch-sentinel closeout triage). RATIONALE: recurring per-tick DEAD-DETECTOR — the >50 drain MANDATORY-PERSIST-GUARD reads TRIPPED on a 100%-garbage inbox (live 52/52 docs/signals/*.json lack from/to/type) every dev-team tick, so a genuine signal backlog can never raise it again (false assurance). Per PO priority order recurring bugs rank first; row is fully specced (acceptance + verification_gate + precise fix sites). SAFE HALVES dispatchable now (no peer-data delete): (1) redirect cowork telemetry writer out of docs/signals/; (2) MANDATORY-PERSIST-GUARD counts only signal-shaped files. Only the one-time 46-file sweep touches peer-produced files -> supervised:true retained so router adjudicates that step.",
         "po_cowork_signal_triage_20260721T16": "TRIAGE of cow-20260721T153000 (MED, cowork-team) — root cause CONFIRMED at the mechanism level, but TWO of the signal's claims are CORRECTED and its recommended fix is INSUFFICIENT ALONE (PO signal-drain 2026-07-21T16:xxZ, RAW-verified). CONFIRMED: the drain skip is shape-driven, and scripts/agents-flow/drain-signals.js:77 is the exact predicate — a file is skipped iff it is an array OR has NONE of from/source/type/signal_type; line 78 logs 'leaving in inbox' and never moves or unlinks. Live shape census: all 47 top-level cowork-team-*.json are flat (0 enveloped), while 121 of 125 cowork files already in processed/ ARE enveloped — shape predicts drain success almost perfectly. So this row's acceptance clause (1) (redirect/fix the telemetry writer) is the right root-cause fix and is already correctly specified. CORRECTION 1 — the signal's '96 files/day of pure accretion at */15' is NOT supported and should not be used to size the work: the stuck floor is 43/47 a single stale 2026-07-10..07-11 batch, and cowork telemetry has drained NORMALLY since 07-14 (14 on 07-14, 14 on 07-15, 29 on 07-16, 31 on 07-17, 19 on 07-18, 5 on 07-21 all reached processed/). Exactly ONE flat file accreted on 07-21. Real accretion of NON-drainable files is ~1/week, not 96/day. The Step 6.1 skip-on-silent condition may still be worth honoring, but it is a hygiene nit, not a 96/day flood — do not prioritize it as one. CORRECTION 2 — the signal frames Option A as a one-line writer change that 'makes existing prune machinery work'. It does not, for the files that already exist: because the skip path never removes anything, the 47 accumulated files are permanently inert regardless of what the writer does from now on. The one-time sweep (this row's acceptance clause 2) is therefore REQUIRED, not optional, and is the ONLY clause that actually clears the >50 guard today (47 removed leaves ~6, well under the threshold). Writer fix prevents recurrence; sweep restores the detector. SCOPE NOTE for the implementer: the drain needs only ONE of from/source/type/signal_type, so the minimal unblock is narrower than the full envelope — but emit the full enveloped schema per docs/agents/cowork-team/flow/telemetry.md:5 anyway, since that INVARIANT is what the processed/ corpus already follows. NO NEW ROW MINTED: acceptance clauses (1)(2)(3)(4) on this row already cover the writer fix, the sweep, the shape-aware guard count, and quarantining. Signal RESOLVED into this row. Also acknowledged: the cowork dispatcher RETRACTED cow-20260721T152500 this tick after finding it had queried .task_board.rows[], a key that does not exist — correct self-catch of the empty-read-as-evidence class; no action needed.",
-        "po_regression_guard_20260721": "PO REGRESSION GUARD 2026-07-21T18:42Z — THIS ROW WAS LIVE-DANGEROUS AS WRITTEN. It sits in ready/P1 and its previous acceptance clauses (2) 'sweep the price_anomaly files' and (4) 'drain skip path quarantines rather than leaving files in inbox' would BOTH have moved docs/signals/price_anomaly_*.json out of docs/signals/ top-level. That directory is exactly where unified-agent Chef's by-path glob reads them (docs/agents/unified-agent/flow/chef.md:116); Chef's dual-read AUTO-CURE covers only bctc_signal_* and fundamental_*, NOT price_anomaly_*. Executing this row unamended would have silently killed the EOD dish's market-anomaly input — i.e. manufactured the exact data loss that the four signals about this family wrongly believed was already happening. Acceptance clauses (2)(3)(4) amended above to carve out the family. The row's own prior note field still says 'sweep the 4 old price_anomaly files' and its related_not_duplicate field still points at FIX-PRICE-ANOMALY-DISH-SIGNAL-ENVELOPE describing it as 'real data-loss' — BOTH of those are now superseded by this guard and by that row's CANCELLED status; do not act on them. Telemetry half of this row (cowork-team-*.json) is UNAFFECTED and remains correct and dispatchable."
+        "po_regression_guard_20260721": "PO REGRESSION GUARD 2026-07-21T18:42Z — THIS ROW WAS LIVE-DANGEROUS AS WRITTEN. It sits in ready/P1 and its previous acceptance clauses (2) 'sweep the price_anomaly files' and (4) 'drain skip path quarantines rather than leaving files in inbox' would BOTH have moved docs/signals/price_anomaly_*.json out of docs/signals/ top-level. That directory is exactly where unified-agent Chef's by-path glob reads them (docs/agents/unified-agent/flow/chef.md:116); Chef's dual-read AUTO-CURE covers only bctc_signal_* and fundamental_*, NOT price_anomaly_*. Executing this row unamended would have silently killed the EOD dish's market-anomaly input — i.e. manufactured the exact data loss that the four signals about this family wrongly believed was already happening. Acceptance clauses (2)(3)(4) amended above to carve out the family. The row's own prior note field still says 'sweep the 4 old price_anomaly files' and its related_not_duplicate field still points at FIX-PRICE-ANOMALY-DISH-SIGNAL-ENVELOPE describing it as 'real data-loss' — BOTH of those are now superseded by this guard and by that row's CANCELLED status; do not act on them. Telemetry half of this row (cowork-team-*.json) is UNAFFECTED and remains correct and dispatchable.",
+        "po_addendum_zerobyte": "ADDED by po 2026-07-21T19:29:49Z. docs/signals/cowork-team-20260721T183028Z.json is ZERO BYTES, untracked, written 18:30:28Z — 21 seconds before the successful 18:30:49Z write of the SAME tick. The telemetry write path can therefore emit an empty artifact without erroring. RULING ON DISPOSITION: do NOT simply delete it. po upholds the dev-team signal's reasoning verbatim — a 0-byte file's forensic content IS its existence, so deleting it as debris destroys the only evidence of the writer defect. It is a finding first and debris second. Deletion alone would also leave the writer free to re-emit, which is fix-the-symptom-not-the-root-cause. ADDITIONAL ACCEPTANCE FOR THIS ROW: (a) make the telemetry write atomic (write to a temp path then rename) so a partial/empty artifact cannot appear at the destination path at all; (b) make the drain tolerate a 0-byte or unparseable file by skipping it with a loud log rather than failing the whole tick — the drain currently re-reads and fails on it every tick forever; (c) only AFTER (a) and (b) are landed and the defect is captured in the commit body may the 0-byte file itself be removed, with an explicit pathspec git rm; (d) the 43 burst files from 07-10/07-11 remain the separate age-vs-count sweep concern already on this row — note the designed >14-day window does not catch them until 2026-07-25, so it must be shortened or made count-aware."
       },
       {
         "id": "FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK",
@@ -11666,39 +11855,6 @@
         "router_confirmed_sibling_gap_is_arm_b2_only": "ROUTER READ THE SIBLING WRITER AT SOURCE AND CAN SHARPEN QA'S FINDING. newsChainFallback.ts is NOT missing the whole guard — it already has arm (b1). Lines 264-274 block the write when existingReportRow.total_assets > 0, preserving a previously-good row and logging BLOCKED. What it lacks is arm (b2): when NO prior row exists, it proceeds to INSERT a brand-new row whose totalAssets is the hardcoded 0 at line 307 (bound into the INSERT at line 535), alongside an entire all-zeros balance sheet at lines 304-313. So the defect shape is IDENTICAL to the one just fixed in parseBctcReport.ts storeReport(): refuses to overwrite a good row, but freely CREATES a fresh zero-total row that bctcIdentityGuard.ts then reads at serve time as the OCR-corruption fingerprint. The file's own comment at lines 254-263 already states it 'carried the same two defects' as storeReport and 'mirrors the identical guard' — the mirror was simply completed for only one of the two arms.",
         "router_containment_flag_default_false": "BLAST RADIUS IS BOUNDED — PRIORITISE ACCORDINGLY, THIS IS NOT LIVE-BLEEDING. Router grep-confirmed QA's flag claim independently: enableBctcFallback is declared optional at bctc/types.ts:59, DEFAULTS TO false at fetchParseAndStoreBctc.ts:50 (destructured `enableBctcFallback = false`), and resolvePdfText.ts:228 gates the fallback call behind `if (!enableBctcFallback)`. No non-test caller passes it true. So the hole is LATENT — reachable only by flipping one config flag, not by current production traffic. Recommend the follow-up row be filed HIGH rather than P0, and that it record the flag as the containment so nobody later 'discovers' the flag is safe and downgrades it further, and so nobody enables the flag without closing arm (b2) first.",
         "router_recommendation_to_po_new_row": "FOR PO — MINT, DO NOT FOLD. QA recommended a separate row and explicitly declined to mint it or expand this row; router agrees and also declines to mint (minting is PO's). Scope: apply arm (b2) to newsChainFallback.ts so a first-ever fallback write does not create an all-zeros financial_reports row. The unavoidable conflict, which is why this cannot be a quiet patch: SIX existing tests assert precisely that first-ever zero-total write SUCCEEDING (1294b-bctc-fallback RED 1 / RED 6 / RED 7 / RED 8-first-call, and both cases in FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN). Those six encode the defect as intended behaviour, so the row must decide what a news-inference fallback is FOR — if its value is directional hints and never balance-sheet figures, then writing it into financial_reports (the table bctcIdentityGuard treats as authoritative) may be the actual design error, and a guard on arm (b2) alone would just move the problem. That product question is why this is a PO row and not a fixer ticket."
-      },
-      {
-        "id": "FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-SKILLS",
-        "type": "FIX",
-        "title": "Fix commit-mutex/commit-boundary/commit skills: bare-commit lines → pathspec-scoped (git commit ... -- <paths>)",
-        "status": "REVIEW",
-        "priority": "P0",
-        "size": "S",
-        "zone": ".claude/skills/",
-        "owner": "agent-father",
-        "next_agent": "po",
-        "depends": [],
-        "supervised": true,
-        "created_at": "2026-07-21T17:15:48Z",
-        "created_by": "pm/FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-decomposition",
-        "parent_task": "FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD",
-        "note": "Layer 1 (structural fix for highest-traffic call sites). Implements §4.2 from architecture brief. AC: 1,2,3. Fixes 3 surgical edits: commit-mutex Step 3c, commit-boundary RULE 2.5, commit Step 2. Caveat: adding new files requires git add <new> before scoped commit.",
-        "updated_at": "2026-07-21T19:13:53Z",
-        "updated_by": "po/triage-20260721T1707",
-        "po_promote_20260721T1724": "PROMOTED backlog->ready (PO Step-1 triage). pm decomposed the parent into these two children but left them in the 409-row backlog lane with status BACKLOG, so no dispatcher would ever pick them — the decomposition would have stalled silently. Both rows are fully specced (owner, next_agent, zone, size, AC refs into docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md, supervised:true) and the design load-bearing claim was independently reproduced by router at scripts/audits/verify-commit-sweep-discriminator.sh (VERDICT PASS, git 2.49.0). Nothing further gates them.",
-        "acceptance": "(1) Fix the 3 skills own bare-commit lines to pathspec-scoped form per docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md §4.2 and docs/handoffs/FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-SKILLS.md: commit-mutex/SKILL.md Step 3c, commit-boundary/SKILL.md (new sub-rule inserted between RULE 2 and RULE 3), commit/SKILL.md Step 2 -- each git commit -m call gets -- <exact paths from that skills own explicit-stage step> appended, never a directory or dot pathspec. (2) commit-boundary RULE 3s post-hoc git show --name-only HEAD / git reset --soft HEAD~1 backstop is preserved unchanged as defense-in-depth, not replaced. (3) No behavioral change to the explicit-file-list collection logic itself (commit-mutex Step 3a, commit-boundary RULE 1, commit Step 1) -- only the commit line gains a pathspec. (4) Documentation-example bare-commit lines that illustrate the anti-pattern being replaced (e.g. commit-mutex Wiring Pattern prose Replace any bare git add ... && git commit block with:) are left untouched and reported, not edited. (5) Other bare-commit occurrences found in .claude/skills/ during the scoping grep but outside these 3 files (session-log-cowork/SKILL.md:28, decision-journal/SKILL.md:76, append-session-record/SKILL.md:15, signal-dashboard/dashboard-protocol.md:127) are explicitly OUT of this row scope per architecture brief §3 step 3 (Layer-2, not this row, PM-tracked cleanup pass) and must be left untouched, reported not fixed. (6) Commit lands with explicit pathspecs on the commit line itself (not just git add), consistent with the standing constraint and the defect this row exists to close.",
-        "files": [
-          ".claude/skills/commit-mutex/SKILL.md",
-          ".claude/skills/commit-boundary/SKILL.md",
-          ".claude/skills/commit/SKILL.md"
-        ],
-        "acceptance_written_by": "agent-father/FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-SKILLS-20260721T1908",
-        "acceptance_written_at": "2026-07-21T19:08:10Z",
-        "entered_review_at": "2026-07-21T19:13:38Z",
-        "agent_father_completed_at": "2026-07-21T19:13:38Z",
-        "agent_father_completed_by": "agent-father",
-        "commit_sha": "3e4f50d3a4d2ccd22a2cd60ede304e567af7b627",
-        "review_note": "3 surgical edits shipped per docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md §4.2 and docs/handoffs/FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-SKILLS.md: commit-mutex/SKILL.md Step 3c (+ Quick Reference step 4, kept consistent) -> `-- <path1> <path2> ...`; commit-boundary/SKILL.md new RULE 2.5 inserted between RULE 2/3 (RULE 3 post-hoc git show/reset --soft backstop preserved unchanged, R-HANDOFF RULE-1-3 refs updated to (incl. 2.5)); commit/SKILL.md Step 2 -> `-- <same paths from Step 1>` + Rules-list line added. Raw-verified: re-grepped all 3 files post-edit, confirmed zero remaining bare `git commit -m` lines outside 2 deliberately-left doc-example spots (commit-mutex Wiring-Pattern prose naming the anti-pattern; commit-boundary FORBIDDEN block illustrating it). Re-ran scripts/audits/verify-commit-sweep-discriminator.sh fresh (VERDICT PASS, git 2.49.0) to confirm the design premise still holds before treating the fix as durable. mock-guard.sh --files run but its PASS is a no-op for .md (filters to ts/tsx/js/py/go) -- did not bank it, read every changed file raw myself instead. Committed with git commit -- <3 explicit paths> (dogfooding the exact fix), diff-cached empty post-commit, git show --name-only HEAD confirms exactly the 3 intended files landed. Size-justification headers updated for both files that crossed/grew past the 120L threshold (commit-mutex 230->240L, commit-boundary newly added at 140L/20L overage since it had none before). OUT OF SCOPE, deliberately left (grepped, not fixed) -- same bare-commit defect class but outside this row per architecture brief §3 step 3 (Layer-2, PM-tracked cleanup pass, not this row): session-log-cowork/SKILL.md:28, decision-journal/SKILL.md:76, append-session-record/SKILL.md:15, signal-dashboard/dashboard-protocol.md:127. Also NOT touched (adjacent zone, outside .claude/skills/): docs/agents/{pm,agents-architect,agent-father}/init.md commit_discipline lines still read RULE 1-3 without the (incl. 2.5) suffix -- cosmetic staleness only, the skill file itself is authoritative and correct. Sibling row FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK checked: status READY, zone scripts/, owner/next_agent developer, untouched by this work -- no overlap found."
       }
     ],
     "qa": [],
@@ -11718,8 +11874,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-21T18:14:57Z",
-    "last_triaged_by": "po/decision-consumption-20260721T1811",
+    "last_triaged_at": "2026-07-21T19:29:49Z",
+    "last_triaged_by": "po/triage-20260721T1907",
     "in_progress": [
       {
         "id": "DESIGN-COWORK-FANOUT-PRODUCER-CONSUMER-ORDERING",
@@ -11764,6 +11920,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-07-21T16:40:00Z",
-  "_updated_by": "po/escalation-commit-path-guard-20260721T1635"
+  "_updated_at": "2026-07-21T19:29:49Z",
+  "_updated_by": "po/triage-20260721T1907"
 }

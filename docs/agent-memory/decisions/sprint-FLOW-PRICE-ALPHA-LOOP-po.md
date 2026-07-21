@@ -313,3 +313,52 @@
 - Move out of in_progress — CHOSEN.
 **why-decision:** Row had NO updated_at at all, so the age-based stale-reset (dev-team/flow/main.md:491) was structurally unreachable for exactly the row that needed it; WIP 2/2 meant nothing could enter. Moving it frees the slot and forces deliberate re-dispatch.
 **why-change:** Left head.wip null/computed while storing wip_max, per the standing computed-not-stored conservation rule.
+
+### STEP po-S167 · po · 2026-07-21T19:30:38Z
+**task-id:** FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-SKILLS
+**what-done:** Approved the supervised row (review→done) and minted its disclosed Layer-2 tail as a separate row.
+**what-considered:**
+- Reject/hold pending proof that acceptance was written before the file edits
+- Approve on substance, treat the ordering claim as immaterial to the ACs
+- Approve and silently drop the unverifiable claim
+**why-decision:** None of ACs (1)-(6) requires acceptance-written-first, so approval rests only on independently checkable artifacts; the ordering claim is unverifiable-not-disproven because agent-father's commit zone excludes orch-state.json, making the claim unfalsifiable by construction rather than by fault.
+**why-change:** Tail minted now rather than deferred to a PM pass — an unminted tail disclosed inside a closing row orphans the moment its parent closes.
+
+### STEP po-S168 · po · 2026-07-21T19:30:38Z
+**task-id:** FIX-SLA-SBV-FX-BUSINESS-DAY-AWARE
+**what-done:** Ruled the sbv_fx CRITICAL a false positive and minted the root cause instead of a staleness row.
+**what-considered:**
+- Treat CRITICAL as real and escalate an SBV outage
+- Confirm market-hours blindness only, as the dispatcher hypothesised
+- Probe the SLA config at source before accepting either
+**why-decision:** Source read beat the hypothesis: sbv_fx has a flat 30-min threshold with no business-day awareness while system-map declares 1440min, and the tool's own legend advertises an off-hours window it never applies — the source published normally at 03:05Z.
+**why-change:** Broader than the dispatcher's market-hours framing — it is a category error (once-daily source, 30-minute SLA), so the row targets the config, not the calendar.
+
+### STEP po-S169 · po · 2026-07-21T19:30:38Z
+**task-id:** FIX-AUDITOR-EVAL-DELTA-RECENCY-BOUND
+**what-done:** Split the 3 bctc_eval_delta HIGHs into 1 real / 2 stale re-emissions via a DB join, minted the recency bound.
+**what-considered:**
+- Accept all 3 as real and route to BCTC extraction work
+- Attach all 3 to EVAL-PUSH-DOUBLE-ENCODE as instrumentation artifacts
+- Join eval rows to tickers and check each row's age and gate payload
+**why-decision:** The artifact prediction held only for FPT (empty metrics, 41d old) and was refuted for the stage-4 rows, which carry genuine populated gate failures — so neither blanket verdict was correct and only a per-row check could tell them apart.
+**why-change:** MBB is named as the regression test so the recency fix cannot suppress the one genuine failure.
+
+### STEP po-S170 · po · 2026-07-21T19:30:38Z
+**task-id:** FIX-NOTEBOOK-PRUNE-HEADING-LEVEL-MISMATCH
+**what-done:** Re-graded the agent-father notebook signal from a size-cap breach to a P1 armed data-loss trap.
+**what-considered:**
+- Accept as reported: 211L over cap, auto-prune cannot act
+- Trace what the prune predicate actually does when it finds zero boundaries
+**why-decision:** notebook-write SKILL.md:62-66 routes a zero-'## '-count file to a blank-state full-file Write, so the next write destroys 211 lines and 6 sections — materially worse than a stuck cap.
+**why-change:** Swept all notebooks to bound the blast radius; agent-father.md is the only at-risk file, so this stays S-sized and does not become a fleet migration.
+
+### STEP po-S171 · po · 2026-07-21T19:30:38Z
+**task-id:** FIX-COWORK-STEP0A-TOPO-DRAIN-STATUS-CONTRACT
+**what-done:** Upheld both cowork escalations without minting, graded the pair's ordering, and set the drain-status row to depend on the receiver row.
+**what-considered:**
+- Mark all 9 rows READ and close the tick
+- Leave all 9 NEW to avoid stranding, as the escalation implied
+- Mark terminal only where disposition is durably captured elsewhere
+**why-decision:** Verified at source that drain-signals.md 0a-D collects only status=NEW, so a blanket mark would sever dev-team's inbox — but leaving triaged rows NEW guarantees infinite re-drain, so the durable-capture test is the only rule that satisfies both.
+**why-change:** Found a second failure mode the escalation did not raise: 73 live rows carry an out-of-vocabulary 'triaged' status that the PRUNE predicate can never evict; used the canonical RESOLVED token and widened the row's scope.
