@@ -11,8 +11,18 @@
     "classification": "FIRE",
     "reason": "spawned",
     "silent": false,
-    "matched_slots": ["news-scout-offhours", "market-watcher-offhours", "market-watcher-eod", "alert-commander-critical"],
-    "won_slots": ["news-scout-offhours", "market-watcher-offhours", "market-watcher-eod", "alert-commander-critical"],
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "market-watcher-eod",
+      "alert-commander-critical"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "market-watcher-eod",
+      "alert-commander-critical"
+    ],
     "held_by_other": [],
     "all_held": false,
     "spawned": [
@@ -44,7 +54,12 @@
       "alert-commander-critical": 240
     },
     "last_fired_timestamp": "2026-07-21T16:09:45.000Z",
-    "last_fired_slots": ["news-scout-offhours", "market-watcher-offhours", "market-watcher-eod", "alert-commander-critical"],
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "market-watcher-eod",
+      "alert-commander-critical"
+    ],
     "last_fired_write_errors": null,
     "collision_warning": "agent_id=market-watcher matched 2 slots (market-watcher-offhours, market-watcher-eod) — both spawned per R3; WORK telegram sent",
     "drain": {
@@ -65,5 +80,11 @@
       "stale_warning flipped to true on this emit (was false at 15:54:19Z). Per pressure-read.md Step 4.2 AC-P1-6-3 this forces PRESSURE_MODE=legacy on the next tick regardless of emitted_at age. Recording as an observation, not a defect — likely downstream of the snapshot-promotion failure keeping state from refreshing.",
       "market-watcher-eod last_fired was 2026-07-17T16:08:34Z despite cron '0 16 * * 1-5' — it did not fire on Mon 07-20 (a weekday). Not investigated this tick and NOT filed; flagged here only so a later pass can check whether the 16:00 tick was missed on 07-20 or the slot was gated. Do not treat as a confirmed missed-fire without checking."
     ]
+  },
+  "_processed": {
+    "fingerprint": "d25f508d612cade6bd2c2db3b694bf26fbe4be93d710051ee087b6b38f162192",
+    "processedAt": "2026-07-21T16:14:56Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }
