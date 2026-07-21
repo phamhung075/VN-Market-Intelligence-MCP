@@ -1,15 +1,6 @@
 # BCTC Analyst — Notebook
 
-**Last updated:** 2026-07-21T18:16:00Z | **Sprint:** BCTC-EXTRACT-QUALITY
-
-## c106 · 2026-07-21T00:10:00Z
-### Analysis Cycle (00:05–00:10 UTC) — mode: routine (reprocess-corruption batch DOUBLED: 8→16 tickers across 2 days)
-- E2 guard: PASS (00:05:03Z per get_market_snapshot fetchedAt — outside [02:00,08:00) UTC window). Slot: bctc-analyst-slot-4 (00:00 UTC fire). Calendar re-fetched fresh (58-ticker, ref 2026-07-21).
-- **VISIBILITY GAP disclosed**: notebook has zero entries for all 4 scheduled 2026-07-20 cycles (00:00/15:00/18:00/21:00 UTC) — unknown if they ran under a different slot or didn't fire. Flagged honestly in escalation signal, no claim of certainty either way.
-- **Batch DOUBLED**: 8 new tickers joined the reprocess pattern — GEX/SAB (dated 07-19, missed prior cycle) + DBC/DXG/KDH/MSN/PDR/SHB (dated 07-20, new day). All verified CORRUPT (total_assets=0, forced 0%: GEX/DXG/KDH/PDR) or "Chưa có dữ liệu" (SAB/DBC/MSN/SHB) via get_bctc_full; none has a prior ledger entry. All still serve plausible get_sector_comparison ratios — downgraded to routine bctc_signal, no ledger write, no fabrication. Escalated 4th UPDATE signal docs/signals/bctc-analyst-20260721T000600Z.json to dev-team (severity HIGH, links full chain -151400Z/-180932Z/-211100Z, all still NEW). get_recent_fixes(10) still stale (latest 2026-05-12).
-- FPT/HPG/VCB byte-identical vs c079-c105. KD BROKE 11-cycle pattern on both FPT+VCB (coincides w/ 2026-07-20 VN-Index -2.46% selloff). ESC-Gate: no_escalation all 3 core tickers (coverage guards held, live-reconfirmed). Posted fundamental_validation #8441 (FPT, 1.0), #8442 (VCB, 0.8). 19 evidence fragments recorded (ids 275-293) across 13 tickers. Emitted 12 bctc_signal files.
-- KBC legal escalated to QUAN TRỌNG (chairman tax-penalty, 2 items). BID confirmed QUÁ HẠN (13-ticker overdue cluster). Rotation touch: VIX/DIG/DPM confirmed still "Chưa có dữ liệu".
-- Carry-over to c107: KD regime-shift n=1 post-break, confirm holds/reverts. Reprocess/corruption batch 16 tickers, 4 escalations unresolved. Rotation next: NVL/SSI/VCI/HCM. Q2 deadline 2026-07-31 (10d).
+**Last updated:** 2026-07-21T21:16:00Z | **Sprint:** BCTC-EXTRACT-QUALITY
 
 ## c107 · 2026-07-21T15:20:00Z
 ### Analysis Cycle (15:09–15:20 UTC) — mode: routine (blocked-cluster EXPANDED: NVL/SSI/VCI/HCM confirmed blocked)
@@ -30,3 +21,14 @@
 - Session note: no Bash tool this session — notebook git-commit deferred to next Bash-capable process (c078-c107 precedent continues).
 - Carry-over to c109: confirm KD stabilization holds a 2nd unchanged cycle (currently n=1) before declaring volatility regime over. Blocked cluster ~17-18 tickers, 5 escalations unresolved — watch for dev-team response. Rotation next: KBC/NVL/SSI/VCI/HCM (re-touch c106-c107 cluster for resolution). Q2 deadline 2026-07-31 (10d — reminder threshold 7d, not yet due).
 - Doc self-heal: fixed 1 item in docs/agents/tools/package/bctc-analyst.md — `get_insider_signals` doc claimed `outstandingShares`/`windowDays` required; live call with bare `{code}` succeeds. Corrected.
+
+## c109 · 2026-07-21T21:16:00Z
+### Analysis Cycle (21:08–21:16 UTC) — mode: routine (KD stabilization CONFIRMED n=2; rotation touch KBC/NVL/SSI/VCI/HCM unchanged)
+- E2 guard: PASS (21:07Z per dispatcher, well outside [02:00,08:00) UTC window). Slot: bctc-analyst-slot-3 (21:00 UTC fire) — this slot last fired 2026-07-19T21:04:25Z; 2026-07-20 21:00Z fire missed (dispatcher-side gap, ~48h since last slot-3 fire, not re-litigated). Calendar re-fetched fresh (58-ticker, ref 2026-07-21, NO new ĐÃ NỘP since c108 — MODE_RELEASE=false).
+- **KD STABILIZATION CONFIRMED (n=2)**: FPT (Khiêm/100%), HPG (Bác/25%), VCB (Phục/100%) all UNCHANGED vs c108 — 2nd consecutive unchanged cycle. Volatility regime from 07-20 selloff treated as resolved per 2-cycle confirm rule; revert to standard monitoring cadence next cycle.
+- FPT/HPG/VCB: fundamentals byte-identical vs c079-c108 (Rev 12,480tỷ/NI 2,476.8tỷ FPT; HPG Rev52,900.8/NI9,055.9/Op.Profit=0 known defect; VCB NI 9,462.1tỷ). B/S PASS (FPT 0%, HPG 0%, VCB 0.37%). ESC-3 DATA-COVERAGE-LIMITED all 3 (2/4Q FPT+HPG, 3/4Q VCB) — guards live-reconfirmed held (expires_at 1784840925/939 unchanged, no re-emit). ESC-4 FALSE (FPT 2.0%, VCB -21.4% bank structure); SKIPPED HPG (op_profit=0 defect). ESC-5 FALSE (get_bctc_refined "no refined units" all 3). Posted fundamental_validation #8700 (FPT, critic 0.8), #8701 (VCB, critic 0.8). 4 evidence fragments recorded (ids 355-358): FPT/HPG/VCB roe_ratio, KBC regulatory_compliance.
+- **Rotation touch KBC/NVL/SSI/VCI/HCM**: all confirmed still get_bctc_full="Chưa có dữ liệu" (unchanged, no expansion — already counted in ~17-18 blocked cluster). Sector ratios: KBC PE13.8x DISCOUNT ROE9.7%, NVL PE19.3x PREMIUM ROE4.2%, SSI PE14.6x PREMIUM ROE14.0%, VCI PE21.3x PREMIUM ROE8.7%, HCM PE17.8x PREMIUM ROE9.4%. No new escalation signal this cycle (touch-only, no expansion, matches c105/c108 precedent). get_recent_fixes(10) still stale (latest 2026-05-12) — all 5 prior escalation signals remain NEW/unresolved, no dev-team fix landed.
+- Legal risk: KBC 2 items unchanged (chairman tax-penalty, 07-19/07-20) + PC1/Rox Energy unchanged (06-26). Investment Clock phase=Overheat (CPI 5.46% HIGH), unchanged. Chain findings: 0 this cycle.
+- REGIME=NEUTRAL fallback (macro JSON shape, no REGIME field). CARRY_REGIME=NEUTRAL (1.37pp spread). MAX_DEPOSIT_RATE=5%. E1: SKIPPED FPT/HPG/VCB (byte-identical re-verified live, cache-equivalent). Emitted 8 bctc_signal files: FPT/HPG/VCB/KBC/NVL/SSI/VCI/HCM (_20260721_routine.json).
+- Session note: no Bash tool this session — notebook git-commit deferred to next Bash-capable process (c078-c108 precedent continues).
+- Carry-over to c110: KD volatility regime declared over (n=2 confirm) — resume standard cadence. Blocked cluster ~17-18 tickers, 5 escalations unresolved (dev-team no fix yet, get_recent_fixes stale since 05-12). Rotation next: DIG/VIX/DPM/SAB (re-touch, per c108 rotation cadence). Q2 deadline 2026-07-31 (10d — not yet in 7d reminder window).

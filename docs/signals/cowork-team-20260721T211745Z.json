@@ -1,0 +1,45 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "dispatcher-telemetry",
+  "priority": "HIGH",
+  "createdAt": "2026-07-21T21:17:45Z",
+  "payload": {
+    "tick": "2026-07-21T21:00Z",
+    "record_type": "agent-return-verification (post-tick; the 21:00Z tick itself is closed and its election lock released)",
+    "agent_return_verification": {
+      "agent": "bctc-analyst slot-3 — spawned 21:07Z, returned 21:14Z (434s, 70 tool calls, 140.6k tokens)",
+      "method": "Checked the self-report against ground truth rather than accepting the narrative.",
+      "CONFIRMED": {
+        "8_signal_files": "All 8 exist on disk (FPT/HPG/VCB/KBC/NVL/SSI/VCI/HCM, 685-1300 bytes, mtime 21:12Z).",
+        "signal_ids_8700_8701": "Both exist on the bus (get_agent_signals from_agent=bctc-analyst). Content matches the self-report field-for-field: FPT EY +2.2pp / ROE 6.2% / imbalance 0%; VCB EY +2.1pp / ROE 4.2% / imbalance 0.37% / non_operating -21.4% described as bank-structural, not a one-off. KD stability n=2 asserted in both.",
+        "notebook": "Updated, 34L (within the 200L rule), headers c107/c108/c109 present — c106 rotated out exactly as claimed.",
+        "no_fabrication_on_blocked_tickers": "HCM/KBC/NVL/SSI/VCI files carry data_status=BLOCKED with sector-ratio context only. No invented financials. Honest-absence discipline held."
+      },
+      "verdict": "Self-report accurate on every checkable claim. No overclaim detected. One framing correction below."
+    },
+    "finding_9_bctc_analyst_step_5d_is_permanently_unexecutable_not_a_session_limitation": {
+      "severity": "MED",
+      "agent_framing": "'No Bash tool available this session, so the mandated git commit (flow step 5d) could NOT be performed — this continues the c078-c108 precedent of deferring commit to the next Bash-capable process.'",
+      "why_that_framing_is_wrong": "It is not a session condition. bctc-analyst's frontmatter grants exactly `tools: Read, Write, Edit, mcp__gateway__call_tool`. Bash is not in the grant and never was. The step cannot run on any cycle, ever.",
+      "the_step": "docs/agents/bctc-analyst/flow/stage-log-notify.md:44-48 — '5d. Commit (mutex-guarded)' with literal `git add` + `git commit`.",
+      "verified_at_source": "git log -20 on docs/agent-memory/notebooks/bctc-analyst.md: EVERY commit is authored by `report-analyzer` (the router/dispatcher session), spanning 2026-06-15..2026-07-21. The agent has never committed its own notebook. Artifacts land only because a Bash-capable sweeper picks them up afterwards.",
+      "why_it_matters": "A step that cannot execute is not a harmless no-op — it is a documented responsibility with no real owner. The flow asserts the agent commits; the actual arrangement is an undocumented dependency on a router sweep. If the sweeper stops, artifacts strand silently while the flow still reads as complete.",
+      "normalization_smell": "Carrying this as a 'c078-c108 precedent' converts a structural defect into a routine inconvenience. ~30 cycles failing the same way is a spec bug, not a precedent.",
+      "fix_direction_NOT_MINE_TO_PICK": "Two opposite repairs: (a) grant Bash so the agent commits, or (b) delete step 5d and document the router-sweep contract explicitly. The agent's own frontmatter says 'No other filesystem writes permitted', which argues for (b) — but that is PO/agents-architect's call, not the dispatcher's.",
+      "owner": "po -> agents-architect"
+    },
+    "unverified_note_evidence_type_series_fork_risk": {
+      "observation": "Agent reports fragments of evidence_type 'bctc_roe_ratio'. The accumulated FPT series uses 'bctc_roe_strong'.",
+      "why_it_could_matter": "record_evidence_fragment takes evidence_type as free text (minLength:1, no enum). A variant string silently forks the series into a new one with no likelihood-ratio history (LR n=0, UNTRUSTED) instead of accumulating into the existing one.",
+      "claim_NOT_made": "NOT confirmed. get_evidence_summary reads a NIGHTLY aggregate (up to 23h stale), so today's fragments cannot appear yet either way. Hypothesis to re-check after the next nightly run — not a finding."
+    },
+    "finding_10_drain_window_is_too_tight_for_the_fold_dont_mint_rule": {
+      "severity": "LOW — process observation, not a defect",
+      "what_happened": "I tried to amend the live 21:10Z telemetry with the above rather than mint a new file (per the fold-don't-mint guidance). Between `ls` confirming it live at 23:15 local and the write at 23:16 local, the drain moved it to processed/. Same thing happened on the 20:45Z tick to two earlier artifacts.",
+      "correction_to_the_guidance": "feedback_dispatcher_telemetry_writes_deadlock_inbox_backlog_guard says 'prefer folding the finding into an existing artifact over minting'. That presumes artifacts linger. Empirically the drain here consumes cowork telemetry within ~5-6 minutes. Amend-later is not a safe pattern for this dispatcher; a consumed artifact is no longer an inbox item and amending it buries the finding where the drain will not re-route it.",
+      "how_to_apply": "Decide mint-vs-fold at WRITE time, not after. If a finding arrives post-write, mint — do not attempt to reopen a file the drain may already own.",
+      "the_generalization": "A read that confirms a file is live is only valid for as long as nothing else owns the path. This is a TOCTOU on the drain, the same shape as the git-index TOCTOU already recorded."
+    }
+  }
+}
