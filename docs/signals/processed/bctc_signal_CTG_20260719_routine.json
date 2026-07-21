@@ -1,0 +1,20 @@
+{
+  "ticker": "CTG",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Retail and corporate banking, SME lending, bancassurance (VietinBank, state-controlled JSC bank)",
+  "customer": "SOE/corporate lending clients, SME working-capital borrowers, retail depositors",
+  "ops": "get_bctc_full raw statement CORRUPT (total_assets=0, OCR extraction failure, 0% forced confidence) — no derived revenue/NI/EPS usable this cycle. Sector-comparison layer still serves ROE 21.1% (above sector median 16.7%), PE 7.8x (in-line), PB 1.5x (in-line)",
+  "mgmt": "Calendar NGAY NOP flipped to 2026-07-19 (today) alongside D2D/FRT/VCB — same-day reprocessing batch; CTG PDF on disk since 2026-06-08, never previously release-processed (ledger empty). No beat/miss verdict possible — raw statement corrupt, not fabricated",
+  "cycle_ref": "20260719-1500",
+  "data_quality": "CORRUPT — total_assets=0, action recommended by tool: re-extract via /api/bctc-inspect or refine pipeline",
+  "no_ledger_write": "true — cannot compute Revenue/NI/EPS from corrupt source; fabrication avoided per no-fake-data policy",
+  "_processed": {
+    "fingerprint": "13bd7a520906377f7df60d93645961f03e6e1a95c0118b0f86d4c364d2a10175",
+    "processedAt": "2026-07-21T14:46:44Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -3,27 +3,24 @@
   "signal_type": "bctc_signal",
   "quarter": "Q1-2026",
   "mode": "routine",
-  "product": "IT services, software exports, telecom (FPT Telecom), education (FPT Edu)",
-  "customer": "Enterprise IT buyers (VN + offshore), SME telecom subscribers",
-  "ops": "Gross margin 34.0%, operating margin 22.0%; ROE 6.17%q/28.3% annualized; EY spread +2.25pp FAIR vs 5% deposit rate",
-  "mgmt": "Fundamentals byte-identical 8th consecutive cycle; KD Que 8 Ty THUAN LOI 100% confidence sustained",
-  "escalation_status": "no_escalation",
-  "esc3_status": "DATA-COVERAGE-LIMITED",
-  "coverage_guard_key": "esc-datacov:FPT:Q1-2026:ESC-3",
-  "quarters_returned": 2,
-  "balance_sheet_check": "PASS (0% imbalance)",
-  "esc4_non_operating_share": 0.02,
-  "esc5_refined_confidence": "FALSE (no refined units)",
-  "kinhdich": "Que 8 Ty, THUAN LOI, 100% confidence",
-  "sentiment_30d": {
-    "entries": 24,
-    "slope": -0.18,
-    "direction": "GIAM"
+  "beat_miss": null,
+  "product": "IT services and software exports, telecom (FPT Telecom broadband/pay-TV), education (FPT Edu)",
+  "customer": "Enterprise IT buyers (VN + offshore Japan/US/APAC), retail telecom/broadband subscribers, students",
+  "ops": "Net margin 19.8%, ROE 6.17%q/28.3% ann. (above sector median 10.6%); OCF -2,847.8 ty vs NI +2,476.8 ty this quarter (accrual divergence, 2/4 quarters coverage — DATA-COVERAGE-LIMITED, no escalation)",
+  "mgmt": "11th consecutive cycle of byte-identical confirmed fundamentals; EY spread +2.25pp (FAIR), PE 13.8x -20% discount to sector median",
+  "cycle_ref": "20260719-2100",
+  "esc_gate": {
+    "esc1": "FALSE",
+    "esc2": "PASS (0%)",
+    "esc3": "DATA-COVERAGE-LIMITED (2/4, guard held)",
+    "esc4": "FALSE (2.0%)",
+    "esc5": "FALSE (refined empty)"
   },
-  "fetched_at": "2026-07-19T00:07:00Z",
+  "kinhdich": "Que 8 Ty / THUAN LOI / 100% confidence (10th consecutive cycle)",
+  "signal_id": 8138,
   "_processed": {
-    "fingerprint": "c9133839c9342067bbebdd872d8bdcb7b0eb86299a03ca1c6df240c1904c5087",
-    "processedAt": "2026-07-19T00:18:23Z",
+    "fingerprint": "24c949ff0adc210851fb25ddceb0d72ed9445b3912579758c7f4c4ac2fb411a5",
+    "processedAt": "2026-07-21T14:46:44Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

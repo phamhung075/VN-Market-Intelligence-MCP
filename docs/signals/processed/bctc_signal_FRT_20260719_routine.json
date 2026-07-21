@@ -1,0 +1,20 @@
+{
+  "ticker": "FRT",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "FPT Shop electronics/mobile retail, Long Chau pharmacy chain",
+  "customer": "Retail consumer electronics buyers, pharmacy/healthcare retail customers",
+  "ops": "get_bctc_full raw statement CORRUPT (total_assets=0, OCR extraction failure, 0% forced confidence) — no derived revenue/NI/EPS usable this cycle. Sector-comparison layer serves PE 32.2x (+89% premium), PB 6.1x (+109% premium), ROE 26.1% (above sector median 19.9%) — EY spread -1.89pp vs 5% deposit rate => AVOID valuation (no bullish signal warranted even if data were clean)",
+  "mgmt": "Calendar NGAY NOP flipped to 2026-07-19 (today) alongside CTG/D2D/VCB — same-day reprocessing batch; FRT PDF on disk since 2026-06-13, never previously release-processed (ledger file does not exist). No beat/miss verdict possible — raw statement corrupt, not fabricated",
+  "cycle_ref": "20260719-1500",
+  "data_quality": "CORRUPT — total_assets=0, action recommended by tool: re-extract via /api/bctc-inspect or refine pipeline",
+  "no_ledger_write": "true — cannot compute Revenue/NI/EPS from corrupt source; fabrication avoided per no-fake-data policy",
+  "_processed": {
+    "fingerprint": "d68c2ebbd657e44c3fc0373f3feef0968631501d24c17196da8fd5f5b6a10702",
+    "processedAt": "2026-07-21T14:46:44Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

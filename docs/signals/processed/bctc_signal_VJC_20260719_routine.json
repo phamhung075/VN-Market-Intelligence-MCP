@@ -1,0 +1,21 @@
+{
+  "ticker": "VJC",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Low-cost air passenger transport, ancillary/cargo services (VietJet Air)",
+  "customer": "Domestic + regional leisure/budget air travelers",
+  "ops": "get_bctc_full raw statement CORRUPT (total_assets=0, OCR extraction failure, 0% forced confidence) — no derived revenue/NI/EPS usable this cycle. Sector-comparison layer still serves PE 44.7x vs median 7.6 (+486% PREMIUM), PB 4.0 vs 3.3 (+21%), ROE 10.1% below median 16.7%",
+  "mgmt": "Calendar NGAY NOP flipped to 2026-07-19 (today) alongside VND, joining CTG/D2D/FRT/VCB (15:00 UTC) and DGC/KDC (18:00 UTC) — 3rd consecutive cycle of same-day reprocessing batch expansion, NOT a new filing. No prior ledger entry (docs/analysis-briefs/VJC.md has only generic price-tracking placeholders, no BCTC quarterly synthesis)",
+  "cycle_ref": "20260719-2100",
+  "data_quality": "CORRUPT — total_assets=0, action recommended by tool: re-extract via /api/bctc-inspect or refine pipeline",
+  "no_ledger_write": "true — cannot compute Revenue/NI/EPS from corrupt source; fabrication avoided per no-fake-data policy",
+  "data_quality_signal_ref": "docs/signals/bctc-analyst-20260719T211100Z.json",
+  "_processed": {
+    "fingerprint": "e71a1d293af1945f9dae85410ee8f8e0f6c104832a00fef7c3dace20471d5af4",
+    "processedAt": "2026-07-21T14:46:44Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

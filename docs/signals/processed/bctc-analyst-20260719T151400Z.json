@@ -1,0 +1,55 @@
+{
+  "id": "bca-dataqual-20260719T151400Z",
+  "ts": "2026-07-19T15:14:00Z",
+  "from": "bctc-analyst",
+  "to": "dev-team",
+  "type": "bctc-data-quality-anomaly",
+  "summary": "CTG/D2D/FRT/VCB Q1-2026 BCTC reports all show get_earnings_calendar() NGAY NOP flipped to today (2026-07-19) in the same cycle -- consistent with a same-day reprocessing/reparse batch, not new filings. VCB reprocessed clean (byte-identical values, Published ts updated 12:43:43Z). CTG and FRT reprocessed CORRUPT (get_bctc_full returns total_assets=0, 0% forced confidence, 'OCR extraction failure'). D2D returned 'Chua co du lieu BCTC' (no data).",
+  "severity": "MEDIUM",
+  "status": "NEW",
+  "payload_ref": null,
+  "payload": {
+    "affected_tickers": [
+      "CTG",
+      "FRT",
+      "D2D",
+      "VCB"
+    ],
+    "quarter": "Q1-2026",
+    "cycle_ref": "20260719-1500",
+    "evidence": {
+      "CTG": {
+        "pdf_on_disk_since": "2026-06-08",
+        "prior_ledger_entry": "none (docs/analysis-briefs/CTG.md shows 'Quarterly reports pending')",
+        "get_bctc_full_result": "[CORRUPT DATA - SKIP] total_assets=0, confidence 0% (forced)",
+        "sector_comparison_still_serving": "PE 7.8x, PB 1.5x, ROE 21.1% (real-looking, not zero) -- inconsistent with raw-statement corruption, suggests two-plane data divergence"
+      },
+      "FRT": {
+        "pdf_on_disk_since": "2026-06-13",
+        "prior_ledger_entry": "none (docs/analysis-briefs/FRT.md does not exist)",
+        "get_bctc_full_result": "[CORRUPT DATA - SKIP] total_assets=0, confidence 0% (forced)",
+        "sector_comparison_still_serving": "PE 32.2x, PB 6.1x, ROE 26.1% -- same two-plane divergence as CTG"
+      },
+      "D2D": {
+        "pdf_on_disk_since": "2026-06-07",
+        "get_bctc_full_result": "Chua co du lieu BCTC (no data at all)",
+        "get_sector_comparison_result": "PE/PB/ROE all N/A"
+      },
+      "VCB": {
+        "get_bctc_full_result": "passed, values byte-identical to prior 9 cycles (NI 9,462.1ty, ROE 4.21%, EPS 15)",
+        "published_timestamp": "2026-07-19T12:43:43.098Z (updated today, ~2.5h before this cycle -- confirms a reprocess event touched this report without changing the underlying figures)"
+      }
+    },
+    "action_recommended_by_tool": "get_bctc_full response for CTG/FRT explicitly suggests: 're-extract via /api/bctc-inspect or re-run the BCTC refine pipeline'",
+    "impact_on_bctc_analyst_flow": "MODE_RELEASE determination (cycle.md Step 0c) treats NGAY NOP date-change as the newly-filed trigger. Since these are reprocess events (not new filings) and 3/4 produced corrupt/no data, bctc-analyst did NOT write release-mode ledger entries (docs/analysis-briefs/{CTG,D2D,FRT}.md) to avoid fabricating Revenue/NI/EPS/beat-miss from corrupt/absent source data. Recommend dev-team assess whether the calendar's NGAY NOP field should track true original filing date vs last-reprocessed timestamp -- current behavior can falsely trigger release-mode for non-events.",
+    "root_task_suggestion": "BCTC-EXTRACT-QUALITY (per current sprint tag) or new CORRUPT-REPROCESS-BATCH-0719 task"
+  },
+  "priority": "medium",
+  "createdAt": "2026-07-19T15:14:00Z",
+  "_processed": {
+    "fingerprint": "f99451156278ae3baecb8dd24f9bd00ef8dcb22bc1a730e2e40053401f045bef",
+    "processedAt": "2026-07-21T14:46:44Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

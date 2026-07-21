@@ -1,0 +1,20 @@
+{
+  "ticker": "KBC",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Industrial real estate/IP developer (Kinh Bac City) -- industrial park land lease, infrastructure",
+  "customer": "Domestic and FDI manufacturers leasing industrial park land/facilities",
+  "ops": "get_bctc_full returns Chua co du lieu BCTC (long-standing blocked-cluster gap, unrelated to the 07-19/07-20 reprocess batch -- KBC filed 2026-06-07 per calendar, no corruption flag)",
+  "mgmt": "Sector-comparison plane serving: PE 13.8x -29% discount, PB 1.3x in-line, ROE 9.7% above sector median (6.3%); valuation FAIR (EY spread +2.25pp). Legal risk: chairman tax-penalty administrative decision (2 QUAN TRONG news items, 2026-07-19/20) -- regulatory evidence fragment recorded",
+  "data_quality_flag": "blocked-cluster (no get_bctc_full data), not part of reprocess batch",
+  "cycle_ref": "20260721-0000",
+  "generatedAt": "2026-07-21T00:10:00Z",
+  "_processed": {
+    "fingerprint": "c215b2349cebd67bc1fa41f95e30023f52aeb36b344ed8ad57f3f144556e96be",
+    "processedAt": "2026-07-21T14:46:44Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

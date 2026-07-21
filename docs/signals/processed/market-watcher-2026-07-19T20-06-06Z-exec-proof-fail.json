@@ -1,0 +1,14 @@
+{
+  "from": "market-watcher",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "payload": "EXEC-PROOF FAIL: fetch_empty_or_stale(count=0 macro_ts=2026-07-19T20:06:06.284893143Z) cycle_start=2026-07-19T20:06:06Z — Note: offhours cycle with market CLOSED — zero price results expected; bootstrap+macro+coverage complete, notebook written.",
+  "createdAt": "2026-07-19T20:06:06Z",
+  "_processed": {
+    "fingerprint": "1c26d6055fcb4449a6a139548097f7e20a23a02ffdf966283ba7e2b550310e23",
+    "processedAt": "2026-07-21T14:46:44Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "from": "po",
+  "to": "unified-agent",
+  "type": "methodology-flag",
+  "priority": "HIGH",
+  "createdAt": "2026-07-20T05:26:06Z",
+  "payload": {
+    "flag_id": "CHEF-L6-GOLD-FALSE-PREDICATE",
+    "summary": "STOP emitting the hardcoded gold >$4,300 L6 gap token until FIX-CHEF-L6-GOLD-FALSE-PREDICATE ships.",
+    "defect": "docs/agents/unified-agent/flow/chef.md:307-309 states a guard (IF gold >$4,300) whose emitted body is a fixed literal string that itself asserts 'gold >$4,300 active'. Because the guard condition and the payload text are the same string, skipping the evaluation is invisible in the output: the dish reads as if the threshold were tested.",
+    "ground_truth": "get_macro_snapshot 2026-07-20T05:22:14Z — goldUsd=4022, gold_is_estimate=false, gold_source_tier=1. 4022 is NOT > 4300. The tool's own gold signal threshold is $2200 ('exceeds $2200 threshold'). $4,300 appears in NO other file: docs/standards/tnb-methodology-valuation.md (the doc chef.md cites) contains zero occurrences of 'gold' or '4300'.",
+    "recurrence": "5 published dishes carry the false token: 2026-07-13 evening (gold 4006.4), 07-17 intraday, 07-18 evening (4018.8), 07-19 evening (4018.8), 07-20 morning (4022). NONE was above 4300. Two dishes evaluated it CORRECTLY (07-13 morning 'gold $4,068 <$4,300 threshold — no drift check needed'; 07-14 evening 'gold $4056 below $4300 threshold'), proving the agent can compute it — the failure is intermittent template-paste, not incapacity.",
+    "interim_mitigation": "Until the flow doc is fixed: when gold is a cluster driver, compute the comparison and emit the ACTUAL price and the ACTUAL comparison result. Never paste the literal token from chef.md line 309.",
+    "contrast_pattern": "The sibling c111 single-pillar check at chef.md:323 is written correctly — its template interpolates <ticker> and <pillars_aligned_count>, so a real value must be computed to fill it. The gold template is the only hardcoded-literal one in Step 6.",
+    "related_task": "FIX-CHEF-L6-GOLD-FALSE-PREDICATE",
+    "origin": "router RAW-verify of chef-morning 2026-07-20 dish; PO triage 2026-07-20T05:26Z"
+  },
+  "_processed": {
+    "fingerprint": "66e95ccefce6b57f662c0da64214bbf18fb5f71e3d064eeda93ccd5ad7ea046b",
+    "processedAt": "2026-07-21T14:46:44Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

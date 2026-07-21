@@ -411,8 +411,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-21T14:23:45Z",
-    "_updated_by": "po-s147-auditor-fp-converge-drain",
+    "_updated_at": "2026-07-21T14:46:09Z",
+    "_updated_by": "dev-team",
     "archive": [],
     "rows": [
       {
@@ -2443,10 +2443,62 @@
         "triaged_by": "po-s147-auditor-fp-converge-drain",
         "triaged_home": "FIX-MCP-MEMORY-CODE-LEAK",
         "drain_note": "recurring auditor FP / known-tracked finding folded to FIX-MCP-MEMORY-CODE-LEAK as corroboration (dedup, no new backlog mint). po-s147 converge drain."
+      },
+      {
+        "id": "sys-20260721T143352-15e7",
+        "ts": "2026-07-21T14:33:52Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "news stale 92min (expected 60min, SLA 30min)",
+        "severity": "CRITICAL",
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_at": "2026-07-21T14:41:51Z",
+        "triaged_by": "po-auditor-datastale-fp-triage",
+        "triaged_home": "FIX-AUDITOR-B11-NEWS-FRESHNESS-LAYER-SPLIT",
+        "drain_note": "data_stale CRITICAL FALSE-POSITIVE — two-layer fetch-vs-analysis conflation (feedback_news_freshness_two_layer_fetch_vs_analysis). RAW-verified @2026-07-21T14:41Z: FETCH layer FRESH — get_vps_proxy_health(news) last push 2026-07-21T14:30:04Z (~4min before the 14:33 auditor tick), ongoing 30-min cadence (14:30/14:00/13:30/13:00/12:30), 71 pushes/24h, 0 errors; get_vps_service_health vn-news-fetch=healthy. The 92-min staleness = ANALYSIS layer (news-scout cowork slot cadence 4h/daily), NOT a fetch outage. B-11 predicate reads the raw-fetch SSOT threshold (~60min) against the last-ANALYSIS timestamp = phantom CRITICAL. NOT a fetch-layer stall -> NOT routed to dev-news-scout, no VPS restart. FOLD -> FIX-AUDITOR-B11-NEWS-FRESHNESS-LAYER-SPLIT (existing BACKLOG). No new mint."
+      },
+      {
+        "id": "sys-20260721T143355-616c",
+        "ts": "2026-07-21T14:33:55Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "sbv-vps stale 47min (expected 6h, SLA 30min)",
+        "severity": "CRITICAL",
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_at": "2026-07-21T14:41:51Z",
+        "triaged_by": "po-auditor-datastale-fp-triage",
+        "triaged_home": "FIX-AUDITOR-SBVFX-SLA-POSTMARKET-TOLERANCE",
+        "drain_note": "data_stale CRITICAL FALSE-POSITIVE — market-hours-blind freshness threshold (feedback_auditor_freshness_threshold_market_hours_blind). now=2026-07-21T14:41Z=21:41 VN (Tue), VN market CLOSED; SBV FX does not publish after-hours. 47-min data-age vs 6h expected cadence = normal off-hours idle, well within cadence; last fetch 13:45Z (20:45 VN) proves the fetcher ran recently -> NOT a hard fetch outage. The fixed 30-min SLA gate is 24/7-blind (fires continuously off-hours). SEPARATE (not this row): get_vps_service_health shows vn-sbv-fetch=unhealthy — a service-health condition already tracked by FIX-SBV-FETCHER-ZERO-VALUE-EMIT; VPS restart is USER-GATED, not authorized/requested here. FOLD -> FIX-AUDITOR-SBVFX-SLA-POSTMARKET-TOLERANCE (existing BACKLOG post-publish-window relaxation + poll-cadence tolerance band). No new mint."
+      },
+      {
+        "id": "sys-20260721T144253-1153",
+        "ts": "2026-07-21T14:42:53Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "pdf-extractor A-20 multi-probe 0/3 — event-loop stall (known PDF-AVAIL-02-FIX)",
+        "severity": "WARN",
+        "status": "READ",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260721T144300-1e9e",
+        "ts": "2026-07-21T14:43:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "mcp-server A-30 memory 91.19% — GC-sawtooth within band",
+        "severity": "WARN",
+        "status": "READ",
+        "payload_ref": null
       }
     ],
-    "last_triaged_at": "2026-07-21T14:23:45Z",
-    "last_triaged_by": "po-s147-auditor-fp-converge-drain"
+    "last_triaged_at": "2026-07-21T14:41:51Z",
+    "last_triaged_by": "po-auditor-datastale-fp-triage"
   },
   "sprint_goal": {
     "_note": "Active sprint visions. PO triage 2026-07-20 16->15: archived QUE-REFERENCE-PAGE (SHIPPED — route apps/frontend/app/routes/dashboard.kinh-dich-reference.tsx exists 9489B, renders all 64 que from que-descriptions-detail.generated; successor sprint KINHDICH-HOVER-DETAIL scope_out treats the reference page + its deep-link as already-existing; 0 orphan refs in task_board lanes; not in active_sprints). PREV: Active sprint visions. PO triage 2026-07-11 16->14: merged FB-POSTER-LAUNCHD-FIRER into COWORK-GUARANTEED-SLOT-DURABILITY (superseded per cron-jobs.md, firer plist installed+loaded); archived NARRATIVE-TRUTH-CCATO-GATE (T2+T3 both DONE, T3 qa-APPROVED). Reasoning: sprint-ANALYSIS-QUALITY-CONVERGENCE-po.md.",
@@ -11853,6 +11905,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-07-21T02:52:42Z",
-  "_updated_by": "po"
+  "_updated_at": "2026-07-21T14:41:51Z",
+  "_updated_by": "po-auditor-datastale-fp-triage"
 }

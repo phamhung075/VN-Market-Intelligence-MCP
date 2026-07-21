@@ -1,0 +1,52 @@
+{
+  "emitted_at": "2026-07-19T00:05:56.560Z",
+  "nominal_tick": "00:00",
+  "tick_id": "2026-07-19T00:00:00Z",
+  "classification": "FIRE",
+  "reason": "spawned",
+  "matched": [
+    "bctc-analyst-slot-4",
+    "news-scout-offhours",
+    "market-watcher-offhours",
+    "alert-commander-critical"
+  ],
+  "won": [
+    "bctc-analyst-slot-4",
+    "news-scout-offhours",
+    "market-watcher-offhours",
+    "alert-commander-critical"
+  ],
+  "last_fired_slots": [
+    "bctc-analyst-slot-4",
+    "news-scout-offhours",
+    "market-watcher-offhours",
+    "alert-commander-critical"
+  ],
+  "spawned": [
+    "docs/agents/bctc-analyst/flow/main.md",
+    "docs/agents/news-scout/flow/main.md",
+    "docs/agents/market-watcher/flow/main.md",
+    "docs/agents/alert-commander/flow/main.md"
+  ],
+  "drift_min": 3,
+  "pressure_mode": "adaptive",
+  "calendar": "unknown",
+  "chef_mutex_applied": false,
+  "due_reasons": [
+    "cron",
+    "cadence",
+    "cadence",
+    "cadence"
+  ],
+  "cadence_minutes": [
+    null,
+    240,
+    240,
+    240
+  ],
+  "last_fired_timestamp": "2026-07-19T00:05:41.416Z",
+  "cycle_snapshot_promoted": false,
+  "dev_queue_depth": 5,
+  "signal_backlog": 6,
+  "signals_observed": []
+}

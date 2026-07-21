@@ -1,0 +1,31 @@
+{
+  "ticker": "FPT",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "IT services, software exports, telecom (FPT Telecom), education (FPT Edu)",
+  "customer": "Enterprise IT buyers (VN + offshore), SME telecom subscribers",
+  "ops": "ROE 6.17%q (28.3% annualized), gross margin 34.0%, operating margin 22.0%; OCF -2,847.8 ty vs NI +2,476.8 ty (accruals flag) unchanged 12 consecutive cycles",
+  "mgmt": "Byte-identical fundamentals across 12 cycles since 2026-05-24 filing; PE 13.8x -20% sector discount, PB 3.6x +136% premium, EY spread +2.25pp FAIR",
+  "kinhdich": {
+    "quai": "Que 16 - Du",
+    "trend": "THUAN LOI",
+    "confidence_pct": 44,
+    "note": "BREAK from prior 11-cycle Que 8 Ty / ~100% confidence pattern -- first hexagram + confidence-level shift, coincides with 2026-07-20 VN-Index -2.46% selloff"
+  },
+  "esc_gate": {
+    "esc2": "PASS 0%",
+    "esc3": "DATA-COVERAGE-LIMITED 2/4Q guard-held",
+    "esc4": "FALSE 2.0%",
+    "esc5": "FALSE (no refined units)"
+  },
+  "cycle_ref": "20260721-0000",
+  "generatedAt": "2026-07-21T00:10:00Z",
+  "_processed": {
+    "fingerprint": "2a79640d7c8a1a46b5ca3ffc027eac0f379b8aa02b25f4e4708a4c3ff108a221",
+    "processedAt": "2026-07-21T14:46:44Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

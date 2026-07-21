@@ -1,0 +1,101 @@
+{
+  "schema": "price_anomaly_v1",
+  "generated_at": "2026-07-17T16:08:00Z",
+  "dish_window": "eod",
+  "tickers": [
+    {
+      "code": "VNM",
+      "price": 59000,
+      "daily_change_pct": 4.98,
+      "yoy_change_pct": -1.83,
+      "volume": 12982500,
+      "vs_avg_pct": 650,
+      "rsi": 62.4,
+      "sentiment": "Neutral — brand strength maintained; khối ngoại bán ròng gần 700 tỷ",
+      "insider_activity": "no activity",
+      "brief_action": "Watch resistance; volume spike overbought",
+      "regime_flag": "NEUTRAL",
+      "anomaly": true,
+      "anomaly_reason": "CRITICAL volume spike 6.5× average; price at 99.2% of upper Bollinger Band; RSI neutral-high at 62.4 entering potential resistance zone"
+    },
+    {
+      "code": "KDC",
+      "price": 49600,
+      "daily_change_pct": -0.20,
+      "yoy_change_pct": -11.74,
+      "volume": 312900,
+      "vs_avg_pct": 470,
+      "rsi": 48.3,
+      "sentiment": "Neutral — agriculture sector no specific catalysts",
+      "insider_activity": "no activity",
+      "brief_action": "Watch for support",
+      "regime_flag": "NEUTRAL",
+      "anomaly": true,
+      "anomaly_reason": "HIGH volume spike 4.7× average; price at 19.9% of Bollinger Band width indicating technical bounce setup; YoY decline -11.74% signals sector headwinds"
+    },
+    {
+      "code": "VCB",
+      "price": 58500,
+      "daily_change_pct": -1.52,
+      "yoy_change_pct": -5.95,
+      "volume": 1990100,
+      "vs_avg_pct": 157,
+      "rsi": 31.2,
+      "sentiment": "Mixed — VPBankS reported record profit but market focused on macro headwinds",
+      "insider_activity": "no activity",
+      "brief_action": "Hold or cautious buy on dips",
+      "regime_flag": "NEUTRAL",
+      "anomaly": true,
+      "anomaly_reason": "RSI 31.2 oversold (below 35); price at 0.4% of Bollinger Band lower; banking sector declined due to macro concerns; setup for potential mean reversion"
+    },
+    {
+      "code": "DIG",
+      "price": 12050,
+      "daily_change_pct": -3.21,
+      "yoy_change_pct": -40.64,
+      "volume": 5569900,
+      "vs_avg_pct": 183,
+      "rsi": 41.6,
+      "sentiment": "Bearish — real estate sector down 1.93% on average; DIG hit hardest",
+      "insider_activity": "no activity",
+      "brief_action": "Reduce positions; monitor support",
+      "regime_flag": "NEUTRAL",
+      "anomaly": true,
+      "anomaly_reason": "YoY decline -40.64% signals severe sector underperformance; price -3.21% today in sector-wide decline; RSI 41.6 neutral but trend down; High volume (1.83× avg) on weakness"
+    },
+    {
+      "code": "NKG",
+      "price": 11150,
+      "daily_change_pct": -3.46,
+      "yoy_change_pct": -22.03,
+      "volume": 1258500,
+      "vs_avg_pct": 152,
+      "rsi": 23.0,
+      "sentiment": "Bearish — steel sector down 3.71% on average; global slowdown pressure",
+      "insider_activity": "no activity",
+      "brief_action": "Reduce positions; oversold but trend negative",
+      "regime_flag": "NEUTRAL",
+      "anomaly": true,
+      "anomaly_reason": "RSI 23.0 oversold (below 30); price at -33.3% of Bollinger Band (extreme oversold); YoY decline -22.03%; Steel sector under pressure; requires sector catalyst for reversal"
+    }
+  ],
+  "market_context": {
+    "vnindex_status": "Down 17 points; foreign flow net selling; sector rotation into defensives",
+    "macro_snapshot": {
+      "brent_crude_usd": 86.6,
+      "brent_change_pct": 2.01,
+      "gold_usd_oz": 4018.3,
+      "gold_change_pct": 1.02,
+      "usd_vnd": 26110,
+      "fed_funds_rate_pct": 3.63
+    },
+    "alerts_24h": {
+      "total": 20,
+      "critical": 1,
+      "high": 13,
+      "medium": 1,
+      "low": 5
+    }
+  },
+  "summary": "EOD 2026-07-17: Sector rotation ongoing — real estate and steel down; food staples (VNM) show volume anomaly but mixed technical setup; banking oversold (VCB). Macro: Brent +2.01% (supply concern), USD/VND stable. Monitor support levels; expect sector rebalancing over next 2–3 sessions."
+}

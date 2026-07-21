@@ -1,0 +1,21 @@
+{
+  "ticker": "KDC",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Packaged foods — cooking oil, ice cream/frozen foods, snacks (Kido Group)",
+  "customer": "Domestic retail/mass-market consumer buyers, modern trade + traditional trade distribution",
+  "ops": "get_bctc_full returned 'Chua co du lieu BCTC' (no data at all) this cycle. Sector-comparison layer still serves PE 27.1x vs median 8.9 (+206% premium), PB 2.0x vs 1.6 (+23% premium), ROE 7.6% vs median 15.5% (below median)",
+  "mgmt": "Calendar NGAY NOP flipped to 2026-07-19 (today) alongside DGC and the 4 tickers flagged at 15:00 UTC (CTG/D2D/FRT/VCB) — same-day reprocessing batch, NOT a new filing. No genuine BCTC release entry ever written (docs/analysis-briefs/KDC.md exists but only generic 2026-01-15 placeholder). EY spread -1.31pp AVOID on sector-comparison PE — expensive vs below-median returns (informational only, not release-grade)",
+  "cycle_ref": "20260719-1800",
+  "data_quality": "NO DATA — Chua co du lieu BCTC",
+  "no_ledger_write": "true — cannot compute Revenue/NI/EPS from absent source; fabrication avoided per no-fake-data policy",
+  "kinhdich": "Que 2 Khon / TRUNG TINH / 37-38% confidence",
+  "_processed": {
+    "fingerprint": "837cfce2ddac96537b207a20b30b74f7b38a7d86bb863913a982a6aa800762a0",
+    "processedAt": "2026-07-21T14:46:44Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "ticker": "HPG",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Steel manufacturing (construction steel, HRC), agriculture and real estate side businesses",
+  "customer": "Construction contractors, steel distributors, industrial fabricators (domestic + export)",
+  "ops": "Operating Profit=0 / CF=0 known extraction defect persists (NI 9,055.9 ty > Gross Profit 8,365.1 ty, non-operating-income artefact); ESC-4 SKIPPED as a result",
+  "mgmt": "ROE 6.48%q (12.7% vs sector median 2.9%, above), PE 14.2x -57% sector discount, PB 1.7x +93% premium; data unreliable for earnings-quality verdict, no fundamental_validation posted",
+  "kinhdich": {
+    "quai": "Que 2 - Khon",
+    "trend": "TRUNG TINH",
+    "confidence_pct": 13,
+    "note": "confidence dropped sharply from prior 37-38% baseline, same hexagram"
+  },
+  "esc_gate": {
+    "esc2": "PASS 0%",
+    "esc3": "DATA-COVERAGE-LIMITED 2/4Q guard-held",
+    "esc4": "SKIPPED (operating_profit=0)",
+    "esc5": "FALSE (no refined units)"
+  },
+  "cycle_ref": "20260721-0000",
+  "generatedAt": "2026-07-21T00:10:00Z",
+  "_processed": {
+    "fingerprint": "83944a7d004ef3ed19e3960babd10cbc7123d1199bc78d713054acbfd06d5aae",
+    "processedAt": "2026-07-21T14:46:44Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

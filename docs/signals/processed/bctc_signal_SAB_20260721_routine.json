@@ -1,0 +1,20 @@
+{
+  "ticker": "SAB",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Beer and beverage manufacturing (Sabeco), leading domestic beer brands",
+  "customer": "Mass-market retail and HORECA (bars/restaurants/hotels) beverage consumers",
+  "ops": "get_bctc_full returns Chua co du lieu BCTC -- same-day reprocess/reparse pattern per cycle.md guard, not a genuine new filing; no prior release ledger entry (file does not exist)",
+  "mgmt": "Sector-comparison plane still serving: PE 13.1x +48% premium, PB 2.7x +69% premium, ROE 19.9% above sector median (15.5%); valuation FAIR (EY spread +2.63pp)",
+  "data_quality_flag": "reprocess-no-data, downgraded per Step 0c guard, see docs/signals/bctc-analyst-20260721T000600Z.json",
+  "cycle_ref": "20260721-0000",
+  "generatedAt": "2026-07-21T00:10:00Z",
+  "_processed": {
+    "fingerprint": "7d7e98f3a4a1b358aac72569f3dd3b8e7e3fd549eece474acc57f7d941cf33c5",
+    "processedAt": "2026-07-21T14:46:44Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,104 @@
+{
+  "id": "bca-dataqual-20260721T000600Z",
+  "ts": "2026-07-21T00:06:00Z",
+  "from": "bctc-analyst",
+  "to": "dev-team",
+  "type": "bctc-data-quality-anomaly",
+  "summary": "UPDATE #4 to bca-dataqual-20260719T211100Z (still status=NEW, unresolved after ~27h). The same-day reprocess/reparse batch has EXPANDED further: 8 additional watchlist tickers now show get_earnings_calendar() NGAY NOP flipped, dated across the gap in this agent's own visibility (2026-07-19: GEX, SAB; 2026-07-20: DBC, DXG, KDH, MSN, PDR, SHB). Cumulative known-affected tickers now 16: CTG/D2D/FRT/VCB/DGC/KDC/VJC/VND (07-19, previously escalated) + GEX/SAB/DBC/DXG/KDH/MSN/PDR/SHB (this cycle). Same two-plane failure mode confirmed again: get_bctc_full returns CORRUPT (total_assets=0, forced 0% confidence) for DXG/KDH/PDR/GEX, or 'Chua co du lieu BCTC' for SAB/DBC/MSN/SHB, while get_sector_comparison keeps serving plausible non-zero PE/PB/ROE ratios for all 8. None has a genuine prior release-mode ledger entry (docs/analysis-briefs/{TICKER}.md checked for all 8 -- GEX/DBC have only Report-Analyzer/Market-Watcher placeholders, no BCTC synthesis; SAB/DXG/KDH/MSN/PDR/SHB files do not exist at all) -- confirms none are genuine new filings, all downgraded to routine-mode bctc_signal per cycle.md Step 0c guard, no fabrication. get_recent_fixes(10) checked again this cycle -- still stale (latest 2026-05-12, nothing addresses this pattern). VISIBILITY GAP DISCLOSED: this agent's notebook has zero entries for all four 2026-07-20 scheduled cycles (00:00/15:00/18:00/21:00 UTC) -- unknown whether those cycles ran under a different subagent slot, deferred, or did not fire; cannot confirm whether the 07-20-dated tickers were already investigated and reported by a peer cycle. Recommend dev-team also check whether this data gap itself is a symptom of the same infra issue driving the reprocess corruption.",
+  "severity": "HIGH",
+  "status": "NEW",
+  "payload_ref": "docs/signals/bctc-analyst-20260719T211100Z.json",
+  "payload": {
+    "related_signal_id": "bca-dataqual-20260719T211100Z",
+    "related_signal_chain": [
+      "bca-dataqual-20260719T151400Z",
+      "bca-dataqual-20260719T180932Z",
+      "bca-dataqual-20260719T211100Z"
+    ],
+    "affected_tickers_this_cycle": [
+      "GEX",
+      "SAB",
+      "DBC",
+      "DXG",
+      "KDH",
+      "MSN",
+      "PDR",
+      "SHB"
+    ],
+    "affected_tickers_cumulative_known": [
+      "CTG",
+      "D2D",
+      "FRT",
+      "VCB",
+      "DGC",
+      "KDC",
+      "VJC",
+      "VND",
+      "GEX",
+      "SAB",
+      "DBC",
+      "DXG",
+      "KDH",
+      "MSN",
+      "PDR",
+      "SHB"
+    ],
+    "quarter": "Q1-2026",
+    "cycle_ref": "20260721-0000",
+    "slot": "bctc-analyst-slot-4",
+    "evidence": {
+      "GEX": {
+        "get_bctc_full_result": "CORRUPT total_assets=0, 0% forced",
+        "sector_comparison": "PE 25.1x +151% premium, PB 2.1x +55%, ROE 9.3% below median"
+      },
+      "SAB": {
+        "get_bctc_full_result": "Chua co du lieu BCTC",
+        "sector_comparison": "PE 13.1x +48% premium, ROE 19.9% above median"
+      },
+      "DBC": {
+        "get_bctc_full_result": "Chua co du lieu BCTC",
+        "sector_comparison": "PE 6.2x -33% discount, ROE 20.3% above median"
+      },
+      "DXG": {
+        "get_bctc_full_result": "CORRUPT total_assets=0, 0% forced",
+        "sector_comparison": "PE 66.5x +312% premium, ROE 1.9% below median"
+      },
+      "KDH": {
+        "get_bctc_full_result": "CORRUPT total_assets=0, 0% forced",
+        "sector_comparison": "PE 28.0x +73% premium, ROE 5.8% below median"
+      },
+      "MSN": {
+        "get_bctc_full_result": "Chua co du lieu BCTC",
+        "sector_comparison": "PE 28.6x +223% premium, ROE 12.5% below median"
+      },
+      "PDR": {
+        "get_bctc_full_result": "CORRUPT total_assets=0, 0% forced",
+        "sector_comparison": "PE 31.0x +92% premium, ROE 4.4% below median"
+      },
+      "SHB": {
+        "get_bctc_full_result": "Chua co du lieu BCTC",
+        "sector_comparison": "PE 5.8x -36% discount, ROE 18.9% above median"
+      }
+    },
+    "notebook_gap": {
+      "last_entry_before_this_cycle": "2026-07-19T21:11:00Z (c105)",
+      "missing_scheduled_cycles": [
+        "2026-07-20T00:00Z",
+        "2026-07-20T15:00Z",
+        "2026-07-20T18:00Z",
+        "2026-07-20T21:00Z"
+      ],
+      "note": "Reporting honestly -- no claim made about what happened during this gap, only that this agent's own notebook has no record of it."
+    },
+    "pattern_observation": "Corruption/reprocess batch has now doubled (8->16 known tickers) across at least 2 calendar days with zero dev-team fix landed. Recommend root-cause priority escalation over continued cycle-by-cycle downgrade-and-report.",
+    "root_task_suggestion": "BCTC-EXTRACT-QUALITY (current sprint tag) -- 4th consecutive escalation cycle, batch size trend: 4 (c103) -> 6 (c104) -> 8 (c105) -> 16 (this cycle). Recommend priority bump."
+  },
+  "priority": "high",
+  "createdAt": "2026-07-21T00:06:00Z",
+  "_processed": {
+    "fingerprint": "275af1d12c5f3b93a6705955e5e566cf06099d5bb3f378eb6ebc1f4e8579b549",
+    "processedAt": "2026-07-21T14:46:44Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

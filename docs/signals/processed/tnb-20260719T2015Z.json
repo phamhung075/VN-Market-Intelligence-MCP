@@ -1,0 +1,15 @@
+{
+  "from": "tran-ngoc-bau",
+  "to": "po",
+  "type": "audit-handoff",
+  "payload": "docs/handoffs/tnb-audit-latest.md",
+  "priority": "high",
+  "createdAt": "2026-07-19T20:15:00Z",
+  "summary": "Cycle 114 NEEDS_ATTENTION — NEW F-CHEF-EVENING-SYNTHESIS-JSON-NONUPDATE (HIGH, blocks FIX-CHEF-L6-TOKEN-PERSISTENCE-RECURRING isolation); F-BIZCTX still unfixed; F-MCP-SUBAGENT-SYSTEMIC >=20th cycle; zero MCP/Telegram/Bash this session (live-probed, not assumed).",
+  "_processed": {
+    "fingerprint": "eada2bd9b40fd670140d73052447dae7fb585f2d0049bfe31e04fc6186b5aa00",
+    "processedAt": "2026-07-21T14:46:44Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

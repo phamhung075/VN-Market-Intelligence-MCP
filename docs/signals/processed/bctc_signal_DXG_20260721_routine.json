@@ -1,0 +1,20 @@
+{
+  "ticker": "DXG",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Real estate development (Dat Xanh Group) -- residential projects, brokerage services",
+  "customer": "Homebuyers and investors in mid-tier residential real estate (mostly southern VN)",
+  "ops": "get_bctc_full CORRUPT (total_assets=0, forced 0% confidence) -- same-day reprocess/reparse pattern per cycle.md guard, not a genuine new filing; no prior release ledger entry",
+  "mgmt": "Sector-comparison plane still serving: PE 66.5x +312% premium (extreme), PB 1.2x in-line, ROE 1.9% well below sector median (7.3%); valuation AVOID (EY spread -3.50pp). Foreign flow weak (-37K net vs sector +16K)",
+  "data_quality_flag": "reprocess-corrupt, downgraded per Step 0c guard, see docs/signals/bctc-analyst-20260721T000600Z.json",
+  "cycle_ref": "20260721-0000",
+  "generatedAt": "2026-07-21T00:10:00Z",
+  "_processed": {
+    "fingerprint": "a03b2fb54b74e2e043bc38da4b3bc67f463472c319060d84bba8c5885bff519c",
+    "processedAt": "2026-07-21T14:46:44Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

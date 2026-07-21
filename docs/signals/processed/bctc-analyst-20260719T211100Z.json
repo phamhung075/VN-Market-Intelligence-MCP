@@ -1,0 +1,53 @@
+{
+  "id": "bca-dataqual-20260719T211100Z",
+  "ts": "2026-07-19T21:11:00Z",
+  "from": "bctc-analyst",
+  "to": "dev-team",
+  "type": "bctc-data-quality-anomaly",
+  "summary": "UPDATE to bca-dataqual-20260719T180932Z (still status=NEW, unresolved): the same-day reprocess/reparse batch has EXPANDED a 3rd consecutive cycle. VJC and VND now also show get_earnings_calendar() NGAY NOP flipped to today (2026-07-19), joining CTG/D2D/FRT/VCB (15:00 UTC cycle) and DGC/KDC (18:00 UTC cycle). VJC reprocessed CORRUPT (get_bctc_full total_assets=0, 0% forced confidence, identical failure mode to CTG/FRT/DGC). VND returned 'Chua co du lieu BCTC' (identical to D2D/KDC). Neither has a genuine prior release-mode ledger entry (VJC.md exists but only generic Report-Analyzer/Unified-Agent price-tracking placeholders, no BCTC quarterly synthesis; VND.md does not exist at all) -- confirms neither is a genuine new filing. This is now 3 consecutive cycles (15:00, 18:00, 21:00 UTC) with new tickers pulled into the same corruption/reprocess pattern -- 8 tickers cumulative today, growing surface area, not a one-off.",
+  "severity": "HIGH",
+  "status": "NEW",
+  "payload_ref": "docs/signals/bctc-analyst-20260719T180932Z.json",
+  "payload": {
+    "related_signal_id": "bca-dataqual-20260719T180932Z",
+    "affected_tickers_this_cycle": [
+      "VJC",
+      "VND"
+    ],
+    "affected_tickers_cumulative_today": [
+      "CTG",
+      "FRT",
+      "D2D",
+      "VCB",
+      "DGC",
+      "KDC",
+      "VJC",
+      "VND"
+    ],
+    "quarter": "Q1-2026",
+    "cycle_ref": "20260719-2100",
+    "evidence": {
+      "VJC": {
+        "prior_ledger_entry": "none (docs/analysis-briefs/VJC.md exists but only generic Report-Analyzer 'Analysis pending' + Unified-Agent price/RSI/insider-price-tracking batches from 2026-05-20, no BCTC quarterly synthesis ever written)",
+        "get_bctc_full_result": "[CORRUPT DATA - SKIP] total_assets=0, confidence 0% (forced)",
+        "sector_comparison_still_serving": "PE 44.7x vs median 7.6 (+486% PREMIUM), PB 4.0 vs 3.3 (+21%), ROE 10.1% vs median 16.7% (below) -- same two-plane divergence pattern as CTG/FRT/DGC"
+      },
+      "VND": {
+        "prior_ledger_entry": "none (docs/analysis-briefs/VND.md does not exist)",
+        "get_bctc_full_result": "Chua co du lieu BCTC (no data at all)",
+        "sector_comparison_still_serving": "PE 12.7x vs median 14.6 (NGANG BANG, in-line), PB 1.2 vs 1.8 (-31% discount), ROE 10.0% vs median 11.3% (below) -- same two-plane divergence as D2D/KDC pattern"
+      }
+    },
+    "pattern_observation": "3rd consecutive cycle confirms the two-plane divergence is systemic, not transient: get_sector_comparison keeps serving plausible non-zero ratios while get_bctc_full is simultaneously corrupt or empty for the SAME report, across 8 tickers now spanning 3 fire cycles. Recommend dev-team prioritize root-cause diagnostic over the NGAY NOP semantics question raised in the original signal -- the corruption/reprocess event itself is the actionable thread.",
+    "impact_on_bctc_analyst_flow": "Per cycle.md Step 0c reprocess-vs-new-filing guard, bctc-analyst downgraded VJC/VND to routine-mode bctc_signal (sector-comparison ratios only) and did NOT write release-mode ledger entries or fabricate beat/miss/Revenue/NI. No fundamental_validation posted for either (data confidence insufficient for that signal class).",
+    "root_task_suggestion": "BCTC-EXTRACT-QUALITY (current sprint tag) -- 3-cycle growth trend now confirmed systemic; recommend priority escalation. Watch next cycle (00:00 UTC 2026-07-20) for further expansion or reversion."
+  },
+  "priority": "high",
+  "createdAt": "2026-07-19T21:11:00Z",
+  "_processed": {
+    "fingerprint": "f05c1b43a41e3a88d8396f0db3378a7b6cfe1e61be91c8334ea98243d555da4c",
+    "processedAt": "2026-07-21T14:46:44Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "ticker": "KDH",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Real estate development (Khang Dien House) -- residential/township projects in HCMC area",
+  "customer": "Mid-to-upper income homebuyers in Ho Chi Minh City metro area",
+  "ops": "get_bctc_full CORRUPT (total_assets=0, forced 0% confidence) -- same-day reprocess/reparse pattern per cycle.md guard, not a genuine new filing; no prior release ledger entry",
+  "mgmt": "Sector-comparison plane still serving: PE 28.0x +73% premium, PB 1.6x +24% premium, ROE 5.8% below sector median (7.3%); valuation AVOID (EY spread -1.43pp). Note: 2026-07-20 news -- Deputy CEO registered to buy 20M shares (insider buy signal, non-BCTC)",
+  "data_quality_flag": "reprocess-corrupt, downgraded per Step 0c guard, see docs/signals/bctc-analyst-20260721T000600Z.json",
+  "cycle_ref": "20260721-0000",
+  "generatedAt": "2026-07-21T00:10:00Z",
+  "_processed": {
+    "fingerprint": "c8de9448c7a6b39616317db6c0e8e93676ad94a167b06c9a6073106ffbfb615a",
+    "processedAt": "2026-07-21T14:46:44Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

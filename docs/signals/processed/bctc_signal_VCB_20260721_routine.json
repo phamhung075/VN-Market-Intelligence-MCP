@@ -1,0 +1,31 @@
+{
+  "ticker": "VCB",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "State-owned commercial bank -- corporate lending, retail banking, trade finance, FX",
+  "customer": "Large corporates, SOEs, retail depositors, import/export clients",
+  "ops": "ROE 4.21%q (16.7% annualized, below 17.6% sector median), OCF/NI ratio 1.37x healthy for a bank; Published-ts reprocessed 2026-07-19 but values byte-identical (non-event)",
+  "mgmt": "PE 14.1x +57% premium, PB 2.2x +45% premium vs peers; sentiment TANG +0.50 holds 2nd consecutive cycle (n=5, 4/5 bullish)",
+  "kinhdich": {
+    "quai": "Que 7 - Su",
+    "trend": "TRUNG TINH",
+    "confidence_pct": 38,
+    "note": "BREAK from prior 11-cycle Que 15 Khiem / THUAN LOI / 100% pattern -- hexagram + trend + confidence all changed, coincides with 2026-07-20 VN-Index -2.46% selloff"
+  },
+  "esc_gate": {
+    "esc2": "PASS 0.37%",
+    "esc3": "DATA-COVERAGE-LIMITED 3/4Q guard-held",
+    "esc4": "FALSE -21.4% (bank structure)",
+    "esc5": "FALSE (no refined units)"
+  },
+  "cycle_ref": "20260721-0000",
+  "generatedAt": "2026-07-21T00:10:00Z",
+  "_processed": {
+    "fingerprint": "96509d9f56de043d408be75300e62297914f756436d4fc4ef0dd2bda403c302c",
+    "processedAt": "2026-07-21T14:46:44Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
