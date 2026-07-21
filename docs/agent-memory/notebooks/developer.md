@@ -1,20 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-16 | **Cycle:** FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE (sprint FLOW-PRICE-ALPHA-LOOP)
-
-## Session 2026-07-16 — UC-GCP-P2 (dev-team BOUNDED-1 auto-pickup, zone `cross-service/`) — IN_PROGRESS→REVIEW
-
-**Task:** `git-ci-publish-P2` (CONFIRMED) — signals.db + runtime logs + test debris were tracked and churned the tree every dev-team tick (228+ signals.db commits, ~20 preflight-lsof logs tracked despite an existing but too-narrow ignore rule).
-
-**Actions taken:** `git rm --cached docs/signals/signals.db` (*.db rule already covers it going forward) + 5 churn session logs (fb-daily-firer(.error).log, fleet-push(.error).log, pm.log) + 13 preflight-lsof-*.log. Widened `.gitignore:20` `preflight-lsof-*.log` → `docs/agent-memory/sessions/*.log`. Deliberately did NOT rm --cached the frozen incident-evidence logs (headlock-h1-live-evidence-*, indexlock-race-evidence-*, ops-1912*) per the audit's own non-blocking nit — verified `git check-ignore` reports a tracked file as NOT ignored (with index consulted) even though the pattern textually matches, so no negation pattern was needed. Appended `.test-notebook-prune-debug/` + `/scratchpad_*.txt` debris patterns. Edited `drain-signals.md` MANDATORY-PERSIST-GUARD to drop `signals.db` from the commit-path list (kept the mtime freshness check) — verified `git add docs/signals/signals.db` exits 1 pre-fix, confirming the edit is load-bearing.
-
-**Verification:** `scripts/agents-flow/drain-signals.test.js` 15/15 PASS (unaffected fixture suite — script never git-adds the DB). `bun tsc --noEmit` clean. Pre-push hook tsc OK, pushed `40727dc17..c34b7fcc9`. Self-caught a pathspec-commit bug mid-task: first commit (`git commit -m ... -- <pathspec>`) silently re-synced the index from the CURRENT WORKING TREE for the listed deletion paths, undoing the `--cached` removals (still on disk); caught via `git ls-files` + `git diff HEAD~1 HEAD` showing zero change. Corrective commit re-ran `git rm --cached` + committed with a bare `git commit -m` (index independently verified scoped to only this task's paths first).
-
-**Board:** Moved `task_board.in_progress[UC-GCP-P2]` → `task_board.review[]` (status REVIEW, next_agent=qa) + `.head`/`.task_board.head` synced to idle, via `orch-apply.sh` (conservation OK, task_total unchanged at 543). Commits: `476c331d4` (gitignore+flow-doc), `c34b7fcc9` (corrective untrack). Decision journal: `sprint-ULTRACODE-AUDIT-FIXALL-developer.md` STEP developer-S8.
-
-**Scope discipline:** Touched only `.gitignore`, `docs/agents/dev-team/flow/drain-signals.md`, and the 15 rm --cached deletions. Did NOT touch `tool-usage-stats.json`/`coverage-state.json` (SYSREMAKE-P2 RC-GITSTATE's scope) or any of the 40+ peer-dirty files already in the tree (cowork notebooks, analysis-briefs, session logs, orch-state.json edits from other agents).
-
-Zone health: repo-root git-state plane — signals.db + churn logs now correctly untracked; drain path verified intact | HEALTHY
+**Last updated:** 2026-07-21 | **Cycle:** FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE (sprint FLOW-PRICE-ALPHA-LOOP)
 
 ## Session 2026-07-16 — UC-GCP-P4 (dev-team BOUNDED-1 auto-pickup, zone `cross-service/`) — IN_PROGRESS→REVIEW
 
@@ -43,3 +29,21 @@ Zone health: `scripts/git-hooks/` pre-push tsc gate — path-filter live, escape
 **Scope discipline:** Touched only `scripts/devteam-backlog-promote-bounded1.jq`, `scripts/audits/devteam-bounded1-detail-disposition-gate-verify.sh`, `docs/agents/dev-team/flow/main.md` + this notebook + decision journal. Did not touch the sibling `FIX-DEVTEAM-BOUNDED1-MAINTLANE-NEXTAGENT-GATE` backlog row (already PO-held supervised:true / SUPERSEDED-BY note) or any of the ~90 unrelated peer-dirty files in the tree.
 
 Zone health: `scripts/devteam-backlog-promote-bounded1.jq` BOUNDED-1 disposition gates — plan_only + next_agent now board-OR-detail effective, no known inline-no-detail leak class remaining | HEALTHY
+
+## Session 2026-07-21 — FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE (router-directed, scripts/, recurring_bug_count=4) — REVIEW
+
+**Task:** `repointPayloadRefs()`'s jq `execFileSync` call (drain-signals.js:233) had no `maxBuffer`; jq's `{doc,changed}` output re-emits the whole orch-state doc, which crossed Node's default 1,048,576-byte cap the moment the live file passed 1,109,434 bytes — `ENOBUFS` thrown every run since, caught, and reported as a "non-fatal" WARN, so the shipped repoint fix has been silently dead in production. Same catch also mis-classified a genuine computation failure as equivalent to "nothing to repoint."
+
+**Actions taken:** Added explicit `maxBuffer: 64MB` (comment cites measured numbers + row id) to the jq `execFileSync` call. Reclassified the catch at 240-245 from silent `WARN`+`return` to `FAIL-LOUD`+`process.exit(1)`, matching the existing FAIL-LOUD pattern at lines ~268/272; left the genuinely-benign `!result.changed` branch untouched. Grepped `scripts/agents-flow/` for other `execFileSync`/`spawnSync` reading orch-state.json (or any file that can grow past 1MB) without `maxBuffer` — none found; every other call either queries a small sqlite3 aggregate or (the orch-apply.sh invocation) never echoes the doc back to stdout.
+
+**Verification (RED-before, twice):** (1) natural TDD order — new `drain-signals.test.js` ENOBUFS scenario (isolated harness, >1MB orch-state.json fixture padded via schema-safe `dashboard_section_cache`, never the live SSOT) against the then-current unfixed code: 21/22 pass, 1 FAIL (`spawnSync jq ENOBUFS` swallowed, payload_ref left dangling). (2) `git stash push --keep-index` on `drain-signals.js` only (test file kept) reproduced the identical 21/22 failure against the reverted file. After the fix, both re-runs: 22/22 GREEN. Live orch-state.json currently 1,112,468 bytes — 64MB maxBuffer gives ~57x headroom.
+
+**Also emitted (not fixed, per instruction):** `docs/signals/2026-07-21T162233Z-drain-predicate-price-anomaly-family.json` to `po` — drain's non-routable-shape predicate never matches `price_anomaly_v1` (7 files stranded in inbox, one live/minutes-old carrying real VN-Index/sector data); PO's earlier "cowork-team telemetry only" characterization of the drain-skip blast radius is incomplete. Scope adjudication left to PO — no board row minted, task not widened.
+
+**Router mid-task note:** router's own `git add -A` + `git commit -m` swept an unrelated pre-existing HEAD state (commit `84096f617`, already containing the pre-maxBuffer shipped code — not my edits, I had not yet touched either file at that point) into an auditor commit. No work of mine was lost; RED evidence above was captured entirely after that point, against the then-current HEAD content.
+
+**Board:** `task_board.backlog[FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE]` → REVIEW, next_agent=qa, via `orch-apply.sh`.
+
+**Scope discipline:** Touched only `scripts/agents-flow/drain-signals.js`, `scripts/agents-flow/drain-signals.test.js`, this notebook, decision journal, + the new po-addressed signal file. Did not touch the price_anomaly predicate itself, did not touch live `docs/data/orch/orch-state.json`.
+
+Zone health: `scripts/agents-flow/drain-signals.js` payload_ref repoint path — now buffer-safe past 1MB + FAIL-LOUD on genuine computation failure; price_anomaly drain-skip family flagged to PO as a distinct, unfixed gap | HEALTHY (repoint) / KNOWN-GAP (price_anomaly, PO-owned)

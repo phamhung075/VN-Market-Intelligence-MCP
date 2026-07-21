@@ -60,3 +60,12 @@
 - only path: root-cause pre-verified by PO (local repro), guard test itself correct/not touched — pure data-line removal, no code/generator change needed.
 **why-decision:** Baseline repro confirmed BSR.md as sole failure (3 pass/1 fail); after 3-line deletions test is 4/4 green; every other brief + canonical template already lack the field, so removal is definitive (no re-emission source).
 **why-change:** No change from PO fix-spec.
+
+### STEP developer-S7 · developer · 2026-07-21T16:22:00Z
+**task-id:** FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE
+**what-done:** `scripts/agents-flow/drain-signals.js` repointPayloadRefs()'s jq execFileSync gained explicit `maxBuffer: 64MB` (default 1,048,576B < live doc's 1,109,434B, guaranteed ENOBUFS forever since the doc only grows); reclassified the jq-computation catch from silent WARN+return to FAIL-LOUD process.exit(1), matching the two pre-existing orch-apply.sh failure paths — left the genuinely-benign `!result.changed` branch untouched.
+**what-considered:**
+- Only path for maxBuffer size: pick multi-decade headroom over current growth rate (bounded, cheap resource) vs. a tight fit that could recur — chose generous fixed constant with comment citing measured numbers.
+- Catch-block reclassification: reuse existing FAIL-LOUD string/exit pattern from lines ~268/272 rather than inventing a new error class, to stay consistent within the same function.
+**why-decision:** RED-before proved twice: (1) natural TDD order — new ENOBUFS test scenario against pre-existing unfixed code failed 21/22 (`spawnSync jq ENOBUFS` swallowed as non-fatal, payload_ref left dangling); (2) `git stash push --keep-index` on drain-signals.js only (test file kept) reproduced the identical 21/22 failure against the reverted file. After the fix: 22/22 GREEN both times. Grepped scripts/agents-flow/ for other execFileSync/spawnSync reading orch-state.json or a growing file without maxBuffer — none found; every other call either queries small aggregates (sqlite3 COUNT) or (orch-apply.sh invocation) never echoes the doc back to stdout.
+**why-change:** No change from router-supplied root cause; scope held to the 2 defects named (maxBuffer + reclassify), did not widen to price_anomaly drain-skip family (separate signal emitted to po instead, per instruction).
