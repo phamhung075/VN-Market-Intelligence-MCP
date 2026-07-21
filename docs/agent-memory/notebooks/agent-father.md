@@ -195,3 +195,17 @@ docs/signals/orchestration-health-agent-20260721T150023Z.json from agents-archit
   solo-operation path applied instead (`orch-state.json .head.status=idle`, no contention).
 - Signal consumed: moved to `docs/signals/processed/global-geopolitical-signal-coverage-20260720T222951Z.json`.
 - Commit: pending (this entry written pre-commit; SHA reported in RETURN block of this task).
+
+### Edit 2026-07-21T19:13Z — FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-SKILLS (P0, supervised)
+- Row had `acceptance:null`/`files:null` — grepped `.claude/skills/` for bare-commit patterns
+  myself, wrote AC + files onto the row before touching anything (per task instruction).
+- Fixed 3 files per `docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md`
+  §4.2 + `docs/handoffs/FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-SKILLS.md`: `commit-mutex/SKILL.md`
+  Step 3c, new `commit-boundary/SKILL.md` RULE 2.5, `commit/SKILL.md` Step 2 — all now
+  `git commit -m ... -- <exact paths>`, never bare/dir/`.`.
+- Left untouched, reported: 2 doc-example bare-commit lines (illustrate the anti-pattern by
+  design) + 4 more bare-commit hits outside these 3 files (session-log-cowork, decision-journal,
+  append-session-record, dashboard-protocol) — Layer-2 per brief §3 step 3, not this row.
+- Re-ran `scripts/audits/verify-commit-sweep-discriminator.sh` fresh (PASS, git 2.49.0) before
+  trusting the fix design. Committed with `git commit -- <3 paths>` (dogfooded own fix).
+- Row moved `ready`→`review`, `next_agent:po` (supervised:true, not self-closed). Commit `3e4f50d3a`.
