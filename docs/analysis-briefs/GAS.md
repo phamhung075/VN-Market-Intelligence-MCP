@@ -10,6 +10,7 @@
 2026-07-01 | Q2 earnings forecast bullish (9/10) — analyst consensus upgrades, oil/gas sector catalyst; Brent $73.19 NEUTRAL band | YoY: N/A
 
 ## [Market Watcher] Price, Volume, Technicals
+2026-07-21 16:00 | Close: 68,000 VND (-6.98%) | RSI: 29.3 | Vol: 4.29M (402% avg) | YoY: N/A | Anomaly: YES | Note: Oversold; 4.0x volume capitulation below lower BB; sector Dau khi -6.05%/1d while Brent +2.71%
 2026-05-12 16:00 | Close: 76,500 VND | RSI: N/A | Vol: 1.56M (185% avg) | YoY: N/A
 2026-05-01 16:00 | Close: 75,200 VND (+2.31% daily) | RSI: N/A | Volume: avg vol | Sentiment: Bullish
 2026-06-01 08:59 | Close: 84,200 VND (-3.66%) | RSI: N/A | Vol: N/A | YoY: N/A | Note: Oil sector weakness (-2.21% avg), Brent +4.54%

@@ -14,6 +14,7 @@
 2026-07-02 | Q2 earnings + global EV tech momentum (9/10) — tech sector catalyst from earnings + startup IPO confidence | YoY: N/A
 
 ## [Market Watcher] Price, Volume, Technicals
+2026-07-21 16:00 | Close: 64,800 VND (-3.43%) | RSI: 26.9 | Vol: 7.54M (98% avg) | YoY: N/A | Anomaly: YES | Note: Oversold; volume at average; tech sector -2.79%/1d
 2026-06-02 16:00 | Close: 74.800 VND | RSI: N/A | Vol: (spike 2.9x avg) | YoY: N/A | Action: Buy on dip — tech sector resilience
 2026-05-12 16:00 | Close: 70,600 VND | RSI: N/A | Vol: 8.53M (166% avg) | YoY: N/A
 2026-05-01 05:34 | Close: 75,500 VND (+1.48%) | RSI: N/A | Vol: N/A | YoY: N/A | Note: Tech sector benefiting from US-VN relations
