@@ -389,10 +389,10 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
-    "next_agent": "ba",
-    "next_action": "Supervised-Lane Sweep claim of FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD — spawn ba DIRECTLY (no zone-detect indirection; lane already resolved at promote time). supervised/plan_only preserved — do not clear.",
-    "updated_at": "2026-07-21T22:47:59Z",
-    "updated_by": "dev-team (supervised-lane sweep)"
+    "next_agent": "po",
+    "next_action": "BA spec complete (docs/handoffs/FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD-BA-spec.md). PO must resolve Q1 (ticket-closure sequencing across the deliberate (a)+(c)-now/(b)-residual split) before architect. supervised/plan_only preserved — do not clear.",
+    "updated_at": "2026-07-21T23:02:09Z",
+    "updated_by": "ba"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -12110,9 +12110,15 @@
         "promoted_by": "dev-team (supervised-lane sweep)",
         "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='ba' (priority_rank=0); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
         "dispatch_lane": "ba",
-        "updated_at": "2026-07-21T22:48:00Z",
+        "updated_at": "2026-07-21T23:02:09Z",
         "claimed_at": "2026-07-21T22:47:59Z",
-        "claimed_by": "dev-team (supervised-lane sweep)"
+        "claimed_by": "dev-team (supervised-lane sweep)",
+        "plan_only": true,
+        "ba_spec_complete": true,
+        "ba_handoff": "docs/handoffs/FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD-BA-spec.md",
+        "ba_completed_at": "2026-07-21T23:02:09Z",
+        "next_agent": "po",
+        "status_note": "BA spec complete for fix_spec(a)+(c)/AC1+AC3 (P3 RESCOPE). 1 PO blocker: ticket-closure sequencing vs fix_spec(b)/AC2 residual (execute-tier.md:42-64, deliberately not implemented this wave). See handoff."
       }
     ]
   },

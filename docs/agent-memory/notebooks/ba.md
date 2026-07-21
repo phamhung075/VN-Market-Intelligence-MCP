@@ -1,6 +1,14 @@
 # BA — Notebook
 
-**Last updated:** 2026-07-16 | **Sprint:** ULTRACODE-AUDIT-FIXALL
+**Last updated:** 2026-07-22 | **Sprint:** ULTRACODE-AUDIT-FIXALL
+
+## FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD · 2026-07-22
+
+Spec complete for fix_spec(a)+(c)/AC1+AC3 (router-dispatch-locking-P3 RESCOPE). REQ file: `docs/handoffs/FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD-BA-spec.md`. 1 PO blocker. NEXT: po.
+
+Supervised P0, dispatched via dev-team Supervised-Lane Sweep (direct spawn, no zone-detect). 8 FRs: task_heartbeat ttl_seconds+payload_patch extension (coordinationTools.ts+coordinationStore.ts), a null-session match ladder (owner_agent+payload.original_owner_client_session) so reaper-minted orphan-signal rows — always owner_client_session=NULL — become heartbeat/release-able (today: unconditional no-op, confirmed via code read, 0 `payload_patch` hits repo-wide), and a board-state guard duplicated in BOTH adoption paths (dispatch-claim SKILL.md router-side + dev-team Step 0a-B, latter as SSOT-pointer not copy). Found 2 live bugs while reading `dev-team/flow/main.md:383-388`'s existing post-adopt board-flip that the new guard must NOT inherit: (1) `original_task_id` keeps its `task:` prefix (both outer-wrap tiers key on `"task:"+id`) but board `.id` is bare — that jq's `select(.id==$tid)` has therefore ALWAYS silently no-op'd; (2) it only scans `active_sprints[].tasks[]` while live board is 95%+ flat-lane (backlog=412/ready=35/in_progress=2/review=34 vs active_sprints=8) — same root class as `dev-team-loop-I9` (unmined board row) but compounds with (1), not just caused by it. Used `apps/mcp-server/src/infrastructure/orchStateSchema.ts:416-424` `LANE_ALLOWED_STATUSES` (ADD-2, now HARD-FAIL at Stage 1b) as the SSOT for "active lane" classification instead of re-deriving one — BLOCKED is a valid sub-state of 3 different lanes, so a bare status check is ambiguous, lane membership is the authoritative signal. fix_spec(b)/AC2 (sprint-task TTL raise / heartbeat-during-run, `execute-tier.md:42-64` — confirmed the actual hardcoded-3600s claim site, NOT `main.md` §Step3 as the REJECTED router-P2 proposal mis-targeted) carried forward verbatim as an explicit residual per dispatch instruction — not implemented this wave, not silently dropped either; PO blocker asks whether this ticket stays open for a 2nd supervised wave or PM spins a new linked row.
+
+Decision journal (task_id: FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD): see `docs/agent-memory/decisions/sprint-ULTRACODE-AUDIT-FIXALL-ba.md`.
 
 ## UC-CRITIC-GATEWAY-CONTRACT-DRIFT · 2026-07-16
 
