@@ -387,14 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-07-21T21:35:54Z",
-    "updated_by": "dev-team/head-policy-restore-20260721T2137",
-    "active_task_id": null,
-    "next_agent": null,
-    "wip_max": 2,
-    "po_wip_note_20260721": "wip_max=2 encoded 2026-07-21T18:45Z by po/triage-signals-routing-class-20260721. Previously BOTH head.wip and head.wip_max were null, so the WIP limit of 2 enforced across the board was convention only — no gate could read it. wip_max is a static policy constant (docs/policies/dev-standards.md) and is now stored. head.wip is deliberately LEFT NULL and must stay computed from .task_board.in_progress|length at read time: storing a derived count invites exactly the drift class recorded in feedback_orchstate_conservation_totals_computed_not_stored.",
-    "head_restore_note": "wip_max + po_wip_note_20260721 were dropped by architect commit 5ec93134f (.head reset to idle via wholesale overwrite, not merge). Behavior was unaffected (dispatch reads .head.wip_max // 2) but the stored policy constant + its governance annotation are the SSOT per po/triage-signals-routing-class-20260721 and must not be lost. Restored verbatim from pre-clobber head a675199dd. status:idle is correct — architect returned, WIP now 1."
+    "status": "in_progress",
+    "active_task_id": "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
+    "next_agent": "ba",
+    "next_action": "Supervised-Lane Sweep claim of FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD — spawn ba DIRECTLY (no zone-detect indirection; lane already resolved at promote time). supervised/plan_only preserved — do not clear.",
+    "updated_at": "2026-07-21T22:47:59Z",
+    "updated_by": "dev-team (supervised-lane sweep)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7745,22 +7743,6 @@
         "created_at": "2026-07-09T11:53:21Z"
       },
       {
-        "id": "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
-        "type": "FIX",
-        "title": "Orphan-adoption board-state guard (both paths) + stop false-orphaning long agents + clearable reaper orphans",
-        "status": "BACKLOG",
-        "priority": "P0",
-        "zone": "multi",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
-        "supervised": true,
-        "audit_ref": {
-          "audit": "ultracode-2026-07-12",
-          "verdict": "router-dispatch-locking-P3 RESCOPE folds here (do NOT dup, do NOT close); also absorbs REJECTED router-P2 impl-notes",
-          "note": "P3 implements fix_spec(a)+(c)/AC1+AC3 (heartbeat payload_patch+null-session ladder in coordinationTools/coordinationStore; board-state guard in dispatch-claim SKILL AND dev-team Step0a). fix_spec(b)/AC2 (sprint-task TTL/heartbeat >90min, execute-tier.md:42-64) remains OPEN residual. Route via supervised chain, next_agent=ba.",
-          "ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#router-dispatch-locking-P3"
-        }
-      },
-      {
         "id": "AUDIT-FETCH-COMPLETE",
         "title": "Source-fetch-completeness audit: every IMPORTANT source pulls COMPLETE detail (no partial/stub/truncated persisted-as-complete)",
         "type": "SPIKE",
@@ -12072,8 +12054,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-21T21:31:14Z",
-    "last_triaged_by": "architect",
+    "last_triaged_at": "2026-07-21T22:47:59Z",
+    "last_triaged_by": "dev-team (supervised-lane sweep)",
     "in_progress": [
       {
         "id": "DESIGN-COWORK-FANOUT-PRODUCER-CONSUMER-ORDERING",
@@ -12108,6 +12090,29 @@
         "po_released_to_pm_at": "2026-07-21T18:14:57Z",
         "status_note": "Decomposed into 8 atomic tasks T1-T8; T6 ships first per PO order.",
         "po_scope_confirmation_20260721T1842": "PO SCOPE RULING — NO AMENDMENT. Scope stands as originally written; the 8 subtasks are NOT to be touched. The dev-team signal argued this row's scope was too narrow because 'the detection ALSO happened on a second parallel plane and was structurally undeliverable regardless of ordering'. That argument fails on its premise: the second plane (price_anomaly_*.json EOD file) was fully DELIVERABLE to its intended consumer (unified-agent Chef, by path, chef.md:116) and was never addressed to alert-commander at all — see the CANCELLED FIX-PRICE-ANOMALY-DISH-SIGNAL-ENVELOPE row for the source-verified disproof. The 07-21 file's own note ('First EOD pass since 2026-07-17 — slot did not fire for 4 days') identifies the actual failure as the market-watcher EOD slot not firing, which is ALREADY this row's DESIGN-COWORK-FANOUT-T6-MARKET-WATCHER-SLOT-ROUTING subtask. So the second plane corroborates T6 rather than revealing an uncovered strand. Net: the file plane is evidence FOR the existing decomposition, not evidence of a gap in it. Adding scope here would have imported a false premise into an in_progress epic."
+      },
+      {
+        "id": "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
+        "type": "FIX",
+        "title": "Orphan-adoption board-state guard (both paths) + stop false-orphaning long agents + clearable reaper orphans",
+        "status": "IN_PROGRESS",
+        "priority": "P0",
+        "zone": "multi",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
+        "supervised": true,
+        "audit_ref": {
+          "audit": "ultracode-2026-07-12",
+          "verdict": "router-dispatch-locking-P3 RESCOPE folds here (do NOT dup, do NOT close); also absorbs REJECTED router-P2 impl-notes",
+          "note": "P3 implements fix_spec(a)+(c)/AC1+AC3 (heartbeat payload_patch+null-session ladder in coordinationTools/coordinationStore; board-state guard in dispatch-claim SKILL AND dev-team Step0a). fix_spec(b)/AC2 (sprint-task TTL/heartbeat >90min, execute-tier.md:42-64) remains OPEN residual. Route via supervised chain, next_agent=ba.",
+          "ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#router-dispatch-locking-P3"
+        },
+        "promoted_at": "2026-07-21T22:47:59Z",
+        "promoted_by": "dev-team (supervised-lane sweep)",
+        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='ba' (priority_rank=0); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
+        "dispatch_lane": "ba",
+        "updated_at": "2026-07-21T22:48:00Z",
+        "claimed_at": "2026-07-21T22:47:59Z",
+        "claimed_by": "dev-team (supervised-lane sweep)"
       }
     ]
   },
