@@ -67,6 +67,7 @@ Host safety:
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import os
@@ -255,7 +256,14 @@ class ExtractLayoutFirstUseCase:
 
         # Tier 1 — per-page layout zoning (header/footer bands + column
         # gutters); continuation pages inherit the schema-page's column schema.
-        zones_by_page, page_zones_output = self._tier1_zone_pages(pdf_path, units_in_map)
+        #
+        # PDF-AVAIL-02-FIX (event-loop isolation): _tier1_zone_pages() is
+        # synchronous (pdf2image rasterization + column-gutter detection per
+        # page). Dispatched via asyncio.to_thread() so the uvicorn event loop
+        # stays free to serve GET /health while this background task runs.
+        zones_by_page, page_zones_output = await asyncio.to_thread(
+            self._tier1_zone_pages, pdf_path, units_in_map
+        )
         if zones_by_page is None:
             return abort_result
 
@@ -656,6 +664,39 @@ class ExtractLayoutFirstUseCase:
         call per page (AC-LFE-6). ocr_unit failures are captured as
         quarantine-tagged results (_ocr_error), never raised — Tier 3 makes
         the actual quarantine decision from rows_for_gate.
+
+        PDF-AVAIL-02-FIX (event-loop isolation): the actual OCR loop is a
+        synchronous method (_tier2_ocr_and_stitch_sync) dispatched via
+        asyncio.to_thread() so the uvicorn event loop stays free to serve
+        GET /health while Tesseract runs. Was previously `async def` with a
+        synchronous body and no `await` inside the loop — a coroutine wearing
+        an async costume that pinned the event loop for the full OCR duration.
+        """
+        unit_ocr_results = await asyncio.to_thread(
+            self._tier2_ocr_and_stitch_sync,
+            pdf_path,
+            units_in_map,
+            zones_by_page,
+            ocr_pages,
+        )
+
+        logger.info(
+            "ExtractLayoutFirstUseCase: Tier 2 complete — %d unit OCR results",
+            len(unit_ocr_results),
+        )
+        return unit_ocr_results
+
+    def _tier2_ocr_and_stitch_sync(
+        self,
+        pdf_path: str,
+        units_in_map: List[Dict],
+        zones_by_page: Dict[int, Dict],
+        ocr_pages: List[Dict],
+    ) -> List[Dict]:
+        """
+        Synchronous body of Tier 2 — runs on a worker thread (via
+        asyncio.to_thread() in _tier2_ocr_and_stitch()). Logic is unchanged
+        from the pre-fix inline loop.
         """
         import tempfile
 
@@ -691,10 +732,6 @@ class ExtractLayoutFirstUseCase:
                         "_ocr_error": str(exc),
                     })
 
-        logger.info(
-            "ExtractLayoutFirstUseCase: Tier 2 complete — %d unit OCR results",
-            len(unit_ocr_results),
-        )
         return unit_ocr_results
 
     # ------------------------------------------------------------------

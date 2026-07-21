@@ -46,6 +46,7 @@ MD-EXTRACT-2 DEFECT-A fix:
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
 import tempfile
@@ -234,45 +235,33 @@ class ExtractMdTablesUseCase:
 
         # ------------------------------------------------------------------
         # Step 2: Rasterize pages to temp PNGs, extract tables sequentially
+        #
+        # PDF-AVAIL-02-FIX (event-loop isolation): this step runs pdf2image
+        # (subprocess rasterization) and pytesseract (subprocess OCR) — both
+        # synchronous and, per MAX_PAGES=20 at ~3-5s/page, up to 60-100s.
+        # Dispatched via asyncio.to_thread() so the uvicorn event loop stays
+        # free to serve GET /health while this background task runs. Mirrors
+        # the asyncio.to_thread() pattern already used in
+        # infrastructure/extraction_engine.py.
         # ------------------------------------------------------------------
-        all_md_tables: List[str] = []
-
-        with tempfile.TemporaryDirectory(prefix="pdf_md_tables_") as tmp_dir:
-            for page_num in page_numbers_to_process:
-                page_png_path = self._rasterize_page(
-                    pdf_path=pdf_path,
-                    page_num=page_num,
-                    tmp_dir=tmp_dir,
-                    convert_from_path=convert_from_path,
-                )
-                if page_png_path is None:
-                    continue
-
-                # Pass a single-element list to the extractor (sequential)
-                result = self._extractor.extract_md_tables(
-                    page_image_paths=[page_png_path],
-                    doc_ocr_text=None,  # doc_ocr_text handled at doc level below
-                )
-                page_tables: List[str] = result.get("md_tables", [])
-                all_md_tables.extend(page_tables)
-
-                # Explicitly delete temp PNG to free disk space during long runs
-                try:
-                    os.unlink(page_png_path)
-                except OSError:
-                    pass
+        all_md_tables: List[str] = await asyncio.to_thread(
+            self._process_pages_sync,
+            pdf_path,
+            page_numbers_to_process,
+            convert_from_path,
+        )
 
         # ------------------------------------------------------------------
         # Step 3: Convert OCR text to markdown (no re-OCR needed)
+        #
+        # PDF-AVAIL-02-FIX: extract_md_tables() is a synchronous call even on
+        # this doc_ocr_text-only path (imports pytesseract at call time) —
+        # offload for the same event-loop-isolation reason as Step 2.
         # ------------------------------------------------------------------
         if doc_ocr_text is not None:
-            # Use the extractor's pure ocr_text_to_markdown helper via a dummy call
-            # (passes empty image list, only doc_ocr_text is used for this field)
-            ocr_result = self._extractor.extract_md_tables(
-                page_image_paths=[],
-                doc_ocr_text=doc_ocr_text,
+            ocr_as_markdown = await asyncio.to_thread(
+                self._compute_ocr_as_markdown_sync, doc_ocr_text
             )
-            ocr_as_markdown: str = ocr_result.get("ocr_as_markdown", "")
         else:
             ocr_as_markdown = ""
 
@@ -314,6 +303,70 @@ class ExtractMdTablesUseCase:
         )
 
         return {"tables_detected": tables_detected, "pushed": pushed}
+
+    # ------------------------------------------------------------------
+    # PDF-AVAIL-02-FIX: synchronous helpers — always invoked via
+    # asyncio.to_thread() from execute(), never awaited directly. Kept as
+    # plain (non-async) methods so their entire call graph (pdf2image,
+    # pytesseract) runs on the worker thread the offload dispatches to.
+    # ------------------------------------------------------------------
+
+    def _process_pages_sync(
+        self,
+        pdf_path: str,
+        page_numbers_to_process: List[int],
+        convert_from_path: object,
+    ) -> List[str]:
+        """
+        Synchronous body of Step 2 — rasterize + extract markdown tables for
+        every page in page_numbers_to_process, sequentially.
+
+        Runs on a worker thread (via asyncio.to_thread() in execute()) so the
+        uvicorn event loop is never blocked by pdf2image/pytesseract subprocess
+        calls. Logic is unchanged from the pre-fix inline loop.
+        """
+        all_md_tables: List[str] = []
+
+        with tempfile.TemporaryDirectory(prefix="pdf_md_tables_") as tmp_dir:
+            for page_num in page_numbers_to_process:
+                page_png_path = self._rasterize_page(
+                    pdf_path=pdf_path,
+                    page_num=page_num,
+                    tmp_dir=tmp_dir,
+                    convert_from_path=convert_from_path,
+                )
+                if page_png_path is None:
+                    continue
+
+                # Pass a single-element list to the extractor (sequential)
+                result = self._extractor.extract_md_tables(
+                    page_image_paths=[page_png_path],
+                    doc_ocr_text=None,  # doc_ocr_text handled at doc level (Step 3)
+                )
+                page_tables: List[str] = result.get("md_tables", [])
+                all_md_tables.extend(page_tables)
+
+                # Explicitly delete temp PNG to free disk space during long runs
+                try:
+                    os.unlink(page_png_path)
+                except OSError:
+                    pass
+
+        return all_md_tables
+
+    def _compute_ocr_as_markdown_sync(self, doc_ocr_text: str) -> str:
+        """
+        Synchronous body of Step 3 — convert doc_ocr_text to markdown via the
+        extractor's pure ocr_text_to_markdown helper (dummy call: passes an
+        empty image list, only doc_ocr_text drives this field).
+
+        Runs on a worker thread (via asyncio.to_thread() in execute()).
+        """
+        ocr_result = self._extractor.extract_md_tables(
+            page_image_paths=[],
+            doc_ocr_text=doc_ocr_text,
+        )
+        return ocr_result.get("ocr_as_markdown", "")
 
     def _count_pages(self, pdf_path: str) -> int:
         """

@@ -275,3 +275,43 @@ This is a single-zone, single-dev task. No split required.
   multi-probe /health under /extract load for >=15min.
 - Sequence: dev-pdf-extractor THEN ops targeted rebuild THEN FIX-AUDITOR-A20-MULTIPROBE
   (auditor sensor tuning is gated on fix landing)
+
+---
+
+## ADDENDUM (2026-07-21) — PDF-AVAIL-02-FIX: "LOW risk" background-task paths were the actual recurrence
+
+**Correction to the "Call paths with blocking exposure" table above.** That table marked
+`/extract-md-tables`, `/extract-layout-first`, and `/pek-extract` as **LOW** risk because
+their HTTP handlers return 202 Accepted immediately via `background_tasks.add_task`. That
+reasoning was incomplete: returning 202 fast says nothing about what happens *after* the
+response is sent. Starlette's `BackgroundTask.__call__` awaits an `async def` task callable
+**directly on the main event loop** (not in a worker thread). If that callable's body runs
+synchronous, non-yielding work (no `await` inside), it pins the same event loop that serves
+`GET /health`, exactly like the `/extract` path this brief fixed — just delayed until after
+the response.
+
+This is why the pdf-extractor "Up but unhealthy" bug recurred a 5th/6th time after the June
+fix landed: three background-task bodies never got the `asyncio.to_thread()` treatment
+because they were (mis)judged low-risk.
+
+Confirmed blocking call sites (root-caused 2026-07-21, fixed same day):
+
+| Background task (`interface/handlers.py` wrapper) | Blocking body | Fix |
+|---|---|---|
+| `_run_pek_extract` → POST /pek-extract | `pek_adapter.extract_layout_and_tables()` (sync; internally `future.result(timeout=PEK_EXTRACTION_TIMEOUT_SECONDS)`, default 1800s) called with no offload | Wrapped the call in `await asyncio.to_thread(...)` in `interface/handlers.py::_run_pek_extract` |
+| `_run_extract_md_tables` → POST /extract-md-tables | `ExtractMdTablesUseCase.execute()` Step 2 (pdf2image rasterize + pytesseract OCR loop, up to MAX_PAGES=20 pages) and Step 3 (doc_ocr_text→markdown) ran inline in an `async def` with no `await` inside the loop | Extracted the loop bodies into sync helpers `_process_pages_sync()` / `_compute_ocr_as_markdown_sync()`, dispatched via `await asyncio.to_thread(...)` in `application/extract_md_tables_usecase.py::execute()` |
+| `_run_extract_layout_first` → POST /extract-layout-first | Tier 1 `_tier1_zone_pages()` (sync, pdf2image + column-gutter detection) called with no offload; Tier 2 `_tier2_ocr_and_stitch()` was `async def` but its OCR loop (`self._ocr_unit()`, Tesseract) had no `await` inside | Tier 1 call wrapped in `await asyncio.to_thread(self._tier1_zone_pages, ...)`; Tier 2 loop extracted into sync helper `_tier2_ocr_and_stitch_sync()`, dispatched via `await asyncio.to_thread(...)` in `application/extract_layout_first_usecase.py` |
+
+Same `asyncio.to_thread()` pattern as the original fix — no new workers, no cgroup change,
+no docker-compose change, `/health` route and healthcheck config unchanged.
+
+Regression tests (mirror TC-EE-1/2 thread-identity pattern):
+- `__tests__/unit/test_pek_extract_handler_nonblocking.py`
+- `__tests__/unit/test_extract_md_tables_usecase_nonblocking.py`
+- `__tests__/unit/test_extract_layout_first_usecase_nonblocking.py`
+
+**Lesson for future call paths:** "returns 202 fast" and "does not block the event loop"
+are NOT the same property for a `BackgroundTasks.add_task` callable. Every new `async def`
+background-task body must be audited for synchronous, non-yielding work in its own right —
+offload via `asyncio.to_thread()` (or an injected `Executor`) at the point where the
+blocking call happens, not assumed safe because the HTTP response already went out.

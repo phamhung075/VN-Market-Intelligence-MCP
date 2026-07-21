@@ -5,6 +5,7 @@ Handlers delegate all business logic to application usecases.
 HTTP concerns (status codes, serialization) are handled here.
 """
 
+import asyncio
 import os
 from typing import Any, Optional
 
@@ -226,11 +227,25 @@ async def _run_pek_extract(
         project_mcp_server_write_wedge) and the persisted DB count (which this
         handler cannot observe directly — ops must verify via in-container
         market.db COUNT query).
+
+    PDF-AVAIL-02-FIX (event-loop isolation):
+        pek_adapter.extract_layout_and_tables() is a synchronous method that
+        internally blocks on `future.result(timeout=PEK_EXTRACTION_TIMEOUT_SECONDS)`
+        (default 30 min). Because this coroutine is scheduled as a FastAPI
+        BackgroundTask, Starlette awaits it directly ON THE MAIN EVENT LOOP —
+        calling the sync method inline would pin that loop for the full
+        extraction, starving GET /health (which is also served by the same
+        loop) for up to 30 minutes. asyncio.to_thread() moves the entire
+        call (including its internal blocking wait) onto a worker thread so
+        the event loop stays free. Mirrors the asyncio.to_thread() pattern
+        already used in infrastructure/extraction_engine.py,
+        table_push_client.py, alert_adapter.py, layout_first_push_client.py.
     """
     import logging as _logging
     _log = _logging.getLogger(__name__)
     try:
-        result = pek_adapter.extract_layout_and_tables(
+        result = await asyncio.to_thread(
+            pek_adapter.extract_layout_and_tables,
             pdf_path=pdf_path,
             report_id=report_id,
         )
