@@ -83,15 +83,23 @@ export async function fetchParseAndStoreBctc(
 
   let report: FinancialReport;
   try {
-    report = await parseBctcReport({ rawText, actionCode, period });
+    // FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP: pass the real SSC
+    // filing date (doc.publishedAt) INTO parseBctcReport so it lands in the
+    // DB write itself. Previously this was patched onto the in-memory
+    // `report` object AFTER parseBctcReport had already persisted (see the
+    // removed line below) — that patch never reached SQLite, so the stored
+    // published_at was always parsedAt (the processing timestamp), on both
+    // first ingest AND every subsequent re-parse.
+    report = await parseBctcReport({ rawText, actionCode, period, publishedAt: doc.publishedAt ?? null });
   } catch (err) {
     logger.error(`${tag} parseBctcReport failed`, { error: err instanceof Error ? err.message : String(err) });
     return null;
   }
 
-  // Patch source URL from SSC portal + local PDF path (Task 1002)
+  // Patch source URL + local PDF path (Task 1002) — informational on the
+  // returned in-memory object only; ssc_url/pdf_path persistence is a
+  // separate, pre-existing gap out of scope for this fix.
   report.source.sscUrl = doc.url;
-  report.source.publishedAt = doc.publishedAt || report.source.parsedAt;
   const normFilename = normaliseFilename(doc.url, actionCode, year, quarter);
   report.source.pdfPath = join(process.cwd(), "data", "pdfs", normFilename);
 

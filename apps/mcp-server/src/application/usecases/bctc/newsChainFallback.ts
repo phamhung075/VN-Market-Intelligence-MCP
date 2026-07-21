@@ -247,9 +247,36 @@ export async function tryNewsChainFallback(
     // reference financial_reports.id via a plain TEXT column — NOT a real FK —
     // so an id that drifts from what's persisted would orphan them.
     const existingReportRow = db
-      .prepare("SELECT id FROM financial_reports WHERE action_code = ? AND sort_key = ?")
-      .get(actionCode, period.sortKey) as { id: string } | null;
+      .prepare("SELECT id, total_assets FROM financial_reports WHERE action_code = ? AND sort_key = ?")
+      .get(actionCode, period.sortKey) as { id: string; total_assets: number | null } | null;
     const reportId = existingReportRow?.id ?? randomUUID();
+
+    // FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP: this fallback ALWAYS
+    // writes totalAssets=0 (hardcoded placeholder below — it reconstructs
+    // directional hints from news signals, never real balance-sheet figures)
+    // — i.e. every call is, by construction, the exact OCR-corruption
+    // fingerprint bctcIdentityGuard.ts checks for at serve time. Never let it
+    // overwrite a previously-good stored report (existing total_assets > 0).
+    // This mirrors the identical guard in parseBctcReport.ts::storeReport() —
+    // this function is a SECOND, independently-implemented writer to the
+    // same (action_code, sort_key) row and carried the same two defects
+    // (processing-date published_at + unconditional overwrite on conflict).
+    if (
+      existingReportRow &&
+      existingReportRow.total_assets != null &&
+      existingReportRow.total_assets > 0
+    ) {
+      const blockMsg =
+        `[BCTC] News-chain fallback write BLOCKED for ${actionCode} ${period.sortKey}: ` +
+        `fallback always writes total_assets=0 and would overwrite a previously-good ` +
+        `stored report (total_assets=${existingReportRow.total_assets}). Existing row ` +
+        `preserved untouched — flagged for manual review, NOT fallback-overwritten.`;
+      logger.warn(blockMsg);
+      return {
+        fallback: false,
+        reason: `existing good row (total_assets=${existingReportRow.total_assets}) preserved — fallback write blocked`,
+      };
+    }
 
     // Build minimal fallback report
     const fallbackReport: FinancialReport & {
@@ -417,7 +444,12 @@ export async function tryNewsChainFallback(
         period_end = excluded.period_end,
         ssc_url = excluded.ssc_url,
         pdf_path = excluded.pdf_path,
-        published_at = excluded.published_at,
+        -- published_at is deliberately NOT in this SET clause — SQLite keeps
+        -- the existing row's filing date untouched on conflict, mirroring
+        -- parseBctcReport.ts::storeReport() (FIX-BCTC-REPARSE-BATCH-
+        -- CORRUPTION-NGAYNOP-FLIP). It is only ever set once, on the row's
+        -- original INSERT; the $publishedAt bind value below is discarded by
+        -- SQLite on a real conflict, same as $id.
         parsed_at = excluded.parsed_at,
         audit_status = excluded.audit_status,
         auditor = excluded.auditor,

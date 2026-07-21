@@ -92,6 +92,18 @@ export interface ParseBctcReportParams {
    */
   previousReport?: FinancialReport;
   /**
+   * FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP: real filing date (ISO),
+   * sourced from the filing itself (e.g. SSC document metadata —
+   * `doc.publishedAt` from listSscDocuments()) — NEVER the processing
+   * timestamp. Optional: when omitted (a reparse/recovery call that supplies
+   * only pdfTextOverride, with no SSC doc), storeReport() falls back to the
+   * processing timestamp ONLY on a genuine first-ever insert for this
+   * (action_code, sort_key) — its ON CONFLICT clause never touches
+   * published_at on a re-parse, so this fallback can never clobber an
+   * existing row's real filing date.
+   */
+  publishedAt?: string | null;
+  /**
    * Injectable Telegram bug notifier — for testability (Task 1792).
    * When provided, overrides the default dynamic import of sendTelegramBug.
    * In production callers, omit to use the real Telegram notifier.
@@ -286,6 +298,44 @@ async function storeReport(
   }
 
   const db = getDb();
+
+  // FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP: never let a reparse
+  // replace a previously-good stored report with corrupt/failed data.
+  // "Good" (existing) = total_assets > 0. "Failed" (new) = totalAssets <= 0
+  // — the exact OCR-corruption fingerprint bctcIdentityGuard.ts checks at
+  // serve time (total_assets<=0 -> "[CORRUPT DATA — SKIP]"). The
+  // extractionConfidence===0 guard above already blocks an ALL-ZERO
+  // extraction from writing at all; this closes the remaining gap where a
+  // PARTIAL failure (e.g. the balance-sheet page was missed but other
+  // fields extracted something) scores a nonzero-but-low confidence and
+  // would otherwise sail through the UPSERT below, wiping out good totals.
+  const existingGoodRow = db
+    .query<{ total_assets: number | null }, [string, string]>(
+      "SELECT total_assets FROM financial_reports WHERE action_code = ? AND sort_key = ?",
+    )
+    .get(report.actionCode, report.period.sortKey);
+
+  if (
+    existingGoodRow &&
+    existingGoodRow.total_assets != null &&
+    existingGoodRow.total_assets > 0 &&
+    report.balanceSheet.totalAssets <= 0
+  ) {
+    const blockMsg =
+      `[BCTC] Reparse write BLOCKED for ${report.actionCode} ${report.period.sortKey}: ` +
+      `new extraction total_assets=${report.balanceSheet.totalAssets} would overwrite a ` +
+      `previously-good stored report (total_assets=${existingGoodRow.total_assets}). ` +
+      `Existing row preserved untouched — flagged for manual review, NOT re-extracted.`;
+    logger.warn(blockMsg);
+    if (telegramBugFn) {
+      await telegramBugFn(blockMsg).catch(() => {});
+    } else {
+      const { sendTelegramBug } = await import("../../infrastructure/notifiers/telegram.js");
+      await sendTelegramBug(blockMsg).catch(() => {});
+    }
+    return; // NO WRITE — the existing good row is left completely untouched.
+  }
+
   const stmt = db.prepare(`
     INSERT INTO financial_reports (
       id, action_code, company_name, exchange, domain,
@@ -333,7 +383,11 @@ async function storeReport(
       period_end = excluded.period_end,
       ssc_url = excluded.ssc_url,
       pdf_path = excluded.pdf_path,
-      published_at = excluded.published_at,
+      -- published_at is deliberately NOT in this SET clause — SQLite keeps
+      -- the existing row's filing date untouched on every re-parse
+      -- (FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP). It is only ever
+      -- set once, on the row's original INSERT (the $publishedAt bind
+      -- value below is discarded by SQLite on a real conflict, same as $id).
       parsed_at = excluded.parsed_at,
       audit_status = excluded.audit_status,
       auditor = excluded.auditor,
@@ -489,7 +543,7 @@ async function storeReport(
 export async function parseBctcReport(
   params: ParseBctcReportParams,
 ): Promise<FinancialReport> {
-  const { rawText, actionCode, period, shares, price, previousReport, _telegramBugFn } = params;
+  const { rawText, actionCode, period, shares, price, previousReport, publishedAt: callerPublishedAt, _telegramBugFn } = params;
 
   // ── Step 1: Extract the three financial statements ────────────────────────
   const balanceSheet = extractBalanceSheet(rawText);
@@ -662,6 +716,13 @@ export async function parseBctcReport(
   // ── Step 6: Assemble the FinancialReport ──────────────────────────────────
   const parsedAt = new Date().toISOString();
 
+  // FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP: prefer the caller-supplied
+  // real filing date (e.g. SSC doc.publishedAt). parsedAt is used ONLY as a
+  // last-resort placeholder when no real filing date is known — and even
+  // then, storeReport()'s ON CONFLICT clause never lets this value clobber
+  // an existing row's published_at on a re-parse (see storeReport doc).
+  const publishedAt = callerPublishedAt ?? parsedAt;
+
   // FIX-BCTC-D1-STABILIZE-REPORT-ID: reuse the existing row's id when one
   // already exists for this (action_code, sort_key). storeReport()'s
   // ON CONFLICT DO UPDATE never touches the id column on a real conflict, so
@@ -690,7 +751,7 @@ export async function parseBctcReport(
     source: {
       sscUrl: "",
       pdfPath: null,
-      publishedAt: parsedAt,  // No SSC source in this task — use parsedAt as placeholder
+      publishedAt,
       parsedAt,
       auditStatus: "unaudited",
       auditor: null,

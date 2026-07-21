@@ -37,6 +37,53 @@ WHERE action_code = ? AND sort_key = ?`) before assembling the returned `Financi
 in-memory `report.id` handed back to the caller matches the DB-persisted id on a re-parse too (not
 just the SQL-column-level guarantee). Test: `src/__tests__/FIX-BCTC-D1-STABILIZE-REPORT-ID.test.ts`.
 
+**FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP (2026-07-21):** two write-back
+invariants added to `storeReport()`'s same `ON CONFLICT` UPSERT, closing the
+mechanism behind a live incident where a same-day reprocess flipped 16
+watchlist tickers' filing dates to the processing day and zeroed out
+previously-good financials:
+1. **`published_at` (the BCTC filing date / "NGÀY NỘP" in `get_earnings_calendar`)
+   is immutable after first insert.** `published_at = excluded.published_at`
+   was removed from the `DO UPDATE SET` clause — SQLite now keeps the
+   existing row's filing date untouched on every re-parse, same pattern as
+   the `id` column. `parseBctcReport()` also gained an optional
+   `publishedAt` param (real filing date, e.g. `doc.publishedAt` from
+   `listSscDocuments()`) threaded in from `fetchParseAndStoreBctc.ts` BEFORE
+   the DB write — previously the caller patched `report.source.publishedAt`
+   on the in-memory object AFTER `parseBctcReport()` had already persisted,
+   so the correction never reached SQLite and every row's stored
+   `published_at` was always the processing timestamp. `parsedAt` (the
+   processing timestamp) remains the fallback ONLY for a genuine first-ever
+   insert with no known filing date.
+2. **A failed/corrupt extraction can never overwrite a previously-good
+   stored report.** New pre-write guard in `storeReport()`: if an existing
+   row for `(action_code, sort_key)` has `total_assets > 0` (a servable
+   report) and the new extraction's `balanceSheet.totalAssets <= 0` (the
+   exact OCR-corruption fingerprint `bctcIdentityGuard.ts` checks at serve
+   time), the write is skipped entirely, a `sendTelegramBug` alert fires,
+   and the existing good row is left untouched. This closes a gap the
+   pre-existing `extractionConfidence===0` skip-guard (1196) missed: a
+   PARTIAL extraction failure (balance-sheet page missed, other statements
+   extracted fine) scores a nonzero-but-low confidence and previously sailed
+   through the UPSERT, wiping out good totals.
+
+Both invariants were also applied to `tryNewsChainFallback()` (see below) —
+an independent second writer to the same table with the identical two
+defects. Root-cause note: PO's initial attribution of `bctcReparseJob.ts` as
+the write-back path was explicitly UNVERIFIED; investigation traced the
+actual persistence choke point to `storeReport()` (and its
+`tryNewsChainFallback()` sibling), which every known upstream caller
+(`bctcReparseJob.ts` recovery path, the VPS push handler chain
+`bctcVpsIngestHandler.ts` → `pushBctcExtraction.ts` → `fetchParseAndStoreBctc.ts`,
+and the `composition-root.ts` §4b post-OCR bootstrap reparse hook) funnels
+through — the fix protects against all of them uniformly, regardless of
+which upstream trigger fires. `composition-root.ts` also gained an
+env-gated kill switch (`DISABLE_BOOTSTRAP_OCREPARSE=1`) as an additional
+operational lever for that specific hook.
+No test regressions: `src/__tests__/FIX-BCTC-D1-STABILIZE-REPORT-ID.test.ts`
+(scalar UPSERT still applies on a genuinely better re-parse) and
+`src/__tests__/1196-bctc-reparse-pipeline.test.ts` pass unchanged.
+
 ### bctc/ensureFinancialReportShellRow.ts
 
 **FIX-BCTC-D2-ENSURE-SHELL-ROW (2026-07-10):** idempotent upsert that ensures a
@@ -85,6 +132,24 @@ id handed back to the caller matches what's persisted. Closes the same
 `bctc_layout_units`/`bctc_page_zones` orphan risk for reports whose FIRST
 successful write was a news-chain fallback (not a scalar OCR parse).
 Test: `src/__tests__/FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN.test.ts`.
+
+**FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP (2026-07-21):** this
+function ALWAYS writes `total_assets=0` (hardcoded — it reconstructs
+directional hints from `agent_signals`, never real balance-sheet figures)
+and previously set `published_at: new Date().toISOString()` unconditionally
+on every call, with its own independent `ON CONFLICT ... DO UPDATE SET
+published_at = excluded.published_at` — i.e. this second writer carried the
+SAME two defects fixed in `parseBctcReport.ts::storeReport()` above,
+discovered while establishing the actual write-back path for a live
+corruption incident. Same two fixes applied here: `published_at` removed
+from the `DO UPDATE SET` clause (immutable after first insert), and a guard
+added before the INSERT — if an existing row already has `total_assets > 0`,
+the fallback write is skipped entirely (`fallback: false`, reason logged)
+rather than clobbering good data with the hardcoded zero. A same-ticker
+re-run after a first fallback write (`total_assets` already 0, not `> 0`)
+is unaffected — the guard only blocks overwriting a row that was already
+servable. Test: `src/__tests__/FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN.test.ts`
+(unchanged, still passes — its re-run scenario starts from `total_assets=0`).
 
 ### discoverBctcPdfUrlBrowser.ts / discoverBctcPdfUrlDirectApi.ts
 PDF discovery strategies (browser scraping vs direct API)

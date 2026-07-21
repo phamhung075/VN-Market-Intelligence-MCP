@@ -115,6 +115,25 @@ export async function bootstrapMcpServer(cfg: AppConfig, log: Logger): Promise<v
   // Guard: only trigger if OCR produced text (totalChars > 0) AND
   // financial_reports has no row for this ticker+period yet. This keeps the
   // hook idempotent: a PDF that was already fully parsed is never re-processed.
+  //
+  // FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP: this hook runs
+  // unconditionally on EVERY container startup/restart and walks every PDF
+  // in data/pdfs/ sequentially — it was ops's prime (unverified) suspect for
+  // the 2026-07-19/07-20 corruption batch (see docs/agent-memory/decisions/
+  // FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP-ops-part1.md). The actual
+  // write function (parseBctcReport.ts storeReport(), the single choke point
+  // this hook's own reparseSingleWithOcrFallback -> fetchParseAndStoreBctc
+  // call ultimately funnels through) now refuses to overwrite a
+  // previously-good report with a failed/zero extraction and never touches
+  // published_at on a re-parse — that is the durable, upstream-agnostic
+  // fix. This env-gated switch is an additional operational lever: set
+  // DISABLE_BOOTSTRAP_OCREPARSE=1 to skip this hook entirely (e.g. ahead of
+  // an unrelated container rebuild) without a further code deploy.
+  const bootstrapOcrReparseDisabled =
+    ["1", "true"].includes((Bun.env.DISABLE_BOOTSTRAP_OCREPARSE ?? "").toLowerCase());
+  if (bootstrapOcrReparseDisabled) {
+    log.warn("[bootstrap] post-OCR reparse hook DISABLED via DISABLE_BOOTSTRAP_OCREPARSE — skipping §4b entirely");
+  } else {
   setTimeout(async () => {
     try {
       const { mkdirSync, readdirSync } = await import("node:fs");
@@ -217,6 +236,7 @@ export async function bootstrapMcpServer(cfg: AppConfig, log: Logger): Promise<v
       log.warn("[bootstrap] background OCR check failed", { error: err instanceof Error ? err.message : String(err) });
     }
   }, 10_000);
+  }
 
   // ── 5. Graceful shutdown + signal handlers ────────────────────────────────
   async function shutdown(signal: string) {
