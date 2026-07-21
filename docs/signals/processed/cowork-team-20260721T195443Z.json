@@ -6,9 +6,13 @@
     "fire_time": "2026-07-21T19:54:43Z",
     "nominal_tick": "2026-07-21T19:45Z",
     "drift_min": 6,
-    "matched_slots": ["chef-evening"],
+    "matched_slots": [
+      "chef-evening"
+    ],
     "won_slots": [],
-    "held_by_other": ["chef-evening"],
+    "held_by_other": [
+      "chef-evening"
+    ],
     "all_held": true,
     "spawned": [],
     "silent": false,
@@ -54,5 +58,11 @@
     "note": "DRAIN_ONLY tick, zero spawns, by design. Drain inserted=0, db_count=245, price_anomaly floor unchanged at 7 (no regression). last_fired for chef-evening deliberately NOT written: last-fired.md:14 scopes the write to WON_SLOTS (this dispatcher's own successful spawns) and the peer router does not run last-fired.md, so chef-evening's last_fired stays 2026-07-19 despite firing today. Downstream consequence, stated so it is not later mistaken for an outage: any future missed-slot census computed from last_fired will WRONGLY count chef-evening as missed on 2026-07-21. The artifact plane (docs/data/unified-agent-synthesis-2026-07-21-evening.json) is the authority and will corroborate. Writing a peer's fire into last_fired was rejected as out-of-contract mutation of shared schedule state."
   },
   "priority": "high",
-  "createdAt": "2026-07-21T19:54:43Z"
+  "createdAt": "2026-07-21T19:54:43Z",
+  "_processed": {
+    "fingerprint": "8d16be7cc233322636c741b897cf46c3c65d5a4c4bca6a8565c820b484474a6e",
+    "processedAt": "2026-07-21T20:07:06Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

@@ -94,5 +94,11 @@
   "priority": "high",
   "createdAt": "2026-07-21T20:10:05Z",
   "_amended_at": "2026-07-21T20:13Z",
-  "_amendment_note": "finding_2 RETRACTED (wrong class, unreachable callsite); finding_4 ADDED. Amended in place rather than minting a new signal file — anti-churn."
+  "_amendment_note": "finding_2 RETRACTED (wrong class, unreachable callsite); finding_4 ADDED. Amended in place rather than minting a new signal file — anti-churn.",
+  "_processed": {
+    "fingerprint": "a7fe035dfc021b15d27263d8d4db761bc11a82a4c6d3a53c436880cc88924109",
+    "processedAt": "2026-07-21T20:52:34Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

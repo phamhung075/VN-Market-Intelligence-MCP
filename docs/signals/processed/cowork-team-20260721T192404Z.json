@@ -19,14 +19,43 @@
       "claimed_by_four_analyses_including_the_dispatchers_own": "cowork-team-*.json never drains; dispatcher telemetry accumulates permanently and saturates the drain count>50 gate.",
       "actually_true": "Files written in the ENVELOPED schema {from,to,type,payload,priority,createdAt} drain normally within one drain cycle. Files written as a RAW TICK-STATE DUMP (top-level keys tick/verdict/severity/action/classification, no from/type) can never drain.",
       "verified_at_source": "scripts/agents-flow/drain-signals.js:98 — routable iff at least one of j.from / j.source / j.type / j.signal_type is non-null. Filename prefix is never consulted.",
-      "evidence_drained_183049Z_keys": ["_processed", "createdAt", "from", "payload", "priority", "to", "type"],
-      "evidence_not_drained_152400Z_keys": ["action", "classification", "drift_min", "tick", "won_slots", "raw tick state, no from/type"],
-      "evidence_not_drained_burst_20260710_keys": ["action", "classification", "drift_min", "tick", "verdict", "severity", "raw tick state, no from/type"]
+      "evidence_drained_183049Z_keys": [
+        "_processed",
+        "createdAt",
+        "from",
+        "payload",
+        "priority",
+        "to",
+        "type"
+      ],
+      "evidence_not_drained_152400Z_keys": [
+        "action",
+        "classification",
+        "drift_min",
+        "tick",
+        "won_slots",
+        "raw tick state, no from/type"
+      ],
+      "evidence_not_drained_burst_20260710_keys": [
+        "action",
+        "classification",
+        "drift_min",
+        "tick",
+        "verdict",
+        "severity",
+        "raw tick state, no from/type"
+      ]
     },
     "revised_root_cause": "telemetry.md:34 writes the file via an LLM-narrated heredoc (cat > ... <<EOF). The schema therefore depends on what the model narrates that tick, and it DRIFTS: some ticks emit a drainable envelope, others emit a raw state dump that jams the inbox permanently. This is a non-deterministic-write defect, not a directory-colocation defect. Relocating telemetry to a sibling directory (the previously suggested fix) would NOT address it — a raw-schema file dropped in docs/signals/ by any future drifted tick recreates the floor.",
     "revised_floor_composition": "Undrainable set = files in RAW schema: 43 from the 07-10/07-11 burst PLUS cowork-team-20260721T152400Z.json written TODAY at 15:24Z in raw schema. The drift is still live, not historical. Also permanently stuck: cowork-team-20260721T183028Z.json (0 bytes, unparseable, drain-signals.js:93 SKIP) — retained deliberately as evidence of an empty-artifact write path.",
     "what_this_changes_for_the_p1": "CLEAN-COWORK-DISPATCHER-TELEMETRY-DRAIN-DIR should NOT be scoped as moving telemetry out of the inbox. Correct scope: (1) make telemetry.md emit the envelope deterministically rather than by narration, so new files always drain; (2) git rm the 43 raw-schema burst files plus 152400Z to unsaturate the gate now, since the designed >14d retention does not reach 11d files until 07-25; (3) never sweep price_anomaly_* (by-path consumer, chef.md:116).",
     "self_correction_note": "The telemetry write was skipped on the 18:45Z and 19:00Z ticks on the stated grounds that these files were permanently inflating the floor. That premise was FALSE — enveloped files drain. The skip was harmless but the reason was wrong, and the reversal is recorded here rather than quietly resumed. Normal writes resume this tick.",
     "housekeeping_flag": "The 19:15Z drain left a DIRTY TREE: 4 tracked files show as deleted (D) with untracked copies under docs/signals/processed/. This is the known pathspec-drops-deletion hazard — a pathspec commit that does not name the deleted paths will silently drop the deletions. Flagged, not fixed: the move is the drain owner work, and committing another actor in-flight state is the peer-index-sweep defect."
+  },
+  "_processed": {
+    "fingerprint": "e464b9c355a920832b9ca025b4e2cc28a6ea1f477d9185c27a09284dc9a11f42",
+    "processedAt": "2026-07-21T19:44:45Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

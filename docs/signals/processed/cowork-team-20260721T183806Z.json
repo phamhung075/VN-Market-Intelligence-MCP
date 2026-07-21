@@ -51,5 +51,11 @@
       "NET": "6 auditor rows -> at most 3 distinct issues, 2 of which match documented FP classes. Cluster C is the one carrying new information."
     },
     "NO_ROW_MINTED": "Dispatcher minted nothing. Cluster A off-hours-exemption asymmetry may deserve a row, but B-04 ownership sits with system-auditor/PO and FIX-AUDITOR-B05-BCTC-FRESHNESS-LAYER-SPLIT already covers the sibling shape. PO decides."
+  },
+  "_processed": {
+    "fingerprint": "1fb3c2c20bde9211897218c0cbc9f80a64294d04916f29a23c4d4a5368d85dfa",
+    "processedAt": "2026-07-21T19:15:29Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

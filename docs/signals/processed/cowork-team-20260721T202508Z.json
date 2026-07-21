@@ -90,5 +90,11 @@
     }
   },
   "_amended_at": "2026-07-21T20:45Z",
-  "_amendment_note": "finding_1 CONFIRMED by execution + severity MED->HIGH (5 audits already armed to be skipped). finding_3 (read_telegram_reports channel no-op, dispatcher-verified) and finding_4 (uncommitted flow-doc edits) added."
+  "_amendment_note": "finding_1 CONFIRMED by execution + severity MED->HIGH (5 audits already armed to be skipped). finding_3 (read_telegram_reports channel no-op, dispatcher-verified) and finding_4 (uncommitted flow-doc edits) added.",
+  "_processed": {
+    "fingerprint": "b0fa829b09d462b8b3270297ab48248aeee082dc8742c9c702a407fc3c1a7bd5",
+    "processedAt": "2026-07-21T20:52:34Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

@@ -78,5 +78,11 @@
       ],
       "ask": "PO: set next_agent on both, or promote to ready[]. No new row needed — this is the whole ask."
     }
+  },
+  "_processed": {
+    "fingerprint": "c27a9d4ebf7f4765bbd3d578703db0872499b74469460a1bc4be976f6c5b83b4",
+    "processedAt": "2026-07-21T19:15:29Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

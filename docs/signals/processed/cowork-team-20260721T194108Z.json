@@ -34,5 +34,11 @@
     },
     "not_asserted": "Chef-evening 19:45Z output is NOT yet examined — it fires as this tick closes. Whether it carries the token is unknown and is NOT claimed either way here. Next tick should check docs/data/unified-agent-synthesis-2026-07-21-evening.json.",
     "dispatcher_actions_not_taken": "Did NOT spawn unified-agent (chef-evening owns that slot; spawning would be the known router/cowork double-dispatch defect). Did NOT edit chef.md (flow-doc surgery is agent-father scope). Did NOT flip the row status (recipient cannot read it in any state, and PO recorded it as deliberately LEFT NEW). Did NOT mint a board row (minting is PO's)."
+  },
+  "_processed": {
+    "fingerprint": "eb2cc7db90b1f1a5d9a86a013ad9373876c5eca94beb422aa06c7db7ea7bf152",
+    "processedAt": "2026-07-21T19:44:45Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }
