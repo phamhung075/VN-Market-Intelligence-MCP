@@ -1,20 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-21 | **Cycle:** FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE (sprint FLOW-PRICE-ALPHA-LOOP)
-
-## Session 2026-07-16 — UC-GCP-P4 (dev-team BOUNDED-1 auto-pickup, zone `cross-service/`) — IN_PROGRESS→REVIEW
-
-**Task:** `git-ci-publish-P4` (CONFIRMED) — every push (even doc/notebook/orch-state-only, ~68% of commits) paid the full `pnpm --filter vn-market check` tsc (~94s wall-clock, over the commit-mutex 90s TTL), stranding the fleet on unrelated red and letting a peer `task_claim` win mid-push.
-
-**Actions taken:** `scripts/git-hooks/pre-push` now loops ALL stdin ref lines, computes `git diff --name-only <remote>..<local>` per line, and skips the full tsc only if NO line matches `^(apps|packages|scripts)/.*\.(ts|tsx|js|mjs|json)$` or root `package.json`/`pnpm-lock.yaml`/`pnpm-workspace.yaml` (docs/ excluded). All 4 mandatory hardenings: (a) fail-open full tsc if `git diff` fails, guarded inside an `if` so it never hits the bare `set -e` abort; (b) all-zero local-sha (branch-delete) lines skipped; (c) ANY code-touching line across multiple stdin refs forces full tsc (drains all stdin, no early break); (d) root dependency files added to the code-touching set. Zero-remote-sha (new branch) always runs full tsc.
-
-**Verification:** `bash -n` + `shellcheck` clean (one SC2034 on the intentionally-unused `remote_ref` field silenced inline — documents the 4-field stdin protocol). 9 simulated stdin scenarios against a throwaway repo + fake-pnpm stub: doc-only→skip/no-call, code-touching→full-tsc/call, fail-open (bogus remote sha)→full-tsc, new-branch (zero remote sha)→full-tsc, branch-delete (zero local sha)→skip, multi-line doc+code→full-tsc (ANY-rule), `PRE_PUSH_SKIP_TSC=1`→skip untouched, no-pnpm-on-PATH→WARN untouched, root `package.json`→full-tsc. All matched spec.
-
-**Board:** Moving `task_board.in_progress[UC-GCP-P4]` → `task_board.review[]` (status REVIEW, next_agent=qa) + `.head`/`.task_board.head` synced to idle, via `orch-apply.sh`.
-
-**Scope discipline:** Touched ONLY `scripts/git-hooks/pre-push` (sole in-scope file) + `docs/WORK.md` one-liner + this notebook + decision journal. Shell-only hook edit, no `.ts` touched — no tsc/full-suite run needed per the task's own verification bar. Did not touch commit-mutex TTL/SKILL.md — the residual code-touching-push mutex-overrun (~94s > 90s TTL) is an explicit out-of-scope follow-up per the brief.
-
-Zone health: `scripts/git-hooks/` pre-push tsc gate — path-filter live, escape hatch + no-pnpm WARN branches intact; no other drift observed | HEALTHY
+**Last updated:** 2026-07-21 | **Cycle:** FIX-ORCHSTATE-UPDATED-AT-WRITE-PATH (dispatched via router)
 
 ## Session 2026-07-16 — FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE (dev-team lead, cross-service/, subsumes FIX-DEVTEAM-BOUNDED1-MAINTLANE-NEXTAGENT-GATE) — IN_PROGRESS→REVIEW
 
@@ -47,3 +33,17 @@ Zone health: `scripts/devteam-backlog-promote-bounded1.jq` BOUNDED-1 disposition
 **Scope discipline:** Touched only `scripts/agents-flow/drain-signals.js`, `scripts/agents-flow/drain-signals.test.js`, this notebook, decision journal, + the new po-addressed signal file. Did not touch the price_anomaly predicate itself, did not touch live `docs/data/orch/orch-state.json`.
 
 Zone health: `scripts/agents-flow/drain-signals.js` payload_ref repoint path — now buffer-safe past 1MB + FAIL-LOUD on genuine computation failure; price_anomaly drain-skip family flagged to PO as a distinct, unfixed gap | HEALTHY (repoint) / KNOWN-GAP (price_anomaly, PO-owned)
+
+## Session 2026-07-21 — FIX-ORCHSTATE-UPDATED-AT-WRITE-PATH (router-directed, scripts/, P0) — task_board.ready (untouched, router-owned)
+
+**Task:** `scripts/orch-apply.sh` (the single mandatory gated hot-file write path) had zero `updated_at` handling on task_board rows — 524/577 rows null — because the field is stamped only by whichever of 30+ ad-hoc jq callers happened to remember it (Head/Meta schema sites declare it optional; TaskSchema doesn't even list it, `.passthrough()` lets anything through unstamped).
+
+**Actions taken:** New `scripts/orch-stamp-updated-at.mjs` — id-keyed, order-independent deep-equal diff of every task_board row (all 9 lanes + legacy `archive`), live vs candidate, `updated_at` itself excluded from the comparison (no feedback into its own predicate). Wired into `orch-apply.sh` as Stage 1.5, AFTER Stage 0/1 validation (protects the raw-text dup-key scanner from a parse/stringify roundtrip) and BEFORE Stage 2 conservation/CAS-rename. Diff unit deliberately lane-agnostic — real lane moves virtually always change `status`, already caught as content; `checkLaneCoherence` backstops the general case. No backfill of existing nulls (hard constraint honored).
+
+**Verification:** Live-verified against the REAL orch-state.json: snapshotted all 577 rows' `updated_at`, mutated exactly 1 archived row (`BPE-ARCH-1`) via a jq filter mentioning no timestamp, applied through the real `orch-apply.sh` — structural diff confirmed ONLY that row changed (null→stamp), null count 524→523 (exactly -1). Re-applying an unchanged candidate stamped 0 rows (idempotent). Reverted the probe field via a second real write (also timestamp-free) — original field content restored byte-identical; `updated_at` correctly stays non-null (a real second touch, not falsified back to null). `scripts/test/orch-apply-wrapper-tests.sh` 31/31 pre-existing unchanged + 11 new STAMP-* cases = 42/42 GREEN.
+
+**Board:** Deliberately did NOT move `task_board.ready[FIX-ORCHSTATE-UPDATED-AT-WRITE-PATH]` — router holds/releases the coordination lock for this row and the dispatched report-back contract didn't ask for a board transition; left for router/PO to action.
+
+**Scope discipline:** Touched `scripts/orch-apply.sh`, new `scripts/orch-stamp-updated-at.mjs`, `scripts/test/orch-apply-wrapper-tests.sh` (new cases only), `docs/policies/dev-standards.md`, `docs/WORK.md`, this notebook, decision journal. Did NOT touch `orchStateSchema.ts` (existing `.passthrough()` already permits the field; task explicitly forbids tightening it). Did NOT implement `updated_by` — the PO board row's acceptance text asks for it but the dispatched task text doesn't, and there is no reliable caller-identity signal at the chokepoint; flagged, not silently added.
+
+Zone health: `scripts/orch-apply.sh` — write-path timestamp gap closed at the chokepoint; ~500 pre-existing null rows age out naturally, no synthetic backfill | HEALTHY
