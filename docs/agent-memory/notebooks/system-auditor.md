@@ -1,6 +1,16 @@
 # System Auditor — Notebook
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
+## c387 · 2026-07-21T03:43:02Z
+### Audit Run Tier-1 (03:40–03:41 UTC 2026-07-21)
+- Tier: 1 | Services: 12 checked | Health: 5 probed
+- A-01 to A-11 (container status): 12/12 UP, 1 unhealthy (pdf-extractor) [RAW-PROBE L2-16]
+- A-12 (frontend health): CURL_ERR endpoint, dedup-skip (last_sent=2026-07-21T01:41:55Z)
+- A-20 (pdf-extractor multi-probe): 0/3 FAIL — HTTP 000 event-loop wedge, dedup-skip (last_sent=2026-07-19T20:46:16Z)
+- A-21 (restart count): mcp-server=2 PASS [RAW-PROBE L45]
+- A-30 (memory): mcp-server=19.35% PASS [RAW-PROBE L48]
+- A-32 (disk): 35% < 85% PASS [RAW-PROBE L52]
+- Anomalies: 0 new | 2 dedup-skipped (A-12, A-20) | Status: DEGRADED
 
 ## c386 · 2026-07-21T03:12:16Z
 ### Audit Run Tier-1 (03:10–03:12 UTC 2026-07-21)
