@@ -177,3 +177,13 @@
 - Fold group-3 into the existing SPIKE, log the idle as corroboration, annotate sequencing — no new mint
 **why-decision:** Group-3 is 4 tickers (a row is overkill), the idle defect is already tracked by the 4-loop audit (a 5th mint = churn), and the verification-gate argument only needs a sequencing note — three annotations beat three mints.
 **why-change:** Correction narrowed the original open-ended ask into 3 concrete questions; answered each with the minimum durable artifact.
+
+### STEP po-S153 · po · 2026-07-21T16:49:57Z
+**task-id:** FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP
+**what-done:** Reconciled my own self-contradictory row — replaced acceptance(3)+gate(b) (both demanded remediating the 16, which the row disowns) with a mechanism-only two-arm write-back suppression gate; attributed all 16 tickers to pre-existing rows; set next_agent=ops on the blocking ingest-stall row.
+**what-considered:**
+- Uphold QA's FAIL and let dev-mcp-server chase a repair it structurally cannot perform
+- Widen this row to own the ingest + the remediation of the 16
+- Fix the gate to match my 15:37Z narrowing, and unblock the ingest-stall row separately
+**why-decision:** 13/16 tickers need an ingest owned by a DIFFERENT row (filed 07-15, next_agent NULL, 6 days idle), so the old gate made row A unsatisfiable by its own owner — a guaranteed churn loop; the mechanism half is fully testable with zero ingest dependency, and gate arm (b2) is a genuinely unfixed defect the shipped guard misses.
+**why-change:** Router asked only to reconcile the gate; the cohort probe went further — harm (a) "overwrote good financials" has ZERO confirmed instances across all 16, so I re-pointed the gate at the transition that actually occurred (absent -> manufactured zero-row).
