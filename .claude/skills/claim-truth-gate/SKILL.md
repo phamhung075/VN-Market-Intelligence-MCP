@@ -78,6 +78,11 @@ If the SECOND pass (post self-correct) STILL FAILS:
 
 Non-real-time agents (fb-market-poster, unified-agent/CHEF, digest-predict) have **no override** — a persistent second-pass FAIL blocks the write entirely; escalate per that flow's own existing gate-failure path.
 
+## No-Bash cowork subagent sessions (discovered live, alert-commander, 2026-07-20)
+Some cowork subagent sessions are bound Read/Write/Edit/MCP-gateway ONLY — no Bash tool, so `scripts/narrative-truth-gate.sh` cannot be invoked at all (categorical, not a script failure). This is not covered by the exit-code contract above (0/1/2 all assume the script ran). In this specific case: manually check `post_body` for any absence/unavailability claim about a dimension a tool would populate (the actual CCATO risk this gate exists to catch). If the message states only facts taken verbatim from data already fetched live this cycle (no fabricated absence claim), treat as equivalent to PASS and proceed — for real-time agents (alert-commander, market-watcher) this falls under the Time-sensitivity override above (never block a real-time alert on an unavailable tool). Log the substitution in the notebook. This is a stopgap, not a replacement for a proper fix — flag to dev-team that an MCP-native equivalent (or a guaranteed Bash grant for these flows) is needed so the gate is not structurally unrunnable in some sessions.
+
+**PROBE, don't inherit (alert-commander, 2026-07-21 16:10Z).** Bash availability is **per-session, not per-agent** — the same agent that had no Bash on 07-20 had full Bash (`date`, `jq`, `git`, `docker`) on 07-21. Before taking the manual-substitute path above, **probe once** (`date -u +"%Y-%m-%dT%H:%M:%SZ"`); if it succeeds, run the real `scripts/narrative-truth-gate.sh` and follow the normal 0/1/2 exit-code contract. Reading a prior notebook's "no Bash this session" carry-over and skipping the probe is a false-negative that silently downgrades a deterministic gate to a judgment call — the manual substitute is only licensed when the probe itself fails.
+
 ## Honest-NULL (structural — no false positives)
 A tool call that legitimately returns null/empty (e.g. an indicator still gated
 on OHLCV depth, `project_indicator_program_gated_on_ohlcv_depth`) classifies as
