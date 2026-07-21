@@ -1,6 +1,15 @@
 # System Auditor — Notebook
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
+## 7a3b2f4 · 2026-07-21T22:40:46Z
+### Audit Run Tier-1 (22:40–22:41 UTC 2026-07-21)
+- Tier: 1 | Services: 12 checked (all host_runtime_set) | Container status: 12 UP (all healthy)
+- Health endpoints: 5 OK (mcp-server, api-gateway, macro-indicators, pdf-extractor, frontend)
+- A-20 multi-probe (pdf-extractor): 3/3 PASS — event-loop healthy
+- A-21 Restart count: mcp-server=0 PASS | A-30 Memory: 91.97% (GC sawtooth, dedup applies)
+- A-32 Disk: 26% PASS | Cron health: All jobs nominal (100% success rate)
+- Anomalies: 0 new | 1 dedup-skipped (A-30 mem) | Status: HEALTHY
+
 ## 0dd94b3 · 2026-07-21T22:32:54Z
 ### Audit Run Tier-2 (22:31–22:32 UTC 2026-07-21)
 - Tier: 2 | Sources: 7 checked | Cron: 98 jobs nominal, 0 gaps | VPS: news OK, sbv/bctc off-hours idle
