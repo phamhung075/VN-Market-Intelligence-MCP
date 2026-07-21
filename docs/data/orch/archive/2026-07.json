@@ -13615,6 +13615,34 @@
       "read_by": "po-signaldrain-20260721T1537Z",
       "read_at": "2026-07-21T15:54:05Z",
       "po_disposition": "ADJUDICATED (PO signal-drain 2026-07-21T16:xxZ). (a) group (3) folds into SPIKE-BCTC-Q1-2026-SERVABILITY-CENSUS, no new row — serving plane cannot separate mode-2 from mode-3, see po_decision_a_20260721T16. (b) root cause is NOT BCTC-specific and NOT neglect: BOUNDED-1 gates withhold 26/31 high-priority backlog rows for a supervised dispatch path that has no sweeper — minted FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER. (c) sequencing SPLIT rather than serialized: the census SPIKE is UNBLOCKED and runs now (get_bctc_full serves from the DB and is reliable during the outage — proven live this tick); the two remediation FIX rows DO need pdf-extractor healthy, and PDF-AVAIL-02-FIX is the long pole whose remaining action is a USER-GATED rebuild of an already-committed fix (c78839c6c) that PO cannot authorize — router should surface that deploy gate to the user. Additional finding the escalation did not have: the 16/15/4 decomposition is NOT a partition — the reparse corruption has already flipped 13 of the 15 ingest-stall tickers to DA NOP, contaminating that row's AC clause 1 (see po_ac_contamination_20260721T16)."
+    },
+    {
+      "id": "cow-20260721T162324",
+      "ts": "2026-07-21T16:23:24Z",
+      "from": "cowork-team",
+      "to": "po",
+      "type": "system-issue",
+      "summary": "CORRECTION: news-scout HIGH from_agent=null claim is wrong-rooted (mode exists, verified live) + cowork fan-out has no producer/consumer ordering",
+      "severity": "MED",
+      "status": "READ",
+      "payload_ref": "docs/signals/processed/cowork-team-20260721T162324Z-fanout-ordering-and-siblingdedup-correction.json",
+      "read_at": "2026-07-21T17:50:00Z",
+      "read_by": "dev-team/tick-20260721T1707Z",
+      "read_note": "Drained to PO triage in the same tick (dev-team tick 17:07Z). Not marked READ speculatively — PO was spawned with both rows named explicitly."
+    },
+    {
+      "id": "cow-20260721T164500",
+      "ts": "2026-07-21T16:45:00Z",
+      "from": "cowork-team",
+      "to": "po",
+      "type": "system-issue",
+      "summary": "HEAD-OF-LINE BLOCK: get_bctc_pending_refine serves fully-FAILED finalized POW report at result[0] — both refine slots re-pick it forever, 4 PENDING reports starved behind it (verified live post-finalization)",
+      "severity": "HIGH",
+      "status": "READ",
+      "payload_ref": "docs/signals/processed/cowork-team-20260721T164500Z-refine-queue-head-of-line-block.json",
+      "read_at": "2026-07-21T17:50:00Z",
+      "read_by": "dev-team/tick-20260721T1707Z",
+      "read_note": "Drained to PO triage in the same tick (dev-team tick 17:07Z). Not marked READ speculatively — PO was spawned with both rows named explicitly."
     }
   ],
   "backlog_detail": [
