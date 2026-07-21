@@ -10587,36 +10587,120 @@
         "router_healthy_gate_positive_control": "POSITIVE CONTROL, per this row requirement to list healthy gates so the sweep is distinguishable from one that stopped early: the tier-1 heartbeat WRITE condition itself is healthy and NOT saturated — the script writes only on ALL_GREEN, downgrades to FAILURE if the write itself fails (never claims green without a verified write), and leaves the file untouched on FAILURE so age genuinely grows. Router verified this BEFORE going looking for the defect, so the finding is not the product of a search that only reports hits."
       },
       {
-        "id": "DESIGN-COWORK-FANOUT-PRODUCER-CONSUMER-ORDERING",
-        "type": "FIX",
-        "title": "cowork-team parallel fan-out has no producer/consumer ordering — alert-commander read the signal bus before its co-dispatched producers wrote to it, and went silent on a session with real >5% drops",
-        "status": "READY",
-        "priority": "P1",
+        "id": "DESIGN-COWORK-FANOUT-T6-MARKET-WATCHER-SLOT-ROUTING",
+        "type": "TASK",
+        "title": "market-watcher main.md: derive sub-flow from slot= parameter, fall back to wall-clock window table for ad-hoc invocation",
+        "zone": "docs/agents/market-watcher/",
         "size": "M",
-        "zone": "cross-service/",
-        "owner": "pm",
-        "next_agent": "pm",
+        "priority": "P1",
+        "status": "READY",
+        "created_at": "2026-07-21T18:30:00Z",
         "depends": [],
-        "supervised": true,
-        "created_at": "2026-07-21T17:24:33Z",
-        "created_by": "po/triage-20260721T1707",
-        "updated_at": "2026-07-21T18:14:57Z",
-        "updated_by": "po/decision-consumption-20260721T1811",
-        "origin_signal_id": "cow-20260721T162324",
-        "source_signal": "docs/signals/processed/cowork-team-20260721T162324Z-fanout-ordering-and-siblingdedup-correction.json",
-        "mechanism": "BGFAN-1 mandates run_in_background=true for every dispatcher spawn and spawn-fanout.md issues all matched slots in ONE parallel block, with no dependency ordering. When a tick matches both a PRODUCER (market-watcher -> price_anomaly; news-scout -> urgent_news/chain_catalyst) and a CONSUMER (alert-commander -> gates on those exact signal types), the consumer can complete its bus read before the producers have posted.",
-        "evidence_16_00Z_tick": "Dispatched together: news-scout-offhours, market-watcher-offhours, market-watcher-eod, alert-commander-critical. alert-commander ran ~16:10-16:15Z and reported zero verified_chain/chain_catalyst/price_anomaly on the bus, verified by explicit signal_type-filtered calls — its evidence was CLEAN, the bus genuinely WAS empty at read time. market-watcher-offhours then posted price_anomaly 8680 (GAS -6.98%, 2.89 sigma, 4.02x volume) and 8681 (D2D -3.30%, 52-week low) at ~16:17Z, AFTER alert-commander had exited silent.",
-        "why_this_matters_beyond_tidiness": "alert-commander's position-danger gate failed at condition 1/3 for want of price signals its SIBLING produced two minutes later, on a session with real >5% drops (GAS -6.98%, BSR -6.49%, GEX -5.16%). The silent exit was CORRECT given what it could see. The dispatch order is what made it blind. This is a market-facing miss, not an internal hygiene issue.",
-        "options_for_architect": "(a) order the fan-out into producer-wave then consumer-wave within a tick; (b) have consumers re-read the bus after a bounded wait when co-dispatched producers are known to be in flight; (c) accept and document that consumers lag producers by one tick. PO has NOT pre-selected one — this is a genuine design decision with a latency/complexity tradeoff and it belongs to architect. Note cowork-team correctly refused to self-modify its own dispatch contract.",
-        "second_order_in_scope": "R3 (match-slots.md Step 4b: multi-slot collision WARNs but never blocks) spawned market-watcher TWICE the same tick — the EOD slot fired late (~16:08-16:13Z) pushing the 16:09 dispatch into offhours, so TWO market-watcher cycles processed the SAME 08:32 closing prices four minutes apart. R3 is working as written; the written rule is what needs review. Fold into this design pass — same dispatcher, same tick-ordering root.",
-        "important_scoping_do_not_absorb": "This does NOT establish that get_alerts(type=price) is broken. alert-commander separately reported get_alerts(type=price) empty; prior art FIX-ALERT-SCAN-REJECT-STUB-BAR-P0 and FIX-ALERT-OPEN-ZERO-PRICE-RACE sit in that neighbourhood and were deliberately NOT re-filed. At least part of this cycle's blindness is dispatcher ordering, not detector failure. BOTH causes may be live — do not let this row absorb the detector question or close it by proxy.",
-        "acceptance": "Architecture brief selecting (a), (b) or (c) with the tradeoff stated, plus the decomposition into implementable rows. If (c) is chosen, the documentation must land somewhere a consumer agent actually reads, not only in the brief.",
-        "architecture_brief_ref": "docs/architecture-briefs/2026-07-21-cowork-fanout-producer-consumer-ordering.md",
-        "architect_design_summary": "Chose bounded async schedule_task recheck (variant of PO option b, not synchronous wait) over two-phase wave (a, breaks BGFAN-1 fire-and-forget + risks fire-election TTL lapse) or accept-and-document alone (c, row is market-facing). Mechanism: tick-snapshot.md Step 4.7 captures won_slots at dispatch time (last_fired is stamped at spawn not completion, so a consumer re-deriving co-dispatch after the fact would be silently defeated) -> surfaced through the already-shared cycle-bootstrap/SKILL.md tick-snapshot read every cowork agent uses (zero spawn-fanout.md prompt-template edit) -> alert-commander schedules ONE schedule_task recheck (~20min, cowork-schedule.json producer_settle_wait_seconds field) only when a co-dispatched gatherer producer is known AND its own read was empty AND this is not already a recheck (bounded, real discriminator, zero cost on quiet ticks). Prerequisite gap found: alert_commander SKILL_MANIFEST does not grant schedule_task today (apps/mcp-server/src/interface/mcp/bootstrap/agentBootstrap.ts:115-139). R3 folded in as root-cause fix: market-watcher/flow/main.md derives sub-flow from wall-clock time and discards the slot= the dispatcher already sends -- a late EOD-slot fire silently loses eod.md own deliverable, not just duplicate compute; match-slots.md Step 4b kept WARN-only (DDD: dispatcher cannot know same-trading-day-close domain fact). digest-daily flowpath/trigger_prompt signal confirmed orthogonal. 8-row PM decomposition T1-T8 in brief section 9.",
-        "po_ruling_deviation_accepted_20260721T1811": "DEVIATION FROM (a)/(b)/(c) — ACCEPTED. Architect was right to not pick one of my three literals, and the row's own options_for_architect text explicitly said PO had NOT pre-selected one. I verified BOTH brownfield facts the deviation rests on at source rather than accepting them: (F4) docs/agents/cowork-team/flow/last-fired.md:10 states 'AC-P1-7-1: last_fired written after successful spawn' — confirmed, last_fired is stamped at SPAWN, not completion, so any consumer re-deriving co-dispatch from it after the fact would read a slot as fired before its output exists and be silently defeated. That single fact kills the cheap version of (b) and justifies the tick-snapshot won_slots capture instead. (F7) docs/agents/market-watcher/flow/main.md:10-14 routes on wall-clock UTC windows only, and Step 2 ('Read current UTC time. Match the window above') never consumes the slot= the dispatcher already sends — confirmed, the parameter is discarded. Both facts hold. The chosen bounded-async schedule_task recheck is a better option than any of my three: it keeps BGFAN-1's parallel fire-and-forget contract untouched (the real cost of (a), compounded by the fire-election 600s TTL lapse risk during a multi-minute in-session wait), pays zero cost on quiet ticks (the real cost of (b)-as-worded), and does not leave a market-facing miss undefended (the disqualifier for (c)). Brief section 3 states the tradeoffs plainly as the row's acceptance required — including the two I most wanted named: detection latency goes to a bounded ~20min and NOT to zero, and a tick now has two possible verdicts so telemetry readers must check the recheck cycle too. Acceptance MET. Released to pm for the 8-row T1-T8 decomposition.",
-        "po_ruling_r3_folds_here_20260721T1811": "ITEM 4 RULED — FOLDS INTO THIS ROW, NO SEPARATE ROW MINTED. The market-watcher slot-routing defect (a late-firing market-watcher-eod falls through to the generic offhours cycle and loses eod.md's ledger + signal-file deliverable that Chef's 08:37Z dish consumes) is already decomposed HERE as T6 (+ optional doc-only T7) against brief section 5, and section 5's fix is the correct root-cause one: route by the slot= already sent, wall-clock table as no-slot fallback only. Minting a second row would split one root cause (a receiving flow discarding its dispatched identity and re-deriving from ambient clock) across two owners — the same defect shape as section 4.3, same dispatcher, same tick. I also endorse architect's refusal to flip match-slots.md Step 4b from WARN to BLOCK: the dispatcher cannot distinguish a legitimate two-dish tick from this incident without leaking market-domain knowledge into a generic scheduler, and blocking would break the documented intentional case. SEQUENCING INSTRUCTION FOR PM — T6 GOES FIRST, ahead of T1-T5. Three reasons: (a) T6 is the only strand that is market-facing DATA LOSS rather than detection latency — a lost eod.md deliverable is a missing artifact a downstream Chef dish depends on, strictly worse than an alert arriving ~20min late; (b) brief section 9 already records T6/T7 as having NO dependency on T1-T5 and being separately shippable, so there is no cost to promoting it; (c) T3 is the one strand that touches apps/mcp-server/ and must be sequenced behind the live qa full-suite run, so T1-T5 cannot complete promptly anyway — T6 is doc-only and unblocked right now. Parallelise T6 against T1/T2/T5 if two developers are available.",
-        "po_scope_hold_20260721T1811": "SCOPE HOLD REAFFIRMED at release. This row still does NOT own the get_alerts(type=price) detector question — important_scoping_do_not_absorb stands unchanged, prior art FIX-ALERT-SCAN-REJECT-STUB-BAR-P0 and FIX-ALERT-OPEN-ZERO-PRICE-RACE remain deliberately un-refiled, and BOTH causes may be live. Landing T1-T8 must NOT be read as closing the detector question by proxy. Architect correctly confirmed the digest-daily flow_path/trigger_prompt signal is orthogonal (different parallel_group, different field) — it does not fold in here either.",
-        "po_released_to_pm_at": "2026-07-21T18:14:57Z"
+        "note": "Root-cause fix for R3: late-firing market-watcher-eod loses eod.md deliverable. Design brief §5. PO sequencing: T6 ships first — market-facing DATA LOSS not latency.",
+        "updated_at": "2026-07-21T18:24:59Z"
+      },
+      {
+        "id": "DESIGN-COWORK-FANOUT-T1-TICK-SNAPSHOT-WON-SLOTS",
+        "type": "TASK",
+        "title": "tick-snapshot.md Step 4.7: capture won_slots array at dispatch time",
+        "zone": "docs/agents/cowork-team/",
+        "size": "S",
+        "priority": "P1",
+        "status": "TODO",
+        "created_at": "2026-07-21T18:30:00Z",
+        "depends": [],
+        "note": "Capture co-dispatched producer slots for cycle-bootstrap. Design brief §4.1. Parallel with T6.",
+        "updated_at": "2026-07-21T18:24:59Z"
+      },
+      {
+        "id": "DESIGN-COWORK-FANOUT-T5-COWORK-SCHEDULE-CONFIG",
+        "type": "TASK",
+        "title": "cowork-schedule.json: add producer_settle_wait_seconds and depends_on annotation",
+        "zone": "docs/data/",
+        "size": "S",
+        "priority": "P1",
+        "status": "TODO",
+        "created_at": "2026-07-21T18:30:00Z",
+        "depends": [],
+        "note": "Config 1200s default wait with rationale. Design brief §4.4. Parallel with T6.",
+        "updated_at": "2026-07-21T18:24:59Z"
+      },
+      {
+        "id": "DESIGN-COWORK-FANOUT-T2-CYCLE-BOOTSTRAP-EXTRACTION",
+        "type": "TASK",
+        "title": "cycle-bootstrap/SKILL.md Step -1: extract won_slots field into $CYCLE_SNAPSHOT",
+        "zone": ".claude/skills/cycle-bootstrap/",
+        "size": "S",
+        "priority": "P1",
+        "status": "TODO",
+        "created_at": "2026-07-21T18:30:00Z",
+        "depends": [
+          "DESIGN-COWORK-FANOUT-T1-TICK-SNAPSHOT-WON-SLOTS"
+        ],
+        "note": "Surface won_slots via shared bootstrap to all cowork agents. Design brief §4.2. Tier 2 after T1.",
+        "updated_at": "2026-07-21T18:24:59Z"
+      },
+      {
+        "id": "DESIGN-COWORK-FANOUT-T3-ALERT-COMMANDER-SCHEDULE-TASK-GRANT",
+        "type": "TASK",
+        "title": "alert_commander SKILL_MANIFEST: grant schedule_task tool + companion test",
+        "zone": "apps/mcp-server/",
+        "size": "S",
+        "priority": "P1",
+        "status": "TODO",
+        "created_at": "2026-07-21T18:30:00Z",
+        "depends": [],
+        "note": "Prerequisite tool grant (alerts can call schedule_task). Design brief §4.5. Must wait for qa full-suite.",
+        "updated_at": "2026-07-21T18:24:59Z"
+      },
+      {
+        "id": "DESIGN-COWORK-FANOUT-T4-ALERT-COMMANDER-RECHECK-LOGIC",
+        "type": "TASK",
+        "title": "alert-commander main.md + cycle.md: parse slot=, implement co-producer recheck guard",
+        "zone": "docs/agents/alert-commander/",
+        "size": "M",
+        "priority": "P1",
+        "status": "TODO",
+        "created_at": "2026-07-21T18:30:00Z",
+        "depends": [
+          "DESIGN-COWORK-FANOUT-T2-CYCLE-BOOTSTRAP-EXTRACTION",
+          "DESIGN-COWORK-FANOUT-T3-ALERT-COMMANDER-SCHEDULE-TASK-GRANT"
+        ],
+        "note": "Parse slot=/recheck= params, call schedule_task on empty bus with co-producers. Design brief §4.3. Tier 2b after T2, T3.",
+        "updated_at": "2026-07-21T18:24:59Z"
+      },
+      {
+        "id": "DESIGN-COWORK-FANOUT-T7-MATCH-SLOTS-CLARIFY",
+        "type": "TASK",
+        "title": "[OPTIONAL] match-slots.md Step 4b: clarify why WARN-only remains correct post-T6",
+        "zone": "docs/agents/cowork-team/",
+        "size": "S",
+        "priority": "P1",
+        "status": "TODO",
+        "created_at": "2026-07-21T18:30:00Z",
+        "depends": [
+          "DESIGN-COWORK-FANOUT-T6-MARKET-WATCHER-SLOT-ROUTING"
+        ],
+        "note": "R3 fold-in: doc-only clarifying comment. Design brief §5. Optional, low-priority. Tier 3 after T6.",
+        "updated_at": "2026-07-21T18:24:59Z"
+      },
+      {
+        "id": "DESIGN-COWORK-FANOUT-T8-QA-TEST-STRATEGY",
+        "type": "TASK",
+        "title": "[QA] Execute test strategy: T-1 through T-9 per brief §7",
+        "zone": "qa/",
+        "size": "L",
+        "priority": "P1",
+        "status": "TODO",
+        "created_at": "2026-07-21T18:30:00Z",
+        "depends": [
+          "DESIGN-COWORK-FANOUT-T1-TICK-SNAPSHOT-WON-SLOTS",
+          "DESIGN-COWORK-FANOUT-T2-CYCLE-BOOTSTRAP-EXTRACTION",
+          "DESIGN-COWORK-FANOUT-T4-ALERT-COMMANDER-RECHECK-LOGIC",
+          "DESIGN-COWORK-FANOUT-T6-MARKET-WATCHER-SLOT-ROUTING"
+        ],
+        "note": "QA: 9-point test strategy from brief §7. Tier 4 after T1, T2, T4, T6.",
+        "updated_at": "2026-07-21T18:24:59Z"
       }
     ],
     "review": [
@@ -11536,6 +11620,39 @@
             "no_action": "no new dev row minted; ops NOT re-fired (would duplicate in-flight SPIKE)."
           }
         }
+      },
+      {
+        "id": "DESIGN-COWORK-FANOUT-PRODUCER-CONSUMER-ORDERING",
+        "type": "FIX",
+        "title": "cowork-team parallel fan-out has no producer/consumer ordering — alert-commander read the signal bus before its co-dispatched producers wrote to it, and went silent on a session with real >5% drops",
+        "status": "IN_PROGRESS",
+        "priority": "P1",
+        "size": "M",
+        "zone": "cross-service/",
+        "owner": "pm",
+        "next_agent": "pm",
+        "depends": [],
+        "supervised": true,
+        "created_at": "2026-07-21T17:24:33Z",
+        "created_by": "po/triage-20260721T1707",
+        "updated_at": "2026-07-21T18:24:59Z",
+        "updated_by": "pm/decomposition-20260721T1830",
+        "origin_signal_id": "cow-20260721T162324",
+        "source_signal": "docs/signals/processed/cowork-team-20260721T162324Z-fanout-ordering-and-siblingdedup-correction.json",
+        "mechanism": "BGFAN-1 mandates run_in_background=true for every dispatcher spawn and spawn-fanout.md issues all matched slots in ONE parallel block, with no dependency ordering. When a tick matches both a PRODUCER (market-watcher -> price_anomaly; news-scout -> urgent_news/chain_catalyst) and a CONSUMER (alert-commander -> gates on those exact signal types), the consumer can complete its bus read before the producers have posted.",
+        "evidence_16_00Z_tick": "Dispatched together: news-scout-offhours, market-watcher-offhours, market-watcher-eod, alert-commander-critical. alert-commander ran ~16:10-16:15Z and reported zero verified_chain/chain_catalyst/price_anomaly on the bus, verified by explicit signal_type-filtered calls — its evidence was CLEAN, the bus genuinely WAS empty at read time. market-watcher-offhours then posted price_anomaly 8680 (GAS -6.98%, 2.89 sigma, 4.02x volume) and 8681 (D2D -3.30%, 52-week low) at ~16:17Z, AFTER alert-commander had exited silent.",
+        "why_this_matters_beyond_tidiness": "alert-commander's position-danger gate failed at condition 1/3 for want of price signals its SIBLING produced two minutes later, on a session with real >5% drops (GAS -6.98%, BSR -6.49%, GEX -5.16%). The silent exit was CORRECT given what it could see. The dispatch order is what made it blind. This is a market-facing miss, not an internal hygiene issue.",
+        "options_for_architect": "(a) order the fan-out into producer-wave then consumer-wave within a tick; (b) have consumers re-read the bus after a bounded wait when co-dispatched producers are known to be in flight; (c) accept and document that consumers lag producers by one tick. PO has NOT pre-selected one — this is a genuine design decision with a latency/complexity tradeoff and it belongs to architect. Note cowork-team correctly refused to self-modify its own dispatch contract.",
+        "second_order_in_scope": "R3 (match-slots.md Step 4b: multi-slot collision WARNs but never blocks) spawned market-watcher TWICE the same tick — the EOD slot fired late (~16:08-16:13Z) pushing the 16:09 dispatch into offhours, so TWO market-watcher cycles processed the SAME 08:32 closing prices four minutes apart. R3 is working as written; the written rule is what needs review. Fold into this design pass — same dispatcher, same tick-ordering root.",
+        "important_scoping_do_not_absorb": "This does NOT establish that get_alerts(type=price) is broken. alert-commander separately reported get_alerts(type=price) empty; prior art FIX-ALERT-SCAN-REJECT-STUB-BAR-P0 and FIX-ALERT-OPEN-ZERO-PRICE-RACE sit in that neighbourhood and were deliberately NOT re-filed. At least part of this cycle's blindness is dispatcher ordering, not detector failure. BOTH causes may be live — do not let this row absorb the detector question or close it by proxy.",
+        "acceptance": "Architecture brief selecting (a), (b) or (c) with the tradeoff stated, plus the decomposition into implementable rows. If (c) is chosen, the documentation must land somewhere a consumer agent actually reads, not only in the brief.",
+        "architecture_brief_ref": "docs/architecture-briefs/2026-07-21-cowork-fanout-producer-consumer-ordering.md",
+        "architect_design_summary": "Chose bounded async schedule_task recheck (variant of PO option b, not synchronous wait) over two-phase wave (a, breaks BGFAN-1 fire-and-forget + risks fire-election TTL lapse) or accept-and-document alone (c, row is market-facing). Mechanism: tick-snapshot.md Step 4.7 captures won_slots at dispatch time (last_fired is stamped at spawn not completion, so a consumer re-deriving co-dispatch after the fact would be silently defeated) -> surfaced through the already-shared cycle-bootstrap/SKILL.md tick-snapshot read every cowork agent uses (zero spawn-fanout.md prompt-template edit) -> alert-commander schedules ONE schedule_task recheck (~20min, cowork-schedule.json producer_settle_wait_seconds field) only when a co-dispatched gatherer producer is known AND its own read was empty AND this is not already a recheck (bounded, real discriminator, zero cost on quiet ticks). Prerequisite gap found: alert_commander SKILL_MANIFEST does not grant schedule_task today (apps/mcp-server/src/interface/mcp/bootstrap/agentBootstrap.ts:115-139). R3 folded in as root-cause fix: market-watcher/flow/main.md derives sub-flow from wall-clock time and discards the slot= the dispatcher already sends -- a late EOD-slot fire silently loses eod.md own deliverable, not just duplicate compute; match-slots.md Step 4b kept WARN-only (DDD: dispatcher cannot know same-trading-day-close domain fact). digest-daily flowpath/trigger_prompt signal confirmed orthogonal. 8-row PM decomposition T1-T8 in brief section 9.",
+        "po_ruling_deviation_accepted_20260721T1811": "DEVIATION FROM (a)/(b)/(c) — ACCEPTED. Architect was right to not pick one of my three literals, and the row's own options_for_architect text explicitly said PO had NOT pre-selected one. I verified BOTH brownfield facts the deviation rests on at source rather than accepting them: (F4) docs/agents/cowork-team/flow/last-fired.md:10 states 'AC-P1-7-1: last_fired written after successful spawn' — confirmed, last_fired is stamped at SPAWN, not completion, so any consumer re-deriving co-dispatch from it after the fact would read a slot as fired before its output exists and be silently defeated. That single fact kills the cheap version of (b) and justifies the tick-snapshot won_slots capture instead. (F7) docs/agents/market-watcher/flow/main.md:10-14 routes on wall-clock UTC windows only, and Step 2 ('Read current UTC time. Match the window above') never consumes the slot= the dispatcher already sends — confirmed, the parameter is discarded. Both facts hold. The chosen bounded-async schedule_task recheck is a better option than any of my three: it keeps BGFAN-1's parallel fire-and-forget contract untouched (the real cost of (a), compounded by the fire-election 600s TTL lapse risk during a multi-minute in-session wait), pays zero cost on quiet ticks (the real cost of (b)-as-worded), and does not leave a market-facing miss undefended (the disqualifier for (c)). Brief section 3 states the tradeoffs plainly as the row's acceptance required — including the two I most wanted named: detection latency goes to a bounded ~20min and NOT to zero, and a tick now has two possible verdicts so telemetry readers must check the recheck cycle too. Acceptance MET. Released to pm for the 8-row T1-T8 decomposition.",
+        "po_ruling_r3_folds_here_20260721T1811": "ITEM 4 RULED — FOLDS INTO THIS ROW, NO SEPARATE ROW MINTED. The market-watcher slot-routing defect (a late-firing market-watcher-eod falls through to the generic offhours cycle and loses eod.md's ledger + signal-file deliverable that Chef's 08:37Z dish consumes) is already decomposed HERE as T6 (+ optional doc-only T7) against brief section 5, and section 5's fix is the correct root-cause one: route by the slot= already sent, wall-clock table as no-slot fallback only. Minting a second row would split one root cause (a receiving flow discarding its dispatched identity and re-deriving from ambient clock) across two owners — the same defect shape as section 4.3, same dispatcher, same tick. I also endorse architect's refusal to flip match-slots.md Step 4b from WARN to BLOCK: the dispatcher cannot distinguish a legitimate two-dish tick from this incident without leaking market-domain knowledge into a generic scheduler, and blocking would break the documented intentional case. SEQUENCING INSTRUCTION FOR PM — T6 GOES FIRST, ahead of T1-T5. Three reasons: (a) T6 is the only strand that is market-facing DATA LOSS rather than detection latency — a lost eod.md deliverable is a missing artifact a downstream Chef dish depends on, strictly worse than an alert arriving ~20min late; (b) brief section 9 already records T6/T7 as having NO dependency on T1-T5 and being separately shippable, so there is no cost to promoting it; (c) T3 is the one strand that touches apps/mcp-server/ and must be sequenced behind the live qa full-suite run, so T1-T5 cannot complete promptly anyway — T6 is doc-only and unblocked right now. Parallelise T6 against T1/T2/T5 if two developers are available.",
+        "po_scope_hold_20260721T1811": "SCOPE HOLD REAFFIRMED at release. This row still does NOT own the get_alerts(type=price) detector question — important_scoping_do_not_absorb stands unchanged, prior art FIX-ALERT-SCAN-REJECT-STUB-BAR-P0 and FIX-ALERT-OPEN-ZERO-PRICE-RACE remain deliberately un-refiled, and BOTH causes may be live. Landing T1-T8 must NOT be read as closing the detector question by proxy. Architect correctly confirmed the digest-daily flow_path/trigger_prompt signal is orthogonal (different parallel_group, different field) — it does not fold in here either.",
+        "po_released_to_pm_at": "2026-07-21T18:14:57Z",
+        "status_note": "Decomposed into 8 atomic tasks T1-T8; T6 ships first per PO order."
       }
     ]
   },
