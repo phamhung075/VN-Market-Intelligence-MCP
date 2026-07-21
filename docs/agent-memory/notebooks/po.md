@@ -1,6 +1,25 @@
 # PO Notebook
 
-_Last: 2026-07-21T15:45Z (router signal-drain — 5 assigned rows triaged, 1 SPIKE minted, drain-dangle escalated BLOCKING)_
+_Last: 2026-07-21T16:01Z (router signal-drain — 5 NEW rows RESOLVED, 1 FIX minted, prior-pass "no mint" on loop-closure OVERRIDDEN on new evidence)_
+
+## Tick 2026-07-21T16:01Z — router signal-drain (scope_correction + cowork + 3 auditor)
+
+One clean orch-apply write (Stage 0/1 PASS, conservation 561→562 tasks / 159 signals held, arrays intact — the map→array class avoided). All 5 po-addressed NEW rows → RESOLVED; `po-20260720T052606` left NEW deliberately (to=unified-agent, not mine). Transform persisted → `scripts/po-signaldrain-20260721T16-bctcscope-cowork-loopclosure.jq`.
+
+**(a) group (3) = FOLD, no new row.** `get_bctc_full` this tick returns the literal `Chua co du lieu BCTC` for NVL/SSI/VCI/HCM — byte-identical to MSN, a confirmed 15T mode-2 member — while VNM/VIC return the `[CORRUPT DATA — SKIP] total_assets=0` mode-1 banner. Serving plane separates mode-1 cleanly but CANNOT separate mode-2 from mode-3, exactly as the census SPIKE's own method says. Minting a 4th row would mint an unmeasured mode. Folded into the SPIKE's census input.
+
+**★ The 16/15/4 decomposition is NOT a partition — new, nobody had this.** 13 of the 15 ingest-stall tickers now show ĐÃ NỘP with submission dates 07-19/07-20 — precisely the NGAY-NOP-flip window of the in-flight reparse row. The corruption has SPREAD INTO the mode-2 cohort, and 15T's AC clause 1 ("no longer reports QUÁ HẠN") is now satisfied BY THE CORRUPTION, not by any fix. Only the conjunctive AND with clause 2 prevents a 13/15 false-green today. Recorded on the row: never score clause 1 alone, never drop clause 2, re-derive cohort membership from the serving plane (calendar status is now a corrupted discriminator).
+
+**★ (b) OVERRODE the prior pass's "instance, not new mint".** Prior tick called 15T "dispatch-ready" and declined to mint. That is FALSE and I minted **FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER**. Replaying the promote script's own predicates live: 26 of 31 high-priority BACKLOG rows are structurally BOUNDED-1-ineligible (16 by NON-DEV-OWNER-unrouted, 12 supervised, 11 plan_only); only 5 are eligible. 15T is gated forever (owner=ops + next_agent absent + no detail entry), so it could never have dispatched. The gates are correct AS DESIGNED — they withhold rows for a "router-adjudicated path" that **has no sweeper**. Verified NOT a board row anywhere (the 4-loop audit lives only in a memory file), so this is a mint, not a duplicate; cross-linked to SPIKE-BOUNDED1-ELIGIBILITY-CONTRACT-REVIEW (that asks if gates are buggy; this asks where gated rows go).
+
+**(c) sequencing SPLIT, not serialized — corrected the router.** The census SPIKE is UNBLOCKED and runs NOW: `get_bctc_full` serves from the DB and was demonstrably reliable during the outage (three distinguishable outcomes live — servable HPG/FPT, corrupt VNM/VIC, absent NVL/SSI/VCI/HCM). pdf-extractor is needed for INGEST, not serving. Only the two remediation FIX rows wait on it; PDF-AVAIL-02-FIX is the long pole and its remaining action is a USER-GATED rebuild of already-committed c78839c6c.
+
+**cowork cow-20260721T153000 = root cause CONFIRMED, two claims CORRECTED, no new row.** Mechanism is exact: `drain-signals.js:77` skips iff array OR none of from/source/type/signal_type; line 78 never moves/unlinks. Live: 47/47 top-level cowork files flat, 121/125 in processed/ enveloped — shape predicts drain success. But (1) "96 files/day accretion" is unsupported — 43/47 of the floor is one stale 07-10/07-11 batch and cowork has drained normally since 07-14 (112 files); real non-drainable accretion ≈1/week. (2) Option A alone canNOT clear the existing 47 — the skip path never removes anything, so the one-time sweep is REQUIRED, not optional, and is the only clause that clears the >50 guard today. All covered by CLEAN-COWORK acceptance clauses 1-4.
+
+**Auditor rows:** A-20 pdf → corroboration on PDF-AVAIL-02-FIX (rbc HELD at 6, same episode; re-emits ≠ failed fix — it has not run anywhere). api-gateway CURL_ERR → downstream symptom of the pdf outage, NOT an independent defect (endpoint is UP and correctly self-reporting `degraded`); auditor was right, the earlier port-3001 dismissal was the router's error. A-30 memory → real, router holds the rebuild; no PO dispatch, no restart.
+
+**Lesson — "dispatch-ready" is a claim about the dispatcher, not the row.** A row with a clear AC and a named owner can still be structurally undispatchable. Check the promote predicates before calling anything ready; ownership metadata on a BACKLOG row confers no dispatch.
+
 
 ## Tick 2026-07-21T15:45Z — router signal-drain (5 NEW PO rows)
 
