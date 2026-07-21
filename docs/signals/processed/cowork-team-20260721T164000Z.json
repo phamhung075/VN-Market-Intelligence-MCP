@@ -18,11 +18,17 @@
     "session_blind": false,
     "leader_lock": "acquired",
     "election_lock_id": "cron:cowork:2026-07-21T16:30Z",
-    "matched_slots": ["refine-bctc-slot-4"],
-    "won_slots": ["refine-bctc-slot-4"],
+    "matched_slots": [
+      "refine-bctc-slot-4"
+    ],
+    "won_slots": [
+      "refine-bctc-slot-4"
+    ],
     "held_by_other": [],
     "all_held": false,
-    "spawned": ["docs/agents/refine_bctc_md/flow/main.md"],
+    "spawned": [
+      "docs/agents/refine_bctc_md/flow/main.md"
+    ],
     "errors": [],
     "one_shots": [],
     "pressure_mode": "adaptive",
@@ -32,11 +38,17 @@
     "suppressed_cadence": [],
     "downgraded": [],
     "chef_mutex_applied": false,
-    "due_reasons": { "refine-bctc-slot-4": "cron" },
-    "cadence_minutes": { "refine-bctc-slot-4": null },
+    "due_reasons": {
+      "refine-bctc-slot-4": "cron"
+    },
+    "cadence_minutes": {
+      "refine-bctc-slot-4": null
+    },
     "cadence_note": "policy_id=bctc-offmarket + calendar_status=unknown → _cron_fallback=true, so cron governs and the slot stays due. The _cron_fallback branch is evaluated BEFORE the interval_minutes==null suppression branch — order matters; a reordering would silently suppress every bctc slot on unknown/open/half_day.",
     "last_fired_timestamp": "2026-07-21T16:39:38Z",
-    "last_fired_slots": ["refine-bctc-slot-4"],
+    "last_fired_slots": [
+      "refine-bctc-slot-4"
+    ],
     "last_fired_write_errors": null,
     "last_fired_prior_value": "2026-07-19T16:34:33.974Z",
     "last_fired_gap_note": "Prior stamp was 07-19, not 07-20, for a daily '30 16 * * *' slot — the 07-20 fire never happened. Consistent with the already-known 07-20 master-cron gap (remedy is operational: re-arm crons after session restart). NOT filed as a defect row.",
@@ -91,5 +103,11 @@
       "assembled": "market_context len=10964, macro_snapshot keys=fetchedAt,source_tier,text; staging files cleaned via trap EXIT"
     },
     "envelope_note": "Written to the enveloped schema {from,to,type,payload,priority,createdAt} per telemetry.md line 5 INVARIANT so this file actually drains instead of joining the 54-file skip floor."
+  },
+  "_processed": {
+    "fingerprint": "93b931b629add0795dfbd0193a55673bdea57e374de2d0ddeeddf1626a948a37",
+    "processedAt": "2026-07-21T16:49:28Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }
