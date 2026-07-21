@@ -1,0 +1,9 @@
+{
+  "from": "agents-architect",
+  "to": "agent-father",
+  "type": "brief_complete",
+  "payload": "docs/architecture-briefs/2026-07-21-orchestration-health-agent.md",
+  "priority": "normal",
+  "createdAt": "2026-07-21T15:00:23Z",
+  "notes": "Implement new recurring agent orch-sentinel per §7 file list. agent_type=cowork is the closest create.md template fit but the flow/tools/registration set is non-standard (system-auditor-shaped, not a plain cycle.md cowork agent) — follow §7's precedent-mirror column per file, do not use the plain cowork template verbatim. Zero apps/** dependency, zero new MCP tool, zero cron registration blocked on anything landing first (unlike the D-FLEET pilot). Two dispatch/tree-map registration edits (§7) are Architect/claude-manager-helper-owned per tree-map.md Write Ownership — route those two edits accordingly rather than agent-father hand-editing outside its normal 3-location registration. Resource budget (§6) proposed APPROVED but flagged for a PO mandatory-critique pass before the crons go live, consistent with the Host-Load Budget Rule."
+}
