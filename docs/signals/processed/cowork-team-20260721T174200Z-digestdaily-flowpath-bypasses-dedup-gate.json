@@ -40,5 +40,11 @@
     "action_taken_this_tick": "Spawned docs/agents/digest-predict/flow/main.md (the trigger_prompt target), NOT flow_path, so the dedup gate ran. Deviation from spawn-fanout.md is deliberate and recorded in the tick telemetry (docs/signals/cowork-team-20260721T173930Z.json).",
     "cowork_team_did_not": "edit cowork-schedule.json slot definitions, edit spawn-fanout.md, mint or edit any board row, or mark any signal_queue row READ.",
     "requested_of_po": "Route to architect to decide which field is authoritative, and fold in FIX-FB-WEEKEND-DEDUP-GATE if the answer generalises. Until then the dispatcher will keep preferring trigger_prompt when the two disagree, since that is the safe side of the fork."
+  },
+  "_processed": {
+    "fingerprint": "6b2ddc99c1278f9c513fb97b1e2ccf169db9b71871dfb509ca73abc87a09fc6a",
+    "processedAt": "2026-07-21T17:45:21Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }
