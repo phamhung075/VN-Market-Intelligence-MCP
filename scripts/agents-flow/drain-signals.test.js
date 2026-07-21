@@ -245,6 +245,25 @@ function cleanup(dir) {
 //   (3) the REAL scripts/orch-validate.mjs (bun — see its own #!/usr/bin/env bun shebang;
 //       plain node cannot import its .ts schema dependency) exits 0 against the harness copy
 // ---------------------------------------------------------------------------
+// FIX-DRAIN-TEST-HARNESS-ORCH-HELPER-COPY-LIST — derive the helper-script copy list from
+// orch-apply.sh's OWN source instead of hand-maintaining a parallel array. orch-apply.sh
+// invokes every helper via the fixed idiom `bun "${REPO_ROOT}/scripts/<name>.<ext>" ...`
+// (see its Stage 0/1.5/2 blocks) — scanning for that pattern makes the harness self-updating:
+// the next helper orch-apply.sh grows (like orch-stamp-updated-at.mjs before this fix) is
+// picked up automatically the next time this test runs, with no second file to remember to
+// touch. Root-cause fix, not just backfilling the one symptom file.
+function deriveOrchApplyHelpers() {
+  const src = fs.readFileSync(path.join(REPO_ROOT, 'scripts/orch-apply.sh'), 'utf8');
+  const re = /\$\{REPO_ROOT\}\/scripts\/([A-Za-z0-9_-]+\.(?:sh|mjs|js))/g;
+  const found = new Set();
+  let m;
+  while ((m = re.exec(src)) !== null) found.add(`scripts/${m[1]}`);
+  if (found.size === 0) {
+    throw new Error('deriveOrchApplyHelpers(): matched 0 helpers in orch-apply.sh — regex is stale, fix it before trusting this harness');
+  }
+  return [...found];
+}
+
 function makeOrchRefHarness() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'drain-orchref-test-'));
   fs.mkdirSync(path.join(dir, 'scripts/agents-flow'), { recursive: true });
@@ -253,7 +272,7 @@ function makeOrchRefHarness() {
   fs.mkdirSync(path.join(dir, 'apps/mcp-server/src/infrastructure'), { recursive: true });
 
   fs.copyFileSync(SRC_SCRIPT, path.join(dir, 'scripts/agents-flow/drain-signals.js'));
-  for (const rel of ['scripts/orch-apply.sh', 'scripts/orch-validate.mjs', 'scripts/orch-conservation-check.mjs']) {
+  for (const rel of ['scripts/orch-apply.sh', ...deriveOrchApplyHelpers()]) {
     fs.copyFileSync(path.join(REPO_ROOT, rel), path.join(dir, rel));
   }
   fs.copyFileSync(
