@@ -1559,7 +1559,9 @@
         "summary": "A-30 mcp-server memory: discriminator ESCALATE (first non-FP). 8/8 samples 96.26-96.70%, 0 reclamation dips/140s, VmRSS ~2.86GiB near 3GiB cap, uptime ~7h restart_count 0 (not-yet-OOMKilled). Loss of reclamation = imminent OOM. ASK: ops assess proactive CLEAN restart before disruptive OOM-kill (caveat OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN); prioritize root FIX-MCP-MEMORY-CODE-LEAK.",
         "severity": "HIGH",
         "status": "NEW",
-        "payload_ref": "scripts/audits/verify-a30-mcp-memory-reclamation.sh"
+        "payload_ref": "scripts/audits/verify-a30-mcp-memory-reclamation.sh",
+        "router_reconcile": "SUPERSEDED-EVIDENCE (router reconcile): A-30 RAW-VERIFY by system-auditor commit dd68f7452 (13 samples @23:42Z) = BENIGN — clear GC sawtooth 2.962->2.883 GiB reclamation dips, OOMKilled=false, peak 98.73% NOT sustained >97%, oscillating baseline 94-97%. This 8-sample no-dips first-non-FP escalation under-sampled and missed the reclamation phase. OPS: corroborate before ANY mcp-server intervention — do NOT restart on this alone. Discriminator-FP instance for FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE.",
+        "router_reconcile_at": "2026-07-21T23:50:18Z"
       },
       {
         "id": "sys-20260721T234132-3f03",
