@@ -32,5 +32,11 @@
       "recommended_fix": "Add an explicit EP-3 clause: when CYCLE_SNAPSHOT is set, CYCLE_START_UTC := snapshot.created_at, and require snapshot freshness (e.g. age <= 20 min) instead of the >= comparison."
     }
   ],
-  "corroboration_note": "Separately — c177 signal #8679 flagged an unexplained divergence (Brent +2.71% to $91.41 at +2 sigma while VN oil_gas was the worst sector: GAS -6.98%, BSR -6.49%, PLX -4.81%) and asked market-watcher for volume confirmation. docs/signals/price_anomaly_20260721T1613.json, written independently ~1 min earlier, supplies it: GAS 4.0x average volume, DIG 1.9x, BSR/PLX ~1.5x — capitulation on heavy turnover, versus GEX 0.87x and FPT 0.98x grinding down on average-or-below volume. Two agents reached the same divergence independently. No action needed; recorded so the convergence is not re-derived a third time."
+  "corroboration_note": "Separately — c177 signal #8679 flagged an unexplained divergence (Brent +2.71% to $91.41 at +2 sigma while VN oil_gas was the worst sector: GAS -6.98%, BSR -6.49%, PLX -4.81%) and asked market-watcher for volume confirmation. docs/signals/price_anomaly_20260721T1613.json, written independently ~1 min earlier, supplies it: GAS 4.0x average volume, DIG 1.9x, BSR/PLX ~1.5x — capitulation on heavy turnover, versus GEX 0.87x and FPT 0.98x grinding down on average-or-below volume. Two agents reached the same divergence independently. No action needed; recorded so the convergence is not re-derived a third time.",
+  "_processed": {
+    "fingerprint": "799f7f719f50995b3775806dff79443ebb4b988ab2c9875d1f9a33cc95ba2291",
+    "processedAt": "2026-07-21T16:22:43Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

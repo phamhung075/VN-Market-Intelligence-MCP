@@ -14,7 +14,7 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { execFileSync } = require('child_process');
+const { execFileSync, spawnSync } = require('child_process');
 
 const REPO_ROOT = path.resolve(__dirname, '..', '..');
 const SRC_SCRIPT = path.join(REPO_ROOT, 'scripts/agents-flow/drain-signals.js');
@@ -320,6 +320,69 @@ function makeOrchRefHarness() {
   }
   assert('FIX-DRAIN-PAYLOADREF gate (3) orch-validate.mjs exits 0', validateOk, true);
   if (!validateOk) console.log(`        orch-validate stderr: ${validateErr}`);
+
+  cleanup(h);
+}
+
+// ---------------------------------------------------------------------------
+// FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE / ENOBUFS regression — repointPayloadRefs()'s
+// `jq` execFileSync call had no maxBuffer, so Node's default (measured 1,048,576 bytes
+// on this machine) silently truncated the read whenever the jq {doc,changed} output —
+// essentially the WHOLE orch-state document plus a small wrapper — exceeded ~1MB. The
+// live docs/data/orch/orch-state.json crossed that line on 2026-07-21 (measured
+// 1,109,434 bytes), so this was not hypothetical: the repoint has been permanently
+// dead in production since that point (the file only grows), surfacing only as a
+// swallowed "non-fatal" WARN and a payload_ref that never actually moved — the exact
+// mechanism behind this row's recurring_bug_count=4.
+//
+// Reuses the orch-ref harness above but pads the seeded orch-state.json fixture past
+// 1MB via `dashboard_section_cache` (z.record(z.unknown()).optional() in
+// orchStateSchema.ts — arbitrary-shape, schema-safe filler, does not affect the
+// conservation-guard task_total/signal_total counts) so the REAL jq subprocess output
+// genuinely exceeds Node's default execFileSync maxBuffer — no mocking of the failure.
+// ---------------------------------------------------------------------------
+{
+  const h = makeOrchRefHarness();
+  const sigDir = path.join(h, 'docs/signals');
+  const orchStatePath = path.join(h, 'docs/data/orch/orch-state.json');
+  const scriptPath = path.join(h, 'scripts/agents-flow/drain-signals.js');
+
+  const sigFile = {
+    from: 'test-harness', to: 'po', type: 'gate-verify-large', priority: 'LOW',
+    createdAt: '2026-07-21T00:00:00Z', payload: { note: 'ENOBUFS maxBuffer regression gate' },
+  };
+  fs.writeFileSync(path.join(sigDir, 'gate-verify-large-signal.json'), JSON.stringify(sigFile));
+
+  // Pad past Node's default execFileSync maxBuffer (1,048,576 bytes) with margin —
+  // mirrors the live orch-state.json's real 2026-07-21 overflow (1,109,434 bytes).
+  const PADDING_BYTES = 1_300_000;
+  const orchStateFixture = {
+    head: { status: 'idle', active_task_id: null, next_agent: null },
+    task_board: { backlog: [], active_sprints: [] },
+    dashboard_section_cache: { _test_padding: 'x'.repeat(PADDING_BYTES) },
+    signal_queue: {
+      _updated_at: '2026-07-21T00:00:00Z',
+      _updated_by: 'test-harness',
+      rows: [
+        { id: 'gate-verify-large-row', summary: 'gate verify large', severity: 'LOW', status: 'NEW', payload_ref: 'docs/signals/gate-verify-large-signal.json' },
+      ],
+      archive: [],
+    },
+  };
+  const fixtureText = JSON.stringify(orchStateFixture, null, 2);
+  fs.writeFileSync(orchStatePath, fixtureText);
+  assert('ENOBUFS gate precondition: fixture itself exceeds Node default maxBuffer (1,048,576 bytes)', fixtureText.length > 1_048_576, true);
+
+  const run = spawnSync('node', [scriptPath], { encoding: 'utf8' });
+  assert('ENOBUFS gate: drain process itself does not crash on a >1MB orch-state.json', run.status, 0);
+
+  const finalOrch = JSON.parse(fs.readFileSync(orchStatePath, 'utf8'));
+  const row = finalOrch.signal_queue.rows.find((r) => r.id === 'gate-verify-large-row');
+  assert('ENOBUFS gate: file moved to processed/ regardless of orch-state.json size', fs.existsSync(path.join(sigDir, 'processed/gate-verify-large-signal.json')), true);
+  assert('ENOBUFS gate: payload_ref repointed to processed/ path even when orch-state.json > 1MB', row && row.payload_ref, 'docs/signals/processed/gate-verify-large-signal.json');
+  if (!row || row.payload_ref !== 'docs/signals/processed/gate-verify-large-signal.json') {
+    console.log(`        ENOBUFS gate stderr: ${run.stderr}`);
+  }
 
   cleanup(h);
 }

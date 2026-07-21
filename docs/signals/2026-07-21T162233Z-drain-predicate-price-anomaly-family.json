@@ -1,0 +1,32 @@
+{
+  "from": "developer",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "medium",
+  "createdAt": "2026-07-21T16:22:33Z",
+  "payload": "drain-signals.js's non-routable-shape predicate (accepts only from/source/type/signal_type at root) never matches schema price_anomaly_v1 (root keys: schema/generated_at/summary/market_context/tickers/dish_window/data_quality only). Like the cowork-team telemetry family, these files are neither moved nor unlinked on skip -- they accrete in docs/signals/ forever. Unlike telemetry, price_anomaly files carry real, actionable market signal that no agent ever receives via the drain path.",
+  "evidence": {
+    "affected_files_count": 7,
+    "affected_files": [
+      "docs/signals/price_anomaly_20260702T1607.json",
+      "docs/signals/price_anomaly_20260703T1600.json",
+      "docs/signals/price_anomaly_20260704T1605.json",
+      "docs/signals/price_anomaly_20260713T1616.json",
+      "docs/signals/price_anomaly_20260716T1608.json",
+      "docs/signals/price_anomaly_20260717T1608.json",
+      "docs/signals/price_anomaly_20260721T1613.json"
+    ],
+    "most_recent_example": {
+      "file": "docs/signals/price_anomaly_20260721T1613.json",
+      "schema": "price_anomaly_v1",
+      "generated_at": "2026-07-21T16:13:00Z",
+      "vn_index": 1730.56,
+      "vn_index_delta": -12.95,
+      "worst_sector_1d": "Dau khi (oil_gas) -6.05%",
+      "note": "Live market data, generated minutes before this signal, never routed to any addressee by drain."
+    },
+    "predicate_location": "scripts/agents-flow/drain-signals.js — non-routable-shape guard: `if (Array.isArray(j) || (j.from == null && j.source == null && j.type == null && j.signal_type == null)) { ... continue; }`"
+  },
+  "scope_note": "PO characterized this morning's drain-skip blast radius as cowork-team telemetry only (47 flat files, covered by CLEAN-COWORK-DISPATCHER-TELEMETRY-DRAIN-DIR). That characterization is incomplete: price_anomaly_* is a second, distinct undrainable family with a different root cause (schema/generated_at shape, not cowork-team flat-file shape) and materially different stakes (real market signal vs telemetry). Not fixed here, not scoped into FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE, no board row minted -- scope adjudication (new row vs extend CLEAN-COWORK-DISPATCHER-TELEMETRY-DRAIN-DIR vs something else) is PO's call.",
+  "found_during": "FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE ENOBUFS/maxBuffer repair (developer, 2026-07-21T16:1x-16:2xZ)"
+}

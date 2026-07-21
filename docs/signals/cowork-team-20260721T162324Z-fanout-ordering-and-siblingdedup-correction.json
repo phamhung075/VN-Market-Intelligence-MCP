@@ -1,0 +1,62 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "system-issue",
+  "priority": "medium",
+  "createdAt": "2026-07-21T16:23:24Z",
+  "payload": {
+    "tick": "2026-07-21T16:15Z",
+    "origin": "post-hoc analysis of the 16:00Z 4-slot fan-out (all 4 agents returned before this tick)",
+    "findings": [
+
+      {
+        "ref": "FINDING-1",
+        "title": "CORRECTION — news-scout HIGH escalation is wrong-rooted; get_agent_signals(from_agent=null) WORKS. Do not schedule a design/build task.",
+        "severity": "HIGH-as-filed, actually NOT-A-DEFECT",
+        "time_critical": true,
+        "why_now": "news-scout-20260721T161414Z.json drained routed-to-po at 2026-07-21T16:2xZ this tick. Read as written it asks PO for a DESIGN DECISION to add an 'all producers' mode. That mode already exists, ships, and is reachable. Acting on it as written burns a build cycle on a feature that is already live.",
+        "claim_as_filed": "news-scout reported that stage-bootstrap.md Step 0c calls get_agent_signals with from_agent=null, that 'the live tool rejects this', that the documented non-fatal branch then sets SIBLING_WINDOW_CACHE=[] so the DMS-1 double-fire guard silently suppresses nothing, and concluded 'the tool has no all-producers mode, so this needs a design decision'.",
+        "disproof": {
+          "source_evidence": "apps/mcp-server/src/interface/mcp/tools/news-analysis/agentSignalTools.ts:471 declares from_agent: z.string().nullable().optional() — null is ACCEPTED by the Zod schema, not rejected. Line 507-510 implements the dedicated all-producers branch (getRecentSignals cross-producer window query, default 0.25h). Line 525 handles from_agent===undefined separately. The feature is implemented, reachable, and not dead code.",
+          "live_evidence": "Called through the SAME gateway transport news-scout uses: call_tool(server='vn-market', tool='get_agent_signals', arguments={from_agent: null, hours_back: 0.25}) -> returned 'Tin hieu cho all-producers (94 tin)'. It works.",
+          "helper_evidence": "apps/mcp-server/src/tools/signals/getRecentSignals.ts filters created_at >= now-windowSeconds AND status IN ('committed','published','read'), explicitly NOT constrained by expires_at. Reads correct on its face."
+        },
+        "probable_cause_of_the_false_report": "news-scout's cycle ran 16:09-16:17Z and spans the mcp-server restart at 16:10:02Z (docker inspect StartedAt=2026-07-21T16:10:02.506Z). news-scout itself logged 'one transient gateway EOF on host.docker.internal:3000/sse, recovered on retry'. A transport failure during that restart was almost certainly misread as a tool-contract rejection. UNPROVEN as the specific mechanism — stated as probable cause, not fact.",
+        "what_is_still_genuinely_open": [
+          "docs/agents/market-watcher/flow/main.md:66 passes the identical from_agent: null (comment at :70 'from_agent=null -> all producers, 15-minute window'). That call is CORRECT per the tool contract — no change needed. Recorded so a fixer does not 'fix' a working call site.",
+          "news-scout's separate claim that agent:'all' returned #8677 and #8679 but MISSED #8678 was NOT verified by cowork-team. Untested. Do not treat as established.",
+          "OPEN QUESTION, NOT A FINDING: the live from_agent=null call returned 94 rows for a 0.25h window, all alert-engine VERIFIED_DECISION, carrying expires_at stamps HOURS in the past (04:00, 10:30, 15:45) — an expiry preceding creation does not reconcile with a created_at-bounded window. The query reads correct, so cowork-team is NOT calling this a bug. Worth exactly one look by whoever owns agent_signals."
+        ],
+        "requested_action": "Before triaging news-scout-20260721T161414Z.json finding #1: re-read it against this correction. Recommend closing its HIGH as NOT-A-DEFECT (infra-transient misattribution) and instead minting a much smaller doc/robustness item — the flow's documented non-fatal branch converts a transport failure into a silently-empty dedup cache, which is the real hazard and is a different bug from the one reported."
+      },
+
+      {
+        "ref": "FINDING-2",
+        "title": "cowork-team parallel fan-out has no producer/consumer ordering — alert-commander reads the signal bus before its producers write to it",
+        "severity": "MED",
+        "owner_suggestion": "agents-architect (dispatcher design), via po triage",
+        "self_attributed": true,
+        "mechanism": "BGFAN-1 mandates run_in_background=true for every dispatcher spawn and spawn-fanout.md issues all matched slots in ONE parallel block. There is no dependency ordering. When a tick matches both a PRODUCER (market-watcher -> posts price_anomaly; news-scout -> posts urgent_news/chain_catalyst) and a CONSUMER (alert-commander -> gates on those exact signal types), the consumer can complete its bus read before the producers have posted.",
+        "evidence_16_00Z_tick": {
+          "dispatched_together": ["news-scout-offhours", "market-watcher-offhours", "market-watcher-eod", "alert-commander-critical"],
+          "consumer_observation": "alert-commander ran ~16:10-16:15Z and reported: 'zero verified_chain/chain_catalyst/price_anomaly on the bus (verified by explicit signal_type-filtered calls, not just the general one)'. Its evidence was CLEAN — the bus genuinely was empty at read time.",
+          "producer_observation": "market-watcher-offhours posted price_anomaly signal 8680 (GAS -6.98%, 2.89 sigma, 4.02x volume) and 8681 (D2D -3.30%, 52-week low) at ~16:17Z — AFTER alert-commander had already exited silent.",
+          "consequence": "alert-commander's position-danger gate failed at condition 1/3 for want of price signals that its sibling produced two minutes later, on a session with real >5% drops (GAS -6.98%, BSR -6.49%, GEX -5.16%). The silent exit was CORRECT given what it could see; the dispatch order is what made it blind."
+        },
+        "important_scoping": "This does NOT establish that get_alerts(type='price') is broken. alert-commander separately reported get_alerts(type='price') empty; prior art FIX-ALERT-SCAN-REJECT-STUB-BAR-P0 and FIX-ALERT-OPEN-ZERO-PRICE-RACE sit in that neighbourhood and were NOT re-filed. At least part of this cycle's blindness is dispatcher ordering, not detector failure. Both causes may be live; do not let one absorb the other.",
+        "related_second_order_effect": "Same tick, R3 (match-slots.md Step 4b: multi-slot collision WARNs but never blocks) spawned market-watcher twice. market-watcher-offhours reported the consequence: the EOD slot fired late (~16:08-16:13Z) which pushed the 16:09 dispatch into offhours, so TWO market-watcher cycles processed the SAME 08:32 closing prices four minutes apart. Duplicated work per close. R3 is working as written; the written rule is what needs review.",
+        "requested_action": "Design decision for agents-architect: either (a) order the fan-out into producer-wave then consumer-wave within a tick, (b) have consumers re-read the bus after a bounded wait when co-dispatched producers are known to be in flight, or (c) accept and document that consumers lag producers by one tick. cowork-team has NOT implemented any of these — dispatcher must not self-modify its own contract."
+      }
+    ],
+
+    "not_filed_this_tick": [
+      "Envelope/drain-floor defect — already cow-20260721T153000 (NEW). Reconfirmed hard this tick: drain printed 54 SKIP lines (47 cowork-team-*.json + 7 price_anomaly_*.json), inbox 55->54, only the one enveloped news-scout file drained. price_anomaly_20260721T1613.json, written TODAY by market-watcher-eod, is already in the skip list — writers are still emitting skip-shaped files, so the floor grows faster than a one-time directory relocation can drain it. CLEAN-COWORK-DISPATCHER-TELEMETRY-DRAIN-DIR is ready/P1 as a RELOCATION task and reached that lane at 15:37:13Z, ~3min BEFORE cow-20260721T153000 landed — an implementer picking it up will miss the writer-side one-line fix.",
+      "cycle_snapshot_promoted=false — cow-20260721T151500, writer-side confirmed.",
+      "market-watcher-eod 4-day fire gap (last 2026-07-17) — now corroborated 3 ways (last_fired stamp, agent self-report, ZERO cowork-team telemetry files anywhere for 07-20 14:00-17:00Z incl. processed/). Consistent with the master cron not being armed on 07-20 rather than slot gating. NOT filed as a defect row because the remedy is operational (re-arm crons after session restart), not a code change.",
+      "alert-commander wrote .claude/skills/claim-truth-gate/SKILL.md (commit 0ac57e848) — outside its declared write allowlist (notebooks/alert-commander.md only). Content is correct and the commit honestly declares it also swept that agent's own prior uncommitted 07-20 section, so this is a self-sweep and NOT a peer-sweep. Recorded as scope drift, not filed: the fix it shipped (probe Bash per-session, never inherit a prior no-Bash note) is genuinely good and demonstrably propagated — market-watcher probed for Bash this same tick and ran the real claim-truth-gate script (exit 0) instead of the manual substitute.",
+      "mcp-server restart 16:10:02Z — market-watcher-eod hypothesised its own 6-way parallel fanout starved the host. REFUTED by docker inspect: restarts=0, exit=0, oom=false with a fresh StartedAt, which is a recreate/start and NOT a starvation crash (an OOM kill shows oom=true or nonzero exit with RestartCount>=1). pdf-extractor started 16:03:10Z and rag-service 15:22:12Z (restarts=2) in the same window — reads as ops activity. Cause unidentified; the starvation hypothesis is unsupported and should not be carried forward in any notebook."
+    ],
+
+    "envelope_note": "Written to the enveloped schema {from,to,type,payload,priority,createdAt} per telemetry.md line 5 INVARIANT so this file actually drains."
+  }
+}

@@ -371,11 +371,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-07-21T15:57:22Z",
-    "updated_by": "dev-mcp-server (FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP review-flip)"
+    "status": "review",
+    "active_task_id": "FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE",
+    "next_agent": "qa",
+    "next_action": "FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE at REVIEW -- qa: re-run scripts/agents-flow/drain-signals.test.js (18/18 expected), spot-check the payload_ref repoint jq filter in scripts/agents-flow/drain-signals.js, then flip DONE_VERIFIED. No rebuild/deploy needed (scripts/ tooling change, no apps/mcp-server image dependency).",
+    "updated_at": "2026-07-21T16:16:39Z",
+    "updated_by": "developer"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -411,7 +412,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-21T15:56:00Z",
+    "_updated_at": "2026-07-21T16:23:24Z",
     "_updated_by": "cowork-team",
     "archive": [],
     "rows": [
@@ -2802,6 +2803,17 @@
         "read_by": "po-signaldrain-20260721T1537Z",
         "read_at": "2026-07-21T15:54:05Z",
         "po_disposition": "ADJUDICATED (PO signal-drain 2026-07-21T16:xxZ). (a) group (3) folds into SPIKE-BCTC-Q1-2026-SERVABILITY-CENSUS, no new row — serving plane cannot separate mode-2 from mode-3, see po_decision_a_20260721T16. (b) root cause is NOT BCTC-specific and NOT neglect: BOUNDED-1 gates withhold 26/31 high-priority backlog rows for a supervised dispatch path that has no sweeper — minted FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER. (c) sequencing SPLIT rather than serialized: the census SPIKE is UNBLOCKED and runs now (get_bctc_full serves from the DB and is reliable during the outage — proven live this tick); the two remediation FIX rows DO need pdf-extractor healthy, and PDF-AVAIL-02-FIX is the long pole whose remaining action is a USER-GATED rebuild of an already-committed fix (c78839c6c) that PO cannot authorize — router should surface that deploy gate to the user. Additional finding the escalation did not have: the 16/15/4 decomposition is NOT a partition — the reparse corruption has already flipped 13 of the 15 ingest-stall tickers to DA NOP, contaminating that row's AC clause 1 (see po_ac_contamination_20260721T16)."
+      },
+      {
+        "id": "cow-20260721T162324",
+        "ts": "2026-07-21T16:23:24Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "CORRECTION: news-scout HIGH from_agent=null claim is wrong-rooted (mode exists, verified live) + cowork fan-out has no producer/consumer ordering",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": "docs/signals/cowork-team-20260721T162324Z-fanout-ordering-and-siblingdedup-correction.json"
       }
     ],
     "last_triaged_at": "2026-07-21T15:28:00Z",
@@ -2997,8 +3009,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-21T15:54:05Z",
-    "_updated_by": "po-signaldrain-20260721T1537Z",
+    "_updated_at": "2026-07-21T16:16:39Z",
+    "_updated_by": "developer (FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE -> REVIEW)",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -10459,33 +10471,6 @@
         "po_corroboration_20260721_1451": "CORROBORATION (PO Step 0-SIG triage 2026-07-21T14:51:20Z). Dashboard signal sys-20260721T144300-1e9e (A-30 mcp-server memory 91.19%, 14:43:00Z) re-emitted ~20 min AFTER this converge row was minted at 14:23:45Z, with 91.19% sitting inside the documented 85-93% GC-sawtooth band this row exists to stop firing on. Nth-instance confirmation of the exact FP class in scope item 1; folded, NOT re-minted. No recurring_bug_count bump (same unchanged condition, same session)."
       },
       {
-        "id": "FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE",
-        "type": "FIX",
-        "status": "BACKLOG",
-        "priority": "high",
-        "size": "S",
-        "zone": "cross-service/",
-        "owner": "po",
-        "supervised": true,
-        "created_at": "2026-07-21T14:51:20Z",
-        "created_by": "po-step0sig-triage-20260721T1451Z",
-        "title": "drain-signals.js moves docs/signals/*.json to processed/ without updating signal_queue.rows[].payload_ref — dangling ref HARD-BLOCKS every orch-state write fleet-wide (validator Stage 1c) and strands the addressee's payload",
-        "problem": "scripts/agents-flow/drain-signals.js has ZERO awareness of orch-state .signal_queue — grep confirms it never references signal_queue or payload_ref anywhere. It moves inbox files to processed/ purely on the file plane. Any signal_queue row whose payload_ref points at a top-level docs/signals/ path therefore dangles the moment that file drains. Two distinct harms: (a) BOARD-WIDE WRITE BLOCK — scripts/orch-validate.mjs Stage 1c hard-fails on a dangling payload_ref, so EVERY agent's orch-apply write aborts until a human/agent manually repairs the ref; this is a fleet-wide stall triggered by routine drain hygiene. (b) STRANDED ESCALATION — the addressee following payload_ref gets a 404 with no error anywhere.",
-        "evidence": "LIVE INSTANCE 2026-07-21: this tick's own drain (commit 0ab70d437, 14:47:59Z) moved docs/signals/po-20260720T052606Z.json to processed/. signal_queue row id=po-20260720T052606 (to=unified-agent, type=methodology-flag, severity=HIGH, status=NEW — never read by its addressee) still carried payload_ref=docs/signals/po-20260720T052606Z.json. Discovered because it aborted THIS PO triage's own orch-apply write. Repaired in the same write (ref repointed to processed/, content verified present, 2368 bytes, status left NEW and content untriaged since PO is not the addressee).",
-        "mechanism_not_single_observation": "Verified structurally in code, not inferred from the one instance: drain-signals.js contains no signal_queue/payload_ref handling at all, so this is guaranteed for every file-bus row with a payload_ref, not a fluke. Only 1 row was exposed today because most signal_queue rows are auditor-emitted with inline payloads and no payload_ref; the blast radius grows as file-bus to:<agent> routing is used more.",
-        "acceptance": "drain-signals.js (or the drain flow step) rewrites signal_queue.rows[].payload_ref from docs/signals/X.json to docs/signals/processed/X.json for every file it moves, in the same commit as the move. Rows already RESOLVED/archived may be skipped; NEW/READ rows MUST be repointed.",
-        "verification_gate": "Synthetic: seed a docs/signals/<f>.json + a signal_queue row with payload_ref to it, run the drain, then assert (1) the file is in processed/, (2) the row's payload_ref points at the processed/ path, and (3) `node scripts/orch-validate.mjs` exits 0. All three checked live — a green validator alone is NOT sufficient (an unreferenced row also validates green).",
-        "refs": [
-          "feedback_auditor_signal_write_orphan_key",
-          "feedback_orphan_signal_immune_and_adoption_no_board_guard",
-          "feedback_cowork_signal_filename_cycleid_keying"
-        ],
-        "note": "supervised:true blocks BOUNDED-1 idle auto-pickup. Distinct from UC-GCP-P3 (that row is about the drain COMMIT dropping deletions via pathspec; this row is about the orch-state REFERENCE not following the move). Distinct from CLEAN-COWORK-DISPATCHER-TELEMETRY-DRAIN-DIR (inbox floor hygiene).",
-        "recurring_bug_count": 4,
-        "po_recurrence_escalation_20260721T1537": "RECURRING-BUG ESCALATION (2+ -> BLOCK, PO signal-drain 2026-07-21T15:37Z). This dangling-payload_ref-on-drain has now HARD-BLOCKED / threatened orch-state writes 3x within ~1h per router observation (14:51Z first repair, ~15:2xZ, and re-flagged this drain). The unshipped code fix is now treated as BLOCKING — every fleet orch-apply write can abort on routine drain hygiene until drain-signals.js repoints signal_queue.rows[].payload_ref in the same commit as the file move. Priority HELD at high (already high; board has no higher enum) — the BLOCKING status is carried in the PO notebook carry-over. HONEST OBSERVATION: this drain's OWN first orch-apply write did NOT hard-block — all signal_queue payload_refs resolved OK and orch-validate Stage 0+1 PASSED on the live file at drain start, so no in-write repoint was needed this cycle; recurring_bug_count=3 reflects the standing unshipped defect + router's cross-cycle recurrence assertion, not a block observed in this write.",
-        "po_direct_observation_20260721T16": "DIRECT PO OBSERVATION (2026-07-21T15:51:00Z): the dangle RECURRED live during this very drain cycle and HARD-BLOCKED the fleet. A concurrent drain moved docs/signals/cowork-team-20260721T153000-telemetry-envelope-violation.json to processed/ AFTER my 2 clean orch-apply writes, orphaning signal_queue row cow-20260721T153000.payload_ref; orch-validate Stage 1c then FAILED (exit 2, 1 dangling ref) on the live file, which would abort the NEXT fleet write. PO repaired it inside an orch-apply write (repointed to processed/, row left NEW — content triage deferred, this repair only clears the fleet-wide block). This is the strongest evidence yet: a concrete reproduction with the exact orphaned file, on TOP of the router's earlier 14:51Z/15:2x observations. recurring_bug_count 3->4. UNSHIPPED FIX IS BLOCKING — ship drain-signals.js payload_ref-repoint-in-same-commit; until then every drain cycle can wedge the whole fleet's orch-state writes."
-      },
-      {
         "id": "FIX-OHLCV-HISTORY-PLANE-EMPTY-LIVE-PLANE-HEALTHY",
         "type": "FIX",
         "status": "BACKLOG",
@@ -12247,6 +12232,38 @@
         "dispatch_note": "Router-adjudicated dispatch of a supervised:true row — the supervised gate is scoped to the unattended BOUNDED-1 idle-pickup lane only (docs/policies/dev-standards.md), not to this PO-BATCH path. Part (1) stop-the-bleed routed to ops (attempt through the front door; the ops/user-gated label on this row carries NO recorded classifier denial, and per feedback_container_swaps_user_gated a gate without denial evidence is a false gate). Part (2) durable write-back fix routed to dev-mcp-server.",
         "po_scope_adjudication_20260721T1537": "SCOPE HELD SHARP (PO signal-drain 2026-07-21T15:37Z, adjudicating dev-team escalation devteam-20260721T152332-bctcscope). This row stays bounded to the mode-1 reparse-corruption mechanism (total_assets=0 + ngay_nop->processing-date flip) + its durable write-back fix; the 16-ticker acceptance/verification_gate is UNCHANGED. Do NOT widen it to the broad servability problem. The cross-watchlist true-scope census is spun out to SPIKE-BCTC-Q1-2026-SERVABILITY-CENSUS; the epic-vs-fold remediation decision is DEFERRED to that census. WATCH-SPREAD: router found SSI/NVL — listed as 'correctly DA NOP' siblings on 07-15 in FIX-BCTC-Q1-2026-STORED-PDF-INGEST-STALL-15T — now return 'Chua co du lieu' through get_bctc_full at 15:2xZ; consistent with this row's 'still expanding' concern, i.e. the batch may have corrupted previously-servable tickers beyond the 16. Ops SERVABLE column is unreliable (self-contradictory 29+~40>58) — do not baseline on it.",
         "review_note": ""
+      },
+      {
+        "id": "FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE",
+        "type": "FIX",
+        "status": "REVIEW",
+        "priority": "high",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "po",
+        "supervised": true,
+        "created_at": "2026-07-21T14:51:20Z",
+        "created_by": "po-step0sig-triage-20260721T1451Z",
+        "title": "drain-signals.js moves docs/signals/*.json to processed/ without updating signal_queue.rows[].payload_ref — dangling ref HARD-BLOCKS every orch-state write fleet-wide (validator Stage 1c) and strands the addressee's payload",
+        "problem": "scripts/agents-flow/drain-signals.js has ZERO awareness of orch-state .signal_queue — grep confirms it never references signal_queue or payload_ref anywhere. It moves inbox files to processed/ purely on the file plane. Any signal_queue row whose payload_ref points at a top-level docs/signals/ path therefore dangles the moment that file drains. Two distinct harms: (a) BOARD-WIDE WRITE BLOCK — scripts/orch-validate.mjs Stage 1c hard-fails on a dangling payload_ref, so EVERY agent's orch-apply write aborts until a human/agent manually repairs the ref; this is a fleet-wide stall triggered by routine drain hygiene. (b) STRANDED ESCALATION — the addressee following payload_ref gets a 404 with no error anywhere.",
+        "evidence": "LIVE INSTANCE 2026-07-21: this tick's own drain (commit 0ab70d437, 14:47:59Z) moved docs/signals/po-20260720T052606Z.json to processed/. signal_queue row id=po-20260720T052606 (to=unified-agent, type=methodology-flag, severity=HIGH, status=NEW — never read by its addressee) still carried payload_ref=docs/signals/po-20260720T052606Z.json. Discovered because it aborted THIS PO triage's own orch-apply write. Repaired in the same write (ref repointed to processed/, content verified present, 2368 bytes, status left NEW and content untriaged since PO is not the addressee).",
+        "mechanism_not_single_observation": "Verified structurally in code, not inferred from the one instance: drain-signals.js contains no signal_queue/payload_ref handling at all, so this is guaranteed for every file-bus row with a payload_ref, not a fluke. Only 1 row was exposed today because most signal_queue rows are auditor-emitted with inline payloads and no payload_ref; the blast radius grows as file-bus to:<agent> routing is used more.",
+        "acceptance": "drain-signals.js (or the drain flow step) rewrites signal_queue.rows[].payload_ref from docs/signals/X.json to docs/signals/processed/X.json for every file it moves, in the same commit as the move. Rows already RESOLVED/archived may be skipped; NEW/READ rows MUST be repointed.",
+        "verification_gate": "Synthetic: seed a docs/signals/<f>.json + a signal_queue row with payload_ref to it, run the drain, then assert (1) the file is in processed/, (2) the row's payload_ref points at the processed/ path, and (3) `node scripts/orch-validate.mjs` exits 0. All three checked live — a green validator alone is NOT sufficient (an unreferenced row also validates green).",
+        "refs": [
+          "feedback_auditor_signal_write_orphan_key",
+          "feedback_orphan_signal_immune_and_adoption_no_board_guard",
+          "feedback_cowork_signal_filename_cycleid_keying"
+        ],
+        "note": "supervised:true blocks BOUNDED-1 idle auto-pickup. Distinct from UC-GCP-P3 (that row is about the drain COMMIT dropping deletions via pathspec; this row is about the orch-state REFERENCE not following the move). Distinct from CLEAN-COWORK-DISPATCHER-TELEMETRY-DRAIN-DIR (inbox floor hygiene).",
+        "recurring_bug_count": 4,
+        "po_recurrence_escalation_20260721T1537": "RECURRING-BUG ESCALATION (2+ -> BLOCK, PO signal-drain 2026-07-21T15:37Z). This dangling-payload_ref-on-drain has now HARD-BLOCKED / threatened orch-state writes 3x within ~1h per router observation (14:51Z first repair, ~15:2xZ, and re-flagged this drain). The unshipped code fix is now treated as BLOCKING — every fleet orch-apply write can abort on routine drain hygiene until drain-signals.js repoints signal_queue.rows[].payload_ref in the same commit as the file move. Priority HELD at high (already high; board has no higher enum) — the BLOCKING status is carried in the PO notebook carry-over. HONEST OBSERVATION: this drain's OWN first orch-apply write did NOT hard-block — all signal_queue payload_refs resolved OK and orch-validate Stage 0+1 PASSED on the live file at drain start, so no in-write repoint was needed this cycle; recurring_bug_count=3 reflects the standing unshipped defect + router's cross-cycle recurrence assertion, not a block observed in this write.",
+        "po_direct_observation_20260721T16": "DIRECT PO OBSERVATION (2026-07-21T15:51:00Z): the dangle RECURRED live during this very drain cycle and HARD-BLOCKED the fleet. A concurrent drain moved docs/signals/cowork-team-20260721T153000-telemetry-envelope-violation.json to processed/ AFTER my 2 clean orch-apply writes, orphaning signal_queue row cow-20260721T153000.payload_ref; orch-validate Stage 1c then FAILED (exit 2, 1 dangling ref) on the live file, which would abort the NEXT fleet write. PO repaired it inside an orch-apply write (repointed to processed/, row left NEW — content triage deferred, this repair only clears the fleet-wide block). This is the strongest evidence yet: a concrete reproduction with the exact orphaned file, on TOP of the router's earlier 14:51Z/15:2x observations. recurring_bug_count 3->4. UNSHIPPED FIX IS BLOCKING — ship drain-signals.js payload_ref-repoint-in-same-commit; until then every drain cycle can wedge the whole fleet's orch-state writes.",
+        "next_agent": "qa",
+        "reviewed_at": "2026-07-21T16:16:39Z",
+        "reviewed_by": "developer",
+        "review_note": "Root cause: scripts/agents-flow/drain-signals.js moved docs/signals/*.json -> processed/ with zero signal_queue awareness. Fix: after the existing move loop, the script now builds a movedRefs map (old repo-relative path -> new processed/ path, both routed-to-po and skipped-duplicate-replay branches) and, if non-empty, calls repointPayloadRefs() -- a jq filter (--argjson bound map, never string-interpolated) that rewrites signal_queue.rows[].payload_ref (fragment-preserving split on \"#\") for every row whose ref matches a moved file, computes {doc, changed}, and skips the write entirely when changed==0 (common case). When changed>0 the candidate is applied via the SAME scripts/orch-apply.sh gate every other orch-state writer uses (Zod schema + conservation + CAS), with up to 3 CAS-retry attempts (re-deriving the candidate from the live file each attempt) and a FAIL-LOUD process.exit(1) if the gated write still cannot land -- silently swallowing that failure would just reproduce the exact bug being fixed. All new diagnostics use console.error (stderr) only, so stdout stays byte-identical for every pre-existing caller/test (confirmed: existing golden-stdout regression test AC7 in drain-signals.test.js still passes verbatim). New verification-gate scenario in scripts/agents-flow/drain-signals.test.js (isolated mkdtemp harness: drain-signals.js + orch-apply.sh + orch-validate.mjs + orch-conservation-check.mjs + orchStateSchema.ts copied in, node_modules symlinked -- never the live orch-state.json) asserts live, in one run: (1) seeded docs/signals/<f>.json now under processed/, (2) the seeded signal_queue row payload_ref rewritten to the processed/ path, (3) the REAL bun scripts/orch-validate.mjs exits 0 against the harness copy. 18/18 total assertions green (15 pre-existing + 3 new). Negative control (pre-fix HEAD copy of the script, run against the identical fixture) reproduces the live bug verbatim -- payload_ref stays at the pre-move path after the file relocates, and a direct dangling-ref fixture separately confirmed orch-validate.mjs Stage 1c genuinely fails (exit 2) on this exact defect class, so the new gate is not vacuously green. Commit scoped to scripts/agents-flow/drain-signals.js + scripts/agents-flow/drain-signals.test.js only (explicit pathspec) -- did not sweep the live orch-state.json (already dirty from a separate concurrent fleet-push) into that commit; this board-transition write is a separate, additive orch-apply.sh write, also not committed by developer (left for the owning fleet-push/PO to pick up).",
+        "developer_enobufs_followup_20260721T1622Z": "FAIL-LOUD ENOBUFS ROOT-CAUSE FIX (developer, 2026-07-21T16:22Z): the 2026-07-21T16:16Z REVIEW note above claimed the payload_ref repoint was verified end-to-end but it was actually silently dead in production -- repointPayloadRefs() jq execFileSync had no maxBuffer (Node default 1,048,576B < live doc 1,109,434B+), so every real repoint threw ENOBUFS, caught and reported non-fatal WARN, leaving refs dangling despite the prior green report. Fixed: explicit maxBuffer:64MB on the jq call; reclassified that catch from silent WARN+return to FAIL-LOUD process.exit(1) (matches the two pre-existing FAIL-LOUD paths in the same function), leaving the genuinely-benign !result.changed branch untouched. RED confirmed twice pre-fix (natural TDD order + git stash A/B on drain-signals.js only): new isolated >1MB-fixture scenario in drain-signals.test.js failed 21/22 with spawnSync jq ENOBUFS; 22/22 GREEN after. Grepped scripts/agents-flow/ for other execFileSync/spawnSync reading orch-state.json without maxBuffer -- none found. Live orch-state.json now 1,112,468B; 64MB gives ~57x headroom. Also flagged (not fixed, PO-owned, separate signal): 7 price_anomaly_v1 files silently stranded by the drain non-routable-shape predicate."
       }
     ],
     "qa": [],

@@ -229,8 +229,18 @@ function repointPayloadRefs(map) {
     | {doc: $newDoc, changed: $changed}
   `;
 
+  // FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE / ENOBUFS (2026-07-21): the jq filter emits
+  // {doc: $newDoc, changed: $changed} — essentially the WHOLE orch-state document plus
+  // a small wrapper. execFileSync's default maxBuffer (measured 1,048,576 bytes on this
+  // machine) is smaller than that output the moment the live doc crosses ~1MB (measured
+  // docs/data/orch/orch-state.json = 1,109,434 bytes this same day, and the doc only
+  // grows) — execFileSync then throws ENOBUFS on every future run, permanently. 64MB
+  // gives multi-decade headroom over the doc's current growth rate; this is cheap
+  // (bounded by one process's stdout buffer) so there is no reason to be stingy.
+  const JQ_MAX_BUFFER = 64 * 1024 * 1024;
+
   const computeCandidate = () => {
-    const out = execFileSync('jq', ['--argjson', 'map', JSON.stringify(map), filter, ORCH_STATE], { encoding: 'utf8' });
+    const out = execFileSync('jq', ['--argjson', 'map', JSON.stringify(map), filter, ORCH_STATE], { encoding: 'utf8', maxBuffer: JQ_MAX_BUFFER });
     return JSON.parse(out);
   };
 
@@ -240,8 +250,15 @@ function repointPayloadRefs(map) {
     try {
       result = computeCandidate();
     } catch (e) {
-      console.error(`[drain-signals] WARN: payload_ref repoint jq computation failed (non-fatal, orch-state.json untouched): ${e.message}`);
-      return;
+      // FAIL-LOUD, not swallowed: a computation failure (ENOBUFS, jq crash, malformed
+      // ORCH_STATE, etc.) means the repoint NEVER RAN — that is categorically different
+      // from "nothing to repoint" (the genuinely-benign !result.changed branch below) and
+      // must not share its silent return. This exact silent-swallow was the mechanism
+      // behind recurring_bug_count=4 on this row: every prior "fix" left orch-state.json
+      // dangling while reporting nothing wrong. Same FAIL-LOUD treatment as the two
+      // orch-apply.sh failure paths below (lines ~268/272).
+      console.error(`[drain-signals] FAIL-LOUD: payload_ref repoint jq computation failed (orch-state.json untouched, refs still dangling): ${e.message}\nAny row referencing a file moved this run still points at the pre-move path; orch-validate Stage 1c will hard-block the NEXT fleet orch-apply write until this is repaired.`);
+      process.exit(1);
     }
     if (!result.changed) {
       console.error(attempt === 1
