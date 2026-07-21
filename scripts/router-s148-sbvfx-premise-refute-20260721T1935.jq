@@ -1,0 +1,24 @@
+def annotate($id; $keys):
+  (.task_board // {}) |= (
+    to_entries
+    | map(.value |= (
+        if (. | type) == "array"
+        then map(if (.id? // "") == $id then . + $keys else . end)
+        else . end
+      ))
+    | from_entries
+  );
+
+annotate("FIX-SLA-SBV-FX-BUSINESS-DAY-AWARE"; {
+  router_premise_refuted_20260721T1935: "ROUTER VERIFIED THIS ROW AT SOURCE AND ACCEPTANCE CLAUSE (1) IS BUILT ON A FALSE PREMISE. DO NOT START WORK FROM THE TITLE. PO's finding was that sbv_fx 'has only defaultThresholdMinutes: 30; no market-hours or off-hours variant, and it is absent from the dynamic window-aware set.' The second half is FALSE. apps/mcp-server/src/domain/services/freshnessSlaChecker.ts:286-288 declares SBV_BUSINESS_DAY_ONLY_SOURCES containing 'sbv_fx'; getSlaThreshold consumes it at line 678-684 with a real weekend/holiday branch; slaStatusTools.ts:215 consumes it a second time; and apps/mcp-server/src/__tests__/FIX-SLA-EXEMPT-NEWS-SBVFX.test.ts:304-307 is a dedicated passing regression file for it. It shipped in commit d71e3f2e2 under a prior row FIX-SLA-EXEMPT-NEWS-SBVFX. A developer told to 'add business-day awareness' would either bounce the row or build a duplicate branch alongside the existing one.",
+
+  router_actual_defect_20260721T1935: "THE REAL DEFECT IS THE INTRA-DAY HALF, AND IT IS MUCH CHEAPER THAN THE ROW IMPLIES. The calendar branch exempts only NON-business days. On a business day it returns the flat cfg.defaultThresholdMinutes (30) for the entire 24h, against a source that publishes once per day around 10:05 VN (real last push 2026-07-21T03:05:21Z corroborates the cadence). So sbv_fx sits in guaranteed breach from roughly 10:35 VN until midnight of every business day. PO's shape-of-complaint survives; only its mechanism was wrong, and the breach window is ~13.5h per business day, not '47.5 of every 48 hours'. The fix mirrors the NEWS branch at lines 667-673 exactly: inside the isVnSbvBusinessDay(now) arm, return cfg.defaultThresholdMinutes only while within the publish window, else minutesSinceLastSbvWindowEnd(now) + OFF_HOURS_GRACE_MINUTES. BOTH HELPERS ALREADY EXIST AND ARE ALREADY EXPORTED — minutesSinceLastSbvWindowEnd at line 593 and lastExpectedSbvWindowEnd behind it — and are already used by the weekend arm two lines below. This is a ~3-line change to one branch, not a new capability.",
+
+  router_duplicate_row_20260721T1935: "PROBABLE DUPLICATE — PO DID NOT GREP THE BOARD BEFORE MINTING. Row FIX-AUDITOR-SBVFX-SLA-POSTMARKET-TOLERANCE already sits in BACKLOG titled 'SBV-FX (+news) SLA: post-publish-window relaxation + poll-cadence tolerance band'. That is a precise description of the missing intra-day half identified above, and it also already scopes the news source alongside sbv_fx. It is a stub (priority/owner/acceptance all null), which is plausibly why a substance-based scan missed it, but its title is an exact topical match. PO applied the grep-the-board-first discipline correctly to the bctc finding in this same pass and did not apply it here. FOR PO TO RULE, ROUTER DOES NOT MINT OR MERGE: either fold this row's acceptance (2)(3)(4)(5) into the existing stub and drop this one, or supersede the stub explicitly. What is not acceptable is leaving two live rows for one 3-line fix.",
+
+  router_clauses_that_survive_20260721T1935: "CLAUSES (2)(3)(4)(5) ARE SOUND AND ROUTER RE-VERIFIED THEM INDEPENDENTLY — do not discard them when the premise is corrected. (2) is REAL and router confirmed both halves at source: slaStatusTools.ts:99-101 comment scopes calendar-awareness to 'market-hours-only sources (price, foreign_flow)' while the user-facing legend at slaStatusTools.ts:165 advertises 'sbv_fx: VN business days' — 65 lines apart in one file. Note the legend is now arguably TRUE given line 215 does consult the set, so clause (2) may resolve to 'the comment at :99 is stale', which is the opposite repair from the one PO implied. (3) is REAL and remains the right regression to add. (4) is REAL: system-map.json carries sbv -> 24h (1440min) against DEFAULT_SLA_CONFIG's 30min, a 48x divergence between two silent SSOTs. (5) is REAL and is the most valuable clause on the row — 1920i-freshness-sla-extension.test.ts:273 pins the 30-minute default, so any fix must update that test rather than route around it."
+})
+
+| annotate("FIX-AUDITOR-SBVFX-SLA-POSTMARKET-TOLERANCE"; {
+  router_crosslink_20260721T1935: "ROUTER CROSSLINK — this stub is the probable true home of the sbv_fx SLA defect. PO minted FIX-SLA-SBV-FX-BUSINESS-DAY-AWARE on 2026-07-21 covering the same ground; that row carries verified acceptance clauses (2)(3)(4)(5) plus a router-corrected mechanism (the intra-day publish-window arm of getSlaThreshold, ~3 lines, helpers already exist). Read that row's router_* keys before either row is started. PO to rule on fold-vs-supersede; router did not merge them."
+})
