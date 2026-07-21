@@ -923,6 +923,10 @@
         "type": "dev-core"
       },
       {
+        "id": "orch-sentinel",
+        "type": "dev-core"
+      },
+      {
         "id": "claude-manager-helper",
         "type": "dev-core"
       },
