@@ -388,11 +388,11 @@
   ],
   "head": {
     "status": "in_progress",
-    "active_task_id": "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
+    "active_task_id": "DESIGN-COWORK-FANOUT-PRODUCER-CONSUMER-ORDERING",
     "next_agent": "pm",
-    "next_action": "PO GO-AHEAD (supervised chain): pm decomposes FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD per architect blueprint docs/architecture-briefs/2026-07-22-fix-orphan-adoption-board-state-guard-design.md. HARD PRECONDITION (po_ruling.closure_gate): pm MUST mint the fix_spec(b)/AC2 successor row (sprint-task TTL/heartbeat, execute-tier.md:42-64+:64, per po_ruling.successor_requirements) BEFORE this P0 may ever flip DONE; I10 owner_client_session binding (execute-tier.md:42-48 + :64 AND fail-loud-protocol.md:71) sequenced FIRST inside that successor. NOTE: prior head.next_action referenced FACTORY-APIGW-split-handlers, which is not present anywhere on the board — stale qa closeout note, no row to close.",
-    "updated_at": "2026-07-22T00:49:21Z",
-    "updated_by": "po/triage-20260722T0049"
+    "next_action": "PO GO-AHEAD (po_goahead_20260722, reaffirmed 00:49:21Z; acceptance MET 2026-07-21T18:14:57Z). Resume DESIGN-COWORK-FANOUT-PRODUCER-CONSUMER-ORDERING: pm drives T1-T8 dispatch, T6 (market-watcher slot-routing, market-facing DATA LOSS) FIRST per po_ruling_r3_folds_here; T1/T2/T5 parallelisable, T3 sequenced behind live qa full-suite. Scope UNCHANGED per po_scope_confirmation_20260721T1842 (does NOT own get_alerts detector question; prior-art rows stay un-refiled). Head repointed off FIX-ORPHAN — its pm-decompose COMPLETE + verified at source: 6 FR children in ready[], fix_spec(b)/AC2 successor FIX-SPRINT-TASK-HEARTBEAT-LOCK minted (I10 seq-1 required_before_qa), closure gate satisfied. FIX-ORPHAN parent stays in_progress lane as tracking epic (must NOT flip DONE until successor lands+QA).",
+    "updated_at": "2026-07-22T01:28:10Z",
+    "updated_by": "router/head-repoint-designcowork-20260722T012810Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -1730,8 +1730,12 @@
         "type": "signal_feedback",
         "summary": "A-30 mcp-server memory 98.81% (threshold 85%)",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_at": "2026-07-22T01:22:12Z",
+        "triaged_by": "cowork-team/a30-fold-0115Z",
+        "triaged_home": "cowork-20260721T232634Z-a30-mcp-oom-escalate",
+        "drain_note": "Continuation of A-30 loss-of-reclamation incident. system-auditor re-emit (signalqueue append-always, telegram-only dedup — detector-calibration tracked FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE). Memory 98.81% — churn resumed after a one-tick pause at 01:00Z; still in the ~99% at-cap band and inside the discriminator ESCALATE envelope (0 reclamation dips/140s, verify-a30-mcp-memory-reclamation.sh). Ops escalation cowork-20260721T232634Z-a30-mcp-oom-escalate still HIGH/NEW/unactioned (restart_count still 0 — holding at cap, no OOM-kill yet). Folded — no re-run, no duplicate mint."
       }
     ],
     "last_triaged_at": "2026-07-21T19:29:49Z",
