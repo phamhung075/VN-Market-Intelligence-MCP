@@ -168,3 +168,15 @@ simplification.
 **why-decision:** `grep -rn NOTE_SIGNALS_DB_DRAIN` across docs/scripts/.claude shows the only inbound
 reference is the audit brief describing the problem — no live pointer breaks on deletion.
 **why-change:** No change from plan.
+
+### STEP developer-S11 · developer · 2026-07-22T22:50:44Z
+**task-id:** UC-SDF-P1
+**what-done:** Added a self-prune `find … -mmin +1440 -delete` line to tick-snapshot.md Step 4.7
+bash block (right after the `mv` line, latest.json exempt); fixed false "ephemeral/overwritten"
+comment to "pruned after 24h by this step". Ran the same find (minus -delete) to count 10 stale
+files, then executed the delete — 10 removed, only cycle-snapshot-latest.json remains.
+**what-considered:**
+- only path: brief specifies the exact find line and placement verbatim; no alternative considered.
+**why-decision:** CONFIRMED verifier-blessed near-zero-risk fix — implemented exactly as spec'd,
+no simplification needed.
+**why-change:** No change from plan.
