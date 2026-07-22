@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "pm",
-    "next_action": "FACTORY-APIGW-split-handlers verified DONE_VERIFIED by qa (direct-commit verify) -- mark done, unblock downstream.",
-    "updated_at": "2026-07-22T00:28:59Z",
-    "updated_by": "qa"
+    "status": "in_progress",
+    "active_task_id": "FACTORY-APIGW-proxy-timeout-constant",
+    "next_agent": "qa",
+    "next_action": "Review-Lane QA-Drain claim of FACTORY-APIGW-proxy-timeout-constant — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have).",
+    "updated_at": "2026-07-22T00:46:19Z",
+    "updated_by": "dev-team (review-lane qa-drain)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -11441,24 +11441,6 @@
         "status_note": "Code complete, tests green, sandbox green. Rebuild verification deferred to ops (signal: ops-rebuild-verify-kinh-dich-20260709T1923Z.json)"
       },
       {
-        "title": "Promote the 5x proxy-timeout multiplier to a named config accessor",
-        "priority": "P1",
-        "zone": "api-gateway",
-        "type": "FACTORY",
-        "status": "REVIEW",
-        "id": "FACTORY-APIGW-proxy-timeout-constant",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APIGW-proxy-timeout-constant",
-        "promoted_at": "2026-07-09T20:17:18Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-09T20:17:34Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
-        "completed_at": "2026-07-09T20:25:05Z",
-        "completed_by": "dev-api-gateway",
-        "status_note": "Named the inline `*5` proxy-timeout fallback as domain.DefaultProxyTimeoutMultiplier=5 (pkg/domain/models.go) with a new domain.ServiceConfig.EffectiveProxyTimeoutMs() accessor; proxy.go serveProxied simplified from (overrideMs,timeoutMs int64) to a single pre-resolved effectiveMs int64, both HandleProxy call sites now call the accessor instead of inlining the fallback branch. Deviated from the backlog note's suggested registry.go placement: proxy.go is Fence-C-restricted from importing pkg/infrastructure (registry.go's package), so the constant+accessor had to live in pkg/domain instead — documented in the decision journal. New pkg/domain/models_test.go pins EffectiveProxyTimeoutMs() (2000ms+no override->10000ms; 120000ms override wins; 0+no override->0) plus the constant value itself. go build/vet clean, gofmt -l clean (no new unformatted files — pre-existing registry.go debt confirmed via git-stash baseline, out of scope), golangci-lint 0 issues (confirms Fence-C respected), go test ./... 10/10 packages PASS, G12 sandbox primitive 14/14 + module 1/1 PASS. rebuild_required=true (hottest-path prod HTTP handler) — deferred post-rebuild behavior verification tracked in signal docs/signals/ops-rebuild-verify-api-gateway-20260709T2022Z.json. Kept REVIEW (not self-asserted DONE_VERIFIED) pending router/qa sign-off given hottest-path risk. DJ: docs/agent-memory/decisions/dev-api-gateway-20260709T2022Z-FACTORY-APIGW-proxy-timeout-constant.md"
-      },
-      {
         "title": "Split the 743L stock-price sandbox by executor seam",
         "priority": "P1",
         "zone": "stock-price",
@@ -12180,7 +12162,27 @@
         "router_source_verified_20260722": "Router source-verified the keystone code layer at 2026-07-21T22:41Z (commit b787e9a5d clean, .head intact, satisfiability instrument EXIT=0) — full record on FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER.router_source_verified_20260722. Remaining DoD = live-tick AC(3) only; do NOT flip to DONE_VERIFIED on the unit instrument alone."
       }
     ],
-    "qa": [],
+    "qa": [
+      {
+        "title": "Promote the 5x proxy-timeout multiplier to a named config accessor",
+        "priority": "P1",
+        "zone": "api-gateway",
+        "type": "FACTORY",
+        "status": "QA",
+        "id": "FACTORY-APIGW-proxy-timeout-constant",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APIGW-proxy-timeout-constant",
+        "promoted_at": "2026-07-09T20:17:18Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-22T00:46:19Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "qa",
+        "completed_at": "2026-07-09T20:25:05Z",
+        "completed_by": "dev-api-gateway",
+        "status_note": "Named the inline `*5` proxy-timeout fallback as domain.DefaultProxyTimeoutMultiplier=5 (pkg/domain/models.go) with a new domain.ServiceConfig.EffectiveProxyTimeoutMs() accessor; proxy.go serveProxied simplified from (overrideMs,timeoutMs int64) to a single pre-resolved effectiveMs int64, both HandleProxy call sites now call the accessor instead of inlining the fallback branch. Deviated from the backlog note's suggested registry.go placement: proxy.go is Fence-C-restricted from importing pkg/infrastructure (registry.go's package), so the constant+accessor had to live in pkg/domain instead — documented in the decision journal. New pkg/domain/models_test.go pins EffectiveProxyTimeoutMs() (2000ms+no override->10000ms; 120000ms override wins; 0+no override->0) plus the constant value itself. go build/vet clean, gofmt -l clean (no new unformatted files — pre-existing registry.go debt confirmed via git-stash baseline, out of scope), golangci-lint 0 issues (confirms Fence-C respected), go test ./... 10/10 packages PASS, G12 sandbox primitive 14/14 + module 1/1 PASS. rebuild_required=true (hottest-path prod HTTP handler) — deferred post-rebuild behavior verification tracked in signal docs/signals/ops-rebuild-verify-api-gateway-20260709T2022Z.json. Kept REVIEW (not self-asserted DONE_VERIFIED) pending router/qa sign-off given hottest-path risk. DJ: docs/agent-memory/decisions/dev-api-gateway-20260709T2022Z-FACTORY-APIGW-proxy-timeout-constant.md",
+        "updated_at": "2026-07-22T00:46:19Z"
+      }
+    ],
     "_closed_signals_20260614": {
       "_by": "po-S50",
       "_at": "2026-06-14T14:45:14Z",
