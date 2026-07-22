@@ -12562,6 +12562,21 @@
         "updated_at": "2026-07-21T22:41:33Z",
         "updated_by": "architect (UNBLOCK-DEVTEAM-DISPATCH-GATE-STAGING-DEADLOCK)",
         "router_source_verified_20260722": "Router source-verified the keystone code layer at 2026-07-21T22:41Z (commit b787e9a5d clean, .head intact, satisfiability instrument EXIT=0) — full record on FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER.router_source_verified_20260722. Remaining DoD = live-tick AC(3) only; do NOT flip to DONE_VERIFIED on the unit instrument alone."
+      },
+      {
+        "id": "DESIGN-COWORK-FANOUT-T6-MARKET-WATCHER-SLOT-ROUTING",
+        "type": "TASK",
+        "title": "market-watcher main.md: derive sub-flow from slot= parameter, fall back to wall-clock window table for ad-hoc invocation",
+        "zone": "docs/agents/market-watcher/",
+        "size": "M",
+        "priority": "P1",
+        "status": "REVIEW",
+        "created_at": "2026-07-21T18:30:00Z",
+        "depends": [],
+        "note": "Root-cause fix for R3: late-firing market-watcher-eod loses eod.md deliverable. Design brief §5. PO sequencing: T6 ships first — market-facing DATA LOSS not latency. | T6 implemented: main.md Step 2 slot= parsed first (eod/offhours explicit routes), wall-clock table unchanged fallback for empty/unrecognized slot. slot= premise CONFIRMED present in spawn-fanout.md:120. Awaiting T8 QA gate.",
+        "updated_at": "2026-07-22T02:18:01Z",
+        "owner": "agent-father",
+        "next_agent": "agent-father"
       }
     ],
     "qa": [],
@@ -12677,21 +12692,6 @@
           "at": "2026-07-22T00:49:21Z",
           "note": "Architect ruling (8843b099d) reviewed + endorsed: FR-5 board-flip BUNDLED into FR-4 via shared scripts/agents-flow/resolve-task-lane-by-id.jq; backlog+BLOCKED=TERMINAL; I10 batching = hard precondition of the fix_spec(b)/AC2 successor (2 extra unbound owner_client_session sites confirmed at execute-tier.md:64 + fail-loud-protocol.md:71). po_ruling.q1=B stands. Closure of THIS P0 remains HARD-GATED on the fix_spec(b)/AC2 successor row existing on the board (anti-silent-drop)."
         }
-      },
-      {
-        "id": "DESIGN-COWORK-FANOUT-T6-MARKET-WATCHER-SLOT-ROUTING",
-        "type": "TASK",
-        "title": "market-watcher main.md: derive sub-flow from slot= parameter, fall back to wall-clock window table for ad-hoc invocation",
-        "zone": "docs/agents/market-watcher/",
-        "size": "M",
-        "priority": "P1",
-        "status": "IN_PROGRESS",
-        "created_at": "2026-07-21T18:30:00Z",
-        "depends": [],
-        "note": "Root-cause fix for R3: late-firing market-watcher-eod loses eod.md deliverable. Design brief §5. PO sequencing: T6 ships first — market-facing DATA LOSS not latency.",
-        "updated_at": "2026-07-22T01:52:02Z",
-        "owner": "agent-father",
-        "next_agent": "agent-father"
       }
     ]
   },

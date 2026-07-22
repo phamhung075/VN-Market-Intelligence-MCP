@@ -4,7 +4,17 @@ Universal entry. Picks the right sub-flow based on current time. Crons and ad-ho
 
 **Tools:** `docs/agents/tools/package/market-watcher.md`
 
-## Dispatch (UTC clock)
+## Dispatch
+
+**Primary — `slot=` parameter (checked FIRST; F7 fix, DESIGN-COWORK-FANOUT-T6-MARKET-WATCHER-SLOT-ROUTING):**
+The cowork dispatcher already passes `slot=<slot_id>` in the spawn prompt (`docs/agents/cowork-team/flow/spawn-fanout.md` Step 5: `"run <flow_path>  slot=<slot_id>"`). When present and recognized, route by slot identity — never re-derive from wall-clock, since a late-firing slot can silently drift outside its own window and misroute to the wrong sub-flow (2026-07-21 incident: `market-watcher-eod` fired ~16:08–16:13Z, outside its 15:55–16:05 window, fell through to `cycle.md`/offhours, and never posted the EOD ledger + signal file Chef's 08:37 UTC dish depends on).
+
+| slot= | Sub-flow | mode |
+|---|---|---|
+| `market-watcher-eod` | `docs/agents/market-watcher/flow/eod.md` | — (always, regardless of wall-clock drift) |
+| `market-watcher-offhours` | `docs/agents/market-watcher/flow/cycle.md` | `offhours` (always) |
+
+**Fallback — UTC clock window table (used ONLY when `slot=` is empty, missing, or unrecognized — e.g. manual/ad-hoc invocation with no `slot=` param):**
 
 | Window | Sub-flow | mode |
 |---|---|---|
@@ -44,7 +54,10 @@ else:
 Pattern: If name/color/description fields are missing or wrong (context window truncated identity stanza), this fires before any market data fetch. Detects the SUCCESS→SILENT→FAILURE recurrence pattern (TASK_1967-04).
 
 1. Read current UTC time.
-2. Match the window above (evaluate market row first, then prepost, then EOD, then offhours); all times resolve to a sub-flow — there is no unconditional EXIT branch.
+2. Parse `slot=<slot_id>` from the invocation prompt, if present.
+   - `slot=market-watcher-eod` → route to `docs/agents/market-watcher/flow/eod.md` (always — regardless of wall-clock drift).
+   - `slot=market-watcher-offhours` → route to `docs/agents/market-watcher/flow/cycle.md` with `mode=offhours` (always).
+   - `slot=` empty, missing, or any other value (unrecognized slot id, or manual/ad-hoc invocation with no `slot=` param at all) → fall back to the UTC clock window table above, UNCHANGED: match the window (evaluate market row first, then prepost, then EOD, then offhours); all times resolve to a sub-flow — there is no unconditional EXIT branch.
 3. Run Step 0-GW corroboration probe (Root C fix — DMS-2, DESIGN-GATHERER-DOUBLEFIRE-DEDUP-CLUSTER):
 
    ```
