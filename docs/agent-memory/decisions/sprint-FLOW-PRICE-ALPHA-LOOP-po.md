@@ -484,3 +484,14 @@
 - Conflate with FIX-CI-GOLANGCI-CONFIG-VERIFY (P2) — REJECTED: different job (golangci config-verify), not this bun-test red.
 **why-decision:** Convergence over churn — dedup + escalate + record-fingerprint resolves the red without adding a row to an already-bloated 439-backlog; the falsified "CI UNAFFECTED" premise + fleet-gate breakage justify P1/ready; fingerprint recorded so a re-drain of the same red self-suppresses (memory: ci_red close must record fingerprint else re-drain).
 **why-change:** Kept router's suggested dedup target; ADDED a disambiguation directive to the row (pull the actual CI log run 29943451339/job 89002842796 FIRST; timer-leak-timeout-on-CI is the leading hypothesis given watchdog-widen b3317f7f3 added intervals + CI historically green on this suite; batch-regression would be CI-env-only since local A/B was clean) — prevents the fix agent re-running a 2x full-suite local A/B the PO already did. Also flagged 8a0b079b1's "CI green confirmed" commit msg as a probable subset false-green (verify raw not badges).
+
+### STEP po-S172 · po · 2026-07-22T20:14:41Z
+**task-id:** FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR
+**what-done:** Ruled the chef marker-key semantics and minted the P0 root-cause row + a P2 observability row; extended UC-CCA-P3's ACs instead of folding into it.
+**what-considered:**
+- Fold into UC-CCA-P3 (P0 umbrella, already covers marker gates) — REJECTED: its late-claim redesign does not prevent divergent keys, so folding would close the umbrella green with the defect alive.
+- Key on trading-day label (session reported on) — REJECTED: needs a holiday/weekend calendar on the mutex path, a new dependency and new failure mode.
+- Key on metadata.cycle_id — REJECTED: cycle_id is run-start-keyed, diverged 19:56:00Z vs 20:00:37Z tonight; same bug in a new field.
+- Key on the scheduled UTC fire-window — CHOSEN.
+**why-decision:** A mutex key that depends on which timezone the reader consults is not a mutex. Window-anchoring is the only derivation invariant to timezone, midnight straddle, DST, clock skew and run-start jitter, and it needs no calendar. Separately ruled key != display label: chef-evening is a forward preview (dish_type evening_preview, fires between VN close and next VN open), so date_vn = next VN session = VN wall date at fire time; 19:55Z run's 2026-07-22 label was wrong.
+**why-change:** Escalated beyond the router's framing — the same defect also threatens a MISSED dish tomorrow (published:chef-evening:2026-07-23 expires 00:01:30Z on 07-24, after the 19:45Z fire), so it is bidirectional, not duplicate-only.
