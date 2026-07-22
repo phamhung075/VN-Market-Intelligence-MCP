@@ -8,6 +8,30 @@ Live data → `docs/data/cron-registry.json`
 
 **Orphan** (not registered): none | **Legacy** (fallback test only): `newsPollerJob.ts`
 
+## Weekly (Sunday-only) Jobs — Startup Catch-Up (FIX-CRON-SUNDAY-STARTUP-CATCHUP, 2026-07-22)
+
+`recoverMissedExecutions` (the `scheduleCron()` wrapper's default) only replays
+ticks missed by IN-PROCESS event-loop lag — `Scheduler.start()` re-seeds its
+`lastCheck`/`lastExecution` reference from `new Date()` on every construction
+(i.e. every container boot), so it can never see a scheduled time that already
+passed before the process existed. A weekly job gets exactly ONE window per
+week; if the container happens to be down at that exact moment, the entire
+week is silently lost with no replay — this went undetected for 3 consecutive
+Sundays (`integrityCheckJob`, `bondMaturityPollerJob`, `devTeamHeartbeatJob`,
+`predictionOutcomeJob` — all `timezone:'UTC'`, early-morning windows 02:00-08:00
+UTC) purely because the container's restart timing happened to land after
+those windows but before the day's later Sunday jobs (`patternWatchJob` 15:30
+UTC, `weeklyPortfolioReportJob` 16:00 UTC — which kept firing fine).
+
+Fix: `shouldRunCatchup()` (`apps/mcp-server/src/scheduler/startupHelpers.ts`)
+gained a `requiredUtcDay` param (0=Sunday..6=Saturday); `startScheduler.ts` runs
+a 30s-post-boot probe for the 4 affected jobs, looking up each job's exact
+runner by name from the already-built `jobTable` (schedulerJobTable.ts
+`buildJobTable`) and firing it through the same `jobRunRepo.wrapRun(name, ...)`
+envelope the regular cron path uses. All 4 jobs are also now in
+`WATCHDOG_MANIFEST` (weekly cadence, 1.2× threshold) so a future 2-consecutive-
+Sunday miss alerts before it can compound into a 3rd.
+
 ## Intelligence Cycle Steps (15-min tick)
 
 | Step | What | Hours | Timeout |
@@ -56,9 +80,20 @@ Verdict lifecycle → `docs/policies/alert-policy.md` (Signal Verdict Lifecycle 
 |----------|-----|------|
 | `17 * * * *` (hourly) | `signalOutcomeResolutionJob` — resolves T+24h / T+48h pending rows in `signal_outcomes`; compares entry vs resolution price; classifies correct/incorrect/neutral | 1941 |
 | `0 7 * * *` (daily 07:00 UTC) | `accuracyDigestJob` — computes 30-day accuracy from `signal_outcomes`; formats top-3/bottom-3 signal types + new stocks count; sends to WORK channel. AC-3 skip when empty; AC-8 short digest when all-neutral. DB-backed dedup via `cron_job_runs` | 1941c |
+| `30 8 * * 1-5` (08:30 UTC M-F) | `signalOutcomeJob` — resolves `agent_signals` outcome='fired'/NULL after VN close; entry vs resolution price | 1382 |
+| `45 8 * * 1-5` (08:45 UTC M-F) | `alertOutcomeJob` — scores fired alerts via `market_prices_history`; WORK digest for position-danger HITs | 1847d-C |
 
 Source: `apps/mcp-server/src/scheduler/digest/accuracyDigestJob.ts`
 Env override: `CRON_ACCURACY_DIGEST` (default `0 7 * * *`)
+
+**FIX-CRON-WATCHDOG-COVERAGE-BESPOKE-TELEMETRY (2026-07-22):** `signalOutcomeJob` /
+`alertOutcomeJob` / `signalOutcomeResolutionJob` are registered via bespoke
+`scheduleCron(...)` call sites (`registerBespokeJobs` in `schedulerJobTable.ts`)
+that previously called `.catch(console.error)` with ZERO `cron_job_runs`
+telemetry — invisible to `get_cron_health` and unreachable by any
+`WATCHDOG_MANIFEST` entry regardless of manifest width. Now routed through
+`jobRunRepo.wrapRun(name, ...)`, matching the job_name each row is recorded
+under, and all 3 are in `WATCHDOG_MANIFEST` (`schedulerWatchdogJob.ts`).
 
 ## OHLCV Data Quality & TA Indicator Restoration
 

@@ -20,14 +20,16 @@ agents: [ops, system-auditor]
 
 ```json
 {
-  "service": "vn-sbv-fetch.service",
-  "attempted": 1,
-  "success": 1,
+  "service": "vn-sbv-fetch",
+  "attempted": ["vn-sbv-fetch"],
+  "success": ["vn-sbv-fetch"],
   "failed": [],
   "dry_run": false,
-  "log_tail": "[SSH] Queued command: ssh root@..../run-sbv-debug.sh..."
+  "log_tail": "[...] LIVE mode — SSH command: /root/run-sbv-debug.sh --verbose\n[...] SSH exited 0 — VPS script launched. Check VPS logs at /tmp/sbv-debug-*.log"
 }
 ```
+A failed ssh call populates `failed: [{source, reason}]` with the REAL error,
+never a silent empty-everything payload.
 
 ## Usage
 
@@ -47,6 +49,10 @@ agents: [ops, system-auditor]
 - Fetches USD/VND from Vietcombank XML endpoint
 - No tickers parameter (global SBV rate)
 - dry_run=true inspects without triggering SSH
-- Queues SSH command to VPS (fire-and-forget)
+- **FIX-VPS-SSH-TRIGGER-FAIL-LOUD (2026-07-22):** live mode now performs a REAL
+  synchronous SSH call (previously it only logged a would-be command and
+  always returned empty attempted/success/failed — see
+  `docs/architecture/microservice/mcp-server/system.md` § VPS Debug-Trigger Tools).
+- Uses VPS_HOST/VPS_SSH_USER/VPS_SSH_KEY_PATH env vars (not VINAHOST_IP) via
+  the shared `sshExec()` infrastructure
 - Check VPS logs at /tmp/sbv-debug-*.log
-- VINAHOST_IP env var must be set for live mode

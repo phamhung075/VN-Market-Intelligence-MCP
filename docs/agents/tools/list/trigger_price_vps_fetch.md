@@ -21,14 +21,17 @@ agents: [ops, system-auditor]
 
 ```json
 {
-  "service": "vn-price-fetch.service",
-  "attempted": 30,
-  "success": 30,
+  "service": "vn-price-fetch",
+  "attempted": ["FPT", "VIC"],
+  "success": ["FPT", "VIC"],
   "failed": [],
   "dry_run": false,
-  "log_tail": "[SSH] Queued command: ssh root@..../run-price-debug.sh..."
+  "log_tail": "[...] LIVE mode — SSH command: /root/run-price-debug.sh --ticker FPT --ticker VIC\n[...] SSH exited 0 — VPS script launched. Check VPS logs at /tmp/price-debug-*.log"
 }
 ```
+`attempted`/`success`/`failed` are string arrays (ticker codes, or `["all"]` when
+no ticker filter given) — a failed ssh call populates `failed: [{ticker, reason}]`
+with the REAL error, never a silent empty-everything payload.
 
 ## Usage
 
@@ -47,7 +50,13 @@ agents: [ops, system-auditor]
 
 - Service: vn-price-fetch.service (runs every 60s)
 - dry_run=true inspects without triggering SSH
-- Queues SSH command to VPS (fire-and-forget)
+- **FIX-VPS-SSH-TRIGGER-FAIL-LOUD (2026-07-22):** live mode now performs a REAL
+  synchronous SSH call (previously it only logged a would-be command and
+  always returned empty attempted/success/failed — see
+  `docs/architecture/microservice/mcp-server/system.md` § VPS Debug-Trigger Tools).
+  `success`/`failed` reflect the actual ssh exit code; a failure is never
+  silently reported as success.
+- Uses VPS_HOST/VPS_SSH_USER/VPS_SSH_KEY_PATH env vars (not VINAHOST_IP) via
+  the shared `sshExec()` infrastructure — same path `restart_vps_service` uses
 - Check VPS logs at /tmp/price-debug-*.log
-- VINAHOST_IP env var must be set for live mode
 - Useful for debugging price data pipeline

@@ -30,10 +30,11 @@ Individual tool signatures: `docs/agents/tools/list/<tool>.md`
 | `get_agent_signals` | Get signals for an agent | agent_name, unread_only? | market.db (agent_signals) |
 | `get_cycle_bootstrap` | Bootstrap data for agent cycle start | agent_name | All: signals + context + status |
 | `submit_feedback` | Submit user feedback | feedback_text | market.db |
-| `trigger_price_vps_fetch` | Manually trigger VPS price fetch | — | VPS service |
-| `trigger_news_vps_fetch` | Manually trigger VPS news fetch | — | VPS service |
-| `trigger_sbv_vps_fetch` | Manually trigger VPS SBV fetch | — | VPS service |
-| `trigger_foreign_flow_vps_fetch` | Manually trigger VPS foreign flow fetch | — | VPS service |
+| `trigger_price_vps_fetch` | Manually trigger VPS price fetch | tickers?, verbose?, dry_run? | vpsDebugSshTrigger.ts → vps/sshExec.ts |
+| `trigger_news_vps_fetch` | Manually trigger VPS news fetch | verbose?, dry_run? | vpsDebugSshTrigger.ts → vps/sshExec.ts |
+| `trigger_sbv_vps_fetch` | Manually trigger VPS SBV/FX fetch | verbose?, dry_run? | vpsDebugSshTrigger.ts → vps/sshExec.ts |
+| `trigger_bctc_vps_fetch` | Manually trigger VPS BCTC PDF fetch | tickers?, verbose?, dry_run? | vpsDebugSshTrigger.ts → vps/sshExec.ts + bctc_vps_queue |
+| `trigger_foreign_flow_vps_fetch` | Manually trigger VPS foreign flow fetch | tickers?, verbose?, dry_run? | vpsDebugSshTrigger.ts → vps/sshExec.ts |
 | `get_analysis_history` | Historical analysis log for a ticker | ticker, days? | market.db |
 | `smart_compact` | Compact a cowork session context | — | cowork agent helper |
 | `get_evidence_summary` | Evidence items for open chain findings | chain_id? | market.db (evidence_items) |
@@ -100,8 +101,70 @@ Step 0b.3 added to `docs/agents/cowork-team/flow/main.md` after the fire-time el
 
 | Job | Cadence | Purpose |
 |-----|---------|---------|
-| `askQueueCheckJob` | Every 5min | Check /ask queue for pending questions |
-| `devTeamHeartbeatJob` | Every 1h | Dev-team heartbeat — confirm pipeline alive |
+| `askQueueCheckJob` | Every 12min | Check /ask queue for pending questions |
+| `devTeamHeartbeatJob` | Sunday 07:00 UTC (weekly) | Dev-team heartbeat — confirm pipeline alive |
+
+`devTeamHeartbeatJob` (and 3 sibling Sunday jobs — `integrityCheckJob`,
+`bondMaturityPollerJob`, `predictionOutcomeJob`) get a startup-catchup probe
+(FIX-CRON-SUNDAY-STARTUP-CATCHUP, 2026-07-22): `recoverMissedExecutions`
+(scheduleCron's default) only replays ticks missed by in-process event-loop
+lag — it can never see a scheduled time that already passed BEFORE the process
+existed. A weekly job gets exactly one window per week; if the container is
+down at that exact moment, the whole week silently drops with no replay unless
+a startup catch-up covers it. See `apps/mcp-server/src/scheduler/startScheduler.ts`
+§ FIX-CRON-SUNDAY-STARTUP-CATCHUP and `shouldRunCatchup()`'s `requiredUtcDay`
+param in `startupHelpers.ts`.
+
+---
+
+## VPS Debug-Trigger Tools — SSH Execution Boundary
+
+`trigger_price_vps_fetch` / `trigger_news_vps_fetch` / `trigger_sbv_vps_fetch` /
+`trigger_bctc_vps_fetch` / `trigger_foreign_flow_vps_fetch` (FIX-VPS-SSH-TRIGGER-
+FAIL-LOUD, 2026-07-22): in `dry_run=false` ("live") mode these tools now call
+the REAL `sshExec()` (`apps/mcp-server/src/infrastructure/vps/sshExec.ts`) via
+the shared `apps/mcp-server/src/interface/mcp/vpsDebugSshTrigger.ts` executor.
+
+**Before this fix:** none of the 5 tools ever called `sshExec()`, `Bun.spawn`,
+or any process launch — they only string-built a `ssh root@$VINAHOST_IP ...`
+command and appended prose ("SSH trigger will be executed by server.ts" /
+"fire-and-forget") to `log_tail`, while `attempted`/`success`/`failed` stayed
+hardcoded `[]` in every mode. A live call that executed NOTHING returned a
+success-shaped empty-everything payload — the exact defect a cron audit found.
+
+**After this fix:** `attempted`/`success`/`failed` reflect the REAL ssh exit
+code. Ticker input is sanitized (`^[A-Z0-9]{1,10}$` allowlist) before reaching
+the remote command string — `ssh user@host "<command>"` hands `command` to the
+VPS's default shell, so an unvalidated ticker is not safe to concatenate into
+it. Invalid tickers are rejected into `failed` without ever attempting SSH.
+
+**Container dependency:** the image previously had NO `ssh` client binary
+(`apps/mcp-server/Dockerfile` now installs `openssh-client` — Ubuntu apt). Env
+vars `VPS_HOST` / `VPS_SSH_USER` / `VPS_SSH_KEY_PATH` were already correctly
+configured in `docker-compose.yml` with a real mounted key — this was a
+missing-client problem, not a missing-credential one. `restart_vps_service`
+already depended on the same `sshExec()` path and has the same binary
+dependency.
+
+**Second layer found while verifying (2026-07-22):** even with the client
+installed, `sshExec.ts` passed `-o StrictHostKeyChecking=yes` with
+`BatchMode=yes` (no interactive fallback) — and the live container has no
+`/root/.ssh/known_hosts` at all, confirmed via `docker exec`. That combination
+refuses EVERY connection from a fresh container regardless of client
+availability, so `restart_vps_service` could never have succeeded either,
+since inception. Changed to `StrictHostKeyChecking=accept-new` (trust-on-first-
+use — auto-accepts + caches an unseen host key, still rejects a CHANGED key on
+any later connection, i.e. the real MITM protection is preserved). Appropriate
+for a single, stable, operator-controlled VPS. A hardcoded `ssh-keyscan` at
+build time was considered and rejected: it would bake the VPS IP into the
+Dockerfile (hardcode debt) and turn an optional runtime feature into a
+build-time network dependency (image build would fail if the VPS happens to be
+unreachable during `docker build`).
+
+**Residual, unverifiable from this zone:** whether the real ssh handshake
+actually succeeds end-to-end (network reachability, key auth) can only be
+confirmed by an operator-executed rebuild + live probe — this is exactly what
+the mandatory post-push REAL-DATA verification task (PUSH-AUTONOMY-1) is for.
 
 ---
 
