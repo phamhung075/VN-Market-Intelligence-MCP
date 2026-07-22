@@ -1,19 +1,21 @@
 # PO Notebook
 
-_Last: 2026-07-22T06:43Z (router-spawned triage — drained 4 accumulated NEW po-bound signal_queue rows since 04:49Z)_
+_Last: 2026-07-22T15:10Z (router-spawned scoped triage — drained 4 NEW po-bound signal_queue rows; 0 mints, all prior-art on board)_
 
-## Tick 2026-07-22T06:43Z — persist dev-team WIP-deadlock BATCH + fold VPS-bridge cluster
+## Tick 2026-07-22T15:10Z — auditor recovery-artifact cluster → FOLD, zero mint
 
-**★ PERSIST the two po-S1/po-S2 FIXes to backlog — dev-team's triage SUCCEEDED but its output could not land.** `dev-team-20260722T054244Z-triage-batch-wip-deadlock`: WIP=2/2 (DESIGN-COWORK-FANOUT + FIX-ORPHAN-ADOPTION, both parked epics), and the direct-FIX path (Step2 FIX→skip→Step3) has NO WIP gate, so dispatching would breach WIP≤2 while BOUNDED-1(WIP=0)/RLC(WIP<2) block promotion. Router can't mint rows → BATCH was neither dispatched nor persisted. Minted BOTH to `task_board.backlog[]` at BACKLOG (auto-promote via BOUNDED-1/RLC): **FIX-DRAIN-PERSIST-GUARD-COUNT-DRAINABLE-ONLY** (P1, first — relieves drain false-trip pressure) + **FIX-ORCHSTATE-CONSERVATION-GUARD-QA-LANE-BLIND** (P2, latent qa-lane-blind gap). Both cross-service/, next_agent=developer. Specs copied verbatim from journal po-S1/po-S2 (no re-decision). Prior-art RAW-verified absent (0 task-row hits).
+**★ 4 po-bound NEW rows, all downstream of the ALREADY-RESOLVED mcp-server mem wedge (degraded ~08:30Z → CLEAN restart 14:53Z exit=0, NOT OOMKilled). Independently verified via get_system_status @15:06Z: uptime 13m, 16/16 breakers OK, DB 374MB no malformed, news RSS 0.1h fresh (self-resolved), VN market CLOSED.** No restart/rebuild authorized (already happened, user-gated).
 
-**★ FLOW-GAP folded, not re-minted.** "Even when Step-1 triage succeeds under saturation, its direct-FIX output needs a free WIP slot to LAND → triaged BATCH silently lost if not persisted" = sharper facet of existing **FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION**. Annotated that row (note + related + architect ask: fairness fix must ALSO guarantee triaged output is DURABLY PERSISTED). No dup mint.
+- `sys-…635a` data_stale (news-vps 389min) → self-resolved (0.1h now); prior-art **FIX-AUDITOR-B11-NEWS-FRESHNESS-LAYER-SPLIT** + **FIX-VPS-NEWS-STALE-FALSEPOS**. RESOLVED.
+- `sys-…7ed7` db_integrity_breach (market_messages 0/3h) = MISLABELED volume-dip (outage-window + off-market, DB structurally fine). Prior-art **FIX-AUDITOR-C12-READONLY-BLINDED-AND-TABLENAME** (exact: false-CRITICAL re-fire after writer restart) + **FIX-AUDITOR-C06-OFFMARKET-RECALIBRATE** + root **FIX-MARKET-MESSAGES-TIMESTAMP-FORMAT**. RESOLVED — no improvement_proposal (predicate-tune already backlogged; single outage-time obs = degenerate, not a broken-mechanism claim).
+- `sys-…2c18` microservice_degraded CRITICAL (rag-service 99.46% mem, LanceDB) → infra (PO not_my_job); prior-art **RAG-FTS-BUILD-MEMORY-BOUND** (REVIEW) + FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP + FU-RAG-DEPLOY-MEMORY. RESOLVED.
+- `sys-…5955` microservice_degraded WARN (mcp restart count=2) → root **FIX-MCP-MEMORY-CODE-LEAK** + **OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN**; live ops escalation cowork-…a30 already owns it. RESOLVED.
 
-**★ 3 CRITICAL VPS data_stale rows → FOLD into VPS-bridge cluster, NO restart.** sys-…1356/07c9/76cb (foreign-flow 1642min, 3/5 VPS unhealthy, bctc-discover 2441min/183 pending). Same root as 04:49Z 774e disposition + Telegram BUG 3866: Vinahost VPS endpoint timeout >5000ms; restart is USER-GATED (NOT triggered). status→triaged, high-water-marks recorded (foreign-flow ~27.4h, BCTC ~40.7h). Two-layer BCTC caveat: root = FETCH layer (VPS bridge), distinct from analysis-layer FIX-AUDITOR-B05. VPS infra = no code-fix mint.
+**★ Corroboration stamped on FIX-MCP-MEMORY-CODE-LEAK.status_note** (was null): real 07-22 outage, high-water ~87%, confirms "~87% in 12h" — raises leak-fix priority. No new mint (grep-board prior-art hit for every row).
 
-**★ orch-apply clean, board left for router.** task_total 594→596 (+2), signal_total 97→97 (0 rows removed). 12 top-level keys + conservation preserved. orch-state.json left MODIFIED for the router's board commit (PO does not commit the board).
+**★ orch-apply clean (2 atomic writes).** task_total 594→594, signal_total 101→101. 12 top-level keys + conservation preserved.
 
 ## Carry-over
-- 2 NEW signal_queue rows left NEW by design: `po-20260720T052606`→unified-agent (methodology-flag), `cowork-20260721T232634Z-a30-mcp-oom-escalate`→ops. Recipients drain, not PO.
-- WATCH: VPS-bridge cluster will keep re-emitting (foreign-flow/price/bctc + 3 unhealthy services) until user authorizes the VPS-fetcher restart — expected/suppressible, not new dev work.
-- backlog=419 (bloated) — both mints this tick are persisted-not-additive (dev-team-triaged root-cause FIXes), not churn.
-- Two FIXes auto-promote when a WIP slot frees; FIX-DRAIN-PERSIST-GUARD first. Architect owns FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION (now carries the persist-durability facet).
+- 2 NEW rows left NEW by design: `po-20260720T052606`→unified-agent, `cowork-…a30-mcp-oom-escalate`→ops (owners drain, not PO).
+- WATCH 16:00Z Tier-2: if db_integrity_breach / data_stale RE-FIRE post-recovery (not outage-benign) → bump priority on FIX-AUDITOR-C12 / C06 / B11; still NO fresh mint (fixes exist).
+- Root wedge = FIX-MCP-MEMORY-CODE-LEAK (BACKLOG, now corroborated) + rag-service mem cluster; both infra/ops-owned, one fix in REVIEW. backlog=419 (bloated) — 0 additions this tick.

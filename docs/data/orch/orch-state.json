@@ -1834,10 +1834,54 @@
         "disposition": "VPS-bridge cluster / BCTC fetch-layer facet (bctc-discover 2441min, queue=183 pending). FOLD/DEDUP into the VPS-bridge degradation cluster — same root as prior triaged sys-20260722T023220-774e (po @04:49Z) + user escalation Telegram BUG 3866. ROOT CAUSE = Vinahost VPS endpoint timeout >5000ms (foreign-flow-job fallbacks exhausted every minute); 3/5 VPS services unhealthy (vn-bctc-fetch, vn-price-fetch, vn-foreign-flow). CONFIRMED genuine + USER-GATED: VPS fetcher restart NOT triggered (already surfaced to user via Telegram BUG 3866; re-emits until VPS recovers are expected/suppressible). HIGH-WATER-MARK this tick: foreign-flow 1642min (~27.4h), stock-price (Gia co phieu) ~27.4h Rat-cu, bctc-discover 2441min (~40.7h, queue=183 pending). TWO-LAYER BCTC FRESHNESS CAVEAT: root here is the FETCH LAYER (VPS bridge down) — consistent with the cluster — distinct from the analysis-layer quarterly-SLA freshness tracked under FIX-AUDITOR-B05-BCTC-FRESHNESS-LAYER-SPLIT. No code-fix mint (VPS infra, ops/user-gated). Triaged by po (router session drain).",
         "triaged_at": "2026-07-22T06:40:43Z",
         "triaged_by": "po/triage-20260722T0640"
+      },
+      {
+        "id": "sys-20260722T150033-635a",
+        "ts": "2026-07-22T15:00:33Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "news-vps stale 389min (SLA 30min) — note: fresh after mcp-restart 14:53Z",
+        "severity": "CRITICAL",
+        "status": "RESOLVED",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260722T150037-7ed7",
+        "ts": "2026-07-22T15:00:37Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_integrity_breach",
+        "summary": "market_messages count=0 in 3h (expected >0) — post-restart recovery",
+        "severity": "CRITICAL",
+        "status": "RESOLVED",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260722T150730-2c18",
+        "ts": "2026-07-22T15:07:30Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "rag-service at 99.46% memory (763.8/768MiB, LanceDB pressure)",
+        "severity": "CRITICAL",
+        "status": "RESOLVED",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260722T150735-5955",
+        "ts": "2026-07-22T15:07:35Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "mcp-server restart count=2 — recurring OOM→restart pattern indicates mem-leak",
+        "severity": "WARN",
+        "status": "RESOLVED",
+        "payload_ref": null
       }
     ],
-    "last_triaged_at": "2026-07-22T06:40:43Z",
-    "last_triaged_by": "po/triage-20260722T0640"
+    "last_triaged_at": "2026-07-22T15:10:08Z",
+    "last_triaged_by": "po/triage-20260722T1508"
   },
   "sprint_goal": {
     "_note": "Active sprint visions. PO triage 2026-07-20 16->15: archived QUE-REFERENCE-PAGE (SHIPPED — route apps/frontend/app/routes/dashboard.kinh-dich-reference.tsx exists 9489B, renders all 64 que from que-descriptions-detail.generated; successor sprint KINHDICH-HOVER-DETAIL scope_out treats the reference page + its deep-link as already-existing; 0 orphan refs in task_board lanes; not in active_sprints). PREV: Active sprint visions. PO triage 2026-07-11 16->14: merged FB-POSTER-LAUNCHD-FIRER into COWORK-GUARANTEED-SLOT-DURABILITY (superseded per cron-jobs.md, firer plist installed+loaded); archived NARRATIVE-TRUTH-CCATO-GATE (T2+T3 both DONE, T3 qa-APPROVED). Reasoning: sprint-ANALYSIS-QUALITY-CONVERGENCE-po.md.",
@@ -7744,7 +7788,9 @@
         "zone": "apps/mcp-server",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MCP-MEMORY-CODE-LEAK",
         "po_corroboration_20260721": "CORROBORATION / high-water (PO converge-drain po-s147 2026-07-21T14:23:45Z): 5 A-30 mcp-server MemPerc samples this session 94.43→90.58→88.38→88.53→88.81% — reclaimed from peak, WITHIN the documented 85–93% GC-sawtooth band, NO OOM, tripwire UNtripped (no OOMKilled, no >93%-no-dip, no >97%-sustained). Benign leak episode already tracked here → NO new mint. DO NOT escalate to ops; DO NOT recommend a restart (would destroy trajectory evidence for zero OOM-risk benefit — feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn).",
-        "po_corroboration_20260721_1537": "HIGH-WATER CORROBORATION (PO signal-drain 2026-07-21T15:37Z, folds A-30 sys-20260721T151241-28d6). Router-verified 18-sample x12s window: mcp-server MemPerc 95.39-99.99% GC sawtooth WITH reclamation dips; band crept up ~6pt this session (floor 95.39% vs historical 89.2%). VmHWM 2.95GiB > current VmRSS 2.77GiB (high-water above current = reclaim happening), OOMKilled=false, gateway serving, rag-service co-pinned 99.8%. Genuine tripwire (OOMKilled / >93%-no-reclaim-across-all-samples / >97%-sustained) UNtripped -> benign-but-elevated. NO new mint. DO NOT escalate to ops; DO NOT restart/rebuild (user-gated; would destroy trajectory evidence). FP re-emission of this same in-band condition tracked by FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE (already commissioned, next=architect)."
+        "po_corroboration_20260721_1537": "HIGH-WATER CORROBORATION (PO signal-drain 2026-07-21T15:37Z, folds A-30 sys-20260721T151241-28d6). Router-verified 18-sample x12s window: mcp-server MemPerc 95.39-99.99% GC sawtooth WITH reclamation dips; band crept up ~6pt this session (floor 95.39% vs historical 89.2%). VmHWM 2.95GiB > current VmRSS 2.77GiB (high-water above current = reclaim happening), OOMKilled=false, gateway serving, rag-service co-pinned 99.8%. Genuine tripwire (OOMKilled / >93%-no-reclaim-across-all-samples / >97%-sustained) UNtripped -> benign-but-elevated. NO new mint. DO NOT escalate to ops; DO NOT restart/rebuild (user-gated; would destroy trajectory evidence). FP re-emission of this same in-band condition tracked by FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE (already commissioned, next=architect).",
+        "status_note": "CORROBORATION 2026-07-22: real outage — mcp-server mem wedge degraded ~08:30Z, fully wedged, CLEAN restart 14:53Z (exit=0, OOMKilled=false, NOT OOM). High-water ~87%. Downstream false-CRITICALs (auditor recovery artifacts, self-resolved): news-vps data_stale (sys-...635a) + market_messages db_integrity_breach (sys-...7ed7). Confirms 'accumulates ~87% in 12h' — raises leak-fix priority.",
+        "updated_at": "2026-07-22T15:08:29Z"
       },
       {
         "id": "FIX-CHEF-PUBLISHED-MARKER-RELEASE",
