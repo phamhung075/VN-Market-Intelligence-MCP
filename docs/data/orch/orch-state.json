@@ -1920,6 +1920,17 @@
         "triaged_at": "2026-07-22T17:21:02Z",
         "triaged_by": "po/triage-20260722T1707",
         "disposition": "TRIAGED — DUPLICATE 24h re-report, NO new mint. Same defect triaged 2026-07-21T17:24:33Z from prior signal cow-20260721T164500. Already tracked as a TWO-LAYER pair: LAYER-1 FIX-BCTC-PENDING-REFINE-HEAD-OF-LINE-FAILED-ROW (ready/P0, apps/mcp-server, dev-mcp-server) carries PO decision option-(b) [query-predicate: exclude FAILED rows with ZERO unprocessed windows; keep serving FAILED rows that still have remaining work] + full AC + LIVE verification gate; LAYER-2 FIX-BCTC-REFINE-RESOURCE-EXCEEDED-STATUS (backlog/P2, depends on layer-1) carries the text_fetch_failed/image_fetch_oversized -> distinct non-finalizing RESOURCE_EXCEEDED status taxonomy. Same tool, same report POW 78b06684, same 4 starved reports (DPM_2025_Q4/REE_2025_Q4/DPM_2026_Q1/VPB_2026_Q1). Requester ask to FOLD into epic BCTC-REFINE-STALL-RETRIGGER DECLINED: that epic is the OPPOSITE failure mode (trigger dormant / throughput-drain, all tasks DONE/DEFERRED/CANCELLED); this is the trigger firing correctly and the queue handing it dead work — the standalone P0 row is the correct, more-visible home (prior_art_note on that row). Re-report VALUE folded onto the P0 row as cowork_rereport_20260722T1721: confirms STILL LIVE 24h later, daily slot fired again 2026-07-22 16:30Z, still burning; row undispatched only because WIP=2 was saturated by two ~16h in_progress rows. Closing NEW so it stops churning the triage set."
+      },
+      {
+        "id": "sys-20260722T183223-0f2a",
+        "ts": "2026-07-22T18:32:23Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "sbv_fx marginal SLA breach 31min vs 30min threshold",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-22T15:10:08Z",
