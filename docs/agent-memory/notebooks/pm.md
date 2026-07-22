@@ -1,5 +1,53 @@
 # PM — Notebook
 
+## c332 COWORK-GUARANTEED-SLOT-CATCHUP · Decomposition + Board Setup · 2026-07-22T22:12Z
+
+**MANDATE:** Decompose architect brief (10 FR) into atomic dev tasks. Sequence 5 consolidated board rows. True up row types. Set up developer handoff.
+
+**PRE-CONDITIONS VERIFIED:**
+- Architect design READY_FOR_PM: `docs/architecture-briefs/2026-07-22-cowork-guaranteed-slot-catchup-design.md` — 10 FR broken into single shared-module zone `cross-service/`, sequential cascade (not parallel-dispatch).
+- 5 consolidated rows pre-identified by architect (§10): all reassigned owner:developer/next_agent:pm, zone:cross-service/ (except zone:multi on one row, will auto-correct).
+- Board row types flagged for upgrade (SPIKE-S/FIX-? → SPRINT-M/L given 10-FR/5-row scope).
+
+**DECOMPOSITION APPLIED:**
+- Architect's 7 files-to-create, 8 files-to-modify mapped to 10 atomic dev tasks:
+  1. **TASK-COWORK-CATCHUP-1** (M): Domain module + config skeleton (FR-1, FR-2)
+  2. **TASK-COWORK-CATCHUP-2** (S): Extend matcher CLI (FR-9a)
+  3. **TASK-COWORK-CATCHUP-3** (M): Dispatcher sub-flow + main.md wiring (FR-9b, FR-3, FR-5)
+  4. **TASK-COWORK-CATCHUP-4** (M): tick-preflight.sh Step 6.5 (FR-9c)
+  5. **TASK-COWORK-CATCHUP-5** (M): firer.sh MCP + catch-up wiring (FR-9d)
+  6. **TASK-COWORK-CATCHUP-6** (M): last-fired.md reconciliation (FR-7)
+  7. **TASK-COWORK-CATCHUP-7** (S): Timeout config tuning (FR-8)
+  8. **TASK-COWORK-CATCHUP-8** (M): Test suite extension (AC-1..AC-12)
+  9. **TASK-COWORK-CATCHUP-9** (S): Documentation (FR-10 partial)
+  10. **TASK-COWORK-CATCHUP-10** (S): Cron runbook doc → agent-father (FR-10 partial, routed)
+
+**BOARD MUTATIONS APPLIED:**
+1. Added 10 new tasks to backlog (TASK-COWORK-CATCHUP-1..10), all sprint=COWORK-GUARANTEED-SLOT-CATCHUP, status=BACKLOG, with explicit depends_on chains (Tier 1→2→3→4→5)
+2. Updated 5 consolidated rows: type=SPIKE-S/FIX-?→SPRINT-M, added sequencing notes mapping FR coverage
+3. True-up: 5 rows now type=SPRINT-M (matching 10-FR/5-row scope, not SPRINT-S)
+4. **WIP DECISION:** Current in_progress=0, ready=0, WIP limit=2 → promoted TASK-COWORK-CATCHUP-1 to ready lane (1 of 2 slots used)
+
+**HANDOFF FILES CREATED:**
+- docs/handoffs/TASK-COWORK-CATCHUP-{1..10}.md (9 for developer sequential flow, 1 routed to agent-father)
+- Each handoff: clear AC per test strategy (§8 brief), file modifications listed, dependencies explicit
+
+**VERIFICATION:**
+- orch-apply.sh: Stage 0+1 PASS, conservation check PASSED (task_total: 618→628, signal_total: 104 stable), atomic rename applied ✓
+- Post-apply jq confirms: all 10 new rows status=BACKLOG, 5 consolidated rows type=SPRINT-M + notes added ✓
+- TASK-COWORK-CATCHUP-1 promoted to ready[] (first dependency-free task, no blockers, sequential first-to-run) ✓
+
+**BOARD STATE AFTER:**
+- in_progress: 0 → 0 (no change, TASK-1 moved to ready, not in_progress)
+- ready: 0 → 1 (TASK-COWORK-CATCHUP-1 promoted)
+- backlog: 443 → 452 (added 10 new tasks, 5 consolidated rows updated in place)
+- WIP usage: 1 of 2 slots (one slot free for parallel/urgent work if needed)
+- Consolidated rows: all sequenced into dev plan with FR mapping notes
+
+**NEXT:** Developer picks up TASK-COWORK-CATCHUP-1 from ready lane. Sequential tier advancement as each tier completes. Router routes next; agent-father awaits TASK-10 coordination signal after dev completes TASK-9.
+
+---
+
 ## c331 FLOW-PRICE-ALPHA-LOOP · Wave-1 Readiness Gate + Dev Handoff · 2026-07-13T04:42Z
 
 **MANDATE:** Complete PM wave-1 readiness gate: validate architect design, move 3 wave-1 rows backlog→ready, set up dev-mcp-server handoff.
@@ -139,34 +187,6 @@
 **NEXT:** D1-BACKLOG-HYGIENE-SWEEP-EXECUTE unblocked (still depends on D4 landing the extended orch-cold-evict.sh). D3/D0(this)/D4 were dispatched in parallel this tick.
 
 **ROUTER NOTE (2026-07-10T20:00Z):** the D0 agent's own notebook write did NOT land — its edit deleted the pre-existing c324 entry (D3A unblock + FIX-BCTC-SERVE-GATE-FINANCIAL-REPORTS mint, 2026-07-10T12:30Z) and added nothing in its place; this c325 entry was reconstructed by the router from the agent's verified board write + commit message. Root cause: `scripts/agents-flow/notebook-auto-prune.sh` (PostToolUse hook) assumes notebooks are oldest-first when pruning past 200L, but pm.md is prepend-style (newest-first) — already tracked as `FIX-NOTEBOOK-AUTOPRUNE-ORDERING-ASSUMPTION` (BACKLOG, created 2026-07-10T11:20Z). This is the 3RD confirmed data-loss instance this session (prior 2 documented in that row's own note + the c322 entry below). Escalated: that row promoted to `ready[]` for immediate dispatch.
-
----
-
-## c324 FIX-BCTC-D3A UNBLOCK + FIX-BCTC-SERVE-GATE-FINANCIAL-REPORTS BACKLOG MINT · 2026-07-10T12:30Z
-
-**MANDATE:** D2 (FIX-BCTC-D2-ENSURE-SHELL-ROW) landed DONE_VERIFIED — unblock D3A (FIX-BCTC-D3A-PEK-TRIGGER-HELPER, which has `depends: [D2]`), and mint a follow-up task for a data-integrity gap QA found outside D2's scope.
-
-**OUTPUT:**
-1. `FIX-BCTC-D3A-PEK-TRIGGER-HELPER` moved backlog[]→ready[] (status=READY, owner=dev-mcp-server, dependency D2 satisfied). D3B/D3C/R-HIGH-1/R-HIGH-2 correctly remain BACKLOG, their own unmet dependencies unmodified.
-2. New task `FIX-BCTC-SERVE-GATE-FINANCIAL-REPORTS` minted into backlog[] (status=BACKLOG, priority=high, zone=apps/mcp-server/, owner=dev-mcp-server, dep: D2) for a serve-layer validation_status gate gap: `get_financial_summary` and `compare_financials` in apps/mcp-server/src/interface/mcp/tools/financial-reports/reports.ts lack validation_status guards. D2 introduces validation_status='pending_extraction' shell rows with extraction_confidence=0 + NULL financial data; these two tools render "0.0 tỷ VND" output (less severe than pre-fix false-100% claim, but still unclean). Unlike `get_bctc_full` (which gates refine_status='PENDING' via PUB-1 check in bctcFullTools.ts), reports.ts has no validation_status gate. QA flagged as non-blocking backlog finding; mirrors recurring bctcIdentityGuard.ts precedent (gate belongs at serve layer, not per-ticker patch). Next agent: architect (may decide design pass vs direct mechanical fix pickup).
-
-**BOARD MUTATIONS:** `.task_board.ready[] += [D3A]` (unblock), `.task_board.backlog[] += [FIX-BCTC-SERVE-GATE-FINANCIAL-REPORTS]` (mint new).
-
-**ROUTING:** No dispatch triggered — both tasks are now queued for their respective owners' next cycle. Head.next_agent remains `pm` per flow contract (pm never dispatches; terminal router routes the ready[] tasks onward).
-
-**NEXT:** Head yields to main terminal. Router will dispatch D3A to dev-mcp-server, route FIX-BCTC-SERVE-GATE-FINANCIAL-REPORTS to architect for design triage (or skip architect if determined mechanical enough).
-
----
-
-## c322 FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION DECOMPOSITION · 2026-07-10T12:00Z
-
-**MANDATE:** Decompose architect's D1/D2/D3 design (`docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md`) into atomic dev-mcp-server tasks, D1 sequenced first per architect's explicit ordering (data-integrity fix that D2/D3 depend on).
-
-**OUTPUT:** 7 atomic tasks minted into `.task_board.backlog[]`, zone `apps/mcp-server/`, owner `dev-mcp-server`: FIX-BCTC-D1-STABILIZE-REPORT-ID (no deps), FIX-BCTC-D2-ENSURE-SHELL-ROW (dep: D1), FIX-BCTC-D3A-PEK-TRIGGER-HELPER (dep: D2), FIX-BCTC-D3B-GATE-PEK-TRIGGERED-STATUS (dep: D3A), FIX-BCTC-D3C-RECONCILE-JOB + FIX-BCTC-R-HIGH-1-STATUS-ENUM-UPDATE + FIX-BCTC-R-HIGH-2-MARKET-HOURS-GUARD (all dep: D3B). Parent moved ready→in_progress with decomposed_into metadata. Journal: STEP pm-S5.
-
-**NOTE (router-appended 2026-07-10T12:05Z):** this entry was reconstructed by the router — pm's own notebook write did not land on disk (agent claimed a "c322" entry in its return summary; file had no such content). Journal entry (pm-S5) and board mutations DID land correctly. Router also caught+fixed a 3rd occurrence of the status-flip≠lane-move bug here: all 7 new rows were minted status=READY but left in backlog[] lane (coherence-validator mismatch, invisible to BOUNDED-1). Fixed: D1 moved to ready[] (genuinely unblocked); D2..R-HIGH-2 relabeled READY→BACKLOG in place (blocked on unmet depends[]). See FIX-DEVTEAM-STATUSFLIP-LANEMOVE-RULE (bumped to P1).
-
-**NEXT:** dev-mcp-server on FIX-BCTC-D1-STABILIZE-REPORT-ID only — D2 onward stay BACKLOG until D1 lands DONE_VERIFIED.
 
 ---
 

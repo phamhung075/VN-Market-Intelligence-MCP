@@ -10907,20 +10907,6 @@
         "updated_by": "po"
       },
       {
-        "id": "TASK-COWORK-CATCHUP-1",
-        "title": "FR-1 + FR-2: Core domain module cowork-catchup-predicate.js with per-dish-type config",
-        "type": "SPRINT-M",
-        "size": "M",
-        "priority": "P0",
-        "zone": "scripts/agents-flow/",
-        "sprint": "COWORK-GUARANTEED-SLOT-CATCHUP",
-        "status": "BACKLOG",
-        "depends_on": [],
-        "created_at": "2026-07-22T22:12:59Z",
-        "created_by": "pm",
-        "updated_at": "2026-07-22T22:12:59Z"
-      },
-      {
         "id": "TASK-COWORK-CATCHUP-2",
         "title": "FR-9a: Extend cowork-match-slots.js CLI to emit catchup_raw field",
         "type": "SPRINT-M",
@@ -12888,6 +12874,20 @@
             "acceptance": "Confirm no edit needed or document required changes"
           }
         ]
+      },
+      {
+        "id": "TASK-COWORK-CATCHUP-1",
+        "title": "FR-1 + FR-2: Core domain module cowork-catchup-predicate.js with per-dish-type config",
+        "type": "SPRINT-M",
+        "size": "M",
+        "priority": "P0",
+        "zone": "scripts/agents-flow/",
+        "sprint": "COWORK-GUARANTEED-SLOT-CATCHUP",
+        "status": "READY",
+        "depends_on": [],
+        "created_at": "2026-07-22T22:12:59Z",
+        "created_by": "pm",
+        "updated_at": "2026-07-22T22:16:09Z"
       }
     ],
     "review": [
