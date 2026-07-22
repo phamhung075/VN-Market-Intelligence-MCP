@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-07-22T06:00:36Z",
-    "updated_by": "qa",
-    "active_task_id": null,
-    "next_agent": "pm",
-    "next_action": "UC-GCP-P2 QA-APPROVED, DONE_VERIFIED (direct-commit verify) — pm mark done, unblock downstream"
+    "status": "in_progress",
+    "active_task_id": "UC-GCP-P4",
+    "next_agent": "qa",
+    "next_action": "Review-Lane QA-Drain claim of UC-GCP-P4 — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have).",
+    "updated_at": "2026-07-22T06:18:00Z",
+    "updated_by": "dev-team (review-lane qa-drain)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -12162,31 +12162,6 @@
         "po_triage_note_reverify": "PO TRIAGE 2026-07-15T17:28:38Z (dev-team tick 17:07Z, sig dev-team-20260715T160042Z-rag-corpus-repopulation-scale-reverify): corpus RE-POPULATION CONFIRMED CLIMBING — live GET :5002/embed/health index_size=297 rows now vs 116 @ qa 16:01Z verify (+181 in ~1.5h). Re-embed pipeline ALIVE => NOT stuck-at-116, so NO new bug for dev-rag-service. BUT 297 << ~56k representative scale => AC#1 (no-OOM at ~56k) re-run stays UN-testable now: this row STAYS review, done_verified WITHHELD, blocked_on=rag-corpus-repopulation-to-representative-scale UNCHANGED (TIME-GATED on wall-clock, NOT a dispatch — do NOT force a rebuild against a 116/297-row corpus). GATE to lift WITHHELD (= signal action 2): once corpus ~= representative scale, re-run AC#1 (POST /admin/rebuild-fts under 768m cgroup, docker stats peak-mem, 2x), record real peak-mem => then unblock ALPHA-S2 deadline retune + BM25 round-trip. Heads-up carried: rag-service idle mem ~92% of 768m with ZERO FTS activity (tight margin — ALPHA-S2 retune input). Tech-debt spin-off (signal 2, hybrid max_distance no-op) minted separately as SPIKE-RAG-HYBRID-MAXDISTANCE-NOOP (backlog, P3, non-blocking)."
       },
       {
-        "id": "UC-GCP-P4",
-        "type": "FIX",
-        "title": "Path-filter the pre-push tsc hook: skip full tsc for pushes touching no code",
-        "status": "REVIEW",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "CONFIRMED",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#git-ci-publish-P4",
-        "note": "Every push (even doc/notebook-only) pays a full tsc, stranding the fleet on unrelated red. Path-filter the pre-push hook: run tsc only when the push touches code paths.",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "next_agent": "qa",
-        "promoted_at": "2026-07-16T14:00:03Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-16T14:00:13Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "developer_completed_at": "2026-07-16T14:12:40Z",
-        "developer_completed_by": "developer (UC-GCP-P4, dev-team bounded-1 pickup)",
-        "review_note": "Path-filtered scripts/git-hooks/pre-push: loops all stdin ref lines, computes git diff --name-only <remote>..<local> per line, skips the full pnpm --filter vn-market check tsc (~94s, over the commit-mutex 90s TTL) only when NO line matches ^(apps|packages|scripts)/.*\\.(ts|tsx|js|mjs|json)$ or root package.json/pnpm-lock.yaml/pnpm-workspace.yaml (docs/ excluded). All 4 mandatory hardenings implemented: (a) fail-open full tsc on git diff failure (remote sha absent locally), guarded inside an if so it never hits the bare set -e abort; (b) all-zero local-sha (branch-delete) lines skipped; (c) ANY code-touching line across multiple stdin refs forces full tsc (drains all stdin, no early break); (d) root package.json/pnpm-lock.yaml/pnpm-workspace.yaml added to the code-touching set. Zero-remote-sha (new branch) always runs full tsc. Verified: bash -n + shellcheck clean; 9 simulated stdin scenarios against a throwaway repo + fake-pnpm stub (doc-only skip/no-call, code-touching full-tsc/call, fail-open bogus-remote-sha full-tsc, new-branch zero-remote-sha full-tsc, branch-delete zero-local-sha skip, multi-line doc+code ANY-rule full-tsc, PRE_PUSH_SKIP_TSC=1 escape hatch intact, no-pnpm-on-PATH WARN intact, root package.json full-tsc) all matched spec. Shell-only change, no .ts touched -- no tsc/test suite run applicable. DJ-GATE-1: sprint-ULTRACODE-AUDIT-FIXALL-developer.md STEP developer-S9. qa: confirm scripts/git-hooks/pre-push diff matches detail_ref git-ci-publish-P4 acceptance + all 4 hardenings, confirm .git/hooks/pre-push symlink still resolves (install.sh untouched), promote to done_verified."
-      },
-      {
         "id": "UC-MDH-P1",
         "type": "FIX",
         "title": "Sandbox the 1300b memory-tools test (registration-time env injection) + purge its accumulated pollution",
@@ -12494,7 +12469,34 @@
         "next_agent": "agent-father"
       }
     ],
-    "qa": [],
+    "qa": [
+      {
+        "id": "UC-GCP-P4",
+        "type": "FIX",
+        "title": "Path-filter the pre-push tsc hook: skip full tsc for pushes touching no code",
+        "status": "QA",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "CONFIRMED",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#git-ci-publish-P4",
+        "note": "Every push (even doc/notebook-only) pays a full tsc, stranding the fleet on unrelated red. Path-filter the pre-push hook: run tsc only when the push touches code paths.",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "next_agent": "qa",
+        "promoted_at": "2026-07-16T14:00:03Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-22T06:18:00Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "developer_completed_at": "2026-07-16T14:12:40Z",
+        "developer_completed_by": "developer (UC-GCP-P4, dev-team bounded-1 pickup)",
+        "review_note": "Path-filtered scripts/git-hooks/pre-push: loops all stdin ref lines, computes git diff --name-only <remote>..<local> per line, skips the full pnpm --filter vn-market check tsc (~94s, over the commit-mutex 90s TTL) only when NO line matches ^(apps|packages|scripts)/.*\\.(ts|tsx|js|mjs|json)$ or root package.json/pnpm-lock.yaml/pnpm-workspace.yaml (docs/ excluded). All 4 mandatory hardenings implemented: (a) fail-open full tsc on git diff failure (remote sha absent locally), guarded inside an if so it never hits the bare set -e abort; (b) all-zero local-sha (branch-delete) lines skipped; (c) ANY code-touching line across multiple stdin refs forces full tsc (drains all stdin, no early break); (d) root package.json/pnpm-lock.yaml/pnpm-workspace.yaml added to the code-touching set. Zero-remote-sha (new branch) always runs full tsc. Verified: bash -n + shellcheck clean; 9 simulated stdin scenarios against a throwaway repo + fake-pnpm stub (doc-only skip/no-call, code-touching full-tsc/call, fail-open bogus-remote-sha full-tsc, new-branch zero-remote-sha full-tsc, branch-delete zero-local-sha skip, multi-line doc+code ANY-rule full-tsc, PRE_PUSH_SKIP_TSC=1 escape hatch intact, no-pnpm-on-PATH WARN intact, root package.json full-tsc) all matched spec. Shell-only change, no .ts touched -- no tsc/test suite run applicable. DJ-GATE-1: sprint-ULTRACODE-AUDIT-FIXALL-developer.md STEP developer-S9. qa: confirm scripts/git-hooks/pre-push diff matches detail_ref git-ci-publish-P4 acceptance + all 4 hardenings, confirm .git/hooks/pre-push symlink still resolves (install.sh untouched), promote to done_verified.",
+        "updated_at": "2026-07-22T06:18:00Z"
+      }
+    ],
     "_closed_signals_20260614": {
       "_by": "po-S50",
       "_at": "2026-06-14T14:45:14Z",
