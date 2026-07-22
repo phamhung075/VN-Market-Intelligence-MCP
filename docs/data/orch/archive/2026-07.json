@@ -9554,6 +9554,28 @@
       "qa_reviewed_at": "2026-07-22T00:28:59Z",
       "qa_reviewed_by": "qa",
       "qa_test_suite_result": "go build/vet/gofmt clean, go test 10/10 packages (pkg/interface/http 37/0 fail), golangci-lint 0 issues, mock-guard PASS"
+    },
+    {
+      "title": "Promote the 5x proxy-timeout multiplier to a named config accessor",
+      "priority": "P1",
+      "zone": "api-gateway",
+      "type": "FACTORY",
+      "status": "DONE_VERIFIED",
+      "id": "FACTORY-APIGW-proxy-timeout-constant",
+      "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APIGW-proxy-timeout-constant",
+      "promoted_at": "2026-07-09T20:17:18Z",
+      "promoted_by": "dev-team (bounded-1 auto-pickup)",
+      "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+      "claimed_at": "2026-07-22T00:46:19Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "completed_at": "2026-07-09T20:25:05Z",
+      "completed_by": "dev-api-gateway",
+      "status_note": "Named the inline `*5` proxy-timeout fallback as domain.DefaultProxyTimeoutMultiplier=5 (pkg/domain/models.go) with a new domain.ServiceConfig.EffectiveProxyTimeoutMs() accessor; proxy.go serveProxied simplified from (overrideMs,timeoutMs int64) to a single pre-resolved effectiveMs int64, both HandleProxy call sites now call the accessor instead of inlining the fallback branch. Deviated from the backlog note's suggested registry.go placement: proxy.go is Fence-C-restricted from importing pkg/infrastructure (registry.go's package), so the constant+accessor had to live in pkg/domain instead — documented in the decision journal. New pkg/domain/models_test.go pins EffectiveProxyTimeoutMs() (2000ms+no override->10000ms; 120000ms override wins; 0+no override->0) plus the constant value itself. go build/vet clean, gofmt -l clean (no new unformatted files — pre-existing registry.go debt confirmed via git-stash baseline, out of scope), golangci-lint 0 issues (confirms Fence-C respected), go test ./... 10/10 packages PASS, G12 sandbox primitive 14/14 + module 1/1 PASS. rebuild_required=true (hottest-path prod HTTP handler) — deferred post-rebuild behavior verification tracked in signal docs/signals/ops-rebuild-verify-api-gateway-20260709T2022Z.json. Kept REVIEW (not self-asserted DONE_VERIFIED) pending router/qa sign-off given hottest-path risk. DJ: docs/agent-memory/decisions/dev-api-gateway-20260709T2022Z-FACTORY-APIGW-proxy-timeout-constant.md | [QA] Review Record (direct-commit verify, 2026-07-22T00:50:50Z): commit eedbdf4e6a7fe82a8520e9df6afcc7b3e447158d confirmed on main ancestry, touches exactly the claimed files (pkg/domain/models.go+models_test.go, pkg/interface/http/proxy.go, pkg/infrastructure/registry.go doc-comment only). go build/vet clean; gofmt -l flags registry.go but before/after diff proves identical pre-existing debt, not introduced; golangci-lint 0 issues (Fence-C intact); go test -count=1 ./... 10/10 packages PASS incl. new TestServiceConfig_EffectiveProxyTimeoutMs+TestDefaultProxyTimeoutMultiplier_PinnedValue; mock-guard PASS; secrets clean. Both HandleProxy call sites confirmed calling .EffectiveProxyTimeoutMs(). Closed the row's own deferred DoD item (ops-rebuild-verify signal was deleted unactioned in 83748768d, pruned in 1f9fbf52b, never verified): container created 2026-07-15 (post-commit), live-probed /health(200)/macro/health(200, override branch)/stock/health(200, default-multiplier branch)/unknown-service(404). VERDICT: APPROVED, DONE_VERIFIED.",
+      "updated_at": "2026-07-22T00:50:50Z",
+      "qa_verdict": "APPROVED",
+      "qa_commit": "eedbdf4e6a7fe82a8520e9df6afcc7b3e447158d",
+      "qa_reviewed_at": "2026-07-22T00:50:50Z",
+      "qa_reviewed_by": "qa"
     }
   ],
   "closed_sprints": [
