@@ -1746,6 +1746,17 @@
         "severity": "CRITICAL",
         "status": "NEW",
         "payload_ref": null
+      },
+      {
+        "id": "sys-20260722T023220-774e",
+        "ts": "2026-07-22T02:32:20Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "foreign-flow stale 1402min (check B-04)",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-21T19:29:49Z",
