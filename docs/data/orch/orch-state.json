@@ -9941,6 +9941,65 @@
         ],
         "note": "Auditor-FP family (feedback_auditor_predicate_drift_false_regression). Distinct from the A12/A20/A30 health-probe converge row (runtime health predicates vs this doc-integrity path predicate). PO source-verified path absence (ls + git log --diff-filter=D empty) before minting.",
         "updated_at": "2026-07-22T00:52:31Z"
+      },
+      {
+        "id": "FIX-SPRINT-TASK-HEARTBEAT-LOCK",
+        "type": "FIX",
+        "title": "Fix fix_spec(b)/AC2: Add owner_client_session binding + sprint-task heartbeat loop + TTL raise + INV-GATEWAY-1 cleanup",
+        "status": "BACKLOG",
+        "priority": "P0",
+        "size": "L",
+        "zone": "apps/mcp-server/ + flow-docs/",
+        "owner": "pm",
+        "next_agent": "developer",
+        "depends": [
+          "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD"
+        ],
+        "supervised": true,
+        "created_at": "2026-07-22T01:15:30Z",
+        "created_by": "pm/decomposition-20260722T0115",
+        "updated_at": "2026-07-22T01:21:08Z",
+        "updated_by": "pm/decomposition-20260722T0115",
+        "origin_ticket": "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
+        "parent_fix_spec": "fix_spec(b)/AC2",
+        "upstream_brief_ref": "docs/architecture-briefs/2026-07-22-fix-orphan-adoption-board-state-guard-design.md §4",
+        "spec_ref": "docs/handoffs/FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD-BA-spec.md §3",
+        "subtasks": [
+          {
+            "seq": 1,
+            "key": "I10-PRECURSOR",
+            "title": "[I10 PRECURSOR] Bind owner_client_session to execute-tier.md claim + release calls",
+            "acceptance": "execute-tier.md:42-48 claim adds owner_client_session: $CLAUDE_CODE_SESSION_ID; :64 release adds owner_client_session",
+            "required_before_qa": true
+          },
+          {
+            "seq": 2,
+            "key": "TTL-HEARTBEAT-LOOP",
+            "title": "[AC2 CORE] Raise sprint-task TTL + implement heartbeat loop in execute-tier.md try block",
+            "acceptance": "execute-tier.md:46 TTL raised; heartbeat loop added inside try block, running every TTL/3",
+            "depends_on_seq": [
+              1
+            ]
+          },
+          {
+            "seq": 3,
+            "key": "DOC-SYNC",
+            "title": "[SYNC] Update TTL references across three docs (SAME commit as step 2)",
+            "acceptance": "task-lock/SKILL.md:33, developer.md:69, fail-loud-protocol.md:71 all updated together",
+            "depends_on_seq": [
+              2
+            ]
+          },
+          {
+            "seq": 4,
+            "key": "INV-GATEWAY-1-CLEANUP",
+            "title": "[CLEANUP] Delete INV-GATEWAY-1 dead calls from developer + qa flows",
+            "acceptance": "developer/flow/main.md:69 and :91-95 removed; qa/flow/main.md:139 removed; dispatcher owns TTL end-to-end"
+          }
+        ],
+        "rationale_why_separate_row": "fix_spec(b) is supervised wave 2: I10 precursor is hard dep for heartbeat; TTL raise has container-rebuild gate; INV-GATEWAY-1 cleanup is independently shippable",
+        "closure_gate_note": "This row DONE unblocks FIX-ORPHAN from its hard precondition per PO ruling",
+        "status_note": "Backlog: awaiting FIX-ORPHAN ship + QA-verify"
       }
     ],
     "closed_sprints": [
@@ -11440,6 +11499,231 @@
         "sibling_row": "FIX-CHEF-L6-TOKEN-PERSISTENCE-RECURRING",
         "note": "PO TRIAGE 2026-07-21 (TNB c115 finding F-CHEF-MORNING-FALSE-FULL-VERDICT). VERDICT: CONFIRMED AT SOURCE by PO — with ONE correction to TNB's evidence chain (below). This is a FALSE CERTIFICATION, which is a strictly worse failure mode than every previously-tracked chef finding: all prior ones were HONEST degraded self-reports.\n\nRAW EVIDENCE (PO read docs/data/unified-agent-synthesis-2026-07-21-morning.json directly; note the fields are NESTED — metadata.* and tnb_synthesis.* — a top-level jq query returns null and will look like a missing field):\n- metadata.cycle_id = \"morning-2026-07-21T05:20:19Z\"\n- metadata.quality_verdict = \"full\"\n- metadata.layers_walked_summary = \"1-6 (full)\"\n- tnb_synthesis.us_macro_layer = \"Fed funds rate 3.63% with risk-off sentiment signaled by gold spike +$24.1 to $4053/oz. Safe-haven demand reflects caution amid margin debt expansion.\"  -> Fed funds ONLY. NO PMI. NO EFFR-IORB spread. Both are mandatory Layer-2 content per tnb-methodology.md / the main.md Layer table.\n- known_gaps = [\"[gap:business_context_sparse] ...\", \"[gap:gold_4300_active] ...\"] -> ZERO L2 gap token.\nSo the dish certifies 6/6 layers walked while its own persisted payload shows Layer 2 is not walked, and emits no gap token to compensate. The quality signal is not merely wrong, it is confidently wrong — downstream consumers that trust quality_verdict to gate use have no way to detect this.\n\n*** CORRECTION TO TNB'S EVIDENCE (PO re-verified; do not carry TNB's version forward) ***\nTNB's finding argues the self-scoring gate CAN work by contrasting the SAME-DAY eod dish, which it says \"explicitly tokens [gap:L2_US_macro_absent]\". That contrast is NOT RAW-verifiable: docs/data/unified-agent-synthesis-2026-07-21-eod.json DOES NOT EXIST (PO ls-confirmed; TNB's OWN other finding, GAP-CHEF-SYNTHESIS-A-FLOW-PERSIST, states the same file is Glob-confirmed absent). TNB therefore cited the eod NOTEBOOK claim as if it were persisted-JSON evidence, in the same handoff where it correctly reports that JSON never landed — an internal contradiction.\nThe proof leg SURVIVES, but must be re-anchored to the EVENING dish, which PO verified RAW: unified-agent-synthesis-2026-07-21-evening.json has metadata.quality_verdict=\"degraded\" AND tnb_synthesis.us_macro_layer=\"EFFR-IORB spread 1.64pp NEUTRAL. Brent +2.31% ... Gold +1.97% ...\" — i.e. genuine L2 content and an honest verdict, same agent, same day. That is a sound same-day control and it establishes the same point: the defect is isolated to the morning cycle, not universal.\nCONSEQUENCE FOR WHOEVER FIXES THIS: do not build the fix around a comparison with the eod JSON. It is not there.\n\nOCCURRENCE COUNT = 1 (first live-verified). Below the 3-cycle auto-cure threshold, and PO agrees auto-cure is the WRONG instrument here regardless of count — see the sibling row below.\n\nFIX SHAPE (PO directive): the verdict gate must be a DETERMINISTIC ASSERTION, not a narrative self-judgement. Before writing metadata.quality_verdict=\"full\", the agent must assert per-layer that the layer's own payload field is non-empty AND contains its mandatory tokens (L2: PMI and/or EFFR-IORB). If an assertion fails, \"full\" is not writable — the verdict must downgrade to \"degraded\" and a [gap:L<N>_...] token must be appended to known_gaps. Verdict and gap-token must be derived from ONE evaluation so they cannot disagree.\n\nAC: (1) quality_verdict=\"full\" is unwritable when any mandatory layer field lacks its required tokens; (2) verdict and known_gaps are computed from a single pass (no independent second judgement); (3) negative control — a synthetic dish with L2 stripped must produce degraded + an L2 gap token, proving the assertion fires (without this the fix is indistinguishable from always writing degraded); (4) RAW-verify on the next morning fire by reading metadata.quality_verdict + tnb_synthesis.us_macro_layer from the persisted JSON — an agent self-report or notebook line is NOT acceptable evidence (the 07-21 morning notebook line matched the false \"full\" verbatim, so the notebook faithfully reproduces the bad verdict and cannot detect it).\n\nSIBLING / DO NOT MERGE: FIX-CHEF-L6-TOKEN-PERSISTENCE-RECURRING (P3, BLOCKED) is the nearest prior art and is RELATED BUT DISTINCT. That row = a token WAS generated and then dropped on JSON write (persist-step vs narrative-gen, isolation-first, 3 manifestations despite 2 auto-cures). THIS row = no token was ever generated AND the verdict was affirmatively certified \"full\". Different mechanism, opposite end of the pipeline. They share the family \"chef self-scoring integrity\" and should be looked at together, but merging them would bury a false-certification bug inside a persistence bug. The L6 row's own lesson applies here though: more same-shape auto-cure is the wrong move; this needs a deterministic assertion.\n",
         "updated_at": "2026-07-21T21:03:15Z"
+      },
+      {
+        "id": "FIX-ORPHAN-FR1-FR2-INFRA-HEARTBEAT-LADDER",
+        "type": "FEATURE",
+        "title": "Implement FR-1/FR-2: extend task_heartbeat with ttl_seconds/payload_patch + null-session ladder for task_release",
+        "status": "READY",
+        "priority": "P0",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "owner": "pm",
+        "next_agent": "developer",
+        "depends": [],
+        "supervised": false,
+        "created_at": "2026-07-22T01:15:30Z",
+        "created_by": "pm/decomposition-20260722T0115",
+        "updated_at": "2026-07-22T01:21:08Z",
+        "updated_by": "pm/decomposition-20260722T0115",
+        "origin_task": "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
+        "parent_fix_spec": "fix_spec(a)+(c)/AC1+AC3",
+        "subtasks": [
+          {
+            "seq": 1,
+            "title": "Add ttl_seconds + payload_patch optional params to heartbeatTask()",
+            "acceptance": "heartbeatTask accepts optional ttl_seconds (60-691200), updates row.ttl_seconds when supplied; payload_patch shallow-merges into payload JSON when supplied"
+          },
+          {
+            "seq": 2,
+            "title": "Add null-session ladder to heartbeatTask/releaseTask for orphan-signal rows",
+            "acceptance": "orphan-signal:* rows with owner_client_session=NULL match on (owner_agent + original_owner_client_session echo); live-session rows (owner_client_session IS NOT NULL) never match via new params"
+          },
+          {
+            "seq": 3,
+            "title": "Implement two-statement UPDATE pattern (not CTE) per FR-1 file-level design",
+            "acceptance": "First UPDATE: ttl_seconds if supplied. Second UPDATE: payload_patch merge. Both preserve unpatched fields."
+          }
+        ]
+      },
+      {
+        "id": "FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS",
+        "type": "FEATURE",
+        "title": "Add Zod schemas for FR-1/FR-2 optional params; update task_heartbeat/task_release registration per FR-6/FR-7",
+        "status": "READY",
+        "priority": "P0",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "owner": "pm",
+        "next_agent": "developer",
+        "depends": [
+          "FIX-ORPHAN-FR1-FR2-INFRA-HEARTBEAT-LADDER"
+        ],
+        "supervised": false,
+        "created_at": "2026-07-22T01:15:30Z",
+        "created_by": "pm/decomposition-20260722T0115",
+        "updated_at": "2026-07-22T01:21:08Z",
+        "updated_by": "pm/decomposition-20260722T0115",
+        "origin_task": "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
+        "parent_fix_spec": "fix_spec(a)+(c)/AC1+AC3",
+        "subtasks": [
+          {
+            "seq": 1,
+            "title": "Add optional ttl_seconds to task_heartbeat Zod schema (min:60, max:691200)",
+            "acceptance": "Schema allows omitted ttl_seconds (backward compatible); .describe() prose updated"
+          },
+          {
+            "seq": 2,
+            "title": "Add optional payload_patch to task_heartbeat Zod schema",
+            "acceptance": "Schema allows omitted payload_patch; .describe() prose updated"
+          },
+          {
+            "seq": 3,
+            "title": "Add optional owner_agent + original_owner_client_session to task_heartbeat/task_release schemas",
+            "acceptance": "Both params optional, both schemas document use for null-session orphan-signal ladder only"
+          }
+        ]
+      },
+      {
+        "id": "FIX-ORPHAN-FR1-FR3-FR6-SKILL-DISPATCH-CLAIM",
+        "type": "FEATURE",
+        "title": "Update dispatch-claim/SKILL.md: payload_patch prose (FR-1), Orphan-Adoption Probe guard (FR-3), escalation call-site owner_agent (FR-6)",
+        "status": "READY",
+        "priority": "P0",
+        "size": "M",
+        "zone": "flow-docs/",
+        "owner": "pm",
+        "next_agent": "developer",
+        "depends": [],
+        "supervised": false,
+        "created_at": "2026-07-22T01:15:30Z",
+        "created_by": "pm/decomposition-20260722T0115",
+        "updated_at": "2026-07-22T01:21:08Z",
+        "updated_by": "pm/decomposition-20260722T0115",
+        "origin_task": "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
+        "parent_fix_spec": "fix_spec(a)+(c)/AC1+AC3",
+        "subtasks": [
+          {
+            "seq": 1,
+            "title": "Fix SKILL.md :182-184 prose: update to document payload_patch now available in task_heartbeat",
+            "acceptance": "Prose at :182-184 describes payload_patch capability"
+          },
+          {
+            "seq": 2,
+            "title": "Implement Orphan-Adoption Probe guard logic per FR-3",
+            "acceptance": "Guard checks board-state before redispatch_count >= N_MAX branch; handles both flat lanes and active_sprints nesting; classifies by lane membership"
+          },
+          {
+            "seq": 3,
+            "title": "Add owner_agent to escalation heartbeat call at :354-359 (FR-6)",
+            "acceptance": "call_tool task_heartbeat now includes owner_agent:<dispatcher-role> parameter"
+          }
+        ]
+      },
+      {
+        "id": "FIX-ORPHAN-FR4-FR5-FLOW-DEVTEAM-ADOPTION-GUARD",
+        "type": "FEATURE",
+        "title": "Create resolve-task-lane-by-id.jq; implement FR-4 read-guard + FR-5 board-flip write in dev-team/flow/main.md Step 0a-B",
+        "status": "READY",
+        "priority": "P0",
+        "size": "M",
+        "zone": "flow-docs/",
+        "owner": "pm",
+        "next_agent": "developer",
+        "depends": [],
+        "supervised": false,
+        "created_at": "2026-07-22T01:15:30Z",
+        "created_by": "pm/decomposition-20260722T0115",
+        "updated_at": "2026-07-22T01:21:08Z",
+        "updated_by": "pm/decomposition-20260722T0115",
+        "origin_task": "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
+        "parent_fix_spec": "fix_spec(a)+(c)/AC1+AC3",
+        "subtasks": [
+          {
+            "seq": 1,
+            "title": "Create scripts/agents-flow/resolve-task-lane-by-id.jq script per architect ruling",
+            "acceptance": "Script resolves task_id across all board lanes, returns {lane, status} map indexed by bare id"
+          },
+          {
+            "seq": 2,
+            "title": "Update dev-team/flow/main.md Step 0a-B read-guard with pointer to dispatch-claim/SKILL.md (FR-4)",
+            "acceptance": "Guard runs before redispatch_count >= N_MAX branch"
+          },
+          {
+            "seq": 3,
+            "title": "Fix board-flip write at dev-team/flow/main.md :383-388: strip 'task:' prefix, use resolve-task-lane-by-id.jq (FR-5)",
+            "acceptance": "jq now targets correct flat lane via shared resolver"
+          },
+          {
+            "seq": 4,
+            "title": "Update task_release call sites in dev-team/flow/main.md for orphan-signal cleanup (FR-2)",
+            "acceptance": "Release calls at :365-370 and :391-394 now succeed via null-session ladder"
+          }
+        ]
+      },
+      {
+        "id": "FIX-ORPHAN-FR8-TEST-COORDINATION-STORE",
+        "type": "FEATURE",
+        "title": "Write tests for coordinationStore.test.ts covering FR-1/FR-2/NFR-1 regression gate",
+        "status": "READY",
+        "priority": "P0",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "owner": "pm",
+        "next_agent": "developer",
+        "depends": [
+          "FIX-ORPHAN-FR1-FR2-INFRA-HEARTBEAT-LADDER"
+        ],
+        "supervised": false,
+        "created_at": "2026-07-22T01:15:30Z",
+        "created_by": "pm/decomposition-20260722T0115",
+        "updated_at": "2026-07-22T01:21:08Z",
+        "updated_by": "pm/decomposition-20260722T0115",
+        "origin_task": "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
+        "parent_fix_spec": "fix_spec(a)+(c)/AC1+AC3",
+        "subtasks": [
+          {
+            "seq": 1,
+            "title": "Test heartbeatTask with ttl_seconds: persists new TTL value, unpatched fields survive",
+            "acceptance": "Test covers both current and new behavior"
+          },
+          {
+            "seq": 2,
+            "title": "Test heartbeatTask with payload_patch: shallow-merges into existing payload",
+            "acceptance": "Test covers merge, null/malformed payload handling"
+          },
+          {
+            "seq": 3,
+            "title": "Test null-session ladder: succeeds on correct params; fails on wrong params",
+            "acceptance": "Test covers successful match and all failure branches"
+          },
+          {
+            "seq": 4,
+            "title": "Regression test NFR-1: null-session ladder NEVER matches live-session rows",
+            "acceptance": "Live-session rows cannot be released/heartbeated via new params"
+          },
+          {
+            "seq": 5,
+            "title": "Test-before-ship gate: live integration round-trip against running container",
+            "acceptance": "Must pass before FR-3/FR-4/FR-6 prose ships as available"
+          }
+        ]
+      },
+      {
+        "id": "FIX-ORPHAN-FR7-VERIFY-TOOL-REGISTRY",
+        "type": "FEATURE",
+        "title": "Verify docs/data/tool-registry.json references for FR-1/FR-2 params per FR-7 SSOT sync",
+        "status": "READY",
+        "priority": "P0",
+        "size": "M",
+        "zone": "docs/",
+        "owner": "pm",
+        "next_agent": "developer",
+        "depends": [],
+        "supervised": false,
+        "created_at": "2026-07-22T01:15:30Z",
+        "created_by": "pm/decomposition-20260722T0115",
+        "updated_at": "2026-07-22T01:21:08Z",
+        "updated_by": "pm/decomposition-20260722T0115",
+        "origin_task": "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
+        "parent_fix_spec": "fix_spec(a)+(c)/AC1+AC3",
+        "subtasks": [
+          {
+            "seq": 1,
+            "title": "Check tool-registry.json task_heartbeat/task_release entries; verify no per-tool schema payload duplication needed",
+            "acceptance": "Confirm no edit needed or document required changes"
+          }
+        ]
       }
     ],
     "review": [
