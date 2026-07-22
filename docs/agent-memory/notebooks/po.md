@@ -1,25 +1,23 @@
 # PO Notebook
 
-_Last: 2026-07-22T21:33Z (router task=fix-cowork-guaranteed-slot-recovery — WHY proven 2-plane, 1 sprint + 1 BA minted, converge not 7th-mint)_
+_Last: 2026-07-22T22:02Z (dev-team WIP-reconcile adjudication — po-s148, freed WIP 2→0)_
 
-## Tick 2026-07-22T21:20–21:33Z — cowork `guaranteed:true` is a false promise: WHY proven, catch-up sprint minted
+## Tick 2026-07-22T21:53–22:02Z — 2 stale in_progress rows are LEGIT epics, not a deadlock; reclaimed their WIP
 
-**User demand:** "find problem why missing job ... then fix." 07-22 chef-eod(08:45Z)+refine(09/11/14Z)+fb-daily(09:15Z) all MISSED, nothing recovered overnight.
+**dev-team ask:** adjudicate 2 in_progress rows pinning WIP=2, starving 41 ready[]. Premise: possible decomposition data-loss (children "never landed"), maybe abandoned.
 
-**Root cause — PROVEN on two planes, not asserted:**
-1. **Wake-lock death → standby.** pmset: multiple `caffeinate ClientDied` at ~05:00–05:13Z (07:00–07:13 CEST) — the interactive CLI session holding the */15 CronCreate dispatcher ended, host lost its wake-lock, entered standby.
-2. **launchd firer provably did NOT run 05:58→17:34Z (~11.5h).** The firer (`cowork-guaranteed-slot-firer.sh`) only logs when it MATCHES a guaranteed slot; chef-eod/fb-daily had last_fired=07-21 which does NOT suppress them, so had StartInterval fired in-window the log WOULD show them. Total absence ⇒ StartInterval never ran (host not rebooted: uptime 11d; job still loaded: resumed same-day 17:34Z). Both planes dark.
-3. **No look-back on resume.** matcher `cowork-match-slots.js` `cronMatches()` only offers slots within ±2min of the CURRENT nominal tick. On 17:34Z wake the 08:45–14:00Z windows were hours gone → NEVER re-offered → permanently dropped. `guaranteed:true` has NO catch-up on either plane.
+**RAW verdict — premise FALSE, both legitimately decomposed (NOT abandoned, NOT done-unflipped):**
+- `DESIGN-COWORK-FANOUT-PRODUCER-CONSUMER-ORDERING`: 8 children T1-T8 LIVE (T1-5,7,8 ready/TODO, T6 review/REVIEW). pm decomposed 95e0ba8a1 + promoted T6 d651b0eab.
+- `FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD`: 6 FR children in ready[] + AC2 successor `FIX-SPRINT-TASK-HEARTBEAT-LOCK` live in backlog (closure HARD-precondition MET). pm fd401f51e/638ecdc91.
+- dev-team's "0 children" was a **jq false-negative**: `.task_board|to_entries[]|.value[]` throws *Cannot iterate over string* on scalar lane keys (_updated_at,...) and returns empty. Children are top-level rows in ready/review, NOT inline `.children`.
 
-**Track B is ALREADY shipped, not the gap.** `launchctl`: `com.vn-market.cowork-guaranteed-slot-firer` loaded, last-exit 0, plist symlinked, fired chef-evening 20:19Z. auditor-tier1 Check-6 self-verifies it stays loaded. The 2026-07-07 durability brief + firer + tests all landed. The missing piece is Track A (look-back/catch-up) — which the 07-07 fix never added.
+**Real defect = post-decomposition WIP leak** (NOT stale/abandoned): a decomposed epic parent lingered in in_progress holding a WIP slot while its children are worked — the post-decomp half of the epic-wrapper-closeout gap. Convention confirms: other epic (SYSREMAKE-P2) parks in active_sprints, never in_progress.
 
-**Triage call — CONVERGE, do not mint a 7th row.** Backlog is 440-deep with a live 6-row guaranteed-slot cluster (2 spikes + 4 fixes) all starving. Minted ONE umbrella `COWORK-GUARANTEED-SLOT-CATCHUP` (active, high, user_prioritized) + ONE `BA-COWORK-GUARANTEED-SLOT-CATCHUP` (BACKLOG) that consolidates the cluster as scope. Avoided bulk-rewriting existing rows (jq-clobber risk on 440-array) — BA/architect mark them subsumed during the sprint. Corrected SPIKE-DEAD-WINDOW's "machine sleep ruled out" (it was wrong).
+**Action — po-s148 relocate in_progress→backlog+BLOCKED** (epic-hold; architect's own ruling + 13-row TASK_2005 precedent). Added inline children[] (is_epic_wrapper=true) + depends + blocked_reason. WIP **2→0**, idempotent, conservation 618=618. Committed 39d5331b1 (script + orch-state, explicit pathspecs). NO push.
 
 ## Carry-over
-- **Minted:** sprint `COWORK-GUARANTEED-SLOT-CATCHUP` + `BA-COWORK-GUARANTEED-SLOT-CATCHUP`. Sprint lock claimed. Conservation 617→618, both orch-apply clean. NEXT=ba (write spec).
-- **Consolidates (BA to mark subsumed, NOT re-open):** SPIKE-DEAD-WINDOW-20260722-EIGHT-HOUR-SILENCE, SPIKE-COWORK-GUARANTEED-SLOT-SUPERSEDE-WIRING, FIX-GUARANTEED-SLOT-FIRER-FANOUT-TRUNCATION, FIX-GUARANTEED-SLOT-DUAL-PLANE-DOUBLE-FIRE, FIX-COWORK-LASTFIRED-DECOUPLE-FROM-DELIVERY.
-- **Track B residual (architect ruling):** laptop-standby through a full window + VN-day rollover is a real residual Track A catch-up can't cover; pmset/caffeinate keep-awake = optional thin OPS task, NOT a VPS reopen (07-07 brief §3 rejected B on security).
-- **3rd recurrence / FAILED-FIX** (06-30, 07-04→07, 07-22): 07-07 launchd fix was necessary but incomplete. QA needs a session-down + standby survival test.
-- **Secondary hardening surfaced:** 07-22 chef-morning firer run exit_code=143 (SIGTERM at 1800s bound) — dishes fanning to subagents truncate (already = FIX-GUARANTEED-SLOT-FIRER-FANOUT-TRUNCATION, folded).
-- **Still starving from prior tick:** UC-CCA-P3 + FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR (P0, chef marker key), FIX-BCTC-PENDING-REFINE-HEAD-OF-LINE-FAILED-ROW, ci_red row awaiting RLC promotion. WIP 2/2, backlog 440 — promotion starvation is the standing systemic driver.
-- Left orch-state + po.md + journal dirty for tick-close commit. NO git push.
+- **WIP now 0/2** — RLC unblocked to promote starving P0/P1 ready rows (FIX-MCP-TEST-SUITE-INTERVAL-TIMER-LEAK-TEARDOWN P1, CCATO-MCP-T1..T8 P0, FIX-ORPHAN-FR*, FANOUT-T*).
+- **Do NOT re-flag these 2 rows** — they are epic-holds (BLOCKED, epic_hold:true, children populated), not a deadlock. Close to DONE only when children all DONE_VERIFIED.
+- **CLASS-FIX recommended (returned to dev-team):** (1) pm decomposition should move the parent OUT of in_progress in the same write; (2) widen `FIX-DEVTEAM-EPIC-WRAPPER-AUTOCLOSE-SWEEP` to also scan backlog[] BLOCKED wrappers (currently ready/in_progress only) so these auto-close via owner/next_agent=pm.
+- **Head residue (benign):** `.head.next_agent="ops"→OPS-REBUILD-MCP-SERVER-OPENSSH` is stale Close-Gate residue; that deploy verifiably shipped (DONE_VERIFIED, 61b407dc4). head.status=idle so pointer is dormant — left untouched (risk-asymmetric); router/next head-write can null it.
+- **Still live from prior tick:** sprint `COWORK-GUARANTEED-SLOT-CATCHUP` + `BA-COWORK-GUARANTEED-SLOT-CATCHUP` (NEXT=ba write spec); consolidates the 6-row guaranteed-slot cluster (BA marks subsumed, do NOT re-open).
