@@ -2,6 +2,20 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## 5c1b8a0 · 2026-07-22T15:07:36Z
+### Audit Run Tier-2 (15:05–15:07 UTC 2026-07-22)
+- Tier: 2 | Cron fire check: PASS (100+ jobs running, 4 recent crashes at 14:52:12-14:52:34Z consistent with OOM) | Sources checked: 28
+- VPS proxy health: ACCEPTABLE (news OK, sbv/bctc stale but off-season SLA allows; prices off-hours)
+- SLA breaches: 0 CRITICAL (all within thresholds, BCTC 2956min / 11017min SLA window)
+- DB spot checks: PASS (news freshness OK, BCTC queue 183 items healthy-idle gate pass)
+- Container status: 12/12 UP (mcp-server up 13min post-restart; restart count=2 — OOM pattern identified)
+- **NEW CRITICAL**: rag-service memory 763.8/768 MiB (99.46%) — LanceDB ceiling pressure detected
+- **NEW WARN**: mcp-server restart count=2 — recurring OOM→restart pattern, root cause: potential memory leak
+- Anomalies: 2 new (C critical × 1: rag-service memory, W warn × 1: mcp-server OOM pattern) | Status: DEGRADED
+- [emit-signal] OK A-31 id=sys-20260722T150730-2c18
+- [emit-signal] OK A-21-OOM-PATTERN id=sys-20260722T150735-5955
+- Context: mcp-server recovered from 14:51Z OOM event; current memory 651.6MiB/3GiB (21.21%); previous A-30 mem threshold alert RESOLVED (not re-emitted per dedup/resolution gate)
+
 ## 43a798a97 · 2026-07-22T15:01:19Z
 ### Audit Run Tier-2 (15:00–15:01 UTC 2026-07-22)
 - Tier: 2 | Cron fire check: PASS (100+ jobs running) | Sources checked: 28
