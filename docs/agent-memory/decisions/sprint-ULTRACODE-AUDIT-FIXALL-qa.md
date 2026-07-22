@@ -220,3 +220,20 @@ strftime compare byte-identical/untouched); tests green; live data confirms no o
 **why-change:** No change from plan — moved `UC-SDF-P4` `qa[]`->`done_verified[]`
 (status=DONE_VERIFIED, qa_verdict=APPROVED, commit=64cd7edf9,b087d30a0, completed_at/by backfilled
 from commit author). `.head` reset idle, next_agent=pm. Did NOT push.
+
+### STEP qa-S9 · qa · 2026-07-22T05:59:00Z
+**task-id:** UC-GCP-P2
+**what-done:** Direct-commit verify (mode=verify-committed, branch:null). Read git-ci-publish-P2
+Change(a/b/c) from the audit brief; confirmed 476c331d4(.gitignore+drain-signals.md text)+
+c34b7fcc9(actual rm --cached of signals.db+15 logs) both main-ancestors, diffs match exactly.
+**what-considered:**
+- Trust review_note's self-reported pathspec-commit bug story — rejected: independently diffed
+  both commits' `--stat`/content, confirmed 476c331d4 alone left files tracked, c34b7fcc9 removed them.
+- Risk-note's "add signals.db to backup-smoke scope before untracking" — checked: audit's own
+  Verifier already closed this via WAL/shm-already-ignored + drain-signals.md §0a-0 degrade path +
+  scripts/migrations/backfill-signals-db.ts (both confirmed present/live), not a blocking gap.
+**why-decision:** `git ls-files`/`check-ignore -v` confirm signals.db+15 logs untracked+on-disk;
+frozen incident-evidence logs still tracked (scope respected); `git add signals.db` exits 1 live;
+drain-signals.md still carries the fix at HEAD (unclobbered by 1 later additive sibling commit).
+**why-change:** No change from plan — moved `UC-GCP-P2` `qa[]`->`done_verified[]`
+(status=DONE_VERIFIED, qa_verdict=APPROVED). `.head` reset idle, next_agent=pm. Did NOT push.
