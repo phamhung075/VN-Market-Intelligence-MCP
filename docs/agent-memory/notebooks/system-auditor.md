@@ -2,6 +2,18 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## 0ab97c7 · 2026-07-22T06:32:52Z
+### Audit Run Tier-2 (06:30–06:32 UTC 2026-07-22)
+- Tier: 2 | Cron fire check: PASS (100+ jobs running) | Sources checked: 28
+- VPS proxy health: DEGRADED (2 healthy, 3 unhealthy: vn-bctc-fetch, vn-price-fetch, vn-foreign-flow)
+- SLA breaches: 2 CRITICAL (B-04 foreign-flow 1642min/10min, B-05 bctc-discover 2441min/120min)
+- DB spot checks: PASS (C-06=3 messages, C-07=284 signals, B-09=0 SSC URLs, B-13=0 stale)
+- BCTC queue: 183 pending/url_not_found/enrich_failed items (not healthy-idle gate)
+- Anomalies: 3 new (C critical × 3: foreign-flow, bctc-discover, VPS services) | Status: DEGRADED
+- [emit-signal] OK-escalation-bypass B-04 id=sys-20260722T063217-1356
+- [emit-signal] OK-escalation-bypass B-05 id=sys-20260722T063233-76cb
+- [emit-signal] OK-escalation-bypass B-06 id=sys-20260722T063225-07c9
+
 ## a4f2b1e · 2026-07-22T06:11:30Z
 ### Audit Run Tier-1 (06:10–06:11 UTC 2026-07-22)
 - Tier: 1 | Services: 12 checked (all host_runtime_set) | Container status: 12 UP (all healthy)
