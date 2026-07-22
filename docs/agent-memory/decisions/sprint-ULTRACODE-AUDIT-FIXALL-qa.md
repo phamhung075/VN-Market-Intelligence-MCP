@@ -237,3 +237,31 @@ frozen incident-evidence logs still tracked (scope respected); `git add signals.
 drain-signals.md still carries the fix at HEAD (unclobbered by 1 later additive sibling commit).
 **why-change:** No change from plan — moved `UC-GCP-P2` `qa[]`->`done_verified[]`
 (status=DONE_VERIFIED, qa_verdict=APPROVED). `.head` reset idle, next_agent=pm. Did NOT push.
+
+### STEP qa-S10 · qa · 2026-07-22T06:21:42Z
+**task-id:** UC-GCP-P4
+**what-done:** Direct-commit verify (mode=verify-committed, branch:null, 3rd live use). No
+`commit`/`files[]` on row; single unambiguous hit `9641f664f` via `git log -- scripts/git-hooks/
+pre-push` (subject literally cites UC-GCP-P4), main-ancestor, date 14:13:08Z matches
+`developer_completed_at` 14:12:40Z within 1min. `git log --follow` confirms no later commit
+re-touched the file — HEAD byte-matches the commit diff. Read git-ci-publish-P4 Change+4
+hardenings from the audit brief directly, not review_note prose.
+**what-considered:**
+- Trust the "9 simulated stdin scenarios ... all matched spec" claim as sufficient — rejected;
+  independently re-ran all scenarios live against the real hook (stubbed `pnpm`, real repo commit
+  SHAs for doc-only/code-touching diffs, a bogus SHA for fail-open, ZERO_SHA for new-branch/
+  branch-delete, 2-line stdin for the ANY-rule drain, `PRE_PUSH_SKIP_TSC=1`, PATH-stripped for
+  no-pnpm-WARN) — all 8 matched; extracted `CODE_TOUCHING_REGEX` verbatim from the file and
+  grep-tested 7 more path samples incl. root package.json/pnpm-lock.yaml/pnpm-workspace.yaml
+  (all MATCH) vs docs/*.md and scripts/*.py (both correctly NO MATCH).
+- Run `bun test`/`tsc` anyway for completeness — rejected: `git show --stat` = exactly 1 file,
+  `.sh` not `.ts`, Smart-Skip N/A category (shell-only, no TS surface touched).
+**why-decision:** `bash -n`+`shellcheck` both clean; live-simulated behavior matches all 6 stated
+ACs (path-filter skip / fail-open / branch-delete skip / ANY-line-triggers / root-dep-files-in-set
+/ new-branch-always-full) verbatim, not just the commit-message claim; `mock-guard.sh` PASS (no
+production source to scan), secrets/DDD grep clean; `.git/hooks/pre-push` symlink still resolves
+to the file (install.sh untouched since this commit). Developer DJ-GATE-1 entry cross-checked
+present (`sprint-ULTRACODE-AUDIT-FIXALL-developer.md` STEP developer-S9, task-id UC-GCP-P4).
+**why-change:** No change from plan — moved `UC-GCP-P4` `qa[]`->`done_verified[]`
+(status=DONE_VERIFIED, qa_verdict=APPROVED, commit=9641f664f backfilled). `.head` reset idle,
+next_agent=pm. Did NOT push.
