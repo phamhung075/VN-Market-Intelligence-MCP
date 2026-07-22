@@ -2,6 +2,63 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## 7d3f9cd · 2026-07-22T03:40:44Z
+### Audit Run Tier-1 (03:40–03:41 UTC 2026-07-22)
+- Tier: 1 | Services: 12 checked (all host_runtime_set) | Container status: 12 UP (all healthy)
+- Health endpoints: 5 OK (all stable)
+- A-20 multi-probe (pdf-extractor): 3/3 PASS — event-loop healthy
+- A-21 Restart count: mcp-server=1 PASS | A-30 Memory: 18.18% PASS | A-32 Disk: 27% PASS
+- Anomalies: 0 new (all green) | Status: HEALTHY
+
+### RAW-PROBE:
+```
+=== AUDITOR PROBE 2026-07-22T03:40:44Z ===
+
+--- docker ps -a ---
+NAMES                                             STATUS                  IMAGE                                           CREATED
+vn-market-intelligence-mcp-mcp-server-1           Up 2 hours (healthy)    vn-market-intelligence-mcp-mcp-server           12 hours ago
+vn-market-intelligence-mcp-pdf-extractor-1        Up 12 hours (healthy)   vn-market-intelligence-mcp-pdf-extractor        12 hours ago
+mcp-gateway                                       Up 6 days (healthy)     mcpservergatway-gateway                         6 days ago
+vn-market-intelligence-mcp-frontend-1             Up 6 days (healthy)     vn-market-intelligence-mcp-frontend             6 days ago
+vn-market-intelligence-mcp-api-gateway-1          Up 6 days (healthy)     vn-market-intelligence-mcp-api-gateway          6 days ago
+vn-market-intelligence-mcp-flaresolverr-1         Up 6 days (healthy)     ghcr.io/flaresolverr/flaresolverr:latest        6 days ago
+vn-market-intelligence-mcp-news-fetch-1           Up 6 days (healthy)     vn-market-intelligence-mcp-news-fetch           6 days ago
+vn-market-intelligence-mcp-rag-service-1          Up 3 hours (healthy)    vn-market-intelligence-mcp-rag-service          6 days ago
+vn-market-intelligence-mcp-macro-indicators-1     Up 6 days (healthy)     vn-market-intelligence-mcp-macro-indicators     6 days ago
+vn-market-intelligence-mcp-technical-analysis-1   Up 6 days (healthy)     vn-market-intelligence-mcp-technical-analysis   6 days ago
+vn-market-intelligence-mcp-alert-engine-1         Up 6 days (healthy)     vn-market-intelligence-mcp-alert-engine         6 days ago
+vn-market-intelligence-mcp-stock-price-1          Up 6 days (healthy)     vn-market-intelligence-mcp-stock-price          6 days ago
+vn-market-intelligence-mcp-kinh-dich-service-1    Up 6 days (healthy)     vn-market-intelligence-mcp-kinh-dich-service    6 days ago
+
+--- health endpoints ---
+[health] mcp-server:3000/health OK (HTTP 200)
+[health] api-gateway:4000/health OK (HTTP 200)
+[health] macro-indicators:5004/health OK (HTTP 200)
+[health] pdf-extractor:5001/health OK (HTTP 200)
+[health] frontend:3001/ OK (HTTP 200)
+
+--- restart count ---
+Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=1
+
+--- memory pressure ---
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=18.18% MemUsage=558.4MiB / 3GiB
+
+--- disk df -h / ---
+Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
+/dev/disk1s4s1   233Gi    13Gi    37Gi    27%    393k  390M    0%   /
+
+--- pdf-extractor in-container multi-probe (A-20) ---
+[A-20-PROBE-1] in-container HTTP 200
+[A-20-PROBE-2] in-container HTTP 200
+[A-20-PROBE-3] in-container HTTP 200
+[A-20] pass_count=3/3
+
+=== PROBE DONE ===
+```
+
+## d4-auto · 2026-07-22T03:00:02.728Z
+D4 candidates: none
+
 ## c86a9e8 · 2026-07-22T02:32:20Z
 ### Audit Run Tier-2 (02:31–02:32 UTC 2026-07-22)
 - Tier: 2 | Cron gap check: PASS | Per-source freshness: 1 CRITICAL | VPS proxy: DEGRADED
@@ -73,11 +130,3 @@ Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
 - A-21 Restart count: mcp-server=0 PASS | A-30 Memory: 99.86% (CONVERGE-benign, GC sawtooth pattern) | A-32 Disk: 27% PASS
 - Health-3000 multi-probe: 5/5 PASS (no transient failures detected under memory pressure)
 - Anomalies: 0 new (transient api-gateway recovery from 01:40Z) | Status: HEALTHY
-
-## c8f3b5d · 2026-07-22T01:11:42Z
-### Audit Run Tier-1 (01:11–01:12 UTC 2026-07-22)
-- Tier: 1 | Services: 13 checked (all host_runtime_set) | Container status: 13 UP (all healthy)
-- Health endpoints: 5 OK (mcp-server, api-gateway, macro-indicators, pdf-extractor, frontend)
-- A-20 multi-probe (pdf-extractor): 3/3 PASS — event-loop healthy
-- A-21 Restart count: mcp-server=0 PASS | A-30 Memory: 99.24% (CONVERGE-benign, GC sawtooth + no OOMKilled) | A-32 Disk: 27% PASS
-- Anomalies: 0 new | Status: HEALTHY
