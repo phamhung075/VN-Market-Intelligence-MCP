@@ -1,26 +1,30 @@
 # PO Notebook
 
-_Last: 2026-07-22T15:56Z (dev-team :37 triage, WIP=2/2 — 1 signal DEDUP'd, 1 perf spin-off minted, 8d review row dispositioned, market_messages RE-VERIFY closed; all via orch-apply)_
+_Last: 2026-07-22T16:03Z (cron-audit sequencing — 11 rows minted, 4 annotated, 3 rulings; 2 audit premises corrected at source)_
 
-## Tick 2026-07-22T15:56Z — bctc-esc5 dedup + pek-perf mint + market_messages resolved
+## Tick 2026-07-22T16:03Z — cross-plane cron audit: triage the unassigned remainder
 
-**★ 1 NEW signal_queue row → triaged (0 NEW po remaining):**
-- `cowork-…bctc-esc5-report-id-gap` MEDIUM (bctc-analyst flow step 5d structurally unexecutable ~30 cycles: get_bctc_full needs report_id but nothing surfaces one by ticker+period → ESC-5 is a silently-dark escalation).
-- **DEDUP — NOT re-minted.** Signal's "no prior art" was a missing board-grep. Prior art existed: backlog **BCTC-REPORT-ID-LOOKUP-TOOL** (same root cause). ENRICHED it: title now names ESC-5 step-5d, priority **MED→HIGH** (dark escalation = reliability gap; feedback_agent_reported_limitation_may_be_structural + recurring-failed-fix >2), added `origin_signal_id` back-ref. Signal closed status→triaged (stops resurfacing; flips →RESOLVED when covering row done_verified).
+Router handed the residue of a 4-plane cron audit (2 fix agents already live out-of-band: dev-mcp-server server-plane, ops VPS-plane). Minted 11 backlog rows + 1 signal_queue row, annotated 4 existing rows, in ONE orch-apply write (task 596→607).
 
-**★ market_messages RE-VERIFY (S4 carry-over) → CLOSED, no escalation.** Market data plane RAW-verified alive+fresh (VN-Index 1668.53 -3.58%, breadth 2026-07-22, turnover 23405bn). Auditor CRITICAL "market_messages=0/3h" fired 15:00Z=22:00 ICT OFF-MARKET — already board-tracked as **FIX-AUDITOR-C06-OFFMARKET-RECALIBRATE** (market-hours-blind FP). "Still 0 during market hours" condition NOT met.
+**★ TWO AUDIT PREMISES WERE WRONG — both caught by verifying at source, not by reading the report.**
 
-**★ MINTED PERF-PEK-PER-PAGE-LATENCY** (backlog, high, zone apps/pdf-extractor/) — orphaned perf escalation documented in the FIX-PDFEXTRACTOR review row's `perf_escalation` field but never board-minted. Root: CPU PaddleOCR 30-40min/page (33pp = ~18-25h), no page-checkpoint/resume across restarts → HPG Q4-2025 (918a7abd) never written back after 21h.
+1. **fleet-push is NOT in an abort loop and needs NO reconcile.** `origin/main...HEAD` = 0 behind / 1 ahead; both cited abort triggers (CONTAM-7 test, the 8-file set) are already in HEAD. The abort text is a log tail frozen 06-27/07-03. Real defect: `launchctl print` = **522 runs, EX_CONFIG(78), zero log bytes since 07-03** — the script body never runs. Hand-ran the identical command: RC=0, output printed. Ruled out TCC (the firer writes the same dir, 815 runs/exit 0), bash-3.2 (`-n` clean, no bash-4 constructs), plist (plutil OK), and every script exit path (only 0 and 1 exist). The old failure was LOUD (stderr + telegram + signal); the current one is silent because all three live *inside* the script that never starts.
 
-**★ FIX-PDFEXTRACTOR-TIER1-OCR-TIMEOUT (8d in review) dispositioned** — added `po_disposition`: the timeout FIX itself is DEPLOYED (ab7db8a7fb8a) + qa APPROVED (568e3b404) + async-reroute VERIFIED firing; closure decoupled from the failed HPG reflow (now carried by PERF-PEK) → routes done_verified to dev-team/qa. No force-close (prior "do not close on this report" note honored).
+2. **NEW finding, not in the audit — the launchd health probe is presence-only.** `auditor-tier1-probe.sh _check_launchd_agents` does `grep -q "$label"` on `launchctl list` and throws away the status column that is in the same captured string. Ran it live: **ALL_GREEN at 15:55:23Z while `-  78  com.vn-market.fleet-push` was visible in that instant.** Ships FIRST — it is the detector for #1 and for every future silent launchd death. (Checked the socat-bridge omission before minting: it is a correct, documented obsolete allow-list entry, not a hole.)
 
-**Telegram 20-new / 271-unresolved:** all 07-19 BCTC-1345b low-conf + reconcile-exhausted notifications — covered by FIX-TELEGRAM-REPORT-ACK-STATUS-STOP-RESURFACE. No new work.
+**★ 3 rulings made (autonomous, no user ask):**
+- **Item 3 (CronCreate cross-session)** → **(a)-scoped + (c)**, reject (b). No home-grown persistence layer: it re-implements a scheduler we don't own and adds a 3rd cron host — the thing UC-CDC-P5 warns about. launchd hosts *re-arm + liveness only*, never every loop (`claude -p` per tick truncates fan-out). 3 parts: registry → **folded into existing UC-SDF-P6**; watchdog → new row; re-arm → **existing UC-CDC-P5, sequenced LAST**. Hard constraint written into the row: evidence-of-life must be the loop's external artifact, never a self-report.
+- **Item 6** → **delete both, load neither.** `com.vn-market.mcp.plist` targets `launchd/mcp-launch.sh`, deleted by f698e0f8b; RunAtLoad+KeepAlive{Crashed} would crash-loop, and a restored script would race the live container on :3000/:4004. socat-bridge: drop the symlink, keep the repo file as the rollback ref the probe already documents.
+- **Item 2** → not a reconcile, an ops FIX (above), with a do-not-chase-the-stale-text banner on the row.
 
-orch-apply: 1 clean write (4 mutations atomic), task 595→596, signal_total 100 unchanged, conservation OK.
+**★ Prior-art discipline:** declined to mint the bctcReparseJob 58.8% row — annotated the ACTIVE+SPREADING `FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP` instead (a ~41% failure rate on the job that row says is corrupting reports is likelier one cause than two; owner told to test disjointness first). Folded item 7a into the firer row and item 5b into the time-base row. Two 5a double-fire prior-art rows checked and deliberately NOT folded — the launchd-vs-CronCreate plane collision shares no lock namespace with either.
+
+**★ Tracking mirrors use backlog+BLOCKED, deliberately.** in_progress is at WIP 2/2; adding 2 would stall BOUNDED-1/SLS/RLC *and* advertise live out-of-band agents as dispatch targets.
 
 ## Carry-over
-- WIP=2/2 (DESIGN-COWORK-FANOUT pm + FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD) — nothing promotes; all mints await a freed slot (BOUNDED-1/RLC).
-- BCTC-REPORT-ID-LOOKUP-TOOL now HIGH (was MED) — top bctc tooling gap; unblocks ESC-5 + 3 get_bctc_* tools once shipped.
-- PERF-PEK-PER-PAGE-LATENCY (high) — dev-pdf-extractor: page-checkpoint/resume + async worker decouple; re-verify closes HPG Q4-2025 918a7abd (net_revenue -1264.66 → positive).
-- rag-service 99.46% mem @15:07Z + mcp-server OOM restart count=2: known tight-margin / FIX-MCP-MEMORY-CODE-LEAK; ops-lane, user-gated. RAG-FTS-BUILD-MEMORY-BOUND correctly TIME-GATED (corpus repopulation).
-- backlog=423 (bloated); review=23. Discipline: dedup-first, no re-mint churn.
+- **Sequence:** probe-false-green → fleet-push EX_CONFIG → firer truncation → watchdog (gated on UC-SDF-P6) → dual-plane double-fire (MUST follow firer fix, it moves the window) → time-bases → 2 LOW. **SPIKE-DEAD-WINDOW runs EARLY in parallel — its evidence decays daily.**
+- Do NOT "fix" auditor :00/:30 vs dev-team :07/:37 vs db-integrity :15/:45 — verified-good offsets.
+- Known-unknown to carry, never report clean: the 24 bespoke scheduleCron jobs emit no telemetry (absence ≠ failure); the VPS crontab/systemd plane has never been inventoried.
+- WIP=2/2 (DESIGN-COWORK-FANOUT pm + FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD) — nothing promotes; all mints await a freed slot.
+- BCTC-REPORT-ID-LOOKUP-TOOL now HIGH; PERF-PEK-PER-PAGE-LATENCY (high) open from the 15:56Z tick.
+- backlog=434 and growing — dedup-first discipline is load-bearing now, not aspirational.
