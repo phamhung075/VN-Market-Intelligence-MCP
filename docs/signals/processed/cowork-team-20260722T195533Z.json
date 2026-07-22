@@ -1,0 +1,47 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "classification": "FIRE",
+    "tick": "2026-07-22T19:45Z",
+    "drift_min": 6,
+    "matched": [
+      "chef-evening"
+    ],
+    "won": [
+      "chef-evening"
+    ],
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "silent": false,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "calendar_suppressed": [],
+    "freshness_downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "chef-evening": "cron"
+    },
+    "cadence_minutes": {
+      "chef-evening": null
+    },
+    "last_fired_timestamp": "2026-07-22T19:55:09Z",
+    "tick_snapshot_written": false,
+    "tick_snapshot_skip_reason": "best-effort cache skipped — 5KB bootstrap market_context blob (escaped href quotes+newlines) cannot be manually materialized with byte-fidelity for jq fromjson; unified-agent self-fetches get_cycle_bootstrap (zero-blocker fallback)",
+    "dev_head": "idle",
+    "devq": 5,
+    "signal_backlog": 8,
+    "note": "19:45Z FAN-OUT chef-evening (unified-agent CHEF) — evening dish, adaptive gates pass-through, VNINDEX cross-plane split 1770 vs 1668.53 observed (tracked FIX-VNINDEX-CROSS-PLANE-PLAUSIBILITY-GATE), dev head idle"
+  },
+  "priority": "low",
+  "createdAt": "2026-07-22T19:55:33Z",
+  "_processed": {
+    "fingerprint": "9c32f79170b39871b68caf8b000d15ed02839cf61e5f7ea20aece2a269a9a2d7",
+    "processedAt": "2026-07-22T20:14:34Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

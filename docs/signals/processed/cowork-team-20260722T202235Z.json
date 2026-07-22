@@ -1,0 +1,45 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "classification": "FIRE",
+    "tick": "2026-07-22T20:15Z",
+    "drift_min": 6,
+    "matched": [
+      "tnb-audit"
+    ],
+    "won": [
+      "tnb-audit"
+    ],
+    "spawned": [
+      "docs/agents/tran-ngoc-bau/flow/main.md"
+    ],
+    "silent": false,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "calendar_suppressed": [],
+    "freshness_downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "tnb-audit": "cron"
+    },
+    "cadence_minutes": {
+      "tnb-audit": null
+    },
+    "last_fired_timestamp": "2026-07-22T20:22:13Z",
+    "dev_head": "idle",
+    "devq": 5,
+    "signal_backlog": 8,
+    "note": "20:15Z FAN-OUT tnb-audit (tran-ngoc-bau) — strategy supervisor auditing chef-evening dish for TNB 6-layer completeness, adaptive gates pass-through, dev head idle"
+  },
+  "priority": "low",
+  "createdAt": "2026-07-22T20:22:35Z",
+  "_processed": {
+    "fingerprint": "41eb6f9f30ee3f3eb4cc60e7a5f9d258077739f5b7bb5f6fcba4d424fb091051",
+    "processedAt": "2026-07-22T20:44:28Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

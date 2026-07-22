@@ -1,0 +1,73 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-22T16:10:50Z",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "market-watcher-eod",
+      "alert-commander-critical"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "market-watcher-eod",
+      "alert-commander-critical"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 6,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence",
+      "market-watcher-eod": "cadence",
+      "alert-commander-critical": "cadence"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": 240,
+      "market-watcher-offhours": 240,
+      "market-watcher-eod": 240,
+      "alert-commander-critical": 240
+    },
+    "last_fired_timestamp": "2026-07-22T16:10:04Z",
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "market-watcher-eod",
+      "alert-commander-critical"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "16:00",
+    "leader_lock": "acquired",
+    "dev_head": "idle",
+    "devq": 0,
+    "signal_backlog": 1,
+    "note": "4-slot gatherer+alert fan-out (news-scout-offhours, market-watcher-offhours, market-watcher-eod, alert-commander-critical); all cadence-due (240m), all 4 claimed+spawned background, adaptive mode, no suppression (calendar=unknown, backlog=7 so freshness-downgrade AND-gate not met); tick-snapshot skipped (no CHEF consumer)."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-22T16:10:50Z",
+  "_processed": {
+    "fingerprint": "7c91880505360a31e4c2749132d7bfaca6bc2c97a976f0e1b2880457971c1914",
+    "processedAt": "2026-07-22T16:15:02Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
