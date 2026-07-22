@@ -1736,6 +1736,17 @@
         "triaged_by": "cowork-team/a30-fold-0115Z",
         "triaged_home": "cowork-20260721T232634Z-a30-mcp-oom-escalate",
         "drain_note": "Continuation of A-30 loss-of-reclamation incident. system-auditor re-emit (signalqueue append-always, telegram-only dedup — detector-calibration tracked FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE). Memory 98.81% — churn resumed after a one-tick pause at 01:00Z; still in the ~99% at-cap band and inside the discriminator ESCALATE envelope (0 reclamation dips/140s, verify-a30-mcp-memory-reclamation.sh). Ops escalation cowork-20260721T232634Z-a30-mcp-oom-escalate still HIGH/NEW/unactioned (restart_count still 0 — holding at cap, no OOM-kill yet). Folded — no re-run, no duplicate mint."
+      },
+      {
+        "id": "sys-20260722T014126-79f7",
+        "ts": "2026-07-22T01:41:26Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "api-gateway health endpoint unreachable (HTTP CURL_ERR)",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-21T19:29:49Z",
