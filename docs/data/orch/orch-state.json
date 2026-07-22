@@ -11402,6 +11402,28 @@
         "updated_at": "2026-07-22T17:23:09Z",
         "updated_by": "po/cron-audit-push-deploy-sequencing-20260722",
         "resolution": "dev-mcp-server RETURNED 2026-07-22 ~17:00Z; full reasoning in docs/agent-memory/decisions/sprint-cron-audit-server-fixes-dev-mcp-server.md. Tracker purpose (mirror the out-of-band server-plane dispatch) fulfilled. Items 1/2/3 are code-complete in commits ac621f648..752d76477 (UNPUSHED, and item 2 is INERT until the image is rebuilt). Spun out by this tick: BLOCK-PUSH-CRON-AUDIT-BATCH-NO-QA (push withheld — PUSH-AUTONOMY-1 cond.(a) QA APPROVE unmet), OPS-REBUILD-MCP-SERVER-OPENSSH (held behind QA), VERIFY-FIX-VPS-SSH-TRIGGER-FAIL-LOUD-REALDATA (blocked on the VPS user gate), FIX-MCP-DOCKERFILE-ENTRYPOINT-KNOWNHOSTS-REGRESSION (accept-new ruling), FIX-CRON-SSCCHECKERJOB-DEAD-87D (new incident). Scope item (5) project-stats cronJobCount is CLOSED: now 88, generator-computed with a MIN_PLAUSIBLE_CRON_COUNT floor guard. Scope item (4) '24 bespoke jobs with zero telemetry' is only PARTLY closed — 3 were genuinely blind and are now wired, 2 were already recorded under a different job_name; the remaining full-fleet coverage is NOT done and is carried by FIX-CRON-SSCCHECKERJOB-DEAD-87D's class-fix clause. The known_unknown on this row therefore still stands for the un-widened remainder."
+      },
+      {
+        "id": "OPS-REBUILD-MCP-SERVER-OPENSSH",
+        "type": "FIX",
+        "status": "DONE_VERIFIED",
+        "priority": "P1",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "title": "Single-service rebuild+deploy mcp-server — Dockerfile now installs openssh-client; running container has NO ssh binary so the VPS-SSH fix is inert",
+        "source": "po/cron-audit-push-deploy-sequencing-20260722",
+        "created_at": "2026-07-22T17:12:55Z",
+        "created_by": "po",
+        "next_agent": "ops",
+        "blocked_note": "UNBLOCKED 2026-07-22T17:41:38Z by qa — BLOCK-PUSH-CRON-AUDIT-BATCH-NO-QA APPROVED, pushed to origin/main (40ca18e50), CI green (runs 29943209241 rag-service-py-lint success, 29943209275 CI success). Rebuild is now safe to dispatch.",
+        "baseline_image_id": "sha256:c5a2c0f7fcf4785643f633d01f7c7ca38d43543e31fa2f8e072885eb6505a44f",
+        "scope": "docker compose build mcp-server && docker compose up -d --no-deps mcp-server",
+        "hard_constraints": "(1) SINGLE SERVICE ONLY — NEVER `docker compose down && up`, which destroys the 12 healthy peer containers (feedback_rebuild_recreate_destroys_peers). (2) NEVER `--force-recreate` without `--build` — that silently redeploys the STALE image (feedback_force_recreate_no_build_stale_image). (3) MUST verify the image ID actually CHANGED vs baseline_image_id above via `docker inspect --format '{{.Image}}' vn-market-intelligence-mcp-mcp-server-1` — a build that logs success but leaves the ID unchanged did NOT deploy (feedback_docker_rebuild_race_pgrep_deadlock).",
+        "acceptance": "Image ID differs from baseline_image_id; container healthy; `docker exec vn-market-intelligence-mcp-mcp-server-1 which ssh` returns a path (currently returns nothing — this is the whole point of the rebuild); scheduler boots and get_cron_health still lists the previously-healthy jobs.",
+        "note": "Also carries live: the 4-Sunday-job startup catchup and the WATCHDOG_MANIFEST 16->25 widening. Next Sunday window is 2026-07-26, so there is slack — no need to force this out un-reviewed today.",
+        "updated_at": "2026-07-22T17:49:28Z",
+        "completed_at": "2026-07-22T17:48:51Z",
+        "new_image_id": "sha256:96036269edc4d17444544197862913e54c2fdda68e2b54ef610aee3c7610985d"
       }
     ],
     "done_verified": [],
@@ -12421,26 +12443,6 @@
             "acceptance": "Confirm no edit needed or document required changes"
           }
         ]
-      },
-      {
-        "id": "OPS-REBUILD-MCP-SERVER-OPENSSH",
-        "type": "FIX",
-        "status": "READY",
-        "priority": "P1",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "title": "Single-service rebuild+deploy mcp-server — Dockerfile now installs openssh-client; running container has NO ssh binary so the VPS-SSH fix is inert",
-        "source": "po/cron-audit-push-deploy-sequencing-20260722",
-        "created_at": "2026-07-22T17:12:55Z",
-        "created_by": "po",
-        "next_agent": "ops",
-        "blocked_note": "UNBLOCKED 2026-07-22T17:41:38Z by qa — BLOCK-PUSH-CRON-AUDIT-BATCH-NO-QA APPROVED, pushed to origin/main (40ca18e50), CI green (runs 29943209241 rag-service-py-lint success, 29943209275 CI success). Rebuild is now safe to dispatch.",
-        "baseline_image_id": "sha256:c5a2c0f7fcf4785643f633d01f7c7ca38d43543e31fa2f8e072885eb6505a44f",
-        "scope": "docker compose build mcp-server && docker compose up -d --no-deps mcp-server",
-        "hard_constraints": "(1) SINGLE SERVICE ONLY — NEVER `docker compose down && up`, which destroys the 12 healthy peer containers (feedback_rebuild_recreate_destroys_peers). (2) NEVER `--force-recreate` without `--build` — that silently redeploys the STALE image (feedback_force_recreate_no_build_stale_image). (3) MUST verify the image ID actually CHANGED vs baseline_image_id above via `docker inspect --format '{{.Image}}' vn-market-intelligence-mcp-mcp-server-1` — a build that logs success but leaves the ID unchanged did NOT deploy (feedback_docker_rebuild_race_pgrep_deadlock).",
-        "acceptance": "Image ID differs from baseline_image_id; container healthy; `docker exec vn-market-intelligence-mcp-mcp-server-1 which ssh` returns a path (currently returns nothing — this is the whole point of the rebuild); scheduler boots and get_cron_health still lists the previously-healthy jobs.",
-        "note": "Also carries live: the 4-Sunday-job startup catchup and the WATCHDOG_MANIFEST 16->25 widening. Next Sunday window is 2026-07-26, so there is slack — no need to force this out un-reviewed today.",
-        "updated_at": "2026-07-22T17:41:38Z"
       }
     ],
     "review": [
