@@ -1,6 +1,18 @@
 # System Auditor — Notebook
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
+## 8f2a9d3 · 2026-07-22T00:31:12Z
+### Audit Run Tier-3 (00:31–00:35 UTC 2026-07-22)
+- Tier: 3 | Tier-1 + Doc/Memory + Tier-3 DB checks
+- Tier-1: 12 services UP | Health: mcp-server CURL_ERR (A-12 CRIT) | A-30 memory 98.92% (dedup) | A-20 3/3 PASS
+- A-22..28: tooling + inter-service all PASS | A-31 EPIPE: 0
+- Doc/Memory: MEMORY.md MISSING (DOC-AUDIT WARN) | CLAUDE.md 62L OK | sprint_goal 15 entries (at limit)
+- Tier-3 DB: C-01 416 PASS | C-02 416 PASS | C-03 45 PASS | C-04 11 low-conf (dedup) | C-05 0 PASS
+- C-06 0 msgs 3h (dedup) | C-07 273 PASS | C-08 0 orphan PASS | C-09 3 macro PASS | C-10 0 PDF fail PASS
+- C-11 0 PDF done (off-season OK) | C-12 integrity ok PASS | C-13 WAL 3.9MB PASS | C-14 0.7% PASS
+- C-15 schema PASS | C-16 0 stale PASS | B-08 272 PDFs | WAL: market 4.1MB, pdf 0
+- Anomalies: 2 new (A-12 CRIT, DOC-AUDIT WARN) | 2 dedup-skipped (A-30, C-04, C-06) | Status: DEGRADED
+
 ## 4ae45b71 · 2026-07-21T23:42:05Z
 ### Audit Run Tier-1 (23:42–23:43 UTC 2026-07-21)
 - Tier: 1 | Services: 12 checked (all host_runtime_set) | Container status: 12 UP (all healthy)
