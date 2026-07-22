@@ -9885,6 +9885,32 @@
       "claimed_by": "dev-team (bounded-1 auto-pickup)",
       "verified_at": "2026-07-22T22:51:02Z",
       "verified_by": "developer (self-verified — near-zero-risk CONFIRMED fix, read-back confirmed)"
+    },
+    {
+      "id": "UC-DTL-P9",
+      "type": "FIX",
+      "title": "Give pm an atomic closeout script (sprint-terminal-flip + guarded head-idle in ONE orch-apply transform)",
+      "status": "DONE_VERIFIED",
+      "priority": "P1",
+      "size": "M",
+      "zone": "cross-service/",
+      "sprint": "ULTRACODE-AUDIT-FIXALL",
+      "source": "ultracode-audit-2026-07-12",
+      "verdict": "RESCOPE",
+      "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#dev-team-loop-P9",
+      "note": "SCOPE=verifier Rescope note. New scripts/pm-closeout-head-idle.jq (--arg sprint_id/--arg now): set sprint status DONE in place (do NOT move to closed_sprints — cold-evict owns that), CONDITIONALLY idle .head only if head belongs to this sprint or is null (mirror ops-closegate-handoff.jq). Wire into pm flow Step 5 + self-verify.",
+      "created_at": "2026-07-13T19:31:11Z",
+      "created_by": "po",
+      "priority_bumped_from": "P2",
+      "priority_bumped_at": "2026-07-17T04:54:03Z",
+      "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
+      "promoted_at": "2026-07-22T23:15:37Z",
+      "promoted_by": "dev-team (bounded-1 auto-pickup)",
+      "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+      "updated_at": "2026-07-22T23:26:09Z",
+      "claimed_at": "2026-07-22T23:15:37Z",
+      "claimed_by": "dev-team (bounded-1 auto-pickup)",
+      "verify_note": "Self-verified: scripts/test/pm-closeout-head-idle-tests.sh 5/5 pass (CASE-A head-belongs-to-sprint->idle, CASE-B head-null->idle, CASE-C head-other-sprint->untouched, CASE-D missing-sprint->refuse, real-SSOT-hash-unchanged). Wired into docs/agents/pm/flow/main.md Sec5 Sprint closeout step. DJ-GATE-1: docs/agent-memory/decisions/sprint-ULTRACODE-AUDIT-FIXALL-developer.md STEP developer-S12."
     }
   ],
   "closed_sprints": [
