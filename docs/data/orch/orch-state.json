@@ -428,8 +428,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-22T05:42:44Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-07-22T06:40:43Z",
+    "_updated_by": "po/triage-20260722T0640",
     "archive": [],
     "rows": [
       {
@@ -1787,12 +1787,57 @@
         "type": "triage-persist-request",
         "summary": "PO dev-team-triage BATCH (2 direct-FIX: FIX-DRAIN-PERSIST-GUARD-COUNT-DRAINABLE-ONLY, FIX-ORCHSTATE-CONSERVATION-GUARD-QA-LANE-BLIND; journal po-S1/po-S2 in df4044a3f) could NOT be dispatched or persisted. WIP saturated: in_progress=2 (DESIGN-COWORK-FANOUT-PRODUCER-CONSUMER-ORDERING + FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD, parked epics); wip_in_progress = in_progress|length counts epic-wrappers; BOUNDED-1 needs WIP=0, RLC needs WIP<2 so both are blocked; the direct-FIX path (main.md Step2 FIX->skip->Step3) has NO WIP gate, so dispatching the BATCH would break the WIP<=2 invariant. Router cannot mint task_board rows and this tick's SF-1/fire-election locks are already released. RAW-VERIFIED absent from task_board(all lanes) + backlog-detail.json + working-tree (0/0 grep hits, no dirty orch-state). ASK: PO please mint BOTH to backlog[] at BACKLOG status so BOUNDED-1/RLC auto-promote them when a WIP slot frees; priority FIX-DRAIN-PERSIST-GUARD-COUNT-DRAINABLE-ONLY first (relieves the drain false-trip pressure). FLOW-GAP (root cause worth architect attention): dev-team Step-1 triage is only REACHABLE under WIP saturation (RLC/QA-Drain no-op'd), yet its direct-FIX output REQUIRES a free WIP slot to land -> a successfully-triaged BATCH is silently lost if not persisted. This is a sharper facet of FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION: even when triage SUCCEEDS, the fixes cannot land under saturation. Full specs: payload_ref (PO decision journal STEP po-S1/po-S2).",
         "severity": "MEDIUM",
-        "status": "NEW",
-        "payload_ref": "docs/agent-memory/decisions/sprint-FLOW-PRICE-ALPHA-LOOP-po.md"
+        "status": "triaged",
+        "payload_ref": "docs/agent-memory/decisions/sprint-FLOW-PRICE-ALPHA-LOOP-po.md",
+        "disposition": "MINTED BOTH direct-FIX rows to task_board.backlog[] at BACKLOG status (auto-promote via BOUNDED-1/RLC when a WIP slot frees): (1) FIX-DRAIN-PERSIST-GUARD-COUNT-DRAINABLE-ONLY [P1, priority-first — relieves the drain false-trip / Step-1 triage starvation pressure]; (2) FIX-ORCHSTATE-CONSERVATION-GUARD-QA-LANE-BLIND [P2, latent qa-lane-blind conservation gap]. Both zone=cross-service/, next_agent=developer; full spec = PO decision journal STEP po-S1/po-S2 (docs/agent-memory/decisions/sprint-FLOW-PRICE-ALPHA-LOOP-po.md, 2026-07-22T05:31:04Z). Prior-art RAW-verified absent from task_board (all lanes) + working tree before mint (0 task-row hits; only the signal summary + journal referenced the ids). NOT dispatched (WIP=2/2 saturated: DESIGN-COWORK-FANOUT-PRODUCER-CONSUMER-ORDERING + FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD, both parked epics) — backlog mint respects the WIP<=2 invariant, exactly per the ASK. FLOW-GAP (dev-team Step-1 triage reachable only under WIP saturation, yet its direct-FIX output requires a free WIP slot to LAND -> a triaged BATCH is silently lost if not persisted) folded as annotation onto existing FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION (sharper facet; no dup mint). Triaged by po (router session drain).",
+        "triaged_at": "2026-07-22T06:40:43Z",
+        "triaged_by": "po/triage-20260722T0640"
+      },
+      {
+        "id": "sys-20260722T063217-1356",
+        "ts": "2026-07-22T06:32:17Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "foreign-flow stale 1642 minutes (check B-04)",
+        "severity": "CRITICAL",
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "VPS-bridge cluster / foreign-flow facet (1642min, higher water-mark vs 774e 1402min). FOLD/DEDUP into the VPS-bridge degradation cluster — same root as prior triaged sys-20260722T023220-774e (po @04:49Z) + user escalation Telegram BUG 3866. ROOT CAUSE = Vinahost VPS endpoint timeout >5000ms (foreign-flow-job fallbacks exhausted every minute); 3/5 VPS services unhealthy (vn-bctc-fetch, vn-price-fetch, vn-foreign-flow). CONFIRMED genuine + USER-GATED: VPS fetcher restart NOT triggered (already surfaced to user via Telegram BUG 3866; re-emits until VPS recovers are expected/suppressible). HIGH-WATER-MARK this tick: foreign-flow 1642min (~27.4h), stock-price (Gia co phieu) ~27.4h Rat-cu, bctc-discover 2441min (~40.7h, queue=183 pending). TWO-LAYER BCTC FRESHNESS CAVEAT: root here is the FETCH LAYER (VPS bridge down) — consistent with the cluster — distinct from the analysis-layer quarterly-SLA freshness tracked under FIX-AUDITOR-B05-BCTC-FRESHNESS-LAYER-SPLIT. No code-fix mint (VPS infra, ops/user-gated). Triaged by po (router session drain).",
+        "triaged_at": "2026-07-22T06:40:43Z",
+        "triaged_by": "po/triage-20260722T0640"
+      },
+      {
+        "id": "sys-20260722T063225-07c9",
+        "ts": "2026-07-22T06:32:25Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "VPS services degraded: 3 unhealthy (vn-bctc-fetch, vn-price-fetch, vn-foreign-flow)",
+        "severity": "CRITICAL",
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "VPS-bridge cluster / service-degradation facet (3/5 VPS services down). FOLD/DEDUP into the VPS-bridge degradation cluster — same root as prior triaged sys-20260722T023220-774e (po @04:49Z) + user escalation Telegram BUG 3866. ROOT CAUSE = Vinahost VPS endpoint timeout >5000ms (foreign-flow-job fallbacks exhausted every minute); 3/5 VPS services unhealthy (vn-bctc-fetch, vn-price-fetch, vn-foreign-flow). CONFIRMED genuine + USER-GATED: VPS fetcher restart NOT triggered (already surfaced to user via Telegram BUG 3866; re-emits until VPS recovers are expected/suppressible). HIGH-WATER-MARK this tick: foreign-flow 1642min (~27.4h), stock-price (Gia co phieu) ~27.4h Rat-cu, bctc-discover 2441min (~40.7h, queue=183 pending). TWO-LAYER BCTC FRESHNESS CAVEAT: root here is the FETCH LAYER (VPS bridge down) — consistent with the cluster — distinct from the analysis-layer quarterly-SLA freshness tracked under FIX-AUDITOR-B05-BCTC-FRESHNESS-LAYER-SPLIT. No code-fix mint (VPS infra, ops/user-gated). Triaged by po (router session drain).",
+        "triaged_at": "2026-07-22T06:40:43Z",
+        "triaged_by": "po/triage-20260722T0640"
+      },
+      {
+        "id": "sys-20260722T063233-76cb",
+        "ts": "2026-07-22T06:32:33Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "bctc-discover stale 2441 minutes (queue=183 pending)",
+        "severity": "CRITICAL",
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "VPS-bridge cluster / BCTC fetch-layer facet (bctc-discover 2441min, queue=183 pending). FOLD/DEDUP into the VPS-bridge degradation cluster — same root as prior triaged sys-20260722T023220-774e (po @04:49Z) + user escalation Telegram BUG 3866. ROOT CAUSE = Vinahost VPS endpoint timeout >5000ms (foreign-flow-job fallbacks exhausted every minute); 3/5 VPS services unhealthy (vn-bctc-fetch, vn-price-fetch, vn-foreign-flow). CONFIRMED genuine + USER-GATED: VPS fetcher restart NOT triggered (already surfaced to user via Telegram BUG 3866; re-emits until VPS recovers are expected/suppressible). HIGH-WATER-MARK this tick: foreign-flow 1642min (~27.4h), stock-price (Gia co phieu) ~27.4h Rat-cu, bctc-discover 2441min (~40.7h, queue=183 pending). TWO-LAYER BCTC FRESHNESS CAVEAT: root here is the FETCH LAYER (VPS bridge down) — consistent with the cluster — distinct from the analysis-layer quarterly-SLA freshness tracked under FIX-AUDITOR-B05-BCTC-FRESHNESS-LAYER-SPLIT. No code-fix mint (VPS infra, ops/user-gated). Triaged by po (router session drain).",
+        "triaged_at": "2026-07-22T06:40:43Z",
+        "triaged_by": "po/triage-20260722T0640"
       }
     ],
-    "last_triaged_at": "2026-07-22T04:49:34Z",
-    "last_triaged_by": "po/triage-20260722T0449"
+    "last_triaged_at": "2026-07-22T06:40:43Z",
+    "last_triaged_by": "po/triage-20260722T0640"
   },
   "sprint_goal": {
     "_note": "Active sprint visions. PO triage 2026-07-20 16->15: archived QUE-REFERENCE-PAGE (SHIPPED — route apps/frontend/app/routes/dashboard.kinh-dich-reference.tsx exists 9489B, renders all 64 que from que-descriptions-detail.generated; successor sprint KINHDICH-HOVER-DETAIL scope_out treats the reference page + its deep-link as already-existing; 0 orphan refs in task_board lanes; not in active_sprints). PREV: Active sprint visions. PO triage 2026-07-11 16->14: merged FB-POSTER-LAUNCHD-FIRER into COWORK-GUARANTEED-SLOT-DURABILITY (superseded per cron-jobs.md, firer plist installed+loaded); archived NARRATIVE-TRUTH-CCATO-GATE (T2+T3 both DONE, T3 qa-APPROVED). Reasoning: sprint-ANALYSIS-QUALITY-CONVERGENCE-po.md.",
@@ -9970,10 +10015,11 @@
         "related": [
           "FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN",
           "FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
-          "FIX-DEVTEAM-BOUNDED1-PENDINGSIGNALS-EMPTY-GUARD"
+          "FIX-DEVTEAM-BOUNDED1-PENDINGSIGNALS-EMPTY-GUARD",
+          "FIX-DRAIN-PERSIST-GUARD-COUNT-DRAINABLE-ONLY"
         ],
-        "note": "Router SURFACED; PO source-verified the JUMP-to-end placements before minting (grep-confirmed distinct from the QA-Drain row which adds the drain). Sequence AFTER the SLS/QA-Drain/RLC live-tick AC(3) verification lands so the two do not race the same flow file.",
-        "updated_at": "2026-07-22T00:52:31Z"
+        "note": "Router SURFACED; PO source-verified the JUMP-to-end placements before minting (grep-confirmed distinct from the QA-Drain row which adds the drain). Sequence AFTER the SLS/QA-Drain/RLC live-tick AC(3) verification lands so the two do not race the same flow file. | 2026-07-22 SHARPER FACET (from dev-team-20260722T054244Z-triage-batch-wip-deadlock): even when Step-1 triage SUCCEEDS under WIP saturation, its direct-FIX output (Step2 FIX->skip->Step3 has NO WIP gate) still requires a free WIP slot to LAND, so a successfully-triaged BATCH is silently lost if the board is saturated and it is not persisted. dev-team could neither dispatch nor persist its 07-22T05:42Z BATCH; PO minted the 2 FIXes (FIX-DRAIN-PERSIST-GUARD-COUNT-DRAINABLE-ONLY P1, FIX-ORCHSTATE-CONSERVATION-GUARD-QA-LANE-BLIND P2) to backlog[] as the workaround. Architect: the fairness fix must ALSO guarantee triaged direct-FIX output is DURABLY PERSISTED, not merely that Step-1 runs.",
+        "updated_at": "2026-07-22T06:43:03Z"
       },
       {
         "id": "FIX-AUDITOR-DOCAUDIT-MEMORY-PATH-PREDICATE",
@@ -10067,6 +10113,52 @@
         "title": "SPIKE->FIX: get_cycle_bootstrap under-returns shared/broadcast chain_catalyst vs get_agent_signals (recurring 2+: 07-21 08:20Z, 07-22 04:29Z). Live probe: catalyst 8779 on bus + in alert-commander inbox but status='read'. get_cycle_bootstrap and get_agent_signals inbox-mode share getSignals(db,agent,{status:'unread'}) (agentSignalStore.ts:837) which mark-reads unread->read on read. Leading hypothesis: first consumer to bootstrap a shared/broadcast catalyst (to_agent='all' or multi-recipient) marks it read so later agents' bootstrap (unread-only) miss it; recovery only via non-consuming all-producers path (from_agent=null). SPIKE must (1) fetch created_at + to_agent of the missed rows across BOTH recurrences to rule out a pure timing artifact (signal created after the bootstrap call), then (2) decide fix direction: (a) bootstrap unions shared catalyst types via a non-consuming window, or (b) broadcast signals get per-recipient read-state / are not single-reader-consumed. Then FIX. Plausible CHEF convergence-coverage miss on -2.67% selloff. Source signal: cowork-20260722T043453Z-bootstrap-underreturn.",
         "verify_note": "prior_status=NEW; minted by po triage 2026-07-22",
         "updated_at": "2026-07-22T04:50:29Z"
+      },
+      {
+        "id": "FIX-DRAIN-PERSIST-GUARD-COUNT-DRAINABLE-ONLY",
+        "title": "FIX: dev-team MANDATORY PERSIST GUARD counts RAW docs/signals/*.json file count, not drainable (from/type-shaped) signals — non-drainable litter (cowork telemetry/tick residue) inflates the count and false-trips the guard, forcing a mandatory full-drain every tick and creating Step-1 triage starvation pressure. Shape-filter the guard to count only routable signals.",
+        "status": "BACKLOG",
+        "type": "FIX",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "developer",
+        "next_agent": "developer",
+        "created_at": "2026-07-22T06:40:43Z",
+        "created_by": "po/triage-20260722T0640",
+        "origin_signal_id": "dev-team-20260722T054244Z-triage-batch-wip-deadlock",
+        "root_cause": "The MANDATORY PERSIST GUARD (docs/agents/dev-team/flow/drain-signals.md:6 + scripts/agents-flow/drain-signals.js / scripts/agents-flow/dev-team-tick-preflight.sh) gates on the raw docs/signals/*.json file count. Non-drainable litter (telemetry/tick residue carrying no valid from + recognised type/route) inflates that count, so the guard mandates a full drain on every tick even when nothing is actually routable.",
+        "deliverable": "Filter the guard's count to signals that are actually drainable (valid from + recognised type/route shape), so litter/telemetry residue no longer trips the mandatory-drain condition.",
+        "acceptance": "A tick whose docs/signals/ holds ONLY non-drainable residue does NOT trip the persist guard (no forced full-drain); a tick with a genuine drainable signal still trips it (negative control). Litter-count independent.",
+        "related": [
+          "FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION",
+          "CLEAN-COWORK-DISPATCHER-TELEMETRY-DRAIN-DIR",
+          "FIX-ORCHSTATE-CONSERVATION-GUARD-QA-LANE-BLIND"
+        ],
+        "note": "Minted from dev-team WIP-deadlock triage-persist-request (dev-team-20260722T054244Z). Full spec = PO decision journal STEP po-S1 (docs/agent-memory/decisions/sprint-FLOW-PRICE-ALPHA-LOOP-po.md, 2026-07-22T05:31:04Z). Priority-first of the pair (relieves recurring drain false-trip pressure). NOT dispatched at mint (WIP=2/2 saturated) — auto-promote via BOUNDED-1/RLC when a WIP slot frees.",
+        "updated_at": "2026-07-22T06:43:03Z"
+      },
+      {
+        "id": "FIX-ORCHSTATE-CONSERVATION-GUARD-QA-LANE-BLIND",
+        "title": "FIX: scripts/orch-conservation-check.mjs FLAT_TASK_LANES (~:67) omits 'qa' — the qa[] lane is excluded from task_total, so a catastrophic qa[] drop is invisible to the floor-ratio conservation circuit-breaker. qa[] is now live via QA-Drain. Add 'qa' to FLAT_TASK_LANES + align the documented conservation formula.",
+        "status": "BACKLOG",
+        "type": "FIX",
+        "priority": "P2",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "developer",
+        "next_agent": "developer",
+        "created_at": "2026-07-22T06:40:43Z",
+        "created_by": "po/triage-20260722T0640",
+        "origin_signal_id": "dev-team-20260722T054244Z-triage-batch-wip-deadlock",
+        "root_cause": "scripts/orch-conservation-check.mjs FLAT_TASK_LANES (~line 67) does not list 'qa', so qa[] task rows are not summed into task_total; the floor-ratio guard therefore cannot detect a qa[] collapse. qa[] is now actively populated by the Review-Lane QA-Drain.",
+        "deliverable": "Add 'qa' to FLAT_TASK_LANES; update the documented conservation formula (dev-standards / script header) to match the enumerated lane set.",
+        "acceptance": "A candidate that drops qa[] below FLOOR_RATIO is ABORTED by the orch-apply.sh conservation stage (negative control); a normal additive write is unaffected. Lane set in code == lane set in the documented formula.",
+        "related": [
+          "FIX-DRAIN-PERSIST-GUARD-COUNT-DRAINABLE-ONLY"
+        ],
+        "note": "Minted from dev-team WIP-deadlock triage-persist-request (dev-team-20260722T054244Z). Full spec = PO decision journal STEP po-S2 (same file, 2026-07-22T05:31:04Z). Latent blind-spot (no active harm yet: qa[] currently 0) -> P2. NOT dispatched at mint (WIP=2/2) — auto-promote via BOUNDED-1/RLC.",
+        "updated_at": "2026-07-22T06:43:03Z"
       }
     ],
     "closed_sprints": [
@@ -10763,38 +10855,7 @@
         "po_tail_disposition": "The 4 Layer-2 bare-commit sites and the 3 stale init.md 'RULE 1-3' refs that this agent disclosed unprompted are minted as FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-LAYER2 in this same cycle, so the tail does not orphan when this parent closes. The unprompted disclosure of out-of-scope defects is exactly the behaviour the maintenance lane should reward."
       }
     ],
-    "done_verified": [
-      {
-        "id": "UC-GCP-P4",
-        "type": "FIX",
-        "title": "Path-filter the pre-push tsc hook: skip full tsc for pushes touching no code",
-        "status": "DONE_VERIFIED",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "CONFIRMED",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#git-ci-publish-P4",
-        "note": "Every push (even doc/notebook-only) pays a full tsc, stranding the fleet on unrelated red. Path-filter the pre-push hook: run tsc only when the push touches code paths.",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "promoted_at": "2026-07-16T14:00:03Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-22T06:18:00Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "developer_completed_at": "2026-07-16T14:12:40Z",
-        "developer_completed_by": "developer (UC-GCP-P4, dev-team bounded-1 pickup)",
-        "review_note": "Path-filtered scripts/git-hooks/pre-push: loops all stdin ref lines, computes git diff --name-only <remote>..<local> per line, skips the full pnpm --filter vn-market check tsc (~94s, over the commit-mutex 90s TTL) only when NO line matches ^(apps|packages|scripts)/.*\\.(ts|tsx|js|mjs|json)$ or root package.json/pnpm-lock.yaml/pnpm-workspace.yaml (docs/ excluded). All 4 mandatory hardenings implemented: (a) fail-open full tsc on git diff failure (remote sha absent locally), guarded inside an if so it never hits the bare set -e abort; (b) all-zero local-sha (branch-delete) lines skipped; (c) ANY code-touching line across multiple stdin refs forces full tsc (drains all stdin, no early break); (d) root package.json/pnpm-lock.yaml/pnpm-workspace.yaml added to the code-touching set. Zero-remote-sha (new branch) always runs full tsc. Verified: bash -n + shellcheck clean; 9 simulated stdin scenarios against a throwaway repo + fake-pnpm stub (doc-only skip/no-call, code-touching full-tsc/call, fail-open bogus-remote-sha full-tsc, new-branch zero-remote-sha full-tsc, branch-delete zero-local-sha skip, multi-line doc+code ANY-rule full-tsc, PRE_PUSH_SKIP_TSC=1 escape hatch intact, no-pnpm-on-PATH WARN intact, root package.json full-tsc) all matched spec. Shell-only change, no .ts touched -- no tsc/test suite run applicable. DJ-GATE-1: sprint-ULTRACODE-AUDIT-FIXALL-developer.md STEP developer-S9. qa: confirm scripts/git-hooks/pre-push diff matches detail_ref git-ci-publish-P4 acceptance + all 4 hardenings, confirm .git/hooks/pre-push symlink still resolves (install.sh untouched), promote to done_verified.",
-        "updated_at": "2026-07-22T06:25:11Z",
-        "commit": "9641f664f",
-        "qa_note": "[QA] Review Record (direct-commit verify): commit 9641f664f (fix(cross-service/git-hooks): UC-GCP-P4 path-filter pre-push tsc gate for non-code pushes) confirmed on main ancestry, single unambiguous hit via `git log -- scripts/git-hooks/pre-push` (subject cites UC-GCP-P4 verbatim), author date 14:13:08Z matches developer_completed_at 14:12:40Z within 1min, `git log --follow` shows no later commit re-touched the file (HEAD byte-identical to the commit diff, exactly 1 file changed: scripts/git-hooks/pre-push +50L). Read git-ci-publish-P4 Change + all 4 mandatory hardenings from the audit brief directly (docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#git-ci-publish-P4), not review_note prose. `bash -n` + `shellcheck` both clean (exit 0, zero findings). Did NOT trust the \"9 simulated stdin scenarios all matched spec\" claim — independently re-ran the live hook with a stubbed `pnpm` against real repo SHAs: (1) doc-only push (d5d9b1cfc^..d5d9b1cfc, docs/reports only) -> SKIP tsc; (2) code-touching push (70202e9da^..70202e9da, apps/**.ts) -> FULL tsc; (3) bogus/absent remote sha -> WARN + fail-open FULL tsc; (4) new-branch zero-remote-sha -> FULL tsc; (5) branch-delete zero-local-sha -> SKIP, no processing; (6) 2-line stdin (doc-only + code-touching) -> FULL tsc (ANY-rule, drains both lines, ran unmodified); (7) PRE_PUSH_SKIP_TSC=1 -> skip message, exit 0; (8) pnpm stripped from PATH -> WARN, no tsc invocation. All 8 matched spec exactly. Additionally extracted CODE_TOUCHING_REGEX verbatim from the live file and grep-tested it directly against 7 path samples: root package.json/pnpm-lock.yaml/pnpm-workspace.yaml all MATCH (hardening (d) confirmed), docs/foo.md and scripts/foo.py both correctly NO MATCH, apps/**.ts/apps/**.json both MATCH. `.git/hooks/pre-push` symlink confirmed still resolves to scripts/git-hooks/pre-push (install.sh untouched since this commit, git log --follow shows install.sh's last touch predates 9641f664f). `mock-guard.sh --files scripts/git-hooks/pre-push` -> \"No production source files to scan. PASS.\" (shell script, not TS -- Smart-Skip: shell-only change, no .ts touched, bun test/tsc correctly N/A). Secrets grep (password|secret|token) and process.env grep both clean; DDD import grep (from.*infrastructure/application) clean (N/A, not a TS file, sanity-checked anyway). Developer DJ-GATE-1 entry cross-checked present and matching: sprint-ULTRACODE-AUDIT-FIXALL-developer.md STEP developer-S9, task-id UC-GCP-P4, timestamp 2026-07-16T14:06:22Z.",
-        "qa_verdict": "APPROVED",
-        "qa_verified_at": "2026-07-22T06:25:11Z",
-        "qa_verified_by": "qa"
-      }
-    ],
+    "done_verified": [],
     "head": {
       "status": "idle",
       "active_task_id": null,
@@ -12517,8 +12578,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-21T22:47:59Z",
-    "last_triaged_by": "dev-team (supervised-lane sweep)",
+    "last_triaged_at": "2026-07-22T06:40:43Z",
+    "last_triaged_by": "po/triage-20260722T0640",
     "in_progress": [
       {
         "id": "DESIGN-COWORK-FANOUT-PRODUCER-CONSUMER-ORDERING",
@@ -12623,6 +12684,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-07-21T20:13:00Z",
-  "_updated_by": "po/ruling-20260721T2009"
+  "_updated_at": "2026-07-22T06:40:43Z",
+  "_updated_by": "po/triage-20260722T0640"
 }
