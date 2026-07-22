@@ -388,11 +388,10 @@
   ],
   "head": {
     "status": "idle",
+    "updated_at": "2026-07-22T22:21:20Z",
+    "updated_by": "developer",
     "active_task_id": null,
-    "next_agent": "ops",
-    "next_action": "OPS-REBUILD-MCP-SERVER-OPENSSH — single-service rebuild+deploy mcp-server (openssh-client now in Dockerfile, image now has real SSH). QA APPROVED + pushed + CI green (see reports/TASK_REPORT_BLOCK-PUSH-CRON-AUDIT-BATCH-NO-QA.md). Follow the row own hard constraints: single-service only, never --force-recreate without --build, verify image ID changed vs baseline sha256:c5a2c0f7.",
-    "updated_at": "2026-07-22T17:41:38Z",
-    "updated_by": "qa"
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -4327,25 +4326,6 @@
         "next_agent": "agent-father",
         "supervised": true,
         "supervised_reason": "[po 2026-07-16T11:59:19Z] 3rd BOUNDED-1 tick churn converged. next_agent=agent-father is a MAINTENANCE-LANE on-demand-only agent (dev-team main.md L12) that zone-detect (cross-service/ => Tier-3 developer) CANNOT route to; idle auto-launch would mis-route factory work to a generic developer. supervised:true withholds it from BOUNDED-1 so the next tick picks a dev-routable P1 (UC-SDF-P4/UC-GCP-P2/UC-GCP-P4->developer, UC-MDH-P1->dev-mcp-server). Deliberate on-demand dispatch of agent-father (task:on-demand:agent-father:<date> mutex-wrap) only; on execution reconcile that the row cites system-auditor init.md but the flow dir has only main.md/tier1-probe.md. Durable class fix tracked by FIX-DEVTEAM-BOUNDED1-MAINTLANE-NEXTAGENT-GATE."
-      },
-      {
-        "id": "UC-SDF-P3",
-        "type": "CLEAN",
-        "title": "Delete NOTE_SIGNALS_DB_DRAIN.md (or rewrite as a 3-line pointer to the live drain)",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "CONFIRMED",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#state-data-files-P3",
-        "note": "Stale drain note contradicts the live drain. Delete it or reduce to a 3-line pointer.",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "priority_bumped_from": "P2",
-        "priority_bumped_at": "2026-07-17T04:54:03Z",
-        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17"
       },
       {
         "id": "UC-SDF-P1",
@@ -11813,7 +11793,36 @@
         "new_image_id": "sha256:96036269edc4d17444544197862913e54c2fdda68e2b54ef610aee3c7610985d"
       }
     ],
-    "done_verified": [],
+    "done_verified": [
+      {
+        "id": "UC-SDF-P3",
+        "type": "CLEAN",
+        "title": "Delete NOTE_SIGNALS_DB_DRAIN.md (or rewrite as a 3-line pointer to the live drain)",
+        "status": "DONE_VERIFIED",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "CONFIRMED",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#state-data-files-P3",
+        "note": "Stale drain note contradicts the live drain. Delete it or reduce to a 3-line pointer.",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "priority_bumped_from": "P2",
+        "priority_bumped_at": "2026-07-17T04:54:03Z",
+        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
+        "promoted_at": "2026-07-22T22:17:20Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "updated_at": "2026-07-22T22:22:48Z",
+        "claimed_at": "2026-07-22T22:17:20Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "verified_at": "2026-07-22T22:21:20Z",
+        "verified_by": "developer",
+        "verify_note": "Self-verified CLEAN doc-delete: docs/signals/NOTE_SIGNALS_DB_DRAIN.md removed (stale, contradicted live drain scripts/agents-flow/drain-signals.js + docs/agents/dev-team/flow/drain-signals.md). grep confirmed no live inbound reference besides the audit brief itself."
+      }
+    ],
     "head": {
       "status": "idle",
       "active_task_id": null,
@@ -13530,8 +13539,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-22T22:01:50Z",
-    "last_triaged_by": "po-s148",
+    "last_triaged_at": "2026-07-22T22:17:20Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": []
   },
   "_meta": {

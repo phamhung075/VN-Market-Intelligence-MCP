@@ -155,3 +155,16 @@ all-zero local-sha delete lines, ANY-line-triggers-full-tsc, root package.json/p
 pnpm-workspace in the code-touching set) map 1:1 to spec items (a)-(d) — implemented verbatim, no
 simplification.
 **why-change:** No change from plan; scope stayed inside the single named file per the boundary.
+
+### STEP developer-S10 · developer · 2026-07-23T00:00:00Z
+**task-id:** UC-SDF-P3
+**what-done:** `git rm docs/signals/NOTE_SIGNALS_DB_DRAIN.md` — stale note ("Status: Dead since
+2026-05-22") contradicted the live drain (drain-signals.js/drain-signals.md, active since 07-04).
+**what-considered:**
+- Rewrite as ≤3-line pointer — rejected: no surviving useful content, drain contract already fully
+  documented in drain-signals.js header + drain-signals.md.
+- Delete outright — chosen, matches the audit brief's own stated preference ("one fewer truth claim
+  to drift").
+**why-decision:** `grep -rn NOTE_SIGNALS_DB_DRAIN` across docs/scripts/.claude shows the only inbound
+reference is the audit brief describing the problem — no live pointer breaks on deletion.
+**why-change:** No change from plan.
