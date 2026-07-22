@@ -265,3 +265,31 @@ present (`sprint-ULTRACODE-AUDIT-FIXALL-developer.md` STEP developer-S9, task-id
 **why-change:** No change from plan — moved `UC-GCP-P4` `qa[]`->`done_verified[]`
 (status=DONE_VERIFIED, qa_verdict=APPROVED, commit=9641f664f backfilled). `.head` reset idle,
 next_agent=pm. Did NOT push.
+
+### STEP qa-S11 · qa · 2026-07-22T06:57:00Z
+**task-id:** UC-MDH-P1
+**what-done:** Direct-commit verify (branch:null, no commit/files[] on row — derived via
+`git log --follow`), landing commit `11c35c0a8` (peer housekeeping tick absorbed the shared
+staged index — dev's own DJ discloses this; independently confirmed via `git diff-tree
+--name-status` = exactly the claimed 89 files, no revert/extra/missing).
+**what-considered:**
+- Trust the review_note's "89-file set + concurrent-commit race" story — rejected: cross-checked
+  every claim at source (both `agentMemoryUpdateTools.ts:189` registration-time env-fallback and
+  the test's `beforeEach mkdtemp`/`afterEach rm+unset` diffed byte-for-byte, MD5-class deletions
+  spot-checked as exact stub content, developer DJ entry cross-read matching).
+- "Zero pollution regrowth" claim — rejected face-value: found 19 files still on the flagged MD5
+  hashes under `sessions/archive/`; traced each via `git log --diff-filter=A` to 2026-06-13 (pre-
+  fix, out of P1's scope — belongs to the separate P3 archive-sweep row), confirmed via
+  `--since=<fix-landing>` that ZERO new-dated pollution exists post-fix. Live-reran the 1300b
+  suite twice just now (standalone, not trusting the dev's prior run) — 14/14 pass both times,
+  `git status --porcelain` on `docs/agent-memory/` clean of new files after each run.
+**why-decision:** `bun tsc --noEmit` exit 0; `mock-guard.sh` PASS; DDD grep on the touched prod
+file clean (its one `infrastructure/projectRoot.js` import is pre-existing/interface-layer, not a
+domain-layer violation, and outside this diff's changed lines); secrets/`process.env` grep — the
+one `process.env.AGENT_MEMORY_ROOT` hit is the fix's own injection point, not a leak. `git log
+--follow` on both files confirms `11c35c0a8` is still HEAD-current, nothing re-touched them since.
+DJ-GATE-1: `sprint-FLOW-PRICE-ALPHA-LOOP-dev-mcp-server.md` STEP dev-mcp-server-S20 present,
+matching task-id.
+**why-change:** No change from plan — moved `UC-MDH-P1` `qa[]`->`done_verified[]`
+(status=DONE_VERIFIED, qa_verdict=APPROVED, commit=11c35c0a8 backfilled). `.head` reset idle,
+next_agent=pm. Did NOT push.
