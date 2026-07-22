@@ -387,11 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-07-22T03:00:54Z",
-    "updated_by": "qa",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "active_task_id": "FACTORY-NEWS-split-sandbox",
+    "next_agent": "qa",
+    "next_action": "Review-Lane QA-Drain claim of FACTORY-NEWS-split-sandbox — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have).",
+    "updated_at": "2026-07-22T03:15:26Z",
+    "updated_by": "dev-team (review-lane qa-drain)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -11869,24 +11870,6 @@
         "reviewed_by": "dev-stock-price"
       },
       {
-        "title": "Split news-fetch sandbox runner.ts; replace by-name signature switch",
-        "priority": "P1",
-        "zone": "news-fetch",
-        "type": "FACTORY",
-        "status": "REVIEW",
-        "id": "FACTORY-NEWS-split-sandbox",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-NEWS-split-sandbox",
-        "promoted_at": "2026-07-09T22:17:08Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-09T22:17:12Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
-        "completed_at": "2026-07-09T22:27:00Z",
-        "completed_by": "dev-news-fetch",
-        "status_note": "Split sandbox/runner.ts (486L) into src/sandbox/{cli,registry,discover,equal,execute,report}.ts + runner.ts as thin orchestrator, all <=120L (execute.ts=120L exactly). registry.ts: added a per-entry argAdapter fn (maps scenario input -> positional args) replacing the by-name if/else signature switch previously inline (was ~line 223-235). import.meta.dir resolution preserved unchanged (all new files stay in the same src/sandbox/ dir). Pre-check: grepped for test imports of runner.ts internals -- none found (runner.ts is invoked only as a CLI script via bun run src/sandbox/runner.ts / package.json \"sandbox\" script, never imported by name from any test). Verification: bun test 233 pass/6 skip/0 fail/372 expect() (unchanged from pre-split baseline); bun tsc --noEmit clean; eslint lint:ci clean; scenario JSON validity clean; G12 sandbox gate bun run sandbox --tier=all --module=news-fetch -> 16 PASS/0 FAIL/0 ERROR (exit 0), same as pre-split. Direct before/after comparison: ran the pre-edit runner.ts (git show HEAD) and the post-split runner.ts against the same --output trace file and diffed JSON with runAt stripped -> byte-identical. rebuild_required=true (news-fetch is a docker-composed service; live container still runs pre-change image) -- deferred verification tracked in signal docs/signals/ops-rebuild-verify-news-fetch-20260709T2227Z.json per feedback_user_gates_delegate_to_ops.md (same pattern as the immediately-preceding FACTORY-NEWS-dedup-normalizeDate task). Kept REVIEW (not self-asserted DONE_VERIFIED) pending rebuild+RAW-verify. DJ: docs/agent-memory/decisions/dev-news-fetch-20260709T2227Z-FACTORY-NEWS-split-sandbox.md"
-      },
-      {
         "id": "FIX-BCTC-FPT-BT5-BALANCE-GATE",
         "type": "FIX",
         "priority": "P1",
@@ -12571,7 +12554,27 @@
         "next_agent": "agent-father"
       }
     ],
-    "qa": [],
+    "qa": [
+      {
+        "title": "Split news-fetch sandbox runner.ts; replace by-name signature switch",
+        "priority": "P1",
+        "zone": "news-fetch",
+        "type": "FACTORY",
+        "status": "QA",
+        "id": "FACTORY-NEWS-split-sandbox",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-NEWS-split-sandbox",
+        "promoted_at": "2026-07-09T22:17:08Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-22T03:15:26Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "qa",
+        "completed_at": "2026-07-09T22:27:00Z",
+        "completed_by": "dev-news-fetch",
+        "status_note": "Split sandbox/runner.ts (486L) into src/sandbox/{cli,registry,discover,equal,execute,report}.ts + runner.ts as thin orchestrator, all <=120L (execute.ts=120L exactly). registry.ts: added a per-entry argAdapter fn (maps scenario input -> positional args) replacing the by-name if/else signature switch previously inline (was ~line 223-235). import.meta.dir resolution preserved unchanged (all new files stay in the same src/sandbox/ dir). Pre-check: grepped for test imports of runner.ts internals -- none found (runner.ts is invoked only as a CLI script via bun run src/sandbox/runner.ts / package.json \"sandbox\" script, never imported by name from any test). Verification: bun test 233 pass/6 skip/0 fail/372 expect() (unchanged from pre-split baseline); bun tsc --noEmit clean; eslint lint:ci clean; scenario JSON validity clean; G12 sandbox gate bun run sandbox --tier=all --module=news-fetch -> 16 PASS/0 FAIL/0 ERROR (exit 0), same as pre-split. Direct before/after comparison: ran the pre-edit runner.ts (git show HEAD) and the post-split runner.ts against the same --output trace file and diffed JSON with runAt stripped -> byte-identical. rebuild_required=true (news-fetch is a docker-composed service; live container still runs pre-change image) -- deferred verification tracked in signal docs/signals/ops-rebuild-verify-news-fetch-20260709T2227Z.json per feedback_user_gates_delegate_to_ops.md (same pattern as the immediately-preceding FACTORY-NEWS-dedup-normalizeDate task). Kept REVIEW (not self-asserted DONE_VERIFIED) pending rebuild+RAW-verify. DJ: docs/agent-memory/decisions/dev-news-fetch-20260709T2227Z-FACTORY-NEWS-split-sandbox.md",
+        "updated_at": "2026-07-22T03:15:26Z"
+      }
+    ],
     "_closed_signals_20260614": {
       "_by": "po-S50",
       "_at": "2026-06-14T14:45:14Z",
