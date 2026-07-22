@@ -7,7 +7,7 @@
 
 <!-- Writes docs/data/cycle-snapshot-<HH:MM>.json before agent spawn.
      Agents read this file instead of calling get_cycle_bootstrap independently.
-     File is ephemeral (overwritten each tick). Not git-committed (.gitignore).
+     File is pruned after 24 h by this step. Not git-committed (.gitignore).
      cycle-snapshot-latest.json is promoted from this file in telemetry.md Step 6 (EMIT-DARK-RECURRING).
      Fallback: if this step fails, agents fall back to direct get_cycle_bootstrap — zero blocker.
      HARDENED 2026-05-25: All scratch/staging MUST be project-local under docs/data/ — NEVER /tmp or any path outside the repo. -->
@@ -55,6 +55,7 @@ jq -n \
   --slurpfile macro_snapshot_raw "$MACRO_STAGE" \
   '{tick: $tick, created_at: $created_at, market_context: ($market_context_raw | fromjson | .market_context // {}), macro_snapshot: $macro_snapshot_raw[0]}' \
   > "$TMPFILE" && mv "$TMPFILE" "$SNAPSHOT_FILE"
+find docs/data -maxdepth 1 -name 'cycle-snapshot-*.json' ! -name 'cycle-snapshot-latest.json' -mmin +1440 -delete
 ```
 
 **On any error in this step** (tool failure, jq error, write failure): log `"[cowork-team] tick-snapshot write failed: <error>"` and continue to Step 4.8. Do NOT block spawns — agents fall back to direct `get_cycle_bootstrap` via the Step -1 miss path in `cycle-bootstrap/SKILL.md`. Staging files are cleaned via trap EXIT in all cases.

@@ -388,10 +388,10 @@
   ],
   "head": {
     "status": "idle",
-    "updated_at": "2026-07-22T22:21:20Z",
-    "updated_by": "developer",
     "active_task_id": null,
-    "next_agent": null
+    "next_agent": null,
+    "updated_by": "developer",
+    "updated_at": "2026-07-22T22:51:20Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -4340,25 +4340,6 @@
         "next_agent": "agent-father",
         "supervised": true,
         "supervised_reason": "[po 2026-07-16T11:59:19Z] 3rd BOUNDED-1 tick churn converged. next_agent=agent-father is a MAINTENANCE-LANE on-demand-only agent (dev-team main.md L12) that zone-detect (cross-service/ => Tier-3 developer) CANNOT route to; idle auto-launch would mis-route factory work to a generic developer. supervised:true withholds it from BOUNDED-1 so the next tick picks a dev-routable P1 (UC-SDF-P4/UC-GCP-P2/UC-GCP-P4->developer, UC-MDH-P1->dev-mcp-server). Deliberate on-demand dispatch of agent-father (task:on-demand:agent-father:<date> mutex-wrap) only; on execution reconcile that the row cites system-auditor init.md but the flow dir has only main.md/tier1-probe.md. Durable class fix tracked by FIX-DEVTEAM-BOUNDED1-MAINTLANE-NEXTAGENT-GATE."
-      },
-      {
-        "id": "UC-SDF-P1",
-        "type": "FIX",
-        "title": "Add self-pruning to the tick-snapshot step + one-time sweep of the 80 stale tick-snapshot files",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "CONFIRMED",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#state-data-files-P1",
-        "note": "Cowork tick snapshots accrete unbounded (80 stale). Add self-prune to the snapshot step and one-time sweep.",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "priority_bumped_from": "P2",
-        "priority_bumped_at": "2026-07-17T04:54:03Z",
-        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17"
       },
       {
         "id": "UC-RDL-P7",
@@ -11807,13 +11788,41 @@
         "new_image_id": "sha256:96036269edc4d17444544197862913e54c2fdda68e2b54ef610aee3c7610985d"
       }
     ],
-    "done_verified": [],
+    "done_verified": [
+      {
+        "id": "UC-SDF-P1",
+        "type": "FIX",
+        "title": "Add self-pruning to the tick-snapshot step + one-time sweep of the 80 stale tick-snapshot files",
+        "status": "DONE_VERIFIED",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "CONFIRMED",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#state-data-files-P1",
+        "note": "Cowork tick snapshots accrete unbounded (80 stale). Add self-prune to the snapshot step and one-time sweep.",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "priority_bumped_from": "P2",
+        "priority_bumped_at": "2026-07-17T04:54:03Z",
+        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
+        "promoted_at": "2026-07-22T22:46:43Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "updated_at": "2026-07-22T22:51:02Z",
+        "claimed_at": "2026-07-22T22:46:43Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "verified_at": "2026-07-22T22:51:02Z",
+        "verified_by": "developer (self-verified — near-zero-risk CONFIRMED fix, read-back confirmed)"
+      }
+    ],
     "head": {
       "status": "idle",
       "active_task_id": null,
-      "next_agent": "qa",
-      "updated_at": "2026-07-22T17:23:45Z",
-      "updated_by": "po/cron-audit-push-deploy-sequencing-20260722"
+      "next_agent": null,
+      "updated_by": "developer",
+      "updated_at": "2026-07-22T22:51:02Z"
     },
     "ready": [
       {
@@ -13524,8 +13533,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-22T22:42:47Z",
-    "last_triaged_by": "po/triage-sys-20260722T223302-4f8b",
+    "last_triaged_at": "2026-07-22T22:46:43Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": []
   },
   "_meta": {
