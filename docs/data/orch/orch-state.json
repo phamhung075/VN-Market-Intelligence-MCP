@@ -387,11 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-07-22T02:22:54Z",
-    "updated_by": "router/t6-review-head-clear-20260722T022254Z",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "active_task_id": "FACTORY-NEWS-dedup-normalizeDate",
+    "next_agent": "qa",
+    "next_action": "Review-Lane QA-Drain claim of FACTORY-NEWS-dedup-normalizeDate — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have).",
+    "updated_at": "2026-07-22T02:47:41Z",
+    "updated_by": "dev-team (review-lane qa-drain)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -11869,24 +11870,6 @@
         "reviewed_by": "dev-stock-price"
       },
       {
-        "title": "Fold the two stealth-scraper normalizeDate copies into the published-at primitive",
-        "priority": "P1",
-        "zone": "news-fetch",
-        "type": "FACTORY",
-        "status": "REVIEW",
-        "id": "FACTORY-NEWS-dedup-normalizeDate",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-NEWS-dedup-normalizeDate",
-        "promoted_at": "2026-07-09T21:47:24Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-09T21:47:49Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
-        "completed_at": "2026-07-09T21:52:14Z",
-        "completed_by": "dev-news-fetch",
-        "status_note": "Deduped normalizeDate: added null-tolerant wrapper to src/primitive/published-at-parser/index.ts (parsePublishedAt as core), removed local definitions from bloomberg-stealth.ts (151->142L) and reuters-stealth.ts (134->125L), replaced with import+re-export (tests in __tests__/1899a-bloomberg-normalize-date.test.ts and __tests__/1899a-reuters-fallback-lifecycle.test.ts import normalizeDate by name from the stealth files directly — router premise of no test dependency was FALSE, so a re-export was required and added). bun test 233 pass/6 skip/0 fail, bun tsc --noEmit clean, G12 sandbox 16/16 PASS, scenario JSON valid. Direct before/after comparison script run against old inlined impl vs new primitive-backed impl across 12 date-format inputs (null/undefined/empty/whitespace/invalid/ISO Z/ISO+offset/RFC2822 GMT/RFC2822+offset/date-only/malformed): 0 mismatches, byte-identical output. rebuild_required=true (news-fetch is a docker-composed service; live container still runs pre-change image) — deferred verification tracked in signal docs/signals/ops-rebuild-verify-news-fetch-20260709T2152Z.json per feedback_user_gates_delegate_to_ops.md. Kept REVIEW (not self-asserted DONE_VERIFIED) pending rebuild+RAW-verify. DJ: docs/agent-memory/decisions/dev-news-fetch-20260709T2152Z-FACTORY-NEWS-dedup-normalizeDate.md"
-      },
-      {
         "title": "Split news-fetch sandbox runner.ts; replace by-name signature switch",
         "priority": "P1",
         "zone": "news-fetch",
@@ -12589,7 +12572,27 @@
         "next_agent": "agent-father"
       }
     ],
-    "qa": [],
+    "qa": [
+      {
+        "title": "Fold the two stealth-scraper normalizeDate copies into the published-at primitive",
+        "priority": "P1",
+        "zone": "news-fetch",
+        "type": "FACTORY",
+        "status": "QA",
+        "id": "FACTORY-NEWS-dedup-normalizeDate",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-NEWS-dedup-normalizeDate",
+        "promoted_at": "2026-07-09T21:47:24Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-22T02:47:41Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "qa",
+        "completed_at": "2026-07-09T21:52:14Z",
+        "completed_by": "dev-news-fetch",
+        "status_note": "Deduped normalizeDate: added null-tolerant wrapper to src/primitive/published-at-parser/index.ts (parsePublishedAt as core), removed local definitions from bloomberg-stealth.ts (151->142L) and reuters-stealth.ts (134->125L), replaced with import+re-export (tests in __tests__/1899a-bloomberg-normalize-date.test.ts and __tests__/1899a-reuters-fallback-lifecycle.test.ts import normalizeDate by name from the stealth files directly — router premise of no test dependency was FALSE, so a re-export was required and added). bun test 233 pass/6 skip/0 fail, bun tsc --noEmit clean, G12 sandbox 16/16 PASS, scenario JSON valid. Direct before/after comparison script run against old inlined impl vs new primitive-backed impl across 12 date-format inputs (null/undefined/empty/whitespace/invalid/ISO Z/ISO+offset/RFC2822 GMT/RFC2822+offset/date-only/malformed): 0 mismatches, byte-identical output. rebuild_required=true (news-fetch is a docker-composed service; live container still runs pre-change image) — deferred verification tracked in signal docs/signals/ops-rebuild-verify-news-fetch-20260709T2152Z.json per feedback_user_gates_delegate_to_ops.md. Kept REVIEW (not self-asserted DONE_VERIFIED) pending rebuild+RAW-verify. DJ: docs/agent-memory/decisions/dev-news-fetch-20260709T2152Z-FACTORY-NEWS-dedup-normalizeDate.md",
+        "updated_at": "2026-07-22T02:47:42Z"
+      }
+    ],
     "_closed_signals_20260614": {
       "_by": "po-S50",
       "_at": "2026-06-14T14:45:14Z",
