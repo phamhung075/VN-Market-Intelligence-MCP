@@ -204,3 +204,19 @@ wrapper name in TNB bootstrap") from `UC-CCA-UNVERIFIED-BATCH`'s note (count 8->
 proposals) — both rows remain `type:SPIKE` in `backlog[]`, zero task rows removed, each note
 annotated with a one-line struck-trail pointing at this commit. Did NOT push (router's job on
 completion notification).
+
+### STEP qa-S8 · qa · 2026-07-22T04:56:35Z
+**task-id:** UC-SDF-P4
+**what-done:** Direct-commit verify (mode=verify-committed, branch:null). Found+read diffs for
+64cd7edf9/b087d30a0 (both merge-base ancestors of main); ran drain-signals.test.js 28/28 PASS;
+mock-guard/DDD/secrets clean; live-checked docs/signals/processed/ (250 files) confirming mtime
+fallback fires only when unstamped and correctly skips 2 pre-existing corrupted-JSON legacy files.
+**what-considered:**
+- Trust review_note prose ("15/15 pass", "1280==1280") — rejected: re-ran test + re-read raw diff.
+- 10 unstamped files still present looked like a possible fix gap — investigated: 8 within 7d
+  mtime window (expected), 2 unparseable (pre-existing corruption, both tools correctly skip).
+**why-decision:** Diff matches remedy exactly (mtime fallback scoped to file-plane only, DB-plane
+strftime compare byte-identical/untouched); tests green; live data confirms no over/under-prune.
+**why-change:** No change from plan — moved `UC-SDF-P4` `qa[]`->`done_verified[]`
+(status=DONE_VERIFIED, qa_verdict=APPROVED, commit=64cd7edf9,b087d30a0, completed_at/by backfilled
+from commit author). `.head` reset idle, next_agent=pm. Did NOT push.
