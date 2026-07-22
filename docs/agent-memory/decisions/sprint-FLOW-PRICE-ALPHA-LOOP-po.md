@@ -410,3 +410,21 @@
 - Fold into the existing last_fired row
 **why-decision:** There is no failing write — 07-20 was a genuine miss and 07-21 fired via the router path, which never writes last_fired (commit 62cf2eab8). Binding last_fired to delivery proof fixes both directions with one change; a second row would split one fix across two owners.
 **why-change:** TNB recommended agent-father/ops investigate a nonexistent write bug — rejected.
+
+### STEP po-S1 · po · 2026-07-22T05:31:04Z
+**task-id:** FIX-DRAIN-PERSIST-GUARD-COUNT-DRAINABLE-ONLY
+**what-done:** Minted FIX to make MANDATORY PERSIST GUARD count only drainable (from/type-shaped) signals, not raw file count.
+**what-considered:**
+- Advance/re-lane the existing CLEAN-COWORK...TELEMETRY row (purge residue) — rejected: symptom-purge recurs; peer-file deletion has evidence gate; churn.
+- Unpark an in_progress epic to free WIP for the starvation fix — rejected: both mid-pm-decomposition; wastes in-flight work.
+- Root-cause the guard so debris never false-trips — chosen.
+**why-decision:** The false-trip forces mandatory full-drain every tick (starvation pressure); shape-filtering the guard is the definitive, litter-independent fix and is not captured by either existing row.
+**why-change:** Dispatcher asked to advance the CLEAN row / unpark epic; substituted the durable root-cause fix instead (converges recurring symptom per CLAUDE.md).
+
+### STEP po-S2 · po · 2026-07-22T05:31:04Z
+**task-id:** FIX-ORCHSTATE-CONSERVATION-GUARD-QA-LANE-BLIND
+**what-done:** Routed pendingSignal #1 (dev-team bug) as a FIX — add 'qa' to FLAT_TASK_LANES (orch-conservation-check.mjs:67) + doc formula.
+**what-considered:**
+- only path: exact root cause supplied by signal; additive array+doc change; shared prewrite-hook logic must not be duplicated.
+**why-decision:** Real latent blind spot (qa[] uncounted → catastrophic qa[] drop invisible to floor-ratio guard; qa[] now live via QA-Drain).
+**why-change:** no change from signal's suggested_fix.
