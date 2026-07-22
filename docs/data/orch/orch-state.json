@@ -1891,8 +1891,9 @@
         "type": "verification_gap",
         "summary": "CROSS-TEAM INPUT for intent:dev-mcp-server:cron-audit-server-fixes (watchdog-coverage strand). Do NOT assume the launchd plane is green while designing cron-watchdog coverage: PO verified 2026-07-22T15:52Z that com.vn-market.fleet-push has run 522 times with `last exit code = 78: EX_CONFIG` and has written ZERO bytes to either of its logs since 2026-07-03, i.e. its script body never executes. It went unnoticed because scripts/agents-flow/auditor-tier1-probe.sh _check_launchd_agents asserts only `grep -q <label>` against `launchctl list` output — the STATUS column is captured in that same string and discarded. The probe returned ALL_GREEN at 15:55:23Z with `-  78  com.vn-market.fleet-push` visible in launchctl at that instant. GENERALIZABLE LESSON for the 85-job / 16-covered watchdog work: registered-and-present is not the same predicate as ran-and-succeeded, and a coverage metric built on registration will reproduce this exact false green at scale. Board rows FIX-LAUNCHD-PROBE-PRESENCE-ONLY-FALSE-GREEN (developer, ships first) and FIX-FLEET-PUSH-LAUNCHD-EXCONFIG-SILENT-DEAD (ops) own the launchd side — do NOT absorb them, they are a different plane from your node-cron scheduler scope. Related PO ruling recorded on TRACK-CRON-AUDIT-SERVER-PLANE: the 24 bespoke scheduleCron jobs' absence from get_cron_health is EXPECTED (no telemetry emitted), not evidence of failure.",
         "severity": "MED",
-        "status": "new",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "triage_note": "PO 2026-07-22T16:22Z: advisory cross-team input, both named target rows EXIST on board (FIX-LAUNCHD-PROBE-PRESENCE-ONLY-FALSE-GREEN + FIX-FLEET-PUSH-LAUNCHD-EXCONFIG-SILENT-DEAD, both BACKLOG). No new task. Consumed."
       },
       {
         "id": "cowork-20260722T161645Z-alertcmd-position-danger-selloff-blind",
@@ -1902,8 +1903,9 @@
         "type": "methodology-flag",
         "summary": "alert-commander position-danger gate (firing condition 1/3) depends SOLELY on get_alerts(type=\"price\")/stopLossHit and is blind to the system-wide price_drop alert bucket, so it stays SILENT during broad severe selloffs. Corroborated LIVE this cycle (2026-07-22 16:11Z): VN-Index broke below 1700 (-3.58%, -74.98), watchlist -5% to -7% (VIC -6.99, VHM -6.96, MWG -6.98, D2D -6.29), 20 open HIGH price_drop system alerts, market-watcher-eod independently emitted 7 price_anomaly signals on the same tickers — yet get_alerts(type=\"price\") returned EMPTY so 0 position-danger fires. Agent self-reports this as recurring across nearly every prior large-selloff cycle; it CANNOT self-escalate (tools=Read/Write/Edit/call_tool, no signal_queue write) and its notebook is dark to PO. PO decision: (a) rewire position-danger condition-1 to also consume the price_drop bucket / add a selloff-breadth trigger, OR (b) confirm stopLossHit-only is correct-by-design (position-danger != market drop without a user stop-loss), OR (c) WONTFIX. Distinct from cowork-20260722T043453Z-bootstrap-underreturn (that is get_cycle_bootstrap agent_signals under-return, different tool).",
         "severity": "MEDIUM",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "triage_note": "PO 2026-07-22T16:22Z: ruling HYBRID(a-modified) -> minted FIX-ALERTCMD-SELLOFF-BREADTH-SILENT (BACKLOG, high, architect). stopLossHit-only kept by-design for position-danger; ADD distinct selloff-breadth trigger so agent is not silent during broad selloffs. Not WONTFIX, not by-design-silent."
       }
     ],
     "last_triaged_at": "2026-07-22T15:10:08Z",
@@ -10357,21 +10359,6 @@
         "updated_at": "2026-07-22T16:02:26Z"
       },
       {
-        "id": "TRACK-CRON-AUDIT-VPS-PLANE",
-        "type": "FIX",
-        "title": "TRACKING MIRROR — VPS plane stale sources (prices/sbv/bctc stale 36-62h) + 2 health-measurement bugs + the never-inventoried VPS crontab/systemd plane",
-        "status": "BLOCKED",
-        "priority": "high",
-        "zone": "cross-service/",
-        "owner": "ops",
-        "created_at": "2026-07-22T16:02:26Z",
-        "created_by": "po/cron-audit-sequencing-20260722",
-        "status_note": "TRACKING ONLY — work is LIVE out-of-band under intent:ops-vps-fetch:vps-plane-stale-sources-audit, dispatched by router 2026-07-22 ~15:48Z. Board-visible mirror, NOT a dispatch target; BLOCKED for the same anti-double-dispatch reason as TRACK-CRON-AUDIT-SERVER-PLANE. Precondition to unblock: the out-of-band agent returns.",
-        "scope": "prices/sbv/bctc sources stale 36-62h; two health-measurement bugs; the VPS crontab + systemd timer plane which has NEVER been inventoried (it is the 5th scheduling plane and was outside the 4-plane audit).",
-        "known_unknown": "The VPS plane is UN-INVENTORIED. Until an inventory exists, no statement about VPS scheduling health — green or red — is supportable.",
-        "updated_at": "2026-07-22T16:02:26Z"
-      },
-      {
         "id": "FIX-GUARANTEED-SLOT-FIRER-FANOUT-TRUNCATION",
         "type": "FIX",
         "title": "OS-level guaranteed-slot backstop kills its own work: headless claude -p terminates backgrounded subagents at 600s and the firer SIGTERMs the whole invocation at its 1800s bound — any guaranteed slot that fans out to subagents silently truncates",
@@ -10553,6 +10540,72 @@
         "updated_at": "2026-07-22T16:21:30Z",
         "updated_by": "ops (recon.md incident analysis)",
         "notes": "Root cause from git: commit 42e8448ce (2026-05-02) added StartLimitIntervalSec=0 to vn-news-fetch/vn-reuters-fetch/vn-tradingeconomics-fetch only. Commit message explicitly lists vn-price-fetch/vn-foreign-flow/vn-sbv-fetch/vn-bctc-fetch as \"had no burst limit and are unchanged\" — this premise is inverted. No explicit override means systemd applies its compiled-in default (StartLimitIntervalSec=10s/StartLimitBurst=5), not \"no limit\". Incident recon: docs/vps-sources/vps-push-plane-stale-2026-07-22/recon.md"
+      },
+      {
+        "id": "FIX-VPS-HEALTH-OFFHOURS-MASK-FALSE-GREEN",
+        "status": "BACKLOG",
+        "type": "FIX",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "priority": "high",
+        "owner": "po",
+        "next_agent": "ba",
+        "title": "get_vps_proxy_health / get_vps_service_health off-hours veto double-applies grace isStale() already spent -> masks genuinely-stale market-hours-only sources (false-green on a live 36h VPS push outage)",
+        "description": "MEASUREMENT-BUG-A from ops-vps-fetch recon 2026-07-22 (P1, RAW live-verified via docker exec into vn-market-intelligence-mcp-mcp-server-1 bun:sqlite at 16:00:07Z). vpsProxyTools.ts formatHealth()'s isServiceOffHours() re-applies a crude wall-clock 'is it market hours now' check ON TOP of isStale() (which already embeds a window-relative grace-adjusted threshold via freshnessSlaChecker.ts and correctly returns true for 'prices' ~36h stale vs ~6.5h grace) and unconditionally excludes any off-hours-stale service from trueStaleServices/the STALE alert line -- double-spending grace, converting a real 36h outage into a silently-excluded 'OFF-HOURS (by design)' line. vpsHealthPoller.ts checkServiceFreshness() has a purer version: short-circuits to healthStatus='idle' for any marketHoursOnly service whenever nowIso is outside 02:00-08:30 UTC with ZERO window-relative check -- live-confirmed vn-price-fetch=idle and vn-foreign-flow=idle right now while both dead since 2026-07-21 03:08 UTC.",
+        "scope": "vpsProxyTools.ts: remove the unconditional 'if (isServiceOffHours(s)) return false;' veto inside trueStaleServices -- isStale()===true (off-hours or not) is a real breach and belongs in the STALE line; reserve the off-hours label for isStale()===false. vpsHealthPoller.ts: replace the unconditional marketHoursOnly idle short-circuit with a window-relative check (mirror lastExpectedWindowEnd()/minutesSinceLastWindowEnd() from freshnessSlaChecker.ts) -- return idle only when latestAt is within grace of the most-recently-closed window; otherwise run the normal ageMs>maxAgeMs check.",
+        "files": "apps/mcp-server/src/interface/mcp/tools/system/vpsProxyTools.ts (isServiceOffHours/trueStaleServices in formatHealth(), ~L71-93); apps/mcp-server/src/domain/services/vpsHealthPoller.ts (checkServiceFreshness marketHoursOnly short-circuit, ~L318-326)",
+        "acceptance": "get_vps_proxy_health and get_vps_service_health both report vn-price-fetch/vn-foreign-flow as STALE (not idle/off-hours) while their push is >grace stale, regardless of wall-clock market hours; an off-hours label only appears when isStale()===false. Live re-probe after fix shows the two currently-dead services surfaced as STALE.",
+        "test_impact_warning": "BROAD existing coverage on this off-hours/grace logic MAY assert the OLD masking behavior and needs review WITH the fix (not just the 2 source files): 234-vps-health-sla.test.ts, FIX-SLA-WEEKEND-AWARE.test.ts, FIX-BCTC-SLA-WEEKEND.test.ts, 1920i-freshness-sla-extension.test.ts and others.",
+        "verification_gate": "GREEN full suite after fix + live re-probe surfaces the stale services; verify no regression on legitimate off-hours idle reporting (a service within grace of last window end still reads idle).",
+        "notes": "Root cause + exact-diff spec from docs/vps-sources/vps-push-plane-stale-2026-07-22/recon.md. Distinct from FIX-VPS-NEWS-STALE-FALSEPOS (that is a false-STALE / opposite direction). Companion to FIX-VPS-SYSTEMD-STARTLIMIT-HARDENING (that fixes the actual dead pipe; this fixes the health tool that was blind to it).",
+        "origin_signal_ref": "docs/signals/processed/dev-mcp-server-20260722T161000Z.json",
+        "created_by": "po/dev-team-tick-20260722T1607Z",
+        "created_at": "2026-07-22T16:29:22Z",
+        "updated_at": "2026-07-22T16:29:22Z"
+      },
+      {
+        "id": "FIX-VPS-SBV-HEALTH-SHARED-TABLE-IS-ESTIMATE",
+        "status": "BACKLOG",
+        "type": "FIX",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "priority": "high",
+        "owner": "po",
+        "next_agent": "ba",
+        "title": "get_vps_service_health reports vn-sbv-fetch=healthy off a shared sbv_rates row the local fallback (is_estimate=1) refreshes every 4h -> masks 36h+ dead VPS sbv push; add WHERE is_estimate=0",
+        "description": "MEASUREMENT-BUG-B from ops-vps-fetch recon 2026-07-22 (P1, RAW live-verified). sbv_rates has PRIMARY KEY(source), single row, INSERT OR REPLACE. BOTH the VPS push handler (pushSbvRatesHandler.ts) and the local server-side fallback job (scheduler/macro/sbvRatesJob.ts, every 4h, fetches a VCB rate independently of the VPS) call storeSbvSnapshot() with identical hardcoded source='sbv' -- no column distinguishes the writer. vpsHealthPoller.ts vn-sbv-fetch freshness reads 'SELECT MAX(fetched_at) FROM sbv_rates' with no is_estimate filter, so the local fallback silently refreshes fetched_at every ~4h regardless of whether the real VPS push is alive. Live: sbv_rates has ONE row is_estimate=1 fetched_at=2026-07-22T16:00:04Z while vps_push_log service='sbv' MAX(pushed_at ok)=2026-07-21 03:05:21 (36h+). get_vps_proxy_health reads vps_push_log directly and correctly shows 36h+ stale -- the two tools disagree because one measures a shared table with an undisclosed second writer.",
+        "scope": "Add 'WHERE is_estimate = 0' to the vn-sbv-fetch latestTimestampSql in vpsHealthPoller.ts DEFAULT_FRESHNESS_CONFIGS, mirroring how vn-news-fetch already reads vps_push_log directly instead of an ambiguous shared table. Makes get_vps_service_health blind to the local fallback's writes WITHOUT touching the fallback job (scheduler/macro/sbvRatesJob.ts is a legitimate degrade-gracefully mechanism, OUT OF SCOPE).",
+        "files": "apps/mcp-server/src/domain/services/vpsHealthPoller.ts (DEFAULT_FRESHNESS_CONFIGS[vn-sbv-fetch].latestTimestampSql)",
+        "acceptance": "get_vps_service_health reports vn-sbv-fetch STALE when only is_estimate=1 fallback rows are fresh and vps_push_log service='sbv' is stale >grace; a real is_estimate=0 VPS push resets it healthy. scheduler/macro/sbvRatesJob.ts unchanged.",
+        "verification_gate": "GREEN suite + live re-probe shows vn-sbv-fetch STALE under the current is_estimate=1-only condition; no false-STALE once a real VPS push lands.",
+        "notes": "Exact one-line diff from docs/vps-sources/vps-push-plane-stale-2026-07-22/recon.md. DISTINCT FROM FIX-USDVND-FROZEN-26110 (serve-layer frozen VALUE/label) and FIX-SBV-FETCHER-ZERO-VALUE-EMIT (fetcher zero-value emit) -- this row is the HEALTH-MEASUREMENT query blind to which writer produced the row; same incident, different code site.",
+        "origin_signal_ref": "docs/signals/processed/dev-mcp-server-20260722T161000Z.json",
+        "created_by": "po/dev-team-tick-20260722T1607Z",
+        "created_at": "2026-07-22T16:29:22Z",
+        "updated_at": "2026-07-22T16:29:22Z"
+      },
+      {
+        "id": "FIX-ALERTCMD-SELLOFF-BREADTH-SILENT",
+        "status": "BACKLOG",
+        "type": "FIX",
+        "size": "M",
+        "zone": "cross-service/",
+        "priority": "high",
+        "owner": "po",
+        "next_agent": "architect",
+        "title": "alert-commander goes SILENT during broad severe selloffs: position-danger fires SOLELY on get_alerts(type=price)/stopLossHit and is blind to the system-wide price_drop bucket -- add a distinct selloff-breadth trigger (do NOT overload stopLossHit)",
+        "description": "methodology-flag from cowork-team 2026-07-22 (LIVE-corroborated 16:11Z): VN-Index broke below 1700 (-3.58%, -74.98), watchlist -5% to -7% (VIC -6.99, VHM -6.96, MWG -6.98, D2D -6.29), 20 open HIGH price_drop system alerts, market-watcher-eod independently emitted 7 price_anomaly signals on the same tickers -- yet get_alerts(type=price) returned EMPTY so alert-commander fired 0 position-danger alerts and stayed silent. Agent self-reports this recurring across nearly every prior large-selloff cycle; it CANNOT self-escalate (tools Read/Write/Edit/call_tool, no signal_queue write) and its notebook is dark to PO. Same coverage-failure class as the 2026-07-20 war-selloff missed by all 4 cowork agents (MEMORY project_global_geopolitical_signal_gap_20260721) and the watchlist-scoped-surfacing / dormant-agent-revival lessons.",
+        "po_ruling": "HYBRID (a-modified): condition-1 stopLossHit-only IS correct-by-design for the position-danger SEMANTIC (a market drop without a user stop-loss is not a stop-loss hit) -- do NOT rewire/overload stopLossHit. BUT the agent going fully SILENT during a broad severe selloff is a real coverage failure. Fix = ADD A DISTINCT selloff-breadth firing condition that consumes the system-wide price_drop alert bucket / market-breadth (e.g. VN-Index move beyond threshold OR N>=K watchlist tickers past a drop threshold OR M open HIGH price_drop alerts) so alert-commander emits a market-breadth danger alert independent of stopLossHit. NOT (b) WONTFIX, NOT (c) by-design-silent.",
+        "scope": "architect designs the selloff-breadth trigger (threshold + which existing tool/bucket to consume -- get_alerts price_drop bucket and/or get_market_snapshot breadth), then agent-father implements alert-commander cycle.md / main.md firing-condition logic as a NEW condition alongside the existing 3. Must not regress position-danger stopLossHit semantics.",
+        "files": "docs/agents/alert-commander/flow/cycle.md, docs/agents/alert-commander/flow/main.md, .claude/agents/alert-commander.md (firing-condition logic); consume existing get_alerts price_drop bucket / breadth -- no new MCP tool expected",
+        "acceptance": "On a broad severe selloff (VN-Index past threshold OR >=K watchlist tickers past drop threshold OR >=M open HIGH price_drop alerts) with get_alerts(type=price) EMPTY, alert-commander emits at least one market-breadth danger alert; position-danger stopLossHit condition still fires exactly as before on a genuine stop-loss hit. Replay against the 2026-07-22 16:11Z conditions would produce >=1 fire.",
+        "verification_gate": "Behavioral: a simulated/next broad-selloff cycle shows alert-commander non-silent (>=1 breadth fire) while a no-stop-loss non-selloff cycle stays quiet (no false fire).",
+        "notes": "DISTINCT FROM DESIGN-COWORK-FANOUT-PRODUCER-CONSUMER-ORDERING (that is alert-commander reading the bus BEFORE co-dispatched producers wrote it) and FEAT-SEVERITY-OVERRIDE-SURFACING (market-mover SURFACING regardless of watchlist scope). This row is the FIRING-CONDITION blindness to the price_drop bucket. Source signal_queue row cowork-20260722T161645Z-alertcmd-position-danger-selloff-blind.",
+        "origin_signal_id": "cowork-20260722T161645Z-alertcmd-position-danger-selloff-blind",
+        "origin_signal_ref": "signal_queue.rows[cowork-20260722T161645Z-alertcmd-position-danger-selloff-blind]",
+        "created_by": "po/dev-team-tick-20260722T1607Z",
+        "created_at": "2026-07-22T16:29:22Z",
+        "updated_at": "2026-07-22T16:29:22Z"
       }
     ],
     "closed_sprints": [
@@ -11247,6 +11300,23 @@
         "po_signoff_verdict": "APPROVED. All six acceptance criteria are independently verifiable at source and were verified — by the dispatcher at commit level (both commits pathspec-scoped and tight, 3 files and 2 files, no peer sweep; all four Layer-2 files show empty diffs; RULE 3 reset --soft HEAD~1 backstop intact; FORBIDDEN doc-examples preserved) and by po against the row's own acceptance text. AC (4) and (5) are satisfied in the strongest available form: the agent reported the out-of-scope sites rather than fixing them, which is the behaviour those criteria asked for. AC (6) is satisfied and self-demonstrating — the fix was committed using the very pathspec form it introduces.",
         "po_signoff_caveat": "The agent's claim that it wrote acceptance onto the row BEFORE editing any file is UNVERIFIABLE and is NOT relied upon for this approval. The acceptance text first appears in git at 304f24edd (19:14:24Z), after the skills commit 3e4f50d3a (19:12:13Z), because agent-father's commit zone excludes orch-state.json and a peer cold-evict collapsed the acceptance-write and the lane-move into one blob. Unverifiable is not disproven, and no fault attaches to the agent: the dispatch instruction was unsatisfiable as written, which the dispatcher has acknowledged as its own error. Decisively, the ordering claim is IMMATERIAL to this sign-off — none of acceptance criteria (1) through (6) requires acceptance-written-first, so the approval rests entirely on independently checkable artifacts. The systemic unenforceability is carried forward as DESIGN-ACCEPTANCE-WRITE-OWNERSHIP-DISPATCHER rather than being resolved here.",
         "po_tail_disposition": "The 4 Layer-2 bare-commit sites and the 3 stale init.md 'RULE 1-3' refs that this agent disclosed unprompted are minted as FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-LAYER2 in this same cycle, so the tail does not orphan when this parent closes. The unprompted disclosure of out-of-scope defects is exactly the behaviour the maintenance lane should reward."
+      },
+      {
+        "id": "TRACK-CRON-AUDIT-VPS-PLANE",
+        "type": "FIX",
+        "title": "TRACKING MIRROR — VPS plane stale sources (prices/sbv/bctc stale 36-62h) + 2 health-measurement bugs + the never-inventoried VPS crontab/systemd plane",
+        "status": "DONE",
+        "priority": "high",
+        "zone": "cross-service/",
+        "owner": "ops",
+        "created_at": "2026-07-22T16:02:26Z",
+        "created_by": "po/cron-audit-sequencing-20260722",
+        "status_note": "TRACKING ONLY — work is LIVE out-of-band under intent:ops-vps-fetch:vps-plane-stale-sources-audit, dispatched by router 2026-07-22 ~15:48Z. Board-visible mirror, NOT a dispatch target; BLOCKED for the same anti-double-dispatch reason as TRACK-CRON-AUDIT-SERVER-PLANE. Precondition to unblock: the out-of-band agent returns.",
+        "scope": "prices/sbv/bctc sources stale 36-62h; two health-measurement bugs; the VPS crontab + systemd timer plane which has NEVER been inventoried (it is the 5th scheduling plane and was outside the 4-plane audit).",
+        "known_unknown": "The VPS plane is UN-INVENTORIED. Until an inventory exists, no statement about VPS scheduling health — green or red — is supportable.",
+        "updated_at": "2026-07-22T16:29:22Z",
+        "updated_by": "po/dev-team-tick-20260722T1607Z",
+        "resolution": "recon RETURNED 2026-07-22T16:10Z (ops-vps-fetch recon-complete). Tracker purpose (mirror out-of-band VPS-plane recon) fulfilled. Findings spun into board rows: FIX-VPS-SYSTEMD-STARTLIMIT-HARDENING (systemd StartLimitIntervalSec=0 + dead-code cleanup + deploy-script dedup; ops self-minted 16:21Z), FIX-VPS-HEALTH-OFFHOURS-MASK-FALSE-GREEN (MEASUREMENT-BUG-A), FIX-VPS-SBV-HEALTH-SHARED-TABLE-IS-ESTIMATE (MEASUREMENT-BUG-B). Immediate VPS reset-failed/restart + inbound-firewall (Vinahost edge DROP) are USER/Vinahost-console actions (blocked_by user-escalation-vps-restart on the systemd row), NOT dev backlog. VPS crontab/systemd-timer plane inventory (the un-inventoried 5th plane) remains OPEN -> owned by ARCH-SESSION-CRON-PLANE-LIVENESS-WATCHDOG / TRACK-CRON-AUDIT-SERVER-PLANE line, not re-opened here."
       }
     ],
     "done_verified": [],

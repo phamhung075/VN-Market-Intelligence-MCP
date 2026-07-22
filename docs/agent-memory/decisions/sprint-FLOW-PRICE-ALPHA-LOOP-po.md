@@ -463,3 +463,13 @@
 - Force-close FIX-PDFEXTRACTOR-TIER1-OCR-TIMEOUT (8d in review) — REJECTED: prior "do not close on this report" note stands; instead minted the documented-but-never-boarded perf spin-off (PERF-PEK) + added po_disposition decoupling closure (fix's OWN ACs deployed+qa-approved+async-reroute-verified) → routes done_verified to dev-team/qa.
 **why-decision:** Convergence over churn — 1 dedup+bump + 1 legit spin-off resolves the signal AND un-orphans the perf escalation AND unblocks the 8d review row, without adding redundant rows to an already-bloated 422-backlog.
 **why-change:** market_messages resolved (off-market FP, not the feared ingest gap) — the S4 carry-over re-verify closed with no mint.
+
+### STEP po-S6 · po · 2026-07-22T16:29Z
+**task-id:** TRACK-CRON-AUDIT-VPS-PLANE
+**what-done:** VPS-plane recon RETURNED; closed tracking mirror (backlog->done/DONE) + spun findings into 3 rows; triaged 2 signal_queue rows.
+**what-considered:**
+- ops half (systemd crash-loop lockout): ALREADY self-minted by ops as FIX-VPS-SYSTEMD-STARTLIMIT-HARDENING (dead-code + deploy-dedup folded in) -> dropped my dup mint
+- dev-mcp-server half (2 health-measurement false-greens, NOT on board): minted FIX-VPS-HEALTH-OFFHOURS-MASK-FALSE-GREEN (M) + FIX-VPS-SBV-HEALTH-SHARED-TABLE-IS-ESTIMATE (S)
+- alert-commander selloff-blind: ruled (a)-hybrid (add distinct selloff-breadth trigger; keep stopLossHit by-design) not (b)/(c) -> minted FIX-ALERTCMD-SELLOFF-BREADTH-SILENT
+**why-decision:** recon delivered exact-diff fixes -> capturing at backlog is required disposition (else P1 findings silently lost); WIP 2/2 saturated so all land BACKLOG, zero dispatched.
+**why-change:** no change from plan — WIP-saturated triage-only tick.
