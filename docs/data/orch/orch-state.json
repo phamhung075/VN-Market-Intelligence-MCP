@@ -1577,6 +1577,17 @@
         "triaged_by": "cowork-team/a30-fold-2345Z",
         "triaged_home": "cowork-20260721T232634Z-a30-mcp-oom-escalate",
         "drain_note": "Continuation of A-30 loss-of-reclamation incident. Auditor self-labels GC sawtooth/dedup at 96.98%, but discriminator (verify-a30-mcp-memory-reclamation.sh, 8 probes/140s @23:26Z) already returned ESCALATE with 0 reclamation dips — the higher-authority verdict overrides the sawtooth predicate. Value climbing 96.70->96.98% is consistent with continued loss of reclamation, not a dip-bearing sawtooth. Folded to ops escalation cowork-20260721T232634Z-a30-mcp-oom-escalate (already NEW, awaiting ops). No re-run, no duplicate mint."
+      },
+      {
+        "id": "sys-20260722T001141-30ee",
+        "ts": "2026-07-22T00:11:41Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-30: mcp-server memory 100% (3GiB/3GiB limit)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-21T19:29:49Z",
