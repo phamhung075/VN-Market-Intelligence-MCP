@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "SUPERVISED HOLD (router-enforced 2026-07-22T00:06:04Z): head set idle to stop Step-0b auto-resume of pm — pipeline-resume path has NO supervised gate, so architect prose hold alone could NOT stop it (po ruling: do NOT auto-advance past architect). FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD parked in in_progress[] (next_agent=pm, supervised+plan_only, architect_ruling recorded; design docs/architecture-briefs/2026-07-22-fix-orphan-adoption-board-state-guard-design.md). Sibling DESIGN-COWORK-FANOUT-PRODUCER-CONSUMER-ORDERING held identically (~5h). PO next triage: keep-hold / give-go-ahead / reclassify. RESUME pm = set head {status:in_progress, active_task_id:FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD, next_agent:pm}. BACKLOG GAP: Step-0b pipeline-resume needs a supervised gate (2 supervised rows now stalled at this exact point).",
-    "updated_at": "2026-07-22T00:06:04Z",
-    "updated_by": "router"
+    "status": "in_progress",
+    "active_task_id": "FACTORY-APIGW-split-handlers",
+    "next_agent": "qa",
+    "next_action": "Review-Lane QA-Drain claim of FACTORY-APIGW-split-handlers — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have).",
+    "updated_at": "2026-07-22T00:21:39Z",
+    "updated_by": "dev-team (review-lane qa-drain)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -1586,8 +1586,45 @@
         "type": "signal_feedback",
         "summary": "A-30: mcp-server memory 100% (3GiB/3GiB limit)",
         "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_at": "2026-07-22T00:24:54Z",
+        "triaged_by": "cowork-team/a30-fold-0015Z",
+        "triaged_home": "cowork-20260721T232634Z-a30-mcp-oom-escalate",
+        "drain_note": "Continuation of A-30 loss-of-reclamation incident. system-auditor re-emit (signalqueue append-always, telegram-only dedup — detector-calibration tracked FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE). Memory now 100% (3GiB/3GiB HARD CAP) — worse than 96.98% at the 23:45Z fold and PAST the 'imminent OOM' framing in the parent escalation; at-cap NOW. Discriminator already returned ESCALATE (first non-FP, 0 reclamation dips/140s, verify-a30-mcp-memory-reclamation.sh) — higher-authority verdict overrides the auditor's cheap sawtooth predicate. Folded to ops escalation cowork-20260721T232634Z-a30-mcp-oom-escalate (NEW, awaiting ops). No re-run, no duplicate mint. Ops: at-cap raises priority of the proactive CLEAN restart in the parent row."
+      },
+      {
+        "id": "orc-20260722T001757-1",
+        "ts": "2026-07-22T00:17:57Z",
+        "from": "orch-sentinel",
+        "to": "po",
+        "type": "orch-health-finding",
+        "summary": "OH-1.4: 54/55 signals non-routable; guard(50) breached. Tracked: CLEAN-COWORK-DISPATCHER-TELEMETRY-DRAIN-DIR (REVIEW)",
+        "severity": "HIGH",
         "status": "NEW",
-        "payload_ref": null
+        "payload_ref": "docs/data/orch-sentinel-scorecard.md"
+      },
+      {
+        "id": "orc-20260722T001805-2",
+        "ts": "2026-07-22T00:18:05Z",
+        "from": "orch-sentinel",
+        "to": "po",
+        "type": "orch-health-finding",
+        "summary": "OH-1.5: 77/80 rows non-canon status, unevictable (200cap=40%); fix tracked: FIX-SIGNALQUEUE-DUP-ID-GUARD",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": "docs/data/orch-sentinel-scorecard.md"
+      },
+      {
+        "id": "orc-20260722T001813-3",
+        "ts": "2026-07-22T00:18:13Z",
+        "from": "orch-sentinel",
+        "to": "po",
+        "type": "orch-health-finding",
+        "summary": "OH-1.6: unified-agent NEW row 42.8h stale (HIGH undelivered); root tracked: FIX-SIGNALQUEUE-RECEIVER-DELIVERY-CONTRACT",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": "docs/data/orch-sentinel-scorecard.md"
       }
     ],
     "last_triaged_at": "2026-07-21T19:29:49Z",
@@ -11334,24 +11371,6 @@
         "status_note": "Code complete, tests green, sandbox green. Rebuild verification deferred to ops (signal: ops-rebuild-verify-kinh-dich-20260709T1923Z.json)"
       },
       {
-        "title": "Split api-gateway handlers.go into dashboard/middleware/proxy files",
-        "priority": "P1",
-        "zone": "api-gateway",
-        "type": "FACTORY",
-        "status": "REVIEW",
-        "id": "FACTORY-APIGW-split-handlers",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APIGW-split-handlers",
-        "promoted_at": "2026-07-09T19:48:38Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-09T19:48:42Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
-        "completed_at": "2026-07-09T20:00:00Z",
-        "completed_by": "dev-api-gateway",
-        "status_note": "Split handlers.go (421L) into dashboard.go(119L)/middleware.go(44L)/proxy.go(117L, new private newReverseProxy+serveProxied helpers collapse the 2 duplicate reverse-proxy setup+timeout blocks)/handlers.go(85L), same package http, all exported symbols unchanged. go build/vet clean, gofmt clean, golangci-lint 0 issues, go test ./... 10/10 packages PASS (handlers_test.go 34 tests untouched, all green), G12 sandbox primitive 14/14 + module 1/1 PASS. rebuild_required=true (hottest-path prod HTTP handler) — deferred post-rebuild behavior verification tracked in signal docs/signals/ops-rebuild-verify-api-gateway-20260709T1958Z.json per feedback_user_gates_delegate_to_ops.md. Kept REVIEW (not self-asserted DONE_VERIFIED) pending router/qa sign-off given hottest-path risk. DJ: docs/agent-memory/decisions/sprint-SYSTEMIC-REMAKE-P1-dev-api-gateway.md"
-      },
-      {
         "title": "Promote the 5x proxy-timeout multiplier to a named config accessor",
         "priority": "P1",
         "zone": "api-gateway",
@@ -12091,7 +12110,27 @@
         "router_source_verified_20260722": "Router source-verified the keystone code layer at 2026-07-21T22:41Z (commit b787e9a5d clean, .head intact, satisfiability instrument EXIT=0) — full record on FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER.router_source_verified_20260722. Remaining DoD = live-tick AC(3) only; do NOT flip to DONE_VERIFIED on the unit instrument alone."
       }
     ],
-    "qa": [],
+    "qa": [
+      {
+        "title": "Split api-gateway handlers.go into dashboard/middleware/proxy files",
+        "priority": "P1",
+        "zone": "api-gateway",
+        "type": "FACTORY",
+        "status": "QA",
+        "id": "FACTORY-APIGW-split-handlers",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APIGW-split-handlers",
+        "promoted_at": "2026-07-09T19:48:38Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-22T00:21:39Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "qa",
+        "completed_at": "2026-07-09T20:00:00Z",
+        "completed_by": "dev-api-gateway",
+        "status_note": "Split handlers.go (421L) into dashboard.go(119L)/middleware.go(44L)/proxy.go(117L, new private newReverseProxy+serveProxied helpers collapse the 2 duplicate reverse-proxy setup+timeout blocks)/handlers.go(85L), same package http, all exported symbols unchanged. go build/vet clean, gofmt clean, golangci-lint 0 issues, go test ./... 10/10 packages PASS (handlers_test.go 34 tests untouched, all green), G12 sandbox primitive 14/14 + module 1/1 PASS. rebuild_required=true (hottest-path prod HTTP handler) — deferred post-rebuild behavior verification tracked in signal docs/signals/ops-rebuild-verify-api-gateway-20260709T1958Z.json per feedback_user_gates_delegate_to_ops.md. Kept REVIEW (not self-asserted DONE_VERIFIED) pending router/qa sign-off given hottest-path risk. DJ: docs/agent-memory/decisions/sprint-SYSTEMIC-REMAKE-P1-dev-api-gateway.md",
+        "updated_at": "2026-07-22T00:21:39Z"
+      }
+    ],
     "_closed_signals_20260614": {
       "_by": "po-S50",
       "_at": "2026-06-14T14:45:14Z",
