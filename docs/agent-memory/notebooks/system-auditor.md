@@ -1,6 +1,14 @@
-# System Auditor — Notebook
 
-Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
+
+## c3c5e1a · 2026-07-22T18:32:45Z
+### Audit Run Tier-2 (18:31–18:32 UTC 2026-07-22)
+- Tier: 2 | Cron fire check: PASS (100+ jobs running, 2 OOM crashes 14:52Z prior) | Sources checked: 28
+- VPS proxy health: 2 healthy (news OK, sbv OK), 2 stale (bctc/prices off-season SLA), 1 idle (foreign-flow market-closed)
+- SLA status: 1 WARN (sbv_fx marginal 31/30min), BCTC healthy-idle (queue=183, 11222min SLA window)
+- DB spot checks: PASS (C-06=0 market_messages expected off-hours, C-07=279 signals, B-09=0 SSC URLs, B-13=0 stale)
+- Rate limits: All ready (0% saturation)
+- Anomalies: 1 new (W warn × 1: sbv_fx SLA) | Status: DEGRADED
+- [emit-signal] OK B-11 id=sys-20260722T183223-0f2a
 
 ## 5c1b8a0 · 2026-07-22T15:07:36Z
 ### Audit Run Tier-2 (15:05–15:07 UTC 2026-07-22)
