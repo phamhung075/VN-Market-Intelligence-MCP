@@ -14128,6 +14128,28 @@
       "status": "READ",
       "summary": "DELIVERY-GAP (evidence-backed): HIGH methodology-flag po-20260720T052606 (STOP false gold >4300usd L6 token -> unified-agent) still NEW after 40h. unified-agent ran 6 synthesis cycles since (07-20 morning->07-21 evening) yet NONE consumed it — the flag is structurally undeliverable. Cause is one of: (a) dispatcher Step-5 does not inject NEW signal_queue rows into the cowork spawn prompt; or (b) unified-agent cron fires independently of this dispatcher and does not read its inbound signal_queue at cycle start. Consequence: the false gold token may persist in PUBLISHED MARKET dishes. Needs PO+agent-father: audit the cowork-signal->agent delivery path (spawn-fanout.md Step 5 vs unified chef.md inbox-read) and confirm/scrub the false token in live dishes. This row is why every cowork tick stays WORK not SILENT.",
       "payload_ref": null
+    },
+    {
+      "id": "sys-20260722T150730-2c18",
+      "ts": "2026-07-22T15:07:30Z",
+      "from": "system-auditor",
+      "to": "po",
+      "type": "microservice_degraded",
+      "summary": "rag-service at 99.46% memory (763.8/768MiB, LanceDB pressure)",
+      "severity": "CRITICAL",
+      "status": "RESOLVED",
+      "payload_ref": null
+    },
+    {
+      "id": "sys-20260722T150735-5955",
+      "ts": "2026-07-22T15:07:35Z",
+      "from": "system-auditor",
+      "to": "po",
+      "type": "microservice_degraded",
+      "summary": "mcp-server restart count=2 — recurring OOM→restart pattern indicates mem-leak",
+      "severity": "WARN",
+      "status": "RESOLVED",
+      "payload_ref": null
     }
   ],
   "backlog_detail": [

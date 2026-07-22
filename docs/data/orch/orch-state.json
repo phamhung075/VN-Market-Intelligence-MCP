@@ -428,8 +428,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-22T06:40:43Z",
-    "_updated_by": "po/triage-20260722T0640",
+    "_updated_at": "2026-07-22T15:13:06Z",
+    "_updated_by": "po/triage-20260722T1512",
     "archive": [],
     "rows": [
       {
@@ -440,9 +440,12 @@
         "type": "methodology-flag",
         "summary": "STOP pasting the literal gold >$4,300 L6 token — false in 5 dishes; compute the comparison from live gold instead",
         "severity": "HIGH",
-        "status": "NEW",
+        "status": "triaged",
         "payload_ref": "docs/signals/processed/po-20260720T052606Z.json",
-        "po_ref_repair_20260721": "payload_ref repointed top-level -> processed/ (PO Step 0-SIG triage 2026-07-21T14:51:20Z). This tick's own drain (commit 0ab70d437, 14:47:59Z) moved the payload file to processed/ but left this row's ref at the old path. Row is still status=NEW, severity=HIGH, to=unified-agent: content NOT triaged by PO (not addressed to PO) — only the broken reference repaired so the addressee can still read it. File content verified present at the new path (2368 bytes). Root cause minted as FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE."
+        "po_ref_repair_20260721": "payload_ref repointed top-level -> processed/ (PO Step 0-SIG triage 2026-07-21T14:51:20Z). This tick's own drain (commit 0ab70d437, 14:47:59Z) moved the payload file to processed/ but left this row's ref at the old path. Row is still status=NEW, severity=HIGH, to=unified-agent: content NOT triaged by PO (not addressed to PO) — only the broken reference repaired so the addressee can still read it. File content verified present at the new path (2368 bytes). Root cause minted as FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE.",
+        "triaged_at": "2026-07-22T15:13:06Z",
+        "triaged_by": "po",
+        "disposition": "FOLD -> FIX-CHEF-L6-GOLD-FALSE-PREDICATE (durable predicate fix, BACKLOG high) + FIX-CHEF-L6-TOKEN-PERSISTENCE-RECURRING (persistence, BLOCKED P3). Methodology directive to unified-agent has been visible 2d; durable enforcement is the code fix, not a standing NEW ask. Closing NEW so it stops resurfacing every PO triage tick (was churning the NEW set)."
       },
       {
         "id": "sys-20260720T220825-19be",
@@ -1558,10 +1561,13 @@
         "type": "escalation",
         "summary": "A-30 mcp-server memory: discriminator ESCALATE (first non-FP). 8/8 samples 96.26-96.70%, 0 reclamation dips/140s, VmRSS ~2.86GiB near 3GiB cap, uptime ~7h restart_count 0 (not-yet-OOMKilled). Loss of reclamation = imminent OOM. ASK: ops assess proactive CLEAN restart before disruptive OOM-kill (caveat OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN); prioritize root FIX-MCP-MEMORY-CODE-LEAK. || [DISPATCHER UPDATE 2026-07-22T14:54:01Z]: mcp-server/gateway transport CONFIRMED HARD-UNREACHABLE — fire-election claim + 2 bounded curl probes all exit=28 (0 bytes, 8-10s timeout) across 14:45-14:52Z UTC = fleet-wide MCP blind (every call_tool path down; dispatcher cannot emit_pressure_state or send_telegram). Escalates the A-30 server-health incident from at-cap-memory to HARD-UNREACHABLE. Root cause UNCONFIRMED (discriminator needs the live server): consistent with A-30 OOM-kill OR gateway/cloudflare-tunnel-aggregator outage (feedback_gateway_502_dashboard_managed_tunnel_aggregator_restart) OR host down. OPS: check BOTH mcp-server OOM/restart AND tunnel/gateway aggregator. Folded via local orch-apply (only working channel); no spawn this tick.",
         "severity": "CRITICAL",
-        "status": "NEW",
+        "status": "triaged",
         "payload_ref": "scripts/audits/verify-a30-mcp-memory-reclamation.sh",
         "router_reconcile": "SUPERSEDED-EVIDENCE (router reconcile): A-30 RAW-VERIFY by system-auditor commit dd68f7452 (13 samples @23:42Z) = BENIGN — clear GC sawtooth 2.962->2.883 GiB reclamation dips, OOMKilled=false, peak 98.73% NOT sustained >97%, oscillating baseline 94-97%. This 8-sample no-dips first-non-FP escalation under-sampled and missed the reclamation phase. OPS: corroborate before ANY mcp-server intervention — do NOT restart on this alone. Discriminator-FP instance for FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE.",
-        "router_reconcile_at": "2026-07-21T23:50:18Z"
+        "router_reconcile_at": "2026-07-21T23:50:18Z",
+        "triaged_at": "2026-07-22T15:13:06Z",
+        "triaged_by": "po",
+        "disposition": "FOLD -> FIX-MCP-MEMORY-CODE-LEAK (root code fix; ESCALATED this tick). Recurrence CONFIRMED (2 OOM/hard-unreachable events: 2026-07-22T00:31Z A-12 FAIL mcp-server health unreachable + 14:51Z fleet-blind -> mcp-restart 14:53Z); reclamation LOST (cowork discriminator 8/8 samples 96.26-96.70pct, 0 dips/140s) = >93pct-no-reclaim tripwire TRIPPED; prior 2026-07-21 'benign GC-sawtooth' PO assessment SUPERSEDED. Restart ASK is user-gated ops-lane (auditor recorded mcp-restart already occurred 14:53Z -> OOM self-resolved this cycle); PO does not execute restarts. Durable code fix is now top priority (recurring-bug-escalation)."
       },
       {
         "id": "sys-20260721T234132-3f03",
@@ -1843,8 +1849,11 @@
         "type": "data_stale",
         "summary": "news-vps stale 389min (SLA 30min) — note: fresh after mcp-restart 14:53Z",
         "severity": "CRITICAL",
-        "status": "RESOLVED",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_at": "2026-07-22T15:13:06Z",
+        "triaged_by": "po",
+        "disposition": "RESOLVED-SELF. Auditor annotated 'fresh after mcp-restart 14:53Z' -- news-vps staleness (389min) was a consequence of the A-30 OOM-outage window (~14:45-14:53Z), not a data-source gap. Recovered post-restart. Consequence of the A-30 incident (cowork-20260721T232634Z-a30-mcp-oom-escalate). No mint."
       },
       {
         "id": "sys-20260722T150037-7ed7",
@@ -1854,30 +1863,11 @@
         "type": "db_integrity_breach",
         "summary": "market_messages count=0 in 3h (expected >0) — post-restart recovery",
         "severity": "CRITICAL",
-        "status": "RESOLVED",
-        "payload_ref": null
-      },
-      {
-        "id": "sys-20260722T150730-2c18",
-        "ts": "2026-07-22T15:07:30Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "microservice_degraded",
-        "summary": "rag-service at 99.46% memory (763.8/768MiB, LanceDB pressure)",
-        "severity": "CRITICAL",
-        "status": "RESOLVED",
-        "payload_ref": null
-      },
-      {
-        "id": "sys-20260722T150735-5955",
-        "ts": "2026-07-22T15:07:35Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "microservice_degraded",
-        "summary": "mcp-server restart count=2 — recurring OOM→restart pattern indicates mem-leak",
-        "severity": "WARN",
-        "status": "RESOLVED",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_at": "2026-07-22T15:13:06Z",
+        "triaged_by": "po",
+        "disposition": "CONSEQUENCE of the A-30 OOM-outage window (auditor annotated 'post-restart recovery'). market_messages count=0 over the 3h window spanning the 14:51Z OOM/restart. Folded into the A-30 incident. RE-VERIFY next tick -- if market_messages still 0 after full recovery during market hours, escalate as a genuine ingest gap. No mint this tick."
       }
     ],
     "last_triaged_at": "2026-07-22T15:10:08Z",
@@ -7790,7 +7780,8 @@
         "po_corroboration_20260721": "CORROBORATION / high-water (PO converge-drain po-s147 2026-07-21T14:23:45Z): 5 A-30 mcp-server MemPerc samples this session 94.43→90.58→88.38→88.53→88.81% — reclaimed from peak, WITHIN the documented 85–93% GC-sawtooth band, NO OOM, tripwire UNtripped (no OOMKilled, no >93%-no-dip, no >97%-sustained). Benign leak episode already tracked here → NO new mint. DO NOT escalate to ops; DO NOT recommend a restart (would destroy trajectory evidence for zero OOM-risk benefit — feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn).",
         "po_corroboration_20260721_1537": "HIGH-WATER CORROBORATION (PO signal-drain 2026-07-21T15:37Z, folds A-30 sys-20260721T151241-28d6). Router-verified 18-sample x12s window: mcp-server MemPerc 95.39-99.99% GC sawtooth WITH reclamation dips; band crept up ~6pt this session (floor 95.39% vs historical 89.2%). VmHWM 2.95GiB > current VmRSS 2.77GiB (high-water above current = reclaim happening), OOMKilled=false, gateway serving, rag-service co-pinned 99.8%. Genuine tripwire (OOMKilled / >93%-no-reclaim-across-all-samples / >97%-sustained) UNtripped -> benign-but-elevated. NO new mint. DO NOT escalate to ops; DO NOT restart/rebuild (user-gated; would destroy trajectory evidence). FP re-emission of this same in-band condition tracked by FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE (already commissioned, next=architect).",
         "status_note": "CORROBORATION 2026-07-22: real outage — mcp-server mem wedge degraded ~08:30Z, fully wedged, CLEAN restart 14:53Z (exit=0, OOMKilled=false, NOT OOM). High-water ~87%. Downstream false-CRITICALs (auditor recovery artifacts, self-resolved): news-vps data_stale (sys-...635a) + market_messages db_integrity_breach (sys-...7ed7). Confirms 'accumulates ~87% in 12h' — raises leak-fix priority.",
-        "updated_at": "2026-07-22T15:08:29Z"
+        "updated_at": "2026-07-22T15:13:42Z",
+        "po_escalation_20260722": "ESCALATION -- SUPERSEDES the 2026-07-21 'benign-but-elevated GC-sawtooth' corroboration notes above. Recurring OOM now CONFIRMED (recurring-bug-escalation): (1) 2026-07-22T00:11Z A-30 100pct (3GiB/3GiB) -> 00:31Z A-12 FAIL mcp-server health unreachable (OOM/crash) -> restart; (2) 14:51Z fleet-wide MCP hard-unreachable (cowork fire-election + 2 curl probes exit=28) -> mcp-restart 14:53Z. Cowork discriminator 2026-07-21T23:26Z: 8/8 samples 96.26-96.70pct, 0 reclamation dips/140s = the >93pct-no-reclaim tripwire is GENUINELY TRIPPED (first non-FP). Leak progressed benign-sawtooth-WITH-reclamation -> reclamation-LOST -> OOM -> restart, TWICE in <15h. Durable code fix is now TOP priority. Restart/rebuild is user-gated ops-lane and NOT a substitute (re-leaks next cycle). Folds signal_queue cowork-20260721T232634Z-a30-mcp-oom-escalate + auditor A-30 chain 07-21T00:12..07-22T14:51."
       },
       {
         "id": "FIX-CHEF-PUBLISHED-MARKER-RELEASE",
@@ -10205,6 +10196,20 @@
         ],
         "note": "Minted from dev-team WIP-deadlock triage-persist-request (dev-team-20260722T054244Z). Full spec = PO decision journal STEP po-S2 (same file, 2026-07-22T05:31:04Z). Latent blind-spot (no active harm yet: qa[] currently 0) -> P2. NOT dispatched at mint (WIP=2/2) — auto-promote via BOUNDED-1/RLC.",
         "updated_at": "2026-07-22T06:43:03Z"
+      },
+      {
+        "id": "FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE",
+        "type": "FIX",
+        "priority": "P2",
+        "size": "S",
+        "sprint": "BACKLOG",
+        "status": "BACKLOG",
+        "zone": "cross-service/",
+        "created_at": "2026-07-22T15:13:42Z",
+        "title": "FIX: signal drain moves a signal payload file from docs/signals/ to docs/signals/processed/ but leaves the owning signal_queue row payload_ref at the old top-level path -> dangling ref; the addressee agent cannot resolve the payload. Update the row payload_ref in the SAME drain transaction that moves the file.",
+        "status_note": "Claimed-minted-but-absent: signal_queue row po-20260720T052606 (po_ref_repair_20260721) states 'Root cause minted as FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE' but grep count=1 across the whole orch-state = only that note; the row was never persisted to any lane. Minting for real now. AC: drain moves the payload file AND rewrites the owning signal_queue row payload_ref atomically; a follow-up read of the row resolves the file at processed/. Regression test asserts no dangling payload_ref after a drain move.",
+        "origin_signal_id": "po-20260720T052606",
+        "updated_at": "2026-07-22T15:13:42Z"
       }
     ],
     "closed_sprints": [
