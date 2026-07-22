@@ -1877,8 +1877,11 @@
         "type": "tool_contract_gap",
         "summary": "ESC-5 (bctc-analyst flow step 5d) structurally unexecutable ~30+ cycles. Flow spec feeds a report_id into get_bctc_full to resolve the escalation, but get_bctc_full REQUIRES report_id as input and never SURFACES one (accepts code/ticker for lookup, returns no report_id) — re-confirmed live c111 2026-07-22T15:00Z. ESC-5 therefore treated FALSE by multi-cycle precedent = a silently-dark escalation detector (fail-safe that never fires = silent disable). bctc-analyst tool grant has no signal_queue write; agent explicitly routed this 'for router/PO' in its c111 cycle summary. Anti-pattern per feedback_agent_reported_limitation_may_be_structural_check_the_tool_grant (a limitation accepted as 'precedent' for 30 cycles is the thing to break, not accept) + recurring-failed-fix (>2). No prior art in signal_queue/task_board. PO decision: triage to dev-mcp-server (fix get_bctc_full to surface report_id, OR rewire ESC-5 to obtain report_id) OR explicit WONTFIX w/ rationale. Relayed by cowork-dispatcher post-tick; not re-minted, not folded (distinct from bootstrap-underreturn get_cycle_bootstrap gap).",
         "severity": "MEDIUM",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_at": "2026-07-22T15:55:33Z",
+        "triaged_by": "po",
+        "disposition": "DEDUP -> backlog BCTC-REPORT-ID-LOOKUP-TOOL (enriched to name ESC-5 step-5d + priority MED->HIGH + origin_signal_id back-ref). Same root cause: no tool surfaces report_id by ticker+period. 'No prior art' claim was a missing board-grep — prior art existed. NOT re-minted. Flips ->RESOLVED when covering row done_verified. Closing NEW so it stops resurfacing every PO triage tick."
       }
     ],
     "last_triaged_at": "2026-07-22T15:10:08Z",
@@ -7818,12 +7821,15 @@
       },
       {
         "id": "BCTC-REPORT-ID-LOOKUP-TOOL",
-        "title": "BCTC tooling gap: expose report_id lookup by ticker+period once refine_status=DONE — unblocks get_bctc_page_text/get_bctc_refined/list_flagged_bctc_cells",
+        "title": "BCTC tooling gap: expose report_id lookup by ticker+period (once refine_status=DONE) — unblocks get_bctc_page_text/get_bctc_refined/list_flagged_bctc_cells AND bctc-analyst ESC-5 step-5d get_bctc_full (structurally unexecutable ~30 cycles: get_bctc_full requires report_id input but no tool surfaces one by ticker+period, so ESC-5 dark-escalation = silent-disable)",
         "status": "BACKLOG",
         "zone": "apps/mcp-server/",
         "type": "FIX",
-        "priority": "MED",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#BCTC-REPORT-ID-LOOKUP-TOOL"
+        "priority": "HIGH",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#BCTC-REPORT-ID-LOOKUP-TOOL",
+        "origin_signal_id": "cowork-20260722T151600Z-bctc-esc5-report-id-gap",
+        "status_note": "RECURRING dark-escalation (feedback_agent_reported_limitation_may_be_structural_check_the_tool_grant + recurring-failed-fix >2). ESC-5 (bctc-analyst flow step 5d) treated FALSE by 30-cycle precedent because get_bctc_full needs report_id input but nothing surfaces one by ticker+period. AC: add report_id lookup by ticker+period (refine_status=DONE) so ESC-5 step-5d + get_bctc_page_text/get_bctc_refined/list_flagged_bctc_cells are executable; verify ESC-5 fires on a known-escalation case (no longer silently FALSE). Priority bumped MED->HIGH 2026-07-22T15:55:33Z (PO triage of signal cowork-20260722T151600Z-bctc-esc5-report-id-gap; reliability>coverage).",
+        "updated_at": "2026-07-22T15:55:34Z"
       },
       {
         "id": "REFLOW-MBB-Q1-2026",
@@ -10293,6 +10299,20 @@
         "router_source_verified_20260722": "Router source-verified the keystone code layer at 2026-07-21T22:41Z (commit b787e9a5d clean, .head intact, satisfiability instrument EXIT=0) — full record on FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER.router_source_verified_20260722. Remaining DoD = live-tick AC(3) only; do NOT flip to DONE_VERIFIED on the unit instrument alone.",
         "sprint": "BACKLOG",
         "po_triage_20260722": "Bootstrap-deadlock break (PO triage 2026-07-22): this review-lane sweeper FIX was itself stranded in REVIEW because no review-lane sweeper exists (the very bug it fixes -- recursive deadlock). Moved REVIEW->BACKLOG so BOUNDED-1/RLC promote it via the existing backlog machinery when a WIP slot frees. Once built, this + its sibling sweeper drain the ~20 other owner-stranded REVIEW rows. PLAN-ONLY design: architect."
+      },
+      {
+        "id": "PERF-PEK-PER-PAGE-LATENCY",
+        "title": "pdf-extractor pek per-page OCR latency 30-40min/page (33pp scanned = ~18-25h) with NO page-checkpoint/resume across restarts — blocks large scanned consolidated BCTC reflow (HPG Q4-2025 918a7abd never written back after 21h)",
+        "status": "BACKLOG",
+        "owner": "po",
+        "type": "FIX",
+        "zone": "apps/pdf-extractor/",
+        "priority": "high",
+        "created_at": "2026-07-22T15:55:33Z",
+        "created_by": "po (spin-off of FIX-PDFEXTRACTOR-TIER1-OCR-TIMEOUT perf_escalation — documented in review row but never board-minted)",
+        "followup_of": "FIX-PDFEXTRACTOR-TIER1-OCR-TIMEOUT",
+        "status_note": "ROOT CAUSE (design, NOT retry): CPU PaddleOCR PP-StructureV2 table extraction 30-40 min/page (page3=2066s..page6=5504s) on 33pp scanned HPG_2025_Q4.pdf => exceeds any timeout window + no resume: each of 3 container restarts reloaded models + restarted from page 1 (RestartCount=3, FailingStreak=161). AC (root-cause fixes): (1) page-level checkpoint/resume so restarts do not restart from page 1; (2) async/background extraction worker decoupled from HTTP /health (single blocking worker starves healthcheck -> restart churn); (3) page-chunk/streaming batching + bounded concurrency within 2.5GiB cap; (4) consider GPU/fast-path table detector or skip pure-OCR pages. VERIFY: HPG Q4-2025 (report_id 918a7abd-ae17-466f-be30-96ec55218ccc, queue row 223) reflow completes with real consolidated scalars (financial_reports.id=918a7abd net_revenue flips -1264.66 -> plausible POSITIVE, refine_status DONE). Closes HPG Q4-2025 consolidated data-coverage-gap that FIX-PDFEXTRACTOR could not on this report.",
+        "updated_at": "2026-07-22T15:55:34Z"
       }
     ],
     "closed_sprints": [
@@ -12353,7 +12373,9 @@
         "reflow_outcome": "FAILED-PATHOLOGICAL",
         "reflow_probe_0714": "pek reflow FAILED after ~21h — RAW @2026-07-13T22:23:14Z: pdf-extractor UNHEALTHY (FailingStreak=161, RestartCount=3, OOMKilled=false now, CPU 197% mem 2.26/2.5GiB=90% STABLE = grinding not hung). Logs: per-page 30-40min (page3=2066s, page4=4611s, page6=5504s) CPU PaddleOCR PP-StructureV2 on 33pp scanned HPG_2025_Q4.pdf; no page-checkpoint -> each of 3 restarts re-loaded models + restarted from page 1. Serving financial_reports.id=918a7abd net_revenue STILL -1264.657037 PARTIAL parsed_at 2026-06-07T10:27:16Z (NEVER written back). reflow_verify_pending cleared -> outcome FAILED.",
         "perf_escalation": "PERF-PEK-PER-PAGE-LATENCY (root-cause, PLAN-ONLY -> PO triage -> dev-pdf-extractor): CPU PaddleOCR table extraction 30-40 min/page => 33pp = ~18-25h, exceeds any practical/timeout window + no resume across restarts. Root-cause fixes (design, NOT retry): (1) page-level checkpoint/resume so restarts don't restart from page 1; (2) async/background extraction worker decoupled from HTTP healthcheck (FailingStreak=161 = single blocking worker starves /health -> restart churn); (3) page-chunk/streaming batching + bounded concurrency within 2.5GiB cap; (4) consider GPU/fast-path table detector or skip pure-OCR pages. OPS note (deferred, host stable no panic): runaway pek grinding 2 cores/2.26GiB indefinitely — recommend ops stop it pending fix. NOTE: FIX-PDFEXTRACTOR timeout fix is NOT the regression; this report exceeds current per-page throughput. Do NOT close FIX-PDFEXTRACTOR as done_verified on this report.",
-        "dispatch_note": "reflow HARD-STOP resolved FAILED-PATHOLOGICAL -> PO backlog plan-only perf escalation. 2026-07-13T22:23:14Z"
+        "dispatch_note": "reflow HARD-STOP resolved FAILED-PATHOLOGICAL -> PO backlog plan-only perf escalation. 2026-07-13T22:23:14Z",
+        "po_disposition": "PO OWNER-DISPOSITION 2026-07-22T15:55:33Z: the TIMEOUT FIX itself (fail-loud + async-reroute) is DEPLOYED (image ab7db8a7fb8a) + qa APPROVED (568e3b404) + async-reroute VERIFIED firing (pek_triggered, not silent-done). Closure was parked pending HPG Q4-2025 reflow, which FAILED-PATHOLOGICAL for a SEPARATE root cause (per-page OCR 30-40min, no resume). That HPG data-coverage gap is now board-tracked as PERF-PEK-PER-PAGE-LATENCY (this fix is NOT the regression). Closure decoupled from HPG reflow -> route to dev-team/qa for done_verified on the fix's OWN ACs. Kept in review per prior 'do not close on this report' note; no force-close by PO.",
+        "updated_at": "2026-07-22T15:55:34Z"
       },
       {
         "id": "RAG-FTS-BUILD-MEMORY-BOUND",
