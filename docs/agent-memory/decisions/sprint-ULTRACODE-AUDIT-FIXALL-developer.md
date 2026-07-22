@@ -180,3 +180,22 @@ files, then executed the delete — 10 removed, only cycle-snapshot-latest.json 
 **why-decision:** CONFIRMED verifier-blessed near-zero-risk fix — implemented exactly as spec'd,
 no simplification needed.
 **why-change:** No change from plan.
+
+### STEP developer-S12 · developer · 2026-07-22T23:25:06Z
+**task-id:** UC-DTL-P9
+**what-done:** New `scripts/pm-closeout-head-idle.jq` (--arg sprint_id/--arg now): sets a named
+`active_sprints[]` entry's `.status="DONE"` in place + guarded `.head` idle, piped to
+`orch-apply.sh`. Wired into `docs/agents/pm/flow/main.md` § 5 Monitor as a new "Sprint closeout"
+bullet. Self-verified all 3 head cases + a refuse-guard case via new
+`scripts/test/pm-closeout-head-idle-tests.sh` (5/5 pass, real SSOT hash unchanged).
+**what-considered:**
+- Inlining `.head.active_task_id` directly inside `index(...)` — hit jq's ambient-`.`-in-args
+  pitfall (arg evaluates against the piped array, not top-level doc) → crashed "Cannot index
+  array with string". Fixed by binding `$head_task_id` from top-level `.` before any pipe.
+- `.head.next_action = null` — failed Zod (`next_action: z.string().optional()`, not nullable);
+  switched to `del(.head.next_action)` to match the optional-absent contract.
+**why-decision:** Mirrors `scripts/ops-closegate-handoff.jq`'s proven guarded-head-sync pattern
+exactly, per RESCOPE spec; both bugs were caught by the mandatory self-verify against tmp fixtures
+before touching the wire-in, so the shipped filter is proven-correct against the live schema.
+**why-change:** No change from RESCOPE plan; two implementation-level jq/Zod pitfalls fixed during
+self-verify, not scope changes.
