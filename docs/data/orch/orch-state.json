@@ -11807,36 +11807,7 @@
         "new_image_id": "sha256:96036269edc4d17444544197862913e54c2fdda68e2b54ef610aee3c7610985d"
       }
     ],
-    "done_verified": [
-      {
-        "id": "UC-SDF-P3",
-        "type": "CLEAN",
-        "title": "Delete NOTE_SIGNALS_DB_DRAIN.md (or rewrite as a 3-line pointer to the live drain)",
-        "status": "DONE_VERIFIED",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "CONFIRMED",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#state-data-files-P3",
-        "note": "Stale drain note contradicts the live drain. Delete it or reduce to a 3-line pointer.",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "priority_bumped_from": "P2",
-        "priority_bumped_at": "2026-07-17T04:54:03Z",
-        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
-        "promoted_at": "2026-07-22T22:17:20Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "updated_at": "2026-07-22T22:22:48Z",
-        "claimed_at": "2026-07-22T22:17:20Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "verified_at": "2026-07-22T22:21:20Z",
-        "verified_by": "developer",
-        "verify_note": "Self-verified CLEAN doc-delete: docs/signals/NOTE_SIGNALS_DB_DRAIN.md removed (stale, contradicted live drain scripts/agents-flow/drain-signals.js + docs/agents/dev-team/flow/drain-signals.md). grep confirmed no live inbound reference besides the audit brief itself."
-      }
-    ],
+    "done_verified": [],
     "head": {
       "status": "idle",
       "active_task_id": null,
