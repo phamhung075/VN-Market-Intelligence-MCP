@@ -22,7 +22,8 @@ import { handleTriggerSbvDebug } from "../../sbvDebugTriggerHandler.js";
 export function registerSbvDebugTriggerTool(server: McpServer): void {
   server.tool(
     "trigger_sbv_vps_fetch",
-    "Manually triggers an SBV/FX rate fetch run on the Vinahost VPS for diagnosis. " +
+    "Manually triggers an SBV/FX rate fetch run on the Vinahost VPS for diagnosis — " +
+    "invokes /root/run-sbv-debug.sh via SSH in live mode (FIX-VPS-SSH-TRIGGER-FAIL-LOUD). " +
     "Fetches USD/VND exchange rate from Vietcombank XML API. " +
     "Returns pipeline state: VCB XML endpoint URL, parse steps, push endpoint status. " +
     "Use dry_run=true to inspect without triggering SSH. " +
@@ -42,23 +43,13 @@ export function registerSbvDebugTriggerTool(server: McpServer): void {
     },
     async ({ verbose, dry_run }) => {
       try {
+        // handleTriggerSbvDebug now performs the REAL SSH trigger itself in
+        // live mode (FIX-VPS-SSH-TRIGGER-FAIL-LOUD, 2026-07-22) — no duplicate
+        // log-building here.
         const result = await handleTriggerSbvDebug({
           verbose: verbose ?? true,
           dry_run: dry_run ?? false,
         });
-
-        // If live mode (not dry_run), attempt SSH trigger via VPS
-        if (!result.dry_run) {
-          const vinahostIp = Bun.env["VINAHOST_IP"];
-          if (vinahostIp) {
-            const verboseFlag = verbose ? "--verbose" : "";
-            const cmd = `ssh root@${vinahostIp} /root/run-sbv-debug.sh ${verboseFlag}`.trim();
-            result.log_tail += `\n[SSH] Queued command: ${cmd}`;
-            result.log_tail += `\n[SSH] Note: SSH execution is fire-and-forget. Check VPS logs at /tmp/sbv-debug-*.log`;
-          } else {
-            result.log_tail += `\n[WARN] VINAHOST_IP not set — cannot SSH to VPS. Set env var and retry.`;
-          }
-        }
 
         return {
           content: [

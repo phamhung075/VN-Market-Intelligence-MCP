@@ -8,8 +8,14 @@
  * already-unit-tested handler module:
  *   bctcDebugTriggerHandler.ts / priceDebugTriggerHandler.ts / newsDebugTriggerHandler.ts /
  *   sbvDebugTriggerHandler.ts / foreignFlowDebugTriggerHandler.ts
- * This file owns only the wiring that used to be duplicated 5×:
- *   auth guard -> body parse -> call handler -> (live mode) build+log SSH command -> respond.
+ * This file owns only the wiring that used to be duplicated 5×: auth guard ->
+ * body parse -> call handler -> respond.
+ *
+ * FIX-VPS-SSH-TRIGGER-FAIL-LOUD (2026-07-22): the 5 handlers now perform the
+ * REAL SSH trigger themselves (see vpsDebugSshTrigger.ts) — this file no
+ * longer builds a second, unexecuted "SSH command" string per route (that
+ * duplicate log-only path was itself part of the bug this fix closes: it is
+ * what made every "live" response success-shaped even though nothing ran).
  *
  * DI contract: db + log are injected by the caller (server.ts handleRequest).
  * No getDb() calls here — db is DI'd for uniform Pattern-A signature parity across
@@ -32,18 +38,6 @@ interface DebugTriggerBody {
   tickers?: string[];
   verbose?: boolean;
   dry_run?: boolean;
-}
-
-/**
- * Dedups the 5 near-identical SSH command strings previously copy-pasted per
- * route. The command is only ever appended to `log_tail` / passed to `log.info`
- * for operator visibility — it is never executed by this process in either the
- * pre- or post-extraction code.
- */
-function buildSshCommand(vinahostIp: string, script: string, tickerArgs: string, verboseFlag: string): string {
-  return [`ssh root@${vinahostIp} /root/${script}`, tickerArgs, verboseFlag]
-    .filter((part) => part.length > 0)
-    .join(" ");
 }
 
 /**
@@ -93,20 +87,11 @@ export async function handleTriggerBctcDebugRoute(
     );
 
     if (!result.dry_run) {
-      const vinahostIp = Bun.env["VINAHOST_IP"];
-      if (vinahostIp) {
-        const tickerArgs =
-          Array.isArray(payload.tickers) && payload.tickers.length > 0
-            ? payload.tickers.map((t) => `--ticker ${t}`).join(" ")
-            : "";
-        const verboseFlag = payload.verbose !== false ? "--verbose" : "";
-        const cmd = buildSshCommand(vinahostIp, "run-bctc-debug.sh", tickerArgs, verboseFlag);
-        result.log_tail += `\n[SSH] Command: ${cmd}`;
-        log.info("[trigger-bctc-debug] SSH trigger queued", { cmd });
-      } else {
-        result.log_tail += `\n[WARN] VINAHOST_IP not set — SSH trigger skipped`;
-        log.warn("[trigger-bctc-debug] VINAHOST_IP not set, skipping SSH");
-      }
+      log.info("[trigger-bctc-debug] SSH trigger executed", {
+        ok: result.failed.length === 0,
+        attempted: result.attempted,
+        failed: result.failed,
+      });
     }
 
     res.writeHead(200, { "Content-Type": "application/json" });
@@ -141,20 +126,11 @@ export async function handleTriggerPriceDebugRoute(
     });
 
     if (!result.dry_run) {
-      const vinahostIp = Bun.env["VINAHOST_IP"];
-      if (vinahostIp) {
-        const tickerArgs =
-          Array.isArray(payload.tickers) && payload.tickers.length > 0
-            ? payload.tickers.map((t) => `--ticker ${t}`).join(" ")
-            : "";
-        const verboseFlag = payload.verbose !== false ? "--verbose" : "";
-        const cmd = buildSshCommand(vinahostIp, "run-price-debug.sh", tickerArgs, verboseFlag);
-        result.log_tail += `\n[SSH] Command: ${cmd}`;
-        log.info("[trigger-price-debug] SSH trigger queued", { cmd });
-      } else {
-        result.log_tail += `\n[WARN] VINAHOST_IP not set — SSH trigger skipped`;
-        log.warn("[trigger-price-debug] VINAHOST_IP not set, skipping SSH");
-      }
+      log.info("[trigger-price-debug] SSH trigger executed", {
+        ok: result.failed.length === 0,
+        attempted: result.attempted,
+        failed: result.failed,
+      });
     }
 
     res.writeHead(200, { "Content-Type": "application/json" });
@@ -188,16 +164,11 @@ export async function handleTriggerNewsDebugRoute(
     });
 
     if (!result.dry_run) {
-      const vinahostIp = Bun.env["VINAHOST_IP"];
-      if (vinahostIp) {
-        const verboseFlag = payload.verbose !== false ? "--verbose" : "";
-        const cmd = buildSshCommand(vinahostIp, "run-news-debug.sh", "", verboseFlag);
-        result.log_tail += `\n[SSH] Command: ${cmd}`;
-        log.info("[trigger-news-debug] SSH trigger queued", { cmd });
-      } else {
-        result.log_tail += `\n[WARN] VINAHOST_IP not set — SSH trigger skipped`;
-        log.warn("[trigger-news-debug] VINAHOST_IP not set, skipping SSH");
-      }
+      log.info("[trigger-news-debug] SSH trigger executed", {
+        ok: result.failed.length === 0,
+        attempted: result.attempted,
+        failed: result.failed,
+      });
     }
 
     res.writeHead(200, { "Content-Type": "application/json" });
@@ -231,16 +202,11 @@ export async function handleTriggerSbvDebugRoute(
     });
 
     if (!result.dry_run) {
-      const vinahostIp = Bun.env["VINAHOST_IP"];
-      if (vinahostIp) {
-        const verboseFlag = payload.verbose !== false ? "--verbose" : "";
-        const cmd = buildSshCommand(vinahostIp, "run-sbv-debug.sh", "", verboseFlag);
-        result.log_tail += `\n[SSH] Command: ${cmd}`;
-        log.info("[trigger-sbv-debug] SSH trigger queued", { cmd });
-      } else {
-        result.log_tail += `\n[WARN] VINAHOST_IP not set — SSH trigger skipped`;
-        log.warn("[trigger-sbv-debug] VINAHOST_IP not set, skipping SSH");
-      }
+      log.info("[trigger-sbv-debug] SSH trigger executed", {
+        ok: result.failed.length === 0,
+        attempted: result.attempted,
+        failed: result.failed,
+      });
     }
 
     res.writeHead(200, { "Content-Type": "application/json" });
@@ -275,20 +241,11 @@ export async function handleTriggerForeignFlowDebugRoute(
     });
 
     if (!result.dry_run) {
-      const vinahostIp = Bun.env["VINAHOST_IP"];
-      if (vinahostIp) {
-        const tickerArgs =
-          Array.isArray(payload.tickers) && payload.tickers.length > 0
-            ? payload.tickers.map((t) => `--ticker ${t}`).join(" ")
-            : "";
-        const verboseFlag = payload.verbose !== false ? "--verbose" : "";
-        const cmd = buildSshCommand(vinahostIp, "run-foreign-flow-debug.sh", tickerArgs, verboseFlag);
-        result.log_tail += `\n[SSH] Command: ${cmd}`;
-        log.info("[trigger-foreign-flow-debug] SSH trigger queued", { cmd });
-      } else {
-        result.log_tail += `\n[WARN] VINAHOST_IP not set — SSH trigger skipped`;
-        log.warn("[trigger-foreign-flow-debug] VINAHOST_IP not set, skipping SSH");
-      }
+      log.info("[trigger-foreign-flow-debug] SSH trigger executed", {
+        ok: result.failed.length === 0,
+        attempted: result.attempted,
+        failed: result.failed,
+      });
     }
 
     res.writeHead(200, { "Content-Type": "application/json" });

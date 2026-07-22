@@ -21,7 +21,8 @@ import { handleTriggerForeignFlowDebug } from "../../foreignFlowDebugTriggerHand
 export function registerForeignFlowDebugTriggerTool(server: McpServer): void {
   server.tool(
     "trigger_foreign_flow_vps_fetch",
-    "Manually triggers a foreign investor flow fetch run on the Vinahost VPS for diagnosis. " +
+    "Manually triggers a foreign investor flow fetch run on the Vinahost VPS for diagnosis — " +
+    "invokes /root/run-foreign-flow-debug.sh via SSH in live mode (FIX-VPS-SSH-TRIGGER-FAIL-LOUD). " +
     "Returns pipeline state: which tickers are being monitored, field names (fBuyVol/fSellVol/fRoom), " +
     "payload size, and push endpoint status. " +
     "Use dry_run=true to inspect without triggering SSH. " +
@@ -46,28 +47,14 @@ export function registerForeignFlowDebugTriggerTool(server: McpServer): void {
     },
     async ({ tickers, verbose, dry_run }) => {
       try {
+        // handleTriggerForeignFlowDebug now performs the REAL SSH trigger itself
+        // in live mode (FIX-VPS-SSH-TRIGGER-FAIL-LOUD, 2026-07-22) — no duplicate
+        // log-building here.
         const result = await handleTriggerForeignFlowDebug({
           tickers,
           verbose: verbose ?? true,
           dry_run: dry_run ?? false,
         });
-
-        // If live mode (not dry_run), attempt SSH trigger via VPS
-        if (!result.dry_run) {
-          const vinahostIp = Bun.env["VINAHOST_IP"];
-          if (vinahostIp) {
-            const tickerArgs =
-              tickers && tickers.length > 0
-                ? tickers.map((t) => `--ticker ${t}`).join(" ")
-                : "";
-            const verboseFlag = verbose ? "--verbose" : "";
-            const cmd = `ssh root@${vinahostIp} /root/run-foreign-flow-debug.sh ${tickerArgs} ${verboseFlag}`.trim();
-            result.log_tail += `\n[SSH] Queued command: ${cmd}`;
-            result.log_tail += `\n[SSH] Note: SSH execution is fire-and-forget. Check VPS logs at /tmp/foreign-flow-debug-*.log`;
-          } else {
-            result.log_tail += `\n[WARN] VINAHOST_IP not set — cannot SSH to VPS. Set env var and retry.`;
-          }
-        }
 
         return {
           content: [

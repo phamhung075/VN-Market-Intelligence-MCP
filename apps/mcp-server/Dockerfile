@@ -29,6 +29,12 @@ COPY --from=bun-src /usr/local/bin/bun /usr/local/bin/bun
 # when PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH points to a missing binary.
 # DEBIAN_FRONTEND=noninteractive prevents apt from prompting during build.
 # --no-install-recommends keeps image size minimal.
+# openssh-client: FIX-VPS-SSH-TRIGGER-FAIL-LOUD (2026-07-22) — sshExec.ts
+# (infrastructure/vps/sshExec.ts) does Bun.spawn(["ssh", ...]) but no ssh binary
+# was ever present in this image (confirmed empty `find / -name ssh -type f` in
+# the cron audit). vpsServiceRestartHandler.ts already depends on this working;
+# the 5 trigger_*_vps_fetch debug tools now also call the real sshExec() (see
+# vpsDebugSshTrigger.ts) instead of only logging a would-be command.
 RUN apt-get update -qq && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
       python3 \
@@ -41,6 +47,7 @@ RUN apt-get update -qq && \
       poppler-utils \
       tesseract-ocr \
       tesseract-ocr-vie \
+      openssh-client \
     && rm -rf /var/lib/apt/lists/*
 
 # ── Python packages — vnstock for VCI backend data ───────────────────────

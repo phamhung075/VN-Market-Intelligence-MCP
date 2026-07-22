@@ -46,28 +46,14 @@ export function registerPriceDebugTriggerTool(server: McpServer): void {
     },
     async ({ tickers, verbose, dry_run }) => {
       try {
+        // handleTriggerPriceDebug now performs the REAL SSH trigger itself in
+        // live mode (FIX-VPS-SSH-TRIGGER-FAIL-LOUD, 2026-07-22) — attempted/
+        // success/failed reflect the actual outcome; no duplicate log-building here.
         const result = await handleTriggerPriceDebug({
           tickers,
           verbose: verbose ?? true,
           dry_run: dry_run ?? false,
         });
-
-        // If live mode (not dry_run), attempt SSH trigger via VPS
-        if (!result.dry_run) {
-          const vinahostIp = Bun.env["VINAHOST_IP"];
-          if (vinahostIp) {
-            const tickerArgs =
-              tickers && tickers.length > 0
-                ? tickers.map((t) => `--ticker ${t}`).join(" ")
-                : "";
-            const verboseFlag = verbose ? "--verbose" : "";
-            const cmd = `ssh root@${vinahostIp} /root/run-price-debug.sh ${tickerArgs} ${verboseFlag}`.trim();
-            result.log_tail += `\n[SSH] Queued command: ${cmd}`;
-            result.log_tail += `\n[SSH] Note: SSH execution is fire-and-forget. Check VPS logs at /tmp/price-debug-*.log`;
-          } else {
-            result.log_tail += `\n[WARN] VINAHOST_IP not set — cannot SSH to VPS. Set env var and retry.`;
-          }
-        }
 
         return {
           content: [

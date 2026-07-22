@@ -174,9 +174,14 @@ describe("Task 1779a — TC-5: Bun.spawn receives args array, not shell string",
       // Must be an array, not a single shell string
       expect(Array.isArray(capturedArgs)).toBe(true);
       expect(capturedArgs[0]).toBe("ssh");
-      // BatchMode and StrictHostKeyChecking must be present as discrete elements
+      // BatchMode and StrictHostKeyChecking must be present as discrete elements.
+      // FIX-VPS-SSH-TRIGGER-FAIL-LOUD (2026-07-22): StrictHostKeyChecking was
+      // changed yes -> accept-new — `yes` refuses every connection from a fresh
+      // container with no pre-seeded known_hosts (confirmed empty live), which
+      // meant this exact args shape could never have connected successfully.
+      // See src/__tests__/FIX-VPS-SSH-TRIGGER-FAIL-LOUD-known-hosts.test.ts.
       expect(capturedArgs).toContain("BatchMode=yes");
-      expect(capturedArgs).toContain("StrictHostKeyChecking=yes");
+      expect(capturedArgs).toContain("StrictHostKeyChecking=accept-new");
       // Target must be user@host, not a shell string
       expect(capturedArgs).toContain("root@125.212.251.27");
       // Command is the last element, not interpolated into a shell string

@@ -6,7 +6,8 @@
  *
  * Behavior:
  *   - dry_run=true  → returns what WOULD be triggered, no side effects
- *   - dry_run=false → server.ts fires SSH command to VPS
+ *   - dry_run=false → calls the REAL sshExec() (FIX-VPS-SSH-TRIGGER-FAIL-LOUD,
+ *     2026-07-22) — see vpsDebugSshTrigger.ts header for the full RCA.
  *   - verbose=true  → includes per-source diagnostic details in log_tail
  *
  * VPS service: vn-news-fetch.service (runs every 15min)
@@ -14,6 +15,8 @@
  * Sources:     CafeF, VnExpress, VnEconomy, VietStock, TuoiTre, NhanDan,
  *              NguoiLaoDong, VietnamBiz, VnBusiness, BaoDauTu (10 sources)
  */
+
+import { triggerVpsDebugScript, type SshExecFn } from "./vpsDebugSshTrigger.js";
 
 export interface TriggerNewsDebugOptions {
   verbose: boolean;
@@ -48,9 +51,11 @@ const NEWS_SOURCES = [
 
 /**
  * Core handler — returns structured result matching the MCP tool output contract.
+ * `sshExecFn` is injectable (tests pass a fake).
  */
 export async function handleTriggerNewsDebug(
   opts: TriggerNewsDebugOptions,
+  sshExecFn?: SshExecFn,
 ): Promise<TriggerNewsDebugResult> {
   const { verbose, dry_run } = opts;
 
@@ -71,18 +76,31 @@ export async function handleTriggerNewsDebug(
     logLines.push(`[${ts}]   Note: Bot-guarded sources use Playwright/Chromium (fetch-browser.py)`);
   }
 
+  let attempted: string[] = [];
+  let success: string[] = [];
+  let failed: { source: string; reason: string }[] = [];
+
   if (dry_run) {
     logLines.push(`[${ts}] DRY RUN — no fetch triggered. To trigger: POST /api/trigger-news-debug {dry_run:false}`);
-    logLines.push(`[${ts}] VPS script: ssh root@$VINAHOST_IP /root/run-news-debug.sh --verbose`);
+    logLines.push(`[${ts}] VPS script: ssh root@$VPS_HOST /root/run-news-debug.sh --verbose`);
   } else {
-    logLines.push(`[${ts}] LIVE mode — SSH trigger will be executed by server.ts`);
+    attempted = ["vn-news-fetch"];
+    const outcome = await triggerVpsDebugScript("run-news-debug.sh", [], verbose, sshExecFn);
+    logLines.push(`[${ts}] LIVE mode — SSH command: ${outcome.command}`);
+    if (outcome.ok) {
+      logLines.push(`[${ts}] SSH exited 0 — VPS script launched. Check VPS logs at /tmp/news-debug-*.log`);
+      success = [...attempted];
+    } else {
+      logLines.push(`[${ts}] SSH FAILED: ${outcome.reason}`);
+      failed = attempted.map((s) => ({ source: s, reason: outcome.reason! }));
+    }
   }
 
   return {
     service: "vn-news-fetch",
-    attempted: [],
-    success: [],
-    failed: [],
+    attempted,
+    success,
+    failed,
     log_tail: logLines.join("\n"),
     dry_run,
   };

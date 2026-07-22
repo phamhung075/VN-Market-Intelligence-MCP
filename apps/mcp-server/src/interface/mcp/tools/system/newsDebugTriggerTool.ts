@@ -42,23 +42,13 @@ export function registerNewsDebugTriggerTool(server: McpServer): void {
     },
     async ({ verbose, dry_run }) => {
       try {
+        // handleTriggerNewsDebug now performs the REAL SSH trigger itself in
+        // live mode (FIX-VPS-SSH-TRIGGER-FAIL-LOUD, 2026-07-22) — no duplicate
+        // log-building here.
         const result = await handleTriggerNewsDebug({
           verbose: verbose ?? true,
           dry_run: dry_run ?? false,
         });
-
-        // If live mode (not dry_run), attempt SSH trigger via VPS
-        if (!result.dry_run) {
-          const vinahostIp = Bun.env["VINAHOST_IP"];
-          if (vinahostIp) {
-            const verboseFlag = verbose ? "--verbose" : "";
-            const cmd = `ssh root@${vinahostIp} /root/run-news-debug.sh ${verboseFlag}`.trim();
-            result.log_tail += `\n[SSH] Queued command: ${cmd}`;
-            result.log_tail += `\n[SSH] Note: SSH execution is fire-and-forget. Check VPS logs at /tmp/news-debug-*.log`;
-          } else {
-            result.log_tail += `\n[WARN] VINAHOST_IP not set — cannot SSH to VPS. Set env var and retry.`;
-          }
-        }
 
         return {
           content: [

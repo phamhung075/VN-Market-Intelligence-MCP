@@ -53,6 +53,9 @@ export function registerBctcDebugTriggerTool(
       const db = _testDb ?? getDb();
 
       try {
+        // handleTriggerBctcDebug now performs the REAL SSH trigger itself in
+        // live mode (FIX-VPS-SSH-TRIGGER-FAIL-LOUD, 2026-07-22) — no duplicate
+        // log-building here.
         const result = await handleTriggerBctcDebug(
           {
             tickers,
@@ -61,23 +64,6 @@ export function registerBctcDebugTriggerTool(
           },
           db,
         );
-
-        // If live mode (not dry_run), attempt SSH trigger via VPS
-        if (!result.dry_run) {
-          const vinahostIp = Bun.env["VINAHOST_IP"];
-          if (vinahostIp) {
-            const tickerArgs =
-              tickers && tickers.length > 0
-                ? tickers.map((t) => `--ticker ${t}`).join(" ")
-                : "";
-            const verboseFlag = verbose ? "--verbose" : "";
-            const cmd = `ssh root@${vinahostIp} /root/run-bctc-debug.sh ${tickerArgs} ${verboseFlag}`.trim();
-            result.log_tail += `\n[SSH] Queued command: ${cmd}`;
-            result.log_tail += `\n[SSH] Note: SSH execution is fire-and-forget. Check VPS logs at /tmp/bctc-debug-*.log`;
-          } else {
-            result.log_tail += `\n[WARN] VINAHOST_IP not set — cannot SSH to VPS. Set env var and retry.`;
-          }
-        }
 
         return {
           content: [

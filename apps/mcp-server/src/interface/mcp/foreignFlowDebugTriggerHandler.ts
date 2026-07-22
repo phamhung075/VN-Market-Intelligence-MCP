@@ -6,14 +6,17 @@
  *
  * Behavior:
  *   - dry_run=true  → returns what WOULD be triggered, no side effects
- *   - dry_run=false → server.ts fires SSH command to VPS
- *   - tickers filter → passed as --ticker args to VPS script
+ *   - dry_run=false → calls the REAL sshExec() (FIX-VPS-SSH-TRIGGER-FAIL-LOUD,
+ *     2026-07-22) — see vpsDebugSshTrigger.ts header for the full RCA.
+ *   - tickers filter → passed as --ticker args to VPS script (sanitized)
  *   - verbose=true  → includes per-step diagnostic details in log_tail
  *
  * VPS service: vn-foreign-flow.service (runs every 60s)
  * VPS script:  /root/run-foreign-flow-debug.sh
  * Source:      bgapidatafeed.vps.com.vn (extracts fBuyVol/fSellVol/fRoom)
  */
+
+import { sanitizeTickers, triggerVpsDebugScript, type SshExecFn } from "./vpsDebugSshTrigger.js";
 
 export interface TriggerForeignFlowDebugOptions {
   tickers: string[] | undefined;
@@ -32,9 +35,11 @@ export interface TriggerForeignFlowDebugResult {
 
 /**
  * Core handler — returns structured result matching the MCP tool output contract.
+ * `sshExecFn` is injectable (tests pass a fake).
  */
 export async function handleTriggerForeignFlowDebug(
   opts: TriggerForeignFlowDebugOptions,
+  sshExecFn?: SshExecFn,
 ): Promise<TriggerForeignFlowDebugResult> {
   const { tickers, verbose, dry_run } = opts;
   const tickerFilter = tickers && tickers.length > 0 ? tickers : null;
@@ -62,22 +67,44 @@ export async function handleTriggerForeignFlowDebug(
     logLines.push(`[${ts}]   Diagnostic: PAYLOAD_SIZE_THRESHOLD=${50000} bytes — warn if larger`);
   }
 
+  let attempted: string[] = [];
+  let success: string[] = [];
+  let failed: { ticker: string; reason: string }[] = [];
+
   if (dry_run) {
     logLines.push(`[${ts}] DRY RUN — no fetch triggered. To trigger: POST /api/trigger-foreign-flow-debug {dry_run:false}`);
-    logLines.push(`[${ts}] VPS script: ssh root@$VINAHOST_IP /root/run-foreign-flow-debug.sh --verbose`);
+    logLines.push(`[${ts}] VPS script: ssh root@$VPS_HOST /root/run-foreign-flow-debug.sh --verbose`);
     if (tickerFilter) {
       const tickerArgs = tickerFilter.map((t) => `--ticker ${t}`).join(" ");
       logLines.push(`[${ts}] Ticker filter: /root/run-foreign-flow-debug.sh ${tickerArgs} --verbose`);
     }
   } else {
-    logLines.push(`[${ts}] LIVE mode — SSH trigger will be executed by server.ts`);
+    const { valid, invalid } = sanitizeTickers(tickerFilter ?? undefined);
+    for (const bad of invalid) {
+      failed.push({ ticker: bad, reason: "invalid ticker format — rejected before SSH (allowlist: 1-10 alnum chars)" });
+    }
+    attempted = tickerFilter ? [...valid] : ["all"];
+
+    if (tickerFilter && valid.length === 0) {
+      logLines.push(`[${ts}] LIVE mode — all supplied tickers failed sanitization, SSH not attempted`);
+    } else {
+      const outcome = await triggerVpsDebugScript("run-foreign-flow-debug.sh", valid, verbose, sshExecFn);
+      logLines.push(`[${ts}] LIVE mode — SSH command: ${outcome.command}`);
+      if (outcome.ok) {
+        logLines.push(`[${ts}] SSH exited 0 — VPS script launched. Check VPS logs at /tmp/foreign-flow-debug-*.log`);
+        success = [...attempted];
+      } else {
+        logLines.push(`[${ts}] SSH FAILED: ${outcome.reason}`);
+        failed.push(...attempted.map((t) => ({ ticker: t, reason: outcome.reason! })));
+      }
+    }
   }
 
   return {
     service: "vn-foreign-flow",
-    attempted: [],
-    success: [],
-    failed: [],
+    attempted,
+    success,
+    failed,
     log_tail: logLines.join("\n"),
     dry_run,
   };
