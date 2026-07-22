@@ -1,5 +1,17 @@
 
 
+
+## c-2026-07-22-T22:33 · 2026-07-22T22:33:17Z
+### Audit Run Tier-2 (22:33 UTC 2026-07-22)
+- Tier: 2 | Cron fire check: PASS | Sources checked: 28
+- VPS proxy health: 2 healthy (news OK), 2 stale (sbv/bctc), 1 idle (foreign-flow market-closed)
+- SLA evaluation: 1 CRITICAL (sbv-vps 43h/24h threshold)
+- BCTC healthy-idle gate: PASS (queue=183, 69h < 191h SLA window)
+- DB spot checks: PASS (C-06=2 messages, C-07=282 signals, B-09=0 SSC, B-13=0 stale)
+- Rate limits: All 12 sources ready
+- Anomalies: 1 new (C critical × 1: sbv-vps stale) | Status: DEGRADED
+- [emit-signal] OK dedup_key=data_stale:sbv-vps:B-06 id=sys-20260722T223302-4f8b
+
 ## c3c5e1a · 2026-07-22T18:32:45Z
 ### Audit Run Tier-2 (18:31–18:32 UTC 2026-07-22)
 - Tier: 2 | Cron fire check: PASS (100+ jobs running, 2 OOM crashes 14:52Z prior) | Sources checked: 28
@@ -50,37 +62,3 @@
 - [emit-signal] OK-escalation-bypass B-06 id=sys-20260722T063225-07c9
 
 ## a4f2b1e · 2026-07-22T06:11:30Z
-### Audit Run Tier-1 (06:10–06:11 UTC 2026-07-22)
-- Tier: 1 | Services: 12 checked (all host_runtime_set) | Container status: 12 UP (all healthy)
-- Health endpoints: 5 OK (all stable)
-- A-20 multi-probe (pdf-extractor): 3/3 PASS — event-loop healthy
-- A-21 Restart count: mcp-server=1 PASS | A-30 Memory: 49.92% PASS | A-32 Disk: 27% PASS
-- Anomalies: 0 new (all green) | Status: HEALTHY
-
-## 7d3f9cd · 2026-07-22T03:40:44Z
-### Audit Run Tier-1 (03:40–03:41 UTC 2026-07-22)
-- Tier: 1 | Services: 12 checked (all host_runtime_set) | Container status: 12 UP (all healthy)
-- Health endpoints: 5 OK (all stable)
-- A-20 multi-probe (pdf-extractor): 3/3 PASS — event-loop healthy
-- A-21 Restart count: mcp-server=1 PASS | A-30 Memory: 18.18% PASS | A-32 Disk: 27% PASS
-- Anomalies: 0 new (all green) | Status: HEALTHY
-
-## d4-auto · 2026-07-22T03:00:02.728Z
-D4 candidates: none
-
-## c86a9e8 · 2026-07-22T02:32:20Z
-### Audit Run Tier-2 (02:31–02:32 UTC 2026-07-22)
-- Tier: 2 | Cron gap check: PASS | Per-source freshness: 1 CRITICAL | VPS proxy: DEGRADED
-- Sources checked: 28 | DB spot checks: PASS (C-06, C-07)
-- B-05 gate: bctc-discover HEALTHY IDLE (queue=183, SLA out-of-window threshold=2355h)
-- B-09 URL shape: PASS (0 SSC portal URLs) | B-13 stale pending: PASS
-- Anomalies: 1 new (C critical: foreign-flow stale 1402min, SLA 30min) | Status: DEGRADED
-- [emit-signal] OK dedup_key=data_stale:foreign-flow:B-04 id=sys-20260722T023220-774e
-
-## c8f3b5d · 2026-07-22T02:11:23Z
-### Audit Run Tier-1 (02:10–02:11 UTC 2026-07-22)
-- Tier: 1 | Services: 12 checked (all host_runtime_set) | Container status: 12 UP (all healthy)
-- Health endpoints: 5 OK (all stable)
-- A-20 multi-probe (pdf-extractor): 3/3 PASS — event-loop healthy
-- A-21 Restart count: mcp-server=1 PASS | A-30 Memory: 10.99% PASS | A-32 Disk: 27% PASS
-- Anomalies: 0 new (all green) | Status: HEALTHY
