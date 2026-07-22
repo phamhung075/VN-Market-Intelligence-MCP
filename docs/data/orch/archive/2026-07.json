@@ -9532,6 +9532,28 @@
       "qa_reviewed_by": "qa",
       "qa_approval_note": "APPROVED. Full review from scratch (never router-verified; row sat REVIEW since 2026-07-10T00:35:55Z). git show --name-status 9ce2e38aa = exactly the 4 claimed files (scripts/devteam-backlog-promote-bounded1.jq, scripts/test-devteam-bounded1-epic-wrapper.sh, docs/agents/dev-team/flow/main.md, docs/policies/dev-standards.md), single commit, no peer-sweep contamination. Read the shipped effective_children/is_epic_wrapper predicate directly (devteam-backlog-promote-bounded1.jq:430-441,582) and confirmed it is STILL wired at HEAD after 7 later sibling commits touched the same file (3d266f1e8/8874901b2/a0c56d989/4e7de1db4/6382a9c97/315730519/0f09a05ba). Independently re-ran (not accepted numbers): new suite test-devteam-bounded1-epic-wrapper.sh 15/15 PASS; both baseline siblings test-devteam-bounded1-supervised-flag.sh 15/15 + test-devteam-bounded1-depends-on.sh 18/18 PASS at current HEAD. Live-data dry-run re-derived fresh (scratch copy in scratchpad, WIP forced 0, never touched live orch-state.json): promote script picked UC-SDF-P3 (non-epic); both AUDIT-FETCH-COMPLETE and FACTORY-GUARD-CI-REGRESSION-SPIKE (both still live in backlog[] today, detail-only/both-signal children shapes matching the row's own reproducer) stayed untouched. grep-confirmed no hardcoded task IDs in the selection logic (both IDs appear only in comments). Doc pointers (dev-team/flow/main.md, dev-standards.md) match the shipped predicate exactly. DJ-GATE-1: developer journal has task-id entry (sprint-SYSTEMIC-REMAKE-P1-developer.md developer-S12). Zero apps/mcp-server/src touched -> tsc/DDD out of scope; mock-guard --files run, N/A by extension (.jq/.sh not scanned), manually read clean (no fabricated data, no secrets/process.env).",
       "updated_at": "2026-07-21T19:00:53Z"
+    },
+    {
+      "title": "Split api-gateway handlers.go into dashboard/middleware/proxy files",
+      "priority": "P1",
+      "zone": "api-gateway",
+      "type": "FACTORY",
+      "status": "DONE_VERIFIED",
+      "id": "FACTORY-APIGW-split-handlers",
+      "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APIGW-split-handlers",
+      "promoted_at": "2026-07-09T19:48:38Z",
+      "promoted_by": "dev-team (bounded-1 auto-pickup)",
+      "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+      "claimed_at": "2026-07-22T00:21:39Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "completed_at": "2026-07-09T20:00:00Z",
+      "completed_by": "dev-api-gateway",
+      "status_note": "Split handlers.go (421L) into dashboard.go(119L)/middleware.go(44L)/proxy.go(117L, new private newReverseProxy+serveProxied helpers collapse the 2 duplicate reverse-proxy setup+timeout blocks)/handlers.go(85L), same package http, all exported symbols unchanged. go build/vet clean, gofmt clean, golangci-lint 0 issues, go test ./... 10/10 packages PASS (handlers_test.go 34 tests untouched, all green), G12 sandbox primitive 14/14 + module 1/1 PASS. rebuild_required=true (hottest-path prod HTTP handler) — deferred post-rebuild behavior verification tracked in signal docs/signals/ops-rebuild-verify-api-gateway-20260709T1958Z.json per feedback_user_gates_delegate_to_ops.md. Kept REVIEW (not self-asserted DONE_VERIFIED) pending router/qa sign-off given hottest-path risk. DJ: docs/agent-memory/decisions/sprint-SYSTEMIC-REMAKE-P1-dev-api-gateway.md || [QA] Review Record (direct-commit verify) -- 2026-07-22T00:28:59Z: RAW re-ran at HEAD, commit 82598ccbd5 (matches completed_at, touches claimed handlers.go, on main ancestry). go build/vet clean; gofmt -l shows 0 of the 4 split files dirty (only pre-existing unrelated debt: handlers_test.go/registry.go/etc, confirmed untouched by this commit); go test ./... 10/10 packages PASS, pkg/interface/http 37 PASS/0 FAIL; golangci-lint run ./... 0 issues; mock-guard.sh PASS; secrets grep clean; Fence-C confirmed (zero pkg/infrastructure import across dashboard.go/handlers.go/middleware.go/proxy.go, corroborated by golangci-lint depguard). Line caps: dashboard.go 119L/handlers.go 85L/middleware.go 44L/proxy.go 116L, all <=120L DoD. Closed the deferred ops-rebuild-verify signal (docs/signals/ops-rebuild-verify-api-gateway-20260709T1958Z.json, deleted unactioned in unrelated commit 83748768d, blocking:false) myself: container confirmed created 2026-07-15T15:16:47Z (post-split), live GET /health 200 JSON, GET /health-dashboard 200 HTML matching pre-split template, a deployed-service proxy path 200, an unknown-service path 404 -- DoD item \"proxy + dashboard behavior unchanged verified\" now satisfied. VERDICT: APPROVED, DONE_VERIFIED.",
+      "updated_at": "2026-07-22T00:29:05Z",
+      "qa_verdict": "APPROVED",
+      "qa_reviewed_at": "2026-07-22T00:28:59Z",
+      "qa_reviewed_by": "qa",
+      "qa_test_suite_result": "go build/vet/gofmt clean, go test 10/10 packages (pkg/interface/http 37/0 fail), golangci-lint 0 issues, mock-guard PASS"
     }
   ],
   "closed_sprints": [
