@@ -428,3 +428,14 @@
 - only path: exact root cause supplied by signal; additive array+doc change; shared prewrite-hook logic must not be duplicated.
 **why-decision:** Real latent blind spot (qa[] uncounted → catastrophic qa[] drop invisible to floor-ratio guard; qa[] now live via QA-Drain).
 **why-change:** no change from signal's suggested_fix.
+
+### STEP po-S3 · po · 2026-07-22T06:43:03Z
+**task-id:** FIX-DRAIN-PERSIST-GUARD-COUNT-DRAINABLE-ONLY (+ FIX-ORCHSTATE-CONSERVATION-GUARD-QA-LANE-BLIND persist; 3 VPS signals fold)
+**what-done:** Drained 4 accumulated NEW po-bound signal_queue rows (last triage 04:49Z). PERSISTED the po-S1/po-S2 pair to task_board.backlog[] (P1 first / P2, both cross-service/, next_agent=developer, auto-promote) — resolving dev-team-20260722T054244Z-triage-batch-wip-deadlock, whose BATCH could be neither dispatched nor persisted under WIP=2/2. FOLDED the 3 CRITICAL sys data_stale rows into the VPS-bridge cluster (status→triaged, no new mint). orch-apply OK: task_total 594→596, signal_total 97→97.
+**what-considered:**
+- Re-mint the two FIXes from scratch — REJECTED: po-S1/po-S2 already specced them 05:31Z; dev-team only needed PERSISTENCE, not re-decision. Copied specs verbatim from the journal.
+- Dispatch the pair now — REJECTED: WIP=2/2 (two parked epics); direct-FIX path has no WIP gate so dispatching would breach WIP≤2. Backlog mint = the ASK, respects the invariant.
+- Mint a fresh FLOW-GAP row for "triaged-but-unpersisted BATCH lost under saturation" — REJECTED: sharper facet of existing FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION; folded as annotation (no dup).
+- Mint a FIX-VPS row for the 3 data_stale rows — REJECTED: same root as 04:49Z 774e disposition + Telegram BUG 3866 (user-escalated, restart USER-GATED); VPS infra = no code-fix. Recorded high-water-marks (foreign-flow ~27.4h, bctc-discover ~40.7h/183 pending) + two-layer BCTC caveat (root = FETCH layer, distinct from analysis-layer FIX-AUDITOR-B05).
+**why-decision:** dev-team's triage SUCCEEDED but its output could not land under saturation — persisting to backlog is the durable capture; folding the VPS cluster keeps re-emits out of the un-triaged pool without authorizing the user-gated restart.
+**why-change:** no change from the dev-team ASK (persist BOTH, P1-first) nor from the standing VPS-cluster disposition; did NOT touch the 2 out-of-scope NEW rows (po→unified-agent methodology-flag, cowork→ops OOM escalation).
