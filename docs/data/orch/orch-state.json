@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
+    "status": "in_progress",
+    "active_task_id": "BLOCK-PUSH-CRON-AUDIT-BATCH-NO-QA",
     "next_agent": "qa",
-    "next_action": "BLOCK-PUSH-CRON-AUDIT-BATCH-NO-QA — QA RAW-review dev-mcp-server batch ac621f648..752d76477 (11 commits unpushed). PO withheld the push: PUSH-AUTONOMY-1 cond.(a) QA APPROVE unmet. PO already verified cond.(b) no net new test failures (full A/B: 42 fail at BOTH base and HEAD) and cond.(c) tsc rc=0. QA must also adjudicate the sshExec StrictHostKeyChecking yes->accept-new relaxation, whose stated premise PO disproved. On APPROVE: push + CI green, then unblock OPS-REBUILD-MCP-SERVER-OPENSSH.",
-    "updated_at": "2026-07-22T17:23:45Z",
-    "updated_by": "po/cron-audit-push-deploy-sequencing-20260722"
+    "next_action": "QA APPROVED — push origin main, RAW-verify CI green on new head SHA (gate ci_green_on_subsequent_push), then unblock OPS-REBUILD-MCP-SERVER-OPENSSH.",
+    "updated_at": "2026-07-22T17:36:38Z",
+    "updated_by": "qa"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -10656,26 +10656,6 @@
         "updated_at": "2026-07-22T17:23:09Z"
       },
       {
-        "id": "BLOCK-PUSH-CRON-AUDIT-BATCH-NO-QA",
-        "type": "UNBLOCK",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "title": "QA review gate for dev-mcp-server cron-audit batch ac621f648..752d76477 (11 commits unpushed) — PUSH-AUTONOMY-1 condition (a) unmet + a disproved security premise to adjudicate",
-        "source": "po/cron-audit-push-deploy-sequencing-20260722",
-        "created_at": "2026-07-22T17:12:55Z",
-        "created_by": "po",
-        "next_agent": "qa",
-        "po_ruling": "PO WITHHELD THE PUSH 2026-07-22T17:12:55Z. PUSH-AUTONOMY-1 (docs/policies/dev-standards.md § Push Policy) gate has THREE conditions. PO RAW-verified each: (a) 'supervised cascade complete — dev commit + QA APPROVE + PO sign-off' => **FAIL**, there was no QA leg at all; dev-mcp-server states plainly 'no supervised QA/PO cascade for this ad-hoc audit dispatch'. (b) 'targeted/merge-gate suite 0 fail' => PASS for the touched surface (see evidence). (c) 'pre-push hook pnpm --filter vn-market check green' => PASS, PO re-ran `bun tsc --noEmit` independently, rc=0, zero diagnostics. One hard FAIL means the gate is not green and the push is not authorized. PUSH-AUTONOMY-1 removes the USER from the loop; it does not remove QA.",
-        "evidence_41_fail_claim": "VERDICT: dev-mcp-server's 'all pre-existing' characterisation is CONFIRMED; its arithmetic is not. PO did not accept the claim — PO ran the FULL suite at BOTH ends in an isolated `git worktree` pinned to base 3509a3974. BASE: 14600 pass / 40 skip / **42** fail / 1205 files. HEAD (752d76477): 14651 pass / 40 skip / **42** fail / 1209 files. (dev-mcp-server had reported 41 fail / 14652 pass — the exact count is not reproducible run-to-run, so no exact-count argument is admissible.) Fail-set diff: 41 of 42 byte-identical; ONE bidirectional swap, both shown to be order-dependent flake, NOT regression — base-only 'SSOT-W1-ZOD-VALIDATOR-CLI invocation-default' reads the live orch-state.json (a worktree artifact); HEAD-only '1288-poll-news-shape.test.ts' PASSES 4/4 in isolation on two consecutive runs. NET NEW REGRESSIONS: ZERO. The change ADDS 4 test files and +51 passing tests. PO additionally A/B'd the highest-risk cluster on its own (tool-REGISTRATION: 081-bun-mcp-server, 1875c-record-signal-outcome-routing, 251-mcp-tools, RAPID-B2-get-market-cap-tool — high-risk precisely because dev-mcp-server changed debugTriggerRoutes.ts + 5 *DebugTriggerTool.ts, the registration surface): 39 pass / 0 fail at BOTH base and HEAD, i.e. those full-suite failures are test POLLUTION reproduced identically with and without the change.",
-        "standing_condition_the_42_failures": "SEPARATE, PRE-EXISTING, NOT THIS BATCH'S FAULT: the mcp-server suite carries 42 order-dependent failures that pass in isolation. This is a test-ISOLATION defect (the repo already ships scripts/ci-per-file-isolation.sh for exactly this). It permanently blocks any literal '0 fail on the full suite' reading of PUSH-AUTONOMY-1 and should be tracked on its own row — it must not keep being re-litigated inside every push decision.",
-        "qa_must_adjudicate": "sshExec.ts StrictHostKeyChecking yes -> accept-new. PO DISPROVED the stated justification — see FIX-MCP-DOCKERFILE-ENTRYPOINT-KNOWNHOSTS-REGRESSION. The code comment asserts the tool 'could never have succeeded for ANY caller since inception'; git says otherwise (commit b741c5634, 1779c, QA-APPROVED 2026-04-30, shipped BOTH openssh-client AND `ENTRYPOINT [\"/entrypoint.sh\"]` which ssh-keyscan-seeds known_hosts). QA should decide whether to land the security relaxation on a premise that is factually wrong.",
-        "acceptance": "QA runs its own RAW verification of the batch, APPROVEs or REJECTs, and records the verdict with a timestamp. On APPROVE: push origin main (serialize; commit WITH pathspecs), RAW-verify CI green on the new head SHA (gate ci_green_on_subsequent_push), then unblock OPS-REBUILD-MCP-SERVER-OPENSSH.",
-        "note": "This is NOT a rejection of the work — the three cron-audit fixes look sound and tsc is clean. It is the missing QA leg of the documented gate, plus one concrete factual defect worth a second pair of eyes before it goes live.",
-        "updated_at": "2026-07-22T17:23:09Z"
-      },
-      {
         "id": "FIX-MCP-DOCKERFILE-ENTRYPOINT-KNOWNHOSTS-REGRESSION",
         "type": "FIX",
         "status": "BACKLOG",
@@ -11447,7 +11427,31 @@
         "resolution": "dev-mcp-server RETURNED 2026-07-22 ~17:00Z; full reasoning in docs/agent-memory/decisions/sprint-cron-audit-server-fixes-dev-mcp-server.md. Tracker purpose (mirror the out-of-band server-plane dispatch) fulfilled. Items 1/2/3 are code-complete in commits ac621f648..752d76477 (UNPUSHED, and item 2 is INERT until the image is rebuilt). Spun out by this tick: BLOCK-PUSH-CRON-AUDIT-BATCH-NO-QA (push withheld — PUSH-AUTONOMY-1 cond.(a) QA APPROVE unmet), OPS-REBUILD-MCP-SERVER-OPENSSH (held behind QA), VERIFY-FIX-VPS-SSH-TRIGGER-FAIL-LOUD-REALDATA (blocked on the VPS user gate), FIX-MCP-DOCKERFILE-ENTRYPOINT-KNOWNHOSTS-REGRESSION (accept-new ruling), FIX-CRON-SSCCHECKERJOB-DEAD-87D (new incident). Scope item (5) project-stats cronJobCount is CLOSED: now 88, generator-computed with a MIN_PLAUSIBLE_CRON_COUNT floor guard. Scope item (4) '24 bespoke jobs with zero telemetry' is only PARTLY closed — 3 were genuinely blind and are now wired, 2 were already recorded under a different job_name; the remaining full-fleet coverage is NOT done and is carried by FIX-CRON-SSCCHECKERJOB-DEAD-87D's class-fix clause. The known_unknown on this row therefore still stands for the un-widened remainder."
       }
     ],
-    "done_verified": [],
+    "done_verified": [
+      {
+        "id": "BLOCK-PUSH-CRON-AUDIT-BATCH-NO-QA",
+        "type": "UNBLOCK",
+        "status": "DONE_VERIFIED",
+        "priority": "P1",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "title": "QA review gate for dev-mcp-server cron-audit batch ac621f648..752d76477 (11 commits unpushed) — PUSH-AUTONOMY-1 condition (a) unmet + a disproved security premise to adjudicate",
+        "source": "po/cron-audit-push-deploy-sequencing-20260722",
+        "created_at": "2026-07-22T17:12:55Z",
+        "created_by": "po",
+        "next_agent": "qa",
+        "po_ruling": "PO WITHHELD THE PUSH 2026-07-22T17:12:55Z. PUSH-AUTONOMY-1 (docs/policies/dev-standards.md § Push Policy) gate has THREE conditions. PO RAW-verified each: (a) 'supervised cascade complete — dev commit + QA APPROVE + PO sign-off' => **FAIL**, there was no QA leg at all; dev-mcp-server states plainly 'no supervised QA/PO cascade for this ad-hoc audit dispatch'. (b) 'targeted/merge-gate suite 0 fail' => PASS for the touched surface (see evidence). (c) 'pre-push hook pnpm --filter vn-market check green' => PASS, PO re-ran `bun tsc --noEmit` independently, rc=0, zero diagnostics. One hard FAIL means the gate is not green and the push is not authorized. PUSH-AUTONOMY-1 removes the USER from the loop; it does not remove QA.",
+        "evidence_41_fail_claim": "VERDICT: dev-mcp-server's 'all pre-existing' characterisation is CONFIRMED; its arithmetic is not. PO did not accept the claim — PO ran the FULL suite at BOTH ends in an isolated `git worktree` pinned to base 3509a3974. BASE: 14600 pass / 40 skip / **42** fail / 1205 files. HEAD (752d76477): 14651 pass / 40 skip / **42** fail / 1209 files. (dev-mcp-server had reported 41 fail / 14652 pass — the exact count is not reproducible run-to-run, so no exact-count argument is admissible.) Fail-set diff: 41 of 42 byte-identical; ONE bidirectional swap, both shown to be order-dependent flake, NOT regression — base-only 'SSOT-W1-ZOD-VALIDATOR-CLI invocation-default' reads the live orch-state.json (a worktree artifact); HEAD-only '1288-poll-news-shape.test.ts' PASSES 4/4 in isolation on two consecutive runs. NET NEW REGRESSIONS: ZERO. The change ADDS 4 test files and +51 passing tests. PO additionally A/B'd the highest-risk cluster on its own (tool-REGISTRATION: 081-bun-mcp-server, 1875c-record-signal-outcome-routing, 251-mcp-tools, RAPID-B2-get-market-cap-tool — high-risk precisely because dev-mcp-server changed debugTriggerRoutes.ts + 5 *DebugTriggerTool.ts, the registration surface): 39 pass / 0 fail at BOTH base and HEAD, i.e. those full-suite failures are test POLLUTION reproduced identically with and without the change.",
+        "standing_condition_the_42_failures": "SEPARATE, PRE-EXISTING, NOT THIS BATCH'S FAULT: the mcp-server suite carries 42 order-dependent failures that pass in isolation. This is a test-ISOLATION defect (the repo already ships scripts/ci-per-file-isolation.sh for exactly this). It permanently blocks any literal '0 fail on the full suite' reading of PUSH-AUTONOMY-1 and should be tracked on its own row — it must not keep being re-litigated inside every push decision.",
+        "qa_must_adjudicate": "sshExec.ts StrictHostKeyChecking yes -> accept-new. PO DISPROVED the stated justification — see FIX-MCP-DOCKERFILE-ENTRYPOINT-KNOWNHOSTS-REGRESSION. The code comment asserts the tool 'could never have succeeded for ANY caller since inception'; git says otherwise (commit b741c5634, 1779c, QA-APPROVED 2026-04-30, shipped BOTH openssh-client AND `ENTRYPOINT [\"/entrypoint.sh\"]` which ssh-keyscan-seeds known_hosts). QA should decide whether to land the security relaxation on a premise that is factually wrong.",
+        "acceptance": "QA runs its own RAW verification of the batch, APPROVEs or REJECTs, and records the verdict with a timestamp. On APPROVE: push origin main (serialize; commit WITH pathspecs), RAW-verify CI green on the new head SHA (gate ci_green_on_subsequent_push), then unblock OPS-REBUILD-MCP-SERVER-OPENSSH.",
+        "note": "This is NOT a rejection of the work — the three cron-audit fixes look sound and tsc is clean. It is the missing QA leg of the documented gate, plus one concrete factual defect worth a second pair of eyes before it goes live.",
+        "updated_at": "2026-07-22T17:36:38Z",
+        "qa_verdict": "APPROVED — targeted+cluster tests 189/189 pass, tsc rc=0, DDD/security clean, mock-guard CAUTION-only. accept-new ruling UPHELD (stopgap only, durable fix tracked). See reports/TASK_REPORT_BLOCK-PUSH-CRON-AUDIT-BATCH-NO-QA.md and docs/agent-memory/decisions/sprint-cron-audit-batch-push-gate-qa.md.",
+        "verified_at": "2026-07-22T17:36:38Z",
+        "verified_by": "qa"
+      }
+    ],
     "head": {
       "status": "idle",
       "active_task_id": null,
