@@ -1,0 +1,18 @@
+{
+  "ticker": "SSI",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Securities brokerage, investment banking, margin lending",
+  "customer": "Retail + institutional equity investors",
+  "ops": "PE 14.6x PREMIUM +15% vs sector 12.7x; PB 1.9x PREMIUM +36%; ROE 14.0% above sector median 10.0%; EY_SPREAD 1.85% FAIR",
+  "mgmt": "BCTC data still unavailable (get_bctc_full = 'Chưa có dữ liệu', unchanged, blocked-cluster ticker)",
+  "escalation_status": "NONE",
+  "_processed": {
+    "fingerprint": "3fa5f34fc73ff5ab39e58260f07ffc7c871272e58680b6c371056700ae068294",
+    "processedAt": "2026-07-22T15:15:05Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

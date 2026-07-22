@@ -1,0 +1,40 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "high",
+  "createdAt": "2026-07-22T14:54:33Z",
+  "payload": {
+    "nominal_tick": "14:45",
+    "tick": "2026-07-22T14:45Z",
+    "classification": "ERROR",
+    "reason": "transport_outage",
+    "matched_slots": [],
+    "won_slots": [],
+    "spawned": [],
+    "held_by_other": [],
+    "all_held": false,
+    "silent": false,
+    "drift_min": 4,
+    "errors": [
+      "fire-election claim transport failure: curl exit=28 (10s timeout, 0 bytes); 2 corroborating bounded curl probes also exit=28 across 14:45-14:52Z UTC; gateway https://zenmidi.com/vn-market/mcp HARD-UNREACHABLE; fleet-wide MCP blind"
+    ],
+    "leader_lock": "undefined_transport_error",
+    "pressure_mode": "unknown",
+    "pressure_emitted": false,
+    "gateway_emit_skipped": true,
+    "gateway_release_skipped": true,
+    "transport_status": "hard_unreachable",
+    "probe_count": 3,
+    "spawn_suppressed": true,
+    "spawn_suppressed_reason": "no election lock acquired (transport error) + gateway dead — any spawned agent would fail every call_tool",
+    "escalation": "folded into cowork-20260721T232634Z-a30-mcp-oom-escalate (sev HIGH->CRITICAL) via local orch-apply — gateway/telegram unavailable, signal_queue is only working channel; root cause UNCONFIRMED (OOM vs tunnel vs host), ops advised to check both",
+    "calendar_status": "unknown"
+  },
+  "_processed": {
+    "fingerprint": "829d6cb50dd9cc28515cf4d6ecfa3d52aaaf869d5970cfa188e44ae815d907c8",
+    "processedAt": "2026-07-22T14:57:56Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "ticker": "KBC",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Industrial park development, leasing, real estate (Kinh Bắc City)",
+  "customer": "FDI manufacturers leasing industrial land/factories, residential buyers",
+  "ops": "PE 13.8x DISCOUNT -29% vs sector 19.3x; PB 1.3x in-line; ROE 9.7% above sector median 6.3%; EY_SPREAD 2.25% FAIR",
+  "mgmt": "BCTC data still unavailable (get_bctc_full = 'Chưa có dữ liệu', unchanged, blocked-cluster ticker); Chairman tax-penalty administrative decision unresolved since 2026-07-19/07-20 (regulatory overhang, get_recent_fixes stale since 05-12 — no dev-team fix landed)",
+  "escalation_status": "NONE",
+  "_processed": {
+    "fingerprint": "c13f556cb6550920a05a43b7efb61f2b847adf4bc78b968c840f260ac70eeea7",
+    "processedAt": "2026-07-22T15:15:05Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

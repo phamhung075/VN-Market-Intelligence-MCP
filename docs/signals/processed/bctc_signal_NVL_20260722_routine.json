@@ -1,0 +1,18 @@
+{
+  "ticker": "NVL",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Residential real estate development",
+  "customer": "Homebuyers, project investors",
+  "ops": "PE 19.3x PREMIUM +20% vs sector 16.1x; PB 0.8x DISCOUNT -36%; ROE 4.2% below sector median 7.3%; EY_SPREAD 0.18% EXPENSIVE",
+  "mgmt": "BCTC data still unavailable (get_bctc_full = 'Chưa có dữ liệu', unchanged, blocked-cluster ticker); ongoing restructuring overhang",
+  "escalation_status": "NONE",
+  "_processed": {
+    "fingerprint": "9fc656290b7da3559f12461f2fb6fb580e283b23596ba78f55f80f9364aca0f9",
+    "processedAt": "2026-07-22T15:15:05Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
