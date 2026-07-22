@@ -11093,21 +11093,6 @@
         "instance_9_closed": "architect 2026-07-21T22:35:20Z — instance 9's REMEDY has shipped (UNBLOCK-DEVTEAM-DISPATCH-GATE-STAGING-DEADLOCK): WIP gate formula corrected to in_progress-length-only across BOUNDED-1/SLS. Per PO ruling, folded here as this SPIKE's secondary sweep DoD. Architect ran a BOUNDED secondary check (grep for multi-lane additive (X|length)+(Y|length) firing-gate patterns and small-threshold single-lane gates across docs/agents/*/flow/*.md + scripts/*.jq + scripts/*.sh) and found ZERO other live instances of this exact defect shape beyond the one this UNBLOCK fixed — the other 2 additive-sum hits found (scripts/orch-cold-evict.sh, scripts/po-s65-error-audit-3wave-mint-dispatch.jq) are REPORTING counters, not firing gates, so out of this class. This bounded check does NOT satisfy this SPIKE's full acceptance criterion (a comprehensive findings doc enumerating EVERY count-threshold predicate in the codebase with file:line/floor/ceiling/verdict, including HEALTHY gates) — that broader deliverable remains OPEN for whoever picks up this row next (it is otherwise unsupervised/unblocked and BOUNDED-1-eligible now that its own firing gate works). Instance 9 is CLOSED for triage purposes — it must not be re-surfaced as an open observation on future ticks (mirrors the instance-8 closure convention above)."
       },
       {
-        "id": "DESIGN-COWORK-FANOUT-T6-MARKET-WATCHER-SLOT-ROUTING",
-        "type": "TASK",
-        "title": "market-watcher main.md: derive sub-flow from slot= parameter, fall back to wall-clock window table for ad-hoc invocation",
-        "zone": "docs/agents/market-watcher/",
-        "size": "M",
-        "priority": "P1",
-        "status": "READY",
-        "created_at": "2026-07-21T18:30:00Z",
-        "depends": [],
-        "note": "Root-cause fix for R3: late-firing market-watcher-eod loses eod.md deliverable. Design brief §5. PO sequencing: T6 ships first — market-facing DATA LOSS not latency.",
-        "updated_at": "2026-07-21T18:36:43Z",
-        "owner": "agent-father",
-        "next_agent": "agent-father"
-      },
-      {
         "id": "DESIGN-COWORK-FANOUT-T1-TICK-SNAPSHOT-WON-SLOTS",
         "type": "TASK",
         "title": "tick-snapshot.md Step 4.7: capture won_slots array at dispatch time",
@@ -11181,10 +11166,11 @@
         "created_at": "2026-07-21T18:30:00Z",
         "depends": [
           "DESIGN-COWORK-FANOUT-T2-CYCLE-BOOTSTRAP-EXTRACTION",
-          "DESIGN-COWORK-FANOUT-T3-ALERT-COMMANDER-SCHEDULE-TASK-GRANT"
+          "DESIGN-COWORK-FANOUT-T3-ALERT-COMMANDER-SCHEDULE-TASK-GRANT",
+          "DESIGN-COWORK-FANOUT-T5-COWORK-SCHEDULE-CONFIG"
         ],
         "note": "Parse slot=/recheck= params, call schedule_task on empty bus with co-producers. Design brief §4.3. Tier 2b after T2, T3.",
-        "updated_at": "2026-07-21T18:36:43Z",
+        "updated_at": "2026-07-22T01:52:02Z",
         "owner": "agent-father",
         "next_agent": "agent-father"
       },
@@ -11217,11 +11203,13 @@
         "depends": [
           "DESIGN-COWORK-FANOUT-T1-TICK-SNAPSHOT-WON-SLOTS",
           "DESIGN-COWORK-FANOUT-T2-CYCLE-BOOTSTRAP-EXTRACTION",
+          "DESIGN-COWORK-FANOUT-T3-ALERT-COMMANDER-SCHEDULE-TASK-GRANT",
           "DESIGN-COWORK-FANOUT-T4-ALERT-COMMANDER-RECHECK-LOGIC",
+          "DESIGN-COWORK-FANOUT-T5-COWORK-SCHEDULE-CONFIG",
           "DESIGN-COWORK-FANOUT-T6-MARKET-WATCHER-SLOT-ROUTING"
         ],
         "note": "QA: 9-point test strategy from brief §7. Tier 4 after T1, T2, T4, T6.",
-        "updated_at": "2026-07-21T18:32:22Z",
+        "updated_at": "2026-07-22T01:52:02Z",
         "owner": "qa",
         "next_agent": "qa"
       },
@@ -12689,6 +12677,21 @@
           "at": "2026-07-22T00:49:21Z",
           "note": "Architect ruling (8843b099d) reviewed + endorsed: FR-5 board-flip BUNDLED into FR-4 via shared scripts/agents-flow/resolve-task-lane-by-id.jq; backlog+BLOCKED=TERMINAL; I10 batching = hard precondition of the fix_spec(b)/AC2 successor (2 extra unbound owner_client_session sites confirmed at execute-tier.md:64 + fail-loud-protocol.md:71). po_ruling.q1=B stands. Closure of THIS P0 remains HARD-GATED on the fix_spec(b)/AC2 successor row existing on the board (anti-silent-drop)."
         }
+      },
+      {
+        "id": "DESIGN-COWORK-FANOUT-T6-MARKET-WATCHER-SLOT-ROUTING",
+        "type": "TASK",
+        "title": "market-watcher main.md: derive sub-flow from slot= parameter, fall back to wall-clock window table for ad-hoc invocation",
+        "zone": "docs/agents/market-watcher/",
+        "size": "M",
+        "priority": "P1",
+        "status": "IN_PROGRESS",
+        "created_at": "2026-07-21T18:30:00Z",
+        "depends": [],
+        "note": "Root-cause fix for R3: late-firing market-watcher-eod loses eod.md deliverable. Design brief §5. PO sequencing: T6 ships first — market-facing DATA LOSS not latency.",
+        "updated_at": "2026-07-22T01:52:02Z",
+        "owner": "agent-father",
+        "next_agent": "agent-father"
       }
     ]
   },
