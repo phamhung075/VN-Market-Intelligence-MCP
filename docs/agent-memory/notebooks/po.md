@@ -1,27 +1,20 @@
 # PO Notebook
 
-_Last: 2026-07-22T17:25Z (cron-audit push/deploy sequencing — push WITHHELD, 5 rows minted, WIP held at 2)_
+_Last: 2026-07-22T17:56Z (dev-team :37 triage — ci_red dedup+escalate, 0 mint, WIP held 2/2)_
 
-## Tick 2026-07-22T17:01–17:25Z — dev-mcp-server RETURN: push gate, rebuild, accept-new ruling
+## Tick 2026-07-22T17:37–17:56Z — Step-1 triage: ci_red bun-test RED on main
 
-**PUSH WITHHELD.** PUSH-AUTONOMY-1 is a 3-way AND; I RAW-verified each instead of trusting the summary:
-(a) supervised cascade dev+**QA**+PO → **FAIL**, no QA leg ever ran; (b) targeted/merge-gate suite 0 fail → PASS; (c) `bun tsc --noEmit` → PASS, re-run myself, rc=0. One hard fail ⇒ gate not green. PUSH-AUTONOMY-1 removed the USER from the loop, not QA. 12 commits sit unpushed. → `BLOCK-PUSH-CRON-AUDIT-BATCH-NO-QA`, head.next_agent=qa.
+**DRIVER ci_red** (CI GREEN→RED flip, HEAD 8a0b079b1, run 29943451339, job `bun test`). Grep-board FIRST → exact-cause row already present: `FIX-MCP-TEST-SUITE-INTERVAL-TIMER-LEAK-TEARDOWN` (was P3/backlog, 07-15). Deduped onto it — **0 new mint, conservation 615=615**.
 
-**Tested the load-bearing "41 pre-existing" claim rather than accepting it.** Full suite at BOTH ends of an isolated worktree pinned to base `3509a3974`: BASE 14600 pass/42 fail/1205 files · HEAD 14651 pass/**42** fail/1209 files (dev-mcp-server said 41 — not reproducible, so no exact-count argument is admissible). Fail sets 41/42 identical; the 1 swap is bidirectional flake. Also A/B'd the highest-risk cluster on its own — tool-REGISTRATION tests, risky because the change touched `debugTriggerRoutes.ts` + 5 `*DebugTriggerTool.ts` — 39 pass/0 fail at BOTH. **Zero net new regressions.** Characterisation confirmed, arithmetic not.
+**Escalated in-place P3→P1 + backlog→ready + plan_only=false.** The row's own impact said "CI UNAFFECTED (CI completes green)" — now **FALSIFIED**. Actively RED on main breaks the fleet-wide `ci_green_on_subsequent_push` gate for ALL mcp-server work + masks new reds ⇒ UNBLOCK-class, no longer latent. Recorded fingerprint `f95c826a` on the row (memory: ci_red close must record fingerprint else re-drain).
 
-**accept-new RULING — premise disproved.** `sshExec.ts` justifies yes→`accept-new` with "could never have succeeded for ANY caller since inception". Git disagrees: `b741c5634` (task-1779c, **QA APPROVED**, 04-30) shipped `openssh-client` AND `ENTRYPOINT ["/entrypoint.sh"]` (ssh-keyscan seeds known_hosts at boot). `6165aa3b4` "rebase Dockerfiles Debian→Ubuntu" silently deleted both, unmentioned. `entrypoint.sh` is still tracked+clean but referenced by NOTHING — dead code ~2.5 months. It worked at inception; a rebase reverted it. Ruling: `accept-new` = stopgap only; durable fix is un-reverting the QA-approved wiring, NOT new hardening. Rejected router's build-time keyscan (couples image build to a VPS that is unreachable *right now*). Rejected verbatim restore (`set -e`+`exit 1` on keyscan fail would turn a VPS outage into total mcp-server death — all 88 crons). Also: `accept-new`'s "still rejects a CHANGED key" is near-illusory here — nothing mounts `/root/.ssh`, so known_hosts is ephemeral ⇒ TOFU on EVERY recreate, not once.
+**Did NOT mint a batch-regression row.** Flip is temporally tied to the cron-audit batch merged between prior-GREEN 5a7a464a9 and RED 8a0b079b1 (b3317f7f3 watchdog-widen adds setInterval; ac621f648; schedulerWatchdogJob.ts). BUT po 17:25Z already A/B'd that exact batch locally: BASE 42 fail = HEAD 42 fail, **zero net-new regressions** ⇒ any CI red is CI-ENV-specific → speculative to mint. Attached a disambiguation directive to the row: pull CI log run 29943451339/job 89002842796 FIRST; leading hypothesis = pre-existing timer-leak now times out ON CI (CI historically green on this suite ⇒ new CI-side hang). Flagged 8a0b079b1's "CI green confirmed" commit as probable subset false-green (verify raw, not badges).
 
-**Rebuild HELD, not dispatched (deviation).** Deploying 17 un-reviewed files whose one new capability (SSH) is unreachable anyway buys nothing today and restarts the 88-cron container. Refusing the push while deploying the same code is incoherent. Next Sunday window 07-26 ⇒ slack. Also: I have no spawn tool — handoff is via head.
-
-**Rows minted (5, all → backlog; WIP untouched at 2/2):** `BLOCK-PUSH-CRON-AUDIT-BATCH-NO-QA` · `OPS-REBUILD-MCP-SERVER-OPENSSH` (blocked on QA; baseline image `sha256:c5a2c0f7…` + the 3 hard constraints recorded) · `VERIFY-FIX-VPS-SSH-TRIGGER-FAIL-LOUD-REALDATA` (blocked on the SAME user gate as FIX-VPS-SYSTEMD-STARTLIMIT-HARDENING, with a loud `do_not_misread`: a timeout before the gate clears is NOT evidence the fix is wrong) · `FIX-MCP-DOCKERFILE-ENTRYPOINT-KNOWNHOSTS-REGRESSION` · `FIX-CRON-SSCCHECKERJOB-DEAD-87D`.
-Closed `TRACK-CRON-AUDIT-SERVER-PLANE`→DONE. Updated existing `FIX-MCP-SUITE-HEALTH-BASELINE` (grep-first found it; baseline drifted 40→42) instead of minting a dup.
-
-**sscCheckerJob**: corroborated independently — absent entirely from live `get_cron_health` 7d (80 jobs listed); admissible because it DOES call `recordJobRun`. Shared failure mode = **name-binding gap** (`job_name` ≠ CRONS key ⇒ dies unalarmed), patched for 2 known cases across two hand-maintained maps that had already drifted; row carries the class-fix. `dataAuditJob:weekly` may be a 2nd live-dead job — flagged verify-before-assuming.
+**Secondaries — all known, 0 re-mint:** cowork-team signal = dispatcher telemetry heartbeat (already drained/pruned), disposed. 20 telegram + 121 unresolved = 07-20 bctc reconcile flood + VPS data-bridge cluster (FIX-VPS-SYSTEMD-STARTLIMIT-HARDENING minted 07-22 + user-escalated) + auditor health/memory FP classes + mcp OOM→restart (OPS-REBUILD unblocked 8a0b079b1) — all map to existing rows. signal_queue 0 NEW. git branch clean (no CLEAN row). GOLANGCI row (P2, different job) NOT conflated.
 
 ## Carry-over
-- **WIP=2/2** (DESIGN-COWORK-FANOUT pm + FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD). Nothing promoted this tick — correctly held, not forced.
-- Next hop **qa** (head set). Chain: QA APPROVE → push → CI green → unblock ops rebuild → (after VPS gate) real-data verify.
-- P0 HOL row `FIX-BCTC-PENDING-REFINE-HEAD-OF-LINE-FAILED-ROW` still starving behind WIP — carried from the 17:22Z peer tick, still the only ready P0 burning a prod slot daily.
-- **Concurrent-peer hazard hit twice:** peer po tick wrote this notebook at 17:22Z uncommitted (nearly destroyed by my overwrite), and its commit `8f1bb3074` then swept my orch-state rows under ITS message. Data safe both times, attribution wrong once. Verified my rows/head/TRACK are committed before proceeding.
-- 42-fail suite baseline is a STANDING red that makes any literal full-suite "0 fail" reading of the push gate permanently unsatisfiable — gate text actually says "targeted/merge-gate suite". Worth pinning that reading in dev-standards.
-- No push (my own ruling); no ops dispatch (held).
+- **Returned BATCH([1 FIX])**: FIX-MCP-TEST-SUITE-INTERVAL-TIMER-LEAK-TEARDOWN (ready/P1, zone apps/mcp-server/, next_agent dev-mcp-server) → Step 3 direct FIX.
+- **WIP=2/2** unchanged (DESIGN-COWORK-FANOUT pm + FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD) — nothing promoted; escalation is a ready P1 for pickup, not an in_progress force.
+- P0 HOL `FIX-BCTC-PENDING-REFINE-HEAD-OF-LINE-FAILED-ROW` still starving behind WIP (carried).
+- 12 unpushed commits from prior tick still awaiting QA leg (BLOCK-PUSH-CRON-AUDIT-BATCH-NO-QA) — CI red now CORROBORATES that withholding the push was correct.
+- Left orch-state + po.md + journal dirty for router tick-close commit. NO git push (my ruling).

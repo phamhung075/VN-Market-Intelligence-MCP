@@ -473,3 +473,14 @@
 - alert-commander selloff-blind: ruled (a)-hybrid (add distinct selloff-breadth trigger; keep stopLossHit by-design) not (b)/(c) -> minted FIX-ALERTCMD-SELLOFF-BREADTH-SILENT
 **why-decision:** recon delivered exact-diff fixes -> capturing at backlog is required disposition (else P1 findings silently lost); WIP 2/2 saturated so all land BACKLOG, zero dispatched.
 **why-change:** no change from plan — WIP-saturated triage-only tick.
+
+### STEP po-S7 · po · 2026-07-22T17:56Z
+**task-id:** FIX-MCP-TEST-SUITE-INTERVAL-TIMER-LEAK-TEARDOWN
+**what-done:** Deduped ci_red (bun-test RED on main HEAD 8a0b079b1, run 29943451339) onto the existing timer-leak row; recorded fingerprint f95c826a; escalated P3->P1 + promoted backlog->ready + plan_only=false; corrected the row's now-FALSIFIED "CI UNAFFECTED (CI completes green)" impact. 0 new mint, conservation 615=615.
+**what-considered:**
+- Mint a NEW ci_red FIX row — REJECTED: same job (bun test) + same suite; grep-board found the exact-cause row (dedup_key ci_red:8a0b079b1:bun test not previously on board); router conservation directive (hold task_total).
+- Mint a batch-regression row for the just-merged cron-audit batch — REJECTED: po 17:25Z already A/B'd this exact batch in an isolated worktree (BASE 42 fail vs HEAD 42 fail = ZERO net-new regressions LOCALLY); any CI red is CI-ENV-specific, not a reproducible local regression → a fresh row would be speculative.
+- Leave at P3 in backlog (latent) — REJECTED: premise changed. Actively RED on main breaks the fleet-wide ci_green_on_subsequent_push verification gate for ALL apps/mcp-server work + masks new genuine reds → UNBLOCK-class urgency.
+- Conflate with FIX-CI-GOLANGCI-CONFIG-VERIFY (P2) — REJECTED: different job (golangci config-verify), not this bun-test red.
+**why-decision:** Convergence over churn — dedup + escalate + record-fingerprint resolves the red without adding a row to an already-bloated 439-backlog; the falsified "CI UNAFFECTED" premise + fleet-gate breakage justify P1/ready; fingerprint recorded so a re-drain of the same red self-suppresses (memory: ci_red close must record fingerprint else re-drain).
+**why-change:** Kept router's suggested dedup target; ADDED a disambiguation directive to the row (pull the actual CI log run 29943451339/job 89002842796 FIRST; timer-leak-timeout-on-CI is the leading hypothesis given watchdog-widen b3317f7f3 added intervals + CI historically green on this suite; batch-regression would be CI-env-only since local A/B was clean) — prevents the fix agent re-running a 2x full-suite local A/B the PO already did. Also flagged 8a0b079b1's "CI green confirmed" commit msg as a probable subset false-green (verify raw not badges).

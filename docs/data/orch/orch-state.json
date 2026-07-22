@@ -8796,37 +8796,6 @@
         "po_decision": "prioritized@P3 (2026-07-15, ALPHA-S2-FF epic-close follow-up): KEPT as tracked debt-reduction. Both intraday5mCompactorJob.ts and intradayForeignFlow5mCompactorJob.ts now exist, so the 5-min bucketing logic is genuinely duplicated -> extracting bucketBy5Min<T>(rows, tsField) removes real drift risk. XS, low-risk, no functional impact -> P3 (architecture/DRY tier). NOT dropped."
       },
       {
-        "id": "FIX-MCP-TEST-SUITE-INTERVAL-TIMER-LEAK-TEARDOWN",
-        "type": "FIX",
-        "title": "Full `bun test` suite in apps/mcp-server does not settle — sla-monitor/reaper setInterval timers leak (no unref/clearInterval afterAll); hangs ~test22 034-telegram-notifier.test.ts",
-        "status": "BACKLOG",
-        "priority": "P3",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "owner": "developer",
-        "next_agent": "dev-mcp-server",
-        "sprint": "TEST-HYGIENE",
-        "plan_only": true,
-        "supervised": false,
-        "created_at": "2026-07-15T00:45:33Z",
-        "created_by": "po (ALPHA-S2-FF epic-close follow-up intake; PLAN-ONLY, WIP=0)",
-        "root_cause": "Tests arm setInterval-style background timers (sla-monitor periodic seed-check + reaper 'periodic reaper armed') that are never unref'd / clearInterval'd in an afterAll teardown. The leaked intervals flood the log ('[sla-monitor] ... not seeded yet (age=-1)', '[reaper] periodic reaper armed') and keep the Bun event loop alive, so the full-suite `bun test` never settles.",
-        "symptom": "Hangs ~test 22 in 034-telegram-notifier.test.ts. One run reached a full summary (14599 pass / 65 fail / 4 err / 14704 total, 605s) then Bun v1.3.13 panicked in post-run shutdown (known upstream instability that fires AFTER results print); a second run hung indefinitely and had to be killed.",
-        "impact": "Impairs LOCAL full-suite verification for ALL apps/mcp-server dev work. CI UNAFFECTED (CI completes green). UNRELATED to ALPHA-S2-FOREIGN-FLOW-WRITE-RACE (its targeted + additive-regression tests are 100% green; CI green 4491a1f2e).",
-        "acceptance": [
-          "AC1: Every test arming an sla-monitor / reaper (or any setInterval-style) background timer clears it via clearInterval + .unref() in an afterAll teardown (or the timer is .unref'd at creation so it never holds the event loop open).",
-          "AC2: Two consecutive full-suite `bun test` runs in apps/mcp-server each reach a summary and exit cleanly — no indefinite hang at ~test22 034-telegram-notifier, no leaked-timer-attributable post-run panic.",
-          "AC3: No '[sla-monitor] ... not seeded yet (age=-1)' / '[reaper] periodic reaper armed' flood after the owning test's teardown."
-        ],
-        "files_hint": "apps/mcp-server test setup/teardown for sla-monitor + reaper timers; 034-telegram-notifier.test.ts (symptom surfacing site, not necessarily the root); shared test bootstrap / afterAll hooks.",
-        "verification_gate": "Two consecutive clean full-suite `bun test` runs in apps/mcp-server that each reach a summary and exit 0 with no leaked-timer hang.",
-        "context_refs": [
-          "reports/TASK_REPORT_ALPHA-S2-FOREIGN-FLOW-WRITE-RACE.md (qa nonblocking_findings)",
-          "orch-state head.next_action + ALPHA-S2-FF done_verified close notes"
-        ],
-        "note": "PLAN-ONLY intake at ALPHA-S2-FF epic close (WIP=0, head idle). Pre-existing background timer leak, NOT introduced by ALPHA-S2-FF. Bun v1.3.13 post-run panic is a separate known upstream instability surfacing AFTER results print — the leaked interval timers are the actionable root cause."
-      },
-      {
         "id": "FIX-BCTC-Q1-2026-STORED-PDF-INGEST-STALL-15T",
         "title": "15 watchlist tickers have Q1-2026 BCTC PDFs stored on VPS (06-07..06-13) but earnings-calendar shows QUA HAN + get_bctc_full empty — stored-PDF ingest/reconcile never ran (partial stall, distinct from refine-dispatch dormancy)",
         "owner": "ops",
@@ -11435,6 +11404,50 @@
       "updated_by": "po/cron-audit-push-deploy-sequencing-20260722"
     },
     "ready": [
+      {
+        "id": "FIX-MCP-TEST-SUITE-INTERVAL-TIMER-LEAK-TEARDOWN",
+        "type": "FIX",
+        "title": "Full `bun test` suite in apps/mcp-server does not settle — sla-monitor/reaper setInterval timers leak (no unref/clearInterval afterAll); hangs ~test22 034-telegram-notifier.test.ts",
+        "status": "READY",
+        "priority": "P1",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "owner": "developer",
+        "next_agent": "dev-mcp-server",
+        "sprint": "TEST-HYGIENE",
+        "plan_only": false,
+        "supervised": false,
+        "created_at": "2026-07-15T00:45:33Z",
+        "created_by": "po (ALPHA-S2-FF epic-close follow-up intake; PLAN-ONLY, WIP=0)",
+        "root_cause": "Tests arm setInterval-style background timers (sla-monitor periodic seed-check + reaper 'periodic reaper armed') that are never unref'd / clearInterval'd in an afterAll teardown. The leaked intervals flood the log ('[sla-monitor] ... not seeded yet (age=-1)', '[reaper] periodic reaper armed') and keep the Bun event loop alive, so the full-suite `bun test` never settles.",
+        "symptom": "Hangs ~test 22 in 034-telegram-notifier.test.ts. One run reached a full summary (14599 pass / 65 fail / 4 err / 14704 total, 605s) then Bun v1.3.13 panicked in post-run shutdown (known upstream instability that fires AFTER results print); a second run hung indefinitely and had to be killed.",
+        "impact": "NOW ACTIVELY RED ON MAIN. bun-test CI job failed on HEAD 8a0b079b1 (run 29943451339). PRIOR PREMISE 'CI UNAFFECTED (CI completes green)' IS FALSIFIED. Blocks the fleet-wide ci_green_on_subsequent_push verification gate for ALL apps/mcp-server work and masks any new genuine red. Also impairs LOCAL full-suite verification (original scope).",
+        "acceptance": [
+          "AC1: Every test arming an sla-monitor / reaper (or any setInterval-style) background timer clears it via clearInterval + .unref() in an afterAll teardown (or the timer is .unref'd at creation so it never holds the event loop open).",
+          "AC2: Two consecutive full-suite `bun test` runs in apps/mcp-server each reach a summary and exit cleanly — no indefinite hang at ~test22 034-telegram-notifier, no leaked-timer-attributable post-run panic.",
+          "AC3: No '[sla-monitor] ... not seeded yet (age=-1)' / '[reaper] periodic reaper armed' flood after the owning test's teardown."
+        ],
+        "files_hint": "apps/mcp-server test setup/teardown for sla-monitor + reaper timers; 034-telegram-notifier.test.ts (symptom surfacing site, not necessarily the root); shared test bootstrap / afterAll hooks.",
+        "verification_gate": "Two consecutive clean full-suite `bun test` runs in apps/mcp-server that each reach a summary and exit 0 with no leaked-timer hang.",
+        "context_refs": [
+          "reports/TASK_REPORT_ALPHA-S2-FOREIGN-FLOW-WRITE-RACE.md (qa nonblocking_findings)",
+          "orch-state head.next_action + ALPHA-S2-FF done_verified close notes"
+        ],
+        "note": "PLAN-ONLY intake at ALPHA-S2-FF epic close (WIP=0, head idle). Pre-existing background timer leak, NOT introduced by ALPHA-S2-FF. Bun v1.3.13 post-run panic is a separate known upstream instability surfacing AFTER results print — the leaked interval timers are the actionable root cause.",
+        "updated_at": "2026-07-22T17:56:19Z",
+        "updated_by": "po (ci_red dedup+escalate P3->P1; actively RED on main falsifies prior 'CI UNAFFECTED' premise)",
+        "ci_red_observed": {
+          "fingerprint": "f95c826a982244d42b5124091c6ba41b2d9bef1ed13ef75bbbc4d467a766224f",
+          "dedup_key": "ci_red:8a0b079b1a9b5d4bf59230d14f977c507ae8d32b:bun test",
+          "head_sha": "8a0b079b1a9b5d4bf59230d14f977c507ae8d32b",
+          "run_id": 29943451339,
+          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/29943451339",
+          "failing_job": "bun test (jobId 89002842796)",
+          "observed_at": "2026-07-22T17:45:10Z",
+          "from": "ci-health-probe",
+          "disambiguation_required": "Fix MUST FIRST pull the actual CI failure log (run 29943451339 / job 89002842796). Do NOT re-run a local full-suite A/B first — po 17:25Z already ran one on THIS exact cron-audit batch (isolated worktree pinned to base 3509a3974): BASE 14600 pass/42 fail vs HEAD 14651 pass/42 fail = ZERO net-new regressions locally. So any batch-attributable CI red is CI-ENVIRONMENT-SPECIFIC (not reproduced locally). LEADING HYPOTHESIS = this row's own root cause: the pre-existing sla-monitor/reaper setInterval leak now times out ON CI because the batch merged between prior-GREEN 5a7a464a9 and RED 8a0b079b1 added never-unref'd intervals (b3317f7f3 watchdog-widen 16->25 jobs; ac621f648 Sunday node-cron; schedulerWatchdogJob.ts). CI was historically green on this suite (the 42 LOCAL fails do not reproduce on CI), so the flip is a NEW CI-side hang/timeout — consistent with this row. ALT: a new cron/watchdog test that fails only in the CI env. Commit 8a0b079b1 msg 'CI green confirmed' contradicts this bun-test red = subset false-green in the push gate (verify raw, not badges). Related standing red: FIX-MCP-SUITE-HEALTH-BASELINE (42 local fails)."
+        }
+      },
       {
         "id": "CCATO-MCP-T1-DOMAIN-ENGINE",
         "type": "IMPL-XS",
