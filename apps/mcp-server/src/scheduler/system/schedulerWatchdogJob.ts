@@ -109,6 +109,17 @@ export const ALERT_COOLDOWN_MS = 7_200_000
 //   summaryJob:daily           summaryJobs.ts L58      recordJobRun(db, `summaryJob:${periodType}`)
 // ─────────────────────────────────────────────────────────────────────────────
 
+// FIX-CRON-WATCHDOG-COVERAGE-2026-07-22: 9 new entries closing the exact gap a
+// cron audit found (item 1: 4 Sunday jobs missing 3 consecutive weeks went
+// undetected because NONE were in this manifest; item 3 RELATED GAP: 3 bespoke
+// jobs had zero cron_job_runs telemetry at all, so no manifest entry could ever
+// have worked for them regardless — see FIX-CRON-WATCHDOG-COVERAGE-BESPOKE-
+// TELEMETRY in schedulerJobTable.ts for the telemetry wiring). Two more
+// (sscCheckerJob, dataAuditJob:weekly) already HAD real telemetry but under a
+// job_name that differs from the CRONS config-key name an auditor might guess
+// (sscCheck -> 'sscCheckerJob', dataAuditWeekly -> 'dataAuditJob:weekly') —
+// RAW-verified against live cron_job_runs before adding, exactly the
+// key-name-drift class WD-10/WD-11 exist to guard against.
 export const CANONICAL_WATCHDOG_JOB_NAMES: readonly string[] = [
   'ohlcv-daily-aggregator',       // startScheduler.ts wrapRun L631
   'vnstockFundamentalsRefresh',   // vnstockFundamentalsJob.ts JOB_NAME_FUNDAMENTALS
@@ -126,6 +137,16 @@ export const CANONICAL_WATCHDOG_JOB_NAMES: readonly string[] = [
   'ta-ohlcv-backfill',            // startScheduler.ts wrapRun L664
   'accuracyDigestJob',            // startScheduler.ts wrapRun L1004
   'summaryJob:daily',             // summaryJobs.ts recordJobRun L58
+  // ── FIX-CRON-WATCHDOG-COVERAGE-2026-07-22 additions ──────────────────────
+  'integrityCheckJob',            // schedulerJobTable.ts JOB_TABLE name: field (buildJobTable)
+  'bondMaturityPollerJob',        // schedulerJobTable.ts JOB_TABLE name: field (buildJobTable)
+  'devTeamHeartbeatJob',          // schedulerJobTable.ts JOB_TABLE name: field (buildJobTable)
+  'predictionOutcomeJob',         // schedulerJobTable.ts JOB_TABLE name: field (buildJobTable)
+  'sscCheckerJob',                // sscCheckerJob.ts recordJobRun (was CRONS key 'sscCheck' — job_name differs)
+  'dataAuditJob:weekly',          // startupHelpers.ts runWeeklyAuditWithDb -> recordJobRun (was CRONS key 'dataAuditWeekly')
+  'signalOutcomeJob',             // schedulerJobTable.ts wrapRun (FIX-CRON-WATCHDOG-COVERAGE-BESPOKE-TELEMETRY, new)
+  'alertOutcomeJob',              // schedulerJobTable.ts wrapRun (FIX-CRON-WATCHDOG-COVERAGE-BESPOKE-TELEMETRY, new)
+  'signalOutcomeResolutionJob',   // schedulerJobTable.ts wrapRun (FIX-CRON-WATCHDOG-COVERAGE-BESPOKE-TELEMETRY, new)
 ] as const
 
 export const WATCHDOG_MANIFEST: WatchdogManifest = {
@@ -217,6 +238,74 @@ export const WATCHDOG_MANIFEST: WatchdogManifest = {
     action: 'alert-only',
   },
   'summaryJob:daily': {
+    cadenceMs: 86_400_000,
+    thresholdMultiplier: 1.5,
+    action: 'alert-only',
+  },
+  // ── FIX-CRON-WATCHDOG-COVERAGE-2026-07-22: closes the gap item 1 evidenced ──
+  // Weekly Sunday jobs — 1.2× (not 1.5×) threshold: these 4 now also have a
+  // startup-catchup probe (FIX-CRON-SUNDAY-STARTUP-CATCHUP), so a genuine
+  // 2-consecutive-Sunday miss (the failure mode that went undetected for 3
+  // weeks) should alert before drifting into a 3rd, rather than waiting the
+  // full 1.5× (10.5 days) a fresh weekly job would warrant.
+  integrityCheckJob: {
+    cadenceMs: 604_800_000,
+    thresholdMultiplier: 1.2,
+    action: 'alert-only',
+  },
+  bondMaturityPollerJob: {
+    cadenceMs: 604_800_000,
+    thresholdMultiplier: 1.2,
+    action: 'alert-only',
+  },
+  devTeamHeartbeatJob: {
+    cadenceMs: 604_800_000,
+    thresholdMultiplier: 1.2,
+    action: 'alert-only',
+  },
+  predictionOutcomeJob: {
+    cadenceMs: 604_800_000,
+    thresholdMultiplier: 1.2,
+    action: 'alert-only',
+  },
+  // Daily job — RAW-verified live 2026-07-22: last recorded run 2026-04-26 (~87
+  // days stale at time of this fix). Pre-existing incident this manifest
+  // addition is EXPECTED to surface immediately on next watchdog tick — not a
+  // bug in this fix. Root cause of the staleness itself is a separate,
+  // out-of-scope investigation (flagged to PO, not chased here).
+  sscCheckerJob: {
+    cadenceMs: 86_400_000,
+    thresholdMultiplier: 1.5,
+    action: 'alert-only',
+  },
+  // Weekly job (Sunday 01:00 UTC) — job_name is 'dataAuditJob:weekly', NOT the
+  // CRONS config key 'dataAuditWeekly' (runWeeklyAuditWithDb -> recordJobRun).
+  'dataAuditJob:weekly': {
+    cadenceMs: 604_800_000,
+    thresholdMultiplier: 1.3,
+    action: 'alert-only',
+  },
+  // Newly-telemetered bespoke jobs (FIX-CRON-WATCHDOG-COVERAGE-BESPOKE-TELEMETRY
+  // in schedulerJobTable.ts) — weekdays-only in reality (Mon-Fri crons) but the
+  // manifest's flat cadenceMs×multiplier model has no weekday-aware mode yet
+  // (same known limitation already flagged on morningBriefingJob/eveningSummaryJob/
+  // franceSummaryJob above); 1.5× daily is a conservative floor that will not
+  // false-fire mid-week and tolerates a single weekend gap.
+  signalOutcomeJob: {
+    cadenceMs: 86_400_000,
+    thresholdMultiplier: 1.5,
+    action: 'alert-only',
+  },
+  alertOutcomeJob: {
+    cadenceMs: 86_400_000,
+    thresholdMultiplier: 1.5,
+    action: 'alert-only',
+  },
+  signalOutcomeResolutionJob: {
+    // Hourly cron, but its own T+24h/T+48h resolution horizon means a missed
+    // hourly tick is low-urgency; daily-equivalent threshold avoids alert noise
+    // from routine short gaps (deploys, restarts) while still catching a
+    // genuine multi-day silent death.
     cadenceMs: 86_400_000,
     thresholdMultiplier: 1.5,
     action: 'alert-only',

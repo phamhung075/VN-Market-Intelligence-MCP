@@ -688,6 +688,15 @@ describe('ARCH-CRON-watchdog — WD-11: call-site derived integrity — every ma
         label: 'vnstockFundamentalsJob.ts',
         path: resolve(testsDir, '../scheduler/financial-reports/vnstockFundamentalsJob.ts'),
       },
+      {
+        // FIX-CRON-WATCHDOG-COVERAGE-2026-07-22: sscCheckerJob's recordJobRun call
+        // site lives inside its own job module, not one of the previously-scanned
+        // composition-root files — added so the new 'sscCheckerJob' manifest entry
+        // is call-site-verified rather than trusted on the CANONICAL_WATCHDOG_JOB_NAMES
+        // comment alone (WD-11's whole point).
+        label: 'sscCheckerJob.ts',
+        path: resolve(testsDir, '../scheduler/news-analysis/sscCheckerJob.ts'),
+      },
     ]
 
     // ── 2. Read each file and extract recorded job_name literals ───────────────

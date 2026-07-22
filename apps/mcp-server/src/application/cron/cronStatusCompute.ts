@@ -78,14 +78,30 @@ interface StaticCronMeta {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// CN-1 tier-1 — verified 16-pair static reverse-map
+// CN-1 tier-1 — verified 25-pair static reverse-map
 // (docs/architecture-briefs/2026-07-02-DASH-CRON-RECHECK-TABLE.md §2)
 //
-// Only 1 of 16 pairs is a literal string match. A pure normalize-and-strip-
-// "Job" heuristic alone would ALSO silently fail on `summaryDaily` →
+// Only 1 of the original 16 pairs is a literal string match. A pure normalize-
+// and-strip-"Job" heuristic alone would ALSO silently fail on `summaryDaily` →
 // `summaryJob:daily` (the "Job" token sits mid-string, not as a suffix) — this
 // is exactly why tier-1 needs an explicit static table rather than relying on
-// tier-2's normalizer for all 16 manifest jobs.
+// tier-2's normalizer for every manifest job.
+//
+// IMPORTANT — why EVERY manifest job needs an explicit tier-1 pair, not just
+// the ones tier-2's normalizer literally can't match (FIX-CRON-WATCHDOG-
+// COVERAGE-2026-07-22 finding): job_name_db is memoized "per CRONS key for the
+// lifetime of the process" (R1, module header). Tier-2 resolution depends on
+// `distinctDbJobNames` — a live DB snapshot at the moment of the FIRST call for
+// that key. If that first call happens before the job has ever recorded a row
+// (e.g. a fresh container, or — in tests — an earlier empty-DB fixture sharing
+// the same process), tier-2 falls through to the tier-3 honest fallback (the
+// cronsKey itself) and that WRONG value is cached FOREVER, even after the job
+// later fires and records its real job_name — the dashboard would show it as
+// permanently NEVER_FIRED. Tier-1 is unconditional (independent of
+// distinctDbJobNames) and therefore the only cache-safe resolution path. All 9
+// jobs added by the 2026-07-22 WATCHDOG_MANIFEST widening (16 -> 25) are listed
+// here for that reason, even the ones whose job_name is a trivial `<cronsKey>Job`
+// suffix that tier-2 could theoretically have handled.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const STATIC_JOB_NAME_MAP: Readonly<Record<string, string>> = {
@@ -105,6 +121,16 @@ const STATIC_JOB_NAME_MAP: Readonly<Record<string, string>> = {
   taOhlcvBackfill: "ta-ohlcv-backfill",
   accuracyDigest: "accuracyDigestJob",
   summaryDaily: "summaryJob:daily",
+  // ── FIX-CRON-WATCHDOG-COVERAGE-2026-07-22 additions (all 9 new manifest jobs) ──
+  integrityCheck: "integrityCheckJob",
+  bondMaturityPoller: "bondMaturityPollerJob",
+  devTeamHeartbeat: "devTeamHeartbeatJob",
+  predictionOutcome: "predictionOutcomeJob",
+  sscCheck: "sscCheckerJob",
+  dataAuditWeekly: "dataAuditJob:weekly",
+  signalOutcomeJob: "signalOutcomeJob",
+  alertOutcomeJob: "alertOutcomeJob",
+  signalOutcomeResolution: "signalOutcomeResolutionJob",
 };
 
 /** Default threshold for Layer-A crons NOT in WATCHDOG_MANIFEST (FR-1.5). */

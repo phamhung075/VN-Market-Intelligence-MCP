@@ -1205,13 +1205,23 @@ export function registerBespokeJobs(ctx: SchedulerJobTableCtx): void {
   // 08:30 UTC Mon-Fri — Signal outcome resolver — task 1382
   // Resolves agent_signals with outcome='fired' or NULL after VN market close. Compares
   // entry price vs resolution price; marks confirmed or false_positive.
-  scheduleCron(CRONS.signalOutcomeJob, () => { runSignalOutcomeJobCron().catch(console.error); }, { timezone: 'UTC' })
+  // FIX-CRON-WATCHDOG-COVERAGE-BESPOKE-TELEMETRY: routed through jobRunRepo.wrapRun (was
+  // a bare scheduleCron + .catch(console.error) with ZERO cron_job_runs telemetry — invisible
+  // to get_cron_health and to WATCHDOG_MANIFEST regardless of manifest coverage, since there
+  // was no row to query). wrapRun records status/duration and never re-throws (see
+  // recordJobRun), so the .catch(console.error) safety net is now redundant and removed.
+  scheduleCron(CRONS.signalOutcomeJob, () => jobRunRepo.wrapRun('signalOutcomeJob', async () => {
+    await runSignalOutcomeJobCron()
+  }), { timezone: 'UTC' })
 
   // 08:45 UTC Mon-Fri — Alert outcome resolver — task 1847d-C
   // Scores fired alerts WHERE outcome IS NULL using market_prices_history. 15 min after
   // signalOutcomeJob to avoid DB write contention. BLK-3: sends Telegram WORK digest for
   // position-danger HITs.
-  scheduleCron(CRONS.alertOutcomeJob, () => { runAlertOutcomeJobCron().catch(console.error); }, { timezone: 'UTC' })
+  // FIX-CRON-WATCHDOG-COVERAGE-BESPOKE-TELEMETRY: see signalOutcomeJob comment above.
+  scheduleCron(CRONS.alertOutcomeJob, () => jobRunRepo.wrapRun('alertOutcomeJob', async () => {
+    await runAlertOutcomeJobCron()
+  }), { timezone: 'UTC' })
 
   // Every 1 min — Foreign flow fallback fetcher — task 1290
   // Resilience loop: if VPS is down, cache/SSE keeps daily_ohlcv updated.
@@ -1231,9 +1241,10 @@ export function registerBespokeJobs(ctx: SchedulerJobTableCtx): void {
   // Resolves T+24h and T+48h pending rows in signal_outcomes by comparing entry vs
   // resolution price. Minute=17 avoids pile-up with minute=0/7 cluster (cronHealthAlert,
   // imfPoller, verdictResolution).
-  scheduleCron(CRONS.signalOutcomeResolution, () => {
-    runSignalOutcomeResolutionJobCron().catch(console.error)
-  }, { timezone: 'UTC' })
+  // FIX-CRON-WATCHDOG-COVERAGE-BESPOKE-TELEMETRY: see signalOutcomeJob comment above.
+  scheduleCron(CRONS.signalOutcomeResolution, () => jobRunRepo.wrapRun('signalOutcomeResolutionJob', async () => {
+    await runSignalOutcomeResolutionJobCron()
+  }), { timezone: 'UTC' })
 
   // Monday 01:00 UTC — vnstock fundamentals weekly batch sweep — task 1920a
   // Iterates 30-ticker watchlist; populates vnstock_financials, balance_sheet, cash_flow,

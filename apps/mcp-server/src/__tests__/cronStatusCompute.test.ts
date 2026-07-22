@@ -1,7 +1,13 @@
 /**
  * cronStatusCompute.test.ts — TASK-DASH-CRON-1
  *
- * CN-1: 16-pair static reverse-map, normalized-fallback match, honest no-match.
+ * CN-1: 25-pair static reverse-map, normalized-fallback match, honest no-match.
+ * (FIX-CRON-WATCHDOG-COVERAGE-2026-07-22: WATCHDOG_MANIFEST grew 16->25; ALL 9
+ * new entries got an explicit tier-1 pair — job_name_db memoization is
+ * "lifetime of the process" per CRONS key, so a tier-2-only resolution risks
+ * permanently caching the tier-3 fallback if the job hasn't fired yet the
+ * first time it's resolved. See cronStatusCompute.ts's STATIC_JOB_NAME_MAP
+ * comment for the full mechanism.)
  * CN-2: EC-2 restricted-window cadence, EC-4 comma-list cadence (exact 1_800_000ms).
  * R1: memoization contract — static per-key metadata computed once per process.
  */
@@ -45,7 +51,7 @@ beforeEach(() => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("resolveJobNameDb — CN-1 hybrid 3-tier", () => {
-  const STATIC_16_PAIRS: ReadonlyArray<[string, string]> = [
+  const STATIC_25_PAIRS: ReadonlyArray<[string, string]> = [
     ["ohlcvDailyAggregator", "ohlcv-daily-aggregator"],
     ["vnstockFundamentalsRefresh", "vnstockFundamentalsRefresh"],
     ["reputationCompute", "reputationComputeJob"],
@@ -62,17 +68,30 @@ describe("resolveJobNameDb — CN-1 hybrid 3-tier", () => {
     ["taOhlcvBackfill", "ta-ohlcv-backfill"],
     ["accuracyDigest", "accuracyDigestJob"],
     ["summaryDaily", "summaryJob:daily"],
+    // FIX-CRON-WATCHDOG-COVERAGE-2026-07-22 additions (see cronStatusCompute.ts comment
+    // for why ALL 9 new manifest jobs need an explicit tier-1 pair, not just the ones
+    // tier-2's normalizer literally can't match — job_name_db memoization is cache-unsafe
+    // for a tier-2-only resolution):
+    ["integrityCheck", "integrityCheckJob"],
+    ["bondMaturityPoller", "bondMaturityPollerJob"],
+    ["devTeamHeartbeat", "devTeamHeartbeatJob"],
+    ["predictionOutcome", "predictionOutcomeJob"],
+    ["sscCheck", "sscCheckerJob"],
+    ["dataAuditWeekly", "dataAuditJob:weekly"],
+    ["signalOutcomeJob", "signalOutcomeJob"],
+    ["alertOutcomeJob", "alertOutcomeJob"],
+    ["signalOutcomeResolution", "signalOutcomeResolutionJob"],
   ];
 
-  it("all 16 verified manifest pairs resolve via the tier-1 static map (no distinctDbJobNames needed)", () => {
-    expect(STATIC_16_PAIRS).toHaveLength(16);
-    for (const [cronsKey, expectedJobName] of STATIC_16_PAIRS) {
+  it("all 25 verified manifest pairs resolve via the tier-1 static map (no distinctDbJobNames needed)", () => {
+    expect(STATIC_25_PAIRS).toHaveLength(25);
+    for (const [cronsKey, expectedJobName] of STATIC_25_PAIRS) {
       expect(resolveJobNameDb(cronsKey, [])).toBe(expectedJobName);
     }
   });
 
-  it("tier-1 map values are exactly CANONICAL_WATCHDOG_JOB_NAMES (16 entries, 1:1)", () => {
-    const resolved = STATIC_16_PAIRS.map(([key]) => resolveJobNameDb(key, []));
+  it("tier-1 map values are exactly CANONICAL_WATCHDOG_JOB_NAMES (25 entries, 1:1)", () => {
+    const resolved = STATIC_25_PAIRS.map(([key]) => resolveJobNameDb(key, []));
     expect(resolved.sort()).toEqual([...CANONICAL_WATCHDOG_JOB_NAMES].sort());
   });
 
