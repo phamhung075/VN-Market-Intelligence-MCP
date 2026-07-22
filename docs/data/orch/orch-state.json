@@ -1893,6 +1893,17 @@
         "severity": "MED",
         "status": "new",
         "payload_ref": null
+      },
+      {
+        "id": "cowork-20260722T161645Z-alertcmd-position-danger-selloff-blind",
+        "ts": "2026-07-22T16:16:45Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "methodology-flag",
+        "summary": "alert-commander position-danger gate (firing condition 1/3) depends SOLELY on get_alerts(type=\"price\")/stopLossHit and is blind to the system-wide price_drop alert bucket, so it stays SILENT during broad severe selloffs. Corroborated LIVE this cycle (2026-07-22 16:11Z): VN-Index broke below 1700 (-3.58%, -74.98), watchlist -5% to -7% (VIC -6.99, VHM -6.96, MWG -6.98, D2D -6.29), 20 open HIGH price_drop system alerts, market-watcher-eod independently emitted 7 price_anomaly signals on the same tickers — yet get_alerts(type=\"price\") returned EMPTY so 0 position-danger fires. Agent self-reports this as recurring across nearly every prior large-selloff cycle; it CANNOT self-escalate (tools=Read/Write/Edit/call_tool, no signal_queue write) and its notebook is dark to PO. PO decision: (a) rewire position-danger condition-1 to also consume the price_drop bucket / add a selloff-breadth trigger, OR (b) confirm stopLossHit-only is correct-by-design (position-danger != market drop without a user stop-loss), OR (c) WONTFIX. Distinct from cowork-20260722T043453Z-bootstrap-underreturn (that is get_cycle_bootstrap agent_signals under-return, different tool).",
+        "severity": "MEDIUM",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-22T15:10:08Z",
@@ -10520,6 +10531,28 @@
         "why_not_cosmetic": "This is the same class as memory feedback_agent_reported_limitation_may_be_structural_check_the_tool_grant — a flow step that is unexecutable or unreached for ~30 cycles gets silently normalized. Find out WHICH is true here before writing any prose: is the write step absent from the dev-team flow, is it unreachable behind a branch that never fires, or does it lack the tool grant to write? The answer determines the fix and it is cheap to establish.",
         "acceptance": "State which of the three causes is real, with the file and line. Then either the notebook receives a dated entry per cycle, or the step is deliberately deleted and the flow says so explicitly — an unexecutable step left in place is the anti-pattern.",
         "updated_at": "2026-07-22T16:02:26Z"
+      },
+      {
+        "id": "FIX-VPS-SYSTEMD-STARTLIMIT-HARDENING",
+        "type": "FIX-M",
+        "status": "BACKLOG",
+        "size": "M",
+        "zone": "apps/vps-scripts",
+        "priority": "P1",
+        "title": "Add StartLimitIntervalSec=0 to systemd units to prevent crash-loop lockout after transient failures",
+        "description": "vn-price-fetch, vn-foreign-flow, vn-sbv-fetch crashed ~2026-07-21 03:05-09 UTC and entered systemd failed state due to missing StartLimitIntervalSec=0 hardening. Systemd default StartLimitIntervalSec=10s/StartLimitBurst=5 causes permanent failed state for any Restart=always unit crashing >=5 times in 10s window. Hardening has been proven safe by commit 42e8448ce (applied to vn-news-fetch/vn-reuters-fetch/vn-tradingeconomics-fetch 2026-05-02) — vn-news-fetch rode through the same incident window unaffected, demonstrating the control. This incident was non-recoverable without manual intervention due to inbound SSH/HTTP being blocked to VPS (user-gated restart already escalated via Telegram).",
+        "scope": "Add StartLimitIntervalSec=0 to [Unit] section of vps-scripts/vn-price-fetch.service, vps-scripts/vn-foreign-flow.service, vps-scripts/vn-sbv-fetch.service, vps-scripts/vn-bctc-fetch.service; audit vps-scripts/vn-agm-plan.service and vps-scripts/vn-reuters-fetch.service deployment status (both exist in repo but are never scp'd/enabled by scripts/deploy-vinahost.sh — same dead-code class as OHLCV-backfill gap from c023). Identify and fix byte-identical duplicate deploy scripts (scripts/deploy-vinahost.sh and apps/mcp-server/deploy-vinahost.sh) — update both or dedupe and select one for deployment.",
+        "acceptance": "Repo hardening complete: all 4 units have StartLimitIntervalSec=0; redundant deploy script verified or deduped; agm-plan and reuters-fetch units disposition determined (deployed-to-vps OR removed-as-dead-code); redeploy via scripts/deploy-vinahost.sh; live systemctl restart on VPS succeeds (user-gated after reachability restored). Post-deploy: all 3 services recover from failed state and resume pushing data; vn-bctc-fetch state verified separately.",
+        "depends": [],
+        "blocked_by": [
+          "user-escalation-vps-restart"
+        ],
+        "next_agent": "dev-vps-crawls",
+        "supervised": false,
+        "plan_only": false,
+        "updated_at": "2026-07-22T16:21:30Z",
+        "updated_by": "ops (recon.md incident analysis)",
+        "notes": "Root cause from git: commit 42e8448ce (2026-05-02) added StartLimitIntervalSec=0 to vn-news-fetch/vn-reuters-fetch/vn-tradingeconomics-fetch only. Commit message explicitly lists vn-price-fetch/vn-foreign-flow/vn-sbv-fetch/vn-bctc-fetch as \"had no burst limit and are unchanged\" — this premise is inverted. No explicit override means systemd applies its compiled-in default (StartLimitIntervalSec=10s/StartLimitBurst=5), not \"no limit\". Incident recon: docs/vps-sources/vps-push-plane-stale-2026-07-22/recon.md"
       }
     ],
     "closed_sprints": [
