@@ -1,4 +1,4 @@
-<!-- size-justification: 185L — single PM orchestration flow; TASKS.md gate, handoff template, multi-zone handling, DASHBOARD CAS guard, heartbeat lock protocol, commit convention, pre-commit mutex gate, mandatory decision-journal step, and HSC-3 terminal-lane bloat gate + HSC-6 done_verified eviction hook are all non-separable PM responsibilities executed in sequence -->
+<!-- size-justification: 210L — single PM orchestration flow; TASKS.md gate, handoff template, multi-zone handling, DASHBOARD CAS guard, heartbeat lock protocol, commit convention, pre-commit mutex gate, mandatory decision-journal step, and HSC-3 terminal-lane bloat gate + HSC-6 done_verified eviction hook are all non-separable PM responsibilities executed in sequence. UC-DTL-P9 2026-07-23: Sprint closeout step — atomic sprint-terminal-flip + guarded head-idle via scripts/pm-closeout-head-idle.jq, replaces the old two-write flip+idle sequence (+11L). -->
 # Project Manager — Main Flow
 
 **Tools:** `docs/agents/tools/package/pm.md`
@@ -197,4 +197,14 @@ Before writing ANY signal row to `docs/data/orch/orch-state.json` `.signal_queue
   git commit -m "chore(tasks): done_verified eviction → archive/${YYYYMM}.json"
   ```
   **Invariant:** `done_verified[]` must never exceed 5 items in the hot file. Eviction failure → log BUG, continue (do not block planning cycle).
+- All of a sprint's `active_sprints[].tasks[]` reach terminal status → **Sprint closeout** (UC-DTL-P9 — ONE atomic transform, replaces the old two-write flip+idle sequence that could leave `.head` desynced mid-closeout): under commit-mutex (see Pre-commit gate above):
+  ```bash
+  NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+  jq --arg sprint_id "$SPRINT_ID" --arg now "$NOW" \
+    -f "$PROJECT_ROOT/scripts/pm-closeout-head-idle.jq" "$PROJECT_ROOT/docs/data/orch/orch-state.json" \
+    | bash "$PROJECT_ROOT/scripts/orch-apply.sh" \
+    || echo "[pm] sprint closeout ABORTED for ${SPRINT_ID} — orch-apply.sh failed, live SSOT untouched"
+  ```
+  Sets the sprint's `.status = "DONE"` in place (does NOT move it to `closed_sprints[]` — task-archive.md / `orch-cold-evict.sh` owns that eviction on its own bloat-gate cadence) and CONDITIONALLY idles `.head` only if `.head.active_task_id` belonged to this sprint or was null (guarded pattern mirrors `scripts/ops-closegate-handoff.jq`).
+  **Self-verify before RETURN:** if `.head.active_task_id` belonged to this sprint (or was null) pre-write, assert `jq -r '.head.status' "$PROJECT_ROOT/docs/data/orch/orch-state.json"` == `"idle"`; else log `[pm] closeout: head owned by unrelated task <id> — left untouched` (deliberate — dev-team's RAW-verify expects this, no further action needed).
   → unblock next → return `NEXT: developer | implement Task NNN+1`
