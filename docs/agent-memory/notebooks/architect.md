@@ -1,8 +1,15 @@
 # Architect — Notebook
 
-**Last updated:** 2026-07-21 23:57 UTC | **Sprint:** ULTRACODE-AUDIT-FIXALL
+**Last updated:** 2026-07-22 22:06 UTC | **Sprint:** COWORK-GUARANTEED-SLOT-CATCHUP
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-07-22T22:06Z — COWORK-GUARANTEED-SLOT-CATCHUP (zone=cross-service/, high user_prioritized, design-only)
+
+**Task:** BA spec (10 FR/7 NFR/12 AC/5-row consolidation) — design shared catch-up module extension (FR-1,3,4,6,7,9), rule explicitly on FR-8 (firer fanout timeout) and the Track-B pmset/caffeinate keep-awake residual, reassign owners on the 5 consolidated rows.
+**Finding:** Grep-confirmed `cowork-guaranteed-slot-firer.sh` has zero MCP/gateway access today (no `mcp-call.sh` sourcing) and zero `last_fired` write call-sites exist in any of the 4 spawned flows — the ONLY stamp site is `last-fired.md` Step 5b, unconditional right after spawn (0.2/0.4's defect, re-confirmed at source). `coordinationStore.ts listHeldTasks()` returns `claimed_at` — powers a path-agnostic FR-7 reconciler with zero schema change. New brownfield finding not in BA spec: the 4 spawned flows do NOT share one date-basis for their `published:` marker — `digest-daily`'s non-Sunday path keys on **UTC-date**, not VN-date, unlike chef/fb/tnb-audit — catch-up must mirror this per-slot, not assume VN-date uniformly (correcting it is out of scope, risks orphaning a held marker at the day-boundary).
+**Output:** `docs/architecture-briefs/2026-07-22-cowork-guaranteed-slot-catchup-design.md` — new pure domain sibling module `cowork-catchup-predicate.js` (mirrors `cadence-policy.js` precedent, DI'd `field`/`dowMatch`, one-directional require, zero circularity); `task_list_held` delivery-check kept per-caller/infrastructure (DDD golden rule: domain has zero I/O), conditional on non-empty `catchup_raw` (NFR-3 preserved); FR-6 ruled — published-marker `task_claim` ratified as sole symmetric arbiter across all firing planes (rejected a "stand-down" derived-signal design — repeats this sprint's own root-cause bug class), directly answering `FIX-GUARANTEED-SLOT-DUAL-PLANE-DOUBLE-FIRE`'s own open design question; FR-7 ruled Option (b) reconciler over Option (a) per-flow self-write (avoids reintroducing the lost-update race `last-fired.md`'s batched write was built to avoid, matches path-agnostic prior art already on that row's own note); FR-8 ruled raise `FIRE_TIMEOUT_SECONDS` per dish_type (`_dish_type_catchup_config`, NFR-4) + accept bounded residual, NOT a flow-duration diagnosis (chef.md is a legitimately heavy 812-line sequential 8-step flow, zero subagent fan-out, confirmed by grep); Track-B ruled document-the-residual, no keep-awake daemon (Track A's catch-up already provides correctness backstop). Appended Brownfield Findings to BA handoff. 5 consolidated rows + umbrella task reassigned `owner:developer`/`next_agent:pm` via `orch-apply.sh` (additive fields only, lane/status untouched — AC-9's "close together" bar stays PM/QA's). BUILD-STANDARD: not-applicable.
+**Next:** pm — decompose FR-1..FR-10 into atomic dev tasks (one shared-module zone, sequential not parallel-dispatch); route the cron-runbook doc subtask to agent-father, rest to developer; true up board row `type: SPRINT-S` → likely SPRINT-M/L (router-flagged, non-blocking).
 
 ## 2026-07-21T23:57Z — FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD (zone=multi, P0 supervised, plan_only, design-only)
 
@@ -18,18 +25,14 @@
 **Output:** Fixed WIP formula to `in_progress` length only (`main.md` + `promote-bounded1.jq`, byte-identical candidate-set parity verified). New Ready-Lane Consumer (`devteam-backlog-claim-ready-lane-consumer.jq`, respects `depends_on` sibling chains — verified it picks `CCATO-MCP-T1` not `T3`). New Review-Lane QA-Drain (`devteam-review-claim-qa-drain.jq` + `qa/flow/main.md` § Direct-Commit Verify additive mode) folding `FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN`. New `scripts/audits/devteam-dispatch-gate-satisfiability.sh` — replays the REAL scripts end-to-end against the live-shaped saturated fixture, asserts fire+drain (not lane-resolution — the exact false-green class `bounded1-supervised-lane-report.sh` fell into for the inert SLS), includes a negative WIP-cap control. Extracted `scripts/lib/devteam-eligibility.jq` (SPIKE-BOUNDED1-ELIGIBILITY-CONTRACT-REVIEW design principle adopted), migrating 3 hand-copied predicate sets to 1. All candidates Zod+conservation-verified via scratch-copy dry-runs before any live write. Folded (annotated, not re-minted) 4 subsumed rows: `FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER` held REVIEW (root cause of its own dead gate now fixed, lane-resolution logic unchanged), `FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN` moved READY→REVIEW (implemented), `SPIKE-SATURATED-COUNT-THRESHOLD-GATES-SWEEP` instance-9 closed (broader findings-doc scope stays open), `SPIKE-BOUNDED1-ELIGIBILITY-CONTRACT-REVIEW` moved BACKLOG→REVIEW (recommendation shipped, not just documented).
 **Next:** dev-team/QA — verify all 4 lanes fire on a live tick (PO AC(3): review[] count strictly decreasing across 2 consecutive ticks with row ids named) before flipping the folded rows to DONE_VERIFIED; zone cross-service/. Committed directly (`b787e9a5d`) mirroring the FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER precedent for this orchestration-script class — no production `apps/` code touched.
 
-## 2026-07-21T21:32Z — FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER (zone=cross-service/, P=high, size=M, REVIEW)
-
-**Task:** PO-triaged direct FIX dispatch (router-relayed). `scripts/devteam-backlog-promote-bounded1.jq` claimed rows gated by supervised/plan_only "still launch normally via the router-adjudicated path" — confirm-or-refute, and if false, build the missing sweeper without clearing the gate flags.
-**Finding:** CONFIRMED FALSE — grepped every dispatch entry point (`po/flow/main.md` pre-checks, `dev-team/flow/main.md` Step 1) and found no priority-ordered sweep of `task_board.backlog[]` for supervised/plan_only rows anywhere; the PO signal-drain that minted this task already says so in its own `question` field. Live replay of the promote script's own `effective_supervised`/`effective_plan_only` predicates found 16 rows doubly-gated (supervised AND plan_only), 7 P0/P1, oldest 18 days.
-**Output:** Built Supervised-Lane Sweep (SLS) — `scripts/devteam-backlog-promote-supervised-lane-sweep.jq` + `scripts/devteam-backlog-claim-supervised-lane-sweep.jq`, wired into `docs/agents/dev-team/flow/main.md` § Supervised-Lane Sweep (spends the pre-existing, named-but-unused 2nd WIP≤2 slot; additive `dispatch_lane` stamp, never clears supervised/plan_only; spawns the resolved specialist directly, bypassing zone-detect's dev-only routing). Acceptance instrument `scripts/audits/bounded1-supervised-lane-report.sh` run live: 16/16 rows resolved, 0 dispatch-lane=none. Corrected the false comment at all 5 sites in the promote script. New scripts dry-run verified (Zod-valid, conservation-neutral, idempotent) against a scratch copy — never run against the live board (dev-team's job next tick).
-**Next:** dev-team/QA — verify SLS fires correctly on a live idle-fallthrough tick before flipping REVIEW→DONE_VERIFIED; zone cross-service/.
-
 ---
 
-## Archive (pre-2026-07-21T22:36Z)
+## Archive (pre-2026-07-21T23:57Z)
 
-[Older cycles archived to git history: DESIGN-COWORK-FANOUT-PRODUCER-CONSUMER-ORDERING (2026-07-21T18:02Z,
+[Older cycles archived to git history: FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER (2026-07-21T21:32Z,
+zone=cross-service/, P=high size=M REVIEW — built Supervised-Lane Sweep SLS spending the
+named-but-unused 2nd WIP≤2 slot, 16/16 supervised/plan_only rows resolved, dispatch_lane stamp),
+DESIGN-COWORK-FANOUT-PRODUCER-CONSUMER-ORDERING (2026-07-21T18:02Z,
 zone=cross-service/, P1 supervised design-first — bounded async schedule_task recheck gated on
 won_slots.parallel_group=="gatherers", market-watcher R3 slot-routing fix, 8-row T1-T8 PM decomposition,
 READY_FOR_PM), FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD (2026-07-21T17:05Z,

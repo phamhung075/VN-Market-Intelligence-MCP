@@ -7449,7 +7449,11 @@
         "source_findings": [
           "tnb-c115-F-COWORK-SCHEDULE-CHEFEVENING-LASTFIRED-STALE"
         ],
-        "updated_at": "2026-07-21T21:06:09Z"
+        "updated_at": "2026-07-22T22:06:37Z",
+        "owner": "developer",
+        "next_agent": "pm",
+        "architect_ruling": "Implemented via FR-7 ruling: Option (b) reconciler reads task_list_held claimed_at and backfills last_fired — NOT per-flow self-write (would reintroduce lost-update race + break path-agnostic requirement already on this row's own note).",
+        "architect_ruling_ref": "docs/architecture-briefs/2026-07-22-cowork-guaranteed-slot-catchup-design.md"
       },
       {
         "id": "FIX-MARKET-MESSAGES-TIMESTAMP-FORMAT",
@@ -8320,7 +8324,7 @@
         "size": "S",
         "mode": "spike",
         "timebox": 120,
-        "owner": "po",
+        "owner": "developer",
         "title": "SPIKE: dispatcher-wide guaranteed-slot backstop/supersede wiring root cause — 3 non-overlapping slots (chef-morning 05:15Z, chef-eod 08:45Z, fb-daily 09:15Z) each miss the same tick 2 days running",
         "question": "Why does the cowork dispatcher mark guaranteed slots undeliverable (_superseded_by=cowork-dispatcher in docs/data/cowork-schedule.json) even when a backstop is supposed to fire — is the true root cause the guaranteed-slot backstop/supersede-trigger wiring itself (dispatcher-wide), independent of any per-slot trigger_id state? Confirm or refute the single-defect hypothesis, pinpoint the exact wiring gap in the guaranteed-slot dispatch path, and recommend the durable fix (findings doc, no code change).",
         "created_at": "2026-07-10T11:00:02Z",
@@ -8342,7 +8346,11 @@
           "by": "po-tnb-c112-triage",
           "datum": "F-CHEF-EOD-DORMANT-0717 (HIGH) — tnb c112: chef-eod is now 4th CONSECUTIVE business-day unhealthy (07-14 dormant, 07-15 dormant, 07-16 phantom-fire, 07-17 dormant-signature-again), alternating between 2 distinct failure modes. RECONCILIATION (deeper peer-session source, cross-plane): 07-17's stale last_fired (stuck 2026-07-16T08:52:50.457Z) is NOT true non-dispatch — the agent DID claim the publish marker (08:50:19Z) + bootstrap (08:50:24Z), gathered Steps 0-1 (22 tool calls / 144.6k tok), then bailed pre-publish, LEAKING the marker (published:chef-eod:2026-07-17) as a false tombstone. So 07-17 belongs to the FIX-CHEF-MIDFLOW-BAIL-DETERMINISM class (P1, recurring recurrence_count=2, supervised, next_agent=agent-father) + the FIX-COWORK-LASTFIRED-DECOUPLE-FROM-DELIVERY false-green class, NOT this dispatcher-wide SPIKE. This SPIKE still owns the TRUE non-dispatch mode (07-14/07-15). tnb recommends priority review on escalating recurrence; PO HOLDS priority=high (already) + supervised — do NOT auto-promote (this is the root-cause investigation, not a live same-day fix; the two agent-side modes are already max-escalated on their own P1 rows).",
           "source": "docs/handoffs/tnb-audit-latest.md#F-CHEF-EOD-DORMANT-0717"
-        }
+        },
+        "next_agent": "pm",
+        "architect_ruling": "Root-caused — 3-caller shared module already exists structurally (cowork-match-slots.js SSOT); catch-up extends it, no separate code change beyond FR-1..9.",
+        "architect_ruling_ref": "docs/architecture-briefs/2026-07-22-cowork-guaranteed-slot-catchup-design.md",
+        "updated_at": "2026-07-22T22:06:37Z"
       },
       {
         "id": "FIX-BCTC-D3C-FOLLOW-UP-RESET-ATTEMPTS",
@@ -10374,8 +10382,8 @@
         "status": "BACKLOG",
         "priority": "high",
         "zone": "cross-service/",
-        "owner": "ops",
-        "next_agent": "architect",
+        "owner": "developer",
+        "next_agent": "pm",
         "created_at": "2026-07-22T16:02:26Z",
         "created_by": "po/cron-audit-sequencing-20260722",
         "status_note": "PO SEQUENCE RANK 3. This is the OS-level backstop that exists SPECIFICALLY to survive session death (docs/standards/cron-jobs.md 273-298, closes the 73h 2026-07-04..07-07 outage). It is currently half-dead: it fires, but the work it fires does not finish.",
@@ -10384,7 +10392,9 @@
         "acceptance": "A guaranteed slot that fans out to subagents either COMPLETES, or emits a loud, consumed 'work truncated' signal naming the slot and the bound that cut it. launchctl exit 0 must stop being reportable as success for a run that produced no deliverable. Raising the bounds alone is NOT acceptance — an unbounded claude -p under launchd StartInterval is the hung-run starvation the plist header explicitly warns against.",
         "folded_sub_item_log_hygiene": "FOLDED (item 7a, LOW, same file/owner): every line in cowork-guaranteed-slot-firer.log is written TWICE — the script tees to LOG_FILE while launchd ALSO redirects stdout to the same path (StandardOutPath). Confirmed at log lines 1042/1043, 1044/1045, 1046/1047. Full claude -p agent narration is also dumped in (118 KB). Pick one writer and drop the narration; whoever opens this log for the truncation fix should close this in the same pass.",
         "prior_art_cross_ref": "SPIKE-COWORK-GUARANTEED-SLOT-SUPERSEDE-WIRING (backlog) is slots MISSING a tick — a different failure from a slot FIRING and being truncated. Cross-reference, do NOT fold. OPS-COWORK-GUARANTEED-SLOT-INSTALL (review) is the install row and stays open.",
-        "updated_at": "2026-07-22T16:02:26Z"
+        "updated_at": "2026-07-22T22:06:37Z",
+        "architect_ruling": "Implemented via FR-8 ruling: raise FIRE_TIMEOUT_SECONDS per dish_type (_dish_type_catchup_config), accept bounded residual — NOT a flow-duration diagnosis.",
+        "architect_ruling_ref": "docs/architecture-briefs/2026-07-22-cowork-guaranteed-slot-catchup-design.md"
       },
       {
         "id": "FIX-FLEET-PUSH-LAUNCHD-EXCONFIG-SILENT-DEAD",
@@ -10447,7 +10457,7 @@
         "status": "BACKLOG",
         "priority": "medium",
         "zone": "cross-service/",
-        "owner": "ops",
+        "owner": "developer",
         "mode": "spike",
         "timebox": 120,
         "created_at": "2026-07-22T16:02:26Z",
@@ -10458,7 +10468,10 @@
         "already_ruled_out_do_not_redo": "MACHINE SLEEP IS RULED OUT — uptime 10d 20:15, `sleep 0`, no Sleep/Wake entries in `pmset -g log`. Do not spend timebox re-confirming this.",
         "hypothesis_not_conclusion": "The load figures are CONSISTENT WITH memory feedback_overparallel_fanout_host_starvation but that is NOT proven and must not be written up as the cause without evidence that distinguishes starvation from the alternatives (gateway/downstream SSE wedge after a restart; a REPL stuck mid-query in every session simultaneously, which would match the CronCreate idle-only constraint; container OOM preceding the restart; a shared lock/mutex held across the window). Note a competing datapoint already on the board: signal_queue sys-20260722T150037 records market_messages count=0 over a 3h window and was triaged as a CONSEQUENCE of an A-30 OOM/restart at 14:51Z — reconcile with that, do not re-litigate it.",
         "acceptance": "A findings doc that either NAMES the mechanism with evidence, or states plainly which hypotheses were eliminated and what instrumentation is missing to decide. 'Probably host starvation' is an UNACCEPTABLE output. If the answer is 'we cannot tell', the deliverable is the specific telemetry gap that made it undecidable.",
-        "updated_at": "2026-07-22T16:02:26Z"
+        "updated_at": "2026-07-22T22:06:37Z",
+        "next_agent": "pm",
+        "architect_ruling": "Root-caused by PO (standby, not sleep) — no code change; closes on PM/QA coordinated pass with the other 4 rows, not standalone.",
+        "architect_ruling_ref": "docs/architecture-briefs/2026-07-22-cowork-guaranteed-slot-catchup-design.md"
       },
       {
         "id": "FIX-GUARANTEED-SLOT-DUAL-PLANE-DOUBLE-FIRE",
@@ -10467,8 +10480,8 @@
         "status": "BACKLOG",
         "priority": "medium",
         "zone": "cross-service/",
-        "owner": "architect",
-        "next_agent": "architect",
+        "owner": "developer",
+        "next_agent": "pm",
         "created_at": "2026-07-22T16:02:26Z",
         "created_by": "po/cron-audit-sequencing-20260722",
         "status_note": "PO SEQUENCE RANK 5 — MUST land AFTER FIX-GUARANTEED-SLOT-FIRER-FANOUT-TRUNCATION. That fix changes whether and how long a firer invocation runs, which directly moves the overlap window. Fixing the collision first is fixing a moving target.",
@@ -10476,7 +10489,9 @@
         "why_a_last_line_of_defense_is_not_a_design": "The ONLY thing preventing a double MARKET post is the published-marker task_claim inside the agent flow. That guard is a last line of defense and it has a documented history of failing open: feedback_chef_leaks_published_marker_on_silent_exit, feedback_chef_releases_published_marker_enables_peer_double_publish, feedback_fb_dedup_gate_orphaned_test_lock_false_block. Relying on it as the arbitration mechanism between two schedulers means a single marker bug becomes a duplicate market-facing publication.",
         "design_question_for_architect": "Which plane is AUTHORITATIVE, and how does the non-authoritative plane learn to stand down? Candidate shapes: launchd fires ONLY when no live dispatcher session is detected (the plist header already frames launchd as the session-death backstop, docs/standards/cron-jobs.md:298); or both planes claim a shared per-slot-per-window lock BEFORE spawn rather than before publish. PO has NOT pre-selected one.",
         "prior_art_distinct_do_not_fold": "This is a THIRD distinct double-fire path and must not be folded into either existing row. FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE is single-session SELF-refire (lock released too early, same session re-elects). FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS is peer/two-path/two-session. THIS one is two different SCHEDULING PLANES (OS-level launchd vs in-REPL CronCreate) that share no lock namespace at all — a namespace merge does not fix it and neither existing fix prevents it.",
-        "updated_at": "2026-07-22T16:02:26Z"
+        "updated_at": "2026-07-22T22:06:37Z",
+        "architect_ruling": "Implemented via FR-6 ruling: published-marker task_claim ratified as sole symmetric arbiter across all firing planes — no plane stands down for another, zero new code (marker-lifecycle leak/release bugs remain separately tracked, NOT closed by this).",
+        "architect_ruling_ref": "docs/architecture-briefs/2026-07-22-cowork-guaranteed-slot-catchup-design.md"
       },
       {
         "id": "ARCH-CRON-THREE-TIME-BASES-UNIFY",
@@ -10740,11 +10755,14 @@
         "created_at": "2026-07-22T21:32:37Z",
         "note": "Write the requirement spec for sprint COWORK-GUARANTEED-SLOT-CATCHUP (.sprint_goal has full root-cause + scope). BA must specify: (1) catch-up detection predicate — guaranteed slot due earlier in the current VN trading day with last_fired < today scheduled-fire epoch; (2) a BOUNDED per-dish-type freshness window (tight for fb_daily_post/event posts, looser for chef/digest) beyond which a stale post is WRONG and the slot is recorded as a structured miss instead; (3) explicit VN-date rollover rule — never retro-post a market/FB dish under a new date; (4) dedup strictly via existing published:<slot_id>:<VN-work-date> task_claim marker (belt-and-suspenders with the 3rd fire plane); (5) last_fired must reflect DELIVERY not spawn-dispatch (FIX-COWORK-LASTFIRED-DECOUPLE) so catch-up detection is not masked; (6) firer invocation must COMPLETE not re-truncate (FIX-GUARANTEED-SLOT-FIRER-FANOUT-TRUNCATION — the 07-22 chef-morning exit143 at the 1800s bound); (7) doc-honesty edits for the `guaranteed` semantics. CONSOLIDATES (mark subsumed, do NOT re-open as parallel work): SPIKE-DEAD-WINDOW-20260722-EIGHT-HOUR-SILENCE, SPIKE-COWORK-GUARANTEED-SLOT-SUPERSEDE-WIRING, FIX-GUARANTEED-SLOT-FIRER-FANOUT-TRUNCATION, FIX-GUARANTEED-SLOT-DUAL-PLANE-DOUBLE-FIRE, FIX-COWORK-LASTFIRED-DECOUPLE-FROM-DELIVERY. Route architect for the shared-matcher (3-caller) design + the pmset/caffeinate-keep-awake vs document-residual ruling. Files: scripts/agents-flow/cowork-match-slots.js, scripts/agents-flow/cowork-guaranteed-slot-firer.sh, docs/agents/cowork-team/flow/*.md, docs/data/cowork-schedule.json, docs/architecture-briefs/2026-07-07-cowork-guaranteed-slot-durability.md.",
         "depends": [],
-        "updated_at": "2026-07-22T21:50:38Z",
+        "updated_at": "2026-07-22T22:06:54Z",
         "ba_spec_complete": true,
         "ba_handoff": "docs/handoffs/BA-COWORK-GUARANTEED-SLOT-CATCHUP.md",
         "ba_completed_at": "2026-07-22T21:50:28Z",
-        "next_agent": "architect"
+        "next_agent": "pm",
+        "architect_design_complete": true,
+        "architect_brief": "docs/architecture-briefs/2026-07-22-cowork-guaranteed-slot-catchup-design.md",
+        "architect_completed_at": "2026-07-22T22:06:54Z"
       },
       {
         "id": "DESIGN-COWORK-FANOUT-PRODUCER-CONSUMER-ORDERING",
