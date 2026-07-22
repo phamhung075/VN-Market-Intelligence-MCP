@@ -428,8 +428,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-21T21:51:08Z",
-    "_updated_by": "dev-team/drain-0a-D-20260721T2149",
+    "_updated_at": "2026-07-22T05:42:44Z",
+    "_updated_by": "dev-team",
     "archive": [],
     "rows": [
       {
@@ -1778,6 +1778,17 @@
         "disposition": "FOLD -> SPIKE-BOOTSTRAP-BROADCAST-CATALYST-CONSUME (minted this triage; task_board.backlog, apps/mcp-server/). Live root-cause probe: chain_catalyst 8779 IS on the bus and IS in alert-commander inbox but now status='read'. get_cycle_bootstrap and get_agent_signals inbox-mode call the IDENTICAL getSignals(db,agent,{status:'unread'}) path (agentSignalStore.ts:837) which UPDATEs unread->read on read. Leading hypothesis: first consumer to bootstrap a shared/broadcast catalyst marks it read, so a later agent's bootstrap (unread-only) legitimately misses it; recovery worked only via the NON-consuming all-producers path (from_agent=null). Alt hypothesis to rule out in the SPIKE: pure timing (signal created after the 04:29Z bootstrap call). NOT a simple aggregation omission either way. Recurring 2+ (07-21 08:20Z + 07-22 04:29Z) -> durable code fix per recurring-bug-escalation. Plausible CHEF convergence-coverage miss on -2.67% selloff w/ live catalyst on bus. dev-mcp-server owns. Triaged by po (router session drain).",
         "triaged_at": "2026-07-22T04:49:34Z",
         "triaged_by": "po"
+      },
+      {
+        "id": "dev-team-20260722T054244Z-triage-batch-wip-deadlock",
+        "ts": "2026-07-22T05:42:44Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "triage-persist-request",
+        "summary": "PO dev-team-triage BATCH (2 direct-FIX: FIX-DRAIN-PERSIST-GUARD-COUNT-DRAINABLE-ONLY, FIX-ORCHSTATE-CONSERVATION-GUARD-QA-LANE-BLIND; journal po-S1/po-S2 in df4044a3f) could NOT be dispatched or persisted. WIP saturated: in_progress=2 (DESIGN-COWORK-FANOUT-PRODUCER-CONSUMER-ORDERING + FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD, parked epics); wip_in_progress = in_progress|length counts epic-wrappers; BOUNDED-1 needs WIP=0, RLC needs WIP<2 so both are blocked; the direct-FIX path (main.md Step2 FIX->skip->Step3) has NO WIP gate, so dispatching the BATCH would break the WIP<=2 invariant. Router cannot mint task_board rows and this tick's SF-1/fire-election locks are already released. RAW-VERIFIED absent from task_board(all lanes) + backlog-detail.json + working-tree (0/0 grep hits, no dirty orch-state). ASK: PO please mint BOTH to backlog[] at BACKLOG status so BOUNDED-1/RLC auto-promote them when a WIP slot frees; priority FIX-DRAIN-PERSIST-GUARD-COUNT-DRAINABLE-ONLY first (relieves the drain false-trip pressure). FLOW-GAP (root cause worth architect attention): dev-team Step-1 triage is only REACHABLE under WIP saturation (RLC/QA-Drain no-op'd), yet its direct-FIX output REQUIRES a free WIP slot to land -> a successfully-triaged BATCH is silently lost if not persisted. This is a sharper facet of FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION: even when triage SUCCEEDS, the fixes cannot land under saturation. Full specs: payload_ref (PO decision journal STEP po-S1/po-S2).",
+        "severity": "MEDIUM",
+        "status": "NEW",
+        "payload_ref": "docs/agent-memory/decisions/sprint-FLOW-PRICE-ALPHA-LOOP-po.md"
       }
     ],
     "last_triaged_at": "2026-07-22T04:49:34Z",
