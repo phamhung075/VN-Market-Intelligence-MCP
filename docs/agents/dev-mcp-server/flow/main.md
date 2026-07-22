@@ -77,9 +77,15 @@ kill %1
 # Canonical: counts server.tool() + server.registerTool() unique names, .ts files only (no .bak)
 bun scripts/gen-project-stats.ts --dry-run | grep '"toolCount"'
 
-# Gate 2d: Scheduler count probe — total cron.schedule across ALL scheduler/*.ts files
-# (startScheduler.ts + summaryJobs.ts; Gate-2d baseline = 76 as of FIX-PROJECT-STATS-GENERATED)
-grep -rc "cron\.schedule" apps/mcp-server/src/scheduler/ | awk -F: '{sum+=$2} END {print sum}'
+# Gate 2d: Scheduler count probe — total registered cron jobs (table-driven +
+# bespoke + summaryJobs). Canonical, same generator as Gate 2c (FIX-PROJECT-
+# STATS-CRONJOBCOUNT-SSOT-DRIFT, 2026-07-22): a raw `grep cron.schedule` count
+# is STALE and WRONG post-FACTORY-SCHEDULER-job-table-registry (61 table-driven
+# jobs collapse to a single generic-loop `scheduleCron(j.cron,...)` call site —
+# this is exactly what silently drifted docs/data/project-stats.json's
+# cronJobCount to 2 for weeks). Gate-2d baseline = 88 as of 2026-07-22
+# (61 buildJobTable entries + 22 registerBespokeJobs call sites + 5 summaryJobs.ts).
+bun scripts/gen-project-stats.ts --dry-run | grep '"cronJobCount"'
 ```
 
 Both gates must exit 0 before the task is DONE.

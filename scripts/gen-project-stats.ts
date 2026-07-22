@@ -84,35 +84,94 @@ function countToolsFromSource(): number {
 }
 
 // ─── Cron job count (source: scheduler/ .ts files) ───────────────────────────
+//
+// FIX-PROJECT-STATS-CRONJOBCOUNT-SSOT-DRIFT (2026-07-22 cron audit item, LOW):
+// The old implementation counted literal `cron.schedule(` occurrences across
+// apps/mcp-server/src/scheduler/**/*.ts. That was correct BEFORE the
+// T2-ARCH-CRON-RECOVER-JITTER refactor introduced the `scheduleCron()` wrapper
+// (startupHelpers.ts) as the ONE place that calls the raw node-cron
+// `cron.schedule()` — after that refactor there are only 2 literal
+// `cron.schedule(` textual occurrences in the ENTIRE scheduler/ tree (a code
+// comment + the wrapper's own single internal call), so the naive regex
+// silently collapsed from ~81 to ~2 and nobody noticed because the generator
+// had no sanity floor. docs/data/project-stats.json's own `cronJobCount: 2`
+// with `lastUpdated: "2026-07-04"` is the live artifact of this drift.
+// A second layer of indirection (FACTORY-SCHEDULER-job-table-registry) makes
+// even a naive `scheduleCron(` occurrence count wrong too: registerJobTable()
+// calls `scheduleCron(j.cron, ...)` ONCE inside a generic loop that iterates
+// buildJobTable()'s array at runtime — 61 logical registrations collapse to a
+// single textual call site. The correct count is the SUM of:
+//   1. buildJobTable() array entries in schedulerJobTable.ts — each is a
+//      `name: '...'` object-literal field (table-driven jobs; same detection
+//      technique as ARCH-CRON-watchdog.test.ts WD-11's JOB_TABLE_NAME_RE).
+//   2. registerBespokeJobs()'s own scheduleCron(...) call sites in
+//      schedulerJobTable.ts — these ARE one-to-one with real registrations
+//      (no generic loop indirection).
+//   3. summaryJobs.ts's scheduleCron(...) call sites (5 period types) — also
+//      one-to-one, no indirection.
+// This is inherently coupled to the current two-tier (table + bespoke)
+// architecture — if it changes again, this function must change with it. The
+// MIN_PLAUSIBLE_CRON_COUNT floor below is the structural guard against a
+// repeat of THIS EXACT SSOT-drift class: any future refactor that silently
+// collapses the count to near-zero fails loud here instead of shipping a
+// value nobody double-checks (feedback_ssot_toolcount_drift_after_waves).
+
+const MIN_PLAUSIBLE_CRON_COUNT = 50;
+
+function countLiteralCallsInRange(content: string, pattern: RegExp, startMarker: string, endMarker: string | null): number {
+  const startIdx = content.indexOf(startMarker);
+  if (startIdx === -1) {
+    throw new Error(`[gen-project-stats] countCronJobsFromSource: marker "${startMarker}" not found — architecture drifted, update this generator`);
+  }
+  const endIdx = endMarker ? content.indexOf(endMarker, startIdx + startMarker.length) : content.length;
+  const slice = content.slice(startIdx, endIdx === -1 ? content.length : endIdx);
+  const matches = slice.match(pattern);
+  return matches ? matches.length : 0;
+}
 
 function countCronJobsFromSource(): number {
-  let count = 0;
+  const jobTablePath = join(SCHEDULER_DIR, "schedulerJobTable.ts");
+  const summaryJobsPath = join(SCHEDULER_DIR, "summaryJobs.ts");
 
-  function walk(dir: string): void {
-    const entries = readdirSync(dir, { withFileTypes: true });
-    for (const entry of entries) {
-      const fullPath = join(dir, entry.name);
-      if (entry.isDirectory()) {
-        walk(fullPath);
-      } else if (entry.isFile() && entry.name.endsWith(".ts") && !entry.name.endsWith(".bak")) {
-        const content = readFileSync(fullPath, "utf-8");
-        // Count ALL occurrences of cron.schedule in the file
-        const matches = content.match(/cron\.schedule\s*\(/g);
-        if (matches) {
-          count += matches.length;
-        }
-      }
-    }
+  if (!existsSync(jobTablePath)) {
+    throw new Error(`[gen-project-stats] schedulerJobTable.ts not found at ${jobTablePath} — architecture drifted, update this generator`);
+  }
+  if (!existsSync(summaryJobsPath)) {
+    throw new Error(`[gen-project-stats] summaryJobs.ts not found at ${summaryJobsPath} — architecture drifted, update this generator`);
   }
 
-  if (!existsSync(SCHEDULER_DIR)) {
-    throw new Error(`[gen-project-stats] SCHEDULER_DIR not found: ${SCHEDULER_DIR}`);
-  }
+  const jobTableSrc = readFileSync(jobTablePath, "utf-8");
+  const summaryJobsSrc = readFileSync(summaryJobsPath, "utf-8");
 
-  walk(SCHEDULER_DIR);
+  // 1. Table-driven jobs: `name: '...'` fields inside buildJobTable()'s returned array.
+  const tableDrivenCount = countLiteralCallsInRange(
+    jobTableSrc,
+    /\bname:\s*['"][^'"]+['"]/g,
+    "export function buildJobTable",
+    "export function registerJobTable",
+  );
 
-  if (count === 0) {
-    throw new Error(`[gen-project-stats] Zero cron jobs found in ${SCHEDULER_DIR} — this is wrong, aborting`);
+  // 2. Bespoke jobs: literal scheduleCron(...) call sites in registerBespokeJobs().
+  const bespokeCount = countLiteralCallsInRange(
+    jobTableSrc,
+    /scheduleCron\s*\(/g,
+    "export function registerBespokeJobs",
+    null,
+  );
+
+  // 3. summaryJobs.ts: literal scheduleCron(...) call sites (5 period types).
+  const summaryJobsMatches = summaryJobsSrc.match(/scheduleCron\s*\(/g);
+  const summaryJobsCount = summaryJobsMatches ? summaryJobsMatches.length : 0;
+
+  const count = tableDrivenCount + bespokeCount + summaryJobsCount;
+
+  if (count < MIN_PLAUSIBLE_CRON_COUNT) {
+    throw new Error(
+      `[gen-project-stats] cronJobCount=${count} (table-driven=${tableDrivenCount} + bespoke=${bespokeCount} + ` +
+      `summaryJobs=${summaryJobsCount}) is below the sanity floor of ${MIN_PLAUSIBLE_CRON_COUNT} — this is almost ` +
+      `certainly a counting-logic bug (see FIX-PROJECT-STATS-CRONJOBCOUNT-SSOT-DRIFT comment above), not a real drop ` +
+      `in registered jobs. Aborting rather than writing a silently-wrong value.`
+    );
   }
 
   return count;
