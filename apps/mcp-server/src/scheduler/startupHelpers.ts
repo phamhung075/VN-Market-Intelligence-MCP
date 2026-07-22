@@ -103,6 +103,7 @@ export function shouldRunCatchup(
   nowUtc: Date = new Date(),
   weekdayOnly: boolean = false,
   reportCheckFn?: () => boolean,
+  requiredUtcDay?: number,
 ): boolean {
   if (weekdayOnly) {
     const day = nowUtc.getUTCDay()
@@ -110,6 +111,22 @@ export function shouldRunCatchup(
       log(`[startup-catchup] ${jobName}: weekend — skipping (weekdayOnly)`)
       return false
     }
+  }
+
+  // FIX-CRON-SUNDAY-STARTUP-CATCHUP: weekly-cadence jobs (e.g. Sunday-only) only
+  // get ONE scheduled window per week. node-cron's recoverMissedExecutions
+  // (scheduleCron's default) does NOT bridge a process restart — it only replays
+  // ticks missed by in-process event-loop lag (Scheduler.start() re-seeds
+  // lastCheck/lastExecution fresh from `new Date()` on every construction, i.e.
+  // every container boot). If the container is down/mid-restart exactly when a
+  // weekly job's single window passes, that whole week is silently lost with NO
+  // replay — unlike a daily job, it does not get another chance until next week.
+  // requiredUtcDay (0=Sunday..6=Saturday) gates the catchup to fire ONLY on the
+  // job's actual scheduled day, mirroring weekdayOnly's day-of-week awareness but
+  // requiring an EXACT day rather than excluding a weekend range.
+  if (requiredUtcDay !== undefined && nowUtc.getUTCDay() !== requiredUtcDay) {
+    log(`[startup-catchup] ${jobName}: not the required UTC day (got ${nowUtc.getUTCDay()}, need ${requiredUtcDay}) — skipping`)
+    return false
   }
 
   const utcHour = nowUtc.getUTCHours()

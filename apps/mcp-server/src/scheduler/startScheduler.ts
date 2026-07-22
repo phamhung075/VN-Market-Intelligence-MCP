@@ -142,7 +142,11 @@ export function startScheduler() {
   // schedulerJobTable.ts's header for the full rationale and the walEscalateFn /
   // scheduler-watchdog self-heal manifest details.
   const jobTableCtx = { db, jobRunRepo }
-  registerJobTable(buildJobTable(jobTableCtx), jobRunRepo)
+  // Captured (not inlined) so the Sunday startup-catchup block below (FIX-CRON-
+  // SUNDAY-STARTUP-CATCHUP) can look up a table-driven job's exact runner by name
+  // — single source of truth stays schedulerJobTable.ts, no duplicated import.
+  const jobTable = buildJobTable(jobTableCtx)
+  registerJobTable(jobTable, jobRunRepo)
   registerBespokeJobs(jobTableCtx)
 
   registerSummaryJobs({
@@ -237,6 +241,59 @@ export function startScheduler() {
       }
     } catch (err) {
       log(`[startup-catchup] summaryJob:daily error: ${err instanceof Error ? err.message : String(err)}`)
+    }
+  }, 30_000)
+
+  // FIX-CRON-SUNDAY-STARTUP-CATCHUP — root cause (RCA):
+  //   node-cron's recoverMissedExecutions (scheduleCron's default) only replays
+  //   ticks missed by in-process event-loop lag; Scheduler.start() re-seeds its
+  //   lastCheck/lastExecution reference from `new Date()` on every construction
+  //   (i.e. every container boot), so it can NEVER see a scheduled time that
+  //   already passed before this process existed. A weekly (Sunday-only) job
+  //   gets exactly ONE window per week — if the container happens to be down or
+  //   mid-restart at that exact moment, the whole week is silently lost with no
+  //   replay, unlike a daily job which gets another chance ~24h later. RAW-verified
+  //   live evidence (2026-07-22): devTeamHeartbeatJob/predictionOutcomeJob/
+  //   integrityCheckJob/bondMaturityPollerJob (all Sunday, timezone:'UTC', early
+  //   UTC-morning windows 02:00-08:00) last fired 2026-06-28 and have been silently
+  //   skipped 3 consecutive Sundays; sibling Sunday jobs whose window falls LATER
+  //   in the UTC day (patternWatchJob 15:30 UTC, weeklyPortfolioReportJob 16:00
+  //   UTC) kept firing because the ~19-day server outage happened to end
+  //   (2026-07-19T12:31Z) BEFORE their window but AFTER the 4 early-morning ones'
+  //   window — pure bad luck of restart timing, not a timezone/DOW library bug.
+  // Fix: apply the SAME startup-catchup pattern already used for daily jobs above
+  // (task 1430 / 1958a), gated to the exact UTC day-of-week each job fires on
+  // (requiredUtcDay param, FIX-CRON-SUNDAY-STARTUP-CATCHUP addition to
+  // shouldRunCatchup). Runners are looked up BY NAME from the already-built
+  // `jobTable` (schedulerJobTable.ts buildJobTable) — single source of truth,
+  // no duplicated business logic — and invoked through the same
+  // jobRunRepo.wrapRun(name, runner) envelope the regular cron path uses, so the
+  // catch-up run is recorded under the identical job_name (no watchdog/health
+  // false-negative from a shadow name).
+  setTimeout(async () => {
+    log('[startup-catchup] Sunday probe firing — checking 4 weekly UTC-morning jobs')
+
+    const sundayCatchups: Array<{ jobName: string; windowUtcHour: number; windowUtcMin: number }> = [
+      { jobName: 'integrityCheckJob', windowUtcHour: 2, windowUtcMin: 0 },
+      { jobName: 'bondMaturityPollerJob', windowUtcHour: 2, windowUtcMin: 30 },
+      { jobName: 'devTeamHeartbeatJob', windowUtcHour: 7, windowUtcMin: 0 },
+      { jobName: 'predictionOutcomeJob', windowUtcHour: 8, windowUtcMin: 0 },
+    ]
+
+    for (const { jobName, windowUtcHour, windowUtcMin } of sundayCatchups) {
+      try {
+        if (shouldRunCatchup(db, jobName, windowUtcHour, windowUtcMin, new Date(), false, undefined, 0)) {
+          const entry = jobTable.find((j) => j.name === jobName)
+          if (!entry) {
+            log(`[startup-catchup] ${jobName}: no matching JOB_TABLE entry found — skipping (registration drift?)`)
+            continue
+          }
+          log(`[startup-catchup] ${jobName}: running Sunday catch-up`)
+          await jobRunRepo.wrapRun(entry.name, entry.runner)
+        }
+      } catch (err) {
+        log(`[startup-catchup] ${jobName} error: ${err instanceof Error ? err.message : String(err)}`)
+      }
     }
   }, 30_000)
 
