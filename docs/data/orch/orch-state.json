@@ -427,8 +427,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-22T15:13:06Z",
-    "_updated_by": "po/triage-20260722T1512",
+    "_updated_at": "2026-07-22T22:42:47Z",
+    "_updated_by": "po/triage-sys-20260722T223302-4f8b",
     "archive": [],
     "rows": [
       {
@@ -1933,6 +1933,20 @@
         "disposition": "DEDUP -> FIX-AUDITOR-SBVFX-SLA-POSTMARKET-TOLERANCE (live BACKLOG P1). Marginal 31-vs-30min (ratio 1.03) is the known category-error FP: sbv_fx is a once-per-business-day source (real push ~10:05 VN) given a flat 30-min SLA for the whole business day => structurally guaranteed intraday breach, market-hours-blind (feedback_auditor_freshness_threshold_market_hours_blind). Source healthy, SLA wrong; superseded row FIX-SLA-SBV-FX-BUSINESS-DAY-AWARE already folded acceptance into the tolerance-band row. NO mint (conservation held). NO restart.",
         "triaged_at": "2026-07-22T18:48:21Z",
         "triaged_by": "po"
+      },
+      {
+        "id": "sys-20260722T223302-4f8b",
+        "ts": "2026-07-22T22:33:02Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "sbv-vps stale 43h (check B-06)",
+        "severity": "CRITICAL",
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "DEDUP -> existing VPS push-plane incident cluster (FIX-VPS-SYSTEMD-STARTLIMIT-HARDENING P1 + FIX-VPS-HEALTH-OFFHOURS-MASK-FALSE-GREEN + FIX-VPS-SBV-HEALTH-SHARED-TABLE-IS-ESTIMATE, all minted 2026-07-22T16:29Z from docs/vps-sources/vps-push-plane-stale-2026-07-22/recon.md). NUMBER IS TRUE, FRAMING IS WRONG. RAW live probe 2026-07-22T22:37-22:45Z via gateway->vn-market + docker exec bun:sqlite on vn-market-intelligence-mcp-mcp-server-1: vps_push_log service='sbv' MAX(pushed_at)=2026-07-21 03:05:21 => 43h32m at signal ts, so the 43h is real. BUT it is NOT sbv-specific and NOT a data outage for sbv: prices last push 2026-07-21 03:08:05 and foreign-flow last push 2026-07-21 03:08:59 died in the SAME 3.5-min window (3 of 5 push services); news alone survives (2026-07-22 22:30:04, 68 pushes/24h) because it already carries the StartLimitIntervalSec=0 hardening (commit 42e8448ce) the other three never got. NOT market-hours blindness: 07-18/07-19 absent = normal Sat/Sun, 07-21 Tue + 07-22 Wed are real VN trading days. NOT a frozen value: sbv_rates_history moved 26130 -> 26140 -> 26120 across 2026-07-22 with last write 21:45:02Z (52min), matching get_sla_status sbv_fx age=53min -- sbv is the LEAST affected source because the local fallback scheduler/macro/sbvRatesJob.ts (VCB pull, is_estimate=1, 4-hourly) keeps refreshing the shared single-row sbv_rates table, which is precisely the masking mechanism FIX-VPS-SBV-HEALTH-SHARED-TABLE-IS-ESTIMATE already documents. TWO-LAYER SPLIT CONFIRMED: push-plane 43h dead vs fetch/serve-plane 53min fresh; the auditor emitted BOTH numbers 4h apart (sys-20260722T183223-0f2a said 31min) without ever reconciling them. NO MINT (conservation held; root cause already diagnosed to systemd StartLimitBurst lockout, blocked_by user-escalation-vps-restart, VPS SSH/HTTP unreachable). NO restart (user-gated). ONE NEW FACT folded into FIX-VPS-SYSTEMD-STARTLIMIT-HARDENING acceptance: the outage is destroying data that will NOT self-heal on restart -- daily_ohlcv 07-21=416 and 07-22=51 vs 887-984/day baseline (~1,400 ticker-days lost) and daily_foreign_flow has NO 2026-07-22 row at all (baseline 102/day, full session gone).",
+        "triaged_at": "2026-07-22T22:42:47Z",
+        "triaged_by": "po/triage-sys-20260722T223302-4f8b"
       }
     ],
     "last_triaged_at": "2026-07-22T15:10:08Z",
@@ -10536,7 +10550,7 @@
         "title": "Add StartLimitIntervalSec=0 to systemd units to prevent crash-loop lockout after transient failures",
         "description": "vn-price-fetch, vn-foreign-flow, vn-sbv-fetch crashed ~2026-07-21 03:05-09 UTC and entered systemd failed state due to missing StartLimitIntervalSec=0 hardening. Systemd default StartLimitIntervalSec=10s/StartLimitBurst=5 causes permanent failed state for any Restart=always unit crashing >=5 times in 10s window. Hardening has been proven safe by commit 42e8448ce (applied to vn-news-fetch/vn-reuters-fetch/vn-tradingeconomics-fetch 2026-05-02) — vn-news-fetch rode through the same incident window unaffected, demonstrating the control. This incident was non-recoverable without manual intervention due to inbound SSH/HTTP being blocked to VPS (user-gated restart already escalated via Telegram).",
         "scope": "Add StartLimitIntervalSec=0 to [Unit] section of vps-scripts/vn-price-fetch.service, vps-scripts/vn-foreign-flow.service, vps-scripts/vn-sbv-fetch.service, vps-scripts/vn-bctc-fetch.service; audit vps-scripts/vn-agm-plan.service and vps-scripts/vn-reuters-fetch.service deployment status (both exist in repo but are never scp'd/enabled by scripts/deploy-vinahost.sh — same dead-code class as OHLCV-backfill gap from c023). Identify and fix byte-identical duplicate deploy scripts (scripts/deploy-vinahost.sh and apps/mcp-server/deploy-vinahost.sh) — update both or dedupe and select one for deployment.",
-        "acceptance": "Repo hardening complete: all 4 units have StartLimitIntervalSec=0; redundant deploy script verified or deduped; agm-plan and reuters-fetch units disposition determined (deployed-to-vps OR removed-as-dead-code); redeploy via scripts/deploy-vinahost.sh; live systemctl restart on VPS succeeds (user-gated after reachability restored). Post-deploy: all 3 services recover from failed state and resume pushing data; vn-bctc-fetch state verified separately.",
+        "acceptance": "Repo hardening complete: all 4 units have StartLimitIntervalSec=0; redundant deploy script verified or deduped; agm-plan and reuters-fetch units disposition determined (deployed-to-vps OR removed-as-dead-code); redeploy via scripts/deploy-vinahost.sh; live systemctl restart on VPS succeeds (user-gated after reachability restored). Post-deploy: all 3 services recover from failed state and resume pushing data; vn-bctc-fetch state verified separately. BACKFILL (added 2026-07-22T22:45Z from po triage of auditor signal sys-20260722T223302-4f8b): recovery must also REPAIR the outage-window gap, which does not self-heal because prices/foreign-flow pushes are live-only. Live-measured at 43h: daily_ohlcv 2026-07-21=416 tickers and 2026-07-22=51 tickers against an 887-984/day baseline (07-13..07-20), and daily_foreign_flow has NO 2026-07-22 row at all (baseline 102/day). Post-restart acceptance: daily_ohlcv coverage for 2026-07-21 and 2026-07-22 restored to >=880 tickers/day and daily_foreign_flow has a populated 2026-07-22 row; if the existing ohlcv_backfill_queue path cannot cover foreign-flow, state that explicitly and raise the follow-on rather than closing with the gap open.",
         "depends": [],
         "blocked_by": [
           "user-escalation-vps-restart"
@@ -10544,8 +10558,8 @@
         "next_agent": "dev-vps-crawls",
         "supervised": false,
         "plan_only": false,
-        "updated_at": "2026-07-22T16:21:30Z",
-        "updated_by": "ops (recon.md incident analysis)",
+        "updated_at": "2026-07-22T22:42:48Z",
+        "updated_by": "po/triage-sys-20260722T223302-4f8b",
         "notes": "Root cause from git: commit 42e8448ce (2026-05-02) added StartLimitIntervalSec=0 to vn-news-fetch/vn-reuters-fetch/vn-tradingeconomics-fetch only. Commit message explicitly lists vn-price-fetch/vn-foreign-flow/vn-sbv-fetch/vn-bctc-fetch as \"had no burst limit and are unchanged\" — this premise is inverted. No explicit override means systemd applies its compiled-in default (StartLimitIntervalSec=10s/StartLimitBurst=5), not \"no limit\". Incident recon: docs/vps-sources/vps-push-plane-stale-2026-07-22/recon.md"
       },
       {
@@ -13539,8 +13553,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-22T22:17:20Z",
-    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
+    "last_triaged_at": "2026-07-22T22:42:47Z",
+    "last_triaged_by": "po/triage-sys-20260722T223302-4f8b",
     "in_progress": []
   },
   "_meta": {

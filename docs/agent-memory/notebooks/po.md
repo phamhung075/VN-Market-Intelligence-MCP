@@ -1,23 +1,26 @@
 # PO Notebook
 
-_Last: 2026-07-22T22:02Z (dev-team WIP-reconcile adjudication — po-s148, freed WIP 2→0)_
+_Last: 2026-07-22T22:42Z (triage sys-20260722T223302-4f8b — auditor "sbv-vps stale 43h", DEDUP 0 mint)_
 
-## Tick 2026-07-22T21:53–22:02Z — 2 stale in_progress rows are LEGIT epics, not a deadlock; reclaimed their WIP
+## Tick 2026-07-22T22:37–22:45Z — 43h is TRUE but it is not an sbv problem; already minted 6h earlier
 
-**dev-team ask:** adjudicate 2 in_progress rows pinning WIP=2, starving 41 ready[]. Premise: possible decomposition data-loss (children "never landed"), maybe abandoned.
+**Signal:** system-auditor data_stale CRITICAL, `payload_ref: null`, summary was the whole signal.
 
-**RAW verdict — premise FALSE, both legitimately decomposed (NOT abandoned, NOT done-unflipped):**
-- `DESIGN-COWORK-FANOUT-PRODUCER-CONSUMER-ORDERING`: 8 children T1-T8 LIVE (T1-5,7,8 ready/TODO, T6 review/REVIEW). pm decomposed 95e0ba8a1 + promoted T6 d651b0eab.
-- `FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD`: 6 FR children in ready[] + AC2 successor `FIX-SPRINT-TASK-HEARTBEAT-LOCK` live in backlog (closure HARD-precondition MET). pm fd401f51e/638ecdc91.
-- dev-team's "0 children" was a **jq false-negative**: `.task_board|to_entries[]|.value[]` throws *Cannot iterate over string* on scalar lane keys (_updated_at,...) and returns empty. Children are top-level rows in ready/review, NOT inline `.children`.
+**RAW probe (gateway→vn-market + docker exec bun:sqlite, live named volume):**
+- `vps_push_log`: sbv MAX=`2026-07-21 03:05:21` (43h32m at signal ts) — **number is real**.
+- Same table: prices `03:08:05`, foreign-flow `03:08:59` — **3 of 5 push services died in one 3.5-min window**. news alive (`22:30:04`, 68/24h) — it is the control: it already has the `StartLimitIntervalSec=0` hardening (42e8448ce) the other three never got.
+- `sbv_rates_history`: 26130→26140→26120 across 07-22, last write `21:45:02Z`; `get_sla_status` sbv_fx age=53min. **sbv data is fresh and moving — least-damaged source.**
 
-**Real defect = post-decomposition WIP leak** (NOT stale/abandoned): a decomposed epic parent lingered in in_progress holding a WIP slot while its children are worked — the post-decomp half of the epic-wrapper-closeout gap. Convention confirms: other epic (SYSREMAKE-P2) parks in active_sprints, never in_progress.
+**Two-layer split (the trap):** push-plane 43h dead vs fetch/serve-plane 53min fresh. sbv looks alive *only* because `scheduler/macro/sbvRatesJob.ts` (VCB pull, `is_estimate=1`, 4-hourly) keeps refreshing the shared single-row `sbv_rates` — the exact masking `FIX-VPS-SBV-HEALTH-SHARED-TABLE-IS-ESTIMATE` already documents. Auditor emitted **both** numbers 4h apart (`sys-20260722T183223-0f2a` = "31min") and never reconciled them.
 
-**Action — po-s148 relocate in_progress→backlog+BLOCKED** (epic-hold; architect's own ruling + 13-row TASK_2005 precedent). Added inline children[] (is_epic_wrapper=true) + depends + blocked_reason. WIP **2→0**, idempotent, conservation 618=618. Committed 39d5331b1 (script + orch-state, explicit pathspecs). NO push.
+**FP-class checks all cleared → not an FP:** 07-18/07-19 absent = normal Sat/Sun, so 07-21 Tue + 07-22 Wed are real trading days (not market-hours-blind). Value not frozen (moved 3x on 07-22). Corroborated on a 2nd plane (price + foreign-flow), not single-source.
+
+**Verdict: REAL, but MISFRAMED + ALREADY MINTED.** 3 live rows from `docs/vps-sources/vps-push-plane-stale-2026-07-22/recon.md` (all 2026-07-22T16:29Z) cover it: `FIX-VPS-SYSTEMD-STARTLIMIT-HARDENING` (P1, the dead pipe), `FIX-VPS-HEALTH-OFFHOURS-MASK-FALSE-GREEN`, `FIX-VPS-SBV-HEALTH-SHARED-TABLE-IS-ESTIMATE`. Root cause = systemd StartLimitBurst lockout, `blocked_by: user-escalation-vps-restart`. **0 mint** (conservation 628=628, signals 105=105). No restart (user-gated).
+
+**One new fact folded into the P1's acceptance** (not a new row): the outage is destroying data that will NOT self-heal on restart — `daily_ohlcv` 07-21=**416**, 07-22=**51** vs **887–984/day** baseline (~1,400 ticker-days); `daily_foreign_flow` has **no 2026-07-22 row at all** (baseline 102/day).
 
 ## Carry-over
-- **WIP now 0/2** — RLC unblocked to promote starving P0/P1 ready rows (FIX-MCP-TEST-SUITE-INTERVAL-TIMER-LEAK-TEARDOWN P1, CCATO-MCP-T1..T8 P0, FIX-ORPHAN-FR*, FANOUT-T*).
-- **Do NOT re-flag these 2 rows** — they are epic-holds (BLOCKED, epic_hold:true, children populated), not a deadlock. Close to DONE only when children all DONE_VERIFIED.
-- **CLASS-FIX recommended (returned to dev-team):** (1) pm decomposition should move the parent OUT of in_progress in the same write; (2) widen `FIX-DEVTEAM-EPIC-WRAPPER-AUTOCLOSE-SWEEP` to also scan backlog[] BLOCKED wrappers (currently ready/in_progress only) so these auto-close via owner/next_agent=pm.
-- **Head residue (benign):** `.head.next_agent="ops"→OPS-REBUILD-MCP-SERVER-OPENSSH` is stale Close-Gate residue; that deploy verifiably shipped (DONE_VERIFIED, 61b407dc4). head.status=idle so pointer is dormant — left untouched (risk-asymmetric); router/next head-write can null it.
-- **Still live from prior tick:** sprint `COWORK-GUARANTEED-SLOT-CATCHUP` + `BA-COWORK-GUARANTEED-SLOT-CATCHUP` (NEXT=ba write spec); consolidates the 6-row guaranteed-slot cluster (BA marks subsumed, do NOT re-open).
+- **VPS is hard-blocked on the user** — SSH+HTTP unreachable, restart user-gated. Every further "sbv/prices/foreign-flow stale" signal until that restart is the SAME incident: mark triaged, do NOT mint. Age just grows (36h→43h→…).
+- **Auditor B-06 is sbv-misattributed**: it names sbv (the one source still being served by a fallback) while prices/foreign-flow take the real damage. Worth folding into `FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE` — B-06 should report the push-plane *cluster*, not per-service, and should not label a source stale on a plane a documented fallback masks.
+- **Signal `status` token is `triaged`** (103 rows) — `RESOLVED` would be novel-token drift; the spawn brief asked for RESOLVED, I used the canonical one.
+- **Still live from prior tick:** WIP 0/2, RLC free to promote. Sprint `COWORK-GUARANTEED-SLOT-CATCHUP` + `BA-COWORK-GUARANTEED-SLOT-CATCHUP` (NEXT=ba write spec). Do NOT re-flag the 2 epic-hold rows.
