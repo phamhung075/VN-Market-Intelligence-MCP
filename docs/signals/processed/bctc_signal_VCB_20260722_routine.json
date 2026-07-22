@@ -1,0 +1,26 @@
+{
+  "ticker": "VCB",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Ngân hàng bán lẻ & doanh nghiệp, tín dụng, tài trợ thương mại, bancassurance",
+  "customer": "Khách hàng doanh nghiệp lớn, SME, cá nhân thu nhập trung-cao",
+  "ops": "Thu nhập lãi thuần 17.421 tỷ; ROE 4.2% dưới trung vị ngành 17.6%; non_operating_share -21.4% phản ánh chi phí dự phòng tín dụng (cấu trúc ngân hàng, không phải one-off)",
+  "mgmt": "KD Phục/THUẬN LỢI ổn định 3 chu kỳ liên tiếp; PE premium +57% vs ngành dù ROE dưới trung vị — định giá cao hơn hiệu quả sinh lời hiện tại",
+  "valuation_verdict": "FAIR",
+  "ey_spread_pct": 2.09,
+  "pe_vs_sector": "14.1 vs 9.0 (PREMIUM +57%)",
+  "kd_reading": "Phục (24) — THUẬN LỢI — 100%",
+  "esc_gate": "ESC-3 DATA-COVERAGE-LIMITED guard held (3/4Q); ESC-4 FALSE -21.4% (bank structure); ESC-5 FALSE",
+  "net_profit_vnd_bn": 9462.1,
+  "roe_pct": 4.2,
+  "generated_at": "2026-07-22T00:12:00Z",
+  "cycle": "bctc-analyst-slot-4",
+  "_processed": {
+    "fingerprint": "516ccfb4029c7d0c94508b8f1206812da26b161c961a4fb5699e399502a47ed6",
+    "processedAt": "2026-07-22T00:19:19Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "ticker": "SAB",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Sản xuất bia (Sabeco), đồ uống có cồn",
+  "customer": "Người tiêu dùng bán lẻ, kênh HORECA",
+  "ops": "PE 13.1x PREMIUM +48% vs ngành, ROE 19.9% trên trung vị ngành 15.5% — get_bctc_full = 'Chưa có dữ liệu' (blocked cluster ~17-18 mã)",
+  "mgmt": "Dòng tiền nước ngoài -60 cp net, gần trung tính, nhỉnh hơn ngành nhẹ; không có tín hiệu quản trị mới",
+  "valuation_verdict": "FAIR",
+  "ey_spread_pct": 2.63,
+  "pe_vs_sector": "13.1 vs 8.9 (PREMIUM +48%)",
+  "data_quality": "DATA-GAP: get_bctc_full unavailable — sector-ratio-only signal",
+  "generated_at": "2026-07-22T00:12:00Z",
+  "cycle": "bctc-analyst-slot-4",
+  "_processed": {
+    "fingerprint": "1670ba412b7ae0aa77b55da3dc838512c527f303fdba5211bb3ebce8835fc5e2",
+    "processedAt": "2026-07-22T00:19:19Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

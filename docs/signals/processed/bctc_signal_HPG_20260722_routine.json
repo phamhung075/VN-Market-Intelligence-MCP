@@ -1,0 +1,26 @@
+{
+  "ticker": "HPG",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Sản xuất thép xây dựng, tôn mạ, ống thép (Khu liên hợp Dung Quất / Hải Dương)",
+  "customer": "Nhà thầu xây dựng, đại lý phân phối thép, khách hàng xuất khẩu",
+  "ops": "Biên lợi nhuận gộp 15.8%; Operating Profit ghi nhận 0 (lỗi dữ liệu đã biết — không phải tín hiệu solvency); Net Profit (9.055,9 tỷ) vượt Gross Profit (8.365,1 tỷ) — validation flag 'possible non-operating income'",
+  "mgmt": "ROE 6.5% dưới trung vị ngành 2.9%... thực chất trên trung vị (ngành thấp); dòng tiền nước ngoài +314K cp net mạnh hơn ngành; KD Bác/BẤT LỢI ổn định 3 chu kỳ, độ tin cậy thấp 25%",
+  "valuation_verdict": "FAIR",
+  "ey_spread_pct": 2.04,
+  "pe_vs_sector": "14.2 vs 32.6 (DISCOUNT -57%)",
+  "kd_reading": "Bác (23) — BẤT LỢI — 25%",
+  "esc_gate": "ESC-3 DATA-COVERAGE-LIMITED guard held; ESC-4 SKIPPED (op_profit=0 known defect); ESC-5 FALSE",
+  "net_profit_vnd_bn": 9055.9,
+  "roe_pct": 6.5,
+  "generated_at": "2026-07-22T00:12:00Z",
+  "cycle": "bctc-analyst-slot-4",
+  "_processed": {
+    "fingerprint": "da30901c6b6f8140c1bec8783903bf27b04c773879566f75e6b9a9bbf46c105e",
+    "processedAt": "2026-07-22T00:19:19Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

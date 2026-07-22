@@ -1,0 +1,72 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-22T00:11:59Z",
+    "matched_slots": [
+      "bctc-analyst-slot-4",
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-4",
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md",
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 6,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "bctc-analyst-slot-4": "cron",
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence",
+      "alert-commander-critical": "cadence"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-4": null,
+      "news-scout-offhours": 240,
+      "market-watcher-offhours": 240,
+      "alert-commander-critical": 240
+    },
+    "last_fired_timestamp": "2026-07-22T00:11:14Z",
+    "last_fired_slots": [
+      "bctc-analyst-slot-4",
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "00:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "signal_backlog": 2,
+    "note": "Top-of-hour 00:00Z fan-out: bctc-analyst-slot-4 (daily cron, ~24h due) + 3 offhours gatherers (0 */4 cadence 240m). tick-snapshot (Step 4.7) skipped — dispatcher cannot reliably reserialize bootstrap payload to stage file; agents fall back to direct get_cycle_bootstrap. A-30 mcp-server memory ESCALATE active (ops escalation cowork-20260721T232634Z-a30-mcp-oom-escalate NEW). Notable market: oil_gas selloff (GAS -6.98%, PLX -4.81%, BSR -6.49%) despite Brent +2.88% — for spawned agents to analyze."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-22T00:11:59Z",
+  "_processed": {
+    "fingerprint": "1106dc5bbde68dcfc0b94c600685b929d9f57a2284f0d85654142b7f918f25a2",
+    "processedAt": "2026-07-22T00:19:19Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

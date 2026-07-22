@@ -1,0 +1,23 @@
+{
+  "ticker": "VIX",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Môi giới chứng khoán, tự doanh, tư vấn tài chính",
+  "customer": "Nhà đầu tư cá nhân & tổ chức trong nước",
+  "ops": "PE 5.5x DISCOUNT -63% vs ngành, ROE 28.9% trên trung vị ngành 10.0% — get_bctc_full = 'Chưa có dữ liệu' (blocked cluster ~17-18 mã, không mở rộng thêm cycle này)",
+  "mgmt": "ROE mạnh nhất nhóm chứng khoán touch-rotation; không có tín hiệu insider mới",
+  "valuation_verdict": "CHEAP",
+  "ey_spread_pct": 13.18,
+  "pe_vs_sector": "5.5 vs 14.6 (DISCOUNT -63%)",
+  "data_quality": "DATA-GAP: get_bctc_full unavailable — sector-ratio-only signal",
+  "generated_at": "2026-07-22T00:12:00Z",
+  "cycle": "bctc-analyst-slot-4",
+  "_processed": {
+    "fingerprint": "d8db9bb041dd635c316c6044066cffd8eb11b44e1ec36fef6a295e0d838b777f",
+    "processedAt": "2026-07-22T00:19:19Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

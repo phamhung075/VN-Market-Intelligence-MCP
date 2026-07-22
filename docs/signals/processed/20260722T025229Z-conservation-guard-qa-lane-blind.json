@@ -1,0 +1,23 @@
+{
+  "from": "dev-team",
+  "to": "architect",
+  "type": "bug",
+  "severity": "low",
+  "created_at": "2026-07-22T02:52:29Z",
+  "title": "orch conservation guard omits qa[] lane — blind to qa loss, false -1 on review->qa",
+  "payload": {
+    "module": "scripts/orch-conservation-check.mjs",
+    "root_cause": "FLAT_TASK_LANES (line 67) = [backlog, ready, in_progress, review, done, done_verified] — 'qa' is missing; documented formula at lines 22-23 also omits it.",
+    "observed": "QA-Drain review->qa move (2026-07-22T02:47Z, FACTORY-NEWS-dedup-normalizeDate) displayed task_total live=599 candidate=598 (false -1). True all-lane board total verified conserved 580->580 at source.",
+    "impact": "(1) cosmetic false -1 on every review->qa move; (2) REAL: qa[] is an uncounted lane, so a catastrophic drop of qa[] rows is invisible to the floor-ratio guard. Latent risk rose today: the Review-Lane QA-Drain lane (UNBLOCK-DEVTEAM-DISPATCH-GATE-STAGING-DEADLOCK) now routes rows through qa[] on a regular cadence.",
+    "suggested_fix": "Add 'qa' to FLAT_TASK_LANES (line 67) and to the doc formula (lines 22-23). Verify no double-count where qa rows might alias another lane.",
+    "non_blocking": true,
+    "verified_by": "router/dev-team tick 2026-07-22T02:37Z — root cause read at source (line 67 + floor-ratio abort logic lines 156-166)"
+  },
+  "_processed": {
+    "fingerprint": "1605780ebe470ba38268982fa724059b343e1b9ceadd8642b5f8cd97332e0a18",
+    "processedAt": "2026-07-22T05:19:30Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

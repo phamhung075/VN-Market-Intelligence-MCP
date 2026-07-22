@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260722T022430Z",
+    "matched_slots": [
+      "chef-intraday"
+    ],
+    "won_slots": [
+      "chef-intraday"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "silent": false,
+    "drift_min": 6,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "chef-intraday": "cadence"
+    },
+    "cadence_minutes": {
+      "chef-intraday": "120"
+    },
+    "last_fired_timestamp": "2026-07-22T02:23:39Z",
+    "last_fired_slots": [
+      "chef-intraday"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "02:15",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": null,
+    "signal_backlog": 3,
+    "note": "chef-intraday intraday dish spawned (unified-agent, cadence-due ~17.9h stale, market open). CHEF mutex not triggered (no guaranteed CHEF sibling in MATCHES). Step 4.7 tick-snapshot skipped (single consumer, zero-blocker fallback). No fresh A-30 re-emit to fold this tick."
+  },
+  "priority": "low",
+  "createdAt": "20260722T022430Z",
+  "_processed": {
+    "fingerprint": "7ab410fde899a1a392c1fe3e90b6f47b094a2da385e51f9d06e2331a25a251d1",
+    "processedAt": "2026-07-22T02:45:34Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "ticker": "DIG",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Phát triển bất động sản khu đô thị, khu công nghiệp (Đồng Nai, Bà Rịa-Vũng Tàu)",
+  "customer": "Người mua nhà ở, nhà đầu tư thứ cấp bất động sản",
+  "ops": "PE 14.9x DISCOUNT -23% vs ngành, ROE 7.3% trên trung vị ngành 6.3% — get_bctc_full = 'Chưa có dữ liệu' (blocked cluster ~17-18 mã, đã xác nhận không mở rộng thêm cycle này)",
+  "mgmt": "Dòng tiền nước ngoài -47K cp net yếu hơn ngành; 5 tín hiệu escalation dev-team vẫn NEW/chưa xử lý (get_recent_fixes stale từ 05-12)",
+  "valuation_verdict": "FAIR",
+  "ey_spread_pct": 1.71,
+  "pe_vs_sector": "14.9 vs 19.3 (DISCOUNT -23%)",
+  "data_quality": "DATA-GAP: get_bctc_full unavailable — sector-ratio-only signal",
+  "generated_at": "2026-07-22T00:12:00Z",
+  "cycle": "bctc-analyst-slot-4",
+  "_processed": {
+    "fingerprint": "5ea897acf091f57da253de91176e190fb7809f35e9321e62d78c8f72f5be1fff",
+    "processedAt": "2026-07-22T00:19:19Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

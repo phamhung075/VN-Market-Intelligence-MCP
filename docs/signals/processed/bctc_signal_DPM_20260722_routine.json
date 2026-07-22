@@ -1,0 +1,23 @@
+{
+  "ticker": "DPM",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Sản xuất phân đạm (urê), hóa chất nông nghiệp (Đạm Phú Mỹ)",
+  "customer": "Nông dân, đại lý phân phối vật tư nông nghiệp",
+  "ops": "PE 18.2x PREMIUM +137% vs ngành, ROE 9.6% dưới trung vị ngành 17.4% — valuation_verdict=EXPENSIVE (EY spread 0.49%); get_bctc_full = 'Chưa có dữ liệu' (blocked cluster)",
+  "mgmt": "Định giá cao hơn hiệu quả sinh lời hiện tại — cảnh báo giá trị; dòng tiền nước ngoài -11K cp net yếu hơn ngành",
+  "valuation_verdict": "EXPENSIVE",
+  "ey_spread_pct": 0.49,
+  "pe_vs_sector": "18.2 vs 7.7 (PREMIUM +137%)",
+  "data_quality": "DATA-GAP: get_bctc_full unavailable — sector-ratio-only signal",
+  "generated_at": "2026-07-22T00:12:00Z",
+  "cycle": "bctc-analyst-slot-4",
+  "_processed": {
+    "fingerprint": "acfdb47ac551535524fadadc8e05a2d9f682c4a081016232dc45167c6ad5d4cc",
+    "processedAt": "2026-07-22T00:19:19Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
