@@ -1,20 +1,19 @@
 # PO Notebook
 
-_Last: 2026-07-22T17:56Z (dev-team :37 triage — ci_red dedup+escalate, 0 mint, WIP held 2/2)_
+_Last: 2026-07-22T18:48Z (dev-team :37 triage — sbv_fx marginal-SLA ask dedup, 0 mint, WIP held 2/2)_
 
-## Tick 2026-07-22T17:37–17:56Z — Step-1 triage: ci_red bun-test RED on main
+## Tick 2026-07-22T18:37–18:48Z — Step-1 triage: sbv_fx 31-vs-30min SLA breach ask
 
-**DRIVER ci_red** (CI GREEN→RED flip, HEAD 8a0b079b1, run 29943451339, job `bun test`). Grep-board FIRST → exact-cause row already present: `FIX-MCP-TEST-SUITE-INTERVAL-TIMER-LEAK-TEARDOWN` (was P3/backlog, 07-15). Deduped onto it — **0 new mint, conservation 615=615**.
+**SOLE DRIVER** signal_queue ask `sys-20260722T183223-0f2a` (system-auditor→po, type=data_stale, WARN, NEW): "sbv_fx marginal SLA breach 31min vs 30min threshold". Flipped **NEW→triaged** this tick so it stops re-triggering the router (asks-buried-in-queue anti-pattern).
 
-**Escalated in-place P3→P1 + backlog→ready + plan_only=false.** The row's own impact said "CI UNAFFECTED (CI completes green)" — now **FALSIFIED**. Actively RED on main breaks the fleet-wide `ci_green_on_subsequent_push` gate for ALL mcp-server work + masks new reds ⇒ UNBLOCK-class, no longer latent. Recorded fingerprint `f95c826a` on the row (memory: ci_red close must record fingerprint else re-drain).
+**Verdict: known category-error FP → DEDUP, 0 mint, conservation 615=615 / signal 104=104.** Grep-board-first surfaced the exact live coverage: `FIX-AUDITOR-SBVFX-SLA-POSTMARKET-TOLERANCE` (BACKLOG **P1**) — sbv_fx returns a flat 30-min threshold for the whole business day against a **once-per-business-day** source (real push ~10:05 VN). 31/30 = ratio 1.03 is textbook near-threshold noise: source healthy, SLA over-tight + market-hours-blind (`feedback_auditor_freshness_threshold_market_hours_blind`). The prior spin-out `FIX-SLA-SBV-FX-BUSINESS-DAY-AWARE` was already RETIRED-as-dup (router refuted clause-1 premise) with acceptance folded into the P1 tolerance-band row. No new fix warranted; near-threshold WARN is NOT a defect.
 
-**Did NOT mint a batch-regression row.** Flip is temporally tied to the cron-audit batch merged between prior-GREEN 5a7a464a9 and RED 8a0b079b1 (b3317f7f3 watchdog-widen adds setInterval; ac621f648; schedulerWatchdogJob.ts). BUT po 17:25Z already A/B'd that exact batch locally: BASE 42 fail = HEAD 42 fail, **zero net-new regressions** ⇒ any CI red is CI-ENV-specific → speculative to mint. Attached a disambiguation directive to the row: pull CI log run 29943451339/job 89002842796 FIRST; leading hypothesis = pre-existing timer-leak now times out ON CI (CI historically green on this suite ⇒ new CI-side hang). Flagged 8a0b079b1's "CI green confirmed" commit as probable subset false-green (verify raw, not badges).
-
-**Secondaries — all known, 0 re-mint:** cowork-team signal = dispatcher telemetry heartbeat (already drained/pruned), disposed. 20 telegram + 121 unresolved = 07-20 bctc reconcile flood + VPS data-bridge cluster (FIX-VPS-SYSTEMD-STARTLIMIT-HARDENING minted 07-22 + user-escalated) + auditor health/memory FP classes + mcp OOM→restart (OPS-REBUILD unblocked 8a0b079b1) — all map to existing rows. signal_queue 0 NEW. git branch clean (no CLEAN row). GOLANGCI row (P2, different job) NOT conflated.
+**Secondaries — all known, 0 re-mint:** signal_queue now **0 NEW**. list_unresolved_reports=122 (07-20:88 / 07-21:21 / 07-22:13): 73× bctcExtractReconcile RECONCILE-EXHAUSTED (07-20 benign flood, FIX-TELEGRAM-REPORT-ACK cluster); `[clean-obsolete-files]` DRAIN-BEHIND (docs/signals >50) = detect-only for dev-team drain owner, covered by UC-SDF-P1; `sbv-vps unhealthy B-07` = FIX-VPS-SYSTEMD-STARTLIMIT-HARDENING (minted 07-22); `C-04 11 low-conf` routine. ci_red bun-test (HEAD 8a0b079b, fp f95c826a) already triaged prior tick → FIX-MCP-TEST-SUITE-INTERVAL-TIMER-LEAK-TEARDOWN ready/P1. git branch clean (no CLEAN row).
 
 ## Carry-over
-- **Returned BATCH([1 FIX])**: FIX-MCP-TEST-SUITE-INTERVAL-TIMER-LEAK-TEARDOWN (ready/P1, zone apps/mcp-server/, next_agent dev-mcp-server) → Step 3 direct FIX.
-- **WIP=2/2** unchanged (DESIGN-COWORK-FANOUT pm + FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD) — nothing promoted; escalation is a ready P1 for pickup, not an in_progress force.
+- **Returned NOTHING (idle)** to dev-team — 0 batch, 0 mint. Sole ask disposed as dedup+FP.
+- **WIP=2/2** unchanged (DESIGN-COWORK-FANOUT pm + FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD) — nothing promoted.
+- `FIX-AUDITOR-SBVFX-SLA-POSTMARKET-TOLERANCE` (P1 backlog) is the real fix home for recurring sbv_fx marginal breaches — promote when WIP frees; every ~13.5h/business-day intraday window will keep re-emitting WARNs until it ships.
 - P0 HOL `FIX-BCTC-PENDING-REFINE-HEAD-OF-LINE-FAILED-ROW` still starving behind WIP (carried).
-- 12 unpushed commits from prior tick still awaiting QA leg (BLOCK-PUSH-CRON-AUDIT-BATCH-NO-QA) — CI red now CORROBORATES that withholding the push was correct.
-- Left orch-state + po.md + journal dirty for router tick-close commit. NO git push (my ruling).
+- ci_red FIX-MCP-TEST-SUITE-INTERVAL-TIMER-LEAK-TEARDOWN (ready/P1) still awaiting RLC promotion; 12 unpushed commits still awaiting QA leg (carried).
+- Left orch-state + po.md dirty for router tick-close commit. NO git push.

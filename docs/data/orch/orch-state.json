@@ -1929,8 +1929,11 @@
         "type": "data_stale",
         "summary": "sbv_fx marginal SLA breach 31min vs 30min threshold",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "DEDUP -> FIX-AUDITOR-SBVFX-SLA-POSTMARKET-TOLERANCE (live BACKLOG P1). Marginal 31-vs-30min (ratio 1.03) is the known category-error FP: sbv_fx is a once-per-business-day source (real push ~10:05 VN) given a flat 30-min SLA for the whole business day => structurally guaranteed intraday breach, market-hours-blind (feedback_auditor_freshness_threshold_market_hours_blind). Source healthy, SLA wrong; superseded row FIX-SLA-SBV-FX-BUSINESS-DAY-AWARE already folded acceptance into the tolerance-band row. NO mint (conservation held). NO restart.",
+        "triaged_at": "2026-07-22T18:48:21Z",
+        "triaged_by": "po"
       }
     ],
     "last_triaged_at": "2026-07-22T15:10:08Z",
