@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "pm",
-    "next_action": "FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH verified DONE_VERIFIED — pm mark done, unblock downstream",
-    "updated_at": "2026-07-22T04:20:05Z",
-    "updated_by": "qa"
+    "status": "in_progress",
+    "active_task_id": "UC-SDF-P4",
+    "next_agent": "qa",
+    "next_action": "Review-Lane QA-Drain claim of UC-SDF-P4 — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have).",
+    "updated_at": "2026-07-22T04:51:25Z",
+    "updated_by": "dev-team (review-lane qa-drain)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -1745,8 +1745,11 @@
         "type": "microservice_degraded",
         "summary": "api-gateway health endpoint unreachable (HTTP CURL_ERR)",
         "severity": "CRITICAL",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "RESOLVE (transient, recovered — status row lagged ground truth). Single-probe api-gateway CURL_ERR blip. Live get_system_status 2026-07-22T04:42Z healthy: uptime 2h40m, all 16 circuit breakers OK, MCP serving path live; follow-up probes show api-gateway:4000/health HTTP 200 UP/healthy for hours. Same flap class already tracked -> FOLD to SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP (probe-timeout vs real-outage isolation) + FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE (single-probe CRITICAL over-severity; isolation/corroboration gate should have suppressed before minting). No new mint. Triaged by po (router session drain).",
+        "triaged_at": "2026-07-22T04:49:34Z",
+        "triaged_by": "po"
       },
       {
         "id": "sys-20260722T023220-774e",
@@ -1756,8 +1759,11 @@
         "type": "data_stale",
         "summary": "foreign-flow stale 1402min (check B-04)",
         "severity": "CRITICAL",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "ESCALATED-TO-USER (genuine + user-gated). CONFIRMED live 2026-07-22T04:42Z: Vinahost VPS endpoint timing out >5000ms continuously (foreign-flow-job fallbacks exhausted every minute); foreign-flow ~23h + stock-price (Gia co phieu) 25.6h \"Rat cu\" DURING VN market OPEN session = real intraday data gap, not a freshness-threshold artifact (corroborated by actual fetch-timeout errors, not just an age counter). BCTC 38.9h is a same-bridge corroborator only (within event-driven quarterly SLA; tracked under FIX-AUDITOR-B05). kinh-dich 503 cascade UNCONFIRMED: get_kinhdich_reading VCB (100%) and BSR (50%) still serve valid readings — stale-price fallback mutes hao-5/hao-4 scores but does NOT 503. Remediation = VPS fetcher restart, which is USER-GATED: surfaced to user via Telegram BUG (NOT triggered). No prior user escalation existed for this cluster. Re-emits until VPS recovers are expected/suppressible. No code-fix mint (VPS infra, ops/user-gated); VPS-FRESH-02-FIX is adjacent (sbv-vps threshold), not this outage. Triaged by po (router session drain).",
+        "triaged_at": "2026-07-22T04:49:34Z",
+        "triaged_by": "po"
       },
       {
         "id": "cowork-20260722T043453Z-bootstrap-underreturn",
@@ -1767,12 +1773,15 @@
         "type": "tool_contract_gap",
         "summary": "get_cycle_bootstrap under-returns agent_signals[] — recurring 2+ (07-21 08:20Z + 07-22 04:29Z): chain_catalyst 8779 absent from bootstrap but present via get_agent_signals(); alert-commander recovered via explicit fetch. CHEF (shared dep) silent-exited on -2.67% selloff day w/ live catalyst on bus → plausible convergence-coverage miss. Fix bootstrap signal aggregation.",
         "severity": "HIGH",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "disposition": "FOLD -> SPIKE-BOOTSTRAP-BROADCAST-CATALYST-CONSUME (minted this triage; task_board.backlog, apps/mcp-server/). Live root-cause probe: chain_catalyst 8779 IS on the bus and IS in alert-commander inbox but now status='read'. get_cycle_bootstrap and get_agent_signals inbox-mode call the IDENTICAL getSignals(db,agent,{status:'unread'}) path (agentSignalStore.ts:837) which UPDATEs unread->read on read. Leading hypothesis: first consumer to bootstrap a shared/broadcast catalyst marks it read, so a later agent's bootstrap (unread-only) legitimately misses it; recovery worked only via the NON-consuming all-producers path (from_agent=null). Alt hypothesis to rule out in the SPIKE: pure timing (signal created after the 04:29Z bootstrap call). NOT a simple aggregation omission either way. Recurring 2+ (07-21 08:20Z + 07-22 04:29Z) -> durable code fix per recurring-bug-escalation. Plausible CHEF convergence-coverage miss on -2.67% selloff w/ live catalyst on bus. dev-mcp-server owns. Triaged by po (router session drain).",
+        "triaged_at": "2026-07-22T04:49:34Z",
+        "triaged_by": "po"
       }
     ],
-    "last_triaged_at": "2026-07-21T19:29:49Z",
-    "last_triaged_by": "po/triage-20260721T1907"
+    "last_triaged_at": "2026-07-22T04:49:34Z",
+    "last_triaged_by": "po/triage-20260722T0449"
   },
   "sprint_goal": {
     "_note": "Active sprint visions. PO triage 2026-07-20 16->15: archived QUE-REFERENCE-PAGE (SHIPPED — route apps/frontend/app/routes/dashboard.kinh-dich-reference.tsx exists 9489B, renders all 64 que from que-descriptions-detail.generated; successor sprint KINHDICH-HOVER-DETAIL scope_out treats the reference page + its deep-link as already-existing; 0 orphan refs in task_board lanes; not in active_sprints). PREV: Active sprint visions. PO triage 2026-07-11 16->14: merged FB-POSTER-LAUNCHD-FIRER into COWORK-GUARANTEED-SLOT-DURABILITY (superseded per cron-jobs.md, firer plist installed+loaded); archived NARRATIVE-TRUTH-CCATO-GATE (T2+T3 both DONE, T3 qa-APPROVED). Reasoning: sprint-ANALYSIS-QUALITY-CONVERGENCE-po.md.",
@@ -10037,6 +10046,16 @@
         "rationale_why_separate_row": "fix_spec(b) is supervised wave 2: I10 precursor is hard dep for heartbeat; TTL raise has container-rebuild gate; INV-GATEWAY-1 cleanup is independently shippable",
         "closure_gate_note": "This row DONE unblocks FIX-ORPHAN from its hard precondition per PO ruling",
         "status_note": "Backlog: awaiting FIX-ORPHAN ship + QA-verify"
+      },
+      {
+        "id": "SPIKE-BOOTSTRAP-BROADCAST-CATALYST-CONSUME",
+        "status": "BACKLOG",
+        "type": "SPIKE",
+        "zone": "apps/mcp-server/",
+        "priority": "P2",
+        "title": "SPIKE->FIX: get_cycle_bootstrap under-returns shared/broadcast chain_catalyst vs get_agent_signals (recurring 2+: 07-21 08:20Z, 07-22 04:29Z). Live probe: catalyst 8779 on bus + in alert-commander inbox but status='read'. get_cycle_bootstrap and get_agent_signals inbox-mode share getSignals(db,agent,{status:'unread'}) (agentSignalStore.ts:837) which mark-reads unread->read on read. Leading hypothesis: first consumer to bootstrap a shared/broadcast catalyst (to_agent='all' or multi-recipient) marks it read so later agents' bootstrap (unread-only) miss it; recovery only via non-consuming all-producers path (from_agent=null). SPIKE must (1) fetch created_at + to_agent of the missed rows across BOTH recurrences to rule out a pure timing artifact (signal created after the bootstrap call), then (2) decide fix direction: (a) bootstrap unions shared catalyst types via a non-consuming window, or (b) broadcast signals get per-recipient read-state / are not single-reader-consumed. Then FIX. Plausible CHEF convergence-coverage miss on -2.67% selloff. Source signal: cowork-20260722T043453Z-bootstrap-underreturn.",
+        "verify_note": "prior_status=NEW; minted by po triage 2026-07-22",
+        "updated_at": "2026-07-22T04:50:29Z"
       }
     ],
     "closed_sprints": [
@@ -12132,34 +12151,6 @@
         "po_triage_note_reverify": "PO TRIAGE 2026-07-15T17:28:38Z (dev-team tick 17:07Z, sig dev-team-20260715T160042Z-rag-corpus-repopulation-scale-reverify): corpus RE-POPULATION CONFIRMED CLIMBING — live GET :5002/embed/health index_size=297 rows now vs 116 @ qa 16:01Z verify (+181 in ~1.5h). Re-embed pipeline ALIVE => NOT stuck-at-116, so NO new bug for dev-rag-service. BUT 297 << ~56k representative scale => AC#1 (no-OOM at ~56k) re-run stays UN-testable now: this row STAYS review, done_verified WITHHELD, blocked_on=rag-corpus-repopulation-to-representative-scale UNCHANGED (TIME-GATED on wall-clock, NOT a dispatch — do NOT force a rebuild against a 116/297-row corpus). GATE to lift WITHHELD (= signal action 2): once corpus ~= representative scale, re-run AC#1 (POST /admin/rebuild-fts under 768m cgroup, docker stats peak-mem, 2x), record real peak-mem => then unblock ALPHA-S2 deadline retune + BM25 round-trip. Heads-up carried: rag-service idle mem ~92% of 768m with ZERO FTS activity (tight margin — ALPHA-S2 retune input). Tech-debt spin-off (signal 2, hybrid max_distance no-op) minted separately as SPIKE-RAG-HYBRID-MAXDISTANCE-NOOP (backlog, P3, non-blocking)."
       },
       {
-        "id": "UC-SDF-P4",
-        "type": "FIX",
-        "title": "Close the legacy-file prune hole in drain-signals.js + one-time scripted purge of ~1,400 unstamped processed files",
-        "status": "REVIEW",
-        "priority": "P1",
-        "size": "M",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "CONFIRMED",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#state-data-files-P4",
-        "note": "drain-signals.js prunes only stamped processed files, leaking ~1,400 unstamped ones. Extend the prune predicate and run a one-time scripted purge (script in scripts/, not /tmp).",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "next_agent": "qa",
-        "promoted_at": "2026-07-16T12:24:25Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-16T12:24:25Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "redispatch_count": 1,
-        "redispatched_at": "2026-07-16T12:55:53Z",
-        "resume_note": "dead-worker re-dispatch 12:37Z — prior developer stalled ~22min silent (partial: 86-line purge script created; drain-signals.js code fix + spec update NOT done, no commit). Fresh developer resumes.",
-        "developer_completed_at": "2026-07-16T13:07:42Z",
-        "developer_completed_by": "developer (UC-SDF-P4 resume, redispatch_count=1)",
-        "review_note": "Code fix: drain-signals.js §0a-2 mtime fallback for legacy/unstamped processed/ files (spec-first in drain-signals.md); regression test added, 15/15 pass. One-time purge: scripts/audits/purge-legacy-processed-signals.sh — dry-run count 1280 == live deletion count 1280, 2nd run idempotent no-op, inbox untouched. Smoke-tested against isolated scratch copy of the real 49-file inbox + 200-file processed/ backdrop + real signals.db — no FAIL-LOUD, routing/dedup unaffected. Commits: 64cd7edf9 (code+spec+test), b087d30a0 (purge script), plus 1280 processed/ deletions in 64cd7edf9."
-      },
-      {
         "id": "UC-GCP-P2",
         "type": "FIX",
         "title": "Untrack machine-written state (signals.db, runtime logs, test debris) + gitignore policy for the machine-state plane",
@@ -12520,7 +12511,37 @@
         "next_agent": "agent-father"
       }
     ],
-    "qa": [],
+    "qa": [
+      {
+        "id": "UC-SDF-P4",
+        "type": "FIX",
+        "title": "Close the legacy-file prune hole in drain-signals.js + one-time scripted purge of ~1,400 unstamped processed files",
+        "status": "QA",
+        "priority": "P1",
+        "size": "M",
+        "zone": "cross-service/",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "CONFIRMED",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#state-data-files-P4",
+        "note": "drain-signals.js prunes only stamped processed files, leaking ~1,400 unstamped ones. Extend the prune predicate and run a one-time scripted purge (script in scripts/, not /tmp).",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "next_agent": "qa",
+        "promoted_at": "2026-07-16T12:24:25Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-22T04:51:25Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "redispatch_count": 1,
+        "redispatched_at": "2026-07-16T12:55:53Z",
+        "resume_note": "dead-worker re-dispatch 12:37Z — prior developer stalled ~22min silent (partial: 86-line purge script created; drain-signals.js code fix + spec update NOT done, no commit). Fresh developer resumes.",
+        "developer_completed_at": "2026-07-16T13:07:42Z",
+        "developer_completed_by": "developer (UC-SDF-P4 resume, redispatch_count=1)",
+        "review_note": "Code fix: drain-signals.js §0a-2 mtime fallback for legacy/unstamped processed/ files (spec-first in drain-signals.md); regression test added, 15/15 pass. One-time purge: scripts/audits/purge-legacy-processed-signals.sh — dry-run count 1280 == live deletion count 1280, 2nd run idempotent no-op, inbox untouched. Smoke-tested against isolated scratch copy of the real 49-file inbox + 200-file processed/ backdrop + real signals.db — no FAIL-LOUD, routing/dedup unaffected. Commits: 64cd7edf9 (code+spec+test), b087d30a0 (purge script), plus 1280 processed/ deletions in 64cd7edf9.",
+        "updated_at": "2026-07-22T04:51:25Z"
+      }
+    ],
     "_closed_signals_20260614": {
       "_by": "po-S50",
       "_at": "2026-06-14T14:45:14Z",
