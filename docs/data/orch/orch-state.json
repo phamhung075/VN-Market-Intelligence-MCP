@@ -390,8 +390,8 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": null,
-    "updated_by": "developer",
-    "updated_at": "2026-07-22T23:26:09Z"
+    "updated_by": "dev-team",
+    "updated_at": "2026-07-22T23:52:55Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -4409,30 +4409,6 @@
         "priority_bumped_from": "P2",
         "priority_bumped_at": "2026-07-17T04:54:03Z",
         "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17"
-      },
-      {
-        "id": "UC-CDC-P5",
-        "type": "FIX",
-        "title": "Make cowork/detect-loop re-arm self-healing without regressing TE-T01 or duplicating cron hosts",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "RESCOPE",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#cowork-dispatcher-cron-P5",
-        "note": "SCOPE=verifier Rescope note. PREPEND (do not replace) a self-arm line to cron-cowork-team SKILL Step2; split SKILL into slim SKILL.md + lazy register.md (mirror cron-detect-loop). Add a SessionStart hook that is PRESENCE-GATED (check session-presence roster; arm only if no live peer host — pick ONE owner).",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "related": [
-          "TE-T01"
-        ],
-        "priority_bumped_from": "P2",
-        "priority_bumped_at": "2026-07-17T04:54:03Z",
-        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
-        "po_sequencing_20260722": "SEQUENCED BY PO 2026-07-22 cron-audit triage: this row is PART 3 of the three-part ruling in ARCH-SESSION-CRON-PLANE-LIVENESS-WATCHDOG.po_design_ruling and must land LAST — after UC-SDF-P6 (registry, part 1) and after the liveness watchdog (part 2). Rationale: automated re-arm without a registry and without liveness detection is re-arming BLIND, which is precisely how you end up with double-hosted crons — the failure this row's own title warns against, and the one now materialized as FIX-GUARANTEED-SLOT-DUAL-PLANE-DOUBLE-FIRE. Scope unchanged; only the ordering constraint is added.",
-        "updated_at": "2026-07-22T16:02:26Z"
       },
       {
         "id": "UC-CDC-P4",
@@ -11016,6 +10992,34 @@
         "created_at": "2026-07-22T22:12:59Z",
         "created_by": "pm",
         "updated_at": "2026-07-22T22:12:59Z"
+      },
+      {
+        "id": "UC-CDC-P5",
+        "type": "FIX",
+        "title": "Make cowork/detect-loop re-arm self-healing without regressing TE-T01 or duplicating cron hosts",
+        "status": "BLOCKED",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "RESCOPE",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#cowork-dispatcher-cron-P5",
+        "note": "SCOPE=verifier Rescope note. PREPEND (do not replace) a self-arm line to cron-cowork-team SKILL Step2; split SKILL into slim SKILL.md + lazy register.md (mirror cron-detect-loop). Add a SessionStart hook that is PRESENCE-GATED (check session-presence roster; arm only if no live peer host — pick ONE owner).",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "related": [
+          "TE-T01"
+        ],
+        "priority_bumped_from": "P2",
+        "priority_bumped_at": "2026-07-17T04:54:03Z",
+        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
+        "po_sequencing_20260722": "SEQUENCED BY PO 2026-07-22 cron-audit triage: this row is PART 3 of the three-part ruling in ARCH-SESSION-CRON-PLANE-LIVENESS-WATCHDOG.po_design_ruling and must land LAST — after UC-SDF-P6 (registry, part 1) and after the liveness watchdog (part 2). Rationale: automated re-arm without a registry and without liveness detection is re-arming BLIND, which is precisely how you end up with double-hosted crons — the failure this row's own title warns against, and the one now materialized as FIX-GUARANTEED-SLOT-DUAL-PLANE-DOUBLE-FIRE. Scope unchanged; only the ordering constraint is added.",
+        "updated_at": "2026-07-22T23:52:55Z",
+        "bounded1_hold_20260722": "dev-team BOUNDED-1 mis-promoted this row 2026-07-22T23:52:55Z then reverted: its sequencing constraint lives only in prose field po_sequencing_20260722, which the promote depends_on gate cannot read. Predecessors UC-SDF-P6 (part1 registry) and ARCH-SESSION-CRON-PLANE-LIVENESS-WATCHDOG (part2 liveness watchdog) are BOTH still BACKLOG. Set to BLOCKED to exclude from BOUNDED-1 re-promotion. Routed to PO to add machine-readable depends_on (auto-unblock on predecessors DONE_VERIFIED) and to consider hardening scripts/devteam-backlog-promote-bounded1.jq to honor po_sequencing predecessors.",
+        "blocked_reason": "Sequenced LAST (PART 3/3) behind UC-SDF-P6 + ARCH-SESSION-CRON-PLANE-LIVENESS-WATCHDOG per PO cron-audit ruling; both predecessors still BACKLOG. Blind re-arm without registry+liveness = double-hosted crons (FIX-GUARANTEED-SLOT-DUAL-PLANE-DOUBLE-FIRE).",
+        "blocked_at": "2026-07-22T23:52:55Z",
+        "blocked_by": "dev-team"
       }
     ],
     "closed_sprints": [
@@ -13486,7 +13490,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-22T23:15:37Z",
+    "last_triaged_at": "2026-07-22T23:48:13Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": []
   },
