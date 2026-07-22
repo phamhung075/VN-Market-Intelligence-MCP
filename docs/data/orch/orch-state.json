@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-07-22T06:25:20Z",
-    "updated_by": "qa",
-    "active_task_id": null,
-    "next_agent": "pm",
-    "next_action": "UC-GCP-P4 DONE_VERIFIED — pm mark done, unblock downstream"
+    "status": "in_progress",
+    "active_task_id": "UC-MDH-P1",
+    "next_agent": "qa",
+    "next_action": "Review-Lane QA-Drain claim of UC-MDH-P1 — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have).",
+    "updated_at": "2026-07-22T06:47:05Z",
+    "updated_by": "dev-team (review-lane qa-drain)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -12254,31 +12254,6 @@
         "po_triage_note_reverify": "PO TRIAGE 2026-07-15T17:28:38Z (dev-team tick 17:07Z, sig dev-team-20260715T160042Z-rag-corpus-repopulation-scale-reverify): corpus RE-POPULATION CONFIRMED CLIMBING — live GET :5002/embed/health index_size=297 rows now vs 116 @ qa 16:01Z verify (+181 in ~1.5h). Re-embed pipeline ALIVE => NOT stuck-at-116, so NO new bug for dev-rag-service. BUT 297 << ~56k representative scale => AC#1 (no-OOM at ~56k) re-run stays UN-testable now: this row STAYS review, done_verified WITHHELD, blocked_on=rag-corpus-repopulation-to-representative-scale UNCHANGED (TIME-GATED on wall-clock, NOT a dispatch — do NOT force a rebuild against a 116/297-row corpus). GATE to lift WITHHELD (= signal action 2): once corpus ~= representative scale, re-run AC#1 (POST /admin/rebuild-fts under 768m cgroup, docker stats peak-mem, 2x), record real peak-mem => then unblock ALPHA-S2 deadline retune + BM25 round-trip. Heads-up carried: rag-service idle mem ~92% of 768m with ZERO FTS activity (tight margin — ALPHA-S2 retune input). Tech-debt spin-off (signal 2, hybrid max_distance no-op) minted separately as SPIKE-RAG-HYBRID-MAXDISTANCE-NOOP (backlog, P3, non-blocking)."
       },
       {
-        "id": "UC-MDH-P1",
-        "type": "FIX",
-        "title": "Sandbox the 1300b memory-tools test (registration-time env injection) + purge its accumulated pollution",
-        "status": "REVIEW",
-        "priority": "P1",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "RESCOPE",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P1",
-        "note": "SCOPE=verifier Rescope note. Inject AGENT_MEMORY_ROOT at registration-time (agentMemoryUpdateTools.ts:189) NOT module-level (module-level const binds at import -> false-green no-op). beforeEach mkdtemp + set env BEFORE register; afterEach rm + delete env; add a regression assert (no new sessions/ file). Purge pollution BY MD5 CLASS (93 byte-identical stubs today, re-enumerate) + 3 test-artifact files. bun test twice + pnpm check. Test-only behavior; prod unchanged but ships in mcp-server -> ops-gated swap.",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "next_agent": "qa",
-        "promoted_at": "2026-07-16T14:26:55Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-16T14:26:55Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "developer_completed_at": "2026-07-16T14:56:13Z",
-        "developer_completed_by": "dev-mcp-server (UC-MDH-P1, dev-team bounded-1 pickup)",
-        "review_note": "agentMemoryUpdateTools.ts:189 (registration-time, already function-scope) memoryDir now = process.env.AGENT_MEMORY_ROOT ?? resolve(getProjectRoot(),...docs/agent-memory). 1300b test beforeEach mkdtemps + sets env BEFORE registerAgentMemoryUpdateTools(); afterEach rm+unset; new regression test asserts zero new files under real sessions/. Purged pollution BY MD5 CLASS re-enumerated live (102 files, not brief stale 93): 36 ops(a003f0cc)+34 developer(35d6330b)+32 qa(35cdf1f8), 84 git rm (tracked) + 18 rm (untracked), plus 3 tracked test-artifact files (issues/patterns/modules test-*.md). Verified: 1300b file 14/14 pass x2 standalone; full bun test run1 14569 pass/46 fail, run2 14568 pass/47 fail -- zero 1300b/agent-memory hits in either fail list (pre-existing flaky class: vps_push_log/insider-tx/OCR-cache/foreign-flow timeouts). git status --porcelain docs/agent-memory/ clean of new files after both full runs. pnpm --filter vn-market check (tsc) exit 0. NOTE: staged+verified exact 89-file set (87 deletions+2 edits) before the 2 full-suite verification runs; a peer dev-team-router housekeeping tick committed during that window (11c35c0a8 chore(tasks): cold-evict...) and its bare git commit -m absorbed the shared index incl. my staged files -- verified via git diff-tree --name-status that commit contains EXACTLY my intended 89 files + the peer own orch-state.json change, no revert/no extra/no missing, HEAD==origin/main (already pushed). Content correct, only that commit message/trailer does not reference UC-MDH-P1 -- did not amend shared-main history mid-peer-activity (forbidden), documented in decision journal + notebook instead. qa: confirm sandbox test 14/14 pass, confirm zero docs/agent-memory/ pollution regrowth, confirm code diff at 11c35c0a8 matches detail_ref rescope note, promote to done_verified."
-      },
-      {
         "id": "FIX-OHLCV-DEPTH-ALERT-HONEST-GAP-SUPPRESS",
         "title": "OHLCV backfill R-5 escalation false-alarm — make BOTH emitters honest-gap-aware (data healthy; noise-only)",
         "type": "FIX",
@@ -12561,7 +12536,34 @@
         "next_agent": "agent-father"
       }
     ],
-    "qa": [],
+    "qa": [
+      {
+        "id": "UC-MDH-P1",
+        "type": "FIX",
+        "title": "Sandbox the 1300b memory-tools test (registration-time env injection) + purge its accumulated pollution",
+        "status": "QA",
+        "priority": "P1",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "RESCOPE",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P1",
+        "note": "SCOPE=verifier Rescope note. Inject AGENT_MEMORY_ROOT at registration-time (agentMemoryUpdateTools.ts:189) NOT module-level (module-level const binds at import -> false-green no-op). beforeEach mkdtemp + set env BEFORE register; afterEach rm + delete env; add a regression assert (no new sessions/ file). Purge pollution BY MD5 CLASS (93 byte-identical stubs today, re-enumerate) + 3 test-artifact files. bun test twice + pnpm check. Test-only behavior; prod unchanged but ships in mcp-server -> ops-gated swap.",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "next_agent": "qa",
+        "promoted_at": "2026-07-16T14:26:55Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-22T06:47:05Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "developer_completed_at": "2026-07-16T14:56:13Z",
+        "developer_completed_by": "dev-mcp-server (UC-MDH-P1, dev-team bounded-1 pickup)",
+        "review_note": "agentMemoryUpdateTools.ts:189 (registration-time, already function-scope) memoryDir now = process.env.AGENT_MEMORY_ROOT ?? resolve(getProjectRoot(),...docs/agent-memory). 1300b test beforeEach mkdtemps + sets env BEFORE registerAgentMemoryUpdateTools(); afterEach rm+unset; new regression test asserts zero new files under real sessions/. Purged pollution BY MD5 CLASS re-enumerated live (102 files, not brief stale 93): 36 ops(a003f0cc)+34 developer(35d6330b)+32 qa(35cdf1f8), 84 git rm (tracked) + 18 rm (untracked), plus 3 tracked test-artifact files (issues/patterns/modules test-*.md). Verified: 1300b file 14/14 pass x2 standalone; full bun test run1 14569 pass/46 fail, run2 14568 pass/47 fail -- zero 1300b/agent-memory hits in either fail list (pre-existing flaky class: vps_push_log/insider-tx/OCR-cache/foreign-flow timeouts). git status --porcelain docs/agent-memory/ clean of new files after both full runs. pnpm --filter vn-market check (tsc) exit 0. NOTE: staged+verified exact 89-file set (87 deletions+2 edits) before the 2 full-suite verification runs; a peer dev-team-router housekeeping tick committed during that window (11c35c0a8 chore(tasks): cold-evict...) and its bare git commit -m absorbed the shared index incl. my staged files -- verified via git diff-tree --name-status that commit contains EXACTLY my intended 89 files + the peer own orch-state.json change, no revert/no extra/no missing, HEAD==origin/main (already pushed). Content correct, only that commit message/trailer does not reference UC-MDH-P1 -- did not amend shared-main history mid-peer-activity (forbidden), documented in decision journal + notebook instead. qa: confirm sandbox test 14/14 pass, confirm zero docs/agent-memory/ pollution regrowth, confirm code diff at 11c35c0a8 matches detail_ref rescope note, promote to done_verified.",
+        "updated_at": "2026-07-22T06:47:05Z"
+      }
+    ],
     "_closed_signals_20260614": {
       "_by": "po-S50",
       "_at": "2026-06-14T14:45:14Z",
