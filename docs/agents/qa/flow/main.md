@@ -153,6 +153,7 @@ verdict: APPROVED | CHANGES_REQUESTED
 UNBLOCK-DEVTEAM-DISPATCH-GATE-STAGING-DEADLOCK (architect, 2026-07-22) — the qa-side HARD PREREQUISITE for `docs/agents/dev-team/flow/main.md` § Review-Lane QA-Drain (folds `FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN`). Every row that drain claims carries `branch: null` — committed straight to `main` via the FIX direct-execute path, never on a `task/NNN-*` branch, often with no `docs/handoffs/TASK_NNN.md` at all (grep-verified 2026-07-21: all 32 live `review[]` rows). The normal `pipeline` JUMP-TO's first line (`git checkout task/NNN-kebab-description`) cannot run against these — using it here guarantee-fails the spawn. Additive entry point only; `pipeline`/`approved`/`changes-requested` are unchanged.
 
 **Input:** the row's own `task_board.qa[]` entry — self-contained (`id`, `commit`, `files[]`, `review_note`/`status_note`, `owner`): `jq --arg id "<task_id>" '.task_board.qa[] | select(.id==$id)' docs/data/orch/orch-state.json`. No handoff-file requirement.
+**Fallback (row predates the drain, missing `commit`/`files[]`/`owner`):** derive `commit` via `git log --oneline --all -- <files named in status_note prose or detail_ref's `files[]`>`, cross-check the candidate commit's date against the row's `completed_at`; use `completed_by` as `owner` if `.owner` absent.
 
 **Verify (no checkout — QA already runs on `main`):**
 ```bash
