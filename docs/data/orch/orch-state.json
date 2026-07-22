@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
-    "next_agent": "pm",
-    "next_action": "SUPERVISED HOLD — architect ruled FR-5 bundle(=yes,shared resolver)/backlog+BLOCKED(=TERMINAL)/I10 batching(=successor precondition); design at docs/architecture-briefs/2026-07-22-fix-orphan-adoption-board-state-guard-design.md. pm decomposition awaits supervisor go-ahead; do NOT auto-dispatch pm. HARD closure gate unchanged: this P0 row may NOT flip DONE until the fix_spec(b)/AC2 successor row EXISTS on the board. supervised+plan_only preserved.",
-    "updated_at": "2026-07-21T23:58:03Z",
-    "updated_by": "architect"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "SUPERVISED HOLD (router-enforced 2026-07-22T00:06:04Z): head set idle to stop Step-0b auto-resume of pm — pipeline-resume path has NO supervised gate, so architect prose hold alone could NOT stop it (po ruling: do NOT auto-advance past architect). FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD parked in in_progress[] (next_agent=pm, supervised+plan_only, architect_ruling recorded; design docs/architecture-briefs/2026-07-22-fix-orphan-adoption-board-state-guard-design.md). Sibling DESIGN-COWORK-FANOUT-PRODUCER-CONSUMER-ORDERING held identically (~5h). PO next triage: keep-hold / give-go-ahead / reclassify. RESUME pm = set head {status:in_progress, active_task_id:FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD, next_agent:pm}. BACKLOG GAP: Step-0b pipeline-resume needs a supervised gate (2 supervised rows now stalled at this exact point).",
+    "updated_at": "2026-07-22T00:06:04Z",
+    "updated_by": "router"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
