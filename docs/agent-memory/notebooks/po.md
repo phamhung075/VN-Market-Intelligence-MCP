@@ -1,21 +1,27 @@
 # PO Notebook
 
-_Last: 2026-07-22T15:10Z (router-spawned scoped triage — drained 4 NEW po-bound signal_queue rows; 0 mints, all prior-art on board)_
+_Last: 2026-07-22T15:17Z (dev-team :37 triage under WIP=2/2 — 4 signals triaged, 1 mint, 1 escalate, review-lane deadlock broken; all via orch-apply)_
 
-## Tick 2026-07-22T15:10Z — auditor recovery-artifact cluster → FOLD, zero mint
+## Tick 2026-07-22T15:17Z — signal drain + review-lane un-strand (WIP saturated, dispatch no-op)
 
-**★ 4 po-bound NEW rows, all downstream of the ALREADY-RESOLVED mcp-server mem wedge (degraded ~08:30Z → CLEAN restart 14:53Z exit=0, NOT OOMKilled). Independently verified via get_system_status @15:06Z: uptime 13m, 16/16 breakers OK, DB 374MB no malformed, news RSS 0.1h fresh (self-resolved), VN market CLOSED.** No restart/rebuild authorized (already happened, user-gated).
+**★ The "2 cowork signals this tick" have NO docs/signals/ files — they were folded into signal_queue row `cowork-20260721T232634Z-a30-mcp-oom-escalate` via local orch-apply because the dispatcher was MCP-blind at 14:51Z (curl exit=28). PO reads signal_queue+board, not docs/signals/ (per feedback asks→queue-not-telemetry).**
 
-- `sys-…635a` data_stale (news-vps 389min) → self-resolved (0.1h now); prior-art **FIX-AUDITOR-B11-NEWS-FRESHNESS-LAYER-SPLIT** + **FIX-VPS-NEWS-STALE-FALSEPOS**. RESOLVED.
-- `sys-…7ed7` db_integrity_breach (market_messages 0/3h) = MISLABELED volume-dip (outage-window + off-market, DB structurally fine). Prior-art **FIX-AUDITOR-C12-READONLY-BLINDED-AND-TABLENAME** (exact: false-CRITICAL re-fire after writer restart) + **FIX-AUDITOR-C06-OFFMARKET-RECALIBRATE** + root **FIX-MARKET-MESSAGES-TIMESTAMP-FORMAT**. RESOLVED — no improvement_proposal (predicate-tune already backlogged; single outage-time obs = degenerate, not a broken-mechanism claim).
-- `sys-…2c18` microservice_degraded CRITICAL (rag-service 99.46% mem, LanceDB) → infra (PO not_my_job); prior-art **RAG-FTS-BUILD-MEMORY-BOUND** (REVIEW) + FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP + FU-RAG-DEPLOY-MEMORY. RESOLVED.
-- `sys-…5955` microservice_degraded WARN (mcp restart count=2) → root **FIX-MCP-MEMORY-CODE-LEAK** + **OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN**; live ops escalation cowork-…a30 already owns it. RESOLVED.
+- **4 NEW signal_queue rows → all triaged (0 NEW remaining):**
+  - `po-…052606` methodology-flag→unified-agent → FOLD **FIX-CHEF-L6-GOLD-FALSE-PREDICATE** (BACKLOG) + FIX-CHEF-L6-TOKEN-PERSISTENCE (BLOCKED). Closed NEW (was resurfacing each tick; durable = the code fix).
+  - `cowork-…a30-mcp-oom-escalate` CRITICAL→ops → FOLD **FIX-MCP-MEMORY-CODE-LEAK** (escalated). Restart is user-gated ops-lane, NOT PO; auditor recorded CLEAN restart 14:53Z.
+  - `sys-…635a` news-vps stale 389min → RESOLVED-SELF (fresh post-restart; A-30-outage-window consequence).
+  - `sys-…7ed7` market_messages 0/3h → CONSEQUENCE of outage window; RE-VERIFY next tick, no mint.
 
-**★ Corroboration stamped on FIX-MCP-MEMORY-CODE-LEAK.status_note** (was null): real 07-22 outage, high-water ~87%, confirms "~87% in 12h" — raises leak-fix priority. No new mint (grep-board prior-art hit for every row).
+**★ MINTED `FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE` (P2, backlog)** — claimed-minted-but-absent (grep count=1 = only the signal_queue note referenced it; never persisted). Drain moves payload→processed/ but leaves row.payload_ref dangling.
 
-**★ orch-apply clean (2 atomic writes).** task_total 594→594, signal_total 101→101. 12 top-level keys + conservation preserved.
+**★ ESCALATED `FIX-MCP-MEMORY-CODE-LEAK`** — recurring cap-exhaustion CONFIRMED (100% @00:11Z, reclamation-lost tripwire TRIPPED per cowork discriminator); superseded 07-21 "benign" note; folded a peer PO 15:10Z tick whose board write was lost but its live get_system_status (14:53Z CLEAN restart, NOT OOMKilled, 16/16 breakers OK) preserved on the row. Durable code fix now top priority; restart ≠ substitute.
+
+**★ Review-lane bootstrap-deadlock BROKEN** — the 2 sweeper FIXes (**FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN** P1, **FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER**) were themselves stranded in REVIEW because no review-lane sweeper exists (recursive). Moved review→backlog so BOUNDED-1/RLC promote them; once built they drain the other 20 owner-stranded REVIEW rows by next_agent. Assigned owners to 9 orphaned REVIEW rows (PO AC1, no silent drop). NOT re-minted the 22 individually (churn).
+
+**★ 2 prior-tick direct-FIX rows already persisted (06:40Z, po-S3): FIX-DRAIN-PERSIST-GUARD + FIX-ORCHSTATE-CONSERVATION-GUARD.** No-op (grep-board prior-art). orch-apply: 4 clean writes, task 594→595, conservation OK.
 
 ## Carry-over
-- 2 NEW rows left NEW by design: `po-20260720T052606`→unified-agent, `cowork-…a30-mcp-oom-escalate`→ops (owners drain, not PO).
-- WATCH 16:00Z Tier-2: if db_integrity_breach / data_stale RE-FIRE post-recovery (not outage-benign) → bump priority on FIX-AUDITOR-C12 / C06 / B11; still NO fresh mint (fixes exist).
-- Root wedge = FIX-MCP-MEMORY-CODE-LEAK (BACKLOG, now corroborated) + rag-service mem cluster; both infra/ops-owned, one fix in REVIEW. backlog=419 (bloated) — 0 additions this tick.
+- WIP=2/2 (2 parked epics) — nothing promoted this tick; all mints/moves await a freed slot (BOUNDED-1/RLC).
+- RE-VERIFY next tick: `sys-…7ed7` market_messages — if still 0 after full recovery in market hours → escalate as genuine ingest gap.
+- Root wedge FIX-MCP-MEMORY-CODE-LEAK (BACKLOG high, now escalated) — durable code fix, ops restart is user-gated stopgap only.
+- backlog=422 (bloated); review=23. Two sweeper FIXes now eligible = the systemic drain for the review-lane strand.
