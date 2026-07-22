@@ -9619,6 +9619,36 @@
       "qa_verdict": "APPROVED",
       "qa_reviewed_at": "2026-07-22T03:24:26Z",
       "qa_reviewed_by": "qa"
+    },
+    {
+      "id": "FIX-BCTC-BT3D-ROWS-THRESHOLD-STALE",
+      "type": "FIX",
+      "priority": "P2",
+      "status": "DONE_VERIFIED",
+      "zone": "apps/pdf-extractor/",
+      "size": "S",
+      "owner": "dev-pdf-extractor",
+      "next_agent": "qa",
+      "title": "BT3D real-OCR test — update stale rows_stored >= 80 to >= 79 (post-FR-5 dedup)",
+      "desc": "PO triage 2026-07-10T00:07Z tick, FIX-type direct-execute (skip PM decomposition). test_extract_tables_bt3d_real_ocr.py line 152 asserted rows_stored>=80; live value=79. Threshold set 2026-05-28 (d1be505048) BEFORE FR-5 same-section dedup (0ae36a0eb, 2026-06-28) shipped. FR-5 now correctly drops one legitimate duplicate row (spurious code \"868\" bled from an income-statement 4-value-column EPS layout — traced in dev-pdf-extractor-2026-07-09T2300Z-FIX-BCTC-FPT-BT5-BALANCE-GATE.md), lowering the correct count from 80 to 79. This is the FIRST assertion in the test and was short-circuiting BEFORE the balance_pass assertion, so FIX-BCTC-FPT-BT5-BALANCE-GATE (review[], balance-gate independently verified fixed: balance_pass=True, delta=0.0) still showed the named test FAILED overall.",
+      "created_at": "2026-07-10T00:33:22Z",
+      "created_by": "po (2026-07-10T00:07Z tick, direct-execute FIX routing, skip PM decomposition)",
+      "claimed_at": "2026-07-22T03:46:29Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "updated_at": "2026-07-22T03:55:54Z",
+      "updated_by": "dev-pdf-extractor",
+      "review_note": "Updated assertion to >=79 with inline comment referencing FR-5 (0ae36a0eb). Did NOT touch dedup logic or balance gate. Verified: -m slow real-OCR test (real Tesseract run, ~15s) now PASSES (was FAIL rows_stored=79<80). Full non-slow suite: 1018 passed/8 failed/7 deselected — git stash A/B confirms all 8 failures are byte-identical pre-existing env-only failures (missing pandas module + rasterizer page-count test-isolation issue), zero regressions from this change. Unblocks FIX-BCTC-FPT-BT5-BALANCE-GATE's review-lane verification (same named test file, first assertion no longer short-circuits before balance_pass check). Decision journal: docs/agent-memory/decisions/sprint-SYSTEMIC-REMAKE-P1-dev-pdf-extractor.md STEP dev-pdf-extractor-S6.",
+      "decision_journal_ref": "docs/agent-memory/decisions/sprint-SYSTEMIC-REMAKE-P1-dev-pdf-extractor.md#dev-pdf-extractor-S6",
+      "status_note": "[QA] Direct-Commit Verify (verify-committed): row was thin (commit/files/completed_at/completed_by all null) — located single unambiguous commit 42cf264f4 via git log --all -- apps/pdf-extractor/ (title matches task-id verbatim), confirmed main ancestry (git merge-base --is-ancestor), scope tight (git show --stat: only test_extract_tables_bt3d_real_ocr.py + own decision journal + own board-row insert, zero production files), no later commit re-touched the test file (git log --follow clean). Live working-tree file byte-identical to commit (git diff empty); live container (built 2026-07-21, post-commit) file also byte-identical (docker exec cat + diff, empty). Host has full real-OCR deps (.venv: pytest/pdf2image/pytesseract, tesseract 5.5.2 binary) — targeted pytest -m slow run PASSED 3x consecutively (12-13s each), confirms >=79 threshold matches live real-OCR behavior against the real FPT PDF. Unfiltered full suite shows this test FAILING (rows_stored=0, OCR image-decode error) alongside 9 other failures; git-stash A/B (reverted assertion in-place to >=80, re-ran identical full suite) reproduced the IDENTICAL 10-failure signature, proving pre-existing test-isolation/cache pollution unrelated to this edit — root cause isolated to sibling test_bt3_fix3_row_fidelity.py hardcoding a container-only /app/data/pdfs/... path that fails to open on host and pollutes the shared rasterizer cache. -m \"not slow\" regression run: 8 failed/1022 passed/7 deselected, matching dev's own claimed baseline (1018/8/7; small drift = later unrelated commits). Container run of the same test SKIPPED not FAIL: _FPT_PDF_PATH (line 42-46, unchanged by this commit) hardcodes this admin's host absolute path, does not resolve inside the container — pre-existing structural gap outside this row's 1-line scope, not a new regression. mock-guard.sh --files PASS (no production files touched, test-only change per Smart-Skip). DDD infra/application-import grep + secrets/token/password grep: clean (test-only, N/A). qa_reviewed_at: 2026-07-22T03:55:44Z qa_reviewed_by: qa",
+      "qa_verdict": "APPROVED",
+      "qa_reviewed_at": "2026-07-22T03:55:44Z",
+      "qa_reviewed_by": "qa",
+      "commit": "42cf264f4",
+      "files": [
+        "apps/pdf-extractor/__tests__/integration/test_extract_tables_bt3d_real_ocr.py"
+      ],
+      "completed_at": "2026-07-10T00:34:09Z",
+      "completed_by": "dev-pdf-extractor"
     }
   ],
   "closed_sprints": [
