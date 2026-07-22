@@ -2139,7 +2139,10 @@
         "scope_in": "TRACK A (PRIMARY, dev-team chain): add look-back/catch-up to the guaranteed-slot firing path shared by all 3 callers (scripts/agents-flow/cowork-match-slots.js matcher, scripts/agents-flow/cowork-guaranteed-slot-firer.sh launchd firer, and the live */15 dispatcher startup). On each tick/startup, in addition to the +/-2min current-tick match, detect guaranteed slots DUE earlier in the current VN trading day but never fired (last_fired < today scheduled-fire epoch) and re-offer them IF now is within a bounded, per-dish-type catch-up window that keeps the deliverable meaningful (tight for market/FB posts, looser for chef/digest). Dedup STRICTLY via the existing published:<slot_id>:<VN-work-date> task_claim marker so a late catch-up never double-posts and never labels stale data as fresh. VN-date rollover is explicit: if the VN day rolled past the slot window, DO NOT retro-post under a new date — skip + record miss. CONSOLIDATES the existing cluster (subsume together, do NOT re-litigate): SPIKE-DEAD-WINDOW-20260722-EIGHT-HOUR-SILENCE (root-caused by this triage — its `already_ruled_out: machine sleep` note is INCORRECT, corrected here), SPIKE-COWORK-GUARANTEED-SLOT-SUPERSEDE-WIRING (root-caused), FIX-GUARANTEED-SLOT-FIRER-FANOUT-TRUNCATION (the 07-22 chef-morning exit_code=143 SIGTERM at the 1800s bound / 600s subagent kill truncates guaranteed dishes — catch-up re-firing must complete, not re-truncate), FIX-GUARANTEED-SLOT-DUAL-PLANE-DOUBLE-FIRE (catch-up adds a 3rd fire path — published-marker arbitration must be verified airtight), FIX-COWORK-LASTFIRED-DECOUPLE-FROM-DELIVERY (catch-up detects a miss via last_fired, so last_fired MUST reflect DELIVERY not just spawn-dispatch). DOC-HONESTY: update cowork-schedule.json `guaranteed` semantics + docs/agents/cowork-team/flow/*.md + docs/architecture-briefs/2026-07-07-cowork-guaranteed-slot-durability.md + docs/protocols/cowork-master-cron-runbook.md to state the true coverage envelope.",
         "scope_out": "Track B heavy infra: standing up an always-on VPS host for LLM generation — already REJECTED in the 2026-07-07 durability brief §3 (ships an Anthropic key to an internet-facing box; security-surface increase). NOT reopened. The launchd firer itself is already installed+working (launchctl: com.vn-market.cowork-guaranteed-slot-firer loaded, last-exit 0) — OPS-COWORK-GUARANTEED-SLOT-INSTALL stays REVIEW, not reopened. The laptop-standby residual is covered by Track A bounded catch-up on resume PLUS an OPTIONAL ops-owned pmset/caffeinate keep-awake decision (architect rules whether worth it; if yes = one thin OPS task, NOT a sprint). No backfill of the 07-22 FB post (already manually backfilled by user).",
         "success_metric": "QA session-down + standby survival test (2026-07-07 brief §6 extended): with NO live CLI session AND host resuming after a simulated standby that elapsed a guaranteed slot window, the next live firer tick either (a) fires the missed guaranteed slot EXACTLY ONCE — published-marker verified, real deliverable produced, zero duplicate, zero stale-as-fresh — when still within the bounded window, or (b) records a STRUCTURED miss (not silent) when the VN day rolled past. All 6 consolidated rows closed together (spikes→DONE with findings; fix rows→DONE with tests). tsc + touched suites GREEN. cowork-schedule.json `guaranteed` doc semantics match observed behavior.",
-        "created_at": "2026-07-22T21:32:09Z"
+        "created_at": "2026-07-22T21:32:09Z",
+        "ba_status": "spec_complete",
+        "spec_written": "docs/handoffs/BA-COWORK-GUARANTEED-SLOT-CATCHUP.md",
+        "spec_written_at": "2026-07-22T21:50:28Z"
       }
     ]
   },
@@ -10737,7 +10740,150 @@
         "created_at": "2026-07-22T21:32:37Z",
         "note": "Write the requirement spec for sprint COWORK-GUARANTEED-SLOT-CATCHUP (.sprint_goal has full root-cause + scope). BA must specify: (1) catch-up detection predicate — guaranteed slot due earlier in the current VN trading day with last_fired < today scheduled-fire epoch; (2) a BOUNDED per-dish-type freshness window (tight for fb_daily_post/event posts, looser for chef/digest) beyond which a stale post is WRONG and the slot is recorded as a structured miss instead; (3) explicit VN-date rollover rule — never retro-post a market/FB dish under a new date; (4) dedup strictly via existing published:<slot_id>:<VN-work-date> task_claim marker (belt-and-suspenders with the 3rd fire plane); (5) last_fired must reflect DELIVERY not spawn-dispatch (FIX-COWORK-LASTFIRED-DECOUPLE) so catch-up detection is not masked; (6) firer invocation must COMPLETE not re-truncate (FIX-GUARANTEED-SLOT-FIRER-FANOUT-TRUNCATION — the 07-22 chef-morning exit143 at the 1800s bound); (7) doc-honesty edits for the `guaranteed` semantics. CONSOLIDATES (mark subsumed, do NOT re-open as parallel work): SPIKE-DEAD-WINDOW-20260722-EIGHT-HOUR-SILENCE, SPIKE-COWORK-GUARANTEED-SLOT-SUPERSEDE-WIRING, FIX-GUARANTEED-SLOT-FIRER-FANOUT-TRUNCATION, FIX-GUARANTEED-SLOT-DUAL-PLANE-DOUBLE-FIRE, FIX-COWORK-LASTFIRED-DECOUPLE-FROM-DELIVERY. Route architect for the shared-matcher (3-caller) design + the pmset/caffeinate-keep-awake vs document-residual ruling. Files: scripts/agents-flow/cowork-match-slots.js, scripts/agents-flow/cowork-guaranteed-slot-firer.sh, docs/agents/cowork-team/flow/*.md, docs/data/cowork-schedule.json, docs/architecture-briefs/2026-07-07-cowork-guaranteed-slot-durability.md.",
         "depends": [],
-        "updated_at": "2026-07-22T21:32:37Z"
+        "updated_at": "2026-07-22T21:50:38Z",
+        "ba_spec_complete": true,
+        "ba_handoff": "docs/handoffs/BA-COWORK-GUARANTEED-SLOT-CATCHUP.md",
+        "ba_completed_at": "2026-07-22T21:50:28Z",
+        "next_agent": "architect"
+      },
+      {
+        "id": "DESIGN-COWORK-FANOUT-PRODUCER-CONSUMER-ORDERING",
+        "type": "FIX",
+        "title": "cowork-team parallel fan-out has no producer/consumer ordering — alert-commander read the signal bus before its co-dispatched producers wrote to it, and went silent on a session with real >5% drops",
+        "status": "BLOCKED",
+        "priority": "P1",
+        "size": "M",
+        "zone": "cross-service/",
+        "owner": "pm",
+        "next_agent": "pm",
+        "depends": [
+          "DESIGN-COWORK-FANOUT-T1-TICK-SNAPSHOT-WON-SLOTS",
+          "DESIGN-COWORK-FANOUT-T2-CYCLE-BOOTSTRAP-EXTRACTION",
+          "DESIGN-COWORK-FANOUT-T3-ALERT-COMMANDER-SCHEDULE-TASK-GRANT",
+          "DESIGN-COWORK-FANOUT-T4-ALERT-COMMANDER-RECHECK-LOGIC",
+          "DESIGN-COWORK-FANOUT-T5-COWORK-SCHEDULE-CONFIG",
+          "DESIGN-COWORK-FANOUT-T6-MARKET-WATCHER-SLOT-ROUTING",
+          "DESIGN-COWORK-FANOUT-T7-MATCH-SLOTS-CLARIFY",
+          "DESIGN-COWORK-FANOUT-T8-QA-TEST-STRATEGY"
+        ],
+        "supervised": true,
+        "created_at": "2026-07-21T17:24:33Z",
+        "created_by": "po/triage-20260721T1707",
+        "updated_at": "2026-07-22T22:01:38Z",
+        "updated_by": "po",
+        "origin_signal_id": "cow-20260721T162324",
+        "source_signal": "docs/signals/processed/cowork-team-20260721T162324Z-fanout-ordering-and-siblingdedup-correction.json",
+        "mechanism": "BGFAN-1 mandates run_in_background=true for every dispatcher spawn and spawn-fanout.md issues all matched slots in ONE parallel block, with no dependency ordering. When a tick matches both a PRODUCER (market-watcher -> price_anomaly; news-scout -> urgent_news/chain_catalyst) and a CONSUMER (alert-commander -> gates on those exact signal types), the consumer can complete its bus read before the producers have posted.",
+        "evidence_16_00Z_tick": "Dispatched together: news-scout-offhours, market-watcher-offhours, market-watcher-eod, alert-commander-critical. alert-commander ran ~16:10-16:15Z and reported zero verified_chain/chain_catalyst/price_anomaly on the bus, verified by explicit signal_type-filtered calls — its evidence was CLEAN, the bus genuinely WAS empty at read time. market-watcher-offhours then posted price_anomaly 8680 (GAS -6.98%, 2.89 sigma, 4.02x volume) and 8681 (D2D -3.30%, 52-week low) at ~16:17Z, AFTER alert-commander had exited silent.",
+        "why_this_matters_beyond_tidiness": "alert-commander's position-danger gate failed at condition 1/3 for want of price signals its SIBLING produced two minutes later, on a session with real >5% drops (GAS -6.98%, BSR -6.49%, GEX -5.16%). The silent exit was CORRECT given what it could see. The dispatch order is what made it blind. This is a market-facing miss, not an internal hygiene issue.",
+        "options_for_architect": "(a) order the fan-out into producer-wave then consumer-wave within a tick; (b) have consumers re-read the bus after a bounded wait when co-dispatched producers are known to be in flight; (c) accept and document that consumers lag producers by one tick. PO has NOT pre-selected one — this is a genuine design decision with a latency/complexity tradeoff and it belongs to architect. Note cowork-team correctly refused to self-modify its own dispatch contract.",
+        "second_order_in_scope": "R3 (match-slots.md Step 4b: multi-slot collision WARNs but never blocks) spawned market-watcher TWICE the same tick — the EOD slot fired late (~16:08-16:13Z) pushing the 16:09 dispatch into offhours, so TWO market-watcher cycles processed the SAME 08:32 closing prices four minutes apart. R3 is working as written; the written rule is what needs review. Fold into this design pass — same dispatcher, same tick-ordering root.",
+        "important_scoping_do_not_absorb": "This does NOT establish that get_alerts(type=price) is broken. alert-commander separately reported get_alerts(type=price) empty; prior art FIX-ALERT-SCAN-REJECT-STUB-BAR-P0 and FIX-ALERT-OPEN-ZERO-PRICE-RACE sit in that neighbourhood and were deliberately NOT re-filed. At least part of this cycle's blindness is dispatcher ordering, not detector failure. BOTH causes may be live — do not let this row absorb the detector question or close it by proxy.",
+        "acceptance": "Architecture brief selecting (a), (b) or (c) with the tradeoff stated, plus the decomposition into implementable rows. If (c) is chosen, the documentation must land somewhere a consumer agent actually reads, not only in the brief.",
+        "architecture_brief_ref": "docs/architecture-briefs/2026-07-21-cowork-fanout-producer-consumer-ordering.md",
+        "architect_design_summary": "Chose bounded async schedule_task recheck (variant of PO option b, not synchronous wait) over two-phase wave (a, breaks BGFAN-1 fire-and-forget + risks fire-election TTL lapse) or accept-and-document alone (c, row is market-facing). Mechanism: tick-snapshot.md Step 4.7 captures won_slots at dispatch time (last_fired is stamped at spawn not completion, so a consumer re-deriving co-dispatch after the fact would be silently defeated) -> surfaced through the already-shared cycle-bootstrap/SKILL.md tick-snapshot read every cowork agent uses (zero spawn-fanout.md prompt-template edit) -> alert-commander schedules ONE schedule_task recheck (~20min, cowork-schedule.json producer_settle_wait_seconds field) only when a co-dispatched gatherer producer is known AND its own read was empty AND this is not already a recheck (bounded, real discriminator, zero cost on quiet ticks). Prerequisite gap found: alert_commander SKILL_MANIFEST does not grant schedule_task today (apps/mcp-server/src/interface/mcp/bootstrap/agentBootstrap.ts:115-139). R3 folded in as root-cause fix: market-watcher/flow/main.md derives sub-flow from wall-clock time and discards the slot= the dispatcher already sends -- a late EOD-slot fire silently loses eod.md own deliverable, not just duplicate compute; match-slots.md Step 4b kept WARN-only (DDD: dispatcher cannot know same-trading-day-close domain fact). digest-daily flowpath/trigger_prompt signal confirmed orthogonal. 8-row PM decomposition T1-T8 in brief section 9.",
+        "po_ruling_deviation_accepted_20260721T1811": "DEVIATION FROM (a)/(b)/(c) — ACCEPTED. Architect was right to not pick one of my three literals, and the row's own options_for_architect text explicitly said PO had NOT pre-selected one. I verified BOTH brownfield facts the deviation rests on at source rather than accepting them: (F4) docs/agents/cowork-team/flow/last-fired.md:10 states 'AC-P1-7-1: last_fired written after successful spawn' — confirmed, last_fired is stamped at SPAWN, not completion, so any consumer re-deriving co-dispatch from it after the fact would read a slot as fired before its output exists and be silently defeated. That single fact kills the cheap version of (b) and justifies the tick-snapshot won_slots capture instead. (F7) docs/agents/market-watcher/flow/main.md:10-14 routes on wall-clock UTC windows only, and Step 2 ('Read current UTC time. Match the window above') never consumes the slot= the dispatcher already sends — confirmed, the parameter is discarded. Both facts hold. The chosen bounded-async schedule_task recheck is a better option than any of my three: it keeps BGFAN-1's parallel fire-and-forget contract untouched (the real cost of (a), compounded by the fire-election 600s TTL lapse risk during a multi-minute in-session wait), pays zero cost on quiet ticks (the real cost of (b)-as-worded), and does not leave a market-facing miss undefended (the disqualifier for (c)). Brief section 3 states the tradeoffs plainly as the row's acceptance required — including the two I most wanted named: detection latency goes to a bounded ~20min and NOT to zero, and a tick now has two possible verdicts so telemetry readers must check the recheck cycle too. Acceptance MET. Released to pm for the 8-row T1-T8 decomposition.",
+        "po_ruling_r3_folds_here_20260721T1811": "ITEM 4 RULED — FOLDS INTO THIS ROW, NO SEPARATE ROW MINTED. The market-watcher slot-routing defect (a late-firing market-watcher-eod falls through to the generic offhours cycle and loses eod.md's ledger + signal-file deliverable that Chef's 08:37Z dish consumes) is already decomposed HERE as T6 (+ optional doc-only T7) against brief section 5, and section 5's fix is the correct root-cause one: route by the slot= already sent, wall-clock table as no-slot fallback only. Minting a second row would split one root cause (a receiving flow discarding its dispatched identity and re-deriving from ambient clock) across two owners — the same defect shape as section 4.3, same dispatcher, same tick. I also endorse architect's refusal to flip match-slots.md Step 4b from WARN to BLOCK: the dispatcher cannot distinguish a legitimate two-dish tick from this incident without leaking market-domain knowledge into a generic scheduler, and blocking would break the documented intentional case. SEQUENCING INSTRUCTION FOR PM — T6 GOES FIRST, ahead of T1-T5. Three reasons: (a) T6 is the only strand that is market-facing DATA LOSS rather than detection latency — a lost eod.md deliverable is a missing artifact a downstream Chef dish depends on, strictly worse than an alert arriving ~20min late; (b) brief section 9 already records T6/T7 as having NO dependency on T1-T5 and being separately shippable, so there is no cost to promoting it; (c) T3 is the one strand that touches apps/mcp-server/ and must be sequenced behind the live qa full-suite run, so T1-T5 cannot complete promptly anyway — T6 is doc-only and unblocked right now. Parallelise T6 against T1/T2/T5 if two developers are available.",
+        "po_scope_hold_20260721T1811": "SCOPE HOLD REAFFIRMED at release. This row still does NOT own the get_alerts(type=price) detector question — important_scoping_do_not_absorb stands unchanged, prior art FIX-ALERT-SCAN-REJECT-STUB-BAR-P0 and FIX-ALERT-OPEN-ZERO-PRICE-RACE remain deliberately un-refiled, and BOTH causes may be live. Landing T1-T8 must NOT be read as closing the detector question by proxy. Architect correctly confirmed the digest-daily flow_path/trigger_prompt signal is orthogonal (different parallel_group, different field) — it does not fold in here either.",
+        "po_released_to_pm_at": "2026-07-21T18:14:57Z",
+        "status_note": "BLOCKED epic-hold. Decomposition DONE (children T1-T8 on board; T6 already in review). CLOSURE: flip to DONE only after ALL 8 children reach DONE_VERIFIED. Scope UNCHANGED per po_scope_confirmation_20260721T1842. Auto-close path: FIX-DEVTEAM-EPIC-WRAPPER-AUTOCLOSE-SWEEP (dispatch owner=pm) once children terminal — that sweep must be widened to scan backlog[] BLOCKED wrappers (currently ready[]/in_progress[] only).",
+        "po_scope_confirmation_20260721T1842": "PO SCOPE RULING — NO AMENDMENT. Scope stands as originally written; the 8 subtasks are NOT to be touched. The dev-team signal argued this row's scope was too narrow because 'the detection ALSO happened on a second parallel plane and was structurally undeliverable regardless of ordering'. That argument fails on its premise: the second plane (price_anomaly_*.json EOD file) was fully DELIVERABLE to its intended consumer (unified-agent Chef, by path, chef.md:116) and was never addressed to alert-commander at all — see the CANCELLED FIX-PRICE-ANOMALY-DISH-SIGNAL-ENVELOPE row for the source-verified disproof. The 07-21 file's own note ('First EOD pass since 2026-07-17 — slot did not fire for 4 days') identifies the actual failure as the market-watcher EOD slot not firing, which is ALREADY this row's DESIGN-COWORK-FANOUT-T6-MARKET-WATCHER-SLOT-ROUTING subtask. So the second plane corroborates T6 rather than revealing an uncovered strand. Net: the file plane is evidence FOR the existing decomposition, not evidence of a gap in it. Adding scope here would have imported a false premise into an in_progress epic.",
+        "po_goahead_20260722": {
+          "decision": "GO-AHEAD -> pm decomposition (T1-T8, T6 first) — REAFFIRMED",
+          "by": "po",
+          "at": "2026-07-22T00:49:21Z",
+          "note": "PO acceptance was already MET and released to pm 2026-07-21T18:14:57Z (po_ruling_deviation_accepted — bounded-async schedule_task recheck endorsed). This hold since 18:45Z was pure dispatch starvation, NOT a pending ruling. Go-ahead REAFFIRMED, scope UNCHANGED per po_scope_confirmation_20260721T1842 (T6 ships first). Single-.head constraint: FIX-ORPHAN (P0) resumed first this tick; router to point .head at THIS row (next_agent=pm) once FIX-ORPHAN pm decomposition returns .head to idle."
+        },
+        "children": [
+          "DESIGN-COWORK-FANOUT-T1-TICK-SNAPSHOT-WON-SLOTS",
+          "DESIGN-COWORK-FANOUT-T2-CYCLE-BOOTSTRAP-EXTRACTION",
+          "DESIGN-COWORK-FANOUT-T3-ALERT-COMMANDER-SCHEDULE-TASK-GRANT",
+          "DESIGN-COWORK-FANOUT-T4-ALERT-COMMANDER-RECHECK-LOGIC",
+          "DESIGN-COWORK-FANOUT-T5-COWORK-SCHEDULE-CONFIG",
+          "DESIGN-COWORK-FANOUT-T6-MARKET-WATCHER-SLOT-ROUTING",
+          "DESIGN-COWORK-FANOUT-T7-MATCH-SLOTS-CLARIFY",
+          "DESIGN-COWORK-FANOUT-T8-QA-TEST-STRATEGY"
+        ],
+        "epic_hold": true,
+        "blocked_reason": "epic-hold (post-decomposition WIP reclaim): pm decomposition COMPLETE — 8 children DESIGN-COWORK-FANOUT-T1..T8 live (T1-5,7,8 ready/TODO, T6 review/REVIEW). Parent parked pending all children reaching DONE_VERIFIED, then owner=pm closes. Relocated out of in_progress[] to free the WIP<=2 slot it was holding (~21h) so the Ready-Lane Consumer can promote the starving children/CCATO/CI-fix rows.",
+        "decomposition_verified_at": "2026-07-22T22:01:37Z",
+        "reconciled_by": "po-s148 (epic-parent-postdecomp-wip-reconcile)"
+      },
+      {
+        "id": "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
+        "type": "FIX",
+        "title": "Orphan-adoption board-state guard (both paths) + stop false-orphaning long agents + clearable reaper orphans",
+        "status": "BLOCKED",
+        "priority": "P0",
+        "zone": "multi",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
+        "supervised": true,
+        "audit_ref": {
+          "audit": "ultracode-2026-07-12",
+          "verdict": "router-dispatch-locking-P3 RESCOPE folds here (do NOT dup, do NOT close); also absorbs REJECTED router-P2 impl-notes",
+          "note": "P3 implements fix_spec(a)+(c)/AC1+AC3 (heartbeat payload_patch+null-session ladder in coordinationTools/coordinationStore; board-state guard in dispatch-claim SKILL AND dev-team Step0a). fix_spec(b)/AC2 (sprint-task TTL/heartbeat >90min, execute-tier.md:42-64) remains OPEN residual. Route via supervised chain, next_agent=ba.",
+          "ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#router-dispatch-locking-P3"
+        },
+        "promoted_at": "2026-07-21T22:47:59Z",
+        "promoted_by": "dev-team (supervised-lane sweep)",
+        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='ba' (priority_rank=0); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
+        "dispatch_lane": "ba",
+        "updated_at": "2026-07-22T22:01:38Z",
+        "claimed_at": "2026-07-21T22:47:59Z",
+        "claimed_by": "dev-team (supervised-lane sweep)",
+        "plan_only": true,
+        "ba_spec_complete": true,
+        "ba_handoff": "docs/handoffs/FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD-BA-spec.md",
+        "ba_completed_at": "2026-07-21T23:02:09Z",
+        "next_agent": "pm",
+        "status_note": "BLOCKED epic-hold. Decomposition DONE (6 FR children in ready[]; AC2 successor exists). CLOSURE per po_ruling.q1=B: flip to DONE only after all FR children (fix_spec(a)+(c)/AC1+AC3) land + QA-verify AND successor row exists (already TRUE). supervised+plan_only preserved. Auto-close path: FIX-DEVTEAM-EPIC-WRAPPER-AUTOCLOSE-SWEEP dispatch owner=pm once children terminal (widen that sweep to scan backlog[] BLOCKED wrappers).",
+        "po_ruling": {
+          "q1": "B",
+          "decision": "PM spins a NEW explicitly-linked supervised backlog row for fix_spec(b)/AC2 (sprint-task TTL/heartbeat, execute-tier.md:42-64). THIS ticket implements + closes fix_spec(a)+(c)/AC1+AC3 after land + QA-verify.",
+          "closure_gate": "HARD PRECONDITION: this P0 row may NOT flip DONE until the fix_spec(b)/AC2 successor row EXISTS on the board. Neutralizes the silent-drop risk BA flagged in spec §3.",
+          "successor_requirements": "Successor inherits supervised:true + P0; cross-refs predecessor=FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD; carries spec §3 absorbed P2 impl-notes verbatim (execute-tier.md:42-64 TTL raise + heartbeat-loop placement, developer/qa flow INV-GATEWAY-1 dead-lock deletion, dev-team-loop-I10 owner_client_session cross-ref) + audit_ref lineage (ultracode-2026-07-12 router-dispatch-locking-P2-absorbed).",
+          "rationale": "B dominates A once closure is gated on successor existence: keeps no false-IN_PROGRESS P0 blocking the WIP lane for a not-yet-decomposed wave; decouples the two independent deploy/QA cycles ((a)+(c) is container-rebuild-gated + addresses the MATERIALIZED incident, (b) is prophylactic flow-doc/TTL with its own I10/INV-GATEWAY-1 deps); a first-class tracked successor row IS the anti-silent-drop mechanism (better than an open parent that itself risks the epic-wrapper closeout gap).",
+          "ruled_by": "po",
+          "ruled_at": "2026-07-21T23:23:03Z"
+        },
+        "architect_ruling": {
+          "fr5_board_flip_bundle": "BUNDLE NOW — FR-5 board-flip fix lands in the SAME commit as FR-4, both consuming ONE shared lane-resolution pass (new scripts/agents-flow/resolve-task-lane-by-id.jq) across router probe + dev-team read-guard + board-flip write, not 3 independently-drifting copies. Same defects (EC-1/EC-2), same file, 5 lines away, not container-rebuild-gated (NFR-3 does not apply — pure flow-doc jq change). Un-bundled, FR-4's widened guard would let more legit adoptions through to a write that still silently no-ops (zero board trace).",
+          "backlog_blocked_classification": "TERMINAL — no active-branch carve-out inside backlog (lane-alone-decides, consistent with the other 6 flat lanes per EC-5). Grounded in a LIVE board example: TASK_2005 (in_progress->backlog+BLOCKED on a new depends_on) shows the real meaning is \"paused pending an external precondition\", not \"resume automatically\". Asymmetric safety cost: wrong-active risks repeating the MATERIALIZED incident (unauthorized hot-path re-exec); wrong-terminal only delays (self-heals via the existing depends_on-gated promote script, nothing lost — orphan-signal release is best-effort per EC-7).",
+          "i10_batching": "Batched into the fix_spec(b)/AC2 successor row, sequenced FIRST as a hard PRECONDITION (not just an adjacent bundle) of that row's heartbeat-loop deliverable — cannot heartbeat a lock with an owner_client_session that was never bound to it at claim time. NEW FINDING widening BA's I10 scope: execute-tier.md:64's finally-release call ALSO omits the required owner_client_session param (BA only flagged the :42-48 claim call) — both required-Zod-field omissions must be fixed together. 4-step order specified for PM: (1) I10 fix both call sites -> (2) TTL raise + heartbeat-loop placement -> (3) doc-sync SAME commit incl. a 4th site BA did not cite (fail-loud-protocol.md:71, also says 3600s) -> (4) INV-GATEWAY-1 dead-call cleanup (developer/flow/main.md, qa/flow/main.md — independent, no ordering dependency on 1-3).",
+          "ddd_layers": "Ratified unchanged from BA: FR-1/FR-2/FR-7 infrastructure(db)+interface(mcp tool); FR-3/FR-4/FR-5/FR-6 interface (flow-doc procedural, no domain surface); FR-8 infrastructure test. Zero domain-layer touch confirmed.",
+          "build_standard": "not-applicable (bug-fix/refactor, in-zone, no new primitives)",
+          "brief_ref": "docs/architecture-briefs/2026-07-22-fix-orphan-adoption-board-state-guard-design.md",
+          "ruled_by": "architect",
+          "ruled_at": "2026-07-21T23:57:42Z"
+        },
+        "po_goahead_20260722": {
+          "decision": "GO-AHEAD -> pm decomposition (resumed via .head this tick)",
+          "by": "po",
+          "at": "2026-07-22T00:49:21Z",
+          "note": "Architect ruling (8843b099d) reviewed + endorsed: FR-5 board-flip BUNDLED into FR-4 via shared scripts/agents-flow/resolve-task-lane-by-id.jq; backlog+BLOCKED=TERMINAL; I10 batching = hard precondition of the fix_spec(b)/AC2 successor (2 extra unbound owner_client_session sites confirmed at execute-tier.md:64 + fail-loud-protocol.md:71). po_ruling.q1=B stands. Closure of THIS P0 remains HARD-GATED on the fix_spec(b)/AC2 successor row existing on the board (anti-silent-drop)."
+        },
+        "children": [
+          "FIX-ORPHAN-FR1-FR2-INFRA-HEARTBEAT-LADDER",
+          "FIX-ORPHAN-FR1-FR3-FR6-SKILL-DISPATCH-CLAIM",
+          "FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS",
+          "FIX-ORPHAN-FR4-FR5-FLOW-DEVTEAM-ADOPTION-GUARD",
+          "FIX-ORPHAN-FR7-VERIFY-TOOL-REGISTRY",
+          "FIX-ORPHAN-FR8-TEST-COORDINATION-STORE"
+        ],
+        "depends": [
+          "FIX-ORPHAN-FR1-FR2-INFRA-HEARTBEAT-LADDER",
+          "FIX-ORPHAN-FR1-FR3-FR6-SKILL-DISPATCH-CLAIM",
+          "FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS",
+          "FIX-ORPHAN-FR4-FR5-FLOW-DEVTEAM-ADOPTION-GUARD",
+          "FIX-ORPHAN-FR7-VERIFY-TOOL-REGISTRY",
+          "FIX-ORPHAN-FR8-TEST-COORDINATION-STORE"
+        ],
+        "epic_hold": true,
+        "blocked_reason": "epic-hold (post-decomposition WIP reclaim): pm decomposition COMPLETE — 6 children FIX-ORPHAN-FR* live in ready[] + fix_spec(b)/AC2 successor FIX-SPRINT-TASK-HEARTBEAT-LOCK minted in backlog[]. Parent parked pending FR children DONE_VERIFIED. Relocated out of in_progress[] to free the WIP<=2 slot it was holding (~23h).",
+        "decomposition_verified_at": "2026-07-22T22:01:37Z",
+        "successor_gate_satisfied": "FIX-SPRINT-TASK-HEARTBEAT-LOCK live in backlog[] (P0, depends=[FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD], origin_ticket=FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD, parent_fix_spec='fix_spec(b)/AC2') — po_ruling.closure_gate HARD PRECONDITION MET",
+        "reconciled_by": "po-s148 (epic-parent-postdecomp-wip-reconcile)",
+        "updated_by": "po"
       }
     ],
     "closed_sprints": [
@@ -13194,104 +13340,9 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-22T20:14:06Z",
-    "last_triaged_by": "po",
-    "in_progress": [
-      {
-        "id": "DESIGN-COWORK-FANOUT-PRODUCER-CONSUMER-ORDERING",
-        "type": "FIX",
-        "title": "cowork-team parallel fan-out has no producer/consumer ordering — alert-commander read the signal bus before its co-dispatched producers wrote to it, and went silent on a session with real >5% drops",
-        "status": "IN_PROGRESS",
-        "priority": "P1",
-        "size": "M",
-        "zone": "cross-service/",
-        "owner": "pm",
-        "next_agent": "pm",
-        "depends": [],
-        "supervised": true,
-        "created_at": "2026-07-21T17:24:33Z",
-        "created_by": "po/triage-20260721T1707",
-        "updated_at": "2026-07-22T00:52:36Z",
-        "updated_by": "pm/decomposition-20260721T1830",
-        "origin_signal_id": "cow-20260721T162324",
-        "source_signal": "docs/signals/processed/cowork-team-20260721T162324Z-fanout-ordering-and-siblingdedup-correction.json",
-        "mechanism": "BGFAN-1 mandates run_in_background=true for every dispatcher spawn and spawn-fanout.md issues all matched slots in ONE parallel block, with no dependency ordering. When a tick matches both a PRODUCER (market-watcher -> price_anomaly; news-scout -> urgent_news/chain_catalyst) and a CONSUMER (alert-commander -> gates on those exact signal types), the consumer can complete its bus read before the producers have posted.",
-        "evidence_16_00Z_tick": "Dispatched together: news-scout-offhours, market-watcher-offhours, market-watcher-eod, alert-commander-critical. alert-commander ran ~16:10-16:15Z and reported zero verified_chain/chain_catalyst/price_anomaly on the bus, verified by explicit signal_type-filtered calls — its evidence was CLEAN, the bus genuinely WAS empty at read time. market-watcher-offhours then posted price_anomaly 8680 (GAS -6.98%, 2.89 sigma, 4.02x volume) and 8681 (D2D -3.30%, 52-week low) at ~16:17Z, AFTER alert-commander had exited silent.",
-        "why_this_matters_beyond_tidiness": "alert-commander's position-danger gate failed at condition 1/3 for want of price signals its SIBLING produced two minutes later, on a session with real >5% drops (GAS -6.98%, BSR -6.49%, GEX -5.16%). The silent exit was CORRECT given what it could see. The dispatch order is what made it blind. This is a market-facing miss, not an internal hygiene issue.",
-        "options_for_architect": "(a) order the fan-out into producer-wave then consumer-wave within a tick; (b) have consumers re-read the bus after a bounded wait when co-dispatched producers are known to be in flight; (c) accept and document that consumers lag producers by one tick. PO has NOT pre-selected one — this is a genuine design decision with a latency/complexity tradeoff and it belongs to architect. Note cowork-team correctly refused to self-modify its own dispatch contract.",
-        "second_order_in_scope": "R3 (match-slots.md Step 4b: multi-slot collision WARNs but never blocks) spawned market-watcher TWICE the same tick — the EOD slot fired late (~16:08-16:13Z) pushing the 16:09 dispatch into offhours, so TWO market-watcher cycles processed the SAME 08:32 closing prices four minutes apart. R3 is working as written; the written rule is what needs review. Fold into this design pass — same dispatcher, same tick-ordering root.",
-        "important_scoping_do_not_absorb": "This does NOT establish that get_alerts(type=price) is broken. alert-commander separately reported get_alerts(type=price) empty; prior art FIX-ALERT-SCAN-REJECT-STUB-BAR-P0 and FIX-ALERT-OPEN-ZERO-PRICE-RACE sit in that neighbourhood and were deliberately NOT re-filed. At least part of this cycle's blindness is dispatcher ordering, not detector failure. BOTH causes may be live — do not let this row absorb the detector question or close it by proxy.",
-        "acceptance": "Architecture brief selecting (a), (b) or (c) with the tradeoff stated, plus the decomposition into implementable rows. If (c) is chosen, the documentation must land somewhere a consumer agent actually reads, not only in the brief.",
-        "architecture_brief_ref": "docs/architecture-briefs/2026-07-21-cowork-fanout-producer-consumer-ordering.md",
-        "architect_design_summary": "Chose bounded async schedule_task recheck (variant of PO option b, not synchronous wait) over two-phase wave (a, breaks BGFAN-1 fire-and-forget + risks fire-election TTL lapse) or accept-and-document alone (c, row is market-facing). Mechanism: tick-snapshot.md Step 4.7 captures won_slots at dispatch time (last_fired is stamped at spawn not completion, so a consumer re-deriving co-dispatch after the fact would be silently defeated) -> surfaced through the already-shared cycle-bootstrap/SKILL.md tick-snapshot read every cowork agent uses (zero spawn-fanout.md prompt-template edit) -> alert-commander schedules ONE schedule_task recheck (~20min, cowork-schedule.json producer_settle_wait_seconds field) only when a co-dispatched gatherer producer is known AND its own read was empty AND this is not already a recheck (bounded, real discriminator, zero cost on quiet ticks). Prerequisite gap found: alert_commander SKILL_MANIFEST does not grant schedule_task today (apps/mcp-server/src/interface/mcp/bootstrap/agentBootstrap.ts:115-139). R3 folded in as root-cause fix: market-watcher/flow/main.md derives sub-flow from wall-clock time and discards the slot= the dispatcher already sends -- a late EOD-slot fire silently loses eod.md own deliverable, not just duplicate compute; match-slots.md Step 4b kept WARN-only (DDD: dispatcher cannot know same-trading-day-close domain fact). digest-daily flowpath/trigger_prompt signal confirmed orthogonal. 8-row PM decomposition T1-T8 in brief section 9.",
-        "po_ruling_deviation_accepted_20260721T1811": "DEVIATION FROM (a)/(b)/(c) — ACCEPTED. Architect was right to not pick one of my three literals, and the row's own options_for_architect text explicitly said PO had NOT pre-selected one. I verified BOTH brownfield facts the deviation rests on at source rather than accepting them: (F4) docs/agents/cowork-team/flow/last-fired.md:10 states 'AC-P1-7-1: last_fired written after successful spawn' — confirmed, last_fired is stamped at SPAWN, not completion, so any consumer re-deriving co-dispatch from it after the fact would read a slot as fired before its output exists and be silently defeated. That single fact kills the cheap version of (b) and justifies the tick-snapshot won_slots capture instead. (F7) docs/agents/market-watcher/flow/main.md:10-14 routes on wall-clock UTC windows only, and Step 2 ('Read current UTC time. Match the window above') never consumes the slot= the dispatcher already sends — confirmed, the parameter is discarded. Both facts hold. The chosen bounded-async schedule_task recheck is a better option than any of my three: it keeps BGFAN-1's parallel fire-and-forget contract untouched (the real cost of (a), compounded by the fire-election 600s TTL lapse risk during a multi-minute in-session wait), pays zero cost on quiet ticks (the real cost of (b)-as-worded), and does not leave a market-facing miss undefended (the disqualifier for (c)). Brief section 3 states the tradeoffs plainly as the row's acceptance required — including the two I most wanted named: detection latency goes to a bounded ~20min and NOT to zero, and a tick now has two possible verdicts so telemetry readers must check the recheck cycle too. Acceptance MET. Released to pm for the 8-row T1-T8 decomposition.",
-        "po_ruling_r3_folds_here_20260721T1811": "ITEM 4 RULED — FOLDS INTO THIS ROW, NO SEPARATE ROW MINTED. The market-watcher slot-routing defect (a late-firing market-watcher-eod falls through to the generic offhours cycle and loses eod.md's ledger + signal-file deliverable that Chef's 08:37Z dish consumes) is already decomposed HERE as T6 (+ optional doc-only T7) against brief section 5, and section 5's fix is the correct root-cause one: route by the slot= already sent, wall-clock table as no-slot fallback only. Minting a second row would split one root cause (a receiving flow discarding its dispatched identity and re-deriving from ambient clock) across two owners — the same defect shape as section 4.3, same dispatcher, same tick. I also endorse architect's refusal to flip match-slots.md Step 4b from WARN to BLOCK: the dispatcher cannot distinguish a legitimate two-dish tick from this incident without leaking market-domain knowledge into a generic scheduler, and blocking would break the documented intentional case. SEQUENCING INSTRUCTION FOR PM — T6 GOES FIRST, ahead of T1-T5. Three reasons: (a) T6 is the only strand that is market-facing DATA LOSS rather than detection latency — a lost eod.md deliverable is a missing artifact a downstream Chef dish depends on, strictly worse than an alert arriving ~20min late; (b) brief section 9 already records T6/T7 as having NO dependency on T1-T5 and being separately shippable, so there is no cost to promoting it; (c) T3 is the one strand that touches apps/mcp-server/ and must be sequenced behind the live qa full-suite run, so T1-T5 cannot complete promptly anyway — T6 is doc-only and unblocked right now. Parallelise T6 against T1/T2/T5 if two developers are available.",
-        "po_scope_hold_20260721T1811": "SCOPE HOLD REAFFIRMED at release. This row still does NOT own the get_alerts(type=price) detector question — important_scoping_do_not_absorb stands unchanged, prior art FIX-ALERT-SCAN-REJECT-STUB-BAR-P0 and FIX-ALERT-OPEN-ZERO-PRICE-RACE remain deliberately un-refiled, and BOTH causes may be live. Landing T1-T8 must NOT be read as closing the detector question by proxy. Architect correctly confirmed the digest-daily flow_path/trigger_prompt signal is orthogonal (different parallel_group, different field) — it does not fold in here either.",
-        "po_released_to_pm_at": "2026-07-21T18:14:57Z",
-        "status_note": "Decomposed into 8 atomic tasks T1-T8; T6 ships first per PO order.",
-        "po_scope_confirmation_20260721T1842": "PO SCOPE RULING — NO AMENDMENT. Scope stands as originally written; the 8 subtasks are NOT to be touched. The dev-team signal argued this row's scope was too narrow because 'the detection ALSO happened on a second parallel plane and was structurally undeliverable regardless of ordering'. That argument fails on its premise: the second plane (price_anomaly_*.json EOD file) was fully DELIVERABLE to its intended consumer (unified-agent Chef, by path, chef.md:116) and was never addressed to alert-commander at all — see the CANCELLED FIX-PRICE-ANOMALY-DISH-SIGNAL-ENVELOPE row for the source-verified disproof. The 07-21 file's own note ('First EOD pass since 2026-07-17 — slot did not fire for 4 days') identifies the actual failure as the market-watcher EOD slot not firing, which is ALREADY this row's DESIGN-COWORK-FANOUT-T6-MARKET-WATCHER-SLOT-ROUTING subtask. So the second plane corroborates T6 rather than revealing an uncovered strand. Net: the file plane is evidence FOR the existing decomposition, not evidence of a gap in it. Adding scope here would have imported a false premise into an in_progress epic.",
-        "po_goahead_20260722": {
-          "decision": "GO-AHEAD -> pm decomposition (T1-T8, T6 first) — REAFFIRMED",
-          "by": "po",
-          "at": "2026-07-22T00:49:21Z",
-          "note": "PO acceptance was already MET and released to pm 2026-07-21T18:14:57Z (po_ruling_deviation_accepted — bounded-async schedule_task recheck endorsed). This hold since 18:45Z was pure dispatch starvation, NOT a pending ruling. Go-ahead REAFFIRMED, scope UNCHANGED per po_scope_confirmation_20260721T1842 (T6 ships first). Single-.head constraint: FIX-ORPHAN (P0) resumed first this tick; router to point .head at THIS row (next_agent=pm) once FIX-ORPHAN pm decomposition returns .head to idle."
-        }
-      },
-      {
-        "id": "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
-        "type": "FIX",
-        "title": "Orphan-adoption board-state guard (both paths) + stop false-orphaning long agents + clearable reaper orphans",
-        "status": "IN_PROGRESS",
-        "priority": "P0",
-        "zone": "multi",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
-        "supervised": true,
-        "audit_ref": {
-          "audit": "ultracode-2026-07-12",
-          "verdict": "router-dispatch-locking-P3 RESCOPE folds here (do NOT dup, do NOT close); also absorbs REJECTED router-P2 impl-notes",
-          "note": "P3 implements fix_spec(a)+(c)/AC1+AC3 (heartbeat payload_patch+null-session ladder in coordinationTools/coordinationStore; board-state guard in dispatch-claim SKILL AND dev-team Step0a). fix_spec(b)/AC2 (sprint-task TTL/heartbeat >90min, execute-tier.md:42-64) remains OPEN residual. Route via supervised chain, next_agent=ba.",
-          "ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#router-dispatch-locking-P3"
-        },
-        "promoted_at": "2026-07-21T22:47:59Z",
-        "promoted_by": "dev-team (supervised-lane sweep)",
-        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='ba' (priority_rank=0); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
-        "dispatch_lane": "ba",
-        "updated_at": "2026-07-22T00:52:36Z",
-        "claimed_at": "2026-07-21T22:47:59Z",
-        "claimed_by": "dev-team (supervised-lane sweep)",
-        "plan_only": true,
-        "ba_spec_complete": true,
-        "ba_handoff": "docs/handoffs/FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD-BA-spec.md",
-        "ba_completed_at": "2026-07-21T23:02:09Z",
-        "next_agent": "pm",
-        "status_note": "Architect ruling complete (docs/architecture-briefs/2026-07-22-fix-orphan-adoption-board-state-guard-design.md). SUPERVISED HOLD — awaiting supervisor go-ahead before pm decomposition. Closure of this row still gated on fix_spec(b)/AC2 successor row existing. supervised+plan_only preserved.",
-        "po_ruling": {
-          "q1": "B",
-          "decision": "PM spins a NEW explicitly-linked supervised backlog row for fix_spec(b)/AC2 (sprint-task TTL/heartbeat, execute-tier.md:42-64). THIS ticket implements + closes fix_spec(a)+(c)/AC1+AC3 after land + QA-verify.",
-          "closure_gate": "HARD PRECONDITION: this P0 row may NOT flip DONE until the fix_spec(b)/AC2 successor row EXISTS on the board. Neutralizes the silent-drop risk BA flagged in spec §3.",
-          "successor_requirements": "Successor inherits supervised:true + P0; cross-refs predecessor=FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD; carries spec §3 absorbed P2 impl-notes verbatim (execute-tier.md:42-64 TTL raise + heartbeat-loop placement, developer/qa flow INV-GATEWAY-1 dead-lock deletion, dev-team-loop-I10 owner_client_session cross-ref) + audit_ref lineage (ultracode-2026-07-12 router-dispatch-locking-P2-absorbed).",
-          "rationale": "B dominates A once closure is gated on successor existence: keeps no false-IN_PROGRESS P0 blocking the WIP lane for a not-yet-decomposed wave; decouples the two independent deploy/QA cycles ((a)+(c) is container-rebuild-gated + addresses the MATERIALIZED incident, (b) is prophylactic flow-doc/TTL with its own I10/INV-GATEWAY-1 deps); a first-class tracked successor row IS the anti-silent-drop mechanism (better than an open parent that itself risks the epic-wrapper closeout gap).",
-          "ruled_by": "po",
-          "ruled_at": "2026-07-21T23:23:03Z"
-        },
-        "architect_ruling": {
-          "fr5_board_flip_bundle": "BUNDLE NOW — FR-5 board-flip fix lands in the SAME commit as FR-4, both consuming ONE shared lane-resolution pass (new scripts/agents-flow/resolve-task-lane-by-id.jq) across router probe + dev-team read-guard + board-flip write, not 3 independently-drifting copies. Same defects (EC-1/EC-2), same file, 5 lines away, not container-rebuild-gated (NFR-3 does not apply — pure flow-doc jq change). Un-bundled, FR-4's widened guard would let more legit adoptions through to a write that still silently no-ops (zero board trace).",
-          "backlog_blocked_classification": "TERMINAL — no active-branch carve-out inside backlog (lane-alone-decides, consistent with the other 6 flat lanes per EC-5). Grounded in a LIVE board example: TASK_2005 (in_progress->backlog+BLOCKED on a new depends_on) shows the real meaning is \"paused pending an external precondition\", not \"resume automatically\". Asymmetric safety cost: wrong-active risks repeating the MATERIALIZED incident (unauthorized hot-path re-exec); wrong-terminal only delays (self-heals via the existing depends_on-gated promote script, nothing lost — orphan-signal release is best-effort per EC-7).",
-          "i10_batching": "Batched into the fix_spec(b)/AC2 successor row, sequenced FIRST as a hard PRECONDITION (not just an adjacent bundle) of that row's heartbeat-loop deliverable — cannot heartbeat a lock with an owner_client_session that was never bound to it at claim time. NEW FINDING widening BA's I10 scope: execute-tier.md:64's finally-release call ALSO omits the required owner_client_session param (BA only flagged the :42-48 claim call) — both required-Zod-field omissions must be fixed together. 4-step order specified for PM: (1) I10 fix both call sites -> (2) TTL raise + heartbeat-loop placement -> (3) doc-sync SAME commit incl. a 4th site BA did not cite (fail-loud-protocol.md:71, also says 3600s) -> (4) INV-GATEWAY-1 dead-call cleanup (developer/flow/main.md, qa/flow/main.md — independent, no ordering dependency on 1-3).",
-          "ddd_layers": "Ratified unchanged from BA: FR-1/FR-2/FR-7 infrastructure(db)+interface(mcp tool); FR-3/FR-4/FR-5/FR-6 interface (flow-doc procedural, no domain surface); FR-8 infrastructure test. Zero domain-layer touch confirmed.",
-          "build_standard": "not-applicable (bug-fix/refactor, in-zone, no new primitives)",
-          "brief_ref": "docs/architecture-briefs/2026-07-22-fix-orphan-adoption-board-state-guard-design.md",
-          "ruled_by": "architect",
-          "ruled_at": "2026-07-21T23:57:42Z"
-        },
-        "po_goahead_20260722": {
-          "decision": "GO-AHEAD -> pm decomposition (resumed via .head this tick)",
-          "by": "po",
-          "at": "2026-07-22T00:49:21Z",
-          "note": "Architect ruling (8843b099d) reviewed + endorsed: FR-5 board-flip BUNDLED into FR-4 via shared scripts/agents-flow/resolve-task-lane-by-id.jq; backlog+BLOCKED=TERMINAL; I10 batching = hard precondition of the fix_spec(b)/AC2 successor (2 extra unbound owner_client_session sites confirmed at execute-tier.md:64 + fail-loud-protocol.md:71). po_ruling.q1=B stands. Closure of THIS P0 remains HARD-GATED on the fix_spec(b)/AC2 successor row existing on the board (anti-silent-drop)."
-        }
-      }
-    ]
+    "last_triaged_at": "2026-07-22T22:01:50Z",
+    "last_triaged_by": "po-s148",
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
