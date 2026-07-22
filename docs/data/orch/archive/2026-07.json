@@ -9858,6 +9858,33 @@
       "verified_at": "2026-07-22T22:21:20Z",
       "verified_by": "developer",
       "verify_note": "Self-verified CLEAN doc-delete: docs/signals/NOTE_SIGNALS_DB_DRAIN.md removed (stale, contradicted live drain scripts/agents-flow/drain-signals.js + docs/agents/dev-team/flow/drain-signals.md). grep confirmed no live inbound reference besides the audit brief itself."
+    },
+    {
+      "id": "UC-SDF-P1",
+      "type": "FIX",
+      "title": "Add self-pruning to the tick-snapshot step + one-time sweep of the 80 stale tick-snapshot files",
+      "status": "DONE_VERIFIED",
+      "priority": "P1",
+      "size": "S",
+      "zone": "cross-service/",
+      "sprint": "ULTRACODE-AUDIT-FIXALL",
+      "source": "ultracode-audit-2026-07-12",
+      "verdict": "CONFIRMED",
+      "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#state-data-files-P1",
+      "note": "Cowork tick snapshots accrete unbounded (80 stale). Add self-prune to the snapshot step and one-time sweep.",
+      "created_at": "2026-07-13T19:31:11Z",
+      "created_by": "po",
+      "priority_bumped_from": "P2",
+      "priority_bumped_at": "2026-07-17T04:54:03Z",
+      "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
+      "promoted_at": "2026-07-22T22:46:43Z",
+      "promoted_by": "dev-team (bounded-1 auto-pickup)",
+      "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+      "updated_at": "2026-07-22T22:51:02Z",
+      "claimed_at": "2026-07-22T22:46:43Z",
+      "claimed_by": "dev-team (bounded-1 auto-pickup)",
+      "verified_at": "2026-07-22T22:51:02Z",
+      "verified_by": "developer (self-verified — near-zero-risk CONFIRMED fix, read-back confirmed)"
     }
   ],
   "closed_sprints": [
