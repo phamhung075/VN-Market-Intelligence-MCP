@@ -387,12 +387,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "DESIGN-COWORK-FANOUT-T6-MARKET-WATCHER-SLOT-ROUTING",
-    "next_agent": "agent-father",
-    "next_action": "pm sequencing COMPLETE (af20c9fc, commit d651b0eab verified at source: 8 handoffs + T6 promoted to in_progress). DISPATCH T6 (DESIGN-COWORK-FANOUT-T6-MARKET-WATCHER-SLOT-ROUTING, agent-father) FIRST per po_ruling_r3_folds_here (market-facing DATA LOSS); handoff docs/handoffs/TASK_DESIGN-COWORK-FANOUT-T6.md, zone docs/agents/market-watcher/. pm cannot spawn agent-father — Step 0b resume is the only dispatch path. Parent DESIGN-COWORK-FANOUT stays in_progress as tracking epic; remaining children T1/T5 (parallel), T2 (on T1), T3 (behind live qa full-suite), T4, T7 (opt), T8 (QA gate) drain next tier-by-tier, ONE worker-WIP at a time. WIP note: in_progress=3 (2 tracking epics + T6), worker-WIP=1; raw-count breach vs WIP<=2 = tracked epic-parking-vs-count ambiguity (SPIKE-SATURATED-COUNT-THRESHOLD-GATES), PO policy call, non-blocking.",
-    "updated_at": "2026-07-22T01:57:41Z",
-    "updated_by": "router/dispatch-t6-designcowork-20260722T015741Z"
+    "status": "idle",
+    "updated_at": "2026-07-22T02:22:54Z",
+    "updated_by": "router/t6-review-head-clear-20260722T022254Z",
+    "active_task_id": null,
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
