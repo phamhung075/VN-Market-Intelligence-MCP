@@ -1906,6 +1906,17 @@
         "status": "triaged",
         "payload_ref": null,
         "triage_note": "PO 2026-07-22T16:22Z: ruling HYBRID(a-modified) -> minted FIX-ALERTCMD-SELLOFF-BREADTH-SILENT (BACKLOG, high, architect). stopLossHit-only kept by-design for position-danger; ADD distinct selloff-breadth trigger so agent is not silent during broad selloffs. Not WONTFIX, not by-design-silent."
+      },
+      {
+        "id": "cowork-20260722T164119Z-refine-failed-headofline-poison",
+        "ts": "2026-07-22T16:41:19Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "tool_contract_gap",
+        "summary": "get_bctc_pending_refine returns FAILED reports in the pending set, so a permanently-FAILED report pins result[0] and poisons the head of the daily refine queue. Verified LIVE this cycle (2026-07-22 16:30Z refine-bctc-slot-4): get_bctc_pending_refine(limit:5) returns POW_2026_Q1.pdf (id 78b06684-dca5-45e7-8dfd-b173df3d3d02) with refine_status=FAILED as result[0], AHEAD of 4 genuinely PENDING reports (DPM_2025_Q4, REE_2025_Q4, DPM_2026_Q1, VPB_2026_Q1 — all text_status=COMPLETE). The slot flow does get_bctc_pending_refine(limit:1)->result[0], so every daily fire (cron 30 16) re-picks POW, re-fails all 28 windows, re-finalizes FAILED, and NEVER advances -> the 4 real reports are starved indefinitely and bctc-analyst stays blind to them. Agent note 'all 28 windows already pushed in prior runs' = recurring across cycles, not first occurrence. TWO-LAYER root cause for po to route: (1) QUEUE/CONTRACT (dev-mcp-server): get_bctc_pending_refine must EXCLUDE FAILED (and terminal) rows from the pending set, OR the slot trigger must select oldest PENDING not oldest-any-status; (2) DATA (dev-pdf-extractor): all 28 windows fail agent_error:text_fetch_failed (units 0-23) / image_fetch_oversized (units 24-27) DESPITE report-level text_status=COMPLETE — a contradiction (OCR says text complete but per-window fetch returns empty) plus 4 oversized page images. refine_bctc_md CANNOT self-escalate (tools Read/Write/call_tool, no Bash->orch-apply). LINKS existing tracking: fold into ACTIVE epic BCTC-REFINE-STALL-RETRIGGER (throughput-drain) as its specific un-diagnosed head-of-line blocker; the DEFERRED watchdog BCTC-REFINE-A2/T3-WATCHDOG would only detect queue-DEPTH, not this cause. DISTINCT from DONE FIX-PENDING-REFINE-TICKER-TARGETING (same tool, different bug: ticker-arg-ignored). PO decision: (a) exclude FAILED from pending queue + reroute slot to oldest PENDING (unblocks 4 reports immediately), AND/OR (b) root-cause the text_fetch/image_oversize failures (re-OCR/resize), OR (c) mark POW manual-review/WONTFIX to clear head-of-line.",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-22T15:10:08Z",
