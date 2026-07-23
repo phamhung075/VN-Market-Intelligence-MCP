@@ -33,6 +33,13 @@ trigger_foreign_flow_vps_fetch(verbose=true, dry_run=false)
 ```
 Debug: `dry_run=true` first → check `failed[].reason` → `send_telegram(channel="bug")` → `log_fix(...)`
 
+**CANONICAL: foreign-flow freshness recheck harness** — after a `trigger_foreign_flow_vps_fetch` /
+VPS-restore action, do NOT declare the foreign-flow ("khoi ngoai") pipeline fixed on self-report
+alone. Gate it with `scripts/check-foreign-flow-freshness.sh` (exit 0 = confirmed fresh for the
+last completed VN trading session, weekend/holiday-aware; exit 2 = still stale; exit 3 = probe/
+calendar ambiguity, never a false-green). Self-test: `scripts/check-foreign-flow-freshness.sh
+--self-test`. Registry entry: `docs/policies/dev-standards.md` § Script Persistence.
+
 ```
 🔍 VPS DEBUG REPORT — <service> — <date>
 Trigger: <what ran> | Queue: <pending/skipped/done>

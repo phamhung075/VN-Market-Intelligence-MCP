@@ -1,6 +1,6 @@
 # Developer Standards
 
-<!-- size-justification: 140L — unified developer reference: code search tools, test patterns, DDD rules, TypeScript conventions, naming. All read together at sprint start to set context; splitting into tool-guide + test-patterns + naming-rules fragments the unified "how we code" standard. SCRIPT-PERSIST 2026-06-07: Script Persistence section incl. maintenance clause (+15L, user directive). SYSREMAKE-P2-DEVTEAM-BACKLOG-PICKUP-BOUNDED1 2026-07-04: CANONICAL pointer for the dev-team idle-capacity backlog pickup scripts (+11L). PUSH-AUTONOMY-1 2026-07-14: Autonomous Push Gate section (+16L, user directive — push on 100% green, no user action, post-push real-data verify task). FIX-CMH-OBSOLETE-FILE-CLEANUP 2026-07-20: CANONICAL pointer for scripts/audits/clean-obsolete-files.sh (+8L). BLOCK-PUSH-CRON-AUDIT-BATCH-NO-QA 2026-07-22 (qa): pinned the "targeted/merge-gate suite" reading against the standing FIX-MCP-SUITE-HEALTH-BASELINE full-suite red so it stops being re-litigated per push (+3L). UC-MDH-P3 2026-07-23: CANONICAL pointer for scripts/agents-flow/memory-prune-sweep.sh (+14L). UC-MDH-P4 2026-07-23: CANONICAL pointer for scripts/agents-flow/decision-journal-archive.sh (+15L). UC-GCP-P8 2026-07-23: CANONICAL pointer for scripts/agents-flow/stranded-state-sweep.sh (+13L). TE-T17 2026-07-23: CANONICAL pointer for scripts/agents-flow/notebook-linecap-sweep.sh (+13L). TE-T28 2026-07-23: CANONICAL pointer for scripts/gen-tool-list-stubs.py (+15L). TE-T31 2026-07-23: CANONICAL pointer for scripts/gen-tools-index.sh (+14L). TE-T33 2026-07-23: CANONICAL pointer for scripts/agents-flow/cold-archive-sweep.sh (+18L). -->
+<!-- size-justification: 140L — unified developer reference: code search tools, test patterns, DDD rules, TypeScript conventions, naming. All read together at sprint start to set context; splitting into tool-guide + test-patterns + naming-rules fragments the unified "how we code" standard. SCRIPT-PERSIST 2026-06-07: Script Persistence section incl. maintenance clause (+15L, user directive). SYSREMAKE-P2-DEVTEAM-BACKLOG-PICKUP-BOUNDED1 2026-07-04: CANONICAL pointer for the dev-team idle-capacity backlog pickup scripts (+11L). PUSH-AUTONOMY-1 2026-07-14: Autonomous Push Gate section (+16L, user directive — push on 100% green, no user action, post-push real-data verify task). FIX-CMH-OBSOLETE-FILE-CLEANUP 2026-07-20: CANONICAL pointer for scripts/audits/clean-obsolete-files.sh (+8L). BLOCK-PUSH-CRON-AUDIT-BATCH-NO-QA 2026-07-22 (qa): pinned the "targeted/merge-gate suite" reading against the standing FIX-MCP-SUITE-HEALTH-BASELINE full-suite red so it stops being re-litigated per push (+3L). UC-MDH-P3 2026-07-23: CANONICAL pointer for scripts/agents-flow/memory-prune-sweep.sh (+14L). UC-MDH-P4 2026-07-23: CANONICAL pointer for scripts/agents-flow/decision-journal-archive.sh (+15L). UC-GCP-P8 2026-07-23: CANONICAL pointer for scripts/agents-flow/stranded-state-sweep.sh (+13L). TE-T17 2026-07-23: CANONICAL pointer for scripts/agents-flow/notebook-linecap-sweep.sh (+13L). TE-T28 2026-07-23: CANONICAL pointer for scripts/gen-tool-list-stubs.py (+15L). TE-T31 2026-07-23: CANONICAL pointer for scripts/gen-tools-index.sh (+14L). TE-T33 2026-07-23: CANONICAL pointer for scripts/agents-flow/cold-archive-sweep.sh (+18L). FFLOW-STALE-0723-B-RECHECK-HARNESS 2026-07-23: CANONICAL pointer for scripts/check-foreign-flow-freshness.sh (+16L). -->
 
 ## Script Persistence — scripts/, never /tmp
 
@@ -432,6 +432,24 @@ board row TE-T33 carries this coordination note). Owning flow:
 `docs/agents/code-janitor/flow/main.md` § Cold Archive Sweep. Test:
 `scripts/agents-flow/cold-archive-sweep.test.sh`. Owning brief:
 `docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-33`.
+
+**CANONICAL: Foreign-flow freshness recheck harness (FFLOW-STALE-0723-B-RECHECK-HARNESS)**
+```bash
+scripts/check-foreign-flow-freshness.sh              # live gate — exit 0 PASS / 2 STALE / 3 ERROR
+scripts/check-foreign-flow-freshness.sh --self-test    # proves fresh/stale/weekend-nuance branches
+scripts/check-foreign-flow-freshness.sh --help
+```
+Neutral, weekend/holiday-aware verification instrument for market foreign-flow ("khoi ngoai")
+data — the "assume complete fixed" gate for any foreign-flow VPS/pipeline recovery incident
+(origin: FFLOW-STALE-0723, Vinahost VPS suspended-for-non-payment outage). Probes
+`get_market_foreign_flow` via `scripts/agents-flow/mcp-call.sh`; computes the Last Completed
+Trading Session (LCTS) by shelling into the SAME canonical calendar module the OHLCV pipeline
+uses (`apps/mcp-server/src/domain/services/vnTradingCalendar.ts` via `bun -e`) — NO hardcoded
+holiday list in the script. Emits one stdout line
+`FOREIGN_FLOW_FRESHNESS verdict=<PASS|STALE|ERROR> latest_date=... lcts=... now_ict=...` for
+cron/CI capture; any ambiguity (probe/parse/calendar failure) is ERROR/exit 3, never a false
+PASS. Owning monitoring doc pointers: `docs/agents/ops/flow/vps.md`,
+`docs/agents/system-auditor/flow/main.md` § Per-Source Fetch Freshness.
 
 `/tmp` is allowed ONLY for throwaway run-scoped DATA (payload json, stderr capture, session-id cache) — never for executable logic.
 

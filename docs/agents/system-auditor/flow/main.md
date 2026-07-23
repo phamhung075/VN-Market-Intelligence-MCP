@@ -180,6 +180,11 @@ For each source in system-map.json data_sources:
 - Resolve the effective `stale_threshold_hours` for this source using the **SLA resolver** below (never hardcode)
 - Compare `last_fetch_ts` from get_pipeline_health to the resolved effective threshold
 - Skip foreign-flow check outside VN market hours (09:00–15:30 VN = 02:00–08:30 UTC M-F)
+- CANONICAL calendar-aware cross-check (complements the flat cadence threshold above — weekend/
+  holiday-aware, reuses the SAME trading-calendar module as the OHLCV pipeline, no hardcoded
+  holiday list): `scripts/check-foreign-flow-freshness.sh` — exit 0 PASS / 2 STALE / 3 ERROR
+  (ambiguity, never false-green). Origin: FFLOW-STALE-0723 (Vinahost VPS suspended-for-non-
+  payment). Registry: `docs/policies/dev-standards.md` § Script Persistence.
 - VPS proxy: all 7 routes must return `status: ok` (B-06, B-07)
 - Rate limits: no source at 100% (B-12)
 

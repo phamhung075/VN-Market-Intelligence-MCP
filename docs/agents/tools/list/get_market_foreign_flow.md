@@ -18,4 +18,4 @@ call_tool(server="vn-market", tool="get_market_foreign_flow", arguments={
 })
 ```
 
-**See also:** `docs/standards/mcp-tools.md` — MCP Gateway pattern
+**See also:** `docs/standards/mcp-tools.md` — MCP Gateway pattern | `scripts/check-foreign-flow-freshness.sh` — persistent weekend/holiday-aware freshness recheck harness that probes this tool (`docs/policies/dev-standards.md` § Script Persistence)
