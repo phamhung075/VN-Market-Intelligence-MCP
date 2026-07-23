@@ -390,8 +390,8 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": null,
-    "updated_at": "2026-07-23T06:37:31Z",
-    "updated_by": "dev-team"
+    "updated_at": "2026-07-23T07:12:48Z",
+    "updated_by": "developer"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -4655,29 +4655,6 @@
         ],
         "po_fold_widen_2026-07-16": "FOLDED signal cow-20260716T005400 (self-annotated DUPLICATE, no new task minted) — 3 RAW-confirmed advances added to scope: (a) DIAGNOSIS CLOSED — the 07-15 UNVERIFIED hypothesis is CONFIRMED AT SOURCE: emitPressureStateTool.ts joins cycle-snapshot-${tickHHMM}.json using tickHHMM derived from tick_id, while tick-snapshot.md:40,43 names the file by FILE_TICK=actual fire time (date -u +%H:%M) -> the two diverge under jitter/drift, so the join misses. (b) the snapshot key has NO date component -> a 43-day-old (06-03 00:00) file can be read and aged past 4h -> stale:true, which is why the miss is SILENT not merely absent; 102 stale files accrued. (c) SCOPE-BREAKER: regime_status/volatility_level have had NO WRITER since the 2026-06-05 EMIT-DARK-RECURRING refactor (last emitted 06-03; only 12 June files + 1 test fixture carry them; live snapshot has no carry block) -> BOTH promotion-dark handoffs' claim that 'promotion-dark pins last_regime=unknown' is FALSE, and fixing promotion ALONE leaves the adaptive loop dark FOREVER. UC-SDF-P2 as previously scoped is INSUFFICIENT -> WIDENED: scope now MUST include restoring a writer for regime_status/volatility_level (in addition to the promotion filename-key fix + the market-hours staleness tripwire). size M->L. Still plan_only (anomaly->BACKLOG invariant); ba/architect own HOW.",
         "folded_signal": "cow-20260716T005400"
-      },
-      {
-        "id": "UC-GCP-P8",
-        "type": "FIX",
-        "title": "Stranded machine-state sweep: bounded converging-owner step on the dev-team tick (stranded-state-sweep.sh)",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "M",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "RESCOPE",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#git-ci-publish-P8",
-        "note": "SCOPE=verifier Rescope note. Add post-cycle Step 4.3 (<=20L) running stranded-state-sweep.sh --plan: 3 buckets — AUTO-COMMIT (notebooks/decisions/sessions/scripts, mtime>24h, D-entries eligible), OWNED-ELSEWHERE skip (docs/signals owned by drain, orch-state, modules/*.json owned by SYSREMAKE RC-GITSTATE, cowork/auditor churn), UNKNOWN -> ONE aggregated deduped PO signal/tick. Cap 20 paths, commit-mutex:main, explicit paths only. COORDINATE with UC-GCP-P2 + SYSREMAKE RC-GITSTATE.",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "related": [
-          "SYSREMAKE-P2-STRUCTURAL-REMAKE-ROUTE",
-          "UC-GCP-P2"
-        ],
-        "priority_bumped_from": "P2",
-        "priority_bumped_at": "2026-07-17T04:54:03Z",
-        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17"
       },
       {
         "id": "UC-GCP-P3",
@@ -13504,6 +13481,40 @@
         "next_agent": "qa",
         "updated_by": "developer",
         "review_note": "commit-convention.md rewritten as single-file SSOT (140L); 3 sibling docs deleted; 2 dangling .claude/knowledge path refs fixed (audit script + 2026-05-17 audit brief); commit-convention-audit.sh deprecated in place (0 live invocation paths confirmed); tree-map.md 4-file subtree collapsed to 1 node. Commits: 7dcf90919 (main), 8c6d71683 (memory/journal+notebook). Post-change grep confirms zero dangling refs outside historical/archival docs (left untouched by design). graphify --update could not run this session (no LLM API key in env) — flagged, not silently skipped."
+      },
+      {
+        "id": "UC-GCP-P8",
+        "type": "FIX",
+        "title": "Stranded machine-state sweep: bounded converging-owner step on the dev-team tick (stranded-state-sweep.sh)",
+        "status": "REVIEW",
+        "priority": "P1",
+        "size": "M",
+        "zone": "cross-service/",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "RESCOPE",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#git-ci-publish-P8",
+        "note": "SCOPE=verifier Rescope note. Add post-cycle Step 4.3 (<=20L) running stranded-state-sweep.sh --plan: 3 buckets — AUTO-COMMIT (notebooks/decisions/sessions/scripts, mtime>24h, D-entries eligible), OWNED-ELSEWHERE skip (docs/signals owned by drain, orch-state, modules/*.json owned by SYSREMAKE RC-GITSTATE, cowork/auditor churn), UNKNOWN -> ONE aggregated deduped PO signal/tick. Cap 20 paths, commit-mutex:main, explicit paths only. COORDINATE with UC-GCP-P2 + SYSREMAKE RC-GITSTATE.",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "related": [
+          "SYSREMAKE-P2-STRUCTURAL-REMAKE-ROUTE",
+          "UC-GCP-P2"
+        ],
+        "priority_bumped_from": "P2",
+        "priority_bumped_at": "2026-07-17T04:54:03Z",
+        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
+        "promoted_at": "2026-07-23T06:48:49Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "updated_at": "2026-07-23T07:13:34Z",
+        "claimed_at": "2026-07-23T06:48:49Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "owner": "developer",
+        "next_agent": "qa",
+        "dev_result": "DONE: scripts/agents-flow/stranded-state-sweep.sh shipped per RESCOPE spec — classifier-only, 3-bucket (AUTO-COMMIT/OWNED-ELSEWHERE/UNKNOWN), --plan emits JSON, zero git/orch-state writes itself. mtime>24h gate (D-deletions exempt), agent-memory/modules/*.json excluded (RC-GITSTATE), docs/signals + orch-state.json + cowork-schedule.json + coverage-state.json + auditor-*-last-healthy.json OWNED-ELSEWHERE (verified UC-GCP-P2 DONE_VERIFIED + queued SYSREMAKE-P2 RC-GITSTATE ownership live before hardcoding skip-list). 20-path cap across AUTO-COMMIT+UNKNOWN. Dedup-checked aggregated UNKNOWN signal + scripts-pointer signal to po. Wired as post-cycle.md Step 4.3 (15L body, <=20L cap) between Step 4.2/4.5; CANONICAL pointer in dev-standards.md. stranded-state-sweep.test.sh 19/19 GREEN, sandboxed. --plan dry-run against live 57-entry dirty tree confirmed correct classification (9 owned-elsewhere, 2 auto-commit-eligible, 18 unknown). Did NOT execute any live sweep-commit (flow's own future tick responsibility, out of this FIX's scope). Shell-only, shellcheck-clean.",
+        "dev_commit": "231860c6a (script+test+flow-doc+dev-standards+notebook+decisions+WORK)",
+        "dev_completed_at": "2026-07-23T07:12:48Z"
       }
     ],
     "qa": [],
@@ -13523,7 +13534,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-23T06:16:59Z",
+    "last_triaged_at": "2026-07-23T06:48:49Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": []
   },
