@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "pm",
-    "next_action": "UC-MDH-P3 DONE_VERIFIED — memory-prune-sweep.sh + code-janitor wiring verified (direct-commit, 12/12 test PASS, live tree spot-checked, SSOT-W1 boundary confirmed operational). PM: mark done, unblock downstream.",
-    "updated_at": "2026-07-23T04:58:09Z",
-    "updated_by": "qa"
+    "status": "in_progress",
+    "active_task_id": "UC-MDH-P4",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of UC-MDH-P4 — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-23T05:18:53Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2199,8 +2199,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-23T05:07:33Z",
-    "_updated_by": "po/final-signoff-20260723",
+    "_updated_at": "2026-07-23T05:16:51Z",
+    "_updated_by": "po/converge-closeout-crossref-20260723",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -4565,28 +4565,6 @@
         "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
         "deploy_gate": "user-approved-off-market",
         "deploy_gate_note": "ops-rebuild-gated — lands only after a user-approved off-market deploy; next_agent=ba already holds it OUT of BOUNDED-1 auto-pickup, so no supervised flag needed. Bumped P2->P1 with the band 2026-07-17T04:54:03Z"
-      },
-      {
-        "id": "UC-MDH-P4",
-        "type": "FIX",
-        "title": "Implement the promised sprint-journal archival in pm task-archive (scripts/agents-flow/decision-journal-archive.sh)",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "RESCOPE",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P4",
-        "note": "SCOPE=verifier Rescope note. New decision-journal-archive.sh: derive sprint id by LONGEST match against closed+active union (never bare prefix glob — closed prefixes match active journals); move only closed-and-not-active journals to docs/archive/decisions via git mv; ~89 no-record journals left + reported for PO disposition. pm task-archive.md ONE pointer step after Step5; extend Step6 git add pathspec old+new. COORDINATE TE-T33 (its decisions/ leg is superseded — mtime>30d must NOT touch decisions/, see TE-T33 audit_ref).",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "related": [
-          "TE-T33"
-        ],
-        "priority_bumped_from": "P2",
-        "priority_bumped_at": "2026-07-17T04:54:03Z",
-        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17"
       },
       {
         "id": "UC-SDF-P6",
@@ -9410,7 +9388,10 @@
           "sys-20260721T094200-2cae",
           "sys-20260721T141203-40b0"
         ],
-        "po_corroboration_20260721": "CORROBORATION (PO converge-drain po-s147 2026-07-21T14:23:45Z): +7 more A-12 frontend:3001 / api-gateway:4000 CURL_ERR health-probe flaps this session 03:11Z..14:12Z, still CURL_ERR (transport error, NOT HTTP-5xx) while the MCP serving path (gateway→vn-market) stayed healthy every tick → strengthens the probe-side-FP hypothesis this SPIKE exists to isolate. 7 origin ids appended. Still plan-only, supervised."
+        "po_corroboration_20260721": "CORROBORATION (PO converge-drain po-s147 2026-07-21T14:23:45Z): +7 more A-12 frontend:3001 / api-gateway:4000 CURL_ERR health-probe flaps this session 03:11Z..14:12Z, still CURL_ERR (transport error, NOT HTTP-5xx) while the MCP serving path (gateway→vn-market) stayed healthy every tick → strengthens the probe-side-FP hypothesis this SPIKE exists to isolate. 7 origin ids appended. Still plan-only, supervised.",
+        "scope_item_home_ref_20260723": "HOME for scope[] item 2 (A-12/A-04/A-13 CURL_ERR debounce / flap-suppress) of the now-DONE converge wrapper FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE (closed 2026-07-23T05:07:33Z, po_signoff APPROVE). That wrapper delivered ONLY its A-30 reclamation-gate + A-21 windowed-restart slice; the design brief docs/architecture-briefs/2026-07-23-auditor-a30-reclamation-gate-a21-windowed-restart.md lines 227-229 EXPLICITLY deferred A-12/A-04/A-13 'for a future pass; not addressed here'. The A-12/A-04/A-13 FP-reemit debounce is therefore NOT orphaned by that close — it is chartered on THIS isolation SPIKE: classify real-outage vs probe-FP first, then (if probe-FP) spec the N-consecutive debounce scope item 2 prescribes. Cross-ref added per coordinator epic-closeout follow-up (answer (b): lives on an existing row under different naming).",
+        "updated_at": "2026-07-23T05:16:51Z",
+        "updated_by": "po/converge-closeout-crossref-20260723"
       },
       {
         "id": "FIX-CHEF-L6-GOLD-FALSE-PREDICATE",
@@ -13490,9 +13471,38 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-23T04:15:27Z",
+    "last_triaged_at": "2026-07-23T05:18:53Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "UC-MDH-P4",
+        "type": "FIX",
+        "title": "Implement the promised sprint-journal archival in pm task-archive (scripts/agents-flow/decision-journal-archive.sh)",
+        "status": "IN_PROGRESS",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "RESCOPE",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P4",
+        "note": "SCOPE=verifier Rescope note. New decision-journal-archive.sh: derive sprint id by LONGEST match against closed+active union (never bare prefix glob — closed prefixes match active journals); move only closed-and-not-active journals to docs/archive/decisions via git mv; ~89 no-record journals left + reported for PO disposition. pm task-archive.md ONE pointer step after Step5; extend Step6 git add pathspec old+new. COORDINATE TE-T33 (its decisions/ leg is superseded — mtime>30d must NOT touch decisions/, see TE-T33 audit_ref).",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "related": [
+          "TE-T33"
+        ],
+        "priority_bumped_from": "P2",
+        "priority_bumped_at": "2026-07-17T04:54:03Z",
+        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
+        "promoted_at": "2026-07-23T05:18:53Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "updated_at": "2026-07-23T05:18:53Z",
+        "claimed_at": "2026-07-23T05:18:53Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
@@ -13501,6 +13511,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-07-23T05:07:33Z",
-  "_updated_by": "po/final-signoff-20260723"
+  "_updated_at": "2026-07-23T05:16:51Z",
+  "_updated_by": "po/converge-closeout-crossref-20260723"
 }
