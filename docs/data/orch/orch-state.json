@@ -1957,9 +1957,12 @@
         "type": "context_bloat_breach",
         "summary": "agent-father.md notebook context-bloat breach (backstop hook, priority=high) — PO route to claude-manager-helper for prune",
         "severity": "MEDIUM",
-        "status": "NEW",
+        "status": "triaged",
         "payload_ref": "docs/signals/processed/context-bloat-docs-agent-memory-notebooks-agent-father-md-2026-07-23T043408Z.json",
-        "note": "dev-team drain durable re-route: file moved to processed/ with no signal_queue row; pipeline-resume tick skipped Step1 PO triage, so appended for PO next run"
+        "note": "dev-team drain durable re-route: file moved to processed/ with no signal_queue row; pipeline-resume tick skipped Step1 PO triage, so appended for PO next run",
+        "triaged_by": "po",
+        "triaged_at": "2026-07-23T18:03:58Z",
+        "triage_note": "FOLDED into CLEAN-CONTEXT-BLOAT-NOTEBOOKS-20260614 (agent-father.md 303L > cap 200). code-janitor OVERWRITE-trims to <=50L. No per-notebook dup, no claude-manager-helper per-item dispatch (po-s92 precedent)."
       },
       {
         "id": "notebook-unparseable-agent-father-20260723T043406Z",
@@ -1970,9 +1973,12 @@
         "type": "notebook_unparseable_breach",
         "summary": "agent-father.md notebook unparseable (auto-prune hook, priority=high) — PO route to claude-manager-helper for repair",
         "severity": "MEDIUM",
-        "status": "NEW",
+        "status": "triaged",
         "payload_ref": "docs/signals/processed/notebook-unparseable-docs-agent-memory-notebooks-agent-father-md-2026-07-23T043406Z.json",
-        "note": "dev-team drain durable re-route (as above)"
+        "note": "dev-team drain durable re-route (as above)",
+        "triaged_by": "po",
+        "triaged_at": "2026-07-23T18:03:58Z",
+        "triage_note": "FOLDED into CLEAN-CONTEXT-BLOAT-NOTEBOOKS-20260614; the OVERWRITE-rewrite that trims agent-father.md also repairs the notebook_unparseable_breach. No dup."
       },
       {
         "id": "janitor-health-recheck-writer-retired-20260723",
@@ -1982,9 +1988,12 @@
         "type": "system-issue",
         "summary": "retire-vs-replace dead RemoteTrigger health-recheck writer trig_019Q8D5xttjZn6iytx2Ld9dW (flagged by developer UC-MDH-P3 memory-prune-sweep)",
         "severity": "MEDIUM",
-        "status": "NEW",
+        "status": "triaged",
         "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-07-23.json",
-        "note": "dev-team drain durable delivery: file-only PO payload appended to signal_queue for PO triage"
+        "note": "dev-team drain durable delivery: file-only PO payload appended to signal_queue for PO triage",
+        "triaged_by": "po",
+        "triaged_at": "2026-07-23T18:03:58Z",
+        "triage_note": "DECISION=RETIRE (RESOLVED). team-tool-recheck writer was cloud RemoteTrigger trig_019Q8D5xttjZn6iytx2Ld9dW, killed 2026-06-22 by no-RemoteTrigger directive; silent 1 month with zero observed incident. Do NOT replace with a local cron (adds host-load for an unmissed function); let memory-prune-sweep.sh 30d rule drain docs/agent-memory/health/team-tool-recheck-*.md to empty. Any residual dead-ref cleanup is code-janitor's own sweep. No board task."
       },
       {
         "id": "sys-20260723T063226-16ba",
@@ -2008,8 +2017,11 @@
         "type": "data_stale",
         "summary": "prices stale 2880min (check B-06)",
         "severity": "CRITICAL",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_by": "po",
+        "triaged_at": "2026-07-23T18:03:58Z",
+        "triage_note": "FOLDED into new OPS-FFLOW-VPS-CLOCKDRIFT-PREVENTIVE-RESIDUALS ask(3) — vn-price-fetch E2E re-verify + restart. Symptom of the Vinahost VM clock-drift (shared clock, NRestarts=0 but fetcher not re-verified)."
       },
       {
         "id": "sys-20260723T063240-0a0b",
@@ -2019,19 +2031,25 @@
         "type": "data_stale",
         "summary": "sbv-vps stale 2879min (check B-06)",
         "severity": "CRITICAL",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_by": "po",
+        "triaged_at": "2026-07-23T18:03:58Z",
+        "triage_note": "FOLDED into OPS-FFLOW-VPS-CLOCKDRIFT-PREVENTIVE-RESIDUALS ask(3) — sbv-vps E2E re-verify + restart. Same shared-VM-clock root cause."
       },
       {
         "from": "dev-team",
         "id": "dev-team-20260723T063731Z-head-review-unhandled-bypasses-qadrain",
         "payload_ref": "docs/agents/dev-team/flow/execute-tier.md",
         "severity": "MEDIUM",
-        "status": "NEW",
+        "status": "triaged",
         "summary": "developer DONE->REVIEW flip set .head to {status:review, active_task_id:UC-GCP-P1, next_agent:qa} — un-handled dispatch state: pipeline-resume gate needs status==in_progress, idle-fallthrough needs idle/done/missing/v1, so status==review matches NEITHER lane and the BOUNDED-1..QA-Drain fall-through chain never runs -> the branch:null review row is stranded (QA-Drain is the ONLY lane that can dispatch qa in verify-committed mode against branch:null; main.md line 643). Dispatcher reset head->idle this tick to unstall UC-GCP-P1 (now claimable by QA-Drain). ROOT: execute-tier.md § Status-Flip (b) permits 'sync head to next next_agent' but for branch:null REVIEW rows that target is un-dispatchable — head MUST be idle. ASK: tighten execute-tier.md head-sync guidance to prescribe head.status=idle for branch:null REVIEW flips (never review/in_progress).",
         "to": "po",
         "ts": "2026-07-23T06:37:31Z",
-        "type": "routing-gap"
+        "type": "routing-gap",
+        "triaged_by": "po",
+        "triaged_at": "2026-07-23T18:03:58Z",
+        "triage_note": "MINTED FIX-EXECTIER-HEADSYNC-BRANCHNULL-REVIEW-IDLE (P1/developer): execute-tier.md head-sync must set head.status=idle for branch:null REVIEW flips so QA-Drain is reachable. Distinct from FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN (adds the lane)."
       },
       {
         "id": "dev-20260723T071631",
@@ -2041,8 +2059,11 @@
         "type": "system-issue",
         "summary": "cold-evict e39c40179 swept my uncommitted UC-GCP-P8 board-flip; attribution-only, data verified intact, 3rd+ occurrence",
         "severity": "INFO",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_by": "po",
+        "triaged_at": "2026-07-23T18:03:58Z",
+        "triage_note": "DUPLICATE — already tracked by FIX-COLDEVICT-WITHIN-FILE-PEER-CONTENT-CAPTURE (READY/P1/developer): AC = cold-evict performs NO commit/eviction while orch-state.json is dirty. This is the 3rd+ occurrence of that exact within-file capture class; row is READY for dev, no new task. Data verified intact."
       },
       {
         "id": "dev-team-20260723T0919-bounded1-planonly-gate-blind",
@@ -2051,9 +2072,12 @@
         "to": "po",
         "type": "routing-gap",
         "severity": "MED",
-        "status": "NEW",
+        "status": "triaged",
         "summary": "BOUNDED-1 auto-picked FIX-AGENTBOOTSTRAP-EAGER-EXECSYNC-COLDSTART (P1) whose PLAN-ONLY intent lived ONLY in .detail prose (\"PLAN-ONLY backlog for BOUNDED-1 — do NOT dispatch this tick\"), never the structured .plan_only flag; dispatcher reverted the mis-claim + set plan_only:true (coherence mirror of PO prose, precedent 2026-07-09 supervised:true hand-fix). Root cause is systemic → PO/architect action.",
-        "note": "Two findings. (A) This row: no inline plan_only/supervised/next_agent/owner AND no backlog-detail entry — PLAN-ONLY was unenforceable. Now flag-set; PO please confirm and route the deliberate plan-first dispatch (detail lists FIX options: memoize project-root via import.meta.dir walk-up to drop execSync git rev-parse from the module-eval path, OR lazy project-root in registerAgentMemoryTools). (B) SYSTEMIC: docs/data/orch/archive/backlog-detail.json .items is an ARRAY, but scripts/devteam-backlog-promote-bounded1.jq + the SLS promote script index it as an object (.items[<id>]) — so ALL detail-authoritative BOUNDED-1/SLS gates (supervised/plan_only/depends_on/detail-DEFERRED/non-dev-owner/non-dev-next_agent) silently resolve to board-inline fields only; the detail layer is blind. Decide: fix the jq to handle array-shaped .items (index by .id), or require inline flags on every backlog row. Same array-shape was already observed for BCTC-REPORT-ID-LOOKUP-TOOL last tick (board row authoritative)."
+        "note": "Two findings. (A) This row: no inline plan_only/supervised/next_agent/owner AND no backlog-detail entry — PLAN-ONLY was unenforceable. Now flag-set; PO please confirm and route the deliberate plan-first dispatch (detail lists FIX options: memoize project-root via import.meta.dir walk-up to drop execSync git rev-parse from the module-eval path, OR lazy project-root in registerAgentMemoryTools). (B) SYSTEMIC: docs/data/orch/archive/backlog-detail.json .items is an ARRAY, but scripts/devteam-backlog-promote-bounded1.jq + the SLS promote script index it as an object (.items[<id>]) — so ALL detail-authoritative BOUNDED-1/SLS gates (supervised/plan_only/depends_on/detail-DEFERRED/non-dev-owner/non-dev-next_agent) silently resolve to board-inline fields only; the detail layer is blind. Decide: fix the jq to handle array-shaped .items (index by .id), or require inline flags on every backlog row. Same array-shape was already observed for BCTC-REPORT-ID-LOOKUP-TOOL last tick (board row authoritative).",
+        "triaged_by": "po",
+        "triaged_at": "2026-07-23T18:03:58Z",
+        "triage_note": "MINTED (folded) into FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE clause(a): conservative-skip rows whose plan_only intent lives in .detail prose but not the structured .plan_only flag. Complements the shipped FIX-DEVTEAM-BOUNDED1-PROSE-SEQUENCING-UNBACKED-GATE (po_sequencing_* only)."
       },
       {
         "id": "sys-20260723T103217-1735",
@@ -2063,8 +2087,11 @@
         "type": "microservice_degraded",
         "summary": "launchd agent docker-events crash-looping (exit 1)",
         "severity": "CRITICAL",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_by": "po",
+        "triaged_at": "2026-07-23T18:03:58Z",
+        "triage_note": "MINTED FIX-LAUNCHD-DOCKER-EVENTS-EXIT1-CRASHLOOP (P2/ops): repair-or-retire the crash-looping com.vn-market.docker-events launchd agent (exit-1, previously untracked)."
       },
       {
         "id": "sys-20260723T103223-47fd",
@@ -2074,8 +2101,11 @@
         "type": "microservice_degraded",
         "summary": "launchd agent cowork-guaranteed-slot-firer terminated (exit 143 SIGTERM)",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_by": "po",
+        "triaged_at": "2026-07-23T18:03:58Z",
+        "triage_note": "BENIGN — exit 143 = SIGTERM (graceful termination on restart/reload), not a crash. cowork-guaranteed-slot-firer needs a live CLI session (project_cowork_guaranteed_slot_needs_live_cli_session); no repair task."
       },
       {
         "id": "sys-20260723T103235-5181",
@@ -2085,8 +2115,11 @@
         "type": "microservice_degraded",
         "summary": "launchd agent fleet-push dead (exit 78 EX_CONFIG) — attributed to FIX-FLEET-PUSH-LAUNCHD-EXCONFIG-SILENT-DEAD",
         "severity": "CRITICAL",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_by": "po",
+        "triaged_at": "2026-07-23T18:03:58Z",
+        "triage_note": "TRACKED — FIX-FLEET-PUSH-LAUNCHD-EXCONFIG-SILENT-DEAD (BACKLOG/high). PO unblocked it this tick (set next_agent=ops; was null-next_agent stall). No dup."
       },
       {
         "id": "sys-20260723T143211-6aa5",
@@ -2096,8 +2129,11 @@
         "type": "data_stale",
         "summary": "sbv-vps stale 35h (check B-06)",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_by": "po",
+        "triaged_at": "2026-07-23T18:03:58Z",
+        "triage_note": "FOLDED into OPS-FFLOW-VPS-CLOCKDRIFT-PREVENTIVE-RESIDUALS ask(3) — sbv-vps still stale 35h post clock-fix, needs fetcher restart + E2E freshness check."
       },
       {
         "id": "dev-team-fwd-dgc-dataquality-20260723T151800Z",
@@ -2106,9 +2142,12 @@
         "to": "po",
         "type": "bctc-data-quality-anomaly",
         "severity": "MEDIUM",
-        "status": "NEW",
+        "status": "triaged",
         "summary": "FWD(bctc-analyst): DGC Q1-2026 BCTC extraction CORRUPT total_assets=0, conf 0% — re-extract DGC 2026-Q1 (action: /api/bctc-inspect or refine repass). PO dedup vs in-flight FIX-BCTC-REPARSE-BATCH-CORRUPTION or mint DGC-specific. DGC hot (CEO prosecution -6.3%). guard-key data-quality-anomaly:DGC:Q1-2026. Full payload: docs/signals/processed/bctc-analyst-20260723T151000Z-dgc-dataquality.json",
-        "payload_ref": null
+        "payload_ref": null,
+        "triaged_by": "po",
+        "triaged_at": "2026-07-23T18:03:58Z",
+        "triage_note": "DUPLICATE/covered — DGC is a member of the 15-ticker stored-PDF-ingest-stall cohort {DBC DGC DXG FRT GEX HUT KDC KDH MSN PDR PLX SAB SHB VJC VND} owned by FIX-BCTC-Q1-2026-STORED-PDF-INGEST-STALL-15T (BACKLOG/ops re-ingest). Re-extraction lives there; FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP is prevention-only (remediation explicitly out of scope). No DGC-specific mint. guard-key data-quality-anomaly:DGC:Q1-2026 satisfied by the cohort row."
       },
       {
         "id": "dev-team-20260723T1518-drain-prune-detailref-dangle",
@@ -2117,9 +2156,12 @@
         "to": "po",
         "type": "routing-gap",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "triaged",
         "summary": "drain-signals.js prune DELETED processed/dev-team-20260716T112423Z-autolaunch-safety-hold-uc-asl-p6-maintlane.json that backlog row FIX-DEVTEAM-BOUNDED1-MAINTLANE-NEXTAGENT-GATE .detail_ref pointed at -> Stage1c dangle blocked ALL orch-apply writes fleet-wide. Dispatcher nulled that mismatched now-pruned detail_ref to unblock (file recoverable at git 395e224ad~1). TWO asks: (1) drain-prune must SKIP files referenced by any live detail_ref/payload_ref, not only repoint payload_ref (recurs each referenced processed/ file ages past 7d); (2) triage/close obsolete row FIX-DEVTEAM-BOUNDED1-MAINTLANE-NEXTAGENT-GATE — subsumed by FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE per main.md.",
-        "payload_ref": null
+        "payload_ref": null,
+        "triaged_by": "po",
+        "triaged_at": "2026-07-23T18:03:58Z",
+        "triage_note": "MINTED FIX-DRAINPRUNE-SKIP-LIVE-REFERENCED-PROCESSED-FILES (ask1, P1/developer). ask2: FIX-DEVTEAM-BOUNDED1-MAINTLANE-NEXTAGENT-GATE folded (po_folded_at) into the now-real FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE; MAINTLANE stays supervised (no dispatch), closes on the subsumer."
       },
       {
         "id": "dev-team-20260723T1536-bounded1-stale-alreadyfixed-checklist-orphan",
@@ -2128,9 +2170,12 @@
         "to": "po",
         "type": "system-issue",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "triaged",
         "summary": "BOUNDED-1 auto-pickup drained TWO consecutive stale already-fixed quality-checklist orphan rows: MD-FUNC-01-FIX (get_market_snapshot vn_index, shipped 815ccaedd/ddc36452e) + ALT-FUNC-02-FIX (get_alert_accuracy accuracy_rate, shipped 815ccaedd 2026-06-10; docs/data/quality-checklist.json already status=PASS since 2026-06-10T18:00Z). Both backlog rows were minted ~8-10h BEFORE their same-day fix landed and never pruned; re-promoted 6 weeks later, each burned a full dispatch cycle (~90k tokens) re-confirming a long-shipped fix. Root cause: quality-checklist-derived *-FIX backlog rows are never pruned when the checklist item flips to PASS. TWO asks: (1) one-time prune backlog[] of *-FIX rows whose docs/data/quality-checklist.json item is already status=PASS (cross-check by id); (2) add a BOUNDED-1 pre-promotion freshness gate: before promoting a quality-checklist-derived *-FIX row, re-read the checklist item and auto-DEFER/prune if already PASS instead of promoting (same gate-family as the plan-only-gate-blind ask dev-team-20260723T0919). Both re-promoted rows are now correctly in review[] as verification-only for QA-Drain confirm-and-archive.",
-        "payload_ref": null
+        "payload_ref": null,
+        "triaged_by": "po",
+        "triaged_at": "2026-07-23T18:03:58Z",
+        "triage_note": "MINTED (folded) into FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE clause(b): checklist-PASS pre-promotion freshness gate + one-time prune of backlog *-FIX rows whose quality-checklist.json item is already PASS. Named rows MD-FUNC-01-FIX/ALT-FUNC-02-FIX already correctly in review[] for QA-Drain confirm-and-archive."
       },
       {
         "id": "dev-team-20260723T1552-USER-ESCALATED-foreign-flow-stale-recheck",
@@ -2154,10 +2199,13 @@
         "orig_to": "ops",
         "type": "ops_followup_request",
         "severity": "MEDIUM",
-        "status": "NEW",
+        "status": "triaged",
         "summary": "FFLOW-STALE-0723-A VPS clock-drift recovery — 3 ops follow-ups: (1) PREVENTIVE/root-cause-vector: guest clock-drift can recur on next Vinahost VM pause (timedatectl falsely reported synchronized:yes throughout the drift) — evaluate chrony or a boot-time NTP step-check on the VM; this drift IS the mechanism of the stale-foreign-flow bug the user reported. (2) deploy-vinahost.sh leaves unsubstituted __MCP_BASE__/__API_KEY__ placeholders in /root/run-foreign-flow-debug.sh (router/ops worked around live). (3) vn-price-fetch/vn-sbv-fetch share the same now-fixed VM clock (NRestarts=0) but were not independently re-verified E2E — recommend a freshness check.",
         "payload_ref": "docs/vps-sources/vn-foreign-flow-clock-drift-recovery-2026-07-23/recon.md",
-        "note": "Router-filed at FFLOW-STALE-0723-A closeout (ops-vps-fetch commit 446f28c14). Full trail in payload_ref recon.md. Actionable ops hardening — not a blocker to A/B completion (both -> review)."
+        "note": "Router-filed at FFLOW-STALE-0723-A closeout (ops-vps-fetch commit 446f28c14). Full trail in payload_ref recon.md. Actionable ops hardening — not a blocker to A/B completion (both -> review).",
+        "triaged_by": "po",
+        "triaged_at": "2026-07-23T18:03:58Z",
+        "triage_note": "MINTED OPS-FFLOW-VPS-CLOCKDRIFT-PREVENTIVE-RESIDUALS (P1/ops) covering all 3 residuals NOT covered by FFLOW-STALE-0723-A-VPS-FIX (recovery) or -B-RECHECK-HARNESS (freshness gate): (1) preventive chrony/boot NTP step-check; (2) deploy-vinahost.sh placeholder substitution; (3) vn-price/vn-sbv E2E re-verify (folds the 3 data_stale signals)."
       },
       {
         "id": "TIER1-PROBE-LAUNCHD-EXITSTATUS-CHURN-DOCKEREVENTS-20260723T164744Z",
@@ -2167,13 +2215,16 @@
         "orig_to": "dev-mcp-server",
         "type": "recurring_churn_escalation",
         "severity": "MEDIUM",
-        "status": "NEW",
+        "status": "triaged",
         "summary": "Tier-1 probe returns FAILURE every tick post-FIX-LAUNCHD-PROBE-PRESENCE-ONLY-FALSE-GREEN (now correctly checks launchd exit-status). Two persistent dead backstops trip it: com.vn-market.fleet-push (exit-78, ~19d, tracked by FIX-FLEET-PUSH-LAUNCHD-EXCONFIG-SILENT-DEAD) and com.vn-market.docker-events (exit-1, UNTRACKED - no board/signal row). Consequence: the fail-open passive-health guard would spawn system-auditor on all ~48 Tier-1 ticks/day, each re-confirming the same known-dead launchd, dedup-suppressing the signal, refreshing the heartbeat -- pure churn, zero new signal (auditor deems state healthy: wrote healthy heartbeat 16:19:35Z while both already dead). Asks: (1) create docker-events(exit-1) repair row; (2) prioritize fleet-push repair; (3) add probe acknowledged-failure suppression so launchd deaths WITH an open backlog fix-task do not re-trip FAILURE and re-churn the auditor every tick.",
-        "note": "Router-filed at Tier-1 cron 16:43Z tick; verdict=FAILURE fully attributable to the 2 known launchd deaths (probe detail enumerated only those). Router SKIPPED the spawn (heartbeat fresh 24min, probe stricter than auditor, failures known/backlogged, host-mem pressure). Escalation per feedback_recurring_bug_escalation."
+        "note": "Router-filed at Tier-1 cron 16:43Z tick; verdict=FAILURE fully attributable to the 2 known launchd deaths (probe detail enumerated only those). Router SKIPPED the spawn (heartbeat fresh 24min, probe stricter than auditor, failures known/backlogged, host-mem pressure). Escalation per feedback_recurring_bug_escalation.",
+        "triaged_by": "po",
+        "triaged_at": "2026-07-23T18:03:58Z",
+        "triage_note": "MINTED for all 3 asks: ask1=FIX-LAUNCHD-DOCKER-EVENTS-EXIT1-CRASHLOOP (docker-events repair row); ask2=FIX-FLEET-PUSH-LAUNCHD-EXCONFIG-SILENT-DEAD unblocked (next_agent=ops); ask3=FIX-AUDITOR-TIER1-PROBE-ACKED-LAUNCHD-DEATH-SUPPRESSION (acknowledged-failure suppression, stops the ~48-ticks/day auditor re-churn). Recurring_churn_escalation addressed at root."
       }
     ],
-    "last_triaged_at": "2026-07-22T15:10:08Z",
-    "last_triaged_by": "po/triage-20260722T1508"
+    "last_triaged_at": "2026-07-23T18:03:58Z",
+    "last_triaged_by": "po"
   },
   "sprint_goal": {
     "_note": "Active sprint visions. PO triage 2026-07-20 16->15: archived QUE-REFERENCE-PAGE (SHIPPED — route apps/frontend/app/routes/dashboard.kinh-dich-reference.tsx exists 9489B, renders all 64 que from que-descriptions-detail.generated; successor sprint KINHDICH-HOVER-DETAIL scope_out treats the reference page + its deep-link as already-existing; 0 orphan refs in task_board lanes; not in active_sprints). PREV: Active sprint visions. PO triage 2026-07-11 16->14: merged FB-POSTER-LAUNCHD-FIRER into COWORK-GUARANTEED-SLOT-DURABILITY (superseded per cron-jobs.md, firer plist installed+loaded); archived NARRATIVE-TRUTH-CCATO-GATE (T2+T3 both DONE, T3 qa-APPROVED). Reasoning: sprint-ANALYSIS-QUALITY-CONVERGENCE-po.md.",
@@ -6109,9 +6160,26 @@
         "size": "S",
         "priority": "P3",
         "zone": "cross-service/",
-        "title": "context-bloat: trim 6 RAW-verified over-cap agent notebooks to SSOT cap=200",
+        "title": "context-bloat: trim 1 RAW-verified over-cap agent notebook to SSOT cap=200 (agent-father.md 303L, also unparseable)",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#CLEAN-CONTEXT-BLOAT-NOTEBOOKS-20260614",
-        "verify_note": "prior_status=TODO"
+        "verify_note": "prior_status=TODO",
+        "targets": [
+          {
+            "file": "docs/agent-memory/notebooks/agent-father.md",
+            "lines": 303,
+            "note": "over cap=200 AND flagged notebook_unparseable_breach — OVERWRITE-to-≤50L rewrite per notebook-write skill fixes both"
+          }
+        ],
+        "status_note": "Live over-cap set RAW-scanned 2026-07-23T18:03:58Z: 1 notebook (agent-father.md 303L; the other 5 from the 06-16 scan have since been trimmed). Janitor (owner=code-janitor) OVERWRITE-rewrites to ≤50L per notebook-write skill, preserving Carry-over block — this also repairs the notebook_unparseable_breach. Folded from per-notebook signals context-bloat-agent-father-20260723T043408Z + notebook-unparseable-agent-father-20260723T043406Z — do NOT mint per-notebook dups, do NOT dispatch claude-manager-helper per item (po-s92 precedent). digest-predict.md is 198L < 200 cap => under cap, not folded.",
+        "fold_marker": {
+          "folded_at": "2026-07-23T18:03:58Z",
+          "source_signals": [
+            "context-bloat-agent-father-20260723T043408Z",
+            "notebook-unparseable-agent-father-20260723T043406Z"
+          ],
+          "live_target_count": 1
+        },
+        "updated_at": "2026-07-23T18:08:33Z"
       },
       {
         "id": "ROUTE-BCTC-FPT-Q1-2026-ROUTINE",
@@ -8961,7 +9029,9 @@
         "supervised_at": "2026-07-16T17:02:01Z",
         "supervised_by": "po (fold into consolidated gate)",
         "status_note": "SUPERSEDED-BY FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE. Folded: the consolidated effective(board-OR-detail) next_agent predicate covers the maintenance roster too. Do NOT dispatch separately (would concurrently edit the same scripts/devteam-backlog-promote-bounded1.jq -> commit race). Held supervised.",
-        "updated_at": "2026-07-23T15:26:05Z"
+        "updated_at": "2026-07-23T18:08:33Z",
+        "po_fold_note": "PO 2026-07-23 signal-triage: subsumer FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE now EXISTS as a real board row (was prose-only). This row remains supervised (no auto-pickup); do NOT dispatch separately — same scripts/lib/devteam-eligibility.jq surface = commit race. Fold clause (c) of the new row covers the maintenance-roster next_agent predicate. Close on the subsumer's DONE_VERIFIED.",
+        "po_folded_at": "2026-07-23T18:03:58Z"
       },
       {
         "id": "FIX-CHEF-MIDFLOW-BAIL-DETERMINISM",
@@ -10130,7 +10200,10 @@
         "ruled_out_by_po": "NOT TCC/Full-Disk-Access on ~/Documents — com.vn-market.cowork-guaranteed-slot-firer writes to the SAME docs/agent-memory/sessions/ directory with 815 runs and exit 0. NOT bash-3.2 incompatibility — `/bin/bash -n` is clean and the script uses zero bash-4 constructs despite its header claiming 'bash 4+ required'. NOT a malformed plist — `plutil -lint` returns OK. NOT any script exit path — the script's only exit codes are 0 and 1; it never returns 78.",
         "why_this_matters": "The abort path was at least LOUD: it echoed to stderr, called send_tg bug, and called emit_abort_signal. The current failure emits NOTHING anywhere, because all three of those live INSIDE the script that never runs. A backstop that fails silently is worse than one that aborts loudly. Blast radius is currently bounded only because something else (the router/PO push path) has been keeping the repo at 1 commit ahead.",
         "acceptance": "launchctl print shows last exit code 0 AND fleet-push.log receives a fresh dated '[fleet-push] ahead=N threshold=20' line from a launchd-initiated run (not a hand run). Plus: the failure mode must become detectable — see FIX-LAUNCHD-PROBE-PRESENCE-ONLY-FALSE-GREEN, which should land FIRST.",
-        "updated_at": "2026-07-22T16:02:26Z"
+        "updated_at": "2026-07-23T18:08:33Z",
+        "next_agent": "ops",
+        "po_unblock_dispatch_at": "2026-07-23T18:03:58Z",
+        "po_unblock_dispatch_note": "PO 2026-07-23 signal-triage: set next_agent=ops (was null -> null-next_agent stall, could not be picked up). Prioritized per TIER1-PROBE-LAUNCHD-EXITSTATUS-CHURN escalation ask(2) + repeated auditor microservice_degraded signals. exit-78 EX_CONFIG launchd config repair is operational (ops)."
       },
       {
         "id": "ARCH-SESSION-CRON-PLANE-LIVENESS-WATCHDOG",
@@ -10818,6 +10891,129 @@
         "ba_spec_complete": true,
         "ba_handoff": "docs/handoffs/FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS-BA-spec.md",
         "ba_completed_at": "2026-07-23T09:30:55Z"
+      },
+      {
+        "id": "FIX-DRAINPRUNE-SKIP-LIVE-REFERENCED-PROCESSED-FILES",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "next_agent": "developer",
+        "owner": "po",
+        "created_by": "po",
+        "created_at": "2026-07-23T18:03:58Z",
+        "origin_signal_id": "dev-team-20260723T1518-drain-prune-detailref-dangle",
+        "title": "drain-signals.js prune must SKIP processed/ files referenced by ANY live detail_ref/payload_ref (not only repoint payload_ref) — a pruned-but-referenced file causes a Stage1c dangle that blocks ALL orch-apply writes fleet-wide",
+        "note": "ROOT: drain-signals.js 7d prune DELETED docs/signals/processed/dev-team-20260716T112423Z-autolaunch-safety-hold-uc-asl-p6-maintlane.json which backlog row FIX-DEVTEAM-BOUNDED1-MAINTLANE-NEXTAGENT-GATE .detail_ref pointed at -> orch-validate Stage1c dangling-ref hard-fail blocked EVERY orch-apply write until the dispatcher hand-nulled the mismatched ref (file recoverable at git 395e224ad~1). Current prune only repoints payload_ref; it does NOT consult detail_ref. FIX: before deleting any processed/ file, scan task_board[*].detail_ref AND signal_queue.rows[*].payload_ref for a live reference; SKIP deletion if referenced (recurs each referenced processed/ file ages past 7d). Recurring class (see MEMORY drain-prune Stage1c-persistent). AC: (1) prune leaves referenced files on disk; (2) regression test seeds a backlog row whose detail_ref points at a >7d processed file, runs prune, asserts file survives + no Stage1c dangle.",
+        "baseline_pass": true,
+        "updated_at": "2026-07-23T18:08:33Z"
+      },
+      {
+        "id": "FIX-AUDITOR-TIER1-PROBE-ACKED-LAUNCHD-DEATH-SUPPRESSION",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "next_agent": "developer",
+        "owner": "po",
+        "created_by": "po",
+        "created_at": "2026-07-23T18:03:58Z",
+        "origin_signal_id": "TIER1-PROBE-LAUNCHD-EXITSTATUS-CHURN-DOCKEREVENTS-20260723T164744Z",
+        "title": "auditor-tier1-probe.sh must NOT re-trip FAILURE + re-spawn system-auditor every tick for launchd deaths that already have an OPEN backlog fix-task (acknowledged-failure suppression)",
+        "note": "Post FIX-LAUNCHD-PROBE-PRESENCE-ONLY-FALSE-GREEN (REVIEW) the Tier-1 probe correctly checks launchd exit-status and now returns FAILURE EVERY tick because two known-dead backstops persist: com.vn-market.fleet-push (exit-78, tracked FIX-FLEET-PUSH-LAUNCHD-EXCONFIG-SILENT-DEAD) + com.vn-market.docker-events (exit-1, tracked by new FIX-LAUNCHD-DOCKER-EVENTS-EXIT1-CRASHLOOP). Consequence: fail-open passive-health guard would spawn system-auditor on all ~48 Tier-1 ticks/day, each re-confirming the same dead launchd, dedup-suppressing the signal, refreshing the heartbeat -> pure churn, zero new signal (auditor even wrote a healthy heartbeat 16:19:35Z while both already dead). Recurring_churn_escalation. FIX: maintain an acknowledged-launchd-death list (labels whose exit-failure has an open backlog *-FIX row); a listed dead label does NOT flip the probe verdict to FAILURE nor trigger the auditor spawn — it stays a suppressed known-degraded until the fix-row closes. AC: probe run with fleet-push+docker-events dead AND both fix-rows open -> verdict is NOT FAILURE, no auditor spawn; remove the fix-row -> verdict flips back to FAILURE (no permanent blindness).",
+        "baseline_pass": true,
+        "updated_at": "2026-07-23T18:08:33Z"
+      },
+      {
+        "id": "FIX-EXECTIER-HEADSYNC-BRANCHNULL-REVIEW-IDLE",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "next_agent": "developer",
+        "owner": "po",
+        "created_by": "po",
+        "created_at": "2026-07-23T18:03:58Z",
+        "origin_signal_id": "dev-team-20260723T063731Z-head-review-unhandled-bypasses-qadrain",
+        "title": "execute-tier.md head-sync must set head.status=idle (never review/in_progress) for branch:null REVIEW flips, so the BOUNDED-1..QA-Drain fall-through chain is reachable and QA-Drain can dispatch qa in verify-committed mode",
+        "note": "A developer DONE->REVIEW flip set .head={status:review, active_task_id, next_agent:qa}. status==review matches NEITHER dispatch lane: pipeline-resume needs status==in_progress, idle-fallthrough needs idle/done/missing/v1 -> the branch:null REVIEW row strands (QA-Drain is the ONLY lane that dispatches qa in verify-committed mode against branch:null, main.md ~L643, but it is never reached). Dispatcher hand-reset head->idle this tick to unstall UC-GCP-P1. ROOT: execute-tier.md § Status-Flip (b) permits 'sync head to next next_agent' but for branch:null REVIEW rows that target is un-dispatchable. FIX: prescribe head.status=idle for branch:null REVIEW flips (never review/in_progress). Cross-ref (distinct): FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN adds the drain LANE itself; this row fixes the head-sync value that BLOCKS reaching it. AC: a developer DONE->REVIEW(branch:null,next_agent=qa) flip leaves head.status=idle; a subsequent dispatcher tick reaches QA-Drain and dispatches qa without a hand-reset.",
+        "baseline_pass": true,
+        "updated_at": "2026-07-23T18:08:33Z"
+      },
+      {
+        "id": "FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "M",
+        "zone": "cross-service/",
+        "next_agent": "architect",
+        "owner": "po",
+        "created_by": "po",
+        "created_at": "2026-07-23T18:03:58Z",
+        "supervised": true,
+        "supervised_at": "2026-07-23T18:03:58Z",
+        "supervised_by": "po",
+        "supervised_note": "BOUNDED-1 must NOT idle-auto-pick its OWN eligibility-gate fix (self-referential). Deliberate architect/developer dispatch is UNAFFECTED.",
+        "origin_signal_id": "dev-team-20260723T0919-bounded1-planonly-gate-blind",
+        "title": "BOUNDED-1 pre-promotion gate hardening (extends scripts/lib/devteam-eligibility.jq): (a) conservative-skip rows whose plan_only/disposition intent lives in prose/detail but not the structured .plan_only flag; (b) checklist-PASS pre-promotion freshness gate + one-time prune of backlog *-FIX rows whose quality-checklist.json item is already status=PASS; (c) effective(board-OR-detail) next_agent predicate covering the maintenance roster",
+        "note": "The durable structural fix referenced-but-never-minted in FIX-DEVTEAM-BOUNDED1-MAINTLANE-NEXTAGENT-GATE.supervised_note (SUPERSEDED-BY this row) and FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS.supervised_note. Complements the ALREADY-SHIPPED FIX-DEVTEAM-BOUNDED1-PROSE-SEQUENCING-UNBACKED-GATE (added has_unbacked_sequencing_prose for po_sequencing_* only). THREE gate-family gaps still open: (a) plan_only intent in .detail prose ('PLAN-ONLY... do NOT dispatch this tick') not the .plan_only flag -> dispatcher had to hand-set plan_only:true (signal dev-team-20260723T0919); (b) quality-checklist-derived *-FIX rows are never pruned when the checklist item flips to PASS -> MD-FUNC-01-FIX + ALT-FUNC-02-FIX (both PASS since 2026-06-10) re-promoted 6 weeks later, each burning ~90k tokens re-confirming a long-shipped fix (signal dev-team-20260723T1536); (c) effective(board-OR-detail) next_agent predicate covering the maintenance roster -> SUBSUMES FIX-DEVTEAM-BOUNDED1-MAINTLANE-NEXTAGENT-GATE (do NOT dispatch that row separately — same scripts/lib/devteam-eligibility.jq surface, concurrent edit = commit race). ALL THREE clauses land in ONE eligibility-library change. AC: (a) a row with plan_only ONLY in .detail prose is conservative-skipped by is_bounded1_eligible; (b) before promoting a *-FIX row whose id matches a quality-checklist.json item, re-read the item and auto-DEFER/prune if already PASS; ship the one-time backlog prune of already-PASS *-FIX rows in the same change; (c) maintenance-roster next_agent detected from board-OR-detail is withheld from idle auto-pickup.",
+        "baseline_pass": true,
+        "updated_at": "2026-07-23T18:08:33Z"
+      },
+      {
+        "id": "OPS-FFLOW-VPS-CLOCKDRIFT-PREVENTIVE-RESIDUALS",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "M",
+        "zone": "cross-service/",
+        "next_agent": "ops",
+        "owner": "po",
+        "created_by": "po",
+        "created_at": "2026-07-23T18:03:58Z",
+        "origin_signal_id": "FFLOW-STALE-0723-A-OPS-RESIDUALS-20260723T163354Z",
+        "title": "FFLOW-STALE-0723 ops residuals NOT covered by A-VPS-FIX/B-RECHECK-HARNESS: (1) preventive chrony or boot-time NTP step-check on the Vinahost VM; (2) fix deploy-vinahost.sh leaving unsubstituted __MCP_BASE__/__API_KEY__ placeholders; (3) E2E re-verify + restart vn-price-fetch and vn-sbv-fetch which share the now-fixed clock and are STILL stale",
+        "note": "Follow-up to FFLOW-STALE-0723-A-VPS-FIX (REVIEW) / -B-RECHECK-HARNESS (REVIEW). THREE residuals: (1) PREVENTIVE/root-cause-vector: guest clock-drift can recur on next Vinahost VM pause (timedatectl falsely reported synchronized:yes throughout the drift) — this drift IS the mechanism of the user-reported stale-foreign-flow bug; evaluate chrony or a boot-time NTP step-check on the VM. (2) deploy-vinahost.sh leaves unsubstituted __MCP_BASE__/__API_KEY__ placeholders in /root/run-foreign-flow-debug.sh (router/ops worked around live). (3) vn-price-fetch/vn-sbv-fetch share the now-fixed VM clock (NRestarts=0) but were NOT independently re-verified E2E — LIVE auditor data_stale signals corroborate they are STILL stale (prices 2880min/48h sys-20260723T063235; sbv-vps 2879min sys-20260723T063240; sbv-vps 35h sys-20260723T143211) -> restart the fetchers + run a freshness check. FOLDS those 3 data_stale signals. AC: (1) NTP step-check documented/installed + survives a simulated pause; (2) deploy-vinahost.sh substitutes both placeholders (grep of the deployed script shows no __MCP_BASE__/__API_KEY__); (3) get_market_snapshot price latest_date + sbv latest advance to the current completed session, fetchers active(running).",
+        "baseline_pass": true,
+        "updated_at": "2026-07-23T18:08:33Z"
+      },
+      {
+        "id": "FIX-LAUNCHD-DOCKER-EVENTS-EXIT1-CRASHLOOP",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "size": "S",
+        "zone": "cross-service/",
+        "next_agent": "ops",
+        "owner": "po",
+        "created_by": "po",
+        "created_at": "2026-07-23T18:03:58Z",
+        "origin_signal_id": "sys-20260723T103217-1735",
+        "title": "Repair-or-retire the crash-looping com.vn-market.docker-events launchd agent (exit-1) — UNTRACKED sibling of FIX-FLEET-PUSH-LAUNCHD-EXCONFIG-SILENT-DEAD",
+        "note": "com.vn-market.docker-events has been crash-looping with last-exit-code=1 (untracked — no board/signal row until this). Sibling class to fleet-push (exit-78) — both are dead launchd backstops that the now-exit-status-aware Tier-1 probe trips on every tick. Investigate whether docker-events is still needed (like the retired health-recheck RemoteTrigger) or genuinely broken: if obsolete, retire the plist; if needed, fix the exit-1 root cause and confirm it survives reboot. AC: launchctl print for com.vn-market.docker-events shows either (a) removed/unloaded (retired) OR (b) last exit code 0 + running; either way the Tier-1 probe no longer flags it.",
+        "baseline_pass": true,
+        "updated_at": "2026-07-23T18:08:33Z"
+      },
+      {
+        "id": "FIX-QUALITY-CHECKLIST-GENERATOR-FABRICATED-PASS-EVIDENCE",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "M",
+        "zone": "cross-service/",
+        "next_agent": "architect",
+        "owner": "po",
+        "created_by": "po",
+        "created_at": "2026-07-23T18:03:58Z",
+        "origin_signal_id": "dispatcher:DS-OBS-01-FIX-closeout-20260723",
+        "title": "quality-checklist.json generator emits FABRICATED / byte-identical copy-paste PASS evidence across unrelated checks — masks real observability gaps (recurring 2x this session: BCT-OBS-02-FIX + DS-OBS-01-FIX both found their check PASS while the real breach->WORK/BUG Telegram alert was genuinely broken)",
+        "note": "ROOT: quality-checklist.json (_updated_by: system-auditor, generated_at frozen 2026-06-10) stamps check.status=PASS with a REUSED evidence string instead of running that check's own recheck_how and capturing per-check evidence. RAW-confirmed byte-identical duplicates in the LIVE file this tick: 'observability demonstrably working — WORK-channel msg IDs 2743-2766' x4 across unrelated checks; 'CI green commit fc28bf41...' x4; 'HTTP 200' x7. This copy-paste PASS masked BCT-OBS-02 (sscCheck nightly WORK post) and DS-OBS-01 (freshnessSlaMonitor WORK/BUG alert) — both marked PASS while the real breach->human-visible Telegram alert was broken. Recurring 2x -> recurring-bug policy (block+fix root cause). FIX: (1) generator MUST NOT reuse an evidence string across distinct check_ids — each PASS requires its OWN freshly-captured evidence from executing recheck_how; (2) a check that cannot capture distinct real evidence stays UNKNOWN/UNVERIFIED, never a copy-paste PASS (fail-loud, empty-read-is-not-evidence); (3) add a validator (generation-time and/or serve-time in qualityChecklistHandler) that REJECTS a checklist where any evidence string is byte-identical across >1 check_id. AC: (a) live quality-checklist.json regenerated with zero cross-check byte-identical evidence; (b) BCT-OBS-02 + DS-OBS-01 checks reflect TRUE post-fix status from real recheck_how execution; (c) validator fails loud on a seeded duplicate-evidence checklist. DISTINCT from SPIKE-EVIDENCE-SCORE-CACHE-FRAGMENT-DECOUPLE (get_evidence_summary evidence_scores cache) + FIX-CHEF-QUALITY-VERDICT-FALSE-FULL (chef dish self-cert). Do NOT reopen BCT-OBS-02-FIX / DS-OBS-01-FIX (consumers, correctly in review/qa).",
+        "baseline_pass": true,
+        "updated_at": "2026-07-23T18:08:33Z"
       }
     ],
     "closed_sprints": [
