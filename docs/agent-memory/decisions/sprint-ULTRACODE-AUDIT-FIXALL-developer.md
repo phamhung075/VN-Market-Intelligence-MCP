@@ -239,3 +239,18 @@ matching mode branch (no `FANOUT_POLICY.batch_wait_max_seconds` to read in that 
 downgrade, no numeric synthesis) per router's explicit fix guidance — zero `_fanout` shadow copy.
 **why-change:** Scoped to AC1 only; AC2–AC6 (batch semantics, health-driven DEGRADED branch, test,
 carve-out) untouched per redispatch note. `DWF-phase1-cadence.test.ts` re-run 51/51 GREEN.
+
+### STEP developer-S15 · developer · 2026-07-23T02:24:12Z
+**task-id:** UC-CCA-P6-NBWRITE
+**what-done:** Replaced 4 inline AC-3 compose blocks (news-scout, bctc-analyst, chef, digest-predict
+stage-log-notify/P-6) with notebook-write skill pointer + <=10L per-agent template; fixed
+fb-market-poster main.md OVERWRITE->APPEND wording (Output line + STEP 8) and restructured its
+template so Lessons/Known patterns become never-pruned preamble, per-cycle body rolls as `## c<NNN>`.
+**what-considered:**
+- Edit tool vs Python line-range replacement — Edit tool string match failed on unicode em-dash/
+middle-dot bytes; switched to verified line-number Python surgery, re-read after each write.
+- Also fix weekly-recap.md/weekly-prediction.md (same fb notebook, same "full overwrite" wording) —
+REJECTED: outside Piece 1's *Files* list and I8 cited evidence (main.md only); flagged as residual gap.
+**why-decision:** Rescope names exactly 4 files + main.md-only for fb; grep-verified zero remaining
+inline duplicates in scope, zero touch outside it.
+**why-change:** No change from rescope plan; net -59 lines across 5 files (81 del / 22 ins).

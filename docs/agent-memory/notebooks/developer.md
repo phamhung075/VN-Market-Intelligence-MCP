@@ -1,20 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-23 | **Cycle:** UC-CDC-P4 (QA CHANGES_REQUESTED fix)
-
-## Session 2026-07-21 — FIX-DRAIN-TEST-HARNESS-ORCH-HELPER-COPY-LIST (PO-directed, P0 unblocker, cross-service/) — REVIEW
-
-**Task:** `drain-signals.test.js` `makeOrchRefHarness()`'s hardcoded copy list (`['orch-apply.sh','orch-validate.mjs','orch-conservation-check.mjs']`) never got `orch-stamp-updated-at.mjs` added when commit `a5d079663` wired it into `orch-apply.sh` — the sandboxed `orch-apply.sh` called a file that wasn't there, crashing the whole node process at the first `makeOrchRefHarness()` call (line 273), darkening all 13 assertions after it. Same defect the prior CLEAN-COWORK-DISPATCHER session (above) already hit and worked around via a truncated file copy.
-
-**Actions taken:** Replaced the fixed array with `deriveOrchApplyHelpers()` — regex-scans `orch-apply.sh`'s own source (`\$\{REPO_ROOT\}/scripts/<name>.<ext>`) at test-run time and copies whatever it finds, plus `orch-apply.sh` itself. Self-updating: the next helper `orch-apply.sh` grows is picked up automatically, no second list to remember. Throws loud if the regex ever matches 0 (staleness self-detection).
-
-**Verification:** Ran the FULL, untruncated suite end-to-end: 28/28 PASS, 0 fail, exit 0 (previously crashed after assertion 15/28). All 13 previously-dark assertions now execute — 3 FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE gates + 4 ENOBUFS + 6 unparseable-loud (written last session against a truncated copy, never actually run until now) — all PASS, no regression found in any of them.
-
-**Board:** `task_board.ready[FIX-DRAIN-TEST-HARNESS-ORCH-HELPER-COPY-LIST]` → `review`, `dev_result`+`dev_completed_at` set, via `orch-apply.sh`.
-
-**Scope discipline:** Touched only `drain-signals.test.js`, board row, this notebook, decision journal. Did not touch `orch-apply.sh`/other helper scripts (no behavior change needed there) — root-cause fix confined to the test harness.
-
-Zone health: `scripts/agents-flow/drain-signals.test.js` orch-helper sandbox copy — now derives from source instead of a hand-maintained list | HEALTHY
+**Last updated:** 2026-07-23 | **Cycle:** UC-CCA-P6-NBWRITE (notebook-write AC-3 consolidation, Piece 1)
 
 ## Session 2026-07-23 — UC-CDC-P4 (dev-team dispatched, cowork-dispatcher-cron-P4, cross-service/) — REVIEW
 
@@ -43,3 +29,17 @@ Zone health: `docs/agents/cowork-team/flow/spawn-fanout.md` Step 5 fan-out — n
 **Scope discipline:** Touched only `spawn-fanout.md` (Step 5.1/5.2 + size-justification header), this notebook, decision journal. Did NOT re-touch `cadence-policy.json` `_fanout` values, batch semantics, the health-driven DEGRADED fail-safe branch, the test file, or `agent-chaining-protocol.md` per redispatch scope.
 
 Zone health: `docs/agents/cowork-team/flow/spawn-fanout.md` — no `_fanout` shadow copy remains; missing-policy path now mode-downgrades like pressure-read.md | HEALTHY
+
+## Session 2026-07-23 — UC-CCA-P6-NBWRITE (dev-team BOUNDED-1 auto-pickup, cross-service/) — REVIEW
+
+**Task:** ultracode-audit P6 Piece 1 — notebook-write AC-3 compose logic copy-pasted inline in 4 cowork flows (news-scout/bctc-analyst/chef/digest-predict), diverged (daily-predict missing AC-5 gate + AC-4 fallback); fb-market-poster's flow said "full overwrite" while notebook-write SKILL.md AC-6 already classifies fb-market-poster APPEND — full overwrite wiped its own permanent Lessons/Known patterns section every cycle.
+
+**Actions taken:** Replaced all 4 inline compose blocks with a skill pointer (`.claude/skills/notebook-write/SKILL.md`) + <=10L per-agent section template only, in news-scout/flow/stage-log-notify.md, bctc-analyst/flow/stage-log-notify.md, unified-agent/flow/chef.md Step 8b, digest-predict/flow/daily-predict.md P-6 — kept each flow's existing cowork-end-cycle skip-parenthetical unchanged (still needed until TE-T05 lands). Fixed fb-market-poster/flow/main.md: Output line + STEP 8 header now say APPEND class; restructured the template so `# FB Market Poster — Notebook` + `## Lessons learned` + `## Known patterns` are the never-pruned preamble and the per-cycle body ("Last cycle" fields) now lands as a rolling `## c<NNN> · <ISO>` section.
+
+**Verification:** grep across the 4 edited flows for the inline compose-step phrases ("Identify preamble (before first", "drop oldest `## ` block", "Count in-memory lines. If > 200L") returns zero matches; repo-wide grep confirms the pattern still lives only in the skill itself + 3 out-of-scope files (system-auditor/main.md, digest-predict/monday.md, agents-architect/handlers.md — not in Piece 1's file list, untouched). fb-market-poster grep for "overwrite" now returns only the explanatory "was ... full-overwrite body" comparison text, no live-instruction match. Net -59 lines across the 5 files (81 deletions / 22 insertions, `git diff --stat`).
+
+**Board:** `task_board.in_progress[UC-CCA-P6-NBWRITE]` → `review`, `next_agent=qa`, `.head` synced, via `orch-apply.sh`.
+
+**Scope discipline:** Touched only the 5 flow docs in Piece 1's file list, this notebook, decision journal. Did NOT touch weekly-recap.md/weekly-prediction.md, which independently still say "full overwrite" for the SAME fb-market-poster.md notebook (same bug, different evidence anchor, not in Piece 1's *Files* list or cited I8 evidence) — flagged as a residual gap for a follow-up row, not fixed here. Did NOT touch Piece 2 (cowork-end-cycle no-op rule, skip-parenthetical deletion) — folds into queued TE-T05 per rescope.
+
+Zone health: notebook-write AC-3 — single SSOT compose procedure (skill), 4 flow-doc copies retired | fb-market-poster notebook — APPEND class restored per AC-6, Lessons/Known patterns preamble now survives daily cycles (weekly sub-flows still at risk, see gap above) | HEALTHY
