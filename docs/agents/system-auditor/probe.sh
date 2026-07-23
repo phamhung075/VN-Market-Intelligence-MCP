@@ -15,6 +15,14 @@
 # Derived dynamically via docker ps filter — never hardcoded short names.
 
 set -euo pipefail
+
+# ── Portable path resolution (mirrors scripts/emit-audit-signal.sh) ──────────
+# Never rely on CWD-is-repo-root-at-invocation — this script must resolve its
+# own REPO_ROOT so the A-30 deep-probe subprocess call below works regardless
+# of caller CWD.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+
 echo "=== AUDITOR PROBE $(date -u +"%Y-%m-%dT%H:%M:%SZ") ==="
 echo ""
 
@@ -61,6 +69,30 @@ echo ""
 # ── Memory pressure ───────────────────────────────────────────────────────────
 echo "--- memory pressure ---"
 docker stats --no-stream "${MCP_CONTAINER}" --format "Container={{.Name}} MemPerc={{.MemPerc}} MemUsage={{.MemUsage}}" 2>&1 || echo "[PROBE] docker stats FAILED (container=${MCP_CONTAINER}): $?"
+echo ""
+
+# ── Memory pressure multi-probe reclamation gate (A-30, FIX-AUDITOR-A12A20A30-
+# FP-REEMIT-CONVERGE) — a single/2-point MemPerc snapshot is NEVER sufficient
+# evidence for A-30 (root cause of the 07-23T03:42Z false CRITICAL: a bare
+# 2-point, 30-minute-apart MemPerc delta with no multi-probe window, no
+# OOMKilled check, no VmHWM/VmRSS check). When the fast baseline snapshot
+# above is ≥85%, engage the existing, unmodified multi-probe discriminator
+# (scripts/audits/verify-a30-mcp-memory-reclamation.sh — 6 probes/13s spacing,
+# OOMKilled + VmHWM/VmRSS + reclamation-dip detection) as a subprocess. The
+# verdict/reason JSON it prints is this cycle's SELF-CONTAINED evidence bundle
+# — tier1-probe.md's A-30 override section interprets it; this script never
+# compares across cycles.
+echo "--- memory pressure multi-probe reclamation (A-30) ---"
+BASELINE_PCT=$(docker stats --no-stream --format '{{.MemPerc}}' "${MCP_CONTAINER}" 2>/dev/null | tr -d '%')
+if awk -v p="${BASELINE_PCT:-0}" 'BEGIN{exit !(p>=85)}'; then
+  # Tier-1 budget: 6 probes / 13s spacing = 65s span — the exact cadence already
+  # validated live 07-19 ("6 probes/65s caught GC dips", per this row's own text).
+  # CONTAINER override closes probe.sh's own dynamic-name-vs-hardcoded-default gap
+  # (verify-a30's own default is a literal compose name; MCP_CONTAINER is derived).
+  CONTAINER="$MCP_CONTAINER" bash "$REPO_ROOT/scripts/audits/verify-a30-mcp-memory-reclamation.sh" 6 13 || echo "[A-30] deep-probe subprocess FAILED (container=${MCP_CONTAINER}): $?"
+else
+  echo "[A-30] SKIP deep-probe — baseline ${BASELINE_PCT}% < 85% investigate-gate"
+fi
 echo ""
 
 # ── Disk space ───────────────────────────────────────────────────────────────

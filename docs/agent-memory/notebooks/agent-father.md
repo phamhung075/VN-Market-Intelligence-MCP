@@ -1,5 +1,78 @@
 # Agent Father — Notebook
 
+### Edit (system-auditor) 04:33 — 2026-07-23 FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE
+(router-dispatched, plan_only=false supervised=true, source-of-truth brief
+`docs/architecture-briefs/2026-07-23-auditor-a30-reclamation-gate-a21-windowed-restart.md`)
+- Task: implement the brief's code blocks exactly — A-30 reclamation gate + A-21 windowed
+  crash-only restart re-model. Root cause: 07-23T03:42Z false CRITICAL was minted from a
+  bare 2-point/30-min-apart MemPerc delta (no multi-probe, no OOMKilled, no VmHWM/VmRSS
+  check) — 4th recurrence of this class per the row's `recurring_bug_count=4`.
+- `docs/agents/system-auditor/probe.sh`: added `SCRIPT_DIR`/`REPO_ROOT` portable resolution
+  (mirrors `emit-audit-signal.sh`'s own pattern — script no longer assumes CWD=repo-root);
+  new conditional `--- memory pressure multi-probe reclamation (A-30) ---` block after the
+  existing fast baseline snapshot — engages the EXISTING, UNMODIFIED
+  `scripts/audits/verify-a30-mcp-memory-reclamation.sh` (6 probes/13s=65s span) as a
+  subprocess only when baseline MemPerc≥85%, `CONTAINER=$MCP_CONTAINER` env override closes
+  the script's own hardcoded-default-vs-derived-name gap. Did NOT touch that script (out of
+  zone, reused as-is per brief's explicit instruction).
+- Deviation beyond the brief's literal snippet (both logged here, not silently applied):
+  (1) appended `|| echo "[A-30] deep-probe subprocess FAILED ...": $?"` to the subprocess
+  call — the brief's snippet has no fallback, and probe.sh runs under `set -euo pipefail`;
+  a bare failing subprocess call (e.g. container vanishes mid-window, a live-leak edge case)
+  would silently abort the REST of probe.sh (disk check, A-20 multi-probe never run),
+  violating this file's own documented header contract ("Failures are evidence — print them,
+  exit 0"). Matches the exact `cmd || echo "[PROBE] ... FAILED: $?"` idiom already used by
+  every other fallible command in this file — not a new pattern. (2) added a matching
+  `[A-30] deep-probe subprocess FAILED` interpretation line to tier1-probe.md's override
+  section (item 2, TOOL-UNAVAILABLE-equivalent skip) since the brief's own 6-item mapping
+  only covered the `SKIP` marker, not a subprocess-failed marker.
+- `docs/agents/system-auditor/flow/tier1-probe.md`: added `## A-30 — Memory Reclamation
+  Discriminator (Multi-Probe Override)` section (7 items, verbatim per brief's design —
+  SKIP/FAILED short-circuits, JSON field parse, the VmHWM>VmRSS veto in this interpretation
+  layer per the brief's actual placement, FOLD/ESCALATE→PASS/WARN/CRITICAL mapping,
+  single-cycle-only anti-carry rule, unchanged generic emit path) directly after the
+  existing (now explicitly SUPERSEDED, left unmodified for context) general Memory Pressure
+  section — same override-follows-general-section shape as the existing A-20 block. Replaced
+  the A-21 section's stale `RestartCount=N, N>2→WARN` rule (cumulative-since-creation, can
+  only grow) with a `## Restart Count (A-21) — Windowed Crash-Only Override` — inline
+  read-only `docker exec bun -e "require('bun:sqlite')..."` 4h-window query, discriminator
+  ported 1:1 from `apps/mcp-server/src/scheduler/system/restartCadenceAlertJob.ts`
+  (same `ALERT_THRESHOLD=2`, same clean-shutdown-sentinel gap logic, same bootstrap guard).
+  Extended the L1 size-justification comment (138L→211L, still under the brief's own ~220L
+  extraction threshold — did not extract a child file).
+- QA (live, read-only, no mutation — no deploy/restart/rebuild anywhere): ran the edited
+  `probe.sh` end-to-end against the live stack (baseline MemPerc 24-31% → correctly hit the
+  SKIP branch, `=== PROBE DONE ===` printed, ~19s wall time, `shellcheck -S warning` clean).
+  Separately exercised the `CONTAINER=` override invocation path directly
+  (`verify-a30-mcp-memory-reclamation.sh 2 1` against the live mcp-server container) —
+  confirmed the JSON shape (`verdict`/`reason`/`analysis.*`/`state.oom_killed`/`vm.*`)
+  matches exactly what the new tier1-probe.md parser expects; verdict FOLD (healthy).
+  Ran the brief's exact A-21 `bun -e` query live inside the mcp-server container —
+  `require('bun:sqlite')` resolves fine in this image, `cron_job_runs` carries both sentinel
+  job names (113 startup / 58 clean-shutdown rows), query returned valid JSON
+  (`{"crashRestarts":0,...}`, correct for a healthy 7-day-uptime container). Did not run the
+  synthetic mock-function OOMKilled/>97%/N-consecutive-fail injection test the brief
+  suggests (`auditor-tier1-probe.test.sh`-style) — no test harness exists for `probe.sh`
+  itself yet and creating one is outside the strictly-declared 2-file change zone; live
+  low-memory-state QA above is the corroboration actually available this cycle.
+- Out of scope, not touched (per router's explicit HARD CONSTRAINTS): `scripts/emit-audit-
+  signal.sh` (shared, dedup-ledger item satisfied structurally per brief §item-3 — a benign
+  reading now resolves to PASS before that script is ever called, nothing new to verify
+  here), `scripts/audits/verify-a30-mcp-memory-reclamation.sh` (reused unmodified), A-12/
+  A-04/A-13 debounce, E-3 collapse-to-single-row (tracked separately under
+  `FIX-SIGNALQUEUE-DUP-ID-GUARD`), any `apps/mcp-server` code, no container action.
+- Session: no `mcp__gateway__call_tool` binding this spawn (dev-team-tier agent-father
+  frontmatter carries no MCP grant, INV-GATEWAY-1 precedent) — no task_claim/heartbeat/
+  release attempted; router's own PRE-CLAIM already covers this task at the intent level.
+  `commit-boundary/SKILL.md` no-gateway-binding solo path applied (`orch-state.json` not
+  touched, not even read-write — read-only peek at `.head` confirmed no dev-team WIP
+  contention signal relevant to this zone).
+- Commit: explicit pathspecs only — `docs/agents/system-auditor/probe.sh`,
+  `docs/agents/system-auditor/flow/tier1-probe.md`,
+  `docs/agent-memory/notebooks/agent-father.md`. Local only, no push (router instruction —
+  drain/cold-evict layer owns push this session). `docs/data/orch/orch-state.json` and all
+  other dirty peer/cron files in the working tree left untouched, not staged.
+
 ### Edit (unified-agent) 22:5x — 2026-07-19 fix-chef-write-boundary (router-dispatched, PO signal
 docs/signals/po-20260719T203100Z.json, GAP-CHEF-SYNTHESIS-A-FLOW-PERSIST)
 - Sibling defect to the same-day TNB grant fix — DIFFERENT mechanism per PO's explicit framing:

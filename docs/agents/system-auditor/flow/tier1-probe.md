@@ -1,4 +1,4 @@
-<!-- lazy-loaded by main.md §Tier-1. cap: 120L (flow-file). size-justification: ~155L — FIX-AUDITOR-A20-MULTIPROBE 2026-06-08 adds A-20 multi-probe discriminator section (~28L); TOKEN-ECONOMY-TICK-PREFLIGHT WU-3 2026-07-02 adds this SSOT header note (~10L); exceeds 120L cap by design; extraction to separate file would add lazy-load overhead on every T1 cycle where pdf-extractor is in host_runtime_set (i.e. always). -->
+<!-- lazy-loaded by main.md §Tier-1. cap: 120L (flow-file). size-justification: ~155L — FIX-AUDITOR-A20-MULTIPROBE 2026-06-08 adds A-20 multi-probe discriminator section (~28L); TOKEN-ECONOMY-TICK-PREFLIGHT WU-3 2026-07-02 adds this SSOT header note (~10L); FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE 2026-07-23 adds the A-30 multi-probe reclamation override section (~28L, closes the false-CRITICAL root cause: a bare cross-cycle MemPerc delta with no OOMKilled/VmHWM check) + re-models A-21 as a windowed crash-only inline query (~30L, replaces the cumulative-RestartCount rule that could only ever grow); exceeds 120L cap by design; extraction to separate file (`docs/agents/system-auditor/flow/tier1-overrides.md`) remains the documented fallback if a future addition pushes this past ~220L — not yet crossed. -->
 <!-- TOKEN-ECONOMY-TICK-PREFLIGHT WU-3 (2026-07-02, R9/R10): this subagent is
      now only spawned by a shell-first pre-gate, scripts/agents-flow/
      auditor-tier1-probe.sh (invoked by cron-detect-loop/SKILL.md Job 2) —
@@ -98,17 +98,89 @@ From `PROBE_OUT` `--- health endpoints ---` section:
 
 ---
 
-## Restart Count (A-21)
+## Restart Count (A-21) — Windowed Crash-Only Override
 
-From `PROBE_OUT` `--- restart count ---` section:
-- `RestartCount=N` with N ≤ 2 → PASS; N > 2 → WARN
-- `[PROBE] docker inspect FAILED` → log `[A-21] TOOL-UNAVAILABLE — skip` (NOT an infra finding)
+**Override rule:** `PROBE_OUT` `--- restart count ---` still carries the cumulative
+`RestartCount=N` line from `docker inspect` — keep reading it as evidence-only context, but
+it is NEVER the alert driver. Cumulative count is since-container-creation and can only
+grow, so a stale count re-qualifies as evidence every cycle. The windowed query below
+supersedes the old `N > 2 → WARN` rule entirely. It ports
+`apps/mcp-server/src/scheduler/system/restartCadenceAlertJob.ts`'s crash-vs-deploy
+discriminator 1:1 (same 4h window, same `ALERT_THRESHOLD=2`, same clean-shutdown-sentinel
+gap logic, same bootstrap guard) — read-only, against the table that job already writes.
+
+```bash
+MCP_CTR=$(docker ps --format '{{.Names}}' | grep mcp-server | head -1)
+docker exec "$MCP_CTR" bun -e "
+const { Database } = require('bun:sqlite');
+const db = new Database('/app/data/market.db', { readonly: true });
+const firstCS = db.query(\`SELECT MIN(started_at) AS c FROM cron_job_runs WHERE job_name='mcpServerCleanShutdown'\`).get();
+if (!firstCS || !firstCS.c) { console.log(JSON.stringify({crashRestarts:0, bootstrapGuard:true})); process.exit(0); }
+const rows = db.query(\`SELECT started_at FROM cron_job_runs WHERE job_name='mcpServerStartup' AND started_at >= datetime('now','-8 hours') ORDER BY started_at ASC\`).all();
+const cutoff = new Date(Date.now()-4*3600*1000).toISOString().replace('T',' ').slice(0,19);
+let crashes=[];
+for (let i=1;i<rows.length;i++){
+  const cur=rows[i].started_at, prev=rows[i-1].started_at;
+  if (cur<cutoff) continue;
+  if (prev<firstCS.c) continue;
+  const cs=db.query(\`SELECT COUNT(*) AS n FROM cron_job_runs WHERE job_name='mcpServerCleanShutdown' AND started_at>? AND started_at<?\`).get(prev,cur);
+  if (!cs || cs.n===0) crashes.push(cur);
+}
+console.log(JSON.stringify({crashRestarts:crashes.length, crashTimestamps:crashes}));
+"
+```
+
+**Verdict:**
+- `crashRestarts >= 2` (same `ALERT_THRESHOLD` as `restartCadenceAlertJob.ts`, deliberately
+  reused rather than a third arbitrary number) → A-21 WARN.
+- `crashRestarts < 2` → PASS, no emit — regardless of what the cumulative `RestartCount=N`
+  line in `PROBE_OUT` shows.
+- `bootstrapGuard:true` (no clean-shutdown sentinel ever recorded) → PASS, log
+  `[A-21] bootstrap-guard — no clean-shutdown sentinel yet` (same rationale as the TS job's
+  own guard — avoids false pages on a migration boundary).
+- `docker exec`/query failure, or `[PROBE] docker inspect FAILED` present in `PROBE_OUT` →
+  unchanged existing fallback: log `[A-21] TOOL-UNAVAILABLE — skip` (NOT an infra finding).
 
 ## Memory Pressure (A-30)
 
 From `PROBE_OUT` `--- memory pressure ---` section:
 - `MemPerc=X%` with X < 85 → PASS; X ≥ 85 → WARN
 - `[PROBE] docker stats FAILED` → log `[A-30] TOOL-UNAVAILABLE — skip` (NOT an infra finding)
+
+## A-30 — Memory Reclamation Discriminator (Multi-Probe Override)
+
+**Override rule:** the general Memory Pressure section's `MemPerc≥85→WARN` line above is
+SUPERSEDED entirely by this block. A single/2-point snapshot is NEVER sufficient evidence
+for A-30 — this is what produced the false 2026-07-23T03:42Z CRITICAL (a bare 2-point,
+30-minute-apart MemPerc delta, no multi-probe window, no OOMKilled check, no VmHWM/VmRSS
+check).
+
+1. `[A-30] SKIP deep-probe` present in `PROBE_OUT` → A-30 PASS, no emit (baseline was
+   below the 85% investigate-gate — nothing to interpret).
+2. `[A-30] deep-probe subprocess FAILED` present in `PROBE_OUT` → A-30 PASS-equivalent,
+   log `[A-30] TOOL-UNAVAILABLE — skip` (NOT an infra finding — the probe script itself
+   failed to complete, per its own header contract that a non-zero exit means the probe
+   failed, not that memory is unhealthy).
+3. Otherwise parse the verbatim JSON block emitted by `verify-a30-mcp-memory-reclamation.sh`:
+   `verdict`, `reason`, `analysis.{min_pct,max_pct,reclamation_dips}`, `state.oom_killed`,
+   `vm.{vmhwm_kb,vmrss_kb}`.
+4. **ADDITIONAL VETO** (closes a gap in the unmodified script — it collects `vm.vmhwm_kb`/
+   `vmrss_kb` but does not gate on them): if `verdict=="ESCALATE"` AND `vmhwm_kb` and
+   `vmrss_kb` are both numeric (not `"UNAVAILABLE"`) AND `vmhwm_kb > vmrss_kb` → downgrade
+   to PASS, no emit (peak-before-window reclamation already proven, even if this window's
+   6 samples sit on a plateau that never crosses the intra-window dip detector).
+5. Remaining verdict/reason mapping:
+   - `verdict=="FOLD"` → PASS, no emit.
+   - `verdict=="ESCALATE"`, reason contains `"OOMKilled=true"` → CRITICAL.
+   - `verdict=="ESCALATE"`, reason contains `"peak >97%"` → CRITICAL.
+   - `verdict=="ESCALATE"`, reason contains `"no reclamation dip"` (>93% baseline case) → WARN.
+6. This is a SINGLE self-contained per-cycle evidence bundle. NEVER compare this cycle's
+   verdict against a prior cycle's notebook entry or MemPerc reading to decide escalation —
+   that comparison is exactly what produced the false 03:42Z CRITICAL. Each cycle proves
+   its own tripwire or it doesn't.
+7. Emit WARN/CRITICAL via the unchanged general `emit-audit-signal.sh` template, citing the
+   RAW JSON block (same anti-carry rule as the existing RAW-PROBE discipline — verdict
+   lines MUST cite this cycle's JSON, never a previous cycle's).
 
 ## Disk (A-32)
 
