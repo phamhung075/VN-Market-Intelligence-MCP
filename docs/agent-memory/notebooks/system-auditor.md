@@ -1,3 +1,15 @@
+## d8f2c1a5 · 2026-07-23T10:33:18Z
+### Audit Run Tier-2 (10:33 UTC 2026-07-23)
+- Tier: 2 | Launchd checks: 3 agents | Signal-queue rows: 3
+- Anomalies: 3 new (2 CRITICAL, 1 WARN launchd agents)
+- Status: DEGRADED
+- Findings:
+  - A-LAUNCHD-DOCKER-EVENTS: CRITICAL — com.vn-market.docker-events crash-looping (exit-status:1)
+  - A-LAUNCHD-COWORK-FIRER: WARN — com.vn-market.cowork-guaranteed-slot-firer terminated (exit-status:143 SIGTERM)
+  - A-LAUNCHD-FLEET-PUSH-CONFIRM: CRITICAL — com.vn-market.fleet-push dead (exit-status:78 EX_CONFIG, attributed to FIX-FLEET-PUSH-LAUNCHD-EXCONFIG-SILENT-DEAD)
+- Signals emitted: sys-20260723T103217-1735, sys-20260723T103223-47fd, sys-20260723T103235-5181
+- Note: Launchd findings sourced from auditor-tier1-probe.sh --tier=2 fast-gate probe (commit e0d9187cd, 2026-07-23). New check A-LAUNCHD-PROBE-PRESENCE-ONLY-FALSE-GREEN now asserts exit-status ≠ 0 (was presence-only before).
+
 ## c9d4e5f2 · 2026-07-23T09:10:41Z
 ### Audit Run Tier-1 (09:10 UTC 2026-07-23)
 - Tier: 1 | Services: 12 checked | Health endpoints: 5
@@ -7,54 +19,6 @@
 - Anomalies: 0 new
 - Status: HEALTHY
 - Corroboration: All 12 host_runtime_set services healthy, all 5 health endpoints 200 OK. A-20 3/3 probes pass (event loop responsive). A-21 0 crash events in 4h window. Memory at 51.22%, well below 85%. Disk 29% used. Cron jobs executing normally.
-- RAW-PROBE:
-```
-=== AUDITOR PROBE 2026-07-23T09:10:41Z ===
-
---- docker ps -a ---
-NAMES                                             STATUS                  IMAGE                                           CREATED
-vn-market-intelligence-mcp-mcp-server-1           Up 5 hours (healthy)    vn-market-intelligence-mcp-mcp-server           15 hours ago
-vn-market-intelligence-mcp-pdf-extractor-1        Up 41 hours (healthy)   vn-market-intelligence-mcp-pdf-extractor        41 hours ago
-mcp-gateway                                       Up 7 days (healthy)     mcpservergatway-gateway                         7 days ago
-vn-market-intelligence-mcp-frontend-1             Up 7 days (healthy)     vn-market-intelligence-mcp-frontend             7 days ago
-vn-market-intelligence-mcp-api-gateway-1          Up 7 days (healthy)     vn-market-intelligence-mcp-api-gateway          7 days ago
-vn-market-intelligence-mcp-flaresolverr-1         Up 7 days (healthy)     ghcr.io/flaresolverr/flaresolverr:latest        7 days ago
-vn-market-intelligence-mcp-news-fetch-1           Up 7 days (healthy)     vn-market-intelligence-mcp-news-fetch           7 days ago
-vn-market-intelligence-mcp-rag-service-1          Up 13 hours (healthy)   vn-market-intelligence-mcp-rag-service          7 days ago
-vn-market-intelligence-mcp-macro-indicators-1     Up 7 days (healthy)     vn-market-intelligence-mcp-macro-indicators     7 days ago
-vn-market-intelligence-mcp-technical-analysis-1   Up 7 days (healthy)     vn-market-intelligence-mcp-technical-analysis   7 days ago
-vn-market-intelligence-mcp-alert-engine-1         Up 7 days (healthy)     vn-market-intelligence-mcp-alert-engine         7 days ago
-vn-market-intelligence-mcp-stock-price-1          Up 7 days (healthy)     vn-market-intelligence-mcp-stock-price          7 days ago
-vn-market-intelligence-mcp-kinh-dich-service-1    Up 7 days (healthy)     vn-market-intelligence-mcp-kinh-dich-service    7 days ago
-
---- health endpoints ---
-[health] mcp-server:3000/health OK (HTTP 200)
-[health] api-gateway:4000/health OK (HTTP 200)
-[health] macro-indicators:5004/health OK (HTTP 200)
-[health] pdf-extractor:5001/health OK (HTTP 200)
-[health] frontend:3001/ OK (HTTP 200)
-
---- restart count ---
-Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=1
-
---- memory pressure ---
-Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=51.22% MemUsage=1.537GiB / 3GiB
-
---- memory pressure multi-probe reclamation (A-30) ---
-[A-30] SKIP deep-probe — baseline 51.55% < 85% investigate-gate
-
---- disk df -h / ---
-Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
-/dev/disk1s4s1   233Gi    13Gi    33Gi    29%    393k  345M    0%   /
-
---- pdf-extractor in-container multi-probe (A-20) ---
-[A-20-PROBE-1] in-container HTTP 200
-[A-20-PROBE-2] in-container HTTP 200
-[A-20-PROBE-3] in-container HTTP 200
-[A-20] pass_count=3/3
-
-=== PROBE DONE ===
-```
 
 ## 8a49e127 · 2026-07-23T08:41:24Z
 ### Audit Run Tier-1 (08:41 UTC 2026-07-23)
@@ -73,9 +37,3 @@ Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
 - A-21 crash restarts: 0 (window: 4h) | Disk: 29% used
 - Anomalies: 0 new
 - Status: HEALTHY
-
-## a1f7d2a3 · 2026-07-23T06:32:55Z
-### Audit Run Tier-2 (06:32 UTC 2026-07-23)
-- Tier: 2 | Cron checks: 1 | Sources checked: 6 | VPS routes: 4
-- Anomalies: 2 new CRITICAL (foreign-flow, prices) | 1 dedup-skipped (sbv-vps)
-- Status: DEGRADED
