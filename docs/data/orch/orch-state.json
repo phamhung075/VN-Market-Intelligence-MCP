@@ -11776,51 +11776,7 @@
         "new_image_id": "sha256:96036269edc4d17444544197862913e54c2fdda68e2b54ef610aee3c7610985d"
       }
     ],
-    "done_verified": [
-      {
-        "id": "UC-CDC-P4",
-        "type": "FIX",
-        "title": "Headroom-gated fan-out cap in spawn-fanout.md Step 5 (bounded batcher, thresholds in cadence-policy.json)",
-        "status": "DONE_VERIFIED",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "RESCOPE",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#cowork-dispatcher-cron-P4",
-        "note": "SCOPE=verifier Rescope note. Replace unbounded fan-out with a bounded batcher: thresholds in cadence-policy.json _fanout (no hardcode); gate on host_headroom_mb + load/core; batch semantics (fire batch as one block, wait for completions or re-probe, hard cap batch_wait_max_seconds); guaranteed slots fill batch1. Add carve-out to agent-chaining-protocol Background Spawn Mandate.",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "priority_bumped_from": "P2",
-        "priority_bumped_at": "2026-07-17T04:54:03Z",
-        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
-        "promoted_at": "2026-07-23T00:19:41Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "updated_at": "2026-07-23T01:50:47Z",
-        "claimed_at": "2026-07-23T00:19:41Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "owner": "developer",
-        "dev_result": "DONE: bounded batcher shipped per rescope spec. spawn-fanout.md Step 5.1 (MAX_PARALLEL headroom+load gate) + Step 5.2 (batch fan-out, guaranteed-first, real inter-batch wait capped batch_wait_max_seconds) replace the unbounded 'fire all in one block' line. cadence-policy.json new _fanout key = SSOT for all 5 thresholds (no hardcode). agent-chaining-protocol.md Background Spawn Mandate carve-out added. DWF-phase1-cadence.test.ts 51/51 GREEN post _fanout addition, no schema break. Docs/config-only, main-only (no branch).",
-        "dev_commit": "df5871ed4 (impl) + 56b954edc (notebook/journal) + 0ffb8d77a (AC1 fix: _fanout shadow-copy fallback removed)",
-        "dev_completed_at": "2026-07-23T01:24:05Z",
-        "status_note": "UC-CDC-P4 implemented per PO rescope spec (arch brief 2026-07-12 #cowork-dispatcher-cron-P4). Journal: docs/agent-memory/decisions/sprint-ULTRACODE-AUDIT-FIXALL-developer.md STEP developer-S13. Flagged not fixed: graphify-out/graph.json 2mo stale (last run 2026-05-23) — scoped update would re-extract accumulated backlog, disproportionate to this fix; left for PO/router. | QA CHANGES_REQUESTED 2026-07-23T00:52:18Z: AC1 hardcode violation at spawn-fanout.md:132-134 (fallback FANOUT_POLICY literal block duplicates the 5 _fanout SSOT values inline) — see qa_blocking_issues. All other ACs (JSON validity/values, batch semantics, fail-safe-to-degraded, DWF-phase1-cadence.test.ts 51/51 re-run GREEN by qa, agent-chaining-protocol.md carve-out) verified PASS at source. Route back to developer: remove the inline fallback duplicate, resubmit to review. | [developer redispatch fix 2026-07-23T01:24:05Z] AC1 resolved — see qa_blocking_issues_resolution_note. Resubmitted to review for QA re-verification. | [QA] Review Record (re-review, redispatch_count=1) 2026-07-23: AC1 RE-VERIFIED at source, not trusted from dev's resolution note. grep spawn-fanout.md for _fanout numeric literals (4,2,1500,120,load_per_core_factor) outside the policy-loaded else branch = ZERO hits; git show 0ffb8d77a confirms the inline shadow-copy object literal was DELETED, not relocated. Missing/unparseable-policy branch now sets FANOUT_MODE=\"degraded_serial\"+MAX_PARALLEL=1 (single conservative sentinel, referenced by mode name only, not a _fanout key). Read pressure-read.md Step 4.2 source directly to confirm the claimed precedent: same shape (downgrade MODE, skip computation, zero numeric synthesis on missing/malformed policy) — matches. Step 5.2 inter-batch wait gained a matching degraded_serial branch (unconditional wait for the single spawn, no FANOUT_POLICY dereference) — avoids the undefined-object crash the pre-fix code would hit in that mode. Two remaining numeric mentions in the file (L179 \"e.g. MAX_PARALLEL=4\" illustrative comment on chunk() semantics; L249 \"default 120s\" descriptive prose) are both pre-existing/untouched by the fix commit's diff, outside the missing/unparseable branch, and describe rather than assign a fallback — not a recurrence of the AC1 defect. AC2: docs/data/cadence-policy.json still valid JSON, all 5 _fanout keys present unchanged values, zero git diff (file not edited). AC5: RE-RAN bun test src/__tests__/DWF-phase1-cadence.test.ts myself in apps/mcp-server (not trusted from dev's 51/0 report) -> 51 pass/0 fail/183 expect() calls, confirmed live. AC3/AC4/AC6 (batch semantics, headroom fail-to-degraded, agent-chaining-protocol.md carve-out) untouched by this redispatch (0ffb8d77a diff-stat = spawn-fanout.md + developer notebook + developer decision-journal only) — re-spot-checked all three intact at current HEAD, matching prior-cycle findings. mock-guard.sh on both touched files -> \"No production source files to scan. PASS.\" (docs/config-only). VERDICT: APPROVED.",
-        "qa_verdict": "APPROVED",
-        "qa_blocking_issues": [
-          "docs/agents/cowork-team/flow/spawn-fanout.md:132-134 (Step 5.1, POLICY_FILE-missing/unparseable/_fanout-missing branch) hardcodes the ENTIRE _fanout policy object as inline literals — {max_parallel_default:4, max_parallel_degraded:2, headroom_floor_mb:1500, load_per_core_factor:2, batch_wait_max_seconds:120} — duplicating cadence-policy.json's SSOT values verbatim inside the flow doc. Fails AC1 ('ZERO hardcoded fan-out numbers in spawn-fanout.md — all 5 thresholds resolve from cadence-policy.json _fanout, must reference the _fanout keys, not inline constants') — mechanically confirmed via grep, batch/headroom logic block. Also contradicts the commit message's own claim ('5 tunables, zero hardcoded numbers in the flow doc') and docs/WORK.md's claim ('zero hardcoded numbers in the flow doc') — both currently false as shipped. Creates SSOT-drift risk: if _fanout values are retuned later, this shadow copy silently keeps stale numbers on the degraded-file code path, defeating the point of an SSOT. FIX: on POLICY_FILE missing/unparseable/lacking _fanout, do not synthesize a full policy object from inline numbers — either (a) fail-loud + skip fan-out for the tick this cycle only (mirrors Step 5.0's existing blind-guard exit pattern: log + telegram + EXIT Step 5), or (b) if a numeric fallback is required, use a single conservative non-threshold sentinel (e.g. MAX_PARALLEL=1, fully serial) that is not presented as a shadow copy of the 5 SSOT values."
-        ],
-        "qa_reviewed_at": "2026-07-23T01:50:47Z",
-        "qa_reviewed_by": "qa",
-        "redispatch_count": 1,
-        "entered_review_at": "2026-07-23T01:24:05Z",
-        "qa_blocking_issues_resolved": true,
-        "qa_blocking_issues_resolved_at": "2026-07-23T01:24:05Z",
-        "qa_blocking_issues_resolution_note": "AC1 resolved: spawn-fanout.md Step 5.1 missing/unparseable-cadence-policy.json branch no longer inline-synthesizes the _fanout object. Downgrades to FANOUT_MODE=\"degraded_serial\" + MAX_PARALLEL=1 single conservative sentinel (not a shadow copy of any _fanout key) — mirrors pressure-read.md Step 4.2 missing-policy MODE-downgrade pattern. Step 5.2 inter-batch wait guarded with a matching mode branch (previously would have dereferenced FANOUT_POLICY.batch_wait_max_seconds on an undefined object). DWF-phase1-cadence.test.ts re-run 51/51 GREEN (not trusted from prior run). Commit 0ffb8d77a. grep-confirmed zero remaining inline _fanout numeric literals in spawn-fanout.md. AC2-AC6 untouched per redispatch scope.",
-        "qa_verified_at": "2026-07-23T01:50:47Z",
-        "qa_commit": "0ffb8d77a"
-      }
-    ],
+    "done_verified": [],
     "head": {
       "status": "idle",
       "active_task_id": null,
