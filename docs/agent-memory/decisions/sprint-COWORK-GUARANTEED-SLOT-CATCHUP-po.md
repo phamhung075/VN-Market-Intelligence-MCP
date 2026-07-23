@@ -25,3 +25,13 @@
 - DEDUP into the 3 rows minted 6h earlier from recon.md, updating acceptance only.
 **why-decision:** Neither pure FP nor mintable. vps_push_log sbv MAX=2026-07-21 03:05:21 makes 43h literally true, so not FP; but prices (03:08:05) + foreign-flow (03:08:59) died in the same 3.5-min window and sbv is the least-damaged source (sbv_rates moved 26130→26140→26120, last write 21:45Z) because sbvRatesJob's is_estimate=1 VCB fallback masks it — the exact mechanism FIX-VPS-SBV-HEALTH-SHARED-TABLE-IS-ESTIMATE already names. Root cause (systemd StartLimitBurst lockout) is already diagnosed and blocked_by user-escalation-vps-restart, so a 4th row adds zero throughput against a user-gated blocker (feedback_file_prior_art_check).
 **why-change:** Deviates from "mint if real" in the spawn brief — real ≠ unminted; the row existed 6h before the signal fired.
+
+### STEP po-S3 · po · 2026-07-22T23:58:00Z
+**task-id:** UC-CDC-P5
+**what-done:** Installed machine-readable depends_on=[UC-SDF-P6, ARCH-SESSION-CRON-PLANE-LIVENESS-WATCHDOG] on UC-CDC-P5, flipped status BLOCKED→BACKLOG, removed inline blocked_by; minted FIX-DEVTEAM-BOUNDED1-PROSE-SEQUENCING-UNBACKED-GATE (P1/S) for the systemic gap.
+**what-considered:**
+- Leave BLOCKED + add depends_on (belt+suspenders, but the promote gate only evaluates BACKLOG/TODO — a BLOCKED row is inert to the gate, so depends_on never fires and the row needs a MANUAL PO flip after predecessors land = not self-healing).
+- Flip BACKLOG + depends_on (promote-eligible-but-dep-gated: gate evaluates it every tick, deps_satisfied() holds it, auto-unblocks at predecessors' DONE_VERIFIED).
+- Systemic: harden the gate to PARSE po_sequencing_* prose for task-ids (rejected — regex-mining English for control flow is the exact fragility the shared lib exists to kill) vs a conservative-skip predicate that withholds any row with sequencing prose + empty depends_on.
+**why-decision:** BACKLOG makes the depends_on gate I'm installing actually load-bearing; verified live against scripts/lib/devteam-eligibility.jq — effective_depends_on resolves to exactly the 2 predecessors, deps_satisfied=false, is_bounded1_eligible=false (held), and it flips true only at DONE_VERIFIED. Removed blocked_by because the lib unions it into effective_depends_on; "dev-team" there = phantom dep that never reaches DONE_VERIFIED = permanent block, defeating auto-unblock. FIX targets the shared lib (all 3 pickers inherit) not prose-parsing.
+**why-change:** no change from plan — matches the spawn brief's preferred approach + the one-shared-contract principle from SPIKE-BOUNDED1-ELIGIBILITY-CONTRACT-REVIEW.
