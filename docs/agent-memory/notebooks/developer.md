@@ -1,20 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-23 | **Cycle:** UC-GCP-P7 (/commit skill rescope — mutex-bound, main-only)
-
-## Session 2026-07-23 — UC-GCP-P1 (BOUNDED-1 auto-pickup, cross-service/) — REVIEW
-
-**Task:** git-ci-publish-P1 RESCOPE — consolidate the 4 commit-convention docs into ONE SSOT documenting the format actually in use, PLUS reconcile the 2 coupled surfaces (audit script, tree-map DAG) the original CONFIRMED proposal missed.
-
-**Actions taken:** Rewrote `docs/policies/commit-convention.md` as single-file SSOT (140L, was 265L/4 files) — slug task IDs, two-tier type vocab (behavior + role types, both empirically confirmed live via `git log`), `Task:`/`AC:` trailers required on feat/fix, `Sprint:` demoted optional. Carried forward the heredoc `git commit -m`-only/never-`-a` rule VERBATIM. Deleted the 3 sibling children. Fixed the 2 dangling `.claude/knowledge/commit-convention.md` path callers (audit script comment + 2026-05-17 audit brief). Deprecated `commit-convention-audit.sh` in place (banner header — confirmed zero live invocation paths) rather than rewriting its predicates. Collapsed tree-map.md's 4-file subtree to one node.
-
-**Verification:** Post-change grep confirms zero refs to any deleted sibling doc or the nonexistent knowledge path outside historical/archival docs (2026-07-12 audit brief itself, old handoffs/specs — left untouched, not live callers). Tree-map subtree points to the one surviving path, verified on-disk. `/graphify docs --update --no-viz` hard-failed (no LLM API key in session env) — flagged in WORK.md, not silently skipped.
-
-**Board:** `task_board.in_progress[UC-GCP-P1]` → `review`, `next_agent=qa`, `.head` synced, via `orch-apply.sh`.
-
-**Scope discipline:** Docs-only, no code/tests touched. Left ~15 historical handoffs/specs/reports referencing the old `.claude/knowledge/commit-convention.md` path untouched — archival record of past sprints, not live pointers; rewriting them would falsify history for zero operational benefit.
-
-Zone health: commit-convention SSOT consolidated 4→1 file, dangling refs zero, audit script deprecated (was silently asserting dead vocab), tree-map DAG intact | HEALTHY
+**Last updated:** 2026-07-23 | **Cycle:** TE-T17 (notebook prune-bypass class fix — ops.md + code-janitor sweep)
 
 ## Session 2026-07-23 — UC-GCP-P8 (dev-team BOUNDED-1 auto-pickup, cross-service/) — REVIEW
 
@@ -57,3 +43,17 @@ Zone health: drain commit deletion-drop hole closed — tracked-only sweep captu
 **Scope discipline:** Touched exactly the 2 files named in the rescope (`.claude/skills/commit/SKILL.md`, `.claude/commands/commit.md`). No code/tests in scope (skill-doc-only FIX). Left the other live hardcoded `Co-Authored-By: Claude Opus 4.6` occurrence in `docs/references/bundles/bundle-developer.md` untouched — outside this task's named file scope.
 
 Zone health: `/commit` now has one definition, no branch-merge dead code, per-category mutex scoping matches commit-mutex's own TTL=90s sizing, stranded-peer-file guard closes the dirty-board-capture class, no hardcoded model-name trailer | HEALTHY
+
+## Session 2026-07-23 — TE-T17 (dev-team direct-execute, zone=multi) — REVIEW
+
+**Task:** ops.md notebook hit 701L (3.5x cap) — PostToolUse auto-prune hook only matches Write|Edit, Bash-heredoc writes (07-11 Docker incidents) bypass it; class bug across all 30 notebooks.
+
+**Actions taken:** (1) ops.md 1197L→29L (had grown past the 701L in the original finding) — 23 `## ` sections moved verbatim to new `docs/incidents/<date>-<slug>.md` files, one-line pointer left per incident. (2) New `scripts/agents-flow/notebook-linecap-sweep.sh` wired into `code-janitor/flow/main.md`'s existing 6h cron — sweeps all notebooks, delegates over-cap files to `notebook-auto-prune.sh`'s own drop-oldest logic via synthetic PostToolUse JSON (no duplicated pruning code, write-path-agnostic). (3) Blocking `wc -l` pre-commit gate added to ops's notebook-commit step. (4) `.test-notebook-prune-debug/` already absent — verified no-op.
+
+**Verification:** `wc -l` ops.md = 29 (≤200L). 5/5 pre-existing `test-notebook-auto-prune.sh` cases still GREEN after the cross-reference comment edit. New `notebook-linecap-sweep.test.sh` 7/7 GREEN (fixture scoped via `NOTEBOOK_SWEEP_PATTERN` — never touches real notebooks), idempotent second run clean.
+
+**Board:** `task_board.in_progress[TE-T17]` → `review`, `next_agent=qa`, `.head` synced, via `orch-apply.sh`.
+
+**Scope discipline:** Two OTHER real notebooks (`agent-father.md` 303L, `system-auditor.md` 204L) are currently also over cap — left untouched (out of this task's named scope; will be caught by the new sweep on its next 6h cron fire) rather than expanding scope mid-task.
+
+Zone health: notebook prune-bypass class closed — hot notebook (ops) under cap, sweep mechanism proven against synthetic fixtures + reuses tested hook logic, ops commit path gated | HEALTHY
