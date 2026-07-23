@@ -1,6 +1,6 @@
 # Developer Standards
 
-<!-- size-justification: 140L — unified developer reference: code search tools, test patterns, DDD rules, TypeScript conventions, naming. All read together at sprint start to set context; splitting into tool-guide + test-patterns + naming-rules fragments the unified "how we code" standard. SCRIPT-PERSIST 2026-06-07: Script Persistence section incl. maintenance clause (+15L, user directive). SYSREMAKE-P2-DEVTEAM-BACKLOG-PICKUP-BOUNDED1 2026-07-04: CANONICAL pointer for the dev-team idle-capacity backlog pickup scripts (+11L). PUSH-AUTONOMY-1 2026-07-14: Autonomous Push Gate section (+16L, user directive — push on 100% green, no user action, post-push real-data verify task). FIX-CMH-OBSOLETE-FILE-CLEANUP 2026-07-20: CANONICAL pointer for scripts/audits/clean-obsolete-files.sh (+8L). BLOCK-PUSH-CRON-AUDIT-BATCH-NO-QA 2026-07-22 (qa): pinned the "targeted/merge-gate suite" reading against the standing FIX-MCP-SUITE-HEALTH-BASELINE full-suite red so it stops being re-litigated per push (+3L). UC-MDH-P3 2026-07-23: CANONICAL pointer for scripts/agents-flow/memory-prune-sweep.sh (+14L). UC-MDH-P4 2026-07-23: CANONICAL pointer for scripts/agents-flow/decision-journal-archive.sh (+15L). UC-GCP-P8 2026-07-23: CANONICAL pointer for scripts/agents-flow/stranded-state-sweep.sh (+13L). TE-T17 2026-07-23: CANONICAL pointer for scripts/agents-flow/notebook-linecap-sweep.sh (+13L). -->
+<!-- size-justification: 140L — unified developer reference: code search tools, test patterns, DDD rules, TypeScript conventions, naming. All read together at sprint start to set context; splitting into tool-guide + test-patterns + naming-rules fragments the unified "how we code" standard. SCRIPT-PERSIST 2026-06-07: Script Persistence section incl. maintenance clause (+15L, user directive). SYSREMAKE-P2-DEVTEAM-BACKLOG-PICKUP-BOUNDED1 2026-07-04: CANONICAL pointer for the dev-team idle-capacity backlog pickup scripts (+11L). PUSH-AUTONOMY-1 2026-07-14: Autonomous Push Gate section (+16L, user directive — push on 100% green, no user action, post-push real-data verify task). FIX-CMH-OBSOLETE-FILE-CLEANUP 2026-07-20: CANONICAL pointer for scripts/audits/clean-obsolete-files.sh (+8L). BLOCK-PUSH-CRON-AUDIT-BATCH-NO-QA 2026-07-22 (qa): pinned the "targeted/merge-gate suite" reading against the standing FIX-MCP-SUITE-HEALTH-BASELINE full-suite red so it stops being re-litigated per push (+3L). UC-MDH-P3 2026-07-23: CANONICAL pointer for scripts/agents-flow/memory-prune-sweep.sh (+14L). UC-MDH-P4 2026-07-23: CANONICAL pointer for scripts/agents-flow/decision-journal-archive.sh (+15L). UC-GCP-P8 2026-07-23: CANONICAL pointer for scripts/agents-flow/stranded-state-sweep.sh (+13L). TE-T17 2026-07-23: CANONICAL pointer for scripts/agents-flow/notebook-linecap-sweep.sh (+13L). TE-T28 2026-07-23: CANONICAL pointer for scripts/gen-tool-list-stubs.py (+15L). -->
 
 ## Script Persistence — scripts/, never /tmp
 
@@ -376,6 +376,26 @@ jq --arg now "$NOW" -f scripts/devteam-backlog-claim-bounded1.jq \
   docs/data/orch/orch-state.json | bash scripts/orch-apply.sh
 ```
 Owning flow doc: `docs/agents/dev-team/flow/main.md` § Idle-capacity backlog pickup (BOUNDED-1), Step 0b head-idle fall-through, before Step 1 PO triage. BOUNDED-1 gate: WIP (`ready[].length + in_progress[].length`) must be `< 1` — this lane is capped at ONE task in flight (user-gated 2026-07-04, distinct from the WIP≤2 human/router-supervised budget). Both scripts are idempotent no-ops outside their gate condition; neither has a hardcoded task ID; both write ONLY through `orch-apply.sh`. **supervised gate (FIX-DEVTEAM-BOUNDED1-SUPERVISED-FLAG-GATE, 2026-07-09):** `effective_supervised` rows are NEVER auto-promoted — true if EITHER inline `.supervised` on the board row OR `backlog-detail.json` `.items[<id>].supervised` (detail-authoritative, no `.detail_ref` precondition) is true; absent/null in both = promotable. Closes the 2026-07-09T15:48Z near-miss where the old board-row-only check silently treated every detail_ref'd supervised row as unsupervised. Test: `scripts/test-devteam-bounded1-supervised-flag.sh`. **depends_on gate (FIX-DEVTEAM-BOUNDED1-DEPENDS-ON-GATE, 2026-07-08):** promote only picks rows whose effective `depends_on` (inline, or looked up in `backlog-detail.json` for `detail_ref`'d rows) are ALL `DONE_VERIFIED` in some `task_board` lane; a dep resolving nowhere is conservative-skipped. Filter runs during candidate ranking, not just on the final pick — a blocked top-ranked row never starves an eligible lower-ranked one. Test: `scripts/test-devteam-bounded1-depends-on.sh`. **epic-wrapper gate (FIX-DEVTEAM-BOUNDED1-EPIC-WRAPPER-GATE, 2026-07-10):** rows carrying a non-empty `children[]` (decomposition containers, e.g. `mode=audit-epic`/multi-child SPIKEs — not directly-dispatchable atomic tasks) are NEVER auto-promoted, regardless of `supervised` — `effective_children` mirrors `effective_supervised`'s precedence exactly (EITHER inline `.children` on the board row OR `backlog-detail.json` `.items[<id>].children` is non-empty, no `.detail_ref` precondition). Closes the 2026-07-09T23:17Z near-miss (AUDIT-FETCH-COMPLETE auto-claimed, point-fixed by hand) plus the structurally identical exposed row FACTORY-GUARD-CI-REGRESSION-SPIKE (`supervised:null` everywhere — the supervised gate alone could not have caught it). Test: `scripts/test-devteam-bounded1-epic-wrapper.sh`.
+
+**CANONICAL: Tool list-doc stub generator (TE-T28)**
+```bash
+python3 scripts/gen-tool-list-stubs.py              # live run — writes the current missing delta
+python3 scripts/gen-tool-list-stubs.py --dry-run     # preview only, writes nothing
+# Offline/test override (skips the live gateway call):
+TOOL_SCHEMA_JSON_OVERRIDE=<path-to-list_server_tools-json> python3 scripts/gen-tool-list-stubs.py --dry-run
+```
+Diffs `docs/data/tool-registry.json` (SSOT tool inventory) against the basenames already
+under `docs/agents/tools/list/` and mints a lean stub (get_price_history.md shape) for
+exactly the missing delta — idempotent, never overwrites an existing stub, never hardcodes
+a count. Live parameter schema is pulled via the gateway meta-tool `list_server_tools`
+(server=`vn-market`) through the shared bash bridge `scripts/agents-flow/mcp-call.sh`'s
+`mcp_call_gateway_meta()` — no duplicated transport. No-fabrication: if the live schema is
+unreachable, or a specific tool is absent from the live listing, the stub is still emitted
+from registry metadata only and clearly flagged `LIVE SCHEMA UNAVAILABLE` with zero guessed
+parameter rows. Owning brief:
+`docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-28`. Companion fix
+(same task): `.claude/skills/anti-hallucination/SKILL.md` — "no list/ doc" is a DOC GAP
+against `docs/data/tool-registry.json`, not proof the tool doesn't exist.
 
 `/tmp` is allowed ONLY for throwaway run-scoped DATA (payload json, stderr capture, session-id cache) — never for executable logic.
 

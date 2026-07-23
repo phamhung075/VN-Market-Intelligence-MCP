@@ -52,7 +52,7 @@ Step 2: Is tool name in my flow/cycle doc?
   NO  → DO NOT CALL. Log [SKIP].
 ```
 
-**SSOT for tool names:** `docs/agents/tools/list/` (count → `jq '.toolCount' docs/data/project-stats.json` files). If a name has no matching file there, it does not exist.
+**SSOT for tool names/count:** `docs/data/tool-registry.json` (`jq '.groups[].tools[]'` for names, `.totalCount` for count — authoritative; never hardcode). `docs/agents/tools/list/<tool>.md` is the DETAIL layer (signature/params/example) for a name already confirmed live in the registry. If a tool is in the registry but has no `list/` doc, that is a DOC GAP (mint it via `python3 scripts/gen-tool-list-stubs.py`, see `docs/policies/dev-standards.md` § Script Persistence) — NOT proof the tool doesn't exist. Only treat a name as nonexistent when it is absent from the registry itself. (Fixed TE-T28 — the old "no list/ file = doesn't exist" reading produced false BUG/skip verdicts on real, live tools; brief: `docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-28`.)
 
 **Root cause:** Agents pattern-match tool names from training data or adjacent names. This creates phantom calls that fail silently or trigger false bug reports.
 
