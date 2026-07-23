@@ -1,5 +1,24 @@
 # Agent Father — Notebook
 
+### Edit (system-auditor) 04:52 — 2026-07-23 FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE (fix-forward, QA CHANGES_REQUESTED)
+- QA (independent gate-keeper) confirmed the A-30 gate design matches the brief 1:1, but found
+  ONE blocking defect: `probe.sh:86` `BASELINE_PCT=$(docker stats ...)` had no `||` fallback —
+  unlike every other fallible docker call in the file (including the structurally-identical,
+  already-guarded call at :71, and my own :92 addition from the prior round). A docker-stats
+  failure there aborts the WHOLE script under `set -euo pipefail` (bare `var=$(failing_cmd)`
+  is not exempt from `set -e`) — disk(A-32)/A-20 never run, `=== PROBE DONE ===` never prints.
+- Fix: added the exact same guard idiom already used at :31/:66/:71/:92 —
+  `... || { echo "[A-30] baseline probe FAILED (container=${MCP_CONTAINER}): $?"; BASELINE_PCT="0"; }`.
+  1-line change, `probe.sh` only, per router's strict scope (did NOT touch `tier1-probe.md`,
+  app code, `emit-audit-signal.sh`, or `verify-a30-mcp-memory-reclamation.sh`).
+- Verified all 3 of QA's own repro steps: (1) live run at ~27% mem — SKIP branch hit, disk+A-20
+  ran after, `=== PROBE DONE ===` printed, exit 0; (2) `shellcheck -S warning` clean; (3)
+  reproduced QA's abort scenario with a bogus container name — script now prints the FAILED
+  line and still reaches `=== PROBE DONE ===`.
+- Commit: `probe.sh` alone, explicit pathspec (own commit `685285a7c`); notebook and decision
+  journal each committed separately per router instruction. Did not touch `orch-state.json` or
+  the board row — QA re-verify (router-driven) owns the next hop.
+
 ### Edit (system-auditor) 04:33 — 2026-07-23 FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE
 (router-dispatched, plan_only=false supervised=true, source-of-truth brief
 `docs/architecture-briefs/2026-07-23-auditor-a30-reclamation-gate-a21-windowed-restart.md`)
