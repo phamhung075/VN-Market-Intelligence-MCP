@@ -387,12 +387,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "TE-T24",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of TE-T24 — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-23T12:48:32Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "updated_at": "2026-07-23T13:01:36Z",
+    "updated_by": "developer"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -13650,6 +13649,37 @@
           "docs/agents/dev-team/flow/main.md"
         ],
         "status_note": "[Developer] REVIEW 2026-07-23T12:34:28Z. Implementation: added has_unbacked_sequencing_prose($detail_items) to scripts/lib/devteam-eligibility.jq (board-OR-detail po_sequencing_* key present AND effective_depends_on empty), wired as a new conjunct into is_bounded1_eligible ONLY (per the FIX spec's literal text — the root-cause incident was BOUNDED-1-specific). SLS/RLC/QA-Drain compose their own gate subsets, do not call is_bounded1_eligible, so they are unaffected by this conjunct today; verified all 4 shared-library callers (BOUNDED-1/SLS/RLC/QA-Drain) still parse+run clean and scripts/audits/devteam-dispatch-gate-satisfiability.sh is 100% PASS post-change. Extended scripts/audits/bounded1-supervised-lane-report.sh with a non-gating TERTIARY section listing every backlog row with unbacked prose sequencing (live: 1 row, PDF-AVAIL-02-FIX, also supervised:true). Added scripts/audits/devteam-bounded1-prose-sequencing-gate-verify.sh, 5/5 PASS: AC-1 (unbacked prose -> not eligible), AC-1b (same row + depends_on populated with a DONE_VERIFIED predecessor -> eligible), AC-1c (detail-side prose key, board-OR-detail symmetry), AC-2 (LIVE dynamic discovery, no hardcoded id -> the current UC-CDC-P5 row stays is_bounded1_eligible=false, correctly held by pre-existing deps_satisfied, not double-gated), control (clean row unaffected). Doc updated: docs/agents/dev-team/flow/main.md (gate description appended to the BOUNDED-1 Promote paragraph, Reusable Scripts bullet added, shared-library predicate list updated, size-justification note appended). Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md STEP developer-S3 (DJ-GATE-1 satisfied before this flip, per instruction). Deliberately did NOT regex-parse po_sequencing_* prose to infer a predecessor task-id (explicitly forbidden by spec).\n\nRESIDUAL GAPS FOR QA:\n(1) scripts/audits/devteam-bounded1-detail-disposition-gate-verify.sh's own CONTROL assertion FAILS (exit 1) on every run today. Confirmed via git-stash A/B test that this failure is IDENTICAL with and without this task's change -- it is a PRE-EXISTING bug in that sibling verifier's own test harness: make_isolated_fixture() never clears .task_board.ready[] before isolating a candidate row, so run_promote_picked_id()'s `.task_board.ready[0].id` read is contaminated by whatever real row already sits first in the LIVE board's ready[] array whenever the promote script no-ops. NOT caused by, and NOT fixed by, this task (out of scope) -- recommend a follow-up FIX task for that harness bug.\n(2) has_unbacked_sequencing_prose is defined in the shared library (available to any future caller) but is currently wired into is_bounded1_eligible ONLY -- SLS and RLC do not inherit its behavior today because neither calls is_bounded1_eligible (each composes its own predicate subset). This matches the spec's literal FIX instruction and the root-cause incident's scope, but flagging explicitly in case \"all three pickers inherit it automatically\" was intended as a behavioral requirement rather than shared-definition availability.\n(3) No TypeScript/bun changes in this task (pure jq + bash) -- `bun test`/`bun tsc --noEmit` are not applicable; verification was via the 3 audit scripts listed above (all read-only, no live orch-state.json mutation from any of them).\n"
+      },
+      {
+        "id": "TE-T24",
+        "title": "T-24 Context-bloat gate counts LINES only: add byte/token cap (mega-line evasion protection)",
+        "owner": "developer",
+        "status": "REVIEW",
+        "type": "SPRINT-M",
+        "size": "M",
+        "priority": "P2",
+        "wave": 4,
+        "est_saving": "Preventive — protects all P1 recoveries from regrowth",
+        "zone": "cross-service/",
+        "sprint": "TOKEN-ECONOMY-AUDIT",
+        "depends": [],
+        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-24",
+        "note": "GOVERNANCE (land after P1 extractions so it locks them in). context-bloat-backstop.sh measures only wc -l; agents evade via 1500-2600-char lines (po main.md 275L/17.4k tok). Add wc -c predicate (cap = MATCHED_CAP x 60 bytes), same settle-window, reason='byte-cap'. Extend backstop test w/ mega-line fixture. Root-cause enabler of the po/changelog bloat.",
+        "promoted_at": "2026-07-23T12:48:32Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-23T13:01:49Z",
+        "claimed_at": "2026-07-23T12:48:32Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "branch": null,
+        "commit": "1fe592c0066b79fe95129707d85aaa3ea57ae2ab",
+        "files": [
+          "scripts/agents-flow/context-bloat-backstop.sh",
+          "scripts/agents-flow/context-bloat-backstop.test.sh",
+          "docs/policies/dev-standards.md"
+        ],
+        "status_note": "Byte-cap predicate (TE-T24) added to context-bloat-backstop.sh alongside existing line predicate, same settle-window; reason='byte-cap' (or 'line-cap,byte-cap'). Test extended T3 (mega-line 5L/~12.5KB, byte-cap only) + T4 (150L normal, no false positive). All 4 backstop tests GREEN. Journal: sprint-TOKEN-ECONOMY-AUDIT-developer.md STEP developer-S10."
       }
     ],
     "qa": [],
@@ -13671,30 +13701,7 @@
     },
     "last_triaged_at": "2026-07-23T12:48:32Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "TE-T24",
-        "title": "T-24 Context-bloat gate counts LINES only: add byte/token cap (mega-line evasion protection)",
-        "owner": "developer",
-        "status": "IN_PROGRESS",
-        "type": "SPRINT-M",
-        "size": "M",
-        "priority": "P2",
-        "wave": 4,
-        "est_saving": "Preventive — protects all P1 recoveries from regrowth",
-        "zone": "cross-service/",
-        "sprint": "TOKEN-ECONOMY-AUDIT",
-        "depends": [],
-        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-24",
-        "note": "GOVERNANCE (land after P1 extractions so it locks them in). context-bloat-backstop.sh measures only wc -l; agents evade via 1500-2600-char lines (po main.md 275L/17.4k tok). Add wc -c predicate (cap = MATCHED_CAP x 60 bytes), same settle-window, reason='byte-cap'. Extend backstop test w/ mega-line fixture. Root-cause enabler of the po/changelog bloat.",
-        "promoted_at": "2026-07-23T12:48:32Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-23T12:48:33Z",
-        "claimed_at": "2026-07-23T12:48:32Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
