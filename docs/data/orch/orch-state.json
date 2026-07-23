@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
+    "status": "review",
     "active_task_id": "UC-CCA-P6-NBWRITE",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of UC-CCA-P6-NBWRITE — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-23T02:15:43Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "next_agent": "qa",
+    "next_action": "QA to run pipeline on UC-CCA-P6-NBWRITE (review lane) — Piece 1 notebook-write AC-3 consolidation.",
+    "updated_at": "2026-07-23T02:27:21Z",
+    "updated_by": "developer"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -13453,6 +13453,38 @@
         "updated_at": "2026-07-22T02:18:01Z",
         "owner": "agent-father",
         "next_agent": "agent-father"
+      },
+      {
+        "id": "UC-CCA-P6-NBWRITE",
+        "type": "FIX",
+        "title": "Single notebook-write path: remove the 4 inline AC-3 copies + resolve the fb OVERWRITE/APPEND contradiction (Piece 1)",
+        "status": "REVIEW",
+        "priority": "P1",
+        "size": "M",
+        "zone": "cross-service/",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "RESCOPE",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#cowork-cycle-agents-P6",
+        "note": "SCOPE=verifier Rescope note PIECE 1 (not covered by any queued row). Replace 4 inline AC-3 compose blocks (news-scout, chef, bctc, daily-predict) with the notebook-write skill pointer + a <=10L per-agent template; fix fb-market-poster main.md OVERWRITE->APPEND-class (stops wiping its permanent Lessons section). PIECE 2 (no-op rule, skip-parenthetical deletion, fb cowork-end-cycle) folds into queued TE-T05 (see TE-T05 audit_ref).",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "related": [
+          "TE-T05"
+        ],
+        "priority_bumped_from": "P2",
+        "priority_bumped_at": "2026-07-17T04:54:03Z",
+        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
+        "promoted_at": "2026-07-23T02:15:43Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "updated_at": "2026-07-23T02:27:29Z",
+        "claimed_at": "2026-07-23T02:15:43Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "updated_by": "developer",
+        "dev_completed_at": "2026-07-23T02:27:21Z",
+        "dev_result": "Piece 1 done: replaced 4 inline AC-3 compose blocks (news-scout, bctc-analyst, chef, digest-predict) with notebook-write skill pointer + <=10L per-agent template; fixed fb-market-poster main.md OVERWRITE->APPEND wording + restructured template (Lessons/Known patterns as never-pruned preamble, per-cycle body rolls as ## c<NNN>). Net -59 lines / 5 files. Residual gap flagged (not fixed): weekly-recap.md/weekly-prediction.md still say full overwrite for the same notebook — outside Piece 1 file list."
       }
     ],
     "qa": [],
@@ -13474,36 +13506,7 @@
     },
     "last_triaged_at": "2026-07-23T02:15:43Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "UC-CCA-P6-NBWRITE",
-        "type": "FIX",
-        "title": "Single notebook-write path: remove the 4 inline AC-3 copies + resolve the fb OVERWRITE/APPEND contradiction (Piece 1)",
-        "status": "IN_PROGRESS",
-        "priority": "P1",
-        "size": "M",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "RESCOPE",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#cowork-cycle-agents-P6",
-        "note": "SCOPE=verifier Rescope note PIECE 1 (not covered by any queued row). Replace 4 inline AC-3 compose blocks (news-scout, chef, bctc, daily-predict) with the notebook-write skill pointer + a <=10L per-agent template; fix fb-market-poster main.md OVERWRITE->APPEND-class (stops wiping its permanent Lessons section). PIECE 2 (no-op rule, skip-parenthetical deletion, fb cowork-end-cycle) folds into queued TE-T05 (see TE-T05 audit_ref).",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "related": [
-          "TE-T05"
-        ],
-        "priority_bumped_from": "P2",
-        "priority_bumped_at": "2026-07-17T04:54:03Z",
-        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
-        "promoted_at": "2026-07-23T02:15:43Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "updated_at": "2026-07-23T02:15:44Z",
-        "claimed_at": "2026-07-23T02:15:43Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
