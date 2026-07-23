@@ -74,14 +74,6 @@ func createTempMarketDB(t *testing.T) (path string, cleanup func()) {
 	return dbPath, func() { os.Remove(dbPath) }
 }
 
-// createTempOwnDB creates an empty temp SQLite file for stock_price.db writes.
-func createTempOwnDB(t *testing.T) (path string, cleanup func()) {
-	t.Helper()
-	dir := t.TempDir()
-	dbPath := filepath.Join(dir, "stock_price.db")
-	return dbPath, func() { os.Remove(dbPath) }
-}
-
 // ── Tier3CacheFetcher tests ───────────────────────────────────────────────────
 
 func TestTier3Fetcher_CacheHit(t *testing.T) {
@@ -149,8 +141,6 @@ func TestTier3Fetcher_DBNotExist_ReturnsNil(t *testing.T) {
 func TestSQLiteRepo_GetHistory_HitsMarketDB(t *testing.T) {
 	marketDB, mCleanup := createTempMarketDB(t)
 	defer mCleanup()
-	ownDB, oCleanup := createTempOwnDB(t)
-	defer oCleanup()
 
 	// Seed 3 days of OHLCV history into daily_ohlcv (source of truth for history)
 	db, _ := sql.Open("sqlite3", marketDB+"?_journal_mode=WAL")
@@ -164,7 +154,7 @@ func TestSQLiteRepo_GetHistory_HitsMarketDB(t *testing.T) {
 	}
 	db.Close()
 
-	repo := infrastructure.NewSQLitePriceHistoryRepository(marketDB, ownDB)
+	repo := infrastructure.NewSQLitePriceHistoryRepository(marketDB)
 	history, err := repo.GetHistory("VCB", 7)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -180,48 +170,14 @@ func TestSQLiteRepo_GetHistory_HitsMarketDB(t *testing.T) {
 func TestSQLiteRepo_GetHistory_EmptyForUnknown(t *testing.T) {
 	marketDB, mCleanup := createTempMarketDB(t)
 	defer mCleanup()
-	ownDB, oCleanup := createTempOwnDB(t)
-	defer oCleanup()
 
-	repo := infrastructure.NewSQLitePriceHistoryRepository(marketDB, ownDB)
+	repo := infrastructure.NewSQLitePriceHistoryRepository(marketDB)
 	history, err := repo.GetHistory("UNKNOWN_XYZ", 30)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if len(history) != 0 {
 		t.Errorf("expected empty history, got %d rows", len(history))
-	}
-}
-
-func TestSQLiteRepo_SaveQuote_Writes(t *testing.T) {
-	marketDB, mCleanup := createTempMarketDB(t)
-	defer mCleanup()
-	ownDB, oCleanup := createTempOwnDB(t)
-	defer oCleanup()
-
-	repo := infrastructure.NewSQLitePriceHistoryRepository(marketDB, ownDB)
-	q := &domain.PriceQuote{
-		Code:      "HPG",
-		Price:     55000,
-		Volume:    3000000,
-		FetchedAt: time.Now().UTC().Format(time.RFC3339),
-	}
-	err := repo.SaveQuote(q)
-	if err != nil {
-		t.Fatalf("SaveQuote error: %v", err)
-	}
-
-	// Verify the row is readable from own DB
-	db, _ := sql.Open("sqlite3", ownDB)
-	defer db.Close()
-	var code string
-	var price float64
-	row := db.QueryRow(`SELECT code, price FROM market_prices_cache WHERE code = ?`, "HPG")
-	if scanErr := row.Scan(&code, &price); scanErr != nil {
-		t.Fatalf("row not found after SaveQuote: %v", scanErr)
-	}
-	if code != "HPG" || price != 55000 {
-		t.Errorf("unexpected row: code=%s price=%f", code, price)
 	}
 }
 
@@ -234,8 +190,6 @@ func TestSQLiteRepo_SaveQuote_Writes(t *testing.T) {
 func TestSQLiteRepo_GetHistory_OHLCFieldParity(t *testing.T) {
 	marketDB, mCleanup := createTempMarketDB(t)
 	defer mCleanup()
-	ownDB, oCleanup := createTempOwnDB(t)
-	defer oCleanup()
 
 	// Seed one row with asymmetric OHLCV values directly into daily_ohlcv.
 	// Derive seedDate relative to now so it always lands inside GetHistory's
@@ -265,7 +219,7 @@ func TestSQLiteRepo_GetHistory_OHLCFieldParity(t *testing.T) {
 		t.Fatalf("seed daily_ohlcv: %v", err)
 	}
 
-	repo := infrastructure.NewSQLitePriceHistoryRepository(marketDB, ownDB)
+	repo := infrastructure.NewSQLitePriceHistoryRepository(marketDB)
 	history, err := repo.GetHistory("FPT", 7)
 	if err != nil {
 		t.Fatalf("GetHistory error: %v", err)

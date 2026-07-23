@@ -48,8 +48,6 @@ func (h *mockHistory) GetHistory(_ string, _ int) ([]domain.DailyOHLCV, error) {
 	return h.rows, nil
 }
 
-func (h *mockHistory) SaveQuote(_ *domain.PriceQuote) error { return nil }
-
 // ptr returns a pointer to v. Helper to create *float64 values inline.
 func ptr(v float64) *float64 { return &v }
 

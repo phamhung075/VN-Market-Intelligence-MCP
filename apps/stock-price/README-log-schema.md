@@ -26,7 +26,6 @@ All logs are emitted as structured JSON lines via `log/slog` to stdout.
 |---|---|---|
 | `port` | int | Listening port (5000) |
 | `market_db` | string | Path to market.db (readonly Tier 3 source) |
-| `own_db` | string | Path to stock_price.db (write — SaveQuote cache) |
 | `addr` | string | Bind address (`:5000`) |
 
 ## Price fetch log fields
@@ -38,7 +37,7 @@ All logs are emitted as structured JSON lines via `log/slog` to stdout.
 ## Sample log lines
 
 ```json
-{"time":"2026-05-14T20:15:30.123456789Z","level":"INFO","msg":"stock-price starting","port":5000,"market_db":"/app/data/market.db","own_db":"/app/data/stock_price.db"}
+{"time":"2026-05-14T20:15:30.123456789Z","level":"INFO","msg":"stock-price starting","port":5000,"market_db":"/app/data/market.db"}
 {"time":"2026-05-14T20:15:30.456789012Z","level":"INFO","msg":"stock-price listening","addr":":5000"}
 {"time":"2026-05-14T20:15:31.000000000Z","level":"INFO","msg":"http request","method":"GET","path":"/health","duration_ms":1}
 {"time":"2026-05-14T20:15:31.100000000Z","level":"INFO","msg":"http request","method":"POST","path":"/price/fetch","duration_ms":48}

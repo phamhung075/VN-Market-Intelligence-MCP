@@ -286,18 +286,15 @@ func (f *Tier3CacheFetcher) FetchPrice(code string) (*domain.PriceQuote, error) 
 
 // ── SQLite Price History Repository ─────────────────────────────────────────
 
-// SQLitePriceHistoryRepository reads history from market.db (readonly)
-// and writes quotes to stock_price.db (write-only cache).
+// SQLitePriceHistoryRepository reads history from market.db (readonly).
 type SQLitePriceHistoryRepository struct {
-	marketDBPath    string // readonly — market.db
-	ownDBPath       string // write — stock_price.db
+	marketDBPath string // readonly — market.db
 }
 
-// NewSQLitePriceHistoryRepository creates the dual-DB repository.
-func NewSQLitePriceHistoryRepository(marketDBPath, ownDBPath string) *SQLitePriceHistoryRepository {
+// NewSQLitePriceHistoryRepository creates the readonly history repository.
+func NewSQLitePriceHistoryRepository(marketDBPath string) *SQLitePriceHistoryRepository {
 	return &SQLitePriceHistoryRepository{
 		marketDBPath: marketDBPath,
-		ownDBPath:    ownDBPath,
 	}
 }
 
@@ -335,31 +332,4 @@ func (r *SQLitePriceHistoryRepository) GetHistory(code string, days int) ([]doma
 		result = []domain.DailyOHLCV{}
 	}
 	return result, nil
-}
-
-// SaveQuote writes a quote to stock_price.db (market_prices_cache table).
-// Write failure is silently ignored (fire-and-forget semantics, AC-6).
-func (r *SQLitePriceHistoryRepository) SaveQuote(quote *domain.PriceQuote) error {
-	dsn := fmt.Sprintf("file:%s?_journal_mode=WAL", r.ownDBPath)
-	db, err := sql.Open("sqlite3", dsn)
-	if err != nil {
-		return nil //nolint:nilerr
-	}
-	defer db.Close()
-
-	_, err = db.Exec(
-		`CREATE TABLE IF NOT EXISTS market_prices_cache
-		 (code TEXT, price REAL, volume REAL, fetched_at TEXT)`,
-	)
-	if err != nil {
-		return nil //nolint:nilerr
-	}
-
-	_, err = db.Exec(
-		`INSERT INTO market_prices_cache (code, price, volume, fetched_at) VALUES (?, ?, ?, ?)`,
-		quote.Code, quote.Price, quote.Volume, quote.FetchedAt,
-	)
-	// Ignore write errors — price cache is best-effort
-	_ = err
-	return nil
 }

@@ -40,7 +40,6 @@ type mockHistory struct {
 func (h *mockHistory) GetHistory(_ string, _ int) ([]domain.DailyOHLCV, error) {
 	return h.rows, h.err
 }
-func (h *mockHistory) SaveQuote(_ *domain.PriceQuote) error { return nil }
 
 // ── test fixtures ─────────────────────────────────────────────────────────────
 

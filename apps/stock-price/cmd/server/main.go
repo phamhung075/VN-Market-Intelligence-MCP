@@ -29,19 +29,17 @@ func main() {
 	// ── Config ───────────────────────────────────────────────────────────────
 	port := envInt("PORT", 5000)
 	marketDBPath := envStr("DB_PATH", "./data/market.db")
-	ownDBPath := envStr("STOCK_PRICE_DB_PATH", "./data/stock_price.db")
 
 	slog.Info("stock-price starting",
 		"port", port,
 		"market_db", marketDBPath,
-		"own_db", ownDBPath,
 	)
 
 	// ── Infrastructure (Fence-C: only here) ──────────────────────────────────
 	tier1 := infrastructure.NewTier1Fetcher()
 	tier2 := infrastructure.NewTier2Fetcher()
 	tier3 := infrastructure.NewTier3Fetcher(marketDBPath)
-	historyRepo := infrastructure.NewSQLitePriceHistoryRepository(marketDBPath, ownDBPath)
+	historyRepo := infrastructure.NewSQLitePriceHistoryRepository(marketDBPath)
 
 	// IND-P1-FOREIGN-ACCUM-RANK: Foreign flow and room event repositories
 	foreignFlowRepo := infrastructure.NewSQLiteForeignFlowRepository(marketDBPath)

@@ -6,8 +6,7 @@ type PriceFetcherPort interface {
 	FetchPrice(code string) (*PriceQuote, error)
 }
 
-// PriceHistoryPort is the abstract price history + cache-write port.
+// PriceHistoryPort is the abstract price history port.
 type PriceHistoryPort interface {
 	GetHistory(code string, days int) ([]DailyOHLCV, error)
-	SaveQuote(quote *PriceQuote) error
 }
