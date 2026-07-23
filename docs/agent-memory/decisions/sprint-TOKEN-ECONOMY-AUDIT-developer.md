@@ -103,3 +103,14 @@
 - Sweep delegates to the existing, already-tested `notebook-auto-prune.sh` via synthetic stdin JSON vs reimplementing drop-oldest logic in the sweep itself — chose delegation: single source of truth, zero duplicated pruning code, any future fix to the prune algorithm automatically covers both call paths.
 **why-decision:** `wc -l` on ops.md post-prune = 29 (≤200L cap, objective). All 5 pre-existing `test-notebook-auto-prune.sh` cases still GREEN after the cross-reference comment edit (verified rerun, not self-report). New `notebook-linecap-sweep.test.sh` (7 assertions, sandboxed via `NOTEBOOK_SWEEP_PATTERN` scoping so it never touches real notebooks) GREEN on first and idempotent second run.
 **why-change:** No change from plan — task's explicit 4-item list was followed as specified; did not expand into a global settings.local.json hook-matcher change beyond what was asked (see what-considered above).
+
+---
+
+### STEP developer-S10 · developer · 2026-07-23T12:59:36Z
+**task-id:** TE-T24
+**what-done:** Added independent byte-cap predicate (MATCHED_CAP x 60 bytes, reason='byte-cap') to context-bloat-backstop.sh alongside the existing line predicate, same settle-window re-read; extended the test with T3 (mega-line 5L/~12.5KB, byte-cap only, passes line cap) + T4 (150L normal file, no false positive).
+**what-considered:**
+- Whether the existing line-based size-justification comment should also suppress a byte-cap breach — decided NO: a justification declares a LINE count only; honoring it for bytes would let a mega-line file just paste a justification header and keep evading, defeating T-24's purpose. Verified via a manual fixture (line-justified 205L file still emits reason=byte-cap).
+- Single combined signal with a comma-joined REASON ("line-cap,byte-cap") vs two separate signals per predicate — chose one signal, kept the existing one-signal-per-file DEDUP semantics unchanged (additive, not disruptive).
+**why-decision:** All 4 backstop tests GREEN (T1-T4) plus 2 ad-hoc manual fixtures (both-breach -> reason=line-cap,byte-cap; line-justified/byte-not -> reason=byte-cap) confirm the mega-line evasion is closed without regressing existing line-cap behavior.
+**why-change:** No change from plan.
