@@ -226,11 +226,51 @@ def resolved_dispatch_lane($detail_items):
     elif ($ow | length) > 0 then $ow
     else "developer" end;
 
+# ---- prose-sequencing-without-machine-encoding guard
+# (FIX-DEVTEAM-BOUNDED1-PROSE-SEQUENCING-UNBACKED-GATE, 2026-07-23) ----
+# ROOT CAUSE: PO-authored sequencing constraints written in prose fields
+# (`po_sequencing_YYYYMMDD` keys, e.g. UC-CDC-P5's `po_sequencing_20260722`
+# — "must land LAST, after UC-SDF-P6 and the liveness watchdog") are
+# INVISIBLE to `effective_depends_on()` above, which only ever reads
+# `.depends_on`/`.depends`/`.blocked_by`. 2026-07-22: BOUNDED-1 blind-
+# promoted UC-CDC-P5 (ordering constraint lived ONLY in prose) then had to
+# be reverted — a mis-promote+revert churn cycle on a P1 row, hand-contained
+# by installing `depends_on` on that one row after the fact. This def closes
+# the gate for the NEXT prose-only-sequenced row, generically.
+#
+# A row "has" prose sequencing if EITHER the inline board row OR its
+# detail_ref'd counterpart (`docs/data/orch/archive/backlog-detail.json`
+# `.items[<id>]`) carries any object key matching `^po_sequencing` — same
+# board-OR-detail OR-precedence every other effective_* predicate above
+# uses (a PO may leave the note on either side depending on which triage
+# pass wrote it). "Unbacked" = the row's `effective_depends_on` (which
+# ALREADY reads both locations + all 3 field-name aliases) resolves to an
+# empty list — i.e. the ordering constraint has not yet been machine-
+# encoded anywhere this gate can see.
+#
+# DELIBERATELY DOES NOT attempt to parse the prose to extract a predecessor
+# task-id (regex-mining English sentences for control flow is brittle and
+# is exactly the fragility this shared-library consolidation exists to
+# avoid — see file header). This predicate only detects the UNBACKED
+# condition and forces the ordering to be encoded as real `depends_on`
+# before auto-dispatch proceeds; it never infers what that `depends_on`
+# should be.
+def has_unbacked_sequencing_prose($detail_items):
+  ( ((keys // []) | any(test("^po_sequencing")))
+    or ( (.id != null)
+         and ($detail_items[.id] != null)
+         and (($detail_items[.id] | type) == "object")
+         and (($detail_items[.id] | keys) | any(test("^po_sequencing")))
+       )
+  ) as $has_prose
+  | $has_prose and ((effective_depends_on($detail_items) | length) == 0);
+
 # ---- BOUNDED-1's full unattended-auto-pickup eligibility (composed) ----
 # `.` = candidate row object. True iff the row is safe for FULLY UNATTENDED
 # (no human/router/PO adjudication) auto-dispatch: not supervised, not an
 # epic wrapper, deps satisfied, not detail-deferred, not non-dev-owner-
-# unrouted, not plan_only, not non-dev-next_agent-unrouted.
+# unrouted, not plan_only, not non-dev-next_agent-unrouted, not carrying
+# unbacked prose sequencing.
 def is_bounded1_eligible($detail_items; $status_map):
   (effective_supervised($detail_items) != true)
     and (is_epic_wrapper($detail_items) != true)
@@ -238,4 +278,5 @@ def is_bounded1_eligible($detail_items; $status_map):
     and (is_detail_deferred($detail_items) != true)
     and (is_non_dev_owner_unrouted($detail_items) != true)
     and (effective_plan_only($detail_items) != true)
-    and (is_non_dev_next_agent_unrouted($detail_items) != true);
+    and (is_non_dev_next_agent_unrouted($detail_items) != true)
+    and (has_unbacked_sequencing_prose($detail_items) != true);

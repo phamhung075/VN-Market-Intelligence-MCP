@@ -66,9 +66,21 @@
 # see that file's header for the design-principle rationale, adopted from
 # SPIKE-BOUNDED1-ELIGIBILITY-CONTRACT-REVIEW).
 #
+# TERTIARY section (FIX-DEVTEAM-BOUNDED1-PROSE-SEQUENCING-UNBACKED-GATE,
+# 2026-07-23, informational only — does not gate exit code, same rationale
+# as SECONDARY): lists every `task_board.backlog[]` row where
+# `has_unbacked_sequencing_prose($detail_items)` is true — a PO-authored
+# `po_sequencing_*` ordering note exists (board or detail) but no
+# machine-readable `depends_on`/`depends`/`blocked_by` backs it, so
+# `is_bounded1_eligible` now withholds the row (conservative-skip) until
+# the dependency is encoded. This section exists so that withholding is
+# SURFACED, not a row silently idling forever — nudges PO to install
+# `depends_on` the way UC-CDC-P5 was hand-fixed on 2026-07-22.
+#
 # Usage: bash scripts/audits/bounded1-supervised-lane-report.sh
 # Exit 0 = every supervised+plan_only row has a resolved dispatch lane.
 # Exit 1 = at least one supervised+plan_only row has dispatch-lane=none.
+# (TERTIARY findings never affect the exit code.)
 
 set -euo pipefail
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -145,6 +157,19 @@ jq -c \
     ] | sort_by([.rank, (.age_days // -1) * -1])
   ' "$STATE" > "$WORK/secondary.json"
 
+jq -c \
+  --argjson now_epoch "$NOW_EPOCH" \
+  --slurpfile detail "$DETAIL" \
+  --slurpfile roster "$WORK/roster.json" \
+  "$JQ_DEFS"'
+  (detail_items_from($detail)) as $detail_items
+  | ($roster[0] | map({(.id): .type}) | add) as $roster_map
+  | [ .task_board.backlog[]
+    | select(. | has_unbacked_sequencing_prose($detail_items))
+    | report_row($detail_items; $roster_map; $now_epoch)
+    ] | sort_by([.rank, (.age_days // -1) * -1])
+  ' "$STATE" > "$WORK/tertiary.json"
+
 print_table() {
   local file="$1"
   printf '%-46s %-9s %-9s %-28s\n' "ID" "PRIORITY" "AGE(d)" "DISPATCH-LANE"
@@ -175,6 +200,17 @@ echo "Secondary (supervised XOR plan_only) rows: $SECONDARY_TOTAL — dispatch-l
 if [ "$SECONDARY_UNRESOLVED" -gt 0 ]; then
   echo "  (out-of-scope for this task's PASS/FAIL gate — pre-existing mint-time owner/next_agent gap, not the supervised+plan_only quarantine; listed for visibility)"
   jq -r '.[] | select(.dispatch_lane == "none") | "  - " + .id' "$WORK/secondary.json"
+fi
+
+echo ""
+echo "=== TERTIARY (informational only, does not gate exit code): prose sequencing (po_sequencing_*) with unbacked depends_on ==="
+print_table "$WORK/tertiary.json"
+TERTIARY_TOTAL=$(jq 'length' "$WORK/tertiary.json")
+echo ""
+echo "Tertiary (unbacked prose-sequencing) rows: $TERTIARY_TOTAL"
+if [ "$TERTIARY_TOTAL" -gt 0 ]; then
+  echo "  (FIX-DEVTEAM-BOUNDED1-PROSE-SEQUENCING-UNBACKED-GATE — po_sequencing_* prose exists but depends_on is empty; row is withheld from BOUNDED-1 auto-pickup until PO installs a machine-readable depends_on. Not silent — listed for visibility.)"
+  jq -r '.[] | "  - " + .id' "$WORK/tertiary.json"
 fi
 
 echo ""
