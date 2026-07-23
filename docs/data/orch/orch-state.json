@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
+    "status": "review",
     "active_task_id": "UC-GCP-P1",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of UC-GCP-P1 — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-23T06:16:59Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "next_agent": "qa",
+    "next_action": "QA verify UC-GCP-P1 commit-convention SSOT consolidation — grep-verify zero dangling refs, confirm tree-map DAG integrity, confirm audit script deprecation banner, review commits 7dcf90919/8c6d71683",
+    "updated_at": "2026-07-23T06:31:33Z",
+    "updated_by": "developer"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -13433,6 +13433,34 @@
         "updated_at": "2026-07-22T02:18:01Z",
         "owner": "agent-father",
         "next_agent": "agent-father"
+      },
+      {
+        "id": "UC-GCP-P1",
+        "type": "CLEAN",
+        "title": "Consolidate the 4 commit-convention docs into ONE SSOT documenting the format actually in use + reconcile audit script + tree-map",
+        "status": "REVIEW",
+        "priority": "P1",
+        "size": "M",
+        "zone": "cross-service/",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "RESCOPE",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#git-ci-publish-P1",
+        "note": "SCOPE=verifier Rescope note. Rewrite docs/policies/commit-convention.md as single SSOT (slug task IDs, decide type vocab incl incident/role types), CARRY FORWARD the live heredoc `git commit -m`-only/never-`-a` rule (c47 root cause, merge-gate Control4). Delete the 3 sibling docs. Grep BOTH 'commit-convention.md §' AND path-only refs (two cite a nonexistent .claude/knowledge path). Update commit-convention-audit.sh predicates+VOCAB (or deprecate) and tree-map.md 4-file subtree (DAG invariant).",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "priority_bumped_from": "P2",
+        "priority_bumped_at": "2026-07-17T04:54:03Z",
+        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
+        "promoted_at": "2026-07-23T06:16:59Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "updated_at": "2026-07-23T06:31:33Z",
+        "claimed_at": "2026-07-23T06:16:59Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "updated_by": "developer",
+        "review_note": "commit-convention.md rewritten as single-file SSOT (140L); 3 sibling docs deleted; 2 dangling .claude/knowledge path refs fixed (audit script + 2026-05-17 audit brief); commit-convention-audit.sh deprecated in place (0 live invocation paths confirmed); tree-map.md 4-file subtree collapsed to 1 node. Commits: 7dcf90919 (main), 8c6d71683 (memory/journal+notebook). Post-change grep confirms zero dangling refs outside historical/archival docs (left untouched by design). graphify --update could not run this session (no LLM API key in env) — flagged, not silently skipped."
       }
     ],
     "qa": [],
@@ -13454,33 +13482,7 @@
     },
     "last_triaged_at": "2026-07-23T06:16:59Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "UC-GCP-P1",
-        "type": "CLEAN",
-        "title": "Consolidate the 4 commit-convention docs into ONE SSOT documenting the format actually in use + reconcile audit script + tree-map",
-        "status": "IN_PROGRESS",
-        "priority": "P1",
-        "size": "M",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "RESCOPE",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#git-ci-publish-P1",
-        "note": "SCOPE=verifier Rescope note. Rewrite docs/policies/commit-convention.md as single SSOT (slug task IDs, decide type vocab incl incident/role types), CARRY FORWARD the live heredoc `git commit -m`-only/never-`-a` rule (c47 root cause, merge-gate Control4). Delete the 3 sibling docs. Grep BOTH 'commit-convention.md §' AND path-only refs (two cite a nonexistent .claude/knowledge path). Update commit-convention-audit.sh predicates+VOCAB (or deprecate) and tree-map.md 4-file subtree (DAG invariant).",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "priority_bumped_from": "P2",
-        "priority_bumped_at": "2026-07-17T04:54:03Z",
-        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
-        "promoted_at": "2026-07-23T06:16:59Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "updated_at": "2026-07-23T06:17:00Z",
-        "claimed_at": "2026-07-23T06:16:59Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
