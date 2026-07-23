@@ -387,12 +387,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "MD-FUNC-01-FIX",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of MD-FUNC-01-FIX — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-23T14:49:01Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "updated_at": "2026-07-23T15:03:44Z",
+    "updated_by": "dev-mcp-server"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -13762,6 +13761,33 @@
         "completed_at": "2026-07-23T14:37:14Z",
         "completed_by": "developer",
         "status_note": "TE-T33: new scripts/agents-flow/cold-archive-sweep.sh (monthly-guarded 1st-of-month, COLD_ARCHIVE_FORCE=1 override), idempotent. Handoffs leg: docs/handoffs/*.md >30d AND not referenced anywhere in the 5 OPEN task_board lanes (jq recursive scan, computed live) -> archive/YYYY-MM/ (live dry-check: 839 candidates, 27 referenced, 2 correctly held back). Sessions leg: non-.md files >30d -> archive/YYYY-MM/ (the .md leg is already owned by memory-prune-sweep.sh at 14d flat-archive -- verified live before coding, no overlap). po-decisions.md 200L rotation reuses notebook-auto-prune.sh drop-oldest-## algorithm via new opt-in NOTEBOOK_PRUNE_EXTRA_GOVERNED_PATH env guard (default empty = zero hot-path behavior change) -- no new prune scheme. Decisions/ archival leg dropped entirely: decision-journal-archive.sh (UC-MDH-P4, shipped same day) already supersedes it (status-based not mtime-based; board row audit_ref note + that script header both name TE-T33) -- confirmed not ambiguous before skipping. Fixed dev-team/main.md 2 unscoped DJ-GATE-1 grep comments (sprint-*-*.md -> sprint-${SPRINT_ID}-*.md, matching qa/pm already-correct canonical pattern -- verified those needed no change). Wired into code-janitor 6h cron flow. CANONICAL pointer added to dev-standards.md. cold-archive-sweep.test.sh 14/14 PASS incl. idempotent re-run + git-diff-quiet proof live po-decisions.md untouched; 3 sibling suites re-run after shared-hook edit, zero regression (7/7, 12/12, 26/26). Journal: sprint-TOKEN-ECONOMY-AUDIT-developer.md STEP developer-S13."
+      },
+      {
+        "id": "MD-FUNC-01-FIX",
+        "title": "Fix MD-FUNC-01: Does get_market_snapshot return VN-Index with price, change_pct, and direction fields",
+        "owner": "dev-mcp-server",
+        "status": "REVIEW",
+        "type": "fix",
+        "size": "S",
+        "priority": "normal",
+        "zone": "dev-mcp-server",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#MD-FUNC-01-FIX",
+        "promoted_at": "2026-07-23T14:49:01Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-23T15:04:41Z",
+        "claimed_at": "2026-07-23T14:49:01Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "branch": null,
+        "commit": "2fb65b5bc1c75a2ac12bd2f11e4382799e021786",
+        "files": [
+          "docs/agent-memory/notebooks/dev-mcp-server.md",
+          "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md"
+        ],
+        "completed_at": "2026-07-23T15:03:44Z",
+        "completed_by": "dev-mcp-server",
+        "status_note": "MD-FUNC-01-FIX: verification-only, no code change needed. get_market_snapshot vn_index{price,change_pct,direction} struct already shipped 815ccaedd/ddc36452e (2026-06-16), predates running mcp-server image (built 2026-07-22) -- live in production. Root-cause check: price/change_pct read from fetchVnIndex(\"VNINDEX\") real VNDirect vnmarket_prices fetch; direction dynamically derived from changePct sign (not hardcoded). Live gateway verification (mcp-call.sh get_market_snapshot {}): vn_index:{price:1699.38, change_pct:1.85, direction:\"up\"} -- all 3 fields non-null, plausible vs same-payload breadth block (189 adv/122 dec). Targeted test 1982-quality-burndown-CHIJ.test.ts MD-FUNC-01 section 18/18 pass; market-tool-adjacent files 83/84 pass (1 pre-existing skip). bun tsc --noEmit clean. Full suite 14679 pass/40 skip/42 fail/1 error (1214 files) -- fail count matches documented 41-42 pre-existing baseline (_deprecated/logVpsPush/timeout classes), zero source files touched this task. Tool count 184 / cronJobCount 88 unaffected."
       }
     ],
     "qa": [],
@@ -13783,24 +13809,7 @@
     },
     "last_triaged_at": "2026-07-23T14:49:01Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "MD-FUNC-01-FIX",
-        "priority": "normal",
-        "size": "S",
-        "status": "IN_PROGRESS",
-        "title": "Fix MD-FUNC-01: Does get_market_snapshot return VN-Index with price, change_pct, and direction fields",
-        "type": "fix",
-        "zone": "dev-mcp-server",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#MD-FUNC-01-FIX",
-        "promoted_at": "2026-07-23T14:49:01Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-23T14:49:02Z",
-        "claimed_at": "2026-07-23T14:49:01Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
