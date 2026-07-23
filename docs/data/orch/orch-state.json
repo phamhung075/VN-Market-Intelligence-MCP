@@ -387,11 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "updated_at": "2026-07-23T10:24:47Z",
-    "updated_by": "developer"
+    "status": "in_progress",
+    "active_task_id": "FIX-MCP-DOCKERFILE-ENTRYPOINT-KNOWNHOSTS-REGRESSION",
+    "next_agent": "dev-mcp-server",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-MCP-DOCKERFILE-ENTRYPOINT-KNOWNHOSTS-REGRESSION — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-23T10:49:32Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -10390,28 +10391,6 @@
         "updated_at": "2026-07-22T17:23:09Z"
       },
       {
-        "id": "FIX-MCP-DOCKERFILE-ENTRYPOINT-KNOWNHOSTS-REGRESSION",
-        "type": "FIX",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "M",
-        "zone": "apps/mcp-server/",
-        "title": "Debian->Ubuntu Dockerfile rebase silently reverted ALL of task-1779c SSH infra (openssh-client + ENTRYPOINT known_hosts seeding); entrypoint.sh has been tracked dead code ever since — restore it instead of weakening StrictHostKeyChecking",
-        "source": "po/cron-audit-push-deploy-sequencing-20260722",
-        "created_at": "2026-07-22T17:12:55Z",
-        "created_by": "po",
-        "next_agent": "dev-mcp-server",
-        "po_ruling_accept_new": "PO RULING on the accept-new question. (1) REJECT `StrictHostKeyChecking=accept-new` as the DURABLE answer — its stated justification is factually false. (2) KEEP it for now as a stopgap: reverting to `yes` today would simply re-break the tool, and nothing can be verified while the VPS is unreachable. (3) The durable fix is to RESTORE what already existed and was already QA-approved, then put `yes` back. This is un-reverting, not new design.",
-        "evidence": "git b741c5634 (merge of 1779c, 'QA APPROVED', 2026-04-30) — apps/mcp-server/Dockerfile contained BOTH `openssh-client` (line 23) and `ENTRYPOINT [\"/entrypoint.sh\"]` (line 63). git 6165aa3b4 ('fix(docker): rebase Dockerfiles from Debian to Ubuntu to unblock builds') — BOTH GONE, with no mention in the commit message. apps/mcp-server/entrypoint.sh is still tracked and clean at HEAD but is COPY'd/referenced by NOTHING (`git log -S entrypoint.sh -- apps/mcp-server/Dockerfile` after the rebase = empty). So the premise 'this could never have succeeded since inception' is inverted: it was correctly configured at inception and was silently regressed by an unrelated Dockerfile rebase ~2.5 months ago.",
-        "why_accept_new_is_weaker_than_claimed": "The sshExec.ts comment claims accept-new 'STILL rejects a CHANGED key on any later connection'. That protection is largely illusory HERE: docker-compose.yml mounts nothing at /root/.ssh, so known_hosts is ephemeral per-container. Every `docker compose up` starts with an EMPTY known_hosts, so it is trust-on-first-use on EVERY container recreate, not once — a MITM need only win the race after any restart, and restarts are routine (the container restarted twice today). TOFU-on-every-boot is materially weaker than the one-shot TOFU the comment describes.",
-        "also_rejects_the_other_objection": "dev-mcp-server rejected build-time keyscan partly because it 'hardcodes the VPS IP'. The VPS IP is ALREADY hardcoded in docker-compose.yml in four places (VPS_HOST plus three proxy URLs), so this costs nothing new. Its second objection — that it couples the IMAGE BUILD to VPS reachability — is valid, and is exactly why the existing entrypoint.sh does the keyscan at CONTAINER START, not at build.",
-        "scope": "(1) Restore `COPY apps/mcp-server/entrypoint.sh /entrypoint.sh` + `RUN chmod +x /entrypoint.sh` + `ENTRYPOINT [\"/entrypoint.sh\"]` to apps/mcp-server/Dockerfile. (2) Revert sshExec.ts to StrictHostKeyChecking=yes ONCE seeding is live and proven. (3) Add a regression test asserting the Dockerfile still wires the entrypoint, so a future rebase cannot silently drop it again.",
-        "mandatory_change_do_not_restore_verbatim": "entrypoint.sh as written is `set -e` + `exit 1` when ssh-keyscan yields nothing. Restoring it VERBATIM while the VPS is unreachable would make the mcp-server container FAIL TO BOOT — turning a VPS outage into a total outage of all 88 crons and the whole MCP tool surface. It MUST be changed to degrade non-fatally: log a loud WARN, leave known_hosts unseeded, let the server start, and let only the SSH-dependent tools fail loudly at call time. A VPS-reachability problem must never be able to prevent mcp-server startup.",
-        "acceptance": "Container boots with the VPS unreachable (WARN, no crash); with the VPS reachable, known_hosts is seeded at startup and `StrictHostKeyChecking=yes` SSH succeeds; a Dockerfile-wiring regression test is green.",
-        "note": "Shares a failure mode with FIX-CRON-SSCCHECKERJOB-DEAD-87D: work that was completed and signed off, then silently stopped being live, with no alarm — see that row's shared_failure_mode field. Also note reports/TASK_REPORT_1779c.md ticks `[x] Dockerfile: ENTRYPOINT [\"/entrypoint.sh\"]` as satisfied; the checkbox is now false and nothing ever re-checked it.",
-        "updated_at": "2026-07-22T17:23:09Z"
-      },
-      {
         "id": "FIX-CRON-SSCCHECKERJOB-DEAD-87D",
         "type": "FIX",
         "status": "BACKLOG",
@@ -13654,9 +13633,37 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-23T10:17:31Z",
+    "last_triaged_at": "2026-07-23T10:49:32Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-MCP-DOCKERFILE-ENTRYPOINT-KNOWNHOSTS-REGRESSION",
+        "type": "FIX",
+        "status": "IN_PROGRESS",
+        "priority": "P1",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "title": "Debian->Ubuntu Dockerfile rebase silently reverted ALL of task-1779c SSH infra (openssh-client + ENTRYPOINT known_hosts seeding); entrypoint.sh has been tracked dead code ever since — restore it instead of weakening StrictHostKeyChecking",
+        "source": "po/cron-audit-push-deploy-sequencing-20260722",
+        "created_at": "2026-07-22T17:12:55Z",
+        "created_by": "po",
+        "next_agent": "dev-mcp-server",
+        "po_ruling_accept_new": "PO RULING on the accept-new question. (1) REJECT `StrictHostKeyChecking=accept-new` as the DURABLE answer — its stated justification is factually false. (2) KEEP it for now as a stopgap: reverting to `yes` today would simply re-break the tool, and nothing can be verified while the VPS is unreachable. (3) The durable fix is to RESTORE what already existed and was already QA-approved, then put `yes` back. This is un-reverting, not new design.",
+        "evidence": "git b741c5634 (merge of 1779c, 'QA APPROVED', 2026-04-30) — apps/mcp-server/Dockerfile contained BOTH `openssh-client` (line 23) and `ENTRYPOINT [\"/entrypoint.sh\"]` (line 63). git 6165aa3b4 ('fix(docker): rebase Dockerfiles from Debian to Ubuntu to unblock builds') — BOTH GONE, with no mention in the commit message. apps/mcp-server/entrypoint.sh is still tracked and clean at HEAD but is COPY'd/referenced by NOTHING (`git log -S entrypoint.sh -- apps/mcp-server/Dockerfile` after the rebase = empty). So the premise 'this could never have succeeded since inception' is inverted: it was correctly configured at inception and was silently regressed by an unrelated Dockerfile rebase ~2.5 months ago.",
+        "why_accept_new_is_weaker_than_claimed": "The sshExec.ts comment claims accept-new 'STILL rejects a CHANGED key on any later connection'. That protection is largely illusory HERE: docker-compose.yml mounts nothing at /root/.ssh, so known_hosts is ephemeral per-container. Every `docker compose up` starts with an EMPTY known_hosts, so it is trust-on-first-use on EVERY container recreate, not once — a MITM need only win the race after any restart, and restarts are routine (the container restarted twice today). TOFU-on-every-boot is materially weaker than the one-shot TOFU the comment describes.",
+        "also_rejects_the_other_objection": "dev-mcp-server rejected build-time keyscan partly because it 'hardcodes the VPS IP'. The VPS IP is ALREADY hardcoded in docker-compose.yml in four places (VPS_HOST plus three proxy URLs), so this costs nothing new. Its second objection — that it couples the IMAGE BUILD to VPS reachability — is valid, and is exactly why the existing entrypoint.sh does the keyscan at CONTAINER START, not at build.",
+        "scope": "(1) Restore `COPY apps/mcp-server/entrypoint.sh /entrypoint.sh` + `RUN chmod +x /entrypoint.sh` + `ENTRYPOINT [\"/entrypoint.sh\"]` to apps/mcp-server/Dockerfile. (2) Revert sshExec.ts to StrictHostKeyChecking=yes ONCE seeding is live and proven. (3) Add a regression test asserting the Dockerfile still wires the entrypoint, so a future rebase cannot silently drop it again.",
+        "mandatory_change_do_not_restore_verbatim": "entrypoint.sh as written is `set -e` + `exit 1` when ssh-keyscan yields nothing. Restoring it VERBATIM while the VPS is unreachable would make the mcp-server container FAIL TO BOOT — turning a VPS outage into a total outage of all 88 crons and the whole MCP tool surface. It MUST be changed to degrade non-fatally: log a loud WARN, leave known_hosts unseeded, let the server start, and let only the SSH-dependent tools fail loudly at call time. A VPS-reachability problem must never be able to prevent mcp-server startup.",
+        "acceptance": "Container boots with the VPS unreachable (WARN, no crash); with the VPS reachable, known_hosts is seeded at startup and `StrictHostKeyChecking=yes` SSH succeeds; a Dockerfile-wiring regression test is green.",
+        "note": "Shares a failure mode with FIX-CRON-SSCCHECKERJOB-DEAD-87D: work that was completed and signed off, then silently stopped being live, with no alarm — see that row's shared_failure_mode field. Also note reports/TASK_REPORT_1779c.md ticks `[x] Dockerfile: ENTRYPOINT [\"/entrypoint.sh\"]` as satisfied; the checkbox is now false and nothing ever re-checked it.",
+        "updated_at": "2026-07-23T10:49:33Z",
+        "promoted_at": "2026-07-23T10:49:32Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-23T10:49:32Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
