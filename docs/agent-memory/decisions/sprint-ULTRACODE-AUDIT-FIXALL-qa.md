@@ -377,3 +377,50 @@ overwrite) — correctly out of Piece 1's file list, noted not failed.
 **why-decision:** All 3 stated ACs pass on raw re-derivation; known residual explicitly excluded
 from this task's scope by the spawn brief.
 **why-change:** No change from plan — verify-committed JUMP-TO, all checks green.
+
+### STEP qa-S15 · qa · 2026-07-23T03:50:33Z
+**task-id:** UC-CCA-P4
+**what-done:** Direct-commit verify (branch:null, dev-team Review-Lane row) of `455048c76`, main-
+ancestor confirmed, `git show --stat` touches exactly the 8 claimed files + board/notebook/journal.
+Re-read every diff raw against the dispatch's 5 verify points, not the row's `note` prose:
+(a) `weekly-recap.md` new STEP 3e sits between STEP 3d (privacy gate) and STEP 4 (Write deliverable)
+— immediately pre-write, `post_body`=STEP-2 output, `agent_id`="fb-market-poster", "Execute
+identically to main.md STEP 4d" (byte-checked STEP 4d at `main.md:796` — same skill path/exit-code
+handling/non-real-time no-override semantics); (b) `weekly-prediction.md` STEP 4e same pattern,
+between STEP 4d (privacy) and STEP 5 (write), `post_body`=STEP-3 output; (c) digest-predict
+daily.md/weekly.md/monthly.md: grepped each file for `send_telegram(channel="market"` — single hit
+each, gate block sits directly above every one, invocation shape (`GATE_EXIT`/0-1-2 handling/self-
+correct-then-honest-gap) matches `daily-predict.md` P-5.5 verbatim structure; (d) qa-responder
+`cycle.md` new Step 4b sits between Step 4 (compose) and Step 5 (send) — read the full file top to
+bottom to confirm no other MARKET send exists earlier; exit-code handling (0/1/2 + second-pass-FAIL-
+proceeds-anyway) is a verbatim structural match to `alert-commander/stage-dispatch-log.md` Step
+4a-pre (both real-time-override flows); (e) `SKILL.md` diff: qa-responder added to both the
+frontmatter invoker list AND the Time-sensitivity-override paragraph, nothing else touched — no
+logic drift, both new pointer-steps route through the one shared `scripts/narrative-truth-gate.sh`
+invocation contract, zero re-implementation.
+**what-considered:**
+- Trust "qa-responder was genuinely ungated" from the commit message/DJ prose alone — rejected:
+  independently grepped `alert-commander/flow/stage-dispatch-log.md`, `unified-agent/flow/chef.md`,
+  `market-watcher/flow/cycle.md` for `claim-truth-gate` — all 3 already gated pre-existing (commit
+  did not touch them, confirmed no dup added); grepped `news-scout` + `bctc-analyst` flow dirs for
+  `send_telegram(channel="market"` — zero hits in both, confirming they are not public/MARKET
+  publishers (WORK-channel/internal-ledger only) and were correctly left ungated, not a missed gap.
+- Treat the qa-responder addition as scope creep beyond the 5-file rescope note — rejected: the
+  dispatch instruction itself named qa-responder a verify candidate and asked me to confirm it's a
+  genuine live gap not creep; independently re-derived the "no Bash" claim at source — `.claude/
+  agents/qa-responder.md:5` frontmatter is `tools: Read, Write, Edit, WebSearch,
+  mcp__gateway__call_tool` (no Bash) — the new Step 4b's "No-Bash session note" pointer to SKILL.md
+  § "No-Bash cowork subagent sessions" (confirmed present, SKILL.md:81) is the correct, already-
+  documented fallback, not an invented one. `agent_id` in `narrative-truth-gate.sh` is used only for
+  signal attribution (confirmed reading the script header + grep for `AGENT_ID` usage) — dimension
+  routing in `claim-tool-map.json` is agent-agnostic by construction, so adding a 6th invoker
+  requires zero engine/lexicon change, matching the claim.
+- Run `bun test`/`tsc`/mock-guard — N/A: `git show --stat 455048c76` = 8 files, all `.md`/`.json`
+  (flow docs + SKILL.md + orch-state.json + journal/notebook), zero `.ts`/production source touched;
+  Smart-Skip correctly applies (doc-only change).
+**why-decision:** All 5 dispatch verify points confirmed present, correctly positioned (immediately
+pre-send/pre-write, not elsewhere in the flow), routed through the one shared skill/script path with
+zero logic drift, and semantically correct (non-real-time no-override for fb/digest-predict,
+real-time override for qa-responder mirroring alert-commander exactly). The +1 qa-responder file is
+a verified genuine gap per live grep, not creep — matches the dispatch's own framing.
+**why-change:** No change from plan — verify-committed JUMP-TO, all 5 points green, APPROVED.

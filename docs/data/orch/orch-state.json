@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "UC-CCA-P4",
-    "next_agent": "qa",
-    "next_action": "QA verify-committed: UC-CCA-P4 (claim-truth-gate coverage close) committed DIRECTLY to main, branch=null — verify by reading the live main tree (docs/agents/fb-market-poster/flow/weekly-recap.md STEP 3e, weekly-prediction.md STEP 4e, digest-predict/flow/weekly.md|daily.md|monthly.md pre-send gate, qa-responder/flow/cycle.md Step 4b, .claude/skills/claim-truth-gate/SKILL.md invoker list), NOT a pipeline checkout.",
-    "updated_at": "2026-07-23T03:31:50Z",
-    "updated_by": "developer (UC-CCA-P4 claim-truth-gate coverage close)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "pm",
+    "next_action": "UC-CCA-P4 DONE_VERIFIED — claim-truth-gate coverage close verified (docs-only, 5-point check + qa-responder gap confirmed genuine). PM: mark done, unblock downstream.",
+    "updated_at": "2026-07-23T03:52:01Z",
+    "updated_by": "qa"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -1979,7 +1979,7 @@
         "type": "signal_feedback",
         "summary": "A-30 WARN: mcp-server memory 91.33% (threshold 85%)",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null
       },
       {
@@ -1990,7 +1990,7 @@
         "type": "signal_feedback",
         "summary": "A-30 WARN: mcp-server memory 91.25% (>= 85% threshold, recurring after recent restart)",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null
       },
       {
@@ -2001,7 +2001,7 @@
         "type": "microservice_degraded",
         "summary": "mcp-server memory 92.50% (threshold 85%)",
         "severity": "CRITICAL",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null
       }
     ],
@@ -7808,8 +7808,9 @@
         "po_corroboration_20260721": "CORROBORATION / high-water (PO converge-drain po-s147 2026-07-21T14:23:45Z): 5 A-30 mcp-server MemPerc samples this session 94.43→90.58→88.38→88.53→88.81% — reclaimed from peak, WITHIN the documented 85–93% GC-sawtooth band, NO OOM, tripwire UNtripped (no OOMKilled, no >93%-no-dip, no >97%-sustained). Benign leak episode already tracked here → NO new mint. DO NOT escalate to ops; DO NOT recommend a restart (would destroy trajectory evidence for zero OOM-risk benefit — feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn).",
         "po_corroboration_20260721_1537": "HIGH-WATER CORROBORATION (PO signal-drain 2026-07-21T15:37Z, folds A-30 sys-20260721T151241-28d6). Router-verified 18-sample x12s window: mcp-server MemPerc 95.39-99.99% GC sawtooth WITH reclamation dips; band crept up ~6pt this session (floor 95.39% vs historical 89.2%). VmHWM 2.95GiB > current VmRSS 2.77GiB (high-water above current = reclaim happening), OOMKilled=false, gateway serving, rag-service co-pinned 99.8%. Genuine tripwire (OOMKilled / >93%-no-reclaim-across-all-samples / >97%-sustained) UNtripped -> benign-but-elevated. NO new mint. DO NOT escalate to ops; DO NOT restart/rebuild (user-gated; would destroy trajectory evidence). FP re-emission of this same in-band condition tracked by FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE (already commissioned, next=architect).",
         "status_note": "CORROBORATION 2026-07-22: real outage — mcp-server mem wedge degraded ~08:30Z, fully wedged, CLEAN restart 14:53Z (exit=0, OOMKilled=false, NOT OOM). High-water ~87%. Downstream false-CRITICALs (auditor recovery artifacts, self-resolved): news-vps data_stale (sys-...635a) + market_messages db_integrity_breach (sys-...7ed7). Confirms 'accumulates ~87% in 12h' — raises leak-fix priority.",
-        "updated_at": "2026-07-22T15:17:55Z",
-        "po_escalation_20260722": "ESCALATION (PO triage 2026-07-22T15:15Z; SUPERSEDES the 07-21 'benign GC-sawtooth' corroboration notes above AND folds a peer PO 15:10Z tick whose board write was lost but whose live verification is preserved here). Recurring memory-cap exhaustion CONFIRMED, NOT benign sawtooth: A-30 reached 100pct (3GiB/3GiB) at 2026-07-22T00:11Z; cowork discriminator 07-21T23:26Z saw 8/8 samples 96.26-96.70pct with 0 reclamation dips/140s = the >93pct-no-reclaim tripwire GENUINELY TRIPPED (first non-FP). Server went transiently unreachable across the cap windows (00:31Z A-12 FAIL; 14:45-14:52Z cowork fleet-blind, curl exit=28). Resolved by restart 14:53Z -- live get_system_status @15:06Z confirms this restart was CLEAN (exit=0, NOT OOMKilled; uptime 13m, 16/16 breakers OK, DB 374MB no malformed). Mechanism: leak drives memory to cap + loss-of-reclamation -> transient unreachable -> restart clears it -> leak re-accumulates (~87pct in 12h) = recurring. Durable code fix is now TOP priority (recurring-bug-escalation). Restart/rebuild is user-gated ops-lane and NOT a substitute (re-leaks next cycle). Folds signal_queue cowork-20260721T232634Z-a30-mcp-oom-escalate + auditor A-30 chain 07-21T00:12..07-22T14:51."
+        "updated_at": "2026-07-23T03:52:23Z",
+        "po_escalation_20260722": "ESCALATION (PO triage 2026-07-22T15:15Z; SUPERSEDES the 07-21 'benign GC-sawtooth' corroboration notes above AND folds a peer PO 15:10Z tick whose board write was lost but whose live verification is preserved here). Recurring memory-cap exhaustion CONFIRMED, NOT benign sawtooth: A-30 reached 100pct (3GiB/3GiB) at 2026-07-22T00:11Z; cowork discriminator 07-21T23:26Z saw 8/8 samples 96.26-96.70pct with 0 reclamation dips/140s = the >93pct-no-reclaim tripwire GENUINELY TRIPPED (first non-FP). Server went transiently unreachable across the cap windows (00:31Z A-12 FAIL; 14:45-14:52Z cowork fleet-blind, curl exit=28). Resolved by restart 14:53Z -- live get_system_status @15:06Z confirms this restart was CLEAN (exit=0, NOT OOMKilled; uptime 13m, 16/16 breakers OK, DB 374MB no malformed). Mechanism: leak drives memory to cap + loss-of-reclamation -> transient unreachable -> restart clears it -> leak re-accumulates (~87pct in 12h) = recurring. Durable code fix is now TOP priority (recurring-bug-escalation). Restart/rebuild is user-gated ops-lane and NOT a substitute (re-leaks next cycle). Folds signal_queue cowork-20260721T232634Z-a30-mcp-oom-escalate + auditor A-30 chain 07-21T00:12..07-22T14:51.",
+        "po_corroboration_20260723": "HIGH-WATER CORROBORATION (PO CONVERGE drain 2026-07-23T03:47Z; folds A-30 sys-...031127-05d0 91.33% + ...031220-42fc 91.25% + ...034235-2a44 92.50% CRITICAL). RAW 03:43Z: cgroup MemPerc 94.98% = new session high-water; VmRSS 2,843,808kB (90.4% of 3GiB cap), VmHWM 2,971,264kB>VmRSS => reclamation already happened (benign sawtooth). OOMKilled=false, RestartCount=0, :3000/health 200 in 2.35ms, gateway serving. Genuine tripwire (OOMKilled / >93%-no-dip-across-all-samples / >97%-sustained / total-unresponsiveness) UNtripped -> benign-but-elevated instance of the recurring leak already tracked here. NO new mint. DO NOT escalate to ops; DO NOT restart/rebuild (user-gated; would destroy trajectory evidence for zero OOM-risk benefit). FP re-emission + auto-escalation of this in-band condition is tracked by FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE (commissioned to architect 2026-07-23)."
       },
       {
         "id": "FIX-CHEF-PUBLISHED-MARKER-RELEASE",
@@ -9610,7 +9611,9 @@
           "A-30 (mcp-server MemPerc): raise the WARN threshold above the documented 85–93% GC-sawtooth band AND gate on LOSS-OF-RECLAMATION / OOMKilled — NOT a single MemPerc snapshot. Model on the multi-probe reclamation check (07-19 RAW verify: 6 probes/65s caught GC dips). A benign in-band sawtooth must produce NO anomaly row.",
           "A-12/A-04/A-13 (frontend:3001 / api-gateway:4000 health CURL_ERR): DEBOUNCE / flap-suppress — require N-consecutive failed probes before classifying a CURL_ERR (transport error, not HTTP-5xx) as a degradation. A single transient transport flap must not route a NEW→po signal.",
           "A-21 (mcp-server RestartCount): WINDOWED / crash-only — RestartCount is CUMULATIVE-since-creation, not a crashloop. Model on mcp-server's own restartCadenceAlertJob.ts (rate-in-window, LastExitCode/OOMKilled gate).",
-          "dedup-ledger SUPPRESSES RE-EMISSION: for a finding whose dedup_key already holds an open ledger entry AND a tracked backlog home exists, the auditor must NOT re-route it as a fresh actionable NEW→po signal each cycle — bump a last-seen/high-water field on the existing row instead."
+          "dedup-ledger SUPPRESSES RE-EMISSION: for a finding whose dedup_key already holds an open ledger entry AND a tracked backlog home exists, the auditor must NOT re-route it as a fresh actionable NEW→po signal each cycle — bump a last-seen/high-water field on the existing row instead.",
+          "A-30 WARN->CRITICAL ESCALATION GATE (07-23 worsening): the auditor auto-escalated a benign in-band finding from WARN (sys-...031127-05d0/031220-42fc 91.25-91.33% 03:11-12Z) to CRITICAL (sys-...034235-2a44 92.50% 03:42Z microservice_degraded to=po) AND fired Telegram on the CRITICAL, on a 2-point 30-min-apart delta (91.25->92.50%). GATE the WARN->CRITICAL promotion on the GENUINE tripwire ONLY (OOMKilled=true OR >97% sustained-no-reclaim across a multi-probe sawtooth window OR total :3000 unresponsiveness). A VmHWM>VmRSS reclamation signal (peak>current => GC already reclaimed) OR any dip across samples MUST VETO the CRITICAL escalation. A 2-point snapshot delta is insufficient to establish 'sustained leak' (GC cycles are minutes apart; need a multi-probe no-reclaim window). Also raise the raw A-30 WARN threshold toward ~95% (above the documented 85-93% sawtooth band).",
+          "dedup-ledger MUST NOT auto-escalate a deduped benign-band finding to CRITICAL + Telegram: when the dedup_key already holds an open ledger entry for the benign A-30 band AND a tracked backlog home exists (FIX-MCP-MEMORY-CODE-LEAK), the E-2/Telegram path AND the WARN->CRITICAL severity promotion MUST be suppressed. E-3 signal_queue append-always stays UNCHANGED (contract, init.md:38 / flow/main.md:632) — only severity classification + Telegram fire are gated. This closes the intra-run + inter-tick re-emission observed 07-23 (two near-identical rows 53s apart, then a CRITICAL 30 min later)."
         ],
         "hard_constraint": "PRESERVE the E-3 append-always observation-ledger contract (docs/agents/system-auditor/init.md:38 / flow/main.md:632 — 'Always append to signal_queue regardless of dedup'). This fix reduces FALSE-POSITIVE firing + collapses persistent-finding re-emission; it must NEVER instruct the auditor to skip minting a GENUINE new anomaly (feedback_auditor_signalqueue_append_always_telegram_only_dedup). The queue collapse-to-single-row + rows_written tally readability part is SEPARATE — folded into FIX-SIGNALQUEUE-DUP-ID-GUARD (non-urgent).",
         "genuine_tripwire_preserved": "A-30 MUST still fire on OOMKilled=true OR mem >~93% baseline with NO reclamation dips across all samples OR peak sustained >97% with no reclaim (mcp-server OOM = fleet-wide gateway outage). A-12 MUST still fire on a sustained (debounced) real outage. A-20 pdf-extractor wedge is a GENUINE persistent finding (tracked PDF-AVAIL-02-FIX) — NOT in scope to suppress its detection, only to collapse its re-emission.",
@@ -9622,9 +9625,13 @@
           "feedback_recurring_bug_escalation",
           "project_systemic_review_0704_churn_without_convergence"
         ],
-        "recurring_bug_count": 3,
+        "recurring_bug_count": 4,
         "note": "Minted on the explicit router CONVERGE directive (3rd+ consecutive-tick re-emit; PO recorded these plan-only twice prior and did NOT mint — this converge mint ends that cycle). supervised:true blocks BOUNDED-1 idle auto-pickup; owner=architect designs the predicate + dedup-suppression across the auditor flow-doc thresholds + any mcp-server health-job code, then agent-father/dev implements. PO does NOT write the predicate code. Detection-only — no deploy.",
-        "po_corroboration_20260721_1451": "CORROBORATION (PO Step 0-SIG triage 2026-07-21T14:51:20Z). Dashboard signal sys-20260721T144300-1e9e (A-30 mcp-server memory 91.19%, 14:43:00Z) re-emitted ~20 min AFTER this converge row was minted at 14:23:45Z, with 91.19% sitting inside the documented 85-93% GC-sawtooth band this row exists to stop firing on. Nth-instance confirmation of the exact FP class in scope item 1; folded, NOT re-minted. No recurring_bug_count bump (same unchanged condition, same session)."
+        "po_corroboration_20260721_1451": "CORROBORATION (PO Step 0-SIG triage 2026-07-21T14:51:20Z). Dashboard signal sys-20260721T144300-1e9e (A-30 mcp-server memory 91.19%, 14:43:00Z) re-emitted ~20 min AFTER this converge row was minted at 14:23:45Z, with 91.19% sitting inside the documented 85-93% GC-sawtooth band this row exists to stop firing on. Nth-instance confirmation of the exact FP class in scope item 1; folded, NOT re-minted. No recurring_bug_count bump (same unchanged condition, same session).",
+        "po_escalation_20260723": "ESCALATION+COMMISSION (PO CONVERGE drain 2026-07-23T03:47Z). WORSENING confirmed: A-30 auto-escalated benign in-band mem (91.25-92.50%, within the 85-97.8% GC-sawtooth band) to CRITICAL microservice_degraded (sys-20260723T034235-2a44 to=po) + fired Telegram, on a 2-point 30-min delta. RAW verify 03:43Z: cgroup MemPerc 94.98% but VmRSS 2,843,808kB=90.4% of 3GiB cap (cgroup counts reclaimable page-cache); VmHWM 2,971,264kB>VmRSS => GC reclamation ALREADY occurred (sawtooth, not monotonic climb); :3000/health=200 in 2.35ms; OOMKilled=false; RestartCount=0; cpu 107.82% (workload-driven bump). NONE of the 4 genuine tripwires met. Categorically distinct from the 07-22 REAL trip (99.81% + ~10-probe unresponsiveness + gateway EOF). recurring_bug_count 3->4. This row was minted 07-21T14:23Z but sat DORMANT in BACKLOG (plan_only+supervised) while the FP re-emitted and worsened -> the convergence failure is DORMANCY, not absence-of-mint (memory feedback_auditor_mcpserver_a21_a30 body still reads 'no mint' but the board contradicts it). NOW COMMISSIONED: PO routes to architect this cycle to design the predicate+dedup+CRITICAL-gate brief -> agent-father implements. NO ops route, NO restart/rebuild (user-gated; interim rebuild-cron clears cap). NO duplicate mint (prior-art: this IS the tracked converge row).",
+        "commissioned_at": "2026-07-23T03:47Z",
+        "commissioned_by": "po-converge-drain-20260723",
+        "updated_at": "2026-07-23T03:52:23Z"
       },
       {
         "id": "FIX-OHLCV-HISTORY-PLANE-EMPTY-LIVE-PLANE-HEALTHY",
@@ -11791,7 +11798,38 @@
         "new_image_id": "sha256:96036269edc4d17444544197862913e54c2fdda68e2b54ef610aee3c7610985d"
       }
     ],
-    "done_verified": [],
+    "done_verified": [
+      {
+        "id": "UC-CCA-P4",
+        "type": "FIX",
+        "title": "Close the claim-truth-gate coverage gaps on all ungated MARKET/public publishers (claim-truth only)",
+        "status": "DONE_VERIFIED",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "RESCOPE",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#cowork-cycle-agents-P4",
+        "note": "SCOPE=verifier Rescope note. Add claim-truth-gate (CCATO) pointer steps to fb weekly-recap + weekly-prediction and digest-predict weekly/daily/monthly before their market sends. Do NOT touch data-integrity gates (already present). All agents already in claim-tool-map.json. | UC-CCA-P4 DONE (developer, 2026-07-23T03:31:50Z): gated 6 verified-ungated public/MARKET publishers on claim-truth ONLY — fb weekly-recap.md STEP 3e + weekly-prediction.md STEP 4e (non-real-time, mirrors main.md STEP 4d), digest-predict weekly.md/daily.md/monthly.md before send_telegram(market) (mirrors daily-predict.md P-5.5), qa-responder/flow/cycle.md Step 4b before MARKET answer_text send (real-time override, mirrors alert-commander) + SKILL.md invoker-list update — qa-responder is +1 beyond the literal 5-file scope note, verified as a genuine ungated MARKET publisher per dispatch instruction, same single dimension, no other-dimension/engine change. unified-agent/chef.md, market-watcher/cycle.md, alert-commander/stage-dispatch-log.md confirmed already gated (skipped, no dup). news-scout, bctc-analyst confirmed NOT public/MARKET publishers (WORK-channel/internal-ledger only — skipped, noted). QA: verify-committed mode — row is branch=null direct-commit-to-main, verify via live main tree read, not pipeline checkout.",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "priority_bumped_from": "P2",
+        "priority_bumped_at": "2026-07-17T04:54:03Z",
+        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
+        "promoted_at": "2026-07-23T03:19:18Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "updated_at": "2026-07-23T03:52:02Z",
+        "claimed_at": "2026-07-23T03:19:18Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "qa_verdict": "APPROVED",
+        "qa_verified_at": "2026-07-23T03:52:01Z",
+        "qa_commit": "455048c76",
+        "branch": null,
+        "updated_by": "qa"
+      }
+    ],
     "head": {
       "status": "idle",
       "active_task_id": null,
@@ -13489,32 +13527,6 @@
         "updated_at": "2026-07-22T02:18:01Z",
         "owner": "agent-father",
         "next_agent": "agent-father"
-      },
-      {
-        "id": "UC-CCA-P4",
-        "type": "FIX",
-        "title": "Close the claim-truth-gate coverage gaps on all ungated MARKET/public publishers (claim-truth only)",
-        "status": "REVIEW",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "RESCOPE",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#cowork-cycle-agents-P4",
-        "note": "SCOPE=verifier Rescope note. Add claim-truth-gate (CCATO) pointer steps to fb weekly-recap + weekly-prediction and digest-predict weekly/daily/monthly before their market sends. Do NOT touch data-integrity gates (already present). All agents already in claim-tool-map.json. | UC-CCA-P4 DONE (developer, 2026-07-23T03:31:50Z): gated 6 verified-ungated public/MARKET publishers on claim-truth ONLY — fb weekly-recap.md STEP 3e + weekly-prediction.md STEP 4e (non-real-time, mirrors main.md STEP 4d), digest-predict weekly.md/daily.md/monthly.md before send_telegram(market) (mirrors daily-predict.md P-5.5), qa-responder/flow/cycle.md Step 4b before MARKET answer_text send (real-time override, mirrors alert-commander) + SKILL.md invoker-list update — qa-responder is +1 beyond the literal 5-file scope note, verified as a genuine ungated MARKET publisher per dispatch instruction, same single dimension, no other-dimension/engine change. unified-agent/chef.md, market-watcher/cycle.md, alert-commander/stage-dispatch-log.md confirmed already gated (skipped, no dup). news-scout, bctc-analyst confirmed NOT public/MARKET publishers (WORK-channel/internal-ledger only — skipped, noted). QA: verify-committed mode — row is branch=null direct-commit-to-main, verify via live main tree read, not pipeline checkout.",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "priority_bumped_from": "P2",
-        "priority_bumped_at": "2026-07-17T04:54:03Z",
-        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
-        "promoted_at": "2026-07-23T03:19:18Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "updated_at": "2026-07-23T03:31:50Z",
-        "claimed_at": "2026-07-23T03:19:18Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa"
       }
     ],
     "qa": [],
