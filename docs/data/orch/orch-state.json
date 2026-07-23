@@ -2051,6 +2051,39 @@
         "status": "NEW",
         "summary": "BOUNDED-1 auto-picked FIX-AGENTBOOTSTRAP-EAGER-EXECSYNC-COLDSTART (P1) whose PLAN-ONLY intent lived ONLY in .detail prose (\"PLAN-ONLY backlog for BOUNDED-1 — do NOT dispatch this tick\"), never the structured .plan_only flag; dispatcher reverted the mis-claim + set plan_only:true (coherence mirror of PO prose, precedent 2026-07-09 supervised:true hand-fix). Root cause is systemic → PO/architect action.",
         "note": "Two findings. (A) This row: no inline plan_only/supervised/next_agent/owner AND no backlog-detail entry — PLAN-ONLY was unenforceable. Now flag-set; PO please confirm and route the deliberate plan-first dispatch (detail lists FIX options: memoize project-root via import.meta.dir walk-up to drop execSync git rev-parse from the module-eval path, OR lazy project-root in registerAgentMemoryTools). (B) SYSTEMIC: docs/data/orch/archive/backlog-detail.json .items is an ARRAY, but scripts/devteam-backlog-promote-bounded1.jq + the SLS promote script index it as an object (.items[<id>]) — so ALL detail-authoritative BOUNDED-1/SLS gates (supervised/plan_only/depends_on/detail-DEFERRED/non-dev-owner/non-dev-next_agent) silently resolve to board-inline fields only; the detail layer is blind. Decide: fix the jq to handle array-shaped .items (index by .id), or require inline flags on every backlog row. Same array-shape was already observed for BCTC-REPORT-ID-LOOKUP-TOOL last tick (board row authoritative)."
+      },
+      {
+        "id": "sys-20260723T103217-1735",
+        "ts": "2026-07-23T10:32:17Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "launchd agent docker-events crash-looping (exit 1)",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260723T103223-47fd",
+        "ts": "2026-07-23T10:32:23Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "launchd agent cowork-guaranteed-slot-firer terminated (exit 143 SIGTERM)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260723T103235-5181",
+        "ts": "2026-07-23T10:32:35Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "launchd agent fleet-push dead (exit 78 EX_CONFIG) — attributed to FIX-FLEET-PUSH-LAUNCHD-EXCONFIG-SILENT-DEAD",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-22T15:10:08Z",
