@@ -2,27 +2,13 @@
 
 # News Scout — Stage 4–5: Session Log, WORK Notify, Batch 2
 
-**4. Notebook settled-write (AC-3)** — compose ≤200L body entirely in memory, then land in ONE Write/Edit. Never append-then-trim.
+**4. Notebook write** — APPEND class → skill: `.claude/skills/notebook-write/SKILL.md` (AC-3 settled-write; AC-5 gate; AC-4 blank-state fallback)
 
-Step 1 — Read full `docs/agent-memory/notebooks/news-scout.md` into memory.
-Step 2 — Identify preamble (before first `^## `) and all `^## ` section boundaries.
-Step 3 — If ≥ 3 sections: drop oldest `## ` block (heading + body to next `## `) from in-memory body.
-Step 4 — Build new section (≤60L) in memory:
+Section template (≤10L):
 ```
 ## c<NNN> · <ISO-timestamp>
 - Items: N | Impacts: M | Signals: [types] | Regime: REGIME | Carry: CARRY_REGIME
 - Feedback: X accepted / Y rejected | Filter hints: [FILTER_HINT_urgent_news=<STRICT|LOOSE|default>, ...]
-```
-Append new section to end of in-memory body.
-Step 5 — Count in-memory lines. If > 200L: drop next-oldest `## ` block, recount; repeat until ≤200L. If new section > 60L: trim to 60L first.
-Step 6 — Single settled write:
-```
-Write(path="docs/agent-memory/notebooks/news-scout.md", content=<final settled body>)
-```
-Step 7 — AC-5 sanity check (verification only, NOT a remediation loop):
-```bash
-NB_LINES=$(wc -l < docs/agent-memory/notebooks/news-scout.md | tr -d ' ')
-[ "$NB_LINES" -gt 200 ] && echo "[news-scout] BUG: compose logic failed — fix Step 1-5 and re-write once"
 ```
 
 > Notebook is written (appended) to disk every cycle. Git commit is deferred to market-watcher eod.md batch commit at market close (L-7, 1968b2). Off-hours cycles retain their own per-cycle commit.

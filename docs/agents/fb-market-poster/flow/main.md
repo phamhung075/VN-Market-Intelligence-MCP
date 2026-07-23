@@ -41,7 +41,7 @@ Scheduled invocations (two crons — same spawn prompt, flow self-routes by VN d
 ## Output
 
 `docs/social/fb-post-YYYY-MM-DD.md` — dated Facebook draft post in plain Vietnamese.
-`docs/agent-memory/notebooks/fb-market-poster.md` — cycle log (full overwrite).
+`docs/agent-memory/notebooks/fb-market-poster.md` — cycle log (APPEND class, last-3 sections; per notebook-write AC-6).
 
 ---
 
@@ -883,18 +883,24 @@ call_tool(server="vn-market", tool="log_agent_work", arguments={
 })
 ```
 
-Write notebook (full overwrite) → skill: `.claude/skills/notebook-write/SKILL.md`
+**Notebook write** — APPEND class per notebook-write AC-6 → skill: `.claude/skills/notebook-write/SKILL.md` (AC-3 settled-write; AC-5 gate; last-3 `## c<NNN>` sections retained)
 
-Notebook entry format:
+Preamble (never pruned — edit only to record a genuinely new lesson/pattern, NOT part of the per-cycle write):
 ```markdown
 # FB Market Poster — Notebook
 
-**Last updated:** {DATETIME} UTC
+## Lessons learned
+- (append any new tool-behavior lessons here)
 
-## Last cycle
-- Date: {DATE}
-- Mode: DAILY
-- Post file: docs/social/fb-post-{DATE}.md
+## Known patterns
+- unified-agent notebook LATEST entry = today's EOD dish (read [This session] section)
+- DAILY: post writes at 16:15 VN (09:15 UTC) — 30 min after EOD CHEF dish (08:45 UTC / 15:45 VN)
+```
+
+Per-cycle section (≤60L — was "## Last cycle" full-overwrite body, now rolls as `## c<NNN>` instead of wiping Lessons/Known patterns):
+```markdown
+## c<NNN> · {DATETIME} UTC
+- Date: {DATE} | Mode: DAILY | Post file: docs/social/fb-post-{DATE}.md
 - VN-Index: {level} ({+/-delta}%)
 - Sources read: unified-agent={yes/no}, news-scout={yes/no}, market-watcher={yes/no}
 - chef_dish_available: {true/false} — CHEF shortcut used: {yes/no}
@@ -906,13 +912,6 @@ Notebook entry format:
 - Jargon gate: PASS (0 violations) | BLOCKED (N violations, post not written)
 - Data-integrity gate: PASS | BLOCK (violations: ...) | SKIP (gate script pending deploy)
 - Status: {published/failed}
-
-## Lessons learned
-- (append any new tool-behavior lessons here)
-
-## Known patterns
-- unified-agent notebook LATEST entry = today's EOD dish (read [This session] section)
-- DAILY: post writes at 16:15 VN (09:15 UTC) — 30 min after EOD CHEF dish (08:45 UTC / 15:45 VN)
 ```
 
 **Skills available to this agent (lazy-load — load only when the task requires it):**

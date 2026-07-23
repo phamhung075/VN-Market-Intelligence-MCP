@@ -746,12 +746,9 @@ If the cycle exited silently in Step 1 (0 clusters, intraday slot), skip Step 7.
 
 **8a. Mark signals processed** — move consumed signal files to `docs/signals/processed/`.
 
-**8b. Compose in memory (NO file write yet):**
+**8b. Notebook write** — APPEND class → skill: `.claude/skills/notebook-write/SKILL.md` (AC-3 settled-write; AC-2b intra-prune on `## Prior cycles`; AC-5 gate)
 
-Step 1a — Read full `docs/agent-memory/notebooks/unified-agent.md` into memory.
-Step 1b — Identify preamble (before first `^## `) and all `^## ` section boundaries.
-Step 1c — If ≥ 3 sections exist in memory: drop the oldest `## ` block (heading + content to next `## ` or EOF) from the in-memory body.
-Step 1d — Build the new section (≤60L) in memory:
+Section template (≤10L):
 ```
 ## Session: <YYYY-MM-DD> (<DISH_TYPE>)
 ### Chef Dish — <DISH_TYPE> HH:MM UTC
@@ -762,23 +759,6 @@ Step 1d — Build the new section (≤60L) in memory:
 - Signals consumed: [IDs]
 - Dish published: YES | silent-exit
 - QUALITY: <$QUALITY_VERDICT>              # "full" or "degraded" — from Step 7.5 gate
-```
-Append this new section to the end of the in-memory body.
-Step 1e — AC-2b: if any `## Prior cycles` heading is present and has ≥ 4 `### ` sub-blocks inside it, drop the oldest sub-block in memory.
-Step 1f — Count in-memory lines. If > 200L: drop next-oldest `## ` block in memory, recount; repeat until ≤200L or only preamble + 1 section remain. If the new section itself exceeds 60L: trim to 60L first.
-Step 1g — In-memory body is now the final settled content (≤200L guaranteed).
-
-**8c. Single settled write:**
-```
-Write(path="docs/agent-memory/notebooks/unified-agent.md",
-      content=<final settled body from Step 8b>)
-```
-One Write call only. PostToolUse fires exactly once and sees ≤200L.
-
-**8d. AC-5 sanity check** (after the single write — verification only, NOT a remediation loop):
-```bash
-NB_LINES=$(wc -l < docs/agent-memory/notebooks/unified-agent.md | tr -d ' ')
-[ "$NB_LINES" -gt 200 ] && echo "[chef LOG] BUG: compose logic failed — fix Step 8b and re-write once"
 ```
 
 **8e. Commit** (mutex-guarded) → skill: `.claude/skills/commit-mutex/SKILL.md`

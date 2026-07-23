@@ -111,21 +111,12 @@ For each qualifying ticker (bullish_score > 0.6 OR bearish_score > 0.6):
   If FAIL second-pass:
     Skip claim creation for this ticker; log as honest-gap in digest (e.g., "[SKIP] VCB claim contradicts 52w data — re-evaluated, unresolved")
 
-**P-6. Notebook commit** — settled-write invariant (AC-3: compose in memory, one Write only):
+**P-6. Notebook write** — APPEND class → skill: `.claude/skills/notebook-write/SKILL.md` (AC-3 settled-write; AC-5 gate; AC-4 blank-state fallback)
 
-Step 1 — Read full `docs/agent-memory/notebooks/digest-predict.md` into memory.
-Step 2 — Identify preamble (before first `^## `) and all `^## ` section boundaries.
-Step 3 — If ≥ 3 sections: drop oldest `## ` block from in-memory body.
-Step 4 — Build new section (≤60L) in memory:
+Section template (≤10L):
 ```
 ### Daily Predictions (HH:MM UTC) YYYY-MM-DD
 - Calibration: [status], delta: [value] | Claims: N | Dampening: [yes/no]
-```
-Append new section to end of in-memory body.
-Step 5 — Count in-memory lines. If > 200L: drop next-oldest `## ` block, recount; repeat until ≤200L.
-Step 6 — Single settled write:
-```
-Write(path="docs/agent-memory/notebooks/digest-predict.md", content=<final settled body>)
 ```
 
 **Commit (mutex-guarded)** → skill: `.claude/skills/commit-mutex/SKILL.md`
