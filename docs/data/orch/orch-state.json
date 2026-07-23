@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "DS-DEGRADE-01-FIX flipped to REVIEW by dev-mcp-server (BOUNDED-1 auto-pickup closeout) -- idle, awaiting next dispatch.",
-    "updated_at": "2026-07-23T20:05:04Z",
-    "updated_by": "dev-mcp-server"
+    "status": "in_progress",
+    "active_task_id": "FIX-PREDICTION-SIGNALS-EMPTY",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-PREDICTION-SIGNALS-EMPTY — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-23T20:18:17Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6016,16 +6016,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#VPS-FRESH-02-FIX",
         "po_corroboration_20260723": "CORROBORATION (PO CONVERGE drain 2026-07-23T03:52Z, folds sys-20260723T023146-7e7f WARN 'VPS proxy health degraded 3/5 services unhealthy'). Live get_system_status @03:52Z: recurring 'VPS endpoint timeout (>5000ms)' on foreign-flow-job with graceful fallback ACTIVE (all-fallbacks-exhausted -> returns empty, no crash); tradingEconomics disabled/stopped (known). Known recurring VPS-proxy degradation class (also FIX-VPS-SSC-INSIDER-502, OPS-POLLNEWS-NIGHT-ZERO). NO new mint. Not escalated to ops (graceful degradation working; user-gated VPS lane).",
         "updated_at": "2026-07-23T03:53:28Z"
-      },
-      {
-        "id": "FIX-PREDICTION-SIGNALS-EMPTY",
-        "priority": "medium",
-        "status": "BACKLOG",
-        "title": "prediction_signals poll green-but-empty: table frozen 2026-04-27 (45d, 6 rows) while predictionMarketPollJob ran 2026-06-11 17:30 status=success (predictionMarketPollJob + predictionResolutionJob both running). Poll executes, zero signals land 45d.",
-        "type": "FIX",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-PREDICTION-SIGNALS-EMPTY",
-        "verify_note": "prior_status=TODO"
       },
       {
         "id": "FIX-CRON-JOB-RUNS-DOUBLE-LOG",
@@ -14291,9 +14281,26 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-23T19:45:01Z",
+    "last_triaged_at": "2026-07-23T20:18:17Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-PREDICTION-SIGNALS-EMPTY",
+        "priority": "medium",
+        "status": "IN_PROGRESS",
+        "title": "prediction_signals poll green-but-empty: table frozen 2026-04-27 (45d, 6 rows) while predictionMarketPollJob ran 2026-06-11 17:30 status=success (predictionMarketPollJob + predictionResolutionJob both running). Poll executes, zero signals land 45d.",
+        "type": "FIX",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-PREDICTION-SIGNALS-EMPTY",
+        "verify_note": "prior_status=TODO",
+        "promoted_at": "2026-07-23T20:18:17Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-23T20:18:18Z",
+        "claimed_at": "2026-07-23T20:18:17Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
