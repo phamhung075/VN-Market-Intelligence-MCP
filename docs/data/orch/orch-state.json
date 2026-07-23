@@ -387,11 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-07-23T18:26:19Z",
-    "updated_by": "developer",
-    "active_task_id": null,
-    "next_agent": "router"
+    "status": "in_progress",
+    "active_task_id": "FIX-AUDITOR-TIER1-PROBE-ACKED-LAUNCHD-DEATH-SUPPRESSION",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-AUDITOR-TIER1-PROBE-ACKED-LAUNCHD-DEATH-SUPPRESSION — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-23T18:45:02Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -10904,23 +10905,6 @@
         "ba_completed_at": "2026-07-23T09:30:55Z"
       },
       {
-        "id": "FIX-AUDITOR-TIER1-PROBE-ACKED-LAUNCHD-DEATH-SUPPRESSION",
-        "type": "FIX",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "next_agent": "developer",
-        "owner": "po",
-        "created_by": "po",
-        "created_at": "2026-07-23T18:03:58Z",
-        "origin_signal_id": "TIER1-PROBE-LAUNCHD-EXITSTATUS-CHURN-DOCKEREVENTS-20260723T164744Z",
-        "title": "auditor-tier1-probe.sh must NOT re-trip FAILURE + re-spawn system-auditor every tick for launchd deaths that already have an OPEN backlog fix-task (acknowledged-failure suppression)",
-        "note": "Post FIX-LAUNCHD-PROBE-PRESENCE-ONLY-FALSE-GREEN (REVIEW) the Tier-1 probe correctly checks launchd exit-status and now returns FAILURE EVERY tick because two known-dead backstops persist: com.vn-market.fleet-push (exit-78, tracked FIX-FLEET-PUSH-LAUNCHD-EXCONFIG-SILENT-DEAD) + com.vn-market.docker-events (exit-1, tracked by new FIX-LAUNCHD-DOCKER-EVENTS-EXIT1-CRASHLOOP). Consequence: fail-open passive-health guard would spawn system-auditor on all ~48 Tier-1 ticks/day, each re-confirming the same dead launchd, dedup-suppressing the signal, refreshing the heartbeat -> pure churn, zero new signal (auditor even wrote a healthy heartbeat 16:19:35Z while both already dead). Recurring_churn_escalation. FIX: maintain an acknowledged-launchd-death list (labels whose exit-failure has an open backlog *-FIX row); a listed dead label does NOT flip the probe verdict to FAILURE nor trigger the auditor spawn — it stays a suppressed known-degraded until the fix-row closes. AC: probe run with fleet-push+docker-events dead AND both fix-rows open -> verdict is NOT FAILURE, no auditor spawn; remove the fix-row -> verdict flips back to FAILURE (no permanent blindness).",
-        "baseline_pass": true,
-        "updated_at": "2026-07-23T18:08:33Z"
-      },
-      {
         "id": "FIX-EXECTIER-HEADSYNC-BRANCHNULL-REVIEW-IDLE",
         "type": "FIX",
         "status": "BACKLOG",
@@ -14257,9 +14241,32 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-23T18:18:05Z",
+    "last_triaged_at": "2026-07-23T18:45:02Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-AUDITOR-TIER1-PROBE-ACKED-LAUNCHD-DEATH-SUPPRESSION",
+        "type": "FIX",
+        "status": "IN_PROGRESS",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "next_agent": "developer",
+        "owner": "po",
+        "created_by": "po",
+        "created_at": "2026-07-23T18:03:58Z",
+        "origin_signal_id": "TIER1-PROBE-LAUNCHD-EXITSTATUS-CHURN-DOCKEREVENTS-20260723T164744Z",
+        "title": "auditor-tier1-probe.sh must NOT re-trip FAILURE + re-spawn system-auditor every tick for launchd deaths that already have an OPEN backlog fix-task (acknowledged-failure suppression)",
+        "note": "Post FIX-LAUNCHD-PROBE-PRESENCE-ONLY-FALSE-GREEN (REVIEW) the Tier-1 probe correctly checks launchd exit-status and now returns FAILURE EVERY tick because two known-dead backstops persist: com.vn-market.fleet-push (exit-78, tracked FIX-FLEET-PUSH-LAUNCHD-EXCONFIG-SILENT-DEAD) + com.vn-market.docker-events (exit-1, tracked by new FIX-LAUNCHD-DOCKER-EVENTS-EXIT1-CRASHLOOP). Consequence: fail-open passive-health guard would spawn system-auditor on all ~48 Tier-1 ticks/day, each re-confirming the same dead launchd, dedup-suppressing the signal, refreshing the heartbeat -> pure churn, zero new signal (auditor even wrote a healthy heartbeat 16:19:35Z while both already dead). Recurring_churn_escalation. FIX: maintain an acknowledged-launchd-death list (labels whose exit-failure has an open backlog *-FIX row); a listed dead label does NOT flip the probe verdict to FAILURE nor trigger the auditor spawn — it stays a suppressed known-degraded until the fix-row closes. AC: probe run with fleet-push+docker-events dead AND both fix-rows open -> verdict is NOT FAILURE, no auditor spawn; remove the fix-row -> verdict flips back to FAILURE (no permanent blindness).",
+        "baseline_pass": true,
+        "updated_at": "2026-07-23T18:45:02Z",
+        "promoted_at": "2026-07-23T18:45:02Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-23T18:45:02Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
