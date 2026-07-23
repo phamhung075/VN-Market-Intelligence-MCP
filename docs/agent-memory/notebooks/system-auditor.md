@@ -1,15 +1,15 @@
-## 8a49e127 · 2026-07-23T08:41:24Z
-### Audit Run Tier-1 (08:41 UTC 2026-07-23)
+## c9d4e5f2 · 2026-07-23T09:10:41Z
+### Audit Run Tier-1 (09:10 UTC 2026-07-23)
 - Tier: 1 | Services: 12 checked | Health endpoints: 5
-- Memory: mcp-server 47.03% (1.411 GiB / 3 GiB) — stable
+- Memory: mcp-server 51.22% (1.537 GiB / 3 GiB) — stable
 - A-20 pdf-extractor multi-probe: 3/3 PASS
 - A-21 crash restarts: 0 (window: 4h) | Disk: 29% used
 - Anomalies: 0 new
 - Status: HEALTHY
-- Corroboration: All 12 host_runtime_set services healthy, all 5 health endpoints 200 OK. A-20 3/3 probes pass (event loop responsive). A-21 0 crash events in 4h window. Memory stable at 47.03%, well below 85%. Disk 29% used. All cron jobs executing normally.
+- Corroboration: All 12 host_runtime_set services healthy, all 5 health endpoints 200 OK. A-20 3/3 probes pass (event loop responsive). A-21 0 crash events in 4h window. Memory at 51.22%, well below 85%. Disk 29% used. Cron jobs executing normally.
 - RAW-PROBE:
 ```
-=== AUDITOR PROBE 2026-07-23T08:41:24Z ===
+=== AUDITOR PROBE 2026-07-23T09:10:41Z ===
 
 --- docker ps -a ---
 NAMES                                             STATUS                  IMAGE                                           CREATED
@@ -38,14 +38,14 @@ vn-market-intelligence-mcp-kinh-dich-service-1    Up 7 days (healthy)     vn-mar
 Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=1
 
 --- memory pressure ---
-Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=47.03% MemUsage=1.411GiB / 3GiB
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=51.22% MemUsage=1.537GiB / 3GiB
 
 --- memory pressure multi-probe reclamation (A-30) ---
-[A-30] SKIP deep-probe — baseline 47.03% < 85% investigate-gate
+[A-30] SKIP deep-probe — baseline 51.55% < 85% investigate-gate
 
 --- disk df -h / ---
 Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
-/dev/disk1s4s1   233Gi    13Gi    34Gi    29%    393k  355M    0%   /
+/dev/disk1s4s1   233Gi    13Gi    33Gi    29%    393k  345M    0%   /
 
 --- pdf-extractor in-container multi-probe (A-20) ---
 [A-20-PROBE-1] in-container HTTP 200
@@ -55,6 +55,15 @@ Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
 
 === PROBE DONE ===
 ```
+
+## 8a49e127 · 2026-07-23T08:41:24Z
+### Audit Run Tier-1 (08:41 UTC 2026-07-23)
+- Tier: 1 | Services: 12 checked | Health endpoints: 5
+- Memory: mcp-server 47.03% (1.411 GiB / 3 GiB) — stable
+- A-20 pdf-extractor multi-probe: 3/3 PASS
+- A-21 crash restarts: 0 (window: 4h) | Disk: 29% used
+- Anomalies: 0 new
+- Status: HEALTHY
 
 ## 7c4d2a9f · 2026-07-23T07:41:56Z
 ### Audit Run Tier-1 (07:41 UTC 2026-07-23)
