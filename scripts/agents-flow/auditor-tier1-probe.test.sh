@@ -584,6 +584,115 @@ check "T30 CLI injected-fault (real subprocess) — exit=1" "$([ "$CLI_RC_LAUNCH
 check "T30 CLI injected-fault (real subprocess) — detail names missing label" "$([[ "$(printf '%s' "$CLI_OUT_LAUNCHD_FAULT" | jq -r '.detail')" == *"com.vn-market.cowork-guaranteed-slot-firer"* ]] && echo true || echo false)"
 
 # ══════════════════════════════════════════════════════════════════════════════
+# FIX-LAUNCHD-PROBE-PRESENCE-ONLY-FALSE-GREEN — presence-only was a false
+# green: a label could be PRESENT in `launchctl list` (loaded) yet crash-
+# looping (non-zero last exit status) and the old check never noticed.
+# ══════════════════════════════════════════════════════════════════════════════
+
+# Fixture dir with ONLY the fleet-push plist tracked — isolates the
+# loaded+nonzero-status case from every other label so the FAIL assertion
+# below can't be satisfied by coincidence (e.g. a different label being
+# absent).
+FIXTURE_LAUNCHD_DIR_3="$TMPDIR_TEST/launchd-fixture-3"
+mkdir -p "$FIXTURE_LAUNCHD_DIR_3"
+cat > "$FIXTURE_LAUNCHD_DIR_3/com.vn-market.fleet-push.plist" <<'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.vn-market.fleet-push</string>
+  <key>ProgramArguments</key>
+  <array><string>/bin/bash</string></array>
+</dict>
+</plist>
+EOF
+
+# Fixture dir with ONLY the obsolete socat-bridge plist tracked — proves the
+# allow-list skip still applies even though this fix now also inspects
+# status: an obsolete label must PASS regardless of presence OR status,
+# because the check must `continue` before either is evaluated.
+FIXTURE_LAUNCHD_DIR_OBSOLETE="$TMPDIR_TEST/launchd-fixture-obsolete"
+mkdir -p "$FIXTURE_LAUNCHD_DIR_OBSOLETE"
+cat > "$FIXTURE_LAUNCHD_DIR_OBSOLETE/com.vn-market.socat-bridge.plist" <<'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.vn-market.socat-bridge</string>
+  <key>ProgramArguments</key>
+  <array><string>/bin/bash</string></array>
+</dict>
+</plist>
+EOF
+
+# ── T33: INJECTED-FAULT — label IS present (loaded) in launchctl list, but
+# its Status column is non-zero (78 == EX_CONFIG, the live fleet-push
+# incident this fix closes) → FAILURE verdict, detail names BOTH the label
+# AND the exit code (not just "not-loaded" — presence alone is no longer
+# sufficient) ─────────────────────────────────────────────────────────────
+run_case
+LAUNCHD_DIR="$FIXTURE_LAUNCHD_DIR_3"
+STUB_LAUNCHCTL="ok"
+OUT=$(run_probe); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+DETAIL=$(printf '%s' "$OUT" | jq -r '.detail')
+check "T33 INJECTED-FAULT FAILURE verdict (loaded but non-zero exit status)" "$([ "$VERDICT" = "FAILURE" ] && echo true || echo false)"
+check "T33 INJECTED-FAULT exit=1" "$([ "$RC" -eq 1 ] && echo true || echo false)"
+check "T33 INJECTED-FAULT detail mentions launchd_agents" "$([[ "$DETAIL" == *"launchd_agents"* ]] && echo true || echo false)"
+check "T33 INJECTED-FAULT detail names the label" "$([[ "$DETAIL" == *"com.vn-market.fleet-push"* ]] && echo true || echo false)"
+check "T33 INJECTED-FAULT detail names the exit code (78)" "$([[ "$DETAIL" == *"exit-status:78"* ]] && echo true || echo false)"
+check "T33 INJECTED-FAULT does NOT falsely claim not-loaded (it IS loaded)" "$([[ "$DETAIL" != *"com.vn-market.fleet-push(not-loaded)"* ]] && echo true || echo false)"
+check "T33 INJECTED-FAULT does NOT write heartbeat file" "$([ ! -f "$HEARTBEAT_FILE_PATH" ] && echo true || echo false)"
+
+# ── T34: RESTORE (loaded+status0) — same fixture, status column back to "0"
+# → verdict ALL_GREEN, proving the fix's happy path (loaded AND healthy)
+# still passes cleanly ───────────────────────────────────────────────────
+run_case
+LAUNCHD_DIR="$FIXTURE_LAUNCHD_DIR_3"
+launchctl() {
+  case "${1:-}" in
+    list) printf -- '-\t0\tcom.vn-market.fleet-push\n' ;;
+    *) return 1 ;;
+  esac
+  return 0
+}
+OUT=$(run_probe); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+check "T34 RESTORE — loaded+status0 verdict ALL_GREEN" "$([ "$VERDICT" = "ALL_GREEN" ] && echo true || echo false)"
+check "T34 RESTORE exit=0" "$([ "$RC" -eq 0 ] && echo true || echo false)"
+
+# Restore the STUB_LAUNCHCTL-driven launchctl() override for the remaining
+# obsolete-allow-list case below.
+launchctl() {
+  case "${1:-}" in
+    list)
+      case "${STUB_LAUNCHCTL:-ok}" in
+        ok) printf '8750\t1\tcom.vn-market.docker-events\n-\t78\tcom.vn-market.fleet-push\n-\t0\tcom.vn-market.cowork-guaranteed-slot-firer\n' ;;
+        missing_firer) printf '8750\t1\tcom.vn-market.docker-events\n-\t78\tcom.vn-market.fleet-push\n' ;;
+        empty) printf '' ;;
+      esac
+      return 0
+      ;;
+    *) return 1 ;;
+  esac
+}
+
+# ── T35: obsolete-allow-listed + absent from launchctl list → PASS. The
+# socat-bridge label is deliberately absent from every STUB_LAUNCHCTL
+# scenario above (never appears in the "ok" fixture) — proves the allow-
+# list skip fires BEFORE presence is even checked, so an obsolete label
+# being unloaded is correctly a non-event, not a failure ──────────────────
+run_case
+LAUNCHD_DIR="$FIXTURE_LAUNCHD_DIR_OBSOLETE"
+STUB_LAUNCHCTL="ok"
+OUT=$(run_probe); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+check "T35 obsolete-allow-listed label absent from launchctl list — ALL_GREEN" "$([ "$VERDICT" = "ALL_GREEN" ] && echo true || echo false)"
+check "T35 obsolete-allow-listed exit=0" "$([ "$RC" -eq 0 ] && echo true || echo false)"
+
+# ══════════════════════════════════════════════════════════════════════════════
 # auditor-signal-loop-P1 — the previously-DEAD "ALL_GREEN + stale heartbeat →
 # SPAWN" branch is now reachable and meaningful (closes auditor-signal-loop-I1)
 # ══════════════════════════════════════════════════════════════════════════════

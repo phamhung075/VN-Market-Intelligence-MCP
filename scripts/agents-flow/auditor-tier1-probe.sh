@@ -233,8 +233,21 @@ _check_mem_creep() {
 # OBSOLETE agents (kept in launchd/ for rollback reference only, not loaded in live system):
 #   - com.vn-market.socat-bridge — RESOLVED 2026-06-06 per OPERATOR-ALERT-SOCAT-FIX.md
 #     api-gateway Docker container now owns port :4000; socat band-aid was temporary fix
+#
+# FIX-LAUNCHD-PROBE-PRESENCE-ONLY-FALSE-GREEN (2026-07-23): `launchctl list`
+# prints three tab-separated columns — PID\tStatus\tLabel — and the OLD
+# check only asserted the LABEL substring appeared anywhere in the output,
+# discarding the Status column entirely. That let a job that IS loaded but
+# crash-looping (non-zero last exit status, e.g. EX_CONFIG=78 for
+# com.vn-market.fleet-push, confirmed live for 522 consecutive runs) report
+# ALL_GREEN forever — presence != works. Now: match the LABEL column
+# EXACTLY (field 3), then require its Status column (field 2) == "0". A
+# present-but-unhealthy label fails with BOTH the label and its exit code
+# named in the detail line, same as the pre-existing not-loaded failure
+# shape. The obsolete-label allow-list below is untouched — those labels
+# are skipped before either presence or status is evaluated.
 _check_launchd_agents() {
-  local dir="$LAUNCHD_DIR" plist label lc_out bad=""
+  local dir="$LAUNCHD_DIR" plist label lc_out bad="" match_line status
   local obsolete_labels="com.vn-market.socat-bridge"
   if [ ! -d "$dir" ]; then
     echo "launchd source dir not found: $dir"
@@ -253,12 +266,18 @@ _check_launchd_agents() {
     case "$label" in
       $obsolete_labels) continue ;;
     esac
-    if ! printf '%s\n' "$lc_out" | grep -q "$label"; then
+    match_line=$(printf '%s\n' "$lc_out" | awk -F'\t' -v want="$label" '$3 == want {print; exit}')
+    if [ -z "$match_line" ]; then
       bad="${bad}${label}(not-loaded) "
+      continue
+    fi
+    status=$(printf '%s' "$match_line" | awk -F'\t' '{print $2}')
+    if [ "$status" != "0" ]; then
+      bad="${bad}${label}(exit-status:${status}) "
     fi
   done
   if [ -n "$bad" ]; then
-    echo "launchd not loaded: $bad"
+    echo "launchd not loaded/unhealthy: $bad"
     return 1
   fi
   return 0
