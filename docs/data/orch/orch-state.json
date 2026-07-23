@@ -387,12 +387,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "BCT-OBS-01-FIX",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of BCT-OBS-01-FIX — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-23T15:45:46Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "updated_by": "dev-mcp-server",
+    "updated_at": "2026-07-23T15:57:00Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -13841,6 +13840,33 @@
         "completed_at": "2026-07-23T15:32:54Z",
         "completed_by": "dev-mcp-server",
         "status_note": "ALT-FUNC-02-FIX: verification-only, no code change needed. get_alert_accuracy top-level accuracy_rate:number|null already shipped 815ccaedd (2026-06-10T17:24Z, comment ALT-FUNC-02 FIX); null only when hits+misses===0 (insufficientSample data-gap case), tested (1982-quality-burndown-CHIJ.test.ts FIX-3, 3 cases). Backlog row created 2026-06-10T09:27Z -- ~8h BEFORE the fix landed -- a stale pre-fix snapshot BOUNDED-1 auto-picked 6 weeks later; docs/data/quality-checklist.json ALT-FUNC-02 already status=PASS since 2026-06-10T18:00Z citing the same commit. Live gateway verification (mcp-call.sh get_alert_accuracy {}): accuracy_rate:1, insufficientSample:false, scored_pct:19, total:628, hits:110, misses:0, unknowns:518 -- genuine 0..1 rate, AC satisfied live. Targeted tests 46/46 pass (1982-quality-burndown-CHIJ FIX-3 + 183-alert-accuracy + 1847d-D-alert-tools). bun tsc --noEmit clean. Tool count 184 / cronJobCount 88 unaffected (gen-project-stats probe). git status apps/mcp-server/ clean -- zero source files touched."
+      },
+      {
+        "id": "BCT-OBS-01-FIX",
+        "title": "Fix BCT-OBS-01: Does dataAuditDaily produce a data integrity report sent to WORK channel",
+        "owner": "dev-mcp-server",
+        "status": "REVIEW",
+        "type": "fix",
+        "size": "S",
+        "priority": "normal",
+        "zone": "dev-mcp-server",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#BCT-OBS-01-FIX",
+        "promoted_at": "2026-07-23T15:45:46Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-23T15:57:33Z",
+        "claimed_at": "2026-07-23T15:45:46Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "branch": null,
+        "commit": "ccddb9ae6a299733bddb5280e44a4ef79b0d86bd",
+        "files": [
+          "docs/agent-memory/notebooks/dev-mcp-server.md",
+          "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md"
+        ],
+        "completed_at": "2026-07-23T15:57:00Z",
+        "completed_by": "dev-mcp-server",
+        "status_note": "BCT-OBS-01-FIX: verification-only, no code change needed. dataAuditDaily (runDailyAudit, apps/mcp-server/src/scheduler/news-analysis/dataAuditJob.ts) unconditionally writes system_logs(data-auditor)+audit_state, then maybeSendTelegram gates sendTelegramWork on hasIssues (any auto_cleaned>0 or flagged/escalated finding). Live-probed via direct container DB read (not self-report/checklist alone): cron_job_runs shows 4 consecutive real fires 07-19..07-22 (16:00 UTC = 23:00 GMT+7, matches CRONS.dataAuditDaily), all status=success; each wrote a system_logs row with nonzero cleaned+warnings (07-22: 6763/63; 07-21: 18516/63; 07-20: 3931/149; 07-19: 199747/227) -- hasIssues=true every run, so the WORK-channel send-gate fires daily. Live gateway call get_system_status (fresh this session, via scripts/agents-flow/mcp-call.sh) confirms TELEGRAM_BOT_TOKEN/TELEGRAM_INFO_WORK_CHANNEL_ID SET and TELEGRAM_ENABLED=true in the running container -- the exact preconditions sendTelegramWork/coreSend require. Source-read of infrastructure/notifiers/telegram.ts confirms sendTelegramWork has ZERO DB persistence by design (only sendTelegramBug->insertReport persists to telegram_reports; sendTelegramMarket->market_messages) -- so the checklist rows documented recheck_how (read_telegram_reports channel:work) can never observe a WORK send: independently confirms the checklist rows own \"original FAIL was wrong recheck_how\" annotation is correct, not stale. quality-checklist.json BCT-OBS-01 already status=PASS since 2026-06-10T18:00Z citing WORK-channel msg IDs 2743-2766 (a genuine historical live-Telegram observation, not DB-derivable). Unit coverage 157-data-audit-job.test.ts AC-6 (silent on clean DB) + AC-7 (sends when issues exist): 18/18 pass -- contract matches live DB evidence. bun tsc --noEmit clean. Tool count 184 / cronJobCount 88 unaffected (gen-project-stats probe). git status apps/mcp-server/ clean -- zero source files touched."
       }
     ],
     "qa": [],
@@ -13862,24 +13888,7 @@
     },
     "last_triaged_at": "2026-07-23T15:45:46Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "BCT-OBS-01-FIX",
-        "priority": "normal",
-        "size": "S",
-        "status": "IN_PROGRESS",
-        "title": "Fix BCT-OBS-01: Does dataAuditDaily produce a data integrity report sent to WORK channel",
-        "type": "fix",
-        "zone": "dev-mcp-server",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#BCT-OBS-01-FIX",
-        "promoted_at": "2026-07-23T15:45:46Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-23T15:45:46Z",
-        "claimed_at": "2026-07-23T15:45:46Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
