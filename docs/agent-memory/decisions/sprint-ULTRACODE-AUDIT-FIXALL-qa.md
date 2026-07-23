@@ -424,3 +424,29 @@ zero logic drift, and semantically correct (non-real-time no-override for fb/dig
 real-time override for qa-responder mirroring alert-commander exactly). The +1 qa-responder file is
 a verified genuine gap per live grep, not creep — matches the dispatch's own framing.
 **why-change:** No change from plan — verify-committed JUMP-TO, all 5 points green, APPROVED.
+
+### STEP qa-S17 · qa · 2026-07-23T04:56:54Z
+**task-id:** UC-MDH-P3
+**what-done:** Direct-commit verify (`review[]`, branch:null) of `memory-prune-sweep.sh` + code-janitor
+wiring — commits `d88c1bc6d`(impl+sweep+docs)/`2d5cfbf80`(notebook), both main-ancestor confirmed.
+**what-considered:**
+- Trust `dev_result`/`status_note` prose vs re-derive at source: re-derived — grepped the script
+  itself for `orch-state` (2 hits, both comment lines explaining the exclusion, zero code path
+  touches the file); read all 178L, all 4 sweeps match the rescope spec verbatim.
+- Trust the 12/12 claim vs re-run: re-ran `memory-prune-sweep.test.sh` live myself — 12/12 PASS,
+  confirmed sandboxed (mktemp -d + trap cleanup, env overrides point off-tree; `git status`
+  before/after the run shows the only pre-existing dirty entries are unrelated peer drain activity
+  — the live `janitor-health-recheck-writer-retired-2026-07-23.json` payload was moved to
+  `docs/signals/processed/` by an unrelated dev-team drain tick, not by my test run).
+- Trust "live sweep ran, idempotent" vs verify live tree: independently spot-checked the real repo
+  — `session-logs/` dir gone, 0 root `scheduled-task-execution-*.md`, 0 `team-tool-recheck-*.md`
+  >30d, 0 `sessions/*.md` >14d unarchived, all `.log`/`.json` writers in `sessions/` root untouched
+  — matches the commit's claimed live-run counts and the retention doc's rules exactly.
+**why-decision:** SSOT-W1 boundary (script=file-write-only, FLOW=signal_queue-append) verified
+operationally, not just documented — found the actual `signal_queue.rows[]` row
+(`id: janitor-health-recheck-writer-retired-20260723`, `note: "dev-team drain durable delivery:
+file-only PO payload appended to signal_queue for PO triage"`), proving the boundary held in
+production, not merely on paper. `dev-standards.md`/`.retention.md` pointers both present and
+accurate. Smart-Skip correctly applies (shell+docs only, zero `.ts`) — mock-guard/DDD/env/secrets
+greps all clean.
+**why-change:** No change from plan — verify-committed JUMP-TO, zero blocking issues, APPROVED.
