@@ -1,5 +1,15 @@
 
 
+## c7e9f2a1 · 2026-07-23T02:31:49Z
+### Audit Run Tier-2 (02:31 UTC 2026-07-23)
+- Tier: 2 | Sources checked: 6 | VPS routes: 5
+- Cron health: 1 crashed (alertDigestJob), others PASS
+- SLA breaches: bctc 3641m > 120m, foreign-flow 2842m > 10m
+- DB spot: C-06=3, C-07=211, B-09=0, B-13=0 → PASS
+- VPS services: 3 unhealthy (bctc, foreign-flow, price); 2 healthy (news, sbv)
+- Anomalies: 1 new (B-06 VPS health) | 1 dedup-skip (B-05 BCTC)
+- Status: DEGRADED
+
 ## c0fdb6c95 · 2026-07-23T01:40:57Z
 ### Audit Run Tier-1 (01:40 UTC 2026-07-23)
 - Tier: 1 | Services: 12 checked, 5 health endpoints
@@ -146,5 +156,3 @@ Filesystem: 233Gi Size, 13Gi Used, 33Gi Avail, 29% Capacity
 
 === PROBE DONE ===
 ```
-
-
