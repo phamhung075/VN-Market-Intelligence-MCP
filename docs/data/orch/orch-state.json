@@ -389,10 +389,10 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "UC-CDC-P4",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of UC-CDC-P4 — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-23T00:19:41Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "next_agent": "qa",
+    "next_action": "QA review UC-CDC-P4 (REVIEW lane) — spawn-fanout.md bounded batcher + cadence-policy.json _fanout, commits df5871ed4/56b954edc",
+    "updated_at": "2026-07-23T00:33:06Z",
+    "updated_by": "developer"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -13475,6 +13475,37 @@
         "updated_at": "2026-07-22T02:18:01Z",
         "owner": "agent-father",
         "next_agent": "agent-father"
+      },
+      {
+        "id": "UC-CDC-P4",
+        "type": "FIX",
+        "title": "Headroom-gated fan-out cap in spawn-fanout.md Step 5 (bounded batcher, thresholds in cadence-policy.json)",
+        "status": "REVIEW",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "RESCOPE",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#cowork-dispatcher-cron-P4",
+        "note": "SCOPE=verifier Rescope note. Replace unbounded fan-out with a bounded batcher: thresholds in cadence-policy.json _fanout (no hardcode); gate on host_headroom_mb + load/core; batch semantics (fire batch as one block, wait for completions or re-probe, hard cap batch_wait_max_seconds); guaranteed slots fill batch1. Add carve-out to agent-chaining-protocol Background Spawn Mandate.",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "priority_bumped_from": "P2",
+        "priority_bumped_at": "2026-07-17T04:54:03Z",
+        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
+        "promoted_at": "2026-07-23T00:19:41Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "updated_at": "2026-07-23T00:32:48Z",
+        "claimed_at": "2026-07-23T00:19:41Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "owner": "developer",
+        "next_agent": "qa",
+        "dev_result": "DONE: bounded batcher shipped per rescope spec. spawn-fanout.md Step 5.1 (MAX_PARALLEL headroom+load gate) + Step 5.2 (batch fan-out, guaranteed-first, real inter-batch wait capped batch_wait_max_seconds) replace the unbounded 'fire all in one block' line. cadence-policy.json new _fanout key = SSOT for all 5 thresholds (no hardcode). agent-chaining-protocol.md Background Spawn Mandate carve-out added. DWF-phase1-cadence.test.ts 51/51 GREEN post _fanout addition, no schema break. Docs/config-only, main-only (no branch).",
+        "dev_commit": "df5871ed4 (impl) + 56b954edc (notebook/journal)",
+        "dev_completed_at": "2026-07-23T00:32:48Z",
+        "status_note": "UC-CDC-P4 implemented per PO rescope spec (arch brief 2026-07-12 #cowork-dispatcher-cron-P4). Journal: docs/agent-memory/decisions/sprint-ULTRACODE-AUDIT-FIXALL-developer.md STEP developer-S13. Flagged not fixed: graphify-out/graph.json 2mo stale (last run 2026-05-23) — scoped update would re-extract accumulated backlog, disproportionate to this fix; left for PO/router."
       }
     ],
     "qa": [],
@@ -13496,33 +13527,7 @@
     },
     "last_triaged_at": "2026-07-23T00:19:41Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "UC-CDC-P4",
-        "type": "FIX",
-        "title": "Headroom-gated fan-out cap in spawn-fanout.md Step 5 (bounded batcher, thresholds in cadence-policy.json)",
-        "status": "IN_PROGRESS",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "RESCOPE",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#cowork-dispatcher-cron-P4",
-        "note": "SCOPE=verifier Rescope note. Replace unbounded fan-out with a bounded batcher: thresholds in cadence-policy.json _fanout (no hardcode); gate on host_headroom_mb + load/core; batch semantics (fire batch as one block, wait for completions or re-probe, hard cap batch_wait_max_seconds); guaranteed slots fill batch1. Add carve-out to agent-chaining-protocol Background Spawn Mandate.",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "priority_bumped_from": "P2",
-        "priority_bumped_at": "2026-07-17T04:54:03Z",
-        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
-        "promoted_at": "2026-07-23T00:19:41Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "updated_at": "2026-07-23T00:19:42Z",
-        "claimed_at": "2026-07-23T00:19:41Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
