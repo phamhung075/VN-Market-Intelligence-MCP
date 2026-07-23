@@ -387,12 +387,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-DRAIN-PERSIST-GUARD-COUNT-DRAINABLE-ONLY",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-DRAIN-PERSIST-GUARD-COUNT-DRAINABLE-ONLY — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-23T09:47:59Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "updated_at": "2026-07-23T10:06:48Z",
+    "updated_by": "developer"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -13565,6 +13564,36 @@
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
         "next_agent": "qa",
         "branch": null
+      },
+      {
+        "id": "FIX-DRAIN-PERSIST-GUARD-COUNT-DRAINABLE-ONLY",
+        "title": "FIX: dev-team MANDATORY PERSIST GUARD counts RAW docs/signals/*.json file count, not drainable (from/type-shaped) signals — non-drainable litter (cowork telemetry/tick residue) inflates the count and false-trips the guard, forcing a mandatory full-drain every tick and creating Step-1 triage starvation pressure. Shape-filter the guard to count only routable signals.",
+        "status": "REVIEW",
+        "type": "FIX",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "developer",
+        "next_agent": "qa",
+        "created_at": "2026-07-22T06:40:43Z",
+        "created_by": "po/triage-20260722T0640",
+        "origin_signal_id": "dev-team-20260722T054244Z-triage-batch-wip-deadlock",
+        "root_cause": "The MANDATORY PERSIST GUARD (docs/agents/dev-team/flow/drain-signals.md:6 + scripts/agents-flow/drain-signals.js / scripts/agents-flow/dev-team-tick-preflight.sh) gates on the raw docs/signals/*.json file count. Non-drainable litter (telemetry/tick residue carrying no valid from + recognised type/route) inflates that count, so the guard mandates a full drain on every tick even when nothing is actually routable.",
+        "deliverable": "Filter the guard's count to signals that are actually drainable (valid from + recognised type/route shape), so litter/telemetry residue no longer trips the mandatory-drain condition.",
+        "acceptance": "A tick whose docs/signals/ holds ONLY non-drainable residue does NOT trip the persist guard (no forced full-drain); a tick with a genuine drainable signal still trips it (negative control). Litter-count independent.",
+        "related": [
+          "FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION",
+          "CLEAN-COWORK-DISPATCHER-TELEMETRY-DRAIN-DIR",
+          "FIX-ORCHSTATE-CONSERVATION-GUARD-QA-LANE-BLIND"
+        ],
+        "note": "Minted from dev-team WIP-deadlock triage-persist-request (dev-team-20260722T054244Z). Full spec = PO decision journal STEP po-S1 (docs/agent-memory/decisions/sprint-FLOW-PRICE-ALPHA-LOOP-po.md, 2026-07-22T05:31:04Z). Priority-first of the pair (relieves recurring drain false-trip pressure). NOT dispatched at mint (WIP=2/2 saturated) — auto-promote via BOUNDED-1/RLC when a WIP slot frees.",
+        "updated_at": "2026-07-23T10:06:58Z",
+        "promoted_at": "2026-07-23T09:47:59Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-23T09:47:59Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "branch": null
       }
     ],
     "qa": [],
@@ -13586,37 +13615,7 @@
     },
     "last_triaged_at": "2026-07-23T09:47:59Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-DRAIN-PERSIST-GUARD-COUNT-DRAINABLE-ONLY",
-        "title": "FIX: dev-team MANDATORY PERSIST GUARD counts RAW docs/signals/*.json file count, not drainable (from/type-shaped) signals — non-drainable litter (cowork telemetry/tick residue) inflates the count and false-trips the guard, forcing a mandatory full-drain every tick and creating Step-1 triage starvation pressure. Shape-filter the guard to count only routable signals.",
-        "status": "IN_PROGRESS",
-        "type": "FIX",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "owner": "developer",
-        "next_agent": "developer",
-        "created_at": "2026-07-22T06:40:43Z",
-        "created_by": "po/triage-20260722T0640",
-        "origin_signal_id": "dev-team-20260722T054244Z-triage-batch-wip-deadlock",
-        "root_cause": "The MANDATORY PERSIST GUARD (docs/agents/dev-team/flow/drain-signals.md:6 + scripts/agents-flow/drain-signals.js / scripts/agents-flow/dev-team-tick-preflight.sh) gates on the raw docs/signals/*.json file count. Non-drainable litter (telemetry/tick residue carrying no valid from + recognised type/route) inflates that count, so the guard mandates a full drain on every tick even when nothing is actually routable.",
-        "deliverable": "Filter the guard's count to signals that are actually drainable (valid from + recognised type/route shape), so litter/telemetry residue no longer trips the mandatory-drain condition.",
-        "acceptance": "A tick whose docs/signals/ holds ONLY non-drainable residue does NOT trip the persist guard (no forced full-drain); a tick with a genuine drainable signal still trips it (negative control). Litter-count independent.",
-        "related": [
-          "FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION",
-          "CLEAN-COWORK-DISPATCHER-TELEMETRY-DRAIN-DIR",
-          "FIX-ORCHSTATE-CONSERVATION-GUARD-QA-LANE-BLIND"
-        ],
-        "note": "Minted from dev-team WIP-deadlock triage-persist-request (dev-team-20260722T054244Z). Full spec = PO decision journal STEP po-S1 (docs/agent-memory/decisions/sprint-FLOW-PRICE-ALPHA-LOOP-po.md, 2026-07-22T05:31:04Z). Priority-first of the pair (relieves recurring drain false-trip pressure). NOT dispatched at mint (WIP=2/2 saturated) — auto-promote via BOUNDED-1/RLC when a WIP slot frees.",
-        "updated_at": "2026-07-23T09:48:00Z",
-        "promoted_at": "2026-07-23T09:47:59Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-23T09:47:59Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
