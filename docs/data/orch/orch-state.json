@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "DS-DEGRADE-01-FIX",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of DS-DEGRADE-01-FIX — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-23T19:45:01Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "DS-DEGRADE-01-FIX flipped to REVIEW by dev-mcp-server (BOUNDED-1 auto-pickup closeout) -- idle, awaiting next dispatch.",
+    "updated_at": "2026-07-23T20:05:04Z",
+    "updated_by": "dev-mcp-server"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -14244,6 +14244,34 @@
         "commit": "020b9eeeeb2231ef53c4ca433c1d38bb966988c5 7b6d878ab",
         "entered_review_at": "2026-07-23T19:24:10Z",
         "review_note": "execute-tier.md § MUST (b) amended: branch:null REVIEW flip MUST set head={status:idle, active_task_id:null, next_agent:router}, never mirror the task status. Added scripts/audits/execute-tier-branchnull-review-headidle-verify.sh (synthetic before/after fixture, PASS). Root cause confirmed live via commit 38f081ec1 (UC-GCP-P1) + current review[]=47/qa[]=0 state. Journal: docs/agent-memory/decisions/sprint-FIX-EXECTIER-HEADSYNC-BRANCHNULL-REVIEW-IDLE-developer.md. This flip itself exercises the shipped guarantee: head synced idle in this SAME write."
+      },
+      {
+        "id": "DS-DEGRADE-01-FIX",
+        "priority": "normal",
+        "size": "S",
+        "status": "REVIEW",
+        "title": "Fix DS-DEGRADE-01: When muasamcong proxy returns empty (72h stale), does the system flag as stale rather than serve empty as fresh",
+        "type": "fix",
+        "zone": "dev-mcp-server",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#DS-DEGRADE-01-FIX",
+        "promoted_at": "2026-07-23T19:45:01Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-23T20:05:39Z",
+        "claimed_at": "2026-07-23T19:45:01Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "branch": null,
+        "commit": "b1d2f0582969f6a5345244b318100e3f591cd268",
+        "files": [
+          "apps/mcp-server/src/infrastructure/db/schema-macro.ts",
+          "apps/mcp-server/src/__tests__/DS-DEGRADE-01-FIX-muasamcong-table-missing.test.ts",
+          "docs/agent-memory/decisions/sprint-DS-DEGRADE-01-FIX-dev-mcp-server.md",
+          "docs/agent-memory/notebooks/dev-mcp-server.md"
+        ],
+        "completed_at": "2026-07-23T20:05:04Z",
+        "completed_by": "dev-mcp-server",
+        "status_note": "DS-DEGRADE-01-FIX: REAL fix shipped (audit-then-fix, different shape than expected). RAW-verified at source: publicInvestmentTools.ts already carried the intended stale-vs-empty SLA check (2026-06-10 commit 815ccaedd, comment \"DS-DEGRADE-01 FIX\" -- reads latest public_contracts.fetched_at, 168h SLA, returns {stale:true,stale_since,source} on breach) and publicContractsStore.ts never advances fetched_at on an empty fetch (early-return before INSERT) -- so the literal \"serve empty as fresh\" framing does not reproduce. But a live runtime probe against the REAL initDatabase()/getDb() path (not the isolated hand-rolled :memory: DB every existing test used) proved the public_contracts table itself was NEVER created by any schema-*.ts initXTables() -- only a test-local makeTestDb() fixture in taskB-public-contracts-job.test.ts had it, masking the gap for 6 weeks. Both the stale-check SELECT and the store INSERT threw \"no such table: public_contracts\" against the real schema; the SELECT error is caught silently in getPublicContractsHandler, always falling through to the generic {unavailable:true} branch -- the designed stale:true degradation signal could never fire in production. docs/data/quality-checklist.json DS-DEGRADE-01=PASS evidence describes the broken fallback path as if it were the intended stale-flag -- same self-report-confab false-positive class BCT-OBS-02-FIX/DS-OBS-01-FIX already flagged this session (left unedited, not this zones file). Fix: schema-macro.ts initMacroTables() now registers public_contracts (exact column set mirrors the pre-existing test fixture) + 2 indexes, wired into initDatabase(). Zero changes to publicContractsStore.ts/publicInvestmentTools.ts -- their pre-written degradation logic is now reachable. New test DS-DEGRADE-01-FIX-muasamcong-table-missing.test.ts (5 cases through the REAL initDatabase()/getDb() path): table-exists, empty+zero-rows-unavailable, empty+stale-row(>168h)-stale-true, non-empty-upstream-unaffected, store-write-succeeds -- 5/5 green. Targeted regression check (248-muasamcong, taskB-public-contracts-job, 1982-quality-burndown-CHIJ, 250-signal-integration): 56/56 pass. bun tsc --noEmit clean. Full suite (standalone) 14696 pass/40 skip/41 fail -- tail shows only pre-existing _deprecated/1302-technical-indicators failures, zero muasamcong/DS-DEGRADE/public_contracts hits. Server boot probe: local instance registers 184 tools cleanly before expected EADDRINUSE (port held by live not-yet-rebuilt docker container). Tool count 184 / cronJobCount 88 unaffected (schema-only change). QA note: verify via call_tool(vn-market, get_public_contracts, {}) after seeding a stale public_contracts row, or inspect schema-macro.ts diff directly -- this is a pure schema-registration fix, no new tool/cron surface."
       }
     ],
     "qa": [],
@@ -14265,24 +14293,7 @@
     },
     "last_triaged_at": "2026-07-23T19:45:01Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "DS-DEGRADE-01-FIX",
-        "priority": "normal",
-        "size": "S",
-        "status": "IN_PROGRESS",
-        "title": "Fix DS-DEGRADE-01: When muasamcong proxy returns empty (72h stale), does the system flag as stale rather than serve empty as fresh",
-        "type": "fix",
-        "zone": "dev-mcp-server",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#DS-DEGRADE-01-FIX",
-        "promoted_at": "2026-07-23T19:45:01Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-23T19:45:01Z",
-        "claimed_at": "2026-07-23T19:45:01Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
