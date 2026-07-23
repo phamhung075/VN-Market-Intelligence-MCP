@@ -298,8 +298,19 @@ def _make_row(
     id: str = "r1",
     distance_key: str | None = "_distance",
     distance_val: float | None = 0.5,
+    confidence: float | None = 0.0,
+    impact_score: float | None = 0.0,
+    omit_confidence: bool = False,
+    omit_impact_score: bool = False,
 ) -> dict:
-    """Build a minimal LanceDB row dict with the given distance key/value."""
+    """Build a minimal LanceDB row dict with the given distance key/value.
+
+    confidence/impact_score default to 0.0 (a legitimate low score). Pass
+    omit_confidence/omit_impact_score=True to simulate a row where the key
+    is entirely absent (backward-compat / older row) rather than explicitly
+    0.0 — the two cases must resolve differently only when the raw value is
+    None, and identically (0.0) when either absent or explicitly 0.0.
+    """
     row: dict = {
         "id": id,
         "level": "global",
@@ -314,9 +325,11 @@ def _make_row(
         "depth_tier": "shallow",
         "doc_type": "news",
         "published_at": "",
-        "confidence": 0.0,
-        "impact_score": 0.0,
     }
+    if not omit_confidence:
+        row["confidence"] = confidence
+    if not omit_impact_score:
+        row["impact_score"] = impact_score
     if distance_key is not None and distance_val is not None:
         row[distance_key] = distance_val
     return row
@@ -410,3 +423,87 @@ class TestFDA9DistanceResolution:
         assert results[0].distance == pytest.approx(0.2), (
             f"Expected _distance=0.2 to take priority over _relevance_score=0.9."
         )
+
+
+# ── FACTORY-RAG-confidence-impact-or-00-mask regression ──────────────────
+# AC (test, fail-loud): proves `_dedup_and_trim` resolves confidence /
+# impact_score with an explicit None-guard, not a truthiness `or 0.0` mask
+# (same bug family as FDA-9 above, applied to the two remaining fields that
+# still used `row.get(k) or 0.0`).
+# ─────────────────────────────────────────────────────────────────────────
+
+
+class TestConfidenceImpactScoreNoneGuard:
+    """Regression tests for confidence/impact_score resolution in _dedup_and_trim."""
+
+    def _store(self) -> LanceDBVectorStore:
+        return LanceDBVectorStore(db_path="/dev/null")  # path unused — no I/O in _dedup_and_trim
+
+    def test_explicit_zero_confidence_preserved(self):
+        """Row has confidence=0.0 explicitly set (a real low-confidence score).
+
+        MUST be preserved as 0.0, not silently swapped for a different fallback.
+        """
+        row = _make_row(id="r1", confidence=0.0, impact_score=0.7)
+        store = self._store()
+        results = store._dedup_and_trim([row], limit=10)
+        assert len(results) == 1
+        assert results[0].confidence == pytest.approx(0.0)
+        assert results[0].impact_score == pytest.approx(0.7)
+
+    def test_explicit_zero_impact_score_preserved(self):
+        """Row has impact_score=0.0 explicitly set (a real zero-impact score).
+
+        MUST be preserved as 0.0, not silently swapped for a different fallback.
+        """
+        row = _make_row(id="r1", confidence=0.9, impact_score=0.0)
+        store = self._store()
+        results = store._dedup_and_trim([row], limit=10)
+        assert len(results) == 1
+        assert results[0].confidence == pytest.approx(0.9)
+        assert results[0].impact_score == pytest.approx(0.0)
+
+    def test_missing_confidence_and_impact_score_default_to_zero(self):
+        """Row has NEITHER key at all (older/backward-compat row).
+
+        MUST default to 0.0 for both fields (absence, not a masked real value).
+        """
+        row = _make_row(id="r1", omit_confidence=True, omit_impact_score=True)
+        assert "confidence" not in row
+        assert "impact_score" not in row
+        store = self._store()
+        results = store._dedup_and_trim([row], limit=10)
+        assert len(results) == 1
+        assert results[0].confidence == pytest.approx(0.0)
+        assert results[0].impact_score == pytest.approx(0.0)
+
+    def test_explicit_none_value_defaults_to_zero(self):
+        """Row has confidence/impact_score keys present but explicitly None.
+
+        MUST default to 0.0 — the None-guard, not the `or` truthiness mask,
+        is what handles this case.
+        """
+        row = _make_row(id="r1", confidence=None, impact_score=None)
+        assert row["confidence"] is None
+        assert row["impact_score"] is None
+        store = self._store()
+        results = store._dedup_and_trim([row], limit=10)
+        assert len(results) == 1
+        assert results[0].confidence == pytest.approx(0.0)
+        assert results[0].impact_score == pytest.approx(0.0)
+
+    def test_dedup_and_ordering_unaffected_by_zero_scores(self):
+        """Multiple distinct rows, all with confidence=impact_score=0.0.
+
+        Dedup key is (title, summary) only — confidence/impact_score must
+        neither cause false-dedup nor be dropped/reordered by the None-guard.
+        """
+        row1 = _make_row(id="r1", distance_key="_distance", distance_val=0.1,
+                          confidence=0.0, impact_score=0.0)
+        row2 = _make_row(id="r2", distance_key="_distance", distance_val=0.4,
+                          confidence=0.0, impact_score=0.0)
+        store = self._store()
+        results = store._dedup_and_trim([row1, row2], limit=10)
+        assert len(results) == 2, "Distinct rows with matching zero scores must both survive dedup."
+        assert results[0].id == "r1" and results[0].confidence == pytest.approx(0.0)
+        assert results[1].id == "r2" and results[1].impact_score == pytest.approx(0.0)

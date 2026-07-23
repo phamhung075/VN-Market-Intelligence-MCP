@@ -349,6 +349,16 @@ class LanceDBVectorStore(VectorStorePort):
                 distance = float(row["_relevance_score"])
             else:
                 distance = 1.0  # fail-safe: absent signal → low similarity (0.5), not perfect match
+
+            # Resolve confidence / impact_score with an explicit None-guard — same
+            # truthiness-mask family as the _distance fix above. `row.get(k) or 0.0`
+            # would coalesce a LEGITIMATE 0.0 score down the SAME path as a missing
+            # key; only the field's own None/absence should trigger the 0.0 default.
+            _confidence_raw = row.get("confidence")
+            _impact_score_raw = row.get("impact_score")
+            confidence = float(_confidence_raw) if _confidence_raw is not None else 0.0
+            impact_score = float(_impact_score_raw) if _impact_score_raw is not None else 0.0
+
             results.append(
                 SearchResult(
                     id=row.get("id", ""),
@@ -366,8 +376,8 @@ class LanceDBVectorStore(VectorStorePort):
                     depth_tier=row.get("depth_tier") or "shallow",
                     doc_type=row.get("doc_type") or "news",
                     published_at=row.get("published_at") or "",
-                    confidence=float(row.get("confidence") or 0.0),
-                    impact_score=float(row.get("impact_score") or 0.0),
+                    confidence=confidence,
+                    impact_score=impact_score,
                 )
             )
             if len(results) >= limit:
