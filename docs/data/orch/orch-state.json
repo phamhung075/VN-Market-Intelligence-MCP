@@ -2158,6 +2158,18 @@
         "summary": "FFLOW-STALE-0723-A VPS clock-drift recovery — 3 ops follow-ups: (1) PREVENTIVE/root-cause-vector: guest clock-drift can recur on next Vinahost VM pause (timedatectl falsely reported synchronized:yes throughout the drift) — evaluate chrony or a boot-time NTP step-check on the VM; this drift IS the mechanism of the stale-foreign-flow bug the user reported. (2) deploy-vinahost.sh leaves unsubstituted __MCP_BASE__/__API_KEY__ placeholders in /root/run-foreign-flow-debug.sh (router/ops worked around live). (3) vn-price-fetch/vn-sbv-fetch share the same now-fixed VM clock (NRestarts=0) but were not independently re-verified E2E — recommend a freshness check.",
         "payload_ref": "docs/vps-sources/vn-foreign-flow-clock-drift-recovery-2026-07-23/recon.md",
         "note": "Router-filed at FFLOW-STALE-0723-A closeout (ops-vps-fetch commit 446f28c14). Full trail in payload_ref recon.md. Actionable ops hardening — not a blocker to A/B completion (both -> review)."
+      },
+      {
+        "id": "TIER1-PROBE-LAUNCHD-EXITSTATUS-CHURN-DOCKEREVENTS-20260723T164744Z",
+        "ts": "2026-07-23T16:47:44Z",
+        "from": "dev-team",
+        "to": "po",
+        "orig_to": "dev-mcp-server",
+        "type": "recurring_churn_escalation",
+        "severity": "MEDIUM",
+        "status": "NEW",
+        "summary": "Tier-1 probe returns FAILURE every tick post-FIX-LAUNCHD-PROBE-PRESENCE-ONLY-FALSE-GREEN (now correctly checks launchd exit-status). Two persistent dead backstops trip it: com.vn-market.fleet-push (exit-78, ~19d, tracked by FIX-FLEET-PUSH-LAUNCHD-EXCONFIG-SILENT-DEAD) and com.vn-market.docker-events (exit-1, UNTRACKED - no board/signal row). Consequence: the fail-open passive-health guard would spawn system-auditor on all ~48 Tier-1 ticks/day, each re-confirming the same known-dead launchd, dedup-suppressing the signal, refreshing the heartbeat -- pure churn, zero new signal (auditor deems state healthy: wrote healthy heartbeat 16:19:35Z while both already dead). Asks: (1) create docker-events(exit-1) repair row; (2) prioritize fleet-push repair; (3) add probe acknowledged-failure suppression so launchd deaths WITH an open backlog fix-task do not re-trip FAILURE and re-churn the auditor every tick.",
+        "note": "Router-filed at Tier-1 cron 16:43Z tick; verdict=FAILURE fully attributable to the 2 known launchd deaths (probe detail enumerated only those). Router SKIPPED the spawn (heartbeat fresh 24min, probe stricter than auditor, failures known/backlogged, host-mem pressure). Escalation per feedback_recurring_bug_escalation."
       }
     ],
     "last_triaged_at": "2026-07-22T15:10:08Z",
