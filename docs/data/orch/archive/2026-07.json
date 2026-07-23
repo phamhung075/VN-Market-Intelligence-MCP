@@ -9989,6 +9989,36 @@
       "qa_verdict": "APPROVED",
       "qa_verified_at": "2026-07-23T02:58:20Z",
       "qa_verified_by": "qa"
+    },
+    {
+      "id": "UC-CCA-P4",
+      "type": "FIX",
+      "title": "Close the claim-truth-gate coverage gaps on all ungated MARKET/public publishers (claim-truth only)",
+      "status": "DONE_VERIFIED",
+      "priority": "P1",
+      "size": "S",
+      "zone": "cross-service/",
+      "sprint": "ULTRACODE-AUDIT-FIXALL",
+      "source": "ultracode-audit-2026-07-12",
+      "verdict": "RESCOPE",
+      "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#cowork-cycle-agents-P4",
+      "note": "SCOPE=verifier Rescope note. Add claim-truth-gate (CCATO) pointer steps to fb weekly-recap + weekly-prediction and digest-predict weekly/daily/monthly before their market sends. Do NOT touch data-integrity gates (already present). All agents already in claim-tool-map.json. | UC-CCA-P4 DONE (developer, 2026-07-23T03:31:50Z): gated 6 verified-ungated public/MARKET publishers on claim-truth ONLY — fb weekly-recap.md STEP 3e + weekly-prediction.md STEP 4e (non-real-time, mirrors main.md STEP 4d), digest-predict weekly.md/daily.md/monthly.md before send_telegram(market) (mirrors daily-predict.md P-5.5), qa-responder/flow/cycle.md Step 4b before MARKET answer_text send (real-time override, mirrors alert-commander) + SKILL.md invoker-list update — qa-responder is +1 beyond the literal 5-file scope note, verified as a genuine ungated MARKET publisher per dispatch instruction, same single dimension, no other-dimension/engine change. unified-agent/chef.md, market-watcher/cycle.md, alert-commander/stage-dispatch-log.md confirmed already gated (skipped, no dup). news-scout, bctc-analyst confirmed NOT public/MARKET publishers (WORK-channel/internal-ledger only — skipped, noted). QA: verify-committed mode — row is branch=null direct-commit-to-main, verify via live main tree read, not pipeline checkout.",
+      "created_at": "2026-07-13T19:31:11Z",
+      "created_by": "po",
+      "priority_bumped_from": "P2",
+      "priority_bumped_at": "2026-07-17T04:54:03Z",
+      "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
+      "promoted_at": "2026-07-23T03:19:18Z",
+      "promoted_by": "dev-team (bounded-1 auto-pickup)",
+      "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+      "updated_at": "2026-07-23T03:52:02Z",
+      "claimed_at": "2026-07-23T03:19:18Z",
+      "claimed_by": "dev-team (bounded-1 auto-pickup)",
+      "qa_verdict": "APPROVED",
+      "qa_verified_at": "2026-07-23T03:52:01Z",
+      "qa_commit": "455048c76",
+      "branch": null,
+      "updated_by": "qa"
     }
   ],
   "closed_sprints": [
@@ -14331,6 +14361,61 @@
       "summary": "mcp-server restart count=2 — recurring OOM→restart pattern indicates mem-leak",
       "severity": "WARN",
       "status": "RESOLVED",
+      "payload_ref": null
+    },
+    {
+      "id": "sys-20260723T023139-469d",
+      "ts": "2026-07-23T02:31:39Z",
+      "from": "system-auditor",
+      "to": "po",
+      "type": "data_stale",
+      "summary": "bctc-discover stale 60.68h (check B-05)",
+      "severity": "CRITICAL",
+      "status": "READ",
+      "payload_ref": null
+    },
+    {
+      "id": "sys-20260723T023146-7e7f",
+      "ts": "2026-07-23T02:31:46Z",
+      "from": "system-auditor",
+      "to": "po",
+      "type": "data_stale",
+      "summary": "VPS proxy health degraded (3/5 services unhealthy)",
+      "severity": "WARN",
+      "status": "READ",
+      "payload_ref": null
+    },
+    {
+      "id": "sys-20260723T031127-05d0",
+      "ts": "2026-07-23T03:11:27Z",
+      "from": "system-auditor",
+      "to": "po",
+      "type": "signal_feedback",
+      "summary": "A-30 WARN: mcp-server memory 91.33% (threshold 85%)",
+      "severity": "WARN",
+      "status": "READ",
+      "payload_ref": null
+    },
+    {
+      "id": "sys-20260723T031220-42fc",
+      "ts": "2026-07-23T03:12:20Z",
+      "from": "system-auditor",
+      "to": "po",
+      "type": "signal_feedback",
+      "summary": "A-30 WARN: mcp-server memory 91.25% (>= 85% threshold, recurring after recent restart)",
+      "severity": "WARN",
+      "status": "READ",
+      "payload_ref": null
+    },
+    {
+      "id": "sys-20260723T034235-2a44",
+      "ts": "2026-07-23T03:42:35Z",
+      "from": "system-auditor",
+      "to": "po",
+      "type": "microservice_degraded",
+      "summary": "mcp-server memory 92.50% (threshold 85%)",
+      "severity": "CRITICAL",
+      "status": "READ",
       "payload_ref": null
     }
   ],
