@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-23T06:08:58Z",
+    "matched_slots": [
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "alert-commander-market"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "alert-commander-market": "cadence"
+    },
+    "cadence_minutes": {
+      "alert-commander-market": 240
+    },
+    "last_fired_timestamp": "2026-07-23T06:08:31Z",
+    "last_fired_slots": [
+      "alert-commander-market"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "06:00",
+    "leader_lock": "acquired",
+    "dev_head": "idle",
+    "devq": 5,
+    "signal_backlog": 8,
+    "note": "alert-commander-market fired after 240min dangling-policy cadence gap (last_fired 02:09:22Z) — FIX-COWORK-CADENCE-DANGLING-POLICY-ID live during market hours. DATA DIVERGENCE: get_cycle_bootstrap market_context reports vnindex 1770 while get_macro_snapshot reports vnIndex 1670.78 (tier1, is_estimate=false, delta -72.73) at the same instant; all other macro fields (oil/gold/usdVnd) agree exactly. cycle_snapshot_promoted=false again (file key 06:07 vs tick_id 06:00, UC-SDF-P2)."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-23T06:08:58Z",
+  "_processed": {
+    "fingerprint": "4b1442bb1c39645bd9f362d3b7ed2bf0f298117ecbae9d107eca52da81ac9bc9",
+    "processedAt": "2026-07-23T06:15:46Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
