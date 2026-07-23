@@ -1,34 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-23 | **Cycle:** FIX-DRAIN-PERSIST-GUARD-COUNT-DRAINABLE-ONLY (shape-filter the dev-team mandatory persist guard)
-
-## Session 2026-07-23 — UC-GCP-P3 (dev-team BOUNDED-1 auto-pickup, cross-service/) — REVIEW
-
-**Task:** git-ci-publish-P3 RESCOPE — drain commit's shell-glob path list silently dropped deletions of already-removed `docs/signals/*.json` files. Rescope spec: tracked-only `git add -u` staging scoped to `docs/signals/` + explicit `processed/` add + FP-safe post-commit clean invariant + commit-boundary RULE 1 cross-ref note. DROP the one-shot backfill (already landed df0b58bd9).
-
-**Actions taken:** `drain-signals.md` §0a MANDATORY PERSIST GUARD staging changed to `git add -u -- docs/signals/ && git add -- docs/signals/processed/` (`-u` = tracked mods+deletions only, never sweeps peers' untracked mid-write inbox arrivals; second add picks up newly-moved untracked-new processed/ files). Added post-commit invariant: `git status --porcelain -- docs/signals/ | grep -v '^??' | grep -v signals.db | wc -l` must be 0, else bug-telegram naming residual paths. Cross-ref note added to `commit-boundary/SKILL.md` RULE 1 documenting the tracked-only exception is not a directory sweep. Commit `e77635933`.
-
-**Verification:** Docs-only flow-spec change (no test surface) — verified via `git show --name-only HEAD` self-check (RULE 3), exactly the 2 intended files. No backfill re-run (df0b58bd9 already committed the 07-03/04 stranded deletions, verified `docs/signals/` has zero pending deletions today).
-
-**Board:** `task_board.in_progress[UC-GCP-P3]` → `review`, `next_agent=qa`, `.head` synced, via `orch-apply.sh`.
-
-**Scope discipline:** Implemented the verifier's RESCOPE text verbatim, no re-expansion. Left the CANONICAL script (`scripts/agents-flow/drain-signals.js`) untouched — the changed staging/invariant lives in the flow-doc commit step, not the script's fingerprint/move logic.
-
-Zone health: drain commit deletion-drop hole closed — tracked-only sweep captures deletions without risking peer untracked-inbox sweep; FP-safe invariant guards against false bug-telegrams on legitimate mid-commit arrivals | HEALTHY
-
-## Session 2026-07-23 — UC-GCP-P7 (dev-team BOUNDED-1 auto-pickup, cross-service/) — REVIEW
-
-**Task:** git-ci-publish-P7 RESCOPE — /commit skill (1) still has a Step 4 branch-merge/clean section contradicting the no-branches invariant, (2) takes the git index with no commit-mutex across a multi-category run, (3) has no stranded-peer-file guard, (4) hardcodes a stale `Co-Authored-By: Claude Sonnet 4.6` line, and (5) has a live duplicate surface (`.claude/commands/commit.md`) that still describes branch-merge behavior.
-
-**Actions taken:** Rewrote `.claude/skills/commit/SKILL.md`: deleted Step 4 "Merge and clean branch" + all "merge and clean branch" phrasing (frontmatter description, intro line); replaced the whole-run duplicated push shell with a per-category `commit-mutex:main` acquire→critical-section→release wrapper (`→ skill: .claude/skills/commit-mutex/SKILL.md`), pointing at that skill's Step 3d-PUSH as the bounded rebase-retry SSOT instead of re-pasting it; added a Step 1 stranded-peer-file age guard (skip files in another agent's declared zone per `commit-boundary/SKILL.md` RULE 2 with mtime < 2h, list skipped files for router triage); replaced the hardcoded `Co-Authored-By: Claude Sonnet 4.6` line with a pointer to `docs/policies/commit-convention.md` as trailer SSOT. Reduced `.claude/commands/commit.md` to a one-line pointer at the skill so `/commit` has exactly one definition.
-
-**Verification:** Grepped repo-wide for other live (non-archival) callers referencing the deleted Step 4 / "merge and clean branch" text or the skill's old line numbers — none found outside the architecture-brief audit record itself (historical, not a live pointer) and one PO-decision snapshot that only names the file, not its content. Confirmed the rescope's named `commit-convention-format.md`/`-exemptions.md` split no longer exists — UC-GCP-P1 already consolidated both into the live `docs/policies/commit-convention.md`; pointed there instead of the dead split names. Used `Write` (full-file rewrite, not multi-hunk `Edit`) for the SKILL.md change per the rescope's own risk note (Edit-tool hook strips multiline edits on this file class).
-
-**Board:** `task_board.in_progress[UC-GCP-P7]` → `review`, `next_agent=qa`, `.head` synced, via `orch-apply.sh`.
-
-**Scope discipline:** Touched exactly the 2 files named in the rescope (`.claude/skills/commit/SKILL.md`, `.claude/commands/commit.md`). No code/tests in scope (skill-doc-only FIX). Left the other live hardcoded `Co-Authored-By: Claude Opus 4.6` occurrence in `docs/references/bundles/bundle-developer.md` untouched — outside this task's named file scope.
-
-Zone health: `/commit` now has one definition, no branch-merge dead code, per-category mutex scoping matches commit-mutex's own TTL=90s sizing, stranded-peer-file guard closes the dirty-board-capture class, no hardcoded model-name trailer | HEALTHY
+**Last updated:** 2026-07-23 | **Cycle:** FIX-LAUNCHD-PROBE-PRESENCE-ONLY-FALSE-GREEN (launchd_agents check now asserts exit status, not just presence)
 
 ## Session 2026-07-23 — TE-T17 (dev-team direct-execute, zone=multi) — REVIEW
 
@@ -57,3 +29,17 @@ Zone health: notebook prune-bypass class closed — hot notebook (ops) under cap
 **Scope discipline:** Touched exactly the 3 named root-cause files + their paired tests + `drain-signals.md` guard line + `docs/WORK.md` — no fork of the shape predicate, no live `docs/signals/` mutation from `--count-drainable` (read-only by design).
 
 Zone health: dev-team persist-guard no longer litter-sensitive — drainable-only count verified against real inbox (55 raw / 0 drainable) and both fixture directions (litter-only no-trip, genuine signal still-trips) test-proven | HEALTHY
+
+## Session 2026-07-23 — FIX-LAUNCHD-PROBE-PRESENCE-ONLY-FALSE-GREEN (dev-team BOUNDED-1 auto-pickup, cross-service/) — REVIEW
+
+**Task:** `auditor-tier1-probe.sh` `_check_launchd_agents()` only asserted a repo-tracked plist's Label appeared somewhere in `launchctl list` output — the PID/Status/Label output's Status column was captured then discarded. `com.vn-market.fleet-push` sat loaded at EX_CONFIG(78) for 522 consecutive runs, verdict stayed ALL_GREEN the whole time. Presence != works.
+
+**Actions taken:** Rewrote the check to `awk`-match the LABEL column exactly (field 3 of the tab-delimited `PID\tStatus\tLabel` output, confirmed live against real `launchctl list` on this host), then read field 2 (Status) from that same matched line and require `== "0"`. A present-but-unhealthy label now fails as `<label>(exit-status:<code>)`, distinct from the pre-existing `<label>(not-loaded)` absent case. The obsolete-label allow-list `case` skip (`com.vn-market.socat-bridge`) is untouched — left exactly as-is per PO's explicit do-not-change.
+
+**Verification:** Full `auditor-tier1-probe.test.sh` 102/102 GREEN, including 3 new cases (T33 loaded+status78→FAIL naming label+code, T34 loaded+status0→PASS restore, T35 obsolete-allow-listed+absent→PASS), plus all 30 pre-existing launchd/non-launchd cases unchanged. Live probe run post-fix: verdict flipped ALL_GREEN→FAILURE (exit 1) — 3 of 4 tracked non-obsolete LaunchAgents currently carry nonzero last-exit status: `com.vn-market.fleet-push(exit-status:78)` (the confirmed EX_CONFIG case), plus newly-surfaced `com.vn-market.docker-events(exit-status:1)` and `com.vn-market.cowork-guaranteed-slot-firer(exit-status:143)`. Not investigated/remediated — reported per instruction, out of this task's scope; `com.vn-market.socat-bridge` correctly stayed off the failure list.
+
+**Board:** `task_board.in_progress[FIX-LAUNCHD-PROBE-PRESENCE-ONLY-FALSE-GREEN]` → `review`, `next_agent=qa`, `.head` synced, via `orch-apply.sh`.
+
+**Scope discipline:** Touched exactly the one check function + its test file. Did not chase the 3 newly-surfaced nonzero-exit LaunchAgents (docker-events, cowork-guaranteed-slot-firer) — that's new signal for a follow-up task, not this fix's job.
+
+Zone health: launchd_agents check now closes the "exists != works" gap generically — live-proven it catches the real fleet-push EX_CONFIG incident plus 2 more previously-invisible nonzero-exit agents in one pass | DEGRADED (3 LaunchAgents newly confirmed unhealthy live — detector fixed, underlying jobs not yet fixed)
