@@ -387,12 +387,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "TE-T33",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of TE-T33 — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-23T14:17:32Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "updated_at": "2026-07-23T14:37:14Z",
+    "updated_by": "developer"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -13729,6 +13728,49 @@
         "completed_at": "2026-07-23T13:57:41Z",
         "completed_by": "developer",
         "status_note": "TE-T31: docs/agents/tools/list/INDEX.md (254L, stale hand-maintained 3rd tool-inventory SSOT self-declaring 157 tools/canonical) regenerated from docs/data/tool-registry.json via new scripts/gen-tools-index.sh (bash+jq, --check mode) -- total (184) + all 12 per-category counts computed live, zero hardcoded. Header now 'GENERATED -- do not hand-edit; registry is the SSOT', false canonical-inventory claim dropped. Idempotent: no wall-clock stamp, only registry .lastUpdated echoed -- 2 consecutive runs both NOOP. comm set-diff registry-tools vs INDEX-linked-tools = 0/0 both directions (184=184, 0 dupes, every link resolves to an existing list/<tool>.md stub); per-section counts diff-verified against jq groups[].tools|length. CANONICAL pointer added to dev-standards.md Script Persistence. tran-ngoc-bau package pointers unaffected (path unchanged). market-analyst.md 267L prose->table NOT done here (brief's separate merged corroborating item, logged as follow-up in journal). Journal: sprint-TOKEN-ECONOMY-AUDIT-developer.md STEP developer-S12."
+      },
+      {
+        "id": "TE-T33",
+        "title": "T-33 Archival policy for docs/handoffs (11MB/974 files), decisions/ (3.8MB), sessions/ — rotate >30d via janitor cron [~1-3k tok/day + caps growth]",
+        "owner": "developer",
+        "status": "REVIEW",
+        "type": "CLEAN",
+        "size": "S",
+        "priority": "P2",
+        "wave": 4,
+        "est_saving": "~1-3k tok/day + caps unbounded growth curve",
+        "zone": "cross-service/",
+        "sprint": "TOKEN-ECONOMY-AUDIT",
+        "depends": [],
+        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-33",
+        "note": "3 write-heavy dirs grow unboundedly (707/974 handoffs >30d). Add monthly cold-archive sweep to code-janitor 6h cron (guard: 1st of month): mv >30d + no open task_board ref -> archive/YYYY-MM/. Rotate po-decisions.md at 200L. Update DJ-GATE-1 grep to exclude archive/. Mirrors existing orch archive/ precedent.",
+        "audit_ref": {
+          "audit": "ultracode-2026-07-12",
+          "verdict": "memory-docs-hygiene-P4 coordination",
+          "note": "TE-T33 decisions/ leg is SUPERSEDED by UC-MDH-P4 (decision-journal-archive.sh, longest-match closed-only). mtime>30d rotation must NOT be applied to decisions/ (would move open-sprint journals).",
+          "ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P4"
+        },
+        "promoted_at": "2026-07-23T14:17:32Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-23T14:38:24Z",
+        "claimed_at": "2026-07-23T14:17:32Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "branch": null,
+        "commit": "82a69523807289a00fc6c8edae6769201a914b78",
+        "files": [
+          "scripts/agents-flow/cold-archive-sweep.sh",
+          "scripts/agents-flow/cold-archive-sweep.test.sh",
+          "scripts/agents-flow/notebook-auto-prune.sh",
+          "docs/agents/code-janitor/flow/main.md",
+          "docs/agents/dev-team/flow/main.md",
+          "docs/policies/dev-standards.md",
+          "docs/WORK.md"
+        ],
+        "completed_at": "2026-07-23T14:37:14Z",
+        "completed_by": "developer",
+        "status_note": "TE-T33: new scripts/agents-flow/cold-archive-sweep.sh (monthly-guarded 1st-of-month, COLD_ARCHIVE_FORCE=1 override), idempotent. Handoffs leg: docs/handoffs/*.md >30d AND not referenced anywhere in the 5 OPEN task_board lanes (jq recursive scan, computed live) -> archive/YYYY-MM/ (live dry-check: 839 candidates, 27 referenced, 2 correctly held back). Sessions leg: non-.md files >30d -> archive/YYYY-MM/ (the .md leg is already owned by memory-prune-sweep.sh at 14d flat-archive -- verified live before coding, no overlap). po-decisions.md 200L rotation reuses notebook-auto-prune.sh drop-oldest-## algorithm via new opt-in NOTEBOOK_PRUNE_EXTRA_GOVERNED_PATH env guard (default empty = zero hot-path behavior change) -- no new prune scheme. Decisions/ archival leg dropped entirely: decision-journal-archive.sh (UC-MDH-P4, shipped same day) already supersedes it (status-based not mtime-based; board row audit_ref note + that script header both name TE-T33) -- confirmed not ambiguous before skipping. Fixed dev-team/main.md 2 unscoped DJ-GATE-1 grep comments (sprint-*-*.md -> sprint-${SPRINT_ID}-*.md, matching qa/pm already-correct canonical pattern -- verified those needed no change). Wired into code-janitor 6h cron flow. CANONICAL pointer added to dev-standards.md. cold-archive-sweep.test.sh 14/14 PASS incl. idempotent re-run + git-diff-quiet proof live po-decisions.md untouched; 3 sibling suites re-run after shared-hook edit, zero regression (7/7, 12/12, 26/26). Journal: sprint-TOKEN-ECONOMY-AUDIT-developer.md STEP developer-S13."
       }
     ],
     "qa": [],
@@ -13750,36 +13792,7 @@
     },
     "last_triaged_at": "2026-07-23T14:17:32Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "TE-T33",
-        "title": "T-33 Archival policy for docs/handoffs (11MB/974 files), decisions/ (3.8MB), sessions/ — rotate >30d via janitor cron [~1-3k tok/day + caps growth]",
-        "owner": "developer",
-        "status": "IN_PROGRESS",
-        "type": "CLEAN",
-        "size": "S",
-        "priority": "P2",
-        "wave": 4,
-        "est_saving": "~1-3k tok/day + caps unbounded growth curve",
-        "zone": "cross-service/",
-        "sprint": "TOKEN-ECONOMY-AUDIT",
-        "depends": [],
-        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-33",
-        "note": "3 write-heavy dirs grow unboundedly (707/974 handoffs >30d). Add monthly cold-archive sweep to code-janitor 6h cron (guard: 1st of month): mv >30d + no open task_board ref -> archive/YYYY-MM/. Rotate po-decisions.md at 200L. Update DJ-GATE-1 grep to exclude archive/. Mirrors existing orch archive/ precedent.",
-        "audit_ref": {
-          "audit": "ultracode-2026-07-12",
-          "verdict": "memory-docs-hygiene-P4 coordination",
-          "note": "TE-T33 decisions/ leg is SUPERSEDED by UC-MDH-P4 (decision-journal-archive.sh, longest-match closed-only). mtime>30d rotation must NOT be applied to decisions/ (would move open-sprint journals).",
-          "ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P4"
-        },
-        "promoted_at": "2026-07-23T14:17:32Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-23T14:17:33Z",
-        "claimed_at": "2026-07-23T14:17:32Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
