@@ -1,19 +1,22 @@
 # PO Notebook
 
-_Last: 2026-07-22T23:58Z (triage: dev-team BOUNDED-1 mis-promoted UC-CDC-P5 — installed machine dep gate + minted systemic FIX)_
+_Last: 2026-07-23T03:53Z (CONVERGE drain: A-30 mcp-server MemPerc FP — augmented existing converge row + routed to architect, no duplicate mint)_
 
-## Tick 2026-07-22T23:37–23:58Z — prose sequencing is invisible to the promote gate; encode it or the gate can't hold it
+## Tick 2026-07-23T03:47–03:53Z — the convergence failure was DORMANCY, not absence-of-mint
 
-**Incident:** BOUNDED-1 blind-promoted UC-CDC-P5 (PART 3/3 of the cron-plane ruling, must land LAST) because its ordering lived ONLY in prose `.po_sequencing_20260722`. The promote gate reads machine `depends_on` (via `scripts/lib/devteam-eligibility.jq` `effective_depends_on`), which the row lacked. dev-team reverted the claim (no dispatch, no cron armed) → set BLOCKED, routed to me.
+**Directive:** router CONVERGE — A-30 mcp-server MemPerc FP worsened (WARN 91.25-91.33% 03:11-12Z → CRITICAL 92.50% + Telegram 03:42Z); "mint the fix, don't note-only a 3rd time."
 
-**Decision 1 — UC-CDC-P5 (Option B, flip to BACKLOG):** added `depends_on=[UC-SDF-P6, ARCH-SESSION-CRON-PLANE-LIVENESS-WATCHDOG]`, status BLOCKED→BACKLOG, deleted inline `blocked_by/blocked_reason/blocked_at`. Why BACKLOG not BLOCKED: the promote gate only evaluates BACKLOG/TODO — a BLOCKED row never re-enters the gate, so `depends_on` would be inert and need a MANUAL flip after predecessors land (not self-healing). BACKLOG = promote-eligible-but-dep-gated: `deps_satisfied()` requires DONE_VERIFIED, so it auto-unblocks only when BOTH predecessors finish. Removed `blocked_by` because the lib UNIONS `.blocked_by` into `effective_depends_on` as task-ids; "dev-team" there = phantom dep that never reaches DONE_VERIFIED = permanent block, defeating auto-unblock.
+**Prior-art check (decisive):** `FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE` was ALREADY minted 07-21T14:23Z (owner=architect, plan_only+supervised, BACKLOG). The memory body still reads "no mint" but the BOARD is ground-truth — the row exists. A 2nd row into a 447-deep backlog IS the churn the directive fights. So I converged by **routing, not re-minting.**
 
-**GATE PROOF (live, against the real lib):** effective_depends_on=[the 2 predecessors], both status=BACKLOG → `deps_satisfied=false` → `is_bounded1_eligible=false`. Held. Flips true at predecessors' DONE_VERIFIED.
-
-**Decision 2 — systemic FIX minted:** `FIX-DEVTEAM-BOUNDED1-PROSE-SEQUENCING-UNBACKED-GATE` (P1/S, cross-service, owner dev). Add a conservative-skip predicate in the SHARED lib: a row with any `^po_sequencing` key AND empty `effective_depends_on` → withheld from unattended auto-pickup + surfaced in the audit report. REJECTED teaching the gate to regex-parse prose for task-ids (the exact fragility the shared contract exists to kill). All 3 pickers (BOUNDED-1/SLS/RLC) inherit it. Prior-art grep clean.
+**Actions (2 orch-apply writes, conservation intact 624/110):**
+1. Augmented the converge row: +2 scope items (WARN→CRITICAL escalation-GATE on genuine tripwire only, VmHWM>VmRSS reclamation VETOes escalation, raise WARN thr ~95%; dedup-ledger must NOT auto-escalate deduped-benign to CRITICAL+Telegram, E-3 append UNCHANGED), recurring 3→4, `po_escalation_20260723`, `commissioned_at`, `next_agent=architect`.
+2. Folded 94.98% high-water (VmRSS 90.4% of 3GiB, VmHWM>VmRSS=reclaim already happened, health 200/2.35ms, OOMKilled=false, RC=0) into `FIX-MCP-MEMORY-CODE-LEAK` corroboration. NO ops route, NO restart (user-gated).
+3. Folded the 2 Tier-2 data_stale rows to their FP homes (RAW-verified via get_system_status): bctc 62h = documented B-05 phantom-CRITICAL (quarterly source, breakers OK) → FIX-AUDITOR-B05-BCTC-FRESHNESS-LAYER-SPLIT; VPS 3/5 unhealthy = known degradation, graceful fallback active → VPS-FRESH-02-FIX.
+4. ACKed all 5 signal_queue rows NEW→READ (consumed by this triage). 0 NEW to=po remain.
 
 ## Carry-over
-- **UC-CDC-P5 is now correctly held** — do NOT re-flag or re-block. It auto-unblocks when UC-SDF-P6 (part1 registry) AND ARCH-SESSION-CRON-PLANE-LIVENESS-WATCHDOG (part2 watchdog) both reach DONE_VERIFIED. Both still BACKLOG.
-- **New meta-rule for me:** whenever I write a `po_sequencing_*` prose ordering constraint, ALSO write machine `depends_on` — prose alone is invisible to every dev-team picker. The new FIX enforces this once shipped.
-- **VPS still hard-blocked on user** (restart user-gated); every further sbv/prices/foreign-flow stale signal = same incident, mark triaged, do NOT mint. WIP was 0/2.
-- Sprint `COWORK-GUARANTEED-SLOT-CATCHUP` + `BA-COWORK-GUARANTEED-SLOT-CATCHUP` still live (NEXT=ba write spec).
+- **A-30 converge is COMMISSIONED, next=architect** (design predicate+dedup+CRITICAL-gate brief → agent-father implements). Do NOT re-mint / re-fold; on any further in-band A-30 re-emit → mark triaged, corroborate to the leak row, no new work. Only a GENUINE tripwire (OOMKilled / >97%-sustained-no-reclaim multi-probe / total :3000 unresponsiveness, cf the 07-22 real 99.81% trip) breaks this.
+- **Router mental-model fix:** the memory feedback body says "no mint" — stale; the converge row EXISTS since 07-21. The lever is architect pickup, not another mint.
+- **UC-CDC-P5 still correctly held** — auto-unblocks when UC-SDF-P6 + ARCH-SESSION-CRON-PLANE-LIVENESS-WATCHDOG both DONE_VERIFIED. Do NOT re-flag.
+- **VPS still user-gated** (restart); every further sbv/prices/foreign-flow/VPS stale = same incident, mark triaged, do NOT mint.
+- Out-of-scope observation for next auditor cycle: "Giá cổ phiếu" 48.7h stale during market-open (HOSE staleness itself fresh 0.0h — different table); not in my drain scope, flag if it persists.

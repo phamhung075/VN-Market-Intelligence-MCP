@@ -1957,7 +1957,7 @@
         "type": "data_stale",
         "summary": "bctc-discover stale 60.68h (check B-05)",
         "severity": "CRITICAL",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null
       },
       {
@@ -1968,7 +1968,7 @@
         "type": "data_stale",
         "summary": "VPS proxy health degraded (3/5 services unhealthy)",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null
       },
       {
@@ -6030,7 +6030,9 @@
         "title": "Fix VPS-FRESH-02: Is sbv-vps proxy within 24h stale threshold",
         "type": "fix",
         "zone": "ops",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#VPS-FRESH-02-FIX"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#VPS-FRESH-02-FIX",
+        "po_corroboration_20260723": "CORROBORATION (PO CONVERGE drain 2026-07-23T03:52Z, folds sys-20260723T023146-7e7f WARN 'VPS proxy health degraded 3/5 services unhealthy'). Live get_system_status @03:52Z: recurring 'VPS endpoint timeout (>5000ms)' on foreign-flow-job with graceful fallback ACTIVE (all-fallbacks-exhausted -> returns empty, no crash); tradingEconomics disabled/stopped (known). Known recurring VPS-proxy degradation class (also FIX-VPS-SSC-INSIDER-502, OPS-POLLNEWS-NIGHT-ZERO). NO new mint. Not escalated to ops (graceful degradation working; user-gated VPS lane).",
+        "updated_at": "2026-07-23T03:53:28Z"
       },
       {
         "id": "DS-OBS-01-FIX",
@@ -7996,7 +7998,9 @@
         "title": "system-auditor B-05 (bctc-vps freshness) applies a 24h-continuous SLA to the RAW quarterly-PDF push layer instead of the authoritative analysis-layer SLA gate -> phantom CRITICAL + Telegram BUG ~6x/day for an event-driven quarterly source",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AUDITOR-B05-BCTC-FRESHNESS-LAYER-SPLIT",
         "supervised": true,
-        "verify_note": "prior_status=TODO"
+        "verify_note": "prior_status=TODO",
+        "po_corroboration_20260723": "CORROBORATION (PO CONVERGE drain 2026-07-23T03:52Z, folds sys-20260723T023139-469d B-05 CRITICAL 'bctc-discover stale 60.68h'). Confirmed FP via live get_system_status @03:52Z: BCTC raw-layer freshness 62.0h stale, BUT hose/hnx/ssc circuit breakers all [OK] 0 failures + DB 374MB healthy no-malformed => fetch infra HEALTHY, 62h = no new quarterly filings in an event-driven source, NOT an outage. This is exactly the documented raw-quarterly-PDF-layer phantom-CRITICAL this row exists to fix (24h-continuous SLA mis-applied to an event-driven source). NO new mint. Nth-instance of the FP class in scope.",
+        "updated_at": "2026-07-23T03:53:28Z"
       },
       {
         "id": "P1-DRIFT-QUARANTINE-FREEZE-FLAG",

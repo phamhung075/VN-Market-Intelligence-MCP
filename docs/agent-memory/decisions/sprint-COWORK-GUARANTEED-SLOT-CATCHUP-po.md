@@ -35,3 +35,13 @@
 - Systemic: harden the gate to PARSE po_sequencing_* prose for task-ids (rejected — regex-mining English for control flow is the exact fragility the shared lib exists to kill) vs a conservative-skip predicate that withholds any row with sequencing prose + empty depends_on.
 **why-decision:** BACKLOG makes the depends_on gate I'm installing actually load-bearing; verified live against scripts/lib/devteam-eligibility.jq — effective_depends_on resolves to exactly the 2 predecessors, deps_satisfied=false, is_bounded1_eligible=false (held), and it flips true only at DONE_VERIFIED. Removed blocked_by because the lib unions it into effective_depends_on; "dev-team" there = phantom dep that never reaches DONE_VERIFIED = permanent block, defeating auto-unblock. FIX targets the shared lib (all 3 pickers inherit) not prose-parsing.
 **why-change:** no change from plan — matches the spawn brief's preferred approach + the one-shared-contract principle from SPIKE-BOUNDED1-ELIGIBILITY-CONTRACT-REVIEW.
+
+### STEP po-S4 · po · 2026-07-23T03:54:20Z
+**task-id:** FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE
+**what-done:** CONVERGE drain of A-30 mcp-server MemPerc FP: augmented the EXISTING converge row (not a new mint) with the WARN->CRITICAL escalation-gate facet + recurring 3->4 + commission-to-architect; folded 94.98% high-water to FIX-MCP-MEMORY-CODE-LEAK; folded bctc B-05 + VPS data_stale to their FP homes; ACKed 5 signals.
+**what-considered:**
+- Mint a fresh converge row (directive's literal ask) — REJECTED: prior-art grep found FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE already minted 07-21; a 2nd row into a 447-deep backlog IS the churn the directive fights.
+- Note-only fold a 3rd time — REJECTED: that is exactly what the CONVERGE directive forbids.
+- Augment existing row + route to architect (chosen).
+**why-decision:** The real convergence failure was DORMANCY (row minted 07-21 but sat plan_only+supervised in BACKLOG while the FP re-emitted and worsened to CRITICAL+Telegram), not absence-of-mint. Augmenting scope for the new CRITICAL-escalation facet + commissioning to architect stops the churn WITHOUT a duplicate-mint.
+**why-change:** Directive assumed "not yet minted" (memory body still reads 'no mint'); board ground-truth showed the row exists — so I converged by routing, not re-minting.
