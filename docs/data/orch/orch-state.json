@@ -428,8 +428,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-22T22:42:47Z",
-    "_updated_by": "po/triage-sys-20260722T223302-4f8b",
+    "_updated_at": "2026-07-23T04:53:05Z",
+    "_updated_by": "dev-team",
     "archive": [],
     "rows": [
       {
@@ -1948,6 +1948,44 @@
         "disposition": "DEDUP -> existing VPS push-plane incident cluster (FIX-VPS-SYSTEMD-STARTLIMIT-HARDENING P1 + FIX-VPS-HEALTH-OFFHOURS-MASK-FALSE-GREEN + FIX-VPS-SBV-HEALTH-SHARED-TABLE-IS-ESTIMATE, all minted 2026-07-22T16:29Z from docs/vps-sources/vps-push-plane-stale-2026-07-22/recon.md). NUMBER IS TRUE, FRAMING IS WRONG. RAW live probe 2026-07-22T22:37-22:45Z via gateway->vn-market + docker exec bun:sqlite on vn-market-intelligence-mcp-mcp-server-1: vps_push_log service='sbv' MAX(pushed_at)=2026-07-21 03:05:21 => 43h32m at signal ts, so the 43h is real. BUT it is NOT sbv-specific and NOT a data outage for sbv: prices last push 2026-07-21 03:08:05 and foreign-flow last push 2026-07-21 03:08:59 died in the SAME 3.5-min window (3 of 5 push services); news alone survives (2026-07-22 22:30:04, 68 pushes/24h) because it already carries the StartLimitIntervalSec=0 hardening (commit 42e8448ce) the other three never got. NOT market-hours blindness: 07-18/07-19 absent = normal Sat/Sun, 07-21 Tue + 07-22 Wed are real VN trading days. NOT a frozen value: sbv_rates_history moved 26130 -> 26140 -> 26120 across 2026-07-22 with last write 21:45:02Z (52min), matching get_sla_status sbv_fx age=53min -- sbv is the LEAST affected source because the local fallback scheduler/macro/sbvRatesJob.ts (VCB pull, is_estimate=1, 4-hourly) keeps refreshing the shared single-row sbv_rates table, which is precisely the masking mechanism FIX-VPS-SBV-HEALTH-SHARED-TABLE-IS-ESTIMATE already documents. TWO-LAYER SPLIT CONFIRMED: push-plane 43h dead vs fetch/serve-plane 53min fresh; the auditor emitted BOTH numbers 4h apart (sys-20260722T183223-0f2a said 31min) without ever reconciling them. NO MINT (conservation held; root cause already diagnosed to systemd StartLimitBurst lockout, blocked_by user-escalation-vps-restart, VPS SSH/HTTP unreachable). NO restart (user-gated). ONE NEW FACT folded into FIX-VPS-SYSTEMD-STARTLIMIT-HARDENING acceptance: the outage is destroying data that will NOT self-heal on restart -- daily_ohlcv 07-21=416 and 07-22=51 vs 887-984/day baseline (~1,400 ticker-days lost) and daily_foreign_flow has NO 2026-07-22 row at all (baseline 102/day, full session gone).",
         "triaged_at": "2026-07-22T22:42:47Z",
         "triaged_by": "po/triage-sys-20260722T223302-4f8b"
+      },
+      {
+        "id": "context-bloat-agent-father-20260723T043408Z",
+        "ts": "2026-07-23T04:53:05Z",
+        "from": "context-bloat-backstop-hook",
+        "to": "po",
+        "orig_to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "summary": "agent-father.md notebook context-bloat breach (backstop hook, priority=high) — PO route to claude-manager-helper for prune",
+        "severity": "MEDIUM",
+        "status": "NEW",
+        "payload_ref": "docs/signals/processed/context-bloat-docs-agent-memory-notebooks-agent-father-md-2026-07-23T043408Z.json",
+        "note": "dev-team drain durable re-route: file moved to processed/ with no signal_queue row; pipeline-resume tick skipped Step1 PO triage, so appended for PO next run"
+      },
+      {
+        "id": "notebook-unparseable-agent-father-20260723T043406Z",
+        "ts": "2026-07-23T04:53:05Z",
+        "from": "notebook-auto-prune-hook",
+        "to": "po",
+        "orig_to": "claude-manager-helper",
+        "type": "notebook_unparseable_breach",
+        "summary": "agent-father.md notebook unparseable (auto-prune hook, priority=high) — PO route to claude-manager-helper for repair",
+        "severity": "MEDIUM",
+        "status": "NEW",
+        "payload_ref": "docs/signals/processed/notebook-unparseable-docs-agent-memory-notebooks-agent-father-md-2026-07-23T043406Z.json",
+        "note": "dev-team drain durable re-route (as above)"
+      },
+      {
+        "id": "janitor-health-recheck-writer-retired-20260723",
+        "ts": "2026-07-23T04:53:05Z",
+        "from": "code-janitor",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "retire-vs-replace dead RemoteTrigger health-recheck writer trig_019Q8D5xttjZn6iytx2Ld9dW (flagged by developer UC-MDH-P3 memory-prune-sweep)",
+        "severity": "MEDIUM",
+        "status": "NEW",
+        "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-07-23.json",
+        "note": "dev-team drain durable delivery: file-only PO payload appended to signal_queue for PO triage"
       }
     ],
     "last_triaged_at": "2026-07-22T15:10:08Z",
@@ -9561,9 +9599,10 @@
         "po_escalation_20260723": "ESCALATION+COMMISSION (PO CONVERGE drain 2026-07-23T03:47Z). WORSENING confirmed: A-30 auto-escalated benign in-band mem (91.25-92.50%, within the 85-97.8% GC-sawtooth band) to CRITICAL microservice_degraded (sys-20260723T034235-2a44 to=po) + fired Telegram, on a 2-point 30-min delta. RAW verify 03:43Z: cgroup MemPerc 94.98% but VmRSS 2,843,808kB=90.4% of 3GiB cap (cgroup counts reclaimable page-cache); VmHWM 2,971,264kB>VmRSS => GC reclamation ALREADY occurred (sawtooth, not monotonic climb); :3000/health=200 in 2.35ms; OOMKilled=false; RestartCount=0; cpu 107.82% (workload-driven bump). NONE of the 4 genuine tripwires met. Categorically distinct from the 07-22 REAL trip (99.81% + ~10-probe unresponsiveness + gateway EOF). recurring_bug_count 3->4. This row was minted 07-21T14:23Z but sat DORMANT in BACKLOG (plan_only+supervised) while the FP re-emitted and worsened -> the convergence failure is DORMANCY, not absence-of-mint (memory feedback_auditor_mcpserver_a21_a30 body still reads 'no mint' but the board contradicts it). NOW COMMISSIONED: PO routes to architect this cycle to design the predicate+dedup+CRITICAL-gate brief -> agent-father implements. NO ops route, NO restart/rebuild (user-gated; interim rebuild-cron clears cap). NO duplicate mint (prior-art: this IS the tracked converge row).",
         "commissioned_at": "2026-07-23T03:47Z",
         "commissioned_by": "po-converge-drain-20260723",
-        "updated_at": "2026-07-23T04:21:07Z",
+        "updated_at": "2026-07-23T04:46:38Z",
         "design_brief_ref": "docs/architecture-briefs/2026-07-23-auditor-a30-reclamation-gate-a21-windowed-restart.md @82a8367ff",
-        "po_advance_20260723": "ADVANCE+APPROVE (PO focused converge drain 2026-07-23T04:21:06Z). agents-architect DESIGN hop COMPLETE — brief docs/architecture-briefs/2026-07-23-auditor-a30-reclamation-gate-a21-windowed-restart.md committed @82a8367ff (detection-layer ONLY: probe.sh + flow/tier1-probe.md; reuses unmodified scripts/audits/verify-a30-mcp-memory-reclamation.sh 6-probe/65s gate + VmHWM>VmRSS veto; A-21 re-modeled as windowed crash-only cron_job_runs query). Row was NOT advanced (stuck next_agent=architect) — silent-stall corrected here in place, NO re-mint. next_agent architect->agent-father, owner->architect->agent-father, plan_only true->false (implementation AUTHORIZED under supervision). supervised stays true (blocks BOUNDED-1 idle auto-pickup; router dispatches agent-father explicitly this cycle). PROCEED NOW not scheduled: design bounded+low-risk, recurring_bug_count=4, SOFT DEADLINE = implement before next mem-refill past 85% (mcp-server just restarted mem~27%, A-30 dormant, hours out) to stop the 5th FP recurrence. Change zone honored: docs/agents/system-auditor/* only, NO app code, NO deploy/restart (user-gated). E-3 append-always contract PRESERVED per brief item 3 (structural: benign readings never reach emit-audit-signal.sh)."
+        "po_advance_20260723": "ADVANCE+APPROVE (PO focused converge drain 2026-07-23T04:21:06Z). agents-architect DESIGN hop COMPLETE — brief docs/architecture-briefs/2026-07-23-auditor-a30-reclamation-gate-a21-windowed-restart.md committed @82a8367ff (detection-layer ONLY: probe.sh + flow/tier1-probe.md; reuses unmodified scripts/audits/verify-a30-mcp-memory-reclamation.sh 6-probe/65s gate + VmHWM>VmRSS veto; A-21 re-modeled as windowed crash-only cron_job_runs query). Row was NOT advanced (stuck next_agent=architect) — silent-stall corrected here in place, NO re-mint. next_agent architect->agent-father, owner->architect->agent-father, plan_only true->false (implementation AUTHORIZED under supervision). supervised stays true (blocks BOUNDED-1 idle auto-pickup; router dispatches agent-father explicitly this cycle). PROCEED NOW not scheduled: design bounded+low-risk, recurring_bug_count=4, SOFT DEADLINE = implement before next mem-refill past 85% (mcp-server just restarted mem~27%, A-30 dormant, hours out) to stop the 5th FP recurrence. Change zone honored: docs/agents/system-auditor/* only, NO app code, NO deploy/restart (user-gated). E-3 append-always contract PRESERVED per brief item 3 (structural: benign readings never reach emit-audit-signal.sh).",
+        "qa_verify_20260723": "QA TERMINAL VERIFY (2026-07-23T04:47Z, independent gate-keeper, commits 2f956f1c5+51d7f4467). VERDICT: CHANGES_REQUESTED (1 blocking issue) — NOT closed. PASS: (1) diff vs brief docs/architecture-briefs/2026-07-23-auditor-a30-reclamation-gate-a21-windowed-restart.md matches design 1:1 (A-30 conditional deep-probe, FOLD/ESCALATE->PASS/WARN/CRITICAL mapping, VmHWM>VmRSS veto, single-cycle anti-carry rule, A-21 windowed crash-only query); (2) live probe.sh run at mem~27%: SKIP branch hit correctly, disk+A-20 ran after, \"=== PROBE DONE ===\" printed, exit 0; shellcheck -S warning clean; (3) verify-a30-mcp-memory-reclamation.sh invoked directly with CONTAINER= override: JSON shape (verdict/reason/analysis.{min_pct,max_pct,reclamation_dips}/state.oom_killed/vm.{vmhwm_kb,vmrss_kb}) matches tier1-probe.md parser exactly, reason-string substrings (\"OOMKilled=true\"/\"peak >97%\"/\"no reclamation dip\") confirmed to match the 3 ESCALATE branches; (4) A-21 bun:sqlite query runs read-only in mcp-server container, returns valid JSON against real cron_job_runs data (113 startup/58 cleanshutdown rows); explicitly stress-tested for WAL-blindness (feedback_integrity_helper_readonly_wal_blinded precedent) by comparing readonly connection against live WAL-mode db with a 5.7MB uncheckpointed -wal file — readonly connection correctly saw a sub-minute-fresh row, NOT blinded (bun {readonly:true} = SQLITE_OPEN_READONLY, not the dangerous immutable=1 DSN pattern); (5) agent-father one deliberate addition beyond brief (|| echo \"[A-30] deep-probe subprocess FAILED\" guard on the verify-a30 subprocess call, probe.sh:92) confirmed SOUND — reproduced the exact abort scenario with a bad container name, guard fires correctly, matches file idiom. BLOCKING ISSUE (file:line): docs/agents/system-auditor/probe.sh:86 — `BASELINE_PCT=$(docker stats ... \"${MCP_CONTAINER}\" 2>/dev/null | tr -d \"%\")` has NO `||` fallback, unlike every other fallible docker call in this file (lines 31/66/71/92/100) and unlike the structurally-identical guarded call one line above at :71. Empirically reproduced: under `set -euo pipefail` (line 17), a docker-stats failure at this exact line silently aborts the WHOLE script (bash semantics: var=$(failing_cmd) is NOT exempt from set -e) — disk(A-32)/A-20 checks never run, \"=== PROBE DONE ===\" never prints, violating the files own contract (line 4: \"Failures are evidence - print them, exit 0\"). This is the SAME abort-risk class agent fathers own decision journal cites as the reason for the :92 guard, but the guard was placed one line too late - it protects the subprocess call but not the baseline-pct extraction immediately above it. Risk is correlated with the exact scenario this fix targets (docker stats on a transiently non-running/restarting container during genuine memory-pressure/crash-loop conditions - precisely when Tier-1 evidence matters most). Minimal fix: same idiom as line 71/92, e.g. `BASELINE_PCT=$(docker stats --no-stream --format \"{{.MemPerc}}\" \"${MCP_CONTAINER}\" 2>/dev/null | tr -d \"%\") || { echo \"[A-30] baseline probe FAILED (container=${MCP_CONTAINER}): $?\"; BASELINE_PCT=\"0\"; }`. RESIDUAL (not blocking, per router scoping): true field acceptance of the >=85% deep-probe branch is the next live Tier-1 cycle at genuine mem pressure - hours out, cron-gated, monitored separately. NEXT: agent-father applies the 1-line fix at probe.sh:86, then re-request QA verify (no re-design needed, brief/logic otherwise correct)."
       },
       {
         "id": "FIX-OHLCV-HISTORY-PLANE-EMPTY-LIVE-PLANE-HEALTHY",

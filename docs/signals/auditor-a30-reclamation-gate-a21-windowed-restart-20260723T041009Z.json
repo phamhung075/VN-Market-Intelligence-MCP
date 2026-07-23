@@ -1,9 +1,0 @@
-{
-  "from": "agents-architect",
-  "to": "agent-father",
-  "type": "architecture-brief",
-  "payload": "docs/architecture-briefs/2026-07-23-auditor-a30-reclamation-gate-a21-windowed-restart.md",
-  "priority": "high",
-  "createdAt": "2026-07-23T04:10:09Z",
-  "summary": "FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE (recurring_bug_count=4, PO commissioned 2026-07-23T03:47Z): detection-only predicate tune for system-auditor A-30 (mcp-server MemPerc) + A-21 (RestartCount). Change zone restricted to docs/agents/system-auditor/probe.sh + docs/agents/system-auditor/flow/tier1-probe.md ONLY. Reuses existing unmodified scripts/audits/verify-a30-mcp-memory-reclamation.sh (multi-probe/OOMKilled/VmHWM discriminator, currently only wired into ad hoc cowork manual triage) as a conditional subprocess call from probe.sh; A-30 verdict becomes a single self-contained per-cycle evidence bundle (never a cross-cycle delta) with an added VmHWM>VmRSS veto in the calling layer. A-21 re-modeled as a read-only inline bun:sqlite windowed crash-only query against cron_job_runs, porting apps/mcp-server/src/scheduler/system/restartCadenceAlertJob.ts's discriminator (4h window, ALERT_THRESHOLD=2) — zero app-code change. No edit to scripts/emit-audit-signal.sh (shared, out of zone) — dedup-ledger item 3 satisfied structurally since a benign finding never reaches that script. NO deploy/restart/rebuild of any monitored service. A-12/A-04/A-13 debounce explicitly out of scope for this commissioning wave (flagged, not silently dropped)."
-}

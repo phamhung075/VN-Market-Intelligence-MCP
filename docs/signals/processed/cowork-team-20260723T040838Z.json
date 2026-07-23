@@ -1,0 +1,69 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260723T040838Z",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [
+      "alert-commander-market"
+    ],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence",
+      "alert-commander-critical": "cadence"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": "240",
+      "market-watcher-offhours": "240",
+      "alert-commander-critical": "240"
+    },
+    "last_fired_timestamp": "2026-07-23T04:07:49Z",
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "04:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 8,
+    "note": "First fan-out after 6 consecutive silent ticks. MAX_PARALLEL=4 (headroom 3173MB > 1500 floor, load1m 2.64 << 24). alert-commander-market suppressed_cadence at 14400s vs its */15 cron (dangling policy_id -> AC-P1-1-3 240min default); next eligible 06:00Z. chef-intraday running 120min (calendar_status unknown) vs 60min (open) - no calendar_status producer exists in the codebase."
+  },
+  "priority": "low",
+  "createdAt": "20260723T040838Z",
+  "_processed": {
+    "fingerprint": "05dd100e69587bddff075ae7358e630c60fa38c6d99e5eb295e794c279a4100c",
+    "processedAt": "2026-07-23T04:14:54Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
