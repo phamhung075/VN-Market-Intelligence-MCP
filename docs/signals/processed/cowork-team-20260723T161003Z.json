@@ -3,7 +3,7 @@
   "to": "dev-team",
   "type": "cowork-fire",
   "payload": {
-    "fire_time": "2026-07-16T16:10:08.416Z",
+    "fire_time": "2026-07-23T16:10:03Z",
     "matched_slots": [
       "news-scout-offhours",
       "market-watcher-offhours",
@@ -25,7 +25,7 @@
       "docs/agents/alert-commander/flow/main.md"
     ],
     "silent": false,
-    "drift_min": 3,
+    "drift_min": 5,
     "errors": [],
     "pressure_mode": "adaptive",
     "calendar_status": "unknown",
@@ -45,7 +45,7 @@
       "market-watcher-eod": 240,
       "alert-commander-critical": 240
     },
-    "last_fired_timestamp": "2026-07-16T16:08:49.343Z",
+    "last_fired_timestamp": "2026-07-23T16:09:33Z",
     "last_fired_slots": [
       "news-scout-offhours",
       "market-watcher-offhours",
@@ -57,16 +57,16 @@
     "reason": "spawned",
     "nominal_tick": "16:00",
     "leader_lock": "acquired",
-    "dev_head": "unknown",
+    "dev_head": "idle",
     "devq": 5,
-    "signal_backlog": 4,
-    "note": "4-slot WORK fan-out (adaptive; stale_warning false, age ~11min<20). Step4b collision WARNING emitted for agent=market-watcher x2 slots (market-watcher-offhours + market-watcher-eod) — both spawned per R3, distinct slot_id locks, each owns its own published-marker gate. market-watcher-eod last_fired was 3-day-stale (2026-07-13T16:15:42Z) — EOD coverage gap closed this tick. last_fired batch write succeeded on 2nd attempt: 1st attempt hit jq needle-eval bug ($won|index(.slot_id) evaluated .slot_id against $won array) — failed to .tmp only, no corruption, schedule intact; fixed by binding .slot_id as $sid first. market-watcher-offhours subagent already completed clean (0 anomalies, offhours). emit_pressure_state success; cycle_snapshot_promoted:false (UC-SDF-P2); stale_warning oscillated true post-emit (benign, self-clears)."
+    "signal_backlog": 8,
+    "note": "4-slot fan-out, MAX_PARALLEL=4 (headroom 3112MB >= 1500, load1m 2 <= 24), single batch. Step 4b collision WARN sent: agent_id=market-watcher matched 2 slots (market-watcher-offhours, market-watcher-eod) — both spawned per R3. alert-commander-critical policy_id has ZERO rows in cadence-policy.json .policies[] (dangling) — fell through to unmatched default 240min."
   },
   "priority": "low",
-  "createdAt": "2026-07-16T16:10:08.416Z",
+  "createdAt": "2026-07-23T16:10:03Z",
   "_processed": {
-    "fingerprint": "bca8fabf50bce406d05ae28d8f0af15de080eb3cf59e035aa09222b5dd397083",
-    "processedAt": "2026-07-16T16:19:31Z",
+    "fingerprint": "1f00393739c94435891d317132c031627d7d6afc9fd662b91f92b74a1cf4e4a9",
+    "processedAt": "2026-07-23T16:24:02Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
