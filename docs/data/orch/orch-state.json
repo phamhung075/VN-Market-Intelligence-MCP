@@ -387,11 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "updated_at": "2026-07-23T15:33:00Z",
-    "updated_by": "dev-mcp-server"
+    "status": "in_progress",
+    "active_task_id": "BCT-OBS-01-FIX",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of BCT-OBS-01-FIX — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-23T15:45:46Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -5899,16 +5900,6 @@
         "type": "fix",
         "zone": "ops",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#NEWS-FETCH-AVAIL-01-FIX"
-      },
-      {
-        "id": "BCT-OBS-01-FIX",
-        "priority": "normal",
-        "size": "S",
-        "status": "BACKLOG",
-        "title": "Fix BCT-OBS-01: Does dataAuditDaily produce a data integrity report sent to WORK channel",
-        "type": "fix",
-        "zone": "dev-mcp-server",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#BCT-OBS-01-FIX"
       },
       {
         "id": "BCT-OBS-02-FIX",
@@ -13858,9 +13849,26 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-23T15:27:04Z",
+    "last_triaged_at": "2026-07-23T15:45:46Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "BCT-OBS-01-FIX",
+        "priority": "normal",
+        "size": "S",
+        "status": "IN_PROGRESS",
+        "title": "Fix BCT-OBS-01: Does dataAuditDaily produce a data integrity report sent to WORK channel",
+        "type": "fix",
+        "zone": "dev-mcp-server",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#BCT-OBS-01-FIX",
+        "promoted_at": "2026-07-23T15:45:46Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-23T15:45:46Z",
+        "claimed_at": "2026-07-23T15:45:46Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
