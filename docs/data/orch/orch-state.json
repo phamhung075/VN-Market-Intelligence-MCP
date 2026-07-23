@@ -2221,6 +2221,17 @@
         "triaged_by": "po",
         "triaged_at": "2026-07-23T18:03:58Z",
         "triage_note": "MINTED for all 3 asks: ask1=FIX-LAUNCHD-DOCKER-EVENTS-EXIT1-CRASHLOOP (docker-events repair row); ask2=FIX-FLEET-PUSH-LAUNCHD-EXCONFIG-SILENT-DEAD unblocked (next_agent=ops); ask3=FIX-AUDITOR-TIER1-PROBE-ACKED-LAUNCHD-DEATH-SUPPRESSION (acknowledged-failure suppression, stops the ~48-ticks/day auditor re-churn). Recurring_churn_escalation addressed at root."
+      },
+      {
+        "id": "sys-20260723T183346-148e",
+        "ts": "2026-07-23T18:33:46Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "sbv_fx stale 47min (check B-04)",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-23T18:03:58Z",
