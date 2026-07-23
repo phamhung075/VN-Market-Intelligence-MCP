@@ -4,26 +4,24 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Chung khoan (moi gioi, tu doanh, tu van tai chinh) — VIX Securities",
-  "customer": "Nha dau tu ca nhan/to chuc trong nuoc, khach hang moi gioi ban le",
-  "ops": "BCTC goc chua co du lieu (Chua co du lieu BCTC) — chi co ty le so sanh nganh: PE 5.5x (DISCOUNT -63% vs median 14.6x), PB 1.4x (DISCOUNT -23%), ROE 28.9% (tren median 10.0%)",
+  "product": "Securities brokerage, margin lending, proprietary trading — VIX Securities",
+  "customer": "Retail and institutional stock investors",
+  "ops": "BCTC goc chua co du lieu (Chua co du lieu BCTC) — chi co ty le so sanh nganh: PE 5.5x (DISCOUNT -63% vs median 14.6x, re), ROE 28.9% (tren median 10.0%), PB DISCOUNT -23%",
   "mgmt": "Khong co du lieu quan tri moi; theo doi luan phien (rotation touch), khong mo rong cum bi chan",
   "fundamentals": {
     "data_status": "Chua co du lieu BCTC — blocked cluster (unchanged)",
     "sector_pe": 5.5,
-    "sector_pe_verdict": "DISCOUNT",
-    "sector_pb": 1.4,
+    "sector_pe_verdict": "CHEAP/DISCOUNT",
     "sector_roe_pct": 28.9
   },
   "esc_gate": {
     "note": "ESC gate not evaluated — no BCTC extraction available"
   },
-  "data_quality_note": "VPS push plane (prices/foreign-flow/sbv) degraded since 2026-07-21T03:05Z — daily_ohlcv coverage collapsed to 416 rows (07-21) and 51 rows (07-22) vs 887-984/day baseline. Sector PE/PB/ROE figures above use this same degraded price plane — treat as degraded-confidence pending VPS restore.",
-  "cycle_id": "20260723-0000",
-  "source": "bctc-analyst-slot-4",
+  "cycle_id": "20260723-1800",
+  "source": "bctc-analyst-slot-2",
   "_processed": {
-    "fingerprint": "a9a9cafac8845ab0be8771f1ea675a68a0a44abe3e5cd7ca0b3e6854048043e2",
-    "processedAt": "2026-07-23T00:17:24Z",
+    "fingerprint": "1807e99a8cf3d453f2288124512a60d933840ef0d98688a2735978c83c81c494",
+    "processedAt": "2026-07-23T18:17:06Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

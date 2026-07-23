@@ -4,26 +4,24 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "San xuat bia (Sabeco), do uong giai khat",
-  "customer": "Kenh ban le/HORECA trong nuoc, mot phan xuat khau",
-  "ops": "BCTC goc chua co du lieu (Chua co du lieu BCTC) — chi co ty le so sanh nganh: PE 13.1x (PREMIUM +48% vs median 8.9x), PB 2.7x (PREMIUM +69%), ROE 19.9% (tren median 15.5%)",
+  "product": "Bia, ruou, nuoc giai khat (Sabeco)",
+  "customer": "Nguoi tieu dung ban le, kenh phan phoi HORECA (nha hang - khach san)",
+  "ops": "BCTC goc chua co du lieu (Chua co du lieu BCTC) — chi co ty le so sanh nganh: PE 13.1x (PREMIUM +48% vs median 8.9x), ROE 19.9% (tren median 15.5%), PB PREMIUM +69%",
   "mgmt": "Khong co du lieu quan tri moi; theo doi luan phien (rotation touch), khong mo rong cum bi chan",
   "fundamentals": {
     "data_status": "Chua co du lieu BCTC — blocked cluster (unchanged)",
     "sector_pe": 13.1,
-    "sector_pe_verdict": "PREMIUM",
-    "sector_pb": 2.7,
+    "sector_pe_verdict": "PREMIUM/FAIR",
     "sector_roe_pct": 19.9
   },
   "esc_gate": {
     "note": "ESC gate not evaluated — no BCTC extraction available"
   },
-  "data_quality_note": "VPS push plane (prices/foreign-flow/sbv) degraded since 2026-07-21T03:05Z — daily_ohlcv coverage collapsed to 416 rows (07-21) and 51 rows (07-22) vs 887-984/day baseline. Sector PE/PB/ROE figures above use this same degraded price plane — treat as degraded-confidence pending VPS restore.",
-  "cycle_id": "20260723-0000",
-  "source": "bctc-analyst-slot-4",
+  "cycle_id": "20260723-1800",
+  "source": "bctc-analyst-slot-2",
   "_processed": {
-    "fingerprint": "28b894c256931bc4a8b8ebcd8dfb17741820fdd9dc00fd76fe7b6153e574c823",
-    "processedAt": "2026-07-23T00:17:24Z",
+    "fingerprint": "5942880d18558e04900dca2854ab925691318963f9fcc07b5f5240b96e41feb8",
+    "processedAt": "2026-07-23T18:17:06Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
