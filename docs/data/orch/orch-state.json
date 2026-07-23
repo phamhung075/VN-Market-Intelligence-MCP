@@ -387,12 +387,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-EXECTIER-HEADSYNC-BRANCHNULL-REVIEW-IDLE",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-EXECTIER-HEADSYNC-BRANCHNULL-REVIEW-IDLE — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-23T19:14:48Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "updated_at": "2026-07-23T19:24:10Z",
+    "updated_by": "developer"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -14228,6 +14227,32 @@
         "claimed_at": "2026-07-23T18:45:02Z",
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
         "review_note": "[developer 2026-07-23T18:59:59Z] Fixed: new ACK LEDGER docs/data/auditor-launchd-ack.json (labels:tracked_by:acked_at) + auditor-tier1-probe.sh _check_launchd_agents label-exact-match suppression — acked-only launchd failures keep verdict=ALL_GREEN (detail names acked labels for transparency), any unacknowledged label (alone or mixed with acked) still fails. Chose ALL_GREEN-remap over a new verdict enum — cron-detect-loop/register.md Job 2 already skip-checks on ALL_GREEN+fresh-heartbeat, zero prompt/re-arm change needed. Heartbeat-write/freshness mechanics untouched (T31/T32 dead-branch tests still green). auditor-tier1-probe.test.sh: added LAUNCHD_ACK_PATH default-nonexistent seam (kept T1-T35 byte-identical, 102/102 baseline reconfirmed first) + T36-T39 (acked-only/mixed/uncovered-ledger/all-healthy-with-ledger). 120/120 PASS. Live-verified against the real system: verdict flips FAILURE -> ALL_GREEN. Commit b9484fa7a."
+      },
+      {
+        "id": "FIX-EXECTIER-HEADSYNC-BRANCHNULL-REVIEW-IDLE",
+        "type": "FIX",
+        "status": "REVIEW",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "next_agent": "qa",
+        "owner": "po",
+        "created_by": "po",
+        "created_at": "2026-07-23T18:03:58Z",
+        "origin_signal_id": "dev-team-20260723T063731Z-head-review-unhandled-bypasses-qadrain",
+        "title": "execute-tier.md head-sync must set head.status=idle (never review/in_progress) for branch:null REVIEW flips, so the BOUNDED-1..QA-Drain fall-through chain is reachable and QA-Drain can dispatch qa in verify-committed mode",
+        "note": "A developer DONE->REVIEW flip set .head={status:review, active_task_id, next_agent:qa}. status==review matches NEITHER dispatch lane: pipeline-resume needs status==in_progress, idle-fallthrough needs idle/done/missing/v1 -> the branch:null REVIEW row strands (QA-Drain is the ONLY lane that dispatches qa in verify-committed mode against branch:null, main.md ~L643, but it is never reached). Dispatcher hand-reset head->idle this tick to unstall UC-GCP-P1. ROOT: execute-tier.md § Status-Flip (b) permits 'sync head to next next_agent' but for branch:null REVIEW rows that target is un-dispatchable. FIX: prescribe head.status=idle for branch:null REVIEW flips (never review/in_progress). Cross-ref (distinct): FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN adds the drain LANE itself; this row fixes the head-sync value that BLOCKS reaching it. AC: a developer DONE->REVIEW(branch:null,next_agent=qa) flip leaves head.status=idle; a subsequent dispatcher tick reaches QA-Drain and dispatches qa without a hand-reset.",
+        "baseline_pass": true,
+        "updated_at": "2026-07-23T19:24:10Z",
+        "promoted_at": "2026-07-23T19:14:48Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-23T19:14:48Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "branch": null,
+        "commit": "020b9eeeeb2231ef53c4ca433c1d38bb966988c5 7b6d878ab",
+        "entered_review_at": "2026-07-23T19:24:10Z",
+        "review_note": "execute-tier.md § MUST (b) amended: branch:null REVIEW flip MUST set head={status:idle, active_task_id:null, next_agent:router}, never mirror the task status. Added scripts/audits/execute-tier-branchnull-review-headidle-verify.sh (synthetic before/after fixture, PASS). Root cause confirmed live via commit 38f081ec1 (UC-GCP-P1) + current review[]=47/qa[]=0 state. Journal: docs/agent-memory/decisions/sprint-FIX-EXECTIER-HEADSYNC-BRANCHNULL-REVIEW-IDLE-developer.md. This flip itself exercises the shipped guarantee: head synced idle in this SAME write."
       }
     ],
     "qa": [],
@@ -14249,30 +14274,7 @@
     },
     "last_triaged_at": "2026-07-23T19:14:48Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-EXECTIER-HEADSYNC-BRANCHNULL-REVIEW-IDLE",
-        "type": "FIX",
-        "status": "IN_PROGRESS",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "next_agent": "developer",
-        "owner": "po",
-        "created_by": "po",
-        "created_at": "2026-07-23T18:03:58Z",
-        "origin_signal_id": "dev-team-20260723T063731Z-head-review-unhandled-bypasses-qadrain",
-        "title": "execute-tier.md head-sync must set head.status=idle (never review/in_progress) for branch:null REVIEW flips, so the BOUNDED-1..QA-Drain fall-through chain is reachable and QA-Drain can dispatch qa in verify-committed mode",
-        "note": "A developer DONE->REVIEW flip set .head={status:review, active_task_id, next_agent:qa}. status==review matches NEITHER dispatch lane: pipeline-resume needs status==in_progress, idle-fallthrough needs idle/done/missing/v1 -> the branch:null REVIEW row strands (QA-Drain is the ONLY lane that dispatches qa in verify-committed mode against branch:null, main.md ~L643, but it is never reached). Dispatcher hand-reset head->idle this tick to unstall UC-GCP-P1. ROOT: execute-tier.md § Status-Flip (b) permits 'sync head to next next_agent' but for branch:null REVIEW rows that target is un-dispatchable. FIX: prescribe head.status=idle for branch:null REVIEW flips (never review/in_progress). Cross-ref (distinct): FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN adds the drain LANE itself; this row fixes the head-sync value that BLOCKS reaching it. AC: a developer DONE->REVIEW(branch:null,next_agent=qa) flip leaves head.status=idle; a subsequent dispatcher tick reaches QA-Drain and dispatches qa without a hand-reset.",
-        "baseline_pass": true,
-        "updated_at": "2026-07-23T19:14:50Z",
-        "promoted_at": "2026-07-23T19:14:48Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-23T19:14:48Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
