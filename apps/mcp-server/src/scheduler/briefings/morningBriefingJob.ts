@@ -44,12 +44,17 @@ function deltaArrow(current: number, prev: number | undefined): string {
  * Exported for unit testing (task 1434/1435).
  */
 export function formatCommoditiesSection(
-  commodities: { indicator: string; value: number; unit: string; dataPoints: number; previousValue?: number }[],
+  commodities: { indicator: string; value: number; unit: string; dataPoints: number; previousValue?: number; isStale?: boolean }[],
 ): string[] {
   if (commodities.length === 0) return [];
   const lines: string[] = ["📦 Hàng hóa:"];
   for (const c of commodities.slice(0, 5)) {
-    lines.push(`  ${c.indicator}: ${c.value} ${c.unit}${deltaArrow(c.value, c.previousValue)}`.trimEnd());
+    // FIX-COMMODITY-WTI-DELTA-CORRUPT (I10): a news-mined indicator (e.g. wti_crude_usd,
+    // no live fetcher) whose latest row is stale (>4h, DSI-MACRO-PHANTOM-STALE-GUARD)
+    // must never be presented as an unqualified "current" price — surface it explicitly,
+    // same [STALE] convention already used for watchlist prices (marketContextBuilder.ts).
+    const staleFlag = c.isStale ? " [STALE]" : "";
+    lines.push(`  ${c.indicator}: ${c.value} ${c.unit}${deltaArrow(c.value, c.previousValue)}${staleFlag}`.trimEnd());
   }
   return lines;
 }

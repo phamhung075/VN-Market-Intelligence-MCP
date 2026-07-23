@@ -266,7 +266,7 @@ export interface DailyBriefing {
   /** Sensitive dates / upcoming events affecting the market */
   sensitiveWarnings: string[];
   /** Auto-tracked commodity indicators discovered from news */
-  trackedCommodities: { indicator: string; value: number; unit: string; dataPoints: number; previousValue?: number }[];
+  trackedCommodities: { indicator: string; value: number; unit: string; dataPoints: number; previousValue?: number; isStale?: boolean }[];
   /** Unresolved HIGH/CRITICAL alerts from previous session (not yet read) */
   unresolvedAlerts: BriefingAlert[];
   /** Top conviction signal — cross-validated strongest signal for today */
@@ -901,10 +901,16 @@ async function _assembleBriefingImpl(
   }
 
   // ── Step 9: Auto-tracked commodities ────────────────────────────────────────
-  let trackedCommodities: { indicator: string; value: number; unit: string; dataPoints: number; previousValue?: number }[] = [];
+  // FIX-COMMODITY-WTI-DELTA-CORRUPT (I10): switched from listTrackedIndicators()
+  // (no freshness signal) to listTrackedIndicatorsFromDb() (DSI-MACRO-PHANTOM-
+  // STALE-GUARD's isStale flag, 4h threshold) — news-mined indicators like
+  // wti_crude_usd have no live fetcher and can freeze for months once a source
+  // stops mentioning them (live case: stuck 102+ days). Never silently serve a
+  // frozen value as "current" — surface the staleness in the briefing text instead.
+  let trackedCommodities: { indicator: string; value: number; unit: string; dataPoints: number; previousValue?: number; isStale?: boolean }[] = [];
   const commoditySectionResult = await runSectionAsync(async () => {
-    const { listTrackedIndicators, getIndicatorHistory } = await import("../../infrastructure/db/commodityTracker.js");
-    return listTrackedIndicators().map((t) => {
+    const { listTrackedIndicatorsFromDb, getIndicatorHistory } = await import("../../infrastructure/db/commodityTracker.js");
+    return listTrackedIndicatorsFromDb(db).map((t) => {
       // Fetch last 2 values for this indicator to compute delta direction.
       // history[0] = latest, history[1] = previous (ordered DESC).
       const history = getIndicatorHistory(t.indicator, 2);
@@ -914,6 +920,7 @@ async function _assembleBriefingImpl(
         value: t.value,
         unit: t.unit,
         dataPoints: t.dataPoints,
+        isStale: t.isStale,
         ...(previousValue !== undefined ? { previousValue } : {}),
       };
     });

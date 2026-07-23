@@ -138,6 +138,72 @@ describe("Task 298 — computeMacroScore fix", () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// FIX-COMMODITY-WTI-DELTA-CORRUPT (I10) — stale news-mined indicator exclusion
+//
+// wti_crude_usd has no live fetcher (news-regex extraction only). Live evidence
+// (2026-07-23): 79 rows, all value=95.5, latest extracted_at=2026-04-12 — frozen
+// 102+ days because no news article has mentioned WTI since. Before this fix,
+// computeMacroScore() fed that frozen value into the z-score unconditionally,
+// corrupting the Hao 6 oil-regime signal with a permanent phantom "reading".
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("FIX-COMMODITY-WTI-DELTA-CORRUPT I10 — stale indicator excluded from composite score", () => {
+  it("a stale (>4h) frozen wti_crude_usd contributes ZERO influence — score matches WTI-absent baseline", () => {
+    // Baseline: only brent_crude_usd seeded (fresh, rising) — no wti_crude_usd at all.
+    seedIndicator("brent_crude_usd", 20, 75, 1);
+    const baseline = computeMacroScore();
+
+    // Reset and re-seed the SAME brent pattern, PLUS a rising wti_crude_usd series
+    // (real variance, would otherwise produce a strong z-score) whose entire
+    // history (including the "latest" row) is stale (>4h old) — mirrors the live
+    // frozen-95.5-for-102-days pattern (a frozen series is the degenerate case of
+    // "stale"; a varying-but-stale series proves the guard keys on staleness, not
+    // on the value being constant / std=0).
+    const db = getDb();
+    db.exec("DELETE FROM tracked_indicators");
+    seedIndicator("brent_crude_usd", 20, 75, 1);
+    for (let i = 0; i < 20; i++) {
+      const hoursAgo = 40 - i; // 40h..21h ago — all well beyond the 4h staleness threshold
+      const value = 75 + i; // rising, same shape as the brent fixture (real variance)
+      db.exec(`
+        INSERT INTO tracked_indicators (indicator, value, unit, source, extracted_at)
+        VALUES ('wti_crude_usd', ${value}, '$/bbl', 'test', datetime('now', '-${hoursAgo} hours'))
+      `);
+    }
+    const withStaleWti = computeMacroScore();
+
+    // The stale WTI series (despite carrying real variance) must be excluded
+    // entirely — score must match the WTI-absent baseline, not be skewed by it.
+    expect(withStaleWti).toBeCloseTo(baseline, 6);
+  });
+
+  it("control: a FRESH (<4h) falling wti_crude_usd series DOES influence the score", () => {
+    // Proves the guard is staleness-specific — not an unconditional WTI blackout.
+    // WTI is seeded FALLING (opposite shape from brent's rising fixture) so its
+    // z-score differs from brent's — if the fix wrongly excluded ALL wti_crude_usd
+    // unconditionally, this fresh series would be dropped too and the score would
+    // match the baseline; it must NOT.
+    seedIndicator("brent_crude_usd", 20, 75, 1);
+    const baseline = computeMacroScore();
+
+    const db = getDb();
+    db.exec("DELETE FROM tracked_indicators");
+    seedIndicator("brent_crude_usd", 20, 75, 1);
+    for (let i = 0; i < 20; i++) {
+      const hoursAgo = i === 19 ? 0 : 40 - i; // latest row (i=19) is fresh ("now")
+      const value = 94 - i; // falling — opposite shape from brent's rising fixture
+      db.exec(`
+        INSERT INTO tracked_indicators (indicator, value, unit, source, extracted_at)
+        VALUES ('wti_crude_usd', ${value}, '$/bbl', 'test', datetime('now', '-${hoursAgo} hours'))
+      `);
+    }
+    const withFreshFallingWti = computeMacroScore();
+
+    expect(withFreshFallingWti).not.toBeCloseTo(baseline, 3);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Task 300 — computeMacroIndicatorScore fix
 // ─────────────────────────────────────────────────────────────────────────────
 

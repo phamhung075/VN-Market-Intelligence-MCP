@@ -19,10 +19,13 @@
  *   GUARD-6: buildMacroSection — stale row does NOT leak phantom price as live value
  */
 
-import { describe, it, expect } from "bun:test";
+import { describe, it, expect, afterEach } from "bun:test";
 import { Database } from "bun:sqlite";
+import { mkdirSync, rmSync, existsSync } from "node:fs";
+import { join } from "node:path";
 import { buildMacroSection } from "../domain/services/marketContextBuilder.js";
 import { listTrackedIndicatorsFromDb } from "../infrastructure/db/commodityTracker.js";
+import { formatCommoditiesSection } from "../scheduler/briefings/morningBriefingJob.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DB fixture helpers
@@ -153,5 +156,153 @@ describe("DSI-MACRO-PHANTOM-STALE-GUARD — listTrackedIndicatorsFromDb isStale 
     expect(wti).toBeDefined();
     expect(wti!.isStale).toBe(false);
     expect(wti!.value).toBe(79.8);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GUARD-7..8: FIX-COMMODITY-WTI-DELTA-CORRUPT (I10) — the wiring this file's own
+// header comment promised ("listTrackedIndicators() adds isStale flag so
+// consumers (assembleBriefing step 9) can surface honest staleness to agents")
+// but was never actually delivered at the assembleBriefing.ts call site —
+// step 9 called the UNGUARDED listTrackedIndicators() (no isStale) the whole
+// time, so a frozen wti_crude_usd (live case: stuck at $95.5 for 102+ days,
+// last real news extraction 2026-04-12) was served to the morning Telegram
+// briefing as an unqualified "current" price. GUARD-7 proves the real
+// assembleBriefing() end-to-end wiring now threads isStale through; GUARD-8
+// proves the Telegram formatter surfaces it as "[STALE]" (never silently drops
+// or silently serves it as fresh).
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Minimal DB schema covering assembleBriefing's UNGUARDED steps (3-6) — proven
+ * table set (mirrors 1159-morning-briefing-enrichment.test.ts's setupTestDb) —
+ * plus tracked_indicators (step 9, under test here). Every step past #9 is
+ * wrapped in try/catch in the real implementation (verified at source), so no
+ * further tables are required for the pipeline to reach `return`. */
+function buildAssembleBriefingFixtureDb(): Database {
+  const db = new Database(":memory:");
+  db.exec("PRAGMA journal_mode = WAL");
+  db.exec(`
+    CREATE TABLE watchlist (
+      code              TEXT PRIMARY KEY,
+      company_name      TEXT,
+      exchange          TEXT NOT NULL DEFAULT 'HOSE',
+      domain            TEXT NOT NULL DEFAULT 'other',
+      notes             TEXT,
+      added_at          TEXT NOT NULL DEFAULT (datetime('now')),
+      alert_drop_pct    REAL NOT NULL DEFAULT -3,
+      alert_rise_pct    REAL NOT NULL DEFAULT 5,
+      alert_impact_min  REAL NOT NULL DEFAULT 7,
+      alert_report_new  INTEGER NOT NULL DEFAULT 1
+    );
+    CREATE TABLE market_prices (
+      code        TEXT PRIMARY KEY,
+      price       REAL,
+      change_amt  REAL,
+      change_pct  REAL,
+      volume      REAL,
+      updated_at  TEXT
+    );
+    CREATE TABLE daily_ohlcv (
+      code       TEXT NOT NULL,
+      date       TEXT NOT NULL,
+      open       REAL NOT NULL,
+      high       REAL NOT NULL,
+      low        REAL NOT NULL,
+      close      REAL NOT NULL,
+      volume     REAL NOT NULL DEFAULT 0,
+      updated_at TEXT NOT NULL,
+      PRIMARY KEY (code, date)
+    );
+    CREATE TABLE rag_analyses (
+      id TEXT PRIMARY KEY, created_at TEXT NOT NULL, level TEXT NOT NULL,
+      source_title TEXT, sentiment TEXT, impact_score REAL
+    );
+    CREATE TABLE alerts (
+      id TEXT PRIMARY KEY, triggered_at TEXT NOT NULL, severity TEXT NOT NULL,
+      affected_actions_json TEXT, message TEXT
+    );
+    CREATE TABLE financial_reports (
+      id TEXT PRIMARY KEY, action_code TEXT NOT NULL, period_year INTEGER,
+      period_type TEXT, parsed_at TEXT
+    );
+    CREATE TABLE tracked_indicators (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      indicator TEXT NOT NULL,
+      value REAL NOT NULL,
+      unit TEXT NOT NULL DEFAULT '',
+      source TEXT NOT NULL DEFAULT 'news',
+      extracted_at TEXT NOT NULL,
+      data_env TEXT
+    );
+  `);
+  return db;
+}
+
+const I10_BRIEFINGS_DIR = join(process.cwd(), "data", "__test-briefings-i10__");
+function cleanupI10BriefingsDir(): void {
+  if (existsSync(I10_BRIEFINGS_DIR)) {
+    rmSync(I10_BRIEFINGS_DIR, { recursive: true, force: true });
+  }
+}
+const i10Noop = () => Promise.resolve({ fetched: 0, inserted: 0, duplicates: 0, alerts: 0, errors: 0 });
+
+describe("FIX-COMMODITY-WTI-DELTA-CORRUPT I10 — assembleBriefing step 9 wiring", () => {
+  afterEach(() => cleanupI10BriefingsDir());
+
+  it("GUARD-7: a stale wti_crude_usd row surfaces as trackedCommodities[].isStale=true (real assembleBriefing() path)", async () => {
+    const db = buildAssembleBriefingFixtureDb();
+    mkdirSync(I10_BRIEFINGS_DIR, { recursive: true });
+    insertTrackedRow(db, "wti_crude_usd", 95.5, 6); // 6h old = stale (mirrors live 102-day-stale case)
+
+    const { assembleBriefing } = await import("../application/usecases/assembleBriefing.js");
+    const briefing = await assembleBriefing({
+      db,
+      pollNewsFn: i10Noop,
+      fetchVnIndexFn: async () => null,
+      briefingsDir: I10_BRIEFINGS_DIR,
+    });
+
+    const wtiEntry = briefing.trackedCommodities.find((c) => c.indicator === "wti_crude_usd");
+    expect(wtiEntry).toBeDefined();
+    expect(wtiEntry!.isStale).toBe(true);
+    // Value is still returned (transparency) — the point is the flag, not suppression.
+    expect(wtiEntry!.value).toBe(95.5);
+    db.close();
+  });
+
+  it("GUARD-7b (regression control): a fresh wti_crude_usd row surfaces isStale=false", async () => {
+    const db = buildAssembleBriefingFixtureDb();
+    mkdirSync(I10_BRIEFINGS_DIR, { recursive: true });
+    insertTrackedRow(db, "wti_crude_usd", 79.8, 1); // 1h old = fresh
+
+    const { assembleBriefing } = await import("../application/usecases/assembleBriefing.js");
+    const briefing = await assembleBriefing({
+      db,
+      pollNewsFn: i10Noop,
+      fetchVnIndexFn: async () => null,
+      briefingsDir: I10_BRIEFINGS_DIR,
+    });
+
+    const wtiEntry = briefing.trackedCommodities.find((c) => c.indicator === "wti_crude_usd");
+    expect(wtiEntry).toBeDefined();
+    expect(wtiEntry!.isStale).toBe(false);
+    expect(wtiEntry!.value).toBe(79.8);
+    db.close();
+  });
+
+  it("GUARD-8: formatCommoditiesSection renders '[STALE]' for isStale:true — never a bare 'current' price", () => {
+    const lines = formatCommoditiesSection([
+      { indicator: "wti_crude_usd", value: 95.5, unit: "$/bbl", dataPoints: 79, isStale: true },
+    ]);
+    const line = lines.find((l) => l.includes("wti_crude_usd"))!;
+    expect(line).toContain("[STALE]");
+  });
+
+  it("GUARD-8b (regression control): formatCommoditiesSection omits '[STALE]' for isStale:false/undefined", () => {
+    const lines = formatCommoditiesSection([
+      { indicator: "brent_crude_usd", value: 99.85, unit: "$/bbl", dataPoints: 30, isStale: false },
+    ]);
+    const line = lines.find((l) => l.includes("brent_crude_usd"))!;
+    expect(line).not.toContain("[STALE]");
   });
 });

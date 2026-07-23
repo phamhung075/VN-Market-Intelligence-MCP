@@ -27,6 +27,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
 import { sqlInClause } from "../../../../infrastructure/db/sqlHelpers.js";
+import { TRACKED_INDICATOR_STALE_MS } from "../../../../infrastructure/db/commodityTracker.js";
 import type { IKinhDichScoreRepository } from "../../../../domain/repositories/IKinhDichScoreRepository.js";
 import { SqliteKinhDichScoreRepository } from "../../../../infrastructure/db/repositories/SqliteKinhDichScoreRepository.js";
 import { getSectorPeers } from "../../../../domain/services/sectorPeers.js";
@@ -251,6 +252,19 @@ export function computeSectorScore(
  * Derives z-score inline from a rolling history window of each indicator.
  * Rising commodity prices = macro stress = negative score for stocks.
  * Returns a value in [-1, +1].
+ *
+ * FIX-COMMODITY-WTI-DELTA-CORRUPT (I10, 2026-07-23): wti_crude_usd has no live
+ * fetcher — it is only populated by news-text regex extraction (commodityTracker.ts).
+ * When a news source stops mentioning WTI, the latest row freezes indefinitely
+ * (live case: wti_crude_usd stuck at $95.5 for 102+ days, last real extraction
+ * 2026-04-12). Feeding a frozen value into the z-score corrupts the oil-regime
+ * signal with a phantom "no movement" reading forever. Same anti-pattern already
+ * fixed once for marketContextBuilder.buildMacroSection (DSI-MACRO-PHANTOM-STALE-GUARD)
+ * but this consumer was missed. Fix: reuse the SAME TRACKED_INDICATOR_STALE_MS
+ * threshold (4h) generically for ALL three indicators — an indicator whose latest
+ * row is stale is excluded from the composite z-score entirely (degrades that
+ * indicator's contribution to zero-influence rather than serving a frozen number
+ * as "current"). Generic — no per-indicator/per-value literal.
  */
 export function computeMacroScore(): number {
   try {
@@ -260,10 +274,10 @@ export function computeMacroScore(): number {
 
     const rows = db
       .query<
-        { indicator: string; value: number },
+        { indicator: string; value: number; extracted_at: string },
         string[]
       >(
-        `SELECT indicator, value FROM tracked_indicators
+        `SELECT indicator, value, extracted_at FROM tracked_indicators
          WHERE indicator IN (${placeholders})
          ORDER BY extracted_at DESC LIMIT 80`,
       )
@@ -272,16 +286,22 @@ export function computeMacroScore(): number {
     if (rows.length === 0) return 0.0;
 
     // Group by indicator — first value per group is the most recent (ORDER BY extracted_at DESC)
-    const byIndicator = new Map<string, number[]>();
+    const byIndicator = new Map<string, { value: number; extractedAt: string }[]>();
     for (const r of rows) {
       const arr = byIndicator.get(r.indicator) ?? [];
-      arr.push(r.value);
+      arr.push({ value: r.value, extractedAt: r.extracted_at });
       byIndicator.set(r.indicator, arr);
     }
 
+    const now = Date.now();
     const zScores: number[] = [];
-    for (const [, values] of byIndicator) {
-      if (values.length < 3) continue;
+    for (const [, points] of byIndicator) {
+      if (points.length < 3) continue;
+      // DSI-MACRO-PHANTOM-STALE-GUARD extension: skip indicators whose latest
+      // (most recent) row is stale — never fabricate a z-score against a frozen value.
+      const latestAgeMs = now - new Date(points[0]!.extractedAt).getTime();
+      if (!isFinite(latestAgeMs) || latestAgeMs >= TRACKED_INDICATOR_STALE_MS) continue;
+      const values = points.map((p) => p.value);
       const latest = values[0]!;
       const window = values.slice(1);
       const mean = window.reduce((s, v) => s + v, 0) / window.length;
