@@ -387,12 +387,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-LAUNCHD-PROBE-PRESENCE-ONLY-FALSE-GREEN",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-LAUNCHD-PROBE-PRESENCE-ONLY-FALSE-GREEN — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-23T10:17:31Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "updated_at": "2026-07-23T10:24:47Z",
+    "updated_by": "developer"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -13578,6 +13577,31 @@
         "claimed_at": "2026-07-23T09:47:59Z",
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
         "branch": null
+      },
+      {
+        "id": "FIX-LAUNCHD-PROBE-PRESENCE-ONLY-FALSE-GREEN",
+        "type": "FIX",
+        "title": "auditor tier-1 launchd_agents check asserts presence in `launchctl list` only, never exit status — it returned ALL_GREEN today while com.vn-market.fleet-push sat at EX_CONFIG(78) for 522 consecutive runs",
+        "status": "REVIEW",
+        "priority": "high",
+        "zone": "cross-service/",
+        "owner": "developer",
+        "created_at": "2026-07-22T16:02:26Z",
+        "created_by": "po/cron-audit-sequencing-20260722 (NEW finding — not in the source audit)",
+        "status_note": "PO SEQUENCE RANK 1 — SHIP THIS FIRST. It is the smallest change on the list (one bash function) and it is the DETECTOR for FIX-FLEET-PUSH-LAUNCHD-EXCONFIG-SILENT-DEAD and for every future silent launchd death. Shipping the fixes before the detector guarantees the next one is also found by hand-audit.",
+        "mechanism_verified_by_po": "scripts/agents-flow/auditor-tier1-probe.sh _check_launchd_agents() (~line 236) reads each repo-tracked launchd/*.plist Label and asserts `printf '%s\\n' \"$lc_out\" | grep -q \"$label\"`. `launchctl list` prints PID, STATUS, LABEL — the status column is right there in the captured output and is discarded. PO ran the probe live 2026-07-22T15:55:23Z: verdict ALL_GREEN, 'all 6 checks passed (docker_ps, health_3000, health_3001, disk, mem_creep, launchd_agents)', while `launchctl list` showed `-  78  com.vn-market.fleet-push` in that same instant.",
+        "not_a_bug_do_not_change": "The socat-bridge exclusion is CORRECT and deliberate, not a hole. com.vn-market.socat-bridge is explicitly allow-listed as obsolete in the function's own $obsolete_labels with a documented reason (RESOLVED 2026-06-06, api-gateway container owns :4000, per OPERATOR-ALERT-SOCAT-FIX.md). PO checked this specifically before minting. Leave it.",
+        "acceptance": "The check fails when a repo-tracked LaunchAgent is loaded but its last exit status is non-zero, naming the label and the code. Regression test in scripts/agents-flow/auditor-tier1-probe.test.sh (which already mocks launchctl) covering: loaded+0 = pass, loaded+78 = fail, absent = fail, obsolete-allow-listed+absent = pass. This is the generic 'exists != works' gate — same class as FB-LAUNCHD-QA-FIRE-VERIFY-DEDUP.",
+        "second_order": "Presence-only is also why nothing noticed the 2026-07-03 death. Consider whether a job whose `runs` counter advances while its log mtime does not should also be flagged — that is the shape that catches EX_CONFIG-class spawn failures generically.",
+        "updated_at": "2026-07-23T10:24:51Z",
+        "promoted_at": "2026-07-23T10:17:31Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-23T10:17:31Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "branch": null,
+        "reviewed_transition_at": "2026-07-23T10:24:47Z"
       }
     ],
     "qa": [],
@@ -13599,30 +13623,7 @@
     },
     "last_triaged_at": "2026-07-23T10:17:31Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-LAUNCHD-PROBE-PRESENCE-ONLY-FALSE-GREEN",
-        "type": "FIX",
-        "title": "auditor tier-1 launchd_agents check asserts presence in `launchctl list` only, never exit status — it returned ALL_GREEN today while com.vn-market.fleet-push sat at EX_CONFIG(78) for 522 consecutive runs",
-        "status": "IN_PROGRESS",
-        "priority": "high",
-        "zone": "cross-service/",
-        "owner": "developer",
-        "created_at": "2026-07-22T16:02:26Z",
-        "created_by": "po/cron-audit-sequencing-20260722 (NEW finding — not in the source audit)",
-        "status_note": "PO SEQUENCE RANK 1 — SHIP THIS FIRST. It is the smallest change on the list (one bash function) and it is the DETECTOR for FIX-FLEET-PUSH-LAUNCHD-EXCONFIG-SILENT-DEAD and for every future silent launchd death. Shipping the fixes before the detector guarantees the next one is also found by hand-audit.",
-        "mechanism_verified_by_po": "scripts/agents-flow/auditor-tier1-probe.sh _check_launchd_agents() (~line 236) reads each repo-tracked launchd/*.plist Label and asserts `printf '%s\\n' \"$lc_out\" | grep -q \"$label\"`. `launchctl list` prints PID, STATUS, LABEL — the status column is right there in the captured output and is discarded. PO ran the probe live 2026-07-22T15:55:23Z: verdict ALL_GREEN, 'all 6 checks passed (docker_ps, health_3000, health_3001, disk, mem_creep, launchd_agents)', while `launchctl list` showed `-  78  com.vn-market.fleet-push` in that same instant.",
-        "not_a_bug_do_not_change": "The socat-bridge exclusion is CORRECT and deliberate, not a hole. com.vn-market.socat-bridge is explicitly allow-listed as obsolete in the function's own $obsolete_labels with a documented reason (RESOLVED 2026-06-06, api-gateway container owns :4000, per OPERATOR-ALERT-SOCAT-FIX.md). PO checked this specifically before minting. Leave it.",
-        "acceptance": "The check fails when a repo-tracked LaunchAgent is loaded but its last exit status is non-zero, naming the label and the code. Regression test in scripts/agents-flow/auditor-tier1-probe.test.sh (which already mocks launchctl) covering: loaded+0 = pass, loaded+78 = fail, absent = fail, obsolete-allow-listed+absent = pass. This is the generic 'exists != works' gate — same class as FB-LAUNCHD-QA-FIRE-VERIFY-DEDUP.",
-        "second_order": "Presence-only is also why nothing noticed the 2026-07-03 death. Consider whether a job whose `runs` counter advances while its log mtime does not should also be flagged — that is the shape that catches EX_CONFIG-class spawn failures generically.",
-        "updated_at": "2026-07-23T10:17:31Z",
-        "promoted_at": "2026-07-23T10:17:31Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-23T10:17:31Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
