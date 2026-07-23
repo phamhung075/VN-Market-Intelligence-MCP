@@ -358,3 +358,22 @@ AC3/AC4/AC6 untouched by fix diff-stat, re-spot-checked intact.
 **why-decision:** All 6 ACs RAW-confirmed PASS at source; the specific defect I flagged
 (shadow-copy object) is mechanically absent post-fix via the same grep method that found it.
 **why-change:** No change from plan — fix matched the requested remediation exactly.
+
+### STEP qa-S14 · qa · 2026-07-23T02:56:39Z
+**task-id:** UC-CCA-P6-NBWRITE
+**what-done:** Direct-commit verify of `da70e9e3a`(impl)/`fb61d6f3d`(board flip), both main-ancestor.
+Read all 5 diffs raw, not `dev_result` prose. AC1: targeted grep for the boilerplate signature
+(`^Step 1.*Read full`/`Single settled write`/`NB_LINES=`) across all 4 flows = 0 hits, matches
+dev's exit=1 claim; the one loose hit on a broader grep (bctc:8, one-line AC-3 invariant callout,
+not the removed multi-step block) is not a duplicate. AC2: fb main.md :44/:886 now say APPEND-class;
+sole remaining "overwrite" hit (:900) is explanatory comparison prose, no live instruction; preamble
+(Lessons/Known patterns) now precedes the rolling `## c<NNN>` body, matches AC-6 template. AC3: all
+5 files even ``` fence count. Confirmed notebook-write SKILL.md AC-6 table lists fb-market-poster
+APPEND (skill:83). Confirmed residual (weekly-recap.md:206/weekly-prediction.md:263 still say full
+overwrite) — correctly out of Piece 1's file list, noted not failed.
+**what-considered:**
+- Fail on the bctc:8 grep hit as an AC1 violation — rejected: it's a 1-line invariant reminder
+  after the pointer, not the removed Step-1..6 compose boilerplate; targeted signature grep = 0.
+**why-decision:** All 3 stated ACs pass on raw re-derivation; known residual explicitly excluded
+from this task's scope by the spawn brief.
+**why-change:** No change from plan — verify-committed JUMP-TO, all checks green.
