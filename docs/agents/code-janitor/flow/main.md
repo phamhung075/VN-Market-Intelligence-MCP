@@ -1,4 +1,4 @@
-<!-- size-justification: 182L — cap 120; UC-MDH-P3 added the Memory Prune Sweep section (script invocation + FLOW-vs-script signal_queue boundary, ~35L) which is tightly coupled to the adjacent Memory + State section it precedes; splitting into a child doc would orphan a 6-step sequential procedure that must run in one pass every scan. TE-T17 2026-07-23: added Notebook Line-Cap Sweep (script pointer, ~20L) — same every-scan cadence, precedes Memory + State for the same reason. -->
+<!-- size-justification: 182L — cap 120; UC-MDH-P3 added the Memory Prune Sweep section (script invocation + FLOW-vs-script signal_queue boundary, ~35L) which is tightly coupled to the adjacent Memory + State section it precedes; splitting into a child doc would orphan a 6-step sequential procedure that must run in one pass every scan. TE-T17 2026-07-23: added Notebook Line-Cap Sweep (script pointer, ~20L) — same every-scan cadence, precedes Memory + State for the same reason. TE-T33 2026-07-23: added Cold Archive Sweep (script pointer, ~26L) — internally monthly-guarded, same every-scan cron invocation pattern, precedes Memory + State for the same reason. -->
 
 # Code Janitor — Main Flow
 
@@ -131,6 +131,39 @@ Emits the same `notebook-unparseable-*`/`notebook-single-section-breach-*` safe-
 or only 1 section left and still over cap) — those require manual review, not auto-action here.
 Reusable-Scripts pointer: `docs/policies/dev-standards.md` § Script Persistence.
 Test: `scripts/agents-flow/notebook-linecap-sweep.test.sh`.
+
+---
+
+## Cold Archive Sweep (every scan; internally monthly-guarded — TE-T33)
+
+Caps the unbounded growth of `docs/handoffs/` (707+/1026 files >30d before this sweep
+existed) and the non-`.md` leftovers in `docs/agent-memory/sessions/` that
+`memory-prune-sweep.sh` (above) deliberately leaves alone, plus rotates
+`docs/agent-memory/decisions/po-decisions.md` at the same 200L cap notebooks use. The
+script self-guards to a no-op on every day except the 1st of the month — safe to run on
+this cron's 6h cadence, costs one cheap date-check the other ~119 fires/month.
+
+**CANONICAL SCRIPT:**
+```bash
+bash "$PROJECT_ROOT/scripts/agents-flow/cold-archive-sweep.sh"
+```
+Idempotent — safe every cycle. Three legs: (1) `docs/handoffs/*.md` >30d AND not
+referenced by any OPEN `task_board` lane (backlog/ready/in_progress/review/qa) →
+`docs/handoffs/archive/YYYY-MM/`; (2) `docs/agent-memory/sessions/*` non-`.md` files >30d
+→ `docs/agent-memory/sessions/archive/YYYY-MM/` (the `.md` leg is already owned by
+`memory-prune-sweep.sh` at a tighter 14d, flat-archive threshold — no overlap); (3)
+`po-decisions.md` rotated via the SAME drop-oldest-`## ` algorithm as
+`notebook-auto-prune.sh`, delegated through its opt-in
+`NOTEBOOK_PRUNE_EXTRA_GOVERNED_PATH` governed-path hook — no duplicated prune logic.
+Decision-journal archival (`docs/agent-memory/decisions/sprint-*.md`) is explicitly
+OUT of scope here — SUPERSEDED by `scripts/agents-flow/decision-journal-archive.sh`
+(status-based, not mtime-based; see that script's own header). Reusable-Scripts
+pointer: `docs/policies/dev-standards.md` § Script Persistence.
+Test: `scripts/agents-flow/cold-archive-sweep.test.sh`.
+
+Commit any moved/pruned paths with explicit pathspecs (old AND new paths for the
+handoffs/sessions moves, per feedback_pathspec_commit_drops_rename_deletion) alongside
+the notebook commit below.
 
 ---
 

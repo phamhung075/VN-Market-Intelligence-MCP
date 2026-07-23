@@ -1,4 +1,4 @@
-<!-- size-justification: 868L — thin dispatcher; PREFLIGHT script-first gate + JUMP-TO table route Steps 0a/0a.5/3/4 to sub-flows; Steps 0b/1/2 (session-gate, PO triage, planning matrix) too small to extract; full change history in git log. UNBLOCK-DEVTEAM-DISPATCH-GATE-STAGING-DEADLOCK 2026-07-22: +113L — Ready-Lane Consumer + Review-Lane QA-Drain sections (2 new idle-fallthrough pickup lanes, mirroring BOUNDED-1/SLS's existing inline shape; extracting to a sub-flow would break the single linear head-idle fall-through chain BOUNDED-1→SLS→RLC→QA-Drain that makes same-tick `.head`-collision-freedom provable by control-flow inspection alone). FIX-DEVTEAM-BOUNDED1-PROSE-SEQUENCING-UNBACKED-GATE 2026-07-23: +1L (868→869) — PROSE-SEQUENCING GATE clause appended to the existing BOUNDED-1 Promote paragraph + predicate-list update (in-place, same lines) + ONE new Reusable Scripts bullet for the new regression verifier's own line; no new section. -->
+<!-- size-justification: 868L — thin dispatcher; PREFLIGHT script-first gate + JUMP-TO table route Steps 0a/0a.5/3/4 to sub-flows; Steps 0b/1/2 (session-gate, PO triage, planning matrix) too small to extract; full change history in git log. UNBLOCK-DEVTEAM-DISPATCH-GATE-STAGING-DEADLOCK 2026-07-22: +113L — Ready-Lane Consumer + Review-Lane QA-Drain sections (2 new idle-fallthrough pickup lanes, mirroring BOUNDED-1/SLS's existing inline shape; extracting to a sub-flow would break the single linear head-idle fall-through chain BOUNDED-1→SLS→RLC→QA-Drain that makes same-tick `.head`-collision-freedom provable by control-flow inspection alone). FIX-DEVTEAM-BOUNDED1-PROSE-SEQUENCING-UNBACKED-GATE 2026-07-23: +1L (868→869) — PROSE-SEQUENCING GATE clause appended to the existing BOUNDED-1 Promote paragraph + predicate-list update (in-place, same lines) + ONE new Reusable Scripts bullet for the new regression verifier's own line; no new section. TE-T33 2026-07-23: +6L (869→875) — the 2 DJ-GATE-1 grep-pattern comments scoped from unbounded `sprint-*-*.md` to `sprint-${SPRINT_ID}-*.md` (matches agent-chaining-protocol.md's already-scoped canonical PATTERN), noting archive/ exclusion by non-recursive-glob construction; in-place, same lines. -->
 <!-- BGFAN-1: ALL Agent spawns from THIS dispatcher MUST use run_in_background=true. Canonical rule + rationale → docs/protocols/agent-chaining-protocol.md § Background Spawn Mandate. Background ≠ parallel: gated chain (po→ba→…→qa) still serializes on completion notification; independent tier tasks fan out concurrently. Commit-mutex serialization unchanged. -->
 # Dev Team — Cron Orchestration Flow (Thin Dispatcher)
 
@@ -746,7 +746,10 @@ if result.claimed:
   spawn {route_to} run_in_background=true   # (background) — BGFAN-1
   # DJ-GATE-1 (journal-before-DONE — canonical gate → docs/protocols/agent-chaining-protocol.md § Journal-before-DONE Gate):
   # Worker writes journal entry; if absent, router writes STEP via skill .claude/skills/decision-journal/SKILL.md § Write Entry [task_id: batch_id].
-  # Gate: grep docs/agent-memory/decisions/sprint-*-*.md for "task-id:** {batch_id}" — absent → run skill, then flip.
+  # Gate: grep docs/agent-memory/decisions/sprint-${SPRINT_ID}-*.md (active sprint id ONLY —
+  # matches agent-chaining-protocol.md's canonical PATTERN, TE-T33: excludes archive/ by
+  # construction since a non-recursive glob never descends into docs/archive/decisions/) for
+  # "task-id:** {batch_id}" — absent → run skill, then flip.
   call_tool(server="vn-market", tool="task_release", arguments={ task_id: "task:" + batch_id, owner_client_session: $CLAUDE_CODE_SESSION_ID })
 else:
   log "[dev-team] SKIP UNBLOCK " + batch_id + " — held by " + result.current_holder.owner_agent
@@ -766,7 +769,10 @@ if result.claimed:
   spawn qa with branch list run_in_background=true   # (background) — BGFAN-1
   # DJ-GATE-1 (journal-before-DONE — canonical gate → docs/protocols/agent-chaining-protocol.md § Journal-before-DONE Gate):
   # CLEAN auto-close: router is sole actor → run skill .claude/skills/decision-journal/SKILL.md § Write Entry [task_id: batch_id] directly before flip.
-  # Gate: grep docs/agent-memory/decisions/sprint-*-*.md for "task-id:** {batch_id}" — absent → run skill, then flip.
+  # Gate: grep docs/agent-memory/decisions/sprint-${SPRINT_ID}-*.md (active sprint id ONLY —
+  # matches agent-chaining-protocol.md's canonical PATTERN, TE-T33: excludes archive/ by
+  # construction since a non-recursive glob never descends into docs/archive/decisions/) for
+  # "task-id:** {batch_id}" — absent → run skill, then flip.
   call_tool(server="vn-market", tool="task_release", arguments={ task_id: "task:" + batch_id, owner_client_session: $CLAUDE_CODE_SESSION_ID })
 else:
   log "[dev-team] SKIP CLEAN " + batch_id + " — held by " + result.current_holder.owner_agent

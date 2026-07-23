@@ -1,6 +1,6 @@
 # Developer Standards
 
-<!-- size-justification: 140L — unified developer reference: code search tools, test patterns, DDD rules, TypeScript conventions, naming. All read together at sprint start to set context; splitting into tool-guide + test-patterns + naming-rules fragments the unified "how we code" standard. SCRIPT-PERSIST 2026-06-07: Script Persistence section incl. maintenance clause (+15L, user directive). SYSREMAKE-P2-DEVTEAM-BACKLOG-PICKUP-BOUNDED1 2026-07-04: CANONICAL pointer for the dev-team idle-capacity backlog pickup scripts (+11L). PUSH-AUTONOMY-1 2026-07-14: Autonomous Push Gate section (+16L, user directive — push on 100% green, no user action, post-push real-data verify task). FIX-CMH-OBSOLETE-FILE-CLEANUP 2026-07-20: CANONICAL pointer for scripts/audits/clean-obsolete-files.sh (+8L). BLOCK-PUSH-CRON-AUDIT-BATCH-NO-QA 2026-07-22 (qa): pinned the "targeted/merge-gate suite" reading against the standing FIX-MCP-SUITE-HEALTH-BASELINE full-suite red so it stops being re-litigated per push (+3L). UC-MDH-P3 2026-07-23: CANONICAL pointer for scripts/agents-flow/memory-prune-sweep.sh (+14L). UC-MDH-P4 2026-07-23: CANONICAL pointer for scripts/agents-flow/decision-journal-archive.sh (+15L). UC-GCP-P8 2026-07-23: CANONICAL pointer for scripts/agents-flow/stranded-state-sweep.sh (+13L). TE-T17 2026-07-23: CANONICAL pointer for scripts/agents-flow/notebook-linecap-sweep.sh (+13L). TE-T28 2026-07-23: CANONICAL pointer for scripts/gen-tool-list-stubs.py (+15L). TE-T31 2026-07-23: CANONICAL pointer for scripts/gen-tools-index.sh (+14L). -->
+<!-- size-justification: 140L — unified developer reference: code search tools, test patterns, DDD rules, TypeScript conventions, naming. All read together at sprint start to set context; splitting into tool-guide + test-patterns + naming-rules fragments the unified "how we code" standard. SCRIPT-PERSIST 2026-06-07: Script Persistence section incl. maintenance clause (+15L, user directive). SYSREMAKE-P2-DEVTEAM-BACKLOG-PICKUP-BOUNDED1 2026-07-04: CANONICAL pointer for the dev-team idle-capacity backlog pickup scripts (+11L). PUSH-AUTONOMY-1 2026-07-14: Autonomous Push Gate section (+16L, user directive — push on 100% green, no user action, post-push real-data verify task). FIX-CMH-OBSOLETE-FILE-CLEANUP 2026-07-20: CANONICAL pointer for scripts/audits/clean-obsolete-files.sh (+8L). BLOCK-PUSH-CRON-AUDIT-BATCH-NO-QA 2026-07-22 (qa): pinned the "targeted/merge-gate suite" reading against the standing FIX-MCP-SUITE-HEALTH-BASELINE full-suite red so it stops being re-litigated per push (+3L). UC-MDH-P3 2026-07-23: CANONICAL pointer for scripts/agents-flow/memory-prune-sweep.sh (+14L). UC-MDH-P4 2026-07-23: CANONICAL pointer for scripts/agents-flow/decision-journal-archive.sh (+15L). UC-GCP-P8 2026-07-23: CANONICAL pointer for scripts/agents-flow/stranded-state-sweep.sh (+13L). TE-T17 2026-07-23: CANONICAL pointer for scripts/agents-flow/notebook-linecap-sweep.sh (+13L). TE-T28 2026-07-23: CANONICAL pointer for scripts/gen-tool-list-stubs.py (+15L). TE-T31 2026-07-23: CANONICAL pointer for scripts/gen-tools-index.sh (+14L). TE-T33 2026-07-23: CANONICAL pointer for scripts/agents-flow/cold-archive-sweep.sh (+18L). -->
 
 ## Script Persistence — scripts/, never /tmp
 
@@ -411,6 +411,27 @@ no embedded wall-clock timestamp, only the registry's own `.lastUpdated` field i
 so a no-op run against an unchanged registry is byte-identical (proven: two consecutive
 runs both print `NOOP`). Owning brief:
 `docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-31`.
+
+**CANONICAL: Cold archive sweep — handoffs/sessions/po-decisions rotation (TE-T33)**
+```bash
+bash scripts/agents-flow/cold-archive-sweep.sh                # normal run — no-op except on the 1st of the month
+COLD_ARCHIVE_FORCE=1 bash scripts/agents-flow/cold-archive-sweep.sh   # force-run any day (ad-hoc / test)
+```
+Monthly-guarded, idempotent. Three legs: (1) `docs/handoffs/*.md` >30d AND not referenced
+by any OPEN `task_board` lane (backlog/ready/in_progress/review/qa — computed live via jq,
+never hardcoded) → `docs/handoffs/archive/YYYY-MM/`; (2) `docs/agent-memory/sessions/*`
+non-`.md` files >30d → `docs/agent-memory/sessions/archive/YYYY-MM/` (the `.md` leg is
+already owned by `memory-prune-sweep.sh` at a tighter 14d flat-archive threshold — no
+overlap); (3) `docs/agent-memory/decisions/po-decisions.md` rotated at 200L via the SAME
+drop-oldest-`## ` algorithm as `notebook-auto-prune.sh`, delegated through that script's
+new opt-in `NOTEBOOK_PRUNE_EXTRA_GOVERNED_PATH` governed-path hook (default unset = zero
+behavior change on the hot PostToolUse path) — no duplicated prune scheme. Decision-journal
+archival (`decisions/sprint-*.md`) is explicitly OUT of scope — SUPERSEDED by
+`scripts/agents-flow/decision-journal-archive.sh` (UC-MDH-P4, status-based not mtime-based;
+board row TE-T33 carries this coordination note). Owning flow:
+`docs/agents/code-janitor/flow/main.md` § Cold Archive Sweep. Test:
+`scripts/agents-flow/cold-archive-sweep.test.sh`. Owning brief:
+`docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-33`.
 
 `/tmp` is allowed ONLY for throwaway run-scoped DATA (payload json, stderr capture, session-id cache) — never for executable logic.
 

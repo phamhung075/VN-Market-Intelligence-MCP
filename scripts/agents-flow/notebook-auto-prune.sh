@@ -24,6 +24,14 @@
 # Line-Cap Sweep), re-sweeps every docs/agent-memory/notebooks/*.md on a fixed
 # cadence regardless of write path, delegating over-cap files back to THIS
 # script's own prune logic (single source of truth).
+#
+# EXTENSION (TE-T33, 2026-07-23): docs/agent-memory/decisions/po-decisions.md needed
+# the same drop-oldest-## rotation at 200L but lives outside docs/agent-memory/notebooks/.
+# Rather than fork the algorithm, the guard below accepts ONE opt-in extra governed path
+# via NOTEBOOK_PRUNE_EXTRA_GOVERNED_PATH (repo-relative, e.g. from a synthetic PostToolUse
+# JSON invocation — see scripts/agents-flow/cold-archive-sweep.sh). Unset/empty by default
+# (the normal PostToolUse hook invocation never sets it) → zero behavior change on the hot
+# path; a REL_PATH can never equal an empty string so the extra arm cannot accidentally match.
 set -u
 
 # --- Resolve project root ---
@@ -100,10 +108,15 @@ REL_PATH="${FILE_PATH#${PROJECT_ROOT}/}"
 # Guard: relativize failed (file outside project root)
 [ "$REL_PATH" = "$FILE_PATH" ] && exit 0
 
-# --- Guard: must be docs/agent-memory/notebooks/*.md AND NOT archive/ ---
+# --- Guard: must be docs/agent-memory/notebooks/*.md AND NOT archive/, OR the
+# single opt-in extra governed path (TE-T33 — see EXTENSION note above) ---
+NOTEBOOK_PRUNE_EXTRA_GOVERNED_PATH="${NOTEBOOK_PRUNE_EXTRA_GOVERNED_PATH:-}"
 case "$REL_PATH" in
   docs/agent-memory/notebooks/archive/*) exit 0 ;;
   docs/agent-memory/notebooks/*.md) ;;  # governed — fall through
+  "$NOTEBOOK_PRUNE_EXTRA_GOVERNED_PATH")
+    [ -n "$NOTEBOOK_PRUNE_EXTRA_GOVERNED_PATH" ] || exit 0  # belt-and-suspenders vs empty-pattern match
+    ;;  # governed — opt-in extra path, fall through
   *) exit 0 ;;  # non-notebook — instant exit (hot path)
 esac
 
