@@ -72,6 +72,24 @@ unhandled error), via an injectable `sendWorkAlertFn` defaulting to
 precedent. Concurrency-guard and T4 recovery-dedup early-returns stay silent
 (nothing new happened, no message needed).
 
+**WORK/BUG-channel observability (DS-OBS-01-FIX, 2026-07-23):**
+`freshnessSlaMonitorJob` (12-signal-source freshness poll, every 30 min) never
+sent a breach directly to a Telegram channel — RAW-verified: its escalation
+path (`escalateToCommander` → `postSignal(toAgent:"alert-commander",
+signalType:"urgent_news")`) only writes an `agent_signals` row; per
+`docs/agents/alert-commander/flow/stage-signals.md`'s documented 2026-07-12
+finding, alert-commander correctly SUPPRESSES these synthetic
+freshness-sla-monitor `urgent_news` signals every cycle as infra noise (they
+never satisfy the MARKET firing gate) — so the signal-bus path never reached a
+human-visible channel. The job's only `sendTelegramWork` call was the
+once-per-UTC-day `buildDailySummary()` coverage snapshot (FR-5), unconditional
+and not breach-scoped. Fix: at the same 60-min-cooldown-gated escalation site,
+`runFreshnessSlaMonitor()` now sends a direct alert — CRITICAL breach
+(`age > threshold × 1.5`) → BUG (`sendBugFn`, defaults to `sendTelegramBug`),
+HIGH breach → WORK (`sendWorkFn`, the pre-existing injectable, reused). Both
+non-fatal on send failure; independent of the pre-existing `escalateToCommander`
+signal-bus call, which is left unchanged.
+
 ## Intelligence Cycle Steps (15-min tick)
 
 | Step | What | Hours | Timeout |

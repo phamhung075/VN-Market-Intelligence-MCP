@@ -24,7 +24,7 @@ import {
   checkCoverageMapFreshness,
   type CoverageMapRow,
 } from "../../domain/services/coverageMapFreshnessChecker.js";
-import { sendTelegramWork } from "../../infrastructure/notifiers/telegram.js";
+import { sendTelegramWork, sendTelegramBug } from "../../infrastructure/notifiers/telegram.js";
 
 /**
  * Absolute path to the frontend data coverage map (SSOT for L4 self-policing).
@@ -451,6 +451,8 @@ const MARKET_HOURS_ONLY_SIGNALS: SignalType[] = ["price", "foreign_flow"];
  * @param injectedRuntimeStates FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH: optional pre-computed
  *        per-signal-type queue-depth + service-state probes (for testing). In production
  *        (undefined), the scheduler queries live via queryBctcPipelineRuntimeState().
+ * @param sendBugFn DS-OBS-01-FIX: optional BUG channel sender override (for testing; omit
+ *        in production). Used for CRITICAL breaches — see the DS-OBS-01-FIX note below.
  * @returns Job result summary
  */
 export async function runFreshnessSlaMonitor(
@@ -461,6 +463,7 @@ export async function runFreshnessSlaMonitor(
   sendWorkFn: (msg: string) => Promise<unknown> = sendTelegramWork,
   injectedCoverageMapRows?: CoverageMapRow[],
   injectedRuntimeStates?: Partial<Record<SignalType, PipelineRuntimeState>>,
+  sendBugFn: (msg: string) => Promise<unknown> = sendTelegramBug,
 ): Promise<{ breaches: number; recoveries: number; escalations: number }> {
   // Query current signal ages (or use injected ages for testing)
   const signalAges = injectedSignalAges ?? querySignalAges(db);
@@ -529,6 +532,33 @@ export async function runFreshnessSlaMonitor(
         console.error(
           `[sla-monitor] escalation failed for ${breach.signalType}:`,
           err
+        );
+      }
+
+      // DS-OBS-01-FIX: escalateToCommander() (default impl, above) only writes an
+      // agent_signals row (urgent_news, toAgent="alert-commander") — it never calls
+      // a telegram sender itself. Per docs/agents/alert-commander/flow/stage-signals.md's
+      // documented 2026-07-12 finding, alert-commander correctly SUPPRESSES these
+      // synthetic freshness-sla-monitor urgent_news signals every cycle as infra noise
+      // (they never satisfy the position-danger / watchlist-opportunity firing gate) —
+      // so the signal-bus escalation path never reaches a human-visible channel. Send a
+      // direct alert here so a genuine SLA breach is actually observable: CRITICAL
+      // (age > 1.5x threshold) -> BUG (dev-actionable), HIGH -> WORK (status visibility).
+      // Gated by the same cooldown as escalateToCommander to avoid channel spam on a
+      // persisting breach. Non-fatal: a send failure must not affect breach bookkeeping.
+      try {
+        const alertMsg =
+          `[sla-monitor] ${breach.severity} breach: ${breach.signalType} stale ` +
+          `${breach.ageMinutes}min (threshold ${breach.thresholdMinutes}min)`;
+        if (breach.severity === "CRITICAL") {
+          await sendBugFn(alertMsg);
+        } else {
+          await sendWorkFn(alertMsg);
+        }
+      } catch (alertErr) {
+        console.warn(
+          `[sla-monitor] direct WORK/BUG alert send failed for ${breach.signalType} (non-fatal):`,
+          alertErr
         );
       }
     }
