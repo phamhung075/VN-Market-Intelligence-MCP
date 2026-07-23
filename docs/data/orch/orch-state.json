@@ -387,11 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "updated_at": "2026-07-23T08:59:54Z",
-    "updated_by": "dev-mcp-server"
+    "status": "in_progress",
+    "active_task_id": "FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS",
+    "next_agent": "ba",
+    "next_action": "Supervised-Lane Sweep claim of FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS — spawn ba DIRECTLY (no zone-detect indirection; lane already resolved at promote time). supervised/plan_only preserved — do not clear.",
+    "updated_at": "2026-07-23T09:20:52Z",
+    "updated_by": "dev-team (supervised-lane sweep)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2040,6 +2041,17 @@
         "severity": "INFO",
         "status": "NEW",
         "payload_ref": null
+      },
+      {
+        "id": "dev-team-20260723T0919-bounded1-planonly-gate-blind",
+        "ts": "2026-07-23T09:20:31Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "routing-gap",
+        "severity": "MED",
+        "status": "NEW",
+        "summary": "BOUNDED-1 auto-picked FIX-AGENTBOOTSTRAP-EAGER-EXECSYNC-COLDSTART (P1) whose PLAN-ONLY intent lived ONLY in .detail prose (\"PLAN-ONLY backlog for BOUNDED-1 — do NOT dispatch this tick\"), never the structured .plan_only flag; dispatcher reverted the mis-claim + set plan_only:true (coherence mirror of PO prose, precedent 2026-07-09 supervised:true hand-fix). Root cause is systemic → PO/architect action.",
+        "note": "Two findings. (A) This row: no inline plan_only/supervised/next_agent/owner AND no backlog-detail entry — PLAN-ONLY was unenforceable. Now flag-set; PO please confirm and route the deliberate plan-first dispatch (detail lists FIX options: memoize project-root via import.meta.dir walk-up to drop execSync git rev-parse from the module-eval path, OR lazy project-root in registerAgentMemoryTools). (B) SYSTEMIC: docs/data/orch/archive/backlog-detail.json .items is an ARRAY, but scripts/devteam-backlog-promote-bounded1.jq + the SLS promote script index it as an object (.items[<id>]) — so ALL detail-authoritative BOUNDED-1/SLS gates (supervised/plan_only/depends_on/detail-DEFERRED/non-dev-owner/non-dev-next_agent) silently resolve to board-inline fields only; the detail layer is blind. Decide: fix the jq to handle array-shaped .items (index by .id), or require inline flags on every backlog row. Same array-shape was already observed for BCTC-REPORT-ID-LOOKUP-TOOL last tick (board row authoritative)."
       }
     ],
     "last_triaged_at": "2026-07-22T15:10:08Z",
@@ -8771,33 +8783,6 @@
         "supervised_note": "BOUNDED-1 stopgap: plan_only design/spec ask with a non-dev board next_agent that leaks past the detail-only promote gates (inline plan_only + no backlog-detail entry). Held from idle auto-pickup so BOUNDED-1 reaches genuinely dev-routable rows. Deliberate router/ba/architect dispatch is UNAFFECTED. Durable structural fix: FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE (once shipped this stamp is belt-and-suspenders)."
       },
       {
-        "id": "FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS",
-        "type": "FIX",
-        "title": "COWORK DISPATCH — router intent PRE-CLAIM and the cowork slot dispatcher share NO task_id namespace, so task_claim is a no-op mutex across paths; a peer router session double-dispatches a cowork slot agent while the cowork dispatcher's own instance still runs it (2nd confirmed instance same tick 2026-07-15: chef-evening 932+933 double-publish + tnb-audit dual c110 audit)",
-        "status": "BACKLOG",
-        "priority": "P0",
-        "size": "M",
-        "zone": "cross-service/",
-        "plan_only": true,
-        "next_agent": "ba",
-        "created_at": "2026-07-15T20:56:10Z",
-        "created_by": "po",
-        "origin_signal_id": "cow-20260715T203953",
-        "detail_ref": "docs/handoffs/2026-07-15-tnb-audit-double-dispatch-unreachable-marker-gate.md",
-        "note": "ENABLER (new — no existing row covers it; the two per-slot guard bugs are separate). ROOT CAUSE: router CLAUDE.md/dispatch-claim §2.5 PRE-CLAIM keys on intent:<agent>:<intent-key> while cowork keys on cowork-slot:<slot> / cron:cowork:<tick> / published:<slot>:<periodKey> — DIFFERENT namespaces, so task_claim cannot collide across the two dispatch paths (no-op mutex by construction) and neither path consults the other. 2 CONFIRMED instances same tick 2026-07-15 (feedback_recurring_bug_escalation 2+ => rank-1-band candidate): (a) chef-evening/unified-agent -> MARKET double-publish ids 932+933; (b) tnb-audit/tran-ngoc-bau -> 2 concurrent full c110 audits, clobber avoided ONLY by the Edit stale-read check (the Write path has none => silent-clobber risk). CHEAPEST CORRECT FIX (ba/architect own HOW): router §2.5 PRE-CLAIM for a cowork-slot agent MUST also probe cowork-slot:<slot_id> and/or published:<slot>:<periodKey> before dispatch, OR key both paths on ONE shared task_id namespace so they collide by construction. Rule: do NOT dispatch a cowork slot agent via the intent path while the cowork dispatcher owns that slot. Distinct from UC-CCA-P3 (marker lifecycle) and FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK (capability gap) — this is the cross-path coordination hole that ENABLED both. PLAN-ONLY.\n\n[po 2026-07-21T20:37:51Z 3rd CONFIRMED OCCURRENCE — P1->P0 ESCALATION, NO NEW ROW MINTED] Router escalated this as a fresh P1 root-cause ask; PO checked prior art first and this row ALREADY owns it exactly (title + note already name the disjoint-namespace root cause and the cheapest-correct-fix). Minting a sibling would have duplicated it — declined.\n\nOCCURRENCE 3 (2026-07-21, RAW-verified via task_list_held, not agent self-report): 20:24:33Z cowork dispatcher session 9f4a6bfc-b001-4349-8a44-545f24c1b0ac claimed published:tnb-audit:2026-07-20/2026-07-26 (owner_agent tran-ngoc-bau) and its tnb instance began running. 20:25:14Z a SECOND router session 8def3b83-8326-4a26-a663-2f2616dfc38e claimed intent:tran-ngoc-bau:tnb-audit -> claimed:TRUE, 41s later, while the peer instance was live. Exactly the predicted no-op mutex: two namespaces, one agent, zero collision. Same slot (tnb-audit) as occurrence 2. Occurrence count is now 3 (07-15 chef-evening MARKET 932+933; 07-15 tnb-audit dual c110; 07-21 tnb-audit). feedback_recurring_bug_escalation: 2+ => block and fix ROOT CAUSE not symptom — this is the root cause row, and it has been dormant in BACKLOG for 6 days while the class recurred.\n\nWHY P0 (priority inversion correction, NOT damage-this-time): this occurrence caused ZERO damage — see POSITIVE below — so the escalation is NOT argued on impact. It is argued on (a) 3rd confirmed occurrence of a class whose worst instance was a user-visible MARKET double-publish, and (b) priority inversion: this row is the ENABLER that UC-CCA-P3 (P0) explicitly names as the hole that \"ENABLED both\" — an enabler ranked below its own downstream symptom will never be reached first.\n\nOPERATIVE BLOCKER IS DISPATCH, NOT PRIORITY (PO directive): this row is plan_only:true + supervised:true + next_agent:ba, and supervised_note states \"Deliberate router/ba/architect dispatch is UNAFFECTED\" — the hold only stops BOUNDED-1 idle auto-pickup. So the reason nothing shipped in 6 days is that nobody deliberately dispatched it, and a priority bump ALONE will not change that. PO AUTHORIZES + DIRECTS deliberate ba dispatch now. Keep supervised:true (it is correctly preventing the plan_only/no-detail-entry auto-pickup leak it was installed for — do NOT clear it as a shortcut to auto-pickup). ba should produce the spec for the cheapest-correct-fix already stated in this note (router PRE-CLAIM must probe cowork-slot:<slot_id> / published:<slot>:<periodKey> before dispatching a cowork-slot agent, OR both paths key one shared namespace).\n\nPOSITIVE — 07-15 PRIMARY DEFECT IS FIXED AND PROVEN (partially closes detail_ref handoff 2026-07-15-tnb-audit-double-dispatch-unreachable-marker-gate.md): that handoff s headline finding was that the Step G gate was DEAD CODE — .claude/agents/tran-ngoc-bau.md frontmatter lacked mcp__gateway__call_tool, so the gate was unreachable on every cycle and both 07-15 instances ran two full audits. VERIFIED FIXED: frontmatter now reads \"tools: Read, Edit, Write, Glob, Grep, mcp__gateway__call_tool\", and c115 (2026-07-21) is the FIRST cycle with the gate confirmed live — it fired, claimed cleanly, and the redundant session was blocked with no duplicate audit and no notebook clobber. DEFENCE-IN-DEPTH HELD. Residual risk is unchanged though: the inner marker gate is a per-agent LAST line of defence that only protects cowork agents that both have a marker gate AND gateway tools; the cross-path mutex hole itself is still fully open, and any slot agent without that gate is still unprotected. Do NOT downgrade or close this row on the strength of the gate working.\n\nNOTE ON THE OTHER HALF: the router also fixed the gate s missing owner_client_session in commit 164f836f7 (Step G task_claim was failing zod on its first-ever live invocation) — that is a tran-ngoc-bau-local fix, already shipped, not part of this row s scope.",
-        "sibling_refire_row": "FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE",
-        "sibling_note": "SIBLING enabler minted 2026-07-15 (cow-20260715T214005): the single-session same-tick self-refire path is NOT closed by unifying this row's namespaces. Fixing THIS row does not close the refire; both are members of the 'guard released when the work ends' class. Do not certify the double-dispatch class done on this row alone.",
-        "supervised": true,
-        "supervised_at": "2026-07-16T17:02:01Z",
-        "supervised_by": "po (autolaunch_safety_hold adjudication, dev-team 16:37Z)",
-        "supervised_note": "BOUNDED-1 stopgap: plan_only design/spec ask with a non-dev board next_agent that leaks past the detail-only promote gates (inline plan_only + no backlog-detail entry). Held from idle auto-pickup so BOUNDED-1 reaches genuinely dev-routable rows. Deliberate router/ba/architect dispatch is UNAFFECTED. Durable structural fix: FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE (once shipped this stamp is belt-and-suspenders).",
-        "po_escalated_at": "2026-07-21T20:37:51Z",
-        "po_escalated_by": "po",
-        "occurrence_count": 3,
-        "last_occurrence_at": "2026-07-21T20:25:14Z",
-        "updated_at": "2026-07-21T20:37:51Z"
-      },
-      {
         "id": "FIX-VNINDEX-CROSS-PLANE-PLAUSIBILITY-GATE",
         "type": "FIX",
         "title": "VN-INDEX PLAUSIBILITY GATE — a tier-4 is_estimate macro_snapshot.vnIndex (1280.5) with prevFetchedAt:null produced a bogus -526.13 'delta' that reached MARKET as fact (dish 933, false ~29% crash); no same-cycle cross-plane check vs tier-2 market_context (1782.12, real -1.36%)",
@@ -8921,38 +8906,6 @@
         "detail_ref": "docs/agents/dev-team/flow/main.md#Step-0b",
         "title": "dev-team flow Step 0b BOUNDED-1 idle-pickup runs BEFORE Step 1 PO triage with NO 'pendingSignals empty' guard — when head is idle AND a promotable backlog row exists AND pendingSignals is non-empty, BOUNDED-1's JUMP-TO-execute preempts PO triage and DROPS already-consumed file-drained signals (moved to processed/, fingerprinted)",
         "note": "MINTED 2026-07-16 by po — latent hazard flagged by router this tick (router HELD BOUNDED-1 manually to avoid the drop). Add a precondition to the BOUNDED-1 WIP gate in docs/agents/dev-team/flow/main.md Step 0b: do NOT JUMP-TO-execute when pendingSignals[] is non-empty (or when signal_queue has NEW rows to=po) — let Step 1 PO triage run first so drained signals are dispositioned, not dropped. Low priority (mitigated today by router discretion; only fires on the specific idle+promotable+pending-signals coincidence). AC: with head idle + a promotable backlog row + a non-empty pendingSignals[], the flow routes to Step 1 PO triage FIRST (no signal drop), and BOUNDED-1 idle-eval runs only after triage."
-      },
-      {
-        "id": "FIX-AGENTBOOTSTRAP-EAGER-EXECSYNC-COLDSTART",
-        "type": "FIX",
-        "priority": "P1",
-        "size": "M",
-        "status": "BACKLOG",
-        "zone": "apps/mcp-server/",
-        "title": "agentBootstrap buildToolNameMap() singleton blocks on execSync git rev-parse -> cascading TDZ flake on 1299b + real cold-start risk (SPIKE item #1)",
-        "detail": "SPIKE item #1 — the HIGH-severity follow-up that was dropped when items #2/#3/#4 were minted 2026-07-10 (FIX-CYCLEJOB-1294-FOLLOWUP-SWEEP, FIX-RAG-TEMPORAL-DECAY-TEST-JITTER, CI-PERFILE-STRUCTURAL-MITIGATION all exist; this one never got a row). Root cause of the recurring CI RED on 1299b-skill-gated-bootstrap.test.ts, re-observed this tick: CI run 29464553988 @ head 571818c2d = 14498 pass / 1 fail, delta since last GREEN 25cb69031 is 4 docs/chore/orch-state commits with ZERO product code; local isolated repro 9/9 pass 549ms. Mechanism: agentBootstrap.ts:358 `const toolNameMap = buildToolNameMap()` eagerly + synchronously probes ~107 tool-registration fns at module top-level; registerAgentMemoryTools -> getProjectRoot() runs blocking execSync('git rev-parse --show-toplevel') (projectRoot.ts:16). Under CPU starvation the git fork stalls past bun's 5s per-test timeout; the mid-flight-errored ES module instance is then permanently TDZ-poisoned ('Cannot access toolNameMap before initialization'), cascading to every remaining test in the file (6/9 failed in worst reproduced run, 11/24 runs under contention per SPIKE). Also a genuine production cold-start latency risk: server.ts:40 imports agentBootstrap on the live MCP boot path and ~30 test files import it transitively (this is the 'rotating failing file' blast radius). FIX options: remove the subprocess from the eval path -> memoize project-root via import.meta.dir walk-up (no git spawn), OR make registerAgentMemoryTools' project-root resolution lazy (resolve at tool-invocation, not at the registration probe). AC: no execSync on the module-eval path + cold-start non-regression guard + all ~107 tool names resolve + 1299b 9/9 green + ~30 agentBootstrap-importer tests green. PLAN-ONLY backlog for BOUNDED-1 — do NOT dispatch this tick.",
-        "files": [
-          "apps/mcp-server/src/interface/mcp/bootstrap/agentBootstrap.ts",
-          "apps/mcp-server/src/infrastructure/projectRoot.ts"
-        ],
-        "baseline_pass": true,
-        "related": [
-          "docs/spikes/SPIKE_CI-PERFILE-ISOLATION-FLAKE.md",
-          "docs/signals/processed/ci-red-571818c2-20260716014951.json"
-        ],
-        "created_by": "po-triage-20260716T0158Z",
-        "verify_note": "repeat-flaker: SPIKE reproduced 11/24 under contention + re-observed CI RED this tick. Router suggested P3 grooming; SPIKE rated HIGH (production boot path + ~30-file blast radius + recurring triage cost) -> PO minted P2 as PLAN-ONLY backlog.",
-        "created_at": "2026-07-16T02:01:00Z",
-        "ci_red_recurrence": {
-          "obs_count": 2,
-          "signals": [
-            "CI-RED-571818c2 (2026-07-16T02:01Z)",
-            "CI-RED-77c07cc7 (2026-07-17T19:33Z)"
-          ],
-          "note": "2nd independent ci_red flaky-dismissal of 1299b (byte-identical tree green->red; probe fp 63fba0b43 recorded flaky-dismissed). Bumped P2->P1 ONCE on 2nd obs — do NOT re-bump on further recurrences (churn cap); P0 rejected (CI completes green on subsequent pushes, not a reliability emergency). Fix root cause to stop recurring per-tick triage cost.",
-          "last_obs": "2026-07-17T19:33:14Z",
-          "last_obs_by": "po (dev-team Step 0-SIG)"
-        }
       },
       {
         "id": "FIX-COWORK-CADENCE-DANGLING-POLICY-ID",
@@ -10899,6 +10852,40 @@
           "SPIKE-BOUNDED1-ELIGIBILITY-CONTRACT-REVIEW"
         ],
         "note": "ROOT CAUSE: PO-authored sequencing constraints written in prose fields (po_sequencing_YYYYMMDD) are INVISIBLE to scripts/lib/devteam-eligibility.jq — effective_depends_on() only reads .depends_on/.depends/.blocked_by. On 2026-07-22 dev-team BOUNDED-1 mis-promoted UC-CDC-P5 (its PART-3/3 ordering constraint lived ONLY in .po_sequencing_20260722): blind-promoted then reverted (mis-promote+revert churn on a P1 row). Acutely contained 2026-07-23 by hand-installing depends_on on UC-CDC-P5, but the gate blind-spot remains for the NEXT prose-only-sequenced row. This is the meta-class SPIKE-BOUNDED1-ELIGIBILITY-CONTRACT-REVIEW named ('resolve ALL gating metadata through one shared contract, not hole-by-hole') — the 'future' hook it left open.\n\nFIX (in the SHARED library scripts/lib/devteam-eligibility.jq, NOT any single caller — one-shared-contract principle; all three pickers BOUNDED-1/SLS/RLC inherit it automatically): add def has_unbacked_sequencing_prose = (row has any object key matching ^po_sequencing) AND (effective_depends_on($detail_items) | length)==0. Add (has_unbacked_sequencing_prose != true) as a conjunct in is_bounded1_eligible → conservative-skip: a row that declares sequencing in prose but has NO machine-readable dep is withheld from unattended auto-dispatch until the dep is encoded.\n\nSURFACE (not silent): extend scripts/audits/bounded1-supervised-lane-report.sh SECONDARY section (or a small new detector) to LIST every backlog row carrying prose sequencing with empty depends_on, so PO is nudged to encode the dep instead of the row silently idling forever.\n\nDO-NOT: do NOT teach the gate to parse po_sequencing prose to extract predecessor task-ids — regex-mining English sentences for control flow is brittle and is exactly the fragility this library exists to avoid. The fix FORCES the ordering to be machine-encoded as depends_on and refuses auto-dispatch until it is.\n\nACCEPTANCE (dynamic fixtures, NO hardcoded task-ids): (1) a BACKLOG row with a po_sequencing_* key and empty depends_on is NOT bounded1-eligible; the SAME row with depends_on populated IS eligible (deps permitting). (2) A UC-CDC-P5-shaped live fixture stays held while UC-SDF-P6/ARCH-SESSION-CRON-PLANE-LIVENESS-WATCHDOG are not DONE_VERIFIED. (3) Regression verifier added under scripts/audits/ mirroring the existing devteam-bounded1-detail-disposition-gate-verify.sh pattern. Related: UC-CDC-P5 (acute instance), SPIKE-BOUNDED1-ELIGIBILITY-CONTRACT-REVIEW (parent design)."
+      },
+      {
+        "id": "FIX-AGENTBOOTSTRAP-EAGER-EXECSYNC-COLDSTART",
+        "type": "FIX",
+        "priority": "P1",
+        "size": "M",
+        "status": "BACKLOG",
+        "zone": "apps/mcp-server/",
+        "title": "agentBootstrap buildToolNameMap() singleton blocks on execSync git rev-parse -> cascading TDZ flake on 1299b + real cold-start risk (SPIKE item #1)",
+        "detail": "SPIKE item #1 — the HIGH-severity follow-up that was dropped when items #2/#3/#4 were minted 2026-07-10 (FIX-CYCLEJOB-1294-FOLLOWUP-SWEEP, FIX-RAG-TEMPORAL-DECAY-TEST-JITTER, CI-PERFILE-STRUCTURAL-MITIGATION all exist; this one never got a row). Root cause of the recurring CI RED on 1299b-skill-gated-bootstrap.test.ts, re-observed this tick: CI run 29464553988 @ head 571818c2d = 14498 pass / 1 fail, delta since last GREEN 25cb69031 is 4 docs/chore/orch-state commits with ZERO product code; local isolated repro 9/9 pass 549ms. Mechanism: agentBootstrap.ts:358 `const toolNameMap = buildToolNameMap()` eagerly + synchronously probes ~107 tool-registration fns at module top-level; registerAgentMemoryTools -> getProjectRoot() runs blocking execSync('git rev-parse --show-toplevel') (projectRoot.ts:16). Under CPU starvation the git fork stalls past bun's 5s per-test timeout; the mid-flight-errored ES module instance is then permanently TDZ-poisoned ('Cannot access toolNameMap before initialization'), cascading to every remaining test in the file (6/9 failed in worst reproduced run, 11/24 runs under contention per SPIKE). Also a genuine production cold-start latency risk: server.ts:40 imports agentBootstrap on the live MCP boot path and ~30 test files import it transitively (this is the 'rotating failing file' blast radius). FIX options: remove the subprocess from the eval path -> memoize project-root via import.meta.dir walk-up (no git spawn), OR make registerAgentMemoryTools' project-root resolution lazy (resolve at tool-invocation, not at the registration probe). AC: no execSync on the module-eval path + cold-start non-regression guard + all ~107 tool names resolve + 1299b 9/9 green + ~30 agentBootstrap-importer tests green. PLAN-ONLY backlog for BOUNDED-1 — do NOT dispatch this tick.",
+        "files": [
+          "apps/mcp-server/src/interface/mcp/bootstrap/agentBootstrap.ts",
+          "apps/mcp-server/src/infrastructure/projectRoot.ts"
+        ],
+        "baseline_pass": true,
+        "related": [
+          "docs/spikes/SPIKE_CI-PERFILE-ISOLATION-FLAKE.md",
+          "docs/signals/processed/ci-red-571818c2-20260716014951.json"
+        ],
+        "created_by": "po-triage-20260716T0158Z",
+        "verify_note": "repeat-flaker: SPIKE reproduced 11/24 under contention + re-observed CI RED this tick. Router suggested P3 grooming; SPIKE rated HIGH (production boot path + ~30-file blast radius + recurring triage cost) -> PO minted P2 as PLAN-ONLY backlog.",
+        "created_at": "2026-07-16T02:01:00Z",
+        "ci_red_recurrence": {
+          "obs_count": 2,
+          "signals": [
+            "CI-RED-571818c2 (2026-07-16T02:01Z)",
+            "CI-RED-77c07cc7 (2026-07-17T19:33Z)"
+          ],
+          "note": "2nd independent ci_red flaky-dismissal of 1299b (byte-identical tree green->red; probe fp 63fba0b43 recorded flaky-dismissed). Bumped P2->P1 ONCE on 2nd obs — do NOT re-bump on further recurrences (churn cap); P0 rejected (CI completes green on subsequent pushes, not a reliability emergency). Fix root cause to stop recurring per-tick triage cost.",
+          "last_obs": "2026-07-17T19:33:14Z",
+          "last_obs_by": "po (dev-team Step 0-SIG)"
+        },
+        "updated_at": "2026-07-23T09:19:37Z",
+        "plan_only": true
       }
     ],
     "closed_sprints": [
@@ -13585,9 +13572,43 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-23T08:46:43Z",
-    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "last_triaged_at": "2026-07-23T09:20:52Z",
+    "last_triaged_by": "dev-team (supervised-lane sweep)",
+    "in_progress": [
+      {
+        "id": "FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS",
+        "type": "FIX",
+        "title": "COWORK DISPATCH — router intent PRE-CLAIM and the cowork slot dispatcher share NO task_id namespace, so task_claim is a no-op mutex across paths; a peer router session double-dispatches a cowork slot agent while the cowork dispatcher's own instance still runs it (2nd confirmed instance same tick 2026-07-15: chef-evening 932+933 double-publish + tnb-audit dual c110 audit)",
+        "status": "IN_PROGRESS",
+        "priority": "P0",
+        "size": "M",
+        "zone": "cross-service/",
+        "plan_only": true,
+        "next_agent": "ba",
+        "created_at": "2026-07-15T20:56:10Z",
+        "created_by": "po",
+        "origin_signal_id": "cow-20260715T203953",
+        "detail_ref": "docs/handoffs/2026-07-15-tnb-audit-double-dispatch-unreachable-marker-gate.md",
+        "note": "ENABLER (new — no existing row covers it; the two per-slot guard bugs are separate). ROOT CAUSE: router CLAUDE.md/dispatch-claim §2.5 PRE-CLAIM keys on intent:<agent>:<intent-key> while cowork keys on cowork-slot:<slot> / cron:cowork:<tick> / published:<slot>:<periodKey> — DIFFERENT namespaces, so task_claim cannot collide across the two dispatch paths (no-op mutex by construction) and neither path consults the other. 2 CONFIRMED instances same tick 2026-07-15 (feedback_recurring_bug_escalation 2+ => rank-1-band candidate): (a) chef-evening/unified-agent -> MARKET double-publish ids 932+933; (b) tnb-audit/tran-ngoc-bau -> 2 concurrent full c110 audits, clobber avoided ONLY by the Edit stale-read check (the Write path has none => silent-clobber risk). CHEAPEST CORRECT FIX (ba/architect own HOW): router §2.5 PRE-CLAIM for a cowork-slot agent MUST also probe cowork-slot:<slot_id> and/or published:<slot>:<periodKey> before dispatch, OR key both paths on ONE shared task_id namespace so they collide by construction. Rule: do NOT dispatch a cowork slot agent via the intent path while the cowork dispatcher owns that slot. Distinct from UC-CCA-P3 (marker lifecycle) and FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK (capability gap) — this is the cross-path coordination hole that ENABLED both. PLAN-ONLY.\n\n[po 2026-07-21T20:37:51Z 3rd CONFIRMED OCCURRENCE — P1->P0 ESCALATION, NO NEW ROW MINTED] Router escalated this as a fresh P1 root-cause ask; PO checked prior art first and this row ALREADY owns it exactly (title + note already name the disjoint-namespace root cause and the cheapest-correct-fix). Minting a sibling would have duplicated it — declined.\n\nOCCURRENCE 3 (2026-07-21, RAW-verified via task_list_held, not agent self-report): 20:24:33Z cowork dispatcher session 9f4a6bfc-b001-4349-8a44-545f24c1b0ac claimed published:tnb-audit:2026-07-20/2026-07-26 (owner_agent tran-ngoc-bau) and its tnb instance began running. 20:25:14Z a SECOND router session 8def3b83-8326-4a26-a663-2f2616dfc38e claimed intent:tran-ngoc-bau:tnb-audit -> claimed:TRUE, 41s later, while the peer instance was live. Exactly the predicted no-op mutex: two namespaces, one agent, zero collision. Same slot (tnb-audit) as occurrence 2. Occurrence count is now 3 (07-15 chef-evening MARKET 932+933; 07-15 tnb-audit dual c110; 07-21 tnb-audit). feedback_recurring_bug_escalation: 2+ => block and fix ROOT CAUSE not symptom — this is the root cause row, and it has been dormant in BACKLOG for 6 days while the class recurred.\n\nWHY P0 (priority inversion correction, NOT damage-this-time): this occurrence caused ZERO damage — see POSITIVE below — so the escalation is NOT argued on impact. It is argued on (a) 3rd confirmed occurrence of a class whose worst instance was a user-visible MARKET double-publish, and (b) priority inversion: this row is the ENABLER that UC-CCA-P3 (P0) explicitly names as the hole that \"ENABLED both\" — an enabler ranked below its own downstream symptom will never be reached first.\n\nOPERATIVE BLOCKER IS DISPATCH, NOT PRIORITY (PO directive): this row is plan_only:true + supervised:true + next_agent:ba, and supervised_note states \"Deliberate router/ba/architect dispatch is UNAFFECTED\" — the hold only stops BOUNDED-1 idle auto-pickup. So the reason nothing shipped in 6 days is that nobody deliberately dispatched it, and a priority bump ALONE will not change that. PO AUTHORIZES + DIRECTS deliberate ba dispatch now. Keep supervised:true (it is correctly preventing the plan_only/no-detail-entry auto-pickup leak it was installed for — do NOT clear it as a shortcut to auto-pickup). ba should produce the spec for the cheapest-correct-fix already stated in this note (router PRE-CLAIM must probe cowork-slot:<slot_id> / published:<slot>:<periodKey> before dispatching a cowork-slot agent, OR both paths key one shared namespace).\n\nPOSITIVE — 07-15 PRIMARY DEFECT IS FIXED AND PROVEN (partially closes detail_ref handoff 2026-07-15-tnb-audit-double-dispatch-unreachable-marker-gate.md): that handoff s headline finding was that the Step G gate was DEAD CODE — .claude/agents/tran-ngoc-bau.md frontmatter lacked mcp__gateway__call_tool, so the gate was unreachable on every cycle and both 07-15 instances ran two full audits. VERIFIED FIXED: frontmatter now reads \"tools: Read, Edit, Write, Glob, Grep, mcp__gateway__call_tool\", and c115 (2026-07-21) is the FIRST cycle with the gate confirmed live — it fired, claimed cleanly, and the redundant session was blocked with no duplicate audit and no notebook clobber. DEFENCE-IN-DEPTH HELD. Residual risk is unchanged though: the inner marker gate is a per-agent LAST line of defence that only protects cowork agents that both have a marker gate AND gateway tools; the cross-path mutex hole itself is still fully open, and any slot agent without that gate is still unprotected. Do NOT downgrade or close this row on the strength of the gate working.\n\nNOTE ON THE OTHER HALF: the router also fixed the gate s missing owner_client_session in commit 164f836f7 (Step G task_claim was failing zod on its first-ever live invocation) — that is a tran-ngoc-bau-local fix, already shipped, not part of this row s scope.",
+        "sibling_refire_row": "FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE",
+        "sibling_note": "SIBLING enabler minted 2026-07-15 (cow-20260715T214005): the single-session same-tick self-refire path is NOT closed by unifying this row's namespaces. Fixing THIS row does not close the refire; both are members of the 'guard released when the work ends' class. Do not certify the double-dispatch class done on this row alone.",
+        "supervised": true,
+        "supervised_at": "2026-07-16T17:02:01Z",
+        "supervised_by": "po (autolaunch_safety_hold adjudication, dev-team 16:37Z)",
+        "supervised_note": "BOUNDED-1 stopgap: plan_only design/spec ask with a non-dev board next_agent that leaks past the detail-only promote gates (inline plan_only + no backlog-detail entry). Held from idle auto-pickup so BOUNDED-1 reaches genuinely dev-routable rows. Deliberate router/ba/architect dispatch is UNAFFECTED. Durable structural fix: FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE (once shipped this stamp is belt-and-suspenders).",
+        "po_escalated_at": "2026-07-21T20:37:51Z",
+        "po_escalated_by": "po",
+        "occurrence_count": 3,
+        "last_occurrence_at": "2026-07-21T20:25:14Z",
+        "updated_at": "2026-07-23T09:20:53Z",
+        "promoted_at": "2026-07-23T09:20:52Z",
+        "promoted_by": "dev-team (supervised-lane sweep)",
+        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='ba' (priority_rank=0); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
+        "dispatch_lane": "ba",
+        "claimed_at": "2026-07-23T09:20:52Z",
+        "claimed_by": "dev-team (supervised-lane sweep)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
