@@ -3,7 +3,7 @@
   "to": "dev-team",
   "type": "cowork-fire",
   "payload": {
-    "fire_time": "2026-07-16T14:08:31.059Z",
+    "fire_time": "20260723T140849Z",
     "matched_slots": [
       "refine-bctc-slot-2"
     ],
@@ -16,7 +16,7 @@
       "docs/agents/refine_bctc_md/flow/main.md"
     ],
     "silent": false,
-    "drift_min": 4,
+    "drift_min": 5,
     "errors": [],
     "pressure_mode": "adaptive",
     "calendar_status": "unknown",
@@ -30,7 +30,7 @@
     "cadence_minutes": {
       "refine-bctc-slot-2": null
     },
-    "last_fired_timestamp": "2026-07-16T14:07:09.083Z",
+    "last_fired_timestamp": "2026-07-23T14:08:11Z",
     "last_fired_slots": [
       "refine-bctc-slot-2"
     ],
@@ -39,16 +39,16 @@
     "reason": "spawned",
     "nominal_tick": "14:00",
     "leader_lock": "acquired",
-    "dev_head": "active",
-    "devq": 0,
-    "signal_backlog": 0,
-    "note": "WORK tick recovered read-only after && chain swallowed WORK verdict JSON (exit 1). Preflight side-effects verified intact: election lock held by this session, one_shots=[] (nothing orphaned), matcher re-run (side-effect-free) recovered the single due slot refine-bctc-slot-2 (cron 0 14, last_fired 07-13). Agent spawned+completed clean: oldest pending MBB_2026_Q1.pdf page_count=0 matched cover-letter skip pattern, reported to WORK, exited. WATCH: page_count=0 skip could mask an unpopulated-page-count real Q1 statement vs a genuine thin cover — one observation, not chased from dispatcher."
+    "dev_head": "idle",
+    "devq": 5,
+    "signal_backlog": 8,
+    "note": "bctc-offmarket cron slot, first fire since 2026-07-21T14:04Z (07-22 dispatcher outage). Step 5.1 load parse: uptime reports comma-decimal (1,12) — spawn-fanout.md:161 gsub strips the comma to 112 and would falsely trip DEGRADED; single-slot tick so max_parallel had no effect. cycle_snapshot_promoted=false again."
   },
   "priority": "low",
-  "createdAt": "2026-07-16T14:08:31.059Z",
+  "createdAt": "20260723T140849Z",
   "_processed": {
-    "fingerprint": "759d3c7622ae3e592607a8bfcaebeda4dc8ea6ca72d01db04227274aff5347e5",
-    "processedAt": "2026-07-16T14:22:02Z",
+    "fingerprint": "96b68a591d0f6d8857f20802e2f00ee042ce78f0a35f52a8aba4d1b09b1c8587",
+    "processedAt": "2026-07-23T15:17:30Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

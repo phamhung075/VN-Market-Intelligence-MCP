@@ -1,0 +1,19 @@
+{
+  "ticker": "SSI",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "product": "Securities brokerage, investment banking, proprietary trading",
+  "customer": "Retail and institutional equity investors, corporate issuers (underwriting/advisory)",
+  "ops": "Sector-calc PE 14.6x PREMIUM +15% vs sector 12.7x, PB PREMIUM +36%, ROE 14.0% above sector median 10.0% — FAIR valuation on EY spread. No full BCTC extraction available yet (\"Chua co du lieu\") — sector ratios only",
+  "mgmt": "No new BCTC filing since 2026-06-07; no legal/insider flags this cycle",
+  "esc_status": "Rotation touch — no ESC anchor-ticker forensic pass run (sector-comparison only).",
+  "cycle": "c115",
+  "generated_at": "2026-07-23T15:10:00Z",
+  "_processed": {
+    "fingerprint": "a97f73bb9d0b7ac8ce3a42c08efc00b1fdc7cb8d0196d3f3406e29f4b9018ce7",
+    "processedAt": "2026-07-23T15:17:30Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

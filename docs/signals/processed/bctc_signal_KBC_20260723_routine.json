@@ -1,0 +1,19 @@
+{
+  "ticker": "KBC",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "product": "Industrial park (KCN) development, leasing and infrastructure",
+  "customer": "FDI manufacturers and industrial tenants leasing KCN land/factory space",
+  "ops": "Sector-calc PE 13.8x DISCOUNT -29% vs sector 19.3x, PB in-line, ROE 9.7% above sector median 6.3% — FAIR valuation. No full BCTC extraction available yet (\"Chua co du lieu\") — sector ratios only",
+  "mgmt": "Legal risk unchanged: Chairman Dang Thanh Tam tax-penalty administrative decision (07-19/07-20), unresolved this cycle. No new BCTC filing since 2026-06-07",
+  "esc_status": "Rotation touch — no ESC anchor-ticker forensic pass run (sector-comparison only, per established pattern for tickers without full BCTC extraction).",
+  "cycle": "c115",
+  "generated_at": "2026-07-23T15:10:00Z",
+  "_processed": {
+    "fingerprint": "3d6d68f72bcf66cde9cb369129277d838e30e4de7002e5d3f6a38234fcac3310",
+    "processedAt": "2026-07-23T15:17:30Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "ticker": "HCM",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "product": "Securities brokerage, investment banking (HSC)",
+  "customer": "Retail and institutional equity investors",
+  "ops": "Sector-calc PE 17.8x PREMIUM +41% vs sector 12.7x, PB PREMIUM +41%, ROE 9.4% below sector median 11.3% — EXPENSIVE valuation verdict. No full BCTC extraction available yet (\"Chua co du lieu\") — sector ratios only",
+  "mgmt": "No new BCTC filing since 2026-06-07; EXPENSIVE verdict unchanged vs prior cycles",
+  "esc_status": "Rotation touch — no ESC anchor-ticker forensic pass run (sector-comparison only).",
+  "cycle": "c115",
+  "generated_at": "2026-07-23T15:10:00Z",
+  "_processed": {
+    "fingerprint": "5fc1d58ba36833122e466c4d57c6477eda6d7706216a6a0ddf458309518c3ca3",
+    "processedAt": "2026-07-23T15:17:30Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

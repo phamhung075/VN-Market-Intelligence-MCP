@@ -1,0 +1,27 @@
+{
+  "id": "bca-dataquality-20260723T151000Z",
+  "ts": "2026-07-23T15:10:00Z",
+  "from": "bctc-analyst",
+  "to": "dev-team",
+  "type": "bctc-data-quality-anomaly",
+  "summary": "DGC Q1-2026 BCTC extraction CORRUPT: total_assets=0, forced 0% confidence",
+  "severity": "MEDIUM",
+  "status": "NEW",
+  "payload_ref": null,
+  "payload": {
+    "ticker": "DGC",
+    "quarter": "Q1-2026",
+    "issue": "get_bctc_full(code=DGC) returns balance-sheet identity violation: total_assets=0 (zero/negative — OCR extraction failure), confidence forced to 0%. No derived ratios served.",
+    "context": "Discovered during ad-hoc legal-risk touch (2026-07-23 08:09 QUAN TRONG prosecution of DGC CEO, price -6.3% same day) — not a newly-ĐÃ-NỘP release event, this is the existing 2026-07-19-filed Q1-2026 report failing extraction.",
+    "action_requested": "Re-extract via /api/bctc-inspect or re-run BCTC refine pipeline for DGC 2026-Q1 per the tool's own suggested action.",
+    "downgrade_applied": "Emitted routine bctc_signal for DGC using sector-comparison ratios only (last-known-good, not current-quarter verified) — no beat_miss/Revenue/NI fabricated from corrupt data.",
+    "guard_key": "data-quality-anomaly:DGC:Q1-2026",
+    "guard_ttl_days": 7
+  },
+  "_processed": {
+    "fingerprint": "ccad9a5514ac2fcf9153012d263db99c376edaeff153ca3278c9b7eaa4a96ee4",
+    "processedAt": "2026-07-23T15:17:30Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

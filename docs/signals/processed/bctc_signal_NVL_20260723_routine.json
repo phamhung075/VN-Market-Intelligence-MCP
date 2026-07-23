@@ -1,0 +1,19 @@
+{
+  "ticker": "NVL",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "product": "Residential real estate development — condominiums, integrated townships, resort/tourism projects",
+  "customer": "Homebuyers and investors in NVL residential and resort-project developments",
+  "ops": "Sector-calc PE 19.3x PREMIUM +20% vs sector 16.1x, PB DISCOUNT -36%, ROE 4.2% below sector median 7.3% — EXPENSIVE valuation verdict. No full BCTC extraction available yet (\"Chua co du lieu\") — sector ratios only",
+  "mgmt": "No new BCTC filing since 2026-06-08; restructuring overhang persists, valuation verdict unchanged vs prior cycles",
+  "esc_status": "Rotation touch — no ESC anchor-ticker forensic pass run (sector-comparison only).",
+  "cycle": "c115",
+  "generated_at": "2026-07-23T15:10:00Z",
+  "_processed": {
+    "fingerprint": "a46d8639eacc8e1efacb627515f8ce28e40133b2210083b27d2e868e0f0d5a2d",
+    "processedAt": "2026-07-23T15:17:30Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
