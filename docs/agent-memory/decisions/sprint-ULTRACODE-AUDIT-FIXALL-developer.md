@@ -254,3 +254,27 @@ REJECTED: outside Piece 1's *Files* list and I8 cited evidence (main.md only); f
 **why-decision:** Rescope names exactly 4 files + main.md-only for fb; grep-verified zero remaining
 inline duplicates in scope, zero touch outside it.
 **why-change:** No change from rescope plan; net -59 lines across 5 files (81 del / 22 ins).
+
+### STEP developer-S16 · developer · 2026-07-23T03:30:21Z
+**task-id:** UC-CCA-P4
+**what-done:** Added CLAIM-TRUTH GATE pointer step (skill: claim-truth-gate/SKILL.md) before every
+verified-ungated public/MARKET emit: fb weekly-recap.md STEP 3e, weekly-prediction.md STEP 4e
+(non-real-time, mirrors main.md STEP 4d); digest-predict weekly/daily/monthly.md before their
+`send_telegram(channel="market")` (mirrors daily-predict.md P-5.5); qa-responder cycle.md Step 4b
+before its MARKET `answer_text` send (real-time override, mirrors alert-commander). SKILL.md
+frontmatter + Time-sensitivity override list updated to add qa-responder as an invoker.
+**what-considered:**
+- Board row note lists only the 5 rescope files (fb weekly x2, digest-predict daily/weekly/monthly)
+  vs the dispatch's broader candidate list (unified-agent, market-watcher, alert-commander, news-scout,
+  bctc-analyst, qa-responder) — grep-verified: unified-agent/market-watcher/alert-commander already
+  gated (skip, no dup); news-scout/bctc-analyst only ever send to WORK, not MARKET/public (skip, not
+  a publisher); qa-responder DOES send composed `answer_text` to MARKET channel from live-tool data,
+  zero gate present, frontmatter confirms no Bash tool (documented no-Bash fallback in SKILL.md
+  already covers this) — genuine ungated public/MARKET publisher, added.
+- No engine change anywhere — dimension routing in claim-tool-map.json is agent-agnostic by design.
+**why-decision:** Task title is "close gaps on ALL ungated MARKET/public publishers, claim-truth
+ONLY" — qa-responder meets both the "ungated" and "public/MARKET" tests the dispatch explicitly
+told me to verify; excluding a real, live gap after positively verifying it would be under-scoping,
+not caution.
+**why-change:** +1 file (qa-responder/flow/cycle.md) + SKILL.md beyond the board row's literal
+5-file note; no data-integrity/other-dimension additions, no engine changes — same single dimension.

@@ -62,6 +62,19 @@ Cải thiện hệ thống tuần này:
 Tổng feedback: {N} từ {agents}
 ```
 
+**CLAIM-TRUTH GATE (hard gate — last pre-send check)**
+→ skill: `.claude/skills/claim-truth-gate/SKILL.md`
+Before the MARKET send below, run the gate on `<weekly_digest_text>` to detect CCATO (Claim Contradicts Authorized Tool Output) — mirrors the invocation pattern in `daily-predict.md` STEP P-5.5.
+```
+GATE_EXIT = skill `.claude/skills/claim-truth-gate/SKILL.md`
+  post_body = <weekly_digest_text>
+  agent_id  = "digest-predict"
+  cache     = <this cycle's tool-call results, or null>
+```
+- `0` = PASS → proceed to MARKET send.
+- `1` = FAIL — contradiction detected; signal emitted to `po` by script. Self-correct: call the named tool directly, rewrite the offending sentence in `weekly_digest_text` using real returned values, re-run the gate. Second-pass PASS → proceed. Second-pass FAIL (tool genuinely errors) → replace that sentence with an honest-gap note (do not re-assert the false claim) and proceed with the corrected digest.
+- `2` = config-error → fail-loud: `send_telegram(channel="bug", message="[digest-predict] claim-truth-gate CONFIG ERROR")` and EXIT. Do NOT treat as PASS.
+
 `send_telegram(channel="market", message=<weekly_digest_text>)`
 `send_telegram(channel="work", message="[Digest & Predict] HH:MM UTC — WEEKLY sent. Next: TIME")`
 

@@ -1,6 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-23 | **Cycle:** UC-CCA-P6-NBWRITE (notebook-write AC-3 consolidation, Piece 1)
+**Last updated:** 2026-07-23 | **Cycle:** UC-CCA-P4 (claim-truth-gate coverage close)
 
 ## Session 2026-07-23 — UC-CDC-P4 (dev-team dispatched, cowork-dispatcher-cron-P4, cross-service/) — REVIEW
 
@@ -43,3 +43,17 @@ Zone health: `docs/agents/cowork-team/flow/spawn-fanout.md` — no `_fanout` sha
 **Scope discipline:** Touched only the 5 flow docs in Piece 1's file list, this notebook, decision journal. Did NOT touch weekly-recap.md/weekly-prediction.md, which independently still say "full overwrite" for the SAME fb-market-poster.md notebook (same bug, different evidence anchor, not in Piece 1's *Files* list or cited I8 evidence) — flagged as a residual gap for a follow-up row, not fixed here. Did NOT touch Piece 2 (cowork-end-cycle no-op rule, skip-parenthetical deletion) — folds into queued TE-T05 per rescope.
 
 Zone health: notebook-write AC-3 — single SSOT compose procedure (skill), 4 flow-doc copies retired | fb-market-poster notebook — APPEND class restored per AC-6, Lessons/Known patterns preamble now survives daily cycles (weekly sub-flows still at risk, see gap above) | HEALTHY
+
+## Session 2026-07-23 — UC-CCA-P4 (dev-team dispatched, cowork-cycle-agents-P4 RESCOPE, cross-service/) — REVIEW
+
+**Task:** Close claim-truth-gate (CCATO) coverage gaps on ungated public/MARKET publishers, claim-truth dimension ONLY. Board note scoped 5 files (fb weekly-recap/weekly-prediction, digest-predict daily/weekly/monthly); dispatch asked me to also verify unified-agent, market-watcher, alert-commander, news-scout, bctc-analyst, qa-responder as candidates.
+
+**Actions taken:** Added a CLAIM-TRUTH GATE pointer step before every verified-ungated MARKET/public emit: fb `weekly-recap.md` STEP 3e + `weekly-prediction.md` STEP 4e (non-real-time, mirrors `main.md` STEP 4d, added CLAIM-TRUTH GATE line to notebook/RETURN templates); digest-predict `weekly.md`/`daily.md`/`monthly.md` before each `send_telegram(channel="market")` (mirrors `daily-predict.md` P-5.5); `qa-responder/flow/cycle.md` Step 4b before its MARKET `answer_text` send (real-time time-sensitivity override, mirrors `alert-commander/stage-dispatch-log.md`). Updated `.claude/skills/claim-truth-gate/SKILL.md` frontmatter + Time-sensitivity override list to name qa-responder. No engine change (`claim-tool-map.json` dimension routing is agent-agnostic).
+
+**Verification:** grep confirmed exactly these gaps pre-edit (claim-truth-gate absent from all 6 target files) and confirmed unified-agent/chef.md, market-watcher/cycle.md, alert-commander/stage-dispatch-log.md already gated ahead of their MARKET sends (skip, no dup). news-scout and bctc-analyst grepped for `channel="market"`/public-doc writes — both only ever send to WORK/write internal analysis-briefs, not public/MARKET publishers (skip, noted, not gated). qa-responder frontmatter (`.claude/agents/qa-responder.md`) confirmed no Bash tool grant — SKILL.md's existing "No-Bash cowork subagent sessions" fallback already covers this generically, referenced inline. Post-edit grep re-confirms gate now sits immediately before each target's public/MARKET emit line.
+
+**Board:** `task_board.in_progress[UC-CCA-P4]` → `review`, `next_agent=qa`, `.head` synced (verify-committed context, branch=null), via `orch-apply.sh`.
+
+**Scope discipline:** claim-truth dimension only — no data-integrity/privacy/other-gate additions, no `apps/<service>/` or mcp-server code touched, no engine change to `narrative-truth-gate.sh`/`claim-tool-map.json`. +1 file (qa-responder/flow/cycle.md) + SKILL.md beyond the board row's literal 5-file note — flagged in decision journal as a verified, in-scope addition (same dimension, genuine live gap the dispatch explicitly asked me to check), not scope creep.
+
+Zone health: 6/6 verified-ungated public/MARKET publishers now gated on claim-truth; unified-agent/market-watcher/alert-commander/TNB backstop confirmed pre-existing gated; news-scout/bctc-analyst confirmed not public/MARKET publishers | HEALTHY

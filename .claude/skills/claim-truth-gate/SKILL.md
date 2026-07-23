@@ -4,8 +4,8 @@ description: >
   Shared SSOT pre-write gate: re-probes narrative absence-claims against live MCP
   gateway tool output via scripts/narrative-truth-gate.sh. Every cowork narrative
   agent (fb-market-poster, unified-agent/CHEF, market-watcher, alert-commander,
-  digest-predict) and TNB backstop invoke this ONE skill so in-flow and backstop
-  logic never drift. CCATO Tier-1, brief docs/architecture-briefs/2026-06-30-narrative-quality-ccato-gate.md.
+  digest-predict, qa-responder) and TNB backstop invoke this ONE skill so in-flow
+  and backstop logic never drift. CCATO Tier-1, brief docs/architecture-briefs/2026-06-30-narrative-quality-ccato-gate.md.
 ---
 
 # Skill: claim-truth-gate
@@ -69,7 +69,7 @@ Capture full stdout+stderr and paste it into the calling flow's cycle report
 5. The signal already fired on the FIRST FAIL — do not suppress it even if self-correction succeeds; it records that in-cycle correction occurred.
 
 ## Time-sensitivity override (real-time agents ONLY)
-Applies to **market-watcher** and **alert-commander** (any flow whose gate sits before a real-time alert send, not a scheduled digest/post).
+Applies to **market-watcher**, **alert-commander**, and **qa-responder** (any flow whose gate sits before a real-time alert/answer send, not a scheduled digest/post).
 If the SECOND pass (post self-correct) STILL FAILS:
 - do NOT block the alert indefinitely
 - write the per-field honest-gap version (same text as step 4 above)

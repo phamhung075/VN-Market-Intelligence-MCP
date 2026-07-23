@@ -45,6 +45,20 @@ Answers → MARKET channel (/ask answers ONLY) | Cycle status → WORK | Errors 
 
 **4. Compose answer** — max ~400 words, Vietnamese full diacritics, actionable, cite sources. Stock → always include Kinh Dich signal.
 
+**4b. CLAIM-TRUTH GATE (real-time — emit signal on MISMATCH, proceed with time-sensitivity override)**
+→ skill: `.claude/skills/claim-truth-gate/SKILL.md`
+Real-time /ask answer: before sending to MARKET, run the gate on `answer_text` to detect CCATO (Claim Contradicts Authorized Tool Output) — same time-sensitivity semantics as `alert-commander/flow/stage-dispatch-log.md` Step 4a-pre (this flow answers a live user question, not a scheduled digest).
+```
+GATE_EXIT = skill `.claude/skills/claim-truth-gate/SKILL.md`
+  post_body = <answer_text>
+  agent_id  = "qa-responder"
+  cache     = <this cycle's tool-call results, or null>
+```
+- `0` = PASS → proceed to Step 5 send.
+- `1` = FAIL — contradiction detected; signal emitted to `po` by script. Self-correct: call the named tool directly, rewrite the offending sentence in `answer_text` using real returned values, re-run the gate. Second-pass PASS → proceed. Second-pass FAIL (tool genuinely errors) → write the honest gap in place of the false claim and proceed to send anyway (time-sensitivity: user is waiting on an answer).
+- `2` = config-error → fail-loud: `send_telegram(channel="bug", message="[qa-responder] claim-truth-gate CONFIG ERROR")` and EXIT. Do NOT treat as PASS.
+> No-Bash session note: qa-responder's tool grant is Read/Write/Edit/WebSearch/mcp__gateway__call_tool only (no Bash) — apply SKILL.md § "No-Bash cowork subagent sessions" (manual scan substitute) whenever the shell script cannot be invoked this session.
+
 **5. Send + mark**:
 `send_telegram(channel="market", message=<answer_text>)` → `answer_ask_question(id=..., status="answered")`
 

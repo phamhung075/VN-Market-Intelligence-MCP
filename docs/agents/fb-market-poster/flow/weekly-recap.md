@@ -1,4 +1,4 @@
-<!-- size-justification: ~167L — WEEKLY_RECAP Saturday sub-flow; main.md MODE ROUTER JUMPs here; +12L: PRIVACY GUARD pointer + STEP 3d privacy gate; three-section composition + gate-override docs + notebook format mandate the length; no prediction section -->
+<!-- size-justification: ~167L — WEEKLY_RECAP Saturday sub-flow; main.md MODE ROUTER JUMPs here; +12L: PRIVACY GUARD pointer + STEP 3d privacy gate; three-section composition + gate-override docs + notebook format mandate the length; no prediction section. UC-CCA-P4 2026-07-23: +7L STEP 3e CLAIM-TRUTH GATE pointer (was ungated). -->
 # FB Market Poster — Weekly Recap Flow (Saturday / WEEKLY_RECAP)
 
 ## SELF-IDENTITY GUARD
@@ -181,6 +181,11 @@ LLM semantic scan of the full post body for personal portfolio language. WEEKLY_
 
 Log "PRIVACY GATE: PASS" in RETURN block after clean scan.
 
+### STEP 3e — CLAIM-TRUTH GATE (hard gate — last pre-write check)
+→ Execute identically to `main.md` STEP 4d (skill: `.claude/skills/claim-truth-gate/SKILL.md`; `post_body` = composed weekly-recap post body from STEP 2; `agent_id` = "fb-market-poster"; non-real-time semantics per SKILL.md — persistent second-pass FAIL blocks the write; exit 2 = config-error → `send_telegram(channel="bug", message="[fb-market-poster] claim-truth-gate CONFIG ERROR")` + EXIT, never treat as PASS).
+
+Log "CLAIM-TRUTH GATE: PASS" in RETURN block after clean pass (or "FAIL-corrected" / "BLOCKED" per outcome).
+
 ---
 
 ## STEP 4 — Write deliverable
@@ -217,6 +222,7 @@ Notebook entry:
 - Jargon gate: PASS (0 violations) | BLOCKED (N violations, post not written)
 - Integrity gate: PASS | BLOCK (weekly ±7% override applied: {details}) | SKIP
 - Privacy gate: PASS | BLOCK (violations found and fixed: {details})
+- Claim-truth gate: PASS | FAIL-corrected | BLOCKED
 - Status: {published/failed}
 ## Known patterns
 - WEEKLY_RECAP: cumulative weekly % moves legitimately exceed ±7%; weekly override applied
@@ -235,4 +241,5 @@ QUALITY: full | partial — daily posts read: {N}/5; gaps: {list or none}
 JARGON GATE: [paste verbatim stdout of fb-jargon-gate.sh]
 INTEGRITY GATE: [PASS | BLOCK — weekly ±7% override applied: {detail} | SKIP]
 PRIVACY GATE: [PASS | BLOCK — violations found and fixed: {detail}]
+CLAIM-TRUTH GATE: [PASS | FAIL-corrected | BLOCKED]
 ```

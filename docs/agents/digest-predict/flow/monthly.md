@@ -24,6 +24,20 @@ Monthly digest to MARKET | Quarterly synthesis in `docs/analysis-briefs/` | WORK
   - `GROWTH_PRIORITY` → positive for equities/realty; `FX_STABILITY` → positive for VND bonds, negative for equity valuation
 - **[Nhân Hòa]** month-level score: pivot_window + regime + carry + EY_spread + macro_calendar
 `get_portfolio_risk()` VaR + drawdown | `get_rebalancing_signals()` drift | `get_performance_attribution()` P&L | `get_prediction_accuracy(days=30)`
+
+**CLAIM-TRUTH GATE (hard gate — last pre-send check)**
+→ skill: `.claude/skills/claim-truth-gate/SKILL.md`
+Before the MARKET send below, run the gate on `<monthly_digest_text>` to detect CCATO (Claim Contradicts Authorized Tool Output) — mirrors the invocation pattern in `daily-predict.md` STEP P-5.5.
+```
+GATE_EXIT = skill `.claude/skills/claim-truth-gate/SKILL.md`
+  post_body = <monthly_digest_text>
+  agent_id  = "digest-predict"
+  cache     = <this cycle's tool-call results, or null>
+```
+- `0` = PASS → proceed to MARKET send.
+- `1` = FAIL — contradiction detected; signal emitted to `po` by script. Self-correct: call the named tool directly, rewrite the offending sentence in `monthly_digest_text` using real returned values, re-run the gate. Second-pass PASS → proceed. Second-pass FAIL (tool genuinely errors) → replace that sentence with an honest-gap note (do not re-assert the false claim) and proceed with the corrected digest.
+- `2` = config-error → fail-loud: `send_telegram(channel="bug", message="[digest-predict] claim-truth-gate CONFIG ERROR")` and EXIT. Do NOT treat as PASS.
+
 `send_telegram(channel="market", message=<monthly_digest_text>)`
 
 ## Quarterly (Mar 31 / Jun 30 / Sep 30 / Dec 31)

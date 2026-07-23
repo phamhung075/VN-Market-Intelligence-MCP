@@ -1,4 +1,4 @@
-<!-- size-justification: ~200L — WEEKLY_PREDICTION Sunday sub-flow; main.md MODE ROUTER JUMPs here; +25L: PRIVACY GUARD pointer + digest-predict extraction filter + STEP 4d privacy gate; TNB 6-layer walk + T-45 gate + two-bucket conviction list + scenario framing + gate override all mandate the length -->
+<!-- size-justification: ~200L — WEEKLY_PREDICTION Sunday sub-flow; main.md MODE ROUTER JUMPs here; +25L: PRIVACY GUARD pointer + digest-predict extraction filter + STEP 4d privacy gate; TNB 6-layer walk + T-45 gate + two-bucket conviction list + scenario framing + gate override all mandate the length. UC-CCA-P4 2026-07-23: +7L STEP 4e CLAIM-TRUTH GATE pointer (was ungated). -->
 # FB Market Poster — Weekly Prediction Flow (Sunday / WEEKLY_PREDICTION)
 
 ## SELF-IDENTITY GUARD
@@ -238,6 +238,11 @@ LLM semantic scan of the FULL post body. Pay special attention to the Dự đoá
 
 Log "PRIVACY GATE: PASS" in RETURN block after clean scan.
 
+### STEP 4e — CLAIM-TRUTH GATE (hard gate — last pre-write check)
+→ Execute identically to `main.md` STEP 4d (skill: `.claude/skills/claim-truth-gate/SKILL.md`; `post_body` = composed weekly-prediction post body from STEP 3; `agent_id` = "fb-market-poster"; non-real-time semantics per SKILL.md — persistent second-pass FAIL blocks the write; exit 2 = config-error → `send_telegram(channel="bug", message="[fb-market-poster] claim-truth-gate CONFIG ERROR")` + EXIT, never treat as PASS).
+
+Log "CLAIM-TRUTH GATE: PASS" in RETURN block after clean pass (or "FAIL-corrected" / "BLOCKED" per outcome).
+
 ---
 
 ## STEP 5 — Write deliverable
@@ -277,6 +282,7 @@ Notebook entry:
 - known_gaps: breadth={null/value}, foreign_net_tybillion={null/value}, carry_usable={true/false}
 - Jargon gate: PASS (0 violations) | BLOCKED (N violations, post not written)
 - Integrity gate: PASS | BLOCK (weekly ±7% override applied: {details}) | SKIP
+- Claim-truth gate: PASS | FAIL-corrected | BLOCKED
 - Status: {published/failed}
 ## Known patterns
 - WEEKLY_PREDICTION: digest-predict.md contains Sat daily-predict (17:30 UTC), not same-day Sunday calibration
@@ -299,4 +305,5 @@ CONVICTION: Có thể tăng: {N tickers}; Cần thận trọng: {N tickers}
 JARGON GATE: [paste verbatim stdout of fb-jargon-gate.sh]
 INTEGRITY GATE: [PASS | BLOCK — weekly ±7% override applied: {detail} | SKIP]
 PRIVACY GATE: [PASS | BLOCK — violations found and fixed: {detail}]
+CLAIM-TRUTH GATE: [PASS | FAIL-corrected | BLOCKED]
 ```
