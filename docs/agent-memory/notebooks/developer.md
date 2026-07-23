@@ -1,34 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-23 | **Cycle:** UC-CCA-P4 (claim-truth-gate coverage close)
-
-## Session 2026-07-23 — UC-CDC-P4 (dev-team dispatched, cowork-dispatcher-cron-P4, cross-service/) — REVIEW
-
-**Task:** `spawn-fanout.md` Step 5 fired ALL `WON_SLOTS` unconditionally in one message block ("no sequential gating") — root cause of a prior load-205 host-starvation incident (memory `feedback_overparallel_fanout_host_starvation`). PO rescope (architecture brief 2026-07-12 #cowork-dispatcher-cron-P4) asked for a headroom-gated bounded batcher, thresholds SSOT'd not hardcoded.
-
-**Actions taken:** New Step 5.1 computes `MAX_PARALLEL` from `cadence-policy.json` new `_fanout` key (5 thresholds), gated on `host_headroom_mb` (Step 4.2's `PRESSURE_STATE`, fail-safe degraded when legacy/stale) OR `uptime` 1-min load vs `sysctl -n hw.ncpu`. New Step 5.2 batches `WON_SLOTS` (guaranteed slots fill batch 1), fires each batch as one `run_in_background=true` block (BGFAN-1 unchanged within a batch), and waits for completion/load re-probe between batches capped at `batch_wait_max_seconds` (degrades on timeout, never stalls past the 600s token TTL/15-min tick — naive back-to-back batching of background spawns would otherwise be a no-op). Added the carve-out to `agent-chaining-protocol.md` § Background Spawn Mandate. Corrected spawn-fanout.md's stale size-justification header (108L claimed vs 227L actual pre-edit drift) to the real post-edit count.
-
-**Verification:** `cadence-policy.json` jq-validated. `DWF-phase1-cadence.test.ts` (only test touching cadence-policy.js) re-run 51/51 GREEN post `_fanout` addition — no schema assertion broke. Docs/config-only, no `.ts` touched, main-only (no branch, per CLAUDE.md).
-
-**Board:** `task_board.in_progress[UC-CDC-P4]` → review, via `orch-apply.sh`.
-
-**Scope discipline:** Touched `spawn-fanout.md`, `cadence-policy.json`, `agent-chaining-protocol.md`, `WORK.md`, this notebook, decision journal. Flagged not fixed: `graphify-out/graph.json` is 2 months stale (last run 2026-05-23) — a scoped `--update` would re-extract that whole accumulated backlog, disproportionate to this 3-file fix; left for PO/router.
-
-Zone health: `docs/agents/cowork-team/flow/spawn-fanout.md` Step 5 fan-out — now headroom/load-bounded, thresholds SSOT | HEALTHY
-
-## Session 2026-07-23 — UC-CDC-P4 (QA CHANGES_REQUESTED redispatch #1, cross-service/) — REVIEW
-
-**Task:** QA AC1 blocking: Step 5.1's missing/unparseable-`cadence-policy.json` branch inline-synthesized the ENTIRE `_fanout` object (`{max_parallel_default:4, max_parallel_degraded:2, headroom_floor_mb:1500, load_per_core_factor:2, batch_wait_max_seconds:120}`) as a fallback — a shadow copy of the SSOT, violating "ZERO hardcoded fan-out numbers" and contradicting the prior commit/WORK.md claim. AC2–AC6 already PASSED, untouched.
-
-**Actions taken:** Replaced the literal-object fallback with a `FANOUT_MODE="degraded_serial"` downgrade + `MAX_PARALLEL=1` single conservative sentinel (not read from/standing in for any `_fanout` key) — mirrors pressure-read.md Step 4.2's proven missing-policy MODE-downgrade pattern (no numeric synthesis). Headroom/load computation is skipped entirely in that mode (no thresholds exist to gate against) rather than partially reconstructed. Step 5.2's inter-batch wait gained a matching `if FANOUT_MODE == "degraded_serial"` branch — it previously dereferenced `FANOUT_POLICY.batch_wait_max_seconds` unconditionally, which would now crash on an undefined object; degraded_serial instead waits unconditionally for the single spawn's completion (MAX_PARALLEL=1 already bounds concurrency, no timeout/re-probe math needed).
-
-**Verification:** `bun test src/__tests__/DWF-phase1-cadence.test.ts` re-run (not trusted from prior run) — 51 pass / 0 fail, 183 expect() calls. `grep` confirms zero remaining inline `_fanout` numeric literals anywhere in spawn-fanout.md — all 5 keys now referenced by name only (`FANOUT_POLICY.<key>`), inside the `else` (policy-loaded) branch exclusively.
-
-**Board:** `task_board.in_progress[UC-CDC-P4]` → `review`, `qa_blocking_issues` annotated resolved, via `orch-apply.sh`.
-
-**Scope discipline:** Touched only `spawn-fanout.md` (Step 5.1/5.2 + size-justification header), this notebook, decision journal. Did NOT re-touch `cadence-policy.json` `_fanout` values, batch semantics, the health-driven DEGRADED fail-safe branch, the test file, or `agent-chaining-protocol.md` per redispatch scope.
-
-Zone health: `docs/agents/cowork-team/flow/spawn-fanout.md` — no `_fanout` shadow copy remains; missing-policy path now mode-downgrades like pressure-read.md | HEALTHY
+**Last updated:** 2026-07-23 | **Cycle:** UC-MDH-P3 (memory-docs-hygiene prune sweep)
 
 ## Session 2026-07-23 — UC-CCA-P6-NBWRITE (dev-team BOUNDED-1 auto-pickup, cross-service/) — REVIEW
 
@@ -57,3 +29,17 @@ Zone health: notebook-write AC-3 — single SSOT compose procedure (skill), 4 fl
 **Scope discipline:** claim-truth dimension only — no data-integrity/privacy/other-gate additions, no `apps/<service>/` or mcp-server code touched, no engine change to `narrative-truth-gate.sh`/`claim-tool-map.json`. +1 file (qa-responder/flow/cycle.md) + SKILL.md beyond the board row's literal 5-file note — flagged in decision journal as a verified, in-scope addition (same dimension, genuine live gap the dispatch explicitly asked me to check), not scope creep.
 
 Zone health: 6/6 verified-ungated public/MARKET publishers now gated on claim-truth; unified-agent/market-watcher/alert-commander/TNB backstop confirmed pre-existing gated; news-scout/bctc-analyst confirmed not public/MARKET publishers | HEALTHY
+
+## Session 2026-07-23 — UC-MDH-P3 (dev-team BOUNDED-1 auto-pickup, cross-service/) — REVIEW
+
+**Task:** memory-docs-hygiene-P3 RESCOPE — no prune automation exists for `docs/agent-memory/` debris: sessions/ grows unbounded, health/ held 122 dead RemoteTrigger recheck probes (writer silent since 06-23), legacy `session-logs/` duplicates sessions/, root-level `scheduled-task-execution-*.md` orphaned since May.
+
+**Actions taken:** New `scripts/agents-flow/memory-prune-sweep.sh` — 4 idempotent file-ops sweeps (sessions/*.md >14d archive, health/team-tool-recheck-*.md >30d delete + one idempotent PO-decision payload, session-logs/ fold + rmdir, scheduled-task-execution-*.md relocate); never touches orch-state.json (file-ops only, SSOT-W1 boundary). Wired invocation + the FLOW-owns-signal_queue-row boundary into `code-janitor/flow/main.md` § Memory Prune Sweep. Extended `.retention.md` with the 4 new rules. CANONICAL pointer in `dev-standards.md` § Script Persistence.
+
+**Verification:** Paired `memory-prune-sweep.test.sh` — sandboxed via `AGENT_MEMORY_ROOT`/`MPS_SIGNALS_DIR` env overrides (never touches the live tree), 12/12 PASS covering all 4 sweeps + `*.md`-only/`*.log`-untouched guard + idempotent-rerun no-op. Ran the sweep live once against the real repo: 15 sessions archived, 46 stale health-recheck files deleted, 5 session-logs folded, 3 scheduled-task-execution files relocated, 1 PO payload written to `docs/signals/janitor-health-recheck-writer-retired-2026-07-23.json`; reran live to confirm clean no-op.
+
+**Board:** `task_board.in_progress[UC-MDH-P3]` → `review`, `next_agent=qa`, `.head` synced, via `orch-apply.sh`.
+
+**Scope discipline:** File-ops ONLY, no orch-state.json write from the script (constraint honored) — the `.signal_queue.rows[]` append is a documented FLOW-step responsibility, not executed here (no live janitor cycle running this task). Shell-only, no `.ts`/`.js` touched. Full graphify `--update` skipped (graph.json 2mo stale, disproportionate for a hygiene fix — same call as this sprint's UC-CDC-P4 cycles) — flagged for PO/router.
+
+Zone health: `docs/agent-memory/` debris sweep — sessions/ 15/16 stale files archived, health/ 46/122 dead-writer probes deleted, session-logs/ retired, scheduled-task-execution/ root debris relocated; PO decision payload pending pickup | HEALTHY
