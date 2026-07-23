@@ -1,12 +1,19 @@
 ---
 name: commit
-description: Update docs, commit all changes by category, push to main, merge and clean branch
+description: Update docs, commit changes by category under a per-commit mutex, push to main
 trigger: /commit
 ---
 
 # /commit
 
-Commit all changes grouped by category, update related docs, push to main, and clean up the branch.
+Commit all changes grouped by category, update related docs, and push each category to
+main under its own `commit-mutex:main` critical section. All work stays on `main` —
+there is no feature branch to merge or clean up (no-branches invariant).
+
+**Context requirement (INV-GATEWAY-1):** `/commit` runs as the dispatcher/team-lead
+session — it is the caller with the MCP gateway binding required for `task_claim` on
+`commit-mutex:main`. Dev-*/qa/ba/pm/architect specialist sub-agents do not invoke this
+skill; they commit directly (explicit paths) per their own flow.
 
 ## Step 0 — Update related documentation FIRST
 
@@ -29,6 +36,16 @@ Do not create new documentation files unless clearly missing. Prefer updating ex
 
 Group all modified/untracked files into logical categories. Skip `.DS_Store` — never commit it.
 
+**Stranded-peer-file age guard (before staging anything):** check every candidate file
+against the declared per-agent zone table in `.claude/skills/commit-boundary/SKILL.md`
+§ RULE 2 (agents-architect / agent-father / pm / ops zones). If a file BOTH (a) falls
+inside another agent's declared zone AND (b) has `mtime` < 2h old —
+`age_h = (now() - mtime(f)) / 3600` (macOS: `stat -f %m <f>`; Linux: `stat -c %Y <f>`)
+— SKIP it: do not stage it, do not include it in any category below. List every
+skipped file in the `/commit` run output for the router to triage next cycle. A peer
+may be mid-edit; sweeping their in-flight uncommitted work into this run is exactly the
+failure this guard exists to prevent.
+
 | Category | Commit prefix | Examples |
 |----------|--------------|---------|
 | Agent files | `chore(agents)` | `.claude/agents/*.md` |
@@ -42,62 +59,44 @@ Group all modified/untracked files into logical categories. Skip `.DS_Store` —
 | Source code | `feat` / `fix` / `refactor` | `apps/`, `src/` |
 | Config / lock | `chore(config)` | `*.lock`, `*.json` config |
 
-## Step 2 — One commit per category
+## Step 2 — One mutex-bound commit per category
 
-For each non-empty category:
-1. `git add <explicit file paths — never git add -A or git add .>`
-2. Commit using HEREDOC, with the SAME explicit paths from step 1 as a pathspec on
-   the commit line itself — never bare, never a directory or `.` pathspec. A bare
-   commit absorbs whatever else is currently staged (e.g. a concurrent peer's
-   `git add`); a pathspec commit resolves atomically at commit time and ignores it
-   (FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-SKILLS):
+For each non-empty category, run ONE `commit-mutex:main` acquire → critical section →
+release cycle scoped to that category alone — never one claim spanning the whole
+multi-category run. `.claude/skills/commit-mutex/SKILL.md` sizes TTL=90s and its
+No-Heartbeat Rule for a single seconds-long critical section; holding the lock across
+several categories' worth of doc-scan + stage + commit + push routinely exceeds that
+budget and lets the lock silently expire mid-run.
+
+```
+→ skill: .claude/skills/commit-mutex/SKILL.md
+  own_paths: [<explicit paths staged in Step 1 for this category>]
+  intent:    "<category prefix>: <one-line summary>"
+```
+
+That skill is the SSOT for the full acquire/stage/verify/commit/push/release sequence
+(its Steps 1–4, including Step 3d-PUSH's bounded rebase-retry push guard) — do not
+duplicate that shell here. Fail-closed paths (C-2 MCP-unavailable, C-2b mechanism-broken,
+contention give-up after 6 backoff retries) all resolve to: skip this category's commit,
+move to the next category, work stays in the tree for next `/commit` run.
+
+Commit message HEREDOC (paths repeated on the commit line itself, per the skill's
+pathspec-scoped commit — never bare):
 
 ```bash
 git commit -m "$(cat <<'EOF'
 <prefix>: <concise summary of what changed and why>
 
-Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+Task: <TASK-SLUG>        # omit if no board task (see commit-convention.md § Exempt Categories)
+AC: <criterion 1> / <criterion 2>
 EOF
-)" -- <same explicit file paths staged in step 1>
+)" -- <same explicit file paths staged in Step 1>
 ```
 
-## Step 3 — Push to main
-
-Use the bounded rebase-retry guard (same semantics as `.claude/skills/commit-mutex/SKILL.md`
-Step 3d-PUSH, which is the SSOT — see it for full guard rationale and conflict semantics):
-
-```bash
-# Bounded rebase-retry push — MAX 2 total push attempts; abort on conflict
-git push origin main
-PUSH_EXIT=$?
-if [ $PUSH_EXIT -ne 0 ]; then
-  git pull --rebase origin main
-  REBASE_EXIT=$?
-  if [ $REBASE_EXIT -ne 0 ]; then
-    # Rebase conflict — abort cleanly; never auto-resolve
-    git rebase --abort 2>/dev/null || true
-    send_telegram(channel="bug",
-      "[<agent>] commit: push rebase CONFLICT — rebase aborted; commit local-only. \
-       Paths: <staged_paths>. Manual reconcile required.")
-    # Commit is preserved locally; EXIT push step
-  else
-    git push origin main
-    PUSH2_EXIT=$?
-    if [ $PUSH2_EXIT -ne 0 ]; then
-      send_telegram(channel="bug",
-        "[<agent>] commit: push retry FAILED after rebase; commit local-only. \
-         Paths: <staged_paths>.")
-    fi
-  fi
-fi
-```
-
-## Step 4 — Merge and clean branch (only if NOT on main)
-
-1. `git checkout main`
-2. `git merge <branch> --no-ff -m "merge(<branch>): finish"`
-3. `git push origin main`
-4. `git branch -d <branch>`
+Trailer set, type/scope vocabulary, and exemptions (notebook commits, no-board-task
+hygiene commits, etc.) are defined in `docs/policies/commit-convention.md` — that
+document is the SSOT. Never hardcode a co-author or model-name trailer here; it drifts
+out of sync with whatever model authored the change.
 
 ## Rules
 
@@ -107,4 +106,7 @@ fi
 - Never skip hooks (`--no-verify`)
 - Use HEREDOC for all commit messages
 - Prefer many focused commits over one large commit
+- Skip stranded peer-zone files younger than 2h (Step 1 guard) — never sweep another agent's in-flight work
+- One `commit-mutex:main` acquire/release per category commit (Step 2) — never span the whole run
 - Do NOT ask the user to run anything — execute autonomously
+- All work stays on `main` — there is no feature branch to merge or delete (no-branches invariant)
