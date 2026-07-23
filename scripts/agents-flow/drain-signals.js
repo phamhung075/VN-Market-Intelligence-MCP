@@ -17,6 +17,15 @@
 // processed/ location, in a dedicated orch-apply.sh-gated write (Zod schema + conservation + CAS —
 // same gate every other orch-state writer goes through). Test: scripts/agents-flow/drain-signals.test.js
 // "FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE" scenario (isolated harness, never touches the live orch-state.json).
+//
+// FIX-DRAINPRUNE-SKIP-LIVE-REFERENCED-PROCESSED-FILES (2026-07-23): the above fix only covers the
+// MOVE step — the separate 7-day PRUNE step (below) still deleted any aged-out processed/ file
+// unconditionally, including ones still referenced by a live task_board detail_ref or signal_queue
+// payload_ref, leaving the SAME class of Stage 1c dangling ref (recurred 2026-07-23, drain commit
+// 395e224ad). Fix: before pruning a candidate, check it against a referenced-basename set gathered
+// from ORCH_STATE (mirrors Stage 1c's own checkRefIntegrity() walk) and SKIP the delete if referenced.
+// Test: scripts/agents-flow/drain-signals.test.js "FIX-DRAINPRUNE-SKIP-LIVE-REFERENCED-PROCESSED-FILES"
+// scenario (isolated harness, never touches the live orch-state.json).
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
@@ -227,6 +236,59 @@ if (newFingerprints.length > 0) {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// FIX-DRAINPRUNE-SKIP-LIVE-REFERENCED-PROCESSED-FILES (2026-07-23) — referenced-file guard
+// ─────────────────────────────────────────────────────────────────────────────
+// The prune loop below previously deleted any aged-out processed/ file unconditionally — it
+// never checked whether the file was still referenced by a live task_board detail_ref or
+// signal_queue payload_ref. FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE (above) only repoints
+// payload_ref on MOVE; it does nothing for this separate PRUNE step. Result: an aged-out-but-
+// still-referenced file (e.g. an obsolete backlog row's detail_ref) got silently unlinkSync'd,
+// leaving a PERSISTENT Stage-1c dangling ref that hard-blocks EVERY orch-apply.sh write
+// fleet-wide until someone hand-repairs it (confirmed 2026-07-23 — drain commit 395e224ad
+// pruned docs/signals/processed/dev-team-20260716T112423Z-...json while backlog row
+// FIX-DEVTEAM-BOUNDED1-MAINTLANE-NEXTAGENT-GATE.detail_ref still pointed at it).
+// Fix: gather every live detail_ref/payload_ref from ORCH_STATE — SAME walk as Stage 1c's
+// checkRefIntegrity() in orchStateSchema.ts (flat task_board lanes + active_sprints/
+// closed_sprints .tasks[] + signal_queue.rows[]) — and SKIP deleting any candidate whose
+// basename is in that set, regardless of age. Does NOT restore already-pruned files and does
+// NOT repoint anything — additive read-only guard in front of the existing unlinkSync call.
+function gatherLiveReferencedBasenames() {
+  const referenced = new Set();
+  if (!fs.existsSync(ORCH_STATE)) return referenced; // no orch-state -> nothing to protect against (age-only prune, unchanged from pre-fix behavior)
+  let doc;
+  try {
+    doc = JSON.parse(fs.readFileSync(ORCH_STATE, 'utf8'));
+  } catch (e) {
+    console.error(`[drain-signals] WARN: prune referenced-file guard could not parse ${ORCH_STATE} (${e.message}) — proceeding with EMPTY referenced set (age-only prune, unchanged from pre-fix behavior)`);
+    return referenced;
+  }
+
+  const addRef = (ref) => {
+    if (typeof ref !== 'string' || !ref) return;
+    referenced.add(path.basename(ref.split('#')[0])); // strip #fragment, same convention as checkRefIntegrity()/repointPayloadRefs()
+  };
+
+  // Same lane set as Stage 1c's checkRefIntegrity() in orchStateSchema.ts — MUST stay in sync.
+  const FLAT_LANES = ['backlog', 'done', 'done_verified', 'in_progress', 'qa', 'ready', 'review', 'archive'];
+  const tb = doc.task_board || {};
+  for (const lane of FLAT_LANES) {
+    if (Array.isArray(tb[lane])) for (const t of tb[lane]) addRef(t && t.detail_ref);
+  }
+  for (const sprintArr of [tb.active_sprints, tb.closed_sprints]) {
+    if (!Array.isArray(sprintArr)) continue;
+    for (const sprint of sprintArr) {
+      for (const t of (sprint && sprint.tasks) || []) addRef(t && t.detail_ref);
+    }
+  }
+
+  for (const row of (doc.signal_queue && doc.signal_queue.rows) || []) addRef(row && row.payload_ref);
+
+  return referenced;
+}
+
+const liveReferencedBasenames = gatherLiveReferencedBasenames();
+
 let pruned = 0;
 for (const pf of fs.readdirSync(PROC).filter(f => f.endsWith('.json'))) {
   const ppath = path.join(PROC, pf);
@@ -239,7 +301,13 @@ for (const pf of fs.readdirSync(PROC).filter(f => f.endsWith('.json'))) {
     // shape as cutoffIso so the comparison stays a straight string compare. Scoped to this
     // file-plane prune ONLY — does NOT touch the DB-side epoch-seconds fix above.
     const pa = pj._processed?.processedAt ?? pj.processedAt ?? new Date(fs.statSync(ppath).mtimeMs).toISOString().replace(/\.\d+Z$/, 'Z');
-    if (pa && pa < cutoffIso) { fs.unlinkSync(ppath); pruned++; }
+    if (pa && pa < cutoffIso) {
+      if (liveReferencedBasenames.has(pf)) {
+        console.error(`[drain-signals] PRUNE SKIP (still referenced): ${pf} is >7d old but referenced by a live task_board.*[].detail_ref or signal_queue.rows[].payload_ref — leaving on disk`);
+        continue;
+      }
+      fs.unlinkSync(ppath); pruned++;
+    }
   } catch { /* leave unparseable files alone */ }
 }
 

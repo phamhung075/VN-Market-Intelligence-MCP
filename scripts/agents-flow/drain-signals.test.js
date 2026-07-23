@@ -499,6 +499,122 @@ function countDrainable(scriptPath) {
 }
 
 // ---------------------------------------------------------------------------
+// FIX-DRAINPRUNE-SKIP-LIVE-REFERENCED-PROCESSED-FILES — prune-time referenced-file guard.
+// Before this fix, the 7-day prune loop deleted any aged-out processed/ file unconditionally,
+// even when a live task_board.*[].detail_ref or signal_queue.rows[].payload_ref still pointed
+// at it — leaving a PERSISTENT Stage-1c dangling ref (confirmed live 2026-07-23, drain commit
+// 395e224ad, task FIX-DEVTEAM-BOUNDED1-MAINTLANE-NEXTAGENT-GATE). The guard is read-only
+// (fs.readFileSync + JSON.parse against ORCH_STATE) — no orch-apply/orch-validate chain needed
+// here, unlike the payload_ref-on-move harness above. Isolated tmp root only; the LIVE
+// docs/data/orch/orch-state.json is never read or written by any scenario below.
+// ---------------------------------------------------------------------------
+function makePruneRefHarness() {
+  const dir = makeHarness();
+  fs.mkdirSync(path.join(dir, 'docs/data/orch'), { recursive: true });
+  return dir;
+}
+
+function seedProcessedFile(procDir, name, ageDays) {
+  const processedAt = new Date(Date.now() - ageDays * 864e5).toISOString().replace(/\.\d+Z$/, 'Z');
+  fs.writeFileSync(path.join(procDir, name), JSON.stringify({ from: 'x', type: 'y', _processed: { processedAt } }));
+}
+
+// Case 1 — referenced (via backlog lane detail_ref) file is NOT pruned despite being >7d old.
+{
+  const h = makePruneRefHarness();
+  const sigDir = path.join(h, 'docs/signals');
+  const procDir = path.join(sigDir, 'processed');
+  fs.mkdirSync(procDir, { recursive: true });
+  const scriptPath = path.join(h, 'scripts/agents-flow/drain-signals.js');
+  const orchStatePath = path.join(h, 'docs/data/orch/orch-state.json');
+
+  seedProcessedFile(procDir, 'referenced-old.json', 10); // >7d old
+
+  fs.writeFileSync(orchStatePath, JSON.stringify({
+    head: { status: 'idle', active_task_id: null, next_agent: null },
+    task_board: {
+      backlog: [
+        { id: 'FIX-SOME-OBSOLETE-ROW', detail_ref: 'docs/signals/processed/referenced-old.json' },
+      ],
+    },
+    signal_queue: { rows: [] },
+  }, null, 2));
+
+  const run = spawnSync('node', [scriptPath], { encoding: 'utf8' });
+  assert('FIX-DRAINPRUNE referenced file (backlog detail_ref) survives >7d prune', fs.existsSync(path.join(procDir, 'referenced-old.json')), true);
+  assert('FIX-DRAINPRUNE referenced-file skip note logged to stderr', /PRUNE SKIP \(still referenced\): referenced-old\.json/.test(run.stderr), true);
+  cleanup(h);
+}
+
+// Case 2 — same age, referenced via signal_queue.rows[].payload_ref instead of detail_ref.
+{
+  const h = makePruneRefHarness();
+  const sigDir = path.join(h, 'docs/signals');
+  const procDir = path.join(sigDir, 'processed');
+  fs.mkdirSync(procDir, { recursive: true });
+  const scriptPath = path.join(h, 'scripts/agents-flow/drain-signals.js');
+  const orchStatePath = path.join(h, 'docs/data/orch/orch-state.json');
+
+  seedProcessedFile(procDir, 'referenced-via-payloadref.json', 10);
+
+  fs.writeFileSync(orchStatePath, JSON.stringify({
+    head: { status: 'idle', active_task_id: null, next_agent: null },
+    task_board: { backlog: [] },
+    signal_queue: { rows: [
+      { id: 'row-1', status: 'NEW', payload_ref: 'docs/signals/processed/referenced-via-payloadref.json' },
+    ] },
+  }, null, 2));
+
+  execFileSync('node', [scriptPath], { encoding: 'utf8' });
+  assert('FIX-DRAINPRUNE referenced file (signal_queue payload_ref) survives >7d prune', fs.existsSync(path.join(procDir, 'referenced-via-payloadref.json')), true);
+  cleanup(h);
+}
+
+// Case 3 — unreferenced >7d file IS still pruned (regression guard: the new check must not
+// disable pruning wholesale).
+{
+  const h = makePruneRefHarness();
+  const sigDir = path.join(h, 'docs/signals');
+  const procDir = path.join(sigDir, 'processed');
+  fs.mkdirSync(procDir, { recursive: true });
+  const scriptPath = path.join(h, 'scripts/agents-flow/drain-signals.js');
+  const orchStatePath = path.join(h, 'docs/data/orch/orch-state.json');
+
+  seedProcessedFile(procDir, 'unreferenced-old.json', 10);
+
+  fs.writeFileSync(orchStatePath, JSON.stringify({
+    head: { status: 'idle', active_task_id: null, next_agent: null },
+    task_board: {
+      backlog: [
+        { id: 'SOME-OTHER-ROW', detail_ref: 'docs/signals/processed/some-other-file.json' },
+      ],
+    },
+    signal_queue: { rows: [] },
+  }, null, 2));
+
+  execFileSync('node', [scriptPath], { encoding: 'utf8' });
+  assert('FIX-DRAINPRUNE unreferenced >7d file IS still pruned', fs.existsSync(path.join(procDir, 'unreferenced-old.json')), false);
+  cleanup(h);
+}
+
+// Case 4 — no orch-state.json present at all → guard degrades to age-only prune (pre-fix
+// behavior preserved when there is nothing to check references against).
+{
+  const h = makePruneRefHarness();
+  const sigDir = path.join(h, 'docs/signals');
+  const procDir = path.join(sigDir, 'processed');
+  fs.mkdirSync(procDir, { recursive: true });
+  const scriptPath = path.join(h, 'scripts/agents-flow/drain-signals.js');
+  // orch-state.json intentionally absent
+
+  seedProcessedFile(procDir, 'no-orchstate-old.json', 10);
+
+  execFileSync('node', [scriptPath], { encoding: 'utf8' });
+  assert('FIX-DRAINPRUNE no orch-state.json present → guard degrades to age-only prune', fs.existsSync(path.join(procDir, 'no-orchstate-old.json')), false);
+  cleanup(h);
+}
+
+// ---------------------------------------------------------------------------
 // Summary
 // ---------------------------------------------------------------------------
 const total = passed + failed;
