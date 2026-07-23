@@ -387,11 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-07-23T19:24:10Z",
-    "updated_by": "developer"
+    "status": "in_progress",
+    "active_task_id": "DS-DEGRADE-01-FIX",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of DS-DEGRADE-01-FIX — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-23T19:45:01Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6015,16 +6016,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#VPS-FRESH-02-FIX",
         "po_corroboration_20260723": "CORROBORATION (PO CONVERGE drain 2026-07-23T03:52Z, folds sys-20260723T023146-7e7f WARN 'VPS proxy health degraded 3/5 services unhealthy'). Live get_system_status @03:52Z: recurring 'VPS endpoint timeout (>5000ms)' on foreign-flow-job with graceful fallback ACTIVE (all-fallbacks-exhausted -> returns empty, no crash); tradingEconomics disabled/stopped (known). Known recurring VPS-proxy degradation class (also FIX-VPS-SSC-INSIDER-502, OPS-POLLNEWS-NIGHT-ZERO). NO new mint. Not escalated to ops (graceful degradation working; user-gated VPS lane).",
         "updated_at": "2026-07-23T03:53:28Z"
-      },
-      {
-        "id": "DS-DEGRADE-01-FIX",
-        "priority": "normal",
-        "size": "S",
-        "status": "BACKLOG",
-        "title": "Fix DS-DEGRADE-01: When muasamcong proxy returns empty (72h stale), does the system flag as stale rather than serve empty as fresh",
-        "type": "fix",
-        "zone": "dev-mcp-server",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#DS-DEGRADE-01-FIX"
       },
       {
         "id": "FIX-PREDICTION-SIGNALS-EMPTY",
@@ -14272,9 +14263,26 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-23T19:14:48Z",
+    "last_triaged_at": "2026-07-23T19:45:01Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "DS-DEGRADE-01-FIX",
+        "priority": "normal",
+        "size": "S",
+        "status": "IN_PROGRESS",
+        "title": "Fix DS-DEGRADE-01: When muasamcong proxy returns empty (72h stale), does the system flag as stale rather than serve empty as fresh",
+        "type": "fix",
+        "zone": "dev-mcp-server",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#DS-DEGRADE-01-FIX",
+        "promoted_at": "2026-07-23T19:45:01Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-23T19:45:01Z",
+        "claimed_at": "2026-07-23T19:45:01Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
