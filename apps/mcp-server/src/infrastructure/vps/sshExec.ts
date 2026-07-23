@@ -36,6 +36,15 @@ const DEFAULT_KEY_PATH = "/run/secrets/vps_ssh_key";
  * "never seen this host before" case is no longer a hard failure. Appropriate
  * here: VPS_HOST is a single, stable, operator-controlled Vinahost VPS (not a
  * public multi-tenant target where TOFU risk would be a concern).
+ *
+ * FIX-MCP-DOCKERFILE-ENTRYPOINT-KNOWNHOSTS-REGRESSION (2026-07-23): the
+ * entrypoint.sh known_hosts seeding this stopgap depended on was itself
+ * silently dropped by 6165aa3b4 and has just been restored (non-fatally —
+ * see entrypoint.sh header) — but restoration could not be live-verified
+ * from this environment (VPS unreachable from the dev sandbox). Do NOT flip
+ * back to `StrictHostKeyChecking=yes` until a live container run confirms
+ * known_hosts is actually seeded on boot against the real VPS. Stays
+ * `accept-new` until then.
  */
 export function buildSshArgs(command: string, target: string, keyPath: string): string[] {
   return [

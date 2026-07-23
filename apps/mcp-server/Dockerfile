@@ -83,6 +83,18 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
     CMD bun -e "fetch('http://localhost:3000/health').then(r=>r.ok?process.exit(0):process.exit(1)).catch(()=>process.exit(1))"
 
+# ── Entrypoint — seeds VPS host key into known_hosts at container startup ──
+# Runs ssh-keyscan against VPS_HOST before handing off to CMD. Non-fatal by
+# design (FIX-MCP-DOCKERFILE-ENTRYPOINT-KNOWNHOSTS-REGRESSION, 2026-07-23):
+# if ssh-keyscan fails or the VPS is unreachable, entrypoint.sh logs a WARN
+# and starts the server anyway — see entrypoint.sh header for the full
+# rationale. A VPS outage must never take down the entire MCP tool surface.
+# Restored here after 6165aa3b4 ("rebase Dockerfiles from Debian to Ubuntu")
+# silently dropped this whole block (task-1779c regression, no alarm raised).
+COPY apps/mcp-server/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]
+
 # ── Start ─────────────────────────────────────────────────────────────────
 ARG GIT_SHA=unknown
 LABEL vn.market.git_sha=$GIT_SHA
