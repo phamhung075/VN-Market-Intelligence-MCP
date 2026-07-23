@@ -387,11 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-07-23T17:59:24Z",
-    "updated_by": "dev-mcp-server (DS-OBS-01-FIX closeout)"
+    "status": "in_progress",
+    "active_task_id": "FIX-DRAINPRUNE-SKIP-LIVE-REFERENCED-PROCESSED-FILES",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-DRAINPRUNE-SKIP-LIVE-REFERENCED-PROCESSED-FILES — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-23T18:18:05Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -10893,23 +10894,6 @@
         "ba_completed_at": "2026-07-23T09:30:55Z"
       },
       {
-        "id": "FIX-DRAINPRUNE-SKIP-LIVE-REFERENCED-PROCESSED-FILES",
-        "type": "FIX",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "next_agent": "developer",
-        "owner": "po",
-        "created_by": "po",
-        "created_at": "2026-07-23T18:03:58Z",
-        "origin_signal_id": "dev-team-20260723T1518-drain-prune-detailref-dangle",
-        "title": "drain-signals.js prune must SKIP processed/ files referenced by ANY live detail_ref/payload_ref (not only repoint payload_ref) — a pruned-but-referenced file causes a Stage1c dangle that blocks ALL orch-apply writes fleet-wide",
-        "note": "ROOT: drain-signals.js 7d prune DELETED docs/signals/processed/dev-team-20260716T112423Z-autolaunch-safety-hold-uc-asl-p6-maintlane.json which backlog row FIX-DEVTEAM-BOUNDED1-MAINTLANE-NEXTAGENT-GATE .detail_ref pointed at -> orch-validate Stage1c dangling-ref hard-fail blocked EVERY orch-apply write until the dispatcher hand-nulled the mismatched ref (file recoverable at git 395e224ad~1). Current prune only repoints payload_ref; it does NOT consult detail_ref. FIX: before deleting any processed/ file, scan task_board[*].detail_ref AND signal_queue.rows[*].payload_ref for a live reference; SKIP deletion if referenced (recurs each referenced processed/ file ages past 7d). Recurring class (see MEMORY drain-prune Stage1c-persistent). AC: (1) prune leaves referenced files on disk; (2) regression test seeds a backlog row whose detail_ref points at a >7d processed file, runs prune, asserts file survives + no Stage1c dangle.",
-        "baseline_pass": true,
-        "updated_at": "2026-07-23T18:08:33Z"
-      },
-      {
         "id": "FIX-AUDITOR-TIER1-PROBE-ACKED-LAUNCHD-DEATH-SUPPRESSION",
         "type": "FIX",
         "status": "BACKLOG",
@@ -14240,9 +14224,32 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-23T17:20:59Z",
+    "last_triaged_at": "2026-07-23T18:18:05Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-DRAINPRUNE-SKIP-LIVE-REFERENCED-PROCESSED-FILES",
+        "type": "FIX",
+        "status": "IN_PROGRESS",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "next_agent": "developer",
+        "owner": "po",
+        "created_by": "po",
+        "created_at": "2026-07-23T18:03:58Z",
+        "origin_signal_id": "dev-team-20260723T1518-drain-prune-detailref-dangle",
+        "title": "drain-signals.js prune must SKIP processed/ files referenced by ANY live detail_ref/payload_ref (not only repoint payload_ref) — a pruned-but-referenced file causes a Stage1c dangle that blocks ALL orch-apply writes fleet-wide",
+        "note": "ROOT: drain-signals.js 7d prune DELETED docs/signals/processed/dev-team-20260716T112423Z-autolaunch-safety-hold-uc-asl-p6-maintlane.json which backlog row FIX-DEVTEAM-BOUNDED1-MAINTLANE-NEXTAGENT-GATE .detail_ref pointed at -> orch-validate Stage1c dangling-ref hard-fail blocked EVERY orch-apply write until the dispatcher hand-nulled the mismatched ref (file recoverable at git 395e224ad~1). Current prune only repoints payload_ref; it does NOT consult detail_ref. FIX: before deleting any processed/ file, scan task_board[*].detail_ref AND signal_queue.rows[*].payload_ref for a live reference; SKIP deletion if referenced (recurs each referenced processed/ file ages past 7d). Recurring class (see MEMORY drain-prune Stage1c-persistent). AC: (1) prune leaves referenced files on disk; (2) regression test seeds a backlog row whose detail_ref points at a >7d processed file, runs prune, asserts file survives + no Stage1c dangle.",
+        "baseline_pass": true,
+        "updated_at": "2026-07-23T18:18:06Z",
+        "promoted_at": "2026-07-23T18:18:05Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-23T18:18:05Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
