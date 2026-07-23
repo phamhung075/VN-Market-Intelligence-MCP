@@ -387,12 +387,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-DRAINPRUNE-SKIP-LIVE-REFERENCED-PROCESSED-FILES",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-DRAINPRUNE-SKIP-LIVE-REFERENCED-PROCESSED-FILES — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-23T18:18:05Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "updated_at": "2026-07-23T18:26:19Z",
+    "updated_by": "developer",
+    "active_task_id": null,
+    "next_agent": "router"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -14205,6 +14204,29 @@
         "completed_at": "2026-07-23T17:59:24Z",
         "completed_by": "dev-mcp-server",
         "status_note": "DS-OBS-01-FIX: REAL fix shipped (structurally identical audit-then-fix to sibling BCT-OBS-02-FIX). RAW-verified at source: escalateToCommander() (default escalation callback, fired on breach post cooldown/market-hours gate) only wrote an agent_signals row (urgent_news, toAgent=alert-commander) -- never called sendTelegramWork/sendTelegramBug. docs/agents/alert-commander/flow/stage-signals.md (live, 2026-07-12 finding) confirms alert-commander correctly SUPPRESSES these synthetic freshness-sla-monitor urgent_news signals every cycle as infra noise (never satisfies the MARKET firing gate) -- so the signal-bus escalation never reached a human-visible channel. The job's only sendTelegramWork call was an unconditional once-daily coverage snapshot, not breach-scoped. quality-checklist.json DS-OBS-01=PASS evidence (WORK-channel msg IDs 2743-2766) is the identical copy-pasted string found byte-for-byte across 4 unrelated checklist rows -- same self-report-confab false-positive class BCT-OBS-02-FIX already flagged this session, not corroborating. Fix: at the existing 60-min-cooldown-gated escalation site, runFreshnessSlaMonitor() now sends a direct alert -- CRITICAL breach (age > 1.5x threshold) -> BUG via new injectable sendBugFn (defaults sendTelegramBug), HIGH breach -> WORK via the pre-existing sendWorkFn (reused). Non-fatal on send failure; independent of existing escalation bookkeeping; signal-bus escalateToCommander path left unchanged. New test DS-OBS-01-FIX-sla-breach-work-bug-alert.test.ts 6/6 pass; 95/95 adjacent sibling freshness-SLA suites green; bun tsc --noEmit clean. Full suite A/B via git-stash on the one modified file: AFTER 14690 pass/40 skip/42 fail vs BEFORE 14684 pass/40 skip/42 fail -- diffed (fail) sets directly, only delta is one flaky news-polling timing pair swap (unrelated files); 235-telegram-send-merge.test.ts BUG-channel test failure present identically in both logs (pre-existing mock.module cross-file pollution, unrelated to this fix's new sendTelegramBug import). Tool count 184 / cronJobCount 88 unaffected (no new tool/cron, existing cron behavior extended in-place). QA note: verify the direct alert via source read (grep sendBugFn/sendWorkFn call site) or live Telegram WORK/BUG channel inspection at next real breach -- read_telegram_reports cannot confirm a WORK send (sendTelegramWork has zero DB persistence by design, same structural limitation noted in BCT-OBS-01-FIX/BCT-OBS-02-FIX); a BUG send IS DB-persisted (telegram_reports) and could in principle be cross-checked there if/when a live CRITICAL breach fires."
+      },
+      {
+        "id": "FIX-DRAINPRUNE-SKIP-LIVE-REFERENCED-PROCESSED-FILES",
+        "type": "FIX",
+        "status": "REVIEW",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "next_agent": "qa",
+        "owner": "po",
+        "created_by": "po",
+        "created_at": "2026-07-23T18:03:58Z",
+        "origin_signal_id": "dev-team-20260723T1518-drain-prune-detailref-dangle",
+        "title": "drain-signals.js prune must SKIP processed/ files referenced by ANY live detail_ref/payload_ref (not only repoint payload_ref) — a pruned-but-referenced file causes a Stage1c dangle that blocks ALL orch-apply writes fleet-wide",
+        "note": "ROOT: drain-signals.js 7d prune DELETED docs/signals/processed/dev-team-20260716T112423Z-autolaunch-safety-hold-uc-asl-p6-maintlane.json which backlog row FIX-DEVTEAM-BOUNDED1-MAINTLANE-NEXTAGENT-GATE .detail_ref pointed at -> orch-validate Stage1c dangling-ref hard-fail blocked EVERY orch-apply write until the dispatcher hand-nulled the mismatched ref (file recoverable at git 395e224ad~1). Current prune only repoints payload_ref; it does NOT consult detail_ref. FIX: before deleting any processed/ file, scan task_board[*].detail_ref AND signal_queue.rows[*].payload_ref for a live reference; SKIP deletion if referenced (recurs each referenced processed/ file ages past 7d). Recurring class (see MEMORY drain-prune Stage1c-persistent). AC: (1) prune leaves referenced files on disk; (2) regression test seeds a backlog row whose detail_ref points at a >7d processed file, runs prune, asserts file survives + no Stage1c dangle.",
+        "baseline_pass": true,
+        "updated_at": "2026-07-23T18:26:20Z",
+        "promoted_at": "2026-07-23T18:18:05Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-23T18:18:05Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "review_note": "[developer 2026-07-23T18:26:19Z] Fixed: prune loop now skips >7d processed/ files still referenced by a live task_board.*[].detail_ref or signal_queue.rows[].payload_ref (gatherLiveReferencedBasenames(), mirrors Stage 1c checkRefIntegrity walk). Spec doc drain-signals.md §0a-2 updated first, then script. 5 new tests (referenced-via-detail_ref survives, referenced-via-payload_ref survives, unreferenced still pruned, no-orch-state degrades gracefully) — 36/36 assertions pass, node scripts/agents-flow/drain-signals.test.js. Commit 56be7b77e32e7b24752347cfe2dae70150ca1387."
       }
     ],
     "qa": [],
@@ -14226,30 +14248,7 @@
     },
     "last_triaged_at": "2026-07-23T18:18:05Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-DRAINPRUNE-SKIP-LIVE-REFERENCED-PROCESSED-FILES",
-        "type": "FIX",
-        "status": "IN_PROGRESS",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "next_agent": "developer",
-        "owner": "po",
-        "created_by": "po",
-        "created_at": "2026-07-23T18:03:58Z",
-        "origin_signal_id": "dev-team-20260723T1518-drain-prune-detailref-dangle",
-        "title": "drain-signals.js prune must SKIP processed/ files referenced by ANY live detail_ref/payload_ref (not only repoint payload_ref) — a pruned-but-referenced file causes a Stage1c dangle that blocks ALL orch-apply writes fleet-wide",
-        "note": "ROOT: drain-signals.js 7d prune DELETED docs/signals/processed/dev-team-20260716T112423Z-autolaunch-safety-hold-uc-asl-p6-maintlane.json which backlog row FIX-DEVTEAM-BOUNDED1-MAINTLANE-NEXTAGENT-GATE .detail_ref pointed at -> orch-validate Stage1c dangling-ref hard-fail blocked EVERY orch-apply write until the dispatcher hand-nulled the mismatched ref (file recoverable at git 395e224ad~1). Current prune only repoints payload_ref; it does NOT consult detail_ref. FIX: before deleting any processed/ file, scan task_board[*].detail_ref AND signal_queue.rows[*].payload_ref for a live reference; SKIP deletion if referenced (recurs each referenced processed/ file ages past 7d). Recurring class (see MEMORY drain-prune Stage1c-persistent). AC: (1) prune leaves referenced files on disk; (2) regression test seeds a backlog row whose detail_ref points at a >7d processed file, runs prune, asserts file survives + no Stage1c dangle.",
-        "baseline_pass": true,
-        "updated_at": "2026-07-23T18:18:06Z",
-        "promoted_at": "2026-07-23T18:18:05Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-23T18:18:05Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
