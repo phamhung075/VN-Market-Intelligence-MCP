@@ -61,6 +61,17 @@ the WD-11 guard in `ARCH-CRON-watchdog.test.ts`) plus
 key/value on any future divergence — verified via a live injected-typo
 experiment.
 
+**WORK-channel observability (BCT-OBS-02-FIX, 2026-07-23):** `sscCheckerJob`
+(the 20:00 Asia/Ho_Chi_Minh `sscCheck` cron) never sent anything to the WORK
+Telegram channel — RAW-verified zero `sendTelegram*`/`telegram` references
+across the full git history of `sscCheckerJob.ts` and the `checkSscReports`
+use case it wraps. Fix: `runSscCheck()` now posts exactly one WORK-channel
+summary message per executed nightly cycle (VPS-only no-op skip / full run /
+unhandled error), via an injectable `sendWorkAlertFn` defaulting to
+`sendTelegramWork` — mirrors the `bctcOverdueCheckJob.ts` FR-OBS-01-FIX
+precedent. Concurrency-guard and T4 recovery-dedup early-returns stay silent
+(nothing new happened, no message needed).
+
 ## Intelligence Cycle Steps (15-min tick)
 
 | Step | What | Hours | Timeout |

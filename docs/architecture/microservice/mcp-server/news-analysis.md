@@ -43,6 +43,9 @@ visible, but the actual discovery+alert function is superseded by the
 queue-based VPS pipeline (`GET /api/bctc-fetch-queue` + `bctcQueueEnricherJob`
 + `POST /api/push-bctc-pdf`) and `signalDetector.ts`'s generic `report_new`
 signal. Set `ENABLE_LOCAL_BCTC_FETCH=true` only if running directly on the VPS.
+Every executed nightly cycle (no-op skip / full run / unhandled error) also
+posts one summary message to the WORK Telegram channel (BCT-OBS-02-FIX,
+2026-07-23) — previously silent regardless of outcome.
 
 ---
 
