@@ -1,20 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-23 | **Cycle:** FIX-AUDITOR-TIER1-PROBE-ACKED-LAUNCHD-DEATH-SUPPRESSION (ack-ledger suppression for already-tracked launchd deaths in the Tier-1 auditor probe)
-
-## Session 2026-07-23 — TE-T31 (TOKEN-ECONOMY-AUDIT, wave 4) — REVIEW
-
-**Task:** `docs/agents/tools/list/INDEX.md` (254L) was a stale hand-maintained THIRD tool-inventory SSOT — self-declared "157 tools / canonical tool inventory" while the real SSOT `tool-registry.json` held 184 (post-TE-T28), and its own header table disagreed with its own section headings (Financial 21 vs FINANCIAL 19 tools). tran-ngoc-bau's daily package pointed at it 3x.
-
-**Actions taken:** New `scripts/gen-tools-index.sh` (bash+jq, `--check` mode) renders INDEX.md straight from `tool-registry.json` `.groups[]` — total + every per-category count computed live, zero hardcoded. Regenerated INDEX.md: header now says "GENERATED — do not hand-edit; registry is the SSOT", drops the false canonical-inventory claim, echoes only the registry's own `.lastUpdated` (no wall-clock stamp) so idempotency holds. Canonical pointer added to `dev-standards.md` § Script Persistence.
-
-**Verification:** `comm` set-diff registry-tools vs INDEX-linked-tools = 0/0 both directions (184=184, 0 dupes); every linked tool has a matching `list/<tool>.md` stub (0 missing); per-section counts `diff`-verified against `jq -r '.groups[] | .name + " " + (.tools|length|tostring)'` = exact match; two consecutive script runs both printed NOOP (idempotency proven).
-
-**Board:** `task_board.in_progress[TE-T31]` → `review`, `next_agent=qa`, `branch:null`, `.head` synced to idle, via `orch-apply.sh` (dispatcher-owned write, not committed by this cycle).
-
-**Scope discipline:** Touched exactly the new script + INDEX.md (generated) + `dev-standards.md` pointer + journal/notebook. Did NOT touch `market-analyst.md` package (267L prose→table) — brief's merged corroborating item, separate batch finding, noted as follow-up in the journal only.
-
-Zone health: tools/list/INDEX.md is now a pure generated view of tool-registry.json — re-running the script after any future registry change mints the current delta, 3-way SSOT drift class closed for this surface | HEALTHY
+**Last updated:** 2026-07-23 | **Cycle:** FIX-EXECTIER-HEADSYNC-BRANCHNULL-REVIEW-IDLE (execute-tier.md head-sync guarantee for branch:null REVIEW flips)
 
 ## Session 2026-07-23 — TE-T33 (TOKEN-ECONOMY-AUDIT, wave 4) — REVIEW
 
@@ -43,3 +29,17 @@ Zone health: 3-dir unbounded-growth class capped for handoffs+sessions-gap+po-de
 **Scope discipline:** Touched exactly the new ack ledger + probe script's Check-6 function + `run_probe`'s detail-line assembly + paired test + `WORK.md`/journal/notebook. Did NOT touch the heartbeat-write/freshness code paths (constraint #2) — verified T31/T32 (tier-2/3 stale-heartbeat dead-branch tests) still green, proving zero collateral change there. Did NOT touch `cron-detect-loop/register.md` (ALL_GREEN-remap choice makes that unnecessary).
 
 Zone health: Tier-1 probe no longer churns a full system-auditor spawn on 2 known, already-owned launchd deaths; ack ledger is a live, hand-edited SSOT with an explicit staleness rule (remove entry at DONE_VERIFIED) so this can never become a permanent blind spot | HEALTHY
+
+## Session 2026-07-23 — FIX-EXECTIER-HEADSYNC-BRANCHNULL-REVIEW-IDLE — REVIEW
+
+**Task:** `execute-tier.md` § MUST — Status-Flip = Lane-Move clause (b) told every flip-executing agent to "sync head to idle, or the next legitimate active_task_id/next_agent" — ambiguous enough that a `branch:null` REVIEW self-closeout could legally mirror the task's own new status onto `.head.status`. `"review"` IS a valid `.head.status` enum value (orch-state-access.md §5) but matches neither dev-team/main.md's `in_progress` branch nor its `idle/done` fall-through, so BOUNDED-1→SLS→RLC→QA-Drain never runs and the row strands. Confirmed live, not hypothetical: `review[]=47`/`qa[]=0` today, and commit `38f081ec1` shows the exact incident (`UC-GCP-P1`, `.head.status` left `"review"`, dispatcher hand-reset required) — this board row's own `origin_signal_id`.
+
+**Actions taken:** Added explicit branch:null sub-rule to `execute-tier.md` § MUST (b): a `branch:null` REVIEW flip MUST set `head={status:idle, active_task_id:null, next_agent:router}`, never mirror the task's status; branch-carrying (worktree) tasks keep the prior latitude unchanged (scoped strictly, per task instruction — did not touch worktree-task semantics). No generic executable flip-helper exists to patch directly — grepped `scripts/`, confirmed 40+ one-off `*-review.jq` files and zero shared call site; every flip is hand-written jq per agent per tick, so the SSOT prose text itself (bound to pm/qa/developer/fixer via the existing "do NOT duplicate" pointer in `main.md`) is the only lever. Left `pm/flow/main.md`'s per-task "Task → Review" line untouched — architecture-brief audit already ruled duplicating this clause elsewhere violates the anti-copy-paste invariant.
+
+**Verification:** New `scripts/audits/execute-tier-branchnull-review-headidle-verify.sh` — synthetic before/after fixture (no live-file writes) replaying the `UC-GCP-P1` incident shape: OLD ambiguous pattern reproduces `head.status="review"`; NEW documented pattern yields `head={status:idle, active_task_id:null, next_agent:router}` + lane-move (a) satisfied (`in_progress[]=0, review[]=1`). Ran live: PASS, exit 0. Honest limitation stated in script header: this proves the pattern is sound, not that every future hand-written flip complies (no code-enforced call site to test directly).
+
+**Board:** `task_board.in_progress[FIX-EXECTIER-HEADSYNC-BRANCHNULL-REVIEW-IDLE]` → `review`, `next_agent=qa`, `branch:null`, `.head` synced to idle, via `orch-apply.sh` (separate commit — this fix's own closeout exercises the very guarantee it ships).
+
+**Scope discipline:** Touched exactly `execute-tier.md` § MUST (b) + the new regression-verifier script + journal/notebook. Did NOT touch `pm/flow/main.md`, `dev-team/main.md`'s Pipeline Resume gate, or any per-task one-off `*-review.jq` script (out of scope — SSOT text is the single lever, not each historical flip site).
+
+Zone health: branch:null REVIEW→head-idle guarantee now explicit in the one SSOT text every flip-executing agent reads; 47-row review-lane stall's root cause is now documented+guarded (drain itself is QA-Drain's job, tracked separately) | HEALTHY
