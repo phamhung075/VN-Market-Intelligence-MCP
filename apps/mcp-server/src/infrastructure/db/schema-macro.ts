@@ -346,4 +346,37 @@ export function initMacroTables(db: Database): void {
   db.exec(`CREATE INDEX IF NOT EXISTS idx_pharma_code ON pharma_events(stock_code)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_pharma_date ON pharma_events(created_at)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_pharma_type ON pharma_events(event_type)`);
+
+  // ── Public Contracts / Procurement (Task B / DS-DEGRADE-01-FIX) ──────────
+  // FIX-DS-DEGRADE-01-MUASAMCONG-TABLE-MISSING (2026-07-23): public_contracts
+  // was referenced by publicContractsStore.ts (writer) and
+  // publicInvestmentTools.ts's get_public_contracts stale-vs-empty SLA check
+  // (reader, added 2026-06-10 commit 815ccaedd — comment "DS-DEGRADE-01 FIX")
+  // since Task B / Task 251, but no schema file ever created the table in the
+  // live DB — only a test-local `makeTestDb()` in taskB-public-contracts-job.
+  // test.ts had it, masking the gap. Runtime probe against the real
+  // initDatabase() path confirmed "no such table: public_contracts": every
+  // store() write and every stale-SLA SELECT threw and was silently
+  // swallowed, so get_public_contracts ALWAYS fell through to the generic
+  // {unavailable:true} branch — the designed stale:true/degraded signal for
+  // an empty-upstream-while-stale-stored condition could never fire in
+  // production. This registers the table so that mechanism actually runs.
+  // Column set mirrors the pre-existing test fixture exactly (no drift).
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS public_contracts (
+      id             INTEGER PRIMARY KEY,
+      title          TEXT NOT NULL,
+      value          REAL NOT NULL DEFAULT 0,
+      category       TEXT NOT NULL DEFAULT 'other',
+      agency         TEXT NOT NULL DEFAULT '',
+      winner         TEXT NOT NULL DEFAULT '',
+      award_date     TEXT NOT NULL DEFAULT '',
+      related_stocks TEXT NOT NULL DEFAULT '[]',
+      fetched_at     TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+  // Dedup lookup key used by publicContractsStore.ts's existsStmt.
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_public_contracts_title_date ON public_contracts(title, award_date)`);
+  // Staleness-check ORDER BY key used by get_public_contracts (publicInvestmentTools.ts).
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_public_contracts_fetched_at ON public_contracts(fetched_at)`);
 }
