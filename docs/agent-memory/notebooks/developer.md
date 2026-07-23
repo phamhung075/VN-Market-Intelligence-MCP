@@ -1,6 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-23 | **Cycle:** UC-GCP-P3 (drain commit tracked-only -u sweep)
+**Last updated:** 2026-07-23 | **Cycle:** UC-GCP-P7 (/commit skill rescope — mutex-bound, main-only)
 
 ## Session 2026-07-23 — UC-GCP-P1 (BOUNDED-1 auto-pickup, cross-service/) — REVIEW
 
@@ -43,3 +43,17 @@ Zone health: dev-team post-cycle tick now has a converging owner for stranded ma
 **Scope discipline:** Implemented the verifier's RESCOPE text verbatim, no re-expansion. Left the CANONICAL script (`scripts/agents-flow/drain-signals.js`) untouched — the changed staging/invariant lives in the flow-doc commit step, not the script's fingerprint/move logic.
 
 Zone health: drain commit deletion-drop hole closed — tracked-only sweep captures deletions without risking peer untracked-inbox sweep; FP-safe invariant guards against false bug-telegrams on legitimate mid-commit arrivals | HEALTHY
+
+## Session 2026-07-23 — UC-GCP-P7 (dev-team BOUNDED-1 auto-pickup, cross-service/) — REVIEW
+
+**Task:** git-ci-publish-P7 RESCOPE — /commit skill (1) still has a Step 4 branch-merge/clean section contradicting the no-branches invariant, (2) takes the git index with no commit-mutex across a multi-category run, (3) has no stranded-peer-file guard, (4) hardcodes a stale `Co-Authored-By: Claude Sonnet 4.6` line, and (5) has a live duplicate surface (`.claude/commands/commit.md`) that still describes branch-merge behavior.
+
+**Actions taken:** Rewrote `.claude/skills/commit/SKILL.md`: deleted Step 4 "Merge and clean branch" + all "merge and clean branch" phrasing (frontmatter description, intro line); replaced the whole-run duplicated push shell with a per-category `commit-mutex:main` acquire→critical-section→release wrapper (`→ skill: .claude/skills/commit-mutex/SKILL.md`), pointing at that skill's Step 3d-PUSH as the bounded rebase-retry SSOT instead of re-pasting it; added a Step 1 stranded-peer-file age guard (skip files in another agent's declared zone per `commit-boundary/SKILL.md` RULE 2 with mtime < 2h, list skipped files for router triage); replaced the hardcoded `Co-Authored-By: Claude Sonnet 4.6` line with a pointer to `docs/policies/commit-convention.md` as trailer SSOT. Reduced `.claude/commands/commit.md` to a one-line pointer at the skill so `/commit` has exactly one definition.
+
+**Verification:** Grepped repo-wide for other live (non-archival) callers referencing the deleted Step 4 / "merge and clean branch" text or the skill's old line numbers — none found outside the architecture-brief audit record itself (historical, not a live pointer) and one PO-decision snapshot that only names the file, not its content. Confirmed the rescope's named `commit-convention-format.md`/`-exemptions.md` split no longer exists — UC-GCP-P1 already consolidated both into the live `docs/policies/commit-convention.md`; pointed there instead of the dead split names. Used `Write` (full-file rewrite, not multi-hunk `Edit`) for the SKILL.md change per the rescope's own risk note (Edit-tool hook strips multiline edits on this file class).
+
+**Board:** `task_board.in_progress[UC-GCP-P7]` → `review`, `next_agent=qa`, `.head` synced, via `orch-apply.sh`.
+
+**Scope discipline:** Touched exactly the 2 files named in the rescope (`.claude/skills/commit/SKILL.md`, `.claude/commands/commit.md`). No code/tests in scope (skill-doc-only FIX). Left the other live hardcoded `Co-Authored-By: Claude Opus 4.6` occurrence in `docs/references/bundles/bundle-developer.md` untouched — outside this task's named file scope.
+
+Zone health: `/commit` now has one definition, no branch-merge dead code, per-category mutex scoping matches commit-mutex's own TTL=90s sizing, stranded-peer-file guard closes the dirty-board-capture class, no hardcoded model-name trailer | HEALTHY

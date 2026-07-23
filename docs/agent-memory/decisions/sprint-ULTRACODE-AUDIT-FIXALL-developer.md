@@ -360,3 +360,22 @@ command, exact invariant grep chain, exact RULE-1 cross-ref wording) — no desi
 choice left open besides matching it exactly.
 **why-change:** No change from plan. Dropped the one-shot backfill per explicit
 instruction — already landed in df0b58bd9 (2026-07-12).
+
+### STEP developer-S22 · developer · 2026-07-23T07:54:53Z
+**task-id:** UC-GCP-P7
+**what-done:** Rewrote `.claude/skills/commit/SKILL.md` (deleted Step 4 merge/branch-
+clean; per-category `commit-mutex:main` acquire/critical-section/release replacing the
+whole-run duplicate push shell, pointed at commit-mutex Step 3d-PUSH as SSOT; added
+Step 1 stranded-peer-file age guard citing commit-boundary RULE 2 zone table + mtime<2h;
+replaced hardcoded `Co-Authored-By: Claude Sonnet 4.6` with a pointer to
+commit-convention.md); reduced `.claude/commands/commit.md` to a one-line pointer.
+**what-considered:**
+- Rescope note names `commit-convention-format.md`/`-exemptions.md` (pre-consolidation
+  split); UC-GCP-P1 already folded both into single `docs/policies/commit-convention.md`
+  — pointed at the live consolidated file, not the dead split names.
+- Used Write (not multi-hunk Edit) for the SKILL.md rewrite per the rescope's own risk
+  note (Edit-tool hook strips multiline edits on this file class).
+**why-decision:** Followed the verifier-adjudicated Rescope text verbatim (5 numbered
+changes); per-category mutex scoping matches commit-mutex's own No-Heartbeat Rule
+sizing (TTL=90s, seconds-long critical section only).
+**why-change:** No change from plan.
