@@ -1,22 +1,26 @@
 # PO Notebook
 
-_Last: 2026-07-23T03:53Z (CONVERGE drain: A-30 mcp-server MemPerc FP — augmented existing converge row + routed to architect, no duplicate mint)_
+_Last: 2026-07-23T04:22Z (focused converge drain: advanced FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE architect→agent-father; design hop DONE, implementation authorized under supervision)_
 
-## Tick 2026-07-23T03:47–03:53Z — the convergence failure was DORMANCY, not absence-of-mint
+## Tick 2026-07-23T04:21–04:22Z — advance the stalled A-30 converge row (design→implement hop)
 
-**Directive:** router CONVERGE — A-30 mcp-server MemPerc FP worsened (WARN 91.25-91.33% 03:11-12Z → CRITICAL 92.50% + Telegram 03:42Z); "mint the fix, don't note-only a 3rd time."
+**Directive:** router focused — one stalled converge item. `FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE` sat stuck next_agent=architect though agents-architect DESIGN hop was COMPLETE + committed @82a8367ff. Silent-stall risk.
 
-**Prior-art check (decisive):** `FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE` was ALREADY minted 07-21T14:23Z (owner=architect, plan_only+supervised, BACKLOG). The memory body still reads "no mint" but the BOARD is ground-truth — the row exists. A 2nd row into a 447-deep backlog IS the churn the directive fights. So I converged by **routing, not re-minting.**
+**Verified ground-truth (read-only):**
+- Brief on disk: docs/architecture-briefs/2026-07-23-auditor-a30-reclamation-gate-a21-windowed-restart.md (17.8KB); its own RETURN says NEXT: agent-father.
+- Detection-layer ONLY: probe.sh + flow/tier1-probe.md. Reuses UNMODIFIED scripts/audits/verify-a30-mcp-memory-reclamation.sh (6-probe/65s + VmHWM>VmRSS veto). A-21 → windowed crash-only cron_job_runs query. NO app code, NO deploy.
+- Board idiom confirms in-place advance (UC-ASL-P6 already BACKLOG next=agent-father supervised=true) → no lane move (avoids conservation/dup footguns).
 
-**Actions (2 orch-apply writes, conservation intact 624/110):**
-1. Augmented the converge row: +2 scope items (WARN→CRITICAL escalation-GATE on genuine tripwire only, VmHWM>VmRSS reclamation VETOes escalation, raise WARN thr ~95%; dedup-ledger must NOT auto-escalate deduped-benign to CRITICAL+Telegram, E-3 append UNCHANGED), recurring 3→4, `po_escalation_20260723`, `commissioned_at`, `next_agent=architect`.
-2. Folded 94.98% high-water (VmRSS 90.4% of 3GiB, VmHWM>VmRSS=reclaim already happened, health 200/2.35ms, OOMKilled=false, RC=0) into `FIX-MCP-MEMORY-CODE-LEAK` corroboration. NO ops route, NO restart (user-gated).
-3. Folded the 2 Tier-2 data_stale rows to their FP homes (RAW-verified via get_system_status): bctc 62h = documented B-05 phantom-CRITICAL (quarterly source, breakers OK) → FIX-AUDITOR-B05-BCTC-FRESHNESS-LAYER-SPLIT; VPS 3/5 unhealthy = known degradation, graceful fallback active → VPS-FRESH-02-FIX.
-4. ACKed all 5 signal_queue rows NEW→READ (consumed by this triage). 0 NEW to=po remain.
+**Decision (1 orch-apply write, conservation 623/105 intact):**
+- next_agent + owner architect→agent-father.
+- plan_only true→false (implementation AUTHORIZED). supervised stays true (blocks BOUNDED-1 idle pickup; router dispatches agent-father explicitly this cycle).
+- PROCEED NOW not scheduled — recurring_bug_count=4; SOFT DEADLINE = ship before next mem-refill past 85% (mcp-server just restarted ~27%, A-30 dormant hours out) to stop the 5th FP recurrence.
+- +design_brief_ref, +po_advance_20260723. NO re-mint (augmented in place). E-3 append-always contract PRESERVED (brief item 3 = structural, benign never reaches emit-audit-signal.sh).
+
+**Push:** committed po.md local-only (mutex). Did NOT commit orch-state.json — live hot file carries peer in-flight churn (UC-MDH-P3 evict, session_handoff) I don't own; drain/cold-evict layer commits it. agent-father reads the LIVE working-tree file + local brief — push not required. 82a8367ff stays local (router norm: don't push peer/cron commits).
 
 ## Carry-over
-- **A-30 converge is COMMISSIONED, next=architect** (design predicate+dedup+CRITICAL-gate brief → agent-father implements). Do NOT re-mint / re-fold; on any further in-band A-30 re-emit → mark triaged, corroborate to the leak row, no new work. Only a GENUINE tripwire (OOMKilled / >97%-sustained-no-reclaim multi-probe / total :3000 unresponsiveness, cf the 07-22 real 99.81% trip) breaks this.
-- **Router mental-model fix:** the memory feedback body says "no mint" — stale; the converge row EXISTS since 07-21. The lever is architect pickup, not another mint.
-- **UC-CDC-P5 still correctly held** — auto-unblocks when UC-SDF-P6 + ARCH-SESSION-CRON-PLANE-LIVENESS-WATCHDOG both DONE_VERIFIED. Do NOT re-flag.
-- **VPS still user-gated** (restart); every further sbv/prices/foreign-flow/VPS stale = same incident, mark triaged, do NOT mint.
-- Out-of-scope observation for next auditor cycle: "Giá cổ phiếu" 48.7h stale during market-open (HOSE staleness itself fresh 0.0h — different table); not in my drain scope, flag if it persists.
+- **A-30 converge now IMPLEMENTING, next=agent-father** (reads committed brief @82a8367ff; swept signal file NOT required). Any further in-band A-30 re-emit before it ships → mark triaged, corroborate to FIX-MCP-MEMORY-CODE-LEAK, NO new work. Only a GENUINE tripwire (OOMKilled / >97%-sustained-no-reclaim multi-probe / total :3000 down) breaks this.
+- **Still open on the row for a later pass** (out of this brief's scope): A-12/A-04/A-13 debounce (row scope item 2). E-3 collapse-to-single-row = separate FIX-SIGNALQUEUE-DUP-ID-GUARD.
+- **VPS user-gated** (restart); every further VPS/sbv/prices stale = same incident, mark triaged, do NOT mint.
+- **UC-CDC-P5** still correctly held; auto-unblocks on UC-SDF-P6 + ARCH-SESSION-CRON-PLANE-LIVENESS-WATCHDOG DONE_VERIFIED. Do NOT re-flag.
