@@ -1,0 +1,15 @@
+{
+  "_comment": "ACK LEDGER for scripts/agents-flow/auditor-tier1-probe.sh _check_launchd_agents (FIX-AUDITOR-TIER1-PROBE-ACKED-LAUNCHD-DEATH-SUPPRESSION, 2026-07-23). A listed `label` whose launchd check currently fails (not-loaded OR non-zero exit status) is reported as acknowledged-degraded instead of a fresh failure: if every unhealthy launchd label found this run is in this list, the probe still returns ALL_GREEN (with the acknowledged labels named in `detail` for transparency) so the Tier-1 cron does not re-spawn system-auditor every ~30min tick re-confirming a signature that already has an open backlog fix-task. A NEW/unacknowledged failure (label absent from this list) always still fails the check, even alongside acked ones — acknowledgment never masks a fresh signature. STALENESS RULE: remove an entry once its `tracked_by` task reaches DONE_VERIFIED — a stale entry left here after the underlying fix ships would silently re-suppress a REAL regression forever. Read-only from the probe's point of view; edited by hand (PO/developer) when a launchd death gets triaged into a tracked backlog row, or when that row closes.",
+  "acked": [
+    {
+      "label": "com.vn-market.docker-events",
+      "tracked_by": "FIX-LAUNCHD-DOCKER-EVENTS-EXIT1-CRASHLOOP",
+      "acked_at": "2026-07-23T18:51:09Z"
+    },
+    {
+      "label": "com.vn-market.fleet-push",
+      "tracked_by": "FIX-FLEET-PUSH-LAUNCHD-EXCONFIG-SILENT-DEAD",
+      "acked_at": "2026-07-23T18:51:09Z"
+    }
+  ]
+}

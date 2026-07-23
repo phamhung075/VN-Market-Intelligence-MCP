@@ -69,6 +69,10 @@
 #   SYSTEM_MAP_PATH     — system-map.json path (default: repo docs/data/system-map.json)
 #   HEARTBEAT_FILE_PATH — heartbeat output path (default: repo docs/data/auditor-tier1-last-healthy.json)
 #   LAUNCHD_DIR_PATH    — directory of *.plist files to require-loaded (default: repo launchd/)
+#   LAUNCHD_ACK_PATH    — acknowledged-launchd-death ledger (default: repo
+#                         docs/data/auditor-launchd-ack.json) — see Check 6 /
+#                         _check_launchd_agents() header comment below
+#                         (FIX-AUDITOR-TIER1-PROBE-ACKED-LAUNCHD-DEATH-SUPPRESSION)
 #
 # HARD CONSTRAINT: every probe below is READ-ONLY (docker ps/stats, curl GET,
 # df, launchctl list, jq). This script NEVER runs docker restart/stop/rm/
@@ -129,6 +133,7 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 SYSTEM_MAP="${SYSTEM_MAP_PATH:-$REPO_ROOT/docs/data/system-map.json}"
 HEARTBEAT_FILE="${HEARTBEAT_FILE_PATH:-$REPO_ROOT/docs/data/auditor-tier1-last-healthy.json}"
 LAUNCHD_DIR="${LAUNCHD_DIR_PATH:-$REPO_ROOT/launchd}"
+LAUNCHD_ACK="${LAUNCHD_ACK_PATH:-$REPO_ROOT/docs/data/auditor-launchd-ack.json}"
 WARN_PCT=85
 
 _now_iso() { date -u +"%Y-%m-%dT%H:%M:%SZ"; }
@@ -246,9 +251,27 @@ _check_mem_creep() {
 # named in the detail line, same as the pre-existing not-loaded failure
 # shape. The obsolete-label allow-list below is untouched — those labels
 # are skipped before either presence or status is evaluated.
+#
+# FIX-AUDITOR-TIER1-PROBE-ACKED-LAUNCHD-DEATH-SUPPRESSION (2026-07-23): the
+# check above made every launchd death visible, which surfaced a NEW problem
+# — two already-tracked, already-backlogged deaths (com.vn-market.docker-
+# events exit-1, com.vn-market.fleet-push exit-78) now fail EVERY tick,
+# fail-opening the Tier-1 cron's passive-health guard into spawning a full
+# system-auditor subagent ~48x/day that only ever re-confirms the same known
+# signature (pure churn, zero new signal). Fix: read the ACK LEDGER
+# ($LAUNCHD_ACK, docs/data/auditor-launchd-ack.json) — labels listed there
+# are reported as "acknowledged" rather than "bad". If EVERY unhealthy label
+# this pass finds is acknowledged, the check still PASSes (rc=0, detail
+# names the acked labels for transparency via the `acked` output line —
+# see run_probe()'s launchd_note handling). A label NOT in the ledger still
+# fails the check even when acked labels are ALSO present (mixed case never
+# suppresses) — acknowledgment only ever silences a signature the ledger
+# explicitly names, never a fresh one.
 _check_launchd_agents() {
-  local dir="$LAUNCHD_DIR" plist label lc_out bad="" match_line status
+  local dir="$LAUNCHD_DIR" plist label lc_out bad="" acked="" match_line status
   local obsolete_labels="com.vn-market.socat-bridge"
+  local ack_labels=""
+  [ -f "$LAUNCHD_ACK" ] && ack_labels=$(jq -r '.acked[]?.label // empty' "$LAUNCHD_ACK" 2>/dev/null)
   if [ ! -d "$dir" ]; then
     echo "launchd source dir not found: $dir"
     return 1
@@ -268,19 +291,44 @@ _check_launchd_agents() {
     esac
     match_line=$(printf '%s\n' "$lc_out" | awk -F'\t' -v want="$label" '$3 == want {print; exit}')
     if [ -z "$match_line" ]; then
-      bad="${bad}${label}(not-loaded) "
+      if _launchd_label_acked "$label" "$ack_labels"; then
+        acked="${acked}${label}(not-loaded) "
+      else
+        bad="${bad}${label}(not-loaded) "
+      fi
       continue
     fi
     status=$(printf '%s' "$match_line" | awk -F'\t' '{print $2}')
     if [ "$status" != "0" ]; then
-      bad="${bad}${label}(exit-status:${status}) "
+      if _launchd_label_acked "$label" "$ack_labels"; then
+        acked="${acked}${label}(exit-status:${status}) "
+      else
+        bad="${bad}${label}(exit-status:${status}) "
+      fi
     fi
   done
   if [ -n "$bad" ]; then
-    echo "launchd not loaded/unhealthy: $bad"
+    echo "launchd not loaded/unhealthy: ${bad}${acked:+(also acknowledged-degraded, tracked: $acked)}"
     return 1
   fi
+  if [ -n "$acked" ]; then
+    echo "acknowledged-degraded (suppressed — open backlog fix-task tracks it): $acked"
+    return 0
+  fi
   return 0
+}
+
+# Exact-match membership test for a label against a newline-separated list
+# (jq -r '.acked[].label' output) — never substring, so a label like
+# "com.vn-market.fleet-push-v2" could not accidentally match an ack entry
+# for "com.vn-market.fleet-push".
+_launchd_label_acked() {
+  local label="$1" list="$2" l
+  [ -z "$list" ] && return 1
+  while IFS= read -r l; do
+    [ "$l" = "$label" ] && return 0
+  done <<< "$list"
+  return 1
 }
 
 # ── Heartbeat write — atomic tmp-file + mv rename (R10) ───────────────────────
@@ -314,6 +362,7 @@ run_probe() {
   local suppress_heartbeat="${1:-}"
   local prev_healthy="" out rc failures="" checks_json ts
   local st_docker="PASS" st_h3000="PASS" st_h3001="PASS" st_disk="PASS" st_mem="PASS" st_launchd="PASS"
+  local launchd_note=""
 
   [ -f "$HEARTBEAT_FILE" ] && prev_healthy=$(jq -r '.last_healthy_at // empty' "$HEARTBEAT_FILE" 2>/dev/null)
 
@@ -333,7 +382,16 @@ run_probe() {
   [ $rc -ne 0 ] && { st_mem="FAIL"; failures="${failures}mem_creep: ${out}; "; }
 
   out=$(_check_launchd_agents 2>&1); rc=$?
-  [ $rc -ne 0 ] && { st_launchd="FAIL"; failures="${failures}launchd_agents: ${out}; "; }
+  if [ $rc -ne 0 ]; then
+    st_launchd="FAIL"; failures="${failures}launchd_agents: ${out}; "
+  elif [ -n "$out" ]; then
+    # FIX-AUDITOR-TIER1-PROBE-ACKED-LAUNCHD-DEATH-SUPPRESSION: check PASSED
+    # (rc=0) but has something to say — an acknowledged-degraded note. Keep
+    # st_launchd="PASS" (checks_json stays the pre-existing PASS/FAIL enum,
+    # no schema drift) and surface the note in the ALL_GREEN detail line
+    # below for transparency instead — "ALL_GREEN verdict, honest detail".
+    launchd_note="$out"
+  fi
 
   checks_json=$(jq -n --arg d "$st_docker" --arg h1 "$st_h3000" --arg h2 "$st_h3001" --arg dk "$st_disk" --arg mc "$st_mem" --arg ld "$st_launchd" \
     '{docker_ps:$d, health_3000:$h1, health_3001:$h2, disk:$dk, mem_creep:$mc, launchd_agents:$ld}')
@@ -349,8 +407,10 @@ run_probe() {
         return 1
       fi
     fi
+    local green_detail="all 6 checks passed (docker_ps, health_3000, health_3001, disk, mem_creep, launchd_agents)"
+    [ -n "$launchd_note" ] && green_detail="${green_detail} — ${launchd_note}"
     jq -n --arg v "ALL_GREEN" \
-      --arg d "all 6 checks passed (docker_ps, health_3000, health_3001, disk, mem_creep, launchd_agents)" \
+      --arg d "$green_detail" \
       --arg lh "$ts" \
       '{verdict:$v, detail:$d, last_healthy_at:$lh}'
     return 0

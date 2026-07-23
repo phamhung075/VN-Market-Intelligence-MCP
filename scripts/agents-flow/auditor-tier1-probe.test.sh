@@ -71,6 +71,18 @@ LAUNCHD_EMPTY_DIR="$TMPDIR_TEST/launchd-empty"
 mkdir -p "$LAUNCHD_EMPTY_DIR"
 export LAUNCHD_DIR_PATH="$LAUNCHD_EMPTY_DIR"
 
+# Default LAUNCHD_ACK_PATH → a path that deliberately does NOT exist. The
+# real repo now ships docs/data/auditor-launchd-ack.json (with live
+# docker-events/fleet-push entries) — without this override every T1-T35
+# case below would silently pick that file up via the script's own
+# LAUNCHD_ACK_PATH:-default fallback and could flip a pre-existing FAILURE
+# assertion to ALL_GREEN by coincidence. Pointing at a nonexistent path
+# keeps `ack_labels` empty for every case below (byte-identical to
+# pre-FIX-AUDITOR-TIER1-PROBE-ACKED-LAUNCHD-DEATH-SUPPRESSION behavior); the
+# new ack-ledger-specific tests (T36+) override $LAUNCHD_ACK per-case, same
+# pattern as $LAUNCHD_DIR.
+export LAUNCHD_ACK_PATH="$TMPDIR_TEST/no-such-ack-ledger.json"
+
 # ── Source the script under test (guard prevents auto-exec: $0 != BASH_SOURCE) ──
 # shellcheck source=./auditor-tier1-probe.sh
 source "$PROBE_SH"
@@ -725,6 +737,141 @@ check "T32 tier3 ALL_GREEN checks + NO prior heartbeat -> verdict SPAWN" "$([ "$
 check "T32 tier3 ALL_GREEN checks + NO prior heartbeat -> exit=1" "$([ "$RC_T32" -eq 1 ] && echo true || echo false)"
 check "T32 tier3 ALL_GREEN checks + NO prior heartbeat -> last_healthy_at == \"never\"" "$([ "$(printf '%s' "$OUT_T32" | jq -r '.last_healthy_at')" = "never" ] && echo true || echo false)"
 check "T32 tier3 ALL_GREEN checks + NO prior heartbeat -> does NOT create the fixture file" "$([ ! -f "$NEVER_TIER3" ] && echo true || echo false)"
+
+# ══════════════════════════════════════════════════════════════════════════════
+# FIX-AUDITOR-TIER1-PROBE-ACKED-LAUNCHD-DEATH-SUPPRESSION — ACK LEDGER
+# suppression coverage. Reuses the STUB_LAUNCHCTL="ok" scenario (already
+# restored to its standard, STUB_LAUNCHCTL-driven definition right after
+# T34) that reports the exact live incident this fix closes:
+# com.vn-market.docker-events exit-1 + com.vn-market.fleet-push exit-78.
+# ══════════════════════════════════════════════════════════════════════════════
+
+FIXTURE_LAUNCHD_DIR_ACK_BOTH="$TMPDIR_TEST/launchd-fixture-ack-both"
+mkdir -p "$FIXTURE_LAUNCHD_DIR_ACK_BOTH"
+cat > "$FIXTURE_LAUNCHD_DIR_ACK_BOTH/com.vn-market.docker-events.plist" <<'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.vn-market.docker-events</string>
+  <key>ProgramArguments</key>
+  <array><string>/bin/bash</string></array>
+</dict>
+</plist>
+EOF
+cp "$FIXTURE_LAUNCHD_DIR_3/com.vn-market.fleet-push.plist" "$FIXTURE_LAUNCHD_DIR_ACK_BOTH/"
+
+FIXTURE_LAUNCHD_DIR_ACK_DOCKEREVENTS_ONLY="$TMPDIR_TEST/launchd-fixture-ack-dockerevents-only"
+mkdir -p "$FIXTURE_LAUNCHD_DIR_ACK_DOCKEREVENTS_ONLY"
+cp "$FIXTURE_LAUNCHD_DIR_ACK_BOTH/com.vn-market.docker-events.plist" "$FIXTURE_LAUNCHD_DIR_ACK_DOCKEREVENTS_ONLY/"
+
+# Ledger fixtures — same {acked:[{label,tracked_by,acked_at}]} shape as the
+# real docs/data/auditor-launchd-ack.json this fix ships.
+ACK_FIXTURE_BOTH="$TMPDIR_TEST/ack-ledger-both.json"
+jq -n '{acked:[
+  {label:"com.vn-market.docker-events", tracked_by:"FIX-LAUNCHD-DOCKER-EVENTS-EXIT1-CRASHLOOP", acked_at:"2026-07-23T18:51:09Z"},
+  {label:"com.vn-market.fleet-push", tracked_by:"FIX-FLEET-PUSH-LAUNCHD-EXCONFIG-SILENT-DEAD", acked_at:"2026-07-23T18:51:09Z"}
+]}' > "$ACK_FIXTURE_BOTH"
+
+ACK_FIXTURE_FLEETPUSH_ONLY="$TMPDIR_TEST/ack-ledger-fleetpush-only.json"
+jq -n '{acked:[
+  {label:"com.vn-market.fleet-push", tracked_by:"FIX-FLEET-PUSH-LAUNCHD-EXCONFIG-SILENT-DEAD", acked_at:"2026-07-23T18:51:09Z"}
+]}' > "$ACK_FIXTURE_FLEETPUSH_ONLY"
+
+ACK_FIXTURE_UNRELATED="$TMPDIR_TEST/ack-ledger-unrelated.json"
+jq -n '{acked:[
+  {label:"com.vn-market.some-other-agent", tracked_by:"FIX-SOME-OTHER-AGENT-UNRELATED", acked_at:"2026-07-23T18:51:09Z"}
+]}' > "$ACK_FIXTURE_UNRELATED"
+
+# ── T36: acknowledged-ONLY launchd failures (both docker-events exit-1 and
+# fleet-push exit-78 are in the ack ledger) -> verdict stays ALL_GREEN, exit
+# 0, no auditor spawn eligible, detail names both acknowledged labels for
+# transparency, and the heartbeat valve behaves exactly like any other
+# ALL_GREEN pass (still writes/refreshes — passive-health freshness gate is
+# untouched by this fix, only what counts as "green" changed) ─────────────
+run_case
+LAUNCHD_DIR="$FIXTURE_LAUNCHD_DIR_ACK_BOTH"
+STUB_LAUNCHCTL="ok"
+LAUNCHD_ACK="$ACK_FIXTURE_BOTH"
+OUT=$(run_probe); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+DETAIL=$(printf '%s' "$OUT" | jq -r '.detail')
+check "T36 acked-only launchd failures -> verdict ALL_GREEN" "$([ "$VERDICT" = "ALL_GREEN" ] && echo true || echo false)"
+check "T36 acked-only launchd failures -> exit=0" "$([ "$RC" -eq 0 ] && echo true || echo false)"
+check "T36 acked-only -> detail names docker-events (transparency)" "$([[ "$DETAIL" == *"com.vn-market.docker-events"* ]] && echo true || echo false)"
+check "T36 acked-only -> detail names fleet-push (transparency)" "$([[ "$DETAIL" == *"com.vn-market.fleet-push"* ]] && echo true || echo false)"
+check "T36 acked-only -> writes heartbeat file (passive-health valve unaffected)" "$([ -f "$HEARTBEAT_FILE_PATH" ] && echo true || echo false)"
+check "T36 acked-only -> heartbeat checks.launchd_agents == PASS (enum schema unchanged)" "$([ "$(jq -r '.checks.launchd_agents' "$HEARTBEAT_FILE_PATH")" = "PASS" ] && echo true || echo false)"
+check "T36 acked-only -> output is still exactly {verdict,detail,last_healthy_at} (no schema drift)" "$([ "$(printf '%s' "$OUT" | jq -r 'keys | sort | join(",")')" = "detail,last_healthy_at,verdict" ] && echo true || echo false)"
+
+# ── T37: MIXED acked + new unacknowledged failure (fleet-push acked,
+# docker-events NOT acked) -> verdict FAILURE, never suppress a genuinely
+# new signature just because a sibling failure is acked ──────────────────
+run_case
+LAUNCHD_DIR="$FIXTURE_LAUNCHD_DIR_ACK_BOTH"
+STUB_LAUNCHCTL="ok"
+LAUNCHD_ACK="$ACK_FIXTURE_FLEETPUSH_ONLY"
+OUT=$(run_probe); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+DETAIL=$(printf '%s' "$OUT" | jq -r '.detail')
+check "T37 mixed acked+new -> verdict FAILURE" "$([ "$VERDICT" = "FAILURE" ] && echo true || echo false)"
+check "T37 mixed acked+new -> exit=1" "$([ "$RC" -eq 1 ] && echo true || echo false)"
+check "T37 mixed acked+new -> detail mentions launchd_agents" "$([[ "$DETAIL" == *"launchd_agents"* ]] && echo true || echo false)"
+check "T37 mixed acked+new -> detail names the UNACKED docker-events failure" "$([[ "$DETAIL" == *"com.vn-market.docker-events(exit-status:1)"* ]] && echo true || echo false)"
+check "T37 mixed acked+new -> does NOT write heartbeat file" "$([ ! -f "$HEARTBEAT_FILE_PATH" ] && echo true || echo false)"
+
+# ── T38: ack ledger PRESENT but does not cover the failing label (docker-
+# events fails; ledger only lists an unrelated label) -> verdict FAILURE —
+# presence of SOME ledger must never blanket-suppress an uncovered failure ─
+run_case
+LAUNCHD_DIR="$FIXTURE_LAUNCHD_DIR_ACK_DOCKEREVENTS_ONLY"
+STUB_LAUNCHCTL="ok"
+LAUNCHD_ACK="$ACK_FIXTURE_UNRELATED"
+OUT=$(run_probe); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+DETAIL=$(printf '%s' "$OUT" | jq -r '.detail')
+check "T38 unacknowledged failure (ledger present, uncovered) -> verdict FAILURE" "$([ "$VERDICT" = "FAILURE" ] && echo true || echo false)"
+check "T38 unacknowledged failure -> exit=1" "$([ "$RC" -eq 1 ] && echo true || echo false)"
+check "T38 unacknowledged failure -> detail names docker-events" "$([[ "$DETAIL" == *"com.vn-market.docker-events(exit-status:1)"* ]] && echo true || echo false)"
+
+# ── T39: all-healthy WITH an ack ledger present (both tracked labels
+# healthy this run) -> verdict ALL_GREEN, generic detail (no acknowledged
+# noise when nothing is actually degraded) — proves the ledger's mere
+# presence never manufactures a false note ─────────────────────────────────
+run_case
+LAUNCHD_DIR="$FIXTURE_LAUNCHD_DIR_ACK_BOTH"
+LAUNCHD_ACK="$ACK_FIXTURE_BOTH"
+launchctl() {
+  case "${1:-}" in
+    list) printf -- '-\t0\tcom.vn-market.docker-events\n-\t0\tcom.vn-market.fleet-push\n' ;;
+    *) return 1 ;;
+  esac
+  return 0
+}
+OUT=$(run_probe); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+DETAIL=$(printf '%s' "$OUT" | jq -r '.detail')
+check "T39 all-healthy + ack ledger present -> verdict ALL_GREEN" "$([ "$VERDICT" = "ALL_GREEN" ] && echo true || echo false)"
+check "T39 all-healthy + ack ledger present -> exit=0" "$([ "$RC" -eq 0 ] && echo true || echo false)"
+check "T39 all-healthy + ack ledger present -> detail carries NO acknowledged-degraded noise" "$([[ "$DETAIL" != *"acknowledged"* ]] && echo true || echo false)"
+
+# Restore the STUB_LAUNCHCTL-driven launchctl() override + default (empty)
+# LAUNCHD_ACK for any test appended after this section in the future.
+launchctl() {
+  case "${1:-}" in
+    list)
+      case "${STUB_LAUNCHCTL:-ok}" in
+        ok) printf '8750\t1\tcom.vn-market.docker-events\n-\t78\tcom.vn-market.fleet-push\n-\t0\tcom.vn-market.cowork-guaranteed-slot-firer\n' ;;
+        missing_firer) printf '8750\t1\tcom.vn-market.docker-events\n-\t78\tcom.vn-market.fleet-push\n' ;;
+        empty) printf '' ;;
+      esac
+      return 0
+      ;;
+    *) return 1 ;;
+  esac
+}
+LAUNCHD_ACK="$TMPDIR_TEST/no-such-ack-ledger.json"
 
 # ── Summary ────────────────────────────────────────────────────────────────────
 echo ""
