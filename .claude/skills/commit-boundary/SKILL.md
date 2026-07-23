@@ -25,6 +25,12 @@ git add docs/     # directory sweep — includes open-sprint files, notebooks, o
 Rationale: other agents in the same session modify notebooks, analysis-briefs, and
 orch-state.json concurrently. A directory sweep silently bundles their work into your commit.
 
+Note (UC-GCP-P3): the dev-team drain lane (`docs/agents/dev-team/flow/drain-signals.md` §0a
+MANDATORY PERSIST GUARD) uses `git add -u -- docs/signals/ && git add -- docs/signals/processed/`
+under commit-mutex:main — `-u` stages only TRACKED modifications+deletions (never untracked files),
+so it cannot capture other agents' unstaged/mid-write inbox arrivals in `docs/signals/`. This is a
+tracked-only sweep, not a directory sweep in the RULE 1 sense above.
+
 ## RULE 2 — ZONE SELF-CHECK (before git commit)
 
 ```bash
