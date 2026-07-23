@@ -83,7 +83,7 @@ echo ""
 # — tier1-probe.md's A-30 override section interprets it; this script never
 # compares across cycles.
 echo "--- memory pressure multi-probe reclamation (A-30) ---"
-BASELINE_PCT=$(docker stats --no-stream --format '{{.MemPerc}}' "${MCP_CONTAINER}" 2>/dev/null | tr -d '%')
+BASELINE_PCT=$(docker stats --no-stream --format '{{.MemPerc}}' "${MCP_CONTAINER}" 2>/dev/null | tr -d '%') || { echo "[A-30] baseline probe FAILED (container=${MCP_CONTAINER}): $?"; BASELINE_PCT="0"; }
 if awk -v p="${BASELINE_PCT:-0}" 'BEGIN{exit !(p>=85)}'; then
   # Tier-1 budget: 6 probes / 13s spacing = 65s span — the exact cadence already
   # validated live 07-19 ("6 probes/65s caught GC dips", per this row's own text).
