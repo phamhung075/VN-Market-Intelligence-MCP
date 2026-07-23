@@ -387,11 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "updated_by": "dev-mcp-server",
-    "updated_at": "2026-07-23T11:06:11Z"
+    "status": "in_progress",
+    "active_task_id": "FIX-CRON-SSCCHECKERJOB-DEAD-87D",
+    "next_agent": "dev-mcp-server",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-CRON-SSCCHECKERJOB-DEAD-87D — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-23T11:18:47Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -10390,26 +10391,6 @@
         "updated_at": "2026-07-22T17:23:09Z"
       },
       {
-        "id": "FIX-CRON-SSCCHECKERJOB-DEAD-87D",
-        "type": "FIX",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "M",
-        "zone": "apps/mcp-server/",
-        "title": "sscCheckerJob live-stale ~87 days — daily SSC disclosure check silently dead, and the watchdog could not see it because its job_name != its CRONS key",
-        "source": "po/cron-audit-push-deploy-sequencing-20260722 (found by dev-mcp-server while widening watchdog coverage; scoped out and flagged to PO)",
-        "created_at": "2026-07-22T17:12:55Z",
-        "created_by": "po",
-        "next_agent": "dev-mcp-server",
-        "evidence": "dev-mcp-server RAW-found ~87 days stale (decision journal STEP dev-mcp-server-S3). PO independently corroborated: get_cron_health (live, 7-day window, 2026-07-22T17:0xZ) lists 80 jobs and sscCheckerJob is ABSENT ENTIRELY => zero runs in 7 days. This absence IS admissible evidence for THIS job (unlike the bespoke telemetry-blind jobs called out in TRACK-CRON-AUDIT-SERVER-PLANE.known_unknown) precisely because sscCheckerJob DOES call recordJobRun — src/scheduler/news-analysis/sscCheckerJob.ts:64 — so it would appear if it had run. Sibling insiderCheckJob (same zone, daily 01:00) IS running, so the whole news-analysis zone is not dead.",
-        "shared_failure_mode": "ANSWERING PO'S 'what else shares this?' — the enabling defect is a NAME-BINDING gap, not a scheduling bug: a job records telemetry under one job_name while the watchdog manifest and the dashboard resolver key off the CRONS config key. When the two differ, the job can die and NOTHING alarms. Confirmed instances: sscCheck -> 'sscCheckerJob', dataAuditWeekly -> 'dataAuditJob:weekly' (dataAuditJob:weekly is likewise ABSENT from the same live 7-day report, while dataAuditJob:daily is present — so it may be a SECOND live-dead job, not merely mislabelled; verify before assuming). dev-mcp-server hand-patched these two into WATCHDOG_MANIFEST and into cronStatusCompute.ts STATIC_JOB_NAME_MAP, which fixes the two known cases but NOT the class.",
-        "scope": "(1) Root-cause why sscCheckerJob stopped ~87 days ago (dev-mcp-server deliberately did NOT chase this — out of scope for its dispatch) and restore it. (2) Verify whether dataAuditJob:weekly is also genuinely dead vs merely misnamed. (3) CLASS FIX: add an automated invariant so a job_name/CRONS-key divergence can never again hide a dead job — e.g. a test or startup assertion that every CRONS key resolves to a job_name that actually appears in cron_job_runs, failing loudly on any unresolvable key, rather than the current hand-maintained 25-entry manifest + hand-maintained STATIC_JOB_NAME_MAP that must be edited in two places and were already observed to drift apart.",
-        "known_unknown": "87 days of silence means nobody was consuming sscCheckerJob's output either. Determine what downstream depended on the SSC disclosure check and whether that data has been quietly stale/absent for ~3 months before declaring this closed — restoring the cron is necessary but may not be sufficient.",
-        "do_not_absorb": "Do NOT fold this into the WATCHDOG_MANIFEST widening already done in b3317f7f3 — that made the job VISIBLE, it did not make it RUN. Visibility and liveness are different fixes; closing this row requires an actual successful run recorded in cron_job_runs.",
-        "related": "FIX-BASE-RATE-COMPUTATION-CRON-DEAD (same 'weekly/daily job silently dead for weeks' family; note baseRateComputationJob now shows healthy in the live 7-day report — re-verify before working it, it may have self-recovered).",
-        "updated_at": "2026-07-22T17:23:09Z"
-      },
-      {
         "id": "FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR",
         "title": "PUBLISHED-MARKER KEY AGREEMENT — derive the dedup key from the scheduled UTC fire-window, never from a wall-clock date read (P0: chef-evening double-published 2026-07-22 19:56Z + 20:00Z on keys :2026-07-22 vs :2026-07-23 derived from ONE instant; the same defect will FALSELY SUPPRESS the 2026-07-23 19:45Z dish)",
         "type": "FIX",
@@ -13662,9 +13643,35 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-23T10:49:32Z",
+    "last_triaged_at": "2026-07-23T11:18:47Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-CRON-SSCCHECKERJOB-DEAD-87D",
+        "type": "FIX",
+        "status": "IN_PROGRESS",
+        "priority": "P1",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "title": "sscCheckerJob live-stale ~87 days — daily SSC disclosure check silently dead, and the watchdog could not see it because its job_name != its CRONS key",
+        "source": "po/cron-audit-push-deploy-sequencing-20260722 (found by dev-mcp-server while widening watchdog coverage; scoped out and flagged to PO)",
+        "created_at": "2026-07-22T17:12:55Z",
+        "created_by": "po",
+        "next_agent": "dev-mcp-server",
+        "evidence": "dev-mcp-server RAW-found ~87 days stale (decision journal STEP dev-mcp-server-S3). PO independently corroborated: get_cron_health (live, 7-day window, 2026-07-22T17:0xZ) lists 80 jobs and sscCheckerJob is ABSENT ENTIRELY => zero runs in 7 days. This absence IS admissible evidence for THIS job (unlike the bespoke telemetry-blind jobs called out in TRACK-CRON-AUDIT-SERVER-PLANE.known_unknown) precisely because sscCheckerJob DOES call recordJobRun — src/scheduler/news-analysis/sscCheckerJob.ts:64 — so it would appear if it had run. Sibling insiderCheckJob (same zone, daily 01:00) IS running, so the whole news-analysis zone is not dead.",
+        "shared_failure_mode": "ANSWERING PO'S 'what else shares this?' — the enabling defect is a NAME-BINDING gap, not a scheduling bug: a job records telemetry under one job_name while the watchdog manifest and the dashboard resolver key off the CRONS config key. When the two differ, the job can die and NOTHING alarms. Confirmed instances: sscCheck -> 'sscCheckerJob', dataAuditWeekly -> 'dataAuditJob:weekly' (dataAuditJob:weekly is likewise ABSENT from the same live 7-day report, while dataAuditJob:daily is present — so it may be a SECOND live-dead job, not merely mislabelled; verify before assuming). dev-mcp-server hand-patched these two into WATCHDOG_MANIFEST and into cronStatusCompute.ts STATIC_JOB_NAME_MAP, which fixes the two known cases but NOT the class.",
+        "scope": "(1) Root-cause why sscCheckerJob stopped ~87 days ago (dev-mcp-server deliberately did NOT chase this — out of scope for its dispatch) and restore it. (2) Verify whether dataAuditJob:weekly is also genuinely dead vs merely misnamed. (3) CLASS FIX: add an automated invariant so a job_name/CRONS-key divergence can never again hide a dead job — e.g. a test or startup assertion that every CRONS key resolves to a job_name that actually appears in cron_job_runs, failing loudly on any unresolvable key, rather than the current hand-maintained 25-entry manifest + hand-maintained STATIC_JOB_NAME_MAP that must be edited in two places and were already observed to drift apart.",
+        "known_unknown": "87 days of silence means nobody was consuming sscCheckerJob's output either. Determine what downstream depended on the SSC disclosure check and whether that data has been quietly stale/absent for ~3 months before declaring this closed — restoring the cron is necessary but may not be sufficient.",
+        "do_not_absorb": "Do NOT fold this into the WATCHDOG_MANIFEST widening already done in b3317f7f3 — that made the job VISIBLE, it did not make it RUN. Visibility and liveness are different fixes; closing this row requires an actual successful run recorded in cron_job_runs.",
+        "related": "FIX-BASE-RATE-COMPUTATION-CRON-DEAD (same 'weekly/daily job silently dead for weeks' family; note baseRateComputationJob now shows healthy in the live 7-day report — re-verify before working it, it may have self-recovered).",
+        "updated_at": "2026-07-23T11:18:48Z",
+        "promoted_at": "2026-07-23T11:18:47Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-23T11:18:47Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
