@@ -492,12 +492,24 @@ export async function runPredictionMarketPoll(
     // ── Step 5: store current snapshot ───────────────────────────────────
     storeSnapshot(currentMarkets, db);
 
-    if (currentMarkets.length === 0) {
-      logger.info("[prediction-market-job] no markets to process");
-      return;
-    }
-
     // ── Step 5b: staleness guard ──────────────────────────────────────────
+    // FIX-PREDICTION-SIGNALS-EMPTY (2026-07-23): this guard MUST run BEFORE
+    // the "no markets returned" early return that used to sit here.
+    // fetchPolymarkets() is a "never throws" fetcher — it swallows CLOB
+    // (403 geo-block) and Gamma HTTP/TLS failures internally and simply
+    // resolves to `[]` (RAW-verified live: gamma-api.polymarket.com has been
+    // serving an unrelated *.anj.fr TLS certificate / ERR_TLS_CERT_ALTNAME_INVALID
+    // on every poll cycle since at least 2026-06-30). Because the fetch never
+    // throws, Step 3's own try/catch fallback-to-cache branch never fires
+    // either, so `currentMarkets.length === 0` used to reach the old early
+    // return below BEFORE this guard ever ran — silencing the only
+    // degradation signal this job has for as long as the upstream stays
+    // broken (live impact: prediction_signals frozen 87 days, cron_job_runs
+    // logging status=success every ~30min the whole time). Running staleness
+    // detection first — regardless of whether THIS cycle's fetch returned
+    // anything — restores the intended "stale data still gets escalated"
+    // contract for both failure modes (a throwing fetch AND a
+    // silently-empty-returning fetch).
     // Resolve threshold: opts injection (tests) > config > hardcoded default.
     let staleThresholdHours = opts.staleThresholdHours;
     if (staleThresholdHours === undefined) {
@@ -529,8 +541,8 @@ export async function runPredictionMarketPoll(
           `[POLYMARKET] DU LIEU STALE\n` +
           `prediction_markets.fetched_at qua cu: ${ageLabel}\n` +
           `Nguong: ${staleThresholdHours}h\n` +
-          `fetchPolymarkets() that bai — fallback sang cache.\n` +
-          `Kiem tra: ket noi mang, CORS, API Polymarket con hoat dong.`;
+          `fetchPolymarkets() khong tra ve du lieu moi (loi hoac ket qua rong lien tuc).\n` +
+          `Kiem tra: ket noi mang, TLS/DNS, geo-block, CORS, API Polymarket con hoat dong.`;
 
         try {
           if (opts.telegramFn) {
@@ -553,6 +565,11 @@ export async function runPredictionMarketPoll(
       }
 
       // Fail-fast: skip signal detection on stale data
+      return;
+    }
+
+    if (currentMarkets.length === 0) {
+      logger.info("[prediction-market-job] no markets to process");
       return;
     }
 
