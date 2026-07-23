@@ -1948,6 +1948,28 @@
         "disposition": "DEDUP -> existing VPS push-plane incident cluster (FIX-VPS-SYSTEMD-STARTLIMIT-HARDENING P1 + FIX-VPS-HEALTH-OFFHOURS-MASK-FALSE-GREEN + FIX-VPS-SBV-HEALTH-SHARED-TABLE-IS-ESTIMATE, all minted 2026-07-22T16:29Z from docs/vps-sources/vps-push-plane-stale-2026-07-22/recon.md). NUMBER IS TRUE, FRAMING IS WRONG. RAW live probe 2026-07-22T22:37-22:45Z via gateway->vn-market + docker exec bun:sqlite on vn-market-intelligence-mcp-mcp-server-1: vps_push_log service='sbv' MAX(pushed_at)=2026-07-21 03:05:21 => 43h32m at signal ts, so the 43h is real. BUT it is NOT sbv-specific and NOT a data outage for sbv: prices last push 2026-07-21 03:08:05 and foreign-flow last push 2026-07-21 03:08:59 died in the SAME 3.5-min window (3 of 5 push services); news alone survives (2026-07-22 22:30:04, 68 pushes/24h) because it already carries the StartLimitIntervalSec=0 hardening (commit 42e8448ce) the other three never got. NOT market-hours blindness: 07-18/07-19 absent = normal Sat/Sun, 07-21 Tue + 07-22 Wed are real VN trading days. NOT a frozen value: sbv_rates_history moved 26130 -> 26140 -> 26120 across 2026-07-22 with last write 21:45:02Z (52min), matching get_sla_status sbv_fx age=53min -- sbv is the LEAST affected source because the local fallback scheduler/macro/sbvRatesJob.ts (VCB pull, is_estimate=1, 4-hourly) keeps refreshing the shared single-row sbv_rates table, which is precisely the masking mechanism FIX-VPS-SBV-HEALTH-SHARED-TABLE-IS-ESTIMATE already documents. TWO-LAYER SPLIT CONFIRMED: push-plane 43h dead vs fetch/serve-plane 53min fresh; the auditor emitted BOTH numbers 4h apart (sys-20260722T183223-0f2a said 31min) without ever reconciling them. NO MINT (conservation held; root cause already diagnosed to systemd StartLimitBurst lockout, blocked_by user-escalation-vps-restart, VPS SSH/HTTP unreachable). NO restart (user-gated). ONE NEW FACT folded into FIX-VPS-SYSTEMD-STARTLIMIT-HARDENING acceptance: the outage is destroying data that will NOT self-heal on restart -- daily_ohlcv 07-21=416 and 07-22=51 vs 887-984/day baseline (~1,400 ticker-days lost) and daily_foreign_flow has NO 2026-07-22 row at all (baseline 102/day, full session gone).",
         "triaged_at": "2026-07-22T22:42:47Z",
         "triaged_by": "po/triage-sys-20260722T223302-4f8b"
+      },
+      {
+        "id": "sys-20260723T023139-469d",
+        "ts": "2026-07-23T02:31:39Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "bctc-discover stale 60.68h (check B-05)",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260723T023146-7e7f",
+        "ts": "2026-07-23T02:31:46Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "VPS proxy health degraded (3/5 services unhealthy)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-22T15:10:08Z",
