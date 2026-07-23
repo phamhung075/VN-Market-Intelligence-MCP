@@ -45,6 +45,7 @@ import {
   scheduleForeignFlowCbReset,
   runBctcReparseWithDb,
   runWeeklyAuditWithDb,
+  runBaseRateComputationWithDb,
 } from './startupHelpers.js'
 
 export function startScheduler() {
@@ -319,6 +320,37 @@ export function startScheduler() {
       }
     } catch (err) {
       log(`[startup-catchup] dataAuditJob:weekly error: ${err instanceof Error ? err.message : String(err)}`)
+    }
+  }, 30_000)
+
+  // FIX-BASE-RATE-COMPUTATION-CRON-DEAD (2026-07-23) — baseRateComputationJob is a
+  // 6th job hit by the same restart-timing mechanism documented above
+  // (FIX-CRON-SUNDAY-STARTUP-CATCHUP / FIX-CRON-SSCCHECKERJOB-DEAD-87D): its single
+  // daily window (19:07 UTC) silently drops for the day if the container is
+  // down/restarting at that exact moment, and — being DAILY rather than weekly —
+  // it normally gets another chance ~24h later, EXCEPT during a multi-day restart
+  // storm. RAW-verified live (2026-07-23, docker exec against production market.db):
+  // mcpServerStartup recorded 28 boots across 2026-06-28..07-19 (>1/day), and
+  // baseRateComputationJob's cron_job_runs history shows a real (non-zero,
+  // rows_written=2) success on 2026-06-28 19:07 UTC, then a total silence — ZERO
+  // rows of ANY kind, not even a failed attempt — until 2026-07-19 19:07 UTC (the
+  // exact ~19-day outage window called out in the FIX-CRON-SUNDAY-STARTUP-CATCHUP
+  // comment above). Since 07-19 the job has fired daily with 100% success (no code
+  // defect in the fire path itself), so this catchup is a defensive close of the
+  // same root-cause CLASS rather than a fix for a currently-reproducing failure.
+  // Uses runBaseRateComputationWithDb(db) directly (not jobRunRepo.wrapRun) because
+  // that wrapper already owns its own recordJobRun + T4 dedup guard (see
+  // startupHelpers.ts) — wrapping it a second time would reintroduce the exact
+  // double-recordJobRun anti-pattern this same task fixed.
+  setTimeout(async () => {
+    try {
+      // baseRateComputationJob: daily 19:07 UTC, every day (weekdayOnly=false)
+      if (shouldRunCatchup(db, 'baseRateComputationJob', 19, 7, new Date(), false)) {
+        log('[startup-catchup] baseRateComputationJob: running catch-up')
+        await runBaseRateComputationWithDb(db)
+      }
+    } catch (err) {
+      log(`[startup-catchup] baseRateComputationJob error: ${err instanceof Error ? err.message : String(err)}`)
     }
   }, 30_000)
 

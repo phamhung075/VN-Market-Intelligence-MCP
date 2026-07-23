@@ -16,7 +16,7 @@ import type { ScheduledTask } from 'node-cron'
 import { runWeeklyAudit } from './news-analysis/dataAuditJob.js'
 import { runBctcReparseJob } from './financial-reports/bctcReparseJob.js'
 import { runEvidenceAccumulator } from './news-analysis/evidenceAccumulatorJob.js'
-import { runBaseRateComputationJob } from './macro/baseRateComputationJob.js'
+import { runBaseRateComputation } from './macro/baseRateComputationJob.js'
 import { runPredictionResolutionJob } from './macro/predictionResolutionJob.js'
 import { runCalibrationReportJob } from './macro/calibrationReportJob.js'
 import { recordJobRun } from '../infrastructure/db/cronJobRunStore.js'
@@ -358,11 +358,39 @@ export async function runEvidenceAccumulatorWithDb(
   await recordJobRun(db, 'evidenceAccumulatorJob', fn)
 }
 
-/** baseRateComputationJob — task 1122 */
+/** baseRateComputationJob — task 1122
+ *
+ * FIX-BASE-RATE-COMPUTATION-CRON-DEAD (2026-07-23): default fn previously called
+ * the self-recording runBaseRateComputationJob() wrapper (baseRateComputationJob.ts),
+ * which ALSO calls recordJobRun internally — the exact "double-wrap" anti-pattern
+ * already diagnosed and fixed for runEvidenceAccumulatorWithDb above. RAW-verified
+ * live against the production DB (docker exec, real market.db, not an isolated
+ * :memory: fixture): every daily 19:07 UTC tick produced 2-3 cron_job_runs rows
+ * (1-2 noisy rows_written=NULL rows from this outer wrapper alongside the 1 real
+ * rows_written=N row from the inner call) instead of 1 — confirmed on 5 consecutive
+ * days (2026-07-19..23, ids 137899-151743). Fixed the same way: default fn now
+ * calls the core runBaseRateComputation(db) directly (single recordJobRun call).
+ * The T4 shouldSkipRecoveryReplay dedup guard — previously living inside
+ * runBaseRateComputationJob(), invisible to a second physical node-cron tick
+ * because THIS wrapper (not that one) is what schedulerJobTable.ts actually
+ * invokes — is replicated here so a genuine same-window double-fire (node-cron's
+ * recoverMissedExecutions catching event-loop-lag ticks, confirmed live: a second
+ * tick at 19:07:01, ~1s after the 19:07:00 on-time tick, every day in the sample)
+ * still no-ops cleanly with ZERO extra row, matching the dedup-before-recordJobRun
+ * shape already used by runEvidenceAccumulatorWithDb.
+ */
 export async function runBaseRateComputationWithDb(
   db: Database,
-  fn: () => Promise<void> = async () => { await runBaseRateComputationJob() },
+  fn: () => Promise<{ rowsWritten?: number } | void> = async () => {
+    const result = await runBaseRateComputation(db)
+    return { rowsWritten: result.triplesUpserted }
+  },
 ): Promise<void> {
+  const DAILY_CADENCE_MS = 86_400_000
+  if (shouldSkipRecoveryReplay(db, 'baseRateComputationJob', DAILY_CADENCE_MS)) {
+    log('[base-rate-computation] already ran within cadence window — dedup skip (recoverMissedExecutions guard)')
+    return
+  }
   await recordJobRun(db, 'baseRateComputationJob', fn)
 }
 
