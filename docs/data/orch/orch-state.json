@@ -387,12 +387,13 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS",
-    "next_agent": "ba",
-    "next_action": "Supervised-Lane Sweep claim of FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS — spawn ba DIRECTLY (no zone-detect indirection; lane already resolved at promote time). supervised/plan_only preserved — do not clear.",
-    "updated_at": "2026-07-23T09:20:52Z",
-    "updated_by": "dev-team (supervised-lane sweep)"
+    "status": "idle",
+    "updated_at": "2026-07-23T09:30:55Z",
+    "updated_by": "ba",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS BA spec complete (zero PO blockers) -> backlog[], next_agent=architect. supervised:true holds it from BOUNDED-1 auto-pickup -- dispatch architect deliberately via router/po.",
+    "note": "FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS moved to backlog[] with ba_handoff spec. Head idle -- free slot for next tick."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2265,8 +2266,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-23T05:16:51Z",
-    "_updated_by": "po/converge-closeout-crossref-20260723",
+    "_updated_at": "2026-07-23T09:30:55Z",
+    "_updated_by": "ba",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -10886,6 +10887,42 @@
         },
         "updated_at": "2026-07-23T09:19:37Z",
         "plan_only": true
+      },
+      {
+        "id": "FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS",
+        "type": "FIX",
+        "title": "COWORK DISPATCH — router intent PRE-CLAIM and the cowork slot dispatcher share NO task_id namespace, so task_claim is a no-op mutex across paths; a peer router session double-dispatches a cowork slot agent while the cowork dispatcher's own instance still runs it (2nd confirmed instance same tick 2026-07-15: chef-evening 932+933 double-publish + tnb-audit dual c110 audit)",
+        "status": "BACKLOG",
+        "priority": "P0",
+        "size": "M",
+        "zone": "cross-service/",
+        "plan_only": true,
+        "next_agent": "architect",
+        "created_at": "2026-07-15T20:56:10Z",
+        "created_by": "po",
+        "origin_signal_id": "cow-20260715T203953",
+        "detail_ref": "docs/handoffs/2026-07-15-tnb-audit-double-dispatch-unreachable-marker-gate.md",
+        "note": "ENABLER (new — no existing row covers it; the two per-slot guard bugs are separate). ROOT CAUSE: router CLAUDE.md/dispatch-claim §2.5 PRE-CLAIM keys on intent:<agent>:<intent-key> while cowork keys on cowork-slot:<slot> / cron:cowork:<tick> / published:<slot>:<periodKey> — DIFFERENT namespaces, so task_claim cannot collide across the two dispatch paths (no-op mutex by construction) and neither path consults the other. 2 CONFIRMED instances same tick 2026-07-15 (feedback_recurring_bug_escalation 2+ => rank-1-band candidate): (a) chef-evening/unified-agent -> MARKET double-publish ids 932+933; (b) tnb-audit/tran-ngoc-bau -> 2 concurrent full c110 audits, clobber avoided ONLY by the Edit stale-read check (the Write path has none => silent-clobber risk). CHEAPEST CORRECT FIX (ba/architect own HOW): router §2.5 PRE-CLAIM for a cowork-slot agent MUST also probe cowork-slot:<slot_id> and/or published:<slot>:<periodKey> before dispatch, OR key both paths on ONE shared task_id namespace so they collide by construction. Rule: do NOT dispatch a cowork slot agent via the intent path while the cowork dispatcher owns that slot. Distinct from UC-CCA-P3 (marker lifecycle) and FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK (capability gap) — this is the cross-path coordination hole that ENABLED both. PLAN-ONLY.\n\n[po 2026-07-21T20:37:51Z 3rd CONFIRMED OCCURRENCE — P1->P0 ESCALATION, NO NEW ROW MINTED] Router escalated this as a fresh P1 root-cause ask; PO checked prior art first and this row ALREADY owns it exactly (title + note already name the disjoint-namespace root cause and the cheapest-correct-fix). Minting a sibling would have duplicated it — declined.\n\nOCCURRENCE 3 (2026-07-21, RAW-verified via task_list_held, not agent self-report): 20:24:33Z cowork dispatcher session 9f4a6bfc-b001-4349-8a44-545f24c1b0ac claimed published:tnb-audit:2026-07-20/2026-07-26 (owner_agent tran-ngoc-bau) and its tnb instance began running. 20:25:14Z a SECOND router session 8def3b83-8326-4a26-a663-2f2616dfc38e claimed intent:tran-ngoc-bau:tnb-audit -> claimed:TRUE, 41s later, while the peer instance was live. Exactly the predicted no-op mutex: two namespaces, one agent, zero collision. Same slot (tnb-audit) as occurrence 2. Occurrence count is now 3 (07-15 chef-evening MARKET 932+933; 07-15 tnb-audit dual c110; 07-21 tnb-audit). feedback_recurring_bug_escalation: 2+ => block and fix ROOT CAUSE not symptom — this is the root cause row, and it has been dormant in BACKLOG for 6 days while the class recurred.\n\nWHY P0 (priority inversion correction, NOT damage-this-time): this occurrence caused ZERO damage — see POSITIVE below — so the escalation is NOT argued on impact. It is argued on (a) 3rd confirmed occurrence of a class whose worst instance was a user-visible MARKET double-publish, and (b) priority inversion: this row is the ENABLER that UC-CCA-P3 (P0) explicitly names as the hole that \"ENABLED both\" — an enabler ranked below its own downstream symptom will never be reached first.\n\nOPERATIVE BLOCKER IS DISPATCH, NOT PRIORITY (PO directive): this row is plan_only:true + supervised:true + next_agent:ba, and supervised_note states \"Deliberate router/ba/architect dispatch is UNAFFECTED\" — the hold only stops BOUNDED-1 idle auto-pickup. So the reason nothing shipped in 6 days is that nobody deliberately dispatched it, and a priority bump ALONE will not change that. PO AUTHORIZES + DIRECTS deliberate ba dispatch now. Keep supervised:true (it is correctly preventing the plan_only/no-detail-entry auto-pickup leak it was installed for — do NOT clear it as a shortcut to auto-pickup). ba should produce the spec for the cheapest-correct-fix already stated in this note (router PRE-CLAIM must probe cowork-slot:<slot_id> / published:<slot>:<periodKey> before dispatching a cowork-slot agent, OR both paths key one shared namespace).\n\nPOSITIVE — 07-15 PRIMARY DEFECT IS FIXED AND PROVEN (partially closes detail_ref handoff 2026-07-15-tnb-audit-double-dispatch-unreachable-marker-gate.md): that handoff s headline finding was that the Step G gate was DEAD CODE — .claude/agents/tran-ngoc-bau.md frontmatter lacked mcp__gateway__call_tool, so the gate was unreachable on every cycle and both 07-15 instances ran two full audits. VERIFIED FIXED: frontmatter now reads \"tools: Read, Edit, Write, Glob, Grep, mcp__gateway__call_tool\", and c115 (2026-07-21) is the FIRST cycle with the gate confirmed live — it fired, claimed cleanly, and the redundant session was blocked with no duplicate audit and no notebook clobber. DEFENCE-IN-DEPTH HELD. Residual risk is unchanged though: the inner marker gate is a per-agent LAST line of defence that only protects cowork agents that both have a marker gate AND gateway tools; the cross-path mutex hole itself is still fully open, and any slot agent without that gate is still unprotected. Do NOT downgrade or close this row on the strength of the gate working.\n\nNOTE ON THE OTHER HALF: the router also fixed the gate s missing owner_client_session in commit 164f836f7 (Step G task_claim was failing zod on its first-ever live invocation) — that is a tran-ngoc-bau-local fix, already shipped, not part of this row s scope.\n\n[ba 2026-07-23T09:30:55Z SPEC COMPLETE — PLAN-ONLY, zero PO blockers] Confirmed the 4 literal task_id formats live (intent:<agent>:<intent-key> / cron:cowork:<TICK> / cowork-slot:<slot_id> / published:<slot_id>:<period>) — disjoint keyspaces, task_claim is a no-op mutex across paths by construction. 7 FRs + 6 edge cases in ba_handoff: cowork-slot-agent recognition (cowork-schedule.json SSOT), intent-key->slot_id resolution (ambiguous for 8/9 multi-slot agents), 2 named collision-check candidates (read-probe vs shared-namespace) narrowed to both needing to gate on published:<slot_id>:<period> since cowork-slot:<slot_id> alone is released seconds after spawn and cannot anchor the fix, symmetric log+telegram+EXIT reuse, CLAUDE.md/SKILL.md lockstep-update requirement (pattern duplicated inline in both), live reproduction-harness requirement. Did not mint child board rows -- updated this same parent row per ba/flow/main.md Step 5 anti-dup-row precedent. NEXT: architect -- rule on candidate A vs B + multi-slot resolution rule.",
+        "sibling_refire_row": "FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE",
+        "sibling_note": "SIBLING enabler minted 2026-07-15 (cow-20260715T214005): the single-session same-tick self-refire path is NOT closed by unifying this row's namespaces. Fixing THIS row does not close the refire; both are members of the 'guard released when the work ends' class. Do not certify the double-dispatch class done on this row alone.",
+        "supervised": true,
+        "supervised_at": "2026-07-16T17:02:01Z",
+        "supervised_by": "po (autolaunch_safety_hold adjudication, dev-team 16:37Z)",
+        "supervised_note": "BOUNDED-1 stopgap: plan_only design/spec ask with a non-dev board next_agent that leaks past the detail-only promote gates (inline plan_only + no backlog-detail entry). Held from idle auto-pickup so BOUNDED-1 reaches genuinely dev-routable rows. Deliberate router/ba/architect dispatch is UNAFFECTED. Durable structural fix: FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE (once shipped this stamp is belt-and-suspenders).",
+        "po_escalated_at": "2026-07-21T20:37:51Z",
+        "po_escalated_by": "po",
+        "occurrence_count": 3,
+        "last_occurrence_at": "2026-07-21T20:25:14Z",
+        "updated_at": "2026-07-23T09:30:55Z",
+        "promoted_at": "2026-07-23T09:20:52Z",
+        "promoted_by": "dev-team (supervised-lane sweep)",
+        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='ba' (priority_rank=0); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
+        "dispatch_lane": "ba",
+        "claimed_at": "2026-07-23T09:20:52Z",
+        "claimed_by": "dev-team (supervised-lane sweep)",
+        "ba_spec_complete": true,
+        "ba_handoff": "docs/handoffs/FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS-BA-spec.md",
+        "ba_completed_at": "2026-07-23T09:30:55Z"
       }
     ],
     "closed_sprints": [
@@ -13574,41 +13611,7 @@
     },
     "last_triaged_at": "2026-07-23T09:20:52Z",
     "last_triaged_by": "dev-team (supervised-lane sweep)",
-    "in_progress": [
-      {
-        "id": "FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS",
-        "type": "FIX",
-        "title": "COWORK DISPATCH — router intent PRE-CLAIM and the cowork slot dispatcher share NO task_id namespace, so task_claim is a no-op mutex across paths; a peer router session double-dispatches a cowork slot agent while the cowork dispatcher's own instance still runs it (2nd confirmed instance same tick 2026-07-15: chef-evening 932+933 double-publish + tnb-audit dual c110 audit)",
-        "status": "IN_PROGRESS",
-        "priority": "P0",
-        "size": "M",
-        "zone": "cross-service/",
-        "plan_only": true,
-        "next_agent": "ba",
-        "created_at": "2026-07-15T20:56:10Z",
-        "created_by": "po",
-        "origin_signal_id": "cow-20260715T203953",
-        "detail_ref": "docs/handoffs/2026-07-15-tnb-audit-double-dispatch-unreachable-marker-gate.md",
-        "note": "ENABLER (new — no existing row covers it; the two per-slot guard bugs are separate). ROOT CAUSE: router CLAUDE.md/dispatch-claim §2.5 PRE-CLAIM keys on intent:<agent>:<intent-key> while cowork keys on cowork-slot:<slot> / cron:cowork:<tick> / published:<slot>:<periodKey> — DIFFERENT namespaces, so task_claim cannot collide across the two dispatch paths (no-op mutex by construction) and neither path consults the other. 2 CONFIRMED instances same tick 2026-07-15 (feedback_recurring_bug_escalation 2+ => rank-1-band candidate): (a) chef-evening/unified-agent -> MARKET double-publish ids 932+933; (b) tnb-audit/tran-ngoc-bau -> 2 concurrent full c110 audits, clobber avoided ONLY by the Edit stale-read check (the Write path has none => silent-clobber risk). CHEAPEST CORRECT FIX (ba/architect own HOW): router §2.5 PRE-CLAIM for a cowork-slot agent MUST also probe cowork-slot:<slot_id> and/or published:<slot>:<periodKey> before dispatch, OR key both paths on ONE shared task_id namespace so they collide by construction. Rule: do NOT dispatch a cowork slot agent via the intent path while the cowork dispatcher owns that slot. Distinct from UC-CCA-P3 (marker lifecycle) and FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK (capability gap) — this is the cross-path coordination hole that ENABLED both. PLAN-ONLY.\n\n[po 2026-07-21T20:37:51Z 3rd CONFIRMED OCCURRENCE — P1->P0 ESCALATION, NO NEW ROW MINTED] Router escalated this as a fresh P1 root-cause ask; PO checked prior art first and this row ALREADY owns it exactly (title + note already name the disjoint-namespace root cause and the cheapest-correct-fix). Minting a sibling would have duplicated it — declined.\n\nOCCURRENCE 3 (2026-07-21, RAW-verified via task_list_held, not agent self-report): 20:24:33Z cowork dispatcher session 9f4a6bfc-b001-4349-8a44-545f24c1b0ac claimed published:tnb-audit:2026-07-20/2026-07-26 (owner_agent tran-ngoc-bau) and its tnb instance began running. 20:25:14Z a SECOND router session 8def3b83-8326-4a26-a663-2f2616dfc38e claimed intent:tran-ngoc-bau:tnb-audit -> claimed:TRUE, 41s later, while the peer instance was live. Exactly the predicted no-op mutex: two namespaces, one agent, zero collision. Same slot (tnb-audit) as occurrence 2. Occurrence count is now 3 (07-15 chef-evening MARKET 932+933; 07-15 tnb-audit dual c110; 07-21 tnb-audit). feedback_recurring_bug_escalation: 2+ => block and fix ROOT CAUSE not symptom — this is the root cause row, and it has been dormant in BACKLOG for 6 days while the class recurred.\n\nWHY P0 (priority inversion correction, NOT damage-this-time): this occurrence caused ZERO damage — see POSITIVE below — so the escalation is NOT argued on impact. It is argued on (a) 3rd confirmed occurrence of a class whose worst instance was a user-visible MARKET double-publish, and (b) priority inversion: this row is the ENABLER that UC-CCA-P3 (P0) explicitly names as the hole that \"ENABLED both\" — an enabler ranked below its own downstream symptom will never be reached first.\n\nOPERATIVE BLOCKER IS DISPATCH, NOT PRIORITY (PO directive): this row is plan_only:true + supervised:true + next_agent:ba, and supervised_note states \"Deliberate router/ba/architect dispatch is UNAFFECTED\" — the hold only stops BOUNDED-1 idle auto-pickup. So the reason nothing shipped in 6 days is that nobody deliberately dispatched it, and a priority bump ALONE will not change that. PO AUTHORIZES + DIRECTS deliberate ba dispatch now. Keep supervised:true (it is correctly preventing the plan_only/no-detail-entry auto-pickup leak it was installed for — do NOT clear it as a shortcut to auto-pickup). ba should produce the spec for the cheapest-correct-fix already stated in this note (router PRE-CLAIM must probe cowork-slot:<slot_id> / published:<slot>:<periodKey> before dispatching a cowork-slot agent, OR both paths key one shared namespace).\n\nPOSITIVE — 07-15 PRIMARY DEFECT IS FIXED AND PROVEN (partially closes detail_ref handoff 2026-07-15-tnb-audit-double-dispatch-unreachable-marker-gate.md): that handoff s headline finding was that the Step G gate was DEAD CODE — .claude/agents/tran-ngoc-bau.md frontmatter lacked mcp__gateway__call_tool, so the gate was unreachable on every cycle and both 07-15 instances ran two full audits. VERIFIED FIXED: frontmatter now reads \"tools: Read, Edit, Write, Glob, Grep, mcp__gateway__call_tool\", and c115 (2026-07-21) is the FIRST cycle with the gate confirmed live — it fired, claimed cleanly, and the redundant session was blocked with no duplicate audit and no notebook clobber. DEFENCE-IN-DEPTH HELD. Residual risk is unchanged though: the inner marker gate is a per-agent LAST line of defence that only protects cowork agents that both have a marker gate AND gateway tools; the cross-path mutex hole itself is still fully open, and any slot agent without that gate is still unprotected. Do NOT downgrade or close this row on the strength of the gate working.\n\nNOTE ON THE OTHER HALF: the router also fixed the gate s missing owner_client_session in commit 164f836f7 (Step G task_claim was failing zod on its first-ever live invocation) — that is a tran-ngoc-bau-local fix, already shipped, not part of this row s scope.",
-        "sibling_refire_row": "FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE",
-        "sibling_note": "SIBLING enabler minted 2026-07-15 (cow-20260715T214005): the single-session same-tick self-refire path is NOT closed by unifying this row's namespaces. Fixing THIS row does not close the refire; both are members of the 'guard released when the work ends' class. Do not certify the double-dispatch class done on this row alone.",
-        "supervised": true,
-        "supervised_at": "2026-07-16T17:02:01Z",
-        "supervised_by": "po (autolaunch_safety_hold adjudication, dev-team 16:37Z)",
-        "supervised_note": "BOUNDED-1 stopgap: plan_only design/spec ask with a non-dev board next_agent that leaks past the detail-only promote gates (inline plan_only + no backlog-detail entry). Held from idle auto-pickup so BOUNDED-1 reaches genuinely dev-routable rows. Deliberate router/ba/architect dispatch is UNAFFECTED. Durable structural fix: FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE (once shipped this stamp is belt-and-suspenders).",
-        "po_escalated_at": "2026-07-21T20:37:51Z",
-        "po_escalated_by": "po",
-        "occurrence_count": 3,
-        "last_occurrence_at": "2026-07-21T20:25:14Z",
-        "updated_at": "2026-07-23T09:20:53Z",
-        "promoted_at": "2026-07-23T09:20:52Z",
-        "promoted_by": "dev-team (supervised-lane sweep)",
-        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='ba' (priority_rank=0); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
-        "dispatch_lane": "ba",
-        "claimed_at": "2026-07-23T09:20:52Z",
-        "claimed_by": "dev-team (supervised-lane sweep)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
