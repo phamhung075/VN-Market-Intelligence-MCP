@@ -2129,6 +2129,17 @@
         "status": "NEW",
         "summary": "BOUNDED-1 auto-pickup drained TWO consecutive stale already-fixed quality-checklist orphan rows: MD-FUNC-01-FIX (get_market_snapshot vn_index, shipped 815ccaedd/ddc36452e) + ALT-FUNC-02-FIX (get_alert_accuracy accuracy_rate, shipped 815ccaedd 2026-06-10; docs/data/quality-checklist.json already status=PASS since 2026-06-10T18:00Z). Both backlog rows were minted ~8-10h BEFORE their same-day fix landed and never pruned; re-promoted 6 weeks later, each burned a full dispatch cycle (~90k tokens) re-confirming a long-shipped fix. Root cause: quality-checklist-derived *-FIX backlog rows are never pruned when the checklist item flips to PASS. TWO asks: (1) one-time prune backlog[] of *-FIX rows whose docs/data/quality-checklist.json item is already status=PASS (cross-check by id); (2) add a BOUNDED-1 pre-promotion freshness gate: before promoting a quality-checklist-derived *-FIX row, re-read the checklist item and auto-DEFER/prune if already PASS instead of promoting (same gate-family as the plan-only-gate-blind ask dev-team-20260723T0919). Both re-promoted rows are now correctly in review[] as verification-only for QA-Drain confirm-and-archive.",
         "payload_ref": null
+      },
+      {
+        "id": "dev-team-20260723T1552-USER-ESCALATED-foreign-flow-stale-recheck",
+        "ts": "2026-07-23T15:52:21Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "data_stale",
+        "severity": "HIGH",
+        "status": "NEW",
+        "summary": "USER-ESCALATED (interactive report 2026-07-23): market foreign-flow (khoi ngoai) STALE — get_market_foreign_flow latest_date=2026-07-21, NO 07-22/07-23 session data (today 07-23, HOSE closed hours ago, EOD data should exist). User asks TWO things: (1) FIX the stale pipeline; (2) build a persistent RECHECK HARNESS (user: program for recheck for assume complete fixed) that verifies foreign-flow freshness as the complete-fixed gate. DISPATCHER RECON: circuit breaker CLOSED/healthy (0/5 consecutive failures, never tripped) BUT Total successes=0 = no successful ingest traffic recorded; source=bgapidatafeed.vps.com.vn batch API via vn-foreign-flow.service (60s push-foreign-flow). Pipeline has not ingested since 07-21 (also an earlier gap 06-30->07-20 in the watchlist aggregate). Root cause is NOT the breaker — likely VPS service/timer stopped, source API changed/blocked, or push-ingest failing. NEEDS ops-vps-fetch LIVE SSH diagnosis (systemctl status vn-foreign-flow.service + /root/run-foreign-flow-debug.sh live, trigger_foreign_flow_vps_fetch dry_run=false) + fix; THEN a dev recheck-harness script under scripts/ asserting latest_date ~= current trading session (the assume-complete-fixed gate), wired so it can gate CI/cron. CONSOLIDATE with existing auditor rows sys-20260723T063226-16ba (B-07 foreign-flow stale 3082min), plus B-02/B-04 same root issue — triage as ONE incident, do NOT split. PO spawned this tick to scope + dispatch (ops fix + dev harness).",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-22T15:10:08Z",
