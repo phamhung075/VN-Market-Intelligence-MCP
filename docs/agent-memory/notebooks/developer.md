@@ -1,20 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-23 | **Cycle:** FFLOW-STALE-0723-B-RECHECK-HARNESS (persistent calendar-aware foreign-flow freshness recheck harness — PART A's "assume complete fixed" gate)
-
-## Session 2026-07-23 — FFLOW-STALE-0723-B-RECHECK-HARNESS — REVIEW
-
-**Task:** Build a persistent, weekend/holiday-aware recheck harness so PART A (ops-vps-fetch recovering the Vinahost-suspended vn-foreign-flow.service) can be declared "complete fixed" on an independent instrument, not self-report. Cross-service artifact outside all dev-* zones — built directly per router instruction, no zone dispatch.
-
-**Actions taken:** New `scripts/check-foreign-flow-freshness.sh`. PROBE: `get_market_foreign_flow(days:1)` via `scripts/agents-flow/mcp-call.sh`, latest_date extracted with a tolerant regex (the tool's `text` field embeds raw unescaped newlines — `jq .` chokes with "control characters must be escaped", live-verified). LCTS (Last Completed Trading Session): shells into the live `apps/mcp-server/src/domain/services/vnTradingCalendar.ts` module via `bun -e` (precedent: `ops-bctc-enrich-reverify-pulljob.sh`'s docker-exec-bun-e pattern) — zero hardcoded holidays, reuses the SAME calendar the OHLCV pipeline uses. Verdict: `latest_date >= LCTS` → PASS/exit 0; else STALE/exit 2; any ambiguity → ERROR/exit 3 (never false-green). Self-test mode (`--self-test`) re-execs the script with gated env-var overrides (`FFLOW_FRESH_SELF_TEST=1` + override vars — a lone stray override var alone is inert) proving 3 branches against the real calendar module. Bug caught+fixed mid-build: a single-quoted heredoc nested inside `"$(...)"` inside outer double quotes is NOT quote-inert — an odd apostrophe count in the body ("isn't") broke bash's outer double-quote scan; fixed by capturing the heredoc to a variable first.
-
-**Verification:** `bash -n` clean. Live run today: `verdict=PASS latest_date=2026-07-23 lcts=2026-07-23` (PART A's parallel VPS recovery had already landed fresh data by the time this ran). Fixture proof (AC-B7 mandate): `FFLOW_FRESH_OVERRIDE_LATEST_DATE=2026-07-21` (the historical stuck value) → `verdict=STALE exit=2` as required. `--self-test` → 3/3 branches PASS (stale/fresh/Saturday-nuance, Sat 2026-07-25 correctly resolves LCTS to preceding Fri 2026-07-24). Ambiguity paths (malformed override date/now/grace-cutoff) all → `verdict=ERROR exit=3`, never 0. Unauthorized override (SELF_TEST unset) correctly ignored, falls through to live probe.
-
-**Board:** `task_board.in_progress[FFLOW-STALE-0723-B-RECHECK-HARNESS]` — router owns this row's lifecycle per task boundary; not touched by this cycle.
-
-**Scope discipline:** New script + 4 doc pointers (`dev-standards.md` § Script Persistence CANONICAL entry, `ops/flow/vps.md`, `system-auditor/flow/main.md` § Per-Source Fetch Freshness, `get_market_foreign_flow.md` See-also) + this journal/notebook. No `apps/mcp-server` source files modified (read-only reuse of `vnTradingCalendar.ts`) — zero tsc/test regression surface.
-
-Zone health: foreign-flow freshness now has an independent, weekend/holiday-aware, non-self-report gate; graphify incremental update skipped — Agent/Skill tools not granted to this subagent session (structural, noted for router) | HEALTHY
+**Last updated:** 2026-07-23 | **Cycle:** FIX-AUDITOR-TIER1-PROBE-ACKED-LAUNCHD-DEATH-SUPPRESSION (ack-ledger suppression for already-tracked launchd deaths in the Tier-1 auditor probe)
 
 ## Session 2026-07-23 — TE-T31 (TOKEN-ECONOMY-AUDIT, wave 4) — REVIEW
 
@@ -43,3 +29,17 @@ Zone health: tools/list/INDEX.md is now a pure generated view of tool-registry.j
 **Scope discipline:** Touched exactly the new script + test + `notebook-auto-prune.sh` (opt-in guard extension only) + `code-janitor/flow/main.md` + `dev-team/flow/main.md` (2 comment lines) + `dev-standards.md` pointer + journal/notebook/WORK.md. Did not touch qa/pm (already correct) or decisions/ (superseded, confirmed not ambiguous).
 
 Zone health: 3-dir unbounded-growth class capped for handoffs+sessions-gap+po-decisions; decisions/ leg correctly deferred to its real owner instead of double-implemented | HEALTHY
+
+## Session 2026-07-23 — FIX-AUDITOR-TIER1-PROBE-ACKED-LAUNCHD-DEATH-SUPPRESSION — REVIEW
+
+**Task:** `auditor-tier1-probe.sh`'s launchd check (fixed same day, FIX-LAUNCHD-PROBE-PRESENCE-ONLY-FALSE-GREEN, to check exit-status not just presence) started returning `FAILURE` EVERY ~30min Tier-1 tick because 2 already-tracked dead backstops persist: `com.vn-market.docker-events` (exit-1, `FIX-LAUNCHD-DOCKER-EVENTS-EXIT1-CRASHLOOP`) + `com.vn-market.fleet-push` (exit-78, `FIX-FLEET-PUSH-LAUNCHD-EXCONFIG-SILENT-DEAD`) — fail-opening the passive-health guard into spawning a full system-auditor subagent ~48x/day for zero new signal.
+
+**Actions taken:** New ACK LEDGER `docs/data/auditor-launchd-ack.json` (`{acked:[{label,tracked_by,acked_at}]}`, live-seeded with both entries). `_check_launchd_agents` in `scripts/agents-flow/auditor-tier1-probe.sh` now label-exact-matches each unhealthy launchd label against the ledger — acked labels report "acknowledged" instead of "bad"; if EVERY unhealthy label this pass is acked, the check still PASSes (verdict stays `ALL_GREEN`, detail names the acked labels for transparency). A new/unacknowledged label always still fails, even mixed with acked ones. Chose the ALL_GREEN-remap (not a new verdict enum) — the live-registered Tier-1 cron prompt already treats `ALL_GREEN AND heartbeat<=60min` as skip-eligible, zero prompt/re-arm change needed. New `LAUNCHD_ACK_PATH` test seam mirrors the existing `LAUNCHD_DIR_PATH` pattern.
+
+**Verification:** `auditor-tier1-probe.test.sh` extended with a default nonexistent-ledger seam (kept T1-T35 byte-identical — first confirmed 102/102 baseline green BEFORE adding new tests, since the real ack ledger would otherwise silently flip T33's fleet-push-exit-78 fixture to ALL_GREEN) + T36-T39 (acked-only→ALL_GREEN, mixed acked+new→FAILURE, ledger-present-but-uncovered→FAILURE, all-healthy+ledger-present→ALL_GREEN no false noise) — 120/120 total PASS. Live-verified against the real running system: `bash scripts/agents-flow/auditor-tier1-probe.sh` now returns `ALL_GREEN` with both acknowledged labels named in `detail` (previously `FAILURE` every tick).
+
+**Board:** `task_board.in_progress[FIX-AUDITOR-TIER1-PROBE-ACKED-LAUNCHD-DEATH-SUPPRESSION]` → `review`, `next_agent=qa`, `.head` synced to idle, via `orch-apply.sh` (separate commit).
+
+**Scope discipline:** Touched exactly the new ack ledger + probe script's Check-6 function + `run_probe`'s detail-line assembly + paired test + `WORK.md`/journal/notebook. Did NOT touch the heartbeat-write/freshness code paths (constraint #2) — verified T31/T32 (tier-2/3 stale-heartbeat dead-branch tests) still green, proving zero collateral change there. Did NOT touch `cron-detect-loop/register.md` (ALL_GREEN-remap choice makes that unnecessary).
+
+Zone health: Tier-1 probe no longer churns a full system-auditor spawn on 2 known, already-owned launchd deaths; ack ledger is a live, hand-edited SSOT with an explicit staleness rule (remove entry at DONE_VERIFIED) so this can never become a permanent blind spot | HEALTHY
