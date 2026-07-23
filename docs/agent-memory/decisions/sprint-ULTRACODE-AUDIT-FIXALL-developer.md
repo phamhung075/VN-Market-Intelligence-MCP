@@ -312,3 +312,21 @@ pm/task-archive.md Step 5.5 + Step6 pathspec extension; CANONICAL pointer in dev
 docs/WORK.md; a real mv/git-mv dry-run was the only way to avoid asserting an unverified number.
 **why-change:** Did not execute the one-time live backfill (mutating, out of this FIX's scope) —
 dry-run confirmed 202 eligible (git status/count unchanged), left as a follow-up PO-routed action.
+
+### STEP developer-S19 · developer · 2026-07-23T08:32:00Z
+**task-id:** UC-GCP-P1
+**what-done:** Rewrote commit-convention.md as single-file SSOT (140L); deleted 3 sibling docs;
+fixed 2 dangling `.claude/knowledge` path callers; deprecated commit-convention-audit.sh in place;
+collapsed tree-map.md's 4-file subtree to one node.
+**what-considered:**
+- Update audit script predicates+VOCAB vs deprecate: deprecated — 0 live invocation paths
+  (grep confirmed) and its digit-in-scope/Sprint-trailer heuristic no longer matches slug format.
+- Role-type vocab: admit explicitly (qa/ops/pm/po/arch/ba/incident) vs remap to chore(<role>/...)
+  — admit explicitly, matches dominant live usage (330+ commits use bare role types in git log).
+- Merge Commits pattern: dropped, not carried forward — 0/1000 recent commits use `merge task/`,
+  dead under the no-branches invariant; carrying forward a dead pattern reintroduces the doc rot.
+**why-decision:** Followed the architect-adjudicated RESCOPE text verbatim on the two explicitly-
+named dangling-path callers; scoped the "repoint every ref" instruction to those 2 + tree-map,
+not the ~15 historical handoffs/specs also matching the grep (would falsify archival record).
+**why-change:** No change from rescope plan. `/graphify docs --update --no-viz` hard-failed
+(no LLM API key in this session env) — flagged in WORK.md, not silently skipped or faked.

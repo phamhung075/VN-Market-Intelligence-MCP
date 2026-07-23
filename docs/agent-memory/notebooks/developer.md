@@ -1,20 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-23 | **Cycle:** UC-MDH-P4 (decision-journal-archive)
-
-## Session 2026-07-23 — UC-CCA-P4 (dev-team dispatched, cowork-cycle-agents-P4 RESCOPE, cross-service/) — REVIEW
-
-**Task:** Close claim-truth-gate (CCATO) coverage gaps on ungated public/MARKET publishers, claim-truth dimension ONLY. Board note scoped 5 files (fb weekly-recap/weekly-prediction, digest-predict daily/weekly/monthly); dispatch asked me to also verify unified-agent, market-watcher, alert-commander, news-scout, bctc-analyst, qa-responder as candidates.
-
-**Actions taken:** Added a CLAIM-TRUTH GATE pointer step before every verified-ungated MARKET/public emit: fb `weekly-recap.md` STEP 3e + `weekly-prediction.md` STEP 4e (non-real-time, mirrors `main.md` STEP 4d, added CLAIM-TRUTH GATE line to notebook/RETURN templates); digest-predict `weekly.md`/`daily.md`/`monthly.md` before each `send_telegram(channel="market")` (mirrors `daily-predict.md` P-5.5); `qa-responder/flow/cycle.md` Step 4b before its MARKET `answer_text` send (real-time time-sensitivity override, mirrors `alert-commander/stage-dispatch-log.md`). Updated `.claude/skills/claim-truth-gate/SKILL.md` frontmatter + Time-sensitivity override list to name qa-responder. No engine change (`claim-tool-map.json` dimension routing is agent-agnostic).
-
-**Verification:** grep confirmed exactly these gaps pre-edit (claim-truth-gate absent from all 6 target files) and confirmed unified-agent/chef.md, market-watcher/cycle.md, alert-commander/stage-dispatch-log.md already gated ahead of their MARKET sends (skip, no dup). news-scout and bctc-analyst grepped for `channel="market"`/public-doc writes — both only ever send to WORK/write internal analysis-briefs, not public/MARKET publishers (skip, noted, not gated). qa-responder frontmatter (`.claude/agents/qa-responder.md`) confirmed no Bash tool grant — SKILL.md's existing "No-Bash cowork subagent sessions" fallback already covers this generically, referenced inline. Post-edit grep re-confirms gate now sits immediately before each target's public/MARKET emit line.
-
-**Board:** `task_board.in_progress[UC-CCA-P4]` → `review`, `next_agent=qa`, `.head` synced (verify-committed context, branch=null), via `orch-apply.sh`.
-
-**Scope discipline:** claim-truth dimension only — no data-integrity/privacy/other-gate additions, no `apps/<service>/` or mcp-server code touched, no engine change to `narrative-truth-gate.sh`/`claim-tool-map.json`. +1 file (qa-responder/flow/cycle.md) + SKILL.md beyond the board row's literal 5-file note — flagged in decision journal as a verified, in-scope addition (same dimension, genuine live gap the dispatch explicitly asked me to check), not scope creep.
-
-Zone health: 6/6 verified-ungated public/MARKET publishers now gated on claim-truth; unified-agent/market-watcher/alert-commander/TNB backstop confirmed pre-existing gated; news-scout/bctc-analyst confirmed not public/MARKET publishers | HEALTHY
+**Last updated:** 2026-07-23 | **Cycle:** UC-GCP-P1 (commit-convention consolidation)
 
 ## Session 2026-07-23 — UC-MDH-P3 (dev-team BOUNDED-1 auto-pickup, cross-service/) — REVIEW
 
@@ -43,3 +29,17 @@ Zone health: `docs/agent-memory/` debris sweep — sessions/ 15/16 stale files a
 **Scope discipline:** File-ops-only, no orch-state.json write (jq reads only). Did NOT run the one-time live backfill (mutating, out of this FIX's scope) — left as a follow-up PO-routed action; only a read-only `--dry-run` was executed live.
 
 Zone health: sprint-journal archival promise now real — `docs/agent-memory/decisions/` 431 files, 202 backfill-eligible (verified dry, not moved), 24 correctly excluded as still-active, 205 have no orch record (left in place, reported) | HEALTHY
+
+## Session 2026-07-23 — UC-GCP-P1 (BOUNDED-1 auto-pickup, cross-service/) — REVIEW
+
+**Task:** git-ci-publish-P1 RESCOPE — consolidate the 4 commit-convention docs into ONE SSOT documenting the format actually in use, PLUS reconcile the 2 coupled surfaces (audit script, tree-map DAG) the original CONFIRMED proposal missed.
+
+**Actions taken:** Rewrote `docs/policies/commit-convention.md` as single-file SSOT (140L, was 265L/4 files) — slug task IDs, two-tier type vocab (behavior + role types, both empirically confirmed live via `git log`), `Task:`/`AC:` trailers required on feat/fix, `Sprint:` demoted optional. Carried forward the heredoc `git commit -m`-only/never-`-a` rule VERBATIM. Deleted the 3 sibling children. Fixed the 2 dangling `.claude/knowledge/commit-convention.md` path callers (audit script comment + 2026-05-17 audit brief). Deprecated `commit-convention-audit.sh` in place (banner header — confirmed zero live invocation paths) rather than rewriting its predicates. Collapsed tree-map.md's 4-file subtree to one node.
+
+**Verification:** Post-change grep confirms zero refs to any deleted sibling doc or the nonexistent knowledge path outside historical/archival docs (2026-07-12 audit brief itself, old handoffs/specs — left untouched, not live callers). Tree-map subtree points to the one surviving path, verified on-disk. `/graphify docs --update --no-viz` hard-failed (no LLM API key in session env) — flagged in WORK.md, not silently skipped.
+
+**Board:** `task_board.in_progress[UC-GCP-P1]` → `review`, `next_agent=qa`, `.head` synced, via `orch-apply.sh`.
+
+**Scope discipline:** Docs-only, no code/tests touched. Left ~15 historical handoffs/specs/reports referencing the old `.claude/knowledge/commit-convention.md` path untouched — archival record of past sprints, not live pointers; rewriting them would falsify history for zero operational benefit.
+
+Zone health: commit-convention SSOT consolidated 4→1 file, dangling refs zero, audit script deprecated (was silently asserting dead vocab), tree-map DAG intact | HEALTHY
