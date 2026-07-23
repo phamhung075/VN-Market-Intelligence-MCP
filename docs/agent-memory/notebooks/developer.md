@@ -1,20 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-23 | **Cycle:** UC-GCP-P1 (commit-convention consolidation)
-
-## Session 2026-07-23 — UC-MDH-P3 (dev-team BOUNDED-1 auto-pickup, cross-service/) — REVIEW
-
-**Task:** memory-docs-hygiene-P3 RESCOPE — no prune automation exists for `docs/agent-memory/` debris: sessions/ grows unbounded, health/ held 122 dead RemoteTrigger recheck probes (writer silent since 06-23), legacy `session-logs/` duplicates sessions/, root-level `scheduled-task-execution-*.md` orphaned since May.
-
-**Actions taken:** New `scripts/agents-flow/memory-prune-sweep.sh` — 4 idempotent file-ops sweeps (sessions/*.md >14d archive, health/team-tool-recheck-*.md >30d delete + one idempotent PO-decision payload, session-logs/ fold + rmdir, scheduled-task-execution-*.md relocate); never touches orch-state.json (file-ops only, SSOT-W1 boundary). Wired invocation + the FLOW-owns-signal_queue-row boundary into `code-janitor/flow/main.md` § Memory Prune Sweep. Extended `.retention.md` with the 4 new rules. CANONICAL pointer in `dev-standards.md` § Script Persistence.
-
-**Verification:** Paired `memory-prune-sweep.test.sh` — sandboxed via `AGENT_MEMORY_ROOT`/`MPS_SIGNALS_DIR` env overrides (never touches the live tree), 12/12 PASS covering all 4 sweeps + `*.md`-only/`*.log`-untouched guard + idempotent-rerun no-op. Ran the sweep live once against the real repo: 15 sessions archived, 46 stale health-recheck files deleted, 5 session-logs folded, 3 scheduled-task-execution files relocated, 1 PO payload written to `docs/signals/janitor-health-recheck-writer-retired-2026-07-23.json`; reran live to confirm clean no-op.
-
-**Board:** `task_board.in_progress[UC-MDH-P3]` → `review`, `next_agent=qa`, `.head` synced, via `orch-apply.sh`.
-
-**Scope discipline:** File-ops ONLY, no orch-state.json write from the script (constraint honored) — the `.signal_queue.rows[]` append is a documented FLOW-step responsibility, not executed here (no live janitor cycle running this task). Shell-only, no `.ts`/`.js` touched. Full graphify `--update` skipped (graph.json 2mo stale, disproportionate for a hygiene fix — same call as this sprint's UC-CDC-P4 cycles) — flagged for PO/router.
-
-Zone health: `docs/agent-memory/` debris sweep — sessions/ 15/16 stale files archived, health/ 46/122 dead-writer probes deleted, session-logs/ retired, scheduled-task-execution/ root debris relocated; PO decision payload pending pickup | HEALTHY
+**Last updated:** 2026-07-23 | **Cycle:** UC-GCP-P8 (stranded machine-state sweep)
 
 ## Session 2026-07-23 — UC-MDH-P4 (dev-team BOUNDED-1 auto-pickup, cross-service/) — REVIEW
 
@@ -43,3 +29,17 @@ Zone health: sprint-journal archival promise now real — `docs/agent-memory/dec
 **Scope discipline:** Docs-only, no code/tests touched. Left ~15 historical handoffs/specs/reports referencing the old `.claude/knowledge/commit-convention.md` path untouched — archival record of past sprints, not live pointers; rewriting them would falsify history for zero operational benefit.
 
 Zone health: commit-convention SSOT consolidated 4→1 file, dangling refs zero, audit script deprecated (was silently asserting dead vocab), tree-map DAG intact | HEALTHY
+
+## Session 2026-07-23 — UC-GCP-P8 (dev-team BOUNDED-1 auto-pickup, cross-service/) — REVIEW
+
+**Task:** git-ci-publish-P8 RESCOPE — no converging owner exists for the dirty-tree categories (notebooks/decisions/sessions/scripts strand past cycle end); rescope spec: bounded Step 4.3 on post-cycle.md running `stranded-state-sweep.sh --plan`, 3-bucket classify (AUTO-COMMIT/OWNED-ELSEWHERE/UNKNOWN), cap 20 paths, commit-mutex:main, coordinate with UC-GCP-P2 + SYSREMAKE-P2 RC-GITSTATE ownership.
+
+**Actions taken:** New `scripts/agents-flow/stranded-state-sweep.sh` — classifier-only (`--plan` emits JSON, makes zero git/orch-state writes itself, matching the memory-prune-sweep.sh script/flow split). Verified UC-GCP-P2 (DONE_VERIFIED — untracked signals.db/session-logs) and SYSREMAKE-P2 RC-GITSTATE (queued, owns `agent-memory/modules/*.json` + `coverage-state.json`) live before hardcoding the OWNED-ELSEWHERE skip-list, per coordination note. Wired as post-cycle.md § Step 4.3 (15L body, ≤20L rescope cap) between Step 4.2 and 4.5. CANONICAL pointer in `dev-standards.md`.
+
+**Verification:** Paired `stranded-state-sweep.test.sh` — 19/19 PASS, sandboxed git repo (seeded tracked placeholders per dir so git doesn't collapse fully-untracked dirs into one porcelain line) — covers all 3 buckets, the 24h age gate, `D`-deletion age-exemption, sessions `*.md`-only gate, NUL-safe space-path parsing (live repo has one), the 20-path execution cap, dedup-skip true/false, and bad-usage exit 2. Dry-run against the live repo (`--plan`, read-only, no mutation) confirmed correct classification of the real 57-entry dirty tree: 9 owned-elsewhere, 2 auto-commit-eligible, 18 unknown surfaced (capped at 20 total considered).
+
+**Board:** `task_board.in_progress[UC-GCP-P8]` → `review`, `next_agent=qa`, `.head` synced, via `orch-apply.sh`.
+
+**Scope discipline:** Script is classifier-only per the rescope's script/flow split — the flow (not this developer cycle) performs the actual `git add`/commit and `.signal_queue.rows[]` write on its next live tick; no live sweep-commit executed here (would be acting outside this FIX's own scope, on a peer-owned dirty tree). Fixed a self-caught dedup bug pre-ship: the unknown-signal summary originally front-loaded the dynamic path count, which would break `startswith`-prefix dedup every tick — moved the count to a trailing `(N)` suffix.
+
+Zone health: dev-team post-cycle tick now has a converging owner for stranded machine-state — 3-bucket classify verified against the live 57-entry dirty tree, RC-GITSTATE/UC-GCP-P2 boundaries respected, cap+dedup+mutex all test-proven | HEALTHY

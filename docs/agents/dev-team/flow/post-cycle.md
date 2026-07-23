@@ -1,8 +1,10 @@
-<!-- size-justification: 185L (65L overage) — Step 4/4.2/4.5/4.8/4.9 sub-flow: post-execution
+<!-- size-justification: 206L (86L overage) — Step 4/4.2/4.3/4.5/4.8/4.9 sub-flow: post-execution
      checks, cold-eviction backstop (now CANON-SCRIPT spec pointer to dev-team-tick-preflight.sh
      Step 5.5 — task UC-DTL-P2, 2026-07-15), compact-checkpoint, push-backstop fallback, and
      cycle-elapsed announce are all distinct load-bearing sequential steps; splitting fragments
-     the post-cycle contract across files. -->
+     the post-cycle contract across files. UC-GCP-P8 2026-07-23: Step 4.3 stranded machine-state
+     sweep added (CANON-SCRIPT pointer to scripts/agents-flow/stranded-state-sweep.sh --plan,
+     bounded to <=20 body lines per the rescope) (+21L). -->
 # Dev Team — Step 4 & 4.5: Scan + Compact Checkpoint
 
 **Parent flow:** `docs/agents/dev-team/flow/main.md` (Step 4 / 4.5 dispatcher)
@@ -94,6 +96,27 @@ fi
 **Mutex contract:** claim `commit-mutex:main` (TTL=120s) before calling script; release after git commit.  
 **Invariant (HSC-6):** `done_verified[]` never grows beyond 5 items in hot file after this hook is active.  
 Script exit non-zero → log BUG-channel Telegram; skip commit; continue to Step 4.5 (do not block compact).
+
+---
+
+## Step 4.3 — Stranded Machine-State Sweep (UC-GCP-P8)
+
+**CANON-SCRIPT:** classification lives in `scripts/agents-flow/stranded-state-sweep.sh --plan` (AUTO-COMMIT / OWNED-ELSEWHERE / UNKNOWN — spec: `docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#git-ci-publish-P8`). Run after Step 4.2, before Step 4.5.
+```bash
+PLAN="$(bash "$PROJECT_ROOT/scripts/agents-flow/stranded-state-sweep.sh" --plan)" && RC=0 || RC=$?
+if [ "$RC" -ne 0 ]; then
+  send_telegram(channel="bug", message="[dev-team] stranded-state-sweep FAILED rc=$RC — skip, retry next tick")
+else
+  # task_claim(task_kind="commit-mutex", task_id="commit-mutex:main", owner_agent="dev-team", ttl_seconds=120)
+  echo "$PLAN" | jq -c '.auto_commit[]?' | while read -r c; do
+    eval "git add -- $(echo "$c" | jq -r '.paths | map(@sh) | join(" ")')" && git commit -m "$(echo "$c" | jq -r '.commit_message')"
+  done
+  # task_release(task_id: "commit-mutex:main")
+  echo "$PLAN" | jq -c '.signals[]? | select(.dedup_skip==false)' | while read -r s; do
+    # WRITE via .claude/skills/signal-dashboard/SKILL.md § WRITE — from="dev-team", to/type/summary/payload = s.to/s.type/s.summary/s.payload
+  done
+fi
+```
 
 ---
 

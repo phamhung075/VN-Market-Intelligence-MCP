@@ -1,6 +1,6 @@
 # Developer Standards
 
-<!-- size-justification: 140L — unified developer reference: code search tools, test patterns, DDD rules, TypeScript conventions, naming. All read together at sprint start to set context; splitting into tool-guide + test-patterns + naming-rules fragments the unified "how we code" standard. SCRIPT-PERSIST 2026-06-07: Script Persistence section incl. maintenance clause (+15L, user directive). SYSREMAKE-P2-DEVTEAM-BACKLOG-PICKUP-BOUNDED1 2026-07-04: CANONICAL pointer for the dev-team idle-capacity backlog pickup scripts (+11L). PUSH-AUTONOMY-1 2026-07-14: Autonomous Push Gate section (+16L, user directive — push on 100% green, no user action, post-push real-data verify task). FIX-CMH-OBSOLETE-FILE-CLEANUP 2026-07-20: CANONICAL pointer for scripts/audits/clean-obsolete-files.sh (+8L). BLOCK-PUSH-CRON-AUDIT-BATCH-NO-QA 2026-07-22 (qa): pinned the "targeted/merge-gate suite" reading against the standing FIX-MCP-SUITE-HEALTH-BASELINE full-suite red so it stops being re-litigated per push (+3L). UC-MDH-P3 2026-07-23: CANONICAL pointer for scripts/agents-flow/memory-prune-sweep.sh (+14L). UC-MDH-P4 2026-07-23: CANONICAL pointer for scripts/agents-flow/decision-journal-archive.sh (+15L). -->
+<!-- size-justification: 140L — unified developer reference: code search tools, test patterns, DDD rules, TypeScript conventions, naming. All read together at sprint start to set context; splitting into tool-guide + test-patterns + naming-rules fragments the unified "how we code" standard. SCRIPT-PERSIST 2026-06-07: Script Persistence section incl. maintenance clause (+15L, user directive). SYSREMAKE-P2-DEVTEAM-BACKLOG-PICKUP-BOUNDED1 2026-07-04: CANONICAL pointer for the dev-team idle-capacity backlog pickup scripts (+11L). PUSH-AUTONOMY-1 2026-07-14: Autonomous Push Gate section (+16L, user directive — push on 100% green, no user action, post-push real-data verify task). FIX-CMH-OBSOLETE-FILE-CLEANUP 2026-07-20: CANONICAL pointer for scripts/audits/clean-obsolete-files.sh (+8L). BLOCK-PUSH-CRON-AUDIT-BATCH-NO-QA 2026-07-22 (qa): pinned the "targeted/merge-gate suite" reading against the standing FIX-MCP-SUITE-HEALTH-BASELINE full-suite red so it stops being re-litigated per push (+3L). UC-MDH-P3 2026-07-23: CANONICAL pointer for scripts/agents-flow/memory-prune-sweep.sh (+14L). UC-MDH-P4 2026-07-23: CANONICAL pointer for scripts/agents-flow/decision-journal-archive.sh (+15L). UC-GCP-P8 2026-07-23: CANONICAL pointer for scripts/agents-flow/stranded-state-sweep.sh (+13L). -->
 
 ## Script Persistence — scripts/, never /tmp
 
@@ -54,6 +54,21 @@ sprint id via LONGEST-match, never bare prefix glob — handles the live
 supersedes the decisions/ leg of backlog row TE-T33. File-ops-only (jq reads orch-state, never
 writes it). Owning flow: `docs/agents/pm/flow/task-archive.md` § Step 5.5. Test:
 `scripts/agents-flow/decision-journal-archive.test.sh`.
+
+**CANONICAL: Stranded machine-state sweep (UC-GCP-P8, git-ci-publish-P8)**
+```bash
+bash scripts/agents-flow/stranded-state-sweep.sh --plan
+```
+Classifier-only — emits a JSON commit-plan to stdout, makes NO git/orch-state writes itself.
+Classifies `git status --porcelain` into AUTO-COMMIT (notebooks/decisions -> `memory`, `sessions/*.md`
+-> `sessions`, `scripts/*` -> `scripts`; mtime >24h gate, deletions exempt; `agent-memory/modules/*.json`
+excluded — owned by queued SYSREMAKE-P2 RC-GITSTATE), OWNED-ELSEWHERE (silent skip — `docs/signals/**`,
+orch-state.json, cowork-schedule.json, coverage-state.json, `agent-memory/modules/**`,
+`auditor-*-last-healthy.json`), and UNKNOWN (aggregated, dedup-checked signal to po). Capped at 20 paths
+acted on per run. Owning flow: `docs/agents/dev-team/flow/post-cycle.md` § Step 4.3 — the FLOW step
+(not the script) performs the `git add`/`git commit` (commit-mutex:main) and the
+`.signal_queue.rows[]` write via `.claude/skills/signal-dashboard/SKILL.md`. Test:
+`scripts/agents-flow/stranded-state-sweep.test.sh`.
 
 **CANONICAL: OHLCV unit contamination repair (CONTAM-6)**
 ```bash

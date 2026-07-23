@@ -330,3 +330,18 @@ named dangling-path callers; scoped the "repoint every ref" instruction to those
 not the ~15 historical handoffs/specs also matching the grep (would falsify archival record).
 **why-change:** No change from rescope plan. `/graphify docs --update --no-viz` hard-failed
 (no LLM API key in this session env) — flagged in WORK.md, not silently skipped or faked.
+
+### STEP developer-S20 · developer · 2026-07-23T07:08:15Z
+**task-id:** UC-GCP-P8
+**what-done:** New scripts/agents-flow/stranded-state-sweep.sh (classifier-only, `--plan` JSON to
+stdout) + paired .test.sh (19/19 PASS, sandboxed); wired as post-cycle.md Step 4.3 (15L body);
+CANONICAL pointer in dev-standards.md.
+**what-considered:**
+- "one commit per category" (multi-agent notebook batch) vs per-agent `chore(memory/<agent>)`:
+  used `chore(memory/sweep)` scope — rescope's execution contract is explicit (ONE commit/category,
+  cap 20), distinct from the routine end-of-cycle self-commit convention it would otherwise collide with.
+- Dedup signal summary: moved the dynamic path-count out of the prefix (now a trailing "(N)")
+  after confirming a front-loaded count would break startswith-prefix dedup every tick.
+**why-decision:** Verified UC-GCP-P2 (DONE_VERIFIED) + SYSREMAKE-P2 RC-GITSTATE (queued, not yet
+minted) ownership live before hardcoding the OWNED-ELSEWHERE skip-list, per coordination note.
+**why-change:** No change from rescope plan.
