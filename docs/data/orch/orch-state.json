@@ -387,11 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "updated_by": "dev-team",
-    "updated_at": "2026-07-22T23:52:55Z"
+    "status": "in_progress",
+    "active_task_id": "UC-CDC-P4",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of UC-CDC-P4 — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-23T00:19:41Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -4406,25 +4407,6 @@
         "created_at": "2026-07-13T19:31:11Z",
         "created_by": "po",
         "next_agent": "ba",
-        "priority_bumped_from": "P2",
-        "priority_bumped_at": "2026-07-17T04:54:03Z",
-        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17"
-      },
-      {
-        "id": "UC-CDC-P4",
-        "type": "FIX",
-        "title": "Headroom-gated fan-out cap in spawn-fanout.md Step 5 (bounded batcher, thresholds in cadence-policy.json)",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "RESCOPE",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#cowork-dispatcher-cron-P4",
-        "note": "SCOPE=verifier Rescope note. Replace unbounded fan-out with a bounded batcher: thresholds in cadence-policy.json _fanout (no hardcode); gate on host_headroom_mb + load/core; batch semantics (fire batch as one block, wait for completions or re-probe, hard cap batch_wait_max_seconds); guaranteed slots fill batch1. Add carve-out to agent-chaining-protocol Background Spawn Mandate.",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
         "priority_bumped_from": "P2",
         "priority_bumped_at": "2026-07-17T04:54:03Z",
         "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17"
@@ -13512,9 +13494,35 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-22T23:48:13Z",
+    "last_triaged_at": "2026-07-23T00:19:41Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "UC-CDC-P4",
+        "type": "FIX",
+        "title": "Headroom-gated fan-out cap in spawn-fanout.md Step 5 (bounded batcher, thresholds in cadence-policy.json)",
+        "status": "IN_PROGRESS",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "RESCOPE",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#cowork-dispatcher-cron-P4",
+        "note": "SCOPE=verifier Rescope note. Replace unbounded fan-out with a bounded batcher: thresholds in cadence-policy.json _fanout (no hardcode); gate on host_headroom_mb + load/core; batch semantics (fire batch as one block, wait for completions or re-probe, hard cap batch_wait_max_seconds); guaranteed slots fill batch1. Add carve-out to agent-chaining-protocol Background Spawn Mandate.",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "priority_bumped_from": "P2",
+        "priority_bumped_at": "2026-07-17T04:54:03Z",
+        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
+        "promoted_at": "2026-07-23T00:19:41Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "updated_at": "2026-07-23T00:19:42Z",
+        "claimed_at": "2026-07-23T00:19:41Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
