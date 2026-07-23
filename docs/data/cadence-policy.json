@@ -2,6 +2,14 @@
   "_ssot": "docs/data/cadence-policy.json",
   "_description": "DWF-PHASE1 cadence policy table. First-match wins (array order). interval_minutes: null = suppress. guaranteed=true slots bypass this table entirely (cron governs).",
   "_staleness_threshold_minutes": 20,
+  "_fanout": {
+    "_description": "UC-CDC-P4 — spawn-fanout.md Step 5.1 headroom-gated batch cap. max_parallel_default/degraded bound concurrent Agent spawns per batch; headroom_floor_mb/load_per_core_factor decide the default->degraded switch; batch_wait_max_seconds bounds the inter-batch wait (never stalls past the 600s per-work-item token TTL or the 15-min tick).",
+    "max_parallel_default": 4,
+    "max_parallel_degraded": 2,
+    "headroom_floor_mb": 1500,
+    "load_per_core_factor": 2,
+    "batch_wait_max_seconds": 120
+  },
   "policies": [
     { "policy_id": "gatherer-standard", "calendar_status": "open",     "signal_backlog_tier": "high",   "volatility_tier": "*",   "interval_minutes": 30 },
     { "policy_id": "gatherer-standard", "calendar_status": "open",     "signal_backlog_tier": "medium", "volatility_tier": "*",   "interval_minutes": 60 },

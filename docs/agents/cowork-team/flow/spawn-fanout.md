@@ -1,7 +1,13 @@
-<!-- size-justification: 108L — Step 5: parallel fan-out with published-marker gate contract. Child of main.md. BGFAN-1 2026-06-07: run_in_background=true added to spawn template (+3L). FIX-COWORK-STEP5-BACKSTOP-TRUSTS-STALE-TRIGGER-STATUS 2026-07-08: Step 5.0 discriminator re-keyed trigger_status->_superseded_by, comment block expanded (+4L). Pre-existing drift note: header count was already stale vs live line count before this edit (untouched, out of this task's scope). -->
-<!-- BGFAN-1: ALL Agent spawns in this file MUST use run_in_background=true. Cowork agents are independent → genuine parallel background fan-out. Canonical rule → docs/protocols/agent-chaining-protocol.md § Background Spawn Mandate -->
+<!-- size-justification: 227L — Step 5: blind guard, published-marker gate contract, and the
+     UC-CDC-P4 headroom-gated bounded batcher (Step 5.1 MAX_PARALLEL computation + Step 5.2
+     batch fan-out with inter-batch wait) are one tightly sequential dispatch unit, child of
+     main.md. -->
+<!-- BGFAN-1: every Agent spawn in this file MUST use run_in_background=true; UC-CDC-P4 bounds
+     CONCURRENCY ACROSS batches via Step 5.1/5.2, it does not relax background=true within a
+     batch. Canonical rule + batcher carve-out → docs/protocols/agent-chaining-protocol.md
+     § Background Spawn Mandate -->
 
-## Step 5 — Parallel fan-out
+## Step 5 — Bounded parallel fan-out (headroom-gated batcher, UC-CDC-P4)
 
 ## Step 5.0 — Blind guard (second enforcement point)
 
@@ -111,9 +117,64 @@ Where this gate lives: inside each spawned agent's own flow, co-located with `se
 The dispatcher (this file) does NOT set published markers — the publishing agent is responsible.
 See `docs/protocols/dwf-ops-runbook.md` § Published Marker Interaction for ops context.
 
-Fire **all** WON_SLOTS simultaneously in a single Agent tool message block. No sequential gating.
+## Step 5.1 — Compute MAX_PARALLEL (headroom-gated batch cap, UC-CDC-P4)
 
-For each slot in WON_SLOTS:
+<!-- UC-CDC-P4 (2026-07-23): replaces the prior "fire all WON_SLOTS in one message block, no
+     sequential gating" line. Rationale + full design: docs/architecture-briefs/
+     2026-07-12-ultracode-workflow-improvement-audit.md #cowork-dispatcher-cron-P4. Thresholds
+     are SSOT in docs/data/cadence-policy.json `_fanout` — never hardcoded here. -->
+
+```
+# Load fan-out thresholds — self-contained read (do not assume Step 4.2's POLICY_OBJ is still
+# in scope; this step must degrade safely even if it runs in isolation).
+POLICY_FILE = "docs/data/cadence-policy.json"   # same SSOT as Step 4.2
+
+if POLICY_FILE is missing or fails JSON parse or its `_fanout` key is missing:
+  FANOUT_POLICY = { max_parallel_default: 4, max_parallel_degraded: 2, headroom_floor_mb: 1500,
+                     load_per_core_factor: 2, batch_wait_max_seconds: 120 }
+  log "[cowork-team] WARN: cadence-policy.json _fanout missing/unreadable — using in-line safe defaults"
+else:
+  FANOUT_POLICY = JSON.parse(readFile(POLICY_FILE))._fanout
+
+# HEADROOM — reuse PRESSURE_STATE / PRESSURE_MODE set at Step 4.2 (pressure-read.md, same tick,
+# same session). If PRESSURE_MODE == "legacy" (pressure-state.json missing/stale/malformed —
+# Step 4.2's own isStale gate already fired), headroom is unknown → fail-safe degraded, per the
+# same NFR-P1-3 "never worse than today" posture Step 4.2 already applies.
+if PRESSURE_MODE == "adaptive" and PRESSURE_STATE.host_headroom_mb is a number:
+  HEADROOM_MB = PRESSURE_STATE.host_headroom_mb
+else:
+  HEADROOM_MB = null   # unknown → forces the degraded branch below
+
+# LOAD / CORES — dispatcher-level bash (proven available: scripts/agents-flow/
+# cowork-tick-preflight.sh already runs bash+jq+curl at this same dispatch step).
+LOAD_1MIN = bash: `uptime | awk -F'load average' '{print $2}' | awk -F',' '{gsub(/[^0-9.]/,"",$1); print $1}'`
+CORES     = bash: `sysctl -n hw.ncpu 2>/dev/null || nproc`   # macOS dev host; nproc fallback for Linux containers
+
+DEGRADED = (HEADROOM_MB == null) OR (HEADROOM_MB < FANOUT_POLICY.headroom_floor_mb) \
+           OR (LOAD_1MIN > FANOUT_POLICY.load_per_core_factor * CORES)
+
+MAX_PARALLEL = FANOUT_POLICY.max_parallel_degraded if DEGRADED else FANOUT_POLICY.max_parallel_default
+
+log "[cowork-team] fan-out gate — headroom_mb=" + (HEADROOM_MB ?? "unknown") + " load1m=" + LOAD_1MIN + \
+    " cores=" + CORES + " degraded=" + DEGRADED + " max_parallel=" + MAX_PARALLEL
+```
+
+## Step 5.2 — Bounded batch fan-out (UC-CDC-P4)
+
+Guaranteed slots fill batch 1 first — never delayed behind non-guaranteed work:
+
+```
+ORDERED_SLOTS = [s for s in WON_SLOTS if s.guaranteed == true] + [s for s in WON_SLOTS if s.guaranteed != true]
+BATCHES = chunk(ORDERED_SLOTS, MAX_PARALLEL)   # e.g. MAX_PARALLEL=4 → groups of up to 4 slots
+```
+
+For each batch, in order:
+
+**Fire the whole batch as ONE Agent tool message block** (unchanged BGFAN-1 semantics — every
+spawn in the batch still uses `run_in_background=true`; batching bounds concurrency ACROSS
+batches, not within one):
+
+For each slot in the current batch:
 
 ```
 subagent_type      : <slot.agent>
@@ -127,7 +188,7 @@ Track spawn results: success (no error) vs failure (agent tool returns error).
 **On spawn failure for any slot:**
 - Log to `errors[]` in telemetry (Step 6).
 - `send_telegram(channel="work", message="[cowork-team] spawn failed: <slot.slot_id> — <one-line error>")`
-- Continue remaining spawns. R4: one slot failure never blocks others.
+- Continue remaining spawns in this batch and subsequent batches. R4: one slot failure never blocks others.
 
 **On flow path missing** (slot.flow_path does not exist as a file — verify before spawn):
 - `send_telegram(channel="work", message="[cowork-team] flow missing: <slot.slot_id> → <slot.flow_path>")`
@@ -146,3 +207,27 @@ finally:
   # ok=false is acceptable (already expired, stolen, or crashed) — ignore release errors
   # NOTE: key uses slot.slot_id (suffix-free) matching the claim in Step 4.6
 ```
+
+**Inter-batch wait (REQUIRED — naive back-to-back batching of `run_in_background=true` spawns is
+a no-op, since each spawn call returns immediately; without an explicit wait, batching would not
+actually bound peak concurrency).** Skip this wait after the LAST batch — proceed straight to
+Step 5b.
+
+```
+elapsed = 0
+while elapsed < FANOUT_POLICY.batch_wait_max_seconds:
+  if every spawn in this batch has returned its task notification (genuine completion): break
+  re-probe LOAD_1MIN (same `uptime` command as Step 5.1)
+  if LOAD_1MIN <= FANOUT_POLICY.load_per_core_factor * CORES: break
+  sleep 5s; elapsed += 5
+
+if elapsed >= FANOUT_POLICY.batch_wait_max_seconds:
+  log "[cowork-team] batch wait timeout (" + FANOUT_POLICY.batch_wait_max_seconds + "s) — continuing at degraded cap"
+  send_telegram(channel="work", message="[cowork-team] fan-out batch wait timeout — continuing remaining slots at max_parallel_degraded")
+  MAX_PARALLEL = FANOUT_POLICY.max_parallel_degraded
+  BATCHES = chunk(remaining not-yet-fired slots, MAX_PARALLEL)   # re-chunk only what's left
+```
+
+The `batch_wait_max_seconds` cap (default 120s) is well inside both the 600s per-work-item token
+TTL (Step 4.6) and the 15-min tick cadence — a full timeout on every batch still finishes the
+tick with room to spare. Step 5.0 blind guard above is unchanged.

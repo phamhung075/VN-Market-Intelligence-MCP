@@ -1,6 +1,6 @@
 # Agent Chaining Protocol
 
-<!-- size-justification: 221L — architect-managed SSOT: pipeline maps + return templates + parallel spawn rules + cross-team signal directory + DJ-GATE-1 journal gate are read as one unit by every chaining-related agent (PM, architect, dev-team). Excluded from split waves per zone-enforcement-and-split-policy brief § Excluded. -->
+<!-- size-justification: 268L — architect-managed SSOT: pipeline maps + return templates + parallel spawn rules (incl. the UC-CDC-P4 bounded-batcher carve-out) + cross-team signal directory + DJ-GATE-1 journal gate are read as one unit by every chaining-related agent (PM, architect, dev-team). Excluded from split waves per zone-enforcement-and-split-policy brief § Excluded. -->
 
 **title:** Agent Chaining Protocol
 **description:** Main terminal as permanent switch — how agents chain, pipeline maps, return templates, parallel spawn rules, and fixer ceiling.
@@ -84,6 +84,18 @@ Dispatcher flows: `docs/agents/dev-team/flow/main.md`, `drain-signals.md`, `drai
 - Gated tasks (dev-team po→ba→architect→pm→dev→qa chain) → background-spawn each stage, then WAIT for its
   task notification before spawning the next gate. The dispatcher serializes on completion, not on the call.
 - Cowork agents are independent of each other → genuinely parallel background fan-out is desired.
+
+**Bounded-batcher exception (UC-CDC-P4, 2026-07-23):** cowork's cron-tick fan-out
+(`docs/agents/cowork-team/flow/spawn-fanout.md` Step 5) is independent-task fan-out per the rule
+above, but bounds CONCURRENCY ACROSS batches for host-headroom safety (memory
+`feedback_overparallel_fanout_host_starvation` — a load-205 incident from unbounded fan-out).
+Independent cowork tasks fan out in headroom-bounded batches: within one batch, still ONE Agent
+tool message block with every spawn `run_in_background=true` (this mandate is unchanged inside a
+batch); ACROSS batches, the dispatcher waits (bounded by `batch_wait_max_seconds`, SSOT
+`docs/data/cadence-policy.json` `_fanout`) before firing the next batch. Guaranteed slots always
+fill batch 1. This is the ONLY sanctioned exception to "background-spawn ALL concurrently in one
+message block" for independent tasks — do not generalize it to other dispatcher flows without an
+equivalent architect-reviewed rescope.
 
 **Commit-mutex serialization is preserved.** Parallel background workers still serialize commits via
 `task_claim(task_kind:"commit-mutex")` — background spawn does not relax the concurrent-commit-race protection
