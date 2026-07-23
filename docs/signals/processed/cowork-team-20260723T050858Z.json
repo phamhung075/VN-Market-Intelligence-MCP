@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260723T050858Z",
+    "matched_slots": [
+      "news-scout-sentiment"
+    ],
+    "won_slots": [
+      "news-scout-sentiment"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "news-scout-sentiment": "cadence"
+    },
+    "cadence_minutes": {
+      "news-scout-sentiment": "240"
+    },
+    "last_fired_timestamp": "2026-07-23T05:08:27Z",
+    "last_fired_slots": [
+      "news-scout-sentiment"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "05:00",
+    "leader_lock": "acquired",
+    "dev_head": "idle",
+    "devq": 0,
+    "signal_backlog": 57,
+    "note": "WORK path from preflight; 3 NEW signal_queue rows all to=po (2x agent-father notebook prune/bloat breach, 1x code-janitor retire-vs-replace) left NEW — not consumed by this tick per recipient-keyed ACK. cycle-snapshot written as 05:07 but promoter keys off tick_id 05:00 (UC-SDF-P2 mismatch) -> cycle_snapshot_promoted=false."
+  },
+  "priority": "low",
+  "createdAt": "20260723T050858Z",
+  "_processed": {
+    "fingerprint": "715ab60360e653c04ad62812948d8030de266f9c31803eae5b63009565e845f9",
+    "processedAt": "2026-07-23T05:16:24Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

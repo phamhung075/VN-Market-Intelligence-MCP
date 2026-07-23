@@ -1,0 +1,21 @@
+{
+  "from": "context-bloat-backstop-hook",
+  "to": "claude-manager-helper",
+  "type": "context_bloat_breach",
+  "priority": "high",
+  "createdAt": "2026-07-23T04:53:49Z",
+  "payload": {
+    "file": "docs/agent-memory/notebooks/agent-father.md",
+    "line_count": 303,
+    "cap": 200,
+    "class": "agent-notebook",
+    "overage": 103,
+    "action_required": "prune_or_split"
+  },
+  "_processed": {
+    "fingerprint": "00c882b031d7cbae740d27963fb432e576a560a897d087d0863821fdf7609ae8",
+    "processedAt": "2026-07-23T05:16:24Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
