@@ -3,16 +3,27 @@
   "signal_type": "bctc_signal",
   "quarter": "Q1-2026",
   "mode": "routine",
-  "product": "Securities brokerage, investment banking, proprietary trading",
-  "customer": "Retail and institutional equity investors, corporate issuers (underwriting/advisory)",
-  "ops": "Sector-calc PE 14.6x PREMIUM +15% vs sector 12.7x, PB PREMIUM +36%, ROE 14.0% above sector median 10.0% — FAIR valuation on EY spread. No full BCTC extraction available yet (\"Chua co du lieu\") — sector ratios only",
-  "mgmt": "No new BCTC filing since 2026-06-07; no legal/insider flags this cycle",
-  "esc_status": "Rotation touch — no ESC anchor-ticker forensic pass run (sector-comparison only).",
-  "cycle": "c115",
-  "generated_at": "2026-07-23T15:10:00Z",
+  "beat_miss": null,
+  "product": "Môi giới chứng khoán, cho vay ký quỹ, ngân hàng đầu tư, tự doanh",
+  "customer": "Nhà đầu tư cá nhân và tổ chức giao dịch cổ phiếu VN",
+  "ops": "BCTC gốc chưa có dữ liệu (Chưa có dữ liệu BCTC) — chỉ có tỷ lệ so sánh ngành: PE 14.6x (PREMIUM +15% vs median 12.7x), PB PREMIUM +36%, ROE 14.0% (trên median 10.0%)",
+  "mgmt": "Không có tín hiệu giao dịch nội bộ đáng kể; Kinh Dịch: Quẻ Phệ Hạp (21)/THẬN TRỌNG tích cực, THUẬN LỢI, độ tin cậy 37-38%",
+  "fundamentals": {
+    "data_status": "Chưa có dữ liệu BCTC — blocked cluster (unchanged)",
+    "sector_pe": 14.6,
+    "sector_pe_verdict": "PREMIUM",
+    "sector_roe_pct": 14
+  },
+  "esc_gate": {
+    "note": "ESC gate not evaluated — no BCTC extraction available"
+  },
+  "legal_risk": "none flagged this cycle",
+  "cycle_id": "20260723-2100",
+  "source": "bctc-analyst-slot-3",
+  "generated_at": "2026-07-23T21:15:00Z",
   "_processed": {
-    "fingerprint": "a97f73bb9d0b7ac8ce3a42c08efc00b1fdc7cb8d0196d3f3406e29f4b9018ce7",
-    "processedAt": "2026-07-23T15:17:30Z",
+    "fingerprint": "3a1ee83bfb27d11996cf490f29b228f6d51e550679ada0b75537d925d7e6bdb4",
+    "processedAt": "2026-07-23T21:14:42Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

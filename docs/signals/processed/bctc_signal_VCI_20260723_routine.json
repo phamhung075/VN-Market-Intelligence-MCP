@@ -3,16 +3,27 @@
   "signal_type": "bctc_signal",
   "quarter": "Q1-2026",
   "mode": "routine",
-  "product": "Securities brokerage, investment banking, wealth management",
-  "customer": "Retail and institutional equity investors",
-  "ops": "Sector-calc PE 21.3x PREMIUM +68% vs sector 12.7x (highest in peer set), PB PREMIUM +30%, ROE 8.7% below sector median 11.3% — AVOID valuation verdict (EY spread negative). No full BCTC extraction available yet (\"Chua co du lieu\") — sector ratios only",
-  "mgmt": "No new BCTC filing since 2026-06-07; AVOID verdict unchanged vs prior cycles",
-  "esc_status": "Rotation touch — no ESC anchor-ticker forensic pass run (sector-comparison only).",
-  "cycle": "c115",
-  "generated_at": "2026-07-23T15:10:00Z",
+  "beat_miss": null,
+  "product": "Môi giới chứng khoán, ngân hàng đầu tư, quản lý tài sản",
+  "customer": "Nhà đầu tư cá nhân, tổ chức và khách hàng IB doanh nghiệp",
+  "ops": "BCTC gốc chưa có dữ liệu (Chưa có dữ liệu BCTC) — chỉ có tỷ lệ so sánh ngành: PE 21.3x (PREMIUM +68% vs median 12.7x, cao nhất nhóm peer), PB PREMIUM +30%, ROE 8.7% (dưới median 11.3%) — định giá AVOID (P/E cao, sinh lời dưới trung vị)",
+  "mgmt": "Không có tín hiệu giao dịch nội bộ đáng kể; Kinh Dịch: Quẻ Tấn (35)/GIỮ tích cực, THUẬN LỢI, độ tin cậy 100%",
+  "fundamentals": {
+    "data_status": "Chưa có dữ liệu BCTC — blocked cluster (unchanged)",
+    "sector_pe": 21.3,
+    "sector_pe_verdict": "PREMIUM/AVOID",
+    "sector_roe_pct": 8.7
+  },
+  "esc_gate": {
+    "note": "ESC gate not evaluated — no BCTC extraction available"
+  },
+  "legal_risk": "none flagged this cycle",
+  "cycle_id": "20260723-2100",
+  "source": "bctc-analyst-slot-3",
+  "generated_at": "2026-07-23T21:15:00Z",
   "_processed": {
-    "fingerprint": "427445cd136235c6e7fd335afb4be9631051e6ae0ddfd48e6e9a7eb4beb410a4",
-    "processedAt": "2026-07-23T15:17:30Z",
+    "fingerprint": "163c9842dfaec14c403754b1b93d5a85a0cd6107e380e7129b84c0b2f7bf667f",
+    "processedAt": "2026-07-23T21:14:42Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
