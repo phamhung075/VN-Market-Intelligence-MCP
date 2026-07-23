@@ -55,3 +55,13 @@
 - Sign off + lane-move in one atomic orch-apply transform (chosen).
 **why-decision:** Re-verified at source, not from prose: qa_reverify_20260723=PASS (both QA passes clean); probe.sh:86 carries the `|| { echo ...; BASELINE_PCT="0"; }` guard matching :31/:66/:71/:92; git show 685285a7c = single-file probe.sh 1+/1-; forbidden files (tier1-probe.md logic, verify-a30-mcp-memory-reclamation.sh, emit-audit-signal.sh, app code) clean at HEAD + working-tree. Matched the FIX-COMMIT-PATH supervised-close precedent shape exactly.
 **why-change:** no change from plan — the only deviation was del(.next_agent) after Zod rejected the initial null (settle semantics unchanged).
+
+### STEP po-S6 · po · 2026-07-23T05:16:51Z
+**task-id:** FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE
+**what-done:** Answered coordinator epic-closeout follow-up on the wrapper's named-but-undelivered A-12/A-04/A-13 debounce scope item — confirmed (b) it lives on an existing row, and made the linkage durable with a conservation-neutral cross-ref field on the SPIKE.
+**what-considered:**
+- (a) delivered in-fix — REJECTED: git show 685285a7c + brief lines 227-229 explicitly deferred A-12/A-04/A-13 'for a future pass; not addressed here'; probe.sh:48 still flags a single CURL_ERR with no N-consecutive debounce.
+- (c) mint a new tracking row — REJECTED: prior-art SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP already homes it (title names A-12/A-04/A-13, 11 origin CURL_ERR signals, architect-owned, next_agent set = live auto-revisit); a mint = the duplicate churn the wrapper fought.
+- (b) name it + document the linkage (chosen) — coordinator had dismissed the SPIKE as 'unrelated' precisely because the wrapper->SPIKE link was undocumented.
+**why-decision:** The scope item is NOT orphaned — it has an owner + next_agent + verification_gate on the SPIKE. Root-cause of the closeout ambiguity was the missing documented linkage, so I added scope_item_home_ref_20260723 on the SPIKE (via orch-apply, uncommitted) so this exact re-raise can't recur. No new row (feedback_epic_wrapper_closeout_gap + prior-art check).
+**why-change:** goes one step beyond the read-only 'name it' the coordinator asked for, to definitively retire the recurring epic-closeout-orphan class rather than leave the linkage implicit.
