@@ -13,6 +13,24 @@
 
 Only execute if `WON_SLOTS` is non-empty (skip on silent-exit path).
 
+**Implementation → `scripts/agents-flow/cowork-write-last-fired.js`** (added 2026-07-23). Run it; do
+NOT hand-roll this step inline. Two confirmed corruptions of `cowork-schedule.json` came from
+ad-hoc inline versions and both were SILENT: a multi-slot `jq` needle that clobbered sibling
+slots, and a zsh `for s in $SLOT_IDS` loop that (zsh does not word-split unquoted vars) iterated
+once over the whole string, matched nothing, and still reported write-OK. The script makes both
+structurally impossible — whole-document parse → in-memory mutation against a Set → parse-back
+guard → atomic rename — and refuses with rc=2 on an empty or unknown slot id rather than writing
+a valid-looking file that updated nothing.
+
+```bash
+FIRED_AT=<ISO8601 UTC, optional> node scripts/agents-flow/cowork-write-last-fired.js <slot_id> [<slot_id> ...]
+# → {"ok":true,"fired_at":"...","updated":[...],"skipped":[{slot_id,kept}]}
+# rc=0 written · rc=1 runtime failure (non-fatal per AC-P1-7-3 — record in telemetry, never roll back spawns)
+# rc=2 caller bug (no/unknown slot ids) — loud by design
+```
+
+The pseudocode below is the reference contract the script implements.
+
 ```
 FIRED_AT      = new Date().toISOString()   # UTC ISO8601 — same timestamp for all WON_SLOTS in this tick
 SCHED_FILE    = "docs/data/cowork-schedule.json"
