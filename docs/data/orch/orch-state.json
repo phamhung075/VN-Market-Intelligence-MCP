@@ -387,12 +387,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-COMMODITY-WTI-DELTA-CORRUPT",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-COMMODITY-WTI-DELTA-CORRUPT — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-23T21:14:31Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "updated_at": "2026-07-23T21:42:05Z",
+    "updated_by": "dev-mcp-server"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -14270,6 +14269,36 @@
         "next_agent": "qa",
         "updated_by": "dev-mcp-server",
         "review_note": "FIX-PREDICTION-SIGNALS-EMPTY: RAW-verified live root cause (gamma-api.polymarket.com TLS-blocked to unrelated *.anj.fr cert; CLOB already 403 geo-blocked; fetchPolymarkets() never throws, resolves []) — reordered runPredictionMarketPoll() staleness guard (Step 5b) to run before the empty-markets early return so the existing degradation/Telegram-alert path is reachable again. Ruled out DS-DEGRADE-01-class table-gap and read/write mismatch explicitly. New test FIX-PREDICTION-SIGNALS-EMPTY-staleness-guard-unreachable.test.ts (3 TCs, real initDatabase()/getDb() path) green. Full prediction-suite 83/83 pass. Full bun test 14698 pass/42 pre-existing fail (git-stash A/B confirmed unrelated). tsc clean. Commits: e6378d65a (fix+test), a15d75e6f (notebook+journal). Journal: docs/agent-memory/decisions/sprint-FIX-PREDICTION-SIGNALS-EMPTY-dev-mcp-server.md."
+      },
+      {
+        "id": "FIX-COMMODITY-WTI-DELTA-CORRUPT",
+        "priority": "P2",
+        "status": "REVIEW",
+        "title": "FIX-COMMODITY-WTI-DELTA-CORRUPT — commodityTracker gaps: I10 wti_crude_usd stuck $95.5 vs live Brent $87.33 (WTI>Brent physically impossible, corrupts oil regime); I8 get_macro_snapshot oil/gold/usdVnd deltas null; I4 BDI stale 67+ days (not in commodityTrackerRefreshJob scope).",
+        "type": "FIX",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-COMMODITY-WTI-DELTA-CORRUPT",
+        "verify_note": "prior_status=TODO",
+        "zone": "apps/mcp-server/",
+        "note": " [PO 2026-07-20] zone was missing (batch-reject risk) -> apps/mcp-server/. SCOPE EXTENSION: usdVnd is frozen byte-identical at 26110 from 2026-07-17 evening through 2026-07-20T05:22Z (~57h, 10+ chef cycles) while gold and oil move in the same snapshots — same frozen-value class as I10 wti_crude_usd stuck $95.5. The I8 'oil/gold/usdVnd deltas null' item is confirmed still live (prevFetchedAt:null at 05:22Z). See FIX-USDVND-FROZEN-26110 for the FX-specific fetcher probe.",
+        "promoted_at": "2026-07-23T21:14:31Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-23T21:42:56Z",
+        "claimed_at": "2026-07-23T21:14:31Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "updated_by": "dev-mcp-server",
+        "commit": "3192360c3",
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/kinhdich/kinhDichTools.ts",
+          "apps/mcp-server/src/application/usecases/assembleBriefing.ts",
+          "apps/mcp-server/src/scheduler/briefings/morningBriefingJob.ts",
+          "apps/mcp-server/src/__tests__/298-macro-score-fix.test.ts",
+          "apps/mcp-server/src/__tests__/DSI-MACRO-PHANTOM-STALE-GUARD.test.ts",
+          "docs/agent-memory/decisions/sprint-FIX-COMMODITY-WTI-DELTA-CORRUPT-dev-mcp-server.md",
+          "docs/agent-memory/notebooks/dev-mcp-server.md"
+        ],
+        "review_note": "FIX-COMMODITY-WTI-DELTA-CORRUPT: I10 REAL fix shipped, I8 NO_CHANGE_NEEDED (already fixed elsewhere), I4 confirmed out-of-scope. RAW-verified live named-volume market.db: wti_crude_usd has 79 rows all value=95.5, latest extracted_at=2026-04-12 (102d+ stale) -- no live fetcher exists (commodityTracker.ts news-regex only). Two consumers read it with zero staleness gate: kinhDichTools.computeMacroScore() (Hao 6 oil-regime z-score) and assembleBriefing.ts step 9 -> morning Telegram briefing. DSI-MACRO-PHANTOM-STALE-GUARD.test.ts header comment already promised assembleBriefing step 9 wiring that was never actually delivered at the call site -- this fix closes that gap. I8: live HTTP probe of apps/macro-indicators (Go service, separate zone) showed real signed oilUsdDelta=3.55/goldUsdDelta=-75.1 (commit e55805aa3, deployed 2026-07-15); usdVndDelta=null is the documented Q2 SBV-override same-source-only honesty suppression, not a bug -- zero Go edits made. I4: live BDI last row 2026-04-07 (107d stale, ^BDI Yahoo still 404) -- already tracked as its own backlog row FIX-BDI-SHIPPING-STALE-404-GUARD (owner dev-mcp-server, status BACKLOG); flagged, not fixed here. Fix: computeMacroScore() now excludes any indicator whose latest row is >=4h stale from the composite z-score (reuses existing TRACKED_INDICATOR_STALE_MS guard, no new threshold invented); assembleBriefing.ts step 9 switched listTrackedIndicators() -> listTrackedIndicatorsFromDb() threading isStale into trackedCommodities[]; morningBriefingJob.ts formatCommoditiesSection appends \"[STALE]\" (reuses buildWatchlistSection convention) instead of presenting a frozen price as current. New/extended tests through the REAL getDb()/initDatabase() path: 298-macro-score-fix.test.ts +2 (stale-exclusion + fresh-control), DSI-MACRO-PHANTOM-STALE-GUARD.test.ts +4 (GUARD-7/7b assembleBriefing wiring, GUARD-8/8b formatter) -- 13/13 and 10/10 green respectively. Full touched-module regression (43 files): 438/438 pass, 0 fail. bun tsc --noEmit clean. Full bun test 14705 pass/41 fail -- git-stash A/B on all 5 changed files confirms identical 1-fail pre-existing cron-expression test-order flake before/after, unrelated to this scope. Server boot probe clean (toolCount=184, 88 cron keys, both dashboards 200). Tool/cron counts unaffected (job-internals-only change). Commits: 3192360c3 (fix+test), 413f1b8fd (notebook+journal). Journal: docs/agent-memory/decisions/sprint-FIX-COMMODITY-WTI-DELTA-CORRUPT-dev-mcp-server.md."
       }
     ],
     "qa": [],
@@ -14291,25 +14320,7 @@
     },
     "last_triaged_at": "2026-07-23T21:14:31Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-COMMODITY-WTI-DELTA-CORRUPT",
-        "priority": "P2",
-        "status": "IN_PROGRESS",
-        "title": "FIX-COMMODITY-WTI-DELTA-CORRUPT — commodityTracker gaps: I10 wti_crude_usd stuck $95.5 vs live Brent $87.33 (WTI>Brent physically impossible, corrupts oil regime); I8 get_macro_snapshot oil/gold/usdVnd deltas null; I4 BDI stale 67+ days (not in commodityTrackerRefreshJob scope).",
-        "type": "FIX",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-COMMODITY-WTI-DELTA-CORRUPT",
-        "verify_note": "prior_status=TODO",
-        "zone": "apps/mcp-server/",
-        "note": " [PO 2026-07-20] zone was missing (batch-reject risk) -> apps/mcp-server/. SCOPE EXTENSION: usdVnd is frozen byte-identical at 26110 from 2026-07-17 evening through 2026-07-20T05:22Z (~57h, 10+ chef cycles) while gold and oil move in the same snapshots — same frozen-value class as I10 wti_crude_usd stuck $95.5. The I8 'oil/gold/usdVnd deltas null' item is confirmed still live (prevFetchedAt:null at 05:22Z). See FIX-USDVND-FROZEN-26110 for the FX-specific fetcher probe.",
-        "promoted_at": "2026-07-23T21:14:31Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-23T21:14:32Z",
-        "claimed_at": "2026-07-23T21:14:31Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
