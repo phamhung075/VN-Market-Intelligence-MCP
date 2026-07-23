@@ -1,3 +1,5 @@
+<!-- size-justification: 158L — cap 120; UC-MDH-P3 added the Memory Prune Sweep section (script invocation + FLOW-vs-script signal_queue boundary, ~35L) which is tightly coupled to the adjacent Memory + State section it precedes; splitting into a child doc would orphan a 6-step sequential procedure that must run in one pass every scan. -->
+
 # Code Janitor — Main Flow
 
 **Tools:** `docs/agents/tools/package/code-janitor.md`
@@ -61,6 +63,50 @@ If the sweep produced any escalation-class findings (doublons / DRY violations N
    ```
 
 Skip this step entirely if all findings were auto-fixed (nothing escalated).
+
+---
+
+## Memory Prune Sweep (every scan, before Memory + State)
+
+Runs the file-ops-only debris sweep over `docs/agent-memory/` — sessions/*.md >14d archived,
+dead health rechecks >30d deleted, `session-logs/` folded into `sessions/archive/`,
+root-level `scheduled-task-execution-*.md` relocated. Detail: memory-docs-hygiene-P3.
+
+**CANONICAL SCRIPT:**
+```bash
+bash "$PROJECT_ROOT/scripts/agents-flow/memory-prune-sweep.sh"
+```
+Idempotent — safe every cycle, no flags needed. Reusable-Scripts pointer:
+`docs/policies/dev-standards.md` § Script Persistence.
+
+**Boundary (SSOT-W1):** the script does file-ops ONLY — it never touches
+`docs/data/orch/orch-state.json`. It writes at most one payload file to `docs/signals/`
+(`janitor-health-recheck-writer-retired-*.json`, skipped on re-run once any prior payload
+exists) routing the dead-RemoteTrigger-writer replace-vs-retire decision to PO. Appending the
+corresponding `.signal_queue.rows[]` row is THIS FLOW's job, not the script's:
+
+If the script's stdout contains a `SIGNAL-WRITTEN` line (i.e. the payload file was newly
+created this run — check for its absence before the run, per pointer-integrity Rule 3):
+```json
+{
+  "id": "cj-{YYYYMMDDTHHmmss}",
+  "ts": "<ISO-UTC>",
+  "from": "code-janitor",
+  "to": "po",
+  "type": "system-issue",
+  "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
+  "severity": "LOW",
+  "status": "NEW",
+  "payload_ref": "docs/signals/janitor-health-recheck-writer-retired-<date>.json"
+}
+```
+Append via skill: `.claude/skills/signal-dashboard/SKILL.md` § WRITE (atomic orch-state.json
+write, mandatory read-back). Skip this row entirely if the script logged `SIGNAL-SKIP`
+(payload already existed — already routed in a prior cycle).
+
+Commit the sweep's moved/deleted paths with explicit pathspecs (old AND new paths for
+renames, per feedback_pathspec_commit_drops_rename_deletion) alongside the notebook commit
+below.
 
 ---
 

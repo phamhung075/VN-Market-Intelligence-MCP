@@ -1,6 +1,6 @@
 # Developer Standards
 
-<!-- size-justification: 140L — unified developer reference: code search tools, test patterns, DDD rules, TypeScript conventions, naming. All read together at sprint start to set context; splitting into tool-guide + test-patterns + naming-rules fragments the unified "how we code" standard. SCRIPT-PERSIST 2026-06-07: Script Persistence section incl. maintenance clause (+15L, user directive). SYSREMAKE-P2-DEVTEAM-BACKLOG-PICKUP-BOUNDED1 2026-07-04: CANONICAL pointer for the dev-team idle-capacity backlog pickup scripts (+11L). PUSH-AUTONOMY-1 2026-07-14: Autonomous Push Gate section (+16L, user directive — push on 100% green, no user action, post-push real-data verify task). FIX-CMH-OBSOLETE-FILE-CLEANUP 2026-07-20: CANONICAL pointer for scripts/audits/clean-obsolete-files.sh (+8L). BLOCK-PUSH-CRON-AUDIT-BATCH-NO-QA 2026-07-22 (qa): pinned the "targeted/merge-gate suite" reading against the standing FIX-MCP-SUITE-HEALTH-BASELINE full-suite red so it stops being re-litigated per push (+3L). -->
+<!-- size-justification: 140L — unified developer reference: code search tools, test patterns, DDD rules, TypeScript conventions, naming. All read together at sprint start to set context; splitting into tool-guide + test-patterns + naming-rules fragments the unified "how we code" standard. SCRIPT-PERSIST 2026-06-07: Script Persistence section incl. maintenance clause (+15L, user directive). SYSREMAKE-P2-DEVTEAM-BACKLOG-PICKUP-BOUNDED1 2026-07-04: CANONICAL pointer for the dev-team idle-capacity backlog pickup scripts (+11L). PUSH-AUTONOMY-1 2026-07-14: Autonomous Push Gate section (+16L, user directive — push on 100% green, no user action, post-push real-data verify task). FIX-CMH-OBSOLETE-FILE-CLEANUP 2026-07-20: CANONICAL pointer for scripts/audits/clean-obsolete-files.sh (+8L). BLOCK-PUSH-CRON-AUDIT-BATCH-NO-QA 2026-07-22 (qa): pinned the "targeted/merge-gate suite" reading against the standing FIX-MCP-SUITE-HEALTH-BASELINE full-suite red so it stops being re-litigated per push (+3L). UC-MDH-P3 2026-07-23: CANONICAL pointer for scripts/agents-flow/memory-prune-sweep.sh (+14L). -->
 
 ## Script Persistence — scripts/, never /tmp
 
@@ -24,6 +24,20 @@ scripts/audits/clean-obsolete-files.sh --live        # quarantines to docs/data/
 Allow-list-driven, quarantine-first janitor cleanup (unexpanded-shell-var names, aged atomic-write `.tmp`
 leftovers, superseded per-cycle snapshots). Owning flow: `docs/agents/claude-manager-helper/flow/main.md`
 § Pass 0b. Policy SSOT: `docs/policies/obsolete-file-cleanup.md`.
+
+**CANONICAL: Agent-memory prune sweep (UC-MDH-P3, memory-docs-hygiene-P3)**
+```bash
+bash scripts/agents-flow/memory-prune-sweep.sh
+```
+File-ops-only (never touches `docs/data/orch/orch-state.json`), idempotent — archives
+`docs/agent-memory/sessions/*.md` >14d to `sessions/archive/` (`*.md` only; log/json writers
+untouched), deletes `docs/agent-memory/health/team-tool-recheck-*.md` >30d + writes one
+idempotent PO-decision payload to `docs/signals/`, folds `session-logs/` into
+`sessions/archive/`, relocates root-level `scheduled-task-execution-*.md` to
+`docs/agent-memory/archive/`. Owning flow: `docs/agents/code-janitor/flow/main.md` § Memory
+Prune Sweep — the FLOW step (not the script) appends the `.signal_queue.rows[]` row for the
+PO payload via `.claude/skills/signal-dashboard/SKILL.md`. Retention rules:
+`docs/agent-memory/sessions/archive/.retention.md`. Test: `scripts/agents-flow/memory-prune-sweep.test.sh`.
 
 **CANONICAL: OHLCV unit contamination repair (CONTAM-6)**
 ```bash

@@ -278,3 +278,22 @@ told me to verify; excluding a real, live gap after positively verifying it woul
 not caution.
 **why-change:** +1 file (qa-responder/flow/cycle.md) + SKILL.md beyond the board row's literal
 5-file note; no data-integrity/other-dimension additions, no engine changes — same single dimension.
+
+### STEP developer-S17 · developer · 2026-07-23T04:35:00Z
+**task-id:** UC-MDH-P3
+**what-done:** Added scripts/agents-flow/memory-prune-sweep.sh (4 idempotent file-ops sweeps:
+sessions/*.md>14d archive, health/team-tool-recheck-*.md>30d delete+PO payload, session-logs/
+fold, scheduled-task-execution-*.md relocate), paired .test.sh, wired invocation + FLOW-owns-
+signal_queue-row boundary into code-janitor/flow/main.md, extended .retention.md, ran the sweep
+live once (15 archived, 46 deleted, 5 folded, 3 relocated, 1 PO payload) + reran to prove no-op.
+**what-considered:**
+- Run live now vs leave unexecuted: rescope's commit instruction names "moved/deleted paths" as
+  commit content — chose to execute (archival + stale-probe deletion both rescope-authorized).
+- mtime-based age filter vs filename-date parsing: matches the brief's own verifier methodology
+  and repo precedent (lsof retention, clean-obsolete-files.sh) — kept mtime.
+- Full graphify `--update` vs skip: same call as S13 (UC-CDC-P4 this cycle) — graph.json 2mo
+  stale (05-23), disproportionate for a hygiene fix; flagged in RETURN, not silently skipped.
+**why-decision:** RESCOPE text is explicit and narrow (file-ops only, no orch-state access, FLOW
+owns signal_queue append) — implemented exactly that boundary, reused AGENT_MEMORY_ROOT env-var
+name already established by the sibling P1 task for the same directory family (test isolation).
+**why-change:** No change from rescope plan.
