@@ -16,3 +16,14 @@
 **why-decision:** The brief is the declared SOURCE OF TRUTH and its own text instructs implementing the code blocks exactly; the one addition beyond the literal snippet (the `||` fallback) preserves an existing, explicitly-documented file invariant that the brief's snippet would otherwise silently violate on a narrow edge case — a safety-preserving addition, not a redesign of the escalation logic.
 **why-change:** No change to the brief's actual escalation/verdict logic (85% gate, 6-probe/13s cadence, FOLD/ESCALATE mapping, VmHWM veto, A-21 threshold/window/bootstrap-guard) — implemented verbatim.
 **commit:** 2f956f1c5
+
+---
+
+### STEP agent-father-S2 · agent-father · 2026-07-23T04:53Z
+**task-id:** FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE
+**what-done:** Fix-forward on QA CHANGES_REQUESTED — added the same `||` guard idiom (used at :31/:66/:71/:92) to `probe.sh:86`'s `BASELINE_PCT=$(docker stats ...)`, the one line I left unguarded in S1.
+**what-considered:**
+- Only path: QA's minimal fix, matching the existing file idiom exactly — no redesign considered.
+**why-decision:** QA empirically reproduced the abort (bad container name → script dies before disk/A-20) — same failure class my own S1 `:92` guard targeted, just one line too late; mechanical, low-risk, exact-match fix.
+**why-change:** No change from QA's prescribed fix — applied verbatim, matching lines 31/66/71/92 idiom.
+**commit:** 685285a7c
