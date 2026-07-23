@@ -387,11 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-07-23T17:17:09Z",
-    "updated_by": "dev-mcp-server",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "active_task_id": "DS-OBS-01-FIX",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of DS-OBS-01-FIX — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-23T17:20:59Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -5953,16 +5954,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#VPS-FRESH-02-FIX",
         "po_corroboration_20260723": "CORROBORATION (PO CONVERGE drain 2026-07-23T03:52Z, folds sys-20260723T023146-7e7f WARN 'VPS proxy health degraded 3/5 services unhealthy'). Live get_system_status @03:52Z: recurring 'VPS endpoint timeout (>5000ms)' on foreign-flow-job with graceful fallback ACTIVE (all-fallbacks-exhausted -> returns empty, no crash); tradingEconomics disabled/stopped (known). Known recurring VPS-proxy degradation class (also FIX-VPS-SSC-INSIDER-502, OPS-POLLNEWS-NIGHT-ZERO). NO new mint. Not escalated to ops (graceful degradation working; user-gated VPS lane).",
         "updated_at": "2026-07-23T03:53:28Z"
-      },
-      {
-        "id": "DS-OBS-01-FIX",
-        "priority": "normal",
-        "size": "S",
-        "status": "BACKLOG",
-        "title": "Fix DS-OBS-01: Does freshnessSlaMonitor log a WORK/BUG alert when any source exceeds its stale_threshold",
-        "type": "fix",
-        "zone": "dev-mcp-server",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#DS-OBS-01-FIX"
       },
       {
         "id": "DS-DEGRADE-01-FIX",
@@ -14025,9 +14016,26 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-23T16:52:17Z",
+    "last_triaged_at": "2026-07-23T17:20:59Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "DS-OBS-01-FIX",
+        "priority": "normal",
+        "size": "S",
+        "status": "IN_PROGRESS",
+        "title": "Fix DS-OBS-01: Does freshnessSlaMonitor log a WORK/BUG alert when any source exceeds its stale_threshold",
+        "type": "fix",
+        "zone": "dev-mcp-server",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#DS-OBS-01-FIX",
+        "promoted_at": "2026-07-23T17:20:59Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-23T17:20:59Z",
+        "claimed_at": "2026-07-23T17:20:59Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
