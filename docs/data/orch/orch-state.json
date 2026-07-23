@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "pm",
-    "next_action": "UC-MDH-P4 DONE_VERIFIED -- decision-journal-archive.sh + pm/task-archive.md Step 5.5 wiring verified (direct-commit, 26/26 test PASS, SSOT-W1 boundary confirmed read-only, sandboxing byte-identical before/after). PM: mark done, unblock downstream.",
-    "updated_at": "2026-07-23T05:50:02Z",
-    "updated_by": "qa"
+    "status": "in_progress",
+    "active_task_id": "UC-GCP-P1",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of UC-GCP-P1 — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-23T06:16:59Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -4612,25 +4612,6 @@
         ],
         "po_fold_widen_2026-07-16": "FOLDED signal cow-20260716T005400 (self-annotated DUPLICATE, no new task minted) — 3 RAW-confirmed advances added to scope: (a) DIAGNOSIS CLOSED — the 07-15 UNVERIFIED hypothesis is CONFIRMED AT SOURCE: emitPressureStateTool.ts joins cycle-snapshot-${tickHHMM}.json using tickHHMM derived from tick_id, while tick-snapshot.md:40,43 names the file by FILE_TICK=actual fire time (date -u +%H:%M) -> the two diverge under jitter/drift, so the join misses. (b) the snapshot key has NO date component -> a 43-day-old (06-03 00:00) file can be read and aged past 4h -> stale:true, which is why the miss is SILENT not merely absent; 102 stale files accrued. (c) SCOPE-BREAKER: regime_status/volatility_level have had NO WRITER since the 2026-06-05 EMIT-DARK-RECURRING refactor (last emitted 06-03; only 12 June files + 1 test fixture carry them; live snapshot has no carry block) -> BOTH promotion-dark handoffs' claim that 'promotion-dark pins last_regime=unknown' is FALSE, and fixing promotion ALONE leaves the adaptive loop dark FOREVER. UC-SDF-P2 as previously scoped is INSUFFICIENT -> WIDENED: scope now MUST include restoring a writer for regime_status/volatility_level (in addition to the promotion filename-key fix + the market-hours staleness tripwire). size M->L. Still plan_only (anomaly->BACKLOG invariant); ba/architect own HOW.",
         "folded_signal": "cow-20260716T005400"
-      },
-      {
-        "id": "UC-GCP-P1",
-        "type": "CLEAN",
-        "title": "Consolidate the 4 commit-convention docs into ONE SSOT documenting the format actually in use + reconcile audit script + tree-map",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "M",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "RESCOPE",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#git-ci-publish-P1",
-        "note": "SCOPE=verifier Rescope note. Rewrite docs/policies/commit-convention.md as single SSOT (slug task IDs, decide type vocab incl incident/role types), CARRY FORWARD the live heredoc `git commit -m`-only/never-`-a` rule (c47 root cause, merge-gate Control4). Delete the 3 sibling docs. Grep BOTH 'commit-convention.md §' AND path-only refs (two cite a nonexistent .claude/knowledge path). Update commit-convention-audit.sh predicates+VOCAB (or deprecate) and tree-map.md 4-file subtree (DAG invariant).",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "priority_bumped_from": "P2",
-        "priority_bumped_at": "2026-07-17T04:54:03Z",
-        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17"
       },
       {
         "id": "UC-GCP-P8",
@@ -13471,9 +13452,35 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-23T05:18:53Z",
+    "last_triaged_at": "2026-07-23T06:16:59Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "UC-GCP-P1",
+        "type": "CLEAN",
+        "title": "Consolidate the 4 commit-convention docs into ONE SSOT documenting the format actually in use + reconcile audit script + tree-map",
+        "status": "IN_PROGRESS",
+        "priority": "P1",
+        "size": "M",
+        "zone": "cross-service/",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "RESCOPE",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#git-ci-publish-P1",
+        "note": "SCOPE=verifier Rescope note. Rewrite docs/policies/commit-convention.md as single SSOT (slug task IDs, decide type vocab incl incident/role types), CARRY FORWARD the live heredoc `git commit -m`-only/never-`-a` rule (c47 root cause, merge-gate Control4). Delete the 3 sibling docs. Grep BOTH 'commit-convention.md §' AND path-only refs (two cite a nonexistent .claude/knowledge path). Update commit-convention-audit.sh predicates+VOCAB (or deprecate) and tree-map.md 4-file subtree (DAG invariant).",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "priority_bumped_from": "P2",
+        "priority_bumped_at": "2026-07-17T04:54:03Z",
+        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
+        "promoted_at": "2026-07-23T06:16:59Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "updated_at": "2026-07-23T06:17:00Z",
+        "claimed_at": "2026-07-23T06:16:59Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
