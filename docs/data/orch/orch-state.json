@@ -387,12 +387,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-PREDICTION-SIGNALS-EMPTY",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-PREDICTION-SIGNALS-EMPTY — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-23T20:18:17Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "updated_at": "2026-07-23T20:49:04Z",
+    "updated_by": "dev-mcp-server"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -14262,6 +14261,25 @@
         "completed_at": "2026-07-23T20:05:04Z",
         "completed_by": "dev-mcp-server",
         "status_note": "DS-DEGRADE-01-FIX: REAL fix shipped (audit-then-fix, different shape than expected). RAW-verified at source: publicInvestmentTools.ts already carried the intended stale-vs-empty SLA check (2026-06-10 commit 815ccaedd, comment \"DS-DEGRADE-01 FIX\" -- reads latest public_contracts.fetched_at, 168h SLA, returns {stale:true,stale_since,source} on breach) and publicContractsStore.ts never advances fetched_at on an empty fetch (early-return before INSERT) -- so the literal \"serve empty as fresh\" framing does not reproduce. But a live runtime probe against the REAL initDatabase()/getDb() path (not the isolated hand-rolled :memory: DB every existing test used) proved the public_contracts table itself was NEVER created by any schema-*.ts initXTables() -- only a test-local makeTestDb() fixture in taskB-public-contracts-job.test.ts had it, masking the gap for 6 weeks. Both the stale-check SELECT and the store INSERT threw \"no such table: public_contracts\" against the real schema; the SELECT error is caught silently in getPublicContractsHandler, always falling through to the generic {unavailable:true} branch -- the designed stale:true degradation signal could never fire in production. docs/data/quality-checklist.json DS-DEGRADE-01=PASS evidence describes the broken fallback path as if it were the intended stale-flag -- same self-report-confab false-positive class BCT-OBS-02-FIX/DS-OBS-01-FIX already flagged this session (left unedited, not this zones file). Fix: schema-macro.ts initMacroTables() now registers public_contracts (exact column set mirrors the pre-existing test fixture) + 2 indexes, wired into initDatabase(). Zero changes to publicContractsStore.ts/publicInvestmentTools.ts -- their pre-written degradation logic is now reachable. New test DS-DEGRADE-01-FIX-muasamcong-table-missing.test.ts (5 cases through the REAL initDatabase()/getDb() path): table-exists, empty+zero-rows-unavailable, empty+stale-row(>168h)-stale-true, non-empty-upstream-unaffected, store-write-succeeds -- 5/5 green. Targeted regression check (248-muasamcong, taskB-public-contracts-job, 1982-quality-burndown-CHIJ, 250-signal-integration): 56/56 pass. bun tsc --noEmit clean. Full suite (standalone) 14696 pass/40 skip/41 fail -- tail shows only pre-existing _deprecated/1302-technical-indicators failures, zero muasamcong/DS-DEGRADE/public_contracts hits. Server boot probe: local instance registers 184 tools cleanly before expected EADDRINUSE (port held by live not-yet-rebuilt docker container). Tool count 184 / cronJobCount 88 unaffected (schema-only change). QA note: verify via call_tool(vn-market, get_public_contracts, {}) after seeding a stale public_contracts row, or inspect schema-macro.ts diff directly -- this is a pure schema-registration fix, no new tool/cron surface."
+      },
+      {
+        "id": "FIX-PREDICTION-SIGNALS-EMPTY",
+        "priority": "medium",
+        "status": "REVIEW",
+        "title": "prediction_signals poll green-but-empty: table frozen 2026-04-27 (45d, 6 rows) while predictionMarketPollJob ran 2026-06-11 17:30 status=success (predictionMarketPollJob + predictionResolutionJob both running). Poll executes, zero signals land 45d.",
+        "type": "FIX",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-PREDICTION-SIGNALS-EMPTY",
+        "verify_note": "prior_status=TODO",
+        "promoted_at": "2026-07-23T20:18:17Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-23T20:49:04Z",
+        "claimed_at": "2026-07-23T20:18:17Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "updated_by": "dev-mcp-server",
+        "review_note": "FIX-PREDICTION-SIGNALS-EMPTY: RAW-verified live root cause (gamma-api.polymarket.com TLS-blocked to unrelated *.anj.fr cert; CLOB already 403 geo-blocked; fetchPolymarkets() never throws, resolves []) — reordered runPredictionMarketPoll() staleness guard (Step 5b) to run before the empty-markets early return so the existing degradation/Telegram-alert path is reachable again. Ruled out DS-DEGRADE-01-class table-gap and read/write mismatch explicitly. New test FIX-PREDICTION-SIGNALS-EMPTY-staleness-guard-unreachable.test.ts (3 TCs, real initDatabase()/getDb() path) green. Full prediction-suite 83/83 pass. Full bun test 14698 pass/42 pre-existing fail (git-stash A/B confirmed unrelated). tsc clean. Commits: e6378d65a (fix+test), a15d75e6f (notebook+journal). Journal: docs/agent-memory/decisions/sprint-FIX-PREDICTION-SIGNALS-EMPTY-dev-mcp-server.md."
       }
     ],
     "qa": [],
@@ -14283,24 +14301,7 @@
     },
     "last_triaged_at": "2026-07-23T20:18:17Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-PREDICTION-SIGNALS-EMPTY",
-        "priority": "medium",
-        "status": "IN_PROGRESS",
-        "title": "prediction_signals poll green-but-empty: table frozen 2026-04-27 (45d, 6 rows) while predictionMarketPollJob ran 2026-06-11 17:30 status=success (predictionMarketPollJob + predictionResolutionJob both running). Poll executes, zero signals land 45d.",
-        "type": "FIX",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-PREDICTION-SIGNALS-EMPTY",
-        "verify_note": "prior_status=TODO",
-        "promoted_at": "2026-07-23T20:18:17Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-23T20:18:18Z",
-        "claimed_at": "2026-07-23T20:18:17Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
