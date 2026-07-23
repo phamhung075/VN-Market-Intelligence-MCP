@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-BASE-RATE-COMPUTATION-CRON-DEAD",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-BASE-RATE-COMPUTATION-CRON-DEAD — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-23T21:45:43Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "FIX-BASE-RATE-COMPUTATION-CRON-DEAD flipped to REVIEW by dev-mcp-server — awaiting QA.",
+    "updated_at": "2026-07-23T22:34:18Z",
+    "updated_by": "dev-mcp-server"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -14289,6 +14289,35 @@
           "docs/agent-memory/notebooks/dev-mcp-server.md"
         ],
         "review_note": "FIX-COMMODITY-WTI-DELTA-CORRUPT: I10 REAL fix shipped, I8 NO_CHANGE_NEEDED (already fixed elsewhere), I4 confirmed out-of-scope. RAW-verified live named-volume market.db: wti_crude_usd has 79 rows all value=95.5, latest extracted_at=2026-04-12 (102d+ stale) -- no live fetcher exists (commodityTracker.ts news-regex only). Two consumers read it with zero staleness gate: kinhDichTools.computeMacroScore() (Hao 6 oil-regime z-score) and assembleBriefing.ts step 9 -> morning Telegram briefing. DSI-MACRO-PHANTOM-STALE-GUARD.test.ts header comment already promised assembleBriefing step 9 wiring that was never actually delivered at the call site -- this fix closes that gap. I8: live HTTP probe of apps/macro-indicators (Go service, separate zone) showed real signed oilUsdDelta=3.55/goldUsdDelta=-75.1 (commit e55805aa3, deployed 2026-07-15); usdVndDelta=null is the documented Q2 SBV-override same-source-only honesty suppression, not a bug -- zero Go edits made. I4: live BDI last row 2026-04-07 (107d stale, ^BDI Yahoo still 404) -- already tracked as its own backlog row FIX-BDI-SHIPPING-STALE-404-GUARD (owner dev-mcp-server, status BACKLOG); flagged, not fixed here. Fix: computeMacroScore() now excludes any indicator whose latest row is >=4h stale from the composite z-score (reuses existing TRACKED_INDICATOR_STALE_MS guard, no new threshold invented); assembleBriefing.ts step 9 switched listTrackedIndicators() -> listTrackedIndicatorsFromDb() threading isStale into trackedCommodities[]; morningBriefingJob.ts formatCommoditiesSection appends \"[STALE]\" (reuses buildWatchlistSection convention) instead of presenting a frozen price as current. New/extended tests through the REAL getDb()/initDatabase() path: 298-macro-score-fix.test.ts +2 (stale-exclusion + fresh-control), DSI-MACRO-PHANTOM-STALE-GUARD.test.ts +4 (GUARD-7/7b assembleBriefing wiring, GUARD-8/8b formatter) -- 13/13 and 10/10 green respectively. Full touched-module regression (43 files): 438/438 pass, 0 fail. bun tsc --noEmit clean. Full bun test 14705 pass/41 fail -- git-stash A/B on all 5 changed files confirms identical 1-fail pre-existing cron-expression test-order flake before/after, unrelated to this scope. Server boot probe clean (toolCount=184, 88 cron keys, both dashboards 200). Tool/cron counts unaffected (job-internals-only change). Commits: 3192360c3 (fix+test), 413f1b8fd (notebook+journal). Journal: docs/agent-memory/decisions/sprint-FIX-COMMODITY-WTI-DELTA-CORRUPT-dev-mcp-server.md."
+      },
+      {
+        "id": "FIX-BASE-RATE-COMPUTATION-CRON-DEAD",
+        "type": "FIX",
+        "status": "REVIEW",
+        "size": "S",
+        "priority": "P2",
+        "zone": "apps/mcp-server/",
+        "title": "baseRateComputationJob ~20 days stale — genuinely broken weekly job (CORRECT watchdog alert from T3 LIVE run, now actionable)",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-BASE-RATE-COMPUTATION-CRON-DEAD",
+        "verify_note": "prior_status=TODO",
+        "promoted_at": "2026-07-23T21:45:43Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-23T22:34:37Z",
+        "claimed_at": "2026-07-23T21:45:43Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "updated_by": "dev-mcp-server",
+        "entered_review_at": "2026-07-23T22:34:18Z",
+        "status_note": "[dev-mcp-server 2026-07-23] PARTIAL + dependency flag. RAW-verified live (docker exec, production market.db): baseRateComputationJob IS correctly registered (daily 7 19 * * * since the 07-01 TASK-EVIDENCE-HOP1-MCP cadence fix), fires daily, 100% success (18/18 in 30d) -- NO_CHANGE_NEEDED on registration/execution. But evidence_likelihood_ratios (its sole output) has not received a real content update since 2026-06-28 (25d) because triplesUpserted=0 every run since -- HONEST zero: its sole input evidence_fragments shows a real success on 06-28 then ZERO rows of any kind until 07-19 (~21d gap), matching the documented ~19-day container restart-storm already called out in startScheduler.ts (mcpServerStartup recorded 28 boots across 06-28..07-19). evidence_fragments has since recovered (239 rows, earliest 07-19) but is not yet 5d old, so 0-output today is still correct -- DEPENDENCY FLAGGED, tracked under still-open FIX-EVIDENCE-PIPELINE-STARVED, not chased (out of this S-task scope). Found+fixed 2 genuine reachable bugs: (1) runBaseRateComputationWithDb double-wrapped recordJobRun via the self-recording runBaseRateComputationJob() (same class already fixed for runEvidenceAccumulatorWithDb) -- RAW-confirmed 2-3 cron_job_runs rows per tick live every day sampled; fixed by calling the core runBaseRateComputation(db) directly + replicating the T4 shouldSkipRecoveryReplay dedup guard into the wrapper itself. (2) baseRateComputationJob had no startup-catchup probe unlike its 5 hardened siblings -- added a 6th probe in startScheduler.ts using the same shouldRunCatchup() mechanism, directly closing the restart-timing class that produced the historical dead window. New FIX-BASE-RATE-COMPUTATION-CRON-DEAD.test.ts (11 cases) proves both fixes through the real default code paths; also worked around a discovered unrestored mock.module() in FACTORY-SCHEDULER-job-table-registry.test.ts using the established ?isolate= dynamic-import precedent (034-telegram-notifier.test.ts) rather than editing that other tasks test file. bun test: 14715 pass/40 skip/42 fail -- git-stash A/B on both touched files confirms all 42 pre-existing (vps_push_log schema-drift + 5000ms MCP-client-timeout class, zero overlap). tsc clean. Server boot probe clean (toolCount=184, health 200, both dashboards 200). Tool count 184 / cronJobCount 88 unaffected. Decision journal: docs/agent-memory/decisions/sprint-FIX-BASE-RATE-COMPUTATION-CRON-DEAD-dev-mcp-server.md.",
+        "commit": "a22a91a3a",
+        "files": [
+          "apps/mcp-server/src/scheduler/startupHelpers.ts",
+          "apps/mcp-server/src/scheduler/startScheduler.ts",
+          "apps/mcp-server/src/__tests__/FIX-BASE-RATE-COMPUTATION-CRON-DEAD.test.ts",
+          "docs/agent-memory/decisions/sprint-FIX-BASE-RATE-COMPUTATION-CRON-DEAD-dev-mcp-server.md",
+          "docs/agent-memory/notebooks/dev-mcp-server.md"
+        ]
       }
     ],
     "qa": [],
@@ -14310,25 +14339,7 @@
     },
     "last_triaged_at": "2026-07-23T21:45:43Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-BASE-RATE-COMPUTATION-CRON-DEAD",
-        "type": "FIX",
-        "status": "IN_PROGRESS",
-        "size": "S",
-        "priority": "P2",
-        "zone": "apps/mcp-server/",
-        "title": "baseRateComputationJob ~20 days stale — genuinely broken weekly job (CORRECT watchdog alert from T3 LIVE run, now actionable)",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-BASE-RATE-COMPUTATION-CRON-DEAD",
-        "verify_note": "prior_status=TODO",
-        "promoted_at": "2026-07-23T21:45:43Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-23T21:45:44Z",
-        "claimed_at": "2026-07-23T21:45:43Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
