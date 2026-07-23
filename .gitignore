@@ -67,3 +67,6 @@ docs/data/db-integrity-history.json
 # obsolete-file cleanup quarantine (FIX-CMH-OBSOLETE-FILE-CLEANUP 2026-07-20) — Pass 0b
 # --live target: scripts/audits/clean-obsolete-files.sh moves candidates here, never rm's directly.
 docs/data/.trash/
+
+# never commit .bak dead-code/backup files (FACTORY-INTERFACE-delete-bak-files, 2026-07-24)
+*.bak
