@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-23T09:23:12Z",
+    "matched_slots": [
+      "fb-daily"
+    ],
+    "won_slots": [
+      "fb-daily"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/fb-market-poster/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "fb-daily": "cron"
+    },
+    "cadence_minutes": {
+      "fb-daily": null
+    },
+    "last_fired_timestamp": "2026-07-23T09:22:43Z",
+    "last_fired_slots": [
+      "fb-daily"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "09:15",
+    "leader_lock": "acquired",
+    "dev_head": "in_progress",
+    "devq": 0,
+    "signal_backlog": 9,
+    "note": "fb-daily first fire since 2026-07-21 (07-22 missed in dispatcher outage). No catch-up instructed. Inputs degraded: CHEF EOD 08:54Z quality_verdict=degraded, business_context_unavailable (BCTC refine head-of-line blocked since 07-21). cycle_snapshot_promoted=false again (UC-SDF-P2: snapshot named 09:21 vs nominal tick 09:15)."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-23T09:23:12Z",
+  "_processed": {
+    "fingerprint": "d81e38f0634eecf64594bc691b6fc6359f661b8a00dab782d6e3cb97fb2173b2",
+    "processedAt": "2026-07-23T09:45:16Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
