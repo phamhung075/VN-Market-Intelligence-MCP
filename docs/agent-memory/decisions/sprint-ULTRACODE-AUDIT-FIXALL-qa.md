@@ -450,3 +450,34 @@ production, not merely on paper. `dev-standards.md`/`.retention.md` pointers bot
 accurate. Smart-Skip correctly applies (shell+docs only, zero `.ts`) — mock-guard/DDD/env/secrets
 greps all clean.
 **why-change:** No change from plan — verify-committed JUMP-TO, zero blocking issues, APPROVED.
+
+### STEP qa-S18 · qa · 2026-07-23T05:50:00Z
+**task-id:** UC-MDH-P4
+**what-done:** Direct-commit verify (`review[]`, branch:null) of `decision-journal-archive.sh` +
+pm/task-archive.md Step 5.5 wiring — commits `48e6bf250`(impl+test+docs)/`880c28f43`(board flip),
+both main-ancestor confirmed. Re-ran `decision-journal-archive.test.sh` myself — 26/26 PASS, exit 0.
+Snapshotted `docs/agent-memory/decisions/`+`docs/archive/decisions/` (487 files, filename list + md5
+per file) before/after the run — byte-identical, `git status` on both paths unchanged (same 3
+pre-existing unrelated dirty files); confirms sandboxing (mktemp -d fixture, `DJA_GIT_MV=0`) is real,
+not just claimed.
+**what-considered:**
+- Trust `dev_result`'s OHLCV-UNIT-CONTAM collision claim vs re-derive: re-derived — grepped live
+  orch-state.json, confirmed `OHLCV-UNIT-CONTAM-WHOLEROW-LT1000` is genuinely in
+  `active_sprints[]` and `OHLCV-UNIT-CONTAM` is genuinely a `closed_sprints[]` stub, a real live
+  string-prefix collision the longest-match awk logic (script:162-175) correctly resolves.
+- Trust "file-ops-only, never writes orch-state.json" prose vs grep: grepped the script — `ORCH_STATE`
+  used only in `jq -r ... "$ORCH_STATE"` reads (2 sites) and the missing-file guard; zero `>`/write
+  redirection, zero `orch-apply.sh` reference — SSOT-W1 boundary holds.
+- Run `bun tsc --noEmit`/mock-guard: mock-guard PASS ("no production source files to scan" — `.sh` is
+  outside its scan surface); `git show --stat` on both commits confirms zero `.ts` touched anywhere —
+  Smart-Skip correctly applies (shell+test+docs only).
+- Verify contract fidelity vs flow doc: read `task-archive.md` Step 5.5 verbatim — `comm -23
+  <(PRE_EVICT) <(POST_EVICT) | bash decision-journal-archive.sh` (stdin mode, no `--all`) matches the
+  script's default `MODE="stdin"` exactly; Step 6 pathspec extension includes both
+  `docs/agent-memory/decisions/` and `docs/archive/decisions/` for the `git mv` rename pair.
+**why-decision:** Test suite RAW-reproduced (not trusted from commit message), sandboxing
+independently proven via before/after hash-identical snapshot (not just reading the test's own
+env-var overrides), SSOT-boundary grep-confirmed read-only, and the flow-doc/script invocation
+shapes cross-checked line-for-line — all match. Deferred `--all` backfill (~202 files, `--dry-run`
+verified) correctly left unexecuted, a separate PO-routed mutating action out of this task's scope.
+**why-change:** No change from plan — verify-committed JUMP-TO, zero blocking issues, APPROVED.

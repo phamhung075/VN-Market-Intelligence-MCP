@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "UC-MDH-P4",
-    "next_agent": "qa",
-    "next_action": "QA review UC-MDH-P4 (REVIEW lane) — decision-journal-archive.sh + pm/task-archive.md Step 5.5 wiring, commit 48e6bf250",
-    "updated_at": "2026-07-23T05:35:06Z",
-    "updated_by": "developer"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "pm",
+    "next_action": "UC-MDH-P4 DONE_VERIFIED -- decision-journal-archive.sh + pm/task-archive.md Step 5.5 wiring verified (direct-commit, 26/26 test PASS, SSOT-W1 boundary confirmed read-only, sandboxing byte-identical before/after). PM: mark done, unblock downstream.",
+    "updated_at": "2026-07-23T05:50:02Z",
+    "updated_by": "qa"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -11754,7 +11754,45 @@
         "po_signoff_verdict": "APPROVE — independent PO sign-off 2026-07-23T05:07:33Z. Re-read qa_reverify_20260723 (PASS; both QA gate passes clean, closes the single probe.sh:86 blocking issue). Confirmed probe.sh:86 carries the || fallback guard idiom matching :31/:66/:71/:92 (git show 685285a7c: single-file, 1 insertion/1 deletion). Forbidden files UNTOUCHED at HEAD + working-tree: tier1-probe.md logic, scripts/audits/verify-a30-mcp-memory-reclamation.sh, scripts/emit-audit-signal.sh, app code (git status clean). Detection-layer-only fix per brief docs/architecture-briefs/2026-07-23-auditor-a30-reclamation-gate-a21-windowed-restart.md; E-3 append-always observation-ledger contract preserved. Supervised converge pipeline design->impl->QA verify->QA delta re-verify->PO sign-off now fully closed. RESIDUAL non-blocking: field-acceptance of the >=85% deep-probe branch awaits the next live Tier-1 cycle at genuine mem pressure (cron-gated, monitored separately, not a gate on close)."
       }
     ],
-    "done_verified": [],
+    "done_verified": [
+      {
+        "id": "UC-MDH-P4",
+        "type": "FIX",
+        "title": "Implement the promised sprint-journal archival in pm task-archive (scripts/agents-flow/decision-journal-archive.sh)",
+        "status": "DONE_VERIFIED",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "RESCOPE",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P4",
+        "note": "SCOPE=verifier Rescope note. New decision-journal-archive.sh: derive sprint id by LONGEST match against closed+active union (never bare prefix glob — closed prefixes match active journals); move only closed-and-not-active journals to docs/archive/decisions via git mv; ~89 no-record journals left + reported for PO disposition. pm task-archive.md ONE pointer step after Step5; extend Step6 git add pathspec old+new. COORDINATE TE-T33 (its decisions/ leg is superseded — mtime>30d must NOT touch decisions/, see TE-T33 audit_ref).",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "related": [
+          "TE-T33"
+        ],
+        "priority_bumped_from": "P2",
+        "priority_bumped_at": "2026-07-17T04:54:03Z",
+        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
+        "promoted_at": "2026-07-23T05:18:53Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "updated_at": "2026-07-23T05:52:16Z",
+        "claimed_at": "2026-07-23T05:18:53Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "owner": "developer",
+        "dev_result": "DONE: scripts/agents-flow/decision-journal-archive.sh shipped per RESCOPE spec — stdin + --all modes, longest-match closed-vs-active sprint-id resolution (never bare prefix glob, verified against the live OHLCV-UNIT-CONTAM/OHLCV-UNIT-CONTAM-WHOLEROW-LT1000 collision), file-ops-only (jq reads orch-state, never writes it). Wired as pm/task-archive.md Step 5.5 + Step6 pathspec extension; CANONICAL pointer in dev-standards.md. Added --dry-run for safe verification (not in rescope contract, matches orch-cold-evict.sh convention). decision-journal-archive.test.sh 26/26 GREEN, sandboxed (DJA_GIT_MV=0, mktemp fixture), never touches live decisions/. Live --dry-run --all confirmed 202/431 eligible, 24 active-stay, 205 no-orch-record (git status/count unchanged before/after — zero mutation). Did NOT run the live backfill (mutating, out of scope) — follow-up PO-routed action. Shell-only, no .ts touched, main-only.",
+        "dev_commit": "48e6bf250 (script+test+flow-doc+docs)",
+        "dev_completed_at": "2026-07-23T05:35:06Z",
+        "status_note": "UC-MDH-P4 implemented per PO/verifier RESCOPE spec (arch brief 2026-07-12 #memory-docs-hygiene-P4). Journal: docs/agent-memory/decisions/sprint-ULTRACODE-AUDIT-FIXALL-developer.md STEP developer-S18. TE-T33 backlog row already carries the coordination note (decisions/ leg superseded, mtime>30d must not touch decisions/) — no further edit needed. One-time live backfill (~202 files, verified via --dry-run) left for a follow-up PO-routed action, not executed here. | [QA] Review Record (direct-commit verify, 2026-07-23): commits 48e6bf250(impl+test+flow-doc+docs)/880c28f43(board flip), both main-ancestor confirmed. decision-journal-archive.test.sh re-run live: 26/26 PASS, exit 0, sandboxed (mktemp -d fixture, DJA_GIT_MV=0) -- before/after snapshot of docs/agent-memory/decisions/+docs/archive/decisions/ (487 files, filenames+md5) byte-identical, git status on those paths unchanged. Script grep-confirmed file-ops-ONLY: ORCH_STATE read via jq -r only (2 sites), zero write/orch-apply.sh reference -- SSOT-W1 boundary holds. Longest-match derivation verified against the LIVE OHLCV-UNIT-CONTAM/OHLCV-UNIT-CONTAM-WHOLEROW-LT1000 collision (closed stub vs active sprint, both real in orch-state.json). task-archive.md Step 5.5 invocation (comm -23 <(PRE) <(POST) | bash decision-journal-archive.sh, stdin mode) matches the scripts default MODE=stdin exactly; Step 6 pathspec covers both old+new decision-journal paths. Injection-safe (grep -F fixed-string, awk -v, git mv -k --, all vars quoted). Idempotent (test run3: 0 new archives on re-run) + collision-safe (SKIP-EXISTS never clobbers). mock-guard PASS (no production source to scan -- .sh outside scan surface), DDD/process.env/secrets greps clean, Smart-Skip applies (shell+test+docs only, zero .ts touched per git show --stat on both commits). Deferred --all backfill (~202 files, --dry-run verified) correctly left unexecuted -- separate PO-routed mutating action, out of this tasks scope. VERDICT: APPROVED.",
+        "qa_verdict": "APPROVED",
+        "qa_verified_at": "2026-07-23T05:50:02Z",
+        "qa_commit": "48e6bf250",
+        "updated_by": "qa"
+      }
+    ],
     "head": {
       "status": "idle",
       "active_task_id": null,
@@ -13452,40 +13490,6 @@
         "updated_at": "2026-07-22T02:18:01Z",
         "owner": "agent-father",
         "next_agent": "agent-father"
-      },
-      {
-        "id": "UC-MDH-P4",
-        "type": "FIX",
-        "title": "Implement the promised sprint-journal archival in pm task-archive (scripts/agents-flow/decision-journal-archive.sh)",
-        "status": "REVIEW",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "RESCOPE",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P4",
-        "note": "SCOPE=verifier Rescope note. New decision-journal-archive.sh: derive sprint id by LONGEST match against closed+active union (never bare prefix glob — closed prefixes match active journals); move only closed-and-not-active journals to docs/archive/decisions via git mv; ~89 no-record journals left + reported for PO disposition. pm task-archive.md ONE pointer step after Step5; extend Step6 git add pathspec old+new. COORDINATE TE-T33 (its decisions/ leg is superseded — mtime>30d must NOT touch decisions/, see TE-T33 audit_ref).",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "related": [
-          "TE-T33"
-        ],
-        "priority_bumped_from": "P2",
-        "priority_bumped_at": "2026-07-17T04:54:03Z",
-        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
-        "promoted_at": "2026-07-23T05:18:53Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "updated_at": "2026-07-23T05:35:07Z",
-        "claimed_at": "2026-07-23T05:18:53Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "owner": "developer",
-        "next_agent": "qa",
-        "dev_result": "DONE: scripts/agents-flow/decision-journal-archive.sh shipped per RESCOPE spec — stdin + --all modes, longest-match closed-vs-active sprint-id resolution (never bare prefix glob, verified against the live OHLCV-UNIT-CONTAM/OHLCV-UNIT-CONTAM-WHOLEROW-LT1000 collision), file-ops-only (jq reads orch-state, never writes it). Wired as pm/task-archive.md Step 5.5 + Step6 pathspec extension; CANONICAL pointer in dev-standards.md. Added --dry-run for safe verification (not in rescope contract, matches orch-cold-evict.sh convention). decision-journal-archive.test.sh 26/26 GREEN, sandboxed (DJA_GIT_MV=0, mktemp fixture), never touches live decisions/. Live --dry-run --all confirmed 202/431 eligible, 24 active-stay, 205 no-orch-record (git status/count unchanged before/after — zero mutation). Did NOT run the live backfill (mutating, out of scope) — follow-up PO-routed action. Shell-only, no .ts touched, main-only.",
-        "dev_commit": "48e6bf250 (script+test+flow-doc+docs)",
-        "dev_completed_at": "2026-07-23T05:35:06Z",
-        "status_note": "UC-MDH-P4 implemented per PO/verifier RESCOPE spec (arch brief 2026-07-12 #memory-docs-hygiene-P4). Journal: docs/agent-memory/decisions/sprint-ULTRACODE-AUDIT-FIXALL-developer.md STEP developer-S18. TE-T33 backlog row already carries the coordination note (decisions/ leg superseded, mtime>30d must not touch decisions/) — no further edit needed. One-time live backfill (~202 files, verified via --dry-run) left for a follow-up PO-routed action, not executed here."
       }
     ],
     "qa": [],
