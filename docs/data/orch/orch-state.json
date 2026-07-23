@@ -387,12 +387,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "TE-T31",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of TE-T31 — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-23T13:47:41Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "updated_at": "2026-07-23T13:57:41Z",
+    "updated_by": "developer"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -13706,6 +13705,40 @@
           "scripts/gen-tool-list-stubs.py"
         ],
         "status_note": "TE-T28: 26 missing tools/list stubs generated (live-diff-computed, not hardcoded) via new scripts/gen-tool-list-stubs.py (registry diff + live gateway list_server_tools schema via mcp-call.sh bridge); 0 flagged registry-only. Fixed anti-hallucination/SKILL.md L55: tool-registry.json is now the name/count SSOT, missing list/ doc = DOC GAP not nonexistence. Post-gen diff = 0 missing / 0 extra (no dead litter). Idempotency re-proven (clean no-op re-run). Journal: sprint-TOKEN-ECONOMY-AUDIT-developer.md STEP developer-S11."
+      },
+      {
+        "id": "TE-T31",
+        "title": "T-31 tools/list/INDEX.md 253L: regenerate from tool-registry.json (kill 3-way SSOT drift) [~2-3k/consult + drift-kill]",
+        "owner": "developer",
+        "status": "REVIEW",
+        "type": "CLEAN",
+        "size": "S",
+        "priority": "P2",
+        "wave": 4,
+        "est_saving": "~2-3k tok/consultation + eliminates 3-way SSOT drift",
+        "zone": "multi",
+        "sprint": "TOKEN-ECONOMY-AUDIT",
+        "depends": [],
+        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-31",
+        "note": "INDEX self-declares SSOT/157 tools but registry has 183 (missing 26, inconsistent counts). tran-ngoc-bau package (daily) points at INDEX 3x -> staleness propagates. Add scripts/gen-tools-index.sh rendering from registry groups; header 'GENERATED — do not hand-edit'. Recurring-bug 2+ threshold met. Member: market-analyst package 267L -> compact table.",
+        "promoted_at": "2026-07-23T13:47:41Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-23T13:57:41Z",
+        "claimed_at": "2026-07-23T13:47:41Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "branch": null,
+        "commit": "e3a3a68bb8e36cfe529acb511b1053cc01982e57",
+        "files": [
+          "scripts/gen-tools-index.sh",
+          "docs/agents/tools/list/INDEX.md",
+          "docs/policies/dev-standards.md",
+          "docs/WORK.md"
+        ],
+        "completed_at": "2026-07-23T13:57:41Z",
+        "completed_by": "developer",
+        "status_note": "TE-T31: docs/agents/tools/list/INDEX.md (254L, stale hand-maintained 3rd tool-inventory SSOT self-declaring 157 tools/canonical) regenerated from docs/data/tool-registry.json via new scripts/gen-tools-index.sh (bash+jq, --check mode) -- total (184) + all 12 per-category counts computed live, zero hardcoded. Header now 'GENERATED -- do not hand-edit; registry is the SSOT', false canonical-inventory claim dropped. Idempotent: no wall-clock stamp, only registry .lastUpdated echoed -- 2 consecutive runs both NOOP. comm set-diff registry-tools vs INDEX-linked-tools = 0/0 both directions (184=184, 0 dupes, every link resolves to an existing list/<tool>.md stub); per-section counts diff-verified against jq groups[].tools|length. CANONICAL pointer added to dev-standards.md Script Persistence. tran-ngoc-bau package pointers unaffected (path unchanged). market-analyst.md 267L prose->table NOT done here (brief's separate merged corroborating item, logged as follow-up in journal). Journal: sprint-TOKEN-ECONOMY-AUDIT-developer.md STEP developer-S12."
       }
     ],
     "qa": [],
@@ -13727,30 +13760,7 @@
     },
     "last_triaged_at": "2026-07-23T13:47:41Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "TE-T31",
-        "title": "T-31 tools/list/INDEX.md 253L: regenerate from tool-registry.json (kill 3-way SSOT drift) [~2-3k/consult + drift-kill]",
-        "owner": "developer",
-        "status": "IN_PROGRESS",
-        "type": "CLEAN",
-        "size": "S",
-        "priority": "P2",
-        "wave": 4,
-        "est_saving": "~2-3k tok/consultation + eliminates 3-way SSOT drift",
-        "zone": "multi",
-        "sprint": "TOKEN-ECONOMY-AUDIT",
-        "depends": [],
-        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-31",
-        "note": "INDEX self-declares SSOT/157 tools but registry has 183 (missing 26, inconsistent counts). tran-ngoc-bau package (daily) points at INDEX 3x -> staleness propagates. Add scripts/gen-tools-index.sh rendering from registry groups; header 'GENERATED — do not hand-edit'. Recurring-bug 2+ threshold met. Member: market-analyst package 267L -> compact table.",
-        "promoted_at": "2026-07-23T13:47:41Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-23T13:47:42Z",
-        "claimed_at": "2026-07-23T13:47:41Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
