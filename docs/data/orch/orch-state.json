@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FACTORY-STOCK-resolve-dead-writeback",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-STOCK-resolve-dead-writeback — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-23T23:44:32Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "dev-stock-price completed FACTORY-STOCK-resolve-dead-writeback; moved to review for qa",
+    "updated_at": "2026-07-23T23:52:02Z",
+    "updated_by": "dev-stock-price"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -14327,6 +14327,24 @@
         "next_agent": "qa",
         "entered_review_at": "2026-07-23T23:20:06Z",
         "review_note": "dev-mcp-server self-closeout: 4 tracked .bak files git rm (2 mcp-server-interface + docker-compose.yml.bak + docs/TASKS.md.bak per canonical ticket text found in 2026-06-15 audit + 2026-07-04 brief + backlog-detail.json archive), *.bak added to .gitignore, tsc clean, commit 2a146ecdd. Zero-reference grep confirmed clean pre-deletion. Journal: docs/agent-memory/decisions/sprint-FACTORY-INTERFACE-delete-bak-files-dev-mcp-server.md"
+      },
+      {
+        "title": "Resolve dead SaveQuote / Tier-3 write-back: delete the unused writer path",
+        "priority": "P2",
+        "zone": "stock-price",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-STOCK-resolve-dead-writeback",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-STOCK-resolve-dead-writeback",
+        "promoted_at": "2026-07-23T23:44:32Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-23T23:52:03Z",
+        "claimed_at": "2026-07-23T23:44:32Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "reviewed_at": "2026-07-23T23:52:02Z",
+        "reviewed_by": "dev-stock-price"
       }
     ],
     "qa": [],
@@ -14348,23 +14366,7 @@
     },
     "last_triaged_at": "2026-07-23T23:44:32Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "title": "Resolve dead SaveQuote / Tier-3 write-back: delete the unused writer path",
-        "priority": "P2",
-        "zone": "stock-price",
-        "type": "FACTORY",
-        "status": "IN_PROGRESS",
-        "id": "FACTORY-STOCK-resolve-dead-writeback",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-STOCK-resolve-dead-writeback",
-        "promoted_at": "2026-07-23T23:44:32Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-23T23:44:33Z",
-        "claimed_at": "2026-07-23T23:44:32Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
@@ -14373,6 +14375,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-07-23T05:16:51Z",
-  "_updated_by": "po/converge-closeout-crossref-20260723"
+  "_updated_at": "2026-07-23T23:52:02Z",
+  "_updated_by": "dev-stock-price"
 }
