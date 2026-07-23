@@ -1,4 +1,4 @@
-<!-- size-justification: 158L — cap 120; UC-MDH-P3 added the Memory Prune Sweep section (script invocation + FLOW-vs-script signal_queue boundary, ~35L) which is tightly coupled to the adjacent Memory + State section it precedes; splitting into a child doc would orphan a 6-step sequential procedure that must run in one pass every scan. -->
+<!-- size-justification: 182L — cap 120; UC-MDH-P3 added the Memory Prune Sweep section (script invocation + FLOW-vs-script signal_queue boundary, ~35L) which is tightly coupled to the adjacent Memory + State section it precedes; splitting into a child doc would orphan a 6-step sequential procedure that must run in one pass every scan. TE-T17 2026-07-23: added Notebook Line-Cap Sweep (script pointer, ~20L) — same every-scan cadence, precedes Memory + State for the same reason. -->
 
 # Code Janitor — Main Flow
 
@@ -107,6 +107,30 @@ write, mandatory read-back). Skip this row entirely if the script logged `SIGNAL
 Commit the sweep's moved/deleted paths with explicit pathspecs (old AND new paths for
 renames, per feedback_pathspec_commit_drops_rename_deletion) alongside the notebook commit
 below.
+
+---
+
+## Notebook Line-Cap Sweep (every scan, before Memory + State)
+
+Root-cause backstop for the notebook-auto-prune PostToolUse hook (`.claude/settings.local.json`
+matcher `Write|Edit`): any notebook write landed via a different tool path — Bash
+heredoc/append, direct `mv`, etc — never fires that hook, so a governed notebook can grow
+unbounded (ops.md hit 1197L / ~6x the 200L cap, via the 07-11 Docker-incident heredoc dumps,
+before this sweep existed — TE-T17). This sweep is write-path-agnostic: it re-checks every
+`docs/agent-memory/notebooks/*.md` file on this cron's 6h cadence regardless of how it grew.
+
+**CANONICAL SCRIPT:**
+```bash
+bash "$PROJECT_ROOT/scripts/agents-flow/notebook-linecap-sweep.sh"
+```
+Idempotent — safe every cycle. For each file >200L, delegates to
+`scripts/agents-flow/notebook-auto-prune.sh` (same drop-oldest section logic the PostToolUse
+hook uses — single source of truth, no duplicated pruning code) via synthetic PostToolUse JSON.
+Emits the same `notebook-unparseable-*`/`notebook-single-section-breach-*` safe-fail signals to
+`docs/signals/` on the rare cases the hook itself cannot safely auto-prune (no `## ` sections,
+or only 1 section left and still over cap) — those require manual review, not auto-action here.
+Reusable-Scripts pointer: `docs/policies/dev-standards.md` § Script Persistence.
+Test: `scripts/agents-flow/notebook-linecap-sweep.test.sh`.
 
 ---
 

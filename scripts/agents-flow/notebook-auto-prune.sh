@@ -15,6 +15,15 @@
 #
 # Pointer: docs/agents/agent-father/flow/main.md § notebook-auto-prune hook
 #          docs/policies/dev-standards.md § Script Persistence
+#
+# KNOWN GAP (TE-T17, 2026-07-23): this hook only fires on the PostToolUse
+# Write|Edit matcher (.claude/settings.local.json) — a notebook write landed via
+# any other tool path (Bash heredoc/append, direct mv, etc) never triggers it.
+# Backstop: scripts/agents-flow/notebook-linecap-sweep.sh, wired into
+# code-janitor's 6h cron (docs/agents/code-janitor/flow/main.md § Notebook
+# Line-Cap Sweep), re-sweeps every docs/agent-memory/notebooks/*.md on a fixed
+# cadence regardless of write path, delegating over-cap files back to THIS
+# script's own prune logic (single source of truth).
 set -u
 
 # --- Resolve project root ---

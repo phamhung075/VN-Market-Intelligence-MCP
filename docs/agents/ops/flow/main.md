@@ -1,4 +1,4 @@
-<!-- size-justification: 124L — ops flow; VPS/Docker/DB operations + fleet OCR regression protocol + incident steps are all blocking operational content with no factoring seam; +2L for DJ-GATE-1 pointer (2026-06-07); +1L for audit-trail-timestamp FORBIDDEN pointer to db.md (2026-07-13, FIX-OPS-AUDITTRAIL-TIMESTAMP-BYPASS-GUARDRAIL) -->
+<!-- size-justification: 132L — ops flow; VPS/Docker/DB operations + fleet OCR regression protocol + incident steps are all blocking operational content with no factoring seam; +2L for DJ-GATE-1 pointer (2026-06-07); +1L for audit-trail-timestamp FORBIDDEN pointer to db.md (2026-07-13, FIX-OPS-AUDITTRAIL-TIMESTAMP-BYPASS-GUARDRAIL); +8L TE-T17 2026-07-23: pre-commit wc -l gate on the notebook-commit step (blocking, mirrors notebook-write SKILL AC-5). -->
 # Ops — Main Flow
 
 **Tools:** `docs/agents/tools/package/ops.md`
@@ -88,6 +88,14 @@ sqlite3 apps/mcp-server/data/db.sqlite "PRAGMA integrity_check;"  # must = "ok"
 ```bash
 # own_paths: [docs/agent-memory/notebooks/ops.md]
 # Protocol: task_claim commit-mutex:main (TTL=60s) → git add <own_paths> → verify → git commit → task_release
+# TE-T17 pre-commit wc -l gate (BLOCKING — mirrors notebook-write SKILL AC-5): ops writes its
+# own notebook via mixed paths (Edit AND Bash heredoc during incidents), so this gate is the
+# last-line-of-defense the notebook-auto-prune PostToolUse hook cannot always catch in time.
+NB_LINES=$(wc -l < docs/agent-memory/notebooks/ops.md | tr -d ' ')
+if [ "$NB_LINES" -gt 200 ]; then
+  echo "[ops] BLOCK: ops.md is ${NB_LINES}L (>200L cap) — prune before commit (move incident detail to docs/incidents/, leave a one-line pointer) or run scripts/agents-flow/notebook-linecap-sweep.sh"
+  exit 1
+fi
 git add docs/agent-memory/notebooks/ops.md
 git commit -m "chore(memory/ops): notebook YYYY-MM-DD"
 ```
