@@ -387,11 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-07-23T20:49:04Z",
-    "updated_by": "dev-mcp-server"
+    "status": "in_progress",
+    "active_task_id": "FIX-COMMODITY-WTI-DELTA-CORRUPT",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-COMMODITY-WTI-DELTA-CORRUPT — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-23T21:14:31Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6091,17 +6092,6 @@
         "verify_note": "prior_status=DEFERRED",
         "superseded_by": "TE-T06",
         "note": " [SUPERSEDED by TE-T06 (system-auditor main.md Tier-2/3 split, richer scope) — PO rerank 2026-07-17; dev-team: close as dup when TE-T06 is picked, do NOT dispatch independently.]"
-      },
-      {
-        "id": "FIX-COMMODITY-WTI-DELTA-CORRUPT",
-        "priority": "P2",
-        "status": "BACKLOG",
-        "title": "FIX-COMMODITY-WTI-DELTA-CORRUPT — commodityTracker gaps: I10 wti_crude_usd stuck $95.5 vs live Brent $87.33 (WTI>Brent physically impossible, corrupts oil regime); I8 get_macro_snapshot oil/gold/usdVnd deltas null; I4 BDI stale 67+ days (not in commodityTrackerRefreshJob scope).",
-        "type": "FIX",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-COMMODITY-WTI-DELTA-CORRUPT",
-        "verify_note": "prior_status=TODO",
-        "zone": "apps/mcp-server/",
-        "note": " [PO 2026-07-20] zone was missing (batch-reject risk) -> apps/mcp-server/. SCOPE EXTENSION: usdVnd is frozen byte-identical at 26110 from 2026-07-17 evening through 2026-07-20T05:22Z (~57h, 10+ chef cycles) while gold and oil move in the same snapshots — same frozen-value class as I10 wti_crude_usd stuck $95.5. The I8 'oil/gold/usdVnd deltas null' item is confirmed still live (prevFetchedAt:null at 05:22Z). See FIX-USDVND-FROZEN-26110 for the FX-specific fetcher probe."
       },
       {
         "id": "FIX-ALERT-CASCADE-OUTCOME-DEAD",
@@ -14299,9 +14289,27 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-23T20:18:17Z",
+    "last_triaged_at": "2026-07-23T21:14:31Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-COMMODITY-WTI-DELTA-CORRUPT",
+        "priority": "P2",
+        "status": "IN_PROGRESS",
+        "title": "FIX-COMMODITY-WTI-DELTA-CORRUPT — commodityTracker gaps: I10 wti_crude_usd stuck $95.5 vs live Brent $87.33 (WTI>Brent physically impossible, corrupts oil regime); I8 get_macro_snapshot oil/gold/usdVnd deltas null; I4 BDI stale 67+ days (not in commodityTrackerRefreshJob scope).",
+        "type": "FIX",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-COMMODITY-WTI-DELTA-CORRUPT",
+        "verify_note": "prior_status=TODO",
+        "zone": "apps/mcp-server/",
+        "note": " [PO 2026-07-20] zone was missing (batch-reject risk) -> apps/mcp-server/. SCOPE EXTENSION: usdVnd is frozen byte-identical at 26110 from 2026-07-17 evening through 2026-07-20T05:22Z (~57h, 10+ chef cycles) while gold and oil move in the same snapshots — same frozen-value class as I10 wti_crude_usd stuck $95.5. The I8 'oil/gold/usdVnd deltas null' item is confirmed still live (prevFetchedAt:null at 05:22Z). See FIX-USDVND-FROZEN-26110 for the FX-specific fetcher probe.",
+        "promoted_at": "2026-07-23T21:14:31Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-23T21:14:32Z",
+        "claimed_at": "2026-07-23T21:14:31Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
