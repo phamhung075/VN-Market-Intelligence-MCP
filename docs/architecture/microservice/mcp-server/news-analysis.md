@@ -32,7 +32,17 @@ Individual tool signatures: `docs/agents/tools/list/<tool>.md`
 | `dataAuditJob` | Hourly | Audit data freshness, prune stale NULL-outcome signals |
 | `evidenceAccumulatorJob` | Every 30min | Accumulate evidence items for open chains |
 | `patternWatchJob` | Every 6h | Detect recurring patterns in cascade outcomes |
-| `sscCheckerJob` | Daily | Check SSC for new regulatory filings |
+| `sscCheckerJob` | Daily | Check SSC for new regulatory filings† |
+
+† VPS-only architecture (task 1281-fix): no-ops on the local (France) server —
+`ENABLE_LOCAL_BCTC_FETCH` defaults `false` and is unset in production, so the
+network-calling `checkSscReports()` path never runs there (avoids geo-blocked
+SSC portal timeouts). Still fires daily and records honest `success`/
+`rowsWritten:0` telemetry (FIX-CRON-SSCCHECKERJOB-DEAD-87D) so its liveness is
+visible, but the actual discovery+alert function is superseded by the
+queue-based VPS pipeline (`GET /api/bctc-fetch-queue` + `bctcQueueEnricherJob`
++ `POST /api/push-bctc-pdf`) and `signalDetector.ts`'s generic `report_new`
+signal. Set `ENABLE_LOCAL_BCTC_FETCH=true` only if running directly on the VPS.
 
 ---
 

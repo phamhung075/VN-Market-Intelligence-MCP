@@ -36,15 +36,6 @@ let isRunning = false;
  * Skips the check if a previous invocation is still running.
  */
 export async function runSscCheck(): Promise<void> {
-  // Task 1281-fix: VPS-only architecture guard.
-  // The local server (France IP) must NOT attempt to download BCTC PDFs directly.
-  // All BCTC acquisition is handled exclusively by vn-bctc-fetch.service on the
-  // Vinahost VPS (Vietnam IP). Skipping prevents x5 "Network timeout" errors at startup.
-  if (!mcpConfig.features.enableLocalBctcFetch) {
-    logger.debug("[ssc-check] ENABLE_LOCAL_BCTC_FETCH=false — skipping (VPS-only mode)");
-    return;
-  }
-
   if (isRunning) {
     logger.warn("[ssc-check] previous cycle still running — skipped");
     return;
@@ -62,6 +53,29 @@ export async function runSscCheck(): Promise<void> {
 
     // recordJobRun never re-throws — errors are captured in cron_job_runs.error_msg
     await recordJobRun(db, "sscCheckerJob", async () => {
+      // Task 1281-fix: VPS-only architecture guard.
+      // The local server (France IP) must NOT attempt to download BCTC PDFs directly.
+      // All BCTC acquisition is handled exclusively by vn-bctc-fetch.service on the
+      // Vinahost VPS (Vietnam IP). Skipping prevents x5 "Network timeout" errors at startup.
+      //
+      // FIX-CRON-SSCCHECKERJOB-DEAD-87D (2026-07-23): this guard used to sit
+      // BEFORE recordJobRun() was ever called, so the daily cron wrote ZERO
+      // cron_job_runs rows for the entire ~88 days it was unset in production —
+      // indistinguishable from "crashed / never registered" to any freshness or
+      // watchdog check. Moved inside the recordJobRun callback so the cron
+      // always writes an honest 'success' row (rowsWritten=0) when it correctly
+      // no-ops. This does NOT reintroduce any network call — checkSscReports()
+      // is still only invoked when the flag is true. checkSscReports()'s
+      // functional role (new-report discovery + alerting) has also been fully
+      // superseded since by the queue-based VPS-driven pipeline (GET
+      // /api/bctc-fetch-queue + bctcQueueEnricherJob + POST /api/push-bctc-pdf)
+      // and by signalDetector.ts's generic report_new signal — see decision
+      // journal FIX-CRON-SSCCHECKERJOB-DEAD-87D for the full evidence trail.
+      if (!mcpConfig.features.enableLocalBctcFetch) {
+        logger.debug("[ssc-check] ENABLE_LOCAL_BCTC_FETCH=false — skipping (VPS-only mode)");
+        return { rowsWritten: 0 };
+      }
+
       const result = await checkSscReports();
       logger.info(
         `[ssc-check] cycle complete — ` +

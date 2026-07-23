@@ -44,6 +44,7 @@ import {
   eveningReportIsValid,
   scheduleForeignFlowCbReset,
   runBctcReparseWithDb,
+  runWeeklyAuditWithDb,
 } from './startupHelpers.js'
 
 export function startScheduler() {
@@ -294,6 +295,30 @@ export function startScheduler() {
       } catch (err) {
         log(`[startup-catchup] ${jobName} error: ${err instanceof Error ? err.message : String(err)}`)
       }
+    }
+  }, 30_000)
+
+  // FIX-CRON-SSCCHECKERJOB-DEAD-87D item 2 (2026-07-23) — dataAuditJob:weekly
+  // is a 5th weekly job hit by the exact same restart-timing mechanism as the
+  // 4 above, but it fell OUTSIDE that audit's scan scope: its job_name
+  // ('dataAuditJob:weekly') differs from its CRONS key ('dataAuditWeekly'),
+  // and its window is Saturday 18:00 UTC (CRONS.dataAuditWeekly = '0 1 * * 0'
+  // registered with { timezone: 'Asia/Ho_Chi_Minh' } = Sunday 01:00 ICT), not
+  // one of the Sunday UTC-morning windows the block above targets. RAW-verified
+  // live (2026-07-23): last successful run 2026-06-27 18:00 UTC — 26+ days
+  // stale (07-04/07-11/07-18 windows all silently missed). dataAuditJob:weekly
+  // is bespoke (registerBespokeJobs, not part of buildJobTable), so its runner
+  // is called directly via runWeeklyAuditWithDb(db) — same pattern as the
+  // bctcReparseJob catch-up above — rather than looked up from jobTable.
+  setTimeout(async () => {
+    try {
+      // dataAuditJob:weekly: Saturday 18:00 UTC = Sunday 01:00 ICT, requiredUtcDay=6
+      if (shouldRunCatchup(db, 'dataAuditJob:weekly', 18, 0, new Date(), false, undefined, 6)) {
+        log('[startup-catchup] dataAuditJob:weekly: running catch-up')
+        await runWeeklyAuditWithDb(db)
+      }
+    } catch (err) {
+      log(`[startup-catchup] dataAuditJob:weekly error: ${err instanceof Error ? err.message : String(err)}`)
     }
   }, 30_000)
 

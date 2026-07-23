@@ -174,6 +174,18 @@ export function resolveJobNameDb(cronsKey: string, distinctDbJobNames: readonly 
   return cronsKey;
 }
 
+/**
+ * Test-only: the REAL keys of the tier-1 STATIC_JOB_NAME_MAP (not a hand-copied
+ * list) — FIX-CRON-SSCCHECKERJOB-DEAD-87D class-fix. Lets an invariant test
+ * iterate every actual entry a developer adds/edits here directly, so a future
+ * addition can never silently skip verification the way a second, manually
+ * duplicated key list could (exactly the mechanism that let sscCheckerJob's
+ * job_name/CRONS-key divergence hide undetected for ~87 days).
+ */
+export function _staticJobNameMapKeysForTests(): string[] {
+  return Object.keys(STATIC_JOB_NAME_MAP);
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // CN-2 — deriveCadenceMs (MIN-of-6-samples)
 // ─────────────────────────────────────────────────────────────────────────────

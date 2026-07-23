@@ -32,6 +32,35 @@ envelope the regular cron path uses. All 4 jobs are also now in
 `WATCHDOG_MANIFEST` (weekly cadence, 1.2× threshold) so a future 2-consecutive-
 Sunday miss alerts before it can compound into a 3rd.
 
+**5th job added (FIX-CRON-SSCCHECKERJOB-DEAD-87D, 2026-07-23):** `dataAuditJob:weekly`
+hit the exact same restart-timing mechanism but was NOT in the original 4-job
+scan (its `job_name` differs from its CRONS key `dataAuditWeekly`, and its
+window — `0 1 * * 0` registered `{timezone:'Asia/Ho_Chi_Minh'}` = Saturday
+18:00 UTC — is outside the "Sunday UTC-morning" search the audit used). RAW-
+verified live: 26+ days stale (last success 2026-06-27) at discovery, a
+genuinely SECOND dead job, not merely a label mismatch. Fix: a separate
+`startScheduler.ts` startup-catchup block (`requiredUtcDay=6`) calling
+`runWeeklyAuditWithDb(db)` directly — bespoke job, not in `jobTable`, so it
+cannot share the 4-job lookup loop above.
+
+**Class fix — job_name/CRONS-key name-binding invariant (FIX-CRON-SSCCHECKERJOB-DEAD-87D
+item 3):** `sscCheckerJob` itself was found live-stale ~87 days for a DIFFERENT
+reason (task 1281-fix's `ENABLE_LOCAL_BCTC_FETCH` guard silently returned
+before `recordJobRun()` ever ran — fixed by moving the guard inside the
+`recordJobRun` callback so the daily cron always records honest
+`success`/`rowsWritten:0` telemetry when it correctly no-ops). The SHARED
+defect enabling both incidents to hide: three independently hand-maintained
+registries (`CANONICAL_WATCHDOG_JOB_NAMES`, `WATCHDOG_MANIFEST` keys,
+`cronStatusCompute.ts`'s `STATIC_JOB_NAME_MAP`) had to be kept in sync by
+hand and had already drifted apart once. New test
+`FIX-CRON-SSCCHECKERJOB-DEAD-87D-classfix-registry-invariant.test.ts` reads
+`STATIC_JOB_NAME_MAP`'s REAL keys (no more hand-copied test fixture) and
+cross-checks them against a source-derived call-site scan (same mechanism as
+the WD-11 guard in `ARCH-CRON-watchdog.test.ts`) plus
+`CANONICAL_WATCHDOG_JOB_NAMES`, failing loudly with the exact offending
+key/value on any future divergence — verified via a live injected-typo
+experiment.
+
 ## Intelligence Cycle Steps (15-min tick)
 
 | Step | What | Hours | Timeout |
