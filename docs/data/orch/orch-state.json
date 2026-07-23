@@ -2117,6 +2117,17 @@
         "status": "NEW",
         "summary": "drain-signals.js prune DELETED processed/dev-team-20260716T112423Z-autolaunch-safety-hold-uc-asl-p6-maintlane.json that backlog row FIX-DEVTEAM-BOUNDED1-MAINTLANE-NEXTAGENT-GATE .detail_ref pointed at -> Stage1c dangle blocked ALL orch-apply writes fleet-wide. Dispatcher nulled that mismatched now-pruned detail_ref to unblock (file recoverable at git 395e224ad~1). TWO asks: (1) drain-prune must SKIP files referenced by any live detail_ref/payload_ref, not only repoint payload_ref (recurs each referenced processed/ file ages past 7d); (2) triage/close obsolete row FIX-DEVTEAM-BOUNDED1-MAINTLANE-NEXTAGENT-GATE — subsumed by FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE per main.md.",
         "payload_ref": null
+      },
+      {
+        "id": "dev-team-20260723T1536-bounded1-stale-alreadyfixed-checklist-orphan",
+        "ts": "2026-07-23T15:36:04Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "system-issue",
+        "severity": "WARN",
+        "status": "NEW",
+        "summary": "BOUNDED-1 auto-pickup drained TWO consecutive stale already-fixed quality-checklist orphan rows: MD-FUNC-01-FIX (get_market_snapshot vn_index, shipped 815ccaedd/ddc36452e) + ALT-FUNC-02-FIX (get_alert_accuracy accuracy_rate, shipped 815ccaedd 2026-06-10; docs/data/quality-checklist.json already status=PASS since 2026-06-10T18:00Z). Both backlog rows were minted ~8-10h BEFORE their same-day fix landed and never pruned; re-promoted 6 weeks later, each burned a full dispatch cycle (~90k tokens) re-confirming a long-shipped fix. Root cause: quality-checklist-derived *-FIX backlog rows are never pruned when the checklist item flips to PASS. TWO asks: (1) one-time prune backlog[] of *-FIX rows whose docs/data/quality-checklist.json item is already status=PASS (cross-check by id); (2) add a BOUNDED-1 pre-promotion freshness gate: before promoting a quality-checklist-derived *-FIX row, re-read the checklist item and auto-DEFER/prune if already PASS instead of promoting (same gate-family as the plan-only-gate-blind ask dev-team-20260723T0919). Both re-promoted rows are now correctly in review[] as verification-only for QA-Drain confirm-and-archive.",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-22T15:10:08Z",
