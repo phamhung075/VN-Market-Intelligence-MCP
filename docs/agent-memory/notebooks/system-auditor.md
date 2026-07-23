@@ -1,3 +1,17 @@
+## h8a2f3c1 · 2026-07-23T18:34:09Z
+### Audit Run Tier-2 (18:33–18:34 UTC 2026-07-23)
+- Tier: 2 | Sources: 12 | Cron checks: 1 | VPS routes: 4 | BCTC health gates: 3
+- A-29 cron fire gaps: PASS (all major jobs executing on schedule, no 2x cadence gaps)
+- B-01..B-07 data freshness: PASS (pipeline health healthy, get_pipeline_health generated 2026-07-23T18:31:49, all sources recent)
+- B-09 BCTC URL shape: PASS (0 SSC portal URLs in queue)
+- B-13 stale pending BCTC: PASS (0 stale items > 72h)
+- B-05 BCTC healthy idle gate: PASS (183 actionable queue items, push-age 72h << SLA threshold 195.5h out-of-window)
+- C-06 market_messages 3h: 0 (off-market hours 03:00 VN time, expected INFO) | C-07 agent_signals 24h: 308 PASS
+- SLA status: sbv_fx 47m/30m threshold breached → signal_queue row appended (dedup-skipped: B-04 last_sent 2026-07-21T18:32:00Z)
+- Anomalies: 0 new (1 dedup-skipped sbv_fx)
+- Status: HEALTHY
+- Corroboration: Fleet healthy apart from known launchd (docker-events, fleet-push already tracked 2026-07-23T10:32). Heartbeat refreshed (tier-2-last-healthy.json).
+
 ## g7e1f2a5 · 2026-07-23T17:41:24Z
 ### Audit Run Tier-1 (17:41 UTC 2026-07-23)
 - Tier: 1 | Services: 12 checked | Health endpoints: 5
@@ -7,55 +21,6 @@
 - Anomalies: 0 new
 - Status: HEALTHY
 - Corroboration: All 12 host_runtime_set services UP (healthy). All 5 health endpoints 200 OK. A-20 3/3 in-container probes pass. A-21 zero crash events in 4h window. Memory stable at 22.62%, well below 85%. Disk 33%. No clock skew detected (file mtimes normal). All cron jobs executing. docker-events/fleet-push already tracked as known launchd issues (dedup guard active).
-
-### RAW-PROBE:
-```
-=== AUDITOR PROBE 2026-07-23T17:41:24Z ===
-
---- docker ps -a ---
-NAMES                                             STATUS                       IMAGE                                           CREATED
-vn-market-intelligence-mcp-mcp-server-1           Up About an hour (healthy)   vn-market-intelligence-mcp-mcp-server           24 hours ago
-vn-market-intelligence-mcp-pdf-extractor-1        Up 2 days (healthy)          vn-market-intelligence-mcp-pdf-extractor        2 days ago
-mcp-gateway                                       Up 7 days (healthy)          mcpservergatway-gateway                         7 days ago
-vn-market-intelligence-mcp-frontend-1             Up 8 days (healthy)          vn-market-intelligence-mcp-frontend             8 days ago
-vn-market-intelligence-mcp-api-gateway-1          Up 8 days (healthy)          vn-market-intelligence-mcp-api-gateway          8 days ago
-vn-market-intelligence-mcp-flaresolverr-1         Up 8 days (healthy)          ghcr.io/flaresolverr/flaresolverr:latest        8 days ago
-vn-market-intelligence-mcp-news-fetch-1           Up 8 days (healthy)          vn-market-intelligence-mcp-news-fetch           8 days ago
-vn-market-intelligence-mcp-rag-service-1          Up 22 hours (healthy)        vn-market-intelligence-mcp-rag-service          8 days ago
-vn-market-intelligence-mcp-macro-indicators-1     Up 8 days (healthy)          vn-market-intelligence-mcp-macro-indicators     8 days ago
-vn-market-intelligence-mcp-technical-analysis-1   Up 8 days (healthy)          vn-market-intelligence-mcp-technical-analysis   8 days ago
-vn-market-intelligence-mcp-alert-engine-1         Up 8 days (healthy)          vn-market-intelligence-mcp-alert-engine         8 days ago
-vn-market-intelligence-mcp-stock-price-1          Up 8 days (healthy)          vn-market-intelligence-mcp-stock-price          8 days ago
-vn-market-intelligence-mcp-kinh-dich-service-1    Up 8 days (healthy)          vn-market-intelligence-mcp-kinh-dich-service    8 days ago
-
---- health endpoints ---
-[health] mcp-server:3000/health OK (HTTP 200)
-[health] api-gateway:4000/health OK (HTTP 200)
-[health] macro-indicators:5004/health OK (HTTP 200)
-[health] pdf-extractor:5001/health OK (HTTP 200)
-[health] frontend:3001/ OK (HTTP 200)
-
---- restart count ---
-Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=2
-
---- memory pressure ---
-Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=22.62% MemUsage=695MiB / 3GiB
-
---- memory pressure multi-probe reclamation (A-30) ---
-[A-30] SKIP deep-probe — baseline 22.62% < 85% investigate-gate
-
---- disk df -h / ---
-Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
-/dev/disk1s4s1   233Gi    13Gi    28Gi    33%    393k  292M    0%   /
-
---- pdf-extractor in-container multi-probe (A-20) ---
-[A-20-PROBE-1] in-container HTTP 200
-[A-20-PROBE-2] in-container HTTP 200
-[A-20-PROBE-3] in-container HTTP 200
-[A-20] pass_count=3/3
-
-=== PROBE DONE ===
-```
 
 ## f3c2d1e4 · 2026-07-23T16:17:07Z
 ### Audit Run Tier-1 (16:17 UTC 2026-07-23)
@@ -83,10 +48,3 @@ Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
 - A-21 crash restarts: 0 (window: 4h) | Disk: 30% used
 - Anomalies: 0 new
 - Status: HEALTHY
-
-## d8f2c1a5 · 2026-07-23T10:33:18Z
-### Audit Run Tier-2 (10:33 UTC 2026-07-23)
-- Tier: 2 | Launchd checks: 3 agents | Signal-queue rows: 3
-- Anomalies: 3 new (2 CRITICAL, 1 WARN launchd agents)
-- Status: DEGRADED
-- Findings: A-LAUNCHD-DOCKER-EVENTS CRITICAL | A-LAUNCHD-COWORK-FIRER WARN | A-LAUNCHD-FLEET-PUSH-CONFIRM CRITICAL
