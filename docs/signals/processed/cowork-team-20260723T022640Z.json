@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-23T02:26:40Z",
+    "matched_slots": [
+      "chef-intraday"
+    ],
+    "won_slots": [
+      "chef-intraday"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "silent": false,
+    "drift_min": 7,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "chef-intraday": "cadence"
+    },
+    "cadence_minutes": {
+      "chef-intraday": "120"
+    },
+    "last_fired_timestamp": "2026-07-23T02:25:52Z",
+    "last_fired_slots": [
+      "chef-intraday"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "02:15",
+    "leader_lock": "acquired",
+    "dev_head": "in_progress",
+    "devq": 5,
+    "signal_backlog": 8,
+    "note": "chef-intraday spawned with a 3-point data-quality briefing: (1) VN-Index two-plane divergence — market_context MACRO block stale at 1770 (2026-07-22 08:30) vs live get_macro_snapshot 1675.45 dataSource=live source_tier=2 fetchedAt 2026-07-23T02:24:28Z; chef told to cite live plane only and never delta the two planes. (2) VPS push-plane outage unresolved since 2026-07-21T03:05Z — daily_ohlcv 07-22=51 rows vs ~900 baseline, daily_foreign_flow no 07-22 row; chef told to confirm both endpoints exist before any cross-date computation. (3) usdVnd=26120 re-verify-before-cite (known frozen-carry-labelled-live failure mode). DEFECTS OBSERVED THIS TICK: (a) cycle_snapshot_promoted=false again despite two fresh snapshots written 1min earlier under both the writer key (02:24, date -u +%H:%M unrounded) and the reader key (02:25, nearest-5-min per cycle-bootstrap SKILL Step -1) — cycle-snapshot-latest.json still frozen at 2026-07-07T19:47:26Z, 16 days; broken predicate, not missing input. (b) tick-snapshot.md writer key and cycle-bootstrap SKILL Step -1 reader key disagree 4 ticks in 5; dispatcher writes both as a workaround. (c) spawn-fanout.md Step 5.1 LOAD_1MIN parser splits uptime on comma — this host prints space-separated comma-decimal load averages (1,80 2,27 2,19), so the parser yields 1 instead of 1.80; load half of the DEGRADED gate is dead, headroom alone decides. Outcome unaffected (headroom 3599>=1500, true load 1.80 vs cap 24, MAX_PARALLEL=4). (d) docs/signals/ pending count is 55, above the >50 threshold that has previously dead-locked the dev-team drain."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-23T02:26:40Z",
+  "_processed": {
+    "fingerprint": "e82193ed32d9f7a7b355a1fae7169ba0dee5783e51f8ef05e8cbb0ca03b83ded",
+    "processedAt": "2026-07-23T02:46:11Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

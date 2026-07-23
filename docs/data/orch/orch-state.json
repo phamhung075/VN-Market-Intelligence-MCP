@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "review",
+    "status": "in_progress",
     "active_task_id": "UC-CCA-P6-NBWRITE",
     "next_agent": "qa",
-    "next_action": "QA to run pipeline on UC-CCA-P6-NBWRITE (review lane) — Piece 1 notebook-write AC-3 consolidation.",
-    "updated_at": "2026-07-23T02:27:21Z",
-    "updated_by": "developer"
+    "next_action": "QA verify-committed UC-CCA-P6-NBWRITE (review[] lane, branch=null — direct-commit to main; use verify-committed mode, NOT normal pipeline checkout). Piece 1: notebook-write AC-3 consolidation across news-scout/chef/bctc/daily-predict + fb-market-poster OVERWRITE->APPEND.",
+    "updated_at": "2026-07-23T02:53:31Z",
+    "updated_by": "dev-team (head-coherence: review->in_progress to match pipeline-resume convention, per UC-CDC-P4 precedent)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
