@@ -293,3 +293,51 @@ matching task-id.
 **why-change:** No change from plan — moved `UC-MDH-P1` `qa[]`->`done_verified[]`
 (status=DONE_VERIFIED, qa_verdict=APPROVED, commit=11c35c0a8 backfilled). `.head` reset idle,
 next_agent=pm. Did NOT push.
+
+### STEP qa-S12 · qa · 2026-07-23T00:52:18Z
+**task-id:** UC-CDC-P4
+**what-done:** Review-lane gate (row in `review[]`, `branch:null`, docs/config-only, commits
+df5871ed4/56b954edc/1ee1b4963 already on main). Verified AC2 (`jq '._fanout'` — valid JSON, all 5
+keys present, values match spec exactly). Verified AC3 (batch semantics: `ORDERED_SLOTS` puts
+`guaranteed==true` first, `chunk(..., MAX_PARALLEL)`, inter-batch wait loop polls completion-or-
+reprobe with 5s ticks hard-capped at `batch_wait_max_seconds`, degrades `MAX_PARALLEL` on timeout —
+real wait, not naive back-to-back `run_in_background` spawns). Verified AC4 (`HEADROOM_MB = null`
+whenever `PRESSURE_MODE != "adaptive"`, forcing the `DEGRADED` branch — fails to
+`max_parallel_degraded`, never fails open). Verified AC5 by RE-RUNNING (not trusting the developer's
+51/51 claim): `cd apps/mcp-server && bun test src/__tests__/DWF-phase1-cadence.test.ts` → **51 pass,
+0 fail, 183 expect() calls** myself; cross-checked no other consumer schema-validates
+cadence-policy.json strictly (`cowork-match-slots.js`, `emitPressureStateTool.ts` — neither breaks
+on an added top-level key). Verified AC6: `agent-chaining-protocol.md` carve-out added, correctly
+scoped, references SSOT by key name only (no literal numbers). **Found AC1 BLOCKING violation**:
+grepped the flow doc's batch/headroom logic for literal integers — `spawn-fanout.md:132-134`
+(Step 5.1, `POLICY_FILE`-missing/unparseable/`_fanout`-missing branch) hardcodes the entire
+`_fanout` policy object as inline literals (`max_parallel_default:4, max_parallel_degraded:2,
+headroom_floor_mb:1500, load_per_core_factor:2, batch_wait_max_seconds:120`) — a shadow copy of the
+SSOT values duplicated inline. Both the commit message ("5 tunables, zero hardcoded numbers in the
+flow doc") and `docs/WORK.md`'s one-liner ("zero hardcoded numbers in the flow doc") assert the
+opposite of what the raw file contains — self-report contradicted by source. Verdict:
+**CHANGES_REQUESTED**.
+**what-considered:**
+- Treat the fallback as an acceptable defensive default (matches today's SSOT values, only
+  triggers when the config file itself is unreadable) — rejected: the AC's own verification method
+  is explicit and mechanical ("grep the flow doc for literal integers... must reference the
+  _fanout keys, not inline constants"), with no fallback-only carve-out; the shadow copy creates
+  real SSOT-drift risk (if `_fanout` values are retuned later, this fallback silently keeps stale
+  numbers) — exactly the failure mode a threshold SSOT exists to prevent.
+- Checked precedent: Step 4.2's `pressure-read.md` handles a fully-missing/malformed policy file by
+  logging WARN and degrading to `legacy` mode WITHOUT synthesizing a numeric threshold — no
+  established precedent in this codebase for whole-object inline-literal fallback; Step 5.1's
+  pattern is a new, avoidable deviation, not consistent with the one per-field `|| 20` default
+  `pressure-read.md` uses when a single key inside an already-parsed file is missing.
+- Approve with a non-blocking note instead of gating — rejected: the AC was phrased as a hard,
+  grep-verifiable gate specifically to catch this class of issue; rubber-stamping a self-report that
+  contradicts the raw source defeats the point of RAW verification (feedback_router_verify_raw_not_badges).
+**why-decision:** 5/6 ACs independently RAW-confirmed PASS at source (own jq run, own grep of batch/
+wait logic, own re-run of the regression suite); AC1 mechanically fails via the same grep method the
+gate specified — not a judgment call, a literal-integer match inside the batch/headroom logic block.
+**why-change:** Escalation from the default PASS path — moved `UC-CDC-P4` `review[]`->`in_progress[]`
+(status=IN_PROGRESS, owner/next_agent=developer, `qa_verdict=CHANGES_REQUESTED`, one `qa_blocking_issues[]`
+entry with file:line + fix guidance, `redispatch_count`=0->1) via `jq | scripts/orch-apply.sh`
+(validator PASS, conservation PASS 626=626/105=105). `.head` set `next_agent: developer`,
+`next_action` names the exact fix. Did NOT approve, did NOT merge (nothing to merge — already on
+main), did NOT push.
