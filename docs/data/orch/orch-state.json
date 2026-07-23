@@ -387,12 +387,11 @@
     }
   ],
   "head": {
-    "status": "review",
-    "active_task_id": "UC-GCP-P1",
-    "next_agent": "qa",
-    "next_action": "QA verify UC-GCP-P1 commit-convention SSOT consolidation — grep-verify zero dangling refs, confirm tree-map DAG integrity, confirm audit script deprecation banner, review commits 7dcf90919/8c6d71683",
-    "updated_at": "2026-07-23T06:31:33Z",
-    "updated_by": "developer"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "updated_at": "2026-07-23T06:37:31Z",
+    "updated_by": "dev-team"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -1986,6 +1985,50 @@
         "status": "NEW",
         "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-07-23.json",
         "note": "dev-team drain durable delivery: file-only PO payload appended to signal_queue for PO triage"
+      },
+      {
+        "id": "sys-20260723T063226-16ba",
+        "ts": "2026-07-23T06:32:26Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "foreign-flow stale 3082min (check B-07)",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260723T063235-2758",
+        "ts": "2026-07-23T06:32:35Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "prices stale 2880min (check B-06)",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260723T063240-0a0b",
+        "ts": "2026-07-23T06:32:40Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "sbv-vps stale 2879min (check B-06)",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "from": "dev-team",
+        "id": "dev-team-20260723T063731Z-head-review-unhandled-bypasses-qadrain",
+        "payload_ref": "docs/agents/dev-team/flow/execute-tier.md",
+        "severity": "MEDIUM",
+        "status": "NEW",
+        "summary": "developer DONE->REVIEW flip set .head to {status:review, active_task_id:UC-GCP-P1, next_agent:qa} — un-handled dispatch state: pipeline-resume gate needs status==in_progress, idle-fallthrough needs idle/done/missing/v1, so status==review matches NEITHER lane and the BOUNDED-1..QA-Drain fall-through chain never runs -> the branch:null review row is stranded (QA-Drain is the ONLY lane that can dispatch qa in verify-committed mode against branch:null; main.md line 643). Dispatcher reset head->idle this tick to unstall UC-GCP-P1 (now claimable by QA-Drain). ROOT: execute-tier.md § Status-Flip (b) permits 'sync head to next next_agent' but for branch:null REVIEW rows that target is un-dispatchable — head MUST be idle. ASK: tighten execute-tier.md head-sync guidance to prescribe head.status=idle for branch:null REVIEW flips (never review/in_progress).",
+        "to": "po",
+        "ts": "2026-07-23T06:37:31Z",
+        "type": "routing-gap"
       }
     ],
     "last_triaged_at": "2026-07-22T15:10:08Z",
