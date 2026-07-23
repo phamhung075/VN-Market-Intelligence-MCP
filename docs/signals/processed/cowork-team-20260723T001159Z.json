@@ -4,11 +4,26 @@
   "type": "cowork-fire",
   "payload": {
     "fire_time": "2026-07-23T00:11:59Z",
-    "matched_slots": ["bctc-analyst-slot-4","news-scout-offhours","market-watcher-offhours","alert-commander-critical"],
-    "won_slots": ["bctc-analyst-slot-4","news-scout-offhours","market-watcher-offhours","alert-commander-critical"],
+    "matched_slots": [
+      "bctc-analyst-slot-4",
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-4",
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
     "held_by_other": [],
     "all_held": false,
-    "spawned": ["docs/agents/bctc-analyst/flow/main.md","docs/agents/news-scout/flow/main.md","docs/agents/market-watcher/flow/main.md","docs/agents/alert-commander/flow/main.md"],
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md",
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
     "silent": false,
     "drift_min": 6,
     "errors": [],
@@ -18,10 +33,25 @@
     "suppressed_cadence": [],
     "downgraded": [],
     "chef_mutex_applied": false,
-    "due_reasons": { "bctc-analyst-slot-4": "cron", "news-scout-offhours": "cadence", "market-watcher-offhours": "cadence", "alert-commander-critical": "cadence" },
-    "cadence_minutes": { "bctc-analyst-slot-4": null, "news-scout-offhours": 240, "market-watcher-offhours": 240, "alert-commander-critical": 240 },
+    "due_reasons": {
+      "bctc-analyst-slot-4": "cron",
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence",
+      "alert-commander-critical": "cadence"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-4": null,
+      "news-scout-offhours": 240,
+      "market-watcher-offhours": 240,
+      "alert-commander-critical": 240
+    },
     "last_fired_timestamp": "2026-07-23T00:11:01Z",
-    "last_fired_slots": ["bctc-analyst-slot-4","news-scout-offhours","market-watcher-offhours","alert-commander-critical"],
+    "last_fired_slots": [
+      "bctc-analyst-slot-4",
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
     "last_fired_write_errors": null,
     "classification": "FIRE",
     "reason": "spawned",
@@ -33,5 +63,11 @@
     "note": "Step 4.7 tick-snapshot SKIPPED: dispatcher ran Step 5 fan-out before 4.7, so all 4 agents had already passed their cycle-bootstrap Step -1 snapshot check (7-min window) and fell through to direct get_cycle_bootstrap — writing the file would have produced a dead artifact. Step 5b now runs via scripts/agents-flow/cowork-write-last-fired.js (new). VPS push plane dead since 2026-07-21T03:05Z; broad-market OHLCV collapsed to watchlist-only coverage, foreign flow has no 07-22 row. docs/signals drain backlog at 55 files, oldest 2026-07-03 — dead-locked, needs routing."
   },
   "priority": "low",
-  "createdAt": "2026-07-23T00:11:59Z"
+  "createdAt": "2026-07-23T00:11:59Z",
+  "_processed": {
+    "fingerprint": "e1e86b1082128a584cc366e776a26e8ebff39fe47f69056759c27ad885075fb4",
+    "processedAt": "2026-07-23T00:17:24Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

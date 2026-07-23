@@ -1,0 +1,22 @@
+{
+  "ticker": "VCB",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Retail and corporate banking, trade finance, bancassurance cross-sell",
+  "customer": "Retail depositors, SOE/corporate borrowers, trade-finance clients",
+  "ops": "Net interest income 17.421 ty VND, ROE 4.2% (bctc) / 16.7% (sector-calc, below sector median 17.6%), PE 14.1x PREMIUM +57% vs sector median 9.0x",
+  "mgmt": "Kinh Dich signal Khon(2)/THAN TRONG (13% conf.) holds n=4 consecutive cycles since the 07-20/07-22 selloff — NOT corroborated by byte-identical fundamentals (fundamental_validation id=8903 posted, critic 1.0)",
+  "esc_status": "ESC-3 DATA-COVERAGE-LIMITED (3/4Q cash-flow history) — guard esc-datacov:VCB:Q1-2026:ESC-3 held (unexpired), no re-emit. ESC-4 FALSE (non_operating_share -21.4%, bank pre-provision structure, AC-1 formula). ESC-1/2/5 FALSE (B/S imbalance 0.37%).",
+  "data_quality_note": "VPS push plane (prices/foreign-flow/sbv) degraded since 2026-07-21T03:05Z — daily_ohlcv coverage collapsed to 416 rows (07-21) and 51 rows (07-22) vs 887-984/day baseline. Sector PE/PB peer ranking above uses this same degraded price plane — treat as degraded-confidence pending VPS restore. BCTC fundamentals (revenue/profit/ROE) are from the separate OCR/PDF pipeline, own staleness: VPS bctc push last succeeded 2026-07-20T01:26:41Z (70.7h ago, SLA 48h).",
+  "cycle": "c114",
+  "generated_at": "2026-07-23T00:20:00Z",
+  "source": "bctc-analyst-slot-4",
+  "_processed": {
+    "fingerprint": "bf646499b3f97aacc0764ebe2b3f96b1c818557a8cfa51ba473b1d88780d61b8",
+    "processedAt": "2026-07-23T00:17:24Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

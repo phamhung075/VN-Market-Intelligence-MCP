@@ -1,0 +1,29 @@
+{
+  "ticker": "DIG",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Phat trien bat dong san khu do thi, khu cong nghiep (DIC Corp)",
+  "customer": "Nguoi mua nha o, nha dau tu thu cap bat dong san khu vuc Ba Ria-Vung Tau/phia Nam",
+  "ops": "BCTC goc chua co du lieu (Chua co du lieu BCTC) — chi co ty le so sanh nganh: PE 14.9x (DISCOUNT -23% vs median 19.3x), ROE 7.3% (tren median 6.3%)",
+  "mgmt": "Khong co du lieu quan tri moi; theo doi luan phien (rotation touch), khong mo rong cum bi chan",
+  "fundamentals": {
+    "data_status": "Chua co du lieu BCTC — blocked cluster (unchanged)",
+    "sector_pe": 14.9,
+    "sector_pe_verdict": "DISCOUNT",
+    "sector_roe_pct": 7.3
+  },
+  "esc_gate": {
+    "note": "ESC gate not evaluated — no BCTC extraction available"
+  },
+  "data_quality_note": "VPS push plane (prices/foreign-flow/sbv) degraded since 2026-07-21T03:05Z — daily_ohlcv coverage collapsed to 416 rows (07-21) and 51 rows (07-22) vs 887-984/day baseline. Sector PE/ROE figures above use this same degraded price plane — treat as degraded-confidence pending VPS restore.",
+  "cycle_id": "20260723-0000",
+  "source": "bctc-analyst-slot-4",
+  "_processed": {
+    "fingerprint": "a5847c90b8458fc20672a425627fd6d016a6dc30729a0a98af7e055d374f41a3",
+    "processedAt": "2026-07-23T00:17:24Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

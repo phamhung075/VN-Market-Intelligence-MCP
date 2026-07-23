@@ -1,0 +1,30 @@
+{
+  "ticker": "DPM",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "San xuat phan bon (Dam Phu My — ure, NPK), hoa chat nong nghiep",
+  "customer": "Nong dan/dai ly phan bon trong nuoc, mot phan xuat khau",
+  "ops": "BCTC goc chua co du lieu (Chua co du lieu BCTC) — chi co ty le so sanh nganh: PE 18.2x (PREMIUM +137% vs median 7.7x), ROE 9.6% (duoi median 17.4%); EY spread EXPENSIVE (EY 5.49% - deposit 5% = 0.49pp)",
+  "mgmt": "Khong co du lieu quan tri moi; theo doi luan phien (rotation touch), khong mo rong cum bi chan",
+  "fundamentals": {
+    "data_status": "Chua co du lieu BCTC — blocked cluster (unchanged)",
+    "sector_pe": 18.2,
+    "sector_pe_verdict": "PREMIUM",
+    "sector_roe_pct": 9.6,
+    "ey_spread_verdict": "EXPENSIVE"
+  },
+  "esc_gate": {
+    "note": "ESC gate not evaluated — no BCTC extraction available"
+  },
+  "data_quality_note": "VPS push plane (prices/foreign-flow/sbv) degraded since 2026-07-21T03:05Z — daily_ohlcv coverage collapsed to 416 rows (07-21) and 51 rows (07-22) vs 887-984/day baseline. Sector PE/ROE figures above use this same degraded price plane — treat as degraded-confidence pending VPS restore.",
+  "cycle_id": "20260723-0000",
+  "source": "bctc-analyst-slot-4",
+  "_processed": {
+    "fingerprint": "be49f537e538b3df9e1f46b25f83126af77c0f75947f092a98bd6132b9d90dc3",
+    "processedAt": "2026-07-23T00:17:24Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
