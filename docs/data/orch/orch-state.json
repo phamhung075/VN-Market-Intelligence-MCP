@@ -387,11 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "updated_at": "2026-07-23T12:06:43Z",
-    "updated_by": "dev-mcp-server"
+    "status": "in_progress",
+    "active_task_id": "FIX-DEVTEAM-BOUNDED1-PROSE-SEQUENCING-UNBACKED-GATE",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-DEVTEAM-BOUNDED1-PROSE-SEQUENCING-UNBACKED-GATE — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-23T12:18:11Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -10783,26 +10784,6 @@
         "po_gate_20260723": "PO triage 2026-07-22T23:57:27Z (dev-team BOUNDED-1 mis-promote follow-up): installed machine-readable depends_on=[UC-SDF-P6, ARCH-SESSION-CRON-PLANE-LIVENESS-WATCHDOG] and returned status BLOCKED->BACKLOG. Row is now promote-eligible-but-dep-gated: BOUNDED-1 evaluates it every idle tick but deps_satisfied() holds it (both predecessors still BACKLOG; the gate requires DONE_VERIFIED) and it AUTO-UNBLOCKS only once BOTH predecessors reach DONE_VERIFIED. Removed inline blocked_by=\"dev-team\": scripts/lib/devteam-eligibility.jq unions .blocked_by into effective_depends_on as a task-id list, so a non-task-id string there is a phantom dep that never reaches DONE_VERIFIED and would permanently defeat auto-unblock. Prior BLOCKED state (blocked_at 2026-07-22T23:52:55Z by dev-team) preserved in bounded1_hold_20260722. Prose rationale unchanged in po_sequencing_20260722."
       },
       {
-        "id": "FIX-DEVTEAM-BOUNDED1-PROSE-SEQUENCING-UNBACKED-GATE",
-        "type": "FIX",
-        "title": "BOUNDED-1 promote gate is blind to PO prose sequencing (po_sequencing_* fields) — add a conservative-skip gate in the shared eligibility library that withholds any backlog row carrying a po_sequencing_*-pattern key while its effective_depends_on is empty, and surface it in the audit report",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "owner": "dev",
-        "next_agent": "developer",
-        "source": "po-triage-2026-07-23-bounded1-prose-sequencing-near-miss",
-        "created_at": "2026-07-22T23:57:54Z",
-        "created_by": "po",
-        "updated_at": "2026-07-22T23:57:54Z",
-        "related": [
-          "UC-CDC-P5",
-          "SPIKE-BOUNDED1-ELIGIBILITY-CONTRACT-REVIEW"
-        ],
-        "note": "ROOT CAUSE: PO-authored sequencing constraints written in prose fields (po_sequencing_YYYYMMDD) are INVISIBLE to scripts/lib/devteam-eligibility.jq — effective_depends_on() only reads .depends_on/.depends/.blocked_by. On 2026-07-22 dev-team BOUNDED-1 mis-promoted UC-CDC-P5 (its PART-3/3 ordering constraint lived ONLY in .po_sequencing_20260722): blind-promoted then reverted (mis-promote+revert churn on a P1 row). Acutely contained 2026-07-23 by hand-installing depends_on on UC-CDC-P5, but the gate blind-spot remains for the NEXT prose-only-sequenced row. This is the meta-class SPIKE-BOUNDED1-ELIGIBILITY-CONTRACT-REVIEW named ('resolve ALL gating metadata through one shared contract, not hole-by-hole') — the 'future' hook it left open.\n\nFIX (in the SHARED library scripts/lib/devteam-eligibility.jq, NOT any single caller — one-shared-contract principle; all three pickers BOUNDED-1/SLS/RLC inherit it automatically): add def has_unbacked_sequencing_prose = (row has any object key matching ^po_sequencing) AND (effective_depends_on($detail_items) | length)==0. Add (has_unbacked_sequencing_prose != true) as a conjunct in is_bounded1_eligible → conservative-skip: a row that declares sequencing in prose but has NO machine-readable dep is withheld from unattended auto-dispatch until the dep is encoded.\n\nSURFACE (not silent): extend scripts/audits/bounded1-supervised-lane-report.sh SECONDARY section (or a small new detector) to LIST every backlog row carrying prose sequencing with empty depends_on, so PO is nudged to encode the dep instead of the row silently idling forever.\n\nDO-NOT: do NOT teach the gate to parse po_sequencing prose to extract predecessor task-ids — regex-mining English sentences for control flow is brittle and is exactly the fragility this library exists to avoid. The fix FORCES the ordering to be machine-encoded as depends_on and refuses auto-dispatch until it is.\n\nACCEPTANCE (dynamic fixtures, NO hardcoded task-ids): (1) a BACKLOG row with a po_sequencing_* key and empty depends_on is NOT bounded1-eligible; the SAME row with depends_on populated IS eligible (deps permitting). (2) A UC-CDC-P5-shaped live fixture stays held while UC-SDF-P6/ARCH-SESSION-CRON-PLANE-LIVENESS-WATCHDOG are not DONE_VERIFIED. (3) Regression verifier added under scripts/audits/ mirroring the existing devteam-bounded1-detail-disposition-gate-verify.sh pattern. Related: UC-CDC-P5 (acute instance), SPIKE-BOUNDED1-ELIGIBILITY-CONTRACT-REVIEW (parent design)."
-      },
-      {
         "id": "FIX-AGENTBOOTSTRAP-EAGER-EXECSYNC-COLDSTART",
         "type": "FIX",
         "priority": "P1",
@@ -13670,9 +13651,35 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-23T11:18:47Z",
+    "last_triaged_at": "2026-07-23T12:18:11Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-DEVTEAM-BOUNDED1-PROSE-SEQUENCING-UNBACKED-GATE",
+        "type": "FIX",
+        "title": "BOUNDED-1 promote gate is blind to PO prose sequencing (po_sequencing_* fields) — add a conservative-skip gate in the shared eligibility library that withholds any backlog row carrying a po_sequencing_*-pattern key while its effective_depends_on is empty, and surface it in the audit report",
+        "status": "IN_PROGRESS",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "dev",
+        "next_agent": "developer",
+        "source": "po-triage-2026-07-23-bounded1-prose-sequencing-near-miss",
+        "created_at": "2026-07-22T23:57:54Z",
+        "created_by": "po",
+        "updated_at": "2026-07-23T12:18:12Z",
+        "related": [
+          "UC-CDC-P5",
+          "SPIKE-BOUNDED1-ELIGIBILITY-CONTRACT-REVIEW"
+        ],
+        "note": "ROOT CAUSE: PO-authored sequencing constraints written in prose fields (po_sequencing_YYYYMMDD) are INVISIBLE to scripts/lib/devteam-eligibility.jq — effective_depends_on() only reads .depends_on/.depends/.blocked_by. On 2026-07-22 dev-team BOUNDED-1 mis-promoted UC-CDC-P5 (its PART-3/3 ordering constraint lived ONLY in .po_sequencing_20260722): blind-promoted then reverted (mis-promote+revert churn on a P1 row). Acutely contained 2026-07-23 by hand-installing depends_on on UC-CDC-P5, but the gate blind-spot remains for the NEXT prose-only-sequenced row. This is the meta-class SPIKE-BOUNDED1-ELIGIBILITY-CONTRACT-REVIEW named ('resolve ALL gating metadata through one shared contract, not hole-by-hole') — the 'future' hook it left open.\n\nFIX (in the SHARED library scripts/lib/devteam-eligibility.jq, NOT any single caller — one-shared-contract principle; all three pickers BOUNDED-1/SLS/RLC inherit it automatically): add def has_unbacked_sequencing_prose = (row has any object key matching ^po_sequencing) AND (effective_depends_on($detail_items) | length)==0. Add (has_unbacked_sequencing_prose != true) as a conjunct in is_bounded1_eligible → conservative-skip: a row that declares sequencing in prose but has NO machine-readable dep is withheld from unattended auto-dispatch until the dep is encoded.\n\nSURFACE (not silent): extend scripts/audits/bounded1-supervised-lane-report.sh SECONDARY section (or a small new detector) to LIST every backlog row carrying prose sequencing with empty depends_on, so PO is nudged to encode the dep instead of the row silently idling forever.\n\nDO-NOT: do NOT teach the gate to parse po_sequencing prose to extract predecessor task-ids — regex-mining English sentences for control flow is brittle and is exactly the fragility this library exists to avoid. The fix FORCES the ordering to be machine-encoded as depends_on and refuses auto-dispatch until it is.\n\nACCEPTANCE (dynamic fixtures, NO hardcoded task-ids): (1) a BACKLOG row with a po_sequencing_* key and empty depends_on is NOT bounded1-eligible; the SAME row with depends_on populated IS eligible (deps permitting). (2) A UC-CDC-P5-shaped live fixture stays held while UC-SDF-P6/ARCH-SESSION-CRON-PLANE-LIVENESS-WATCHDOG are not DONE_VERIFIED. (3) Regression verifier added under scripts/audits/ mirroring the existing devteam-bounded1-detail-disposition-gate-verify.sh pattern. Related: UC-CDC-P5 (acute instance), SPIKE-BOUNDED1-ELIGIBILITY-CONTRACT-REVIEW (parent design).",
+        "promoted_at": "2026-07-23T12:18:11Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-23T12:18:11Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
