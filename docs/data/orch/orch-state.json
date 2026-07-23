@@ -387,12 +387,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "DS-OBS-01-FIX",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of DS-OBS-01-FIX — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-23T17:20:59Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "updated_at": "2026-07-23T17:59:24Z",
+    "updated_by": "dev-mcp-server (DS-OBS-01-FIX closeout)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -13997,6 +13996,35 @@
         "completed_at": "2026-07-23T17:17:09Z",
         "completed_by": "dev-mcp-server",
         "status_note": "BCT-OBS-02-FIX: REAL fix shipped (opposite of sibling BCT-OBS-01/verification-only rows). RAW-verified at source (not the checklist self-report): zero sendTelegram*/telegram references in sscCheckerJob.ts or checkSscReports.ts across their FULL git history (f3eeb9b7d..791b0e4dc) -- runSscCheck() never posted anything to WORK regardless of outcome. quality-checklist.json BCT-OBS-02=PASS is a false-positive: live signal msg 3628 proves read_telegram_reports channel param is a zod-schema no-op (cannot filter WORK); independently corroborated by this session's own BCT-OBS-01-FIX finding that sendTelegramWork has zero DB persistence by design -- read_telegram_reports can never observe a WORK sscCheck message either way, so the checklist recheck_how was structurally unable to confirm what it claimed. Fix: runSscCheck() now posts exactly one WORK-channel summary message per executed nightly cycle (VPS-only no-op skip / full run / unhandled error) via new injectable sendWorkAlertFn defaulting to sendTelegramWork -- mirrors bctcOverdueCheckJob.ts FR-OBS-01-FIX precedent (commit 7ce61568e). Concurrency-guard and T4 recovery-dedup early-returns stay silent. New test FIX-BCT-OBS-02-SSCCHECK-WORK-ALERT.test.ts 5/5 pass; 9/9 adjacent sibling suites green; bun tsc --noEmit clean. Full suite 14684 pass/42 fail/1 error -- RAW-confirmed pre-existing via git-stash A/B (identical 2 failures reproduced with this fix stashed out: RSS-degradation timing test + deprecated technical-indicators golden-output test); zero ssc/BCT-OBS hits in the failure log. Tool count 184 / cronJobCount 88 unaffected (no new tool/cron). QA note: cannot verify via read_telegram_reports (sendTelegramWork is not DB-persisted by design) -- verify via live Telegram WORK channel inspection or get_system_status TELEGRAM_ENABLED check instead."
+      },
+      {
+        "id": "DS-OBS-01-FIX",
+        "priority": "normal",
+        "size": "S",
+        "status": "REVIEW",
+        "title": "Fix DS-OBS-01: Does freshnessSlaMonitor log a WORK/BUG alert when any source exceeds its stale_threshold",
+        "type": "fix",
+        "zone": "dev-mcp-server",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#DS-OBS-01-FIX",
+        "promoted_at": "2026-07-23T17:20:59Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-23T17:59:56Z",
+        "claimed_at": "2026-07-23T17:20:59Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "branch": null,
+        "commit": "2c44564a33f66e6d65c4a09d418f82deb6f3c1dc",
+        "files": [
+          "apps/mcp-server/src/scheduler/system/freshnessSlaMonitorJob.ts",
+          "apps/mcp-server/src/__tests__/DS-OBS-01-FIX-sla-breach-work-bug-alert.test.ts",
+          "docs/standards/cron-jobs.md",
+          "docs/agent-memory/decisions/sprint-ds-obs-01-fix-dev-mcp-server.md",
+          "docs/agent-memory/notebooks/dev-mcp-server.md"
+        ],
+        "completed_at": "2026-07-23T17:59:24Z",
+        "completed_by": "dev-mcp-server",
+        "status_note": "DS-OBS-01-FIX: REAL fix shipped (structurally identical audit-then-fix to sibling BCT-OBS-02-FIX). RAW-verified at source: escalateToCommander() (default escalation callback, fired on breach post cooldown/market-hours gate) only wrote an agent_signals row (urgent_news, toAgent=alert-commander) -- never called sendTelegramWork/sendTelegramBug. docs/agents/alert-commander/flow/stage-signals.md (live, 2026-07-12 finding) confirms alert-commander correctly SUPPRESSES these synthetic freshness-sla-monitor urgent_news signals every cycle as infra noise (never satisfies the MARKET firing gate) -- so the signal-bus escalation never reached a human-visible channel. The job's only sendTelegramWork call was an unconditional once-daily coverage snapshot, not breach-scoped. quality-checklist.json DS-OBS-01=PASS evidence (WORK-channel msg IDs 2743-2766) is the identical copy-pasted string found byte-for-byte across 4 unrelated checklist rows -- same self-report-confab false-positive class BCT-OBS-02-FIX already flagged this session, not corroborating. Fix: at the existing 60-min-cooldown-gated escalation site, runFreshnessSlaMonitor() now sends a direct alert -- CRITICAL breach (age > 1.5x threshold) -> BUG via new injectable sendBugFn (defaults sendTelegramBug), HIGH breach -> WORK via the pre-existing sendWorkFn (reused). Non-fatal on send failure; independent of existing escalation bookkeeping; signal-bus escalateToCommander path left unchanged. New test DS-OBS-01-FIX-sla-breach-work-bug-alert.test.ts 6/6 pass; 95/95 adjacent sibling freshness-SLA suites green; bun tsc --noEmit clean. Full suite A/B via git-stash on the one modified file: AFTER 14690 pass/40 skip/42 fail vs BEFORE 14684 pass/40 skip/42 fail -- diffed (fail) sets directly, only delta is one flaky news-polling timing pair swap (unrelated files); 235-telegram-send-merge.test.ts BUG-channel test failure present identically in both logs (pre-existing mock.module cross-file pollution, unrelated to this fix's new sendTelegramBug import). Tool count 184 / cronJobCount 88 unaffected (no new tool/cron, existing cron behavior extended in-place). QA note: verify the direct alert via source read (grep sendBugFn/sendWorkFn call site) or live Telegram WORK/BUG channel inspection at next real breach -- read_telegram_reports cannot confirm a WORK send (sendTelegramWork has zero DB persistence by design, same structural limitation noted in BCT-OBS-01-FIX/BCT-OBS-02-FIX); a BUG send IS DB-persisted (telegram_reports) and could in principle be cross-checked there if/when a live CRITICAL breach fires."
       }
     ],
     "qa": [],
@@ -14018,24 +14046,7 @@
     },
     "last_triaged_at": "2026-07-23T17:20:59Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "DS-OBS-01-FIX",
-        "priority": "normal",
-        "size": "S",
-        "status": "IN_PROGRESS",
-        "title": "Fix DS-OBS-01: Does freshnessSlaMonitor log a WORK/BUG alert when any source exceeds its stale_threshold",
-        "type": "fix",
-        "zone": "dev-mcp-server",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#DS-OBS-01-FIX",
-        "promoted_at": "2026-07-23T17:20:59Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-23T17:20:59Z",
-        "claimed_at": "2026-07-23T17:20:59Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
