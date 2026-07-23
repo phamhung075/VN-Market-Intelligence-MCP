@@ -1,0 +1,67 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-23T08:09:08Z",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence",
+      "alert-commander-critical": "cadence"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": 240,
+      "market-watcher-offhours": 240,
+      "alert-commander-critical": 240
+    },
+    "last_fired_timestamp": "2026-07-23T08:08:23Z",
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "08:00",
+    "leader_lock": "acquired",
+    "dev_head": "idle",
+    "devq": 5,
+    "signal_backlog": 8,
+    "note": "First non-zero-slot tick of the session (8 prior consecutive zero-slot WORK ticks). All 3 offhours gatherers due via snapToCronBoundary on 0 */4. cycle-snapshot-08:07.json written but emit_pressure_state returned cycle_snapshot_promoted:false — snapshot filename uses assembly time, promoter keys off nominal tick_id 08:00; no such file, so latest stays frozen at 2026-07-07. 8 NEW signal_queue rows all to=po, none consumable by cowork."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-23T08:09:08Z",
+  "_processed": {
+    "fingerprint": "fa412d07d47f89f622ca465284f6375bde67e7d6746ecee8cc777b0e0469af9c",
+    "processedAt": "2026-07-23T08:16:04Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
