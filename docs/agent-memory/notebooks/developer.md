@@ -1,20 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-23 | **Cycle:** UC-GCP-P8 (stranded machine-state sweep)
-
-## Session 2026-07-23 — UC-MDH-P4 (dev-team BOUNDED-1 auto-pickup, cross-service/) — REVIEW
-
-**Task:** memory-docs-hygiene-P4 (P1 FIX) — `docs/data/file-size-caps.json` had promised "Archived → docs/archive/decisions/ at sprint close by pm" since inception; no script and no flow step ever implemented it. RESCOPE spec: new `decision-journal-archive.sh` (longest-match closed-vs-active, never bare prefix glob) + pm/task-archive.md pointer.
-
-**Actions taken:** New `scripts/agents-flow/decision-journal-archive.sh` — stdin mode (per-cycle diff) + `--all` backfill mode + `--dry-run` (added for safe live verification, not in the rescope contract). Wired as `pm/task-archive.md` Step 5.5 (after Step 5, not the earlier Sprint-Eviction orch-apply block, since sprints close via both paths) + extended Step 6's commit pathspec for the old+new journal paths. CANONICAL pointer in `dev-standards.md`.
-
-**Verification:** Paired `decision-journal-archive.test.sh` — 26/26 PASS, fully sandboxed (`DJA_GIT_MV=0`, mktemp -d fixture, never touches live `docs/agent-memory/decisions/`) — covers the live `OHLCV-UNIT-CONTAM`/`OHLCV-UNIT-CONTAM-WHOLEROW-LT1000` prefix-collision shape, stdin scoping, `--all`, bare+agent-suffixed forms, no-orch-record files left+counted, mtime-independence, idempotency, and collision safety. `--dry-run` against the live repo confirmed 202/431 eligible with zero mutation (`git status`/file-count unchanged before/after).
-
-**Board:** `task_board.in_progress[UC-MDH-P4]` → `review`, `next_agent=qa`, `.head` synced, via `orch-apply.sh`.
-
-**Scope discipline:** File-ops-only, no orch-state.json write (jq reads only). Did NOT run the one-time live backfill (mutating, out of this FIX's scope) — left as a follow-up PO-routed action; only a read-only `--dry-run` was executed live.
-
-Zone health: sprint-journal archival promise now real — `docs/agent-memory/decisions/` 431 files, 202 backfill-eligible (verified dry, not moved), 24 correctly excluded as still-active, 205 have no orch record (left in place, reported) | HEALTHY
+**Last updated:** 2026-07-23 | **Cycle:** UC-GCP-P3 (drain commit tracked-only -u sweep)
 
 ## Session 2026-07-23 — UC-GCP-P1 (BOUNDED-1 auto-pickup, cross-service/) — REVIEW
 
@@ -43,3 +29,17 @@ Zone health: commit-convention SSOT consolidated 4→1 file, dangling refs zero,
 **Scope discipline:** Script is classifier-only per the rescope's script/flow split — the flow (not this developer cycle) performs the actual `git add`/commit and `.signal_queue.rows[]` write on its next live tick; no live sweep-commit executed here (would be acting outside this FIX's own scope, on a peer-owned dirty tree). Fixed a self-caught dedup bug pre-ship: the unknown-signal summary originally front-loaded the dynamic path count, which would break `startswith`-prefix dedup every tick — moved the count to a trailing `(N)` suffix.
 
 Zone health: dev-team post-cycle tick now has a converging owner for stranded machine-state — 3-bucket classify verified against the live 57-entry dirty tree, RC-GITSTATE/UC-GCP-P2 boundaries respected, cap+dedup+mutex all test-proven | HEALTHY
+
+## Session 2026-07-23 — UC-GCP-P3 (dev-team BOUNDED-1 auto-pickup, cross-service/) — REVIEW
+
+**Task:** git-ci-publish-P3 RESCOPE — drain commit's shell-glob path list silently dropped deletions of already-removed `docs/signals/*.json` files. Rescope spec: tracked-only `git add -u` staging scoped to `docs/signals/` + explicit `processed/` add + FP-safe post-commit clean invariant + commit-boundary RULE 1 cross-ref note. DROP the one-shot backfill (already landed df0b58bd9).
+
+**Actions taken:** `drain-signals.md` §0a MANDATORY PERSIST GUARD staging changed to `git add -u -- docs/signals/ && git add -- docs/signals/processed/` (`-u` = tracked mods+deletions only, never sweeps peers' untracked mid-write inbox arrivals; second add picks up newly-moved untracked-new processed/ files). Added post-commit invariant: `git status --porcelain -- docs/signals/ | grep -v '^??' | grep -v signals.db | wc -l` must be 0, else bug-telegram naming residual paths. Cross-ref note added to `commit-boundary/SKILL.md` RULE 1 documenting the tracked-only exception is not a directory sweep. Commit `e77635933`.
+
+**Verification:** Docs-only flow-spec change (no test surface) — verified via `git show --name-only HEAD` self-check (RULE 3), exactly the 2 intended files. No backfill re-run (df0b58bd9 already committed the 07-03/04 stranded deletions, verified `docs/signals/` has zero pending deletions today).
+
+**Board:** `task_board.in_progress[UC-GCP-P3]` → `review`, `next_agent=qa`, `.head` synced, via `orch-apply.sh`.
+
+**Scope discipline:** Implemented the verifier's RESCOPE text verbatim, no re-expansion. Left the CANONICAL script (`scripts/agents-flow/drain-signals.js`) untouched — the changed staging/invariant lives in the flow-doc commit step, not the script's fingerprint/move logic.
+
+Zone health: drain commit deletion-drop hole closed — tracked-only sweep captures deletions without risking peer untracked-inbox sweep; FP-safe invariant guards against false bug-telegrams on legitimate mid-commit arrivals | HEALTHY

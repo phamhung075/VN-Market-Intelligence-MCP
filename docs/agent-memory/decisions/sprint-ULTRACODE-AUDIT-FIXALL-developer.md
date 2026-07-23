@@ -345,3 +345,18 @@ CANONICAL pointer in dev-standards.md.
 **why-decision:** Verified UC-GCP-P2 (DONE_VERIFIED) + SYSREMAKE-P2 RC-GITSTATE (queued, not yet
 minted) ownership live before hardcoding the OWNED-ELSEWHERE skip-list, per coordination note.
 **why-change:** No change from rescope plan.
+
+### STEP developer-S21 · developer · 2026-07-23T07:26:11Z
+**task-id:** UC-GCP-P3
+**what-done:** drain-signals.md §0a MANDATORY PERSIST GUARD staging changed to
+`git add -u -- docs/signals/ && git add -- docs/signals/processed/` + post-commit
+`git status --porcelain` clean invariant (bug-telegram on residual); cross-ref note
+added to commit-boundary/SKILL.md RULE 1. Commit e77635933.
+**what-considered:**
+- only path: implement the verifier's RESCOPE text verbatim — `git add -A` variant
+  already rejected in the verifier's own critique (sweeps peers' untracked inbox).
+**why-decision:** RESCOPE text was concrete and fully specified (exact staging
+command, exact invariant grep chain, exact RULE-1 cross-ref wording) — no design
+choice left open besides matching it exactly.
+**why-change:** No change from plan. Dropped the one-shot backfill per explicit
+instruction — already landed in df0b58bd9 (2026-07-12).
