@@ -125,3 +125,14 @@
 - Full live description as Purpose vs mechanical first-sentence extraction — chose first-sentence: existing lean docs (get_price_history.md, get_carry_trade_signal.md) use a short clause, not a dumped paragraph; verified all 26 first-sentence extractions read as clean single-line summaries before committing the design.
 **why-decision:** `comm`/set-diff (registry ∪ existing) = 0 missing, 0 extra (no dead docs) after generation — objective, re-run twice (post-fix regen + final check), both idempotent no-ops. Enum-fix verified via `awk -F'|'` field-count scan across all 26 files.
 **why-change:** No change from plan — task doc guessed `claim-truth-gate/SKILL.md` as the anti-hallucination skill; brief text at `#T-28` explicitly names `.claude/skills/anti-hallucination/SKILL.md` L55, confirmed by reading both files (claim-truth-gate is the unrelated CCATO narrative-claim gate).
+
+---
+
+### STEP developer-S12 · developer · 2026-07-23T14:05:00Z
+**task-id:** TE-T31
+**what-done:** Built `scripts/gen-tools-index.sh` (bash+jq, `--check` mode), regenerated `docs/agents/tools/list/INDEX.md` from `docs/data/tool-registry.json` `.groups[]` — total (184) + all 12 per-category counts computed live, dropped the false "canonical tool inventory/157 tools" self-claim, added `GENERATED — do not hand-edit` header. Added CANONICAL pointer to `docs/policies/dev-standards.md` § Script Persistence.
+**what-considered:**
+- Preserving the old hand-picked category display order vs registry's natural (alphabetical) `.groups[]` order — chose registry order: deterministic, needs zero extra sort logic, and the old order carried no semantic meaning worth replicating in a generator.
+- Embedding a fresh `date -u` "generated at" stamp vs echoing only the registry's own `.lastUpdated` field — chose registry-only: a wall-clock stamp would make every re-run non-idempotent (diff every time) even when the registry itself hadn't changed, violating the "proven no-op" requirement.
+**why-decision:** `comm` set-diff registry-tools vs INDEX-linked-tools = 0/0 both directions (184=184, 0 duplicates); every linked tool has a matching `docs/agents/tools/list/<tool>.md` stub (0 missing); per-section counts `diff`-verified byte-identical against `jq -r '.groups[] | .name + " " + (.tools|length|tostring)'`; two consecutive script runs both printed `NOOP` (idempotency proven, not asserted).
+**why-change:** No change from plan. Follow-up (explicitly out of scope per task): brief's merged corroborating item — `docs/agents/tools/package/market-analyst.md` (267L verbose per-tool prose duplicating `list/`) → compact table — is a separate batch finding, not done here.

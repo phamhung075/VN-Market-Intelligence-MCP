@@ -1,34 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-23 | **Cycle:** FIX-DEVTEAM-BOUNDED1-PROSE-SEQUENCING-UNBACKED-GATE (BOUNDED-1 now withholds prose-only-sequenced rows until PO encodes the dep)
-
-## Session 2026-07-23 — FIX-DRAIN-PERSIST-GUARD-COUNT-DRAINABLE-ONLY (dev-team BOUNDED-1 auto-pickup, cross-service/) — REVIEW
-
-**Task:** dev-team MANDATORY PERSIST GUARD counted RAW `docs/signals/*.json` files, not drainable (from/type-shaped) signals — cowork telemetry/tick residue (55 files live, e.g. `cowork-team-*`/`price_anomaly_*`) inflated the count past the >50 threshold and forced a full drain every tick even with nothing routable, feeding Step-1 triage starvation.
-
-**Actions taken:** Extracted `drain-signals.js`'s inline "SKIP non-signal shape" check into a shared `isDrainableShape()` + new read-only `--count-drainable` subcommand (zero DB/file mutation). `drain-signals.md` guard item 1 and `dev-team-tick-preflight.sh` Step 5 idle-check field (a) both now call it instead of a raw `ls | wc -l` — single predicate, not forked, per the task's explicit instruction. Added `DRAIN_SIGNALS_DIR_OVERRIDE` env seam (mirrors `ORCH_APPLY_LIVE_FILE_OVERRIDE`) so preflight's isolated test fixtures reach the shared script.
-
-**Verification:** Live-confirmed against the real inbox: raw=55, drainable=0 (matches the reported symptom exactly). 3 new fixtures in `drain-signals.test.js` (residue-only→0, genuine+litter mixed→1 negative control, missing-dir→0) — 31/31 GREEN. `dev-team-tick-preflight.test.sh`: T14 fixture upgraded `{}`→genuine `from`+`type` signal (negative control, still trips RUN); new T32 proves litter-only `SIGNALS_DIR` resolves RUN-IDLE — 91/91 GREEN. Self-caught mid-verification: first `sed \+` extraction is GNU-only BRE, silently no-op on BSD/macOS `sed` (this host) — always returned empty, masking the fix; replaced with portable bash parameter-expansion prefix-strip.
-
-**Board:** `task_board.in_progress[FIX-DRAIN-PERSIST-GUARD-COUNT-DRAINABLE-ONLY]` → `review`, `next_agent=qa`, `.head` synced, via `orch-apply.sh`.
-
-**Scope discipline:** Touched exactly the 3 named root-cause files + their paired tests + `drain-signals.md` guard line + `docs/WORK.md` — no fork of the shape predicate, no live `docs/signals/` mutation from `--count-drainable` (read-only by design).
-
-Zone health: dev-team persist-guard no longer litter-sensitive — drainable-only count verified against real inbox (55 raw / 0 drainable) and both fixture directions (litter-only no-trip, genuine signal still-trips) test-proven | HEALTHY
-
-## Session 2026-07-23 — FIX-LAUNCHD-PROBE-PRESENCE-ONLY-FALSE-GREEN (dev-team BOUNDED-1 auto-pickup, cross-service/) — REVIEW
-
-**Task:** `auditor-tier1-probe.sh` `_check_launchd_agents()` only asserted a repo-tracked plist's Label appeared somewhere in `launchctl list` output — the PID/Status/Label output's Status column was captured then discarded. `com.vn-market.fleet-push` sat loaded at EX_CONFIG(78) for 522 consecutive runs, verdict stayed ALL_GREEN the whole time. Presence != works.
-
-**Actions taken:** Rewrote the check to `awk`-match the LABEL column exactly (field 3 of the tab-delimited `PID\tStatus\tLabel` output, confirmed live against real `launchctl list` on this host), then read field 2 (Status) from that same matched line and require `== "0"`. A present-but-unhealthy label now fails as `<label>(exit-status:<code>)`, distinct from the pre-existing `<label>(not-loaded)` absent case. The obsolete-label allow-list `case` skip (`com.vn-market.socat-bridge`) is untouched — left exactly as-is per PO's explicit do-not-change.
-
-**Verification:** Full `auditor-tier1-probe.test.sh` 102/102 GREEN, including 3 new cases (T33 loaded+status78→FAIL naming label+code, T34 loaded+status0→PASS restore, T35 obsolete-allow-listed+absent→PASS), plus all 30 pre-existing launchd/non-launchd cases unchanged. Live probe run post-fix: verdict flipped ALL_GREEN→FAILURE (exit 1) — 3 of 4 tracked non-obsolete LaunchAgents currently carry nonzero last-exit status: `com.vn-market.fleet-push(exit-status:78)` (the confirmed EX_CONFIG case), plus newly-surfaced `com.vn-market.docker-events(exit-status:1)` and `com.vn-market.cowork-guaranteed-slot-firer(exit-status:143)`. Not investigated/remediated — reported per instruction, out of this task's scope; `com.vn-market.socat-bridge` correctly stayed off the failure list.
-
-**Board:** `task_board.in_progress[FIX-LAUNCHD-PROBE-PRESENCE-ONLY-FALSE-GREEN]` → `review`, `next_agent=qa`, `.head` synced, via `orch-apply.sh`.
-
-**Scope discipline:** Touched exactly the one check function + its test file. Did not chase the 3 newly-surfaced nonzero-exit LaunchAgents (docker-events, cowork-guaranteed-slot-firer) — that's new signal for a follow-up task, not this fix's job.
-
-Zone health: launchd_agents check now closes the "exists != works" gap generically — live-proven it catches the real fleet-push EX_CONFIG incident plus 2 more previously-invisible nonzero-exit agents in one pass | DEGRADED (3 LaunchAgents newly confirmed unhealthy live — detector fixed, underlying jobs not yet fixed)
+**Last updated:** 2026-07-23 | **Cycle:** TE-T31 (TOKEN-ECONOMY-AUDIT wave 4 — tools/list/INDEX.md 3rd tool-inventory SSOT killed, now generated from tool-registry.json)
 
 ## Session 2026-07-23 — FIX-DEVTEAM-BOUNDED1-PROSE-SEQUENCING-UNBACKED-GATE (dev-team BOUNDED-1 auto-pickup, cross-service/) — REVIEW
 
@@ -57,3 +29,17 @@ Zone health: BOUNDED-1's prose-sequencing blind spot closed generically — next
 **Scope discipline:** Touched exactly the 26 new stub files + new script + `anti-hallucination/SKILL.md` + `dev-standards.md` pointer + this journal/notebook. Left 3 pre-existing dirty `tools/list/*.md` files (unrelated in-flight work from another session) untouched — explicit pathspecs only.
 
 Zone health: registry (184) and `list/` (184) now in 1:1 lockstep; re-running the generator after any future `gen-tool-registry.ts` run mints only the true delta | HEALTHY
+
+## Session 2026-07-23 — TE-T31 (TOKEN-ECONOMY-AUDIT, wave 4) — REVIEW
+
+**Task:** `docs/agents/tools/list/INDEX.md` (254L) was a stale hand-maintained THIRD tool-inventory SSOT — self-declared "157 tools / canonical tool inventory" while the real SSOT `tool-registry.json` held 184 (post-TE-T28), and its own header table disagreed with its own section headings (Financial 21 vs FINANCIAL 19 tools). tran-ngoc-bau's daily package pointed at it 3x.
+
+**Actions taken:** New `scripts/gen-tools-index.sh` (bash+jq, `--check` mode) renders INDEX.md straight from `tool-registry.json` `.groups[]` — total + every per-category count computed live, zero hardcoded. Regenerated INDEX.md: header now says "GENERATED — do not hand-edit; registry is the SSOT", drops the false canonical-inventory claim, echoes only the registry's own `.lastUpdated` (no wall-clock stamp) so idempotency holds. Canonical pointer added to `dev-standards.md` § Script Persistence.
+
+**Verification:** `comm` set-diff registry-tools vs INDEX-linked-tools = 0/0 both directions (184=184, 0 dupes); every linked tool has a matching `list/<tool>.md` stub (0 missing); per-section counts `diff`-verified against `jq -r '.groups[] | .name + " " + (.tools|length|tostring)'` = exact match; two consecutive script runs both printed NOOP (idempotency proven).
+
+**Board:** `task_board.in_progress[TE-T31]` → `review`, `next_agent=qa`, `branch:null`, `.head` synced to idle, via `orch-apply.sh` (dispatcher-owned write, not committed by this cycle).
+
+**Scope discipline:** Touched exactly the new script + INDEX.md (generated) + `dev-standards.md` pointer + journal/notebook. Did NOT touch `market-analyst.md` package (267L prose→table) — brief's merged corroborating item, separate batch finding, noted as follow-up in the journal only.
+
+Zone health: tools/list/INDEX.md is now a pure generated view of tool-registry.json — re-running the script after any future registry change mints the current delta, 3-way SSOT drift class closed for this surface | HEALTHY
