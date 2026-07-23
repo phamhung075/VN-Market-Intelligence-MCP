@@ -18,13 +18,26 @@
 # See docs/memory/feedback_ctxbloat_breach_on_live_sprint_file_defer.md +
 # docs/memory/feedback_auditor_false_positive_destructive.md.
 #
+# BYTE-CAP PREDICATE (TE-T24 mega-line evasion guard): line count alone is evadable —
+# an agent can hold a file's LINE count under cap while packing huge content into a
+# small number of very long lines (observed: po main.md ~275L but ~17.4k tokens). A
+# second, independent predicate compares total bytes (wc -c) against MATCHED_CAP x 60
+# (a 60-bytes/line budget), using the SAME settle-window semantics as the line
+# predicate. Either predicate breaching is sufficient to emit a signal; payload.reason
+# lists which predicate(s) fired ("line-cap" | "byte-cap" | "line-cap,byte-cap"). A
+# size-justification comment only ever covers the LINE predicate (it declares a line
+# count) — it never suppresses a byte-cap breach, otherwise the mega-line evasion this
+# predicate exists to close would simply move under a justification header instead.
+# See docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-24.
+#
 # Input contract: PostToolUse hook JSON received on STDIN.
 #   { "tool_name": "Write", "tool_input": { "file_path": "..." }, ... }
 #
 # Performance contract:
-#   - Non-governed path → exit 0 with no wc -l call (hot path)
+#   - Non-governed path → exit 0 with no wc -l/wc -c call (hot path)
 #   - jq called at most once (after classification)
-#   - wc -l called at most once (after classification confirms governed)
+#   - wc -l and wc -c each called at most once (after classification confirms governed);
+#     a second settled read of both happens only on the settle-window breach path
 #   - Script NEVER blocks the write — always exits 0
 #   - Script NEVER invokes any Claude tool
 #
@@ -99,19 +112,29 @@ if [ -n "$MATCHED_EXEMPT_SIBLING" ] && [ "$MATCHED_EXEMPT_SIBLING" != "null" ]; 
   fi
 fi
 
-# --- MEASURE: count lines in the written file ---
+# --- MEASURE: count lines AND bytes in the written file ---
 [ -f "$FILE_PATH" ] || exit 0
 LINE_COUNT=$(wc -l < "$FILE_PATH" 2>/dev/null | tr -d ' ' || true)
 [ -z "$LINE_COUNT" ] && exit 0
+BYTE_COUNT=$(wc -c < "$FILE_PATH" 2>/dev/null | tr -d ' ' || true)
+[ -z "$BYTE_COUNT" ] && exit 0
 
-# Within cap → exit clean
-[ "$LINE_COUNT" -le "$MATCHED_CAP" ] && exit 0
+# BC-1 byte-cap: 60 bytes/line budget on top of the matched line cap (TE-T24).
+BYTE_CAP=$((MATCHED_CAP * 60))
+
+LINE_OVER=0
+BYTE_OVER=0
+[ "$LINE_COUNT" -gt "$MATCHED_CAP" ] 2>/dev/null && LINE_OVER=1
+[ "$BYTE_COUNT" -gt "$BYTE_CAP" ] 2>/dev/null && BYTE_OVER=1
+
+# Both predicates within cap → exit clean
+[ "$LINE_OVER" -eq 0 ] && [ "$BYTE_OVER" -eq 0 ] && exit 0
 
 # --- SETTLE-READ / DEBOUNCE: re-read after a short settle window before declaring breach ---
 # Kills the mid-write false-positive class: a file caught mid-growth (still being written/
-# edited by a live in-flight sprint) can transiently read over-cap on this FIRST wc -l.
-# Wait a short, configurable window, then RE-READ. Only the SETTLED (post-window) line
-# count is authoritative from here on — if it drops back within cap, the first read was
+# edited by a live in-flight sprint) can transiently read over-cap on this FIRST wc -l/wc -c.
+# Wait a short, configurable window, then RE-READ. Only the SETTLED (post-window) line/byte
+# counts are authoritative from here on — if both drop back within cap, the first read was
 # mid-write noise, not a real breach. Override window via CONTEXT_BLOAT_SETTLE_SECONDS
 # (default 2s; set to 0 to disable, e.g. for fast test harnesses).
 SETTLE_SECONDS="${CONTEXT_BLOAT_SETTLE_SECONDS:-2}"
@@ -123,18 +146,31 @@ fi
 LINE_COUNT_SETTLED=$(wc -l < "$FILE_PATH" 2>/dev/null | tr -d ' ' || true)
 [ -z "$LINE_COUNT_SETTLED" ] && exit 0
 LINE_COUNT="$LINE_COUNT_SETTLED"   # settled reading supersedes the initial (possibly mid-write) reading
+BYTE_COUNT_SETTLED=$(wc -c < "$FILE_PATH" 2>/dev/null | tr -d ' ' || true)
+[ -z "$BYTE_COUNT_SETTLED" ] && exit 0
+BYTE_COUNT="$BYTE_COUNT_SETTLED"
 
-# Settled within cap → the initial over-cap read was a mid-write transient, not a real breach
-[ "$LINE_COUNT" -le "$MATCHED_CAP" ] && exit 0
+LINE_OVER=0
+BYTE_OVER=0
+[ "$LINE_COUNT" -gt "$MATCHED_CAP" ] 2>/dev/null && LINE_OVER=1
+[ "$BYTE_COUNT" -gt "$BYTE_CAP" ] 2>/dev/null && BYTE_OVER=1
 
-# --- BREACH DETECTED (overage exists) → check for justification ---
+# Settled within both caps → the initial over-cap read was a mid-write transient, not a real breach
+[ "$LINE_OVER" -eq 0 ] && [ "$BYTE_OVER" -eq 0 ] && exit 0
+
+# --- BREACH DETECTED (overage exists on at least one predicate) → check for justification ---
 # Honor <!-- size-justification: ... --> (HTML comment, for .md files)
 # or # size-justification: ... (for other formats).
 # Presence of a size-justification comment indicates a deliberate factory decision.
 # Skip emission if the comment is present (the comment itself is the signal).
+#
+# NOTE (TE-T24): a size-justification comment declares a LINE count only, so it can ONLY
+# honor a line-cap breach. It NEVER honors a byte-cap breach — otherwise a mega-line file
+# could simply paste a justification header and keep evading governance under the byte
+# dimension, defeating the whole point of this predicate.
 
-JUSTIFIED=0
-if [ -f "$FILE_PATH" ]; then
+LINE_JUSTIFIED=0
+if [ "$LINE_OVER" -eq 1 ] && [ -f "$FILE_PATH" ]; then
   # Extract first few lines to check for size-justification comment
   JUSTIFICATION_LINE=$(head -5 "$FILE_PATH" 2>/dev/null | grep -E '(<!--.*size-justification:|#.*size-justification:)' | head -1 || true)
 
@@ -155,14 +191,23 @@ if [ -f "$FILE_PATH" ]; then
 
       if [ "$LINE_COUNT" -le "$UPPER_BOUND" ]; then
         # Actual line count is within tolerance of declared cap — justification is current
-        JUSTIFIED=1
+        LINE_JUSTIFIED=1
       fi
     fi
   fi
 fi
 
-if [ "$JUSTIFIED" -eq 1 ]; then
-  # File has a current (non-stale) size-justification — skip signal
+# --- RESOLVE: which predicate(s) still have an unjustified breach? ---
+REASON=""
+if [ "$LINE_OVER" -eq 1 ] && [ "$LINE_JUSTIFIED" -eq 0 ]; then
+  REASON="line-cap"
+fi
+if [ "$BYTE_OVER" -eq 1 ]; then
+  if [ -n "$REASON" ]; then REASON="$REASON,byte-cap"; else REASON="byte-cap"; fi
+fi
+
+if [ -z "$REASON" ]; then
+  # Every breach that fired is covered by a current line-based justification — skip signal
   exit 0
 fi
 
@@ -184,7 +229,11 @@ TIMESTAMP="$(date -u +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null || true)"
 SIGNAL_STEM="context-bloat-$(echo "$REL_PATH" | tr '/.' '-')-$(echo "$TIMESTAMP" | tr -d ':')"
 SIGNAL_FILE="$SIGNALS_DIR/${SIGNAL_STEM}.json"
 
-OVERAGE=$((LINE_COUNT - MATCHED_CAP))
+# Overage is only meaningful for the predicate that actually breached; 0 otherwise.
+OVERAGE=0
+[ "$LINE_OVER" -eq 1 ] && OVERAGE=$((LINE_COUNT - MATCHED_CAP))
+BYTE_OVERAGE=0
+[ "$BYTE_OVER" -eq 1 ] && BYTE_OVERAGE=$((BYTE_COUNT - BYTE_CAP))
 
 # Write signal atomically via heredoc (no Claude tool invoked — pure bash)
 cat > "$SIGNAL_FILE" <<EOF
@@ -198,8 +247,12 @@ cat > "$SIGNAL_FILE" <<EOF
     "file": "$REL_PATH",
     "line_count": $LINE_COUNT,
     "cap": $MATCHED_CAP,
+    "byte_count": $BYTE_COUNT,
+    "byte_cap": $BYTE_CAP,
     "class": "$MATCHED_CLASS",
+    "reason": "$REASON",
     "overage": $OVERAGE,
+    "byte_overage": $BYTE_OVERAGE,
     "action_required": "prune_or_split"
   }
 }

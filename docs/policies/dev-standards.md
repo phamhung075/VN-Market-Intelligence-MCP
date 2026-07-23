@@ -318,12 +318,17 @@ no-op-in-production safety propagation as orch-cold-evict.sh above). Does NOT se
 `ORCH_APPLY_ALLOW_SHRINK` — this script only strips fields, `task_board.backlog` length is
 unchanged, so it never trips the conservation guard.
 
-**CANONICAL: Context-bloat backstop regression test (FIX-CTXBLOAT-ARCHIVE-CAP-OVERMATCH)**
+**CANONICAL: Context-bloat backstop regression test (FIX-CTXBLOAT-ARCHIVE-CAP-OVERMATCH + TE-T24)**
 ```bash
-# Regression: T1 archive/*.md >200L → EXEMPT, T2 top-level notebooks/*.md >200L → BREACH
+# Regression: T1 archive/*.md >200L → EXEMPT | T2 top-level notebooks/*.md >200L → BREACH (line-cap)
+#   | T3 mega-line 5L/>12000B → BREACH (byte-cap, passes line cap — the evasion case) | T4 normal
+#   150L file within both caps → CLEAN (no false positive).
 bash scripts/agents-flow/context-bloat-backstop.test.sh
-# Exit 0 = both pass. Exit 1 = failure.
+# Exit 0 = all 4 pass. Exit 1 = failure.
 # Owning brief: docs/architecture-briefs/2026-05-24-context-bloat-backstop-hook.md §2a
+# Byte-cap predicate (MATCHED_CAP x 60 bytes, reason='byte-cap', SAME settle-window as the line
+# predicate; a line-based size-justification never suppresses it): TE-T24, see
+# docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-24
 ```
 
 **CANONICAL: Fleet worktree push backstop (TASK-AUTO-PUSH-A)**
