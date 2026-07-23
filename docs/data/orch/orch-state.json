@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FACTORY-RAG-confidence-impact-or-00-mask",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-RAG-confidence-impact-or-00-mask — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-23T22:45:36Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "FACTORY-RAG-confidence-impact-or-00-mask moved to review — awaiting qa pickup",
+    "updated_at": "2026-07-23T22:52:28Z",
+    "updated_by": "dev-rag-service"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -14309,6 +14309,24 @@
           "docs/agent-memory/decisions/sprint-FIX-BASE-RATE-COMPUTATION-CRON-DEAD-dev-mcp-server.md",
           "docs/agent-memory/notebooks/dev-mcp-server.md"
         ]
+      },
+      {
+        "title": "Fix `or 0.0` truthiness mask on confidence/impact_score in rag _dedup_and_trim",
+        "priority": "P2",
+        "zone": "rag-service",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-RAG-confidence-impact-or-00-mask",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-RAG-confidence-impact-or-00-mask",
+        "promoted_at": "2026-07-23T22:45:36Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-23T22:52:53Z",
+        "claimed_at": "2026-07-23T22:45:36Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "entered_review_at": "2026-07-23T22:52:28Z",
+        "review_note": "dev-rag-service: fixed or-0.0 truthiness mask on confidence/impact_score in _dedup_and_trim (infrastructure/repositories.py), matches sibling FDA-9 _distance fix pattern. 5 new regression tests added (TestConfidenceImpactScoreNoneGuard), full suite 165/165 pass, G12 sandbox both tiers GREEN, env audit clean, mypy no new errors. Empirically confirmed via git-stash self-check that current 0.0 defaults make old/new code behavior-equivalent today (no active corruption) — journal: docs/agent-memory/decisions/sprint-FACTORY-RAG-confidence-impact-or-00-mask-dev-rag-service.md. Commit b470f31420a276e98e430c651a0fa1f1660cb805"
       }
     ],
     "qa": [],
@@ -14330,23 +14348,7 @@
     },
     "last_triaged_at": "2026-07-23T22:45:36Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "title": "Fix `or 0.0` truthiness mask on confidence/impact_score in rag _dedup_and_trim",
-        "priority": "P2",
-        "zone": "rag-service",
-        "type": "FACTORY",
-        "status": "IN_PROGRESS",
-        "id": "FACTORY-RAG-confidence-impact-or-00-mask",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-RAG-confidence-impact-or-00-mask",
-        "promoted_at": "2026-07-23T22:45:36Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-23T22:45:37Z",
-        "claimed_at": "2026-07-23T22:45:36Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
