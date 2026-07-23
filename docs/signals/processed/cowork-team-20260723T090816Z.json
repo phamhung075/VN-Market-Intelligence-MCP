@@ -1,0 +1,28 @@
+{
+  "source": "cowork-team",
+  "tick_id": "2026-07-23T09:00:00Z",
+  "fire_time": "2026-07-23T09:08:16Z",
+  "classification": "FIRE",
+  "reason": "spawned",
+  "drift_min": 5,
+  "pressure_mode": "legacy",
+  "calendar_status": "unknown",
+  "new_signals": 8,
+  "spawned": [
+    "refine-bctc-slot-1"
+  ],
+  "one_shots": [],
+  "errors": [],
+  "observations": [
+    "DISPATCHER OUTAGE 2026-07-22: every slot due between ~08:45Z and ~14:00Z has last_fired=2026-07-21 (chef-eod 45 8, refine-bctc-slot-1 0 9, fb-daily 15 9, refine-bctc-slot-3 0 11, refine-bctc-slot-2 0 14). Every slot due 15:00Z onward fired on 07-22 (bctc-analyst-slot-1 0 15, refine-bctc-slot-4 30 16, market-watcher-eod 0 16, digest-daily 30 17, bctc-analyst-slot-2 0 18, chef-evening 45 19, tnb-audit 13 20, bctc-analyst-slot-3 0 21). Consistent with a ~6h session-scoped dispatcher gap, not per-slot defects.",
+    "UC-SDF-P2 again: snapshot written as cycle-snapshot-09:07.json for nominal tick 09:00 (7-min gap); cycle_snapshot_promoted=false on emit.",
+    "signal_queue unchanged for a 4th consecutive tick: same 8 NEW rows, 100% to=po, 3 CRITICAL, no po consumer running.",
+    "task_claim payload arg is typed string, not object — object form rejected with zod invalid_type. Flow docs show object-shaped payload in pseudocode."
+  ],
+  "_processed": {
+    "fingerprint": "1bef7a2380a37a1d26d6049101c1f2634467be029162b5d78acd15959217bcac",
+    "processedAt": "2026-07-23T09:15:08Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
