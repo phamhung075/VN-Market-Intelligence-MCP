@@ -1,6 +1,6 @@
 # ops-vps-fetch — Notebook
 
-**Last updated:** 2026-07-22 16:15 UTC | **Sprint:** vps-plane-stale-sources-audit — 3/4 push sources root-caused (systemd StartLimitBurst lockout), 2 measurement bugs pinpointed, handed to ops + dev-mcp-server (see c024)
+**Last updated:** 2026-07-23 16:25 UTC | **Sprint:** FFLOW-STALE-0723-A-VPS-FIX — foreign-flow clock-drift ROOT-CAUSED + FIXED, corrects c024's crash-loop hypothesis (see c025)
 
 ---
 
@@ -8,7 +8,8 @@
 
 | Source | Last recon | Status | Anti-bot |
 |--------|-----------|--------|---------|
-| vps-prices / vps-foreign-flow / vps-sbv | 2026-07-22 | **DEAD since 2026-07-21 ~03:05-09 UTC** — systemd StartLimitBurst lockout, no `StartLimitIntervalSec=0` on these 3 units (unlike news/reuters/tradingeconomics). No auto-recovery in 36h+; VPS itself unreachable via SSH this cycle so no manual restart possible. See c024. | none — infra, not anti-bot |
+| vps-foreign-flow | 2026-07-23 | **FIXED** — VM hypervisor-pause (Vinahost non-payment suspension) froze guest clock ~2d13h; NTP force-resynced, service restarted+enabled, live fetch+push proven (HTTP 200). Was NEVER crash-looped (`NRestarts=0` throughout) — corrects c024. 07-22 unrecoverable (snapshot-only API); 07-23 partial (1 manual push). See c025. | none — infra, not anti-bot |
+| vps-prices / vps-sbv | 2026-07-22 | Same VM-wide clock fixed in c025 (shared host) — both `NRestarts=0`, never crash-looped either; not independently re-verified end-to-end post-fix, flagged as follow-up. | none — infra, not anti-bot |
 | cafef-index | 2026-05-13 | healthy | none |
 | vn-news-rss (vn-news-fetch.service) | 2026-07-22 | Still healthy/pushing continuously (control for c024's diagnosis) | none |
 | sbv-rates | 2026-07-22 | VPS push dead 36h+ (see above); `get_vps_service_health` falsely reports healthy — masked by local 4h VCB-fallback job sharing the same DB row (Measurement Bug B, c024) | none |
@@ -26,19 +27,8 @@ Key historical context (full recon docs in `docs/vps-sources/*/recon.md`):
 - afrLoop rollover fix (c014): regex `r"(\d{15,18})"`, HNX session warmup GET deployed
 - SSC 503 ~12:00Z UTC daily maintenance window (c016): no retry = cycle burn; needs 1-retry + 60s backoff
 - Foreign flow integrity issue (c017): dual-writer conflict on vnstock_trading_stats; dev-mcp-server owns fix
-- systemd StartLimitBurst lockout (c024): `Restart=always` alone is not self-healing — any unit without `StartLimitIntervalSec=0` hits systemd's default 5-crashes/10s lockout and dies for good.
-
----
-
-## c022 · 2026-07-07T17:03Z · FIX-NEWS-VPS-CRASH-LOOP recon #2 — crash-loop DISPROVEN, real Cloudflare Tunnel outage found instead
-
-Trigger: dev-team dispatch, task nearly a month old, dispatcher pre-check AMBIGUOUS (blank uptime col, 1 fresh push after multi-day gap).
-
-**VERDICT: NOT a systemd crash-loop.** `vn-news-fetch.service`: active 26d+ (since Jun 11), `NRestarts=0`, `Tasks: 2/32`. Last real oom-kill was Apr 21 (one-time, restart-counter 7625 in 15min) + one residual Apr 29 — zero crash events since, incl. zero restarts at all in the board-cited Jun 7/9 window. The 2026-06-09 alarm was already recon'd same-day: false-UNHEALTHY (Bug A, `vpsHealthPoller.ts` lexicographic-MAX bug) + cursor-jump (Bug B) — both fixes confirmed still live (commit `b3d3022c6`; VPS script mtime Jun11, 0 cap-triggers since).
-
-**Real finding:** `/var/log/vn-news-fetch.log` push step (`POST zenmidi.com/api/push-news`) failed **95–100%** of cycles 2026-07-04T19:47Z→07-07T16:46Z (`error 1033`/502, Cloudflare Tunnel unreachable) — Jul5/Jul6 = 0/90 success both full days. **Not news-specific**: `vn-sbv-fetch.log` and `vn-foreign-flow.log` show the identical signature same window — shared Cloudflare Tunnel / mcp-server-side receiving-path issue, out of VPS-script scope. Recovering as of recon (last 2 cycles = http=200; live probe from VPS → 401 reachable). Full detail: `docs/vps-sources/vn-news-rss/recon.md` § Incident 07-07.
-
-**Recommendation:** close FIX-NEWS-VPS-CRASH-LOOP done_verified/NO-CHANGE-NEEDED (crash-loop hyp. disproven); open separate `ops`-owned (local-infra) task for the Tunnel outage if dispatcher wants root-cause on the receiving side — no VPS script bug to fix.
+- News crash-loop DISPROVEN (c022): real cause was a Cloudflare Tunnel outage 07-04→07-07, not systemd — same "assumed crash, actually infra-adjacent" pattern later repeated in c024/c025.
+- systemd StartLimitBurst lockout (c024) — **CORRECTED by c025**: live evidence (`NRestarts=0` on all 3 units) disproves the crash-loop hypothesis; real cause was a hypervisor VM-pause clock-drift (see c025). c024's Measurement Bug A/B (off-hours masking, sbv dual-writer) and cron/timer inventory findings are unaffected and still stand.
 
 ---
 
@@ -63,6 +53,22 @@ Trigger: router dispatch — prices/sbv/bctc stale (news = control, healthy), 2 
 **VPS cron/timer plane:** 0 crontab (100% systemd), 11 units inventoried from repo/`deploy-vinahost.sh` cross-check. 2 units (`vn-agm-plan.service`, `vn-reuters-fetch.service`) never wired into the deploy script — same dead-code class as c023's OHLCV gap. **Zero live systemctl/journalctl obtained** — SSH/HTTP(8765/443/80)/ICMP to `125.212.251.27` all timed out this cycle (traceroute dies at Vinahost's own edge, hop 14); crucially this does NOT mean the VPS is down — `news` is provably still pushing live, so this is an inbound-only reachability gap (firewall/allowlist), stacking on top of the already-known `sshExec.ts` break — net effect: **no remote path currently exists to un-stick the 3 failed units.**
 
 Full evidence: `docs/vps-sources/vps-push-plane-stale-2026-07-22/recon.md`. **Signals:** `docs/signals/dev-mcp-server-20260722T161000Z.json` → dev-mcp-server (2 measurement bugs, exact diffs); `docs/signals/ops-20260722T161000Z.json` → ops (systemd hardening + manual restart once reachable + reachability investigation).
+
+---
+
+## c025 · 2026-07-23T16:25Z · FFLOW-STALE-0723-A-VPS-FIX — root cause was VM hypervisor-pause clock-drift, NOT c024's crash-loop; FIXED live
+
+Trigger: user-escalated, `get_market_foreign_flow` stuck at 07-21. Premise: Vinahost non-payment suspension, now paid/resumed.
+
+**VERDICT: `vn-foreign-flow.service` (+ `vn-price-fetch`/`vn-sbv-fetch`) never crashed — `NRestarts=0`, `active running` continuously since before the incident (Jul 08/08/10 resp.).** This disproves c024's `StartLimitBurst` hypothesis for these 3 units (built without SSH access). **Real cause: Vinahost suspended the VM via a hypervisor pause/freeze (not shutdown, not network-only block)** — `uptime` shows 98 days no reboot, but the guest clock froze during the pause and resumed ~2d13h behind real time (`timedatectl` falsely claimed "synchronized: yes"). Corroboration: `journalctl -u systemd-timesyncd` shows zero poll activity between `Jul 17 18:30:51` and my manual restart (a network-only block would still show repeated "Timed out" retries — silence means the guest's own timers were frozen too); `dmesg` shows `clocksource: Long readout interval, skipping watchdog check` — the kernel's own pause/resume symptom. `fetch-foreign-flow-loop.sh` gates fetching on `date -u +%H` in `[2,8]` UTC (VN market hours) — with the clock drifted ~2.5 days, the loop silently skipped the real 07-22/07-23 trading windows while (at connect time) actively fetching during a real off-hours moment its drifted clock mistook for market hours.
+
+**Fix applied:** `systemctl restart systemd-timesyncd` force-stepped the clock `2026-07-21T03:28:49Z → 2026-07-23T16:15:47Z` instantly. Restarted + confirmed `enabled` on `vn-foreign-flow.service`; post-fix it correctly went idle (`sleep 300`, off-hours) instead of erroneously fetching — proves the gate now reads real time. **Live end-to-end proof captured** (not self-reported): `/root/run-foreign-flow-debug.sh --verbose` → bgapidatafeed 97964B/104 items → 102 extracted → `POST /api/push-foreign-flow` → `HTTP 200 {"ok":true,"upserted":102,"validationErrors":0}`, exit 0. HTTP 200 (not 503) also confirms the `foreignFlow` circuit breaker was closed/healthy throughout — not touched, nothing to reset.
+
+**Backfill:** 07-22 **not recoverable** — `bgapidatafeed.vps.com.vn/getliststockdata` is live-snapshot-only, no date param anywhere in the deployed scripts; would need a separate historical source (new recon, out of scope). 07-23 got one real manual-push row (server-stamps `date` from its own clock, unaffected by VPS drift); full intraday coverage resumes automatically 07-24 02:00 UTC now the clock is fixed.
+
+**Residual:** clock-drift can recur on the next VM pause (`timedatectl` gives a false "synchronized" read, no auto hard-step observed) — recommend `ops` evaluate `chrony` or a boot-time step-check; `prices`/`sbv` share the same fixed VM clock but weren't independently re-verified end-to-end. `deploy-vinahost.sh` still doesn't substitute `__MCP_BASE__`/`__API_KEY__` into `/root/run-foreign-flow-debug.sh` (worked around via env override, same defect class as c023's OHLCV gap).
+
+Full evidence: `docs/vps-sources/vn-foreign-flow-clock-drift-recovery-2026-07-23/recon.md`. No `dev-vps-crawls` signal — pure infra recovery, no code touched, no anti-bot finding.
 
 ---
 
