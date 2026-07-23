@@ -45,3 +45,13 @@
 - Augment existing row + route to architect (chosen).
 **why-decision:** The real convergence failure was DORMANCY (row minted 07-21 but sat plan_only+supervised in BACKLOG while the FP re-emitted and worsened to CRITICAL+Telegram), not absence-of-mint. Augmenting scope for the new CRITICAL-escalation facet + commissioning to architect stops the churn WITHOUT a duplicate-mint.
 **why-change:** Directive assumed "not yet minted" (memory body still reads 'no mint'); board ground-truth showed the row exists — so I converged by routing, not re-minting.
+
+### STEP po-S5 · po · 2026-07-23T05:07:33Z
+**task-id:** FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE
+**what-done:** Final independent PO sign-off on the supervised converge row after QA delta re-verify PASS; applied po_signoff_at/by/verdict=APPROVE + status BACKLOG→DONE, moved backlog[]→done[] via one orch-apply write (conservation 623=623 preserved, next_agent settled via del not null).
+**what-considered:**
+- Trust QA's PASS verdict and lane-move directly (rejected — a supervised row cannot self-close through QA; PO owes an independent source-level re-verify, not a badge read).
+- Set next_agent:null to settle (rejected — Zod rejects null; next_agent is optional-not-nullable, so del(.next_agent) is the correct settle).
+- Sign off + lane-move in one atomic orch-apply transform (chosen).
+**why-decision:** Re-verified at source, not from prose: qa_reverify_20260723=PASS (both QA passes clean); probe.sh:86 carries the `|| { echo ...; BASELINE_PCT="0"; }` guard matching :31/:66/:71/:92; git show 685285a7c = single-file probe.sh 1+/1-; forbidden files (tier1-probe.md logic, verify-a30-mcp-memory-reclamation.sh, emit-audit-signal.sh, app code) clean at HEAD + working-tree. Matched the FIX-COMMIT-PATH supervised-close precedent shape exactly.
+**why-change:** no change from plan — the only deviation was del(.next_agent) after Zod rejected the initial null (settle semantics unchanged).
