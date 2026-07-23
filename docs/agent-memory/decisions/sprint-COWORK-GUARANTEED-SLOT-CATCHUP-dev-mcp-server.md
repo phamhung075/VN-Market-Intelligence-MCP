@@ -15,3 +15,13 @@
 - Error-shape on zero matches: `{error}` (like get_bctc_refined) vs typed-absent `{report_id:null}` — chose typed-absent per task AC ("empty/typed-absent for a not-yet-refined one") + it mirrors ESC-5's own graceful "no rows = FALSE, not an error" precedent.
 **why-decision:** Root cause was structural (no tool anywhere surfaced report_id by ticker+period — confirmed by reading get_bctc_full's full JSON output, which omits report_id from structured_data); a dedicated, DONE-restricted lookup tool is the minimal fix that unblocks all 4 downstream report_id-consuming tools without touching their contracts.
 **why-change:** no change from task brief.
+---
+
+### STEP dev-mcp-server-S2 · dev-mcp-server · 2026-07-23T15:01:12Z
+**task-id:** MD-FUNC-01-FIX
+**what-done:** Verified `get_market_snapshot` (marketTools.ts) already emits a `vn_index{price,change_pct,direction}` struct from live `fetchVnIndex()` data (VNDirect vnmarket_prices), fixed under commit 815ccaedd/ddc36452e; confirmed by live gateway call (`mcp_call get_market_snapshot {}`) returning `vn_index:{price:1699.38, change_pct:1.85, direction:"up"}` — non-null, plausible, matches breadth block (189 adv/122 dec). No code change needed.
+**what-considered:**
+- Re-implement fix from scratch vs verify existing implementation — chose verify-only after `git log -- marketTools.ts` showed the exact "MD-FUNC-01 FIX" comment already committed 2026-06-16, predating the currently-running container image (built 2026-07-22), so the fix is live, not stale.
+- Trust schema comment vs re-derive from a live payload — per task directive, called the live tool through gateway (not just reading the test file) to authoritatively confirm all 3 fields non-null.
+**why-decision:** Root-cause check confirmed no defect exists (field present, correctly mapped, dynamically derived from live changePct sign — not hardcoded); re-doing the fix would be redundant churn.
+**why-change:** no change from task brief — outcome is "no fix needed", documented per dispatch instructions.
