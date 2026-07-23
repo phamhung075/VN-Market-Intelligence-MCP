@@ -388,10 +388,10 @@
   ],
   "head": {
     "status": "idle",
-    "updated_at": "2026-07-23T07:56:21Z",
-    "updated_by": "developer",
     "active_task_id": null,
-    "next_agent": null
+    "next_agent": null,
+    "updated_at": "2026-07-23T08:32:29Z",
+    "updated_by": "developer"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -4967,22 +4967,6 @@
         "next_agent": "agent-father",
         "po_routing_ruling_20260721": "PO ARTIFACT-CLASS ROUTING RULING 2026-07-21T18:42Z. Rule: routing follows ARTIFACT CLASS, not directory. Any row whose deliverable is instruction-prose that an agent LOADS AND EXECUTES — .claude/agents/**, docs/agents/** (init/flow/knowledge/tools-package), .claude/skills/**/SKILL.md — routes to agent-father. Executable code (apps/**, scripts/**), codegen-from-registry, and data/root-config (docs/data/**, CLAUDE.md) route to zone-matched dev-* or developer. Rationale: for this system a flow doc IS the executable source; agent-father is already sole owner of agent-file lifecycle (dispatch/SKILL.md:48) and of NEW cron skill files (:50), and board precedent has 5/5 pre-existing docs/agents/ rows routed to agent-father/agents-architect/po and 0 to developer. Precedent for SKILL.md specifically: docs/signals/processed/dev-team-20260716T102429Z-autolaunch-safety-hold-uc-asl-p6.json already routed a signal-dashboard SKILL.md edit to agent-father as 'the factory rule'. ROOT CAUSE this closes: .claude/skills/zone-detect/SKILL.md resolves ONLY dev-<service> (Tier-1/2, needs apps/<service>/-shaped zone) or generic developer (Tier-3 fallback) — it has NO path to agent-father, so any docs/agents/ or .claude/skills/ row reaching execute-tier with next_agent unset gets the 'developer' placeholder and mis-routes. EXPECTED SIDE EFFECT (do NOT 'fix' this): next_agent=agent-father does not match the dev-role pattern ^dev(-|$)|^developer$, so the BOUNDED-1 NON-DEV-NEXT_AGENT gate (dev-team/flow/main.md:518) now WITHHOLDS these rows from unattended idle auto-pickup. That is the intended outcome — they require deliberate router dispatch to agent-father, not silent promotion to a generic developer.",
         "updated_at": "2026-07-21T18:44:02Z"
-      },
-      {
-        "id": "TE-T17",
-        "title": "T-17 ops notebook 701L (3.5x cap): fix prune bypass (non-Write/Edit writes skip auto-prune hook) + janitor sweep [~18-36k tok/day]",
-        "owner": "developer",
-        "status": "BACKLOG",
-        "type": "FIX",
-        "size": "S",
-        "priority": "P1",
-        "wave": 2,
-        "est_saving": "~18-36k tok/day + prevents class on all 30 notebooks",
-        "zone": "multi",
-        "sprint": "TOKEN-ECONOMY-AUDIT",
-        "depends": [],
-        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-17",
-        "note": "PostToolUse auto-prune hook only matches Write|Edit; Bash-heredoc writes bypass it (07-11 Docker incidents). (1) prune ops.md now (move incident detail to docs/incidents/), (2) add notebook line-cap sweep to code-janitor 6h cron (catches Bash writes), (3) add pre-commit wc -l gate to ops notebook-commit step. Also delete untracked .test-notebook-prune-debug/."
       },
       {
         "id": "TE-T21",
@@ -13548,6 +13532,33 @@
         "completed_at": "2026-07-23T07:56:21Z",
         "completed_by": "developer",
         "status_note": "Rewrote .claude/skills/commit/SKILL.md (deleted Step 4 merge/branch-clean; per-category commit-mutex:main acquire/critical-section/release replacing whole-run duplicated push shell, pointing at commit-mutex Step 3d-PUSH as SSOT; added Step 1 stranded-peer-file age guard citing commit-boundary RULE 2 zone table + mtime<2h; replaced hardcoded Co-Authored-By line with pointer to commit-convention.md) + reduced .claude/commands/commit.md to a one-line pointer so /commit has exactly one definition. Commits a5202512c (fix, Task/AC trailers) + 2cd532595 (memory), both pushed to main. DJ entry: sprint-ULTRACODE-AUDIT-FIXALL-developer.md STEP developer-S22. Direct-commit branch:null — qa verify-committed-fix mode applies (docs/agents/qa/flow/main.md Direct-Commit Verify)."
+      },
+      {
+        "id": "TE-T17",
+        "title": "T-17 ops notebook 701L (3.5x cap): fix prune bypass (non-Write/Edit writes skip auto-prune hook) + janitor sweep [~18-36k tok/day]",
+        "owner": "developer",
+        "status": "REVIEW",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "wave": 2,
+        "est_saving": "~18-36k tok/day + prevents class on all 30 notebooks",
+        "zone": "multi",
+        "sprint": "TOKEN-ECONOMY-AUDIT",
+        "depends": [],
+        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-17",
+        "note": "PostToolUse auto-prune hook only matches Write|Edit; Bash-heredoc writes bypass it (07-11 Docker incidents). (1) prune ops.md now (move incident detail to docs/incidents/), (2) add notebook line-cap sweep to code-janitor 6h cron (catches Bash writes), (3) add pre-commit wc -l gate to ops notebook-commit step. Also delete untracked .test-notebook-prune-debug/.",
+        "promoted_at": "2026-07-23T08:17:03Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "updated_at": "2026-07-23T08:32:48Z",
+        "claimed_at": "2026-07-23T08:17:03Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "branch": null,
+        "completed_at": "2026-07-23T08:32:29Z",
+        "completed_by": "developer",
+        "status_note": "TE-T17 DONE. (1) ops.md 1197L->29L: 23 sections moved verbatim to docs/incidents/<date>-<slug>.md, one-line pointers left. (2) New scripts/agents-flow/notebook-linecap-sweep.sh (+test) wired into code-janitor/flow/main.md's existing 6h cron -- write-path-agnostic backstop, delegates over-cap files to notebook-auto-prune.sh's own drop-oldest logic via synthetic PostToolUse JSON (no duplicated pruning code). (3) Blocking wc -l pre-commit gate added to ops/flow/main.md's notebook-commit step. (4) .test-notebook-prune-debug/ already absent -- verified no-op. Tests: 5/5 pre-existing test-notebook-auto-prune.sh GREEN (post cross-ref comment edit), new notebook-linecap-sweep.test.sh 7/7 GREEN + idempotent. Scope discipline: agent-father.md (303L) and system-auditor.md (204L) also currently over cap -- left untouched (out of named scope), will be caught by the new sweep's next 6h cron fire. Commits: 32529e57f (fix, ops.md+incidents+sweep+gate), 29e17fca8 (memory), both pushed to main. DJ entry: sprint-TOKEN-ECONOMY-AUDIT-developer.md STEP developer-S9. Direct-commit branch:null -- qa verify-committed-fix mode applies (docs/agents/qa/flow/main.md Direct-Commit Verify)."
       }
     ],
     "qa": [],
@@ -13567,7 +13578,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-23T07:49:33Z",
+    "last_triaged_at": "2026-07-23T08:17:03Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": []
   },
