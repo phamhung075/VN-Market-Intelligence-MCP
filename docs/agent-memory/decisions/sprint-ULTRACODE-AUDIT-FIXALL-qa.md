@@ -341,3 +341,20 @@ entry with file:line + fix guidance, `redispatch_count`=0->1) via `jq | scripts/
 (validator PASS, conservation PASS 626=626/105=105). `.head` set `next_agent: developer`,
 `next_action` names the exact fix. Did NOT approve, did NOT merge (nothing to merge — already on
 main), did NOT push.
+
+### STEP qa-S13 · qa · 2026-07-23T01:50:47Z
+**task-id:** UC-CDC-P4
+**what-done:** Re-review (redispatch #1) of AC1 fix commit 0ffb8d77a. `git show 0ffb8d77a` confirms
+the inline `_fanout` object literal was DELETED (not relocated): missing/unparseable branch now
+sets `FANOUT_MODE="degraded_serial"`+`MAX_PARALLEL=1` sentinel only; grep for the 5 literals
+(4/2/1500/120/load-factor) outside the else branch = zero hits (2 pre-existing prose mentions,
+untouched by this diff, illustrative not fallback). Read `pressure-read.md` Step 4.2 source
+directly — the claimed precedent matches exactly. AC2 (`cadence-policy.json` unedited, 5 keys
+intact) + AC5 (RE-RAN `bun test DWF-phase1-cadence.test.ts` myself: 51/0/183) both RAW-reconfirmed.
+AC3/AC4/AC6 untouched by fix diff-stat, re-spot-checked intact.
+**what-considered:**
+- Flag the L179/L249 numeric prose as a residual AC1 violation — rejected: neither is inside the
+  missing/unparseable branch, neither assigns a fallback value, both pre-date this diff untouched.
+**why-decision:** All 6 ACs RAW-confirmed PASS at source; the specific defect I flagged
+(shadow-copy object) is mechanically absent post-fix via the same grep method that found it.
+**why-change:** No change from plan — fix matched the requested remediation exactly.
