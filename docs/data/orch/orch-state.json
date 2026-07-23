@@ -387,12 +387,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "BCT-OBS-02-FIX",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of BCT-OBS-02-FIX — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-23T16:52:17Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "updated_at": "2026-07-23T17:17:09Z",
+    "updated_by": "dev-mcp-server",
+    "active_task_id": null,
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -13977,6 +13976,36 @@
         "dispatch_note": "manual supervised WIP<=2 dispatch — USER-ESCALATED foreign-flow FFLOW-STALE-0723",
         "entered_review_at": "2026-07-23T16:33:37Z",
         "review_note": "[dev-team] Recheck harness scripts/check-foreign-flow-freshness.sh built + router raw-verified 3 ways (un-piped exit codes): --self-test 3/3 OK; STALE fixture(07-21)=exit2 no-false-green; LIVE=exit0 latest_date=2026-07-23. 8/8 ACs: probe via mcp-call.sh, LCTS+ICT 16:30 grace, vnTradingCalendar SSOT (zero hardcoded holidays), exit 0/2/3, persistence+registry wiring. Commits a7b3709db + e5440901. THIS is the user \"program for recheck / assume complete fixed\" gate."
+      },
+      {
+        "id": "BCT-OBS-02-FIX",
+        "priority": "normal",
+        "size": "S",
+        "status": "REVIEW",
+        "title": "Fix BCT-OBS-02: Does sscCheck (20:00 VN daily) send its nightly BCTC check result to WORK channel",
+        "type": "fix",
+        "zone": "dev-mcp-server",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#BCT-OBS-02-FIX",
+        "promoted_at": "2026-07-23T16:52:17Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-23T17:17:46Z",
+        "claimed_at": "2026-07-23T16:52:17Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "branch": null,
+        "commit": "a5809fab083c50fa31d991806d87e486dfa8a013",
+        "files": [
+          "apps/mcp-server/src/scheduler/news-analysis/sscCheckerJob.ts",
+          "apps/mcp-server/src/__tests__/FIX-BCT-OBS-02-SSCCHECK-WORK-ALERT.test.ts",
+          "docs/standards/cron-jobs.md",
+          "docs/architecture/microservice/mcp-server/news-analysis.md",
+          "docs/agent-memory/decisions/sprint-bct-obs-02-fix-dev-mcp-server.md",
+          "docs/agent-memory/notebooks/dev-mcp-server.md"
+        ],
+        "completed_at": "2026-07-23T17:17:09Z",
+        "completed_by": "dev-mcp-server",
+        "status_note": "BCT-OBS-02-FIX: REAL fix shipped (opposite of sibling BCT-OBS-01/verification-only rows). RAW-verified at source (not the checklist self-report): zero sendTelegram*/telegram references in sscCheckerJob.ts or checkSscReports.ts across their FULL git history (f3eeb9b7d..791b0e4dc) -- runSscCheck() never posted anything to WORK regardless of outcome. quality-checklist.json BCT-OBS-02=PASS is a false-positive: live signal msg 3628 proves read_telegram_reports channel param is a zod-schema no-op (cannot filter WORK); independently corroborated by this session's own BCT-OBS-01-FIX finding that sendTelegramWork has zero DB persistence by design -- read_telegram_reports can never observe a WORK sscCheck message either way, so the checklist recheck_how was structurally unable to confirm what it claimed. Fix: runSscCheck() now posts exactly one WORK-channel summary message per executed nightly cycle (VPS-only no-op skip / full run / unhandled error) via new injectable sendWorkAlertFn defaulting to sendTelegramWork -- mirrors bctcOverdueCheckJob.ts FR-OBS-01-FIX precedent (commit 7ce61568e). Concurrency-guard and T4 recovery-dedup early-returns stay silent. New test FIX-BCT-OBS-02-SSCCHECK-WORK-ALERT.test.ts 5/5 pass; 9/9 adjacent sibling suites green; bun tsc --noEmit clean. Full suite 14684 pass/42 fail/1 error -- RAW-confirmed pre-existing via git-stash A/B (identical 2 failures reproduced with this fix stashed out: RSS-degradation timing test + deprecated technical-indicators golden-output test); zero ssc/BCT-OBS hits in the failure log. Tool count 184 / cronJobCount 88 unaffected (no new tool/cron). QA note: cannot verify via read_telegram_reports (sendTelegramWork is not DB-persisted by design) -- verify via live Telegram WORK channel inspection or get_system_status TELEGRAM_ENABLED check instead."
       }
     ],
     "qa": [],
@@ -13998,24 +14027,7 @@
     },
     "last_triaged_at": "2026-07-23T16:52:17Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "BCT-OBS-02-FIX",
-        "priority": "normal",
-        "size": "S",
-        "status": "IN_PROGRESS",
-        "title": "Fix BCT-OBS-02: Does sscCheck (20:00 VN daily) send its nightly BCTC check result to WORK channel",
-        "type": "fix",
-        "zone": "dev-mcp-server",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#BCT-OBS-02-FIX",
-        "promoted_at": "2026-07-23T16:52:17Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-23T16:52:18Z",
-        "claimed_at": "2026-07-23T16:52:17Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
