@@ -222,3 +222,20 @@ SSOT, headroom+load gate, real inter-batch wait (naive batching of `run_in_backg
 no-op), guaranteed-slots-first, carve-out to prevent canonical-doc drift.
 **why-change:** No change from rescope plan. `DWF-phase1-cadence.test.ts` re-run 51/51 GREEN post
 `_fanout` addition (no schema assertion broke) — confirms the new key is additive-safe.
+
+### STEP developer-S14 · developer · 2026-07-23T01:15:00Z
+**task-id:** UC-CDC-P4
+**what-done:** QA CHANGES_REQUESTED AC1 fix — `spawn-fanout.md` Step 5.1's missing/unparseable
+`cadence-policy.json` branch no longer synthesizes the whole `_fanout` object inline; downgrades
+to `FANOUT_MODE="degraded_serial"`, `MAX_PARALLEL=1` sentinel. Step 5.2 inter-batch wait gained a
+matching mode branch (no `FANOUT_POLICY.batch_wait_max_seconds` to read in that mode).
+**what-considered:**
+- QA's option (a) fail-loud+skip-tick vs option (b) MAX_PARALLEL=1 sentinel — chose (b): matches
+  router's explicit "single-batch / max_parallel_degraded path" guidance and still delivers slots
+  (serially) instead of dropping the tick's fan-out entirely.
+- Leaving Step 5.2's wait loop untouched vs branching it — untouched would dereference
+  `FANOUT_POLICY` which doesn't exist in `degraded_serial` mode (new defect); branched instead.
+**why-decision:** Mirrors pressure-read.md Step 4.2's proven missing-policy pattern (MODE
+downgrade, no numeric synthesis) per router's explicit fix guidance — zero `_fanout` shadow copy.
+**why-change:** Scoped to AC1 only; AC2–AC6 (batch semantics, health-driven DEGRADED branch, test,
+carve-out) untouched per redispatch note. `DWF-phase1-cadence.test.ts` re-run 51/51 GREEN.

@@ -1,7 +1,10 @@
 <!-- size-justification: 227L — Step 5: blind guard, published-marker gate contract, and the
      UC-CDC-P4 headroom-gated bounded batcher (Step 5.1 MAX_PARALLEL computation + Step 5.2
      batch fan-out with inter-batch wait) are one tightly sequential dispatch unit, child of
-     main.md. -->
+     main.md. UC-CDC-P4 QA AC1 fix 2026-07-23 (+21L): replaced the inline `_fanout` shadow-copy
+     fallback with a `degraded_serial` MODE downgrade (MAX_PARALLEL=1 sentinel, no SSOT numeric
+     literals) mirroring pressure-read.md Step 4.2's missing-policy pattern; Step 5.2 inter-batch
+     wait gained a matching mode branch since FANOUT_POLICY does not exist in that mode. -->
 <!-- BGFAN-1: every Agent spawn in this file MUST use run_in_background=true; UC-CDC-P4 bounds
      CONCURRENCY ACROSS batches via Step 5.1/5.2, it does not relax background=true within a
      batch. Canonical rule + batcher carve-out → docs/protocols/agent-chaining-protocol.md
@@ -128,35 +131,43 @@ See `docs/protocols/dwf-ops-runbook.md` § Published Marker Interaction for ops 
 # Load fan-out thresholds — self-contained read (do not assume Step 4.2's POLICY_OBJ is still
 # in scope; this step must degrade safely even if it runs in isolation).
 POLICY_FILE = "docs/data/cadence-policy.json"   # same SSOT as Step 4.2
+FANOUT_MODE = "policy"   # default; may downgrade to "degraded_serial" below
 
 if POLICY_FILE is missing or fails JSON parse or its `_fanout` key is missing:
-  FANOUT_POLICY = { max_parallel_default: 4, max_parallel_degraded: 2, headroom_floor_mb: 1500,
-                     load_per_core_factor: 2, batch_wait_max_seconds: 120 }
-  log "[cowork-team] WARN: cadence-policy.json _fanout missing/unreadable — using in-line safe defaults"
+  # Mirrors pressure-read.md Step 4.2's missing/malformed-policy pattern: downgrade MODE,
+  # do NOT synthesize the SSOT's numeric values inline (no shadow copy of _fanout — UC-CDC-P4
+  # QA AC1). MAX_PARALLEL=1 is a single conservative non-threshold sentinel (fully serial) —
+  # it is not read from, and does not stand in for, any of the 5 _fanout keys. Since no
+  # thresholds are available at all, the headroom/load gate below is skipped entirely rather
+  # than partially reconstructed.
+  FANOUT_MODE  = "degraded_serial"
+  MAX_PARALLEL = 1
+  log "[cowork-team] WARN: cadence-policy.json _fanout missing/unreadable — degraded_serial mode, MAX_PARALLEL=1 (fully serial, no threshold numbers available)"
+  → skip HEADROOM/LOAD computation below; proceed directly to Step 5.2 with MAX_PARALLEL=1
 else:
   FANOUT_POLICY = JSON.parse(readFile(POLICY_FILE))._fanout
 
-# HEADROOM — reuse PRESSURE_STATE / PRESSURE_MODE set at Step 4.2 (pressure-read.md, same tick,
-# same session). If PRESSURE_MODE == "legacy" (pressure-state.json missing/stale/malformed —
-# Step 4.2's own isStale gate already fired), headroom is unknown → fail-safe degraded, per the
-# same NFR-P1-3 "never worse than today" posture Step 4.2 already applies.
-if PRESSURE_MODE == "adaptive" and PRESSURE_STATE.host_headroom_mb is a number:
-  HEADROOM_MB = PRESSURE_STATE.host_headroom_mb
-else:
-  HEADROOM_MB = null   # unknown → forces the degraded branch below
+  # HEADROOM — reuse PRESSURE_STATE / PRESSURE_MODE set at Step 4.2 (pressure-read.md, same tick,
+  # same session). If PRESSURE_MODE == "legacy" (pressure-state.json missing/stale/malformed —
+  # Step 4.2's own isStale gate already fired), headroom is unknown → fail-safe degraded, per the
+  # same NFR-P1-3 "never worse than today" posture Step 4.2 already applies.
+  if PRESSURE_MODE == "adaptive" and PRESSURE_STATE.host_headroom_mb is a number:
+    HEADROOM_MB = PRESSURE_STATE.host_headroom_mb
+  else:
+    HEADROOM_MB = null   # unknown → forces the degraded branch below
 
-# LOAD / CORES — dispatcher-level bash (proven available: scripts/agents-flow/
-# cowork-tick-preflight.sh already runs bash+jq+curl at this same dispatch step).
-LOAD_1MIN = bash: `uptime | awk -F'load average' '{print $2}' | awk -F',' '{gsub(/[^0-9.]/,"",$1); print $1}'`
-CORES     = bash: `sysctl -n hw.ncpu 2>/dev/null || nproc`   # macOS dev host; nproc fallback for Linux containers
+  # LOAD / CORES — dispatcher-level bash (proven available: scripts/agents-flow/
+  # cowork-tick-preflight.sh already runs bash+jq+curl at this same dispatch step).
+  LOAD_1MIN = bash: `uptime | awk -F'load average' '{print $2}' | awk -F',' '{gsub(/[^0-9.]/,"",$1); print $1}'`
+  CORES     = bash: `sysctl -n hw.ncpu 2>/dev/null || nproc`   # macOS dev host; nproc fallback for Linux containers
 
-DEGRADED = (HEADROOM_MB == null) OR (HEADROOM_MB < FANOUT_POLICY.headroom_floor_mb) \
-           OR (LOAD_1MIN > FANOUT_POLICY.load_per_core_factor * CORES)
+  DEGRADED = (HEADROOM_MB == null) OR (HEADROOM_MB < FANOUT_POLICY.headroom_floor_mb) \
+             OR (LOAD_1MIN > FANOUT_POLICY.load_per_core_factor * CORES)
 
-MAX_PARALLEL = FANOUT_POLICY.max_parallel_degraded if DEGRADED else FANOUT_POLICY.max_parallel_default
+  MAX_PARALLEL = FANOUT_POLICY.max_parallel_degraded if DEGRADED else FANOUT_POLICY.max_parallel_default
 
-log "[cowork-team] fan-out gate — headroom_mb=" + (HEADROOM_MB ?? "unknown") + " load1m=" + LOAD_1MIN + \
-    " cores=" + CORES + " degraded=" + DEGRADED + " max_parallel=" + MAX_PARALLEL
+  log "[cowork-team] fan-out gate — headroom_mb=" + (HEADROOM_MB ?? "unknown") + " load1m=" + LOAD_1MIN + \
+      " cores=" + CORES + " degraded=" + DEGRADED + " max_parallel=" + MAX_PARALLEL
 ```
 
 ## Step 5.2 — Bounded batch fan-out (UC-CDC-P4)
@@ -214,18 +225,25 @@ actually bound peak concurrency).** Skip this wait after the LAST batch — proc
 Step 5b.
 
 ```
-elapsed = 0
-while elapsed < FANOUT_POLICY.batch_wait_max_seconds:
-  if every spawn in this batch has returned its task notification (genuine completion): break
-  re-probe LOAD_1MIN (same `uptime` command as Step 5.1)
-  if LOAD_1MIN <= FANOUT_POLICY.load_per_core_factor * CORES: break
-  sleep 5s; elapsed += 5
+if FANOUT_MODE == "degraded_serial":
+  # MAX_PARALLEL=1 (Step 5.1) → every batch here is already a single slot. There is no
+  # FANOUT_POLICY object to read a timeout/re-probe threshold from in this mode, so the wait
+  # is unconditional: fire one slot, wait for its genuine completion, then fire the next.
+  # Concurrency is already bounded to 1 by MAX_PARALLEL — no timeout/re-probe math is needed.
+  wait for the single spawn in this batch to return its task notification (genuine completion)
+else:
+  elapsed = 0
+  while elapsed < FANOUT_POLICY.batch_wait_max_seconds:
+    if every spawn in this batch has returned its task notification (genuine completion): break
+    re-probe LOAD_1MIN (same `uptime` command as Step 5.1)
+    if LOAD_1MIN <= FANOUT_POLICY.load_per_core_factor * CORES: break
+    sleep 5s; elapsed += 5
 
-if elapsed >= FANOUT_POLICY.batch_wait_max_seconds:
-  log "[cowork-team] batch wait timeout (" + FANOUT_POLICY.batch_wait_max_seconds + "s) — continuing at degraded cap"
-  send_telegram(channel="work", message="[cowork-team] fan-out batch wait timeout — continuing remaining slots at max_parallel_degraded")
-  MAX_PARALLEL = FANOUT_POLICY.max_parallel_degraded
-  BATCHES = chunk(remaining not-yet-fired slots, MAX_PARALLEL)   # re-chunk only what's left
+  if elapsed >= FANOUT_POLICY.batch_wait_max_seconds:
+    log "[cowork-team] batch wait timeout (" + FANOUT_POLICY.batch_wait_max_seconds + "s) — continuing at degraded cap"
+    send_telegram(channel="work", message="[cowork-team] fan-out batch wait timeout — continuing remaining slots at max_parallel_degraded")
+    MAX_PARALLEL = FANOUT_POLICY.max_parallel_degraded
+    BATCHES = chunk(remaining not-yet-fired slots, MAX_PARALLEL)   # re-chunk only what's left
 ```
 
 The `batch_wait_max_seconds` cap (default 120s) is well inside both the 600s per-work-item token
