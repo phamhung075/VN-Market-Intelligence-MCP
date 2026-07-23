@@ -427,8 +427,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-23T07:16:31Z",
-    "_updated_by": "developer",
+    "_updated_at": "2026-07-23T15:26:04Z",
+    "_updated_by": "dev-team",
     "archive": [],
     "rows": [
       {
@@ -2094,6 +2094,28 @@
         "summary": "sbv-vps stale 35h (check B-06)",
         "severity": "WARN",
         "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "dev-team-fwd-dgc-dataquality-20260723T151800Z",
+        "ts": "2026-07-23T15:26:04Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "bctc-data-quality-anomaly",
+        "severity": "MEDIUM",
+        "status": "NEW",
+        "summary": "FWD(bctc-analyst): DGC Q1-2026 BCTC extraction CORRUPT total_assets=0, conf 0% — re-extract DGC 2026-Q1 (action: /api/bctc-inspect or refine repass). PO dedup vs in-flight FIX-BCTC-REPARSE-BATCH-CORRUPTION or mint DGC-specific. DGC hot (CEO prosecution -6.3%). guard-key data-quality-anomaly:DGC:Q1-2026. Full payload: docs/signals/processed/bctc-analyst-20260723T151000Z-dgc-dataquality.json",
+        "payload_ref": null
+      },
+      {
+        "id": "dev-team-20260723T1518-drain-prune-detailref-dangle",
+        "ts": "2026-07-23T15:26:04Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "routing-gap",
+        "severity": "WARN",
+        "status": "NEW",
+        "summary": "drain-signals.js prune DELETED processed/dev-team-20260716T112423Z-autolaunch-safety-hold-uc-asl-p6-maintlane.json that backlog row FIX-DEVTEAM-BOUNDED1-MAINTLANE-NEXTAGENT-GATE .detail_ref pointed at -> Stage1c dangle blocked ALL orch-apply writes fleet-wide. Dispatcher nulled that mismatched now-pruned detail_ref to unblock (file recoverable at git 395e224ad~1). TWO asks: (1) drain-prune must SKIP files referenced by any live detail_ref/payload_ref, not only repoint payload_ref (recurs each referenced processed/ file ages past 7d); (2) triage/close obsolete row FIX-DEVTEAM-BOUNDED1-MAINTLANE-NEXTAGENT-GATE — subsumed by FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE per main.md.",
         "payload_ref": null
       }
     ],
@@ -8920,12 +8942,13 @@
         "next_agent": "developer",
         "created_at": "2026-07-16T11:59:56Z",
         "created_by": "po",
-        "detail_ref": "docs/signals/processed/dev-team-20260716T112423Z-autolaunch-safety-hold-uc-asl-p6-maintlane.json",
+        "detail_ref": null,
         "note": "[po 2026-07-16T11:59:56Z] DURABLE CLASS FIX for the UC-ASL-P6 3-tick churn (autolaunch_safety_hold, dedup_key autolaunch_safety_hold:UC-ASL-P6:maint-lane-v2). ROOT: scripts/devteam-backlog-promote-bounded1.jq has a NON-DEV-NEXT_AGENT gate that only fires when BOTH detail.next_agent is non-dev AND the board next_agent is null; a row whose BOARD next_agent names a maintenance-lane agent (non-null) promotes cleanly and is then mis-routed by zone-detect (which only yields dev-<service> or Tier-3 developer, never a maintenance agent). FIX: add a gate that withholds any candidate whose EFFECTIVE next_agent (board OR backlog-detail) is in the maintenance-lane roster, since those are on-demand-only (dev-team main.md L12, mutex-wrap required) and neither zone-detect-routable nor safe to idle-auto-launch. AC: (1) a BACKLOG row with next_agent in the maintenance roster is NOT promoted by a BOUNDED-1 tick (dry-run: ready[] stays empty for that row); (2) a control row with next_agent=developer/dev-<service> still promotes; (3) roster sourced from docs/data/system-map.json .project.agents (maintenance lane) + dev-team main.md L12 — NOT hardcoded inline; (4) also covers agents-architect-owned design rows. This closes the class so no future maintenance-lane-next_agent row needs a hand-stamped supervised:true stopgap. Immediate acute case already converged via supervised:true on UC-ASL-P6.",
         "supervised": true,
         "supervised_at": "2026-07-16T17:02:01Z",
         "supervised_by": "po (fold into consolidated gate)",
-        "status_note": "SUPERSEDED-BY FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE. Folded: the consolidated effective(board-OR-detail) next_agent predicate covers the maintenance roster too. Do NOT dispatch separately (would concurrently edit the same scripts/devteam-backlog-promote-bounded1.jq -> commit race). Held supervised."
+        "status_note": "SUPERSEDED-BY FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE. Folded: the consolidated effective(board-OR-detail) next_agent predicate covers the maintenance roster too. Do NOT dispatch separately (would concurrently edit the same scripts/devteam-backlog-promote-bounded1.jq -> commit race). Held supervised.",
+        "updated_at": "2026-07-23T15:26:05Z"
       },
       {
         "id": "FIX-CHEF-MIDFLOW-BAIL-DETERMINISM",
