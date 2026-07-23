@@ -48,7 +48,7 @@ Rationale: AC trailers are the highest-effort field and agents may legitimately 
 
 **Threshold: ≥ 95% of non-notebook commit scopes use a recognized area token.**
 
-Recognized area tokens (from `.claude/knowledge/commit-convention.md § Scope Rules`):
+Recognized area tokens (from `docs/policies/commit-convention.md § Scope Rules`; historical note 2026-07-23: the `.claude/knowledge/` path never existed in this repo, path corrected to the actual SSOT location):
 `scheduler`, `mcp`, `knowledge`, `agents`, `infra`, `docker`, `qa`, `rag`, `db`, `alerts`, `telegram`, `vps`, `architecture`, `tree-map`, `memory`, `state`, `merge`, `tasks`, `audit`, `cycle`
 
 Rationale: 95% because vocabulary drift is the leading indicator of convention abandonment. One or two novel area tokens in 7 days is acceptable; more signals agents are working outside the SSOT.

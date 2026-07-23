@@ -3,6 +3,14 @@
 # Brief: docs/architecture-briefs/2026-05-17-commit-convention-audit.md
 # Usage: bash scripts/audits/commit-convention-audit.sh [SINCE_DATE] [--emit-signal]
 # Exit: 0 = PASS, 1 = FAIL
+#
+# DEPRECATED (2026-07-23, UC-GCP-P1): this was a ONE-TIME Phase-B (2026-05-10..05-17)
+# greenlight gate. Its C1-C4 predicates and VOCAB below assert the dead numeric-sprint /
+# `Sprint:`-trailer / digit-in-scope convention — they do NOT match the current slug-based
+# format documented at docs/policies/commit-convention.md. Confirmed NOT wired into any
+# live flow/cron/skill (grep -r 'commit-convention-audit' scripts/ .claude/ docs/agents/ = 0
+# hits outside this file). Do not run this as a live validator; kept only as a historical
+# Phase-B artifact. SSOT: docs/policies/commit-convention.md.
 
 set -euo pipefail
 
@@ -30,7 +38,8 @@ REPORT_DATE="$(date -u +%Y%m%d)"
 REPORT_FILE="${REPORT_DIR}/commit-convention-audit-${REPORT_DATE}.json"
 SIGNAL_TS="$(date -u +%Y-%m-%dT%H-%M-%SZ)"
 
-# Canonical area token vocabulary (from .claude/knowledge/commit-convention.md § Scope Rules)
+# DEPRECATED vocabulary snapshot (historical Phase-B era; not synced to current
+# docs/policies/commit-convention.md § Scope Rules, which has no fixed enforced list)
 VOCAB="agent-doc agents agents-architect alert-accuracy alerts api-gateway arch architecture audit cleanup commit-convention crons cycle data db deploy-verification dev-team docker flow flows infra janitor knowledge market-watcher mcp mcp-server mcp-tool memory merge microservice notebooks pm qa rag readme registry routing scan-market scheduler sessions signals skill skills ssot state system-auditor ta-alert-notifier tasks telegram tree-map types vps"
 
 mkdir -p "${REPORT_DIR}"

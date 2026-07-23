@@ -71,10 +71,7 @@ CLAUDE.md (root — always loaded)
 │   └── docs/social/fb-feedback.md (feedback sink — user appends corrections; Phase 2: auto-read via Graph API)
 │
 ├── docs/policies/dev-standards.md (DDD layer rules, coding standards, test template, commit format pointer, branch hygiene)
-│   └── docs/policies/commit-convention.md (index: section-anchor redirects for `§ X` back-compat — children below)
-│       ├── docs/policies/commit-convention-format.md (Format · Shell · Type vocab · Scope · Task ID · Trailers · AC style)
-│       ├── docs/policies/commit-convention-exemptions.md (No-Sprint Rule · C3-Exempt · C2-Exempt)
-│       └── docs/policies/commit-convention-examples.md (Worked Example · Merge Commits · Notebook Commits)
+│   └── docs/policies/commit-convention.md (single-file SSOT — Format · Shell/heredoc `-m`-only rule · Type vocab · Scope · Task slug · Trailers · Exempt categories · Worked examples · Notebook commits; consolidated from the former 3-child split 2026-07-23 UC-GCP-P1)
 │
 ├── docs/protocols/janitor-procedures.md (code janitor: canonical sources, scan checklist, output contract, state file)
 │
