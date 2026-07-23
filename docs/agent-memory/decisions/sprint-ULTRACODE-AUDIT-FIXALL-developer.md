@@ -199,3 +199,26 @@ exactly, per RESCOPE spec; both bugs were caught by the mandatory self-verify ag
 before touching the wire-in, so the shipped filter is proven-correct against the live schema.
 **why-change:** No change from RESCOPE plan; two implementation-level jq/Zod pitfalls fixed during
 self-verify, not scope changes.
+
+### STEP developer-S13 · developer · 2026-07-23T00:30:04Z
+**task-id:** UC-CDC-P4
+**what-done:** `spawn-fanout.md` Step 5.1/5.2: bounded batcher replaces "fire all in one block" —
+gates `MAX_PARALLEL` on `host_headroom_mb` (Step 4.2 `PRESSURE_STATE`, degrade if legacy) OR
+`uptime` load vs `load_per_core_factor*cores`; batches wait on notification/re-probe capped at
+`batch_wait_max_seconds`. New `cadence-policy.json._fanout` SSOT (5 thresholds, no hardcode).
+Carve-out added to `agent-chaining-protocol.md` § Background Spawn Mandate.
+**what-considered:**
+- Reuse Step 4.2's `POLICY_OBJ` var vs re-read cadence-policy.json independently at Step 5.1 —
+  chose independent re-read: `POLICY_OBJ` is only set on the JSON-parse-success branch of Step
+  4.2, undefined on the legacy-fallback branch, so trusting it at Step 5 risks an undefined-var
+  read; a direct re-read matches pressure-read.md's own precedent and degrades safely alone.
+- Full graphify `--update` on `docs/` vs skip — chose skip + flag: `graphify-out/graph.json` is
+  already 2 months stale (last run 2026-05-23), predating this task; an incremental run against
+  `docs/` would re-extract that entire accumulated drift, wildly disproportionate to a 3-file
+  S-size fix. Flagged in RETURN for PO/router, not silently absorbed or silently skipped.
+**why-decision:** Matches the PO rescope spec verbatim (docs/architecture-briefs/2026-07-12-
+ultracode-workflow-improvement-audit.md #cowork-dispatcher-cron-P4 rescope clause) — thresholds
+SSOT, headroom+load gate, real inter-batch wait (naive batching of `run_in_background=true` is a
+no-op), guaranteed-slots-first, carve-out to prevent canonical-doc drift.
+**why-change:** No change from rescope plan. `DWF-phase1-cadence.test.ts` re-run 51/51 GREEN post
+`_fanout` addition (no schema assertion broke) — confirms the new key is additive-safe.

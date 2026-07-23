@@ -1,20 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-21 | **Cycle:** FIX-DRAIN-TEST-HARNESS-ORCH-HELPER-COPY-LIST (PO-directed)
-
-## Session 2026-07-21 — FIX-ORCHSTATE-UPDATED-AT-WRITE-PATH (router-directed, scripts/, P0) — task_board.ready (untouched, router-owned)
-
-**Task:** `scripts/orch-apply.sh` (the single mandatory gated hot-file write path) had zero `updated_at` handling on task_board rows — 524/577 rows null — because the field is stamped only by whichever of 30+ ad-hoc jq callers happened to remember it (Head/Meta schema sites declare it optional; TaskSchema doesn't even list it, `.passthrough()` lets anything through unstamped).
-
-**Actions taken:** New `scripts/orch-stamp-updated-at.mjs` — id-keyed, order-independent deep-equal diff of every task_board row (all 9 lanes + legacy `archive`), live vs candidate, `updated_at` itself excluded from the comparison (no feedback into its own predicate). Wired into `orch-apply.sh` as Stage 1.5, AFTER Stage 0/1 validation (protects the raw-text dup-key scanner from a parse/stringify roundtrip) and BEFORE Stage 2 conservation/CAS-rename. Diff unit deliberately lane-agnostic — real lane moves virtually always change `status`, already caught as content; `checkLaneCoherence` backstops the general case. No backfill of existing nulls (hard constraint honored).
-
-**Verification:** Live-verified against the REAL orch-state.json: snapshotted all 577 rows' `updated_at`, mutated exactly 1 archived row (`BPE-ARCH-1`) via a jq filter mentioning no timestamp, applied through the real `orch-apply.sh` — structural diff confirmed ONLY that row changed (null→stamp), null count 524→523 (exactly -1). Re-applying an unchanged candidate stamped 0 rows (idempotent). Reverted the probe field via a second real write (also timestamp-free) — original field content restored byte-identical; `updated_at` correctly stays non-null (a real second touch, not falsified back to null). `scripts/test/orch-apply-wrapper-tests.sh` 31/31 pre-existing unchanged + 11 new STAMP-* cases = 42/42 GREEN.
-
-**Board:** Deliberately did NOT move `task_board.ready[FIX-ORCHSTATE-UPDATED-AT-WRITE-PATH]` — router holds/releases the coordination lock for this row and the dispatched report-back contract didn't ask for a board transition; left for router/PO to action.
-
-**Scope discipline:** Touched `scripts/orch-apply.sh`, new `scripts/orch-stamp-updated-at.mjs`, `scripts/test/orch-apply-wrapper-tests.sh` (new cases only), `docs/policies/dev-standards.md`, `docs/WORK.md`, this notebook, decision journal. Did NOT touch `orchStateSchema.ts` (existing `.passthrough()` already permits the field; task explicitly forbids tightening it). Did NOT implement `updated_by` — the PO board row's acceptance text asks for it but the dispatched task text doesn't, and there is no reliable caller-identity signal at the chokepoint; flagged, not silently added.
-
-Zone health: `scripts/orch-apply.sh` — write-path timestamp gap closed at the chokepoint; ~500 pre-existing null rows age out naturally, no synthetic backfill | HEALTHY
+**Last updated:** 2026-07-23 | **Cycle:** UC-CDC-P4 (dev-team dispatched)
 
 ## Session 2026-07-21 — CLEAN-COWORK-DISPATCHER-TELEMETRY-DRAIN-DIR (router-directed, active-producer premise, ready/P1) — PARTIAL, step (1) re-routed
 
@@ -49,3 +35,17 @@ Zone health: `scripts/agents-flow/drain-signals.js` unparseable-skip path now lo
 **Scope discipline:** Touched only `drain-signals.test.js`, board row, this notebook, decision journal. Did not touch `orch-apply.sh`/other helper scripts (no behavior change needed there) — root-cause fix confined to the test harness.
 
 Zone health: `scripts/agents-flow/drain-signals.test.js` orch-helper sandbox copy — now derives from source instead of a hand-maintained list | HEALTHY
+
+## Session 2026-07-23 — UC-CDC-P4 (dev-team dispatched, cowork-dispatcher-cron-P4, cross-service/) — REVIEW
+
+**Task:** `spawn-fanout.md` Step 5 fired ALL `WON_SLOTS` unconditionally in one message block ("no sequential gating") — root cause of a prior load-205 host-starvation incident (memory `feedback_overparallel_fanout_host_starvation`). PO rescope (architecture brief 2026-07-12 #cowork-dispatcher-cron-P4) asked for a headroom-gated bounded batcher, thresholds SSOT'd not hardcoded.
+
+**Actions taken:** New Step 5.1 computes `MAX_PARALLEL` from `cadence-policy.json` new `_fanout` key (5 thresholds), gated on `host_headroom_mb` (Step 4.2's `PRESSURE_STATE`, fail-safe degraded when legacy/stale) OR `uptime` 1-min load vs `sysctl -n hw.ncpu`. New Step 5.2 batches `WON_SLOTS` (guaranteed slots fill batch 1), fires each batch as one `run_in_background=true` block (BGFAN-1 unchanged within a batch), and waits for completion/load re-probe between batches capped at `batch_wait_max_seconds` (degrades on timeout, never stalls past the 600s token TTL/15-min tick — naive back-to-back batching of background spawns would otherwise be a no-op). Added the carve-out to `agent-chaining-protocol.md` § Background Spawn Mandate. Corrected spawn-fanout.md's stale size-justification header (108L claimed vs 227L actual pre-edit drift) to the real post-edit count.
+
+**Verification:** `cadence-policy.json` jq-validated. `DWF-phase1-cadence.test.ts` (only test touching cadence-policy.js) re-run 51/51 GREEN post `_fanout` addition — no schema assertion broke. Docs/config-only, no `.ts` touched, main-only (no branch, per CLAUDE.md).
+
+**Board:** `task_board.in_progress[UC-CDC-P4]` → review, via `orch-apply.sh`.
+
+**Scope discipline:** Touched `spawn-fanout.md`, `cadence-policy.json`, `agent-chaining-protocol.md`, `WORK.md`, this notebook, decision journal. Flagged not fixed: `graphify-out/graph.json` is 2 months stale (last run 2026-05-23) — a scoped `--update` would re-extract that whole accumulated backlog, disproportionate to this 3-file fix; left for PO/router.
+
+Zone health: `docs/agents/cowork-team/flow/spawn-fanout.md` Step 5 fan-out — now headroom/load-bounded, thresholds SSOT | HEALTHY
