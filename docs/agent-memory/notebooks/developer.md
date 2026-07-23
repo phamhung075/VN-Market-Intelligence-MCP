@@ -1,20 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-23 | **Cycle:** TE-T17 (notebook prune-bypass class fix — ops.md + code-janitor sweep)
-
-## Session 2026-07-23 — UC-GCP-P8 (dev-team BOUNDED-1 auto-pickup, cross-service/) — REVIEW
-
-**Task:** git-ci-publish-P8 RESCOPE — no converging owner exists for the dirty-tree categories (notebooks/decisions/sessions/scripts strand past cycle end); rescope spec: bounded Step 4.3 on post-cycle.md running `stranded-state-sweep.sh --plan`, 3-bucket classify (AUTO-COMMIT/OWNED-ELSEWHERE/UNKNOWN), cap 20 paths, commit-mutex:main, coordinate with UC-GCP-P2 + SYSREMAKE-P2 RC-GITSTATE ownership.
-
-**Actions taken:** New `scripts/agents-flow/stranded-state-sweep.sh` — classifier-only (`--plan` emits JSON, makes zero git/orch-state writes itself, matching the memory-prune-sweep.sh script/flow split). Verified UC-GCP-P2 (DONE_VERIFIED — untracked signals.db/session-logs) and SYSREMAKE-P2 RC-GITSTATE (queued, owns `agent-memory/modules/*.json` + `coverage-state.json`) live before hardcoding the OWNED-ELSEWHERE skip-list, per coordination note. Wired as post-cycle.md § Step 4.3 (15L body, ≤20L rescope cap) between Step 4.2 and 4.5. CANONICAL pointer in `dev-standards.md`.
-
-**Verification:** Paired `stranded-state-sweep.test.sh` — 19/19 PASS, sandboxed git repo (seeded tracked placeholders per dir so git doesn't collapse fully-untracked dirs into one porcelain line) — covers all 3 buckets, the 24h age gate, `D`-deletion age-exemption, sessions `*.md`-only gate, NUL-safe space-path parsing (live repo has one), the 20-path execution cap, dedup-skip true/false, and bad-usage exit 2. Dry-run against the live repo (`--plan`, read-only, no mutation) confirmed correct classification of the real 57-entry dirty tree: 9 owned-elsewhere, 2 auto-commit-eligible, 18 unknown surfaced (capped at 20 total considered).
-
-**Board:** `task_board.in_progress[UC-GCP-P8]` → `review`, `next_agent=qa`, `.head` synced, via `orch-apply.sh`.
-
-**Scope discipline:** Script is classifier-only per the rescope's script/flow split — the flow (not this developer cycle) performs the actual `git add`/commit and `.signal_queue.rows[]` write on its next live tick; no live sweep-commit executed here (would be acting outside this FIX's own scope, on a peer-owned dirty tree). Fixed a self-caught dedup bug pre-ship: the unknown-signal summary originally front-loaded the dynamic path count, which would break `startswith`-prefix dedup every tick — moved the count to a trailing `(N)` suffix.
-
-Zone health: dev-team post-cycle tick now has a converging owner for stranded machine-state — 3-bucket classify verified against the live 57-entry dirty tree, RC-GITSTATE/UC-GCP-P2 boundaries respected, cap+dedup+mutex all test-proven | HEALTHY
+**Last updated:** 2026-07-23 | **Cycle:** FIX-DRAIN-PERSIST-GUARD-COUNT-DRAINABLE-ONLY (shape-filter the dev-team mandatory persist guard)
 
 ## Session 2026-07-23 — UC-GCP-P3 (dev-team BOUNDED-1 auto-pickup, cross-service/) — REVIEW
 
@@ -57,3 +43,17 @@ Zone health: `/commit` now has one definition, no branch-merge dead code, per-ca
 **Scope discipline:** Two OTHER real notebooks (`agent-father.md` 303L, `system-auditor.md` 204L) are currently also over cap — left untouched (out of this task's named scope; will be caught by the new sweep on its next 6h cron fire) rather than expanding scope mid-task.
 
 Zone health: notebook prune-bypass class closed — hot notebook (ops) under cap, sweep mechanism proven against synthetic fixtures + reuses tested hook logic, ops commit path gated | HEALTHY
+
+## Session 2026-07-23 — FIX-DRAIN-PERSIST-GUARD-COUNT-DRAINABLE-ONLY (dev-team BOUNDED-1 auto-pickup, cross-service/) — REVIEW
+
+**Task:** dev-team MANDATORY PERSIST GUARD counted RAW `docs/signals/*.json` files, not drainable (from/type-shaped) signals — cowork telemetry/tick residue (55 files live, e.g. `cowork-team-*`/`price_anomaly_*`) inflated the count past the >50 threshold and forced a full drain every tick even with nothing routable, feeding Step-1 triage starvation.
+
+**Actions taken:** Extracted `drain-signals.js`'s inline "SKIP non-signal shape" check into a shared `isDrainableShape()` + new read-only `--count-drainable` subcommand (zero DB/file mutation). `drain-signals.md` guard item 1 and `dev-team-tick-preflight.sh` Step 5 idle-check field (a) both now call it instead of a raw `ls | wc -l` — single predicate, not forked, per the task's explicit instruction. Added `DRAIN_SIGNALS_DIR_OVERRIDE` env seam (mirrors `ORCH_APPLY_LIVE_FILE_OVERRIDE`) so preflight's isolated test fixtures reach the shared script.
+
+**Verification:** Live-confirmed against the real inbox: raw=55, drainable=0 (matches the reported symptom exactly). 3 new fixtures in `drain-signals.test.js` (residue-only→0, genuine+litter mixed→1 negative control, missing-dir→0) — 31/31 GREEN. `dev-team-tick-preflight.test.sh`: T14 fixture upgraded `{}`→genuine `from`+`type` signal (negative control, still trips RUN); new T32 proves litter-only `SIGNALS_DIR` resolves RUN-IDLE — 91/91 GREEN. Self-caught mid-verification: first `sed \+` extraction is GNU-only BRE, silently no-op on BSD/macOS `sed` (this host) — always returned empty, masking the fix; replaced with portable bash parameter-expansion prefix-strip.
+
+**Board:** `task_board.in_progress[FIX-DRAIN-PERSIST-GUARD-COUNT-DRAINABLE-ONLY]` → `review`, `next_agent=qa`, `.head` synced, via `orch-apply.sh`.
+
+**Scope discipline:** Touched exactly the 3 named root-cause files + their paired tests + `drain-signals.md` guard line + `docs/WORK.md` — no fork of the shape predicate, no live `docs/signals/` mutation from `--count-drainable` (read-only by design).
+
+Zone health: dev-team persist-guard no longer litter-sensitive — drainable-only count verified against real inbox (55 raw / 0 drainable) and both fixture directions (litter-only no-trip, genuine signal still-trips) test-proven | HEALTHY
