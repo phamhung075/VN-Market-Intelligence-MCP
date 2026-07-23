@@ -1,20 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-23 | **Cycle:** TE-T31 (TOKEN-ECONOMY-AUDIT wave 4 — tools/list/INDEX.md 3rd tool-inventory SSOT killed, now generated from tool-registry.json)
-
-## Session 2026-07-23 — FIX-DEVTEAM-BOUNDED1-PROSE-SEQUENCING-UNBACKED-GATE (dev-team BOUNDED-1 auto-pickup, cross-service/) — REVIEW
-
-**Task:** PO-authored ordering constraints written as prose (`po_sequencing_YYYYMMDD` keys) are invisible to `scripts/lib/devteam-eligibility.jq`'s `effective_depends_on()` — 2026-07-22 BOUNDED-1 blind-promoted UC-CDC-P5 (ordering lived only in `.po_sequencing_20260722`) then had to be reverted; hand-fixed with `depends_on` after the fact, gate blind-spot remained for the next such row.
-
-**Actions taken:** Added `has_unbacked_sequencing_prose($detail_items)` to the shared library (board-OR-detail `po_sequencing_*` key present AND `effective_depends_on` empty) as a new conjunct in `is_bounded1_eligible` ONLY (SLS/RLC compose their own predicate subsets, don't call `is_bounded1_eligible` — def lives in the shared file per one-shared-contract principle so they CAN adopt it later, but this incident was BOUNDED-1-specific so only BOUNDED-1 gates on it now). Extended `bounded1-supervised-lane-report.sh` with a non-gating TERTIARY section listing every unbacked-prose row. Added `scripts/audits/devteam-bounded1-prose-sequencing-gate-verify.sh` (SYNTHETIC unbacked/backed/detail-side/control fixtures + LIVE dynamic-discovery check, no hardcoded task IDs). Deliberately does NOT regex-parse the prose to infer a predecessor id — forces PO to encode `depends_on` instead.
-
-**Verification:** New verifier 5/5 PASS (AC-1/1b/1c/AC-2-live/control). Live-verified UC-CDC-P5 (already hand-fixed 07-22) now evaluates `has_unbacked_sequencing_prose=false, is_bounded1_eligible=false` — correctly still held by pre-existing `deps_satisfied`, not double-gated. Live TERTIARY report surfaces exactly 1 row (`PDF-AVAIL-02-FIX`, also `supervised:true`). Ran full suite: `devteam-dispatch-gate-satisfiability.sh` 100% PASS, `bounded1-supervised-lane-report.sh` PASS, all 4 shared-library callers (BOUNDED-1/SLS/RLC/QA-Drain) parse+run clean. Dry-run of `devteam-backlog-promote-bounded1.jq` against live board still resolves a normal pick (unaffected). Pre-existing sibling verifier `devteam-bounded1-detail-disposition-gate-verify.sh` CONTROL assertion fails — confirmed via `git stash` this is IDENTICAL pre-fix (harness bug: `make_isolated_fixture()` never clears `.task_board.ready[]`, so `ready[0]` reads a stale leftover id on no-op runs) — unrelated to this change, reported not fixed (out of scope).
-
-**Board:** `task_board.backlog[FIX-DEVTEAM-BOUNDED1-PROSE-SEQUENCING-UNBACKED-GATE]` → `review`, `next_agent=qa`, `branch:null`, `.head` synced to idle, via `orch-apply.sh` (dispatcher-owned write, not committed by this cycle).
-
-**Scope discipline:** Touched exactly `scripts/lib/devteam-eligibility.jq` + `scripts/audits/bounded1-supervised-lane-report.sh` + new verifier + `docs/agents/dev-team/flow/main.md` doc update. No regex-mining of prose (explicitly forbidden by spec). No orch-state.json commit (dispatcher's file).
-
-Zone health: BOUNDED-1's prose-sequencing blind spot closed generically — next PO-prose-only-sequenced row is withheld + surfaced instead of blind-promoted; SLS/RLC/QA-Drain unaffected (verified) | HEALTHY
+**Last updated:** 2026-07-23 | **Cycle:** TE-T33 (TOKEN-ECONOMY-AUDIT wave 4 — handoffs/sessions cold-archive sweep + po-decisions.md rotation, decisions/ leg confirmed superseded)
 
 ## Session 2026-07-23 — TE-T28 (TOKEN-ECONOMY-AUDIT, wave 2) — REVIEW
 
@@ -43,3 +29,17 @@ Zone health: registry (184) and `list/` (184) now in 1:1 lockstep; re-running th
 **Scope discipline:** Touched exactly the new script + INDEX.md (generated) + `dev-standards.md` pointer + journal/notebook. Did NOT touch `market-analyst.md` package (267L prose→table) — brief's merged corroborating item, separate batch finding, noted as follow-up in the journal only.
 
 Zone health: tools/list/INDEX.md is now a pure generated view of tool-registry.json — re-running the script after any future registry change mints the current delta, 3-way SSOT drift class closed for this surface | HEALTHY
+
+## Session 2026-07-23 — TE-T33 (TOKEN-ECONOMY-AUDIT, wave 4) — REVIEW
+
+**Task:** `docs/handoffs` (12M/1026 files, 707+ >30d), `agent-memory/decisions` (4.5M), `agent-memory/sessions` (files since 05-14) grow unboundedly — no eviction analogue to `orch/archive/`; DJ-GATE-1 greps `sprint-*-*.md` across ALL decision files on every DONE flip.
+
+**Actions taken:** New `scripts/agents-flow/cold-archive-sweep.sh` (monthly-guarded, `COLD_ARCHIVE_FORCE=1` test override): handoffs `.md` >30d + not referenced anywhere in the 5 OPEN task_board lanes (live jq scan) → `archive/YYYY-MM/`; sessions non-`.md` >30d → `archive/YYYY-MM/` (`.md` leg already owned by `memory-prune-sweep.sh` at 14d — verified before coding, scoped to the gap it leaves, not duplicated). po-decisions.md 200L rotation reuses `notebook-auto-prune.sh`'s drop-oldest-`##` algorithm via a new opt-in `NOTEBOOK_PRUNE_EXTRA_GOVERNED_PATH` env guard (default empty, zero behavior change on its hot PostToolUse path) — no new prune scheme. **Dropped the decisions/ leg entirely**: discovered live that `decision-journal-archive.sh` (UC-MDH-P4, shipped same day) already supersedes it — board row's own `audit_ref` note + that script's header both name TE-T33. Fixed dev-team/main.md's 2 unscoped DJ-GATE-1 grep comments (`sprint-*-*.md` → `sprint-${SPRINT_ID}-*.md`, matching qa/pm's already-correct canonical pattern — verified those two needed no change). Wired into code-janitor's 6h cron flow. CANONICAL pointer added.
+
+**Verification:** Live dry pre-check: 839 handoffs >30d, 27 referenced-anywhere, 2 overlap (both correctly held back — `comm -12` verified before writing code). `cold-archive-sweep.test.sh` 14/14 PASS incl. idempotent re-run + `git diff --quiet` proof the real `po-decisions.md` was never touched. Re-ran `notebook-linecap-sweep`/`memory-prune-sweep`/`decision-journal-archive` test suites after the shared-hook edit — 7/7, 12/12, 26/26 PASS, zero regression.
+
+**Board:** `task_board.in_progress[TE-T33]` → `review`, `next_agent=qa`, `branch:null`, `.head` synced to idle, via `orch-apply.sh` (dispatcher-owned write, not committed by this cycle).
+
+**Scope discipline:** Touched exactly the new script + test + `notebook-auto-prune.sh` (opt-in guard extension only) + `code-janitor/flow/main.md` + `dev-team/flow/main.md` (2 comment lines) + `dev-standards.md` pointer + journal/notebook/WORK.md. Did not touch qa/pm (already correct) or decisions/ (superseded, confirmed not ambiguous).
+
+Zone health: 3-dir unbounded-growth class capped for handoffs+sessions-gap+po-decisions; decisions/ leg correctly deferred to its real owner instead of double-implemented | HEALTHY
