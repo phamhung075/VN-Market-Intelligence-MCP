@@ -387,11 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "updated_at": "2026-07-23T15:03:44Z",
-    "updated_by": "dev-mcp-server"
+    "status": "in_progress",
+    "active_task_id": "ALT-FUNC-02-FIX",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of ALT-FUNC-02-FIX — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-23T15:27:04Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -5840,16 +5841,6 @@
         "type": "fix",
         "zone": "qa",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#SYS-TEST-01-FIX"
-      },
-      {
-        "id": "ALT-FUNC-02-FIX",
-        "priority": "normal",
-        "size": "S",
-        "status": "BACKLOG",
-        "title": "Fix ALT-FUNC-02: Does get_alert_accuracy return an accuracy rate between 0 and 1",
-        "type": "fix",
-        "zone": "dev-mcp-server",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#ALT-FUNC-02-FIX"
       },
       {
         "id": "MCP-TEST-01-FIX",
@@ -13830,9 +13821,26 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-23T14:49:01Z",
+    "last_triaged_at": "2026-07-23T15:27:04Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "ALT-FUNC-02-FIX",
+        "priority": "normal",
+        "size": "S",
+        "status": "IN_PROGRESS",
+        "title": "Fix ALT-FUNC-02: Does get_alert_accuracy return an accuracy rate between 0 and 1",
+        "type": "fix",
+        "zone": "dev-mcp-server",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#ALT-FUNC-02-FIX",
+        "promoted_at": "2026-07-23T15:27:04Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-23T15:27:05Z",
+        "claimed_at": "2026-07-23T15:27:04Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
