@@ -43,3 +43,17 @@ Zone health: launchd_agents check now closes the "exists != works" gap generical
 **Scope discipline:** Touched exactly `scripts/lib/devteam-eligibility.jq` + `scripts/audits/bounded1-supervised-lane-report.sh` + new verifier + `docs/agents/dev-team/flow/main.md` doc update. No regex-mining of prose (explicitly forbidden by spec). No orch-state.json commit (dispatcher's file).
 
 Zone health: BOUNDED-1's prose-sequencing blind spot closed generically — next PO-prose-only-sequenced row is withheld + surfaced instead of blind-promoted; SLS/RLC/QA-Drain unaffected (verified) | HEALTHY
+
+## Session 2026-07-23 — TE-T28 (TOKEN-ECONOMY-AUDIT, wave 2) — REVIEW
+
+**Task:** 26 registry tools had no `docs/agents/tools/list/` doc; `anti-hallucination/SKILL.md` L55's "no file = tool does not exist" predicate turned that DOC GAP into false BUG/skip verdicts on real, live tools (incl. the P0 indicator suite + entire scheduled-task family).
+
+**Actions taken:** New `scripts/gen-tool-list-stubs.py` — diffs `tool-registry.json` vs existing `list/` basenames (idempotent, never hardcodes "26"), pulls live schema via the gateway `list_server_tools` meta-tool through the existing `scripts/agents-flow/mcp-call.sh` bridge, mints lean stubs (get_price_history.md shape). Live diff = 26 missing, all 26 resolved from live schema (0 registry-only-flagged). Caught+fixed one real bug during generation: enum types joined with `" | "` corrupted 2 markdown tables (raw pipe = column separator) — switched to `" / "` + added a generic escape net, regenerated both files via the same idempotent path. Fixed `anti-hallucination/SKILL.md` L55: SSOT is now `tool-registry.json` (name/count), `list/` is the detail layer; missing doc = DOC GAP not nonexistence. Canonical pointer added to `dev-standards.md` § Script Persistence.
+
+**Verification:** Post-gen diff = 0 missing / 0 extra (no dead stub litter, matches brief's own "zero dead docs" finding). Re-run = clean no-op (idempotency proven twice). `awk -F'|'` field-count scan across all 26 files confirms no other broken table rows.
+
+**Board:** `task_board.in_progress[TE-T28]` → `review`, `next_agent=qa`, `branch:null`, `.head` synced to idle, via `orch-apply.sh` (dispatcher-owned write, not committed by this cycle).
+
+**Scope discipline:** Touched exactly the 26 new stub files + new script + `anti-hallucination/SKILL.md` + `dev-standards.md` pointer + this journal/notebook. Left 3 pre-existing dirty `tools/list/*.md` files (unrelated in-flight work from another session) untouched — explicit pathspecs only.
+
+Zone health: registry (184) and `list/` (184) now in 1:1 lockstep; re-running the generator after any future `gen-tool-registry.ts` run mints only the true delta | HEALTHY

@@ -114,3 +114,14 @@
 - Single combined signal with a comma-joined REASON ("line-cap,byte-cap") vs two separate signals per predicate — chose one signal, kept the existing one-signal-per-file DEDUP semantics unchanged (additive, not disruptive).
 **why-decision:** All 4 backstop tests GREEN (T1-T4) plus 2 ad-hoc manual fixtures (both-breach -> reason=line-cap,byte-cap; line-justified/byte-not -> reason=byte-cap) confirm the mega-line evasion is closed without regressing existing line-cap behavior.
 **why-change:** No change from plan.
+
+---
+
+### STEP developer-S11 · developer · 2026-07-23T13:27:52Z
+**task-id:** TE-T28
+**what-done:** Built `scripts/gen-tool-list-stubs.py` (diffs `tool-registry.json` vs `docs/agents/tools/list/` basenames, mints missing stubs from live `list_server_tools` schema via `mcp-call.sh`'s `mcp_call_gateway_meta`). Live diff found exactly 26 missing (matches brief snapshot) — generated all 26 lean stubs, 0 flagged registry-only (live schema resolved for every one). Fixed anti-hallucination/SKILL.md L55: SSOT for name/count is now `tool-registry.json`; missing `list/` doc = DOC GAP, not nonexistence.
+**what-considered:**
+- Enum type rendered as `" | "`-joined string in a markdown table cell vs `" / "` — caught live (2 files: list_scheduled_tasks/complete_scheduled_task broke their table row, 5 pipe-fields instead of well-formed), switched to `/` + added a generic `escape_table_cell()` safety net, deleted+regenerated the 2 files via the same idempotent diff to prove the re-run-only-mints-missing contract.
+- Full live description as Purpose vs mechanical first-sentence extraction — chose first-sentence: existing lean docs (get_price_history.md, get_carry_trade_signal.md) use a short clause, not a dumped paragraph; verified all 26 first-sentence extractions read as clean single-line summaries before committing the design.
+**why-decision:** `comm`/set-diff (registry ∪ existing) = 0 missing, 0 extra (no dead docs) after generation — objective, re-run twice (post-fix regen + final check), both idempotent no-ops. Enum-fix verified via `awk -F'|'` field-count scan across all 26 files.
+**why-change:** No change from plan — task doc guessed `claim-truth-gate/SKILL.md` as the anti-hallucination skill; brief text at `#T-28` explicitly names `.claude/skills/anti-hallucination/SKILL.md` L55, confirmed by reading both files (claim-truth-gate is the unrelated CCATO narrative-claim gate).
