@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FACTORY-INTERFACE-delete-bak-files",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-INTERFACE-delete-bak-files — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-23T23:14:58Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "idle — FACTORY-INTERFACE-delete-bak-files closed out to REVIEW by dev-mcp-server; router to dispatch qa next",
+    "updated_at": "2026-07-23T23:20:06Z",
+    "updated_by": "dev-mcp-server (FACTORY-INTERFACE-delete-bak-files self-closeout)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -14318,6 +14318,24 @@
         "next_agent": "qa",
         "entered_review_at": "2026-07-23T22:52:28Z",
         "review_note": "dev-rag-service: fixed or-0.0 truthiness mask on confidence/impact_score in _dedup_and_trim (infrastructure/repositories.py), matches sibling FDA-9 _distance fix pattern. 5 new regression tests added (TestConfidenceImpactScoreNoneGuard), full suite 165/165 pass, G12 sandbox both tiers GREEN, env audit clean, mypy no new errors. Empirically confirmed via git-stash self-check that current 0.0 defaults make old/new code behavior-equivalent today (no active corruption) — journal: docs/agent-memory/decisions/sprint-FACTORY-RAG-confidence-impact-or-00-mask-dev-rag-service.md. Commit b470f31420a276e98e430c651a0fa1f1660cb805"
+      },
+      {
+        "title": "Remove 2 committed .bak dead-code files from the interface zone (+ repo-root .bak)",
+        "priority": "P2",
+        "zone": "mcp-server-interface",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-INTERFACE-delete-bak-files",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INTERFACE-delete-bak-files",
+        "promoted_at": "2026-07-23T23:14:58Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-23T23:20:06Z",
+        "claimed_at": "2026-07-23T23:14:58Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "entered_review_at": "2026-07-23T23:20:06Z",
+        "review_note": "dev-mcp-server self-closeout: 4 tracked .bak files git rm (2 mcp-server-interface + docker-compose.yml.bak + docs/TASKS.md.bak per canonical ticket text found in 2026-06-15 audit + 2026-07-04 brief + backlog-detail.json archive), *.bak added to .gitignore, tsc clean, commit 2a146ecdd. Zero-reference grep confirmed clean pre-deletion. Journal: docs/agent-memory/decisions/sprint-FACTORY-INTERFACE-delete-bak-files-dev-mcp-server.md"
       }
     ],
     "qa": [],
@@ -14339,23 +14357,7 @@
     },
     "last_triaged_at": "2026-07-23T23:14:58Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "title": "Remove 2 committed .bak dead-code files from the interface zone (+ repo-root .bak)",
-        "priority": "P2",
-        "zone": "mcp-server-interface",
-        "type": "FACTORY",
-        "status": "IN_PROGRESS",
-        "id": "FACTORY-INTERFACE-delete-bak-files",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INTERFACE-delete-bak-files",
-        "promoted_at": "2026-07-23T23:14:58Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-23T23:14:59Z",
-        "claimed_at": "2026-07-23T23:14:58Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
