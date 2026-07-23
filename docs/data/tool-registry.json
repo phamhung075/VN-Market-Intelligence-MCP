@@ -1,7 +1,7 @@
 {
   "_maintained_by": "generator (do not hand-edit)",
-  "lastUpdated": "2026-07-01T10:09:25.202Z",
-  "totalCount": 183,
+  "lastUpdated": "2026-07-23T08:54:48.528Z",
+  "totalCount": 184,
   "groups": [
     {
       "name": "alerts",
@@ -61,7 +61,7 @@
     },
     {
       "name": "financial-reports",
-      "count": 19,
+      "count": 20,
       "tools": [
         "bctc_skip_queue_item",
         "compare_financials",
@@ -73,6 +73,7 @@
         "get_bctc_page_text",
         "get_bctc_pending_refine",
         "get_bctc_refined",
+        "get_bctc_report_id",
         "get_bctc_series",
         "get_cash_flow",
         "get_earnings_calendar",

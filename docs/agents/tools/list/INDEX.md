@@ -45,7 +45,7 @@ Complete reference for all 157 MCP tools organized by category.
 - **[`reset_foreign_flow_circuit_breaker`](reset_foreign_flow_circuit_breaker.md)**
 - **[`set_price_alert`](set_price_alert.md)**
 
-## FINANCIAL (19 tools)
+## FINANCIAL (20 tools)
 
 - **[`bctc_skip_queue_item`](bctc_skip_queue_item.md)**
 - **[`finalize_bctc_refine`](finalize_bctc_refine.md)**
@@ -56,6 +56,7 @@ Complete reference for all 157 MCP tools organized by category.
 - **[`get_bctc_page_text`](get_bctc_page_text.md)**
 - **[`get_bctc_pending_refine`](get_bctc_pending_refine.md)**
 - **[`get_bctc_refined`](get_bctc_refined.md)**
+- **[`get_bctc_report_id`](get_bctc_report_id.md)**
 - **[`get_bctc_series`](get_bctc_series.md)**
 - **[`get_cash_flow`](get_cash_flow.md)**
 - **[`get_earnings_calendar`](get_earnings_calendar.md)**

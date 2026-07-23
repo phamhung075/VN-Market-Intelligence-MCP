@@ -133,6 +133,7 @@ import { registerRelativeStrengthTools } from "./market-data/relativeStrengthToo
 import { register52WProximityTools } from "./market-data/52wProximityTools.js"; // IND-P1-MCP-PROXY-INDICATORS: get_52w_proximity (#183)
 import { registerForeignAccumRankTools } from "./market-data/foreignAccumRankTools.js"; // IND-P1-MCP-PROXY-INDICATORS: get_foreign_accum_rank (#184)
 import { registerMoneyRadarTools } from "./market-data/moneyRadarTools.js"; // MONEY-RADAR-P0-T2-COMPOSITE: get_money_radar_composite (#185)
+import { registerGetBctcReportIdTool } from "./financial-reports/getBctcReportIdTool.js"; // BCTC-REPORT-ID-LOOKUP-TOOL: get_bctc_report_id (#186)
 
 /**
  * Flat array of all MCP tool registration functions.
@@ -270,4 +271,5 @@ export const toolRegistry: Array<(server: McpServer) => void> = [
   register52WProximityTools,            // IND-P1-MCP-PROXY-INDICATORS: get_52w_proximity (#183)
   registerForeignAccumRankTools,        // IND-P1-MCP-PROXY-INDICATORS: get_foreign_accum_rank (#184)
   registerMoneyRadarTools,              // MONEY-RADAR-P0-T2-COMPOSITE: get_money_radar_composite (#185)
+  registerGetBctcReportIdTool,          // BCTC-REPORT-ID-LOOKUP-TOOL: get_bctc_report_id (#186)
 ];

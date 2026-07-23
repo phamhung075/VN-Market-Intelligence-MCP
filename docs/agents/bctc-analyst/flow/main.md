@@ -64,6 +64,17 @@ Each ESC check is independent. Any single TRUE fires Opus deep-dive. Gate does N
 - If TRUE → escalate at the severity resolved above. Context: `{ item_type, item_amount, item_pct: non_operating_share, severity: "HIGH" | "INFO" (per AC-2 downgrade), structural_context_note? }`.
 
 ### ESC-5: Refine Confidence Below Bar (Option B — MCP tool call)
+- **Step 5d — resolve `report_id` first** (BCTC-REPORT-ID-LOOKUP-TOOL fix, 2026-07-23 — closes the
+  30-cycle dark-escalation: no tool ever surfaced `report_id` for a ticker/period, so the
+  `get_bctc_refined(report_id)` call below was structurally unreachable — every cycle silently
+  degraded to the "no rows returned" branch regardless of the report's actual refine state).
+  Call `get_bctc_report_id(code=ticker, quarter=quarter)` (tool #186) — resolves
+  `financial_reports.id`, restricted to `refine_status='DONE'`.
+  - `report_id == null` (whether `existing_refine_status` is `null` — no report filed — or a
+    non-DONE status like PENDING/IN_PROGRESS/PARTIAL/FAILED — refine not finished) → ESC-5 = FALSE
+    (graceful, no error). Log: `[ESC-5] get_bctc_report_id returned null for {ticker}/{quarter}
+    (existing_refine_status={existing_refine_status}) — skipping.`
+  - `report_id != null` → proceed to the `get_bctc_refined` call below with the resolved `report_id`.
 - Call: `get_bctc_refined(report_id)` (tool #141, live per AR-MCP commit 76a3b8d2).
 - If no rows returned → ESC-5 = FALSE (refine not yet run for this report — graceful, no error).
   Log: `[ESC-5] bctc_refined_units empty for {report_id} — skipping.`
