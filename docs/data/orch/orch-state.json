@@ -390,8 +390,8 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": null,
-    "updated_at": "2026-07-23T08:32:29Z",
-    "updated_by": "developer"
+    "updated_at": "2026-07-23T08:59:54Z",
+    "updated_by": "dev-mcp-server"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7737,18 +7737,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-TCH-BCTC-COVERAGE"
       },
       {
-        "id": "BCTC-REPORT-ID-LOOKUP-TOOL",
-        "title": "BCTC tooling gap: expose report_id lookup by ticker+period (once refine_status=DONE) — unblocks get_bctc_page_text/get_bctc_refined/list_flagged_bctc_cells AND bctc-analyst ESC-5 step-5d get_bctc_full (structurally unexecutable ~30 cycles: get_bctc_full requires report_id input but no tool surfaces one by ticker+period, so ESC-5 dark-escalation = silent-disable)",
-        "status": "BACKLOG",
-        "zone": "apps/mcp-server/",
-        "type": "FIX",
-        "priority": "HIGH",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#BCTC-REPORT-ID-LOOKUP-TOOL",
-        "origin_signal_id": "cowork-20260722T151600Z-bctc-esc5-report-id-gap",
-        "status_note": "RECURRING dark-escalation (feedback_agent_reported_limitation_may_be_structural_check_the_tool_grant + recurring-failed-fix >2). ESC-5 (bctc-analyst flow step 5d) treated FALSE by 30-cycle precedent because get_bctc_full needs report_id input but nothing surfaces one by ticker+period. AC: add report_id lookup by ticker+period (refine_status=DONE) so ESC-5 step-5d + get_bctc_page_text/get_bctc_refined/list_flagged_bctc_cells are executable; verify ESC-5 fires on a known-escalation case (no longer silently FALSE). Priority bumped MED->HIGH 2026-07-22T15:55:33Z (PO triage of signal cowork-20260722T151600Z-bctc-esc5-report-id-gap; reliability>coverage).",
-        "updated_at": "2026-07-22T15:55:34Z"
-      },
-      {
         "id": "REFLOW-MBB-Q1-2026",
         "type": "FIX",
         "size": "M",
@@ -13559,6 +13547,25 @@
         "completed_at": "2026-07-23T08:32:29Z",
         "completed_by": "developer",
         "status_note": "TE-T17 DONE. (1) ops.md 1197L->29L: 23 sections moved verbatim to docs/incidents/<date>-<slug>.md, one-line pointers left. (2) New scripts/agents-flow/notebook-linecap-sweep.sh (+test) wired into code-janitor/flow/main.md's existing 6h cron -- write-path-agnostic backstop, delegates over-cap files to notebook-auto-prune.sh's own drop-oldest logic via synthetic PostToolUse JSON (no duplicated pruning code). (3) Blocking wc -l pre-commit gate added to ops/flow/main.md's notebook-commit step. (4) .test-notebook-prune-debug/ already absent -- verified no-op. Tests: 5/5 pre-existing test-notebook-auto-prune.sh GREEN (post cross-ref comment edit), new notebook-linecap-sweep.test.sh 7/7 GREEN + idempotent. Scope discipline: agent-father.md (303L) and system-auditor.md (204L) also currently over cap -- left untouched (out of named scope), will be caught by the new sweep's next 6h cron fire. Commits: 32529e57f (fix, ops.md+incidents+sweep+gate), 29e17fca8 (memory), both pushed to main. DJ entry: sprint-TOKEN-ECONOMY-AUDIT-developer.md STEP developer-S9. Direct-commit branch:null -- qa verify-committed-fix mode applies (docs/agents/qa/flow/main.md Direct-Commit Verify)."
+      },
+      {
+        "id": "BCTC-REPORT-ID-LOOKUP-TOOL",
+        "title": "BCTC tooling gap: expose report_id lookup by ticker+period (once refine_status=DONE) — unblocks get_bctc_page_text/get_bctc_refined/list_flagged_bctc_cells AND bctc-analyst ESC-5 step-5d get_bctc_full (structurally unexecutable ~30 cycles: get_bctc_full requires report_id input but no tool surfaces one by ticker+period, so ESC-5 dark-escalation = silent-disable)",
+        "status": "REVIEW",
+        "zone": "apps/mcp-server/",
+        "type": "FIX",
+        "priority": "HIGH",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#BCTC-REPORT-ID-LOOKUP-TOOL",
+        "origin_signal_id": "cowork-20260722T151600Z-bctc-esc5-report-id-gap",
+        "status_note": "RECURRING dark-escalation (feedback_agent_reported_limitation_may_be_structural_check_the_tool_grant + recurring-failed-fix >2). ESC-5 (bctc-analyst flow step 5d) treated FALSE by 30-cycle precedent because get_bctc_full needs report_id input but nothing surfaces one by ticker+period. AC: add report_id lookup by ticker+period (refine_status=DONE) so ESC-5 step-5d + get_bctc_page_text/get_bctc_refined/list_flagged_bctc_cells are executable; verify ESC-5 fires on a known-escalation case (no longer silently FALSE). Priority bumped MED->HIGH 2026-07-22T15:55:33Z (PO triage of signal cowork-20260722T151600Z-bctc-esc5-report-id-gap; reliability>coverage). | DEV COMPLETE 2026-07-23: added get_bctc_report_id MCP tool (ticker[+year][+quarter] -> financial_reports.id, refine_status=DONE-restricted, typed-absent null on zero matches + existing_refine_status diagnostic); wired registry.ts + regenerated docs/data/tool-registry.json + project-stats.json#toolCount (183->184) via existing generators; closed ESC-5 dark-escalation at flow-doc level (bctc-analyst/flow/main.md Step 5d resolves report_id via new tool before get_bctc_refined); 5-case test green (FIX-BCTC-REPORT-ID-LOOKUP-TOOL.test.ts); tsc clean; commit 7a9eea6bd. Rebuild note: tool is code-committed but a running mcp-server container needs a single-service rebuild to load it live (ops-executed, OVERRIDE 2026-07-03 no user gate) — not yet deployed.",
+        "updated_at": "2026-07-23T08:59:54Z",
+        "promoted_at": "2026-07-23T08:46:43Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-23T08:46:43Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "branch": null
       }
     ],
     "qa": [],
@@ -13578,7 +13585,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-23T08:17:03Z",
+    "last_triaged_at": "2026-07-23T08:46:43Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": []
   },
