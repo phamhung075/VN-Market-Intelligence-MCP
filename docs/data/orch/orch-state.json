@@ -387,12 +387,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "TE-T28",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of TE-T28 — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-23T13:16:00Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "updated_at": "2026-07-23T13:30:30Z",
+    "updated_by": "developer"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -13665,6 +13664,63 @@
           "docs/policies/dev-standards.md"
         ],
         "status_note": "Byte-cap predicate (TE-T24) added to context-bloat-backstop.sh alongside existing line predicate, same settle-window; reason='byte-cap' (or 'line-cap,byte-cap'). Test extended T3 (mega-line 5L/~12.5KB, byte-cap only) + T4 (150L normal, no false positive). All 4 backstop tests GREEN. Journal: sprint-TOKEN-ECONOMY-AUDIT-developer.md STEP developer-S10."
+      },
+      {
+        "id": "TE-T28",
+        "title": "T-28 Generate 26 missing tools/list stubs from registry + fix anti-hallucination SSOT (false 'tool missing') [~3-6k tok/day + correctness]",
+        "owner": "developer",
+        "status": "REVIEW",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P2",
+        "wave": 2,
+        "est_saving": "~3-6k tok/day indirect + un-blocks 26 real tools",
+        "zone": "multi",
+        "sprint": "TOKEN-ECONOMY-AUDIT",
+        "depends": [],
+        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-28",
+        "note": "26 registry tools (incl. P0 indicator suite + entire scheduled-task family) have no tools/list doc; anti-hallucination SKILL reads 'no file = does not exist' -> false BUG/skip. Generate 26 lean stubs via reusable scripts/gen-tool-list-stubs.* from registry + live schema; fix anti-hallucination L55 to name tool-registry.json as count/name SSOT.",
+        "promoted_at": "2026-07-23T13:16:00Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-23T13:30:30Z",
+        "claimed_at": "2026-07-23T13:16:00Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "branch": null,
+        "commit": "3e4fd2747660a170152c2876d838b47d97eed199",
+        "files": [
+          ".claude/skills/anti-hallucination/SKILL.md",
+          "docs/agents/tools/list/cancel_scheduled_task.md",
+          "docs/agents/tools/list/claim_due_scheduled_tasks.md",
+          "docs/agents/tools/list/complete_scheduled_task.md",
+          "docs/agents/tools/list/expire_scheduled_task.md",
+          "docs/agents/tools/list/fail_scheduled_task.md",
+          "docs/agents/tools/list/get_52w_proximity.md",
+          "docs/agents/tools/list/get_breadth_thrust.md",
+          "docs/agents/tools/list/get_cpi_components.md",
+          "docs/agents/tools/list/get_foreign_accum_rank.md",
+          "docs/agents/tools/list/get_foreign_room.md",
+          "docs/agents/tools/list/get_insider_sentiment.md",
+          "docs/agents/tools/list/get_market_breadth.md",
+          "docs/agents/tools/list/get_market_hexagram.md",
+          "docs/agents/tools/list/get_market_sentiment_index.md",
+          "docs/agents/tools/list/get_money_radar_composite.md",
+          "docs/agents/tools/list/get_recent_signals.md",
+          "docs/agents/tools/list/get_relative_strength.md",
+          "docs/agents/tools/list/get_roc_momentum.md",
+          "docs/agents/tools/list/get_vn_bop.md",
+          "docs/agents/tools/list/get_vn_liquidity_state.md",
+          "docs/agents/tools/list/get_vn_macro_indicators.md",
+          "docs/agents/tools/list/get_vn_trade_balance.md",
+          "docs/agents/tools/list/get_volatility_indicators.md",
+          "docs/agents/tools/list/get_week_period.md",
+          "docs/agents/tools/list/list_scheduled_tasks.md",
+          "docs/agents/tools/list/schedule_task.md",
+          "docs/policies/dev-standards.md",
+          "scripts/gen-tool-list-stubs.py"
+        ],
+        "status_note": "TE-T28: 26 missing tools/list stubs generated (live-diff-computed, not hardcoded) via new scripts/gen-tool-list-stubs.py (registry diff + live gateway list_server_tools schema via mcp-call.sh bridge); 0 flagged registry-only. Fixed anti-hallucination/SKILL.md L55: tool-registry.json is now the name/count SSOT, missing list/ doc = DOC GAP not nonexistence. Post-gen diff = 0 missing / 0 extra (no dead litter). Idempotency re-proven (clean no-op re-run). Journal: sprint-TOKEN-ECONOMY-AUDIT-developer.md STEP developer-S11."
       }
     ],
     "qa": [],
@@ -13686,30 +13742,7 @@
     },
     "last_triaged_at": "2026-07-23T13:16:00Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "TE-T28",
-        "title": "T-28 Generate 26 missing tools/list stubs from registry + fix anti-hallucination SSOT (false 'tool missing') [~3-6k tok/day + correctness]",
-        "owner": "developer",
-        "status": "IN_PROGRESS",
-        "type": "FIX",
-        "size": "S",
-        "priority": "P2",
-        "wave": 2,
-        "est_saving": "~3-6k tok/day indirect + un-blocks 26 real tools",
-        "zone": "multi",
-        "sprint": "TOKEN-ECONOMY-AUDIT",
-        "depends": [],
-        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-28",
-        "note": "26 registry tools (incl. P0 indicator suite + entire scheduled-task family) have no tools/list doc; anti-hallucination SKILL reads 'no file = does not exist' -> false BUG/skip. Generate 26 lean stubs via reusable scripts/gen-tool-list-stubs.* from registry + live schema; fix anti-hallucination L55 to name tool-registry.json as count/name SSOT.",
-        "promoted_at": "2026-07-23T13:16:00Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-23T13:16:01Z",
-        "claimed_at": "2026-07-23T13:16:00Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
