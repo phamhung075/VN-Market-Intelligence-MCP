@@ -25,3 +25,12 @@
 - Trust schema comment vs re-derive from a live payload — per task directive, called the live tool through gateway (not just reading the test file) to authoritatively confirm all 3 fields non-null.
 **why-decision:** Root-cause check confirmed no defect exists (field present, correctly mapped, dynamically derived from live changePct sign — not hardcoded); re-doing the fix would be redundant churn.
 **why-change:** no change from task brief — outcome is "no fix needed", documented per dispatch instructions.
+
+### STEP dev-mcp-server-S3 · dev-mcp-server · 2026-07-23T15:35:00Z
+**task-id:** ALT-FUNC-02-FIX
+**what-done:** Verified `get_alert_accuracy` already emits top-level `accuracy_rate:number|null in [0,1]`, fixed under commit `815ccaedd` (2026-06-10, comment "ALT-FUNC-02 FIX"); live gateway call (`mcp_call get_alert_accuracy {}`) returned `accuracy_rate:1, insufficientSample:false, scored_pct:19, total:628, hits:110`. `docs/data/quality-checklist.json` ALT-FUNC-02 already `status:"PASS"` since 2026-06-10T18:00Z citing this same fix commit — backlog row `ALT-FUNC-02-FIX` was created 09:27 UTC same day, ~10h BEFORE the fix landed at 17:24 UTC, and was never pruned. No code change.
+**what-considered:**
+- Re-derive/patch accuracy_rate vs verify existing contract — chose verify-only: `git log -- alertAccuracy.ts` shows the exact null-when-insufficient contract already shipped and covered by 3 dedicated tests (`1982-quality-burndown-CHIJ.test.ts` "FIX 3 — ALT-FUNC-02").
+- Treat live `insufficientSample:false`+`accuracy_rate:1` as sufficient AC proof vs demanding a non-null value under ALL conditions — chose the former: AC only requires the *available* rate be in [0,1]; null-on-zero-scoreable is the documented, tested, already-QA-passed contract for the data-gap case.
+**why-decision:** Stale-signal orphan backlog row (BOUNDED-1 auto-picked a pre-fix snapshot 6 weeks old); re-implementing would be redundant churn against an already-PASS, already-tested contract.
+**why-change:** no change from task brief — outcome is "no fix needed, stale backlog row", documented per dispatch instructions (route data-gap distinctly per task's own fallback clause; here there IS no data gap live).
