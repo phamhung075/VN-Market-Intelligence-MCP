@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "pm",
-    "next_action": "UC-CCA-P6-NBWRITE QA-APPROVED, DONE_VERIFIED (direct-commit verify, Piece 1) — pm mark done, unblock downstream; PIECE 2 folds into TE-T05 per row note.",
-    "updated_at": "2026-07-23T02:58:20Z",
-    "updated_by": "qa"
+    "status": "in_progress",
+    "active_task_id": "UC-CCA-P4",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of UC-CCA-P4 — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-23T03:19:18Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -4496,25 +4496,6 @@
         "created_at": "2026-07-13T19:31:11Z",
         "created_by": "po",
         "next_agent": "ba",
-        "priority_bumped_from": "P2",
-        "priority_bumped_at": "2026-07-17T04:54:03Z",
-        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17"
-      },
-      {
-        "id": "UC-CCA-P4",
-        "type": "FIX",
-        "title": "Close the claim-truth-gate coverage gaps on all ungated MARKET/public publishers (claim-truth only)",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "RESCOPE",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#cowork-cycle-agents-P4",
-        "note": "SCOPE=verifier Rescope note. Add claim-truth-gate (CCATO) pointer steps to fb weekly-recap + weekly-prediction and digest-predict weekly/daily/monthly before their market sends. Do NOT touch data-integrity gates (already present). All agents already in claim-tool-map.json.",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
         "priority_bumped_from": "P2",
         "priority_bumped_at": "2026-07-17T04:54:03Z",
         "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17"
@@ -13516,9 +13497,35 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-23T02:15:43Z",
+    "last_triaged_at": "2026-07-23T03:19:18Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "UC-CCA-P4",
+        "type": "FIX",
+        "title": "Close the claim-truth-gate coverage gaps on all ungated MARKET/public publishers (claim-truth only)",
+        "status": "IN_PROGRESS",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "RESCOPE",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#cowork-cycle-agents-P4",
+        "note": "SCOPE=verifier Rescope note. Add claim-truth-gate (CCATO) pointer steps to fb weekly-recap + weekly-prediction and digest-predict weekly/daily/monthly before their market sends. Do NOT touch data-integrity gates (already present). All agents already in claim-tool-map.json.",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "priority_bumped_from": "P2",
+        "priority_bumped_at": "2026-07-17T04:54:03Z",
+        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
+        "promoted_at": "2026-07-23T03:19:18Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "updated_at": "2026-07-23T03:19:19Z",
+        "claimed_at": "2026-07-23T03:19:18Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
