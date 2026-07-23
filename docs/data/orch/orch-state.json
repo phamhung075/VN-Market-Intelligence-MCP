@@ -427,7 +427,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-23T15:26:04Z",
+    "_updated_at": "2026-07-23T16:33:54Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
@@ -2145,6 +2145,19 @@
         "triaged_at": "2026-07-23T15:57:46Z",
         "triaged_by": "po (router->PO USER-ESCALATED FFLOW-STALE-0723 decomposition)",
         "disposition": "USER-ESCALATED foreign-flow stale + recheck-harness request scoped into ONE incident FFLOW-STALE-0723 (no duplicate mint). Decomposed: PART A FFLOW-STALE-0723-A-VPS-FIX (ops-vps-fetch: LIVE SSH diag + remediate vn-foreign-flow.service; breaker reset ONLY AFTER fetch healthy; push-side code facet -> dev-stock-price / existing FIX-FOREIGN-FLOW-DEAD-ENDPOINT) + PART B FFLOW-STALE-0723-B-RECHECK-HARNESS (developer: scripts/check-foreign-flow-freshness.sh assume-complete-fixed gate). Sequencing: B is the neutral verification instrument; A DONE_VERIFIED only when B exits 0 on first completed VN trading session after remediation. Both READY, supervised:true (router/PO WIP<=2 slot, held OUT of BOUNDED-1 + SLS). Consolidated auditor rows: sys-20260723T063226-16ba (B-07), sys-20260722T023220-774e/-1356/-07c9 (B-04 + VPS-degraded, already triaged), sys-20260721T063301-43cf (B-02). USER-GATE for VPS restart now LIFTED by this interactive escalation. Router owns dispatch; origin_signal_id bound to PART A. [ROOT-CAUSE CONFIRMED 2026-07-23 by user: Vinahost VPS hosting vn-foreign-flow.service was SUSPENDED for non-payment (~07-21+); user has PAID + VPS resumed. INFRA-DOWNTIME, not a code fault. PART A rescoped to RECOVERY/BACKFILL; breaker CLOSED = starvation, not a trip — no blind reset.]"
+      },
+      {
+        "id": "FFLOW-STALE-0723-A-OPS-RESIDUALS-20260723T163354Z",
+        "ts": "2026-07-23T16:33:54Z",
+        "from": "dev-team",
+        "to": "po",
+        "orig_to": "ops",
+        "type": "ops_followup_request",
+        "severity": "MEDIUM",
+        "status": "NEW",
+        "summary": "FFLOW-STALE-0723-A VPS clock-drift recovery — 3 ops follow-ups: (1) PREVENTIVE/root-cause-vector: guest clock-drift can recur on next Vinahost VM pause (timedatectl falsely reported synchronized:yes throughout the drift) — evaluate chrony or a boot-time NTP step-check on the VM; this drift IS the mechanism of the stale-foreign-flow bug the user reported. (2) deploy-vinahost.sh leaves unsubstituted __MCP_BASE__/__API_KEY__ placeholders in /root/run-foreign-flow-debug.sh (router/ops worked around live). (3) vn-price-fetch/vn-sbv-fetch share the same now-fixed VM clock (NRestarts=0) but were not independently re-verified E2E — recommend a freshness check.",
+        "payload_ref": "docs/vps-sources/vn-foreign-flow-clock-drift-recovery-2026-07-23/recon.md",
+        "note": "Router-filed at FFLOW-STALE-0723-A closeout (ops-vps-fetch commit 446f28c14). Full trail in payload_ref recon.md. Actionable ops hardening — not a blocker to A/B completion (both -> review)."
       }
     ],
     "last_triaged_at": "2026-07-22T15:10:08Z",
@@ -13873,38 +13886,17 @@
         "completed_at": "2026-07-23T15:57:00Z",
         "completed_by": "dev-mcp-server",
         "status_note": "BCT-OBS-01-FIX: verification-only, no code change needed. dataAuditDaily (runDailyAudit, apps/mcp-server/src/scheduler/news-analysis/dataAuditJob.ts) unconditionally writes system_logs(data-auditor)+audit_state, then maybeSendTelegram gates sendTelegramWork on hasIssues (any auto_cleaned>0 or flagged/escalated finding). Live-probed via direct container DB read (not self-report/checklist alone): cron_job_runs shows 4 consecutive real fires 07-19..07-22 (16:00 UTC = 23:00 GMT+7, matches CRONS.dataAuditDaily), all status=success; each wrote a system_logs row with nonzero cleaned+warnings (07-22: 6763/63; 07-21: 18516/63; 07-20: 3931/149; 07-19: 199747/227) -- hasIssues=true every run, so the WORK-channel send-gate fires daily. Live gateway call get_system_status (fresh this session, via scripts/agents-flow/mcp-call.sh) confirms TELEGRAM_BOT_TOKEN/TELEGRAM_INFO_WORK_CHANNEL_ID SET and TELEGRAM_ENABLED=true in the running container -- the exact preconditions sendTelegramWork/coreSend require. Source-read of infrastructure/notifiers/telegram.ts confirms sendTelegramWork has ZERO DB persistence by design (only sendTelegramBug->insertReport persists to telegram_reports; sendTelegramMarket->market_messages) -- so the checklist rows documented recheck_how (read_telegram_reports channel:work) can never observe a WORK send: independently confirms the checklist rows own \"original FAIL was wrong recheck_how\" annotation is correct, not stale. quality-checklist.json BCT-OBS-01 already status=PASS since 2026-06-10T18:00Z citing WORK-channel msg IDs 2743-2766 (a genuine historical live-Telegram observation, not DB-derivable). Unit coverage 157-data-audit-job.test.ts AC-6 (silent on clean DB) + AC-7 (sends when issues exist): 18/18 pass -- contract matches live DB evidence. bun tsc --noEmit clean. Tool count 184 / cronJobCount 88 unaffected (gen-project-stats probe). git status apps/mcp-server/ clean -- zero source files touched."
-      }
-    ],
-    "qa": [],
-    "_closed_signals_20260614": {
-      "_by": "po-S50",
-      "_at": "2026-06-14T14:45:14Z",
-      "closed": [
-        {
-          "signal": "docs/signals/workflow-protocol-coherence-audit-20260614T141952Z.json",
-          "reason": "ALREADY IMPLEMENTED — all 6 COHERENCE-GAP tasks status=IMPLEMENTED, result=RESOLVED (commit 85935da3). No work to queue.",
-          "disposition": "move-to-processed"
-        },
-        {
-          "signal": "docs/signals/dev-team-tool-contract-cron-overlap-20260614T121816Z.json",
-          "reason": "ALREADY RESOLVED by the LIVE SF-1 single-flight guard (F2-A) + gateway-call-contract.md (F1) now in dev-team flow. This brief is the source that DELIVERED SF-1; no residual work.",
-          "disposition": "move-to-processed"
-        }
-      ]
-    },
-    "last_triaged_at": "2026-07-23T15:45:46Z",
-    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
+      },
       {
         "id": "FFLOW-STALE-0723-A-VPS-FIX",
         "type": "FIX",
         "title": "USER-ESCALATED PART A (RECOVERY/BACKFILL): foreign-flow (khoi ngoai) stalled since 2026-07-21 — Vinahost VPS hosting vn-foreign-flow.service was SUSPENDED for non-payment; user has PAID + VPS resumed. Recover the service + backfill 07-22/07-23. INFRA-DOWNTIME, NOT a code fault.",
-        "status": "IN_PROGRESS",
+        "status": "REVIEW",
         "priority": "P0",
         "size": "M",
         "zone": "ops",
         "owner": "ops-vps-fetch",
-        "next_agent": "ops-vps-fetch",
+        "next_agent": "qa",
         "supervised": true,
         "plan_only": false,
         "sprint": "FFLOW-STALE-0723",
@@ -13932,22 +13924,24 @@
           "existing backlog: FIX-FOREIGN-FLOW-DEAD-ENDPOINT (push-side candidate), VERIFY-FIX-VPS-SSH-TRIGGER-FAIL-LOUD-REALDATA (confirms trigger tools actually SSH)"
         ],
         "note": "ROOT CAUSE CONFIRMED = Vinahost VPS suspended for non-payment, now paid + resumed (user 2026-07-23). RESCOPED from code-fault hunt to RECOVERY/BACKFILL. No dev-stock-price code branch needed UNLESS the resumed fetcher reveals a genuine push-side regression. Sequence with PART B unchanged: B is the neutral verification instrument; A's close is gated by B exit 0 on the current completed session (not self-report).",
-        "updated_at": "2026-07-23T16:09:56Z",
+        "updated_at": "2026-07-23T16:33:38Z",
         "updated_by": "po (rescope: user-confirmed root cause = VPS suspended for non-payment, now paid+resumed -> recovery/backfill, not code fault)",
         "dispatched_at": "2026-07-23T16:09:32Z",
         "dispatched_by": "dev-team-router",
-        "dispatch_note": "manual supervised WIP<=2 dispatch — USER-ESCALATED foreign-flow FFLOW-STALE-0723"
+        "dispatch_note": "manual supervised WIP<=2 dispatch — USER-ESCALATED foreign-flow FFLOW-STALE-0723",
+        "entered_review_at": "2026-07-23T16:33:37Z",
+        "review_note": "[dev-team] VPS recovery COMPLETE + router raw-verified. Root cause: Vinahost non-payment = hypervisor VM PAUSE froze guest clock ~2d13h behind; service market-hours gate (date -u +%H in [2,8]) silently skipped 07-22/07-23 windows (NOT a crash-loop; prior StartLimitBurst hypothesis disproven). Fix: NTP resync stepped clock 07-21T03:28->07-23T16:15, service restart+enable. Live E2E raw-verified: get_market_foreign_flow latest_date=2026-07-23 (102 tickers, upserted:102 HTTP200; breaker was closed all along). Gate: FFLOW-B harness live exit0 / stale-fixture(07-21) exit2 confirmed by router. RESIDUAL: 07-22 UNRECOVERABLE (live-snapshot API, no backfill param, zero fake rows); ops follow-ups -> signal_queue. Commit 446f28c14."
       },
       {
         "id": "FFLOW-STALE-0723-B-RECHECK-HARNESS",
         "type": "FIX",
         "title": "USER-ESCALATED PART B: persistent RECHECK HARNESS scripts/check-foreign-flow-freshness.sh — asserts get_market_foreign_flow latest_date within last completed VN trading session, exits non-zero when stale, weekend/holiday-aware, wired to gate cron/CI (the 'assume complete fixed' gate for PART A)",
-        "status": "IN_PROGRESS",
+        "status": "REVIEW",
         "priority": "P0",
         "size": "S",
         "zone": "cross-service/",
         "owner": "developer",
-        "next_agent": "developer",
+        "next_agent": "qa",
         "supervised": true,
         "plan_only": false,
         "sprint": "FFLOW-STALE-0723",
@@ -13974,12 +13968,34 @@
           "docs/policies/dev-standards.md § Script Persistence (pointer + registry requirement)"
         ],
         "note": "NEUTRAL, INDEPENDENT verification instrument for PART A. No code dependency on PART A — build can proceed in parallel with the VPS remediation. This IS the user's 'assume complete fixed' gate: PART A cannot be DONE_VERIFIED until this harness exits 0 on the first completed VN trading session after remediation. Owner is generic developer (scripts/ artifact -> cross-service/), deliberately separate from ops-vps-fetch/dev-stock-price so the fix cannot verify itself.",
-        "updated_at": "2026-07-23T16:09:56Z",
+        "updated_at": "2026-07-23T16:33:38Z",
         "dispatched_at": "2026-07-23T16:09:32Z",
         "dispatched_by": "dev-team-router",
-        "dispatch_note": "manual supervised WIP<=2 dispatch — USER-ESCALATED foreign-flow FFLOW-STALE-0723"
+        "dispatch_note": "manual supervised WIP<=2 dispatch — USER-ESCALATED foreign-flow FFLOW-STALE-0723",
+        "entered_review_at": "2026-07-23T16:33:37Z",
+        "review_note": "[dev-team] Recheck harness scripts/check-foreign-flow-freshness.sh built + router raw-verified 3 ways (un-piped exit codes): --self-test 3/3 OK; STALE fixture(07-21)=exit2 no-false-green; LIVE=exit0 latest_date=2026-07-23. 8/8 ACs: probe via mcp-call.sh, LCTS+ICT 16:30 grace, vnTradingCalendar SSOT (zero hardcoded holidays), exit 0/2/3, persistence+registry wiring. Commits a7b3709db + e5440901. THIS is the user \"program for recheck / assume complete fixed\" gate."
       }
-    ]
+    ],
+    "qa": [],
+    "_closed_signals_20260614": {
+      "_by": "po-S50",
+      "_at": "2026-06-14T14:45:14Z",
+      "closed": [
+        {
+          "signal": "docs/signals/workflow-protocol-coherence-audit-20260614T141952Z.json",
+          "reason": "ALREADY IMPLEMENTED — all 6 COHERENCE-GAP tasks status=IMPLEMENTED, result=RESOLVED (commit 85935da3). No work to queue.",
+          "disposition": "move-to-processed"
+        },
+        {
+          "signal": "docs/signals/dev-team-tool-contract-cron-overlap-20260614T121816Z.json",
+          "reason": "ALREADY RESOLVED by the LIVE SF-1 single-flight guard (F2-A) + gateway-call-contract.md (F1) now in dev-team flow. This brief is the source that DELIVERED SF-1; no residual work.",
+          "disposition": "move-to-processed"
+        }
+      ]
+    },
+    "last_triaged_at": "2026-07-23T15:45:46Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
