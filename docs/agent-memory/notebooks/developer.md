@@ -1,20 +1,20 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-23 | **Cycle:** TE-T33 (TOKEN-ECONOMY-AUDIT wave 4 — handoffs/sessions cold-archive sweep + po-decisions.md rotation, decisions/ leg confirmed superseded)
+**Last updated:** 2026-07-23 | **Cycle:** FFLOW-STALE-0723-B-RECHECK-HARNESS (persistent calendar-aware foreign-flow freshness recheck harness — PART A's "assume complete fixed" gate)
 
-## Session 2026-07-23 — TE-T28 (TOKEN-ECONOMY-AUDIT, wave 2) — REVIEW
+## Session 2026-07-23 — FFLOW-STALE-0723-B-RECHECK-HARNESS — REVIEW
 
-**Task:** 26 registry tools had no `docs/agents/tools/list/` doc; `anti-hallucination/SKILL.md` L55's "no file = tool does not exist" predicate turned that DOC GAP into false BUG/skip verdicts on real, live tools (incl. the P0 indicator suite + entire scheduled-task family).
+**Task:** Build a persistent, weekend/holiday-aware recheck harness so PART A (ops-vps-fetch recovering the Vinahost-suspended vn-foreign-flow.service) can be declared "complete fixed" on an independent instrument, not self-report. Cross-service artifact outside all dev-* zones — built directly per router instruction, no zone dispatch.
 
-**Actions taken:** New `scripts/gen-tool-list-stubs.py` — diffs `tool-registry.json` vs existing `list/` basenames (idempotent, never hardcodes "26"), pulls live schema via the gateway `list_server_tools` meta-tool through the existing `scripts/agents-flow/mcp-call.sh` bridge, mints lean stubs (get_price_history.md shape). Live diff = 26 missing, all 26 resolved from live schema (0 registry-only-flagged). Caught+fixed one real bug during generation: enum types joined with `" | "` corrupted 2 markdown tables (raw pipe = column separator) — switched to `" / "` + added a generic escape net, regenerated both files via the same idempotent path. Fixed `anti-hallucination/SKILL.md` L55: SSOT is now `tool-registry.json` (name/count), `list/` is the detail layer; missing doc = DOC GAP not nonexistence. Canonical pointer added to `dev-standards.md` § Script Persistence.
+**Actions taken:** New `scripts/check-foreign-flow-freshness.sh`. PROBE: `get_market_foreign_flow(days:1)` via `scripts/agents-flow/mcp-call.sh`, latest_date extracted with a tolerant regex (the tool's `text` field embeds raw unescaped newlines — `jq .` chokes with "control characters must be escaped", live-verified). LCTS (Last Completed Trading Session): shells into the live `apps/mcp-server/src/domain/services/vnTradingCalendar.ts` module via `bun -e` (precedent: `ops-bctc-enrich-reverify-pulljob.sh`'s docker-exec-bun-e pattern) — zero hardcoded holidays, reuses the SAME calendar the OHLCV pipeline uses. Verdict: `latest_date >= LCTS` → PASS/exit 0; else STALE/exit 2; any ambiguity → ERROR/exit 3 (never false-green). Self-test mode (`--self-test`) re-execs the script with gated env-var overrides (`FFLOW_FRESH_SELF_TEST=1` + override vars — a lone stray override var alone is inert) proving 3 branches against the real calendar module. Bug caught+fixed mid-build: a single-quoted heredoc nested inside `"$(...)"` inside outer double quotes is NOT quote-inert — an odd apostrophe count in the body ("isn't") broke bash's outer double-quote scan; fixed by capturing the heredoc to a variable first.
 
-**Verification:** Post-gen diff = 0 missing / 0 extra (no dead stub litter, matches brief's own "zero dead docs" finding). Re-run = clean no-op (idempotency proven twice). `awk -F'|'` field-count scan across all 26 files confirms no other broken table rows.
+**Verification:** `bash -n` clean. Live run today: `verdict=PASS latest_date=2026-07-23 lcts=2026-07-23` (PART A's parallel VPS recovery had already landed fresh data by the time this ran). Fixture proof (AC-B7 mandate): `FFLOW_FRESH_OVERRIDE_LATEST_DATE=2026-07-21` (the historical stuck value) → `verdict=STALE exit=2` as required. `--self-test` → 3/3 branches PASS (stale/fresh/Saturday-nuance, Sat 2026-07-25 correctly resolves LCTS to preceding Fri 2026-07-24). Ambiguity paths (malformed override date/now/grace-cutoff) all → `verdict=ERROR exit=3`, never 0. Unauthorized override (SELF_TEST unset) correctly ignored, falls through to live probe.
 
-**Board:** `task_board.in_progress[TE-T28]` → `review`, `next_agent=qa`, `branch:null`, `.head` synced to idle, via `orch-apply.sh` (dispatcher-owned write, not committed by this cycle).
+**Board:** `task_board.in_progress[FFLOW-STALE-0723-B-RECHECK-HARNESS]` — router owns this row's lifecycle per task boundary; not touched by this cycle.
 
-**Scope discipline:** Touched exactly the 26 new stub files + new script + `anti-hallucination/SKILL.md` + `dev-standards.md` pointer + this journal/notebook. Left 3 pre-existing dirty `tools/list/*.md` files (unrelated in-flight work from another session) untouched — explicit pathspecs only.
+**Scope discipline:** New script + 4 doc pointers (`dev-standards.md` § Script Persistence CANONICAL entry, `ops/flow/vps.md`, `system-auditor/flow/main.md` § Per-Source Fetch Freshness, `get_market_foreign_flow.md` See-also) + this journal/notebook. No `apps/mcp-server` source files modified (read-only reuse of `vnTradingCalendar.ts`) — zero tsc/test regression surface.
 
-Zone health: registry (184) and `list/` (184) now in 1:1 lockstep; re-running the generator after any future `gen-tool-registry.ts` run mints only the true delta | HEALTHY
+Zone health: foreign-flow freshness now has an independent, weekend/holiday-aware, non-self-report gate; graphify incremental update skipped — Agent/Skill tools not granted to this subagent session (structural, noted for router) | HEALTHY
 
 ## Session 2026-07-23 — TE-T31 (TOKEN-ECONOMY-AUDIT, wave 4) — REVIEW
 
