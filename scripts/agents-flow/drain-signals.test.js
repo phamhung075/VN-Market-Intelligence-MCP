@@ -443,6 +443,62 @@ function makeOrchRefHarness() {
 }
 
 // ---------------------------------------------------------------------------
+// FIX-DRAIN-PERSIST-GUARD-COUNT-DRAINABLE-ONLY — --count-drainable subcommand.
+// drain-signals.md's MANDATORY PERSIST GUARD (and dev-team-tick-preflight.sh's Step 5
+// idle-check) both consume this instead of a raw `ls docs/signals/*.json | wc -l`, which
+// previously counted non-drainable litter (cowork telemetry / tick residue with no valid
+// from/type) and inflated the guard's count, forcing a full drain even when nothing was
+// actually routable. Verifies the subcommand shares isDrainableShape() with the drain
+// loop's own "SKIP non-signal shape" guard — not a forked second definition.
+// ---------------------------------------------------------------------------
+function countDrainable(scriptPath) {
+  const out = execFileSync('node', [scriptPath, '--count-drainable'], { encoding: 'utf8' });
+  const m = out.trim().match(/^drainable_count=(-?\d+)$/);
+  return m ? parseInt(m[1], 10) : NaN;
+}
+
+// Fixture A — residue-only inbox (mirrors the live ~55 cowork-team-* state files +
+// price_anomaly_* currently in docs/signals/): well-formed JSON, no from/source/type/
+// signal_type. Must NOT trip the guard (count stays 0 regardless of file count).
+{
+  const h = makeHarness();
+  const sigDir = path.join(h, 'docs/signals');
+  const scriptPath = path.join(h, 'scripts/agents-flow/drain-signals.js');
+  fs.writeFileSync(path.join(sigDir, 'cowork-team-a1b2c3.json'), JSON.stringify({ agent: 'cowork-team', status: 'idle', last_tick: '2026-07-23T00:00:00Z' }));
+  fs.writeFileSync(path.join(sigDir, 'cowork-team-d4e5f6.json'), JSON.stringify({ agent: 'cowork-team', status: 'idle', last_tick: '2026-07-23T00:07:00Z' }));
+  fs.writeFileSync(path.join(sigDir, 'price_anomaly_VNM_20260723.json'), JSON.stringify({ ticker: 'VNM', severity: 'HIGH', detected_at: '2026-07-23T00:00:00Z' }));
+  const n = countDrainable(scriptPath);
+  assert('FIX-DRAIN-PERSIST-GUARD residue-only inbox (litter, no from/type) → drainable_count=0 (guard does NOT trip)', n, 0);
+  cleanup(h);
+}
+
+// Fixture B — genuine drainable signal present (valid from+type) alongside residue.
+// Negative control: the guard must still trip — litter-filtering must not weaken it to
+// always-pass.
+{
+  const h = makeHarness();
+  const sigDir = path.join(h, 'docs/signals');
+  const scriptPath = path.join(h, 'scripts/agents-flow/drain-signals.js');
+  fs.writeFileSync(path.join(sigDir, 'cowork-team-a1b2c3.json'), JSON.stringify({ agent: 'cowork-team', status: 'idle' }));
+  fs.writeFileSync(path.join(sigDir, 'genuine-signal.json'), JSON.stringify({ from: 'bctc-analyst', to: 'dev-team', type: 'esc-deep-dive-request', createdAt: '2026-07-23T00:00:00Z', payload: {} }));
+  const n = countDrainable(scriptPath);
+  assert('FIX-DRAIN-PERSIST-GUARD genuine signal (valid from+type) present → drainable_count=1 (guard STILL trips, litter excluded)', n, 1);
+  cleanup(h);
+}
+
+// Fixture C — empty / missing inbox dir → count=0, no crash (degradation parity with the
+// other subcommands in this file).
+{
+  const h = fs.mkdtempSync(path.join(os.tmpdir(), 'drain-signals-test-nosig-'));
+  fs.mkdirSync(path.join(h, 'scripts/agents-flow'), { recursive: true }); // docs/signals intentionally absent
+  const scriptPath = path.join(h, 'scripts/agents-flow/drain-signals.js');
+  fs.copyFileSync(SRC_SCRIPT, scriptPath);
+  const n = countDrainable(scriptPath);
+  assert('FIX-DRAIN-PERSIST-GUARD missing docs/signals/ dir → drainable_count=0, no crash', n, 0);
+  cleanup(h);
+}
+
+// ---------------------------------------------------------------------------
 // Summary
 // ---------------------------------------------------------------------------
 const total = passed + failed;

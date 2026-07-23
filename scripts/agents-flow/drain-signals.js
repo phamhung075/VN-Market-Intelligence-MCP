@@ -23,7 +23,12 @@ const crypto = require('crypto');
 const { execFileSync } = require('child_process');
 
 const ROOT = path.resolve(__dirname, '..', '..');
-const SIG = path.join(ROOT, 'docs/signals');
+// DRAIN_SIGNALS_DIR_OVERRIDE — test-only override (same convention as
+// ORCH_APPLY_LIVE_FILE_OVERRIDE below). No-op in production: defaults to the identical
+// canonical inbox path. Added FIX-DRAIN-PERSIST-GUARD-COUNT-DRAINABLE-ONLY (2026-07-23)
+// so dev-team-tick-preflight.sh's Step 5 idle-check can point --count-drainable at its
+// isolated SIGNALS_DIR test fixtures instead of the live docs/signals/.
+const SIG = process.env.DRAIN_SIGNALS_DIR_OVERRIDE || path.join(ROOT, 'docs/signals');
 const PROC = path.join(SIG, 'processed');
 const DB = path.join(SIG, 'signals.db');
 const NOW = new Date().toISOString().replace(/\.\d+Z$/, 'Z');
@@ -33,6 +38,41 @@ const PROCESSED_BY = process.env.DRAIN_PROCESSED_BY || 'dev-team';
 // this script and orch-apply.sh independently default to the identical canonical live path.
 const ORCH_STATE = process.env.ORCH_APPLY_LIVE_FILE_OVERRIDE || path.join(ROOT, 'docs/data/orch/orch-state.json');
 const ORCH_APPLY_SH = path.join(ROOT, 'scripts', 'orch-apply.sh');
+
+// Shared drainable-shape predicate (FIX-DRAIN-PERSIST-GUARD-COUNT-DRAINABLE-ONLY, 2026-07-23):
+// a routable signal must carry at least one of from/source OR type/signal_type; a top-level
+// array or an object with NEITHER field is litter (state file / cowork telemetry / tick
+// residue), not a signal. SAME predicate used by (1) the main drain loop's "SKIP non-signal
+// shape" guard below and (2) the --count-drainable subcommand below — single definition,
+// never forked (docs/agents/dev-team/flow/drain-signals.md MANDATORY PERSIST GUARD and
+// scripts/agents-flow/dev-team-tick-preflight.sh Step 5 idle-check both consume (2) instead
+// of a raw `ls docs/signals/*.json | wc -l`, which previously counted litter too).
+function isDrainableShape(j) {
+  if (Array.isArray(j)) return false;
+  if (j.from == null && j.source == null && j.type == null && j.signal_type == null) return false;
+  return true;
+}
+
+// --count-drainable subcommand (FIX-DRAIN-PERSIST-GUARD-COUNT-DRAINABLE-ONLY, 2026-07-23).
+// Read-only count of docs/signals/*.json (top-level inbox, excludes processed/) that pass
+// isDrainableShape() above. No DB open, no file mutation, no orch-state touch — zero side
+// effects, safe to call on every tick. Unparseable JSON does not count either (nothing
+// routable). Usage: node scripts/agents-flow/drain-signals.js --count-drainable
+// Prints "drainable_count=<n>" and exits 0 (n=0 on any degradation — dir missing, etc).
+if (process.argv[2] === '--count-drainable') {
+  let n = 0;
+  try {
+    const files = fs.existsSync(SIG) ? fs.readdirSync(SIG).filter(f => f.endsWith('.json')) : [];
+    for (const base of files) {
+      try {
+        const j = JSON.parse(fs.readFileSync(path.join(SIG, base), 'utf8'));
+        if (isDrainableShape(j)) n++;
+      } catch (e) { /* unparseable — not drainable, not counted (mirrors main loop's own catch) */ }
+    }
+  } catch (e) { /* SIG dir unreadable — count stays 0, never blocks the caller */ }
+  console.log(`drainable_count=${n}`);
+  process.exit(0);
+}
 
 // GATE-B recurrence-count subcommand (FIX-DRAINESC-SEVERITY-RECURRENCE-GATE, 2026-07-04).
 // Read-only bootstrap safety-net query for drain-esc-dispatch.md GATE-B Tier 2 (used ONLY when
@@ -106,9 +146,10 @@ for (const base of files) {
   }
 
   // Non-routable-shape guard: skip state files / non-signal JSON dropped in inbox by accident.
-  // A routable signal must have at least one of: from/source OR type/signal_type.
-  // A top-level array or an object with NEITHER field is not a signal — skip it, do NOT move/unlink.
-  if (Array.isArray(j) || (j.from == null && j.source == null && j.type == null && j.signal_type == null)) {
+  // isDrainableShape() is the SAME predicate the --count-drainable subcommand above uses —
+  // not forked (FIX-DRAIN-PERSIST-GUARD-COUNT-DRAINABLE-ONLY, 2026-07-23). A top-level array
+  // or an object with neither from/type is not a signal — skip it, do NOT move/unlink.
+  if (!isDrainableShape(j)) {
     console.log(`[drain-signals] SKIP non-signal shape: ${base} (no from/type — state file or unknown format; leaving in inbox)`);
     continue;
   }

@@ -35,12 +35,14 @@
 #      BEFORE main.md's Step 0a drain-signals.md ever runs) — P1-IDLE-DEVTEAM-
 #      PREFLIGHT-SCRIPT. Mirrors cowork-tick-preflight.sh's SILENT-gate
 #      pattern (§_step8_silent_release / Step 7). Reuses the exact fields
-#      drain-signals.md's own MANDATORY PERSIST GUARD reads: signal file
-#      count (docs/signals/*.json), signals.db mtime freshness, signal_queue
-#      NEW-row count, and task_board.active_sprints emptiness. All four empty/
-#      fresh => verdict RUN-IDLE — the LLM continuation skips Step 0a drain
-#      entirely (drain-signals.md branch lives in main.md, out of this
-#      script's scope — P1-IDLE-DEVTEAM-FLOW-BRANCH wires the read side).
+#      drain-signals.md's own MANDATORY PERSIST GUARD reads: drainable signal
+#      file count (docs/signals/*.json, litter excluded — FIX-DRAIN-PERSIST-
+#      GUARD-COUNT-DRAINABLE-ONLY, 2026-07-23, see _step5_idle_check field (a)),
+#      signals.db mtime freshness, signal_queue NEW-row count, and
+#      task_board.active_sprints emptiness. All four empty/fresh => verdict
+#      RUN-IDLE — the LLM continuation skips Step 0a drain entirely
+#      (drain-signals.md branch lives in main.md, out of this script's
+#      scope — P1-IDLE-DEVTEAM-FLOW-BRANCH wires the read side).
 #   5.5. Board-hygiene / cold-eviction backstop (dev-team-loop-P2, sprint
 #      ULTRACODE-AUDIT-FIXALL task UC-DTL-P2). Runs unconditionally on every
 #      LOCK-WINNING tick — i.e. both the RUN and RUN-IDLE verdict branches
@@ -278,13 +280,26 @@ _step_fire_election() {
 # MANDATORY PERSIST GUARD fields + signal_queue/active_sprints emptiness.
 # Prints "true" (idle — safe to skip Step 0a drain-signals.md entirely) or
 # "false" (at least one field non-empty/stale — normal RUN, drain runs).
-# Pure filesystem/jq read — makes NO mcp_call (no tool-call cost either way).
+# Field (a) shells out to drain-signals.js --count-drainable (still no mcp_call — the
+# "no tool-call cost either way" guarantee below is about MCP calls specifically).
 _step5_idle_check() {
-  local signal_file_count db_mtime_epoch now_epoch age_h db_stale signal_new_count active_sprints_count
+  local signal_drainable_count db_mtime_epoch now_epoch age_h db_stale signal_new_count active_sprints_count
 
-  # (a) docs/signals/*.json count — nullglob-safe via 2>/dev/null + wc -l.
-  signal_file_count=$(ls "$SIGNALS_DIR"/*.json 2>/dev/null | wc -l | tr -d ' ')
-  [[ "$signal_file_count" =~ ^[0-9]+$ ]] || signal_file_count=0
+  # (a) drainable docs/signals/*.json count — FIX-DRAIN-PERSIST-GUARD-COUNT-DRAINABLE-ONLY
+  # (2026-07-23): reuses the SAME isDrainableShape() predicate scripts/agents-flow/
+  # drain-signals.js's drain loop already applies (its "SKIP non-signal shape" guard) via
+  # --count-drainable — shared, not forked. A raw `ls | wc -l` previously counted cowork
+  # telemetry / tick residue litter too, permanently blocking RUN-IDLE (forcing Step 0a to
+  # run, and drain-signals.md's own MANDATORY PERSIST GUARD to mandate a full drain) on
+  # ticks where nothing was actually routable. DRAIN_SIGNALS_DIR_OVERRIDE forwards this
+  # function's own SIGNALS_DIR test seam into the script's identical override convention.
+  local drainable_out
+  drainable_out=$(DRAIN_SIGNALS_DIR_OVERRIDE="$SIGNALS_DIR" node "$ROOT/scripts/agents-flow/drain-signals.js" --count-drainable 2>/dev/null)
+  # Portable prefix-strip (bash parameter expansion) — NOT sed: BSD/macOS sed's BRE mode has
+  # no `\+` (GNU-only extension), which silently fails to match and always yields an empty
+  # count here — caught live during this fix's own verification (see decision journal).
+  signal_drainable_count="${drainable_out#drainable_count=}"
+  [[ "$signal_drainable_count" =~ ^[0-9]+$ ]] || signal_drainable_count=0
 
   # (b) signals.db freshness — mirrors drain-signals.md guard #2 (mtime > 24h
   # => DB write REQUIRED this tick, i.e. NOT idle). Missing file = safe
@@ -307,7 +322,7 @@ _step5_idle_check() {
   active_sprints_count=$(jq '.task_board.active_sprints // [] | length' "$ORCH_STATE_PATH" 2>/dev/null)
   [[ "$active_sprints_count" =~ ^[0-9]+$ ]] || active_sprints_count=0
 
-  if [ "$signal_file_count" -eq 0 ] && [ "$db_stale" = "false" ] && [ "$signal_new_count" -eq 0 ] && [ "$active_sprints_count" -eq 0 ]; then
+  if [ "$signal_drainable_count" -eq 0 ] && [ "$db_stale" = "false" ] && [ "$signal_new_count" -eq 0 ] && [ "$active_sprints_count" -eq 0 ]; then
     echo true
   else
     echo false
@@ -490,7 +505,7 @@ run_preflight() {
 
   if [ "$idle_result" = "true" ]; then
     _emit_verdict "RUN-IDLE" "$tick" \
-      "no docs/signals/*.json files, signals.db not stale (<=${IDLE_STALE_HOURS}h or absent), zero NEW signal_queue rows, task_board.active_sprints empty — both locks held, continue main.md at gcc-preflight but SKIP Step 0a drain-signals.md entirely"
+      "no drainable docs/signals/*.json files (litter excluded), signals.db not stale (<=${IDLE_STALE_HOURS}h or absent), zero NEW signal_queue rows, task_board.active_sprints empty — both locks held, continue main.md at gcc-preflight but SKIP Step 0a drain-signals.md entirely"
     return 1
   fi
 

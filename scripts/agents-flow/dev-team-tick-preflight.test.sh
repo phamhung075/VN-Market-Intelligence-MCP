@@ -59,8 +59,17 @@ CALL_LOG_FILE="$TMPDIR_TEST/call-log.txt"
 # live repo state. run_case() below pins SIGNALS_DIR/SIGNALS_DB_PATH/
 # ORCH_STATE_PATH to the "non-idle" fixtures for every scenario by default;
 # only the dedicated idle tests (T13+) override them.
-mkdir -p "$TMPDIR_TEST/signals-nonempty" "$TMPDIR_TEST/signals-empty"
-echo '{}' > "$TMPDIR_TEST/signals-nonempty/placeholder-signal.json"
+mkdir -p "$TMPDIR_TEST/signals-nonempty" "$TMPDIR_TEST/signals-empty" "$TMPDIR_TEST/signals-litter-only"
+# FIX-DRAIN-PERSIST-GUARD-COUNT-DRAINABLE-ONLY (2026-07-23): this fixture must carry a valid
+# from+type — the idle-check's field (a) now counts DRAINABLE signals only (shares
+# drain-signals.js's isDrainableShape() predicate), so a shapeless `{}` no longer counts and
+# would silently defeat T14's "signal files present blocks idle" assertion below.
+echo '{"from":"bctc-analyst","to":"dev-team","type":"esc-deep-dive-request","createdAt":"2026-07-23T00:00:00Z","payload":{}}' > "$TMPDIR_TEST/signals-nonempty/genuine-signal.json"
+# Residue-only fixture (mirrors the live ~55 cowork-team-* state files + price_anomaly_*
+# currently in docs/signals/ — no from/source/type/signal_type). Used by T32 to prove litter
+# alone does NOT block idle.
+echo '{"agent":"cowork-team","status":"idle","last_tick":"2026-07-23T00:00:00Z"}' > "$TMPDIR_TEST/signals-litter-only/cowork-team-abc123.json"
+echo '{"ticker":"VNM","severity":"HIGH","detected_at":"2026-07-23T00:00:00Z"}' > "$TMPDIR_TEST/signals-litter-only/price_anomaly_VNM_20260723.json"
 echo '{"task_board":{"active_sprints":[{"id":"placeholder-sprint"}]},"signal_queue":{"rows":[]}}' > "$TMPDIR_TEST/orch-not-idle.json"
 echo '{"task_board":{"active_sprints":[]},"signal_queue":{"rows":[]}}' > "$TMPDIR_TEST/orch-idle.json"
 echo '{"task_board":{"active_sprints":[]},"signal_queue":{"rows":[{"id":"s1","status":"NEW","to":"po"}]}}' > "$TMPDIR_TEST/orch-new-signal-only.json"
@@ -292,13 +301,15 @@ check "T13 RUN-IDLE does NOT send telegram" "$([ "$(log_has send_telegram)" = "f
 check "T13 RUN-IDLE task_claim called exactly 3x (presence, SF-1, fire-election — no drain-signals calls)" "$([ "$(log_count task_claim)" -eq 3 ] && echo true || echo false)"
 check "T13 RUN-IDLE total call trace == exactly 3 (ZERO drain-signals-related calls)" "$([ "$(wc -l < "$CALL_LOG_FILE" | tr -d ' ')" -eq 3 ] && echo true || echo false)"
 
-# ── T14: RUN (not idle) — docs/signals/*.json non-empty alone blocks idle ────
+# ── T14: RUN (not idle) — a GENUINE drainable signal (valid from+type) alone blocks
+# idle. Negative control for FIX-DRAIN-PERSIST-GUARD-COUNT-DRAINABLE-ONLY: the
+# litter-filtering fix must not weaken this to always-idle ─────────────────────────
 run_case
 export SIGNALS_DIR="$TMPDIR_TEST/signals-nonempty"
 export ORCH_STATE_PATH="$TMPDIR_TEST/orch-idle.json"
 OUT=$(run_preflight); RC=$?
 VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
-check "T14 RUN verdict (signal files present blocks idle)" "$([ "$VERDICT" = "RUN" ] && echo true || echo false)"
+check "T14 RUN verdict (genuine drainable signal present blocks idle)" "$([ "$VERDICT" = "RUN" ] && echo true || echo false)"
 
 # ── T15: RUN (not idle) — task_board.active_sprints non-empty alone blocks idle ─
 run_case
@@ -479,6 +490,20 @@ check "T31 hygiene: cold-evict invoked" "$([ "$(log_has _step55_run_cold_evict)"
 check "T31 hygiene: validate invoked" "$([ "$(log_has _step55_run_validate)" = "true" ] && echo true || echo false)"
 check "T31 hygiene: git commit NOT invoked after validation failure" "$([ "$(log_has _step55_git_commit_evict)" = "false" ] && echo true || echo false)"
 check "T31 hygiene: sends bug telegram on validation failure" "$([ "$(log_has send_telegram)" = "true" ] && echo true || echo false)"
+
+# ── T32: RUN-IDLE — signals dir holds ONLY non-drainable litter (cowork telemetry /
+# tick residue, no from/type) — must NOT block idle. FIX-DRAIN-PERSIST-GUARD-COUNT-
+# DRAINABLE-ONLY regression guard: a raw `ls | wc -l` previously counted this litter,
+# forcing RUN every tick (and, one layer up in drain-signals.md, a mandatory full
+# drain) even though nothing was actually routable ──────────────────────────────────
+run_case
+export SIGNALS_DIR="$TMPDIR_TEST/signals-litter-only"
+export SIGNALS_DB_PATH="$TMPDIR_TEST/does-not-exist-signals.db"
+export ORCH_STATE_PATH="$TMPDIR_TEST/orch-idle.json"
+OUT=$(run_preflight); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+check "T32 RUN-IDLE verdict (litter-only signals dir does not block idle)" "$([ "$VERDICT" = "RUN-IDLE" ] && echo true || echo false)"
+check "T32 RUN-IDLE task_claim called exactly 3x (no drain-signals calls)" "$([ "$(log_count task_claim)" -eq 3 ] && echo true || echo false)"
 
 # ── Summary ────────────────────────────────────────────────────────────────────
 echo ""
