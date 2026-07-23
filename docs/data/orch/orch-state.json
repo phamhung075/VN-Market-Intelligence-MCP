@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "FIX-BASE-RATE-COMPUTATION-CRON-DEAD flipped to REVIEW by dev-mcp-server — awaiting QA.",
-    "updated_at": "2026-07-23T22:34:18Z",
-    "updated_by": "dev-mcp-server"
+    "status": "in_progress",
+    "active_task_id": "FACTORY-RAG-confidence-impact-or-00-mask",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-RAG-confidence-impact-or-00-mask — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-23T22:45:36Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6169,15 +6169,6 @@
         "status": "BLOCKED",
         "title": "FIX-ALERT-OPEN-ZERO-PRICE-RACE — bbAlertScanJob/taAlertScanJob fire giá=0 BB-breakout + single-digit RSI (3.7-11.9) at 02:00-02:15Z market open, self-normalizing to RSI 35-48 by 06:08Z.",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-ALERT-OPEN-ZERO-PRICE-RACE"
-      },
-      {
-        "title": "Fix `or 0.0` truthiness mask on confidence/impact_score in rag _dedup_and_trim",
-        "priority": "P2",
-        "zone": "rag-service",
-        "type": "FACTORY",
-        "status": "BACKLOG",
-        "id": "FACTORY-RAG-confidence-impact-or-00-mask",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-RAG-confidence-impact-or-00-mask"
       },
       {
         "title": "Remove 2 committed .bak dead-code files from the interface zone (+ repo-root .bak)",
@@ -14337,9 +14328,25 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-23T21:45:43Z",
+    "last_triaged_at": "2026-07-23T22:45:36Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "title": "Fix `or 0.0` truthiness mask on confidence/impact_score in rag _dedup_and_trim",
+        "priority": "P2",
+        "zone": "rag-service",
+        "type": "FACTORY",
+        "status": "IN_PROGRESS",
+        "id": "FACTORY-RAG-confidence-impact-or-00-mask",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-RAG-confidence-impact-or-00-mask",
+        "promoted_at": "2026-07-23T22:45:36Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-23T22:45:37Z",
+        "claimed_at": "2026-07-23T22:45:36Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
