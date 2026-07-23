@@ -387,12 +387,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "ALT-FUNC-02-FIX",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of ALT-FUNC-02-FIX — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-23T15:27:04Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "updated_at": "2026-07-23T15:33:00Z",
+    "updated_by": "dev-mcp-server"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -13802,6 +13801,33 @@
         "completed_at": "2026-07-23T15:03:44Z",
         "completed_by": "dev-mcp-server",
         "status_note": "MD-FUNC-01-FIX: verification-only, no code change needed. get_market_snapshot vn_index{price,change_pct,direction} struct already shipped 815ccaedd/ddc36452e (2026-06-16), predates running mcp-server image (built 2026-07-22) -- live in production. Root-cause check: price/change_pct read from fetchVnIndex(\"VNINDEX\") real VNDirect vnmarket_prices fetch; direction dynamically derived from changePct sign (not hardcoded). Live gateway verification (mcp-call.sh get_market_snapshot {}): vn_index:{price:1699.38, change_pct:1.85, direction:\"up\"} -- all 3 fields non-null, plausible vs same-payload breadth block (189 adv/122 dec). Targeted test 1982-quality-burndown-CHIJ.test.ts MD-FUNC-01 section 18/18 pass; market-tool-adjacent files 83/84 pass (1 pre-existing skip). bun tsc --noEmit clean. Full suite 14679 pass/40 skip/42 fail/1 error (1214 files) -- fail count matches documented 41-42 pre-existing baseline (_deprecated/logVpsPush/timeout classes), zero source files touched this task. Tool count 184 / cronJobCount 88 unaffected."
+      },
+      {
+        "id": "ALT-FUNC-02-FIX",
+        "title": "Fix ALT-FUNC-02: Does get_alert_accuracy return an accuracy rate between 0 and 1",
+        "owner": "dev-mcp-server",
+        "status": "REVIEW",
+        "type": "fix",
+        "size": "S",
+        "priority": "normal",
+        "zone": "dev-mcp-server",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#ALT-FUNC-02-FIX",
+        "promoted_at": "2026-07-23T15:27:04Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-23T15:32:54Z",
+        "claimed_at": "2026-07-23T15:27:04Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "branch": null,
+        "commit": "6fed9dc8bcd21752729363d0fbcd97060592535a",
+        "files": [
+          "docs/agent-memory/notebooks/dev-mcp-server.md",
+          "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md"
+        ],
+        "completed_at": "2026-07-23T15:32:54Z",
+        "completed_by": "dev-mcp-server",
+        "status_note": "ALT-FUNC-02-FIX: verification-only, no code change needed. get_alert_accuracy top-level accuracy_rate:number|null already shipped 815ccaedd (2026-06-10T17:24Z, comment ALT-FUNC-02 FIX); null only when hits+misses===0 (insufficientSample data-gap case), tested (1982-quality-burndown-CHIJ.test.ts FIX-3, 3 cases). Backlog row created 2026-06-10T09:27Z -- ~8h BEFORE the fix landed -- a stale pre-fix snapshot BOUNDED-1 auto-picked 6 weeks later; docs/data/quality-checklist.json ALT-FUNC-02 already status=PASS since 2026-06-10T18:00Z citing the same commit. Live gateway verification (mcp-call.sh get_alert_accuracy {}): accuracy_rate:1, insufficientSample:false, scored_pct:19, total:628, hits:110, misses:0, unknowns:518 -- genuine 0..1 rate, AC satisfied live. Targeted tests 46/46 pass (1982-quality-burndown-CHIJ FIX-3 + 183-alert-accuracy + 1847d-D-alert-tools). bun tsc --noEmit clean. Tool count 184 / cronJobCount 88 unaffected (gen-project-stats probe). git status apps/mcp-server/ clean -- zero source files touched."
       }
     ],
     "qa": [],
@@ -13823,24 +13849,7 @@
     },
     "last_triaged_at": "2026-07-23T15:27:04Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "ALT-FUNC-02-FIX",
-        "priority": "normal",
-        "size": "S",
-        "status": "IN_PROGRESS",
-        "title": "Fix ALT-FUNC-02: Does get_alert_accuracy return an accuracy rate between 0 and 1",
-        "type": "fix",
-        "zone": "dev-mcp-server",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#ALT-FUNC-02-FIX",
-        "promoted_at": "2026-07-23T15:27:04Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-23T15:27:05Z",
-        "claimed_at": "2026-07-23T15:27:04Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
