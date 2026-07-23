@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "pm",
-    "next_action": "UC-CCA-P4 DONE_VERIFIED — claim-truth-gate coverage close verified (docs-only, 5-point check + qa-responder gap confirmed genuine). PM: mark done, unblock downstream.",
-    "updated_at": "2026-07-23T03:52:01Z",
-    "updated_by": "qa"
+    "status": "in_progress",
+    "active_task_id": "UC-MDH-P3",
+    "next_agent": "qa",
+    "next_action": "QA review UC-MDH-P3 (REVIEW lane) — memory-prune-sweep.sh + code-janitor wiring, commits d88c1bc6d/2d5cfbf80",
+    "updated_at": "2026-07-23T04:36:10Z",
+    "updated_by": "developer"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -4527,25 +4527,6 @@
         "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
         "deploy_gate": "user-approved-off-market",
         "deploy_gate_note": "ops-rebuild-gated — lands only after a user-approved off-market deploy; next_agent=ba already holds it OUT of BOUNDED-1 auto-pickup, so no supervised flag needed. Bumped P2->P1 with the band 2026-07-17T04:54:03Z"
-      },
-      {
-        "id": "UC-MDH-P3",
-        "type": "FIX",
-        "title": "Add scripts/agents-flow/memory-prune-sweep.sh wired into code-janitor (sessions >14d, dead health rechecks, legacy session-logs, root debris)",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "M",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "RESCOPE",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P3",
-        "note": "SCOPE=verifier Rescope note. File-ops ONLY (no orch-state access): archive sessions/*.md >14d (only *.md, keep archive/ + *.log writers), delete team-tool-recheck >30d + write ONE idempotent payload routed to PO for the RemoteTrigger-dead recheck decision, fold session-logs/ into archive, move scheduled-task-execution files. FLOW step (not script) appends the signal_queue row via signal-dashboard SKILL. Commit explicit old+new paths.",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "priority_bumped_from": "P2",
-        "priority_bumped_at": "2026-07-17T04:54:03Z",
-        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17"
       },
       {
         "id": "UC-MDH-P4",
@@ -9548,9 +9529,9 @@
         "priority": "high",
         "size": "M",
         "zone": "multi",
-        "owner": "architect",
-        "next_agent": "architect",
-        "plan_only": true,
+        "owner": "agent-father",
+        "next_agent": "agent-father",
+        "plan_only": false,
         "supervised": true,
         "created_at": "2026-07-21T14:23:45Z",
         "created_by": "po-s147-auditor-fp-converge-drain",
@@ -9580,7 +9561,9 @@
         "po_escalation_20260723": "ESCALATION+COMMISSION (PO CONVERGE drain 2026-07-23T03:47Z). WORSENING confirmed: A-30 auto-escalated benign in-band mem (91.25-92.50%, within the 85-97.8% GC-sawtooth band) to CRITICAL microservice_degraded (sys-20260723T034235-2a44 to=po) + fired Telegram, on a 2-point 30-min delta. RAW verify 03:43Z: cgroup MemPerc 94.98% but VmRSS 2,843,808kB=90.4% of 3GiB cap (cgroup counts reclaimable page-cache); VmHWM 2,971,264kB>VmRSS => GC reclamation ALREADY occurred (sawtooth, not monotonic climb); :3000/health=200 in 2.35ms; OOMKilled=false; RestartCount=0; cpu 107.82% (workload-driven bump). NONE of the 4 genuine tripwires met. Categorically distinct from the 07-22 REAL trip (99.81% + ~10-probe unresponsiveness + gateway EOF). recurring_bug_count 3->4. This row was minted 07-21T14:23Z but sat DORMANT in BACKLOG (plan_only+supervised) while the FP re-emitted and worsened -> the convergence failure is DORMANCY, not absence-of-mint (memory feedback_auditor_mcpserver_a21_a30 body still reads 'no mint' but the board contradicts it). NOW COMMISSIONED: PO routes to architect this cycle to design the predicate+dedup+CRITICAL-gate brief -> agent-father implements. NO ops route, NO restart/rebuild (user-gated; interim rebuild-cron clears cap). NO duplicate mint (prior-art: this IS the tracked converge row).",
         "commissioned_at": "2026-07-23T03:47Z",
         "commissioned_by": "po-converge-drain-20260723",
-        "updated_at": "2026-07-23T03:52:23Z"
+        "updated_at": "2026-07-23T04:21:07Z",
+        "design_brief_ref": "docs/architecture-briefs/2026-07-23-auditor-a30-reclamation-gate-a21-windowed-restart.md @82a8367ff",
+        "po_advance_20260723": "ADVANCE+APPROVE (PO focused converge drain 2026-07-23T04:21:06Z). agents-architect DESIGN hop COMPLETE — brief docs/architecture-briefs/2026-07-23-auditor-a30-reclamation-gate-a21-windowed-restart.md committed @82a8367ff (detection-layer ONLY: probe.sh + flow/tier1-probe.md; reuses unmodified scripts/audits/verify-a30-mcp-memory-reclamation.sh 6-probe/65s gate + VmHWM>VmRSS veto; A-21 re-modeled as windowed crash-only cron_job_runs query). Row was NOT advanced (stuck next_agent=architect) — silent-stall corrected here in place, NO re-mint. next_agent architect->agent-father, owner->architect->agent-father, plan_only true->false (implementation AUTHORIZED under supervision). supervised stays true (blocks BOUNDED-1 idle auto-pickup; router dispatches agent-father explicitly this cycle). PROCEED NOW not scheduled: design bounded+low-risk, recurring_bug_count=4, SOFT DEADLINE = implement before next mem-refill past 85% (mcp-server just restarted mem~27%, A-30 dormant, hours out) to stop the 5th FP recurrence. Change zone honored: docs/agents/system-auditor/* only, NO app code, NO deploy/restart (user-gated). E-3 append-always contract PRESERVED per brief item 3 (structural: benign readings never reach emit-audit-signal.sh)."
       },
       {
         "id": "FIX-OHLCV-HISTORY-PLANE-EMPTY-LIVE-PLANE-HEALTHY",
@@ -13445,6 +13428,37 @@
         "updated_at": "2026-07-22T02:18:01Z",
         "owner": "agent-father",
         "next_agent": "agent-father"
+      },
+      {
+        "id": "UC-MDH-P3",
+        "type": "FIX",
+        "title": "Add scripts/agents-flow/memory-prune-sweep.sh wired into code-janitor (sessions >14d, dead health rechecks, legacy session-logs, root debris)",
+        "status": "REVIEW",
+        "priority": "P1",
+        "size": "M",
+        "zone": "cross-service/",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "RESCOPE",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P3",
+        "note": "SCOPE=verifier Rescope note. File-ops ONLY (no orch-state access): archive sessions/*.md >14d (only *.md, keep archive/ + *.log writers), delete team-tool-recheck >30d + write ONE idempotent payload routed to PO for the RemoteTrigger-dead recheck decision, fold session-logs/ into archive, move scheduled-task-execution files. FLOW step (not script) appends the signal_queue row via signal-dashboard SKILL. Commit explicit old+new paths.",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "priority_bumped_from": "P2",
+        "priority_bumped_at": "2026-07-17T04:54:03Z",
+        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
+        "promoted_at": "2026-07-23T04:15:27Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "updated_at": "2026-07-23T04:36:10Z",
+        "claimed_at": "2026-07-23T04:18:03Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "owner": "developer",
+        "next_agent": "qa",
+        "dev_result": "DONE: memory-prune-sweep.sh shipped per rescope spec. 4 idempotent file-ops sweeps (sessions/*.md>14d archive, health/team-tool-recheck-*.md>30d delete+PO payload, session-logs/ fold, scheduled-task-execution-*.md relocate) — never touches orch-state.json. Wired into code-janitor/flow/main.md; FLOW owns the signal_queue append (SSOT-W1 boundary documented). .retention.md extended, dev-standards.md CANONICAL pointer added. memory-prune-sweep.test.sh 12/12 GREEN (sandboxed via AGENT_MEMORY_ROOT/MPS_SIGNALS_DIR). Ran live once: 15 sessions archived, 46 stale health-recheck deleted, 5 session-logs folded, 3 scheduled-task-execution relocated, 1 PO payload written; reran clean no-op. Shell-only, no .ts touched, main-only.",
+        "dev_commit": "d88c1bc6d (impl+sweep+docs) + 2d5cfbf80 (notebook)",
+        "dev_completed_at": "2026-07-23T04:36:10Z",
+        "status_note": "UC-MDH-P3 implemented per PO rescope spec (arch brief 2026-07-12 #memory-docs-hygiene-P3). Journal: docs/agent-memory/decisions/sprint-ULTRACODE-AUDIT-FIXALL-developer.md STEP developer-S17. PO decision payload pending pickup: docs/signals/janitor-health-recheck-writer-retired-2026-07-23.json (replace-vs-retire team-tool-recheck writer). Flagged not fixed: graphify-out/graph.json 2mo stale — scoped update disproportionate to this fix; left for PO/router."
       }
     ],
     "qa": [],
@@ -13464,7 +13478,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-23T03:19:18Z",
+    "last_triaged_at": "2026-07-23T04:15:27Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": []
   },
