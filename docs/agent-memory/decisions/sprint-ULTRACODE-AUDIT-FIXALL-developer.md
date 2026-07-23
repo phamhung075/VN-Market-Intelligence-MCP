@@ -297,3 +297,18 @@ live once (15 archived, 46 deleted, 5 folded, 3 relocated, 1 PO payload) + reran
 owns signal_queue append) — implemented exactly that boundary, reused AGENT_MEMORY_ROOT env-var
 name already established by the sibling P1 task for the same directory family (test isolation).
 **why-change:** No change from rescope plan.
+
+### STEP developer-S18 · developer · 2026-07-23T05:40:00Z
+**task-id:** UC-MDH-P4
+**what-done:** New scripts/agents-flow/decision-journal-archive.sh (longest-match closed-vs-active
+sprint-id resolution, stdin + --all modes) + paired .test.sh (26/26 PASS, sandboxed); wired as
+pm/task-archive.md Step 5.5 + Step6 pathspec extension; CANONICAL pointer in dev-standards.md.
+**what-considered:**
+- Bare prefix glob vs longest-match: rescope names a live collision (OHLCV-UNIT-CONTAM prefixes
+  OHLCV-UNIT-CONTAM-WHOLEROW-LT1000) — longest-match only, verified against the real repo pair.
+- Added --dry-run (not in rescope contract) to safely verify live backfill counts without ever
+  mutating docs/agent-memory/decisions/ — matches orch-cold-evict.sh's existing --dry-run pattern.
+**why-decision:** Read-only verification of the ~281-file backfill claim was needed before writing
+docs/WORK.md; a real mv/git-mv dry-run was the only way to avoid asserting an unverified number.
+**why-change:** Did not execute the one-time live backfill (mutating, out of this FIX's scope) —
+dry-run confirmed 202 eligible (git status/count unchanged), left as a follow-up PO-routed action.

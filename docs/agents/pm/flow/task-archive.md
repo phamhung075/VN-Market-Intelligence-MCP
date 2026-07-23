@@ -1,3 +1,4 @@
+<!-- size-justification: 186L — sequential eviction+archive sub-flow (sprint eviction, bloat verify, commit-mutex, signal closure, cold-evict, post-verify, decision-journal-archive pointer, commit, release); splitting fragments one atomic held-mutex operation. UC-MDH-P4 2026-07-23: pre-eviction id capture + Step 5.5 decision-journal-archive pointer + Step 6 pathspec extension (+17L total) — was a promised-but-missing archival step (docs/data/file-size-caps.json already claimed "Archived → docs/archive/decisions/ at sprint close by pm"); this wires it in for real. -->
 # PM — Task Archive Sub-Flow
 
 **Trigger:** terminal-lane bloat — `done[] > 10` OR `done_verified[] > 0`
@@ -30,6 +31,11 @@
 ## docs_required
 > Read in parallel before Step 1.
 - `docs/data/orch/orch-state.json` — structural sentinel + lane counts via jq slice only (NEVER cat full file to model context — `docs/standards/orch-state-access.md §1`)
+
+**Pre-eviction sprint-id capture** (feeds Step 5.5's decision-journal-archive pointer below — must run BEFORE either eviction path so the later diff is accurate):
+```bash
+PRE_EVICT_ACTIVE_IDS=$(jq -r '.task_board.active_sprints[]?.id // empty' "$PROJECT_ROOT/docs/data/orch/orch-state.json" | sort -u)
+```
 
 ## § Sprint Eviction (runs before done/done_verified eviction)
 
@@ -146,11 +152,22 @@
    echo "[pm/task-archive] Post-eviction OK — done=$DONE_POST, done_verified=$DV_POST"
    ```
 
+5.5. **Archive newly-closed sprint journals** (pointer only — full contract in `scripts/agents-flow/decision-journal-archive.sh`; sprints close via BOTH §Sprint Eviction above AND Step 4's `orch-cold-evict.sh`, so this diff must run here, after both, not after the §Sprint Eviction orch-apply block):
+   ```bash
+   POST_EVICT_ACTIVE_IDS=$(jq -r '.task_board.active_sprints[]?.id // empty' "$PROJECT_ROOT/docs/data/orch/orch-state.json" | sort -u)
+   comm -23 <(echo "$PRE_EVICT_ACTIVE_IDS") <(echo "$POST_EVICT_ACTIVE_IDS") \
+     | bash "$PROJECT_ROOT/scripts/agents-flow/decision-journal-archive.sh"
+   # Read-only w.r.t. orch-state (jq queries only); moves land via git mv — ride the SAME commit at Step 6.
+   ```
+
 6. **Commit (mutex still held)**:
    ```bash
    YYYYMM=$(date -u +%Y-%m)
    # own_paths: docs/data/orch/orch-state.json + docs/data/orch/archive/YYYY-MM.json
-   git add docs/data/orch/orch-state.json "$PROJECT_ROOT/docs/data/orch/archive/${YYYYMM}.json"
+   # + decision-journal moves from Step 5.5 (old+new paths — pathspec must cover
+   #   renames per feedback_pathspec_commit_drops_rename_deletion)
+   git add docs/data/orch/orch-state.json "$PROJECT_ROOT/docs/data/orch/archive/${YYYYMM}.json" \
+     "$PROJECT_ROOT/docs/agent-memory/decisions/" "$PROJECT_ROOT/docs/archive/decisions/"
    git commit -m "chore(tasks): cold-evict ${DV_N} done_verified + excess done tasks → archive/${YYYYMM}.json"
    ```
 
