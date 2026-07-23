@@ -387,11 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "updated_at": "2026-07-23T13:57:41Z",
-    "updated_by": "developer"
+    "status": "in_progress",
+    "active_task_id": "TE-T33",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of TE-T33 — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-23T14:17:32Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -5344,28 +5345,6 @@
         "next_agent": "agent-father",
         "po_routing_ruling_20260721": "PO ARTIFACT-CLASS ROUTING RULING 2026-07-21T18:42Z. Rule: routing follows ARTIFACT CLASS, not directory. Any row whose deliverable is instruction-prose that an agent LOADS AND EXECUTES — .claude/agents/**, docs/agents/** (init/flow/knowledge/tools-package), .claude/skills/**/SKILL.md — routes to agent-father. Executable code (apps/**, scripts/**), codegen-from-registry, and data/root-config (docs/data/**, CLAUDE.md) route to zone-matched dev-* or developer. Rationale: for this system a flow doc IS the executable source; agent-father is already sole owner of agent-file lifecycle (dispatch/SKILL.md:48) and of NEW cron skill files (:50), and board precedent has 5/5 pre-existing docs/agents/ rows routed to agent-father/agents-architect/po and 0 to developer. Precedent for SKILL.md specifically: docs/signals/processed/dev-team-20260716T102429Z-autolaunch-safety-hold-uc-asl-p6.json already routed a signal-dashboard SKILL.md edit to agent-father as 'the factory rule'. ROOT CAUSE this closes: .claude/skills/zone-detect/SKILL.md resolves ONLY dev-<service> (Tier-1/2, needs apps/<service>/-shaped zone) or generic developer (Tier-3 fallback) — it has NO path to agent-father, so any docs/agents/ or .claude/skills/ row reaching execute-tier with next_agent unset gets the 'developer' placeholder and mis-routes. EXPECTED SIDE EFFECT (do NOT 'fix' this): next_agent=agent-father does not match the dev-role pattern ^dev(-|$)|^developer$, so the BOUNDED-1 NON-DEV-NEXT_AGENT gate (dev-team/flow/main.md:518) now WITHHOLDS these rows from unattended idle auto-pickup. That is the intended outcome — they require deliberate router dispatch to agent-father, not silent promotion to a generic developer.",
         "updated_at": "2026-07-21T18:44:02Z"
-      },
-      {
-        "id": "TE-T33",
-        "title": "T-33 Archival policy for docs/handoffs (11MB/974 files), decisions/ (3.8MB), sessions/ — rotate >30d via janitor cron [~1-3k tok/day + caps growth]",
-        "owner": "developer",
-        "status": "BACKLOG",
-        "type": "CLEAN",
-        "size": "S",
-        "priority": "P2",
-        "wave": 4,
-        "est_saving": "~1-3k tok/day + caps unbounded growth curve",
-        "zone": "cross-service/",
-        "sprint": "TOKEN-ECONOMY-AUDIT",
-        "depends": [],
-        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-33",
-        "note": "3 write-heavy dirs grow unboundedly (707/974 handoffs >30d). Add monthly cold-archive sweep to code-janitor 6h cron (guard: 1st of month): mv >30d + no open task_board ref -> archive/YYYY-MM/. Rotate po-decisions.md at 200L. Update DJ-GATE-1 grep to exclude archive/. Mirrors existing orch archive/ precedent.",
-        "audit_ref": {
-          "audit": "ultracode-2026-07-12",
-          "verdict": "memory-docs-hygiene-P4 coordination",
-          "note": "TE-T33 decisions/ leg is SUPERSEDED by UC-MDH-P4 (decision-journal-archive.sh, longest-match closed-only). mtime>30d rotation must NOT be applied to decisions/ (would move open-sprint journals).",
-          "ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P4"
-        }
       },
       {
         "id": "ALPHA-S2-RAG-FTS-REBUILD-CRON",
@@ -13758,9 +13737,38 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-23T13:47:41Z",
+    "last_triaged_at": "2026-07-23T14:17:32Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "TE-T33",
+        "title": "T-33 Archival policy for docs/handoffs (11MB/974 files), decisions/ (3.8MB), sessions/ — rotate >30d via janitor cron [~1-3k tok/day + caps growth]",
+        "owner": "developer",
+        "status": "IN_PROGRESS",
+        "type": "CLEAN",
+        "size": "S",
+        "priority": "P2",
+        "wave": 4,
+        "est_saving": "~1-3k tok/day + caps unbounded growth curve",
+        "zone": "cross-service/",
+        "sprint": "TOKEN-ECONOMY-AUDIT",
+        "depends": [],
+        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-33",
+        "note": "3 write-heavy dirs grow unboundedly (707/974 handoffs >30d). Add monthly cold-archive sweep to code-janitor 6h cron (guard: 1st of month): mv >30d + no open task_board ref -> archive/YYYY-MM/. Rotate po-decisions.md at 200L. Update DJ-GATE-1 grep to exclude archive/. Mirrors existing orch archive/ precedent.",
+        "audit_ref": {
+          "audit": "ultracode-2026-07-12",
+          "verdict": "memory-docs-hygiene-P4 coordination",
+          "note": "TE-T33 decisions/ leg is SUPERSEDED by UC-MDH-P4 (decision-journal-archive.sh, longest-match closed-only). mtime>30d rotation must NOT be applied to decisions/ (would move open-sprint journals).",
+          "ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P4"
+        },
+        "promoted_at": "2026-07-23T14:17:32Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-23T14:17:33Z",
+        "claimed_at": "2026-07-23T14:17:32Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
