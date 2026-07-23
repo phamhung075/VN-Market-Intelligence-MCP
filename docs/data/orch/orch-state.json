@@ -1992,6 +1992,17 @@
         "severity": "WARN",
         "status": "NEW",
         "payload_ref": null
+      },
+      {
+        "id": "sys-20260723T034235-2a44",
+        "ts": "2026-07-23T03:42:35Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "mcp-server memory 92.50% (threshold 85%)",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-22T15:10:08Z",
