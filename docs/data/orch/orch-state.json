@@ -387,11 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-07-23T01:50:47Z",
-    "updated_by": "qa",
-    "active_task_id": null,
-    "next_agent": "pm"
+    "status": "in_progress",
+    "active_task_id": "UC-CCA-P6-NBWRITE",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of UC-CCA-P6-NBWRITE — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-23T02:15:43Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -4451,28 +4452,6 @@
         "created_at": "2026-07-13T19:31:11Z",
         "created_by": "po",
         "next_agent": "ba",
-        "priority_bumped_from": "P2",
-        "priority_bumped_at": "2026-07-17T04:54:03Z",
-        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17"
-      },
-      {
-        "id": "UC-CCA-P6-NBWRITE",
-        "type": "FIX",
-        "title": "Single notebook-write path: remove the 4 inline AC-3 copies + resolve the fb OVERWRITE/APPEND contradiction (Piece 1)",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "M",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "RESCOPE",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#cowork-cycle-agents-P6",
-        "note": "SCOPE=verifier Rescope note PIECE 1 (not covered by any queued row). Replace 4 inline AC-3 compose blocks (news-scout, chef, bctc, daily-predict) with the notebook-write skill pointer + a <=10L per-agent template; fix fb-market-poster main.md OVERWRITE->APPEND-class (stops wiping its permanent Lessons section). PIECE 2 (no-op rule, skip-parenthetical deletion, fb cowork-end-cycle) folds into queued TE-T05 (see TE-T05 audit_ref).",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "related": [
-          "TE-T05"
-        ],
         "priority_bumped_from": "P2",
         "priority_bumped_at": "2026-07-17T04:54:03Z",
         "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17"
@@ -13493,9 +13472,38 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-23T00:19:41Z",
+    "last_triaged_at": "2026-07-23T02:15:43Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "UC-CCA-P6-NBWRITE",
+        "type": "FIX",
+        "title": "Single notebook-write path: remove the 4 inline AC-3 copies + resolve the fb OVERWRITE/APPEND contradiction (Piece 1)",
+        "status": "IN_PROGRESS",
+        "priority": "P1",
+        "size": "M",
+        "zone": "cross-service/",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "RESCOPE",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#cowork-cycle-agents-P6",
+        "note": "SCOPE=verifier Rescope note PIECE 1 (not covered by any queued row). Replace 4 inline AC-3 compose blocks (news-scout, chef, bctc, daily-predict) with the notebook-write skill pointer + a <=10L per-agent template; fix fb-market-poster main.md OVERWRITE->APPEND-class (stops wiping its permanent Lessons section). PIECE 2 (no-op rule, skip-parenthetical deletion, fb cowork-end-cycle) folds into queued TE-T05 (see TE-T05 audit_ref).",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "related": [
+          "TE-T05"
+        ],
+        "priority_bumped_from": "P2",
+        "priority_bumped_at": "2026-07-17T04:54:03Z",
+        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
+        "promoted_at": "2026-07-23T02:15:43Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "updated_at": "2026-07-23T02:15:44Z",
+        "claimed_at": "2026-07-23T02:15:43Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
