@@ -387,11 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-07-23T12:34:28Z",
-    "updated_by": "developer",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "active_task_id": "TE-T24",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of TE-T24 — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-23T12:48:32Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -5173,22 +5174,6 @@
         "next_agent": "agent-father",
         "po_routing_ruling_20260721": "PO ARTIFACT-CLASS ROUTING RULING 2026-07-21T18:42Z. Rule: routing follows ARTIFACT CLASS, not directory. Any row whose deliverable is instruction-prose that an agent LOADS AND EXECUTES — .claude/agents/**, docs/agents/** (init/flow/knowledge/tools-package), .claude/skills/**/SKILL.md — routes to agent-father. Executable code (apps/**, scripts/**), codegen-from-registry, and data/root-config (docs/data/**, CLAUDE.md) route to zone-matched dev-* or developer. Rationale: for this system a flow doc IS the executable source; agent-father is already sole owner of agent-file lifecycle (dispatch/SKILL.md:48) and of NEW cron skill files (:50), and board precedent has 5/5 pre-existing docs/agents/ rows routed to agent-father/agents-architect/po and 0 to developer. Precedent for SKILL.md specifically: docs/signals/processed/dev-team-20260716T102429Z-autolaunch-safety-hold-uc-asl-p6.json already routed a signal-dashboard SKILL.md edit to agent-father as 'the factory rule'. ROOT CAUSE this closes: .claude/skills/zone-detect/SKILL.md resolves ONLY dev-<service> (Tier-1/2, needs apps/<service>/-shaped zone) or generic developer (Tier-3 fallback) — it has NO path to agent-father, so any docs/agents/ or .claude/skills/ row reaching execute-tier with next_agent unset gets the 'developer' placeholder and mis-routes. EXPECTED SIDE EFFECT (do NOT 'fix' this): next_agent=agent-father does not match the dev-role pattern ^dev(-|$)|^developer$, so the BOUNDED-1 NON-DEV-NEXT_AGENT gate (dev-team/flow/main.md:518) now WITHHOLDS these rows from unattended idle auto-pickup. That is the intended outcome — they require deliberate router dispatch to agent-father, not silent promotion to a generic developer.",
         "updated_at": "2026-07-21T18:44:02Z"
-      },
-      {
-        "id": "TE-T24",
-        "title": "T-24 Context-bloat gate counts LINES only: add byte/token cap (mega-line evasion protection)",
-        "owner": "developer",
-        "status": "BACKLOG",
-        "type": "SPRINT-M",
-        "size": "M",
-        "priority": "P2",
-        "wave": 4,
-        "est_saving": "Preventive — protects all P1 recoveries from regrowth",
-        "zone": "cross-service/",
-        "sprint": "TOKEN-ECONOMY-AUDIT",
-        "depends": [],
-        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-24",
-        "note": "GOVERNANCE (land after P1 extractions so it locks them in). context-bloat-backstop.sh measures only wc -l; agents evade via 1500-2600-char lines (po main.md 275L/17.4k tok). Add wc -c predicate (cap = MATCHED_CAP x 60 bytes), same settle-window, reason='byte-cap'. Extend backstop test w/ mega-line fixture. Root-cause enabler of the po/changelog bloat."
       },
       {
         "id": "TE-T25",
@@ -13684,9 +13669,32 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-23T12:18:11Z",
+    "last_triaged_at": "2026-07-23T12:48:32Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "TE-T24",
+        "title": "T-24 Context-bloat gate counts LINES only: add byte/token cap (mega-line evasion protection)",
+        "owner": "developer",
+        "status": "IN_PROGRESS",
+        "type": "SPRINT-M",
+        "size": "M",
+        "priority": "P2",
+        "wave": 4,
+        "est_saving": "Preventive — protects all P1 recoveries from regrowth",
+        "zone": "cross-service/",
+        "sprint": "TOKEN-ECONOMY-AUDIT",
+        "depends": [],
+        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-24",
+        "note": "GOVERNANCE (land after P1 extractions so it locks them in). context-bloat-backstop.sh measures only wc -l; agents evade via 1500-2600-char lines (po main.md 275L/17.4k tok). Add wc -c predicate (cap = MATCHED_CAP x 60 bytes), same settle-window, reason='byte-cap'. Extend backstop test w/ mega-line fixture. Root-cause enabler of the po/changelog bloat.",
+        "promoted_at": "2026-07-23T12:48:32Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-23T12:48:33Z",
+        "claimed_at": "2026-07-23T12:48:32Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
