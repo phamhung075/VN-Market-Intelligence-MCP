@@ -1,0 +1,25 @@
+{
+  "from": "context-bloat-backstop-hook",
+  "to": "claude-manager-helper",
+  "type": "context_bloat_breach",
+  "priority": "high",
+  "createdAt": "2026-07-24T02:09:00Z",
+  "payload": {
+    "file": "docs/agent-memory/notebooks/alert-commander.md",
+    "line_count": 173,
+    "cap": 200,
+    "byte_count": 64353,
+    "byte_cap": 12000,
+    "class": "agent-notebook",
+    "reason": "byte-cap",
+    "overage": 0,
+    "byte_overage": 52353,
+    "action_required": "prune_or_split"
+  },
+  "_processed": {
+    "fingerprint": "d7744f72287a1502f2b00a0b2df84f12ebffde77d3895414b5089b5b6bf6f3de",
+    "processedAt": "2026-07-24T02:14:41Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
