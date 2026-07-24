@@ -1,0 +1,28 @@
+{
+  "ticker": "VIX",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Chung khoan - moi gioi, tu doanh, ngan hang dau tu (VIX Securities)",
+  "customer": "Nha dau tu ca nhan/to chuc trong nuoc, khach hang moi gioi ban le",
+  "ops": "BCTC goc chua co du lieu (Chua co du lieu BCTC) - chi co ty le so sanh nganh: PE 5.5x (DISCOUNT -63% vs median 14.6x), ROE 28.9% (tren median 10.0%). Gia +6.6% hom nay (dong ngoai +249K cp net, manh hon nganh)",
+  "mgmt": "Khong co du lieu quan tri moi; theo doi luan phien (rotation touch), khong mo rong cum bi chan",
+  "fundamentals": {
+    "data_status": "Chua co du lieu BCTC - blocked cluster (unchanged)",
+    "sector_pe": 5.5,
+    "sector_pe_verdict": "DISCOUNT",
+    "sector_roe_pct": 28.9
+  },
+  "esc_gate": {
+    "note": "ESC gate not evaluated - no BCTC extraction available"
+  },
+  "cycle_id": "20260724-0000",
+  "source": "bctc-analyst-slot-4",
+  "_processed": {
+    "fingerprint": "f85f065ae77f4c17fecc1d94ea4a52b5ab8372e11e966bbcb86217df1d6b70bb",
+    "processedAt": "2026-07-24T00:14:39Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

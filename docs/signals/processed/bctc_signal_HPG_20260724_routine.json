@@ -1,0 +1,29 @@
+{
+  "ticker": "HPG",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Steel production (construction steel, HRC), steel pipe, agriculture, real estate side businesses",
+  "customer": "Construction contractors, steel distributors, downstream manufacturers (domestic + export)",
+  "ops": "Op. profit=0 (data defect, unaudited), ROE 6.5% (bctc) / 12.7% (sector-calc basis), EY spread FAIR (PE 14.2x DISCOUNT -57% vs sector 32.6x, PB PREMIUM +93%)",
+  "mgmt": "Kinh Dich Du(16)/THAN TRONG ~43% holds n=3 consecutive cycles (since 07-23 15:10 reversal) - divergence NOT corroborated by unchanged strong Net Profit 9,055.9 ty VND; flagged to alert-commander (fundamental_validation id=9118, critic 0.8)",
+  "fundamentals": {
+    "net_revenue_ty_vnd": 52900.8,
+    "net_profit_ty_vnd": 9055.9,
+    "operating_profit_defect": "reported as 0 - known data quality issue, not agent-caused",
+    "byte_identical_vs_prior_cycles": true,
+    "balance_sheet_imbalance_pct": 0
+  },
+  "esc_status": "ESC-1 FALSE. ESC-2 PASS (0% imbalance). ESC-3 DATA-COVERAGE-LIMITED (2/4Q cash-flow) - guard TTL lapsed this cycle, data-coverage-gap re-emitted to ops. ESC-4 SKIPPED (op_profit=0 defect blocks non_operating_share calc). ESC-5 FALSE (get_bctc_report_id confirmed-blind, 7th consecutive cycle, dedup-checked BUG telegram sent msg 3894). E1: SKIPPED (byte-identical, cache-equivalent).",
+  "data_quality_note": "VPS bctc push last known-good 2026-07-20T01:26:41Z (stale_age_hours ~95h vs SLA 48h) - last-known-good data, may not reflect newest filing.",
+  "cycle": "c118",
+  "generated_at": "2026-07-24T00:10:00Z",
+  "source": "bctc-analyst-slot-4",
+  "_processed": {
+    "fingerprint": "7b809fef62470451f092c70a2bb9ad4b87d12c4dd90634b8fc145bb63447b85d",
+    "processedAt": "2026-07-24T00:14:39Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
