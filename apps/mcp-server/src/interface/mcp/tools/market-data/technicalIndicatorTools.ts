@@ -36,6 +36,7 @@ import {
   computeTAIndicators,
   type ComputeTAResponse,
 } from "../../../../infrastructure/microservices/clients.js";
+import { getContinuityCheckedOhlcvSeries } from "../../../../application/usecases/getContinuityCheckedOhlcvSeries.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -62,12 +63,6 @@ interface LocalIndicatorResult {
   rsi14: number | null;
   macd: { line: number; signal: number; histogram: number } | null;
   bb20: { upper: number; mid: number; lower: number } | null;
-}
-
-/** One row returned by the daily-candle SQL query. */
-interface CandleRow {
-  day: string;
-  close_price: number;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -562,23 +557,21 @@ export function registerTechnicalIndicatorTools(
         // so we fetch the LATEST `lookbackDays` rows, not the OLDEST.
         // Before fix: ORDER BY date ASC LIMIT 60 → returned oldest rows (stale 2023 data ~88k).
         // After fix:  subquery DESC LIMIT ? → outer ORDER BY day ASC → latest rows (~62k).
+        // FIX-OHLCV-CORP-ACTION-CONTINUITY: route through the continuity guard
+        // instead of a raw daily_ohlcv SELECT — a corp-action boundary bar
+        // (bar-to-bar move beyond the ticker's real board limit, e.g. an
+        // ex-div/ex-rights adjustment stitched onto unadjusted history) is
+        // reconciled-or-excluded here so it can never poison RSI/MACD/BB
+        // downstream (docs/handoffs/FIX-OHLCV-SEED-CANDLE-behavioral-gate-
+        // 2026-06-16-RED.md Class 4 — live VJC example).
         let prefetchedCloses: number[] | undefined;
         let lastPrice: number | null = null;
         if (resolvedDb) {
           try {
-            const candleRows = resolvedDb.query<CandleRow, [string, number]>(
-              `SELECT day, close_price
-                 FROM (SELECT date AS day, close AS close_price
-                         FROM daily_ohlcv
-                        WHERE code = ?
-                          AND close > 0
-                        ORDER BY date DESC
-                        LIMIT ?)
-                ORDER BY day ASC`,
-            ).all(code, lookbackDays);
-            if (candleRows.length > 0) {
-              prefetchedCloses = candleRows.map((r) => r.close_price);
-              lastPrice = candleRows[candleRows.length - 1]!.close_price;
+            const { bars } = getContinuityCheckedOhlcvSeries(resolvedDb, code, lookbackDays);
+            if (bars.length > 0) {
+              prefetchedCloses = bars.map((b) => b.close);
+              lastPrice = bars[bars.length - 1]!.close;
             }
           } catch {
             // DB unavailable — Go service will use its own DB fetch
@@ -597,11 +590,11 @@ export function registerTechnicalIndicatorTools(
         // if prefetch missed (DB was unavailable during prefetch).
         if (lastPrice === null && resolvedDb) {
           try {
-            const row = resolvedDb.query<{ close_price: number }, [string]>(
-              `SELECT close AS close_price FROM daily_ohlcv
-                WHERE code = ? ORDER BY date DESC LIMIT 1`,
-            ).get(code);
-            lastPrice = row?.close_price ?? null;
+            // FIX-OHLCV-CORP-ACTION-CONTINUITY: same continuity guard as the
+            // prefetch above — a raw single-row SELECT here could still leak
+            // a discontinuous corp-action boundary bar as the reported price.
+            const { bars } = getContinuityCheckedOhlcvSeries(resolvedDb, code, lookbackDays);
+            lastPrice = bars.length > 0 ? bars[bars.length - 1]!.close : null;
           } catch {
             // Degrade gracefully — BB position % omitted from report
           }
@@ -626,19 +619,14 @@ export function registerTechnicalIndicatorTools(
               error: httpErr instanceof Error ? httpErr.message : String(httpErr),
             });
 
-            const rows = resolvedDb
-              .query<CandleRow, [string, number]>(
-                `SELECT date AS day, close AS close_price
-                   FROM daily_ohlcv
-                  WHERE code = ?
-                    AND date >= date('now', '-' || ? || ' days')
-                  ORDER BY date ASC`,
-              )
-              .all(code, lookbackDays);
+            // FIX-OHLCV-CORP-ACTION-CONTINUITY: same continuity guard as the
+            // primary-path prefetch — never feed a corp-action-discontinuous
+            // boundary bar into the local RSI/MACD/BB fallback computation.
+            const { bars } = getContinuityCheckedOhlcvSeries(resolvedDb, code, lookbackDays);
 
-            const candles: ToolCandle[] = rows.map((r) => ({
-              day: r.day,
-              close: r.close_price,
+            const candles: ToolCandle[] = bars.map((b) => ({
+              day: b.date,
+              close: b.close,
             }));
 
             const text = formatReport(code, candles, lookbackDays);
