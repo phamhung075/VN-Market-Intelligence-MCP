@@ -14,6 +14,12 @@
  * The refine_bctc_md flow sets reset=true on the first push, clearing prior FAILED
  * units before re-processing.
  *
+ * Paginated (FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW): `limit` defaults to
+ * DEFAULT_LIMIT (20, max MAX_LIMIT=100) so the inline JSON payload never overflows
+ * the MCP response limit. `offset` pages through the full queue: offset=0, then
+ * offset += limit each call, until a call returns fewer than `limit` rows. Both
+ * are ignored when `report_id` is supplied (single-row fetch).
+ *
  * Output: Array<{ id, filename, page_count, text_status, confirm_status, refine_status, windows[] }>
  *   - filename:       basename of pdf_path (the PDF filename without path)
  *   - page_count:     max page_number from pdf_extracted_text for the report's
@@ -40,6 +46,19 @@ import { fetchAllPageTexts, type FetchPageTextsDeps } from "../../../../schedule
 // ── Constants (single SSOT — read from same env var as bctcRefineJob) ─────────
 
 const REFINE_MAX_WINDOW_PAGES = parseInt(Bun.env.REFINE_MAX_WINDOW_PAGES ?? "3", 10);
+
+// FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW: bound the inline MCP payload.
+// Mirrors the DEFAULT_LIMIT/MAX_LIMIT clamped-limit convention already used across
+// this codebase's large-output list endpoints (e.g. foreignFlowHandler.ts,
+// marketSummaryHandler.ts, predictionClaimsHandler.ts, agmPlanActualHandler.ts) —
+// no new pagination convention invented. Paired with `offset` (native SQL
+// LIMIT/OFFSET, same mechanism the query already used for `limit`) so ALL
+// pending-refine rows remain reachable by paging (offset += limit) even though a
+// single unbounded call is no longer served. Previously an omitted `limit` meant
+// NO SQL LIMIT clause at all — unbounded rows × pre-partitioned windows[] per row
+// is what produced the 235K-char inline overflow (bridge file-path fallback).
+const DEFAULT_LIMIT = 20;
+const MAX_LIMIT = 100;
 
 // ── DB row type ───────────────────────────────────────────────────────────────
 
@@ -81,9 +100,23 @@ const InputSchema = z.object({
     .number()
     .int()
     .min(1)
-    .max(100)
+    .max(MAX_LIMIT)
+    // NOTE: `.optional().default(N)` — order matters. `.default(N).optional()` would
+    // let `undefined` pass straight through ZodOptional without ever reaching the
+    // default (verified live: z.number().default(20).optional().parse(undefined)
+    // -> undefined). `.optional().default(N)` is the correct order: ZodDefault
+    // intercepts `undefined` first and substitutes DEFAULT_LIMIT.
     .optional()
-    .describe("Maximum reports to return (default: no limit, max 100)"),
+    .default(DEFAULT_LIMIT)
+    .describe(`Max reports per page (1-${MAX_LIMIT}, default ${DEFAULT_LIMIT}). Pair with offset to page through all pending rows.`),
+  offset: z
+    .coerce
+    .number()
+    .int()
+    .min(0)
+    .optional()
+    .default(0)
+    .describe("Row offset for pagination (default 0). Page through all rows: offset=0, then offset+=limit until fewer than `limit` rows are returned."),
   ticker: z
     .string()
     .optional()
@@ -124,7 +157,7 @@ export function buildGetBctcPendingRefineHandler(
       };
     }
 
-    const { limit, ticker, report_id } = parsed.data;
+    const { limit, offset, ticker, report_id } = parsed.data;
     const db = dbOverride ?? getDb();
 
     try {
@@ -160,7 +193,9 @@ export function buildGetBctcPendingRefineHandler(
           .all(report_id);
       } else if (ticker !== undefined) {
         // Branch 2: ticker-filtered queue query
-        const limitClause = limit ? `LIMIT ${limit}` : "";
+        // `limit` always defined (zod default DEFAULT_LIMIT) — LIMIT/OFFSET is the
+        // native SQL pagination pair; paging offset += limit reaches every row.
+        const limitClause = `LIMIT ${limit} OFFSET ${offset}`;
         rows = db
           .prepare<PendingRefineRow, [string]>(
             `SELECT id, pdf_path, refine_status, text_status, confirm_status
@@ -193,7 +228,9 @@ export function buildGetBctcPendingRefineHandler(
         // no refinable work remains (DONE=processed, FAILED=terminal for this run).
         // REJECTED_SANITY is NOT in the exclusion set — those docs stay visible for investigation.
         // Index: idx_bctc_refined_units_report_status (report_id, window_status) — O(log n).
-        const limitClause = limit ? `LIMIT ${limit}` : "";
+        // `limit` always defined (zod default DEFAULT_LIMIT) — LIMIT/OFFSET is the
+        // native SQL pagination pair; paging offset += limit reaches every row.
+        const limitClause = `LIMIT ${limit} OFFSET ${offset}`;
         rows = db
           .prepare<PendingRefineRow, []>(
             `SELECT id, pdf_path, refine_status, text_status, confirm_status
@@ -349,16 +386,28 @@ export function registerGetBctcPendingRefineTool(server: McpServer): void {
       "windows is [] if page texts are unavailable (flow handles gracefully). " +
       "Used by the host-level fleet cron (refine_bctc_md flow). " +
       "Read-only — idempotent, safe to re-run. " +
-      "Optional limit parameter caps results (default: all pending, max 100). limit ignored when report_id is supplied.",
+      `Paginated (FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW): limit defaults to ${DEFAULT_LIMIT} (max ${MAX_LIMIT}) so the ` +
+      "inline payload never overflows the MCP response limit. Page through ALL pending rows with offset: " +
+      "call with offset=0, then offset += limit on each subsequent call, until a call returns fewer than `limit` " +
+      "rows (that page is the last one — no rows are skipped or lost). limit/offset are ignored when report_id is supplied.",
     {
       limit: z
         .coerce
         .number()
         .int()
         .min(1)
-        .max(100)
+        .max(MAX_LIMIT)
         .optional()
-        .describe("Maximum reports to return (omit for all pending, max 100). Ignored when report_id is supplied."),
+        .default(DEFAULT_LIMIT)
+        .describe(`Max reports per page (1-${MAX_LIMIT}, default ${DEFAULT_LIMIT}). Pair with offset to page through all pending rows. Ignored when report_id is supplied.`),
+      offset: z
+        .coerce
+        .number()
+        .int()
+        .min(0)
+        .optional()
+        .default(0)
+        .describe("Row offset for pagination (default 0): offset=0, then offset+=limit until fewer than `limit` rows come back. Ignored when report_id is supplied."),
       ticker: z
         .string()
         .optional()
