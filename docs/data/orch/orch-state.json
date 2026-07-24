@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "idle — FACTORY-INTERFACE-vps-auth-guard-dedup closed out to REVIEW by dev-mcp-server; router to dispatch qa next",
-    "updated_at": "2026-07-24T02:05:06Z",
-    "updated_by": "dev-mcp-server (FACTORY-INTERFACE-vps-auth-guard-dedup self-closeout)"
+    "status": "in_progress",
+    "active_task_id": "FACTORY-INTERFACE-move-kinhdich-ta-scoring-down",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-INTERFACE-move-kinhdich-ta-scoring-down — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-24T02:14:29Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6196,15 +6196,6 @@
         "status": "BACKLOG",
         "id": "FACTORY-ALERT-dedup-window-config",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-ALERT-dedup-window-config"
-      },
-      {
-        "title": "Move Kinh Dich + TA scoring math out of interface tools into domain",
-        "priority": "P2",
-        "zone": "mcp-server-interface",
-        "type": "FACTORY",
-        "status": "BACKLOG",
-        "id": "FACTORY-INTERFACE-move-kinhdich-ta-scoring-down",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INTERFACE-move-kinhdich-ta-scoring-down"
       },
       {
         "title": "Extract sentiment lexicon + negation tables from sentimentClassifier",
@@ -14400,9 +14391,25 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-24T01:44:28Z",
+    "last_triaged_at": "2026-07-24T02:14:29Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "title": "Move Kinh Dich + TA scoring math out of interface tools into domain",
+        "priority": "P2",
+        "zone": "mcp-server-interface",
+        "type": "FACTORY",
+        "status": "IN_PROGRESS",
+        "id": "FACTORY-INTERFACE-move-kinhdich-ta-scoring-down",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INTERFACE-move-kinhdich-ta-scoring-down",
+        "promoted_at": "2026-07-24T02:14:29Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-24T02:14:30Z",
+        "claimed_at": "2026-07-24T02:14:29Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
