@@ -158,6 +158,18 @@ import {
 export { detectPolicyInterventionCombo, isPrecededByPlacePrefix };
 
 /**
+ * DEFAULT_BROADCAST_MIN_IMPACT — the "broadcast floor" (Task 162): minimum
+ * impactScore an event must reach before the cascade's market-wide broadcast
+ * pass (Step 3b below) fans it out to every watchlist stock not already
+ * covered by a domain rule or alias resolution. SSOT for this default — also
+ * mirrored as `mcp.config.json`'s `alerts.marketWideCascadeMinImpact` runtime
+ * override (see application/usecases/runImpactChain.ts and pollNews.ts, both
+ * of which import this constant as their config-load fallback so the
+ * fallback and the domain default never drift apart).
+ */
+export const DEFAULT_BROADCAST_MIN_IMPACT = 6;
+
+/**
  * Build a causal chain from a seed AnalysisEntry.
  *
  * Traces global/country macro events down to specific Vietnamese stocks
@@ -171,8 +183,9 @@ export { detectPolicyInterventionCombo, isPrecededByPlacePrefix };
  * @param macroContext - Real-time macro indicators for confidence adjustments (optional).
  *                       When omitted or null, behavior is identical to pre-Sprint-008.
  * @param broadcastMinImpact - Minimum impactScore required to trigger market-wide broadcast.
- *                             Default: 6. Market-wide events (e.g. "VN-Index drops 5%")
- *                             cascade to ALL watchlist stocks not already covered by domain rules.
+ *                             Default: DEFAULT_BROADCAST_MIN_IMPACT (6). Market-wide events
+ *                             (e.g. "VN-Index drops 5%") cascade to ALL watchlist stocks not
+ *                             already covered by domain rules.
  * @returns                  - CausalChain with all levels: seed → domain → action
  */
 export function buildCausalChain(
@@ -622,7 +635,7 @@ export function buildCausalChain(
   // If this is a market-wide event (VN-Index, "toàn thị trường", or a
   // country/global article with sufficient impact score), cascade to ALL
   // watchlist stocks not already covered by domain rules or alias resolution.
-  const effectiveBroadcastMin = broadcastMinImpact ?? 6;
+  const effectiveBroadcastMin = broadcastMinImpact ?? DEFAULT_BROADCAST_MIN_IMPACT;
   const seedTextForBroadcast = `${seedEntry.sourceTitle} ${seedEntry.summary}`;
 
   // Task 1256: Commodity-source broadcast exclusion.

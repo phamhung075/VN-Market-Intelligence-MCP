@@ -14,8 +14,9 @@
  * balanceSheetExtractor's original 2-arg findValue(lines, pattern) and
  * income/cashFlow's original 4-arg findValue(primaryLines, fallbackLines,
  * primary, fallback) were NOT the same function — balanceSheet had a
- * row-code guard (skip whole-multiples-of-10 in [10,990], BCTC item-code
- * artifacts) with no ASCII-fallback pass; income/cashFlow had an ASCII
+ * row-code guard (skip whole-multiples-of-10 in [10,990] — see
+ * VAS_ROW_CODE_MIN/MAX/STEP below, BCTC item-code artifacts) with no
+ * ASCII-fallback pass; income/cashFlow had an ASCII
  * diacritic-stripped fallback pass with no row-code guard. The canonical
  * findValue below takes both behaviors as OPT-IN options so each call site
  * reproduces its pre-migration behavior exactly (see per-extractor migration
@@ -27,6 +28,28 @@
  */
 
 import { LOOKAHEAD_LINES, extractNumber } from "../extractorHelpers.js";
+
+// ---------------------------------------------------------------------------
+// VAS row-code guard bounds (FACTORY-DOMAIN-name-bctc-cascade-magic-numbers)
+// ---------------------------------------------------------------------------
+
+/**
+ * VAS_ROW_CODE_MIN / VAS_ROW_CODE_MAX — VAS (Vietnamese Accounting Standard)
+ * BCTC statement item codes live in this numeric range (e.g. "10"=net_revenue,
+ * "100"=current_assets, "270"=long-term-other-assets-subtotal,
+ * "440"=total-capital-sources). A scanned candidate number that is a whole
+ * multiple of `VAS_ROW_CODE_STEP` inside [VAS_ROW_CODE_MIN, VAS_ROW_CODE_MAX]
+ * is almost always a stray item-code digit-string picked up by the OCR/regex
+ * scan, not a real financial value — the row-code guard skips it and keeps
+ * scanning (see findValue's `rowCodeGuard` option and findValueByCode below).
+ * Named separately from VAS_ROW_CODE_STEP even though both equal 10 — MIN is
+ * the lower bound of the code range, STEP is the multiples-of increment;
+ * they are distinct domain facts that happen to share a value.
+ */
+const VAS_ROW_CODE_MIN = 10;
+const VAS_ROW_CODE_MAX = 990;
+/** Item codes are issued in increments of 10 (e.g. 10, 20, ..., 440, ..., 990). */
+const VAS_ROW_CODE_STEP = 10;
 
 // ---------------------------------------------------------------------------
 // findValue
@@ -42,9 +65,10 @@ export interface FindValueFallback {
 export interface FindValueOptions {
   /**
    * BCTC row-code guard (balanceSheetExtractor origin): skip a candidate value
-   * when it is a whole integer multiple of 10 in [10, 990] — these are BCTC
-   * item-code artifacts (e.g. "100", "270"), not real financial values. When
-   * a guarded value is hit, the scan CONTINUES (does not return 0 early).
+   * when it is a whole integer multiple of VAS_ROW_CODE_STEP in
+   * [VAS_ROW_CODE_MIN, VAS_ROW_CODE_MAX] — these are BCTC item-code artifacts
+   * (e.g. "100", "270"), not real financial values. When a guarded value is
+   * hit, the scan CONTINUES (does not return 0 early).
    */
   rowCodeGuard?: boolean;
   /**
@@ -72,7 +96,11 @@ export function findValue(
   const { rowCodeGuard = false, fallback } = opts;
 
   const isGuarded = (val: number): boolean =>
-    rowCodeGuard && Number.isInteger(val) && val >= 10 && val <= 990 && val % 10 === 0;
+    rowCodeGuard &&
+    Number.isInteger(val) &&
+    val >= VAS_ROW_CODE_MIN &&
+    val <= VAS_ROW_CODE_MAX &&
+    val % VAS_ROW_CODE_STEP === 0;
 
   const scan = (scanLines: string[], scanPattern: RegExp): number | null => {
     for (let i = 0; i < scanLines.length; i++) {
@@ -122,8 +150,9 @@ export function findValue(
  *   Only tried for grand-total codes (>= 270) to avoid false positives on
  *   sub-item codes.
  *
- * The row-code guard (skip whole multiples of 10 in [10,990]) applies in
- * both forms. Returns 0 if no matching line is found.
+ * The row-code guard (skip whole multiples of VAS_ROW_CODE_STEP in
+ * [VAS_ROW_CODE_MIN, VAS_ROW_CODE_MAX]) applies in both forms. Returns 0 if
+ * no matching line is found.
  */
 export function findValueByCode(lines: string[], code: number): number {
   const codeStr = String(code);
@@ -143,7 +172,12 @@ export function findValueByCode(lines: string[], code: number): number {
       const rest = trimmed.slice(codeStr.length).trim();
       const val = extractNumber(rest);
       if (val === null) continue;
-      if (Number.isInteger(val) && val >= 10 && val <= 990 && val % 10 === 0) continue;
+      if (
+        Number.isInteger(val) &&
+        val >= VAS_ROW_CODE_MIN &&
+        val <= VAS_ROW_CODE_MAX &&
+        val % VAS_ROW_CODE_STEP === 0
+      ) continue;
       return val;
     }
 
@@ -157,7 +191,12 @@ export function findValueByCode(lines: string[], code: number): number {
         const afterCode = trimmed.slice(match.index + match[0].length);
         const val = extractNumber(afterCode);
         if (val === null) continue;
-        if (Number.isInteger(val) && val >= 10 && val <= 990 && val % 10 === 0) continue;
+        if (
+          Number.isInteger(val) &&
+          val >= VAS_ROW_CODE_MIN &&
+          val <= VAS_ROW_CODE_MAX &&
+          val % VAS_ROW_CODE_STEP === 0
+        ) continue;
         return val;
       }
     }

@@ -13,7 +13,7 @@
  */
 
 import { normalizeNews } from "../../domain/services/newsNormalizer.js";
-import { buildCausalChain } from "../../domain/services/cascadeEngine.js";
+import { buildCausalChain, DEFAULT_BROADCAST_MIN_IMPACT } from "../../domain/services/cascadeEngine.js";
 import type { WatchlistEntry, CausalChain, SearchResult, MacroContext } from "../../domain/services/cascadeEngine.js";
 import type { AnalysisEntry } from "../../domain/services/newsNormalizer.js";
 import { logger } from "../../infrastructure/logger.js";
@@ -199,12 +199,13 @@ export async function runImpactChain(input: RunCascadeInput): Promise<CausalChai
   }
 
   // ── Step 3: Build causal chain (pure domain call) ────────────────────────
-  // Load broadcast threshold from config (best-effort; default 6 on failure)
-  let broadcastMinImpact = 6;
+  // Load broadcast threshold ("broadcast floor") from config (best-effort;
+  // falls back to the domain SSOT default on failure or missing config key).
+  let broadcastMinImpact = DEFAULT_BROADCAST_MIN_IMPACT;
   try {
     const { loadMcpConfig } = await import("../../infrastructure/config.js");
     const cfg = loadMcpConfig();
-    broadcastMinImpact = cfg.alerts?.marketWideCascadeMinImpact ?? 6;
+    broadcastMinImpact = cfg.alerts?.marketWideCascadeMinImpact ?? DEFAULT_BROADCAST_MIN_IMPACT;
   } catch { /* use default */ }
 
   const chain = buildCausalChain(seedEntry, input.watchlist, ragResults, macroContext, macroStats, broadcastMinImpact);

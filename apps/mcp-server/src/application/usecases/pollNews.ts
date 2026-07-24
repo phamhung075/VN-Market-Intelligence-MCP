@@ -22,7 +22,7 @@ import type { SearchResult } from "../../domain/services/cascadeEngine.js";
 import { normalizeNews } from "../../domain/services/newsNormalizer.js";
 import { isVnRelevant } from "../../domain/services/vnRelevanceFilter.js";
 import { scoreMacroIndicator } from "../../domain/services/macroIndicatorScorer.js";
-import { buildCausalChain } from "../../domain/services/cascadeEngine.js";
+import { buildCausalChain, DEFAULT_BROADCAST_MIN_IMPACT } from "../../domain/services/cascadeEngine.js";
 import { detectStocksInText, tickerWholeWordMatch, stripSourceAttributionSuffix } from "../../domain/services/stockAliases.js";
 import { generateAlerts } from "../../domain/services/alertGenerator.js";
 import { storeAlerts } from "../../infrastructure/db/alertStore.js";
@@ -1166,12 +1166,14 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
       };
     } catch { /* no macro context */ }
 
-    // Load broadcastMinImpact from config once for the whole batch (default 6)
-    let broadcastMinImpact = 6;
+    // Load broadcastMinImpact ("broadcast floor") from config once for the
+    // whole batch (falls back to the domain SSOT default on failure or
+    // missing config key).
+    let broadcastMinImpact = DEFAULT_BROADCAST_MIN_IMPACT;
     try {
       const { loadMcpConfig } = await import("../../infrastructure/config.js");
       const cfg = loadMcpConfig();
-      broadcastMinImpact = cfg.alerts?.marketWideCascadeMinImpact ?? 6;
+      broadcastMinImpact = cfg.alerts?.marketWideCascadeMinImpact ?? DEFAULT_BROADCAST_MIN_IMPACT;
     } catch { /* use default */ }
 
     for (const entry of newEntries) {
