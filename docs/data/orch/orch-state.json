@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FACTORY-SHARED-prune-phantom-primitives",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-SHARED-prune-phantom-primitives — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-24T00:44:29Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "FACTORY-SHARED-prune-phantom-primitives moved to review — awaiting qa pickup",
+    "updated_at": "2026-07-24T00:49:22Z",
+    "updated_by": "dev-technical-analysis"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2446,8 +2446,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-23T09:30:55Z",
-    "_updated_by": "ba",
+    "_updated_at": "2026-07-24T00:49:22Z",
+    "_updated_by": "dev-technical-analysis",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -14345,6 +14345,24 @@
         "next_agent": "qa",
         "entered_review_at": "2026-07-24T00:22:37Z",
         "review_note": "dev-rag-service: confirmed dead at source (SQLiteAnalysisRepository constructed only in test_rag_integration.py fixture, never by app_factory.build_real_adapters or main.py; AnalysisRepositoryPort had no live implementer/consumer beyond it) — deleted class + _row_to_entry helper + sqlite3 import (infrastructure/repositories.py), AnalysisRepositoryPort ABC (domain/repositories.py), the test that exercised only them, fixed phantom analysis_repo docstring (usecases.py), trimmed matching arch-doc sections. pytest 165->161 (exactly the 4 deleted tests), mypy 259->253 (strict decrease, no new), sandbox 16/16+2/2 GREEN, env audit empty. Journal: docs/agent-memory/decisions/sprint-FACTORY-RAG-delete-dead-sqlite-repo-dev-rag-service.md. Commit 768bee954."
+      },
+      {
+        "title": "Delete the phantom packages/primitives/technical-analysis package",
+        "priority": "P2",
+        "zone": "packages-shared",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-SHARED-prune-phantom-primitives",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-SHARED-prune-phantom-primitives",
+        "promoted_at": "2026-07-24T00:44:29Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-24T00:49:30Z",
+        "claimed_at": "2026-07-24T00:44:29Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "entered_review_at": "2026-07-24T00:49:22Z",
+        "review_note": "dev-technical-analysis: confirmed dead at source — packages/primitives/technical-analysis was git-UNTRACKED residue (bun.lock + node_modules only, no package.json, no source), never a pnpm workspace member (pnpm requires package.json to register), zero repo-wide code/manifest importers (Go service has its own pkg/primitive/* impl at apps/technical-analysis, no packages/ import path exists). Root-caused via docs/handoffs/TASK_pivot-B-revert.md: leftover bun-install artifact from the reverted TS-pilot RSI commit 6248f3da. Deleted packages/primitives/ (29M, rm -rf, untracked so no git rm needed) + removed dangling .gitignore:33 rule. go build/vet/test all green (12/12 packages), G12 sandbox dashboard 35/35 + headless render PASS. Journal: docs/agent-memory/decisions/sprint-FACTORY-SHARED-prune-phantom-primitives-dev-technical-analysis.md. Commit df6c1dc7d."
       }
     ],
     "qa": [],
@@ -14366,23 +14384,7 @@
     },
     "last_triaged_at": "2026-07-24T00:44:29Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "title": "Delete the phantom packages/primitives/technical-analysis package",
-        "priority": "P2",
-        "zone": "packages-shared",
-        "type": "FACTORY",
-        "status": "IN_PROGRESS",
-        "id": "FACTORY-SHARED-prune-phantom-primitives",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-SHARED-prune-phantom-primitives",
-        "promoted_at": "2026-07-24T00:44:29Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-24T00:44:29Z",
-        "claimed_at": "2026-07-24T00:44:29Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
