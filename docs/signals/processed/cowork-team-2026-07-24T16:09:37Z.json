@@ -1,0 +1,73 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-24T16:09:37Z",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "market-watcher-eod",
+      "alert-commander-critical"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "market-watcher-eod",
+      "alert-commander-critical"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "closed",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence",
+      "market-watcher-eod": "cadence",
+      "alert-commander-critical": "cadence"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": 240,
+      "market-watcher-offhours": 240,
+      "market-watcher-eod": 240,
+      "alert-commander-critical": 240
+    },
+    "last_fired_timestamp": "2026-07-24T16:09:24Z",
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "market-watcher-eod",
+      "alert-commander-critical"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "16:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 0,
+    "signal_backlog": 9,
+    "note": "EOD tick — 4 gatherers (news-scout offhours, market-watcher offhours+eod R3 multi-slot, alert-commander critical) spawned background; drain no-op (0 NEW cowork signals); NORMAL fanout max_parallel=4 headroom=4636MB"
+  },
+  "priority": "low",
+  "createdAt": "2026-07-24T16:09:37Z",
+  "_processed": {
+    "fingerprint": "f6d9af8e66e09451978cac46e5e49cffc2d26ebe2337dd056cfbec5cce92c4dc",
+    "processedAt": "2026-07-24T16:16:29Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
