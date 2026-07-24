@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FACTORY-SCHEDULER-dedup-briefing-formatters",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-SCHEDULER-dedup-briefing-formatters — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-24T08:44:30Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "FACTORY-SCHEDULER-dedup-briefing-formatters self-closed by dev-mcp-server -> REVIEW, next_agent=qa. Board idle, ready for next dispatch.",
+    "updated_at": "2026-07-24T09:12:27Z",
+    "updated_by": "dev-mcp-server"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -14445,6 +14445,24 @@
         "entered_review_at": "2026-07-24T08:22:04Z",
         "review_note": "dev-mcp-server self-closeout: code done; rebuild + RAW-DB-verify PENDING (user-gated). CODE-ONLY per CRITICAL SCOPE BOUND -- no container rebuilt, no live named-volume DB touched; change is inert until next user-authorized rebuild. Split vnstockStore.ts (937L, 8 entities + migrations) into infrastructure/db/vnstock/{financialsStore,tradingStatsStore,officersStore,shareholdersStore,eventsStore,balanceSheetStore,cashFlowStore,foreignFlowStore}.ts (one per entity) + fetchLog.ts (shared isStale/markFetched) + migrations.ts (runVnstockMigrations verbatim). vnstockStore.ts is now a 37L pure re-export barrel -- all existing call sites (incl. require() dynamic lookup in SqliteVnstockRepository.ts) resolve unchanged. foreignFlowStore.ts (240L) and migrations.ts (256L) carry size-justification comments (dual-schema upsert / pure-DDL migration sequence). schema-financial-reports.ts: 22 inline if(!colNames.has)ALTER TABLE migrations on financial_reports (confirmed exact count across 7 former try/catch blocks) collapsed into ONE declarative FINANCIAL_REPORTS_COLUMN_MIGRATIONS array + ONE runColumnMigrations() loop; initFinancialReportsTables stays a thin orchestrator. Equivalence proof: actual A/B diff (pre-refactor code copied verbatim from git HEAD into a sibling temp file, deleted after use) -- 5/5 pass, byte-identical financial_reports column set (name/type/notnull/default) + index + idempotent + 6 unrelated tables untouched. Barrel verified by strict reference equality (barrel.fn === subfolder.fn) across all 19 exports. Both proofs are now a permanent test: FACTORY-INFRA-split-stores-and-migrations.test.ts (23 assertions, green). bun tsc --noEmit clean. Targeted suites green: 189 vnstock/foreign-flow (19 files) + 233 financial-reports/schema (12 files) + 23 new equivalence tests -- all match pre-change baseline. Full bun test (~1220 files, 3 runs): settled 14743 pass/40 skip/57 fail vs true pre-change baseline 14729 pass/48 fail/2 errors; set-difference of failure names shows exactly 8 new failures, ALL in the UNTOUCHED vnstock-3statement.test.ts, root-caused to a pre-existing documented Bun mock.module cross-file cache-pollution hazard from 1466-sync-db-corruption-bail.test.ts (confirmed via isolation: standalone 10/10 pass, paired-with-1466 13/13 pass) -- unrelated to this refactor logic. Commits: 76c73b4c1 (code, 13 files), abaf44fd1 (journal), 97af4860e (notebook). Journal: docs/agent-memory/decisions/sprint-FACTORY-INFRA-split-stores-and-migrations-dev-mcp-server.md",
         "status_note": "rebuild-verify PASSED 2026-07-24T08:30:37Z (ops single-svc rebuild a3efeeddd: mcp-server mem 67%->12%, new image sha256:159c2940; financial_reports 226 rows/60 cols intact, vnstock_financials 170 rows persist identically, named volumes preserved, peers untouched) — full DoD now met (was PARTIAL-code-done-rebuild-pending)"
+      },
+      {
+        "title": "Extract shared briefing formatters; break the sibling-job cross-dependency",
+        "priority": "P2",
+        "zone": "mcp-server-scheduler",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-SCHEDULER-dedup-briefing-formatters",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-SCHEDULER-dedup-briefing-formatters",
+        "promoted_at": "2026-07-24T08:44:30Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-24T09:12:36Z",
+        "claimed_at": "2026-07-24T08:44:30Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "entered_review_at": "2026-07-24T09:12:27Z",
+        "review_note": "dev-mcp-server self-closeout: code done; rebuild + live-container verify PENDING (user-gated). CODE-ONLY per explicit SCOPE BOUND -- no container rebuilt. Extracted 5 shared briefing formatters (globalSnapshotSection 42L, foreignFlowSection 45L, moversSection 114L, alertLines 98L, vnIndexFreshness 27L -- all <=120L) into new scheduler/briefings/format/ subfolder, verbatim moves incl. private leaf helpers (deltaArrow, fmtVolume/fmtMoverLine/MoverEntry, severityLabel/AlertDisplayRow). Broke the franceSummaryJob<->morningBriefingJob<->eveningSummaryJob job->job cross-import cycle (3 edges: france->morning formatGlobalSnapshotSection, france->evening formatForeignFlowSection+isVnIndexFresh, evening->morning formatGlobalSnapshotSection) -- grep-confirmed zero job->job imports remain. All 3 job files import from ./format/*.js; kept thin re-export lines on each job file so the 9 existing test files that import these formatters directly from job files resolve unchanged (no test-path rewrites needed). Equivalence: byte-diffed all 9 moved function bodies (git show HEAD:<old> vs new file) -- all empty diffs (identical). bun tsc --noEmit clean. Targeted 9-file suite (1783/1503/1784/1552/1511/1512/1424/1794/FIX-DIGEST-FOREIGN-FLOW): 89 pass/0 fail/188 expect() calls, identical before/after. gen-project-stats unaffected (toolCount=184, cronJobCount=88). Local server boot probe (PORT=3099, not a container rebuild): no import errors, health 200 toolCount=184, both dashboards 200. Full bun test run twice: 14748 pass/52 fail (run1), 14747 pass/53 fail/1 error (run2) -- grep-confirmed zero fail-line or file-section overlap with briefings/franceSummaryJob/eveningSummaryJob/morningBriefingJob/format/; swing matches today's documented flaky-not-deterministic 5000ms-timeout class. Commits: eb9f87f38 (code, 8 files) + 2f5232b0d (journal+notebook). Journal: docs/agent-memory/decisions/sprint-FACTORY-SCHEDULER-dedup-briefing-formatters-dev-mcp-server.md"
       }
     ],
     "qa": [],
@@ -14466,23 +14484,7 @@
     },
     "last_triaged_at": "2026-07-24T08:44:30Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "title": "Extract shared briefing formatters; break the sibling-job cross-dependency",
-        "priority": "P2",
-        "zone": "mcp-server-scheduler",
-        "type": "FACTORY",
-        "status": "IN_PROGRESS",
-        "id": "FACTORY-SCHEDULER-dedup-briefing-formatters",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-SCHEDULER-dedup-briefing-formatters",
-        "promoted_at": "2026-07-24T08:44:30Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-24T08:44:31Z",
-        "claimed_at": "2026-07-24T08:44:30Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
