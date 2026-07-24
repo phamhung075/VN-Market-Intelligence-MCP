@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FE-PG-BCTC-EVAL-_INDEX-FUNC-FIX",
-    "next_agent": "dev-frontend",
-    "next_action": "BOUNDED-1 auto-pickup claim of FE-PG-BCTC-EVAL-_INDEX-FUNC-FIX — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-24T17:48:11Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "BGFAN-1 closeout complete: FE-PG-BCTC-EVAL-_INDEX-FUNC-FIX (Quality-Audit P1 broken page) implemented + live-verified by dev-frontend -> review (next=qa). WIP now 0; dispatch lanes free.",
+    "updated_at": "2026-07-24T18:09:09Z",
+    "updated_by": "dev-team (BGFAN-1 closeout)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -14706,6 +14706,32 @@
         "next_agent": "qa",
         "updated_by": "dev-team (BGFAN-1 closeout: architect design complete -> review)",
         "review_note": "Design task complete (BGFAN-1). Architect produced brief docs/architecture-briefs/2026-07-24-factory-guard-ci-metric-mask-lint.md + minted child impl FACTORY-GUARD-CI-METRICMASK-IMPL (developer, backlog). Verify-live corrected TWO stale dispatch premises: (1) row is NOT a stub — detail_ref carries a full confidence_score=50-bug-class spec traced to 2026-06-15-maintainability-factory-audit.md; (2) real intent is banning non-zero numeric-literal fallbacks on confidence*/score*/impact*/magnitude*/probability* fields, NOT composite-metric-masks-dead-detector. Live debt only 4 lines/2 files (cascadeEngine.ts:356/375/394 seedEntry.confidence ?? 0.6; marketSentimentCalculator.ts:174 impact_score ?? 1.0) + 1 legit-excluded config default (watchlist.ts:198) -> zero-tolerance gate, no baseline (unlike 733-file size sibling). All 5 fast-track confidence fixes DONE_VERIFIED (allowlist honest). QA: verdict brief adequacy + child scoping — no code to test."
+      },
+      {
+        "id": "FE-PG-BCTC-EVAL-_INDEX-FUNC-FIX",
+        "type": "FIX",
+        "title": "Fix /dashboard/bctc-eval HTTP 500 — loader throws on upstream /api/bctc-eval 404 instead of rendering a recoverable Card (user-visible broken page)",
+        "status": "REVIEW",
+        "priority": "P1",
+        "size": "S",
+        "zone": "apps/frontend/",
+        "sprint": "QUALITY-AUDIT-FRONTEND-COVERAGE",
+        "source": "quality-audit-frontend-page-coverage-20260724",
+        "owner": "dev-frontend",
+        "next_agent": "qa",
+        "check_id": "FE-PG-BCTC-EVAL-_INDEX-FUNC",
+        "status_note": "FE-PG-BCTC-EVAL-_INDEX-FUNC re-check returns PASS",
+        "note": "Quality-audit frontend page-coverage 2026-07-24 (FE-PG-BCTC-EVAL-_INDEX-FUNC, FAIL — LIVE probe). SYMPTOM: GET /dashboard/bctc-eval returns HTTP 500 (root error boundary 'Something went wrong'); the eval scorecard list never renders. ROOT CAUSE: the loader fetches /api/bctc-eval which returns HTTP 404 ({\"error\":\"Not found\",\"path\":\"/api/bctc-eval/\"}) and THROWS, violating the route's own JSDoc contract ('show Card with API error, do NOT throw'). TRIAGE HINT (verify, do not assume): determine whether the frontend proxy forwards a trailing slash the mcp-server route rejects (path shows '/api/bctc-eval/') OR the mcp-server GET /api/bctc-eval handler is unregistered — escalate to dev-mcp-server if server-side. Also closes the same-root-cause NEEDS_REVIEW rows FE-PG-BCTC-EVAL-_INDEX-{FRESH,OBS,DEGR,CORR} + FE-PG-BCTC-EVAL-$REPORTID-FUNC. AC: FE-PG-BCTC-EVAL-_INDEX-FUNC re-check returns PASS (GET /dashboard/bctc-eval → 200 + eval table renders).",
+        "created_at": "2026-07-24T17:28:34Z",
+        "created_by": "po",
+        "updated_at": "2026-07-24T18:09:34Z",
+        "promoted_at": "2026-07-24T17:48:11Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-24T17:48:11Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "updated_by": "dev-team (BGFAN-1 closeout: dev-frontend fix live-verified -> review)",
+        "review_note": "IMPLEMENTED + live-verified at source (dispatcher confabulation-guard, not self-report). GET /dashboard/bctc-eval 500->200 and GET /api/bctc-eval 404->200 confirmed by live curl on the 3001-served container; StatusBadge now `status: EvalStatus|undefined` (renders neutral '—'), lying `as EvalStatus` cast removed from EvalTable, StageStatuses keys made optional to match live wire contract. Committed aaf487834 (8 files, apps/frontend/) + 2 dev-frontend memory commits, all pushed by dispatcher. LIVE ROOT CAUSE DIVERGED FROM PO NARRATIVE (verify-live catch): the loader never threw — real crash was a render-time `TypeError: Cannot destructure 'variant' of STATUS_CONFIG[status]` in StatusBadge, because live mcp-server payloads only carry stage_statuses keys for stages actually computed (MBB Q1-2026 had only stages 4/5/6) while the domain type declared all 6 required. A SECOND real bug also fixed: bare GET /api/bctc-eval through the frontend splat proxy appended a trailing slash on empty params['*'] -> mcp-server 404; fixed in-zone (buildBctcEvalUpstreamUrl), NO mcp-server escalation needed. GATES (dev-reported): tsc --noEmit 0 errors; vitest 2125/2127 pass (2 pre-existing QUE-TOOLTIP failures out-of-zone, unmodified — QA to confirm unrelated); playwright render-check 3/3 PASS (G12). CLOSES 6 quality-audit checks: FE-PG-BCTC-EVAL-_INDEX-{FUNC,FRESH,OBS,DEGR,CORR} + FE-PG-BCTC-EVAL-$REPORTID-FUNC — QA should re-run the quality audit to flip them PASS. FOLLOW-UP DEBT (out of ticket scope, dispatcher-confirmed via dev notebook flag): apps/frontend/app/routes/api.bctc-inspect.$.tsx carries the identical trailing-slash-on-empty-subpath pattern, currently unexercised by any real caller — candidate for a future ticket, NOT fixed here. QA: verdict on gate adequacy + confirm the 2 QUE-TOOLTIP failures pre-date this change; then done_verified."
       }
     ],
     "qa": [],
@@ -14727,32 +14753,7 @@
     },
     "last_triaged_at": "2026-07-24T17:48:11Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FE-PG-BCTC-EVAL-_INDEX-FUNC-FIX",
-        "type": "FIX",
-        "title": "Fix /dashboard/bctc-eval HTTP 500 — loader throws on upstream /api/bctc-eval 404 instead of rendering a recoverable Card (user-visible broken page)",
-        "status": "IN_PROGRESS",
-        "priority": "P1",
-        "size": "S",
-        "zone": "apps/frontend/",
-        "sprint": "QUALITY-AUDIT-FRONTEND-COVERAGE",
-        "source": "quality-audit-frontend-page-coverage-20260724",
-        "owner": "dev-frontend",
-        "next_agent": "dev-frontend",
-        "check_id": "FE-PG-BCTC-EVAL-_INDEX-FUNC",
-        "status_note": "FE-PG-BCTC-EVAL-_INDEX-FUNC re-check returns PASS",
-        "note": "Quality-audit frontend page-coverage 2026-07-24 (FE-PG-BCTC-EVAL-_INDEX-FUNC, FAIL — LIVE probe). SYMPTOM: GET /dashboard/bctc-eval returns HTTP 500 (root error boundary 'Something went wrong'); the eval scorecard list never renders. ROOT CAUSE: the loader fetches /api/bctc-eval which returns HTTP 404 ({\"error\":\"Not found\",\"path\":\"/api/bctc-eval/\"}) and THROWS, violating the route's own JSDoc contract ('show Card with API error, do NOT throw'). TRIAGE HINT (verify, do not assume): determine whether the frontend proxy forwards a trailing slash the mcp-server route rejects (path shows '/api/bctc-eval/') OR the mcp-server GET /api/bctc-eval handler is unregistered — escalate to dev-mcp-server if server-side. Also closes the same-root-cause NEEDS_REVIEW rows FE-PG-BCTC-EVAL-_INDEX-{FRESH,OBS,DEGR,CORR} + FE-PG-BCTC-EVAL-$REPORTID-FUNC. AC: FE-PG-BCTC-EVAL-_INDEX-FUNC re-check returns PASS (GET /dashboard/bctc-eval → 200 + eval table renders).",
-        "created_at": "2026-07-24T17:28:34Z",
-        "created_by": "po",
-        "updated_at": "2026-07-24T17:48:12Z",
-        "promoted_at": "2026-07-24T17:48:11Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-24T17:48:11Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
