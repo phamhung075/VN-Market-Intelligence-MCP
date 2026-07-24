@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FACTORY-GUARD-CI-shared-package-import-check",
-    "next_agent": "architect",
-    "next_action": "Architect design task (BOUNDED-1 lane-corrected): FACTORY-GUARD-CI-shared-package-import-check (6th of 7 ci-regression-prevention guardrails). Audit existing shared-package import mechanism, grep-verify live offender counts, design zero-tolerance-vs-baseline CI gate, mint ONE developer child impl row.",
-    "updated_at": "2026-07-24T19:48:31Z",
-    "updated_by": "dev-team (BOUNDED-1 lane-correct -> architect design)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "BGFAN-1 closeout complete: FACTORY-GUARD-CI-shared-package-import-check design delivered by architect -> review (next=qa). Child FACTORY-GUARD-CI-SHAREDPKG-IMPL in backlog (developer, brief_ref wired). WIP now 0; dispatch lanes free. 1 more null-disposition CI-GUARDRAIL row awaits lane-correction (rebuild-raw-verify-hook).",
+    "updated_at": "2026-07-24T20:00:38Z",
+    "updated_by": "dev-team (BGFAN-1 closeout)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -14856,6 +14856,25 @@
         "dev_agent": "architect",
         "updated_by": "dev-team (BGFAN-1 closeout: architect design complete -> review)",
         "review_note": "Design task complete (BGFAN-1, 5th of 7 ci-regression-prevention guardrails). Architect brief docs/architecture-briefs/2026-07-24-factory-guard-ci-no-hardcode-allowlist-scan.md (10.1KB) + child FACTORY-GUARD-CI-NOHARDCODE-IMPL minted into backlog (next_agent/dev_agent=developer, zone cross-service/, brief_ref pre-wired by architect, epic FACTORY-MAINTAINABILITY-2026-06). DISPATCHER CONFABULATION-GUARD: 3 anchors INDEPENDENTLY confirmed at source (not self-report): (1) brief file present (10122 B, 21:29Z) with load-bearing verify-live corrections; (2) commit 9581fa432 reachable from origin/main, `origin/main..HEAD` empty = pushed clean, carries brief+orch-state(+21=child row)+notebook+journal; (3) child row present next_agent=developer, brief_ref wired. VERIFY-LIVE CATCHES (ticket premise naively over-scoped ~100x): a literal 'ticker allowlist' grep hits hundreds of legitimate already-correctly-homed domain rule-table arrays (predictionCascadeMapper/policyImpactMapper/creditFlowAnalyzer/climateImpactMapper, cascade/rules/*) that sibling FACTORY-DOMAIN-split-cascade-engine legitimizes. Real bug class = ticker/date literal compared INSIDE a control-flow branch. Correctly scoped, live debt = 5 sites across 5 files: newsChainFallback.ts:224 (ticket's own named example, tracked JANITOR-035); cascadeExecutor.ts:194 + priceSourceRouter.ts:53 (diverging ticker arrays, tracked JANITOR-034); backfillBctcScalarsTool.ts:199 + pharmaEventMapper.ts:288 (2 NEW previously-untracked cosmetic per-ticker branches). Zero existing CI/lint coverage confirmed (3 eslint configs, 7 .golangci.yml, 2 pyproject.toml carry only architecture-fence rules). DESIGN DECISION: zero-tolerance (matches metric-mask/dead-code siblings, not size-lint baseline/ratchet) via 2-check grep-based scripts/audits/no-hardcode-allowlist-scan.sh (temporal-combo ban + ticker/code-literal-in-control-flow ban, denylisting stable HOSE|HNX|UPCOM|BLOOMBERG exchange enum). Explicitly DEFERRED a generic cross-file ticker-array-overlap detector (would FP against dozens of legit overlapping rule tables). QA: verdict brief adequacy + child scoping - NO code to test (design task). After review->done_verified, PM routes NOHARDCODE-IMPL to developer per normal backlog flow. Note: 2 more null-disposition CI-GUARDRAIL rows remain (shared-package-import-check, rebuild-raw-verify-hook) - each future BOUNDED-1 pickup needs the same developer->architect lane-correction (detail.dev_agent=architect is the tell). Out-of-scope: a context_bloat_breach auto-fired on the architect notebook post-edit (routed to claude-manager-helper) - left for owning hygiene flow, self-heals."
+      },
+      {
+        "title": "CI-shared-package-import-check",
+        "priority": "P2",
+        "type": "CI-GUARDRAIL",
+        "zone": "cross-service/",
+        "status": "REVIEW",
+        "id": "FACTORY-GUARD-CI-shared-package-import-check",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-GUARD-CI-shared-package-import-check",
+        "promoted_at": "2026-07-24T19:47:49Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-24T20:00:39Z",
+        "claimed_at": "2026-07-24T19:47:49Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "dev_agent": "architect",
+        "updated_by": "dev-team (BGFAN-1 closeout: architect design complete -> review)",
+        "review_note": "Design task complete (BGFAN-1, 6th of 7 ci-regression-prevention guardrails). Architect brief docs/architecture-briefs/2026-07-24-factory-guard-ci-shared-package-import-check.md (10968 B) + child FACTORY-GUARD-CI-SHAREDPKG-IMPL minted into backlog (next_agent/dev_agent=developer, zone cross-service/, brief_ref wired, epic FACTORY-MAINTAINABILITY-2026-06). DISPATCHER CONFABULATION-GUARD: 3 anchors INDEPENDENTLY confirmed at source (not self-report): (1) brief file present (10968 B, 21:55 local) with load-bearing verify-live corrections; (2) commit d220c8e1b ancestor of origin/main, origin/main..HEAD empty = pushed clean, carries brief+orch-state(+21=child row)+notebook+journal; (3) child row present next_agent=developer, brief_ref wired. VERIFY-LIVE CATCHES vs ticket/audit premise: (a) audit's cited shared-db stale-module-list already fixed (FACTORY-SHARED-fix-shared-db-stale-list REVIEW, ef62d2921 — 9/9 live-matching); (b) audit's shared-types ComputeTAResponse nullability is a 3-way divergence between two ALREADY-dead/orphaned shapes (shared-types + a dead TS shadow service slated for deletion + the live Go contract whose header documents the drift as intentional/zero-caller) — NOT a live-serving bug; (c) 3/3 packages/shared-* (shared-types 76L, shared-config 73L, shared-db 37L) grep-verified 100% orphaned repo-wide (zero import specifier, zero package.json dep) — same phantom shape as already-pruned packages/primitives (df6c1dc7d). Zero CI/lint coverage confirmed (all .github workflows, 3 eslint configs, 7 .golangci.yml, 2 pyproject.toml). DESIGN DECISION: BASELINE/RATCHET (NOT zero-tolerance) — unlike dead-code/metric-mask/no-hardcode siblings, driven by OWNERSHIP not volume: the keep-or-cut-per-package fix is already explicitly assigned to a separate larger task FACTORY-SHARED-wire-or-prune-shared-packages (P2, effort L, risk med, rebuild true, still BACKLOG) — not this CI-tooling task's decision to make. Design = blocking package-level orphan-importer check baseline-seeded with the 3 current orphans (blocks any NEW zero-importer package, closing the regression-prevention gap) + advisory-only non-blocking structural-drift/name-collision surface (new Alert/Signal/McpConfig collisions found). Full AST structural diffing explicitly DEFERRED (no TS AST tool wired into any bash-only audit script; regex field-diff would FP on reorder/JSDoc/optional-marker churn). QA: verdict brief adequacy + child scoping - NO code to test (design task); after review->done_verified, PM routes SHAREDPKG-IMPL to developer per normal backlog flow. RECURRING CI-GUARDRAIL mis-route now 3/3 lane-corrected+closed (dead-code b418c9ad6, no-hardcode be5ef50b4, shared-package this row); 1 more null-disposition row remains in backlog (rebuild-raw-verify-hook) - next BOUNDED-1 pickup needs same developer->architect lane-correction (detail.dev_agent=architect is the tell, read from backlog-detail not board row). Do NOT confuse with code-task FACTORY-SHARED-wire-or-prune-shared-packages."
       }
     ],
     "qa": [],
@@ -14877,26 +14896,7 @@
     },
     "last_triaged_at": "2026-07-24T19:47:49Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "title": "CI-shared-package-import-check",
-        "priority": "P2",
-        "type": "CI-GUARDRAIL",
-        "zone": "cross-service/",
-        "status": "IN_PROGRESS",
-        "id": "FACTORY-GUARD-CI-shared-package-import-check",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-GUARD-CI-shared-package-import-check",
-        "promoted_at": "2026-07-24T19:47:49Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-24T19:48:31Z",
-        "claimed_at": "2026-07-24T19:47:49Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "architect",
-        "dev_agent": "architect",
-        "updated_by": "dev-team (BOUNDED-1 lane-correct -> architect design)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
