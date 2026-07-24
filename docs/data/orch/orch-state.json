@@ -2450,8 +2450,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-24T00:49:22Z",
-    "_updated_by": "dev-technical-analysis",
+    "_updated_at": "2026-07-24T17:28:34Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -10660,6 +10660,102 @@
         "created_at": "2026-07-24T16:55:43Z",
         "created_by": "architect",
         "updated_at": "2026-07-24T16:55:43Z"
+      },
+      {
+        "id": "FE-PG-_INDEX-FRESH-FIX",
+        "type": "FIX",
+        "title": "Add page-level freshness/staleness indicator to /dashboard (Market Overview) — CHEF digest shows only per-dish timestamps, no page-level stale flag",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "size": "S",
+        "zone": "apps/frontend/",
+        "sprint": "QUALITY-AUDIT-FRONTEND-COVERAGE",
+        "source": "quality-audit-frontend-page-coverage-20260724",
+        "owner": "dev-frontend",
+        "next_agent": "dev-frontend",
+        "check_id": "FE-PG-_INDEX-FRESH",
+        "status_note": "FE-PG-_INDEX-FRESH re-check returns PASS",
+        "note": "Quality-audit frontend page-coverage 2026-07-24 (FE-PG-_INDEX-FRESH, WARN). GAP: dashboard._index (market overview front page) renders only per-dish ClientTimestamp; there is no <FreshnessBadge> / page-level staleness SLA, so a stale synthesis feed is not flagged. Ref: project_frontend_freshness_transparency. AC: FE-PG-_INDEX-FRESH re-check returns PASS (page-level 'data as of' + stale indicator visible).",
+        "created_at": "2026-07-24T17:22:24Z",
+        "created_by": "po",
+        "updated_at": "2026-07-24T17:22:24Z"
+      },
+      {
+        "id": "FE-PG-BCTC-FRESH-FIX",
+        "type": "FIX",
+        "title": "Flag stale reports on /dashboard/bctc (Financial Reports hub) — per-item updated_at shown but old reports not visually flagged as stale",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "size": "S",
+        "zone": "apps/frontend/",
+        "sprint": "QUALITY-AUDIT-FRONTEND-COVERAGE",
+        "source": "quality-audit-frontend-page-coverage-20260724",
+        "owner": "dev-frontend",
+        "next_agent": "dev-frontend",
+        "check_id": "FE-PG-BCTC-FRESH",
+        "status_note": "FE-PG-BCTC-FRESH re-check returns PASS",
+        "note": "Quality-audit frontend page-coverage 2026-07-24 (FE-PG-BCTC-FRESH, WARN). GAP: dashboard.bctc renders generated_at + per-item updated_at (recency visible) but no <FreshnessBadge> / stale flag on the report list, so an old brief is not visually flagged. Ref: project_frontend_freshness_transparency. AC: FE-PG-BCTC-FRESH re-check returns PASS (stale reports visually flagged on the hub).",
+        "created_at": "2026-07-24T17:22:24Z",
+        "created_by": "po",
+        "updated_at": "2026-07-24T17:22:24Z"
+      },
+      {
+        "id": "FE-PG-INTEL-FRESH-FIX",
+        "type": "FIX",
+        "title": "Add page-level freshness/staleness indicator to /dashboard/intel (AI Bulletin Hub) — only per-item timestamps, no page-level stale flag",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "size": "S",
+        "zone": "apps/frontend/",
+        "sprint": "QUALITY-AUDIT-FRONTEND-COVERAGE",
+        "source": "quality-audit-frontend-page-coverage-20260724",
+        "owner": "dev-frontend",
+        "next_agent": "dev-frontend",
+        "check_id": "FE-PG-INTEL-FRESH",
+        "status_note": "FE-PG-INTEL-FRESH re-check returns PASS",
+        "note": "Quality-audit frontend page-coverage 2026-07-24 (FE-PG-INTEL-FRESH, WARN). GAP: dashboard.intel renders only per-item ts (ClientTimestamp); no <FreshnessBadge> / page-level staleness SLA on the AI bulletin hub, so old bulletins are not flagged as stale. Ref: project_frontend_freshness_transparency. AC: FE-PG-INTEL-FRESH re-check returns PASS (page-level freshness/staleness indicator visible).",
+        "created_at": "2026-07-24T17:22:24Z",
+        "created_by": "po",
+        "updated_at": "2026-07-24T17:22:24Z"
+      },
+      {
+        "id": "FACTORY-GUARD-CI-METRICMASK-IMPL",
+        "type": "SPRINT-S",
+        "title": "Implement metric-mask-lint CI guardrail (script + fix live offenders + workflow wiring)",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "size": "S",
+        "zone": "cross-service/",
+        "epic": "FACTORY-MAINTAINABILITY-2026-06",
+        "cluster": "ci-regression-prevention",
+        "source": "architect design brief 2026-07-24, parent FACTORY-GUARD-CI-metric-mask-lint",
+        "detail_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-metric-mask-lint.md#3-build-vs-plan--decomposed-not-self-implemented",
+        "dev_agent": "developer",
+        "next_agent": "developer",
+        "parent_task": "FACTORY-GUARD-CI-metric-mask-lint",
+        "note": "files: scripts/audits/metric-mask-lint.sh (new, --check mode, zero-tolerance no baseline needed), apps/mcp-server/src/domain/services/cascadeEngine.ts (fix 3x seedEntry.confidence ?? 0.6 masks at L356/375/394 feeding stored MSCI cascade confidence), apps/mcp-server/src/domain/services/news-analysis/marketSentimentCalculator.ts (fix row.impact_score ?? 1.0 mask at L174), apps/mcp-server/src/interface/mcp/tools/system/watchlist.ts (annotate thresholds?.impactScore ?? 7 at L198 with metric-mask-allow: — genuine user config threshold, not fabricated metric), .github/workflows/ci.yml (add metric-mask-lint job), docs/policies/dev-standards.md (CANONICAL pointer), scripts/audits/metric-mask-lint.test.sh (new smoke test). approach: single cross-language regex script scanning *.ts/*.py/*.go (excl tests/vendor) for ?? / || / python or / destructuring-or-param default with a NON-ZERO numeric literal on identifiers matching /confidence|score|impact|magnitude|probability/i; 0/0.0/null always allowed (honest-absence idiom); inline metric-mask-allow: <reason> comment suppresses a match (mirrors size-justification: convention); fix the 4 real live masks + annotate the 1 legit config default FIRST so the gate opens at zero offenders and can be true zero-tolerance (no baseline manifest, unlike the size-lint sibling which had 733 debt). dod: --check exits 0 on post-fix repo state; synthetic new ?? 50-style mask fails; ?? 0 / ?? null pass; annotated line passes; the 3+1 live masks fixed with no scoring-behavior regression (RAW-verify MSCI cascade + daily sentiment score after rebuild); smoke test covers all cases; CI green on push.",
+        "created_at": "2026-07-24T17:26:06Z",
+        "created_by": "architect",
+        "updated_at": "2026-07-24T17:26:07Z"
+      },
+      {
+        "id": "FE-PG-BCTC-EVAL-_INDEX-FUNC-FIX",
+        "type": "FIX",
+        "title": "Fix /dashboard/bctc-eval HTTP 500 — loader throws on upstream /api/bctc-eval 404 instead of rendering a recoverable Card (user-visible broken page)",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "S",
+        "zone": "apps/frontend/",
+        "sprint": "QUALITY-AUDIT-FRONTEND-COVERAGE",
+        "source": "quality-audit-frontend-page-coverage-20260724",
+        "owner": "dev-frontend",
+        "next_agent": "dev-frontend",
+        "check_id": "FE-PG-BCTC-EVAL-_INDEX-FUNC",
+        "status_note": "FE-PG-BCTC-EVAL-_INDEX-FUNC re-check returns PASS",
+        "note": "Quality-audit frontend page-coverage 2026-07-24 (FE-PG-BCTC-EVAL-_INDEX-FUNC, FAIL — LIVE probe). SYMPTOM: GET /dashboard/bctc-eval returns HTTP 500 (root error boundary 'Something went wrong'); the eval scorecard list never renders. ROOT CAUSE: the loader fetches /api/bctc-eval which returns HTTP 404 ({\"error\":\"Not found\",\"path\":\"/api/bctc-eval/\"}) and THROWS, violating the route's own JSDoc contract ('show Card with API error, do NOT throw'). TRIAGE HINT (verify, do not assume): determine whether the frontend proxy forwards a trailing slash the mcp-server route rejects (path shows '/api/bctc-eval/') OR the mcp-server GET /api/bctc-eval handler is unregistered — escalate to dev-mcp-server if server-side. Also closes the same-root-cause NEEDS_REVIEW rows FE-PG-BCTC-EVAL-_INDEX-{FRESH,OBS,DEGR,CORR} + FE-PG-BCTC-EVAL-$REPORTID-FUNC. AC: FE-PG-BCTC-EVAL-_INDEX-FUNC re-check returns PASS (GET /dashboard/bctc-eval → 200 + eval table renders).",
+        "created_at": "2026-07-24T17:28:34Z",
+        "created_by": "po",
+        "updated_at": "2026-07-24T17:28:34Z"
       }
     ],
     "closed_sprints": [
@@ -14658,6 +14754,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-07-23T23:52:02Z",
-  "_updated_by": "dev-stock-price"
+  "_updated_at": "2026-07-24T17:28:34Z",
+  "_updated_by": "po"
 }

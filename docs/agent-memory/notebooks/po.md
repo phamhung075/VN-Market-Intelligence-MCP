@@ -1,22 +1,23 @@
 # PO Notebook
 
-_Last: 2026-07-23T18:10Z (dev-team Step-1 slot — drained 17 NEW signal_queue rows + 1 pendingSignal + 1 dispatcher input; minted 7 deduped backlog rows)_
+_Last: 2026-07-24T17:29Z (self-initiated — user demand: recheck frontend, add ALL missing quality-audit checks page by page)_
 
-## Tick 2026-07-23T18:04–18:10Z — signal-queue triage drain (rare non-preempted Step-1)
+## Tick 2026-07-24T17:12–17:29Z — quality-audit FRONTEND page-by-page coverage expansion
 
-**Directive:** dispatcher tick 17:37Z, head in_progress (bg worker) so head-idle lanes skipped → Step 1 reached. Drain PO inbox. DS-OBS-01-FIX + BCT-OBS-02-FIX in-flight — NOT reopened.
+**Directive:** genuine human demand "recheck the frontend, add ALL missing quality-audit checks, page by page. I see many are missing." Scope = coverage EXPANSION (my decision).
 
-**2 orch-apply writes (both PASS; task_total 623→630, signal_total 124=124; commit local-only, no push):**
-- T1 board: +7 backlog rows; unblock fleet-push (next_agent=ops); fold agent-father.md into CLEAN-CONTEXT-BLOAT-NOTEBOOKS-20260614; fold MAINTLANE→EFFECTIVE-DISPOSITION.
-- T2 signals: 17 NEW→triaged (per-row disposition, anti-burial — only rows actioned).
+**Ground truth (verified live, prompt prose was stale):** artifact `docs/data/quality-checklist.json` — checks nest under `.capabilities[].checks[]` (NOT top-level `.checks`); ONLY frontend cap was CAP-SVC-FRONTEND (5 SERVICE-level checks), ZERO per-page checks for 36 dashboard routes. Handler `qualityChecklistHandler.ts` = pure passthrough → stored lowercase summary IS authoritative.
 
-**7 minted (all cross-service/):** FIX-DRAINPRUNE-SKIP-LIVE-REFERENCED-PROCESSED-FILES (P1, fleet-wide Stage1c write-block), FIX-AUDITOR-TIER1-PROBE-ACKED-LAUNCHD-DEATH-SUPPRESSION (P1, ~48-tick/day churn), FIX-EXECTIER-HEADSYNC-BRANCHNULL-REVIEW-IDLE (P1), FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE (P1, supervised, 3-clause consolidation of signals 8+15, subsumes MAINTLANE), OPS-FFLOW-VPS-CLOCKDRIFT-PREVENTIVE-RESIDUALS (P1/ops), FIX-LAUNCHD-DOCKER-EVENTS-EXIT1-CRASHLOOP (P2/ops), FIX-QUALITY-CHECKLIST-GENERATOR-FABRICATED-PASS-EVIDENCE (P1, mid-task dispatcher input, recurring 2x, RAW-confirmed byte-identical evidence x4/x4/x7).
+**Delivered (generator `scripts/gen-frontend-page-checks.mjs`, idempotent):** +36 per-page capability groups / **+173 checks** (Functional/Freshness/Observability/Degradation/Correctness, contract-grounded per page). Total 264→**437**. New: 153 PASS · 3 WARN · 5 INFO · 11 NEEDS_REVIEW · 1 FAIL. Summary recomputed FROM rows (jq-verified `summary==rows`). overall→DEGRADED.
 
-**Tally:** minted 7 · resolved 1 (janitor RETIRE) · under-cap 1 (digest-predict 198<200) · dup-skip 3 (cold-evict, DGC, fleet-push) · folded 5 · benign 1 (SIGTERM slot-firer). Journal: docs/agent-memory/decisions/sprint-2026-07-23-po-signal-triage.md.
+**2 pre-existing bugs fixed in-pass:** (1) stored-summary DRIFT pass 239→245 / info 20→14 (the off-by-N the prompt warned of); (2) legacy `NEEDS-REVIEW` token → `NEEDS_REVIEW` (consumer badge only matched underscore → 3 rows rendered grey not yellow).
+
+**LIVE probe caught a false-green (the recurring defect):** HTTP-probed all 36 routes → `/dashboard/bctc-eval` = **HTTP 500** (root error boundary): loader fetches `/api/bctc-eval` which **404s** (`path:/api/bctc-eval/`) and THROWS vs its own "do NOT throw" contract. Static-only pass had marked it PASS. Flipped FUNC→FAIL, siblings+detail-FUNC→NEEDS_REVIEW.
+
+**4 fix-tasks minted** (owner=dev-frontend, AC="{check_id} re-check returns PASS", sprint QUALITY-AUDIT-FRONTEND-COVERAGE): FE-PG-BCTC-EVAL-_INDEX-FUNC-FIX (**P1**, broken page — triage proxy trailing-slash vs mcp-server endpoint reg) + FE-PG-{_INDEX,BCTC,INTEL}-FRESH-FIX (P2, page-level freshness-transparency gaps). Journal: sprint-QUALITY-AUDIT-FRONTEND-COVERAGE-po.md.
 
 ## Carry-over
-- **NEW rows now owned by dev/ops loops** — do NOT re-triage the 17; all triaged with disposition notes. EFFECTIVE-DISPOSITION + PROSE-SEQUENCING(shipped) + MAINTLANE(folded) all touch scripts/lib/devteam-eligibility.jq → serialize, never concurrent-dispatch.
-- **Quality-checklist producer P1** — masks real observability gaps (false-green). Consumers BCT-OBS-02/DS-OBS-01 in review/qa; do NOT reopen. Any new OBS-*-FIX check found PASS-while-broken → converge to FIX-QUALITY-CHECKLIST-GENERATOR-FABRICATED-PASS-EVIDENCE, no new row.
-- **VPS clock-drift** — any further vn-price/sbv/prices stale = same OPS-FFLOW-VPS-CLOCKDRIFT-PREVENTIVE-RESIDUALS incident, mark triaged, do NOT mint.
-- **A-30 converge CLOSED** (prior tick). In-band A-30 re-emit → triaged, corroborate FIX-MCP-MEMORY-CODE-LEAK, no new work. Only GENUINE tripwire (OOMKilled / >97% sustained / :3000 down) breaks this.
-- **UC-CDC-P5** held; auto-unblocks on UC-SDF-P6 + ARCH-SESSION-CRON-PLANE-LIVENESS-WATCHDOG DONE_VERIFIED. Do NOT re-flag.
+- **Live-probe BEFORE PASS** — the notebook's FIX-QUALITY-CHECKLIST-GENERATOR-FABRICATED-PASS-EVIDENCE warning is REAL: static contract ≠ runtime green. Any future quality-check PASS on a rendered page MUST be HTTP-probed (curl needs dangerouslyDisableSandbox for the loop — single calls pass sandbox). bctc-eval 500 proved it.
+- **bctc-eval upstream 404** — `/api/bctc-eval` returns 404 (`path:/api/bctc-eval/`, trailing slash). FE-PG-BCTC-EVAL-_INDEX-FUNC-FIX owns it; its 5 NEEDS_REVIEW rows (index FRESH/OBS/DEGR/CORR + detail FUNC) auto-close when it returns PASS. If found server-side, dev-frontend escalates to dev-mcp-server.
+- **Regen path:** `node scripts/gen-frontend-page-checks.mjs` (idempotent; strips CAP-FE-PAGE-*, recomputes summary) → serves LIVE via bind-mount, no rebuild. Companion mint `scripts/po-qa-frontend-coverage-warn-fix-mint.jq`. Both registered in po/flow/scripts-registry.md.
+- **Deferred (documented, not a gap):** 14 NEEDS_REVIEW = runtime-value plausibility (synthesized prose, VNINDEX/market numeric plausibility, KD trend-badge logic) + the bctc-eval-blocked rows — need live data cross-check, not static; flip via each row's recheck_how.
