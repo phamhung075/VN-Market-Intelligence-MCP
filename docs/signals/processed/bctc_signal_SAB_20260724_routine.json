@@ -4,24 +4,18 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "San xuat bia (Sabeco) - Bia Saigon, 333, thuc uong khong con",
-  "customer": "Nguoi tieu dung ca nhan trong nuoc, kenh ban le/HORECA",
-  "ops": "BCTC goc chua co du lieu (Chua co du lieu BCTC) - chi co ty le so sanh nganh: PE 13.1x (PREMIUM +48% vs median 8.9x), ROE 19.9% (tren median 15.5%)",
-  "mgmt": "Khong co du lieu quan tri moi; theo doi luan phien (rotation touch), khong mo rong cum bi chan",
-  "fundamentals": {
-    "data_status": "Chua co du lieu BCTC - blocked cluster (unchanged)",
-    "sector_pe": 13.1,
-    "sector_pe_verdict": "PREMIUM",
-    "sector_roe_pct": 19.9
-  },
+  "product": "San xuat va kinh doanh bia (Sabeco) — thuong hieu Bia Saigon, 333",
+  "customer": "Nguoi tieu dung ca nhan qua kenh ban le/on-trade toan quoc",
+  "ops": "BCTC goc chua co du lieu (Chua co du lieu BCTC) — chi co ty le so sanh nganh: PE 13.1x (PREMIUM +48% vs median 8.9x), ROE 19.9% (tren median 15.5%), PB PREMIUM +69%. EY spread FAIR. News hom nay: SAB giu >20,000 ty tien mat, 6 thang lai gan 2,500 ty (news_mention LOW). Unchanged vs c116-c119.",
+  "mgmt": "Khong co du lieu quan tri moi; theo doi luan phien (rotation touch DIG/VIX/DPM/SAB), khong mo rong cum bi chan.",
   "esc_gate": {
-    "note": "ESC gate not evaluated - no BCTC extraction available"
+    "note": "ESC gate not evaluated — no BCTC extraction available"
   },
-  "cycle_id": "20260724-0000",
-  "source": "bctc-analyst-slot-4",
+  "cycle_id": "20260724-1800",
+  "source": "bctc-analyst-slot-2",
   "_processed": {
-    "fingerprint": "13d39c066c1eb21c963f3d657cb94a0c814bf181648e9e8c25b9ec953bd65c59",
-    "processedAt": "2026-07-24T00:14:39Z",
+    "fingerprint": "ab4c059090eeb0b822a291c2942c084613e8b5bd487e6f1ee535ec7773a01a5f",
+    "processedAt": "2026-07-24T18:15:35Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

@@ -6,22 +6,16 @@
   "beat_miss": null,
   "product": "Phat trien bat dong san khu do thi, khu cong nghiep (DIC Corp)",
   "customer": "Nguoi mua nha o, nha dau tu thu cap bat dong san khu vuc Ba Ria-Vung Tau/phia Nam",
-  "ops": "BCTC goc chua co du lieu (Chua co du lieu BCTC) - chi co ty le so sanh nganh: PE 14.9x (DISCOUNT -23% vs median 19.3x), ROE 7.3% (tren median 6.3%)",
-  "mgmt": "Khong co du lieu quan tri moi; theo doi luan phien (rotation touch), khong mo rong cum bi chan",
-  "fundamentals": {
-    "data_status": "Chua co du lieu BCTC - blocked cluster (unchanged)",
-    "sector_pe": 14.9,
-    "sector_pe_verdict": "DISCOUNT",
-    "sector_roe_pct": 7.3
-  },
+  "ops": "BCTC goc chua co du lieu (Chua co du lieu BCTC) — chi co ty le so sanh nganh: PE 14.9x (DISCOUNT -23% vs median 19.3x), ROE 7.3% (tren median 6.3%), PB ngang bang. Unchanged vs c116-c119.",
+  "mgmt": "Khong co du lieu quan tri moi; theo doi luan phien (rotation touch DIG/VIX/DPM/SAB), khong mo rong cum bi chan.",
   "esc_gate": {
-    "note": "ESC gate not evaluated - no BCTC extraction available"
+    "note": "ESC gate not evaluated — no BCTC extraction available"
   },
-  "cycle_id": "20260724-0000",
-  "source": "bctc-analyst-slot-4",
+  "cycle_id": "20260724-1800",
+  "source": "bctc-analyst-slot-2",
   "_processed": {
-    "fingerprint": "b948f3bbcb1099ad37fa27528be3694257d97a6ad3cc8ce4d6ba9126adaf1626",
-    "processedAt": "2026-07-24T00:14:39Z",
+    "fingerprint": "90a3ea34ef547d7681459ee5d140b1477476301a4dbb981eabe20820845c234d",
+    "processedAt": "2026-07-24T18:15:35Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
