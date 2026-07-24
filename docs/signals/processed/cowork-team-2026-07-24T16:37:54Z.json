@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-24T16:37:54Z",
+    "matched_slots": [
+      "refine-bctc-slot-4"
+    ],
+    "won_slots": [
+      "refine-bctc-slot-4"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/refine_bctc_md/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "closed",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "refine-bctc-slot-4": "cadence"
+    },
+    "cadence_minutes": {
+      "refine-bctc-slot-4": 240
+    },
+    "last_fired_timestamp": "2026-07-24T16:37:29Z",
+    "last_fired_slots": [
+      "refine-bctc-slot-4"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "16:30",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": null,
+    "signal_backlog": 10,
+    "note": "single-slot off-market bctc-refine dispatch; refine_bctc_md spawned bg for oldest pending row (get_bctc_pending_refine limit:1)"
+  },
+  "priority": "low",
+  "createdAt": "2026-07-24T16:37:54Z",
+  "_processed": {
+    "fingerprint": "6115518ab93a092f34d12176e25e1ce0161f1ebc2727ae7b535485d5016124fa",
+    "processedAt": "2026-07-24T16:44:50Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
