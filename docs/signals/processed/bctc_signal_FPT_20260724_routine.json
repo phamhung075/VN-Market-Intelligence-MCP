@@ -3,25 +3,16 @@
   "signal_type": "bctc_signal",
   "quarter": "Q1-2026",
   "mode": "routine",
-  "beat_miss": null,
   "product": "IT services and software exports, systems integration, telecom (FPT Telecom), education (FPT Edu)",
   "customer": "Enterprise IT buyers (domestic + offshore outsourcing clients), SME/retail telecom subscribers",
-  "ops": "Op. margin 22.0%, ROE 6.2% (bctc) / 28.3% (sector-calc basis), EY spread FAIR (PE 13.8x DISCOUNT -20% vs sector 17.3x, PB PREMIUM +136%)",
-  "mgmt": "Consistent multi-cycle guidance delivery track record; Kinh Dich Phuc(24)/GIU 100% confirms fundamentals, holds n=3 consecutive cycles (reversed from bearish Su(7)/BAN on 07-23 15:10)",
-  "fundamentals": {
-    "net_revenue_ty_vnd": 12480,
-    "net_profit_ty_vnd": 2476.8,
-    "byte_identical_vs_prior_cycles": true,
-    "balance_sheet_imbalance_pct": 0
-  },
-  "esc_status": "ESC-1 FALSE. ESC-2 PASS (0% imbalance). ESC-3 DATA-COVERAGE-LIMITED (2/4Q cash-flow) - guard TTL lapsed this cycle, data-coverage-gap re-emitted to ops. ESC-4 FALSE (non_operating_share 2.0%). ESC-5 FALSE (get_bctc_report_id confirmed-blind, 7th consecutive cycle, dedup-checked BUG telegram sent msg 3894). E1: SKIPPED (byte-identical, cache-equivalent).",
-  "data_quality_note": "VPS bctc push last known-good 2026-07-20T01:26:41Z (stale_age_hours ~95h vs SLA 48h) - last-known-good data, may not reflect newest filing.",
-  "cycle": "c118",
-  "generated_at": "2026-07-24T00:10:00Z",
-  "source": "bctc-analyst-slot-4",
+  "ops": "Op. margin 22.0%, ROE 6.2% (bctc) / 28.3% (sector-calc basis), EY spread FAIR (PE 13.8x DISCOUNT -20% vs sector 17.3x, PB PREMIUM +136%). Fundamentals byte-identical vs c079-c118 (E3 cache-hit, 6-pass skipped).",
+  "mgmt": "NEW legal risk 2026-07-24: prosecution of an FPT Shop deputy manager (subsidiary-level, administrative/criminal). Kinh Dich softened to Khon(2)/GIU/TRUNG TINH (38% conf., was Phuc(24)/GIU 100%) same cycle. ESC-5 fired for the first time in 8 cycles (get_bctc_report_id resolved live) — Opus deep-dive dispatched.",
+  "esc_status": "ESC-2 PASS (0% imbalance). ESC-3 DATA-COVERAGE-LIMITED (2/4Q cash-flow history) — guard held, no re-emit. ESC-4 FALSE (non_operating_share 2.0%). ESC-5 TRUE — min_confidence 0.45, 7/15 refined units (unit-0008..unit-0014, footnote/related-party/loan-schedule pages 26-46) below 0.50 bar; guard-key esc-deepdive:FPT:Q1-2026:ESC-5 claimed, esc-deep-dive-request signal emitted (docs/signals/bctc-analyst-20260724T151200Z.json).",
+  "cycle": "c119",
+  "generated_at": "2026-07-24T15:20:00Z",
   "_processed": {
-    "fingerprint": "657a27041ae1fe8a87da250f7b54bfb6dcf24c3268b7f5c134b257b97a793db5",
-    "processedAt": "2026-07-24T00:14:39Z",
+    "fingerprint": "1680748ee25d7fb80f679bcdf0989d159722b14afa00729f61c2e34b182f2938",
+    "processedAt": "2026-07-24T15:16:14Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

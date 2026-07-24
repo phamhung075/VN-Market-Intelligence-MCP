@@ -1,0 +1,41 @@
+{
+  "id": "bca-20260724T151200Z",
+  "ts": "2026-07-24T15:12:00Z",
+  "from": "bctc-analyst",
+  "to": "dev-team",
+  "type": "esc-deep-dive-request",
+  "summary": "ESC deep-dive: FPT Q1-2026 ESC-5",
+  "severity": "HIGH",
+  "status": "NEW",
+  "payload_ref": null,
+  "payload": {
+    "trigger_id": "ESC-5",
+    "ticker": "FPT",
+    "quarter": "Q1-2026",
+    "report_id": "e8ea3df5-3f32-413d-a3eb-c71634c0438d",
+    "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
+    "context": {
+      "low_confidence_unit_ids": [
+        "unit-0008",
+        "unit-0009",
+        "unit-0010",
+        "unit-0011",
+        "unit-0012",
+        "unit-0013",
+        "unit-0014"
+      ],
+      "min_confidence": 0.45,
+      "note": "get_bctc_report_id (tool #186) resolved successfully this cycle for the first time since 2026-07-16/c111 — the ESC-5 dark-escalation gap (8 consecutive cycles, 'Tool not found') is CLOSED. Root cause of the prior blindness looks like a param-format mismatch: the tool rejects 'Q1-2026' (Zod invalid_enum_value) and requires bare 'Q1'|'Q2'|'Q3'|'Q4'. get_bctc_refined(report_id) then returned 15 units for FPT Q1-2026; 7 of 15 (unit-0008..unit-0014, all footnote/related-party/subsidiary-listing pages 26-46) sit at confidence=0.45, below the 0.50 bar. Cause per unit flags: complex_multicol_note:prose_form + image_unavailable — dense multi-column OCR tables (loan schedules, equity roll-forward, related-party balances, subsidiary ownership tables) that the refine pass could not grid-verify from the source image. Units 0000-0007 (cover page, B01 balance sheet, B02 P&L, cash flow, cash/note-6/7/8/9/10) are all >= 0.50 (0.45-0.85 range, mostly 0.55-0.85). No accounting_trick/revenue_pull_forward flags in any unit; flags are OCR-confidence only, not a manipulation signal."
+    },
+    "all_esc_fired": [
+      "ESC-3:DATA-COVERAGE-LIMITED",
+      "ESC-5:TRUE"
+    ]
+  },
+  "_processed": {
+    "fingerprint": "59bef646f7000914c40d5e97121b77581dfae53bc9a6ca8b4e7398809ddd616d",
+    "processedAt": "2026-07-24T15:16:14Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

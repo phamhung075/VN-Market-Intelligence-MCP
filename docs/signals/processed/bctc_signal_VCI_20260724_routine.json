@@ -1,0 +1,19 @@
+{
+  "ticker": "VCI",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "product": "Brokerage, investment banking, and securities services (Vietcap)",
+  "customer": "Retail and institutional securities investors",
+  "ops": "ROE 8.7% below sector median 11.3%, PE 21.3x PREMIUM +68% vs sector 12.7x, EY spread AVOID (-0.31pp under deposit rate). Sector ratios byte-identical vs c115/c117.",
+  "mgmt": "No legal/insider flags this cycle; direct BCTC extraction still unavailable (sector-ratio only, rotation touch). Kinh Dich REVERSED to negative this cycle: Kien(39)/BAN/BAT LOI (100% conf.), flipping from Tan(35)/GIU 100% THUAN LOI at c117 baseline — sharpest reversal in this rotation cluster; aligns directionally with the AVOID valuation verdict.",
+  "esc_status": "N/A — no direct BCTC extraction this cycle (get_bctc_full returns \"Chua co du lieu BCTC\").",
+  "cycle": "c119",
+  "generated_at": "2026-07-24T15:20:00Z",
+  "_processed": {
+    "fingerprint": "27e6b5aa6ce22e204c7c413ee0cf7b1e4c594cdf1abd15e834508b88a4663dd6",
+    "processedAt": "2026-07-24T15:16:14Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

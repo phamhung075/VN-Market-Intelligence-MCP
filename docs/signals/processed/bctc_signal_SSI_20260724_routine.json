@@ -1,0 +1,19 @@
+{
+  "ticker": "SSI",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "product": "Brokerage, investment banking, and asset management services",
+  "customer": "Retail and institutional securities investors",
+  "ops": "ROE 14.0% above sector median 10.0%, PE 14.6x PREMIUM +15% vs sector 12.7x, EY spread FAIR (1.85pp over deposit rate). Sector ratios byte-identical vs c115/c117.",
+  "mgmt": "No legal/insider flags this cycle; direct BCTC extraction still unavailable (sector-ratio only, rotation touch). Kinh Dich REVERSED to negative this cycle: Kien(39)/BAN/BAT LOI (63% conf.), flipping from Phe Hap(21)/THAN TRONG 37-38% THUAN LOI at c117 baseline — first negative signal this rotation cluster has shown; no fundamental data to corroborate/contradict (still \"Chua co du lieu\").",
+  "esc_status": "N/A — no direct BCTC extraction this cycle (get_bctc_full returns \"Chua co du lieu BCTC\").",
+  "cycle": "c119",
+  "generated_at": "2026-07-24T15:20:00Z",
+  "_processed": {
+    "fingerprint": "3318a4f3a1453d1482b2b53704cc6c12960b4e236011388826ac8e42932a3da9",
+    "processedAt": "2026-07-24T15:16:14Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
