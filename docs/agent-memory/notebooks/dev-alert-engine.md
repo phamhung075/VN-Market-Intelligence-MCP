@@ -44,19 +44,22 @@ Zone health: taAlertScanJob properly guarded; 22/22 TA tests GREEN; no drift det
 
 ---
 
-## Session: 2026-06-10 (GFD-4 — Pre-deploy validation gate)
+## Session: 2026-07-24 (FACTORY-ALERT-router-cleanups)
 
-**Task:** GFD-4 sprint GO-FLEET-DEPLOY — pre-deploy production-readiness validation (no feature build).
+**Task:** FACTORY-ALERT-router-cleanups (P2, FACTORY-MAINTAINABILITY-2026-06 audit) — 4 small router.go/sqlite.go cleanups.
 
-**Decision:** All 4 DoD items verified from existing code — zero code changes required.
+**Item 3 set-equality proof:** `domain.AlertSeverity.IsValid()` (models.go:16-22) accepts exactly `{low,medium,high,critical}` — identical to the inline `validSeverities` map, no discrepancy. Swapped in; kept the 400 message text byte-identical.
 
-### DoD Evidence
+**Item 4 case-sensitivity proof:** old `containsStr`/`findSubstr` used plain `s[i:i+len(sub)]==sub`, no `ToLower` anywhere → confirmed CASE-SENSITIVE, exact match to `strings.Contains` semantics. Direct swap, no fold wrapper needed. Hoisted `outcomeLookbackDays=90`/`defaultPendingLimit=100` to named consts.
 
-- **DoD-1:** `/health` route registered + live-verified (HTTP 200, `{"status":"ok","service":"alert-engine","port":5006}`)
-- **DoD-2:** CGO deps present (`go-sqlite3 v1.14.24`, builder `golang:1.22-alpine` with `gcc musl-dev`, runtime `alpine:3.20`)
-- **DoD-3:** `golangci-lint run ./...` → 0 issues; `.golangci.yml` has depguard v2 format (Fence-A/B/C enabled)
-- **DoD-4:** `docker-compose.yml` healthcheck: `wget -qO- http://localhost:5006/health`, interval 30s, retries 3, start_period 10s
+**Item 1:** `UseCaseExecutor` interface had zero refs repo-wide beyond its own decl (grepped `apps/alert-engine/**/*.go`) — deleted.
 
-**Files verified (no changes):** `cmd/server/main.go`, `pkg/interface/http/router.go`, `Dockerfile`, `.golangci.yml`, `go.mod`, `docker-compose.yml`
+**Item 2 (intentional fix):** `NewRouter(uc, port)` now threads `cfg.Port` through to `handleHealth`; `cmd/server/main.go` passes `cfg.Port` instead of hardcoded `5006`. Added `TestHealth_ReflectsConfiguredPort` (port=6123) as a regression lock proving the port is real, not hardcoded.
 
-**Outcome:** GATE PASSED ✓ — ready for deploy. Zero commits required.
+**Verify:** go build/vet/test ./... green + golangci-lint 0 issues + sandbox harness 11/11 PASS.
+
+**Doc:** `docs/architecture/microservice/alert-engine/api-reference.md` — noted /health `port` reflects live `cfg.Port`. Graphify `--update` attempted, failed structurally (no LLM API key in shell env) — logged, not silently skipped.
+
+**Commit:** local-only, explicit pathspecs, no push (task constraint).
+
+Zone health: no drift detected; 4/4 items closed with equivalence proofs; behavior unchanged except the intended /health port correction.
