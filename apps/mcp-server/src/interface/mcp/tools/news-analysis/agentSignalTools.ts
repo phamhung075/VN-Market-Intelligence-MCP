@@ -69,6 +69,59 @@ const PayloadSchema = z.object({
     .describe("Impact score 0-10 (optional)"),
 }).passthrough();
 
+// FIX-AGENTSIGNALS-FROMAGENT-SCHEMA: exported (not inlined) so tests can assert
+// against the REAL runtime shape — z.object(GetAgentSignalsShape).safeParse(...) —
+// instead of a hand-mirrored duplicate that can silently drift from this source.
+// `agent` is OPTIONAL: required only in inbox mode (from_agent omitted); the
+// handler enforces "at least one of agent/from_agent" at runtime (see
+// get_agent_signals handler body) rather than via a zod .refine, so a caller
+// omitting both gets a readable tool-response error instead of a hard MCP
+// protocol-level parse failure (-32602).
+export const GetAgentSignalsShape = {
+  agent: z
+    .string()
+    .optional()
+    .describe(
+      "Agent name to fetch signals for (e.g. 'alert_commander'). " +
+        "Required in inbox mode (from_agent omitted). " +
+        "Omittable in sender-history mode (from_agent=string) and all-producers mode (from_agent=null).",
+    ),
+  status: z
+    .enum(["unread", "all"])
+    .default("unread")
+    .describe("Filter: 'unread' (default) or 'all'"),
+  from_agent: z
+    .string()
+    .nullable()
+    .optional()
+    .describe(
+      "If provided as a string, return only signals sent BY this agent (sender history). " +
+        "Read-mark side-effect is suppressed. " +
+        "Pass null (or omit) to return signals from ALL producers — used for cross-sibling " +
+        "dedup (SIBLING_WINDOW_CACHE) and market-watcher corroboration gate. " +
+        "When null, hours_back is required to bound the query window.",
+    ),
+  hours_back: z.coerce
+    .number()
+    .positive()
+    .optional()
+    .describe(
+      "Restrict results to signals created within the last N hours " +
+        "(e.g. 6 = last 360 minutes; 0.25 = last 15 minutes for sibling window). " +
+        "When omitted with from_agent=null, defaults to 0.25 (15-min sibling window). " +
+        "When omitted with a specific from_agent, returns non-expired signals only.",
+    ),
+  signal_type: z
+    .string()
+    .nullable()
+    .optional()
+    .describe(
+      "Filter results to a specific signal type (server-side). " +
+        "Examples: 'price_anomaly', 'chain_catalyst', 'verified_decision', 'legal_risk'. " +
+        "When null or omitted, all signal types are returned (backward compatible).",
+    ),
+} as const;
+
 // ── Signal Validation ───────────────────────────────────────────────────────────
 
 /**
@@ -455,50 +508,7 @@ export function registerAgentSignalTools(server: McpServer): void {
       "Pass hours_back to restrict results to signals created within the last N hours " +
       "(e.g. hours_back=6 covers the 360-min legal_risk dedup window; hours_back=0.25 = 15-min sibling window). " +
       "Pass signal_type to filter results server-side by signal type (reduces payload 40-60%).",
-    {
-      agent: z
-        .string()
-        .optional()
-        .describe(
-          "Agent name to fetch signals for (e.g. 'alert_commander'). " +
-            "Required in inbox mode (from_agent omitted). " +
-            "Omittable in sender-history mode (from_agent=string) and all-producers mode (from_agent=null).",
-        ),
-      status: z
-        .enum(["unread", "all"])
-        .default("unread")
-        .describe("Filter: 'unread' (default) or 'all'"),
-      from_agent: z
-        .string()
-        .nullable()
-        .optional()
-        .describe(
-          "If provided as a string, return only signals sent BY this agent (sender history). " +
-            "Read-mark side-effect is suppressed. " +
-            "Pass null (or omit) to return signals from ALL producers — used for cross-sibling " +
-            "dedup (SIBLING_WINDOW_CACHE) and market-watcher corroboration gate. " +
-            "When null, hours_back is required to bound the query window.",
-        ),
-      hours_back: z.coerce
-        .number()
-        .positive()
-        .optional()
-        .describe(
-          "Restrict results to signals created within the last N hours " +
-            "(e.g. 6 = last 360 minutes; 0.25 = last 15 minutes for sibling window). " +
-            "When omitted with from_agent=null, defaults to 0.25 (15-min sibling window). " +
-            "When omitted with a specific from_agent, returns non-expired signals only.",
-        ),
-      signal_type: z
-        .string()
-        .nullable()
-        .optional()
-        .describe(
-          "Filter results to a specific signal type (server-side). " +
-            "Examples: 'price_anomaly', 'chain_catalyst', 'verified_decision', 'legal_risk'. " +
-            "When null or omitted, all signal types are returned (backward compatible).",
-        ),
-    },
+    GetAgentSignalsShape,
     async (args) => {
       try {
         await initDatabase();
