@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FACTORY-GUARD-CI-depguard-tier-boundaries",
-    "next_agent": "architect",
-    "next_action": "Dispatch architect for FACTORY-GUARD-CI-depguard-tier-boundaries (CI-GUARDRAIL design; detail dev_agent=architect). Sibling of FACTORY-GUARD-CI-metric-mask-lint handled by architect this session.",
-    "updated_at": "2026-07-24T18:18:58Z",
-    "updated_by": "dev-team (BOUNDED-1 NON-CODE/DESIGN correction)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "BGFAN-1 closeout complete: FACTORY-GUARD-CI-depguard-tier-boundaries design delivered by architect -> review (next=qa). Children FACTORY-GUARD-CI-TSBOUNDARIES-IMPL + FACTORY-GUARD-CI-COMPROOT-LOGIC-IMPL in backlog (developer). WIP now 0; dispatch lanes free.",
+    "updated_at": "2026-07-24T18:33:47Z",
+    "updated_by": "dev-team (BGFAN-1 closeout)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -14763,6 +14763,25 @@
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
         "updated_by": "dev-team (BGFAN-1 closeout: dev-frontend fix live-verified -> review)",
         "review_note": "IMPLEMENTED + live-verified at source (dispatcher confabulation-guard, not self-report). GET /dashboard/bctc-eval 500->200 and GET /api/bctc-eval 404->200 confirmed by live curl on the 3001-served container; StatusBadge now `status: EvalStatus|undefined` (renders neutral '—'), lying `as EvalStatus` cast removed from EvalTable, StageStatuses keys made optional to match live wire contract. Committed aaf487834 (8 files, apps/frontend/) + 2 dev-frontend memory commits, all pushed by dispatcher. LIVE ROOT CAUSE DIVERGED FROM PO NARRATIVE (verify-live catch): the loader never threw — real crash was a render-time `TypeError: Cannot destructure 'variant' of STATUS_CONFIG[status]` in StatusBadge, because live mcp-server payloads only carry stage_statuses keys for stages actually computed (MBB Q1-2026 had only stages 4/5/6) while the domain type declared all 6 required. A SECOND real bug also fixed: bare GET /api/bctc-eval through the frontend splat proxy appended a trailing slash on empty params['*'] -> mcp-server 404; fixed in-zone (buildBctcEvalUpstreamUrl), NO mcp-server escalation needed. GATES (dev-reported): tsc --noEmit 0 errors; vitest 2125/2127 pass (2 pre-existing QUE-TOOLTIP failures out-of-zone, unmodified — QA to confirm unrelated); playwright render-check 3/3 PASS (G12). CLOSES 6 quality-audit checks: FE-PG-BCTC-EVAL-_INDEX-{FUNC,FRESH,OBS,DEGR,CORR} + FE-PG-BCTC-EVAL-$REPORTID-FUNC — QA should re-run the quality audit to flip them PASS. FOLLOW-UP DEBT (out of ticket scope, dispatcher-confirmed via dev notebook flag): apps/frontend/app/routes/api.bctc-inspect.$.tsx carries the identical trailing-slash-on-empty-subpath pattern, currently unexercised by any real caller — candidate for a future ticket, NOT fixed here. QA: verdict on gate adequacy + confirm the 2 QUE-TOOLTIP failures pre-date this change; then done_verified."
+      },
+      {
+        "title": "CI-depguard-tier-boundaries",
+        "priority": "P2",
+        "type": "CI-GUARDRAIL",
+        "zone": "cross-service/",
+        "status": "REVIEW",
+        "id": "FACTORY-GUARD-CI-depguard-tier-boundaries",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-GUARD-CI-depguard-tier-boundaries",
+        "promoted_at": "2026-07-24T18:17:35Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-24T18:33:48Z",
+        "claimed_at": "2026-07-24T18:17:35Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "owner": "architect",
+        "updated_by": "dev-team (BGFAN-1 closeout: architect design complete -> review)",
+        "review_note": "Design task complete (BGFAN-1). Architect produced brief docs/architecture-briefs/2026-07-24-factory-guard-ci-depguard-tier-boundaries.md (46L) + minted 2 child impl rows into task_board.backlog: FACTORY-GUARD-CI-TSBOUNDARIES-IMPL (ESLint CI-wiring + fix 4 live offenders + missing news-fetch-go-lint job) and FACTORY-GUARD-CI-COMPROOT-LOGIC-IMPL (new go/ast composition-root-logic gate + fix 2 macro-indicators offenders), both next_agent=developer, dev_agent=developer (correctly resolved to developer, NOT a phantom specialist). DISPATCHER CONFABULATION-GUARD: 3 load-bearing verify-live claims INDEPENDENTLY confirmed at source (not self-report): (1) Python clause STALE — Fence-C 'application must not import infrastructure or interface' already live at apps/pdf-extractor/pyproject.toml:70, already in py-lint CI, zero work; (2) TS fences ALREADY EXIST — mcp-server eslint.config.mjs Fence-A (domain-not-infra/interface/scheduler) + Fence-B (application-not-interface/scheduler) confirmed live, so ticket's cited pollNews/telegramCommands leaks are already DONE_VERIFIED — real gap is ESLint NEVER RUNS IN CI (zero eslint steps in .github/workflows) plus a drifted boundaries/elements blind spot on news-fetch src/routes/**; (3) composition-root offenders REAL — macro-indicators/cmd/server/adapters.go FetchPolicyRates(L142)+FetchOMO(L229) carry business-semantic IsEstimate fallback logic (net-new go/ast mechanism, depguard is import-only so cannot catch this). Ticket was wrong on 2 of 3 clauses; architect corrected via live scan (TS 4 offenders across mcp-server getMoneyRadarComposite.ts/recoverMissingOhlcvSession.ts + news-fetch routes/fetchArticle.ts; Go 2 offenders in macro-indicators only, zero FP against 10 other checked shims). Architect commit d44818f1e (brief + notebook + journal + 2 backlog rows; .head/.in_progress untouched, verified via diff) was LOCAL-ONLY at closeout — carried by this dispatcher push. QA: verdict brief adequacy + child scoping; no code to test (design task). Do NOT re-verify the child-task offender lists exhaustively — dispatcher spot-checked the 3 anchors; the -IMPL rows carry the full fix scope for developer + a later QA gate."
       }
     ],
     "qa": [],
@@ -14784,25 +14803,7 @@
     },
     "last_triaged_at": "2026-07-24T18:17:35Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "title": "CI-depguard-tier-boundaries",
-        "priority": "P2",
-        "type": "CI-GUARDRAIL",
-        "zone": "cross-service/",
-        "status": "IN_PROGRESS",
-        "id": "FACTORY-GUARD-CI-depguard-tier-boundaries",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-GUARD-CI-depguard-tier-boundaries",
-        "promoted_at": "2026-07-24T18:17:35Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-24T18:18:58Z",
-        "claimed_at": "2026-07-24T18:17:35Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "architect",
-        "owner": "architect"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
