@@ -822,7 +822,7 @@ export async function fetchTradingEconomicsNews(
       // Health tracking — success
       try {
         const { globalSourceTracker } = await import(
-          "../../interface/mcp/tools/news-analysis/sourceHealthTools.js"
+          "../observability/sourceHealthRegistry.js"
         );
         globalSourceTracker.recordSuccess("tradingEconomics");
       } catch { /* health tracking is best-effort */ }
@@ -855,7 +855,7 @@ export async function fetchTradingEconomicsNews(
       // Health tracking — failure
       try {
         const { globalSourceTracker } = await import(
-          "../../interface/mcp/tools/news-analysis/sourceHealthTools.js"
+          "../observability/sourceHealthRegistry.js"
         );
         globalSourceTracker.recordFailure("tradingEconomics", errorMsg);
       } catch { /* health tracking is best-effort */ }

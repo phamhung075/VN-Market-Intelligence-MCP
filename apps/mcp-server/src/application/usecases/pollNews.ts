@@ -29,8 +29,10 @@ import { storeAlerts } from "../../infrastructure/db/alertStore.js";
 import { getDb } from "../../infrastructure/db/schema.js";
 import { logger } from "../../infrastructure/logger.js";
 import { currentDataEnv } from "../../infrastructure/envCheck.js";
-// eslint-disable-next-line boundaries/dependencies -- FENCE-LEGACY: pre-existing before G4 fence — reviewed: globalSourceTracker is shared state tied to interface layer; refactor to domain/application deferred
-import { globalSourceTracker, _resetGlobalSourceTracker } from "../../interface/mcp/tools/news-analysis/sourceHealthTools.js";
+// FACTORY-APP-pollNews-layering-fix (2026-07-24): globalSourceTracker relocated
+// from interface/ to infrastructure/observability/sourceHealthRegistry.ts —
+// resolves the former Fence-B violation (application must not import interface).
+import { globalSourceTracker, _resetGlobalSourceTracker } from "../../infrastructure/observability/sourceHealthRegistry.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants — Reuters/TE fallback chain (Task 1345a)

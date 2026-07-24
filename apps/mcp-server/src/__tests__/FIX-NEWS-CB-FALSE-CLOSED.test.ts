@@ -78,7 +78,7 @@ describe("FIX-NEWS-CB-FALSE-CLOSED — defaultPollNews stub set excludes disable
     Bun.env["DB_PATH"] = ":memory:";
     const { pollNews } = await import("../application/usecases/pollNews.js");
     const { globalSourceTracker, _resetGlobalSourceTracker } = await import(
-      "../interface/mcp/tools/news-analysis/sourceHealthTools.js"
+      "../infrastructure/observability/sourceHealthRegistry.js"
     );
 
     _resetGlobalSourceTracker();
@@ -182,7 +182,7 @@ describe("FIX-NEWS-CB-FALSE-CLOSED — pushNewsHandler (2nd call site) stub set 
     const { initDatabase, getDb, closeDb } = await import("../infrastructure/db/schema.js");
     const { handlePushNews } = await import("../interface/mcp/routes/pushNewsHandler.js");
     const { globalSourceTracker, _resetGlobalSourceTracker } = await import(
-      "../interface/mcp/tools/news-analysis/sourceHealthTools.js"
+      "../infrastructure/observability/sourceHealthRegistry.js"
     );
 
     await initDatabase();

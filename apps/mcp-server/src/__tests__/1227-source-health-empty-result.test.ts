@@ -125,7 +125,7 @@ describe("Task 1227 — Source health table not updating on transient fetch fail
   it("pollNews: calls recordFailure on globalSourceTracker when Reuters returns empty array", async () => {
     const { pollNews } = await import("../application/usecases/pollNews.js");
     const { globalSourceTracker } = await import(
-      "../interface/mcp/tools/news-analysis/sourceHealthTools.js"
+      "../infrastructure/observability/sourceHealthRegistry.js"
     );
 
     const db = buildPollNewsTestDb();
@@ -165,7 +165,7 @@ describe("Task 1227 — Source health table not updating on transient fetch fail
   it("pollNews: calls recordSuccess when Reuters returns items (no regression)", async () => {
     const { pollNews } = await import("../application/usecases/pollNews.js");
     const { globalSourceTracker } = await import(
-      "../interface/mcp/tools/news-analysis/sourceHealthTools.js"
+      "../infrastructure/observability/sourceHealthRegistry.js"
     );
 
     const db = buildPollNewsTestDb();

@@ -36,9 +36,7 @@
  * HONEST-NULL (HN-1..HN-7) enforcement — see inline comments at each guard.
  *
  * DDD layer: application/usecases — orchestrates domain + infrastructure
- * (+ a small number of interface/mcp/tools exported query/handler functions,
- * consistent with existing precedent: pollNews.ts imports from
- * interface/mcp/tools/news-analysis/sourceHealthTools.js).
+ * (+ a small number of interface/mcp/tools exported query/handler functions).
  *
  * @module application/usecases/getMoneyRadarComposite
  */

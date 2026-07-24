@@ -174,7 +174,7 @@ describe("fix/fetch-source-issues — Issue 2: pollNews newsapi disabled guard",
   it("8. newsapi returning [] with no key configured does not increment failure count", async () => {
     const { pollNews } = await import("../application/usecases/pollNews.js");
     const { globalSourceTracker } = await import(
-      "../interface/mcp/tools/news-analysis/sourceHealthTools.js"
+      "../infrastructure/observability/sourceHealthRegistry.js"
     );
 
     const db = buildTestDb();

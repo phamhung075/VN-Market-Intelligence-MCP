@@ -8,8 +8,9 @@
 //          Domain is the pure business-logic layer — zero I/O, zero HTTP, zero DB.
 // Fence-B: src/application/** must not import src/interface/ or src/scheduler/.
 //          Application use-cases orchestrate domain + infra but must not reach into the interface/HTTP layer.
-//          Pre-existing violation: pollNews.ts imports globalSourceTracker from interface/
-//          — annotated FENCE-LEGACY (reviewed: sourceHealthTools shared state, brownfield; refactor deferred).
+//          FACTORY-APP-pollNews-layering-fix (2026-07-24): the previously-annotated FENCE-LEGACY
+//          violation (pollNews.ts importing globalSourceTracker from interface/sourceHealthTools.ts)
+//          is resolved — the singleton moved to infrastructure/observability/sourceHealthRegistry.ts.
 // Fence-C: Fence-A already enforces domain→infrastructure boundary. Sandbox files are excluded via ignores[].
 //          NOTE: src/interface/ and src/scheduler/ legitimately import src/infrastructure/ in this brownfield service
 //          (scheduler is the application-layer orchestrator; interface/HTTP handlers hold DB refs directly).

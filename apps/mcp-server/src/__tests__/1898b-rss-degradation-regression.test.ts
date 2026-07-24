@@ -21,7 +21,7 @@ const _realRetriever1898b = { searchContext: async () => [], insertAnalysis: asy
 mock.module("../infrastructure/rag/retriever.js", () => _realRetriever1898b);
 
 import { pollNews, _resetAllDarkAlert } from "../application/usecases/pollNews.js";
-import { globalSourceTracker, _resetGlobalSourceTracker } from "../interface/mcp/tools/news-analysis/sourceHealthTools.js";
+import { globalSourceTracker, _resetGlobalSourceTracker } from "../infrastructure/observability/sourceHealthRegistry.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DB setup

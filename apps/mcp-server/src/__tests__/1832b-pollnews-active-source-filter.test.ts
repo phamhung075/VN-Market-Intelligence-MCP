@@ -25,7 +25,7 @@ import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import { pollNews, _resetAllDarkAlert } from "../application/usecases/pollNews.js";
 import { initDatabase } from "../infrastructure/db/schema.js";
-import { globalSourceTracker } from "../interface/mcp/tools/news-analysis/sourceHealthTools.js";
+import { globalSourceTracker } from "../infrastructure/observability/sourceHealthRegistry.js";
 
 const DOWN_THRESHOLD = 5;
 const noopSleep = async (_ms: number): Promise<void> => { /* no-op for tests */ };

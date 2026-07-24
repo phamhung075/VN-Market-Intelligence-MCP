@@ -17,7 +17,8 @@ import { resolve } from "node:path";
 import { getAllBreakerStats } from "../../../../infrastructure/circuitBreakerRegistry.js";
 import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
 import { logger, getErrorSummary } from "../../../../infrastructure/logger.js";
-import { globalSourceTracker, formatSourceHealthTable } from "../news-analysis/sourceHealthTools.js";
+import { formatSourceHealthTable } from "../news-analysis/sourceHealthTools.js";
+import { globalSourceTracker } from "../../../../infrastructure/observability/sourceHealthRegistry.js";
 import { getDataFreshness } from "../market-data/dataFreshnessTools.js";
 import { tradingWindowLabel } from "../../../../domain/services/tradingWindow.js";
 
