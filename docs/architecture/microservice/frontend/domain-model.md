@@ -248,6 +248,37 @@ Source: `apps/frontend/app/domain/market.ts:157–166`
 
 ---
 
+### `StageStatuses` (BCTC eval scorecard)
+
+Per-report map of BCTC extraction-pipeline stage → status, returned by mcp-server
+`GET /api/bctc-eval` as `EvalReportSummary.stage_statuses`.
+
+```ts
+interface StageStatuses {
+  "1_RASTERIZE"?: EvalStatus;
+  "2_LAYOUT_DETECT"?: EvalStatus;
+  "3_OCR"?: EvalStatus;
+  "4_TABLE_RECONSTRUCT"?: EvalStatus;
+  "5_MARKDOWN_RENDER"?: EvalStatus;
+  "6_STRUCTURED_EXTRACT"?: EvalStatus;   // EvalStatus = "green" | "yellow" | "red"
+}
+```
+
+**All 6 keys are OPTIONAL** — this is the corrected, live-verified contract (2026-07-24,
+FE-PG-BCTC-EVAL-_INDEX-FUNC-FIX). A report only carries a key for a stage that has
+actually been computed; a report whose pipeline started at stage 4 (e.g. re-ingested
+from an already-rasterized/OCR'd source) has ONLY `"4_.."`.."6_.."` keys. The domain
+type previously declared all 6 as required, which did not match the wire payload and
+caused `EvalTable`/`StatusBadge` (`apps/frontend/app/components/bctc-eval/`) to crash
+on `undefined` for the missing keys — a render-time `TypeError` that bubbled to the
+Remix root error boundary (`GET /dashboard/bctc-eval` → 500). Consumers must treat a
+missing key as "stage not yet run" — `StatusBadge` renders a neutral "—" placeholder
+for `status === undefined` rather than assuming presence.
+
+Source: `apps/frontend/app/domain/bctc-eval.ts`
+
+---
+
 ## Business Rules
 
 ### `computeDecision(ta, reading, prices)` — Scoring

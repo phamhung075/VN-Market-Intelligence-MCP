@@ -17,7 +17,7 @@ import {
 import { Card, CardContent } from "~/components/ui/card";
 import { StatusBadge } from "~/components/bctc-eval/StatusBadge";
 import { Button } from "~/components/ui/button";
-import type { EvalReportSummary, EvalStatus } from "~/domain/bctc-eval";
+import type { EvalReportSummary } from "~/domain/bctc-eval";
 
 export const STAGE_KEYS = [
   "1_RASTERIZE",
@@ -97,10 +97,10 @@ export function EvalTable({ reports }: { reports: EvalReportSummary[] }) {
             </TableCell>
             {STAGE_KEYS.map((key) => (
               <TableCell key={key}>
-                <StatusBadge
-                  status={r.stage_statuses[key] as EvalStatus}
-                  showIcon={false}
-                />
+                {/* stage_statuses[key] is undefined when that stage has not
+                    been computed yet — StatusBadge renders a neutral "—"
+                    placeholder for undefined instead of crashing. */}
+                <StatusBadge status={r.stage_statuses[key]} showIcon={false} />
               </TableCell>
             ))}
             <TableCell className="text-xs text-slate-400">

@@ -24,13 +24,20 @@ export interface EvalStage {
   computed_at: string;
 }
 
+/**
+ * Live contract (verified against mcp-server GET /api/bctc-eval, 2026-07-24):
+ * a report only carries keys for stages that have actually been computed —
+ * e.g. a report whose pipeline started at stage 4 has ONLY "4_..".."6_.." keys.
+ * All 6 keys are therefore OPTIONAL, not guaranteed. Consumers must treat a
+ * missing key as "stage not yet run", never assume presence.
+ */
 export interface StageStatuses {
-  "1_RASTERIZE": EvalStatus;
-  "2_LAYOUT_DETECT": EvalStatus;
-  "3_OCR": EvalStatus;
-  "4_TABLE_RECONSTRUCT": EvalStatus;
-  "5_MARKDOWN_RENDER": EvalStatus;
-  "6_STRUCTURED_EXTRACT": EvalStatus;
+  "1_RASTERIZE"?: EvalStatus;
+  "2_LAYOUT_DETECT"?: EvalStatus;
+  "3_OCR"?: EvalStatus;
+  "4_TABLE_RECONSTRUCT"?: EvalStatus;
+  "5_MARKDOWN_RENDER"?: EvalStatus;
+  "6_STRUCTURED_EXTRACT"?: EvalStatus;
 }
 
 export interface EvalReportSummary {

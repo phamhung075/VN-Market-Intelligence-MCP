@@ -2,19 +2,29 @@
  * Vitest component tests — BCTC Eval list view
  *
  * Covers:
- * 1. Loader returns OK with 3 reports (1 red, 1 yellow, 1 green) — table renders all
- * 2. Loader returns OK — status badges rendered correctly
- * 3. Loader returns error — error Card renders with message
- * 4. Schema version mismatch — error Card renders
+ * 1. loadBctcEvalListData — HTTP 200 valid response — resolves ok:true with reports
+ * 2. loadBctcEvalListData — upstream 4xx/5xx and network error — resolves ok:false,
+ *    NEVER throws (FE-PG-BCTC-EVAL-_INDEX-FUNC-FIX regression lock: this is the
+ *    JSDoc contract the route violated before the fix — "do NOT throw")
+ * 3. loadBctcEvalListData — partial stage_statuses (live contract: a report only
+ *    carries keys for stages actually computed) — resolves ok:true, no throw
+ * 4. Schema version mismatch — resolves ok:false
  * 5. fetchBctcEvalList — HTTP 200 valid response maps correctly
  * 6. fetchBctcEvalList — API error is caught and bubbled as BctcEvalApiError
+ * 7. StatusBadge — missing/unrecognized status renders a neutral placeholder
+ *    instead of throwing (FE-PG-BCTC-EVAL-_INDEX-FUNC-FIX: this is the actual
+ *    live root cause of the 500 — TypeError destructuring STATUS_CONFIG[undefined]
+ *    when a report's stage_statuses omits a not-yet-computed stage key)
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen } from "@testing-library/react";
 import {
   fetchBctcEvalList,
   BctcEvalApiError,
 } from "~/lib/api/bctc-eval-client";
+import { loadBctcEvalListData } from "~/routes/dashboard.bctc-eval._index";
+import { StatusBadge } from "~/components/bctc-eval/StatusBadge";
 import type { EvalListResponse } from "~/domain/bctc-eval";
 
 // --------------------------------------------------------------------------
@@ -162,6 +172,127 @@ describe("fetchBctcEvalList", () => {
 });
 
 // --------------------------------------------------------------------------
+// 1b. loadBctcEvalListData (route loader helper) — graceful degradation
+//     contract: fetchBctcEvalList (above) throws on upstream error, but the
+//     loader layer MUST catch it and resolve ok:false — never let it bubble
+//     to the Remix root error boundary (that bubble is what produced the
+//     live 500 the PO reported before this fix; see StatusBadge suite below
+//     for the ACTUAL crash site that caused it).
+// --------------------------------------------------------------------------
+
+describe("loadBctcEvalListData — loader never throws on upstream error", () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
+  it("HTTP 200 valid response — resolves ok:true with reports", async () => {
+    const mockData = makeListResponse();
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => mockData,
+    }));
+
+    const data = await loadBctcEvalListData();
+
+    expect(data.ok).toBe(true);
+    if (data.ok) {
+      expect(data.reports).toHaveLength(3);
+      expect(data.sort).toBe("trust_ascending");
+    }
+  });
+
+  it("upstream 404 — resolves { ok: false, error } — does NOT throw", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValueOnce({
+      ok: false,
+      status: 404,
+      statusText: "Not Found",
+    }));
+
+    const data = await loadBctcEvalListData();
+
+    expect(data.ok).toBe(false);
+    if (!data.ok) {
+      expect(data.error).toMatch(/404/);
+    }
+  });
+
+  it("upstream 500 — resolves { ok: false, error } — does NOT throw", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      statusText: "Internal Server Error",
+    }));
+
+    const data = await loadBctcEvalListData();
+
+    expect(data.ok).toBe(false);
+    if (!data.ok) {
+      expect(data.error).toMatch(/500/);
+    }
+  });
+
+  it("network error (fetch rejects) — resolves { ok: false, error } — does NOT throw", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValueOnce(new Error("ECONNREFUSED")));
+
+    const data = await loadBctcEvalListData();
+
+    expect(data.ok).toBe(false);
+    if (!data.ok) {
+      expect(data.error).toContain("ECONNREFUSED");
+    }
+  });
+
+  it("schema_version mismatch — resolves { ok: false, error } — does NOT throw", async () => {
+    const mockData = makeListResponse({ schema_version: "99" });
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => mockData,
+    }));
+
+    const data = await loadBctcEvalListData();
+
+    expect(data.ok).toBe(false);
+  });
+
+  it("HTTP 200 — report with PARTIAL stage_statuses (live payload shape: only " +
+    "stages 4-6 computed, mirrors verified MBB/Q1-2026 row) resolves ok:true, no throw", async () => {
+    const mockData = makeListResponse({
+      reports: [
+        {
+          report_id: "1d94c902-a6b6-460b-a995-0f9cdb42e445",
+          ticker: "MBB",
+          period: "Q1-2026",
+          overall_status: "red",
+          stage_statuses: {
+            "4_TABLE_RECONSTRUCT": "red",
+            "5_MARKDOWN_RENDER": "yellow",
+            "6_STRUCTURED_EXTRACT": "yellow",
+          },
+          detector_version: "v1",
+          computed_at: "2026-07-20 09:06:41",
+          is_stale: false,
+        },
+      ],
+    });
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => mockData,
+    }));
+
+    const data = await loadBctcEvalListData();
+
+    expect(data.ok).toBe(true);
+    if (data.ok) {
+      expect(data.reports[0].stage_statuses["1_RASTERIZE"]).toBeUndefined();
+      expect(data.reports[0].stage_statuses["4_TABLE_RECONSTRUCT"]).toBe("red");
+    }
+  });
+});
+
+// --------------------------------------------------------------------------
 // 2. Schema version validation
 // --------------------------------------------------------------------------
 
@@ -196,10 +327,14 @@ describe("schema_version contract", () => {
 
 // --------------------------------------------------------------------------
 // 3. Stage statuses shape
+//    NOTE: keys are OPTIONAL on the wire (see domain/bctc-eval.ts). This
+//    fixture happens to populate all 6 for the "fully computed" case; the
+//    partial-key case (some reports only have 3 of 6) is covered above in
+//    "loadBctcEvalListData" and below in "StatusBadge".
 // --------------------------------------------------------------------------
 
 describe("stage_statuses shape", () => {
-  it("all 6 stage keys present on each report", async () => {
+  it("all 6 stage keys present on a fully-computed report", async () => {
     const mockData = makeListResponse();
     vi.stubGlobal("fetch", vi.fn().mockResolvedValueOnce({
       ok: true,
@@ -238,5 +373,42 @@ describe("BctcEvalApiError", () => {
     expect(err.name).toBe("BctcEvalApiError");
     expect(err.message).toBe("Not found");
     expect(err instanceof Error).toBe(true);
+  });
+});
+
+// --------------------------------------------------------------------------
+// 5. StatusBadge — missing/unrecognized status (FE-PG-BCTC-EVAL-_INDEX-FUNC-FIX)
+//
+// Live-verified root cause of the reported 500: EvalTable iterates all 6
+// STAGE_KEYS and reads r.stage_statuses[key]; for a report whose pipeline
+// only ran stages 4-6 (real production data — see docker logs, MBB Q1-2026),
+// keys 1-3 are absent → status is undefined → the OLD StatusBadge did
+// `STATUS_CONFIG[status]` and crashed on destructuring `undefined`, which
+// bubbled through SSR render to the Remix root error boundary (500).
+// StatusBadge is a leaf component with no Remix router hooks, so it can be
+// rendered directly here without a Router/RemixStub wrapper.
+// --------------------------------------------------------------------------
+
+describe("StatusBadge — missing status (live contract: stage not yet computed)", () => {
+  it("status=undefined does NOT throw", () => {
+    expect(() => render(<StatusBadge status={undefined} />)).not.toThrow();
+  });
+
+  it("status=undefined renders a neutral em-dash placeholder, not a crash", () => {
+    render(<StatusBadge status={undefined} />);
+    expect(screen.getByText("—")).toBeTruthy();
+  });
+
+  it("valid status still renders its label (regression guard — fix must not break the happy path)", () => {
+    render(<StatusBadge status="red" />);
+    expect(screen.getByText("Red")).toBeTruthy();
+  });
+
+  it("green/yellow statuses still render correct labels (regression guard)", () => {
+    const { unmount } = render(<StatusBadge status="green" />);
+    expect(screen.getByText("Green")).toBeTruthy();
+    unmount();
+    render(<StatusBadge status="yellow" />);
+    expect(screen.getByText("Yellow")).toBeTruthy();
   });
 });

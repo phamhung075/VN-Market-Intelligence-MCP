@@ -6,6 +6,12 @@
  * Sort: trust-ascending (red → yellow → green), as returned by server — no client re-sort.
  * Schema version check: if schema_version !== "1" render mismatch error card.
  * Error state: show Card with API error, do NOT throw (keeps UX recoverable).
+ *
+ * loadBctcEvalListData() is exported separately from loader() so it can be
+ * unit-tested directly — Remix's vite plugin strips the `loader` export in
+ * jsdom test runs (server-only tree-shaking), so tests must import a plain
+ * named function instead (see dashboard.alerts.tsx fetchAlertsData for the
+ * established pattern).
  */
 import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
@@ -38,21 +44,26 @@ type LoaderError = {
 
 type LoaderData = LoaderOk | LoaderError;
 
-export async function loader(_args: LoaderFunctionArgs) {
+/**
+ * Fetches + shapes the eval list. NEVER throws — any upstream failure
+ * (non-2xx, network error, schema mismatch) resolves to { ok: false, error }
+ * so the page always renders (200), never bubbles to the root error boundary.
+ */
+export async function loadBctcEvalListData(): Promise<LoaderData> {
   try {
     const list = await fetchBctcEvalList();
     if (list.schema_version !== "1") {
-      return json<LoaderData>({
+      return {
         ok: false,
         error: `Schema version mismatch: expected "1", got "${list.schema_version}". Deploy the latest frontend build.`,
-      });
+      };
     }
-    return json<LoaderData>({
+    return {
       ok: true,
       reports: list.reports,
       sort: list.sort,
       thresholds_version: list.thresholds_version,
-    });
+    };
   } catch (err) {
     const message =
       err instanceof BctcEvalApiError
@@ -60,8 +71,13 @@ export async function loader(_args: LoaderFunctionArgs) {
         : err instanceof Error
           ? err.message
           : "Unknown error fetching BCTC eval list";
-    return json<LoaderData>({ ok: false, error: message });
+    return { ok: false, error: message };
   }
+}
+
+export async function loader(_args: LoaderFunctionArgs) {
+  const data = await loadBctcEvalListData();
+  return json<LoaderData>(data);
 }
 
 // --------------------------------------------------------------------------
