@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "FACTORY-SHARED-prune-phantom-primitives moved to review — awaiting qa pickup",
-    "updated_at": "2026-07-24T00:49:22Z",
-    "updated_by": "dev-technical-analysis"
+    "status": "in_progress",
+    "active_task_id": "FACTORY-ALERT-delete-deprecated-domain",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-ALERT-delete-deprecated-domain — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-24T01:14:30Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6187,15 +6187,6 @@
         "status": "BACKLOG",
         "id": "FACTORY-STOCK-delete-dead-port-and-deprecated",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-STOCK-delete-dead-port-and-deprecated"
-      },
-      {
-        "title": "Delete dead _deprecated domain package (298L duplicate of primitives)",
-        "priority": "P2",
-        "zone": "alert-engine",
-        "type": "FACTORY",
-        "status": "BACKLOG",
-        "id": "FACTORY-ALERT-delete-deprecated-domain",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-ALERT-delete-deprecated-domain"
       },
       {
         "title": "Replace hardcoded 60-min dedup window with a config-sourced DedupWindowMinutes",
@@ -14382,9 +14373,25 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-24T00:44:29Z",
+    "last_triaged_at": "2026-07-24T01:14:30Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "title": "Delete dead _deprecated domain package (298L duplicate of primitives)",
+        "priority": "P2",
+        "zone": "alert-engine",
+        "type": "FACTORY",
+        "status": "IN_PROGRESS",
+        "id": "FACTORY-ALERT-delete-deprecated-domain",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-ALERT-delete-deprecated-domain",
+        "promoted_at": "2026-07-24T01:14:30Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-24T01:14:31Z",
+        "claimed_at": "2026-07-24T01:14:30Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
