@@ -1,3 +1,13 @@
+## c2a9f5e1 · 2026-07-24T18:32:47Z
+### Audit Run Tier-2 (18:31–18:32 UTC 2026-07-24)
+- Tier: 2 | Sources: 8 checked | Cron checks: 1 | VPS routes: 4
+- A-29 cron fire gaps: PASS | B-01..B-07 fetch freshness: PASS | B-09 BCTC URL: PASS | B-13 stale BCTC: PASS
+- B-05 BCTC healthy idle gate: PASS (queue=183 actionable items, push-age 113h << 216h out-of-window threshold)
+- C-06 market_messages 3h: 1 PASS | C-07 agent_signals 24h: 284 PASS
+- Anomalies: 0 new | 0 dedup-skipped
+- Status: HEALTHY
+- Corroboration: All Tier-2 dimensions PASS. Known launchd degraded (docker-events exit:1, fleet-push exit:78) unchanged since 2026-07-23T10:32 — no re-mint. Heartbeat refreshed (tier-2-last-healthy.json 2026-07-24T18:32:47Z). BCTC-EVAL snapshot: 9 red + 11 yellow reports held for next-cycle delta analysis.
+
 ## c0a4b2d9 · 2026-07-24T03:20:41Z
 ### Audit Run Tier-1 (03:20 UTC 2026-07-24) — A-30 VETO Applied
 - Tier: 1 | Services: 12 checked | Health endpoints: 5
@@ -69,30 +79,6 @@ Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
 - Anomalies: 0 new
 - Status: HEALTHY
 - Corroboration: All 12 host_runtime_set services UP (healthy). All 5 health endpoints 200 OK. A-30 multi-probe confirms 89% is benign (6-sample FOLD, no reclamation dips needed—peak >89.9% but GC recovery proven). A-21 zero crash events in windowed query. No EPIPE. Cron jobs all executing (get_cron_health). No clock skew. Previous Tier-1 at 17:41Z showed 22.62%; current climb to 89% NOT a Bun-JIT leak (OOMKilled=false, reclamation capable). Heartbeat refreshed (tier-1-last-healthy.json).
-
-### RAW-PROBE:
-```
-=== AUDITOR PROBE 2026-07-24T03:11:27Z ===
-
---- docker ps -a ---
-NAMES                                             STATUS                  IMAGE                                           CREATED
-vn-market-intelligence-mcp-mcp-server-1           Up 11 hours (healthy)   vn-market-intelligence-mcp-mcp-server           33 hours ago
-vn-market-intelligence-mcp-pdf-extractor-1        Up 2 days (healthy)     vn-market-intelligence-mcp-pdf-extractor        2 days ago
-mcp-gateway                                       Up 8 days (healthy)     mcpservergatway-gateway                         8 days ago
-vn-market-intelligence-mcp-frontend-1             Up 8 days (healthy)     vn-market-intelligence-mcp-frontend             8 days ago
-vn-market-intelligence-mcp-api-gateway-1          Up 8 days (healthy)     vn-market-intelligence-mcp-api-gateway          8 days ago
-vn-market-intelligence-mcp-flaresolverr-1         Up 8 days (healthy)     ghcr.io/flaresolverr/flaresolverr:latest        8 days ago
-vn-market-intelligence-mcp-news-fetch-1           Up 8 days (healthy)     vn-market-intelligence-mcp-news-fetch           8 days ago
-vn-market-intelligence-mcp-rag-service-1          Up 7 hours (healthy)    vn-market-intelligence-mcp-rag-service          8 days ago
-vn-market-intelligence-mcp-macro-indicators-1     Up 8 days (healthy)     vn-market-intelligence-mcp-macro-indicators     8 days ago
-vn-market-intelligence-mcp-technical-analysis-1   Up 8 days (healthy)     vn-market-intelligence-mcp-technical-analysis   8 days ago
-vn-market-intelligence-mcp-alert-engine-1         Up 8 days (healthy)     vn-market-intelligence-mcp-alert-engine         8 days ago
-vn-market-intelligence-mcp-stock-price-1          Up 8 days (healthy)     vn-market-intelligence-mcp-stock-price          8 days ago
-vn-market-intelligence-mcp-kinh-dich-service-1    Up 8 days (healthy)     vn-market-intelligence-mcp-kinh-dich-service    8 days ago
-
---- memory pressure multi-probe reclamation (A-30) ---
-{"probe":"A-30 mcp-server memory reclamation discriminator","container":"vn-market-intelligence-mcp-mcp-server-1","window":{"probes":6,"interval_sec":13,"span_sec":65},"state":{"oom_killed":"false","restart_count":"2","started_at":"2026-07-23T16:18:08.617204525Z"},"vm":{"vmhwm_kb":"2830832","vmrss_kb":"2819760","note":"VmHWM >> VmRSS proves a reclamation already occurred; UNAVAILABLE means this evidence is missing, not that it is absent"},"samples":[{"n":1,"t":"03:11:32Z","pct":89.04},{"n":2,"t":"03:11:47Z","pct":89.44},{"n":3,"t":"03:12:01Z","pct":89.37},{"n":4,"t":"03:12:17Z","pct":89.84},{"n":5,"t":"03:12:31Z","pct":89.92},{"n":6,"t":"03:12:47Z","pct":89.86}],"analysis":{"min_pct":89.04,"max_pct":89.92,"reclamation_dips":0,"dip_detail":"none"},"verdict":"FOLD","reason":"benign GC sawtooth or below tripwire","tripwire_ref":"feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn — escalate ONLY on OOMKilled, or >93% with no dips, or >97% sustained no reclaim"}
-```
 
 ## d4-auto · 2026-07-24T03:00:03.063Z
 D4 candidates: R3-no-board-row:data-quality-anomaly:DGC:Q1-2026
