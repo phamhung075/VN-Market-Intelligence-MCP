@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "idle -- awaiting next dispatch",
-    "updated_at": "2026-07-24T04:40:33Z",
-    "updated_by": "dev-mcp-server (self-closeout)"
+    "status": "in_progress",
+    "active_task_id": "FACTORY-APP-pollNews-layering-fix",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-APP-pollNews-layering-fix — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-24T04:44:30Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6214,15 +6214,6 @@
         "status": "BACKLOG",
         "id": "FACTORY-APP-split-pollNews",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APP-split-pollNews"
-      },
-      {
-        "title": "Move source-health tracker singleton from interface down to infrastructure",
-        "priority": "P2",
-        "zone": "mcp-server-application",
-        "type": "FACTORY",
-        "status": "BACKLOG",
-        "id": "FACTORY-APP-pollNews-layering-fix",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APP-pollNews-layering-fix"
       },
       {
         "title": "Extract assembleBriefing's 19 numbered steps into briefing/ query modules",
@@ -14436,9 +14427,25 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-24T04:14:32Z",
+    "last_triaged_at": "2026-07-24T04:44:30Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "title": "Move source-health tracker singleton from interface down to infrastructure",
+        "priority": "P2",
+        "zone": "mcp-server-application",
+        "type": "FACTORY",
+        "status": "IN_PROGRESS",
+        "id": "FACTORY-APP-pollNews-layering-fix",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APP-pollNews-layering-fix",
+        "promoted_at": "2026-07-24T04:44:30Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-24T04:44:31Z",
+        "claimed_at": "2026-07-24T04:44:30Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
