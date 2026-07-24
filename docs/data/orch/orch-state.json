@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FACTORY-GUARD-CI-rebuild-raw-verify-hook",
-    "next_agent": "architect",
-    "next_action": "Architect design task (BOUNDED-1 lane-corrected): FACTORY-GUARD-CI-rebuild-raw-verify-hook (7th and LAST of 7 ci-regression-prevention guardrails, epic FACTORY-MAINTAINABILITY-2026-06). Audit existing raw-verify-hook mechanism (verify-live, not ticket prose), grep-verify live offender counts at source, cross-check against any already-owned sibling remediation task before designing, decide zero-tolerance-vs-baseline/ratchet by evidence, mint ONE developer child impl row with brief_ref wired. Detail dev_agent=architect confirmed the design-task class.",
-    "updated_at": "2026-07-24T20:21:06Z",
-    "updated_by": "dev-team (BOUNDED-1 lane-correct -> architect design)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "BGFAN-1 closeout complete: FACTORY-GUARD-CI-rebuild-raw-verify-hook design delivered by architect -> review (next=qa). Child FACTORY-GUARD-CI-RAWVERIFY-IMPL in backlog (developer, brief_ref wired). WIP now 0; dispatch lanes free. ALL 7 ci-regression-prevention guardrails now designed; 0 null-disposition CI-GUARDRAIL mis-routes remain (pattern exhausted).",
+    "updated_at": "2026-07-24T20:34:52Z",
+    "updated_by": "dev-team (BGFAN-1 closeout)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -14887,6 +14887,25 @@
         "dev_agent": "architect",
         "updated_by": "dev-team (BGFAN-1 closeout: architect design complete -> review)",
         "review_note": "Design task complete (BGFAN-1, 6th of 7 ci-regression-prevention guardrails). Architect brief docs/architecture-briefs/2026-07-24-factory-guard-ci-shared-package-import-check.md (10968 B) + child FACTORY-GUARD-CI-SHAREDPKG-IMPL minted into backlog (next_agent/dev_agent=developer, zone cross-service/, brief_ref wired, epic FACTORY-MAINTAINABILITY-2026-06). DISPATCHER CONFABULATION-GUARD: 3 anchors INDEPENDENTLY confirmed at source (not self-report): (1) brief file present (10968 B, 21:55 local) with load-bearing verify-live corrections; (2) commit d220c8e1b ancestor of origin/main, origin/main..HEAD empty = pushed clean, carries brief+orch-state(+21=child row)+notebook+journal; (3) child row present next_agent=developer, brief_ref wired. VERIFY-LIVE CATCHES vs ticket/audit premise: (a) audit's cited shared-db stale-module-list already fixed (FACTORY-SHARED-fix-shared-db-stale-list REVIEW, ef62d2921 — 9/9 live-matching); (b) audit's shared-types ComputeTAResponse nullability is a 3-way divergence between two ALREADY-dead/orphaned shapes (shared-types + a dead TS shadow service slated for deletion + the live Go contract whose header documents the drift as intentional/zero-caller) — NOT a live-serving bug; (c) 3/3 packages/shared-* (shared-types 76L, shared-config 73L, shared-db 37L) grep-verified 100% orphaned repo-wide (zero import specifier, zero package.json dep) — same phantom shape as already-pruned packages/primitives (df6c1dc7d). Zero CI/lint coverage confirmed (all .github workflows, 3 eslint configs, 7 .golangci.yml, 2 pyproject.toml). DESIGN DECISION: BASELINE/RATCHET (NOT zero-tolerance) — unlike dead-code/metric-mask/no-hardcode siblings, driven by OWNERSHIP not volume: the keep-or-cut-per-package fix is already explicitly assigned to a separate larger task FACTORY-SHARED-wire-or-prune-shared-packages (P2, effort L, risk med, rebuild true, still BACKLOG) — not this CI-tooling task's decision to make. Design = blocking package-level orphan-importer check baseline-seeded with the 3 current orphans (blocks any NEW zero-importer package, closing the regression-prevention gap) + advisory-only non-blocking structural-drift/name-collision surface (new Alert/Signal/McpConfig collisions found). Full AST structural diffing explicitly DEFERRED (no TS AST tool wired into any bash-only audit script; regex field-diff would FP on reorder/JSDoc/optional-marker churn). QA: verdict brief adequacy + child scoping - NO code to test (design task); after review->done_verified, PM routes SHAREDPKG-IMPL to developer per normal backlog flow. RECURRING CI-GUARDRAIL mis-route now 3/3 lane-corrected+closed (dead-code b418c9ad6, no-hardcode be5ef50b4, shared-package this row); 1 more null-disposition row remains in backlog (rebuild-raw-verify-hook) - next BOUNDED-1 pickup needs same developer->architect lane-correction (detail.dev_agent=architect is the tell, read from backlog-detail not board row). Do NOT confuse with code-task FACTORY-SHARED-wire-or-prune-shared-packages."
+      },
+      {
+        "title": "CI-rebuild-raw-verify-hook",
+        "priority": "P2",
+        "type": "CI-GUARDRAIL",
+        "zone": "cross-service/",
+        "status": "REVIEW",
+        "id": "FACTORY-GUARD-CI-rebuild-raw-verify-hook",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-GUARD-CI-rebuild-raw-verify-hook",
+        "promoted_at": "2026-07-24T20:20:25Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-24T20:34:53Z",
+        "claimed_at": "2026-07-24T20:20:25Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "dev_agent": "architect",
+        "updated_by": "dev-team (BGFAN-1 closeout: architect design complete -> review)",
+        "review_note": "Design task complete (BGFAN-1, 7th and LAST of 7 ci-regression-prevention guardrails; also the 4th and FINAL null-disposition CI-GUARDRAIL BOUNDED-1 mis-route lane-corrected). Architect brief docs/architecture-briefs/2026-07-24-factory-guard-ci-rebuild-raw-verify-hook.md (10395 B) + child FACTORY-GUARD-CI-RAWVERIFY-IMPL minted into backlog (next_agent/dev_agent=developer, zone cross-service/, brief_ref wired, epic FACTORY-MAINTAINABILITY-2026-06). DISPATCHER CONFABULATION-GUARD: 3 anchors INDEPENDENTLY confirmed at source (not self-report): (1) brief file present (10395 B) with load-bearing verify-live corrections; (2) commit 265451cc62e055e63719dff6c80cd92a91874473 ancestor of origin/main, origin/main..HEAD empty = pushed clean, carries brief+orch-state(+21=child row)+notebook+journal (4 files); (3) child row present next_agent=developer, brief_ref wired. VERIFY-LIVE CATCHES (ticket premise did not fit this repo): (a) the ticket's 'attached to the PR' framing is a category error — gh pr list --state all returns exactly 1 PR ever (closed, never merged), branch protection off (404); the real workflow is autonomous direct-push-to-main. (b) the requested no-fake-data DoD ALREADY EXISTS as written mandatory policy — docs/policies/dev-standards.md PUSH-AUTONOMY-1 §5 mandates a post-push REAL-DATA verification task word-for-word — but only 2 VERIFY-*-REALDATA rows have ever existed against 54 serving-code commits since the policy was pinned (concrete miss cited: commit e3386bdfa). DESIGN DECISION: zero-tolerance, NO baseline, forward-only attestation check (composes the already-designed depguard-tier-boundaries layer fences + metric-mask-lint field regex), wired PRIMARILY into the existing scripts/git-hooks/pre-push (the repo's real merge gate) with a CI-job backstop — mechanizes the existing-but-unenforced PUSH-AUTONOMY-1 §5 policy. QA: verdict brief adequacy + child scoping - NO code to test (design task); after review->done_verified, PM routes RAWVERIFY-IMPL to developer per normal backlog flow. RECURRING CI-GUARDRAIL null-disposition mis-route now FULLY EXHAUSTED: all 4 instances lane-corrected+closed (dead-code b418c9ad6, no-hardcode be5ef50b4, shared-package 7fe63a5ad, rebuild-raw-verify-hook this row); 0 null-disposition CI-GUARDRAIL rows remain in backlog. All 7 ci-regression-prevention guardrails now designed (3 architect-direct: depguard/metric-mask/size-lint; 4 BOUNDED-1-lane-corrected: dead-code/no-hardcode/shared-package/rebuild-raw-verify-hook). Their 7 child -IMPL rows await developer via normal PM backlog flow; FACTORY-GUARD-CI-REGRESSION-SPIKE (epic-wrapper) is PO's batch-scoping vehicle."
       }
     ],
     "qa": [],
@@ -14908,26 +14927,7 @@
     },
     "last_triaged_at": "2026-07-24T20:20:25Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "title": "CI-rebuild-raw-verify-hook",
-        "priority": "P2",
-        "type": "CI-GUARDRAIL",
-        "zone": "cross-service/",
-        "status": "IN_PROGRESS",
-        "id": "FACTORY-GUARD-CI-rebuild-raw-verify-hook",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-GUARD-CI-rebuild-raw-verify-hook",
-        "promoted_at": "2026-07-24T20:20:25Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-24T20:21:07Z",
-        "claimed_at": "2026-07-24T20:20:25Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "architect",
-        "dev_agent": "architect",
-        "updated_by": "dev-team (BOUNDED-1 lane-correct -> architect design)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
