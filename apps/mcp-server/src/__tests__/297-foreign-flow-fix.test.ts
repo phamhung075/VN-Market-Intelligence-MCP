@@ -10,7 +10,7 @@
 Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "bun:test";
-import { computeForeignFlowScore } from "../interface/mcp/tools/kinhdich/kinhDichTools.js";
+import { computeForeignFlowScore } from "../application/services/kinhDich/kinhDichScoring.js";
 import { getDb, closeDb, initDatabase } from "../infrastructure/db/schema.js";
 
 // ─────────────────────────────────────────────────────────────────────────────

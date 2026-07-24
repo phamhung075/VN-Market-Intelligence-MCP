@@ -3,6 +3,16 @@
 **Module path:** `src/interface/mcp/tools/kinhdich/`
 **Scheduler:** none (on-demand only)
 **Domain services:** `src/domain/services/kinhDich/` — hexagramLibrary, hexagramResolver, haoEncoder, nuclearComputer, transformedComputer, nguHanhClassifier, kinhDichReading, kinhDichFormatter, hexagramBacktester, kinhDichWrapper
+**Application services:** `src/application/services/kinhDich/kinhDichScoring.ts` — the 6 hào score-computation
+functions (`computeSentimentScore`, `computeFundamentalsScore`, `computePriceScore`,
+`computeForeignFlowScore`, `computeSectorScore`, `computeMacroScore`, plus `tickerJitter`,
+`computeHaoScores`, `computeMacroIndicatorScore`). Moved here (FACTORY-INTERFACE-move-kinhdich-ta-scoring-down,
+2026-07-24) out of `kinhDichTools.ts` — they read `market.db` directly (via `getDb()` /
+`IKinhDichScoreRepository`), so they don't satisfy `domain/services`' pure-no-I/O convention;
+application layer orchestrates infra + computation instead (same pattern as
+`application/services/imfConvictionBridge.ts`). Still NOT migrated to the separate
+kinh-dich-service HTTP microservice (AC-8, task 285) — this is an internal-to-mcp-server layering
+move only.
 
 Individual tool signatures: `docs/agents/tools/list/<tool>.md`
 

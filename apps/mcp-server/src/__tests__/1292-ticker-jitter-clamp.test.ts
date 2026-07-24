@@ -9,7 +9,7 @@
  */
 
 import { describe, it, expect } from "bun:test";
-import { tickerJitter } from "../interface/mcp/tools/kinhdich/kinhDichTools.js";
+import { tickerJitter } from "../application/services/kinhDich/kinhDichScoring.js";
 
 describe("Task 1292 — tickerJitter output never exceeds 0.089", () => {
   const TICKERS = [

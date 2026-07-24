@@ -13,7 +13,7 @@ Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import { initDatabase, getDb, closeDb } from "../infrastructure/db/schema.js";
-import { computeHaoScores, tickerJitter } from "../interface/mcp/tools/kinhdich/kinhDichTools.js";
+import { computeHaoScores, tickerJitter } from "../application/services/kinhDich/kinhDichScoring.js";
 import { computeReading } from "../domain/services/kinhDich/kinhDichReading.js";
 
 const WATCHLIST = ["VNM", "FPT", "VCB", "VEA"];

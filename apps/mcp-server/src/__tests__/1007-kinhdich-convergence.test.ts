@@ -18,7 +18,7 @@
  */
 
 import { describe, it, expect } from "bun:test";
-import { tickerJitter } from "../interface/mcp/tools/kinhdich/kinhDichTools.js";
+import { tickerJitter } from "../application/services/kinhDich/kinhDichScoring.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // tickerJitter() — deterministic per-ticker perturbation

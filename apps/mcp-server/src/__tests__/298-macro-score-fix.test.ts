@@ -11,7 +11,7 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach } from "bun:test"
 import {
   computeMacroScore,
   computeMacroIndicatorScore,
-} from "../interface/mcp/tools/kinhdich/kinhDichTools.js";
+} from "../application/services/kinhDich/kinhDichScoring.js";
 import { getDb, closeDb, initDatabase } from "../infrastructure/db/schema.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
