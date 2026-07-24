@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FACTORY-KINHDICH-split-sandbox",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-KINHDICH-split-sandbox — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-24T11:15:54Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "FACTORY-KINHDICH-split-sandbox completed by dev-kinh-dich; task in review lane. Awaiting next dispatch.",
+    "updated_at": "2026-07-24T11:21:58Z",
+    "updated_by": "dev-kinh-dich"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -14494,6 +14494,21 @@
         "completed_by": "dev-macro-indicators",
         "completed_at": "2026-07-24T11:08:32Z",
         "review_note": "CODE-ONLY DONE: sjc_fx split (SJCGoldFXAdapter DB adapter vs parsers_vmt_sbv_policy_rates.go SBV HTML parse/fetch/TLS+DB-fallback, same package, no import-graph change); usecases.go + 5 VMT parser files carry honest size-justification headers; main.go 9 composition-root shim types moved to sibling adapters.go (still package main, Fence-C preserved) — .golangci.yml fence-c file allow-list updated to match. Pure code motion verified byte-identical (sorted, comment-stripped diff) between original and split files (caught+fixed one Unicode NBSP->ASCII-space normalization bug during verification). go build + go vet + go test ./... all green; golangci-lint 0 issues; G12 sandbox gate primitive 18/18 PASS + module 2/2 PASS. Committed a87079574 (local, explicit pathspecs, no push). rebuild_required=true but USER-GATED per task constraint — rebuild-verify PENDING-USER-GATED, to be batched onto next authorized mcp-server/macro-indicators rebuild. Journal: docs/agent-memory/decisions/sprint-FACTORY-MACRO-split-or-justify-over-cap-dev-macro-indicators.md"
+      },
+      {
+        "title": "Split the 752L kinh-dich sandbox CLI by seam",
+        "priority": "P2",
+        "zone": "kinh-dich-service",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-KINHDICH-split-sandbox",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-KINHDICH-split-sandbox",
+        "promoted_at": "2026-07-24T11:15:54Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-24T11:21:58Z",
+        "claimed_at": "2026-07-24T11:15:54Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
       }
     ],
     "qa": [],
@@ -14515,23 +14530,7 @@
     },
     "last_triaged_at": "2026-07-24T11:15:54Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "title": "Split the 752L kinh-dich sandbox CLI by seam",
-        "priority": "P2",
-        "zone": "kinh-dich-service",
-        "type": "FACTORY",
-        "status": "IN_PROGRESS",
-        "id": "FACTORY-KINHDICH-split-sandbox",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-KINHDICH-split-sandbox",
-        "promoted_at": "2026-07-24T11:15:54Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-24T11:15:55Z",
-        "claimed_at": "2026-07-24T11:15:54Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
