@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "next_action": "BGFAN-1 closeout complete: FACTORY-GUARD-CI-shared-package-import-check design delivered by architect -> review (next=qa). Child FACTORY-GUARD-CI-SHAREDPKG-IMPL in backlog (developer, brief_ref wired). WIP now 0; dispatch lanes free. 1 more null-disposition CI-GUARDRAIL row awaits lane-correction (rebuild-raw-verify-hook).",
-    "updated_at": "2026-07-24T20:00:38Z",
-    "updated_by": "dev-team (BGFAN-1 closeout)"
+    "status": "in_progress",
+    "active_task_id": "FACTORY-GUARD-CI-rebuild-raw-verify-hook",
+    "next_agent": "architect",
+    "next_action": "Architect design task (BOUNDED-1 lane-corrected): FACTORY-GUARD-CI-rebuild-raw-verify-hook (7th and LAST of 7 ci-regression-prevention guardrails, epic FACTORY-MAINTAINABILITY-2026-06). Audit existing raw-verify-hook mechanism (verify-live, not ticket prose), grep-verify live offender counts at source, cross-check against any already-owned sibling remediation task before designing, decide zero-tolerance-vs-baseline/ratchet by evidence, mint ONE developer child impl row with brief_ref wired. Detail dev_agent=architect confirmed the design-task class.",
+    "updated_at": "2026-07-24T20:21:06Z",
+    "updated_by": "dev-team (BOUNDED-1 lane-correct -> architect design)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6362,15 +6362,6 @@
         "status": "BACKLOG",
         "id": "FACTORY-XZONE-size-justification-sweep",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-XZONE-size-justification-sweep"
-      },
-      {
-        "title": "CI-rebuild-raw-verify-hook",
-        "priority": "P2",
-        "type": "CI-GUARDRAIL",
-        "zone": "cross-service/",
-        "status": "BACKLOG",
-        "id": "FACTORY-GUARD-CI-rebuild-raw-verify-hook",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-GUARD-CI-rebuild-raw-verify-hook"
       },
       {
         "title": "Architect spike: scope the 7 factory CI guardrails (size-justification lint, metric-mask lint, depguard tier-boundaries, dead-code gate, no-hardcode allowlist scan, shared-package import check, rebuild raw-verify hook)",
@@ -14894,9 +14885,28 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-24T19:47:49Z",
+    "last_triaged_at": "2026-07-24T20:20:25Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "title": "CI-rebuild-raw-verify-hook",
+        "priority": "P2",
+        "type": "CI-GUARDRAIL",
+        "zone": "cross-service/",
+        "status": "IN_PROGRESS",
+        "id": "FACTORY-GUARD-CI-rebuild-raw-verify-hook",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-GUARD-CI-rebuild-raw-verify-hook",
+        "promoted_at": "2026-07-24T20:20:25Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-24T20:21:07Z",
+        "claimed_at": "2026-07-24T20:20:25Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "architect",
+        "dev_agent": "architect",
+        "updated_by": "dev-team (BOUNDED-1 lane-correct -> architect design)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
