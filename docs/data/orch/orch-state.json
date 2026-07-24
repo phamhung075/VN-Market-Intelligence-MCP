@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FACTORY-DOMAIN-split-newsNormalizer",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-DOMAIN-split-newsNormalizer — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-24T03:45:16Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "FACTORY-DOMAIN-split-newsNormalizer self-closed by dev-mcp-server -> REVIEW, next_agent=qa. Board idle, ready for next dispatch.",
+    "updated_at": "2026-07-24T03:58:41Z",
+    "updated_by": "dev-mcp-server"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -14390,6 +14390,24 @@
         "next_agent": "qa",
         "entered_review_at": "2026-07-24T03:25:09Z",
         "review_note": "dev-mcp-server self-closeout: pure data/logic separation, byte-identical. Moved VN_BULLISH/VN_BEARISH/EN_BULLISH/EN_BEARISH keyword-weight tables + derived ALL_BULLISH/ALL_BEARISH (longest-first sorted merge), FLIP_NEGATION_TOKENS/SOFT_NEGATION_TOKENS/NEGATION_WINDOW negation scope tables, and SentimentKeyword interface verbatim from domain/services/sentimentClassifier.ts into new sibling domain/services/sentimentLexicons.ts (mirrors existing vnHolidayData.ts/stockAliases/catalog.ts convention -- no domain/data/ dir exists in repo). Classifier keeps 100% of the algorithm (tokenize/findOccurrences/currentSentenceBefore/detectNegation/classifySentiment), now imports the tables. Byte-diffed every table literal old vs new (Python regex compare) before wiring the import -- zero drift. Evidence: bun test on all 17 test files that exercise sentimentClassifier (180 tests, 372 expect calls) -- 180 pass/0 fail both pre- and post-refactor, byte-identical result. tsc clean. Tool/scheduler probe unaffected: toolCount=184, cronJobCount=88. Full-server-boot probe intentionally skipped per task scope (pure data-move, unit tests are the right proof; keeps zone clear of concurrent mcp-server memory audit). Commit fcf1a60ec. Journal: docs/agent-memory/decisions/sprint-FACTORY-DOMAIN-extract-sentiment-lexicons-dev-mcp-server.md"
+      },
+      {
+        "title": "Split newsNormalizer types/helpers/tables out of the 979L file",
+        "priority": "P2",
+        "zone": "mcp-server-domain",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-DOMAIN-split-newsNormalizer",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-DOMAIN-split-newsNormalizer",
+        "promoted_at": "2026-07-24T03:45:16Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-24T03:58:53Z",
+        "claimed_at": "2026-07-24T03:45:16Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "entered_review_at": "2026-07-24T03:58:41Z",
+        "review_note": "dev-mcp-server self-closeout: pure structural split, behavior-preserving. Split newsNormalizer.ts (1086L) into sibling newsNormalizerTypes.ts (4 type aliases + AnalysisEntry), newsNormalizerTables.ts (8 keyword/lookup data tables), newsNormalizerHelpers.ts (14 pure helper functions + derived ALL_CATALOG_CODES cache) -- mirrors the FACTORY-DOMAIN-extract-sentiment-lexicons sibling-file convention (domain/services/*.ts, not a data/ subfolder). Main file (1086L->236L) keeps ONLY normalizeNews() orchestration, re-exporting the pre-split public surface (types + decodeHtmlEntities/truncateAt120/buildDecisionResume/DOMAIN_VN_LABEL) so all ~50 existing import call sites are unaffected. Byte-diffed every moved unit old-vs-new (8 tables, AnalysisEntry + 4 type aliases, all 14 helper function bodies, normalizeNews() itself): zero drift. bun tsc --noEmit clean. Ran the 50-file newsNormalizer-touching test set before AND after the split: identical 575 pass / 0 fail / 1166 expect() calls both times. gen-project-stats.ts --dry-run unaffected (toolCount 184, cronJobCount 88). No full-server-boot probe per task brief (pure code split; host resource conservation given concurrent mcp-server memory pressure this session). Commit 9cfeefc16 (code) + 25cc5d7d6 (memory). Journal: docs/agent-memory/decisions/sprint-FACTORY-DOMAIN-split-newsNormalizer-dev-mcp-server.md"
       }
     ],
     "qa": [],
@@ -14411,23 +14429,7 @@
     },
     "last_triaged_at": "2026-07-24T03:45:16Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "title": "Split newsNormalizer types/helpers/tables out of the 979L file",
-        "priority": "P2",
-        "zone": "mcp-server-domain",
-        "type": "FACTORY",
-        "status": "IN_PROGRESS",
-        "id": "FACTORY-DOMAIN-split-newsNormalizer",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-DOMAIN-split-newsNormalizer",
-        "promoted_at": "2026-07-24T03:45:16Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-24T03:45:17Z",
-        "claimed_at": "2026-07-24T03:45:16Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
