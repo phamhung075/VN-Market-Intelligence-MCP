@@ -880,21 +880,34 @@ export function getSignals(
 
   // Optional lookback window: restrict to signals created within the last N minutes.
   // Uses minutes internally (hoursBack param is in hours; converted to minutes for SQLite).
+  // SEC-FIX (FACTORY-INFRA-agentSignal-sql-binding): value is bound (?), not interpolated —
+  // idiom matches cronJobRunStore.ts / agentWorkLogStore.ts (`datetime('now', ? || ' minutes')`).
   const hoursBackClause =
     opts.hoursBack !== undefined
-      ? `AND s.created_at >= datetime('now', '-${Math.ceil(opts.hoursBack * 60)} minutes')`
+      ? `AND s.created_at >= datetime('now', ? || ' minutes')`
       : "";
 
   // Task 1968c-P03: Optional server-side signal_type filter.
   // Applied when signalType is a non-null, non-empty string.
   // null / undefined / "" = no filter (all types, backward-compatible).
+  // SEC-FIX (FACTORY-INFRA-agentSignal-sql-binding): bound placeholder, not string-interpolated.
   const signalTypeClause =
     opts.signalType != null && opts.signalType !== ""
-      ? `AND s.signal_type = '${opts.signalType.replace(/'/g, "''")}'`
+      ? `AND s.signal_type = ?`
       : "";
 
+  // SEC-FIX (FACTORY-INFRA-agentSignal-sql-binding): params array built in the same order the
+  // optional clauses appear in the SQL text below (recipient → hoursBack → signalType).
+  const params: (string | number)[] = [bindParam];
+  if (opts.hoursBack !== undefined) {
+    params.push(`-${Math.ceil(opts.hoursBack * 60)}`);
+  }
+  if (opts.signalType != null && opts.signalType !== "") {
+    params.push(opts.signalType);
+  }
+
   const rows = db
-    .query<RawRow, [string]>(
+    .query<RawRow, (string | number)[]>(
       `SELECT id, from_agent, to_agent, signal_type, stock_code, payload, status,
               created_at, expires_at${validationColumns}
        FROM agent_signals s
@@ -905,12 +918,17 @@ export function getSignals(
          ${signalTypeClause}
        ORDER BY s.id ASC`,
     )
-    .all(bindParam) as RawRow[];
+    .all(...params) as RawRow[];
 
   // Mark unread rows as read (only when fetching as inbox — NOT when doing sender-history lookup)
+  // SEC-FIX (FACTORY-INFRA-agentSignal-sql-binding): generated placeholder pattern
+  // (precedent: coordinationStore.ts ORPHAN_EMIT_ALLOW_LIST, seedWatchlist.ts HIGH_VOL_TICKERS) —
+  // the `IN (${ids})` structural shape can't be a single bind, so placeholder count is derived
+  // from array length (never from string content) and every id value is bound.
   if (statusFilter === "unread" && opts.fromAgent === undefined && rows.length > 0) {
-    const ids = rows.map((r) => r.id).join(",");
-    db.exec(`UPDATE agent_signals SET status = 'read' WHERE id IN (${ids})`);
+    const ids = rows.map((r) => r.id);
+    const idPlaceholders = ids.map(() => "?").join(",");
+    db.prepare(`UPDATE agent_signals SET status = 'read' WHERE id IN (${idPlaceholders})`).run(...ids);
   }
 
   return rows.map((r) => {
@@ -995,13 +1013,26 @@ export function getSignalEffectiveness(
 ): SignalEffectiveness[] {
   const days = opts.days ?? 7;
 
+  // SEC-FIX (FACTORY-INFRA-agentSignal-sql-binding): all three values below were previously
+  // string-interpolated (days as a raw template literal; fromAgent/signalType manually
+  // '-escaped via .replace(/'/g, "''")). Converted to bound placeholders — idiom for the
+  // datetime() offset matches cronJobRunStore.ts / agentWorkLogStore.ts
+  // (`datetime('now', ? || ' days')`); fromAgent/signalType now bind like every other
+  // equality filter in this file (see getSignals' recipientClause).
   const conditions: string[] = [
     "outcome IS NOT NULL",
-    `created_at >= datetime('now', '-${days} days')`,
+    "created_at >= datetime('now', ? || ' days')",
   ];
+  const params: (string | number)[] = [`-${days}`];
 
-  if (opts.fromAgent) conditions.push(`from_agent = '${opts.fromAgent.replace(/'/g, "''")}'`);
-  if (opts.signalType) conditions.push(`signal_type = '${opts.signalType.replace(/'/g, "''")}'`);
+  if (opts.fromAgent) {
+    conditions.push("from_agent = ?");
+    params.push(opts.fromAgent);
+  }
+  if (opts.signalType) {
+    conditions.push("signal_type = ?");
+    params.push(opts.signalType);
+  }
 
   const where = conditions.join(" AND ");
 
@@ -1015,7 +1046,7 @@ export function getSignalEffectiveness(
   };
 
   const rows = db
-    .query<Row, []>(
+    .query<Row, (string | number)[]>(
       `SELECT
          from_agent,
          signal_type,
@@ -1028,7 +1059,7 @@ export function getSignalEffectiveness(
        GROUP BY from_agent, signal_type
        ORDER BY from_agent, signal_type`,
     )
-    .all();
+    .all(...params);
 
   return rows.map((r) => {
     const denom = r.confirmed + r.false_positive;
