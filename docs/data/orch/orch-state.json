@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "",
-    "next_action": "",
-    "updated_at": "2026-07-24T12:50:34Z",
-    "updated_by": "dev-stock-price"
+    "status": "in_progress",
+    "active_task_id": "FACTORY-ALERT-shared-vocab-package",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-ALERT-shared-vocab-package — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-24T13:14:40Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6344,15 +6344,6 @@
         "status": "BACKLOG",
         "id": "FACTORY-STOCK-dedup-history-handlers",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-STOCK-dedup-history-handlers"
-      },
-      {
-        "title": "Collapse triple-declared severity/channel constants (Fence-aware)",
-        "priority": "P2",
-        "zone": "alert-engine",
-        "type": "FACTORY",
-        "status": "BACKLOG",
-        "id": "FACTORY-ALERT-shared-vocab-package",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-ALERT-shared-vocab-package"
       },
       {
         "title": "Split the 565L alert-engine sandbox by concern",
@@ -14554,9 +14545,25 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-24T12:44:38Z",
+    "last_triaged_at": "2026-07-24T13:14:40Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "title": "Collapse triple-declared severity/channel constants (Fence-aware)",
+        "priority": "P2",
+        "zone": "alert-engine",
+        "type": "FACTORY",
+        "status": "IN_PROGRESS",
+        "id": "FACTORY-ALERT-shared-vocab-package",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-ALERT-shared-vocab-package",
+        "promoted_at": "2026-07-24T13:14:40Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-24T13:14:40Z",
+        "claimed_at": "2026-07-24T13:14:40Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
