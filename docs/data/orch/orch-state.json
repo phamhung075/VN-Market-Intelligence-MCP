@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FACTORY-PDF-extract-tesseract-config",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-PDF-extract-tesseract-config — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-24T09:14:31Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "FACTORY-PDF-extract-tesseract-config self-closed by dev-pdf-extractor -> REVIEW, next_agent=qa. Board idle, ready for next dispatch.",
+    "updated_at": "2026-07-24T09:33:45Z",
+    "updated_by": "dev-pdf-extractor"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -14454,6 +14454,24 @@
         "next_agent": "qa",
         "entered_review_at": "2026-07-24T09:12:27Z",
         "review_note": "dev-mcp-server self-closeout: code done; rebuild + live-container verify PENDING (user-gated). CODE-ONLY per explicit SCOPE BOUND -- no container rebuilt. Extracted 5 shared briefing formatters (globalSnapshotSection 42L, foreignFlowSection 45L, moversSection 114L, alertLines 98L, vnIndexFreshness 27L -- all <=120L) into new scheduler/briefings/format/ subfolder, verbatim moves incl. private leaf helpers (deltaArrow, fmtVolume/fmtMoverLine/MoverEntry, severityLabel/AlertDisplayRow). Broke the franceSummaryJob<->morningBriefingJob<->eveningSummaryJob job->job cross-import cycle (3 edges: france->morning formatGlobalSnapshotSection, france->evening formatForeignFlowSection+isVnIndexFresh, evening->morning formatGlobalSnapshotSection) -- grep-confirmed zero job->job imports remain. All 3 job files import from ./format/*.js; kept thin re-export lines on each job file so the 9 existing test files that import these formatters directly from job files resolve unchanged (no test-path rewrites needed). Equivalence: byte-diffed all 9 moved function bodies (git show HEAD:<old> vs new file) -- all empty diffs (identical). bun tsc --noEmit clean. Targeted 9-file suite (1783/1503/1784/1552/1511/1512/1424/1794/FIX-DIGEST-FOREIGN-FLOW): 89 pass/0 fail/188 expect() calls, identical before/after. gen-project-stats unaffected (toolCount=184, cronJobCount=88). Local server boot probe (PORT=3099, not a container rebuild): no import errors, health 200 toolCount=184, both dashboards 200. Full bun test run twice: 14748 pass/52 fail (run1), 14747 pass/53 fail/1 error (run2) -- grep-confirmed zero fail-line or file-section overlap with briefings/franceSummaryJob/eveningSummaryJob/morningBriefingJob/format/; swing matches today's documented flaky-not-deterministic 5000ms-timeout class. Commits: eb9f87f38 (code, 8 files) + 2f5232b0d (journal+notebook). Journal: docs/agent-memory/decisions/sprint-FACTORY-SCHEDULER-dedup-briefing-formatters-dev-mcp-server.md"
+      },
+      {
+        "title": "Extract shared Tesseract config + DPI constants (5 files)",
+        "priority": "P2",
+        "zone": "pdf-extractor",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-PDF-extract-tesseract-config",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-PDF-extract-tesseract-config",
+        "promoted_at": "2026-07-24T09:14:31Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-24T09:34:16Z",
+        "claimed_at": "2026-07-24T09:14:31Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "entered_review_at": "2026-07-24T09:33:45Z",
+        "review_note": "dev-pdf-extractor self-closeout: extracted the Tesseract lang/psm/DPI config (copy-pasted across 5 named call sites, each with its own DO-NOT-REMOVE --psm 6 warning) into new infrastructure/tesseract_config.py (TESSERACT_LANG=vie+eng, TESSERACT_PSM6_CONFIG=--psm 6, OCR_RASTER_DPI=200). generic_md_table_extractor.py resolved to 2 real files behind its FACTORY-PDF-split-generic-md-table shim (generic_md_table/extractor.py + unit_ocr.py) -- 6 real call sites total, rewired incrementally (1 file -> tests green -> next file). Equivalence: git-HEAD grep confirmed all 6 pre-refactor literals byte-identical; post-refactor 0 literal matches remain, existing test_ocr_adapter_psm6_guard.py runtime regression guard 3/3 pass. Warning consolidated to 1 authoritative copy (tesseract_config.py docstring) + 6 one-line pointers. Full suite -m \"not slow\": baseline 1022 pass/8 fail, post-change 1022-1023 pass/7-8 fail -- 7 failures identical A/B via git stash (PIL.Image test-pollution, page_rasterizer, ocr_unit_tesseract_retry order-dependence), 8th (test_pek_engine_adapter timeout) is a pre-existing flake in an untouched file (0 diff). mypy: repo-wide pre-existing package-name env bug, workaround --explicit-package-bases shows 141 errors both before/after (0 new), tesseract_config.py alone 0 errors. G12 sandbox_runner.py still does not exist in this repo (3rd cycle flagging this doc drift). Code-only -- rebuild_required:true DEFERRED (user-gated, no container touched this cycle). Simplicity gate: PASS (Q1-Q4 all NO). Commits: cfe0a78d7 (code+docs) + 43d0c92ad (memory). Journal: docs/agent-memory/decisions/sprint-FACTORY-PDF-extract-tesseract-config-dev-pdf-extractor.md"
       }
     ],
     "qa": [],
@@ -14475,23 +14493,7 @@
     },
     "last_triaged_at": "2026-07-24T09:14:31Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "title": "Extract shared Tesseract config + DPI constants (5 files)",
-        "priority": "P2",
-        "zone": "pdf-extractor",
-        "type": "FACTORY",
-        "status": "IN_PROGRESS",
-        "id": "FACTORY-PDF-extract-tesseract-config",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-PDF-extract-tesseract-config",
-        "promoted_at": "2026-07-24T09:14:31Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-24T09:14:31Z",
-        "claimed_at": "2026-07-24T09:14:31Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
