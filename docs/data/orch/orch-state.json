@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FACTORY-ALERT-delete-deprecated-domain",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-ALERT-delete-deprecated-domain — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-24T01:14:30Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "FACTORY-ALERT-delete-deprecated-domain closed out by dev-alert-engine (REVIEW, next_agent=qa) — idle, awaiting next dispatch.",
+    "updated_at": "2026-07-24T01:22:19Z",
+    "updated_by": "dev-alert-engine"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -14354,6 +14354,24 @@
         "next_agent": "qa",
         "entered_review_at": "2026-07-24T00:49:22Z",
         "review_note": "dev-technical-analysis: confirmed dead at source — packages/primitives/technical-analysis was git-UNTRACKED residue (bun.lock + node_modules only, no package.json, no source), never a pnpm workspace member (pnpm requires package.json to register), zero repo-wide code/manifest importers (Go service has its own pkg/primitive/* impl at apps/technical-analysis, no packages/ import path exists). Root-caused via docs/handoffs/TASK_pivot-B-revert.md: leftover bun-install artifact from the reverted TS-pilot RSI commit 6248f3da. Deleted packages/primitives/ (29M, rm -rf, untracked so no git rm needed) + removed dangling .gitignore:33 rule. go build/vet/test all green (12/12 packages), G12 sandbox dashboard 35/35 + headless render PASS. Journal: docs/agent-memory/decisions/sprint-FACTORY-SHARED-prune-phantom-primitives-dev-technical-analysis.md. Commit df6c1dc7d."
+      },
+      {
+        "title": "Delete dead _deprecated domain package (298L duplicate of primitives)",
+        "priority": "P2",
+        "zone": "alert-engine",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-ALERT-delete-deprecated-domain",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-ALERT-delete-deprecated-domain",
+        "promoted_at": "2026-07-24T01:14:30Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-24T01:22:40Z",
+        "claimed_at": "2026-07-24T01:14:30Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "reviewed_at": "2026-07-24T01:22:19Z",
+        "reviewed_by": "dev-alert-engine"
       }
     ],
     "qa": [],
@@ -14375,23 +14393,7 @@
     },
     "last_triaged_at": "2026-07-24T01:14:30Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "title": "Delete dead _deprecated domain package (298L duplicate of primitives)",
-        "priority": "P2",
-        "zone": "alert-engine",
-        "type": "FACTORY",
-        "status": "IN_PROGRESS",
-        "id": "FACTORY-ALERT-delete-deprecated-domain",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-ALERT-delete-deprecated-domain",
-        "promoted_at": "2026-07-24T01:14:30Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-24T01:14:31Z",
-        "claimed_at": "2026-07-24T01:14:30Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
