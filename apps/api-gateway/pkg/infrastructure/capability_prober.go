@@ -1,46 +1,24 @@
-// Package infrastructure provides concrete implementations of domain ports.
+// capability_prober.go — the CapabilityProber struct, its TTL cache, and the
+// probe-orchestration methods (ProbeAll, capabilityFor, runProbe). Manifest
+// parsing lives in capability_manifest.go; the concrete probe implementations
+// live in capability_probe.go. Split per FACTORY-APIGW-split-capability-prober.
+//
+// size-justification: 191L — struct definition, both constructors, the cache
+// entry type, and the three orchestration methods (ProbeAll/capabilityFor/
+// runProbe) all read and mutate the same locked struct state (p.mu, p.cache,
+// p.manifest); the task's own file-seam spec keeps this quartet together as
+// "the prober struct + ProbeAll + capabilityFor + runProbe" — splitting further
+// would separate methods from the state invariants they protect.
 package infrastructure
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"fmt"
-	"io"
-	"log/slog"
 	"net/http"
-	"os"
 	"sync"
 	"time"
 
 	"github.com/vn-market-intelligence/api-gateway/pkg/domain"
 )
-
-// ── Manifest types ─────────────────────────────────────────────────────────────
-
-// capabilityManifestEntry mirrors one entry in capability_manifest in system-map.json.
-type capabilityManifestEntry struct {
-	Capability     domain.CapabilityStatus `json:"capability"`
-	ProbeType      string                  `json:"probe_type"`
-	Probe          *string                 `json:"probe"` // null for probe_type "none"
-	CapabilityNote string                  `json:"capability_note,omitempty"`
-}
-
-// systemMapFragment is the minimal shape of system-map.json needed to read
-// the capability_manifest.  The manifest map is decoded as raw JSON first so
-// that metadata string keys (e.g. "_note", "_ground_truth_date") are silently
-// skipped rather than causing a type-mismatch unmarshal error.
-type systemMapFragment struct {
-	Project struct {
-		Infrastructure struct {
-			Docker struct {
-				HostRuntimeSet struct {
-					CapabilityManifest map[string]json.RawMessage `json:"capability_manifest"`
-				} `json:"host_runtime_set"`
-			} `json:"docker"`
-		} `json:"infrastructure"`
-	} `json:"project"`
-}
 
 // ── Cache entry ────────────────────────────────────────────────────────────────
 
@@ -52,8 +30,9 @@ type cachedCapability struct {
 // ── CapabilityProber ───────────────────────────────────────────────────────────
 
 // CapabilityProber implements domain.CapabilityProberPort.
-// It reads the capability_manifest from system-map.json and runs at most one
-// bounded HTTP probe per not-deployed service per 60-second window.
+// It reads the capability_manifest from system-map.json (capability_manifest.go)
+// and runs at most one bounded HTTP probe per not-deployed service per 60-second
+// window (probeHealthEndpoint / probeMcpTool in capability_probe.go).
 //
 // Safety invariants (all enforced):
 //   - Maximum 7 probes per 60s window (one per not_deployed short_key).
@@ -61,11 +40,11 @@ type cachedCapability struct {
 //   - Cache keyed by short_key, TTL 60s.
 //   - The prober NEVER touches deployed services (ANTI-FALSE-GREEN).
 type CapabilityProber struct {
-	mcpBaseURL      string
-	systemMapPath   string
-	probeTTL        time.Duration
-	probeTimeoutMs  int64
-	httpClient      *http.Client
+	mcpBaseURL     string
+	systemMapPath  string
+	probeTTL       time.Duration
+	probeTimeoutMs int64
+	httpClient     *http.Client
 
 	mu       sync.Mutex
 	cache    map[string]*cachedCapability
@@ -105,67 +84,7 @@ func NewCapabilityProberForTest(
 	}
 }
 
-// loadManifest reads and parses system-map.json on first call; cached after that.
-// Must be called with p.mu held.
-//
-// The capability_manifest object may contain metadata string keys (e.g. "_note",
-// "_ground_truth_date") alongside service-entry object keys.  Each raw value is
-// decoded individually; non-object values (strings, numbers) are silently skipped
-// so that metadata keys never abort the load with a type-mismatch error.
-func (p *CapabilityProber) loadManifest() (map[string]*capabilityManifestEntry, error) {
-	if p.manifest != nil {
-		return p.manifest, nil
-	}
-
-	data, err := os.ReadFile(p.systemMapPath)
-	if err != nil {
-		return nil, fmt.Errorf("capability_manifest: read %s: %w", p.systemMapPath, err)
-	}
-
-	var fragment systemMapFragment
-	if err := json.Unmarshal(data, &fragment); err != nil {
-		return nil, fmt.Errorf("capability_manifest: parse %s: %w", p.systemMapPath, err)
-	}
-
-	rawMap := fragment.Project.Infrastructure.Docker.HostRuntimeSet.CapabilityManifest
-	if len(rawMap) == 0 {
-		return nil, fmt.Errorf("capability_manifest: empty or missing in %s", p.systemMapPath)
-	}
-
-	// Decode each value individually.  Skip keys whose value is not a JSON object
-	// (e.g. "_note" / "_ground_truth_date" metadata strings).
-	m := make(map[string]*capabilityManifestEntry, len(rawMap))
-	skipped := 0
-	for key, raw := range rawMap {
-		// A JSON object starts with '{'; anything else (string, number, null) is metadata.
-		if len(raw) == 0 || raw[0] != '{' {
-			skipped++
-			continue
-		}
-		var entry capabilityManifestEntry
-		if err := json.Unmarshal(raw, &entry); err != nil {
-			// Malformed entry — skip rather than aborting the whole load.
-			skipped++
-			continue
-		}
-		m[key] = &entry
-	}
-
-	if len(m) == 0 {
-		return nil, fmt.Errorf("capability_manifest: no valid service entries found in %s (skipped %d non-object keys)", p.systemMapPath, skipped)
-	}
-
-	// Startup diagnostic: always log how many entries were loaded so silent-empty
-	// is never invisible in production logs.
-	slog.Info("capability_manifest loaded",
-		"path", p.systemMapPath,
-		"entries", len(m),
-		"skipped_metadata_keys", skipped,
-	)
-
-	p.manifest = m
-	return p.manifest, nil
-}
+// ── Probe orchestration ────────────────────────────────────────────────────────
 
 // ProbeAll returns the capability map for all manifest entries.
 // Each not-deployed service entry is probed at most once per TTL window.
@@ -269,109 +188,4 @@ func (p *CapabilityProber) runProbe(
 		Capability: entry.Capability,
 		Note:       entry.CapabilityNote,
 	}
-}
-
-// probeHealthEndpoint performs a GET to {mcpBaseURL}{probe_path} and returns nil on 2xx.
-func (p *CapabilityProber) probeHealthEndpoint(ctx context.Context, entry *capabilityManifestEntry) error {
-	if entry.Probe == nil {
-		return fmt.Errorf("health_endpoint probe has nil path for service")
-	}
-	url := p.mcpBaseURL + *entry.Probe
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		return err
-	}
-	resp, err := p.httpClient.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	_, _ = io.Copy(io.Discard, resp.Body)
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return fmt.Errorf("health endpoint returned %d", resp.StatusCode)
-	}
-	return nil
-}
-
-// mcpToolCallRequest is the JSON-RPC 2.0 body for an MCP tools/call request.
-type mcpToolCallRequest struct {
-	JSONRPC string                 `json:"jsonrpc"`
-	Method  string                 `json:"method"`
-	Params  map[string]interface{} `json:"params"`
-	ID      int                    `json:"id"`
-}
-
-// mcpToolCallResponse is the minimal response shape we check.
-type mcpToolCallResponse struct {
-	JSONRPC string      `json:"jsonrpc"`
-	Error   interface{} `json:"error,omitempty"`
-	ID      interface{} `json:"id"`
-}
-
-// probeMcpTool posts a tools/call request to the mcp-server Streamable HTTP endpoint
-// (POST /mcp) and returns nil when the server accepts the call without a JSON-RPC error.
-// A 2xx response with no error field is treated as "tool online" even if the result
-// itself has partial data — the capability level (live/data_limited) comes from the manifest.
-func (p *CapabilityProber) probeMcpTool(ctx context.Context, toolName string) error {
-	body := mcpToolCallRequest{
-		JSONRPC: "2.0",
-		Method:  "tools/call",
-		Params: map[string]interface{}{
-			"name":      toolName,
-			"arguments": map[string]interface{}{},
-		},
-		ID: 1,
-	}
-
-	bodyBytes, err := json.Marshal(body)
-	if err != nil {
-		return err
-	}
-
-	url := p.mcpBaseURL + "/mcp"
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(bodyBytes))
-	if err != nil {
-		return err
-	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json, text/event-stream")
-
-	resp, err := p.httpClient.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	// Read a bounded amount to parse the response (avoid memory bomb on large results)
-	limited := io.LimitReader(resp.Body, 64*1024) // 64 KB cap
-	respBytes, err := io.ReadAll(limited)
-	if err != nil {
-		return err
-	}
-
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return fmt.Errorf("mcp tools/call returned HTTP %d", resp.StatusCode)
-	}
-
-	// Parse the JSON-RPC response — a top-level "error" field means the call failed.
-	// We parse only the envelope; we do not care about the result content.
-	// Note: Streamable HTTP may return SSE (text/event-stream) for streaming tools.
-	// In that case we cannot fully parse, but status 200 with SSE = tool accepted.
-	ct := resp.Header.Get("Content-Type")
-	if len(ct) >= 17 && ct[:17] == "text/event-stream" {
-		// SSE stream started = server accepted the tool call → probe success
-		return nil
-	}
-
-	var rpcResp mcpToolCallResponse
-	if err := json.Unmarshal(respBytes, &rpcResp); err != nil {
-		// Non-JSON 200 response — treat as probe success (server responded)
-		return nil
-	}
-
-	if rpcResp.Error != nil {
-		return fmt.Errorf("mcp tools/call rpc error for %s: %v", toolName, rpcResp.Error)
-	}
-
-	return nil
 }
