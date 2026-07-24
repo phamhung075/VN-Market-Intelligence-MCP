@@ -1,0 +1,15 @@
+{
+  "from": "tran-ngoc-bau",
+  "to": "po",
+  "type": "system-issue",
+  "payload": "docs/handoffs/tnb-audit-supplementary-2026-07-24.md",
+  "priority": "high",
+  "createdAt": "2026-07-24T20:31:24Z",
+  "note": "Supplementary, gate-blocked cycle (published:tnb-audit:2026-07-20/2026-07-26 still held, weekly WORK row NOT re-published). 2 new HIGH findings: (1) F-CHEF-EOD-POSSIBLE-DOUBLE-PUBLISH-0724 — two distinct chef-signature MARKET messages 9min apart (08:53:02Z/09:02:31Z), only the 2nd traceable in unified-agent's own notebook/synthesis JSON; chef-eod's 08:45 UTC cron does NOT cross VN midnight so the diagnosed FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR root cause cannot mechanically explain it if confirmed — possible 4th distinct root cause in the marker-gate recurrence ledger. (2) F-CHEF-MORNING-TOTAL-SILENT-MISS-0724 — chef-morning fired (cowork-schedule last_fired 05:22:26Z) but zero trace anywhere (no synthesis JSON, no notebook block, no MARKET message), worse than the tracked GAP-CHEF-SYNTHESIS-A-FLOW-PERSIST pattern. Also flagging (WATCH, not new-critical): USD/VND canonical threshold is 3-way inconsistent across code+docs (25500 cascade code / 25000 live macro_snapshot / 26500 tnb-methodology-layers.md L3 + chef.md + my own main.md L74) — today's eod dish states a numerically false threshold-crossing as a direct consequence. Full detail in payload file.",
+  "_processed": {
+    "fingerprint": "9c48e3ffd4f37ade897e3d39e80538f5288684dff11e88d47354393c36a241b8",
+    "processedAt": "2026-07-24T20:47:02Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

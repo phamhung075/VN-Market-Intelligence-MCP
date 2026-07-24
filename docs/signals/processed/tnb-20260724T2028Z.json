@@ -1,0 +1,15 @@
+{
+  "from": "tran-ngoc-bau",
+  "to": "po",
+  "type": "methodology-flag",
+  "payload": "docs/agent-memory/notebooks/tran-ngoc-bau.md#c118",
+  "priority": "high",
+  "createdAt": "2026-07-24T20:28:00Z",
+  "summary": "c118 supplementary content audit (weekly publish-gate still blocked, datapoint #3): (1) chef-morning fired 05:22:26Z per cowork-schedule.json but produced ZERO trace (no notebook session, no synthesis JSON) — cross-ref existing BACKLOG FIX-GUARANTEED-SLOT-FIRER-FANOUT-TRUNCATION, not new. (2) eod dish self-certifies layers_walked_summary='1-6 (full)' with zero PMI/EFFR-IORB and zero L2 gap token — 2nd confirmed occurrence of FIX-CHEF-QUALITY-VERDICT-FALSE-FULL-NO-LAYER-ASSERTION (READY, agent-father), crossing c115's own '2nd instance escalates' bar; also contains an arithmetically false USD/VND threshold claim (26,130 'exceeds' 26,500) and an internally-inconsistent gold threshold (prose cites $2,200 vs the same doc's own L6 token citing $4,300). (3) evening dish notebook quotes 3 L6-gap single-pillar tokens that are ABSENT from the persisted synthesis JSON known_gaps[] — first direct side-by-side confirmation resolving FIX-CHEF-L6-TOKEN-PERSISTENCE-RECURRING's open isolation question (persist-step drop, not narrative-gen miss); same-day intraday+eod L6 tokens both persisted correctly, narrowing the defect to intermittent/evening-leaning. Full evidence + methodology 9-step scores in notebook c118.",
+  "_processed": {
+    "fingerprint": "18701246784486dc06ac3ddbd1755a0ee85be7e38fff6f13ed816f6f4ea3d217",
+    "processedAt": "2026-07-24T20:47:02Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
