@@ -21,6 +21,7 @@ import { formatSourceHealthTable } from "../news-analysis/sourceHealthTools.js";
 import { globalSourceTracker } from "../../../../infrastructure/observability/sourceHealthRegistry.js";
 import { getDataFreshness } from "../market-data/dataFreshnessTools.js";
 import { tradingWindowLabel } from "../../../../domain/services/tradingWindow.js";
+import { listTrackedIndicatorsFromDb } from "../../../../infrastructure/db/commodityTracker.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SQLite row type
@@ -286,19 +287,29 @@ export async function getSystemStatus(opts: SystemStatusOptions): Promise<string
         dbLines.push("");
 
         // Auto-tracked Indicators
+        // FIX-DOWJONES-STALE-WRONG-VALUE: this section used to run its own raw,
+        // unguarded "latest row per indicator" query with NO staleness check —
+        // a value extracted months ago (e.g. dow_jones=23750, last written
+        // 2026-04-13) was displayed with zero freshness signal, indistinguishable
+        // from a live value (report 3237). Switched to listTrackedIndicatorsFromDb()
+        // (already used by buildMacroSection's DSI-MACRO-PHANTOM-STALE-GUARD and
+        // assembleBriefing step 9 — GUARD-7/8) so every row here is annotated
+        // [STALE] when its age exceeds TRACKED_INDICATOR_STALE_MS (4h). The value
+        // is still shown (transparency, matches formatCommoditiesSection GUARD-8
+        // precedent) — never silently hidden, never silently presented as current.
         dbLines.push("--- Auto-tracked Indicators ---");
         try {
-          const indicators = db.query<{ indicator: string; value: number; cnt: number }, []>(
-            `SELECT indicator, value, (SELECT COUNT(*) FROM tracked_indicators t2 WHERE t2.indicator = t1.indicator) as cnt
-             FROM tracked_indicators t1
-             WHERE extracted_at = (SELECT MAX(extracted_at) FROM tracked_indicators t3 WHERE t3.indicator = t1.indicator)
-             GROUP BY indicator ORDER BY cnt DESC LIMIT 10`,
-          ).all();
+          const indicators = listTrackedIndicatorsFromDb(db)
+            .sort((a, b) => b.dataPoints - a.dataPoints)
+            .slice(0, 10);
           if (indicators.length === 0) {
             dbLines.push("  (none yet — will populate after first news cycle)");
           } else {
             for (const ind of indicators) {
-              dbLines.push(`  ${ind.indicator.padEnd(22)} ${String(ind.value).padEnd(12)} (${ind.cnt} data points)`);
+              const staleTag = ind.isStale ? " [STALE]" : "";
+              dbLines.push(
+                `  ${ind.indicator.padEnd(22)} ${String(ind.value).padEnd(12)} (${ind.dataPoints} data points)${staleTag}`,
+              );
             }
           }
         } catch {

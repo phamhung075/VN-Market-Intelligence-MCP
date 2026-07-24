@@ -66,6 +66,11 @@ export const INDICATOR_RANGES: Record<string, { min: number; max: number; severi
   gold_usd_per_oz:  { min: 500,    max: 5000,   severity: "critical" },
   cpi_vietnam:      { min: -5,     max: 30,     severity: "warning"  },
   usd_vnd_rate:     { min: 20000,  max: 30000,  severity: "warning"  },
+  // FIX-DOWJONES-STALE-WRONG-VALUE: audit-layer defense-in-depth — same band
+  // as the write-time gate in indicatorPlausibility.ts. A ~44%-wrong magnitude
+  // (23750 vs real DJIA ~42k) corrupts regime analysis exactly like a bad
+  // brent/gold value, so it is severity=critical like those.
+  dow_jones:        { min: 25000,  max: 60000,  severity: "critical" },
 };
 
 /** Major tables for D-10 row count snapshot. */

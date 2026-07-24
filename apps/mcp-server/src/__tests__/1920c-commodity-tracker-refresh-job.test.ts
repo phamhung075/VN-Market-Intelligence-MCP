@@ -8,10 +8,14 @@
  * TC-5: Shipping failure does NOT abort commodity call; WORK telegram sent
  * TC-6: recordJobRun receives rowsWritten when both calls succeed
  * TC-7: CRONS.commodityTrackerRefresh === '0 6 * * *'
+ * TC-8: (FIX-DOWJONES-STALE-WRONG-VALUE) dow_jones fetch + store called on success
+ * TC-9: dow_jones failure does NOT abort commodity/shipping calls; WORK telegram sent
+ * TC-10: dow_jones store rejecting an out-of-band value is reflected as 0 rows (no throw)
  *
  * All tests inject deps (fetchCommodityFn / storeCommodityFn /
- * fetchShippingFn / storeShippingFn / sendWorkFn) — no real HTTP,
- * no real Telegram, no real DB writes from within the job.
+ * fetchShippingFn / storeShippingFn / fetchDowJonesFn / storeDowJonesFn /
+ * sendWorkFn) — no real HTTP, no real Telegram, no real DB writes from
+ * within the job.
  *
  * DB: :memory: (set globally in setup.ts preload).
  */
@@ -33,6 +37,10 @@ function makeOpts(overrides: Partial<CommodityTrackerRefreshOptions> = {}): Comm
     storeCommodityFn: async () => {},
     fetchShippingFn: async () => [{ name: "BDI", value: 1500, change: 10, changePct: 0.67, date: "2026-05-16" }],
     storeShippingFn: async () => {},
+    // FIX-DOWJONES-STALE-WRONG-VALUE: mocked by default so pre-existing TC-1..TC-7
+    // never hit real network/DB via the new Block 3.
+    fetchDowJonesFn: async () => 42000,
+    storeDowJonesFn: (_value: number | null, _fetchedAt: string) => true,
     sendWorkFn: async (_msg: string) => {},
     ...overrides,
   };
@@ -153,5 +161,61 @@ describe("Task 1920c — commodityTrackerRefreshJob", () => {
   // TC-7: cron expression check
   it("TC-7: CRONS.commodityTrackerRefresh defaults to '0 6 * * *'", () => {
     expect(CRONS.commodityTrackerRefresh).toBe("0 6 * * *");
+  });
+
+  // TC-8 (FIX-DOWJONES-STALE-WRONG-VALUE): dow_jones fetch + store called on success
+  it("TC-8: calls fetchDowJonesFn and storeDowJonesFn on success", async () => {
+    let fetchCalled = false;
+    // Mutable holder object (not a bare `let`) — avoids a TS control-flow
+    // narrowing quirk where a union-typed `let` reassigned only inside a
+    // nested closure gets narrowed to its initial literal type at the
+    // `expect()` call site.
+    const captured: { value: number | null } = { value: null };
+
+    const result = await runCommodityTrackerRefreshJob(makeOpts({
+      fetchDowJonesFn: async () => { fetchCalled = true; return 42150; },
+      storeDowJonesFn: (value: number | null, _fetchedAt: string) => {
+        captured.value = value;
+        return true;
+      },
+    }));
+
+    expect(fetchCalled).toBe(true);
+    expect(captured.value).toBe(42150);
+    expect(result.dowJonesSuccess).toBe(true);
+  });
+
+  // TC-9: dow_jones failure does NOT abort commodity/shipping calls; WORK telegram sent
+  it("TC-9: commodity + shipping calls run even when dow_jones fetch throws; WORK alert sent", async () => {
+    let commodityStoreCalled = false;
+    let shippingStoreCalled = false;
+    const workMessages: string[] = [];
+
+    const result = await runCommodityTrackerRefreshJob(makeOpts({
+      storeCommodityFn: async () => { commodityStoreCalled = true; },
+      storeShippingFn: async () => { shippingStoreCalled = true; },
+      fetchDowJonesFn: async () => { throw new Error("yahoo ^DJI timeout"); },
+      sendWorkFn: async (msg: string) => { workMessages.push(msg); },
+    }));
+
+    expect(commodityStoreCalled).toBe(true);
+    expect(shippingStoreCalled).toBe(true);
+    expect(result.commoditySuccess).toBe(true);
+    expect(result.shippingSuccess).toBe(true);
+    expect(result.dowJonesSuccess).toBe(false);
+    expect(workMessages.length).toBe(1);
+    expect(workMessages[0]).toContain("commodityTrackerRefresh");
+    expect(workMessages[0]).toContain("dow_jones");
+  });
+
+  // TC-10: dow_jones store rejecting an out-of-band value is reflected as 0 rows (no throw)
+  it("TC-10: storeDowJonesFn returning false (out-of-band rejection) does not throw and counts 0 rows", async () => {
+    const result = await runCommodityTrackerRefreshJob(makeOpts({
+      fetchDowJonesFn: async () => 23750, // the historical phantom value — gate rejects it
+      storeDowJonesFn: () => false, // simulates the real fail-closed gate rejecting it
+    }));
+
+    expect(result.dowJonesSuccess).toBe(true); // job did not throw
+    expect(result.rowsWritten).toBeGreaterThanOrEqual(1); // commodity + shipping rows still counted
   });
 });

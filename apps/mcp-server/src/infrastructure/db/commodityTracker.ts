@@ -19,6 +19,7 @@
 import { getDb } from "./schema.js";
 import { logger } from "../logger.js";
 import { currentDataEnv } from "../envCheck.js";
+import { isPlausibleIndicatorValue } from "./indicatorPlausibility.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Schema note (Task 1039)
@@ -103,7 +104,18 @@ const EXTRACTION_PATTERNS: ExtractionPattern[] = [
 
   // Stock indices — must match 4+ digit numbers (indices are 1000+), skip percentages
   { regex: /s&p\s*500[\s\S]{0,40}?(?:to|at|hit|near)\s+([\d,]{4,}(?:\.\d+)?)/i, indicator: "sp500", unit: "points" },
-  { regex: /(?:dow jones|dow)[\s\S]{0,40}?(?:to|at|hit|near)\s+([\d,]{4,}(?:\.\d+)?)/i, indicator: "dow_jones", unit: "points" },
+  // FIX-DOWJONES-STALE-WRONG-VALUE: dow_jones news-mining REMOVED (matches the
+  // brent_crude_usd precedent above — backlog 921). The loose "dow ... to/at/
+  // hit/near ####" pattern was picking up wrong numbers from RSS article text
+  // (observed in production tracked_indicators: 10604, 23750, 23807, 48221,
+  // 76848 — all within the same week, real DJIA never moved like that). A
+  // single-source-of-truth live fetch (Yahoo Finance ^DJI) now feeds
+  // tracked_indicators instead — see infrastructure/fetchers/yahooFinance.ts
+  // fetchDowJonesIndex()/storeDowJonesIndex(), wired into
+  // commodityTrackerRefreshJob.ts. Both this file and that mirror path run
+  // every dow_jones value through the shared isPlausibleIndicatorValue() gate
+  // (indicatorPlausibility.ts) before a write — an out-of-band value is
+  // rejected, never served silently (report 3237).
   { regex: /nasdaq[\s\S]{0,40}?(?:to|at|hit|near)\s+([\d,]{4,}(?:\.\d+)?)/i, indicator: "nasdaq", unit: "points" },
   { regex: /(?:vn-index|vnindex)[\s\S]{0,30}?(?:to|at|đạt|lên|về)\s+([\d,]{4,}(?:\.\d+)?)/i, indicator: "vnindex", unit: "points" },
 ];
@@ -155,41 +167,13 @@ export function extractAndStoreIndicators(
     const value = parseFloat(rawValue);
     if (isNaN(value) || value <= 0) continue;
 
-    // Sanity check: reject obviously wrong values
-    const MIN_VALUES: Record<string, number> = {
-      gold_usd_oz: 500,       // Gold never below $500
-      brent_crude_usd: 20,    // Brent never below $20
-      wti_crude_usd: 20,
-      sp500: 1000,            // S&P never below 1000
-      dow_jones: 10000,       // Dow never below 10000
-      nasdaq: 5000,           // Nasdaq never below 5000
-      vnindex: 500,           // VN-Index never below 500
-      wheat_usd_bushel: 3,
-      copper_usd: 1,
-      interest_rate_pct: 0.1, // Base rates never below 0.1%
-      inflation_pct: 0,
-      gdp_growth_pct: -20,
-      natgas_usd_mmbtu: 0.5,
-      soybean_usd_bushel: 5,
-      coffee_usd: 0.5,
-    };
-    const MAX_VALUES: Record<string, number> = {
-      interest_rate_pct: 15,  // Base/policy rates never above 15%
-      inflation_pct: 30,      // CPI never above 30%
-      gdp_growth_pct: 20,     // GDP growth never above 20%
-      brent_crude_usd: 300,
-      wti_crude_usd: 300,
-      gold_usd_oz: 10000,
-      natgas_usd_mmbtu: 30,
-      wheat_usd_bushel: 20,
-      soybean_usd_bushel: 30,
-      copper_usd: 20,
-      coffee_usd: 500,
-    };
-    const minVal = MIN_VALUES[pattern.indicator];
-    if (minVal !== undefined && value < minVal) continue;
-    const maxVal = MAX_VALUES[pattern.indicator];
-    if (maxVal !== undefined && value > maxVal) continue;
+    // Sanity check: reject obviously wrong values. FIX-DOWJONES-STALE-WRONG-VALUE:
+    // moved to the shared indicatorPlausibility.ts gate (was a local, one-off
+    // MIN_VALUES/MAX_VALUES pair here) so EVERY writer of tracked_indicators —
+    // this regex-extraction path AND yahooFinance.ts's live-API mirror path —
+    // enforces the SAME band per indicator, generically, not a duplicated /
+    // divergent one-off per writer.
+    if (!isPlausibleIndicatorValue(pattern.indicator, value)) continue;
 
     seen.add(pattern.indicator);
     extracted.push({

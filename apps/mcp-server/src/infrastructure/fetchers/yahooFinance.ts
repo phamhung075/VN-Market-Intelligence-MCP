@@ -34,6 +34,7 @@ import type { Database } from "bun:sqlite";
 import { logger } from "../logger.js";
 import { getDb } from "../db/schema.js";
 import { currentDataEnv } from "../envCheck.js";
+import { isPlausibleIndicatorValue } from "../db/indicatorPlausibility.js";
 
 // Re-export HttpClient from ssc.ts so consumers have a single import point.
 export type { HttpClient } from "./ssc.js";
@@ -74,6 +75,17 @@ const SYMBOLS = {
 
 /** Source identifier written to SQLite rows. */
 const SOURCE = "yahoo";
+
+/**
+ * Yahoo ticker for the Dow Jones Industrial Average index level.
+ *
+ * FIX-DOWJONES-STALE-WRONG-VALUE: kept separate from the 12-symbol
+ * CommoditySnapshot/commodity_prices pipeline above (deliberately — that
+ * table's schema is shared by many consumers/tests and dow_jones only needs
+ * to land in tracked_indicators, same as brent/gold's mirror in
+ * storeCommoditySnapshot). See fetchDowJonesIndex()/storeDowJonesIndex().
+ */
+const DOW_JONES_SYMBOL = "^DJI";
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -379,6 +391,117 @@ export async function fetchYahooFinancePrices(
   });
 
   return snapshot;
+}
+
+// ---------------------------------------------------------------------------
+// Public API — Dow Jones index (FIX-DOWJONES-STALE-WRONG-VALUE)
+// ---------------------------------------------------------------------------
+
+/**
+ * Fetches the live Dow Jones Industrial Average index level from Yahoo Finance.
+ *
+ * Replaces the retired news-mined `dow_jones` regex extraction in
+ * commodityTracker.ts (EXTRACTION_PATTERNS), which was reading wrong numbers
+ * out of RSS article text — production tracked_indicators showed dow_jones
+ * oscillating 10604 → 23750 → 23807 → 48221 → 76848 within one week, a
+ * ~44%-wrong phantom value ultimately served as "current" (report 3237).
+ *
+ * Uses the SAME Yahoo Chart API contract (regularMarketPrice) already proven
+ * for brent/gold/sp500/etc. — a real, live, verifiable payload, giving a
+ * single source of truth for the index level instead of a text-mining guess.
+ *
+ * @param httpClient - Optional injectable HTTP client (defaults to axios).
+ *                     Pass a mock in tests to avoid real network calls.
+ * @returns Parsed DJIA level, or null on any failure (never throws).
+ */
+export async function fetchDowJonesIndex(
+  httpClient?: HttpClient,
+): Promise<number | null> {
+  const client = httpClient ?? (await makeDefaultHttpClient());
+  const apiBase = Bun.env["YAHOO_FINANCE_API_URL"] ?? YAHOO_API_BASE;
+  return fetchSymbolPrice(DOW_JONES_SYMBOL, client, apiBase);
+}
+
+/**
+ * Persists the live Dow Jones index level into `tracked_indicators`
+ * (source='yahoo').
+ *
+ * FIX-DOWJONES-STALE-WRONG-VALUE — fails CLOSED: a value outside the shared
+ * plausibility band (indicatorPlausibility.ts, ~25000–60000 for dow_jones) is
+ * logged as a warning and NOT written — it is rejected, never served silently
+ * as "current". This is the write-time enforcement of the sanity gate; the
+ * same gate is also applied at extraction time in commodityTracker.ts.
+ *
+ * Existing yahoo-sourced dow_jones rows are deleted before insert (same
+ * dedup precedent as brent/gold in storeCommoditySnapshot / Task 1489) so
+ * tracked_indicators never accumulates more than one live dow_jones row.
+ *
+ * @param value     - DJIA level from fetchDowJonesIndex(), or null (fetch failed — no-op).
+ * @param fetchedAt - ISO 8601 timestamp of the fetch.
+ * @param db        - Optional database instance (defaults to the app singleton via getDb()).
+ * @returns true if the value was written, false if it was null/rejected/skipped.
+ */
+export function storeDowJonesIndex(
+  value: number | null,
+  fetchedAt: string,
+  db?: Database,
+): boolean {
+  if (value == null) return false;
+
+  if (!isPlausibleIndicatorValue("dow_jones", value)) {
+    logger.warn(
+      "[yahooFinance] dow_jones value outside plausible band — REJECTED (fail-closed, not written)",
+      { value, fetchedAt },
+    );
+    return false;
+  }
+
+  const database = db ?? getDb();
+  const dataEnv = currentDataEnv();
+
+  // data_env is a migration-added column (ALTER TABLE ADD COLUMN) — may not
+  // exist in minimal test schemas. Detect and branch, mirroring the same
+  // guard already used for brent/gold in storeCommoditySnapshot above.
+  const hasDataEnvCol = (() => {
+    try {
+      database.prepare(`SELECT data_env FROM tracked_indicators LIMIT 0`).run();
+      return true;
+    } catch {
+      return false;
+    }
+  })();
+
+  const runTransaction = database.transaction(() => {
+    database.exec(
+      `DELETE FROM tracked_indicators WHERE source = 'yahoo' AND indicator = 'dow_jones'`,
+    );
+    if (hasDataEnvCol) {
+      database
+        .prepare(
+          `INSERT INTO tracked_indicators (indicator, value, unit, source, extracted_at, data_env)
+           VALUES ('dow_jones', ?, 'points', 'yahoo', ?, ?)`,
+        )
+        .run(value, fetchedAt, dataEnv);
+    } else {
+      database
+        .prepare(
+          `INSERT INTO tracked_indicators (indicator, value, unit, source, extracted_at)
+           VALUES ('dow_jones', ?, 'points', 'yahoo', ?)`,
+        )
+        .run(value, fetchedAt);
+    }
+  });
+
+  try {
+    runTransaction();
+    logger.debug("[yahooFinance] stored dow_jones index", { value, fetchedAt });
+    return true;
+  } catch (err) {
+    logger.error("[yahooFinance] failed to store dow_jones index", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return false;
+  }
 }
 
 // ---------------------------------------------------------------------------
