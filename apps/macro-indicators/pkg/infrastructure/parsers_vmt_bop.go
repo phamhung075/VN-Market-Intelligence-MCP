@@ -32,6 +32,14 @@
 // Bridge the application-layer interfaces (BOPParser, BOPURLBuilder) to the
 // concrete infrastructure functions. Only cmd/server/main.go constructs them (Fence-C).
 //
+// size-justification: ~214L — one VMT-2 concern (SBV BOP fetch URL + quarter-window
+// math + Liferay JSON response parse) sharing one contract (the live-payload recon
+// documented above); URL building (BuildBOPFetchURL/CurrentQuarterWindow/PrevQuarterWindow)
+// and response parsing (ParseBOPResponse/parseArticleFields) are two halves of the same
+// VMT-2 fetch recipe and reference each other's Liferay-specific quirks (dedup by
+// articleId, DO-NOT-date-filter) directly in their doc comments — splitting them apart
+// would separate a fetch URL from the response it fetches for no reuse benefit.
+//
 // Fence-C: only cmd/server/main.go imports pkg/infrastructure.
 package infrastructure
 

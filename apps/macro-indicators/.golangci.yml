@@ -52,12 +52,17 @@ linters:
               desc: "Fence-B: module must not import infrastructure layer"
 
         # Fence-C: pkg/infrastructure constructors must only be wired from the
-        # composition root (cmd/server/main.go). No other non-test file may import
-        # pkg/infrastructure directly. Test files (*_test.go) are exempt to allow
-        # infrastructure package self-tests.
+        # composition root (cmd/server/, package main). No other non-test file may
+        # import pkg/infrastructure directly. Test files (*_test.go) are exempt to
+        # allow infrastructure package self-tests.
+        # main.go: DI wiring (func main). adapters.go: composition-root adapter shim
+        # types split out of main.go (FACTORY-MACRO-split-or-justify-over-cap,
+        # 2026-07-24) — same package main, same composition-root file set, no new
+        # import-graph edge; both files together ARE the composition root.
         fence-c:
           files:
             - "!**/cmd/server/main.go"
+            - "!**/cmd/server/adapters.go"
             - "!**/*_test.go"
           deny:
             - pkg: "github.com/vn-market-intelligence/macro-indicators/pkg/infrastructure"

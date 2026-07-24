@@ -64,6 +64,16 @@
 // fail sanity checks: monthly > YTD (impossible), or monthly value outside 5000–200000 M USD
 // (VN monthly trade is typically ~$25–60bn), or |balance| > 50000 M USD ($50bn).
 //
+// size-justification: ~492L — one NSO Excel parser covering 2 sheets that are read
+// together for one contract (VMT-1a export/import totals + HS breakdown, VMT-1b FDI
+// bloc_split) sharing the same content-based sheet-selection strategy
+// (selectSheetsByContent), the same column-index constants, and the same
+// plausibility guard. The XK/NK/FDI sheet-layout tables above are the parser's only
+// spec and must stay directly beside the row-walking code that implements them —
+// NSO's month-to-month label/spacing drift (FIX-NSO-TRADE-SHEET) is the primary
+// regression risk here, and splitting the sheets into separate files would duplicate
+// (or desync) that shared selection/plausibility logic.
+//
 // Fence-C: only cmd/server/main.go imports pkg/infrastructure.
 package infrastructure
 

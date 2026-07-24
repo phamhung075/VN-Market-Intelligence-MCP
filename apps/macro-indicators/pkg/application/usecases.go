@@ -19,6 +19,19 @@
 //
 // Fence-C note: only cmd/server/main.go imports pkg/infrastructure.
 // This package imports only pkg/module and pkg/primitive (via module types).
+//
+// size-justification: ~570L — one cohesive use case, ComputeMacroUseCase.Execute, that
+// orchestrates the macro_signals module against 5 live-vs-fixture inputs (oil, gold,
+// usdVnd, fedFunds, vndDeposit) plus VN-Index + commodity delta computation. Every
+// unexported helper below Execute (buildCarryDTO, buildYieldDTO, resolveVNIndex,
+// resolvePrevSessionVnIndex, computeDelta, getFlatThresholdPct, computeCommodityDelta,
+// resolveCommodityPrevClose, resolveVNDDepositRate, resolveFedFundsRate,
+// resolveEarningYield, resolveMarketPrices) exists ONLY to serve this one Execute
+// method and is not called from anywhere else in the package — they are Execute's
+// decomposition, not independent concerns. Splitting them into separate files would
+// scatter one method's logic across N files with no independent-reuse benefit, and
+// would fragment the per-input liveness/safe-degrade contract (DSI-INV-1) that all of
+// them jointly implement and that is documented once, here, at the top of the file.
 package application
 
 import (

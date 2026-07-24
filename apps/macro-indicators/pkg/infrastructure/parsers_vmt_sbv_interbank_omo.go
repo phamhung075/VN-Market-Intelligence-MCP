@@ -26,6 +26,16 @@
 // Fail-closed: OMOParseResult.ParseOK=false on any fetch or parse error.
 // is_estimate=true is set by the use case (via domain.BuildOMOFailed) when ParseOK=false.
 //
+// size-justification: ~551L — one fetch+parse pipeline (FetchSBVOMOFromHTML →
+// ParseSBVOMOHTML → collectOMOFromDoc → collectOMORow) plus its field-level value
+// parsers (parseTenorDays, parseOMORate, parseMembersXY, extractAuctionDate,
+// isDateDDMMYYYY, parseOMOVolume, normaliseVNText). Every helper below ParseSBVOMOHTML
+// exists ONLY to extract one field out of one HTML table row for this one contract
+// (documented above from the live probe sample) and has no caller outside this file —
+// splitting field-parsers out from the row-walker they serve would scatter one row's
+// worth of parsing logic across files for no reuse benefit. This mirrors the existing
+// size-justified pattern in parsers_vmt_sbv_policy_rates.go (same package, same shape).
+//
 // Fence-C: only cmd/server/main.go imports pkg/infrastructure.
 package infrastructure
 

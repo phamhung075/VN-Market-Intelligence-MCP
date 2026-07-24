@@ -29,6 +29,13 @@
 //   All WeightPct fields MUST remain nil; WeightsIsEstimate=true always.
 //   Never infer or fabricate weights from index values.
 //
+// size-justification: ~157L — one parser (ParseCPIFromExcel) for one sheet contract;
+// the column-layout table, the derived-YoY formula, the live anchor, and the
+// weights-policy CRITICAL note above are all facts about that single sheet's shape
+// and must stay directly beside the code that reads it — splitting the sheet-selection
+// helper from the row-parse logic would separate two steps of one parse that share
+// this same doc comment as their only spec.
+//
 // Fence-C: only cmd/server/main.go imports pkg/infrastructure.
 package infrastructure
 

@@ -22,6 +22,12 @@
 //   "Công nghiệp khai khoáng"         → key: iip_mining
 //   "Sản xuất và phân phối điện"      → key: iip_electricity
 //
+// size-justification: ~156L — one parser (ParseIIPFromExcel) for one sheet contract;
+// the column-layout table, live anchor, and the 4 target-row label constants above
+// are all facts about this single sheet's shape and must stay directly beside the
+// row-matching code that depends on them (Vietnamese label drift is the primary
+// regression risk here) — there is no independent sub-concern to extract.
+//
 // Fence-C: only cmd/server/main.go imports pkg/infrastructure.
 package infrastructure
 
