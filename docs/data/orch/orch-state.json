@@ -387,11 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-07-24T11:57:06Z",
-    "updated_by": "dev-team",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "active_task_id": "FACTORY-APIGW-split-capability-prober",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-APIGW-split-capability-prober — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-24T12:17:56Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6316,15 +6317,6 @@
         "status": "BACKLOG",
         "id": "FACTORY-KINHDICH-add-data-invariant-test",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-KINHDICH-add-data-invariant-test"
-      },
-      {
-        "title": "Split capability_prober.go into manifest/probe/prober files",
-        "priority": "P2",
-        "zone": "api-gateway",
-        "type": "FACTORY",
-        "status": "BACKLOG",
-        "id": "FACTORY-APIGW-split-capability-prober",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APIGW-split-capability-prober"
       },
       {
         "title": "Make StaticServiceRegistry the sole SSOT for default upstream URLs",
@@ -14533,9 +14525,25 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-24T11:44:39Z",
+    "last_triaged_at": "2026-07-24T12:17:56Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "title": "Split capability_prober.go into manifest/probe/prober files",
+        "priority": "P2",
+        "zone": "api-gateway",
+        "type": "FACTORY",
+        "status": "IN_PROGRESS",
+        "id": "FACTORY-APIGW-split-capability-prober",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APIGW-split-capability-prober",
+        "promoted_at": "2026-07-24T12:17:56Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-24T12:17:57Z",
+        "claimed_at": "2026-07-24T12:17:56Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
