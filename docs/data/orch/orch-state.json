@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "FACTORY-ALERT-delete-deprecated-domain closed out by dev-alert-engine (REVIEW, next_agent=qa) — idle, awaiting next dispatch.",
-    "updated_at": "2026-07-24T01:22:19Z",
-    "updated_by": "dev-alert-engine"
+    "status": "in_progress",
+    "active_task_id": "FACTORY-INTERFACE-vps-auth-guard-dedup",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-INTERFACE-vps-auth-guard-dedup — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-24T01:44:28Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6196,15 +6196,6 @@
         "status": "BACKLOG",
         "id": "FACTORY-ALERT-dedup-window-config",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-ALERT-dedup-window-config"
-      },
-      {
-        "title": "Extract one requireVpsApiKey guard; replace 15+ copy-paste auth blocks",
-        "priority": "P2",
-        "zone": "mcp-server-interface",
-        "type": "FACTORY",
-        "status": "BACKLOG",
-        "id": "FACTORY-INTERFACE-vps-auth-guard-dedup",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INTERFACE-vps-auth-guard-dedup"
       },
       {
         "title": "Move Kinh Dich + TA scoring math out of interface tools into domain",
@@ -14391,9 +14382,25 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-24T01:14:30Z",
+    "last_triaged_at": "2026-07-24T01:44:28Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "title": "Extract one requireVpsApiKey guard; replace 15+ copy-paste auth blocks",
+        "priority": "P2",
+        "zone": "mcp-server-interface",
+        "type": "FACTORY",
+        "status": "IN_PROGRESS",
+        "id": "FACTORY-INTERFACE-vps-auth-guard-dedup",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INTERFACE-vps-auth-guard-dedup",
+        "promoted_at": "2026-07-24T01:44:28Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-24T01:44:28Z",
+        "claimed_at": "2026-07-24T01:44:28Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
