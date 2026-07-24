@@ -3,16 +3,25 @@
   "signal_type": "bctc_signal",
   "quarter": "Q1-2026",
   "mode": "routine",
-  "product": "Industrial park development and leasing (Kinh Bac City Development Holding)",
-  "customer": "FDI manufacturers seeking industrial land leases in Northern Vietnam",
-  "ops": "ROE 9.7% above sector median 6.3%, PE 13.8x DISCOUNT -29% vs sector 19.3x, PB in line with sector. Sector ratios byte-identical vs c115/c117.",
-  "mgmt": "Chairman Dang Thanh Tam tax-penalty administrative decisions (2026-07-19/07-20) remain an unresolved legal-risk overhang; direct BCTC extraction still unavailable (sector-ratio only, rotation touch). Kinh Dich flipped sharply positive this cycle: Ty(8)/GIU/THUAN LOI (100% conf., was Bac(23)/GIU tieu cuc 25% BAT LOI at c117 baseline).",
-  "esc_status": "N/A — no direct BCTC extraction this cycle (get_bctc_full returns \"Chua co du lieu BCTC\"); legal-risk flag recorded via evidence fragment id=509.",
-  "cycle": "c119",
-  "generated_at": "2026-07-24T15:20:00Z",
+  "beat_miss": null,
+  "product": "Phát triển hạ tầng khu công nghiệp, cho thuê đất/nhà xưởng KCN (Kinh Bắc City)",
+  "customer": "Nhà đầu tư FDI thuê đất KCN, doanh nghiệp sản xuất trong nước",
+  "ops": "BCTC gốc chưa có dữ liệu (Chưa có dữ liệu BCTC) — chỉ có tỷ lệ so sánh ngành: PE 13.8x (DISCOUNT -29% vs median 19.3x), PB ngang bằng, ROE 9.7% (trên median 6.3%). Dòng tiền nước ngoài KBC mạnh hơn ngành (+19K cp net vs ngành -95K cp net).",
+  "mgmt": "KD Ty(8)/GIU/THUAN LOI 100% (unchanged since c119). Rủi ro pháp lý: 2 khoản xử phạt hành chính thuế (Chủ tịch Đặng Thành Tâm, 2026-07-19/20) — unchanged, chưa có diễn biến mới.",
+  "fundamentals": {
+    "data_status": "Chưa có dữ liệu BCTC — blocked cluster (unchanged)",
+    "sector_pe": 13.8,
+    "sector_pe_verdict": "DISCOUNT",
+    "sector_roe_pct": 9.7
+  },
+  "esc_gate": {
+    "note": "ESC gate not evaluated — no BCTC extraction available"
+  },
+  "cycle_id": "20260724-2100",
+  "source": "bctc-analyst-slot-3",
   "_processed": {
-    "fingerprint": "8d9efc3af4c189a4bca3fa1891509a223ac4dc3e33eb9da288efa94d5de55e0c",
-    "processedAt": "2026-07-24T15:16:14Z",
+    "fingerprint": "c24baf5473b0663eb503c282ab32f3b6051579929203a797b81901bfd4eaa05e",
+    "processedAt": "2026-07-24T21:17:16Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

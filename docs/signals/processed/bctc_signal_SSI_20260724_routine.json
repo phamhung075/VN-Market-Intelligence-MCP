@@ -3,16 +3,25 @@
   "signal_type": "bctc_signal",
   "quarter": "Q1-2026",
   "mode": "routine",
-  "product": "Brokerage, investment banking, and asset management services",
-  "customer": "Retail and institutional securities investors",
-  "ops": "ROE 14.0% above sector median 10.0%, PE 14.6x PREMIUM +15% vs sector 12.7x, EY spread FAIR (1.85pp over deposit rate). Sector ratios byte-identical vs c115/c117.",
-  "mgmt": "No legal/insider flags this cycle; direct BCTC extraction still unavailable (sector-ratio only, rotation touch). Kinh Dich REVERSED to negative this cycle: Kien(39)/BAN/BAT LOI (63% conf.), flipping from Phe Hap(21)/THAN TRONG 37-38% THUAN LOI at c117 baseline — first negative signal this rotation cluster has shown; no fundamental data to corroborate/contradict (still \"Chua co du lieu\").",
-  "esc_status": "N/A — no direct BCTC extraction this cycle (get_bctc_full returns \"Chua co du lieu BCTC\").",
-  "cycle": "c119",
-  "generated_at": "2026-07-24T15:20:00Z",
+  "beat_miss": null,
+  "product": "Môi giới chứng khoán, tự doanh, ngân hàng đầu tư (công ty chứng khoán lớn nhất Việt Nam)",
+  "customer": "Nhà đầu tư cá nhân và tổ chức trong nước, khách hàng tự doanh/IB",
+  "ops": "BCTC gốc chưa có dữ liệu (Chưa có dữ liệu BCTC) — chỉ có tỷ lệ so sánh ngành: PE 14.6x (PREMIUM +15% vs median 12.7x), PB PREMIUM +36%, ROE 14.0% (trên median 10.0%). Dòng tiền nước ngoài SSI yếu hơn ngành (-243K cp net vs ngành -159K cp net).",
+  "mgmt": "KD Kien(39)/BAN/BAT LOI 63% — reversed negative since c119, 2nd touch confirms same direction (watch n=2 for durability). Không có rủi ro pháp lý mới.",
+  "fundamentals": {
+    "data_status": "Chưa có dữ liệu BCTC — blocked cluster (unchanged)",
+    "sector_pe": 14.6,
+    "sector_pe_verdict": "PREMIUM",
+    "sector_roe_pct": 14
+  },
+  "esc_gate": {
+    "note": "ESC gate not evaluated — no BCTC extraction available"
+  },
+  "cycle_id": "20260724-2100",
+  "source": "bctc-analyst-slot-3",
   "_processed": {
-    "fingerprint": "3318a4f3a1453d1482b2b53704cc6c12960b4e236011388826ac8e42932a3da9",
-    "processedAt": "2026-07-24T15:16:14Z",
+    "fingerprint": "16548b1f329af901649ee9fa167dffcc262d3fee476a2e724581ab37b6ae74b0",
+    "processedAt": "2026-07-24T21:17:16Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

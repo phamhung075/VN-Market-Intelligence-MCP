@@ -6,14 +6,14 @@
   "beat_miss": null,
   "product": "IT services and software exports, systems integration, telecom (FPT Telecom), education (FPT Edu)",
   "customer": "Enterprise IT buyers (domestic + offshore outsourcing clients), SME/retail telecom subscribers",
-  "ops": "Op. margin 22.0%, ROE 6.2% (bctc) / 28.3% (sector-calc), EY spread FAIR (PE 13.8x DISCOUNT -20% vs sector 17.3x, PB PREMIUM +136%). Data byte-identical vs c079-c119 (E3 cache-hit, E1 6-pass skipped).",
-  "mgmt": "KD Khon(2)/GIU/TRUNG TINH 38% (unchanged since c119 shift, n=2). Legal: FPT Shop deputy-manager prosecution unchanged (2026-07-24 12:07, subsidiary-level). No insider activity.",
-  "esc_status": "ESC-3 DATA-COVERAGE-LIMITED (2/4Q cash-flow history) — guard held (esc-datacov:FPT:Q1-2026:ESC-3), no re-emit. ESC-4 FALSE (non_operating_share 2.0%, pre-tax-consistent AC-1 formula). ESC-5 TRUE (7/15 bctc_refined_units <0.50 confidence — unit-0008..0014, footnote/related-party/loan-schedule/subsidiary pages 26-46) — guard held (esc-deepdive:FPT:Q1-2026:ESC-5, dev-team Opus deep-dive pending since 2026-07-24T15:12:00Z), no re-emit this cycle. ESC-1/2 FALSE (B/S imbalance 0%).",
-  "cycle": "c120",
-  "generated_at": "2026-07-24T18:11:00Z",
+  "ops": "Op. margin 22.0%, ROE 6.2% (bctc) / 28.3% (sector-calc), EY spread FAIR (PE 13.8x DISCOUNT -20% vs sector 17.3x, PB PREMIUM +136%). Data byte-identical vs c079-c120 (E3 cache-hit, E1 6-pass skipped).",
+  "mgmt": "KD Khon(2)/GIU/TRUNG TINH 37-38% (unchanged since c119 shift, n=3 hold). Legal: FPT Shop deputy-manager prosecution unchanged (2026-07-24 12:07, subsidiary-level). No insider activity.",
+  "esc_status": "ESC-3 DATA-COVERAGE-LIMITED (2/4Q cash-flow history) — guard held (esc-datacov:FPT:Q1-2026:ESC-3), no re-emit. ESC-4 FALSE (non_operating_share 2.0%, pre-tax-consistent AC-1 formula). ESC-5 TRUE (7/15 bctc_refined_units <0.50 confidence — unit-0008..0014, footnote/related-party/loan-schedule/subsidiary pages 26-46) — guard held (esc-deepdive:FPT:Q1-2026:ESC-5, dev-team Opus deep-dive pending since 2026-07-24T15:12:00Z, 3rd consecutive cycle confirmed), no re-emit. ESC-1/2 FALSE (B/S imbalance 0%).",
+  "cycle": "c121",
+  "generated_at": "2026-07-24T21:10:00Z",
   "_processed": {
-    "fingerprint": "c2b11d374b0c695cd60ee557d792c19523c33a2cc4d7001fe72ec1f1f1872448",
-    "processedAt": "2026-07-24T18:15:35Z",
+    "fingerprint": "273b39bedc17f7ddb230a0b0692b4f6df442d29d0aaf7145c8dd4ea07b905ba6",
+    "processedAt": "2026-07-24T21:17:16Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

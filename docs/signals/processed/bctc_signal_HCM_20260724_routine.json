@@ -3,16 +3,25 @@
   "signal_type": "bctc_signal",
   "quarter": "Q1-2026",
   "mode": "routine",
-  "product": "Brokerage and investment banking services",
-  "customer": "Retail and institutional securities investors",
-  "ops": "ROE 9.4% below sector median 11.3%, PE 17.8x PREMIUM +41% vs sector 12.7x, EY spread EXPENSIVE (0.62pp over deposit rate). Sector ratios byte-identical vs c115/c117.",
-  "mgmt": "No legal/insider flags this cycle; direct BCTC extraction still unavailable (sector-ratio only, rotation touch). Kinh Dich unchanged direction: Tiet(60)/GIU/TRUNG TINH (38% conf., up from Co(18)/THAN TRONG 12-13% TRUNG TINH at c117 baseline) — still neutral-lean-positive.",
-  "esc_status": "N/A — no direct BCTC extraction this cycle (get_bctc_full returns \"Chua co du lieu BCTC\").",
-  "cycle": "c119",
-  "generated_at": "2026-07-24T15:20:00Z",
+  "beat_miss": null,
+  "product": "Môi giới chứng khoán, tự doanh, tư vấn tài chính doanh nghiệp (HSC)",
+  "customer": "Nhà đầu tư cá nhân và tổ chức trong nước",
+  "ops": "BCTC gốc chưa có dữ liệu (Chưa có dữ liệu BCTC) — chỉ có tỷ lệ so sánh ngành: PE 17.8x (PREMIUM +41% vs median 12.7x, EXPENSIVE theo EY-spread 0.62%), PB PREMIUM +41%, ROE 9.4% (dưới median 11.3%). Dòng tiền nước ngoài HCM mạnh hơn ngành (-24K cp net vs ngành -195K cp net).",
+  "mgmt": "KD Tiet(60)/GIU/TRUNG TINH 37-38% (unchanged since c119). Tin tức: TP HCM thành lập khu thương mại tự do — tin ngành, không phải rủi ro pháp lý trực tiếp với HCM.",
+  "fundamentals": {
+    "data_status": "Chưa có dữ liệu BCTC — blocked cluster (unchanged)",
+    "sector_pe": 17.8,
+    "sector_pe_verdict": "PREMIUM/EXPENSIVE",
+    "sector_roe_pct": 9.4
+  },
+  "esc_gate": {
+    "note": "ESC gate not evaluated — no BCTC extraction available"
+  },
+  "cycle_id": "20260724-2100",
+  "source": "bctc-analyst-slot-3",
   "_processed": {
-    "fingerprint": "35114255aa8cdfd266db13db8c5fc4aafae432d0b811d98a2a6eb9fb22599cfb",
-    "processedAt": "2026-07-24T15:16:14Z",
+    "fingerprint": "15b03f8fa89fa90127a44377768db89aad7aa2b1a10fcc5fcd59aa181aa16326",
+    "processedAt": "2026-07-24T21:17:16Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

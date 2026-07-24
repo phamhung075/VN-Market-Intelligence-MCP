@@ -3,16 +3,25 @@
   "signal_type": "bctc_signal",
   "quarter": "Q1-2026",
   "mode": "routine",
-  "product": "Real estate development — residential + resort/mixed-use projects (Novaland)",
-  "customer": "Retail homebuyers, resort/second-home investors",
-  "ops": "ROE 4.2% below sector median 7.3%, PE 19.3x PREMIUM +20% vs sector 16.1x, PB DISCOUNT -36%, EY spread EXPENSIVE (0.18pp over deposit rate). Sector ratios byte-identical vs c115/c117.",
-  "mgmt": "No legal/insider flags this cycle; direct BCTC extraction still unavailable (sector-ratio only, rotation touch). Kinh Dich firmed: Tiem(53)/GIU/THUAN LOI (100% conf., was Phe Hap(21)/THAN TRONG 50% THUAN LOI at c117 baseline).",
-  "esc_status": "N/A — no direct BCTC extraction this cycle (get_bctc_full returns \"Chua co du lieu BCTC\").",
-  "cycle": "c119",
-  "generated_at": "2026-07-24T15:20:00Z",
+  "beat_miss": null,
+  "product": "Phát triển bất động sản nghỉ dưỡng và khu đô thị (Novaland)",
+  "customer": "Nhà đầu tư thứ cấp bất động sản nghỉ dưỡng, người mua nhà ở khu đô thị phía Nam",
+  "ops": "BCTC gốc chưa có dữ liệu (Chưa có dữ liệu BCTC) — chỉ có tỷ lệ so sánh ngành: PE 19.3x (PREMIUM +20% vs median 16.1x, EXPENSIVE theo EY-spread 0.18%), PB DISCOUNT -36%, ROE 4.2% (dưới median 7.3%). Dòng tiền nước ngoài NVL yếu hơn ngành (-127K cp net vs ngành -79K cp net).",
+  "mgmt": "KD Tiem(53)/GIU/THUAN LOI 100% (unchanged since c119). Không có rủi ro pháp lý mới.",
+  "fundamentals": {
+    "data_status": "Chưa có dữ liệu BCTC — blocked cluster (unchanged)",
+    "sector_pe": 19.3,
+    "sector_pe_verdict": "PREMIUM/EXPENSIVE",
+    "sector_roe_pct": 4.2
+  },
+  "esc_gate": {
+    "note": "ESC gate not evaluated — no BCTC extraction available"
+  },
+  "cycle_id": "20260724-2100",
+  "source": "bctc-analyst-slot-3",
   "_processed": {
-    "fingerprint": "2a068b63f3a029e11ac99bb7b223cb557584b898d34b4f419226e607c2e9bebc",
-    "processedAt": "2026-07-24T15:16:14Z",
+    "fingerprint": "ab9c71b815bb1cb38910690b3cfe5177fea6ebc9c63245803a06930892c29aa0",
+    "processedAt": "2026-07-24T21:17:16Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

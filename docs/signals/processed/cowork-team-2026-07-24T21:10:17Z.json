@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-24T21:10:17Z",
+    "matched_slots": [
+      "bctc-analyst-slot-3"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-3"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "closed",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "bctc-analyst-slot-3": "cadence"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-3": "240"
+    },
+    "last_fired_timestamp": "2026-07-24T21:09:31Z",
+    "last_fired_slots": [
+      "bctc-analyst-slot-3"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "21:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 10,
+    "note": "bctc-analyst-slot-3 cadence fire (240min, last ~24h prior). 2 NEW to:po signals (tnb c118 methflag + chef-reliability handoff) left NEW for PO drain per Step0a-ACK-buries. bctc has independent 0-21-UTC cron backstop → possible RemoteTrigger/CLI double-run, deduped by bctc E3 cache + published-marker."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-24T21:10:17Z",
+  "_processed": {
+    "fingerprint": "92f784b36e58c60ce610cea205699cb1adaf790b1fac35c63fd8aadffbd759fd",
+    "processedAt": "2026-07-24T21:17:16Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
