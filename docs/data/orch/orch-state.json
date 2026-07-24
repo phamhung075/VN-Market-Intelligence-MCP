@@ -387,11 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-07-24T23:12:57Z",
-    "updated_by": "developer"
+    "status": "in_progress",
+    "active_task_id": "FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-24T23:25:06Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6545,16 +6546,6 @@
         "zone": "scripts/agents-flow/",
         "size": "XS",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FOLLOW-ON-CWKSCH-3"
-      },
-      {
-        "id": "FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW",
-        "type": "FIX",
-        "title": "FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW — get_bctc_pending_refine returns 235K chars exceeding MCP inline limit → callers get a file path not data",
-        "zone": "apps/mcp-server/",
-        "status": "BACKLOG",
-        "priority": "medium",
-        "size": "S",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW"
       },
       {
         "id": "FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT",
@@ -14970,9 +14961,26 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-24T22:46:18Z",
+    "last_triaged_at": "2026-07-24T23:25:06Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW",
+        "type": "FIX",
+        "title": "FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW — get_bctc_pending_refine returns 235K chars exceeding MCP inline limit → callers get a file path not data",
+        "zone": "apps/mcp-server/",
+        "status": "IN_PROGRESS",
+        "priority": "medium",
+        "size": "S",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW",
+        "promoted_at": "2026-07-24T23:25:06Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-24T23:25:07Z",
+        "claimed_at": "2026-07-24T23:25:06Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
