@@ -6,11 +6,20 @@ package infrastructure
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/vn-market-intelligence/alert-engine/pkg/domain"
 )
+
+// outcomeLookbackDays bounds ReadPendingOutcomeAlerts to alerts triggered
+// within the last N days.
+const outcomeLookbackDays = 90
+
+// defaultPendingLimit is the fallback row limit for ReadPendingOutcomeAlerts
+// when the caller passes limit<=0.
+const defaultPendingLimit = 100
 
 // OpenAlertDB opens (or creates) the alert_engine.db with WAL mode.
 // DSN per NFR-2: file:<path>?_journal=WAL&_busy_timeout=5000&_foreign_keys=on
@@ -106,20 +115,7 @@ func sqliteIsDuplicateColumn(err error) bool {
 	if err == nil {
 		return false
 	}
-	return containsStr(err.Error(), "duplicate column name")
-}
-
-func containsStr(s, sub string) bool {
-	return len(s) >= len(sub) && (s == sub || len(s) > 0 && findSubstr(s, sub))
-}
-
-func findSubstr(s, sub string) bool {
-	for i := 0; i+len(sub) <= len(s); i++ {
-		if s[i:i+len(sub)] == sub {
-			return true
-		}
-	}
-	return false
+	return strings.Contains(err.Error(), "duplicate column name")
 }
 
 // ── SQLiteAlertRepository ────────────────────────────────────────────────────
@@ -290,9 +286,9 @@ type PendingOutcomeAlert struct {
 // limit defaults to 100.
 func ReadPendingOutcomeAlerts(db *sql.DB, limit int) ([]PendingOutcomeAlert, error) {
 	if limit <= 0 {
-		limit = 100
+		limit = defaultPendingLimit
 	}
-	cutoff := time.Now().UTC().Add(-90 * 24 * time.Hour).Format(time.RFC3339Nano)
+	cutoff := time.Now().UTC().Add(-outcomeLookbackDays * 24 * time.Hour).Format(time.RFC3339Nano)
 	rows, err := db.Query(`
 		SELECT
 			id, stocks, signal_types, message, fingerprint, severity,

@@ -6,6 +6,7 @@
 ```json
 { "status": "ok", "service": "alert-engine", "port": 5006 }
 ```
+`port` reflects the live `cfg.Port` (env `PORT`, default 5006) — not hardcoded (FACTORY-ALERT-router-cleanups).
 
 ## POST /evaluate
 Evaluate alert request against dedup, cooldown, mute rules.

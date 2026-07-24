@@ -66,7 +66,7 @@ func main() {
 	uc := application.NewEvaluateAlertUseCase(pipeline)
 
 	// Build HTTP router
-	router := httphandler.NewRouter(uc)
+	router := httphandler.NewRouter(uc, cfg.Port)
 
 	addr := fmt.Sprintf(":%d", cfg.Port)
 	srv := &http.Server{

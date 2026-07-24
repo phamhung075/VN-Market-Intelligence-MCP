@@ -55,9 +55,13 @@ func newUseCase(repo alertpipeline.AlertRepositoryPort, mute alertpipeline.MuteP
 	return application.NewEvaluateAlertUseCase(pipeline)
 }
 
+// testPort is the fixed port passed to NewRouter in tests (mirrors the
+// service's default cfg.Port).
+const testPort = 5006
+
 func makeRouter() http.Handler {
 	uc := newUseCase(&fakeAlertRepo{}, &fakeMutePort{}, &fakeTelegramPort{})
-	return NewRouter(uc)
+	return NewRouter(uc, testPort)
 }
 
 // ── AC-2: GET /health ────────────────────────────────────────────────────────
@@ -82,6 +86,30 @@ func TestHealth_Returns200(t *testing.T) {
 	}
 	if body["service"] != "alert-engine" {
 		t.Errorf("expected service=alert-engine, got %v", body["service"])
+	}
+	if port, ok := body["port"].(float64); !ok || int(port) != testPort {
+		t.Errorf("expected port=%d, got %v", testPort, body["port"])
+	}
+}
+
+// TestHealth_ReflectsConfiguredPort proves /health emits the port passed to
+// NewRouter (cfg.Port) rather than a hardcoded value — the FACTORY-ALERT-router-cleanups
+// item-2 correction.
+func TestHealth_ReflectsConfiguredPort(t *testing.T) {
+	const customPort = 6123
+	uc := newUseCase(&fakeAlertRepo{}, &fakeMutePort{}, &fakeTelegramPort{})
+	router := NewRouter(uc, customPort)
+
+	rr := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/health", nil)
+	router.ServeHTTP(rr, req)
+
+	var body map[string]interface{}
+	if err := json.Unmarshal(rr.Body.Bytes(), &body); err != nil {
+		t.Fatalf("invalid JSON: %v", err)
+	}
+	if port, ok := body["port"].(float64); !ok || int(port) != customPort {
+		t.Errorf("expected port=%d, got %v", customPort, body["port"])
 	}
 }
 
@@ -161,7 +189,7 @@ func TestEvaluate_NormalisesStockToUppercase(t *testing.T) {
 	// Build custom use case that captures stock
 	repo := &captureAlertRepo{captureStock: &capturedStock}
 	uc := newUseCase(repo, &fakeMutePort{}, &fakeTelegramPort{})
-	router := NewRouter(uc)
+	router := NewRouter(uc, testPort)
 
 	body := `{"stock":"vcb","severity":"high","message":"test"}`
 	rr := httptest.NewRecorder()

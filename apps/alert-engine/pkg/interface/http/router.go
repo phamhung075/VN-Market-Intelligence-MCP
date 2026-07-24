@@ -13,18 +13,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/vn-market-intelligence/alert-engine/pkg/application"
+	"github.com/vn-market-intelligence/alert-engine/pkg/domain"
 )
-
-// UseCaseExecutor is the interface the handler depends on.
-// Allows test injection of a mock use case.
-type UseCaseExecutor interface {
-	Execute(ctx interface {
-		Deadline() (interface{}, bool)
-		Done() <-chan struct{}
-		Err() error
-		Value(interface{}) interface{}
-	}, req application.EvaluateAlertRequest) (application.EvaluateAlertResponse, error)
-}
 
 // Handler holds the router and dependencies.
 type Handler struct {
@@ -33,29 +23,31 @@ type Handler struct {
 }
 
 // NewRouter creates and returns a chi router with all routes registered.
-// AC-2: GET /health byte-identical JSON.
+// AC-2: GET /health JSON (port reflects the real listening port, cfg.Port).
 // AC-3: POST /evaluate request validation.
 // AC-4: stock normalisation (trim+uppercase).
 // AC-5: response shape.
-func NewRouter(uc *application.EvaluateAlertUseCase) http.Handler {
+func NewRouter(uc *application.EvaluateAlertUseCase, port int) http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(middleware.Recoverer)
 	r.Use(requestLogger)
 
-	r.Get("/health", handleHealth)
+	r.Get("/health", handleHealth(port))
 	r.Post("/evaluate", handleEvaluate(uc))
 
 	return r
 }
 
-// handleHealth returns AC-2 byte-identical JSON.
-func handleHealth(w http.ResponseWriter, _ *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]interface{}{
-		"status":  "ok",
-		"service": "alert-engine",
-		"port":    5006,
-	})
+// handleHealth returns AC-2 JSON reflecting the real configured port.
+func handleHealth(port int) http.HandlerFunc {
+	return func(w http.ResponseWriter, _ *http.Request) {
+		writeJSON(w, http.StatusOK, map[string]interface{}{
+			"status":  "ok",
+			"service": "alert-engine",
+			"port":    port,
+		})
+	}
 }
 
 // handleEvaluate processes POST /evaluate.
@@ -79,8 +71,7 @@ func handleEvaluate(uc *application.EvaluateAlertUseCase) http.HandlerFunc {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "stock is required"})
 			return
 		}
-		validSeverities := map[string]bool{"low": true, "medium": true, "high": true, "critical": true}
-		if !validSeverities[body.Severity] {
+		if !domain.AlertSeverity(body.Severity).IsValid() {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "severity must be low|medium|high|critical"})
 			return
 		}
