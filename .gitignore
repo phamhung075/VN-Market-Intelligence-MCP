@@ -30,7 +30,6 @@ apps/frontend/build/
 **/test-results/
 # vendored third-party clone (has its own .git) & local dep install
 apps/pdf-extractor/PDF-Extract-Kit/
-packages/primitives/
 docs/data/cycle-snapshot-*.json
 docs/data/.cycle-snapshot-*.stage
 docs/data/cycle-snapshot-*.json.tmp
