@@ -1,20 +1,20 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-23 | **Cycle:** FIX-EXECTIER-HEADSYNC-BRANCHNULL-REVIEW-IDLE (execute-tier.md head-sync guarantee for branch:null REVIEW flips)
+**Last updated:** 2026-07-24 | **Cycle:** FACTORY-NEWS-fix-source-logging (news-fetch ingestHeadlines log-tag bug, zone-routed generic developer)
 
-## Session 2026-07-23 — TE-T33 (TOKEN-ECONOMY-AUDIT, wave 4) — REVIEW
+## Session 2026-07-24 — FACTORY-NEWS-fix-source-logging — REVIEW
 
-**Task:** `docs/handoffs` (12M/1026 files, 707+ >30d), `agent-memory/decisions` (4.5M), `agent-memory/sessions` (files since 05-14) grow unboundedly — no eviction analogue to `orch/archive/`; DJ-GATE-1 greps `sprint-*-*.md` across ALL decision files on every DONE flip.
+**Task:** `apps/news-fetch/src/module/news_ingest/index.ts` `ingestHeadlines(_source, ...)` ignored its `source` param and unconditionally emitted BOTH `[reuters/headlines]` and `[bloomberg/headlines]` `console.warn` in every RSS-fallback branch — a Bloomberg ingest printed spurious Reuters log lines and vice-versa. Zone-routed (no dev-news-fetch specialist).
 
-**Actions taken:** New `scripts/agents-flow/cold-archive-sweep.sh` (monthly-guarded, `COLD_ARCHIVE_FORCE=1` test override): handoffs `.md` >30d + not referenced anywhere in the 5 OPEN task_board lanes (live jq scan) → `archive/YYYY-MM/`; sessions non-`.md` >30d → `archive/YYYY-MM/` (`.md` leg already owned by `memory-prune-sweep.sh` at 14d — verified before coding, scoped to the gap it leaves, not duplicated). po-decisions.md 200L rotation reuses `notebook-auto-prune.sh`'s drop-oldest-`##` algorithm via a new opt-in `NOTEBOOK_PRUNE_EXTRA_GOVERNED_PATH` env guard (default empty, zero behavior change on its hot PostToolUse path) — no new prune scheme. **Dropped the decisions/ leg entirely**: discovered live that `decision-journal-archive.sh` (UC-MDH-P4, shipped same day) already supersedes it — board row's own `audit_ref` note + that script's header both name TE-T33. Fixed dev-team/main.md's 2 unscoped DJ-GATE-1 grep comments (`sprint-*-*.md` → `sprint-${SPRINT_ID}-*.md`, matching qa/pm's already-correct canonical pattern — verified those two needed no change). Wired into code-janitor's 6h cron flow. CANONICAL pointer added.
+**Actions taken:** RED test first (2 new tests in `index.test.ts` — capture `console.warn`, assert tag matches the actual source, confirmed failing pre-fix). Fix: renamed `_source`→`source` (now used), value-imported `NewsSource` (was type-only, needed at runtime for the enum compare), computed `tag` once (`source===NewsSource.REUTERS ? '[reuters/headlines]' : '[bloomberg/headlines]'` — confirmed exactly 2 enum members in `domain/models.ts`), collapsed 3 duplicated warn-pairs (6 calls total — task text said 4 pairs, actual grep count was 3) to 3 single `console.warn` calls. Control flow byte-diffed unchanged. Also updated 3 pre-existing source-text-scan assertions in `__tests__/fix-reuters-url-bloomberg-timeout.test.ts` that hardcoded the buggy reuters-prefixed literal — now check the source-agnostic message body (same text), since the hardcoded tag was literally the bug being fixed.
 
-**Verification:** Live dry pre-check: 839 handoffs >30d, 27 referenced-anywhere, 2 overlap (both correctly held back — `comm -12` verified before writing code). `cold-archive-sweep.test.sh` 14/14 PASS incl. idempotent re-run + `git diff --quiet` proof the real `po-decisions.md` was never touched. Re-ran `notebook-linecap-sweep`/`memory-prune-sweep`/`decision-journal-archive` test suites after the shared-hook edit — 7/7, 12/12, 26/26 PASS, zero regression.
+**Verification:** `bun test` 235 pass/0 fail/6 skip (was 233/0/6, +2 net new). `bun tsc --noEmit` 0 errors. `eslint lint:ci --max-warnings 0` clean. `bun run sandbox --tier=all --module=news-fetch` 16/16 PASS. Security clause: env grep for DB_/API_KEY/SECRET/TOKEN/PASSWORD/NEWS_API_KEY returned no credential matches.
 
-**Board:** `task_board.in_progress[TE-T33]` → `review`, `next_agent=qa`, `branch:null`, `.head` synced to idle, via `orch-apply.sh` (dispatcher-owned write, not committed by this cycle).
+**Board:** `task_board.in_progress[FACTORY-NEWS-fix-source-logging]` → `review`, `.head` synced to idle, via `orch-apply.sh` (dispatcher-owned commit, not committed by this cycle).
 
-**Scope discipline:** Touched exactly the new script + test + `notebook-auto-prune.sh` (opt-in guard extension only) + `code-janitor/flow/main.md` + `dev-team/flow/main.md` (2 comment lines) + `dev-standards.md` pointer + journal/notebook/WORK.md. Did not touch qa/pm (already correct) or decisions/ (superseded, confirmed not ambiguous).
+**Scope discipline:** Touched exactly the target file + its unit test + the one pre-existing regression test whose assertions encoded the bug's premise. Code-only landed per task constraint — `rebuild_required=true` but PENDING-USER-GATED, no docker rebuild performed.
 
-Zone health: 3-dir unbounded-growth class capped for handoffs+sessions-gap+po-decisions; decisions/ leg correctly deferred to its real owner instead of double-implemented | HEALTHY
+Zone health: no drift detected
 
 ## Session 2026-07-23 — FIX-AUDITOR-TIER1-PROBE-ACKED-LAUNCHD-DEATH-SUPPRESSION — REVIEW
 
