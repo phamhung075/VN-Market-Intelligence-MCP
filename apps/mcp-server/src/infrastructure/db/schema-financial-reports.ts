@@ -20,6 +20,89 @@ import type { Database } from "bun:sqlite";
 import { SQLITE_DDL } from "../../../bctc-schema.js";
 import { logger } from "../logger.js";
 
+// ---------------------------------------------------------------------------
+// FACTORY-INFRA-split-stores-and-migrations — declarative column migrations
+// ---------------------------------------------------------------------------
+// financial_reports accreted ~22 columns over many tasks, each guarded by its
+// own hand-written `if (!colNames.has("x")) db.exec("ALTER TABLE ... ADD
+// COLUMN x ...")`. Converted to ONE data array iterated by ONE loop — adding
+// a future column is now a one-line entry here instead of a new inline
+// try/catch block. `ddl` strings are byte-identical to the original inline
+// statements (verified by AR-schema-migration equivalence test). `column` is
+// the PRAGMA table_info name checked before ALTER (idempotency guard).
+interface FinancialReportsColumnMigration {
+  column: string;
+  ddl: string;
+}
+
+const FINANCIAL_REPORTS_COLUMN_MIGRATIONS: FinancialReportsColumnMigration[] = [
+  // ── validation_status/validation_notes ──────────────────────────────────
+  { column: "validation_status", ddl: "ALTER TABLE financial_reports ADD COLUMN validation_status TEXT DEFAULT 'pending'" },
+  { column: "validation_notes", ddl: "ALTER TABLE financial_reports ADD COLUMN validation_notes TEXT" },
+  // ── Task 1294b: extraction method + confidence tracking ────────────────
+  { column: "extraction_method", ddl: "ALTER TABLE financial_reports ADD COLUMN extraction_method TEXT DEFAULT 'ocr_pdf'" },
+  { column: "extraction_source_note", ddl: "ALTER TABLE financial_reports ADD COLUMN extraction_source_note TEXT" },
+  { column: "revenue_growth_qoq", ddl: "ALTER TABLE financial_reports ADD COLUMN revenue_growth_qoq REAL DEFAULT 0.0" },
+  { column: "margin_trend", ddl: "ALTER TABLE financial_reports ADD COLUMN margin_trend REAL DEFAULT 0.0" },
+  { column: "debt_ratio_hint", ddl: "ALTER TABLE financial_reports ADD COLUMN debt_ratio_hint REAL DEFAULT 0.0" },
+  // ── Task 1345b: financial validation confidence columns ────────────────
+  { column: "ocr_confidence", ddl: "ALTER TABLE financial_reports ADD COLUMN ocr_confidence REAL" },
+  { column: "confidence_financial", ddl: "ALTER TABLE financial_reports ADD COLUMN confidence_financial REAL" },
+  // ── Task 1878a: OCF bridge column (vnstock API-grade, quarterly only) ──
+  { column: "operating_cash_flow", ddl: "ALTER TABLE financial_reports ADD COLUMN operating_cash_flow REAL" },
+  // ── Task 1941d: net_profit API bridge column ────────────────────────────
+  { column: "net_profit_api_bridge", ddl: "ALTER TABLE financial_reports ADD COLUMN net_profit_api_bridge REAL" },
+  // ── BCTC-AGENTIC-REFINE: text_status + refine_status ────────────────────
+  { column: "text_status", ddl: "ALTER TABLE financial_reports ADD COLUMN text_status TEXT NOT NULL DEFAULT 'COMPLETE'" },
+  { column: "refine_status", ddl: "ALTER TABLE financial_reports ADD COLUMN refine_status TEXT NOT NULL DEFAULT 'PENDING'" },
+  // ── BAL-1c: period_basis ────────────────────────────────────────────────
+  { column: "period_basis", ddl: "ALTER TABLE financial_reports ADD COLUMN period_basis TEXT" },
+  // ── BAL-1d: report_scope ────────────────────────────────────────────────
+  { column: "report_scope", ddl: "ALTER TABLE financial_reports ADD COLUMN report_scope TEXT" },
+  // ── EI-P2-2: data_env ────────────────────────────────────────────────────
+  { column: "data_env", ddl: "ALTER TABLE financial_reports ADD COLUMN data_env TEXT" },
+  // ── FIX-F: charter_capital / investment_property / reward_fund ─────────
+  { column: "charter_capital", ddl: "ALTER TABLE financial_reports ADD COLUMN charter_capital REAL" },
+  { column: "investment_property", ddl: "ALTER TABLE financial_reports ADD COLUMN investment_property REAL" },
+  { column: "reward_fund", ddl: "ALTER TABLE financial_reports ADD COLUMN reward_fund REAL" },
+  // ── BCTC-HUMAN-CONFIRM Migration 2: confirm_status on financial_reports ─
+  { column: "confirm_status", ddl: "ALTER TABLE financial_reports ADD COLUMN confirm_status TEXT NOT NULL DEFAULT 'PENDING'" },
+  { column: "final_confirmed_at", ddl: "ALTER TABLE financial_reports ADD COLUMN final_confirmed_at TEXT" },
+  { column: "confirmed_by", ddl: "ALTER TABLE financial_reports ADD COLUMN confirmed_by TEXT DEFAULT 'user'" },
+];
+
+/**
+ * runColumnMigrations — apply a declarative [{column, ddl}] array against one
+ * table, idempotently. PRAGMA table_info is read ONCE (matches the original
+ * inline blocks' single colNames snapshot per try-block); each ALTER TABLE
+ * runs in its OWN try/catch so one unexpected failure does not block the
+ * remaining independent column additions (equal-or-better resilience vs the
+ * original's 7 separate try-blocks, since ALTER TABLE ADD COLUMN statements
+ * are mutually independent — order between them is not observable).
+ */
+function runColumnMigrations(
+  db: Database,
+  table: string,
+  migrations: FinancialReportsColumnMigration[],
+): void {
+  let colNames: Set<string>;
+  try {
+    const cols = db.query<{ name: string }, []>(`PRAGMA table_info(${table})`).all();
+    colNames = new Set(cols.map((c) => c.name));
+  } catch {
+    // table not queryable yet — nothing to migrate this call
+    return;
+  }
+  for (const m of migrations) {
+    if (colNames.has(m.column)) continue;
+    try {
+      db.exec(m.ddl);
+    } catch {
+      // fresh DB race / column already added concurrently — safe to skip
+    }
+  }
+}
+
 export function initFinancialReportsTables(db: Database): void {
   // ── Financial Reports (BCTC) ───────────────────────────────────────────────
   // DDL imported from bctc-schema.ts — includes financial_reports table,
@@ -27,70 +110,13 @@ export function initFinancialReportsTables(db: Database): void {
   // v_yoy_comparison views.
   db.exec(SQLITE_DDL);
 
-  // ── Migration: add validation_status/validation_notes if missing ───────────
+  // ── Declarative column migrations (was 7 inline try/catch blocks, ~22
+  // ALTER TABLE statements scattered across this function) ─────────────────
   try {
-    const cols = db
-      .query<{ name: string }, []>("PRAGMA table_info(financial_reports)")
-      .all();
-    const colNames = new Set(cols.map((c) => c.name));
-    if (!colNames.has("validation_status")) {
-      db.exec(
-        "ALTER TABLE financial_reports ADD COLUMN validation_status TEXT DEFAULT 'pending'",
-      );
-    }
-    if (!colNames.has("validation_notes")) {
-      db.exec("ALTER TABLE financial_reports ADD COLUMN validation_notes TEXT");
-    }
-
-    // ── Task 1294b: extraction method + confidence tracking ──────────────────
-    if (!colNames.has("extraction_method")) {
-      db.exec(
-        "ALTER TABLE financial_reports ADD COLUMN extraction_method TEXT DEFAULT 'ocr_pdf'",
-      );
-    }
-    if (!colNames.has("extraction_source_note")) {
-      db.exec("ALTER TABLE financial_reports ADD COLUMN extraction_source_note TEXT");
-    }
-    if (!colNames.has("revenue_growth_qoq")) {
-      db.exec("ALTER TABLE financial_reports ADD COLUMN revenue_growth_qoq REAL DEFAULT 0.0");
-    }
-    if (!colNames.has("margin_trend")) {
-      db.exec("ALTER TABLE financial_reports ADD COLUMN margin_trend REAL DEFAULT 0.0");
-    }
-    if (!colNames.has("debt_ratio_hint")) {
-      db.exec("ALTER TABLE financial_reports ADD COLUMN debt_ratio_hint REAL DEFAULT 0.0");
-    }
-
-    // Add index for fallback signal lookups
+    runColumnMigrations(db, "financial_reports", FINANCIAL_REPORTS_COLUMN_MIGRATIONS);
+    // Index for fallback signal lookups — depends on extraction_method,
+    // which the loop above guarantees exists by this point.
     db.exec(`CREATE INDEX IF NOT EXISTS idx_fr_extraction_method ON financial_reports(action_code, extraction_method, parsed_at)`);
-
-    // ── Task 1345b: financial validation confidence columns ──────────────────
-    if (!colNames.has("ocr_confidence")) {
-      db.exec("ALTER TABLE financial_reports ADD COLUMN ocr_confidence REAL");
-    }
-    if (!colNames.has("confidence_financial")) {
-      db.exec("ALTER TABLE financial_reports ADD COLUMN confidence_financial REAL");
-    }
-
-    // ── Task 1878a: OCF bridge column (vnstock API-grade, quarterly only) ───
-    // Separate from existing `operating_cf` (BCTC OCR/PDF extraction).
-    // Unit: trieu VND (millions) — consistent with all other scalar columns.
-    // NULLABLE: not every ticker has vnstock cash-flow history.
-    if (!colNames.has("operating_cash_flow")) {
-      db.exec(
-        "ALTER TABLE financial_reports ADD COLUMN operating_cash_flow REAL",
-      );
-    }
-
-    // ── Task 1941d: net_profit API bridge column ─────────────────────────────
-    // Separate from existing `net_profit` (BCTC OCR/PDF extraction, often wrong).
-    // Populated from vnstock_financials.net_profit_bn * 1000 (ty -> trieu).
-    // Unit: trieu VND (millions). NULLABLE: not every ticker has vnstock data.
-    if (!colNames.has("net_profit_api_bridge")) {
-      db.exec(
-        "ALTER TABLE financial_reports ADD COLUMN net_profit_api_bridge REAL",
-      );
-    }
   } catch {
     // fresh DB — CREATE TABLE already included the columns
   }
@@ -501,35 +527,15 @@ export function initFinancialReportsTables(db: Database): void {
   db.exec(`CREATE INDEX IF NOT EXISTS idx_bctc_refined_units_report_status ON bctc_refined_units(report_id, window_status)`);
 
   // ── BCTC-AGENTIC-REFINE: text_status + refine_status on financial_reports ─
-  // Idempotent migrations: check PRAGMA table_info before ALTER TABLE.
   // text_status: OCR lifecycle (COMPLETE | IN_PROGRESS | PARTIAL)
   //   Default COMPLETE for existing rows (they already have extracted OCR text).
   // refine_status: refine lifecycle (PENDING | IN_PROGRESS | DONE | FAILED | PARTIAL | REJECTED_SANITY)
   //   Default PENDING for existing rows (they need to be refined).
   //   REJECTED_SANITY — terminal state, report rejected by DT-2/DT-3 aggregate sanity gates
   //   during finalize_bctc_refine (BCTC-TRUST-RED sprint). Not re-queued by cron until
-  //   manually reset to PENDING. No ALTER TABLE needed — TEXT column, additive value.
-  try {
-    const refCols = db
-      .query<{ name: string }, []>("PRAGMA table_info(financial_reports)")
-      .all();
-    const refColNames = new Set(refCols.map((c) => c.name));
-
-    if (!refColNames.has("text_status")) {
-      db.exec(
-        "ALTER TABLE financial_reports ADD COLUMN text_status TEXT NOT NULL DEFAULT 'COMPLETE'",
-      );
-      // Existing rows have completed OCR — default COMPLETE is correct.
-    }
-    if (!refColNames.has("refine_status")) {
-      db.exec(
-        "ALTER TABLE financial_reports ADD COLUMN refine_status TEXT NOT NULL DEFAULT 'PENDING'",
-      );
-      // Existing rows need refine — default PENDING is correct.
-    }
-  } catch {
-    // fresh DB — columns included via SQLITE_DDL or table does not yet exist
-  }
+  //   manually reset to PENDING.
+  // NOTE: DDL moved into FINANCIAL_REPORTS_COLUMN_MIGRATIONS (top of file) —
+  // applied by the runColumnMigrations() call at the start of this function.
 
   // ── BCTC-HUMAN-CONFIRM: Migration 1 — source_confidence on bctc_table_rows ─
   // Non-breaking additive column. Default 1.0 = fully confident for existing rows
@@ -549,124 +555,12 @@ export function initFinancialReportsTables(db: Database): void {
     // bctc_table_rows may not exist yet on fresh DB (handled by CREATE TABLE IF NOT EXISTS above)
   }
 
-  // ── BAL-1c: period_basis column on financial_reports ─────────────────────
-  // period_basis: 'standalone_quarter' | 'full_year_cumulative' | NULL (unknown)
-  //   Q4 under VAS standard = full-year cumulative (Jan–Dec).
-  //   Q1/Q2/Q3 = YTD cumulative but treated as 'standalone_quarter' for comparison
-  //   basis (the minimal conservative tagging sufficient to block the false Q4 vs
-  //   Q1/Q2/Q3 delta). NULL on existing rows until finalize_bctc_refine populates them.
-  //
-  // Migration mechanism: PRAGMA table_info check + guarded ALTER TABLE (idempotent).
-  // Pattern: same as refine_status / confirm_status migrations above.
-  try {
-    const pb_cols = db
-      .query<{ name: string }, []>("PRAGMA table_info(financial_reports)")
-      .all();
-    const pb_col_names = new Set(pb_cols.map((c) => c.name));
-    if (!pb_col_names.has("period_basis")) {
-      db.exec("ALTER TABLE financial_reports ADD COLUMN period_basis TEXT");
-      // NULL default: existing rows are unknown basis until finalize_bctc_refine
-      // backfills them on next run. NULL causes the comparison guard to pass-through
-      // (safe fail-open: no false-block on untagged data).
-    }
-  } catch {
-    // fresh DB — column included via SQLITE_DDL (will be added there in future)
-  }
-
-  // ── BAL-1d: report_scope column on financial_reports ─────────────────────
-  // report_scope: 'consolidated' | 'parent_only' | NULL (unknown)
-  //   'consolidated' — the report covers the consolidated group (hợp nhất).
-  //   'parent_only'  — the report covers the parent entity only (riêng lẻ).
-  //   NULL           — not yet tagged; finalize_bctc_refine populates on next run.
-  //
-  // Detection heuristic (finalize time):
-  //   net_revenue ≈ 0 (or null) AND net_profit > 0 → 'parent_only'
-  //   else → 'consolidated'
-  //   Guard: false-positive protection — only stamp 'parent_only' when revenue is
-  //   genuinely zero/absent, not merely small. Full heuristic in finalizeBctcRefineTool.ts.
-  //
-  // Migration mechanism: PRAGMA table_info check + guarded ALTER TABLE (idempotent).
-  // Pattern: same as period_basis / refine_status / confirm_status migrations above.
-  try {
-    const rs_cols = db
-      .query<{ name: string }, []>("PRAGMA table_info(financial_reports)")
-      .all();
-    const rs_col_names = new Set(rs_cols.map((c) => c.name));
-    if (!rs_col_names.has("report_scope")) {
-      db.exec("ALTER TABLE financial_reports ADD COLUMN report_scope TEXT");
-      // NULL default: existing rows are unknown scope until finalize_bctc_refine
-      // backfills them on next run. NULL causes PUB-8 to fall back to the inline
-      // heuristic (graceful degradation — same pattern as period_basis/PUB-7).
-    }
-  } catch {
-    // fresh DB — column included via SQLITE_DDL (will be added there in future)
-  }
-
-  // ── EI-P2-2: data_env column on financial_reports ────────────────────────
-  // Idempotent: PRAGMA check + guarded ALTER TABLE.
-  // Existing rows get NULL. New rows stamped by bctcReparseJob write path.
-  try {
-    const de_cols = db
-      .query<{ name: string }, []>("PRAGMA table_info(financial_reports)")
-      .all();
-    if (!de_cols.some((c) => c.name === "data_env")) {
-      db.exec("ALTER TABLE financial_reports ADD COLUMN data_env TEXT");
-    }
-  } catch {
-    // fresh DB — column will be added by CREATE TABLE in SQLITE_DDL (future)
-  }
-
-  // ── FIX-F: charter_capital / investment_property / reward_fund ────────────
-  // Three new scalar columns from the ScalarAggregate pipeline (FIX-F task).
-  // All three are corporate B01-DN only — bank path adds them to notApplicable
-  // (finalize/backfill will null-clear them for bank reports on re-run).
-  // NULL default: existing rows are data-pending until re-finalize/backfill runs.
-  try {
-    const fixf_cols = db
-      .query<{ name: string }, []>("PRAGMA table_info(financial_reports)")
-      .all();
-    const fixf_col_names = new Set(fixf_cols.map((c) => c.name));
-    if (!fixf_col_names.has("charter_capital")) {
-      db.exec("ALTER TABLE financial_reports ADD COLUMN charter_capital REAL");
-    }
-    if (!fixf_col_names.has("investment_property")) {
-      db.exec("ALTER TABLE financial_reports ADD COLUMN investment_property REAL");
-    }
-    if (!fixf_col_names.has("reward_fund")) {
-      db.exec("ALTER TABLE financial_reports ADD COLUMN reward_fund REAL");
-    }
-  } catch {
-    // fresh DB — columns included via SQLITE_DDL (future addition)
-  }
-
-  // ── BCTC-HUMAN-CONFIRM: Migration 2 — confirm_status on financial_reports ──
-  // confirm_status: PENDING | CONFIRMED (separate dimension from refine_status)
-  // final_confirmed_at: ISO8601 UTC timestamp; NULL when not yet confirmed
-  // confirmed_by: reserved for future RBAC; always 'user' for single-user product
-  // Default PENDING for all existing rows (nothing has been human-confirmed yet).
-  try {
-    const frCols2 = db
-      .query<{ name: string }, []>("PRAGMA table_info(financial_reports)")
-      .all();
-    const frColNames2 = new Set(frCols2.map((c) => c.name));
-    if (!frColNames2.has("confirm_status")) {
-      db.exec(
-        "ALTER TABLE financial_reports ADD COLUMN confirm_status TEXT NOT NULL DEFAULT 'PENDING'",
-      );
-    }
-    if (!frColNames2.has("final_confirmed_at")) {
-      db.exec(
-        "ALTER TABLE financial_reports ADD COLUMN final_confirmed_at TEXT",
-      );
-    }
-    if (!frColNames2.has("confirmed_by")) {
-      db.exec(
-        "ALTER TABLE financial_reports ADD COLUMN confirmed_by TEXT DEFAULT 'user'",
-      );
-    }
-  } catch {
-    // fresh DB — columns included via SQLITE_DDL
-  }
+  // ── BAL-1c/BAL-1d/EI-P2-2/FIX-F/BCTC-HUMAN-CONFIRM-2: period_basis,
+  // report_scope, data_env, charter_capital, investment_property,
+  // reward_fund, confirm_status, final_confirmed_at, confirmed_by ─────────
+  // NOTE: DDL for all 9 columns moved into FINANCIAL_REPORTS_COLUMN_MIGRATIONS
+  // (top of file) — applied by the runColumnMigrations() call at the start
+  // of this function. See that array for per-column semantics/provenance.
 
   // ── BCTC-HUMAN-CONFIRM: Migration 3 — bctc_human_corrections table ──────────
   // One correction record per (report_id, row_id). INSERT OR REPLACE is the
