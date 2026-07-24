@@ -317,6 +317,53 @@ so the moved components can import them via a type-only import (same pattern alr
 used by `FinancialsZone`/`NewsBuzzZone`). Behavior-preserving; verified via a fresh
 isolated dev-server curl + Playwright G12 render-gate (4/4 pass) against the split code.
 
+### `dashboard.market-summaries.tsx` — split to `app/domain/market-summaries/format.ts` + `app/components/market-summaries/*`
+
+Moved 2026-07-24 (FACTORY-FRONTEND-split-market-summaries) — same pattern as the
+`dashboard.analysis.tsx` split above. 9 pure helpers, verbatim logic, one module:
+
+| Function/const | Purpose |
+|---|---|
+| `PERIOD_LABELS` | VN labels for the 5 `PeriodType` values |
+| `formatDateRange(start, end)` | `"start"` or `"start → end"` display string |
+| `formatChangePct(pct)` | signed 1-decimal `"%"` string (bare string, NOT the canonical `app/domain/formatters/change-pct.ts` object) |
+| `changePctColorClass(pct)` | Tailwind class, emerald/red/slate family (distinct color family from the canonical `text-green-400` formatter) |
+| `directionArrow(direction)` | bare glyph string ↑/↓/—/"" (NOT the canonical `app/domain/formatters/direction-arrow.ts` object) |
+| `directionArrowColorClass(direction)` | Tailwind class, emerald/red/slate/"" |
+| `outlookLabel(outlook)` | VN label for recommendation outlook |
+| `outlookColorClass(outlook)` | Tailwind badge class for recommendation outlook |
+| `filterTickers(stocks, query)` | case-insensitive symbol filter, generic over `{symbol: string}` |
+
+**Load-bearing caution honored:** `app/domain/formatters/change-pct.ts` and
+`direction-arrow.ts` already exist and look same-purpose, but return OBJECTS
+(`{formatted, symbol, cls}` / `{symbol, cls}`) with a different color family
+(`text-green-400`) and always emit a symbol. This route's helpers return BARE
+STRINGS with a different color family (`text-emerald-400`) and the symbol is a
+separate opt-in call. Reusing the canonical versions would have changed the
+rendered output, so `format.ts` keeps its own independent, verbatim exports —
+same function names are safe since they live in a different module path with no
+import collision at any call-site.
+
+Presentational split into `app/components/market-summaries/*.tsx` (12 files, each
+<=120L, no exceptions this time — the large `DetailView` was split once more into
+`DetailView` (shell) + `DetailContent` (chips/narrative/tables) to stay under the
+cap): `PeriodBadge`, `CountChip`, `PeriodPicker`, `SummaryCard`,
+`TickerFilteredTable` (generic, houses `filterTickers`), `KeyEventsSection`,
+`SectionHeader`, `ListView`, `StockPerformanceTable`, `RecommendationsTable`,
+`DetailView`, `DetailContent`. The route (`dashboard.market-summaries.tsx`) dropped
+from 955L to 324L; types, `fetchSummaries` (I/O — not a pure helper, stays put per
+task scope), and the `loader`/default-export composition remain. The 9 domain
+helpers are re-exported from the route module for backward-compat call-sites (the
+loader test itself was re-pointed to import directly from `app/domain/market-summaries/format.ts`).
+Components import route-file types via `import type` only (erased at compile —
+zero runtime circular dependency between `routes/` and `components/`).
+Behavior-preserving; verified via reference-identity + golden-value equivalence
+tests (moved helpers are literally the same function objects the route re-exports)
+plus `tsc --noEmit` clean + full Vitest suite unchanged vs baseline (2047/2049,
+the 2 pre-existing failures are an unrelated Kinh Dịch `QUE_DESCRIPTIONS` map
+issue, confirmed still red with this change stashed out). Live rebuild + Playwright
+G12 render-gate is DEFERRED (user-gated rebuild, out of scope for this task).
+
 ---
 
 ## Service Health types

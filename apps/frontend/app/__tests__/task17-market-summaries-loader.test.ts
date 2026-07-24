@@ -39,8 +39,11 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+// FACTORY-FRONTEND-split-market-summaries: fetchSummaries stays on the route
+// (it is not a pure helper — it does I/O), the 9 pure formatter/filter helpers
+// moved to the domain layer.
+import { fetchSummaries } from "~/routes/dashboard.market-summaries";
 import {
-  fetchSummaries,
   formatDateRange,
   formatChangePct,
   changePctColorClass,
@@ -48,7 +51,7 @@ import {
   outlookColorClass,
   filterTickers,
   PERIOD_LABELS,
-} from "~/routes/dashboard.market-summaries";
+} from "~/domain/market-summaries/format";
 import type {
   SummaryListItem,
   StockPerf,
