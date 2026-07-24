@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FACTORY-INFRA-split-stores-and-migrations",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-INFRA-split-stores-and-migrations — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-24T06:15:03Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "FACTORY-INFRA-split-stores-and-migrations self-closed by dev-mcp-server -> REVIEW, next_agent=qa. Board idle, ready for next dispatch.",
+    "updated_at": "2026-07-24T08:22:04Z",
+    "updated_by": "dev-mcp-server"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -14435,6 +14435,24 @@
         "next_agent": "qa",
         "entered_review_at": "2026-07-24T06:12:21Z",
         "review_note": "dev-mcp-server self-closeout: pure structural split, behavior-preserving, no dedup-delete (deferred to a follow-up task per explicit scope note). Split ssc.ts (1029L, bundled SSC+HOSE+HNX+UPCOM disclosure fetchers) into sscCommon.ts (SscDocument/HttpClient types, makeDefaultHttpClient, titleMatchesReportType), sscPortal.ts (SSC congbothongtin.ssc.gov.vn: buildSscSearchUrl/parseSscHtml/withBrowserLock/_runSscPath), hoseDisclosure.ts, hnxDisclosure.ts, upcomDisclosure.ts (named *Disclosure.ts, not hose.ts/hnx.ts, to avoid colliding with existing unrelated market-price fetchers of those names). ssc.ts (1029L->186L) kept to listSscDocuments/listSscDocumentsWithFlag orchestration, re-exporting the pre-split public surface so all 7 production + 16 test call sites are unaffected -- mirrors this session's newsNormalizer split precedent. Note: canonical backlog ticket specifies a disclosures/ subfolder + <=120L cap; followed the dispatcher's explicit newsNormalizer-precedent instruction instead (flagged in journal for QA). Code-only diff confirms zero logic drift (only delta: 3 fns gain export + 5 re-export barrel lines). bun tsc --noEmit clean. Targeted 9-file ssc/disclosure suite 85/85 pass identical before/after. Full bun test: 14734 pass/40 skip/43 fail -- grep-confirmed zero overlap with touched files, all 43 match documented pre-existing flaky classes. gen-project-stats unaffected (toolCount=184, cronJobCount=88). Server boot probe (port 3099): health 200, both dashboards 200. Commit 315bc0728 (code) + 64d014937 (memory). Journal: docs/agent-memory/decisions/sprint-FACTORY-INFRA-split-ssc-fetchers-dev-mcp-server.md"
+      },
+      {
+        "title": "Split vnstockStore per entity + make schema-financial migrations declarative",
+        "priority": "P2",
+        "zone": "mcp-server-infra",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-INFRA-split-stores-and-migrations",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INFRA-split-stores-and-migrations",
+        "promoted_at": "2026-07-24T06:15:03Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-24T08:23:23Z",
+        "claimed_at": "2026-07-24T06:15:03Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "entered_review_at": "2026-07-24T08:22:04Z",
+        "review_note": "dev-mcp-server self-closeout: code done; rebuild + RAW-DB-verify PENDING (user-gated). CODE-ONLY per CRITICAL SCOPE BOUND -- no container rebuilt, no live named-volume DB touched; change is inert until next user-authorized rebuild. Split vnstockStore.ts (937L, 8 entities + migrations) into infrastructure/db/vnstock/{financialsStore,tradingStatsStore,officersStore,shareholdersStore,eventsStore,balanceSheetStore,cashFlowStore,foreignFlowStore}.ts (one per entity) + fetchLog.ts (shared isStale/markFetched) + migrations.ts (runVnstockMigrations verbatim). vnstockStore.ts is now a 37L pure re-export barrel -- all existing call sites (incl. require() dynamic lookup in SqliteVnstockRepository.ts) resolve unchanged. foreignFlowStore.ts (240L) and migrations.ts (256L) carry size-justification comments (dual-schema upsert / pure-DDL migration sequence). schema-financial-reports.ts: 22 inline if(!colNames.has)ALTER TABLE migrations on financial_reports (confirmed exact count across 7 former try/catch blocks) collapsed into ONE declarative FINANCIAL_REPORTS_COLUMN_MIGRATIONS array + ONE runColumnMigrations() loop; initFinancialReportsTables stays a thin orchestrator. Equivalence proof: actual A/B diff (pre-refactor code copied verbatim from git HEAD into a sibling temp file, deleted after use) -- 5/5 pass, byte-identical financial_reports column set (name/type/notnull/default) + index + idempotent + 6 unrelated tables untouched. Barrel verified by strict reference equality (barrel.fn === subfolder.fn) across all 19 exports. Both proofs are now a permanent test: FACTORY-INFRA-split-stores-and-migrations.test.ts (23 assertions, green). bun tsc --noEmit clean. Targeted suites green: 189 vnstock/foreign-flow (19 files) + 233 financial-reports/schema (12 files) + 23 new equivalence tests -- all match pre-change baseline. Full bun test (~1220 files, 3 runs): settled 14743 pass/40 skip/57 fail vs true pre-change baseline 14729 pass/48 fail/2 errors; set-difference of failure names shows exactly 8 new failures, ALL in the UNTOUCHED vnstock-3statement.test.ts, root-caused to a pre-existing documented Bun mock.module cross-file cache-pollution hazard from 1466-sync-db-corruption-bail.test.ts (confirmed via isolation: standalone 10/10 pass, paired-with-1466 13/13 pass) -- unrelated to this refactor logic. Commits: 76c73b4c1 (code, 13 files), abaf44fd1 (journal), 97af4860e (notebook). Journal: docs/agent-memory/decisions/sprint-FACTORY-INFRA-split-stores-and-migrations-dev-mcp-server.md"
       }
     ],
     "qa": [],
@@ -14456,23 +14474,7 @@
     },
     "last_triaged_at": "2026-07-24T06:15:03Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "title": "Split vnstockStore per entity + make schema-financial migrations declarative",
-        "priority": "P2",
-        "zone": "mcp-server-infra",
-        "type": "FACTORY",
-        "status": "IN_PROGRESS",
-        "id": "FACTORY-INFRA-split-stores-and-migrations",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INFRA-split-stores-and-migrations",
-        "promoted_at": "2026-07-24T06:15:03Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-24T06:15:03Z",
-        "claimed_at": "2026-07-24T06:15:03Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
