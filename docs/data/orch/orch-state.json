@@ -390,8 +390,8 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "router",
-    "updated_at": "2026-07-24T22:25:33Z",
-    "updated_by": "dev-mcp-server"
+    "updated_at": "2026-07-24T23:12:57Z",
+    "updated_by": "developer"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6545,15 +6545,6 @@
         "zone": "scripts/agents-flow/",
         "size": "XS",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FOLLOW-ON-CWKSCH-3"
-      },
-      {
-        "id": "FIX-DOWJONES-STALE-WRONG-VALUE",
-        "title": "dow_jones served value 23750 vs real ~42k (~56% of real / ~44% wrong) — clearly-wrong macro indicator, data-integrity bug in dow_jones source/parse. Flagged NEW report 3237. zone dev-macro-indicators.",
-        "type": "FIX",
-        "priority": "P2",
-        "status": "BACKLOG",
-        "zone": "apps/macro-indicators/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-DOWJONES-STALE-WRONG-VALUE"
       },
       {
         "id": "FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW",
@@ -14933,6 +14924,33 @@
         "next_agent": "qa",
         "updated_by": "dev-mcp-server",
         "review_note": "STALE-BACKLOG-ROW CLOSURE, not a new fix: `agent` was already made schema-optional by 8a6b798ce (FIX-AGENT-SIGNALS-AGENT-PARAM-CONTRACT, 2026-06-19) — a sibling backlog row minted for the IDENTICAL root cause (agentSignalTools.ts), promoted by po-s107 and shipped 2 days after THIS ticket was minted (po-s94, 2026-06-17T01:34:10Z), never cross-reconciled against it. Confirmed via git log -p on the file plus the still-on-disk scripts/po-s107-insider-agentsignals-schema-contract-promote.jq. Code commit 440e924f7: extracted the tool's inline zod shape to exported GetAgentSignalsShape (agentSignalTools.ts, zero behavior change — pure const-extraction, diff-verified) so tests assert the REAL runtime schema instead of a hand-mirrored copy that can drift. New FIX-AGENTSIGNALS-FROMAGENT-SCHEMA.test.ts (8 tests: schema-level + real McpServer/handler/DB end-to-end) proves the ticket's literal repro get_agent_signals({from_agent:\"news-scout\"}) returns rows or an empty array, never -32602; neither-agent-nor-from_agent still gets a controlled readable tool-response error, not a protocol crash. Evidence: bun tsc --noEmit clean; new suite 8/8 pass; precedent/consumer suites (FIX-AGENT-SIGNALS-AGENT-PARAM-CONTRACT+1194-agent08-tools+FACTORY-INFRA-agentSignal-sql-binding+1968b1-hours-back) 30/30 pass; full bun test run TWICE (14772 pass/40 skip/49 fail/530s and 14771 pass/40 skip/50 fail/535s, full log grepped both times) — complete fail lists match the SAME pre-existing flaky/resource-contention class documented across 5+ prior QA journals (CI-RED-RECONCILE, FIX-FUNDAMENTALS-REFRESH-CRON-DEAD, FIX-PRED-CLAIMS-EXCLUDED-SERVE-DISPLAY, PREDICTION-EVIDENCE-REVIVAL, SYSTEMIC-REMAKE-P1), zero overlap with agentSignalTools/get_agent_signals/GetAgentSignalsShape/FIX-AGENTSIGNALS. Journal commit 0e354e21c. REMAINING GAP (not closed here): a rebuild + LIVE gateway RAW-verify of get_agent_signals({from_agent:...}) against the running container is an ops/user-gated step — the underlying fix has been live-shipped code since 8a6b798ce (2026-06-19) but was never actually RAW-verified against a rebuilt container per the original verification_gate; QA should route that check onto the existing rebuild queue, not treat this commit as opening a NEW rebuild_required gate."
+      },
+      {
+        "id": "FIX-DOWJONES-STALE-WRONG-VALUE",
+        "title": "dow_jones served value 23750 vs real ~42k (~56% of real / ~44% wrong) — clearly-wrong macro indicator, data-integrity bug in dow_jones source/parse. Flagged NEW report 3237. zone dev-macro-indicators.",
+        "type": "FIX",
+        "priority": "P2",
+        "status": "REVIEW",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-DOWJONES-STALE-WRONG-VALUE",
+        "promoted_at": "2026-07-24T22:46:18Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-24T23:12:57Z",
+        "claimed_at": "2026-07-24T22:46:18Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "zone_correction_note": "original zone tag apps/macro-indicators/ was stale backlog metadata — verified at source the Go macro-indicators service has zero dow_jones references; real code lives in apps/mcp-server/ (commodityTracker.ts, yahooFinance.ts, systemTools.ts, commodityTrackerRefreshJob.ts, dataAuditShared.ts)",
+        "next_agent": "qa",
+        "dev_completed_at": "2026-07-24T23:12:57Z",
+        "dev_completed_by": "developer",
+        "commits": [
+          "57b916509",
+          "734c7bd28"
+        ],
+        "review_note": "Root cause verified LIVE via docker exec into named-volume market.db: tracked_indicators dow_jones was news-mined garbage (10604/23750/23807/48221/76848, floor-only gate) AND get_system_status Auto-tracked Indicators section ran its own unguarded latest-row query serving 23750 as current (report 3237) — separate from the already-shipped DSI-MACRO-PHANTOM-STALE-GUARD (covers buildMacroSection only). 3-layer fix: (1) new shared infrastructure/db/indicatorPlausibility.ts generic fail-closed band gate (dow_jones 25000-60000), (2) retired dow_jones news-mining regex + added live Yahoo ^DJI mirror (fetchDowJonesIndex/storeDowJonesIndex, fail-closed, wired into commodityTrackerRefreshJob.ts Block 3), (3) systemTools.ts get_system_status switched to the proven staleness-aware listTrackedIndicatorsFromDb() — stale rows now [STALE]-tagged, generic across every indicator. New FIX-DOWJONES-STALE-WRONG-VALUE.test.ts 15/15 pass + extended 1920c job test +3; targeted+adjacent suite (7 files) 68/68 pass; bun tsc --noEmit clean.",
+        "rebuild_required": true,
+        "rebuild_required_note": "REBUILD_REQUIRED: true — code lands but the running vn-market-intelligence-mcp-mcp-server-1 container must be rebuilt for the fix to take effect. verification_gate LIVE-across-2-refresh-cycles portion (served value within DJIA band AND varied vs named-volume DB across 2 daily commodityTrackerRefresh cron cycles, 06:00 UTC) requires the rebuilt container PLUS 2 elapsed cron cycles post-deploy — cannot be completed by this agent (container swap is ops/user-gated per CLAUDE.md). Root cause, fail-closed gate rejecting a synthetic out-of-band value, and sibling-pattern regression are all verified at source/unit level (see review_note).",
+        "decision_journal_ref": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md (STEP developer-S7)"
       }
     ],
     "qa": [],
@@ -14952,7 +14970,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-24T21:55:30Z",
+    "last_triaged_at": "2026-07-24T22:46:18Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": []
   },
