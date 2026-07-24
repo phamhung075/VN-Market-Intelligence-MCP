@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "next_action": "BGFAN-1 closeout complete: FACTORY-GUARD-CI-depguard-tier-boundaries design delivered by architect -> review (next=qa). Children FACTORY-GUARD-CI-TSBOUNDARIES-IMPL + FACTORY-GUARD-CI-COMPROOT-LOGIC-IMPL in backlog (developer). WIP now 0; dispatch lanes free.",
-    "updated_at": "2026-07-24T18:33:47Z",
-    "updated_by": "dev-team (BGFAN-1 closeout)"
+    "status": "in_progress",
+    "active_task_id": "FACTORY-GUARD-CI-dead-code-gate",
+    "next_agent": "architect",
+    "next_action": "BOUNDED-1 idle-capacity pickup, lane-corrected developer->architect (CI-GUARDRAIL design class, matches siblings FACTORY-GUARD-CI-{depguard-tier-boundaries,metric-mask-lint,size-lint-justification} all architect-designed 2026-07-24). Task=FACTORY-GUARD-CI-dead-code-gate, zone=cross-service/, brief_ref=docs/architecture-briefs/2026-06-15-maintainability-factory-audit.md. Architect: produce a design brief (audit existing mechanism first — is any dead-code gate already live in .github/workflows or the eslint/golangci/pyproject configs?; count live offenders: tracked *.bak/*.backup/*.patch files, _deprecated/ or orphaned src/ trees, build-ignored in-tree archives; pick per-language tooling knip/ts-prune for TS, go vet/deadcode for Go, vulture for Python; decide zero-tolerance vs baseline given current debt like the metric-mask sibling did) + mint ONE child impl row (next_agent=developer, dev_agent=developer) into task_board.backlog. Also: add *.bak to .gitignore is in-scope for the child. Verify-live every premise; ticket may be stale on offender counts.",
+    "updated_at": "2026-07-24T18:50:21Z",
+    "updated_by": "dev-team (BOUNDED-1 lane-correct -> architect design)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6362,15 +6362,6 @@
         "status": "BACKLOG",
         "id": "FACTORY-XZONE-size-justification-sweep",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-XZONE-size-justification-sweep"
-      },
-      {
-        "title": "CI-dead-code-gate",
-        "priority": "P2",
-        "type": "CI-GUARDRAIL",
-        "zone": "cross-service/",
-        "status": "BACKLOG",
-        "id": "FACTORY-GUARD-CI-dead-code-gate",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-GUARD-CI-dead-code-gate"
       },
       {
         "title": "CI-no-hardcode-allowlist-scan",
@@ -14801,9 +14792,27 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-24T18:17:35Z",
+    "last_triaged_at": "2026-07-24T18:47:35Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "title": "CI-dead-code-gate",
+        "priority": "P2",
+        "type": "CI-GUARDRAIL",
+        "zone": "cross-service/",
+        "status": "IN_PROGRESS",
+        "id": "FACTORY-GUARD-CI-dead-code-gate",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-GUARD-CI-dead-code-gate",
+        "promoted_at": "2026-07-24T18:47:35Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-24T18:50:22Z",
+        "claimed_at": "2026-07-24T18:47:35Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "architect",
+        "dev_agent": "architect"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
