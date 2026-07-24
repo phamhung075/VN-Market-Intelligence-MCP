@@ -2683,7 +2683,8 @@
       "created_by": "po",
       "fast_track": false,
       "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
-      "id": "FACTORY-STOCK-extract-vndirect-mapper"
+      "id": "FACTORY-STOCK-extract-vndirect-mapper",
+      "dispatch_precondition": "PRECONDITION (added by dev-team closeout of FACTORY-STOCK-vndirect-mapper-tests, 2026-07-24): the primitive apps/stock-price/pkg/primitive/vndirect-quote-mapper/mapper.go (MapPayload/MapItem) + its 13/13 tests ALREADY EXIST (front-loaded by the tests task, commit 49bc309a3). This task's remaining work = (1) GOLDEN-DIFF verify mapper.go output == fetchers.go inline mapping EXACTLY before touching anything (equivalence is currently dev-asserted, NOT proven); (2) rewire Tier1/Tier2 fetchers.go to CALL the primitive, deleting the inline duplicate (collapse the duplication); (3) confirm the served Price is unchanged. Do NOT re-create mapper.go. NOTE: this flips rebuild_required effectively TRUE once fetchers.go is rewired (served-path change) even though the tests task was rebuild_required=false."
     },
     {
       "title": "Backfill Tier1/Tier2 VnDirect mapper unit tests (guards the dedup)",

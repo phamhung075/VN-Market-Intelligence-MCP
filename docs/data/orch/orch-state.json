@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FACTORY-STOCK-vndirect-mapper-tests",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-STOCK-vndirect-mapper-tests — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-24T12:44:38Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "",
+    "next_action": "",
+    "updated_at": "2026-07-24T12:50:34Z",
+    "updated_by": "dev-stock-price"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -14515,6 +14515,26 @@
         "entered_review_at": "2026-07-24T12:28:33Z",
         "updated_by": "dev-api-gateway",
         "review_note": "Split by seam per approach spec: capability_manifest.go 104L (types+loadManifest), capability_probe.go 130L (probeHealthEndpoint+mcp types+probeMcpTool, size-justified), capability_prober.go 191L (struct+cache+ProbeAll/capabilityFor/runProbe, size-justified). ct[:17] HasPrefix hardening landed. go build/vet/test 10/10 pkgs clean, gofmt clean, golangci-lint 0 issues, G12 sandbox primitive 14/14 + module 1/1 GREEN. Behavior-unchanged proven via sorted stripped-code diff (only delta = HasPrefix swap). Commit 9fad8d4ad (local main, not pushed). rebuild_required=true, USER-GATED - rebuild-verify PENDING-USER-GATED, code-only. Decision journal: docs/agent-memory/decisions/sprint-FACTORY-APIGW-split-capability-prober-dev-api-gateway.md"
+      },
+      {
+        "title": "Backfill Tier1/Tier2 VnDirect mapper unit tests (guards the dedup)",
+        "priority": "P2",
+        "zone": "stock-price",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-STOCK-vndirect-mapper-tests",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-STOCK-vndirect-mapper-tests",
+        "promoted_at": "2026-07-24T12:44:38Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-24T12:55:52Z",
+        "claimed_at": "2026-07-24T12:44:38Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "completed_at": "2026-07-24T12:50:34Z",
+        "completed_by": "dev-stock-price",
+        "review_note": "CLOSEOUT CAVEAT (dispatcher): literal DoD met — mapper_test.go 13/13 green (indep re-verified). BUT scope front-loaded: dev created a NEW primitive apps/stock-price/pkg/primitive/vndirect-quote-mapper/mapper.go (MapPayload/MapItem) — that is the paired FACTORY-STOCK-extract-vndirect-mapper deliverable, not this test-only task. fetchers.go is NOT rewired: its inline *1000/floor mapping still serves the live Price and remains UNTESTED; mapping logic is now DUPLICATED (mapper.go copy vs fetchers.go inline). Tests guard the COPY, not the served path. mapper.go==fetchers.go equivalence is dev-ASSERTED, not test-proven. Served-path coverage + dedup complete ONLY after FACTORY-STOCK-extract-vndirect-mapper rewires fetchers.go->mapper.go (must golden-diff equivalence first).",
+        "review_note_by": "dev-team",
+        "review_note_at": "2026-07-24T12:55:51Z"
       }
     ],
     "qa": [],
@@ -14536,23 +14556,7 @@
     },
     "last_triaged_at": "2026-07-24T12:44:38Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "title": "Backfill Tier1/Tier2 VnDirect mapper unit tests (guards the dedup)",
-        "priority": "P2",
-        "zone": "stock-price",
-        "type": "FACTORY",
-        "status": "IN_PROGRESS",
-        "id": "FACTORY-STOCK-vndirect-mapper-tests",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-STOCK-vndirect-mapper-tests",
-        "promoted_at": "2026-07-24T12:44:38Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-24T12:44:39Z",
-        "claimed_at": "2026-07-24T12:44:38Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
