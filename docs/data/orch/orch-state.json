@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "next_action": "BGFAN-1 closeout complete: FACTORY-GUARD-CI-dead-code-gate design delivered by architect -> review (next=qa). Child FACTORY-GUARD-CI-DEADCODE-IMPL in backlog (developer, brief_ref wired). WIP now 0; dispatch lanes free. 3 more null-disposition CI-GUARDRAIL rows await lane-correction on future ticks.",
-    "updated_at": "2026-07-24T19:06:08Z",
-    "updated_by": "dev-team (BGFAN-1 closeout)"
+    "status": "in_progress",
+    "active_task_id": "FACTORY-GUARD-CI-no-hardcode-allowlist-scan",
+    "next_agent": "architect",
+    "next_action": "BOUNDED-1 idle-capacity pickup, lane-corrected developer->architect (CI-GUARDRAIL design class — detail.dev_agent=architect, type=CI-GUARDRAIL, epic FACTORY-MAINTAINABILITY-2026-06, owner/next_agent/plan_only/supervised all null; matches siblings FACTORY-GUARD-CI-{depguard-tier-boundaries,metric-mask-lint,size-lint-justification,dead-code-gate} all architect-designed 2026-07-24). Task=FACTORY-GUARD-CI-no-hardcode-allowlist-scan, zone=cross-service/, brief_ref=docs/architecture-briefs/2026-06-15-maintainability-factory-audit.md. Architect: produce a design brief (1) AUDIT existing mechanism first — is any inline-allowlist/hardcode/per-date-special-case scan already live in .github/workflows or the eslint/golangci/pyproject configs?; (2) grep-VERIFY live offender counts across services — inline ticker/date/exchange-floor allowlists and per-date special-cases (e.g. signalText.includes('2023') && year===2024), reference data that should live in shared-config; (3) pick a structural/grep-or-AST scan mechanism + decide zero-tolerance-vs-baseline given current live debt (like the metric-mask/dead-code siblings); (4) mint ONE child impl row (next_agent=developer, dev_agent=developer) into task_board.backlog with brief_ref pointing at the new brief. Verify-live EVERY premise; ticket may be stale on offender counts. Do NOT JUMP-TO-execute (zone-detect would re-default to developer) — dispatcher spawns architect directly.",
+    "updated_at": "2026-07-24T19:19:40Z",
+    "updated_by": "dev-team (BOUNDED-1 lane-correct -> architect design)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6362,15 +6362,6 @@
         "status": "BACKLOG",
         "id": "FACTORY-XZONE-size-justification-sweep",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-XZONE-size-justification-sweep"
-      },
-      {
-        "title": "CI-no-hardcode-allowlist-scan",
-        "priority": "P2",
-        "type": "CI-GUARDRAIL",
-        "zone": "cross-service/",
-        "status": "BACKLOG",
-        "id": "FACTORY-GUARD-CI-no-hardcode-allowlist-scan",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-GUARD-CI-no-hardcode-allowlist-scan"
       },
       {
         "title": "CI-shared-package-import-check",
@@ -14832,9 +14823,28 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-24T18:47:35Z",
+    "last_triaged_at": "2026-07-24T19:18:42Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "title": "CI-no-hardcode-allowlist-scan",
+        "priority": "P2",
+        "type": "CI-GUARDRAIL",
+        "zone": "cross-service/",
+        "status": "IN_PROGRESS",
+        "id": "FACTORY-GUARD-CI-no-hardcode-allowlist-scan",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-GUARD-CI-no-hardcode-allowlist-scan",
+        "promoted_at": "2026-07-24T19:18:42Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-24T19:19:40Z",
+        "claimed_at": "2026-07-24T19:18:42Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "architect",
+        "dev_agent": "architect",
+        "updated_by": "dev-team (BOUNDED-1 lane-correct -> architect design)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
