@@ -387,11 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-07-24T21:38:54Z",
-    "updated_by": "dev-mcp-server"
+    "status": "in_progress",
+    "active_task_id": "FIX-AGENTSIGNALS-FROMAGENT-SCHEMA",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-AGENTSIGNALS-FROMAGENT-SCHEMA — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-24T21:55:30Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2236,30 +2237,6 @@
         "triaged_by": "dev-team",
         "disposition": "resolved-verified-transient",
         "triage_note": "ground-truth 2026-07-24T10:50:02Z: get_vn_liquidity_state fx_coupling.fetched_at=2026-07-24T10:46:43Z is_estimate=false center=26130 -> sbv_fx FRESH (0min stale). CRITICAL self-resolved post VPS clock-drift fix (07-23T16:15; vn-sbv-fetch shares that VM clock, emitted 18:33Z in residual catch-up window). Recurrence-risk tracked by ops chrony boot-step-check ask; if B-04 sbv_fx recurs, escalate to hardening task."
-      },
-      {
-        "id": "tnb-20260724T2028Z-methflag-c118",
-        "ts": "2026-07-24T20:28:00Z",
-        "from": "tran-ngoc-bau",
-        "to": "po",
-        "type": "methodology-flag",
-        "summary": "TNB methodology-flag c118 (gate-blocked-cycle file-proxy audit). Re-queued to PO by dev-team after BOUNDED-1 preempted Step-1 this tick; original file-plane signal drained+moved to processed/. See notebook#c118.",
-        "severity": "HIGH",
-        "status": "RESOLVED",
-        "payload_ref": "docs/signals/processed/tnb-20260724T2028Z.json",
-        "disposition": "PO 2026-07-24T21:27Z RESOLVED — all 3 c118 items map to existing tracked tickets, ZERO new rows. (1) chef-morning total-miss -> FIX-GUARANTEED-SLOT-FIRER-FANOUT-TRUNCATION (07-24 data point appended). (2) eod false layers-1-6-full -> FIX-CHEF-QUALITY-VERDICT-FALSE-FULL-NO-LAYER-ASSERTION (READY, agent-father; 2nd occurrence crosses escalate bar); USD/VND false-crossing + gold self-inconsistency -> FIX-CHEF-USDVND-THRESHOLD-NUMERIC-DRIFT-GATE (broadened to all macro thresholds). (3) L6-token persist -> FIX-CHEF-L6-TOKEN-PERSISTENCE-RECURRING (isolation resolved: persist-step drop, evening-leaning)."
-      },
-      {
-        "id": "tnb-20260724T2031Z-chef-reliability",
-        "ts": "2026-07-24T20:31:00Z",
-        "from": "tran-ngoc-bau",
-        "to": "po",
-        "type": "system-issue",
-        "summary": "TNB HIGH (2 findings): F-CHEF-EOD-POSSIBLE-DOUBLE-PUBLISH-0724 (MARKET msg id=1016 has zero notebook/synthesis trace vs tracked id=1017; chef-eod fires 15:45 VN = no midnight-straddle, so a genuine double-publish would be a candidate 4th mechanism NOT covered by FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR AC5 - needs RAW verify before closing that ticket). F-CHEF-MORNING-TOTAL-SILENT-MISS-0724 (chef-morning fired last_fired 05:22Z but zero unified-agent-synthesis-2026-07-24-morning.json and zero morning notebook block). Full evidence: docs/handoffs/tnb-audit-supplementary-2026-07-24.md. Re-queued to PO by dev-team after BOUNDED-1 preempted Step-1.",
-        "severity": "HIGH",
-        "status": "RESOLVED",
-        "payload_ref": "docs/handoffs/tnb-audit-supplementary-2026-07-24.md",
-        "disposition": "PO 2026-07-24T21:27Z RESOLVED — RAW-verified via get_unreviewed_market_messages. F-CHEF-EOD-DOUBLE-PUBLISH-0724 CONFIRMED (id=1016@08:53 + id=1017@09:02, only 09:02 traced in eod.json) — distinct NON-straddle mechanism -> EXTENDED FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR (broadened AC: marker must engage on every dispatch path + stay held; recurrence 9th/4th) rather than mint a competing row. F-CHEF-MORNING-TOTAL-SILENT-MISS-0724 -> FIX-GUARANTEED-SLOT-FIRER-FANOUT-TRUNCATION. USD/VND WATCH -> FIX-USDVND-THRESHOLD-SSOT (SSOT choice) + FIX-CHEF-USDVND-THRESHOLD-NUMERIC-DRIFT-GATE (assertion gate). Zero new rows minted."
       }
     ],
     "last_triaged_at": "2026-07-23T18:03:58Z",
@@ -6524,15 +6501,6 @@
         "title": "get_macro_snapshot carry+yield report is_estimate=false but derive from vndDepositRate=5.00 (hardcoded fixture) with stale fetched_at_source 2026-06-12",
         "size": "S",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MACRO-CARRY-YIELD-ESTIMATE-FLAG"
-      },
-      {
-        "id": "FIX-AGENTSIGNALS-FROMAGENT-SCHEMA",
-        "title": "get_agent_signals({from_agent}) fails schema (`agent` Required) -> news-scout SELF_SIGNALS_CACHE empty every cycle",
-        "type": "FIX",
-        "status": "BACKLOG",
-        "priority": "P2",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AGENTSIGNALS-FROMAGENT-SCHEMA"
       },
       {
         "id": "LINT-OHLCV-WRITE-BYPASS",
@@ -14967,9 +14935,25 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-24T20:56:18Z",
+    "last_triaged_at": "2026-07-24T21:55:30Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-AGENTSIGNALS-FROMAGENT-SCHEMA",
+        "title": "get_agent_signals({from_agent}) fails schema (`agent` Required) -> news-scout SELF_SIGNALS_CACHE empty every cycle",
+        "type": "FIX",
+        "status": "IN_PROGRESS",
+        "priority": "P2",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AGENTSIGNALS-FROMAGENT-SCHEMA",
+        "promoted_at": "2026-07-24T21:55:30Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-24T21:55:31Z",
+        "claimed_at": "2026-07-24T21:55:30Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
