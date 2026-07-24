@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "FACTORY-GUARD-CI-size-lint-justification design complete -> review(qa); child FACTORY-GUARD-CI-SIZELINT-IMPL awaits normal cycle",
-    "updated_at": "2026-07-24T17:00:19Z",
-    "updated_by": "dev-team (BGFAN-1 closeout)"
+    "status": "in_progress",
+    "active_task_id": "FACTORY-GUARD-CI-metric-mask-lint",
+    "next_agent": "architect",
+    "next_action": "BOUNDED-1 picked FACTORY-GUARD-CI-metric-mask-lint (type CI-GUARDRAIL, dev_agent=architect, no code spec). Corrected placeholder developer->architect per NON-CODE/DESIGN next_agent-gap guard. Design/guardrail-policy ask, not autonomous code-fix.",
+    "updated_at": "2026-07-24T17:18:54Z",
+    "updated_by": "dev-team (dispatcher-wrap: non-dev-route correction)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6362,15 +6362,6 @@
         "status": "BACKLOG",
         "id": "FACTORY-XZONE-size-justification-sweep",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-XZONE-size-justification-sweep"
-      },
-      {
-        "title": "CI-metric-mask-lint",
-        "priority": "P2",
-        "type": "CI-GUARDRAIL",
-        "zone": "cross-service/",
-        "status": "BACKLOG",
-        "id": "FACTORY-GUARD-CI-metric-mask-lint",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-GUARD-CI-metric-mask-lint"
       },
       {
         "title": "CI-depguard-tier-boundaries",
@@ -14639,9 +14630,26 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-24T16:45:42Z",
+    "last_triaged_at": "2026-07-24T17:17:59Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "title": "CI-metric-mask-lint",
+        "priority": "P2",
+        "type": "CI-GUARDRAIL",
+        "zone": "cross-service/",
+        "status": "IN_PROGRESS",
+        "id": "FACTORY-GUARD-CI-metric-mask-lint",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-GUARD-CI-metric-mask-lint",
+        "promoted_at": "2026-07-24T17:17:59Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-24T17:18:54Z",
+        "claimed_at": "2026-07-24T17:17:59Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "architect"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
