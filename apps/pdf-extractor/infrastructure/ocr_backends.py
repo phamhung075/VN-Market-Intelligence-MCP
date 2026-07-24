@@ -43,6 +43,8 @@ import logging
 import os
 from typing import Any, Optional, Tuple
 
+from infrastructure.tesseract_config import TESSERACT_LANG, TESSERACT_PSM6_CONFIG
+
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
@@ -108,12 +110,9 @@ class TesseractVieBackend:
     """
     OcrBackendPort adapter: pytesseract (vie+eng, --psm 6).
 
-    Reuses the same Tesseract configuration as infrastructure/ocr_adapter.py:
-        - lang="vie+eng"
-        - config="--psm 6"  (single uniform block — line-by-line BCTC layout)
-
-    DO NOT remove config="--psm 6": Tesseract default (psm 3) triggers column
-    segmentation → scrambled BCTC output (drift #4, documented in ocr_adapter.py).
+    Config (TESSERACT_LANG, TESSERACT_PSM6_CONFIG) sourced from the single
+    authoritative infrastructure/tesseract_config.py — see that module's
+    docstring for the "DO NOT remove --psm 6" rationale (drift #4).
 
     Accepts numpy ndarray (uint8, H×W×C BGR/RGB) or PIL.Image.Image.
     Returns ("", 0.0) on None input only. All other failures raise (fail-loud).
@@ -160,8 +159,8 @@ class TesseractVieBackend:
         # Use image_to_data to get per-word confidence scores
         data = pytesseract.image_to_data(
             pil_image,
-            lang="vie+eng",
-            config="--psm 6",
+            lang=TESSERACT_LANG,
+            config=TESSERACT_PSM6_CONFIG,
             output_type=pytesseract.Output.DATAFRAME,
         )
 

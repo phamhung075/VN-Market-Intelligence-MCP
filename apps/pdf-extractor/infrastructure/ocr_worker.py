@@ -58,6 +58,12 @@ import logging
 import os
 from typing import Dict, List
 
+from infrastructure.tesseract_config import (
+    OCR_RASTER_DPI,
+    TESSERACT_LANG,
+    TESSERACT_PSM6_CONFIG,
+)
+
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
@@ -357,8 +363,8 @@ def ocr_pages_worker(pdf_path: str, page_numbers: List[int]) -> List[Dict]:
 
     Mirror of PdfOcrAdapter.ocr_pages() as a standalone picklable function.
 
-    PAGE SEGMENTATION MODE: --psm 6 (single uniform block). See ocr_adapter.py
-    for the full rationale — DO NOT change to psm 3.
+    PAGE SEGMENTATION MODE: config sourced from infrastructure/tesseract_config.py
+    (single authoritative "DO NOT remove --psm 6" warning — see that module).
 
     FIX-BCTC-BANK-PDF-OCR-RASTERIZE rasterize fallback:
       For each page where Tesseract yields < LOW_TESSERACT_PAGE_CHARS chars,
@@ -394,7 +400,7 @@ def ocr_pages_worker(pdf_path: str, page_numbers: List[int]) -> List[Dict]:
         try:
             images = convert_from_path(
                 pdf_path,
-                dpi=200,
+                dpi=OCR_RASTER_DPI,
                 first_page=page_num,
                 last_page=page_num,
                 fmt="png",
@@ -404,7 +410,7 @@ def ocr_pages_worker(pdf_path: str, page_numbers: List[int]) -> List[Dict]:
                 continue
 
             text: str = pytesseract.image_to_string(
-                images[0], lang="vie+eng", config="--psm 6"
+                images[0], lang=TESSERACT_LANG, config=TESSERACT_PSM6_CONFIG
             )
 
             # ── FIX-BCTC-BANK-PDF-OCR-RASTERIZE: PaddleOCR fallback ──────────

@@ -14,6 +14,11 @@ from typing import Optional
 
 from domain.models import ExtractedTable
 from domain.repositories import PDFExtractionEngine
+from infrastructure.tesseract_config import (
+    OCR_RASTER_DPI,
+    TESSERACT_LANG,
+    TESSERACT_PSM6_CONFIG,
+)
 
 
 class PdfplumberExtractionEngine(PDFExtractionEngine):
@@ -162,13 +167,11 @@ class PdfplumberExtractionEngine(PDFExtractionEngine):
 
         try:
             # page.to_image() returns a pdfplumber PageImage
-            img = page.to_image(resolution=200)  # type: ignore[attr-defined]
-            # --psm 6: single uniform block — reads line-by-line (inline layout).
-            # Matches spike/fpt_balance_sheet_eval.py:160 and ocr_adapter.py.
-            # DO NOT remove config= arg: psm 3 (Tesseract default) triggers
-            # column segmentation → scrambled BCTC output (drift #4).
+            img = page.to_image(resolution=OCR_RASTER_DPI)  # type: ignore[attr-defined]
+            # Tesseract config — see infrastructure/tesseract_config.py for the
+            # single authoritative "DO NOT remove --psm 6" rationale.
             text: str = pytesseract.image_to_string(
-                img.original, lang="vie+eng", config="--psm 6"
+                img.original, lang=TESSERACT_LANG, config=TESSERACT_PSM6_CONFIG
             )
             return text.strip()
         except Exception:

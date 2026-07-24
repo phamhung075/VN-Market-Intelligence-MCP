@@ -103,6 +103,7 @@ from infrastructure.generic_md_table.ordinal_grid import (
     _exclude_header_tokens,
     _identify_pure_code_columns,
 )
+from infrastructure.tesseract_config import TESSERACT_LANG, TESSERACT_PSM6_CONFIG
 
 logger = logging.getLogger(__name__)
 
@@ -255,8 +256,8 @@ def _stage_a_tokenize(page_image: object, pytesseract: object, Output: object) -
     try:
         return pytesseract.image_to_data(  # type: ignore[attr-defined]
             page_image,
-            lang="vie+eng",
-            config="--psm 6",
+            lang=TESSERACT_LANG,
+            config=TESSERACT_PSM6_CONFIG,
             output_type=Output.DICT,  # type: ignore[attr-defined]
         )
     except Exception as exc:

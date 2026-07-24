@@ -40,6 +40,11 @@ from infrastructure.generic_md_table.constants import (
     _TESSERACT_RETRY_SLEEP_S,
     _VALUE_TOKEN_RE,
 )
+from infrastructure.tesseract_config import (
+    OCR_RASTER_DPI,
+    TESSERACT_LANG,
+    TESSERACT_PSM6_CONFIG,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -241,11 +246,11 @@ def ocr_unit(
         if col_count == 0:
             col_count = len(column_gutters)
 
-        # Rasterize page at 200 DPI for OCR
+        # Rasterize page at OCR_RASTER_DPI for OCR
         try:
             images = convert_from_path(
                 pdf_path,
-                dpi=200,
+                dpi=OCR_RASTER_DPI,
                 first_page=page_num,
                 last_page=page_num,
                 fmt="png",
@@ -267,8 +272,8 @@ def ocr_unit(
             try:
                 ocr_data = _tesseract_image_to_data(
                     page_img=page_img,
-                    lang="vie+eng",
-                    config="--psm 6",
+                    lang=TESSERACT_LANG,
+                    config=TESSERACT_PSM6_CONFIG,
                 )
             except Exception as exc:
                 logger.warning(

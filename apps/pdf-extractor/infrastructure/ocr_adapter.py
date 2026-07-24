@@ -49,8 +49,8 @@ PAGE SEGMENTATION MODE (dual-path-drift lesson, BT3-FIX3-PSM):
     which reads BCTC three-block layouts column-by-column, scrambling labels,
     codes, and values into separate interleaved blocks (observed: 47 orphan rows,
     off-by-one labels, dup code 222 despite balance_pass=true).
-  - Never remove the config="--psm 6" argument; doing so silently re-introduces
-    dual-path drift at the PSM level (drift #4).
+  - Config sourced from infrastructure/tesseract_config.py (single authoritative
+    "DO NOT remove --psm 6" warning — see that module's docstring).
 
 Reuses the same Tesseract invocation pattern as:
   - infrastructure/extraction_engine.py PdfplumberExtractionEngine._ocr_page()
@@ -81,6 +81,12 @@ import logging
 import os
 import re
 from typing import Dict, List, Optional
+
+from infrastructure.tesseract_config import (
+    OCR_RASTER_DPI,
+    TESSERACT_LANG,
+    TESSERACT_PSM6_CONFIG,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -430,7 +436,7 @@ class PdfOcrAdapter:
                 # D6 HOST SAFETY: convert ONLY this single page (not the full PDF)
                 images = convert_from_path(
                     pdf_path,
-                    dpi=200,
+                    dpi=OCR_RASTER_DPI,
                     first_page=page_num,
                     last_page=page_num,
                     fmt="png",
@@ -443,12 +449,10 @@ class PdfOcrAdapter:
                     pages_out.append({"page_number": page_num, "text": ""})
                     continue
 
-                # --psm 6: single uniform block — reads line-by-line (inline layout).
-                # Matches spike/fpt_balance_sheet_eval.py:160 exactly.
-                # DO NOT remove config= arg: psm 3 (Tesseract default) triggers
-                # column segmentation → scrambled BCTC output (drift #4).
+                # Tesseract config — see infrastructure/tesseract_config.py for the
+                # single authoritative "DO NOT remove --psm 6" rationale.
                 text: str = pytesseract.image_to_string(
-                    images[0], lang="vie+eng", config="--psm 6"
+                    images[0], lang=TESSERACT_LANG, config=TESSERACT_PSM6_CONFIG
                 )
 
                 # ── FIX-BCTC-BANK-PDF-OCR-RASTERIZE: PaddleOCR fallback ──────────

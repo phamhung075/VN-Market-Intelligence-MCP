@@ -51,9 +51,25 @@ CREATE TABLE IF NOT EXISTS pdf_documents (
 4. Returns `(text, min_confidence)` — lowest across all pages
 
 ### _ocr_page(page)
-1. `page.to_image(resolution=200)` (pdfplumber→PIL)
-2. `pytesseract.image_to_string(img.original, lang="vie+eng")`
+1. `page.to_image(resolution=OCR_RASTER_DPI)` (pdfplumber→PIL)
+2. `pytesseract.image_to_string(img.original, lang=TESSERACT_LANG, config=TESSERACT_PSM6_CONFIG)`
 3. Returns text.strip() or "" on error
+
+## Tesseract OCR Configuration (shared)
+- **File:** `apps/pdf-extractor/infrastructure/tesseract_config.py`
+- **FACTORY-PDF-extract-tesseract-config** (2026-07-24): single source of truth for the
+  Tesseract lang/psm/DPI literals, previously copy-pasted (each with its own "DO NOT
+  remove --psm 6" warning) across 5 call sites.
+- **Constants:** `TESSERACT_LANG = "vie+eng"`, `TESSERACT_PSM6_CONFIG = "--psm 6"`,
+  `OCR_RASTER_DPI = 200`
+- **Callers (all import from this module — no inline literals remain):**
+  `ocr_adapter.py` (`PdfOcrAdapter.ocr_pages`), `ocr_worker.py` (`ocr_pages_worker`),
+  `ocr_backends.py` (`TesseractVieBackend.recognize_text`),
+  `generic_md_table/extractor.py` (`_stage_a_tokenize`),
+  `generic_md_table/unit_ocr.py` (`ocr_unit` call site), `extraction_engine.py`
+  (`PdfplumberExtractionEngine._ocr_page`)
+- `--psm 6` is load-bearing — do not change without re-validating BT3-FIX3-PSM
+  (see the module's docstring for the full drift #4 rationale).
 
 ## System Dependencies
 - `tesseract-ocr` + `tesseract-ocr-vie` + `tesseract-ocr-eng`
@@ -115,10 +131,10 @@ BT-3-C integration test, which pre-supplied OCR text and never exercised real Te
 
 ### ocr_pages(pdf_path, page_numbers) → list[dict]
 - D6 HOST SAFETY: converts ONE page at a time via `pdf2image.convert_from_path(first_page=n, last_page=n)`
-- Tesseract via `pytesseract.image_to_string(img, lang="vie+eng")` (self-hosted)
+- Tesseract via `pytesseract.image_to_string(img, lang=TESSERACT_LANG, config=TESSERACT_PSM6_CONFIG)` (self-hosted; constants from `tesseract_config.py`, see below)
 - Sequential loop — no threading, no batching
 - Returns `[{"page_number": int, "text": str}, ...]` — failed pages get `text=""`
-- DPI=200 (same as integration test helper `_ocr_pdf_pages()`)
+- DPI=`OCR_RASTER_DPI` (200 — same as integration test helper `_ocr_pdf_pages()`)
 
 ### DDD placement
 - Infrastructure layer (correct — does I/O: pdfplumber, pdf2image, Tesseract subprocess)
