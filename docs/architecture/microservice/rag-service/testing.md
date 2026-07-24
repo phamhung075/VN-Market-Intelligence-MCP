@@ -29,11 +29,10 @@ Mocks: `VectorStorePort`, `EmbedderPort` (AsyncMock)
 ## Integration Tests
 **File:** `apps/rag-service/__tests__/integration/test_rag_integration.py`
 
-- Real LanceDB and SQLite (tmp_path fixtures)
+- Real LanceDB (tmp_path fixture)
 - Fake deterministic embedder (hash-based, not real sentence-transformers)
 - Full pipeline: index → search → temporal decay
 - Recent entries rank higher than old (same content, different created_at)
-- SQLiteAnalysisRepository: save → find_by_id → find_all
 - Deduplication: same article re-indexed multiple times
 - Schema verification: all fields preserved through storage
 

@@ -4,6 +4,18 @@ Zone: `apps/rag-service/` | Stack: Python/FastAPI | DB: rag_service.db (write)
 
 ## Working Memory
 
+### 2026-07-24 — FACTORY-RAG-delete-dead-sqlite-repo (dead-code removal, P2)
+
+**Task:** delete dead `SQLiteAnalysisRepository` + phantom `AnalysisRepositoryPort`. Investigated at source FIRST (did not trust ticket title): grep-confirmed `SQLiteAnalysisRepository` constructed ONLY in `test_rag_integration.py`'s `sqlite_repo` fixture (4 tests, `TestSQLiteRepository`); `AnalysisRepositoryPort` implemented ONLY by that class; `app_factory.build_real_adapters()` (sole prod-adapter composition point) and `main.py` wire only `SentenceTransformersEmbedder`+`LanceDBVectorStore` — zero `SQLiteAnalysisRepository` construction anywhere live. `IndexUseCase`/`SearchUseCase` `__init__` never took an analysis-repo param (the `IndexUseCase` docstring's `analysis_repo (optional)` claim was itself phantom — fixed). Matches (and independently verified, not just trusted) `docs/architecture-briefs/2026-06-15-maintainability-factory-audit.md` FACTORY-RAG-delete-dead-sqlite-repo entry.
+
+**Deleted:** `SQLiteAnalysisRepository` + `_row_to_entry()` helper + `sqlite3` import (infrastructure/repositories.py), `AnalysisRepositoryPort` ABC (domain/repositories.py), `TestSQLiteRepository`+`sqlite_repo` fixture (test_rag_integration.py). Fixed phantom docstring (usecases.py). Trimmed matching sections from owned docs (domain-model.md, infrastructure.md, testing.md). Net: 238 deletions / 7 insertions.
+
+**Verified:** pytest 165→161 passed (exactly the 4 deleted tests, 0 fail), grep confirms zero remaining refs to either symbol, mypy 259→253 errors (strict decrease, no new), sandbox 16/16 + 2/2 GREEN exit 0, env audit EMPTY via canonical anchored `_audit_env()` (the 3 `CTX_ADVISOR_*` hits from the flow doc's loose `env|grep` one-liner are the SAME known TOKEN-substring false positive already logged in the 07-15 FTS entry below — not credentials). Fence-A/B grep hits are pre-existing docstring prose only, zero real cross-layer imports.
+
+**DJ:** `docs/agent-memory/decisions/sprint-FACTORY-RAG-delete-dead-sqlite-repo-dev-rag-service.md`
+
+---
+
 ### 2026-07-15 — RAG-FTS-BUILD-MEMORY-BOUND (P1 FIX-S)
 
 **Root cause found:** native FTS builder (Rust `lance-index`, `scalar/inverted/builder.rs`)
@@ -170,26 +182,4 @@ Tested against throwaway LanceDB in ephemeral Docker run. 3-row table with curre
 
 **P3-A/B/C/D status:** DONE. P3-E is QA+PO scope. Not marking pilot DONE (QA+PO own re-close).
 
----
-
-### 2026-05-24 — TASK P2-K2 (G9 Playwright headless trust contract — LAST Phase 2 task)
-
-**Spec:** `apps/rag-service/dashboard/trust-contract.spec.mjs` (standalone Playwright .mjs, mirrors kinh-dich dash-check.mjs pattern)
-**Result:** `apps/rag-service/dashboard/trust-contract-result.json` — PASS
-**Screenshot:** `apps/rag-service/dashboard/trust-contract-screenshot.png`
-
-**VERDICT (LIVE Playwright run, Chromium 147.0.7727.15, playwright-core from apps/mcp-server/node_modules):**
-- panels_ok: true (3/3 panels rendered)
-- primitive_cards_count: 5/5 all GREEN (similarity-scorer, relevance-threshold-gate, temporal-decay-scorer, top-k-selector, context-window-packer)
-- module_ok: true (retrieval GREEN)
-- microservice_not_run: true (honest NOT-RUN)
-- colors_match_traces: true — proved via page.route() DOM patch: similarity-scorer trace patched to passed=false in-memory → card showed FAIL (RED). File on disk NOT modified. Transient, never committed.
-- console_errors: 0
-- network_calls: 0
-- verdict: PASS
-
-**G12 DoD (final):** 16/16 primitive sandbox GREEN, 2/2 module sandbox GREEN, 81/81 pytest, env audit empty.
-
-**Commits:** `fa1b7773` (spec + result, via concurrent pdf-extractor agent pick-up), `4c0c0edb` (screenshot + commitSHA fix)
-
-**P2-K2 status:** DONE. All Phase 2 tasks complete (P2-B1 through P2-K2). G9 PASS verdict live. NEXT: PO does G9 Path-B sign-off + terminal 12/12 atomic close + decisionMatrix.
+<!-- Oldest entry (2026-05-24 TASK P2-K2, G9 Playwright trust-contract PASS) trimmed 2026-07-24 to hold ≤200L notebook cap. Full record: git history / prior commit of this file. -->

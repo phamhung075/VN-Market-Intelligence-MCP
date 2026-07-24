@@ -1,5 +1,5 @@
 """
-Integration tests — SearchUseCase + IndexUseCase with real SQLite + real LanceDB.
+Integration tests — SearchUseCase + IndexUseCase with real LanceDB.
 
 Tests: end-to-end indexing → searching → temporal decay ranking.
 Uses tmp_path fixture for isolated DB per test.
@@ -21,7 +21,7 @@ from domain.repositories import EmbedderPort
 from domain.services import SearchService
 from application.dtos import SearchRequest, IndexRequest
 from application.usecases import SearchUseCase, IndexUseCase
-from infrastructure.repositories import LanceDBVectorStore, SQLiteAnalysisRepository
+from infrastructure.repositories import LanceDBVectorStore
 
 
 # ── Fake Embedder (deterministic, no model download) ─────────────────────
@@ -63,11 +63,6 @@ def lancedb_store(tmp_path):
 
 
 @pytest.fixture
-def sqlite_repo(tmp_path):
-    return SQLiteAnalysisRepository(db_path=str(tmp_path / "rag.db"))
-
-
-@pytest.fixture
 def search_service():
     return SearchService()
 
@@ -92,73 +87,6 @@ def search_usecase(lancedb_store, embedder, search_service):
 def days_ago_iso(n: float) -> str:
     dt = datetime.now(tz=timezone.utc) - timedelta(days=n)
     return dt.isoformat()
-
-
-# ── Integration: SQLiteAnalysisRepository ────────────────────────────────
-
-
-@pytest.mark.asyncio
-class TestSQLiteRepository:
-
-    async def test_save_and_find_by_id(self, sqlite_repo):
-        from domain.models import AnalysisEntry
-
-        entry = AnalysisEntry(
-            id="test-1",
-            level="global",
-            title="Test Title",
-            summary="Test Summary",
-            tags=["vn", "macro"],
-            created_at=datetime.now(tz=timezone.utc),
-            action_code=None,
-        )
-        await sqlite_repo.save(entry)
-        found = await sqlite_repo.find_by_id("test-1")
-
-        assert found is not None
-        assert found.id == "test-1"
-        assert found.title == "Test Title"
-        assert found.tags == ["vn", "macro"]
-
-    async def test_find_by_id_returns_none_for_missing(self, sqlite_repo):
-        result = await sqlite_repo.find_by_id("nonexistent")
-        assert result is None
-
-    async def test_save_is_upsert(self, sqlite_repo):
-        from domain.models import AnalysisEntry
-
-        entry = AnalysisEntry(
-            id="upsert-1",
-            level="global",
-            title="Original",
-            summary="s",
-            tags=[],
-            created_at=datetime.now(tz=timezone.utc),
-        )
-        await sqlite_repo.save(entry)
-
-        entry.title = "Updated"
-        await sqlite_repo.save(entry)
-
-        found = await sqlite_repo.find_by_id("upsert-1")
-        assert found.title == "Updated"
-
-    async def test_find_all_returns_all_entries(self, sqlite_repo):
-        from domain.models import AnalysisEntry
-
-        for i in range(3):
-            entry = AnalysisEntry(
-                id=f"entry-{i}",
-                level="global",
-                title=f"Title {i}",
-                summary="s",
-                tags=[],
-                created_at=datetime.now(tz=timezone.utc),
-            )
-            await sqlite_repo.save(entry)
-
-        all_entries = await sqlite_repo.find_all()
-        assert len(all_entries) == 3
 
 
 # ── Integration: IndexUseCase + SearchUseCase end-to-end ─────────────────

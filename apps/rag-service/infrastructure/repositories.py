@@ -1,20 +1,19 @@
 """
-Infrastructure — LanceDBVectorStore and SQLiteAnalysisRepository.
+Infrastructure — LanceDBVectorStore.
 
-Implements VectorStorePort and AnalysisRepositoryPort.
+Implements VectorStorePort.
 Infrastructure layer: may import lancedb, sqlite3, etc.
 """
 
 import json
 import logging
 import os
-import sqlite3
 import re
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from domain.models import AnalysisEntry, EmbeddingVector, SearchResult
-from domain.repositories import VectorStorePort, AnalysisRepositoryPort
+from domain.repositories import VectorStorePort
 
 logger = logging.getLogger(__name__)
 
@@ -516,116 +515,3 @@ class LanceDBVectorStore(VectorStorePort):
             return await table.count_rows()
         except Exception:
             return 0
-
-
-# ── SQLite Analysis Repository ────────────────────────────────────────────
-
-
-class SQLiteAnalysisRepository(AnalysisRepositoryPort):
-    """
-    SQLite-backed metadata store for AnalysisEntry records.
-
-    Used for administrative queries (list all, find by id).
-    The canonical store is LanceDB — SQLite is a lightweight index.
-    """
-
-    def __init__(self, db_path: str) -> None:
-        self._db_path = db_path
-        self._initialized = False
-
-    def _get_conn(self) -> sqlite3.Connection:
-        os.makedirs(os.path.dirname(self._db_path) or ".", exist_ok=True)
-        conn = sqlite3.connect(self._db_path)
-        conn.row_factory = sqlite3.Row
-        return conn
-
-    def _ensure_table(self) -> None:
-        if self._initialized:
-            return
-        with self._get_conn() as conn:
-            conn.execute("""
-                CREATE TABLE IF NOT EXISTS rag_entries (
-                    id TEXT PRIMARY KEY,
-                    level TEXT NOT NULL,
-                    title TEXT NOT NULL,
-                    summary TEXT NOT NULL,
-                    tags TEXT NOT NULL DEFAULT '[]',
-                    action_code TEXT,
-                    created_at TEXT NOT NULL
-                )
-            """)
-            conn.commit()
-        self._initialized = True
-
-    async def save(self, entry: AnalysisEntry) -> None:
-        self._ensure_table()
-        with self._get_conn() as conn:
-            conn.execute(
-                """
-                INSERT INTO rag_entries (id, level, title, summary, tags, action_code, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-                ON CONFLICT(id) DO UPDATE SET
-                    level=excluded.level,
-                    title=excluded.title,
-                    summary=excluded.summary,
-                    tags=excluded.tags,
-                    action_code=excluded.action_code,
-                    created_at=excluded.created_at
-                """,
-                (
-                    entry.id,
-                    entry.level,
-                    entry.title,
-                    entry.summary,
-                    json.dumps(entry.tags),
-                    entry.action_code,
-                    entry.created_at.isoformat(),
-                ),
-            )
-            conn.commit()
-
-    async def find_by_id(self, entry_id: str) -> Optional[AnalysisEntry]:
-        self._ensure_table()
-        with self._get_conn() as conn:
-            row = conn.execute(
-                "SELECT * FROM rag_entries WHERE id = ?", (entry_id,)
-            ).fetchone()
-        if row is None:
-            return None
-        return _row_to_entry(dict(row))
-
-    async def find_all(self) -> list[AnalysisEntry]:
-        self._ensure_table()
-        with self._get_conn() as conn:
-            rows = conn.execute("SELECT * FROM rag_entries").fetchall()
-        return [_row_to_entry(dict(row)) for row in rows]
-
-
-def _row_to_entry(row: dict) -> AnalysisEntry:
-    tags: list[str] = []
-    raw_tags = row.get("tags", "[]")
-    if isinstance(raw_tags, str):
-        try:
-            tags = json.loads(raw_tags)
-        except (json.JSONDecodeError, ValueError):
-            tags = []
-    else:
-        tags = raw_tags
-
-    created_at_str = row.get("created_at", "")
-    try:
-        created_at = datetime.fromisoformat(created_at_str.replace("Z", "+00:00"))
-        if created_at.tzinfo is None:
-            created_at = created_at.replace(tzinfo=timezone.utc)
-    except (ValueError, AttributeError):
-        created_at = datetime.now(tz=timezone.utc)
-
-    return AnalysisEntry(
-        id=row["id"],
-        level=row["level"],
-        title=row["title"],
-        summary=row["summary"],
-        tags=tags,
-        created_at=created_at,
-        action_code=row.get("action_code"),
-    )

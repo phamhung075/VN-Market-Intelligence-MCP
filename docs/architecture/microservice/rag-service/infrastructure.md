@@ -113,27 +113,6 @@ wall-clock on the real ~56k-row corpus is pending qa/ops verification** (RAG-FTS
 task — dev-side sanity run was blocked by an unrelated Docker Desktop host outage;
 see task notebook).
 
-## SQLiteAnalysisRepository
-- **File:** `apps/rag-service/infrastructure/repositories.py`
-
-### Schema
-```sql
-CREATE TABLE IF NOT EXISTS rag_entries (
-    id TEXT PRIMARY KEY,
-    level TEXT NOT NULL,
-    title TEXT NOT NULL,
-    summary TEXT NOT NULL,
-    tags TEXT NOT NULL DEFAULT '[]',
-    action_code TEXT,
-    created_at TEXT NOT NULL
-);
-```
-
-### Operations
-- `save(entry)`: `INSERT ... ON CONFLICT DO UPDATE` (upsert), tags→JSON
-- `find_by_id(entry_id)`: Fetch + deserialize tags from JSON
-- `find_all()`: Fetch all + deserialize
-
 ## SentenceTransformersEmbedder
 - **File:** `apps/rag-service/infrastructure/embedder.py`
 - Implements `EmbedderPort`

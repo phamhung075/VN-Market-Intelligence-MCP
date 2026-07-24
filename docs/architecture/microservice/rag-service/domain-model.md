@@ -79,13 +79,6 @@ async search(query_vector, limit, level_filter?, action_code_filter?) -> list[Se
 async count() -> int
 ```
 
-### AnalysisRepositoryPort
-```python
-async save(entry: AnalysisEntry) -> None       # upsert by id
-async find_by_id(entry_id) -> Optional[AnalysisEntry]
-async find_all() -> list[AnalysisEntry]
-```
-
 ### EmbedderPort
 ```python
 async embed(text: str) -> EmbeddingVector

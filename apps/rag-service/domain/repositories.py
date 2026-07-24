@@ -56,22 +56,6 @@ class VectorStorePort(ABC):
         """Return total number of indexed entries."""
 
 
-class AnalysisRepositoryPort(ABC):
-    """Port: SQLite metadata store for AnalysisEntry records."""
-
-    @abstractmethod
-    async def save(self, entry: AnalysisEntry) -> None:
-        """Persist or update an AnalysisEntry (upsert by id)."""
-
-    @abstractmethod
-    async def find_by_id(self, entry_id: str) -> Optional[AnalysisEntry]:
-        """Return entry by id, or None if not found."""
-
-    @abstractmethod
-    async def find_all(self) -> list[AnalysisEntry]:
-        """Return all stored entries."""
-
-
 class EmbedderPort(ABC):
     """Port: text embedding — converts text to EmbeddingVector."""
 

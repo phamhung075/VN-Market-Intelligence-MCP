@@ -126,7 +126,7 @@ class IndexUseCase:
     """
     Application use case: embed content and index in vector store.
 
-    Injection points: vector_store, embedder, analysis_repo (optional)
+    Injection points: vector_store, embedder
     """
 
     def __init__(
