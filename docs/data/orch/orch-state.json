@@ -387,12 +387,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FACTORY-ALERT-router-cleanups",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-ALERT-router-cleanups — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-24T14:14:41Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "updated_at": "2026-07-24T14:23:53Z",
+    "updated_by": "dev-alert-engine",
+    "active_task_id": null,
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -14543,6 +14542,23 @@
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
         "entered_review_at": "2026-07-24T13:52:26Z",
         "dev_result": "DONE-CODE: split apps/alert-engine/cmd/sandbox/main.go (565L) into discovery.go (96L), exec_primitive.go (207L, size-justified), exec_module.go (200L, size-justified), main.go (116L, entry point only) — package main unchanged, no API change. Byte-exact sed line-range extraction (no manual retype), diff of each new file code-tail vs original block = 0 diff lines (4/4). go build ./... clean, go vet ./... clean, go test -count=1 ./... 7/7 packages GREEN, golangci-lint run ./... 0 issues (Fence-A/B/C unaffected — sandbox never imports pkg/infrastructure, no rule extension needed). Sandbox run on all scenarios (-tier=all): 11/11 GREEN, identical to pre-split baseline (also re-verified tier=primitive 9/9, tier=module 2/2, single-file mode, missing-flags and bad-tier error paths — all byte-identical behavior). NBSP (U+00A0) grep across new files: 0 hits. gofmt -l: clean. Journal: docs/agent-memory/decisions/sprint-FACTORY-ALERT-split-sandbox-dev-alert-engine.md. rebuild_required=true but PENDING-USER-GATED (code-only landed, no docker rebuild performed per task constraint)."
+      },
+      {
+        "title": "Delete dead UseCaseExecutor, inject real port into /health, reuse domain severity validation, simplify substring search",
+        "priority": "P2",
+        "zone": "alert-engine",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-ALERT-router-cleanups",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-ALERT-router-cleanups",
+        "promoted_at": "2026-07-24T14:14:41Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-24T14:24:03Z",
+        "claimed_at": "2026-07-24T14:14:41Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "entered_review_at": "2026-07-24T14:23:53Z",
+        "dev_result": "DONE-CODE: 4 small cleanups in router.go+sqlite.go. (1) Deleted orphaned UseCaseExecutor interface, zero refs confirmed via repo-wide grep. (2) INTENTIONAL FIX: threaded cfg.Port into NewRouter(uc,port) -> handleHealth(port), cmd/server/main.go now passes cfg.Port instead of hardcoded 5006; added TestHealth_ReflectsConfiguredPort (port=6123) as regression lock. (3) Replaced inline validSeverities map with domain.AlertSeverity(body.Severity).IsValid() -- proved set equality first (IsValid accepts exactly low/medium/high/critical, identical to inline map); 400 message text byte-identical. (4) Replaced hand-rolled containsStr/findSubstr with strings.Contains -- proved old scanner was CASE-SENSITIVE (no ToLower anywhere) so strings.Contains is exact semantic match; hoisted outcomeLookbackDays=90/defaultPendingLimit=100 to named consts. Verify: go build/vet/test ./... green, golangci-lint 0 issues, sandbox harness 11/11 PASS. Docs: api-reference.md /health note updated (graphify --update attempted, structurally unavailable -- no LLM API key in shell env, logged not silently skipped). Journal: docs/agent-memory/decisions/sprint-FACTORY-ALERT-router-cleanups-dev-alert-engine.md. Commits: fb5fc9d4c code, a3bc53270 journal. rebuild_required=true but PENDING-USER-GATED (code-only landed, no docker rebuild performed per task constraint)."
       }
     ],
     "qa": [],
@@ -14564,23 +14580,7 @@
     },
     "last_triaged_at": "2026-07-24T14:14:41Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "title": "Delete dead UseCaseExecutor, inject real port into /health, reuse domain severity validation, simplify substring search",
-        "priority": "P2",
-        "zone": "alert-engine",
-        "type": "FACTORY",
-        "status": "IN_PROGRESS",
-        "id": "FACTORY-ALERT-router-cleanups",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-ALERT-router-cleanups",
-        "promoted_at": "2026-07-24T14:14:41Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-24T14:14:42Z",
-        "claimed_at": "2026-07-24T14:14:41Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
