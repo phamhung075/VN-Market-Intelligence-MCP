@@ -1,6 +1,31 @@
 # dev-frontend notebook
 
-**Last updated:** 2026-07-09 | **Sprint:** SYSTEMIC-REMAKE-P1
+**Last updated:** 2026-07-24 | **Sprint:** FACTORY-FRONTEND-split-market-summaries
+
+---
+
+## Session: 2026-07-24 (FACTORY-FRONTEND-split-market-summaries — BOUNDED-1 idle-pickup)
+
+**FACTORY-FRONTEND-split-market-summaries DONE-CODE (rebuild-verify deferred) — 955L route split into domain formatters + 12 components**
+
+Zone health: 83 test files; 2047 pass / 2 fail (pre-existing QUE-TOOLTIP, unrelated — confirmed still red with this change stashed out via git-stash A/B); tsc 0 errors | HEALTHY
+
+Task: same split pattern as FACTORY-FRONTEND-split-dashboard-analysis — `dashboard.market-summaries.tsx` (list/detail dual-mode route).
+
+Files created:
+- `domain/market-summaries/format.ts` — 9 pure helpers moved verbatim (PERIOD_LABELS, formatDateRange, formatChangePct, changePctColorClass, directionArrow, directionArrowColorClass, outlookLabel, outlookColorClass, filterTickers). Ticket named only 5; extended to all 9 to avoid a route<->components circular import (the other 4 feed the split-out table components) — see decision journal S1/S2.
+- `components/market-summaries/{PeriodBadge,CountChip,PeriodPicker,SummaryCard,TickerFilteredTable,KeyEventsSection,SectionHeader,ListView,StockPerformanceTable,RecommendationsTable,DetailView,DetailContent}.tsx` — 12 files, all <=120L (DetailView needed a 2nd split into DetailView+DetailContent after 1st pass landed at 131L)
+
+Files updated:
+- `routes/dashboard.market-summaries.tsx` — 955L→324L; types + `fetchSummaries` (verified inline here, NOT in `lib/api/client.ts` as the ticket assumed — left in place) + loader + thin ListView/DetailView composition remain; re-exports the 9 domain helpers for backward-compat
+- `__tests__/task17-market-summaries-loader.test.ts` — 9 helper imports re-pointed `~/routes/...` → `~/domain/market-summaries/format`; fetchSummaries+types unchanged
+- `docs/architecture/microservice/frontend/domain-model.md` — split documented (mirrors dashboard.analysis.tsx precedent section)
+
+Equivalence proof (scratch, uncommitted, deleted after run): reference-identity (route re-export === domain export, same fn object) + golden-value assertions for all 9 helpers + proof canonical `change-pct.ts`/`direction-arrow.ts` return OBJECTS with `text-green-400` (confirms NOT reused) — 19/19 pass.
+
+Commit: `e2f18a897` | tsc: 0 errors | vitest: 2047 pass / 2049 (same 2 pre-existing fail as baseline)
+
+rebuild_required=true but SCOPE-BOUND to CODE-ONLY per task — NO rebuild performed (user-gated, one just ran). Live Playwright G12 render-gate DEFERRED to next rebuild batch; board flipped `in_progress`→`review`, `next_agent=qa`.
 
 ---
 
@@ -49,30 +74,6 @@ RAW-verify: ran 7 representative (ta, reading, prices) tuples through the moved 
 Commit: `2819d710c` | tsc: 0 errors | vitest: 2047 pass / 2 pre-existing fail | eslint: clean (no new errors vs pre-change baseline)
 
 rebuild_required=true — route file touched; board flipped `in_progress`→`review`, `next_agent=ops` for Docker Close Gate.
-
----
-
-## Session: 2026-07-02 (TASK-DASH-CRON-2 — Cron Recheck Table UI, Zone 2)
-
-**TASK-DASH-CRON-2 DONE (implementation) — CronRecheckTable added to /dashboard/orchestration**
-
-Zone health: 83 test files; 2047 pass / 2 fail (pre-existing QUE-TOOLTIP); tsc 0 errors; Playwright 4/4 GREEN (verified against a fresh isolated local dev server — see GOTCHA below) | HEALTHY
-
-Task: build `GET /api/cron-status` proxy + `CronRecheckTable` UI section per `docs/handoffs/TASK-DASH-CRON-2.md` — Zone 2 of DASH-CRON-RECHECK-TABLE sprint, depends on TASK-DASH-CRON-1 (dev-mcp-server, APPROVED r3 commit `82907e5d`).
-
-Files created:
-- `routes/api.cron-status.tsx` — proxy, byte-for-byte mirror of `api.orchestration.tsx` (FR-4.1)
-- `__tests__/TASK-DASH-CRON-2-cron-recheck-table.test.ts` — 41 assertions: `parseCronStatusDto`, `normalizeCronStatusA/B`, `normalizeCronRowA/B`, `cronStatusBadgeClasses`, `CRON_STATUS_LABELS`, `cronLayerLabel`
-
-Files updated:
-- `routes/dashboard.orchestration.tsx` — CronStatusDto types + `parseCronStatusDto` (mirrors `parseOrchStateDto`); loader `Promise.all`'s `/api/cron-status` alongside `/api/orchestration` (CN-4, parallel, no added latency); `CronRecheckTable`/`CronLayerTable`/`CronStatusBadge` components, rendered OUTSIDE the `state ? (...) : (...)` conditional (independent surface, AC-16/AC-25); RECHECK reuses existing `revalidator`; 2nd `FreshnessBadge` (slaTierKey=realtime); Layer-A/B visually distinct sub-sections; Layer-B `status` unconditionally forced `SESSION_SCOPED` (stronger than spec minimum — defends AC-14/NFR-7 even under malformed upstream); "Chưa từng chạy" for null `last_fire` (AC-20); all VN copy (AC-28)
-- `docs/data/frontend-data-coverage-map.json` — +1 row incl. `route` field (BA's own FR-6 example omitted it; architect-flagged), rows 49→50, LIVE 39→40
-
-GOTCHA (load-bearing for future Playwright runs): port 3001 is bound by the LIVE `frontend` Docker container (stale image, un-rebuilt) — Playwright's `webServer.reuseExistingServer: !CI` silently piggybacks on it instead of spawning a fresh dev server, which would false-green the G12 gate against OLD code with zero signal on the actual diff. Fix: `PLAYWRIGHT_PORT=<unused> npm run test:e2e` forces a genuinely fresh local Vite server on an unused port. No Docker container touched/rebuilt/restarted.
-
-Container note: mcp-server rebuild for Zone 1 still user-gated — `GET /api/cron-status` 404s live today; proxy relays as-is, loader degrades to empty-shape DTO, table shows "Không có dữ liệu." until the rebuild ships (expected, not a defect).
-
-Commit: `b563c0d2` (code+tests+docs), `3a29d352` (orch-state board) | tsc: 0 errors | vitest: 2047 pass / 2 pre-existing fail | Playwright: 4/4 GREEN (isolated port)
 
 ---
 
