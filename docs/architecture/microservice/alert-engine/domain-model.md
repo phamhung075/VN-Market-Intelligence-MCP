@@ -84,10 +84,12 @@ are no longer on the live path:
 | `shouldSuppressAlert` | `pkg/primitive/cooldown-gate.Check` (+ `pkg/primitive/signal-classifier.Classify` for severity) |
 | `IsDuplicate` | `AlertRepositoryPort.HasDuplicateFingerprint` (dedup check moved to the repository) |
 
-The originals are frozen, unimported dead code at
-`apps/alert-engine/pkg/domain/_deprecated/services_v1.go` (verified
-FACTORY-ALERT-consolidate-dual-engines: zero non-test imports across the repo)
-— kept only as a historical reference, never resurrected.
+The originals lived at `apps/alert-engine/pkg/domain/_deprecated/services_v1.go`
+(a build-excluded, zero-non-test-import dead package per
+FACTORY-ALERT-consolidate-dual-engines) and were deleted
+2026-07-24 (FACTORY-ALERT-delete-deprecated-domain, maintainability audit
+2026-06-15) — superseded primitives above are the sole live implementation;
+history is in git, not on disk.
 
 ## Error Types
 - `AlertEngineError` (base, `pkg/domain/errors.go`)
