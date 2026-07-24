@@ -62,3 +62,13 @@
 - Skip new tests since the fix pre-exists — rejected: no test in the repo asserted against the REAL exported shape (existing precedent test hand-mirrors the schema, a drift risk) or drove the literal news-scout repro call through a real McpServer end-to-end.
 **why-decision:** Closing a duplicate/stale backlog row correctly means proving the ALREADY-LANDED fix against this task's own literal verification_gate with non-redundant, drift-proof coverage — not re-implementing or reverting a shipped design.
 **why-change:** No production behavior change — this is a stale-backlog-row closure (dedup gap), not a functional fix; only export+test additions, zero handler/schema semantics changed.
+
+### STEP dev-mcp-server-S7 · dev-mcp-server · 2026-07-24T23:40:00Z
+**task-id:** FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW
+**what-done:** `get_bctc_pending_refine`'s default query had NO SQL LIMIT when `limit` was omitted -> unbounded rows x windows[] produced the 235K-char inline overflow (bridge file-path fallback). Added `DEFAULT_LIMIT=20`/`MAX_LIMIT=100` zod defaults + a new `offset` param paired with the existing SQL LIMIT (native LIMIT/OFFSET, same mechanism `limit` already used) on both Branch 2 (ticker) and Branch 3 (default) queries. Updated both zod schema copies (internal `InputSchema` + the MCP-registration inline shape) and the tool description/docs to document the offset+=limit paging contract.
+**what-considered:**
+- Invent a cursor/`has_more` response envelope (object wrapper) vs plain offset+limit array — chose plain array: grepped the whole codebase for an existing MCP-tool pagination convention first (none found — only HTTP dashboard routes use DEFAULT_LIMIT/MAX_LIMIT clamping, no tool uses offset/cursor); wrapping the array would break the documented `Array<...>` contract and the live `refine_bctc_md` flow's `result[0]` destructuring for zero benefit (length<limit is a sufficient, standard end-of-page signal).
+- `.default(N).optional()` vs `.optional().default(N)` zod chain order — live-verified `z.number().default(20).optional().parse(undefined)` returns `undefined` (default never fires; matches the exact latent bug already present in `marketMessageTools.ts:234`, not fixed here — out of zone). Used `.optional().default(N)` (correct order) so the AC-c "default applied when limit omitted" test-first requirement actually holds.
+**why-decision:** LIMIT/OFFSET reuses the query's own existing SQL LIMIT clause (zero new query-shape risk) and matches the fix_spec's explicit "reuse whatever pagination convention already exists, don't invent one" mandate — since no tool-level convention existed, the closest true SSOT was the SQL mechanism the query already had half-built.
+**why-change:** no change from task brief.
+
