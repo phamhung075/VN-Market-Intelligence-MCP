@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FACTORY-ALERT-shared-vocab-package",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-ALERT-shared-vocab-package — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-24T13:14:40Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "FACTORY-ALERT-shared-vocab-package closed out by dev-alert-engine (REVIEW, next_agent=qa) — idle, awaiting next dispatch.",
+    "updated_at": "2026-07-24T13:22:00Z",
+    "updated_by": "dev-alert-engine"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -14526,6 +14526,24 @@
         "review_note": "CLOSEOUT CAVEAT (dispatcher): literal DoD met — mapper_test.go 13/13 green (indep re-verified). BUT scope front-loaded: dev created a NEW primitive apps/stock-price/pkg/primitive/vndirect-quote-mapper/mapper.go (MapPayload/MapItem) — that is the paired FACTORY-STOCK-extract-vndirect-mapper deliverable, not this test-only task. fetchers.go is NOT rewired: its inline *1000/floor mapping still serves the live Price and remains UNTESTED; mapping logic is now DUPLICATED (mapper.go copy vs fetchers.go inline). Tests guard the COPY, not the served path. mapper.go==fetchers.go equivalence is dev-ASSERTED, not test-proven. Served-path coverage + dedup complete ONLY after FACTORY-STOCK-extract-vndirect-mapper rewires fetchers.go->mapper.go (must golden-diff equivalence first).",
         "review_note_by": "dev-team",
         "review_note_at": "2026-07-24T12:55:51Z"
+      },
+      {
+        "title": "Collapse triple-declared severity/channel constants (Fence-aware)",
+        "priority": "P2",
+        "zone": "alert-engine",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-ALERT-shared-vocab-package",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-ALERT-shared-vocab-package",
+        "promoted_at": "2026-07-24T13:14:40Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-24T13:20:58Z",
+        "claimed_at": "2026-07-24T13:14:40Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "reviewed_at": "2026-07-24T13:22:00Z",
+        "reviewed_by": "dev-alert-engine"
       }
     ],
     "qa": [],
@@ -14547,23 +14565,7 @@
     },
     "last_triaged_at": "2026-07-24T13:14:40Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "title": "Collapse triple-declared severity/channel constants (Fence-aware)",
-        "priority": "P2",
-        "zone": "alert-engine",
-        "type": "FACTORY",
-        "status": "IN_PROGRESS",
-        "id": "FACTORY-ALERT-shared-vocab-package",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-ALERT-shared-vocab-package",
-        "promoted_at": "2026-07-24T13:14:40Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-24T13:14:40Z",
-        "claimed_at": "2026-07-24T13:14:40Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
