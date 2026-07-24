@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FACTORY-INTERFACE-vps-auth-guard-dedup",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-INTERFACE-vps-auth-guard-dedup — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-24T01:44:28Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "idle — FACTORY-INTERFACE-vps-auth-guard-dedup closed out to REVIEW by dev-mcp-server; router to dispatch qa next",
+    "updated_at": "2026-07-24T02:05:06Z",
+    "updated_by": "dev-mcp-server (FACTORY-INTERFACE-vps-auth-guard-dedup self-closeout)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -14363,6 +14363,24 @@
         "next_agent": "qa",
         "reviewed_at": "2026-07-24T01:22:19Z",
         "reviewed_by": "dev-alert-engine"
+      },
+      {
+        "title": "Extract one requireVpsApiKey guard; replace 15+ copy-paste auth blocks",
+        "priority": "P2",
+        "zone": "mcp-server-interface",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-INTERFACE-vps-auth-guard-dedup",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INTERFACE-vps-auth-guard-dedup",
+        "promoted_at": "2026-07-24T01:44:28Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-24T02:05:25Z",
+        "claimed_at": "2026-07-24T01:44:28Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "entered_review_at": "2026-07-24T02:05:06Z",
+        "review_note": "dev-mcp-server self-closeout: migrated last 5 copy-paste VPS-auth blocks (pushPricesHandler/pushSbvRatesHandler/pushNewsHandler/pushForeignFlowHandler/server.ts GET /api/watchlist) onto the existing shared requireVpsApiKey guard (15 other call sites already used it, per FACTORY-INTERFACE-split-server-ts Stage 1 bce8be44b). Byte-compared before migrating; foreignFlowStatusHandler.ts's buildForeignFlowStatusResponse deliberately left unmigrated (same predicate, returns {status,body} not res-write, own dedicated HTTP-free test suite). New FACTORY-INTERFACE-vps-auth-guard-dedup.test.ts: 6 guard unit tests + 5 live-HTTP e2e tests, 11/11 pass. tsc clean. git-stash A/B on the 5 touched files: 38/38 pass pre, 71/71 pass post, zero regressions. Full bun test: 14726 pass/40 skip/42 fail/1 error — 42-fail matches todays already-documented pre-existing baseline (vps_push_log schema-drift + 5000ms MCP-client-timeout classes), zero Unauthorized-string failures anywhere, zero fails in any of the 6 auth-relevant test files. Live boot probe: /health 200, unauthenticated GET /api/watchlist 401, toolCount=184/cronJobCount=88 unchanged. Commit cf28a32e8. Journal: docs/agent-memory/decisions/sprint-FACTORY-INTERFACE-vps-auth-guard-dedup-dev-mcp-server.md"
       }
     ],
     "qa": [],
@@ -14384,23 +14402,7 @@
     },
     "last_triaged_at": "2026-07-24T01:44:28Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "title": "Extract one requireVpsApiKey guard; replace 15+ copy-paste auth blocks",
-        "priority": "P2",
-        "zone": "mcp-server-interface",
-        "type": "FACTORY",
-        "status": "IN_PROGRESS",
-        "id": "FACTORY-INTERFACE-vps-auth-guard-dedup",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INTERFACE-vps-auth-guard-dedup",
-        "promoted_at": "2026-07-24T01:44:28Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-24T01:44:28Z",
-        "claimed_at": "2026-07-24T01:44:28Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
