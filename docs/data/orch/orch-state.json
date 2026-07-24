@@ -387,12 +387,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FACTORY-NEWS-go-server-tier-split",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-NEWS-go-server-tier-split — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-24T15:48:26Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "updated_at": "2026-07-24T15:59:50Z",
+    "updated_by": "developer"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -14565,6 +14564,23 @@
         "updated_at": "2026-07-24T15:34:27Z",
         "claimed_at": "2026-07-24T15:22:45Z",
         "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      },
+      {
+        "title": "Move Go news-fetch HTTP handlers out of the fat composition root",
+        "priority": "P2",
+        "zone": "news-fetch",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-NEWS-go-server-tier-split",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-NEWS-go-server-tier-split",
+        "promoted_at": "2026-07-24T15:48:26Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-24T15:59:50Z",
+        "claimed_at": "2026-07-24T15:48:26Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "entered_review_at": "2026-07-24T15:59:50Z",
+        "dev_result": "DONE-CODE: apps/news-fetch/cmd/server/main.go (254L, package main) mixed HTTP handlers with env/store/fetcher composition-root wiring; two bare-20 fetch-limit literals (NewVnEconomyFetcher/NewVnExpressFetcher) and a hardcoded \"port\":5008 duplicating the env-resolved port var. New internal/httpapi/{router.go,handlers.go} -- Router(fetchers Fetchers, s *store.Store, logger *slog.Logger, port string) *chi.Mux wires the 6 routes; moved handleHealth/handleRSSFetch/handleFetchAll/fetchResult/writeJSON verbatim (byte-identical logic, only relocated). main.go now 138L -- env reads, store.Open, fetcher construction, Router(...) call, graceful shutdown only. Added envInt(\"RSS_MAX_ITEMS\", 20) (new const defaultRSSMaxItems=20), passed to both fetcher constructors replacing the bare 20 literals. /health port field now strconv.Atoi(port) of the resolved env var (kept int type -- api/openapi.yaml documents port: integer, a string type would silently break the contract). go build ./..., go vet ./..., gofmt -l all clean on the 3 touched files. go test ./... 2/2 packages pass, zero regressions (httpapi has no dedicated test file -- handlers are pure relocations of already-covered logic). RAW-verify (not just tests): built the binary and ran it locally with PORT=15008 RSS_MAX_ITEMS=7 -- GET /health returned {\"port\":15008} (proving derivation, not the old hardcoded literal); POST /vneconomy/fetch + /fetch/all hit the live vneconomy.vn/vnexpress.net RSS feeds and persisted 13/7 real articles into the rag_analyses SQLite table (confirmed via direct sqlite3 query, source_type=vneconomy row inspected); /newsapi + /vps (no key/host configured) returned the same deterministic zero-insert JSON shape as pre-refactor. grep-verified 0 residual bare 20 (only the one named const) and 0 residual 5008 literal in any JSON-building path (only remaining occurrence is the legitimate envStr(\"PORT\",\"5008\") fallback default, unrelated to the health-JSON bug). Journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md (STEP developer-S6). Commits: 5bce393a7 code, b9665aff0 memory (journal+notebook+WORK.md). rebuild_required=true but PENDING-USER-GATED (code-only landed, no docker rebuild performed per task constraint)."
       }
     ],
     "qa": [],
@@ -14586,23 +14602,7 @@
     },
     "last_triaged_at": "2026-07-24T15:48:26Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "title": "Move Go news-fetch HTTP handlers out of the fat composition root",
-        "priority": "P2",
-        "zone": "news-fetch",
-        "type": "FACTORY",
-        "status": "IN_PROGRESS",
-        "id": "FACTORY-NEWS-go-server-tier-split",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-NEWS-go-server-tier-split",
-        "promoted_at": "2026-07-24T15:48:26Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-24T15:48:26Z",
-        "claimed_at": "2026-07-24T15:48:26Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
