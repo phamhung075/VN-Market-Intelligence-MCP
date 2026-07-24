@@ -43,3 +43,13 @@
 - Wait for the imminent 16:00 UTC tick for a byte-for-byte fresh send vs close on the 4-day unbroken streak + fresh env-probe — chose close now: the extra tick would only add one more `success` row (near-certain given the streak), not a new delivery-observability channel (no message-id persisted anywhere for WORK sends either way) — marginal evidence for wall-clock cost.
 **why-decision:** All 3 preconditions (cron fires, hasIssues true, Telegram env live+enabled) independently confirmed via real runtime state, not the checklist row alone; AC-6/AC-7 unit tests (157-data-audit-job.test.ts, 18/18) match live behavior.
 **why-change:** no change from task brief — outcome is "no fix needed", verification-only per dispatch instructions.
+
+### STEP dev-mcp-server-S5 · dev-mcp-server · 2026-07-24T21:20:00Z
+**task-id:** FIX-OHLCV-CORP-ACTION-CONTINUITY
+**what-done:** Added domain service `ohlcvContinuityGuard.ts` (per-exchange board-limit resolution + adjacent-bar discontinuity detector + reconcile-or-flag) and application usecase `getContinuityCheckedOhlcvSeries.ts`; wired both `daily_ohlcv` read sites in `get_technical_indicators` (technicalIndicatorTools.ts) through it so a corp-action-discontinuous bar can no longer feed RSI/MACD/BB.
+**what-considered:**
+- Hardcode a single board-limit % (rejected — ticket explicitly requires resolving the real per-exchange limit HOSE/HNX/UPCOM, not one value)
+- Build a full corp-action calendar/adjustment-factor source to always auto-reconcile (rejected — no such live data source exists in this pipeline; left as a pluggable extension point `ReconcileOptions.knownAdjustmentFactor` for a future source)
+- Guard at write-time (ohlcvWriteService) vs read/serving-time — chose read-time: a boundary is only detectable once the NEXT bar exists (need the post-boundary close to compute the move), so it cannot run at single-row write time; must scan the served series.
+**why-decision:** Read-time guard placed in the exact path the 2026-06-16 behavioral gate (Class 4, real VJC -24.87% HOSE move) identified as the poisoning point (get_technical_indicators local closes) directly closes the documented live incident with a generic (no ticker/date literal) mechanism; tests use the REAL VJC 2026-06-08..19 series fetched live from the production DB (no fabricated bars).
+**why-change:** no change from plan — ticket's file target ("apps/mcp-server OHLCV continuity/adjustment layer (new)") matched this design 1:1.
