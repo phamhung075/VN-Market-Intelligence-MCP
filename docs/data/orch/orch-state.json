@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "FACTORY-PDF-extract-tesseract-config self-closed by dev-pdf-extractor -> REVIEW, next_agent=qa. Board idle, ready for next dispatch.",
-    "updated_at": "2026-07-24T09:33:45Z",
-    "updated_by": "dev-pdf-extractor"
+    "status": "in_progress",
+    "active_task_id": "FACTORY-FRONTEND-split-market-summaries",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-FRONTEND-split-market-summaries — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-24T09:44:29Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6268,15 +6268,6 @@
         "status": "BACKLOG",
         "id": "FACTORY-PDF-split-handlers",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-PDF-split-handlers"
-      },
-      {
-        "title": "Move market-summaries pure helpers to domain; split list/detail JSX",
-        "priority": "P2",
-        "zone": "frontend",
-        "type": "FACTORY",
-        "status": "BACKLOG",
-        "id": "FACTORY-FRONTEND-split-market-summaries",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-FRONTEND-split-market-summaries"
       },
       {
         "title": "Reconcile and dedup directionArrow/changePct formatters (behavior decision)",
@@ -14491,9 +14482,25 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-24T09:14:31Z",
+    "last_triaged_at": "2026-07-24T09:44:29Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "title": "Move market-summaries pure helpers to domain; split list/detail JSX",
+        "priority": "P2",
+        "zone": "frontend",
+        "type": "FACTORY",
+        "status": "IN_PROGRESS",
+        "id": "FACTORY-FRONTEND-split-market-summaries",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-FRONTEND-split-market-summaries",
+        "promoted_at": "2026-07-24T09:44:29Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-24T09:44:30Z",
+        "claimed_at": "2026-07-24T09:44:29Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
