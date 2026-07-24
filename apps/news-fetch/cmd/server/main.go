@@ -3,35 +3,43 @@
 // Ports the Node/Bun news-fetch service RSS/API paths to Go.
 // Out of scope: Playwright/chromium scraping (stays in mcp-server).
 //
-// HTTP server on port 5008 (matches existing Node service port mapping).
+// HTTP server on port 5008 by default (matches existing Node service port
+// mapping; override via env PORT — see envStr below).
 // SQLite via modernc.org/sqlite (CGO_ENABLED=0, pure-Go).
 //
-// Endpoints:
-//   GET /health               → 200 {"status":"ok"}
-//   POST /vneconomy/fetch     → fetch + store vneconomy RSS articles
-//   POST /vnexpress/fetch     → fetch + store vnexpress RSS articles
-//   POST /newsapi/fetch       → fetch + store newsapi articles (stub when no key)
-//   POST /vps/fetch           → fetch + store VPS proxy articles (stub when no host)
-//   POST /fetch/all           → run all four sources in sequence
+// HTTP handlers live in internal/httpapi (httpapi.Router) — this file is a
+// thin composition root: env reads, store.Open, fetcher construction,
+// graceful shutdown. No handler/routing logic here.
+//
+// Endpoints (see internal/httpapi for handler implementations):
+//
+//	GET /health               → 200 {"status":"ok","service":"news-fetch","port":<port>}
+//	POST /vneconomy/fetch     → fetch + store vneconomy RSS articles
+//	POST /vnexpress/fetch     → fetch + store vnexpress RSS articles
+//	POST /newsapi/fetch       → fetch + store newsapi articles (stub when no key)
+//	POST /vps/fetch           → fetch + store VPS proxy articles (stub when no host)
+//	POST /fetch/all           → run all four sources in sequence
 package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
-
 	"github.com/vn-market-intelligence/news-fetch/internal/fetcher"
+	"github.com/vn-market-intelligence/news-fetch/internal/httpapi"
 	"github.com/vn-market-intelligence/news-fetch/internal/store"
 )
+
+// defaultRSSMaxItems is the fetch-limit fallback used when RSS_MAX_ITEMS is
+// unset or invalid (matches the fetcher package's own internal default).
+const defaultRSSMaxItems = 20
 
 func main() {
 	port := envStr("PORT", "5008")
@@ -39,6 +47,7 @@ func main() {
 	vpsHost := envStr("VPS_HOST", "")
 	newsAPIKey := envStr("NEWSAPI_KEY", "")
 	newsAPIEnabled := newsAPIKey != ""
+	rssMaxItems := envInt("RSS_MAX_ITEMS", defaultRSSMaxItems)
 
 	logLevel := slog.LevelInfo
 	if os.Getenv("LOG_LEVEL") == "DEBUG" {
@@ -56,8 +65,8 @@ func main() {
 	defer s.Close()
 
 	// ── Fetchers ─────────────────────────────────────────────────────────────
-	vnEconomyFetcher := fetcher.NewVnEconomyFetcher(nil, 20)
-	vnExpressFetcher := fetcher.NewVnExpressFetcher(nil, 20)
+	vnEconomyFetcher := fetcher.NewVnEconomyFetcher(nil, rssMaxItems)
+	vnExpressFetcher := fetcher.NewVnExpressFetcher(nil, rssMaxItems)
 	newsAPIFetcher := fetcher.NewNewsAPIFetcher(fetcher.NewsAPIConfig{
 		APIKey:  newsAPIKey,
 		Enabled: newsAPIEnabled,
@@ -65,22 +74,12 @@ func main() {
 	vpsProxyFetcher := fetcher.NewVPSProxyFetcher(vpsHost, nil)
 
 	// ── Router ───────────────────────────────────────────────────────────────
-	r := chi.NewRouter()
-	r.Use(middleware.RequestID)
-	r.Use(middleware.Recoverer)
-
-	r.Get("/health", handleHealth())
-	r.Post("/vneconomy/fetch", handleRSSFetch("vneconomy", vnEconomyFetcher.Fetch, s, logger))
-	r.Post("/vnexpress/fetch", handleRSSFetch("vnexpress", vnExpressFetcher.Fetch, s, logger))
-	r.Post("/newsapi/fetch", handleRSSFetch("newsapi", newsAPIFetcher.Fetch, s, logger))
-	r.Post("/vps/fetch", handleRSSFetch("vps_proxy", vpsProxyFetcher.Fetch, s, logger))
-	r.Post("/fetch/all", handleFetchAll(
-		vnEconomyFetcher.Fetch,
-		vnExpressFetcher.Fetch,
-		newsAPIFetcher.Fetch,
-		vpsProxyFetcher.Fetch,
-		s, logger,
-	))
+	r := httpapi.Router(httpapi.Fetchers{
+		VnEconomy: vnEconomyFetcher.Fetch,
+		VnExpress: vnExpressFetcher.Fetch,
+		NewsAPI:   newsAPIFetcher.Fetch,
+		VPSProxy:  vpsProxyFetcher.Fetch,
+	}, s, logger, port)
 
 	// ── HTTP server ───────────────────────────────────────────────────────────
 	addr := fmt.Sprintf(":%s", port)
@@ -115,140 +114,25 @@ func main() {
 	slog.Info("news-fetch stopped")
 }
 
-// handleHealth serves GET /health → 200 {"status":"ok"}.
-func handleHealth() http.HandlerFunc {
-	return func(w http.ResponseWriter, _ *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte(`{"status":"ok","service":"news-fetch","port":5008}`))
-	}
-}
-
-// fetchFunc is the signature shared by all fetcher.Fetch methods.
-type fetchFunc func(ctx context.Context) ([]fetcher.RssItem, error)
-
-// fetchResult is the JSON response shape for fetch endpoints.
-type fetchResult struct {
-	Source    string `json:"source"`
-	Inserted  int    `json:"inserted"`
-	FetchedAt string `json:"fetched_at"`
-	Error     string `json:"error,omitempty"`
-}
-
-// handleRSSFetch returns an HTTP handler that runs a single fetch source and
-// persists the results to SQLite.
-func handleRSSFetch(source string, fn fetchFunc, s *store.Store, logger *slog.Logger) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
-		defer cancel()
-
-		items, err := fn(ctx)
-		if err != nil {
-			logger.Error("fetch error", "source", source, "error", err)
-			writeJSON(w, http.StatusInternalServerError, fetchResult{
-				Source:    source,
-				FetchedAt: time.Now().UTC().Format(time.RFC3339),
-				Error:     err.Error(),
-			})
-			return
-		}
-
-		inserted := 0
-		for _, it := range items {
-			ni := store.NewsItem{
-				ID:          it.ID,
-				SourceURL:   it.URL,
-				SourceTitle: it.Title,
-				SourceType:  it.Source,
-				PublishedAt: it.PublishedAt,
-				CreatedAt:   it.FetchedAt,
-			}
-			if dbErr := s.UpsertNewsItem(ni); dbErr != nil {
-				logger.Warn("store insert failed", "source", source, "id", it.ID, "error", dbErr)
-				continue
-			}
-			inserted++
-		}
-
-		writeJSON(w, http.StatusOK, fetchResult{
-			Source:    source,
-			Inserted:  inserted,
-			FetchedAt: time.Now().UTC().Format(time.RFC3339),
-		})
-	}
-}
-
-// handleFetchAll runs all four fetch sources sequentially and returns a summary.
-func handleFetchAll(
-	vnEconomy, vnExpress, newsAPI, vpsProxy fetchFunc,
-	s *store.Store, logger *slog.Logger,
-) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, cancel := context.WithTimeout(r.Context(), 90*time.Second)
-		defer cancel()
-
-		sources := []struct {
-			name string
-			fn   fetchFunc
-		}{
-			{"vneconomy", vnEconomy},
-			{"vnexpress", vnExpress},
-			{"newsapi", newsAPI},
-			{"vps_proxy", vpsProxy},
-		}
-
-		type summary struct {
-			Source   string `json:"source"`
-			Inserted int    `json:"inserted"`
-			Error    string `json:"error,omitempty"`
-		}
-		results := make([]summary, 0, len(sources))
-
-		for _, src := range sources {
-			items, err := src.fn(ctx)
-			if err != nil {
-				logger.Error("fetch/all: source error", "source", src.name, "error", err)
-				results = append(results, summary{Source: src.name, Error: err.Error()})
-				continue
-			}
-			ins := 0
-			for _, it := range items {
-				ni := store.NewsItem{
-					ID:          it.ID,
-					SourceURL:   it.URL,
-					SourceTitle: it.Title,
-					SourceType:  it.Source,
-					PublishedAt: it.PublishedAt,
-					CreatedAt:   it.FetchedAt,
-				}
-				if dbErr := s.UpsertNewsItem(ni); dbErr != nil {
-					logger.Warn("fetch/all: store error", "source", src.name, "id", it.ID, "error", dbErr)
-					continue
-				}
-				ins++
-			}
-			results = append(results, summary{Source: src.name, Inserted: ins})
-		}
-
-		writeJSON(w, http.StatusOK, map[string]interface{}{
-			"fetched_at": time.Now().UTC().Format(time.RFC3339),
-			"sources":    results,
-		})
-	}
-}
-
-// writeJSON writes a JSON response with the given status code.
-func writeJSON(w http.ResponseWriter, status int, v interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	if err := json.NewEncoder(w).Encode(v); err != nil {
-		slog.Error("writeJSON encode failed", "error", err)
-	}
-}
-
 func envStr(key, fallback string) string {
 	if v := os.Getenv(key); v != "" {
 		return v
 	}
 	return fallback
+}
+
+// envInt resolves an integer env var, falling back to fallback when unset or
+// unparsable. Used for RSS_MAX_ITEMS so the fetch-limit is no longer a bare
+// literal at either fetcher construction call site.
+func envInt(key string, fallback int) int {
+	v := os.Getenv(key)
+	if v == "" {
+		return fallback
+	}
+	n, err := strconv.Atoi(v)
+	if err != nil {
+		slog.Warn("invalid int env value, using fallback", "key", key, "value", v, "fallback", fallback)
+		return fallback
+	}
+	return n
 }
