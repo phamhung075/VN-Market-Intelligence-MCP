@@ -6,6 +6,22 @@ Zone: `apps/alert-engine/` | Stack: Go 1.22 (migrated from TS/Bun) | DB: alert_e
 
 ---
 
+## Session: 2026-07-24 (FACTORY-ALERT-delete-deprecated-domain)
+
+**Task:** FACTORY-ALERT-delete-deprecated-domain (P2, FACTORY-MAINTAINABILITY-2026-06 audit) — delete dead `_deprecated` domain package.
+
+**Deadness proven at source (not audit-trusted blind):** `go list ./...` never surfaces `pkg/domain/_deprecated` (Go ignores `_`-prefixed dirs, no build tag needed); zero `.go` files repo-wide import the path; its own files reference `AlertRequest`/`StoredAlert`/`CooldownConfig` types not defined anywhere in that directory (live types live in sibling `pkg/domain/models.go`) — would not even compile if forced into the build. Live successors: `pkg/primitive/cooldown-gate` + `pkg/primitive/dedup-key-builder` (both self-document as the brownfield replacement). Corroborated by 2026-07-04 `FACTORY-ALERT-consolidate-dual-engines` (commit 1c45abb1e) which already rewired `cmd/server/main.go` off any `domain.*` path.
+
+**Fix:** `git rm -r apps/alert-engine/pkg/domain/_deprecated/` (services_v1.go 150L + services_v1_test.go 148L = 298L removed). Updated `docs/architecture/microservice/alert-engine/domain-model.md` (documented file path no longer exists).
+
+**Verify:** go build/vet/test ./... green (identical to pre-delete baseline) + `go test ./pkg/... -count=1` green + golangci-lint 0 issues + sandbox harness 11/11 PASS (`go run ./cmd/sandbox -tier=all -module=alert-engine -scenario=all`).
+
+**Commit:** 314461cbd — refactor(alert-engine): delete dead _deprecated domain package
+
+Zone health: dead-code audit item closed; primitives (cooldown-gate, dedup-key-builder) confirmed sole live implementation; no drift detected.
+
+---
+
 ## Session: 2026-06-15 (FIX-ALERT-ENGINE-RSI-SINGLEDIGIT)
 
 **Task:** FIX-ALERT-ENGINE-RSI-SINGLEDIGIT — candle-depth guard for taAlertScanJob.
@@ -44,32 +60,3 @@ Zone health: taAlertScanJob properly guarded; 22/22 TA tests GREEN; no drift det
 **Files verified (no changes):** `cmd/server/main.go`, `pkg/interface/http/router.go`, `Dockerfile`, `.golangci.yml`, `go.mod`, `docker-compose.yml`
 
 **Outcome:** GATE PASSED ✓ — ready for deploy. Zero commits required.
-
----
-
-## Archive: Earlier Sessions (2026-05-24 through 2026-05-14)
-
-**2026-05-24 (Phase-2 Gate Closure — 8 sessions)**
-- P2-M: Single-literal fix (djb2Seed 5382→5381); 1 attempt, all ACs PASS
-- P2-I: Dashboard finalization (deprecated-notice + Phase-2 wired state); all ACs PASS
-- P2-H: Composition root rewire + OpenAPI contract; 7 ACs PASS
-- P2-F: git mv services.go→_deprecated; 7 ACs PASS
-- P2-E: alert-engine-pre-delete tag created; Phase-1 anchor preserved
-- P2-C: Fence-A deliberate violation proof (inject + revert + verify clean); 4 ACs PASS
-- Dashboard category chip relabel: Plain meaning convention applied (commit 099f8819)
-- P2-B: .golangci.yml (v2 format, Fence-A/B/C rules) + CI go-lint job; 5 ACs PASS
-
-**2026-05-20:** FIX-alertsource-legal-risk-enum — added `legal_risk` to WRITE_ALERT_VERDICT_SCHEMA enum (commit 09f80233); 5/5 new tests + 5/5 existing PASS
-
-**2026-05-14 (Go Cutover Sprint c108-c110)**
-- c108-tick3-fix: DDL ordering bug fixed (3-phase: base / ALTER / outcome index); test #17 confirms pre-migration DB works
-- c108-tick2: Go cutover complete — Dockerfile multi-stage, 20 TS files removed, agent .md refreshed (version→2026-05-14)
-- c108 post: 1912b BLK-1 + BLK-2 fixed (7 missing source files committed, .gitignore updated)
-- c108 QA: CHANGES_REQUESTED → re-submitted after fixes
-- 1912b complete: 27/27 go test PASS, off-by-one fixed in evaluate_test.go + services_test.go
-
-All Go implementation complete; infrastructure (SQLite + TelegramClient), application (EvaluateUseCase), and interface (chi router) layers wired. Graceful shutdown (SIGINT/SIGTERM) implemented.
-
----
-
-**Current state:** Phase-2 gate closure complete. Production-ready. All tests PASS. No active work.
