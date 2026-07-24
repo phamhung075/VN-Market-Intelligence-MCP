@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "dev-stock-price completed FACTORY-STOCK-resolve-dead-writeback; moved to review for qa",
-    "updated_at": "2026-07-23T23:52:02Z",
-    "updated_by": "dev-stock-price"
+    "status": "in_progress",
+    "active_task_id": "FACTORY-RAG-delete-dead-sqlite-repo",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-RAG-delete-dead-sqlite-repo — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-24T00:14:29Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6187,15 +6187,6 @@
         "status": "BACKLOG",
         "id": "FACTORY-STOCK-delete-dead-port-and-deprecated",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-STOCK-delete-dead-port-and-deprecated"
-      },
-      {
-        "title": "Delete dead SQLiteAnalysisRepository and phantom AnalysisRepositoryPort",
-        "priority": "P2",
-        "zone": "rag-service",
-        "type": "FACTORY",
-        "status": "BACKLOG",
-        "id": "FACTORY-RAG-delete-dead-sqlite-repo",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-RAG-delete-dead-sqlite-repo"
       },
       {
         "title": "Delete the phantom packages/primitives/technical-analysis package",
@@ -14364,9 +14355,25 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-23T23:44:32Z",
+    "last_triaged_at": "2026-07-24T00:14:29Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "title": "Delete dead SQLiteAnalysisRepository and phantom AnalysisRepositoryPort",
+        "priority": "P2",
+        "zone": "rag-service",
+        "type": "FACTORY",
+        "status": "IN_PROGRESS",
+        "id": "FACTORY-RAG-delete-dead-sqlite-repo",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-RAG-delete-dead-sqlite-repo",
+        "promoted_at": "2026-07-24T00:14:29Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-24T00:14:29Z",
+        "claimed_at": "2026-07-24T00:14:29Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
