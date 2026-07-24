@@ -387,12 +387,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FACTORY-NEWS-dedup-handlers-maxitems",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-NEWS-dedup-handlers-maxitems — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-24T15:22:45Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "updated_at": "2026-07-24T15:34:26Z",
+    "updated_by": "developer",
+    "active_task_id": null,
+    "next_agent": "router"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -14559,6 +14558,21 @@
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
         "entered_review_at": "2026-07-24T14:57:06Z",
         "dev_result": "DONE-CODE: ingestHeadlines(_source,...) ignored its source param, unconditionally emitting BOTH [reuters/headlines] and [bloomberg/headlines] console.warn in every RSS-fallback branch (6 warns total across 3 duplicated pairs -- not 4 pairs as task text estimated, verified by grep -- Bloomberg ingest printed spurious Reuters lines and vice-versa). Fix: renamed _source->source (now used), value-imported NewsSource (was type-only, now needed at runtime for the enum compare), computed tag once (source===NewsSource.REUTERS ? [reuters/headlines] : [bloomberg/headlines] -- confirmed exactly 2 NewsSource members: REUTERS=reuters, BLOOMBERG=bloomberg, in domain/models.ts), collapsed the 3 duplicated pairs to 3 single console.warn calls using the tag. Control flow byte-identical (diffed): same if/else structure, same order, same fallback invocation, same processArticleBatch call -- only console.warn lines + the two import/param lines changed. Warn-line count: 6 -> 3 (halved). RED test added first (source-correct log tag assertions in index.test.ts, 2 new tests) confirmed failing pre-fix, GREEN post-fix. Also updated 3 pre-existing source-text-scan assertions in __tests__/fix-reuters-url-bloomberg-timeout.test.ts that hardcoded the buggy [reuters/headlines]-prefixed literal -- now check the source-agnostic message body (unchanged text), preserving original regression intent without re-encoding the bug. Full suite: bun test 235 pass/0 fail/6 skip (was 233/0/6 baseline, +2 net new tests). bun tsc --noEmit: 0 errors. eslint (lint:ci --max-warnings 0): clean. Sandbox (bun run sandbox --tier=all --module=news-fetch): 16/16 PASS. Security clause: env grep DB_/API_KEY/SECRET/TOKEN/PASSWORD/NEWS_API_KEY returned no credential matches. Journal: docs/agent-memory/decisions/sprint-FACTORY-NEWS-fix-source-logging-developer.md. Commits: fe264aa43 code+tests, e87ae392c journal. rebuild_required=true but PENDING-USER-GATED (code-only landed, no docker rebuild performed per task constraint)."
+      },
+      {
+        "title": "Dedup the 4 headline route handlers + name the 15/10 maxItems defaults",
+        "priority": "P2",
+        "zone": "news-fetch",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-NEWS-dedup-handlers-maxitems",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-NEWS-dedup-handlers-maxitems",
+        "promoted_at": "2026-07-24T15:22:45Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-24T15:34:27Z",
+        "claimed_at": "2026-07-24T15:22:45Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
       }
     ],
     "qa": [],
@@ -14580,23 +14594,7 @@
     },
     "last_triaged_at": "2026-07-24T15:22:45Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "title": "Dedup the 4 headline route handlers + name the 15/10 maxItems defaults",
-        "priority": "P2",
-        "zone": "news-fetch",
-        "type": "FACTORY",
-        "status": "IN_PROGRESS",
-        "id": "FACTORY-NEWS-dedup-handlers-maxitems",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-NEWS-dedup-handlers-maxitems",
-        "promoted_at": "2026-07-24T15:22:45Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-24T15:22:46Z",
-        "claimed_at": "2026-07-24T15:22:45Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
