@@ -6,82 +6,6 @@ Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (writ
 
 ---
 
-## Cycle 2026-07-09 — FACTORY-PDF-delete-deprecated-inspect
-
-**Sprint:** SYSTEMIC-REMAKE-P1 | **Zone:** apps/pdf-extractor/ | **Size:** M | P1
-
-### Deletion
-Removed the deprecated `/inspect` viewer surface (SI-2/PI-2, superseded by mcp-server
-`GET /api/bctc-inspect`, confirmed DONE-on-real-data since `ca955baf1` PO REOPEN-2
-sign-off, actively developed since). Dropped `InspectionStore` import+construction+param
-from `main.py`/`register_routes`; deleted 4 route closures in `handlers.py` (`GET /inspect`,
-`/inspect/pdfs`, `/inspect/pdf/{doc_id}`, `/inspect/extraction/{doc_id}`, -135L incl. dead
-`HTMLResponse`/`Response`/`Path`/`_VIEWER_HTML_PATH` imports); deleted
-`infrastructure/inspection_store.py` + `interface/viewer.html`; deleted 3 tests-only-for-
-this-surface files (72 tests); dropped now-unneeded `inspection_store=` stub kwarg from 3
-unrelated call sites. Real extraction routes (`/extract`, `/extract-layout-first`,
-`/extract-tables`, `/pek-extract`, etc.) untouched.
-
-### RAW-verify
-`grep` zero hits for InspectionStore/inspection_store/viewer.html. Live `create_app()` +
-`TestClient`: `/health`→200, `/inspect`→404, `/inspect/pdfs`→404 (both were live before).
-`pytest -q`: 12 failed/1016 passed/1 skipped — identical 12 pre-existing env failures
-(A/B via git stash); 72-test drop = exactly the 3 deleted files. mypy: same pre-existing
-env error as baseline. `handlers.py` 808→673L, `main.py` 280→271L.
-
-### Commit
-`47453d546` — chore(pdf-extractor): delete deprecated /inspect viewer surface
-
-Zone health: no drift detected.
-
-### Status
-REVIEW → next_agent=ops (rebuild_required: true; ops rebuild+swap, then qa live-verify)
-
----
-
-## Cycle 2026-07-09 — FACTORY-PDF-fix-application-infra-leak
-
-**Sprint:** SYSTEMIC-REMAKE-P1 | **Zone:** apps/pdf-extractor/ | **Size:** M | P1 | epic: FACTORY-MAINTAINABILITY-2026-06 | BOUNDED-1 auto-pickup
-
-### Fix
-`doclang_serialize_usecase.py:18` imported concrete `infrastructure.DocLangSerializer`
-directly — the only `from infrastructure` import in `application/`; import-linter only
-fenced `domain.primitives`/`domain.modules`, so it passed CI silently. Added
-`DocLangSerializerPort` Protocol (`domain/modules/financial_reports/ports.py`, sibling
-to `DocLangWritePort`) typing the `.serialize(tables, report_id) -> str` surface;
-retyped the usecase's `serializer` param to the Port, dropped the infrastructure
-import. `main.py` composition root already wired the concrete `DocLangSerializer`
-positionally — unchanged (Protocols are structural, no explicit `implements`).
-
-### Port typing choice
-`tables: List[Any]` not `List[application.dtos.ExtractedTableDTO]` — importing the
-concrete DTO into `ports.py` would itself be a domain→application leak (file's own
-header: "Zero imports from infrastructure/, application/, interface/"); matches every
-sibling port's Dict/str generic-passthrough convention. mypy structurally accepts
-`List[ExtractedTableDTO]` call-site args against `List[Any]` (Any is bidirectional).
-
-### Import-linter contract
-Added `Fence-C: source=application forbidden=infrastructure,interface` to
-`pyproject.toml`. `lint-imports`: 3 kept / 0 broken (was 2/0) — this class of leak is
-now caught by CI going forward.
-
-### Tests
-`test_doclang_serializer.py`: 13/13 pass (serializer/usecase logic untouched — type+
-import change only). Full suite: 1013 pass/9 fail — A/B via `git stash`: identical 8
-pre-existing env failures; 9th (timeout test) reproduced GREEN in isolation both times
-(flake, unrelated file). mypy: same pre-existing package-name env error as baseline;
-scoped mypy on the 2 changed files: 18 pre-existing errors, byte-identical before/after.
-
-### Commit
-`bfe92c225` — refactor(pdf-extractor/application): FACTORY-PDF-fix-application-infra-leak DocLangSerializerPort
-
-Zone health: no drift detected.
-
-### Status
-REVIEW → next_agent=ops (rebuild_required: true; ops rebuild+swap, then qa live-verify)
-
----
-
 ## Cycle 2026-07-09 — FACTORY-PDF-split-generic-md-table
 
 **Sprint:** SYSTEMIC-REMAKE-P1 | **Zone:** apps/pdf-extractor/ | **Size:** XL | P0 | epic: FACTORY-MAINTAINABILITY-2026-06 | BOUNDED-1 auto-pickup
@@ -176,3 +100,53 @@ Zone health: no drift detected.
 REVIEW (not self-closed — named test still red on unrelated pre-existing
 assertion, see Decision Journal
 `docs/agent-memory/decisions/dev-pdf-extractor-2026-07-09T2300Z-FIX-BCTC-FPT-BT5-BALANCE-GATE.md`)
+
+---
+
+## Cycle 2026-07-24 — FACTORY-PDF-extract-tesseract-config
+
+**Sprint:** n/a (BOUNDED-1 auto-pickup) | **Zone:** apps/pdf-extractor/ | **Size:** M | P2
+
+### Refactor
+Extracted the Tesseract lang/psm/DPI config (copy-pasted across 5 named call
+sites, each with its own "DO NOT remove --psm 6" warning) into new
+`infrastructure/tesseract_config.py` (`TESSERACT_LANG="vie+eng"`,
+`TESSERACT_PSM6_CONFIG="--psm 6"`, `OCR_RASTER_DPI=200`). `generic_md_table_
+extractor.py`'s conceptual call site actually resolved to 2 real files behind
+its FACTORY-PDF-split-generic-md-table shim: `generic_md_table/extractor.py`
++ `unit_ocr.py` — 6 real call sites total, all rewired incrementally
+(1 file → tests green → next file). Warning consolidated to 1 authoritative
+copy + 6 one-line pointers (verified via grep).
+
+### Equivalence
+`git show HEAD:<path> | grep` confirmed all 6 pre-refactor literals byte-
+identical (`lang="vie+eng"`, `config="--psm 6"`, `dpi=200`/`resolution=200`).
+Post-refactor: 0 literal matches remain in call-site files; constants
+assert-equal via standalone import. `test_ocr_adapter_psm6_guard.py` (the
+existing runtime regression guard) 3/3 pass.
+
+### Tests
+Full suite `-m "not slow"`: baseline 1022 pass/8 fail; post-change 1022-1023
+pass/7-8 fail — 7 failures identical A/B via `git stash` (PIL.Image test-
+pollution, page_rasterizer, ocr_unit_tesseract_retry order-dependence); 8th
+(`test_pek_engine_adapter.py` timeout) is a pre-existing flake in an
+untouched file (0 diff). mypy: repo-wide pre-existing "not a valid Python
+package name" env bug (reproduces on untouched files); workaround
+`--explicit-package-bases` shows 141 errors both before/after (0 new);
+`tesseract_config.py` alone: 0 errors.
+
+### G12 sandbox gate — N/A (repeat drift)
+`sandbox_runner.py` still does not exist in this repo — same stale-gate
+drift flagged in the 2026-07-09 FACTORY-PDF-split-generic-md-table cycle
+above (2 cycles now). pytest is the live DoD gate.
+
+### Commit
+`<pending>` — refactor(pdf-extractor): FACTORY-PDF-extract-tesseract-config shared OCR config
+
+Zone health: G12 pilot-gate doc drift flagged a 3rd time (2026-07-09 ×2,
+2026-07-24) — needs PO/architect to retire the stale flow-doc section.
+
+### Status
+REVIEW → next_agent=qa (rebuild_required: true — DEFERRED user-gated, no
+rebuild performed this cycle per explicit task scope bound; ops rebuild+swap
++ qa live-verify batches onto a future rebuild)
