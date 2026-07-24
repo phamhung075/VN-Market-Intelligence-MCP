@@ -387,12 +387,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FACTORY-APIGW-split-capability-prober",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-APIGW-split-capability-prober — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-24T12:17:56Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "updated_at": "2026-07-24T12:28:33Z",
+    "updated_by": "dev-api-gateway"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -14506,6 +14505,24 @@
         "updated_at": "2026-07-24T11:57:06Z",
         "claimed_at": "2026-07-24T11:44:39Z",
         "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      },
+      {
+        "title": "Split capability_prober.go into manifest/probe/prober files",
+        "priority": "P2",
+        "zone": "api-gateway",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-APIGW-split-capability-prober",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APIGW-split-capability-prober",
+        "promoted_at": "2026-07-24T12:17:56Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-24T12:28:33Z",
+        "claimed_at": "2026-07-24T12:17:56Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "entered_review_at": "2026-07-24T12:28:33Z",
+        "updated_by": "dev-api-gateway",
+        "review_note": "Split by seam per approach spec: capability_manifest.go 104L (types+loadManifest), capability_probe.go 130L (probeHealthEndpoint+mcp types+probeMcpTool, size-justified), capability_prober.go 191L (struct+cache+ProbeAll/capabilityFor/runProbe, size-justified). ct[:17] HasPrefix hardening landed. go build/vet/test 10/10 pkgs clean, gofmt clean, golangci-lint 0 issues, G12 sandbox primitive 14/14 + module 1/1 GREEN. Behavior-unchanged proven via sorted stripped-code diff (only delta = HasPrefix swap). Commit 9fad8d4ad (local main, not pushed). rebuild_required=true, USER-GATED - rebuild-verify PENDING-USER-GATED, code-only. Decision journal: docs/agent-memory/decisions/sprint-FACTORY-APIGW-split-capability-prober-dev-api-gateway.md"
       }
     ],
     "qa": [],
@@ -14527,23 +14544,7 @@
     },
     "last_triaged_at": "2026-07-24T12:17:56Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "title": "Split capability_prober.go into manifest/probe/prober files",
-        "priority": "P2",
-        "zone": "api-gateway",
-        "type": "FACTORY",
-        "status": "IN_PROGRESS",
-        "id": "FACTORY-APIGW-split-capability-prober",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APIGW-split-capability-prober",
-        "promoted_at": "2026-07-24T12:17:56Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-24T12:17:57Z",
-        "claimed_at": "2026-07-24T12:17:56Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
