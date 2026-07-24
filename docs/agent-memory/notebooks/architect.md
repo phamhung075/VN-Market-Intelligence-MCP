@@ -1,8 +1,15 @@
 # Architect — Notebook
 
-**Last updated:** 2026-07-22 22:06 UTC | **Sprint:** COWORK-GUARANTEED-SLOT-CATCHUP
+**Last updated:** 2026-07-24 16:58 UTC | **Sprint:** COWORK-GUARANTEED-SLOT-CATCHUP
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-07-24T16:58Z — FACTORY-GUARD-CI-size-lint-justification (zone=cross-service/, P2 BOUNDED-1 pickup, design+decompose)
+
+**Task:** Scope/design an underspecified backlog row (title-only, no approach/dod/files) — the FACTORY-MAINTAINABILITY-2026-06 CI-guardrail companion for the 120-LOC + `size-justification`-header standard the audit brief already declared but never enforced.
+**Finding:** Zero existing mechanism covers `apps/**/*.ts|py|go` size — the only live analog, `context-bloat-backstop.sh` + `file-size-caps.json`, explicitly excludes code ("Code and data JSON are explicitly NOT governed") and is a session-time Claude-tool hook, not a CI gate. Live-counted (ticket said stale "600+"): 748 files >120L across apps/+packages/, 733 unjustified, 15 already carry the exact `size-justification:` convention this ticket proposes (organic FACTORY-* split precedent). Ticket prose was wrong on TS comment syntax (`<!-- -->` invalid in `.ts`) and on the suggested `agent-father` router (its own init.md disclaims production code; sibling row UC-ASL-P6 is `supervised:true` for the identical un-routable next_agent+zone combo).
+**Output:** `docs/architecture-briefs/2026-07-24-factory-guard-ci-size-lint-justification.md` — baseline/ratchet CI design (grandfather today's 733, fail only new/regrown offenders; full-tree scan at CI time, not diff-only, closing the doc-hook's non-Claude-tool-edit gap); marker corrected to `//` (ts/go) / `#` (py); minted child dev row `FACTORY-GUARD-CI-SIZELINT-IMPL` (`developer`, zone cross-service/) for the script+baseline+workflow wiring — not self-implemented.
+**Next:** pm/dev-team — promote+dispatch `FACTORY-GUARD-CI-SIZELINT-IMPL` when picked up; dispatcher (this task's owner) flips `FACTORY-GUARD-CI-size-lint-justification` board status.
 
 ## 2026-07-22T22:06Z — COWORK-GUARANTEED-SLOT-CATCHUP (zone=cross-service/, high user_prioritized, design-only)
 
@@ -18,18 +25,14 @@
 **Output:** `docs/architecture-briefs/2026-07-22-fix-orphan-adoption-board-state-guard-design.md` — FR-5 board-flip bundled into FR-4's commit via ONE shared `resolve-task-lane-by-id.jq` resolver (router probe + dev-team read-guard + board-flip write, not 3 drifting copies); `backlog+BLOCKED` ruled TERMINAL (asymmetric safety cost, in_progress+BLOCKED not symmetric since it resumes downstream of PO/BA scoping, backlog+BLOCKED would bypass triage entirely); I10 batched into the fix_spec(b) successor as a hard PRECONDITION (not just adjacent bundle) of that row's heartbeat-loop deliverable, 4-step ordering specified (I10 fix → TTL/heartbeat-loop → doc-sync incl. a 4th site BA didn't cite, `fail-loud-protocol.md:71` → INV-GATEWAY-1 dead-call cleanup). DDD layers ratified unchanged from BA. Appended Brownfield Findings to BA-spec handoff. BUILD-STANDARD: not-applicable.
 **Next:** pm — decompose FR-1..FR-8 into atomic dev tasks + mint the fix_spec(b)/AC2 successor row per PO Option B + brief §4 ordering. SUPERVISED HOLD recorded on board — do not auto-dispatch pm without supervisor go-ahead.
 
-## 2026-07-21T22:36Z — UNBLOCK-DEVTEAM-DISPATCH-GATE-STAGING-DEADLOCK (zone=cross-service/, S4 direct-spawn, implemented directly)
-
-**Task:** PO ruling (instance 9 on the count-threshold-gate class): BOUNDED-1 gate `(ready+in_progress)<1` and SLS gate `(ready+in_progress)<2` both permanently false at ready=36/in_progress=1 — neither auto-pickup lane could ever fire while ready[] is saturated. Deliver gate=in_progress-only + a ready-lane consumer + a review-lane QA-drain + a satisfiability (not lane-resolution) DoD instrument — all 4, not any subset.
-**Finding:** Confirmed root cause at source: `ready[]` conflated a staging queue with a concurrency count. 25 of the 36 ready[] rows (CCATO-MCP-T1..8, SYSREMAKE-P2-T1..9, DESIGN-COWORK-FANOUT-T1..8) are PM/architect epic children with a resolved `next_agent` but no `promoted_by` marker BOUNDED-1/SLS claim scripts recognize — unclaimable by anything. `review[]` (32 rows) had zero consumers anywhere in the flow, and ALL 32 rows carry `branch:null` — the normal qa `pipeline` git-checkout mode would guarantee-fail every dispatch (hard prerequisite, not separable, confirmed via grep).
-**Output:** Fixed WIP formula to `in_progress` length only (`main.md` + `promote-bounded1.jq`, byte-identical candidate-set parity verified). New Ready-Lane Consumer (`devteam-backlog-claim-ready-lane-consumer.jq`, respects `depends_on` sibling chains — verified it picks `CCATO-MCP-T1` not `T3`). New Review-Lane QA-Drain (`devteam-review-claim-qa-drain.jq` + `qa/flow/main.md` § Direct-Commit Verify additive mode) folding `FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN`. New `scripts/audits/devteam-dispatch-gate-satisfiability.sh` — replays the REAL scripts end-to-end against the live-shaped saturated fixture, asserts fire+drain (not lane-resolution — the exact false-green class `bounded1-supervised-lane-report.sh` fell into for the inert SLS), includes a negative WIP-cap control. Extracted `scripts/lib/devteam-eligibility.jq` (SPIKE-BOUNDED1-ELIGIBILITY-CONTRACT-REVIEW design principle adopted), migrating 3 hand-copied predicate sets to 1. All candidates Zod+conservation-verified via scratch-copy dry-runs before any live write. Folded (annotated, not re-minted) 4 subsumed rows: `FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER` held REVIEW (root cause of its own dead gate now fixed, lane-resolution logic unchanged), `FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN` moved READY→REVIEW (implemented), `SPIKE-SATURATED-COUNT-THRESHOLD-GATES-SWEEP` instance-9 closed (broader findings-doc scope stays open), `SPIKE-BOUNDED1-ELIGIBILITY-CONTRACT-REVIEW` moved BACKLOG→REVIEW (recommendation shipped, not just documented).
-**Next:** dev-team/QA — verify all 4 lanes fire on a live tick (PO AC(3): review[] count strictly decreasing across 2 consecutive ticks with row ids named) before flipping the folded rows to DONE_VERIFIED; zone cross-service/. Committed directly (`b787e9a5d`) mirroring the FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER precedent for this orchestration-script class — no production `apps/` code touched.
-
 ---
 
 ## Archive (pre-2026-07-21T23:57Z)
 
-[Older cycles archived to git history: FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER (2026-07-21T21:32Z,
+[Older cycles archived to git history: UNBLOCK-DEVTEAM-DISPATCH-GATE-STAGING-DEADLOCK (2026-07-21T22:36Z,
+zone=cross-service/, S4 direct-spawn — fixed WIP formula to in_progress-only, new ready-lane consumer +
+review-lane QA-drain + dispatch-gate satisfiability instrument, extracted shared devteam-eligibility.jq,
+committed directly b787e9a5d), FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER (2026-07-21T21:32Z,
 zone=cross-service/, P=high size=M REVIEW — built Supervised-Lane Sweep SLS spending the
 named-but-unused 2nd WIP≤2 slot, 16/16 supervised/plan_only rows resolved, dispatch_lane stamp),
 DESIGN-COWORK-FANOUT-PRODUCER-CONSUMER-ORDERING (2026-07-21T18:02Z,
