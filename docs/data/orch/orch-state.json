@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FACTORY-GUARD-CI-size-lint-justification",
-    "next_agent": "architect",
-    "next_action": "BOUNDED-1 picked FACTORY-GUARD-CI-size-lint-justification (type CI-GUARDRAIL, dev_agent=architect, no code spec). Corrected placeholder developer->architect per NON-CODE/DESIGN next_agent-gap guard. Design/guardrail-policy ask, not autonomous code-fix.",
-    "updated_at": "2026-07-24T16:47:17Z",
-    "updated_by": "dev-team (dispatcher-wrap: non-dev-route correction)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "FACTORY-GUARD-CI-size-lint-justification design complete -> review(qa); child FACTORY-GUARD-CI-SIZELINT-IMPL awaits normal cycle",
+    "updated_at": "2026-07-24T17:00:19Z",
+    "updated_by": "dev-team (BGFAN-1 closeout)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -10649,6 +10649,26 @@
         "note": "ROOT: quality-checklist.json (_updated_by: system-auditor, generated_at frozen 2026-06-10) stamps check.status=PASS with a REUSED evidence string instead of running that check's own recheck_how and capturing per-check evidence. RAW-confirmed byte-identical duplicates in the LIVE file this tick: 'observability demonstrably working — WORK-channel msg IDs 2743-2766' x4 across unrelated checks; 'CI green commit fc28bf41...' x4; 'HTTP 200' x7. This copy-paste PASS masked BCT-OBS-02 (sscCheck nightly WORK post) and DS-OBS-01 (freshnessSlaMonitor WORK/BUG alert) — both marked PASS while the real breach->human-visible Telegram alert was broken. Recurring 2x -> recurring-bug policy (block+fix root cause). FIX: (1) generator MUST NOT reuse an evidence string across distinct check_ids — each PASS requires its OWN freshly-captured evidence from executing recheck_how; (2) a check that cannot capture distinct real evidence stays UNKNOWN/UNVERIFIED, never a copy-paste PASS (fail-loud, empty-read-is-not-evidence); (3) add a validator (generation-time and/or serve-time in qualityChecklistHandler) that REJECTS a checklist where any evidence string is byte-identical across >1 check_id. AC: (a) live quality-checklist.json regenerated with zero cross-check byte-identical evidence; (b) BCT-OBS-02 + DS-OBS-01 checks reflect TRUE post-fix status from real recheck_how execution; (c) validator fails loud on a seeded duplicate-evidence checklist. DISTINCT from SPIKE-EVIDENCE-SCORE-CACHE-FRAGMENT-DECOUPLE (get_evidence_summary evidence_scores cache) + FIX-CHEF-QUALITY-VERDICT-FALSE-FULL (chef dish self-cert). Do NOT reopen BCT-OBS-02-FIX / DS-OBS-01-FIX (consumers, correctly in review/qa).",
         "baseline_pass": true,
         "updated_at": "2026-07-23T18:08:33Z"
+      },
+      {
+        "id": "FACTORY-GUARD-CI-SIZELINT-IMPL",
+        "type": "SPRINT-S",
+        "title": "Implement size-lint-justification CI guardrail (script + baseline + workflow wiring)",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "size": "M",
+        "zone": "cross-service/",
+        "epic": "FACTORY-MAINTAINABILITY-2026-06",
+        "cluster": "ci-regression-prevention",
+        "source": "architect design brief 2026-07-24, parent FACTORY-GUARD-CI-size-lint-justification",
+        "detail_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-size-lint-justification.md#3-build-vs-plan--decomposed-not-self-implemented",
+        "dev_agent": "developer",
+        "next_agent": "developer",
+        "parent_task": "FACTORY-GUARD-CI-size-lint-justification",
+        "note": "files: scripts/audits/size-lint-justification.sh (new, --check/--update modes), docs/data/size-lint-baseline.json (new, generated), .github/workflows/ci.yml (edit — add size-lint job), docs/policies/dev-standards.md (edit — CANONICAL pointer), scripts/audits/size-lint-justification.test.sh (new). approach: implement --check (CI mode, exit 0/1, walks apps/**/*.ts|*.py|*.go + packages/**/*.ts excl test/vendor/.d.ts, 120L threshold, honors // (ts/go) and # (py) size-justification headers, baseline-file tolerance ±10%/min5L mirrors context-bloat-backstop.sh idiom) and --update (regen docs/data/size-lint-baseline.json from live repo state, prune-eligible entries that shrank/got justified); run --update once to generate initial baseline (grandfathers current ~733 unjustified over-cap files verified 2026-07-24); wire size-lint job into ci.yml (ubuntu-latest, checkout only, no toolchain setup needed); add CANONICAL pointer in dev-standards.md Script Persistence section. dod: --check exits 0 on current repo state (baseline covers all current offenders); synthetic new >120L file with no header fails --check; synthetic baseline file grown past tolerance fails; a justified/shrunk file is dropped by --update; smoke test (size-lint-justification.test.sh) covers all 4 cases; CI green on push.",
+        "created_at": "2026-07-24T16:55:43Z",
+        "created_by": "architect",
+        "updated_at": "2026-07-24T16:55:43Z"
       }
     ],
     "closed_sprints": [
@@ -14582,6 +14602,24 @@
         "next_agent": "qa",
         "entered_review_at": "2026-07-24T16:30:44Z",
         "review_note": "dev-mcp-server: added schema-backtesting to DB_SCHEMA_MODULES (packages/shared-db/index.ts), alphabetical position, sync comment added. Array now matches all 9 on-disk apps/mcp-server/src/infrastructure/db/schema-*.ts files exactly. Zero importers of DB_SCHEMA_MODULES/shared-db anywhere in the repo (grep-confirmed) — constant-only, zero-runtime-effect change. No test harness in packages/shared-db (no test script) so per DoD the sync comment alone satisfies it. Gates: tsc clean, gen-project-stats toolCount=184/cronJobCount=88 unaffected, full bun test 14751 pass/40 skip/49 fail (fail set is the same pre-existing flaky class documented earlier today, mathematically unrelated given zero import edges). Commits: ef62d2921 (code), 5c20d7b88 (journal), 160c0b410 (notebook). Journal: docs/agent-memory/decisions/sprint-FACTORY-SHARED-fix-shared-db-stale-list-dev-mcp-server.md"
+      },
+      {
+        "title": "CI-size-lint-justification",
+        "priority": "P2",
+        "type": "CI-GUARDRAIL",
+        "zone": "cross-service/",
+        "status": "REVIEW",
+        "id": "FACTORY-GUARD-CI-size-lint-justification",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-GUARD-CI-size-lint-justification",
+        "promoted_at": "2026-07-24T16:45:42Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-24T17:00:32Z",
+        "claimed_at": "2026-07-24T16:45:42Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "review_note": "Design task complete (BGFAN-1). Architect produced brief docs/architecture-briefs/2026-07-24-factory-guard-ci-size-lint-justification.md + minted child impl FACTORY-GUARD-CI-SIZELINT-IMPL (developer, backlog). Verify-live corrected stale ticket prose: no existing CI size gate anywhere; 733 unjustified >120L files (real, ticket said 600+); baseline/ratchet design grandfathers debt. QA: verdict brief adequacy + child scoping (no code to test).",
+        "updated_by": "dev-team (BGFAN-1 closeout: architect design complete -> review)"
       }
     ],
     "qa": [],
@@ -14603,24 +14641,7 @@
     },
     "last_triaged_at": "2026-07-24T16:45:42Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "title": "CI-size-lint-justification",
-        "priority": "P2",
-        "type": "CI-GUARDRAIL",
-        "zone": "cross-service/",
-        "status": "IN_PROGRESS",
-        "id": "FACTORY-GUARD-CI-size-lint-justification",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-GUARD-CI-size-lint-justification",
-        "promoted_at": "2026-07-24T16:45:42Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-24T16:47:18Z",
-        "claimed_at": "2026-07-24T16:45:42Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "architect"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
