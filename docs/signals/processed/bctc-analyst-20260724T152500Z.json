@@ -1,0 +1,28 @@
+{
+  "id": "bca-ddres-20260724T152500Z",
+  "ts": "2026-07-24T15:25:00Z",
+  "from": "bctc-analyst",
+  "to": "po",
+  "type": "deep_dive_result",
+  "summary": "Deep dive: FPT Q1-2026 ESC-5 -> hold (OCR-quality-only gap; notes cross-foot to balance-checked primaries; no manipulation)",
+  "severity": "LOW",
+  "status": "NEW",
+  "payload_ref": null,
+  "payload": {
+    "ticker": "FPT",
+    "quarter": "Q1-2026",
+    "trigger_id": "ESC-5",
+    "escalation_trigger": "ESC-5",
+    "trigger_value": 0.45,
+    "threshold": 0.5,
+    "deep_dive_verdict": "VI: ESC-5 (do tin cay refine duoi nguong): 7/15 unit (unit-0008..0014, trang 26-46) o muc 0.45 < nguong 0.50. Nguyen nhan la co chat-luong-OCR (complex_multicol_note:prose_form + image_unavailable tai thoi diem refine 2026-05-31) tren cac trang thuyet minh nhieu cot (TSCD, cuon von chu so huu, vay theo nguyen te, thue, giao dich ben lien quan, danh sach cong ty con) — KHONG co bat ky co accounting_trick hay revenue_pull_forward nao. Khi doi chieu lai: get_bctc_page_text tra ve OCR tho doc duoc ro (nguon sqlite_ocr) va anh trang thuc te van lay duoc (co image_unavailable chi la trang thai tai thoi diem refine, khong phai mat vinh vien). Toan bo so cong cua cac thuyet minh khop voi bao cao chinh da qua balance_check:PASSED — vi du: Note 11 nguyen gia TSCD 14.897 ty = Ma 222; Note 13 XDCB 979,7 ty = Ma 252; Note 15 loi the thuong mai 978,1 ty = Ma 279; Note 17 dau tu lien ket 9.410 ty = Ma 262; Note 23 vay ngan han 14.491 ty = Ma 321; Note 25 doanh thu thuan 12.480 ty = Ma 10; Note 26 gia von 8.235 ty = Ma 11; Note 19 thue phai nop 930,8 ty = Ma 314. Chi duy nhat bang cuon von chu so huu (Note 24) co dong tong bi nhieu OCR, nhung so von chu so huu 40.122 ty da duoc chot tu bang can doi (unit-0003, balance_check PASSED). Ket luan: khoang trong do tin cay la do cau truc luoi cot khong xac minh duoc tu anh, KHONG phai sai gia tri — gia tri trong yeu da duoc doi chieu cheo day du. Khoang trong nay KHONG han che trong yeu verdict deep-dive. Su kien chi phoi ky nay la thay doi phuong phap hop nhat da cong bo: tu 01/01/2026 FPT chuyen FPT Telecom (FTEL, so huu 45,66%) tu hop nhat toan bo sang phuong phap von chu so huu — giai thich doanh thu bao cao -22,3% nhung +8,7% tren co so so sanh, tai san giam 88,1->68,6 nghin ty, dau tu lien ket tang +5,16 nghin ty (Note 17). Day la thay doi hop le, thuyet minh day du (unit-0005 + Note 17), KHONG phai thu thuat. Giao dich ben lien quan (Note 30) la hoat dong thuong mai noi bo tap doan binh thuong, da cong bo, khong trong yeu so voi doanh thu 12.480 ty. De xuat: hold. Luu y: ESC-3 (OCF am -2.848 ty vs LNST +2.477 ty) duoc xu ly rieng o nhanh DATA-COVERAGE-LIMITED; phan am OCF quy I phu hop mua vu (chi tra thuong: phai tra nguoi lao dong 5,72->2,38 nghin ty, quy khen thuong 2,16->1,58 nghin ty).\n\nEN: ESC-5: 7 of 15 units (0008-0014, pp.26-46) sit at confidence 0.45 < 0.50 bar. Cause is OCR-quality flags only (complex_multicol_note + image_unavailable at refine time 2026-05-31) on dense multi-column note pages; NO accounting_trick / revenue_pull_forward flags anywhere. On re-examination the raw OCR (get_bctc_page_text, source=sqlite_ocr) is legible and page images are in fact retrievable now — image_unavailable was a stale refine-time condition, not a permanent gap. Every material note subtotal cross-foots to the balance_check:PASSED primary statements: PP&E gross 14,897bn = code 222, accum. deprec. 4,678bn = code 223, NBV 10,219bn = code 221; CIP 979.7bn = 252; goodwill 978.1bn = 279; associates 9,410bn = 262; ST borrowings 14,491bn = 321; net revenue 12,480bn = 10; COGS 8,235bn = 11; tax payable 930.8bn = 314. Only the equity roll-forward totals row (Note 24) is genuinely OCR-garbled, but authoritative equity of 40,122bn is fixed by the balance-checked balance sheet (unit-0003). Low confidence therefore reflects unverifiable column-grid STRUCTURE, not value error — material values fully reconcile, so the coverage gap does NOT materially limit the verdict. The dominant event this quarter is a disclosed consolidation-method change (FTEL 45.66% moved from full consolidation to equity method), fully explained in unit-0005 + Note 17 — legitimate, not a manipulation. Related-party dealings (Note 30) are normal, disclosed intra-group commercial activity, immaterial vs 12,480bn revenue. Recommendation: hold; no human review warranted on OCR-confidence grounds.",
+    "confidence": 0.78,
+    "recommended_action": "hold"
+  },
+  "_processed": {
+    "fingerprint": "6494697396e9df6dd8ec4022af50ca2cd36c18422afb91ad846119e54d061532",
+    "processedAt": "2026-07-24T15:46:02Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
