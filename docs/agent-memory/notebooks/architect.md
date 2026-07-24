@@ -1,8 +1,15 @@
 # Architect — Notebook
 
-**Last updated:** 2026-07-24 18:29 UTC | **Sprint:** COWORK-GUARANTEED-SLOT-CATCHUP
+**Last updated:** 2026-07-24 19:02 UTC | **Sprint:** COWORK-GUARANTEED-SLOT-CATCHUP
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-07-24T19:02Z — FACTORY-GUARD-CI-dead-code-gate (zone=cross-service/, P2 BOUNDED-1 pickup, design+decompose)
+
+**Task:** Design a CI gate catching tracked `*.bak`/`*.backup`/`*.patch` files, `_deprecated/`/orphaned `src/` trees, and build-ignored archives — 4th of the 7 `ci-regression-prevention` guardrails, same epic/audit as the depguard/metric-mask/size-lint siblings.
+**Finding:** Ticket's "4 currently committed .bak" stale — already 0 (`FACTORY-INTERFACE-delete-bak-files` self-closed same-day, commit `2a146ecdd`, `.gitignore` already covers `*.bak`); found 2 uncovered `.backup`/`.patch` survivors instead. Live `_deprecated/`-named debt: 4 dirs/1,373L across mcp-server/pdf-extractor/stock-price, all self-labeled with stale "delete after G5" headers from a stalled migration phase. Found a BIGGER unlabeled orphan the naming grep alone misses: `apps/technical-analysis/src/` (697L incl. tests) — a dead TS DDD stack surviving from a PO-decided-FINAL 2026-05-22 Go rewrite (Dockerfile/CI/compose all Go-only today, TS tree never swept); last live instance of this shape (macro-indicators/kinh-dich-service already 0 TS files). Caught `apps/technical-analysis/package.json` is partially-live (dashboard/build.sh still needs its esbuild/playwright-core deps — trim, don't delete) and `1081-sprint-054-smoke.test.ts` is partially-live (surgical removal of 3 `it()` blocks, not whole-file delete).
+**Output:** `docs/architecture-briefs/2026-07-24-factory-guard-ci-dead-code-gate.md` — zero-tolerance CI design (fix all ~2,070L confirmed-orphaned debt in the same child task before the gate activates, despite bigger absolute LOC than metric-mask/depguard since it's 100% pure subtraction of zero-import-verified code, unlike size-lint's refactor-risk 733-file debt): single `dead-code-gate.sh` with 4 structural checks (bak/backup/patch ban, `_deprecated/`-name ban, Go-service+stray-TS-scaffold ban, `//go:build ignore` ban); deferred full knip/ts-prune/vulture unused-export tooling as documented enhancement (no live debt evidence beyond what the 4 checks catch). Minted child dev row `FACTORY-GUARD-CI-DEADCODE-IMPL` (`developer`, zone cross-service/) — not self-implemented.
+**Next:** pm/dev-team — promote+dispatch `FACTORY-GUARD-CI-DEADCODE-IMPL` when picked up; dispatcher (this task's owner) flips `FACTORY-GUARD-CI-dead-code-gate` board status.
 
 ## 2026-07-24T18:29Z — FACTORY-GUARD-CI-depguard-tier-boundaries (zone=cross-service/, P2 BOUNDED-1 pickup, design+decompose)
 
@@ -18,18 +25,14 @@
 **Output:** `docs/architecture-briefs/2026-07-24-factory-guard-ci-metric-mask-lint.md` — zero-tolerance CI design (not baseline/ratchet, since debt is small enough to fix in the same child task before the gate activates): single cross-language regex script (not 3 native-linter integrations, given near-zero live debt + zero Go offenders), always-allow `0`/`0.0`/`null` (the honest-absence idiom the 5 fixes established), `metric-mask-allow:` inline escape hatch. Minted child dev row `FACTORY-GUARD-CI-METRICMASK-IMPL` (`developer`, zone cross-service/) — fixes the 4 real masks + annotates the 1 config default + ships script/CI wiring — not self-implemented.
 **Next:** pm/dev-team — promote+dispatch `FACTORY-GUARD-CI-METRICMASK-IMPL` when picked up; dispatcher (this task's owner) flips `FACTORY-GUARD-CI-metric-mask-lint` board status.
 
-## 2026-07-24T16:58Z — FACTORY-GUARD-CI-size-lint-justification (zone=cross-service/, P2 BOUNDED-1 pickup, design+decompose)
-
-**Task:** Scope/design an underspecified backlog row (title-only, no approach/dod/files) — the FACTORY-MAINTAINABILITY-2026-06 CI-guardrail companion for the 120-LOC + `size-justification`-header standard the audit brief already declared but never enforced.
-**Finding:** Zero existing mechanism covers `apps/**/*.ts|py|go` size — the only live analog, `context-bloat-backstop.sh` + `file-size-caps.json`, explicitly excludes code ("Code and data JSON are explicitly NOT governed") and is a session-time Claude-tool hook, not a CI gate. Live-counted (ticket said stale "600+"): 748 files >120L across apps/+packages/, 733 unjustified, 15 already carry the exact `size-justification:` convention this ticket proposes (organic FACTORY-* split precedent). Ticket prose was wrong on TS comment syntax (`<!-- -->` invalid in `.ts`) and on the suggested `agent-father` router (its own init.md disclaims production code; sibling row UC-ASL-P6 is `supervised:true` for the identical un-routable next_agent+zone combo).
-**Output:** `docs/architecture-briefs/2026-07-24-factory-guard-ci-size-lint-justification.md` — baseline/ratchet CI design (grandfather today's 733, fail only new/regrown offenders; full-tree scan at CI time, not diff-only, closing the doc-hook's non-Claude-tool-edit gap); marker corrected to `//` (ts/go) / `#` (py); minted child dev row `FACTORY-GUARD-CI-SIZELINT-IMPL` (`developer`, zone cross-service/) for the script+baseline+workflow wiring — not self-implemented.
-**Next:** pm/dev-team — promote+dispatch `FACTORY-GUARD-CI-SIZELINT-IMPL` when picked up; dispatcher (this task's owner) flips `FACTORY-GUARD-CI-size-lint-justification` board status.
-
 ---
 
-## Archive (pre-2026-07-24T18:29Z)
+## Archive (pre-2026-07-24T19:02Z)
 
-[Older cycles archived to git history: COWORK-GUARANTEED-SLOT-CATCHUP (2026-07-22T22:06Z,
+[Older cycles archived to git history: FACTORY-GUARD-CI-size-lint-justification (2026-07-24T16:58Z,
+zone=cross-service/, P2 BOUNDED-1 pickup — baseline/ratchet CI gate for 120-LOC+size-justification,
+733/748 unjustified live-counted, `size-lint-baseline.json` grandfather, child FACTORY-GUARD-CI-SIZELINT-IMPL),
+COWORK-GUARANTEED-SLOT-CATCHUP (2026-07-22T22:06Z,
 zone=cross-service/, high user_prioritized design-only — BA 10 FR/7 NFR/12 AC/5-row consolidation,
 new pure domain sibling `cowork-catchup-predicate.js`, FR-6 published-marker sole-arbiter ruling,
 FR-7 reconciler-not-self-write, FR-8 raise-timeout+accept-residual, Track-B no keep-awake daemon,

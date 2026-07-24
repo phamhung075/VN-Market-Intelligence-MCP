@@ -10759,6 +10759,26 @@
         "created_at": "2026-07-24T18:29:15Z",
         "created_by": "architect",
         "updated_at": "2026-07-24T18:29:15Z"
+      },
+      {
+        "id": "FACTORY-GUARD-CI-DEADCODE-IMPL",
+        "type": "SPRINT-S",
+        "title": "Implement dead-code-gate CI guardrail (script + delete confirmed-orphaned trees + workflow wiring)",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "size": "M",
+        "zone": "cross-service/",
+        "epic": "FACTORY-MAINTAINABILITY-2026-06",
+        "cluster": "ci-regression-prevention",
+        "source": "architect design brief 2026-07-24, parent FACTORY-GUARD-CI-dead-code-gate",
+        "detail_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-dead-code-gate.md#3-build-vs-plan--decomposed-not-self-implemented",
+        "dev_agent": "developer",
+        "next_agent": "developer",
+        "parent_task": "FACTORY-GUARD-CI-dead-code-gate",
+        "note": "files: scripts/audits/dead-code-gate.sh (new, --check mode, zero-tolerance, 4 checks: tracked *.bak/*.backup/*.patch ban, _deprecated/-dir-name ban, Go-service-with-stray-package.json+src/-twin-scaffold ban, //go:build ignore ban), .gitignore (extend *.bak line to *.backup/*.patch), docker-compose.yml.backup + docker-compose.yml.patch (delete, 2 stray root artifacts), apps/mcp-server/src/_deprecated/ + apps/mcp-server/src/infrastructure/_deprecated/kinhDichWrapper.ts (delete whole trees, zero live importers verified), apps/mcp-server/src/__tests__/1077-kinh-dich-wrapper.test.ts (delete whole file — dedicated solely to the deleted wrapper), apps/mcp-server/src/__tests__/1081-sprint-054-smoke.test.ts (surgical edit only: remove appendKinhDich import + Scenario 5/5b/5c it() blocks ~L447-490, KEEP the rest of the 569L suite — it covers other still-live scenarios), apps/pdf-extractor/_deprecated/ (delete), apps/stock-price/pkg/domain/_deprecated/ (delete, includes the only 2 //go:build ignore files repo-wide), apps/technical-analysis/src/ (delete, 9 TS files/383L — PO-decided-FINAL 2026-05-22 language-pivot-to-Go dead scaffold, zero Dockerfile/CI/compose wiring verified) + its 3 apps/technical-analysis/__tests__/*.test.ts files (delete), apps/technical-analysis/package.json (TRIM ONLY: drop module/start/test/check script fields + bun-types/typescript devDeps — KEEP esbuild/playwright-core, still used live by dashboard/build.sh — do NOT delete the file), .github/workflows/ci.yml (add dead-code-gate job, ubuntu-latest + checkout only), docs/policies/dev-standards.md (CANONICAL pointer), scripts/audits/dead-code-gate.test.sh (new smoke test). approach: fix all confirmed-orphaned debt (~2,070 LOC across mcp-server/pdf-extractor/stock-price/technical-analysis + 2 stray root files) in this same child task BEFORE the gate activates, so it opens at zero offenders and can be true zero-tolerance (no baseline manifest) — same reasoning as metric-mask/depguard siblings, justified here by 100% pure-subtraction/already-zero-import-verified risk profile despite larger absolute LOC than those siblings. dod: --check exits 0 on post-cleanup repo state; synthetic new .bak/_deprecated//twin-scaffold//go:build-ignore file each independently fails --check; mcp-server tsc --noEmit + bun test green post-deletion (1081 surviving scenarios still pass); technical-analysis-go-lint + dashboard build (./dashboard/build.sh) still green post package.json trim; smoke test covers all 4 check cases; CI green on push.",
+        "created_at": "2026-07-24T19:01:20Z",
+        "created_by": "architect",
+        "updated_at": "2026-07-24T19:01:21Z"
       }
     ],
     "closed_sprints": [
