@@ -39,10 +39,27 @@ readable tool-response error) is correct and is what AC-4 locks in.
 - `bunx tsc --noEmit` (apps/mcp-server) → **exit 0**.
 - `8a6b798ce` ancestor of origin/main → **no rebuild required** (running image already fixed).
 
-## Closeout
-dev-mcp-server worker (agent a3769b0614590e95c) implemented the edit + test but abandoned
-closeout (stopped mid-commit with a confused "wait for background notification" message —
-head left in_progress, no commit/flip). dev-team dispatcher completed the BGFAN-1 closeout:
-committed code+test+journal, flipped in_progress→review (next=qa), reset head idle, pushed,
-released `task:FIX-AGENTSIGNALS-FROMAGENT-SCHEMA`. QA verifies test-green + (optional) live
-gateway RAW `get_agent_signals({from_agent})` non-`-32602`; no rebuild step needed.
+## Closeout (CORRECTED — double-closeout race)
+The dev-mcp-server worker (agent a3769b0614590e95c) completed the FULL closeout ITSELF:
+`440e924f7` (code+test) → `0e354e21c` (notebook/WORK.md/journal) → `b80230d90` (orch-state
+status-flip: in_progress→review next=qa, head→idle in one orch-apply write). It was NOT
+abandoned — its transcript-final "I'll stop and wait for the background notification" was a
+legitimate no-sleep-poll pause waiting on its own full-suite `bun test` (14771/14772 pass;
+49-50 fails are the documented pre-existing flaky/resource-contention class, zero touching
+agentSignalTools/get_agent_signals — grep-confirmed). Ref `feedback_background_subagent_transcript_silence_is_not_death`.
+
+dev-team dispatcher (git author report-analyzer) RACED the worker's own closeout off a STALE
+snapshot (read head=in_progress + uncommitted file, then acted as if abandoned): wrote this
+journal (`ea5f0b4f3`, kept — the only FIX-AGENTSIGNALS-specific decision entry) and issued a
+code+test commit that was a harmless NO-OP (worker had already committed identical content;
+diff vs 440e924f7 empty). No duplicate flip/push occurred — explicit-pathspec commits swept
+zero peer files; the dispatcher's only durable acts were this journal + releasing the outer
+`task:FIX-AGENTSIGNALS-FROMAGENT-SCHEMA` dispatcher lock (released:1). Lesson captured in
+memory `feedback_bgfan_double_closeout_race_stale_snapshot`.
+
+## Remaining (ops/QA — NOT a new rebuild gate)
+Rebuild + LIVE gateway RAW-verify of `get_agent_signals({from_agent:'news-scout'})` on the
+running container is still outstanding: the fix has been live-shipped code since `8a6b798ce`
+(2026-06-19) but was never RAW-verified against a rebuilt container per the original
+verification_gate. QA routes this onto the EXISTING rebuild queue — do NOT treat this commit
+as opening a new `rebuild_required` gate.
