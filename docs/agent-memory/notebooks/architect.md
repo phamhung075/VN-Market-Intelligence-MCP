@@ -1,8 +1,15 @@
 # Architect — Notebook
 
-**Last updated:** 2026-07-24 16:58 UTC | **Sprint:** COWORK-GUARANTEED-SLOT-CATCHUP
+**Last updated:** 2026-07-24 17:27 UTC | **Sprint:** COWORK-GUARANTEED-SLOT-CATCHUP
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-07-24T17:26Z — FACTORY-GUARD-CI-metric-mask-lint (zone=cross-service/, P2 BOUNDED-1 pickup, design+decompose)
+
+**Task:** Scope/design an underspecified-looking backlog row (dispatch prompt claimed "no ticket prose") — the FACTORY-MAINTAINABILITY-2026-06 CI-guardrail companion banning the `confidence_score=50` bug class (non-zero numeric-literal fallback fabricating confidence/score/impact/magnitude/probability metrics).
+**Finding:** Dispatch prompt's inferred intent (composite-metric-masks-dead-detector) was wrong — `detail_ref` carries a full spec traced to `2026-06-15-maintainability-factory-audit.md`, the numeric-literal-fallback bug class, not aggregate masking. Zero CI/lint coverage confirmed (3 eslint configs, 7 golangci.yml, 2 pyproject.toml — fence/import rules only). All 5 audit fast-track fixes confirmed `DONE_VERIFIED` (allowlist basis honest). Live-counted real offenders: only 4 non-zero-literal masks across 2 files (`cascadeEngine.ts` x3 `?? 0.6`, `marketSentimentCalculator.ts` x1 `?? 1.0`), plus 1 correctly-excludable genuine config default (`watchlist.ts` alert-threshold `?? 7`) — orders of magnitude smaller than the size-lint sibling's 733.
+**Output:** `docs/architecture-briefs/2026-07-24-factory-guard-ci-metric-mask-lint.md` — zero-tolerance CI design (not baseline/ratchet, since debt is small enough to fix in the same child task before the gate activates): single cross-language regex script (not 3 native-linter integrations, given near-zero live debt + zero Go offenders), always-allow `0`/`0.0`/`null` (the honest-absence idiom the 5 fixes established), `metric-mask-allow:` inline escape hatch. Minted child dev row `FACTORY-GUARD-CI-METRICMASK-IMPL` (`developer`, zone cross-service/) — fixes the 4 real masks + annotates the 1 config default + ships script/CI wiring — not self-implemented.
+**Next:** pm/dev-team — promote+dispatch `FACTORY-GUARD-CI-METRICMASK-IMPL` when picked up; dispatcher (this task's owner) flips `FACTORY-GUARD-CI-metric-mask-lint` board status.
 
 ## 2026-07-24T16:58Z — FACTORY-GUARD-CI-size-lint-justification (zone=cross-service/, P2 BOUNDED-1 pickup, design+decompose)
 
@@ -18,18 +25,15 @@
 **Output:** `docs/architecture-briefs/2026-07-22-cowork-guaranteed-slot-catchup-design.md` — new pure domain sibling module `cowork-catchup-predicate.js` (mirrors `cadence-policy.js` precedent, DI'd `field`/`dowMatch`, one-directional require, zero circularity); `task_list_held` delivery-check kept per-caller/infrastructure (DDD golden rule: domain has zero I/O), conditional on non-empty `catchup_raw` (NFR-3 preserved); FR-6 ruled — published-marker `task_claim` ratified as sole symmetric arbiter across all firing planes (rejected a "stand-down" derived-signal design — repeats this sprint's own root-cause bug class), directly answering `FIX-GUARANTEED-SLOT-DUAL-PLANE-DOUBLE-FIRE`'s own open design question; FR-7 ruled Option (b) reconciler over Option (a) per-flow self-write (avoids reintroducing the lost-update race `last-fired.md`'s batched write was built to avoid, matches path-agnostic prior art already on that row's own note); FR-8 ruled raise `FIRE_TIMEOUT_SECONDS` per dish_type (`_dish_type_catchup_config`, NFR-4) + accept bounded residual, NOT a flow-duration diagnosis (chef.md is a legitimately heavy 812-line sequential 8-step flow, zero subagent fan-out, confirmed by grep); Track-B ruled document-the-residual, no keep-awake daemon (Track A's catch-up already provides correctness backstop). Appended Brownfield Findings to BA handoff. 5 consolidated rows + umbrella task reassigned `owner:developer`/`next_agent:pm` via `orch-apply.sh` (additive fields only, lane/status untouched — AC-9's "close together" bar stays PM/QA's). BUILD-STANDARD: not-applicable.
 **Next:** pm — decompose FR-1..FR-10 into atomic dev tasks (one shared-module zone, sequential not parallel-dispatch); route the cron-runbook doc subtask to agent-father, rest to developer; true up board row `type: SPRINT-S` → likely SPRINT-M/L (router-flagged, non-blocking).
 
-## 2026-07-21T23:57Z — FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD (zone=multi, P0 supervised, plan_only, design-only)
-
-**Task:** BA spec (8 FR/3 NFR/8 EC) + PO Q1 ruling (Option B — this ticket closes fix_spec(a)+(c)/AC1+AC3, fix_spec(b)/AC2 spins a new supervised successor row) — rule 3 architect-decidable calls, then blueprint.
-**Finding:** Widened BA's I10 finding — `execute-tier.md:64`'s finally-release call also omits the required `owner_client_session` param (BA only flagged the `:42-48` claim call); `owner_client_session` is a non-optional Zod field on both `task_claim` and `task_release`, so the dispatcher-side sprint-task lock lifecycle in `execute-tier.md` looks non-functional end-to-end as literally written. Live-grepped 12 backlog+BLOCKED rows on the board; one (`TASK_2005`) has a decision-journal-documented cause (in_progress→backlog+BLOCKED on a new `depends_on`) grounding the backlog+BLOCKED ruling in real system behavior, not abstraction.
-**Output:** `docs/architecture-briefs/2026-07-22-fix-orphan-adoption-board-state-guard-design.md` — FR-5 board-flip bundled into FR-4's commit via ONE shared `resolve-task-lane-by-id.jq` resolver (router probe + dev-team read-guard + board-flip write, not 3 drifting copies); `backlog+BLOCKED` ruled TERMINAL (asymmetric safety cost, in_progress+BLOCKED not symmetric since it resumes downstream of PO/BA scoping, backlog+BLOCKED would bypass triage entirely); I10 batched into the fix_spec(b) successor as a hard PRECONDITION (not just adjacent bundle) of that row's heartbeat-loop deliverable, 4-step ordering specified (I10 fix → TTL/heartbeat-loop → doc-sync incl. a 4th site BA didn't cite, `fail-loud-protocol.md:71` → INV-GATEWAY-1 dead-call cleanup). DDD layers ratified unchanged from BA. Appended Brownfield Findings to BA-spec handoff. BUILD-STANDARD: not-applicable.
-**Next:** pm — decompose FR-1..FR-8 into atomic dev tasks + mint the fix_spec(b)/AC2 successor row per PO Option B + brief §4 ordering. SUPERVISED HOLD recorded on board — do not auto-dispatch pm without supervisor go-ahead.
-
 ---
 
-## Archive (pre-2026-07-21T23:57Z)
+## Archive (pre-2026-07-24T17:26Z)
 
-[Older cycles archived to git history: UNBLOCK-DEVTEAM-DISPATCH-GATE-STAGING-DEADLOCK (2026-07-21T22:36Z,
+[Older cycles archived to git history: FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD (2026-07-21T23:57Z,
+zone=multi, P0 supervised, plan_only — FR-5 board-flip bundled into FR-4's commit via ONE shared
+`resolve-task-lane-by-id.jq` resolver, backlog+BLOCKED ruled TERMINAL, I10 `owner_client_session`
+gap widened + batched into fix_spec(b) successor as hard precondition, SUPERVISED HOLD),
+UNBLOCK-DEVTEAM-DISPATCH-GATE-STAGING-DEADLOCK (2026-07-21T22:36Z,
 zone=cross-service/, S4 direct-spawn — fixed WIP formula to in_progress-only, new ready-lane consumer +
 review-lane QA-drain + dispatch-gate satisfiability instrument, extracted shared devteam-eligibility.jq,
 committed directly b787e9a5d), FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER (2026-07-21T21:32Z,
