@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FACTORY-RAG-delete-dead-sqlite-repo",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-RAG-delete-dead-sqlite-repo — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-24T00:14:29Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "FACTORY-RAG-delete-dead-sqlite-repo moved to review — awaiting qa pickup",
+    "updated_at": "2026-07-24T00:22:37Z",
+    "updated_by": "dev-rag-service"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -14336,6 +14336,24 @@
         "next_agent": "qa",
         "reviewed_at": "2026-07-23T23:52:02Z",
         "reviewed_by": "dev-stock-price"
+      },
+      {
+        "title": "Delete dead SQLiteAnalysisRepository and phantom AnalysisRepositoryPort",
+        "priority": "P2",
+        "zone": "rag-service",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-RAG-delete-dead-sqlite-repo",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-RAG-delete-dead-sqlite-repo",
+        "promoted_at": "2026-07-24T00:14:29Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-24T00:22:47Z",
+        "claimed_at": "2026-07-24T00:14:29Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "entered_review_at": "2026-07-24T00:22:37Z",
+        "review_note": "dev-rag-service: confirmed dead at source (SQLiteAnalysisRepository constructed only in test_rag_integration.py fixture, never by app_factory.build_real_adapters or main.py; AnalysisRepositoryPort had no live implementer/consumer beyond it) — deleted class + _row_to_entry helper + sqlite3 import (infrastructure/repositories.py), AnalysisRepositoryPort ABC (domain/repositories.py), the test that exercised only them, fixed phantom analysis_repo docstring (usecases.py), trimmed matching arch-doc sections. pytest 165->161 (exactly the 4 deleted tests), mypy 259->253 (strict decrease, no new), sandbox 16/16+2/2 GREEN, env audit empty. Journal: docs/agent-memory/decisions/sprint-FACTORY-RAG-delete-dead-sqlite-repo-dev-rag-service.md. Commit 768bee954."
       }
     ],
     "qa": [],
@@ -14357,23 +14375,7 @@
     },
     "last_triaged_at": "2026-07-24T00:14:29Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "title": "Delete dead SQLiteAnalysisRepository and phantom AnalysisRepositoryPort",
-        "priority": "P2",
-        "zone": "rag-service",
-        "type": "FACTORY",
-        "status": "IN_PROGRESS",
-        "id": "FACTORY-RAG-delete-dead-sqlite-repo",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-RAG-delete-dead-sqlite-repo",
-        "promoted_at": "2026-07-24T00:14:29Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-24T00:14:29Z",
-        "claimed_at": "2026-07-24T00:14:29Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
