@@ -159,3 +159,78 @@ describe('composeNewsIngest', () => {
     expect(articles.length).toBe(1);
   });
 });
+
+// ---------------------------------------------------------------------------
+// ingestHeadlines — source-correct log tag (FACTORY-NEWS-fix-source-logging)
+// ---------------------------------------------------------------------------
+
+describe('composeNewsIngest — ingestHeadlines source-correct logging', () => {
+  function captureWarnings<T>(run: () => Promise<T>): Promise<{ result: T; warnings: string[] }> {
+    const warnings: string[] = [];
+    const original = console.warn;
+    console.warn = (...args: unknown[]) => {
+      warnings.push(String(args[0]));
+    };
+    return run()
+      .then((result) => ({ result, warnings }))
+      .finally(() => {
+        console.warn = original;
+      });
+  }
+
+  it('tags every fallback warning [bloomberg/headlines] when source is BLOOMBERG, never [reuters/headlines]', async () => {
+    const erroredResult: FetchResult = {
+      source: NewsSource.BLOOMBERG,
+      articles: [],
+      fetchedAt: '2026-05-13T14:31:00.000Z',
+      method: 'rss',
+      error: 'http-503',
+    };
+    const emptyFallback: FetchResult = {
+      source: NewsSource.BLOOMBERG,
+      articles: [],
+      fetchedAt: '2026-05-13T14:31:00.000Z',
+      method: 'playwright-stealth',
+      error: null,
+    };
+    const mockPrimary: NewsFetcherPort = { fetchHeadlines: async () => erroredResult };
+    const mockFallback: NewsFetcherPort = { fetchHeadlines: async () => emptyFallback };
+    const port = composeNewsIngest(mockPrimary, mockFallback);
+
+    const { warnings } = await captureWarnings(() => port.ingestHeadlines(NewsSource.BLOOMBERG, 10));
+
+    expect(warnings.length).toBeGreaterThan(0);
+    for (const line of warnings) {
+      expect(line).toContain('[bloomberg/headlines]');
+      expect(line).not.toContain('[reuters/headlines]');
+    }
+  });
+
+  it('tags every fallback warning [reuters/headlines] when source is REUTERS, never [bloomberg/headlines]', async () => {
+    const erroredResult: FetchResult = {
+      source: NewsSource.REUTERS,
+      articles: [],
+      fetchedAt: '2026-05-13T14:31:00.000Z',
+      method: 'rss',
+      error: 'http-503',
+    };
+    const emptyFallback: FetchResult = {
+      source: NewsSource.REUTERS,
+      articles: [],
+      fetchedAt: '2026-05-13T14:31:00.000Z',
+      method: 'playwright-stealth',
+      error: null,
+    };
+    const mockPrimary: NewsFetcherPort = { fetchHeadlines: async () => erroredResult };
+    const mockFallback: NewsFetcherPort = { fetchHeadlines: async () => emptyFallback };
+    const port = composeNewsIngest(mockPrimary, mockFallback);
+
+    const { warnings } = await captureWarnings(() => port.ingestHeadlines(NewsSource.REUTERS, 10));
+
+    expect(warnings.length).toBeGreaterThan(0);
+    for (const line of warnings) {
+      expect(line).toContain('[reuters/headlines]');
+      expect(line).not.toContain('[bloomberg/headlines]');
+    }
+  });
+});

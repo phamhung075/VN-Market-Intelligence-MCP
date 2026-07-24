@@ -65,6 +65,11 @@ describe('Bug 1 — Reuters RSS URL is not the decommissioned feeds.reuters.com'
 // ---------------------------------------------------------------------------
 
 describe('Bug 1 — Reuters handler emits warning log when RSS primary fails', () => {
+  // NOTE (FACTORY-NEWS-fix-source-logging): the [reuters/headlines] tag used to be
+  // hardcoded (and duplicated with an always-emitted [bloomberg/headlines] line —
+  // the bug this task fixed). The tag is now computed from the actual `source`
+  // param, so these assertions check the source-agnostic message body instead of
+  // assuming a hardcoded reuters prefix.
   it('news_ingest module warns when RSS primary returns error', () => {
     // Fallback-chain logic moved from handlers.ts to src/module/news_ingest/index.ts (P1-C)
     const src = readFileSync(
@@ -72,7 +77,7 @@ describe('Bug 1 — Reuters handler emits warning log when RSS primary fails', (
       'utf-8',
     );
     // Must log when rssResult.error != null before invoking fallback
-    expect(src).toContain('[reuters/headlines] RSS primary failed');
+    expect(src).toContain('RSS primary failed, invoking stealth fallback');
   });
 
   it('news_ingest module warns when RSS primary returns 0 articles', () => {
@@ -81,7 +86,7 @@ describe('Bug 1 — Reuters handler emits warning log when RSS primary fails', (
       'utf-8',
     );
     // Must log when RSS returns empty feed before invoking fallback
-    expect(src).toContain('[reuters/headlines] RSS primary returned 0 articles');
+    expect(src).toContain('RSS primary returned 0 articles, invoking stealth fallback');
   });
 
   it('news_ingest module warns when stealth fallback also returns 0 articles', () => {
@@ -90,7 +95,7 @@ describe('Bug 1 — Reuters handler emits warning log when RSS primary fails', (
       'utf-8',
     );
     // Must log when both primary and fallback yield no headlines
-    expect(src).toContain('[reuters/headlines] stealth fallback also returned 0 articles');
+    expect(src).toContain('stealth fallback also returned 0 articles');
   });
 });
 

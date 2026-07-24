@@ -10,7 +10,7 @@
  */
 
 import type { Article } from '../../domain/models.js';
-import type { NewsSource } from '../../domain/models.js';
+import { NewsSource } from '../../domain/models.js';
 import { normalizeHeadline } from '../../primitive/headline-normalizer/index.js';
 import { computeArticleKey } from '../../primitive/source-dedup-key/index.js';
 import type { NewsIngestPort, NewsFetcherPort } from './ports.js';
@@ -99,29 +99,24 @@ export function composeNewsIngest(
   fallback: NewsFetcherPort,
 ): NewsIngestPort {
   return {
-    async ingestHeadlines(_source: NewsSource, maxItems?: number): Promise<Article[]> {
+    async ingestHeadlines(source: NewsSource, maxItems?: number): Promise<Article[]> {
+      const tag = source === NewsSource.REUTERS ? '[reuters/headlines]' : '[bloomberg/headlines]';
+
       // Try primary
       const primaryResult = await primary.fetchHeadlines(maxItems);
 
       // Fall back if primary errored or returned empty
       if (primaryResult.error !== null || primaryResult.articles.length === 0) {
         if (primaryResult.error !== null) {
-          console.warn('[reuters/headlines] RSS primary failed, invoking stealth fallback', {
-            rssError: primaryResult.error,
-          });
-          console.warn('[bloomberg/headlines] RSS primary failed, invoking stealth fallback', {
+          console.warn(`${tag} RSS primary failed, invoking stealth fallback`, {
             rssError: primaryResult.error,
           });
         } else {
-          console.warn('[reuters/headlines] RSS primary returned 0 articles, invoking stealth fallback');
-          console.warn('[bloomberg/headlines] RSS primary returned 0 articles, invoking stealth fallback');
+          console.warn(`${tag} RSS primary returned 0 articles, invoking stealth fallback`);
         }
         const fallbackResult = await fallback.fetchHeadlines(maxItems);
         if (fallbackResult.articles.length === 0) {
-          console.warn('[reuters/headlines] stealth fallback also returned 0 articles', {
-            fallbackError: fallbackResult.error ?? 'none',
-          });
-          console.warn('[bloomberg/headlines] stealth fallback also returned 0 articles', {
+          console.warn(`${tag} stealth fallback also returned 0 articles`, {
             fallbackError: fallbackResult.error ?? 'none',
           });
         }
