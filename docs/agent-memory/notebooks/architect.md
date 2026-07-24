@@ -1,8 +1,15 @@
 # Architect — Notebook
 
-**Last updated:** 2026-07-24 19:57 UTC | **Sprint:** COWORK-GUARANTEED-SLOT-CATCHUP
+**Last updated:** 2026-07-24 20:31 UTC | **Sprint:** COWORK-GUARANTEED-SLOT-CATCHUP
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-07-24T20:31Z — FACTORY-GUARD-CI-rebuild-raw-verify-hook (zone=cross-service/, P2 BOUNDED-1 lane-corrected pickup, design+decompose) — 7th and LAST of 7
+
+**Task:** Design a check that PRs touching a hardcode-metric/metric-serving path attach a documented RAW verification against the named-volume DB after rebuild — 7th and last `ci-regression-prevention` guardrail, same epic/audit as the size-lint/metric-mask/depguard/dead-code/no-hardcode/shared-package siblings.
+**Finding:** Ticket's own "attached to the PR" framing is a category error for this repo — `gh pr list --state all` returns exactly 1 PR ever (closed, never merged, 2026-04-25), branch protection 404, and CLAUDE.md's actual rule is "NO branches — all work stays on main" (autonomous direct push, `PUSH-AUTONOMY-1`). Bigger finding: the DoD this ticket asks for is not a policy gap — `dev-standards.md` `PUSH-AUTONOMY-1` §5 already mandates it word-for-word (PO mints `VERIFY-<task-id>-REALDATA`, gated on a RAW-live serving-layer probe after rebuild). The gap is 100% enforcement: across all of `orch-state.json`+archive, only 2 `VERIFY-*-REALDATA` rows have EVER existed (1 archived-done, 1 currently BLOCKED) against 54 commits touching serving code since §5 was pinned 2026-07-14. Concrete miss: commit `e3386bdfa` ("remove DEFAULT-50 confidence mask, wire real severity/finding confidence", self-flagged `rebuild_required: true`) carries zero RAW-verify/REALDATA attestation and no companion VERIFY task. Cross-checked: no other backlog row owns enforcing §5 or automating REALDATA-task minting — no double-count risk.
+**Output:** `docs/architecture-briefs/2026-07-24-factory-guard-ci-rebuild-raw-verify-hook.md` — zero-tolerance going forward, no baseline file (this is a forward-only attestation check on the push diff, not a source-file sweep — nothing historical to grandfather, unlike size-lint). Trigger scope composed from 2 already-designed siblings rather than a 3rd invented pattern: DDD infra/interface-layer files (the tiers `depguard-tier-boundaries` fences) whose added lines match `metric-mask-lint`'s own field regex (confidence/score/impact/magnitude/probability). On trigger, requires a `RAW-verify`/`REALDATA` token in the commit-range message OR a touched decision-journal/task-report OR an inline `raw-verify-allow:` escape hatch. Wired PRIMARY into the existing `scripts/git-hooks/pre-push` (this repo's real merge gate, since there's no PR/branch-protection to block on) and SECONDARY as a `.github/workflows/ci.yml` backstop job for bypass visibility (red CI on main is a monitored signal here). Explicitly excludes changing `PUSH-AUTONOMY-1` §5 itself or board-state-aware VERIFY-task-minting verification (deferred — temporally outside the triggering commit range). Minted child dev row `FACTORY-GUARD-CI-RAWVERIFY-IMPL` (`developer`, zone cross-service/) — not self-implemented.
+**Next:** pm/dev-team — promote+dispatch `FACTORY-GUARD-CI-RAWVERIFY-IMPL` when picked up; dispatcher (this task's owner) flips `FACTORY-GUARD-CI-rebuild-raw-verify-hook` board status. This closes out all 7 `ci-regression-prevention` guardrail designs.
 
 ## 2026-07-24T19:57Z — FACTORY-GUARD-CI-shared-package-import-check (zone=cross-service/, P2 BOUNDED-1 pickup, design+decompose)
 
@@ -18,18 +25,16 @@
 **Output:** `docs/architecture-briefs/2026-07-24-factory-guard-ci-no-hardcode-allowlist-scan.md` — zero-tolerance CI design (5 sites, small, matches metric-mask/dead-code precedent): single `no-hardcode-allowlist-scan.sh` with 2 mechanically-reliable checks (temporal-combo ban, ticker/code-literal-in-control-flow ban with a HOSE/HNX/UPCOM/BLOOMBERG denylist); explicitly deferred generic cross-file ticker-array-overlap detection (would false-positive against the dozens of legitimately-overlapping rule tables). Child task fixes the 2 cosmetic-only findings outright (zero behavior risk) and annotates the 2 known-debt findings (JANITOR-034/035) with a `hardcode-scan-allow:` escape hatch rather than forcing the human design decision their own ledger entries already flag as out-of-scope. Minted child dev row `FACTORY-GUARD-CI-NOHARDCODE-IMPL` (`developer`, zone cross-service/) — not self-implemented.
 **Next:** pm/dev-team — promote+dispatch `FACTORY-GUARD-CI-NOHARDCODE-IMPL` when picked up; dispatcher (this task's owner) flips `FACTORY-GUARD-CI-no-hardcode-allowlist-scan` board status.
 
-## 2026-07-24T19:02Z — FACTORY-GUARD-CI-dead-code-gate (zone=cross-service/, P2 BOUNDED-1 pickup, design+decompose)
-
-**Task:** Design a CI gate catching tracked `*.bak`/`*.backup`/`*.patch` files, `_deprecated/`/orphaned `src/` trees, and build-ignored archives — 4th of the 7 `ci-regression-prevention` guardrails, same epic/audit as the depguard/metric-mask/size-lint siblings.
-**Finding:** Ticket's "4 currently committed .bak" stale — already 0 (`FACTORY-INTERFACE-delete-bak-files` self-closed same-day, commit `2a146ecdd`, `.gitignore` already covers `*.bak`); found 2 uncovered `.backup`/`.patch` survivors instead. Live `_deprecated/`-named debt: 4 dirs/1,373L across mcp-server/pdf-extractor/stock-price, all self-labeled with stale "delete after G5" headers from a stalled migration phase. Found a BIGGER unlabeled orphan the naming grep alone misses: `apps/technical-analysis/src/` (697L incl. tests) — a dead TS DDD stack surviving from a PO-decided-FINAL 2026-05-22 Go rewrite (Dockerfile/CI/compose all Go-only today, TS tree never swept); last live instance of this shape (macro-indicators/kinh-dich-service already 0 TS files). Caught `apps/technical-analysis/package.json` is partially-live (dashboard/build.sh still needs its esbuild/playwright-core deps — trim, don't delete) and `1081-sprint-054-smoke.test.ts` is partially-live (surgical removal of 3 `it()` blocks, not whole-file delete).
-**Output:** `docs/architecture-briefs/2026-07-24-factory-guard-ci-dead-code-gate.md` — zero-tolerance CI design (fix all ~2,070L confirmed-orphaned debt in the same child task before the gate activates, despite bigger absolute LOC than metric-mask/depguard since it's 100% pure subtraction of zero-import-verified code, unlike size-lint's refactor-risk 733-file debt): single `dead-code-gate.sh` with 4 structural checks (bak/backup/patch ban, `_deprecated/`-name ban, Go-service+stray-TS-scaffold ban, `//go:build ignore` ban); deferred full knip/ts-prune/vulture unused-export tooling as documented enhancement (no live debt evidence beyond what the 4 checks catch). Minted child dev row `FACTORY-GUARD-CI-DEADCODE-IMPL` (`developer`, zone cross-service/) — not self-implemented.
-**Next:** pm/dev-team — promote+dispatch `FACTORY-GUARD-CI-DEADCODE-IMPL` when picked up; dispatcher (this task's owner) flips `FACTORY-GUARD-CI-dead-code-gate` board status.
-
 ---
 
 ## Archive (pre-2026-07-24T19:57Z)
 
-[Older cycles archived to git history: FACTORY-GUARD-CI-depguard-tier-boundaries (2026-07-24T18:29Z,
+[Older cycles archived to git history: FACTORY-GUARD-CI-dead-code-gate (2026-07-24T19:02Z,
+zone=cross-service/, P2 BOUNDED-1 pickup — ticket's "4 committed .bak" stale (already 0, self-closed
+same-day commit `2a146ecdd`), found 2 uncovered `.backup`/`.patch` survivors + 4 `_deprecated/` dirs/
+1,373L + a bigger unlabeled orphan `apps/technical-analysis/src/` (697L, dead since a PO-decided-FINAL
+2026-05-22 Go rewrite never swept the TS tree), zero-tolerance `dead-code-gate.sh` 4-check design,
+child `FACTORY-GUARD-CI-DEADCODE-IMPL`), FACTORY-GUARD-CI-depguard-tier-boundaries (2026-07-24T18:29Z,
 zone=cross-service/, P2 BOUNDED-1 pickup — ticket wrong on 2/3 clauses (TS fences + Python contract
 already live/enforced, real TS gap was ESLint never running in CI + missing news-fetch-go-lint job),
 net-new go/ast composition-root-logic gate scoped to receiver methods (2 real macro-indicators

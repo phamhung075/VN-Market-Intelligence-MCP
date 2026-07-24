@@ -10795,6 +10795,27 @@
         "created_at": "2026-07-24T19:56:48Z",
         "created_by": "architect",
         "updated_at": "2026-07-24T19:56:48Z"
+      },
+      {
+        "id": "FACTORY-GUARD-CI-RAWVERIFY-IMPL",
+        "type": "SPRINT-S",
+        "title": "Implement rebuild-raw-verify-hook CI guardrail (pre-push blocking check + CI backstop job)",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "size": "S",
+        "zone": "cross-service/",
+        "epic": "FACTORY-MAINTAINABILITY-2026-06",
+        "cluster": "ci-regression-prevention",
+        "source": "architect design brief 2026-07-24, parent FACTORY-GUARD-CI-rebuild-raw-verify-hook",
+        "detail_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-rebuild-raw-verify-hook.md#3-guardrail-design--zero-tolerance-going-forward-no-baseline-different-reasoning-than-size-lints-grandfather",
+        "dev_agent": "developer",
+        "next_agent": "developer",
+        "parent_task": "FACTORY-GUARD-CI-rebuild-raw-verify-hook",
+        "brief_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-rebuild-raw-verify-hook.md",
+        "note": "files: scripts/audits/rebuild-raw-verify-check.sh (new, <base-sha> <head-sha> positional args, zero-tolerance, no baseline file), scripts/git-hooks/pre-push (extend: call the new script inside the existing CODE_TOUCHING_REGEX block, same fail-open-on-diff-error posture as the tsc check), .github/workflows/ci.yml (add rebuild-raw-verify-hook backstop job), docs/policies/dev-standards.md (CANONICAL pointer + cross-reference under PUSH-AUTONOMY-1 §5), scripts/audits/rebuild-raw-verify-check.test.sh (new smoke test: trigger-path+field-match with no attestation FAILs — reproduce e3386bdfa shape as a synthetic fixture; same diff with a RAW-verify token in the range commit message PASSes; same diff with a raw-verify-allow: inline annotation PASSes; a diff touching only non-trigger paths, or trigger paths with no metric-field-name line, PASSes trivially). EXPLICITLY OUT OF SCOPE: no change to PUSH-AUTONOMY-1 §5 PO-mint-task requirement; no board-state-aware check of whether a VERIFY-*-REALDATA task was actually minted (deferred, documented enhancement). approach: trigger fires when a file under a DB-write/route-serving DDD layer (apps/*/src/infrastructure/**, apps/*/src/interface/**, apps/*/pkg/interface/http/**, apps/*/pkg/infrastructure/**) has an added line matching the metric-mask-lint sibling field regex (confidence|score|impact|magnitude|probability, case-insensitive). On trigger, require ONE of: git log <base>..<head> --format=%B contains raw-verify|raw verified|realdata (case-insensitive); OR the range touches docs/agent-memory/decisions/** or reports/TASK_REPORT_*.md with an added line matching the same token; OR an inline raw-verify-allow: <reason> annotation on the triggering line. Wire primary check into scripts/git-hooks/pre-push (this repo has no PR/branch-protection to gate on — direct push to main is the real merge gate, confirmed live: gh pr list shows exactly 1 PR ever, closed unmerged, and branch protection is 404); wire secondary backstop into ci.yml running the same script against github.event.before..github.sha for visibility when the local hook is bypassed. dod: hook blocks a synthetic un-attested trigger-path push locally; CI job mirrors the same verdict on github.event.before..github.sha; existing doc-only-push fast-skip in pre-push unaffected; smoke test covers all 4 cases (fail/pass-commit-msg/pass-annotation/pass-no-trigger); CI green.",
+        "created_at": "2026-07-24T20:30:58Z",
+        "created_by": "architect",
+        "updated_at": "2026-07-24T20:31:12Z"
       }
     ],
     "closed_sprints": [
