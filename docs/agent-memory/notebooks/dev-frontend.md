@@ -1,6 +1,31 @@
 # dev-frontend notebook
 
-**Last updated:** 2026-07-24 | **Sprint:** FACTORY-FRONTEND-split-orchestration
+**Last updated:** 2026-07-24 | **Sprint:** QUALITY-AUDIT-FRONTEND-COVERAGE
+
+---
+
+## Session: 2026-07-24 (FE-PG-BCTC-EVAL-_INDEX-FUNC-FIX — quality-audit dispatch)
+
+**DONE — /dashboard/bctc-eval 500→200; live root cause diverged from PO narrative**
+
+Zone health: 96 test files (+1); 2125 pass / 2 fail (same pre-existing QUE-TOOLTIP, confirmed unmodified in git status); tsc 0 errors | HEALTHY
+
+PO narrative: loader throws on a 404 from `/api/bctc-eval`. Live-verified (curl :3001/:3000, `docker exec` into the running container's `build/server/index.js`, `docker logs`) that narrative was WRONG on the throw site — the loader already caught upstream errors correctly (unchanged, kept as-is). The REAL crash: render-time `TypeError` in `StatusBadge` — `STATUS_CONFIG[status]` destructured `undefined`, because live mcp-server payloads only include `stage_statuses` keys for stages actually computed (MBB Q1-2026 live row has only keys 4-6, not 1-3) while the domain type declared all 6 required. `EvalTable` iterated all 6 STAGE_KEYS unconditionally with a lying `as EvalStatus` cast.
+
+Files updated:
+- `domain/bctc-eval.ts` — StageStatuses: all 6 keys made optional (matches live wire contract)
+- `components/bctc-eval/StatusBadge.tsx` — defensive: `status: EvalStatus | undefined`, renders neutral "—" instead of crashing
+- `components/bctc-eval/EvalTable.tsx` — removed the lying `as EvalStatus` cast
+- `routes/dashboard.bctc-eval._index.tsx` — extracted `loadBctcEvalListData()` as plain testable export (Remix strips `loader` under jsdom — dashboard.alerts.tsx precedent)
+- `routes/api.bctc-eval.$.tsx` — SEPARATE real bug found+fixed: bare `GET /api/bctc-eval` through this splat proxy appended a trailing slash (empty `params["*"]`), which mcp-server 404s. Extracted `buildBctcEvalUpstreamUrl()`. NOTE: `api.bctc-inspect.$.tsx` has the identical latent pattern, unexercised today, NOT fixed (out of ticket scope) — flag for a future ticket.
+- `__tests__/bctc-eval-list.test.tsx` +2 suites, new `__tests__/bctc-eval-proxy-trailing-slash.test.ts`
+- `docs/architecture/microservice/frontend/domain-model.md` — StageStatuses live-contract entry added
+
+Rebuild: `docker compose build frontend` + `up -d --no-deps frontend` (image ID verified match). Live before/after: `/dashboard/bctc-eval` 500→200; `/api/bctc-eval` proxy 404→200 (real MBB/HVN/HPG data); recompute POST sub-path regression-checked 200.
+
+Commit: `aaf487834` | tsc: 0 errors | vitest: 2125/2127 (same 2 pre-existing fail)
+
+Lesson: PO's narrated root cause pointed at the wrong file/layer — reproducing live against the actual served bundle (not just reading source) found the real crash site. Verify live before trusting any bug narrative, even a "PO-confirmed" one.
 
 ---
 
@@ -54,30 +79,6 @@ rebuild_required=true but SCOPE-BOUND to CODE-ONLY per task — NO rebuild perfo
 
 ---
 
-## Session: 2026-07-09 (FACTORY-FRONTEND-split-dashboard-analysis — BOUNDED-1 idle-pickup)
-
-**FACTORY-FRONTEND-split-dashboard-analysis DONE — 1836L route split into formatters + 22 components**
-
-Zone health: 83 test files; 2047 pass / 2 fail (pre-existing QUE-TOOLTIP, unrelated); tsc 0 errors; eslint clean (same 5 pre-existing react-hooks/exhaustive-deps errors in unrelated CorporateEventsZone/FinancialsZone/TechnicalZone, confirmed unrelated); Playwright G12 4/4 GREEN (isolated port) | HEALTHY
-
-Task: direct sequel to FACTORY-FRONTEND-extract-computeDecision — split remaining 1836L `dashboard.analysis.tsx` per `docs/architecture-briefs/2026-06-15-maintainability-factory-audit.md`.
-
-Files created (20 commits, one extraction per commit):
-- `domain/formatters/{signal-color,confidence-pct,confidence-label,indicator-label,signal-direction-label}.ts` — 5 pure helpers moved verbatim
-- `components/analysis/{ConfidenceBar,SectionShell,StockSelector,WatchlistTile,WatchlistOverviewGrid,SectorPeersBar,MacroImpactPanel,KinhDichMarketPanel,MacroSignalPanel,StockTable,AnalysisDecision,InfoSourcePanel,buildInfoSourceRows,buildInfoSourcePriceTaRows,InfoSourceRow,StockSignalsPanel,MiniPriceTable,StockDetailPanel,StockDetailBottomGrid,AiDeepDivePanel,BriefSection,AccuracyDigestCard}.tsx` — 22 files, all <=120L (initial audit found 2 over: WatchlistTile 121L comment-trimmed to 119L; StockDetailPanel 133L split into itself 78L + new StockDetailBottomGrid 78L)
-
-Files updated:
-- `routes/dashboard.analysis.tsx` — 1836L→457L; only loader + default export + `AnalysisBriefDto`/`AnalysisBriefResult`/`StockDetail` types remain (now exported so moved components `import type` them — same pattern as FinancialsZone/NewsBuzzZone); honest size-justification header added (457L is smallest of 19 `/dashboard/*.tsx` routes in the zone, all currently unheaded — monorepo CI-size-lint-justification gate not built yet)
-- `docs/architecture/microservice/frontend/domain-model.md` — formatters + component-split documented
-
-RAW-verify: fresh isolated dev server (unused port, bypassing the stale live :3001 Docker container) — curl `/dashboard/analysis` (9/9 content checks pass) and `?stock=VNM` (8/8 pass, all StockDetailPanel sub-panels present); one anomaly found (2 deterministic null bytes mid-"định") confirmed PRE-EXISTING via git-stash A/B test against the original 1836L file — not a regression.
-
-Commits: `a5e6294`..`41279090e` (18 extraction + 2 doc/fixup) | tsc: 0 errors | vitest: 2047/2049 | eslint clean | Playwright 4/4 GREEN
-
-rebuild_required=true — route file touched; board flipped `in_progress`→`review`, `next_agent=ops` for Docker Close Gate.
-
----
-
-**Current state:** 95 test files; 2110 pass / 2 fail (pre-existing QUE-TOOLTIP schema); tsc 0 errors.
+**Current state:** 96 test files; 2125 pass / 2 fail (pre-existing QUE-TOOLTIP schema); tsc 0 errors.
 **Tech stack:** Remix 2 + TypeScript 5 strict + Tailwind 3 + shadcn/ui + Vitest + Playwright
 **Key patterns:** useFetcher self-fetching zones; FreshnessBadge(intraday/daily/weekly SLA); safeFetch bounded; honest-NULL (null_reason + gray badge, never fabricate); DDD layers enforced; route-colocated DTO/parser/formatter families kept textually distinct across merged pages (do-not-homogenize); Playwright G12 gate must run with an unused `PLAYWRIGHT_PORT` override if the live frontend Docker container occupies :3001 (reuseExistingServer piggybacks on it otherwise, false-greening against stale code). Shared pure helpers used by >=2 sibling split-out components go to `domain/` (formatters or a feature-scoped `domain/<feature>/`), never colocated in one sibling — avoids components<->components circular imports (FACTORY-FRONTEND-split-orchestration).
