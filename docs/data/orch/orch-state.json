@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FACTORY-INTERFACE-move-kinhdich-ta-scoring-down",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-INTERFACE-move-kinhdich-ta-scoring-down — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-24T02:14:29Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "FACTORY-INTERFACE-move-kinhdich-ta-scoring-down closed out to REVIEW by dev-mcp-server; router to dispatch qa next",
+    "updated_at": "2026-07-24T02:45:33Z",
+    "updated_by": "dev-mcp-server (FACTORY-INTERFACE-move-kinhdich-ta-scoring-down self-closeout)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -14372,6 +14372,24 @@
         "next_agent": "qa",
         "entered_review_at": "2026-07-24T02:05:06Z",
         "review_note": "dev-mcp-server self-closeout: migrated last 5 copy-paste VPS-auth blocks (pushPricesHandler/pushSbvRatesHandler/pushNewsHandler/pushForeignFlowHandler/server.ts GET /api/watchlist) onto the existing shared requireVpsApiKey guard (15 other call sites already used it, per FACTORY-INTERFACE-split-server-ts Stage 1 bce8be44b). Byte-compared before migrating; foreignFlowStatusHandler.ts's buildForeignFlowStatusResponse deliberately left unmigrated (same predicate, returns {status,body} not res-write, own dedicated HTTP-free test suite). New FACTORY-INTERFACE-vps-auth-guard-dedup.test.ts: 6 guard unit tests + 5 live-HTTP e2e tests, 11/11 pass. tsc clean. git-stash A/B on the 5 touched files: 38/38 pass pre, 71/71 pass post, zero regressions. Full bun test: 14726 pass/40 skip/42 fail/1 error — 42-fail matches todays already-documented pre-existing baseline (vps_push_log schema-drift + 5000ms MCP-client-timeout classes), zero Unauthorized-string failures anywhere, zero fails in any of the 6 auth-relevant test files. Live boot probe: /health 200, unauthenticated GET /api/watchlist 401, toolCount=184/cronJobCount=88 unchanged. Commit cf28a32e8. Journal: docs/agent-memory/decisions/sprint-FACTORY-INTERFACE-vps-auth-guard-dedup-dev-mcp-server.md"
+      },
+      {
+        "title": "Move Kinh Dich + TA scoring math out of interface tools into domain",
+        "priority": "P2",
+        "zone": "mcp-server-interface",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-INTERFACE-move-kinhdich-ta-scoring-down",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INTERFACE-move-kinhdich-ta-scoring-down",
+        "promoted_at": "2026-07-24T02:14:29Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-24T02:46:08Z",
+        "claimed_at": "2026-07-24T02:14:29Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "entered_review_at": "2026-07-24T02:45:33Z",
+        "review_note": "dev-mcp-server self-closeout: pure DDD move, byte-identical. Moved 9 Kinh Dich score-computation functions (computeSentimentScore/computeFundamentalsScore/computePriceScore/computeForeignFlowScore/computeSectorScore/computeMacroScore/tickerJitter/computeHaoScores/computeMacroIndicatorScore) from interface/mcp/tools/kinhdich/kinhDichTools.ts to new application/services/kinhDich/kinhDichScoring.ts (application not domain -- these do real DB I/O via getDb()/IKinhDichScoreRepository, domain/services convention is pure-no-I/O). All 9 function bodies byte-diff-verified identical old vs new. Updated 1 scheduler dynamic-import consumer + 6 test files import paths. TA scoring math in technicalIndicatorTools.ts investigated but NOT moved -- already-shipped deliberate G5/P2-B2 architecture (real domain TA service intentionally quarantined to _deprecated/, Go microservice port 5003 is the permanent home); moving it would resurrect retired code, documented in journal as PARTIAL-by-design. Evidence: tsc clean. Targeted kinhdich/macro/diacritics regression 19 files/457 tests: 453 pass/4 skip/0 fail identical pre vs post. Full bun test: 14727 pass/41 fail then 14725 pass/43 fail on repeat run (count flux 41-43 proves flaky/timeout class not deterministic); grepped every (fail) line -- zero kinhdich/hexagram/macro-score/sector-score/foreign-flow-score mentions, all match today pre-existing classes (vps_push_log schema-drift, 5000ms MCP-client-timeout, pre-quarantined _deprecated/1302-technical-indicators.test.ts flake). Local isolated server boot probe (port 3999): health 200 toolCount=184, both dashboards 200. Tool count 184/cronJobCount 88 unaffected. Commit b6b659ea0. Journal: docs/agent-memory/decisions/sprint-FACTORY-INTERFACE-move-kinhdich-ta-scoring-down-dev-mcp-server.md"
       }
     ],
     "qa": [],
@@ -14393,23 +14411,7 @@
     },
     "last_triaged_at": "2026-07-24T02:14:29Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "title": "Move Kinh Dich + TA scoring math out of interface tools into domain",
-        "priority": "P2",
-        "zone": "mcp-server-interface",
-        "type": "FACTORY",
-        "status": "IN_PROGRESS",
-        "id": "FACTORY-INTERFACE-move-kinhdich-ta-scoring-down",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INTERFACE-move-kinhdich-ta-scoring-down",
-        "promoted_at": "2026-07-24T02:14:29Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-24T02:14:30Z",
-        "claimed_at": "2026-07-24T02:14:29Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
