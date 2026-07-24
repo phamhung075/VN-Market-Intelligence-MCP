@@ -387,12 +387,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-AGENTSIGNALS-FROMAGENT-SCHEMA",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-AGENTSIGNALS-FROMAGENT-SCHEMA — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-24T21:55:30Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "updated_at": "2026-07-24T22:25:33Z",
+    "updated_by": "dev-mcp-server"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2450,8 +2449,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-24T17:28:34Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-07-24T22:25:33Z",
+    "_updated_by": "dev-mcp-server",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -14916,6 +14915,24 @@
           "3f2acbdda (memory: notebook + decision journal)"
         ],
         "review_note": "dev-mcp-server BOUNDED-1 pickup, direct-commit (branch:null). New domain service ohlcvContinuityGuard.ts (per-exchange board-limit resolution HOSE7/HNX10/UPCOM15 + adjacent-bar discontinuity detector + reconcile-or-flag) + application usecase getContinuityCheckedOhlcvSeries.ts, wired into get_technical_indicators (both daily_ohlcv read sites) so a corp-action-discontinuous bar can never poison RSI/MACD/BB downstream. Tests use REAL live-fetched VJC (HOSE) 2026-06-08..19 daily_ohlcv rows (the real 2026-06-15->06-16 -24.87% corp-action move), no fabricated bars. Evidence: tsc clean; new suite 13/13 pass; touched-file consumers 282 pass/2 fail (both the SAME already-documented pre-existing flaky class in _deprecated/1302-technical-indicators.test.ts, confirmed unrelated via git-stash A/B against unmodified baseline — identical failures before/after); full bun test run twice (14760p/53f/1e, 14764p/49f) with zero failure referencing the touched/new files, all failures in unrelated pre-existing-flaky files (logVpsPush, telegram routing, push-news, vnstock stores, insider_transactions, market_cap, MCP SSE, get_foreign_flow — 5000ms-timeout class already documented earlier in this session's notebook cycles). tool/cron counts unaffected (184/88). Simplicity gate PASS. DJ-GATE-1 satisfied. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md"
+      },
+      {
+        "id": "FIX-AGENTSIGNALS-FROMAGENT-SCHEMA",
+        "title": "get_agent_signals({from_agent}) fails schema (`agent` Required) -> news-scout SELF_SIGNALS_CACHE empty every cycle",
+        "type": "FIX",
+        "status": "REVIEW",
+        "priority": "P2",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AGENTSIGNALS-FROMAGENT-SCHEMA",
+        "promoted_at": "2026-07-24T21:55:30Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-24T22:25:33Z",
+        "claimed_at": "2026-07-24T21:55:30Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "updated_by": "dev-mcp-server",
+        "review_note": "STALE-BACKLOG-ROW CLOSURE, not a new fix: `agent` was already made schema-optional by 8a6b798ce (FIX-AGENT-SIGNALS-AGENT-PARAM-CONTRACT, 2026-06-19) — a sibling backlog row minted for the IDENTICAL root cause (agentSignalTools.ts), promoted by po-s107 and shipped 2 days after THIS ticket was minted (po-s94, 2026-06-17T01:34:10Z), never cross-reconciled against it. Confirmed via git log -p on the file plus the still-on-disk scripts/po-s107-insider-agentsignals-schema-contract-promote.jq. Code commit 440e924f7: extracted the tool's inline zod shape to exported GetAgentSignalsShape (agentSignalTools.ts, zero behavior change — pure const-extraction, diff-verified) so tests assert the REAL runtime schema instead of a hand-mirrored copy that can drift. New FIX-AGENTSIGNALS-FROMAGENT-SCHEMA.test.ts (8 tests: schema-level + real McpServer/handler/DB end-to-end) proves the ticket's literal repro get_agent_signals({from_agent:\"news-scout\"}) returns rows or an empty array, never -32602; neither-agent-nor-from_agent still gets a controlled readable tool-response error, not a protocol crash. Evidence: bun tsc --noEmit clean; new suite 8/8 pass; precedent/consumer suites (FIX-AGENT-SIGNALS-AGENT-PARAM-CONTRACT+1194-agent08-tools+FACTORY-INFRA-agentSignal-sql-binding+1968b1-hours-back) 30/30 pass; full bun test run TWICE (14772 pass/40 skip/49 fail/530s and 14771 pass/40 skip/50 fail/535s, full log grepped both times) — complete fail lists match the SAME pre-existing flaky/resource-contention class documented across 5+ prior QA journals (CI-RED-RECONCILE, FIX-FUNDAMENTALS-REFRESH-CRON-DEAD, FIX-PRED-CLAIMS-EXCLUDED-SERVE-DISPLAY, PREDICTION-EVIDENCE-REVIVAL, SYSTEMIC-REMAKE-P1), zero overlap with agentSignalTools/get_agent_signals/GetAgentSignalsShape/FIX-AGENTSIGNALS. Journal commit 0e354e21c. REMAINING GAP (not closed here): a rebuild + LIVE gateway RAW-verify of get_agent_signals({from_agent:...}) against the running container is an ops/user-gated step — the underlying fix has been live-shipped code since 8a6b798ce (2026-06-19) but was never actually RAW-verified against a rebuilt container per the original verification_gate; QA should route that check onto the existing rebuild queue, not treat this commit as opening a NEW rebuild_required gate."
       }
     ],
     "qa": [],
@@ -14937,23 +14954,7 @@
     },
     "last_triaged_at": "2026-07-24T21:55:30Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-AGENTSIGNALS-FROMAGENT-SCHEMA",
-        "title": "get_agent_signals({from_agent}) fails schema (`agent` Required) -> news-scout SELF_SIGNALS_CACHE empty every cycle",
-        "type": "FIX",
-        "status": "IN_PROGRESS",
-        "priority": "P2",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AGENTSIGNALS-FROMAGENT-SCHEMA",
-        "promoted_at": "2026-07-24T21:55:30Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-24T21:55:31Z",
-        "claimed_at": "2026-07-24T21:55:30Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
@@ -14962,6 +14963,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-07-24T17:28:34Z",
-  "_updated_by": "po"
+  "_updated_at": "2026-07-24T22:25:33Z",
+  "_updated_by": "dev-mcp-server"
 }
