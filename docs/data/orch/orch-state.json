@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FACTORY-APP-pollNews-layering-fix",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-APP-pollNews-layering-fix — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-24T04:44:30Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "FACTORY-APP-pollNews-layering-fix moved to REVIEW by dev-mcp-server self-closeout — awaiting qa",
+    "updated_at": "2026-07-24T05:02:48Z",
+    "updated_by": "dev-mcp-server"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -14408,6 +14408,24 @@
         "next_agent": "qa",
         "entered_review_at": "2026-07-24T04:40:33Z",
         "review_note": "dev-mcp-server self-closeout: pure readability refactor, values byte-identical. VAS row-code guard (lineScan.ts): inline val>=10 && val<=990 && val%10===0 repeated 3x (findValue isGuarded + findValueByCode Form A/B) named VAS_ROW_CODE_MIN=10/VAS_ROW_CODE_MAX=990/VAS_ROW_CODE_STEP=10 (MIN and STEP separate consts despite sharing value 10 -- distinct domain facts). Cascade broadcast-floor (Task 162): inline default 6 duplicated 5x across cascadeEngine.ts + runImpactChain.ts + pollNews.ts config-load fallbacks, consolidated into 1 exported SSOT DEFAULT_BROADCAST_MIN_IMPACT=6 in cascadeEngine.ts, imported at both application-layer sites. Evidence: tsc clean. Targeted regression 16 files/193 tests (9 BCTC-extractor + 7 cascade/broadcast): pass counts identical pre/post (105+88). Full bun test: 14727 pass/41 fail -- grep-verified zero overlap with touched files/concepts (lineScan/cascadeEngine/runImpactChain/pollNews/broadcast/VAS/rowCode/bctcOverdue absent from fail list); all 41 match documented pre-existing classes (vps_push_log schema-drift, 5000ms MCP-client-timeout, deprecated 1302-technical-indicators flake). Server boot probe (port 3999): health 200 toolCount=184, both dashboards 200. Tool 184/cron 88 unaffected. Commit 6b0141a5a. Journal: docs/agent-memory/decisions/sprint-FACTORY-DOMAIN-name-bctc-cascade-magic-numbers-dev-mcp-server.md"
+      },
+      {
+        "title": "Move source-health tracker singleton from interface down to infrastructure",
+        "priority": "P2",
+        "zone": "mcp-server-application",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-APP-pollNews-layering-fix",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APP-pollNews-layering-fix",
+        "promoted_at": "2026-07-24T04:44:30Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-24T05:03:01Z",
+        "claimed_at": "2026-07-24T04:44:30Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "entered_review_at": "2026-07-24T05:02:48Z",
+        "review_note": "dev-mcp-server self-closeout: pure DDD move, behavior-preserving. Moved globalSourceTracker singleton (+ _resetGlobalSourceTracker) from interface/mcp/tools/news-analysis/sourceHealthTools.ts to new infrastructure/observability/sourceHealthRegistry.ts -- resolves the Fence-B violation eslint.config.mjs already documented by name (pollNews.ts importing interface-layer state, annotated FENCE-LEGACY). Mirrors existing stateful-tracker precedent in infrastructure/observability/ (jobMetrics.ts, circuitBreakerLogger.ts). Left formatSourceHealthTable/registerSourceHealthTools (pure rendering, no state) in the interface file. Rewired 3 production consumers (pollNews.ts -- the violation itself; systemTools.ts; tradingEconomicsChromium.ts 2 dynamic imports, which was also wrongly reaching into interface/) + 6 test files. Removed the now-obsolete eslint-disable comment; updated the stale eslint.config.mjs Fence-B comment + a stale precedent citation in getMoneyRadarComposite.ts. Evidence: byte-diffed singleton block old-vs-new -- identical. tsc clean, zero dangling imports to old path (grep-confirmed). npx eslint clean on all 5 touched files (Fence-B no longer needs the disable). Targeted 10-file source-health/pollNews suite: 239-240 pass/4 skip, one known singleton-state cross-file flake (passes standalone, fails intermittently only under batch order) reproduced identically before AND after the move -- same signature, proving singleton semantics genuinely preserved. Server boot probe (PORT=3099, port 3000 held by live docker): health 200 toolCount=184=baseline. gen-project-stats: toolCount 184/cronJobCount 88 unaffected. Commit a2a386d24. Journal: docs/agent-memory/decisions/sprint-FACTORY-APP-pollNews-layering-fix-dev-mcp-server.md"
       }
     ],
     "qa": [],
@@ -14429,23 +14447,7 @@
     },
     "last_triaged_at": "2026-07-24T04:44:30Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "title": "Move source-health tracker singleton from interface down to infrastructure",
-        "priority": "P2",
-        "zone": "mcp-server-application",
-        "type": "FACTORY",
-        "status": "IN_PROGRESS",
-        "id": "FACTORY-APP-pollNews-layering-fix",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APP-pollNews-layering-fix",
-        "promoted_at": "2026-07-24T04:44:30Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-24T04:44:31Z",
-        "claimed_at": "2026-07-24T04:44:30Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
