@@ -1,6 +1,20 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-24 | **Cycle:** FACTORY-NEWS-fix-source-logging (news-fetch ingestHeadlines log-tag bug, zone-routed generic developer)
+**Last updated:** 2026-07-24 | **Cycle:** FACTORY-NEWS-dedup-handlers-maxitems (news-fetch handlers.ts dedup, zone-routed generic developer)
+
+## Session 2026-07-24 — FACTORY-NEWS-dedup-handlers-maxitems — REVIEW
+
+**Task:** `apps/news-fetch/src/interface/handlers.ts` had 4 near-identical POST/GET headline handlers (Reuters + Bloomberg) with the maxItems default hardcoded bare `15`/`10` inline in each. Board row was branch:null direct-execute (BOUNDED-1 auto-pickup), no TASK_NNN.md handoff. Zone-routed (no dev-news-fetch specialist).
+
+**Actions taken:** RED test first (`domain-models.test.ts` — 6 new tests for `DEFAULT_MAX_ITEMS`/`resolveMaxItems`, confirmed failing pre-impl via a temporary `git checkout` revert of the not-yet-existing exports). GREEN: added `DEFAULT_MAX_ITEMS: Record<NewsSource, number>` (`{reuters:15, bloomberg:10}`, values unchanged) + `resolveMaxItems(raw: number|string|undefined, source)` to `domain/models.ts` — one function serves both channels: `number` (POST body) passes through with NO NaN guard (byte-matches legacy `typeof x==='number'` ternary), `string` (GET querystring) does `parseInt`+`isNaN` fallback (byte-matches legacy). Extracted `makeHeadlinesHandler(ingest, source)` in `handlers.ts` returning `{post, get}`; both routes now register the factory's output — grepped post-edit to confirm zero leftover inline handler bodies and exactly one `app.post`/`app.get` registration per route.
+
+**Verification:** `bun test` 241 pass/6 skip/0 fail (baseline 235/6/0, +6 net new). `bun tsc --noEmit` 0 errors. `eslint lint:ci --max-warnings 0` clean. `bun run sandbox --tier=all --module=news-fetch` 16/16 PASS. Response-envelope + error-branch lines byte-diffed identical to all 4 originals via `git diff` (not asserted). `handlers.ts` 171L→118L (cap 120L). Security clause: grep for DB_/API_KEY/SECRET/TOKEN/PASSWORD/NEWS_API_KEY on both changed files → no matches.
+
+**Board:** `task_board.in_progress[FACTORY-NEWS-dedup-handlers-maxitems]` → `review`, `.head` synced to idle (`next_agent:router`), via `orch-apply.sh` (dispatcher-owned commit, not committed by this cycle).
+
+**Scope discipline:** Touched exactly the 2 FILES named in the task (`handlers.ts`, `domain/models.ts`) + the one paired unit test. Left the separately-duplicated 15/10 literals in `application/use-cases.ts` + the 4 scraper files (`reuters-rss.ts`, `bloomberg-rss.ts`, `reuters-stealth.ts`, `bloomberg-stealth.ts`) untouched — different call chain, not part of the 4-handler dedup, out of this task's explicit FILES scope. Code-only, `rebuild_required=true` but PENDING-USER-GATED, no docker rebuild performed.
+
+Zone health: no drift detected
 
 ## Session 2026-07-24 — FACTORY-NEWS-fix-source-logging — REVIEW
 
@@ -29,17 +43,3 @@ Zone health: no drift detected
 **Scope discipline:** Touched exactly the new ack ledger + probe script's Check-6 function + `run_probe`'s detail-line assembly + paired test + `WORK.md`/journal/notebook. Did NOT touch the heartbeat-write/freshness code paths (constraint #2) — verified T31/T32 (tier-2/3 stale-heartbeat dead-branch tests) still green, proving zero collateral change there. Did NOT touch `cron-detect-loop/register.md` (ALL_GREEN-remap choice makes that unnecessary).
 
 Zone health: Tier-1 probe no longer churns a full system-auditor spawn on 2 known, already-owned launchd deaths; ack ledger is a live, hand-edited SSOT with an explicit staleness rule (remove entry at DONE_VERIFIED) so this can never become a permanent blind spot | HEALTHY
-
-## Session 2026-07-23 — FIX-EXECTIER-HEADSYNC-BRANCHNULL-REVIEW-IDLE — REVIEW
-
-**Task:** `execute-tier.md` § MUST — Status-Flip = Lane-Move clause (b) told every flip-executing agent to "sync head to idle, or the next legitimate active_task_id/next_agent" — ambiguous enough that a `branch:null` REVIEW self-closeout could legally mirror the task's own new status onto `.head.status`. `"review"` IS a valid `.head.status` enum value (orch-state-access.md §5) but matches neither dev-team/main.md's `in_progress` branch nor its `idle/done` fall-through, so BOUNDED-1→SLS→RLC→QA-Drain never runs and the row strands. Confirmed live, not hypothetical: `review[]=47`/`qa[]=0` today, and commit `38f081ec1` shows the exact incident (`UC-GCP-P1`, `.head.status` left `"review"`, dispatcher hand-reset required) — this board row's own `origin_signal_id`.
-
-**Actions taken:** Added explicit branch:null sub-rule to `execute-tier.md` § MUST (b): a `branch:null` REVIEW flip MUST set `head={status:idle, active_task_id:null, next_agent:router}`, never mirror the task's status; branch-carrying (worktree) tasks keep the prior latitude unchanged (scoped strictly, per task instruction — did not touch worktree-task semantics). No generic executable flip-helper exists to patch directly — grepped `scripts/`, confirmed 40+ one-off `*-review.jq` files and zero shared call site; every flip is hand-written jq per agent per tick, so the SSOT prose text itself (bound to pm/qa/developer/fixer via the existing "do NOT duplicate" pointer in `main.md`) is the only lever. Left `pm/flow/main.md`'s per-task "Task → Review" line untouched — architecture-brief audit already ruled duplicating this clause elsewhere violates the anti-copy-paste invariant.
-
-**Verification:** New `scripts/audits/execute-tier-branchnull-review-headidle-verify.sh` — synthetic before/after fixture (no live-file writes) replaying the `UC-GCP-P1` incident shape: OLD ambiguous pattern reproduces `head.status="review"`; NEW documented pattern yields `head={status:idle, active_task_id:null, next_agent:router}` + lane-move (a) satisfied (`in_progress[]=0, review[]=1`). Ran live: PASS, exit 0. Honest limitation stated in script header: this proves the pattern is sound, not that every future hand-written flip complies (no code-enforced call site to test directly).
-
-**Board:** `task_board.in_progress[FIX-EXECTIER-HEADSYNC-BRANCHNULL-REVIEW-IDLE]` → `review`, `next_agent=qa`, `branch:null`, `.head` synced to idle, via `orch-apply.sh` (separate commit — this fix's own closeout exercises the very guarantee it ships).
-
-**Scope discipline:** Touched exactly `execute-tier.md` § MUST (b) + the new regression-verifier script + journal/notebook. Did NOT touch `pm/flow/main.md`, `dev-team/main.md`'s Pipeline Resume gate, or any per-task one-off `*-review.jq` script (out of scope — SSOT text is the single lever, not each historical flip site).
-
-Zone health: branch:null REVIEW→head-idle guarantee now explicit in the one SSOT text every flip-executing agent reads; 47-row review-lane stall's root cause is now documented+guarded (drain itself is QA-Drain's job, tracked separately) | HEALTHY
