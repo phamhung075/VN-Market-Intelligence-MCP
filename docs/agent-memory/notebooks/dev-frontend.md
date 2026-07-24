@@ -1,6 +1,31 @@
 # dev-frontend notebook
 
-**Last updated:** 2026-07-24 | **Sprint:** FACTORY-FRONTEND-split-market-summaries
+**Last updated:** 2026-07-24 | **Sprint:** FACTORY-FRONTEND-split-orchestration
+
+---
+
+## Session: 2026-07-24 (FACTORY-FRONTEND-split-orchestration — BOUNDED-1 idle-pickup)
+
+**FACTORY-FRONTEND-split-orchestration DONE-CODE (rebuild-verify deferred) — 1325L route split into domain types/staleness/formatter + 11 components**
+
+Zone health: 95 test files; 2110 pass / 2 fail (pre-existing QUE-TOOLTIP, unrelated — confirmed still red with the change stashed out via `git stash push -u -- apps/frontend` A/B); tsc 0 errors | HEALTHY
+
+Task: sequel to FACTORY-FRONTEND-split-market-summaries — split `dashboard.orchestration.tsx` (fleet-monitoring dashboard, POLL_MS=5000 polling). Ticket added an explicit test-first constraint: a render smoke test confirmed RED (module not found) BEFORE each new component file was created, GREEN immediately after.
+
+Files created:
+- `domain/orchestration/types.ts` — 12 DTO types moved verbatim (StepDto, DecisionsDto, TaskStatus, TaskRow, TaskBoardCounts, TaskBoard, SignalRow, SignalQueue, SprintGoal, Narrative, Head, OrchState)
+- `domain/orchestration/staleness.ts` — STALE_THRESHOLD_MS + `isStale(tsField, now)` predicate, 9 unit tests
+- `domain/formatters/task-status-classes.ts` — `taskStatusClasses` (shared by 2 split-out components — moved here, not colocated, to avoid a components<->components circular import), 8 unit tests
+- `components/orchestration/{HeadPanel,TaskGroup,StepCard,DecisionAccordion,DoneTaskRow,DoneTaskGroup,doneTaskGrid,TaskBoard,SignalQueue,SprintGoal,Narrative}.tsx` — 11 files all <=120L (DoneTaskGroup, originally ~158L combined, split a 2nd time into shell 104L + row 88L, sharing `DONE_GRID` via a non-JSX const module)
+
+Files updated:
+- `routes/dashboard.orchestration.tsx` — thin composition: types (re-exported) + loader (POLL_MS=5000 + fetch untouched, grep-confirmed) + StaleBadge/Section + 5 panel imports. TASK-DASH-CRON-2 Cron Recheck Table left untouched (out of ticket scope; a pre-existing test imports its exports directly from the route)
+- `vite.config.ts` — test.include gained `app/domain/orchestration/**/*.test.{ts,tsx}` (the new staleness test was otherwise invisible to Vitest's discovery glob — root-cause fix mirroring the existing `domain/formatters` entry)
+- `docs/architecture/microservice/frontend/domain-model.md` — split documented (mirrors market-summaries/dashboard-analysis precedent sections)
+
+Commit: see decision journal `sprint-FACTORY-FRONTEND-split-orchestration-dev-frontend.md` | tsc: 0 errors | vitest: 2110 pass / 2112 (same 2 pre-existing fail as baseline)
+
+rebuild_required=true but SCOPE-BOUND to CODE-ONLY per task — NO rebuild performed (user-gated, one just ran). Live Playwright G12 render-gate DEFERRED to next rebuild batch; board flipped `in_progress`→`review`, `next_agent=qa`.
 
 ---
 
@@ -53,30 +78,6 @@ rebuild_required=true — route file touched; board flipped `in_progress`→`rev
 
 ---
 
-## Session: 2026-07-09 (FACTORY-FRONTEND-extract-computeDecision — BOUNDED-1 idle-pickup)
-
-**FACTORY-FRONTEND-extract-computeDecision DONE — computeDecision moved route→domain**
-
-Zone health: 83 test files; 2047 pass / 2 fail (pre-existing QUE-TOOLTIP schema, unrelated); tsc 0 errors; eslint clean (pre-existing 5 `react-hooks/exhaustive-deps` config errors in unrelated components/analysis/* files, confirmed present before this change via git-stash diff) | HEALTHY
-
-Task: `docs/architecture-briefs/2026-06-15-maintainability-factory-audit.md` flagged `computeDecision` (TA/RSI/KD/price scoring, MUA MẠNH/MUA/GIỮ/BÁN/BÁN MẠNH) as business logic leaking into the interface layer (`dashboard.analysis.tsx`).
-
-Files created:
-- `app/domain/analysis/decision.ts` — `computeDecision` + `DecisionResult` moved verbatim; 13 inline magic numbers hoisted to named consts (`TA_TREND_SCORE`, `RSI_SCORE`, `KD_STRONG_SCORE`, `KD_CAUTION_SCORE`, `PRICE_TREND_SCORE`, `PRICE_TREND_LOOKBACK`, `RSI_OVERSOLD`, `RSI_RECOVERY_CEILING`, `RSI_OVERBOUGHT`, `STRONG_BUY_SCORE`, `BUY_SCORE`, `HOLD_SCORE`, `SELL_SCORE`) — if/else structure kept verbatim (no behavior change)
-
-Files updated:
-- `routes/dashboard.analysis.tsx` — local `computeDecision`/`DecisionResult` def removed; imports both from `~/domain/analysis/decision`; `decision` const explicitly typed `DecisionResult` (keeps the type import non-dead)
-- `__tests__/1937-decision-logic.test.ts` — import re-pointed `~/routes/dashboard.analysis` → `~/domain/analysis/decision`
-- `docs/architecture/microservice/frontend/domain-model.md` — `computeDecision` Business Rules section: source path + threshold-const note updated
-
-RAW-verify: ran 7 representative (ta, reading, prices) tuples through the moved function directly (tsx script, not committed) — output byte-identical to the pre-move version for all 5 label branches (MUA MẠNH/MUA/GIỮ/BÁN/BÁN MẠNH) + null-TA path; matches existing 10-assertion test suite which stayed GREEN untouched.
-
-Commit: `2819d710c` | tsc: 0 errors | vitest: 2047 pass / 2 pre-existing fail | eslint: clean (no new errors vs pre-change baseline)
-
-rebuild_required=true — route file touched; board flipped `in_progress`→`review`, `next_agent=ops` for Docker Close Gate.
-
----
-
-**Current state:** 83 test files; 2047 pass / 2 fail (pre-existing QUE-TOOLTIP schema); tsc 0 errors.
+**Current state:** 95 test files; 2110 pass / 2 fail (pre-existing QUE-TOOLTIP schema); tsc 0 errors.
 **Tech stack:** Remix 2 + TypeScript 5 strict + Tailwind 3 + shadcn/ui + Vitest + Playwright
-**Key patterns:** useFetcher self-fetching zones; FreshnessBadge(intraday/daily/weekly SLA); safeFetch bounded; honest-NULL (null_reason + gray badge, never fabricate); DDD layers enforced; route-colocated DTO/parser/formatter families kept textually distinct across merged pages (do-not-homogenize); Playwright G12 gate must run with an unused `PLAYWRIGHT_PORT` override if the live frontend Docker container occupies :3001 (reuseExistingServer piggybacks on it otherwise, false-greening against stale code).
+**Key patterns:** useFetcher self-fetching zones; FreshnessBadge(intraday/daily/weekly SLA); safeFetch bounded; honest-NULL (null_reason + gray badge, never fabricate); DDD layers enforced; route-colocated DTO/parser/formatter families kept textually distinct across merged pages (do-not-homogenize); Playwright G12 gate must run with an unused `PLAYWRIGHT_PORT` override if the live frontend Docker container occupies :3001 (reuseExistingServer piggybacks on it otherwise, false-greening against stale code). Shared pure helpers used by >=2 sibling split-out components go to `domain/` (formatters or a feature-scoped `domain/<feature>/`), never colocated in one sibling — avoids components<->components circular imports (FACTORY-FRONTEND-split-orchestration).
