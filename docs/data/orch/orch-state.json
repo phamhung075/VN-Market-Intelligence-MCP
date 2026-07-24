@@ -387,12 +387,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-24T23:25:06Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "updated_by": "dev-mcp-server",
+    "updated_at": "2026-07-24T23:47:30Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -14942,6 +14941,27 @@
         "rebuild_required": true,
         "rebuild_required_note": "REBUILD_REQUIRED: true — code lands but the running vn-market-intelligence-mcp-mcp-server-1 container must be rebuilt for the fix to take effect. verification_gate LIVE-across-2-refresh-cycles portion (served value within DJIA band AND varied vs named-volume DB across 2 daily commodityTrackerRefresh cron cycles, 06:00 UTC) requires the rebuilt container PLUS 2 elapsed cron cycles post-deploy — cannot be completed by this agent (container swap is ops/user-gated per CLAUDE.md). Root cause, fail-closed gate rejecting a synthetic out-of-band value, and sibling-pattern regression are all verified at source/unit level (see review_note).",
         "decision_journal_ref": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md (STEP developer-S7)"
+      },
+      {
+        "id": "FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW",
+        "type": "FIX",
+        "title": "FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW — get_bctc_pending_refine returns 235K chars exceeding MCP inline limit → callers get a file path not data",
+        "zone": "apps/mcp-server/",
+        "status": "REVIEW",
+        "priority": "medium",
+        "size": "S",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW",
+        "promoted_at": "2026-07-24T23:25:06Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-24T23:47:31Z",
+        "claimed_at": "2026-07-24T23:25:06Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "rebuild_required": true,
+        "branch": null,
+        "updated_by": "dev-mcp-server",
+        "review_note": "get_bctc_pending_refine now bounds/paginates: limit defaults to 20 (max 100, zod .optional().default() order fixed), new offset param pairs with the existing SQL LIMIT (native LIMIT/OFFSET on Branch2 ticker + Branch3 default queries) so all pending-refine rows remain reachable by paging offset+=limit; no rows lost vs the old unbounded dump. Served-path test (real McpServer + registerGetBctcPendingRefineTool): 45-row set -> bounded first page (20 rows, well under MCP inline limit, no file-path fallback), 3-page offset walk (20/20/5) recovers all 45 ids exactly once, default page size applies whenever limit is omitted (incl. with explicit offset). bun tsc --noEmit clean; new test file 5/5 pass; pre-existing FIX-REFINE-PENDING-SCHEMA.test.ts (same tool) 13/13 pass unchanged; gen-project-stats toolCount=184/cronJobCount=88 unchanged (no tool added/removed). Commits 51f162829 (code+test+doc) + e0ed0369e (decision journal), pushed. rebuild_required:true — LIVE inline-payload-size verify needs the container rebuild; leaving to QA/ops cascade per dispatch instruction."
       }
     ],
     "qa": [],
@@ -14963,24 +14983,7 @@
     },
     "last_triaged_at": "2026-07-24T23:25:06Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW",
-        "type": "FIX",
-        "title": "FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW — get_bctc_pending_refine returns 235K chars exceeding MCP inline limit → callers get a file path not data",
-        "zone": "apps/mcp-server/",
-        "status": "IN_PROGRESS",
-        "priority": "medium",
-        "size": "S",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW",
-        "promoted_at": "2026-07-24T23:25:06Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-24T23:25:07Z",
-        "claimed_at": "2026-07-24T23:25:06Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
