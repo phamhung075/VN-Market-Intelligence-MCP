@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FACTORY-MACRO-split-or-justify-over-cap",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-MACRO-split-or-justify-over-cap — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-24T10:51:13Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "FACTORY-MACRO-split-or-justify-over-cap moved to REVIEW by dev-macro-indicators — dev-team dispatcher to closeout (QA relay + rebuild-verify PENDING-USER-GATED).",
+    "updated_at": "2026-07-24T11:08:32Z",
+    "updated_by": "dev-macro-indicators"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -14485,6 +14485,24 @@
         "next_agent": "qa",
         "entered_review_at": "2026-07-24T10:35:20Z",
         "review_note": "dev-frontend DONE-CODE (rebuild-verify deferred, USER-GATED): DTOs (StepDto/DecisionsDto/TaskStatus/TaskRow/TaskBoardCounts/TaskBoard/SignalRow/SignalQueue/SprintGoal/Narrative/Head/OrchState) moved verbatim to app/domain/orchestration/types.ts (re-exported from route). STALE_THRESHOLD_MS + staleness predicate moved to app/domain/orchestration/staleness.ts as isStale(tsField, now) — 9 unit tests. taskStatusClasses moved to app/domain/formatters/task-status-classes.ts (shared by 2 components, avoids circular import) — 8 unit tests. 11 render components split into app/components/orchestration/*.tsx, all <=120L (HeadPanel 52L, TaskGroup 57L, StepCard 61L, DecisionAccordion 66L, DoneTaskRow 88L, DoneTaskGroup 104L, TaskBoard 74L, SignalQueue 88L, SprintGoal 49L, Narrative 69L, doneTaskGrid.ts 16L) — a render smoke test was written and confirmed RED (module not found) BEFORE each component file was created, then GREEN immediately after (test-first, per ticket DoD). TASK-DASH-CRON-2 Cron Recheck Table left untouched (out of scope; a pre-existing test imports its exports directly from the route). POLL_MS=5000 + loader unchanged (grep-confirmed). tsc --noEmit clean. Full Vitest suite: 95 files/2112 tests, 2110 pass, same 2 pre-existing unrelated QUE_DESCRIPTIONS failures — confirmed IDENTICAL to baseline via git stash push -u -- apps/frontend A/B re-run (baseline 81/83 files, 2047/2049 tests, same 2 failures), then git stash pop. vite.config.ts test.include gained one entry (app/domain/orchestration/**) so the new staleness test is discoverable by Vitest — root-cause fix, mirrors the existing domain/formatters entry. Docs updated: docs/architecture/microservice/frontend/domain-model.md new split section. Decision journal: docs/agent-memory/decisions/sprint-FACTORY-FRONTEND-split-orchestration-dev-frontend.md (7 STEP entries). Live rebuild + Playwright G12 render-gate DEFERRED — task scope bound explicit \"CODE-ONLY, NO REBUILD... rebuilds are USER-GATED\"; batches onto a future rebuild."
+      },
+      {
+        "title": "Split adapters_vmt_sjc_fx + justify cohesive over-cap Go files",
+        "priority": "P2",
+        "zone": "macro-indicators",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-MACRO-split-or-justify-over-cap",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-MACRO-split-or-justify-over-cap",
+        "promoted_at": "2026-07-24T10:51:13Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-24T11:08:33Z",
+        "claimed_at": "2026-07-24T10:51:13Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "completed_by": "dev-macro-indicators",
+        "completed_at": "2026-07-24T11:08:32Z",
+        "review_note": "CODE-ONLY DONE: sjc_fx split (SJCGoldFXAdapter DB adapter vs parsers_vmt_sbv_policy_rates.go SBV HTML parse/fetch/TLS+DB-fallback, same package, no import-graph change); usecases.go + 5 VMT parser files carry honest size-justification headers; main.go 9 composition-root shim types moved to sibling adapters.go (still package main, Fence-C preserved) — .golangci.yml fence-c file allow-list updated to match. Pure code motion verified byte-identical (sorted, comment-stripped diff) between original and split files (caught+fixed one Unicode NBSP->ASCII-space normalization bug during verification). go build + go vet + go test ./... all green; golangci-lint 0 issues; G12 sandbox gate primitive 18/18 PASS + module 2/2 PASS. Committed a87079574 (local, explicit pathspecs, no push). rebuild_required=true but USER-GATED per task constraint — rebuild-verify PENDING-USER-GATED, to be batched onto next authorized mcp-server/macro-indicators rebuild. Journal: docs/agent-memory/decisions/sprint-FACTORY-MACRO-split-or-justify-over-cap-dev-macro-indicators.md"
       }
     ],
     "qa": [],
@@ -14506,23 +14524,7 @@
     },
     "last_triaged_at": "2026-07-24T10:51:13Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "title": "Split adapters_vmt_sjc_fx + justify cohesive over-cap Go files",
-        "priority": "P2",
-        "zone": "macro-indicators",
-        "type": "FACTORY",
-        "status": "IN_PROGRESS",
-        "id": "FACTORY-MACRO-split-or-justify-over-cap",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-MACRO-split-or-justify-over-cap",
-        "promoted_at": "2026-07-24T10:51:13Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-24T10:51:14Z",
-        "claimed_at": "2026-07-24T10:51:13Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
