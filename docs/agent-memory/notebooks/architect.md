@@ -1,8 +1,15 @@
 # Architect — Notebook
 
-**Last updated:** 2026-07-24 17:27 UTC | **Sprint:** COWORK-GUARANTEED-SLOT-CATCHUP
+**Last updated:** 2026-07-24 18:29 UTC | **Sprint:** COWORK-GUARANTEED-SLOT-CATCHUP
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-07-24T18:29Z — FACTORY-GUARD-CI-depguard-tier-boundaries (zone=cross-service/, P2 BOUNDED-1 pickup, design+decompose)
+
+**Task:** Extend depguard/import-linter to enforce ALL layer fences (TS boundaries application->interface + domain->infrastructure; Python pdf-extractor import-linter contract; Go composition-root-contains-no-pkg/module-logic check) — 3rd of the 7 `ci-regression-prevention` guardrails, same epic/audit as the size-lint and metric-mask siblings.
+**Finding:** Ticket wrong on 2 of 3 clauses. TS — both named leaks (pollNews interface-import, telegramCommands application-import) already `DONE_VERIFIED`/live-committed, AND both fence directions the ticket asks for already forbidden in all 3 live `eslint.config.mjs` — real gap is ESLint never running in CI at all (zero eslint steps anywhere in `.github/workflows/`). Python — the "missing" import-linter contract already lives at `pdf-extractor/pyproject.toml:69-76`, `DONE_VERIFIED` 2026-07-09, already enforced in `py-lint` — zero work needed. Go — depguard fine for 6/7 services but `news-fetch` (7th `.golangci.yml`) has zero CI job wired at all (ticket didn't name this). The ticket's 3rd ask (composition-root contains no pkg/module-logic) IS genuinely new and real — depguard is import-only, can't express it; live-scanned all 7 services' `cmd/server/**/*.go` and found exactly 2 real offenders (both macro-indicators: `policyRatesAdapter.FetchPolicyRates`, `omoAdapter.FetchOMO` — real HTML/DB-fallback decision logic that also sets a business-semantic `IsEstimate` flag, same bug class as the metric-mask ticket), zero false positives against the other 10 checked composition-root shims when scoped to receiver-methods-only.
+**Output:** `docs/architecture-briefs/2026-07-24-factory-guard-ci-depguard-tier-boundaries.md` — TS: zero-tolerance CI-wiring gate (fix 3 live offenders in mcp-server + 1 previously-invisible news-fetch offender caused by a `boundaries/elements` drift where `src/routes/**` isn't mapped, then wire `eslint --max-warnings=0` per service; bonus fix: missing `news-fetch-go-lint` job). Go: net-new `go/ast`-based composition-root-logic gate scoped to receiver methods only (excludes `main()`/free helper funcs — empirically zero false positives), threshold if>=2-or-any-for, `composition-root-logic-allow:` escape hatch, zero-tolerance (debt=2 functions/1 service, fixed in the same child task). Minted 2 child dev rows (different toolchains, independently testable): `FACTORY-GUARD-CI-TSBOUNDARIES-IMPL`, `FACTORY-GUARD-CI-COMPROOT-LOGIC-IMPL` (`developer`, zone cross-service/) — neither self-implemented.
+**Next:** pm/dev-team — promote+dispatch both `-IMPL` rows when picked up; dispatcher (this task's owner) flips `FACTORY-GUARD-CI-depguard-tier-boundaries` board status.
 
 ## 2026-07-24T17:26Z — FACTORY-GUARD-CI-metric-mask-lint (zone=cross-service/, P2 BOUNDED-1 pickup, design+decompose)
 
@@ -18,18 +25,15 @@
 **Output:** `docs/architecture-briefs/2026-07-24-factory-guard-ci-size-lint-justification.md` — baseline/ratchet CI design (grandfather today's 733, fail only new/regrown offenders; full-tree scan at CI time, not diff-only, closing the doc-hook's non-Claude-tool-edit gap); marker corrected to `//` (ts/go) / `#` (py); minted child dev row `FACTORY-GUARD-CI-SIZELINT-IMPL` (`developer`, zone cross-service/) for the script+baseline+workflow wiring — not self-implemented.
 **Next:** pm/dev-team — promote+dispatch `FACTORY-GUARD-CI-SIZELINT-IMPL` when picked up; dispatcher (this task's owner) flips `FACTORY-GUARD-CI-size-lint-justification` board status.
 
-## 2026-07-22T22:06Z — COWORK-GUARANTEED-SLOT-CATCHUP (zone=cross-service/, high user_prioritized, design-only)
-
-**Task:** BA spec (10 FR/7 NFR/12 AC/5-row consolidation) — design shared catch-up module extension (FR-1,3,4,6,7,9), rule explicitly on FR-8 (firer fanout timeout) and the Track-B pmset/caffeinate keep-awake residual, reassign owners on the 5 consolidated rows.
-**Finding:** Grep-confirmed `cowork-guaranteed-slot-firer.sh` has zero MCP/gateway access today (no `mcp-call.sh` sourcing) and zero `last_fired` write call-sites exist in any of the 4 spawned flows — the ONLY stamp site is `last-fired.md` Step 5b, unconditional right after spawn (0.2/0.4's defect, re-confirmed at source). `coordinationStore.ts listHeldTasks()` returns `claimed_at` — powers a path-agnostic FR-7 reconciler with zero schema change. New brownfield finding not in BA spec: the 4 spawned flows do NOT share one date-basis for their `published:` marker — `digest-daily`'s non-Sunday path keys on **UTC-date**, not VN-date, unlike chef/fb/tnb-audit — catch-up must mirror this per-slot, not assume VN-date uniformly (correcting it is out of scope, risks orphaning a held marker at the day-boundary).
-**Output:** `docs/architecture-briefs/2026-07-22-cowork-guaranteed-slot-catchup-design.md` — new pure domain sibling module `cowork-catchup-predicate.js` (mirrors `cadence-policy.js` precedent, DI'd `field`/`dowMatch`, one-directional require, zero circularity); `task_list_held` delivery-check kept per-caller/infrastructure (DDD golden rule: domain has zero I/O), conditional on non-empty `catchup_raw` (NFR-3 preserved); FR-6 ruled — published-marker `task_claim` ratified as sole symmetric arbiter across all firing planes (rejected a "stand-down" derived-signal design — repeats this sprint's own root-cause bug class), directly answering `FIX-GUARANTEED-SLOT-DUAL-PLANE-DOUBLE-FIRE`'s own open design question; FR-7 ruled Option (b) reconciler over Option (a) per-flow self-write (avoids reintroducing the lost-update race `last-fired.md`'s batched write was built to avoid, matches path-agnostic prior art already on that row's own note); FR-8 ruled raise `FIRE_TIMEOUT_SECONDS` per dish_type (`_dish_type_catchup_config`, NFR-4) + accept bounded residual, NOT a flow-duration diagnosis (chef.md is a legitimately heavy 812-line sequential 8-step flow, zero subagent fan-out, confirmed by grep); Track-B ruled document-the-residual, no keep-awake daemon (Track A's catch-up already provides correctness backstop). Appended Brownfield Findings to BA handoff. 5 consolidated rows + umbrella task reassigned `owner:developer`/`next_agent:pm` via `orch-apply.sh` (additive fields only, lane/status untouched — AC-9's "close together" bar stays PM/QA's). BUILD-STANDARD: not-applicable.
-**Next:** pm — decompose FR-1..FR-10 into atomic dev tasks (one shared-module zone, sequential not parallel-dispatch); route the cron-runbook doc subtask to agent-father, rest to developer; true up board row `type: SPRINT-S` → likely SPRINT-M/L (router-flagged, non-blocking).
-
 ---
 
-## Archive (pre-2026-07-24T17:26Z)
+## Archive (pre-2026-07-24T18:29Z)
 
-[Older cycles archived to git history: FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD (2026-07-21T23:57Z,
+[Older cycles archived to git history: COWORK-GUARANTEED-SLOT-CATCHUP (2026-07-22T22:06Z,
+zone=cross-service/, high user_prioritized design-only — BA 10 FR/7 NFR/12 AC/5-row consolidation,
+new pure domain sibling `cowork-catchup-predicate.js`, FR-6 published-marker sole-arbiter ruling,
+FR-7 reconciler-not-self-write, FR-8 raise-timeout+accept-residual, Track-B no keep-awake daemon,
+READY_FOR_PM), FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD (2026-07-21T23:57Z,
 zone=multi, P0 supervised, plan_only — FR-5 board-flip bundled into FR-4's commit via ONE shared
 `resolve-task-lane-by-id.jq` resolver, backlog+BLOCKED ruled TERMINAL, I10 `owner_client_session`
 gap widened + batched into fix_spec(b) successor as hard precondition, SUPERVISED HOLD),
