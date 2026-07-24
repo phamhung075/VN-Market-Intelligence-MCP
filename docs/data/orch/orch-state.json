@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "FACTORY-ALERT-shared-vocab-package closed out by dev-alert-engine (REVIEW, next_agent=qa) — idle, awaiting next dispatch.",
-    "updated_at": "2026-07-24T13:22:00Z",
-    "updated_by": "dev-alert-engine"
+    "status": "in_progress",
+    "active_task_id": "FACTORY-ALERT-split-sandbox",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-ALERT-split-sandbox — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-24T13:44:35Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6344,15 +6344,6 @@
         "status": "BACKLOG",
         "id": "FACTORY-STOCK-dedup-history-handlers",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-STOCK-dedup-history-handlers"
-      },
-      {
-        "title": "Split the 565L alert-engine sandbox by concern",
-        "priority": "P2",
-        "zone": "alert-engine",
-        "type": "FACTORY",
-        "status": "BACKLOG",
-        "id": "FACTORY-ALERT-split-sandbox",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-ALERT-split-sandbox"
       },
       {
         "title": "Delete dead UseCaseExecutor, inject real port into /health, reuse domain severity validation, simplify substring search",
@@ -14563,9 +14554,25 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-24T13:14:40Z",
+    "last_triaged_at": "2026-07-24T13:44:35Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "title": "Split the 565L alert-engine sandbox by concern",
+        "priority": "P2",
+        "zone": "alert-engine",
+        "type": "FACTORY",
+        "status": "IN_PROGRESS",
+        "id": "FACTORY-ALERT-split-sandbox",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-ALERT-split-sandbox",
+        "promoted_at": "2026-07-24T13:44:35Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-24T13:44:36Z",
+        "claimed_at": "2026-07-24T13:44:35Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
