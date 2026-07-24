@@ -1,8 +1,11 @@
 // Package cooldowngate is a pure primitive deciding whether an alert should be
 // suppressed given recent fires, a cooldown window, and a daily cap.
 //
-// Fence-A: imports only stdlib (fmt, strings, time). No infrastructure, no
-// application, no interface, no CGO extensions, no credential values of any kind.
+// Fence-A: imports only stdlib (fmt, strings, time) + pkg/domain (the shared
+// leaf vocab package — see .golangci.yml fence-a rule, which allows
+// pkg/domain and denies only application/infrastructure/interface/CGO). No
+// infrastructure, no application, no interface, no CGO extensions, no
+// credential values of any kind.
 //
 // Determinism (HARD): Check NEVER reads the wall clock internally. The caller
 // injects the reference instant `now`, so identical inputs always yield identical
@@ -23,12 +26,9 @@ import (
 	"fmt"
 	"strings"
 	"time"
-)
 
-// severityCritical is the local copy of the critical severity sentinel.
-// Kept local (not imported from domain) so the primitive stays self-contained
-// and stdlib-only per Fence-A.
-const severityCritical = "critical"
+	"github.com/vn-market-intelligence/alert-engine/pkg/domain"
+)
 
 // SuppressResult is the output of Check.
 type SuppressResult struct {
@@ -89,7 +89,7 @@ func sameCalendarDay(a, b time.Time) bool {
 // Pure function — no I/O, no env reads, no network, no DB.
 func Check(alert AlertInput, recentAlerts []RecentAlert, cfg CooldownConfig, now time.Time) SuppressResult {
 	// Bypass: critical severity skips cooldown EXCEPT for MACRO action codes.
-	if alert.Severity == severityCritical && alert.ActionCode != "MACRO" {
+	if alert.Severity == string(domain.SeverityCritical) && alert.ActionCode != "MACRO" {
 		return SuppressResult{Suppress: false, Reason: "critical severity bypasses cooldown"}
 	}
 
