@@ -1,0 +1,25 @@
+{
+  "from": "context-bloat-backstop-hook",
+  "to": "claude-manager-helper",
+  "type": "context_bloat_breach",
+  "priority": "high",
+  "createdAt": "2026-07-24T04:08:20Z",
+  "payload": {
+    "file": "docs/agent-memory/notebooks/news-scout.md",
+    "line_count": 134,
+    "cap": 200,
+    "byte_count": 35518,
+    "byte_cap": 12000,
+    "class": "agent-notebook",
+    "reason": "byte-cap",
+    "overage": 0,
+    "byte_overage": 23518,
+    "action_required": "prune_or_split"
+  },
+  "_processed": {
+    "fingerprint": "d25ec1dd9c89f6b2cf3e5af9ac5f65598291ff35e00ce05667d9bf118333dd71",
+    "processedAt": "2026-07-24T04:14:43Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
