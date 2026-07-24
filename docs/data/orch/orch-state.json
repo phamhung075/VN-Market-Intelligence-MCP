@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "next_action": "BGFAN-1 closeout complete: FE-PG-BCTC-EVAL-_INDEX-FUNC-FIX (Quality-Audit P1 broken page) implemented + live-verified by dev-frontend -> review (next=qa). WIP now 0; dispatch lanes free.",
-    "updated_at": "2026-07-24T18:09:09Z",
-    "updated_by": "dev-team (BGFAN-1 closeout)"
+    "status": "in_progress",
+    "active_task_id": "FACTORY-GUARD-CI-depguard-tier-boundaries",
+    "next_agent": "architect",
+    "next_action": "Dispatch architect for FACTORY-GUARD-CI-depguard-tier-boundaries (CI-GUARDRAIL design; detail dev_agent=architect). Sibling of FACTORY-GUARD-CI-metric-mask-lint handled by architect this session.",
+    "updated_at": "2026-07-24T18:18:58Z",
+    "updated_by": "dev-team (BOUNDED-1 NON-CODE/DESIGN correction)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6362,15 +6362,6 @@
         "status": "BACKLOG",
         "id": "FACTORY-XZONE-size-justification-sweep",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-XZONE-size-justification-sweep"
-      },
-      {
-        "title": "CI-depguard-tier-boundaries",
-        "priority": "P2",
-        "type": "CI-GUARDRAIL",
-        "zone": "cross-service/",
-        "status": "BACKLOG",
-        "id": "FACTORY-GUARD-CI-depguard-tier-boundaries",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-GUARD-CI-depguard-tier-boundaries"
       },
       {
         "title": "CI-dead-code-gate",
@@ -14751,9 +14742,27 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-24T17:48:11Z",
+    "last_triaged_at": "2026-07-24T18:17:35Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "title": "CI-depguard-tier-boundaries",
+        "priority": "P2",
+        "type": "CI-GUARDRAIL",
+        "zone": "cross-service/",
+        "status": "IN_PROGRESS",
+        "id": "FACTORY-GUARD-CI-depguard-tier-boundaries",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-GUARD-CI-depguard-tier-boundaries",
+        "promoted_at": "2026-07-24T18:17:35Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-24T18:18:58Z",
+        "claimed_at": "2026-07-24T18:17:35Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "architect",
+        "owner": "architect"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
