@@ -387,12 +387,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FACTORY-FRONTEND-split-market-summaries",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-FRONTEND-split-market-summaries — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-24T09:44:29Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "updated_at": "2026-07-24T09:58:54Z",
+    "updated_by": "dev-frontend"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -14463,6 +14462,24 @@
         "next_agent": "qa",
         "entered_review_at": "2026-07-24T09:33:45Z",
         "review_note": "dev-pdf-extractor self-closeout: extracted the Tesseract lang/psm/DPI config (copy-pasted across 5 named call sites, each with its own DO-NOT-REMOVE --psm 6 warning) into new infrastructure/tesseract_config.py (TESSERACT_LANG=vie+eng, TESSERACT_PSM6_CONFIG=--psm 6, OCR_RASTER_DPI=200). generic_md_table_extractor.py resolved to 2 real files behind its FACTORY-PDF-split-generic-md-table shim (generic_md_table/extractor.py + unit_ocr.py) -- 6 real call sites total, rewired incrementally (1 file -> tests green -> next file). Equivalence: git-HEAD grep confirmed all 6 pre-refactor literals byte-identical; post-refactor 0 literal matches remain, existing test_ocr_adapter_psm6_guard.py runtime regression guard 3/3 pass. Warning consolidated to 1 authoritative copy (tesseract_config.py docstring) + 6 one-line pointers. Full suite -m \"not slow\": baseline 1022 pass/8 fail, post-change 1022-1023 pass/7-8 fail -- 7 failures identical A/B via git stash (PIL.Image test-pollution, page_rasterizer, ocr_unit_tesseract_retry order-dependence), 8th (test_pek_engine_adapter timeout) is a pre-existing flake in an untouched file (0 diff). mypy: repo-wide pre-existing package-name env bug, workaround --explicit-package-bases shows 141 errors both before/after (0 new), tesseract_config.py alone 0 errors. G12 sandbox_runner.py still does not exist in this repo (3rd cycle flagging this doc drift). Code-only -- rebuild_required:true DEFERRED (user-gated, no container touched this cycle). Simplicity gate: PASS (Q1-Q4 all NO). Commits: cfe0a78d7 (code+docs) + 43d0c92ad (memory). Journal: docs/agent-memory/decisions/sprint-FACTORY-PDF-extract-tesseract-config-dev-pdf-extractor.md"
+      },
+      {
+        "title": "Move market-summaries pure helpers to domain; split list/detail JSX",
+        "priority": "P2",
+        "zone": "frontend",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-FRONTEND-split-market-summaries",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-FRONTEND-split-market-summaries",
+        "promoted_at": "2026-07-24T09:44:29Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-24T09:58:54Z",
+        "claimed_at": "2026-07-24T09:44:29Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "entered_review_at": "2026-07-24T09:58:54Z",
+        "review_note": "dev-frontend DONE-CODE: 955L route split into app/domain/market-summaries/format.ts (9 pure helpers, verbatim) + app/components/market-summaries/*.tsx (12 files, all <=120L). Route 955L->324L. tsc clean, vitest 2047/2049 (2 pre-existing unrelated fail, confirmed baseline via git-stash A/B). Equivalence proven via reference-identity + golden-value tests. Live Playwright G12 render-gate DEFERRED (rebuild is USER-GATED, out of scope this task) — QA should verify code-level evidence only; render-gate batches onto next rebuild. Commits: e2f18a897 (code), 67e7be472 (memory)."
       }
     ],
     "qa": [],
@@ -14484,23 +14501,7 @@
     },
     "last_triaged_at": "2026-07-24T09:44:29Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "title": "Move market-summaries pure helpers to domain; split list/detail JSX",
-        "priority": "P2",
-        "zone": "frontend",
-        "type": "FACTORY",
-        "status": "IN_PROGRESS",
-        "id": "FACTORY-FRONTEND-split-market-summaries",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-FRONTEND-split-market-summaries",
-        "promoted_at": "2026-07-24T09:44:29Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-24T09:44:30Z",
-        "claimed_at": "2026-07-24T09:44:29Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
