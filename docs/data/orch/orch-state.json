@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "FACTORY-SCHEDULER-dedup-briefing-formatters self-closed by dev-mcp-server -> REVIEW, next_agent=qa. Board idle, ready for next dispatch.",
-    "updated_at": "2026-07-24T09:12:27Z",
-    "updated_by": "dev-mcp-server"
+    "status": "in_progress",
+    "active_task_id": "FACTORY-PDF-extract-tesseract-config",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-PDF-extract-tesseract-config — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-24T09:14:31Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6259,15 +6259,6 @@
         "status": "BACKLOG",
         "id": "FACTORY-SCHEDULER-split-bctcReparseJob",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-SCHEDULER-split-bctcReparseJob"
-      },
-      {
-        "title": "Extract shared Tesseract config + DPI constants (5 files)",
-        "priority": "P2",
-        "zone": "pdf-extractor",
-        "type": "FACTORY",
-        "status": "BACKLOG",
-        "id": "FACTORY-PDF-extract-tesseract-config",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-PDF-extract-tesseract-config"
       },
       {
         "title": "Split pdf handlers.py: schemas, run-helpers, thin routes",
@@ -14482,9 +14473,25 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-24T08:44:30Z",
+    "last_triaged_at": "2026-07-24T09:14:31Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "title": "Extract shared Tesseract config + DPI constants (5 files)",
+        "priority": "P2",
+        "zone": "pdf-extractor",
+        "type": "FACTORY",
+        "status": "IN_PROGRESS",
+        "id": "FACTORY-PDF-extract-tesseract-config",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-PDF-extract-tesseract-config",
+        "promoted_at": "2026-07-24T09:14:31Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-24T09:14:31Z",
+        "claimed_at": "2026-07-24T09:14:31Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
