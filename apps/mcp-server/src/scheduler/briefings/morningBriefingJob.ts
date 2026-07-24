@@ -21,8 +21,15 @@ import type {
 import { BEARISH_WARNING_THRESHOLD } from "../../application/usecases/assembleBriefing.js";
 import { TelegramMessageFactory } from "../../infrastructure/notifiers/telegramMessageFactory.js";
 import { formatPnlSection } from "../../domain/services/portfolioPnlCalculator.js";
-import { isVnIndexFresh } from "./eveningSummaryJob.js";
+import { isVnIndexFresh } from "./format/vnIndexFreshness.js";
+import { formatGlobalSnapshotSection } from "./format/globalSnapshotSection.js";
 import { logger } from "../../infrastructure/logger.js";
+
+// Re-exported for back-compat — tests (1511/1512) import formatGlobalSnapshotSection
+// directly from this job file. Shared formatter now lives in ./format/ (FACTORY-
+// SCHEDULER-dedup-briefing-formatters) — this removes the former job→job import
+// that eveningSummaryJob.ts and franceSummaryJob.ts used to reach into this file.
+export { formatGlobalSnapshotSection } from "./format/globalSnapshotSection.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Formatter
@@ -57,24 +64,6 @@ export function formatCommoditiesSection(
     lines.push(`  ${c.indicator}: ${c.value} ${c.unit}${deltaArrow(c.value, c.previousValue)}${staleFlag}`.trimEnd());
   }
   return lines;
-}
-
-/**
- * Format a global market snapshot as an array of Telegram lines.
- * Returns [] only when snap is null/undefined (guard at call sites).
- * Exported for unit testing (task 1511b).
- */
-export function formatGlobalSnapshotSection(
-  snap: { vix: number; dxy: number; sp500: number; hangSeng: number; fetchedAt: string; prevVix?: number; prevDxy?: number; prevSp500?: number; prevHangSeng?: number }
-): string[] {
-  if (!snap) return [];
-  return [
-    "🌐 Thị trường toàn cầu:",
-    `  VIX: ${snap.vix.toFixed(2)}${deltaArrow(snap.vix, snap.prevVix)}`,
-    `  DXY: ${snap.dxy.toFixed(2)}${deltaArrow(snap.dxy, snap.prevDxy)}`,
-    `  S&P500: ${Math.round(snap.sp500)}${deltaArrow(snap.sp500, snap.prevSp500)}`,
-    `  Hang Seng: ${Math.round(snap.hangSeng)}${deltaArrow(snap.hangSeng, snap.prevHangSeng)}`,
-  ];
 }
 
 /**

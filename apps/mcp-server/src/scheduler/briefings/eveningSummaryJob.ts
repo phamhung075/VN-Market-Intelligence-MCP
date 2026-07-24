@@ -12,37 +12,29 @@
 
 import type { EveningSummary } from "../../application/usecases/assembleEveningSummary.js";
 import { logger } from "../../infrastructure/logger.js";
-import {
-  computeSectorAverage,
-  getStockProfile,
-  SECTOR_NAME_VI,
-} from "../../domain/services/sectorPeers.js";
 import { formatPnlSection } from "../../domain/services/portfolioPnlCalculator.js";
-import { VN_INDEX_FRESHNESS_MS } from "../../domain/services/timeConstants.js";
 import { TelegramMessageFactory } from "../../infrastructure/notifiers/telegramMessageFactory.js";
-import { formatGlobalSnapshotSection } from "./morningBriefingJob.js";
+import { formatGlobalSnapshotSection } from "./format/globalSnapshotSection.js";
+import { formatForeignFlowSection } from "./format/foreignFlowSection.js";
+import { formatMoversSection } from "./format/moversSection.js";
+import { isVnIndexFresh } from "./format/vnIndexFreshness.js";
 import type { GlobalSnapshot } from "../../application/usecases/assembleBriefing.js";
+
+// Re-exported for back-compat — several test files import these formatters
+// directly from this job file. Shared formatters now live in ./format/
+// (FACTORY-SCHEDULER-dedup-briefing-formatters) — this removes the former
+// job→job import that morningBriefingJob.ts and franceSummaryJob.ts used to
+// reach into this file for isVnIndexFresh (and this file into morningBriefingJob.ts
+// for formatGlobalSnapshotSection).
+export { formatForeignFlowSection } from "./format/foreignFlowSection.js";
+export { formatMoversSection } from "./format/moversSection.js";
+export { isVnIndexFresh } from "./format/vnIndexFreshness.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Concurrency guard
 // ─────────────────────────────────────────────────────────────────────────────
 
 let _running = false;
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Freshness guard
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Returns true when a vnIndex fetchedAt timestamp is within the last 25 hours.
- * A stale index (e.g. VPS down for >25h) must not trigger a send on its own.
- */
-export function isVnIndexFresh(
-  fetchedAt: string,
-  nowMs: number = Date.now(),
-): boolean {
-  return nowMs - new Date(fetchedAt).getTime() < VN_INDEX_FRESHNESS_MS;
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DB-level same-day dedup guard
@@ -108,141 +100,8 @@ function fmtThousands(n: number): string {
   return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
 
-/**
- * Format a trading volume as a compact human-readable string.
- * >= 1_000_000 → "X.XM", >= 1_000 → "X.XK", otherwise raw rounded number.
- * Examples: 7_000_000 → "7.0M", 500_000 → "500.0K", 1_200 → "1.2K"
- */
-function fmtVolume(v: number): string {
-  if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M`;
-  if (v >= 1_000) return `${(v / 1_000).toFixed(1)}K`;
-  return String(Math.round(v));
-}
-
-/** Mover entry accepted by formatMoversSection. volume and rsi14 are optional. */
-type MoverEntry = {
-  code: string;
-  changePct: number;
-  volume?: number;
-  rsi14?: number | null;
-};
-
-/**
- * Format a single mover ticker line: "CODE: +X.XX% | Vol: Y | RSI: Z"
- * Vol is "N/A" when volume is undefined. RSI is "N/A" when rsi14 is null/undefined.
- */
-function fmtMoverLine(prefix: string, m: MoverEntry): string {
-  const sign = m.changePct >= 0 ? "+" : "";
-  const volStr = m.volume != null ? fmtVolume(m.volume) : "N/A";
-  const rsiStr = m.rsi14 != null ? m.rsi14.toFixed(1) : "N/A";
-  return `${prefix}${m.code}: ${sign}${m.changePct.toFixed(2)}% | Vol: ${volStr} | RSI: ${rsiStr}`;
-}
-
-/**
- * Formats watchlistMovers into sector-grouped + flat lines.
- * Exported for unit-test isolation (Task 1424 / 1425).
- *
- * @param movers - MoverEntry[] sorted |changePct| DESC (from assembleEveningSummary)
- * @returns string[] — ready to push onto the message lines array
- */
-export function formatMoversSection(
-  movers: MoverEntry[],
-): string[] {
-  if (movers.length === 0) return [];
-
-  // Group by domain
-  const sectorMap = new Map<string, MoverEntry[]>();
-  for (const m of movers) {
-    const profile = getStockProfile(m.code);
-    const domain = profile?.domain ?? "other";
-    if (!sectorMap.has(domain)) sectorMap.set(domain, []);
-    sectorMap.get(domain)!.push(m);
-  }
-
-  // Split: multi-mover sectors (>=2, not "other") vs single-mover
-  const multiSectors: { domain: string; movers: MoverEntry[]; avgPct: number }[] = [];
-  const singleMovers: MoverEntry[] = [];
-
-  for (const [domain, domainMovers] of sectorMap.entries()) {
-    if (domain !== "other" && domainMovers.length >= 2) {
-      const avgPct = computeSectorAverage(domainMovers) ?? 0;
-      multiSectors.push({ domain, movers: domainMovers, avgPct });
-    } else {
-      singleMovers.push(...domainMovers);
-    }
-  }
-
-  // No multi-mover sector → flat block only (backward-compat)
-  if (multiSectors.length === 0) {
-    const lines: string[] = ["", "Biến động giá:"];
-    for (const m of singleMovers) {
-      lines.push(fmtMoverLine("  ", m));
-    }
-    return lines;
-  }
-
-  // Sort sectors by |avgPct| DESC
-  multiSectors.sort((a, b) => Math.abs(b.avgPct) - Math.abs(a.avgPct));
-
-  const lines: string[] = ["", "Biến động theo ngành:"];
-  for (const sector of multiSectors) {
-    const sectorLabel = (SECTOR_NAME_VI as Record<string, string>)[sector.domain] ?? sector.domain;
-    const sign = sector.avgPct >= 0 ? "+" : "";
-    lines.push(`  ${sectorLabel} (+${sector.movers.length} cp): avg ${sign}${sector.avgPct.toFixed(2)}%`);
-    for (const m of sector.movers.slice(0, 5)) {
-      lines.push(fmtMoverLine("    ", m));
-    }
-  }
-
-  // Flat block for single-mover tickers
-  if (singleMovers.length > 0) {
-    lines.push("", "Biến động giá:");
-    for (const m of singleMovers) {
-      lines.push(fmtMoverLine("  ", m));
-    }
-  }
-
-  return lines;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Foreign flow formatter (Task 1503)
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Format the "Khối ngoại" (foreign investor flow) block for the evening Telegram message.
- *
- * @param movers - Array of ForeignFlowMover entries ordered by |foreignNetVol| DESC.
- * @returns string[] — ready to push onto the message lines array. Empty when movers is empty.
- */
-export function formatForeignFlowSection(
-  movers: { code: string; foreignNetVol: number; foreignBuyVol: number; foreignSellVol: number }[],
-): string[] {
-  if (movers.length === 0) return [];
-
-  // Filter to nonzero net-vol entries only — SQL already excludes zeros, but
-  // this defensive guard also covers the injected-fn path and edge cases where
-  // a partial-zero set slips through (e.g. getForeignFlowMoversFn returns raw DB rows).
-  const nonZeroMovers = movers.filter((m) => m.foreignNetVol !== 0);
-  if (nonZeroMovers.length === 0) {
-    return ["", "Khối ngoại: Dữ liệu không khả dụng (pipeline tạm dừng)"];
-  }
-
-  // Sort by |net_flow| descending — biggest movers first.
-  const sorted = [...nonZeroMovers].sort(
-    (a, b) => Math.abs(b.foreignNetVol) - Math.abs(a.foreignNetVol),
-  );
-
-  const lines: string[] = ["", `Khối ngoại (top ${sorted.length}):`];
-  for (const m of sorted) {
-    const direction = m.foreignNetVol >= 0 ? "mua ròng" : "bán ròng";
-    const netK = (Math.abs(m.foreignNetVol) / 1000).toFixed(3);
-    const buyK = (m.foreignBuyVol / 1000).toFixed(3);
-    const sellK = (m.foreignSellVol / 1000).toFixed(3);
-    lines.push(`  ${m.code}: ${direction} ${netK}k (mua ${buyK}k / bán ${sellK}k)`);
-  }
-  return lines;
-}
+// formatMoversSection and formatForeignFlowSection moved to ./format/
+// (FACTORY-SCHEDULER-dedup-briefing-formatters) — see re-exports above.
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Evening message formatter (exported for unit testing — task 1512)
