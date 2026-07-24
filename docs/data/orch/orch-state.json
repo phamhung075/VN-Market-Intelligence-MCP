@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FACTORY-INFRA-split-ssc-fetchers",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-INFRA-split-ssc-fetchers — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-24T05:46:19Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "FACTORY-INFRA-split-ssc-fetchers self-closed by dev-mcp-server -> REVIEW, next_agent=qa. Board idle, ready for next dispatch.",
+    "updated_at": "2026-07-24T06:12:21Z",
+    "updated_by": "dev-mcp-server"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -14426,6 +14426,24 @@
         "next_agent": "qa",
         "entered_review_at": "2026-07-24T05:44:13Z",
         "review_note": "dev-mcp-server self-closeout: SQLi hardening in agentSignalStore.ts READ paths. Converted 5 caller-supplied-value interpolation sites to bound placeholders -- getSignals() hoursBack/signalType/mark-as-read UPDATE...IN(ids); getSignalEffectiveness() days/fromAgent/signalType -- matching existing codebase idiom (cronJobRunStore.ts/agentWorkLogStore.ts datetime offset pattern; coordinationStore.ts/seedWatchlist.ts generated-placeholder IN-list pattern). No structural dynamic column/table interpolation existed. Empirically verified via git-stash A/B probe which sites were genuinely exploitable pre-fix: fromAgent/signalType already had correct manual quote-escaping (not broken); hoursBack arithmetic coercion neutralized non-numeric input. getSignalEffectiveness's days field was the one live footprint -- unescaped, corrupted the WHERE clause under a crafted stacked-statement payload pre-fix (silent malformed null-row result); post-fix bound and returns a clean empty result, table intact both ways. Evidence: tsc clean. New test file FACTORY-INFRA-agentSignal-sql-binding.test.ts (9 tests incl. the days-field differential proof): 9/9 pass. Full 26-file agentSignalStore-dependent regression: 277/277 pass, identical to baseline. Full bun test: 14733 pass/44 fail/2 errors -- grep-confirmed zero (fail) lines mention agentSignalStore/agentSignal (all pre-existing VPS-push/insider-transactions/market-cap/foreign-flow 5000ms-timeout flake, count fluctuated 42-44 across 2 runs confirming flaky not deterministic). Commit a881b2489. Journal: docs/agent-memory/decisions/sprint-FACTORY-INFRA-agentSignal-sql-binding-dev-mcp-server.md"
+      },
+      {
+        "title": "Split ssc.ts into per-portal disclosure fetchers (no dedup-delete yet)",
+        "priority": "P2",
+        "zone": "mcp-server-infra",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-INFRA-split-ssc-fetchers",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INFRA-split-ssc-fetchers",
+        "promoted_at": "2026-07-24T05:46:19Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-24T06:12:34Z",
+        "claimed_at": "2026-07-24T05:46:19Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "entered_review_at": "2026-07-24T06:12:21Z",
+        "review_note": "dev-mcp-server self-closeout: pure structural split, behavior-preserving, no dedup-delete (deferred to a follow-up task per explicit scope note). Split ssc.ts (1029L, bundled SSC+HOSE+HNX+UPCOM disclosure fetchers) into sscCommon.ts (SscDocument/HttpClient types, makeDefaultHttpClient, titleMatchesReportType), sscPortal.ts (SSC congbothongtin.ssc.gov.vn: buildSscSearchUrl/parseSscHtml/withBrowserLock/_runSscPath), hoseDisclosure.ts, hnxDisclosure.ts, upcomDisclosure.ts (named *Disclosure.ts, not hose.ts/hnx.ts, to avoid colliding with existing unrelated market-price fetchers of those names). ssc.ts (1029L->186L) kept to listSscDocuments/listSscDocumentsWithFlag orchestration, re-exporting the pre-split public surface so all 7 production + 16 test call sites are unaffected -- mirrors this session's newsNormalizer split precedent. Note: canonical backlog ticket specifies a disclosures/ subfolder + <=120L cap; followed the dispatcher's explicit newsNormalizer-precedent instruction instead (flagged in journal for QA). Code-only diff confirms zero logic drift (only delta: 3 fns gain export + 5 re-export barrel lines). bun tsc --noEmit clean. Targeted 9-file ssc/disclosure suite 85/85 pass identical before/after. Full bun test: 14734 pass/40 skip/43 fail -- grep-confirmed zero overlap with touched files, all 43 match documented pre-existing flaky classes. gen-project-stats unaffected (toolCount=184, cronJobCount=88). Server boot probe (port 3099): health 200, both dashboards 200. Commit 315bc0728 (code) + 64d014937 (memory). Journal: docs/agent-memory/decisions/sprint-FACTORY-INFRA-split-ssc-fetchers-dev-mcp-server.md"
       }
     ],
     "qa": [],
@@ -14447,23 +14465,7 @@
     },
     "last_triaged_at": "2026-07-24T05:46:19Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "title": "Split ssc.ts into per-portal disclosure fetchers (no dedup-delete yet)",
-        "priority": "P2",
-        "zone": "mcp-server-infra",
-        "type": "FACTORY",
-        "status": "IN_PROGRESS",
-        "id": "FACTORY-INFRA-split-ssc-fetchers",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INFRA-split-ssc-fetchers",
-        "promoted_at": "2026-07-24T05:46:19Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-24T05:46:19Z",
-        "claimed_at": "2026-07-24T05:46:19Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
