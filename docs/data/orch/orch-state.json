@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "FACTORY-INFRA-split-ssc-fetchers self-closed by dev-mcp-server -> REVIEW, next_agent=qa. Board idle, ready for next dispatch.",
-    "updated_at": "2026-07-24T06:12:21Z",
-    "updated_by": "dev-mcp-server"
+    "status": "in_progress",
+    "active_task_id": "FACTORY-INFRA-split-stores-and-migrations",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-INFRA-split-stores-and-migrations — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-24T06:15:03Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6250,15 +6250,6 @@
         "status": "BACKLOG",
         "id": "FACTORY-INFRA-split-agentSignalStore",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INFRA-split-agentSignalStore"
-      },
-      {
-        "title": "Split vnstockStore per entity + make schema-financial migrations declarative",
-        "priority": "P2",
-        "zone": "mcp-server-infra",
-        "type": "FACTORY",
-        "status": "BACKLOG",
-        "id": "FACTORY-INFRA-split-stores-and-migrations",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INFRA-split-stores-and-migrations"
       },
       {
         "title": "Extract shared briefing formatters; break the sibling-job cross-dependency",
@@ -14463,9 +14454,25 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-24T05:46:19Z",
+    "last_triaged_at": "2026-07-24T06:15:03Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "title": "Split vnstockStore per entity + make schema-financial migrations declarative",
+        "priority": "P2",
+        "zone": "mcp-server-infra",
+        "type": "FACTORY",
+        "status": "IN_PROGRESS",
+        "id": "FACTORY-INFRA-split-stores-and-migrations",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INFRA-split-stores-and-migrations",
+        "promoted_at": "2026-07-24T06:15:03Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-24T06:15:03Z",
+        "claimed_at": "2026-07-24T06:15:03Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
