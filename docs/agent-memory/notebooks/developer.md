@@ -1,20 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-24 | **Cycle:** FACTORY-NEWS-dedup-handlers-maxitems (news-fetch handlers.ts dedup, zone-routed generic developer)
-
-## Session 2026-07-24 — FACTORY-NEWS-dedup-handlers-maxitems — REVIEW
-
-**Task:** `apps/news-fetch/src/interface/handlers.ts` had 4 near-identical POST/GET headline handlers (Reuters + Bloomberg) with the maxItems default hardcoded bare `15`/`10` inline in each. Board row was branch:null direct-execute (BOUNDED-1 auto-pickup), no TASK_NNN.md handoff. Zone-routed (no dev-news-fetch specialist).
-
-**Actions taken:** RED test first (`domain-models.test.ts` — 6 new tests for `DEFAULT_MAX_ITEMS`/`resolveMaxItems`, confirmed failing pre-impl via a temporary `git checkout` revert of the not-yet-existing exports). GREEN: added `DEFAULT_MAX_ITEMS: Record<NewsSource, number>` (`{reuters:15, bloomberg:10}`, values unchanged) + `resolveMaxItems(raw: number|string|undefined, source)` to `domain/models.ts` — one function serves both channels: `number` (POST body) passes through with NO NaN guard (byte-matches legacy `typeof x==='number'` ternary), `string` (GET querystring) does `parseInt`+`isNaN` fallback (byte-matches legacy). Extracted `makeHeadlinesHandler(ingest, source)` in `handlers.ts` returning `{post, get}`; both routes now register the factory's output — grepped post-edit to confirm zero leftover inline handler bodies and exactly one `app.post`/`app.get` registration per route.
-
-**Verification:** `bun test` 241 pass/6 skip/0 fail (baseline 235/6/0, +6 net new). `bun tsc --noEmit` 0 errors. `eslint lint:ci --max-warnings 0` clean. `bun run sandbox --tier=all --module=news-fetch` 16/16 PASS. Response-envelope + error-branch lines byte-diffed identical to all 4 originals via `git diff` (not asserted). `handlers.ts` 171L→118L (cap 120L). Security clause: grep for DB_/API_KEY/SECRET/TOKEN/PASSWORD/NEWS_API_KEY on both changed files → no matches.
-
-**Board:** `task_board.in_progress[FACTORY-NEWS-dedup-handlers-maxitems]` → `review`, `.head` synced to idle (`next_agent:router`), via `orch-apply.sh` (dispatcher-owned commit, not committed by this cycle).
-
-**Scope discipline:** Touched exactly the 2 FILES named in the task (`handlers.ts`, `domain/models.ts`) + the one paired unit test. Left the separately-duplicated 15/10 literals in `application/use-cases.ts` + the 4 scraper files (`reuters-rss.ts`, `bloomberg-rss.ts`, `reuters-stealth.ts`, `bloomberg-stealth.ts`) untouched — different call chain, not part of the 4-handler dedup, out of this task's explicit FILES scope. Code-only, `rebuild_required=true` but PENDING-USER-GATED, no docker rebuild performed.
-
-Zone health: no drift detected
+**Last updated:** 2026-07-24 | **Cycle:** FACTORY-NEWS-go-server-tier-split (news-fetch Go server handler extraction, zone-routed generic developer)
 
 ## Session 2026-07-24 — FACTORY-NEWS-fix-source-logging — REVIEW
 
@@ -43,3 +29,17 @@ Zone health: no drift detected
 **Scope discipline:** Touched exactly the new ack ledger + probe script's Check-6 function + `run_probe`'s detail-line assembly + paired test + `WORK.md`/journal/notebook. Did NOT touch the heartbeat-write/freshness code paths (constraint #2) — verified T31/T32 (tier-2/3 stale-heartbeat dead-branch tests) still green, proving zero collateral change there. Did NOT touch `cron-detect-loop/register.md` (ALL_GREEN-remap choice makes that unnecessary).
 
 Zone health: Tier-1 probe no longer churns a full system-auditor spawn on 2 known, already-owned launchd deaths; ack ledger is a live, hand-edited SSOT with an explicit staleness rule (remove entry at DONE_VERIFIED) so this can never become a permanent blind spot | HEALTHY
+
+## Session 2026-07-24 — FACTORY-NEWS-go-server-tier-split — REVIEW
+
+**Task:** `apps/news-fetch/cmd/server/main.go` (254L, `package main`) mixed the HTTP handlers (`handleHealth`/`handleRSSFetch`/`handleFetchAll`) with env-read/store/fetcher wiring. Two hardcoded fetch-limit `20` literals + a hardcoded `"port":5008` duplicating the env-resolved `port` var. Board row was branch:null direct-execute (BOUNDED-1 auto-pickup). Zone-routed to `developer` (no `dev-news-fetch` specialist exists in `system-map.json`).
+
+**Actions taken:** New `internal/httpapi/{router.go,handlers.go}` — `Router(fetchers Fetchers, s *store.Store, logger *slog.Logger, port string) *chi.Mux` wires the 6 routes; moved `handleHealth`/`handleRSSFetch`/`handleFetchAll`/`fetchResult`/`writeJSON` verbatim. `main.go` now 138L — env reads, `store.Open`, fetcher construction, `Router(...)`, graceful shutdown only. Added `envInt("RSS_MAX_ITEMS", 20)`, passed to both `NewVnEconomyFetcher`/`NewVnExpressFetcher` (was bare `20` each). `/health`'s port field now `strconv.Atoi(port)` of the resolved env var (kept `int` type per `api/openapi.yaml`'s `port: integer` schema — not a string).
+
+**Verification:** `go build ./...`/`go vet ./...`/`gofmt -l` all clean on the 3 touched files. `go test ./...` 2/2 packages pass (no regressions; httpapi has no dedicated test file — handlers are pure relocations). RAW-verify: ran the built binary locally (`PORT=15008 RSS_MAX_ITEMS=7`) — `/health` returned `"port":15008` (proving derivation, not the old literal), `/vneconomy/fetch`+`/fetch/all` hit live vneconomy.vn/vnexpress.net RSS feeds and persisted 13/7 real rows into `rag_analyses` (confirmed via `sqlite3`), `/newsapi`+`/vps` unchanged deterministic zero-insert shape. grep-verified 0 residual bare `20` (only `const defaultRSSMaxItems = 20`) and 0 residual `5008` literal in any JSON path (only in the legitimate `envStr("PORT","5008")` fallback).
+
+**Board:** `task_board.in_progress[FACTORY-NEWS-go-server-tier-split]` → `review`, `.head` synced to idle (`next_agent:router`), via `orch-apply.sh`.
+
+**Scope discipline:** Touched exactly `main.go` + the 2 new `internal/httpapi` files named in the task's DO list. `rebuild_required=true` — Go binary changed; code-only landed, no `docker compose up --build` run (user-gated).
+
+Zone health: no drift detected

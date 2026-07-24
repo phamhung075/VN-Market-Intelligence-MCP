@@ -54,3 +54,13 @@
 **why-decision:** Factory has 2 real call sites (Reuters/Bloomberg) so it clears simplicity-gate Q2; response envelope + error branch byte-diffed identical to all 4 originals (verified via `git diff`, not asserted).
 **why-change:** No change from plan.
 **verify:** `bun test` 241 pass/6 skip/0 fail (baseline 235/6/0, +6 net new = the added DEFAULT_MAX_ITEMS/resolveMaxItems tests). `bun tsc --noEmit` 0 errors. `eslint lint:ci --max-warnings 0` clean. `bun run sandbox --tier=all --module=news-fetch` 16/16 PASS. `grep -inE "DB_|API_KEY|SECRET|TOKEN|PASSWORD|NEWS_API_KEY"` on both changed source files → no matches.
+
+### STEP developer-S6 · developer · 2026-07-24T15:56:54Z
+**task-id:** FACTORY-NEWS-go-server-tier-split
+**what-done:** Created `apps/news-fetch/internal/httpapi/{router.go,handlers.go}` (`Router(fetchers, s, logger, port)`, moved `handleHealth`/`handleRSSFetch`/`handleFetchAll`/`fetchResult`/`writeJSON` verbatim); `cmd/server/main.go` 254L→138L, now a thin composition root (env reads, `store.Open`, fetcher construction, `Router(...)`, graceful shutdown only).
+**what-considered:**
+- `Router` signature: added a `port string` 4th arg (task's shorthand `Router(fetchers, store, logger)` didn't account for it) since `/health` now derives its port from this, replacing the old hardcoded `5008` literal.
+- Health `port` JSON field type: kept `int` (`strconv.Atoi`) not `string` — `apps/news-fetch/api/openapi.yaml` `/health` schema requires `port: integer`; a string type would silently break the documented contract.
+**why-decision:** New `envInt("RSS_MAX_ITEMS", 20)` in main.go replaces both `NewVnEconomyFetcher(nil,20)`/`NewVnExpressFetcher(nil,20)` bare-literal call sites — smallest change removing both named hardcodes without touching `fetcher.go`'s own internal `<=0`→20 default guard.
+**why-change:** No change from plan.
+**verify:** `go build ./...` / `go vet ./...` clean, `gofmt -l` clean on all 3 touched files, `go test ./...` 2/2 packages pass (fetcher, store; httpapi has no dedicated test file — handlers are pure relocations). RAW-verify: ran the built binary locally (`PORT=15008 RSS_MAX_ITEMS=7`) — `/health` returned `{"port":15008}` (not 5008, proving the derivation), `/vneconomy/fetch`+`/fetch/all` hit live vneconomy.vn/vnexpress.net RSS and persisted 13/7 real rows into `rag_analyses` (confirmed via `sqlite3` query, `source_type='vneconomy'` row inspected), `/newsapi`+`/vps` returned deterministic zero-insert shape (no key/host) — response shape identical to pre-refactor. grep confirms 0 bare `20` (only `const defaultRSSMaxItems = 20`) and 0 literal `5008` in any JSON-building path (only remaining occurrence is the legitimate `envStr("PORT","5008")` fallback default).
