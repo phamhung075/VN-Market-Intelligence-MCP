@@ -387,12 +387,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-OHLCV-CORP-ACTION-CONTINUITY",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-OHLCV-CORP-ACTION-CONTINUITY — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-24T20:56:18Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "updated_at": "2026-07-24T21:38:54Z",
+    "updated_by": "dev-mcp-server"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -14926,6 +14925,29 @@
         "dev_agent": "architect",
         "updated_by": "dev-team (BGFAN-1 closeout: architect design complete -> review)",
         "review_note": "Design task complete (BGFAN-1, 7th and LAST of 7 ci-regression-prevention guardrails; also the 4th and FINAL null-disposition CI-GUARDRAIL BOUNDED-1 mis-route lane-corrected). Architect brief docs/architecture-briefs/2026-07-24-factory-guard-ci-rebuild-raw-verify-hook.md (10395 B) + child FACTORY-GUARD-CI-RAWVERIFY-IMPL minted into backlog (next_agent/dev_agent=developer, zone cross-service/, brief_ref wired, epic FACTORY-MAINTAINABILITY-2026-06). DISPATCHER CONFABULATION-GUARD: 3 anchors INDEPENDENTLY confirmed at source (not self-report): (1) brief file present (10395 B) with load-bearing verify-live corrections; (2) commit 265451cc62e055e63719dff6c80cd92a91874473 ancestor of origin/main, origin/main..HEAD empty = pushed clean, carries brief+orch-state(+21=child row)+notebook+journal (4 files); (3) child row present next_agent=developer, brief_ref wired. VERIFY-LIVE CATCHES (ticket premise did not fit this repo): (a) the ticket's 'attached to the PR' framing is a category error — gh pr list --state all returns exactly 1 PR ever (closed, never merged), branch protection off (404); the real workflow is autonomous direct-push-to-main. (b) the requested no-fake-data DoD ALREADY EXISTS as written mandatory policy — docs/policies/dev-standards.md PUSH-AUTONOMY-1 §5 mandates a post-push REAL-DATA verification task word-for-word — but only 2 VERIFY-*-REALDATA rows have ever existed against 54 serving-code commits since the policy was pinned (concrete miss cited: commit e3386bdfa). DESIGN DECISION: zero-tolerance, NO baseline, forward-only attestation check (composes the already-designed depguard-tier-boundaries layer fences + metric-mask-lint field regex), wired PRIMARILY into the existing scripts/git-hooks/pre-push (the repo's real merge gate) with a CI-job backstop — mechanizes the existing-but-unenforced PUSH-AUTONOMY-1 §5 policy. QA: verdict brief adequacy + child scoping - NO code to test (design task); after review->done_verified, PM routes RAWVERIFY-IMPL to developer per normal backlog flow. RECURRING CI-GUARDRAIL null-disposition mis-route now FULLY EXHAUSTED: all 4 instances lane-corrected+closed (dead-code b418c9ad6, no-hardcode be5ef50b4, shared-package 7fe63a5ad, rebuild-raw-verify-hook this row); 0 null-disposition CI-GUARDRAIL rows remain in backlog. All 7 ci-regression-prevention guardrails now designed (3 architect-direct: depguard/metric-mask/size-lint; 4 BOUNDED-1-lane-corrected: dead-code/no-hardcode/shared-package/rebuild-raw-verify-hook). Their 7 child -IMPL rows await developer via normal PM backlog flow; FACTORY-GUARD-CI-REGRESSION-SPIKE (epic-wrapper) is PO's batch-scoping vehicle."
+      },
+      {
+        "id": "FIX-OHLCV-CORP-ACTION-CONTINUITY",
+        "title": "Detect adjusted-vs-unadjusted price discontinuity at a corp-action boundary (|move| beyond board limit) -> reconcile/flag, never serve a false bar",
+        "type": "FIX",
+        "status": "REVIEW",
+        "priority": "P2",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-OHLCV-CORP-ACTION-CONTINUITY",
+        "promoted_at": "2026-07-24T20:56:18Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-24T21:38:55Z",
+        "claimed_at": "2026-07-24T20:56:18Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "dev_agent": "dev-mcp-server",
+        "entered_review_at": "2026-07-24T21:38:54Z",
+        "commits": [
+          "90434daad (code: domain guard + application usecase + wiring + real-VJC test + arch doc)",
+          "3f2acbdda (memory: notebook + decision journal)"
+        ],
+        "review_note": "dev-mcp-server BOUNDED-1 pickup, direct-commit (branch:null). New domain service ohlcvContinuityGuard.ts (per-exchange board-limit resolution HOSE7/HNX10/UPCOM15 + adjacent-bar discontinuity detector + reconcile-or-flag) + application usecase getContinuityCheckedOhlcvSeries.ts, wired into get_technical_indicators (both daily_ohlcv read sites) so a corp-action-discontinuous bar can never poison RSI/MACD/BB downstream. Tests use REAL live-fetched VJC (HOSE) 2026-06-08..19 daily_ohlcv rows (the real 2026-06-15->06-16 -24.87% corp-action move), no fabricated bars. Evidence: tsc clean; new suite 13/13 pass; touched-file consumers 282 pass/2 fail (both the SAME already-documented pre-existing flaky class in _deprecated/1302-technical-indicators.test.ts, confirmed unrelated via git-stash A/B against unmodified baseline — identical failures before/after); full bun test run twice (14760p/53f/1e, 14764p/49f) with zero failure referencing the touched/new files, all failures in unrelated pre-existing-flaky files (logVpsPush, telegram routing, push-news, vnstock stores, insider_transactions, market_cap, MCP SSE, get_foreign_flow — 5000ms-timeout class already documented earlier in this session's notebook cycles). tool/cron counts unaffected (184/88). Simplicity gate PASS. DJ-GATE-1 satisfied. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md"
       }
     ],
     "qa": [],
@@ -14947,23 +14969,7 @@
     },
     "last_triaged_at": "2026-07-24T20:56:18Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-OHLCV-CORP-ACTION-CONTINUITY",
-        "title": "Detect adjusted-vs-unadjusted price discontinuity at a corp-action boundary (|move| beyond board limit) -> reconcile/flag, never serve a false bar",
-        "type": "FIX",
-        "status": "IN_PROGRESS",
-        "priority": "P2",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-OHLCV-CORP-ACTION-CONTINUITY",
-        "promoted_at": "2026-07-24T20:56:18Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-24T20:56:19Z",
-        "claimed_at": "2026-07-24T20:56:18Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
