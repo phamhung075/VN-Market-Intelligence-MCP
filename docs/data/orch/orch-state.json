@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "next_action": "BGFAN-1 closeout complete: FACTORY-GUARD-CI-no-hardcode-allowlist-scan design delivered by architect -> review (next=qa). Child FACTORY-GUARD-CI-NOHARDCODE-IMPL in backlog (developer, brief_ref wired). WIP now 0; dispatch lanes free. 2 more null-disposition CI-GUARDRAIL rows await lane-correction (shared-package-import-check, rebuild-raw-verify-hook).",
-    "updated_at": "2026-07-24T19:34:03Z",
-    "updated_by": "dev-team (BGFAN-1 closeout)"
+    "status": "in_progress",
+    "active_task_id": "FACTORY-GUARD-CI-shared-package-import-check",
+    "next_agent": "architect",
+    "next_action": "Architect design task (BOUNDED-1 lane-corrected): FACTORY-GUARD-CI-shared-package-import-check (6th of 7 ci-regression-prevention guardrails). Audit existing shared-package import mechanism, grep-verify live offender counts, design zero-tolerance-vs-baseline CI gate, mint ONE developer child impl row.",
+    "updated_at": "2026-07-24T19:48:31Z",
+    "updated_by": "dev-team (BOUNDED-1 lane-correct -> architect design)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6362,15 +6362,6 @@
         "status": "BACKLOG",
         "id": "FACTORY-XZONE-size-justification-sweep",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-XZONE-size-justification-sweep"
-      },
-      {
-        "title": "CI-shared-package-import-check",
-        "priority": "P2",
-        "type": "CI-GUARDRAIL",
-        "zone": "cross-service/",
-        "status": "BACKLOG",
-        "id": "FACTORY-GUARD-CI-shared-package-import-check",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-GUARD-CI-shared-package-import-check"
       },
       {
         "title": "CI-rebuild-raw-verify-hook",
@@ -14863,9 +14854,28 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-24T19:18:42Z",
+    "last_triaged_at": "2026-07-24T19:47:49Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "title": "CI-shared-package-import-check",
+        "priority": "P2",
+        "type": "CI-GUARDRAIL",
+        "zone": "cross-service/",
+        "status": "IN_PROGRESS",
+        "id": "FACTORY-GUARD-CI-shared-package-import-check",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-GUARD-CI-shared-package-import-check",
+        "promoted_at": "2026-07-24T19:47:49Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-24T19:48:31Z",
+        "claimed_at": "2026-07-24T19:47:49Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "architect",
+        "dev_agent": "architect",
+        "updated_by": "dev-team (BOUNDED-1 lane-correct -> architect design)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
