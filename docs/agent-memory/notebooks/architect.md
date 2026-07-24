@@ -1,8 +1,15 @@
 # Architect — Notebook
 
-**Last updated:** 2026-07-24 19:31 UTC | **Sprint:** COWORK-GUARANTEED-SLOT-CATCHUP
+**Last updated:** 2026-07-24 19:57 UTC | **Sprint:** COWORK-GUARANTEED-SLOT-CATCHUP
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-07-24T19:57Z — FACTORY-GUARD-CI-shared-package-import-check (zone=cross-service/, P2 BOUNDED-1 pickup, design+decompose)
+
+**Task:** Design a check that any type/constant in `packages/shared-*` has a real importer AND app-side duplicates don't structurally drift — 6th of 7 `ci-regression-prevention` guardrails, same epic/audit as the size-lint/metric-mask/depguard/dead-code/no-hardcode siblings.
+**Finding:** Audit's 2 cited drift examples are stale/understated: "shared-db stale module list" already fixed (`FACTORY-SHARED-fix-shared-db-stale-list`, REVIEW, commit `ef62d2921`, 9/9 confirmed live-matching); "shared-types ComputeTAResponse nullability" is really a 3-way divergence between two already-orphaned/dead shapes (shared-types, the dead TS shadow service scheduled for deletion by `FACTORY-GUARD-CI-DEADCODE-IMPL`, and the live Go contract whose own header documents the drift was investigated/intentional) — not a live-serving bug. Confirmed live debt: 3/3 `packages/shared-*` (types/config/db, 76+73+37L) have **zero real importers repo-wide** (no import specifier, no package.json dependency, anywhere) — same phantom-package shape as the already-pruned `packages/primitives`. Found new undocumented name-collisions (Alert/Signal/McpConfig) between the orphaned shared package and independently-invented live app-side types of the same name — e.g. `McpConfig` in shared-config is a 6-block/73L stub vs the live app's actual 18-block/~300L `infrastructure/config.ts`. **Critical scope catch:** a dedicated, larger backlog task — `FACTORY-SHARED-wire-or-prune-shared-packages` (P2, effort L, risk med, rebuild true, BACKLOG) — already owns the "deliberate keep-or-cut decision per package" work; this CI-guardrail task must NOT preempt/duplicate it.
+**Output:** `docs/architecture-briefs/2026-07-24-factory-guard-ci-shared-package-import-check.md` — **baseline/ratchet** (not zero-tolerance, unlike dead-code/metric-mask/no-hardcode — different axis than size-lint's "too voluminous": here the fix is a domain decision already owned by a separate task, not a volume problem). `scripts/audits/shared-package-import-check.sh`: check 1 (blocking) — package-level orphan-importer check, baseline-seeded with the 3 current orphans, fails any NEW zero-importer `packages/*` addition (prevents `packages/primitives`-shaped regrowth); check 2 (advisory-only, non-blocking) — same-exported-symbol-name collision scan (Alert/Signal/McpConfig today), full AST structural diffing explicitly deferred (no TS AST tool wired into any bash-only audit script here; regex field-diff would false-positive on reorder/JSDoc churn). Minted child dev row `FACTORY-GUARD-CI-SHAREDPKG-IMPL` (`developer`, zone cross-service/) — not self-implemented; explicitly excludes any packages/shared-*/ content edits, consumer wiring, or deletion (reserved for `FACTORY-SHARED-wire-or-prune-shared-packages`).
+**Next:** pm/dev-team — promote+dispatch `FACTORY-GUARD-CI-SHAREDPKG-IMPL` when picked up; dispatcher (this task's owner) flips `FACTORY-GUARD-CI-shared-package-import-check` board status.
 
 ## 2026-07-24T19:31Z — FACTORY-GUARD-CI-no-hardcode-allowlist-scan (zone=cross-service/, P2 BOUNDED-1 pickup, design+decompose)
 
@@ -18,18 +25,16 @@
 **Output:** `docs/architecture-briefs/2026-07-24-factory-guard-ci-dead-code-gate.md` — zero-tolerance CI design (fix all ~2,070L confirmed-orphaned debt in the same child task before the gate activates, despite bigger absolute LOC than metric-mask/depguard since it's 100% pure subtraction of zero-import-verified code, unlike size-lint's refactor-risk 733-file debt): single `dead-code-gate.sh` with 4 structural checks (bak/backup/patch ban, `_deprecated/`-name ban, Go-service+stray-TS-scaffold ban, `//go:build ignore` ban); deferred full knip/ts-prune/vulture unused-export tooling as documented enhancement (no live debt evidence beyond what the 4 checks catch). Minted child dev row `FACTORY-GUARD-CI-DEADCODE-IMPL` (`developer`, zone cross-service/) — not self-implemented.
 **Next:** pm/dev-team — promote+dispatch `FACTORY-GUARD-CI-DEADCODE-IMPL` when picked up; dispatcher (this task's owner) flips `FACTORY-GUARD-CI-dead-code-gate` board status.
 
-## 2026-07-24T18:29Z — FACTORY-GUARD-CI-depguard-tier-boundaries (zone=cross-service/, P2 BOUNDED-1 pickup, design+decompose)
-
-**Task:** Extend depguard/import-linter to enforce ALL layer fences (TS boundaries application->interface + domain->infrastructure; Python pdf-extractor import-linter contract; Go composition-root-contains-no-pkg/module-logic check) — 3rd of the 7 `ci-regression-prevention` guardrails, same epic/audit as the size-lint and metric-mask siblings.
-**Finding:** Ticket wrong on 2 of 3 clauses. TS — both named leaks (pollNews interface-import, telegramCommands application-import) already `DONE_VERIFIED`/live-committed, AND both fence directions the ticket asks for already forbidden in all 3 live `eslint.config.mjs` — real gap is ESLint never running in CI at all (zero eslint steps anywhere in `.github/workflows/`). Python — the "missing" import-linter contract already lives at `pdf-extractor/pyproject.toml:69-76`, `DONE_VERIFIED` 2026-07-09, already enforced in `py-lint` — zero work needed. Go — depguard fine for 6/7 services but `news-fetch` (7th `.golangci.yml`) has zero CI job wired at all (ticket didn't name this). The ticket's 3rd ask (composition-root contains no pkg/module-logic) IS genuinely new and real — depguard is import-only, can't express it; live-scanned all 7 services' `cmd/server/**/*.go` and found exactly 2 real offenders (both macro-indicators: `policyRatesAdapter.FetchPolicyRates`, `omoAdapter.FetchOMO` — real HTML/DB-fallback decision logic that also sets a business-semantic `IsEstimate` flag, same bug class as the metric-mask ticket), zero false positives against the other 10 checked composition-root shims when scoped to receiver-methods-only.
-**Output:** `docs/architecture-briefs/2026-07-24-factory-guard-ci-depguard-tier-boundaries.md` — TS: zero-tolerance CI-wiring gate (fix 3 live offenders in mcp-server + 1 previously-invisible news-fetch offender caused by a `boundaries/elements` drift where `src/routes/**` isn't mapped, then wire `eslint --max-warnings=0` per service; bonus fix: missing `news-fetch-go-lint` job). Go: net-new `go/ast`-based composition-root-logic gate scoped to receiver methods only (excludes `main()`/free helper funcs — empirically zero false positives), threshold if>=2-or-any-for, `composition-root-logic-allow:` escape hatch, zero-tolerance (debt=2 functions/1 service, fixed in the same child task). Minted 2 child dev rows (different toolchains, independently testable): `FACTORY-GUARD-CI-TSBOUNDARIES-IMPL`, `FACTORY-GUARD-CI-COMPROOT-LOGIC-IMPL` (`developer`, zone cross-service/) — neither self-implemented.
-**Next:** pm/dev-team — promote+dispatch both `-IMPL` rows when picked up; dispatcher (this task's owner) flips `FACTORY-GUARD-CI-depguard-tier-boundaries` board status.
-
 ---
 
-## Archive (pre-2026-07-24T19:31Z)
+## Archive (pre-2026-07-24T19:57Z)
 
-[Older cycles archived to git history: FACTORY-GUARD-CI-metric-mask-lint (2026-07-24T17:26Z,
+[Older cycles archived to git history: FACTORY-GUARD-CI-depguard-tier-boundaries (2026-07-24T18:29Z,
+zone=cross-service/, P2 BOUNDED-1 pickup — ticket wrong on 2/3 clauses (TS fences + Python contract
+already live/enforced, real TS gap was ESLint never running in CI + missing news-fetch-go-lint job),
+net-new go/ast composition-root-logic gate scoped to receiver methods (2 real macro-indicators
+offenders, zero false positives), zero-tolerance, 2 child rows FACTORY-GUARD-CI-TSBOUNDARIES-IMPL +
+FACTORY-GUARD-CI-COMPROOT-LOGIC-IMPL), FACTORY-GUARD-CI-metric-mask-lint (2026-07-24T17:26Z,
 zone=cross-service/, P2 BOUNDED-1 pickup — corrected dispatch prompt's inferred intent (composite-
 metric-masks-dead-detector was wrong; `detail_ref` carried the real numeric-literal-fallback spec),
 4 live offenders/2 files (`cascadeEngine.ts` x3 `?? 0.6`, `marketSentimentCalculator.ts` x1 `?? 1.0`)
