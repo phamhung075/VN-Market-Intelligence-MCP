@@ -44,3 +44,13 @@
 - Repoint the dangling ref at prune time (mirror FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE) vs SKIP-only — task explicitly forbids restore-then-reprune; SKIP-only matches the stated fix shape, keeps the change additive.
 **why-decision:** One fs.readFileSync + JSON.parse per run (no jq/execFileSync) is the smallest correct guard that closes the exact live incident (drain commit 395e224ad pruning a detail_ref'd file) without touching MOVE-time repoint or the existing age/legacy-mtime cutoff logic.
 **why-change:** No change from plan — FIX SHAPE in the task matched implementation directly. Added a 4th test case beyond the 2 requested ACs (no orch-state.json present → guard degrades to age-only prune, fails open not closed) to prove the degradation path live, not just the happy path. 36/36 assertions pass (`node scripts/agents-flow/drain-signals.test.js`).
+
+### STEP developer-S5 · developer · 2026-07-24T15:32:35Z
+**task-id:** FACTORY-NEWS-dedup-handlers-maxitems
+**what-done:** Added `DEFAULT_MAX_ITEMS`/`resolveMaxItems` to `domain/models.ts` (RED test first in `domain-models.test.ts`, 22/22 pass after); replaced the 4 near-identical POST/GET headline handlers in `interface/handlers.ts` with a `makeHeadlinesHandler(ingest, source)` factory returning `{post, get}`, registered on the same 4 routes. `handlers.ts` 171L→118L.
+**what-considered:**
+- Only path considered for `resolveMaxItems` signature: accept `number | string | undefined` so ONE function serves both the JSON-body channel (POST, no NaN guard — preserves `typeof x === 'number'` pass-through incl. NaN) and querystring channel (GET, `parseInt`+`isNaN` guard) without collapsing their genuinely different legacy semantics.
+- Scope: task FILES list names only handlers.ts + domain/models.ts; left the separately-duplicated 15/10 defaults in `application/use-cases.ts` + 4 scraper files untouched — different call chain, not part of the 4-handler dedup, out of this task's explicit scope.
+**why-decision:** Factory has 2 real call sites (Reuters/Bloomberg) so it clears simplicity-gate Q2; response envelope + error branch byte-diffed identical to all 4 originals (verified via `git diff`, not asserted).
+**why-change:** No change from plan.
+**verify:** `bun test` 241 pass/6 skip/0 fail (baseline 235/6/0, +6 net new = the added DEFAULT_MAX_ITEMS/resolveMaxItems tests). `bun tsc --noEmit` 0 errors. `eslint lint:ci --max-warnings 0` clean. `bun run sandbox --tier=all --module=news-fetch` 16/16 PASS. `grep -inE "DB_|API_KEY|SECRET|TOKEN|PASSWORD|NEWS_API_KEY"` on both changed source files → no matches.
