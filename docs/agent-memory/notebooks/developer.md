@@ -43,3 +43,15 @@ Zone health: Tier-1 probe no longer churns a full system-auditor spawn on 2 know
 **Scope discipline:** Touched exactly `main.go` + the 2 new `internal/httpapi` files named in the task's DO list. `rebuild_required=true` — Go binary changed; code-only landed, no `docker compose up --build` run (user-gated).
 
 Zone health: no drift detected
+
+## Session 2026-07-25 — FIX-DOWJONES-STALE-WRONG-VALUE — REVIEW
+
+**Task:** Backlog's `zone: apps/macro-indicators/` tag was stale — verified the Go macro-indicators service has zero dow_jones references; real code is `apps/mcp-server/`. Live-verified root cause via `docker exec` into the named-volume DB: `tracked_indicators` dow_jones rows are news-mined garbage (10604/23750/23807/48221/76848, no ceiling gate) AND `get_system_status`'s "Auto-tracked Indicators" ran its own unguarded latest-row query serving 23750 as current (report 3237) — a separate bug from the already-shipped DSI-MACRO-PHANTOM-STALE-GUARD (only covers `buildMacroSection`).
+
+**Actions taken:** New `infrastructure/db/indicatorPlausibility.ts` — shared, generic `isPlausibleIndicatorValue()` band gate (dow_jones 25000–60000) used by every `tracked_indicators` writer; `commodityTracker.ts` delegates to it (other indicators' bounds preserved byte-identical). Retired the dow_jones news-mining regex (precedent: brent's backlog-921 removal); `yahooFinance.ts` gained `fetchDowJonesIndex()`(live `^DJI`)+`storeDowJonesIndex()` (fail-closed, dedup-before-insert), wired into `commodityTrackerRefreshJob.ts` Block 3 (own try/catch, zero-arg production call site already picks it up — no scheduler change). `systemTools.ts` switched to the proven `listTrackedIndicatorsFromDb()` — stale rows now tagged `[STALE]`, generic across all indicators. Added dow_jones to audit-layer `INDICATOR_RANGES` (defense-in-depth).
+
+**Verification:** New `FIX-DOWJONES-STALE-WRONG-VALUE.test.ts` 15/15 pass (band accept/reject on the literal phantom values, news-mining retirement, live fetch parse, fail-closed store + dedup, `[STALE]` tag). Extended `1920c-commodity-tracker-refresh-job.test.ts` +3. Full targeted+adjacent suite (7 files touching every changed module) 68/68 pass. `bun tsc --noEmit` clean. Simplicity-gate self-caught scope creep — trimmed 3 speculative ceiling additions (sp500/nasdaq/vnindex) not required by this AC. Full monorepo `bun test` kicked off as an extra background check but stalled/did not complete in-session (unrelated pre-existing suite characteristic, not this diff — every directly-dependent file already green); noted transparently, not claimed.
+
+**Board:** `task_board.in_progress[FIX-DOWJONES-STALE-WRONG-VALUE]` → `review` (`next_agent:qa`), `.head` synced to idle, via `orch-apply.sh`. `REBUILD_REQUIRED: true` — live container swap + 2 elapsed daily-cron cycles needed for the LIVE-across-2-cycles portion of the verification_gate; ops-gated, flagged not fabricated.
+
+Zone health: no drift detected
