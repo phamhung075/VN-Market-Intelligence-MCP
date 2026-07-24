@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "next_action": "BGFAN-1 closeout complete: FACTORY-GUARD-CI-metric-mask-lint design delivered by architect -> review (next=qa). Child FACTORY-GUARD-CI-METRICMASK-IMPL in backlog (developer). WIP now 0; dispatch lanes free.",
-    "updated_at": "2026-07-24T17:30:21Z",
-    "updated_by": "dev-team (BGFAN-1 closeout)"
+    "status": "in_progress",
+    "active_task_id": "FE-PG-BCTC-EVAL-_INDEX-FUNC-FIX",
+    "next_agent": "dev-frontend",
+    "next_action": "BOUNDED-1 auto-pickup claim of FE-PG-BCTC-EVAL-_INDEX-FUNC-FIX — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-24T17:48:11Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -10737,25 +10737,6 @@
         "created_at": "2026-07-24T17:26:06Z",
         "created_by": "architect",
         "updated_at": "2026-07-24T17:26:07Z"
-      },
-      {
-        "id": "FE-PG-BCTC-EVAL-_INDEX-FUNC-FIX",
-        "type": "FIX",
-        "title": "Fix /dashboard/bctc-eval HTTP 500 — loader throws on upstream /api/bctc-eval 404 instead of rendering a recoverable Card (user-visible broken page)",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "S",
-        "zone": "apps/frontend/",
-        "sprint": "QUALITY-AUDIT-FRONTEND-COVERAGE",
-        "source": "quality-audit-frontend-page-coverage-20260724",
-        "owner": "dev-frontend",
-        "next_agent": "dev-frontend",
-        "check_id": "FE-PG-BCTC-EVAL-_INDEX-FUNC",
-        "status_note": "FE-PG-BCTC-EVAL-_INDEX-FUNC re-check returns PASS",
-        "note": "Quality-audit frontend page-coverage 2026-07-24 (FE-PG-BCTC-EVAL-_INDEX-FUNC, FAIL — LIVE probe). SYMPTOM: GET /dashboard/bctc-eval returns HTTP 500 (root error boundary 'Something went wrong'); the eval scorecard list never renders. ROOT CAUSE: the loader fetches /api/bctc-eval which returns HTTP 404 ({\"error\":\"Not found\",\"path\":\"/api/bctc-eval/\"}) and THROWS, violating the route's own JSDoc contract ('show Card with API error, do NOT throw'). TRIAGE HINT (verify, do not assume): determine whether the frontend proxy forwards a trailing slash the mcp-server route rejects (path shows '/api/bctc-eval/') OR the mcp-server GET /api/bctc-eval handler is unregistered — escalate to dev-mcp-server if server-side. Also closes the same-root-cause NEEDS_REVIEW rows FE-PG-BCTC-EVAL-_INDEX-{FRESH,OBS,DEGR,CORR} + FE-PG-BCTC-EVAL-$REPORTID-FUNC. AC: FE-PG-BCTC-EVAL-_INDEX-FUNC re-check returns PASS (GET /dashboard/bctc-eval → 200 + eval table renders).",
-        "created_at": "2026-07-24T17:28:34Z",
-        "created_by": "po",
-        "updated_at": "2026-07-24T17:28:34Z"
       }
     ],
     "closed_sprints": [
@@ -14744,9 +14725,34 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-24T17:17:59Z",
+    "last_triaged_at": "2026-07-24T17:48:11Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FE-PG-BCTC-EVAL-_INDEX-FUNC-FIX",
+        "type": "FIX",
+        "title": "Fix /dashboard/bctc-eval HTTP 500 — loader throws on upstream /api/bctc-eval 404 instead of rendering a recoverable Card (user-visible broken page)",
+        "status": "IN_PROGRESS",
+        "priority": "P1",
+        "size": "S",
+        "zone": "apps/frontend/",
+        "sprint": "QUALITY-AUDIT-FRONTEND-COVERAGE",
+        "source": "quality-audit-frontend-page-coverage-20260724",
+        "owner": "dev-frontend",
+        "next_agent": "dev-frontend",
+        "check_id": "FE-PG-BCTC-EVAL-_INDEX-FUNC",
+        "status_note": "FE-PG-BCTC-EVAL-_INDEX-FUNC re-check returns PASS",
+        "note": "Quality-audit frontend page-coverage 2026-07-24 (FE-PG-BCTC-EVAL-_INDEX-FUNC, FAIL — LIVE probe). SYMPTOM: GET /dashboard/bctc-eval returns HTTP 500 (root error boundary 'Something went wrong'); the eval scorecard list never renders. ROOT CAUSE: the loader fetches /api/bctc-eval which returns HTTP 404 ({\"error\":\"Not found\",\"path\":\"/api/bctc-eval/\"}) and THROWS, violating the route's own JSDoc contract ('show Card with API error, do NOT throw'). TRIAGE HINT (verify, do not assume): determine whether the frontend proxy forwards a trailing slash the mcp-server route rejects (path shows '/api/bctc-eval/') OR the mcp-server GET /api/bctc-eval handler is unregistered — escalate to dev-mcp-server if server-side. Also closes the same-root-cause NEEDS_REVIEW rows FE-PG-BCTC-EVAL-_INDEX-{FRESH,OBS,DEGR,CORR} + FE-PG-BCTC-EVAL-$REPORTID-FUNC. AC: FE-PG-BCTC-EVAL-_INDEX-FUNC re-check returns PASS (GET /dashboard/bctc-eval → 200 + eval table renders).",
+        "created_at": "2026-07-24T17:28:34Z",
+        "created_by": "po",
+        "updated_at": "2026-07-24T17:48:12Z",
+        "promoted_at": "2026-07-24T17:48:11Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-24T17:48:11Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
