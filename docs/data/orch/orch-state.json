@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FACTORY-DOMAIN-name-bctc-cascade-magic-numbers",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-DOMAIN-name-bctc-cascade-magic-numbers — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-24T04:14:32Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "idle -- awaiting next dispatch",
+    "updated_at": "2026-07-24T04:40:33Z",
+    "updated_by": "dev-mcp-server (self-closeout)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -14399,6 +14399,24 @@
         "next_agent": "qa",
         "entered_review_at": "2026-07-24T03:58:41Z",
         "review_note": "dev-mcp-server self-closeout: pure structural split, behavior-preserving. Split newsNormalizer.ts (1086L) into sibling newsNormalizerTypes.ts (4 type aliases + AnalysisEntry), newsNormalizerTables.ts (8 keyword/lookup data tables), newsNormalizerHelpers.ts (14 pure helper functions + derived ALL_CATALOG_CODES cache) -- mirrors the FACTORY-DOMAIN-extract-sentiment-lexicons sibling-file convention (domain/services/*.ts, not a data/ subfolder). Main file (1086L->236L) keeps ONLY normalizeNews() orchestration, re-exporting the pre-split public surface (types + decodeHtmlEntities/truncateAt120/buildDecisionResume/DOMAIN_VN_LABEL) so all ~50 existing import call sites are unaffected. Byte-diffed every moved unit old-vs-new (8 tables, AnalysisEntry + 4 type aliases, all 14 helper function bodies, normalizeNews() itself): zero drift. bun tsc --noEmit clean. Ran the 50-file newsNormalizer-touching test set before AND after the split: identical 575 pass / 0 fail / 1166 expect() calls both times. gen-project-stats.ts --dry-run unaffected (toolCount 184, cronJobCount 88). No full-server-boot probe per task brief (pure code split; host resource conservation given concurrent mcp-server memory pressure this session). Commit 9cfeefc16 (code) + 25cc5d7d6 (memory). Journal: docs/agent-memory/decisions/sprint-FACTORY-DOMAIN-split-newsNormalizer-dev-mcp-server.md"
+      },
+      {
+        "title": "Name VAS row-code guards + cascade broadcast-floor magic numbers",
+        "priority": "P2",
+        "zone": "mcp-server-domain",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-DOMAIN-name-bctc-cascade-magic-numbers",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-DOMAIN-name-bctc-cascade-magic-numbers",
+        "promoted_at": "2026-07-24T04:14:32Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-24T04:40:48Z",
+        "claimed_at": "2026-07-24T04:14:32Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "entered_review_at": "2026-07-24T04:40:33Z",
+        "review_note": "dev-mcp-server self-closeout: pure readability refactor, values byte-identical. VAS row-code guard (lineScan.ts): inline val>=10 && val<=990 && val%10===0 repeated 3x (findValue isGuarded + findValueByCode Form A/B) named VAS_ROW_CODE_MIN=10/VAS_ROW_CODE_MAX=990/VAS_ROW_CODE_STEP=10 (MIN and STEP separate consts despite sharing value 10 -- distinct domain facts). Cascade broadcast-floor (Task 162): inline default 6 duplicated 5x across cascadeEngine.ts + runImpactChain.ts + pollNews.ts config-load fallbacks, consolidated into 1 exported SSOT DEFAULT_BROADCAST_MIN_IMPACT=6 in cascadeEngine.ts, imported at both application-layer sites. Evidence: tsc clean. Targeted regression 16 files/193 tests (9 BCTC-extractor + 7 cascade/broadcast): pass counts identical pre/post (105+88). Full bun test: 14727 pass/41 fail -- grep-verified zero overlap with touched files/concepts (lineScan/cascadeEngine/runImpactChain/pollNews/broadcast/VAS/rowCode/bctcOverdue absent from fail list); all 41 match documented pre-existing classes (vps_push_log schema-drift, 5000ms MCP-client-timeout, deprecated 1302-technical-indicators flake). Server boot probe (port 3999): health 200 toolCount=184, both dashboards 200. Tool 184/cron 88 unaffected. Commit 6b0141a5a. Journal: docs/agent-memory/decisions/sprint-FACTORY-DOMAIN-name-bctc-cascade-magic-numbers-dev-mcp-server.md"
       }
     ],
     "qa": [],
@@ -14420,23 +14438,7 @@
     },
     "last_triaged_at": "2026-07-24T04:14:32Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "title": "Name VAS row-code guards + cascade broadcast-floor magic numbers",
-        "priority": "P2",
-        "zone": "mcp-server-domain",
-        "type": "FACTORY",
-        "status": "IN_PROGRESS",
-        "id": "FACTORY-DOMAIN-name-bctc-cascade-magic-numbers",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-DOMAIN-name-bctc-cascade-magic-numbers",
-        "promoted_at": "2026-07-24T04:14:32Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-24T04:14:33Z",
-        "claimed_at": "2026-07-24T04:14:32Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
