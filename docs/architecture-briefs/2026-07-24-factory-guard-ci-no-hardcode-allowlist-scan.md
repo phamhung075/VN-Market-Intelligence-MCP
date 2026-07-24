@@ -1,0 +1,50 @@
+<!-- size-justification: 50L — single-guardrail design brief (existing-mechanism audit + scope-narrowing verify-live pass + live-offender count + design + child-task decomposition); the scope-narrowing evidence and the zero-tolerance sizing call share one trail and splitting loses it. -->
+# FACTORY-GUARD-CI-no-hardcode-allowlist-scan — Architect Design Brief
+
+**Task:** `FACTORY-GUARD-CI-no-hardcode-allowlist-scan` (epic FACTORY-MAINTAINABILITY-2026-06, P2, zone `cross-service/`) — 5th of 7 `ci-regression-prevention` guardrails.
+**Author:** architect · **Date:** 2026-07-24
+**Note on scope precondition:** same coordination note as the depguard/metric-mask/size-lint/dead-code siblings — `backlog-detail.json` carries "Scope via architect spike `FACTORY-GUARD-CI-REGRESSION-SPIKE` before dispatch" on all 7 `ci-regression-prevention` rows; that spike is still `BACKLOG`. Scoping this ONE row standalone (BOUNDED-1 idle-capacity pickup) is self-contained.
+
+## 0. Ticket-premise correction (verify-live catch — the naive reading over-scopes by ~100x)
+
+A literal grep for "ticker allowlist" hits **hundreds** of bare `["VCB","BID",...]`-shaped arrays across `domain/services/{predictionCascadeMapper,policyImpactMapper,creditFlowAnalyzer,climateImpactMapper,supplyChainEventDetector}.ts` and `domain/services/cascade/rules/*.ts`. **These are NOT the bug class.** They are this repo's already-established, correctly-homed cascade/policy rule-table data (the audit brief's own `FACTORY-DOMAIN-split-cascade-engine` task explicitly legitimizes this exact shape: "data tables may exceed cap WITH a size-justification header"). The ticket's own named example — `signalText.includes('2023') && year===2024` — is a **control-flow branch**, not a data table. The real bug class is: a ticker/date/exchange **literal compared inside an `if`/ternary condition** that silently special-cases *behavior*, not a named reference-data array declared once and consumed generically. Scoped correctly, live debt is small (§2), not systemic.
+
+## 1. Existing live mechanism (verified, not ticket prose)
+
+**Zero coverage confirmed**, same pattern as all 4 siblings: `.github/workflows/*.yml` — zero grep hits for hardcode/allowlist/special-case (the one `ci.yml:182` hit is an unrelated Fence-A import-allowlist comment). All 3 `eslint.config.mjs` carry only `eslint-plugin-boundaries` layer fences. All 7 `.golangci.yml` enable `depguard` only. Both `pyproject.toml` carry only `importlinter`/`mypy`/`pytest`. No existing "no-hardcode-stats"-style rule exists anywhere in CI config (that WIKI-lesson title refers to a doc-content convention, not a shipped lint).
+
+## 2. Live offender count (2026-07-24, grep-verified at source, scope-corrected per §0)
+
+**5 real sites across 5 files** — small, matching the metric-mask/dead-code siblings' scale, not size-lint's systemic scale:
+
+1. **`apps/mcp-server/src/application/usecases/bctc/newsChainFallback.ts:224`** — `signalText.includes('2023') && year === 2024` (temporal special-case; the ticket's own named example, found verbatim). **Already tracked**: `JANITOR-035` in `docs/data/code-janitor-known-findings.json` (discovered 2026-07-08 during `FACTORY-APP-split-fetchParseAndStoreBctc`, status `proposed`, explicitly flagged as "requires explicit architect/developer decision on intended semantics before generalizing" — not mechanical).
+2. **`apps/mcp-server/src/application/cascadeExecutor.ts:194`** (`LARGE_CAP_FALLBACK = [...8 tickers]`) + **`apps/mcp-server/src/infrastructure/fetchers/priceSourceRouter.ts:53`** (`MAJOR_CAPS = [...8 tickers]`) — two semantically-overlapping (6/8 shared) but diverging ticker allowlists, no canonical source, both living in `application`/`infrastructure` layers rather than a shared home. **Already tracked**: `JANITOR-034` (discovered 2026-05-13, status `proposed`, explicitly flagged "requires domain design decision... not mechanical").
+3. **`apps/mcp-server/src/interface/mcp/tools/financial-reports/backfillBctcScalarsTool.ts:199`** — `report.action_code === "CTG"` branches a diagnostic reason string only for the CTG ticker. **NEW finding**, not previously tracked.
+4. **`apps/mcp-server/src/domain/services/pharmaEventMapper.ts:288`** — `code === "IMP"` branches a reasoning string only for the IMP ticker. **NEW finding**, not previously tracked.
+
+**Explicitly excluded (verify-live, not offenders):** (a) `item.Floor === "HOSE"/"HNX"/"UPCOM"` in `stock-price`'s fetchers.go/mapper.go — a stable domain-enum mapping (API floor code → typed `Source`), not volatile reference data; the real defect there is Tier1/Tier2 *duplication*, already owned by the separate, in-flight `FACTORY-STOCK-extract-vndirect-mapper` task (dedup theme, not this scan's theme). (b) `apps/mcp-server/src/infrastructure/fetchers/muasamcong.ts` keyword→stock procurement table and the ~15 `domain/services/*Mapper.ts` cascade/policy rule tables — named, documented, generically-consumed reference data in its established home, not a smuggled special-case. (c) `apps/mcp-server/src/domain/services/priceBackfillService.ts:224` `ticker === "BAD"` — a test-fixture sentinel inside a documented mock-only function (`ohlcvWriteService.ts:49` already labels it "Historical seed/mock only... sentinel present"), never called outside `__tests__/`; a test-mock-leaked-into-domain-layer issue, not a reference-data/allowlist issue — out of this scan's scope. (d) `ohlcvBackfill.ts` hardcoded `"2024-01-01"`/`"2024-01-15"` date defaults — magic-literal-not-special-case-branch, belongs to the audit's separate "promote magic numbers to named constants" theme, not this guardrail.
+
+## 3. Guardrail design — zero-tolerance (5 sites, small, matches metric-mask/dead-code precedent, not size-lint's baseline)
+
+**Mechanism — `scripts/audits/no-hardcode-allowlist-scan.sh` (bash/grep, no toolchain), 2 mechanically-reliable checks** (mirrors dead-code-gate's "purpose-built for the exact debt shapes found today" MVP posture over generic AST tooling):
+
+1. **Temporal special-case ban**: flag any `.includes(['"](19|20)\d{2}` occurring within a small line window of a literal-year equality (`===? *(19|20)\d{2}` TS / `== *(19|20)\d{2}` Go) — catches finding #1's exact shape. Near-zero false-positive risk (this combination is rare and structurally always signals a hardcoded date-vs-date special-case).
+2. **Ticker/code literal-branch ban**: flag `(ticker|symbol|code|action_code)\s*===?\s*['"][A-Z]{2,5}['"]` appearing as an `if`/ternary *condition* (not inside an array/object literal) — catches findings #3-4. Denylist (never flagged): comparisons against the fixed exchange-enum set `HOSE|HNX|UPCOM|BLOOMBERG` (stable domain modeling, not reference data, per §2(a)).
+
+**Deferred, NOT built now (documented enhancement, same reasoning as JANITOR-034's own note and the dead-code-gate sibling's deferred knip/vulture tooling):** a generic cross-file ticker-array-duplication/overlap detector. Rejected for MVP — the repo has dozens of *legitimately* overlapping domain rule tables (e.g. `predictionCascadeMapper.ts`'s cascade categories intentionally re-use the same tickers like VCB/BID/CTG across unrelated semantic buckets); a mechanical "N-shared-elements" check would false-positive on all of them. Finding #2 (`JANITOR-034`) is real but requires the human design decision its own known-finding entry already calls for — resolved via the escape hatch below, not automated detection.
+
+**Escape hatch** (mirrors `size-justification:`/`metric-mask-allow:` convention): inline `// hardcode-scan-allow: <reason>` (TS/Go) suppresses a match on that line.
+
+**CI wiring:** new `no-hardcode-allowlist-scan` job in `.github/workflows/ci.yml`, `ubuntu-latest` + checkout only — same cheap-job shape as every sibling.
+
+## 4. Build vs plan — decomposed, NOT self-implemented
+
+**Routing:** `next_agent`/`dev_agent` = `developer` (`cross-service/` resolves to `developer` per zone-detect Tier-3; architect disclaims code-writing — no fixes fast-tracked here, same posture the metric-mask sibling took).
+
+**Minted child row:** `FACTORY-GUARD-CI-NOHARDCODE-IMPL` (`task_board.backlog`) — files: `scripts/audits/no-hardcode-allowlist-scan.sh` (new, `--check` mode, zero-tolerance, 2 checks per §3), `apps/mcp-server/src/interface/mcp/tools/financial-reports/backfillBctcScalarsTool.ts` (drop the CTG-only reason-string branch to the generic message — cosmetic-only, zero classification/confidence impact), `apps/mcp-server/src/domain/services/pharmaEventMapper.ts` (same, drop the IMP-only reasoning-string branch), `apps/mcp-server/src/application/usecases/bctc/newsChainFallback.ts` (annotate the JANITOR-035 line with `hardcode-scan-allow: JANITOR-035 — pending generalization decision, tracked in docs/data/code-janitor-known-findings.json`; do NOT generalize the semantics here — that decision is explicitly out of this task's scope per the finding's own note), `apps/mcp-server/src/application/cascadeExecutor.ts` + `apps/mcp-server/src/infrastructure/fetchers/priceSourceRouter.ts` (same annotate-and-defer treatment for JANITOR-034, citing the same ledger), `.github/workflows/ci.yml` (add job), `docs/policies/dev-standards.md` (CANONICAL pointer), `scripts/audits/no-hardcode-allowlist-scan.test.sh` (new smoke test: temporal-combo synthetic fails, ticker-branch synthetic fails, HOSE/HNX/UPCOM comparison passes, annotated line passes, post-fix repo state passes). DoD: `--check` exits 0 on post-fix/post-annotation repo state; the CTG/IMP reason-string fixes are behavior-preserving for the numeric/classification fields (RAW-verify only the text differs); the 2 annotations reference their janitor ticket ids (not silent suppressions); smoke test covers all cases; CI green.
+
+## RETURN
+DONE: Design complete, brief written, 1 child task minted (not yet promoted — dispatcher/PM sequences per normal backlog flow).
+ZONE: cross-service/
+NEXT: pm (routes FACTORY-GUARD-CI-NOHARDCODE-IMPL to developer when promoted)
+BUILD-STANDARD: not-applicable (bug-fix/tooling-add in-zone, no new service/feature primitive)

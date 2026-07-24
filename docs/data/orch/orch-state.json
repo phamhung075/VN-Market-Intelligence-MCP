@@ -10771,6 +10771,27 @@
         "created_by": "architect",
         "updated_at": "2026-07-24T19:06:08Z",
         "brief_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-dead-code-gate.md"
+      },
+      {
+        "id": "FACTORY-GUARD-CI-NOHARDCODE-IMPL",
+        "type": "SPRINT-S",
+        "title": "Implement no-hardcode-allowlist-scan CI guardrail (script + fix 2 cosmetic ticker-branches + annotate 2 known-debt findings + workflow wiring)",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "size": "S",
+        "zone": "cross-service/",
+        "epic": "FACTORY-MAINTAINABILITY-2026-06",
+        "cluster": "ci-regression-prevention",
+        "source": "architect design brief 2026-07-24, parent FACTORY-GUARD-CI-no-hardcode-allowlist-scan",
+        "detail_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-no-hardcode-allowlist-scan.md#3-guardrail-design--zero-tolerance-5-sites-small-matches-metric-masklead-code-precedent-not-size-lints-baseline",
+        "dev_agent": "developer",
+        "next_agent": "developer",
+        "parent_task": "FACTORY-GUARD-CI-no-hardcode-allowlist-scan",
+        "note": "files: scripts/audits/no-hardcode-allowlist-scan.sh (new, --check mode, zero-tolerance, 2 checks: temporal special-case ban [.includes('YYYY') co-occurring near a literal-year === comparison] + ticker/code literal-branch ban [(ticker|symbol|code|action_code) ===? 'XXX' as an if/ternary condition, denylisting HOSE|HNX|UPCOM|BLOOMBERG exchange-enum comparisons]), apps/mcp-server/src/interface/mcp/tools/financial-reports/backfillBctcScalarsTool.ts (drop the report.action_code===\"CTG\"-only reason-string branch to the generic message — cosmetic-only, zero classification/confidence field impact), apps/mcp-server/src/domain/services/pharmaEventMapper.ts (same: drop the code===\"IMP\"-only reasoning-string branch), apps/mcp-server/src/application/usecases/bctc/newsChainFallback.ts (add 'hardcode-scan-allow: JANITOR-035 — pending generalization decision, tracked in docs/data/code-janitor-known-findings.json' annotation on the signalText.includes('2023')&&year===2024 line; do NOT generalize the semantics — out of scope, that decision belongs to a future task per the finding's own note), apps/mcp-server/src/application/cascadeExecutor.ts + apps/mcp-server/src/infrastructure/fetchers/priceSourceRouter.ts (same annotate-and-defer treatment on LARGE_CAP_FALLBACK/MAJOR_CAPS for JANITOR-034, citing the same ledger — do NOT attempt consolidation, that requires the domain design decision the finding already flags as non-mechanical), .github/workflows/ci.yml (add no-hardcode-allowlist-scan job, ubuntu-latest + checkout only), docs/policies/dev-standards.md (CANONICAL pointer), scripts/audits/no-hardcode-allowlist-scan.test.sh (new smoke test: temporal-combo synthetic fails, ticker-branch synthetic fails, HOSE/HNX/UPCOM comparison passes, annotated line passes, post-fix/post-annotation repo state passes). approach: zero-tolerance MVP — only the 2 mechanically-reliable checks are automated (generic cross-file ticker-array-duplication detection is explicitly deferred, same reasoning as JANITOR-034's own note: the repo has dozens of LEGITIMATELY overlapping domain rule tables, e.g. predictionCascadeMapper.ts's cascade categories re-using VCB/BID/CTG across unrelated buckets, so a mechanical N-shared-elements check would false-positive heavily). Fix the 2 cosmetic-only findings outright (zero behavior/classification risk); annotate the 2 known-debt findings (JANITOR-034/035, both already flagged in code-janitor-known-findings.json as requiring a human design decision this CI-tooling task must not make unilaterally) so the gate opens clean without forcing a premature semantics change. dod: --check exits 0 on post-fix/post-annotation repo state; synthetic temporal-combo and ticker-branch fixtures each independently fail --check; a synthetic HOSE/HNX/UPCOM comparison and an annotated line each pass; CTG/IMP fixes are behavior-preserving for all non-string fields (RAW-verify only reason/reasoning text differs, confidence/severity/direction unchanged); the 2 annotations reference their janitor ticket ids (not silent blanket suppressions); mcp-server tsc --noEmit + bun test green; smoke test covers all cases; CI green on push.",
+        "created_at": "2026-07-24T19:29:07Z",
+        "created_by": "architect",
+        "updated_at": "2026-07-24T19:30:10Z",
+        "brief_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-no-hardcode-allowlist-scan.md"
       }
     ],
     "closed_sprints": [

@@ -1,8 +1,15 @@
 # Architect — Notebook
 
-**Last updated:** 2026-07-24 19:02 UTC | **Sprint:** COWORK-GUARANTEED-SLOT-CATCHUP
+**Last updated:** 2026-07-24 19:31 UTC | **Sprint:** COWORK-GUARANTEED-SLOT-CATCHUP
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-07-24T19:31Z — FACTORY-GUARD-CI-no-hardcode-allowlist-scan (zone=cross-service/, P2 BOUNDED-1 pickup, design+decompose)
+
+**Task:** Design a CI scan flagging inline ticker/date/exchange-floor allowlists and per-date special-cases (e.g. `signalText.includes('2023') && year===2024`) introduced in diffs — 5th of the 7 `ci-regression-prevention` guardrails, same epic/audit as the depguard/metric-mask/size-lint/dead-code siblings.
+**Finding:** A naive reading of "ticker allowlist" over-scopes ~100x — hundreds of bare ticker arrays in `domain/services/{predictionCascadeMapper,policyImpactMapper,creditFlowAnalyzer,climateImpactMapper,supplyChainEventDetector}.ts` + `cascade/rules/*.ts` are already-legitimate, correctly-homed cascade/policy rule-table data (the same shape `FACTORY-DOMAIN-split-cascade-engine` explicitly legitimizes), NOT the bug class. The real bug class is a ticker/date literal compared INSIDE a control-flow branch. Live-counted 5 real sites/5 files: the ticket's own named example exists verbatim at `newsChainFallback.ts:224` (already tracked `JANITOR-035`, unresolved since 2026-07-08); `cascadeExecutor.ts`/`priceSourceRouter.ts` diverging `LARGE_CAP_FALLBACK`/`MAJOR_CAPS` ticker arrays (already tracked `JANITOR-034`); 2 NEW untracked cosmetic per-ticker branches (`backfillBctcScalarsTool.ts` `action_code==="CTG"`, `pharmaEventMapper.ts` `code==="IMP"`, both diagnostic-text-only). Zero CI/lint coverage confirmed (same pattern as all 4 siblings — 3 eslint configs/7 golangci.yml/2 pyproject.toml, fence/import rules only). Explicitly excluded: `HOSE`/`HNX`/`UPCOM` floor comparisons (stable domain enum, dedup theme owned by `FACTORY-STOCK-extract-vndirect-mapper`), `muasamcong.ts` procurement keyword→stock table (legitimate reference data), `priceBackfillService.ts` `ticker==="BAD"` (test-mock-in-domain-layer, different bug class, never called outside `__tests__/`), `ohlcvBackfill.ts` hardcoded backfill dates (magic-number theme, not special-case-branch theme).
+**Output:** `docs/architecture-briefs/2026-07-24-factory-guard-ci-no-hardcode-allowlist-scan.md` — zero-tolerance CI design (5 sites, small, matches metric-mask/dead-code precedent): single `no-hardcode-allowlist-scan.sh` with 2 mechanically-reliable checks (temporal-combo ban, ticker/code-literal-in-control-flow ban with a HOSE/HNX/UPCOM/BLOOMBERG denylist); explicitly deferred generic cross-file ticker-array-overlap detection (would false-positive against the dozens of legitimately-overlapping rule tables). Child task fixes the 2 cosmetic-only findings outright (zero behavior risk) and annotates the 2 known-debt findings (JANITOR-034/035) with a `hardcode-scan-allow:` escape hatch rather than forcing the human design decision their own ledger entries already flag as out-of-scope. Minted child dev row `FACTORY-GUARD-CI-NOHARDCODE-IMPL` (`developer`, zone cross-service/) — not self-implemented.
+**Next:** pm/dev-team — promote+dispatch `FACTORY-GUARD-CI-NOHARDCODE-IMPL` when picked up; dispatcher (this task's owner) flips `FACTORY-GUARD-CI-no-hardcode-allowlist-scan` board status.
 
 ## 2026-07-24T19:02Z — FACTORY-GUARD-CI-dead-code-gate (zone=cross-service/, P2 BOUNDED-1 pickup, design+decompose)
 
@@ -18,18 +25,16 @@
 **Output:** `docs/architecture-briefs/2026-07-24-factory-guard-ci-depguard-tier-boundaries.md` — TS: zero-tolerance CI-wiring gate (fix 3 live offenders in mcp-server + 1 previously-invisible news-fetch offender caused by a `boundaries/elements` drift where `src/routes/**` isn't mapped, then wire `eslint --max-warnings=0` per service; bonus fix: missing `news-fetch-go-lint` job). Go: net-new `go/ast`-based composition-root-logic gate scoped to receiver methods only (excludes `main()`/free helper funcs — empirically zero false positives), threshold if>=2-or-any-for, `composition-root-logic-allow:` escape hatch, zero-tolerance (debt=2 functions/1 service, fixed in the same child task). Minted 2 child dev rows (different toolchains, independently testable): `FACTORY-GUARD-CI-TSBOUNDARIES-IMPL`, `FACTORY-GUARD-CI-COMPROOT-LOGIC-IMPL` (`developer`, zone cross-service/) — neither self-implemented.
 **Next:** pm/dev-team — promote+dispatch both `-IMPL` rows when picked up; dispatcher (this task's owner) flips `FACTORY-GUARD-CI-depguard-tier-boundaries` board status.
 
-## 2026-07-24T17:26Z — FACTORY-GUARD-CI-metric-mask-lint (zone=cross-service/, P2 BOUNDED-1 pickup, design+decompose)
-
-**Task:** Scope/design an underspecified-looking backlog row (dispatch prompt claimed "no ticket prose") — the FACTORY-MAINTAINABILITY-2026-06 CI-guardrail companion banning the `confidence_score=50` bug class (non-zero numeric-literal fallback fabricating confidence/score/impact/magnitude/probability metrics).
-**Finding:** Dispatch prompt's inferred intent (composite-metric-masks-dead-detector) was wrong — `detail_ref` carries a full spec traced to `2026-06-15-maintainability-factory-audit.md`, the numeric-literal-fallback bug class, not aggregate masking. Zero CI/lint coverage confirmed (3 eslint configs, 7 golangci.yml, 2 pyproject.toml — fence/import rules only). All 5 audit fast-track fixes confirmed `DONE_VERIFIED` (allowlist basis honest). Live-counted real offenders: only 4 non-zero-literal masks across 2 files (`cascadeEngine.ts` x3 `?? 0.6`, `marketSentimentCalculator.ts` x1 `?? 1.0`), plus 1 correctly-excludable genuine config default (`watchlist.ts` alert-threshold `?? 7`) — orders of magnitude smaller than the size-lint sibling's 733.
-**Output:** `docs/architecture-briefs/2026-07-24-factory-guard-ci-metric-mask-lint.md` — zero-tolerance CI design (not baseline/ratchet, since debt is small enough to fix in the same child task before the gate activates): single cross-language regex script (not 3 native-linter integrations, given near-zero live debt + zero Go offenders), always-allow `0`/`0.0`/`null` (the honest-absence idiom the 5 fixes established), `metric-mask-allow:` inline escape hatch. Minted child dev row `FACTORY-GUARD-CI-METRICMASK-IMPL` (`developer`, zone cross-service/) — fixes the 4 real masks + annotates the 1 config default + ships script/CI wiring — not self-implemented.
-**Next:** pm/dev-team — promote+dispatch `FACTORY-GUARD-CI-METRICMASK-IMPL` when picked up; dispatcher (this task's owner) flips `FACTORY-GUARD-CI-metric-mask-lint` board status.
-
 ---
 
-## Archive (pre-2026-07-24T19:02Z)
+## Archive (pre-2026-07-24T19:31Z)
 
-[Older cycles archived to git history: FACTORY-GUARD-CI-size-lint-justification (2026-07-24T16:58Z,
+[Older cycles archived to git history: FACTORY-GUARD-CI-metric-mask-lint (2026-07-24T17:26Z,
+zone=cross-service/, P2 BOUNDED-1 pickup — corrected dispatch prompt's inferred intent (composite-
+metric-masks-dead-detector was wrong; `detail_ref` carried the real numeric-literal-fallback spec),
+4 live offenders/2 files (`cascadeEngine.ts` x3 `?? 0.6`, `marketSentimentCalculator.ts` x1 `?? 1.0`)
++ 1 excludable config default, zero-tolerance cross-language regex script, `metric-mask-allow:`
+escape hatch, child `FACTORY-GUARD-CI-METRICMASK-IMPL`), FACTORY-GUARD-CI-size-lint-justification (2026-07-24T16:58Z,
 zone=cross-service/, P2 BOUNDED-1 pickup — baseline/ratchet CI gate for 120-LOC+size-justification,
 733/748 unjustified live-counted, `size-lint-baseline.json` grandfather, child FACTORY-GUARD-CI-SIZELINT-IMPL),
 COWORK-GUARANTEED-SLOT-CATCHUP (2026-07-22T22:06Z,
