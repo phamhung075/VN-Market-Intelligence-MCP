@@ -387,11 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-07-24T10:35:20Z",
-    "updated_by": "dev-frontend"
+    "status": "in_progress",
+    "active_task_id": "FACTORY-MACRO-split-or-justify-over-cap",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-MACRO-split-or-justify-over-cap — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-24T10:51:13Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -427,7 +428,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-23T16:33:54Z",
+    "_updated_at": "2026-07-24T10:50:02Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
@@ -2230,8 +2231,12 @@
         "type": "data_stale",
         "summary": "sbv_fx stale 47min (check B-04)",
         "severity": "CRITICAL",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "triaged",
+        "payload_ref": null,
+        "triaged_at": "2026-07-24T10:50:02Z",
+        "triaged_by": "dev-team",
+        "disposition": "resolved-verified-transient",
+        "triage_note": "ground-truth 2026-07-24T10:50:02Z: get_vn_liquidity_state fx_coupling.fetched_at=2026-07-24T10:46:43Z is_estimate=false center=26130 -> sbv_fx FRESH (0min stale). CRITICAL self-resolved post VPS clock-drift fix (07-23T16:15; vn-sbv-fetch shares that VM clock, emitted 18:33Z in residual catch-up window). Recurrence-risk tracked by ops chrony boot-step-check ask; if B-04 sbv_fx recurs, escalate to hardening task."
       }
     ],
     "last_triaged_at": "2026-07-23T18:03:58Z",
@@ -6276,15 +6281,6 @@
         "status": "BACKLOG",
         "id": "FACTORY-FRONTEND-reconcile-formatters",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-FRONTEND-reconcile-formatters"
-      },
-      {
-        "title": "Split adapters_vmt_sjc_fx + justify cohesive over-cap Go files",
-        "priority": "P2",
-        "zone": "macro-indicators",
-        "type": "FACTORY",
-        "status": "BACKLOG",
-        "id": "FACTORY-MACRO-split-or-justify-over-cap",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-MACRO-split-or-justify-over-cap"
       },
       {
         "title": "Dedup sandboxCalculator vs TACalculator via a pkg/module mapper (behavior decision)",
@@ -14508,9 +14504,25 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-24T10:14:31Z",
+    "last_triaged_at": "2026-07-24T10:51:13Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "title": "Split adapters_vmt_sjc_fx + justify cohesive over-cap Go files",
+        "priority": "P2",
+        "zone": "macro-indicators",
+        "type": "FACTORY",
+        "status": "IN_PROGRESS",
+        "id": "FACTORY-MACRO-split-or-justify-over-cap",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-MACRO-split-or-justify-over-cap",
+        "promoted_at": "2026-07-24T10:51:13Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-24T10:51:14Z",
+        "claimed_at": "2026-07-24T10:51:13Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
