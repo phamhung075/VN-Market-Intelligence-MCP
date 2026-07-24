@@ -23,6 +23,7 @@ import {
   writeOhlcvBatch,
   type OhlcvWriteRow,
 } from "../../../application/usecases/ohlcvWriteService.js";
+import { requireVpsApiKey } from "./_shared/requireVpsApiKey.js";
 
 export async function handlePushPrices(
   req: IncomingMessage,
@@ -30,15 +31,7 @@ export async function handlePushPrices(
   db: Database,
   log: ReturnType<typeof createLogger>,
 ): Promise<void> {
-  const apiKey = Bun.env.VPS_PUSH_API_KEY;
-  const authHeader =
-    (req.headers["x-api-key"] as string | undefined) ||
-    (req.headers["authorization"] as string | undefined)?.replace("Bearer ", "");
-  if (!apiKey || authHeader !== apiKey) {
-    res.writeHead(401, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ error: "Unauthorized" }));
-    return;
-  }
+  if (!requireVpsApiKey(req, res)) return;
 
   let body = "";
   for await (const chunk of req) body += chunk;

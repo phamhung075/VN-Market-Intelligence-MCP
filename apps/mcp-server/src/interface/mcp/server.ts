@@ -51,6 +51,7 @@ export {
 } from "./server-startup.js";
 import { handlePushPrices } from "./routes/pushPricesHandler.js";
 import { handlePushForeignFlow } from "./routes/pushForeignFlowHandler.js";
+import { requireVpsApiKey } from "./routes/_shared/requireVpsApiKey.js";
 import { handleWebhook } from "./routes/webhookHandler.js";
 import { handlePushNews } from "./routes/pushNewsHandler.js";
 import { handleVpsNewsHealth } from "./routes/vpsNewsHealthHandler.js";
@@ -686,13 +687,7 @@ export async function createBunServer(
 
     // ── Get all stock codes for VPS proxy (watchlist + reference stocks) ────
     if (method === "GET" && pathname === "/api/watchlist") {
-      const apiKey = Bun.env.VPS_PUSH_API_KEY;
-      const authHeader = req.headers["x-api-key"] || req.headers["authorization"]?.replace("Bearer ", "");
-      if (!apiKey || authHeader !== apiKey) {
-        res.writeHead(401, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ error: "Unauthorized" }));
-        return;
-      }
+      if (!requireVpsApiKey(req, res)) return;
       try {
         // Watchlist stocks (user's portfolio)
         const rows = db.prepare("SELECT code FROM watchlist ORDER BY code").all() as { code: string }[];

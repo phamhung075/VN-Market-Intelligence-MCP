@@ -20,6 +20,7 @@ import { validateForeignFlowPayload } from "../../../domain/services/market-data
 import { breakers } from "../../../infrastructure/circuitBreakerRegistry.js";
 import { CircuitOpenError } from "../../../infrastructure/circuitBreaker.js";
 import { ensureForeignFlowMigration } from "../server-startup.js";
+import { requireVpsApiKey } from "./_shared/requireVpsApiKey.js";
 
 export async function handlePushForeignFlow(
   req: IncomingMessage,
@@ -27,13 +28,7 @@ export async function handlePushForeignFlow(
   db: Database,
   log: ReturnType<typeof createLogger>,
 ): Promise<void> {
-  const apiKey = Bun.env.VPS_PUSH_API_KEY;
-  const authHeader = req.headers["x-api-key"] || req.headers["authorization"]?.replace("Bearer ", "");
-  if (!apiKey || authHeader !== apiKey) {
-    res.writeHead(401, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ error: "Unauthorized" }));
-    return;
-  }
+  if (!requireVpsApiKey(req, res)) return;
 
   const startTime = Date.now();
   let body = "";

@@ -13,6 +13,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import type { Database } from "bun:sqlite";
 import { createLogger } from "../../../infrastructure/logger.js";
 import { safeLogVpsPush } from "../../../infrastructure/db/vpsPushLogStore.js";
+import { requireVpsApiKey } from "./_shared/requireVpsApiKey.js";
 
 export async function handlePushNews(
   req: IncomingMessage,
@@ -20,15 +21,7 @@ export async function handlePushNews(
   db: Database,
   log: ReturnType<typeof createLogger>,
 ): Promise<void> {
-  const apiKey = Bun.env.VPS_PUSH_API_KEY;
-  const authHeader =
-    (req.headers["x-api-key"] as string | undefined) ||
-    (req.headers["authorization"] as string | undefined)?.replace("Bearer ", "");
-  if (!apiKey || authHeader !== apiKey) {
-    res.writeHead(401, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ error: "Unauthorized" }));
-    return;
-  }
+  if (!requireVpsApiKey(req, res)) return;
 
   let body = "";
   for await (const chunk of req) body += chunk;
