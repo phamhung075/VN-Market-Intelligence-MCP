@@ -11,6 +11,34 @@ export enum NewsSource {
   BLOOMBERG = 'bloomberg',
 }
 
+/**
+ * Per-source default cap on the number of headlines a fetch returns when the
+ * caller omits (or supplies an invalid) `maxItems` override.
+ * Values unchanged from the original per-route handler literals.
+ */
+export const DEFAULT_MAX_ITEMS: Record<NewsSource, number> = {
+  [NewsSource.REUTERS]: 15,
+  [NewsSource.BLOOMBERG]: 10,
+};
+
+/**
+ * Resolve the effective `maxItems` value from a raw request input.
+ * - `number` (JSON body field) → used as-is, no NaN guard (mirrors legacy
+ *   POST-handler behaviour: `typeof body.maxItems === 'number' ? body.maxItems : default`)
+ * - `string` (querystring param) → parsed as base-10 int; falls back to the
+ *   source's default when parsing yields NaN (mirrors legacy GET-handler behaviour)
+ * - `undefined` → the source's default
+ */
+export function resolveMaxItems(raw: number | string | undefined, source: NewsSource): number {
+  const fallback = DEFAULT_MAX_ITEMS[source];
+  if (typeof raw === 'number') return raw;
+  if (typeof raw === 'string') {
+    const parsed = parseInt(raw, 10);
+    return isNaN(parsed) ? fallback : parsed;
+  }
+  return fallback;
+}
+
 /** A single scraped news article headline. */
 export interface Article {
   /** Provider that scraped this article. */

@@ -15,6 +15,8 @@ import { describe, it, expect } from 'bun:test';
 // These imports will fail until implementation exists — that is the RED phase.
 import {
   NewsSource,
+  DEFAULT_MAX_ITEMS,
+  resolveMaxItems,
   type Article,
   type FetchResult,
 } from '../../domain/models.js';
@@ -39,6 +41,41 @@ describe('NewsSource enum', () => {
   it('has exactly two members', () => {
     const values = Object.values(NewsSource).filter((v) => typeof v === 'string');
     expect(values).toHaveLength(2);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// DEFAULT_MAX_ITEMS + resolveMaxItems — FACTORY-NEWS-dedup-handlers-maxitems
+// ---------------------------------------------------------------------------
+describe('DEFAULT_MAX_ITEMS', () => {
+  it('Reuters default is 15 (unchanged value)', () => {
+    expect(DEFAULT_MAX_ITEMS[NewsSource.REUTERS]).toBe(15);
+  });
+
+  it('Bloomberg default is 10 (unchanged value)', () => {
+    expect(DEFAULT_MAX_ITEMS[NewsSource.BLOOMBERG]).toBe(10);
+  });
+});
+
+describe('resolveMaxItems', () => {
+  it('numeric raw value is used as-is (POST-body semantics, no NaN guard)', () => {
+    expect(resolveMaxItems(7, NewsSource.REUTERS)).toBe(7);
+    expect(resolveMaxItems(NaN, NewsSource.BLOOMBERG)).toBeNaN();
+  });
+
+  it('string raw value is parsed base-10 (GET-querystring semantics)', () => {
+    expect(resolveMaxItems('3', NewsSource.REUTERS)).toBe(3);
+    expect(resolveMaxItems('6', NewsSource.BLOOMBERG)).toBe(6);
+  });
+
+  it('unparseable string falls back to the source default', () => {
+    expect(resolveMaxItems('abc', NewsSource.REUTERS)).toBe(15);
+    expect(resolveMaxItems('abc', NewsSource.BLOOMBERG)).toBe(10);
+  });
+
+  it('undefined raw value falls back to the source default', () => {
+    expect(resolveMaxItems(undefined, NewsSource.REUTERS)).toBe(15);
+    expect(resolveMaxItems(undefined, NewsSource.BLOOMBERG)).toBe(10);
   });
 });
 
