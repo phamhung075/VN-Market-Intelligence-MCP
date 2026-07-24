@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-24T19:55:54Z",
+    "matched_slots": [
+      "chef-evening"
+    ],
+    "won_slots": [
+      "chef-evening"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "closed",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "chef-evening": "cron"
+    },
+    "cadence_minutes": {
+      "chef-evening": null
+    },
+    "last_fired_timestamp": "2026-07-24T19:55:02Z",
+    "last_fired_slots": [
+      "chef-evening"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "19:45",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 11,
+    "note": "single-slot chef-evening guaranteed evening dish; adaptive mode, calendar=closed (no suppression), CHEF mutex N/A (no non-guaranteed sibling in MATCHES), due_reason=cron; tick-snapshot deferred to agent bootstrap (zero-blocker); unified-agent spawned background; VN-Index 1686.11 -13.27 amid weekly -5.67% selloff"
+  },
+  "priority": "low",
+  "createdAt": "2026-07-24T19:55:54Z",
+  "_processed": {
+    "fingerprint": "1bfc6170b3c57e6f851fec30f120fed2d6a3741cd1615083de6f9399f4c784c6",
+    "processedAt": "2026-07-24T20:18:18Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
