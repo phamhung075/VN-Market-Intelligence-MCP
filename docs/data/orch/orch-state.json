@@ -387,12 +387,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FACTORY-GUARD-CI-metric-mask-lint",
-    "next_agent": "architect",
-    "next_action": "BOUNDED-1 picked FACTORY-GUARD-CI-metric-mask-lint (type CI-GUARDRAIL, dev_agent=architect, no code spec). Corrected placeholder developer->architect per NON-CODE/DESIGN next_agent-gap guard. Design/guardrail-policy ask, not autonomous code-fix.",
-    "updated_at": "2026-07-24T17:18:54Z",
-    "updated_by": "dev-team (dispatcher-wrap: non-dev-route correction)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "BGFAN-1 closeout complete: FACTORY-GUARD-CI-metric-mask-lint design delivered by architect -> review (next=qa). Child FACTORY-GUARD-CI-METRICMASK-IMPL in backlog (developer). WIP now 0; dispatch lanes free.",
+    "updated_at": "2026-07-24T17:30:21Z",
+    "updated_by": "dev-team (BGFAN-1 closeout)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -14707,6 +14707,24 @@
         "next_agent": "qa",
         "review_note": "Design task complete (BGFAN-1). Architect produced brief docs/architecture-briefs/2026-07-24-factory-guard-ci-size-lint-justification.md + minted child impl FACTORY-GUARD-CI-SIZELINT-IMPL (developer, backlog). Verify-live corrected stale ticket prose: no existing CI size gate anywhere; 733 unjustified >120L files (real, ticket said 600+); baseline/ratchet design grandfathers debt. QA: verdict brief adequacy + child scoping (no code to test).",
         "updated_by": "dev-team (BGFAN-1 closeout: architect design complete -> review)"
+      },
+      {
+        "title": "CI-metric-mask-lint",
+        "priority": "P2",
+        "type": "CI-GUARDRAIL",
+        "zone": "cross-service/",
+        "status": "REVIEW",
+        "id": "FACTORY-GUARD-CI-metric-mask-lint",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-GUARD-CI-metric-mask-lint",
+        "promoted_at": "2026-07-24T17:17:59Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-24T17:31:08Z",
+        "claimed_at": "2026-07-24T17:17:59Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "updated_by": "dev-team (BGFAN-1 closeout: architect design complete -> review)",
+        "review_note": "Design task complete (BGFAN-1). Architect produced brief docs/architecture-briefs/2026-07-24-factory-guard-ci-metric-mask-lint.md + minted child impl FACTORY-GUARD-CI-METRICMASK-IMPL (developer, backlog). Verify-live corrected TWO stale dispatch premises: (1) row is NOT a stub — detail_ref carries a full confidence_score=50-bug-class spec traced to 2026-06-15-maintainability-factory-audit.md; (2) real intent is banning non-zero numeric-literal fallbacks on confidence*/score*/impact*/magnitude*/probability* fields, NOT composite-metric-masks-dead-detector. Live debt only 4 lines/2 files (cascadeEngine.ts:356/375/394 seedEntry.confidence ?? 0.6; marketSentimentCalculator.ts:174 impact_score ?? 1.0) + 1 legit-excluded config default (watchlist.ts:198) -> zero-tolerance gate, no baseline (unlike 733-file size sibling). All 5 fast-track confidence fixes DONE_VERIFIED (allowlist honest). QA: verdict brief adequacy + child scoping — no code to test."
       }
     ],
     "qa": [],
@@ -14728,24 +14746,7 @@
     },
     "last_triaged_at": "2026-07-24T17:17:59Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "title": "CI-metric-mask-lint",
-        "priority": "P2",
-        "type": "CI-GUARDRAIL",
-        "zone": "cross-service/",
-        "status": "IN_PROGRESS",
-        "id": "FACTORY-GUARD-CI-metric-mask-lint",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-GUARD-CI-metric-mask-lint",
-        "promoted_at": "2026-07-24T17:17:59Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-24T17:18:54Z",
-        "claimed_at": "2026-07-24T17:17:59Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "architect"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
