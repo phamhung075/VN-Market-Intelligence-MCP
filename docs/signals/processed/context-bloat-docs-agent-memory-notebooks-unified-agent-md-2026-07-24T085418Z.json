@@ -1,0 +1,25 @@
+{
+  "from": "context-bloat-backstop-hook",
+  "to": "claude-manager-helper",
+  "type": "context_bloat_breach",
+  "priority": "high",
+  "createdAt": "2026-07-24T08:54:18Z",
+  "payload": {
+    "file": "docs/agent-memory/notebooks/unified-agent.md",
+    "line_count": 190,
+    "cap": 200,
+    "byte_count": 20438,
+    "byte_cap": 12000,
+    "class": "agent-notebook",
+    "reason": "byte-cap",
+    "overage": 0,
+    "byte_overage": 8438,
+    "action_required": "prune_or_split"
+  },
+  "_processed": {
+    "fingerprint": "50e29bb8de0031a053f90a394e0ae9ae75a66aa83618903e522cba7dfdbb724e",
+    "processedAt": "2026-07-24T09:14:41Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
