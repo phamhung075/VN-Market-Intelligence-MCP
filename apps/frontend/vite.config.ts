@@ -31,6 +31,7 @@ export default defineConfig({
     include: [
       "./app/__tests__/**/*.test.{ts,tsx}",
       "./app/domain/formatters/**/*.test.{ts,tsx}",
+      "./app/domain/orchestration/**/*.test.{ts,tsx}",
       "./app/lib/view-models/**/*.test.{ts,tsx}",
     ],
   },

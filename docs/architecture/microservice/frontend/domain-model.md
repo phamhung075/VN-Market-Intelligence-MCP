@@ -364,6 +364,68 @@ the 2 pre-existing failures are an unrelated Kinh Dịch `QUE_DESCRIPTIONS` map
 issue, confirmed still red with this change stashed out). Live rebuild + Playwright
 G12 render-gate is DEFERRED (user-gated rebuild, out of scope for this task).
 
+### `dashboard.orchestration.tsx` — split to `app/domain/orchestration/*` + `app/components/orchestration/*`
+
+Moved 2026-07-24 (FACTORY-FRONTEND-split-orchestration) — same pattern as the
+`dashboard.analysis.tsx` / `dashboard.market-summaries.tsx` splits above, plus a
+test-first constraint (a render smoke test was added and confirmed RED — module
+not found — for every newly-extracted component BEFORE that component file
+was created, then confirmed GREEN immediately after).
+
+The DTO contract (`StepDto`, `DecisionsDto`, `TaskStatus`, `TaskRow`,
+`TaskBoardCounts`, `TaskBoard`, `SignalRow`, `SignalQueue`, `SprintGoal`,
+`Narrative`, `Head`, `OrchState`) moved verbatim — no shape change — to
+`app/domain/orchestration/types.ts` (re-exported from the route for
+backward-compat call-sites). `STALE_THRESHOLD_MS` + the inline
+`age > STALE_THRESHOLD_MS` staleness check moved to
+`app/domain/orchestration/staleness.ts` as a pure, unit-tested predicate:
+`isStale(tsField, now = Date.now())` (9 tests: undefined/null/empty →
+`false`, exactly-at-threshold → `false` (strict `>`), 1ms past → `true`).
+`taskStatusClasses(status)` (shared by `TaskGroup` and `DoneTaskRow`, so it
+cannot be colocated in either without a component<->component circular
+import) moved to `app/domain/formatters/task-status-classes.ts`, mirroring
+the `signal-color.ts` precedent.
+
+Presentational split into `app/components/orchestration/*.tsx` (11 component
+files, all <=120L — `DoneTaskGroup`, originally ~158L combined, needed a
+second split into `DoneTaskGroup` (shell: state, expand toggle, header row)
++ `DoneTaskRow` (one clickable row + its accordion), sharing the
+`DONE_GRID` grid-template constant via a non-JSX `doneTaskGrid.ts` module
+so the two files don't import each other):
+`HeadPanel`(52L), `TaskBoard`(74L, exports `TaskBoardPanel`),
+`TaskGroup`(57L), `StepCard`(61L), `DecisionAccordion`(66L),
+`DoneTaskRow`(88L), `DoneTaskGroup`(104L), `SignalQueue`(88L, exports
+`SignalQueuePanel`; `severityClasses`/`SeverityBadge` colocated — single
+consumer, no shared-module need), `SprintGoal`(49L, exports
+`SprintGoalPanel`), `Narrative`(69L, exports `NarrativePanel`).
+
+The TASK-DASH-CRON-2 Cron Recheck Table section (types, `parseCronStatusDto`,
+`CronStatusBadge`/`CronLayerTable`/`CronRecheckTable`) was OUT OF SCOPE for
+this split and stays in the route unchanged — a pre-existing test
+(`TASK-DASH-CRON-2-cron-recheck-table.test.ts`) imports its exports directly
+from `~/routes/dashboard.orchestration`.
+
+The route (`dashboard.orchestration.tsx`) is now types (re-exports) + the
+`loader` (POLL_MS=5000 polling unchanged, confirmed via grep) +
+`StaleBadge`/`Section` (used directly in the page JSX and inside
+`CronRecheckTable`, both of which stay in the route) + a thin page
+composition over the extracted panels.
+
+`vite.config.ts` test `include` gained one entry,
+`./app/domain/orchestration/**/*.test.{ts,tsx}`, mirroring the pre-existing
+`./app/domain/formatters/**/*.test.{ts,tsx}` entry — the new
+`app/domain/orchestration/staleness.test.ts` was otherwise invisible to
+Vitest's discovery glob.
+
+Behavior-preserving; verified via a render smoke test per extracted
+component (test-first, confirmed RED before the component existed) +
+`tsc --noEmit` clean + full Vitest suite (95 files / 2112 tests, 63 new)
+identical to baseline vs. the same 2 pre-existing unrelated
+`QUE_DESCRIPTIONS` failures (confirmed via `git stash push -u -- apps/frontend`
+re-run with the change stashed out). Live rebuild + Playwright G12
+render-gate is DEFERRED (rebuild is USER-GATED; out of scope for this
+code-only task).
+
 ---
 
 ## Service Health types
