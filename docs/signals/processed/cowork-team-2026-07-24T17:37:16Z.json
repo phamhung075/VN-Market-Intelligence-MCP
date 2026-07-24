@@ -1,0 +1,41 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "matched_slots": [
+      "digest-daily"
+    ],
+    "won_slots": [
+      "digest-daily"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/digest-predict/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "closed",
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "17:30",
+    "leader_lock": "acquired",
+    "last_fired_timestamp": "2026-07-24T17:36:56Z",
+    "last_fired_slots": [
+      "digest-daily"
+    ],
+    "signal_backlog": 10,
+    "note": "single-slot guaranteed daily digest-predict dispatch; off-market (calendar closed); no signal drain (0 new), no one-shots"
+  },
+  "priority": "low",
+  "createdAt": "2026-07-24T17:37:16Z",
+  "_processed": {
+    "fingerprint": "0ebadc216d40423137a5c381b55739ce59e9798a8b3c14e36d1380bd1f25a216",
+    "processedAt": "2026-07-24T17:46:39Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
