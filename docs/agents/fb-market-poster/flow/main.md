@@ -243,6 +243,37 @@ From the result, read `macro.carry` and store `$carry_usable = (macro.carry.is_e
 If the call errors or `macro` is unavailable, set `$carry_usable = false`.
 This flag governs carry/FII narrative eligibility throughout STEP 3 (see carry hard rule below).
 
+**Macro provenance marker (FIX-FB-GATE-STALE-MACRO-GUARD — required for STEP 4b Check-I):**
+
+STEP 4b's gate Check-I rejects any macro/FX figure in the post that has no proof it was
+fetched THIS cycle (lesson L3: 06-19 USD/VND carried stale; 06-21 unverified prior level).
+The gate cannot see tool calls — it can only see files. This flow step is where the
+"fetched-this-cycle" proof is produced: build `$macro_provenance`, one entry per macro/FX
+class, from the `macro` result above (GENERIC — every macro/FX class, not just USD/VND):
+
+```
+$macro_provenance = {
+  "usdVnd":    { "fetched_this_cycle": <bool>, "value": <number|null>, "source": "get_macro_snapshot", "fetched_at": <ISO8601 now> },
+  "gold":      { "fetched_this_cycle": <bool>, "value": <number|null>, "source": "get_macro_snapshot", "fetched_at": <ISO8601 now> },
+  "brent":     { "fetched_this_cycle": <bool>, "value": <number|null>, "source": "get_macro_snapshot", "fetched_at": <ISO8601 now> },
+  "fedRate":   { "fetched_this_cycle": <bool>, "value": <number|null>, "source": "get_macro_snapshot", "fetched_at": <ISO8601 now> },
+  "bondYield": { "fetched_this_cycle": <bool>, "value": <number|null>, "source": "get_macro_snapshot", "fetched_at": <ISO8601 now> }
+}
+```
+
+Per-class rule: `fetched_this_cycle = true` ONLY if `macro` returned a genuine value for that
+class this cycle with `is_estimate == false` (reuse the SAME provenance discipline as the
+generalised is-estimate rule in Layer 6 above — do NOT invent a second concept). If the call
+errored, the field is missing, or `is_estimate == true` → `fetched_this_cycle = false, value:
+null` and the post MUST use the honest-gap phrasing for that class (e.g. "tỷ giá phiên này
+công cụ chưa trả được") — never assert a number for a class marked `fetched_this_cycle:false`.
+**Fed rate note:** `fedFundsRate`/`vndDepositRate` are documented stale fixtures (see carry
+hard rule below) — mark `fedRate.fetched_this_cycle = false` unless a genuinely live-tagged
+field is available this cycle; default to the honest gap for Fed rate.
+
+Hold `$macro_provenance` in working memory — STEP 4b writes it to a temp file and passes it
+as the gate's 4th argument.
+
 ---
 
 ## STEP 2 — Read forward-looking sources (L2 — mandatory for Dự đoán)
@@ -692,7 +723,9 @@ The gate script is `scripts/fb-data-integrity-gate.sh` (authored by sibling task
 - Special case — Check-C negation-blind false-positive: if the gate blocks on "bán tháo"-class language AND breadth data confirms orderly decline (e.g. ≤2 sàn, net-positive or small-negative advancers), AND the phrase includes a negation prefix ("chưa", "không", "chưa có dấu hiệu"), this is a known false-positive. Apply fix: replace "bán tháo" / "tháo chạy" / "hoảng loạn" with neutral language ("áp lực bán chưa lan rộng", "chốt lời nhẹ", "lực bán chưa quá lớn") and re-run once. If that one re-run passes: proceed. If still fails: write honest gap + proceed (do NOT EXIT on known false-positive).
 - EXIT path: only if gate blocks on a REAL fabrication violation (e.g. per-ticker move >±7% cannot be corrected by rephrasing) after 2 rounds → send_telegram(bug) + EXIT cleanly. Never infinite-loop.
 
-Required execution sequence:
+Required execution sequence — writes `$macro_provenance` (STEP 1b) to a temp file and
+passes it as the gate's 4th argument, so Check-I (macro/FX stale-as-current +
+unverified-comparison-level guard, FIX-FB-GATE-STALE-MACRO-GUARD) can verify it:
 ```bash
 GATE_4B_ROUNDS=0
 INTEGRITY_EXIT=1
@@ -700,9 +733,11 @@ while [ $INTEGRITY_EXIT -ne 0 ] && [ $GATE_4B_ROUNDS -lt 2 ]; do
   if [ -f "scripts/fb-data-integrity-gate.sh" ]; then
     TMPFILE=$(mktemp /tmp/fb-post-integrity-XXXXXX.txt)
     printf '%s' "$POST_BODY" > "$TMPFILE"
-    bash scripts/fb-data-integrity-gate.sh "$TMPFILE" "$POST_DATE"
+    PROVFILE=$(mktemp /tmp/fb-post-macro-prov-XXXXXX.json)
+    printf '%s' "$macro_provenance_json" > "$PROVFILE"   # $macro_provenance from STEP 1b, JSON-serialised
+    bash scripts/fb-data-integrity-gate.sh "$TMPFILE" "$POST_DATE" "" "$PROVFILE"
     INTEGRITY_EXIT=$?
-    rm -f "$TMPFILE"
+    rm -f "$TMPFILE" "$PROVFILE"
     GATE_4B_ROUNDS=$((GATE_4B_ROUNDS + 1))
     if [ $INTEGRITY_EXIT -ne 0 ] && [ $GATE_4B_ROUNDS -lt 2 ]; then
       # Fix all flagged violations inline, then loop
@@ -720,11 +755,13 @@ done
 - Gate exits non-zero after 2 rounds:
   - If violation is a known false-positive (Check-C negation-blind pattern described above) → write per-field honest gap + PROCEED.
   - If violation is a real fabrication (per-ticker move >±7%, or genuine unprovable breadth claim) → send_telegram(bug, "[fb-market-poster] DATA-INTEGRITY GATE: unresolvable fabrication after 2 rounds — post NOT written") + EXIT.
+  - **Check-I violation (macro/FX stale-as-current or unverified-comparison-level, FIX-FB-GATE-STALE-MACRO-GUARD):** fix inline — either (a) replace the offending figure with the honest-gap phrasing for that macro/FX class, or (b) if `$macro_provenance` shows the class WAS fetched this cycle but the post cited a different (stale/carried) number, correct the post to the live-fetched value. NEVER assert a comparison/prior-level number ("vẫn ở mức X", "từ mức Y") that has no live-fetch provenance this cycle — drop the comparison framing or write the honest gap instead. This is a fixable-inline violation, not an EXIT condition.
 - If gate script missing → log warning, treat as PASS for this cycle only (gate pending deploy).
 - Violations the gate checks (reference — gate script is authoritative):
   - Any per-ticker HOSE move > ±7% (above daily price limit = impossible = fabrication)
   - Any "bán tháo / selloff" narrative when same-session breadth shows net-positive advancers and zero floor hits [NOTE: negation prefix "chưa/không" may trigger false-positive — see bounded retry handling above]
   - Foreign flow rendered in tỷ đồ (currency) instead of share volume: any "Khối ngoại: ... tỷ đồng" figure where the numeric magnitude > session total_matched_value tỷ đồng is a 1000x scale error (unit confusion: volumes→currency). Catch "+651.200 tỷ đồng" pattern when session turnover is ~16 tỷ đồng. Fix: re-derive as share volume "+651,2 nghìn cổ phiếu" (NOT currency-scaled). Cite coverage "rổ theo dõi" (watchlist-only) and session date.
+  - Check-I (FIX-FB-GATE-STALE-MACRO-GUARD): any macro/FX figure (USD/VND, gold, Brent, Fed rate, bond yield) present in the post with no `fetched_this_cycle=true` entry in `$macro_provenance`, or an unverified comparison/prior-level figure ("vẫn ở mức X", "từ mức Y", "vượt ngưỡng Z") that does not match this cycle's live-fetched value.
   - If gate BLOCKS but violation is a live tool value (not a CHEF carry-forward): override is permitted with a note in RETURN explaining the anomaly and its live source.
 
 Paste the VERBATIM one-line gate stdout into the RETURN block (INTEGRITY GATE field).

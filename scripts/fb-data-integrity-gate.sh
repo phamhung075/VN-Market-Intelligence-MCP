@@ -2,13 +2,17 @@
 # fb-data-integrity-gate.sh — numeric plausibility gate for fb-market-poster
 #
 # Usage:
-#   bash scripts/fb-data-integrity-gate.sh <post-body-file> [YYYY-MM-DD] [snapshot-json-file]
+#   bash scripts/fb-data-integrity-gate.sh <post-body-file> [YYYY-MM-DD] [snapshot-json-file] [macro-provenance-file]
 #
 # Args:
-#   $1  post-body-file     path to the post text (required)
-#   $2  YYYY-MM-DD         post date (optional — used for context only)
-#   $3  snapshot-json-file pre-fetched live snapshot JSON (optional; if absent the gate
-#                          fetches from http://localhost:3000/mcp/api/prices/batch)
+#   $1  post-body-file         path to the post text (required)
+#   $2  YYYY-MM-DD             post date (optional — used for context only)
+#   $3  snapshot-json-file     pre-fetched live snapshot JSON (optional; if absent the gate
+#                              fetches from http://localhost:3000/mcp/api/prices/batch)
+#   $4  macro-provenance-file  per-figure "fetched-this-cycle" provenance JSON for Check-I
+#                              (optional; absent = graceful skip, see Check-I below). Written
+#                              by docs/agents/fb-market-poster/flow/main.md STEP 1b — see that
+#                              file for the marker contract.
 #
 # Exit codes:
 #   0  = PASS — all checks clean
@@ -52,6 +56,22 @@
 #      NOTE: minted as "Check-F" (2026-06-20, before the currency-unit guard and
 #      structural validator above claimed letters F and G) — implemented as
 #      Check-H, the next unclaimed letter in the A..G sequence.
+#   I  Macro/FX stale-as-current + unverified comparison-level guard
+#      (FIX-FB-GATE-STALE-MACRO-GUARD, 2026-07-25):
+#      I1 stale-as-current    — a macro/FX figure (USD/VND, gold, Brent, Fed rate,
+#                                bond yield — generic, any macro/FX class) appears
+#                                in the post with NO live-fetch provenance this cycle.
+#      I2 unverified-comparison — a figure is present but does not match this
+#                                cycle's live-fetched value (e.g. "vẫn ở mức X",
+#                                "từ mức Y", "vượt ngưỡng Z" prior/reference-level
+#                                phrasing) — asserting a prior level with no verification.
+#      Provenance source: $4 macro-provenance-file, written by
+#      docs/agents/fb-market-poster/flow/main.md STEP 1b (per-figure
+#      fetched_this_cycle marker). Absent file = graceful skip (same posture as
+#      Check-B/D when live data is unavailable) — NOT a block.
+#      NOTE: ticket named this "Check-G" but A-H were already claimed by execution
+#      time (see Check-H note above) — implemented as Check-I, the next
+#      unclaimed letter in the A..H sequence.
 #
 # SSOT for all check thresholds lives exclusively here.
 # SSOT for ticker→sector/company mapping: docs/data/system-map.json .project.watchlist
@@ -67,6 +87,7 @@ set -euo pipefail
 FILE="${1:-}"
 POST_DATE="${2:-}"
 SNAPSHOT_FILE="${3:-}"
+MACRO_PROVENANCE_FILE="${4:-}"
 
 if [[ -z "$FILE" || ! -f "$FILE" ]]; then
   echo "ERROR: post-body-file argument required and must exist" >&2
@@ -1108,6 +1129,215 @@ if [[ -n "$check_h_violations" ]]; then
   h_count=$(echo "$check_h_violations" | grep -c '^\[BLOCK\]' || true)
   h_count=$(echo "$h_count" | grep -m1 '^[0-9]' || echo "0")
   VIOLATIONS=$((VIOLATIONS + h_count))
+fi
+
+# ── Check I: macro/FX stale-as-current + unverified comparison-level guard ────
+# (FIX-FB-GATE-STALE-MACRO-GUARD) Lesson L3: 06-19 USD/VND figure carried stale
+# as if it were current; 06-21 an unverified prior/reference level ("25.500")
+# was asserted with no verification. GENERIC across every macro/FX class:
+# USD/VND, gold, Brent, Fed rate, bond yield — not hardcoded to one class.
+#
+# Provenance contract (flow-side: docs/agents/fb-market-poster/flow/main.md STEP 1b):
+#   The poster writes a per-figure "fetched-this-cycle" provenance file (arg $4)
+#   after STEP 1b's live macro fetch, one entry per macro class:
+#     { "usdVnd":    { "fetched_this_cycle": bool, "value": number|null,
+#                       "source": "get_macro_snapshot", "fetched_at": ISO8601 },
+#       "gold": {...}, "brent": {...}, "fedRate": {...}, "bondYield": {...} }
+#
+# Posture (mirrors Check-B/D "no live data available" vs "figure unprovenanced"):
+#   - $4 absent/empty/unparseable → no live-fetch attempt was recorded this cycle
+#     at all → the gate cannot distinguish live-vs-carried → GRACEFUL SKIP,
+#     same posture as Check-B/D when SNAPSHOT_JSON is unavailable. NOT a block.
+#   - $4 present → any macro/FX figure detected in the post for a class with no
+#     matching fetched_this_cycle=true entry (within class tolerance) → BLOCK:
+#       I1 stale-as-current      — no provenance entry at all for that class.
+#       I2 unverified-comparison — figure present but does NOT match this
+#         cycle's live value (classic "vẫn ở mức X" / "từ mức Y" / "vượt ngưỡng Z"
+#         prior/reference-level phrasing — the exact L3 failure mode).
+#   Honest-gap phrasing ("chưa lấy được", "chưa trả được", ...) never fires —
+#   no numeric figure is asserted, so there is nothing to verify.
+
+check_i_violations=$(python3 - "$FILE" "$MACRO_PROVENANCE_FILE" <<'PYEOF'
+import re, sys, json
+
+post_file = sys.argv[1]
+prov_file = sys.argv[2] if len(sys.argv) > 2 else ""
+
+try:
+    with open(post_file, encoding="utf-8") as f:
+        text = f.read()
+except Exception as e:
+    print(f"[WARN] Check-I: cannot read post file: {e}", flush=True)
+    sys.exit(0)
+
+# Graceful skip: no provenance file supplied → no live-fetch attempt recorded
+# this cycle for macro figures. Same posture as Check-B/D skip-on-unavailable.
+provenance = None
+if prov_file:
+    try:
+        with open(prov_file, encoding="utf-8") as pf:
+            raw = pf.read().strip()
+        if raw:
+            provenance = json.loads(raw)
+    except Exception:
+        provenance = None
+
+if not provenance:
+    sys.exit(0)
+
+HONEST_GAP_PAT = re.compile(
+    r'chưa\s+lấy\s+được|chưa\s+trả\s+được|chưa\s+có\s+số\s+liệu|'
+    r'chưa\s+xác\s+minh|chưa\s+có\s+dữ\s+liệu|công\s+cụ\s+chưa|xin\s+phép\s+không\s+nêu',
+    re.IGNORECASE | re.UNICODE
+)
+COMPARISON_PAT = re.compile(
+    r'vẫn\s+ở\s+mức|vẫn\s+duy\s+trì\s+ở\s+mức|vẫn\s+giữ\s+ở\s+mức|'
+    r'từ\s+mức|so\s+với\s+mức|vượt\s+ngưỡng|quanh\s+ngưỡng',
+    re.IGNORECASE | re.UNICODE
+)
+
+def norm_thousands(raw):
+    # "26.122" / "26,122" -> 26122.0  (VND-rate shape: no decimal in practice)
+    digits = re.sub(r'[.,]', '', raw)
+    try:
+        return float(digits)
+    except ValueError:
+        return None
+
+def norm_decimal_thousands(raw):
+    # "4.507,60" -> 4507.60 ; "4.520" -> 4520.0  (VN format: dot=thousands, comma=decimal)
+    s = raw.replace('.', '').replace(',', '.')
+    try:
+        return float(s)
+    except ValueError:
+        return None
+
+def norm_decimal(raw):
+    # "95,29" / "3,63" -> 95.29 / 3.63  (comma-decimal, no thousands grouping)
+    try:
+        return float(raw.replace(',', '.'))
+    except ValueError:
+        return None
+
+MACRO_CLASSES = [
+    {
+        "key": "usdVnd", "label": "USD/VND",
+        "keyword": re.compile(r'usd\s*/\s*vnd|tỷ\s*giá', re.IGNORECASE | re.UNICODE),
+        "value": re.compile(r'(\d{2}[.,]\d{3})\b'),
+        "norm": norm_thousands, "tolerance": 60.0,
+    },
+    {
+        "key": "gold", "label": "vàng (gold)",
+        "keyword": re.compile(r'\bvàng\b', re.IGNORECASE | re.UNICODE),
+        "value": re.compile(r'(\d{1,2}[.,]\d{3}(?:[.,]\d{1,2})?)\s*(?:usd|\$)'),
+        "norm": norm_decimal_thousands, "tolerance": 20.0,
+    },
+    {
+        "key": "brent", "label": "dầu Brent/WTI",
+        "keyword": re.compile(r'dầu\s*brent|\bbrent\b|dầu\s*wti|dầu\s*thô|giá\s*dầu', re.IGNORECASE | re.UNICODE),
+        "value": re.compile(r'(\d{1,3}(?:[.,]\d{1,2})?)\s*(?:usd|\$)?\s*/\s*(?:thùng|barrel)'),
+        "norm": norm_decimal, "tolerance": 2.0,
+    },
+    {
+        "key": "fedRate", "label": "lãi suất Fed",
+        "keyword": re.compile(r'lãi\s*suất\s*fed|fed\s*funds', re.IGNORECASE | re.UNICODE),
+        "value": re.compile(r'(\d{1,2}(?:[.,]\d{1,2})?)\s*%'),
+        "norm": norm_decimal, "tolerance": 0.10,
+    },
+    {
+        "key": "bondYield", "label": "lợi suất trái phiếu",
+        "keyword": re.compile(r'lợi\s*suất\s*trái\s*phiếu|trái\s*phiếu\s*chính\s*phủ|bond\s*yield', re.IGNORECASE | re.UNICODE),
+        "value": re.compile(r'(\d{1,2}(?:[.,]\d{1,2})?)\s*%'),
+        "norm": norm_decimal, "tolerance": 0.10,
+    },
+]
+
+violations = []
+seen = set()
+
+# NOTE: iterate value-occurrences first (not "first match in keyword window") so
+# multi-figure sentences are ALL evaluated — e.g. "tỷ giá ... 26.127, vượt ngưỡng
+# 25.500" carries a live current figure AND a separate unverified comparison
+# figure in the SAME sentence; only scanning the first match would silently miss
+# the second (the exact L3 06-21 failure mode).
+for cls in MACRO_CLASSES:
+    kw_spans = [m.span() for m in cls["keyword"].finditer(text)]
+    if not kw_spans:
+        continue
+
+    for val_m in cls["value"].finditer(text):
+        v_start, v_end = val_m.span()
+        # Proximity gate: the figure must sit within 150 chars of a class keyword.
+        near_keyword = any(
+            (kw_s - 150) <= v_start and v_end <= (kw_e + 150)
+            for kw_s, kw_e in kw_spans
+        )
+        if not near_keyword:
+            continue
+
+        local_start = max(0, v_start - 60)
+        local_end = min(len(text), v_end + 20)
+        window = text[local_start:local_end]
+
+        if HONEST_GAP_PAT.search(window):
+            continue  # honest gap — nothing asserted, nothing to verify
+
+        figure = cls["norm"](val_m.group(1))
+        if figure is None:
+            continue
+
+        dedup_key = (cls["key"], round(figure, 2))
+        if dedup_key in seen:
+            continue
+
+        entry = provenance.get(cls["key"]) or {}
+        is_comparison = bool(COMPARISON_PAT.search(window))
+
+        if not entry.get("fetched_this_cycle") or entry.get("value") is None:
+            seen.add(dedup_key)
+            if is_comparison:
+                violations.append(
+                    f"[BLOCK] Check-I2 unverified-comparison-level: {cls['label']} figure "
+                    f"'{val_m.group(1)}' asserts a prior/reference level with NO live-fetch "
+                    f"provenance this cycle — window: '{window.strip()[:100]}'"
+                )
+            else:
+                violations.append(
+                    f"[BLOCK] Check-I1 stale-as-current: {cls['label']} figure "
+                    f"'{val_m.group(1)}' present with NO live-fetch provenance this cycle "
+                    f"(no fetched_this_cycle=true entry) — window: '{window.strip()[:100]}'"
+                )
+            continue
+
+        live_value = entry["value"]
+        try:
+            live_value = float(live_value)
+        except (TypeError, ValueError):
+            continue
+
+        delta = abs(figure - live_value)
+        if delta > cls["tolerance"]:
+            seen.add(dedup_key)
+            violations.append(
+                f"[BLOCK] Check-I2 unverified-comparison-level: {cls['label']} figure "
+                f"'{val_m.group(1)}' (={figure}) does not match this cycle's live-fetched "
+                f"value ({live_value}, delta={delta:.2f} > {cls['tolerance']} tolerance) — "
+                f"likely a stale/prior-level comparison, not the live figure — "
+                f"window: '{window.strip()[:100]}'"
+            )
+        else:
+            seen.add(dedup_key)  # verified — do not re-flag the same figure again
+
+for v in violations:
+    print(v)
+PYEOF
+)
+
+if [[ -n "$check_i_violations" ]]; then
+  echo "$check_i_violations"
+  i_count=$(echo "$check_i_violations" | grep -c '^\[BLOCK\]' || true)
+  i_count=$(echo "$i_count" | grep -m1 '^[0-9]' || echo "0")
+  VIOLATIONS=$((VIOLATIONS + i_count))
 fi
 
 # ── Result ────────────────────────────────────────────────────────────────────
