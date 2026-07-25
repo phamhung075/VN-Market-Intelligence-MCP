@@ -45,5 +45,11 @@
     "note": "calendar_status=closed matches NO rule in cadence-policy bctc-offmarket (covers holiday/weekend/open/half_day/unknown) -> unmatched fallback 240min governed instead of the weekend 1440min rule; today is Saturday. Fire decision unchanged this tick (elapsed cleared both). Step 4.7 tick-snapshot assembly skipped (no reusable script; consumer already spawned+fell back). emit_pressure_state returned cycle_snapshot_promoted=false; cycle-snapshot-latest.json mtime 2026-07-07 (18d stale) -> last_regime/last_volatility_level permanently unknown."
   },
   "priority": "low",
-  "createdAt": "2026-07-25T15:12:00Z"
+  "createdAt": "2026-07-25T15:12:00Z",
+  "_processed": {
+    "fingerprint": "3bbb47639636a0c187669d6decd2cc4470db7b6aa53db32ff38bc0b21c5b898c",
+    "processedAt": "2026-07-25T15:19:58Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

@@ -1,0 +1,25 @@
+{
+  "from": "context-bloat-backstop-hook",
+  "to": "claude-manager-helper",
+  "type": "context_bloat_breach",
+  "priority": "high",
+  "createdAt": "2026-07-25T15:17:57Z",
+  "payload": {
+    "file": "docs/agent-memory/notebooks/bctc-analyst.md",
+    "line_count": 54,
+    "cap": 200,
+    "byte_count": 14162,
+    "byte_cap": 12000,
+    "class": "agent-notebook",
+    "reason": "byte-cap",
+    "overage": 0,
+    "byte_overage": 2162,
+    "action_required": "prune_or_split"
+  },
+  "_processed": {
+    "fingerprint": "777dbae0928b374f91a606767d4ea4442229d38e2707998a894a511a7b25ea6c",
+    "processedAt": "2026-07-25T15:19:58Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

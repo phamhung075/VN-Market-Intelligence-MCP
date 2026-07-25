@@ -1,0 +1,40 @@
+{
+  "id": "bca-20260725T151219Z",
+  "ts": "2026-07-25T15:12:19Z",
+  "from": "bctc-analyst",
+  "to": "dev-team",
+  "type": "esc-deep-dive-request",
+  "summary": "ESC deep-dive: FPT Q1-2026 ESC-5",
+  "severity": "HIGH",
+  "status": "NEW",
+  "payload_ref": null,
+  "payload": {
+    "trigger_id": "ESC-5",
+    "ticker": "FPT",
+    "quarter": "Q1-2026",
+    "report_id": "e8ea3df5-3f32-413d-a3eb-c71634c0438d",
+    "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
+    "context": {
+      "low_confidence_unit_ids": [
+        "unit-0008",
+        "unit-0009",
+        "unit-0010",
+        "unit-0011",
+        "unit-0012",
+        "unit-0013",
+        "unit-0014"
+      ],
+      "min_confidence": 0.45
+    },
+    "all_esc_fired": [
+      "ESC-5"
+    ],
+    "reescalation_note": "Prior dispatch bca-20260724T151200Z (guard claimed ~2026-07-24T15:12Z, 24h TTL) expired without visible resolution — this cycle's task_claim on the same guard_key returned stolen:true (natural TTL expiry, not a release). Re-emitting per esc-deepdive 24h re-arm design. Underlying data unchanged: report_id, refined_at (2026-05-31 11:19:09), and the 7 low-confidence unit_ids are byte-identical to the original 2026-07-24 dispatch — this is the same footnote-OCR confidence gap (units 8-14, complex multi-column notes, image_unavailable), not a new finding."
+  },
+  "_processed": {
+    "fingerprint": "2428f8ae20c2710f13e4cbfe1ee663d19ccc1f6b44aa2f3c36294b92577c651a",
+    "processedAt": "2026-07-25T15:19:58Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
