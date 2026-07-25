@@ -387,12 +387,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-FB-GATE-BREADTH-PCT-INTERNAL",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-FB-GATE-BREADTH-PCT-INTERNAL — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-25T02:15:17Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "updated_at": "2026-07-25T02:27:22Z",
+    "updated_by": "developer"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -14996,6 +14995,27 @@
         "branch": null,
         "updated_by": "developer",
         "review_note": "developer: Added Check-I to scripts/fb-data-integrity-gate.sh (macro/FX stale-as-current + unverified-comparison-level guard, generic across usdVnd/gold/brent/fedRate/bondYield). Paired flow change: docs/agents/fb-market-poster/flow/main.md STEP 1b builds $macro_provenance (per-class fetched_this_cycle marker reusing the existing is_estimate discipline) after get_macro_snapshot; STEP 4b writes it to a temp file and passes it as the gate new $4 arg. Absent provenance file = graceful skip (same posture as Check-B/D no-live-data). NOTE: ticket named this \"Check-G\" but A-H were already claimed by execution time (same pattern as prior Check-F->Check-H mint) -- implemented as Check-I, next unclaimed letter, documented inline. RAW fence (real fixtures, no network dependency): unprovenanced USD/VND 26.150 (prov entry fetched_this_cycle:false) -> [BLOCK] Check-I1 stale-as-current, exit 1. Honest-gap phrasing -> [PASS] 0 violations, exit 0. 26.150 with prov entry fetched_this_cycle:true value:26150 -> [PASS] 0 violations, exit 0. \"van o muc 25.500\" vs live prov 26150 -> [BLOCK] Check-I2 unverified-comparison-level delta=650.00 > 60.0 tolerance, exit 1. RED baseline: pre-fix script (git show HEAD) run against both BLOCK fixtures -> false PASS both times (proves the gap existed). Real-corpus multi-figure sentence (2026-06-08 post text \"26.127 ... vuot nguong 25.500\") with prov matching only 26.127 -> correctly PASSes the live figure and BLOCKs only the comparison figure. Regression: all 48 real docs/social/fb-post-*.md, no provenance file -> 0/48 Check-I false-fires (graceful skip); real fb-post-2026-06-03.md with a MATCHING provenance file -> 0 violations end-to-end. bash -n clean. Simplicity gate Q1-Q4 all NO. Commits 41975d433 (fix, both files) + c08a42f2d (decision journal), pushed origin/main."
+      },
+      {
+        "id": "FIX-FB-GATE-BREADTH-PCT-INTERNAL",
+        "title": "fb-gate Check-H: internal breadth-% vs cited-counts consistency",
+        "type": "FIX",
+        "status": "REVIEW",
+        "priority": "P2",
+        "zone": "cross-service/",
+        "size": "S",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-FB-GATE-BREADTH-PCT-INTERNAL",
+        "promoted_at": "2026-07-25T02:15:17Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-25T02:27:40Z",
+        "claimed_at": "2026-07-25T02:15:17Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "rebuild_required": false,
+        "branch": null,
+        "updated_by": "developer",
+        "review_note": "developer: Added Check-J to scripts/fb-data-integrity-gate.sh -- stated advancer/decliner breadth % must match counts cited elsewhere in the same post within BREADTH_PCT_TOLERANCE (new header const, 6.0pp). Stated-% extraction: (1) headline -- first N% within a tight 30-char window AFTER the \"do rong\"/\"breadth\" keyword, same sentence only (prevents grabbing an unrelated later % in the same sentence -- thanh khoan/ticker move); (2) labelled -- N% ma tang/giam either word order. Cited-counts extraction, label-agnostic (covers advancer/decliner/floor/ceiling generically without one regex per label): (a) explicit fraction \"N (label)? cua/tren/trong (tong)? (khoang|~)? M\" e.g. \"81 cua ~350\"; (b) co-occurring \"N ma tang ... M ma giam [... K ma dung gia]\" in one sentence. BLOCKs when stated % is farther than tolerance from every direction-matching candidate. NOTE: ticket title said \"Check-H\" but that letter is STALE -- A-I already claimed (Check-H=point-pct-math, Check-I=stale-macro, both this same day) -- enumerated live via grep before minting, implemented as Check-J, next unclaimed letter, documented inline. RAW fence (real fixtures, no network dependency): full-structure fixture \"Do rong thi truong ~40%. ... 81 cua ~350 ma ...\" with a snapshot file matching the fixture own VN-Index level (isolates from unrelated Check-D noise) -> [BLOCK] Check-J breadth-pct-internal: stated do rong...40% = 40.0% does not match cited counts (81 cua ~350 = 23.14%), delta=16.86pp > 6.0pp tolerance, exit 1. Matching fixture (do rong ~23% + same 81 cua ~350) -> [PASS] fb-data-integrity-gate: 0 violations, exit 0. RED baseline: git show HEAD (pre-fix, commit 41975d433) run against the same BLOCK fixture + matched snapshot -> [PASS] 0 violations (proves the gap existed). Regression: all 48 real docs/social/fb-post-*.md (no snapshot arg, live-independent check) -> 0/48 Check-J false-fires, incl. the closest real near-miss 2026-06-19 (\"chi 25% ma tang trong khi 63% ma giam\" vs cited 81/203/66=350 -> implied 23.14%/58.0%, deltas 1.86pp/5.00pp, both <=6.0pp tolerance). bash -n clean. Simplicity gate Q1-Q4 all NO. Commits ce04d512a (fix) + ce34c588f (decision journal), pushed origin/main."
       }
     ],
     "qa": [],
@@ -15017,24 +15037,7 @@
     },
     "last_triaged_at": "2026-07-25T02:15:17Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-FB-GATE-BREADTH-PCT-INTERNAL",
-        "title": "fb-gate Check-H: internal breadth-% vs cited-counts consistency",
-        "type": "FIX",
-        "status": "IN_PROGRESS",
-        "priority": "P2",
-        "zone": "cross-service/",
-        "size": "S",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-FB-GATE-BREADTH-PCT-INTERNAL",
-        "promoted_at": "2026-07-25T02:15:17Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-25T02:15:18Z",
-        "claimed_at": "2026-07-25T02:15:17Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
