@@ -1,37 +1,35 @@
 # PO Notebook
 
-_Last: 2026-07-25T14:31Z (dev-team Step 1 triage — signal_queue TRIAGED strand: 1 MINT + 1 launchd ACK; premise of the ask partly REFUTED)_
+_Last: 2026-07-25T14:59Z (dev-team Step 1 triage — router-referred cold-evict no-op loop: 2 MINTs + 1 SPIKE instance; 2 router claims CORRECTED, 1 of my own hypotheses REFUTED)_
 
-## Tick 2026-07-25T14:07–14:31Z
+## Tick 2026-07-25T14:37–14:59Z
 
-| Input | Disposition |
-|---|---|
-| Tick claim: `triaged` is an improvised status with NO contract (leg 1) | **REFUTED.** The grep was `'"triaged"'` — lowercase + double-quoted. The contract writes it uppercase, unquoted, in prose: `system-auditor/handlers.md:240`, `po/flow/scripts-registry.md:44`, `cron-db-data-integrity.md:130,138`. TRIAGED is canonical, deliberate, and **non-terminal by design** |
-| Proposed fix (a): add `triaged`+`RETRACTED` to `TERMINAL_SIGNAL_STATUSES` | **REJECTED** — would evict rows whose tracked work is still open; contradicts all three contract sites |
-| Proposed fix (b): strict `z.enum` on signal status ("the definitive fix") | **REJECTED** — already formally refuted 2026-07-12 (`ultracode-workflow-improvement-audit.md:1155` item 5). orch-apply Zod-validates the WHOLE doc, so one legit TRIAGED flip post-tightening hard-rejects **all** subsequent orch-state writes fleet-wide (`project_mcp_server_write_wedge`) |
-| Real root cause | **MINT** `FIX-SIGNALQUEUE-TRIAGED-NO-EXIT-TRANSITION` → `backlog` (SPRINT-S/high/`cross-service/`/`architect`). TRIAGED has **no exit transition**: `pm/flow/task-archive.md:118` matches `.status=="READ"` only; TRIAGED falls to the `else .` no-op — and `:122` then echoes closure success **unconditionally**, a silent false-green that hid the skip |
-| Dedup | 5 adjacent rows the prior-art list omitted were read and cleared (`FIX-BACKLOG-TERMINAL-ROW-DRIFT-EVICT-BLIND` = isomorphic bug, other plane; `P1-DETECTOR-CLOSURE-TRIAGE-SIGNALS` = forward half of the same mechanism, sequence it first; +3). No duplicate |
-| Launchd: `com.vn-market.cowork-guaranteed-slot-firer` exit-143 unacked → full auditor spawn every ~30min | **ACK option (a)** against `FIX-GUARANTEED-SLOT-FIRER-FANOUT-TRUNCATION` (verified BACKLOG, so not stale-on-arrival). Probe re-run → `ALL_GREEN` |
-| Board totals | `task_total` 654→655, `signal_total` 125→125, backlog 388→389, row read back from `.task_board` = **lane `backlog`, exactly 1 occurrence** |
+**Returned BATCH(2).** Both verified on `.task_board` by `id` after write, not asserted from narration.
 
-**Ruling:** the reported symptom was real (124 rows, all >24h, hot file 1.9MB) but both proposed causes and both proposed fixes were wrong. Journal: `docs/agent-memory/decisions/triage-20260725T1407Z-po.md`.
+| Minted | Lane (read back) | Mechanism |
+|---|---|---|
+| `FIX-COLDEVICT-DONE-LANE-TRIGGER-ACTION-AXIS-NOOP` | `backlog` ×1, P2/S, `cross-service/` | Step-5.5 trigger is a COUNT gate (`done_n>10`); the eviction it fires is a COUNT-**AND**-AGE gate. Different axes → unclearable by its own action |
+| `FIX-SLA-BCTC-THRESHOLD-TRACKS-STALENESS-NOT-CONSTANT` | `backlog` ×1, P2/S, `apps/mcp-server/` | bctc SLA "threshold" is not a policy constant — tracks staleness at a fixed 5439-min offset |
+
+Board: `task_total` 655→657, backlog 389→391, `signal_total` 125 unchanged. `.head` **untouched** (router owns closeout).
+Also annotated `SPIKE-SATURATED-COUNT-THRESHOLD-GATES-SWEEP` with **instance 10** + new **sub-class 5** (trigger/action on different axes).
 
 ## Lessons
 
-- **⚠️ A grep that is case- and quote-sensitive can manufacture a "this exists in no contract" conclusion.** `'"triaged"'` returned zero while `TRIAGED` was documented in four places. The upstream agent had already caught one grep artifact (zsh glob-expanding `--include`) and still shipped a second one in the same command. **Two independent artifacts in one grep is the norm, not the exception — vary case AND quoting before concluding absence.**
-- **⚠️ "No consumer in either prune path" can be the DESIGN, not the gap.** TRIAGED is excluded from both prune lists deliberately because it means *active*. Reading the exclusion as a bug and "fixing" it would have evicted live work. Before calling a missing entry a gap, find out who *chose* to leave it out.
-- **⚠️ Check whether the fix you are about to mint was already refuted.** Candidate (b) was killed on write-wedge grounds 13 days earlier in an architecture brief. Prior-art grep must cover `docs/architecture-briefs/` verifier rulings, not just `.task_board` ids — the board records what was *minted*, not what was *rejected and why*.
-- **A no-op guarded by an unconditional success echo is invisible.** `task-archive.md:122` prints `Signal closure: SID READ→RESOLVED` even when its `map` matched zero rows. Every closure of a TRIAGED row has been logging success while doing nothing.
-- **"Count only grows" deserves its own timestamp check.** Newest TRIAGED row is 2026-07-23T18:33Z — ~44h stale. This is a *static* 124-row strand, not an accelerating fire; priority set high, not P0, on that basis.
-- **The evidence for the fix's tractability was in the rows themselves.** 122/124 carry `triaged_by`, but only 49 carry `disposition` and 0 carry a structured `tracked_by` — so ~64% have no machine-readable back-reference. That number is what makes this an architect ruling rather than a mechanical patch.
+- **⚠️ A per-file sweep for gate patterns cannot see a trigger/action pair that straddles a file boundary.** The architect's `instance_9_closed` check examined `orch-cold-evict.sh`, correctly ruled its additive sums to be *reporting counters, not firing gates* — and was right. The firing gate lives in the **caller** (`dev-team-tick-preflight.sh:368`). **When a script is side-effecting, enumerate its CALLERS, not only the predicates inside it.**
+- **⚠️ `//` in jq fires when the LHS yields NO outputs, not only on null.** `[[] | .[].id // ""]` → `[""]`, length 1. So `--dry-run` reports "would evict: 1" for two lanes that are provably empty. **The instrument I was about to cite as acceptance evidence was itself lying.** Fix the counter before trusting the count.
+- **⚠️ `x // "default"` does NOT catch a poison *string*.** `sort_by(.created_at // "0000-…")` guards null/absent, but 10 rows carry the literal `"unknown"`, which string-sorts ABOVE every ISO date — so `reverse()` ranks the oldest rows as the **newest**, and they consume the whole `keep_n=10` window. Schema permits it: `created_at: z.string().optional()` — any string.
+- **My own structural-grant hypothesis was WRONG, and checking it is what proved it.** `get_bctc_report_id` is granted by *no* tools package → I predicted bctc-analyst was structurally blind. Probed the live gateway: the tool **works**. My first probe (`stock_code`/`period`) reproduced the *real* cause — a Zod arg-shape mismatch, already diagnosed and closed at `bctc-analyst/flow/main.md:78` on 07-24. **3 telegram reports were stale, not open. Do not mint on a hypothesis that a 30-second probe can settle.**
+- **A constant difference between two growing numbers means neither is a policy value.** 12 bctc alerts / 21h: `stale − threshold` = `{5439}`, one element. Positive control in the same stream: `bond_maturity` 10080, `signal_quality_audit` 2880, `news`/`sbv_fx` 30 — all constant. That control is what turns "looks odd" into "isolated to bctc".
 
 ## Carry-over
 
-- **`FIX-SIGNALQUEUE-TRIAGED-NO-EXIT-TRANSITION` needs an ARCHITECT SEMANTIC RULING before code.** Two documented readings disagree: `handlers.md:240` says TRIAGED = work still open (keep hot); observed usage (row `po-20260720T052606`: *"Closing NEW so it stops resurfacing every PO triage tick"*) says TRIAGED = folded into a board row, stop showing me. The fix differs per reading, and the 75 undispositioned rows resolve under neither.
-- **Sequence `P1-DETECTOR-CLOSURE-TRIAGE-SIGNALS` BEFORE it** — that row wires PO to stamp `origin_signal_id` (forward half); the new row fixes the predicate that consumes it (close half). Backfill has no back-reference for new rows until the forward half ships.
-- **`FIX-BACKLOG-TERMINAL-ROW-DRIFT-EVICT-BLIND` is the same bug on the `task_board.backlog[]` plane.** Same shape, different array — consider one shared architect ruling covering both rather than two divergent fixes.
-- **The launchd ACK is label-granular, not signature-granular.** A crash-at-startup or not-loaded failure of `com.vn-market.cowork-guaranteed-slot-firer` is now ALSO suppressed. Mitigated only by the ledger's STALENESS RULE: **remove that entry the moment FANOUT-TRUNCATION reaches DONE_VERIFIED.**
-- **The "600s background tasks" line is NOT live evidence.** `cowork-guaranteed-slot-firer-error.log` mtime is 2026-07-18T22:27 — unchanged. Today's event was the OUTER 1800s bound only. Do not cite that line as a same-day observation.
-- **Do NOT let QA close `FIX-PREDCLAIM-CREATIONPRICE-UNGATE-ZOD-CONTRACT` via host CLI / direct sqlite.** Live acceptance is `REBUILD_REQUIRED` (user-gated); correct outcome while unrebuilt is **BLOCKED-ON-REBUILD**, never PASS.
-- **`ready[]` / `review[]` drainage still unverified this tick** — not re-measured; carry forward from 12:57Z.
-- **Nothing pushed. No agent dispatched, no container touched. Runtime reads only; probe run with `HEARTBEAT_FILE_PATH` redirected to scratch so the live heartbeat was untouched (still 13:44:06Z).**
+- **Do NOT "fix" the cold-evict trigger by narrowing it to the done[] predicate.** `preflight.sh:419` is the *sole* automated caller and the trigger has **no signal_queue term** — yet the run does evict `signal_queue.rows[]` (commit `127d53a8a` moved exactly one READ row and zero done rows, despite its title). Narrowing it silently kills signal-queue eviction. Trigger must gain a signal_queue disjunct in the *same* change.
+- **Sequencing:** that coupling is currently dormant — `signal_queue.rows[]` is 124 `triaged` + 1 `RETRACTED`, none in `TERMINAL_SIGNAL_STATUSES`. It becomes load-bearing the moment `FIX-SIGNALQUEUE-TRIAGED-NO-EXIT-TRANSITION` lands. Not a blocker; do not use it as a reason to skip the disjunct.
+- **Fixing the sort alone buys ~7 days, not a fix.** Correct sort → 6 rows evict immediately → `done_n` 16→10 → trigger clears. But dated rows accrue ~1.5/day against a 7d window, so it re-saturates. Both defects or neither.
+- **`FIX-COLD-EVICT-EXCLUDE-IDS-VS-HARD-COHERENCE` contains a stale risk line** — "no cron invokes orch-cold-evict.sh". True when written, invalidated by `83e0578ea` (07-15). Re-read before working either row.
+- **`review`=110 / `qa`=0 is ALREADY OWNED — do not re-mint.** `FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN` (backlog, architect) + `FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION`. Router flagged it as unverified; it is tracked, and that row's own history records a prior PO asserting a phantom ownership gap on exactly this question.
+- **All 20 new telegram reports + 100 unresolved map to existing rows or are stale.** Dominated by `sla-monitor` repeat-fire on 3 metrics. Only the bctc threshold arithmetic was new.
+- **`FIX-SIGNALQUEUE-TRIAGED-NO-EXIT-TRANSITION` still needs the architect semantic ruling** before code (carried from 14:07Z — unchanged).
+- **Do NOT let QA close `FIX-PREDCLAIM-CREATIONPRICE-UNGATE-ZOD-CONTRACT` via host CLI / direct sqlite.** Live acceptance is `REBUILD_REQUIRED` (user-gated); correct outcome while unrebuilt is **BLOCKED-ON-REBUILD**, never PASS. (carried)
+- **Nothing pushed. No agent dispatched, no container touched.** Two `orch-apply.sh` writes, both validated + conservation-checked; commit-mutex claimed and released (`released:1`).
