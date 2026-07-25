@@ -387,11 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-07-25T04:30:04Z",
-    "updated_by": "dev-mcp-server"
+    "status": "in_progress",
+    "active_task_id": "FIX-FB-GATE-CHECKC-NEGATION-LEXICON",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-FB-GATE-CHECKC-NEGATION-LEXICON — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-25T04:45:37Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6731,16 +6732,6 @@
         "size": "S",
         "title": "system-auditor B-11 (news-vps freshness) conflates raw-fetch-freshness with analysis-cadence -> emits a phantom CRITICAL + MED duplicate every Tier-2 cycle",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AUDITOR-B11-NEWS-FRESHNESS-LAYER-SPLIT"
-      },
-      {
-        "id": "FIX-FB-GATE-CHECKC-NEGATION-LEXICON",
-        "title": "fb-gate Check-C: negation-blind to Vietnamese 'chưa' false-blocks orderly-pullback posts + \\d->[0-9] BSD-grep portability",
-        "type": "FIX",
-        "status": "BACKLOG",
-        "priority": "P2",
-        "zone": "cross-service/",
-        "size": "S",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-FB-GATE-CHECKC-NEGATION-LEXICON"
       },
       {
         "id": "FU-FB-FOREIGN-FLOW-UNIT-LABEL",
@@ -15084,9 +15075,26 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-25T04:15:55Z",
+    "last_triaged_at": "2026-07-25T04:45:37Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-FB-GATE-CHECKC-NEGATION-LEXICON",
+        "title": "fb-gate Check-C: negation-blind to Vietnamese 'chưa' false-blocks orderly-pullback posts + \\d->[0-9] BSD-grep portability",
+        "type": "FIX",
+        "status": "IN_PROGRESS",
+        "priority": "P2",
+        "zone": "cross-service/",
+        "size": "S",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-FB-GATE-CHECKC-NEGATION-LEXICON",
+        "promoted_at": "2026-07-25T04:45:37Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-25T04:45:38Z",
+        "claimed_at": "2026-07-25T04:45:37Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
