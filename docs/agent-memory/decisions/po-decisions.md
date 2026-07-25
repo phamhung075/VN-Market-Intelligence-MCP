@@ -554,3 +554,22 @@ SUPPORTING EPIC 3 (foundational, runs underneath) — **HONEST-DATA-FLOOR HOLD**
 - File the systemic issue as a SPIKE instance vs its own row vs no row
 **why-decision:** Field read-back is exactly the false-green this whole tick was about — a value the predicate never consults reads identically to one it does. Executed instead: FU `deps_satisfied:false`, blocker `true` (not self-blocked). Minted its own row rather than a SPIKE instance: that SPIKE's class is gates whose INPUT cannot cross a threshold; here there is no gate at all, and filing it there would dilute a carefully bounded class. Cross-referenced one transferable line instead.
 **why-change:** No change from the reporter's ask on the primary; the systemic ask was left to me and I took it, at P2 — with a mandatory negative control (author a NEW reverse-only guard post-fix and prove it is caught), since a remedy that only cleans today's 7 rows leaves the trap armed.
+
+### STEP po-S8 · po · 2026-07-25T17:15:22Z
+**task-id:** FIX-DEVTEAM-BACKGROUND-SPAWN-LOCK-RELEASED-AT-SPAWN-NOT-COMPLETION
+**what-done:** Ruled the remedy for the bg-spawn lock near-miss and minted P1 standalone.
+**what-considered:**
+- (a) hold lock for agent lifetime — reporter flagged "needs a place to live"
+- (b)/(d) gate resume on head.updated_at age vs a max-runtime constant
+- (c) stamp head with in_flight_since / in_flight_agent
+**why-decision:** (a), simplified so the reporter's blocker vanishes: the lock ALREADY carries ttl_seconds:3600, so DELETING the success-path release makes TTL the lifetime bound — no completion hook, no new field, no machinery. It is a deletion, not an addition. Keep a FAILURE-path release (try/except not try/finally) so a throwing spawn does not lock the task for an hour. (b)/(d) rejected: must invent a timeout constant, trading an exact guard for a probabilistic one. (c) rejected: anything that must be cleared is a new way to leak.
+**why-change:** Lingering-lock objection does not bite — resume is gated on head.status FIRST, so a lock outliving a completed agent is unreachable; crash case frees at TTL and correctly re-spawns, with the 24h stale reset as outer backstop.
+
+### STEP po-S9 · po · 2026-07-25T17:15:22Z
+**task-id:** FIX-DEVTEAM-BACKGROUND-SPAWN-LOCK-RELEASED-AT-SPAWN-NOT-COMPLETION
+**what-done:** OVERRULED the reporter's fold-in lean; bound the two rows by co_edit instead.
+**what-considered:**
+- Fold into FIX-DEVTEAM-STEP0B-RESUME-SUPERVISED-HOLD-GATE (reporter's lean: same step, one edit site)
+- Standalone row + co_edit binding
+**why-decision:** Two grounds. (1) SCOPE — that row's title/root_cause/deliverable/acceptance are all one predicate at ONE site; this defect is at FOUR (main.md:484-488, :571-574, :624-627, :675-678), so an implementer would fix Step 0b, close honestly, and leave three exposed. (2) QUARANTINE — that row is plan_only+supervised, dependent on the SLS to move; folding a defect that can fire every 30min would strand it. Mine is deliberately NOT plan_only/supervised for that reason.
+**why-change:** Also CORRECTED the reporter's scope: Step 1's triage_key is NOT this shape — main.md:711 already says "await task notification, then release" with the release a separate statement at :716, not a finally. Excluded it explicitly. Did NOT increment the sibling's recurrence_count (2) — this near-miss corroborates a different mechanism and inflating it would misdirect escalation.
