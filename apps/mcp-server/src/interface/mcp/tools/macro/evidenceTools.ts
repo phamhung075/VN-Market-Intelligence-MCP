@@ -348,7 +348,11 @@ export function registerEvidenceTools(
     "Insert a structured, falsifiable prediction claim for a stock. " +
       "Intended to be called by the 08-prediction-synthesizer Cowork agent. " +
       "resolution_criteria must be valid JSON with fields: metric, operator, value, currency, description. " +
-      "Duplicate claims (same stock + claim_text + resolution_date) are silently skipped.",
+      "Duplicate claims (same stock + claim_text + resolution_date) are silently skipped. " +
+      "creation_price (latest close from daily_ohlcv) is captured for EVERY claim, " +
+      "regardless of direction/expected_move_pct — a ticker with no OHLCV data is " +
+      "REJECTED outright (no scoreless claims can be created). direction+expected_move_pct " +
+      "are optional and only affect target_price; omitting them still requires a resolvable price.",
     {
       stock: z.string().min(1),
       claim_text: z.string().min(1),
@@ -393,32 +397,40 @@ export function registerEvidenceTools(
           };
         }
 
-        // Step 2: look up latest close price from daily_ohlcv (only needed when direction + pct provided)
+        // Step 2: look up latest close price from daily_ohlcv.
+        // FIX-PREDCLAIM-CREATIONPRICE-UNGATE-ZOD-CONTRACT (2026-07-25): this lookup
+        // is UNCONDITIONAL — every claim (directional or neutral) needs a
+        // creation-time baseline price to ever be scoreable. Previously this only
+        // ran when direction+expected_move_pct were BOTH supplied (both optional
+        // params), so any claim that omitted them was silently persisted with
+        // creation_price=NULL and could never be resolved (100% of claims minted
+        // since 2026-06-14). direction/expected_move_pct now ONLY gate the optional
+        // target_price computation (Step 3) below — never the price lookup itself.
         interface OhlcvRow { close: number }
-        let creationPrice: number | null = null;
-        if (direction != null && expected_move_pct != null) {
-          const priceRow = database
-            .prepare(
-              `SELECT close FROM daily_ohlcv WHERE code = ? ORDER BY date DESC LIMIT 1`,
-            )
-            .get(ticker) as OhlcvRow | null;
+        const priceRow = database
+          .prepare(
+            `SELECT close FROM daily_ohlcv WHERE code = ? ORDER BY date DESC LIMIT 1`,
+          )
+          .get(ticker) as OhlcvRow | null;
 
-          if (!priceRow) {
-            return {
-              content: [
-                {
-                  type: "text" as const,
-                  text: `No price data found for ${ticker} — cannot compute target_price`,
-                },
-              ],
-            };
-          }
-          creationPrice = priceRow.close;
+        if (!priceRow) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text:
+                  `No price data found for ${ticker} — cannot compute creation_price. ` +
+                  `Claim NOT created: a claim without a creation-time baseline price can never be scored.`,
+              },
+            ],
+          };
         }
+        const creationPrice: number = priceRow.close;
 
         // Step 3: compute target_price — null when either direction or pct is absent
+        // (creation_price is now always resolved by this point; see Step 2 above)
         const targetPrice: number | null =
-          direction != null && expected_move_pct != null && creationPrice != null
+          direction != null && expected_move_pct != null
             ? direction === "bullish"
               ? Math.round(creationPrice * (1 + expected_move_pct))
               : Math.round(creationPrice * (1 - expected_move_pct))

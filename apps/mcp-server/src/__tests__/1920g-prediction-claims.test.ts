@@ -141,6 +141,16 @@ describe("Task 1920g — runChainSynthesis prediction claim wiring", () => {
         resolved_at TEXT,
         UNIQUE(stock, claim_text, resolution_date)
       );
+      -- FIX-PREDCLAIM-CREATIONPRICE-UNGATE-ZOD-CONTRACT: runChainSynthesis now looks
+      -- up the latest close price unconditionally (was hardcoded null) — this table
+      -- must exist or the lookup query throws before the mocked insertClaimFn is
+      -- ever reached (caught non-fatally by the existing outer try/catch, but that
+      -- would make TC-1/TC-3/TC-5/TC-6/TC-7 fail to call insertClaimFn at all).
+      CREATE TABLE IF NOT EXISTS daily_ohlcv (
+        code TEXT NOT NULL,
+        date TEXT NOT NULL,
+        close REAL
+      );
     `);
   });
 
@@ -221,6 +231,11 @@ describe("Task 1920g — runChainSynthesis prediction claim wiring", () => {
 
   it("TC-1: conviction=0.8 (BUY) → insertClaimFn called once with correct shape (AC-1, AC-2, AC-7)", async () => {
     seedChainFindings("VCB", 0.8, "BUY", "VCB tăng mạnh dựa trên Q1");
+    // FIX-PREDCLAIM-CREATIONPRICE-UNGATE-ZOD-CONTRACT: seed a price so creation_price
+    // is captured (was hardcoded null pre-fix — the root bug this task closes).
+    db.prepare(
+      `INSERT INTO daily_ohlcv (code, date, close) VALUES (?, ?, ?)`,
+    ).run("VCB", "2026-07-24", 91000);
 
     const capturedCalls: PredictionClaimInput[] = [];
     const mockInsertFn = mock((params: PredictionClaimInput) => {
@@ -238,7 +253,10 @@ describe("Task 1920g — runChainSynthesis prediction claim wiring", () => {
     expect(call.confidence).toBeGreaterThanOrEqual(0.7);
     expect(call.resolution_date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(call.target_price).toBeNull();
-    expect(call.creation_price).toBeNull();
+    // FIX-PREDCLAIM-CREATIONPRICE-UNGATE-ZOD-CONTRACT: creation_price is now
+    // ALWAYS captured from daily_ohlcv (was unconditionally null before the fix —
+    // the exact bug this task closes).
+    expect(call.creation_price).toBe(91000);
     expect(call.claim_text.length).toBeLessThanOrEqual(255);
   });
 
@@ -306,13 +324,17 @@ describe("Task 1920g — runChainSynthesis prediction claim wiring", () => {
     const { insertPredictionClaim } = await import("../infrastructure/db/predictionClaimStore.js");
     const { isoDatePlusDays: datePlusDays } = await import("../scheduler/news-analysis/intelligenceCycleJob.js");
 
+    // FIX-PREDCLAIM-CREATIONPRICE-UNGATE-ZOD-CONTRACT: insertPredictionClaim() now
+    // refuses null creation_price — use a real value so this idempotency test still
+    // exercises the actual write path (INSERT OR IGNORE dedup is this test's intent,
+    // not the creation_price gate itself).
     const params: PredictionClaimInput = {
       stock: "VNM",
       agent_id: "chain-synthesizer",
       claim_text: "VNM sẽ tăng",
       direction: "bullish",
       target_price: null,
-      creation_price: null,
+      creation_price: 84000,
       resolution_date: datePlusDays(7),
       confidence: 0.8,
     };

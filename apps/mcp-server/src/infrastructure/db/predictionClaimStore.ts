@@ -20,6 +20,8 @@
  */
 
 import type { Database } from "bun:sqlite";
+import { z } from "zod";
+import { sendTelegramBug } from "../notifiers/telegram.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -47,7 +49,13 @@ export interface PredictionClaimInput {
   target_price?: number | null;
   /**
    * Price at claim-creation time (close from daily_ohlcv).
-   * Nullable — legacy rows inserted before Sprint 065 have NULL.
+   * Type kept nullable for structural compatibility with legacy rows /
+   * PredictionClaimRow — but FIX-PREDCLAIM-CREATIONPRICE-UNGATE-ZOD-CONTRACT
+   * (2026-07-25) added a store-boundary Zod contract to insertPredictionClaim()
+   * that REFUSES (throws) any insert where this resolves to null/undefined.
+   * A claim with no creation-time baseline price can never be resolved (the
+   * resolver has nothing to compare actual_price against) — legacy NULL rows
+   * pre-date this contract and remain readable, but no NEW insert can create one.
    */
   creation_price?: number | null;
   /** ISO 8601 date (YYYY-MM-DD) by which the claim should be resolved */
@@ -128,6 +136,79 @@ function mapRow(r: ClaimDbRow): PredictionClaimRow {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Write-door contract (FIX-PREDCLAIM-CREATIONPRICE-UNGATE-ZOD-CONTRACT, 2026-07-25)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Insert-time contract for prediction_claims — enforced at the domain/
+ * infrastructure STORE boundary per
+ * docs/architecture-briefs/2026-07-25-input-validation-coverage-blueprint.md
+ * §1.4 (Class-A / Point-2: server write-door, `SomeSchema.strict().safeParse()`
+ * at the store — NEVER only in the interface/mcp/tools/ handler — so any
+ * caller of insertPredictionClaim, present or future, is covered).
+ *
+ * creation_price is REQUIRED (a finite number, never null/undefined): a claim
+ * without a creation-time baseline price can never be resolved — the resolver
+ * (predictionResolutionJob) has nothing to compare actual_price against, so
+ * the row is permanently unscoreable. 100% of claims minted since 2026-06-14
+ * had creation_price=NULL for exactly this reason (a caller-side conditional
+ * that only looked up the price when two OPTIONAL params happened to be
+ * supplied together). This schema makes the write itself refuse ANY insert
+ * that would persist a scoreless claim, regardless of caller.
+ *
+ * `.strict()` — reject unknown keys (blueprint §3 default for every new schema).
+ */
+const PredictionClaimInsertSchema = z
+  .object({
+    stock: z.string().min(1),
+    agent_id: z.string().min(1),
+    claim_text: z.string().min(1),
+    direction: z.enum(["bullish", "bearish", "neutral"]),
+    target_price: z.number().nullable().optional(),
+    creation_price: z
+      .number({
+        required_error:
+          "creation_price is required — a claim without a creation-time baseline price can never be scored",
+        invalid_type_error:
+          "creation_price must be a finite number (null is not accepted) — a claim without a creation-time baseline price can never be scored",
+      })
+      .finite(),
+    resolution_date: z.string().min(1),
+    confidence: z.number().min(0).max(1),
+  })
+  .strict();
+
+/**
+ * Format a Zod validation failure using the blueprint §2 canonical
+ * descriptive-error contract (per-field field/problem/expected/originalValue).
+ * Merged shape per §2: agentSignalTools.ts's top-line-message pattern +
+ * foreignFlowValidator's {field, reason, originalValue} + the
+ * SSOT-zod-validation-directive auto-fix contract (path/problem/expected/fix).
+ *
+ * The full `ValidationRejection` envelope (surface/class/rejectedAt/errors[])
+ * and the shared `write_rejections` audit sink are IVC-A2 scope (not yet
+ * built) — this local formatter emits the same per-field wording so it is a
+ * drop-in match once that shared module lands.
+ */
+function formatWriteRejection(
+  surface: string,
+  error: z.ZodError,
+  candidate: Record<string, unknown>,
+): string {
+  const lines = error.issues.map((issue, i) => {
+    const field = issue.path.length > 0 ? issue.path.join(".") : "(root)";
+    const originalValue = field in candidate ? candidate[field] : undefined;
+    const expected = issue.code === "invalid_type" ? issue.expected : undefined;
+    const suffix = expected
+      ? ` (expected: ${expected}, got: ${JSON.stringify(originalValue)})`
+      : ` (got: ${JSON.stringify(originalValue)})`;
+    return `[${i + 1}] ${field}: ${issue.message}${suffix}`;
+  });
+
+  return `${surface} rejected — invalid or missing required fields:\n${lines.join("\n")}\n\nFix and retry.`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Write helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -137,12 +218,40 @@ function mapRow(r: ClaimDbRow): PredictionClaimRow {
  * Uses INSERT OR IGNORE — duplicate (stock, claim_text, resolution_date) triplets
  * are silently skipped. Returns the new row's id, or 0 if the insert was a no-op.
  *
+ * Write-door contract (FIX-PREDCLAIM-CREATIONPRICE-UNGATE-ZOD-CONTRACT): throws
+ * a descriptive Error (see formatWriteRejection) when `params` fails
+ * PredictionClaimInsertSchema — in practice this means a null/undefined/non-finite
+ * `creation_price`. Callers that already wrap this in try/catch (e.g. the
+ * non-fatal chain-synthesis auto-claim path) degrade gracefully; the MCP tool
+ * handler's existing try/catch surfaces the message directly to the caller.
+ *
  * @returns The new row's auto-increment id, or 0 if already exists (IGNORE).
+ * @throws {Error} when params fails the insert-time write-door contract.
  */
 export function insertPredictionClaim(
   db: Database,
   params: PredictionClaimInput,
 ): number {
+  const parsed = PredictionClaimInsertSchema.safeParse(params);
+  if (!parsed.success) {
+    const rejectionMessage = formatWriteRejection(
+      "predictionClaimStore.insertPredictionClaim",
+      parsed.error,
+      params as unknown as Record<string, unknown>,
+    );
+    // Fail-loud (docs/protocols/fail-loud-protocol.md): throw AND alert — never
+    // fall back to silently writing null. Fire-and-forget (not awaited): this
+    // function is a widely-used synchronous store call (~30 call sites incl.
+    // tests); sendTelegramBug already "never throws" by its own contract
+    // (best-effort — missing env config silently no-ops), so a synchronous
+    // dispatch-then-throw gives the caller the immediate rejection while the
+    // alert lands independently, matching the non-fatal-notification pattern
+    // already used elsewhere in this codebase (e.g. chain-synthesis claim
+    // insert, SLA monitor direct alerts).
+    void sendTelegramBug(rejectionMessage).catch(() => {});
+    throw new Error(rejectionMessage);
+  }
+
   const result = db
     .prepare(
       `INSERT OR IGNORE INTO prediction_claims
@@ -151,14 +260,14 @@ export function insertPredictionClaim(
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .run(
-      params.stock,
-      params.agent_id,
-      params.claim_text,
-      params.direction,
-      params.target_price ?? null,
-      params.resolution_date,
-      params.confidence,
-      params.creation_price ?? null,
+      parsed.data.stock,
+      parsed.data.agent_id,
+      parsed.data.claim_text,
+      parsed.data.direction,
+      parsed.data.target_price ?? null,
+      parsed.data.resolution_date,
+      parsed.data.confidence,
+      parsed.data.creation_price,
     );
 
   return result.changes > 0 ? (result.lastInsertRowid as number) : 0;

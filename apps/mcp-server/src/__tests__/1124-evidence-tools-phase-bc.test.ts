@@ -105,6 +105,20 @@ function seedLikelihoodRatio(
   ).run(evidenceType, direction, horizonDays, ratio, sampleSize, new Date().toISOString());
 }
 
+/**
+ * Seed a daily_ohlcv close price for a ticker.
+ *
+ * FIX-PREDCLAIM-CREATIONPRICE-UNGATE-ZOD-CONTRACT: create_prediction_claim's
+ * price lookup is now UNCONDITIONAL (runs regardless of direction/expected_move_pct),
+ * and insertPredictionClaim() refuses any insert with a null creation_price — every
+ * create_prediction_claim test below needs a resolvable price for its ticker.
+ */
+function seedOhlcv(db: Database, code: string, close: number): void {
+  db.prepare(
+    `INSERT INTO daily_ohlcv (code, date, close) VALUES (?, ?, ?)`,
+  ).run(code, "2026-07-24", close);
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Tests
 // ─────────────────────────────────────────────────────────────────────────────
@@ -227,6 +241,7 @@ describe("Task 1124 — evidence tools Phase B+C", () => {
     });
 
     it("inserts a claim and returns id and resolution_date", async () => {
+      seedOhlcv(_testDb, "VCB", 91000);
       const text = await callTool("create_prediction_claim", {
         stock: "VCB",
         claim_text: "VCB sẽ tăng mạnh trong 10 ngày tới",
@@ -240,6 +255,7 @@ describe("Task 1124 — evidence tools Phase B+C", () => {
     });
 
     it("uppercases and trims the stock ticker", async () => {
+      seedOhlcv(_testDb, "FPT", 105000);
       const text = await callTool("create_prediction_claim", {
         stock: " fpt ",
         claim_text: "FPT sẽ tăng",
@@ -249,11 +265,13 @@ describe("Task 1124 — evidence tools Phase B+C", () => {
       });
 
       expect(text).toContain("FPT");
+      expect(text).toContain("id=");
     });
 
     it("computes resolution_date = today + horizon_days TRADING days (skips weekends/holidays)", async () => {
       // PRED-RESOLVER-GAP-FIX: resolution_date is now computed in trading days,
       // not calendar days, so the result always lands on a VN trading day.
+      seedOhlcv(_testDb, "HPG", 33000);
       const text = await callTool("create_prediction_claim", {
         stock: "HPG",
         claim_text: "HPG Q2 bullish",
@@ -295,6 +313,7 @@ describe("Task 1124 — evidence tools Phase B+C", () => {
     });
 
     it("returns 'Duplicate claim skipped' on re-insert with same stock+claim_text+resolution_date", async () => {
+      seedOhlcv(_testDb, "VNM", 68000);
       // First insert
       await callTool("create_prediction_claim", {
         stock: "VNM",
@@ -319,6 +338,7 @@ describe("Task 1124 — evidence tools Phase B+C", () => {
     it("clamps probability to [0.01, 0.99] — tool schema enforces this", async () => {
       // The z.number().min(0.01).max(0.99) schema should reject values outside range.
       // We verify a valid boundary value (0.01) is accepted.
+      seedOhlcv(_testDb, "ACB", 24000);
       const text = await callTool("create_prediction_claim", {
         stock: "ACB",
         claim_text: "ACB minimal confidence claim",

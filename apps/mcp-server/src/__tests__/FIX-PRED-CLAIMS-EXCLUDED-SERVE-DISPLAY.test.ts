@@ -82,19 +82,34 @@ function makeFakeReq(url: string): import("node:http").IncomingMessage {
   return { url } as import("node:http").IncomingMessage;
 }
 
-/** Seed an excluded claim (is_excluded=1, resolution_outcome NULL — mirrors live FPT/VNINDEX/GAS). */
+/**
+ * Seed an excluded claim (is_excluded=1, resolution_outcome NULL — mirrors live FPT/VNINDEX/GAS).
+ *
+ * FIX-PREDCLAIM-CREATIONPRICE-UNGATE-ZOD-CONTRACT: insertPredictionClaim() now
+ * REFUSES any insert with a null/missing creation_price (store-boundary Zod
+ * contract) — these excluded rows deliberately simulate the LEGACY (pre-fix)
+ * no-baseline-price shape (see claim_text), so they must be seeded via a
+ * direct raw SQL INSERT that bypasses the store's write-door, same pattern as
+ * TASK17-PRED-prediction-claims-endpoint.test.ts's seedNeutralNullClaim().
+ */
 function seedExcludedClaim(stock: string, resolutionDate: string): number {
   const db = getDb();
-  const id = insertPredictionClaim(db, {
-    stock,
-    agent_id: "08-prediction-synthesizer",
-    claim_text: `${stock} đi ngang (legacy, không có giá tạo)`,
-    direction: "neutral",
-    target_price: null,
-    creation_price: null,
-    resolution_date: resolutionDate,
-    confidence: 0.5,
-  });
+  const result = db
+    .prepare(
+      `INSERT INTO prediction_claims
+         (stock, agent_id, claim_text, direction, target_price, creation_price,
+          resolution_date, confidence)
+       VALUES (?, ?, ?, ?, NULL, NULL, ?, ?)`,
+    )
+    .run(
+      stock,
+      "08-prediction-synthesizer",
+      `${stock} đi ngang (legacy, không có giá tạo)`,
+      "neutral",
+      resolutionDate,
+      0.5,
+    );
+  const id = result.lastInsertRowid as number;
   if (id > 0) {
     excludeClaim(db, id);
   }

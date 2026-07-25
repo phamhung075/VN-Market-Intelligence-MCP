@@ -9,18 +9,34 @@
  * Read path: getAllClaimsForTracker() from predictionClaimStore (infrastructure).
  * This handler ONLY maps + aggregates — no SQL here.
  *
- * Live contract (probed 2026-06-11 against named-volume DB):
- *   9 total claims, agent_id="08-prediction-synthesizer".
- *   Distribution: 3 correct, 3 wrong, 0 pending, 3 excluded.
- *   hitRate = 3/6 = 0.50 (correct / (correct+wrong), excluded NOT counted).
+ * Live contract (STALE EXAMPLE CORRECTED 2026-07-25 —
+ * FIX-PREDCLAIM-CREATIONPRICE-UNGATE-ZOD-CONTRACT deliverable (h); the 2026-06-11
+ * snapshot below was superseded by live growth and had been silently read as
+ * settled history for 6 weeks — see the task's root_cause in
+ * docs/data/orch/orch-state.json for the full live-probe trail):
+ *   Per the 2026-07-25T07:11:04Z live probe (PO, curl against the served
+ *   endpoint): 17 total claims, agent_id="08-prediction-synthesizer".
+ *   Distribution: 4 correct, 2 wrong, 5 pending, 6 excluded.
+ *   hitRate = 4/6 = 0.6667 (correct / (correct+wrong), excluded NOT counted).
+ *   (Historical snapshot, now stale: 2026-06-11 probe showed 9 total /
+ *   3 correct / 3 wrong / 0 pending / 3 excluded / hitRate 0.50.)
  *
  * Outcome mapping:
  *   is_excluded = 1              → "excluded" (takes PRECEDENCE over null check)
  *   resolution_outcome NULL + is_excluded != 1 → "pending"
  *   resolution_outcome 1         → "correct"
  *   resolution_outcome 0         → "wrong"
- * NOTE: rows with is_excluded=1 are legacy neutral claims where creation_price=NULL —
- * the resolver could not evaluate them. They are terminal; do NOT show as "pending".
+ * NOTE: rows with is_excluded=1 have creation_price=NULL — the resolver could not
+ * evaluate them (no baseline to score against), so they are terminal; do NOT show
+ * as "pending". CORRECTED (2026-07-25): these are NOT necessarily "legacy" —
+ * live data showed the NEWEST excluded rows (created 2026-06-24..26) sitting
+ * alongside the OLDEST scoreable ones (April 2026); the producer defect
+ * (evidenceTools.ts gating creation_price capture behind optional
+ * direction+expected_move_pct — fixed by FIX-PREDCLAIM-CREATIONPRICE-UNGATE-ZOD-CONTRACT)
+ * ran continuously from 2026-06-14 until this fix landed, so "excluded" means
+ * "no creation_price baseline", not "old". Existing excluded rows are grandfathered
+ * (this fix is a write-path guard only — see FIX-PREDCLAIM-BACKFILL-NULL-CREATIONPRICE
+ * for the separate, not-yet-decided backfill question).
  *
  * Query params:
  *   ?limit=N                             — default 100, clamped [1, 500]

@@ -152,21 +152,34 @@ function seedPendingClaim(stock: string, resolutionDate: string): number {
 }
 
 /**
- * Seed a neutral claim with NULL target_price + creation_price.
+ * Seed a LEGACY neutral claim with NULL target_price + creation_price.
+ *
+ * FIX-PREDCLAIM-CREATIONPRICE-UNGATE-ZOD-CONTRACT: insertPredictionClaim() now
+ * REFUSES any insert with a null/missing creation_price (store-boundary Zod
+ * contract) — a null-creation_price row can only legitimately exist as a
+ * pre-fix legacy row, so it must be simulated with a direct raw SQL INSERT,
+ * bypassing the store's write-door entirely (same pattern already established
+ * in 1154-prediction-resolution-loop.test.ts's AC-6 "truly legacy claim" seed).
  * Returns the inserted id.
  */
 function seedNeutralNullClaim(stock: string, resolutionDate: string): number {
   const db = getDb();
-  return insertPredictionClaim(db, {
-    stock,
-    agent_id: "08-prediction-synthesizer",
-    claim_text: `${stock} sẽ đi ngang`,
-    direction: "neutral",
-    target_price: null,
-    creation_price: null,
-    resolution_date: resolutionDate,
-    confidence: 0.5,
-  });
+  const result = db
+    .prepare(
+      `INSERT INTO prediction_claims
+         (stock, agent_id, claim_text, direction, target_price, creation_price,
+          resolution_date, confidence)
+       VALUES (?, ?, ?, ?, NULL, NULL, ?, ?)`,
+    )
+    .run(
+      stock,
+      "08-prediction-synthesizer",
+      `${stock} sẽ đi ngang`,
+      "neutral",
+      resolutionDate,
+      0.5,
+    );
+  return result.lastInsertRowid as number;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -663,17 +676,23 @@ describe("TASK17-PRED — handleGetPredictionClaims HTTP handler", () => {
   it("PRODUCTION SHAPE: past resolution_date + outcome=null stays pending (not invented verdict)", () => {
     // A neutral claim whose resolution_date is in the PAST but outcome is still NULL
     // (resolver couldn't determine — no target price to compare against)
+    // FIX-PREDCLAIM-CREATIONPRICE-UNGATE-ZOD-CONTRACT: insertPredictionClaim() now
+    // refuses null creation_price — simulate this LEGACY (pre-fix) row shape via
+    // raw SQL, same pattern as seedNeutralNullClaim() above.
     const db = getDb();
-    insertPredictionClaim(db, {
-      stock: "TCB",
-      agent_id: "08-prediction-synthesizer",
-      claim_text: "TCB thị trường trung lập",
-      direction: "neutral",
-      target_price: null,
-      creation_price: null,
-      resolution_date: "2026-01-01", // past date
-      confidence: 0.5,
-    });
+    db.prepare(
+      `INSERT INTO prediction_claims
+         (stock, agent_id, claim_text, direction, target_price, creation_price,
+          resolution_date, confidence)
+       VALUES (?, ?, ?, ?, NULL, NULL, ?, ?)`,
+    ).run(
+      "TCB",
+      "08-prediction-synthesizer",
+      "TCB thị trường trung lập",
+      "neutral",
+      "2026-01-01", // past date
+      0.5,
+    );
 
     const res = makeMockRes();
     handleGetPredictionClaims(

@@ -63,7 +63,7 @@ Invoke via gateway: call_tool(server="vn-market", tool="<name>", arguments={...}
 |------|---------|-----------|
 | `get_prediction_accuracy` | Prediction model accuracy metrics | — |
 | `get_calibration_report` | Calibration analysis of prediction confidence | — |
-| `create_prediction_claim` | Create timestamped prediction claim for tracking | `stock: string, claim_text: string, probability: number, horizon_days: number, resolution_criteria: string(JSON)` (verified param names — see daily-predict.md flow; NOT ticker/prediction/confidence) |
+| `create_prediction_claim` | Create timestamped prediction claim for tracking | `stock: string, claim_text: string, probability: number, horizon_days: number, resolution_criteria: string(JSON), direction?: "bullish"\|"bearish", expected_move_pct?: number` (verified param names — see daily-predict.md flow; NOT ticker/prediction/confidence). Full signature + `creation_price` contract: `docs/agents/tools/list/create_prediction_claim.md`. |
 | `get_macro_snapshot` | Macro environment (rates, FX, credit, inflation) | — |
 
 ### Portfolio & Evidence

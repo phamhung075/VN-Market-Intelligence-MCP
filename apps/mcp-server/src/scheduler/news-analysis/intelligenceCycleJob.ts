@@ -929,13 +929,27 @@ export async function runChainSynthesis(deps: ChainSynthesisDeps = {}): Promise<
       // Claim write failure is non-fatal (try/catch + console.warn). Must not throw
       // or increment cycle errors counter (AC-6).
       try {
+        // FIX-PREDCLAIM-CREATIONPRICE-UNGATE-ZOD-CONTRACT (2026-07-25): look up the
+        // latest close from daily_ohlcv as the claim's creation-time baseline.
+        // Previously hardcoded to null — every auto-populated chain-synthesis claim
+        // was born unscoreable. insertPredictionClaim's store-boundary Zod contract
+        // now REFUSES (throws) any insert with a null/missing creation_price, so an
+        // un-fixed hardcoded null here would silently stop this feature from ever
+        // writing a claim again — a query that finds no row (or a missing table in
+        // a minimal test DB) is caught by the existing outer try/catch below and
+        // degrades non-fatally (AC-6), same graceful-degrade contract as before.
+        interface OhlcvRow { close: number }
+        const priceRow = db
+          .prepare(`SELECT close FROM daily_ohlcv WHERE code = ? ORDER BY date DESC LIMIT 1`)
+          .get(stock) as OhlcvRow | null;
+
         const claimParams: import("../../infrastructure/db/predictionClaimStore.js").PredictionClaimInput = {
           stock,
           agent_id: "chain-synthesizer",
           claim_text: chain.narrative.slice(0, 255),
           direction: mapChainAction(chain.action),
           target_price: null,
-          creation_price: null,
+          creation_price: priceRow?.close ?? null,
           resolution_date: isoDatePlusDays(7),
           confidence: chain.conviction,
         };

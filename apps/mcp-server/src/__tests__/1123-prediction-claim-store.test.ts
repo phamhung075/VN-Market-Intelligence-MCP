@@ -105,6 +105,7 @@ describe("Task 1123 — prediction_claims store", () => {
       claim_text: "VCB sẽ tăng 10% trong 30 ngày tới",
       direction: "bullish",
       target_price: 88000,
+      creation_price: 85000,
       resolution_date: futureDate(30),
       confidence: 0.75,
     };
@@ -121,6 +122,7 @@ describe("Task 1123 — prediction_claims store", () => {
       claim_text: "FPT sẽ vượt 100k",
       direction: "bullish",
       target_price: 100000,
+      creation_price: 97000,
       resolution_date: resDate,
       confidence: 0.6,
     };
@@ -147,6 +149,7 @@ describe("Task 1123 — prediction_claims store", () => {
       claim_text: "HPG bullish Q2",
       direction: "bullish",
       target_price: 35000,
+      creation_price: 32000,
       resolution_date: futureDate(14),
       confidence: 0.7,
     });
@@ -157,6 +160,7 @@ describe("Task 1123 — prediction_claims store", () => {
       claim_text: "HPG bearish yesterday",
       direction: "bearish",
       target_price: 30000,
+      creation_price: 27000,
       resolution_date: pastDate(1),
       confidence: 0.5,
     });
@@ -173,6 +177,7 @@ describe("Task 1123 — prediction_claims store", () => {
       claim_text: "VCB claim A",
       direction: "bullish",
       target_price: 90000,
+      creation_price: 87000,
       resolution_date: futureDate(7),
       confidence: 0.8,
     });
@@ -182,6 +187,7 @@ describe("Task 1123 — prediction_claims store", () => {
       claim_text: "FPT claim B",
       direction: "bullish",
       target_price: 105000,
+      creation_price: 102000,
       resolution_date: futureDate(7),
       confidence: 0.65,
     });
@@ -199,6 +205,7 @@ describe("Task 1123 — prediction_claims store", () => {
       claim_text: "MWG recovery",
       direction: "bullish",
       target_price: 62000,
+      creation_price: 59000,
       resolution_date: resDate,
       confidence: 0.6,
     });
@@ -217,6 +224,7 @@ describe("Task 1123 — prediction_claims store", () => {
       claim_text: "VCB target 90k",
       direction: "bullish",
       target_price: 90000,
+      creation_price: 87000,
       resolution_date: futureDate(5),
       confidence: 0.8,
     });
@@ -250,6 +258,7 @@ describe("Task 1123 — prediction_claims store", () => {
       claim_text: "HPG will rise",
       direction: "bullish",
       target_price: 40000,
+      creation_price: 37000,
       resolution_date: futureDate(5),
       confidence: 0.7,
     });
@@ -276,6 +285,7 @@ describe("Task 1123 — prediction_claims store", () => {
       claim_text: "VCB resolved",
       direction: "bullish",
       target_price: 88000,
+      creation_price: 85000,
       resolution_date: futureDate(5),
       confidence: 0.75,
     });
@@ -285,6 +295,7 @@ describe("Task 1123 — prediction_claims store", () => {
       claim_text: "VCB still pending",
       direction: "bullish",
       target_price: 90000,
+      creation_price: 87000,
       resolution_date: futureDate(10),
       confidence: 0.6,
     });
@@ -303,6 +314,7 @@ describe("Task 1123 — prediction_claims store", () => {
       claim_text: "VCB up",
       direction: "bullish",
       target_price: 88000,
+      creation_price: 85000,
       resolution_date: futureDate(5),
       confidence: 0.75,
     });
@@ -312,6 +324,7 @@ describe("Task 1123 — prediction_claims store", () => {
       claim_text: "FPT up",
       direction: "bullish",
       target_price: 100000,
+      creation_price: 97000,
       resolution_date: futureDate(5),
       confidence: 0.7,
     });
@@ -332,6 +345,7 @@ describe("Task 1123 — prediction_claims store", () => {
         claim_text: `VCB claim ${i}`,
         direction: "bullish",
         target_price: 80000 + i * 1000,
+        creation_price: 77000 + i * 1000,
         resolution_date: resDate,
         confidence: 0.7,
       });
@@ -351,6 +365,7 @@ describe("Task 1123 — prediction_claims store", () => {
       claim_text: "VCB by agent 04",
       direction: "bullish",
       target_price: 88000,
+      creation_price: 85000,
       resolution_date: futureDate(14),
       confidence: 0.75,
     });
@@ -360,6 +375,7 @@ describe("Task 1123 — prediction_claims store", () => {
       claim_text: "FPT by agent 04",
       direction: "bullish",
       target_price: 100000,
+      creation_price: 97000,
       resolution_date: futureDate(14),
       confidence: 0.6,
     });
@@ -369,6 +385,7 @@ describe("Task 1123 — prediction_claims store", () => {
       claim_text: "HPG by agent 05",
       direction: "bearish",
       target_price: 30000,
+      creation_price: 27000,
       resolution_date: futureDate(14),
       confidence: 0.55,
     });

@@ -107,7 +107,13 @@ GATE_EXIT = skill `.claude/skills/claim-truth-gate/SKILL.md`
 For each qualifying ticker (bullish_score > 0.6 OR bearish_score > 0.6):
   Run P-5.5 gate on claim_text
   If PASS:
-    `create_prediction_claim(stock, claim_text, probability, horizon_days, resolution_criteria)`
+    `create_prediction_claim(stock, claim_text, probability, horizon_days, resolution_criteria, direction?, expected_move_pct?)`
+    — `direction`/`expected_move_pct` are OPTIONAL (only affect the computed `target_price`); `creation_price` is
+    ALWAYS captured server-side from the latest `daily_ohlcv` close regardless of whether they are supplied
+    (FIX-PREDCLAIM-CREATIONPRICE-UNGATE-ZOD-CONTRACT, 2026-07-25 — a ticker with no OHLCV data is REJECTED
+    outright, never silently persisted scoreless). Passing `direction` (bullish/bearish, derived from the
+    same bullish_score/bearish_score used for the qualifying-ticker check above) is RECOMMENDED where known —
+    it costs nothing and additionally populates `target_price` — but omitting it is no longer a data-quality bug.
   If FAIL second-pass:
     Skip claim creation for this ticker; log as honest-gap in digest (e.g., "[SKIP] VCB claim contradicts 52w data — re-evaluated, unresolved")
 
