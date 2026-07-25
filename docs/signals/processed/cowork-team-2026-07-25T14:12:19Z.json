@@ -45,5 +45,11 @@
     "note": "cycle_snapshot_promoted=false (4th consecutive refusal). calendar_status=closed matches no consumer branch in Step 4.3 (holiday/weekend only) - falls through to no-suppression, fail-safe but FR-P1-4 weekend suppression unreachable."
   },
   "priority": "low",
-  "createdAt": "2026-07-25T14:12:19Z"
+  "createdAt": "2026-07-25T14:12:19Z",
+  "_processed": {
+    "fingerprint": "ed7ce24e2ace42cd1de08e5bf17484398508ace6bf5ff29f17181b74d720e5cc",
+    "processedAt": "2026-07-25T14:19:36Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }
