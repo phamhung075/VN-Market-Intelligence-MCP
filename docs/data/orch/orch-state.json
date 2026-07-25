@@ -387,12 +387,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-MACRO-CALENDAR-WIRE-STATIC-SOURCE",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-MACRO-CALENDAR-WIRE-STATIC-SOURCE — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-25T04:15:55Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "updated_at": "2026-07-25T04:30:04Z",
+    "updated_by": "dev-mcp-server"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -15048,6 +15047,24 @@
         "rebuild_required": true,
         "branch": null,
         "review_note": "dev-mcp-server: get_supply_chain_exposure served a ~2.5mo-stale BDI (^BDI Yahoo permanently HTTP 404 since 2026-04) as current +0.0%, concluding false ổn định — same class as DSI-MACRO-PHANTOM-STALE-GUARD. Verified at source: guard genuinely did not exist (shippingIndex.ts L160 still `?? Date.now()/1000`). Reused the ALREADY-SHIPPED shared staleness helper (TRACKED_INDICATOR_STALE_MS/listTrackedIndicatorsFromDb, DSI precedent, epoch-ms compare) instead of inventing a new threshold. Fix (2 seams): (1) supplyChainTools.ts readShippingIndicesFromDb (now exported) filters stale shipping_* tracked_indicators rows out via the shared helper; (2) buildSupplyChainExposureOutput no longer defaults to ổn định when indices=[] (all stale/absent) — surfaces explicit no-data summary, real alert/signal paths unaffected. Root cause at shippingIndex.ts fetchSymbolData: removed the `?? Date.now()/1000` fallback that fabricated freshness when the source omitted a timestamp — missing regularMarketTime now returns null (no-data), generic across any symbol; this is the shared fetch seam both the serve path and commodityTrackerRefreshJob Block 2 call through, so no direct edit to that job file was made/needed. RED confirmed via git-stash A/B (new test failed pre-fix on missing export) -> GREEN after restore. New test FIX-BDI-SHIPPING-STALE-404-GUARD.test.ts 7/7 pass (12 expect calls). Precedent+affected suites (252-shipping-index/253-supply-chain/254-supply-chain-events/256-mcp-tool-041/1920c-commodity-tracker-refresh-job/DSI-MACRO-PHANTOM-STALE-GUARD/FIX-DOWJONES-STALE-WRONG-VALUE/1039-commodity-tracker-ddl-dedup/1248-bdi-vps-proxy/255-signal-integration): 107/107 pass, zero regression. bunx tsc --noEmit exit 0. Commits 646960658 (code+test) + fe24fcf4b (memory), pushed origin/main. Part (b) source replacement (^BDI dead, needs a live feed — ops-mainserver-fetch live-recon domain) stays OPEN; did NOT fabricate a replacement URL. QA: verify LIVE named-vol DB post-rebuild that a stale/absent BDI surfaces as no-data/stale and the conclusion is never falsely ổn định; decide whether part (b) becomes its own ops-mainserver-fetch co_owner row."
+      },
+      {
+        "id": "FIX-MACRO-CALENDAR-WIRE-STATIC-SOURCE",
+        "type": "FIX",
+        "title": "get_macro_calendar serves empty events[] — MCP tool proxies the FDA-4 honest-unavailable Go stub while a complete unwired static-calendar domain service exists in mcp-server",
+        "status": "REVIEW",
+        "priority": "P2",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MACRO-CALENDAR-WIRE-STATIC-SOURCE",
+        "promoted_at": "2026-07-25T04:15:55Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-25T04:30:04Z",
+        "claimed_at": "2026-07-25T04:15:55Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "rebuild_required": true,
+        "branch": null
       }
     ],
     "qa": [],
@@ -15069,23 +15086,7 @@
     },
     "last_triaged_at": "2026-07-25T04:15:55Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-MACRO-CALENDAR-WIRE-STATIC-SOURCE",
-        "type": "FIX",
-        "title": "get_macro_calendar serves empty events[] — MCP tool proxies the FDA-4 honest-unavailable Go stub while a complete unwired static-calendar domain service exists in mcp-server",
-        "status": "IN_PROGRESS",
-        "priority": "P2",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MACRO-CALENDAR-WIRE-STATIC-SOURCE",
-        "promoted_at": "2026-07-25T04:15:55Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-25T04:15:55Z",
-        "claimed_at": "2026-07-25T04:15:55Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
