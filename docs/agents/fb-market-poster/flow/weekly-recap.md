@@ -1,4 +1,4 @@
-<!-- size-justification: ~167L — WEEKLY_RECAP Saturday sub-flow; main.md MODE ROUTER JUMPs here; +12L: PRIVACY GUARD pointer + STEP 3d privacy gate; three-section composition + gate-override docs + notebook format mandate the length; no prediction section. UC-CCA-P4 2026-07-23: +7L STEP 3e CLAIM-TRUTH GATE pointer (was ungated). -->
+<!-- size-justification: ~167L — WEEKLY_RECAP Saturday sub-flow; main.md MODE ROUTER JUMPs here; +12L: PRIVACY GUARD pointer + STEP 3d privacy gate; three-section composition + gate-override docs + notebook format mandate the length; no prediction section. UC-CCA-P4 2026-07-23: +7L STEP 3e CLAIM-TRUTH GATE pointer (was ungated). FIX-FB-GATE-WEEKLY-FRAME-MODE 2026-07-25: STEP 3b replaced the manual "WEEKLY MODE OVERRIDE" procedure with a concrete --frame=weekly gate invocation (+8L net). -->
 # FB Market Poster — Weekly Recap Flow (Saturday / WEEKLY_RECAP)
 
 ## SELF-IDENTITY GUARD
@@ -149,19 +149,27 @@ _Được tạo bởi bot AI lúc {HH:MM} giờ Việt Nam_
 ### STEP 3a — Jargon gate (HARD-FAIL, REAL EXECUTION MANDATORY)
 → Execute identically to `main.md` STEP 4a (skill: `.claude/skills/fb-jargon-gate/SKILL.md`). Must run as real shell command; paste verbatim stdout in RETURN. Gate exit non-zero → block write, fix all [FAIL] lines, re-run.
 
-### STEP 3b — Data-integrity gate — WEEKLY MODE OVERRIDE
+### STEP 3b — Data-integrity gate — WEEKLY FRAME (FIX-FB-GATE-WEEKLY-FRAME-MODE)
 
-**The ±7% HOSE daily-limit check does NOT apply to WEEKLY_RECAP posts.**
-The `scripts/fb-data-integrity-gate.sh` Check-A ±7% rule detects physically-impossible single-day HOSE moves. Weekly recap posts legitimately show cumulative weekly changes exceeding ±7% — this is correct data, not fabrication.
+Invoke `scripts/fb-data-integrity-gate.sh` with **`--frame=weekly`** — compares the
+post's stated index moves against a WEEKLY close series (`get_price_history` REST
+mirror), NOT the latest daily snapshot. This is what closes lesson L5 (2026-06-21
+weekly "+1,84% w/w" false-blocked against that day's daily −0,32% snapshot) and
+SUPERSEDES the former manual "WEEKLY MODE OVERRIDE" workaround this replaced. Under
+`--frame=weekly`, Check-A (±7% daily price-limit) does not run at all — a per-session
+exchange limit never applies to a week's cumulative move — so no override is needed.
 
-**Override procedure when gate blocks on a ticker's weekly % figure:**
-1. Verify the figure is a weekly cumulative (derived from $daily_posts Mon–Fri), not a single-day move.
-2. Add "trong tuần" inline to clarify: e.g. "tăng 9,5% trong tuần" (explicit weekly framing).
-3. Re-run. If still blocks on a genuine weekly figure → write per-field honest gap ("số liệu tuần chưa thể xác minh") + PROCEED. Do NOT EXIT on this known false-positive.
-4. EXIT only if the figure is genuinely impossible: a single-day HOSE move >±7% asserted as daily.
+```bash
+TMPFILE=$(mktemp /tmp/fb-post-integrity-weekly-XXXXXX.txt)
+printf '%s' "$POST_BODY" > "$TMPFILE"
+bash scripts/fb-data-integrity-gate.sh --frame=weekly "$TMPFILE" "$DATE"
+INTEGRITY_EXIT=$?
+rm -f "$TMPFILE"
+```
+Paste the VERBATIM one-line gate stdout into the RETURN block.
 
-"bán tháo" negation-blind false-positive from `main.md` STEP 4b also applies here.
-Maximum 2 fix rounds (same bounded-retry as `main.md` STEP 4b). After 2 rounds: per-field honest gap + PROCEED.
+Same bounded-retry (max 2 fix rounds), Check-C "bán tháo" negation-blind false-positive
+handling, and EXIT-only-on-real-fabrication posture as `main.md` STEP 4b.
 
 ### STEP 3c — Structural checks
 - Disclaimer + hashtag block present (see STEP 2 rules).
@@ -220,12 +228,12 @@ Notebook entry:
 - Post file: docs/social/fb-post-{DATE}.md
 - Daily posts read: {N}/5 (Mon–Fri); data gaps: {list or none}
 - Jargon gate: PASS (0 violations) | BLOCKED (N violations, post not written)
-- Integrity gate: PASS | BLOCK (weekly ±7% override applied: {details}) | SKIP
+- Integrity gate (--frame=weekly): PASS | BLOCK (details: {details}) | SKIP
 - Privacy gate: PASS | BLOCK (violations found and fixed: {details})
 - Claim-truth gate: PASS | FAIL-corrected | BLOCKED
 - Status: {published/failed}
 ## Known patterns
-- WEEKLY_RECAP: cumulative weekly % moves legitimately exceed ±7%; weekly override applied
+- WEEKLY_RECAP: gate runs with --frame=weekly — cumulative weekly % moves compared against the weekly close series, not the daily snapshot; Check-A (daily limit) does not apply
 ```
 
 ---
@@ -239,7 +247,7 @@ PIPELINE: complete
 MODE: WEEKLY_RECAP
 QUALITY: full | partial — daily posts read: {N}/5; gaps: {list or none}
 JARGON GATE: [paste verbatim stdout of fb-jargon-gate.sh]
-INTEGRITY GATE: [PASS | BLOCK — weekly ±7% override applied: {detail} | SKIP]
+INTEGRITY GATE (--frame=weekly): [PASS | BLOCK — {detail} | SKIP]
 PRIVACY GATE: [PASS | BLOCK — violations found and fixed: {detail}]
 CLAIM-TRUTH GATE: [PASS | FAIL-corrected | BLOCKED]
 ```

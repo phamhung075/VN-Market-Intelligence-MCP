@@ -1,4 +1,4 @@
-<!-- size-justification: ~907L — 3-mode flow (DAILY/WEEKLY_RECAP/WEEKLY_PREDICTION) with MODE ROUTER, PRIVACY GUARD (SSOT for all 3 modes), and publish-once dedup gate coupled inline; full change history in git log. -->
+<!-- size-justification: ~907L — 3-mode flow (DAILY/WEEKLY_RECAP/WEEKLY_PREDICTION) with MODE ROUTER, PRIVACY GUARD (SSOT for all 3 modes), and publish-once dedup gate coupled inline; full change history in git log. FIX-FB-GATE-WEEKLY-FRAME-MODE 2026-07-25: STEP 4b +10L FRAME MODE note (this file's own gate call stays --frame=daily default; WEEKLY_RECAP/WEEKLY_PREDICTION sub-flows use --frame=weekly). -->
 # FB Market Poster — Main Flow
 
 ## SELF-IDENTITY GUARD (read first — non-negotiable)
@@ -716,6 +716,16 @@ Before writing the file, verify ALL checks. Fix inline where possible; log and a
 This gate runs IN ADDITION to the jargon gate. It checks numeric plausibility — the jargon gate passes both fabricated and real numbers equally (known failure: feedback_fb_poster_fabricates_when_data_thin, feedback_fb_poster_gate_false_green).
 
 The gate script is `scripts/fb-data-integrity-gate.sh` (authored by sibling task FIX-FB-POST-DATA-INTEGRITY-GATE).
+
+**FRAME MODE (FIX-FB-GATE-WEEKLY-FRAME-MODE):** this STEP 4b is the DAILY caller — the
+invocation below runs with the gate's default `--frame=daily` (no flag needed, unchanged
+behavior). WEEKLY_RECAP / WEEKLY_PREDICTION posts (`docs/agents/fb-market-poster/flow/
+weekly-recap.md` / `weekly-prediction.md`) MUST instead invoke the gate with
+`--frame=weekly`, which compares stated index moves against a WEEKLY close series
+(`get_price_history` REST mirror) instead of the latest daily snapshot — closes lesson
+L5 (2026-06-21 weekly "+1,84% w/w" false-blocked against that day's daily −0,32%
+snapshot). This superseded the former "WEEKLY MODE OVERRIDE" manual-router-override
+procedure in those two files.
 
 **GATE-LOOP HARDENING (failure mode: regen attempt wedged ~4.5h on Check-C "bán tháo" negation-blind false-positive):**
 - Maximum fix rounds: **2**. On each BLOCK, fix ALL flagged violations, then re-run the gate ONCE.

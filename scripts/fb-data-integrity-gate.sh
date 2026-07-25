@@ -2,13 +2,23 @@
 # fb-data-integrity-gate.sh — numeric plausibility gate for fb-market-poster
 #
 # Usage:
-#   bash scripts/fb-data-integrity-gate.sh <post-body-file> [YYYY-MM-DD] [snapshot-json-file] [macro-provenance-file]
+#   bash scripts/fb-data-integrity-gate.sh [--frame=daily|weekly|monthly] \
+#     <post-body-file> [YYYY-MM-DD] [snapshot-json-file] [macro-provenance-file]
 #
 # Args:
+#   --frame=X                  OPTIONAL, may appear anywhere in argv. One of
+#                              daily (DEFAULT — current/original behavior, unchanged) |
+#                              weekly | monthly. GENERIC MANDATE: the period is an
+#                              EXPLICIT input, never inferred from today's date alone —
+#                              see "FRAME MODES" below.
 #   $1  post-body-file         path to the post text (required)
 #   $2  YYYY-MM-DD             post date (optional — used for context only)
 #   $3  snapshot-json-file     pre-fetched live snapshot JSON (optional; if absent the gate
-#                              fetches from http://localhost:3000/mcp/api/prices/batch)
+#                              fetches live — see "FRAME MODES" below for the per-frame
+#                              source). Same `{"quotes": {TICKER: {close, changePct}}}` shape
+#                              regardless of frame — in weekly/monthly mode the caller may
+#                              supply a pre-computed PERIOD-close quotes JSON through this
+#                              SAME arg (e.g. for deterministic/historical replay testing).
 #   $4  macro-provenance-file  per-figure "fetched-this-cycle" provenance JSON for Check-I
 #                              (optional; absent = graceful skip, see Check-I below). Written
 #                              by docs/agents/fb-market-poster/flow/main.md STEP 1b — see that
@@ -19,18 +29,62 @@
 #   1  = BLOCK — one or more violations; [BLOCK] lines printed to stdout
 #   2  = usage/file error
 #
+# FRAME MODES (FIX-FB-GATE-WEEKLY-FRAME-MODE, 2026-07-25):
+#   Lesson L5 (2026-06-21): a WEEKLY post stating "+1,84% w/w" was FALSE-BLOCKED
+#   because the gate compared it against the latest DAILY snapshot (−0,32% that
+#   session) — a daily-vs-weekly frame mismatch, not a real fabrication. Before
+#   this fix shipped, weekly posts required a MANUAL router override (see the
+#   now-removed "WEEKLY MODE OVERRIDE" steps this superseded in
+#   docs/agents/fb-market-poster/flow/weekly-recap.md and weekly-prediction.md).
+#   --frame=daily   (DEFAULT) — unchanged: compares the post's index moves
+#                    against the LATEST DAILY snapshot (see LIVE DATA SOURCE below).
+#   --frame=weekly / --frame=monthly — compares the post's index moves against a
+#                    PERIOD-CLOSE series (this week/month's close vs the prior
+#                    period's close), NOT the latest daily snapshot. The period
+#                    close series is derived from the SAME REST surface the daily
+#                    path already uses (GET ${MCP_BASE}/mcp/api/prices/history —
+#                    the REST mirror of the get_price_history MCP tool; see
+#                    build_period_snapshot() below), grouping the returned daily
+#                    OHLCV rows by ISO week / calendar month — there is no
+#                    separate "weekly" table server-side, so deriving it from the
+#                    daily series is the correct, non-fabricated mechanism (no new
+#                    fetch path invented). If $3 is supplied, it is used AS-IS
+#                    (same shape) instead of the live derivation — same posture as
+#                    daily mode's snapshot-file override.
+#                    Check-A (daily ±7% price-limit) is SKIPPED outside --frame=daily
+#                    — the exchange price limit is a per-SESSION rule; a week's
+#                    cumulative move legitimately exceeds it.
+#                    Check-C (selloff language) is period-scoped regardless of
+#                    frame — see Check-C below.
+#
 # LIVE DATA SOURCE (for router / poster callers):
-#   The gate fetches live data from the mcp-server REST API:
-#     GET http://localhost:3000/mcp/api/prices/batch?tickers=VNINDEX,VIC,VHM,...
-#   Response: { "quotes": { "VIC": { "ticker":"VIC", "close":..., "changePct":..., ... }, ... } }
+#   --frame=daily (default): GET http://localhost:3000/mcp/api/prices/batch?tickers=VNINDEX,VIC,VHM,...
+#     Response: { "quotes": { "VIC": { "ticker":"VIC", "close":..., "changePct":..., ... }, ... } }
+#   --frame=weekly|monthly: GET http://localhost:3000/mcp/api/prices/history?code=<TICKER>&days=<N>
+#     per index ticker (VNINDEX/VN30/HNXINDEX/UPCOMINDEX) — see FRAME MODES above.
 #   If the API is unavailable (timeout) AND no snapshot-json-file was supplied, the gate
 #   logs a warning and exits 0 (skip-on-unavailable, not block-on-unavailable).
 #   The poster may supply a pre-fetched snapshot as $3 to eliminate the network dependency.
 #
 # CHECKS PERFORMED:
-#   A  per-ticker HOSE move > ±7%  (daily price limit violation = fabrication signal)
+#   A  per-ticker HOSE move > ±7%  (daily price limit violation = fabrication signal).
+#      FRAME-GATED (FIX-FB-GATE-WEEKLY-FRAME-MODE): only runs when --frame=daily
+#      (the default) — a per-session exchange price limit does not apply to a
+#      week's/month's cumulative move.
 #   B  per-ticker % in post vs live snapshot beyond 1.0 pp absolute delta
-#   C  "bán tháo"/"giảm sàn"/selloff narrative while live breadth = 0 floor + net-positive
+#   C  "bán tháo"/"giảm sàn"/selloff narrative while live breadth = 0 floor + net-positive.
+#      PERIOD-SCOPED (FIX-FB-GATE-WEEKLY-FRAME-MODE, lesson L5): only cross-checks
+#      selloff language found in the post's CURRENT-period recap section (before
+#      the mandated "Phân tích" section label — docs/agents/fb-market-poster/flow/
+#      main.md STEP 5 section order) against live breadth. A correct sentence
+#      describing a PRIOR period's real crash, or a conditional/forward scenario,
+#      lives in Phân tích/Dự đoán/Kịch bản — never asserted as THIS period's live
+#      state — so it is out of Check-C's cross-check scope. No "Phân tích" label
+#      found → falls back to scanning the whole post (never MORE restrictive than
+#      before this fix). Also strips lines carrying an explicit relative
+#      past-period marker ("tuần trước", "tháng trước", "kỳ trước", "phiên trước",
+#      "trước đó", "trước sốc") from the affirmative match set — belt-and-suspenders,
+#      generic phrasing only, no hardcoded dates.
 #   D  VN-Index level or % in post vs live snapshot beyond tolerance
 #   E  sector/company-name validator — SSOT-driven (docs/data/system-map.json watchlist)
 #      Blocks when a watchlist ticker is labelled with a contradicting sector keyword,
@@ -104,6 +158,38 @@
 
 set -euo pipefail
 
+# ── Frame flag (FIX-FB-GATE-WEEKLY-FRAME-MODE) ─────────────────────────────────
+# --frame=daily|weekly|monthly may appear anywhere in argv; stripped out before
+# positional-arg parsing so $1..$4 below keep their original meaning regardless
+# of where the flag was passed. Default = daily = current/original behavior,
+# unchanged (GENERIC MANDATE: period is an explicit input, never inferred from
+# today's date alone). See "FRAME MODES" in the header comment above.
+FRAME="daily"
+ARGS=()
+for arg in "$@"; do
+  case "$arg" in
+    --frame=*)
+      FRAME="${arg#--frame=}"
+      ;;
+    *)
+      ARGS+=("$arg")
+      ;;
+  esac
+done
+if [[ ${#ARGS[@]} -gt 0 ]]; then
+  set -- "${ARGS[@]}"
+else
+  set --
+fi
+
+case "$FRAME" in
+  daily|weekly|monthly) ;;
+  *)
+    echo "ERROR: --frame must be one of daily|weekly|monthly (got: $FRAME)" >&2
+    exit 2
+    ;;
+esac
+
 # ── Args ──────────────────────────────────────────────────────────────────────
 FILE="${1:-}"
 POST_DATE="${2:-}"
@@ -125,6 +211,9 @@ VNINDEX_PCT_LIMIT=0.5    # max acceptable |post_pct - live_pct| for VN-Index in 
 POINT_PCT_MATH_TOLERANCE=1.0  # Check-H: max |stated_point_change - implied_point_change| in index points
 BREADTH_PCT_TOLERANCE=6.0     # Check-J: max |stated_breadth_pct - implied_pct_from_cited_counts| in pp
 CURL_TIMEOUT=8           # seconds
+PRICE_HISTORY_URL="${MCP_BASE}/mcp/api/prices/history"  # FIX-FB-GATE-WEEKLY-FRAME-MODE
+FRAME_HISTORY_DAYS_WEEKLY="${FRAME_HISTORY_DAYS_WEEKLY:-21}"    # >= 2 ISO weeks of lookback
+FRAME_HISTORY_DAYS_MONTHLY="${FRAME_HISTORY_DAYS_MONTHLY:-70}"  # >= 2 calendar months of lookback
 
 VIOLATIONS=0
 
@@ -163,20 +252,121 @@ else
   FETCH_TICKERS="$INDEX_TICKERS"
 fi
 
-# ── Step 2: Fetch live snapshot ───────────────────────────────────────────────
+# ── build_period_snapshot: weekly/monthly period-close derivation ─────────────
+# (FIX-FB-GATE-WEEKLY-FRAME-MODE) Mirrors the EXACT data-access idiom already
+# used for the daily snapshot above (curl against the mcp-server REST API —
+# never a different fetch path): GET ${PRICE_HISTORY_URL}?code=<TICKER>&days=<N>
+# is the REST mirror of the get_price_history MCP tool
+# (apps/mcp-server/src/interface/mcp/routes/priceHistoryHandler.ts). There is no
+# separate "weekly" table server-side, so the period close/%-change is derived
+# HERE from the returned daily OHLCV rows (grouped by ISO week or calendar
+# month) — this is the correct, non-fabricated way to get a period-close series
+# without inventing a new fetch path. Per-ticker fetch/parse failure is a
+# graceful per-ticker skip (same posture as a missing ticker in the daily quotes
+# JSON — downstream Check-A/B/D/H already no-op on a "null" quote).
+build_period_snapshot() {
+  local days="$1"
+  local group_mode="$2"   # "week" or "month"
+  local combined="{}"
+  local tk hist frag
+  local tickers
+  IFS=',' read -ra tickers <<< "$INDEX_TICKERS"
+  for tk in "${tickers[@]}"; do
+    hist=$(curl -sf --max-time "$CURL_TIMEOUT" "${PRICE_HISTORY_URL}?code=${tk}&days=${days}" 2>/dev/null || true)
+    [[ -z "$hist" ]] && continue
+    frag=$(python3 - "$tk" "$group_mode" "$hist" <<'PYEOF'
+import sys, json
+from datetime import date as _date
+
+ticker, mode, hist_json = sys.argv[1], sys.argv[2], sys.argv[3]
+try:
+    data = json.loads(hist_json)
+except Exception:
+    print("{}"); sys.exit(0)
+rows = data.get("history", [])
+if not rows:
+    print("{}"); sys.exit(0)
+
+def period_key(date_str):
+    y, m, d = (int(x) for x in date_str.split("-"))
+    dt = _date(y, m, d)
+    if mode == "week":
+        iso = dt.isocalendar()
+        return (iso[0], iso[1])
+    return (y, m)
+
+groups = {}
+for r in rows:
+    groups.setdefault(period_key(r["date"]), []).append(r)
+
+ordered_keys = sorted(groups.keys())
+if len(ordered_keys) < 2:
+    print("{}"); sys.exit(0)  # not enough distinct periods to derive a %-change
+
+# Latest DISTINCT period present = the "current" period being reported;
+# the one immediately before it = the comparison base. Each period's close =
+# the close of its LAST (latest-dated) row — mirrors how the daily-quotes
+# endpoint's "close" is always the latest available session close.
+prev_close = sorted(groups[ordered_keys[-2]], key=lambda r: r["date"])[-1]["close"]
+curr_close = sorted(groups[ordered_keys[-1]], key=lambda r: r["date"])[-1]["close"]
+if not prev_close:
+    print("{}"); sys.exit(0)
+
+pct = (curr_close - prev_close) / prev_close * 100.0
+print(json.dumps({ticker: {"ticker": ticker, "close": curr_close, "changePct": pct}}))
+PYEOF
+)
+    [[ -z "$frag" ]] && frag="{}"
+    combined=$(python3 -c '
+import json, sys
+a = json.loads(sys.argv[1])
+b = json.loads(sys.argv[2])
+a.update(b)
+print(json.dumps(a))
+' "$combined" "$frag")
+  done
+  echo "{\"quotes\": ${combined}}"
+}
+
+# ── Step 2: Fetch live snapshot (frame-aware) ─────────────────────────────────
 SNAPSHOT_JSON=""
 
 if [[ -n "$SNAPSHOT_FILE" && -f "$SNAPSHOT_FILE" && -s "$SNAPSHOT_FILE" ]]; then
   SNAPSHOT_JSON=$(cat "$SNAPSHOT_FILE")
-  echo "[INFO] fb-data-integrity-gate: using pre-fetched snapshot from $SNAPSHOT_FILE"
-else
+  echo "[INFO] fb-data-integrity-gate: using pre-fetched snapshot from $SNAPSHOT_FILE (frame=${FRAME})"
+elif [[ "$FRAME" == "daily" ]]; then
   SNAPSHOT_JSON=$(curl -sf --max-time "$CURL_TIMEOUT" \
     "${PRICE_BATCH_URL}?tickers=${FETCH_TICKERS}" 2>/dev/null || true)
   if [[ -z "$SNAPSHOT_JSON" ]]; then
     echo "[WARN] fb-data-integrity-gate: live API unavailable (${PRICE_BATCH_URL}) — skipping live checks (A+B+D); only static checks (C) apply"
     SNAPSHOT_JSON=""
   else
-    echo "[INFO] fb-data-integrity-gate: live snapshot fetched from ${PRICE_BATCH_URL}"
+    echo "[INFO] fb-data-integrity-gate: live snapshot fetched from ${PRICE_BATCH_URL} (frame=daily)"
+  fi
+else
+  # weekly/monthly — derive a period-close series from daily OHLCV instead of
+  # the latest daily snapshot (see build_period_snapshot / FRAME MODES above).
+  if [[ "$FRAME" == "weekly" ]]; then
+    FRAME_DAYS="$FRAME_HISTORY_DAYS_WEEKLY"
+    FRAME_GROUP="week"
+  else
+    FRAME_DAYS="$FRAME_HISTORY_DAYS_MONTHLY"
+    FRAME_GROUP="month"
+  fi
+  SNAPSHOT_JSON=$(build_period_snapshot "$FRAME_DAYS" "$FRAME_GROUP")
+  HAS_QUOTES=$(python3 -c "
+import json, sys
+try:
+    d = json.loads(sys.argv[1])
+    print('1' if d.get('quotes') else '0')
+except Exception:
+    print('0')
+" "$SNAPSHOT_JSON")
+  if [[ "$HAS_QUOTES" != "1" ]]; then
+    echo "[WARN] fb-data-integrity-gate: no ${FRAME} period data derivable from ${PRICE_HISTORY_URL} — skipping live checks (B+D+H); only static checks (C) apply"
+    SNAPSHOT_JSON=""
+  else
+    echo "[INFO] fb-data-integrity-gate: ${FRAME} period-close snapshot derived from ${PRICE_HISTORY_URL} (period-close series, not the latest daily snapshot)"
   fi
 fi
 
@@ -373,9 +563,14 @@ while IFS=$'\t' read -r ticker post_pct; do
   [[ -z "$ticker" ]] && continue
 
   # ── Check A: HOSE daily price limit ─────────────────────────────────────
-  abs_pct=$(abs_val "$post_pct")
-  if python_gt "$abs_pct" "$HOSE_LIMIT" 2>/dev/null; then
-    log_block "Check-A HOSE-price-limit: $ticker post=$post_pct% exceeds ±${HOSE_LIMIT}% daily limit — FABRICATION SIGNAL"
+  # FRAME-GATED (FIX-FB-GATE-WEEKLY-FRAME-MODE): only meaningful for --frame=daily
+  # (the default) — a per-session exchange price limit does not apply to a
+  # week's/month's cumulative move.
+  if [[ "$FRAME" == "daily" ]]; then
+    abs_pct=$(abs_val "$post_pct")
+    if python_gt "$abs_pct" "$HOSE_LIMIT" 2>/dev/null; then
+      log_block "Check-A HOSE-price-limit: $ticker post=$post_pct% exceeds ±${HOSE_LIMIT}% daily limit — FABRICATION SIGNAL"
+    fi
   fi
 
   # ── Check B: live snapshot delta ─────────────────────────────────────────
@@ -395,9 +590,31 @@ done <<< "$TICKER_PCTS"
 # Must NOT fire on negations: "không phải bán tháo", "không phải sell-off",
 # "không có mã giảm sàn", "không bán tháo".
 # Strategy: count lines with selloff language, then subtract negation lines.
-SELLOFF_LINES=$(grep -iE 'bán tháo|sell.?off|hoảng loạn|tháo chạy' "$FILE" 2>/dev/null || true)
+#
+# PERIOD-SCOPING (FIX-FB-GATE-WEEKLY-FRAME-MODE, lesson L5): the live cross-check
+# below asserts the CURRENT reporting period's breadth — it must only consider
+# selloff language that is actually ABOUT that period. The mandated post template
+# order (docs/agents/fb-market-poster/flow/main.md STEP 5: Tóm tắt nhanh →
+# Phân tích → Dự đoán/Tổng kết) puts CURRENT-period factual recap in "Tóm tắt
+# nhanh" — everything at/after the "Phân tích" section label is analysis,
+# history, or forward-looking scenario, never an assertion about THIS period's
+# live state (e.g. lesson L5: "Tuần 8–12/6 ... bán tháo mạnh" correctly describes
+# a PRIOR week's real crash, appearing in Phân tích). No "Phân tích" label found
+# (older/malformed posts) → falls back to the whole file, never MORE restrictive
+# than pre-fix behavior.
+PHAN_TICH_LINE=$(grep -n '^Phân tích:\?[[:space:]]*$' "$FILE" 2>/dev/null | head -1 | cut -d: -f1 || true)
+if [[ -n "$PHAN_TICH_LINE" && "$PHAN_TICH_LINE" -gt 1 ]]; then
+  RECAP_SCOPE_TEXT=$(head -n $((PHAN_TICH_LINE - 1)) "$FILE")
+else
+  RECAP_SCOPE_TEXT=$(cat "$FILE")
+fi
+
+SELLOFF_LINES=$(grep -iE 'bán tháo|sell.?off|hoảng loạn|tháo chạy' <<< "$RECAP_SCOPE_TEXT" 2>/dev/null || true)
 # Remove negation lines (không phải bán tháo / không phải / chứ không phải / mà không)
-SELLOFF_AFFIRM_LINES=$(echo "$SELLOFF_LINES" | grep -vE 'không phải|không có|không bán|chứ không|mà không' 2>/dev/null || true)
+# and lines carrying an explicit RELATIVE past-period marker — generic phrasing,
+# no hardcoded dates, defense-in-depth alongside the section-scope above (covers
+# a past-period reference that happens to still land inside Tóm tắt nhanh).
+SELLOFF_AFFIRM_LINES=$(echo "$SELLOFF_LINES" | grep -vE 'không phải|không có|không bán|chứ không|mà không|tuần trước|tháng trước|kỳ trước|phiên trước|trước đó|trước sốc' 2>/dev/null || true)
 SELLOFF_LANG=$(echo "$SELLOFF_AFFIRM_LINES" | grep -c '.' 2>/dev/null || echo "0")
 SELLOFF_LANG="${SELLOFF_LANG//[^0-9]/}"  # strip any whitespace/newlines
 SELLOFF_LANG="${SELLOFF_LANG:-0}"
@@ -416,7 +633,7 @@ if [[ "$SELLOFF_LANG" -gt 0 && -n "$SNAPSHOT_JSON" ]]; then
       # Check if post itself claims 0 floor stocks (evidence of contradiction within post)
       # NOTE: grep -c returns exit 1 when 0 lines match, so || echo "0" would fire and produce
       # "0\n0" (grep stdout "0" + echo "0"). Fix: capture via subshell that always exits 0.
-      floor_zero=$(grep -ciE '0 mã (giảm sàn|sàn)|không có mã (nào |giảm )?sàn|chỉ \d mã sàn|sàn, (0|không)' "$FILE" 2>/dev/null || true)
+      floor_zero=$(grep -ciE '0 mã (giảm sàn|sàn)|không có mã (nào |giảm )?sàn|chỉ \d mã sàn|sàn, (0|không)' <<< "$RECAP_SCOPE_TEXT" 2>/dev/null || true)
       floor_zero=$(echo "$floor_zero" | grep -m1 '^[0-9]' || echo "0")
       if [[ "$floor_zero" -gt 0 ]]; then
         log_block "Check-C breadth-contradiction: post contains selloff/bán-tháo language but claims 0 floor stocks AND live VN-Index=${vnindex_live_pct}% (mild). Contradiction."
@@ -428,7 +645,7 @@ if [[ "$SELLOFF_LANG" -gt 0 && -n "$SNAPSHOT_JSON" ]]; then
   else
     # No live data available — check for internal post contradiction only
     # Same grep -c / || echo "0" guard (see first floor_zero note above)
-    floor_zero=$(grep -ciE '0 mã (giảm sàn|sàn)|không có mã (nào |giảm )?sàn|không có mã giảm sàn' "$FILE" 2>/dev/null || true)
+    floor_zero=$(grep -ciE '0 mã (giảm sàn|sàn)|không có mã (nào |giảm )?sàn|không có mã giảm sàn' <<< "$RECAP_SCOPE_TEXT" 2>/dev/null || true)
     floor_zero=$(echo "$floor_zero" | grep -m1 '^[0-9]' || echo "0")
     if [[ "$floor_zero" -gt 0 ]]; then
       log_block "Check-C breadth-contradiction: post contains selloff/bán-tháo language but also states 0 floor stocks. Internal contradiction."
