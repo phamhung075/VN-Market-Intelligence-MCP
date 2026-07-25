@@ -387,11 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-07-25T03:24:53Z",
-    "updated_by": "dev-mcp-server"
+    "status": "in_progress",
+    "active_task_id": "FIX-BDI-SHIPPING-STALE-404-GUARD",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-BDI-SHIPPING-STALE-404-GUARD — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-25T03:45:49Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6645,16 +6646,6 @@
         "title": "fb-market-poster flow calls get_sentiment_trend({}) with EMPTY args but tool REQUIRES stock_code -> silent error every fb-poster cycle -> sentiment signal permanently blind",
         "size": "S",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-FBPOSTER-SENTIMENT-TREND-BARE-CALL"
-      },
-      {
-        "id": "FIX-BDI-SHIPPING-STALE-404-GUARD",
-        "type": "FIX",
-        "priority": "P2",
-        "status": "BACKLOG",
-        "zone": "apps/mcp-server",
-        "size": "M",
-        "title": "get_supply_chain_exposure serves STALE BDI as current: BDI 1,400 (+0.0%) data-date 2026-04-07 (~2.5mo stale) shown under current header + concludes ổn định — ^BDI Yahoo endpoint DEAD (HTTP 404). no-fake-data/staleness violation (same class as DSI-MACRO-PHANTOM-STALE-GUARD, NEW BDI/supply-chain instance).",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-BDI-SHIPPING-STALE-404-GUARD"
       },
       {
         "id": "FIX-MACRO-CALENDAR-WIRE-STATIC-SOURCE",
@@ -15065,9 +15056,26 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-25T03:16:18Z",
+    "last_triaged_at": "2026-07-25T03:45:49Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-BDI-SHIPPING-STALE-404-GUARD",
+        "type": "FIX",
+        "priority": "P2",
+        "status": "IN_PROGRESS",
+        "zone": "apps/mcp-server",
+        "size": "M",
+        "title": "get_supply_chain_exposure serves STALE BDI as current: BDI 1,400 (+0.0%) data-date 2026-04-07 (~2.5mo stale) shown under current header + concludes ổn định — ^BDI Yahoo endpoint DEAD (HTTP 404). no-fake-data/staleness violation (same class as DSI-MACRO-PHANTOM-STALE-GUARD, NEW BDI/supply-chain instance).",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-BDI-SHIPPING-STALE-404-GUARD",
+        "promoted_at": "2026-07-25T03:45:49Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-25T03:45:50Z",
+        "claimed_at": "2026-07-25T03:45:49Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
