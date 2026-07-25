@@ -10,5 +10,11 @@
     "cap": 200,
     "reason": "no ## section boundaries found; cannot safely prune",
     "action_required": "manual_review"
+  },
+  "_processed": {
+    "fingerprint": "d2b0f47008b2e3fa8c1efe2c9ffadf394143da14212fd7f346952a5205bb2eb6",
+    "processedAt": "2026-07-25T10:43:10Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

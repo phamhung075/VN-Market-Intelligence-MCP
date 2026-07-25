@@ -35,5 +35,11 @@
     "note": "WORK tick via preflight. Routed sau-d4-data-quality-anomaly-dgc-q1-2026 (D4 false-positive: KNOWN_LEGIT_PREFIXES lacks data-quality-anomaly:) + sys-20260725T003340-1ce9 (11 low-confidence financial_reports) to po under intent lock. Rows left NEW — po ACKs what it dispositions."
   },
   "priority": "low",
-  "createdAt": "2026-07-25T06:55:42Z"
+  "createdAt": "2026-07-25T06:55:42Z",
+  "_processed": {
+    "fingerprint": "8d8028d4f049ea3b4838558b80819fbca06055dcad4fd578aa6d9f1e6994806b",
+    "processedAt": "2026-07-25T10:43:10Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

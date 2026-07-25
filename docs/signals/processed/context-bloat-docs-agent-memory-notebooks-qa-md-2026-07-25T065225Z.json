@@ -3,22 +3,22 @@
   "to": "claude-manager-helper",
   "type": "context_bloat_breach",
   "priority": "high",
-  "createdAt": "2026-07-25T00:15:49Z",
+  "createdAt": "2026-07-25T06:52:25Z",
   "payload": {
-    "file": "docs/agent-memory/notebooks/alert-commander.md",
-    "line_count": 183,
+    "file": "docs/agent-memory/notebooks/qa.md",
+    "line_count": 187,
     "cap": 200,
-    "byte_count": 114306,
+    "byte_count": 55481,
     "byte_cap": 12000,
     "class": "agent-notebook",
     "reason": "byte-cap",
     "overage": 0,
-    "byte_overage": 102306,
+    "byte_overage": 43481,
     "action_required": "prune_or_split"
   },
   "_processed": {
-    "fingerprint": "5f0fb5255a977296653543cca6b800fe4e38d7705040b3ef4ca9cdead8e81a0d",
-    "processedAt": "2026-07-25T01:46:16Z",
+    "fingerprint": "d57da8c7d95fc5486c83b474429c904f770a2535a5ba9c359176651e3c6de963",
+    "processedAt": "2026-07-25T10:43:10Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

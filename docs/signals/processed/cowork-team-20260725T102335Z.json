@@ -1,0 +1,43 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-25T10:22:54Z",
+    "matched_slots": [],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": true,
+    "drift_min": 7,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "closed",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {},
+    "cadence_minutes": {},
+    "last_fired_timestamp": null,
+    "last_fired_slots": [],
+    "last_fired_write_errors": null,
+    "classification": "DEFERRED",
+    "reason": "drain_deferred_pending_devteam_fire",
+    "nominal_tick": "10:15",
+    "leader_lock": "acquired",
+    "dev_head": "idle",
+    "devq": 5,
+    "signal_backlog": 17,
+    "note": "DELIBERATE CONTRACT DEVIATION: Step 6.1 skip-rule (silent AND no spawns AND no errors) would suppress this tick, but that would leave cwk-20260725T101142-c4f1 NEW across multiple ticks with no trace of why - indistinguishable from a stuck drain. Row is cowork-teams own evidence-only signal to po; no other agents signal is queued behind it. NOT spawning po this tick: dev-team cron 45e8a8e9 (7,37) fires 10:37Z and is the decisive evidence for pos own open question (tick-plane vs board). Spawning after 10:37Z yields one complete po run instead of two partial ones. Row left NEW (not flipped READ) per blanket-ACK lesson - flipping without spawning buries it. Step 6.0 returned cycle_snapshot_promoted=false for the 3rd consecutive tick, corroborating UC-SDF-P2."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-25T10:22:54Z",
+  "_processed": {
+    "fingerprint": "f24f6f25a1ab605741b56d3e2982e01455406f86fe4163c419bd74b3e4a91a7d",
+    "processedAt": "2026-07-25T10:43:10Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

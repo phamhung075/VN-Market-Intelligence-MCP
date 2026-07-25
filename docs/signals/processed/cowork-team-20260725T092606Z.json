@@ -1,0 +1,45 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260725T092606Z",
+    "matched_slots": [],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/po/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 7,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "closed",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {},
+    "cadence_minutes": {},
+    "last_fired_timestamp": null,
+    "last_fired_slots": [],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "signal_drain_routed",
+    "nominal_tick": "09:15",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 17,
+    "note": "No slot matches this tick (matched_slots empty) — the spawn came from the Step 0a signal_queue drain, not a slot fire. Routed 2 NEW rows (cwk-20260725T091107-1f13, cwk-20260725T091107-a591) to po via background spawn, then flipped both NEW->READ. Step 4.7/5/5b skipped per WON_SLOTS empty. FINDING (routed as cwk-20260725T092802-7c2e, root cause VERIFIED): cycle-snapshot-latest.json is frozen at 2026-07-07T19:47:26Z (mtime AND content). emitPressureStateTool.ts:360 derives tickHHMM from the NOMINAL tick_id (always :00/:15/:30/:45) and line 232 looks up cycle-snapshot-<that>.json, but tick-snapshot.md Step 4.7 names the file with FILE_TICK=$(date -u +%H:%M) = FIRE time (observed on disk: 00:10, 08:10, 09:08, 20:09, 20:26, 21:09 — none on a nominal boundary). existsSync fails every tick -> early return line 233 with {promoted:false, stale:false}, so stale_warning is never set and the failure is completely silent. Not the minute-boundary race I first suspected; it is a systematic producer/consumer filename-contract mismatch."
+  },
+  "priority": "low",
+  "createdAt": "20260725T092606Z",
+  "_processed": {
+    "fingerprint": "4e2cfd4d010570ac87211f8da591a4224f2efc0ee1115786029af4fef15dd1ea",
+    "processedAt": "2026-07-25T10:43:10Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

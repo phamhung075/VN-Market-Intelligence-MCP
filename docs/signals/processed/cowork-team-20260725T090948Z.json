@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-25T09:09:48Z",
+    "matched_slots": [
+      "refine-bctc-slot-1"
+    ],
+    "won_slots": [
+      "refine-bctc-slot-1"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/refine_bctc_md/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 7,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "closed",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "refine-bctc-slot-1": "cadence"
+    },
+    "cadence_minutes": {
+      "refine-bctc-slot-1": "240"
+    },
+    "last_fired_timestamp": "2026-07-25T09:09:16Z",
+    "last_fired_slots": [
+      "refine-bctc-slot-1"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "09:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 17,
+    "note": "calendar_status='closed' on a Saturday matches NO row in cadence-policy.json for policy bctc-offmarket (rows exist for holiday/weekend/open/half_day/unknown only), so the slot fell through to the 240min unmatched default instead of the intended weekend row's 1440min. Step 4.3 suppression also matches literals ['holiday','weekend'] and therefore did not evaluate. THIS TICK the outcome was unchanged: elapsed 1441min cleared both 240 and 1440, and bctc-offmarket+weekend is explicitly NOT calendar-suppressed anyway (Step 4.3 defers it to the Step 4.4 cadence rate). Second observation of this vocabulary gap (first: tick 08:00Z, gatherer-standard). Origin of the 'closed' literal still UNVERIFIED — needs triage of the emit_pressure_state calendar producer."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-25T09:09:48Z",
+  "_processed": {
+    "fingerprint": "c268f0bee515bf1160c181a0c3cb8ca0a18a7c1a0cd3c25e97e5ec6f4eec48d4",
+    "processedAt": "2026-07-25T10:43:10Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

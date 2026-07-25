@@ -3,23 +3,23 @@
   "to": "claude-manager-helper",
   "type": "context_bloat_breach",
   "priority": "high",
-  "createdAt": "2026-07-25T00:13:44Z",
+  "createdAt": "2026-07-24T21:37:12Z",
   "payload": {
-    "file": "docs/agent-memory/notebooks/news-scout.md",
-    "line_count": 174,
+    "file": "docs/agent-memory/notebooks/dev-mcp-server.md",
+    "line_count": 51,
     "cap": 200,
-    "byte_count": 49734,
+    "byte_count": 13920,
     "byte_cap": 12000,
     "class": "agent-notebook",
     "reason": "byte-cap",
     "overage": 0,
-    "byte_overage": 37734,
+    "byte_overage": 1920,
     "action_required": "prune_or_split"
   },
   "_processed": {
-    "fingerprint": "46096ec0dd53d11ee7e7332d6c3a3e93364f82cc6209888bb7236e2b084eac2d",
-    "processedAt": "2026-07-25T01:46:16Z",
+    "fingerprint": "b6ee8b2932220477c8eb44a82c86fbde317eed09bc373a1e87e8da491d1c85f2",
+    "processedAt": "2026-07-25T10:43:10Z",
     "processedBy": "dev-team",
-    "result": "routed-to-po"
+    "result": "skipped-duplicate-replay"
   }
 }

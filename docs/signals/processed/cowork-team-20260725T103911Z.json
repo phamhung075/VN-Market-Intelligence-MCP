@@ -1,0 +1,43 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-25T10:39:11Z",
+    "matched_slots": [],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": true,
+    "drift_min": 8,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "closed",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {},
+    "cadence_minutes": {},
+    "last_fired_timestamp": null,
+    "last_fired_slots": [],
+    "last_fired_write_errors": null,
+    "classification": "DEFERRED",
+    "reason": "drain_deferred_pending_devteam_first_fire",
+    "nominal_tick": "10:30",
+    "leader_lock": "acquired",
+    "dev_head": "idle",
+    "devq": 5,
+    "signal_backlog": 17,
+    "note": "DELIBERATE CONTRACT DEVIATION (2nd consecutive), Step 6.1 skip-rule overridden. Sole NEW row is cowork-teams own evidence-only cwk-20260725T101142-c4f1 to po; no other agents signal queued behind it. DEFER RATIONALE: dev-team cron 45e8a8e9 (7,37) was armed ~10:10Z, AFTER the 10:07 slot, so it has had ZERO fires to date. Its first fire (10:37) is queued behind this cowork turn (crons fire only on REPL idle) and executes immediately after. Spawning po now would hand it only crons armed, first fire pending. HARD BOUND: spawn po at the 10:45Z tick REGARDLESS of outcome - claim or no-claim are both decisive for pos tick-plane-vs-board question. This bound is recorded here because context compaction can drop it. Row left NEW (not flipped READ) per blanket-ACK lesson. VERIFIED THIS TICK: CronList shows all 5 crons alive (re-arm persisted 28min); head still idle since 09:51:59Z; P0 FIX-BCTC-PENDING-REFINE-HEAD-OF-LINE-FAILED-ROW still lane=backlog owner=dev-mcp-server. Step 6.0 returned cycle_snapshot_promoted=false for the 4th consecutive tick, corroborating UC-SDF-P2."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-25T10:39:11Z",
+  "_processed": {
+    "fingerprint": "9942c6d75609968928da889b25e9eab450599df6deeb85a2deb38d7671b52610",
+    "processedAt": "2026-07-25T10:43:10Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

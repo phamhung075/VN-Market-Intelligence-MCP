@@ -1,0 +1,45 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-25T09:42:03Z",
+    "matched_slots": [],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/po/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 8,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "closed",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {},
+    "cadence_minutes": {},
+    "last_fired_timestamp": null,
+    "last_fired_slots": [],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "signal_drain_routed",
+    "nominal_tick": "09:30",
+    "leader_lock": "acquired",
+    "dev_head": "active_but_stalled",
+    "devq": 5,
+    "signal_backlog": 17,
+    "note": "Drained 2 NEW rows (7c2e snapshot-promotion break, b3d1 BOUNDED-1 stall) -> spawned po, both flipped READ, conservation 131=131. Step 6.0 returned cycle_snapshot_promoted=false, reproducing the 7c2e defect live on this tick. Head still pinned on P2 FIX-VNINDEX-CACHE-STARTUP-PURGE since 05:18:13Z (4h24m) with 18 P0 rows READY. NEW: today is Saturday and calendar_status=closed is out-of-domain for Step 4.3, so weekend suppression never fires - 3 non-guaranteed slots (news-scout-offhours, market-watcher-offhours, alert-commander-critical) fired today that the design says should be suppressed. Sent to live po as UC-CDC-P1 impact evidence, no new row minted. calendar_status passed through unchanged rather than corrected - unilateral change would alter dispatcher behavior mid-triage."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-25T09:42:03Z",
+  "_processed": {
+    "fingerprint": "1b5f85742582c5b1247d0a585632f5afafd9639394b03f0d6f0432d9b18a7985",
+    "processedAt": "2026-07-25T10:43:10Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

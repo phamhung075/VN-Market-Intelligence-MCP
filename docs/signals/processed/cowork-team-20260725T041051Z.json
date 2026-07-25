@@ -1,0 +1,67 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-25T04:10:51Z",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "closed",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence",
+      "alert-commander-critical": "cadence"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": "240",
+      "market-watcher-offhours": "240",
+      "alert-commander-critical": "240"
+    },
+    "last_fired_timestamp": "2026-07-25T04:10:43Z",
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "04:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 13,
+    "note": "3 offhours gatherer/alert slots fired at 04:00 (cadence 240min, snapped last_fired 00:00Z). calendar_status='closed' (server vocab; 2026-07-25 is weekend) -> no Step 4.3 suppression under literal flow; freshness downgrade skipped (signal_backlog=13!=0). Known calendar vocab mismatch, previously flagged (dev/PO item), router did not mint."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-25T04:10:51Z",
+  "_processed": {
+    "fingerprint": "76646a9190c282bd7ca5e79d51489595543aff718adfd3b1558d467cb3a284e7",
+    "processedAt": "2026-07-25T10:43:10Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

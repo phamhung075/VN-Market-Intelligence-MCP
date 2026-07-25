@@ -1,0 +1,69 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-25T08:11:43Z",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 7,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "closed",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence",
+      "alert-commander-critical": "cadence"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": 240,
+      "market-watcher-offhours": 240,
+      "alert-commander-critical": 240
+    },
+    "last_fired_timestamp": "2026-07-25T08:11:05Z",
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "08:00",
+    "leader_lock": "acquired",
+    "dev_head": "in_progress",
+    "devq": 5,
+    "signal_backlog": 17,
+    "max_parallel": 4,
+    "fanout_degraded": false,
+    "note": "OBSERVATION: pressure-state emits calendar_status=\"closed\" on a Saturday, but Step 4.3 suppression matches literal [\"holiday\",\"weekend\"] and cadence-policy.json gatherer-standard has rows only for open/half_day/holiday/weekend/unknown. \"closed\" matches neither, so weekend suppression of non-guaranteed slots never fires and gatherers fall through to the 240min default instead of the weekend 480min row. Unverified whether \"closed\" is intentional or a vocabulary mismatch — needs triage, not fixed this tick."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-25T08:11:43Z",
+  "_processed": {
+    "fingerprint": "a6f4c513f642a767dcde8ec6c48dc37b539ec0f60352f5269be8960974bd3e09",
+    "processedAt": "2026-07-25T10:43:10Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
