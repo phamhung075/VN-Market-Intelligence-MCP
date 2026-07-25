@@ -1,0 +1,46 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "recurring-bug",
+  "priority": "high",
+  "createdAt": "2026-07-25T12:14:21Z",
+  "payload": {
+    "title": "cycle-snapshot-latest.json promotion has been dead 18 days — nominal-vs-actual HH:MM mismatch",
+    "severity": "high",
+    "detected_at": "2026-07-25T12:14:21Z",
+    "detected_by": "cowork-team dispatcher tick 2026-07-25T12:00Z",
+    "root_cause": {
+      "summary": "Step 4.7 names the snapshot file from the ACTUAL fire minute; Step 6.0 looks it up by the NOMINAL tick minute. They agree only at drift_min==0.",
+      "writer": "docs/agents/cowork-team/flow/tick-snapshot.md:40 — FILE_TICK=$(date -u +%H:%M) => docs/data/cycle-snapshot-12:10.json",
+      "reader": "apps/mcp-server/src/interface/mcp/tools/system/emitPressureStateTool.ts:359-362 — tickHHMM = tick_id.match(/T(\\d{2}:\\d{2}):/) => 12:00",
+      "failure_line": "emitPressureStateTool.ts:232-233 — existsSync(cycle-snapshot-12:00.json) is false => return {promoted:false, stale:false}"
+    },
+    "evidence": [
+      "emit_pressure_state returned cycle_snapshot_promoted=false this tick (tick_id=2026-07-25T12:00:00Z, file on disk=cycle-snapshot-12:10.json).",
+      "cycle-snapshot-latest.json mtime 2026-07-07T21:47:54Z — 18 days stale while pressure-state.json updates every tick.",
+      "Zero of the 7 cycle-snapshot-HH:MM.json files on disk sit on a :00/:15/:30/:45 boundary (00:10, 08:10, 09:08, 12:10, 20:09, 20:26, 21:09).",
+      "drift_min observed 7, 7, 12 across this session — the dispatcher never fires at drift 0, so the lookup never hits.",
+      "stale:false in the return distinguishes this from the FIX-CYCLE-SNAPSHOT-STALE-PROMOTE-FAILSAFE freshness gate — this is a plain file-not-found, not a refusal."
+    ],
+    "blast_radius": [
+      "cycle-snapshot-latest.json is frozen at 2026-07-07 for every consumer that reads it.",
+      "telemetry.md Step 6.0 sources last_regime and last_volatility_level from that file; both are therefore permanently unknown.",
+      "computeTiers maps volatility_level unknown -> volatility_tier low, so the high-volatility rows of cadence-policy.json are unreachable — the adaptive cadence volatility dimension is dead code in production.",
+      "This is the concrete mechanism behind the known 2-of-3-adaptive-inputs-dead observation; prior fix attempt UC-CDC-P1 did not close it."
+    ],
+    "secondary_findings": [
+      "cadence-policy.json has NO row for calendar_status=closed, but pressure-state.json emits closed live. Table covers only open/half_day/holiday/weekend/unknown. Every off-hours lookup silently falls to the evaluateCadence 240-min safe default rather than a declared policy.",
+      "policy_id=alert-commander-critical has ZERO rows in cadence-policy.json for any calendar_status — a slot named critical always gets the generic 240-min default.",
+      "Both degrade safely (no crash, no suppression) which is why neither has ever surfaced."
+    ],
+    "suggested_fix_direction": "Make writer and reader share one key. Either pass the actual FILE_TICK back into emit_pressure_state instead of deriving from tick_id, or have Step 4.7 name the file by the nominal tick boundary. Prefer the latter — the nominal tick is already the stable per-tick identity used by the election lock. Add a regression test that fires the dispatcher at non-zero drift and asserts cycle_snapshot_promoted=true.",
+    "action_taken": "None — cowork-team is a dispatcher and does not mint board rows or edit apps/. Reported for PO triage.",
+    "note": "Tick itself completed normally: 3 slots matched, won, spawned, last_fired written, all locks released."
+  },
+  "_processed": {
+    "fingerprint": "55508ed9a401e80f67dcbd605dbffb05390e1ae3ab325db7e102b8a405d05cb0",
+    "processedAt": "2026-07-25T12:22:22Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

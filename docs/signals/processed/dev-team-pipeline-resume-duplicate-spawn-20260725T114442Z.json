@@ -1,0 +1,30 @@
+{
+  "from": "dev-team",
+  "to": "po",
+  "type": "recurring-bug",
+  "priority": "high",
+  "createdAt": "2026-07-25T11:44:42Z",
+  "payload": {
+    "module": "docs/agents/dev-team/flow/main.md § Step 0b pipeline-resume",
+    "title": "pipeline-resume re-spawns a duplicate agent for a still-running background task",
+    "observed_at": "2026-07-25T11:44:42Z",
+    "evidence": [
+      "head.status=in_progress active_task_id=FIX-PREDCLAIM-CREATIONPRICE-UNGATE-ZOD-CONTRACT next_agent=dev-mcp-server updated_at=2026-07-25T11:21:25Z",
+      "background agent abdbc263fcc82b09d for that task still running at tick 2026-07-25T11:37Z (~20min elapsed)",
+      "task_list_held(kind=sprint-task) returns 7 locks, NONE of them task:FIX-PREDCLAIM-CREATIONPRICE-UNGATE-ZOD-CONTRACT",
+      "working tree carries the live agent unfinished edits: apps/mcp-server/src/infrastructure/db/predictionClaimStore.ts modified + FIX-PREDCLAIM-CREATIONPRICE-UNGATE-ZOD-CONTRACT.test.ts untracked"
+    ],
+    "root_cause_hypothesis": "execute-tier.md Phase-3.5 dispatcher-wrap claims task:<id> then releases it in its finally block. The spawn is run_in_background=true so the wrapper returns immediately and releases while the agent keeps working. The lock therefore covers only the instant of spawning, not the duration of the work. Step 0b pipeline-resume relies on that same lock failing-to-claim as its duplicate-spawn guard, so the guard is unarmed for the entire life of every backgrounded task.",
+    "blast_radius": "every dev-team tick (30min) that fires while a backgrounded task agent is still working would spawn a duplicate onto the same files. Two concurrent code agents on one working tree.",
+    "why_not_caught_by_session_scoping": "the running agent is a subagent of the same client session, so even if a lock existed a re-claim reads as re-entrant (heartbeat->proceed) rather than a peer collision",
+    "action_taken_this_tick": "dev-team DECLINED the pipeline-resume spawn and DECLINED the BOUNDED-1/SLS/RLC idle chain (head is not idle; SLS claim would clobber .head.active_task_id for the live task). No dispatch this tick.",
+    "suggested_fix_direction": "hold the task:<id> sprint-task lock for the lifetime of a backgrounded dispatch (release on completion notification, not on spawn-return), OR give pipeline-resume a liveness probe that is not the lock.",
+    "signal_file": "docs/signals/dev-team-pipeline-resume-duplicate-spawn-20260725T114442Z.json"
+  },
+  "_processed": {
+    "fingerprint": "8aceac50bfa7bd01dcf337190a7c6c5f95206aa44196aad4fb0f5a0f3a05c5c6",
+    "processedAt": "2026-07-25T12:22:22Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

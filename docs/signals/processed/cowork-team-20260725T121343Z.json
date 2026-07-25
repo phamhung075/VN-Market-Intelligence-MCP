@@ -1,0 +1,67 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-25T12:13:43Z",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 7,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "closed",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence",
+      "alert-commander-critical": "cadence"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": 240,
+      "market-watcher-offhours": 240,
+      "alert-commander-critical": 240
+    },
+    "last_fired_timestamp": "2026-07-25T12:11:49Z",
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "12:00",
+    "leader_lock": "acquired",
+    "dev_head": "active",
+    "devq": 5,
+    "signal_backlog": 13,
+    "note": "Step 6.0 returned cycle_snapshot_promoted=false. ROOT CAUSE (verified this tick): promoteCycleSnapshot() derives tickHHMM by regex on the NOMINAL tick_id (emitPressureStateTool.ts:359-362 -> 12:00) but tick-snapshot.md Step 4.7 names the file from the ACTUAL fire minute (date -u +%H:%M -> 12:10). existsSync miss => {promoted:false, stale:false}. Mismatch on every tick with drift_min!=0; drift has been 7-12 all session. Corroboration: zero snapshot files on disk sit on a :00/:15/:30/:45 boundary, and cycle-snapshot-latest.json has not changed since 2026-07-07T21:47Z (18d). Downstream: last_regime/last_volatility_level can never be recovered from the latest snapshot, so volatility_tier is pinned low and the high-volatility rows of cadence-policy.json are unreachable. ALSO: calendar_status=closed has zero rows in cadence-policy.json (table covers open/half_day/holiday/weekend/unknown only) and policy_id=alert-commander-critical has zero rows for any status - both silently fall to the 240min safe default."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-25T12:13:43Z",
+  "_processed": {
+    "fingerprint": "550c9f326ffe05813d38caab413517d1052307273705b13c3005130e11f6d455",
+    "processedAt": "2026-07-25T12:22:22Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

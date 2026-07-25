@@ -1,0 +1,65 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "recurring-bug",
+  "priority": "high",
+  "createdAt": "2026-07-25T12:19:17Z",
+  "payload": {
+    "title": "agent_signals default TTL (120 min) is HALF the alert-commander-critical sweep cadence (240 min) — high-impact signals are purged before the only consumer that gates on them can read them",
+    "summary": "chain_catalyst / legal_risk / crisis_velocity / verified_chain / price_anomaly signals are written with a 120-minute TTL and hard-deleted at expiry. The alert-commander-critical slot that gates on exactly those types runs every 240 minutes. Any such signal posted more than 2h before the next sweep is purged unseen. On average ~50% of them can never reach the alert surface; a signal posted immediately after a sweep is invisible for its entire lifetime.",
+    "observed_at": "2026-07-25T12:13Z cowork tick",
+    "root_cause": {
+      "writer": {
+        "file": "apps/mcp-server/src/infrastructure/db/agentSignalStore.ts",
+        "detail": "expires ?? expiresAt(ttlMinutes ?? 120) — repeated at lines 550, 584, 614, 641, 668. Default TTL = 120 min for every signal type except urgent_news.",
+        "note": "Line 154 documents the one deliberate exception: 'urgent_news signals: 240 minutes (4 hours) when this field is omitted.' The TTL-vs-cadence alignment was reasoned about ONCE, for urgent_news only, and never generalised to the types alert-commander actually gates on."
+      },
+      "reader": {
+        "file": "apps/mcp-server/src/infrastructure/db/agentSignalStore.ts",
+        "detail": "Line 827 comment: 'Always filters out expired signals (expires_at <= now).' Enforced at lines 915, 1252, 1429 via AND expires_at > datetime('now').",
+        "purge": "Line 1130 — DELETE FROM agent_signals WHERE expires_at < datetime('now'). Expired signals are not merely hidden, they are removed."
+      },
+      "consumer_cadence": {
+        "slot_id": "alert-commander-critical",
+        "cadence_minutes": 240,
+        "source": "docs/data/cowork-schedule.json + cadence-policy 240-min default",
+        "gates_on": [
+          "chain_catalyst",
+          "legal_risk",
+          "crisis_velocity",
+          "verified_chain",
+          "price_anomaly"
+        ]
+      },
+      "arithmetic": "TTL 120 min < cadence 240 min. Blind window = 240 - 120 = 120 min per 4h cycle = 50% of the timeline."
+    },
+    "evidence": [
+      "news-scout cycle c199 posted signal #9340 CHAIN_CATALYST 'Giá vàng vọt tăng' impact 10/10 bearish at 12:13:25Z, expiry 2026-07-25 14:13:25.",
+      "news-scout posted #9341 CHAIN_CATALYST 'Trung Nam bond 2.300 tỷ' impact 9/10 bullish at 12:13:29Z, expiry 2026-07-25 14:13:29.",
+      "Both expiries are exactly created_at + 120 min, confirming the ttlMinutes ?? 120 default is what live callers get.",
+      "alert-commander-critical last fired 12:13Z; next fire ~16:13Z. Both signals expire 14:13Z — purged 2h BEFORE the next sweep. Neither will ever be read by the alert surface.",
+      "Independent second failure the same tick: alert-commander swept at 12:13 and reported 'No chain_catalyst/legal_risk/crisis_velocity/verified_chain/price_anomaly signals in the bus this window' — it read microseconds before news-scout's write committed. Race and TTL are two distinct mechanisms producing the same blindness.",
+      "Router verified both planes rather than one: writer TTL constant AND reader expiry predicate AND purge statement all read from source at 2026-07-25T12:19Z."
+    ],
+    "blast_radius": [
+      "The 4h CRITICAL-always sweep — the system's only real-time alert surface — is structurally blind to ~half of all high-impact signals produced.",
+      "Highest-impact signals are the most affected: news-scout posts chain_catalyst only for its top-scoring impacts (10/10 and 9/10 today), so the signals most likely to be purged unseen are precisely the ones most worth alerting on.",
+      "Directly extends docs/signals/router-alert-commander-dead-20260703.md. That signal restored a DEAD consumer (missing cowork slot, ~5.5 weeks silent, PNJ coverage miss). The consumer is now alive and running — but still cannot see the producer's output. The 07-03 fix addressed reachability of the agent; this addresses reachability of the data. Closing one without the other leaves the original user-visible symptom intact.",
+      "Explains alert-commander silent-exiting on days when news-scout demonstrably produced high-impact chain_catalyst signals — silence reads as 'nothing happened' when it may mean 'everything expired'."
+    ],
+    "secondary_findings": [
+      "get_agent_signals appears to mark rows read on read. Router's diagnostic query at 12:19Z returned #9340/#9341 with status 'read'. This did NOT suppress them (alert-commander's own 12:13 sweep also returned read-status rows, so the reader does not filter unread-only), but a read-marking diagnostic is a side-effecting one and should be treated as such. Flagged in the spirit of the standing 'read-only ≠ no-POST' lesson.",
+      "news-scout c199 identified 'PNJ crisis 8/10 bearish — liquidity stress, control transfer' and 'Oil/yields 9/10 bullish' as impacts but posted NEITHER as a signal (only gold 10 and bond 9 reached the bus). The posting predicate is not a clean impact threshold — 9/10 oil was identified and dropped while 9/10 bond was posted. UNVERIFIED: router did not read the news-scout posting gate. Worth a separate look, especially as PNJ is the same ticker as the 07-03 coverage-miss incident.",
+      "alert-commander reported get_foreign_room exceeding the max-token response limit (72,409 chars) and skipping it — a standing, separately-tracked token-overflow gap, non-blocking this cycle.",
+      "alert-commander reported get_macro_calendar() returning status 'unavailable' with no events, forcing pivot_window_active=false."
+    ],
+    "suggested_fix_direction": "Do NOT simply raise the global default to 240. Two candidate framings for PO: (a) make TTL a function of the consumer cadence — any signal type gated by a scheduled sweep must carry TTL >= that sweep's cadence, ideally >= 2x for one guaranteed overlap, mirroring what urgent_news already does deliberately at 240; or (b) decouple consumption from expiry — have the sweep read a durable high-water-mark of signals-since-last-sweep rather than a live TTL window, which removes the whole class of cadence-vs-TTL coupling. (b) is the definitive fix and also closes the 12:13 read/write race, which (a) does not. Recommend (b) with (a) as the cheap interim. Whichever is chosen, the alert-commander-critical cadence-policy gap noted in the sibling 12:14Z signal should be resolved in the same pass, since that slot currently has zero policy rows and silently inherits the 240-min default that this bug is measured against.",
+    "router_scope_note": "Router is dispatcher-only and did not modify apps/**, mint a board row, or alter any schedule. Verification was read-only against source; the single live tool call (get_agent_signals) is disclosed above as read-marking."
+  },
+  "_processed": {
+    "fingerprint": "63fa3bb80984d661d1df603c18cb6114d1e55e3c75fb05ef4ecb904d166d8665",
+    "processedAt": "2026-07-25T12:22:22Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
