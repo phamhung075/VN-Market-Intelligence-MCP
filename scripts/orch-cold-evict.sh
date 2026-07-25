@@ -232,8 +232,18 @@ compute_id_maps() {
       ($cold_backlog_detail | map({key: (. // ""), value: true}) | from_entries) as $cbd_set |
 
       # ── done[]: sort DESC; evict beyond keep_n AND older than cutoff ─────
+      # FIX-COLDEVICT-DONE-LANE-TRIGGER-ACTION-AXIS-NOOP defect (A): this was
+      # a plain STRING sort on the raw created_at value. A poison non-ISO
+      # string (e.g. "unknown") string-sorts ABOVE every real ISO-8601 date
+      # (char u > any digit), so after sort_by|reverse a malformed row ranked as
+      # the NEWEST item — permanently un-evictable, and consuming the entire
+      # keep_n window. Sort on the PARSED epoch instead, with any unparseable
+      # value mapped to 0 (== 1970-01-01, i.e. OLDEST) — this is the SAME
+      # sentinel the age-gate below already uses (`try fromdateiso8601 catch
+      # 0`), so a malformed value can never rank ahead of a genuinely recent
+      # row again.
       (.task_board.done // []
-        | sort_by(.created_at // "0000-00-00T00:00:00Z")
+        | sort_by(try (.created_at | fromdateiso8601) catch 0)
         | reverse
         | to_entries
       ) as $done_ranked |
@@ -253,7 +263,17 @@ compute_id_maps() {
       ] as $new_done_ids |
 
       # ── done_verified[]: all items are terminal ──────────────────────────
-      [.task_board.done_verified // [] | .[].id // ""] as $all_terminal_dv_ids |
+      # FIX-COLDEVICT-DONE-LANE-TRIGGER-ACTION-AXIS-NOOP defect (C): the old
+      # shape `[array // [] | .[].id // ""]` puts the `[]` element-iterator
+      # INSIDE the same pipeline as the `// ""` alternative. The jq `//` operator fires
+      # whenever its LHS produces ZERO outputs (not just null/false) — and
+      # `.[]` over a genuinely empty array produces zero outputs — so on an
+      # EMPTY array this yielded `[""]` (length 1), not `[]`. Moving the `[]`
+      # iterator OUTSIDE the `// []` (so it only ever iterates a real array)
+      # and applying `// ""` per-element (a per-id null-id fallback, not an
+      # empty-array fallback) fixes both: empty array -> [], and a real
+      # element with a null id -> "".
+      [(.task_board.done_verified // [])[] | (.id // "")] as $all_terminal_dv_ids |
 
       [$all_terminal_dv_ids[] | select(
           . != "" and ($cd_set[.] != true)
@@ -291,7 +311,8 @@ compute_id_maps() {
       [$all_terminal_sig_row_ids[] | select($csig_set[.] != true)] as $new_sig_row_ids |
 
       # ── signal_queue.archive[]: ALL items evicted (inline archive = RC-1) ─
-      [.signal_queue.archive // [] | .[].id // ""] as $all_sig_archive_ids |
+      # Same defect (C) fix as done_verified[] above — `[]` moved outside `// []`.
+      [(.signal_queue.archive // [])[] | (.id // "")] as $all_sig_archive_ids |
 
       [$all_sig_archive_ids[] | select(. != "" and ($csig_set[.] != true))] as $new_sig_arch_ids |
 

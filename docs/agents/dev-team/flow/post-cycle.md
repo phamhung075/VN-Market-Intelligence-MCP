@@ -54,29 +54,39 @@ longer skipped by main.md's Session-Gate / orphan-adoption / monitoring-only-gua
 (dev-team-loop-I2). Edit this spec first, then update the script to match — never the
 reverse. See `docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#dev-team-loop-P2`.
 
-Below is the spec of record (Run after Step 4.1 exits cleanly. Checks for terminal sprints and bloated done lanes; evicts to cold if found. This ensures bloat never re-accumulates between pm/task-archive cycles):
+Below is the spec of record (Run after Step 4.1 exits cleanly. Checks whether a real
+eviction run would change anything; evicts to cold if so. This ensures bloat never
+re-accumulates between pm/task-archive cycles):
+
+**FIX-COLDEVICT-DONE-LANE-TRIGGER-ACTION-AXIS-NOOP (2026-07-25):** the threshold used
+to be a hand-rolled COUNT-only predicate (`done_n>10` etc) evaluated against this same
+hot file, while `orch-cold-evict.sh`'s own done[] eviction gate is COUNT-AND-AGE
+(rank>=keep_n AND older than `DONE_MAX_AGE_DAYS`, default 7d) — two different axes, so
+the trigger could be permanently true (done_n stays >10) while the action was a
+permanent no-op (every row failing one gate or the other). The proxy also had no
+`signal_queue` term, even though the script always sweeps `signal_queue.archive[]` and
+conditionally sweeps `signal_queue.rows[]` — this backstop was the sole automated
+caller, so the ever-true `done_n` condition was, by accident, the only thing that ever
+reached that sweep. Root cause also included a plain STRING sort on `created_at` in the
+script (a poison non-ISO value such as `"unknown"` string-sorted ABOVE every real date
+and ranked as newest, permanently un-evictable) and a jq shape bug that misreported an
+empty `done_verified[]`/`signal_queue.archive[]` as `1` item instead of `0` in the
+eviction preview. All three are fixed in `scripts/orch-cold-evict.sh` (jq epoch-sort +
+phantom-array shape) and in the trigger below (ask the script itself, not a separate
+proxy):
 
 ```bash
-# Terminal sprint statuses — SSOT: apps/mcp-server/src/infrastructure/orchStateSchema.ts TERMINAL_SET
-# {DONE, DONE_VERIFIED, CANCELLED, DEFERRED, SKIPPED} — must match scripts/orch-cold-evict.sh $TERMINAL_SPRINT_STATUSES exactly.
-TERMINAL_SPRINT_N=$(jq '[.task_board.active_sprints[] | select(
-  ((.status // "") | IN("DONE","DONE_VERIFIED","CANCELLED","DEFERRED","SKIPPED")) or
-  ((.status // "") | startswith("BCTC-"))
-)] | length' "$PROJECT_ROOT/docs/data/orch/orch-state.json")
+# Ask orch-cold-evict.sh itself (--dry-run) whether a real run would change the hot
+# file — trigger and action are now the SAME computation, so they cannot drift apart
+# again, and the signal_queue disjunct rides along for free (build_hot_temp always
+# clears signal_queue.archive[] and filters signal_queue.rows[] by terminal status).
+DRY_RUN_OUT=$(bash "$PROJECT_ROOT/scripts/orch-cold-evict.sh" --dry-run 2>&1)
+BYTE_REDUCTION=$(printf '%s\n' "$DRY_RUN_OUT" \
+  | sed -n 's/.*Byte reduction:[[:space:]]*\(-\{0,1\}[0-9]\{1,\}\) bytes.*/\1/p' | tail -1)
+[[ "$BYTE_REDUCTION" =~ ^-?[0-9]+$ ]] || BYTE_REDUCTION=0
 
-# sprint_goal.entries[] — SEPARATE array from active_sprints[] above, keyed by sprint_id not id
-# (FIX-SPRINT-GOAL-STATUS-DRIFT-EVICT, 2026-07-02). Entries must already carry canonical tokens —
-# scripts/orch-validate.mjs Stage 1d rejects drifted writes at source, so this predicate needs no
-# alias/case-insensitive fallback (unlike the one-time scripts/fix-sprint-goal-status-drift-evict-normalize.jq).
-SPRINT_GOAL_TERMINAL_N=$(jq '[(.sprint_goal.entries // [])[] | select(
-  .sprint_id != null and ((.status // "") | IN("DONE","DONE_VERIFIED","CANCELLED","DEFERRED","SKIPPED"))
-)] | length' "$PROJECT_ROOT/docs/data/orch/orch-state.json")
-
-DONE_N=$(jq '.task_board.done | length' "$PROJECT_ROOT/docs/data/orch/orch-state.json")
-DV_N=$(jq '.task_board.done_verified | length' "$PROJECT_ROOT/docs/data/orch/orch-state.json")
-
-if [ "$TERMINAL_SPRINT_N" -gt 0 ] || [ "$SPRINT_GOAL_TERMINAL_N" -gt 0 ] || [ "$DONE_N" -gt 10 ] || [ "$DV_N" -gt 0 ]; then
-  echo "[dev-team/post-cycle] Terminal bloat: sprints=$TERMINAL_SPRINT_N sprint_goal=$SPRINT_GOAL_TERMINAL_N done=$DONE_N done_verified=$DV_N — cold eviction"
+if [ "$BYTE_REDUCTION" -gt 0 ]; then
+  echo "[dev-team/post-cycle] orch-cold-evict.sh --dry-run reports the hot file would shrink by ${BYTE_REDUCTION} bytes — cold eviction"
   # Claim commit-mutex before running script — task_id is the SAME canonical
   # "commit-mutex:main" every other orch-state.json writer uses (a per-caller
   # slug would not mutex against other writers of the same hot file; corrected

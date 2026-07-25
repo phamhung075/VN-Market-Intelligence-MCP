@@ -360,6 +360,89 @@ fi
 assert_real_live_unchanged "T6"
 
 # =============================================================================
+# TEST 7 — FIX-COLDEVICT-DONE-LANE-TRIGGER-ACTION-AXIS-NOOP regression:
+#   (A) done[] sort_by is a STRING sort on .created_at — a poison non-ISO
+#       string (e.g. "unknown") string-sorts ABOVE every real ISO date and
+#       ranks as NEWEST after reverse, permanently un-evictable. Fixed sort
+#       must treat any unparseable created_at as epoch 0 (OLDEST), matching
+#       the age-gate's own `try fromdateiso8601 catch 0` convention (line
+#       ~245) so a poison row can never rank ahead of a genuinely recent row.
+#   (C) compute_id_maps' done_verified[]/signal_queue.archive[] id-extraction
+#       shape `[<array> // [] | .[].id // ""]` yields `[""]` (length 1) on a
+#       genuinely EMPTY array — jq's `//` substitutes when the LHS pipeline
+#       produces ZERO outputs, and `.[]` over an empty array produces zero
+#       outputs, so the empty-array case is misreported as "1 item". This
+#       corrupts exactly the report AC(1)'s biconditional trigger reads.
+# =============================================================================
+POISON_FIXTURE=$(jq -n --arg now "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '{
+  "_meta": {"schema":"v4","ssot":true,"updated_at":"2026-06-01T00:00:00Z","updated_by":"fixture"},
+  "head": {"status":"idle","active_task_id":null,"next_agent":null},
+  "task_board": {
+    "backlog": [], "review": [], "qa": [], "in_progress": [], "ready": [],
+    "done": [
+      {"id":"DONE-POISON","status":"DONE","created_at":"unknown"},
+      {"id":"DONE-RECENT","status":"DONE","created_at":$now}
+    ],
+    "done_verified": [],
+    "active_sprints": []
+  },
+  "signal_queue": {"_updated_at":"2026-06-01T00:00:00Z","_updated_by":"fixture","rows":[],"archive":[]},
+  "sprint_goal": {"entries": []}
+}')
+new_fixture "t7-poison-sort" "$POISON_FIXTURE"
+
+# (C) dry-run must report 0, not the phantom 1, for done_verified[]/archive[]
+# when they are genuinely empty — this must be verified BEFORE (A)/(1) per
+# the task row's acceptance ordering (the (A) assertions below read the same
+# report machinery).
+EXIT_T7_DRY=0
+KEEP_RECENT_DONE=1 run_cold_evict --dry-run || EXIT_T7_DRY=$?
+if [ "$EXIT_T7_DRY" -eq 0 ]; then
+  pass "T7 — dry-run (poison fixture) exits 0"
+else
+  fail "T7 — expected exit 0, got $EXIT_T7_DRY"
+fi
+DV_N=$(grep -E 'done_verified\[\]' "$FIXTURE_ROOT/.last-stderr" | grep -oE '[0-9]+' | head -1)
+if [ "$DV_N" = "0" ]; then
+  pass "T7 — (C) done_verified[] dry-run reports 0 (not phantom 1) when genuinely empty"
+else
+  fail "T7 — (C) done_verified[] dry-run reports '$DV_N', expected 0"
+fi
+SIGARCH_N=$(grep -E 'signal_queue\.archive\[\] evict' "$FIXTURE_ROOT/.last-stderr" | grep -oE '[0-9]+' | head -1)
+if [ "$SIGARCH_N" = "0" ]; then
+  pass "T7 — (C) signal_queue.archive[] dry-run reports 0 (not phantom 1) when genuinely empty"
+else
+  fail "T7 — (C) signal_queue.archive[] dry-run reports '$SIGARCH_N', expected 0"
+fi
+assert_real_live_unchanged "T7-dry"
+
+# (A) LIVE run with keep_n=1: DONE-POISON ("unknown") must sort as OLDEST ->
+# evicted; DONE-RECENT (today) must sort as NEWEST -> rank 0 < keep_n=1,
+# protected regardless of age (this is also the AC(4) negative control: a
+# genuinely recent row within keep_n survives even when keep_n is squeezed
+# to 1 specifically to force the poison row's rank below the window).
+EXIT_T7_LIVE=0
+KEEP_RECENT_DONE=1 run_cold_evict || EXIT_T7_LIVE=$?
+if [ "$EXIT_T7_LIVE" -eq 0 ]; then
+  pass "T7 — (A) live run (keep_n=1) exits 0"
+else
+  fail "T7 — expected exit 0, got $EXIT_T7_LIVE ($(cat "$FIXTURE_ROOT/.last-stderr" | tail -5))"
+fi
+T7_HOT_DONE_IDS=$(jq -c '[.task_board.done[].id] | sort' "$HOT_PATH" 2>/dev/null)
+if [ "$T7_HOT_DONE_IDS" = '["DONE-RECENT"]' ]; then
+  pass "T7 — (A) poison created_at sorts as OLDEST: DONE-POISON evicted, DONE-RECENT (rank 0) kept"
+else
+  fail "T7 — (A) unexpected hot done[] after keep_n=1 run: $T7_HOT_DONE_IDS (poison must evict, recent must survive)"
+fi
+T7_COLD_DONE=$(jq -c '[.done_tasks[].id] | sort' "$ARCHIVE_PATH/$MONTH.json" 2>/dev/null)
+if [ "$T7_COLD_DONE" = '["DONE-POISON"]' ]; then
+  pass "T7 — (A) cold .done_tasks[] contains exactly the poison row"
+else
+  fail "T7 — (A) cold .done_tasks[] unexpected: $T7_COLD_DONE"
+fi
+assert_real_live_unchanged "T7-live"
+
+# =============================================================================
 # Summary
 # =============================================================================
 TOTAL=$((PASS+FAIL))

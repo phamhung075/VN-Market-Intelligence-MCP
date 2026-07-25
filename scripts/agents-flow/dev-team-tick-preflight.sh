@@ -70,6 +70,16 @@
 #      for the full reasoning (this deviates from a literal "all 4 verdict
 #      paths" reading of the dispatch brief, in favor of the architecture
 #      brief's own verifier-vetted "every LOCK-WINNING tick" scope).
+#      FIX-COLDEVICT-DONE-LANE-TRIGGER-ACTION-AXIS-NOOP (2026-07-25): the
+#      threshold check itself no longer hand-rolls a count-based predicate
+#      (done_n>10 OR ...) — that was on a different axis than the action it
+#      fired (orch-cold-evict.sh's own COUNT-AND-AGE done[] gate), which made
+#      it possible for the trigger to be permanently true while the action
+#      was a permanent no-op. It now asks orch-cold-evict.sh itself, via
+#      --dry-run, whether a real run would change the hot file at all
+#      (_step55_would_evict below) — trigger and action are the same
+#      computation, so they cannot drift apart again, and the signal_queue
+#      sweep (which the old predicate never referenced) rides along for free.
 #
 # Verdict JSON (one line, stdout): {verdict, tick, detail}.
 #   verdict ∈ RUN|RUN-IDLE|SKIP|ERROR.
@@ -102,9 +112,10 @@
 #   ORCH_STATE_PATH  — orch-state.json path (default: $PREFLIGHT_ROOT/docs/data/orch/orch-state.json).
 #     All four are Step 5 idle-check test seams — see dev-team-tick-preflight.test.sh.
 #     ORCH_STATE_PATH is ALSO read by Step 5.5 board-hygiene (same file, same SSOT
-#     path — no separate env var). Step 5.5's actual side-effecting calls
-#     (orch-cold-evict.sh / orch-state-validate.sh / git commit) are wrapped in the
-#     small overridable functions _step55_run_cold_evict / _step55_run_validate /
+#     path — no separate env var). Step 5.5's threshold check (_step55_would_evict)
+#     and its side-effecting calls (orch-cold-evict.sh / orch-state-validate.sh /
+#     git commit) are wrapped in the small overridable functions
+#     _step55_would_evict / _step55_run_cold_evict / _step55_run_validate /
 #     _step55_git_commit_evict — the test harness replaces these wholesale so it
 #     NEVER shells out to the real scripts or touches the real git index.
 #
@@ -337,39 +348,52 @@ _step5_idle_check() {
 # mcp_call invocations — same translation this whole script already performs
 # for SF-1/fire-election above.
 #
-# Pure jq/filesystem read for the threshold check (no mcp_call cost when the
-# threshold does not trip — mirrors _step5_idle_check's zero-cost design).
+# FIX-COLDEVICT-DONE-LANE-TRIGGER-ACTION-AXIS-NOOP (2026-07-25): the ORIGINAL
+# trigger here was a hand-rolled COUNT-only predicate (done_n>10 OR ...) while
+# the action it fires (orch-cold-evict.sh) evicts done[] on a COUNT-AND-AGE
+# predicate (rank>=keep_n AND older than DONE_MAX_AGE_DAYS) — two different
+# axes, so the trigger could be permanently true while the action was a
+# permanent no-op (done_n stayed >10 forever; every row either failed the
+# rank gate or the age gate). The proxy also had NO signal_queue term at all,
+# even though orch-cold-evict.sh always sweeps signal_queue.archive[] and
+# conditionally sweeps signal_queue.rows[] — Step 5.5 was the ONLY automated
+# caller, so the ever-true done_n condition was, by accident, the sole thing
+# that ever reached that signal_queue sweep. See task row status_note +
+# trap_do_not_fix_it_this_way for the full incident writeup.
+#
+# FIX: ask orch-cold-evict.sh itself (--dry-run) whether a real run would
+# change the hot file, instead of approximating that question with a
+# separately-maintained predicate. This makes trigger and action the SAME
+# computation by construction — the biconditional (trigger fires <-> hot file
+# would change) can no longer drift, and it restores the signal_queue
+# disjunct for free (build_hot_temp always clears signal_queue.archive[] and
+# filters signal_queue.rows[] by terminal status, so any signal_queue work
+# shows up in the byte-reduction figure exactly like every other lane does).
 _step55_board_hygiene() {
   local session_id="$1"
-  local terminal_sprint_n sprint_goal_terminal_n done_n dv_n
 
-  # Terminal sprint statuses — SSOT: apps/mcp-server/src/infrastructure/orchStateSchema.ts
-  # TERMINAL_SET {DONE, DONE_VERIFIED, CANCELLED, DEFERRED, SKIPPED} — must match
-  # scripts/orch-cold-evict.sh $TERMINAL_SPRINT_STATUSES exactly (post-cycle.md:43-44).
-  terminal_sprint_n=$(jq '[.task_board.active_sprints[]? | select(
-    ((.status // "") | IN("DONE","DONE_VERIFIED","CANCELLED","DEFERRED","SKIPPED")) or
-    ((.status // "") | startswith("BCTC-"))
-  )] | length' "$ORCH_STATE_PATH" 2>/dev/null)
-  [[ "$terminal_sprint_n" =~ ^[0-9]+$ ]] || terminal_sprint_n=0
-
-  # sprint_goal.entries[] — SEPARATE array from active_sprints[], keyed by
-  # sprint_id not id (post-cycle.md:50-56 / FIX-SPRINT-GOAL-STATUS-DRIFT-EVICT).
-  sprint_goal_terminal_n=$(jq '[(.sprint_goal.entries // [])[]? | select(
-    .sprint_id != null and ((.status // "") | IN("DONE","DONE_VERIFIED","CANCELLED","DEFERRED","SKIPPED"))
-  )] | length' "$ORCH_STATE_PATH" 2>/dev/null)
-  [[ "$sprint_goal_terminal_n" =~ ^[0-9]+$ ]] || sprint_goal_terminal_n=0
-
-  done_n=$(jq '.task_board.done // [] | length' "$ORCH_STATE_PATH" 2>/dev/null)
-  [[ "$done_n" =~ ^[0-9]+$ ]] || done_n=0
-
-  dv_n=$(jq '.task_board.done_verified // [] | length' "$ORCH_STATE_PATH" 2>/dev/null)
-  [[ "$dv_n" =~ ^[0-9]+$ ]] || dv_n=0
-
-  if [ "$terminal_sprint_n" -gt 0 ] || [ "$sprint_goal_terminal_n" -gt 0 ] || [ "$done_n" -gt 10 ] || [ "$dv_n" -gt 0 ]; then
-    echo "[dev-team-preflight] Terminal bloat: sprints=$terminal_sprint_n sprint_goal=$sprint_goal_terminal_n done=$done_n done_verified=$dv_n — cold eviction" >&2
+  if _step55_would_evict; then
+    echo "[dev-team-preflight] Step 5.5: orch-cold-evict.sh --dry-run reports the hot file would shrink — running eviction" >&2
     _step55_cold_evict_and_commit "$session_id"
   fi
   return 0
+}
+
+# ── Step 5.5 threshold seam — ground-truth "would this run change anything"
+# check. Overridable (test harness stubs this — see dev-team-tick-preflight.
+# test.sh — same pattern as _step55_run_cold_evict/_step55_run_validate/
+# _step55_git_commit_evict below: NEVER exercised for real against the live
+# repo from the unit tests). Default implementation runs the REAL script in
+# --dry-run mode (no writes, no commit-mutex claim, no Zod validation, no git
+# commit — just the read + jq transform) and parses its own "Byte reduction:"
+# report line, which is exactly the quantity that determines whether a live
+# run would touch the hot file at all. Returns success (0) iff reduction > 0.
+_step55_would_evict() {
+  local out reduction
+  out=$(ORCH_STATE="$ORCH_STATE_PATH" bash "$ROOT/scripts/orch-cold-evict.sh" --dry-run 2>&1)
+  reduction=$(printf '%s\n' "$out" | sed -n 's/.*Byte reduction:[[:space:]]*\(-\{0,1\}[0-9]\{1,\}\) bytes.*/\1/p' | tail -1)
+  [[ "$reduction" =~ ^-?[0-9]+$ ]] || reduction=0
+  [ "$reduction" -gt 0 ]
 }
 
 # ── Step 5.5 side-effecting sub-step: claim commit-mutex, evict, validate,

@@ -47,11 +47,19 @@ check() {
 # shellcheck source=./dev-team-tick-preflight.sh
 source "$PREFLIGHT_SH"
 
+# ── Capture the REAL (pristine, pre-stub) _step55_would_evict under a new name
+# BEFORE the stub definition below shadows it — T35 calls this directly to
+# prove the actual default implementation (real orch-cold-evict.sh --dry-run
+# + "Byte reduction:" parse) works in both directions, not just that the
+# stub-driven wiring is correct.
+eval "$(declare -f _step55_would_evict | sed '1s/^_step55_would_evict/_step55_would_evict_REAL/')"
+
 # ── Isolated tmp fixture (call log only — this script touches no local files) ──
 TMPDIR_TEST=$(mktemp -d /private/tmp/dev-team-preflight-test-XXXXXX)
 cleanup() { rm -rf "$TMPDIR_TEST"; }
 trap cleanup EXIT
 CALL_LOG_FILE="$TMPDIR_TEST/call-log.txt"
+WOULD_EVICT_LOG_FILE="$TMPDIR_TEST/would-evict-log.txt"
 
 # ── Step 5 idle-check fixtures (P1-IDLE-DEVTEAM-PREFLIGHT-SCRIPT) ────────────
 # NEVER let the idle-check read the LIVE repo's docs/signals/ or orch-state.json
@@ -78,11 +86,19 @@ touch "$TMPDIR_TEST/signals-stale.db"
 touch -t "$(date -v-2d +%Y%m%d%H%M 2>/dev/null || date -d '2 days ago' +%Y%m%d%H%M)" "$TMPDIR_TEST/signals-stale.db" 2>/dev/null
 
 # ── Step 5.5 board-hygiene fixtures (dev-team-loop-P2, task UC-DTL-P2) ───────
+# FIX-COLDEVICT-DONE-LANE-TRIGGER-ACTION-AXIS-NOOP (2026-07-25): whether Step
+# 5.5 fires is now driven SOLELY by the $STUB_WOULD_EVICT seam (see
+# _step55_would_evict stub below), never by reading done[]/active_sprints
+# counts off this fixture directly (that count-based proxy was the axis-
+# mismatch bug this task fixed). The done[]=11 content below is now VESTIGIAL
+# — kept only so these two fixtures still exercise the idle-check's
+# active_sprints branch correctly; T33/T34 further down prove the count no
+# longer has any bearing on the hygiene decision.
 # "trip-notidle": active_sprints non-empty (forces RUN, independent of the
-# idle-check fixtures above) AND done[] has 11 items (>10 threshold trips).
+# idle-check fixtures above).
 echo '{"task_board":{"active_sprints":[{"id":"placeholder-sprint"}],"done":["d1","d2","d3","d4","d5","d6","d7","d8","d9","d10","d11"],"done_verified":[]},"signal_queue":{"rows":[]}}' > "$TMPDIR_TEST/orch-hygiene-trip-notidle.json"
-# "trip-idle": active_sprints EMPTY (idle-eligible) AND done[] has 11 items —
-# proves Step 5.5 fires on the RUN-IDLE branch too (both reach the same line).
+# "trip-idle": active_sprints EMPTY (idle-eligible) — proves Step 5.5 reaches
+# the RUN-IDLE branch too (both reach the same line).
 echo '{"task_board":{"active_sprints":[],"done":["d1","d2","d3","d4","d5","d6","d7","d8","d9","d10","d11"],"done_verified":[]},"signal_queue":{"rows":[]}}' > "$TMPDIR_TEST/orch-hygiene-trip-idle.json"
 
 # ── Stub mcp_call — overrides the real function pulled in by the source above ──
@@ -135,6 +151,26 @@ mcp_call() {
   esac
 }
 
+# ── Step 5.5 threshold seam — stubbed so the test NEVER shells out to the
+# real orch-cold-evict.sh --dry-run (see dev-team-tick-preflight.sh header
+# comment). Behavior controlled by $STUB_WOULD_EVICT ("true"/"false", default
+# "false" — most scenarios below have no hygiene bloat to evict). This is a
+# DELIBERATELY SEPARATE knob from the ORCH_STATE_PATH fixture content
+# (FIX-COLDEVICT-DONE-LANE-TRIGGER-ACTION-AXIS-NOOP regression guard: T33/T34
+# below prove hygiene is driven ONLY by this seam, never by a done[]/
+# active_sprints count read directly off the fixture — that count-based
+# proxy is exactly the axis-mismatch bug this task fixed).
+# Deliberately logged to a SEPARATE trace file, not CALL_LOG_FILE: unlike
+# the other three Step 5.5 seams below (which only ever fire CONDITIONALLY,
+# when hygiene has already tripped), this one is invoked UNCONDITIONALLY on
+# every RUN/RUN-IDLE tick — mixing it into CALL_LOG_FILE would break T3/T13's
+# strict "total call trace == N" assertions, which pre-date this seam and
+# count MCP calls only.
+_step55_would_evict() {
+  echo "_step55_would_evict" >> "$WOULD_EVICT_LOG_FILE"
+  [ "${STUB_WOULD_EVICT:-false}" = "true" ]
+}
+
 # ── Step 5.5 side-effect seams — stubbed wholesale so the test NEVER shells
 # out to the real orch-cold-evict.sh / orch-state-validate.sh / git commit
 # (see dev-team-tick-preflight.sh header comment on ORCH_STATE_PATH). Behavior
@@ -156,12 +192,14 @@ run_case() {
   # Resets scenario knobs to defaults before each test.
   STUB_PRESENCE="ok"; STUB_SF1="won"; STUB_ELECTION="won"
   STUB_MUTEX="won"; STUB_COLD_EVICT_RC=0; STUB_VALIDATE_RC=0
+  STUB_WOULD_EVICT="false"
   # Step 5 idle-check fixtures — default = deliberately NOT idle (isolates
   # T1-T12's RUN assertions from the live repo's docs/signals/ + orch-state.json).
   export SIGNALS_DIR="$TMPDIR_TEST/signals-nonempty"
   export SIGNALS_DB_PATH="$TMPDIR_TEST/does-not-exist-signals.db"
   export ORCH_STATE_PATH="$TMPDIR_TEST/orch-not-idle.json"
   : > "$CALL_LOG_FILE"
+  : > "$WOULD_EVICT_LOG_FILE"
 }
 
 log_count() {
@@ -375,9 +413,10 @@ check "T20 SKIP(a) does NOT call task_release (never held SF-1)" "$([ "$(log_has
 # the P2 architecture brief's own verifier-vetted scope ("every LOCK-WINNING
 # tick"), not a literal "fires on all 4 verdicts" reading.
 
-# ── T21: RUN + hygiene threshold trip (done[] len=11 > 10) — full success path ─
+# ── T21: RUN + would-evict trip (_step55_would_evict=true) — full success path ─
 run_case
 export ORCH_STATE_PATH="$TMPDIR_TEST/orch-hygiene-trip-notidle.json"
+STUB_WOULD_EVICT="true"
 OUT=$(run_preflight); RC=$?
 VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
 check "T21 RUN verdict (hygiene trip does not change tick verdict)" "$([ "$VERDICT" = "RUN" ] && echo true || echo false)"
@@ -388,22 +427,23 @@ check "T21 hygiene: git commit invoked" "$([ "$(log_has _step55_git_commit_evict
 check "T21 hygiene: commit-mutex claimed+released" "$([ "$(log_count task_release)" -ge 1 ] && echo true || echo false)"
 check "T21 hygiene: full success sends NO telegram (silent, like post-cycle.md original)" "$([ "$(log_has send_telegram)" = "false" ] && echo true || echo false)"
 
-# ── T22: RUN + NO hygiene trip (default fixture, done[] absent) — no-op ──────
+# ── T22: RUN + NO would-evict trip (default STUB_WOULD_EVICT=false) — no-op ─
 run_case
 OUT=$(run_preflight); RC=$?
 VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
 check "T22 RUN verdict (no trip)" "$([ "$VERDICT" = "RUN" ] && echo true || echo false)"
 check "T22 hygiene: cold-evict NOT invoked (threshold not tripped)" "$([ "$(log_has _step55_run_cold_evict)" = "false" ] && echo true || echo false)"
 
-# ── T23: RUN-IDLE + hygiene threshold trip — Step 5.5 reaches the RUN-IDLE
+# ── T23: RUN-IDLE + would-evict trip — Step 5.5 reaches the RUN-IDLE
 # branch too (same choke-point before either _emit_verdict call) ────────────
 run_case
 export SIGNALS_DIR="$TMPDIR_TEST/signals-empty"
 export SIGNALS_DB_PATH="$TMPDIR_TEST/does-not-exist-signals.db"
 export ORCH_STATE_PATH="$TMPDIR_TEST/orch-hygiene-trip-idle.json"
+STUB_WOULD_EVICT="true"
 OUT=$(run_preflight); RC=$?
 VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
-check "T23 RUN-IDLE verdict (active_sprints empty, but done[] len=11 trips hygiene)" "$([ "$VERDICT" = "RUN-IDLE" ] && echo true || echo false)"
+check "T23 RUN-IDLE verdict (active_sprints empty, would-evict trips hygiene)" "$([ "$VERDICT" = "RUN-IDLE" ] && echo true || echo false)"
 check "T23 hygiene: cold-evict invoked on RUN-IDLE branch" "$([ "$(log_has _step55_run_cold_evict)" = "true" ] && echo true || echo false)"
 check "T23 hygiene: git commit invoked on RUN-IDLE branch" "$([ "$(log_has _step55_git_commit_evict)" = "true" ] && echo true || echo false)"
 
@@ -459,6 +499,7 @@ check "T28 hygiene: cold-evict NOT invoked on ERROR (fire-election isError)" "$(
 # tick, retry next), does NOT crash and does NOT block the tick's own verdict ─
 run_case
 export ORCH_STATE_PATH="$TMPDIR_TEST/orch-hygiene-trip-notidle.json"
+STUB_WOULD_EVICT="true"
 STUB_MUTEX="lost"
 OUT=$(run_preflight); RC=$?
 VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
@@ -469,6 +510,7 @@ check "T29 hygiene: cold-evict NOT invoked (mutex not claimed)" "$([ "$(log_has 
 # unaffected (non-blocking, matches post-cycle.md's original contract) ──────
 run_case
 export ORCH_STATE_PATH="$TMPDIR_TEST/orch-hygiene-trip-notidle.json"
+STUB_WOULD_EVICT="true"
 STUB_COLD_EVICT_RC=1
 OUT=$(run_preflight); RC=$?
 VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
@@ -482,6 +524,7 @@ check "T30 hygiene: sends bug telegram on cold-evict failure" "$([ "$(log_has se
 # telegram, tick verdict unaffected ──────────────────────────────────────────
 run_case
 export ORCH_STATE_PATH="$TMPDIR_TEST/orch-hygiene-trip-notidle.json"
+STUB_WOULD_EVICT="true"
 STUB_VALIDATE_RC=1
 OUT=$(run_preflight); RC=$?
 VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
@@ -504,6 +547,77 @@ OUT=$(run_preflight); RC=$?
 VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
 check "T32 RUN-IDLE verdict (litter-only signals dir does not block idle)" "$([ "$VERDICT" = "RUN-IDLE" ] && echo true || echo false)"
 check "T32 RUN-IDLE task_claim called exactly 3x (no drain-signals calls)" "$([ "$(log_count task_claim)" -eq 3 ] && echo true || echo false)"
+
+# ── T33/T34: axis-independence regression (FIX-COLDEVICT-DONE-LANE-TRIGGER-
+# ACTION-AXIS-NOOP) — hygiene is now driven SOLELY by _step55_would_evict,
+# never by reading done[]/active_sprints counts off ORCH_STATE_PATH directly.
+# The old bug was exactly a hand-rolled count-based proxy on a DIFFERENT
+# axis than the real eviction predicate; these two tests prove that axis has
+# no bearing on the decision anymore, in both directions.
+# ── T33: fixture WOULD have tripped the OLD done_n>10 proxy, but the seam
+# says false — hygiene must NOT fire.
+run_case
+export ORCH_STATE_PATH="$TMPDIR_TEST/orch-hygiene-trip-notidle.json"
+STUB_WOULD_EVICT="false"
+OUT=$(run_preflight); RC=$?
+check "T33 hygiene: would_evict seam checked" "$([ -s "$WOULD_EVICT_LOG_FILE" ] && echo true || echo false)"
+check "T33 hygiene: cold-evict NOT invoked despite done[] len=11 (old count-axis proxy is gone)" "$([ "$(log_has _step55_run_cold_evict)" = "false" ] && echo true || echo false)"
+
+# ── T34: fixture would NEVER have tripped the OLD done_n>10 proxy (done[]
+# absent), but the seam says true — hygiene MUST fire anyway.
+run_case
+export ORCH_STATE_PATH="$TMPDIR_TEST/orch-idle.json"
+STUB_WOULD_EVICT="true"
+OUT=$(run_preflight); RC=$?
+check "T34 hygiene: would_evict seam checked" "$([ -s "$WOULD_EVICT_LOG_FILE" ] && echo true || echo false)"
+check "T34 hygiene: cold-evict invoked despite done[] absent (seam is the sole driver)" "$([ "$(log_has _step55_run_cold_evict)" = "true" ] && echo true || echo false)"
+
+# ── T35: real (UNSTUBBED) _step55_would_evict_REAL — proves the ACTUAL
+# default implementation (real orch-cold-evict.sh --dry-run + "Byte
+# reduction:" parse, captured pre-stub near the top of this file) reports
+# correctly in BOTH directions (AC(1) biconditional), not just that the
+# stub-driven wiring exercised by T21-T34 above is internally consistent.
+# Fully isolated: dedicated ORCH_STATE_PATH fixtures + dedicated ARCHIVE_DIR
+# under $TMPDIR_TEST — the REAL repo orch-state.json/archive/ are never read
+# or written (dry-run performs no writes regardless).
+REAL_LIVE_ORCH_STATE="$ROOT/docs/data/orch/orch-state.json"
+T35_REAL_HASH_BEFORE=$(shasum -a 256 "$REAL_LIVE_ORCH_STATE" 2>/dev/null | awk '{print $1}')
+T35_ARCHIVE_DIR="$TMPDIR_TEST/t35-archive"
+mkdir -p "$T35_ARCHIVE_DIR"
+# NOTE: written via `jq '.'` (default pretty-print), NOT a raw compact heredoc
+# — build_hot_temp's own output is jq's default pretty-print, and so is the
+# REAL live orch-state.json. Comparing a compact source's byte count against
+# a pretty-printed projection would inflate "Byte reduction" regardless of
+# content removed (pretty-printing alone adds indentation/newlines) — an
+# apples-to-oranges artifact that has nothing to do with the predicate under
+# test here.
+jq -n '{
+  "head": {"status":"idle","active_task_id":null,"next_agent":null},
+  "task_board": {"backlog":[],"review":[],"qa":[],"in_progress":[],"ready":[],"done":[],"done_verified":[],"active_sprints":[]},
+  "signal_queue": {"rows":[],"archive":[]},
+  "sprint_goal": {"entries":[]}
+}' > "$TMPDIR_TEST/t35-no-bloat.json"
+jq -n '{
+  "head": {"status":"idle","active_task_id":null,"next_agent":null},
+  "task_board": {"backlog":[],"review":[],"qa":[],"in_progress":[],"ready":[],"done":[],"done_verified":[{"id":"T35-DV-1","status":"DONE_VERIFIED"}],"active_sprints":[]},
+  "signal_queue": {"rows":[],"archive":[]},
+  "sprint_goal": {"entries":[]}
+}' > "$TMPDIR_TEST/t35-has-bloat.json"
+
+export ARCHIVE_DIR="$T35_ARCHIVE_DIR"
+export ORCH_STATE_PATH="$TMPDIR_TEST/t35-no-bloat.json"
+T35_NOBLOAT_RC=0
+_step55_would_evict_REAL || T35_NOBLOAT_RC=$?
+check "T35 (i) real would_evict: no evictable content -> false / no-op direction" "$([ "$T35_NOBLOAT_RC" -ne 0 ] && echo true || echo false)"
+
+export ORCH_STATE_PATH="$TMPDIR_TEST/t35-has-bloat.json"
+T35_BLOAT_RC=0
+_step55_would_evict_REAL || T35_BLOAT_RC=$?
+check "T35 (ii) real would_evict: one evictable done_verified[] row -> true / fires direction" "$([ "$T35_BLOAT_RC" -eq 0 ] && echo true || echo false)"
+unset ARCHIVE_DIR
+
+T35_REAL_HASH_AFTER=$(shasum -a 256 "$REAL_LIVE_ORCH_STATE" 2>/dev/null | awk '{print $1}')
+check "T35 REAL live orch-state.json UNCHANGED (dry-run performs no writes)" "$([ "$T35_REAL_HASH_BEFORE" = "$T35_REAL_HASH_AFTER" ] && echo true || echo false)"
 
 # ── Summary ────────────────────────────────────────────────────────────────────
 echo ""
