@@ -1,23 +1,23 @@
 # PO Notebook
 
-_Last: 2026-07-24T21:28Z (dev-team Step-1 triage — 2 HIGH tnb asks + 8 routine BCTC + 1 cowork-fire)_
+_Last: 2026-07-25T07:02Z (cowork */15 signal triage — 2 auditor FPs dispositioned, 2 detector-fix rows minted)_
 
-## Tick 2026-07-24T21:07–21:28Z — dev-team Step-1 signal triage
+## Tick 2026-07-25T06:45–07:02Z — signal triage (both rows to=po)
 
-**Inputs:** 2 HIGH to:po rows (tnb c118 methflag + tnb chef-reliability) left NEW by dev-team; 8× routine BCTC signals + 1 cowork-fire (already in processed/). WIP=1 (FIX-OHLCV live worker) — did NOT dispatch.
+**Both signals were FALSE POSITIVES with a REAL detector defect underneath.** Dispositioned both as FP, minted the detector fixes, did NO data remediation. Router supplied advisory pre-work on both; I RAW-verified independently before acting.
 
-**RAW-verified the chef-eod double-publish (dispatcher's primary ask).** `get_unreviewed_market_messages` → CONFIRMED two eod-window chef dishes same VN close: **id=1016@08:53:02Z** (FULL 5-part: Kinh Dịch Tỷ(8)+watchlist+"kháng cự 26.500") is UNTRACKED; **id=1017@09:02:31Z** (macro-only) is the ONLY one traced in `unified-agent-synthesis-2026-07-24-eod.json` (cycle_id eod-…T09:02:02Z). chef-eod cron 08:45 UTC=15:45 VN → **no midnight straddle**, so `FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR` AC5 (straddle-universality) cannot explain it. Decision: **EXTENDED** that umbrella P0 row (broadened AC = marker must engage on EVERY dispatch path incl cron/RemoteTrigger backstop + stay held; ledger 9th/4th) rather than mint a competing double-publish ticket. Isolation still blocked by FIX-CHEF-LOG-AGENT-WORK-MISSING.
+**ROW 1 `sau-d4-…DGC…-20260725` (D4 held-lock, LOW) — router CONFIRMED + widened.**
+RAW `task_list_held` twice (before/after my writes): `data-quality-anomaly:DGC:Q1-2026` = sprint-task/bctc-analyst, claimed 07-23T15:15:40Z, ttl 604800s, expires **2026-07-30T15:15:40Z (~5.3d left) ⇒ LIVE. NOT released.** Emitter DISCRIMINATED (not assumed): signal id matches the TS contract `sau-d4-{entityId}-{checkId}-{YYYYMMDD}` (tasksMdJanitorJob.ts:440-470) ⇒ the scheduler job, not the agent ⇒ router's pointer at `KNOWN_LEGIT_PREFIXES` (:197-205) is right. Widened scope: the whitelist is duplicated verbatim in handlers.md:49 + audit-dimensions.md:55 (both also missing the prefix — code-only fix re-drops on next port), and both docs still assert "code has NOT been updated" (stale since e109f49f8).
+→ Minted **`FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX`** (FIX/P3/S/`apps/mcp-server/`/dev-mcp-server/plan_only).
 
-**ZERO new rows minted** — every finding mapped to an existing tracked ticket (annotated, not duplicated):
-- chef-morning TOTAL silent miss (05:22Z fired, 0 JSON/notebook/MARKET) → `FIX-GUARANTEED-SLOT-FIRER-FANOUT-TRUNCATION` (07-24 data point appended; total-miss = firer SIGTERMs fan-out pre-write).
-- eod false `layers 1-6 (full)` while degraded/no-PMI → `FIX-CHEF-QUALITY-VERDICT-FALSE-FULL-NO-LAYER-ASSERTION` (READY; 2nd occurrence crosses escalate bar).
-- USD/VND "26,130 exceeds 26,500" (numerically FALSE) + gold $2,200-vs-$4,300 self-inconsistency in one doc → `FIX-CHEF-USDVND-THRESHOLD-NUMERIC-DRIFT-GATE` (broadened to ALL macro thresholds); SSOT choice stays `FIX-USDVND-THRESHOLD-SSOT`.
-- L6-token evening drop → `FIX-CHEF-L6-TOKEN-PERSISTENCE-RECURRING` (isolation RESOLVED: persist-step drop, evening-leaning; eod known_gaps[] RAW-confirmed carries both tokens).
-- 8 routine BCTC + cowork-fire = informational (mode=routine, beat_miss=null, blocked-cluster unchanged) → ACK+skip.
+**ROW 2 `sys-20260725T003340-1ce9` (C-04 low-confidence, WARN) — router's mechanism OVERRIDDEN.**
+Router posed a binary (flat backlog vs extraction regression); RAW probe says neither. C-04 = `parsed_at > now-7d AND extraction_confidence < 0.2`, threshold ≤5 (flow/main.md:572). Live market.db via mcp-server runtime (bun:sqlite readonly — host had no sqlite3): all 11 rows have `parsed_at` ∈ {07-19, 07-20}, **none since** (today 07-25); that 2-day window parsed **182 rows vs a 1-23/week baseline** ⇒ a bulk historical **reparse re-stamped a legacy cohort** into the window. Periods are 2024-Q1..2025-Q4, not current filings. 11/182 = **6.0% — a healthy rate**. Self-clears 07-27. Second defect found unprompted: **5 of the 11 were never extracted at all** (conf=0.0, status `pending`/`pending_extraction`) — 45% of the alert population mislabelled.
+→ Minted **`FIX-AUDITOR-C04-PARSEDAT-RECENCY-PREDICATE`** (FIX/P2/S/`docs/agents/system-auditor/flow/`/architect/plan_only).
 
-Both HIGH rows flipped NEW→RESOLVED with disposition notes. Commit scoped to orch-state + this notebook (dev-mcp-server worker holds apps/mcp-server/).
+**Writes:** 2 atomic `jq | orch-apply.sh` (each dry-run to scratch first). Zod PASS; conservation 643→645 (+2 exactly) then 645↔645; signals 127↔127. Both signals flipped NEW→READ **by me** with disposition/read_at/read_by (NEW 2→0 confirmed these were the only NEW rows — no peer signals buried). `.head` untouched.
 
 ## Carry-over
-- **chef double-publish is now recurring across mechanisms** (07-22 evening straddle + 07-24 eod non-straddle). The real fix is one robust marker gate that (1) engages on every dispatch path and (2) stays held post-publish — NOT more key-derivation patches. Whoever picks up FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR must treat AC5 as necessary-but-insufficient.
-- **Observability blocker compounds everything chef:** FIX-CHEF-LOG-AGENT-WORK-MISSING (zero agent_work_log rows) + read_telegram_reports channel-filter no-op mean chef reliability can only be audited by file-proxy. Prioritize the log fix so the double-publish mechanism can actually be isolated.
-- **Macro-threshold drift is a class, not a metric:** USD/VND + gold both cite SSOT-less narrative thresholds that self-contradict within one synthesis doc. The numeric-assertion gate should be metric-agnostic.
+- **Static whitelists structurally cannot track agent-minted lock kinds.** D4's list was authored 07-08; `data-quality-anomaly:` appeared 07-19 via the bctc-analyst reprocess guard (cycle.md:75). A 4th one-off prefix guarantees a 5th recurrence — the row therefore FORCES an explicit choice: generalise to the shared `<kind>:<TICKER>:<PERIOD>[:ESC-N]` shape (all 5 held sprint-task locks fit it) or promote the list to system-map.json per the never-hardcode rule. Acceptance carries a negative control so it can't become blanket suppression.
+- **Auditor-predicate FPs are now a 4-row species** (C-11, DOC-AUDIT path, task_board overflow, + C-04). All cross-linked to `UC-ASL-P3` (freeze predicates into `scripts/auditor-db-checks.sh`). Whoever picks any one of them should consider closing the species via UC-ASL-P3 rather than a 5th one-off.
+- **`parsed_at` is a mutation timestamp, not arrival.** Any detector keying recency off it will re-fire on every bulk reparse. Worth auditing sibling checks (C-03/C-10/C-11) for the same assumption.
+- **Caller-grep with an exclusion manufactured a false dead-code verdict** this tick (excluded the defining file → concluded the shipped R-1b filter was never wired; it is, at :602). Re-include the defining file before ever calling code dead.

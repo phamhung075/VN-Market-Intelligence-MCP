@@ -440,8 +440,11 @@
         "type": "system_issue",
         "summary": "held lock data-quality-anomaly:DGC:Q1-2026 has no orch-state task_board row",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "READ",
+        "payload_ref": null,
+        "disposition": "FALSE_POSITIVE — lock LIVE (expires 2026-07-30T15:15:40Z), NOT released; detector whitelist gap minted as FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX",
+        "read_at": "2026-07-25T06:59:44Z",
+        "read_by": "po/triage-20260725T0645"
       },
       {
         "id": "po-20260720T052606",
@@ -2257,8 +2260,11 @@
         "type": "db_integrity_breach",
         "summary": "financial_reports low confidence extraction (C-04): 11 reports",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "READ",
+        "payload_ref": null,
+        "disposition": "FALSE_POSITIVE — bulk reparse 2026-07-19/20 re-stamped parsed_at on a legacy cohort (11/182 = 6.0%, healthy); self-clears 2026-07-27; detector defect minted as FIX-AUDITOR-C04-PARSEDAT-RECENCY-PREDICATE",
+        "read_at": "2026-07-25T06:59:44Z",
+        "read_by": "po/triage-20260725T0645"
       }
     ],
     "last_triaged_at": "2026-07-23T18:03:58Z",
@@ -2472,8 +2478,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-24T22:25:33Z",
-    "_updated_by": "dev-mcp-server",
+    "_updated_at": "2026-07-25T06:49:36Z",
+    "_updated_by": "po (data-freshness intake: mint FIX-PRICEHISTORY-DATAASOF-STOCKPRICE-SERVING + promote/re-scope FFT L3/L4 residuals backlog->ready after prior-art reconciliation)",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -6779,24 +6785,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#GAP-CHEF-SYNTHESIS-B-ENDPOINT-CARD"
       },
       {
-        "id": "FIX-L3-FRONTEND-AUTOREFRESH-FRESHNESS-BADGE",
-        "title": "L3 frontend auto-refresh + freshness badge: pages are SSR-only so an open tab shows stale data silently until manual reload. Add Remix useRevalidator on an interval driven by each row's sla_tier.refresh_ms + a per-card green/amber/red FreshnessBadge from data_asof vs max_staleness_min. Centralize as a shared hook + component; reuse safeFetch.",
-        "type": "FEATURE",
-        "priority": "P2",
-        "status": "BACKLOG",
-        "zone": "apps/frontend/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-L3-FRONTEND-AUTOREFRESH-FRESHNESS-BADGE"
-      },
-      {
-        "id": "FIX-L4-FRESHNESS-SLA-MONITOR-SELF-POLICING",
-        "title": "L4 SLA monitor: extend the EXISTING freshnessSlaMonitor cron (apps/mcp-server/src/scheduler/**, */30) + system-auditor Tier-2 to read frontend-data-coverage-map.json as SSOT and emit a signal_feedback row when ANY element exceeds its tier SLA (max_staleness_min, market-hours-aware). Makes 'all data must update' self-policing.",
-        "type": "FIX",
-        "priority": "P2",
-        "status": "BACKLOG",
-        "zone": "multi",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-L4-FRESHNESS-SLA-MONITOR-SELF-POLICING"
-      },
-      {
         "id": "FIX-DEPTHTHIN-A-PRICE-HISTORY-RETENTION-10D",
         "title": "DEPTH_THIN (a): market_prices_history is only ~2 trading days deep -> /api/sector-rotation runs in only1dAvailable=true mode. Backfill/retain market_prices_history to >=10 trading days by fixing the retention WRITER.",
         "type": "FIX",
@@ -10710,6 +10698,58 @@
         "created_at": "2026-07-24T20:30:58Z",
         "created_by": "architect",
         "updated_at": "2026-07-24T20:31:12Z"
+      },
+      {
+        "id": "FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX",
+        "title": "D4 held-lock detector re-fires on data-quality-anomaly:* — KNOWN_LEGIT_PREFIXES (authored 2026-07-08) never learned the lock kind bctc-analyst introduced 2026-07-19; whitelist is a static list that lags every new escalation-lock kind",
+        "status": "BACKLOG",
+        "type": "FIX",
+        "priority": "P3",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "plan_only": true,
+        "supervised": true,
+        "created_at": "2026-07-25T06:59:44Z",
+        "created_by": "po/triage-20260725T0645",
+        "origin_signal_id": "sau-d4-data-quality-anomaly-dgc-q1-2026-not_found-20260725",
+        "root_cause": "apps/mcp-server/src/scheduler/system/tasksMdJanitorJob.ts:197-205 KNOWN_LEGIT_PREFIXES omits 'data-quality-anomaly:'. PO RAW-verified the filter IS live (applyR1bFilter called at :602 inside runTasksMdJanitor) and that the TS job IS the emitter (signal id matches the sau-d4-{entityId}-{checkId}-{YYYYMMDD} contract at :440-470) — so this is NOT a regression of FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE (e109f49f8, DONE_VERIFIED), it is a whitelist coverage gap. Second guard cannot save it: isLiveConcurrentSession requires the owner session in the live presence roster, and owner f33d0102 (bctc-analyst) is absent. TIMELINE = the real defect: whitelist authored 2026-07-08; the data-quality-anomaly escalation lock was introduced 2026-07-19 by the bctc-analyst reprocess-vs-new-filing guard (docs/agents/bctc-analyst/flow/cycle.md:75). A static prefix list cannot track lock kinds that agents mint later.",
+        "deliverable": "1) Stop the false positive: cover 'data-quality-anomaly:' in the R-1b exclusion. 2) DECIDE EXPLICITLY, do not silently add a 4th one-off prefix (CLAUDE.md: fix root cause definitif not recurrent symptom): all 5 held sprint-task locks today are ticker-scoped bctc-analyst escalations (esc-datacov:*, esc-deepdive:*, data-quality-anomaly:*) sharing the shape <kind>:<TICKER>:<PERIOD>[:ESC-N] — either generalise to that shape, or promote the list to docs/data/system-map.json per the CLAUDE.md 'System Data - Never Hardcode' rule so code + agent spec read ONE source. 3) Sync the spec plane in the SAME change or it re-drops on the next port: the whitelist is duplicated verbatim in docs/agents/system-auditor/handlers.md:49 and docs/agents/system-auditor/audit-dimensions.md:55, both also missing the prefix. 4) Clear stale doc drift: handlers.md:19 and audit-dimensions.md:90 still assert 'the live code has NOT been updated to implement it yet' — false since e109f49f8.",
+        "acceptance": "One live tasksMdJanitor cycle with data-quality-anomaly:DGC:Q1-2026 still held emits ZERO D4 signal_queue rows for it and logs 'D4 SKIP: data-quality-anomaly:DGC:Q1-2026 - known-legit-pattern'. Negative control: a genuinely orphaned non-whitelisted sprint-task lock STILL trips D4 (do not blanket-suppress). Unit tests extend apps/mcp-server/src/__tests__/FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE.test.ts:120-147 table. Code whitelist and both doc lists are byte-identical in content.",
+        "related": [
+          "FIX-AUDITOR-C04-PARSEDAT-RECENCY-PREDICATE",
+          "UC-ASL-P3"
+        ],
+        "note": "DO NOT RELEASE the lock. PO RAW-probed task_list_held: data-quality-anomaly:DGC:Q1-2026 is LIVE (sprint-task, bctc-analyst, claimed 2026-07-23T15:15:40Z, ttl 604800s, expires 2026-07-30T15:15:40Z, ~5.3d remaining) — legit board-row-less escalation per feedback_esc3_held_lock_no_board_row_is_legit. Signal is a FALSE POSITIVE; releasing would drop an in-flight 7-day data-quality escalation. Prior art checked: no existing row covers the prefix gap; git log on tasksMdJanitorJob.ts since 2026-07-20 empty and worktree clean, so no in-flight peer fix.",
+        "updated_at": "2026-07-25T07:00:53Z"
+      },
+      {
+        "id": "FIX-AUDITOR-C04-PARSEDAT-RECENCY-PREDICATE",
+        "title": "system-auditor C-04 counts bulk-reparse re-stamps as new low-confidence extractions (parsed_at is a mutation timestamp, not arrival) AND counts never-extracted rows (conf=0, status=pending) as low-confidence -> recurring WARN false-positive",
+        "status": "BACKLOG",
+        "type": "FIX",
+        "priority": "P2",
+        "size": "S",
+        "zone": "docs/agents/system-auditor/flow/",
+        "owner": "architect",
+        "next_agent": "architect",
+        "plan_only": true,
+        "supervised": true,
+        "created_at": "2026-07-25T06:59:44Z",
+        "created_by": "po/triage-20260725T0645",
+        "origin_signal_id": "sys-20260725T003340-1ce9",
+        "root_cause": "C-04 (docs/agents/system-auditor/flow/main.md:572) = SELECT count(*) FROM financial_reports WHERE parsed_at > datetime('now','-7 days') AND extraction_confidence < 0.2, threshold <=5. TWO independent predicate defects, both RAW-probed by PO against live market.db in the mcp-server runtime. D1 RECENCY: parsed_at is a MUTATION timestamp bumped by any reparse, not an arrival timestamp. All 11 flagged rows have parsed_at in {2026-07-19, 2026-07-20} and NONE since; that 2-day window parsed 182 rows total against a historical baseline of 1-23 rows/WEEK — i.e. a bulk historical reparse batch re-stamped a legacy cohort into the 7-day window. Periods flagged are 2024-Q1..2025-Q4, not current filings. The 11 are 6.0% of the 182-row batch — a HEALTHY rate, not an extractor regression. D2 POPULATION: extraction_confidence < 0.2 sweeps in rows that were never extracted at all — 5 of the 11 (HUT 2024-Q1, HUT 2024-Q3, HUT 2025-Q3, BSR 2024-Q3, HUT 2025-Q4) — leaving only 6 rows that are genuinely low_confidence — carry conf=0.0 with validation_status in {pending, pending_extraction}. 'Not yet extracted' is not 'low-confidence extraction'; 45% of the alert population is mislabelled. An absolute count threshold (<=5) with no volume normalisation guarantees re-fire on every future bulk reparse.",
+        "deliverable": "Re-specify C-04: (a) normalise to a RATE with a minimum-volume floor (e.g. lowconf/total > 15% AND total >= 20) instead of an absolute count, so healthy large batches do not trip it; (b) restrict the population to rows that actually completed extraction — exclude validation_status in ('pending','pending_extraction') and/or require extraction_confidence IS NOT NULL AND > 0; (c) decide whether recency should key off an immutable arrival column (published_at) rather than parsed_at, or whether the reparse path should stop re-stamping parsed_at. Fold into scripts/auditor-db-checks.sh as predicate SSOT per UC-ASL-P3 rather than leaving raw SQL in the flow doc.",
+        "acceptance": "Replaying the live 2026-07-19/20 reparse batch through the new predicate emits ZERO C-04 signal. Negative control: a synthetic cohort where >15% of a >=20-row genuinely-extracted batch lands under 0.2 confidence STILL trips C-04. No never-extracted (pending*) row appears in the counted population.",
+        "related": [
+          "FIX-AUDITOR-C11-PDFX-STATUS-PREDICATE",
+          "FIX-AUDITOR-DOCAUDIT-MEMORY-PATH-PREDICATE",
+          "FIX-AUDITOR-TASKBOARD-OVERFLOW-PREDICATE-WIP-ONLY",
+          "UC-ASL-P3"
+        ],
+        "note": "Auditor-FP family (feedback_auditor_predicate_drift_false_regression), 4th sibling of the same species. The CURRENT alert is a FALSE POSITIVE and self-clears 2026-07-27 when the 7-day window rolls past 2026-07-20 — no data remediation needed, this row fixes the DETECTOR only. Per reference_low_confidence_handling.md low_confidence is a by-design flag (deliberate insert + WORK alert + filtered out of RAG/alerts/briefings), not corruption, so severity WARN db_integrity_breach was the wrong framing. Distinct from FIX-BCTC-BANK-SUMMARY-MAPPING (bank scalar-column data defect) and REVIEW-PPC-Q4-LOW-CONFIDENCE (per-ticker human review) — those remediate DATA, this fixes the CHECK. Only 1 of the 11 rows is a bank (MBB 2025-Q4) and it is a different period from REFLOW-MBB-Q1-2026.",
+        "updated_at": "2026-07-25T07:02:40Z"
       }
     ],
     "closed_sprints": [
@@ -12586,6 +12626,83 @@
         "created_at": "2026-07-22T22:12:59Z",
         "created_by": "pm",
         "updated_at": "2026-07-22T22:16:09Z"
+      },
+      {
+        "id": "FIX-PRICEHISTORY-DATAASOF-STOCKPRICE-SERVING",
+        "type": "FIX",
+        "status": "READY",
+        "priority": "P1",
+        "size": "S",
+        "zone": "apps/stock-price/",
+        "owner": "developer",
+        "next_agent": "dev-stock-price",
+        "title": "Live /api/price-history/:ticker omits top-level data_asof while the other 4 L2 handlers serve it. TASK-FFT-L2 added data_asof to the mcp-server priceHistoryHandler.ts (route /mcp/api/prices/history) but the frontend-facing route is served by the Go stock-price service, so the L2 fix landed off the serving path (QA verified the wrong endpoint).",
+        "root_cause": "Router live-probe 2026-07-25: GET /api/price-history/:ticker returns keys [candles,count,data_source,generated_at,latest,stale_served,ticker] with NO top-level data_asof. That shape (stale_served/data_source/generated_at) is served by Go apps/stock-price/pkg/interface/http/router.go, NOT the mcp-server TS handler apps/mcp-server/src/interface/mcp/routes/priceHistoryHandler.ts (route /mcp/api/prices/history, returns {code,days,count,history,data_asof}; data_asof at line 111, commit a384497a3 TASK-FFT-L2). So TASK-FFT-L2 added data_asof to a handler that is NOT on the frontend serving path. The other 4 L2 handlers (market-digest, quality-checklist, vps-proxy-health, alerts) DO serve data_asof live — price-history is the only off-path one.",
+        "acceptance": [
+          "AC1: live GET /api/price-history/:ticker (frontend-facing route, via api-gateway/stock-price) returns a top-level data_asof ISO 8601 UTC string per the BA-FFT canonical key (docs/handoffs/BA-FRONTEND-FRESHNESS-TRANSPARENCY.md FR-1).",
+          "AC2: data_asof = MAX(updated_at) of the ticker's daily_ohlcv rows (data last-write, not request time); empty-table fallback new Date().toISOString().",
+          "AC3: coverage-map row technical / /api/price-history/:ticker reconciled (asof column actually reaches the wire).",
+          "AC4: count:0 for FPT/VNM/HPG (router observed) investigated — confirm weekend/param-gated (days window / trading-day) vs genuinely empty; do NOT assume broken; record finding."
+        ],
+        "verification_gate": "RAW live curl of the frontend-facing route (NOT /mcp/api/prices/history, NOT self-report): curl -s '<gateway>/api/price-history/FPT' | jq '.data_asof' returns an ISO 8601 string; repeat for a ticker with rows. Verify against the live named-volume DB, post-rebuild if a rebuild is required.",
+        "files_hint": "apps/stock-price/pkg/interface/http/router.go (live serving path — add data_asof); apps/mcp-server/src/interface/mcp/routes/priceHistoryHandler.ts (off-path reference impl that already has data_asof); apps/api-gateway (confirm which upstream /api/price-history rewrites to); docs/data/frontend-data-coverage-map.json (reconcile).",
+        "note": "Leading owner dev-stock-price (Go router.go returns the exact live keys). FIRST confirm the api-gateway rewrite target; if the route actually terminates elsewhere, bounce to architect. Distinct from FIX-DEPTHTHIN-B-GATEWAY-TA-PATH-REWRITE (that is the /ta MA/RSI/MACD indicator gap, not the data_asof stamp). Distinct from the mcp-server priceHistoryHandler which already has data_asof but is not the frontend route.",
+        "created_at": "2026-07-25T06:49:36Z",
+        "created_by": "po (data-freshness intake; router-relayed live-probe 2026-07-25)",
+        "updated_at": "2026-07-25T06:52:08Z",
+        "updated_by": "po"
+      },
+      {
+        "id": "FIX-L3-FRONTEND-AUTOREFRESH-FRESHNESS-BADGE",
+        "type": "FIX",
+        "status": "READY",
+        "priority": "P1",
+        "size": "M",
+        "zone": "apps/frontend/",
+        "owner": "developer",
+        "next_agent": "dev-frontend",
+        "title": "VERIFY-LIVE + close wiring gap for the FreshnessBadge auto-revalidate program. Implementation is DONE (TASK-FFT-L3A/L3B, sprint FRONTEND-FRESHNESS-TRANSPARENCY closed 2026-06-27) but (a) the closure DEPLOY FLAG was never confirmed executed and (b) only ~24 route files import FreshnessBadge vs the L3B DoD target — the checklist itself records pages still missing the badge.",
+        "supersedes_note": "RESIDUAL of already-DONE TASK-FFT-L3A (FreshnessBadge.tsx + useFreshnessRevalidator.ts, commit afbb0c99) and TASK-FFT-L3B (34-route wiring, commit 24bbecbf). NOT a re-implementation — the shared primitives exist on disk. Prior-art gate: do NOT re-create FreshnessBadge/hook.",
+        "root_cause": "SSR-only pages show stale data in an open tab until manual reload — the fix (revalidate interval + green/amber/red badge from data_asof vs SLA max_staleness_min) was built and QA-approved but its LIVE visibility was never verified. grep -rl FreshnessBadge apps/frontend/app/routes/ = 24 files (< L3B ~34-site DoD). docs/data/quality-checklist.json:4901 explicitly records bctc-eval-hub items carry updated_at/generated_at but have NO <FreshnessBadge>/stale flag — a surviving wiring gap despite the DONE marking. Without visible auto-revalidate, endpoints that DO emit data_asof still look stale to the user (direct cause of 'data forgot to update').",
+        "acceptance": [
+          "AC1: on the LIVE dashboard, an open tab visibly renders the 'Cập nhật lúc HH:MM' FreshnessBadge on each data page and auto-revalidates per its SLA client_refresh_ms (realtime 60s / intraday 300s) — confirmed in a running browser, not just source.",
+          "AC2: every data-rendering page missing a badge is wired (close the 24-vs-target gap); bctc-eval-hub (quality-checklist.json:4901) specifically gets a FreshnessBadge/stale flag.",
+          "AC3: single shared definition preserved (grep export FreshnessBadge = 1); no per-page fork.",
+          "AC4: if a frontend rebuild is required for visibility (closure DEPLOY FLAG), call it out to ops."
+        ],
+        "verification_gate": "RAW live: load the running dashboard, confirm badge renders + colour + auto-revalidate fires (network tab shows revalidation at the SLA interval). Not source-grep, not self-report.",
+        "files_hint": "apps/frontend/app/components/FreshnessBadge.tsx (exists), apps/frontend/app/lib/hooks/useFreshnessRevalidator.ts (exists), apps/frontend/app/routes/*.tsx (close wiring gap), docs/data/frontend-data-coverage-map.json (l3b_status), docs/data/quality-checklist.json:4901 (bctc-eval-hub gap).",
+        "note": "Promoted from backlog by po after prior-art reconciliation: the FFT sprint that owned this anchor is CLOSED with all 4 tasks DONE, so the residual is verify-deploy + close the wiring gap, NOT fresh implementation. Related: quality-audit checklist base is 45d stale (generated_at 2026-06-10) — dev-frontend is regenerating it now via scripts/gen-frontend-page-checks.mjs.",
+        "created_at": "2026-06-27T00:00:00Z",
+        "created_by": "po (FFT anchor)",
+        "updated_at": "2026-07-25T06:52:08Z",
+        "updated_by": "po (backlog->ready; re-scoped implement->verify-live+close-wiring-gap after prior-art: TASK-FFT-L3A/L3B DONE)"
+      },
+      {
+        "id": "FIX-L4-FRESHNESS-SLA-MONITOR-SELF-POLICING",
+        "type": "FIX",
+        "status": "READY",
+        "priority": "P1",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "owner": "developer",
+        "next_agent": "dev-mcp-server",
+        "title": "VERIFY-LIVE the coverage-map SLA self-policing monitor actually runs and emits SLA-breach signals. Implementation DONE (TASK-FFT-L4, coverageMapFreshnessChecker.ts, commit 1dd3c6d1) but never confirmed wired into the live freshnessSlaMonitorJob scheduler or observed raising a breach — this IS the 'audit auto-catches stale data' capability the user is asking for.",
+        "supersedes_note": "RESIDUAL of already-DONE TASK-FFT-L4. apps/mcp-server/src/domain/services/coverageMapFreshnessChecker.ts EXISTS on disk (11KB). NOT a re-implementation — verify runtime wiring + effectiveness. Prior-art gate: do NOT re-create the checker.",
+        "root_cause": "coverageMapFreshnessChecker.ts (BA-FFT FR-6) reads frontend-data-coverage-map.json, compares each page's data age to its SLA tier, and postSignal()s an SLA breach (market-hours-gated) to alert-commander. Built + unit-tested + QA-approved, but there is no live evidence the scheduler second-pass (freshnessSlaMonitorJob.ts runFreshnessSlaMonitor) invokes it in production or that a real breach signal has ever fired. This is the continuous/runtime complement to dev-frontend's audit-time gen-frontend-page-checks.mjs FRESH-vs-SLA checks.",
+        "acceptance": [
+          "AC1: confirm freshnessSlaMonitorJob.ts (live scheduler) invokes coverageMapFreshnessChecker as its second pass every tick (reads the live coverage map, not just unit-test injected rows).",
+          "AC2: forced breach — set a watched endpoint's DB column old → an agent_signals row is created with fromAgent=freshness-sla-monitor and payload.title containing 'SLA BREACH' (raw DB, live named volume).",
+          "AC3: STALE_RISK rows (alerts, foreign-flow) suppressed outside VN market hours (isVnMarketHours gate); existing 12-signal SQL path unchanged (additive).",
+          "AC4: if not wired live, wire it and rebuild mcp-server."
+        ],
+        "verification_gate": "RAW live: query the live named-volume DB for an agent_signals row from freshness-sla-monitor after a forced breach; confirm scheduler log shows the coverage-map second pass ran. Not unit-test-only, not self-report.",
+        "files_hint": "apps/mcp-server/src/domain/services/coverageMapFreshnessChecker.ts (exists), apps/mcp-server/src/scheduler/system/freshnessSlaMonitorJob.ts (verify second-pass wiring), apps/mcp-server/src/domain/services/freshnessSlaChecker.ts (isVnMarketHours), docs/data/frontend-data-coverage-map.json (SSOT).",
+        "note": "Highest-leverage of the freshness residuals: the runtime self-policing the user really wants ('the audit auto-catches stale data'). Promoted from backlog by po after prior-art: the FFT sprint that owned this anchor is CLOSED (TASK-FFT-L4 DONE), so scope is verify-live + wire-if-missing, NOT fresh build. Complements dev-frontend's in-flight audit-time gen-frontend-page-checks.mjs upgrade (audit-time probe). Note: quality-audit checklist base is 45d stale (generated_at 2026-06-10); dev-frontend regenerating now.",
+        "created_at": "2026-06-27T00:00:00Z",
+        "created_by": "po (FFT anchor)",
+        "updated_at": "2026-07-25T06:52:08Z",
+        "updated_by": "po (backlog->ready; re-scoped implement->verify-live after prior-art: TASK-FFT-L4 DONE)"
       }
     ],
     "review": [
@@ -15087,8 +15204,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-25T05:15:55Z",
-    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
+    "last_triaged_at": "2026-07-25T06:59:44Z",
+    "last_triaged_by": "po/triage-20260725T0645",
     "in_progress": [
       {
         "id": "FIX-VNINDEX-CACHE-STARTUP-PURGE",
