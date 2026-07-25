@@ -40,6 +40,18 @@
 #      G3 valid hashtag block as last element (mandatory 5 tags, no diacritics)
 #      G4 no raw markdown in post body (**bold**, ##headers, | table |)
 #      G5 word ceiling ≤ 1300 words (flow cap; trim Tóm tắt nhanh first if over)
+#   H  Index point-change vs percent math consistency (FIX-FB-GATE-POINT-PCT-MATH):
+#      For any VN market index the post states with BOTH a point delta ("giảm/tăng
+#      X điểm") AND a % delta ("(±Y%)") for the same mention — VN-Index, VN30,
+#      HNX-Index, UPCOM — asserts |stated_point_change − pct × prev_close| is within
+#      POINT_PCT_MATH_TOLERANCE. prev_close is derived from the live snapshot
+#      (close / (1 + changePct/100)) — never hardcoded. BLOCKs when the point delta
+#      and the % delta are internally inconsistent (unit-confusion / fabrication
+#      signal — e.g. lesson L2 06-19: post said "giảm 0,32 điểm (−0,32%)" when
+#      −0,32% at that day's level is actually ≈ −5,9 điểm, not −0,32 điểm).
+#      NOTE: minted as "Check-F" (2026-06-20, before the currency-unit guard and
+#      structural validator above claimed letters F and G) — implemented as
+#      Check-H, the next unclaimed letter in the A..G sequence.
 #
 # SSOT for all check thresholds lives exclusively here.
 # SSOT for ticker→sector/company mapping: docs/data/system-map.json .project.watchlist
@@ -68,6 +80,7 @@ HOSE_LIMIT=7.0           # daily price limit %; Block if |pct| > this
 LIVE_DELTA_LIMIT=1.0     # max acceptable |post_pct - live_pct| in pp
 VNINDEX_LEVEL_LIMIT=5.0  # max acceptable |post_level - live_level| in points
 VNINDEX_PCT_LIMIT=0.5    # max acceptable |post_pct - live_pct| for VN-Index in pp
+POINT_PCT_MATH_TOLERANCE=1.0  # Check-H: max |stated_point_change - implied_point_change| in index points
 CURL_TIMEOUT=8           # seconds
 
 VIOLATIONS=0
@@ -98,11 +111,13 @@ POST_TICKERS=$(set +o pipefail; grep -oE '\b([A-Z]{2,4})\b' "$FILE" 2>/dev/null 
   | sort -u \
   | tr '\n' ',' | sed 's/,$//')
 
-# Always include VNINDEX for the index check
+# Always include the standard VN market index tickers — Check-D (VN-Index) and
+# Check-H (point-vs-pct math, any index) both need live close/changePct for these.
+INDEX_TICKERS="VNINDEX,VN30,HNXINDEX,UPCOMINDEX"
 if [[ -n "$POST_TICKERS" ]]; then
-  FETCH_TICKERS="VNINDEX,$POST_TICKERS"
+  FETCH_TICKERS="${INDEX_TICKERS},$POST_TICKERS"
 else
-  FETCH_TICKERS="VNINDEX"
+  FETCH_TICKERS="$INDEX_TICKERS"
 fi
 
 # ── Step 2: Fetch live snapshot ───────────────────────────────────────────────
@@ -962,6 +977,137 @@ if [[ -n "$check_g_violations" ]]; then
   g_count=$(echo "$check_g_violations" | grep -c '^\[BLOCK\]' || true)
   g_count=$(echo "$g_count" | grep -m1 '^[0-9]' || echo "0")
   VIOLATIONS=$((VIOLATIONS + g_count))
+fi
+
+# ── Check H: index point-change vs percent math consistency (FIX-FB-GATE-POINT-PCT-MATH) ──
+# A post can state a point delta ("giảm/tăng X điểm") and a % delta ("(±Y%)") for the
+# SAME index mention that are internally inconsistent — e.g. lesson L2 (2026-06-19):
+# post said "giảm 0,32 điểm (−0,32%)" when at that day's level a −0,32% move is
+# actually ≈ −5,9 điểm, not −0,32 điểm (unit-confusion / fabrication signal).
+#
+# Math: implied_point_change = pct/100 × prev_close. prev_close is derived from the
+# LIVE snapshot only (never hardcoded, never guessed):
+#   prev_close = live_close / (1 + live_pct/100)
+# BLOCK when |stated_point_change - implied_point_change| > POINT_PCT_MATH_TOLERANCE.
+#
+# GENERIC: applies to any VN market index the post pairs with both a point delta and a
+# % for the same mention — VN-Index, VN30, HNX-Index, UPCOM (INDEX_ALIASES below) — not
+# hardcoded to one ticker. Skips gracefully (no block) when no live snapshot is available,
+# same skip-on-unavailable posture as Check-B/D.
+
+check_h_violations=$(python3 - "$FILE" "$SNAPSHOT_JSON" "$POINT_PCT_MATH_TOLERANCE" <<'PYEOF'
+import re, sys, json
+
+post_file = sys.argv[1]
+snapshot_json_str = sys.argv[2]
+tolerance = float(sys.argv[3])
+
+try:
+    with open(post_file, encoding="utf-8") as f:
+        text = f.read()
+except Exception as e:
+    print(f"[WARN] Check-H: cannot read post file: {e}", flush=True)
+    sys.exit(0)
+
+quotes = {}
+if snapshot_json_str:
+    try:
+        quotes = json.loads(snapshot_json_str).get("quotes", {})
+    except Exception:
+        quotes = {}
+
+if not quotes:
+    sys.exit(0)  # no live data — nothing to validate against, skip gracefully
+
+# Display-name pattern → live ticker code. New indices participate by adding one
+# entry here — the check logic below never names a specific ticker.
+INDEX_ALIASES = [
+    (re.compile(r'VN[- ]?Index\b', re.IGNORECASE), "VNINDEX"),
+    (re.compile(r'VN\s?30\b', re.IGNORECASE), "VN30"),
+    (re.compile(r'HNX[- ]?Index\b', re.IGNORECASE), "HNXINDEX"),
+    (re.compile(r'UPCOM(?:[- ]?Index)?\b', re.IGNORECASE), "UPCOMINDEX"),
+]
+
+# <index name> ... (tăng|giảm) N,NN điểm ... (±M,MM%) — same clause, same index mention.
+PAIR_PAT = re.compile(
+    r'(?P<idx>VN[- ]?Index|VN\s?30|HNX[- ]?Index|UPCOM(?:[- ]?Index)?)'
+    r'[^\n]{0,120}?'
+    r'(?P<dir>tăng|giảm)\s+(?P<pt>\d{1,4}(?:[.,]\d{1,2})?)\s*điểm'
+    r'[^\n]{0,40}?'
+    r'\((?P<sign>[+\-−±])\s*(?P<pct>\d{1,3}(?:[.,]\d{1,2})?)\s*%\)',
+    re.IGNORECASE | re.UNICODE,
+)
+
+violations = []
+seen = set()
+
+for m in PAIR_PAT.finditer(text):
+    idx_raw = m.group("idx")
+    ticker = None
+    for pat, tk in INDEX_ALIASES:
+        if pat.search(idx_raw):
+            ticker = tk
+            break
+    if ticker is None or ticker in seen:
+        continue
+
+    point_raw = m.group("pt").replace(",", ".")
+    try:
+        point_change = float(point_raw)
+    except ValueError:
+        continue
+    if "giảm" in m.group("dir"):
+        point_change = -point_change
+
+    sign = -1 if m.group("sign") in ("-", "−") else 1
+    pct_raw = m.group("pct").replace(",", ".")
+    try:
+        pct_change = sign * float(pct_raw)
+    except ValueError:
+        continue
+
+    q = quotes.get(ticker)
+    if not q:
+        continue
+    live_close = q.get("close")
+    live_pct = q.get("changePct")
+    if live_close is None or live_pct is None:
+        continue
+    try:
+        live_close = float(live_close)
+        live_pct = float(live_pct)
+    except (TypeError, ValueError):
+        continue
+    denom = 1 + live_pct / 100
+    if live_close <= 0 or denom == 0:
+        continue
+
+    prev_close = live_close / denom
+    implied_point_change = pct_change / 100 * prev_close
+    delta = abs(point_change - implied_point_change)
+
+    seen.add(ticker)
+
+    if delta > tolerance:
+        direction_word = "giảm" if point_change < 0 else "tăng"
+        violations.append(
+            f"[BLOCK] Check-H point-pct-math: {idx_raw.strip()} stated "
+            f"'{direction_word} {abs(point_change):.2f} điểm ({pct_change:+.2f}%)' — "
+            f"implied point change from % at prev_close≈{prev_close:.2f} is "
+            f"{implied_point_change:+.2f} điểm, delta={delta:.2f} > {tolerance}pt "
+            "tolerance. Point delta and percent delta are internally inconsistent."
+        )
+
+for v in violations:
+    print(v)
+PYEOF
+)
+
+if [[ -n "$check_h_violations" ]]; then
+  echo "$check_h_violations"
+  h_count=$(echo "$check_h_violations" | grep -c '^\[BLOCK\]' || true)
+  h_count=$(echo "$h_count" | grep -m1 '^[0-9]' || echo "0")
+  VIOLATIONS=$((VIOLATIONS + h_count))
 fi
 
 # ── Result ────────────────────────────────────────────────────────────────────
