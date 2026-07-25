@@ -1,12 +1,13 @@
 # PO Notebook
 
-_Last: 2026-07-25T12:34Z (dev-team Step 1 triage — broke the head=review wedge, returned 5-row BATCH, folded 2 signals into existing rows)_
+_Last: 2026-07-25T12:34Z (dev-team Step 1 triage — broke the head=review wedge, returned 6-row BATCH, folded 2 signals into existing rows)_
 
 ## Tick 2026-07-25T12:27–12:34Z
 
 | Input | Disposition |
 |---|---|
 | `.head = {status:"review", …}` wedging the whole dispatch chain | **RESET → idle** via `orch-apply.sh` — contract restoration, not a judgement call |
+| …and its root cause: `head.status` has no write-time gate anywhere | **MINT** `FIX-ORCHAPPLY-HEAD-STATUS-WRITE-GATE` (batch #1) — prose→gate |
 | Signal: agent_signals TTL 120m < alert-commander sweep 240m | **MINT** `FIX-AGENTSIGNALS-TTL-SHORTER-THAN-CONSUMER-CADENCE` (no prior art) |
 | Signal: `promoteCycleSnapshot` HH:MM mismatch | **FOLD** → `UC-SDF-P2` (title already named it) — 0 rows minted |
 | Finding B: drain-report prints `[PASS]` on 75 undrained rows | **MINT** `FIX-DRAINREPORT-PREDICATE-MEASURES-ARRIVAL-NOT-DRAINAGE` |
