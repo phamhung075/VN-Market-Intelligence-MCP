@@ -72,6 +72,27 @@
 #      NOTE: ticket named this "Check-G" but A-H were already claimed by execution
 #      time (see Check-H note above) — implemented as Check-I, the next
 #      unclaimed letter in the A..H sequence.
+#   J  Breadth %-vs-cited-counts internal consistency guard
+#      (FIX-FB-GATE-BREADTH-PCT-INTERNAL, 2026-07-25):
+#      Any stated advancer/decliner breadth % must match the counts cited
+#      elsewhere in the SAME post within BREADTH_PCT_TOLERANCE — lesson L4:
+#      2026-06-19 post said "độ rộng khoảng 40%" while citing counts that
+#      work out to ~25% (81 of ~350) — unit/arithmetic confusion signal.
+#      GENERIC: parses (1) a headline "độ rộng ~Y%"/"breadth Y%" claim near
+#      the keyword, (2) a direct "%...mã tăng/giảm" labelled claim, against
+#      (a) an explicit "N (mã tăng/giảm/trần/sàn) của/trên/trong (tổng)
+#      ~M" fraction citation — label-agnostic, covers advancer/decliner/
+#      floor/ceiling counts generically — and (b) "N mã tăng ... M mã giảm
+#      [... K mã đứng giá]" co-occurring counts (implied_pct = part/total).
+#      BLOCKs when |stated_pct − implied_pct| > BREADTH_PCT_TOLERANCE.
+#      Graceful skip (no block) when the post cites no breadth % claim, or
+#      cites a % with no counts to cross-check against — same skip-on-
+#      absent posture as Check-B/D/H/I.
+#      NOTE: ticket named this "Check-H" but A-I were already claimed by
+#      execution time (see Check-H/Check-I notes above) — implemented as
+#      Check-J, the next unclaimed letter in the A..I sequence (verified via
+#      `grep -oE 'Check-[A-Z]' scripts/fb-data-integrity-gate.sh | sort -u`
+#      before minting).
 #
 # SSOT for all check thresholds lives exclusively here.
 # SSOT for ticker→sector/company mapping: docs/data/system-map.json .project.watchlist
@@ -102,6 +123,7 @@ LIVE_DELTA_LIMIT=1.0     # max acceptable |post_pct - live_pct| in pp
 VNINDEX_LEVEL_LIMIT=5.0  # max acceptable |post_level - live_level| in points
 VNINDEX_PCT_LIMIT=0.5    # max acceptable |post_pct - live_pct| for VN-Index in pp
 POINT_PCT_MATH_TOLERANCE=1.0  # Check-H: max |stated_point_change - implied_point_change| in index points
+BREADTH_PCT_TOLERANCE=6.0     # Check-J: max |stated_breadth_pct - implied_pct_from_cited_counts| in pp
 CURL_TIMEOUT=8           # seconds
 
 VIOLATIONS=0
@@ -1338,6 +1360,167 @@ if [[ -n "$check_i_violations" ]]; then
   i_count=$(echo "$check_i_violations" | grep -c '^\[BLOCK\]' || true)
   i_count=$(echo "$i_count" | grep -m1 '^[0-9]' || echo "0")
   VIOLATIONS=$((VIOLATIONS + i_count))
+fi
+
+# ── Check J: breadth %-vs-cited-counts internal consistency (FIX-FB-GATE-BREADTH-PCT-INTERNAL) ──
+# Lesson L4 (2026-06-19): a post can state a headline breadth % ("độ rộng khoảng 40%")
+# that is internally inconsistent with the advancer/decliner counts cited elsewhere in
+# the SAME post ("81 mã tăng" / "81 của ~350" implying ~23%, not 40%).
+#
+# GENERIC across any breadth phrasing (advancers/decliners/floor-sàn/ceiling-trần counts
+# vs %) — not a one-phrase hardcode:
+#   Stated-% extraction (either form counts as a claim to verify):
+#     (1) headline: first "N%" within 30 chars AFTER the "độ rộng"/"breadth" keyword,
+#         in the SAME sentence — tight window so an unrelated % later in the sentence
+#         (thanh khoản %, a ticker's own % move, etc.) is never mistaken for the
+#         breadth headline.
+#     (2) labelled: "N% mã tăng/giảm" or "mã tăng/giảm: N%" (direction known).
+#   Cited-counts extraction (label-agnostic, so it covers advancer/decliner/floor/
+#   ceiling counts without one regex per label):
+#     (a) explicit fraction — "N (mã tăng|giảm|trần|sàn)? của/trên/trong (tổng)?
+#         (khoảng|~)? M" — e.g. "81 của ~350" — implied_pct = N/M×100.
+#     (b) co-occurring "N mã tăng ... M mã giảm [... K mã đứng giá]" in the same
+#         sentence — implied_pct = part/(tăng+giảm[+đứng giá])×100, both the
+#         advancer-view and decliner-view (and flat-view) are candidates.
+#   BLOCK when the stated % is farther than BREADTH_PCT_TOLERANCE from every implied
+#   candidate whose direction matches the stated claim (undirected "độ rộng ~Y%"
+#   headline claims are checked against ALL candidates).
+#
+# Graceful skip (no block, same posture as Check-B/D/H/I skip-on-absent):
+#   - no breadth % claim in the post at all
+#   - a % claim is present but the post cites no counts to cross-check it against
+
+check_j_violations=$(python3 - "$FILE" "$BREADTH_PCT_TOLERANCE" <<'PYEOF'
+import re, sys
+
+post_file = sys.argv[1]
+tolerance = float(sys.argv[2])
+
+try:
+    with open(post_file, encoding="utf-8") as f:
+        text = f.read()
+except Exception as e:
+    print(f"[WARN] Check-J: cannot read post file: {e}", flush=True)
+    sys.exit(0)
+
+sentences = re.split(r'(?<=[.!?…])\s+|\n+', text)
+
+# ── stated %: (1) headline "độ rộng ... N%" (tight 30-char window, same sentence) ──
+stated = []  # (pct, direction_or_None, desc)
+KW_PAT = re.compile(r'độ\s*rộng|breadth', re.IGNORECASE | re.UNICODE)
+PCT_NUM_PAT = re.compile(r'(\d{1,3}(?:[.,]\d{1,2})?)\s*%')
+for sent in sentences:
+    m = KW_PAT.search(sent)
+    if not m:
+        continue
+    tail = sent[m.end(): m.end() + 30]
+    pm = PCT_NUM_PAT.search(tail)
+    if not pm:
+        continue
+    try:
+        pct = float(pm.group(1).replace(",", "."))
+    except ValueError:
+        continue
+    between = tail[:pm.start()].lower()
+    i_tang = between.find("tăng")
+    i_giam = between.find("giảm")
+    if i_tang != -1 and (i_giam == -1 or i_tang < i_giam):
+        direction = "tăng"
+    elif i_giam != -1:
+        direction = "giảm"
+    else:
+        direction = None
+    stated.append((pct, direction, f"'độ rộng...{pm.group(0)}'"))
+
+# ── stated %: (2) labelled "N% mã tăng/giảm" (either word order, tight adjacency) ──
+LABEL_AFTER_PAT = re.compile(r'(\d{1,3}(?:[.,]\d{1,2})?)\s*%\s*(?:mã\s*)?(tăng|giảm)\b', re.UNICODE)
+for m in LABEL_AFTER_PAT.finditer(text):
+    try:
+        pct = float(m.group(1).replace(",", "."))
+    except ValueError:
+        continue
+    stated.append((pct, m.group(2), f"'{m.group(0)}'"))
+
+LABEL_BEFORE_PAT = re.compile(r'mã\s*(tăng|giảm)\s*(?::|là|ở mức)?\s*(\d{1,3}(?:[.,]\d{1,2})?)\s*%', re.UNICODE)
+for m in LABEL_BEFORE_PAT.finditer(text):
+    try:
+        pct = float(m.group(2).replace(",", "."))
+    except ValueError:
+        continue
+    stated.append((pct, m.group(1), f"'{m.group(0)}'"))
+
+if not stated:
+    sys.exit(0)  # no breadth % claim anywhere — nothing to cross-check, graceful skip
+
+# ── cited counts (a): explicit "N (label)? của/trên/trong (tổng)? (khoảng|~)? M" fraction ──
+FRACTION_PAT = re.compile(
+    r'(\d{1,4})\s*(?:mã)?\s*(?:tăng|giảm|trần|sàn)?\s*'
+    r'(?:của|trên|trong)\s+(?:tổng\s+)?(?:khoảng\s+)?~?\s*(\d{1,4})',
+    re.UNICODE
+)
+fraction_candidates = []  # ("fraction", implied_pct, desc)
+for m in FRACTION_PAT.finditer(text):
+    n, total = int(m.group(1)), int(m.group(2))
+    if total <= 0 or n > total:
+        continue
+    fraction_candidates.append(("fraction", n / total * 100.0, f"{n} của ~{total}"))
+
+# ── cited counts (b): co-occurring "N mã tăng ... M mã giảm [... K mã đứng giá]" ──
+ADV_PAT = re.compile(r'(\d{1,4})\s*mã\s*tăng\b', re.UNICODE)
+DEC_PAT = re.compile(r'(\d{1,4})\s*mã\s*giảm\b', re.UNICODE)
+FLAT_PAT = re.compile(r'(\d{1,4})\s*mã\s*đứng\s*giá\b', re.UNICODE)
+labeled_candidates = []  # (direction, implied_pct, desc)
+for sent in sentences:
+    adv_m, dec_m = ADV_PAT.search(sent), DEC_PAT.search(sent)
+    if not (adv_m and dec_m):
+        continue
+    adv, dec = int(adv_m.group(1)), int(dec_m.group(1))
+    flat_m = FLAT_PAT.search(sent)
+    flat = int(flat_m.group(1)) if flat_m else 0
+    total = adv + dec + flat
+    if total <= 0:
+        continue
+    labeled_candidates.append(("tăng", adv / total * 100.0, f"{adv} mã tăng / {total} tổng"))
+    labeled_candidates.append(("giảm", dec / total * 100.0, f"{dec} mã giảm / {total} tổng"))
+    if flat_m:
+        labeled_candidates.append(("đứng giá", flat / total * 100.0, f"{flat} mã đứng giá / {total} tổng"))
+    break  # first co-occurring sentence = the primary breadth statement
+
+all_candidates = fraction_candidates + labeled_candidates
+if not all_candidates:
+    sys.exit(0)  # % claim present but no counts cited anywhere — nothing to verify against
+
+violations = []
+seen = set()
+for pct, direction, desc in stated:
+    key = (round(pct, 1), direction)
+    if key in seen:
+        continue
+    seen.add(key)
+
+    pool = all_candidates if direction is None else \
+        [c for c in all_candidates if c[0] in (direction, "fraction")] or all_candidates
+
+    best = min(pool, key=lambda c: abs(pct - c[1]))
+    delta = abs(pct - best[1])
+    if delta > tolerance:
+        violations.append(
+            f"[BLOCK] Check-J breadth-pct-internal: stated {desc} = {pct}% does not "
+            f"match cited counts ({best[2]} = {best[1]:.2f}%), delta={delta:.2f}pp > "
+            f"{tolerance}pp tolerance — internal inconsistency (headline breadth % vs "
+            "cited counts)"
+        )
+
+for v in violations:
+    print(v)
+PYEOF
+)
+
+if [[ -n "$check_j_violations" ]]; then
+  echo "$check_j_violations"
+  j_count=$(echo "$check_j_violations" | grep -c '^\[BLOCK\]' || true)
+  j_count=$(echo "$j_count" | grep -m1 '^[0-9]' || echo "0")
+  VIOLATIONS=$((VIOLATIONS + j_count))
 fi
 
 # ── Result ────────────────────────────────────────────────────────────────────
