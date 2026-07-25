@@ -419,12 +419,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-FB-GATE-CHECKD2-NONWAIVABLE-NUMERIC-BLOCK",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-FB-GATE-CHECKD2-NONWAIVABLE-NUMERIC-BLOCK — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-25T16:26:38Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "updated_at": "2026-07-25T16:43:24Z",
+    "updated_by": "developer"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -15693,6 +15692,34 @@
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
         "claimed_at": "2026-07-25T15:44:32Z",
         "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      },
+      {
+        "id": "FIX-FB-GATE-CHECKD2-NONWAIVABLE-NUMERIC-BLOCK",
+        "type": "FIX",
+        "title": "fb-gate Check-D2 must be non-waivable: numeric BLOCK inherits Check-C false-positive waiver and ships wrong week baseline",
+        "status": "REVIEW",
+        "priority": "P1",
+        "size": "S",
+        "zone": "docs/agents/fb-market-poster/",
+        "sprint": null,
+        "source": "router-observed-2026-07-25-fb-weekend-tick",
+        "verdict": "CONFIRMED",
+        "detail_ref": "docs/agents/fb-market-poster/flow/weekly-recap.md#L171",
+        "note": "LIVE MISS 2026-07-25: WEEKLY_RECAP hit Check-D2 BLOCK 2/2 (post -3.29% vs live -5.67%, delta 2.38pp > 0.5pp tol) and PROCEEDED, shipping docs/social/fb-post-2026-07-25.md with the wrong baseline. Ground truth get_price_history(VNINDEX): 2026-07-17 close 1787 -> 2026-07-24 close 1686 = -101pts/-5.65% WoW. Post used Monday CLOSE 1743.51 labelled \"lúc đầu tuần\", discarding Mon -2.46%. Knock-on errors in shipped file: (a) \"-101,47 điểm một ngày\" mislabels the FULL-WEEK decline as a single day (true max day = Wed -3.58% = -62pts); (b) \"dao động 75 điểm\" understates true range 1787->1669 = 118pts. ROOT CAUSE: weekly-recap.md:171-172 applies main.md STEP 4b EXIT-only-on-real-fabrication posture gate-WIDE. That waiver exists for Check-C (bán tháo negation-blind LEXICAL false positive). Check-D2 compares two computed numbers and has NO false-positive mode, so it must be non-waivable: on Check-D2 BLOCK, recompute baseline as prior-period CLOSE (not first-session close of the period) and re-derive; never resolve by prose softening (\"mức giảm đáng kể\"). Sibling rows FIX-FB-GATE-WEEKLY-FRAME-MODE + FIX-FB-GATE-POINT-PCT-MATH are in review and DETECT correctly - this is the waiver path, not detection. Check-F also missed (b) because the bare point figure carries no percent to cross-check.",
+        "created_at": "2026-07-25T13:35:47Z",
+        "created_by": "router",
+        "next_agent": "qa",
+        "supervised": false,
+        "updated_at": "2026-07-25T16:43:24Z",
+        "promoted_at": "2026-07-25T16:26:38Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-25T16:26:38Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "updated_by": "developer",
+        "rebuild_required": false,
+        "branch": null,
+        "review_note": "developer: root cause was the WAIVER path, not detection -- Check-D2 (VN-Index %-vs-live under --frame=weekly) already BLOCKed 2/2 rounds on the live post (post -3.29% vs live -5.67%) but main.md STEP 4b's \"EXIT-only-on-real-fabrication posture\" pointer defaulted every non-Check-A/non-breadth BLOCK into honest-gap+PROCEED, so fb-post-2026-07-25.md shipped with the wrong weekly baseline (Monday's own close used as start-of-week instead of the PRIOR week's close), cascading into a mislabelled full-week decline read as one day and an understated range. Rewrote main.md STEP 4b + weekly-recap.md STEP 3b + weekly-prediction.md STEP 4b: waivability is now per-check -- Check-C's negation-blind prose pattern is the ONLY waivable check; every numeric check (A/B/D/D1/D2/E/F/H/J) is non-waivable, EXIT after 2 rounds. Added Check-D2 fix protocol (recompute baseline as prior-period close, re-derive dependent figures). Zero changes to scripts/fb-data-integrity-gate.sh -- re-verified the unmodified gate still BLOCKs (Check-D2) on the live fixture with a correct weekly snapshot. New scripts/test-fb-gate-checkd2-nonwaivable.sh (10 assertions): live-fixture BLOCK proof, correctly-baselined contrast PASS, doc-prose assertions across all 3 flow files. RED->GREEN via pathspec-limited git stash push/pop on the 3 flow docs: RED 4/10, GREEN 10/10. No regression: sibling test-fb-gate-checkc-negation.sh still 6/6. docs/social/fb-post-2026-07-25.md left untouched (0 diff) -- DO-NOT-PASTE hold lifts via this fix, not by editing the post. Commits 1b506cbdd (fix) + 7b87ac372 (journal+notebook), NOT pushed (CI RED on origin/main, out of scope per instruction)."
       }
     ],
     "qa": [],
@@ -15714,32 +15741,7 @@
     },
     "last_triaged_at": "2026-07-25T16:31:11Z",
     "last_triaged_by": "po/triage-20260725T1631",
-    "in_progress": [
-      {
-        "id": "FIX-FB-GATE-CHECKD2-NONWAIVABLE-NUMERIC-BLOCK",
-        "type": "FIX",
-        "title": "fb-gate Check-D2 must be non-waivable: numeric BLOCK inherits Check-C false-positive waiver and ships wrong week baseline",
-        "status": "IN_PROGRESS",
-        "priority": "P1",
-        "size": "S",
-        "zone": "docs/agents/fb-market-poster/",
-        "sprint": null,
-        "source": "router-observed-2026-07-25-fb-weekend-tick",
-        "verdict": "CONFIRMED",
-        "detail_ref": "docs/agents/fb-market-poster/flow/weekly-recap.md#L171",
-        "note": "LIVE MISS 2026-07-25: WEEKLY_RECAP hit Check-D2 BLOCK 2/2 (post -3.29% vs live -5.67%, delta 2.38pp > 0.5pp tol) and PROCEEDED, shipping docs/social/fb-post-2026-07-25.md with the wrong baseline. Ground truth get_price_history(VNINDEX): 2026-07-17 close 1787 -> 2026-07-24 close 1686 = -101pts/-5.65% WoW. Post used Monday CLOSE 1743.51 labelled \"lúc đầu tuần\", discarding Mon -2.46%. Knock-on errors in shipped file: (a) \"-101,47 điểm một ngày\" mislabels the FULL-WEEK decline as a single day (true max day = Wed -3.58% = -62pts); (b) \"dao động 75 điểm\" understates true range 1787->1669 = 118pts. ROOT CAUSE: weekly-recap.md:171-172 applies main.md STEP 4b EXIT-only-on-real-fabrication posture gate-WIDE. That waiver exists for Check-C (bán tháo negation-blind LEXICAL false positive). Check-D2 compares two computed numbers and has NO false-positive mode, so it must be non-waivable: on Check-D2 BLOCK, recompute baseline as prior-period CLOSE (not first-session close of the period) and re-derive; never resolve by prose softening (\"mức giảm đáng kể\"). Sibling rows FIX-FB-GATE-WEEKLY-FRAME-MODE + FIX-FB-GATE-POINT-PCT-MATH are in review and DETECT correctly - this is the waiver path, not detection. Check-F also missed (b) because the bare point figure carries no percent to cross-check.",
-        "created_at": "2026-07-25T13:35:47Z",
-        "created_by": "router",
-        "next_agent": "developer",
-        "supervised": false,
-        "updated_at": "2026-07-25T16:26:39Z",
-        "promoted_at": "2026-07-25T16:26:38Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-25T16:26:38Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
