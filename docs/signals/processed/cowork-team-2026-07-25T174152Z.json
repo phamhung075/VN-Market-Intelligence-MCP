@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-25T17:41:52Z",
+    "matched_slots": [
+      "digest-daily"
+    ],
+    "won_slots": [
+      "digest-daily"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/digest-predict/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 7,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "closed",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "digest-daily": "cron"
+    },
+    "cadence_minutes": {
+      "digest-daily": null
+    },
+    "last_fired_timestamp": "2026-07-25T17:40:32Z",
+    "last_fired_slots": [
+      "digest-daily"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "17:30",
+    "leader_lock": "acquired",
+    "dev_head": "idle",
+    "devq": 5,
+    "signal_backlog": 13,
+    "note": "Entered digest-predict at flow/main.md (schedule .trigger_prompt) NOT at .flow_path=flow/daily-predict.md, which spawn-fanout.md Step 5.2 prescribes: main.md carries Step pre-D DAILY-PREDICT DEDUP GATE (published:digest-daily:<UTC_DATE>) and daily-predict.md has none, so the literal flow_path spawn would bypass the FR-P2-7 published-marker gate on a guaranteed daily publish slot. Step 4.7 snapshot ASSEMBLY skipped (prune half ran, 0 pruned): dispatcher reordered 4.7/4.8 after the spawn, so the snapshot would not have been read by this tick agent, which falls back to direct get_cycle_bootstrap per the documented zero-blocker path. cycle_snapshot_promoted=false again (dead promotion). calendar_status passed through as frozen illegal closed per standing do-not-hand-correct guidance; producer fix is UC-CDC-P1."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-25T17:41:52Z",
+  "_processed": {
+    "fingerprint": "1bf361dd7fd1ec50470d754600364210ff64521a5cc0ac4acb8b35f77ec44486",
+    "processedAt": "2026-07-25T17:48:17Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
