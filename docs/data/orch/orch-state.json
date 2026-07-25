@@ -387,12 +387,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-SIGNAL-OUTCOMES-RESOLUTION-STALLED",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-SIGNAL-OUTCOMES-RESOLUTION-STALLED — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-25T00:17:59Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "updated_by": "dev-mcp-server",
+    "updated_at": "2026-07-25T00:45:39Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -14965,6 +14964,25 @@
         "branch": null,
         "updated_by": "dev-mcp-server",
         "review_note": "get_bctc_pending_refine now bounds/paginates: limit defaults to 20 (max 100, zod .optional().default() order fixed), new offset param pairs with the existing SQL LIMIT (native LIMIT/OFFSET on Branch2 ticker + Branch3 default queries) so all pending-refine rows remain reachable by paging offset+=limit; no rows lost vs the old unbounded dump. Served-path test (real McpServer + registerGetBctcPendingRefineTool): 45-row set -> bounded first page (20 rows, well under MCP inline limit, no file-path fallback), 3-page offset walk (20/20/5) recovers all 45 ids exactly once, default page size applies whenever limit is omitted (incl. with explicit offset). bun tsc --noEmit clean; new test file 5/5 pass; pre-existing FIX-REFINE-PENDING-SCHEMA.test.ts (same tool) 13/13 pass unchanged; gen-project-stats toolCount=184/cronJobCount=88 unchanged (no tool added/removed). Commits 51f162829 (code+test+doc) + e0ed0369e (decision journal), pushed. rebuild_required:true — LIVE inline-payload-size verify needs the container rebuild; leaving to QA/ops cascade per dispatch instruction."
+      },
+      {
+        "id": "FIX-SIGNAL-OUTCOMES-RESOLUTION-STALLED",
+        "type": "FIX",
+        "title": "signal_outcomes resolution job stalled: 65/72 rows pending >5d, checked_at never advances; calibration frozen since 2026-06-14",
+        "status": "REVIEW",
+        "priority": "P2",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-SIGNAL-OUTCOMES-RESOLUTION-STALLED",
+        "promoted_at": "2026-07-25T00:17:59Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-25T00:45:39Z",
+        "claimed_at": "2026-07-25T00:17:59Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "rebuild_required": true,
+        "branch": null,
+        "review_note": "dev-mcp-server: root cause = 2 compounding bugs in signalOutcomeStore.ts (Option-B /price/history envelope-shape parse bug — flat array vs real {code,history}, same class as 1945a — + hardcoded days=3 unusable for old dates; baseline price_at_signal had NO Option-B fallback at all against market_prices_history's rolling ~24h purge). Live-verified 102/105 rows stuck pending despite hourly cron reporting success. Fixed via canonical getPriceHistory client + dynamic days + injectable fetchHistoryFn. Live-copy-DB proof (real stock-price service, not the live container): 102 pending -> 7 (98/105 checked_at populated), remaining 7 legit (2 non-ticker MACRO/MULTI signals, 5 too-recent for 48h window) -- self-heals via the SAME already-scheduled hourly cron once deployed, no backfill script needed. Also fixed folded_scope_orphan_fk durably: cleanExpired()/checkStaleAgentSignals() bulk DELETEs were throwing FOREIGN KEY constraint failed (rolled back, 0 rows) whenever any matched row was still referenced by signal_outcomes -- live-verified 104/5983 expired rows blocked -- guarded both with NOT IN subquery; getAccuracyStats INNER->LEFT JOIN so orphans are not silently dropped from stats; the 1 existing orphan (id=66) resolves normally via the fixed generic resolver, no special-case script. Added checkStalledResolutionLiveness() self-alert guard (>=1 BUG alert/day if rows sit unresolved >72h). SCOPE NOTE: verification_gate (b) get_calibration_report is a DIFFERENT subsystem (prediction_claims/calibrationReportJob.ts) -- live DB already shows computed_at=2026-07-19/resolved=6 (independently self-recovered) -- gate already passes, did not touch that code. Evidence: tsc clean, new suite 9/9 pass, affected+precedent suites 147/147 pass, toolCount=184/cronJobCount=88 unaffected, local server boot clean. Commits 1f4b491b1 (code+test) + 537911454 (memory), pushed origin/main. QA: verify LIVE named-vol DB post-rebuild per verification_gate (a)/(b)/(c)."
       }
     ],
     "qa": [],
@@ -14986,23 +15004,7 @@
     },
     "last_triaged_at": "2026-07-25T00:17:59Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-SIGNAL-OUTCOMES-RESOLUTION-STALLED",
-        "type": "FIX",
-        "title": "signal_outcomes resolution job stalled: 65/72 rows pending >5d, checked_at never advances; calibration frozen since 2026-06-14",
-        "status": "IN_PROGRESS",
-        "priority": "P2",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-SIGNAL-OUTCOMES-RESOLUTION-STALLED",
-        "promoted_at": "2026-07-25T00:17:59Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-25T00:18:00Z",
-        "claimed_at": "2026-07-25T00:17:59Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
