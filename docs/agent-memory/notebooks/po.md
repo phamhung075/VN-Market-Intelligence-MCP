@@ -1,37 +1,38 @@
 # PO Notebook
 
-_Last: 2026-07-25T09:52Z (2 cowork signals + coordinator addendum — 1 row minted, 3 folded, 1 closed, dev-team head unpinned)_
+_Last: 2026-07-25T11:02Z (router-referred throughput ruling — idle-chain fairness raised P0, design pre-selected, 1 row folded)_
 
-**Journal:** `docs/agent-memory/decisions/triage-20260725T0948Z-po.md` · **Script:** `scripts/po-signaltriage-20260725T0948-headunpin-snapshot-fold.jq`
+**Journal:** `docs/agent-memory/decisions/ruling-20260725T1101Z-devteam-idle-chain-po.md` · **Script:** `scripts/po-s150-devteam-idle-chain-fairness-ruling-20260725T1059.jq`
 
-## Tick 2026-07-25T09:40–09:52Z
+## Tick 2026-07-25T10:53–11:02Z
 
 | Input | Disposition |
 |---|---|
-| cwk-…092802-7c2e (snapshot frozen 18d) | FOLD → `UC-SDF-P2` (P2→**P1**), no mint |
-| cwk-…093521-b3d1 (head pinned on P2) | **head unpinned** + MINT + FOLD → chain-starvation row |
-| coordinator addendum (weekend suppression dead) | FOLD → `UC-CDC-P1` |
-| `SPIKE-TICK-SNAPSHOT-DEADCODE-OR-REGRESSED` | CLOSED → `archive[]`/CANCELLED (question answered) |
-| **`FIX-DEVTEAM-HEAD-PIN-STALE-THRESHOLD-24H-VS-TICK-CADENCE`** | **MINTED** P1 · architect · `docs/agents/dev-team/flow/` |
+| Router: decide disposition of idle-chain starvation | **FIX + RAISE P1→P0**, design **pre-selected** (was "PO has NOT pre-selected") |
+| `FIX-DEVTEAM-BOUNDED1-PENDINGSIGNALS-EMPTY-GUARD` (P3) | **FOLDED** → parent AC-2; `CANCELLED`, `backlog[]`→`archive[]` |
+| Router: close tick-plane open question | **CLOSED** — confirmed, with a two-cause correction (below) |
+| Board totals | backlog 391→390, archive 8→9, task_total 653→652 (archive is excluded from `FLAT_TASK_LANES` — verified in `orch-conservation-check.mjs:67`, not assumed) |
+
+**Ruling:** aged round-robin over all 5 idle-path consumers **+** durable `pendingSignals` handoff. Both required, co-shipped. BOUNDED-1 cap **stays 1** (AC-3 = diff proof it is byte-unchanged).
 
 ## Lessons
 
-- **Both signals were already on the board — for the 3rd and 4th time.** `UC-SDF-P2`'s *title* already read "tickHHMM-vs-FILE_TICK filename divergence". Grep-the-board kept 2 duplicates off. The system's failure here is not detection, it is **dispatch** — three correct detections produced zero fixes.
-- **An answered SPIKE must be CLOSED, not left open** — otherwise a 4th agent burns a cycle re-deriving it. But copy the load-bearing note across *first*: `SPIKE-TICK-…`'s SEQUENCING GUARD (4 coupled units; 16x alert-commander degradation if the residue-prune lands alone) now lives on `UC-SDF-P2`.
-- **Never fake a provenance marker to force a script's hand.** I could have stamped `promoted_by="dev-team (bounded-1 auto-pickup)"` on the P0 so the claim script grabbed it. That marker's contract is "never a pre-existing PO-placed ready[] row" — faking it corrupts exactly the signal the next incident needs. Moved the row to `backlog[]` and let real `priority_rank=0` win instead.
-- **Verify the executable, not my own prose.** I ran the real `devteam-backlog-promote-bounded1.jq` + `claim` scripts against the candidate doc *before* applying: promote selects the P0 at rank 0, claim routes `dev-mcp-server`. "BOUNDED-1 will pick it" would otherwise have been a guess.
-- **orch-apply caught my lane error; I fixed the cause.** `CANCELLED` in `backlog[]` → Stage 1b reject (backlog allows BACKLOG|BLOCKED only) → moved to `archive[]`. Did not route around the gate.
-- **A 24h stale-reset against a ~30min tick cadence is not a safety net, it is a 48x-oversized outage window.** One silent spawn failure took all 4 dispatch lanes down 4h25m with zero alert. Same shape as `UC-SDF-P2`'s fail-safe-that-refuses-every-input: the conservative branch became the only branch.
-- **`transcript-silence ≠ dead` cuts both ways — get objective evidence.** `task_list_held` showed **no lock** on the pinned task (14 held, none matching). That killed the "held by peer session" hypothesis and proved Pipeline Resume was free to respawn every tick and produced nothing.
-- **`ready[]` is a trap lane.** It is drained only by RLC, which is 3rd in the head-idle chain behind BOUNDED-1 + a 390-row backlog — so effectively never. Live proof: `qa[]`=0 while 73 `review[]` rows carry `next_agent=qa`.
+- **The defect is destructive, not slow — that is what forced P0.** Step 0a moves signal files to `processed/`, writes the fingerprint (so the next drain dedups them away), and marks queue rows `NEW→READ` — then hands off via `pendingSignals[]`, an **in-memory per-tick variable** whose ONLY consumer is Step 1. A short-circuited tick does not defer its signals, it **destroys** them. I nearly ruled this a scheduling issue; grepping for where `pendingSignals` is persisted (nowhere — no script, no orch-state key) is what changed the verdict.
+- **Rotation alone would have been a false fix.** Under round-robin, triage loses 4 of every 5 ticks → still drops ~80% of drained signals. Durability is a *co-required part*, not a follow-up. This is why I folded the guard row in as a hard AC instead of leaving it as a sibling.
+- **"PO has NOT pre-selected" is itself a cause of stalling.** The row sat from 07-22 with three open options; an architect ask with no decidable scope is not dispatchable. Picking one and writing the rejection reasons for the others is the deliverable.
+- **62 PO cycles in 7d, but only 1 dev-team Step-1 triage.** PO being busy hid the starvation completely. The starved thing is a *path*, not an agent — measure the path (`signals.db` 363 `routed-to-po` vs `triage-*-po.md` count), never the agent's activity.
+- **`grep` the board before minting — it paid twice.** `FIX-DEVTEAM-BOUNDED1-PENDINGSIGNALS-EMPTY-GUARD` already existed (07-16) for the exact loss I "discovered". Separately, my near-mint on the 57 non-drainable `docs/signals/` files was pre-empted by 3 already-CANCELLED archive rows (`CLEAN-SIGNALS-DIR-NONSIGNAL-ARTIFACTS`, `FIX-DRAIN-QUARANTINE-NONROUTABLE-SIGNALS`, `FIX-PRICE-ANOMALY-DISH-SIGNAL-ENVELOPE`). **0 rows minted this tick.**
+- **Same lane-coherence trap as the 09:52Z tick, caught the same way.** `CANCELLED` in `backlog[]` → Stage 1b reject. Dry-run on a **scratch copy** caught it before the live file was touched. Status is not lane — a terminal status obliges a lane move.
+- **The fix for the starvation is starved by the starvation.** The P0 is `supervised+plan_only` → SLS lane → 2nd in the very chain it describes → unreachable. A defect that blocks its own remediation outranks everything it starves; that is the P0 justification, and it is generalizable.
 
 ## Carry-over
 
-- **`FIX-BCTC-PENDING-REFINE-HEAD-OF-LINE-FAILED-ROW` is now top-ranked in `backlog[]`** (P0, rank 0, all BOUNDED-1 gates verified). Next dev-team idle tick should claim it. **If it does not, the fault is in the tick plane, not the board** — I have ruled out every board-side cause.
-- **"Finalized, therefore cleared" is never remediation on that row** — only its verification_gate (live `get_bctc_pending_refine`: POW absent, PENDING at `result[0]`).
-- **Do NOT mint a spike for a "shared upstream cause" behind the 28 POW failures** — settled 07-21 in `FIX-BCTC-REFINE-RESOURCE-EXCEEDED-STATUS.advisory_do_not_chase`.
-- **`UC-CDC-P1` + `FIX-COWORK-CADENCE-DANGLING-POLICY-ID` MUST CO-SHIP** — producer fix without domain validation re-arms on the next invented literal; validation without the producer leaves the value wrong.
-- **`UC-SDF-P2` has a SECOND failure mode beyond the filename** — even on a name match the on-grid file is the dispatcher's own tick-snapshot with no `fetchedAt`/`created_at`, so the freshness gate refuses. Fixing only the filename leaves it dark.
-- **Unresolved, deliberately not guessed:** whether the 3 unsuppressed Saturday spawns took adaptive-mode-with-`"closed"` or legacy-mode-skips-4.3. Both end in no-suppression; isolation is recoverable from the 08:11Z tick telemetry in `docs/signals/`.
-- **Architect-owned rows** (`UC-SDF-P2`, `UC-CDC-P1`, both chain rows, the new head-pin row) **need deliberate dispatch** — BOUNDED-1's NON-DEV-NEXT_AGENT gate excludes them by design; SLS sweeps only `supervised AND plan_only`.
-- Head left **idle**. I dispatched no dev agent (double-ownership hazard). **Nothing pushed** — push stays gated.
+- **`FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION` (P0) CANNOT self-dispatch** — needs an out-of-band `architect` spawn. Do **not** clear `supervised`/`plan_only` to make it auto-pickable; the classification is correct.
+- **Do not re-open the option set** on that row. Architect may refine the *mechanism*, not re-litigate (a)/(b)/(c) — rejection reasons are recorded in the ruling journal.
+- **If architect rejects the durable inbox** in favour of the narrow BOUNDED-1 guard → **re-open** `FIX-DEVTEAM-BOUNDED1-PENDINGSIGNALS-EMPTY-GUARD` from `archive[]`; do not silently narrow AC-2.
+- **Tick-plane question CLOSED, with a correction:** the P0 BCTC row's ~4-day delay had **two** independent causes. Dead tick plane 05:18Z–10:37Z is real and closed. It does **not** explain the prior ~4 days — the row was in `ready[]`, a lane with no reachable consumer, until PO's 09:51Z ready→backlog re-route made it BOUNDED-1 eligible. Both stand; the second is why AC-1 must cover `ready[]`.
+- **`ready[]` is a trap lane** (44 rows, 18 P0) and **`review[]` is write-only** (106 rows, 73 `next_agent=qa`, `qa[]`=0). Both unblock only via the P0 above.
+- **Architect-owned rows** (`UC-SDF-P2`, `UC-CDC-P1`, both chain rows, head-pin row) need deliberate dispatch — BOUNDED-1's NON-DEV-NEXT_AGENT gate excludes them by design.
+- **`UC-CDC-P1` + `FIX-COWORK-CADENCE-DANGLING-POLICY-ID` MUST CO-SHIP.** **`UC-SDF-P2` has a 2nd failure mode** beyond the filename (on-grid file lacks `fetchedAt`/`created_at` → freshness gate refuses); fixing only the name leaves it dark.
+- **"Finalized, therefore cleared" is never remediation** on the BCTC row — only its verification_gate (live `get_bctc_pending_refine`: POW absent, PENDING at `result[0]`).
+- Head untouched (`dev-mcp-server` owns it). I dispatched no agent. **Nothing pushed** — push stays gated.
