@@ -10996,6 +10996,25 @@
           "FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX"
         ],
         "updated_at": "2026-07-25T12:56:44Z"
+      },
+      {
+        "id": "FIX-FB-GATE-CHECKD2-NONWAIVABLE-NUMERIC-BLOCK",
+        "type": "FIX",
+        "title": "fb-gate Check-D2 must be non-waivable: numeric BLOCK inherits Check-C false-positive waiver and ships wrong week baseline",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "S",
+        "zone": "docs/agents/fb-market-poster/",
+        "sprint": null,
+        "source": "router-observed-2026-07-25-fb-weekend-tick",
+        "verdict": "CONFIRMED",
+        "detail_ref": "docs/agents/fb-market-poster/flow/weekly-recap.md#L171",
+        "note": "LIVE MISS 2026-07-25: WEEKLY_RECAP hit Check-D2 BLOCK 2/2 (post -3.29% vs live -5.67%, delta 2.38pp > 0.5pp tol) and PROCEEDED, shipping docs/social/fb-post-2026-07-25.md with the wrong baseline. Ground truth get_price_history(VNINDEX): 2026-07-17 close 1787 -> 2026-07-24 close 1686 = -101pts/-5.65% WoW. Post used Monday CLOSE 1743.51 labelled \"lúc đầu tuần\", discarding Mon -2.46%. Knock-on errors in shipped file: (a) \"-101,47 điểm một ngày\" mislabels the FULL-WEEK decline as a single day (true max day = Wed -3.58% = -62pts); (b) \"dao động 75 điểm\" understates true range 1787->1669 = 118pts. ROOT CAUSE: weekly-recap.md:171-172 applies main.md STEP 4b EXIT-only-on-real-fabrication posture gate-WIDE. That waiver exists for Check-C (bán tháo negation-blind LEXICAL false positive). Check-D2 compares two computed numbers and has NO false-positive mode, so it must be non-waivable: on Check-D2 BLOCK, recompute baseline as prior-period CLOSE (not first-session close of the period) and re-derive; never resolve by prose softening (\"mức giảm đáng kể\"). Sibling rows FIX-FB-GATE-WEEKLY-FRAME-MODE + FIX-FB-GATE-POINT-PCT-MATH are in review and DETECT correctly - this is the waiver path, not detection. Check-F also missed (b) because the bare point figure carries no percent to cross-check.",
+        "created_at": "2026-07-25T13:35:47Z",
+        "created_by": "router",
+        "next_agent": "developer",
+        "supervised": false,
+        "updated_at": "2026-07-25T13:35:48Z"
       }
     ],
     "closed_sprints": [
