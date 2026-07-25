@@ -2501,8 +2501,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-25T12:56:44Z",
-    "_updated_by": "po/triage-20260725T1254-a30-veto-gate-defect (mint FIX-AUDITOR-A30-VMHWM-VETO-TAUTOLOGY-FALSE-NEGATIVE)",
+    "_updated_at": "2026-07-25T13:01:01Z",
+    "_updated_by": "po/triage-20260725T1254-a30-veto-gate-defect (fold: sweep-guard occurrence 4)",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -9195,7 +9195,7 @@
         "next_agent": "po",
         "plan_only": true,
         "supervised": true,
-        "recurring_bug_count": 3,
+        "recurring_bug_count": 4,
         "depends": [
           "FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK",
           "FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-SKILLS"
@@ -9203,7 +9203,7 @@
         "title": "Shared-index sweep: a commit with absent/partial pathspecs absorbs a live peer's WIP into a mis-attributed commit. 3 confirmed occurrences (f05795c3c 06-08 auditor swept architect; 84096f617 07-21 router swept developer; 0e28eed23 07-21 cowork-team swept the same developer). Documentation-only enforcement has now failed 3x — need ONE executable guard on the shared commit path.",
         "created_at": "2026-07-21T16:35:12Z",
         "created_by": "po/escalation-commit-path-guard-20260721T1635",
-        "updated_at": "2026-07-21T17:24:33Z",
+        "updated_at": "2026-07-25T13:01:02Z",
         "updated_by": "po/triage-20260721T1707",
         "supersedes": [
           "FIX-AUDITOR-COMMIT-NONEXPLICIT-PATHSPEC"
@@ -9236,7 +9236,8 @@
         "decomposed_at": "2026-07-21T17:20:00Z",
         "decomposed_by": "pm/FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-decomposition",
         "router_note_20260721T1740": "PM decomposition COMPLETE (commit c73307325) but this parent still carries next_agent=pm — a future dispatcher reading next_agent would re-spawn pm and risk a duplicate decomposition. Router did NOT change status/next_agent (lane disposition is PO's call, and next_agent is optional-not-nullable in the schema). PO: decide whether this parent moves to a holding lane pending its two children, or stays READY as a tracking row. Children carry owner+next_agent+supervised=true and are independently dispatchable now.",
-        "po_lane_disposition_20260721T1724": "LANE DECISION (router deferred this to PO). Parent was ready/P0 still carrying next_agent=pm AFTER pm had already decomposed it — a dispatcher reading next_agent would re-spawn pm and produce a duplicate decomposition. Resolved as: status READY->BLOCKED, lane ready->backlog (out of the dispatchable lane), depends=[HOOK,SKILLS], next_agent pm->po. next_agent is set to po rather than deleted DELIBERATELY: an absent next_agent is the exact structurally-undispatchable signature that let FIX-AUDITOR-COMMIT-NONEXPLICIT-PATHSPEC idle six weeks, so the parent stays addressed to PO for closeout once both children reach DONE_VERIFIED. This row now tracks, it does not dispatch."
+        "po_lane_disposition_20260721T1724": "LANE DECISION (router deferred this to PO). Parent was ready/P0 still carrying next_agent=pm AFTER pm had already decomposed it — a dispatcher reading next_agent would re-spawn pm and produce a duplicate decomposition. Resolved as: status READY->BLOCKED, lane ready->backlog (out of the dispatchable lane), depends=[HOOK,SKILLS], next_agent pm->po. next_agent is set to po rather than deleted DELIBERATELY: an absent next_agent is the exact structurally-undispatchable signature that let FIX-AUDITOR-COMMIT-NONEXPLICIT-PATHSPEC idle six weeks, so the parent stays addressed to PO for closeout once both children reach DONE_VERIFIED. This row now tracks, it does not dispatch.",
+        "po_occurrence_4_20260725T1257Z": "OCCURRENCE 4 (PO-observed on its own write, 2026-07-25T12:57Z) — FIRST occurrence that POST-DATES the shipped SKILLS arm (FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-SKILLS, DONE 2026-07-21T19:29:49Z), which is the decisive new fact: the documentation/skill-level pathspec guard did NOT prevent it, so the remaining executable arm FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK (READY/P0, undispatched since 2026-07-21T17:24:33Z) is the binding one. MECHANISM: PO (session ad265f86) applied a task_board mint to docs/data/orch/orch-state.json via scripts/orch-apply.sh at 12:56:44Z (row FIX-AUDITOR-A30-VMHWM-VETO-TAUTOLOGY-FALSE-NEGATIVE). Before PO reached its own commit step, peer session e3a3f331 committed 55c29b525 `chore(tasks): FIX-PREDCLAIM-BACKFILL-NULL-CREATIONPRICE in_progress->review (next=qa, no rebuild)`, which absorbed PO`s unrelated mint. RAW-VERIFIED, not inferred: `git status --porcelain docs/data/orch/orch-state.json` returns EMPTY (working tree == HEAD, nothing left for PO to commit); `git show HEAD:docs/data/orch/orch-state.json | jq` finds the PO row present in HEAD; `git log -S <row-id> -- docs/data/orch/orch-state.json` attributes it to 55c29b525 and to no other commit. NO DATA LOST — the row is intact and committed. The damage is attribution: a commit whose message names one predclaim lane-flip silently carries an unrelated P1 auditor mint, so `git log --oneline` and any -S/blame archaeology point at the wrong author, the wrong session and the wrong intent. NOTE THE SHAPE: orch-state.json is the shared hot file, so EVERY agent is a peer on it simultaneously; unlike occurrences 1-3 there was no window in which pathspec discipline on PO`s side could have helped — PO never got to stage anything. Only a guard on the WRITING side (the hook arm) can close this variant."
       },
       {
         "id": "FIX-COWORK-SIBLING-WINDOW-CACHE-FAIL-OPEN",
@@ -12158,9 +12159,10 @@
         "created_by": "pm/FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-decomposition",
         "parent_task": "FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD",
         "note": "Layer 0 (universal backstop hook). Implements §4.1 §4.3 from architecture brief. AC: 1,2,3,4,5. Depends on verification via scripts/audits/verify-commit-sweep-discriminator.sh.",
-        "updated_at": "2026-07-21T17:24:33Z",
+        "updated_at": "2026-07-25T13:01:02Z",
         "updated_by": "po/triage-20260721T1707",
-        "po_promote_20260721T1724": "PROMOTED backlog->ready (PO Step-1 triage). pm decomposed the parent into these two children but left them in the 409-row backlog lane with status BACKLOG, so no dispatcher would ever pick them — the decomposition would have stalled silently. Both rows are fully specced (owner, next_agent, zone, size, AC refs into docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md, supervised:true) and the design load-bearing claim was independently reproduced by router at scripts/audits/verify-commit-sweep-discriminator.sh (VERDICT PASS, git 2.49.0). Nothing further gates them."
+        "po_promote_20260721T1724": "PROMOTED backlog->ready (PO Step-1 triage). pm decomposed the parent into these two children but left them in the 409-row backlog lane with status BACKLOG, so no dispatcher would ever pick them — the decomposition would have stalled silently. Both rows are fully specced (owner, next_agent, zone, size, AC refs into docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md, supervised:true) and the design load-bearing claim was independently reproduced by router at scripts/audits/verify-commit-sweep-discriminator.sh (VERDICT PASS, git 2.49.0). Nothing further gates them.",
+        "po_evidence_20260725T1257Z": "OCCURRENCE 4 landed 2026-07-25T12:57Z, i.e. AFTER the sibling SKILLS arm shipped (DONE 07-21T19:29:49Z) — see parent FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD.po_occurrence_4_20260725T1257Z for the raw-verified trace (commit 55c29b525 absorbed an unrelated PO orch-state mint; git status empty, row present in HEAD, git -S attributes it to the peer commit). This is direct evidence that this HOOK row, not the shipped SKILLS row, is the binding arm: the victim never staged anything, so no amount of pathspec discipline on the victim side could have prevented it. Row has now sat READY/P0/next_agent=developer and undispatched since 2026-07-21T17:24:33Z."
       },
       {
         "id": "SPIKE-SATURATED-COUNT-THRESHOLD-GATES-SWEEP",
@@ -15566,6 +15568,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-07-25T12:56:44Z",
+  "_updated_at": "2026-07-25T13:01:01Z",
   "_updated_by": "po/triage-20260725T1254-a30-veto-gate-defect"
 }
