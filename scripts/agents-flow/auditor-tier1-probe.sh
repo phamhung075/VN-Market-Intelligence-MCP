@@ -29,10 +29,20 @@
 #   4. df -h / capacity < 85% (WARN boundary reused from tier1-probe.md A-32
 #      as this pre-gate's pass/fail line — anything >= 85% defers to the
 #      subagent, which applies the full WARN/CRITICAL severity split)
-#   5. mcp-server container mem creep: `docker stats --no-stream` MemPerc
+#   5. per-container memory creep — EVERY running container that declares a
+#      memory cap (resolved live via `docker inspect ...HostConfig.Memory`,
+#      never a hardcoded name list): `docker stats --no-stream` MemPerc
 #      < 85% (WARN boundary reused from A-30, same reasoning as #4 — a
 #      single-point threshold, since this pure-shell gate has no baseline-
-#      diff state store; a true trend/creep detector stays a Tier-2/3 job)
+#      diff state store; a true trend/creep detector stays a Tier-2/3 job).
+#      Uncapped containers are skipped (their MemPerc is vs total HOST
+#      memory, not a per-container headroom signal). A breach already
+#      tracked by an open backlog row is suppressed via the SAME
+#      acknowledged-degraded ledger mechanism as check 6 below
+#      (FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE, 2026-07-25 —
+#      closes a demonstrated false-pass where this check, then hardcoded to
+#      mcp-server only, reported HEALTHY while rag-service sat at 98.46% of
+#      its 768m cap, 12 of 13 containers with zero coverage)
 #   6. FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED — vn-market LaunchAgents
 #      loaded: every repo-tracked `launchd/*.plist` Label (read off the
 #      plist's own <key>Label</key>, never hardcoded — this repo's
@@ -69,10 +79,16 @@
 #   SYSTEM_MAP_PATH     — system-map.json path (default: repo docs/data/system-map.json)
 #   HEARTBEAT_FILE_PATH — heartbeat output path (default: repo docs/data/auditor-tier1-last-healthy.json)
 #   LAUNCHD_DIR_PATH    — directory of *.plist files to require-loaded (default: repo launchd/)
-#   LAUNCHD_ACK_PATH    — acknowledged-launchd-death ledger (default: repo
+#   LAUNCHD_ACK_PATH    — acknowledged-degraded ledger (default: repo
 #                         docs/data/auditor-launchd-ack.json) — see Check 6 /
 #                         _check_launchd_agents() header comment below
-#                         (FIX-AUDITOR-TIER1-PROBE-ACKED-LAUNCHD-DEATH-SUPPRESSION)
+#                         (FIX-AUDITOR-TIER1-PROBE-ACKED-LAUNCHD-DEATH-SUPPRESSION).
+#                         SAME file also carries `.acked_memory[]`, read by
+#                         Check 5 / _check_mem_creep() below
+#                         (FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE) —
+#                         one ledger, two arrays, honouring the identical
+#                         mixed-case-never-suppresses + staleness-rule
+#                         guarantees for both launchd and memory signatures.
 #
 # HARD CONSTRAINT: every probe below is READ-ONLY (docker ps/stats, curl GET,
 # df, launchctl list, jq). This script NEVER runs docker restart/stop/rm/
@@ -203,29 +219,111 @@ _check_disk() {
   return 0
 }
 
-# ── Check 5: mcp-server container mem creep (docker stats MemPerc) ───────────
+# ── Check 5: per-container memory creep (docker stats MemPerc, looped over
+# every RUNNING container that declares a memory cap) ────────────────────────
+# FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE (2026-07-25): the OLD
+# check inspected exactly one hardcoded container (mcp-server), leaving the
+# other 12 running containers with ZERO memory coverage — demonstrated
+# false-pass 2026-07-25 08:30Z (rag-service sat at 94.76%->98.46% of its
+# 768m cap while Tier-1 reported "A-30 Memory: 58.63% — PASS" / HEALTHY).
+# Scope is now resolved LIVE from the daemon (never a hardcoded name list,
+# never docker-compose.yml — config-truth drifts from runtime-truth):
+#   docker inspect -f '{{.Name}} {{.HostConfig.Memory}}' $(docker ps -q)
+# returns one line per RUNNING container — its name and byte memory cap
+# (exactly 0 for uncapped). Uncapped containers are SKIPPED: docker stats
+# reports their MemPerc against total HOST memory (mcp-gateway is the one
+# live example — 0 cap), not a per-container headroom signal, so it is not
+# comparable against WARN_PCT.
+#
+# Same already-tuned WARN_PCT=85 boundary applies per container (no
+# per-container threshold constants — PO DECISION on the owning task
+# explicitly rejected static overrides as the same lagging-whitelist
+# failure mode already open on FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-
+# ANOMALY-PREFIX). rag-service's legitimately-high steady-state (~94-98% of
+# its 768m cap, healthy/serving throughout) is resolved via the SAME
+# acknowledged-degraded ledger mechanism _check_launchd_agents() already
+# uses below, not via a threshold carve-out: $LAUNCHD_ACK's `.acked_memory[]`
+# entries ({container, tracked_by, acked_at}) are matched by case-insensitive
+# substring against each breaching container's full name (see
+# _mem_container_acked() — same substring-match style _check_docker_ps
+# already uses for service-name-within-container-name; safe here because
+# this repo's compose service names do not substring-collide with one
+# another, e.g. "rag-service" is not a substring of "kinh-dich-service").
+# The SAME two guarantees as the launchd arm apply: (1) mixed case never
+# suppresses — an unacknowledged breach alongside acked ones still FAILS,
+# and names the unacked container(s); (2) STALENESS RULE — remove the entry
+# once its tracked_by row reaches DONE_VERIFIED.
 _check_mem_creep() {
-  local ctr pct_raw pct
-  ctr=$(docker ps --format '{{.Names}}' 2>/dev/null | grep -i 'mcp-server' | head -1)
-  if [ -z "$ctr" ]; then
-    echo "mcp-server container not found via docker ps"
+  local ctr_ids inspect_out name mem_cap pct_raw pct
+  local breach="" acked="" ack_list=""
+
+  ctr_ids=$(docker ps -q 2>/dev/null)
+  if [ -z "$ctr_ids" ]; then
+    echo "docker ps -q returned no output (docker unreachable?)"
     return 1
   fi
-  pct_raw=$(docker stats --no-stream --format '{{.MemPerc}}' "$ctr" 2>/dev/null)
-  if [ -z "$pct_raw" ]; then
-    echo "docker stats returned no output for $ctr"
+
+  [ -f "$LAUNCHD_ACK" ] && ack_list=$(jq -r '.acked_memory[]?.container // empty' "$LAUNCHD_ACK" 2>/dev/null)
+
+  # ctr_ids is a newline-separated id list from `docker ps -q`;
+  # word-splitting is intended below (one positional arg per id).
+  # shellcheck disable=SC2086
+  inspect_out=$(docker inspect -f '{{.Name}} {{.HostConfig.Memory}}' $ctr_ids 2>/dev/null)
+  if [ -z "$inspect_out" ]; then
+    echo "docker inspect returned no output for running containers"
     return 1
   fi
-  pct=$(printf '%s' "$pct_raw" | tr -d '%' | tr -d '\n')
-  if ! printf '%s' "$pct" | grep -Eq '^[0-9]+(\.[0-9]+)?$'; then
-    echo "could not parse MemPerc from docker stats output: $pct_raw"
+
+  while read -r name mem_cap; do
+    [ -z "$name" ] && continue
+    name="${name#/}"
+    [[ "$mem_cap" =~ ^[0-9]+$ ]] || continue
+    [ "$mem_cap" -eq 0 ] && continue  # uncapped — MemPerc would be vs host mem, not a headroom signal
+
+    pct_raw=$(docker stats --no-stream --format '{{.MemPerc}}' "$name" 2>/dev/null)
+    if [ -z "$pct_raw" ]; then
+      breach="${breach}${name}(stats-unavailable) "
+      continue
+    fi
+    pct=$(printf '%s' "$pct_raw" | tr -d '%' | tr -d '\n')
+    if ! printf '%s' "$pct" | grep -Eq '^[0-9]+(\.[0-9]+)?$'; then
+      breach="${breach}${name}(unparseable:${pct_raw}) "
+      continue
+    fi
+    if awk -v p="$pct" -v w="$WARN_PCT" 'BEGIN{exit !(p>=w)}'; then
+      if _mem_container_acked "$name" "$ack_list"; then
+        acked="${acked}${name}(${pct}%) "
+      else
+        breach="${breach}${name}(${pct}%) "
+      fi
+    fi
+  done <<< "$inspect_out"
+
+  if [ -n "$breach" ]; then
+    echo "mem >= ${WARN_PCT}% threshold (A-30 WARN boundary, mem-creep gate): ${breach}${acked:+(also acknowledged-degraded, tracked: $acked)}"
     return 1
   fi
-  if awk -v p="$pct" -v w="$WARN_PCT" 'BEGIN{exit !(p>=w)}'; then
-    echo "mcp-server mem ${pct}% >= ${WARN_PCT}% threshold (A-30 WARN boundary, mem-creep gate)"
-    return 1
+  if [ -n "$acked" ]; then
+    echo "acknowledged-degraded (suppressed — open backlog fix-task tracks it): $acked"
+    return 0
   fi
   return 0
+}
+
+# Case-insensitive substring membership test for a container's full name
+# against the acked_memory[].container list (jq -r '.acked_memory[].container'
+# output, newline-separated). Portable (grep -qi, no bash4-only lowercasing —
+# this repo runs on macOS system bash 3.2).
+_mem_container_acked() {
+  local name="$1" list="$2" entry
+  [ -z "$list" ] && return 1
+  while IFS= read -r entry; do
+    [ -z "$entry" ] && continue
+    if printf '%s' "$name" | grep -qi -- "$entry"; then
+      return 0
+    fi
+  done <<< "$list"
+  return 1
 }
 
 # ── Check 6: vn-market LaunchAgents loaded (FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED) ──
@@ -362,7 +460,7 @@ run_probe() {
   local suppress_heartbeat="${1:-}"
   local prev_healthy="" out rc failures="" checks_json ts
   local st_docker="PASS" st_h3000="PASS" st_h3001="PASS" st_disk="PASS" st_mem="PASS" st_launchd="PASS"
-  local launchd_note=""
+  local launchd_note="" mem_note=""
 
   [ -f "$HEARTBEAT_FILE" ] && prev_healthy=$(jq -r '.last_healthy_at // empty' "$HEARTBEAT_FILE" 2>/dev/null)
 
@@ -379,7 +477,15 @@ run_probe() {
   [ $rc -ne 0 ] && { st_disk="FAIL"; failures="${failures}disk: ${out}; "; }
 
   out=$(_check_mem_creep 2>&1); rc=$?
-  [ $rc -ne 0 ] && { st_mem="FAIL"; failures="${failures}mem_creep: ${out}; "; }
+  if [ $rc -ne 0 ]; then
+    st_mem="FAIL"; failures="${failures}mem_creep: ${out}; "
+  elif [ -n "$out" ]; then
+    # FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE: mirrors the launchd
+    # arm above — check PASSED (rc=0) but has an acknowledged-degraded note
+    # to surface. st_mem stays "PASS" (no schema drift); the note is
+    # appended to the ALL_GREEN detail line below for transparency.
+    mem_note="$out"
+  fi
 
   out=$(_check_launchd_agents 2>&1); rc=$?
   if [ $rc -ne 0 ]; then
@@ -408,6 +514,7 @@ run_probe() {
       fi
     fi
     local green_detail="all 6 checks passed (docker_ps, health_3000, health_3001, disk, mem_creep, launchd_agents)"
+    [ -n "$mem_note" ] && green_detail="${green_detail} — ${mem_note}"
     [ -n "$launchd_note" ] && green_detail="${green_detail} — ${launchd_note}"
     jq -n --arg v "ALL_GREEN" \
       --arg d "$green_detail" \

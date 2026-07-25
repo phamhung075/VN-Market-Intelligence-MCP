@@ -17,5 +17,13 @@
       "acked_at": "2026-07-25T14:26:58Z",
       "signature": "exit-status 143 = OUTER bound (b) of the tracked row: firer _bounded_exec SIGTERMs claude at FIRE_TIMEOUT_SECONDS=1800. Verified live 2026-07-25: firer.log 13:22:25Z invoking (bounded 1800s) slot=fb-weekend -> 13:52:25Z flow exited exit_code=143 (exactly 1800s); launchctl last exit code = 143. Same signature as the rows own reproducer (chef-morning 1800s SIGTERM 2026-07-22). ACK COVERS THIS LABELS non-zero-exit failures only in the sense the ledger allows (label-granular); a not-loaded/crash-at-startup failure of this label would also be suppressed - accepted tradeoff, mitigated by the STALENESS RULE above."
     }
+  ],
+  "_comment_acked_memory": "ACK LEDGER for the SAME probe's _check_mem_creep (FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE, 2026-07-25). A listed `container` value is matched (case-insensitive substring) against the full name of any RUNNING, memory-capped container whose docker-stats MemPerc breaches WARN_PCT=85: if every breaching container this run is covered, the probe still returns ALL_GREEN (acked containers named in `detail` for transparency). A breach NOT covered here always still fails the check, even alongside acked ones — same mixed-case-never-suppresses guarantee as `acked` above. STALENESS RULE identical: remove the entry once its `tracked_by` task reaches DONE_VERIFIED. Seeded 2026-07-25 with rag-service, whose legitimately-high steady-state (~94-98% of its 768m cap, healthy/serving throughout, RestartCount trajectory already tracked separately by FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP) is root-caused by the OPEN row below, not by this detector — do NOT resolve via a per-container threshold override (PO DECISION, task FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE: static overrides are the same lagging-whitelist failure mode as FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX and would also silently swallow a REAL rag OOM approach).",
+  "acked_memory": [
+    {
+      "container": "rag-service",
+      "tracked_by": "RAG-FTS-BUILD-MEMORY-BOUND",
+      "acked_at": "2026-07-25T15:48:56Z"
+    }
   ]
 }

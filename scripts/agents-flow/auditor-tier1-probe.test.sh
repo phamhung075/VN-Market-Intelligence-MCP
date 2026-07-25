@@ -88,12 +88,19 @@ export LAUNCHD_ACK_PATH="$TMPDIR_TEST/no-such-ack-ledger.json"
 source "$PROBE_SH"
 
 # ── Stub docker/curl/df — override the real commands pulled in by the script ──
-# Dispatch controlled by $STUB_DOCKER_PS / $STUB_DOCKER_NAME / $STUB_MEM /
-# $STUB_H3000 / $STUB_H3001 / $STUB_DF (set per scenario below).
+# Dispatch controlled by $STUB_DOCKER_PS / $STUB_MEM_FLEET / $STUB_MEM_MCPSERVER
+# / $STUB_MEM_RAG / $STUB_H3000 / $STUB_H3001 / $STUB_DF (set per scenario below).
 ALL_UP_PS='vn-market-intelligence-mcp-mcp-server-1\tUp 2 hours (healthy)
 vn-market-intelligence-mcp-frontend-1\tUp 21 hours (healthy)
 vn-market-intelligence-mcp-api-gateway-1\tUp 2 hours (healthy)'
 
+# FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE (2026-07-25): the mem
+# check now drives itself off `docker ps -q` + `docker inspect` instead of a
+# single hardcoded name. Default fixture fleet (STUB_MEM_FLEET="ok") is 3
+# containers mirroring the real live fleet's shape: mcp-server (capped,
+# steady-state via $STUB_MEM_MCPSERVER), rag-service (capped, via
+# $STUB_MEM_RAG), mcp-gateway (UNCAPPED — Memory=0, must always be skipped
+# regardless of its own MemPerc, proving acceptance (4)).
 docker() {
   local sub="$1"
   case "$sub" in
@@ -109,20 +116,33 @@ vn-market-intelligence-mcp-api-gateway-1\tUp 2 hours (healthy)" ;;
           empty) printf '' ;;
         esac
         return 0
-      else
-        case "${STUB_DOCKER_NAME:-ok}" in
-          ok) echo "vn-market-intelligence-mcp-mcp-server-1" ;;
-          missing) echo "" ;;
+      elif [ "${2:-}" = "-q" ]; then
+        case "${STUB_MEM_FLEET:-ok}" in
+          ok) printf 'id-mcp-server\nid-rag-service\nid-gateway\n' ;;
+          empty) printf '' ;;
         esac
         return 0
       fi
+      return 0
+      ;;
+    inspect)
+      case "${STUB_MEM_FLEET:-ok}" in
+        ok)
+          printf 'vn-market-intelligence-mcp-mcp-server-1 3221225472\n'
+          printf 'vn-market-intelligence-mcp-rag-service-1 805306368\n'
+          printf 'mcp-gateway 0\n'
+          ;;
+        empty) printf '' ;;
+      esac
+      return 0
       ;;
     stats)
-      case "${STUB_MEM:-ok}" in
-        ok) echo "12.34%" ;;
-        high) echo "91.00%" ;;
-        malformed) echo "n/a" ;;
-        empty) echo "" ;;
+      local name="${!#}"
+      case "$name" in
+        *mcp-server*) printf '%s\n' "${STUB_MEM_MCPSERVER:-12.34}%" ;;
+        *rag-service*) printf '%s\n' "${STUB_MEM_RAG:-20.00}%" ;;
+        *gateway*) printf '%s\n' "${STUB_MEM_GATEWAY:-0.28}%" ;;
+        *) printf '%s\n' "${STUB_MEM_OTHER:-1.00}%" ;;
       esac
       return 0
       ;;
@@ -160,7 +180,8 @@ df() {
 
 run_case() {
   # Resets scenario knobs to defaults before each test; wipes heartbeat fixture.
-  STUB_DOCKER_PS="ok"; STUB_DOCKER_NAME="ok"; STUB_MEM="ok"
+  STUB_DOCKER_PS="ok"
+  STUB_MEM_FLEET="ok"; STUB_MEM_MCPSERVER="12.34"; STUB_MEM_RAG="20.00"; STUB_MEM_GATEWAY="0.28"
   STUB_H3000="200"; STUB_H3001="200"; STUB_DF="ok"
   rm -f "$HEARTBEAT_FILE_PATH"
 }
@@ -236,25 +257,33 @@ OUT=$(run_probe); RC=$?
 VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
 check "T8 FAILURE verdict (df output malformed)" "$([ "$VERDICT" = "FAILURE" ] && echo true || echo false)"
 
-# ── T9: FAILURE — injected fault: mcp-server container MemPerc >= 85% ────────
+# ── T9: FAILURE — injected fault: rag-service container MemPerc >= 85%,
+# NOT in the ack ledger (FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE
+# acceptance (1) — proves the widened scope actually sees a container OTHER
+# than mcp-server, and never mislabels the breach as "mcp-server mem") ──────
 run_case
-STUB_MEM="high"
+STUB_MEM_RAG="93.67"
 OUT=$(run_probe); RC=$?
 VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
 DETAIL=$(printf '%s' "$OUT" | jq -r '.detail')
-check "T9 FAILURE verdict (mem creep 91%% >= 85%% threshold)" "$([ "$VERDICT" = "FAILURE" ] && echo true || echo false)"
+check "T9 FAILURE verdict (rag-service mem creep 93.67%% >= 85%% threshold)" "$([ "$VERDICT" = "FAILURE" ] && echo true || echo false)"
 check "T9 FAILURE detail mentions mem_creep" "$([[ "$DETAIL" == *"mem_creep"* ]] && echo true || echo false)"
+check "T9 FAILURE detail names rag-service with its own percentage" "$([[ "$DETAIL" == *"rag-service"*"93.67%"* ]] && echo true || echo false)"
+check "T9 FAILURE detail NEVER hardcodes mcp-server mem (old single-container string)" "$([[ "$DETAIL" != *"mcp-server mem"* ]] && echo true || echo false)"
 
-# ── T10: FAILURE — injected fault: mcp-server container not found ────────────
+# ── T10: FAILURE — injected fault: docker unreachable (docker ps -q returns
+# no output) — loop must not crash, must FAIL loud, not silently PASS ──────
 run_case
-STUB_DOCKER_NAME="missing"
+STUB_MEM_FLEET="empty"
 OUT=$(run_probe); RC=$?
 VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
-check "T10 FAILURE verdict (mcp-server container not found for mem check)" "$([ "$VERDICT" = "FAILURE" ] && echo true || echo false)"
+DETAIL=$(printf '%s' "$OUT" | jq -r '.detail')
+check "T10 FAILURE verdict (docker ps -q unreachable for mem check)" "$([ "$VERDICT" = "FAILURE" ] && echo true || echo false)"
+check "T10 FAILURE detail mentions mem_creep" "$([[ "$DETAIL" == *"mem_creep"* ]] && echo true || echo false)"
 
 # ── T11: FAILURE — injected fault: docker stats returns unparseable MemPerc ──
 run_case
-STUB_MEM="malformed"
+STUB_MEM_RAG="n/a"
 OUT=$(run_probe); RC=$?
 VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
 check "T11 FAILURE verdict (docker stats MemPerc unparseable)" "$([ "$VERDICT" = "FAILURE" ] && echo true || echo false)"
@@ -405,9 +434,13 @@ case "$1" in
   ps)
     if [ "$2" = "-a" ]; then
       printf 'mcp-server\tUp 2 hours (healthy)\nfrontend\tUp 2 hours (healthy)\napi-gateway\tUp 2 hours (healthy)\n'
-    else
-      echo "mcp-server-container"
+    elif [ "$2" = "-q" ]; then
+      printf 'id-mcp-server\nid-rag-service\n'
     fi
+    ;;
+  inspect)
+    printf 'mcp-server 3221225472\n'
+    printf 'rag-service 805306368\n'
     ;;
   stats) echo "12.34%" ;;
 esac
@@ -871,6 +904,86 @@ launchctl() {
     *) return 1 ;;
   esac
 }
+LAUNCHD_ACK="$TMPDIR_TEST/no-such-ack-ledger.json"
+
+# ══════════════════════════════════════════════════════════════════════════════
+# FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE — acked_memory[] ledger
+# coverage for the widened multi-container mem check. Reuses the SAME
+# $LAUNCHD_ACK file/variable as the launchd arm above (one ledger, two
+# arrays — see auditor-launchd-ack.json's `acked_memory` seed). Each case
+# below explicitly resets LAUNCHD_DIR to the empty fixture dir so the
+# launchd_agents check stays trivially green and every assertion below is
+# isolated to mem_creep, same discipline T29 already established.
+# ══════════════════════════════════════════════════════════════════════════════
+
+ACK_FIXTURE_MEM_RAG="$TMPDIR_TEST/ack-ledger-mem-rag.json"
+jq -n '{acked_memory:[
+  {container:"rag-service", tracked_by:"RAG-FTS-BUILD-MEMORY-BOUND", acked_at:"2026-07-25T15:48:56Z"}
+]}' > "$ACK_FIXTURE_MEM_RAG"
+
+# ── T40: rag-service breach ACKED (tracked_by an OPEN row) -> verdict stays
+# ALL_GREEN, rag-service named on the acknowledged-degraded line (NOT
+# silently dropped), heartbeat still written — acceptance (2) ─────────────
+run_case
+LAUNCHD_DIR="$LAUNCHD_EMPTY_DIR"
+LAUNCHD_ACK="$ACK_FIXTURE_MEM_RAG"
+STUB_MEM_RAG="93.67"
+OUT=$(run_probe); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+DETAIL=$(printf '%s' "$OUT" | jq -r '.detail')
+check "T40 acked rag-service breach -> verdict ALL_GREEN" "$([ "$VERDICT" = "ALL_GREEN" ] && echo true || echo false)"
+check "T40 acked rag-service breach -> exit=0" "$([ "$RC" -eq 0 ] && echo true || echo false)"
+check "T40 acked rag-service breach -> detail names rag-service (transparency, not silently dropped)" "$([[ "$DETAIL" == *"rag-service"* ]] && echo true || echo false)"
+check "T40 acked rag-service breach -> detail carries its own percentage" "$([[ "$DETAIL" == *"93.67%"* ]] && echo true || echo false)"
+check "T40 acked rag-service breach -> writes heartbeat file (passive-health valve unaffected)" "$([ -f "$HEARTBEAT_FILE_PATH" ] && echo true || echo false)"
+check "T40 acked rag-service breach -> heartbeat checks.mem_creep == PASS (enum schema unchanged)" "$([ "$(jq -r '.checks.mem_creep' "$HEARTBEAT_FILE_PATH")" = "PASS" ] && echo true || echo false)"
+
+# ── T41: MIXED — rag-service acked AND mcp-server forced over 85% (NOT
+# acked) -> verdict still FAILURE, names mcp-server (the second, unacked
+# container) — acknowledgment never masks a fresh signature — acceptance (3) ─
+run_case
+LAUNCHD_DIR="$LAUNCHD_EMPTY_DIR"
+LAUNCHD_ACK="$ACK_FIXTURE_MEM_RAG"
+STUB_MEM_RAG="93.67"
+STUB_MEM_MCPSERVER="90.00"
+OUT=$(run_probe); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+DETAIL=$(printf '%s' "$OUT" | jq -r '.detail')
+check "T41 MIXED acked-rag + unacked-mcp-server -> verdict FAILURE" "$([ "$VERDICT" = "FAILURE" ] && echo true || echo false)"
+check "T41 MIXED -> exit=1" "$([ "$RC" -eq 1 ] && echo true || echo false)"
+check "T41 MIXED -> detail mentions mem_creep" "$([[ "$DETAIL" == *"mem_creep"* ]] && echo true || echo false)"
+check "T41 MIXED -> detail names the UNACKED mcp-server breach with its percentage" "$([[ "$DETAIL" == *"mcp-server"*"90.00%"* ]] && echo true || echo false)"
+check "T41 MIXED -> detail also surfaces rag-service as acknowledged-degraded (transparency even on FAILURE)" "$([[ "$DETAIL" == *"acknowledged-degraded"* ]] && [[ "$DETAIL" == *"rag-service"* ]] && echo true || echo false)"
+check "T41 MIXED -> does NOT write heartbeat file" "$([ ! -f "$HEARTBEAT_FILE_PATH" ] && echo true || echo false)"
+
+# ── T42: mcp-gateway (HostConfig.Memory == 0, uncapped) forced to a high
+# MemPerc reading -> still SKIPPED, never named in breach or acked — proves
+# the skip fires on the CAP, not the percentage — acceptance (4) ───────────
+run_case
+LAUNCHD_DIR="$LAUNCHD_EMPTY_DIR"
+STUB_MEM_GATEWAY="99.00"
+OUT=$(run_probe); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+DETAIL=$(printf '%s' "$OUT" | jq -r '.detail')
+check "T42 uncapped mcp-gateway forced-high MemPerc -> still ALL_GREEN (skipped, not a headroom signal)" "$([ "$VERDICT" = "ALL_GREEN" ] && echo true || echo false)"
+check "T42 exit=0" "$([ "$RC" -eq 0 ] && echo true || echo false)"
+check "T42 detail never names gateway" "$([[ "$DETAIL" != *"gateway"* ]] && echo true || echo false)"
+
+# ── T43: all-healthy WITH the mem ack ledger present (rag-service healthy
+# this run) -> verdict ALL_GREEN, detail carries NO acknowledged-degraded
+# noise — the ledger's mere presence never manufactures a false note ───────
+run_case
+LAUNCHD_DIR="$LAUNCHD_EMPTY_DIR"
+LAUNCHD_ACK="$ACK_FIXTURE_MEM_RAG"
+OUT=$(run_probe); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+DETAIL=$(printf '%s' "$OUT" | jq -r '.detail')
+check "T43 all-healthy + mem ack ledger present -> verdict ALL_GREEN" "$([ "$VERDICT" = "ALL_GREEN" ] && echo true || echo false)"
+check "T43 all-healthy + mem ack ledger present -> exit=0" "$([ "$RC" -eq 0 ] && echo true || echo false)"
+check "T43 all-healthy + mem ack ledger present -> detail carries NO acknowledged-degraded noise" "$([[ "$DETAIL" != *"acknowledged-degraded"* ]] && echo true || echo false)"
+
+# Restore defaults for any test appended after this section in the future.
+LAUNCHD_DIR="$LAUNCHD_EMPTY_DIR"
 LAUNCHD_ACK="$TMPDIR_TEST/no-such-ack-ledger.json"
 
 # ── Summary ────────────────────────────────────────────────────────────────────
