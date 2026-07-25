@@ -387,11 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-07-25T05:00:04Z",
-    "updated_by": "developer"
+    "status": "in_progress",
+    "active_task_id": "FIX-VNINDEX-CACHE-STARTUP-PURGE",
+    "next_agent": "dev-mcp-server",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-VNINDEX-CACHE-STARTUP-PURGE — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-25T05:18:13Z",
+    "updated_by": "dev-team (bounded-1 zone-detect -> dev-mcp-server)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6740,15 +6741,6 @@
         "zone": "docs/agents/fb-market-poster/",
         "title": "fb-poster mislabels foreign-flow unit: get_market_foreign_flow net is SHARE VOLUME (M shares), post writes 'X tỷ'",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-FB-FOREIGN-FLOW-UNIT-LABEL"
-      },
-      {
-        "id": "FIX-VNINDEX-CACHE-STARTUP-PURGE",
-        "title": "vn_index_cache PURGED on mcp-server startup + refresh is market-hours-only -> any off-hours restart strands cache=0 until next Mon open. RECURRING: prior FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH (DONE, never done_verified) framed it as a refresh-path bug and did NOT close the root.",
-        "type": "FIX",
-        "priority": "P2",
-        "status": "BACKLOG",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-VNINDEX-CACHE-STARTUP-PURGE"
       },
       {
         "id": "FIX-SCHEDULER-DOUBLE-REGISTRATION",
@@ -15095,9 +15087,26 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-25T04:45:37Z",
+    "last_triaged_at": "2026-07-25T05:15:55Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-VNINDEX-CACHE-STARTUP-PURGE",
+        "title": "vn_index_cache PURGED on mcp-server startup + refresh is market-hours-only -> any off-hours restart strands cache=0 until next Mon open. RECURRING: prior FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH (DONE, never done_verified) framed it as a refresh-path bug and did NOT close the root.",
+        "type": "FIX",
+        "priority": "P2",
+        "status": "IN_PROGRESS",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-VNINDEX-CACHE-STARTUP-PURGE",
+        "promoted_at": "2026-07-25T05:15:55Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-25T05:18:14Z",
+        "claimed_at": "2026-07-25T05:15:55Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "dev-mcp-server"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
