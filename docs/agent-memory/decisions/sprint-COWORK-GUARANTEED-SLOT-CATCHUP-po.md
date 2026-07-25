@@ -106,3 +106,13 @@
 - Solve it with the ACK LEDGER (chosen) — the mechanism is already LIVE in this same script (b9484fa7a, `docs/data/auditor-launchd-ack.json`) and carries both needed guarantees: mixed case never suppresses, and entries expire on DONE_VERIFIED.
 **why-decision:** Flat WARN_PCT=85 across all capped containers is only safe because rag-service's legitimately-high 98.46% set-point can be acked against an OPEN row rather than threshold-excused — suppression that points at a tracked fix is self-expiring and auditable, a threshold constant is permanent blindness.
 **why-change:** Kept an absolute-headroom secondary predicate OUT of scope (11.9MiB free on 768m is thin, and % is not comparable across a 512m and 3g cap) — adding a second predicate in the same change would confound the FP evidence for the first.
+
+### STEP po-S11 · po · 2026-07-25T09:29:16Z
+**task-id:** UC-CDC-P1 / FIX-COWORK-CADENCE-DANGLING-POLICY-ID / FIX-BCTC-PENDING-REFINE-HEAD-OF-LINE-FAILED-ROW (evidence attach, no status flip)
+**what-done:** Triaged 2 cowork signals (cwk-...-1f13 config_drift, cwk-...-a591 data_fetch_failure); both DUPLICATES — attached traced-origin + refutation evidence to 3 existing rows, flipped both signals RESOLVED, minted nothing.
+**what-considered:**
+- Mint a FIX for the calendar_status drift — rejected: UC-CDC-P1 already owns this exact mechanism and already names all 4 fix points
+- Mint a SPIKE for the "shared upstream cause" behind the 2 BCTC fetch modes — rejected: adjudicated 07-21, the 2 modes have different causes (advisory_do_not_chase)
+- Accept the signal's "09:00Z fire cleared the queue head" and close the BCTC item — rejected: live gateway probe refutes it
+**why-decision:** Prior-art grep + live probe both showed the rows exist, are correctly scoped, and are dispatchable; the deficit is DISPATCH not detection. A 4th duplicate would burn a dev slot re-deriving a settled answer.
+**why-change:** Signal framed the drift as emitter-vs-policy and told me to pick one; source trace showed NEITHER — calendar_status is caller-supplied, self-recycled from the file it writes back, with no enum gate at the tool boundary.
