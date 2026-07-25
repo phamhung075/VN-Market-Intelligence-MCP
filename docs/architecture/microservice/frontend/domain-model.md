@@ -459,6 +459,67 @@ code-only task).
 
 ---
 
+### `dashboard.quality-audit.tsx` — per-check `last_verified` + staleness marker
+
+Added 2026-07-25 (FE-PG-QUALITY-AUDIT-LASTVERIFIED-RENDER-FIX). Prior to
+this change the route rendered every check identically regardless of when
+it was last verified — a 45-day-stale check was visually indistinguishable
+from one verified that morning.
+
+`AuditCheck.last_verified` is typed `unknown` on purpose (not `string`):
+`parseQualityChecklistDto` in the route is a pass-through cast
+(`raw as QualityChecklist`), so the DTO type is not runtime-enforced — the
+served JSON value could in principle be any type even though the field is
+always a string in the live `docs/data/quality-checklist.json` payload.
+
+`app/domain/formatters/check-verification.ts` (new file):
+`classifyCheckVerification(rawLastVerified: unknown, now: Date): StaleBadge`
+— a thin `typeof`-guarding wrapper around the existing
+`classifyStaleBadge` (`app/domain/formatters/stale-badge.ts`, unchanged),
+called with a fixed `CHECK_VERIFICATION_WINDOW_MINUTES = 7 * 24 * 60`
+(the D-PAGE re-verification rotation window, see
+`docs/agents/system-auditor/flow/page-freshness.md` Step 2, "not
+re-probed within the 7-day window"). Any non-string runtime value
+(number/object/array/null/undefined) is treated identically to "missing"
+— never passed into `classifyStaleBadge`'s `.includes()` call, which
+would otherwise throw. `classifyStaleBadge` itself already tolerates all
+four timestamp shapes present in the live data (bare date `2026-06-10`,
+second/millisecond/microsecond-precision ISO 8601) because it feeds the
+raw string straight into `new Date(...)`, which V8 parses leniently for
+all four without producing `NaN`.
+
+The route's new `LastVerifiedBadge` component (colocated in the route
+file, same pattern as `CheckStatusBadge`/`DeployStatusBadge`) renders one
+of three states, all visually distinguishable WITHOUT hovering (color +
+explicit text label, never color alone): a green badge with the
+`formatDateOnlyVi`-formatted date (fresh), a red badge with the date plus
+an explicit "stale" text label (stale), or a grey "UNKNOWN" badge
+(missing/unparseable — never a silent fresh-looking blank). The reference
+`now` for classification is the loader's `fetchedAt` (already existed,
+now also threaded into `CapabilitySection`/`ChecksTable`/
+`LastVerifiedBadge`) rather than `new Date()` inside render, keeping SSR
+and client hydration in agreement.
+
+Verified against the real served path (loader → `/api/quality-checklist`
+proxy → live mcp-server `:3000` data, which naturally contains all four
+timestamp shapes — no synthetic fixture needed):
+`app/domain/formatters/check-verification.test.ts` (16 unit tests, all
+four shapes + boundary + non-string guards) and a new Playwright spec
+`tests/e2e/quality-audit-lastverified.spec.ts` (3 tests: no-crash,
+stale-bucketing across all four shapes, fresh-check has no stale marker)
+run against a throwaway `PLAYWRIGHT_PORT=3011` dev server — the live
+`:3001` container predates this change and a rebuild is user-gated (see
+`docs/agent-memory/notebooks/dev-frontend.md` "PLAYWRIGHT_PORT gotcha").
+
+Pre-existing, out-of-scope anomaly noted (not fixed): every capability's
+`key={cap.capability_id}` is `undefined` at runtime because the served
+field is actually `cap_id`, not `capability_id` — `AuditCapability`'s type
+has never matched the wire shape. React only warns (duplicate/missing
+key), it does not break rendering; left untouched, distinct from this
+row's scope.
+
+---
+
 ## Service Health types
 
 ```ts

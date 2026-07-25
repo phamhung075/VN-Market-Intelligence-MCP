@@ -9,7 +9,8 @@
  *   - Summary header: pass / warn / fail / info / needs_review / total counts
  *   - Capabilities: collapsible sections grouped by capability, each showing
  *     title, service, deploy_status badge, and a checks[] table with
- *     check_id, dimension, question, severity, status, and optional evidence.
+ *     check_id, dimension, question, severity, status, last_verified, and
+ *     optional evidence.
  *
  * StatusBadge mapping:
  *   PASS        → green
@@ -17,6 +18,17 @@
  *   NEEDS_REVIEW → yellow
  *   FAIL        → red
  *   INFO        → grey (inline badge — not EvalStatus)
+ *
+ * Last Verified column (FE-PG-QUALITY-AUDIT-LASTVERIFIED-RENDER-FIX):
+ *   Each check row shows its own `last_verified` timestamp plus a staleness
+ *   marker, classified via app/domain/formatters/check-verification.ts
+ *   against a fixed 7-day D-PAGE re-verification window (see
+ *   docs/agents/system-auditor/flow/page-freshness.md Step 2). "stale" is
+ *   visually distinguishable (red badge + label) WITHOUT hovering; a
+ *   missing or unparseable last_verified renders an explicit "UNKNOWN"
+ *   badge rather than a silent fresh-looking blank. This is deliberately
+ *   distinct from the page's own FreshnessBadge (data_asof / generated_at)
+ *   — see FE-PG-QUALITY-AUDIT-FRESH / FE-PG-QUALITY-AUDIT-CONTENT-REGEN-CORR.
  *
  * Frontend reads over HTTP only — no direct disk read.
  */
@@ -37,6 +49,8 @@ import {
   CardTitle,
   CardContent,
 } from "~/components/ui/card";
+import { classifyCheckVerification } from "~/domain/formatters/check-verification";
+import { formatDateOnlyVi } from "~/lib/formatDate";
 
 export const meta: MetaFunction = () => [
   { title: "Quality Audit — VN Market Intelligence" },
@@ -59,6 +73,15 @@ interface AuditCheck {
   severity: string;
   status: CheckStatus;
   evidence?: string;
+  /**
+   * ISO 8601 timestamp of when this check was last (re-)verified.
+   * `unknown` on purpose: parseQualityChecklistDto is a pass-through cast
+   * (`raw as QualityChecklist`) so this DTO type is NOT runtime-enforced —
+   * the served value could be any JSON type. Callers must not assume
+   * `string` and must route through classifyCheckVerification, which
+   * type-guards before parsing.
+   */
+  last_verified?: unknown;
 }
 
 interface AuditCapability {
@@ -159,6 +182,52 @@ function CheckStatusBadge({ status }: { status: CheckStatus }) {
   );
 }
 
+/**
+ * Inline badge for a check's `last_verified` timestamp + staleness marker.
+ * Distinguishable from a fresh badge WITHOUT hovering: color (red vs green)
+ * PLUS an explicit "STALE" text label — never relies on color alone.
+ * Unknown/unparseable/missing renders an explicit "UNKNOWN" badge, never a
+ * silent fresh-looking blank (AC d).
+ */
+function LastVerifiedBadge({
+  lastVerified,
+  now,
+}: {
+  lastVerified: unknown;
+  now: Date;
+}) {
+  const bucket = classifyCheckVerification(lastVerified, now);
+
+  if (bucket === "unknown") {
+    return (
+      <span className="inline-flex items-center gap-1 whitespace-nowrap rounded border border-slate-600 bg-slate-700 px-1.5 py-0.5 text-xs font-bold uppercase tracking-wide text-slate-400">
+        UNKNOWN
+      </span>
+    );
+  }
+
+  // bucket is "fresh" | "stale" here — classifyCheckVerification only
+  // returns those when the timestamp actually parsed, so lastVerified is a
+  // valid string at this point.
+  const label = formatDateOnlyVi(lastVerified as string);
+
+  if (bucket === "stale") {
+    return (
+      <span className="inline-flex items-center gap-1 whitespace-nowrap rounded border border-red-700 bg-red-900 px-1.5 py-0.5 text-xs font-medium text-red-300">
+        <span aria-hidden="true">⚠</span>
+        {label}
+        <span className="font-bold uppercase tracking-wide">stale</span>
+      </span>
+    );
+  }
+
+  return (
+    <span className="inline-flex items-center gap-1 whitespace-nowrap rounded border border-green-700 bg-green-900 px-1.5 py-0.5 text-xs font-medium text-green-300">
+      {label}
+    </span>
+  );
+}
+
 /** Badge for capability deploy_status. Blue for DEPLOYED, grey for any other value. */
 function DeployStatusBadge({ status }: { status: DeployStatus }) {
   const isDeployed = status === "DEPLOYED";
@@ -196,7 +265,7 @@ function SummaryCount({
 }
 
 /** Checks table for a single capability. */
-function ChecksTable({ checks }: { checks: AuditCheck[] }) {
+function ChecksTable({ checks, now }: { checks: AuditCheck[]; now: Date }) {
   if (checks.length === 0) {
     return (
       <p className="text-xs text-slate-500 italic">No checks for this capability.</p>
@@ -222,6 +291,9 @@ function ChecksTable({ checks }: { checks: AuditCheck[] }) {
             </th>
             <th className="px-3 py-2 text-left font-medium text-slate-400">
               Status
+            </th>
+            <th className="px-3 py-2 text-left font-medium text-slate-400">
+              Last Verified
             </th>
             <th className="px-3 py-2 text-left font-medium text-slate-400">
               Evidence
@@ -251,6 +323,9 @@ function ChecksTable({ checks }: { checks: AuditCheck[] }) {
               <td className="px-3 py-2 whitespace-nowrap">
                 <CheckStatusBadge status={check.status} />
               </td>
+              <td className="px-3 py-2 whitespace-nowrap">
+                <LastVerifiedBadge lastVerified={check.last_verified} now={now} />
+              </td>
               <td className="px-3 py-2 text-slate-500 max-w-xs">
                 {check.evidence ?? <span className="italic">—</span>}
               </td>
@@ -263,7 +338,7 @@ function ChecksTable({ checks }: { checks: AuditCheck[] }) {
 }
 
 /** Single collapsible capability section. */
-function CapabilitySection({ cap }: { cap: AuditCapability }) {
+function CapabilitySection({ cap, now }: { cap: AuditCapability; now: Date }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -299,7 +374,7 @@ function CapabilitySection({ cap }: { cap: AuditCapability }) {
         </CardHeader>
         <CollapsibleContent>
           <CardContent className="px-4 pb-4 pt-0">
-            <ChecksTable checks={cap.checks} />
+            <ChecksTable checks={cap.checks} now={now} />
           </CardContent>
         </CollapsibleContent>
       </Card>
@@ -312,7 +387,14 @@ function CapabilitySection({ cap }: { cap: AuditCapability }) {
 // ---------------------------------------------------------------------------
 
 export default function QualityAuditDashboard() {
-  const { checklist, error } = useLoaderData<typeof loader>();
+  const { checklist, error, fetchedAt } = useLoaderData<typeof loader>();
+  // Deterministic reference "now" for last_verified staleness classification
+  // — reuses the loader's fetchedAt so server render and client hydration
+  // agree (never `new Date()` inside render). fetchedAt is always a valid
+  // ISO string (set via `new Date().toISOString()` in the loader), but the
+  // fallback keeps this call site defensive rather than trusting the type.
+  const now = new Date(fetchedAt);
+  const nowForClassification = isNaN(now.getTime()) ? new Date() : now;
 
   return (
     <div className="w-full space-y-6">
@@ -379,7 +461,11 @@ export default function QualityAuditDashboard() {
             </h2>
             <div className="space-y-3">
               {checklist.capabilities.map((cap) => (
-                <CapabilitySection key={cap.capability_id} cap={cap} />
+                <CapabilitySection
+                  key={cap.capability_id}
+                  cap={cap}
+                  now={nowForClassification}
+                />
               ))}
             </div>
           </section>

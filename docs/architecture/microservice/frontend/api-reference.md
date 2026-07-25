@@ -18,6 +18,7 @@ All routes live in `apps/frontend/app/routes/`.
 | ~~`dashboard.technical.tsx`~~ | ~~`/dashboard/technical`~~ | DELETED FE-AHUB-INT-INTEGRATE — content merged into `TechnicalZone` component embedded in `/dashboard/analysis`. |
 | `dashboard.alerts.tsx` + `api.alerts.tsx` | `/dashboard/alerts` | `GET /api/alerts?limit=100` (proxied via api.alerts.tsx → mcp-server :3000). `AlertSeverity = "low" \| "medium" \| "warning" \| "high" \| "critical"` — `"warning"` is a live backend-emitted value (amber styling). `parseAlertsDto` normalises unknown severities → `"medium"` at the data boundary. `severityColours()` has a `default:` belt-and-suspenders branch. |
 | `dashboard.prediction-claims.tsx` + `api.prediction-claims.tsx` | `/dashboard/prediction-claims` | `GET /api/prediction-claims?limit=N&outcome=X` (proxied via api.prediction-claims.tsx → mcp-server :3000). See § Prediction Claims Trust-Surface Context below. |
+| `dashboard.quality-audit.tsx` + `api.quality-checklist.tsx` | `/dashboard/quality-audit` | `GET /api/quality-checklist` (proxied via api.quality-checklist.tsx → mcp-server :3000). Each `checks[]` entry carries `last_verified` (type `unknown` at the DTO boundary — `parseQualityChecklistDto` is a pass-through cast, not runtime-validated); rendered per-check with a fresh/stale/unknown badge via `app/domain/formatters/check-verification.ts` (7-day window). See `docs/architecture/microservice/frontend/domain-model.md` § `dashboard.quality-audit.tsx` — per-check `last_verified` + staleness marker. |
 
 ### Loader pattern
 
