@@ -2,7 +2,7 @@
 
 # System Auditor — Audit Dimensions
 
-<!-- size-justification: 173L — canonical dimension registry; each dimension is a one-table entry + acceptance reference. Tightly coupled check-ID traceability. A-01-EXPECTED-SET fix (2026-06-02) adds host_runtime_set gating note to D1. +7L: FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE (2026-07-08) D4-R1b exclusion whitelist + D4-R4b debounce rows + doc/code gap note. +13L: D-FLEET (Tier-4, PILOT) added after D5 (2026-07-18), per brief docs/architecture-briefs/2026-07-18-cron-workflow-optimize-tier4-fleet-audit.md §8 EDIT-1 — on-demand only, zero cron registration. -->
+<!-- size-justification: 215L — canonical dimension registry; each dimension is a one-table entry + acceptance reference. Tightly coupled check-ID traceability. A-01-EXPECTED-SET fix (2026-06-02) adds host_runtime_set gating note to D1. +7L: FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE (2026-07-08) D4-R1b exclusion whitelist + D4-R4b debounce rows + doc/code gap note. +13L: D-FLEET (Tier-4, PILOT) added after D5 (2026-07-18), per brief docs/architecture-briefs/2026-07-18-cron-workflow-optimize-tier4-fleet-audit.md §8 EDIT-1 — on-demand only, zero cron registration. +27L: D-PAGE (Tier-5) added before D-FLEET (2026-07-25) — quality-audit rotating re-verification, partition key + window + verified_at contract + two anomaly classes + write boundary; handler extracted to flow/page-freshness.md (kept out of main.md per lazy-load discipline). -->
 
 This file is the canonical registry of what system-auditor checks and why. Each dimension maps to check IDs in `docs/agents/system-auditor/flow/main.md` and acceptance criteria in architecture briefs.
 
@@ -171,6 +171,33 @@ Notebook context overflow is the root cause of identity-assertion failures in co
 ### Handler
 
 See `docs/agents/system-auditor/handlers.md` §Step D5.
+
+---
+
+## D-PAGE (Tier-5): Quality-Audit Freshness Rotation
+
+**Tier:** 5 (daily, own cron `30 3 * * *` — see `.claude/commands/crons/cron-auditor-page-reverify.md`; distinct from Tier-3's `0 2 * * *` and D4/D-N's `03:00Z`)
+**Check IDs:** every `check_id` in `docs/data/quality-checklist.json .capabilities[].checks[]` whose `dimension` matches `Freshness|SLA` (74 at authoring time — live count, never hardcode) + `PG-MAP-SELF` (coverage-map self-staleness sentinel, unconditional every cycle)
+**Scope:** rotating re-verification of the checks that back the `/dashboard/quality-audit` page, PLUS per-page `verified_at` stamping on `docs/data/frontend-data-coverage-map.json`. Origin: user demand "system audit need planify to reverify this quality-audit page, plan it day by day, part by part... do not trust stale status" (coordination_session=93587c5d-9135-42df-a0e7-170d0f8358b2, 2026-07-25).
+**Handler:** `docs/agents/system-auditor/flow/page-freshness.md` (lazy-loaded, not inline in `main.md`) + mechanical bookkeeping in `scripts/audits/auditor-page-reverify.sh`.
+
+**Partition key:** `cksum(check_id) mod 7` for the checklist rotation, `cksum(page) mod 7` for the map rotation — a stable hash of the row's own identifier, NEVER array position (qa/dev appending rows must never reshuffle an existing row's assigned day). Today's partition = ISO weekday − 1 (Mon=0 … Sun=6), so each of the 7 partitions fires exactly once per calendar week.
+**Window:** 7 days — every check/row is guaranteed a fresh probe attempt at least once per week; `staleness-scan` proves this from the ledger rather than asserting it.
+**Canonical field:** `verified_at` (`date -u +%Y-%m-%dT%H:%M:%SZ`, second precision) = when system-auditor last live-reprobed a row/check. Distinct from `quality-checklist.json .last_verified` (qa-owned) and `frontend-data-coverage-map.json .asof` (data recency, not confirmation recency). Written on every probe, pass or fail, never fabricated.
+
+**Two anomaly classes (both must emit — see handler for exact emit calls):**
+| Class | Meaning | Category (reuses existing `anomaly-task-bridge` pipeline, zero new plumbing) |
+|---|---|---|
+| VALUE DRIFT | stored `status=PASS`, live re-probe disagrees (FAIL/WARN) — a regression that went silent | `data_stale`, dedup_key `data_stale:<check_id>:PG-DRIFT` |
+| AUDIT STALENESS | a check's `verified_at` is missing or older than the 7-day window — the rotation itself may have stopped running | `system_issue`, dedup_key `system_issue:<check_id>:PG-STALE` |
+
+**Coverage ledger (system-auditor-owned, NEW file, atomic tmp+mv):** `docs/data/auditor-page-reverify-ledger.json` — per-check `{partition, verified_at, stored_status_at_probe, live_verdict, drift}` + `skipped_runs[]` (a skipped partition-day is an explicit ledger entry, never a silent gap).
+
+**Write boundary (resolved — see `.claude/agents/system-auditor.md` write-contract):** READ-ONLY on `docs/data/quality-checklist.json` (qa remains sole writer — `docs/agents/qa/flow/quality-audit.md`); OWNED atomic-write on `docs/data/auditor-page-reverify-ledger.json` (new, system-auditor's own namespace); NARROW additive write on `docs/data/frontend-data-coverage-map.json` limited to the `verified_at` key per row only (no active concurrent writer on that file — last edit 2026-07-02, a one-time snapshot). No write to `apps/frontend/**` — rendering `verified_at` + a staleness marker on the quality-audit page is a `dev-frontend` follow-up, out of scope here.
+
+**Task minting:** reuses the existing `data_stale`/`system_issue` → `anomaly-task-bridge` → `repair_task_request` → PO → `.task_board` pipeline unchanged (see `.claude/skills/anomaly-task-bridge/SKILL.md`) — no new signal type, no new plumbing.
+
+**Not in scope for D-PAGE v1:** mass-backfilling `verified_at` for rows/checks not actually probed this cycle (would be timestamp falsification); re-verifying the other 368 non-Freshness/SLA checks in quality-checklist.json (Security/Performance/Maintainability checks don't carry a "staleness" concept the way freshness does — out of scope, not this dimension's job); auto-fixing drift or staleness — detect and signal only, per the agent's `detect_only` constraint.
 
 ---
 

@@ -1,10 +1,10 @@
 ---
-<!-- size-justification: 160L — agent definition covers 3-tier audit cadence (Tier 1/2/3), 6-pillar capability list, 60+ check IDs across runtime/fetch/DB surfaces, dedup policy, and typed signal shapes; each section is load-bearing and non-separable from the agent identity -->
+<!-- size-justification: 169L — agent definition covers 3-tier audit cadence (Tier 1/2/3), 6-pillar capability list, 60+ check IDs across runtime/fetch/DB surfaces, dedup policy, and typed signal shapes; each section is load-bearing and non-separable from the agent identity. +9L (2026-07-25): D-PAGE (Tier-5, daily 03:30Z quality-audit freshness rotation) capability/responsibility bullets + max_wall_time_tier5_seconds — full spec lives in flow/page-freshness.md + audit-dimensions.md §D-PAGE, kept out of this file per the same lazy-load discipline as tier1-probe.md. -->
 
 agent:
   id: system-auditor
   name: System Auditor
-  version: "2026-05-19"
+  version: "2026-07-25"
   description: Three-pillar health auditor. Detects anomalies across (A) microservice runtime health — host_runtime_set services only (SSOT docs/data/system-map.json .infrastructure.docker.host_runtime_set), container tooling, inter-service connectivity; (B) data fetch integrity — 27 sources vs expected cadence, VPS proxy health, BCTC URL shape; (C) DB write integrity — row distributions, watchlist coverage, schema sentinels, cross-table consistency. Also covers docs/memory/code layer (MEMORY.md, knowledge hygiene, agent files, size caps, SQLite WAL). Emits typed signals. Reports NEW problems to BUG channel. Detect only — never fix. Strict 7-day dedup on BUG writes. NOT-deployed-by-design services (defined in compose but not in host_runtime_set) are INFO/grey — never CRITICAL/WARN.
 
   capabilities:
@@ -16,11 +16,13 @@ agent:
     - Audit host_runtime_set Docker services only (SSOT: system-map.json) — container up, health endpoint 200, restart count, log freshness, tooling presence (pdftoppm/tesseract/vie lang), inter-service connectivity. Not-deployed-by-design services = INFO skip, never checked.
     - Data fetch integrity — per-source last-fetch vs expected cadence (from system-map.json), VPS proxy health (7 geo-blocked routes), BCTC PDF landing, source URL shape (SSC portal filter)
     - DB write integrity — row count distributions per table, watchlist coverage (≥25 of 33 active tickers), schema sentinel checks, cross-table consistency (orphaned alerts), WAL size per DB, PRAGMA integrity_check all 6 DBs
+    - Quality-audit checklist freshness rotation (D-PAGE, Tier 5) — day-partitioned re-verification of quality-checklist.json's Data Freshness/SLA checks + frontend-data-coverage-map.json page rows; stored status is a diff target only, never trusted as-is; detects both value drift (stored PASS, live FAIL/WARN) and audit staleness (a check not re-probed within the 7-day window)
 
   responsibilities:
     - Tier 1 (every 30 min): container + health endpoint liveness for host_runtime_set services only (SSOT) + system status rollup. Not-deployed services = INFO skip.
     - Tier 2 (every 4h): data freshness sweep per source vs expected_cadence_hours in system-map.json; VPS proxy health; cron fire gap check
     - Tier 3 (daily 02:00 UTC): deep DB integrity across all 6 DBs — row distributions, schema sentinels, cross-table consistency, tooling checks, EPIPE crash accumulation
+    - Tier 5 (daily 03:30 UTC): D-PAGE quality-audit freshness rotation — see `docs/agents/system-auditor/flow/page-freshness.md` + `docs/agents/system-auditor/audit-dimensions.md` §D-PAGE
     - Emit signals via `post_agent_signal` (`signal_type: signal_feedback` — live enum; finding category carried in `payload.title`/`payload.check_id`: microservice_degraded | data_stale | db_integrity_breach | system_health_report)
     - Append WARN/CRITICAL findings to `docs/data/orch/orch-state.json` `.signal_queue.rows[]` (zone_owner populated from system-map.json zones)
     - BUG channel reporting for new anomalies only (7-day dedup per dedup_key)
@@ -70,6 +72,7 @@ agent:
     max_wall_time_tier1_seconds: 120
     max_wall_time_tier2_seconds: 300
     max_wall_time_tier3_seconds: 600
+    max_wall_time_tier5_seconds: 240
     plan_only_invariant:  # AUD-ND-1 — CRITICAL fleet-safety invariant
       enforced: true
       forbidden_ops:

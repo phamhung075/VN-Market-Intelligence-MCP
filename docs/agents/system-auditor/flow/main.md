@@ -1,4 +1,4 @@
-<!-- size-justification: ~787L — three-tier dispatcher; Tier-1 detail extracted to tier1-probe.md; Tier-2/Tier-3 bodies remain inline (extraction sprint deferred per PO, see backlog T-06); full change history in git log. +2L: TIER=4 PILOT row added to AUDIT_TIER extraction + Tier Dispatch tables (2026-07-18), per brief docs/architecture-briefs/2026-07-18-cron-workflow-optimize-tier4-fleet-audit.md §8 EDIT-2 — dispatches to handlers.md §Step D-FLEET, own one-off claim, bypasses §Step 0d tick-boundary election. -->
+<!-- size-justification: ~793L — three-tier dispatcher; Tier-1 detail extracted to tier1-probe.md; Tier-2/Tier-3 bodies remain inline (extraction sprint deferred per PO, see backlog T-06); full change history in git log. +2L: TIER=4 PILOT row added to AUDIT_TIER extraction + Tier Dispatch tables (2026-07-18), per brief docs/architecture-briefs/2026-07-18-cron-workflow-optimize-tier4-fleet-audit.md §8 EDIT-2 — dispatches to handlers.md §Step D-FLEET, own one-off claim, bypasses §Step 0d tick-boundary election. +6L (2026-07-25): TIER=5 row added to AUDIT_TIER extraction + Tier Dispatch tables + Step 0d fire-election branch — dispatches to flow/page-freshness.md (D-PAGE, kept fully out of this file per lazy-load discipline, unlike Tier-2/3's still-deferred inline extraction). -->
 # System Auditor — Main Flow
 
 ## PLAN-ONLY INVARIANT — NO DESTRUCTIVE OPS (AUD-ND-1)
@@ -65,6 +65,7 @@ Scan the spawn prompt verbatim for the token `AUDIT_TIER=<value>`. Extract the i
 - Found `AUDIT_TIER=2` → set AUDIT_TIER=2
 - Found `AUDIT_TIER=3` → set AUDIT_TIER=3
 - Found `AUDIT_TIER=4` → set AUDIT_TIER=4 (**PILOT ONLY** — manual invocation only; never present in any cron config; see brief `docs/architecture-briefs/2026-07-18-cron-workflow-optimize-tier4-fleet-audit.md` §5)
+- Found `AUDIT_TIER=5` → set AUDIT_TIER=5 (**D-PAGE — Quality-Audit Freshness Rotation**, daily, own cron — see `.claude/commands/crons/cron-auditor-page-reverify.md`)
 - Not found or unrecognized value → **default AUDIT_TIER=3** (log: `"[TIER-DISPATCH] AUDIT_TIER not set — defaulting to 3"`)
 
 The extracted tier value MUST propagate to:
@@ -76,6 +77,7 @@ The extracted tier value MUST propagate to:
 - **TIER=2** → run §Tier-2 Freshness Sweep only → skip all other steps → notebook (label: Tier-2, gated — see §Notebook Append Gate) → RETURN
 - **TIER=3** → run §Tier-1 + §Existing Doc/Memory Audit (steps 1–6) + §Tier-3 DB Integrity → notebook (label: Tier-3, gated — see §Notebook Append Gate) → RETURN
 - **TIER=4** → **PILOT ONLY, manual invocation — not present in any cron config.** Skip §Step 0d Fire-Time Election below (tier-4 pilot uses its own one-off `pilot-run-<N>` claim inside the handler instead — see `docs/agents/system-auditor/handlers.md` §Step D-FLEET Trigger, not the tick-boundary election) → run §Step D-FLEET handler (`docs/agents/system-auditor/handlers.md` §Step D-FLEET) only → skip all other steps → notebook (label: Tier-4-PILOT, gated — see §Notebook Append Gate) → RETURN
+- **TIER=5** → run §Step 0d Fire-Time Election (tier=5 branch, fixed daily UTC tick) → lazy-load `docs/agents/system-auditor/flow/page-freshness.md` (D-PAGE — Quality-Audit Freshness Rotation) only → skip all other steps → notebook (label: Tier-5-D-PAGE, gated — see §Notebook Append Gate) → RETURN
 
 ---
 
@@ -109,6 +111,12 @@ elif AUDIT_TIER == 3:
   # cron expression: 0 2 * * * (fixed: 02:00 UTC daily)
   FIRE_TICK=$(date -u +"%Y-%m-%dT02:00Z")
   FIRE_TASK_ID = "cron:auditor-t3:" + FIRE_TICK
+
+elif AUDIT_TIER == 5:
+  # cron expression: 30 3 * * * (fixed: 03:30 UTC daily — offset 30min after Tier-3's
+  # 02:00Z and D4/D-N's 03:00Z to avoid I/O contention on orch-state.json/notebook)
+  FIRE_TICK=$(date -u +"%Y-%m-%dT03:30Z")
+  FIRE_TASK_ID = "cron:auditor-t5:" + FIRE_TICK
 
 fire_result = call_tool(server="vn-market", tool="task_claim", arguments={
   task_id:              FIRE_TASK_ID,
