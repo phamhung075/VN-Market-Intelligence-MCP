@@ -573,3 +573,60 @@ SUPPORTING EPIC 3 (foundational, runs underneath) — **HONEST-DATA-FLOOR HOLD**
 - Standalone row + co_edit binding
 **why-decision:** Two grounds. (1) SCOPE — that row's title/root_cause/deliverable/acceptance are all one predicate at ONE site; this defect is at FOUR (main.md:484-488, :571-574, :624-627, :675-678), so an implementer would fix Step 0b, close honestly, and leave three exposed. (2) QUARANTINE — that row is plan_only+supervised, dependent on the SLS to move; folding a defect that can fire every 30min would strand it. Mine is deliberately NOT plan_only/supervised for that reason.
 **why-change:** Also CORRECTED the reporter's scope: Step 1's triage_key is NOT this shape — main.md:711 already says "await task notification, then release" with the release a separate statement at :716, not a finally. Excluded it explicitly. Did NOT increment the sibling's recurrence_count (2) — this near-miss corroborates a different mechanism and inflating it would misdirect escalation.
+
+### STEP po-S10 · po · 2026-07-25T17:35Z
+**task-id:** FIX-COVERAGE-SWEEP-BLANKET-STAMP-DEAD-TRIGGER
+**what-done:** Ruled the transport for the inert coverage-stamp fix — GRANT Bash to news-scout + market-watcher; minted FIX-COWORK-BASH-GRANT-COVERAGE-STAMP-TRANSPORT (ready/P1/→agent-father) and bound it via `blocked_by`.
+**what-considered:**
+- (a) Bash grant to the 2 calling agents
+- (b) MCP-tool wrapper — needs NO grant change (both already hold mcp__gateway__call_tool)
+- (c) dispatcher/relay restructure
+**why-decision:** (b) looked strictly better on paper and I nearly took it. Killed by one measured fact: docker-compose.yml does NOT mount `./scripts` into mcp-server, so an MCP tool cannot exec coverage-stamp.sh — it would be a full TS reimplementation of 313 tested lines, a second implementation of one contract held in drift-lock. `./docs/data` IS mounted RW, so (b) is feasible, just expensive; rejected on duplicate-implementation debt, not feasibility. (a) ships a proven artifact (29/29, RED→GREEN) via a two-line frontmatter change. Blast-radius objection weighed and found weaker than stated: both agents already hold repo-wide Write+Edit, so code execution is ALREADY reachable transitively by rewriting a script a Bash-capable peer runs; Bash makes it direct, not newly possible. What is genuinely new is process execution + network egress from an agent that ingests untrusted scraped news — accepted as proportionate to a live P1, and the reason for the tight scope + explicit non-precedent clause.
+**why-change:** CORRECTED the developer's stated premise before ruling on it. Its claim that no-Bash is "deliberate fleet-wide policy shared by every cowork gatherer/publisher agent" is FALSE — enumerated all 43 `.claude/agents/*.md` frontmatter lines: fb-market-poster (a cowork PUBLISHER), system-auditor and orch-sentinel all hold Bash and all write shared state. Ruled on merits, not on a policy that does not exist. Also set an explicit QA CLOSE-GATE (G1 grant present / G2 live agent-driven invocation produces >1 stamp group / G3 sweep_config self-healed) because the 29/29 tests are green TODAY while the defect is fully live — closing on them would be a textbook feedback_verify_executable_not_flowdoc_prose false-green.
+
+### STEP po-S11 · po · 2026-07-25T17:36Z
+**task-id:** FIX-BDI-SHIPPING-STALE-404-GUARD
+**what-done:** Root-caused a 13.5-hour CI red on main that nobody owned, attached the diagnosis + close-gate to the row that caused it, raised P2→P1. Found while adjudicating an unrelated push.
+**what-considered:**
+- Mint a new FIX row for the red
+- Fold into FIX-MCP-SUITE-HEALTH-BASELINE (the standing-red row)
+- Fold into the causing row, FIX-BDI-SHIPPING-STALE-404-GUARD (review/qa, still open)
+**why-decision:** Folded into the causing row. Same commit, row not yet closed, and its QA hop is exactly where "did you leave main red?" belongs; a separate row would create a second owner for one commit's fallout and let the BDI row close green while main stayed red. Explicitly NOT folded into FIX-MCP-SUITE-HEALTH-BASELINE — that tracks an order-dependent full-suite red (~40 fail) under plain `bun test`; THIS is deterministic, single-file, reproduces in isolation, and has a datable culprit. Conflating them would let a real regression be waved through as baseline noise.
+**why-change:** RAW-diagnosed rather than relayed. `git log 525a82e14..fe24fcf4b` = exactly this row's 2 commits; last green 03:47:37Z, first red 04:01:35Z; 16 consecutive failures, identical fingerprint. Reproduced locally: 1408-tool-diacritics.test.ts:113 asserts `toContain("ổn định")` — the precise fake conclusion this row's fix deliberately deleted, per its own code comment. THE TEST IS WRONG, THE CODE IS RIGHT; do not revert. Impact beyond the row: PUSH-AUTONOMY-1 clause 4 (`ci_green_on_subsequent_push`) is unsatisfiable for EVERY agent on EVERY push while this stands. Noted that ci-health-probe.js DID fire at 13:12Z (fingerprint bda56d1c, deduped to docs/signals/processed/) — detector correct, actuator absent (feedback_router_blames_detector_when_actuator_or_policy_is_at_fault).
+
+### STEP po-S12 · po · 2026-07-25T17:38Z
+**task-id:** FIX-SYSTEM-MAP-WATCHLIST-STALE-34-OF-58
+**what-done:** Resolved the "three-way ticker-count disagreement" and minted the real defect it was hiding (backlog/P1/plan_only+supervised/→ba).
+**what-considered:**
+- Declare one of 57 / 34 / 58 authoritative by fiat
+- Probe the runtime and set-diff all three
+- Leave unresolved as the two prior reports did
+**why-decision:** Probed the RUNTIME `get_watchlist` through the gateway — the exact tool both flows call — instead of comparing files to each other. THERE IS NO DISAGREEMENT: the sets are strictly nested, system-map 34 ⊂ coverage-state 57 ⊂ get_watchlist 58, with `get_watchlist \ coverage-state` = {MWG} exactly and both other diffs empty. Authoritative = runtime, 58. news-scout's notebook claim of "58" was RIGHT and had been flagged as the outlier by both prior reports — it was the only number matching what the code serves.
+**why-change:** What remained after resolving it is a live product defect, not bookkeeping: system-map is missing 24 of 58 tickers including ACB/CTG/MBB/VPB (four of the largest banks), GAS, MWG, HVN, REE. It has real consumers — CLAUDE.md's own anti-hardcode rule, .claude/skills/system-map-query/SKILL.md, fb-market-poster's flow, and apps/frontend/app/domain/market.ts's compile-time WATCHLIST_STOCKS (verified: ACB/CTG/MBB/VPB/GAS/MWG appear nowhere in it). Prior art SPIKE_1946 documents a MISSED CRISIS DETECTION from this exact divergence, fixed for PLX and never closed as a class. AC demands SET EQUALITY not a count (a count check passes on the wrong 58) plus a negative control. MWG explicitly left OUT of this row — it self-heals via the coverage-stamp fix.
+
+### STEP po-S13 · po · 2026-07-25T17:39Z
+**task-id:** VERIFY-FIX-COVERAGE-SWEEP-BLANKET-STAMP-REALDATA
+**what-done:** Adjudicated the pre-cascade push and discharged PUSH-AUTONOMY-1 clause 5 (PO's own obligation) by minting the REALDATA verify row, BLOCKED on the two real preconditions.
+**what-considered:**
+- Revert the push
+- Mint READY now
+- Mint BLOCKED with preconditions recorded
+**why-decision:** Not reverted — nothing destructive, artifact well-tested. Split the verdict rather than accepting the router's single-breach framing: CASCADE clause BREACHED (no QA, no PO — real, recorded, explicitly not precedent); SUITE clause NOT breached, which required running the A/B rather than assuming. Pre-push run 30150608772 = 14698 pass / 1 fail, post-push 30167512061 = 14708 pass / 1 fail, SAME single file ⇒ zero NET NEW failures, which is the CANONICAL reading pinned at dev-standards.md:590. The developer did not redden CI. Clause 4 is undischargeable by anyone until po-S11 lands, so it is precondition 1 here, not a developer failing.
+**why-change:** Minted BLOCKED not READY — clause 5 says "after CI green", and CI is red; a READY mint would be a false-ready. Added an explicit `unblock_action` after EXECUTING the predicates showed the row matches no lane while blocked (deps_satisfied:false): the sibling precedent VERIFY-FIX-VPS-SSH-TRIGGER-FAIL-LOUD-REALDATA was minted BLOCKED on 07-22 under the identical clause and has sat untouched for 3 days. AC (f) added beyond the row's own ACs: rotation must ADVANCE across consecutive cycles — (a)–(e) can all pass while the sweep returns the same oldest-N forever.
+
+### STEP po-S14 · po · 2026-07-25T17:37Z
+**task-id:** FIX-ORCHSTATE-BLOCKS-FIELD-WRITE-ONLY-DECORATIVE
+**what-done:** Folded `co_edit` in as a second instance; no new row. Widened the title to name both fields.
+**what-considered:** New row for co_edit · fold into the blocks row · leave as prose
+**why-decision:** Folded, per the reporter's recommendation and on the merits — identical mechanism, identical author-trap, and this row's AC 3 negative control already covers it verbatim with only the field name changing. Re-verified with a WIDER net than the report used (whole repo, no path/extension filter, not just scripts/ + apps/): 3 files match `co_edit`, all writers or records of writes, zero readers. The wider net mattered — a scripts/-only grep could have missed a reader in .claude/ or tooling/.
+**why-change:** Flagged an asymmetry the fold-in must not paper over: `blocks` has a forward normalisation target (`blocked_by`), `co_edit` has NO forward equivalent — there is no atomic-ship primitive in the schema at all. So I recorded a narrower honest menu for it and stated a preference (reject unknown top-level task fields at write time in orch-apply.sh — the only option that stops the NEXT invented field) explicitly as INPUT to ba/architect, not as a decision, since its migration cost across 660 live rows with many ad-hoc annotation fields needs measuring first.
+
+### STEP po-S15 · po · 2026-07-25T17:42Z
+**task-id:** FIX-DEVTEAM-BACKGROUND-SPAWN-LOCK-RELEASED-AT-SPAWN-NOT-COMPLETION
+**what-done:** SELF-CORRECTION. Accepted the reporter's finding that my po-S9 mint landed in a no-lane hole, and encoded the general fix in my own flow docs (`docs/agents/po/flow/zone-routing.md` new Step A2).
+**what-considered:**
+- Treat it as a one-off and move on (row is already hand-dispatched)
+- Add plan_only+supervised to future such rows so SLS picks them up
+- Identify the actually-correct lane and document it
+**why-decision:** My po-S9 reasoning said "deliberately NOT plan_only/supervised" to avoid stranding the row behind the SLS wait. That half was right; the conclusion was wrong, because I checked what I was avoiding and never checked what would pick it up. `backlog` + non-dev next_agent + no plan_only matches NOTHING: BOUNDED-1 requires `^dev(-|$)|^developer$` (verified at scripts/lib/devteam-eligibility.jq:274-281), SLS requires effective_supervised AND effective_plan_only both true. Rejected "just add plan_only" — that buys an SLS wait for a row needing no planning, which is the exact cost I was trying to avoid.
+**why-change:** The right answer is a THIRD lane neither the reporter nor I named: `ready`, consumed by the Ready-Lane Consumer, which deliberately has NO dev/non-dev gate and spawns next_agent directly (its header names agent-father/qa rows as intended targets). PROVED IT rather than asserting it — minted FIX-COWORK-BASH-GRANT-COVERAGE-STAMP-TRANSPORT into `ready` and executed the predicates against live data: `non_dev_unrouted:true` yet `RLC_ELIGIBLE:true`. Then ran the same check on both new backlog rows (system-map SLS_ELIGIBLE:true; REALDATA correctly false-because-blocked). Documented in Step A2 as a 4-row lane table + the executable verification snippet, with the standing rule: a mint is not finished until the predicate output points at a named consumer. Also folded in the sequencing rule — use `depends_on`/`blocked_by` on the waiting row, never `blocks`/`co_edit`, per po-S14.
