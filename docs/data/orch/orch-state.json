@@ -419,12 +419,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
+    "status": "review",
     "active_task_id": "FIX-PREDCLAIM-DASHBOARD-HITRATE-HONESTY",
-    "next_agent": "dev-frontend",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-PREDCLAIM-DASHBOARD-HITRATE-HONESTY — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-25T13:14:43Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "next_agent": "qa",
+    "next_action": "FIX-PREDCLAIM-DASHBOARD-HITRATE-HONESTY at REVIEW -- qa: verify denominator/staleness/breakdown/exclusion context render correctly (unit-level 92/92 pass incl. mutated excluded=11/hitRate=null fixture + double-fetch/lastScoredAt regression guards; SSR-level manually confirmed on a throwaway PORT=3012 dev server against the real mcp-server). PENDING-REBUILD -- the live :3001 Docker container predates this commit; ops rebuild required before the fix is visible on the real dashboard, then re-verify against the LIVE served endpoint. hitRate=null still renders \"Chua co\", never \"0%\" (untouched contract).",
+    "updated_at": "2026-07-25T13:38:21Z",
+    "updated_by": "dev-frontend"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2514,8 +2514,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-25T13:01:01Z",
-    "_updated_by": "po/triage-20260725T1254-a30-veto-gate-defect (fold: sweep-guard occurrence 4)",
+    "_updated_at": "2026-07-25T13:38:21Z",
+    "_updated_by": "dev-frontend (FIX-PREDCLAIM-DASHBOARD-HITRATE-HONESTY -> REVIEW)",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -15546,6 +15546,38 @@
         "rebuild_required": false,
         "branch": null,
         "review_note": "dev-mcp-server: PO ruling 2026-07-25T12:07Z narrowed scope to deliverable (a) ONLY, standalone (depends_on removed, producer fix still REBUILD_REQUIRED/user-gated, unsatisfiable before 07-28). New generic script scripts/migrations/backfill-predclaim-creation-price.ts (14 unit tests incl. negative control + regression-pin) selects prediction_claims rows creation_price IS NULL AND is_excluded=0, backfills from the EXACT-date daily_ohlcv close on created_at trading date only (no interpolation; missing bar -> disposition=no_bar, never fabricated). Ran dry-run then --apply via docker cp + docker exec against the live named-volume DB (no rebuild/restart). Result: 5/5 pending rows backfilled -- id13 VIC 2026-07-21 close 217300, id14 VIC 2026-07-22 close 202100, id15 VIC 2026-07-23 close 214000, id16 VIC 2026-07-24 close 213100, id17 VNM 2026-07-24 close 58900 -- each cross-checked against its source bar (also matches the claim text's own stated price at creation, e.g. id16/id17 narrative price == the bar close exactly). VERIFIED via the LIVE served GET /api/prediction-claims endpoint (curl :3000, server's own long-lived connection -- not a host-CLI/sqlite read): all 5 ids show non-null creationPrice matching the written values; calibration.total held at 17, pending held at 5, excluded held at 6 -- no row dropped or status-flipped. Second dry-run confirms idempotent (0 candidates left). Deliverables (b) reconstruct-the-6-excluded and (c) machine-readable exclusion reasons explicitly NOT started per PO ruling -- the script query (is_excluded=0) structurally cannot touch those rows, so a future run for (b)/(c) needs a separate task. Script persisted scripts/migrations/backfill-predclaim-creation-price.ts, CANONICAL pointer added docs/agents/dev-mcp-server/flow/main.md. No apps/mcp-server/src files touched (pure data-migration script) -- G12 tsc/tool-count/scheduler-count gates N/A. Commits: 964355605 (script+test+flow-pointer), 499c28f25 (journal+notebook)."
+      },
+      {
+        "id": "FIX-PREDCLAIM-DASHBOARD-HITRATE-HONESTY",
+        "title": "'Du bao AI & Ket qua' advertises a 66,7% hit-rate with no denominator and no exclusion reason — the figure is computed on 6 of 17 claims, all from Apr-May, frozen since 2026-06-21, and reads as live",
+        "status": "REVIEW",
+        "type": "FIX",
+        "priority": "P1",
+        "size": "S",
+        "zone": "apps/frontend/",
+        "owner": "dev-frontend",
+        "next_agent": "qa",
+        "created_at": "2026-07-25T07:14:46Z",
+        "created_by": "po/triage-20260725T0711-user-demand-predclaims",
+        "root_cause": "Live calibration block read from the served endpoint 2026-07-25T07:11:04Z: total=17, resolved=6, correct=4, wrong=2, pending=5, excluded=6, hitRate=0.6666666666666666, avgBrier=0.2135. The page renders 66,7% as the AI's accuracy. That number is 4/(4+2) over SIX claims — 35% of the population — while 6 are unscoreable and 5 unresolved. Worse than the small denominator: the six scored claims are ids 2,3,4,5,6,7, ALL created 2026-04-27 or 2026-05-03 and ALL resolved by 2026-06-21T16:35Z. Because every claim minted since 2026-06-14 has creation_price NULL, no new claim can ever enter the numerator or denominator — the badge is STRUCTURALLY FROZEN at 66,7% and has been for over a month, yet it carries no staleness marker and no denominator. A user reading the page cannot distinguish 'the AI is running at 66,7%' from 'the AI has not been scored in five weeks'. This is the passive-health-masks-dead-data pattern (feedback_passive_health_masks_dead_data.md): the green number is the reason nobody noticed the 6-week outage. PO POSITION: the user was right to distrust it. The badge as rendered overstates the track record, and the exclusion bucket that would have revealed the problem is a bare unexplained label.",
+        "deliverable": "(a) Never render a bare hit-rate. Show the denominator inline — e.g. '66,7% (4 dung / 2 sai tren 6 du bao da cham diem)' — so the 6-of-17 basis is visible without interaction. (b) Render a STALENESS marker driven by data, not prose: surface the resolved_at of the most recently SCORED claim (live: 2026-06-21) and warn when it exceeds a threshold, e.g. 'Chua co du bao nao duoc cham diem tu 21/06/2026'. Derive the date from the payload — do not hardcode it. (c) Explain 'Loai tru' at the point of use. A tooltip or inline note stating these claims had no entry price at creation so direction could not be evaluated, and that they are excluded from the accuracy figure. Consume the machine-readable reason produced by FIX-PREDCLAIM-BACKFILL-NULL-CREATIONPRICE where present; fall back to the generic explanation where absent. (d) Show the full disposition breakdown (17 total = 4 dung + 2 sai + 5 dang cho + 6 loai tru) near the badge so the buckets always visibly sum to the total. (e) Vietnamese output must follow feedback_market_report_plain_vietnamese.md — plain language, decimal comma, no untranslated jargon.",
+        "acceptance": "Against the LIVE endpoint the page renders the denominator, the last-scored date, and the exclusion explanation without any hardcoded number or date — confirmed by mutating the fixture (e.g. excluded=11, hitRate=null) and observing the UI track it. hitRate=null still renders 'Chua co' and NEVER '0%' per the existing contract in dashboard.prediction-claims.tsx:27. No frontend-side recomputation of hitRate — the serve layer stays the single source for the figure; the page only adds context around it.",
+        "related": [
+          "FIX-PREDCLAIM-CREATIONPRICE-UNGATE-ZOD-CONTRACT",
+          "FIX-PREDCLAIM-BACKFILL-NULL-CREATIONPRICE",
+          "FEAT-PREDCLAIM-UPDATED-AT",
+          "FIX-PRED-CLAIMS-EXCLUDED-SERVE-DISPLAY"
+        ],
+        "note": "Deliberately INDEPENDENT of the two mcp-server rows — this is the user-visible trust surface and it can ship immediately without waiting on the producer fix or the backfill. Even after both land, the denominator and staleness affordances remain correct and necessary. Predecessor FIX-PRED-CLAIMS-EXCLUDED-SERVE-DISPLAY (commit baff449ae) made the 'Loai tru' label appear; this row makes it MEAN something to the reader.",
+        "updated_at": "2026-07-25T13:38:21Z",
+        "promoted_at": "2026-07-25T13:14:43Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-25T13:14:43Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "reviewed_at": "2026-07-25T13:38:21Z",
+        "reviewed_by": "dev-frontend",
+        "review_note": "Calibration banner no longer renders a bare hitRate. (a) inline denominator formatHitRateDenominator (e.g. \"4 dung / 2 sai tren 6 du bao da cham diem\"), zero recomputation -- echoes calibration.correct/wrong/resolved verbatim. (b) STALE_THRESHOLD_DAYS=14 data-driven staleness marker via describeStaleness(lastScoredAt) -- lastScoredAt computed client-side via computeLastScoredAt(claims) = max resolvedAt among outcome IN (correct,wrong) ONLY (excluded rows also carry resolved_at per excludeClaim() but are NOT a scoring event -- regression-guarded by a dedicated unit test asserting the marker ignores a later excluded resolvedAt). fetchPredictionClaimsData now double-fetches when an outcome filter is active (always-unfiltered context call for calibration+lastScoredAt, plus the existing filtered call for the display list) so the marker stays correct on every filter tab, not just the default view -- confirmed by test asserting exactly 1 fetch unfiltered / 2 fetches filtered. (c) Loai tru explained at point of use: tooltip on the aggregate chip + inline note on each excluded ClaimCard via resolveExclusionReason(claim), consuming claims[].exclusionReason where present (added as OPTIONAL type field; producer FIX-PREDCLAIM-BACKFILL-NULL-CREATIONPRICE deliverable (c) NOT YET SHIPPED -- live-probed curl :3000/api/prediction-claims?outcome=excluded 2026-07-25T13:15Z confirms zero rows carry it today), GENERIC_EXCLUSION_REASON fallback otherwise -- never assumed present on every row. (d) formatDispositionBreakdown always renders total=correct+wrong+pending+excluded near the badge. (e) all new VN text plain-language, no jargon, no decimals introduced. hitRate=null still renders \"Chua co\" (untouched formatHitRate contract, dashboard.prediction-claims.tsx:27) -- never \"0%\". NO frontend recomputation of hitRate anywhere -- every new helper only echoes/composes calibration fields already supplied by the server. Evidence: tsc --noEmit clean. Targeted suite: 92/92 pass (task17-prediction-claims-loader.test.ts, +25 new tests Suites 16-21 incl. mutated-fixture excluded=11/hitRate=null coverage + regression guard for the excluded-resolvedAt trap). Full vitest: 2150 pass/2 fail (94/96 files) -- the 2 fails are pre-existing QUE_DESCRIPTIONS/Kinh Dich tooltip codegen schema mismatches, unrelated, confirmed identical on clean HEAD via git-stash A/B. Playwright G12: 4/4 pass -- ran with PLAYWRIGHT_PORT=3011 (fresh npm run dev), NOT the default :3001, because :3001 is the LIVE DOCKER CONTAINER (built image predates this commit) and reuseExistingServer would have false-greened against stale code (documented gotcha, notebook dev-frontend.md). ALSO live-verified the actual rendered SSR HTML on a throwaway PORT=3012 npm run dev talking to the REAL unmodified mcp-server on :3000 (not a fixture, not a host-file read): denominator \"4 dung / 2 sai tren 6 du bao da cham diem\", breakdown \"17 tong = 4 dung + 2 sai + 5 dang cho + 6 loai tru\", staleness \"Chua co du bao nao duoc cham diem moi tu 21/6/2026 (33 ngay truoc)\" -- matches root_cause's 2026-06-21 freeze exactly, non-hardcoded (STALE_THRESHOLD_DAYS=14 is the only constant, a duration not a date). PENDING-REBUILD: the LIVE served frontend page at :3001 (Docker) still serves the pre-this-commit image -- ops rebuild required before the fix is visible to the real user-facing dashboard; not performed here (infra/Docker is not dev-frontend's zone). Files: apps/frontend/app/routes/dashboard.prediction-claims.tsx, apps/frontend/app/__tests__/task17-prediction-claims-loader.test.ts, docs/architecture/microservice/frontend/api-reference.md (new section, route wasn't documented there before). Commits: 509188b48 (code+tests+docs), 5f81c1e51 (notebook+journal). Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-frontend.md STEP dev-frontend-S1/S2."
       }
     ],
     "qa": [],
@@ -15567,37 +15599,7 @@
     },
     "last_triaged_at": "2026-07-25T13:14:43Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-PREDCLAIM-DASHBOARD-HITRATE-HONESTY",
-        "title": "'Du bao AI & Ket qua' advertises a 66,7% hit-rate with no denominator and no exclusion reason — the figure is computed on 6 of 17 claims, all from Apr-May, frozen since 2026-06-21, and reads as live",
-        "status": "IN_PROGRESS",
-        "type": "FIX",
-        "priority": "P1",
-        "size": "S",
-        "zone": "apps/frontend/",
-        "owner": "dev-frontend",
-        "next_agent": "dev-frontend",
-        "created_at": "2026-07-25T07:14:46Z",
-        "created_by": "po/triage-20260725T0711-user-demand-predclaims",
-        "root_cause": "Live calibration block read from the served endpoint 2026-07-25T07:11:04Z: total=17, resolved=6, correct=4, wrong=2, pending=5, excluded=6, hitRate=0.6666666666666666, avgBrier=0.2135. The page renders 66,7% as the AI's accuracy. That number is 4/(4+2) over SIX claims — 35% of the population — while 6 are unscoreable and 5 unresolved. Worse than the small denominator: the six scored claims are ids 2,3,4,5,6,7, ALL created 2026-04-27 or 2026-05-03 and ALL resolved by 2026-06-21T16:35Z. Because every claim minted since 2026-06-14 has creation_price NULL, no new claim can ever enter the numerator or denominator — the badge is STRUCTURALLY FROZEN at 66,7% and has been for over a month, yet it carries no staleness marker and no denominator. A user reading the page cannot distinguish 'the AI is running at 66,7%' from 'the AI has not been scored in five weeks'. This is the passive-health-masks-dead-data pattern (feedback_passive_health_masks_dead_data.md): the green number is the reason nobody noticed the 6-week outage. PO POSITION: the user was right to distrust it. The badge as rendered overstates the track record, and the exclusion bucket that would have revealed the problem is a bare unexplained label.",
-        "deliverable": "(a) Never render a bare hit-rate. Show the denominator inline — e.g. '66,7% (4 dung / 2 sai tren 6 du bao da cham diem)' — so the 6-of-17 basis is visible without interaction. (b) Render a STALENESS marker driven by data, not prose: surface the resolved_at of the most recently SCORED claim (live: 2026-06-21) and warn when it exceeds a threshold, e.g. 'Chua co du bao nao duoc cham diem tu 21/06/2026'. Derive the date from the payload — do not hardcode it. (c) Explain 'Loai tru' at the point of use. A tooltip or inline note stating these claims had no entry price at creation so direction could not be evaluated, and that they are excluded from the accuracy figure. Consume the machine-readable reason produced by FIX-PREDCLAIM-BACKFILL-NULL-CREATIONPRICE where present; fall back to the generic explanation where absent. (d) Show the full disposition breakdown (17 total = 4 dung + 2 sai + 5 dang cho + 6 loai tru) near the badge so the buckets always visibly sum to the total. (e) Vietnamese output must follow feedback_market_report_plain_vietnamese.md — plain language, decimal comma, no untranslated jargon.",
-        "acceptance": "Against the LIVE endpoint the page renders the denominator, the last-scored date, and the exclusion explanation without any hardcoded number or date — confirmed by mutating the fixture (e.g. excluded=11, hitRate=null) and observing the UI track it. hitRate=null still renders 'Chua co' and NEVER '0%' per the existing contract in dashboard.prediction-claims.tsx:27. No frontend-side recomputation of hitRate — the serve layer stays the single source for the figure; the page only adds context around it.",
-        "related": [
-          "FIX-PREDCLAIM-CREATIONPRICE-UNGATE-ZOD-CONTRACT",
-          "FIX-PREDCLAIM-BACKFILL-NULL-CREATIONPRICE",
-          "FEAT-PREDCLAIM-UPDATED-AT",
-          "FIX-PRED-CLAIMS-EXCLUDED-SERVE-DISPLAY"
-        ],
-        "note": "Deliberately INDEPENDENT of the two mcp-server rows — this is the user-visible trust surface and it can ship immediately without waiting on the producer fix or the backfill. Even after both land, the denominator and staleness affordances remain correct and necessary. Predecessor FIX-PRED-CLAIMS-EXCLUDED-SERVE-DISPLAY (commit baff449ae) made the 'Loai tru' label appear; this row makes it MEAN something to the reader.",
-        "updated_at": "2026-07-25T13:14:43Z",
-        "promoted_at": "2026-07-25T13:14:43Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-25T13:14:43Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
