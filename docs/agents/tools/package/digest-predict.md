@@ -55,7 +55,7 @@ Invoke via gateway: call_tool(server="vn-market", tool="<name>", arguments={...}
 | `get_kinhdich_reading` | Hexagram reading for specific stock | `code: string` (NOT `ticker`) |
 | `get_market_hexagram` | Market-wide hexagram (VN-Index + macro) | — |
 | `run_hexagram_backtest` | Accuracy test of trading signals vs prices | `strategy: string, date_range: string` |
-| `get_transition_probabilities` | Markov transitions (hex → next hex) | `ticker?: string` |
+| `get_transition_probabilities` | Markov transitions (hex → next hex) | `hexagram_number: number` (req, NOT `ticker`) |
 | `compare_backtest_runs` | Compare 2+ backtests side-by-side | `run_ids: string[]` |
 
 ### Prediction & Calibration
@@ -87,7 +87,7 @@ Invoke via gateway: call_tool(server="vn-market", tool="<name>", arguments={...}
 |------|---------|-----------|
 | `get_watchlist` | Current watchlist tickers and metadata | — |
 | `get_user_positions_for_analysis` | Positions formatted for financial analysis | — |
-| `get_insider_signals` | Insider trading activity and positions | — |
+| `get_insider_signals` | Insider trading activity and positions | `code: string` (req) |
 
 ### Memory & Session
 | Tool | Purpose | Key Params |

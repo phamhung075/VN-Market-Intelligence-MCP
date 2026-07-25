@@ -5,14 +5,14 @@
 **Parameters:**
 | Name | Type | Description |
 |------|------|-------------|
-| — | — | No parameters |
+| `hexagram_number` | number (req) | I-Ching hexagram number (1-64), e.g. 15 for Khiêm. NOT `ticker` — passing a ticker string fails validation ("Expected number, received nan"). |
 
 **Returns:** Transition matrix with current state
 
 **Example:**
 ```javascript
 call_tool(server="vn-market", tool="get_transition_probabilities", arguments={
-  
+  hexagram_number: 15
 })
 ```
 
