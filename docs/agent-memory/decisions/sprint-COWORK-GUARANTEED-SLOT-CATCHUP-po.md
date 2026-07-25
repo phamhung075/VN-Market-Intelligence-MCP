@@ -95,3 +95,14 @@
 - Bind AC to check FE-PG-QUALITY-AUDIT-FRESH — REJECTED: that check is INFO-by-design (compute-on-read data_asof), rendering last_verified cannot flip it; a bound AC would be unfalsifiable.
 **why-decision:** Prior-art scan over all 8 board lanes + archive found ZERO rows on quality-audit render/last_verified; the two nearest checks (FE-PG-QUALITY-AUDIT-FRESH INFO, -CONTENT-REGEN-CORR WARN) both DESCRIBE the masking but neither owns a fix. Self-contained AC bound to observable page state instead.
 **why-change:** Router brief said 3 timestamp formats; RAW jq says 4 (microsecond `2026-06-10T09:18:46.945489Z` on FR-FRESH-02). Widened AC(c) to four shapes so the renderer is not built against an incomplete format set.
+
+### STEP po-S10 · po · 2026-07-25T08:57:46Z
+**task-id:** FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE
+**what-done:** Minted ONE backlog row (P1/S, zone cross-service/, next_agent developer) widening the Tier-1 A-30 memory check from its hardcoded single `mcp-server` subject to every capped container.
+**what-considered:**
+- Fold into FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE — REJECTED: that row is DONE and shipped threshold/sampling/dedup tuning only; `auditor-tier1-probe.sh:209` still hardcodes one container, so the scope gap is outside what it delivered.
+- Fold into RAG-FTS-BUILD-MEMORY-BOUND / FU-RAG-DEPLOY-MEMORY — REJECTED: those fix rag-service's memory; this fixes the detector's blindness to any container's memory. Different surface, different zone, different agent.
+- Solve the FP tension with per-container threshold overrides — REJECTED: a static list that lags reality, the exact failure mode already open as FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX; a 99% rag override would also swallow a real rag OOM approach.
+- Solve it with the ACK LEDGER (chosen) — the mechanism is already LIVE in this same script (b9484fa7a, `docs/data/auditor-launchd-ack.json`) and carries both needed guarantees: mixed case never suppresses, and entries expire on DONE_VERIFIED.
+**why-decision:** Flat WARN_PCT=85 across all capped containers is only safe because rag-service's legitimately-high 98.46% set-point can be acked against an OPEN row rather than threshold-excused — suppression that points at a tracked fix is self-expiring and auditable, a threshold constant is permanent blindness.
+**why-change:** Kept an absolute-headroom secondary predicate OUT of scope (11.9MiB free on 768m is thin, and % is not comparable across a 512m and 3g cap) — adding a second predicate in the same change would confound the FP evidence for the first.
