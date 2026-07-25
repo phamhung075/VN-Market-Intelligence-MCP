@@ -387,12 +387,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-FB-GATE-CHECKC-NEGATION-LEXICON",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-FB-GATE-CHECKC-NEGATION-LEXICON — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-25T04:45:37Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "updated_at": "2026-07-25T05:00:04Z",
+    "updated_by": "developer"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -15056,6 +15055,27 @@
         "next_agent": "qa",
         "rebuild_required": true,
         "branch": null
+      },
+      {
+        "id": "FIX-FB-GATE-CHECKC-NEGATION-LEXICON",
+        "title": "fb-gate Check-C: negation-blind to Vietnamese 'chưa' false-blocks orderly-pullback posts + \\d->[0-9] BSD-grep portability",
+        "type": "FIX",
+        "status": "REVIEW",
+        "priority": "P2",
+        "zone": "cross-service/",
+        "size": "S",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-FB-GATE-CHECKC-NEGATION-LEXICON",
+        "promoted_at": "2026-07-25T04:45:37Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-25T05:00:05Z",
+        "claimed_at": "2026-07-25T04:45:37Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "updated_by": "developer",
+        "next_agent": "qa",
+        "rebuild_required": false,
+        "branch": null,
+        "review_note": "developer: FIX(1) Check-C SELLOFF_AFFIRM_LINES negation-strip (line 617) was missing Vietnamese \"chua\" (not yet/not) -- an explicitly-negated panic statement (\"luc ban chua hoang loan\", \"chua phai ban thao\") survived the strip, was miscounted AFFIRMATIVE, and FALSE-BLOCKED a correct orderly-pullback post on a mild day (lesson L4, 2026-06-25, happened twice). Added generic `chua( phai| tung)?` alternation -- not a 2-phrase literal. FIX(2) line 636 `chi \\d ma san` -> `chi [0-9] ma san` (BSD-grep portability) -- audited all 25 `\\d` occurrences in the script: this was the sole real bash grep -ciE context, the other 24 confirmed inside python3 heredoc `re` raw strings (untouched, correct as-is). New scripts/test-fb-gate-checkc-negation.sh regression harness (3 assertions). RED->GREEN proven via pathspec-limited `git stash push/pop -- scripts/fb-data-integrity-gate.sh`: pre-fix false-blocked the negated fixture (4/6 pass); fixed script passes 6/6. No-regression contrast fixture confirms genuine affirmative panic language still BLOCKs. FIX(2)'s BSD-grep-\\d-literal bug did not reproduce on this sandbox's /usr/bin/grep (accepts \\d as extension) -- documented transparently, [0-9] applied regardless as the only universally-portable form. bash -n clean both files; shellcheck -S style before/after diff on the gate script = empty (0 new warnings). Live sanity: gate run against real docs/social/fb-post-2026-07-24.md with the live MCP server -> 0 violations, no crash. Commits 31e39793a (fix) + ab38d4689 (journal+notebook), pushed origin/main."
       }
     ],
     "qa": [],
@@ -15077,24 +15097,7 @@
     },
     "last_triaged_at": "2026-07-25T04:45:37Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-FB-GATE-CHECKC-NEGATION-LEXICON",
-        "title": "fb-gate Check-C: negation-blind to Vietnamese 'chưa' false-blocks orderly-pullback posts + \\d->[0-9] BSD-grep portability",
-        "type": "FIX",
-        "status": "IN_PROGRESS",
-        "priority": "P2",
-        "zone": "cross-service/",
-        "size": "S",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-FB-GATE-CHECKC-NEGATION-LEXICON",
-        "promoted_at": "2026-07-25T04:45:37Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-25T04:45:38Z",
-        "claimed_at": "2026-07-25T04:45:37Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
