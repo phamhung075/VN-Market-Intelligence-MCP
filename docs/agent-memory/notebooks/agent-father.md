@@ -1,5 +1,28 @@
 # Agent Father — Notebook
 
+### Edit (qa) 06:55 — 2026-07-25 qa-flow-quality-audit-checklist-freshness (router-dispatched)
+- Task: "QA adds+verifies quality-audit checklist items, driven by architect doc + freshness
+  demand, mints dev-team task for gaps" existed only as an ephemeral router spawn prompt (zero
+  grep hits in `docs/agents/qa/flow/main.md`) — made it durable.
+- Created `docs/agents/qa/flow/quality-audit.md` (66L, new sub-flow): source-union (quality-audit
+  framework brief + `docs/data/frontend-data-coverage-map.json` live freshness-SLA SSOT +
+  freshness briefs + docs/policies/ re-glob) → diff vs `docs/data/quality-checklist.json`
+  (74-cap live SSOT, traced full serve chain to confirm it's the one declaration point) → 6 hard
+  verification rules (live-runtime-only, badge≠evidence, empty≠pass, two-layer freshness, real
+  `date -u`, no fabrication) → gap escalation (prior-art grep → git-log-since → mint
+  `.task_board.backlog[]` via `orch-apply.sh`, `next_agent` resolved via zone-detect/system-map,
+  never guessed).
+- `docs/agents/qa/flow/main.md`: added ONE dispatch-table row (`→ Run sub-flow:
+  ./quality-audit.md`, per jump-to SKILL.md's cross-file invariant, not an in-file `JUMP TO`);
+  corrected stale `size-justification` header (claimed 227L, was actually 274L pre-edit, now
+  275L) — did not add any procedure inline, stayed under the "don't inflate main.md" constraint.
+- `.claude/agents/qa.md` frontmatter checked (`Read,Edit,Write,Glob,Grep,Bash`) — sufficient for
+  the new sub-flow (no MCP call needed, backlog mint goes through `jq|orch-apply.sh`); no gap,
+  left untouched.
+- Journal: `docs/agent-memory/decisions/sprint-qa-flow-quality-audit-checklist-freshness-
+  agent-father.md` (2 STEP entries). Did not touch frontend routes or `orch-state.json` (peer qa
+  instance's zone, per router instruction) and did not invent/arm a cron.
+
 ### Edit (system-auditor) 04:52 — 2026-07-23 FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE (fix-forward, QA CHANGES_REQUESTED)
 - QA (independent gate-keeper) confirmed the A-30 gate design matches the brief 1:1, but found
   ONE blocking defect: `probe.sh:86` `BASELINE_PCT=$(docker stats ...)` had no `||` fallback —
