@@ -10091,6 +10091,102 @@
       "qa_verified_at": "2026-07-23T05:50:02Z",
       "qa_commit": "48e6bf250",
       "updated_by": "qa"
+    },
+    {
+      "closed_at": "2026-06-05T11:16:27Z",
+      "created_at": "unknown",
+      "id": "BCTC-CURRENT-404-INVESTIGATE",
+      "note": "ops BCTC-HIST-FETCH-VERIFY found 10/10 current-season 404s; prior 8 done so endpoint was reachable; investigate whether VPS cache went thin",
+      "owner": "ops",
+      "priority": "high",
+      "size": "S",
+      "status": "DONE",
+      "status_note": "RESOLVED-BY-SSL-FIX",
+      "title": "Current-season Q1-2026 bctcPdfPull 10/10 HTTP 404 at 18:30Z — verify VPS cache coverage for current season (may be thin/stale, distinct from SSL -k issue)",
+      "type": "SPIKE",
+      "zone": "infra-vps"
+    },
+    {
+      "closed_at": "2026-06-05T11:26:02.711809+00:00",
+      "created_at": "unknown",
+      "files": [
+        "apps/macro-indicators/pkg/interface/http/handlers_calendar.go"
+      ],
+      "id": "FDA-4",
+      "note": "handlers_calendar.go:25 GET /macro-calendar (mounted live in router.go:42) returns two hardcoded macro-event rows (US Core PCE / VN Industrial Output) with a frozen fetchedAt='2026-05-23T18:52:00Z' and NO is_estimate/source_tier. Header comment self-labels 'Per OQ-10: fixture only' but the RESPONSE does not — a consumer cannot distinguish it from live. Mitigated: zero TS/MCP callers consume /macro-calendar today, but the endpoint is publicly mounted and self-presents as real. FIX: return 501/empty with status:'unavailable' until a real source is wired, OR stamp is_estimate=true+source_tier=4 on the response. Verified raw 2026-06-05. | DONE+LIVE 2026-06-05T11:25Z. macro-indicators /macro-calendar stopped serving 2 hardcoded events (US Core PCE / VN Industrial Output) w/ frozen fetchedAt=2026-05-23T18:52Z + no provenance. Now returns honest {events:[],status:unavailable,is_estimate:true,source_tier:4}; fetchedAt OMITTED (no now()-stamp on empty -> avoids DSI fixture-as-live anti-pattern). Live consumer mcp-server get_macro_calendar (carryTools.ts pass-through) envelope shape preserved. commit 181bdc60 (handlers_calendar.go + router_test.go w/ NEGATIVE GUARD asserting the 2 events + frozen ts never reappear). go build + 12 pkgs green. ops rebuilt macro-indicators image 11:24:03Z (--no-deps, only that container recreated; other 6 services untouched, 0 die events). ROUTER RAW-VERIFIED LIVE: my own curl :5004/macro-calendar + MCP get_macro_calendar both honest-unavailable, fabrication negative-guard clean. Highest-harm FAKE-DATA-AUDIT item cleared.",
+      "owner": "unknown",
+      "priority": "P3",
+      "size": "S",
+      "sprint": "FAKE-DATA-AUDIT",
+      "status": "DONE",
+      "status_note": "DONE-LIVE-VERIFIED",
+      "title": "/macro-calendar returns 2 hardcoded events + frozen fetchedAt with no provenance flag (no live consumer yet)",
+      "type": "FIX",
+      "zone": "apps/macro-indicators"
+    },
+    {
+      "closed_at": "2026-06-05T11:26:02.711809+00:00",
+      "created_at": "unknown",
+      "files": [
+        "apps/kinh-dich-service/pkg/application/usecases.go"
+      ],
+      "id": "FDA-8",
+      "note": "usecases.go:22 ReadingUseCase.Execute() returns a fully fabricated reading (Hexagram=1, Name='Stub', Confidence=0.5, Signal='GIU', ActionNote='Stub implementation') with no estimate flag. NOT a live serve path today: router.go wires NO route to this use case (every real /reading,/market,/backtest returns HTTP 501). Latent risk: the moment a task wires Execute() to a route it serves a fabricated reading as real. FIX: delete the stub or return an explicit not-implemented error; when wired, route through reading_composer.ComposeReading() (the real deterministic path), never the literal struct. | DONE 2026-06-05T11:20Z (code-fixed, no rebuild — zero live delta). kinh-dich ReadingUseCase.Execute() fabricated stub (Hexagram=1/Name=Stub/Confidence=0.5/Signal=GIU/ActionNote=Stub) replaced w/ fail-loud `return nil, ErrNotImplemented` so any future route-wiring fails LOUD instead of silently serving a fake reading. commit 5cc96f75 (usecases.go ONLY). NOT a live serve path: every kinh-dich route returns 501, Execute() unwired (grep confirmed no live caller outside _deprecated/+tests) -> ZERO live-behavior change -> NO rebuild needed; the deployed image's old stub is unwired/harmless and syncs on the next kinh-dich rebuild for any reason. go build + tests green. Router raw-verified commit (only usecases.go, stub fabrication gone, fail-loud present, no .env). Latent fixture-as-live landmine removed.",
+      "owner": "unknown",
+      "priority": "P3",
+      "size": "S",
+      "sprint": "FAKE-DATA-AUDIT",
+      "status": "DONE",
+      "title": "kinh-dich ReadingUseCase.Execute() returns a fabricated stub reading — unwired today, latent landmine",
+      "type": "CLEAN",
+      "zone": "apps/kinh-dich-service"
+    },
+    {
+      "closed_at": "2026-06-05T13:32:02.992410+00:00",
+      "created_at": "unknown",
+      "files": [
+        "docs/data/pressure-state.json"
+      ],
+      "id": "FU-PRESSURE-EMIT-DARK",
+      "note": "3 consecutive cowork-team heartbeats (2026-06-05 04:21/05:03/05:18Z) report 'pressure-state STALE ~2d -> legacy-mode fallback, cadence bypassed, cron governs' and 'pressure-emit dark >2d -> system-auditor candidate if not self-healed'. pressure-state.json last tick_id=2026-06-03T00:00:00Z (updated_at 2026-06-03T00:04:30Z). FAIL-SAFE: cowork still fires on legacy fixed cron (no outage), but the adaptive-cadence governor (project_dynamic_workflow_cadence Phase 1, SHIPPED 2026-05-31) is inert — suppression/downgrade logic never runs. Find the emitter that writes pressure-state.json (cadence-policy.json consumer / a cron or the cowork dispatcher) and restore the periodic write, OR if Phase-1 emit was never wired to a live cron, that is the root gap. ROUTE: PO to confirm owner (cowork-plane vs dev cron) — may be agent-father/cowork lane, not apps/ code. Detected by dev-team tick 2026-06-05T06:13Z from drained heartbeats. | DONE 2026-06-05T13:30Z (repo-fixed; live-verify pending next cowork WON tick). FU-PRESSURE-EMIT-DARK root cause (PO-verified, my recon corrected): the cowork adaptive-cadence emitter went dark ~2.5d (pressure-state.json frozen 06-03T00:04:30Z w/ a non-conformant 6-key updated_at schema, no emitted_at -> reader cadence-policy.js isStale=true -> legacy fallback, FAIL-SAFE no outage). No persistent rogue 'writer #2' (agent-father exhaustive grep across flows/scripts/apps/history = none); corruption was a ONE-OFF 06-03 partial write when the OLD 802L main.md's mixed ```bash block aborted on invalid `call_tool(...)` pseudo-bash mid-heredoc. DEFINITIF FIX = lift the is_trading_day gateway call OUT of the ```bash fence into an agent-interpreted pre-step so the emit block is pure bash that cannot abort (commit 545aae11, pressure-emit.md, 88L at-cap; corrupt on-disk file purged). Reader untouched (correct). Routed via PO -> agent-father (maintenance lane, mutex-wrapped). Class-wide sweep confirms 0 call_tool trapped in any cowork ```bash fence post-fix.",
+      "owner": "unknown",
+      "priority": "P3",
+      "size": "S",
+      "sprint": "FLEET-HOST-SAFETY",
+      "status": "DONE",
+      "status_note": "SUPERSEDED",
+      "title": "pressure-state.json emitter dark ~2.25 days (tick_id 2026-06-03T00:00Z, stale at 2026-06-05T06:09Z) — whole cowork fleet fell back to legacy fixed-cron cadence",
+      "type": "FIX",
+      "zone": "cross-service/"
+    },
+    {
+      "closed_at": "2026-06-05T13:32:02.992410+00:00",
+      "created_at": "unknown",
+      "id": "FU-TICK-SNAPSHOT-EMIT-DARK",
+      "note": "DONE 2026-06-05T13:30Z (repo-fixed; live-verify pending next cowork WON tick). SIBLING of FU-PRESSURE-EMIT-DARK, discovered by dispatcher regression-sweep this tick (DSI 'enumerate every sibling path' lesson). tick-snapshot.md Step 4.7 (writes cycle-snapshot-latest.json, which pressure-emit READS for last_regime/last_volatility) had the IDENTICAL bug: 2 call_tool(get_cycle_bootstrap, get_macro_snapshot) embedded in a mixed ```bash fence. CONFIRMED LIVE: cycle-snapshot-latest.json frozen 06-03T00:04:00Z (same minute as pressure-state) -> dark ~2.5d -> explains pressure-emit's last_regime=unknown. FIX = identical lift to an agent-interpreted pre-step, pure-bash assembly preserved (trap/jq --rawfile --slurpfile/.tmp+mv), stale snapshot purged (commit 29d7e944, tick-snapshot.md 59L). Var-name PRE-suffix is cosmetic (pre-step + bash block compute identical stage path strings; minute-rollover edge handled by existing fail-safe). Class fully eradicated.",
+      "owner": "unknown",
+      "priority": "P3",
+      "size": "S",
+      "sprint": "FLEET-HOST-SAFETY",
+      "status": "DONE",
+      "status_note": "SUPERSEDED",
+      "title": "cowork tick-snapshot.md Step 4.7 dark ~2.5d — call_tool embedded in ```bash fence aborts emit (sibling of FU-PRESSURE-EMIT-DARK); cycle-snapshot-latest.json frozen 06-03",
+      "type": "FIX",
+      "zone": "docs/agents/cowork-team/flow/"
+    },
+    {
+      "closed_at": "2026-06-05T14:50:59.399172+00:00",
+      "created_at": "unknown",
+      "id": "FU-LOCKSTORE-EXPIRED-GC",
+      "note": "[PO PROMOTE P3->P2 2026-06-05T14:09Z] task_list_held raw-verified = 117 locks, only ~3 genuinely live (~114 dead TTL-expired tombstones, oldest 2026-05-22). These tombstones are the ROOT of the system-auditor D4 alert class: 20 D4 'held lock X has no task_board row' reports drained this tick alone (ids 3028-3047), recurring every audit cycle. expired:false consumer fix (aa00a1e2) is in but STORAGE GC missing => coordination.db keeps growing + auditor keeps flagging. EXECUTE: add expired-tombstone GC to coordination.db task tools (DELETE WHERE expires_at < now - grace, on each task_claim and/or periodic sweep). Low-risk: expired rows are by definition free to reclaim. DoD (verify-raw): after deploy, task_list_held count drops to ~live-only (single digits); next system-auditor D4 run emits 0 tombstone divergences. Single zone apps/mcp-server. NOTE: FU-AUDITOR-D4-SIGNAL-ID (P3, separate) hardens the auditor's id-dedup but this GC removes the underlying volume at root. | DONE+LIVE-VERIFIED 2026-06-05T14:55Z. coordination.db accumulated TTL-expired tombstone locks never reclaimed -> task_list_held returned 117 rows (~3 genuinely live, ~114 dead, oldest 2026-05-22) -> system-auditor D4 audit flagged ~18-20 'held lock X has no task_board row' divergences EVERY cycle (the 18 reports drained this tick, ids 3028-3045). The consumer-side mask (expired:false, aa00a1e2) was symptom-only. DEFINITIF FIX (commit b600c3ba, dev-mcp-server): gcExpiredLocks(db,grace=300,excludeTaskId) in coordinationStore.ts, wired into claimTask -> DELETE FROM task_locks WHERE expires_at < unixepoch('now')-300 AND task_id!=<claimed> on every task_claim (excludeTaskId preserves Step-2 stale-steal for the row being claimed). 10 unit tests green, 49 coordination tests no-regression. ops rebuilt mcp-server 14:4xZ (image 80de1c86060b, healthy toolCount 161, 4 volumes preserved, 0 die-events, 6 services untouched). ROUTER RAW-VERIFIED LIVE: fresh post-rebuild task_claim fired the GC -> task_list_held count 117->4 (4 survivors all future-expires_at: 2 dispatcher locks + bctc-ctg-attachment-fetch-escalation + esc-datacov:FPT). D4 tombstone-divergence class killed at root; next system-auditor D4 -> 0 tombstone divergences. No always-on timer added (16GB host safe).",
+      "owner": "unknown",
+      "priority": "P2",
+      "size": "S",
+      "sprint": "FLEET-HOST-SAFETY",
+      "status": "DONE",
+      "title": "Lock store (coordination.db) accumulates TTL-expired tombstone locks — task_list_held default returned 114 rows of which only 3 genuinely held (~111 dead). Defence-in-depth for the D4 false-positive fix (aa00a1e2 added expired:false at the consumer): purge/GC expired rows from coordination.db on a cadence (e.g. on each task_claim, DELETE WHERE expires_at < now-grace, or a periodic sweep), so task_list_held storage stays bounded and no consumer can ever read tombstones-as-held. Code: apps/mcp-server coordination.db task tools. Low risk (expired rows are by definition free to reclaim).",
+      "type": "FIX",
+      "zone": "apps/mcp-server"
     }
   ],
   "closed_sprints": [
