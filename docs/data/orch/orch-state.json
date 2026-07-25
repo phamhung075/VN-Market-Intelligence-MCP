@@ -420,10 +420,10 @@
   ],
   "head": {
     "status": "idle",
-    "updated_at": "2026-07-25T17:21:37Z",
-    "updated_by": "developer",
     "active_task_id": null,
-    "next_agent": null
+    "next_agent": "router",
+    "updated_at": "2026-07-25T17:22:34Z",
+    "updated_by": "developer"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
