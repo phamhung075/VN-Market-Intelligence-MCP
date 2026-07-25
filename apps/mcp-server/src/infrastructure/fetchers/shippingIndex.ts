@@ -157,14 +157,29 @@ async function fetchSymbolData(
 
     const value = meta.regularMarketPrice;
     const previousClose = meta.previousClose ?? meta.chartPreviousClose ?? value;
-    const timestamp = (meta.regularMarketTime as number) ?? Date.now() / 1000;
+    const regularMarketTime = meta.regularMarketTime;
 
     if (typeof value !== "number" || Number.isNaN(value)) return null;
+
+    // FIX-BDI-SHIPPING-STALE-404-GUARD: this used to fall back to
+    // `Date.now() / 1000` when the source omitted a timestamp — FABRICATING
+    // freshness for a quote whose actual age we cannot verify. That masks a
+    // dead/degraded source (e.g. a delisted-ticker CDN cache with no time
+    // field) as a live "now" value. If the API doesn't tell us when this
+    // quote is from, treat it as no data rather than assume "now" — the
+    // caller (fetchShippingIndices) already skips symbols that resolve to
+    // null, so this degrades honestly instead of masking staleness.
+    if (typeof regularMarketTime !== "number") {
+      logger.warn("[shippingIndex] missing regularMarketTime — treating as no data", {
+        symbol,
+      });
+      return null;
+    }
 
     return {
       value,
       previousClose: typeof previousClose === "number" ? previousClose : value,
-      timestamp,
+      timestamp: regularMarketTime,
     };
   } catch (err) {
     logger.warn("[shippingIndex] HTTP request failed", {

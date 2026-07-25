@@ -20,6 +20,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { logger } from "../../../../infrastructure/logger.js";
 import { getDb } from "../../../../infrastructure/db/schema.js";
+import { listTrackedIndicatorsFromDb } from "../../../../infrastructure/db/commodityTracker.js";
 import {
   analyzeSupplyChainImpact,
   type SupplyChainSignal,
@@ -110,6 +111,15 @@ export function buildSupplyChainExposureOutput(
     lines.push("TỔNG KẾT: Có tín hiệu QUAN TRỌNG — theo dõi chặt chẽ HPG/GMD/VNM");
   } else if (signals.length > 0) {
     lines.push("TỔNG KẾT: Phát hiện tín hiệu nhẹ — theo dõi thêm");
+  } else if (indices.length === 0) {
+    // FIX-BDI-SHIPPING-STALE-404-GUARD: no fresh shipping index survived the
+    // staleness gate (all stale/absent — e.g. ^BDI permanently 404 since
+    // 2026-04). A stale/absent shipping index must NOT be read as evidence
+    // of a stable supply chain — that would be exactly the "ổn định" fake
+    // conclusion this guard exists to prevent.
+    lines.push(
+      "TỔNG KẾT: Không đủ dữ liệu vận tải biển hiện thời để kết luận (chỉ số gần nhất đã cũ hoặc chưa có dữ liệu)",
+    );
   } else {
     lines.push("TỔNG KẾT: Chuỗi cung ứng ổn định — không có tín hiệu bất thường");
   }
@@ -121,12 +131,6 @@ export function buildSupplyChainExposureOutput(
 // Data access helpers
 // ---------------------------------------------------------------------------
 
-interface TrackedIndicatorRow {
-  indicator: string;
-  value: number;
-  extracted_at: string;
-}
-
 interface WatchlistRow {
   action_code: string;
   domain: string;
@@ -135,35 +139,27 @@ interface WatchlistRow {
 
 /**
  * Reads the latest shipping index values from tracked_indicators table.
+ *
+ * FIX-BDI-SHIPPING-STALE-404-GUARD: reuses the shared
+ * listTrackedIndicatorsFromDb() staleness helper (DSI-MACRO-PHANTOM-STALE-GUARD
+ * precedent — TRACKED_INDICATOR_STALE_MS, epoch-ms compare, not a
+ * datetime('now') SQL string-compare) instead of a raw "latest row per
+ * indicator" query with no freshness check. A shipping indicator whose
+ * latest row is stale (e.g. shipping_bdi — ^BDI Yahoo has been permanently
+ * HTTP 404 since 2026-04) is EXCLUDED here so it is never served as a
+ * current value under a "current" header at a frozen "+0.0%".
  */
-function readShippingIndicesFromDb(db: ReturnType<typeof getDb>): ShippingIndex[] {
+export function readShippingIndicesFromDb(db: ReturnType<typeof getDb>): ShippingIndex[] {
   try {
-    const rows = db
-      .query<TrackedIndicatorRow, []>(
-        `SELECT indicator, value, extracted_at
-         FROM tracked_indicators
-         WHERE indicator LIKE 'shipping_%'
-         AND extracted_at = (
-           SELECT MAX(t2.extracted_at) FROM tracked_indicators t2
-           WHERE t2.indicator = tracked_indicators.indicator
-         )
-         GROUP BY indicator
-         ORDER BY extracted_at DESC`,
-      )
-      .all();
-
-    return rows.map((r) => {
-      const name = r.indicator
-        .replace("shipping_", "")
-        .toUpperCase();
-      return {
-        name,
-        value: r.value,
+    return listTrackedIndicatorsFromDb(db)
+      .filter((row) => row.indicator.startsWith("shipping_") && !row.isStale)
+      .map((row) => ({
+        name: row.indicator.replace("shipping_", "").toUpperCase(),
+        value: row.value,
         change: 0, // historical change not stored
         changePct: 0,
-        date: r.extracted_at.slice(0, 10),
-      };
-    });
+        date: row.lastSeen.slice(0, 10),
+      }));
   } catch {
     return [];
   }
