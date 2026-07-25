@@ -1,7 +1,7 @@
 {
   "_schema": "v1",
   "_ssot": true,
-  "_updated_at": "2026-07-24T17:27:43.491Z",
+  "_updated_at": "2026-07-25T07:00:49.418Z",
   "_updated_by": "po",
   "generated_at": "2026-06-10T09:23:04Z",
   "framework": "ISO-25010 + market-intel dims",
@@ -4381,21 +4381,21 @@
           "severity": "CRITICAL",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: renders CHEF synthesis dishes (text, from_agent badge, ts via ClientTimestamp); loader wired to /api/market-digest.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
           "check_id": "FE-PG-_INDEX-FRESH",
           "dimension": "Data Freshness/SLA",
           "question": "Does the market-overview front page flag staleness with a page-level freshness/SLA indicator?",
-          "metric": "presence of page-level staleness/SLA badge (not only per-item ClientTimestamp)",
-          "expected": "page-level 'data as of' / stale indicator visible",
+          "metric": "real age (min) of the live recency field vs sla_tiers[\"daily\"].max_staleness_min from docs/data/frontend-data-coverage-map.json",
+          "expected": "age ≤ 0.5×thr → PASS; ≤thr → WARN; >thr → FAIL (off-hours realtime/intraday capped at WARN per BA-FFT EC-3)",
           "recheck_how": "GET http://localhost:3001/dashboard/ → assert page-level freshness indicator",
           "status": "WARN",
           "severity": "WARN",
           "zone_owner": "dev-frontend",
-          "evidence": "GAP: only per-dish ClientTimestamp present; no <FreshnessBadge> / page-level staleness SLA on the primary market overview. Age visible per item but not flagged when stale.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "evidence": "LIVE-PROBED 2026-07-25T07:00:40.559Z: GET http://localhost:3000/api/market-digest → data_asof=\"2026-07-24 15:32:09\"; age=15.5h; SLA tier=\"daily\" thr=1560min (0.5×thr=780.0min); verdict=WARN.",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -4409,7 +4409,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc + render: from_agent badge + per-item ts provide provenance for each synthesized dish.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -4423,7 +4423,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: 'items[] may be empty — renders a friendly empty state, never an error. Upstream 5xx → error banner, never throws.'",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -4437,7 +4437,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "Runtime-only: synthesized prose plausibility requires live cross-check against source snapshot; not statically verifiable.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         }
       ]
@@ -4463,21 +4463,21 @@
           "severity": "CRITICAL",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc contract (VERIFIED live 2026-06-11): items[].metrics[] with plan_ty/actual_ty/completion_pct/status + year picker.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
           "check_id": "FE-PG-AGM-PLAN-ACTUAL-FRESH",
           "dimension": "Data Freshness/SLA",
           "question": "Does the AGM page surface data recency for an annual-cadence dataset?",
-          "metric": "generatedAt + availableYears shown; staleness sensitivity low (annual plan)",
-          "expected": "generatedAt + year picker present (annual cadence — no intraday staleness SLA needed)",
+          "metric": "real age (min) of the live recency field vs sla_tiers[\"daily\"].max_staleness_min from docs/data/frontend-data-coverage-map.json",
+          "expected": "age ≤ 0.5×thr → PASS; ≤thr → WARN; >thr → FAIL (off-hours realtime/intraday capped at WARN per BA-FFT EC-3)",
           "recheck_how": "GET http://localhost:3001/dashboard/agm-plan-actual → assert generatedAt + availableYears",
-          "status": "INFO",
+          "status": "PASS",
           "severity": "WARN",
           "zone_owner": "dev-frontend",
-          "evidence": "By-design: AGM plan-vs-actual is an annual dataset; generatedAt + availableYears[] provide recency; no intraday staleness SLA applies.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "evidence": "LIVE-PROBED 2026-07-25T07:00:40.559Z: GET http://localhost:3000/api/agm-plan-actual → generatedAt=\"2026-07-25T07:00:40.654Z\"; age=-0.0min; SLA tier=\"daily\" thr=1560min (0.5×thr=780.0min); verdict=PASS.",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -4491,7 +4491,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: response carries generatedAt, defaultYear, availableYears[] — surfaced in header/picker.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -4505,7 +4505,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc CRITICAL: IN_PROGRESS means reporting year still open; actual_ty/completion_pct WILL BE NULL; render '—'/'Đang thực hiện', never 0/red.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -4519,7 +4519,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc documents status enum + null-handling contract; page honors the documented IN_PROGRESS null invariant.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         }
       ]
@@ -4545,21 +4545,21 @@
           "severity": "CRITICAL",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: summary header + severity filter + newest-first table (severity badge, v2 signal chips with confidence%, tickers+impact, outcome).",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
           "check_id": "FE-PG-ALERTS-FRESH",
           "dimension": "Data Freshness/SLA",
           "question": "Is alert data freshness surfaced?",
-          "metric": "<FreshnessBadge> present + triggeredAt time-ago per row",
-          "expected": "freshness badge + per-alert time-ago visible",
+          "metric": "real age (min) of the live recency field vs sla_tiers[\"realtime\"].max_staleness_min from docs/data/frontend-data-coverage-map.json",
+          "expected": "age ≤ 0.5×thr → PASS; ≤thr → WARN; >thr → FAIL (off-hours realtime/intraday capped at WARN per BA-FFT EC-3)",
           "recheck_how": "GET http://localhost:3001/dashboard/alerts → assert FreshnessBadge",
-          "status": "PASS",
+          "status": "WARN",
           "severity": "WARN",
           "zone_owner": "dev-frontend",
-          "evidence": "Verified: route imports <FreshnessBadge>; per-row triggeredAt rendered as time-ago.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "evidence": "LIVE-PROBED 2026-07-25T07:00:40.559Z: GET http://localhost:3000/api/alerts → data_asof=\"2026-07-24T17:24:25.552Z\"; age=13.6h; SLA tier=\"realtime\" thr=15min (0.5×thr=7.5min); verdict=WARN. off-hours (BA-FFT EC-3): số liệu phiên gần nhất — SLA breach suppressed outside VN market hours 02:00-08:59 UTC Mon-Fri",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -4573,7 +4573,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: items carry sentBy + triggeredAt (ISO8601); surfaced in the table.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -4587,7 +4587,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: 'Honest empty state only on degrade (502/503/timeout or items==[]).'",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -4601,7 +4601,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: Signal shape is v2 object {type,severity,message,confidence}; chips show type label + confidence%, message in tooltip.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         }
       ]
@@ -4627,7 +4627,7 @@
           "severity": "CRITICAL",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: sections = stock selector (30 tickers by sector), watchlist overview grid, Kinh Dịch signal, macro signals, stock table, detail panel; ?stock=CODE loads KD reading + 90d OHLCV.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -4640,8 +4640,8 @@
           "status": "PASS",
           "severity": "WARN",
           "zone_owner": "dev-frontend",
-          "evidence": "Verified: route imports <FreshnessBadge>; per-zone recency surfaced.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "evidence": "Verified: route imports <FreshnessBadge>; per-zone recency surfaced. NOTE: composite page — see FE-PG-ANALYSIS-TECHNICAL-PRICE-HISTORY-FRESH for a confirmed live gap in the Technical Zone's OHLCV freshness contract (data_asof absent).",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -4655,7 +4655,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "Composed from KD reading + macro signals + OHLCV; each zone renders its own source context (analysis zone components).",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -4669,7 +4669,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: loader uses single Promise.allSettled data-fetch orchestration — per-zone settle isolates failures.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -4683,7 +4683,21 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "Runtime-only: multi-source composite plausibility needs live cross-check; not statically verifiable.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
+          "signal_id": null
+        },
+        {
+          "check_id": "FE-PG-ANALYSIS-TECHNICAL-PRICE-HISTORY-FRESH",
+          "dimension": "Data Freshness/SLA",
+          "question": "Does /api/price-history/:ticker (Technical Zone OHLCV, feeds the analysis page's per-stock chart) carry the canonical top-level data_asof field required by the L2 freshness contract?",
+          "metric": "presence of top-level data_asof (ISO 8601 UTC) on GET /api/price-history/:ticker",
+          "expected": "top-level data_asof present; age computed vs sla_tiers[\"intraday\"] (coverage-map row \"technical\")",
+          "recheck_how": "GET http://localhost:3000/api/price-history/<ticker> → assert data_asof present",
+          "status": "FAIL",
+          "severity": "WARN",
+          "zone_owner": "dev-frontend",
+          "evidence": "LIVE-PROBED 2026-07-25T07:00:40.559Z (3 tickers): FPT: keys=[ticker,generated_at,data_source,stale_served,count,latest,candles] count=65 generated_at=2026-07-25T07:00:49.374Z stale_served=false | VNM: keys=[ticker,generated_at,data_source,stale_served,count,latest,candles] count=65 generated_at=2026-07-25T07:00:49.374Z stale_served=false | HPG: keys=[ticker,generated_at,data_source,stale_served,count,latest,candles] count=65 generated_at=2026-07-25T07:00:49.374Z stale_served=false. GENUINE GAP: canonical data_asof ABSENT on all probed tickers — handler emits generated_at (compute/request time, always ≈0 age) + stale_served instead of MAX(updated_at) FROM daily_ohlcv. Per docs/data/frontend-data-coverage-map.json row \"technical\" (_l2_fix: MAX(updated_at) FROM daily_ohlcv WHERE code=?), this is one of the 5 TASK-FFT-L2 handler targets and the ONLY one still unfixed — marketDigest/alerts/qualityChecklist/vpsProxyHealth all confirmed live with data_asof on this same probe run. Real OHLCV recency cannot currently be verified; a badge fed by generated_at would always read green. Dev fix tracked separately; this check reflects true live state until it lands.",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         }
       ]
@@ -4709,7 +4723,7 @@
           "severity": "CRITICAL",
           "zone_owner": "dev-frontend",
           "evidence": "Runtime-unverified + upstream suspect: the SHARED base endpoint /api/bctc-eval returns HTTP 404 (path '/api/bctc-eval/') per the 2026-07-24 live probe, so /api/bctc-eval/{reportId} may also 404; cannot confirm PASS without a valid reportId + a working upstream. Re-check with a real reportId once FE-PG-BCTC-EVAL-_INDEX-FUNC-FIX resolves the upstream route.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -4719,11 +4733,11 @@
           "metric": "is_stale:true → 'Recompute' button shown; POST revalidates",
           "expected": "stale eval flagged + recompute available",
           "recheck_how": "GET http://localhost:3001/dashboard/bctc-eval/<id> → assert Recompute button when stale",
-          "status": "PASS",
+          "status": "NEEDS_REVIEW",
           "severity": "WARN",
           "zone_owner": "dev-frontend",
-          "evidence": "JSDoc: 'Recompute button shown when is_stale: true — POSTs then revalidates.'",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "evidence": "LIVE-PROBED 2026-07-25T07:00:40.559Z: GET http://localhost:3000/api/bctc-eval/1d94c902-a6b6-460b-a995-0f9cdb42e445 → keys=[schema_version,report_id,ticker,period,overall_status,has_pek,stages,detector_version,is_stale] — no top-level recency field (documented coverage-map field \"updated_at\" absent; no fallback field present either). Per-stage nested computed_at exists but is not surfaced as a page-level asof — same class of L2-contract gap as price-history/technical, not yet flagged by the BA-FFT sprint. Cannot verify SLA compliance.",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -4737,7 +4751,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: schema version check — if schema_version !== '1' render mismatch error Card.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -4751,7 +4765,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: 404 → throw Response (error boundary); 409 → render 'Eval not yet computed' Card.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -4765,7 +4779,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: detail view renders server-computed scorecard; schema_version gate guards shape integrity.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         }
       ]
@@ -4791,21 +4805,21 @@
           "severity": "CRITICAL",
           "zone_owner": "dev-frontend",
           "evidence": "LIVE 2026-07-24: GET /dashboard/bctc-eval returns HTTP 500 (root error boundary 'Something went wrong'). Root cause: loader fetches /api/bctc-eval which returns HTTP 404 ({\"error\":\"Not found\",\"path\":\"/api/bctc-eval/\"}) and THROWS instead of rendering a recoverable Card — the eval list never renders. Broken page (false-green in prior static-only pass).",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
           "check_id": "FE-PG-BCTC-EVAL-_INDEX-FRESH",
           "dimension": "Data Freshness/SLA",
           "question": "Is per-row staleness flagged with a recompute affordance?",
-          "metric": "Stale column + Recompute per row",
-          "expected": "stale rows flagged + recompute available",
+          "metric": "real age (min) of the live recency field vs sla_tiers[\"daily\"].max_staleness_min from docs/data/frontend-data-coverage-map.json",
+          "expected": "age ≤ 0.5×thr → PASS; ≤thr → WARN; >thr → FAIL (off-hours realtime/intraday capped at WARN per BA-FFT EC-3)",
           "recheck_how": "GET http://localhost:3001/dashboard/bctc-eval → assert Stale column + Recompute (after FUNC-FIX)",
           "status": "NEEDS_REVIEW",
           "severity": "WARN",
           "zone_owner": "dev-frontend",
-          "evidence": "Unverifiable: page returns HTTP 500 (upstream /api/bctc-eval 404) before rendering; re-check after FE-PG-BCTC-EVAL-_INDEX-FUNC-FIX restores 200.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "evidence": "LIVE-PROBED 2026-07-25T07:00:40.559Z: GET http://localhost:3000/api/bctc-eval → generated_at=\"2026-07-25T07:00:40.699Z\" [FALLBACK FIELD — not the coverage-map-documented name for this row]; age=-0.0min; SLA tier=\"daily\" thr=1560min (0.5×thr=780.0min); verdict=NEEDS_REVIEW. field \"generated_at\"=\"2026-07-25T07:00:40.699Z\" observed live (age=-0.0min) but is NOT the coverage-map-documented recency field for this row — reported for transparency, not graded as a certified SLA verdict",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -4819,7 +4833,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "Unverifiable: page returns HTTP 500 before rendering; re-check after FE-PG-BCTC-EVAL-_INDEX-FUNC-FIX.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -4833,7 +4847,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "CONTRADICTED by live probe: JSDoc claims 'show Card with API error, do NOT throw' but the loader THROWS on the upstream 404 → root error boundary (HTTP 500). Same root cause as FE-PG-BCTC-EVAL-_INDEX-FUNC-FIX (loader must catch the 404 and render a Card); re-check after that fix.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -4847,7 +4861,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "Unverifiable: page returns HTTP 500 before rendering; re-check after FE-PG-BCTC-EVAL-_INDEX-FUNC-FIX.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         }
       ]
@@ -4873,7 +4887,7 @@
           "severity": "CRITICAL",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: resource route returns RAW Response (no JSX); upstream GET /api/bctc-inspect serves self-contained viewer; splat routes (api.bctc-inspect.$.tsx / api.bctc-eval.$.tsx) proxy transparently.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -4887,7 +4901,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "By-design: viewer HTML owns its full DOM (BASE='' resolves fetches against :3001); Remix dashboard chrome intentionally bypassed, so page-level freshness/source badges do not apply.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -4901,7 +4915,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "Resource-route proxy pattern (mirrors api.orchestration read-path); upstream error propagates as a proxied response, not an unhandled crash.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         }
       ]
@@ -4927,21 +4941,21 @@
           "severity": "CRITICAL",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: renders /api/analysis-briefs items[] (ticker, exchange, latest_period, verdict_label/summary, confidence, updated_at) with client-side ticker search + HOSE/HNX/UPCOM chips.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
           "check_id": "FE-PG-BCTC-FRESH",
           "dimension": "Data Freshness/SLA",
           "question": "Does the report hub flag stale reports (per-item updated_at is shown but staleness not flagged)?",
-          "metric": "presence of staleness flag on report list (not only raw updated_at)",
-          "expected": "stale reports visually flagged on the hub",
+          "metric": "real age (min) of the live recency field vs sla_tiers[\"event\"].max_staleness_min from docs/data/frontend-data-coverage-map.json",
+          "expected": "age ≤ 0.5×thr → PASS; ≤thr → WARN; >thr → FAIL (off-hours realtime/intraday capped at WARN per BA-FFT EC-3)",
           "recheck_how": "GET http://localhost:3001/dashboard/bctc → assert staleness flag on report list",
-          "status": "WARN",
+          "status": "PASS",
           "severity": "WARN",
           "zone_owner": "dev-frontend",
-          "evidence": "GAP: items carry updated_at + generated_at (recency visible) but no <FreshnessBadge> / stale flag on the hub — old reports are not visually flagged as stale.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "evidence": "LIVE-PROBED 2026-07-25T07:00:40.559Z: GET http://localhost:3000/api/analysis-briefs → generated_at=\"2026-07-25T07:00:40.666Z\"; age=-0.0min; SLA tier=\"event\" thr=1560min (0.5×thr=780.0min); verdict=PASS.",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -4955,7 +4969,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: response carries generated_at + per-item updated_at + exchange; surfaced on cards.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -4969,7 +4983,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: 'Loader error / non-2xx / network → friendly degraded banner... count:0 → friendly empty state. Never fabricate items.'",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -4983,7 +4997,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: 'Never fabricate items'; verdict_label/verdict_summary/confidence are nullable and rendered from payload only.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         }
       ]
@@ -5009,21 +5023,21 @@
           "severity": "CRITICAL",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc (VERIFIED live 2026-06-11): snapshot[] one-per-symbol + series{} sparklines + summary (bullish/bearish/neutral/unknown, topBullish/topBearish).",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
           "check_id": "FE-PG-CONVICTION-HISTORY-FRESH",
           "dimension": "Data Freshness/SLA",
           "question": "Are stale (non-tradingDate) rows partitioned from fresh ones?",
-          "metric": "row.date===tradingDate → FRESH; else STALE collapsed section; <FreshnessBadge> present",
-          "expected": "fresh vs stale partitioned + freshness badge",
+          "metric": "real age (min) of the live recency field vs sla_tiers[\"intraday\"].max_staleness_min from docs/data/frontend-data-coverage-map.json",
+          "expected": "age ≤ 0.5×thr → PASS; ≤thr → WARN; >thr → FAIL (off-hours realtime/intraday capped at WARN per BA-FFT EC-3)",
           "recheck_how": "GET http://localhost:3001/dashboard/conviction-history → assert fresh/stale partition",
           "status": "PASS",
           "severity": "WARN",
           "zone_owner": "dev-frontend",
-          "evidence": "JSDoc CRITICAL: snapshot mixes FRESH (row.date===tradingDate) + STALE; page partitions — stale rows only in a collapsed section; route imports <FreshnessBadge>.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "evidence": "LIVE-PROBED 2026-07-25T07:00:40.559Z: GET http://localhost:3000/api/conviction-history → generatedAt=\"2026-07-25T07:00:40.699Z\"; age=-0.0min; SLA tier=\"intraday\" thr=60min (0.5×thr=30.0min); verdict=PASS.",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -5037,7 +5051,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: tradingDate = global MAX(date); surfaced as the snapshot reference date.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -5051,7 +5065,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: tradingDate '' when empty; error+empty markers present in route.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -5065,7 +5079,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: signal ∈ bullish|bearish|neutral|unknown — 'unknown' is shown honestly, not hidden.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         }
       ]
@@ -5091,21 +5105,21 @@
           "severity": "CRITICAL",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc (VERIFIED live 2026-06-11): events[] (dividend/issuance/insider/meeting/other) sorted eventDate DESC + byType[] + summary + window picker.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
           "check_id": "FE-PG-CORPORATE-EVENTS-FRESH",
           "dimension": "Data Freshness/SLA",
           "question": "Is the as-of date of the most-recent event surfaced?",
-          "metric": "asOf (most-recent event date) + <FreshnessBadge> present",
-          "expected": "asOf + freshness indicator visible",
+          "metric": "real age (min) of the live recency field vs sla_tiers[\"weekly\"].max_staleness_min from docs/data/frontend-data-coverage-map.json",
+          "expected": "age ≤ 0.5×thr → PASS; ≤thr → WARN; >thr → FAIL (off-hours realtime/intraday capped at WARN per BA-FFT EC-3)",
           "recheck_how": "GET http://localhost:3001/dashboard/corporate-events → assert asOf",
-          "status": "PASS",
+          "status": "FAIL",
           "severity": "WARN",
           "zone_owner": "dev-frontend",
-          "evidence": "JSDoc: asOf = most-recent event date in window; route imports <FreshnessBadge>.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "evidence": "LIVE-PROBED 2026-07-25T07:00:40.559Z: GET http://localhost:3000/api/corporate-events → asOf=\"2026-07-15\"; age=10.3d; SLA tier=\"weekly\" thr=11520min (0.5×thr=5760.0min); verdict=FAIL.",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -5119,7 +5133,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: since + asOf + windowDays (clamped [7,365]) surfaced; days= window links present.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -5133,7 +5147,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: asOf '' when empty; error+empty markers present in route.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -5147,7 +5161,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc HONEST FRAMING (load-bearing): source table has 0 future rows; framed as 'hoạt động gần đây'/'đã công bố', NEVER a calendar/upcoming.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         }
       ]
@@ -5173,21 +5187,21 @@
           "severity": "CRITICAL",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: shows VNINDEX price history (GET /stock/price/history?code=VNINDEX) + Reuters headlines (GET /news/reuters/headlines).",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
           "check_id": "FE-PG-DB-FRESH",
           "dimension": "Data Freshness/SLA",
           "question": "Is data freshness surfaced for the DB report?",
-          "metric": "<FreshnessBadge> + ClientTimestamp per headline",
-          "expected": "freshness badge + per-headline timestamps",
+          "metric": "real age (min) of the live recency field vs sla_tiers[\"intraday\"].max_staleness_min from docs/data/frontend-data-coverage-map.json",
+          "expected": "age ≤ 0.5×thr → PASS; ≤thr → WARN; >thr → FAIL (off-hours realtime/intraday capped at WARN per BA-FFT EC-3)",
           "recheck_how": "GET http://localhost:3001/dashboard/db → assert FreshnessBadge",
-          "status": "PASS",
+          "status": "NEEDS_REVIEW",
           "severity": "WARN",
           "zone_owner": "dev-frontend",
-          "evidence": "Verified: route imports <FreshnessBadge> + <ClientTimestamp>; headline timestamps rendered.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "evidence": "LIVE-PROBED 2026-07-25T07:00:40.559Z: GET http://localhost:4000/news/reuters/headlines → fetchedAt=\"2026-07-25T07:00:40.997Z\" [FALLBACK FIELD — not the coverage-map-documented name for this row]; age=-0.0min; SLA tier=\"intraday\" thr=60min (0.5×thr=30.0min); verdict=NEEDS_REVIEW. field \"fetchedAt\"=\"2026-07-25T07:00:40.997Z\" observed live (age=-0.0min) but is NOT the coverage-map-documented recency field for this row — reported for transparency, not graded as a certified SLA verdict | other probe(s): http://localhost:4000/stock/price/history?code=VNINDEX&days=5 → no recognized recency field; keys=[code,history]",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -5201,7 +5215,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "Verified render: headlines render href={h.url} (clickable source-link) + {h.source} label — genuine source attribution.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -5215,7 +5229,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "Verified render: buildSourceError → '<source>: data temporarily unavailable' fallback; no fabrication.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -5229,7 +5243,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "Runtime-only: numeric price plausibility needs live cross-check against the actual VNINDEX level; not statically verifiable.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         }
       ]
@@ -5255,21 +5269,21 @@
           "severity": "CRITICAL",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc (VERIFIED live 2026-06-09): effr, iorb, spread, trend30d, sampleCount, series[] ascending.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
           "check_id": "FE-PG-FED-RATES-FRESH",
           "dimension": "Data Freshness/SLA",
           "question": "Is the as-of date of the latest rate surfaced?",
-          "metric": "asOf + generatedAt + <FreshnessBadge>",
-          "expected": "asOf + freshness indicator visible",
+          "metric": "real age (min) of the live recency field vs sla_tiers[\"daily\"].max_staleness_min from docs/data/frontend-data-coverage-map.json",
+          "expected": "age ≤ 0.5×thr → PASS; ≤thr → WARN; >thr → FAIL (off-hours realtime/intraday capped at WARN per BA-FFT EC-3)",
           "recheck_how": "GET http://localhost:3001/dashboard/fed-rates → assert asOf",
-          "status": "PASS",
+          "status": "FAIL",
           "severity": "WARN",
           "zone_owner": "dev-frontend",
-          "evidence": "JSDoc: asOf + generatedAt fields; route imports <FreshnessBadge>.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "evidence": "LIVE-PROBED 2026-07-25T07:00:40.559Z: GET http://localhost:3000/api/fed-rates → asOf=\"2026-07-22\"; age=3.3d; SLA tier=\"daily\" thr=1560min (0.5×thr=780.0min); verdict=FAIL.",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -5283,7 +5297,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: generatedAt (ISO) + asOf surfaced in header.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -5297,7 +5311,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: 'Empty-state: sampleCount === 0, series = []. Page renders honest empty-state.'",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -5311,7 +5325,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: spread 'may carry float noise; ROUND for display'; formatSpread/mapTrend30d named helpers unit-tested.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         }
       ]
@@ -5337,21 +5351,21 @@
           "severity": "CRITICAL",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc (Sprint FETCH-OPS-PAGE-TRUTH F-3): per-source freshness (13 VN sources) + VPS proxy health + BCTC pipeline + macro snapshot; source names from API.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
           "check_id": "FE-PG-FETCH-FRESH",
           "dimension": "Data Freshness/SLA",
           "question": "Is per-source freshness the core rendered content?",
-          "metric": "<FreshnessBadge> per source + loading state",
-          "expected": "per-source freshness badges present",
+          "metric": "real age (min) of the live recency field vs sla_tiers[\"realtime\"].max_staleness_min from docs/data/frontend-data-coverage-map.json",
+          "expected": "age ≤ 0.5×thr → PASS; ≤thr → WARN; >thr → FAIL (off-hours realtime/intraday capped at WARN per BA-FFT EC-3)",
           "recheck_how": "GET http://localhost:3001/dashboard/fetch → assert per-source FreshnessBadge",
-          "status": "PASS",
+          "status": "NEEDS_REVIEW",
           "severity": "WARN",
           "zone_owner": "dev-frontend",
-          "evidence": "Verified: route imports <FreshnessBadge> (per-source) + ClientTimestamp + loading state; freshness is the page's core content.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "evidence": "LIVE-PROBED 2026-07-25T07:00:40.559Z: GET http://localhost:3000/api/fetch-status → fetchedAt=\"2026-07-25T07:00:40.724Z\" [FALLBACK FIELD — not the coverage-map-documented name for this row]; age=-0.0min; SLA tier=\"realtime\" thr=15min (0.5×thr=7.5min); verdict=NEEDS_REVIEW. field \"fetchedAt\"=\"2026-07-25T07:00:40.724Z\" observed live (age=-0.0min) but is NOT the coverage-map-documented recency field for this row — reported for transparency, not graded as a certified SLA verdict",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -5365,7 +5379,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: 'All source names come from the API response.' — anti-hardcode provenance.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -5379,7 +5393,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "Sprint FETCH-OPS-PAGE-TRUTH (F-3) — truthful per-source freshness; error+empty markers present in route.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -5393,7 +5407,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "Sprint name FETCH-OPS-PAGE-TRUTH encodes the truthfulness invariant; status mapped from real freshness fields.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         }
       ]
@@ -5419,21 +5433,21 @@
           "severity": "CRITICAL",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc (VERIFIED live 2026-04-15): count 78 rows (one per code, latest period) + summary {medianPe,medianPb,medianRoe} + rankings.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
           "check_id": "FE-PG-FINANCIALS-FRESH",
           "dimension": "Data Freshness/SLA",
           "question": "Is the as-of date surfaced for the screener?",
-          "metric": "asOf + generatedAt + <FreshnessBadge>",
-          "expected": "asOf + freshness indicator visible",
+          "metric": "real age (min) of the live recency field vs sla_tiers[\"weekly\"].max_staleness_min from docs/data/frontend-data-coverage-map.json",
+          "expected": "age ≤ 0.5×thr → PASS; ≤thr → WARN; >thr → FAIL (off-hours realtime/intraday capped at WARN per BA-FFT EC-3)",
           "recheck_how": "GET http://localhost:3001/dashboard/financials → assert asOf",
           "status": "PASS",
           "severity": "WARN",
           "zone_owner": "dev-frontend",
-          "evidence": "JSDoc: generatedAt + asOf; route imports <FreshnessBadge>.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "evidence": "LIVE-PROBED 2026-07-25T07:00:40.559Z: GET http://localhost:3000/api/financials → asOf=\"2026-07-25 02:30:45\"; age=4.5h; SLA tier=\"weekly\" thr=11520min (0.5×thr=5760.0min); verdict=PASS.",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -5447,7 +5461,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: generatedAt (ISO) + asOf (ISO) surfaced.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -5461,7 +5475,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "Verified: error+empty markers present; safeFetch degrade path.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -5475,7 +5489,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc CRITICAL: nim/npl NULL for all 78 rows → OMITTED entirely; eps can legitimately be 0 → render '0', only null → '—'; no ?code selector.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         }
       ]
@@ -5501,21 +5515,21 @@
           "severity": "CRITICAL",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc (VERIFIED live 2026-06-11): headline net buy/sell banner + topBuys/topSells cards + per-code items[] (direction BUY/SELL/FLAT, signed foreignVolume).",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
           "check_id": "FE-PG-FOREIGN-FLOW-FRESH",
           "dimension": "Data Freshness/SLA",
           "question": "Is the trading date surfaced with a freshness indicator?",
-          "metric": "tradingDate + <FreshnessBadge> + per-row fetchedAt",
-          "expected": "tradingDate + freshness visible",
+          "metric": "real age (min) of the live recency field vs sla_tiers[\"realtime\"].max_staleness_min from docs/data/frontend-data-coverage-map.json",
+          "expected": "age ≤ 0.5×thr → PASS; ≤thr → WARN; >thr → FAIL (off-hours realtime/intraday capped at WARN per BA-FFT EC-3)",
           "recheck_how": "GET http://localhost:3001/dashboard/foreign-flow → assert tradingDate + FreshnessBadge",
-          "status": "PASS",
+          "status": "NEEDS_REVIEW",
           "severity": "WARN",
           "zone_owner": "dev-frontend",
-          "evidence": "JSDoc: tradingDate + per-item fetchedAt; route imports <FreshnessBadge>.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "evidence": "LIVE-PROBED 2026-07-25T07:00:40.559Z: GET http://localhost:3000/api/foreign-flow → fetchedAt=\"2026-07-25T07:00:40.860Z\" [FALLBACK FIELD — not the coverage-map-documented name for this row]; age=-0.0min; SLA tier=\"realtime\" thr=15min (0.5×thr=7.5min); verdict=NEEDS_REVIEW. field \"fetchedAt\"=\"2026-07-25T07:00:40.860Z\" observed live (age=-0.0min) but is NOT the coverage-map-documented recency field for this row — reported for transparency, not graded as a certified SLA verdict",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -5529,7 +5543,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: tradingDate + top-level fetchedAt + per-item fetchedAt surfaced.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -5543,7 +5557,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc CRITICAL null-tolerance: currentHoldingRatio/maxHoldingRatio/marketCapBn NULL on today's rows → render '—', NEVER 0, NEVER crash; stale_fields[] documented.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -5557,7 +5571,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: direction ∈ BUY|SELL|FLAT; foreignVolume is a signed integer (net shares) — direction+delta consistency.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         }
       ]
@@ -5583,21 +5597,21 @@
           "severity": "CRITICAL",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc (VERIFIED live 2026-06-11): 12 indicators grouped commodities/equities/fx_rates, 24h+7d deltas+directions, riskTone/vixBand summary, per-indicator sparklines.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
           "check_id": "FE-PG-GLOBAL-MARKETS-FRESH",
           "dimension": "Data Freshness/SLA",
           "question": "Is current/generated time surfaced with a freshness indicator?",
-          "metric": "currentAt + generatedAt + <FreshnessBadge>",
-          "expected": "current/generated time + freshness visible",
+          "metric": "real age (min) of the live recency field vs sla_tiers[\"daily\"].max_staleness_min from docs/data/frontend-data-coverage-map.json",
+          "expected": "age ≤ 0.5×thr → PASS; ≤thr → WARN; >thr → FAIL (off-hours realtime/intraday capped at WARN per BA-FFT EC-3)",
           "recheck_how": "GET http://localhost:3001/dashboard/global-markets → assert currentAt + FreshnessBadge",
           "status": "PASS",
           "severity": "WARN",
           "zone_owner": "dev-frontend",
-          "evidence": "JSDoc: generatedAt + currentAt (ISO); route imports <FreshnessBadge>.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "evidence": "LIVE-PROBED 2026-07-25T07:00:40.559Z: GET http://localhost:3000/api/global-markets → generatedAt=\"2026-07-25T07:00:40.970Z\"; age=-0.0min; SLA tier=\"daily\" thr=1560min (0.5×thr=780.0min); verdict=PASS.",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -5611,7 +5625,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "Verified render: source field parsed (line 338/364) and rendered as a source label for the indicator set.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -5625,7 +5639,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: prev24h/prev7d + deltas are number|null; direction ∈ up/down/flat — null-tolerant; error+empty markers present.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -5639,7 +5653,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: direction24h/direction7d derived from delta sign; topMovers ranked by deltaPct24h — direction+delta consistency.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         }
       ]
@@ -5665,21 +5679,21 @@
           "severity": "CRITICAL",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: 6 live gauge scalars from 5 P0 tools (rv_20d_percentile, news_sentiment_z, breadth_z_score, foreign_outflow_z, omo_net_outstanding, policy_refi_rate).",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
           "check_id": "FE-PG-INDICATOR-GAUGES-FRESH",
           "dimension": "Data Freshness/SLA",
           "question": "Does each gauge show its own freshness at the daily SLA tier?",
-          "metric": "per-section <FreshnessBadge> on section asof/fetched_at; daily SLA",
-          "expected": "per-gauge freshness at daily tier",
+          "metric": "real age (min) of the live recency field vs sla_tiers[\"daily\"].max_staleness_min from docs/data/frontend-data-coverage-map.json",
+          "expected": "age ≤ 0.5×thr → PASS; ≤thr → WARN; >thr → FAIL (off-hours realtime/intraday capped at WARN per BA-FFT EC-3)",
           "recheck_how": "GET http://localhost:3001/dashboard/indicator-gauges → assert per-section FreshnessBadge",
-          "status": "PASS",
+          "status": "NEEDS_REVIEW",
           "severity": "WARN",
           "zone_owner": "dev-frontend",
-          "evidence": "JSDoc Freshness: SLA tier 'daily' for all 5 gauges; FreshnessBadge uses each section's own asof/fetched_at; global generated_at in header.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "evidence": "LIVE-PROBED 2026-07-25T07:00:40.559Z: GET http://localhost:3000/api/indicator-gauges → generated_at=\"2026-07-25T07:00:46.210Z\" [FALLBACK FIELD — not the coverage-map-documented name for this row]; age=-0.1min; SLA tier=\"daily\" thr=1560min (0.5×thr=780.0min); verdict=NEEDS_REVIEW. field \"generated_at\"=\"2026-07-25T07:00:46.210Z\" observed live (age=-0.1min) but is NOT the coverage-map-documented recency field for this row — reported for transparency, not graded as a certified SLA verdict",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -5693,7 +5707,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: global generated_at shown in PageHeader; each gauge traces to a named tool.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -5707,7 +5721,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc Honest-NULL (HARD): all sections/scalars may be null → 'Chưa có dữ liệu' + gray badge; NEVER fabricate or default-fill.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -5721,7 +5735,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc Honest-NULL (HARD): never fabricate or default-fill a null value — correctness = honest null propagation.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         }
       ]
@@ -5747,21 +5761,21 @@
           "severity": "CRITICAL",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: renders /api/market-digest items[] as CHEF dishes (full prose + newlines + emoji, whitespace-pre-wrap); newest at top.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
           "check_id": "FE-PG-INTEL-FRESH",
           "dimension": "Data Freshness/SLA",
           "question": "Does the bulletin hub flag staleness with a page-level freshness indicator?",
-          "metric": "presence of page-level staleness/SLA badge (not only per-item ts)",
-          "expected": "page-level freshness/staleness indicator visible",
+          "metric": "real age (min) of the live recency field vs sla_tiers[\"daily\"].max_staleness_min from docs/data/frontend-data-coverage-map.json",
+          "expected": "age ≤ 0.5×thr → PASS; ≤thr → WARN; >thr → FAIL (off-hours realtime/intraday capped at WARN per BA-FFT EC-3)",
           "recheck_how": "GET http://localhost:3001/dashboard/intel → assert page-level freshness indicator",
           "status": "WARN",
           "severity": "WARN",
           "zone_owner": "dev-frontend",
-          "evidence": "GAP: only per-item ts (ClientTimestamp) present; no <FreshnessBadge> / page-level staleness SLA on the AI bulletin hub — old bulletins not flagged as stale.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "evidence": "LIVE-PROBED 2026-07-25T07:00:40.559Z: GET http://localhost:3000/api/market-digest → data_asof=\"2026-07-24 15:32:09\"; age=15.5h; SLA tier=\"daily\" thr=1560min (0.5×thr=780.0min); verdict=WARN.",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -5775,7 +5789,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: items carry from_agent + ts; surfaced per bulletin.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -5789,7 +5803,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: 'items empty (count 0) → friendly empty state; upstream 5xx / network failure → error banner; unexpected JSON shape → error banner, never throws.'",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -5803,7 +5817,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "Runtime-only: bulletin prose plausibility needs live cross-check; not statically verifiable.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         }
       ]
@@ -5829,7 +5843,7 @@
           "severity": "CRITICAL",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: static import QUE_DETAIL (64 quẻ embedded at build-time); client-side filter by number, romanized name, or Hán; deep-link anchors id='que-{id}'.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -5843,7 +5857,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "By-design: 64 quẻ imported from que-descriptions-detail.generated.ts at build-time; the page IS the canonical reference — no external data source / freshness applies.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -5857,7 +5871,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: filterQues is a pure named helper (unit-tested); no-match returns empty list rendered honestly; 64 items, no debounce needed.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -5871,7 +5885,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: trendBadgeClass keyed on raw marketTrendLabel substring; KD-logic correctness needs domain review vs reference-kinhdich-logic (memory).",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         }
       ]
@@ -5897,21 +5911,21 @@
           "severity": "CRITICAL",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc (VERIFIED live 2026-06-10): snapshot[] (hexagramNumber/Name, action, sentiment, trend, confidence, actionNote) + flips[].",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
           "check_id": "FE-PG-KINH-DICH-SIGNALS-FRESH",
           "dimension": "Data Freshness/SLA",
           "question": "Is the trading date surfaced with a freshness indicator?",
-          "metric": "tradingDate + <FreshnessBadge>",
-          "expected": "tradingDate + freshness visible",
+          "metric": "real age (min) of the live recency field vs sla_tiers[\"intraday\"].max_staleness_min from docs/data/frontend-data-coverage-map.json",
+          "expected": "age ≤ 0.5×thr → PASS; ≤thr → WARN; >thr → FAIL (off-hours realtime/intraday capped at WARN per BA-FFT EC-3)",
           "recheck_how": "GET http://localhost:3001/dashboard/kinh-dich-signals → assert tradingDate + FreshnessBadge",
           "status": "PASS",
           "severity": "WARN",
           "zone_owner": "dev-frontend",
-          "evidence": "JSDoc: tradingDate ('' when empty); route imports <FreshnessBadge>.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "evidence": "LIVE-PROBED 2026-07-25T07:00:40.559Z: GET http://localhost:3000/api/kinh-dich-signals → generatedAt=\"2026-07-25T07:00:43.077Z\"; age=-0.0min; SLA tier=\"intraday\" thr=60min (0.5×thr=30.0min); verdict=PASS.",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -5925,7 +5939,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: source ∈ cycle|manual|all + per-row source + generatedAt — provenance visible.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -5939,7 +5953,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: tradingDate '' when empty; error+empty markers present in route.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -5953,7 +5967,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: confidence number 0..1 OR null; action closed enum incl. UNKNOWN — honest rendering.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         }
       ]
@@ -5979,21 +5993,21 @@
           "severity": "CRITICAL",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: indicators {vnIndex,oilUsd,goldUsd,usdVnd} + signals {investment_clock, oil, gold, usdvnd} + calendar.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
           "check_id": "FE-PG-MACRO-FRESH",
           "dimension": "Data Freshness/SLA",
           "question": "Is data_source freshness (live/stale/unavailable) surfaced with a stale banner?",
-          "metric": "data_source ∈ live|stale|unavailable; stale_served → stale warning banner; <FreshnessBadge>",
-          "expected": "data-source freshness + stale banner visible",
+          "metric": "real age (min) of the live recency field vs sla_tiers[\"daily\"].max_staleness_min from docs/data/frontend-data-coverage-map.json",
+          "expected": "age ≤ 0.5×thr → PASS; ≤thr → WARN; >thr → FAIL (off-hours realtime/intraday capped at WARN per BA-FFT EC-3)",
           "recheck_how": "GET http://localhost:3001/dashboard/macro → assert stale banner when stale_served",
           "status": "PASS",
           "severity": "WARN",
           "zone_owner": "dev-frontend",
-          "evidence": "JSDoc: data_source live|stale|unavailable; stale_served:true → stale warning banner; route imports <FreshnessBadge>.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "evidence": "LIVE-PROBED 2026-07-25T07:00:40.559Z: GET http://localhost:3000/api/macro-regime → generated_at=\"2026-07-25T07:00:43.078Z\"; age=-0.0min; SLA tier=\"daily\" thr=1560min (0.5×thr=780.0min); verdict=PASS.",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -6007,7 +6021,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: generated_at + data_source (live/stale/unavailable) surfaced.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -6021,7 +6035,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: 'data_source:unavailable / null indicators → degraded banner; calendar.available:false → show note, no fabricated events; 5xx → error banner, never throws.'",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -6035,7 +6049,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: signals carry direction + price + reasoning; indicators nullable — honest null handling, no coercion.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         }
       ]
@@ -6061,21 +6075,21 @@
           "severity": "CRITICAL",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: dual-mode SSR loader — LIST (periods {daily..yearly} + archive cards) / DETAIL (?id → full narrative).",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
           "check_id": "FE-PG-MARKET-SUMMARIES-FRESH",
           "dimension": "Data Freshness/SLA",
           "question": "Does the archive surface recency for a historical dataset?",
-          "metric": "generatedAt + per-report createdAt/periodStart/periodEnd shown",
-          "expected": "archive recency visible (historical — no live staleness SLA)",
+          "metric": "real age (min) of the live recency field vs sla_tiers[\"daily\"].max_staleness_min from docs/data/frontend-data-coverage-map.json",
+          "expected": "age ≤ 0.5×thr → PASS; ≤thr → WARN; >thr → FAIL (off-hours realtime/intraday capped at WARN per BA-FFT EC-3)",
           "recheck_how": "GET http://localhost:3001/dashboard/market-summaries → assert generatedAt + period dates",
-          "status": "INFO",
+          "status": "PASS",
           "severity": "WARN",
           "zone_owner": "dev-frontend",
-          "evidence": "By-design: this is a historical ARCHIVE of past summaries; generatedAt + per-report createdAt/period bounds provide recency — no intraday staleness SLA applies.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "evidence": "LIVE-PROBED 2026-07-25T07:00:40.559Z: GET http://localhost:3000/api/market-summaries → generatedAt=\"2026-07-25T07:00:43.078Z\"; age=-0.0min; SLA tier=\"daily\" thr=1560min (0.5×thr=780.0min); verdict=PASS.",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -6089,7 +6103,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: each item carries periodType, periodStart/End, createdAt, source counts (news/alert/report) — provenance visible.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -6103,7 +6117,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: 'verified live 2026-06-11 — STEP 0 anti-demo invariant'; error+empty markers present.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -6117,7 +6131,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "Runtime-only: detail-narrative faithfulness needs live cross-check against the stored summary row; not statically verifiable.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         }
       ]
@@ -6143,21 +6157,21 @@
           "severity": "CRITICAL",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: merged page; Section A momentum (momentum_factor_z, market_rs_composite, net_new_highs, foreign_accum_z_market) + Section B money-radar; shared GaugeCard/FreshnessBadge/InfoCardExpand shell only.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
           "check_id": "FE-PG-MOMENTUM-FRESH",
           "dimension": "Data Freshness/SLA",
           "question": "Does each section surface its own freshness?",
-          "metric": "per-section <FreshnessBadge> (both DTO families)",
-          "expected": "per-section freshness visible",
+          "metric": "real age (min) of the live recency field vs sla_tiers[\"daily\"].max_staleness_min from docs/data/frontend-data-coverage-map.json",
+          "expected": "age ≤ 0.5×thr → PASS; ≤thr → WARN; >thr → FAIL (off-hours realtime/intraday capped at WARN per BA-FFT EC-3)",
           "recheck_how": "GET http://localhost:3001/dashboard/momentum → assert per-section FreshnessBadge",
-          "status": "PASS",
+          "status": "NEEDS_REVIEW",
           "severity": "WARN",
           "zone_owner": "dev-frontend",
-          "evidence": "JSDoc: shared shell includes FreshnessBadge; both sections render their own freshness (do-not-homogenize DTO families).",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "evidence": "LIVE-PROBED 2026-07-25T07:00:40.559Z: GET http://localhost:3000/api/momentum-indicators → generated_at=\"2026-07-25T07:00:46.211Z\" [FALLBACK FIELD — not the coverage-map-documented name for this row]; age=-0.1min; SLA tier=\"daily\" thr=1560min (0.5×thr=780.0min); verdict=NEEDS_REVIEW. field \"generated_at\"=\"2026-07-25T07:00:46.211Z\" observed live (age=-0.1min) but is NOT the coverage-map-documented recency field for this row — reported for transparency, not graded as a certified SLA verdict | other probe(s): http://localhost:3000/api/money-radar → fetch error: This operation was aborted",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -6171,7 +6185,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: Section A scalars map to named tools (get_roc_momentum, get_relative_strength, get_52w_proximity, get_foreign_accum_rank); Section B feeds api.money-radar.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -6185,7 +6199,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc Honest-NULL (HARD): sections/scalars may be null when data accruing/blocked → 'Chưa có dữ liệu' + gray badge; NEVER fabricate.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -6199,7 +6213,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc (HARD per BA spec §5/§10): two textually-distinct DTO/parser/formatter/fetcher families — do-not-homogenize; only presentational shell shared.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         }
       ]
@@ -6225,7 +6239,7 @@
           "severity": "CRITICAL",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: REDIRECT-ONLY (superseded by MERGE-MONEY-RADAR-INTO-MOMENTUM); kept solely so bookmarks/deep-links don't 404 — 302-redirects to /dashboard/momentum (content relocated to Section B).",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         }
       ]
@@ -6251,21 +6265,21 @@
           "severity": "CRITICAL",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc (VERIFIED live 2026-06-11): leaderboard[] (mentions DESC, code ASC, length===distinctCodes) + summary counts.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
           "check_id": "FE-PG-NEWS-BUZZ-FRESH",
           "dimension": "Data Freshness/SLA",
           "question": "Is the mention window surfaced with a freshness indicator?",
-          "metric": "windowStart/windowEnd + <FreshnessBadge>",
-          "expected": "window bounds + freshness visible",
+          "metric": "real age (min) of the live recency field vs sla_tiers[\"event\"].max_staleness_min from docs/data/frontend-data-coverage-map.json",
+          "expected": "age ≤ 0.5×thr → PASS; ≤thr → WARN; >thr → FAIL (off-hours realtime/intraday capped at WARN per BA-FFT EC-3)",
           "recheck_how": "GET http://localhost:3001/dashboard/news-buzz → assert window + FreshnessBadge",
           "status": "PASS",
           "severity": "WARN",
           "zone_owner": "dev-frontend",
-          "evidence": "JSDoc: windowStart/windowEnd (null when empty); route imports <FreshnessBadge>.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "evidence": "LIVE-PROBED 2026-07-25T07:00:40.559Z: GET http://localhost:3000/api/news-buzz → generatedAt=\"2026-07-25T07:00:43.957Z\"; age=-0.1min; SLA tier=\"event\" thr=1560min (0.5×thr=780.0min); verdict=PASS.",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -6279,7 +6293,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: summary.totalSources + generatedAt (ISO) surfaced — aggregate provenance.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -6293,7 +6307,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: 'Empty-state: windowStart/windowEnd null, summary all zeros, leaderboard [].'",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -6307,7 +6321,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: named helpers getNegativityTier + formatNegativeRatioPct (unit-tested); leaderboard length === distinctCodes invariant.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         }
       ]
@@ -6333,21 +6347,21 @@
           "severity": "CRITICAL",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: renders /api/news-sentiment items[] (sentiment, sentiment_score, impact_direction, confidence, affected_tickers/sectors, impact_summary, decision_resume).",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
           "check_id": "FE-PG-NEWS-FRESH",
           "dimension": "Data Freshness/SLA",
           "question": "Is staleness surfaced (stale_served banner + oldest_item_ts)?",
-          "metric": "stale_served → stale warning banner; oldest_item_ts + <FreshnessBadge>",
-          "expected": "stale banner + oldest-item age visible",
+          "metric": "real age (min) of the live recency field vs sla_tiers[\"event\"].max_staleness_min from docs/data/frontend-data-coverage-map.json",
+          "expected": "age ≤ 0.5×thr → PASS; ≤thr → WARN; >thr → FAIL (off-hours realtime/intraday capped at WARN per BA-FFT EC-3)",
           "recheck_how": "GET http://localhost:3001/dashboard/news → assert stale banner when stale_served",
           "status": "PASS",
           "severity": "WARN",
           "zone_owner": "dev-frontend",
-          "evidence": "JSDoc: stale_served=true → stale warning banner; oldest_item_ts + generated_at; route imports <FreshnessBadge>.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "evidence": "LIVE-PROBED 2026-07-25T07:00:40.559Z: GET http://localhost:3000/api/news-sentiment → generated_at=\"2026-07-25T07:00:43.966Z\"; age=-0.1min; SLA tier=\"event\" thr=1560min (0.5×thr=780.0min); verdict=PASS.",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -6361,7 +6375,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "Verified render (lines 202-219): title linked href={item.source}; sourceDomain(item.source) label + source_ts via ClientTimestamp — genuine per-item source-link.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -6375,7 +6389,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: 'items[] may be empty — friendly empty state, never an error. Upstream 5xx/network → error banner, never throws.'",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -6389,7 +6403,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: sentiment + impact_direction + affected_tickers/sectors rendered from items[]; nullable fields handled honestly.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         }
       ]
@@ -6415,21 +6429,21 @@
           "severity": "CRITICAL",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc (VERIFIED live 2026-06-11): officers[] for selectedCode + ranking[] across 32 codes + selectedSummary.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
           "check_id": "FE-PG-OFFICERS-FRESH",
           "dimension": "Data Freshness/SLA",
           "question": "Is the as-of date surfaced with a freshness indicator?",
-          "metric": "asOf + generatedAt + <FreshnessBadge>",
-          "expected": "asOf + freshness visible",
+          "metric": "real age (min) of the live recency field vs sla_tiers[\"daily\"].max_staleness_min from docs/data/frontend-data-coverage-map.json",
+          "expected": "age ≤ 0.5×thr → PASS; ≤thr → WARN; >thr → FAIL (off-hours realtime/intraday capped at WARN per BA-FFT EC-3)",
           "recheck_how": "GET http://localhost:3001/dashboard/officers → assert asOf",
           "status": "PASS",
           "severity": "WARN",
           "zone_owner": "dev-frontend",
-          "evidence": "JSDoc: generatedAt + asOf; route imports <FreshnessBadge>.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "evidence": "LIVE-PROBED 2026-07-25T07:00:40.559Z: GET http://localhost:3000/api/officers?code=BID → asOf=\"2026-07-24T21:00:52Z\"; age=10.0h; SLA tier=\"daily\" thr=1560min (0.5×thr=780.0min); verdict=PASS.",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -6443,7 +6457,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: generatedAt (ISO) + asOf (ISO) surfaced.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -6457,7 +6471,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: appointmentYear null for ~64% of rows → show '—', do NOT invent tenure.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -6471,7 +6485,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc HONEST FRAMING (load-bearing): totalInsiderPct = SUM of DISCLOSED insider ownership only; 0 for state-owned (e.g. BID) — NOT a measure of 'no insiders'.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         }
       ]
@@ -6497,21 +6511,21 @@
           "severity": "CRITICAL",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: sections = head, task board (counts+tasks), signal queue (severity colour), sprint goal, narrative.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
           "check_id": "FE-PG-ORCHESTRATION-FRESH",
           "dimension": "Data Freshness/SLA",
           "question": "Is orch-state staleness flagged (amber badge on last_updated_iso threshold)?",
-          "metric": "last_updated_iso > STALE_THRESHOLD_MS → amber STALE badge; <FreshnessBadge>",
-          "expected": "stale-amber badge when threshold exceeded",
+          "metric": "real age (min) of the live recency field vs sla_tiers[\"event\"].max_staleness_min from docs/data/frontend-data-coverage-map.json",
+          "expected": "age ≤ 0.5×thr → PASS; ≤thr → WARN; >thr → FAIL (off-hours realtime/intraday capped at WARN per BA-FFT EC-3)",
           "recheck_how": "GET http://localhost:3001/dashboard/orchestration → assert stale-amber badge logic",
-          "status": "PASS",
+          "status": "NEEDS_REVIEW",
           "severity": "WARN",
           "zone_owner": "dev-frontend",
-          "evidence": "JSDoc: 'STALE-AMBER BADGE: last_updated_iso > STALE_THRESHOLD_MS → amber indicator'; route imports <FreshnessBadge>.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "evidence": "LIVE-PROBED 2026-07-25T07:00:40.559Z: GET http://localhost:3000/api/orchestration → last_updated_iso=\"2026-07-25T05:18:13Z\" [FALLBACK FIELD — not the coverage-map-documented name for this row]; age=1.7h; SLA tier=\"event\" thr=1560min (0.5×thr=780.0min); verdict=NEEDS_REVIEW. field \"last_updated_iso\"=\"2026-07-25T05:18:13Z\" observed live (age=1.7h) but is NOT the coverage-map-documented recency field for this row — reported for transparency, not graded as a certified SLA verdict",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -6525,7 +6539,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc DTO: last_updated_iso + head.updated_by/updated_at surfaced.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -6539,7 +6553,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "Verified: error+empty+loading markers present; mirrors api.orchestration read-path (OSC-4c).",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -6553,7 +6567,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: task_board.counts + flat tasks[]; signal_queue rows severity colour-coded — internal consistency of counts vs list.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         }
       ]
@@ -6579,21 +6593,21 @@
           "severity": "CRITICAL",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc (VERIFIED commit 69aec59c): calibration {total,resolved,correct,wrong,pending,hitRate,avgBrier} + claims[] with outcome enum.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
           "check_id": "FE-PG-PREDICTION-CLAIMS-FRESH",
           "dimension": "Data Freshness/SLA",
           "question": "Is generation/resolution recency surfaced?",
-          "metric": "generatedAt + per-claim createdAt/resolvedAt + <FreshnessBadge>",
-          "expected": "recency + freshness visible",
+          "metric": "real age (min) of the live recency field vs sla_tiers[\"daily\"].max_staleness_min from docs/data/frontend-data-coverage-map.json",
+          "expected": "age ≤ 0.5×thr → PASS; ≤thr → WARN; >thr → FAIL (off-hours realtime/intraday capped at WARN per BA-FFT EC-3)",
           "recheck_how": "GET http://localhost:3001/dashboard/prediction-claims → assert generatedAt + FreshnessBadge",
           "status": "PASS",
           "severity": "WARN",
           "zone_owner": "dev-frontend",
-          "evidence": "JSDoc: generatedAt + per-claim createdAt/resolvedAt; route imports <FreshnessBadge>.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "evidence": "LIVE-PROBED 2026-07-25T07:00:40.559Z: GET http://localhost:3000/api/prediction-claims → generatedAt=\"2026-07-25T07:00:44.011Z\"; age=-0.1min; SLA tier=\"daily\" thr=1560min (0.5×thr=780.0min); verdict=PASS.",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -6607,7 +6621,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: claims carry agentId + createdAt — per-claim provenance.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -6621,7 +6635,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc CRITICAL null-tolerance: targetPrice/creationPrice/actualPrice/brierScore nullable → render '—'.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -6635,7 +6649,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: calibration {correct,wrong,resolved,hitRate,avgBrier} derived from claim outcomes — internal consistency.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         }
       ]
@@ -6661,7 +6675,7 @@
           "severity": "CRITICAL",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc + verified render: summary header (6 counters) + collapsible capability sections each with checks table (check_id/dimension/question/severity/status/evidence).",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -6674,8 +6688,8 @@
           "status": "INFO",
           "severity": "WARN",
           "zone_owner": "dev-frontend",
-          "evidence": "By-design (qualityChecklistHandler RISK-2): computed-on-read from static JSON; data_asof = request time; badge always green — no DB store by design.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "evidence": "LIVE-PROBED 2026-07-25T07:00:40.559Z: GET http://localhost:3000/api/quality-checklist → data_asof=\"2026-07-25T07:00:49.348Z\" (age=-0.1min) — confirms RISK-2: compute-on-read, always near-zero age by design, NOT a true DB-store recency signal.",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -6689,7 +6703,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "Verified render: checks table renders evidence column; each row carries last_verified + optional signal_id in the artifact.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -6703,7 +6717,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "Verified render (lines 324-393): role='alert' error banner + 'No quality checklist data available.' empty state; parseQualityChecklistDto null-safe.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -6717,7 +6731,21 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "Enforced by this audit: summary recomputed FROM rows (fixed prior 239/245 pass + 20/14 info drift); legacy NEEDS-REVIEW normalized to NEEDS_REVIEW to match consumer CheckStatus enum.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
+          "signal_id": null
+        },
+        {
+          "check_id": "FE-PG-QUALITY-AUDIT-CONTENT-REGEN-CORR",
+          "dimension": "Correctness",
+          "question": "How long since the quality-checklist artifact's own content (capability rows/verdicts) was last regenerated (generated_at), independent of the always-fresh compute-on-read data_asof?",
+          "metric": "age of top-level generated_at (artifact content age) vs data_asof (request time, RISK-2 always ≈0)",
+          "expected": "content regenerated regularly; a large drift between generated_at and data_asof is flagged, not hidden behind an always-green data_asof",
+          "recheck_how": "GET http://localhost:3000/api/quality-checklist → compare generated_at vs data_asof",
+          "status": "WARN",
+          "severity": "WARN",
+          "zone_owner": "dev-frontend",
+          "evidence": "LIVE-PROBED 2026-07-25T07:00:40.559Z: generated_at=\"2026-06-10T09:23:04Z\" is 44.9 days old vs data_asof (age≈0 by RISK-2 design) — the CHECKLIST CONTENT itself has not been regenerated in ~45 days even though the endpoint always reports a fresh data_asof; RISK-2 can mask content staleness behind a false-green badge. Re-run scripts/gen-frontend-page-checks.mjs (and the other quality-checklist content generators) regularly.",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         }
       ]
@@ -6743,21 +6771,21 @@
           "severity": "CRITICAL",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc (VERIFIED live 2026-06-09): leaderboard[] (score DESC, length===total) + summary.byRisk + history{} per ticker.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
           "check_id": "FE-PG-REPUTATION-FRESH",
           "dimension": "Data Freshness/SLA",
           "question": "Is the as-of date surfaced with a freshness indicator?",
-          "metric": "asOf + generatedAt + <FreshnessBadge>",
-          "expected": "asOf + freshness visible",
+          "metric": "real age (min) of the live recency field vs sla_tiers[\"daily\"].max_staleness_min from docs/data/frontend-data-coverage-map.json",
+          "expected": "age ≤ 0.5×thr → PASS; ≤thr → WARN; >thr → FAIL (off-hours realtime/intraday capped at WARN per BA-FFT EC-3)",
           "recheck_how": "GET http://localhost:3001/dashboard/reputation → assert asOf",
-          "status": "PASS",
+          "status": "FAIL",
           "severity": "WARN",
           "zone_owner": "dev-frontend",
-          "evidence": "JSDoc: generatedAt + asOf (null when empty); route imports <FreshnessBadge>.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "evidence": "LIVE-PROBED 2026-07-25T07:00:40.559Z: GET http://localhost:3000/api/reputation → asOf=\"2026-07-24\"; age=31.0h; SLA tier=\"daily\" thr=1560min (0.5×thr=780.0min); verdict=FAIL.",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -6771,7 +6799,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: generatedAt (ISO) + asOf surfaced.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -6785,7 +6813,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: 'Empty-state: asOf null, summary.total 0, avgScore null, byRisk all 0, leaderboard [], history {}.'",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -6799,7 +6827,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: named helpers mapTrend, mapRiskLevel, getRiskBadgeClass (unit-tested); leaderboard length===total invariant.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         }
       ]
@@ -6825,21 +6853,21 @@
           "severity": "CRITICAL",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc (VERIFIED live 2026-06-11): sectors[] {up,down,neutral,total,netBias} sorted netBias DESC + summary topBullish/topBearish.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
           "check_id": "FE-PG-SECTOR-CASCADE-FRESH",
           "dimension": "Data Freshness/SLA",
           "question": "Is the cascade window surfaced with a freshness indicator?",
-          "metric": "windowStart + windowDays + <FreshnessBadge>",
-          "expected": "window + freshness visible",
+          "metric": "real age (min) of the live recency field vs sla_tiers[\"intraday\"].max_staleness_min from docs/data/frontend-data-coverage-map.json",
+          "expected": "age ≤ 0.5×thr → PASS; ≤thr → WARN; >thr → FAIL (off-hours realtime/intraday capped at WARN per BA-FFT EC-3)",
           "recheck_how": "GET http://localhost:3001/dashboard/sector-cascade → assert window + FreshnessBadge",
           "status": "PASS",
           "severity": "WARN",
           "zone_owner": "dev-frontend",
-          "evidence": "JSDoc: windowStart + windowDays (clamped [1,30]); route imports <FreshnessBadge>.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "evidence": "LIVE-PROBED 2026-07-25T07:00:40.559Z: GET http://localhost:3000/api/sector-cascade → generatedAt=\"2026-07-25T07:00:44.029Z\"; age=-0.1min; SLA tier=\"intraday\" thr=60min (0.5×thr=30.0min); verdict=PASS.",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -6853,7 +6881,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: source='cascade_rules' + generatedAt (ISO) + windowStart — provenance visible.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -6867,7 +6895,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "Verified: error+empty markers present in route.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -6881,7 +6909,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: 'THIS PAGE IS DISTINCT FROM sector-rotation (price-based). netBias = (up hits − down hits). Answers where NEWS FLOW leans, not PRICE.'",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         }
       ]
@@ -6907,21 +6935,21 @@
           "severity": "CRITICAL",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc (VERIFIED live 2026-06-11): sectors[] {avg1dReturn, avg5dReturn|null, classification DONG_TIEN_VAO/RA/NEUTRAL, watchlistWarning} + summary.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
           "check_id": "FE-PG-SECTOR-ROTATION-FRESH",
           "dimension": "Data Freshness/SLA",
           "question": "Is the trading date + depth-availability flag surfaced?",
-          "metric": "tradingDate + only1dAvailable flag + <FreshnessBadge>",
-          "expected": "tradingDate + depth flag + freshness visible",
+          "metric": "real age (min) of the live recency field vs sla_tiers[\"realtime\"].max_staleness_min from docs/data/frontend-data-coverage-map.json",
+          "expected": "age ≤ 0.5×thr → PASS; ≤thr → WARN; >thr → FAIL (off-hours realtime/intraday capped at WARN per BA-FFT EC-3)",
           "recheck_how": "GET http://localhost:3001/dashboard/sector-rotation → assert tradingDate + only1dAvailable",
-          "status": "PASS",
+          "status": "WARN",
           "severity": "WARN",
           "zone_owner": "dev-frontend",
-          "evidence": "JSDoc: tradingDate (MAX updated_at) + only1dAvailable (5d history depth flag); route imports <FreshnessBadge>.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "evidence": "LIVE-PROBED 2026-07-25T07:00:40.559Z: GET http://localhost:3000/api/sector-rotation → tradingDate=\"2026-07-25T06:45:03.660Z\"; age=15.6min; SLA tier=\"realtime\" thr=15min (0.5×thr=7.5min); verdict=WARN. off-hours (BA-FFT EC-3): số liệu phiên gần nhất — SLA breach suppressed outside VN market hours 02:00-08:59 UTC Mon-Fri",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -6935,7 +6963,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: priceSource='stored' + tradingDate + generatedAt — provenance visible.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -6949,7 +6977,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: only1dAvailable true when 5-day history not deep enough; avg5dReturn null → honest '—'; watchlistWarning surfaced.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -6963,7 +6991,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: classification ∈ DONG_TIEN_VAO/DONG_TIEN_RA/NEUTRAL; summary top inflow/outflow by avg1dReturn — direction consistency.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         }
       ]
@@ -6989,21 +7017,21 @@
           "severity": "CRITICAL",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: renders live container status for all 12 microservices (GO-FLEET-DEPLOY 2026-06-11); health-compose.ts pure logic.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
           "check_id": "FE-PG-SERVICES-FRESH",
           "dimension": "Data Freshness/SLA",
           "question": "Is service-health recency surfaced?",
-          "metric": "<FreshnessBadge> + ClientTimestamp",
-          "expected": "freshness + timestamp visible",
+          "metric": "real age (min) of the live recency field vs sla_tiers[\"realtime\"].max_staleness_min from docs/data/frontend-data-coverage-map.json",
+          "expected": "age ≤ 0.5×thr → PASS; ≤thr → WARN; >thr → FAIL (off-hours realtime/intraday capped at WARN per BA-FFT EC-3)",
           "recheck_how": "GET http://localhost:3001/dashboard/services → assert FreshnessBadge",
-          "status": "PASS",
+          "status": "NEEDS_REVIEW",
           "severity": "WARN",
           "zone_owner": "dev-frontend",
-          "evidence": "Verified: route imports <FreshnessBadge> + <ClientTimestamp>; health snapshot recency surfaced.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "evidence": "LIVE-PROBED 2026-07-25T07:00:40.559Z: GET http://localhost:4000/health → checkedAt=\"2026-07-25T07:00:42.625272461Z\" [FALLBACK FIELD — not the coverage-map-documented name for this row]; age=-0.0min; SLA tier=\"realtime\" thr=15min (0.5×thr=7.5min); verdict=NEEDS_REVIEW. field \"checkedAt\"=\"2026-07-25T07:00:42.625272461Z\" observed live (age=-0.0min) but is NOT the coverage-map-documented recency field for this row — reported for transparency, not graded as a certified SLA verdict",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -7017,7 +7045,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: single-axis (container status authoritative); capability axis rendered as secondary informational badge.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -7031,7 +7059,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: 'down → RED DOWN (ALWAYS — anti-false-green invariant). A crashed container is always RED; capability NEVER overrides a down verdict.'",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -7045,7 +7073,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: pure compose logic in ~/domain/health-compose.ts (importable/testable); ok/degraded/down → GREEN/YELLOW/RED.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         }
       ]
@@ -7071,21 +7099,21 @@
           "severity": "CRITICAL",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc (VERIFIED live 2026-06-11): holders[] for selectedCode (capped 200) + ranking[] across 32 codes + selectedSummary (concentration).",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
           "check_id": "FE-PG-SHAREHOLDERS-FRESH",
           "dimension": "Data Freshness/SLA",
           "question": "Is the as-of date surfaced with a freshness indicator?",
-          "metric": "asOf + generatedAt + <FreshnessBadge>",
-          "expected": "asOf + freshness visible",
+          "metric": "real age (min) of the live recency field vs sla_tiers[\"weekly\"].max_staleness_min from docs/data/frontend-data-coverage-map.json",
+          "expected": "age ≤ 0.5×thr → PASS; ≤thr → WARN; >thr → FAIL (off-hours realtime/intraday capped at WARN per BA-FFT EC-3)",
           "recheck_how": "GET http://localhost:3001/dashboard/shareholders → assert asOf",
           "status": "PASS",
           "severity": "WARN",
           "zone_owner": "dev-frontend",
-          "evidence": "JSDoc: generatedAt + asOf; route imports <FreshnessBadge>.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "evidence": "LIVE-PROBED 2026-07-25T07:00:40.559Z: GET http://localhost:3000/api/shareholders?code=BID → asOf=\"2026-07-24T18:08:18.309Z\"; age=12.9h; SLA tier=\"weekly\" thr=11520min (0.5×thr=5760.0min); verdict=PASS.",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -7099,7 +7127,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: generatedAt (ISO) + asOf (ISO) surfaced.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -7113,7 +7141,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "Verified: error+empty markers present; selectedSummary nullable handled.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -7127,7 +7155,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc HONEST FRAMING (load-bearing): disclosedPct = SUM of publicly-disclosed holdings only; concentration ∈ {high,medium,low} with VN labels.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         }
       ]
@@ -7153,21 +7181,21 @@
           "severity": "CRITICAL",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: shows REAL VPS push-route freshness per source (prices/news/sbv/bctc) via GET /api/vps-proxy-health.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
           "check_id": "FE-PG-VPS-FRESH",
           "dimension": "Data Freshness/SLA",
           "question": "Is push freshness the core rendered content with a truthful stale mapping?",
-          "metric": "status ok&&!stale→UP, stale→STALE amber, errors→DOWN, no_data→NO DATA",
-          "expected": "per-source push freshness + stale flag is the page content",
+          "metric": "real age (min) of the live recency field vs sla_tiers[\"realtime\"].max_staleness_min from docs/data/frontend-data-coverage-map.json",
+          "expected": "age ≤ 0.5×thr → PASS; ≤thr → WARN; >thr → FAIL (off-hours realtime/intraday capped at WARN per BA-FFT EC-3)",
           "recheck_how": "GET http://localhost:3001/dashboard/vps → assert stale mapping",
           "status": "PASS",
           "severity": "WARN",
           "zone_owner": "dev-frontend",
-          "evidence": "JSDoc: status mapping ok&&!stale→UP(green), stale→STALE(amber, actionable), errors_24h>0→DOWN(red), no_data/null→NO DATA(slate) — freshness IS the content.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "evidence": "LIVE-PROBED 2026-07-25T07:00:40.559Z: GET http://localhost:3000/api/vps-proxy-health → data_asof=\"2026-07-25 07:00:08\"; age=0.5min; SLA tier=\"realtime\" thr=15min (0.5×thr=7.5min); verdict=PASS.",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -7181,7 +7209,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: per-source last_push timestamp drives the status mapping and is surfaced per source.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -7195,7 +7223,7 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc: 'no_data / null last_push → NO DATA (slate)' — anti-false-green; stale is actionable.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         },
         {
@@ -7209,18 +7237,18 @@
           "severity": "WARN",
           "zone_owner": "dev-frontend",
           "evidence": "JSDoc status mapping labeled TRUTHFUL: derived from stale, errors_24h, and last_push — no false-green masking of a stale/erroring source.",
-          "last_verified": "2026-07-24T17:27:43Z",
+          "last_verified": "2026-07-25T07:00:40Z",
           "signal_id": null
         }
       ]
     }
   ],
   "summary": {
-    "pass": 399,
-    "warn": 6,
-    "fail": 2,
-    "info": 19,
-    "needs_review": 14,
-    "total": 440
+    "pass": 389,
+    "warn": 8,
+    "fail": 6,
+    "info": 17,
+    "needs_review": 22,
+    "total": 442
   }
 }

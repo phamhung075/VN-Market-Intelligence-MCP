@@ -34,6 +34,17 @@
  * route enum (dashboard.quality-audit.tsx CheckStatus), and RECOMPUTES the
  * lowercase summary {pass,warn,fail,info,needs_review,total} FROM the rows.
  *
+ * LIVE FRESH-DIMENSION UPGRADE (2026-07-25, FRONTEND-FRESHNESS-TRANSPARENCY):
+ * the "Data Freshness/SLA" check per page used to be STRUCTURAL only (did the
+ * route render a <FreshnessBadge>?, static 2026-07-24 grounding). It now
+ * LIVE-PROBES each page's real endpoint at generation time and grades real
+ * data recency against docs/data/frontend-data-coverage-map.json's SSOT
+ * `sla_tiers` thresholds (never hardcoded) — see `liveProbeFreshness()` below.
+ * Verdict formula + market-hours gate follow
+ * docs/handoffs/BA-FRONTEND-FRESHNESS-TRANSPARENCY.md §FR-6 / EC-3 / EC-4.
+ * Never fabricates: a field that cannot be confirmed live on the real
+ * response is reported NEEDS_REVIEW with the real keys seen, not guessed.
+ *
  * Owning flow pointer: docs/agents/po/flow/scripts-registry.md (PO owns this
  * quality-audit frontend page-coverage expansion). The served artifact is
  * consumed by apps/frontend/app/routes/dashboard.quality-audit.tsx via
@@ -41,6 +52,9 @@
  * so the stored lowercase summary IS authoritative and MUST equal the row tally).
  *
  * Usage: node scripts/gen-frontend-page-checks.mjs
+ *   Env overrides (optional, default to the live local stack):
+ *     QUALITY_AUDIT_APP_BASE     — frontend server base, default http://localhost:3000
+ *     QUALITY_AUDIT_GATEWAY_BASE — api-gateway base, default http://localhost:4000
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -48,8 +62,12 @@ import { dirname, resolve } from "node:path";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ARTIFACT = resolve(__dirname, "../docs/data/quality-checklist.json");
-const NOW = new Date().toISOString().replace(/\.\d+Z$/, "Z");
+const COVERAGE_MAP_PATH = resolve(__dirname, "../docs/data/frontend-data-coverage-map.json");
+const NOW_DATE = new Date();
+const NOW = NOW_DATE.toISOString().replace(/\.\d+Z$/, "Z");
 const OWNER = "dev-frontend";
+const APP_BASE = process.env.QUALITY_AUDIT_APP_BASE || "http://localhost:3000";
+const GATEWAY_BASE = process.env.QUALITY_AUDIT_GATEWAY_BASE || "http://localhost:4000";
 
 // ---------------------------------------------------------------------------
 // Dimension metadata (mapped to existing artifact dimension vocabulary)
@@ -1307,6 +1325,364 @@ const PAGES = [
     ],
   },
 ];
+
+// ---------------------------------------------------------------------------
+// LIVE FRESH-DIMENSION PROBE ENGINE
+// Reads SLA thresholds + per-page recency-field documentation from
+// docs/data/frontend-data-coverage-map.json (SSOT, never hardcoded), fetches
+// each page's real live endpoint, and grades REAL recency. Per
+// docs/handoffs/BA-FRONTEND-FRESHNESS-TRANSPARENCY.md §FR-6 + EC-3 (market
+// hours) + EC-4 (static). Never fabricates a verdict from an unconfirmed
+// field — if the documented field is not actually present on the live
+// response, the check is reported NEEDS_REVIEW with the real keys observed.
+// ---------------------------------------------------------------------------
+const coverageMap = JSON.parse(readFileSync(COVERAGE_MAP_PATH, "utf-8"));
+const SLA_TIERS = coverageMap.sla_tiers; // { tier: [max_staleness_min, client_refresh_ms] }
+
+/** VN market hours per BA-FFT EC-3: 02:00-08:59 UTC, Mon-Fri. */
+function isVnMarketHoursUtc(now) {
+  const dow = now.getUTCDay(); // 0=Sun..6=Sat
+  if (dow === 0 || dow === 6) return false;
+  const h = now.getUTCHours();
+  return h >= 2 && h <= 8;
+}
+
+/** Parse either a proper ISO8601 string or a naive "YYYY-MM-DD HH:MM:SS" DB
+ *  timestamp (SQLite CURRENT_TIMESTAMP convention = UTC, no offset) into a
+ *  UTC epoch-ms. Treating a naive string as host-local would silently skew
+ *  age by the host TZ offset (this host resolves Europe/Paris, +2h — verified
+ *  via `Intl.DateTimeFormat().resolvedOptions().timeZone` at dev time). */
+function parseAsofUtcMs(raw) {
+  if (typeof raw !== "string" || !raw) return null;
+  const naiveSpace = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/;
+  const iso = naiveSpace.test(raw) ? `${raw.replace(" ", "T")}Z` : raw;
+  const ms = Date.parse(iso);
+  return Number.isFinite(ms) ? ms : null;
+}
+
+function fmtAge(min) {
+  if (!Number.isFinite(min)) return "n/a";
+  if (min < 60) return `${min.toFixed(1)}min`;
+  const h = min / 60;
+  if (h < 48) return `${h.toFixed(1)}h`;
+  return `${(h / 24).toFixed(1)}d`;
+}
+
+async function fetchJson(url, timeoutMs = 8000) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { signal: ctrl.signal });
+    if (!res.ok) return { ok: false, url, reason: `HTTP ${res.status}` };
+    const json = await res.json();
+    return { ok: true, url, json };
+  } catch (err) {
+    return { ok: false, url, reason: `fetch error: ${err && err.message ? err.message : String(err)}` };
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+function resolveCoverageRow(pageKey) {
+  return coverageMap.rows.find((r) => r.page === pageKey) || null;
+}
+
+const FALLBACK_ASOF_FIELDS = [
+  "data_asof", "generatedAt", "generated_at", "asOf", "tradingDate",
+  "last_updated_iso", "currentAt", "checkedAt", "fetchedAt",
+];
+
+/**
+ * Pick the top-level recency field to trust on a live JSON response.
+ * L2-target rows (row._l2_fix present — the 5 TASK-FFT-L2 handlers) MUST use
+ * the canonical `data_asof` key per ARCH-RATIFY-FFT-4 — no other field is an
+ * acceptable substitute (generatedAt-style fields on these handlers are
+ * known request/compute-time artifacts, not real DB recency).
+ * Non-L2 rows first try the coverage-map's own documented `row.asof` field
+ * name; if genuinely absent, fall back to a well-known field name list —
+ * but the result is flagged `documented:false` so the caller can grade it
+ * conservatively (never silently trust an unconfirmed field as a clean PASS).
+ */
+function pickAsofField(json, row) {
+  if (!json || typeof json !== "object") return null;
+  if (row && row._l2_fix) {
+    return typeof json.data_asof === "string" && json.data_asof
+      ? { field: "data_asof", value: json.data_asof, documented: true }
+      : null;
+  }
+  const documented = row && row.asof;
+  if (documented && typeof json[documented] === "string" && json[documented]) {
+    return { field: documented, value: json[documented], documented: true };
+  }
+  for (const f of FALLBACK_ASOF_FIELDS) {
+    if (typeof json[f] === "string" && json[f]) {
+      return { field: f, value: json[f], documented: false };
+    }
+  }
+  return null;
+}
+
+/** BA-FFT §FR-6 verdict formula + EC-3 market-hours gate. */
+function verdictFromField(picked, tier, now) {
+  const thrMin = SLA_TIERS[tier] ? SLA_TIERS[tier][0] : null;
+  if (!picked) return { verdict: "NEEDS_REVIEW", thrMin, note: "recency field absent from live response" };
+  const ms = parseAsofUtcMs(picked.value);
+  const ageMin = ms != null ? (now.getTime() - ms) / 60000 : undefined;
+  if (!picked.documented) {
+    // Field exists and its age is shown for transparency, but it is NOT the
+    // coverage-map-documented recency field for this row, so it is not
+    // graded against the SLA threshold as a certified verdict.
+    return {
+      verdict: "NEEDS_REVIEW",
+      ageMin,
+      thrMin,
+      note: `field "${picked.field}"="${picked.value}" observed live (age=${fmtAge(ageMin)}) but is NOT the coverage-map-documented recency field for this row — reported for transparency, not graded as a certified SLA verdict`,
+    };
+  }
+  if (ms == null) return { verdict: "NEEDS_REVIEW", thrMin, note: `unparseable ${picked.field}="${picked.value}"` };
+  if (thrMin == null) return { verdict: "INFO", ageMin, thrMin: null, note: "no numeric SLA threshold (static tier)" };
+  const marketHoursOnly = tier === "realtime" || tier === "intraday";
+  let verdict;
+  let note = null;
+  if (ageMin <= thrMin / 2) verdict = "PASS";
+  else if (ageMin <= thrMin) verdict = "WARN";
+  else if (marketHoursOnly && !isVnMarketHoursUtc(now)) {
+    verdict = "WARN";
+    note = "off-hours (BA-FFT EC-3): số liệu phiên gần nhất — SLA breach suppressed outside VN market hours 02:00-08:59 UTC Mon-Fri";
+  } else {
+    verdict = "FAIL";
+  }
+  return { verdict, ageMin, thrMin, note };
+}
+
+const RANK = { FAIL: 4, NEEDS_REVIEW: 3, WARN: 2, PASS: 1, INFO: 0 };
+
+/** Generic single/multi-URL live probe for a page keyed off a coverage-map row. */
+async function probePageFreshness(rowPageKey, urls, now) {
+  const row = resolveCoverageRow(rowPageKey);
+  if (!row) return { skipped: true, reason: `no coverage-map row for page="${rowPageKey}"` };
+  if (row.status === "STATIC" || row.status === "GAP") return { skipped: true, reason: `status=${row.status}` };
+  const tier = row.sla;
+  const fetched = await Promise.all(urls.map((u) => fetchJson(u)));
+  const results = fetched.map((f, i) => {
+    if (!f.ok) return { url: urls[i], ok: false, reason: f.reason };
+    const picked = pickAsofField(f.json, row);
+    const v = verdictFromField(picked, tier, now);
+    if (!picked) return { url: urls[i], ok: false, reason: `no recognized recency field; keys=[${Object.keys(f.json || {}).join(",")}]` };
+    return { url: urls[i], ok: true, field: picked.field, documented: picked.documented, value: picked.value, ...v };
+  });
+  const okResults = results.filter((r) => r.ok);
+  if (okResults.length === 0) return { skipped: false, ok: false, tier, row, results };
+  const worst = okResults.reduce((a, b) => (RANK[b.verdict] > RANK[a.verdict] ? b : a));
+  return { skipped: false, ok: true, tier, row, worst, results };
+}
+
+/** Config: page.slug -> coverage-map `page` key(s) + live URL(s) to probe.
+ *  Deliberately excludes: kinh-dich-reference (STATIC, correctly INFO already),
+ *  bctc-inspect + money-radar (no FRESH check exists on those pages),
+ *  quality-audit + bctc-eval.$reportId + the price-history/technical gap
+ *  (handled by dedicated functions below — special semantics). */
+const PAGE_FRESH_PROBES = {
+  "_index": { rowPage: "_index", urls: [`${APP_BASE}/api/market-digest`] },
+  "intel": { rowPage: "intel", urls: [`${APP_BASE}/api/market-digest`] },
+  "agm-plan-actual": { rowPage: "agm-plan-actual", urls: [`${APP_BASE}/api/agm-plan-actual`] },
+  "alerts": { rowPage: "alerts", urls: [`${APP_BASE}/api/alerts`] },
+  "bctc": { rowPage: "bctc", urls: [`${APP_BASE}/api/analysis-briefs`] },
+  "bctc-eval._index": { rowPage: "bctc-eval._index", urls: [`${APP_BASE}/api/bctc-eval`] },
+  "conviction-history": { rowPage: "conviction-history", urls: [`${APP_BASE}/api/conviction-history`] },
+  "corporate-events": { rowPage: "corporate-events", urls: [`${APP_BASE}/api/corporate-events`] },
+  "fed-rates": { rowPage: "fed-rates", urls: [`${APP_BASE}/api/fed-rates`] },
+  "fetch": { rowPage: "fetch", urls: [`${APP_BASE}/api/fetch-status`] },
+  "financials": { rowPage: "financials", urls: [`${APP_BASE}/api/financials`] },
+  "foreign-flow": { rowPage: "foreign-flow", urls: [`${APP_BASE}/api/foreign-flow`] },
+  "global-markets": { rowPage: "global-markets", urls: [`${APP_BASE}/api/global-markets`] },
+  "indicator-gauges": { rowPage: "/dashboard/indicator-gauges", urls: [`${APP_BASE}/api/indicator-gauges`] },
+  "kinh-dich-signals": { rowPage: "kinh-dich-signals", urls: [`${APP_BASE}/api/kinh-dich-signals`] },
+  "macro": { rowPage: "macro", urls: [`${APP_BASE}/api/macro-regime`] },
+  "market-summaries": { rowPage: "market-summaries", urls: [`${APP_BASE}/api/market-summaries`] },
+  "momentum": { rowPage: "/dashboard/momentum", urls: [`${APP_BASE}/api/momentum-indicators`, `${APP_BASE}/api/money-radar`] },
+  "news-buzz": { rowPage: "news-buzz", urls: [`${APP_BASE}/api/news-buzz`] },
+  "news": { rowPage: "news", urls: [`${APP_BASE}/api/news-sentiment`] },
+  "officers": { rowPage: "officers", urls: [`${APP_BASE}/api/officers?code=BID`] },
+  "orchestration": { rowPage: "orchestration", urls: [`${APP_BASE}/api/orchestration`] },
+  "prediction-claims": { rowPage: "prediction-claims", urls: [`${APP_BASE}/api/prediction-claims`] },
+  "reputation": { rowPage: "reputation", urls: [`${APP_BASE}/api/reputation`] },
+  "sector-cascade": { rowPage: "sector-cascade", urls: [`${APP_BASE}/api/sector-cascade`] },
+  "sector-rotation": { rowPage: "sector-rotation", urls: [`${APP_BASE}/api/sector-rotation`] },
+  "shareholders": { rowPage: "shareholders", urls: [`${APP_BASE}/api/shareholders?code=BID`] },
+  "vps": { rowPage: "vps", urls: [`${APP_BASE}/api/vps-proxy-health`] },
+  "services": { rowPage: "services", urls: [`${GATEWAY_BASE}/health`] },
+  "db": { rowPage: "db", urls: [`${GATEWAY_BASE}/news/reuters/headlines`, `${GATEWAY_BASE}/stock/price/history?code=VNINDEX&days=5`] },
+};
+
+function buildGenericEvidence(now, result) {
+  const w = result.worst;
+  const thrTxt = w.thrMin == null ? "n/a (no numeric SLA)" : `${w.thrMin}min (0.5×thr=${(w.thrMin / 2).toFixed(1)}min)`;
+  const docNote = w.documented === false ? " [FALLBACK FIELD — not the coverage-map-documented name for this row]" : "";
+  const noteTxt = w.note ? ` ${w.note}` : "";
+  const others = result.results.filter((r) => r !== w);
+  const othersTxt = others.length
+    ? ` | other probe(s): ${others.map((r) => (r.ok ? `${r.url} → ${r.field}="${r.value}" age=${fmtAge(r.ageMin)} ${r.verdict}` : `${r.url} → ${r.reason}`)).join("; ")}`
+    : "";
+  return `LIVE-PROBED ${now.toISOString()}: GET ${w.url} → ${w.field}="${w.value}"${docNote}; age=${fmtAge(w.ageMin)}; SLA tier="${result.tier}" thr=${thrTxt}; verdict=${w.verdict}.${noteTxt}${othersTxt}`;
+}
+
+/** Apply live-probe results to every page's FRESH check via the generic table. */
+async function liveProbeGenericPages(pages, now) {
+  await Promise.all(Object.entries(PAGE_FRESH_PROBES).map(async ([slug, cfg]) => {
+    const page = pages.find((p) => p.slug === slug);
+    if (!page) return;
+    const idx = page.checks.findIndex((c) => c.dimension === DIM.FRESH.dimension);
+    if (idx === -1) return;
+    const rowPages = Array.isArray(cfg.rowPage) ? cfg.rowPage : [cfg.rowPage];
+    const result = await probePageFreshness(rowPages[0], cfg.urls, now);
+    if (result.skipped) return; // STATIC/GAP row or missing SSOT row — leave prior check untouched
+    const old = page.checks[idx];
+    if (!result.ok) {
+      const detail = result.results.map((r) => `${r.url} → ${r.reason}`).join(" | ");
+      page.checks[idx] = chk(slug, "FRESH", "NEEDS_REVIEW", old.question,
+        `live probe against ${cfg.urls.join(", ")}`,
+        `top-level recency field present + age within sla_tiers["${result.tier}"] from docs/data/frontend-data-coverage-map.json`,
+        old.recheck_how,
+        `LIVE-PROBED ${now.toISOString()}: ${detail}`);
+      return;
+    }
+    page.checks[idx] = chk(slug, "FRESH", result.worst.verdict, old.question,
+      `real age (min) of the live recency field vs sla_tiers["${result.tier}"].max_staleness_min from docs/data/frontend-data-coverage-map.json`,
+      `age ≤ 0.5×thr → PASS; ≤thr → WARN; >thr → FAIL (off-hours realtime/intraday capped at WARN per BA-FFT EC-3)`,
+      old.recheck_how,
+      buildGenericEvidence(now, result));
+  }));
+}
+
+/** COMPUTE-ON-READ EXCEPTION (RISK-2): quality-checklist's data_asof is
+ *  always ≈0 age by design (computed at request time, no DB store) — keep
+ *  FRESH as INFO, but surface the artifact's OWN content staleness
+ *  (generated_at = last regeneration time) as a separate Correctness check,
+ *  since RISK-2 means data_asof alone can never reveal stale content. */
+async function upgradeQualityAuditFresh(pages, now) {
+  const page = pages.find((p) => p.slug === "quality-audit");
+  if (!page) return;
+  const idx = page.checks.findIndex((c) => c.dimension === DIM.FRESH.dimension);
+  const fetched = await fetchJson(`${APP_BASE}/api/quality-checklist`);
+  if (!fetched.ok) {
+    if (idx !== -1) {
+      const old = page.checks[idx];
+      page.checks[idx] = chk("quality-audit", "FRESH", "NEEDS_REVIEW", old.question, old.metric, old.expected, old.recheck_how,
+        `LIVE-PROBED ${now.toISOString()}: GET ${APP_BASE}/api/quality-checklist failed — ${fetched.reason}`);
+    }
+    return;
+  }
+  const asof = fetched.json.data_asof;
+  const asofMs = parseAsofUtcMs(asof);
+  const ageMin = asofMs != null ? (now.getTime() - asofMs) / 60000 : null;
+  if (idx !== -1) {
+    const old = page.checks[idx];
+    page.checks[idx] = chk("quality-audit", "FRESH", "INFO", old.question,
+      "data_asof = request time by design (no DB store)",
+      "freshness green by design (computed-on-read)",
+      old.recheck_how,
+      `LIVE-PROBED ${now.toISOString()}: GET ${APP_BASE}/api/quality-checklist → data_asof="${asof}" (age=${fmtAge(ageMin)}) — confirms RISK-2: compute-on-read, always near-zero age by design, NOT a true DB-store recency signal.`);
+  }
+
+  const genAt = fetched.json.generated_at;
+  const genMs = parseAsofUtcMs(genAt);
+  const genAgeDays = genMs != null ? (now.getTime() - genMs) / 86400000 : null;
+  const contentStatus = genAgeDays != null && genAgeDays > 14 ? "WARN" : "PASS";
+  page.checks.push(chk("quality-audit-content-regen", "CORR", contentStatus,
+    "How long since the quality-checklist artifact's own content (capability rows/verdicts) was last regenerated (generated_at), independent of the always-fresh compute-on-read data_asof?",
+    "age of top-level generated_at (artifact content age) vs data_asof (request time, RISK-2 always ≈0)",
+    "content regenerated regularly; a large drift between generated_at and data_asof is flagged, not hidden behind an always-green data_asof",
+    `GET ${APP_BASE}/api/quality-checklist → compare generated_at vs data_asof`,
+    `LIVE-PROBED ${now.toISOString()}: generated_at="${genAt}" is ${genAgeDays != null ? genAgeDays.toFixed(1) : "?"} days old vs data_asof (age≈0 by RISK-2 design) — the CHECKLIST CONTENT itself has not been regenerated in ~${genAgeDays != null ? genAgeDays.toFixed(0) : "?"} days even though the endpoint always reports a fresh data_asof; RISK-2 can mask content staleness behind a false-green badge. Re-run scripts/gen-frontend-page-checks.mjs (and the other quality-checklist content generators) regularly.`));
+}
+
+/** GENUINE GAP (verified live 2026-07-25): /api/price-history/:ticker — one
+ *  of the 5 TASK-FFT-L2 handler targets — has NOT been fixed yet. It emits
+ *  generated_at (request/compute time) + stale_served instead of a top-level
+ *  data_asof. This feeds the Technical Zone chart inside the "analysis" page.
+ *  A FreshnessBadge driven by generated_at here would ALWAYS read green
+ *  regardless of true OHLCV staleness — real recency cannot be verified. */
+async function upgradeTechnicalPriceHistoryGap(pages, now) {
+  const page = pages.find((p) => p.slug === "analysis");
+  if (!page) return;
+  const tickers = ["FPT", "VNM", "HPG"];
+  const probes = await Promise.all(tickers.map(async (t) => {
+    const f = await fetchJson(`${APP_BASE}/api/price-history/${t}`);
+    if (!f.ok) return { ticker: t, error: f.reason };
+    return {
+      ticker: t, keys: Object.keys(f.json), count: f.json.count,
+      generated_at: f.json.generated_at, stale_served: f.json.stale_served,
+      has_data_asof: typeof f.json.data_asof === "string",
+    };
+  }));
+  const anyHasAsof = probes.some((p) => p.has_data_asof);
+  const detail = probes.map((p) => (p.error
+    ? `${p.ticker}: ${p.error}`
+    : `${p.ticker}: keys=[${p.keys.join(",")}] count=${p.count} generated_at=${p.generated_at} stale_served=${p.stale_served}`)).join(" | ");
+  const status = anyHasAsof ? "WARN" : "FAIL";
+  const idx = page.checks.findIndex((c) => c.check_id === "FE-PG-ANALYSIS-TECHNICAL-PRICE-HISTORY-FRESH");
+  const newCheck = chk("analysis-technical-price-history", "FRESH", status,
+    "Does /api/price-history/:ticker (Technical Zone OHLCV, feeds the analysis page's per-stock chart) carry the canonical top-level data_asof field required by the L2 freshness contract?",
+    "presence of top-level data_asof (ISO 8601 UTC) on GET /api/price-history/:ticker",
+    'top-level data_asof present; age computed vs sla_tiers["intraday"] (coverage-map row "technical")',
+    `GET ${APP_BASE}/api/price-history/<ticker> → assert data_asof present`,
+    `LIVE-PROBED ${now.toISOString()} (3 tickers): ${detail}. GENUINE GAP: canonical data_asof ABSENT on all probed tickers — handler emits generated_at (compute/request time, always ≈0 age) + stale_served instead of MAX(updated_at) FROM daily_ohlcv. Per docs/data/frontend-data-coverage-map.json row "technical" (_l2_fix: MAX(updated_at) FROM daily_ohlcv WHERE code=?), this is one of the 5 TASK-FFT-L2 handler targets and the ONLY one still unfixed — marketDigest/alerts/qualityChecklist/vpsProxyHealth all confirmed live with data_asof on this same probe run. Real OHLCV recency cannot currently be verified; a badge fed by generated_at would always read green. Dev fix tracked separately; this check reflects true live state until it lands.`);
+  if (idx === -1) page.checks.push(newCheck);
+  else page.checks[idx] = newCheck;
+
+  const freshIdx = page.checks.findIndex((c) => c.dimension === DIM.FRESH.dimension && c.check_id !== newCheck.check_id);
+  if (freshIdx !== -1 && !page.checks[freshIdx].evidence.includes("FE-PG-ANALYSIS-TECHNICAL-PRICE-HISTORY-FRESH")) {
+    page.checks[freshIdx].evidence += ` NOTE: composite page — see FE-PG-ANALYSIS-TECHNICAL-PRICE-HISTORY-FRESH for a confirmed live gap in the Technical Zone's OHLCV freshness contract (data_asof absent).`;
+  }
+}
+
+/** bctc-eval.$reportId needs a real reportId first (2-step live probe). */
+async function upgradeBctcEvalDetailFresh(pages, now) {
+  const page = pages.find((p) => p.slug === "bctc-eval.$reportId");
+  if (!page) return;
+  const idx = page.checks.findIndex((c) => c.dimension === DIM.FRESH.dimension);
+  if (idx === -1) return;
+  const old = page.checks[idx];
+  const listFetch = await fetchJson(`${APP_BASE}/api/bctc-eval`);
+  const reports = listFetch.ok && Array.isArray(listFetch.json.reports) ? listFetch.json.reports : [];
+  if (!listFetch.ok || reports.length === 0) {
+    page.checks[idx] = chk("bctc-eval.$reportId", "FRESH", "NEEDS_REVIEW", old.question, old.metric, old.expected, old.recheck_how,
+      `LIVE-PROBED ${now.toISOString()}: could not resolve a real reportId from GET ${APP_BASE}/api/bctc-eval (${listFetch.ok ? "empty reports[]" : listFetch.reason}) — cannot live-probe the detail endpoint.`);
+    return;
+  }
+  const reportId = reports[0].report_id;
+  const detailFetch = await fetchJson(`${APP_BASE}/api/bctc-eval/${reportId}`);
+  if (!detailFetch.ok) {
+    page.checks[idx] = chk("bctc-eval.$reportId", "FRESH", "NEEDS_REVIEW", old.question, old.metric, old.expected, old.recheck_how,
+      `LIVE-PROBED ${now.toISOString()}: GET ${APP_BASE}/api/bctc-eval/${reportId} failed — ${detailFetch.reason}`);
+    return;
+  }
+  const row = resolveCoverageRow("bctc-eval.$reportId");
+  const picked = pickAsofField(detailFetch.json, row);
+  const v = verdictFromField(picked, row ? row.sla : null, now);
+  const keys = Object.keys(detailFetch.json);
+  if (!picked) {
+    page.checks[idx] = chk("bctc-eval.$reportId", "FRESH", "NEEDS_REVIEW", old.question, old.metric, old.expected, old.recheck_how,
+      `LIVE-PROBED ${now.toISOString()}: GET ${APP_BASE}/api/bctc-eval/${reportId} → keys=[${keys.join(",")}] — no top-level recency field (documented coverage-map field "${row ? row.asof : "?"}" absent; no fallback field present either). Per-stage nested computed_at exists but is not surfaced as a page-level asof — same class of L2-contract gap as price-history/technical, not yet flagged by the BA-FFT sprint. Cannot verify SLA compliance.`);
+    return;
+  }
+  const docNote = picked.documented === false ? " [FALLBACK FIELD — not the coverage-map-documented name for this row]" : "";
+  page.checks[idx] = chk("bctc-eval.$reportId", "FRESH", v.verdict, old.question,
+    `real age (min) of the live recency field vs sla_tiers["${row ? row.sla : "?"}"].max_staleness_min from docs/data/frontend-data-coverage-map.json`,
+    `age ≤ 0.5×thr → PASS; ≤thr → WARN; >thr → FAIL (off-hours realtime/intraday capped at WARN per BA-FFT EC-3)`,
+    old.recheck_how,
+    `LIVE-PROBED ${now.toISOString()}: GET ${APP_BASE}/api/bctc-eval/${reportId} → ${picked.field}="${picked.value}"${docNote}; age=${fmtAge(v.ageMin)}; verdict=${v.verdict}.${v.note ? ` ${v.note}` : ""}`);
+}
+
+async function liveProbeFreshness(pages, now) {
+  await liveProbeGenericPages(pages, now);
+  await upgradeQualityAuditFresh(pages, now);
+  await upgradeBctcEvalDetailFresh(pages, now);
+  await upgradeTechnicalPriceHistoryGap(pages, now); // must run after the generic "analysis" pass (there is none) — safe any order
+}
+
+await liveProbeFreshness(PAGES, NOW_DATE);
 
 // ---------------------------------------------------------------------------
 // Build capability groups
