@@ -387,11 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-07-25T04:02:12Z",
-    "updated_by": "dev-mcp-server"
+    "status": "in_progress",
+    "active_task_id": "FIX-MACRO-CALENDAR-WIRE-STATIC-SOURCE",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-MACRO-CALENDAR-WIRE-STATIC-SOURCE — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-25T04:15:55Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6645,15 +6646,6 @@
         "title": "fb-market-poster flow calls get_sentiment_trend({}) with EMPTY args but tool REQUIRES stock_code -> silent error every fb-poster cycle -> sentiment signal permanently blind",
         "size": "S",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-FBPOSTER-SENTIMENT-TREND-BARE-CALL"
-      },
-      {
-        "id": "FIX-MACRO-CALENDAR-WIRE-STATIC-SOURCE",
-        "type": "FIX",
-        "title": "get_macro_calendar serves empty events[] — MCP tool proxies the FDA-4 honest-unavailable Go stub while a complete unwired static-calendar domain service exists in mcp-server",
-        "status": "BACKLOG",
-        "priority": "P2",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MACRO-CALENDAR-WIRE-STATIC-SOURCE"
       },
       {
         "id": "SPIKE-BCTC-REFINE-MAXWINDOW-TRUNCATION",
@@ -15075,9 +15067,25 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-25T03:45:49Z",
+    "last_triaged_at": "2026-07-25T04:15:55Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-MACRO-CALENDAR-WIRE-STATIC-SOURCE",
+        "type": "FIX",
+        "title": "get_macro_calendar serves empty events[] — MCP tool proxies the FDA-4 honest-unavailable Go stub while a complete unwired static-calendar domain service exists in mcp-server",
+        "status": "IN_PROGRESS",
+        "priority": "P2",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MACRO-CALENDAR-WIRE-STATIC-SOURCE",
+        "promoted_at": "2026-07-25T04:15:55Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-25T04:15:55Z",
+        "claimed_at": "2026-07-25T04:15:55Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
