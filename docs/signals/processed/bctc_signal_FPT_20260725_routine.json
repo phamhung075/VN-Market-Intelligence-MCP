@@ -1,0 +1,19 @@
+{
+  "ticker": "FPT",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "product": "IT services and software exports, systems integration, telecom (FPT Telecom), education (FPT Edu)",
+  "customer": "Enterprise IT buyers (domestic + offshore outsourcing, Europe +44.4% YoY), SME/retail telecom subscribers",
+  "ops": "Op. margin 22.0%, ROE 6.2% (bctc, quarterly basis) / 28.3% (sector-calc TTM basis); EY spread FAIR (PE 13.8x DISCOUNT -20% vs sector 17.3x, PB PREMIUM +136%); E3 cache-hit, byte-identical vs prior cycle",
+  "mgmt": "Kinh Dich Khon(2)/GIU/TRUNG TINH holds ~38% confidence n=4 cycles; FPT Shop deputy-manager prosecution (2026-07-24, subsidiary-level legal risk, not group-wide)",
+  "esc_status": "ESC-3 DATA-COVERAGE-LIMITED (2/4Q cash-flow history) — guard held, no re-emit. ESC-4 FALSE (non_operating_share 2.0%). ESC-5 TRUE — 7/15 refined units (unit-0008..0014, footnote/related-party/loan-schedule/subsidiary pages 26-46) confidence 0.45<0.50, refined_at unchanged 2026-05-31 — guard esc-deepdive:FPT:Q1-2026:ESC-5 HELD, dev-team Opus deep-dive pending. ESC-1/2 FALSE (B/S imbalance 0%).",
+  "cycle": "c122",
+  "generated_at": "2026-07-25T00:20:00Z",
+  "_processed": {
+    "fingerprint": "1edec4dcbd358d9c0648eaffff6ec6eabae61b309d5336984046c3a237f8daf1",
+    "processedAt": "2026-07-25T01:46:16Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

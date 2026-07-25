@@ -1,0 +1,19 @@
+{
+  "ticker": "DIG",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "product": "Real estate development — urban and resort projects (Ba Ria-Vung Tau, Dong Nai)",
+  "customer": "Individual and institutional buyers of residential/land-plot units in urban development projects",
+  "ops": "Sector-comparison only (no BCTC filing extracted this cycle): PE 14.9x DISCOUNT -23% vs sector, ROE 7.3% above sector median; DIG_2026_Q1.pdf on file since 2026-06-13 still unextracted (blocked-cluster, unchanged for weeks)",
+  "mgmt": "Kinh Dich Du(16)/GIU/THUAN LOI 62-63% confidence; price -4.6% but foreign flow -26K shares net, stronger (less negative) than real-estate sector (-90K)",
+  "esc_status": "N/A — no BCTC data (get_bctc_full returns \"Chua co du lieu\" despite stored PDF). All ratios from get_sector_comparison market-data fallback only.",
+  "cycle": "c122",
+  "generated_at": "2026-07-25T00:20:00Z",
+  "_processed": {
+    "fingerprint": "3ddd389c2ca0752693b91a9748490a43efc1584edd8815b1a9a04f1b3c58f4c9",
+    "processedAt": "2026-07-25T01:46:16Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

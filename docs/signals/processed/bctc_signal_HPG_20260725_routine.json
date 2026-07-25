@@ -1,0 +1,19 @@
+{
+  "ticker": "HPG",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "product": "Steel manufacturing — construction steel, hot-rolled coil (HRC), steel pipe",
+  "customer": "Construction contractors, domestic and export steel distributors",
+  "ops": "Gross margin 15.8%; net profit exceeds gross profit (validation warning — likely large non-operating income); operating_profit reported as 0 (known OCR/extraction defect, not a real going-concern signal); ROE 6.5%",
+  "mgmt": "Kinh Dich Khiem(15)/GIU/THUAN LOI holds 100% confidence n=4 cycles, confirming strong NI; foreign flow +420K shares net, stronger than steel sector (-7K)",
+  "esc_status": "ESC-3 DATA-COVERAGE-LIMITED (2/4Q cash-flow history) — guard held, no re-emit. ESC-4 SKIPPED (operating_profit=0 extraction defect, non-operating-share undefined). ESC-5 FALSE (report_id null, refine_status=PARTIAL, refine not finished). ESC-1/2 FALSE (B/S imbalance 0%).",
+  "cycle": "c122",
+  "generated_at": "2026-07-25T00:20:00Z",
+  "_processed": {
+    "fingerprint": "eb7e12c049d0597de83982cb9b5736ef7913aca253278b714f61789ebd44ce55",
+    "processedAt": "2026-07-25T01:46:16Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

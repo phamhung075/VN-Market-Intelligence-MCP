@@ -1,0 +1,19 @@
+{
+  "ticker": "SAB",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "product": "Beer and alcoholic-beverage manufacturing (Saigon Beer, 333) — largest brewer in Vietnam",
+  "customer": "Mass-market retail consumers via traditional and modern trade distribution nationwide",
+  "ops": "Sector-comparison only (no BCTC filing extracted this cycle): PE 13.1x PREMIUM +48% vs sector, ROE 19.9% above sector median (15.5%); news (2026-07-24) confirms VND 20,000bn+ cash pile, ~VND 2.9bn/day earnings, ~VND 2,500bn H1 net profit; SAB_2026_Q1.pdf on file since 2026-06-13 still unextracted (blocked-cluster)",
+  "mgmt": "Kinh Dich Lam(19)/GIU/THUAN LOI 100% confidence; foreign flow +4K shares net, stronger than sector (-4K)",
+  "esc_status": "N/A — no BCTC data (get_bctc_full returns \"Chua co du lieu\" despite stored PDF). All ratios from get_sector_comparison market-data fallback only.",
+  "cycle": "c122",
+  "generated_at": "2026-07-25T00:20:00Z",
+  "_processed": {
+    "fingerprint": "916665db55c874bc0f4ad10ecf817e759faa14642c815143d4d7a8ed2da688ec",
+    "processedAt": "2026-07-25T01:46:16Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

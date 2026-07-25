@@ -1,0 +1,19 @@
+{
+  "ticker": "DPM",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "product": "Urea and NPK fertilizer, natural-gas-based chemicals (Dam Phu My brand)",
+  "customer": "Farmers and agricultural-input distributors, domestic market",
+  "ops": "Sector-comparison only (no BCTC filing extracted this cycle): PE 18.2x PREMIUM +137% vs sector while ROE 9.6% below sector median (17.4%) — relatively expensive on fundamentals; EY spread 0.49% classifies EXPENSIVE (deposit rate 5%); DPM_2026_Q1.pdf on file since 2026-06-07 still unextracted (blocked-cluster)",
+  "mgmt": "Kinh Dich Ty(8)/GIU/THUAN LOI 100% confidence — technical signal positive despite EXPENSIVE valuation flag; do not post bullish signal per valuation_verdict rule",
+  "esc_status": "N/A — no BCTC data (get_bctc_full returns \"Chua co du lieu\" despite stored PDF). All ratios from get_sector_comparison market-data fallback only.",
+  "cycle": "c122",
+  "generated_at": "2026-07-25T00:20:00Z",
+  "_processed": {
+    "fingerprint": "40e18314e8a44910ea33be35097d581412d4ab119eb0078dd536faa6ae09a727",
+    "processedAt": "2026-07-25T01:46:16Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

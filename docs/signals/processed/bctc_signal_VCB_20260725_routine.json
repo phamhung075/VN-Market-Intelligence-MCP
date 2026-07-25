@@ -1,0 +1,19 @@
+{
+  "ticker": "VCB",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "product": "State-owned commercial bank — corporate and retail lending, payments, bancassurance",
+  "customer": "Large corporate clients, mid-to-high income retail depositors/borrowers, largest state-bank branch network",
+  "ops": "ROE 4.2%, below sector median (17.6%); OCF/NI ratio 1.37x healthy but only 3/4 quarters of cash-flow history available (ESC-3 coverage-limited); PE 14.1x PREMIUM +57% vs sector",
+  "mgmt": "Kinh Dich Khon(2)/GIU/TRUNG TINH direction unchanged, confidence drifted to 0%; foreign flow +23K shares net, stronger than banking sector (-177K)",
+  "esc_status": "ESC-3 DATA-COVERAGE-LIMITED (3/4Q cash-flow history) — guard held, no re-emit. ESC-4 FALSE (non_operating_share -21.4%, pre-provision operating profit exceeds PBT). ESC-5 FALSE (report_id null, refine_status=PARTIAL). ESC-1/2 FALSE (B/S imbalance 0.37%).",
+  "cycle": "c122",
+  "generated_at": "2026-07-25T00:20:00Z",
+  "_processed": {
+    "fingerprint": "6c86a84dcf803a7b6a6a850827a282660cd5b7846902fe4687dde0c7f48b5a6f",
+    "processedAt": "2026-07-25T01:46:16Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

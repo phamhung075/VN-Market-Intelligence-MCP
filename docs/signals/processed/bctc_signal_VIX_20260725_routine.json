@@ -1,0 +1,19 @@
+{
+  "ticker": "VIX",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "product": "Securities brokerage, proprietary trading, corporate financial advisory",
+  "customer": "Individual and institutional investors trading on HOSE/HNX",
+  "ops": "Sector-comparison only (no BCTC filing extracted this cycle): PE 5.5x DEEP DISCOUNT -63% vs sector, ROE 28.9% well above sector median (10.0%); VIX_2026_Q1.pdf on file since 2026-06-13 still unextracted (blocked-cluster)",
+  "mgmt": "Kinh Dich Ty(8)/GIU/THUAN LOI 100% confidence; but foreign flow -666K shares net, notably weaker than securities sector (-88K) — divergence between cheap valuation and outflow warrants watch",
+  "esc_status": "N/A — no BCTC data (get_bctc_full returns \"Chua co du lieu\" despite stored PDF). All ratios from get_sector_comparison market-data fallback only.",
+  "cycle": "c122",
+  "generated_at": "2026-07-25T00:20:00Z",
+  "_processed": {
+    "fingerprint": "b65ea53a750a77a4852dc09ebe8a5d358da00149e2e63b5e8b8a03521423b62f",
+    "processedAt": "2026-07-25T01:46:16Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
