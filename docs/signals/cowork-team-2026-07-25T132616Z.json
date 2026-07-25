@@ -1,0 +1,49 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-25T13:26:16Z",
+    "matched_slots": [
+      "fb-weekend"
+    ],
+    "won_slots": [
+      "fb-weekend"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/fb-market-poster/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 7,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "closed",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "fb-weekend": "cron"
+    },
+    "cadence_minutes": {
+      "fb-weekend": null
+    },
+    "last_fired_timestamp": "2026-07-25T13:25:29Z",
+    "last_fired_slots": [
+      "fb-weekend"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "13:15",
+    "leader_lock": "acquired",
+    "dev_head": "active",
+    "devq": 5,
+    "signal_backlog": 11,
+    "note": "cycle_snapshot_promoted=false from emit_pressure_state — cycle-snapshot-latest.json still 2026-07-07T19:47:26Z while per-tick snapshots write fine; promote predicate refusing, not a mount/permission fault"
+  },
+  "priority": "low",
+  "createdAt": "2026-07-25T13:26:16Z"
+}
