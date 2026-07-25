@@ -1,31 +1,6 @@
 # dev-frontend notebook
 
-**Last updated:** 2026-07-24 | **Sprint:** QUALITY-AUDIT-FRONTEND-COVERAGE
-
----
-
-## Session: 2026-07-24 (FE-PG-BCTC-EVAL-_INDEX-FUNC-FIX — quality-audit dispatch)
-
-**DONE — /dashboard/bctc-eval 500→200; live root cause diverged from PO narrative**
-
-Zone health: 96 test files (+1); 2125 pass / 2 fail (same pre-existing QUE-TOOLTIP, confirmed unmodified in git status); tsc 0 errors | HEALTHY
-
-PO narrative: loader throws on a 404 from `/api/bctc-eval`. Live-verified (curl :3001/:3000, `docker exec` into the running container's `build/server/index.js`, `docker logs`) that narrative was WRONG on the throw site — the loader already caught upstream errors correctly (unchanged, kept as-is). The REAL crash: render-time `TypeError` in `StatusBadge` — `STATUS_CONFIG[status]` destructured `undefined`, because live mcp-server payloads only include `stage_statuses` keys for stages actually computed (MBB Q1-2026 live row has only keys 4-6, not 1-3) while the domain type declared all 6 required. `EvalTable` iterated all 6 STAGE_KEYS unconditionally with a lying `as EvalStatus` cast.
-
-Files updated:
-- `domain/bctc-eval.ts` — StageStatuses: all 6 keys made optional (matches live wire contract)
-- `components/bctc-eval/StatusBadge.tsx` — defensive: `status: EvalStatus | undefined`, renders neutral "—" instead of crashing
-- `components/bctc-eval/EvalTable.tsx` — removed the lying `as EvalStatus` cast
-- `routes/dashboard.bctc-eval._index.tsx` — extracted `loadBctcEvalListData()` as plain testable export (Remix strips `loader` under jsdom — dashboard.alerts.tsx precedent)
-- `routes/api.bctc-eval.$.tsx` — SEPARATE real bug found+fixed: bare `GET /api/bctc-eval` through this splat proxy appended a trailing slash (empty `params["*"]`), which mcp-server 404s. Extracted `buildBctcEvalUpstreamUrl()`. NOTE: `api.bctc-inspect.$.tsx` has the identical latent pattern, unexercised today, NOT fixed (out of ticket scope) — flag for a future ticket.
-- `__tests__/bctc-eval-list.test.tsx` +2 suites, new `__tests__/bctc-eval-proxy-trailing-slash.test.ts`
-- `docs/architecture/microservice/frontend/domain-model.md` — StageStatuses live-contract entry added
-
-Rebuild: `docker compose build frontend` + `up -d --no-deps frontend` (image ID verified match). Live before/after: `/dashboard/bctc-eval` 500→200; `/api/bctc-eval` proxy 404→200 (real MBB/HVN/HPG data); recompute POST sub-path regression-checked 200.
-
-Commit: `aaf487834` | tsc: 0 errors | vitest: 2125/2127 (same 2 pre-existing fail)
-
-Lesson: PO's narrated root cause pointed at the wrong file/layer — reproducing live against the actual served bundle (not just reading source) found the real crash site. Verify live before trusting any bug narrative, even a "PO-confirmed" one.
+**Last updated:** 2026-07-25 | **Sprint:** FRONTEND-FRESHNESS-TRANSPARENCY
 
 ---
 
@@ -79,6 +54,26 @@ rebuild_required=true but SCOPE-BOUND to CODE-ONLY per task — NO rebuild perfo
 
 ---
 
+## Session: 2026-07-25 (QUALITY-AUDIT-FRESHNESS-LIVE-PROBE — direct dispatch, quality-audit page freshness)
+
+**DONE — quality-audit FRESH checks upgraded from static badge-presence to LIVE-PROBE real recency**
+
+Zone health: unchanged (no apps/frontend/ code touched — scope was scripts/gen-frontend-page-checks.mjs + docs/data/quality-checklist.json only) | HEALTHY
+
+User complaint: "quality-audit for each page must verify data freshness against the database... many data forgot to update." Extended the generator per docs/handoffs/BA-FRONTEND-FRESHNESS-TRANSPARENCY.md §FR-6/EC-3/EC-4: FRESH checks now fetch each page's real endpoint at generation time and grade real age vs docs/data/frontend-data-coverage-map.json `sla_tiers` (never hardcoded) — PASS ≤0.5×thr, WARN ≤thr, FAIL >thr; off-hours realtime/intraday capped WARN (never FAIL) per VN market hours 02:00-08:59 UTC Mon-Fri (today=Sat, gate verified firing on alerts/foreign-flow).
+
+Anti-false-green field-trust rule: L2-fix rows (`_l2_fix`: marketDigest/alerts/qualityChecklist/vpsProxyHealth/priceHistory) require the literal canonical `data_asof`; other rows use the coverage-map's documented `row.asof` name; any other field found live is shown (real value+age) but capped NEEDS_REVIEW, never silently promoted to a certified PASS.
+
+Confirmed live: market-digest/alerts/vps-proxy-health/quality-checklist all genuinely carry `data_asof`. GENUINE GAP confirmed: `/api/price-history/:ticker` (Technical Zone inside `analysis`) still has NO top-level `data_asof` → new `FE-PG-ANALYSIS-TECHNICAL-PRICE-HISTORY-FRESH` = FAIL. quality-checklist's `generated_at` found ~45 days stale despite always-fresh `data_asof` (RISK-2) → new `FE-PG-QUALITY-AUDIT-CONTENT-REGEN-CORR` = WARN. Mechanism also organically surfaced bctc-eval (list+detail) lacking any real top-level asof — flagged NEEDS_REVIEW, not fabricated.
+
+Result: 175 new checks / 36 CAP-FE-PAGE-* groups (143 PASS/5 WARN/3 INFO/19 NEEDS_REVIEW/5 FAIL); stored summary 389/8/6/17/22/442 jq-tally-verified; check_id set identical + zero dupes across 2 consecutive runs (idempotent); 38 non-CAP-FE-PAGE-* caps untouched.
+
+Files: `scripts/gen-frontend-page-checks.mjs` (+378L probe engine), `docs/data/quality-checklist.json` (regenerated), `docs/agents/po/flow/scripts-registry.md` (pointer addendum).
+
+Lesson: naive DB timestamps ("YYYY-MM-DD HH:MM:SS", no offset) must be parsed as UTC explicitly — this host's Node default TZ resolves Europe/Paris (+2h); `new Date(str)` naive parsing would have silently skewed every age computation by 2h.
+
+---
+
 **Current state:** 96 test files; 2125 pass / 2 fail (pre-existing QUE-TOOLTIP schema); tsc 0 errors.
 **Tech stack:** Remix 2 + TypeScript 5 strict + Tailwind 3 + shadcn/ui + Vitest + Playwright
-**Key patterns:** useFetcher self-fetching zones; FreshnessBadge(intraday/daily/weekly SLA); safeFetch bounded; honest-NULL (null_reason + gray badge, never fabricate); DDD layers enforced; route-colocated DTO/parser/formatter families kept textually distinct across merged pages (do-not-homogenize); Playwright G12 gate must run with an unused `PLAYWRIGHT_PORT` override if the live frontend Docker container occupies :3001 (reuseExistingServer piggybacks on it otherwise, false-greening against stale code). Shared pure helpers used by >=2 sibling split-out components go to `domain/` (formatters or a feature-scoped `domain/<feature>/`), never colocated in one sibling — avoids components<->components circular imports (FACTORY-FRONTEND-split-orchestration).
+**Key patterns:** useFetcher self-fetching zones; FreshnessBadge(intraday/daily/weekly SLA); safeFetch bounded; honest-NULL (null_reason + gray badge, never fabricate); DDD layers enforced; route-colocated DTO/parser/formatter families kept textually distinct across merged pages (do-not-homogenize); Playwright G12 gate must run with an unused `PLAYWRIGHT_PORT` override if the live frontend Docker container occupies :3001 (reuseExistingServer piggybacks on it otherwise, false-greening against stale code). Shared pure helpers used by >=2 sibling split-out components go to `domain/` (formatters or a feature-scoped `domain/<feature>/`), never colocated in one sibling — avoids components<->components circular imports (FACTORY-FRONTEND-split-orchestration). quality-audit FRESH checks are now LIVE-PROBED (not static) — an undocumented-field fallback is always capped NEEDS_REVIEW, never a certified PASS, to prevent compute-time fields masquerading as real recency (gen-frontend-page-checks.mjs).
