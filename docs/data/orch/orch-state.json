@@ -390,8 +390,8 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "router",
-    "updated_by": "dev-mcp-server",
-    "updated_at": "2026-07-25T00:45:39Z"
+    "updated_at": "2026-07-25T01:27:15Z",
+    "updated_by": "developer"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6605,16 +6605,6 @@
         "zone": "docs/agents/market-watcher/",
         "status": "BACKLOG",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MARKET-WATCHER-DOC-PARAM-DRIFT"
-      },
-      {
-        "id": "FIX-FB-GATE-POINT-PCT-MATH",
-        "title": "fb-gate Check-F: point-change vs percent math consistency",
-        "type": "FIX",
-        "status": "BACKLOG",
-        "priority": "P2",
-        "zone": "cross-service/",
-        "size": "S",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-FB-GATE-POINT-PCT-MATH"
       },
       {
         "id": "FIX-FB-GATE-STALE-MACRO-GUARD",
@@ -14983,6 +14973,27 @@
         "rebuild_required": true,
         "branch": null,
         "review_note": "dev-mcp-server: root cause = 2 compounding bugs in signalOutcomeStore.ts (Option-B /price/history envelope-shape parse bug — flat array vs real {code,history}, same class as 1945a — + hardcoded days=3 unusable for old dates; baseline price_at_signal had NO Option-B fallback at all against market_prices_history's rolling ~24h purge). Live-verified 102/105 rows stuck pending despite hourly cron reporting success. Fixed via canonical getPriceHistory client + dynamic days + injectable fetchHistoryFn. Live-copy-DB proof (real stock-price service, not the live container): 102 pending -> 7 (98/105 checked_at populated), remaining 7 legit (2 non-ticker MACRO/MULTI signals, 5 too-recent for 48h window) -- self-heals via the SAME already-scheduled hourly cron once deployed, no backfill script needed. Also fixed folded_scope_orphan_fk durably: cleanExpired()/checkStaleAgentSignals() bulk DELETEs were throwing FOREIGN KEY constraint failed (rolled back, 0 rows) whenever any matched row was still referenced by signal_outcomes -- live-verified 104/5983 expired rows blocked -- guarded both with NOT IN subquery; getAccuracyStats INNER->LEFT JOIN so orphans are not silently dropped from stats; the 1 existing orphan (id=66) resolves normally via the fixed generic resolver, no special-case script. Added checkStalledResolutionLiveness() self-alert guard (>=1 BUG alert/day if rows sit unresolved >72h). SCOPE NOTE: verification_gate (b) get_calibration_report is a DIFFERENT subsystem (prediction_claims/calibrationReportJob.ts) -- live DB already shows computed_at=2026-07-19/resolved=6 (independently self-recovered) -- gate already passes, did not touch that code. Evidence: tsc clean, new suite 9/9 pass, affected+precedent suites 147/147 pass, toolCount=184/cronJobCount=88 unaffected, local server boot clean. Commits 1f4b491b1 (code+test) + 537911454 (memory), pushed origin/main. QA: verify LIVE named-vol DB post-rebuild per verification_gate (a)/(b)/(c)."
+      },
+      {
+        "id": "FIX-FB-GATE-POINT-PCT-MATH",
+        "title": "fb-gate Check-F: point-change vs percent math consistency",
+        "type": "FIX",
+        "status": "REVIEW",
+        "priority": "P2",
+        "zone": "cross-service/",
+        "size": "S",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-FB-GATE-POINT-PCT-MATH",
+        "promoted_at": "2026-07-25T01:18:13Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-25T01:27:28Z",
+        "claimed_at": "2026-07-25T01:18:13Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "updated_by": "developer",
+        "next_agent": "qa",
+        "rebuild_required": false,
+        "branch": null,
+        "review_note": "developer: Added Check-H to scripts/fb-data-integrity-gate.sh — BLOCKs when |stated index point-change - implied point-change (pct x prev_close)| exceeds POINT_PCT_MATH_TOLERANCE (new header const, 1.0 pt). prev_close derived from live snapshot only: close/(1+changePct/100), never hardcoded. Generic via INDEX_ALIASES (VN-Index/VN30/HNX-Index/UPCOM), not one ticker. NOTE: ticket minted \"Check-F\" 2026-06-20 before letters F (currency-unit) and G (structural) were claimed by other shipped checks -- implemented as Check-H, next unclaimed letter, documented inline in the script header. RAW fence (both fixtures, live-snapshot-injected, no network dependency): fixture prev_close=1800, \"giam 0,32 diem (-0,32%)\" -> [BLOCK] Check-H point-pct-math: VN-Index stated \"giam 0.32 diem (-0.32%)\" -- implied point change from % at prev_close~1800.00 is -5.76 diem, delta=5.44 > 1.0pt tolerance; exit 1. Same prev_close, \"giam 5,90 diem (-0,32%)\" -> [PASS] fb-data-integrity-gate: 0 violations; exit 0. RED baseline confirmed via git stash: pre-fix script falsely PASSed the inconsistent fixture. Regression: real docs/social/fb-post-2026-07-24.md (VN-Index -13 diem/-0,78%) + matching live snapshot -> 0 violations (no false positive); same file with live API unreachable -> graceful skip, 0 violations. bash -n + shellcheck clean (1 pre-existing unrelated SC2034 on untouched POST_DATE). Simplicity gate Q1-Q4 all NO. Commits 4e1b07937 (fix) + d7a7c624c (decision journal), pushed origin/main."
       }
     ],
     "qa": [],
@@ -15002,7 +15013,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-25T00:17:59Z",
+    "last_triaged_at": "2026-07-25T01:18:13Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": []
   },
