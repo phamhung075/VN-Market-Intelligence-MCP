@@ -419,11 +419,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-07-25T12:56:34Z",
-    "updated_by": "dev-mcp-server"
+    "status": "in_progress",
+    "active_task_id": "FIX-PREDCLAIM-DASHBOARD-HITRATE-HONESTY",
+    "next_agent": "dev-frontend",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-PREDCLAIM-DASHBOARD-HITRATE-HONESTY — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-25T13:14:43Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -10818,30 +10819,6 @@
         "updated_at": "2026-07-25T07:02:40Z"
       },
       {
-        "id": "FIX-PREDCLAIM-DASHBOARD-HITRATE-HONESTY",
-        "title": "'Du bao AI & Ket qua' advertises a 66,7% hit-rate with no denominator and no exclusion reason — the figure is computed on 6 of 17 claims, all from Apr-May, frozen since 2026-06-21, and reads as live",
-        "status": "BACKLOG",
-        "type": "FIX",
-        "priority": "P1",
-        "size": "S",
-        "zone": "apps/frontend/",
-        "owner": "dev-frontend",
-        "next_agent": "dev-frontend",
-        "created_at": "2026-07-25T07:14:46Z",
-        "created_by": "po/triage-20260725T0711-user-demand-predclaims",
-        "root_cause": "Live calibration block read from the served endpoint 2026-07-25T07:11:04Z: total=17, resolved=6, correct=4, wrong=2, pending=5, excluded=6, hitRate=0.6666666666666666, avgBrier=0.2135. The page renders 66,7% as the AI's accuracy. That number is 4/(4+2) over SIX claims — 35% of the population — while 6 are unscoreable and 5 unresolved. Worse than the small denominator: the six scored claims are ids 2,3,4,5,6,7, ALL created 2026-04-27 or 2026-05-03 and ALL resolved by 2026-06-21T16:35Z. Because every claim minted since 2026-06-14 has creation_price NULL, no new claim can ever enter the numerator or denominator — the badge is STRUCTURALLY FROZEN at 66,7% and has been for over a month, yet it carries no staleness marker and no denominator. A user reading the page cannot distinguish 'the AI is running at 66,7%' from 'the AI has not been scored in five weeks'. This is the passive-health-masks-dead-data pattern (feedback_passive_health_masks_dead_data.md): the green number is the reason nobody noticed the 6-week outage. PO POSITION: the user was right to distrust it. The badge as rendered overstates the track record, and the exclusion bucket that would have revealed the problem is a bare unexplained label.",
-        "deliverable": "(a) Never render a bare hit-rate. Show the denominator inline — e.g. '66,7% (4 dung / 2 sai tren 6 du bao da cham diem)' — so the 6-of-17 basis is visible without interaction. (b) Render a STALENESS marker driven by data, not prose: surface the resolved_at of the most recently SCORED claim (live: 2026-06-21) and warn when it exceeds a threshold, e.g. 'Chua co du bao nao duoc cham diem tu 21/06/2026'. Derive the date from the payload — do not hardcode it. (c) Explain 'Loai tru' at the point of use. A tooltip or inline note stating these claims had no entry price at creation so direction could not be evaluated, and that they are excluded from the accuracy figure. Consume the machine-readable reason produced by FIX-PREDCLAIM-BACKFILL-NULL-CREATIONPRICE where present; fall back to the generic explanation where absent. (d) Show the full disposition breakdown (17 total = 4 dung + 2 sai + 5 dang cho + 6 loai tru) near the badge so the buckets always visibly sum to the total. (e) Vietnamese output must follow feedback_market_report_plain_vietnamese.md — plain language, decimal comma, no untranslated jargon.",
-        "acceptance": "Against the LIVE endpoint the page renders the denominator, the last-scored date, and the exclusion explanation without any hardcoded number or date — confirmed by mutating the fixture (e.g. excluded=11, hitRate=null) and observing the UI track it. hitRate=null still renders 'Chua co' and NEVER '0%' per the existing contract in dashboard.prediction-claims.tsx:27. No frontend-side recomputation of hitRate — the serve layer stays the single source for the figure; the page only adds context around it.",
-        "related": [
-          "FIX-PREDCLAIM-CREATIONPRICE-UNGATE-ZOD-CONTRACT",
-          "FIX-PREDCLAIM-BACKFILL-NULL-CREATIONPRICE",
-          "FEAT-PREDCLAIM-UPDATED-AT",
-          "FIX-PRED-CLAIMS-EXCLUDED-SERVE-DISPLAY"
-        ],
-        "note": "Deliberately INDEPENDENT of the two mcp-server rows — this is the user-visible trust surface and it can ship immediately without waiting on the producer fix or the backfill. Even after both land, the denominator and staleness affordances remain correct and necessary. Predecessor FIX-PRED-CLAIMS-EXCLUDED-SERVE-DISPLAY (commit baff449ae) made the 'Loai tru' label appear; this row makes it MEAN something to the reader.",
-        "updated_at": "2026-07-25T07:16:52Z"
-      },
-      {
         "id": "FEAT-PREDCLAIM-UPDATED-AT",
         "title": "Add a real updated_at audit column to prediction_claims, maintained on every write, surfaced per-row on the Du bao AI page so a reader can tell at a glance whether a prediction was actually refreshed",
         "status": "BACKLOG",
@@ -15569,9 +15546,39 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-25T12:44:59Z",
+    "last_triaged_at": "2026-07-25T13:14:43Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-PREDCLAIM-DASHBOARD-HITRATE-HONESTY",
+        "title": "'Du bao AI & Ket qua' advertises a 66,7% hit-rate with no denominator and no exclusion reason — the figure is computed on 6 of 17 claims, all from Apr-May, frozen since 2026-06-21, and reads as live",
+        "status": "IN_PROGRESS",
+        "type": "FIX",
+        "priority": "P1",
+        "size": "S",
+        "zone": "apps/frontend/",
+        "owner": "dev-frontend",
+        "next_agent": "dev-frontend",
+        "created_at": "2026-07-25T07:14:46Z",
+        "created_by": "po/triage-20260725T0711-user-demand-predclaims",
+        "root_cause": "Live calibration block read from the served endpoint 2026-07-25T07:11:04Z: total=17, resolved=6, correct=4, wrong=2, pending=5, excluded=6, hitRate=0.6666666666666666, avgBrier=0.2135. The page renders 66,7% as the AI's accuracy. That number is 4/(4+2) over SIX claims — 35% of the population — while 6 are unscoreable and 5 unresolved. Worse than the small denominator: the six scored claims are ids 2,3,4,5,6,7, ALL created 2026-04-27 or 2026-05-03 and ALL resolved by 2026-06-21T16:35Z. Because every claim minted since 2026-06-14 has creation_price NULL, no new claim can ever enter the numerator or denominator — the badge is STRUCTURALLY FROZEN at 66,7% and has been for over a month, yet it carries no staleness marker and no denominator. A user reading the page cannot distinguish 'the AI is running at 66,7%' from 'the AI has not been scored in five weeks'. This is the passive-health-masks-dead-data pattern (feedback_passive_health_masks_dead_data.md): the green number is the reason nobody noticed the 6-week outage. PO POSITION: the user was right to distrust it. The badge as rendered overstates the track record, and the exclusion bucket that would have revealed the problem is a bare unexplained label.",
+        "deliverable": "(a) Never render a bare hit-rate. Show the denominator inline — e.g. '66,7% (4 dung / 2 sai tren 6 du bao da cham diem)' — so the 6-of-17 basis is visible without interaction. (b) Render a STALENESS marker driven by data, not prose: surface the resolved_at of the most recently SCORED claim (live: 2026-06-21) and warn when it exceeds a threshold, e.g. 'Chua co du bao nao duoc cham diem tu 21/06/2026'. Derive the date from the payload — do not hardcode it. (c) Explain 'Loai tru' at the point of use. A tooltip or inline note stating these claims had no entry price at creation so direction could not be evaluated, and that they are excluded from the accuracy figure. Consume the machine-readable reason produced by FIX-PREDCLAIM-BACKFILL-NULL-CREATIONPRICE where present; fall back to the generic explanation where absent. (d) Show the full disposition breakdown (17 total = 4 dung + 2 sai + 5 dang cho + 6 loai tru) near the badge so the buckets always visibly sum to the total. (e) Vietnamese output must follow feedback_market_report_plain_vietnamese.md — plain language, decimal comma, no untranslated jargon.",
+        "acceptance": "Against the LIVE endpoint the page renders the denominator, the last-scored date, and the exclusion explanation without any hardcoded number or date — confirmed by mutating the fixture (e.g. excluded=11, hitRate=null) and observing the UI track it. hitRate=null still renders 'Chua co' and NEVER '0%' per the existing contract in dashboard.prediction-claims.tsx:27. No frontend-side recomputation of hitRate — the serve layer stays the single source for the figure; the page only adds context around it.",
+        "related": [
+          "FIX-PREDCLAIM-CREATIONPRICE-UNGATE-ZOD-CONTRACT",
+          "FIX-PREDCLAIM-BACKFILL-NULL-CREATIONPRICE",
+          "FEAT-PREDCLAIM-UPDATED-AT",
+          "FIX-PRED-CLAIMS-EXCLUDED-SERVE-DISPLAY"
+        ],
+        "note": "Deliberately INDEPENDENT of the two mcp-server rows — this is the user-visible trust surface and it can ship immediately without waiting on the producer fix or the backfill. Even after both land, the denominator and staleness affordances remain correct and necessary. Predecessor FIX-PRED-CLAIMS-EXCLUDED-SERVE-DISPLAY (commit baff449ae) made the 'Loai tru' label appear; this row makes it MEAN something to the reader.",
+        "updated_at": "2026-07-25T13:14:43Z",
+        "promoted_at": "2026-07-25T13:14:43Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-25T13:14:43Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
