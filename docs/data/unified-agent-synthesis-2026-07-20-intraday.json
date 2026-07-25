@@ -1,0 +1,84 @@
+{
+  "metadata": {
+    "cycle_id": "intraday-2026-07-20T07:20:43Z",
+    "dish_type": "intraday",
+    "date_vn": "2026-07-20",
+    "timestamp_utc": "2026-07-20T07:20:43Z",
+    "quality_verdict": "degraded",
+    "layers_walked_summary": "partial — [gap:L2_US_macro_absent_no_gap_token] [gap:L3_VN_macro_incomplete] [gap:L4_partial_pillar_coverage] [gap:business_context_absent]"
+  },
+  "tnb_synthesis": {
+    "clock_phase": "slowdown",
+    "regime_state": "carry-unwind",
+    "regime_confidence": "MEDIUM",
+    "us_macro_layer": "Unavailable (macro fixture fallback, is_estimate=true). Fed funds 5.33% but carry spread inputs missing per DSI-INV-1.",
+    "vn_macro_layer": "USD/VND 26110 > 25500 threshold breach (carry tightening). CPI/VIRA unavailable. Gold 4009.3 risk-off (+0.26%). Sentiment z=-1.32 bearish (bear ratio 32% vs bull 24%). Market hexagram Khiêm: favorable trend but negative signal 52%.",
+    "valuation_layer": "Earnings yield 8.2% >> deposit 5% (CHEAP). Real estate 2/4 pillars, banking 2/4 pillars insufficient. Conviction capped MEDIUM/LOW retroactively. Foreign room: banking exhausted 79-96%, real estate available 1-6%."
+  },
+  "conviction_calls": [
+    {
+      "ticker": "VHM",
+      "conviction_level": "LOW",
+      "direction": "NEUTRAL",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Real estate momentum vs macro carry pressure + foreign room available; 2/4 pillars capped to LOW"
+    },
+    {
+      "ticker": "VIC",
+      "conviction_level": "LOW",
+      "direction": "NEUTRAL",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Highest RS but macro pillars weak; 2/4 pillar coverage insufficient"
+    },
+    {
+      "ticker": "VCB",
+      "conviction_level": "LOW",
+      "direction": "NEUTRAL",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Banking FII de-rotation; foreign room 81% exhausted; carry unwind pressure dominant"
+    },
+    {
+      "ticker": "BID",
+      "conviction_level": "LOW",
+      "direction": "NEUTRAL",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Sector headwind from FX pressure; earnings yield attractive but not offset by macro risk"
+    }
+  ],
+  "sector_phases": [
+    {
+      "sector_vn": "bất động sản",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "negative"
+    },
+    {
+      "sector_vn": "ngân hàng",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "cash",
+      "direction_this_cycle": "negative"
+    },
+    {
+      "sector_vn": "chứng khoán",
+      "investment_phase": "contraction",
+      "pyramid_tier": "cash",
+      "direction_this_cycle": "negative"
+    }
+  ],
+  "known_gaps": [
+    "[gap:L2_US_macro_absent_no_gap_token]",
+    "[gap:L3_VN_macro_incomplete]",
+    "[gap:L4_partial_pillar_coverage]",
+    "[gap:business_context_absent]",
+    "[L6-gap: single-pillar thesis — real estate 2/4 pillars aligned]",
+    "[L6-gap: single-pillar thesis — banking 2/4 pillars aligned]"
+  ],
+  "causal_chains": [
+    "Japan BoJ yield curve control → JPY strength → VND depreciation (USD/VND 26110 > 25500) → FII carry unwind from banking/securities → sector-wide selloff (banking -3.96%, real estate -4.13%, securities -5.78%)"
+  ],
+  "clusters_summary": {
+    "qualified": 3,
+    "tickers_covered": ["VHM", "VIC", "KBC", "KDH", "PDR", "DIG", "DXG", "TCH", "NVL", "VRE", "VCB", "BID", "ACB", "EIB", "MBB", "SHB", "VPB", "CTG", "VCI", "HCM", "SSI", "VIX", "VND"],
+    "sectors_covered": ["real_estate", "banking", "securities"]
+  }
+}

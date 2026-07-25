@@ -1,0 +1,80 @@
+{
+  "metadata": {
+    "cycle_id": "morning-2026-07-22T05:25:17Z",
+    "dish_type": "morning",
+    "date_vn": "2026-07-22",
+    "timestamp_utc": "2026-07-22T05:25:17Z",
+    "quality_verdict": "degraded",
+    "layers_walked_summary": "partial — [gap:L3_VN_macro_incomplete] [gap:business_context_absent] [gap:L6_gap_catalogue_not_enumerated]"
+  },
+  "tnb_synthesis": {
+    "clock_phase": "transition",
+    "regime_state": "geopolitical_risk_off",
+    "regime_confidence": "MEDIUM",
+    "us_macro_layer": "US-Iran escalation with military strikes; oil +$2.1 to $92.31/bbl; geopolitical risk premium active; Fed rate 3.63% neutral posture (source_tier=2)",
+    "vn_macro_layer": "USD/VND at 26140 (depreciation bearish); carry spread 1.37pp NEUTRAL; CPI/VIRA data unavailable; market sentiment +1.117 z-score positive; foreign room on ACB/CTG 80%+ (carry unwind risk)",
+    "valuation_layer": "Banking: mixed 2-3 pillars, valuation fairly valued but oversold technicals. Real estate: extreme oversold (RSI<25) on VHM/VIC/VRE, fundamental disconnect. Energy: oil rally benefit from geopolitical premium."
+  },
+  "conviction_calls": [
+    {
+      "ticker": "VCB",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Oversold technicals + FII carry unwind on ACB/CTG high room + fair valuation; short-term cap pending macro data"
+    },
+    {
+      "ticker": "GAS",
+      "conviction_level": "MEDIUM",
+      "direction": "BUY",
+      "pillars_aligned_count": 3,
+      "rationale_one_liner": "Oil rally from geopolitical premium; energy sector rotation upside play"
+    },
+    {
+      "ticker": "VHM",
+      "conviction_level": "LOW",
+      "direction": "SELL",
+      "pillars_aligned_count": 1,
+      "rationale_one_liner": "Extreme oversold (RSI 19.5) without fundamental driver; realty sector contraction signal"
+    }
+  ],
+  "sector_phases": [
+    {
+      "sector_vn": "ngân hàng",
+      "investment_phase": "transition",
+      "pyramid_tier": "defensive",
+      "direction_this_cycle": "negative"
+    },
+    {
+      "sector_vn": "bất động sản",
+      "investment_phase": "contraction",
+      "pyramid_tier": "cash",
+      "direction_this_cycle": "negative"
+    },
+    {
+      "sector_vn": "dầu khí",
+      "investment_phase": "expansion",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "positive"
+    },
+    {
+      "sector_vn": "công nghệ",
+      "investment_phase": "expansion",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "mixed"
+    }
+  ],
+  "known_gaps": [
+    "[gap:L3_VN_macro_incomplete — CPI trend + VIRA/FX reserves unavailable]",
+    "[gap:business_context_absent — no bctc_signal or fundamental data this cycle]",
+    "[gap:single_pillar_thesis — VCB/ACB/BID 2-3 pillars only, defer EPS confirmation]"
+  ],
+  "causal_chains": [
+    "[US-Iran escalation] → [geopolitical risk premium on oil/gold] → [safe-haven demand + FII exit carry trades] → [USD/VND depreciation 26140 + ACB/CTG high room unwind] → [banking+realty tank on dual pressures (FII exit + rate headwind)]"
+  ],
+  "clusters_summary": {
+    "qualified": 3,
+    "tickers_covered": ["VCB", "GAS", "VHM", "BID", "ACB", "CTG", "VIC", "VRE"],
+    "sectors_covered": ["banking", "energy", "real_estate", "technology"]
+  }
+}

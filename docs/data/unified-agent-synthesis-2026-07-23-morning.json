@@ -1,0 +1,99 @@
+{
+  "metadata": {
+    "cycle_id": "morning-2026-07-23T05:25Z",
+    "dish_type": "morning",
+    "date_vn": "2026-07-23",
+    "timestamp_utc": "2026-07-23T05:25:16Z",
+    "quality_verdict": "degraded",
+    "layers_walked_summary": "partial — [gap:L2_geopolitical_event_absent] [gap:L3_VN_macro_incomplete] [gap:L4_business_context_absent] [gap:L6_gap_catalogue_enumerated]"
+  },
+  "tnb_synthesis": {
+    "clock_phase": "transition",
+    "regime_state": "risk-off-emerging",
+    "regime_confidence": "MEDIUM",
+    "us_macro_layer": "Gold bullish at 4.123 USD/oz (safe-haven demand). Oil neutral at 96.09 USD/barrel. [gap:US_PMI_unavailable] [gap:Fed_action_signal_unavailable].",
+    "vn_macro_layer": "USD/VND 26.120 (above 25.500 threshold, bearish VND depreciation). Carry regime NEUTRAL (1.37pp spread, 5% SBV vs 3.63% Fed). Equities fairly valued (6.64% earnings yield > 5% deposit rate). [gap:CPI_trend_unavailable] [gap:VIRA_FX_reserves_unavailable].",
+    "valuation_layer": "Banking sector 2/4 pillars aligned (carry/valuation discipline). [gap:money_supply_trend] [gap:earnings_outlook]. Real-estate mixed (VHM/VIC +2-4%, DXG/PDR -5-7%)."
+  },
+  "conviction_calls": [
+    {
+      "ticker": "VCB",
+      "conviction_level": "MEDIUM",
+      "direction": "SELL",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Banking sector under TA pressure (BB breakdown, carry regime neutral contradicts gold bullish signal) — cap MEDIUM due to missing business fundamentals."
+    },
+    {
+      "ticker": "ACB",
+      "conviction_level": "MEDIUM",
+      "direction": "SELL",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Banking sector TA convergence (BB breakdown, oversold pressure) — missing BCTC data prevents high conviction."
+    },
+    {
+      "ticker": "VHM",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 1,
+      "rationale_one_liner": "Real-estate selective support (+2.29%) unconfirmed by sector macro data; insufficient pillars for conviction above MEDIUM."
+    },
+    {
+      "ticker": "VIC",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 1,
+      "rationale_one_liner": "Real-estate strength (+4.30%) stands against market decline; single-pillar thesis without fundamentals."
+    }
+  ],
+  "sector_phases": [
+    {
+      "sector_vn": "banking",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "negative"
+    },
+    {
+      "sector_vn": "real_estate",
+      "investment_phase": "transition",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "mixed"
+    },
+    {
+      "sector_vn": "securities",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "negative"
+    }
+  ],
+  "known_gaps": [
+    "[gap:US_PMI_unavailable]",
+    "[gap:Fed_action_signal_unavailable]",
+    "[gap:CPI_trend_unavailable]",
+    "[gap:VIRA_FX_reserves_unavailable]",
+    "[gap:business_context_unavailable]",
+    "[L6-gap: single-pillar thesis — banking sector 2/4 pillars aligned; missing money-supply trend and earnings outlook]",
+    "[L6-gap: macro-micro contradiction — carry NEUTRAL contradicts gold bullish signal]",
+    "[gap:signal_data_thin] — source (a) returned empty agent_signals array; source (b) docs/signals/ unreachable (tool grant limitation)"
+  ],
+  "causal_chains": [
+    "Risk-off macro (gold demand up to 4.123 USD/oz, USD/VND depreciation pressure at 26.120) → VN banking sector panic selling (Bollinger Band breakdowns on VCB, ACB, MBB, VPB; 2x RSI oversold) despite neutral carry regime (1.37pp spread) → selective real-estate strength (VHM +2.29%, VIC +4.30%) contradicts bearish signal pattern."
+  ],
+  "clusters_summary": {
+    "qualified": 1,
+    "tickers_covered": [
+      "VCB",
+      "ACB",
+      "MBB",
+      "VPB",
+      "VHM",
+      "VIC",
+      "HCM",
+      "VND"
+    ],
+    "sectors_covered": [
+      "banking",
+      "real_estate",
+      "securities"
+    ]
+  }
+}

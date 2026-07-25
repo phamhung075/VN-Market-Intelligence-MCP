@@ -1,0 +1,109 @@
+{
+  "metadata": {
+    "cycle_id": "eod-2026-07-20T08:50Z",
+    "dish_type": "eod",
+    "date_vn": "2026-07-20",
+    "timestamp_utc": "2026-07-20T08:50:23Z",
+    "quality_verdict": "degraded",
+    "layers_walked_summary": "partial — [gap:L2_US_macro_absent] [gap:L3_VN_macro_incomplete] [gap:L4_partial_pillar_coverage] [gap:business_context_absent]"
+  },
+
+  "tnb_synthesis": {
+    "clock_phase": "slowdown",
+    "regime_state": "risk-off",
+    "regime_confidence": "HIGH",
+    "us_macro_layer": "Fed funds 5.33%, carry regime unavailable (is_estimate=true). Equity yield 8.2% vs SBV deposit 5% = +3.2pp spread (CHEAP valuation). PMI and EFFR-IORB data absent.",
+    "vn_macro_layer": "USD/VND at 26110 (above 25500 threshold, bearish VND carry tightening). CPI trend unavailable. FX reserves / VIRA unavailable. Market sentiment -1.39 z-score (bearish divergence).",
+    "valuation_layer": "Banking sector: money supply tightening (carry pressure), capital cost rising, EPS mixed, valuation cheap (+3.2pp yield spread). Phase: SLOWDOWN, Tier: fixed_income. Real estate: same pillar structure but momentum divergence (VHM/VIC decile 10 accumulation) overrides sector decline. Phase: SLOWDOWN→RECOVERY, Tier: equity. Agriculture: export upside (sầu riêng +100% yoy), carry-normalized sector recovery. Phase: RECOVERY, Tier: equity. Securities: broker profit collapse (-79% to -82% yoy), earnings reset pending. Phase: CONTRACTION, Tier: cash."
+  },
+
+  "conviction_calls": [
+    {
+      "ticker": "VHM",
+      "conviction_level": "MEDIUM",
+      "direction": "ACCUMULATE",
+      "pillars_aligned_count": 3,
+      "rationale_one_liner": "Real estate momentum decile 10 (roc +50.4%, z +2.16) diverges from sector sell-off; valuations reset on carry tightening; smart-money accumulation signal"
+    },
+    {
+      "ticker": "VIC",
+      "conviction_level": "MEDIUM",
+      "direction": "ACCUMULATE",
+      "pillars_aligned_count": 3,
+      "rationale_one_liner": "Real estate momentum decile 10 (roc +72.6%, z +2.98); Kinh Dịch Tỷ (8) positive overlay; sector reset opportunity"
+    },
+    {
+      "ticker": "VCB",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 3,
+      "rationale_one_liner": "Banking valuation cheap (yield +3.2pp vs deposits); carry pressure temporary; earnings resilience unconfirmed"
+    },
+    {
+      "ticker": "BID",
+      "conviction_level": "MEDIUM",
+      "direction": "ACCUMULATE",
+      "pillars_aligned_count": 3,
+      "rationale_one_liner": "Banking momentum decile 9 (roc +11.5%, z +0.72) leads sector decline; valuation attractive on reset"
+    },
+    {
+      "ticker": "AGRICULTURE_SECTOR",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 3,
+      "rationale_one_liner": "Export opportunity (sầu riêng +100% yoy pipeline) offsets carry pressure; sector recovery timing uncertain"
+    }
+  ],
+
+  "sector_phases": [
+    {
+      "sector_vn": "ngân hàng",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "negative"
+    },
+    {
+      "sector_vn": "bất động sản",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "mixed"
+    },
+    {
+      "sector_vn": "nông nghiệp & thủy sản",
+      "investment_phase": "recovery",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "negative_but_divergence"
+    },
+    {
+      "sector_vn": "chứng khoán",
+      "investment_phase": "contraction",
+      "pyramid_tier": "cash",
+      "direction_this_cycle": "negative"
+    },
+    {
+      "sector_vn": "thép",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "defensive",
+      "direction_this_cycle": "negative"
+    }
+  ],
+
+  "known_gaps": [
+    "[gap: carry regime unavailable — macro is_estimate=true] — cannot compute FII flow thesis from rate differential",
+    "[gap: US_macro_unavailable — PMI/EFFR-IORB missing] — L2 floor: only equity yield vs deposit rate cited",
+    "[gap: L3_VN_macro_incomplete] — CPI and VIRA/FX-reserves absent",
+    "[gap: business_context_unavailable] — no bctc_signal_* or fundamental_* data (BCTC-EXTRACT-QUALITY sprint, 14/16 serve-blocked)"
+  ],
+
+  "causal_chains": [
+    "[gap: no US macro signal in cycle] → VND carry pressure at 26110 (25500 threshold breached) → banking/real-estate sector net-sell by foreigners → VHM/VIC strong momentum (smart money accumulating) contradicts macro signal",
+    "Broker profit collapse 2H25 (-79% avg yoy) → sector earnings reset required → securities conviction LOW pending rebalance",
+    "Export opportunity (sầu riêng +100% yoy pipeline) → agriculture sector recovery despite immediate carry pressure → [phase: recovery] justified"
+  ],
+
+  "clusters_summary": {
+    "qualified": 5,
+    "tickers_covered": ["DBC", "GVR", "VNM", "DPM", "MSN", "VCB", "BID", "ACB", "CTG", "MBB", "VPB", "EIB", "SHB", "VHM", "VIC", "KDH", "NVL", "VRE", "TCH", "KBC", "D2D", "DIG", "DXG", "PDR", "VIX", "SSI", "VCI", "VND", "HCM", "HPG"],
+    "sectors_covered": ["agriculture", "banking", "real_estate", "securities", "steel"]
+  }
+}

@@ -1,0 +1,76 @@
+{
+  "metadata": {
+    "cycle_id": "evening-2026-07-24T19:51:19Z",
+    "dish_type": "evening",
+    "date_vn": "2026-07-25",
+    "timestamp_utc": "2026-07-24T19:51:19Z",
+    "quality_verdict": "degraded",
+    "layers_walked_summary": "partial — [gap:L2_US_macro_absent_no_gap_token] [gap:L3_VN_macro_incomplete] [gap:L4_partial_pillar_coverage] [gap:business_context_unavailable]"
+  },
+  "tnb_synthesis": {
+    "clock_phase": "slowdown",
+    "regime_state": "risk-off-light",
+    "regime_confidence": "MEDIUM",
+    "us_macro_layer": "Fed funds 3.63% holding; no PMI/consumer sentiment data; geopolitical event signal absent",
+    "vn_macro_layer": "USD/VND 26.130 (carry pressure); CPI trend unavailable; VIRA/FX-reserves unavailable",
+    "valuation_layer": "All sectors scored slowdown phase (COC rising, EPS mixed/weak, M2 flat). Banking 2/4 pillars (COC+valuation risk), Real estate 1-2/4 (valuation acute), Steel 1/4 (cost pressures)."
+  },
+  "conviction_calls": [
+    {
+      "ticker": "VCB",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Carry unwind pressure on FII; strong fundamentals insufficient to overcome macro headwind at this quality level."
+    },
+    {
+      "ticker": "VHM",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Real estate supply overhang; recovery signal (Kinh Dịch Sư) contradicted by sector sell-off and weak Q2 earnings."
+    },
+    {
+      "ticker": "HPG",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 1,
+      "rationale_one_liner": "Steel cycle weakness; Kinh Dịch Tập Khảm (major reversal) signals distribution at 87% confidence."
+    }
+  ],
+  "sector_phases": [
+    {
+      "sector_vn": "ngân hàng",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "negative"
+    },
+    {
+      "sector_vn": "bất động sản",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "negative"
+    },
+    {
+      "sector_vn": "thép",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "negative"
+    }
+  ],
+  "known_gaps": [
+    "[gap:L2_US_macro_absent_no_gap_token]",
+    "[gap:L3_VN_macro_incomplete]",
+    "[gap:L4_partial_pillar_coverage]",
+    "[gap:business_context_unavailable]"
+  ],
+  "causal_chains": [
+    "Fed hold 3.63% → carry spread narrow 1.37pp → FII withdrawal pressure (ACB foreign room 81.9% exhausted) → banking sector net-sell -0.35% avg",
+    "Global risk-off (gold +$9.5 to $4056.3) → VND depreciation vs 26.130 → real estate developer capital constraints → sector sell-off -4.03% avg"
+  ],
+  "clusters_summary": {
+    "qualified": 3,
+    "tickers_covered": ["VCB", "VHM", "HPG", "ACB", "BID", "CTG", "EIB", "MBB", "SHB", "VPB", "DIG", "D2D", "DXG", "KDH", "NVL", "PDR", "TCH", "VIC", "VRE", "HSG", "NKG"],
+    "sectors_covered": ["banking", "real_estate", "steel"]
+  }
+}

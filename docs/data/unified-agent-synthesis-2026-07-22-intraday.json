@@ -1,0 +1,83 @@
+{
+  "metadata": {
+    "cycle_id": "intraday-2026-07-22T02:24:00Z",
+    "dish_type": "intraday",
+    "date_vn": "2026-07-22",
+    "timestamp_utc": "2026-07-22T02:24:30Z",
+    "quality_verdict": "degraded",
+    "layers_walked_summary": "partial — [gap:L3_VN_macro_incomplete] [gap:L4_partial_pillar_coverage] [gap:business_context_absent]"
+  },
+
+  "tnb_synthesis": {
+    "clock_phase": "transition",
+    "regime_state": "risk-off with technical oversold bounce",
+    "regime_confidence": "MEDIUM",
+    "us_macro_layer": "USD carry regime neutral at 1.37pp (Fed 3.63% vs VND 5.00%). Gold $4,126.3 signals risk-off demand; geopolitical event absent this cycle.",
+    "vn_macro_layer": "USD/VND 26,140 above 25.5k threshold — VND weakness emerging, carry unwind pressure. CPI unavailable, VIRA data unavailable (degraded).",
+    "valuation_layer": "Oversold technical bounce (20+ RSI <30) vs macro headwinds (carry pressure + risk-off). VIC showing proprietary accumulation signal despite sector weakness."
+  },
+
+  "conviction_calls": [
+    {
+      "ticker": "VIC",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Proprietary buying signal (#8716 urgency) + technical oversold bounce, but carry pressure on real-estate sector limits upside conviction."
+    },
+    {
+      "ticker": "ACB",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Banking sector RSI <30 oversold (2/4 pillars: technical bounce + carry unwind risk), but fundamentals missing due to no BCTC data."
+    },
+    {
+      "ticker": "BID",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Banking sector oversold recovery play (2/4 pillars), hampered by USD/VND 26,140 carry pressure and missing earnings outlook."
+    }
+  ],
+
+  "sector_phases": [
+    {
+      "sector_vn": "ngân hàng",
+      "investment_phase": "transition",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "mixed — technical oversold bounce vs carry unwind pressure"
+    },
+    {
+      "sector_vn": "bất động sản",
+      "investment_phase": "transition",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "mixed — VIC proprietary accumulation vs sector-wide carry headwinds"
+    },
+    {
+      "sector_vn": "chứng khoán",
+      "investment_phase": "transition",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "mixed — technical oversold recovery signal"
+    }
+  ],
+
+  "known_gaps": [
+    "[gap:geopolitical_event_absent]",
+    "[gap:CPI_unavailable]",
+    "[gap:VIRA_unavailable]",
+    "[L6-gap: gold >$4,300 regime-drift risk — gold at 4,126 approaching phase-override threshold; recovery bounce may lag gold retracement]",
+    "[L6-gap: single-pillar thesis — VIC 2/4 pillars aligned; banking/real-estate conviction LOW due to missing fundamental depth beyond technical oversold]"
+  ],
+
+  "causal_chains": [
+    "USD tăng mạnh + vàng vọt lên 4.126 (risk-off) → VND yếu lên 26.140 → áp lực carry trên ngân hàng/bất động sản → nhưng khối tự doanh gom VIC bất chấp, tín hiệu tích lũy từ chuyên gia."
+  ],
+
+  "clusters_summary": {
+    "qualified": 3,
+    "tickers_covered": ["VIC", "ACB", "BID"],
+    "sectors_covered": ["banking", "real_estate", "securities"],
+    "cluster_types": ["ticker_convergence_VIC", "sector_convergence_banking_oversold", "extreme_individual_signals_20_RSI_oversold"]
+  }
+}

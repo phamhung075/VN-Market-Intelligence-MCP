@@ -1,0 +1,102 @@
+{
+  "metadata": {
+    "cycle_id": "eod-2026-07-23T08:54:08Z",
+    "dish_type": "eod",
+    "date_vn": "2026-07-23",
+    "timestamp_utc": "2026-07-23T08:54:08Z",
+    "quality_verdict": "degraded",
+    "layers_walked_summary": "1-6 (partial — [gap:business_context_unavailable] [gap:CPI_trend_unavailable] [gap:VIRA_unavailable] [gap:L4_partial_pillar_coverage])"
+  },
+
+  "tnb_synthesis": {
+    "clock_phase": "slowdown",
+    "regime_state": "risk-off",
+    "regime_confidence": "MEDIUM",
+    "us_macro_layer": "Fed posture neutral (3.63% IORB); geopolitical tension rising (5-day oil run on supply chokepoint concerns)",
+    "vn_macro_layer": "USD/VND 26,120 (bearish, import cost pressure); carry spread 1.37pp neutral; CPI trend unavailable; VIRA data unavailable",
+    "valuation_layer": "Equities fairly valued (6.64% earnings yield vs 5% deposit rate); banking sector margin compression risk from import cost pressure"
+  },
+
+  "conviction_calls": [
+    {
+      "ticker": "VIX",
+      "conviction_level": "MEDIUM",
+      "direction": "BUY",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Securities sector flight-to-quality during risk-off; strong sector momentum (+3.97%) supports broker accumulation; conviction capped at MEDIUM due to macro degradation"
+    },
+    {
+      "ticker": "VCI",
+      "conviction_level": "MEDIUM",
+      "direction": "BUY",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Sector momentum confirmed; Kinh Dịch Khiêm (15) MUA signal; pricing fair vs deposit rate; conviction medium per quality gate"
+    },
+    {
+      "ticker": "GAS",
+      "conviction_level": "MEDIUM",
+      "direction": "BUY",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "5-day momentum on geopolitical supply tension; sector +3.15%; carry regime neutral limits FII support; supply-driven thesis, not macro-driven"
+    },
+    {
+      "ticker": "VHM",
+      "conviction_level": "LOW",
+      "direction": "HOLD",
+      "pillars_aligned_count": 1,
+      "rationale_one_liner": "Price +4.02% but intra-sector divergence vs DXG/DIG weakness; insufficient earnings/customer context (BCTC unavailable); long-term story unconfirmed"
+    },
+    {
+      "ticker": "VIC",
+      "conviction_level": "LOW",
+      "direction": "HOLD",
+      "pillars_aligned_count": 1,
+      "rationale_one_liner": "Strong +5.89% price move but contradicted by Kinh Dịch Kiển (39) bearish signal; real-estate sector faces earnings uncertainty; single-pillar thesis flagged"
+    }
+  ],
+
+  "sector_phases": [
+    {
+      "sector_vn": "chứng khoán",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "positive"
+    },
+    {
+      "sector_vn": "dầu khí",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "positive"
+    },
+    {
+      "sector_vn": "bất động sản",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "cash",
+      "direction_this_cycle": "mixed"
+    },
+    {
+      "sector_vn": "ngân hàng",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "defensive",
+      "direction_this_cycle": "negative"
+    }
+  ],
+
+  "known_gaps": [
+    "[gap:business_context_unavailable — no bctc_signal or fundamental data in cycle; BCTC-EXTRACT-QUALITY sprint tracking 14/16 tickers serve-layer-blocked]",
+    "[gap:CPI_trend_unavailable — VN inflation regime unknown, macro stack incomplete]",
+    "[gap:VIRA_unavailable — FX reserves context missing, current account decomposition not available]",
+    "[L6-gap: single-pillar thesis — real-estate cluster 1/4 pillars; banking <2/4 confirmed; earnings outlook and money supply context missing]",
+    "[gap:US_PMI_direct_value_absent — using geopolitical event as indirect macro proxy]"
+  ],
+
+  "causal_chains": [
+    "Market-wide risk-off (Quẻ 36 Minh Di unfavorable state) → carry neutral (1.37pp SBV vs Fed) → VN sector bifurcation (defensives: securities gaining, cyclicals: real-estate mixed) → ticker divergence (VIC/VHM resilience vs DXG/DIG weakness signaling intra-sector stress)"
+  ],
+
+  "clusters_summary": {
+    "qualified": 4,
+    "tickers_covered": ["VIX", "VCI", "SSI", "HCM", "VND", "VHM", "VIC", "KBC", "GAS", "PLX", "BSR", "EIB", "MBB", "VCB"],
+    "sectors_covered": ["securities", "real_estate", "oil_gas", "banking"]
+  }
+}

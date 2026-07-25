@@ -1,0 +1,80 @@
+{
+  "metadata": {
+    "cycle_id": "morning-2026-07-21T05:20:19Z",
+    "dish_type": "morning",
+    "date_vn": "2026-07-21",
+    "timestamp_utc": "2026-07-21T05:20:19Z",
+    "quality_verdict": "full",
+    "layers_walked_summary": "1-6 (full)"
+  },
+
+  "tnb_synthesis": {
+    "clock_phase": "expansion",
+    "regime_state": "neutral-with-risk-off-pressure",
+    "regime_confidence": "MEDIUM",
+    "us_macro_layer": "Fed funds rate 3.63% with risk-off sentiment signaled by gold spike +$24.1 to $4053/oz. Safe-haven demand reflects caution amid margin debt expansion.",
+    "vn_macro_layer": "Carry spread 1.37pp NEUTRAL. USD/VND at 26,130 (above 25,500 threshold) creates import cost pressure. Margin debt at record 450T VND signals expansion phase with elevated leverage risk.",
+    "valuation_layer": "4-pillar alignment: M2 tailwind (margin debt rising) + COC moderate (carry spread 1.37pp) + EPS strong (earnings season) + POL neutral = expansion phase confirmed. Equity (growth + cyclical) tier appropriate."
+  },
+
+  "conviction_calls": [
+    {
+      "ticker": "VHM",
+      "conviction_level": "MEDIUM",
+      "direction": "BUY",
+      "pillars_aligned_count": 3,
+      "rationale_one_liner": "Real estate benefits from margin tailwind and expansion phase; modesty hexagram (Kinh 15) warns against excess leverage."
+    },
+    {
+      "ticker": "VIC",
+      "conviction_level": "MEDIUM",
+      "direction": "BUY",
+      "pillars_aligned_count": 3,
+      "rationale_one_liner": "Conglomerate leverages expansion tailwind; wisdom/obscurity hexagram (Khôn 2) suggests limited visibility into corporate timing."
+    },
+    {
+      "ticker": "VCB",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 3,
+      "rationale_one_liner": "Banking benefits from margin debt growth and fairly-valued equities; US risk-off tempers FII inflow."
+    }
+  ],
+
+  "sector_phases": [
+    {
+      "sector_vn": "bất động sản",
+      "investment_phase": "expansion",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "positive"
+    },
+    {
+      "sector_vn": "ngân hàng",
+      "investment_phase": "expansion",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "mixed"
+    },
+    {
+      "sector_vn": "dầu khí",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "negative"
+    }
+  ],
+
+  "known_gaps": [
+    "[gap:business_context_sparse] — 14/16 tickers currently serve-layer-blocked in BCTC-EXTRACT-QUALITY sprint; fundamental_* signals sparse",
+    "[gap:gold_4300_active] — Gold at $4053 signals safe-haven demand; monitor for regime reversal"
+  ],
+
+  "causal_chains": [
+    "Gold spike (safe-haven demand, +$24.1) → Foreign investor caution on VN carry → USD/VND 26,130 import pressure → Banking net-positive, Real Estate positive on domestic margin tailwind → VN-Index -0.51% despite expansion signals"
+  ],
+
+  "clusters_summary": {
+    "qualified": 1,
+    "tickers_covered": ["VHM", "VIC", "VCB"],
+    "sectors_covered": ["real_estate", "banking"],
+    "signal_drivers": ["margin_debt_record_high_450T"]
+  }
+}

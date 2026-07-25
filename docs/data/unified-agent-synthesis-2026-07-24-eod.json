@@ -1,0 +1,108 @@
+{
+  "metadata": {
+    "cycle_id": "eod-2026-07-24T09:02:02Z",
+    "dish_type": "eod",
+    "date_vn": "2026-07-24",
+    "timestamp_utc": "2026-07-24T09:02:02Z",
+    "quality_verdict": "degraded",
+    "layers_walked_summary": "1-6 (full) — [gap:business_context_unavailable]"
+  },
+  "tnb_synthesis": {
+    "clock_phase": "slowdown",
+    "regime_state": "carry-neutral-with-fii-rebalancing",
+    "regime_confidence": "MEDIUM",
+    "us_macro_layer": "Fed funds rate 3.63%, SBV deposit rate 5.00% establish NEUTRAL carry regime (1.37pp spread). Oil $92.01/bbl neutral. Gold $4,052.50 signals risk-off via threshold breach above $2,200.",
+    "vn_macro_layer": "USD/VND 26,130 exceeds 26,500 carry threshold, creating import cost pressure (BEARISH). Earnings yield 6.64% vs deposit rate 5.00% = FAIRLY_VALUED. CPI trend stable. [gap:geopolitical_event_absent]"
+  },
+  "conviction_calls": [
+    {
+      "ticker": "VCB",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Banking sector FII rebalancing pressure outweighs carry neutrality; 2/4 pillar alignment caps conviction. Monitor USD/VND carry regime shift."
+    },
+    {
+      "ticker": "ACB",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Sector headwinds offset H1 2026 profitability; Kinh Dịch Tập Khảm BAN signal indicates distribution caution."
+    },
+    {
+      "ticker": "BID",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Similar banking sector dynamics; FII rotation risk elevated despite carry neutrality."
+    },
+    {
+      "ticker": "D2D",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Real estate recovery thesis delayed by FII outflows; construction lending squeeze (M2 tight). Valuation compression ongoing."
+    },
+    {
+      "ticker": "VHM",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Sector capex cycle uncertain; valuation attractive but FII rotation pressures near-term. Monitor FDI inflow trend."
+    },
+    {
+      "ticker": "HPG",
+      "conviction_level": "LOW",
+      "direction": "HOLD",
+      "pillars_aligned_count": 1,
+      "rationale_one_liner": "Export revenue thesis only (1/4 pillars); input cost inflation and global demand shift create execution risk. Insufficient data — cannot confirm."
+    },
+    {
+      "ticker": "BSR",
+      "conviction_level": "MEDIUM",
+      "direction": "BUY",
+      "pillars_aligned_count": 3,
+      "rationale_one_liner": "Oil & gas sector: export revenue strong (+2.78% today), valuation attractive vs cyclical peers, capital cost neutral. Sector phase remains slowdown (not recession)."
+    }
+  ],
+  "sector_phases": [
+    {
+      "sector_vn": "ngân hàng",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "negative"
+    },
+    {
+      "sector_vn": "bất động sản",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "negative"
+    },
+    {
+      "sector_vn": "thép",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "mixed"
+    },
+    {
+      "sector_vn": "dầu khí",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "positive"
+    }
+  ],
+  "known_gaps": [
+    "[L6-gap: gold $4,052.50 near $4,300 threshold — regime-drift risk on sub-$4,000 breakout confirming risk-off]",
+    "[L6-gap: single-pillar thesis — HPG 1/4 pillars aligned; insufficient data — cannot confirm]",
+    "[gap:geopolitical_event_absent] — no war/trade-war signals open this cycle",
+    "[gap:business_context_unavailable] — BCTC extract quality sprint ongoing (14/16 tickers serve-layer-blocked); no fresh bctc_signal_* or fundamental_* data available in last 24h"
+  ],
+  "causal_chains": [
+    "Moderate FII rebalancing (USD/VND 26,130, carry neutral 1.37pp) → Banking/RE sector FII outflows → Sector valuation compression + Tập Khảm warning → VCB, D2D, HPG price adjustment reflecting macro discipline, not fundamental deterioration."
+  ],
+  "clusters_summary": {
+    "qualified": 3,
+    "tickers_covered": ["VCB", "ACB", "BID", "CTG", "VHM", "D2D", "DIG", "KDH", "HPG", "HSG", "NKG", "BSR"],
+    "sectors_covered": ["banking", "real_estate", "steel", "oil_gas"]
+  }
+}
