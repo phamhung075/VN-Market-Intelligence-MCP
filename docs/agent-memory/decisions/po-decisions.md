@@ -514,3 +514,23 @@ SUPPORTING EPIC 3 (foundational, runs underneath) — **HONEST-DATA-FLOOR HOLD**
 - Fix the ACTUATOR so all sectioned notebooks self-heal on next write
 **why-decision:** A byte cap ALREADY EXISTS and fires (TE-T24, backstop.sh:119-123). The real defect is asymmetry — the line cap has an auto-actuator (notebook-auto-prune.sh, line-only at :135/:174), the byte cap has none. Fixing the setpoint clears ~16 of 18 files with zero manual work; a prune row clears 2 and regenerates.
 **why-change:** Split into 2 rows, not the 2 the relay implied: alert-commander is ONE 119KB section so NO pruner can touch it (nothing to drop) — that needed its own row.
+
+### STEP po-S4 · po · 2026-07-25T16:49:30Z
+**task-id:** FIX-BCTC-INGEST-PERIOD-IDENTITY-UNVALIDATED-VS-CONTENT
+**what-done:** Settled the reporter's blocking period-provenance question at source, then minted P1 + attached a do-not-ship-alone warning to FU-BACKFILL-REAL-FILENAMES.
+**what-considered:**
+- Attach to FU-BACKFILL-REAL-FILENAMES as the reporter suggested (filename heuristic = the mechanism)
+- Attach to FU-CTG-DISCOVERY-FILENAME-FILTER or SPIKE-BCTC-VEA-Q4-2025-SOURCE-PROBE
+- Mint a new row for the unvalidated caller-supplied period identity
+**why-decision:** Filename is RENDERED from the period key (`bctcVpsIngestHandler.ts:224` -> `resolvePdfText.ts:45-61`), not the reverse — so no filename row is the container, and fixing filenames alone would DELETE the only visible symptom while the corruption persists. Board grep found no row for period-vs-content validation.
+**why-change:** Reporter's severity binary (filename-derived vs content-derived) was a false frame — it is NEITHER; both filename and DB columns come from unvalidated caller-supplied multipart fields.
+
+### STEP po-S5 · po · 2026-07-25T16:49:30Z
+**task-id:** FIX-BCTC-INGEST-PERIOD-IDENTITY-UNVALIDATED-VS-CONTENT
+**what-done:** Overturned the reporter's urgency model and rewrote the intervention accordingly.
+**what-considered:**
+- Halt the refine slot before the next daily fire (reporter's implied action)
+- Let it run and fix after finalize
+- Correct/remove the period identity on the one row BEFORE finalize, slot keeps running
+**why-decision:** Live runtime probe: `get_bctc_report_id(code=DPM)` -> `count:0, existing_refine_status:"PENDING"`; the tool filters `refine_status='DONE'`, so the mislabel is unreachable today and FINALIZE arms it. The 31 remaining windows inherit ONE already-fixed key and cannot deepen the mislabel — halting would discard 15 completed windows for zero safety gain.
+**why-change:** Severity RAISED above both of the reporter's branches: `sort_key` derives from the same key and the conflict key is (action_code, sort_key), so the mislabelled doc OCCUPIES the slot the real DPM Q4-2025 filing needs — durable data loss, not a wrong label. DPM confirmed NOT in the 07-19 reparse blast radius.

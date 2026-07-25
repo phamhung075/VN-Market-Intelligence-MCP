@@ -1,10 +1,10 @@
 # PO Notebook
 
-_Last: 2026-07-25T16:34Z (router triage: coverage-sweep dead trigger + 2 relayed context_bloat signals — 3 MINTs, 4 evidence-attaches, 1 relayed diagnosis OVERTURNED, 1 umbrella DECLINED)_
+_Last: 2026-07-25T16:52Z (router triage: coverage-sweep dead trigger + 2 context_bloat signals + BCTC period-identity — 4 MINTs, 5 evidence-attaches, 2 relayed diagnoses OVERTURNED, 1 umbrella DECLINED)_
 
-## Tick 2026-07-25T16:21–16:34Z
+## Tick 2026-07-25T16:21–16:52Z
 
-**Returned BATCH(3).** All 3 ids + all 3 SPIKE instance fields read back off `.task_board` by `id` after write — none asserted from narration. Two atomic `jq -f … | bash scripts/orch-apply.sh` writes, Zod Stage0+1 PASS, conservation 651→652→654 (+3 exactly), `signal_total` 126 unchanged, `.head` never referenced.
+**Returned BATCH(4).** All 4 ids + all 3 SPIKE instance fields read back off `.task_board` by `id` after write — none asserted from narration. Three atomic `jq -f … | bash scripts/orch-apply.sh` writes, Zod Stage0+1 PASS, conservation 651→652→654→655 (+4 exactly), `signal_total` 126 unchanged, `.head` never referenced.
 
 | Minted | Lane (read back) | Mechanism |
 |---|---|---|
@@ -12,7 +12,9 @@ _Last: 2026-07-25T16:34Z (router triage: coverage-sweep dead trigger + 2 relayed
 | `FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES` | `backlog`/BACKLOG, P1/S, `cross-service/`, →developer | Line cap has an auto-actuator (`notebook-auto-prune.sh` :135/:174); byte cap has only a detector. 18 notebooks over cap; 87 breach signals filed as processed with the condition untouched |
 | `FIX-ALERT-COMMANDER-NOTEBOOK-SINGLE-BLOB-UNPRUNABLE` | `backlog`/BACKLOG, P2/S, `cross-service/`, →developer | ONE `## This session` = 119035 of 120183B ⇒ drop-oldest-section pruner has nothing to drop; structurally immune to the row above |
 
-**Attached as evidence, NO row minted** (all 4 verified present after write): `SPIKE-SATURATED-COUNT-THRESHOLD-GATES-SWEEP` instances 11/12/13 · `FIX-COVERAGE-STATE-CROSS-AGENT-LOST-UPDATE` (co-ship) · `FIX-USDVND-THRESHOLD-SSOT` (saturation).
+| `FIX-BCTC-INGEST-PERIOD-IDENTITY-UNVALIDATED-VS-CONTENT` | `backlog`/BACKLOG, P1/M, `apps/mcp-server/`, →dev-mcp-server | Period identity is caller-supplied multipart form fields, validated for SHAPE only (year 2000-2099, quarter ∈ Q1-Q4). DPM report `5b0dad71` holds Q1-2026 under (DPM, 2025-Q4) and **occupies the slot** the real Q4-2025 filing needs |
+
+**Attached as evidence, NO row minted** (all 5 verified present after write): `SPIKE-SATURATED-COUNT-THRESHOLD-GATES-SWEEP` instances 11/12/13 · `FIX-COVERAGE-STATE-CROSS-AGENT-LOST-UPDATE` (co-ship) · `FIX-USDVND-THRESHOLD-SSOT` (saturation) · `FU-BACKFILL-REAL-FILENAMES` (do-not-ship-alone warning).
 
 ## Lessons
 
@@ -21,11 +23,16 @@ _Last: 2026-07-25T16:34Z (router triage: coverage-sweep dead trigger + 2 relayed
 - **⚠️ Read the DATA, not the doc — and read the signal archive, not the code.** Two mechanical detectors this class needs, both orthogonal to the code-reading that found instances 1-10: `jq '[.<coll>|to_entries[]|.value.<field>]|group_by(.)|length'` on live state (result 1 across a collection meant to update incrementally = saturated field, any age gate on it is dead); and `ls docs/signals/processed/ | sed -E 's/-[0-9]{8}T[0-9]{6}Z.*//' | sort | uniq -c | sort -rn` (high count on a stable dedup key = detector works, remediation does not). Told the SPIKE to run as **two passes**, code and data.
 - **⚠️ Verify a relayed diagnosis before building against it.** Relay said the byte cap "is denominated in the wrong unit" and wanted one built. It already exists, is correct (200×60), and IS what fired the signals (`reason=byte-cap`, `backstop.sh:119-123`). Building it again ships a duplicate. The relay's *instinct* was right (agents comply with the cap and defeat its purpose); its *mechanism* was wrong — the real defect is that only ONE of the two caps has an actuator.
 - **⚠️ Fix the actuator, not the files.** Declined the prune the signals asked for: correcting the pruner's setpoint self-heals ~16 of 18 notebooks on their next write, whereas a prune row clears 2 and regenerates in ~48h — the 24 alert-commander signals since 07-23T16:13Z are exactly what that looks like.
+- **⚠️ When asked "does X derive from A or from B", the answer can be "neither, and both come from an unvalidated C".** Reporter posed filename-vs-parsed-content as a binary deciding severity. Traced: period is caller-supplied multipart fields (`bctcVpsIngestHandler.ts:183-184`), validated for SHAPE only (:194-201), and the FILENAME is rendered FROM it (:224 → `resolvePdfText.ts:45-61`). Filename and DB columns are the same value from the same source and **cannot disagree** — so the filename is not independent evidence, and "cosmetic" was never on the table. **Answering a binary as posed can validate a false frame; trace the actual provenance.**
+- **⚠️ A wrong label on a keyed row is not a label bug — it is slot occupancy.** `sort_key` is derived from the same key and the conflict key is `(action_code, sort_key)`, so the mislabelled DPM doc **blocks the real Q4-2025 filing from ever landing**. Durable data loss, not display.
+- **⚠️ Check what actually arms the damage before accepting a "halt it now" urgency model.** Reporter argued each daily fire deepens the mislabel. It doesn't — the 31 remaining windows inherit ONE already-fixed key. Live probe: `get_bctc_report_id` filters `refine_status='DONE'` and DPM is PENDING, so nothing is reachable today; **finalize** is what arms it. Halting the slot would have discarded 15 completed windows for zero safety gain.
 - **A vanished key is proof of a write mechanism.** `sweep_config` present 07-21, gone 07-23, deleted by no commit. A merge-based writer cannot lose a key it never touches — that single observation settled the 9-day-old direction question on the sibling lost-update row, which had been stuck between three candidates.
 - **Both relays under-reported scope; both times the sibling was live.** Coverage input named news-scout only — market-watcher was equally saturated. Bloat signals named 2 files — 18 are over cap, and `agent-father.md` (326L) is over the LINE cap too.
 
 ## Carry-over
 
+- **TIME-GATED, highest urgency on this list:** `FIX-BCTC-INGEST-PERIOD-IDENTITY-UNVALIDATED-VS-CONTENT` AC-1 (correct/remove DPM report `5b0dad71`) must land **before that report's refine finalizes**. Unreachable while PENDING; live on DONE. Do **not** halt the refine slot.
+- **`FU-BACKFILL-REAL-FILENAMES` must NOT ship alone** — the filename is rendered from the stored period key, so "real filenames" would delete the only visible tripwire for a wrong period while the corruption persists. Warning attached; it now `blocks`-depends on the P1 row.
 - **`FIX-USDVND-THRESHOLD-SSOT` will close without fixing the defect if "pick one SSOT" picks 25000.** At Bearish=25000/Bullish=23000 and live 26130, BEARISH is the classifier's **only reachable output**. Added a mandatory AC: assert both branches reachable **at the live rate, not a fixture rate**. Durable question (absolute threshold on a drifting nominal series has a shelf life by construction) left with 3 options unchosen — implementer's call.
 - **`docs/agent-memory/decisions/po-decisions.md` is 516L against a declared 200L rotation cap** (dev-standards:425) — a likely third live instance of sub-class 7. NOT minted: needs one read of the rotation path first to confirm it shares the mechanism. **Next PO tick: check before minting, not after.**
 - Cowork cluster sequencing is fixed, do not reorder: `UC-SDF-P2` **first**, then `UC-CDC-P1` + `FIX-COWORK-CADENCE-DANGLING-POLICY-ID` as ONE change set.
