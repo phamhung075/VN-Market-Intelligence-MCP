@@ -1,21 +1,37 @@
 # PO Notebook
 
-_Last: 2026-07-25T09:29Z (2 cowork signals triaged — both DUPLICATES, ZERO rows minted, evidence attached to 3 existing rows)_
+_Last: 2026-07-25T09:52Z (2 cowork signals + coordinator addendum — 1 row minted, 3 folded, 1 closed, dev-team head unpinned)_
 
-## Tick 2026-07-25T09:27–09:29Z — cowork signal triage (cwk-20260725T091107-1f13 / -a591)
+**Journal:** `docs/agent-memory/decisions/triage-20260725T0948Z-po.md` · **Script:** `scripts/po-signaltriage-20260725T0948-headunpin-snapshot-fold.jq`
 
-**MINTED NOTHING.** Both signals are duplicates of rows I already own. Board 653→653 (conservation OK), both signal rows READ→RESOLVED via `scripts/orch-apply.sh`.
+## Tick 2026-07-25T09:40–09:52Z
 
-**ROW 1 `config_drift` — the signal asked me to pick (a) emitter drift or (b) policy never grown for a 4th state. ANSWER: NEITHER, and the trace is now written into UC-CDC-P1 so nobody re-litigates it.** `emitPressureStateTool.ts:387` = `args.calendar_status ?? "unknown"` — CALLER-supplied; the server can only ever emit `"unknown"` itself. `telemetry.md` Step 6.0 L15 passes `<CALENDAR_STATUS from Step 4.3>`; `pressure-read.md:65` reads that value **out of pressure-state.json** — the dispatcher writes back the field it just read. Self-recycling loop, no producer. Enabler: schema is bare `z.string().optional()` (:459), no enum gate, while `vnTradingCalendar.ts` already returns exactly the policy's 5 values and is simply not wired.
+| Input | Disposition |
+|---|---|
+| cwk-…092802-7c2e (snapshot frozen 18d) | FOLD → `UC-SDF-P2` (P2→**P1**), no mint |
+| cwk-…093521-b3d1 (head pinned on P2) | **head unpinned** + MINT + FOLD → chain-starvation row |
+| coordinator addendum (weekend suppression dead) | FOLD → `UC-CDC-P1` |
+| `SPIKE-TICK-SNAPSHOT-DEADCODE-OR-REGRESSED` | CLOSED → `archive[]`/CANCELLED (question answered) |
+| **`FIX-DEVTEAM-HEAD-PIN-STALE-THRESHOLD-24H-VS-TICK-CADENCE`** | **MINTED** P1 · architect · `docs/agents/dev-team/flow/` |
 
-**The landmine in `feedback_pressure_state_caller_supplied_fields_dead_server_computed_live` DETONATED.** That lesson called `off_market`/`closed` latent *only while* the field stayed frozen at `unknown`. Live file 09:24:44Z = `"closed"`; signals read `unknown` through 07-23 then `closed` from 07-24T17:37Z — it is the new steady state. Every weekend tick since then misses all policy rows and takes the 240-min default instead of 480 (gatherer-standard) / 1440 (bctc-offmarket).
+## Lessons
 
-**ROW 2 `data_fetch_failure` — I refused the signal's own remediation claim and probed.** It asserted the 09:00Z fire "finalized FAILED, which cleared it from the head of the pending queue". Live `get_bctc_pending_refine(limit:5)` at 09:2xZ: `result[0]` is **still** POW_2026_Q1 (78b06684, FAILED, all 28 windows) ahead of the same 4 PENDING reports named on 07-21. Finalization does not clear the head — that stickiness *is* the bug.
+- **Both signals were already on the board — for the 3rd and 4th time.** `UC-SDF-P2`'s *title* already read "tickHHMM-vs-FILE_TICK filename divergence". Grep-the-board kept 2 duplicates off. The system's failure here is not detection, it is **dispatch** — three correct detections produced zero fixes.
+- **An answered SPIKE must be CLOSED, not left open** — otherwise a 4th agent burns a cycle re-deriving it. But copy the load-bearing note across *first*: `SPIKE-TICK-…`'s SEQUENCING GUARD (4 coupled units; 16x alert-commander degradation if the residue-prune lands alone) now lives on `UC-SDF-P2`.
+- **Never fake a provenance marker to force a script's hand.** I could have stamped `promoted_by="dev-team (bounded-1 auto-pickup)"` on the P0 so the claim script grabbed it. That marker's contract is "never a pre-existing PO-placed ready[] row" — faking it corrupts exactly the signal the next incident needs. Moved the row to `backlog[]` and let real `priority_rank=0` win instead.
+- **Verify the executable, not my own prose.** I ran the real `devteam-backlog-promote-bounded1.jq` + `claim` scripts against the candidate doc *before* applying: promote selects the P0 at rank 0, claim routes `dev-mcp-server`. "BOUNDED-1 will pick it" would otherwise have been a guess.
+- **orch-apply caught my lane error; I fixed the cause.** `CANCELLED` in `backlog[]` → Stage 1b reject (backlog allows BACKLOG|BLOCKED only) → moved to `archive[]`. Did not route around the gate.
+- **A 24h stale-reset against a ~30min tick cadence is not a safety net, it is a 48x-oversized outage window.** One silent spawn failure took all 4 dispatch lanes down 4h25m with zero alert. Same shape as `UC-SDF-P2`'s fail-safe-that-refuses-every-input: the conservative branch became the only branch.
+- **`transcript-silence ≠ dead` cuts both ways — get objective evidence.** `task_list_held` showed **no lock** on the pinned task (14 held, none matching). That killed the "held by peer session" hypothesis and proved Pipeline Resume was free to respawn every tick and produced nothing.
+- **`ready[]` is a trap lane.** It is drained only by RLC, which is 3rd in the head-idle chain behind BOUNDED-1 + a 390-row backlog — so effectively never. Live proof: `qa[]`=0 while 73 `review[]` rows carry `next_agent=qa`.
 
 ## Carry-over
-- **`FIX-BCTC-PENDING-REFINE-HEAD-OF-LINE-FAILED-ROW` needs a DISPATCH, not a 4th triage pass.** READY/P0/owner+next=dev-mcp-server/`supervised:false`/`depends:[]`, PO decision already ratified (option (b), fix the query predicate not the slot prompts). The 07-22 note blamed WIP=2 saturation — **that constraint is gone, WIP is now 1** (`FIX-VNINDEX-CACHE-STARTUP-PURGE` since 05:18Z). Three independent detections (07-21 mint, 07-22 + 07-25 cowork re-reports) have produced the same correct row three times: this is a recurring FAILED-DISPATCH, not a detection gap. It is the only ready P0 burning a production slot *daily* rather than latent.
-- **"Finalized, therefore cleared" must never again be accepted as remediation on that row** — the only valid evidence is its own verification_gate (live `get_bctc_pending_refine` showing POW absent, PENDING at `result[0]`). Written into the row.
-- **Do NOT mint a spike for a "shared upstream cause" behind the 28 failures.** Settled 07-21 in `FIX-BCTC-REFINE-RESOURCE-EXCEEDED-STATUS.advisory_do_not_chase`: the 24 `text_fetch_failed` and 4 `image_fetch_oversized` differ — the latter is the refine subagent's own context budget on a ~1.2MB base64 image, a worker property, not a fetch layer. `get_bctc_page_text` demonstrably serves these pages.
-- **I refuted a premise inside `FIX-COWORK-CADENCE-DANGLING-POLICY-ID` and recorded it there.** Its class statement calls unmatched-rule-in-real-policy "(240 genuinely safe)". `calendar_status="closed"` is a live counter-example: real policy, unmatched rule, and the 240 default silently *replaces* the declared weekend rate. Corrected rule now on the row — unmatched is safe only when the axis VALUE is in-domain; an out-of-domain value is a config error wearing the unmatched-rule costume. Added AC: the existing `policy_id` diff check must be joined by a per-axis DOMAIN check, fail-loud.
-- **UC-CDC-P1 and FIX-COWORK-CADENCE-DANGLING-POLICY-ID MUST CO-SHIP.** Producer fix without domain validation re-arms the class on the next invented literal; domain validation without the producer fix leaves the value permanently wrong. Neither alone is sufficient — noted on both rows.
-- **Priority deliberately NOT bumped on UC-CDC-P1 (stays P1).** The blast radius is over-firing non-guaranteed slots (~5 extra runs/weekend day, host_headroom 3909MB) — real waste, but no data loss or user-facing breakage. Bumping to P0 to signal "it's live now" would be theater and would crowd the genuinely-burning BCTC P0. The `landmine_state: DETONATED` field carries the status change instead.
+
+- **`FIX-BCTC-PENDING-REFINE-HEAD-OF-LINE-FAILED-ROW` is now top-ranked in `backlog[]`** (P0, rank 0, all BOUNDED-1 gates verified). Next dev-team idle tick should claim it. **If it does not, the fault is in the tick plane, not the board** — I have ruled out every board-side cause.
+- **"Finalized, therefore cleared" is never remediation on that row** — only its verification_gate (live `get_bctc_pending_refine`: POW absent, PENDING at `result[0]`).
+- **Do NOT mint a spike for a "shared upstream cause" behind the 28 POW failures** — settled 07-21 in `FIX-BCTC-REFINE-RESOURCE-EXCEEDED-STATUS.advisory_do_not_chase`.
+- **`UC-CDC-P1` + `FIX-COWORK-CADENCE-DANGLING-POLICY-ID` MUST CO-SHIP** — producer fix without domain validation re-arms on the next invented literal; validation without the producer leaves the value wrong.
+- **`UC-SDF-P2` has a SECOND failure mode beyond the filename** — even on a name match the on-grid file is the dispatcher's own tick-snapshot with no `fetchedAt`/`created_at`, so the freshness gate refuses. Fixing only the filename leaves it dark.
+- **Unresolved, deliberately not guessed:** whether the 3 unsuppressed Saturday spawns took adaptive-mode-with-`"closed"` or legacy-mode-skips-4.3. Both end in no-suppression; isolation is recoverable from the 08:11Z tick telemetry in `docs/signals/`.
+- **Architect-owned rows** (`UC-SDF-P2`, `UC-CDC-P1`, both chain rows, the new head-pin row) **need deliberate dispatch** — BOUNDED-1's NON-DEV-NEXT_AGENT gate excludes them by design; SLS sweeps only `supervised AND plan_only`.
+- Head left **idle**. I dispatched no dev agent (double-ownership hazard). **Nothing pushed** — push stays gated.

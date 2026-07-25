@@ -395,12 +395,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-VNINDEX-CACHE-STARTUP-PURGE",
-    "next_agent": "dev-mcp-server",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-VNINDEX-CACHE-STARTUP-PURGE — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-25T05:18:13Z",
-    "updated_by": "dev-team (bounded-1 zone-detect -> dev-mcp-server)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "Head unpinned by PO 2026-07-25T09:48Z after a 4h25m zero-progress pin on P2 FIX-VNINDEX-CACHE-STARTUP-PURGE (claimed 05:18:14Z, no lock held, no commits, no notebook entry). Fall through to BOUNDED-1 -> SLS -> RLC -> QA-Drain; top-ranked backlog row is now P0 FIX-BCTC-PENDING-REFINE-HEAD-OF-LINE-FAILED-ROW (priority_rank=0).",
+    "updated_at": "2026-07-25T09:51:59Z",
+    "updated_by": "po/signal-triage-20260725T0948 (head unpin)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2304,7 +2304,18 @@
         "type": "config_drift",
         "summary": "cycle-snapshot-latest.json frozen 18d — promoteCycleSnapshot looks up nominal tick_id HH:MM, Step 4.7 writes fire-time HH:MM; names never match, fails silently",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "RESOLVED",
+        "payload_ref": null
+      },
+      {
+        "id": "cwk-20260725T093521-b3d1",
+        "ts": "2026-07-25T09:35:21Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "orch-health-finding",
+        "summary": "BOUNDED-1 has not claimed since 05:18Z (4h15m) — head pinned on P2 FIX-VNINDEX-CACHE-STARTUP-PURGE with zero state change while P0 FIX-BCTC-PENDING-REFINE-HEAD-OF-LINE-FAILED-ROW sits READY; this is the mechanism behind the recurring FAILED-DISPATCH, not a WIP-limit issue",
+        "severity": "WARN",
+        "status": "RESOLVED",
         "payload_ref": null
       }
     ],
@@ -4642,6 +4653,21 @@
         "updated_by": "po/ruling-20260721T2009",
         "superseded_by": "FIX-AUDITOR-SBVFX-SLA-POSTMARKET-TOLERANCE",
         "po_ruling_20260721T2009": "RETIRED AS DUPLICATE by PO ruling 2026-07-21T20:09Z. I minted this row at 19:29Z without grepping the board; FIX-AUDITOR-SBVFX-SLA-POSTMARKET-TOLERANCE already existed as a stub covering the same defect and additionally scoped the news source. Acceptance clauses (2)(3)(4)(5) were re-verified and FOLDED into that row as (B)(C)(D)(E); clause (1)'s premise was refuted at source by router (SBV_BUSINESS_DAY_ONLY_SOURCES ships and is consumed) and is discarded. No work is lost. Do NOT start work here — go to the superseding row."
+      },
+      {
+        "id": "SPIKE-TICK-SNAPSHOT-DEADCODE-OR-REGRESSED",
+        "title": "SPIKE: tick-snapshot Step 4.7 cycle-snapshot-latest.json stale since 06-17 — genuinely inert dead-code (remove) OR silently regressed (re-fix)?",
+        "status": "CANCELLED",
+        "type": "SPIKE",
+        "priority": "low",
+        "zone": "docs/agents/cowork-team/flow/",
+        "sprint": null,
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#SPIKE-TICK-SNAPSHOT-DEADCODE-OR-REGRESSED",
+        "note": "[PO signal cow-20260716T043200, 2026-07-16] SEQUENCING GUARD — DO NOT land cycle-snapshot key-unification / residue-file prune ALONE. Pruning the ~110 gitignored cycle-snapshot-<HH:MM>.json residue files flips every cowork tick to stale_warning=false -> adaptive fleet-wide, which activates the 240-min dangling-policy gate and degrades the alert-commander-market path 16x (15min->240min). Per handoff docs/handoffs/2026-07-16-cycle-snapshot-promotion-dark-9-days-adaptive-cadence-never-runs.md §4-NEW-2/§4-NEW-3 the coupling is 3-way + a 4th unit: (1) unify the snapshot key + put a date in it; (2) author the missing cadence-policy rows (alert-commander-market 15min + alert-commander-critical 240min + gatherer open/half_day tiers); (3) WIRE calendar_status to the existing vnTradingCalendar oracle (isVnTradingDay) — it is structurally latched at 'unknown' so newly-authored open/half_day rows are otherwise unreachable; (4) restore a writer for regime_status/volatility_level (dropped in the 2026-06-05 refactor) + a test that fails when the reader's source field has no writer. Land as ONE change set. Couples with UC-SDF-P2 + FIX-COWORK-CADENCE-DANGLING-POLICY-ID (both tracked in backlog-detail.json).",
+        "status_note": "SUPERSEDED by UC-SDF-P2",
+        "updated_at": "2026-07-25T09:51:59Z",
+        "updated_by": "po/signal-triage-20260725T0948",
+        "po_supersede_20260725T0948": "Question ANSWERED by source-verified evidence, so this exploratory row is closed rather than re-picked. The spike asked: 'genuinely inert dead-code (remove) OR silently regressed (re-fix)?' Answer: NEITHER framing — the promotion path is a producer/consumer filename-contract mismatch that never matched once (consumer looks up the NOMINAL tick HH:MM at emitPressureStateTool.ts L232/L359-362; producer names the file by FIRE time at tick-snapshot.md Step 4.7), compounded by a second gate that refuses the on-grid file for missing timestamps. So: re-fix, and the fix row is UC-SDF-P2 (raised to P1, diagnosis complete). Its load-bearing SEQUENCING GUARD note has been copied verbatim onto UC-SDF-P2 — it is NOT lost by this closure. Closed to stop a fourth agent burning an exploratory cycle re-deriving a root cause now established three times (07-15, 07-21, 07-25)."
       }
     ],
     "backlog": [
@@ -4790,8 +4816,9 @@
         "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
         "po_triage_20260725T0927": "po_triage 2026-07-25T09:27:11Z — ORIGIN DETERMINED + LANDMINE DETONATED (3rd sighting; NO NEW ROW MINTED).\n\ncowork-team signal cwk-20260725T091107-1f13 asked PO to adjudicate between (a) emitter drift — emit_pressure_state produces a literal the policy vocabulary never had — and (b) \"closed\" is a deliberate fourth state the cadence-policy.json rows were never grown to cover, and warned \"do not mint a fix task against a guessed root cause\".\n\nVERDICT: NEITHER (a) NOR (b). Traced at source, not inferred:\n  - emitPressureStateTool.ts:387 stores `args.calendar_status ?? \"unknown\"`. calendar_status is CALLER-SUPPLIED. The server never computes it and can never itself emit \"closed\" — its only self-generated value is \"unknown\".\n  - telemetry.md Step 6.0 L15 passes `\"calendar_status\": \"<CALENDAR_STATUS from Step 4.3>\"`.\n  - pressure-read.md L65: `CALENDAR_STATUS = PRESSURE_STATE.calendar_status` — read FROM pressure-state.json.\n  The dispatcher reads the field out of the very file it then writes back. Closed self-recycling loop, no authoritative producer anywhere in the chain. Whatever literal enters the file once persists forever. This is precisely the \"circular\" mechanism this row was minted for — so the fix lands in the CALLER + the TOOL BOUNDARY, not in cadence-policy.json.\n\nENABLER (why an out-of-domain literal survives): the tool's Zod schema is bare `z.string().optional()` (emitPressureStateTool.ts:459) — no enum gate — even though its own describe() text names the 5-value domain 'open'|'weekend'|'holiday'|'half_day'|'unknown'. The correct producer ALREADY EXISTS and is simply not wired: vnTradingCalendar.ts session_status returns exactly {open, weekend, half_day, holiday, unknown} — a perfect match for the policy file's domain.\n\nSTATUS CHANGE (this is what is genuinely new, and it is the reason to act):\nmemory lesson feedback_pressure_state_caller_supplied_fields_dead_server_computed_live named \"off_market\" and \"closed\" as an ARMED LANDMINE that was latent ONLY while calendar_status stayed frozen at \"unknown\". IT IS NO LONGER LATENT.\n  - Live docs/data/pressure-state.json at 2026-07-25T09:24:44Z reads calendar_status=\"closed\".\n  - Signal files read \"unknown\" through 2026-07-23, then \"closed\" from 2026-07-24T17:37Z onward — \"closed\" is now the recycled steady state, not a one-off.\n  - Consequence, live every weekend tick since 07-24: no cadence-policy row matches, slots fall through to the 240-min generic default instead of their declared weekend rate (gatherer-standard 480, bctc-offmarket 1440) — over-firing non-guaranteed slots by up to ~5 extra runs per weekend day.\n  - Third out-of-domain literal for the class, historical precedent: \"off_market\" in docs/signals/processed/cowork-team-2026-06-07T19:47:55Z.json.\n\nSCOPE UNCHANGED — no re-scope needed. This row as written already names all four fix points (compute via vnTradingCalendar isVnTradingDay().session_status; enum-gate the caller override; stop preflight recycling the file value; DELETE the telemetry Step 6.0 arg line). Implementer: do not re-litigate the origin, it is settled above.\n\nCO-SHIP REQUIREMENT STANDS: must ship together with FIX-COWORK-CADENCE-DANGLING-POLICY-ID (policy-domain validation). Fixing the producer without validating the domain re-arms the identical class the next time any caller invents a literal.\n",
         "landmine_state": "DETONATED 2026-07-24T17:37Z — calendar_status live value out-of-domain, no longer latent",
-        "updated_at": "2026-07-25T09:29:16Z",
-        "updated_by": "po/signal-triage-20260725T0927"
+        "updated_at": "2026-07-25T09:51:59Z",
+        "updated_by": "po/signal-triage-20260725T0948",
+        "po_impact_evidence_20260725T0948": "IMPACT EVIDENCE FOLDED IN — no new row minted. This raises the row from 'a field carries a junk literal' to 'a documented suppression gate never fires, with recurring weekend spawn cost'. PREMISE CORRECTION: this row's own title says 'break the circular unknown', but the live literal is NOT 'unknown' — docs/data/pressure-state.json currently carries calendar_status:'closed' (tick_id 2026-07-25T09:15:00Z). 'closed' is out-of-domain: docs/agents/cowork-team/flow/pressure-read.md Step 4.3 L69 suppresses only on the literal set [\"holiday\",\"weekend\"], and L89 enumerates the recognized no-suppression domain as open/half_day/unknown. 'closed' matches neither list, so it falls through to the conservative no-suppression branch (AC-P1-4-2) — an unrecognized value is silently treated as safe. MEASURED CONSEQUENCE on Saturday 2026-07-25: docs/data/cowork-schedule.json has 23 slots (8 guaranteed / 15 non-guaranteed); five fired today, all non-guaranteed, zero guaranteed — bctc-analyst-slot-4 (bctc-offmarket, 00:11:31Z) and refine-bctc-slot-1 (bctc-offmarket, 09:09:16Z) are legitimately exempt per OQ-P1-3, but news-scout-offhours, market-watcher-offhours and alert-commander-critical (all 08:11:05Z, policies gatherer-standard/gatherer-standard/alert-commander-critical) SHOULD have been suppressed by Step 4.3's 'all other non-guaranteed slots: suppress on holiday OR weekend' rule. Three agent spawns per weekend tick that the design says should not happen. ISOLATION NOT YET DONE — do not overclaim: two paths produce this same outcome and it is unknown which applied at 08:11:05Z — (a) adaptive mode reading the unrecognized 'closed' literal, or (b) PRESSURE_MODE downgraded to 'legacy', in which case Steps 4.3-4.5 are skipped wholesale and no calendar suppression runs at all regardless of the literal. Both end in no-suppression. The 08:11Z tick's mode is recoverable from that tick's telemetry in docs/signals/ if the isolation is wanted before implementation. MECHANISM VERIFIED AT SOURCE this tick (self-recycling loop, no producer of truth anywhere): emitPressureStateTool.ts L387 writes calendar_status: args.calendar_status ?? 'unknown' — purely caller-supplied, never server-computed; its zod schema at L459-461 is z.string().optional() with NO enum gate, so any string validates while the describe() text merely documents the intended domain; and scripts/agents-flow/cowork-tick-preflight.sh L83 READS calendar_status back out of pressure-state.json and L95-97 writes that same value straight back in via emit_pressure_state. The file is its own source. SCOPE ADDITION beyond wiring vnTradingCalendar as the producer: (i) enum-gate calendar_status at the tool boundary so an out-of-domain literal is rejected at write time rather than persisted forever, and (ii) make pressure-read.md Step 4.3 FAIL LOUD on a value outside its known domain instead of silently taking the no-suppression branch — otherwise the next bad literal is equally invisible. Same defect shape as the fail-safe-that-refuses-every-input in UC-SDF-P2: the conservative branch became the only branch."
       },
       {
         "id": "UC-CCA-P1-GWBLIND-DEDUP",
@@ -4937,7 +4964,7 @@
         "type": "SPIKE",
         "title": "Diagnose+FIX: cycle-snapshot promotion dead since 07-07 (tickHHMM-vs-FILE_TICK filename divergence) + WIDEN to restore regime_status/volatility_level writer (no writer since 06-05) + market-hours staleness tripwire",
         "status": "BACKLOG",
-        "priority": "P2",
+        "priority": "P1",
         "size": "L",
         "zone": "multi",
         "sprint": "ULTRACODE-AUDIT-FIXALL",
@@ -4955,7 +4982,10 @@
           "FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK"
         ],
         "po_fold_widen_2026-07-16": "FOLDED signal cow-20260716T005400 (self-annotated DUPLICATE, no new task minted) — 3 RAW-confirmed advances added to scope: (a) DIAGNOSIS CLOSED — the 07-15 UNVERIFIED hypothesis is CONFIRMED AT SOURCE: emitPressureStateTool.ts joins cycle-snapshot-${tickHHMM}.json using tickHHMM derived from tick_id, while tick-snapshot.md:40,43 names the file by FILE_TICK=actual fire time (date -u +%H:%M) -> the two diverge under jitter/drift, so the join misses. (b) the snapshot key has NO date component -> a 43-day-old (06-03 00:00) file can be read and aged past 4h -> stale:true, which is why the miss is SILENT not merely absent; 102 stale files accrued. (c) SCOPE-BREAKER: regime_status/volatility_level have had NO WRITER since the 2026-06-05 EMIT-DARK-RECURRING refactor (last emitted 06-03; only 12 June files + 1 test fixture carry them; live snapshot has no carry block) -> BOTH promotion-dark handoffs' claim that 'promotion-dark pins last_regime=unknown' is FALSE, and fixing promotion ALONE leaves the adaptive loop dark FOREVER. UC-SDF-P2 as previously scoped is INSUFFICIENT -> WIDENED: scope now MUST include restoring a writer for regime_status/volatility_level (in addition to the promotion filename-key fix + the market-hours staleness tripwire). size M->L. Still plan_only (anomaly->BACKLOG invariant); ba/architect own HOW.",
-        "folded_signal": "cow-20260716T005400"
+        "folded_signal": "cow-20260716T005400",
+        "updated_at": "2026-07-25T09:51:59Z",
+        "updated_by": "po/signal-triage-20260725T0948",
+        "po_corroboration_20260725T0948": "THIRD independent detection — folded, no new row minted (signal cwk-20260725T092802-7c2e, cowork-team). Priority P2 -> P1: the DIAGNOSE half of this row is now COMPLETE, it is a pure FIX with a fully source-verified root cause, and the dead-adaptive-layer blast radius is confirmed downstream. Detection history: (1) 2026-07-15 signal cow-20260715T195340 deduped here; (2) 2026-07-21 memory feedback_cycle_snapshot_promote_conservative_default_refuses_every_input; (3) 2026-07-25 this signal. VERIFIED AT SOURCE by PO this tick, not relayed: emitPressureStateTool.ts L359-362 derives tickHHMM from the NOMINAL tick_id (always :00/:15/:30/:45); L232 looks up docs/data/cycle-snapshot-<that HH:MM>.json; but docs/agents/cowork-team/flow/tick-snapshot.md Step 4.7 names the file by FIRE time (FILE_TICK=$(date -u +%H:%M)). All six on-disk snapshots sit at nominal+8..11min (00:10, 08:10, 09:08, 20:09, 20:26, 21:09) — none on a nominal boundary, so existsSync fails every tick and L233 returns {promoted:false, stale:false}. Because stale is ALSO false, stale_warning never fires: the failure is completely silent, which is why it survived 18 days (cycle-snapshot-latest.json content tick '19:45', created_at 2026-07-07T19:47:26Z). This is a producer/consumer filename-contract mismatch that NEVER worked — not a race and not a regression of FU-TICK-SNAPSHOT-EMIT-DARK's bash-fence defect. SECOND independent failure mode still applies and must be fixed too (from the 07-21 memory): even on a name match, the on-grid file is the dispatcher's OWN Step 4.7 tick-snapshot, which carries none of fetchedAt/created_at/macro_snapshot.fetchedAt, so the freshness gate treats it as Infinity-stale and refuses. Fixing only the filename leaves the promoter still refusing. DOWNSTREAM CONFIRMED DEAD: docs/data/pressure-state.json currently has regime_status:null, volatility_level:null, cycle_snapshot_promoted:null. FIX DIRECTION IS AN OPEN DESIGN CALL, deliberately NOT decided by PO (rename in Step 4.7 vs glob/most-recent lookup) — route to architect with the sequencing guard below. ABSORBED FROM SPIKE-TICK-SNAPSHOT-DEADCODE-OR-REGRESSED (now CANCELLED/superseded, its question answered by the above): SEQUENCING GUARD — DO NOT land cycle-snapshot key-unification / residue-file prune ALONE. Pruning the ~110 gitignored cycle-snapshot-<HH:MM>.json residue files flips every cowork tick to stale_warning=false -> adaptive fleet-wide, which activates the 240-min dangling-policy gate and degrades the alert-commander-market path 16x (15min -> 240min). Per handoff docs/handoffs/2026-07-16-cycle-snapshot-promotion-dark-9-days-adaptive-cadence-never-runs.md the coupling is 3-way + a 4th unit, and must land as ONE change set: (1) unify the snapshot key + put a date in it; (2) author the missing cadence-policy rows (alert-commander-market 15min + alert-commander-critical 240min + gatherer open/half_day tiers); (3) WIRE calendar_status to the vnTradingCalendar oracle (isVnTradingDay) — see UC-CDC-P1, which now carries live weekend-suppression impact evidence; (4) restore a writer for regime_status/volatility_level (dropped in the 2026-06-05 refactor) + a test that fails when the reader's source field has no writer. Couples with UC-CDC-P1 and FIX-COWORK-CADENCE-DANGLING-POLICY-ID."
       },
       {
         "id": "UC-RDL-UNVERIFIED-BATCH",
@@ -7283,17 +7313,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FB-LAUNCHD-QA-FIRE-VERIFY-DEDUP"
       },
       {
-        "id": "SPIKE-TICK-SNAPSHOT-DEADCODE-OR-REGRESSED",
-        "title": "SPIKE: tick-snapshot Step 4.7 cycle-snapshot-latest.json stale since 06-17 — genuinely inert dead-code (remove) OR silently regressed (re-fix)?",
-        "status": "BACKLOG",
-        "type": "SPIKE",
-        "priority": "low",
-        "zone": "docs/agents/cowork-team/flow/",
-        "sprint": null,
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#SPIKE-TICK-SNAPSHOT-DEADCODE-OR-REGRESSED",
-        "note": "[PO signal cow-20260716T043200, 2026-07-16] SEQUENCING GUARD — DO NOT land cycle-snapshot key-unification / residue-file prune ALONE. Pruning the ~110 gitignored cycle-snapshot-<HH:MM>.json residue files flips every cowork tick to stale_warning=false -> adaptive fleet-wide, which activates the 240-min dangling-policy gate and degrades the alert-commander-market path 16x (15min->240min). Per handoff docs/handoffs/2026-07-16-cycle-snapshot-promotion-dark-9-days-adaptive-cadence-never-runs.md §4-NEW-2/§4-NEW-3 the coupling is 3-way + a 4th unit: (1) unify the snapshot key + put a date in it; (2) author the missing cadence-policy rows (alert-commander-market 15min + alert-commander-critical 240min + gatherer open/half_day tiers); (3) WIRE calendar_status to the existing vnTradingCalendar oracle (isVnTradingDay) — it is structurally latched at 'unknown' so newly-authored open/half_day rows are otherwise unreachable; (4) restore a writer for regime_status/volatility_level (dropped in the 2026-06-05 refactor) + a test that fails when the reader's source field has no writer. Land as ONE change set. Couples with UC-SDF-P2 + FIX-COWORK-CADENCE-DANGLING-POLICY-ID (both tracked in backlog-detail.json)."
-      },
-      {
         "id": "FIX-VPS-SSC-INSIDER-502",
         "title": "FIX-VPS-SSC-INSIDER-502 — VPS proxy HTTP 502 on ssc-insider upstream (decoupled from BA-PREDICTION-EVIDENCE-REVIVAL)",
         "type": "FIX",
@@ -9526,7 +9545,9 @@
           "FIX-DRAIN-PERSIST-GUARD-COUNT-DRAINABLE-ONLY"
         ],
         "note": "Router SURFACED; PO source-verified the JUMP-to-end placements before minting (grep-confirmed distinct from the QA-Drain row which adds the drain). Sequence AFTER the SLS/QA-Drain/RLC live-tick AC(3) verification lands so the two do not race the same flow file. | 2026-07-22 SHARPER FACET (from dev-team-20260722T054244Z-triage-batch-wip-deadlock): even when Step-1 triage SUCCEEDS under WIP saturation, its direct-FIX output (Step2 FIX->skip->Step3 has NO WIP gate) still requires a free WIP slot to LAND, so a successfully-triaged BATCH is silently lost if the board is saturated and it is not persisted. dev-team could neither dispatch nor persist its 07-22T05:42Z BATCH; PO minted the 2 FIXes (FIX-DRAIN-PERSIST-GUARD-COUNT-DRAINABLE-ONLY P1, FIX-ORCHSTATE-CONSERVATION-GUARD-QA-LANE-BLIND P2) to backlog[] as the workaround. Architect: the fairness fix must ALSO guarantee triaged direct-FIX output is DURABLY PERSISTED, not merely that Step-1 runs.",
-        "updated_at": "2026-07-22T06:43:03Z"
+        "updated_at": "2026-07-25T09:51:59Z",
+        "updated_by": "po/signal-triage-20260725T0948",
+        "po_evidence_20260725T0948": "LIVE EVIDENCE + PREMISE CORRECTION (folded from signal cwk-20260725T093521-b3d1's starvation leg; no new row minted — same defect class, same zone, same architect owner). PREMISE CORRECTION: this row's title asserts 'with review[] holding qa-eligible rows the QA-Drain fires every idle tick'. The live board REFUTES that — qa[] is EMPTY (0 rows) while review[] holds 105 rows, 73 of them carrying next_agent=qa, some stamped explicitly 'branch:null for QA-Drain'. QA-Drain has effectively never fired. The lane that actually wins the head-idle chain is BOUNDED-1, which is FIRST in it and draws from a 390-row backlog[], so it finds an eligible row on essentially every idle tick and JUMPs to execute — leaving SLS, RLC and QA-Drain unreachable behind it. Measured cadence 2026-07-25: seven BOUNDED-1 claim commits between 02:17Z and 05:18Z, one every ~30min (8e062bbd6, 4ba46273b, 941c3b829, 525a82e14, a87975d9d, a44ac38aa, 9f2ae6865), against ZERO RLC or QA-Drain dispatches in the same window. CONSEQUENCE: ready[] (45 rows, 18 of them P0) and review[] (105 rows) are both structurally undrainable while backlog[] is non-empty. Concrete cost: P0 FIX-BCTC-PENDING-REFINE-HEAD-OF-LINE-FAILED-ROW sat READY and undispatched from 2026-07-21 through 2026-07-25 across three independent correct detections, purely because nothing consumes ready[]; PO has re-routed that one row to backlog[] this tick as an ACUTE workaround, which does not fix the lane. So the fairness fix must cover lane ORDERING/starvation between the four dispatch lanes, not only the Step-1 PO-triage preemption this row was originally minted for. Note the chain-ordering defect is CHRONIC and independent of the ACUTE head-pin outage recorded in FIX-DEVTEAM-HEAD-PIN-STALE-THRESHOLD-24H-VS-TICK-CADENCE — the P0s were already starving for 4 days before today's pin."
       },
       {
         "id": "FIX-AUDITOR-DOCAUDIT-MEMORY-PATH-PREDICATE",
@@ -10992,6 +11013,73 @@
           "FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX"
         ],
         "updated_at": "2026-07-25T08:57:46Z"
+      },
+      {
+        "id": "FIX-VNINDEX-CACHE-STARTUP-PURGE",
+        "title": "vn_index_cache PURGED on mcp-server startup + refresh is market-hours-only -> any off-hours restart strands cache=0 until next Mon open. RECURRING: prior FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH (DONE, never done_verified) framed it as a refresh-path bug and did NOT close the root.",
+        "type": "FIX",
+        "priority": "P2",
+        "status": "BACKLOG",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-VNINDEX-CACHE-STARTUP-PURGE",
+        "updated_at": "2026-07-25T09:51:59Z",
+        "next_agent": "dev-mcp-server",
+        "updated_by": "po/signal-triage-20260725T0948",
+        "po_stall_note_20260725": "HEAD-UNPIN 2026-07-25T09:48Z. This row was BOUNDED-1-claimed 2026-07-25T05:18:14Z and pinned .head at status=in_progress for 4h25m with ZERO progress: no commit references the task id, no working-tree change under apps/mcp-server/, no dev-mcp-server notebook entry, and task_list_held shows NO lock on task:FIX-VNINDEX-CACHE-STARTUP-PURGE (so Pipeline Resume was never blocked by a peer holder — it was free to re-spawn every tick and produced nothing). Prior BOUNDED-1 cadence was one claim+closeout every ~30min (7 claims 02:17Z-05:18Z), so this is a silent spawn/agent failure, not slow work. Because docs/agents/dev-team/flow/main.md L491 only auto-resets a pinned head at >=24h, ALL FOUR dispatch lanes (BOUNDED-1/SLS/RLC/QA-Drain, all gated on head-idle at L492) were dead until 2026-07-26T05:18Z. Row returned to backlog[] UNMODIFIED in scope/priority — the defect it describes is still real and unfixed. If a future BOUNDED-1 pick of this row stalls the head a SECOND time, do NOT simply re-unpin: that makes it a reproducible per-row dispatch failure and it must be escalated as such. Systemic fix tracked at FIX-DEVTEAM-HEAD-PIN-STALE-THRESHOLD-24H-VS-TICK-CADENCE."
+      },
+      {
+        "id": "FIX-BCTC-PENDING-REFINE-HEAD-OF-LINE-FAILED-ROW",
+        "type": "FIX",
+        "title": "get_bctc_pending_refine serves a fully-FAILED finalized report at result[0] — both refine slots re-pick it forever and never reach the 4 genuinely-PENDING reports behind it",
+        "status": "BACKLOG",
+        "priority": "P0",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "depends": [],
+        "supervised": false,
+        "created_at": "2026-07-21T17:24:33Z",
+        "created_by": "po/triage-20260721T1707",
+        "updated_at": "2026-07-25T09:51:59Z",
+        "updated_by": "po/signal-triage-20260725T0948",
+        "origin_signal_id": "cow-20260721T164500",
+        "source_signal": "docs/signals/processed/cowork-team-20260721T164500Z-refine-queue-head-of-line-block.json",
+        "mechanism": "refine-bctc-slot-3 (11:00 UTC) and slot-4 (16:30 UTC) trigger prompts both instruct 'call get_bctc_pending_refine (limit:1), pick the OLDEST pending row (result[0])'. The tool's result set includes refine_status=FAILED rows, not only PENDING. POW_2026_Q1.pdf (report_id 78b06684-dca5-45e7-8dfd-b173df3d3d02) finalized FAILED with done_ct=0 / failed_ct=28 across all 28 windows — ZERO remaining windows — and is STILL returned at result[0]. Verified live by cowork-team AFTER finalization: result[0]=POW refine_status=FAILED text_status=COMPLETE; positions 1-4 = DPM_2025_Q4 (47p), REE_2025_Q4 (24p), DPM_2026_Q1 (47p), VPB_2026_Q1 (80p), ALL refine_status=PENDING text_status=COMPLETE.",
+        "po_decision_20260721T1724": "PO RATIFIES OPTION (b) — exclude FAILED rows that have ZERO unprocessed windows; keep serving FAILED rows that still have remaining work. Rationale: option (a) 'exclude refine_status=FAILED entirely' would permanently strand transiently-failed reports with real remaining windows, converting a head-of-line bug into silent data loss; option (c) 'have the slot prompt select the first row with remaining work' pushes a data-layer invariant into N prompt strings and will drift the moment a new slot is added. (b) fixes it once, at the query, and preserves retry. Implement in the tool's query predicate, NOT in the slot prompts.",
+        "why_p0": "This is not a latent bug — it is actively burning both scheduled refine slots as no-ops in perpetuity. Every fire claims the lock, picks POW, finds an empty remaining-window set, exits, and telemetry reads as a SUCCESSFUL slot fire. Silent defeat of the exact drain those two slots were added to perform. 4 ready-to-refine reports are starved behind a dead head row.",
+        "related_not_duplicate": "FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW (backlog) — SAME TOOL, different defect (235K-char inline-limit overflow). NOT a duplicate, but the implementer should read both before touching the query; fixing one without the other means a second pass over the same function.",
+        "prior_art_note": "cowork-team searched signal_queue + board for pending_refine / head-of-line / FAILED-row-retry and found no prior art for THIS defect. PO re-checked and confirms: FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP and the refine-dispatch-dormancy family are the OPPOSITE failure mode (trigger not firing); this is the trigger firing correctly and the queue handing it dead work.",
+        "acceptance": "(1) get_bctc_pending_refine no longer returns reports whose refine_status=FAILED AND whose unprocessed-window count is 0; (2) a FAILED report WITH remaining windows is still returned (negative test — do not over-exclude); (3) result[0] for the live store is a PENDING report with remaining work.",
+        "verification_gate": "Call get_bctc_pending_refine(limit:5) live through the gateway AFTER the change and confirm result[0] is one of DPM_2025_Q4 / REE_2025_Q4 / DPM_2026_Q1 / VPB_2026_Q1 with refine_status=PENDING, AND that POW_2026_Q1 (78b06684-dca5-45e7-8dfd-b173df3d3d02) is absent. Then confirm one real refine slot fire processes non-zero windows. Live call, not unit test alone, not flow-doc prose.",
+        "cowork_rereport_20260722T1721": "PO dev-team triage 2026-07-22T17:21Z — cowork-team RE-REPORTED this exact defect (signal cowork-20260722T164119Z-refine-failed-headofline-poison), verified LIVE this cycle: 24h after this P0 row was minted, get_bctc_pending_refine(limit:5) STILL returns POW_2026_Q1 (78b06684) refine_status=FAILED at result[0] ahead of the same 4 PENDING reports, and the daily refine slot (cron 30 16) fired again 2026-07-22 16:30Z re-picking POW, re-failing 28 windows, advancing nothing. This row is NOT stalled on any missing spec — READY/P0/unsupervised/dev-mcp-server, fully dispatchable, blocked ONLY by WIP=2 saturation (in_progress: DESIGN-COWORK-FANOUT-PRODUCER-CONSUMER-ORDERING + FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD, both since 2026-07-22T00:52Z ~16h, not yet stale-reset at 24h). ESCALATION WITHIN THE P0 POOL: this is the ONLY ready P0 actively BURNING a production slot every day (not latent) and starving live bctc-analyst coverage — should take the next free dev-mcp-server dispatch slot ahead of the latent P0 rows (CCATO-MCP-T* have owner=null and cannot dispatch; FIX-ORPHAN-FR* are owner=pm). No duplicate minted (grep-board discipline).",
+        "cowork_rereport_20260725T0927": "cowork_rereport 2026-07-25T09:27:11Z — THIRD REPORT OF THIS DEFECT, AND THE SIGNAL'S \"CLEARED\" CLAIM IS REFUTED BY LIVE PROBE.\n\ncowork-team signal cwk-20260725T091107-a591 re-reported POW_2026_Q1 28/28 units FAILED (units 0-23 text_fetch_failed, units 24-27 image_fetch_oversized, all since 07-21) and asserted: \"The 09:00Z refine fire already finalized the report FAILED, which cleared it from the head of the pending queue.\"\n\nTHAT ASSERTION IS FALSE. PO probed live through the gateway at 2026-07-25T09:2xZ — get_bctc_pending_refine(limit:5) STILL returns:\n  result[0] = POW_2026_Q1.pdf, id 78b06684-dca5-45e7-8dfd-b173df3d3d02, refine_status=FAILED, text_status=COMPLETE, page_count 31, all 28 windows still enumerated\n  result[1..4] = DPM_2025_Q4 (PENDING), REE_2025_Q4 (PENDING), DPM_2026_Q1 (PENDING), VPB_2026_Q1 (PENDING)\n— byte-for-byte the same head-of-line state this row recorded on 2026-07-21 and re-verified on 2026-07-22. The report was ALREADY finalized FAILED on 07-21. Finalization does NOT clear the head; that stickiness IS this bug. Four days and at least four slot fires later nothing has advanced.\n\nSTANDING RULE FOR FUTURE SIGNALS ON THIS ROW: \"finalized, therefore cleared\" is not evidence and must never be accepted as remediation. The only acceptable evidence is this row's verification_gate — a live get_bctc_pending_refine call showing POW absent and a PENDING report at result[0].\n\nALSO ADJUDICATED — the signal's \"two distinct failure modes in one report suggests a shared upstream cause worth isolating before dispatch\": NO. Already settled 2026-07-21, see the advisory_do_not_chase field on FIX-BCTC-REFINE-RESOURCE-EXCEEDED-STATUS. The 24 text_fetch_failed and the 4 image_fetch_oversized have DIFFERENT causes — the latter is the refine subagent's own context budget on a ~1.2MB base64 page image, a property of the worker, not of a fetch layer. There is no shared upstream cause to isolate. Do NOT mint a spike to look for one, and do NOT route this at the text-extraction layer (get_bctc_page_text demonstrably serves full OCR text for these pages).\n\nDISPATCH STATE: the 2026-07-22 note recorded this row blocked ONLY by WIP=2 saturation. That constraint is GONE — WIP is now 1 (in_progress = FIX-VNINDEX-CACHE-STARTUP-PURGE since 05:18Z). This row is READY / P0 / owner=dev-mcp-server / next_agent=dev-mcp-server / supervised=false / depends=[] — fully dispatchable, no missing spec, PO decision already ratified (option (b), fix in the tool's query predicate not the slot prompts). It remains the only ready P0 actively BURNING a production slot every day rather than sitting latent, and it starves live bctc-analyst coverage behind it.\n\nWHAT THIS ROW NEEDS IS A DISPATCH, NOT ANOTHER TRIAGE PASS. Three independent detections (07-21 mint, 07-22 cowork re-report, 07-25 cowork re-report) have now produced the same correct row three times — this is a recurring FAILED-DISPATCH, not a recurring detection gap. No fourth duplicate should be minted.\n",
+        "po_reroute_20260725T0948": "LANE RE-ROUTE ready[] -> backlog[], priority P0 UNCHANGED. Not a demotion. Rationale: ready[] is drained ONLY by the Ready-Lane Consumer, which sits 3rd in the head-idle fall-through chain (BOUNDED-1 -> SLS -> RLC -> QA-Drain) and is reached only when BOUNDED-1 dispatches nothing. With 390 rows in backlog[] BOUNDED-1 finds an eligible row essentially every idle tick, so RLC has effectively never run — corroborated live: qa[] is EMPTY while 73 review[] rows carry next_agent=qa. This row sat READY and undispatched since 2026-07-21 across three independent detections for exactly that reason. backlog[] is the one lane demonstrably draining (7 BOUNDED-1 claims between 02:17Z and 05:18Z today). Gate check done before the move: status=BACKLOG, supervised=false, depends=[], next_agent=dev-mcp-server (matches the dev-role pattern), no children, no detail entry (all detail-keyed gates default to not-gated), no po_sequencing_* key -> passes every BOUNDED-1 gate, and at priority_rank=0 it outranks every other eligible backlog row. Deliberately did NOT hand-stamp promoted_by='dev-team (bounded-1 auto-pickup)' to force the claim script: that marker's documented contract is 'stamped by the promote script, never a pre-existing human/PO/router-placed ready[] row', and faking provenance would corrupt the very signal the next incident needs. Structural fix for the lane starvation itself: FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION."
+      },
+      {
+        "id": "FIX-DEVTEAM-HEAD-PIN-STALE-THRESHOLD-24H-VS-TICK-CADENCE",
+        "type": "FIX",
+        "title": "dev-team head-pin auto-reset is 24h while the tick cadence is ~30min — ONE silently-failed spawn takes all four dispatch lanes offline for up to 24h",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "S",
+        "zone": "docs/agents/dev-team/flow/",
+        "owner": "architect",
+        "next_agent": "architect",
+        "supervised": true,
+        "plan_only": true,
+        "depends": [],
+        "created_at": "2026-07-25T09:51:59Z",
+        "created_by": "po/signal-triage-20260725T0948",
+        "origin_signal_id": "cwk-20260725T093521-b3d1",
+        "mechanism": "docs/agents/dev-team/flow/main.md L492 gates the ENTIRE dispatch chain (BOUNDED-1 -> SLS -> RLC -> QA-Drain) on head.status being idle/done/missing/v1. L491 is the only self-heal: 'head.status == in_progress AND head.updated_at >= 24h -> stale crash, reset to idle'. Between those two lines, any head that pins without progressing takes every dispatch lane offline until the 24h timer expires. The Pipeline Resume path at L470-489 does re-spawn head.next_agent each tick, but it stamps nothing on .head, so a spawn that dies before writing anything leaves updated_at frozen and the resume silently repeats — burning one spawn per tick with no forward progress and no alert.",
+        "instance": "2026-07-25T05:18:14Z BOUNDED-1 claimed P2 FIX-VNINDEX-CACHE-STARTUP-PURGE and pinned the head. At 09:48Z (4h25m later) PO verified: no commit references the task id; no working-tree change under apps/mcp-server/; no dev-mcp-server notebook entry (its last three 2026-07-25 entries are all pre-05:18Z work from session 4ae45b71); and task_list_held returned 14 locks with NO lock on task:FIX-VNINDEX-CACHE-STARTUP-PURGE — so Pipeline Resume was never blocked by a peer holder and was free to re-spawn every tick. Prior BOUNDED-1 cadence was one claim+closeout every ~30min (7 claims 02:17Z-05:18Z), i.e. a healthy task closes in ~13-30min; the 24h threshold is roughly 48x the observed p100. Blast radius during the pin: 18 P0 rows in ready[], 73 qa-eligible rows in review[], 390 backlog rows — none dispatchable. Auto-reset would not have fired until 2026-07-26T05:18Z. PO unpinned by hand at 09:48Z.",
+        "why_p1": "Single point of failure with a ~24h outage window on the whole dev pipeline, triggered by any one silent spawn failure, with no alert on the way in. The hand-unpin PO performed this tick is not a fix and does not survive the next occurrence.",
+        "acceptance": "(1) A head pinned in_progress with no .head movement AND no commit referencing active_task_id for a bounded interval proportionate to the observed tick cadence (NOT 24h) is detected and reset; PO does not ratify a specific number — architect picks it from the measured cadence and states the basis. (2) Detection emits a BUG-channel signal naming the pinned task id and the pin duration, so a silent spawn failure becomes loud rather than being inferred 4h later from a missing commit. (3) Pipeline Resume records evidence of each re-spawn attempt (e.g. an attempt counter or last_resume_at on .head) so a repeated no-op resume is distinguishable from a task that is genuinely still running — the current state is indistinguishable from the outside, which is why this went unnoticed. (4) Repeated resume of the SAME active_task_id past a small attempt bound stops re-spawning and escalates instead of burning one spawn per tick.",
+        "scope_out": "Do NOT fix by raising WIP or by removing the head gate — the WIP<=1 BOUNDED-1 bound is user-gated (2026-07-04) and out of scope. Do NOT diagnose why dev-mcp-server specifically produced nothing on FIX-VNINDEX-CACHE-STARTUP-PURGE; that row is back in backlog[] and, if it stalls the head a second time, becomes a separate reproducible per-row dispatch failure.",
+        "related_not_duplicate": "FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION (chain ORDERING / lane starvation — chronic, independent, the P0 rows were already starving 4 days before this pin) and ARCH-SESSION-CRON-PLANE-LIVENESS-WATCHDOG (session-scoped CronCreate loop liveness — a different plane; this row is about board-head liveness and would fire even with the cron plane perfectly healthy).",
+        "prior_art_note": "PO grep-checked the board before minting for STARV/DRAIN/STALE-CRASH/HEAD-PIN/WATCHDOG/LIVENESS/DISPATCH-GATE: the two nearest rows are named above and are both distinct. No existing row covers the 24h-threshold-vs-tick-cadence mismatch or the unobservable Pipeline-Resume respawn.",
+        "updated_at": "2026-07-25T09:51:59Z"
       }
     ],
     "closed_sprints": [
@@ -12147,34 +12235,6 @@
         "updated_at": "2026-07-21T17:24:33Z",
         "updated_by": "po/triage-20260721T1707",
         "po_promote_20260721T1724": "PROMOTED backlog->ready (PO Step-1 triage). pm decomposed the parent into these two children but left them in the 409-row backlog lane with status BACKLOG, so no dispatcher would ever pick them — the decomposition would have stalled silently. Both rows are fully specced (owner, next_agent, zone, size, AC refs into docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md, supervised:true) and the design load-bearing claim was independently reproduced by router at scripts/audits/verify-commit-sweep-discriminator.sh (VERDICT PASS, git 2.49.0). Nothing further gates them."
-      },
-      {
-        "id": "FIX-BCTC-PENDING-REFINE-HEAD-OF-LINE-FAILED-ROW",
-        "type": "FIX",
-        "title": "get_bctc_pending_refine serves a fully-FAILED finalized report at result[0] — both refine slots re-pick it forever and never reach the 4 genuinely-PENDING reports behind it",
-        "status": "READY",
-        "priority": "P0",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "next_agent": "dev-mcp-server",
-        "depends": [],
-        "supervised": false,
-        "created_at": "2026-07-21T17:24:33Z",
-        "created_by": "po/triage-20260721T1707",
-        "updated_at": "2026-07-25T09:29:16Z",
-        "updated_by": "po/signal-triage-20260725T0927",
-        "origin_signal_id": "cow-20260721T164500",
-        "source_signal": "docs/signals/processed/cowork-team-20260721T164500Z-refine-queue-head-of-line-block.json",
-        "mechanism": "refine-bctc-slot-3 (11:00 UTC) and slot-4 (16:30 UTC) trigger prompts both instruct 'call get_bctc_pending_refine (limit:1), pick the OLDEST pending row (result[0])'. The tool's result set includes refine_status=FAILED rows, not only PENDING. POW_2026_Q1.pdf (report_id 78b06684-dca5-45e7-8dfd-b173df3d3d02) finalized FAILED with done_ct=0 / failed_ct=28 across all 28 windows — ZERO remaining windows — and is STILL returned at result[0]. Verified live by cowork-team AFTER finalization: result[0]=POW refine_status=FAILED text_status=COMPLETE; positions 1-4 = DPM_2025_Q4 (47p), REE_2025_Q4 (24p), DPM_2026_Q1 (47p), VPB_2026_Q1 (80p), ALL refine_status=PENDING text_status=COMPLETE.",
-        "po_decision_20260721T1724": "PO RATIFIES OPTION (b) — exclude FAILED rows that have ZERO unprocessed windows; keep serving FAILED rows that still have remaining work. Rationale: option (a) 'exclude refine_status=FAILED entirely' would permanently strand transiently-failed reports with real remaining windows, converting a head-of-line bug into silent data loss; option (c) 'have the slot prompt select the first row with remaining work' pushes a data-layer invariant into N prompt strings and will drift the moment a new slot is added. (b) fixes it once, at the query, and preserves retry. Implement in the tool's query predicate, NOT in the slot prompts.",
-        "why_p0": "This is not a latent bug — it is actively burning both scheduled refine slots as no-ops in perpetuity. Every fire claims the lock, picks POW, finds an empty remaining-window set, exits, and telemetry reads as a SUCCESSFUL slot fire. Silent defeat of the exact drain those two slots were added to perform. 4 ready-to-refine reports are starved behind a dead head row.",
-        "related_not_duplicate": "FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW (backlog) — SAME TOOL, different defect (235K-char inline-limit overflow). NOT a duplicate, but the implementer should read both before touching the query; fixing one without the other means a second pass over the same function.",
-        "prior_art_note": "cowork-team searched signal_queue + board for pending_refine / head-of-line / FAILED-row-retry and found no prior art for THIS defect. PO re-checked and confirms: FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP and the refine-dispatch-dormancy family are the OPPOSITE failure mode (trigger not firing); this is the trigger firing correctly and the queue handing it dead work.",
-        "acceptance": "(1) get_bctc_pending_refine no longer returns reports whose refine_status=FAILED AND whose unprocessed-window count is 0; (2) a FAILED report WITH remaining windows is still returned (negative test — do not over-exclude); (3) result[0] for the live store is a PENDING report with remaining work.",
-        "verification_gate": "Call get_bctc_pending_refine(limit:5) live through the gateway AFTER the change and confirm result[0] is one of DPM_2025_Q4 / REE_2025_Q4 / DPM_2026_Q1 / VPB_2026_Q1 with refine_status=PENDING, AND that POW_2026_Q1 (78b06684-dca5-45e7-8dfd-b173df3d3d02) is absent. Then confirm one real refine slot fire processes non-zero windows. Live call, not unit test alone, not flow-doc prose.",
-        "cowork_rereport_20260722T1721": "PO dev-team triage 2026-07-22T17:21Z — cowork-team RE-REPORTED this exact defect (signal cowork-20260722T164119Z-refine-failed-headofline-poison), verified LIVE this cycle: 24h after this P0 row was minted, get_bctc_pending_refine(limit:5) STILL returns POW_2026_Q1 (78b06684) refine_status=FAILED at result[0] ahead of the same 4 PENDING reports, and the daily refine slot (cron 30 16) fired again 2026-07-22 16:30Z re-picking POW, re-failing 28 windows, advancing nothing. This row is NOT stalled on any missing spec — READY/P0/unsupervised/dev-mcp-server, fully dispatchable, blocked ONLY by WIP=2 saturation (in_progress: DESIGN-COWORK-FANOUT-PRODUCER-CONSUMER-ORDERING + FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD, both since 2026-07-22T00:52Z ~16h, not yet stale-reset at 24h). ESCALATION WITHIN THE P0 POOL: this is the ONLY ready P0 actively BURNING a production slot every day (not latent) and starving live bctc-analyst coverage — should take the next free dev-mcp-server dispatch slot ahead of the latent P0 rows (CCATO-MCP-T* have owner=null and cannot dispatch; FIX-ORPHAN-FR* are owner=pm). No duplicate minted (grep-board discipline).",
-        "cowork_rereport_20260725T0927": "cowork_rereport 2026-07-25T09:27:11Z — THIRD REPORT OF THIS DEFECT, AND THE SIGNAL'S \"CLEARED\" CLAIM IS REFUTED BY LIVE PROBE.\n\ncowork-team signal cwk-20260725T091107-a591 re-reported POW_2026_Q1 28/28 units FAILED (units 0-23 text_fetch_failed, units 24-27 image_fetch_oversized, all since 07-21) and asserted: \"The 09:00Z refine fire already finalized the report FAILED, which cleared it from the head of the pending queue.\"\n\nTHAT ASSERTION IS FALSE. PO probed live through the gateway at 2026-07-25T09:2xZ — get_bctc_pending_refine(limit:5) STILL returns:\n  result[0] = POW_2026_Q1.pdf, id 78b06684-dca5-45e7-8dfd-b173df3d3d02, refine_status=FAILED, text_status=COMPLETE, page_count 31, all 28 windows still enumerated\n  result[1..4] = DPM_2025_Q4 (PENDING), REE_2025_Q4 (PENDING), DPM_2026_Q1 (PENDING), VPB_2026_Q1 (PENDING)\n— byte-for-byte the same head-of-line state this row recorded on 2026-07-21 and re-verified on 2026-07-22. The report was ALREADY finalized FAILED on 07-21. Finalization does NOT clear the head; that stickiness IS this bug. Four days and at least four slot fires later nothing has advanced.\n\nSTANDING RULE FOR FUTURE SIGNALS ON THIS ROW: \"finalized, therefore cleared\" is not evidence and must never be accepted as remediation. The only acceptable evidence is this row's verification_gate — a live get_bctc_pending_refine call showing POW absent and a PENDING report at result[0].\n\nALSO ADJUDICATED — the signal's \"two distinct failure modes in one report suggests a shared upstream cause worth isolating before dispatch\": NO. Already settled 2026-07-21, see the advisory_do_not_chase field on FIX-BCTC-REFINE-RESOURCE-EXCEEDED-STATUS. The 24 text_fetch_failed and the 4 image_fetch_oversized have DIFFERENT causes — the latter is the refine subagent's own context budget on a ~1.2MB base64 page image, a property of the worker, not of a fetch layer. There is no shared upstream cause to isolate. Do NOT mint a spike to look for one, and do NOT route this at the text-extraction layer (get_bctc_page_text demonstrably serves full OCR text for these pages).\n\nDISPATCH STATE: the 2026-07-22 note recorded this row blocked ONLY by WIP=2 saturation. That constraint is GONE — WIP is now 1 (in_progress = FIX-VNINDEX-CACHE-STARTUP-PURGE since 05:18Z). This row is READY / P0 / owner=dev-mcp-server / next_agent=dev-mcp-server / supervised=false / depends=[] — fully dispatchable, no missing spec, PO decision already ratified (option (b), fix in the tool's query predicate not the slot prompts). It remains the only ready P0 actively BURNING a production slot every day rather than sitting latent, and it starves live bctc-analyst coverage behind it.\n\nWHAT THIS ROW NEEDS IS A DISPATCH, NOT ANOTHER TRIAGE PASS. Three independent detections (07-21 mint, 07-22 cowork re-report, 07-25 cowork re-report) have now produced the same correct row three times — this is a recurring FAILED-DISPATCH, not a recurring detection gap. No fourth duplicate should be minted.\n"
       },
       {
         "id": "SPIKE-SATURATED-COUNT-THRESHOLD-GATES-SWEEP",
@@ -15462,26 +15522,9 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-25T08:56:36Z",
-    "last_triaged_by": "po",
-    "in_progress": [
-      {
-        "id": "FIX-VNINDEX-CACHE-STARTUP-PURGE",
-        "title": "vn_index_cache PURGED on mcp-server startup + refresh is market-hours-only -> any off-hours restart strands cache=0 until next Mon open. RECURRING: prior FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH (DONE, never done_verified) framed it as a refresh-path bug and did NOT close the root.",
-        "type": "FIX",
-        "priority": "P2",
-        "status": "IN_PROGRESS",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-VNINDEX-CACHE-STARTUP-PURGE",
-        "promoted_at": "2026-07-25T05:15:55Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-25T05:18:14Z",
-        "claimed_at": "2026-07-25T05:15:55Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "dev-mcp-server"
-      }
-    ]
+    "last_triaged_at": "2026-07-25T09:51:59Z",
+    "last_triaged_by": "po/signal-triage-20260725T0948",
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
