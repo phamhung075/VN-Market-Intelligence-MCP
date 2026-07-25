@@ -390,7 +390,7 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "router",
-    "updated_at": "2026-07-25T01:27:15Z",
+    "updated_at": "2026-07-25T02:07:52Z",
     "updated_by": "developer"
   },
   "narrative": {
@@ -6605,16 +6605,6 @@
         "zone": "docs/agents/market-watcher/",
         "status": "BACKLOG",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MARKET-WATCHER-DOC-PARAM-DRIFT"
-      },
-      {
-        "id": "FIX-FB-GATE-STALE-MACRO-GUARD",
-        "title": "fb-gate Check-G: reject stale macro/FX presented as current + unverified comparison levels",
-        "type": "FIX",
-        "status": "BACKLOG",
-        "priority": "P2",
-        "zone": "cross-service/",
-        "size": "M",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-FB-GATE-STALE-MACRO-GUARD"
       },
       {
         "id": "FIX-FB-GATE-BREADTH-PCT-INTERNAL",
@@ -14994,6 +14984,27 @@
         "rebuild_required": false,
         "branch": null,
         "review_note": "developer: Added Check-H to scripts/fb-data-integrity-gate.sh — BLOCKs when |stated index point-change - implied point-change (pct x prev_close)| exceeds POINT_PCT_MATH_TOLERANCE (new header const, 1.0 pt). prev_close derived from live snapshot only: close/(1+changePct/100), never hardcoded. Generic via INDEX_ALIASES (VN-Index/VN30/HNX-Index/UPCOM), not one ticker. NOTE: ticket minted \"Check-F\" 2026-06-20 before letters F (currency-unit) and G (structural) were claimed by other shipped checks -- implemented as Check-H, next unclaimed letter, documented inline in the script header. RAW fence (both fixtures, live-snapshot-injected, no network dependency): fixture prev_close=1800, \"giam 0,32 diem (-0,32%)\" -> [BLOCK] Check-H point-pct-math: VN-Index stated \"giam 0.32 diem (-0.32%)\" -- implied point change from % at prev_close~1800.00 is -5.76 diem, delta=5.44 > 1.0pt tolerance; exit 1. Same prev_close, \"giam 5,90 diem (-0,32%)\" -> [PASS] fb-data-integrity-gate: 0 violations; exit 0. RED baseline confirmed via git stash: pre-fix script falsely PASSed the inconsistent fixture. Regression: real docs/social/fb-post-2026-07-24.md (VN-Index -13 diem/-0,78%) + matching live snapshot -> 0 violations (no false positive); same file with live API unreachable -> graceful skip, 0 violations. bash -n + shellcheck clean (1 pre-existing unrelated SC2034 on untouched POST_DATE). Simplicity gate Q1-Q4 all NO. Commits 4e1b07937 (fix) + d7a7c624c (decision journal), pushed origin/main."
+      },
+      {
+        "id": "FIX-FB-GATE-STALE-MACRO-GUARD",
+        "title": "fb-gate Check-G: reject stale macro/FX presented as current + unverified comparison levels",
+        "type": "FIX",
+        "status": "REVIEW",
+        "priority": "P2",
+        "zone": "cross-service/",
+        "size": "M",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-FB-GATE-STALE-MACRO-GUARD",
+        "promoted_at": "2026-07-25T01:51:59Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-25T02:07:52Z",
+        "claimed_at": "2026-07-25T01:51:59Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "rebuild_required": false,
+        "branch": null,
+        "updated_by": "developer",
+        "review_note": "developer: Added Check-I to scripts/fb-data-integrity-gate.sh (macro/FX stale-as-current + unverified-comparison-level guard, generic across usdVnd/gold/brent/fedRate/bondYield). Paired flow change: docs/agents/fb-market-poster/flow/main.md STEP 1b builds $macro_provenance (per-class fetched_this_cycle marker reusing the existing is_estimate discipline) after get_macro_snapshot; STEP 4b writes it to a temp file and passes it as the gate new $4 arg. Absent provenance file = graceful skip (same posture as Check-B/D no-live-data). NOTE: ticket named this \"Check-G\" but A-H were already claimed by execution time (same pattern as prior Check-F->Check-H mint) -- implemented as Check-I, next unclaimed letter, documented inline. RAW fence (real fixtures, no network dependency): unprovenanced USD/VND 26.150 (prov entry fetched_this_cycle:false) -> [BLOCK] Check-I1 stale-as-current, exit 1. Honest-gap phrasing -> [PASS] 0 violations, exit 0. 26.150 with prov entry fetched_this_cycle:true value:26150 -> [PASS] 0 violations, exit 0. \"van o muc 25.500\" vs live prov 26150 -> [BLOCK] Check-I2 unverified-comparison-level delta=650.00 > 60.0 tolerance, exit 1. RED baseline: pre-fix script (git show HEAD) run against both BLOCK fixtures -> false PASS both times (proves the gap existed). Real-corpus multi-figure sentence (2026-06-08 post text \"26.127 ... vuot nguong 25.500\") with prov matching only 26.127 -> correctly PASSes the live figure and BLOCKs only the comparison figure. Regression: all 48 real docs/social/fb-post-*.md, no provenance file -> 0/48 Check-I false-fires (graceful skip); real fb-post-2026-06-03.md with a MATCHING provenance file -> 0 violations end-to-end. bash -n clean. Simplicity gate Q1-Q4 all NO. Commits 41975d433 (fix, both files) + c08a42f2d (decision journal), pushed origin/main."
       }
     ],
     "qa": [],
@@ -15013,7 +15024,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-25T01:18:13Z",
+    "last_triaged_at": "2026-07-25T01:51:59Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": []
   },
