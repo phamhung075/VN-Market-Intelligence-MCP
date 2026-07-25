@@ -387,11 +387,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-07-25T02:07:52Z",
-    "updated_by": "developer"
+    "status": "in_progress",
+    "active_task_id": "FIX-FB-GATE-BREADTH-PCT-INTERNAL",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-FB-GATE-BREADTH-PCT-INTERNAL — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-25T02:15:17Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6605,16 +6606,6 @@
         "zone": "docs/agents/market-watcher/",
         "status": "BACKLOG",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MARKET-WATCHER-DOC-PARAM-DRIFT"
-      },
-      {
-        "id": "FIX-FB-GATE-BREADTH-PCT-INTERNAL",
-        "title": "fb-gate Check-H: internal breadth-% vs cited-counts consistency",
-        "type": "FIX",
-        "status": "BACKLOG",
-        "priority": "P2",
-        "zone": "cross-service/",
-        "size": "S",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-FB-GATE-BREADTH-PCT-INTERNAL"
       },
       {
         "id": "FIX-FB-GATE-WEEKLY-FRAME-MODE",
@@ -15024,9 +15015,26 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-25T01:51:59Z",
+    "last_triaged_at": "2026-07-25T02:15:17Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-FB-GATE-BREADTH-PCT-INTERNAL",
+        "title": "fb-gate Check-H: internal breadth-% vs cited-counts consistency",
+        "type": "FIX",
+        "status": "IN_PROGRESS",
+        "priority": "P2",
+        "zone": "cross-service/",
+        "size": "S",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-FB-GATE-BREADTH-PCT-INTERNAL",
+        "promoted_at": "2026-07-25T02:15:17Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-25T02:15:18Z",
+        "claimed_at": "2026-07-25T02:15:17Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
