@@ -2268,6 +2268,17 @@
         "triaged_by": "dev-team",
         "disposition": "resolved-verified-transient",
         "triage_note": "ground-truth 2026-07-24T10:50:02Z: get_vn_liquidity_state fx_coupling.fetched_at=2026-07-24T10:46:43Z is_estimate=false center=26130 -> sbv_fx FRESH (0min stale). CRITICAL self-resolved post VPS clock-drift fix (07-23T16:15; vn-sbv-fetch shares that VM clock, emitted 18:33Z in residual catch-up window). Recurrence-risk tracked by ops chrony boot-step-check ask; if B-04 sbv_fx recurs, escalate to hardening task."
+      },
+      {
+        "id": "sys-20260725T130821-59a3",
+        "ts": "2026-07-25T13:08:21Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "api-gateway:4000/health CURL_ERR — unable to reach health endpoint",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-23T18:03:58Z",
