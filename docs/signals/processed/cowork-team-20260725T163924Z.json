@@ -45,5 +45,11 @@
     "note": "Steps 4.3-4.5 SKIPPED: pressure-state.json aged past the 20-min staleness threshold mid-tick (19.93min at first read, 20.18min at evaluation) -> PRESSURE_MODE=legacy per pressure-read.md Step 4.2, CADENCE_MATCHES=MATCHES. Dispatch outcome identical either way (slot is cron 30 16 * * *, last_fired 24h prior). Staleness root cause: no cowork tick emitted between 16:14:37Z and this one - the 16:15Z tick did not complete an emit. calendar_status passed through UNCHANGED as illegal out-of-domain closed (deliberate: UC-CDC-P1 self-perpetuating field, hand-correcting only picks which wrong value freezes). Step 4.7 snapshot assembled via scripts/agents-flow/mcp-call.sh from bash rather than the agent pre-step - tick-snapshot.md premise that bash cannot call MCP is false, the helper exists and the preflight in the same dir uses it."
   },
   "priority": "low",
-  "createdAt": "2026-07-25T16:39:24Z"
+  "createdAt": "2026-07-25T16:39:24Z",
+  "_processed": {
+    "fingerprint": "332f8bcdbe84453f78c17e6810e594e2dd4514ae508dd6df6b3168cbbd2fe280",
+    "processedAt": "2026-07-25T16:51:22Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }
