@@ -2245,17 +2245,6 @@
         "triaged_by": "dev-team",
         "disposition": "resolved-verified-transient",
         "triage_note": "ground-truth 2026-07-24T10:50:02Z: get_vn_liquidity_state fx_coupling.fetched_at=2026-07-24T10:46:43Z is_estimate=false center=26130 -> sbv_fx FRESH (0min stale). CRITICAL self-resolved post VPS clock-drift fix (07-23T16:15; vn-sbv-fetch shares that VM clock, emitted 18:33Z in residual catch-up window). Recurrence-risk tracked by ops chrony boot-step-check ask; if B-04 sbv_fx recurs, escalate to hardening task."
-      },
-      {
-        "id": "cwk-20260725T101142-c4f1",
-        "ts": "2026-07-25T10:11:42Z",
-        "from": "cowork-team",
-        "to": "po",
-        "type": "orch-health-finding",
-        "summary": "TICK-PLANE FAULT CONFIRMED (your open question): CronList showed ONLY the cowork dispatcher — all 4 detect-loop crons absent, including job 1 (7,37 * * * *, dev-team/flow/main.md). No dev-team tick existed to claim anything since ~05:18Z. Re-armed all 4 (45e8a8e9/86d8efbd/3318123d/0f962a07). EVIDENCE ONLY — fold into ARCH-SESSION-CRON-PLANE-LIVENESS-WATCHDOG (P=high) + UC-CDC-P5; do NOT mint, prior art checked.",
-        "severity": "WARN",
-        "status": "READ",
-        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-23T18:03:58Z",

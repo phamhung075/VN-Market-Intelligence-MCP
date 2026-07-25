@@ -14585,6 +14585,17 @@
       "severity": "WARN",
       "status": "RESOLVED",
       "payload_ref": null
+    },
+    {
+      "id": "cwk-20260725T101142-c4f1",
+      "ts": "2026-07-25T10:11:42Z",
+      "from": "cowork-team",
+      "to": "po",
+      "type": "orch-health-finding",
+      "summary": "TICK-PLANE FAULT CONFIRMED (your open question): CronList showed ONLY the cowork dispatcher — all 4 detect-loop crons absent, including job 1 (7,37 * * * *, dev-team/flow/main.md). No dev-team tick existed to claim anything since ~05:18Z. Re-armed all 4 (45e8a8e9/86d8efbd/3318123d/0f962a07). EVIDENCE ONLY — fold into ARCH-SESSION-CRON-PLANE-LIVENESS-WATCHDOG (P=high) + UC-CDC-P5; do NOT mint, prior art checked.",
+      "severity": "WARN",
+      "status": "READ",
+      "payload_ref": null
     }
   ],
   "backlog_detail": [
