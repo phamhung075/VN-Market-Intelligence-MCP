@@ -59,3 +59,5 @@ Signal: fundamental_validation #7942 | Confidence: 0.75 | Critic: 0.8
 2026-07-13 16:00 | Close: 59.400 VND | RSI: 33.9 | Vol: 5820000 (71.4% avg) | YoY: -12.3% | Status: Oversold (BB-20.7%), banking sector weakness from rate cycle, hold
 
 2026-07-16 16:08 | Close: 59.400 VND | Change: +0.34% daily | RSI: N/A | Volume: Standard | YoY: N/A | Regime: NEUTRAL | Brief action: Hold — VCB stabilizing after Q2 earnings beat; banking sector recovery on policy outlook
+
+2026-07-24 16:00 | Close: 54.100 VND (+0.19%) | RSI: 18.6 | Vol: 2.5M (45% avg) | YoY: -12.88% | Anomaly: YES — extreme oversold (RSI<20); banking sector -1.35% avg broad weakness; support forming at BB lower band 53.8k; buy-dip signal for tier-1 blue chip

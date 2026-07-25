@@ -25,6 +25,8 @@ Sentiment baseline established.
 
 2026-07-03 | Vinamilk brand strength maintained — top global FMCG brand tier (7/10 bullish) | YoY: Continued leadership positioning
 
+2026-07-23 | Neutral sector headwinds — market-wide liquidity contraction and investor cash reserves at 6-quarter lows; staple-sector defensive characteristics support relative stability | YoY: no prior data
+
 ---
 
 ## [Market Watcher] Price, Volume, Technicals
@@ -33,6 +35,8 @@ Sentiment baseline established.
 Price monitoring initiated.
 
 2026-07-04 16:00 | Close: 54,900 VND (-1.08%) | RSI: N/A | Vol: 4.13M (71.5% avg) | YoY: -6.31% | Trend: Weak consolidation, trending below MA5/MA20; 30d return -6.31% YTD pressure on staple sector. Monitor support near 54,800 (recent low). Regime: NEUTRAL
+
+2026-07-17 16:00 | Close: 59,000 VND | RSI: 62.4 | Vol: 12.98M (6.5× spike) | YoY: -1.83% | Daily: +4.98% | Signal: CRITICAL volume spike 6.5× average; price near Bollinger Band upper (99.2% of upper band); overbought territory on RSI. Trend: Mixed signals — MACD histogram positive but MA arrangement neutral. Regime: NEUTRAL; Monitor resistance.
 
 ---
 
@@ -63,3 +67,5 @@ Close: 176,800 VND (+1.3% daily, +8.6% YoY) | RSI: 72 | Volume: 3.8M (+22% vs 20
 YoY comparison (May 20 2025): Price was 162,500 → gain of 8.6% over year
 Sentiment: +0.3 (stable positive) | Insider: no activity
 Summary: Day closed strong on sector momentum. Fair value target approaching.
+
+2026-07-23 16:00 | Close: 57,800 VND (-2.20%) | RSI: N/A | Vol: 4.83M | Sector: Neutral headwinds; defensive staple positioning continues

@@ -45,3 +45,10 @@ Action: Reduce / Monitor support levels
 ## [Market Watcher] EOD Updates
 2026-07-02 16:00 | Close: 150,400 VND | RSI: 55 | Vol: 2.22M (-12.3% avg) | YoY: +0.8% | Sentiment: Neutral | Brief action: Hold (modest daily gain, real estate sector stable) | Regime: NEUTRAL
 2026-07-16 16:08 | Close: 142.800 VND | Change: +5.00% daily | RSI: N/A | Volume: High FII buying | YoY: N/A | Regime: NEUTRAL | Brief action: Watch — real estate sector recovery led by FII accumulation on Vingroup group
+
+2026-07-22 16:10 | Close: 126.900 VND | RSI: 31.7 (Oversold) | Vol: 8,235,300 (210% avg) | YoY: +32.88% | Daily: -6.96%
+Sector sell-off — Real estate broad decline (8 stocks avg -4.55%). Oversold signals warrant Watch. Bollinger Band: -10.0% below upper band indicates extreme weakness. MACD histogram negative and declining.
+Brief action: Watch — Extreme oversold conditions, test support at MA20=146,225
+
+2026-07-23 16:00 | Close: 132,000 VND (+4.02%) | Vol: 4.57M | Daily: +4.02%
+Real estate recovery bounce — FII re-entry evident. VHM leading sector rebound. Watch key resistancelevels post-oversold bounce.

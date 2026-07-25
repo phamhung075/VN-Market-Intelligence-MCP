@@ -12,6 +12,8 @@
 2026-05-09 | **BULLISH** Chứng khoán lập đỉnh mới, CTCK gọi tên 5 nhóm cổ phiếu có cơ hội — analyst call targets VIC as money-accumulation play in May | YoY: Recovery from May 1 sell-off
 2026-07-02 | Q2 earnings consensus bullish (9/10) — real estate sector catalyst via macro earnings + consumption expansion | YoY: N/A
 2026-07-03 | Vingroup AI proposal — 6 national breakthrough initiatives, 420T-param model (8/10 bullish EPS) | YoY: Positive macro policy catalyst
+2026-07-22 | **BULLISH** Securities firms proprietary buying gathers momentum, strong institutional accumulation signal (10/10), Vingroup sector leadership sustained, real estate institutional positioning strengthens | YoY: Positive institutional flows vs May sector weakness
+2026-07-23 | Neutral intra-conglomerate restructuring — Vingroup monetizes insurance subsidiary 10% stake via One Mount capital partnership; portfolio optimization ongoing | YoY: Continued strategic capital reallocation
 
 ## [Market Watcher] Price, Volume, Technicals
 2026-05-12 16:00 | Close: 222,000 VND | RSI: N/A | Vol: 4.02M (170% avg) | YoY: N/A
@@ -38,3 +40,7 @@ Action: Reduce / Watch sector sentiment
 **[Market Watcher] 16:08 UTC**
 Close: 223.000 VND | Change: +2.76% daily | RSI: N/A | Volume: High FII buying (~2M+ shares) | YoY: N/A | Regime: NEUTRAL
 Brief action: Buy on dip — Vingroup sector leadership, FII accumulation on real estate recovery
+
+2026-07-22 16:10 | Close: 202.100 VND | RSI: 35.3 (Oversold) | Vol: 5,736,200 (203% avg) | YoY: +71.89% | Daily: -6.99%
+Sector sell-off — Real estate broad decline (8 stocks avg -4.55%). Oversold signals warrant Watch. Bollinger Band: -41.2% below upper band indicates extreme weakness.
+Brief action: Watch — Extreme oversold conditions, potential bounce target MA20=219,655
