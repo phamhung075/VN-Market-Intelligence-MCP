@@ -380,6 +380,20 @@
           "evidence": "observability demonstrably working — WORK-channel msg IDs 2743–2766; original FAIL was wrong recheck_how",
           "last_verified": "2026-06-10T18:00:00Z",
           "signal_id": "qc-FR-OBS-01-4005"
+        },
+        {
+          "check_id": "FR-FRESH-04",
+          "dimension": "Data Freshness/SLA",
+          "question": "Is the BCTC ANALYSIS/serve layer (financial_reports.parsed_at) fresh — independent of the raw PDF-push/queue/discover-cache cadence checked by FR-FRESH-01/02/03?",
+          "metric": "get_sla_status bctc row: age_minutes <= threshold_minutes (earnings-window-aware SLA)",
+          "expected": "bctc status=ok (age within SLA)",
+          "recheck_how": "MCP tools/call get_sla_status({}) over the live /mcp Streamable-HTTP endpoint -> read the bctc row (age/threshold/status/severity)",
+          "status": "FAIL",
+          "severity": "CRITICAL",
+          "zone_owner": "dev-mcp-server",
+          "evidence": "Live tools/call get_sla_status (http://localhost:3000/mcp) 2026-07-25T06:46:06Z: bctc age=6777min threshold=1338min status=breached severity=CRITICAL (ALERT: SLA breached on bctc). Two-layer split confirmed: FR-FRESH-01/03 check the fetch/push layer only (list_stored_pdfs/get_cron_health, both PASS) and would silently mask this analysis-layer breach — same class as feedback_auditor_b05_bctc_rawpush_two_layer_freshness_fp / feedback_bctc_push_ok_masks_stale_ocr_reflow. Likely root cause already tracked: FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP (status REVIEW, dev-mcp-server, write-back guard suppressing financial_reports writes) — no new dev-team row minted for the breach itself, this check exists to make the analysis-layer breach VISIBLE on the quality-audit page instead of being masked by the fetch-layer PASS.",
+          "last_verified": "2026-07-25T06:46:06Z",
+          "signal_id": null
         }
       ]
     },
@@ -1068,6 +1082,20 @@
           "zone_owner": "ops",
           "evidence": "pollNewsJob last_run: 2026-06-10 09:05:15; success_rate: 99.9% (668 runs).",
           "last_verified": "2026-06-10T09:11:30Z",
+          "signal_id": null
+        },
+        {
+          "check_id": "NEWS-FRESH-02",
+          "dimension": "Data Freshness/SLA",
+          "question": "Is the news ANALYSIS/serve layer (rag_analyses.created_at) fresh — independent of the raw VPS-fetch layer checked by NEWS-FRESH-01?",
+          "metric": "get_sla_status news row: age_minutes <= threshold_minutes",
+          "expected": "news status=ok (age within SLA)",
+          "recheck_how": "MCP tools/call get_sla_status({}) over the live /mcp Streamable-HTTP endpoint -> read the news row (age/threshold/status/severity)",
+          "status": "PASS",
+          "severity": "WARN",
+          "zone_owner": "dev-mcp-server",
+          "evidence": "Live tools/call get_sla_status (http://localhost:3000/mcp) 2026-07-25T06:46:06Z: news age=16min threshold=30min status=ok. Two-layer split precedent: feedback_news_freshness_two_layer_fetch_vs_analysis (raw fetch ~15min vs news-scout analysis 4h/daily cadence) — this check is the analysis-layer twin of NEWS-FRESH-01 (fetch-layer), added so a future fetch-fresh/analysis-stale divergence (the exact FP class B-11 hit) is visible on this page instead of masked by NEWS-FRESH-01 alone.",
+          "last_verified": "2026-07-25T06:46:06Z",
           "signal_id": null
         }
       ]
@@ -2769,6 +2797,20 @@
           "zone_owner": "dev-mcp-server",
           "evidence": "RAG service dark by design per HONOR-PANIC-GUARD policy. Axis-B checks cannot auto-PASS dark services. WARN captures honest limitation: capability unverifiable without live pipeline integration.",
           "last_verified": "2026-06-10T19:26:59.000Z",
+          "signal_id": null
+        },
+        {
+          "check_id": "RAG-SERVICE-FRESH-01",
+          "dimension": "Data Freshness/SLA (Axis B)",
+          "question": "Is the RAG FTS/BM25 search index kept fresh against the growing rag_entries corpus (ragFtsRebuildCron, declared daily 20:15 UTC in system-map.json)?",
+          "metric": "ragFtsRebuildCronJob currently registered in the live scheduler (env-gated) AND last_run within 26h",
+          "expected": "cron registered + running daily, OR honestly flagged disabled-by-gate (never silently reported healthy from stale historical rows alone)",
+          "recheck_how": "MCP tools/call get_cron_health({}) for ragFtsRebuildCronJob last_run/success_rate, CROSS-CHECKED against live env var CRON_RAG_FTS_REBUILD_ENABLED in the running mcp-server container (docker exec ... printenv) — get_cron_health alone reads persisted cron_job_runs history and will show stale historical runs as 100% success even when the job is not currently scheduled.",
+          "status": "WARN",
+          "severity": "WARN",
+          "zone_owner": "dev-mcp-server",
+          "evidence": "Live get_cron_health 2026-07-25T06:48Z: ragFtsRebuildCronJob last_run=2026-07-20 20:15:01, success_rate=1.00, total_runs=2 -- reads as healthy in isolation. Live docker exec printenv on vn-market-intelligence-mcp-mcp-server-1: CRON_RAG_FTS_REBUILD_ENABLED is UNSET/empty -> per schedulerJobTable.ts:140 (default false) the job is NOT registered in the current process; registration is entirely omitted per schedulerJobTable.ts:660-668 (ALPHA-S2-RAG-FTS-CRON-SAFETY-GATE). The 2 historical runs predate the gate closing and do not indicate current freshness -- a naive get_cron_health-only read would silently miscall this PASS. This is an added FRESH check for CAP-SVC-RAG-SERVICE, which previously had zero D4 checks despite rag-service graduating from undeployed-by-design to a live container (GO-FLEET-DEPLOY, 2026-06-11) -- the other 5 graduated services (stock-price/ta/kinh-dich-svc/alert-engine/news-fetch) all already carry a FRESH check; rag-service was the one gap. Root-cause gate already tracked (no new dev-team row minted): RAG-FTS-BUILD-MEMORY-BOUND (rag-service _build_fts_index OOMs 768m cgroup at ~56k rows, status review) blocks ALPHA-S2-RAG-FTS-REBUILD-CRON (backlog/BLOCKED) from re-enabling the gate.",
+          "last_verified": "2026-07-25T06:49:18Z",
           "signal_id": null
         }
       ]
@@ -7174,11 +7216,11 @@
     }
   ],
   "summary": {
-    "pass": 398,
-    "warn": 5,
-    "fail": 1,
+    "pass": 399,
+    "warn": 6,
+    "fail": 2,
     "info": 19,
     "needs_review": 14,
-    "total": 437
+    "total": 440
   }
 }
