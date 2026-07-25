@@ -1,0 +1,39 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-25T06:55:42Z",
+    "matched_slots": [],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/po/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 7,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "closed",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {},
+    "cadence_minutes": {},
+    "last_fired_timestamp": null,
+    "last_fired_slots": [],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "signal_drain_only — 0 slots (Saturday, market closed), 0 one-shots, 2 NEW signal_queue rows routed to po",
+    "nominal_tick": "06:45",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 0,
+    "signal_backlog": 2,
+    "note": "WORK tick via preflight. Routed sau-d4-data-quality-anomaly-dgc-q1-2026 (D4 false-positive: KNOWN_LEGIT_PREFIXES lacks data-quality-anomaly:) + sys-20260725T003340-1ce9 (11 low-confidence financial_reports) to po under intent lock. Rows left NEW — po ACKs what it dispositions."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-25T06:55:42Z"
+}
