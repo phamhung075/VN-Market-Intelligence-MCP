@@ -14,6 +14,12 @@
  * The refine_bctc_md flow sets reset=true on the first push, clearing prior FAILED
  * units before re-processing.
  *
+ * FIX-BCTC-PENDING-REFINE-HEAD-OF-LINE-FAILED-ROW: a FAILED report is excluded once
+ * it has ZERO remaining (non-DONE/non-FAILED) bctc_refined_units windows — there is
+ * no work left to retry, and leaving it in the queue head-of-line-blocks every
+ * genuinely-pending report behind it (ORDER BY parsed_at ASC). FAILED reports that
+ * still have remaining windows stay in the queue and are retried as before.
+ *
  * Paginated (FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW): `limit` defaults to
  * DEFAULT_LIMIT (20, max MAX_LIMIT=100) so the inline JSON payload never overflows
  * the MCP response limit. `offset` pages through the full queue: offset=0, then
@@ -195,6 +201,8 @@ export function buildGetBctcPendingRefineHandler(
         // Branch 2: ticker-filtered queue query
         // `limit` always defined (zod default DEFAULT_LIMIT) — LIMIT/OFFSET is the
         // native SQL pagination pair; paging offset += limit reaches every row.
+        // FIX-BCTC-PENDING-REFINE-HEAD-OF-LINE-FAILED-ROW: exclusion extended from
+        // PARTIAL-only to PARTIAL|FAILED — see Branch 3 comment below for rationale.
         const limitClause = `LIMIT ${limit} OFFSET ${offset}`;
         rows = db
           .prepare<PendingRefineRow, [string]>(
@@ -204,7 +212,7 @@ export function buildGetBctcPendingRefineHandler(
                AND refine_status IN ('PENDING', 'PARTIAL', 'FAILED')
                AND (confirm_status IS NULL OR confirm_status != 'CONFIRMED')
                AND NOT (
-                 refine_status = 'PARTIAL'
+                 refine_status IN ('PARTIAL', 'FAILED')
                  AND (
                    SELECT COUNT(*) FROM bctc_refined_units u
                    WHERE u.report_id = financial_reports.id
@@ -227,6 +235,18 @@ export function buildGetBctcPendingRefineHandler(
         // window_status IN ('DONE','FAILED') AND at least one unit exists are excluded —
         // no refinable work remains (DONE=processed, FAILED=terminal for this run).
         // REJECTED_SANITY is NOT in the exclusion set — those docs stay visible for investigation.
+        //
+        // FIX-BCTC-PENDING-REFINE-HEAD-OF-LINE-FAILED-ROW (PO-ratified option b):
+        // The same exclusion now ALSO applies when refine_status='FAILED' (whole-report
+        // terminal failure), not only 'PARTIAL'. Without this, a report that finalized
+        // FAILED with zero remaining (non-DONE/FAILED) windows sat at the head of the
+        // ORDER BY parsed_at ASC queue forever — every fleet-cron fire re-picked it,
+        // found an empty remaining-window set, and exited as a silent no-op, starving
+        // every genuinely-PENDING report behind it. A FAILED report that STILL has
+        // remaining (non-terminal) windows is NOT excluded — it stays retryable, which
+        // is the whole reason FAILED is in the IN(...) allowlist above (see module
+        // docstring). Zero-unit FAILED reports (units not pushed yet) also stay
+        // eligible — same "at least one unit exists" guard as the PARTIAL case.
         // Index: idx_bctc_refined_units_report_status (report_id, window_status) — O(log n).
         // `limit` always defined (zod default DEFAULT_LIMIT) — LIMIT/OFFSET is the
         // native SQL pagination pair; paging offset += limit reaches every row.
@@ -239,7 +259,7 @@ export function buildGetBctcPendingRefineHandler(
                AND refine_status IN ('PENDING', 'PARTIAL', 'FAILED')
                AND (confirm_status IS NULL OR confirm_status != 'CONFIRMED')
                AND NOT (
-                 refine_status = 'PARTIAL'
+                 refine_status IN ('PARTIAL', 'FAILED')
                  AND (
                    SELECT COUNT(*) FROM bctc_refined_units u
                    WHERE u.report_id = financial_reports.id
@@ -368,10 +388,11 @@ export function registerGetBctcPendingRefineTool(server: McpServer): void {
     "Return financial reports pending agentic refine processing, with pre-partitioned windows. " +
       "Default: queries financial_reports WHERE text_status='COMPLETE' AND refine_status IN ('PENDING','PARTIAL','FAILED') " +
       "AND confirm_status != 'CONFIRMED'. " +
-      "PARTIAL reports where ALL bctc_refined_units rows are window_status IN ('DONE','FAILED') are excluded — " +
+      "PARTIAL or FAILED reports where ALL bctc_refined_units rows are window_status IN ('DONE','FAILED') are excluded — " +
       "these have no refinable work remaining (DONE=processed, FAILED=terminal for this run; " +
-      "REJECTED_SANITY units keep the doc visible for investigation). " +
-      "FAILED reports (whole-report refine_status='FAILED', not unit-level) are included so the fleet cron can retry them. " +
+      "REJECTED_SANITY units keep the doc visible for investigation; zero-unit reports stay eligible). " +
+      "FAILED reports (whole-report refine_status='FAILED', not unit-level) are included so the fleet cron can retry them, " +
+      "as long as at least one window is still unprocessed (see exclusion above). " +
       "Optional ticker parameter (action_code) filters results to a specific stock. " +
       "Optional report_id parameter fetches one specific report by primary key regardless of queue status " +
       "(bypasses text_status/refine_status filters — intentional for force-re-verify; confirm_status guard retained). " +
