@@ -419,11 +419,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-07-25T15:26:41Z",
-    "updated_by": "developer"
+    "status": "in_progress",
+    "active_task_id": "FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-25T15:44:32Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -10880,40 +10881,6 @@
         "updated_at": "2026-07-25T07:40:47Z"
       },
       {
-        "id": "FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE",
-        "type": "FIX",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "owner": "developer",
-        "next_agent": "developer",
-        "created_at": "2026-07-25T08:56:36Z",
-        "created_by": "po/triage-20260725T0856-a30-mem-coverage",
-        "source": "router-verified-detector-coverage-gap:2026-07-25T08:55Z",
-        "baseline_pass": true,
-        "title": "Tier-1 A-30 memory check inspects 1 of 13 containers — hardcoded 'mcp-server' scope makes 11 capped containers permanently invisible to the only memory detector in Tier-1 (rag-service sat at 98.46% of cap while the same tick reported HEALTHY / 0 anomalies)",
-        "root_cause": "scripts/agents-flow/auditor-tier1-probe.sh:209 _check_mem_creep() hardcodes its subject: ctr=$(docker ps --format '{{.Names}}' | grep -i 'mcp-server' | head -1). Line 211's failure string ('mcp-server container not found via docker ps') confirms the scope is deliberate-but-narrow, not an accident of parsing. The tuned WARN_PCT=85 predicate at :224 is then applied to that ONE container and nothing else. Tier-1 has no other memory check, at any threshold, for any other container — so 12 of the 13 running containers have ZERO memory coverage in the tier whose job is first-line health. DEMONSTRATED FALSE-PASS (router-verified, same tick): 2026-07-25 08:30Z Tier-1 reported 'A-30 Memory: 58.63% — PASS' + HEALTHY / 0 anomalies (commit 4280e27f5) while docker stats showed rag-service 727.8MiB/768MiB = 94.76%, rising to 756.1MiB = 98.46% by 08:45Z. Router 10-probe / 4-min window (08:48:04Z-08:52:01Z, 25s spacing): pinned 756.1-756.2MiB / 98.46%, ZERO reclamation dips; per-process VmHWM 775224kB > VmRSS 762236kB (reclamation HAD occurred earlier, so the flat line is a real plateau not a measurement artifact). Service was serving correctly throughout (docker health=healthy, FailingStreak=0, /health 200, /search 200, /index 200). PO re-verified at 08:56Z: rag-service 756.2MiB/768MiB 98.46%, mcp-server 1.708GiB/3GiB 56.94%, every other container <= 16.88%. NOT a threshold-tuning problem and NOT agent error — the check cannot look at the container, so no threshold value could ever have caught it. Script is clean in git (no uncommitted edits) and git log on it shows the last 3 commits touched launchd checks only (b9484fa7a, e0d9187cd, 84096f617) — the scope line is live and untouched.",
-        "deliverable": "(a) SCOPE — replace the single grep'd container with a loop over EVERY running container that declares a memory cap. Resolve the set from the LIVE daemon, never a hardcoded name list and never docker-compose.yml (which is config-truth, not runtime-truth — the two already drift, see FU-RUNTIME-SET-TRUTH-RECONCILE). Discriminator VERIFIED live 2026-07-25T08:56Z: `docker inspect -f '{{.Name}} {{.HostConfig.Memory}}' $(docker ps -q)` returns a byte cap per container and exactly 0 for uncapped — today 12 capped + mcp-gateway at 0. SKIP the uncapped ones: docker stats reports their MemPerc against total host memory (mcp-gateway prints 0.27% of 7.753GiB), which is not a headroom signal and would be a meaningless comparand against WARN_PCT. (b) PREDICATE — apply the SAME already-tuned WARN_PCT=85 boundary per container. Do NOT introduce per-container threshold constants (see PO DECISION). (c) MESSAGE — the failure string must name the ACTUAL container(s) over the line; today :225 hardcodes the words 'mcp-server mem' so a widened loop would mislabel every other container's breach as mcp-server. Report all breaching containers in one detail line, not just the first. (d) Drop the `head -1` silent-multi-match on the resolution path — with a loop it is dead, and it was always a silent-truncation hazard. (e) LEDGER — extend the acknowledged-degraded suppression to memory (see PO DECISION), seeded with the rag-service entry.",
-        "note": "PO DECISION — the router correctly flagged the design tension: rag-service's normal set-point IS legitimately high (98.46% flat, healthy, serving), so a flat 85% across all containers would manufacture a fresh every-tick false positive and re-open exactly the churn the DONE row FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE just closed. RESOLVE IT WITH THE ACK LEDGER, NOT WITH THRESHOLDS. The mechanism already EXISTS and is LIVE in this same script — FIX-AUDITOR-TIER1-PROBE-ACKED-LAUNCHD-DEATH-SUPPRESSION shipped it at commit b9484fa7a: scripts/agents-flow/auditor-tier1-probe.sh:255-330 reads docs/data/auditor-launchd-ack.json, and a listed condition that already has an OPEN backlog fix-row is reported as 'acknowledged-degraded (suppressed)' instead of flipping the verdict, WITH two guarantees that are exactly what is needed here: (1) mixed case never suppresses — an unacknowledged breach alongside acked ones still FAILS, so no permanent blindness; (2) a documented STALENESS RULE — the entry is removed once its tracked_by row reaches DONE_VERIFIED, so suppression cannot outlive the fix. Extend that ledger with a parallel acked_memory[] array (or a sibling docs/data/auditor-mem-ack.json) keyed by container/service name + tracked_by + acked_at, honouring the identical two guarantees, and SEED IT with rag-service tracked_by RAG-FTS-BUILD-MEMORY-BOUND. That single seed row is what makes a flat-85 loop safe on day one. EXPLICITLY REJECTED: per-container hardcoded threshold overrides. They are a static list that lags reality — the identical failure mode is already an open bug on this same probe family (FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX: a whitelist authored 2026-07-08 never learned a lock kind introduced 2026-07-19). A per-container 99% override for rag would also silently swallow a REAL rag OOM approach, whereas an ack entry pointing at an open row is self-expiring and auditable. ALSO REJECTED: moving WARN_PCT globally — it is the value the converge row tuned. OUT OF SCOPE (do NOT fold in): an absolute-headroom secondary predicate. 11.9MiB free on a 768m cap is thin in absolute terms and a pure percentage genuinely is not comparable across a 512m and a 3g cap, but adding a second predicate in the same change would confound the FP evidence for the first; mint it separately later if the loop proves the percentage view insufficient. FOLDED IN, NOT RE-MINTED (router prior-art, PO re-confirmed against all 12 board lanes): mcp-server 45.20%->58.63%/90min on ~11h uptime is BELOW the trajectory documented in FIX-MCP-MEMORY-CODE-LEAK ('87% in 12h from a 5% start') — benign, already tracked, no corroboration entry needed. rag-service RestartCount=12 today matches the ~10/day rate already documented in FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP — folded, not novel. Any proposal to RAISE rag-service's 768m limit belongs as a corroboration entry on FU-RAG-DEPLOY-MEMORY (and is user-gated infra anyway), never on this row. The mechanism behind rag's high set-point is already tracked at RAG-FTS-BUILD-MEMORY-BOUND (REVIEW, P1: _build_fts_index OOM-crashes the 768m container at ~56k rows) — this row does NOT fix rag's memory, it fixes the detector's blindness to it. PO independent prior-art scan 2026-07-25T08:56Z: full-text jq over all 12 task_board lanes (backlog 389 / review 105 / ready 45 / done 16 / in_progress 1 / active_sprints 8 / closed_sprints 19 / archive 7) for MemPerc|docker stats|per-container|multi-container|all-container returned 4 rows, all inspected: FIX-MCP-MEMORY-CODE-LEAK, FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE (DONE — shipped threshold/sampling/dedup tune, did NOT touch scope; :209 still hardcodes one container), RAG-FTS-BUILD-MEMORY-BOUND, FIX-MCP-DOCKERFILE-ENTRYPOINT-KNOWNHOSTS-REGRESSION. NONE covers multi-container memory detector coverage. Router's fold list confirmed correct; mint stands.",
-        "acceptance": "(1) Probe run on today's live fleet with rag-service ABSENT from the memory ack ledger -> verdict FAILURE and the detail line NAMES rag-service with its own percentage (never 'mcp-server mem') — proving the 11 previously-invisible capped containers are now in scope. (2) Same fleet with rag-service PRESENT in the ledger tracked_by an OPEN row -> verdict is ALL_GREEN and rag-service is reported on the acknowledged-degraded line, NOT silently dropped. (3) MIXED CASE: rag-service acked AND a second capped container forced over 85% -> verdict is still FAILURE and names the second container (acknowledgment never masks a fresh signature — same invariant the launchd arm already enforces). (4) mcp-gateway (HostConfig.Memory == 0) is skipped and appears in neither the breach list nor the acked list; a container's absence from docker ps does not crash the loop. (5) A full Tier-1 tick over the current real fleet produces ZERO new po-addressed signals while rag-service is acked — i.e. the widened scope does not reintroduce per-tick re-emit churn (the FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE regression bar). (6) Evidence is a RAW captured probe run pasted into the close-out, not prose: verdict line + detail line + the docker inspect/stats snapshot it was evaluated against, timestamped via `date -u`.",
-        "files": [
-          "scripts/agents-flow/auditor-tier1-probe.sh",
-          "docs/data/auditor-launchd-ack.json"
-        ],
-        "related": [
-          "FIX-AUDITOR-TIER1-PROBE-ACKED-LAUNCHD-DEATH-SUPPRESSION",
-          "FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE",
-          "RAG-FTS-BUILD-MEMORY-BOUND",
-          "FU-RAG-DEPLOY-MEMORY",
-          "FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP",
-          "FIX-MCP-MEMORY-CODE-LEAK",
-          "FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX",
-          "FIX-AUDITOR-A30-VMHWM-VETO-TAUTOLOGY-FALSE-NEGATIVE"
-        ],
-        "updated_at": "2026-07-25T12:56:44Z"
-      },
-      {
         "id": "FIX-VNINDEX-CACHE-STARTUP-PURGE",
         "title": "vn_index_cache PURGED on mcp-server startup + refresh is market-hours-only -> any off-hours restart strands cache=0 until next Mon open. RECURRING: prior FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH (DONE, never done_verified) framed it as a refresh-path bug and did NOT close the root.",
         "type": "FIX",
@@ -15631,9 +15598,49 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-25T13:47:58Z",
+    "last_triaged_at": "2026-07-25T15:44:32Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE",
+        "type": "FIX",
+        "status": "IN_PROGRESS",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "developer",
+        "next_agent": "developer",
+        "created_at": "2026-07-25T08:56:36Z",
+        "created_by": "po/triage-20260725T0856-a30-mem-coverage",
+        "source": "router-verified-detector-coverage-gap:2026-07-25T08:55Z",
+        "baseline_pass": true,
+        "title": "Tier-1 A-30 memory check inspects 1 of 13 containers — hardcoded 'mcp-server' scope makes 11 capped containers permanently invisible to the only memory detector in Tier-1 (rag-service sat at 98.46% of cap while the same tick reported HEALTHY / 0 anomalies)",
+        "root_cause": "scripts/agents-flow/auditor-tier1-probe.sh:209 _check_mem_creep() hardcodes its subject: ctr=$(docker ps --format '{{.Names}}' | grep -i 'mcp-server' | head -1). Line 211's failure string ('mcp-server container not found via docker ps') confirms the scope is deliberate-but-narrow, not an accident of parsing. The tuned WARN_PCT=85 predicate at :224 is then applied to that ONE container and nothing else. Tier-1 has no other memory check, at any threshold, for any other container — so 12 of the 13 running containers have ZERO memory coverage in the tier whose job is first-line health. DEMONSTRATED FALSE-PASS (router-verified, same tick): 2026-07-25 08:30Z Tier-1 reported 'A-30 Memory: 58.63% — PASS' + HEALTHY / 0 anomalies (commit 4280e27f5) while docker stats showed rag-service 727.8MiB/768MiB = 94.76%, rising to 756.1MiB = 98.46% by 08:45Z. Router 10-probe / 4-min window (08:48:04Z-08:52:01Z, 25s spacing): pinned 756.1-756.2MiB / 98.46%, ZERO reclamation dips; per-process VmHWM 775224kB > VmRSS 762236kB (reclamation HAD occurred earlier, so the flat line is a real plateau not a measurement artifact). Service was serving correctly throughout (docker health=healthy, FailingStreak=0, /health 200, /search 200, /index 200). PO re-verified at 08:56Z: rag-service 756.2MiB/768MiB 98.46%, mcp-server 1.708GiB/3GiB 56.94%, every other container <= 16.88%. NOT a threshold-tuning problem and NOT agent error — the check cannot look at the container, so no threshold value could ever have caught it. Script is clean in git (no uncommitted edits) and git log on it shows the last 3 commits touched launchd checks only (b9484fa7a, e0d9187cd, 84096f617) — the scope line is live and untouched.",
+        "deliverable": "(a) SCOPE — replace the single grep'd container with a loop over EVERY running container that declares a memory cap. Resolve the set from the LIVE daemon, never a hardcoded name list and never docker-compose.yml (which is config-truth, not runtime-truth — the two already drift, see FU-RUNTIME-SET-TRUTH-RECONCILE). Discriminator VERIFIED live 2026-07-25T08:56Z: `docker inspect -f '{{.Name}} {{.HostConfig.Memory}}' $(docker ps -q)` returns a byte cap per container and exactly 0 for uncapped — today 12 capped + mcp-gateway at 0. SKIP the uncapped ones: docker stats reports their MemPerc against total host memory (mcp-gateway prints 0.27% of 7.753GiB), which is not a headroom signal and would be a meaningless comparand against WARN_PCT. (b) PREDICATE — apply the SAME already-tuned WARN_PCT=85 boundary per container. Do NOT introduce per-container threshold constants (see PO DECISION). (c) MESSAGE — the failure string must name the ACTUAL container(s) over the line; today :225 hardcodes the words 'mcp-server mem' so a widened loop would mislabel every other container's breach as mcp-server. Report all breaching containers in one detail line, not just the first. (d) Drop the `head -1` silent-multi-match on the resolution path — with a loop it is dead, and it was always a silent-truncation hazard. (e) LEDGER — extend the acknowledged-degraded suppression to memory (see PO DECISION), seeded with the rag-service entry.",
+        "note": "PO DECISION — the router correctly flagged the design tension: rag-service's normal set-point IS legitimately high (98.46% flat, healthy, serving), so a flat 85% across all containers would manufacture a fresh every-tick false positive and re-open exactly the churn the DONE row FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE just closed. RESOLVE IT WITH THE ACK LEDGER, NOT WITH THRESHOLDS. The mechanism already EXISTS and is LIVE in this same script — FIX-AUDITOR-TIER1-PROBE-ACKED-LAUNCHD-DEATH-SUPPRESSION shipped it at commit b9484fa7a: scripts/agents-flow/auditor-tier1-probe.sh:255-330 reads docs/data/auditor-launchd-ack.json, and a listed condition that already has an OPEN backlog fix-row is reported as 'acknowledged-degraded (suppressed)' instead of flipping the verdict, WITH two guarantees that are exactly what is needed here: (1) mixed case never suppresses — an unacknowledged breach alongside acked ones still FAILS, so no permanent blindness; (2) a documented STALENESS RULE — the entry is removed once its tracked_by row reaches DONE_VERIFIED, so suppression cannot outlive the fix. Extend that ledger with a parallel acked_memory[] array (or a sibling docs/data/auditor-mem-ack.json) keyed by container/service name + tracked_by + acked_at, honouring the identical two guarantees, and SEED IT with rag-service tracked_by RAG-FTS-BUILD-MEMORY-BOUND. That single seed row is what makes a flat-85 loop safe on day one. EXPLICITLY REJECTED: per-container hardcoded threshold overrides. They are a static list that lags reality — the identical failure mode is already an open bug on this same probe family (FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX: a whitelist authored 2026-07-08 never learned a lock kind introduced 2026-07-19). A per-container 99% override for rag would also silently swallow a REAL rag OOM approach, whereas an ack entry pointing at an open row is self-expiring and auditable. ALSO REJECTED: moving WARN_PCT globally — it is the value the converge row tuned. OUT OF SCOPE (do NOT fold in): an absolute-headroom secondary predicate. 11.9MiB free on a 768m cap is thin in absolute terms and a pure percentage genuinely is not comparable across a 512m and a 3g cap, but adding a second predicate in the same change would confound the FP evidence for the first; mint it separately later if the loop proves the percentage view insufficient. FOLDED IN, NOT RE-MINTED (router prior-art, PO re-confirmed against all 12 board lanes): mcp-server 45.20%->58.63%/90min on ~11h uptime is BELOW the trajectory documented in FIX-MCP-MEMORY-CODE-LEAK ('87% in 12h from a 5% start') — benign, already tracked, no corroboration entry needed. rag-service RestartCount=12 today matches the ~10/day rate already documented in FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP — folded, not novel. Any proposal to RAISE rag-service's 768m limit belongs as a corroboration entry on FU-RAG-DEPLOY-MEMORY (and is user-gated infra anyway), never on this row. The mechanism behind rag's high set-point is already tracked at RAG-FTS-BUILD-MEMORY-BOUND (REVIEW, P1: _build_fts_index OOM-crashes the 768m container at ~56k rows) — this row does NOT fix rag's memory, it fixes the detector's blindness to it. PO independent prior-art scan 2026-07-25T08:56Z: full-text jq over all 12 task_board lanes (backlog 389 / review 105 / ready 45 / done 16 / in_progress 1 / active_sprints 8 / closed_sprints 19 / archive 7) for MemPerc|docker stats|per-container|multi-container|all-container returned 4 rows, all inspected: FIX-MCP-MEMORY-CODE-LEAK, FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE (DONE — shipped threshold/sampling/dedup tune, did NOT touch scope; :209 still hardcodes one container), RAG-FTS-BUILD-MEMORY-BOUND, FIX-MCP-DOCKERFILE-ENTRYPOINT-KNOWNHOSTS-REGRESSION. NONE covers multi-container memory detector coverage. Router's fold list confirmed correct; mint stands.",
+        "acceptance": "(1) Probe run on today's live fleet with rag-service ABSENT from the memory ack ledger -> verdict FAILURE and the detail line NAMES rag-service with its own percentage (never 'mcp-server mem') — proving the 11 previously-invisible capped containers are now in scope. (2) Same fleet with rag-service PRESENT in the ledger tracked_by an OPEN row -> verdict is ALL_GREEN and rag-service is reported on the acknowledged-degraded line, NOT silently dropped. (3) MIXED CASE: rag-service acked AND a second capped container forced over 85% -> verdict is still FAILURE and names the second container (acknowledgment never masks a fresh signature — same invariant the launchd arm already enforces). (4) mcp-gateway (HostConfig.Memory == 0) is skipped and appears in neither the breach list nor the acked list; a container's absence from docker ps does not crash the loop. (5) A full Tier-1 tick over the current real fleet produces ZERO new po-addressed signals while rag-service is acked — i.e. the widened scope does not reintroduce per-tick re-emit churn (the FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE regression bar). (6) Evidence is a RAW captured probe run pasted into the close-out, not prose: verdict line + detail line + the docker inspect/stats snapshot it was evaluated against, timestamped via `date -u`.",
+        "files": [
+          "scripts/agents-flow/auditor-tier1-probe.sh",
+          "docs/data/auditor-launchd-ack.json"
+        ],
+        "related": [
+          "FIX-AUDITOR-TIER1-PROBE-ACKED-LAUNCHD-DEATH-SUPPRESSION",
+          "FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE",
+          "RAG-FTS-BUILD-MEMORY-BOUND",
+          "FU-RAG-DEPLOY-MEMORY",
+          "FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP",
+          "FIX-MCP-MEMORY-CODE-LEAK",
+          "FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX",
+          "FIX-AUDITOR-A30-VMHWM-VETO-TAUTOLOGY-FALSE-NEGATIVE"
+        ],
+        "updated_at": "2026-07-25T15:44:33Z",
+        "promoted_at": "2026-07-25T15:44:32Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-25T15:44:32Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
