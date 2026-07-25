@@ -65,3 +65,23 @@
 - (b) name it + document the linkage (chosen) — coordinator had dismissed the SPIKE as 'unrelated' precisely because the wrapper->SPIKE link was undocumented.
 **why-decision:** The scope item is NOT orphaned — it has an owner + next_agent + verification_gate on the SPIKE. Root-cause of the closeout ambiguity was the missing documented linkage, so I added scope_item_home_ref_20260723 on the SPIKE (via orch-apply, uncommitted) so this exact re-raise can't recur. No new row (feedback_epic_wrapper_closeout_gap + prior-art check).
 **why-change:** goes one step beyond the read-only 'name it' the coordinator asked for, to definitively retire the recurring epic-closeout-orphan class rather than leave the linkage implicit.
+
+### STEP po-S7 · po · 2026-07-25T07:17:07Z
+**task-id:** FIX-PREDCLAIM-CREATIONPRICE-UNGATE-ZOD-CONTRACT
+**what-done:** Re-derived the "Loại trừ" root cause instead of accepting the router's hand-off, found a different (and live) cause, and minted 4 rows for the user's prediction-claims demand.
+**what-considered:**
+- Router hypothesis: `intelligenceCycleJob.ts:938` hardcoded `creation_price: null` — REJECTED as the cause. That path writes `agent_id:"chain-synthesizer"`; all 17 live claims are `08-prediction-synthesizer` from `evidenceTools.ts:435`. Real but dormant; folded in as deliverable (f) so it can't become the next source.
+- Actual cause (chosen): `evidenceTools.ts:397` gates the entry-price SELECT behind `if (direction != null && expected_move_pct != null)` — both OPTIONAL, and both absent from the tool doc's param table AND from `daily-predict.md:110`'s prescribed call. Agent follows the doc → no price → direction defaults "neutral" → resolver `excludeClaim()`.
+- Force `direction` required — REJECTED: `predictionResolutionJob.ts:16` already scores *neutral WITH creation_price* via the neutral band. Ungating price capture alone makes all 10 neutral claims scoreable and breaks zero callers.
+**why-decision:** The discriminator is entry-price capture, not age or direction: every non-null-creationPrice claim (ids 2-7) scored; all 11 null ones excluded or heading there. Ids 8→17 are 10 consecutive claims over 6 weeks at a 0% scoreable rate.
+**why-change:** Diverges from the dispatch's stated root cause — verified live before minting, per the "hand-off is not evidence" instruction.
+
+### STEP po-S8 · po · 2026-07-25T07:17:07Z
+**task-id:** FEAT-PREDCLAIM-UPDATED-AT
+**what-done:** Decided new-column over surfacing an existing timestamp, and ruled the hit-rate badge in scope as a P1 honesty fix.
+**what-considered:**
+- Surface existing `resolvedAt` as the updated-at — REJECTED: it is NULL for all 5 pending rows, i.e. blank for exactly the population the user wants to recheck.
+- Surface `createdAt` — REJECTED: answers "when minted", never moves.
+- Add a real `updated_at` column stamped inside the store fns (chosen) — the Zod update-path work and the backfill both introduce a genuine third mutation class that no existing timestamp can represent, and a backfilled row would otherwise be indistinguishable from an untouched one.
+**why-decision:** Stamping must live in `predictionClaimStore.ts` not at call sites — a call-site convention is precisely what the next new call site skips, which is how this whole defect class arrived. Reuses the existing idempotent `ALTER TABLE ADD COLUMN` pattern at `schema-system.ts:209-212`; no new migration mechanism.
+**why-change:** Added the hit-rate honesty row beyond the literal ask — 66.7% computed on 6/17, frozen since 2026-06-21 with no denominator or staleness marker, is the passive-health-masks-dead-data pattern and is why a 6-week outage went unnoticed.
