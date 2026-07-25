@@ -387,12 +387,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-HNX-OFFHOURS-FORCE-FETCH-ERROR-DOWNGRADE",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-HNX-OFFHOURS-FORCE-FETCH-ERROR-DOWNGRADE — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-25T03:16:18Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "updated_at": "2026-07-25T03:24:53Z",
+    "updated_by": "dev-mcp-server"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -15028,6 +15027,25 @@
         "next_agent": "qa",
         "rebuild_required": false,
         "branch": null
+      },
+      {
+        "id": "FIX-HNX-OFFHOURS-FORCE-FETCH-ERROR-DOWNGRADE",
+        "title": "HNX/UPCOM force:true fetches log ERROR-level spam off-hours — sectorRotationTools:181/188, portfolioTools:160/163, marketTools:225+. After-hours HNX/UPCOM endpoints reject/302 (FIX-HNX-SESSION-COOKIE context) but the force:true bypass still fires + logs at ERROR every off-hours tool call, polluting logs + false-alarming monitors. Distinct from FIX-HNX-SESSION-COOKIE (that=cookie correctness for IN-hours). This=log-noise/severity: off-hours expected-rejection must downgrade ERROR->INFO/DEBUG (or skip the HNX/UPCOM force-fetch when now_VN is outside session), not spam.",
+        "type": "FIX",
+        "priority": "P2",
+        "status": "REVIEW",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-HNX-OFFHOURS-FORCE-FETCH-ERROR-DOWNGRADE",
+        "promoted_at": "2026-07-25T03:16:18Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-25T03:24:53Z",
+        "claimed_at": "2026-07-25T03:16:18Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "branch": null,
+        "updated_by": "dev-mcp-server",
+        "review_note": "STALE-BACKLOG-ROW CLOSURE, not a new fix: the identical off-hours ERROR-log-severity fix for fetchHnxPrices/fetchUpcomPrices was already shipped under sibling ticket FIX-HNX-OFFHOURS-ERROR-DOWNGRADE (commit 93e9dbeb8, 2026-06-21T01:56:45Z), QA-APPROVED (a73bf035d), and rebuild CONFIRMED live (f0ac29998, RAW marker hit both sites, rebuild_required=false) — all BEFORE THIS row was minted (minted_at 2026-06-21T03:14:47Z, 78 min after the fix landed). The row own note admits gateway-blind file-grep triage, live log-severity never probed. Confirmed at HEAD: infrastructure/fetchers/hnx.ts fetchHnxPrices (L354) and fetchUpcomPrices (L436) already branch on isVnTradingWindow(options?.now) (SSOT domain/services/tradingWindow.ts, the shared session helper reused across server-startup/pushPricesHandler/foreignFlowFetcherJob) — in-hours keeps logger.error, off-hours downgrades to logger.debug. All 3 named call sites (sectorRotationTools.ts:181/188, portfolioTools.ts:160/163, marketTools.ts forceOpts:244/253) route through this shared fetcher with no additional error-log wrapper of their own (their catch-paths log warn not error, and only fire on thrown rejections these fetchers never produce). Repo-wide grep sweep found no missed force:true HNX/UPCOM site. Pre-existing FIX-HNX-OFFHOURS-ERROR-DOWNGRADE.test.ts (6 tests) already satisfies the ticket baseline_pass (off-hours expected-rejection -> non-ERROR; in-hours genuine failure -> ERROR, clock-injected) — no duplicate test file added. Evidence: bunx tsc --noEmit exit 0; bun test on pre-existing fix+regression files 50 pass/0 fail/6 skip; sector/portfolio/market tool suites 91 pass/0 fail, zero regression. No code/test commit shipped — only the decision journal (docs/agent-memory/decisions/sprint-FIX-HNX-OFFHOURS-FORCE-FETCH-ERROR-DOWNGRADE-dev-mcp-server.md, commit c2c413def). Nothing to rebuild — fix has been live in production since 2026-06-21."
       }
     ],
     "qa": [],
@@ -15049,23 +15067,7 @@
     },
     "last_triaged_at": "2026-07-25T03:16:18Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-HNX-OFFHOURS-FORCE-FETCH-ERROR-DOWNGRADE",
-        "title": "HNX/UPCOM force:true fetches log ERROR-level spam off-hours — sectorRotationTools:181/188, portfolioTools:160/163, marketTools:225+. After-hours HNX/UPCOM endpoints reject/302 (FIX-HNX-SESSION-COOKIE context) but the force:true bypass still fires + logs at ERROR every off-hours tool call, polluting logs + false-alarming monitors. Distinct from FIX-HNX-SESSION-COOKIE (that=cookie correctness for IN-hours). This=log-noise/severity: off-hours expected-rejection must downgrade ERROR->INFO/DEBUG (or skip the HNX/UPCOM force-fetch when now_VN is outside session), not spam.",
-        "type": "FIX",
-        "priority": "P2",
-        "status": "IN_PROGRESS",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-HNX-OFFHOURS-FORCE-FETCH-ERROR-DOWNGRADE",
-        "promoted_at": "2026-07-25T03:16:18Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-25T03:16:19Z",
-        "claimed_at": "2026-07-25T03:16:18Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
