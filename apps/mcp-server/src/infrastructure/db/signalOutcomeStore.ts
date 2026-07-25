@@ -17,6 +17,7 @@
  */
 
 import type { Database } from "bun:sqlite";
+import { getPriceHistory } from "../microservices/clients.js";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -46,6 +47,11 @@ export interface ResolveOutcomesResult {
   evaluated48h: number;
   resolved: number;
   skipped: number;
+}
+
+export interface ResolveOutcomesDeps {
+  /** Injectable Option-B history fetcher — defaults to fetchPriceFromStockService (tests only). */
+  fetchHistoryFn?: (code: string, targetDate: string) => Promise<number | null>;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -115,27 +121,44 @@ function fetchPriceFromHistory(
 
 /**
  * Fetch price from stock-price service (Option B fallback).
- * GET http://stock-price:5000/price/history?code=X&days=3
- * Returns close price for the trading day closest to targetDate.
+ * Uses the canonical getPriceHistory client (infrastructure/microservices/clients.ts)
+ * instead of a hand-rolled fetch — the Go service's GET /price/history response is the
+ * envelope `{ code, history: DailyOHLCV[] }`, NOT a flat array.
  *
- * Returns null on any error (network, parse, or no matching day).
+ * FIX-SIGNAL-OUTCOMES-RESOLUTION-STALLED root cause: the previous local implementation
+ * parsed the response as a flat `{date,close}[]` array — `Array.isArray(data)` was always
+ * false against the real `{code,history}` envelope, so this fallback returned null on
+ * EVERY call and was permanently dead code in production (same defect class already fixed
+ * once for verdictResolutionJob.ts's defaultFetchHistory, task 1945a — signalOutcomeStore.ts
+ * had an independent, never-updated duplicate). It also hardcoded `days=3`, which only ever
+ * returns the 3 MOST RECENT trading days from "now" regardless of targetDate — useless for
+ * resolving anything more than ~3 days in the past. `days` is now derived from the actual
+ * gap between now and targetDate (Go service corpus verified >=170 trading days deep).
+ *
+ * Returns null on any error (network, parse, or no matching day within 2 calendar days).
  */
 async function fetchPriceFromStockService(
   code: string,
   targetDate: string, // YYYY-MM-DD
 ): Promise<number | null> {
-  const baseUrl = Bun.env.STOCK_PRICE_SERVICE_URL ?? "http://stock-price:5000";
   try {
-    const res = await fetch(`${baseUrl}/price/history?code=${encodeURIComponent(code)}&days=3`);
-    if (!res.ok) return null;
-    const data = await res.json() as { date: string; close: number }[];
-    if (!Array.isArray(data) || data.length === 0) return null;
+    const target = new Date(`${targetDate}T00:00:00Z`).getTime();
+    if (Number.isNaN(target)) return null;
+
+    const daysGap = Math.ceil((Date.now() - target) / 86_400_000);
+    // +5-day buffer absorbs weekends/holidays between targetDate and now.
+    // Floor 3 matches the original narrow-window default; cap 400 avoids an
+    // unbounded request (well beyond the service's verified history depth).
+    const days = Math.min(400, Math.max(3, daysGap + 5));
+
+    const envelope = await getPriceHistory({ code, days });
+    const history = envelope.history;
+    if (!Array.isArray(history) || history.length === 0) return null;
 
     // Find the row with date closest to targetDate
-    const target = new Date(targetDate).getTime();
     let best: { date: string; close: number } | null = null;
     let bestDiff = Infinity;
-    for (const row of data) {
+    for (const row of history) {
       if (typeof row.close !== "number") continue;
       const diff = Math.abs(new Date(row.date).getTime() - target);
       if (diff < bestDiff) {
@@ -210,11 +233,15 @@ export function seedSignalOutcome(
  *
  * @param db          - Active bun:sqlite Database connection
  * @param windowHours - 24 or 48
+ * @param deps        - Injectable deps (tests only); production uses fetchPriceFromStockService
  */
 export async function resolveSignalOutcomes(
   db: Database,
   windowHours: 24 | 48,
+  deps: ResolveOutcomesDeps = {},
 ): Promise<ResolveOutcomesResult> {
+  const fetchHistoryFn = deps.fetchHistoryFn ?? fetchPriceFromStockService;
+
   // Guard: table may not exist
   try {
     db.prepare(`SELECT id FROM signal_outcomes LIMIT 0`).all();
@@ -260,6 +287,16 @@ export async function resolveSignalOutcomes(
       if (baseline === null) {
         baseline = fetchPriceFromHistory(db, row.stock_code, row.created_at, 0, 60);
       }
+      // Option B fallback (FIX-SIGNAL-OUTCOMES-RESOLUTION-STALLED): market_prices_history
+      // is an intraday cache with a rolling ~24h retention purge (pushPricesHandler.ts). By
+      // the time this scan first looks at a row (created_at is already >= windowHours old
+      // per the WHERE clause above), Option A's window around created_at has typically
+      // already rolled off. Without this fallback, baseline NEVER resolves for any row
+      // older than ~1 day and the row is skipped forever — permanently stuck 'pending'
+      // (this was the primary root cause: 102/105 live rows had price_at_signal IS NULL).
+      if (baseline === null) {
+        baseline = await fetchHistoryFn(row.stock_code, row.created_at.slice(0, 10));
+      }
       if (baseline !== null) {
         db.prepare(`UPDATE signal_outcomes SET price_at_signal = ? WHERE id = ?`)
           .run(baseline, row.id);
@@ -296,7 +333,7 @@ export async function resolveSignalOutcomes(
     // Option B fallback: stock-price service
     if (resPrice === null && targetTs) {
       const targetDate = targetTs.slice(0, 10); // YYYY-MM-DD
-      resPrice = await fetchPriceFromStockService(row.stock_code, targetDate);
+      resPrice = await fetchHistoryFn(row.stock_code, targetDate);
     }
 
     if (resPrice === null) {
@@ -555,7 +592,7 @@ export function getAccuracyStats(
          AVG(CASE WHEN so.outcome_24h = 'incorrect' THEN s.confidence_score END) AS avg_confidence_when_incorrect,
          MAX(so.checked_at) AS last_evaluated_at
        FROM signal_outcomes so
-       JOIN agent_signals s ON s.id = so.signal_id
+       LEFT JOIN agent_signals s ON s.id = so.signal_id
        WHERE ${where}
        GROUP BY so.signal_type, so.stock_code
        HAVING sample_count >= 3

@@ -1084,14 +1084,53 @@ export function getSignalEffectiveness(
  * Should be called periodically (e.g. from the data audit job) to prevent
  * unbounded table growth.
  *
+ * FIX-SIGNAL-OUTCOMES-RESOLUTION-STALLED (folded_scope_orphan_fk): agent_signals.id is
+ * referenced by signal_outcomes.signal_id (`NOT NULL REFERENCES agent_signals(id)`, no
+ * `ON DELETE CASCADE`) and the shared connection sets `PRAGMA foreign_keys = ON`
+ * (schema.ts getDb()). Deleting an expired parent that still has a signal_outcomes child
+ * throws "FOREIGN KEY constraint failed" — and because this was a single bulk DELETE
+ * statement, SQLite rolled back the ENTIRE statement, pruning ZERO rows. Verified live:
+ * 104/5983 currently-expired agent_signals rows are still referenced by signal_outcomes,
+ * so this function has been throwing and silently no-oping on every call (the caller in
+ * dataAuditJob.ts wraps it in a try/catch intended for "table may not exist yet", which
+ * was actually swallowing this FK error every day). Exclude still-referenced parents from
+ * the DELETE instead of relying on CASCADE (which would destructively wipe accuracy-
+ * tracking history the moment a signal expires, defeating the purpose of signal_outcomes
+ * outliving its parent's short TTL): a referenced row becomes eligible for pruning the
+ * moment its LAST signal_outcomes row is deleted — never before, because SQLite's FK
+ * enforcement blocks the parent DELETE for as long as ANY child row references it,
+ * regardless of that child's resolved/pending status (there is no ON DELETE CASCADE and
+ * signal_id is NOT NULL, so a resolved-but-still-present child blocks deletion exactly the
+ * same as a pending one — this was verified empirically, not assumed). This does mean a
+ * parent is retained for as long as its accuracy-tracking child exists, but that growth is
+ * bounded by (and proportional to) signal_outcomes' own row count, which is already an
+ * intentionally-permanent accuracy ledger (never pruned) — so this adds no new unbounded
+ * growth, it just correctly reflects an existing invariant instead of throwing on it.
+ *
  * @param db - Active bun:sqlite Database connection
  * @returns  Number of rows deleted
  */
 export function cleanExpired(db: Database): number {
-  const result = db
-    .prepare("DELETE FROM agent_signals WHERE expires_at < datetime('now')")
-    .run();
-  return result.changes;
+  try {
+    const result = db
+      .prepare(`
+        DELETE FROM agent_signals
+         WHERE expires_at < datetime('now')
+           AND id NOT IN (SELECT signal_id FROM signal_outcomes)
+      `)
+      .run();
+    return result.changes;
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    // signal_outcomes table absent (older schema / minimal test DB) — no FK-integrity
+    // risk without that table, so fall back to the unguarded prune. Any OTHER error
+    // (fail-loud-protocol) is re-thrown rather than masked by a second blind attempt.
+    if (!msg.includes("no such table")) throw err;
+    const result = db
+      .prepare("DELETE FROM agent_signals WHERE expires_at < datetime('now')")
+      .run();
+    return result.changes;
+  }
 }
 
 // ── getChainFindings ──────────────────────────────────────────────────────────

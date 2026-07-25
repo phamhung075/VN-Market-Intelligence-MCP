@@ -13,6 +13,13 @@
  *
  * Split from dataAuditJob.ts (FACTORY-SCHEDULER-split-dataAuditJob) — SQL,
  * finding shape, and console.log/console.warn side effects verbatim.
+ *
+ * FIX-SIGNAL-OUTCOMES-RESOLUTION-STALLED (folded_scope_orphan_fk): same FK exposure as
+ * agentSignalStore.ts's cleanExpired() — a matched agent_signals row still referenced by a
+ * signal_outcomes child (NOT NULL FK, PRAGMA foreign_keys=ON) throws "FOREIGN KEY
+ * constraint failed" and, being a single bulk DELETE, rolls back the WHOLE statement
+ * (pruning zero rows, silently masked by this function's own catch). Excluded the same
+ * way — see cleanExpired()'s doc comment for the full rationale.
  */
 
 import { Database } from "bun:sqlite";
@@ -20,9 +27,25 @@ import { AuditFinding } from "../dataAuditShared.js";
 
 export function checkStaleAgentSignals(db: Database): AuditFinding[] {
   try {
-    const result = db.prepare(
-      "DELETE FROM agent_signals WHERE outcome IS NULL AND created_at < datetime('now', '-30 days')"
-    ).run();
+    // Probe first (rather than parsing the DELETE's error message): signal_outcomes may
+    // legitimately be absent on an older/minimal agent_signals-only schema, in which case
+    // there is no FK to worry about and the guard clause itself would be the thing that
+    // throws "no such table".
+    let hasSignalOutcomes = true;
+    try {
+      db.prepare(`SELECT id FROM signal_outcomes LIMIT 0`).all();
+    } catch {
+      hasSignalOutcomes = false;
+    }
+
+    const sql = hasSignalOutcomes
+      ? `DELETE FROM agent_signals
+          WHERE outcome IS NULL AND created_at < datetime('now', '-30 days')
+            AND id NOT IN (SELECT signal_id FROM signal_outcomes)`
+      : `DELETE FROM agent_signals
+          WHERE outcome IS NULL AND created_at < datetime('now', '-30 days')`;
+
+    const result = db.prepare(sql).run();
     console.log(`[dataAuditJob] D-NEW stale_null_outcome_signals: deleted ${result.changes} rows`);
     return [{
       table: "agent_signals",
