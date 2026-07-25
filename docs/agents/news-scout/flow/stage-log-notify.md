@@ -57,16 +57,29 @@ call_tool(server="vn-market", tool="log_agent_work", arguments={
 })
 ```
 
-**7. Coverage-state update** (atomic write, after notebook append):
+**7. Coverage-state update** (deterministic scripted write, after notebook append):
 ```
-for each ticker analyzed this cycle (both event-driven AND sweep-forced):
-  set COVERAGE_STATE.tickers[ticker].last_covered_news_scout = <current UTC ISO-8601>
-set COVERAGE_STATE._updated_by = "news-scout"
-set COVERAGE_STATE._updated_at = <current UTC ISO-8601>
+TICKERS_COVERED = tickers analyzed this cycle (both event-driven AND sweep-forced) — the
+  SAME set, nothing added or dropped.
 
-Atomic write:
-  write updated JSON to docs/data/coverage-state.json.tmp
-  mv docs/data/coverage-state.json.tmp docs/data/coverage-state.json
+scripts/agents-flow/coverage-stamp.sh --agent news-scout --tickers <TICKERS_COVERED, comma-joined>
+  → surgical jq patch: sets ONLY .tickers[T].last_covered_news_scout = now for T in
+    TICKERS_COVERED; every other key/ticker/field — including market-watcher's own field on
+    the SAME ticker — is preserved byte-for-byte. Wrapped in a task_claim("coverage-state:main")
+    mutex, serializing against market-watcher's own write (co-ships
+    FIX-COVERAGE-STATE-CROSS-AGENT-LOST-UPDATE). Also repairs the top-level sweep_config key
+    if it is missing.
+  FIX-COVERAGE-SWEEP-BLANKET-STAMP-DEAD-TRIGGER: this REPLACES "for each ticker analyzed, set
+  X=now" prose executed by hand — that prose, re-run against a 57-entry blob every cycle,
+  blanket-stamped ALL tickers (measured live), making the 48h staleness trigger permanently
+  unsatisfiable. Do NOT regenerate/overwrite the whole file as a substitute for this step.
+
+  ⚠ TRANSPORT GAP (open 2026-07-25): this agent holds no Bash (.claude/agents/news-scout.md:5)
+  and cannot invoke the script directly today — closing this needs either a Bash grant
+  (governance decision) or an MCP-tool wrapper (dev-mcp-server zone); neither is decided yet.
+  Until resolved: if this step cannot execute, SKIP the coverage-state write entirely this
+  cycle and log `[coverage-write-skipped: no-transport]` on the WORK ping — do NOT fall back
+  to a full-file rewrite, that reintroduces the exact bug this task fixed.
 ```
 
 **8. WORK channel** (ULTRA tier — inter-agent status ping per `.claude/skills/caveman/SKILL.md`)

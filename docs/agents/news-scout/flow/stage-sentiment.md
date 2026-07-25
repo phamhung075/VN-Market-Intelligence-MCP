@@ -5,20 +5,22 @@
 ## Step 0-sweep — load coverage state + build sweep list
 
 ```
-COVERAGE_STATE = read docs/data/coverage-state.json
-  (fail-silent: if missing → treat all tickers as last_covered_news_scout=null)
-
 WATCHLIST = call_tool(server="vn-market", tool="get_watchlist", arguments={})
   (reuse this call for Step 2 cross-referencing — do not call twice)
 
-now = current UTC timestamp
-
-STALE_TICKERS = [t for t in WATCHLIST.active where
-  COVERAGE_STATE.tickers[t].last_covered_news_scout == null OR
-  (now - COVERAGE_STATE.tickers[t].last_covered_news_scout) > 48h
-]
-→ sorted by last_covered_news_scout ascending (null = oldest first)
-→ take ≤3 tickers (sweep_config.sweep_batch_size)
+STALE_TICKERS = scripts/agents-flow/coverage-stamp.sh --agent news-scout --list-stale
+  --watchlist <WATCHLIST.active codes, comma-joined>
+  → JSON array, ≤ sweep_config.sweep_batch_size (default 3) entries, oldest/never-covered
+    first. Script owns the 48h-staleness filter (sweep_config.max_staleness_hours, default
+    48) — do NOT hand-derive this list; that non-determinism is what made the sweep dead
+    (FIX-COVERAGE-SWEEP-BLANKET-STAMP-DEAD-TRIGGER). Fail-silent if coverage-state.json is
+    missing (same as before: every ticker treated as never-covered).
+  ⚠ TRANSPORT GAP (open 2026-07-25 — see task note on the board row): this agent holds no
+    Bash (.claude/agents/news-scout.md:5) and cannot invoke the script directly yet. Until a
+    Bash-capable caller wires this in, fall back to the equivalent hand-filter (prior
+    behaviour: null OR >48h vs COVERAGE_STATE.tickers[t].last_covered_news_scout, sorted
+    oldest-first, take ≤3) for THIS read-only sub-step — bounded risk (filter, not a
+    document rewrite). Do NOT apply this fallback to the Step 7 write in stage-log-notify.md.
 
 For each ticker in STALE_TICKERS that is NOT already in the article-impacted set:
   → explicitly include it in sentiment/impact analysis this cycle even if impact_score < threshold

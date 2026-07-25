@@ -1,4 +1,4 @@
-<!-- size-justification: 291L — atomic price-monitoring flow; sigma-threshold logic, channel routing, coverage-rotation floor, and execution-contract guard are step-by-step coupled; exceeds 200L cap (pre-existing debt, split out of scope); history in git log. -->
+<!-- size-justification: 309L — atomic price-monitoring flow; sigma-threshold logic, channel routing, coverage-rotation floor, and execution-contract guard are step-by-step coupled; exceeds 200L cap (pre-existing debt, split out of scope); history in git log. FIX-COVERAGE-SWEEP-BLANKET-STAMP-DEAD-TRIGGER 2026-07-25: replaced prose read-modify-write (Step 0-sweep + Step 5c) with calls to the deterministic scripts/agents-flow/coverage-stamp.sh, +18L incl. a documented transport-gap caveat (agent holds no Bash — see caveat inline). -->
 # Market Watcher — Cycle Flow
 
 **Tools:** `docs/agents/tools/package/market-watcher.md`
@@ -60,17 +60,22 @@ Rationale: off-hours fires (00:00Z, 04:00Z, weekends) scan unchanged EOD prices;
 ## Step 0-sweep — load coverage state + build sweep list
 
 ```
-COVERAGE_STATE = read docs/data/coverage-state.json
-  (fail-silent: if missing → treat all tickers as last_covered_market_watcher=null)
+WATCHLIST = call_tool(server="vn-market", tool="get_watchlist", arguments={})
+  (was previously used undefined here — now fetched explicitly, folded into this task's fix)
 
-now = current UTC timestamp
-
-STALE_TICKERS = [t for t in WATCHLIST where
-  COVERAGE_STATE.tickers[t].last_covered_market_watcher == null OR
-  (now - COVERAGE_STATE.tickers[t].last_covered_market_watcher) > 48h
-]
-→ sorted by last_covered_market_watcher ascending (null = oldest first)
-→ take ≤3 tickers (sweep_config.sweep_batch_size)
+STALE_TICKERS = scripts/agents-flow/coverage-stamp.sh --agent market-watcher --list-stale
+  --watchlist <WATCHLIST.active codes, comma-joined>
+  → JSON array, ≤ sweep_config.sweep_batch_size (default 3) entries, oldest/never-covered
+    first. Script owns the 48h-staleness filter (sweep_config.max_staleness_hours, default
+    48) — do NOT hand-derive this list; that non-determinism is what made the sweep dead
+    (FIX-COVERAGE-SWEEP-BLANKET-STAMP-DEAD-TRIGGER). Fail-silent if coverage-state.json is
+    missing (same as before: every ticker treated as never-covered).
+  ⚠ TRANSPORT GAP (open 2026-07-25 — see task note on the board row): this agent holds no
+    Bash (.claude/agents/market-watcher.md:5) and cannot invoke the script directly yet.
+    Until a Bash-capable caller wires this in, fall back to the equivalent hand-filter (prior
+    behaviour: null OR >48h vs COVERAGE_STATE.tickers[t].last_covered_market_watcher, sorted
+    oldest-first, take ≤3) for THIS read-only sub-step — bounded risk (filter, not a
+    document rewrite). Do NOT apply this fallback to Step 5c's write below.
 
 For each ticker in STALE_TICKERS:
   → include in Step 1 price analysis even if move < sigma_threshold
@@ -238,16 +243,29 @@ Overwrite `docs/agent-memory/notebooks/market-watcher.md` with (≤80L total):
 | exit_status | complete\|blocked\|empty |
 ```
 
-**5c. Coverage-state update** (atomic write, after notebook overwrite):
+**5c. Coverage-state update** (deterministic scripted write, after notebook overwrite):
 ```
-for each ticker priced this cycle (both anomaly-driven AND sweep-forced):
-  set COVERAGE_STATE.tickers[ticker].last_covered_market_watcher = <current UTC ISO-8601>
-set COVERAGE_STATE._updated_by = "market-watcher"
-set COVERAGE_STATE._updated_at = <current UTC ISO-8601>
+TICKERS_COVERED = tickers priced this cycle (both anomaly-driven AND sweep-forced) — the SAME
+  set, nothing added or dropped.
 
-Atomic write:
-  write updated JSON to docs/data/coverage-state.json.tmp
-  mv docs/data/coverage-state.json.tmp docs/data/coverage-state.json
+scripts/agents-flow/coverage-stamp.sh --agent market-watcher --tickers <TICKERS_COVERED, comma-joined>
+  → surgical jq patch: sets ONLY .tickers[T].last_covered_market_watcher = now for T in
+    TICKERS_COVERED; every other key/ticker/field — including news-scout's own field on the
+    SAME ticker — is preserved byte-for-byte. Wrapped in a task_claim("coverage-state:main")
+    mutex, serializing against news-scout's own write (co-ships
+    FIX-COVERAGE-STATE-CROSS-AGENT-LOST-UPDATE). Also repairs the top-level sweep_config key
+    if it is missing.
+  FIX-COVERAGE-SWEEP-BLANKET-STAMP-DEAD-TRIGGER: this REPLACES "for each ticker priced, set
+  X=now" prose executed by hand — that prose, re-run against a 57-entry blob every cycle,
+  blanket-stamped ALL tickers (measured live), making the 48h staleness trigger permanently
+  unsatisfiable. Do NOT regenerate/overwrite the whole file as a substitute for this step.
+
+  ⚠ TRANSPORT GAP (open 2026-07-25): this agent holds no Bash (.claude/agents/market-watcher.md:5)
+  and cannot invoke the script directly today — closing this needs either a Bash grant
+  (governance decision) or an MCP-tool wrapper (dev-mcp-server zone); neither is decided yet.
+  Until resolved: if this step cannot execute, SKIP the coverage-state write entirely this
+  cycle and log `[coverage-write-skipped: no-transport]` on the WORK ping — do NOT fall back
+  to a full-file rewrite, that reintroduces the exact bug this task fixed.
 ```
 
 **Post-write wc guard** (OVERWRITE class — fail-loud):
