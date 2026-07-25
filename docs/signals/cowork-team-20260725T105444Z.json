@@ -1,0 +1,32 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "2026-07-25T10:54:44Z",
+  "payload": {
+    "fire_time": "2026-07-25T10:54:44Z",
+    "nominal_tick": "2026-07-25T10:45:00Z",
+    "silent": true,
+    "classification": "SILENT",
+    "reason": "no slots due, no one-shots claimed, no NEW cowork-addressed signal_queue rows",
+    "matched_slots": [],
+    "won_slots": [],
+    "spawned": [],
+    "errors": [],
+    "note": "BOUND DISCHARGED - do NOT re-fire. The 2026-07-25T10:39:11Z cowork telemetry note carried a self-issued standing bound: spawn po at the 10:45Z tick REGARDLESS of outcome, to answer pos tick-plane-vs-board question. That bound is now SATISFIED AND DISCHARGED at this tick: po was spawned 10:52Z (background) carrying the decisive evidence. Any future tick or PO triage that reads the 10:39:11Z row MUST treat its spawn-po instruction as already executed and take NO action on it. Re-firing it would double-dispatch po on identical inputs.",
+    "finding": "TICK-PLANE FAULT CONFIRMED, board was never at fault. dev-team cron 45e8a8e9 had ZERO fires since arming ~10:10Z; the first fire (10:37Z) had BOUNDED-1 claim FIX-BCTC-PENDING-REFINE-HEAD-OF-LINE-FAILED-ROW at priority_rank=0 and dispatch it to dev-mcp-server. Matches pos executable prediction exactly.",
+    "board_after": {
+      "head_status": "in_progress",
+      "active": "FIX-BCTC-PENDING-REFINE-HEAD-OF-LINE-FAILED-ROW",
+      "next_agent": "dev-mcp-server",
+      "in_progress": 1,
+      "ready": 44,
+      "backlog": 391
+    },
+    "open_for_po": "FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION (already boarded, do NOT mint duplicate) - BOUNDED-1 claim jumps to execute and skips Step 1 PO Triage; ready=44 unconsumed, qa=0 vs review=105.",
+    "held_locks": [
+      "task:FIX-BCTC-PENDING-REFINE-HEAD-OF-LINE-FAILED-ROW (ttl 3600, deliberate, guards against peer double-dispatch while dev-mcp-server runs)"
+    ]
+  }
+}
