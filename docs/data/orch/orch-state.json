@@ -419,12 +419,12 @@
     }
   ],
   "head": {
-    "status": "review",
-    "active_task_id": "FIX-PREDCLAIM-DASHBOARD-HITRATE-HONESTY",
-    "next_agent": "qa",
-    "next_action": "FIX-PREDCLAIM-DASHBOARD-HITRATE-HONESTY at REVIEW -- qa: verify denominator/staleness/breakdown/exclusion context render correctly (unit-level 92/92 pass incl. mutated excluded=11/hitRate=null fixture + double-fetch/lastScoredAt regression guards; SSR-level manually confirmed on a throwaway PORT=3012 dev server against the real mcp-server). PENDING-REBUILD -- the live :3001 Docker container predates this commit; ops rebuild required before the fix is visible on the real dashboard, then re-verify against the LIVE served endpoint. hitRate=null still renders \"Chua co\", never \"0%\" (untouched contract).",
-    "updated_at": "2026-07-25T13:38:21Z",
-    "updated_by": "dev-frontend"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "idle — BOUNDED-1/SLS/RLC/QA-Drain fall-through eligible",
+    "updated_at": "2026-07-25T13:40:33Z",
+    "updated_by": "dev-team"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
