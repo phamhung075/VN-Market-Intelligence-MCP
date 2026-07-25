@@ -17,6 +17,7 @@ All routes live in `apps/frontend/app/routes/`.
 | `dashboard.analysis.tsx` | `/dashboard/analysis` | SSR loader: `GET /kinh-dich/market`, `POST /macro/snapshot`, `GET /kinh-dich/reading/:code` × 8, `GET /stock/price/batch?tickers=…`, `GET /stock/price/history?code&days=90`, `POST /ta/ta/indicators`, `GET /mcp/api/signals/stock/:code?limit=10`, `GET /mcp/api/signals/stock/:code?limit=5&type=chain_catalyst`. Zone components (client-side useFetcher): `GET /api/price-history/:stock?days=90` (TechnicalZone), `GET /api/corporate-events?days=90` (CorporateEventsZone), `GET /api/financials` (FinancialsZone), `GET /api/reputation` (ReputationZone), `GET /api/news-buzz` (NewsBuzzZone), `GET /api/conviction-history?symbol=:stock` (ConvictionHistoryZone). Links to: `/dashboard/shareholders?code=<stock>`, `/dashboard/officers?code=<stock>`. |
 | ~~`dashboard.technical.tsx`~~ | ~~`/dashboard/technical`~~ | DELETED FE-AHUB-INT-INTEGRATE — content merged into `TechnicalZone` component embedded in `/dashboard/analysis`. |
 | `dashboard.alerts.tsx` + `api.alerts.tsx` | `/dashboard/alerts` | `GET /api/alerts?limit=100` (proxied via api.alerts.tsx → mcp-server :3000). `AlertSeverity = "low" \| "medium" \| "warning" \| "high" \| "critical"` — `"warning"` is a live backend-emitted value (amber styling). `parseAlertsDto` normalises unknown severities → `"medium"` at the data boundary. `severityColours()` has a `default:` belt-and-suspenders branch. |
+| `dashboard.prediction-claims.tsx` + `api.prediction-claims.tsx` | `/dashboard/prediction-claims` | `GET /api/prediction-claims?limit=N&outcome=X` (proxied via api.prediction-claims.tsx → mcp-server :3000). See § Prediction Claims Trust-Surface Context below. |
 
 ### Loader pattern
 
@@ -32,6 +33,39 @@ All loaders follow the same pattern:
 ```
 
 Errors are passed through `toUserFriendlyError()` before display to strip internal API paths.
+
+## Prediction Claims Trust-Surface Context (`dashboard.prediction-claims.tsx`)
+
+FIX-PREDCLAIM-DASHBOARD-HITRATE-HONESTY (2026-07-25): the calibration banner no
+longer renders a bare hit-rate. Full endpoint contract lives in the route
+file's own header comment (`apps/frontend/app/routes/dashboard.prediction-claims.tsx:1`)
+— this section documents ONLY what the frontend adds around the server figure
+(no hitRate recomputation happens client-side):
+
+- **`fetchPredictionClaimsData` double-fetch:** an `?outcome=` filter now
+  triggers TWO upstream calls — an always-unfiltered "context" fetch (source
+  of `calibration` + `lastScoredAt`) and, only when a filter is active, a
+  second filtered fetch for the display list. This keeps the calibration
+  banner correct on every filter tab (`Đang chờ`, `Loại trừ`, …), since a
+  filtered response alone would lack the correct/wrong rows needed to compute
+  the staleness marker. Unfiltered ("Tất cả") view still makes exactly one call.
+- **`computeLastScoredAt(claims)`** — max `resolvedAt` among `outcome ∈
+  {correct, wrong}` only. `excluded` rows also carry a non-null `resolvedAt`
+  (set by `excludeClaim()` server-side) but are NOT a scoring event and are
+  explicitly excluded from this computation (regression-guarded by a unit test).
+- **`describeStaleness(lastScoredAt, now)`** — `STALE_THRESHOLD_DAYS = 14`
+  (see constant doc comment for the reasoning). Returns `null` when no claim
+  has ever been scored (nothing to warn about beyond the existing "Chưa có"
+  hit-rate state).
+- **`formatHitRateDenominator` / `formatDispositionBreakdown`** — pure string
+  composition over the given `calibration` fields only (`correct`, `wrong`,
+  `resolved`, `total`, `pending`, `excluded`); never derives a new ratio.
+- **`resolveExclusionReason(claim)`** — consumes `claim.exclusionReason` when
+  present and non-empty (producer: FIX-PREDCLAIM-BACKFILL-NULL-CREATIONPRICE
+  deliverable (c), NOT YET SHIPPED as of this change — the field is optional
+  and currently absent on every live row); falls back to
+  `GENERIC_EXCLUSION_REASON` otherwise. Rendered per-claim on excluded
+  `ClaimCard`s and as a `title` tooltip on the aggregate "Loại trừ" chip.
 
 ## Shared Components
 

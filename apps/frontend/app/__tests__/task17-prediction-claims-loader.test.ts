@@ -27,6 +27,14 @@ import {
   directionColorClass,
   outcomeLabel,
   outcomeColorClass,
+  computeLastScoredAt,
+  formatHitRateDenominator,
+  formatDispositionBreakdown,
+  describeStaleness,
+  resolveExclusionReason,
+  STALE_THRESHOLD_DAYS,
+  GENERIC_EXCLUSION_REASON,
+  type PredictionClaim,
 } from "~/routes/dashboard.prediction-claims";
 
 // ---------------------------------------------------------------------------
@@ -791,11 +799,16 @@ describe('calibration.excluded field — FIX-PRED-CLAIMS-EXCLUDED-SERVE-DISPLAY'
 
 describe("fetchPredictionClaimsData — outcomeFilter propagation", () => {
   it("outcome param is echoed back in outcomeFilter field", async () => {
-    global.fetch = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify(DTO_WITH_DATA), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      })
+    // FIX-PREDCLAIM-DASHBOARD-HITRATE-HONESTY: an outcome filter now triggers
+    // TWO fetches (unfiltered context + filtered display) — mockImplementation
+    // constructs a fresh Response per call (a single reused Response instance
+    // would throw "Body already read" on the second .json() call).
+    global.fetch = vi.fn().mockImplementation(
+      () =>
+        new Response(JSON.stringify(DTO_WITH_DATA), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        })
     );
 
     const data = await fetchPredictionClaimsData(ORIGIN, { outcome: "pending" });
@@ -814,5 +827,333 @@ describe("fetchPredictionClaimsData — outcomeFilter propagation", () => {
     const data = await fetchPredictionClaimsData(ORIGIN);
 
     expect(data.outcomeFilter).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Suite 16 — formatHitRateDenominator (FIX-PREDCLAIM-DASHBOARD-HITRATE-HONESTY a)
+// ---------------------------------------------------------------------------
+
+describe("formatHitRateDenominator — inline denominator text (a)", () => {
+  it("resolved=0 → empty string (no redundant '0 đúng / 0 sai trên 0')", () => {
+    expect(
+      formatHitRateDenominator({
+        total: 3,
+        resolved: 0,
+        correct: 0,
+        wrong: 0,
+        pending: 3,
+        excluded: 0,
+        hitRate: null,
+        avgBrier: null,
+      })
+    ).toBe("");
+  });
+
+  it("live-shaped calibration (4/2/6) → '4 đúng / 2 sai trên 6 dự báo đã chấm điểm'", () => {
+    expect(
+      formatHitRateDenominator({
+        total: 17,
+        resolved: 6,
+        correct: 4,
+        wrong: 2,
+        pending: 5,
+        excluded: 6,
+        hitRate: 0.6666666666666666,
+        avgBrier: 0.2135,
+      })
+    ).toBe("4 đúng / 2 sai trên 6 dự báo đã chấm điểm");
+  });
+
+  it("no hardcoded numbers — tracks whatever calibration fields say", () => {
+    expect(
+      formatHitRateDenominator({
+        total: 40,
+        resolved: 20,
+        correct: 12,
+        wrong: 8,
+        pending: 9,
+        excluded: 11,
+        hitRate: 0.6,
+        avgBrier: 0.1,
+      })
+    ).toBe("12 đúng / 8 sai trên 20 dự báo đã chấm điểm");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Suite 17 — formatDispositionBreakdown (FIX-PREDCLAIM-DASHBOARD-HITRATE-HONESTY d)
+// ---------------------------------------------------------------------------
+
+describe("formatDispositionBreakdown — buckets always sum to total (d)", () => {
+  it("live-shaped calibration (17=4+2+5+6)", () => {
+    expect(
+      formatDispositionBreakdown({
+        total: 17,
+        resolved: 6,
+        correct: 4,
+        wrong: 2,
+        pending: 5,
+        excluded: 6,
+        hitRate: 0.6666666666666666,
+        avgBrier: 0.2135,
+      })
+    ).toBe("17 tổng = 4 đúng + 2 sai + 5 đang chờ + 6 loại trừ");
+  });
+
+  it("mutated fixture — excluded=11, hitRate=null still renders an honest breakdown", () => {
+    expect(
+      formatDispositionBreakdown({
+        total: 20,
+        resolved: 0,
+        correct: 0,
+        wrong: 0,
+        pending: 9,
+        excluded: 11,
+        hitRate: null,
+        avgBrier: null,
+      })
+    ).toBe("20 tổng = 0 đúng + 0 sai + 9 đang chờ + 11 loại trừ");
+  });
+
+  it("all-zero calibration renders '0 tổng = 0 đúng + 0 sai + 0 đang chờ + 0 loại trừ'", () => {
+    expect(
+      formatDispositionBreakdown({
+        total: 0,
+        resolved: 0,
+        correct: 0,
+        wrong: 0,
+        pending: 0,
+        excluded: 0,
+        hitRate: null,
+        avgBrier: null,
+      })
+    ).toBe("0 tổng = 0 đúng + 0 sai + 0 đang chờ + 0 loại trừ");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Suite 18 — computeLastScoredAt (FIX-PREDCLAIM-DASHBOARD-HITRATE-HONESTY b)
+// ---------------------------------------------------------------------------
+
+function claim(overrides: Partial<PredictionClaim>): PredictionClaim {
+  return {
+    id: "pred-x",
+    stock: "FPT",
+    agentId: "agent",
+    claimText: "text",
+    direction: "neutral",
+    targetPrice: null,
+    creationPrice: null,
+    confidence: 0.5,
+    resolutionDate: "2026-06-01",
+    outcome: "pending",
+    actualPrice: null,
+    brierScore: null,
+    createdAt: "2026-05-01T00:00:00.000Z",
+    resolvedAt: null,
+    ...overrides,
+  };
+}
+
+describe("computeLastScoredAt — most recent SCORED (correct/wrong) resolvedAt", () => {
+  it("picks the max resolvedAt among correct/wrong claims", () => {
+    const claims = [
+      claim({ outcome: "correct", resolvedAt: "2026-05-03T15:00:00.000Z" }),
+      claim({ outcome: "wrong", resolvedAt: "2026-06-21T16:35:00.852Z" }),
+      claim({ outcome: "correct", resolvedAt: "2026-04-27T10:00:00.000Z" }),
+    ];
+    expect(computeLastScoredAt(claims)).toBe("2026-06-21T16:35:00.852Z");
+  });
+
+  it("REGRESSION GUARD: ignores 'excluded' resolvedAt even when it is the latest timestamp", () => {
+    // excludeClaim() sets resolved_at=now on exclusion (predictionClaimStore.ts) —
+    // that is NOT a scoring event and must never be read as "last scored".
+    const claims = [
+      claim({ outcome: "correct", resolvedAt: "2026-06-21T16:35:00.852Z" }),
+      claim({ outcome: "excluded", resolvedAt: "2026-07-24T16:35:00.852Z" }),
+    ];
+    expect(computeLastScoredAt(claims)).toBe("2026-06-21T16:35:00.852Z");
+  });
+
+  it("ignores 'pending' claims (resolvedAt is null by definition)", () => {
+    const claims = [claim({ outcome: "pending", resolvedAt: null })];
+    expect(computeLastScoredAt(claims)).toBeNull();
+  });
+
+  it("empty claims array → null", () => {
+    expect(computeLastScoredAt([])).toBeNull();
+  });
+
+  it("no correct/wrong claims present → null", () => {
+    const claims = [
+      claim({ outcome: "pending", resolvedAt: null }),
+      claim({ outcome: "excluded", resolvedAt: "2026-06-21T16:35:00.852Z" }),
+    ];
+    expect(computeLastScoredAt(claims)).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Suite 19 — describeStaleness (FIX-PREDCLAIM-DASHBOARD-HITRATE-HONESTY b)
+// ---------------------------------------------------------------------------
+
+describe("describeStaleness — data-driven marker, never hardcoded", () => {
+  it("lastScoredAt=null → null (nothing to render; 'Chưa có' badge already covers it)", () => {
+    expect(describeStaleness(null)).toBeNull();
+  });
+
+  it("unparseable date string → null (defensive, never throws)", () => {
+    expect(describeStaleness("not-a-date")).toBeNull();
+  });
+
+  it("fresh (1 day old) → isStale=false, neutral label", () => {
+    const now = new Date("2026-06-22T00:00:00.000Z");
+    const result = describeStaleness("2026-06-21T16:35:00.852Z", now);
+    expect(result).not.toBeNull();
+    expect(result!.isStale).toBe(false);
+    expect(result!.label).toContain("Lần chấm điểm gần nhất");
+  });
+
+  it(`stale (> ${STALE_THRESHOLD_DAYS} days old, live root_cause scenario) → isStale=true, warning label`, () => {
+    // Live scenario: last scored 2026-06-21, "now" is 2026-07-25 (34 days) —
+    // exactly the frozen-for-over-a-month case that motivated this task.
+    const now = new Date("2026-07-25T13:15:00.000Z");
+    const result = describeStaleness("2026-06-21T16:35:00.852Z", now);
+    expect(result).not.toBeNull();
+    expect(result!.isStale).toBe(true);
+    expect(result!.label).toContain("Chưa có dự báo nào được chấm điểm");
+    expect(result!.label).toMatch(/\d+ ngày trước/);
+  });
+
+  it(`boundary — exactly ${STALE_THRESHOLD_DAYS} days old → NOT stale (uses '>' not '>=')`, () => {
+    const lastScored = "2026-06-21T00:00:00.000Z";
+    const now = new Date(
+      new Date(lastScored).getTime() + STALE_THRESHOLD_DAYS * 24 * 60 * 60 * 1000
+    );
+    const result = describeStaleness(lastScored, now);
+    expect(result!.isStale).toBe(false);
+  });
+
+  it("label always derives the date from the input — no hardcoded date string", () => {
+    const now = new Date("2026-08-01T00:00:00.000Z");
+    const r1 = describeStaleness("2026-06-01T00:00:00.000Z", now);
+    const r2 = describeStaleness("2026-07-15T00:00:00.000Z", now);
+    expect(r1!.label).not.toBe(r2!.label);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Suite 20 — resolveExclusionReason (FIX-PREDCLAIM-DASHBOARD-HITRATE-HONESTY c)
+// ---------------------------------------------------------------------------
+
+describe("resolveExclusionReason — consume machine-readable reason where present (c)", () => {
+  it("uses claim.exclusionReason when present and non-empty", () => {
+    const reason = "Không có dữ liệu giá OHLCV cho mã này vào ngày tạo dự báo.";
+    expect(resolveExclusionReason({ exclusionReason: reason })).toBe(reason);
+  });
+
+  it("falls back to GENERIC_EXCLUSION_REASON when exclusionReason is undefined", () => {
+    expect(resolveExclusionReason({})).toBe(GENERIC_EXCLUSION_REASON);
+  });
+
+  it("falls back to GENERIC_EXCLUSION_REASON when exclusionReason is null", () => {
+    expect(resolveExclusionReason({ exclusionReason: null })).toBe(GENERIC_EXCLUSION_REASON);
+  });
+
+  it("falls back to GENERIC_EXCLUSION_REASON when exclusionReason is an empty string", () => {
+    expect(resolveExclusionReason({ exclusionReason: "" })).toBe(GENERIC_EXCLUSION_REASON);
+  });
+
+  it("falls back to GENERIC_EXCLUSION_REASON when exclusionReason is whitespace-only", () => {
+    expect(resolveExclusionReason({ exclusionReason: "   " })).toBe(GENERIC_EXCLUSION_REASON);
+  });
+
+  it("does NOT assume the field is present on every row (mixed population)", () => {
+    const withReason = resolveExclusionReason({ exclusionReason: "custom reason" });
+    const withoutReason = resolveExclusionReason({});
+    expect(withReason).not.toBe(withoutReason);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Suite 21 — fetchPredictionClaimsData: lastScoredAt survives outcome filtering
+// (the core correctness fix — CalibrationBanner is rendered on EVERY filter
+// tab, so lastScoredAt must reflect the full population, not the filtered
+// display list).
+// ---------------------------------------------------------------------------
+
+describe("fetchPredictionClaimsData — lastScoredAt derived from unfiltered context, not the filtered display list", () => {
+  const FULL_DTO = {
+    generatedAt: GENERATED_AT,
+    calibration: {
+      total: 17,
+      resolved: 6,
+      correct: 4,
+      wrong: 2,
+      pending: 5,
+      excluded: 6,
+      hitRate: 0.6666666666666666,
+      avgBrier: 0.2135,
+    },
+    claims: [
+      { ...CLAIM_CORRECT, resolvedAt: "2026-06-21T16:35:00.852Z" },
+      { ...CLAIM_PENDING, outcome: "pending", resolvedAt: null },
+    ],
+    count: 2,
+  };
+
+  const PENDING_ONLY_DTO = {
+    generatedAt: GENERATED_AT,
+    calibration: FULL_DTO.calibration,
+    claims: [{ ...CLAIM_PENDING, outcome: "pending", resolvedAt: null }],
+    count: 1,
+  };
+
+  it("outcome=pending view still reports the true lastScoredAt from the unfiltered context fetch", async () => {
+    const capturedUrls: string[] = [];
+    global.fetch = vi.fn().mockImplementation((url: string) => {
+      capturedUrls.push(url);
+      const body = url.includes("outcome=pending") ? PENDING_ONLY_DTO : FULL_DTO;
+      return Promise.resolve(
+        new Response(JSON.stringify(body), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        })
+      );
+    });
+
+    const data = await fetchPredictionClaimsData(ORIGIN, { outcome: "pending" });
+
+    // Display list respects the active filter (pending only).
+    expect(data.claims).toHaveLength(1);
+    expect(data.claims[0]!.outcome).toBe("pending");
+
+    // But lastScoredAt is NOT null — it came from the unfiltered context call,
+    // which still has the correct/wrong rows the filtered response lacks.
+    expect(data.lastScoredAt).toBe("2026-06-21T16:35:00.852Z");
+
+    // Two calls were made: first unfiltered (no "outcome="), second filtered.
+    expect(capturedUrls).toHaveLength(2);
+    expect(capturedUrls[0]).not.toContain("outcome=");
+    expect(capturedUrls[1]).toContain("outcome=pending");
+  });
+
+  it("unfiltered ('Tất cả') view makes exactly one fetch call", async () => {
+    const capturedUrls: string[] = [];
+    global.fetch = vi.fn().mockImplementation((url: string) => {
+      capturedUrls.push(url);
+      return Promise.resolve(
+        new Response(JSON.stringify(FULL_DTO), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        })
+      );
+    });
+
+    const data = await fetchPredictionClaimsData(ORIGIN);
+
+    expect(capturedUrls).toHaveLength(1);
+    expect(data.lastScoredAt).toBe("2026-06-21T16:35:00.852Z");
   });
 });
