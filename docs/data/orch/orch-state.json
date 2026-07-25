@@ -419,13 +419,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "Dispatch chain reachable again. QA-Drain PRIMARY set = 75 rows (status==REVIEW && next_agent==qa) with qa[]==0.",
-    "updated_at": "2026-07-25T12:30:31Z",
-    "updated_by": "po (triage 2026-07-25T12:07Z tick)",
-    "note": "PO contract-restoration: head.status was \"review\" (written by dev-mcp-server 2026-07-25T12:06:39Z) for FIX-PREDCLAIM-CREATIONPRICE-UNGATE-ZOD-CONTRACT, a branch:null REVIEW row. execute-tier.md MUST (b) — amended by the ALREADY-SHIPPED FIX-EXECTIER-HEADSYNC-BRANCHNULL-REVIEW-IDLE (2026-07-23) — requires head={status:idle,active_task_id:null,next_agent:router} for exactly that flip. status==review matches NO dispatch lane in Step 0b, so BOUNDED-1->SLS->RLC->QA-Drain was unreachable. Nothing is lost: the predclaim row stays in review[] with next_agent=qa and is reachable via QA-Drain. Its live-endpoint acceptance is REBUILD_REQUIRED (user-gated) and cannot close this session regardless."
+    "status": "in_progress",
+    "active_task_id": "FIX-PREDCLAIM-BACKFILL-NULL-CREATIONPRICE",
+    "next_agent": "dev-mcp-server",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-PREDCLAIM-BACKFILL-NULL-CREATIONPRICE — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-25T12:45:28Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -10807,29 +10806,6 @@
         "updated_at": "2026-07-25T07:02:40Z"
       },
       {
-        "id": "FIX-PREDCLAIM-BACKFILL-NULL-CREATIONPRICE",
-        "title": "TIME-CRITICAL: backfill creation_price for the 11 NULL-entry-price claims from historical daily_ohlcv — 5 are still PENDING and auto-convert to Loai tru starting 2026-07-28 unless the price lands first",
-        "status": "BACKLOG",
-        "type": "FIX",
-        "priority": "P0",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "next_agent": "dev-mcp-server",
-        "created_at": "2026-07-25T07:14:46Z",
-        "created_by": "po/triage-20260725T0711-user-demand-predclaims",
-        "root_cause": "Consequence-of, not cause-of: the producer defect in FIX-PREDCLAIM-CREATIONPRICE-UNGATE-ZOD-CONTRACT left 11 live rows with creation_price NULL. Live split read from the served endpoint 2026-07-25T07:11:04Z — ALREADY TERMINAL (is_excluded=1, outcome 'excluded'): id 1 FPT created 2026-04-26 resolved 2026-06-21, id 8 VNINDEX created 2026-06-14 resolved 2026-06-21, id 9 GAS created 2026-06-14 resolved 2026-06-21, id 10 FPT created 2026-06-24 resolved 2026-07-19, id 11 VPB created 2026-06-24 resolved 2026-07-19, id 12 POW created 2026-06-26 resolved 2026-07-19. STILL PENDING and therefore still SAVEABLE: id 13 VIC created 2026-07-21 resolution_date 2026-07-28, id 14 VIC created 2026-07-22 res 2026-07-29, id 15 VIC created 2026-07-23 res 2026-07-30, id 16 VIC created 2026-07-24 res 2026-07-31, id 17 VNM created 2026-07-24 res 2026-07-31. The resolution job runs daily at 16:35 UTC, so id 13 is consumed by the excluding branch on the 2026-07-28 tick — THREE DAYS from this triage. Every day of delay converts one more pending claim into a permanently-unscoreable one and pushes excluded from 6/17 toward 11/17.",
-        "deliverable": "(a) Backfill creation_price for the 5 PENDING rows FIRST (ids 13,14,15,16,17) — this is the deadline-bearing half. Source the entry price from daily_ohlcv close for that ticker on the claim's created_at trading date (VIC and VNM are both watchlist tickers with dense OHLCV, so this should be a clean lookup). Once creation_price is present the existing resolver scores them via the neutral-band path with no further change. (b) For the 6 ALREADY-EXCLUDED rows (ids 1,8,9,10,11,12): attempt the same historical reconstruction, and where daily_ohlcv genuinely holds a close for that ticker on that created_at date, clear is_excluded and let the resolver re-score against the real outcome. VNINDEX (id 8) needs an explicit decision — confirm whether the index is carried in daily_ohlcv under that code or needs a different series; if it is not reconstructible, say so rather than guessing. (c) Any row that genuinely cannot be reconstructed stays terminal-excluded and must carry a STATED, machine-readable reason rather than a bare flag — that reason is what FIX-PREDCLAIM-DASHBOARD-HITRATE-HONESTY renders in the UI. (d) Persist the backfill as a reusable script under scripts/ per docs/policies/dev-standards.md Script Persistence — NEVER a /tmp one-shot — and add the pointer to the owning flow doc. This will recur if any producer path regresses. (e) Do NOT fabricate an entry price. If OHLCV has no bar for that ticker/date, leave it excluded with the reason recorded; a plausible-looking invented number is strictly worse than an honest gap.",
-        "acceptance": "All 5 pending rows (13,14,15,16,17) carry a NON-NULL creation_price sourced from a real daily_ohlcv bar, verified by reading them back through the LIVE served endpoint BEFORE the 2026-07-28 16:35 UTC resolution tick. Each backfilled value is cross-checked against the daily_ohlcv row it came from (ticker + date + close) — no value is accepted without its source bar. For the 6 excluded rows, a per-id disposition table is produced: reconstructed-and-rescored, or permanently-excluded-with-reason. The calibration block's total stays 17 — nothing is deleted, no row is silently dropped. Negative control: a ticker/date pair with no OHLCV bar yields an honest 'no bar' disposition, not an interpolated price.",
-        "related": [
-          "FIX-PREDCLAIM-CREATIONPRICE-UNGATE-ZOD-CONTRACT",
-          "FIX-PREDCLAIM-DASHBOARD-HITRATE-HONESTY"
-        ],
-        "note": "Sequence intent: this row DEPENDS on the producer fix only so that the newly-backfilled rows are not immediately re-broken by the next cycle minting more NULL rows. If the producer fix slips past 2026-07-27, the dev-mcp-server owner should run the pending-row backfill (deliverable a) STANDALONE and out of order — the 2026-07-28 deadline outranks the dependency. Flagging that explicitly so the sequencing does not silently eat the deadline.",
-        "updated_at": "2026-07-25T12:32:05Z",
-        "po_ruling_20260725": "DEPENDENCY BROKEN BY PO RULING (2026-07-25T12:07Z triage tick). This row carried depends=FIX-PREDCLAIM-CREATIONPRICE-UNGATE-ZOD-CONTRACT. That producer row is in REVIEW and its live-endpoint acceptance is REBUILD_REQUIRED. Container rebuilds are USER-GATED (feedback_container_swaps_user_gated / feedback_user_gates_delegate_to_ops) and no authorization exists in this session, so the dependency is not merely slow, it is UNSATISFIABLE before the 2026-07-28T16:35Z resolution tick. This row own note already anticipated exactly this: if the producer fix slips past 2026-07-27, run deliverable (a) STANDALONE and out of order -- the deadline outranks the dependency. PO invokes that clause NOW rather than at T-1, because waiting costs one permanently-unscoreable claim per day (id 13 VIC burns on the 07-28 tick, id 14 on 07-29, ids 15/16/17 on 07-30 and 07-31). depends field REMOVED so BOUNDED-1/RLC cannot re-block on it. Priority P1->P0: it is the only row on this board with a hard external clock. SCOPE NARROWED for the standalone run: deliverable (a) ONLY -- backfill creation_price for pending ids 13,14,15,16,17 from real daily_ohlcv bars. Deliverables (b) reconstruct-the-6-excluded and (c) machine-readable exclusion reasons are NOT deadline-bearing and may follow after the producer fix lands. Deliverables (d) persist as scripts/ script and (e) NEVER fabricate a price REMAIN BINDING on the standalone run. Acceptance for the standalone run is read-back through the LIVE served endpoint; if that read-back itself needs the pending rebuild, say so and escalate rather than substituting a host-CLI/sqlite read and reporting green (feedback_host_cli_integrity_check_false_ok_verify_through_runtime)."
-      },
-      {
         "id": "FIX-PREDCLAIM-DASHBOARD-HITRATE-HONESTY",
         "title": "'Du bao AI & Ket qua' advertises a 66,7% hit-rate with no denominator and no exclusion reason — the figure is computed on 6 of 17 claims, all from Apr-May, frozen since 2026-06-21, and reads as live",
         "status": "BACKLOG",
@@ -15508,9 +15484,38 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-25T11:22:27Z",
-    "last_triaged_by": "architect/FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION-20260725T1120",
-    "in_progress": []
+    "last_triaged_at": "2026-07-25T12:44:59Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
+    "in_progress": [
+      {
+        "id": "FIX-PREDCLAIM-BACKFILL-NULL-CREATIONPRICE",
+        "title": "TIME-CRITICAL: backfill creation_price for the 11 NULL-entry-price claims from historical daily_ohlcv — 5 are still PENDING and auto-convert to Loai tru starting 2026-07-28 unless the price lands first",
+        "status": "IN_PROGRESS",
+        "type": "FIX",
+        "priority": "P0",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "created_at": "2026-07-25T07:14:46Z",
+        "created_by": "po/triage-20260725T0711-user-demand-predclaims",
+        "root_cause": "Consequence-of, not cause-of: the producer defect in FIX-PREDCLAIM-CREATIONPRICE-UNGATE-ZOD-CONTRACT left 11 live rows with creation_price NULL. Live split read from the served endpoint 2026-07-25T07:11:04Z — ALREADY TERMINAL (is_excluded=1, outcome 'excluded'): id 1 FPT created 2026-04-26 resolved 2026-06-21, id 8 VNINDEX created 2026-06-14 resolved 2026-06-21, id 9 GAS created 2026-06-14 resolved 2026-06-21, id 10 FPT created 2026-06-24 resolved 2026-07-19, id 11 VPB created 2026-06-24 resolved 2026-07-19, id 12 POW created 2026-06-26 resolved 2026-07-19. STILL PENDING and therefore still SAVEABLE: id 13 VIC created 2026-07-21 resolution_date 2026-07-28, id 14 VIC created 2026-07-22 res 2026-07-29, id 15 VIC created 2026-07-23 res 2026-07-30, id 16 VIC created 2026-07-24 res 2026-07-31, id 17 VNM created 2026-07-24 res 2026-07-31. The resolution job runs daily at 16:35 UTC, so id 13 is consumed by the excluding branch on the 2026-07-28 tick — THREE DAYS from this triage. Every day of delay converts one more pending claim into a permanently-unscoreable one and pushes excluded from 6/17 toward 11/17.",
+        "deliverable": "(a) Backfill creation_price for the 5 PENDING rows FIRST (ids 13,14,15,16,17) — this is the deadline-bearing half. Source the entry price from daily_ohlcv close for that ticker on the claim's created_at trading date (VIC and VNM are both watchlist tickers with dense OHLCV, so this should be a clean lookup). Once creation_price is present the existing resolver scores them via the neutral-band path with no further change. (b) For the 6 ALREADY-EXCLUDED rows (ids 1,8,9,10,11,12): attempt the same historical reconstruction, and where daily_ohlcv genuinely holds a close for that ticker on that created_at date, clear is_excluded and let the resolver re-score against the real outcome. VNINDEX (id 8) needs an explicit decision — confirm whether the index is carried in daily_ohlcv under that code or needs a different series; if it is not reconstructible, say so rather than guessing. (c) Any row that genuinely cannot be reconstructed stays terminal-excluded and must carry a STATED, machine-readable reason rather than a bare flag — that reason is what FIX-PREDCLAIM-DASHBOARD-HITRATE-HONESTY renders in the UI. (d) Persist the backfill as a reusable script under scripts/ per docs/policies/dev-standards.md Script Persistence — NEVER a /tmp one-shot — and add the pointer to the owning flow doc. This will recur if any producer path regresses. (e) Do NOT fabricate an entry price. If OHLCV has no bar for that ticker/date, leave it excluded with the reason recorded; a plausible-looking invented number is strictly worse than an honest gap.",
+        "acceptance": "All 5 pending rows (13,14,15,16,17) carry a NON-NULL creation_price sourced from a real daily_ohlcv bar, verified by reading them back through the LIVE served endpoint BEFORE the 2026-07-28 16:35 UTC resolution tick. Each backfilled value is cross-checked against the daily_ohlcv row it came from (ticker + date + close) — no value is accepted without its source bar. For the 6 excluded rows, a per-id disposition table is produced: reconstructed-and-rescored, or permanently-excluded-with-reason. The calibration block's total stays 17 — nothing is deleted, no row is silently dropped. Negative control: a ticker/date pair with no OHLCV bar yields an honest 'no bar' disposition, not an interpolated price.",
+        "related": [
+          "FIX-PREDCLAIM-CREATIONPRICE-UNGATE-ZOD-CONTRACT",
+          "FIX-PREDCLAIM-DASHBOARD-HITRATE-HONESTY"
+        ],
+        "note": "Sequence intent: this row DEPENDS on the producer fix only so that the newly-backfilled rows are not immediately re-broken by the next cycle minting more NULL rows. If the producer fix slips past 2026-07-27, the dev-mcp-server owner should run the pending-row backfill (deliverable a) STANDALONE and out of order — the 2026-07-28 deadline outranks the dependency. Flagging that explicitly so the sequencing does not silently eat the deadline.",
+        "updated_at": "2026-07-25T12:45:28Z",
+        "po_ruling_20260725": "DEPENDENCY BROKEN BY PO RULING (2026-07-25T12:07Z triage tick). This row carried depends=FIX-PREDCLAIM-CREATIONPRICE-UNGATE-ZOD-CONTRACT. That producer row is in REVIEW and its live-endpoint acceptance is REBUILD_REQUIRED. Container rebuilds are USER-GATED (feedback_container_swaps_user_gated / feedback_user_gates_delegate_to_ops) and no authorization exists in this session, so the dependency is not merely slow, it is UNSATISFIABLE before the 2026-07-28T16:35Z resolution tick. This row own note already anticipated exactly this: if the producer fix slips past 2026-07-27, run deliverable (a) STANDALONE and out of order -- the deadline outranks the dependency. PO invokes that clause NOW rather than at T-1, because waiting costs one permanently-unscoreable claim per day (id 13 VIC burns on the 07-28 tick, id 14 on 07-29, ids 15/16/17 on 07-30 and 07-31). depends field REMOVED so BOUNDED-1/RLC cannot re-block on it. Priority P1->P0: it is the only row on this board with a hard external clock. SCOPE NARROWED for the standalone run: deliverable (a) ONLY -- backfill creation_price for pending ids 13,14,15,16,17 from real daily_ohlcv bars. Deliverables (b) reconstruct-the-6-excluded and (c) machine-readable exclusion reasons are NOT deadline-bearing and may follow after the producer fix lands. Deliverables (d) persist as scripts/ script and (e) NEVER fabricate a price REMAIN BINDING on the standalone run. Acceptance for the standalone run is read-back through the LIVE served endpoint; if that read-back itself needs the pending rebuild, say so and escalate rather than substituting a host-CLI/sqlite read and reporting green (feedback_host_cli_integrity_check_false_ok_verify_through_runtime).",
+        "promoted_at": "2026-07-25T12:44:59Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "claimed_at": "2026-07-25T12:45:28Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
