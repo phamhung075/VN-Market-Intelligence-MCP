@@ -352,6 +352,38 @@ image rebuild). **LIVE RESULT (2026-07-13T14:11Z, executed):** 1 candidate
 found (id=323, VCB_2025_Q4.pdf, 271 reparse_attempts) — marked `dead`.
 Second dry-run confirmed 0 candidates remain.
 
+**CANONICAL: Prediction-claim creation_price backfill (FIX-PREDCLAIM-BACKFILL-NULL-CREATIONPRICE deliverable (a), 2026-07-25)**
+```bash
+# Dry-run (default — reports candidates + source bar or "no_bar", no writes):
+bun scripts/migrations/backfill-predclaim-creation-price.ts
+
+# Apply (UPDATE creation_price for every candidate with a real daily_ohlcv bar):
+bun scripts/migrations/backfill-predclaim-creation-price.ts --apply
+
+# Against the live named-volume DB (docker exec — matches other CANONICAL scripts):
+docker cp scripts/migrations/backfill-predclaim-creation-price.ts \
+  vn-market-intelligence-mcp-mcp-server-1:/app/backfill-predclaim-creation-price.ts
+docker exec vn-market-intelligence-mcp-mcp-server-1 \
+  bun /app/backfill-predclaim-creation-price.ts --apply
+```
+Generic (no ticker/date/id literals): backfills every `prediction_claims` row with
+`creation_price IS NULL AND is_excluded = 0` (still-pending rows only — the
+already-excluded legacy rows are out of this query's scope by construction) from the
+EXACT-date `daily_ohlcv` close for that ticker on the claim's `created_at` trading
+date. No nearest-day fallback — a ticker/date with no exact bar is left untouched and
+reported `disposition=no_bar` (honest gap, never fabricated). Idempotent: `WHERE
+creation_price IS NULL` write guard — a second run finds 0 candidates once
+backfilled. **LIVE RESULT (2026-07-25T12:51Z, executed, standalone per PO ruling
+2026-07-25T12:07Z — producer fix FIX-PREDCLAIM-CREATIONPRICE-UNGATE-ZOD-CONTRACT
+still REBUILD_REQUIRED/user-gated):** 5/5 pending rows backfilled (ids 13,14,15,16,17
+— VIC×4 + VNM×1), each with a real source bar, verified read back through the LIVE
+`GET /api/prediction-claims` HTTP endpoint (not a host-CLI/sqlite read). Calibration
+total held at 17, pending count held at 5 (only `creation_price` changed, no status
+flip). Deliverables (b) reconstruct-the-6-excluded and (c) machine-readable exclusion
+reasons were explicitly out of scope for this standalone run (PO ruling) — script's
+default query naturally excludes `is_excluded=1` rows so a future run cannot
+accidentally touch them; a separate task is needed for (b)/(c).
+
 ---
 
 ## Low-Confidence Reparse Runbook
