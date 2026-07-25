@@ -11530,58 +11530,6 @@
     ],
     "done": [
       {
-        "created_at": "unknown",
-        "depends": [
-          "ARCH-ORCH-DASH-DECISION-DRILLDOWN"
-        ],
-        "id": "PM-ORCH-DASH-DECISION-DRILLDOWN",
-        "owner": "pm",
-        "size": "S",
-        "status": "DONE",
-        "title": "PM: break F1/F2/F3/QA into atomic subtasks + dispatch",
-        "type": "sprint-task",
-        "zone": "multi"
-      },
-      {
-        "created_at": "unknown",
-        "depends": [
-          "PM-ORCH-DASH-DECISION-DRILLDOWN"
-        ],
-        "id": "ARCH-ORCH-F1",
-        "owner": "agent-father",
-        "size": "S",
-        "status": "DONE",
-        "title": "F1: decision-journal SKILL.md task-id field + flow injection",
-        "type": "sprint-task",
-        "zone": "docs/agents/"
-      },
-      {
-        "created_at": "unknown",
-        "depends": [
-          "ARCH-ORCH-F1"
-        ],
-        "id": "ARCH-ORCH-F2",
-        "owner": "dev-mcp-server",
-        "size": "M",
-        "status": "DONE",
-        "title": "F2: journalStore.ts + orchestrationHandler.ts DTO extension",
-        "type": "sprint-task",
-        "zone": "apps/mcp-server/"
-      },
-      {
-        "created_at": "unknown",
-        "depends": [
-          "ARCH-ORCH-F3"
-        ],
-        "id": "ARCH-ORCH-QA",
-        "owner": "qa",
-        "size": "S",
-        "status": "DONE",
-        "title": "QA: live dashboard verify decision drilldown",
-        "type": "sprint-task",
-        "zone": "qa"
-      },
-      {
         "id": "SPIKE-COWORK-DRAIN-BODY-NOT-EXECUTING-ON-WORK-TICKS",
         "type": "SPIKE",
         "mode": "spike",

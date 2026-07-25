@@ -10187,6 +10187,58 @@
       "title": "Lock store (coordination.db) accumulates TTL-expired tombstone locks — task_list_held default returned 114 rows of which only 3 genuinely held (~111 dead). Defence-in-depth for the D4 false-positive fix (aa00a1e2 added expired:false at the consumer): purge/GC expired rows from coordination.db on a cadence (e.g. on each task_claim, DELETE WHERE expires_at < now-grace, or a periodic sweep), so task_list_held storage stays bounded and no consumer can ever read tombstones-as-held. Code: apps/mcp-server coordination.db task tools. Low risk (expired rows are by definition free to reclaim).",
       "type": "FIX",
       "zone": "apps/mcp-server"
+    },
+    {
+      "created_at": "unknown",
+      "depends": [
+        "ARCH-ORCH-DASH-DECISION-DRILLDOWN"
+      ],
+      "id": "PM-ORCH-DASH-DECISION-DRILLDOWN",
+      "owner": "pm",
+      "size": "S",
+      "status": "DONE",
+      "title": "PM: break F1/F2/F3/QA into atomic subtasks + dispatch",
+      "type": "sprint-task",
+      "zone": "multi"
+    },
+    {
+      "created_at": "unknown",
+      "depends": [
+        "PM-ORCH-DASH-DECISION-DRILLDOWN"
+      ],
+      "id": "ARCH-ORCH-F1",
+      "owner": "agent-father",
+      "size": "S",
+      "status": "DONE",
+      "title": "F1: decision-journal SKILL.md task-id field + flow injection",
+      "type": "sprint-task",
+      "zone": "docs/agents/"
+    },
+    {
+      "created_at": "unknown",
+      "depends": [
+        "ARCH-ORCH-F1"
+      ],
+      "id": "ARCH-ORCH-F2",
+      "owner": "dev-mcp-server",
+      "size": "M",
+      "status": "DONE",
+      "title": "F2: journalStore.ts + orchestrationHandler.ts DTO extension",
+      "type": "sprint-task",
+      "zone": "apps/mcp-server/"
+    },
+    {
+      "created_at": "unknown",
+      "depends": [
+        "ARCH-ORCH-F3"
+      ],
+      "id": "ARCH-ORCH-QA",
+      "owner": "qa",
+      "size": "S",
+      "status": "DONE",
+      "title": "QA: live dashboard verify decision drilldown",
+      "type": "sprint-task",
+      "zone": "qa"
     }
   ],
   "closed_sprints": [
