@@ -464,7 +464,24 @@ head_updated_at   =$(printf '%s' "$HEAD" | jq -r '.updated_at')
     JUMP TO drain-signals   # PO triage picks up from here
   fi
   ```
-  If task is NOT BLOCKED → dispatcher-wrap then spawn `head.next_agent`. JUMP TO `execute`.
+  **WF-2 SUPERVISED-HOLD check (FIX-DEVTEAM-STEP0B-RESUME-SUPERVISED-HOLD-GATE — run SECOND, after BLOCKED, before S2 dispatcher-wrap):** mirrors the BLOCKED carve-out above but does NOT reset `head` — a supervised row must stay the active task so a later `po_goahead_*` stamp lets resume proceed automatically on the very next tick, with no manual re-triage round-trip. Closes the gap where `supervised:true` + a prose "SUPERVISED HOLD" note were invisible to this resume path, which spawned anyway.
+  ```bash
+  should_hold=$(jq -r --arg tid "$head_active_task" \
+    --slurpfile detail "$PROJECT_ROOT/docs/data/orch/archive/backlog-detail.json" \
+    'include "scripts/lib/devteam-eligibility";
+     (detail_items_from($detail)) as $detail_items
+     | ( [ (.task_board.in_progress // [])[], (.task_board.review // [])[], (.task_board.qa // [])[] ]
+         | map(select(.id == $tid or .task_id == $tid)) | first ) as $row
+     | (($row != null) and ($row | effective_supervised($detail_items))) as $supervised
+     | ( (($row // {}) | keys) + ((.head // {}) | keys) | any(test("^po_goahead"))) as $goahead
+     | ($supervised and ($goahead | not)) | tostring' \
+    docs/data/orch/orch-state.json)
+  if [ "$should_hold" = "true" ]; then
+    log "[dev-team] SUPERVISED HOLD " + head_active_task + " — effective_supervised=true, no po_goahead_* stamp on row or head; fall through to Step 1 (do NOT spawn)"
+    JUMP TO drain-signals   # PO triage picks up from here; head is left UNCHANGED (unlike BLOCKED) so resume re-evaluates and proceeds the instant a po_goahead_* stamp lands on the row or head
+  fi
+  ```
+  If task is NOT BLOCKED and NOT supervised-held → dispatcher-wrap then spawn `head.next_agent`. JUMP TO `execute`.
   ```
   # S2 dispatcher-wrap:
   bare_task_id = head.active_task_id   # from docs/data/orch/orch-state.json .head block
@@ -483,9 +500,18 @@ head_updated_at   =$(printf '%s' "$HEAD" | jq -r '.updated_at')
   else:
     try:
       Agent(head.next_agent, context... + head.next_action, run_in_background=true)   # (background) — BGFAN-1; await task notification before next gate
-    finally:
+      # LOCK-LIFETIME (FIX-DEVTEAM-BACKGROUND-SPAWN-LOCK-RELEASED-AT-SPAWN-NOT-COMPLETION): NO release here on
+      # the success path. run_in_background=true returns in milliseconds while the spawned agent runs far
+      # longer; releasing in a `finally` bound to this call frees resume_key while the agent is still live, so
+      # the NEXT tick's outer_claim above would succeed again and spawn a SECOND agent onto the same task.
+      # ttl_seconds:3600 on outer_claim (above) is now the lock's lifetime bound instead — this resume branch
+      # is only reachable again once head moves off in_progress (agent closed out) or the TTL lapses (crash
+      # recovery backstop, same role as the 24h stale-crash reset below).
+    except:
+      # Release ONLY when the spawn itself threw (Agent() never handed off) — otherwise a throwing spawn would
+      # hold resume_key locked for the full TTL having started nothing.
       call_tool(server="vn-market", tool="task_release", arguments={ task_id: resume_key, owner_client_session: $CLAUDE_CODE_SESSION_ID })
-      # ok=false is acceptable (TTL expired or inner self-claim already released)
+      raise
     JUMP TO execute
   ```
 - `head.status == "in_progress"` AND `head.updated_at ≥ 24h` → stale crash, reset `head.status` to `"idle"`. Fall through to Step 1.
@@ -570,8 +596,12 @@ if not outer_claim.claimed:
 else:
   try:
     Agent(head.next_agent, context... + head.next_action, run_in_background=true)   # (background) — BGFAN-1
-  finally:
+    # LOCK-LIFETIME (FIX-DEVTEAM-BACKGROUND-SPAWN-LOCK-RELEASED-AT-SPAWN-NOT-COMPLETION): NO release on the
+    # success path — see the S2 dispatcher-wrap comment above for the full rationale. ttl_seconds:3600 on
+    # outer_claim is the lock's lifetime bound; head leaving in_progress (or TTL lapse) is what re-opens resume.
+  except:
     call_tool(server="vn-market", tool="task_release", arguments={ task_id: resume_key, owner_client_session: $CLAUDE_CODE_SESSION_ID })
+    raise
   JUMP TO end   # SLS dispatch queued this tick; do not also fall through to PO triage in the same tick
 ```
 
@@ -623,8 +653,12 @@ if not outer_claim.claimed:
 else:
   try:
     Agent(head.next_agent, context... + head.next_action, run_in_background=true)   # (background) — BGFAN-1
-  finally:
+    # LOCK-LIFETIME (FIX-DEVTEAM-BACKGROUND-SPAWN-LOCK-RELEASED-AT-SPAWN-NOT-COMPLETION): NO release on the
+    # success path — see the S2 dispatcher-wrap comment above for the full rationale. ttl_seconds:3600 on
+    # outer_claim is the lock's lifetime bound; head leaving in_progress (or TTL lapse) is what re-opens resume.
+  except:
     call_tool(server="vn-market", tool="task_release", arguments={ task_id: resume_key, owner_client_session: $CLAUDE_CODE_SESSION_ID })
+    raise
   JUMP TO end   # RLC dispatch queued this tick; do not also fall through to PO triage in the same tick
 ```
 
@@ -674,8 +708,12 @@ else:
     # Spawn qa with mode=verify-committed (head.next_action already carries this instruction).
     # Do NOT spawn qa's normal pipeline mode — this row has no task branch/handoff to check out.
     Agent("qa", context... + head.next_action + " mode=verify-committed", run_in_background=true)
-  finally:
+    # LOCK-LIFETIME (FIX-DEVTEAM-BACKGROUND-SPAWN-LOCK-RELEASED-AT-SPAWN-NOT-COMPLETION): NO release on the
+    # success path — see the S2 dispatcher-wrap comment above for the full rationale. ttl_seconds:3600 on
+    # outer_claim is the lock's lifetime bound; head leaving in_progress (or TTL lapse) is what re-opens resume.
+  except:
     call_tool(server="vn-market", tool="task_release", arguments={ task_id: resume_key, owner_client_session: $CLAUDE_CODE_SESSION_ID })
+    raise
   JUMP TO end
 ```
 
