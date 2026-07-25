@@ -1,18 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-25 | **Cycle:** FIX-FB-GATE-CHECKC-NEGATION-LEXICON (fb-gate Check-C "chưa" negation-lexicon gap + \d→[0-9] BSD-grep portability, zone-routed generic developer)
-
-## Session 2026-07-25 — FIX-DOWJONES-STALE-WRONG-VALUE — REVIEW
-
-**Task:** Backlog's `zone: apps/macro-indicators/` tag was stale — verified the Go macro-indicators service has zero dow_jones references; real code is `apps/mcp-server/`. Live-verified root cause via `docker exec` into the named-volume DB: `tracked_indicators` dow_jones rows are news-mined garbage (10604/23750/23807/48221/76848, no ceiling gate) AND `get_system_status`'s "Auto-tracked Indicators" ran its own unguarded latest-row query serving 23750 as current (report 3237) — a separate bug from the already-shipped DSI-MACRO-PHANTOM-STALE-GUARD (only covers `buildMacroSection`).
-
-**Actions taken:** New `infrastructure/db/indicatorPlausibility.ts` — shared, generic `isPlausibleIndicatorValue()` band gate (dow_jones 25000–60000) used by every `tracked_indicators` writer; `commodityTracker.ts` delegates to it (other indicators' bounds preserved byte-identical). Retired the dow_jones news-mining regex (precedent: brent's backlog-921 removal); `yahooFinance.ts` gained `fetchDowJonesIndex()`(live `^DJI`)+`storeDowJonesIndex()` (fail-closed, dedup-before-insert), wired into `commodityTrackerRefreshJob.ts` Block 3 (own try/catch, zero-arg production call site already picks it up — no scheduler change). `systemTools.ts` switched to the proven `listTrackedIndicatorsFromDb()` — stale rows now tagged `[STALE]`, generic across all indicators. Added dow_jones to audit-layer `INDICATOR_RANGES` (defense-in-depth).
-
-**Verification:** New `FIX-DOWJONES-STALE-WRONG-VALUE.test.ts` 15/15 pass (band accept/reject on the literal phantom values, news-mining retirement, live fetch parse, fail-closed store + dedup, `[STALE]` tag). Extended `1920c-commodity-tracker-refresh-job.test.ts` +3. Full targeted+adjacent suite (7 files touching every changed module) 68/68 pass. `bun tsc --noEmit` clean. Simplicity-gate self-caught scope creep — trimmed 3 speculative ceiling additions (sp500/nasdaq/vnindex) not required by this AC. Full monorepo `bun test` kicked off as an extra background check but stalled/did not complete in-session (unrelated pre-existing suite characteristic, not this diff — every directly-dependent file already green); noted transparently, not claimed.
-
-**Board:** `task_board.in_progress[FIX-DOWJONES-STALE-WRONG-VALUE]` → `review` (`next_agent:qa`), `.head` synced to idle, via `orch-apply.sh`. `REBUILD_REQUIRED: true` — live container swap + 2 elapsed daily-cron cycles needed for the LIVE-across-2-cycles portion of the verification_gate; ops-gated, flagged not fabricated.
-
-Zone health: no drift detected
+**Last updated:** 2026-07-25 | **Cycle:** FIX-COLDEVICT-DONE-LANE-TRIGGER-ACTION-AXIS-NOOP (cold-evict poison-sort + trigger/action axis mismatch + phantom-empty-array counters, zone-routed generic developer)
 
 ## Session 2026-07-25 — FIX-FB-GATE-POINT-PCT-MATH — REVIEW
 
@@ -39,5 +27,21 @@ Zone health: no drift detected
 **Board:** `task_board.in_progress[FIX-FB-GATE-CHECKC-NEGATION-LEXICON]` → `review` (`next_agent:qa`), `.head` synced to idle (`next_agent:router`), via `orch-apply.sh`.
 
 **Scope discipline:** Touched `scripts/fb-data-integrity-gate.sh` (2-line fix) + new `scripts/test-fb-gate-checkc-negation.sh`. `rebuild_required=false` — host shell script, no container rebuild gate.
+
+Zone health: no drift detected
+
+## Session 2026-07-25 — FIX-COLDEVICT-DONE-LANE-TRIGGER-ACTION-AXIS-NOOP — REVIEW
+
+**Task:** Three coupled defects, PO-verified at source. (A) `orch-cold-evict.sh` sorted `done[]` with a plain STRING sort — 10/16 live rows carried `created_at:"unknown"`, which string-sorts above every ISO date and ranked as newest, permanently un-evictable. (B) the Step 5.5 trigger in `dev-team-tick-preflight.sh` was a hand-rolled COUNT-only proxy (`done_n>10`) on a different axis than the script's own COUNT-AND-AGE eviction gate — permanently true trigger firing a permanently-no-op action, 48x/day, with no `signal_queue` term even though the script always sweeps `signal_queue.archive[]`. (C) a jq shape `[.arr // [] | .[].id // ""]` misreported a genuinely-empty `done_verified[]`/`signal_queue.archive[]` as 1 evicted item in the dry-run report — the same report AC(1)'s biconditional needed to read.
+
+**Actions taken:** (C) moved `[]` outside `// []` so an empty array yields `[]` not `[""]`. (A) `sort_by(.created_at // "...")` → `sort_by(try (.created_at|fromdateiso8601) catch 0)` — malformed values now sort as epoch-0 (oldest), matching the age-gate's own convention. (B) replaced the count proxy with `_step55_would_evict` — asks `orch-cold-evict.sh --dry-run` itself and parses its `Byte reduction:` line; trigger and action are now the same computation by construction, and the signal_queue disjunct rides along for free (build_hot_temp always clears `signal_queue.archive[]`). Updated `docs/agents/dev-team/flow/post-cycle.md` § Step 4.2 (CANON spec) to match.
+
+**Verification:** TDD RED→GREEN throughout. New `orch-cold-evict-tests.sh` TEST 7 (poison-sort + phantom-counter, real fixture) — 27/35 (8 pre-existing unrelated SHG-5 lane-coherence failures, confirmed via `git log` to predate this task, unchanged by this diff). `dev-team-tick-preflight.test.sh` extended with `STUB_WOULD_EVICT` across T21/T23/T29-31 + new T33/T34 (stubbed axis-independence regression: high done[] count + stub=false → hygiene does NOT fire; done[] absent + stub=true → hygiene DOES fire) + T35 (REAL unstubbed `_step55_would_evict_REAL`, both directions on pretty-printed fixtures: no evictable content → false, one `done_verified[]` row → true) — 98/98 PASS. `orch-apply-wrapper-tests.sh` 42/42 unchanged.
+
+**Board:** `task_board.in_progress[FIX-COLDEVICT-DONE-LANE-TRIGGER-ACTION-AXIS-NOOP]` → `review` (`next_agent:qa`), `.head` synced to idle, via `orch-apply.sh`. `rebuild_required=false` — host shell scripts, no container rebuild gate.
+
+**Data cleanup (AC-2):** all 10 malformed `done[]` rows reached a terminal state — 6 auto-evicted by a concurrent live dev-team tick reading the corrected on-disk sort mid-session (commit 5100e9d63, unplanned but confirms the fix works end-to-end in production); the remaining 4 cleared via one deliberate `KEEP_RECENT_DONE=6` live run (chosen to exactly match the 6 genuinely-recent well-formed rows — no fabricated timestamps). `done[]` 10→6, 0 "unknown" remain, the 6 negative-control rows are byte-identical before/after (AC-4 satisfied in the same run). Live `--dry-run` steady-state now reports `Byte reduction: 0 bytes` (was misreporting phantom evictions pre-fix).
+
+**AC-6 cost:** pre-fix, every tick (48x/day) unconditionally paid the FULL live path (commit-mutex MCP round-trip + `orch-cold-evict.sh` live run + `orch-state-validate.sh` + orch-apply.sh's own Zod/coherence/conservation/CAS/atomic-rename + a git-commit attempt) since the trigger was permanently true, even though it evicted 0 done rows almost every time. Post-fix, every tick pays only `_step55_would_evict`'s dry-run — measured 0.587s wall, zero MCP calls, zero git commit, zero Zod validation, zero conservation check (vs. the full live path's measured ≥1.16s + a separate 0.156s validate call + 2 MCP round-trips + a commit, reproduced on a scratch copy). The full expensive path now fires only when `Byte reduction>0`, matching the board's real accumulation cadence (~1.5 well-formed done rows/day, keep_n=10, age=7d → roughly weekly), not 48x/day.
 
 Zone health: no drift detected
