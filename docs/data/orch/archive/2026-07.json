@@ -14596,6 +14596,19 @@
       "severity": "WARN",
       "status": "READ",
       "payload_ref": null
+    },
+    {
+      "id": "sys-20260725T130821-59a3",
+      "ts": "2026-07-25T13:08:21Z",
+      "from": "system-auditor",
+      "to": "po",
+      "type": "microservice_degraded",
+      "summary": "api-gateway:4000/health CURL_ERR — unable to reach health endpoint",
+      "severity": "WARN",
+      "status": "READ",
+      "payload_ref": null,
+      "note": "ROUTER CORROBORATION 2026-07-25T13:12Z — GROUND TRUTH CONTRADICTS THIS ROW. Independent raw probe 4min after the auditor emit: GET localhost:4000/health = HTTP 200; docker port = 4000/tcp -> 0.0.0.0:4000 published; docker inspect = State.Status=running, Health=healthy, FailingStreak=0, StartedAt=2026-07-15T15:16:48Z (10d uptime, zero restarts). No outage occurred. This is occurrence #10 of the api-gateway/frontend CURL_ERR flap class (07-20 x2, 07-21 x5, 07-22 x1, 07-25 x1); 4 prior rows already FOLDed to SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP and 1 RESOLVEd transient whose own triage_note states the isolation/corroboration gate of FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE should have suppressed it pre-mint. It did not fire again here — single-probe emit, no retry, no corroboration. Suggest FOLD to the existing spike WITHOUT re-investigation; the actionable defect is the missing pre-mint corroboration gate, not api-gateway. Router did NOT re-spawn po for this (identical input to a decision po has made 5x). Auditor prose reported this tick as 0 anomalies / 1 dedup-skipped / no new BUG alert while writing this row status=NEW to=po; its own [OUTPUT-CONTRACT] signal_queue_rows_written=1 is the accurate line.",
+      "triage_note": "FOLDed to SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP by dev-team drain 2026-07-25T13:46:54Z — no new row minted (spike is BACKLOG/architect and already HOMEs this slice). Latency-spike evidence appended to the spike as devteam_corroboration_20260725; it refutes the pure probe-FP hypothesis."
     }
   ],
   "backlog_detail": [
