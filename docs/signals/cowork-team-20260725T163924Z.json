@@ -1,0 +1,49 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-25T16:39:24Z",
+    "matched_slots": [
+      "refine-bctc-slot-4"
+    ],
+    "won_slots": [
+      "refine-bctc-slot-4"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/refine_bctc_md/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "closed",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "refine-bctc-slot-4": "cron"
+    },
+    "cadence_minutes": {
+      "refine-bctc-slot-4": "240"
+    },
+    "last_fired_timestamp": "2026-07-25T16:37:59Z",
+    "last_fired_slots": [
+      "refine-bctc-slot-4"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "16:30",
+    "leader_lock": "acquired",
+    "dev_head": "active",
+    "devq": 5,
+    "signal_backlog": 10,
+    "note": "Steps 4.3-4.5 SKIPPED: pressure-state.json aged past the 20-min staleness threshold mid-tick (19.93min at first read, 20.18min at evaluation) -> PRESSURE_MODE=legacy per pressure-read.md Step 4.2, CADENCE_MATCHES=MATCHES. Dispatch outcome identical either way (slot is cron 30 16 * * *, last_fired 24h prior). Staleness root cause: no cowork tick emitted between 16:14:37Z and this one - the 16:15Z tick did not complete an emit. calendar_status passed through UNCHANGED as illegal out-of-domain closed (deliberate: UC-CDC-P1 self-perpetuating field, hand-correcting only picks which wrong value freezes). Step 4.7 snapshot assembled via scripts/agents-flow/mcp-call.sh from bash rather than the agent pre-step - tick-snapshot.md premise that bash cannot call MCP is false, the helper exists and the preflight in the same dir uses it."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-25T16:39:24Z"
+}
