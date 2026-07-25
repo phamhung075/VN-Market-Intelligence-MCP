@@ -1,17 +1,18 @@
 # Market Watcher — Notebook
-**Last updated:** 2026-07-25 04:11 UTC | **Sprint:** 2026-07
+**Last updated:** 2026-07-25 12:10 UTC | **Sprint:** 2026-07
 
 ## Carry-over
-Previous offhours cycle (2026-07-25 00:11 UTC): 0 anomalies; market closed, awaiting open at 02:00 UTC.
+Previous offhours cycle (2026-07-25 08:10 UTC): 0 anomalies; market closed; all tickers current.
 
-## Cycle (04:11 UTC — offhours)
-- Market: CLOSED (outside 02:00–08:59 UTC trading window)
-- Watchlist: 56 tickers priced | Coverage scan: all current (max age 16h at 2026-07-24 12:07)
-- Anomalies detected: 0 (>2.5σ floor) | Volume spikes: 0 | Chain confirms: 0 | Stale tickers: 0
-- Regime: NEUTRAL | Offhours floor applied (2.5σ threshold)
-- Duplicate guard: ACTIVE (prices frozen at 2026-07-24 08:59 UTC close, no post-market moves)
+## Cycle (12:10 UTC — offhours mid-day)
+- Market: CLOSED (overnight, 27h after 2026-07-24 08:59 UTC close)
+- Watchlist: 55 tickers with price data | Coverage: all current (max age 4h at 08:10 UTC)
+- Anomalies detected: 0 (>2.5σ floor) | Volume spikes: 0 | Chain confirms: 0
+- Regime: NEUTRAL | DXY: USD STRENGTHENING (26130) | US10Y: RISK-OFF (gold +0.37%) | fx_pressure: none | pe_risk: none
+- Offhours floor applied: 2.5σ threshold active; duplicate guard suppresses same-close re-emission
+- Sweep batch: 0 stale tickers (all covered within 48h window)
 
-## Metrics (cycle 2026-07-25 04:11 UTC)
+## Metrics (cycle 2026-07-25 12:10 UTC)
 | Field | Value |
 |---|---|
 | cycles_run | 1 |
@@ -20,7 +21,7 @@ Previous offhours cycle (2026-07-25 00:11 UTC): 0 anomalies; market closed, awai
 | signals_suppressed | 0 |
 | sweep_tickers_forced | 0 |
 | coverage_state_updated | yes |
-| exit_status | complete |
+| exit_status | empty |
 
 ## Notes
-Offhours execution slot=market-watcher-offhours at 04:11 UTC (19h post-close). Market closed; all watchlist prices stale (last update 2026-07-24 08:59 UTC). No new price movements. AutoCure duplicate guard suppresses re-emission of unchanged closing prices. Zero anomalies passed 2.5σ offhours floor. Ready for market open 2026-07-25 02:00 UTC (note: already past nominal market open; market may be closed this date).
+Offhours execution slot=market-watcher-offhours (12:10 UTC, mid-day Friday). Prices stale (>24h, last update 2026-07-24 08:59 UTC). Macro snapshot: oil NEUTRAL (96.78), gold BULLISH (4070.8, +0.37%), USDVND BEARISH (26130, VND depreciation pressure). VND carry spread NEUTRAL (1.37pp). Zero anomalies passed 2.5σ floor. Ready for next intraday slot or market open.
