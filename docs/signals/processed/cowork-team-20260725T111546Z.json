@@ -1,0 +1,51 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-25T11:15:46Z",
+    "matched_slots": [
+      "refine-bctc-slot-3"
+    ],
+    "won_slots": [
+      "refine-bctc-slot-3"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": false,
+    "drift_min": 10,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "closed",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "refine-bctc-slot-3": "cadence"
+    },
+    "cadence_minutes": {
+      "refine-bctc-slot-3": 240
+    },
+    "last_fired_timestamp": null,
+    "last_fired_slots": [],
+    "last_fired_write_errors": null,
+    "classification": "SUPPRESSED",
+    "reason": "suppressed",
+    "nominal_tick": "11:00",
+    "leader_lock": "acquired",
+    "dev_head": "idle",
+    "devq": 0,
+    "signal_backlog": 0,
+    "note": "Slot refine-bctc-slot-3 matched and was claimed, but NOT spawned: verified guaranteed no-op. Live get_bctc_pending_refine still serves POW_2026_Q1 (78b06684-dca5-45e7-8dfd-b173df3d3d02, refine_status=FAILED) at result[0]; get_bctc_refined shows all 28/28 units terminal FAILED (units 0-23 agent_error:text_fetch_failed, 24-27 agent_error:image_fetch_oversized, all 2026-07-21). Slot prompt uses limit:1 + result[0], so refine_bctc_md would receive only the dead-lettered row and process zero windows. Root cause already boarded: FIX-BCTC-PENDING-REFINE-HEAD-OF-LINE-FAILED-ROW (lane=review, fix committed 8efff7f85 but mcp-server image predates it; rebuild is USER-GATED). Prior-art checked: that row + signal cowork-20260722T164119Z-refine-failed-headofline-poison (triaged) already cover this — no new row minted, no new signal appended. last_fired deliberately NOT written (no successful spawn, per last-fired.md AC-P1-7-2); slot will re-match each tick until the rebuild lands, which is visible-by-design rather than masked by a false last_fired stamp."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-25T11:15:46Z",
+  "_processed": {
+    "fingerprint": "de5132b9840a165ce4ff0f3cb589e4aea231330e8ca2172214ff8ee56d16b5e1",
+    "processedAt": "2026-07-25T11:18:51Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

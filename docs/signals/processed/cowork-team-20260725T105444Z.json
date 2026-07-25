@@ -28,5 +28,11 @@
     "held_locks": [
       "task:FIX-BCTC-PENDING-REFINE-HEAD-OF-LINE-FAILED-ROW (ttl 3600, deliberate, guards against peer double-dispatch while dev-mcp-server runs)"
     ]
+  },
+  "_processed": {
+    "fingerprint": "3b89b8bd2cb8184fdca03e381e6c673682f0122129fb0f2a73571c5f6ac85c6e",
+    "processedAt": "2026-07-25T11:18:51Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }
