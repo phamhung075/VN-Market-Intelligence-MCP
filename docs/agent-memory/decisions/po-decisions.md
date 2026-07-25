@@ -484,3 +484,33 @@ SUPPORTING EPIC 3 (foundational, runs underneath) — **HONEST-DATA-FLOOR HOLD**
 - DECLINED to write (churn avoidance): cycle-snapshot 18d-stale is the 5th sighting of `UC-SDF-P2`, which was already re-stamped today at 12:33Z with byte-identical evidence (same mtime, same 18d, same dead volatility_tier). A 5th corroboration carries zero information.
 - `sys-20260725T151406-cal1`: CONCUR with its do-not-mint instruction. Net-new contribution recorded on `UC-CDC-P1` is not the defect but the ISOLATION — the (a)-adaptive vs (b)-legacy ambiguity that row flagged OPEN at 09:48Z is now CLOSED in favour of (a), because one telemetry row carries `pressure_mode:"adaptive"` together with `calendar_status:"closed"`, `suppressed_calendar:[]` and `cadence_minutes:{"bctc-analyst-slot-1":"240"}`. Cadence arithmetic re-derived from cowork-schedule.json + cadence-policy.json directly (bctc-offmarket has weekend=1440 and no "closed" row) rather than relayed.
 - WRITE DISCIPLINE: 6 separate `jq … | bash scripts/orch-apply.sh` writes, each Zod Stage0+1 PASS + conservation-checked (task_total 647→651 = +4 exactly, signal_total 126 unchanged). `.head` never referenced in any transform — its flip to idle at 15:26:41Z is stamped `updated_by=developer` and pre-dates my first write at 15:28:08Z. All 4 minted ids read back off the board by `id` after write.
+
+## 2026-07-25T16:34Z — coverage-sweep dead trigger + relayed context-bloat signals [task_id: po-triage-20260725T1625]
+
+### STEP po-S1 · po · 2026-07-25T16:25:39Z
+**task-id:** FIX-COVERAGE-SWEEP-BLANKET-STAMP-DEAD-TRIGGER
+**what-done:** Minted P1 FIX for the coverage-sweep dead trigger; annotated 3 existing rows; declined a new umbrella.
+**what-considered:**
+- Mint a new "self-disabling state field" umbrella (router floated it)
+- Attach to the existing SPIKE-SATURATED-COUNT-THRESHOLD-GATES-SWEEP as instance 11
+- Fold the whole thing into the existing lost-update row (no new row)
+**why-decision:** Umbrella ALREADY EXISTS (ready/P1, 10 instances, 5 sub-classes) — a 4th container would fragment a converging class. Fold-only rejected: the lost-update row is plan_only/P2 and would bury a live P1 coverage loss.
+**why-change:** Scope DOUBLED vs the input — market-watcher carries the identical defect live (all 57 stamped 08:10:06Z); input named only news-scout.
+
+### STEP po-S2 · po · 2026-07-25T16:25:39Z
+**task-id:** FIX-COVERAGE-STATE-CROSS-AGENT-LOST-UPDATE
+**what-done:** Attached the discriminating evidence that row lacked and bound it co-ship to the P1 row.
+**what-considered:**
+- only path: a vanished top-level `sweep_config` key (present 0866c35b6 07-21, gone 819fff993 07-23) PROVES the write is a full-doc overwrite, which settles that row's open (i)/(ii)/(iii) direction question
+**why-decision:** A merge-based writer cannot lose a key it never touches; only a full rewrite can. Candidates (ii) disjoint-keys and (iii) CAS-only are now provably insufficient alone.
+**why-change:** Left plan_only/next_agent untouched deliberately — the deliverable moved to the P1 row rather than churning this row's routing fields.
+
+### STEP po-S3 · po · 2026-07-25T16:31:11Z
+**task-id:** FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES
+**what-done:** OVERTURNED the relayed diagnosis, then minted 2 rows (pruner setpoint P1; alert-commander blob P2) instead of the prune the signals asked for.
+**what-considered:**
+- Accept the relay's framing ("cap denominated in the wrong unit") and add a byte cap
+- Mint a one-off prune row for the 2 signalled files
+- Fix the ACTUATOR so all sectioned notebooks self-heal on next write
+**why-decision:** A byte cap ALREADY EXISTS and fires (TE-T24, backstop.sh:119-123). The real defect is asymmetry — the line cap has an auto-actuator (notebook-auto-prune.sh, line-only at :135/:174), the byte cap has none. Fixing the setpoint clears ~16 of 18 files with zero manual work; a prune row clears 2 and regenerates.
+**why-change:** Split into 2 rows, not the 2 the relay implied: alert-commander is ONE 119KB section so NO pruner can touch it (nothing to drop) — that needed its own row.
