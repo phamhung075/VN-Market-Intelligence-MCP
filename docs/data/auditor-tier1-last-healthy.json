@@ -1,11 +1,3 @@
 {
-  "last_healthy_at": "2026-07-12T07:43:27Z",
-  "checks": {
-    "docker_ps": "PASS",
-    "health_3000": "PASS",
-    "health_3001": "PASS",
-    "disk": "PASS",
-    "mem_creep": "PASS",
-    "launchd_agents": "PASS"
-  }
+  "last_healthy_at": "2026-07-25T07:38:02Z"
 }
