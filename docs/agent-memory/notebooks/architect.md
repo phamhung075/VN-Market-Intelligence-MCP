@@ -1,8 +1,15 @@
 # Architect — Notebook
 
-**Last updated:** 2026-07-25 00:10 UTC | **Sprint:** INPUT-VALIDATION-COVERAGE
+**Last updated:** 2026-07-25 11:20 UTC | **Sprint:** FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-07-25T11:20Z — FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION (zone=docs/agents/dev-team/flow/, P0 supervised plan_only, out-of-band architect spawn)
+
+**Task:** PO-ruled P0, design PRE-SELECTED (aged round-robin over 5 idle-path consumers + durable `pendingSignals` inbox) — mechanize, do not re-litigate. Board row cannot self-dispatch (supervised+plan_only routes to the Supervised-Lane Sweep, 2nd in the very chain it describes) — router spawned out-of-band.
+**Finding:** Confirmed live: `pendingSignals` is a pure in-conversation artifact (grep-confirmed: never written to file/DB/orch-state key). Destructive-before-delivery defect is NOT limited to §0a-1 (file signals) as illustrated — §0a-D (dashboard/`signal_queue` rows) shares the identical unconditional NEW→READ-before-Step1-confirms shape (`drain-signals.md:21-56`). Verified all 12 named destroyed signals still sit in `docs/signals/processed/` (7d prune hasn't hit them yet). Sampled the 363-row historical `routed-to-po` backlog (sqlite3 group-by): genuinely mixed — noise (cowork telemetry, breach hooks) vs plausibly-actionable (`bctc_signal`/data-quality, ~160 rows) — not a clean call, so the recovery-sweep decision is routed to PO explicitly rather than assumed either way.
+**Output:** `docs/architecture-briefs/2026-07-25-devteam-idle-chain-rotation-durable-inbox.md` — new root orch-state key `dev_team_idle_chain` (`z.record(z.unknown())`, same precedent as `narrative`/`dashboard_section_cache`), oldest-`last_served_tick`-wins single-serve-per-tick selection (no same-tick cascade — rejected as reintroducing a smaller-scope fixed-priority race), durable `pending_triage_inbox[]` with durable-append-BEFORE-destructive-move/flip ordering (batched, retain-on-failure), flagged a `signal_total` conservation-guard gap (blind to the new inbox). AC-1..AC-4 mapped onto extending the existing `devteam-dispatch-gate-satisfiability.sh` (per AC-4's explicit instruction, not a new instrument).
+**Next:** pm decomposes per brief §6 file list into atomic dev tasks — implementation is a SEPARATE downstream dispatch (row stays `plan_only:true`, SUPERVISED HOLD).
 
 ## 2026-07-25T00:10Z — IVC-ARCH-BLUEPRINT (zone=multi, design-first SPIKE handed by PO)
 
@@ -18,18 +25,14 @@
 **Output:** `docs/architecture-briefs/2026-07-24-factory-guard-ci-rebuild-raw-verify-hook.md` — zero-tolerance going forward, no baseline file (this is a forward-only attestation check on the push diff, not a source-file sweep — nothing historical to grandfather, unlike size-lint). Trigger scope composed from 2 already-designed siblings rather than a 3rd invented pattern: DDD infra/interface-layer files (the tiers `depguard-tier-boundaries` fences) whose added lines match `metric-mask-lint`'s own field regex (confidence/score/impact/magnitude/probability). On trigger, requires a `RAW-verify`/`REALDATA` token in the commit-range message OR a touched decision-journal/task-report OR an inline `raw-verify-allow:` escape hatch. Wired PRIMARY into the existing `scripts/git-hooks/pre-push` (this repo's real merge gate, since there's no PR/branch-protection to block on) and SECONDARY as a `.github/workflows/ci.yml` backstop job for bypass visibility (red CI on main is a monitored signal here). Explicitly excludes changing `PUSH-AUTONOMY-1` §5 itself or board-state-aware VERIFY-task-minting verification (deferred — temporally outside the triggering commit range). Minted child dev row `FACTORY-GUARD-CI-RAWVERIFY-IMPL` (`developer`, zone cross-service/) — not self-implemented.
 **Next:** pm/dev-team — promote+dispatch `FACTORY-GUARD-CI-RAWVERIFY-IMPL` when picked up; dispatcher (this task's owner) flips `FACTORY-GUARD-CI-rebuild-raw-verify-hook` board status. This closes out all 7 `ci-regression-prevention` guardrail designs.
 
-## 2026-07-24T19:57Z — FACTORY-GUARD-CI-shared-package-import-check (zone=cross-service/, P2 BOUNDED-1 pickup, design+decompose)
-
-**Task:** Design a check that any type/constant in `packages/shared-*` has a real importer AND app-side duplicates don't structurally drift — 6th of 7 `ci-regression-prevention` guardrails, same epic/audit as the size-lint/metric-mask/depguard/dead-code/no-hardcode siblings.
-**Finding:** Audit's 2 cited drift examples are stale/understated: "shared-db stale module list" already fixed (`FACTORY-SHARED-fix-shared-db-stale-list`, REVIEW, commit `ef62d2921`, 9/9 confirmed live-matching); "shared-types ComputeTAResponse nullability" is really a 3-way divergence between two already-orphaned/dead shapes (shared-types, the dead TS shadow service scheduled for deletion by `FACTORY-GUARD-CI-DEADCODE-IMPL`, and the live Go contract whose own header documents the drift was investigated/intentional) — not a live-serving bug. Confirmed live debt: 3/3 `packages/shared-*` (types/config/db, 76+73+37L) have **zero real importers repo-wide** (no import specifier, no package.json dependency, anywhere) — same phantom-package shape as the already-pruned `packages/primitives`. Found new undocumented name-collisions (Alert/Signal/McpConfig) between the orphaned shared package and independently-invented live app-side types of the same name — e.g. `McpConfig` in shared-config is a 6-block/73L stub vs the live app's actual 18-block/~300L `infrastructure/config.ts`. **Critical scope catch:** a dedicated, larger backlog task — `FACTORY-SHARED-wire-or-prune-shared-packages` (P2, effort L, risk med, rebuild true, BACKLOG) — already owns the "deliberate keep-or-cut decision per package" work; this CI-guardrail task must NOT preempt/duplicate it.
-**Output:** `docs/architecture-briefs/2026-07-24-factory-guard-ci-shared-package-import-check.md` — **baseline/ratchet** (not zero-tolerance, unlike dead-code/metric-mask/no-hardcode — different axis than size-lint's "too voluminous": here the fix is a domain decision already owned by a separate task, not a volume problem). `scripts/audits/shared-package-import-check.sh`: check 1 (blocking) — package-level orphan-importer check, baseline-seeded with the 3 current orphans, fails any NEW zero-importer `packages/*` addition (prevents `packages/primitives`-shaped regrowth); check 2 (advisory-only, non-blocking) — same-exported-symbol-name collision scan (Alert/Signal/McpConfig today), full AST structural diffing explicitly deferred (no TS AST tool wired into any bash-only audit script here; regex field-diff would false-positive on reorder/JSDoc churn). Minted child dev row `FACTORY-GUARD-CI-SHAREDPKG-IMPL` (`developer`, zone cross-service/) — not self-implemented; explicitly excludes any packages/shared-*/ content edits, consumer wiring, or deletion (reserved for `FACTORY-SHARED-wire-or-prune-shared-packages`).
-**Next:** pm/dev-team — promote+dispatch `FACTORY-GUARD-CI-SHAREDPKG-IMPL` when picked up; dispatcher (this task's owner) flips `FACTORY-GUARD-CI-shared-package-import-check` board status.
-
 ---
 
-## Archive (pre-2026-07-24T20:31Z)
+## Archive (pre-2026-07-25T11:20Z)
 
-[Older cycles archived to git history: FACTORY-GUARD-CI-no-hardcode-allowlist-scan (2026-07-24T19:31Z,
+[Older cycles archived to git history: FACTORY-GUARD-CI-shared-package-import-check (2026-07-24T19:57Z,
+zone=cross-service/, P2 BOUNDED-1 pickup — 3/3 packages/shared-* zero real importers repo-wide (phantom-
+package shape), baseline/ratchet orphan-importer check + advisory name-collision scan, child FACTORY-
+GUARD-CI-SHAREDPKG-IMPL), FACTORY-GUARD-CI-no-hardcode-allowlist-scan (2026-07-24T19:31Z,
 zone=cross-service/, P2 BOUNDED-1 pickup — narrowed "ticker allowlist" scan to literal-in-control-flow
 class (not the legitimate cascade/policy rule tables), 5 live sites (JANITOR-034/035 already tracked +
 2 new cosmetic), zero-tolerance no-hardcode-allowlist-scan.sh, child FACTORY-GUARD-CI-NOHARDCODE-IMPL),
