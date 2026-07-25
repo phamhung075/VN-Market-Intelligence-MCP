@@ -1,4 +1,4 @@
-<!-- size-justification: ~793L — three-tier dispatcher; Tier-1 detail extracted to tier1-probe.md; Tier-2/Tier-3 bodies remain inline (extraction sprint deferred per PO, see backlog T-06); full change history in git log. +2L: TIER=4 PILOT row added to AUDIT_TIER extraction + Tier Dispatch tables (2026-07-18), per brief docs/architecture-briefs/2026-07-18-cron-workflow-optimize-tier4-fleet-audit.md §8 EDIT-2 — dispatches to handlers.md §Step D-FLEET, own one-off claim, bypasses §Step 0d tick-boundary election. +6L (2026-07-25): TIER=5 row added to AUDIT_TIER extraction + Tier Dispatch tables + Step 0d fire-election branch — dispatches to flow/page-freshness.md (D-PAGE, kept fully out of this file per lazy-load discipline, unlike Tier-2/3's still-deferred inline extraction). -->
+<!-- size-justification: ~793L — three-tier dispatcher; Tier-1 detail extracted to tier1-probe.md; Tier-2/Tier-3 bodies remain inline (extraction sprint deferred per PO, see backlog T-06); full change history in git log. +2L: TIER=4 PILOT row added to AUDIT_TIER extraction + Tier Dispatch tables (2026-07-18), per brief docs/architecture-briefs/2026-07-18-cron-workflow-optimize-tier4-fleet-audit.md §8 EDIT-2 — dispatches to handlers.md §Step D-FLEET, own one-off claim, bypasses §Step 0d tick-boundary election. +6L (2026-07-25): TIER=5 row added to AUDIT_TIER extraction + Tier Dispatch tables + Step 0d fire-election branch — dispatches to flow/page-freshness.md (D-PAGE, kept fully out of this file per lazy-load discipline, unlike Tier-2/3's still-deferred inline extraction). +7L (2026-07-25, coordinator review #2): Step 0d TIER=5 FIRE_TICK comment expanded — CronCreate fires machine-local not UTC, the literal cron expression must not be hardcoded here (drifts at DST changeover); Tier-3's own 02:00Z label (line ~111) carries the same unverified-against-that-defect risk, flagged but NOT fixed here — out of scope, that cron is already live-armed. -->
 # System Auditor — Main Flow
 
 ## PLAN-ONLY INVARIANT — NO DESTRUCTIVE OPS (AUD-ND-1)
@@ -113,8 +113,15 @@ elif AUDIT_TIER == 3:
   FIRE_TASK_ID = "cron:auditor-t3:" + FIRE_TICK
 
 elif AUDIT_TIER == 5:
-  # cron expression: 30 3 * * * (fixed: 03:30 UTC daily — offset 30min after Tier-3's
-  # 02:00Z and D4/D-N's 03:00Z to avoid I/O contention on orch-state.json/notebook)
+  # FIRE_TICK target: fixed 03:30 UTC daily (this line is UTC-native, trustworthy
+  # regardless of scheduler mechanics). The underlying cron expression that achieves
+  # this real UTC time is machine-local (⚠️ CronCreate fires local, NOT UTC) and lives
+  # in .claude/commands/crons/cron-auditor-page-reverify.md (CEST/CET dual form,
+  # switches at DST changeover) — do not hardcode a bare "H M * * *" here, it would
+  # silently go stale twice a year. Offset-from-Tier-3/D4-N framing was dropped:
+  # those siblings' 02:00Z/03:00Z labels carry no machine-local disclaimer and are
+  # unverified against the same defect this comment used to have (see cron file
+  # Offset rationale for the full finding — not fixed here, out of scope).
   FIRE_TICK=$(date -u +"%Y-%m-%dT03:30Z")
   FIRE_TASK_ID = "cron:auditor-t5:" + FIRE_TICK
 
