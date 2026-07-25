@@ -1,4 +1,4 @@
-<!-- size-justification: ~200L — WEEKLY_PREDICTION Sunday sub-flow; main.md MODE ROUTER JUMPs here; +25L: PRIVACY GUARD pointer + digest-predict extraction filter + STEP 4d privacy gate; TNB 6-layer walk + T-45 gate + two-bucket conviction list + scenario framing + gate override all mandate the length. UC-CCA-P4 2026-07-23: +7L STEP 4e CLAIM-TRUTH GATE pointer (was ungated). FIX-FB-GATE-WEEKLY-FRAME-MODE 2026-07-25: STEP 4b replaced the manual "WEEKLY MODE OVERRIDE" procedure with a concrete --frame=weekly gate invocation (+8L net). -->
+<!-- size-justification: ~200L — WEEKLY_PREDICTION Sunday sub-flow; main.md MODE ROUTER JUMPs here; +25L: PRIVACY GUARD pointer + digest-predict extraction filter + STEP 4d privacy gate; TNB 6-layer walk + T-45 gate + two-bucket conviction list + scenario framing + gate override all mandate the length. UC-CCA-P4 2026-07-23: +7L STEP 4e CLAIM-TRUTH GATE pointer (was ungated). FIX-FB-GATE-WEEKLY-FRAME-MODE 2026-07-25: STEP 4b replaced the manual "WEEKLY MODE OVERRIDE" procedure with a concrete --frame=weekly gate invocation (+8L net). FIX-FB-GATE-CHECKD2-NONWAIVABLE-NUMERIC-BLOCK 2026-07-25: STEP 4b +6L — replaced ambiguous "EXIT-only-on-real-fabrication posture" pointer with explicit per-check waivability (Check-C only; Check-D2 non-waivable, fix protocol pointer to main.md). -->
 # FB Market Poster — Weekly Prediction Flow (Sunday / WEEKLY_PREDICTION)
 
 ## SELF-IDENTITY GUARD
@@ -214,8 +214,14 @@ rm -f "$TMPFILE"
 ```
 Paste the VERBATIM one-line gate stdout into the RETURN block.
 
-Same bounded-retry (max 2 fix rounds), Check-C "bán tháo" negation-blind false-positive
-handling, and EXIT-only-on-real-fabrication posture as `main.md` STEP 4b.
+Same bounded-retry (max 2 fix rounds) and Check-C "bán tháo" negation-blind false-positive
+handling as `main.md` STEP 4b. **Waivability is per-check, not gate-wide**
+(FIX-FB-GATE-CHECKD2-NONWAIVABLE-NUMERIC-BLOCK, 2026-07-25): only Check-C's prose pattern may
+honest-gap-and-PROCEED — every numeric check, most commonly **Check-D2** (period %-vs-live
+mismatch under this `--frame=weekly` call), is NON-WAIVABLE. On Check-D2 BLOCK, apply `main.md`
+STEP 4b's Check-D2 fix protocol (recompute the baseline as the PRIOR period's close, never the
+first session's own close inside this period, then re-derive every dependent figure) and re-run;
+still BLOCKing after 2 rounds → send_telegram(bug) + EXIT, never PROCEED with a known-wrong number.
 
 ### STEP 4c — Structural checks
 - Disclaimer + hashtag block present (see STEP 3 rules).

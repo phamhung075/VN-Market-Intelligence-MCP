@@ -1,4 +1,4 @@
-<!-- size-justification: ~167L — WEEKLY_RECAP Saturday sub-flow; main.md MODE ROUTER JUMPs here; +12L: PRIVACY GUARD pointer + STEP 3d privacy gate; three-section composition + gate-override docs + notebook format mandate the length; no prediction section. UC-CCA-P4 2026-07-23: +7L STEP 3e CLAIM-TRUTH GATE pointer (was ungated). FIX-FB-GATE-WEEKLY-FRAME-MODE 2026-07-25: STEP 3b replaced the manual "WEEKLY MODE OVERRIDE" procedure with a concrete --frame=weekly gate invocation (+8L net). -->
+<!-- size-justification: ~167L — WEEKLY_RECAP Saturday sub-flow; main.md MODE ROUTER JUMPs here; +12L: PRIVACY GUARD pointer + STEP 3d privacy gate; three-section composition + gate-override docs + notebook format mandate the length; no prediction section. UC-CCA-P4 2026-07-23: +7L STEP 3e CLAIM-TRUTH GATE pointer (was ungated). FIX-FB-GATE-WEEKLY-FRAME-MODE 2026-07-25: STEP 3b replaced the manual "WEEKLY MODE OVERRIDE" procedure with a concrete --frame=weekly gate invocation (+8L net). FIX-FB-GATE-CHECKD2-NONWAIVABLE-NUMERIC-BLOCK 2026-07-25: STEP 3b +6L — replaced ambiguous "EXIT-only-on-real-fabrication posture" pointer with explicit per-check waivability (Check-C only; Check-D2 non-waivable, fix protocol pointer to main.md). -->
 # FB Market Poster — Weekly Recap Flow (Saturday / WEEKLY_RECAP)
 
 ## SELF-IDENTITY GUARD
@@ -168,8 +168,14 @@ rm -f "$TMPFILE"
 ```
 Paste the VERBATIM one-line gate stdout into the RETURN block.
 
-Same bounded-retry (max 2 fix rounds), Check-C "bán tháo" negation-blind false-positive
-handling, and EXIT-only-on-real-fabrication posture as `main.md` STEP 4b.
+Same bounded-retry (max 2 fix rounds) and Check-C "bán tháo" negation-blind false-positive
+handling as `main.md` STEP 4b. **Waivability is per-check, not gate-wide**
+(FIX-FB-GATE-CHECKD2-NONWAIVABLE-NUMERIC-BLOCK, 2026-07-25): only Check-C's prose pattern may
+honest-gap-and-PROCEED — every numeric check, most commonly **Check-D2** (period %-vs-live
+mismatch under this `--frame=weekly` call), is NON-WAIVABLE. On Check-D2 BLOCK, apply `main.md`
+STEP 4b's Check-D2 fix protocol (recompute the baseline as the PRIOR period's close, never the
+first session's own close inside this period, then re-derive every dependent figure) and re-run;
+still BLOCKing after 2 rounds → send_telegram(bug) + EXIT, never PROCEED with a known-wrong number.
 
 ### STEP 3c — Structural checks
 - Disclaimer + hashtag block present (see STEP 2 rules).
