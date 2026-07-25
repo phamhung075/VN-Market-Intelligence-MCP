@@ -53,3 +53,5 @@ If market indicators available: extract volatility regime (gk_vol_20d_pct, vol_r
      bounds how long a stale one keeps re-surfacing. -->
 `get_legal_risk_signals(days=1, hours_back=6)` hit → mark CRITICAL
 `get_crisis_early_warning()` threshold exceeded → mark CRITICAL
+
+> **Clarification (alert-commander, discovered live 2026-07-23T12:10Z):** `get_legal_risk_signals()` returning clean does NOT prove no legal_risk CRITICAL condition exists this cycle — the inter-agent signal bus (`get_agent_signals`) can independently carry a `LEGAL_RISK`-type signal from news-scout ahead of (or instead of) the dedicated detector picking it up. Live instance: DGC id9018 "Khởi tố Tổng Giám đốc" — `get_legal_risk_signals` returned clean while the bus carried the signal, which was correctly treated as CRITICAL per the Step 3 Signal Matrix. Always evaluate the bus-based legal_risk row (Step 3) even when this tool call reports no hits — the two are independent, complementary paths to the same classification, not redundant checks.

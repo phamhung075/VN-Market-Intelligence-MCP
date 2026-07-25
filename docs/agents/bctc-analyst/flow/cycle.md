@@ -67,6 +67,14 @@ ELSE:
 ROUTINE_TICKERS = get_watchlist() [full watchlist, always populated]
 ```
 
+**Reprocess-vs-new-filing guard (2026-07-19):** a "newly ĐÃ NỘP" ticker whose `get_bctc_full(code)`
+returns CORRUPT (`total_assets=0`, forced 0% confidence) or "Chưa có dữ liệu" is a same-day
+reprocess/reparse event, not a genuine new release — verify via `docs/analysis-briefs/{TICKER}.md`
+(no prior entry = never actually release-processed despite an old PDF on disk). Do NOT write a
+ledger entry or fabricate beat_miss/Revenue/NI from corrupt/absent data. Downgrade to a routine-mode
+`bctc_signal` (sector-comparison ratios only, if available) + a `bctc-data-quality-anomaly` signal
+to dev-team (Cross-Team Signal Directory pattern, mirrors `esc-coverage-guard.md`'s `data-coverage-gap`).
+
 **Sequencing rule for mixed cycles:**
 - If MODE_RELEASE == true AND ROUTINE_TICKERS non-empty:
   - Process RELEASE_TICKERS first (time-sensitive → stage-analyze.md release branch)

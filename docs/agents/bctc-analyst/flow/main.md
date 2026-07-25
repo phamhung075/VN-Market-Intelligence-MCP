@@ -70,6 +70,19 @@ Each ESC check is independent. Any single TRUE fires Opus deep-dive. Gate does N
   degraded to the "no rows returned" branch regardless of the report's actual refine state).
   Call `get_bctc_report_id(code=ticker, quarter=quarter)` (tool #186) — resolves
   `financial_reports.id`, restricted to `refine_status='DONE'`.
+  - **`quarter` param format (live-verified 2026-07-24, c119):** the tool's Zod schema requires
+    `quarter` to be a bare enum `"Q1"|"Q2"|"Q3"|"Q4"` — passing a composite string like `"Q1-2026"`
+    (the format `CYCLE_MODE`/signal-file `quarter` fields use elsewhere in this flow) fails
+    validation with `invalid_enum_value`. Strip the year suffix before this call only; keep the
+    composite `"Q{N}-{YYYY}"` form for signal/ledger output fields.
+  - **RESOLVED (2026-07-24, c119) — 8-cycle CONFIRMED-BLIND gap CLOSED:** `get_bctc_report_id` is
+    now live and responding server-side. The prior "Tool not found" gap (live-verified 2026-07-23,
+    c115..c118) was NOT a missing server registration — it was this same `quarter` param-format
+    mismatch surfacing as a generic gateway error on older client call-shapes. Use the corrected
+    `quarter="Q{N}"` call shape above. If a future cycle sees "Tool not found" / "no such tool"
+    again (categorical absence, not a Zod validation error), treat as CONFIRMED-BLIND per
+    `cowork-error-boundary/SKILL.md`, degrade ESC-5 = FALSE gracefully, and re-attempt live next
+    cycle — do not assume permanently broken from a notebook entry (Memory-as-Truth Prohibition).
   - `report_id == null` (whether `existing_refine_status` is `null` — no report filed — or a
     non-DONE status like PENDING/IN_PROGRESS/PARTIAL/FAILED — refine not finished) → ESC-5 = FALSE
     (graceful, no error). Log: `[ESC-5] get_bctc_report_id returned null for {ticker}/{quarter}

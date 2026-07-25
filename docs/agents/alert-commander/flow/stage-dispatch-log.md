@@ -30,6 +30,8 @@ GATE_EXIT = skill `.claude/skills/claim-truth-gate/SKILL.md`
 
 ---
 
+**Published-marker gate (AC extension, discovered live 2026-07-23 06:13Z — doc-self-heal, was undocumented tribal knowledge):** Before the FIRST `send_telegram(channel="market")` of this cycle (i.e. only when the Firing Gate above has already resolved to a fire — never claim on a silent-exit cycle), claim a tombstone lock: `task_claim(task_id="published:alert-commander-market:<nominal_tick>", task_kind="cowork-slot", owner_agent="alert-commander", owner_client_session=<expanded session id>, ttl_seconds=900)`. `<nominal_tick>` = this cycle's dispatched tick (e.g. `2026-07-23T06:00Z`), NOT a calendar date — tick-scoped (not date-scoped like chef's daily-dish marker, see `docs/agents/unified-agent/flow/chef.md` § Step 0.5) because this agent legitimately fires more than once per day on distinct tickers/events; a date-scoped key would wrongly block a second same-day legitimate fire. `claimed:false` → EXIT without sending (a peer session already published this exact tick). `claimed:true` → proceed to send; on success the marker is a **tombstone — never call `task_release`**, TTL is its sole expiry (mirrors `docs/agents/unified-agent/flow/chef.md` § Step 0.5 and the live `published:chef-*`/`published:digest-*` rows in `task_list_held`).
+
 **4a. MARKET channel**
 Pre-send: `get_market_snapshot()` — divergence > 5% → discard, max 2 attempts
 - > 3 pending → `send_alert_digest(alerts=[], channel="market")`
