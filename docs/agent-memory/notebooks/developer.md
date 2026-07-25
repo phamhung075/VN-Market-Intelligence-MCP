@@ -1,20 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-25 | **Cycle:** FIX-COLDEVICT-DONE-LANE-TRIGGER-ACTION-AXIS-NOOP (cold-evict poison-sort + trigger/action axis mismatch + phantom-empty-array counters, zone-routed generic developer)
-
-## Session 2026-07-25 — FIX-FB-GATE-POINT-PCT-MATH — REVIEW
-
-**Task:** `scripts/fb-data-integrity-gate.sh` had no check for a post stating both a point delta ("giảm X điểm") and a % delta ("(±Y%)") for the same VN index that were internally inconsistent — lesson L2 (06-19): post said "giảm 0,32 điểm (−0,32%)" when −0,32% at that day's level is actually ≈ −5,9 điểm. Zone `cross-service/` — outside every dev-* zone, handled directly. Ticket minted "Check-F" (06-20), before letters F (currency-unit guard) and G (structural validator) shipped and claimed those letters.
-
-**Actions taken:** New Check-H — BLOCKs when |stated point delta − pct×prev_close| > `POINT_PCT_MATH_TOLERANCE` (new header const, 1.0 index points). prev_close derived from the live snapshot only (`close/(1+changePct/100)`), never hardcoded. Generic `INDEX_ALIASES` mapping (VN-Index/VN30/HNX-Index/UPCOM) — new indices participate by adding one alias entry, check logic never names a ticker. `FETCH_TICKERS` widened to always include the 4 standard index codes.
-
-**Verification:** RAW fence (both injected fixtures, pre-fetched snapshot file, no network dependency) — prev_close=1800: `'giảm 0,32 điểm (−0,32%)'` → `[BLOCK] Check-H point-pct-math: ... delta=5.44 > 1.0pt tolerance`, exit 1; `'giảm 5,90 điểm (−0,32%)'` → `[PASS] fb-data-integrity-gate: 0 violations`, exit 0. RED confirmed via `git stash`: pre-fix script falsely PASSed the inconsistent fixture. Regression: real `docs/social/fb-post-2026-07-24.md` (VN-Index −13 điểm/−0,78%) + matching live snapshot → 0 violations; same file with live API unreachable → graceful skip. `bash -n` + `shellcheck` clean.
-
-**Board:** `task_board.in_progress[FIX-FB-GATE-POINT-PCT-MATH]` → `review` (`next_agent:qa`), `.head` synced to idle (`next_agent:router`), via `orch-apply.sh`.
-
-**Scope discipline:** Touched exactly `scripts/fb-data-integrity-gate.sh` (single file per task). `rebuild_required=false` — shell script, no container rebuild gate.
-
-Zone health: no drift detected
+**Last updated:** 2026-07-25 | **Cycle:** FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE (Tier-1 memory detector widened from 1 hardcoded container to every capped container, ack-ledger suppression, zone-routed generic developer)
 
 ## Session 2026-07-25 — FIX-FB-GATE-CHECKC-NEGATION-LEXICON — REVIEW
 
@@ -43,5 +29,19 @@ Zone health: no drift detected
 **Data cleanup (AC-2):** all 10 malformed `done[]` rows reached a terminal state — 6 auto-evicted by a concurrent live dev-team tick reading the corrected on-disk sort mid-session (commit 5100e9d63, unplanned but confirms the fix works end-to-end in production); the remaining 4 cleared via one deliberate `KEEP_RECENT_DONE=6` live run (chosen to exactly match the 6 genuinely-recent well-formed rows — no fabricated timestamps). `done[]` 10→6, 0 "unknown" remain, the 6 negative-control rows are byte-identical before/after (AC-4 satisfied in the same run). Live `--dry-run` steady-state now reports `Byte reduction: 0 bytes` (was misreporting phantom evictions pre-fix).
 
 **AC-6 cost:** pre-fix, every tick (48x/day) unconditionally paid the FULL live path (commit-mutex MCP round-trip + `orch-cold-evict.sh` live run + `orch-state-validate.sh` + orch-apply.sh's own Zod/coherence/conservation/CAS/atomic-rename + a git-commit attempt) since the trigger was permanently true, even though it evicted 0 done rows almost every time. Post-fix, every tick pays only `_step55_would_evict`'s dry-run — measured 0.587s wall, zero MCP calls, zero git commit, zero Zod validation, zero conservation check (vs. the full live path's measured ≥1.16s + a separate 0.156s validate call + 2 MCP round-trips + a commit, reproduced on a scratch copy). The full expensive path now fires only when `Byte reduction>0`, matching the board's real accumulation cadence (~1.5 well-formed done rows/day, keep_n=10, age=7d → roughly weekly), not 48x/day.
+
+Zone health: no drift detected
+
+## Session 2026-07-25 — FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE — REVIEW
+
+**Task:** BOUNDED-1 auto-pickup. Tier-1's only memory detector (`_check_mem_creep` in `scripts/agents-flow/auditor-tier1-probe.sh`) hardcoded its subject to `docker ps | grep -i mcp-server | head -1` — 12 of 13 running containers had ZERO memory coverage. Demonstrated live false-pass 2026-07-25 08:30Z: Tier-1 reported HEALTHY/0-anomalies while rag-service sat at 98.46% of its 768m cap.
+
+**Actions taken:** Rewrote the check to loop `docker ps -q` → `docker inspect -f '{{.Name}} {{.HostConfig.Memory}}'` (live daemon, never a hardcoded list), skip `HostConfig.Memory==0` (uncapped — MemPerc vs total host mem is not a headroom signal), same `WARN_PCT=85` per container, detail line names ALL breaching containers (never the old "mcp-server mem" literal), dropped `head -1`. Per binding PO decision, resolved rag-service's legitimate ~94-98% steady-state via the ACK LEDGER not thresholds — extended `docs/data/auditor-launchd-ack.json` with a parallel `acked_memory[]` array (same file, `_check_launchd_agents`'s two guarantees mirrored exactly: mixed case never suppresses, staleness rule = remove at DONE_VERIFIED), seeded rag-service tracked_by `RAG-FTS-BUILD-MEMORY-BOUND` (verified OPEN before seeding). Explicitly rejected per-container threshold overrides and a global `WARN_PCT` move (both named-rejected in the PO decision); absolute-headroom secondary predicate explicitly out of scope.
+
+**Verification:** Rewrote `auditor-tier1-probe.test.sh`'s `docker()` stub (`ps -q`/`inspect`/multi-container `stats`) + CLI stub binary; repurposed T9-T11; added T40-T43 (acked-ALL_GREEN-transparent, MIXED acked+unacked-still-FAILURE-names-the-second, uncapped-skipped-even-forced-99%, ledger-present-nothing-degraded-no-false-note). 141/141 PASS, re-run twice clean. RAW live-fleet evidence (`date -u` timestamped): rag-service absent from ledger → FAILURE naming `vn-market-intelligence-mcp-rag-service-1(93.70%)`; real seeded ledger → ALL_GREEN, rag-service on acknowledged-degraded line; mcp-gateway confirmed in `docker ps` yet absent from both lists. `shellcheck -x` clean on the diff.
+
+**Board:** `task_board.in_progress[FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE]` → `review` (`next_agent:qa`), `.head` synced to idle, via `orch-apply.sh`.
+
+**Scope discipline:** Touched exactly the 2 declared files (`scripts/agents-flow/auditor-tier1-probe.sh`, `docs/data/auditor-launchd-ack.json`) + its paired test file. `rebuild_required=false` — host shell script, no container rebuild gate.
 
 Zone health: no drift detected
