@@ -11008,7 +11008,14 @@
         "files_hint": "docs/agents/pm/flow/task-archive.md (L109-125 closure predicate + L122 unconditional echo - PRIMARY); .claude/skills/signal-dashboard/SKILL.md (L78-82 ACK/CLOSE lifecycle, L104 200-row cap); .claude/skills/signal-dashboard/dashboard-protocol.md (PRUNE body); scripts/orch-cold-evict.sh (L87 TERMINAL_SIGNAL_STATUSES - DO NOT blanket-add TRIAGED, see do_not_repeat_refuted_fixes); apps/mcp-server/src/infrastructure/orchStateSchema.ts (L175-189 SignalRowSchema.status - enum only per the refutation constraints); one backfill jq under scripts/.",
         "prior_art_cross_ref": "P1-DETECTOR-CLOSURE-TRIAGE-SIGNALS (backlog, zone docs/agents/po/) is the FORWARD half of this same mechanism - it wires PO to stamp origin_signal_id when minting; THIS row is the CLOSE half (the predicate that consumes it, plus the existing strand). Complementary, not duplicate; sequence P1-DETECTOR first or the backfill has no back-reference for new rows. FIX-BACKLOG-TERMINAL-ROW-DRIFT-EVICT-BLIND (backlog) is the structurally ISOMORPHIC bug on the OTHER plane (task_board.backlog[] terminal rows invisible to eviction) - same fix shape, different array; consider a shared ruling. FU-ORCH-HOT-SUB150-SPRINT-LIFECYCLE (backlog) targets the SAME hot-file-size goal via active_sprints/decision_journal; this row is the signal_queue contributor. FIX-COWORK-STEP0A-TOPO-DRAIN-STATUS-CONTRACT (backlog) concerns NEW->READ drain filtering, a different transition. NOT duplicates of: FIX-AGENTSIGNALS-EXPIRED-GC-CRON (agent_signals store, different plane), FIX-SIGNALQUEUE-DUP-ID-GUARD (dup ids), FIX-SIGNALQUEUE-RECEIVER-DELIVERY-CONTRACT, FIX-SIGNAL-ROUTING-ROWS-COVERAGE-GAP-DEEPDIVE, FIX-DRAINPRUNE-SKIP-LIVE-REFERENCED-PROCESSED-FILES (processed/ FILE prune). All read before minting.",
         "baseline_pass": 9408,
-        "updated_at": "2026-07-25T14:31:08Z"
+        "updated_at": "2026-07-25T14:35:41Z",
+        "router_case_evidence_20260725": {
+          "verified_at": "2026-07-25T14:35:41Z",
+          "verified_by": "dev-team (router, tick 2026-07-25T14:07Z)",
+          "finding": "STORED CASE IS LOWERCASE. All 124 hot signal_queue rows carry status=\"triaged\". Uppercase \"TRIAGED\" has NEVER been stored: 0 rows hot, 0 rows in archive/2026-07.json at any case. Yet every document defining the vocabulary writes it UPPERCASE (handlers.md:240, po/flow/scripts-registry.md:44, .claude/commands/crons/cron-db-data-integrity.md:130+138).",
+          "why_it_changes_the_fix": "Every status predicate in the system is exact-match and uppercase: task-archive.md:118 uses jq .status == \"READ\"; orch-cold-evict.sh:87 TERMINAL_SIGNAL_STATUSES is an uppercase comma-list. An implementer following the DOCS would add \"TRIAGED\" to a predicate and match 0 of 124 rows — silently reproducing the exact failure mode this row exists to fix (a no-op predicate reported as success). Match the stored lowercase, or normalize both sides with ascii_downcase.",
+          "also": "RETRACTED (1 row) IS stored uppercase, so signal-row status case is inconsistent WITHIN the live data, not uniformly lowercase."
+        }
       }
     ],
     "closed_sprints": [
