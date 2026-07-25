@@ -419,12 +419,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-25T15:44:32Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "updated_at": "2026-07-25T16:02:36Z",
+    "updated_by": "developer",
+    "active_task_id": null,
+    "next_agent": "router"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -15579,37 +15578,16 @@
         "rebuild_required": false,
         "branch": null,
         "review_note": "developer: fixed all 3 coupled defects. (C) jq [.arr // [] | .[].id // \"\"] misreported genuinely-empty done_verified[]/signal_queue.archive[] as 1 evicted item (jq // fires on zero-output) -- moved [] outside // []. (A) done[] sort_by(.created_at // ...) was a plain STRING sort -- literal \"unknown\" (10/16 live rows) string-sorted above every ISO date and ranked newest after reverse, permanently un-evictable -- switched to sort_by(try fromdateiso8601 catch 0), malformed values now sort as epoch-0/oldest, matching the age-gates own convention. (B) Step 5.5 trigger was a hand-rolled COUNT-only proxy (done_n>10) on a different axis than the scripts own COUNT-AND-AGE eviction gate -- permanently true trigger firing a permanently no-op action 48x/day, with no signal_queue term even though the script always sweeps signal_queue.archive[] -- replaced with _step55_would_evict, which asks orch-cold-evict.sh itself via --dry-run and parses its Byte reduction: line, making trigger and action the same computation by construction and restoring the signal_queue disjunct for free. New scripts/test/orch-cold-evict-tests.sh TEST 7 (poison-sort + phantom-counter, RED->GREEN proven) + scripts/agents-flow/dev-team-tick-preflight.test.sh T33/T34 (stubbed axis-independence regression) + T35 (REAL unstubbed _step55_would_evict_REAL, both directions) -- 98/98 preflight PASS, 42/42 orch-apply-wrapper PASS, orch-cold-evict-tests 27/35 (8 pre-existing unrelated SHG-5 lane-coherence failures, confirmed via git log to predate this task). docs/agents/dev-team/flow/post-cycle.md Step 4.2 CANON spec updated to match. AC-2 data cleanup: all 10 malformed done[] created_at:\"unknown\" rows reached terminal state (6 auto-evicted by a concurrent live dev-team tick reading the corrected on-disk sort mid-session, commit 5100e9d63; remaining 4 cleared via a one-time KEEP_RECENT_DONE=6 live run matching the 6 genuinely-recent well-formed rows exactly -- no fabricated timestamps). done[] 10->6, 0 unknown remain, negative-control rows byte-identical before/after. Live --dry-run steady-state now reports Byte reduction: 0 bytes. AC-6 cost: pre-fix every tick unconditionally paid the full live path (commit-mutex + full script run + validate + orch-apply Zod/conservation/CAS/rename + git commit attempt) since the trigger was permanently true; post-fix every tick pays only the dry-run check (measured 0.587s wall, zero MCP calls, zero git commit) and the full expensive path fires only when Byte reduction>0 (matches real accumulation cadence, roughly weekly, not 48x/day)."
-      }
-    ],
-    "qa": [],
-    "_closed_signals_20260614": {
-      "_by": "po-S50",
-      "_at": "2026-06-14T14:45:14Z",
-      "closed": [
-        {
-          "signal": "docs/signals/workflow-protocol-coherence-audit-20260614T141952Z.json",
-          "reason": "ALREADY IMPLEMENTED — all 6 COHERENCE-GAP tasks status=IMPLEMENTED, result=RESOLVED (commit 85935da3). No work to queue.",
-          "disposition": "move-to-processed"
-        },
-        {
-          "signal": "docs/signals/dev-team-tool-contract-cron-overlap-20260614T121816Z.json",
-          "reason": "ALREADY RESOLVED by the LIVE SF-1 single-flight guard (F2-A) + gateway-call-contract.md (F1) now in dev-team flow. This brief is the source that DELIVERED SF-1; no residual work.",
-          "disposition": "move-to-processed"
-        }
-      ]
-    },
-    "last_triaged_at": "2026-07-25T15:44:32Z",
-    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
+      },
       {
         "id": "FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE",
         "type": "FIX",
-        "status": "IN_PROGRESS",
+        "status": "REVIEW",
         "priority": "P1",
         "size": "S",
         "zone": "cross-service/",
         "owner": "developer",
-        "next_agent": "developer",
+        "next_agent": "qa",
         "created_at": "2026-07-25T08:56:36Z",
         "created_by": "po/triage-20260725T0856-a30-mem-coverage",
         "source": "router-verified-detector-coverage-gap:2026-07-25T08:55Z",
@@ -15633,14 +15611,34 @@
           "FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX",
           "FIX-AUDITOR-A30-VMHWM-VETO-TAUTOLOGY-FALSE-NEGATIVE"
         ],
-        "updated_at": "2026-07-25T15:44:33Z",
+        "updated_at": "2026-07-25T16:02:37Z",
         "promoted_at": "2026-07-25T15:44:32Z",
         "promoted_by": "dev-team (bounded-1 auto-pickup)",
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
         "claimed_at": "2026-07-25T15:44:32Z",
         "claimed_by": "dev-team (bounded-1 auto-pickup)"
       }
-    ]
+    ],
+    "qa": [],
+    "_closed_signals_20260614": {
+      "_by": "po-S50",
+      "_at": "2026-06-14T14:45:14Z",
+      "closed": [
+        {
+          "signal": "docs/signals/workflow-protocol-coherence-audit-20260614T141952Z.json",
+          "reason": "ALREADY IMPLEMENTED — all 6 COHERENCE-GAP tasks status=IMPLEMENTED, result=RESOLVED (commit 85935da3). No work to queue.",
+          "disposition": "move-to-processed"
+        },
+        {
+          "signal": "docs/signals/dev-team-tool-contract-cron-overlap-20260614T121816Z.json",
+          "reason": "ALREADY RESOLVED by the LIVE SF-1 single-flight guard (F2-A) + gateway-call-contract.md (F1) now in dev-team flow. This brief is the source that DELIVERED SF-1; no residual work.",
+          "disposition": "move-to-processed"
+        }
+      ]
+    },
+    "last_triaged_at": "2026-07-25T15:44:32Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
