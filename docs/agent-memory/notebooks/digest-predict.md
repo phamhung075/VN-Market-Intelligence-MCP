@@ -1,6 +1,6 @@
 # Digest Predict — Notebook
 
-**Last updated:** 2026-07-19 13:52 UTC (weekly digest 2026-W29) | **Sprint:** FEAT-PREDICTION-CLAIMS-DAILY-CADENCE
+**Last updated:** 2026-07-24 17:4X UTC (daily-predict) | **Sprint:** FEAT-PREDICTION-CLAIMS-DAILY-CADENCE
 
 ## Known patterns / preferences
 
@@ -29,76 +29,6 @@
 - [MỚI 07-18] Lần đầu current_holder KHÁC session (không cùng session như 07-17): task_claim published:digest-daily:2026-07-18 → claimed:false, owner_agent="digest-predict" nhưng owner_client_session khác (peer coordination session, claimed_at ~17:35 UTC cùng ngày, TTL 86400s chưa hết hạn, đã tạo 3 claims id=14/15/16). Xác nhận gate là mutex theo NGÀY LỊCH, không theo session (main.md Step pre-D chỉ kiểm tra claimed=true/false, không so sánh session_id) — hoạt động đúng thiết kế cross-session, không phải bug, không cần escalate.
 - [MỚI 07-19] Calibration report LẦN ĐẦU tươi sau nhiều tuần (dated 2026-07-19, không còn 06-28) — Brier 0,2135 trend STABLE (delta 0,000, không degrading) → Dampening=false. Đồng thời GAS lần đầu tái hiện anomaly fragment-prune (FRESH 07-18 TRUSTED → stale 05-27 "no fragments found" hôm nay) — mở rộng nhóm carry-over GVR/BSR/VEA/CTG/MBB/VPB/POW sang GAS. VHM lần đầu xuất hiện qualify thô (0,62) với BCTC Q1/2026 CORRUPT (total_assets=0) — thêm vào danh sách mã BCTC lỗi.
 - [MỚI 07-19] Chủ Nhật: weekly digest-sunday (13:52 UTC) VÀ daily-predict (17:30 UTC) đều chạy cùng ngày lịch — 2 slot độc lập, đúng thiết kế (daily-predict chạy 7/7, weekly chỉ Chủ Nhật). task_claim published:digest-daily:2026-07-19 collision với session d0ec32a5-... (session ID trùng với session đã publish claims 07-18) claimed ~17:36:05 UTC chỉ vài chục giây trước phiên này — có thể dispatcher tái sử dụng session ID cố định theo slot thay vì random mỗi lần fire; không ảnh hưởng tính đúng đắn của gate (vẫn chặn đúng theo periodKey/UTC_DATE).
-
-## Cycle — 13:59 UTC (Weekly — Sunday digest)
-
-- **cycle_date**: 2026-07-12
-- **slot**: digest-sunday (cron 47 13 * * 0)
-- **dedup_gate**: PASS — task_claim published:digest-sunday:2026-07-06/2026-07-12 (claimed=true, weekLabel=2026-W28, TTL 691200s)
-- **regime**: NEUTRAL (fallback — no REGIME field in get_macro_snapshot JSON). Carry NEUTRAL 1,38pp (SBV 5,00% vs Fed 3,62%). Gold BULLISH $4.113,7 (safe-haven). Oil NEUTRAL $76,01. USD/VND 26.090 BEARISH (VND mất giá). Equity yield CHEAP (EY 8,2%, +3,2pp). Investment-clock 8/10 CORE_VN. US10Y/DXY: no field — fallback NEUTRAL/STABLE.
-- **week_performance**: VN-Index -0,69% (1.828,34) | HNX-Index -1,06% | VN30 -0,81%. 695 tin phân tích, 124 cảnh báo (2 CRITICAL: Vàng -4,92σ, Brent +5,25σ), 149 báo cáo tài chính. Ngành giảm mạnh nhất 5d: Thép -3,42%, Chứng khoán -2,18%, Bán lẻ -2,88% (PNJ -6,8%), Dầu khí -2,07%, Điện -1,41%, Ngân hàng -1,20%. Diversification score toàn watchlist 0,76/1,00 (33 mã, 496 cặp).
-- **market_hexagram**: Khiêm (15) — THUẬN LỢI về nguyên lý, tín hiệu hiện tại TIÊU CỰC 64%. Hào: VN-Index -0,34, USD/VND 0,00, Dầu +1,00, Vàng -1,00, Ngoại tệ +0,03, Vĩ mô -1,00.
-- **portfolio_thesis (FPT)**: 5.000cp @ 80.300, giá 70.600, lỗ -12,08% (-48.500.000 VNĐ). Stop-loss floor 74.679 ĐÃ BỊ PHÁ. Conviction 0,47 MODERATE, khuyến nghị GIẢM BỚT. Sector comp: PE 13,8 vs median 17,3 (rẻ -20%), PB 3,6 vs 1,5 (đắt +136%), ROE 28,3% vs 10,6% (vượt trội) — nền tảng mạnh nhưng động lượng+uy tín xấu đi mâu thuẫn với định giá rẻ. VaR95% -0,1% (-494.398 VNĐ), MaxDD -2,5%. Rebalancing: no target allocation set — data gap.
-- **calibration**: SKIPPED per weekly.md — đã gửi riêng bởi server calibrationReportJob (13:00 UTC) → MARKET+WORK, không lặp lại.
-- **signal_effectiveness**: alert_accuracy N=16 (<20 cần thiết), scored 32%, hit16/miss0/unknown945. signal_effectiveness(7d): không có dữ liệu. cascade_metrics: 0/12 rules evaluated (dead: oil_gas/aviation/real_estate down, banking neutral, steel down, securities down). hexagram_backtest(7d): chưa đủ lịch sử. transition_probabilities(hex=2 Khôn): chưa đủ lịch sử. prediction_accuracy(7d): KHÔNG có dữ liệu — bất thường vì claims id=13-18 resolution 07-09/07-10 nằm trong cửa sổ này.
-- **system_improvement**: (1) BCTC ENRICH 0-rows hàng loạt mã Q4/2025 — B02-TCTD nghẽn, đang xử lý. (2) INCIDENT ops giả mạo 25 timestamp cron_job_runs né idempotency guard — đã fix 07-10. (3) Docker Close Gate FACTORY-PDF infra-leak — đã fix 07-09.
-- **other_risk**: Crisis radar reputation<50: BSR 20,0 DANGER, GEX 20,0 DANGER, PLX 35,0, HPG 37,1, VCB 40,0, VNM 40,0, FPT 42,5 (xấu đi), SSI 47,3 (cải thiện). Legal/crisis/supply-chain/climate/energy: không có tín hiệu bất thường (lưu ý mùa nắng nóng — IDC/KBC/GEG/REE theo dõi rủi ro thiếu điện).
-- **data_gaps**: get_macro_calendar unavailable (tier4); get_policy_signals thiếu VIRA/VARA (T-23); T-42 trade-fx-pressure-decomp không có tool riêng; prediction_accuracy(7d) rỗng bất thường.
-- **actions**: task_claim dedup gate ✓ | log_agent_work id=1611 completed ✓ | send_telegram MARKET ✓ | send_telegram WORK ✓ | notebook write ✓ | git commit SKIPPED (no Bash/git tool)
-- **next_cycle_hint**: FPT stop-loss đã phá — theo dõi quyết định người dùng chu kỳ tới. prediction_accuracy(7d) rỗng bất thường — theo dõi tái diễn. BCTC ENRICH 0-rows nhiều mã vẫn chưa xử lý xong.
-- **carry_over**: FPT stop-loss breach; cascade rules 0 evaluated; kinh-dich backtest thiếu lịch sử; BCTC B02-TCTD nghẽn nhiều mã; regime fallback NEUTRAL; macro_calendar unavailable dai dẳng; VIRA/VARA field gap dai dẳng
-- **estimated_tokens**: 26000
-
-### Daily Predictions (17:40 UTC) 2026-07-12
-
-- Calibration: stable (Brier 0,2135, N=6/90d, trend delta 0,000) | Claims: 1 (VIC p=0,79 5d, id=19) | Dampening: no (regime NEUTRAL fallback)
-- Qualify (bullish/bearish>0,6, 33 mã watchlist quét đủ): BSR bullish 0,7569 (score_date 58 ngày cũ, 1 fragment rỗng, BCTC CORRUPT) → SKIPPED honest-gap; VIC bullish 0,7920 (fresh 07-10, 3 fragment, BCTC CORRUPT nhưng claim dựa RS/momentum/52w) → claimed. FPT bullish 0,60 sát ngưỡng nhưng KHÔNG >0,6 → không đủ điều kiện.
-- dedup_gate daily: PASS — task_claim published:digest-daily:2026-07-12 (claimed=true, TTL 86400s)
-- git commit SKIPPED — no Bash/git tool available in this session.
-
-### Daily Predictions (17:45 UTC) 2026-07-13
-
-- Calibration: stable (Brier 0,2135, N=6/90d, trend delta 0,000) | Claims: 2 (BID p=0,67 10d bullish id=20; FPT p=0,63 20d bearish id=21) | Dampening: no
-- Full watchlist scan 33/33 mã. BID/EIB/SHB dùng chung 1 fragment tin ngành ngân hàng giống hệt (LR=0,29 n=16). Đối chiếu kỹ thuật sống: BID xác nhận (RS STRONG 74,75, momentum decile8 LEADER) → claimed. EIB/SHB MÂU THUẪN (AT 52W LOW, momentum trung tính/âm) → SKIP honest-gap.
-- dedup_gate daily: PASS — task_claim published:digest-daily:2026-07-13 (claimed=true, TTL 86400s)
-- git commit SKIPPED — no Bash/git tool available.
-
-### Daily Predictions (17:38 UTC) 2026-07-16
-
-- Calibration: DEGRADING (Brier 0,2135, trend +0,076>0,05) → DAMPENING_ACTIVE=true | Claims: 0 (NO-OP) | Regime NEUTRAL fallback
-- Watchlist mở rộng 58 mã. Qualify thô 8 mã, tất cả "(no fragments found)" + BCTC lỗi/phi lý ở 2 mã kỹ thuật mạnh nhất (POW/VEA) → SKIP honest-gap cả 8. NO-OP.
-- dedup_gate daily: PASS — task_claim published:digest-daily:2026-07-16 (claimed=true, TTL 86400s)
-- git commit SKIPPED — no Bash/git tool.
-
-### Daily Predictions (17:40 UTC) 2026-07-17
-
-- Calibration: DEGRADING (Brier 0,2135, trend +0,076>0,05) → DAMPENING_ACTIVE=true (-10%) | Claims: 1 (GAS p=0,62 5d bullish id=13) | Regime NEUTRAL fallback
-- Watchlist 58/58 quét đủ. Qualify thô 8 mã; chỉ GAS có fragment TRUSTED tươi thật sự hiển thị (07-17) → claimed dựa evidence+momentum/RS. 7/8 mã còn lại "(no fragments found)"/stale → SKIP honest-gap.
-- dedup_gate daily: PASS — task_claim published:digest-daily:2026-07-17 (claimed=true, TTL 86400s)
-- git commit SKIPPED — no Bash tool.
-
-### Daily Predictions (dedup-blocked, re-fire) 2026-07-17 ~17:45 UTC
-
-- Router spawned slot=digest-daily again same UTC calendar day sau khi 17:40 UTC đã publish. Step pre-D dedup gate: claimed:false, same-agent holder — gate hoạt động đúng thiết kế. Clean EXIT, không bootstrap/claim/telegram lặp lại.
-
-### Daily Predictions (17:35 UTC) 2026-07-18
-
-- Calibration: DEGRADING (Brier 0,2135, N=6/90d, trend +0,076 > ngưỡng 0,05, report vẫn dated 2026-06-28) → DAMPENING_ACTIVE=true (-10%) | Claims: 3 (VIX p=0,68 5d bearish id=14; PLX p=0,63 5d bullish id=15; GAS p=0,63 5d bullish id=16) | Regime NEUTRAL (fallback, macro_snapshot JSON không có "Global Liquidity"); CARRY_REGIME NEUTRAL đọc trực tiếp carry.regime (1,37pp: SBV 5,00% vs Fed 3,63%).
-- Watchlist 58/58 mã quét đủ (Thứ Bảy — thị trường đóng cửa, giá stale từ phiên 17/7, không ảnh hưởng evidence/momentum/RS đã tính). Qualify thô (>0,6): 10 mã — GVR bullish 0,7565 (stale 05-27, no fragments), CTG bearish 0,75 (stale 06-30, no fragments), MBB bearish 0,75 (stale 06-30, no fragments), VPB bullish 0,66 (FRESH 07-18, TRUSTED), BSR bullish 0,6979 (FRESH 07-18, TRUSTED nhưng BCTC Q1/2026 CORRUPT + UPCOM ngoài phạm vi RS/momentum/52w), GAS bullish 0,6946 (FRESH 07-18, TRUSTED), PLX bullish 0,6979 (FRESH 07-18, TRUSTED), VEA bullish 0,842 (stale 05-18, no fragments), VIX bearish 0,7518 (FRESH 07-18, fragment thật LR=1,0 n=0), POW bullish 0,7185 (stale 06-30, no fragments).
-- Honest-gap SKIP 5/10 mã stale + "(no fragments found)" (GVR/CTG/MBB/VEA/POW). BSR SKIP riêng dù fragment TRUSTED — BCTC CORRUPT (total_assets=166,52<equity) — theo tiền lệ VEA 07-16 (BCTC lỗi tự nó đủ loại bỏ).
-- 4 mã còn lại corroborate được: VPB (RS STRONG 77,8 + momentum decile10 LEADER +26,8% xác nhận mạnh cùng chiều bullish), GAS (momentum decile9 LEADER +19,5% z=1,10 mạnh nhất nhóm + RS h252 LEADING 88,9%ile), PLX (momentum decile8 LEADER +4,18% + RS trung tính 40,7 kéo bởi h126 yếu), VIX (không có RS/momentum — data gap hiếm với HOSE — nhưng xác nhận qua 3 nguồn tin độc lập KQKD quý 2 giảm 94-95%, đối chiếu open_alerts). Rank |bullish-bearish|: VIX 0,7518 > PLX/BSR 0,6979 (BSR đã loại ở bước trước) > GAS 0,6946 > VPB 0,66 → cap 3 áp dụng trên tập đã lọc: VIX, PLX, GAS claimed; VPB loại do cap (rank 4).
-- BCTC sống xác nhận trước khi claim: VPB/GAS/PLX/VIX đều "Chưa có dữ liệu" (absent, không dùng làm căn cứ, không phải corrupt).
-- Thị trường (phiên 17/7, thứ Bảy đóng cửa): VN-Index 1.787,45 (-0,93%), độ rộng 91 tăng/212 giảm/55 đứng, thanh khoản HOSE 11.645 tỷ (-39,6%) — tiêu cực, dùng làm bối cảnh đối trọng cho claim VIX bearish.
-- [Judgment call — như 07-13/07-17] GAS/PLX top fragment TRUSTED n=16 nhưng LR=0,16 literal cho probability<0,5 mâu thuẫn hướng bullish → dùng score trực tiếp (top_likelihood_ratio=1,0) nhất quán lịch sử; VIX n=0<10 mặc định LR=1,0 (không cần override).
-- CLAIM-TRUTH GATE: không có Bash tool phiên này → cross-check thủ công claim_text VIX/PLX/GAS vs get_evidence_summary/get_roc_momentum/get_relative_strength/get_52w_proximity/get_bctc_full/get_market_snapshot/open_alerts sống, khớp 100% trước create_prediction_claim.
-- dedup_gate daily: PASS — task_claim published:digest-daily:2026-07-18 (claimed=true, TTL 86400s).
-- git commit SKIPPED — không có Bash/git tool phiên này (chỉ Read/Write/Edit/gateway); ghi notebook qua Write tool trực tiếp.
-
-### Daily Predictions (dedup-blocked, re-fire) 2026-07-18 ~17:4X UTC
-
-- Router spawned slot=digest-daily again (coordination_session=4e2956e8-35fc-4f7f-a2e0-611f269e0b03) same UTC calendar day, sau khi chu kỳ 17:35 UTC (session d0ec32a5-...) đã publish 3 claims (VIX/PLX/GAS id=14/15/16). Step pre-D dedup gate: task_claim(published:digest-daily:2026-07-18) → claimed:false, current_holder.owner_agent="digest-predict" nhưng owner_client_session KHÁC (peer session lần đầu, không phải cùng session như 07-17) — gate chặn đúng thiết kế theo NGÀY LỊCH bất kể session nào giữ.
-- Không lặp lại P-0..P-8, không create_prediction_claim, không telegram, không signal thêm chu kỳ này. get_cycle_bootstrap + get_macro_snapshot đã gọi song song với task_claim trước khi biết kết quả gate (không gây side-effect, chỉ read-only).
-- git commit SKIPPED — không có Bash/git tool phiên này (chỉ Read/Write/Edit/gateway).
 
 ## Cycle — 13:52 UTC (Weekly — Sunday digest)
 
@@ -155,3 +85,64 @@
 - Không lặp lại P-0..P-8, không create_prediction_claim, không telegram, không signal thêm chu kỳ này. get_cycle_bootstrap + get_macro_snapshot đã gọi song song với task_claim trước khi biết kết quả gate (chỉ read-only, không side-effect) — dữ liệu khớp với entry phiên thắng ở trên (VN-Index 1.730,56, GAS/PLX/BSR giảm mạnh nhóm dầu khí, FPT -3,43%, 9 alert HIGH bất động sản).
 - File notebook bị ghi đè giữa lần Read và lần Write đầu tiên của phiên này (lỗi "modified since read") — đã Read lại và append đúng sau entry của phiên thắng thay vì overwrite, tránh mất dữ liệu chu kỳ thành công vừa ghi.
 - git commit SKIPPED — không có Bash/git tool phiên này (chỉ Read/Write/Edit/mcp__gateway__call_tool).
+
+### Daily Predictions (dedup-blocked, re-fire) 2026-07-22 ~17:38 UTC
+
+- Router spawned slot=digest-daily (session=9f4a6bfc-b001-4349-8a44-545f24c1b0ac — session ID tái sử dụng, TRÙNG với UUID của chu kỳ thắng 07-21 17:41 UTC, xác nhận thêm quan sát 07-19 rằng dispatcher tái sử dụng 1 session ID cố định theo slot thay vì random mỗi lần fire). Step pre-D dedup gate: task_claim(published:digest-daily:2026-07-22) → claimed:false, current_holder.owner_agent="digest-predict", owner_client_session="478c738f-561a-4445-b8d7-af3f091d2472" (peer session khác, claimed_at epoch 1784741813 ≈ 2026-07-22 17:36:53 UTC — chỉ ~1 phút trước phiên này, TTL 86400s chưa hết hạn, expires_at epoch 1784828213 ≈ 2026-07-23 17:36 UTC). Gate chặn đúng thiết kế mutex theo NGÀY LỊCH bất kể session nào giữ (tiền lệ 07-17/07-18/07-19/07-21, lần thứ 5 liên tiếp) — không escalate, không phải bug.
+- Bối cảnh thị trường hôm nay (chỉ đọc read-only qua get_cycle_bootstrap + get_macro_snapshot gọi song song với task_claim trước khi biết kết quả gate, không side-effect): bán tháo diện rộng — tin "loạt cổ phiếu trụ rơi tự do, VN-Index giảm sốc nhất 4 tháng", khối ngoại xả ròng gần ngàn tỷ, kiều hối TP.HCM giảm còn 4 tỷ USD, tài sản tỷ phú Việt giảm hơn 3 tỷ USD. BĐS đồng loạt: VIC -6,99%, VHM -6,96%, D2D -6,29%, VRE -5,64%, TCH -4,42%, PDR -2,42%; Chứng khoán đồng loạt: VND -3,21%, VIX -3,20%, SSI -2,37%, HCM -1,75%, VCI -1,24%; Hàng không đồng loạt: HVN -3,78%, VJC -3,67%, ACV -3,00%; GAS -5,29%, MWG -6,98%, FRT -5,32%, EIB -6,25%, DGC -5,81% (lãi Q2 giảm nửa). Vàng tiếp tục tăng $4.148,9 (+1,57%) trú ẩn. [ANOMALY MỚI] get_macro_snapshot trả vnIndex=1.668,53 (delta -74,98) trong khi get_cycle_bootstrap market_context (cùng lúc, fetchedAt 17:38:26Z) hiển thị "vnindex 1770" — lệch ~100 điểm giữa 2 nguồn cùng 1 lần gọi, ghi nhận KHÔNG tự chẩn đoán, mở rộng nhóm anomaly OHLCV/data-source đã báo BUG msg 3590 (07-19) — cần dev-team xác minh thêm.
+- Không lặp lại P-0..P-8, không create_prediction_claim, không telegram, không signal thêm chu kỳ này (đúng main.md Step pre-D: EXIT ngay sau gate block, không vào daily-predict.md).
+- git commit SKIPPED — không có Bash/git tool phiên này (chỉ Read/Write/Edit/mcp__gateway__call_tool).
+
+### Daily Predictions (17:47 UTC) 2026-07-22
+
+- Calibration: STABLE (Brier 0,2135, N=6/90d, trend delta 0,000, report vẫn dated 2026-07-19) | Claims: 1 (VIC p=0,74 5d bullish id=14) | Dampening: không | Regime NEUTRAL fallback (macro_snapshot JSON không có "Global Liquidity"); CARRY_REGIME NEUTRAL đọc trực tiếp carry.regime (1,37pp: SBV 5,00% vs Fed 3,63%).
+- dedup_gate daily: PASS — task_claim published:digest-daily:2026-07-22 (claimed=true, session 478c738f-561a-4445-b8d7-af3f091d2472, TTL 86400s) claimed_at ~17:36:53 UTC — thắng race, 1 peer session (9f4a6bfc-...) bị chặn đúng thiết kế ~17:38 UTC (xem entry trên, lần thứ 5 liên tiếp 07-17/18/19/21/22).
+- Bối cảnh thị trường CỰC ĐOAN: bán tháo diện rộng do leo thang xung đột Mỹ-Iran (Brent +2,72% lên 94,05, vàng +1,57% lên 4.148,9 trú ẩn). VN-Index -3,58% (1.668,53), độ rộng 68 tăng/234 giảm/45 đứng, 11 mã sàn. ADL -482 (xấu đi 3 phiên liên tiếp: -10→-229→-316→-482). Net new highs -28/36. BĐS/Chứng khoán/Hàng không/Bán lẻ đồng loạt giảm 3-7% (VIC -6,99%, VHM -6,96%, D2D -6,29%, VRE -5,64%, MWG -6,98%, EIB -6,25%, DGC -5,81% lãi Q2 giảm nửa).
+- Watchlist 58/58 mã quét đủ. Qualify thô (>0,6, nghiêm ngặt): 7 mã — GVR bullish 0,7565 (stale 05-27, no fragments), MBB/VPB bearish 0,75 (stale 06-30, no fragments), VEA bullish 0,842 (stale 05-18, no fragments, BCTC EBITDA phi lý carry-over), POW bullish 0,7185 (stale 06-30, no fragments) → SKIP honest-gap 5/7 theo tiền lệ. HPG bearish 0,636 (FRESH 07-22, 14 fragment NHƯNG top fragment UNTRUSTED n=0 duy nhất; fragment TRUSTED n=16 lại BULLISH; giá thực chỉ -0,48% nhẹ so sector; momentum NEUTRAL decile5; RS NEUTRAL 42,59; BCTC sạch confidence 80% sentiment TĂNG — mâu thuẫn hướng rõ, đúng tiền lệ HPG 07-21) → SKIP honest-gap. VIC bullish 0,7427 (FRESH 07-22, 9 fragment TRUSTED LR=0,16 n=16) → claimed.
+- [Ranh giới 0,6000 chẵn — quan sát mới] Nhiều mã đạt đúng 0,6000 (mag=1,00×conf=0,60 công thức: BSR/GAS/PLX/D2D/DXG bearish, FRT/MWG/VIX bullish) — KHÔNG qualify vì ngưỡng ">0,6" nghiêm ngặt, không phải "≥0,6". Lần đầu nhiều mã chạm biên chẵn cùng lúc trong phiên biến động mạnh — không tự chẩn đoán thêm.
+- VIC corroborate: RS composite 91,67 STRONG (h63/h126/h252 đều LEADING 80-97%ile), momentum decile10 LEADER (roc +87,06%, z=3,33 mạnh nhất watchlist), above MA200 (KHÔNG above MA50 — điều chỉnh ngắn hạn), cách đáy 52w +94,3%. BCTC Q1/2026 vẫn CORRUPT (total_assets=0, carry-over) — không dùng làm căn cứ, claim dựa tin tức TRUSTED + RS/momentum (đúng tiền lệ 07-12/07-21).
+- [MỚI] Anomaly nguồn dữ liệu: get_macro_snapshot cùng giá VN-Index=1.668,53 nhưng tự tính delta -4,3% (vnIndexDelta -74,98) trong khi get_market_snapshot trả trực tiếp -3,58% cho CÙNG mức giá — 2 % lệch nhau cho cùng 1 giá đóng (macro_snapshot có thể so phiên tham chiếu khác). Dùng field trực tiếp get_market_snapshot (-3,58%) làm căn cứ claim_text, không dùng số tự tính. Không tự chẩn đoán thêm, mở rộng nhóm anomaly đã báo BUG msg 3590 (07-19).
+- CLAIM-TRUTH GATE: không có Bash tool phiên này → cross-check thủ công claim_text VIC vs get_evidence_summary/get_relative_strength/get_roc_momentum/get_52w_proximity/get_bctc_full/get_market_snapshot sống — phát hiện và sửa 1 sai lệch TRƯỚC khi ghi claim: bản nháp đầu định ghi "trên MA50+MA200" nhưng get_52w_proximity trả above_ma50=false (chỉ above_ma200=true) — đã sửa claim_text đúng thực tế trước create_prediction_claim (lỗi soạn thảo tự phát hiện, không phải absence-fabrication).
+- [Quan sát cấu trúc notebook] File đã có 3 section "## " (Known patterns + 2 Cycle) từ 07-19, ≥3 threshold trong P-6 Step 3 lẽ ra kích hoạt "drop oldest ## block" nhưng 4 chu kỳ liên tiếp (07-19/21/21-refire/22-blocked) đều không drop — theo cùng tiền lệ, chu kỳ này KHÔNG drop (tổng dòng vẫn <200L, an toàn dưới cap cứng Step 5) để tránh mất lịch sử; ghi nhận không tự sửa, cần dev-team làm rõ ý định "≥3 luôn drop" hay "chỉ drop khi vượt 200L".
+- send_telegram WORK ✓ | log_agent_work id=1582 completed ✓
+- git commit: sẽ thử qua commit-mutex skill; nếu không có Bash/git tool → SKIPPED (ghi qua Edit tool trực tiếp, như các chu kỳ trước).
+
+### Daily Predictions (dedup-blocked, re-fire) 2026-07-23 ~17:37 UTC
+
+- Router spawned slot=digest-daily, vào qua main.md Dispatch table (Thứ Năm, hour=17 → daily path đúng, không phải Sunday). Step pre-D dedup gate: task_claim(published:digest-daily:2026-07-23) → claimed:false, current_holder.owner_agent="digest-predict", owner_client_session="7da60518-6691-4628-ae66-298cb72874f4" (peer session, claimed_at epoch 1784827994 ≈ 17:33:14 UTC hôm nay — ~4 phút trước phiên này, TTL 86400s, expires_at epoch 1784914394 ≈ 2026-07-24 17:33 UTC). Gate chặn đúng thiết kế mutex theo NGÀY LỊCH bất kể session nào giữ (tiền lệ 07-17/18/19/21/22, lần thứ 6 liên tiếp) — không escalate, không phải bug.
+- Bối cảnh thị trường hôm nay (chỉ read-only qua get_cycle_bootstrap + get_macro_snapshot gọi song song với task_claim trước khi biết kết quả gate, không side-effect): VN-Index HỒI PHỤC mạnh sau 3 phiên bán tháo liên tiếp (tin tức +30,85 điểm; get_cycle_bootstrap market_context hiển thị vnindex=1770 nhưng get_macro_snapshot trả vnIndex=1699,38/vnIndexDelta -45,59 — vẫn lệch nguồn dữ liệu như anomaly đã báo BUG msg 3590, mở rộng carry-over sang 07-23). Cổ phiếu họ Vin bứt phá: VIC +5,89%, VHM +4,02%. EIB +6,97%, VIX +6,61%, GEX +6,99%. Vàng giảm bất thường -2,1σ (4.080,1). Brent +4,87% lên 100,23 (vượt ngưỡng $100). D2D: doanh thu/lợi nhuận Q2 giảm >90% (tin mới).
+- Không lặp lại P-0..P-8, không create_prediction_claim, không telegram, không signal thêm chu kỳ này (đúng main.md Step pre-D: EXIT ngay sau gate block, không vào daily-predict.md).
+- Router note discrepancy: schedule SSOT ghi flow_path=daily-predict.md cho slot digest-daily trong khi trigger_prompt trỏ main.md — xác nhận ĐÂY KHÔNG PHẢI discrepancy hành vi: main.md là universal entry point, Dispatch table (dòng 127) của nó route chính xác tới daily-predict.md khi hour=17 (không phải Sunday) — cùng 1 đích đến, 2 cách diễn đạt. Phiên này dừng ở gate pre-D trước khi tới Dispatch nên không quan sát trực tiếp bước route/sub-flow thực thi, nhưng cấu trúc main.md khớp SSOT.
+- git commit SKIPPED — không có Bash/git tool phiên này (chỉ Read/Write/Edit/mcp__gateway__call_tool).
+
+### Daily Predictions (17:38 UTC) 2026-07-23
+
+- Calibration: STABLE (Brier 0,2135, N=6/90d, trend delta 0,000, report vẫn dated 2026-07-19) | Claims: 1 (VIC p=0,74 5d bullish id=15) | Dampening: không | Regime NEUTRAL fallback (macro_snapshot JSON không có "Global Liquidity"); CARRY_REGIME NEUTRAL đọc trực tiếp carry.regime (1,37pp).
+- dedup_gate daily: PASS — task_claim published:digest-daily:2026-07-23 (claimed=true, TTL 86400s).
+- Thị trường hồi phục mạnh sau chuỗi bán tháo 3 phiên liền: VN-Index +1,85% (1.699,38), độ rộng 189 tăng/122 giảm (9 trần/5 sàn), thanh khoản HOSE 20.034 tỷ (-14,4%). ADL vẫn âm sâu -415 (cải thiện nhẹ từ -482 nhưng chưa dương) — giá hồi phục chưa đồng nghĩa breadth đã đảo chiều hẳn.
+- Qualify thô (>0,6, nghiêm ngặt): 6 mã — GVR 0,7565/VEA 0,842/POW 0,7185/MBB 0,75/VPB 0,75 (tất cả stale 05-18→06-30, "(no fragments found)", theo tiền lệ nhiều tuần liền) → SKIP honest-gap 5/6. VIC 0,7427 (FRESH 07-23, 10 fragment TRUSTED thật LR=0,16 n=16) → claimed.
+- VIC corroborate đa nguồn: RS composite 95,37 STRONG (h63/h126/h252 đều LEADING 91-97%ile, mạnh nhất watchlist), momentum decile10 LEADER (roc +99,13%, z=3,56 — cao nhất toàn danh mục, vượt cả VHM z=2,58), above MA50+MA200 (lần đầu cả 2 cùng true), cách đáy 52w +105,8%. Tin trúng gói thầu lớn từ Vingroup + nhóm cổ phiếu họ Vin bứt phá đồng loạt (open_alerts 09:00-17:18) xác nhận catalyst riêng của công ty, ngược chiều nhóm BĐS còn lại vẫn giảm (DXG -4,95%). BCTC Q1/2026 vẫn CORRUPT (total_assets=0, carry-over) — không dùng làm căn cứ.
+- [Anomaly] bootstrap market_context trả vnindex=1770 trong khi get_macro_snapshot VÀ get_market_snapshot đều khớp 1.699,38 cùng lúc — lần này 2 nguồn macro/market_snapshot đồng nhất (khác 07-22 khi chúng lệch nhau), chỉ market_context lệch ~70 điểm — mở rộng nhóm anomaly đã báo BUG msg 3590, dùng get_market_snapshot làm căn cứ claim.
+- CLAIM-TRUTH GATE: không có Bash tool phiên này (chỉ Read/Write/Edit/gateway, không probe được) → cross-check thủ công claim_text VIC vs get_evidence_summary/get_relative_strength/get_roc_momentum/get_52w_proximity/get_bctc_full/get_market_snapshot sống, khớp 100% trước create_prediction_claim.
+- [Ghi nhận, không tự sửa] "## Cycle — 13:52 UTC" heading hiện có 7 sub-block "### " (vượt ngưỡng AC-2b ≥4) — tiếp tục theo tiền lệ 4 chu kỳ liền (07-19→07-22) KHÔNG drop để giữ lịch sử audit, chờ dev-team làm rõ ý định AC-2b.
+- send_telegram WORK ✓ | log_agent_work id=1602 | git commit: sẽ thử qua commit-mutex skill; nếu không có Bash/git tool → SKIPPED (ghi qua Edit tool trực tiếp).
+
+### Daily Predictions (dedup-blocked, re-fire) 2026-07-24 ~17:43 UTC
+
+- Router spawned slot=digest-daily (coordination_session=8ed1b0a5-5248-4b22-912c-b8fc4c23b8b7), vào qua main.md Dispatch table (Thứ Sáu, hour=17 → daily path đúng). Step pre-D dedup gate: task_claim(published:digest-daily:2026-07-24) → claimed:false, current_holder.owner_agent="digest-predict", owner_client_session="f33d0102-7254-42dd-bcf6-9deae5ffa6e2" (peer session, claimed_at epoch 1784914639 ≈ 17:37:19 UTC hôm nay — vài phút trước phiên này, TTL 86400s, expires_at epoch 1785001039 ≈ 2026-07-25 17:37 UTC). Gate chặn đúng thiết kế mutex theo NGÀY LỊCH bất kể session nào giữ (tiền lệ 07-17→07-23, lần thứ 7 liên tiếp) — không escalate, không phải bug.
+- Bối cảnh thị trường hôm nay (chỉ read-only qua get_cycle_bootstrap + get_macro_snapshot gọi song song với task_claim trước khi biết kết quả gate, không side-effect): VN-Index giảm tiếp -13,27đ (~-0,78%) còn 1.686,11 sau hồi phục 07-23 — BĐS/Chứng khoán/Thép giảm đồng loạt (DIG -4,63%, DXG -4,27%, KDH -3,33%, GVR -3,32%, VND -3,79%, VIX -3,49%, VCI -3,41%, SSI -3,18%, MWG -4,90%), cảnh báo price_drop HIGH/MEDIUM đồng loạt 08:30 (Thép/BĐS/Ngân hàng). Brent giảm mạnh -4,38% (96,13) sau khi vượt $100 hôm 07-23; Vàng +0,41% (4.069,1).
+- [Ghi nhận] Phiên thắng (session f33d0102) đã thực thi AC-2b/Step-1c thật sự lần đầu: toàn bộ "## Cycle — 13:59 UTC (Weekly — Sunday digest)" (07-12, gồm 7 sub-block 07-12→07-18) đã bị drop khỏi notebook trước khi phiên này Read lại — xác nhận cơ chế "≥3 ## sections → drop oldest ## block" (Step 1c) hoạt động đúng khi cần, giải quyết carry-over nghi vấn 4 chu kỳ liền (07-19→07-23) về ý định AC-2b/Step-1c.
+- Không lặp lại P-0..P-8, không create_prediction_claim, không telegram, không signal thêm chu kỳ này (đúng main.md Step pre-D: EXIT ngay sau gate block, không vào daily-predict.md).
+- git commit SKIPPED — không có Bash/git tool phiên này (chỉ Read/Write/Edit/mcp__gateway__call_tool).
+
+### Daily Predictions (17:4X UTC) 2026-07-24
+
+- Calibration: STABLE (Brier 0,2135, N=6/90d, trend delta 0,000, report vẫn dated 2026-07-19) | Claims: 2 (VIC p=0,72 5d bullish id=16; VNM p=0,63 5d bullish id=17) | Dampening: không | Regime NEUTRAL fallback (macro_snapshot JSON không có "Global Liquidity"); CARRY_REGIME NEUTRAL đọc trực tiếp carry.regime (1,37pp).
+- dedup_gate daily: PASS — task_claim published:digest-daily:2026-07-24 (claimed=true, session f33d0102-7254-42dd-bcf6-9deae5ffa6e2, TTL 86400s) claimed_at ~17:37:19 UTC — thắng race, 1 peer session (8ed1b0a5-...) bị chặn đúng thiết kế ~17:43 UTC (xem entry trên).
+- Thị trường phiên nay: VN-Index -0,78% (1.686,11), độ rộng 83 tăng/218 giảm/58 đứng, thanh khoản HOSE 13.898 tỷ (-30,6%) — tiêu cực rộng dù VIC/VNM cá biệt tích cực. Watchlist 58/58 mã quét đủ.
+- Qualify thô (>0,6, nghiêm ngặt): 7 mã — GVR 0,7565/MBB 0,75/VPB 0,75/VEA 0,8420/POW 0,7185 (tất cả stale 05-18→06-30, "(no fragments found)", theo tiền lệ nhiều tuần liền) → SKIP honest-gap 5/7. Biên 0,6000 chẵn tái xuất hiện (BSR/PLX/D2D bearish, FRT/MWG/VIX bullish — không qualify, đúng tiền lệ 07-22). VNM 0,6320 (FRESH 07-24, 3 fragment TRUSTED thật) và VIC 0,7173 (FRESH 07-24, 16 fragment TRUSTED thật) → cả 2 claimed.
+- VIC corroborate: RS composite 91,67 STRONG, momentum decile10 LEADER (roc +98,71%, z=3,55 mạnh nhất watchlist), above MA200 (chưa MA50), cách đáy 52w +104,9%. Tin doanh thu Xanh SM/GSM 17.400 tỷ vượt Mai Linh+Vinasun+Grab cộng lại (17:08). BCTC Q1/2026 vẫn CORRUPT (carry-over) — không dùng làm căn cứ.
+- VNM corroborate: RS composite 75,93 STRONG, above MA50 (chưa MA200), cách đáy 52w +7,48%. Tin lãi kỷ lục gần 3.200 tỷ đồng quý này, công ty con Campuchia tăng trưởng 3 chữ số (17:24, 2 bài báo). [MỚI] BCTC Q1/2026 lần đầu phát hiện CORRUPT (total_assets=0) — mở rộng nhóm VNM/VEA pattern OCR lỗi đã biết sang chính VNM.
+- CLAIM-TRUTH GATE: không có Bash tool phiên này → cross-check thủ công claim_text VIC/VNM vs get_evidence_summary/get_relative_strength/get_roc_momentum/get_52w_proximity/get_bctc_full/get_market_snapshot sống, khớp 100% trước create_prediction_claim.
+- [Notebook hygiene] Prune "## Cycle — 13:59 UTC" (07-12, xem entry blocked trên) đã resolve carry-over Step-1c; AC-2b (9 sub-block dưới heading 13:52 UTC) CHƯA prune chu kỳ này (còn nhiều headroom <200L) — vẫn carry-over chờ dev-team làm rõ ý định.
+- send_telegram WORK ✓ | log_agent_work id=1646 completed ✓ | git commit: sẽ thử qua commit-mutex skill; nếu không có Bash/git tool → SKIPPED (ghi qua Edit tool trực tiếp).
