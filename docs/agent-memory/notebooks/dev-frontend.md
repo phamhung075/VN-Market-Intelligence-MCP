@@ -1,31 +1,6 @@
 # dev-frontend notebook
 
-**Last updated:** 2026-07-25 | **Sprint:** FRONTEND-FRESHNESS-TRANSPARENCY
-
----
-
-## Session: 2026-07-24 (FACTORY-FRONTEND-split-orchestration — BOUNDED-1 idle-pickup)
-
-**FACTORY-FRONTEND-split-orchestration DONE-CODE (rebuild-verify deferred) — 1325L route split into domain types/staleness/formatter + 11 components**
-
-Zone health: 95 test files; 2110 pass / 2 fail (pre-existing QUE-TOOLTIP, unrelated — confirmed still red with the change stashed out via `git stash push -u -- apps/frontend` A/B); tsc 0 errors | HEALTHY
-
-Task: sequel to FACTORY-FRONTEND-split-market-summaries — split `dashboard.orchestration.tsx` (fleet-monitoring dashboard, POLL_MS=5000 polling). Ticket added an explicit test-first constraint: a render smoke test confirmed RED (module not found) BEFORE each new component file was created, GREEN immediately after.
-
-Files created:
-- `domain/orchestration/types.ts` — 12 DTO types moved verbatim (StepDto, DecisionsDto, TaskStatus, TaskRow, TaskBoardCounts, TaskBoard, SignalRow, SignalQueue, SprintGoal, Narrative, Head, OrchState)
-- `domain/orchestration/staleness.ts` — STALE_THRESHOLD_MS + `isStale(tsField, now)` predicate, 9 unit tests
-- `domain/formatters/task-status-classes.ts` — `taskStatusClasses` (shared by 2 split-out components — moved here, not colocated, to avoid a components<->components circular import), 8 unit tests
-- `components/orchestration/{HeadPanel,TaskGroup,StepCard,DecisionAccordion,DoneTaskRow,DoneTaskGroup,doneTaskGrid,TaskBoard,SignalQueue,SprintGoal,Narrative}.tsx` — 11 files all <=120L (DoneTaskGroup, originally ~158L combined, split a 2nd time into shell 104L + row 88L, sharing `DONE_GRID` via a non-JSX const module)
-
-Files updated:
-- `routes/dashboard.orchestration.tsx` — thin composition: types (re-exported) + loader (POLL_MS=5000 + fetch untouched, grep-confirmed) + StaleBadge/Section + 5 panel imports. TASK-DASH-CRON-2 Cron Recheck Table left untouched (out of ticket scope; a pre-existing test imports its exports directly from the route)
-- `vite.config.ts` — test.include gained `app/domain/orchestration/**/*.test.{ts,tsx}` (the new staleness test was otherwise invisible to Vitest's discovery glob — root-cause fix mirroring the existing `domain/formatters` entry)
-- `docs/architecture/microservice/frontend/domain-model.md` — split documented (mirrors market-summaries/dashboard-analysis precedent sections)
-
-Commit: see decision journal `sprint-FACTORY-FRONTEND-split-orchestration-dev-frontend.md` | tsc: 0 errors | vitest: 2110 pass / 2112 (same 2 pre-existing fail as baseline)
-
-rebuild_required=true but SCOPE-BOUND to CODE-ONLY per task — NO rebuild performed (user-gated, one just ran). Live Playwright G12 render-gate DEFERRED to next rebuild batch; board flipped `in_progress`→`review`, `next_agent=qa`.
+**Last updated:** 2026-07-25 | **Sprint:** FIX-PREDCLAIM-DASHBOARD-HITRATE-HONESTY
 
 ---
 
@@ -74,6 +49,26 @@ Lesson: naive DB timestamps ("YYYY-MM-DD HH:MM:SS", no offset) must be parsed as
 
 ---
 
-**Current state:** 96 test files; 2125 pass / 2 fail (pre-existing QUE-TOOLTIP schema); tsc 0 errors.
+## Session: 2026-07-25 (FIX-PREDCLAIM-DASHBOARD-HITRATE-HONESTY — BOUNDED-1 idle-pickup)
+
+**DONE-CODE (rebuild-verify pending, ops-gated) — calibration banner adds denominator/staleness/breakdown/exclusion context, zero hitRate recomputation**
+
+Zone health: 96 test files; 2150 pass / 2 fail (same pre-existing QUE-TOOLTIP, confirmed via git-stash A/B); tsc 0 errors | HEALTHY
+
+Task: bare `66,7%` hit-rate badge (4/6 over 17 total, frozen since 2026-06-21) read as live accuracy. 5 deliverables, all in `routes/dashboard.prediction-claims.tsx`: (a) inline denominator "4 đúng / 2 sai trên 6 dự báo đã chấm điểm", (b) data-driven staleness marker (`STALE_THRESHOLD_DAYS=14`), (c) exclusion explanation at point of use (tooltip on aggregate chip + note on excluded `ClaimCard`s), (d) full disposition breakdown line, (e) plain-VN wording (no jargon added, no decimals introduced).
+
+Key design decision: `fetchPredictionClaimsData` now does a DOUBLE FETCH when an `?outcome=` filter is active — an always-unfiltered "context" call (source of `calibration` + new `lastScoredAt`) plus the existing filtered call for the display list. Without this, the staleness marker (needs correct/wrong `resolvedAt`) would silently vanish on the "Đang chờ"/"Loại trừ" tabs — the CalibrationBanner renders on every filter tab, unfiltered. Zero-cost on the "Tất cả" default view (still exactly 1 fetch, confirmed by test).
+
+`claims[].exclusionReason` added as OPTIONAL type field (`resolveExclusionReason` consumes when present, `GENERIC_EXCLUSION_REASON` fallback otherwise) — producer (FIX-PREDCLAIM-BACKFILL-NULL-CREATIONPRICE deliverable c) NOT YET SHIPPED; live-probed zero rows carry it today, confirmed via `curl :3000/api/prediction-claims?outcome=excluded`.
+
+**PLAYWRIGHT_PORT gotcha hit again (see line below) — port 3001 is the live Docker container (stale image); re-ran G12 with `PLAYWRIGHT_PORT=3011` against a fresh `npm run dev` to get real evidence: 4/4 pass.** Also live-verified the ACTUAL rendered SSR HTML on a throwaway `PORT=3012 npm run dev` against the real (unmodified) mcp-server on :3000 — denominator/breakdown/staleness/exclusion-reason all confirmed rendering with live values (staleness: "21/6/2026 (33 ngày trước)", matching root_cause's 2026-06-21 freeze exactly, non-hardcoded).
+
+Files: `routes/dashboard.prediction-claims.tsx` (+9 exported pure helpers: `computeLastScoredAt`, `formatHitRateDenominator`, `formatDispositionBreakdown`, `describeStaleness`, `resolveExclusionReason`, `STALE_THRESHOLD_DAYS`, `GENERIC_EXCLUSION_REASON`), `__tests__/task17-prediction-claims-loader.test.ts` (+25 tests, Suites 16-21), `docs/architecture/microservice/frontend/api-reference.md` (new § Prediction Claims Trust-Surface Context — route wasn't in the table at all before).
+
+rebuild_required=true, NOT performed (ops-gated, not my zone). Board flipped `in_progress`→`review`, `next_agent=qa`, review_note flags PENDING-REBUILD for live-container re-verification — mirrors sibling FIX-PREDCLAIM-CREATIONPRICE-UNGATE-ZOD-CONTRACT precedent.
+
+---
+
+**Current state:** 96 test files; 2150 pass / 2 fail (pre-existing QUE-TOOLTIP schema); tsc 0 errors.
 **Tech stack:** Remix 2 + TypeScript 5 strict + Tailwind 3 + shadcn/ui + Vitest + Playwright
-**Key patterns:** useFetcher self-fetching zones; FreshnessBadge(intraday/daily/weekly SLA); safeFetch bounded; honest-NULL (null_reason + gray badge, never fabricate); DDD layers enforced; route-colocated DTO/parser/formatter families kept textually distinct across merged pages (do-not-homogenize); Playwright G12 gate must run with an unused `PLAYWRIGHT_PORT` override if the live frontend Docker container occupies :3001 (reuseExistingServer piggybacks on it otherwise, false-greening against stale code). Shared pure helpers used by >=2 sibling split-out components go to `domain/` (formatters or a feature-scoped `domain/<feature>/`), never colocated in one sibling — avoids components<->components circular imports (FACTORY-FRONTEND-split-orchestration). quality-audit FRESH checks are now LIVE-PROBED (not static) — an undocumented-field fallback is always capped NEEDS_REVIEW, never a certified PASS, to prevent compute-time fields masquerading as real recency (gen-frontend-page-checks.mjs).
+**Key patterns:** useFetcher self-fetching zones; FreshnessBadge(intraday/daily/weekly SLA); safeFetch bounded; honest-NULL (null_reason + gray badge, never fabricate); DDD layers enforced; route-colocated DTO/parser/formatter families kept textually distinct across merged pages (do-not-homogenize); Playwright G12 gate must run with an unused `PLAYWRIGHT_PORT` override if the live frontend Docker container occupies :3001 (reuseExistingServer piggybacks on it otherwise, false-greening against stale code) — reconfirmed 2026-07-25. quality-audit FRESH checks are now LIVE-PROBED (not static) — an undocumented-field fallback is always capped NEEDS_REVIEW, never a certified PASS, to prevent compute-time fields masquerading as real recency (gen-frontend-page-checks.mjs).
