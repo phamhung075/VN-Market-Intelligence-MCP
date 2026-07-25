@@ -1,31 +1,6 @@
 # dev-frontend notebook
 
-**Last updated:** 2026-07-25 | **Sprint:** FIX-PREDCLAIM-DASHBOARD-HITRATE-HONESTY
-
----
-
-## Session: 2026-07-24 (FACTORY-FRONTEND-split-market-summaries — BOUNDED-1 idle-pickup)
-
-**FACTORY-FRONTEND-split-market-summaries DONE-CODE (rebuild-verify deferred) — 955L route split into domain formatters + 12 components**
-
-Zone health: 83 test files; 2047 pass / 2 fail (pre-existing QUE-TOOLTIP, unrelated — confirmed still red with this change stashed out via git-stash A/B); tsc 0 errors | HEALTHY
-
-Task: same split pattern as FACTORY-FRONTEND-split-dashboard-analysis — `dashboard.market-summaries.tsx` (list/detail dual-mode route).
-
-Files created:
-- `domain/market-summaries/format.ts` — 9 pure helpers moved verbatim (PERIOD_LABELS, formatDateRange, formatChangePct, changePctColorClass, directionArrow, directionArrowColorClass, outlookLabel, outlookColorClass, filterTickers). Ticket named only 5; extended to all 9 to avoid a route<->components circular import (the other 4 feed the split-out table components) — see decision journal S1/S2.
-- `components/market-summaries/{PeriodBadge,CountChip,PeriodPicker,SummaryCard,TickerFilteredTable,KeyEventsSection,SectionHeader,ListView,StockPerformanceTable,RecommendationsTable,DetailView,DetailContent}.tsx` — 12 files, all <=120L (DetailView needed a 2nd split into DetailView+DetailContent after 1st pass landed at 131L)
-
-Files updated:
-- `routes/dashboard.market-summaries.tsx` — 955L→324L; types + `fetchSummaries` (verified inline here, NOT in `lib/api/client.ts` as the ticket assumed — left in place) + loader + thin ListView/DetailView composition remain; re-exports the 9 domain helpers for backward-compat
-- `__tests__/task17-market-summaries-loader.test.ts` — 9 helper imports re-pointed `~/routes/...` → `~/domain/market-summaries/format`; fetchSummaries+types unchanged
-- `docs/architecture/microservice/frontend/domain-model.md` — split documented (mirrors dashboard.analysis.tsx precedent section)
-
-Equivalence proof (scratch, uncommitted, deleted after run): reference-identity (route re-export === domain export, same fn object) + golden-value assertions for all 9 helpers + proof canonical `change-pct.ts`/`direction-arrow.ts` return OBJECTS with `text-green-400` (confirms NOT reused) — 19/19 pass.
-
-Commit: `e2f18a897` | tsc: 0 errors | vitest: 2047 pass / 2049 (same 2 pre-existing fail as baseline)
-
-rebuild_required=true but SCOPE-BOUND to CODE-ONLY per task — NO rebuild performed (user-gated, one just ran). Live Playwright G12 render-gate DEFERRED to next rebuild batch; board flipped `in_progress`→`review`, `next_agent=qa`.
+**Last updated:** 2026-07-25 | **Sprint:** FE-PG-QUALITY-AUDIT-LASTVERIFIED-RENDER-FIX
 
 ---
 
@@ -69,6 +44,26 @@ rebuild_required=true, NOT performed (ops-gated, not my zone). Board flipped `in
 
 ---
 
-**Current state:** 96 test files; 2150 pass / 2 fail (pre-existing QUE-TOOLTIP schema); tsc 0 errors.
+## Session: 2026-07-25 (FE-PG-QUALITY-AUDIT-LASTVERIFIED-RENDER-FIX — BOUNDED-1 idle-pickup)
+
+**DONE-CODE (rebuild-verify pending, user-gated) — per-check `last_verified` + 7d staleness badge on `/dashboard/quality-audit`**
+
+Zone health: 97 test files; 2166 pass / 2 fail (same pre-existing QUE-TOOLTIP, confirmed via git-stash A/B); tsc 0 errors | HEALTHY
+
+Task: every check rendered identically regardless of `last_verified` age (264/442 checks 45d stale, invisible). AC (a)-(d): per-check timestamp shown; >7d visually distinguishable without hover; all 4 live shapes tolerated (bare date/sec/ms/µs — the µs row is `FR-FRESH-02`); missing/unparseable → explicit UNKNOWN, never a fresh-looking blank.
+
+New `app/domain/formatters/check-verification.ts`: `classifyCheckVerification(unknown, now)` wraps the pre-existing `classifyStaleBadge` with a `typeof === "string"` guard (payload is a pass-through cast, `last_verified` is `unknown` at the type boundary) + fixed `CHECK_VERIFICATION_WINDOW_MINUTES=10080` (7d D-PAGE window, page-freshness.md). `classifyStaleBadge` already tolerated all 4 shapes (confirmed via `new Date()` node probe before writing code — none NaN). New `LastVerifiedBadge` in the route: green+date (fresh) / red+date+"stale" text (stale, never color-only) / grey "UNKNOWN". `now` threaded from the loader's existing `fetchedAt` (no `new Date()` in render — avoids hydration mismatch).
+
+Verified against the REAL served path (not a fixture): 16 new unit tests (check-verification.test.ts) + new `tests/e2e/quality-audit-lastverified.spec.ts` (3 tests: no-crash, all-4-shapes stale bucketing, fresh-has-no-stale-marker) — run via `PLAYWRIGHT_PORT=3011 FRONTEND_ORIGIN=http://localhost:3011 npx playwright test` against a throwaway dev server (live `:3001` container predates this commit, rebuild user-gated) hitting the real, unmodified mcp-server `:3000` — its live data naturally contains all 4 shapes already, no synthetic fixture needed. 7/7 e2e green (3 new + existing 3 render-check + 1 smoke), G12 gate intact.
+
+Files: `domain/formatters/check-verification.ts` (+40L, new) + `.test.ts` (+108L, new), `routes/dashboard.quality-audit.tsx` (+92L: type field, `LastVerifiedBadge`, column, `now` threading), `tests/e2e/quality-audit-lastverified.spec.ts` (+90L, new), `docs/architecture/microservice/frontend/{domain-model,api-reference}.md` updated.
+
+Aside (not fixed, out of scope): `AuditCapability.capability_id` is dead — the wire field is `cap_id`, every `key={cap.capability_id}` is `undefined` at runtime (React key-warning only, no functional break). Noted in domain-model.md for whoever picks it up.
+
+rebuild_required=true, NOT performed (user-gated). Board flipped `in_progress`→`review`, `next_agent=qa`, review_note flags PENDING-REBUILD — code+behavior proven live against real mcp-server data via throwaway dev server, only the named `:3001` container deploy is pending.
+
+---
+
+**Current state:** 97 test files; 2166 pass / 2 fail (pre-existing QUE-TOOLTIP schema); tsc 0 errors.
 **Tech stack:** Remix 2 + TypeScript 5 strict + Tailwind 3 + shadcn/ui + Vitest + Playwright
-**Key patterns:** useFetcher self-fetching zones; FreshnessBadge(intraday/daily/weekly SLA); safeFetch bounded; honest-NULL (null_reason + gray badge, never fabricate); DDD layers enforced; route-colocated DTO/parser/formatter families kept textually distinct across merged pages (do-not-homogenize); Playwright G12 gate must run with an unused `PLAYWRIGHT_PORT` override if the live frontend Docker container occupies :3001 (reuseExistingServer piggybacks on it otherwise, false-greening against stale code) — reconfirmed 2026-07-25. quality-audit FRESH checks are now LIVE-PROBED (not static) — an undocumented-field fallback is always capped NEEDS_REVIEW, never a certified PASS, to prevent compute-time fields masquerading as real recency (gen-frontend-page-checks.mjs).
+**Key patterns:** useFetcher self-fetching zones; FreshnessBadge(intraday/daily/weekly SLA); safeFetch bounded; honest-NULL (null_reason + gray badge, never fabricate); DDD layers enforced; route-colocated DTO/parser/formatter families kept textually distinct across merged pages (do-not-homogenize); Playwright G12 gate must run with an unused `PLAYWRIGHT_PORT` override if the live frontend Docker container occupies :3001 (reuseExistingServer piggybacks on it otherwise, false-greening against stale code) — reconfirmed 2026-07-25 (twice). quality-audit FRESH checks are LIVE-PROBED (not static); its per-check `last_verified` staleness (distinct field, 7d window) is classified via `check-verification.ts` — never conflate the two.
