@@ -1,9 +1,17 @@
-<!-- size-justification: 66L — under the 120L flag threshold, marker kept for context: atomic checklist-sync sub-flow (source-union → diff-against-live → hard verification rules → gap-escalation), 4 sequential steps each consuming the prior's output. -->
+<!-- size-justification: 74L — under the 120L flag threshold, marker kept for context: atomic checklist-sync sub-flow (source-union → diff-against-live → hard verification rules → gap-escalation), 4 sequential steps each consuming the prior's output. +8L (2026-07-25, agent-father, HANDS-OFF lifted for this one edit per coordinator instruction): scoped signal trigger consuming system-auditor's new D-PAGE Tier-5 rotation (data_stale/system_issue signal_queue rows) — closes the loop so a D-PAGE finding reaches a re-verification; quality-checklist.json itself untouched by this edit, qa remains its sole writer. -->
 > Parent: [./main.md](./main.md)
 
 # QA — Quality-Audit Checklist Sync (sub-flow)
 
-**Trigger:** on-demand — user/PO/router names the "quality-audit checklist" or "freshness demand" sync explicitly; OR after `docs/architecture-briefs/2026-06-10-quality-audit-framework.md` or `docs/data/frontend-data-coverage-map.json` changes (check via `git log -1 --format=%cI -- <path>` against last sync's `_updated_at`). No cron arms this today — if a standing cadence turns out to be warranted, name it in RETURN; do not self-arm one.
+**Trigger:** on-demand — user/PO/router names the "quality-audit checklist" or "freshness demand" sync explicitly; OR after `docs/architecture-briefs/2026-06-10-quality-audit-framework.md` or `docs/data/frontend-data-coverage-map.json` changes (check via `git log -1 --format=%cI -- <path>` against last sync's `_updated_at`); OR a scoped signal from system-auditor's D-PAGE rotation (see §Scoped signal trigger below, added 2026-07-25). No cron arms a full sync today — if a standing cadence turns out to be warranted, name it in RETURN; do not self-arm one.
+
+### Scoped signal trigger (D-PAGE, 2026-07-25 — closes the loop, `docs/data/quality-checklist.json` stays 100% qa-written)
+
+`docs/data/orch/orch-state.json .signal_queue.rows[]` may carry a `status: "NEW"` row with `type` in `{data_stale, system_issue}` whose `dedup_key`/`payload.title` ends in `PG-DRIFT`, `PG-STALE`, or `PG-MAP-SELF` — these come from system-auditor's D-PAGE Tier-5 rotation (`docs/agents/system-auditor/flow/page-freshness.md`, read-only on this file, never writes it). Check for these at the top of every qa cycle (same cadence as any other signal_queue scan), not only when a full sync is separately requested.
+
+- **Scoped, not full:** sync ONLY the `check_id`(s) named in the row's `dedup_key`/`payload` — run Steps 2–3 for those check_ids alone, skip the Step 1 full-source union. `PG-MAP-SELF` has no single `check_id` — treat it as re-triggering Step 1's coverage-map source read for any `CAP-FE-PAGE-*` rows whose `last_verified` predates the map's current commit.
+- **Ack after consuming:** once the referenced check_id(s) are re-verified (or confirmed unreachable → `NEEDS_REVIEW`), mark the row `status: "NEW"` → `"READ"` via `jq '<transform>' docs/data/orch/orch-state.json | bash scripts/orch-apply.sh` (same write path as Step 4 — never a raw edit). Do not mark READ before acting on it.
+- This is the path by which a D-PAGE finding actually reaches a checklist re-verification — system-auditor only ever detects and signals; this sub-flow remains the sole writer of `quality-checklist.json`.
 
 ## Input
 None required beyond the trigger. Optional: a specific `check_id`/`cap_id` scope from the requester (else full sync).
