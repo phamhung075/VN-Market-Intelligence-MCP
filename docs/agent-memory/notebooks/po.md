@@ -1,50 +1,37 @@
 # PO Notebook
 
-_Last: 2026-07-25T12:57Z (router triage-decision — A-30 veto-gate defect: MINT, 1 row, 1 atomic write)_
+_Last: 2026-07-25T14:31Z (dev-team Step 1 triage — signal_queue TRIAGED strand: 1 MINT + 1 launchd ACK; premise of the ask partly REFUTED)_
 
-## Tick 2026-07-25T12:50–12:57Z
-
-| Input | Disposition |
-|---|---|
-| Router finding: A-30 clause-4 veto `VmHWM > VmRSS` is non-discriminating | **MINT** `FIX-AUDITOR-A30-VMHWM-VETO-TAUTOLOGY-FALSE-NEGATIVE` (P1/S/`cross-service/`, `architect`, `supervised`+`plan_only`, `recurring_bug_count:5`) |
-| Fold into `FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE`? | **NO** — different file, different plane, *opposite* mechanism (blindness vs veto). That row's own note pre-emptively forbade the merge. Back-ref added instead |
-| Fold into `FIX-VPS-HEALTH-OFFHOURS-MASK-FALSE-GREEN`? | **NO** — same class, unrelated substance (`apps/mcp-server/` TS). Would force `zone:multi` + architect split. `related` only |
-| Reopen `FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE` (DONE)? | **NO** — genuinely done on its own axis; reopening destroys two audit trails |
-| Board totals | `task_total` 652→653, `signal_total` 125→125, ids 815/815 unique, `.head` untouched |
-
-**Ruling:** an FP-suppression fix produced a false negative on the first tick where the check mattered. Journal: `docs/agent-memory/decisions/triage-20260725T1254Z-po.md`. One `orch-apply` transform carried both the mint and the sibling back-reference — one CAS under live concurrent writers.
-
-## Tick 2026-07-25T12:27–12:34Z
+## Tick 2026-07-25T14:07–14:31Z
 
 | Input | Disposition |
 |---|---|
-| `.head = {status:"review", …}` wedging the whole dispatch chain | **RESET → idle** via `orch-apply.sh` — contract restoration, not a judgement call |
-| …and its root cause: `head.status` has no write-time gate anywhere | **MINT** `FIX-ORCHAPPLY-HEAD-STATUS-WRITE-GATE` (batch #1) — prose→gate |
-| Signal: agent_signals TTL 120m < alert-commander sweep 240m | **MINT** `FIX-AGENTSIGNALS-TTL-SHORTER-THAN-CONSUMER-CADENCE` (no prior art) |
-| Signal: `promoteCycleSnapshot` HH:MM mismatch | **FOLD** → `UC-SDF-P2` (title already named it) — 0 rows minted |
-| Finding B: drain-report prints `[PASS]` on 75 undrained rows | **MINT** `FIX-DRAINREPORT-PREDICATE-MEASURES-ARRIVAL-NOT-DRAINAGE` |
-| Finding C: signal_queue PRUNE matches 0 rows | **FOLD** → `TE-T27` + sharpened root cause — 0 rows minted |
-| Signal: pipeline-resume duplicate spawn | **MINT** `FIX-DISPATCHWRAP-LOCK-SPAWN-SCOPED-NOT-WORK-SCOPED` (P0) |
-| `FIX-PREDCLAIM-BACKFILL-NULL-CREATIONPRICE` (3d deadline) | `depends` **DELETED**, P1→**P0**, scope narrowed to deliverable (a) |
+| Tick claim: `triaged` is an improvised status with NO contract (leg 1) | **REFUTED.** The grep was `'"triaged"'` — lowercase + double-quoted. The contract writes it uppercase, unquoted, in prose: `system-auditor/handlers.md:240`, `po/flow/scripts-registry.md:44`, `cron-db-data-integrity.md:130,138`. TRIAGED is canonical, deliberate, and **non-terminal by design** |
+| Proposed fix (a): add `triaged`+`RETRACTED` to `TERMINAL_SIGNAL_STATUSES` | **REJECTED** — would evict rows whose tracked work is still open; contradicts all three contract sites |
+| Proposed fix (b): strict `z.enum` on signal status ("the definitive fix") | **REJECTED** — already formally refuted 2026-07-12 (`ultracode-workflow-improvement-audit.md:1155` item 5). orch-apply Zod-validates the WHOLE doc, so one legit TRIAGED flip post-tightening hard-rejects **all** subsequent orch-state writes fleet-wide (`project_mcp_server_write_wedge`) |
+| Real root cause | **MINT** `FIX-SIGNALQUEUE-TRIAGED-NO-EXIT-TRANSITION` → `backlog` (SPRINT-S/high/`cross-service/`/`architect`). TRIAGED has **no exit transition**: `pm/flow/task-archive.md:118` matches `.status=="READ"` only; TRIAGED falls to the `else .` no-op — and `:122` then echoes closure success **unconditionally**, a silent false-green that hid the skip |
+| Dedup | 5 adjacent rows the prior-art list omitted were read and cleared (`FIX-BACKLOG-TERMINAL-ROW-DRIFT-EVICT-BLIND` = isomorphic bug, other plane; `P1-DETECTOR-CLOSURE-TRIAGE-SIGNALS` = forward half of the same mechanism, sequence it first; +3). No duplicate |
+| Launchd: `com.vn-market.cowork-guaranteed-slot-firer` exit-143 unacked → full auditor spawn every ~30min | **ACK option (a)** against `FIX-GUARANTEED-SLOT-FIRER-FANOUT-TRUNCATION` (verified BACKLOG, so not stale-on-arrival). Probe re-run → `ALL_GREEN` |
+| Board totals | `task_total` 654→655, `signal_total` 125→125, backlog 388→389, row read back from `.task_board` = **lane `backlog`, exactly 1 occurrence** |
+
+**Ruling:** the reported symptom was real (124 rows, all >24h, hot file 1.9MB) but both proposed causes and both proposed fixes were wrong. Journal: `docs/agent-memory/decisions/triage-20260725T1407Z-po.md`.
 
 ## Lessons
 
-- **⚠️ A veto stacked on an already-discriminating check must itself discriminate, or it silently converts that check into a constant.** `VmHWM` is a *monotone high-water mark*, so `VmHWM > VmRSS` is false only in the knife-edge instant where current RSS equals the all-time peak — a **tautology**, not a weak heuristic. It returned the identical verdict at **98.1% of cap** and at **10.4% of cap** on a 3-minute-old container. Triage generalisation: when a fix adds a suppressor, ask *what input would make it NOT fire* — if you cannot name one, it is a constant and the check it guards is dead.
-- **⚠️ Verify the ORDER of a guard, not just its condition.** The router reported the predicate; reading clause 4 myself surfaced a second defect it had not — the veto is ordered **before** the verdict mapping, so it also pre-empts `OOMKilled=true → CRITICAL`. A post-OOM restarted process shows `VmHWM > VmRSS` almost immediately, so the confirmed-OOM branch was reachable only when VM data was *unavailable*. Severity ordering is part of the predicate.
-- **My own prior note was the decisive fold-vs-mint evidence.** The scope row I minted at 08:56Z already said "adding a second predicate in the same change would confound the FP evidence for the first; mint it separately later." Four hours later the answer to a fold question was sitting in a field I wrote. **Read the neighbour row's `note`/`scope_out`, not just its title** — the title says what a row *is*; `scope_out` says what it has already *refused*.
-- **Bound a design you are not entitled to choose with an INFORMATION-CONTENT test, not a threshold.** Told not to prescribe the predicate, and holding no data to choose, I made the acceptance criterion: return **different** verdicts for the 98.1%-of-cap and 10.4%-of-cap samples. That rejects every non-discriminating candidate by construction while leaving formula and number to the architect — and avoids re-introducing the flat-threshold churn the converge row eliminated (rag-service legitimately plateaus ~95-99%).
-- **⚠️ A shipped fix that is PROSE + a SYNTHETIC fixture is not a shipped fix.** `FIX-EXECTIER-HEADSYNC-BRANCHNULL-REVIEW-IDLE` amended a flow doc and added a verify script with a synthetic fixture — both PASS; two days later `dev-mcp-server` wedged the board anyway. `HeadSchema.status` is `z.string()` + `.passthrough()` — no enum, no gate. Enforcement must move from prose into `scripts/orch-apply.sh`.
-- **Prior-art grep on the MECHANISM words, not the symptom words.** `SNAPSHOT|PROMOTE|CYCLE-SNAPSHOT` on `.id` returned nothing; the row was `UC-SDF-P2`, whose *title* carried the mechanism.
-- **Ran the detector before trusting its verdict — it was lying.** `devteam-review-lane-drain-report.sh` printed `[PASS]` while its own table listed 75 rows and `qa[]==0`: a disjunction (one young row green-lights the lane) *and* it ages rows by `updated_at`, which any edit bumps — including the triage reading it.
+- **⚠️ A grep that is case- and quote-sensitive can manufacture a "this exists in no contract" conclusion.** `'"triaged"'` returned zero while `TRIAGED` was documented in four places. The upstream agent had already caught one grep artifact (zsh glob-expanding `--include`) and still shipped a second one in the same command. **Two independent artifacts in one grep is the norm, not the exception — vary case AND quoting before concluding absence.**
+- **⚠️ "No consumer in either prune path" can be the DESIGN, not the gap.** TRIAGED is excluded from both prune lists deliberately because it means *active*. Reading the exclusion as a bug and "fixing" it would have evicted live work. Before calling a missing entry a gap, find out who *chose* to leave it out.
+- **⚠️ Check whether the fix you are about to mint was already refuted.** Candidate (b) was killed on write-wedge grounds 13 days earlier in an architecture brief. Prior-art grep must cover `docs/architecture-briefs/` verifier rulings, not just `.task_board` ids — the board records what was *minted*, not what was *rejected and why*.
+- **A no-op guarded by an unconditional success echo is invisible.** `task-archive.md:122` prints `Signal closure: SID READ→RESOLVED` even when its `map` matched zero rows. Every closure of a TRIAGED row has been logging success while doing nothing.
+- **"Count only grows" deserves its own timestamp check.** Newest TRIAGED row is 2026-07-23T18:33Z — ~44h stale. This is a *static* 124-row strand, not an accelerating fire; priority set high, not P0, on that basis.
+- **The evidence for the fix's tractability was in the rows themselves.** 122/124 carry `triaged_by`, but only 49 carry `disposition` and 0 carry a structured `tracked_by` — so ~64% have no machine-readable back-reference. That number is what makes this an architect ruling rather than a mechanical patch.
 
 ## Carry-over
 
-- **Sequence `FIX-AUDITOR-A30-VMHWM-VETO-TAUTOLOGY-FALSE-NEGATIVE` AHEAD of `FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE`.** They touch the same detector from two sides. Widening *which* containers get inspected while the interpretation layer still vetoes every ESCALATE just multiplies a constant. If the architect concludes they should ship together, that must be stated explicitly in the brief — never by absorbing one into the other.
-- **Do NOT let any downstream row quote an mcp-server pp/h growth rate or an 85% ETA.** Today's windows gave 7.25 / ~3 / 1.6 / ~4.7 pp/h and the 1.6 is formally RETRACTED. Settling it needs process-level RSS logging *inside* the container across several cycles. The 12:45:09Z swap reset the clock — the climb series from 12:47:46Z is the cleanest window available and degrades with every restart.
-- **The 12:45:09Z mcp-server swap is INTERIM MITIGATION, not a fix.** `FIX-MCP-MEMORY-CODE-LEAK` (BACKLOG/high) has been open since 2026-06-09 and is untouched by it. Repair the detector and leave the leak, and the repaired detector will simply fire correctly and repeatedly.
-- **`FIX-DISPATCHWRAP-LOCK-SPAWN-SCOPED-NOT-WORK-SCOPED` remains the highest-blast-radius row I have minted.** All agents are backgrounded by default and the dispatcher-wrap releases `task:<id>` on spawn-*return* — so the duplicate-spawn guard is unarmed for the entire life of every task. Session-scoping does not save it: the running agent is a subagent of the same session, so a re-claim reads re-entrant, not collision.
-- **Do NOT let QA close `FIX-PREDCLAIM-CREATIONPRICE-UNGATE-ZOD-CONTRACT` via host CLI / direct sqlite.** Live acceptance is `REBUILD_REQUIRED` (user-gated). Correct QA outcome while unrebuilt is **BLOCKED-ON-REBUILD**, never PASS (`feedback_host_cli_integrity_check_false_ok_verify_through_runtime`).
-- **`UC-SDF-P2` must ship BEFORE `UC-CDC-P1`.** UC-CDC-P1 treats a symptom of UC-SDF-P2's cause; with no candidate file ever found, the gate is not the binding constraint.
-- **`FIX-AGENTSIGNALS-EXPIRED-GC-CRON` is in TENSION with the new TTL row** — it wants expired rows deleted *faster*; the TTL row says rows expire *before* their only consumer wakes. Whoever takes either must read both.
-- **`ready[]` (44) / `review[]` (105) still not draining.** The head wedge cleared at 12:34Z and `.head` has since moved to a real BOUNDED-1 claim (`FIX-PREDCLAIM-BACKFILL-NULL-CREATIONPRICE`, 12:45:28Z) — so the chain IS alive. If `review[]` has not strictly decreased by the next tick, the QA-Drain consumer itself is broken, which is a new finding.
-- **Nothing pushed. No agent dispatched, no container touched, read-only on runtime throughout.**
+- **`FIX-SIGNALQUEUE-TRIAGED-NO-EXIT-TRANSITION` needs an ARCHITECT SEMANTIC RULING before code.** Two documented readings disagree: `handlers.md:240` says TRIAGED = work still open (keep hot); observed usage (row `po-20260720T052606`: *"Closing NEW so it stops resurfacing every PO triage tick"*) says TRIAGED = folded into a board row, stop showing me. The fix differs per reading, and the 75 undispositioned rows resolve under neither.
+- **Sequence `P1-DETECTOR-CLOSURE-TRIAGE-SIGNALS` BEFORE it** — that row wires PO to stamp `origin_signal_id` (forward half); the new row fixes the predicate that consumes it (close half). Backfill has no back-reference for new rows until the forward half ships.
+- **`FIX-BACKLOG-TERMINAL-ROW-DRIFT-EVICT-BLIND` is the same bug on the `task_board.backlog[]` plane.** Same shape, different array — consider one shared architect ruling covering both rather than two divergent fixes.
+- **The launchd ACK is label-granular, not signature-granular.** A crash-at-startup or not-loaded failure of `com.vn-market.cowork-guaranteed-slot-firer` is now ALSO suppressed. Mitigated only by the ledger's STALENESS RULE: **remove that entry the moment FANOUT-TRUNCATION reaches DONE_VERIFIED.**
+- **The "600s background tasks" line is NOT live evidence.** `cowork-guaranteed-slot-firer-error.log` mtime is 2026-07-18T22:27 — unchanged. Today's event was the OUTER 1800s bound only. Do not cite that line as a same-day observation.
+- **Do NOT let QA close `FIX-PREDCLAIM-CREATIONPRICE-UNGATE-ZOD-CONTRACT` via host CLI / direct sqlite.** Live acceptance is `REBUILD_REQUIRED` (user-gated); correct outcome while unrebuilt is **BLOCKED-ON-REBUILD**, never PASS.
+- **`ready[]` / `review[]` drainage still unverified this tick** — not re-measured; carry forward from 12:57Z.
+- **Nothing pushed. No agent dispatched, no container touched. Runtime reads only; probe run with `HEARTBEAT_FILE_PATH` redirected to scratch so the live heartbeat was untouched (still 13:44:06Z).**

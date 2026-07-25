@@ -10,6 +10,12 @@
       "label": "com.vn-market.fleet-push",
       "tracked_by": "FIX-FLEET-PUSH-LAUNCHD-EXCONFIG-SILENT-DEAD",
       "acked_at": "2026-07-23T18:51:09Z"
+    },
+    {
+      "label": "com.vn-market.cowork-guaranteed-slot-firer",
+      "tracked_by": "FIX-GUARANTEED-SLOT-FIRER-FANOUT-TRUNCATION",
+      "acked_at": "2026-07-25T14:26:58Z",
+      "signature": "exit-status 143 = OUTER bound (b) of the tracked row: firer _bounded_exec SIGTERMs claude at FIRE_TIMEOUT_SECONDS=1800. Verified live 2026-07-25: firer.log 13:22:25Z invoking (bounded 1800s) slot=fb-weekend -> 13:52:25Z flow exited exit_code=143 (exactly 1800s); launchctl last exit code = 143. Same signature as the rows own reproducer (chef-morning 1800s SIGTERM 2026-07-22). ACK COVERS THIS LABELS non-zero-exit failures only in the sense the ledger allows (label-granular); a not-loaded/crash-at-startup failure of this label would also be suppressed - accepted tradeoff, mitigated by the STALENESS RULE above."
     }
   ]
 }
