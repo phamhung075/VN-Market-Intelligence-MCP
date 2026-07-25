@@ -588,7 +588,7 @@ done <<< "$TICKER_PCTS"
 # ── Check C: selloff narrative vs live breadth ────────────────────────────────
 # Look for AFFIRMATIVE selloff claims in post.
 # Must NOT fire on negations: "không phải bán tháo", "không phải sell-off",
-# "không có mã giảm sàn", "không bán tháo".
+# "không có mã giảm sàn", "không bán tháo", "chưa hoảng loạn", "chưa phải bán tháo".
 # Strategy: count lines with selloff language, then subtract negation lines.
 #
 # PERIOD-SCOPING (FIX-FB-GATE-WEEKLY-FRAME-MODE, lesson L5): the live cross-check
@@ -614,7 +614,15 @@ SELLOFF_LINES=$(grep -iE 'bán tháo|sell.?off|hoảng loạn|tháo chạy' <<< 
 # and lines carrying an explicit RELATIVE past-period marker — generic phrasing,
 # no hardcoded dates, defense-in-depth alongside the section-scope above (covers
 # a past-period reference that happens to still land inside Tóm tắt nhanh).
-SELLOFF_AFFIRM_LINES=$(echo "$SELLOFF_LINES" | grep -vE 'không phải|không có|không bán|chứ không|mà không|tuần trước|tháng trước|kỳ trước|phiên trước|trước đó|trước sốc' 2>/dev/null || true)
+# FIX-FB-GATE-CHECKC-NEGATION-LEXICON (2026-07-25, lesson L4): "chưa" (not yet / not)
+# was ABSENT from this set — an explicitly-negated panic statement ("lực bán chưa
+# hoảng loạn", "chưa phải bán tháo") survived the strip and was miscounted
+# AFFIRMATIVE, false-blocking a correct orderly-pullback post twice on 2026-06-25.
+# `chưa( phải| từng)?` is a GENERIC alternation (matches bare "chưa" and the common
+# "chưa phải"/"chưa từng" variants alike) — not a one-off literal for the two
+# observed phrases. Does NOT touch the separate Check-I honest-gap "chưa"-matching
+# block (~line 1428) — that is a different, correct check.
+SELLOFF_AFFIRM_LINES=$(echo "$SELLOFF_LINES" | grep -vE 'không phải|không có|không bán|chứ không|mà không|chưa( phải| từng)?|tuần trước|tháng trước|kỳ trước|phiên trước|trước đó|trước sốc' 2>/dev/null || true)
 SELLOFF_LANG=$(echo "$SELLOFF_AFFIRM_LINES" | grep -c '.' 2>/dev/null || echo "0")
 SELLOFF_LANG="${SELLOFF_LANG//[^0-9]/}"  # strip any whitespace/newlines
 SELLOFF_LANG="${SELLOFF_LANG:-0}"
@@ -633,7 +641,10 @@ if [[ "$SELLOFF_LANG" -gt 0 && -n "$SNAPSHOT_JSON" ]]; then
       # Check if post itself claims 0 floor stocks (evidence of contradiction within post)
       # NOTE: grep -c returns exit 1 when 0 lines match, so || echo "0" would fire and produce
       # "0\n0" (grep stdout "0" + echo "0"). Fix: capture via subshell that always exits 0.
-      floor_zero=$(grep -ciE '0 mã (giảm sàn|sàn)|không có mã (nào |giảm )?sàn|chỉ \d mã sàn|sàn, (0|không)' <<< "$RECAP_SCOPE_TEXT" 2>/dev/null || true)
+      # FIX-FB-GATE-CHECKC-NEGATION-LEXICON (2026-07-25): `\d` is a real bash `grep -ciE`
+      # here — on macOS BSD grep -E, `\d` is matched LITERALLY (never a digit class), so
+      # `chỉ \d mã sàn` never fired. `[0-9]` is GNU/BSD-portable.
+      floor_zero=$(grep -ciE '0 mã (giảm sàn|sàn)|không có mã (nào |giảm )?sàn|chỉ [0-9] mã sàn|sàn, (0|không)' <<< "$RECAP_SCOPE_TEXT" 2>/dev/null || true)
       floor_zero=$(echo "$floor_zero" | grep -m1 '^[0-9]' || echo "0")
       if [[ "$floor_zero" -gt 0 ]]; then
         log_block "Check-C breadth-contradiction: post contains selloff/bán-tháo language but claims 0 floor stocks AND live VN-Index=${vnindex_live_pct}% (mild). Contradiction."
