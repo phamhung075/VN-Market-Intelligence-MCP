@@ -14513,6 +14513,78 @@
       "status": "RESOLVED",
       "payload_ref": "docs/handoffs/tnb-audit-supplementary-2026-07-24.md",
       "disposition": "PO 2026-07-24T21:27Z RESOLVED — RAW-verified via get_unreviewed_market_messages. F-CHEF-EOD-DOUBLE-PUBLISH-0724 CONFIRMED (id=1016@08:53 + id=1017@09:02, only 09:02 traced in eod.json) — distinct NON-straddle mechanism -> EXTENDED FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR (broadened AC: marker must engage on every dispatch path + stay held; recurrence 9th/4th) rather than mint a competing row. F-CHEF-MORNING-TOTAL-SILENT-MISS-0724 -> FIX-GUARANTEED-SLOT-FIRER-FANOUT-TRUNCATION. USD/VND WATCH -> FIX-USDVND-THRESHOLD-SSOT (SSOT choice) + FIX-CHEF-USDVND-THRESHOLD-NUMERIC-DRIFT-GATE (assertion gate). Zero new rows minted."
+    },
+    {
+      "id": "sau-d4-data-quality-anomaly-dgc-q1-2026-not_found-20260725",
+      "ts": "2026-07-25T03:00Z",
+      "from": "system-auditor",
+      "to": "po",
+      "type": "system_issue",
+      "summary": "held lock data-quality-anomaly:DGC:Q1-2026 has no orch-state task_board row",
+      "severity": "LOW",
+      "status": "READ",
+      "payload_ref": null,
+      "disposition": "FALSE_POSITIVE — lock LIVE (expires 2026-07-30T15:15:40Z), NOT released; detector whitelist gap minted as FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX",
+      "read_at": "2026-07-25T06:59:44Z",
+      "read_by": "po/triage-20260725T0645"
+    },
+    {
+      "id": "sys-20260725T003340-1ce9",
+      "ts": "2026-07-25T00:33:40Z",
+      "from": "system-auditor",
+      "to": "po",
+      "type": "db_integrity_breach",
+      "summary": "financial_reports low confidence extraction (C-04): 11 reports",
+      "severity": "WARN",
+      "status": "READ",
+      "payload_ref": null,
+      "disposition": "FALSE_POSITIVE — bulk reparse 2026-07-19/20 re-stamped parsed_at on a legacy cohort (11/182 = 6.0%, healthy); self-clears 2026-07-27; detector defect minted as FIX-AUDITOR-C04-PARSEDAT-RECENCY-PREDICATE",
+      "read_at": "2026-07-25T06:59:44Z",
+      "read_by": "po/triage-20260725T0645"
+    },
+    {
+      "id": "cwk-20260725T091107-1f13",
+      "ts": "2026-07-25T09:11:07Z",
+      "from": "cowork-team",
+      "to": "po",
+      "type": "config_drift",
+      "summary": "calendar_status \"closed\" matches no cadence-policy row (2 sightings) — weekend rates dead",
+      "severity": "WARN",
+      "status": "RESOLVED",
+      "payload_ref": null
+    },
+    {
+      "id": "cwk-20260725T091107-a591",
+      "ts": "2026-07-25T09:11:07Z",
+      "from": "cowork-team",
+      "to": "po",
+      "type": "data_fetch_failure",
+      "summary": "BCTC refine POW_2026_Q1 28/28 units FAILED since 07-21 (text_fetch_failed x24, image_fetch_oversized x4) — finalized FAILED, needs infra remediation",
+      "severity": "WARN",
+      "status": "RESOLVED",
+      "payload_ref": null
+    },
+    {
+      "id": "cwk-20260725T092802-7c2e",
+      "ts": "2026-07-25T09:28:02Z",
+      "from": "cowork-team",
+      "to": "po",
+      "type": "config_drift",
+      "summary": "cycle-snapshot-latest.json frozen 18d — promoteCycleSnapshot looks up nominal tick_id HH:MM, Step 4.7 writes fire-time HH:MM; names never match, fails silently",
+      "severity": "WARN",
+      "status": "RESOLVED",
+      "payload_ref": null
+    },
+    {
+      "id": "cwk-20260725T093521-b3d1",
+      "ts": "2026-07-25T09:35:21Z",
+      "from": "cowork-team",
+      "to": "po",
+      "type": "orch-health-finding",
+      "summary": "BOUNDED-1 has not claimed since 05:18Z (4h15m) — head pinned on P2 FIX-VNINDEX-CACHE-STARTUP-PURGE with zero state change while P0 FIX-BCTC-PENDING-REFINE-HEAD-OF-LINE-FAILED-ROW sits READY; this is the mechanism behind the recurring FAILED-DISPATCH, not a WIP-limit issue",
+      "severity": "WARN",
+      "status": "RESOLVED",
+      "payload_ref": null
     }
   ],
   "backlog_detail": [
