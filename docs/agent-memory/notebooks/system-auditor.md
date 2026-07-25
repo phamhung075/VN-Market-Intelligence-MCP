@@ -1,3 +1,13 @@
+##  · 2026-07-25T00:33:53Z
+### Audit Run Tier-3 (00:33 UTC 2026-07-25)
+- Tier: 3 | Runtime checks: 8 | DB checks: 16 | Tooling: 3
+- A-22–A-28 container/interservice: PASS | A-31 EPIPE: PASS (0)
+- C-01–C-03 OHLCV/BCTC: PASS | C-04 low-confidence: WARN (11 > 5)
+- C-05–C-16 DB integrity: PASS
+- Anomalies: 1 new (0 CRITICAL, 1 WARN, 2 INFO) | 0 dedup-skipped
+- Status: DEGRADED (C-04 threshold breach)
+- Corroboration: All runtime/tooling pass. Tier-3 heartbeat was stale (4315min > 2880min threshold) — now refreshed. C-04 shows 11 low-confidence extraction reports vs expected ≤5; last signal 2026-07-22T00:35:59Z (within 7d dedup window). Signal appended to queue (id=sys-20260725T003340-1ce9). Known launchd degraded (docker-events, fleet-push) unchanged — suppressed per backlog fix-task. BCTC PDF directory: 272 files present.
+
 ## c2a9f5e1 · 2026-07-24T18:32:47Z
 ### Audit Run Tier-2 (18:31–18:32 UTC 2026-07-24)
 - Tier: 2 | Sources: 8 checked | Cron checks: 1 | VPS routes: 4
