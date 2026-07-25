@@ -534,3 +534,23 @@ SUPPORTING EPIC 3 (foundational, runs underneath) — **HONEST-DATA-FLOOR HOLD**
 - Correct/remove the period identity on the one row BEFORE finalize, slot keeps running
 **why-decision:** Live runtime probe: `get_bctc_report_id(code=DPM)` -> `count:0, existing_refine_status:"PENDING"`; the tool filters `refine_status='DONE'`, so the mislabel is unreachable today and FINALIZE arms it. The 31 remaining windows inherit ONE already-fixed key and cannot deepen the mislabel — halting would discard 15 completed windows for zero safety gain.
 **why-change:** Severity RAISED above both of the reporter's branches: `sort_key` derives from the same key and the conflict key is (action_code, sort_key), so the mislabelled doc OCCUPIES the slot the real DPM Q4-2025 filing needs — durable data loss, not a wrong label. DPM confirmed NOT in the 07-19 reparse blast radius.
+
+### STEP po-S6 · po · 2026-07-25T17:00:10Z
+**task-id:** FIX-ORCHSTATE-BLOCKS-FIELD-WRITE-ONLY-DECORATIVE
+**what-done:** SELF-CORRECTION — replaced my own decorative `blocks` guard with a binding inline `depends_on`, then minted the systemic row.
+**what-considered:**
+- Accept the reporter's finding on trust and just write the reciprocal
+- Re-verify the mechanism at source first, then write
+- Write `blocked_by` (matching the RAG positive control) vs `depends_on` (the gate's primary name)
+**why-decision:** Re-verified independently: `devteam-eligibility.jq:133-141` unions only the candidate's OWN 3 dep fields, never a reverse edge; `:161-164` short-circuits true on empty; full-repo grep confirms `blocks` has no reader. Wrote `depends_on` INLINE — inline wins over detail by construction, so it binds regardless of the cold plane's stale nulls. Did NOT set status=BLOCKED (unnecessary; the dep gate is status-independent and BLOCKED risks lane/conservation side-effects).
+**why-change:** Reporter asked only for the reciprocal. I also found a SECOND silent-unset route they did not: `orch-backlog-stub.sh` STUB_FIELDS omits all 3 dep fields and the cold-merge is "existing cold wins" over FU's stale `depends_on: null` — a future strip could re-open the gate. Added as a scope item, not a separate row.
+
+### STEP po-S7 · po · 2026-07-25T17:00:10Z
+**task-id:** FIX-ORCHSTATE-BLOCKS-FIELD-WRITE-ONLY-DECORATIVE
+**what-done:** Verified the repaired gate by EXECUTING the real predicate, and ruled the systemic ask IS a row.
+**what-considered:**
+- Read back `depends_on` off the board and call it verified
+- Run `effective_depends_on`/`deps_satisfied` from scripts/lib/devteam-eligibility.jq against the live board
+- File the systemic issue as a SPIKE instance vs its own row vs no row
+**why-decision:** Field read-back is exactly the false-green this whole tick was about — a value the predicate never consults reads identically to one it does. Executed instead: FU `deps_satisfied:false`, blocker `true` (not self-blocked). Minted its own row rather than a SPIKE instance: that SPIKE's class is gates whose INPUT cannot cross a threshold; here there is no gate at all, and filing it there would dilute a carefully bounded class. Cross-referenced one transferable line instead.
+**why-change:** No change from the reporter's ask on the primary; the systemic ask was left to me and I took it, at P2 — with a mandatory negative control (author a NEW reverse-only guard post-fix and prove it is caught), since a remedy that only cleans today's 7 rows leaves the trap armed.

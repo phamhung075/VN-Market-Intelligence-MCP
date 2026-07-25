@@ -1,10 +1,10 @@
 # PO Notebook
 
-_Last: 2026-07-25T16:52Z (router triage: coverage-sweep dead trigger + 2 context_bloat signals + BCTC period-identity — 4 MINTs, 5 evidence-attaches, 2 relayed diagnoses OVERTURNED, 1 umbrella DECLINED)_
+_Last: 2026-07-25T17:02Z (router triage: coverage-sweep + 2 context_bloat + BCTC period-identity + my own decorative guard — 5 MINTs, 6 evidence-attaches, 2 relayed diagnoses OVERTURNED, 1 SELF-CORRECTION, 1 umbrella DECLINED)_
 
-## Tick 2026-07-25T16:21–16:52Z
+## Tick 2026-07-25T16:21–17:02Z
 
-**Returned BATCH(4).** All 4 ids + all 3 SPIKE instance fields read back off `.task_board` by `id` after write — none asserted from narration. Three atomic `jq -f … | bash scripts/orch-apply.sh` writes, Zod Stage0+1 PASS, conservation 651→652→654→655 (+4 exactly), `signal_total` 126 unchanged, `.head` never referenced.
+**Returned BATCH(5).** All 5 ids + all 3 SPIKE instance fields read back off `.task_board` by `id` after write — none asserted from narration. Four atomic `jq -f … | bash scripts/orch-apply.sh` writes, Zod Stage0+1 PASS, conservation 651→656 (+5 exactly), `signal_total` 126 unchanged, `.head` never referenced.
 
 | Minted | Lane (read back) | Mechanism |
 |---|---|---|
@@ -14,10 +14,14 @@ _Last: 2026-07-25T16:52Z (router triage: coverage-sweep dead trigger + 2 context
 
 | `FIX-BCTC-INGEST-PERIOD-IDENTITY-UNVALIDATED-VS-CONTENT` | `backlog`/BACKLOG, P1/M, `apps/mcp-server/`, →dev-mcp-server | Period identity is caller-supplied multipart form fields, validated for SHAPE only (year 2000-2099, quarter ∈ Q1-Q4). DPM report `5b0dad71` holds Q1-2026 under (DPM, 2025-Q4) and **occupies the slot** the real Q4-2025 filing needs |
 
-**Attached as evidence, NO row minted** (all 5 verified present after write): `SPIKE-SATURATED-COUNT-THRESHOLD-GATES-SWEEP` instances 11/12/13 · `FIX-COVERAGE-STATE-CROSS-AGENT-LOST-UPDATE` (co-ship) · `FIX-USDVND-THRESHOLD-SSOT` (saturation) · `FU-BACKFILL-REAL-FILENAMES` (do-not-ship-alone warning).
+| `FIX-ORCHSTATE-BLOCKS-FIELD-WRITE-ONLY-DECORATIVE` | `backlog`/BACKLOG, P2/S, `cross-service/`, →developer | `blocks` is read by NO script — every reverse-edge sequencing guard is decorative. 7 rows carry it; 1 holds a prose paragraph instead of task ids |
+
+**Attached as evidence, NO row minted** (all 6 verified present after write): `SPIKE-SATURATED-COUNT-THRESHOLD-GATES-SWEEP` instances 11/12/13 · `FIX-COVERAGE-STATE-CROSS-AGENT-LOST-UPDATE` (co-ship) · `FIX-USDVND-THRESHOLD-SSOT` (saturation) · `FU-BACKFILL-REAL-FILENAMES` (do-not-ship-alone warning).
 
 ## Lessons
 
+- **⚠️⚠️ I WROTE A DECORATIVE GUARD AND BELIEVED IT BOUND. Verify the READER exists before trusting a field you just wrote.** At 16:49Z I put `blocks: ["FU-…"]` on the blocker row as a sequencing gate. `blocks` is read by **no script in the repo** — `effective_depends_on` (`devteam-eligibility.jq:133-141`) reads only the *candidate's own* `depends_on`/`depends`/`blocked_by` and never traverses a reverse edge; `deps_satisfied` then short-circuits **true** on an empty list. FU was fully BOUNDED-1 eligible; only its P3 rank was holding it, and rank is queue position, not a guard. Fixed by writing the reciprocal `depends_on` **inline** on the target (inline wins over detail by construction). **A field's existence is not evidence of a consumer — grep for the reader.** Doubly damning: my whole tick was cataloguing guards that report success while doing nothing, and I authored one.
+- **⚠️ Verify the gate by EXECUTING it, never by inspecting the field.** I re-ran the real `effective_depends_on`/`deps_satisfied` from `scripts/lib/devteam-eligibility.jq` against the live board: FU → `deps_satisfied: false`, blocker → `true` (not self-blocked). Reading back `depends_on` would have looked identical for a value the predicate never consults.
 - **⚠️ Before minting an umbrella, check whether the class already has one.** Router offered a new "self-disabling state field" container for 3 same-day instances. `SPIKE-SATURATED-COUNT-THRESHOLD-GATES-SWEEP` (ready/P1) has held exactly this class since 07-21 — 10 instances, 5 sub-classes, with a CLOSED-for-triage convention that stops re-surfacing. **A 4th container fragments a converging class.** Attached instead; marked 11/12/13 closed per that row's own convention.
 - **⚠️ A correct contract executed by an LLM over a bulk structure is not an enforced contract (sub-class 6).** Both coverage flows say "stamp only the tickers analysed this cycle" — the prose is right, and reading code can never find this defect. Across 25 revisions news-scout ran 3/4/7 → 1 → 5 → 1 distinct stamps and market-watcher 8,9,10,10,10,6,7,11 → 1,1, **with no intervening code change**. Editing prose to say it more emphatically is not a fix; only a deterministic scripted patch is.
 - **⚠️ Read the DATA, not the doc — and read the signal archive, not the code.** Two mechanical detectors this class needs, both orthogonal to the code-reading that found instances 1-10: `jq '[.<coll>|to_entries[]|.value.<field>]|group_by(.)|length'` on live state (result 1 across a collection meant to update incrementally = saturated field, any age gate on it is dead); and `ls docs/signals/processed/ | sed -E 's/-[0-9]{8}T[0-9]{6}Z.*//' | sort | uniq -c | sort -rn` (high count on a stable dedup key = detector works, remediation does not). Told the SPIKE to run as **two passes**, code and data.
@@ -32,7 +36,7 @@ _Last: 2026-07-25T16:52Z (router triage: coverage-sweep dead trigger + 2 context
 ## Carry-over
 
 - **TIME-GATED, highest urgency on this list:** `FIX-BCTC-INGEST-PERIOD-IDENTITY-UNVALIDATED-VS-CONTENT` AC-1 (correct/remove DPM report `5b0dad71`) must land **before that report's refine finalizes**. Unreachable while PENDING; live on DONE. Do **not** halt the refine slot.
-- **`FU-BACKFILL-REAL-FILENAMES` must NOT ship alone** — the filename is rendered from the stored period key, so "real filenames" would delete the only visible tripwire for a wrong period while the corruption persists. Warning attached; it now `blocks`-depends on the P1 row.
+- **`FU-BACKFILL-REAL-FILENAMES` now BINDS** (`depends_on` inline, `deps_satisfied:false` confirmed by executing the predicate). Dep gate needs `DONE_VERIFIED` — plain `DONE` will not release it. **Latent re-open hazard:** `orch-backlog-stub.sh` `STUB_FIELDS` omits the dep fields and the cold-merge is "existing cold wins" over a stale `depends_on: null` — a re-run could silently unset this. Scope item on the P2 row; do NOT hand-edit the 761KB detail file.
 - **`FIX-USDVND-THRESHOLD-SSOT` will close without fixing the defect if "pick one SSOT" picks 25000.** At Bearish=25000/Bullish=23000 and live 26130, BEARISH is the classifier's **only reachable output**. Added a mandatory AC: assert both branches reachable **at the live rate, not a fixture rate**. Durable question (absolute threshold on a drifting nominal series has a shelf life by construction) left with 3 options unchosen — implementer's call.
 - **`docs/agent-memory/decisions/po-decisions.md` is 516L against a declared 200L rotation cap** (dev-standards:425) — a likely third live instance of sub-class 7. NOT minted: needs one read of the rotation path first to confirm it shares the mechanism. **Next PO tick: check before minting, not after.**
 - Cowork cluster sequencing is fixed, do not reorder: `UC-SDF-P2` **first**, then `UC-CDC-P1` + `FIX-COWORK-CADENCE-DANGLING-POLICY-ID` as ONE change set.
