@@ -85,3 +85,13 @@
 - Add a real `updated_at` column stamped inside the store fns (chosen) — the Zod update-path work and the backfill both introduce a genuine third mutation class that no existing timestamp can represent, and a backfilled row would otherwise be indistinguishable from an untouched one.
 **why-decision:** Stamping must live in `predictionClaimStore.ts` not at call sites — a call-site convention is precisely what the next new call site skips, which is how this whole defect class arrived. Reuses the existing idempotent `ALTER TABLE ADD COLUMN` pattern at `schema-system.ts:209-212`; no new migration mechanism.
 **why-change:** Added the hit-rate honesty row beyond the literal ask — 66.7% computed on 6/17, frozen since 2026-06-21 with no denominator or staleness marker, is the passive-health-masks-dead-data pattern and is why a 6-week outage went unnoticed.
+
+### STEP po-S9 · po · 2026-07-25T08:02:06Z
+**task-id:** FE-PG-QUALITY-AUDIT-LASTVERIFIED-RENDER-FIX
+**what-done:** Minted ONE backlog row (P1/S, zone apps/frontend/, next_agent dev-frontend) to render per-check `last_verified` + 7d staleness marker on dashboard.quality-audit.tsx.
+**what-considered:**
+- Widen an existing FE-PG-*-FRESH-FIX row — REJECTED: those target /dashboard, /bctc, /intel, a different page each.
+- Fold into FIX-QUALITY-CHECKLIST-GENERATOR-FABRICATED-PASS-EVIDENCE — REJECTED: generator-side (architect, cross-service), this is render-side.
+- Bind AC to check FE-PG-QUALITY-AUDIT-FRESH — REJECTED: that check is INFO-by-design (compute-on-read data_asof), rendering last_verified cannot flip it; a bound AC would be unfalsifiable.
+**why-decision:** Prior-art scan over all 8 board lanes + archive found ZERO rows on quality-audit render/last_verified; the two nearest checks (FE-PG-QUALITY-AUDIT-FRESH INFO, -CONTENT-REGEN-CORR WARN) both DESCRIBE the masking but neither owns a fix. Self-contained AC bound to observable page state instead.
+**why-change:** Router brief said 3 timestamp formats; RAW jq says 4 (microsecond `2026-06-10T09:18:46.945489Z` on FR-FRESH-02). Widened AC(c) to four shapes so the renderer is not built against an incomplete format set.

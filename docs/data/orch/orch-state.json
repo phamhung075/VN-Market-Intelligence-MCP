@@ -2506,8 +2506,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-25T06:49:36Z",
-    "_updated_by": "po (data-freshness intake: mint FIX-PRICEHISTORY-DATAASOF-STOCKPRICE-SERVING + promote/re-scope FFT L3/L4 residuals backlog->ready after prior-art reconciliation)",
+    "_updated_at": "2026-07-25T08:01:26Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -10899,6 +10899,26 @@
         "created_at": "2026-07-25T07:39:10Z",
         "created_by": "po",
         "updated_at": "2026-07-25T07:40:47Z"
+      },
+      {
+        "id": "FE-PG-QUALITY-AUDIT-LASTVERIFIED-RENDER-FIX",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "S",
+        "zone": "apps/frontend/",
+        "owner": "dev-frontend",
+        "next_agent": "dev-frontend",
+        "created_by": "po",
+        "source": "user-demand-20260725-quality-audit-verified-at",
+        "baseline_pass": true,
+        "title": "/dashboard/quality-audit renders every check identically regardless of how long ago it was verified — surface per-check last_verified + staleness marker (user demand: 'need update at for know when verify is done')",
+        "note": "GAP (RAW-verified 2026-07-25T08:00Z): apps/frontend/app/routes/dashboard.quality-audit.tsx renders check.check_id / dimension / question / severity / status / evidence (lines ~234-255) and NOTHING else — grep for last_verified|lastVerified|_updated_at|updatedAt returns ZERO matches; the AuditCheck interface (line 55-62) has no last_verified field, though parseQualityChecklistDto is a pass-through cast (`raw as QualityChecklist`) so the value IS present in the served payload at runtime. LIVE DATA: docs/data/quality-checklist.json holds 442 checks with last_verified; age split 264 @ 2026-06-10 (45d stale) / 178 @ 2026-07-25. Today all 442 render identically — a 45-day-stale check is visually indistinguishable from one verified this morning; that IS the defect. This is also the concrete instance of the masking already flagged by the page's own checks FE-PG-QUALITY-AUDIT-FRESH (INFO: data_asof = request time, always ~0 age by compute-on-read design, NOT a recency signal) and FE-PG-QUALITY-AUDIT-CONTENT-REGEN-CORR (WARN: generated_at 44.9d old behind an always-green badge). SCOPE: (1) render last_verified per check on dashboard.quality-audit.tsx (add to AuditCheck type + the check row/card); (2) staleness marker when last_verified is older than the D-PAGE re-verification window (7-day full rotation — docs/agents/system-auditor/flow/page-freshness.md Step 2 'not re-probed within the 7-day window'); (3) TOLERATE ALL FOUR timestamp shapes present in the live file — bare date `2026-06-10` (4 rows), second precision `...THH:MM:SSZ` (413), millisecond `...THH:MM:SS.mmmZ` (24), microsecond `...THH:MM:SS.ffffffZ` (1, check FR-FRESH-02 = `2026-06-10T09:18:46.945489Z`; router brief said 3 formats, RAW says 4). Bare dates break naive ISO string comparison and Date-based age arithmetic must not NaN/crash or silently mis-bucket; an unparseable/missing last_verified must render an explicit UNKNOWN marker, never a silent fresh-looking blank (empty-read-is-not-evidence). AC: (a) each check row on /dashboard/quality-audit shows its own last_verified; (b) a check with last_verified older than 7d is visually distinguishable from a fresh one WITHOUT hovering (the 264 @ 2026-06-10 must all be marked stale, the 178 @ 2026-07-25 must not); (c) all four timestamp shapes above render correctly — playwright/render-check proves no crash and correct stale/fresh bucketing on a fixture containing all four; (d) missing/unparseable last_verified renders UNKNOWN, not fresh. OUT OF SCOPE (do NOT fold in): rewriting/mass-stamping the 264 stale last_verified values — they are honest and destroying them destroys exactly the signal the user asked for; docs/data/quality-checklist.json is qa-owned (docs/agents/qa/flow/quality-audit.md) and MUST NOT be touched by this row. ALSO OUT OF SCOPE: the system-auditor's own `verified_at` (docs/data/auditor-page-reverify-ledger.json — internal telemetry, ledger-only, not served by any endpoint; page-freshness.md explicitly forbids conflating the two fields). DISTINCT FROM: FIX-QUALITY-CHECKLIST-GENERATOR-FABRICATED-PASS-EVIDENCE (generator-side evidence fabrication, cross-service/architect) and the FE-PG-{_INDEX,BCTC,INTEL}-FRESH-FIX family (page-level freshness badge on OTHER dashboard pages). Prior-art scan 2026-07-25: zero board rows in any lane touch quality-audit render / last_verified display.",
+        "files": [
+          "apps/frontend/app/routes/dashboard.quality-audit.tsx"
+        ],
+        "created_at": "2026-07-25T08:01:26Z",
+        "updated_at": "2026-07-25T08:01:27Z"
       }
     ],
     "closed_sprints": [
@@ -15368,8 +15388,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-25T07:39:10Z",
-    "last_triaged_by": "po (mint SPIKE-FRESHNESS-REMEDIATE-TRIAGE + FRESHNESS-AUTO-REMEDIATE vision)",
+    "last_triaged_at": "2026-07-25T08:01:26Z",
+    "last_triaged_by": "po",
     "in_progress": [
       {
         "id": "FIX-VNINDEX-CACHE-STARTUP-PURGE",

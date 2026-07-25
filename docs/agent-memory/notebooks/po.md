@@ -1,20 +1,22 @@
 # PO Notebook
 
-_Last: 2026-07-25T07:39Z (user demand — auto-alert for stale-at-rest data + auto-remediate; COMPANION sprint FRESHNESS-AUTO-REMEDIATE minted, architect design SPIKE)_
+_Last: 2026-07-25T08:02Z (user demand — quality-audit page must show WHEN each check was verified; ONE row minted, scoped mint only)_
 
-## Tick 2026-07-25T07:35–07:41Z — freshness-auto-remediate kickoff (user demand, router-dispatched)
+## Tick 2026-07-25T08:00–08:03Z — quality-audit last_verified render (user demand, router-dispatched)
 
-**DISTINCT from the 07-29Z input-validation sprint.** That gates bad writes at INPUT time; THIS catches data going stale OVER TIME (detect-at-rest → auto-remediate → anti-spam). Tightly coupled to the freshness sprint, so I FOLDED — did not mint a parallel duplicate.
+**MINTED:** `FE-PG-QUALITY-AUDIT-LASTVERIFIED-RENDER-FIX` — backlog, FIX, P1, S, zone `apps/frontend/`, next_agent `dev-frontend` (resolved from `docs/data/system-map.json` `.project.zones[] | select(.path=="apps/frontend/")`, NOT guessed). Board 388→389, conservation 651→652 OK.
 
-**Prior-art gate confirmed the boundary in code, not assumption:**
-- `FIX-L4-FRESHNESS-SLA-MONITOR-SELF-POLICING` (READY, dev-mcp-server) already owns DETECTION+EMIT verify-live. Kept it SEPARATE — did NOT widen (it is about to execute; widening bloats + hits the health-recheck stale-duplicate footgun).
-- `coverageMapFreshnessChecker.ts` + `freshnessSlaMonitorJob.ts` = the detector/job (reused, not rebuilt). `frontend-data-coverage-map.json` SSOT — its `.writer` field names who refreshes each surface = the triage input.
-- `apps/alert-engine/pkg/primitive/{dedup-key-builder,cooldown-gate}` = anti-spam (reuse, not rebuild). `emit-audit-signal.sh`+`po-s*` jq = anomaly→BACKLOG bridge.
+**Prior-art gate: CLEAN — zero rows anywhere touch quality-audit render / last_verified.** Checked all 8 lanes + `docs/data/orch/archive/`. Three near-misses deliberately NOT widened:
+- `FE-PG-{_INDEX,BCTC,INTEL}-FRESH-FIX` (backlog, 07-24) — same naming family but each targets a DIFFERENT page. Sibling, not duplicate.
+- `FIX-QUALITY-CHECKLIST-GENERATOR-FABRICATED-PASS-EVIDENCE` (backlog, architect) — generator emits copy-paste evidence. Upstream of this row, disjoint fix surface.
+- `FIX-L3-FRONTEND-AUTOREFRESH-FRESHNESS-BADGE` (ready) — FreshnessBadge coverage, page-level `data_asof`, not per-check recency.
 
-**DECISION: companion sprint `FRESHNESS-AUTO-REMEDIATE` (PLANNING) + ONE architect SPIKE `SPIKE-FRESHNESS-REMEDIATE-TRIAGE` (backlog/P1/M, supervised, plan_only, timebox 120, next_agent=architect).** No implementation row — architect/PM/BA decompose from the spike. Mint minimally.
+**RAW verification (did not trust the brief):** grep of `dashboard.quality-audit.tsx` for `last_verified|lastVerified|_updated_at|updatedAt` = ZERO. `AuditCheck` interface (L55-62) has 6 fields, none of them a timestamp; `parseQualityChecklistDto` is a pass-through cast so the value IS in the payload, only untyped+unrendered. 442 checks: 264 @ 2026-06-10, 178 @ 2026-07-25.
+
+**CORRECTION to the brief — 4 timestamp formats, not 3.** jq over the live file: bare-date 4 / second 413 / millisecond 24 / **microsecond 1** (`FR-FRESH-02` = `2026-06-10T09:18:46.945489Z`). Brief's "25 ms-precision" was ms+µs conflated. AC(c) now names all four — a renderer built to 3 shapes would mis-bucket or NaN on FR-FRESH-02.
 
 ## Carry-over
-- **The signal is a DEAD END today.** `freshnessSlaMonitorJob.ts:538-548` (DS-OBS-01-FIX) — alert-commander SUPPRESSES `freshness-sla-monitor` urgent_news as infra noise every cycle. So detection fires but no fix is ever picked up: this is WHY the user still sees stale pages. The spike's crux = REDIRECT the signal off alert-commander onto the po/dev-team signal_queue drain.
-- **Detection is only 10% wired.** `ENDPOINT_DB_QUERY` maps 5 of 50 coverage-map surfaces to DB queries; the other 45 are silently skipped. "Many pages not updating" can't even be DETECTED yet — widening endpoint coverage is a spike input, not just a nicety.
-- **The 'intelligent' classifier already half-exists.** `queryBctcPipelineRuntimeState` (queueDepth+serviceActive) is the exact idle-vs-crash discriminator — but bctc-only. The spike GENERALIZES that reader across surfaces via `.writer`; broken-code→dev FIX, healthy-idle→re-invoke refresh agent (resolve owner from system-map, never hardcode).
-- **architect busy on IVC-ARCH-BLUEPRINT** — spike is BACKLOG+supervised so it queues, no BOUNDED-1 collision.
+- **The page's own checks already confess this defect and nobody owned it.** `FE-PG-QUALITY-AUDIT-FRESH` = INFO ("data_asof = request time, always ~0 age BY DESIGN, NOT a recency signal" — that is RISK-2) and `FE-PG-QUALITY-AUDIT-CONTENT-REGEN-CORR` = WARN ("generated_at 44.9d old behind an always-green badge"). Both DESCRIBE the masking; neither had a fix row until now. Deliberately did NOT bind the row's AC to either check_id — FRESH is INFO-by-design so rendering `last_verified` can never flip it PASS, and a bound-but-unflippable AC is an unfalsifiable AC. AC is bound to observable page state instead.
+- **Do NOT let the implementer "fix" the 264 stale values.** Mass-stamping `last_verified` to now would delete the exact signal the user asked for. Row says this twice (SCOPE + OUT OF SCOPE). `quality-checklist.json` is qa-owned (`docs/agents/qa/flow/quality-audit.md`) — dev-frontend must not write it.
+- **Two `verified_at`-shaped fields exist and must not merge.** Served `last_verified` (qa's, this row) vs `auditor-page-reverify-ledger.json .checks{}.verified_at` (system-auditor's, ledger-only, unserved). `docs/agents/system-auditor/flow/page-freshness.md` L21 explicitly forbids conflating them. The 7d staleness threshold comes FROM that flow (D-PAGE rotation window) — same number, different field.
+- Untouched as required: no `apps/**` code edits, no `quality-checklist.json` write. `git status` on both = empty.
