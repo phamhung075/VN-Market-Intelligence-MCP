@@ -30,6 +30,8 @@ Priority lines: **Hào 3** = current price action | **Hào 5** = medium-term tre
 
 `kinhDichConfidence` = 0–100. Threshold for `watchlist-opportunity` alert → `docs/policies/alert-policy.md`
 
+**Signal label enum (alert-commander, discovered live 2026-07-24T05:26Z — first cycle a real ticker-bearing bullish urgent_news required this check):** `get_kinhdich_reading`'s `Tín hiệu:` field is a Vietnamese label, not the literal English `kinhDichSignal` enum `docs/policies/alert-policy.md`'s watchlist-opportunity gate expects. Observed mapping: `MUA` = BUY | `GIU`/`GIỮ` = HOLD | `THAN TRONG`/`THẬN TRỌNG` = CAUTION | `BAN`/`BÁN` = SELL. Only a literal `MUA` reading satisfies the `kinhDichSignal=BUY` condition — `GIU`/`THAN TRONG`, even at high confidence (e.g. `GIU` at 100%), do NOT qualify, regardless of how bullish the underlying `Xu hướng`/`tich cuc` framing reads. Live instance: VNM (#9183, Q2 profit +30%) read `THAN TRONG` conf 50%; VIC (#9184, won Vingroup tender) read `GIU` conf 100% — both bullish high-impact news, both suppressed for watchlist-opportunity on this condition alone.
+
 ## Agent Integration Pattern
 
 Every Cowork agent analyzing a stock:
