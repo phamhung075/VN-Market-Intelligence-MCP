@@ -419,12 +419,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "TASK-COWORK-CATCHUP-1",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of TASK-COWORK-CATCHUP-1 — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-28T13:42:42Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "updated_at": "2026-07-28T14:06:04Z",
+    "updated_by": "developer",
+    "active_task_id": null,
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2285,6 +2284,32 @@
         "disposition": "evidence-attached-no-new-row",
         "triage_note": "Do not mint a new row; attach as evidence to the two backlog rows and re-rank. The recorded premise was: landmine is latent ONLY while calendar_status is frozen at \"unknown\" (the conservative no-op at every consumer). That premise is now FALSE — observed 2026-07-25T15:12Z pressure-state.json calendar_status=\"closed\", outside the policy 5-value domain (half_day/holiday/open/unknown/weekend). Two live consequences, both on a Saturday: (1) cadence — bctc-offmarket takes the unmatched 240min generic default instead of its weekend 1440min rule, so FIX-COWORK-CADENCE-DANGLING-POLICY-ID's \"(240 genuinely safe)\" premise is actively violated, not hypothetically; (2) suppression — Step 4.3 calendar-suppress and Step 4.5 freshness-downgrade both gate on [holiday,weekend], and \"closed\" matches neither, so weekend suppression is dead by a second independent path. Echo loop confirmed live this tick: cowork-tick-preflight.sh:83 reads calendar_status FROM pressure-state.json, :88 defaults only on empty (never on invalid), :95-97 passes it back to emit_pressure_state, emitPressureStateTool.ts:387 stores args.calendar_status ?? \"unknown\", cowork-match-slots.js:203 reads it back for evaluateCadence. Zod schema :459 is bare z.string() — the docstring enumerates the 5 legal values but nothing enforces them, so \"closed\" validates silently. Widening the policy domain must ship WITH UC-CDC-P1, not after.",
         "po_disposition_note": "CONCUR with the do-not-mint instruction. Evidence folded into UC-CDC-P1 and FIX-COWORK-CADENCE-DANGLING-POLICY-ID (both BACKLOG, both re-stamped this tick). Net-new contribution recorded: the (a)-adaptive vs (b)-legacy isolation that UC-CDC-P1 flagged as OPEN on 2026-07-25T09:48Z is now CLOSED in favour of (a), via pressure_mode=adaptive co-occurring with calendar_status=closed and cadence_minutes=240 in one telemetry row. Sequencing unchanged: UC-SDF-P2 first, then UC-CDC-P1 + FIX-COWORK-CADENCE-DANGLING-POLICY-ID as one change set."
+      },
+      {
+        "id": "sys-20260728T134541-433f",
+        "ts": "2026-07-28T13:45:41Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "SELF-RESOLVED + REDISCOVERY (router 13:50Z). sbv_fx now 2 min / SLA ok — a good snapshot landed 13:45:04Z (overnightRatePct:3, refinancingRatePct:4.5). The zero-value rejection is REAL and correctly-behaving (guard protects a good prior row) but INTERMITTENT, not a stall. Already on board as FIX-SBV-FETCHER-ZERO-VALUE-EMIT. The auditor verdict (b)-not-(a) is too binary: FIX-AUDITOR-SBVFX-SLA-POSTMARKET-TOLERANCE (open) holds the (a) config thesis — flat 30-min SLA against a once-per-business-day source — and FIX-SLA-SBV-FX-BUSINESS-DAY-AWARE said the same and was CANCELLED. Both facets already tracked; no new row.",
+        "severity": "LOW",
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolved_at": "2026-07-28T13:48:17Z",
+        "resolved_by": "router (re-measured + prior-art)"
+      },
+      {
+        "id": "sys-20260728T134549-4b19",
+        "ts": "2026-07-28T13:45:49Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "news data pipeline stall — 389 min (SLA 30 min) — 100% duplicate rejection despite active VPS fetches",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null,
+        "router_action": "Router dispatched dev-mcp-server 2026-07-28T13:52Z (intent:dev-mcp-server:news-dedup-100pct-rejection) with log-verified evidence. LEFT NEW DELIBERATELY: engineering is in flight but po still owns minting the board row — marking it READ would bury it and reproduce the filed-but-never-minted gap. Router-verified beyond the auditor: the counters do not conserve (70 fetched - 60 duplicates - 0 inserted = 10 items with NO disposition, errors:0), which is a sharper lead than over-matching dedup. Possible contributing cause: FIX-SCHEDULER-DOUBLE-REGISTRATION (pollNews 4-5x/min) — 13:30:05 and 13:30:06 cycles fire one second apart, so cycle N+1 would legitimately see cycle N rows as duplicates.",
+        "router_action_at": "2026-07-28T13:52:51Z"
       }
     ],
     "last_triaged_at": "2026-07-28T13:24:57Z",
@@ -16022,6 +16047,32 @@
         "reviewed_by": "developer",
         "updated_by": "developer",
         "review_note": "Premise confirmed at source: byte cap (LINE_CAP*60=12000B, TE-T24) already existed via context-bloat-backstop.sh with a detector only; notebook-auto-prune.sh's early-exit (:135) and loop-break (:174) were line-only, so the actuator never fired on the byte axis (alert-commander.md 632 bytes/line vs a 60 bytes/line budget). FIX: both stopping conditions now require lines<=LINE_CAP AND bytes<=BYTE_CAP. LINE_CAP read at runtime from docs/data/file-size-caps.json (same SSOT context-bloat-backstop.sh reads); BYTE_CAP=LINE_CAP*60 — never a second hardcoded 12000 literal (explicitly avoiding the USD/VND three-SSOT duplication class). Loop recount switched echo->printf %s\\n so byte count matches the final atomic write exactly. OPEN QUESTION decided: option [a] — kept the single-section safe-fail path unchanged (honest signal, no truncation), now reachable on the byte axis too; added byte_count/byte_cap to both safe-fail signal payloads for audit parity with the backstop hook. New scripts/agents-flow/notebook-auto-prune.test.sh, 4/4 PASS: T1 byte-axis regression (142L/30403B -> 49L/10166B, 2 sections remain, no safe-fail); T2 line-axis not regressed (250L/3920B -> 167L); T3 within-both-caps untouched (hash-identical); T4 single-section byte-only breach (67L/18145B, line cap NOT tripped -> hash-identical, notebook_single_section_overage_breach emitted with byte_cap:12000, no truncation). Existing test-notebook-auto-prune.sh (5/5) and context-bloat-backstop.test.sh (4/4) re-run clean, unaffected. Live validation: this very fix, applied to itself, correctly byte-pruned docs/agent-memory/notebooks/developer.md (49L/10324B post-prune) when this task own notebook entry pushed it over the byte cap while still under the line cap. CI: full bun test baseline established fresh (the 3-day-old 1-failure note had moved) = 14824 pass/40 skip/53 fail/1231 files/591s; confirmed 1408-tool-diacritics.test.ts:113 (owned by FIX-BDI-SHIPPING-STALE-404-GUARD) still among them, unchanged. Zero net new failures — this change touches 0 files under apps/mcp-server/. Cited as instance 13/sub-class 7 on SPIKE-SATURATED-COUNT-THRESHOLD-GATES-SWEEP — that row NOT closed. FOLLOW-UP FINDING, not fixed (out of this row's enumerated scope): scripts/agents-flow/notebook-linecap-sweep.sh (6h cron TE-T17 backstop) has its own independent line-only pre-filter before delegating to notebook-auto-prune.sh — a byte-over/line-under notebook written via a non-hook path (Bash heredoc/append) still will not reach the fixed logic through that cron path; flagging for PO/dispatcher to decide whether a follow-up task is warranted. Commits: fix(agents-flow/notebook-prune) implementation+test+docs, chore(memory/developer) notebook."
+      },
+      {
+        "id": "TASK-COWORK-CATCHUP-1",
+        "title": "FR-1 + FR-2: Core domain module cowork-catchup-predicate.js with per-dish-type config",
+        "type": "SPRINT-M",
+        "size": "M",
+        "priority": "P0",
+        "zone": "scripts/agents-flow/",
+        "sprint": "COWORK-GUARANTEED-SLOT-CATCHUP",
+        "status": "REVIEW",
+        "depends_on": [],
+        "created_at": "2026-07-22T22:12:59Z",
+        "created_by": "pm",
+        "updated_at": "2026-07-28T14:06:15Z",
+        "next_agent": "qa",
+        "po_routing_20260728": "PO 2026-07-28T13Z lane routing. pm's decomposition minted this row with next_agent unset, which no dispatch lane resolves (verified by executing scripts/lib/devteam-eligibility.jq predicates, not by reading the row). Handler = developer per docs/handoffs/TASK-COWORK-CATCHUP-10.md ('developer completes code TASK-1..9, then agent-father integrates this doc-only subtask') + docs/data/system-map.json scripts/ zone. dev-role next_agent + backlog lane = BOUNDED-1, per docs/agents/po/flow/zone-routing.md Step A2.",
+        "updated_by": "developer",
+        "po_lane_move_20260728": "MOVED ready[] -> backlog[] by PO. Dep-free P0 head of the epic chain; backlog[] is the BOUNDED-1 lane (1st in the head-idle chain) and this row is currently the only rank-0 BOUNDED-1-eligible row, so it is the next unattended pick. ready[] would have parked it behind RLC (3rd in the chain, reachable only when BOUNDED-1 declines).",
+        "promoted_at": "2026-07-28T13:42:42Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "claimed_at": "2026-07-28T13:42:42Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "qa_verify_mode": "verify-committed",
+        "branch": null,
+        "commit": "06808a8a1"
       }
     ],
     "qa": [],
@@ -16043,31 +16094,7 @@
     },
     "last_triaged_at": "2026-07-28T13:42:42Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "TASK-COWORK-CATCHUP-1",
-        "title": "FR-1 + FR-2: Core domain module cowork-catchup-predicate.js with per-dish-type config",
-        "type": "SPRINT-M",
-        "size": "M",
-        "priority": "P0",
-        "zone": "scripts/agents-flow/",
-        "sprint": "COWORK-GUARANTEED-SLOT-CATCHUP",
-        "status": "IN_PROGRESS",
-        "depends_on": [],
-        "created_at": "2026-07-22T22:12:59Z",
-        "created_by": "pm",
-        "updated_at": "2026-07-28T13:42:43Z",
-        "next_agent": "developer",
-        "po_routing_20260728": "PO 2026-07-28T13Z lane routing. pm's decomposition minted this row with next_agent unset, which no dispatch lane resolves (verified by executing scripts/lib/devteam-eligibility.jq predicates, not by reading the row). Handler = developer per docs/handoffs/TASK-COWORK-CATCHUP-10.md ('developer completes code TASK-1..9, then agent-father integrates this doc-only subtask') + docs/data/system-map.json scripts/ zone. dev-role next_agent + backlog lane = BOUNDED-1, per docs/agents/po/flow/zone-routing.md Step A2.",
-        "updated_by": "po/route-20260728T13",
-        "po_lane_move_20260728": "MOVED ready[] -> backlog[] by PO. Dep-free P0 head of the epic chain; backlog[] is the BOUNDED-1 lane (1st in the head-idle chain) and this row is currently the only rank-0 BOUNDED-1-eligible row, so it is the next unattended pick. ready[] would have parked it behind RLC (3rd in the chain, reachable only when BOUNDED-1 declines).",
-        "promoted_at": "2026-07-28T13:42:42Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
-        "claimed_at": "2026-07-28T13:42:42Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
