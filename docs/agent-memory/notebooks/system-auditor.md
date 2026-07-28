@@ -1,3 +1,37 @@
+## cx7q2m4t · 2026-07-28T17:47:49Z
+### Audit Run Tier-1 (17:40-17:48 UTC 2026-07-28)
+- Tier: 1 | Services: 12/12 host_runtime_set Up(healthy) | Health: 5/5 OK | A-20 pdf-extractor 3/3 OK | A-21 mcp-server crashRestarts=1 (<2, PASS) | A-30 mcp-server MemPerc=22.91% (baseline skip)
+- Anomalies: 1 new (0 critical, 1 warn, 0 info) | 0 dedup-skipped
+- Status: HEALTHY (Tier-1 SSOT A-01..A-32) — 1 new DETECTOR-side finding; 0 new business-impact findings (pdf-extractor/rag-service already owned by existing rows)
+
+### RAW-PROBE: (docs/agents/system-auditor/probe.sh, 2026-07-28T17:40:26Z)
+```
+=== AUDITOR PROBE 2026-07-28T17:40:26Z ===
+--- docker ps -a --- 13/13 Up(healthy); 12/12 host_runtime_set present
+--- health endpoints --- mcp-server/api-gateway/macro-indicators/pdf-extractor/frontend all OK
+--- restart count --- mcp-server RestartCount=2 (cumulative)
+--- memory pressure --- mcp-server MemPerc=21.16% (650.1MiB/3GiB)
+--- A-30 multi-probe --- SKIP deep-probe, baseline 22.91% < 85%
+--- disk --- 39% used
+--- A-20 pdf-extractor multi-probe --- HTTP 200/200/200, pass_count=3/3
+```
+A-21 windowed: crashRestarts=1 @2026-07-28T17:22:24Z, <2 threshold -> PASS.
+
+#### Router-directed independent verification (read-only whitelist only, AUD-ND-1)
+1. **pdf-extractor spike WORSE than router's cite**: 4-sample series 17:40:53Z-17:41:33Z held 99.05-99.97% MemPerc (router cited 95.35%@17:37Z). VmRSS=2518188kB, VmHWM=2619436kB=99.92% of 2621440kB cap, still climbing (2541184->2584200->2619436). tesseract=1 (concurrency invariant intact). NOT re-signalled — FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM already minted by po 17:33:25Z, matching mechanism; ledger has 3 existing pdf-extractor mem_pressure keys today. No duplicate.
+2. **Sampling-frequency hypothesis CORROBORATED (not loop-scope)**: re-ran scripts/agents-flow/auditor-tier1-probe.sh myself @17:42Z (~5.5min after router's cited 17:36:43Z ALL_GREEN) -> verdict=FAILURE, pdf-extractor(99.91%) unacked (rag-service 99.99% separately acked). Loop scope already covers pdf-extractor correctly — miss is a single-point-sample-per-tick timing gap. Evidentiary gap noted: auditor-tier1-last-healthy.json still reads 14:12:23Z, not 17:36:43Z — a genuine ALL_GREEN write is unconditional, so file does not itself corroborate the cited tick; flagged not asserted-false. Minted T1-PREGATE-SAMPLE-FREQ — confirmed absent from both task_board and dedup ledger; distinct from FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE (scope, fixed) and FIX-AUDITOR-A30-VMHWM-VETO-TAUTOLOGY-FALSE-NEGATIVE (mcp-server veto tautology).
+3. **rag-service** unchanged: 99.99% acked (RAG-FTS-BUILD-MEMORY-BOUND). No new signal.
+4. **coverage-map ENOENT** row sys-20260728T171555-7cb3 now status=RESOLVED (po attached to FIX-L4-FRESHNESS-SLA-MONITOR-SELF-POLICING). Not re-emitted.
+5. **launchd** docker-events/fleet-push unchanged ack-suppressed.
+6. get_system_status shows repeated `pdfExtractorClient non-OK response` 17:41-44Z — consistent with mem pressure/backpressure, not new; A-20 in-container /health still 3/3.
+7. Peer-locked rows (FIX-PRESSURE-HOST-HEADROOM-WRONG-MACHINE-WRONG-QUANTITY, FIX-BDI-SHIPPING-STALE-404-GUARD) not touched.
+
+#### Signals Emitted:
+- `[emit-signal] OK dedup_key=auditor_detector_gap:mem_creep_pregate_point_sample:T1-PREGATE-SAMPLE-FREQ id=sys-20260728T174652-22a6` (WARN, fresh key, telegram sent)
+
+DASHBOARD.md row appended (T1-PREGATE-SAMPLE-FREQ, OPEN) — in-boundary this cycle.
+
+[OUTPUT-CONTRACT] signals_posted=1 | telegram_sent=1 | signal_queue_rows_written=1 | dashboard_rows=1
 ## cq2h9wt5 · 2026-07-28T17:18:30Z
 ### Audit Run Tier-1 (17:09–17:18 UTC 2026-07-28)
 - Tier: 1 | Services: 12/12 host_runtime_set Up(healthy) | Health: 5/5 endpoints OK | A-20 pdf-extractor: 3/3 in-container OK | A-21 mcp-server crashRestarts=0 (windowed) | A-30 mcp-server MemPerc=15.35% (baseline, deep-probe skip)
@@ -55,21 +89,3 @@ Note: DASHBOARD.md write SKIPPED this cycle — this invocation's explicit WRITE
 #### Signals Emitted: none this cycle. Tier-1's own scope (A-30 override in tier1-probe.md is mcp-server-only) is ALL_GREEN. pdf-extractor's memory condition is a pre-existing Tier-2/pre-gate finding already carrying open signal_queue rows + a PO disposition (14:53Z) + a P0 board task — no re-triage, per write-fence.
 
 [OUTPUT-CONTRACT] signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0
-
-## ca9mxk7p · 2026-07-28T14:33:40Z
-### Audit Run Tier-2 (14:30–14:35 UTC 2026-07-28)
-- Tier: 2 | Freshness sweep post-dormancy | Sources: 28 checked | Cron: 1 sweep | VPS: 4 routes | DB spot: 5 checks
-- **Dormancy-spanning audit:** Fleet dormancy 66h (2026-07-25T17:49Z–2026-07-28T12:13Z), first freshness sweep since restart
-- **Findings:** sbv_fx escalated HIGH→CRITICAL (47min stale vs 30min SLA, zero-value rejects continue); pdf-extractor at 98.84% memory (capacity warning, dedup-skipped)
-- **Anomalies:** 0 net new | 1 escalation (sbv_fx HIGH→CRITICAL) | 1 dedup-skip (pdf-extractor WARN)
-- **All-green checks:** cron-fire A-29 ✓ | VPS proxy B-06/B-07 ✓ | BCTC shape B-09 ✓ | stale BCTC B-13 ✓ | market msg C-06 ✓ | signals C-07 ✓
-- **Status:** DEGRADED (1 CRITICAL sbv_fx, 1 WARN pdf-extractor at capacity)
-
-#### Signals Emitted:
-- `[emit-signal] OK-escalation-bypass dedup_key=data_stale:sbv_fx:B-02-SBV prev_sev=2→new_sev=3` (B-02 HIGH→CRITICAL)
-- `[emit-signal] SKIP-dedup dedup_key=microservice_degraded:pdf-extractor:A-30-MEMORY` (A-30 WARN, last_sent 14:30:09Z)
-
-#### Two-Layer Freshness (Dormancy Context):
-- Fetch layer: All 4 VPS routes active (prices 08:59Z, news 14:30Z, sbv 14:26Z, bctc 08:23Z) — healthy
-- Analysis layer: Crons running post-restart; 117 signals in 24h; BCTC queue 166 active rows — operational
-- Monday 2026-07-27: OHLCV current (773 rows, post-dormancy aggregation), no data loss detected
