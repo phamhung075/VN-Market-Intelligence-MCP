@@ -87,6 +87,18 @@ export interface PollNewsResult {
   inserted: number;
   /** Items skipped because source_url already exists */
   duplicates: number;
+  /**
+   * Items discarded by the VN-relevance pre-filter (Task 1247, isVnRelevant)
+   * BEFORE they ever reached the dedup/insert loop. Counter-conservation
+   * identity: `fetched === inserted + duplicates + irrelevant` always holds
+   * (FIX-POLLNEWS-COUNTER-CONSERVATION, 2026-07-28) — surfaced as a
+   * first-class field so "fetched - duplicates - inserted" never looks like
+   * an unaccounted silent drop from the logged/returned counters alone.
+   * Optional in the type (not optional at runtime — the real `pollNews()`
+   * always sets it) so pre-existing test doubles that construct a literal
+   * PollNewsResult without this field stay source-compatible.
+   */
+  irrelevant?: number;
   /** Alert rows generated and stored */
   alerts: number;
   /** Source-level failures (non-fatal) */
@@ -1416,6 +1428,7 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
     fetched,
     inserted,
     duplicates,
+    irrelevant: irrelevantCount,
     alerts: totalAlerts,
     errors,
   });
@@ -1423,6 +1436,7 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
   return {
     fetched,
     inserted,
+    irrelevant: irrelevantCount,
     duplicates,
     alerts: totalAlerts,
     errors,

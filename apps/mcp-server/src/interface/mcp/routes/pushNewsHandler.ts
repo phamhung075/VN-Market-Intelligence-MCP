@@ -96,6 +96,7 @@ export async function handlePushNews(
             fetched: result.fetched,
             inserted: result.inserted,
             duplicates: result.duplicates,
+            irrelevant: result.irrelevant,
             alerts: result.alerts,
           });
         });
