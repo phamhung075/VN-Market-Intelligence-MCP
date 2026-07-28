@@ -38,7 +38,7 @@
       "_superseded_by": "cowork-dispatcher",
       "trigger_status": "superseded",
       "last_reactivated_at": "2026-06-13T21:18:35Z",
-      "publish_date_basis": "vn_date"
+      "publish_date_basis": "utc_date"
     },
     {
       "slot_id": "chef-intraday",
@@ -81,7 +81,7 @@
       "_superseded_by": "cowork-dispatcher",
       "trigger_status": "superseded",
       "last_reactivated_at": "2026-06-13T21:18:35Z",
-      "publish_date_basis": "vn_date"
+      "publish_date_basis": "utc_date"
     },
     {
       "slot_id": "chef-evening",
@@ -103,7 +103,7 @@
       "_superseded_by": "cowork-dispatcher",
       "trigger_status": "superseded",
       "last_reactivated_at": "2026-06-13T21:18:35Z",
-      "publish_date_basis": "vn_date"
+      "publish_date_basis": "utc_date"
     },
     {
       "slot_id": "digest-sunday",

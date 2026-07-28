@@ -1,4 +1,4 @@
-<!-- size-justification: 812L — sequential 8-step dish-recipe decision framework (TNB 6-layer); telemetry extracted to chef-telemetry.md; dual-output Step 7 (MARKET plain-VI / WORK TNB-auditable) is one atomic responsibility; Step 7.5 QUALITY VERDICT GATE checks all 5 required sub-checks (L2/L3/L4/BizCtx/gap-catalogue) as one deterministic block; Step 7.6 persist-JSON write-authorization + CYCLE_DATE-pin comments are load-bearing anti-recurrence guards, not changelog — splitting any of these would break the single-enforcement-point guarantee; full change history in git log. -->
+<!-- size-justification: ~890L — sequential 8-step dish-recipe decision framework (TNB 6-layer); telemetry extracted to chef-telemetry.md; dual-output Step 7 (MARKET plain-VI / WORK TNB-auditable) is one atomic responsibility; Step 7.5 QUALITY VERDICT GATE checks all 5 required sub-checks (L2/L3/L4/BizCtx/gap-catalogue) as one deterministic block; Step 7.6 persist-JSON write-authorization + CYCLE_DATE-pin comments are load-bearing anti-recurrence guards, not changelog — splitting any of these would break the single-enforcement-point guarantee; full change history in git log. -->
 > Parent: [./main.md](./main.md)
 
 # Unified Agent — Chef Flow (TNB 6-Layer Recipe)
@@ -40,13 +40,40 @@ Input: `$DISH_TYPE` = `morning` | `intraday` | `eod` | `evening`
      Detection: read the slot's cron from docs/data/cowork-schedule.json; if the hour field
      is a range or list (e.g. "2-8") the slot is multi-fire; a single fixed hour is single-fire.
      Rule is generic — no slot name is hardcoded. -->
+<!-- FIX-CHEF-EVENING-DUP-DATE-MISLABEL-INVESTIGATE (2026-07-29, PO c109/c113/c119): CYCLE_DATE_UTC
+     below is the ONE canonical date-derivation point for chef.md — pinned once here, reused
+     verbatim (never recomputed) at all 3 downstream surfaces that must never disagree: (a) the
+     Step 7.6 synthesis JSON filepath + metadata.date_vn, (b) the Step 8b session/notebook header,
+     (c) this step's single-fire published-marker key. Root cause: chef-evening's cron (`45 19 * * *`)
+     fires at 19:45 UTC, which is ALREADY past VN local midnight (VN midnight = 17:00 UTC) — so
+     VN-local date is structurally always +1 day vs the UTC day of the fire, and two independently
+     -dispatched sessions (Layer-A + Layer-B, or a catch-up + a live fire) racing a few minutes apart
+     can each resolve "VN-local date of my own execution moment" slightly differently, producing two
+     DIFFERENT published:chef-evening:<date> keys for the SAME real day's content — confirmed live
+     2026-07-28 (two synthesis JSONs 8 min apart, date_vn 2026-07-28 vs 2026-07-29, opposite
+     conviction direction on overlapping tickers, both self-certified "published"). UTC has no such
+     day-boundary/timezone ambiguity relative to a fixed-UTC-hour cron, so pinning ONE UTC date here
+     closes the mutex-key race by construction. Scope: only the SINGLE-FIRE branch below (covers
+     chef-morning/chef-eod/chef-evening) switches to CYCLE_DATE_UTC — chef-morning/eod fire at
+     05:15/08:45 UTC, both BEFORE the 17:00 UTC VN-midnight threshold, so UTC date == VN date for
+     them always (this change is a no-op in practice for those two, pure consistency). The MULTI-FIRE
+     (intraday, per-hour) branch keeps WORK_DATE/VN_HOUR unchanged — intraday's per-window keying is
+     not implicated in this defect and is out of scope. docs/data/cowork-schedule.json's
+     `publish_date_basis` for chef-morning/chef-eod/chef-evening was updated iso_week_period-style
+     (vn_date → utc_date) to match, so the live catchup-predicate rollover check agrees with the
+     actual marker-key basis (same invariant as FIX-CADENCE-TNB-AUDIT-WEEKLY-MARKER-BLOCKS-DAILY-CRON:
+     the config declaring the key basis must never drift from the code deriving the key). -->
 
 Determine the slot being executed from the invocation prompt (`slot=<slot_id>`).
 
 ```
-SLOT_ID   = <slot_id from prompt>   # e.g. chef-morning | chef-eod | chef-evening | chef-intraday
-WORK_DATE = TZ="Asia/Ho_Chi_Minh" date +%Y-%m-%d   # VN date GMT+7
-VN_HOUR   = TZ="Asia/Ho_Chi_Minh" date +%H          # VN hour (00-23) of the current tick
+SLOT_ID        = <slot_id from prompt>   # e.g. chef-morning | chef-eod | chef-evening | chef-intraday
+WORK_DATE      = TZ="Asia/Ho_Chi_Minh" date +%Y-%m-%d   # VN date GMT+7 — intraday multi-fire keying ONLY
+VN_HOUR        = TZ="Asia/Ho_Chi_Minh" date +%H          # VN hour (00-23) — intraday multi-fire keying ONLY
+CYCLE_DATE_UTC = date -u +%Y-%m-%d   # UTC calendar date of the current tick — CANONICAL, pinned once.
+                                      # Reused verbatim (never recomputed) at Step 7.6 (filepath +
+                                      # metadata.date_vn), Step 8b (notebook header), and the
+                                      # single-fire MARKER_KEY below. See fix comment above.
 
 # Derive cadence from cowork-schedule.json
 SLOT_RECORD   = jq --arg s "$SLOT_ID" '.slots[] | select(.slot_id == $s)' docs/data/cowork-schedule.json
@@ -61,13 +88,15 @@ if IS_MULTI_FIRE:
   # Per-window key: each hourly (or sub-hourly) window owns its own marker
   # TTL = cadence of the slot in seconds (hourly slot → 3600s, so next window is free)
   # Cadence = 3600 for any range-hour slot; adjust if a future slot has a different step
+  # Unchanged by FIX-CHEF-EVENING-DUP-DATE-MISLABEL-INVESTIGATE — out of scope, see comment above.
   CRON_MIN_FLD  = CRON_EXPR.split(" ")[0]            # first field = minute (or step)
   CADENCE_SEC   = 3600   # default: hourly (range-hour slots); override here if step differs
   MARKER_KEY    = "published:" + SLOT_ID + ":" + WORK_DATE + ":" + VN_HOUR
   MARKER_TTL    = CADENCE_SEC
 else:
-  # Single-fire: per-date key with 28h TTL covers the full day (ARCH-DECIDE-D)
-  MARKER_KEY    = "published:" + SLOT_ID + ":" + WORK_DATE
+  # Single-fire (chef-morning | chef-eod | chef-evening): per-date key with 28h TTL covers the
+  # full day (ARCH-DECIDE-D). Keyed on CYCLE_DATE_UTC, NOT WORK_DATE — see fix comment above.
+  MARKER_KEY    = "published:" + SLOT_ID + ":" + CYCLE_DATE_UTC
   MARKER_TTL    = 100800   # 28h
 
 PUBLISH_CLAIM = call_tool(server="vn-market", tool="task_claim", arguments={
@@ -269,9 +298,41 @@ Include this line verbatim in Block B (Step 7 WORK detail) inside the Layer 4 se
 
 ## Step 5 — LAYER 5 (Kinh Dịch overlay)
 
+<!-- FIX-CHEF-EVENING-L5-KINHDICH-SILENT-OMISSION (2026-07-29, PO c119, 2nd occurrence — live 503
+     corroboration: get_system_status showed 7x "[WARN] kinhdich: service unreachable - omitting
+     hexagram block - 503: insufficient price data for market reading - requires at least 7..." on
+     the same evening a dish had ZERO hexagram content anywhere and no L5 gap token). Root cause:
+     a kinhdich/get_portfolio_conviction error was previously treated as "nothing to say" and the
+     step fell through silently — indistinguishable, to every downstream reader and to the dish's
+     own quality gate, from "layer walked, nothing notable."
+
+     REUSABLE RULE (state once — applies to EVERY layer's data source, not just L5; the same dish
+     also silently missed + left untokened business-context, a second instance of this exact
+     pattern): any layer step whose data-source call errors or returns empty MUST emit an explicit
+     [gap:<X>] token carrying the upstream error text into BOTH (i) $LAYERS_WALKED_SUMMARY (Step 7.5)
+     and (ii) known_gaps[] (Step 7.6 JSON, see that step's Implementation rules for the fix on the
+     business-context side of this same rule). A silently-omitted layer is NEVER acceptable — the
+     floor is an honest, tokened gap, same principle as the Step 1 degraded-dish floor.
+
+     Explicitly NOT this fix's job: asserting $QUALITY_VERDICT over L5 (that is
+     FIX-CHEF-QUALITY-VERDICT-FALSE-FULL-NO-LAYER-ASSERTION, a separate row — do not merge). This
+     fix only guarantees the gap is TOKENED and VISIBLE; it does not change full-vs-degraded. -->
+
 For each qualifying cluster ticker:
-- Call `get_portfolio_conviction(ticker)` — per-ticker hexagram state is embedded in this response. Per memory `feedback_chef_kinhdich_confab`: this is the authoritative source for per-ticker hexagrams; `get_market_hexagram` returning 501 does NOT indicate hexagram data is unavailable.
+- Call `get_portfolio_conviction(ticker)`. **Error/empty-return handling (mandatory — do not fall
+  through silently):** if the call errors (any non-2xx status or exception) or returns an
+  empty/no-data response, set `$L5_GAP_TOKEN = "[gap:L5_kinhdich_unavailable: " + <verbatim
+  upstream error text, e.g. "503: insufficient price data for market reading - requires at least
+  7..."> + "]"` and continue to the next ticker — Kinh Dịch is one overlay among six; its absence
+  never blocks publication, but it must never be silent. If the call succeeds: per-ticker hexagram
+  state is embedded in the response. Per memory `feedback_chef_kinhdich_confab`: this is the
+  authoritative source for per-ticker hexagrams; `get_market_hexagram` returning 501 does NOT
+  indicate hexagram data is unavailable.
 - Flag Lão Dương (老陽, peak Yang) or Lão Âm (老陰, peak Yin) explicitly — these are reversal signals.
+
+If `$L5_GAP_TOKEN` was set for ANY ticker this cycle, carry it (dedup identical error text) into
+Step 7.5 and Step 7.6 per the reusable rule above. Leave `$L5_GAP_TOKEN` unset/empty when every
+call this cycle succeeded — do not emit a gap token for a layer that was genuinely, successfully walked.
 
 For dish header: if `get_market_hexagram()` returned a result in Step 0, use it as market-wide context. If it was absent/501 (`market_hexagram=unavailable`), skip the market-wide hexagram header line — do NOT abort or degrade conviction.
 
@@ -618,6 +679,14 @@ else:
   if NOT BIZ_CTX_OK:      $FAILED_CHECKS.append("[gap:business_context_absent]")
   if NOT GAP_CATALOGUE_OK: $FAILED_CHECKS.append("[gap:L6_gap_catalogue_not_enumerated]")
   $LAYERS_WALKED_SUMMARY = "partial — " + join($FAILED_CHECKS, " ")
+
+# L5 (Kinh Dịch) gap-token append — FIX-CHEF-EVENING-L5-KINHDICH-SILENT-OMISSION.
+# Runs AFTER the verdict above on BOTH branches and does NOT participate in the full/degraded
+# computation (asserting $QUALITY_VERDICT over L5 is FIX-CHEF-QUALITY-VERDICT-FALSE-FULL-
+# NO-LAYER-ASSERTION's job, a separate row) — this only guarantees the token set in Step 5 is
+# VISIBLE wherever $LAYERS_WALKED_SUMMARY is read (notebook Step 8b, JSON Step 7.6), on every path.
+if $L5_GAP_TOKEN is set:
+  $LAYERS_WALKED_SUMMARY = $LAYERS_WALKED_SUMMARY + " " + $L5_GAP_TOKEN
 ```
 
 **Enforcement rules (non-negotiable):**
@@ -644,14 +713,21 @@ After the quality verdict gate (Step 7.5) completes, persist the synthesized TNB
      filename inconsistency (07-17 evening wrote -2026-07-17 i.e. UTC-leaning, 07-18 wrote -2026-07-19
      i.e. VN-leaning, and the 07-14 19:50Z run wrote BOTH -07-14 and -07-15 25s apart) was this step
      independently re-deriving "VN date of cycle execution" from scratch with no pinned source, so
-     different cycles/agents resolved it differently. Fix: reuse WORK_DATE verbatim — the ONE value
-     Step 0.5 already computes exactly once per cycle via `TZ="Asia/Ho_Chi_Minh" date +%Y-%m-%d`
-     (Asia/Ho_Chi_Minh is the single named timezone for this value, for the whole cycle). Do NOT call
-     `date` again in this step. Naming stays "date_vn+dish_type" per FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING
-     (P1 backlog, ba-owned) — that row's structural follow-on is cycle_id-keying the filename entirely;
-     this fix only makes the existing date_vn component deterministic, it does not add cycle_id. -->
+     different cycles/agents resolved it differently. Fix: reuse a Step-0.5-pinned value verbatim,
+     computed exactly once per cycle. Do NOT call `date` again in this step. Naming stays
+     "date_vn+dish_type" per FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING (P1 backlog, ba-owned) — that
+     row's structural follow-on is cycle_id-keying the filename entirely; this fix only makes the
+     existing date component deterministic, it does not add cycle_id. -->
+<!-- FIX-CHEF-EVENING-DUP-DATE-MISLABEL-INVESTIGATE (2026-07-29, PO c109/c113/c119): the pinned
+     value switched from WORK_DATE (VN-local, Asia/Ho_Chi_Minh) to CYCLE_DATE_UTC — see Step 0.5's
+     fix comment for the full root cause. `metadata.date_vn` in the JSON schema below is bound to
+     this SAME CYCLE_DATE value (never independently re-derived) — the field name is legacy
+     ("date_vn"), its value is now the canonical UTC date, same as the filepath and the Step 0.5
+     published-marker key. This closes the exact gap that let two concurrent sessions each compute
+     their own notion of "today" and diverge (confirmed live 2026-07-28: date_vn 2026-07-28 vs
+     2026-07-29 for two dishes 8 minutes apart). -->
 ```
-CYCLE_DATE = WORK_DATE        # verbatim reuse of Step 0.5's value — Asia/Ho_Chi_Minh calendar date,
+CYCLE_DATE = CYCLE_DATE_UTC   # verbatim reuse of Step 0.5's pinned value (UTC calendar date),
                                # computed ONCE per cycle. Never recompute/re-derive it in this step.
 SLOT_ID    = <dish_type> (morning | intraday | eod | evening)
 FILEPATH   = docs/data/unified-agent-synthesis-{CYCLE_DATE}-{SLOT_ID}.json
@@ -718,10 +794,22 @@ Example: `docs/data/unified-agent-synthesis-2026-07-03-eod.json`
 ```
 
 **Implementation rules:**
+- `metadata.date_vn` = `CYCLE_DATE` verbatim (the Step 0.5-pinned canonical UTC date) — NEVER
+  independently re-derived via a fresh `date` call in this step. The field name is legacy
+  ("date_vn"); its value is the same canonical date used for the filepath and the Step 0.5
+  published-marker key (FIX-CHEF-EVENING-DUP-DATE-MISLABEL-INVESTIGATE — this binding closes
+  the exact gap that let two concurrent sessions independently resolve "today" and diverge).
 - Extract conviction calls from Step 4 per-ticker scoring + Step 4 pillar alignment counts.
 - Extract sector phases from Step 4 phase/tier declarations + Step 4 pillar evidence.
 - Extract regime state from Step 3 macro analysis (Layer 2+3) + carry regime if `$carry_usable=true`.
-- Extract known_gaps from Step 6 gap catalogue (the `[gap: ...]` markers that were written to Step 7 Block B).
+- `known_gaps[]` = the UNION of THREE sources this cycle (FIX-CHEF-EVENING-L5-KINHDICH-SILENT-OMISSION
+  — REUSABLE RULE applied: every layer's gap token must reach this array, not just Step 6's):
+  (i) Step 6 `$L6_GAP_TOKENS` (the `[L6-gap: ...]` methodological entries written to Step 7 Block B);
+  (ii) Step 7.5's `$FAILED_CHECKS` list when `$QUALITY_VERDICT = "degraded"` (the `[gap:L2_...]` /
+  `[gap:L3_...]` / `[gap:L4_...]` / `[gap:business_context_absent]` / `[gap:L6_gap_catalogue_not_enumerated]`
+  tokens — these were previously computed but silently stopped at `$LAYERS_WALKED_SUMMARY` and never
+  reached this array, the business-context instance of the same silent-omission pattern L5 has);
+  (iii) `$L5_GAP_TOKEN` from Step 5 if set. Omit empty entries; dedup exact-string matches.
 - Extract causal chains from Step 6.5 session state (the full sentences produced for the dish).
 - Extract cluster summary from Step 1 cluster grouping results.
 - `quality_verdict` and `layers_walked_summary` sourced directly from Step 7.5 gate output.
@@ -748,9 +836,14 @@ If the cycle exited silently in Step 1 (0 clusters, intraday slot), skip Step 7.
 
 **8b. Notebook write** — APPEND class → skill: `.claude/skills/notebook-write/SKILL.md` (AC-3 settled-write; AC-2b intra-prune on `## Prior cycles`; AC-5 gate)
 
+<!-- FIX-CHEF-EVENING-DUP-DATE-MISLABEL-INVESTIGATE (2026-07-29, PO c109): `<YYYY-MM-DD>` below is
+     `CYCLE_DATE` (Step 0.5's pinned canonical UTC date) verbatim — NEVER the VN-local WORK_DATE and
+     NEVER a fresh `date` call. Root cause of the original finding: a session header stamped VN-local
+     date (leaking `TZ="Asia/Ho_Chi_Minh" date` into a header meant to identify the UTC content-day),
+     producing a header 1 day ahead of a sibling entry for the same real evening. -->
 Section template (≤10L):
 ```
-## Session: <YYYY-MM-DD> (<DISH_TYPE>)
+## Session: <CYCLE_DATE> (<DISH_TYPE>)   # CYCLE_DATE = Step 0.5's canonical UTC date, verbatim
 ### Chef Dish — <DISH_TYPE> HH:MM UTC
 - Clusters qualified: N
 - Tickers covered: [list]

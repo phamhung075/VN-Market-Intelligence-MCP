@@ -45,3 +45,34 @@ copy-paste defect, feeds catchup rollover check live) vs fix all 5 same-defect f
 **why-decision:** root-cause fix, not just the named files — invariant applies identically.
 **why-change:** AC(4) needs RAW-verify after 2026-07-29T20:13Z fire (future) — flipping
 READY→REVIEW not DONE_VERIFIED; same-day recheck still owed.
+
+### STEP agent-father-S3 · agent-father · 2026-07-28T23:56:17Z
+**task-id:** FIX-CHEF-EVENING-DUP-DATE-MISLABEL-INVESTIGATE
+**what-done:** chef.md now derives ONE canonical UTC date (`CYCLE_DATE_UTC`, Step 0.5, pinned
+once) reused verbatim at all 3 surfaces: single-fire marker key, Step 7.6 filepath +
+metadata.date_vn, Step 8b notebook header. Matched cowork-schedule.json publish_date_basis
+(chef-morning/eod/evening: vn_date→utc_date; no-op for morning/eod, fixes evening).
+**what-considered:** keep WORK_DATE (VN-local) and patch only the evening marker — rejected,
+PO explicitly widened scope to "single canonical UTC point... all 3 surfaces", and VN-local
+is structurally +1 day vs UTC for any post-17:00-UTC cron, which IS the root cause. Left
+intraday's WORK_DATE/VN_HOUR untouched — not implicated, out of scope.
+**why-decision:** UTC has no day-boundary ambiguity relative to a fixed-UTC-hour cron; pinning
+once closes the race-by-construction (confirmed live: 2 sessions 8min apart, date_vn 07-28 vs
+07-29, real double MARKET publish).
+**why-change:** AC(2) needs RAW-verify on a subsequent evening dish (future) — READY→REVIEW.
+
+### STEP agent-father-S4 · agent-father · 2026-07-28T23:56:17Z
+**task-id:** FIX-CHEF-EVENING-L5-KINHDICH-SILENT-OMISSION
+**what-done:** Step 5 now wraps get_portfolio_conviction: error/empty → `$L5_GAP_TOKEN` with
+verbatim upstream error text. Step 7.5 appends it to `$LAYERS_WALKED_SUMMARY` on both branches
+(no verdict change — that's the sibling row's job). Step 7.6 known_gaps[] now unions Step 6
+L6-gap tokens + Step 7.5 $FAILED_CHECKS (incl. business_context_absent, previously computed
+but never reached this array) + $L5_GAP_TOKEN — stated once as the reusable rule per AC(2).
+**what-considered:** patch only L5 (rejected — AC(2) explicitly requires the discipline stated
+once, reusable; business-context is the confirmed 2nd instance of the identical omission
+pattern in the same dish) vs generalize known_gaps extraction — chosen.
+**why-decision:** a token computed but not propagated to every reading surface is the same bug
+as no token at all; fixing L5 alone would leave known_gaps[] structurally blind to Step 7.5's
+own gap tokens.
+**why-change:** AC(3) needs a synthesis JSON produced during a real kinhdich error window
+(future) — READY→REVIEW, not DONE_VERIFIED.
