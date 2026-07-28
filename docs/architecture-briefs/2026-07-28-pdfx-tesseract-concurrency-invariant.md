@@ -519,9 +519,22 @@ closed, so the 2026-06-01 intraday-price anchor does not apply right now.
 - Not touched: mcp-server's 120 s Tier-1 timeout (`FIX-PDFEXTRACTOR-TIER1-OCR-TIMEOUT`,
   REVIEW); per-page latency / checkpointing (`PERF-PEK-PER-PAGE-LATENCY`); the
   2.5 GiB cap; the auditor detector plane; `docs/data/quality-checklist.json`.
-- **Sequencing:** `FACTORY-PDF-extract-tesseract-config` (REVIEW) edits
-  `tesseract_config.py` and its five importers — the same files §5.3 rewires.
-  **Land that row first**, then this one. Do not merge them.
+- **Sequencing — CORRECTED 2026-07-28T15:57:36Z, no constraint.** An earlier
+  revision of this brief said *"land `FACTORY-PDF-extract-tesseract-config`
+  first"*. **That was wrong and is withdrawn.** That row's code is already on
+  `main` — commit `cfe0a78d7 refactor(pdf-extractor): FACTORY-PDF-extract-tesseract-config
+  shared OCR config` — and `git show HEAD:` confirms `infrastructure/tesseract_config.py`
+  is present at HEAD with all six importers already importing from it. `REVIEW`
+  on this board means *landed, awaiting QA verification*
+  (`qa_verify_mode=verify-committed`), **not** *pending implementation*. There is
+  no unlanded edit to those files, therefore no collision to sequence around.
+  §5.3 rewires a tree that already contains the refactor.
+  **No `depends` was set, deliberately** — a P0 memory-pressure fix blocked on a
+  P2 whose work is already merged would be a false blocker, and `deps_satisfied()`
+  requires `DONE_VERIFIED`, so it would have pinned this row behind a QA queue
+  for zero benefit.
+  *Residual, ordinary:* if QA rejects and reverts `cfe0a78d7`, this row's edits to
+  those six files need a rebase. That is a merge concern, not a dependency.
 
 ---
 
