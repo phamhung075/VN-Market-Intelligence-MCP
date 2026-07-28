@@ -15277,6 +15277,28 @@
         "dedup_key": "stranded-state-sweep-unknown",
         "note": "Likely routine per-cycle cowork output (same class PO dispositioned COMMIT-AS-ROUTINE last tick for analysis-briefs). Flagging rather than self-applying that precedent because the -2026-07-29-evening file is dated ahead of the session UTC date (2026-07-28) — plausible VN-local (UTC+7, already 07-29 early morning there) DATE_VN pinning per unified-agent flow, not confirmed anomalous, wanted PO judgment before commit given the recurring hand-typed/future-date-drift false-positive class."
       }
+    },
+    {
+      "id": "sys-20260728T214004-6369",
+      "ts": "2026-07-28T21:40:04Z",
+      "from": "system-auditor",
+      "to": "po",
+      "type": "signal_feedback",
+      "summary": "A-12 FAIL: api-gateway health endpoint unreachable",
+      "severity": "WARN",
+      "status": "READ",
+      "payload_ref": null
+    },
+    {
+      "id": "sys-20260728T215425-23ef",
+      "ts": "2026-07-28T21:54:25Z",
+      "from": "system-auditor",
+      "to": "po",
+      "type": "signal_feedback",
+      "summary": "A-30 CRITICAL: mcp-server >93% no-reclamation tripwire TRIPPED (12/12 samples, 180s, zero dips)",
+      "severity": "CRITICAL",
+      "status": "READ",
+      "payload_ref": null
     }
   ],
   "backlog_detail": [
