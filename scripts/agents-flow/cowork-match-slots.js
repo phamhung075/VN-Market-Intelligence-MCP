@@ -296,7 +296,30 @@ if (require.main === module) {
 
   const hits     = matchSlots(sched, undefined, { mode, pressureState, policyObj });
   const driftMin = actualM - M; // always 0–14; negative drift impossible given floor()
-  process.stdout.write(JSON.stringify({ slots: hits, drift_min: driftMin }));
+
+  // catchup_raw (FR-9a, TASK-COWORK-CATCHUP-2): guaranteed-slot catch-up candidates,
+  // additive to the CLI JSON stdout contract ONLY — matchSlots() itself (the exported
+  // function used by tests) is unchanged (NFR-2). Mirrors the cadence-policy.js
+  // conditional-require pattern above: module missing/malformed schedule → conservative
+  // empty array (costs nothing extra on the common no-catch-up tick, NFR-3). Consumed by
+  // all 3 callers (dispatcher catchup-check.md, cowork-tick-preflight.sh,
+  // cowork-guaranteed-slot-firer.sh) from this ONE shared computation — architecture brief
+  // docs/architecture-briefs/2026-07-22-cowork-guaranteed-slot-catchup-design.md §2.1.
+  let catchupRaw = [];
+  try {
+    const catchupPredicate = require('./cowork-catchup-predicate.js');
+    const nowUnix = now.getTime() / 1000;
+    // Live-matched slots this tick (hits) are excluded so an on-time fire is never
+    // double-counted as its own catch-up candidate (cowork-catchup-predicate.js JSDoc).
+    const excludeSlotIds = hits.map(sl => sl.slot_id);
+    catchupRaw = catchupPredicate.computeCatchupCandidates(
+      sched, nowUnix, { excludeSlotIds }, { field, dowMatch }
+    );
+  } catch (e) {
+    console.warn('[cowork-match-slots] WARN: cowork-catchup-predicate.js unavailable, catchup_raw=[]:', e.message);
+  }
+
+  process.stdout.write(JSON.stringify({ slots: hits, drift_min: driftMin, catchup_raw: catchupRaw }));
 }
 
 module.exports = { cronMatches, matchSlots, field, dowMatch, snapToCronBoundary, isSuppressedByBoundaryDedup };

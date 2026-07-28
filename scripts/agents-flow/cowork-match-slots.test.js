@@ -9,6 +9,8 @@
 
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
+const { spawnSync } = require('child_process');
 
 // ---------------------------------------------------------------------------
 // Load schedule (SSOT) and the exported helpers from the script under test.
@@ -353,6 +355,135 @@ console.log('\nTC-23: isSuppressedByBoundaryDedup — malformed last_fired → f
   const nowUnix = utcDate('2026-05-18T02:15:30Z').getTime() / 1000;
   const result = isSuppressedByBoundaryDedup(nowUnix, 'garbage', CRON_15);
   assert('malformed last_fired => not suppressed (fires)', result, false);
+}
+
+// ---------------------------------------------------------------------------
+// TC-24..TC-27: CLI entrypoint contract — catchup_raw field (TASK-COWORK-CATCHUP-2, FR-9a)
+// Architecture brief: docs/architecture-briefs/2026-07-22-cowork-guaranteed-slot-catchup-design.md §2.1
+//
+// The CLI reads docs/data/cowork-schedule.json off process.cwd() at require-time and cannot
+// take a ctx override (only matchSlots(), the exported JS function, does — unchanged, NFR-2).
+// So these tests spawn the real CLI against an isolated mkdtemp harness (mirrors
+// drain-signals.test.js's makeHarness() convention) with a small controlled schedule fixture,
+// rather than touching the live production schedule or depending on its (growing) contents.
+// ---------------------------------------------------------------------------
+const SRC_SCRIPT = path.join(process.cwd(), 'scripts/agents-flow/cowork-match-slots.js');
+const SRC_PREDICATE = path.join(process.cwd(), 'scripts/agents-flow/cowork-catchup-predicate.js');
+
+function makeCliHarness() {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'cowork-match-slots-cli-test-'));
+  fs.mkdirSync(path.join(dir, 'scripts/agents-flow'), { recursive: true });
+  fs.mkdirSync(path.join(dir, 'docs/data'), { recursive: true });
+  fs.copyFileSync(SRC_SCRIPT, path.join(dir, 'scripts/agents-flow/cowork-match-slots.js'));
+  fs.copyFileSync(SRC_PREDICATE, path.join(dir, 'scripts/agents-flow/cowork-catchup-predicate.js'));
+  return dir;
+}
+
+function cleanup(dir) {
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+// oneMinuteFutureIso: a last_fired timestamp guaranteed to be AFTER "now" at spawn time, so
+// isSuppressedByBoundaryDedup keeps the fixture slot OUT of the live `slots`/hits array even
+// though its cron ("* * * * *") always cron-matches — deterministic regardless of wall clock.
+function oneHourFutureIso() {
+  return new Date(Date.now() + 3600 * 1000).toISOString();
+}
+
+console.log('\nTC-24: CLI stdout JSON contract gains a top-level catchup_raw array field');
+{
+  const h = makeCliHarness();
+  const sched = {
+    slots: [{
+      slot_id: 'cli-test-guaranteed-eligible', cron: '* * * * *', agent: 'test-agent',
+      flow_path: 'docs/agents/test/flow/main.md', trigger_prompt: 'run test',
+      guaranteed: true, enabled: true, dish_type: 'test_dish_eligible',
+      publish_date_basis: 'vn_date', policy_id: null, last_fired: oneHourFutureIso(),
+    }],
+    _dish_type_catchup_config: {
+      _default: { catchup_max_lateness_minutes: 60, fire_timeout_seconds: 1800 },
+      test_dish_eligible: { catchup_max_lateness_minutes: 999999, fire_timeout_seconds: 1800 },
+    },
+  };
+  fs.writeFileSync(path.join(h, 'docs/data/cowork-schedule.json'), JSON.stringify(sched));
+  const run = spawnSync('node', [path.join(h, 'scripts/agents-flow/cowork-match-slots.js')], { cwd: h, encoding: 'utf8' });
+  assert('CLI exits 0', run.status, 0);
+  let out;
+  try { out = JSON.parse(run.stdout); } catch (e) { out = null; }
+  assert('stdout parses as JSON', out !== null, true);
+  assert('catchup_raw key is an Array', Array.isArray(out && out.catchup_raw), true);
+  assert('slots key still present (NFR-2, unchanged CLI contract)', Array.isArray(out && out.slots), true);
+  assert('drift_min key still present (NFR-2, unchanged CLI contract)', typeof (out && out.drift_min), 'number');
+  cleanup(h);
+}
+
+console.log('\nTC-25: catchup_raw surfaces a real eligible candidate the live cron-match suppressed (positive-path wiring)');
+{
+  const h = makeCliHarness();
+  const sched = {
+    slots: [{
+      slot_id: 'cli-test-guaranteed-eligible', cron: '* * * * *', agent: 'test-agent',
+      flow_path: 'docs/agents/test/flow/main.md', trigger_prompt: 'run test',
+      guaranteed: true, enabled: true, dish_type: 'test_dish_eligible',
+      publish_date_basis: 'vn_date', policy_id: null, last_fired: oneHourFutureIso(),
+    }],
+    _dish_type_catchup_config: {
+      _default: { catchup_max_lateness_minutes: 60, fire_timeout_seconds: 1800 },
+      test_dish_eligible: { catchup_max_lateness_minutes: 999999, fire_timeout_seconds: 1800 },
+    },
+  };
+  fs.writeFileSync(path.join(h, 'docs/data/cowork-schedule.json'), JSON.stringify(sched));
+  const run = spawnSync('node', [path.join(h, 'scripts/agents-flow/cowork-match-slots.js')], { cwd: h, encoding: 'utf8' });
+  const out = JSON.parse(run.stdout);
+  assert('live slots does NOT contain the future-last_fired slot (boundary dedup unaffected)',
+    out.slots.some(sl => sl.slot_id === 'cli-test-guaranteed-eligible'), false);
+  const entry = out.catchup_raw.find(c => c.slot_id === 'cli-test-guaranteed-eligible');
+  assert('catchup_raw contains the eligible candidate', entry !== undefined, true);
+  assert('catchup_eligible is true', entry && entry.catchup_eligible, true);
+  assert('reason is null when eligible', entry && entry.reason, null);
+  assert('expected_publish_task_id is prefixed correctly', /^published:cli-test-guaranteed-eligible:/.test((entry || {}).expected_publish_task_id || ''), true);
+  cleanup(h);
+}
+
+console.log('\nTC-26: catchup_raw marks a candidate ineligible (freshness_window_exceeded) when its dish_type bound is exceeded');
+{
+  const h = makeCliHarness();
+  const sched = {
+    slots: [{
+      slot_id: 'cli-test-guaranteed-ineligible', cron: '* * * * *', agent: 'test-agent',
+      flow_path: 'docs/agents/test/flow/main.md', trigger_prompt: 'run test',
+      guaranteed: true, enabled: true, dish_type: 'test_dish_ineligible',
+      publish_date_basis: 'vn_date', policy_id: null, last_fired: oneHourFutureIso(),
+    }],
+    _dish_type_catchup_config: {
+      _default: { catchup_max_lateness_minutes: 60, fire_timeout_seconds: 1800 },
+      // Negative bound → elapsedMinutes (always >= 0) is deterministically > bound.
+      test_dish_ineligible: { catchup_max_lateness_minutes: -1, fire_timeout_seconds: 1800 },
+    },
+  };
+  fs.writeFileSync(path.join(h, 'docs/data/cowork-schedule.json'), JSON.stringify(sched));
+  const run = spawnSync('node', [path.join(h, 'scripts/agents-flow/cowork-match-slots.js')], { cwd: h, encoding: 'utf8' });
+  const out = JSON.parse(run.stdout);
+  const entry = out.catchup_raw.find(c => c.slot_id === 'cli-test-guaranteed-ineligible');
+  assert('catchup_raw contains the ineligible candidate', entry !== undefined, true);
+  assert('catchup_eligible is false', entry && entry.catchup_eligible, false);
+  assert('reason is freshness_window_exceeded', entry && entry.reason, 'freshness_window_exceeded');
+  cleanup(h);
+}
+
+console.log('\nTC-27: catchup_raw falls back to [] (not a crash) when cowork-catchup-predicate.js is unavailable');
+{
+  const h = makeCliHarness();
+  fs.rmSync(path.join(h, 'scripts/agents-flow/cowork-catchup-predicate.js'));
+  const sched = { slots: [] };
+  fs.writeFileSync(path.join(h, 'docs/data/cowork-schedule.json'), JSON.stringify(sched));
+  const run = spawnSync('node', [path.join(h, 'scripts/agents-flow/cowork-match-slots.js')], { cwd: h, encoding: 'utf8' });
+  assert('CLI still exits 0 with module unavailable', run.status, 0);
+  const out = JSON.parse(run.stdout);
+  assert('catchup_raw falls back to an empty array (Array type)', Array.isArray(out.catchup_raw), true);
+  assert('catchup_raw falls back to an empty array (length 0)', out.catchup_raw.length, 0);
+  assert('stderr carries a WARN for the missing module', /cowork-catchup-predicate\.js unavailable/.test(run.stderr), true);
+  cleanup(h);
 }
 
 // ---------------------------------------------------------------------------
