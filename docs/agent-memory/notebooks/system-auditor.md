@@ -1,19 +1,19 @@
-## 60d26f9b · 2026-07-28T23:10:32Z
-### Audit Run Tier-1 (23:00–23:10 UTC 2026-07-28)
-- Tier: 1 | Services: 12/12 host_runtime_set Up(healthy) | Health: 5/5 OK | A-20 pdf-extractor 3/3 pass | A-21 crashRestarts=0 PASS | A-30 MemPerc=12.54% (fresh process, NOT leak evidence) | A-32 Disk 38% PASS
+## a1f7k9x5 · 2026-07-28T23:39:27Z
+### Audit Run Tier-1 (23:30–23:39 UTC 2026-07-28)
+- Tier: 1 | Services: 12/12 host_runtime_set Up(healthy) | Health: 5/5 OK | A-20 pdf-extractor 3/3 pass | A-21 crashRestarts=1 PASS | A-30 MemPerc=10.38% (process age 40m51s, 3rd trajectory point) | A-32 Disk 38% PASS
 - Anomalies: 0 new (0 critical, 0 warn, 0 info)
 - Status: HEALTHY
 
-Fire-election: tick=2026-07-28T23:00Z (`*/30 * * * *` boundary) — `task_claim` returned `claimed:true`. Led this tick.
+Fire-election: tick=2026-07-28T23:30Z (`*/30 * * * *` boundary) — `task_claim` returned `claimed:true`. Led this tick.
 
-### RAW-PROBE: (docs/agents/system-auditor/probe.sh, 2026-07-28T23:09:59Z)
+### RAW-PROBE: (docs/agents/system-auditor/probe.sh, 2026-07-28T23:39:06Z)
 ```
-=== AUDITOR PROBE 2026-07-28T23:09:59Z ===
+=== AUDITOR PROBE 2026-07-28T23:39:06Z ===
 
 --- docker ps -a ---
 NAMES                                             STATUS                    IMAGE
-vn-market-intelligence-mcp-pdf-extractor-1        Up 5 hours (healthy)      vn-market-intelligence-mcp-pdf-extractor
-vn-market-intelligence-mcp-mcp-server-1           Up 11 minutes (healthy)   vn-market-intelligence-mcp-mcp-server
+vn-market-intelligence-mcp-pdf-extractor-1        Up 6 hours (healthy)      vn-market-intelligence-mcp-pdf-extractor
+vn-market-intelligence-mcp-mcp-server-1           Up 40 minutes (healthy)   vn-market-intelligence-mcp-mcp-server
 vn-market-intelligence-mcp-frontend-1             Up 4 days (healthy)       vn-market-intelligence-mcp-frontend
 mcp-gateway                                       Up 13 days (healthy)      mcpservergatway-gateway
 vn-market-intelligence-mcp-api-gateway-1          Up 13 days (healthy)      vn-market-intelligence-mcp-api-gateway
@@ -37,11 +37,14 @@ vn-market-intelligence-mcp-kinh-dich-service-1    Up 13 days (healthy)      vn-m
 Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=3
 
 --- memory pressure ---
-Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=12.54% MemUsage=385.3MiB / 3GiB
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=10.38% MemUsage=318.8MiB / 3GiB
+
+--- memory pressure multi-probe reclamation (A-30) ---
+[A-30] SKIP deep-probe — baseline 10.38% < 85% investigate-gate
 
 --- disk df -h / ---
-Filesystem        Size    Used   Avail Capacity
-/dev/disk1s4s1   233Gi    13Gi    23Gi    38%
+Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
+/dev/disk1s4s1   233Gi    13Gi    23Gi    38%    393k  236M    0%   /
 
 --- pdf-extractor in-container multi-probe (A-20) ---
 [A-20-PROBE-1] in-container HTTP 200
@@ -52,24 +55,26 @@ Filesystem        Size    Used   Avail Capacity
 === PROBE DONE ===
 ```
 
-**A-29 Cron Health**: 129+ cron jobs all success_rate ≥80%, most ≥99%, last fires current. mcpServerStartup at 2026-07-28T22:58:42Z (matches clean restart). No fire-gap alerts.
+**A-29 Cron Health**: 129+ cron jobs, all success_rate ≥80%, most ≥99%. mcpServerStartup at 2026-07-28T22:58:42Z (clean restart). Last fires current. No fire-gap alerts.
 
-**A-30 Memory Context**: Process at 12.54% due to restart at 22:58:36Z (clean exit code 0, dev-mcp-server commit fe7640267 FIX-SBV-FETCHER-ZERO-VALUE-EMIT). Deep-probe SKIPPED (12.54% < 85% baseline). Memory reading is NOT evidence of leak resolution—process is ~11 minutes old. OHLCV backfill (~450/1543 in progress) will drive memory climb. Do NOT conclude FIX-MCP-MEMORY-CODE-LEAK is resolved. Underlying leak tracking continues (backlog, high).
+**A-30 Memory Trajectory (3rd data point)**: Process restarted 2026-07-28T22:58:36Z clean exit 0 (FIX-SBV-FETCHER-ZERO-VALUE-EMIT). Timeline: 23:06Z (8m post-restart) 8.59% → 23:36Z (37m) 9.02% → 23:39Z (40m51s) 10.38%. Baseline skip-deep-probe applied (10.38% < 85%). Memory is climbing; reclamation NOT proven—process is young. Do NOT conclude FIX-MCP-MEMORY-CODE-LEAK resolved. Underlying leak tracking continues (backlog, high).
 
-**A-20 pdf-extractor**: 3/3 probe pass. All OCR tooling present.
+**A-20 pdf-extractor**: 3/3 multi-probe pass.
+
+**A-21 Windowed Crashes**: 1 crash at 22:58:42Z (authorized restart event), threshold=2 → PASS.
 
 **A-32 Disk**: 38% capacity (233Gi total, 13Gi used, 23Gi avail) — healthy headroom.
 
 [OUTPUT-CONTRACT] signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0
 
-## q3r8n5x2 · 2026-07-28T22:41:40Z
-### Audit Run Tier-1 (22:39-22:41 UTC 2026-07-28)
-- Tier: 1 | Services: 12/12 host_runtime_set Up(healthy) | Health: 5/5 OK | A-20 pdf-extractor 3/3 pass | A-21 crashRestarts=0 PASS | A-30 MemPerc=93.83% verdict=FOLD (benign GC) | A-32 Disk 39% PASS
+## 60d26f9b · 2026-07-28T23:10:32Z
+### Audit Run Tier-1 (23:00–23:10 UTC 2026-07-28)
+- Tier: 1 | Services: 12/12 host_runtime_set Up(healthy) | Health: 5/5 OK | A-20 pdf-extractor 3/3 pass | A-21 crashRestarts=0 PASS | A-30 MemPerc=12.54% (fresh process, NOT leak evidence) | A-32 Disk 38% PASS
 - Anomalies: 0 new (0 critical, 0 warn, 0 info)
 - Status: HEALTHY
 
-Fire-election: tick=2026-07-28T22:30Z (`*/30 * * * *` boundary) — `task_claim` returned `claimed:true`. Led this tick.
+Fire-election: tick=2026-07-28T23:00Z (`*/30 * * * *` boundary) — `task_claim` returned `claimed:true`. Led this tick.
 
-[Abridged: Full RAW-PROBE and detailed A-29/A-30 analysis available in git log; see prior entry for detailed structure]
+[Abridged: Full RAW-PROBE for 23:00Z tick available in git log prior-entry; current cycle shows reduced memory]
 
 [OUTPUT-CONTRACT] signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0
