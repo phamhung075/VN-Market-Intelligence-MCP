@@ -2341,6 +2341,18 @@
         "status": "NEW",
         "payload_ref": null,
         "detail": "Same finding as the po-addressed row this tick: scripts/audits/mock-guard.sh --full HARD-FAILs on 2 lines inside *_test.go files (test stub URL builders), even though its own doc comment claims a tests/ exclusion. Suspected root cause: exclusion list is directory-name based (tests/sandbox/scenarios/spike/.venv) and never checks for the *_test.go Go filename convention. Recurring every tick since at least this session's start. Worth a small architecture/design note on whether mock-guard's exclusion should be filename-suffix-aware across all languages (*_test.go, *.test.ts, *_test.py) rather than directory-only."
+      },
+      {
+        "id": "dev-20260728T234103-sss",
+        "ts": "2026-07-28T23:41:03Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "stranded-state sweep: 10 unknown-owner dirty paths, 3 are LIVE (this tick's own dispatches, not stranded)",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null,
+        "detail": "scripts/agents-flow/stranded-state-sweep.sh --plan (Step 4.3) flagged 10 unknown_paths this tick. 3 are FALSE POSITIVES the script cannot see: apps/mcp-server/src/__tests__/emit-pressure-state.test.ts (dev-mcp-server, task CI-RED-cdd5fa5a-FIX, dispatched this same tick, still running) and docs/agents/cowork-team/flow/spawn-fanout.md + docs/agents/tran-ngoc-bau/flow/main.md (agent-father, task FIX-CADENCE-TNB-AUDIT-WEEKLY-MARKER-BLOCKS-DAILY-CRON, dispatched this same tick, still running) — these are live in-flight edits from background agents this router spawned seconds before the sweep ran, not orphaned state. The remaining 7 (docs/agents/tools/package/tran-ngoc-bau.md, docs/data/DASHBOARD.md, docs/data/auditor-dedup-ledger.json, docs/protocols/dwf-ops-runbook.md, docs/data/unified-agent-synthesis-2026-07-28-evening.json, docs/data/unified-agent-synthesis-2026-07-29-evening.json, docs/social/fb-post-2026-07-28.md) were ALREADY dirty at this session tick's start (confirmed via git status captured before any dispatch this tick) and genuinely need triage — likely cowork agents (unified-agent/fb-market-poster/tran-ngoc-bau) completing cycles without committing. Full script JSON: re-run bash scripts/agents-flow/stranded-state-sweep.sh --plan for current state (paths may have changed by the time this is read, e.g. the 3 live ones should be committed by their owning agents by then)."
       }
     ],
     "last_triaged_at": "2026-07-28T14:53:00Z",
