@@ -221,3 +221,42 @@
 - Escalate the -HOOK child + record constraints — CHOSEN.
 **why-decision:** The reproduction proves the mutex is structurally insufficient (INV-GATEWAY-1 exempts the contending population) and that the 3b-verify predicate is TOCTOU — neither fact was on the row, and both change the implementation.
 **why-change:** Unplanned — the defect fired against my own commit mid-tick; captured it rather than retrying blindly.
+
+### STEP po-S24 · po · 2026-07-28T22:55:49Z
+**task-id:** FIX-CHEF-EVENING-DUP-DATE-MISLABEL-INVESTIGATE
+**what-done:** Overturned c110's component-split, raised P2->P1, re-scoped to one canonical UTC date-derivation feeding filepath + notebook header + publish-marker key.
+**what-considered:**
+- Keep c110 split (Component 1 cosmetic, Component 2 folded to UC-CCA-P3) and mint a fresh dup-publish row
+- Overturn the split — the date derivation IS the mutex key, so one fix closes both
+- Merge into FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS
+**why-decision:** c119 RAW-verified the mutex is keyed on date_vn, so "cosmetic filename bug" and "double MARKET publish" are one defect at one derivation point; a fresh row would duplicate it, and merging into the mutex row conflates WHY-two-sessions-spawned with WHY-the-daily-mutex-missed-them (orthogonal, same axis test as the tnb cadence row).
+**why-change:** Plan assumed c110's split still held; new c119 evidence invalidated it.
+
+### STEP po-S25 · po · 2026-07-28T22:55:49Z
+**task-id:** FIX-CADENCE-TNB-AUDIT-WEEKLY-MARKER-BLOCKS-DAILY-CRON
+**what-done:** Re-activated backlog->ready P1, no re-scoping, flagged TIME-CRITICAL before the 2026-07-29T20:13Z fire.
+**what-considered:**
+- Leave BACKLOG — it self-healed on 07-27 as the row predicted
+- Promote to READY — the self-heal is spent and the fresh weekly key re-arms the identical 5-fire blackout
+**why-decision:** The self-heal was a one-shot periodKey rollover, not a fix; c119 re-claimed the marker with ttl=691200, so 07-29..08-02 will each no-op. Second occurrence of the identical blackout clears the 2+ recurring bar, and the row's ACs/files are already complete so it needs zero planning.
+**why-change:** no change from plan
+
+### STEP po-S26 · po · 2026-07-28T22:55:49Z
+**task-id:** FIX-POLYMARKET-FETCH-DEAD-GEOBLOCK-ACTUATOR
+**what-done:** Minted P1/M supervised row for a 28-day-dead prediction_markets plane found in list_unresolved_reports, confirmed by live get_prediction_markets() probe.
+**what-considered:**
+- Close as duplicate of FIX-PREDICTION-SIGNALS-EMPTY (REVIEW, same zone, same subsystem)
+- SPIKE to diagnose
+- Mint a FIX and let architect rule restore-via-VPS vs retire
+**why-decision:** Not a duplicate — that row's shipped scope was only reordering the staleness guard so the alert became reachable (detector), and it explicitly did not restore acquisition (actuator); the 4 alerts existing at all is proof it worked. No SPIKE needed because root cause is already RAW-verified in that row's review_note (gamma-api TLS-block + CLOB 403). Supervised because restore-vs-retire is a data-plane product call, not an implementation detail.
+**why-change:** Not in any plan — surfaced by this tick's unresolved-reports sweep, zero prior board coverage.
+
+### STEP po-S27 · po · 2026-07-28T22:55:49Z
+**task-id:** FIX-CHEF-EVENING-L5-KINHDICH-SILENT-OMISSION
+**what-done:** Minted P1/S row for chef.md swallowing kinhdich 503s with no gap token; deferred 3 lower-value TNB findings rather than flooding the board.
+**what-considered:**
+- Fold into FIX-CHEF-QUALITY-VERDICT-FALSE-FULL-NO-LAYER-ASSERTION (READY, same file)
+- Fold into FIX-CHEF-L6-TOKEN-PERSISTENCE-RECURRING (P3 BLOCKED)
+- Mint standalone and tell agent-father to batch it with the verdict row
+**why-decision:** Verdict-assertion makes the dish admit "degraded" without saying which layer died; L6-persistence covers tokens generated-then-lost, whereas here none is generated. Distinct halves — minted standalone with an explicit batch instruction so neither ships a half-fix. Capped the batch at 4 P1s (deferred notebook-collision, L6 broadening, business-context) because WIP was 0 and an over-long batch is not throughput.
+**why-change:** no change from plan
