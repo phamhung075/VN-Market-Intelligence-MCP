@@ -459,8 +459,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-28T03:00:01.616Z",
-    "_updated_by": "system-auditor",
+    "_updated_at": "2026-07-28T13:24:57Z",
+    "_updated_by": "po/triage-20260728T13",
     "archive": [],
     "rows": [
       {
@@ -471,8 +471,9 @@
         "type": "system_issue",
         "summary": "held lock data-quality-anomaly:DGC:Q1-2026 has no orch-state task_board row",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "po_disposition_20260728": "RESOLVED, no mint — DETECTOR NOISE with a tracked home. All 4 rows (2 facets x 2 days) belong to FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX (backlog, dev-mcp-server, minted 2026-07-25 from the identical 07-25 pair, origin_signal_id sau-d4-...-not_found-20260725), which PO augmented in this same write with the pipeline_mismatch facet and raised P3 -> P2. NOT a DGC data problem: the lock data-quality-anomaly:DGC:Q1-2026 is a live, legitimate 7-day bctc-analyst escalation claim expiring 2026-07-30T15:15:40Z, and a held lock without a board row is documented-legitimate (feedback_esc3_held_lock_no_board_row_is_legit). DO NOT RELEASE THE LOCK. Route future instances at the auditor's D4 check, never at DGC."
       },
       {
         "id": "sau-d4-data-quality-anomaly-dgc-q1-2026-pipeline_mismatch-20260728",
@@ -482,8 +483,9 @@
         "type": "system_issue",
         "summary": "orch-state/lock mismatch: active=FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES held=data-quality-an...",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "po_disposition_20260728": "RESOLVED, no mint — DETECTOR NOISE with a tracked home. All 4 rows (2 facets x 2 days) belong to FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX (backlog, dev-mcp-server, minted 2026-07-25 from the identical 07-25 pair, origin_signal_id sau-d4-...-not_found-20260725), which PO augmented in this same write with the pipeline_mismatch facet and raised P3 -> P2. NOT a DGC data problem: the lock data-quality-anomaly:DGC:Q1-2026 is a live, legitimate 7-day bctc-analyst escalation claim expiring 2026-07-30T15:15:40Z, and a held lock without a board row is documented-legitimate (feedback_esc3_held_lock_no_board_row_is_legit). DO NOT RELEASE THE LOCK. Route future instances at the auditor's D4 check, never at DGC."
       },
       {
         "id": "sau-d4-data-quality-anomaly-dgc-q1-2026-not_found-20260727",
@@ -493,8 +495,9 @@
         "type": "system_issue",
         "summary": "held lock data-quality-anomaly:DGC:Q1-2026 has no orch-state task_board row",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "po_disposition_20260728": "RESOLVED, no mint — DETECTOR NOISE with a tracked home. All 4 rows (2 facets x 2 days) belong to FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX (backlog, dev-mcp-server, minted 2026-07-25 from the identical 07-25 pair, origin_signal_id sau-d4-...-not_found-20260725), which PO augmented in this same write with the pipeline_mismatch facet and raised P3 -> P2. NOT a DGC data problem: the lock data-quality-anomaly:DGC:Q1-2026 is a live, legitimate 7-day bctc-analyst escalation claim expiring 2026-07-30T15:15:40Z, and a held lock without a board row is documented-legitimate (feedback_esc3_held_lock_no_board_row_is_legit). DO NOT RELEASE THE LOCK. Route future instances at the auditor's D4 check, never at DGC."
       },
       {
         "id": "sau-d4-data-quality-anomaly-dgc-q1-2026-pipeline_mismatch-20260727",
@@ -504,8 +507,9 @@
         "type": "system_issue",
         "summary": "orch-state/lock mismatch: active=FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES held=data-quality-an...",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "po_disposition_20260728": "RESOLVED, no mint — DETECTOR NOISE with a tracked home. All 4 rows (2 facets x 2 days) belong to FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX (backlog, dev-mcp-server, minted 2026-07-25 from the identical 07-25 pair, origin_signal_id sau-d4-...-not_found-20260725), which PO augmented in this same write with the pipeline_mismatch facet and raised P3 -> P2. NOT a DGC data problem: the lock data-quality-anomaly:DGC:Q1-2026 is a live, legitimate 7-day bctc-analyst escalation claim expiring 2026-07-30T15:15:40Z, and a held lock without a board row is documented-legitimate (feedback_esc3_held_lock_no_board_row_is_legit). DO NOT RELEASE THE LOCK. Route future instances at the auditor's D4 check, never at DGC."
       },
       {
         "id": "po-20260720T052606",
@@ -2337,8 +2341,9 @@
         "type": "signal_feedback",
         "summary": "rag-service memory at 99.10% of cap (761.1 MiB / 768 MiB)",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "po_disposition_20260728": "RESOLVED, no mint. 99.10% sample at 12:09Z is the pre-restart peak of the same ~3-day sawtooth; the container restarted at 12:21:47Z, 12 minutes later. Same tracked home: RAG-FTS-BUILD-MEMORY-BOUND (review/next=po)."
       },
       {
         "id": "rag-mem-ceiling-pinned-20260728T122201",
@@ -2347,11 +2352,12 @@
         "to": "po",
         "type": "system_issue",
         "severity": "LOW",
-        "status": "NEW",
+        "status": "RESOLVED",
         "summary": "RETRACTED BY AUTHOR (router). Original claim: rag-service pinned 99.7-99.9% for 2.9d, crash-restart relief NOT operating. FALSE. docker inspect at 13:13Z: RestartCount 14->15, StartedAt moved 2026-07-25T16:14:58Z -> 2026-07-28T12:21:47Z, mem now 678.3MiB/768MiB (88.32%). The container restarted at 12:21:47Z — FOURTEEN SECONDS BEFORE the signal was written. The relief mechanism IS operating on a ~3-day cycle; it had not stopped. The lifetime-vs-recent RestartCount correction was factually right, the inference drawn from it was wrong. Condition is the ALREADY-ACKNOWLEDGED slow-growth-to-ceiling pattern tracked by RAG-FTS-BUILD-MEMORY-BOUND, not a new emergency.",
         "payload_ref": null,
         "retracted_at": "2026-07-28T13:14:31Z",
-        "retracted_by": "router (self-correction on re-measurement)"
+        "retracted_by": "router (self-correction on re-measurement)",
+        "po_disposition_20260728": "RESOLVED, no mint. Author (router) retracted it at 13:14:31Z on re-measurement: the container restarted 2026-07-28T12:21:47Z, 14s BEFORE the signal was written, RestartCount 14->15, memory 766.5 -> 678.3 MiB. The '2.9d continuous uptime proves the crash-restart relief has stopped' inference was reading a mid-cycle sample as a ceased mechanism. Independently corroborated on the other plane by sibling signal sys-20260728T131227-5964 ('88.32% after restart'). Condition is the already-acknowledged slow-growth-to-ceiling sawtooth tracked by RAG-FTS-BUILD-MEMORY-BOUND (review/next=po); its ACK premise has NOT changed and is not being revisited. Standing caveat recorded, not actioned: a service that climbs to its cap and restarts every ~3 days is a leak with a crude relief valve, not a steady state — which is what that row already covers."
       },
       {
         "id": "sys-20260728T124939-50a8",
@@ -2361,8 +2367,9 @@
         "type": "microservice_degraded",
         "summary": "pdf-extractor memory at 85.54% (2.138 GiB / 2.5 GiB limit)",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "po_disposition_20260728": "RESOLVED, no mint, MONITOR with a named re-escalation threshold (not a silent file-and-forget). pdf-extractor 85.54% of 2.5 GiB (2.138 GiB), health=healthy, RestartCount=2, and byte-identical across 4 router samples over 94s plus a second signal 23 minutes later — a stable plateau UNDER cap is not a defect, and minting on it would be the auditor-memory-FP class (feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn). RE-ESCALATE, and mint then, if ANY of: crosses 95% of cap, OOMKilled=true, or RestartCount climbs. SEPARATELY: the tier-1 auditor's 2026-07-28T12:49Z cycle asserted IN PROSE ONLY (never signalled) '458 PDF extraction jobs stuck in processing, 0 completed in 24h'. PO could not reach the live DB either, but the '0 completed in 24h' half is REFUTED on two independent planes: list_stored_pdfs shows files dated 2026-07-28 (today) and get_sla_status reports bctc age 235 min against a 19552 min SLA. Treat 458 as UNSUBSTANTIATED; if anyone re-raises it, it needs a live jobs-table count, not a prose repeat."
       },
       {
         "id": "sys-20260728T131219-3fca",
@@ -2372,8 +2379,9 @@
         "type": "memory_pressure",
         "summary": "pdf-extractor memory 85.54% of 2.5 GiB (2.138 GiB) — stable plateau",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "po_disposition_20260728": "RESOLVED, no mint, MONITOR with a named re-escalation threshold (not a silent file-and-forget). pdf-extractor 85.54% of 2.5 GiB (2.138 GiB), health=healthy, RestartCount=2, and byte-identical across 4 router samples over 94s plus a second signal 23 minutes later — a stable plateau UNDER cap is not a defect, and minting on it would be the auditor-memory-FP class (feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn). RE-ESCALATE, and mint then, if ANY of: crosses 95% of cap, OOMKilled=true, or RestartCount climbs. SEPARATELY: the tier-1 auditor's 2026-07-28T12:49Z cycle asserted IN PROSE ONLY (never signalled) '458 PDF extraction jobs stuck in processing, 0 completed in 24h'. PO could not reach the live DB either, but the '0 completed in 24h' half is REFUTED on two independent planes: list_stored_pdfs shows files dated 2026-07-28 (today) and get_sla_status reports bctc age 235 min against a 19552 min SLA. Treat 458 as UNSUBSTANTIATED; if anyone re-raises it, it needs a live jobs-table count, not a prose repeat."
       },
       {
         "id": "sys-20260728T131227-5964",
@@ -2383,12 +2391,13 @@
         "type": "memory_pressure",
         "summary": "rag-service memory 88.32% of 768 MiB after restart — elevated post-restart",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "po_disposition_20260728": "RESOLVED, no mint. 88.32% post-restart is the expected floor of the sawtooth, and is the independent second-plane corroboration of the 12:21:47Z restart. Same tracked home: RAG-FTS-BUILD-MEMORY-BOUND. This row is the reason the HIGH sibling was retractable — keep it, it is the negative control."
       }
     ],
-    "last_triaged_at": "2026-07-25T15:29:39Z",
-    "last_triaged_by": "po"
+    "last_triaged_at": "2026-07-28T13:24:57Z",
+    "last_triaged_by": "po/triage-20260728T13"
   },
   "sprint_goal": {
     "_note": "Active sprint visions. PO triage 2026-07-20 16->15: archived QUE-REFERENCE-PAGE (SHIPPED — route apps/frontend/app/routes/dashboard.kinh-dich-reference.tsx exists 9489B, renders all 64 que from que-descriptions-detail.generated; successor sprint KINHDICH-HOVER-DETAIL scope_out treats the reference page + its deep-link as already-existing; 0 orphan refs in task_board lanes; not in active_sprints). PREV: Active sprint visions. PO triage 2026-07-11 16->14: merged FB-POSTER-LAUNCHD-FIRER into COWORK-GUARANTEED-SLOT-DURABILITY (superseded per cron-jobs.md, firer plist installed+loaded); archived NARRATIVE-TRUTH-CCATO-GATE (T2+T3 both DONE, T3 qa-APPROVED). Reasoning: sprint-ANALYSIS-QUALITY-CONVERGENCE-po.md.",
@@ -2618,8 +2627,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-28T12:27:08Z",
-    "_updated_by": "developer (FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES -> REVIEW)",
+    "_updated_at": "2026-07-28T13:30:54Z",
+    "_updated_by": "po (triage 20260728T13c — lane-coverage census converge + 2 chain repairs)",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -7060,11 +7069,14 @@
         "source_findings": [
           "tnb-c115-F-COWORK-SCHEDULE-CHEFEVENING-LASTFIRED-STALE"
         ],
-        "updated_at": "2026-07-22T22:12:59Z",
+        "updated_at": "2026-07-28T13:24:57Z",
         "owner": "developer",
         "next_agent": "pm",
         "architect_ruling": "Implemented via FR-7 ruling: Option (b) reconciler reads task_list_held claimed_at and backfills last_fired — NOT per-flow self-write (would reintroduce lost-update race + break path-agnostic requirement already on this row's own note).",
-        "architect_ruling_ref": "docs/architecture-briefs/2026-07-22-cowork-guaranteed-slot-catchup-design.md"
+        "architect_ruling_ref": "docs/architecture-briefs/2026-07-22-cowork-guaranteed-slot-catchup-design.md",
+        "subsumed_by": "BA-COWORK-GUARANTEED-SLOT-CATCHUP",
+        "po_consolidation_ruling_20260728": "PO RULING 2026-07-28T13Z: CONSOLIDATION HAPPENS AFTER ROUTING, NOT BEFORE — and it is a CLOSEOUT act, not a prerequisite. Three reasons. (1) It is already bound as acceptance, not as a gate: docs/handoffs/TASK-COWORK-CATCHUP-10.md AC-9 is 'All 6 consolidated rows closed together (5 fixed rows + umbrella task)', i.e. the consolidation is the epic's exit criterion. Doing it first would be closing rows whose fix has not shipped. (2) It buys zero throughput: all 5 of these rows are ALREADY inert — verified by executing scripts/lib/devteam-eligibility.jq against live data, is_bounded1_eligible=false on all 5 (4 carry a non-dev effective next_agent pm/architect; SPIKE-COWORK-GUARANTEED-SLOT-SUPERSEDE-WIRING is supervised without plan_only, so SLS's doubly-gated select misses it too). Consolidating them changes nothing that can move; routing the epic changes the only thing that can. (3) BA section 0.8 already assigns the owner-reconciliation to architect/PM at close time, and notes the 5 owner fields are stale relative to where the fix actually lands. WHAT THIS FIELD IS FOR: they are currently inert BY ACCIDENT (the NO-LANE hole), not by design. This stamp makes the subsumption explicit so a later triage pass that 'helpfully' routes one of them does not spawn duplicate work against files TASK-COWORK-CATCHUP-1..9 are already rewriting. Do NOT route these until the epic closes; then close all 6 together per AC-9.",
+        "updated_by": "po/triage-20260728T13"
       },
       {
         "id": "FIX-MARKET-MESSAGES-TIMESTAMP-FORMAT",
@@ -7684,15 +7696,6 @@
         "verify_note": "prior_status=TODO"
       },
       {
-        "id": "QA-COWORK-SLOT-SESSION-DOWN-SURVIVAL",
-        "status": "BACKLOG",
-        "priority": "high",
-        "type": "FIX",
-        "zone": "cross-service",
-        "title": "QA: 7-point session-down survival test — DoD gate before signal atb-cowork-...203223Z resolves",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#QA-COWORK-SLOT-SESSION-DOWN-SURVIVAL"
-      },
-      {
         "id": "FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK",
         "priority": "medium",
         "size": "S",
@@ -7941,7 +7944,10 @@
         "next_agent": "pm",
         "architect_ruling": "Root-caused — 3-caller shared module already exists structurally (cowork-match-slots.js SSOT); catch-up extends it, no separate code change beyond FR-1..9.",
         "architect_ruling_ref": "docs/architecture-briefs/2026-07-22-cowork-guaranteed-slot-catchup-design.md",
-        "updated_at": "2026-07-22T22:12:59Z"
+        "updated_at": "2026-07-28T13:24:57Z",
+        "subsumed_by": "BA-COWORK-GUARANTEED-SLOT-CATCHUP",
+        "po_consolidation_ruling_20260728": "PO RULING 2026-07-28T13Z: CONSOLIDATION HAPPENS AFTER ROUTING, NOT BEFORE — and it is a CLOSEOUT act, not a prerequisite. Three reasons. (1) It is already bound as acceptance, not as a gate: docs/handoffs/TASK-COWORK-CATCHUP-10.md AC-9 is 'All 6 consolidated rows closed together (5 fixed rows + umbrella task)', i.e. the consolidation is the epic's exit criterion. Doing it first would be closing rows whose fix has not shipped. (2) It buys zero throughput: all 5 of these rows are ALREADY inert — verified by executing scripts/lib/devteam-eligibility.jq against live data, is_bounded1_eligible=false on all 5 (4 carry a non-dev effective next_agent pm/architect; SPIKE-COWORK-GUARANTEED-SLOT-SUPERSEDE-WIRING is supervised without plan_only, so SLS's doubly-gated select misses it too). Consolidating them changes nothing that can move; routing the epic changes the only thing that can. (3) BA section 0.8 already assigns the owner-reconciliation to architect/PM at close time, and notes the 5 owner fields are stale relative to where the fix actually lands. WHAT THIS FIELD IS FOR: they are currently inert BY ACCIDENT (the NO-LANE hole), not by design. This stamp makes the subsumption explicit so a later triage pass that 'helpfully' routes one of them does not spawn duplicate work against files TASK-COWORK-CATCHUP-1..9 are already rewriting. Do NOT route these until the epic closes; then close all 6 together per AC-9.",
+        "updated_by": "po/triage-20260728T13"
       },
       {
         "id": "FIX-BCTC-D3C-FOLLOW-UP-RESET-ATTEMPTS",
@@ -8499,7 +8505,7 @@
         "next_agent": "ba",
         "po_fold_from_spike_20260721T1811": "FOLD-IN from SPIKE-COWORK-DRAIN-BODY-NOT-EXECUTING-ON-WORK-TICKS (closed 2026-07-21T18:11Z, acceptance met). THE DIAGNOSIS IS SETTLED — do not re-run it: the live failure mode is (a) flow non-compliance, the WORK-continuation drain body is narrated but not executed. Verified at source by router, not accepted from the accused actor's self-report: scripts/agents-flow/drain-signals.js:6 declares READ-marking explicitly OUT of script scope and left to the flow; the flow half never ran. (b) excluded — no write was ever attempted. (c) excluded — the 17:00Z and 17:15Z ticks had ZERO slots. Prior art: feedback_cowork_spawn_narrates_not_executes. BLOCKING ORDERING CONSTRAINT, and it inverts the obvious remedy: do NOT fix cowork compliance first. dev-team/flow/drain-signals.md:22 collects only status==NEW rows and :69 makes READ rows the prunable class — so the moment cowork Step 0a starts marking to:po rows READ as written, every cowork->dev-team escalation becomes invisible to dev-team's own drain and cold-evicts within 24h. cowork's non-compliance has been ACCIDENTALLY PROTECTIVE of that bridge. THIS ROW's status contract must be settled BEFORE compliance is enforced anywhere — that ordering is the whole reason this row, not a fresh fix row, is the fold target. LIVE PROBE — DO NOT TIDY: signal row po-20260720T052606 is deliberately held at NEW as the only reproducing instance; mark it READ only as the verified OUTPUT of a confirmed fix. COST CLOCK: with >=1 NEW cowork-addressed row the preflight SILENT gate can never fire, so every cowork tick burns a full LLM read every 15 min (the script header states SILENT was meant to cover ~80% of ticks). The defect sustains the condition that defeats the optimisation — this is not a static backlog item. Sibling row FIX-SIGNALQUEUE-RECEIVER-DELIVERY-CONTRACT (owner=po, next_agent=architect) covers the adjacent delivery-contract half; keep them coherent, they share the status-semantics question.",
         "po_ruling_signalqueue_prune_deferral_20260721T1811": "ROUTER'S 0a-D PRUNE DEFERRAL IS ENDORSED — AND IT SHOULD STOP BEING RE-LITIGATED EVERY TICK, WHICH IS WHY IT IS RECORDED HERE ON THE OWNING ROW RATHER THAN LEFT AS A PER-TICK JUDGEMENT CALL. Router has now deferred the 0a-D signal_queue prune for THREE consecutive dev-team ticks. That is correct and I am ratifying it, not merely tolerating it: the prune removes READ/RESOLVED rows, drain-signals.md:69 makes READ rows the prunable class, and THIS ROW is open on precisely whether that severs the cowork->dev-team escalation bridge. Running the prune now would destroy the evidence cowork-team warned about and would resolve the open question by deleting its subject. STANDING INSTRUCTION: 0a-D stays deferred until this row's status contract is settled. A deferral driven by a documented open question is not a skipped chore and must not be counted as drift or auto-escalated as a stalled step. When this row closes, the prune is unblocked automatically — no separate PO ruling needed to re-enable it. Nobody needs to ask again in the meantime.",
-        "updated_at": "2026-07-21T19:29:49Z",
+        "updated_at": "2026-07-28T13:28:25Z",
         "depends": [
           "FIX-SIGNALQUEUE-RECEIVER-DELIVERY-CONTRACT"
         ],
@@ -8507,7 +8513,10 @@
         "po_precedent": "po applied the interim rule this cycle and it should inform the contract: mark terminal ONLY when disposition is durably captured in a board row or a decision-journal verdict, and NEVER when the row is undeliverable. 8 of 9 rows were marked RESOLVED under that rule; the 1 undeliverable row was left NEW.",
         "po_vocabulary_evidence": "HARD EVIDENCE FOUND BY po 2026-07-21T19:29:49Z — the status vocabulary is ALREADY fragmented in live data, which makes this row concrete rather than theoretical. .claude/skills/signal-dashboard/SKILL.md is the SSOT and defines exactly three transitions: NEW -> READ (ACK, line 80) -> RESOLVED (CLOSE, line 81), with PRUNE at line 90 evicting rows whose 'status IN (READ, RESOLVED, SUPERSEDED) AND ts older than 24h'. But a census of .signal_queue.rows[] returns: 73 rows status='triaged', 9 status='NEW', 1 status='RETRACTED'. NEITHER 'triaged' NOR 'RETRACTED' appears anywhere in the skill's vocabulary. CONSEQUENCE: because the PRUNE predicate matches only READ/RESOLVED/SUPERSEDED, all 73 'triaged' rows are structurally unprunable and accumulate in the hot file forever — a permanently growing hot-file cost with no eviction path. This is a second, independent failure mode of the same missing contract, and it is not the one the escalation raised. po deliberately used the canonical 'RESOLVED' token for this cycle's 8 rows rather than perpetuating 'triaged'.",
         "po_scope_addendum": "The contract must therefore ALSO specify: (a) the canonical terminal token set and a migration for the 73 existing 'triaged' rows so they become prunable; (b) whether 'RETRACTED' is legitimate (cow-20260721T152500 uses it) and if so add it to both the vocabulary and the PRUNE predicate; (c) a validator that rejects an out-of-vocabulary status at write time, since the fragmentation was introduced silently and went unnoticed across 73 rows.",
-        "updated_by": "po/triage-20260721T1907"
+        "updated_by": "po/triage-20260728T13",
+        "supervised": true,
+        "po_lane_repair_20260728": "LANE REPAIR. This P1 row was plan_only:true with supervised absent — which matches NOTHING: BOUNDED-1 gates plan_only, and the Supervised-Lane Sweep's select requires BOTH effective_supervised AND effective_plan_only (either alone matches nothing, zone-routing.md Step A2). Verified by execution before and after: is_bounded1_eligible=false / SLS-select=false beforehand. Set supervised:true, which is the semantically correct half of the pair for a row whose own title begins 'PLAN-ONLY' and whose next_agent is ba — it now matches the SLS lane that exists for exactly this class (same shape as FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION). NOT moved to ready[]: RLC excludes effective_plan_only, so ready[] would have been a second dead end.",
+        "po_second_facet_20260728": "SECOND CONSEQUENCE of the same root cause, folded in rather than minted (cowork main.md Step 0a's blanket NEW->READ). This row already owns the cross-team leg: dev-team's drain filters status==NEW, so rows Step 0a already flipped to READ are invisible to it and cold-evict after 24h. The same blanket flip ALSO buries po-addressed rows before PO ever reads them — Step 0a instructs marking every processed signal_queue row NEW->READ, but when slots[] is empty there is no route to mark them toward, so obeying it literally is a pure loss. Reported 2026-07-28 by the router, which deliberately DISOBEYED the instruction to avoid burying this tick's 9 po-addressed rows. Same file, same line, same flip — one fix must serve both consumers: the flip must be conditional on the row actually having been routed somewhere, not on it having been merely read."
       },
       {
         "id": "GUARD-COWORK-NOTEBOOK-AGENTS-SELF-EDIT-FLOW-DOC",
@@ -8682,7 +8691,11 @@
         "created_by": "po-devteam-triage-20260716T0637",
         "source": "cow-20260716T052700",
         "note": "RECURRING (2nd occurrence 07-14 + 07-16T05:15Z; recurring-bug-escalation -> FIX this triage). Root: docs/agents/cowork-team/flow/pressure-cadence.md L137,140-141,144-145,149. Prior lesson feedback_cowork_chef_mutex_echo_jq_mangles_escaped_newline exists but the doc is STILL vulnerable — the fix never landed in the doc (or regressed). 07-16 only avoided a double-post because the dispatcher computed the mutex file-direct from memory; a dispatcher following the doc LITERALLY double-posts to users. FIX: replace echo-a-JSON-payload with file-direct jq -c ... docs/data/cowork-schedule.json + jq -n --argjson bound params; ideally EXTRACT the mutex to a tested scripts/ helper (per CLAUDE.md script-persistence) instead of shell-in-markdown. DISTINCT vector from UC-CCA-P3 (published-marker lifecycle) and FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS (router intent namespace). AC: on the 05:15Z coincidence tick a literal doc-follower fires exactly 1 CHEF dish; add a regression guard that cowork-schedule.json round-trips through the mutex membership check without echo corruption. SECOND-ORDER (fold, do not re-mint): audit whether other flows route fix requests via custom payload sub-fields instead of .signal_queue.rows[] — this fix request itself was silently dropped on 07-14 as payload.robustness_note_for_dev_team.",
-        "created_at": "2026-07-16T07:07:00Z"
+        "created_at": "2026-07-16T07:07:00Z",
+        "next_agent": "developer",
+        "updated_by": "po/triage-20260728T13",
+        "po_lane_repair_20260728": "LANE REPAIR. Verified by execution: is_non_dev_owner_unrouted=true — owner 'po' is a non-dev deliberate-launch owner AND the board row's next_agent was empty, which gates it out of BOUNDED-1 while matching neither SLS (not supervised, not plan_only) nor RLC (not in ready[]). deps_satisfied=true, not an epic wrapper, not detail-deferred: the ONLY thing holding it was the missing next_agent. Zone is the cowork pressure-cadence flow + scripts, so the handler is the generic developer per docs/data/system-map.json (scripts/ -> developer). Found by PO's own prior-art grep for this tick's spawn-fanout mint, not reported by anyone.",
+        "updated_at": "2026-07-28T13:28:25Z"
       },
       {
         "id": "FIX-VNINDEX-ESTIMATE-IMPLAUSIBLE-DELTA-GATE",
@@ -9249,10 +9262,12 @@
         "po_ordering_ruling": "LANDS FIRST of the pair. Ruling by po 2026-07-21T19:29:49Z on cowork escalation cow-20260721T172415, which asked for the ORDERING of the two existing rows to be graded and explicitly asked that no new row be minted. Honoured: no row minted. Rationale: a terminal signal_queue status (READ/DONE) is only safe once a defined receiver consumes the row. Defining the status contract first would mark rows terminal while they are still structurally undeliverable — the exact strand this escalation is objecting to. Delivery capability must precede status semantics.",
         "po_repro_case": "po-20260720T052606 (from=po, to=unified-agent, methodology-flag, HIGH) is the canonical live reproduction and MUST be used as the acceptance fixture. It has sat status=NEW since 2026-07-20 addressed to a COWORK agent. dev-team drain 0a-D (docs/agents/dev-team/flow/drain-signals.md) collects only rows whose 'to' matches po or a dev-team-addressed agent, so no drain will ever pick it up. It is not backlogged — it is undeliverable. Its content is a live methodology correction for unified-agent (stop pasting the literal gold >$4,300 L6 token, compute from live gold instead), so the cost of the missing delivery path is ongoing wrong output, not merely a stuck row.",
         "po_status_decision": "This row is DELIBERATELY LEFT status=NEW by po. Marking it READ would destroy the only record that a message was never delivered, and NEW costs nothing here precisely because no drain matches a cowork-addressed row — zero churn. It must stay NEW until a delivery path exists.",
-        "updated_at": "2026-07-21T20:12:26Z",
-        "updated_by": "po/ruling-20260721T2009",
+        "updated_at": "2026-07-28T13:30:55Z",
+        "updated_by": "po/triage-20260728T13",
         "router_fileplane_lock_asymmetry_20260721T1946": "ROUTER — RELATED GAP ON THE FILE PLANE, UNROUTED ACROSS SEVERAL TICKS, RECORDED HERE BECAUSE THIS ROW OWNS DELIVERY SEMANTICS. docs/agents/dev-team/flow/drain-signals.md step 0a-D claims a per-row `dashboard-row` lock (row_key = 'dash:signal_queue:' + row.id, ttl 1800) and SKIPS on collision, so the DB plane is guarded against a concurrent peer. The file plane at step 0a-1 has NO equivalent peer-collision guard: it can `mv` a signal file out of docs/signals/ while a live peer is mid-read on that exact path. The two planes of one drain therefore run at different isolation levels, and the unguarded one is the one that mutates the filesystem. This is adjacent to but distinct from the undeliverable-orphan problem this row already covers — same subsystem, and a receiver contract that does not state which plane holds what lock will not close it. PO to decide whether it folds here or needs its own row; router did not mint.",
-        "po_ruling_fileplane_split_20260721T2011": "RULING 4 — DOES NOT FOLD HERE; OWN ROW MINTED AS FIX-DRAIN-FILEPLANE-PEER-COLLISION-GUARD (backlog, P1). This row is PLAN-ONLY and asks an ARCHITECT to decide a receiver-contract question: whether undeliverable 'to' targets get an inbox step, get delivery pushed to them, or get removed from the table. The file-plane lock asymmetry is a concrete concurrency defect in an existing drain step with a known shape and a developer owner. Different question, different agent, different definition of done — and this row's own status is PLAN-ONLY, so folding an implementable defect into it would strand the defect behind an architecture decision that has not been scheduled. Router was right that they are adjacent and right not to merge them. CROSS-LINK IS RETAINED IN BOTH DIRECTIONS: whatever receiver contract this row settles on MUST state which plane holds which lock, and the new row must not be closed in a way that contradicts the contract this row produces."
+        "po_ruling_fileplane_split_20260721T2011": "RULING 4 — DOES NOT FOLD HERE; OWN ROW MINTED AS FIX-DRAIN-FILEPLANE-PEER-COLLISION-GUARD (backlog, P1). This row is PLAN-ONLY and asks an ARCHITECT to decide a receiver-contract question: whether undeliverable 'to' targets get an inbox step, get delivery pushed to them, or get removed from the table. The file-plane lock asymmetry is a concrete concurrency defect in an existing drain step with a known shape and a developer owner. Different question, different agent, different definition of done — and this row's own status is PLAN-ONLY, so folding an implementable defect into it would strand the defect behind an architecture decision that has not been scheduled. Router was right that they are adjacent and right not to merge them. CROSS-LINK IS RETAINED IN BOTH DIRECTIONS: whatever receiver contract this row settles on MUST state which plane holds which lock, and the new row must not be closed in a way that contradicts the contract this row produces.",
+        "supervised": true,
+        "po_lane_repair_20260728": "LANE REPAIR — acute, chain-motivated. Verified by execution: P1, plan_only:true, supervised absent, next_agent architect, depends_on empty and satisfied => is_bounded1_eligible false AND SLS-select false, i.e. no lane. It is ALSO the sole blocking dependency of FIX-COWORK-STEP0A-TOPO-DRAIN-STATUS-CONTRACT, which PO lane-repaired earlier in this same tick — repairing the dependent alone would have been useless, since deps_satisfied() would have held it behind a predecessor that itself could never dispatch. Set supervised:true (the missing half of the pair) so the whole two-row chain can move. This is one of the 48 plan_only-without-supervised rows censused on FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER; the other 47 are deliberately left untouched as that row's acceptance evidence."
       },
       {
         "id": "CLEAN-REGISTER-ORCH-SENTINEL-TREEMAP-SYSMAP",
@@ -9764,7 +9779,7 @@
         "zone": "cross-service/",
         "owner": "po",
         "next_agent": "architect",
-        "plan_only": false,
+        "plan_only": true,
         "supervised": true,
         "origin_signal_id": "devteam-20260721T154949-bctcscopecorr",
         "created_at": "2026-07-21T16:01:50Z",
@@ -9783,7 +9798,7 @@
         "note": "Minted from router scope_correction devteam-20260721T154949-bctcscopecorr decision (b): 'why did a high-priority raw-verified row with a named owner sit 6 days undispatched'. Answer: not neglect and not BCTC-specific — a structural hole affecting 84% of the high-priority backlog. supervised:true retained so this row itself is router-adjudicated (and is, deliberately, an instance of its own class).\n[po 2026-07-21T21:0xZ — PROMOTED BACKLOG->READY, QUARANTINE SELF-REFERENCE RETRACTED, NO SIBLING MINTED]\nThis row's own closing line read: \"supervised:true retained so this row itself is router-adjudicated (and is, deliberately, an instance of its own class).\" PO (same author, 5h earlier, 16:01Z) now RETRACTS that as a design choice. It was cute and it was wrong: a row whose entire subject is \"rows in this configuration never get dispatched\" cannot itself be placed in that configuration without guaranteeing its own non-execution. That is not a demonstration of the thesis, it is the thesis consuming its own fix. Empirically confirmed twice over: (1) 5h elapsed, zero dispatch; (2) PO re-derived this EXACT finding this tick from a completely unrelated entry point (the dev-team review-lane-drain question) and nearly minted a duplicate — only a prior-art grep caught it. A finding that must be independently rediscovered to receive attention is not tracked.\n\nFRESH MEASUREMENT (PO, live, this tick — complements the 16:xxZ high-priority measurement already in .evidence, different cut):\nCounting the QUARANTINE INTERSECTION across the whole backlog (416 rows), not just high-priority: supervised==true -> 45 rows; plan_only==true -> 39 rows; BOTH (supervised AND plan_only) -> 17 rows. Those 17 are simultaneously withheld from BOUNDED-1 idle auto-pickup AND dependent on a deliberate dispatch that empirically does not arrive. 7 of the 17 are P0/P1. Full aged list (priority / created / owner):\n  P0 2026-07-15 ba        FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS      (6d, occ=3, escalated P1->P0 by PO at 20:37Z THIS TICK)\n  P0 2026-07-21 po        FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD              (PO carry-over flagged it \"STALLED at P0, nobody triaged the block\" — THIS is the block)\n  P1 2026-07-12 architect FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN                    (9d — oldest; owns the review-lane-not-draining problem)\n  P1 2026-07-13 ba        UC-CRITIC-HOOKS-ENFORCEMENT\n  P1 2026-07-15 architect GUARD-COWORK-NOTEBOOK-AGENTS-SELF-EDIT-FLOW-DOC\n  P1 2026-07-15 ba        FIX-VNINDEX-CROSS-PLANE-PLAUSIBILITY-GATE\n  P1 2026-07-15 ba        FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING\n  P3 2026-07-17 ba        FIX-CHEF-USDVND-THRESHOLD-NUMERIC-DRIFT-GATE\n  high 2026-07-09 architect SPIKE-BOUNDED1-ELIGIBILITY-CONTRACT-REVIEW        (12d — see related_not_duplicate)\n  high 2026-07-13 architect SPIKE-SQLITE-DOCKER-VIRT-CORRUPTION-HARDENING\n  high 2026-07-13 dev-rag-service DIAGNOSE-RAG-SERVICE-RESTART-LOOP\n  high 2026-07-17 ops      FIX-INFRA-CRITICAL-VOLUME-PRESENCE-HEALTHCHECK\n  high 2026-07-21 architect FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE\n  high 2026-07-21 architect SPIKE-BCTC-Q1-2026-SERVABILITY-CENSUS\n  high 2026-07-21 architect FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER           (<- this row)\n  HIGH 2026-07-21 ba       FIX-BCTC-NEWSCHAIN-FALLBACK-ZEROS-WRITE-TARGET\n  normal 2026-07-20 architect SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP\n\nKEY CORROBORATION FROM A SECOND, INDEPENDENT PLANE (this is what makes the finding load-bearing rather than a board-hygiene gripe): TWO separate P0/P1 root-cause rows have now been independently diagnosed as \"dormant for days\" by two different investigations that BOTH concluded the priority was not the blocker and the dispatch was. At 20:37Z PO escalated FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS P1->P0 and wrote: \"the reason nothing shipped in 6 days is that nobody deliberately dispatched it, and a priority bump ALONE will not change that.\" That row is in this quarantine set. FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN, diagnosed complete with a remedy on 07-12, is in this quarantine set. The quarantine is the common cause. Raising priorities inside it changes nothing — which is why PO is NOT bumping priorities this tick and is promoting the mechanism row instead.\n\nWHAT CHANGED ON THIS ROW: status BACKLOG->READY, lane backlog->ready, plan_only cleared, supervised RETAINED, next_agent=architect (unchanged). Rationale for retaining supervised while promoting: supervised:true exists to stop BOUNDED-1 idle auto-pickup mis-routing an architect-owned plan row to a developer placeholder — that safety property is still wanted and is NOT being traded away. What was blocking execution was the ABSENCE of a deliberate path, not the presence of the guard. PO is supplying the deliberate path directly: this row is returned in the dev-team Step 1 BATCH this tick, which IS the router-adjudicated dispatch the gate was always waiting for. Do NOT read this promotion as precedent for clearing supervised to obtain auto-pickup — that specific shortcut is explicitly forbidden (see the intent-mutex row's PO directive and feedback_bounded1_autolaunches_uncommitted_peer_staged_rows).\n\nDELIVERABLE UNCHANGED, ONE ADDITION: options (a)/(b)/(c) stand. ADD a hard requirement to the aging report in the AC — it must be an EXECUTABLE that can be run on demand and that lists, for every gated row, its assigned dispatch lane and its age; and its acceptance evidence must be a live run whose output shows ZERO rows with dispatch-lane=none. A flow-doc paragraph asserting a supervised path exists is precisely the artifact that produced this bug (scripts/devteam-backlog-promote-bounded1.jq's own comment \"gated rows still launch normally via the router-adjudicated path\" was, and remains, false).\n",
         "po_promoted_at": "2026-07-21T21:04:23Z",
         "po_promoted_by": "po",
-        "updated_at": "2026-07-22T15:14:41Z",
+        "updated_at": "2026-07-28T13:30:55Z",
         "claimed_at": "2026-07-21T21:14:16Z",
         "claimed_by": "dev-team",
         "dispatch_note": "Dispatched architect 2026-07-21T21:14:16Z by dev-team tick 20:37Z per PO BATCH. MECHANISM row — ships BEFORE its casualty FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN (PO ordering). supervised:true RETAINED deliberately; this dispatch IS the deliberate path the gate waited for — do NOT clear supervised to obtain auto-pickup. Acceptance is an EXECUTABLE run live listing every gated row with dispatch-lane + age, output showing ZERO rows with dispatch-lane=none. Flow-doc prose is NOT acceptance: the false comment in scripts/devteam-backlog-promote-bounded1.jq claiming gated rows still launch via the router-adjudicated path is what produced this bug. LIVE CORROBORATION found by router this tick from an independent entry point (auditor Tier-1 cron, not the board): FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE sits in this exact quarantine (supervised+plan_only, created 14:23:45Z, updated_at null), and the A-30 mcp-server FP it exists to converge re-fired at 21:09Z this tick — so the quarantine is actively suppressing the fix for a defect that keeps firing. Cohort measured at 15 rows.",
@@ -9793,7 +9808,10 @@
         "router_review_gate_honesty_note_20260721T2140": "ROUTER 2026-07-21T21:40Z — VERIFIED AT SOURCE ON WORKER RETURN, and the row must NOT advance to DONE_VERIFIED on the green acceptance instrument alone. Confirmed GOOD: commit 5ec93134f scope clean (no peer sweep, 3 new scripts A-tracked), the false-comment CONFIRMED-FALSE fix landed in scripts/devteam-backlog-promote-bounded1.jq (5 sites), a real SLS caller is wired into the head-idle fall-through at main.md :539-541 (not dead documentation), the journal entry is present, and bounded1-supervised-lane-report.sh runs green for router too (exit 0, PRIMARY 16/16 lane-assigned, 0 dispatch-lane=none). BUT the architect flagged correctly that the SLS was dry-run verified only, never run live, so the row is REVIEW pending a live board run. That live run WILL BE A NO-OP: the SLS firing gate (ready+in_progress) < 2 evaluates to 37 < 2 against the live board (ready=36 holding-pen rows), so the sweep dispatches nothing and the 16 rows stay quarantined. This is a DEAD-gate instance now recorded as instance 9 on SPIKE-SATURATED-COUNT-THRESHOLD-GATES-SWEEP (ready/P1). NET: the code shipped is correct in isolation; the fix does not achieve its goal until the WIP-gate-versus-ready-holding-pen issue (owned by that spike) is resolved. Do not close this row as effective on the instrument; its true DoD depends on the spike. Also fixed this turn: architect reset .head via wholesale overwrite (5ec93134f), dropping wip_max + po_wip_note_20260721; router restored both from the pre-clobber head a675199dd (head-policy-restore-20260721T2137).",
         "router_source_verified_20260722": "ROUTER VERIFIED AT SOURCE on architect worker-return (2026-07-21T22:41Z) — keystone UNBLOCK-DEVTEAM-DISPATCH-GATE-STAGING-DEADLOCK. Commit b787e9a5d, 12 files ALL architect-own (dev-team/main.md, qa/flow/main.md, orch board-fold, 4 new scripts + lib/devteam-eligibility.jq + refactored promote-bounded1.jq + satisfiability instrument); NO peer sweep despite heavily-dirty tree (dirty files are other agents', zero architect files left uncommitted). HEAD=d4d75c32c. CRITICAL: .head.wip_max=2 AND po_wip_note_20260721 confirmed INTACT — the prior-window wholesale .head clobber (feedback_architect_self_flips_spike_board) did NOT recur. Root cause fixed: WIP now = .task_board.in_progress|length ONLY, not ready+in_progress (the staging-pen/concurrency conflation that wedged every pickup lane at 37<2). Satisfiability DoD instrument scripts/audits/devteam-dispatch-gate-satisfiability.sh EXIT=0 ALL PASS against the exact instance-9 saturated fixture (ready=35/in_progress=1/review=34): SLS + Ready-Lane-Consumer + Review-Lane-QA-Drain all SATISFIABLE and draining, BOUNDED-1 correctly no-ops at in_progress>=1, every post-drain candidate Zod-valid + conservation-guarded, negative control (in_progress=2==cap) correctly no-fires, shared WIP<=2 cap not bypassable. REMAINING DoD IS LIVE-TICK ONLY (PO AC(3)): review[] strictly DECREASING across 2 consecutive dev-team ticks with row IDs named. Do NOT flip to DONE_VERIFIED on the unit instrument alone — the next 7,37 dev-team ticks exercise the fixed main.md live and produce the draining evidence; QA signs off after AC(3).",
         "sprint": "BACKLOG",
-        "po_triage_20260722": "Bootstrap-deadlock break (PO triage 2026-07-22): this review-lane sweeper FIX was itself stranded in REVIEW because no review-lane sweeper exists (the very bug it fixes -- recursive deadlock). Moved REVIEW->BACKLOG so BOUNDED-1/RLC promote it via the existing backlog machinery when a WIP slot frees. Once built, this + its sibling sweeper drain the ~20 other owner-stranded REVIEW rows. PLAN-ONLY design: architect."
+        "po_triage_20260722": "Bootstrap-deadlock break (PO triage 2026-07-22): this review-lane sweeper FIX was itself stranded in REVIEW because no review-lane sweeper exists (the very bug it fixes -- recursive deadlock). Moved REVIEW->BACKLOG so BOUNDED-1/RLC promote it via the existing backlog machinery when a WIP slot frees. Once built, this + its sibling sweeper drain the ~20 other owner-stranded REVIEW rows. PLAN-ONLY design: architect.",
+        "updated_by": "po/triage-20260728T13",
+        "po_lane_repair_20260728": "LANE REPAIR — this row could not be picked up by the very lane its own fix created. It carried supervised:true with plan_only:false, and SLS's select requires BOTH, so it matched nothing (verified by execution). Set plan_only:true, which its own title asserts ('PLAN-ONLY: ...'). It is now SLS-shaped, deps-clear, rank 1 — i.e. it queues behind the two rank-0 rows (FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION, FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS) and ahead of the rest. Deliberately NOT raised to P0: the idle-chain row must stay first because ordering fairness is the prerequisite for any lane draining at all.",
+        "po_residual_measurement_20260728": "MEASURED RESIDUAL OF THIS ROW'S OWN FIX (po, 2026-07-28T13:3xZ, executed against live data via scripts/lib/devteam-eligibility.jq — not inferred). This row's fix shipped SLS to drain the class BOUNDED-1 correctly withholds. SLS's select is `effective_supervised == true AND effective_plan_only == true`. That AND is the residual: a row carrying only ONE of the two flags is withheld by BOUNDED-1 and not matched by SLS, so it matches nothing. Live census of task_board.backlog[] (397 rows, status BACKLOG/TODO):\n  - plan_only WITHOUT supervised: 48 rows — ALL 48 are deps-satisfied, i.e. every one is ready to run and none can be picked up.\n  - supervised WITHOUT plan_only: 32 rows — including THIS ROW ITSELF until the repair in this same write.\n  - both flags (the shape SLS actually matches): 21 rows.\n  - non-dev effective next_agent with NEITHER flag: 82 rows — gated out of BOUNDED-1 by is_non_dev_next_agent_unrouted, not matched by SLS (no flags), never seen by RLC (which reads ready[] only, never backlog[]). This is the class docs/agents/po/flow/zone-routing.md Step A2 already names 'not a lane, a hole'.\nTOTAL STRANDED: 48 + 32 + 82 = 162 distinct backlog rows, 41% of the lane, matched by NO consumer. The three sets are disjoint by construction of the census.\nWHY THIS IS NOT THE ALREADY-TRACKED STARVATION: FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION is an ORDERING defect — five consumers, first eligible one wins every tick, the other four starve. This is a COVERAGE defect — 162 rows are in NO consumer's candidate set, so they stay stuck under a perfectly fair scheduler. Both are real; fixing either alone leaves the other. Sequence them deliberately: coverage without fairness means the newly-matched rows still queue behind BOUNDED-1 forever; fairness without coverage means four lanes get fair turns at a candidate set that still excludes 162 rows.\nDIRECTION FOR ARCHITECT (PO has NOT pre-selected, unlike the idle-chain row — the two sub-classes may want different answers): for the 48+32, the question is whether SLS's AND should be an OR (BOUNDED-1 already excludes plan_only rows on its own, so the second conjunct may be buying nothing) or whether the two flags should collapse into one field, since 80 live rows carry exactly one of them and no documented reading of a single flag dispatches anywhere. For the 82, the question is whether RLC should also read backlog[] or whether non-dev-next_agent rows should be minted into ready[] by contract — Step A2 currently says the latter, which is a discipline no mechanism enforces; 82 rows say the discipline does not hold. DO NOT answer this by hand-moving 162 rows: PO deliberately hand-repaired only 3 this tick (this row, FIX-COWORK-STEP0A-TOPO-DRAIN-STATUS-CONTRACT and its blocking predecessor) because those unblock a live signal-burial defect. The other 159 are the acceptance evidence — the fix is right when that census reaches 0 without anyone touching a row."
       },
       {
         "id": "FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN",
@@ -9858,10 +9876,13 @@
         "acceptance": "A guaranteed slot that fans out to subagents either COMPLETES, or emits a loud, consumed 'work truncated' signal naming the slot and the bound that cut it. launchctl exit 0 must stop being reportable as success for a run that produced no deliverable. Raising the bounds alone is NOT acceptance — an unbounded claude -p under launchd StartInterval is the hung-run starvation the plist header explicitly warns against.",
         "folded_sub_item_log_hygiene": "FOLDED (item 7a, LOW, same file/owner): every line in cowork-guaranteed-slot-firer.log is written TWICE — the script tees to LOG_FILE while launchd ALSO redirects stdout to the same path (StandardOutPath). Confirmed at log lines 1042/1043, 1044/1045, 1046/1047. Full claude -p agent narration is also dumped in (118 KB). Pick one writer and drop the narration; whoever opens this log for the truncation fix should close this in the same pass.",
         "prior_art_cross_ref": "SPIKE-COWORK-GUARANTEED-SLOT-SUPERSEDE-WIRING (backlog) is slots MISSING a tick — a different failure from a slot FIRING and being truncated. Cross-reference, do NOT fold. OPS-COWORK-GUARANTEED-SLOT-INSTALL (review) is the install row and stays open.",
-        "updated_at": "2026-07-24T21:28:43Z",
+        "updated_at": "2026-07-28T13:24:57Z",
         "architect_ruling": "Implemented via FR-8 ruling: raise FIRE_TIMEOUT_SECONDS per dish_type (_dish_type_catchup_config), accept bounded residual — NOT a flow-duration diagnosis.",
         "architect_ruling_ref": "docs/architecture-briefs/2026-07-22-cowork-guaranteed-slot-catchup-design.md",
-        "note": "Maps to FR-8: raise FIRE_TIMEOUT_SECONDS per dish_type. Reproducer: chef-morning 1800s SIGTERM on 2026-07-22."
+        "note": "Maps to FR-8: raise FIRE_TIMEOUT_SECONDS per dish_type. Reproducer: chef-morning 1800s SIGTERM on 2026-07-22.",
+        "subsumed_by": "BA-COWORK-GUARANTEED-SLOT-CATCHUP",
+        "po_consolidation_ruling_20260728": "PO RULING 2026-07-28T13Z: CONSOLIDATION HAPPENS AFTER ROUTING, NOT BEFORE — and it is a CLOSEOUT act, not a prerequisite. Three reasons. (1) It is already bound as acceptance, not as a gate: docs/handoffs/TASK-COWORK-CATCHUP-10.md AC-9 is 'All 6 consolidated rows closed together (5 fixed rows + umbrella task)', i.e. the consolidation is the epic's exit criterion. Doing it first would be closing rows whose fix has not shipped. (2) It buys zero throughput: all 5 of these rows are ALREADY inert — verified by executing scripts/lib/devteam-eligibility.jq against live data, is_bounded1_eligible=false on all 5 (4 carry a non-dev effective next_agent pm/architect; SPIKE-COWORK-GUARANTEED-SLOT-SUPERSEDE-WIRING is supervised without plan_only, so SLS's doubly-gated select misses it too). Consolidating them changes nothing that can move; routing the epic changes the only thing that can. (3) BA section 0.8 already assigns the owner-reconciliation to architect/PM at close time, and notes the 5 owner fields are stale relative to where the fix actually lands. WHAT THIS FIELD IS FOR: they are currently inert BY ACCIDENT (the NO-LANE hole), not by design. This stamp makes the subsumption explicit so a later triage pass that 'helpfully' routes one of them does not spawn duplicate work against files TASK-COWORK-CATCHUP-1..9 are already rewriting. Do NOT route these until the epic closes; then close all 6 together per AC-9.",
+        "updated_by": "po/triage-20260728T13"
       },
       {
         "id": "FIX-FLEET-PUSH-LAUNCHD-EXCONFIG-SILENT-DEAD",
@@ -9921,11 +9942,14 @@
         "already_ruled_out_do_not_redo": "MACHINE SLEEP IS RULED OUT — uptime 10d 20:15, `sleep 0`, no Sleep/Wake entries in `pmset -g log`. Do not spend timebox re-confirming this.",
         "hypothesis_not_conclusion": "The load figures are CONSISTENT WITH memory feedback_overparallel_fanout_host_starvation but that is NOT proven and must not be written up as the cause without evidence that distinguishes starvation from the alternatives (gateway/downstream SSE wedge after a restart; a REPL stuck mid-query in every session simultaneously, which would match the CronCreate idle-only constraint; container OOM preceding the restart; a shared lock/mutex held across the window). Note a competing datapoint already on the board: signal_queue sys-20260722T150037 records market_messages count=0 over a 3h window and was triaged as a CONSEQUENCE of an A-30 OOM/restart at 14:51Z — reconcile with that, do not re-litigate it.",
         "acceptance": "A findings doc that either NAMES the mechanism with evidence, or states plainly which hypotheses were eliminated and what instrumentation is missing to decide. 'Probably host starvation' is an UNACCEPTABLE output. If the answer is 'we cannot tell', the deliverable is the specific telemetry gap that made it undecidable.",
-        "updated_at": "2026-07-22T22:12:59Z",
+        "updated_at": "2026-07-28T13:24:57Z",
         "next_agent": "pm",
         "architect_ruling": "Root-caused by PO (standby, not sleep) — no code change; closes on PM/QA coordinated pass with the other 4 rows, not standalone.",
         "architect_ruling_ref": "docs/architecture-briefs/2026-07-22-cowork-guaranteed-slot-catchup-design.md",
-        "note": "Maps to FR-1..10 catch-up implementation; closes on PM/QA coordinated pass with other 4 consolidated rows. Root-caused by standby (not sleep-ruled-out)."
+        "note": "Maps to FR-1..10 catch-up implementation; closes on PM/QA coordinated pass with other 4 consolidated rows. Root-caused by standby (not sleep-ruled-out).",
+        "subsumed_by": "BA-COWORK-GUARANTEED-SLOT-CATCHUP",
+        "po_consolidation_ruling_20260728": "PO RULING 2026-07-28T13Z: CONSOLIDATION HAPPENS AFTER ROUTING, NOT BEFORE — and it is a CLOSEOUT act, not a prerequisite. Three reasons. (1) It is already bound as acceptance, not as a gate: docs/handoffs/TASK-COWORK-CATCHUP-10.md AC-9 is 'All 6 consolidated rows closed together (5 fixed rows + umbrella task)', i.e. the consolidation is the epic's exit criterion. Doing it first would be closing rows whose fix has not shipped. (2) It buys zero throughput: all 5 of these rows are ALREADY inert — verified by executing scripts/lib/devteam-eligibility.jq against live data, is_bounded1_eligible=false on all 5 (4 carry a non-dev effective next_agent pm/architect; SPIKE-COWORK-GUARANTEED-SLOT-SUPERSEDE-WIRING is supervised without plan_only, so SLS's doubly-gated select misses it too). Consolidating them changes nothing that can move; routing the epic changes the only thing that can. (3) BA section 0.8 already assigns the owner-reconciliation to architect/PM at close time, and notes the 5 owner fields are stale relative to where the fix actually lands. WHAT THIS FIELD IS FOR: they are currently inert BY ACCIDENT (the NO-LANE hole), not by design. This stamp makes the subsumption explicit so a later triage pass that 'helpfully' routes one of them does not spawn duplicate work against files TASK-COWORK-CATCHUP-1..9 are already rewriting. Do NOT route these until the epic closes; then close all 6 together per AC-9.",
+        "updated_by": "po/triage-20260728T13"
       },
       {
         "id": "FIX-GUARANTEED-SLOT-DUAL-PLANE-DOUBLE-FIRE",
@@ -9943,10 +9967,13 @@
         "why_a_last_line_of_defense_is_not_a_design": "The ONLY thing preventing a double MARKET post is the published-marker task_claim inside the agent flow. That guard is a last line of defense and it has a documented history of failing open: feedback_chef_leaks_published_marker_on_silent_exit, feedback_chef_releases_published_marker_enables_peer_double_publish, feedback_fb_dedup_gate_orphaned_test_lock_false_block. Relying on it as the arbitration mechanism between two schedulers means a single marker bug becomes a duplicate market-facing publication.",
         "design_question_for_architect": "Which plane is AUTHORITATIVE, and how does the non-authoritative plane learn to stand down? Candidate shapes: launchd fires ONLY when no live dispatcher session is detected (the plist header already frames launchd as the session-death backstop, docs/standards/cron-jobs.md:298); or both planes claim a shared per-slot-per-window lock BEFORE spawn rather than before publish. PO has NOT pre-selected one.",
         "prior_art_distinct_do_not_fold": "This is a THIRD distinct double-fire path and must not be folded into either existing row. FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE is single-session SELF-refire (lock released too early, same session re-elects). FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS is peer/two-path/two-session. THIS one is two different SCHEDULING PLANES (OS-level launchd vs in-REPL CronCreate) that share no lock namespace at all — a namespace merge does not fix it and neither existing fix prevents it.",
-        "updated_at": "2026-07-22T22:12:59Z",
+        "updated_at": "2026-07-28T13:24:57Z",
         "architect_ruling": "Implemented via FR-6 ruling: published-marker task_claim ratified as sole symmetric arbiter across all firing planes — no plane stands down for another, zero new code (marker-lifecycle leak/release bugs remain separately tracked, NOT closed by this).",
         "architect_ruling_ref": "docs/architecture-briefs/2026-07-22-cowork-guaranteed-slot-catchup-design.md",
-        "note": "Maps to FR-6: published-marker task_claim ratified as sole symmetric arbiter. Zero new code; catch-up reuses existing gate."
+        "note": "Maps to FR-6: published-marker task_claim ratified as sole symmetric arbiter. Zero new code; catch-up reuses existing gate.",
+        "subsumed_by": "BA-COWORK-GUARANTEED-SLOT-CATCHUP",
+        "po_consolidation_ruling_20260728": "PO RULING 2026-07-28T13Z: CONSOLIDATION HAPPENS AFTER ROUTING, NOT BEFORE — and it is a CLOSEOUT act, not a prerequisite. Three reasons. (1) It is already bound as acceptance, not as a gate: docs/handoffs/TASK-COWORK-CATCHUP-10.md AC-9 is 'All 6 consolidated rows closed together (5 fixed rows + umbrella task)', i.e. the consolidation is the epic's exit criterion. Doing it first would be closing rows whose fix has not shipped. (2) It buys zero throughput: all 5 of these rows are ALREADY inert — verified by executing scripts/lib/devteam-eligibility.jq against live data, is_bounded1_eligible=false on all 5 (4 carry a non-dev effective next_agent pm/architect; SPIKE-COWORK-GUARANTEED-SLOT-SUPERSEDE-WIRING is supervised without plan_only, so SLS's doubly-gated select misses it too). Consolidating them changes nothing that can move; routing the epic changes the only thing that can. (3) BA section 0.8 already assigns the owner-reconciliation to architect/PM at close time, and notes the 5 owner fields are stale relative to where the fix actually lands. WHAT THIS FIELD IS FOR: they are currently inert BY ACCIDENT (the NO-LANE hole), not by design. This stamp makes the subsumption explicit so a later triage pass that 'helpfully' routes one of them does not spawn duplicate work against files TASK-COWORK-CATCHUP-1..9 are already rewriting. Do NOT route these until the epic closes; then close all 6 together per AC-9.",
+        "updated_by": "po/triage-20260728T13"
       },
       {
         "id": "ARCH-CRON-THREE-TIME-BASES-UNIFY",
@@ -10331,7 +10358,10 @@
         ],
         "created_at": "2026-07-22T22:12:59Z",
         "created_by": "pm",
-        "updated_at": "2026-07-22T22:12:59Z"
+        "updated_at": "2026-07-28T13:16:19Z",
+        "next_agent": "developer",
+        "po_routing_20260728": "PO 2026-07-28T13Z lane routing. pm's decomposition minted this row with next_agent unset, which no dispatch lane resolves (verified by executing scripts/lib/devteam-eligibility.jq predicates, not by reading the row). Handler = developer per docs/handoffs/TASK-COWORK-CATCHUP-10.md ('developer completes code TASK-1..9, then agent-father integrates this doc-only subtask') + docs/data/system-map.json scripts/ zone. dev-role next_agent + backlog lane = BOUNDED-1, per docs/agents/po/flow/zone-routing.md Step A2.",
+        "updated_by": "po/route-20260728T13"
       },
       {
         "id": "TASK-COWORK-CATCHUP-3",
@@ -10348,7 +10378,10 @@
         ],
         "created_at": "2026-07-22T22:12:59Z",
         "created_by": "pm",
-        "updated_at": "2026-07-22T22:12:59Z"
+        "updated_at": "2026-07-28T13:16:19Z",
+        "next_agent": "developer",
+        "po_routing_20260728": "PO 2026-07-28T13Z lane routing. pm's decomposition minted this row with next_agent unset, which no dispatch lane resolves (verified by executing scripts/lib/devteam-eligibility.jq predicates, not by reading the row). Handler = developer per docs/handoffs/TASK-COWORK-CATCHUP-10.md ('developer completes code TASK-1..9, then agent-father integrates this doc-only subtask') + docs/data/system-map.json scripts/ zone. dev-role next_agent + backlog lane = BOUNDED-1, per docs/agents/po/flow/zone-routing.md Step A2.",
+        "updated_by": "po/route-20260728T13"
       },
       {
         "id": "TASK-COWORK-CATCHUP-4",
@@ -10365,7 +10398,10 @@
         ],
         "created_at": "2026-07-22T22:12:59Z",
         "created_by": "pm",
-        "updated_at": "2026-07-22T22:12:59Z"
+        "updated_at": "2026-07-28T13:16:19Z",
+        "next_agent": "developer",
+        "po_routing_20260728": "PO 2026-07-28T13Z lane routing. pm's decomposition minted this row with next_agent unset, which no dispatch lane resolves (verified by executing scripts/lib/devteam-eligibility.jq predicates, not by reading the row). Handler = developer per docs/handoffs/TASK-COWORK-CATCHUP-10.md ('developer completes code TASK-1..9, then agent-father integrates this doc-only subtask') + docs/data/system-map.json scripts/ zone. dev-role next_agent + backlog lane = BOUNDED-1, per docs/agents/po/flow/zone-routing.md Step A2.",
+        "updated_by": "po/route-20260728T13"
       },
       {
         "id": "TASK-COWORK-CATCHUP-5",
@@ -10382,7 +10418,10 @@
         ],
         "created_at": "2026-07-22T22:12:59Z",
         "created_by": "pm",
-        "updated_at": "2026-07-22T22:12:59Z"
+        "updated_at": "2026-07-28T13:16:19Z",
+        "next_agent": "developer",
+        "po_routing_20260728": "PO 2026-07-28T13Z lane routing. pm's decomposition minted this row with next_agent unset, which no dispatch lane resolves (verified by executing scripts/lib/devteam-eligibility.jq predicates, not by reading the row). Handler = developer per docs/handoffs/TASK-COWORK-CATCHUP-10.md ('developer completes code TASK-1..9, then agent-father integrates this doc-only subtask') + docs/data/system-map.json scripts/ zone. dev-role next_agent + backlog lane = BOUNDED-1, per docs/agents/po/flow/zone-routing.md Step A2.",
+        "updated_by": "po/route-20260728T13"
       },
       {
         "id": "TASK-COWORK-CATCHUP-6",
@@ -10399,7 +10438,10 @@
         ],
         "created_at": "2026-07-22T22:12:59Z",
         "created_by": "pm",
-        "updated_at": "2026-07-22T22:12:59Z"
+        "updated_at": "2026-07-28T13:16:19Z",
+        "next_agent": "developer",
+        "po_routing_20260728": "PO 2026-07-28T13Z lane routing. pm's decomposition minted this row with next_agent unset, which no dispatch lane resolves (verified by executing scripts/lib/devteam-eligibility.jq predicates, not by reading the row). Handler = developer per docs/handoffs/TASK-COWORK-CATCHUP-10.md ('developer completes code TASK-1..9, then agent-father integrates this doc-only subtask') + docs/data/system-map.json scripts/ zone. dev-role next_agent + backlog lane = BOUNDED-1, per docs/agents/po/flow/zone-routing.md Step A2.",
+        "updated_by": "po/route-20260728T13"
       },
       {
         "id": "TASK-COWORK-CATCHUP-7",
@@ -10416,7 +10458,10 @@
         ],
         "created_at": "2026-07-22T22:12:59Z",
         "created_by": "pm",
-        "updated_at": "2026-07-22T22:12:59Z"
+        "updated_at": "2026-07-28T13:16:19Z",
+        "next_agent": "developer",
+        "po_routing_20260728": "PO 2026-07-28T13Z lane routing. pm's decomposition minted this row with next_agent unset, which no dispatch lane resolves (verified by executing scripts/lib/devteam-eligibility.jq predicates, not by reading the row). Handler = developer per docs/handoffs/TASK-COWORK-CATCHUP-10.md ('developer completes code TASK-1..9, then agent-father integrates this doc-only subtask') + docs/data/system-map.json scripts/ zone. dev-role next_agent + backlog lane = BOUNDED-1, per docs/agents/po/flow/zone-routing.md Step A2.",
+        "updated_by": "po/route-20260728T13"
       },
       {
         "id": "TASK-COWORK-CATCHUP-8",
@@ -10435,7 +10480,10 @@
         ],
         "created_at": "2026-07-22T22:12:59Z",
         "created_by": "pm",
-        "updated_at": "2026-07-22T22:12:59Z"
+        "updated_at": "2026-07-28T13:16:19Z",
+        "next_agent": "developer",
+        "po_routing_20260728": "PO 2026-07-28T13Z lane routing. pm's decomposition minted this row with next_agent unset, which no dispatch lane resolves (verified by executing scripts/lib/devteam-eligibility.jq predicates, not by reading the row). Handler = developer per docs/handoffs/TASK-COWORK-CATCHUP-10.md ('developer completes code TASK-1..9, then agent-father integrates this doc-only subtask') + docs/data/system-map.json scripts/ zone. dev-role next_agent + backlog lane = BOUNDED-1, per docs/agents/po/flow/zone-routing.md Step A2.",
+        "updated_by": "po/route-20260728T13"
       },
       {
         "id": "TASK-COWORK-CATCHUP-9",
@@ -10453,24 +10501,10 @@
         ],
         "created_at": "2026-07-22T22:12:59Z",
         "created_by": "pm",
-        "updated_at": "2026-07-22T22:12:59Z"
-      },
-      {
-        "id": "TASK-COWORK-CATCHUP-10",
-        "title": "FR-10 doc-only: cron runbook update (route to agent-father)",
-        "type": "SPRINT-S",
-        "size": "S",
-        "priority": "P0",
-        "zone": "docs/",
-        "sprint": "COWORK-GUARANTEED-SLOT-CATCHUP",
-        "status": "BACKLOG",
-        "depends_on": [
-          "TASK-COWORK-CATCHUP-9"
-        ],
-        "next_agent": "agent-father",
-        "created_at": "2026-07-22T22:12:59Z",
-        "created_by": "pm",
-        "updated_at": "2026-07-22T22:12:59Z"
+        "updated_at": "2026-07-28T13:16:19Z",
+        "next_agent": "developer",
+        "po_routing_20260728": "PO 2026-07-28T13Z lane routing. pm's decomposition minted this row with next_agent unset, which no dispatch lane resolves (verified by executing scripts/lib/devteam-eligibility.jq predicates, not by reading the row). Handler = developer per docs/handoffs/TASK-COWORK-CATCHUP-10.md ('developer completes code TASK-1..9, then agent-father integrates this doc-only subtask') + docs/data/system-map.json scripts/ zone. dev-role next_agent + backlog lane = BOUNDED-1, per docs/agents/po/flow/zone-routing.md Step A2.",
+        "updated_by": "po/route-20260728T13"
       },
       {
         "id": "UC-CDC-P5",
@@ -10870,7 +10904,7 @@
         "title": "D4 held-lock detector re-fires on data-quality-anomaly:* — KNOWN_LEGIT_PREFIXES (authored 2026-07-08) never learned the lock kind bctc-analyst introduced 2026-07-19; whitelist is a static list that lags every new escalation-lock kind",
         "status": "BACKLOG",
         "type": "FIX",
-        "priority": "P3",
+        "priority": "P2",
         "size": "S",
         "zone": "apps/mcp-server/",
         "owner": "dev-mcp-server",
@@ -10888,7 +10922,9 @@
           "UC-ASL-P3"
         ],
         "note": "DO NOT RELEASE the lock. PO RAW-probed task_list_held: data-quality-anomaly:DGC:Q1-2026 is LIVE (sprint-task, bctc-analyst, claimed 2026-07-23T15:15:40Z, ttl 604800s, expires 2026-07-30T15:15:40Z, ~5.3d remaining) — legit board-row-less escalation per feedback_esc3_held_lock_no_board_row_is_legit. Signal is a FALSE POSITIVE; releasing would drop an in-flight 7-day data-quality escalation. Prior art checked: no existing row covers the prefix gap; git log on tasksMdJanitorJob.ts since 2026-07-20 empty and worktree clean, so no in-flight peer fix.",
-        "updated_at": "2026-07-25T07:00:53Z"
+        "updated_at": "2026-07-28T13:24:57Z",
+        "po_second_facet_20260728": "SECOND FACET FOLDED IN (converge, no new row — the detector is one root cause with two emissions). The row as written covers the `not_found` emission (held lock has no board row). The SAME detector also emits a `pipeline_mismatch` row for the same lock: 'orch-state/lock mismatch: active=<head.active_task_id> held=data-quality-anomaly:DGC:Q1-2026'. That comparison is a CATEGORY ERROR, not a stale whitelist: it compares .head.active_task_id (the dev-team dispatch head, a dev task) against a long-TTL sprint-task escalation lock owned by a DIFFERENT agent (bctc-analyst) in a DIFFERENT plane. Those two are never required to be equal, so the predicate mismatches on every tick for the entire 7-day TTL regardless of system state — a whitelist entry alone will NOT silence it unless the pipeline_mismatch path consults the same exclusion. Both emissions must be fixed together or the FP count only halves. EVIDENCE: the identical pair fired on 2026-07-27 AND 2026-07-28 with nothing changing in between (4 signal_queue rows, ids sau-d4-data-quality-anomaly-dgc-q1-2026-{not_found,pipeline_mismatch}-2026072{7,8}), on top of the 2026-07-25 pair that minted this row. PRIORITY P3 -> P2: not damage, but a confirmed 2-per-day recurring false positive into PO's inbox that has now survived 3 consecutive days and 6 signal rows; at P3 it sits behind 42 rows and keeps emitting. The lock itself is LIVE and LEGIT (expires 2026-07-30T15:15:40Z) — the standing DO NOT RELEASE instruction in .note is unchanged.",
+        "updated_by": "po/triage-20260728T13"
       },
       {
         "id": "FIX-AUDITOR-C04-PARSEDAT-RECENCY-PREDICATE",
@@ -11318,6 +11354,79 @@
         "updated_at": "2026-07-25T17:41:29Z",
         "updated_by": "po/triage-20260725T1742",
         "unblock_action": "LANE NOTE — this row has NO automated lane while BLOCKED, and that is deliberate (deps_satisfied=false by design; verified by EXECUTING scripts/lib/devteam-eligibility.jq against live data, not inferred). It will NOT self-dispatch when its blockers close.\n\nWHOEVER CLOSES THE LAST OF blocked_by (FIX-BDI-SHIPPING-STALE-404-GUARD, FIX-COWORK-BASH-GRANT-COVERAGE-STAMP-TRANSPORT) MUST, in one write:\n  1. clear .blocked_by\n  2. set status = \"READY\"\n  3. MOVE the row from backlog[] into ready[]\nThen the Ready-Lane Consumer (scripts/devteam-backlog-claim-ready-lane-consumer.jq) claims it and spawns next_agent=qa directly — RLC has no dev/non-dev gate, so a qa-owned row is a valid target there. Leaving it BLOCKED-in-backlog matches nothing: BOUNDED-1 gates out non-dev next_agent, and SLS needs plan_only AND supervised both true (this row is supervised:true, plan_only:false).\n\nTHIS IS NOT HYPOTHETICAL. The sibling precedent row VERIFY-FIX-VPS-SSH-TRIGGER-FAIL-LOUD-REALDATA was minted BLOCKED on 2026-07-22 under the identical PUSH-AUTONOMY-1 clause 5 obligation and has sat untouched ever since, because nothing sweeps a BLOCKED backlog row and no one owned the transition. Do not repeat that.\n\nAll orch-state writes via: jq '...' docs/data/orch/orch-state.json | bash scripts/orch-apply.sh — never raw mv/cp/redirect.\n"
+      },
+      {
+        "id": "TASK-COWORK-CATCHUP-1",
+        "title": "FR-1 + FR-2: Core domain module cowork-catchup-predicate.js with per-dish-type config",
+        "type": "SPRINT-M",
+        "size": "M",
+        "priority": "P0",
+        "zone": "scripts/agents-flow/",
+        "sprint": "COWORK-GUARANTEED-SLOT-CATCHUP",
+        "status": "BACKLOG",
+        "depends_on": [],
+        "created_at": "2026-07-22T22:12:59Z",
+        "created_by": "pm",
+        "updated_at": "2026-07-28T13:16:19Z",
+        "next_agent": "developer",
+        "po_routing_20260728": "PO 2026-07-28T13Z lane routing. pm's decomposition minted this row with next_agent unset, which no dispatch lane resolves (verified by executing scripts/lib/devteam-eligibility.jq predicates, not by reading the row). Handler = developer per docs/handoffs/TASK-COWORK-CATCHUP-10.md ('developer completes code TASK-1..9, then agent-father integrates this doc-only subtask') + docs/data/system-map.json scripts/ zone. dev-role next_agent + backlog lane = BOUNDED-1, per docs/agents/po/flow/zone-routing.md Step A2.",
+        "updated_by": "po/route-20260728T13",
+        "po_lane_move_20260728": "MOVED ready[] -> backlog[] by PO. Dep-free P0 head of the epic chain; backlog[] is the BOUNDED-1 lane (1st in the head-idle chain) and this row is currently the only rank-0 BOUNDED-1-eligible row, so it is the next unattended pick. ready[] would have parked it behind RLC (3rd in the chain, reachable only when BOUNDED-1 declines)."
+      },
+      {
+        "id": "FIX-PRESSURE-HOST-HEADROOM-WRONG-MACHINE-WRONG-QUANTITY",
+        "title": "pressure-state host_headroom_mb is neither the host nor headroom: computeHostHeadroomMb() falls through to Linux `free -m` inside the mcp-server container (measures the Docker VM, not the macOS host), and its macOS branch would return `Pages free` alone (261 MB live) which is ~25x smaller than real available memory — the value gates spawn-fanout Step 5.1 degraded mode at a hardcoded < 1500 floor",
+        "status": "BACKLOG",
+        "type": "FIX",
+        "priority": "P1",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "created_at": "2026-07-28T13:24:57Z",
+        "created_by": "po/triage-20260728T13",
+        "origin_signal_id": "cowork-team-headroom-gauge-uncorroborated-20260728T124035Z",
+        "root_cause": "apps/mcp-server/src/interface/mcp/tools/system/emitPressureStateTool.ts computeHostHeadroomMb() (:126-156) tries macOS `vm_stat` first, then Linux `free -m`, then null. TWO independent defects, both source-verified by PO 2026-07-28T13:2xZ. (A) WRONG MACHINE: the tool runs inside the mcp-server CONTAINER, where vm_stat does not exist, so it always falls through to `free -m` and reports the Docker Linux VM's available memory under a field literally named host_headroom_mb. LIVE PROOF the gauge is not this host: docs/data/pressure-state.json host_headroom_mb=2284 (emitted_at 2026-07-28T13:07:45.974Z) while the macOS host's own vm_stat at 13:2xZ gives Pages free=67387 pages=261 MB and free+inactive+speculative=6427 MB. 2284 matches NEITHER, so the number is measured somewhere else. Corroborates the cowork-team report's 5-sample vm_stat series (6016/6140/6097/5990/6289 MB, flat) against its gauge series (4414 -> 2409 -> 2009 -> 2300, oscillating): the two planes move independently because they are two different machines. (B) WRONG QUANTITY, latent: the macOS branch parses `Pages free` ONLY. On macOS that is a small, violently-oscillating fraction of actually-available memory (261 MB right now, against 6427 MB available). If mcp-server is ever run on the host, or gains vm_stat, this branch returns a value permanently BELOW the 1500 floor and pins the fleet into degraded mode forever. The tool's own description string (:454) writes 'host_headroom_mb (vm_stat/free -m; null if unavailable)' as if the two were interchangeable measures of one machine.",
+        "deliverable": "1) Decide and NAME what the field measures, then make the name true — either rename to container_vm_headroom_mb (and re-derive the 1500 floor against the Docker VM's 8 GB budget, not the host's), or genuinely measure the host. 2) If macOS host measurement is kept: use free+inactive+speculative (macOS 'available'), never `Pages free` alone. 3) The < 1500 floor is hardcoded in docs/agents/cowork-team/flow/spawn-fanout.md Step 5.1 against a gauge whose units and machine were never established — re-derive it from whatever (1) settles, and put the threshold in cadence-policy.json _fanout per the existing no-hardcode rule rather than in flow prose. 4) Emit a null (the documented unavailable sentinel) rather than a wrong number when the intended machine cannot be measured — spawn-fanout Step 5.1 already guards `is a number`, so null degrades safely to the non-adaptive path.",
+        "acceptance": "Same-minute two-plane comparison: host_headroom_mb from a live emit_pressure_state call, and the intended machine's own free-memory figure measured directly, agree within 10%. Must be executed on BOTH the container path and (fixture or real) the macOS path — a single-plane green is the exact false-green this row exists to kill. Negative control: with the measurement source unavailable, the field is null and spawn-fanout Step 5.1 takes the non-adaptive branch (not degraded mode). Prose asserting the gauge 'looks right' is not acceptance.",
+        "note": "PREMISE CORRECTION for whoever reads the standing memory note feedback_pressure_state_caller_supplied_fields_dead_server_computed_live: that note classifies host_headroom_mb as SERVER-COMPUTED = LIVE with the proof 'host_headroom_mb moved 3607->3610 across ticks — the computation runs'. Movement proves the code executes; it does NOT prove it measures the named thing. This row is the corroborate-on-the-other-plane finding that check missed. Distinct from UC-CDC-P1 (calendar_status, CALLER-SUPPLIED, circular) and from FIX-COWORK-CADENCE-DANGLING-POLICY-ID (policy-id domain) — do not fold, they are different fields with different failure modes. The cowork-team reporter flagged a full bun test run (1231 files) as a confounder inside the 12:23->12:37 leg; it does not explain the 4414->2409 leg and is irrelevant to root cause (A), which is machine identity, not load.",
+        "updated_at": "2026-07-28T13:24:57Z"
+      },
+      {
+        "id": "FIX-DEPSSATISFIED-COLD-ARCHIVED-DEP-RESOLVES-MISSING",
+        "title": "deps_satisfied() treats every cold-evicted dependency as UNSATISFIED forever: dep_status_map scans only the HOT board's lanes, so 34 live rows are permanently un-dispatchable — 29 of the 40 distinct blocking dep-ids are already DONE_VERIFIED in docs/data/orch/archive/",
+        "status": "BACKLOG",
+        "type": "FIX",
+        "priority": "P1",
+        "size": "M",
+        "zone": "cross-service/",
+        "owner": "developer",
+        "next_agent": "developer",
+        "created_at": "2026-07-28T13:24:57Z",
+        "created_by": "po/triage-20260728T13",
+        "root_cause": "scripts/lib/devteam-eligibility.jq dep_status_map builds its id->status map by reducing over ['backlog','ready','in_progress','qa','review','done','done_verified'] of the HOT docs/data/orch/orch-state.json ONLY. deps_satisfied() then documents 'a dep id found in NO lane = UNSATISFIED (conservative-skip)'. That conservative default is correct against a typo and catastrophic against cold eviction: the moment scripts/orch-cold-evict.sh moves a DONE_VERIFIED row to docs/data/orch/archive/YYYY-MM.json, every live row depending on it silently becomes permanently ineligible in BOUNDED-1, SLS and RLC simultaneously (all three call the same predicate). MEASURED LIVE 2026-07-28T13:2xZ: 34 rows across backlog/ready/review carry at least one dep resolving to MISSING; 40 distinct missing dep-ids; 29 of those 40 (72.5%) are present in docs/data/orch/archive/2026-07.json or 2026-06.json with status DONE_VERIFIED — i.e. the blocking work is FINISHED and the block is an artefact. The remaining 11 are genuine unknowns or free-text prose deps (e.g. 'user-escalation-vps-restart', 'vnstock-rate-limit-clear / next-fundamentals-sweep') and are a separate, smaller class. Acute instance hand-repaired this tick: QA-COWORK-SLOT-SESSION-DOWN-SURVIVAL was blocked on FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED, DONE_VERIFIED 2026-07-08, cold-archived.",
+        "deliverable": "Preferred shape (developer may refine the mechanism, not re-open the choice — leaving designs open is why rows sit): fold cold-archive statuses into dep_status_map in the ONE shared library, so all four pickers inherit it with no forked logic, per scripts/lib/devteam-eligibility.jq's own one-shared-contract principle. Callers already pass --slurpfile detail; add the archive slurp the same way and thread it through. PLUS a referential guard at eviction time so new instances stop being created: scripts/orch-cold-evict.sh must not evict a row that is still named in any live row's effective_depends_on (this mirrors orch-validate's existing ref-integrity stage). Do NOT 'fix' this by rewriting dependents' depends_on at eviction time — that destroys the provenance the dep encodes.",
+        "acceptance": "A live-data instrument reports ZERO live rows whose effective_depends_on contains an id that is DONE_VERIFIED in cold archive but resolves to MISSING (today: 29 such ids across 34 rows). Negative control, both directions: (a) a dep-id that exists NOWHERE (hot or cold) still resolves UNSATISFIED — do not blanket-satisfy; (b) a dep-id that is cold-archived with a NON-terminal status still resolves UNSATISFIED. Eviction guard proven by attempting to evict a still-referenced row and observing refusal. Extend scripts/audits/devteam-dispatch-gate-satisfiability.sh rather than minting a new instrument, and heed its own recorded lesson: bounded1-supervised-lane-report.sh shipped GREEN while the gate it guarded was dead, because it tested lane RESOLUTION instead of gate FIRING.",
+        "note": "Prior-art grep before minting (feedback_file_prior_art_check_before_minting_row): FIX-BACKLOG-TERMINAL-ROW-DRIFT-EVICT-BLIND, FIX-COLD-EVICT-EXCLUDE-IDS-VS-HARD-COHERENCE, FIX-COLDEVICT-WITHIN-FILE-PEER-CONTENT-CAPTURE, FIX-COLDEVICT-DONE-LANE-TRIGGER-ACTION-AXIS-NOOP — all four are about eviction MECHANICS (what moves, when, what it sweeps). None covers the dep-resolution consequence on the rows left behind. Also distinct from FIX-PO-LOSTMINT-RECOVERY-ARCHIVE-SCAN-GUARD (recovery heuristic scanning ready[] only). This row is the systemic form of the acute repair applied to QA-COWORK-SLOT-SESSION-DOWN-SURVIVAL in the same PO write.",
+        "updated_at": "2026-07-28T13:24:57Z"
+      },
+      {
+        "id": "FIX-COWORK-SPAWNFANOUT-FLOWPATH-BYPASSES-DIGEST-DAILY-DEDUP-GATE",
+        "title": "cowork spawn-fanout dispatches slot.flow_path, not slot.trigger_prompt — digest-daily is the one slot whose two fields disagree, so every dispatcher fire enters daily-predict.md directly and never evaluates the published:digest-daily:<UTC_DATE> duplicate-claim gate, which lives only in main.md",
+        "status": "BACKLOG",
+        "type": "FIX",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "developer",
+        "next_agent": "developer",
+        "created_at": "2026-07-28T13:28:25Z",
+        "created_by": "po/triage-20260728T13",
+        "root_cause": "Four facts, each verified at source by PO 2026-07-28T13:3xZ, not inferred from the report. (1) docs/agents/cowork-team/flow/spawn-fanout.md:192 builds the spawn prompt as `run <slot.flow_path>  slot=<slot.slot_id>` — the dispatched entry point is slot.flow_path; slot.trigger_prompt is never read by the spawn step. (2) docs/data/cowork-schedule.json digest-daily carries flow_path='docs/agents/digest-predict/flow/daily-predict.md' but trigger_prompt='run docs/agents/digest-predict/flow/main.md  slot=digest-daily' — the two fields name DIFFERENT files. Its sibling digest-sunday has both fields naming main.md, so digest-daily is the sole divergent slot on the schedule. (3) The daily dedup gate is 'Step pre-D: DAILY-PREDICT DEDUP GATE' at docs/agents/digest-predict/flow/main.md:15-45, claiming published:digest-daily:<UTC_DATE> with an 86400s TTL. It exists ONLY in main.md. (4) daily-predict.md contains exactly ONE task_claim (line 131) and it is the commit-mutex, not a published marker. THEREFORE every cowork-dispatched digest-daily fire enters daily-predict.md and skips the gate entirely. The gate's own comment states what is lost: it 'protects against cron re-fire, session restart, or dispatcher double-fire producing duplicate claims for the same UTC calendar day' — precisely the protection that is dead on the only path the dispatcher uses.",
+        "deliverable": "PREFERRED (general): make spawn-fanout Step 5.2 dispatch slot.trigger_prompt when present, falling back to the composed flow_path form — trigger_prompt is the field literally named for this and is the one a slot author edits to change the entry point. PLUS a consistency assertion so a future slot cannot silently re-introduce the divergence: fail loud (or refuse the slot) when trigger_prompt names a different file than flow_path. ACUTE MITIGATION if the general fix is deferred: point digest-daily's flow_path at main.md so both fields agree — one field, immediate, but it does not stop the next slot from diverging. Do NOT 'fix' this by copying the dedup gate into daily-predict.md: that creates a second copy of a claim gate that must stay byte-identical to the first, which is the duplicate-predicate class scripts/lib/devteam-eligibility.jq was consolidated to kill.",
+        "acceptance": "Two consecutive dispatcher fires of digest-daily inside the same UTC calendar day produce ONE set of prediction claims, and the second logs the gate's own already-claimed skip path — proven from the live claim/lock evidence, not from flow prose. Negative control: a first fire of the day still runs (do not turn the gate into a blanket suppressor). Static assertion: every slot in docs/data/cowork-schedule.json has trigger_prompt and flow_path naming the same file, asserted by a test that reads the live schedule (today digest-daily is the only violation — it must be the one that fails before the fix and passes after).",
+        "note": "SEQUENCING WITH THE CATCH-UP EPIC: BA-COWORK-GUARANTEED-SLOT-CATCHUP FR-6 makes the published: marker the SOLE fire-authorization arbiter and adds catch-up as a THIRD caller of the fire path. digest-daily is guaranteed:true, so catch-up will dispatch it too — through the same flow_path, through the same missing gate. Landing catch-up while this bypass stands means retro-fires can duplicate a day's prediction claims with no arbiter. This row does not depend_on the epic and should land BEFORE or ALONGSIDE it; recorded as a note, not a dep, so it stays independently dispatchable. Prior-art grep before minting (feedback_file_prior_art_check_before_minting_row): searched the whole board on flow_path / trigger_prompt / spawn-fanout 5.2 / published-marker bypass / dedup-gate bypass — only hit was FIX-COWORK-CHEF-MUTEX-ECHO-JQ-DEFEAT, a different mechanism (echo|jq mangling in the CHEF same-tick mutex). Router reported this 'filed 07-25'; no such row exists on the board, so the filing never became a row — the PO mint!=board lesson, live again.",
+        "updated_at": "2026-07-28T13:28:25Z"
       }
     ],
     "closed_sprints": [
@@ -13013,20 +13122,6 @@
         ]
       },
       {
-        "id": "TASK-COWORK-CATCHUP-1",
-        "title": "FR-1 + FR-2: Core domain module cowork-catchup-predicate.js with per-dish-type config",
-        "type": "SPRINT-M",
-        "size": "M",
-        "priority": "P0",
-        "zone": "scripts/agents-flow/",
-        "sprint": "COWORK-GUARANTEED-SLOT-CATCHUP",
-        "status": "READY",
-        "depends_on": [],
-        "created_at": "2026-07-22T22:12:59Z",
-        "created_by": "pm",
-        "updated_at": "2026-07-22T22:16:09Z"
-      },
-      {
         "id": "FIX-PRICEHISTORY-DATAASOF-STOCKPRICE-SERVING",
         "type": "FIX",
         "status": "READY",
@@ -13132,6 +13227,43 @@
         "note": "MINTED 2026-07-25T17:35Z by po as the ADJUDICATED UNBLOCKER for FIX-COVERAGE-SWEEP-BLANKET-STAMP-DEAD-TRIGGER (review/P1), which is COMPLETE-BUT-INERT: a 313-line deterministic script with 29/29 green tests that neither agent that must call it can invoke. Full reasoning, the three rejected options and the premise correction live on that row's `po_transport_ruling_20260725T1735` field — READ IT BEFORE EDITING ANYTHING. Do not re-litigate the choice here.\n\nTHE CHANGE — exactly two lines, no more:\n  .claude/agents/news-scout.md:5      tools: Read, Write, Edit, mcp__gateway__call_tool   ->   tools: Read, Write, Edit, Bash, mcp__gateway__call_tool\n  .claude/agents/market-watcher.md:5  tools: Read, Write, Edit, mcp__gateway__call_tool   ->   tools: Read, Write, Edit, Bash, mcp__gateway__call_tool\n\nDO NOT also add Glob or Grep. The resulting grant set is exactly `Read, Write, Edit, Bash, mcp__gateway__call_tool` — the same shape fb-market-poster already carries, plus Edit. Any broader set is out of scope and should be bounced back to po.\n\nWHY THIS IS NOT A POLICY BREAK (verified at source by po across all 43 .claude/agents/*.md frontmatter lines): fb-market-poster, a cowork PUBLISHER, already holds `Read, Write, Bash, mcp__gateway__call_tool`; system-auditor and orch-sentinel both hold Bash and both write shared state on cowork cadence. The originating report's claim that no-Bash is \"deliberate fleet-wide policy shared by every cowork gatherer/publisher agent\" is factually wrong — there are three standing exceptions in the same cadence tier.\n\nWHY NOT AN MCP TOOL (the option that needs no grant at all): verified — docker-compose.yml does NOT mount ./scripts into the mcp-server container (mounts are ./data/live, ./data/pdfs, ./mcp.config.json, ./reports, ./docs/agent-memory, ./docs/data, ./docs/data/orch, ./docs/signals, ./docs/analysis-briefs, ./.claude/commands/crons). A `coverage_stamp` tool therefore could not exec the script; it would be a full TypeScript reimplementation of surgical-merge + task_claim mutex + --list-stale, i.e. a second implementation of one contract held in drift-lock with the first. Rejected on duplicate-implementation debt, NOT on feasibility (./docs/data is mounted RW, so it would work).\n\nBLAST-RADIUS NOTE FOR THE IMPLEMENTER — do not skip this, and do not treat it as a reason to refuse. Both agents already hold repo-wide `Write` and `Edit`, so an injected agent can already reach code execution transitively by rewriting a script a Bash-capable peer runs. Bash makes that direct rather than transitive. What is genuinely NEW is process execution and network egress (git push, docker, curl) from an agent whose input includes untrusted scraped news text. That is accepted here as proportionate to a live P1 coverage loss on a proven artifact, and it is the reason for the tight scope above and the non-precedent clause below.\n\nNON-PRECEDENT CLAUSE (binding): this does NOT authorise Bash for the other 8 no-Bash agents (bctc-analyst, unified-agent, digest-predict, alert-commander, tran-ngoc-bau, market-analyst, refine_bctc_md, qa-responder). Each is a separate decision on its own merits. If a THIRD agent ever needs a scripted helper, stop granting per-agent and build the shared MCP transport at that point — the rewrite amortises across N agents instead of 2. That is the standing exit condition; no row is minted for it now because it is speculative.\n\nLANE NOTE (deliberate, per the residual-gap lesson): minted into `ready`/READY rather than `backlog`, because next_agent=agent-father is a non-dev agent and a backlog row with a non-dev next_agent and no plan_only+supervised pair matches NO automated sweep lane (BOUNDED-1 requires next_agent =~ ^dev(-|$)|^developer$; SLS requires effective_supervised AND effective_plan_only). Such a row survives only on someone noticing. `ready` is dispatched explicitly by the router, which is the intended path here.\n\nACCEPTANCE (all RAW, no prose):\n  1. `grep -m1 '^tools:' .claude/agents/news-scout.md` contains Bash; same for market-watcher.md. Both still contain Read, Write, Edit and mcp__gateway__call_tool. Neither contains Glob or Grep.\n  2. A REAL news-scout cycle invokes scripts/agents-flow/coverage-stamp.sh without a tool-permission error, and docs/data/coverage-state.json afterwards shows `[.tickers|to_entries[]|.value.last_covered_news_scout]|group_by(.)|length` > 1 (it is 1 today — one saturated group of 57). Same assertion for market-watcher's field. THIS, not the script's own unit tests, is the proof the transport works.\n  3. `jq 'has(\"sweep_config\")' docs/data/coverage-state.json` = true, self-healed by the script's documented auto-repair — NOT hand-edited in.\n  4. The interim `[coverage-write-skipped: no-transport]` fallback text in the 4 rewired flow-doc sections is removed or demoted to a genuine error path, so it cannot mask a future real transport failure as normal operation.\n  5. NEGATIVE CONTROL: no OTHER agent definition gained a tool in this change — `git diff --stat .claude/agents/` touches exactly 2 files, 1 line each.\n\nON COMPLETION: this row unblocks FIX-COVERAGE-SWEEP-BLANKET-STAMP-DEAD-TRIGGER gates G1/G2/G3 and its co-shipped sibling FIX-COVERAGE-STATE-CROSS-AGENT-LOST-UPDATE. Report back to po; do NOT close the coverage row yourself.\n",
         "updated_at": "2026-07-25T17:35:20Z",
         "updated_by": "po/triage-20260725T1735"
+      },
+      {
+        "id": "TASK-COWORK-CATCHUP-10",
+        "title": "FR-10 doc-only: cron runbook update (route to agent-father)",
+        "type": "SPRINT-S",
+        "size": "S",
+        "priority": "P0",
+        "zone": "docs/",
+        "sprint": "COWORK-GUARANTEED-SLOT-CATCHUP",
+        "status": "READY",
+        "depends_on": [
+          "TASK-COWORK-CATCHUP-9"
+        ],
+        "next_agent": "agent-father",
+        "created_at": "2026-07-22T22:12:59Z",
+        "created_by": "pm",
+        "updated_at": "2026-07-28T13:16:19Z",
+        "po_lane_move_20260728": "MOVED backlog[] -> ready[] by PO. next_agent=agent-father is non-dev: backlog + non-dev next_agent + no plan_only is the documented NO-LANE hole (zone-routing.md Step A2) -- BOUNDED-1 gates it via is_non_dev_next_agent_unrouted and SLS needs supervised AND plan_only, neither of which apply. ready[] + status READY is the only lane with a consumer for a non-dev handler (Ready-Lane Consumer). depends_on [TASK-COWORK-CATCHUP-9] is still enforced there by RLC's deps_satisfied gate.",
+        "updated_by": "po/route-20260728T13"
+      },
+      {
+        "id": "QA-COWORK-SLOT-SESSION-DOWN-SURVIVAL",
+        "status": "READY",
+        "priority": "high",
+        "type": "FIX",
+        "zone": "cross-service",
+        "title": "QA: 7-point session-down survival test — DoD gate before signal atb-cowork-...203223Z resolves",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#QA-COWORK-SLOT-SESSION-DOWN-SURVIVAL",
+        "owner": "qa",
+        "next_agent": "qa",
+        "depends_on": [
+          "OPS-COWORK-GUARANTEED-SLOT-INSTALL"
+        ],
+        "updated_by": "po/triage-20260728T13",
+        "po_routing_20260728": "PO 2026-07-28T13Z. Was backlog[] with a detail-resolved non-dev next_agent (qa) — the documented NO-LANE hole (zone-routing.md Step A2): BOUNDED-1 gates it via is_non_dev_next_agent_unrouted, SLS needs supervised AND plan_only (both null here), RLC never reads backlog[]. Moved to ready[] with status READY and the next_agent/owner promoted INLINE, which is the only lane (RLC) that dispatches a non-dev handler.",
+        "po_dep_repair_20260728": "DEP REPAIR, acute instance of FIX-DEPSSATISFIED-COLD-ARCHIVED-DEP-RESOLVES-MISSING (minted this same write). Its backlog-detail `depends` was [OPS-COWORK-GUARANTEED-SLOT-INSTALL, FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED]. The second is DONE_VERIFIED (2026-07-08T05:22:59Z, by qa) but lives in docs/data/orch/archive/2026-07.json, which dep_status_map does not scan — so it resolved MISSING and blocked this row PERMANENTLY. Dropped it by installing an INLINE depends_on (inline wins over detail in effective_depends_on, same repair shape as UC-CDC-P5 2026-07-23). The row stays legitimately held on OPS-COWORK-GUARANTEED-SLOT-INSTALL, which is still REVIEW — see the consolidation ruling on that row.",
+        "updated_at": "2026-07-28T13:24:57Z"
       }
     ],
     "review": [
@@ -16047,6 +16179,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-07-25T13:01:01Z",
-  "_updated_by": "po/triage-20260725T1254-a30-veto-gate-defect"
+  "_updated_at": "2026-07-28T13:30:54Z",
+  "_updated_by": "po/triage-20260728T13"
 }

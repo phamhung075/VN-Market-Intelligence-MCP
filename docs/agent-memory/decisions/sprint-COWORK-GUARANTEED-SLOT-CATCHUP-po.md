@@ -116,3 +116,23 @@
 - Accept the signal's "09:00Z fire cleared the queue head" and close the BCTC item — rejected: live gateway probe refutes it
 **why-decision:** Prior-art grep + live probe both showed the rows exist, are correctly scoped, and are dispatchable; the deficit is DISPATCH not detection. A 4th duplicate would burn a dev slot re-deriving a settled answer.
 **why-change:** Signal framed the drift as emitter-vs-policy and told me to pick one; source trace showed NEITHER — calendar_status is caller-supplied, self-recycled from the file it writes back, with no enum gate at the tool boundary.
+
+### STEP po-S12 · po · 2026-07-28T13:25:45Z
+**task-id:** TASK-COWORK-CATCHUP-1..10
+**what-done:** Routed all 10 epic children to real lanes (1..9 → `developer`, 10 stays `agent-father`), moved TASK-1 ready→backlog and TASK-10 backlog→ready, and verified every row by executing the eligibility predicates.
+**what-considered:**
+- Leave TASK-1 in ready[] + stamp next_agent (RLC-eligible) — rejected: RLC is 3rd in the head-idle chain, reachable only when BOUNDED-1 declines, and BOUNDED-1 has 82 eligible rows.
+- Route the docs/-zone rows (3,6,9) to agent-father like TASK-10 — rejected: pm's own TASK-10 handoff says "developer completes code TASK-1..9, then agent-father integrates this doc-only subtask", and 30/30 recent commits to docs/agents/cowork-team/flow/ are developer-class.
+- Move all 10 into ready[] like the CCATO/SYSREMAKE decomposition precedent — rejected: dev-role rows have a first-in-chain lane (BOUNDED-1); only the non-dev row needs ready[].
+**why-decision:** Handler came off pm's own decomposition, not a guess; lane came off zone-routing Step A2 executed against live data — TASK-1 is now BOUNDED-1's rank-0 top pick (the only rank-0 eligible row on the board), TASK-2..9 auto-unblock on each predecessor's DONE_VERIFIED, TASK-10 sits RLC-shaped and dep-held on TASK-9.
+**why-change:** no change from plan.
+
+### STEP po-S13 · po · 2026-07-28T13:25:45Z
+**task-id:** BA-COWORK-GUARANTEED-SLOT-CATCHUP
+**what-done:** Ruled consolidation happens AFTER routing as a closeout act; stamped `subsumed_by` + the ruling on the 5 subsumed rows without routing them; declined to independently close OPS-COWORK-GUARANTEED-SLOT-INSTALL.
+**what-considered:**
+- Consolidate first, then route (the literal reading of the BA row's "consolidate the 6-row cluster").
+- Route first, consolidate at close (chosen).
+- Also route the 5 subsumed rows so they can move.
+**why-decision:** AC-9 on TASK-10 already binds consolidation as the epic's exit criterion, so doing it first would close rows whose fix has not shipped; and it buys zero throughput — all 5 are already inert (is_bounded1_eligible=false on all 5, executed against live data), so consolidating changes nothing that can move while routing the epic changes the only thing that can. Declined OPS-INSTALL closure because TASK-COWORK-CATCHUP-5 rewrites the very script that row installed — signing it off now would verify a component about to be replaced.
+**why-change:** goes beyond the ruling to stamp `subsumed_by`, because the 5 rows are inert BY ACCIDENT (the NO-LANE hole), and a later triage that "helpfully" routes one would spawn duplicate work against files TASK-1..9 are rewriting.
