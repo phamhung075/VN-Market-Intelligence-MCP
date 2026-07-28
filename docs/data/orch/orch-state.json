@@ -419,12 +419,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FACTORY-APP-split-assembleBriefing",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-APP-split-assembleBriefing — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-28T19:17:33Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "updated_at": "2026-07-28T19:59:55Z",
+    "updated_by": "dev-mcp-server"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -16328,6 +16327,25 @@
         "commit": "0a56c46ae",
         "updated_by": "developer",
         "review_note": "developer: dep_status_map() (scripts/lib/devteam-eligibility.jq) scanned only the HOT board's 7 lanes, so any live row depending on a cold-evicted (scripts/orch-cold-evict.sh) DONE_VERIFIED row resolved MISSING forever (34 live rows / 41 distinct dep-ids measured, ~35 already DONE_VERIFIED in cold archive). Added dep_status_map($archive) (archive-seeded, hot-lane entries overwrite) + archive_status_map($archive)/normalize_archive_status (case/separator-insensitive DONE_VERIFIED match only). 0-arg dep_status_map kept as a literal dep_status_map([]) proxy -- jq arity overload, zero behavior change for every pre-existing caller, single merge implementation not forked logic. New scripts/lib/archive-glob-cat.sh (find|sort|for-loop concat of the monthly archive files -- a naive <(cat 2026-*.json)/$(ls ...) glob silently produced an EMPTY archive under this session's actual shell with zero error, caught and fixed) threaded via --slurpfile archive into the 3 real callers (BOUNDED-1/SLS promote, RLC claim -- exhaustively grep-verified, not guessed).\\nPLUS a referential eviction guard: orch-cold-evict.sh compute_id_maps() now computes $referenced_dep_ids (effective_depends_on union across TASK_LANES live rows) and holds any still-referenced terminal-status row in hot instead of evicting it.\\nExtended scripts/audits/devteam-dispatch-gate-satisfiability.sh (not a new instrument, per the row's own instruction) with AC-DEP-1 (live dynamic: 0 post-fix leaks, 34 pre-fix baseline matches PO's own measurement), AC-DEP-MECH (same real BOUNDED-1 promote script, only archive content varied -- before=NOT promoted, after=promoted, proves the mechanism FIRES not just predicate resolution, grounded in a real live archived id), AC-DEP-NEG-A/B (nowhere-dep and cold-archived-non-terminal-status both stay UNSATISFIED), AC-EVICT-1/2/3 (real orch-cold-evict.sh run against a scratch ORCH_STATE+ARCHIVE_DIR fixture, never touches the live file -- referenced row HELD in hot, unreferenced sibling row evicted normally, guard proven both directions end-to-end). All pre-existing assertions in this instrument plus 4 sibling audit scripts (devteam-bounded1-prose-sequencing-gate-verify.sh, devteam-bounded1-detail-disposition-gate-verify.sh, bounded1-supervised-lane-report.sh, devteam-review-lane-drain-report.sh) re-run GREEN after the plumbing change; 2 needed --slurpfile archive added to their own run_promote_picked_id helpers since bounded1 promote now requires it unconditionally.\\nIncidental fix (verified pre-existing and unrelated to this task via git-HEAD replay before touching it): devteam-bounded1-detail-disposition-gate-verify.sh's make_isolated_fixture() never cleared .task_board.ready, silently leaking the live board's stale ready[0] into equality-checking assertions -- one-line fix, turned several previously-vacuous inequality assertions into genuinely meaningful ones too.\\nCommits: 0a56c46ae (fix), 4c2cc93ed (memory). No apps/mcp-server/ files touched (scripts/*.jq, scripts/*.sh, docs/*.md only) -- bun tsc/bun test not meaningfully applicable, not run."
+      },
+      {
+        "title": "Extract assembleBriefing's 19 numbered steps into briefing/ query modules",
+        "priority": "P0",
+        "zone": "mcp-server-application",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-APP-split-assembleBriefing",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APP-split-assembleBriefing",
+        "promoted_at": "2026-07-28T19:17:29Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "updated_at": "2026-07-28T20:00:21Z",
+        "claimed_at": "2026-07-28T19:17:33Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "updated_by": "dev-mcp-server",
+        "entered_review_at": "2026-07-28T19:59:55Z",
+        "review_note": "dev-mcp-server COMPLETE: split _assembleBriefingImpl (1327L file, ~620L inline-SQL orchestration in one function) into usecases/briefing/ -- 24 single-owner modules (types.ts + 22 step/helper files) covering all 19 numbered steps + persist + freshness-gate. Sequencer now 72L. Per-step error isolation moved from centralized sequencer try/catch to inside each owning step module (same catch scope/log-ctx/fallback default). Public exports (DailyBriefing, AssembleBriefingOptions, defaultComputeTa, queryForeignFlowSummary_TEST, BEARISH_WARNING_THRESHOLD, TaSignal, GlobalSnapshot, BctcDeadlineRow, VnIndexSnapshot, BriefingAlert, TopStory, NewReport, WatchlistEntry) re-exported verbatim -- zero call-site edits across 27 dependent test files + 5 consumer modules. Dropped dead computeRSILocal (zero call sites, verified via repo-wide grep before removal). Verification: tsc clean; targeted 27-file briefing/TA suite 251 pass/1 fail before AND after (same pre-existing unrelated cron-expr test, zero net-new); full bun test 14844 pass/40 skip/57 fail/1 error across 1233 files, grepped all 57 fail lines to 17 unique files (none touching briefing/watchlist/TA/conviction/foreignFlow/insiderRecent), re-ran all 17 in isolation = 55/55 pass confirming standing FIX-MCP-SUITE-HEALTH-BASELINE order-dependent flakiness (dev-standards.md:590), not a regression; gen-project-stats toolCount=184/cronJobCount=88 unchanged; live server startup (PORT=3099, did not disturb the running :3000 production container) healthy, /health toolCount=184, scheduler 90 cron keys registered; /api/bctc-inspect + /dashboards/news-fetch/ both returned HTML (dashboard circular-dep check clean). Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md STEP dev-mcp-server-S14. Commit 4744b0792 (code) + 09ae11440 (memory). Ready for qa. NOTE: a concurrent shared-index write (unrelated po session content: signal-queue dispositions + a duplicate BACKLOG-row removal for this same task) landed bundled into the memory commit 09ae11440 due to a bare git-commit-after-git-add TOCTOU race -- content independently orch-validate.mjs-verified clean/non-destructive, no history rewrite performed per standing incident-handling precedent; flagging for awareness only."
       }
     ],
     "qa": [],
@@ -16349,23 +16367,7 @@
     },
     "last_triaged_at": "2026-07-28T19:17:29Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "title": "Extract assembleBriefing's 19 numbered steps into briefing/ query modules",
-        "priority": "P0",
-        "zone": "mcp-server-application",
-        "type": "FACTORY",
-        "status": "IN_PROGRESS",
-        "id": "FACTORY-APP-split-assembleBriefing",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APP-split-assembleBriefing",
-        "promoted_at": "2026-07-28T19:17:29Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
-        "updated_at": "2026-07-28T19:17:34Z",
-        "claimed_at": "2026-07-28T19:17:33Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
