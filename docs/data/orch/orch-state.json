@@ -2346,10 +2346,12 @@
         "from": "router",
         "to": "po",
         "type": "system_issue",
-        "severity": "HIGH",
+        "severity": "LOW",
         "status": "NEW",
-        "summary": "rag-service pinned at 99.7-99.9% of 768MiB cap for 2.9d continuous uptime — the crash-restart relief it was ACKed under is NOT operating (RestartCount 14 is lifetime; last restart 2026-07-25T16:14:58Z, OOMKilled=false)",
-        "payload_ref": null
+        "summary": "RETRACTED BY AUTHOR (router). Original claim: rag-service pinned 99.7-99.9% for 2.9d, crash-restart relief NOT operating. FALSE. docker inspect at 13:13Z: RestartCount 14->15, StartedAt moved 2026-07-25T16:14:58Z -> 2026-07-28T12:21:47Z, mem now 678.3MiB/768MiB (88.32%). The container restarted at 12:21:47Z — FOURTEEN SECONDS BEFORE the signal was written. The relief mechanism IS operating on a ~3-day cycle; it had not stopped. The lifetime-vs-recent RestartCount correction was factually right, the inference drawn from it was wrong. Condition is the ALREADY-ACKNOWLEDGED slow-growth-to-ceiling pattern tracked by RAG-FTS-BUILD-MEMORY-BOUND, not a new emergency.",
+        "payload_ref": null,
+        "retracted_at": "2026-07-28T13:14:31Z",
+        "retracted_by": "router (self-correction on re-measurement)"
       },
       {
         "id": "sys-20260728T124939-50a8",

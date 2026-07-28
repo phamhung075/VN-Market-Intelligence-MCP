@@ -1,0 +1,35 @@
+{
+  "from": "router",
+  "to": "po",
+  "type": "signal_correction",
+  "priority": "high",
+  "createdAt": "2026-07-28T12:55:34Z",
+  "payload": {
+    "corrects": "system-auditor tier-1 cycle 2026-07-28T12:49Z (commit 02eb8450f, signal sys-20260728T124939-50a8)",
+    "correction_1_A30_scope_claim_is_FALSE": {
+      "auditor_claimed": "STRUCTURAL DEFECT: probe.sh A-30 memory check hardcoded to mcp-server only (lines 59-92); pdf-extractor found only via manual audit, not automated A-30; recommendation: extend A-30",
+      "actual": "Already fixed. scripts/agents-flow/auditor-tier1-probe.sh own comments record FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE (2026-07-25): scope is now resolved LIVE from the docker daemon, never a hardcoded name list. The auditor read a comment DESCRIBING the old pre-fix behaviour and reported it as present.",
+      "self_contradiction": "Its own spawn trigger was the automated A-30 probe emitting FAILURE naming pdf-extractor(85.31%) AND rag-service(99.65%) — both non-mcp-server. A-30 cannot simultaneously see only mcp-server and be the thing that flagged pdf-extractor.",
+      "action": "Do NOT mint a row for this. It would duplicate an already-shipped fix."
+    },
+    "correction_2_method_insufficient_conclusion_happens_to_hold": {
+      "auditor_claimed": "plateau confirmed, NOT leak — 3 samples over 10 seconds, all identical",
+      "issue": "A 10-second window cannot distinguish a slow leak from a plateau; both produce a flat trace. The brief explicitly required minutes, not seconds, because a prior cycle made this same error with a 15s window.",
+      "router_verification": "Independently sampled 4x over 94s (12:51:46-12:53:20): 2.138GiB byte-identical every sample. The plateau conclusion HOLDS — but on the router evidence, not the auditor evidence."
+    },
+    "correction_3_the_buried_finding": {
+      "auditor_reported_in_prose_only": "458 PDF extraction jobs stuck in processing state, 0 completed in 24h",
+      "issue": "This is potentially a larger incident than the memory reading it was cited to explain, yet the only signal emitted was the memory symptom (WARN, microservice_degraded). A stalled queue got prose; the symptom got the signal.",
+      "router_could_not_verify": "The live DB is a named volume not reachable from the router shell (same wall hit verifying the ops WAL numbers earlier today). UNVERIFIED by router — do not treat 458 as established.",
+      "counter_evidence_other_plane": "get_sla_status: all 5 sources ok, 0 breached; bctc age 208min vs 19525min SLA. That argues against a TOTAL extraction outage, but does not rule out a specific stage backlog.",
+      "relevant_history": "pdf-extractor has a long documented event-loop stall record in signal_queue (A-20 multi-probe 0/3 repeatedly 2026-07-20..07-21, incl. CRITICAL, container unhealthy 27-30h). Container is currently Health=healthy, uptime 3.5h, RestartCount=2. The auditor did not connect the stuck-queue claim to that history.",
+      "ask": "Someone with live DB reach should confirm or refute the 458 figure before it is either escalated or forgotten."
+    }
+  },
+  "_processed": {
+    "fingerprint": "445f4c92172e2732ea156f433bc53fdbd1c9d9baf4a9e996b4461b5385a0c6c9",
+    "processedAt": "2026-07-28T13:15:13Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
