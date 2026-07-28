@@ -1,28 +1,16 @@
 # PO Notebook
 
-_Last: 2026-07-28T17:35Z (router-dispatched triage) · 1 `orch-apply.sh` write, Zod+conservation clean (task_total 661→665) · 834 ids · `.head` untouched · nothing pushed, no agent spawned, no container touched._
+_Last: 2026-07-28T17:55Z (router-dispatched triage, coordination_session 64c7c677, tick 17:37Z) · 0 orch-apply.sh writes, 0 board rows touched, nothing minted, nothing pushed, no agent spawned. Return=NOTHING._
 
-**CONCURRENT-PO NOTE (this same cycle):** a second PO invocation (dev-team Step-1 triage, coordination_session 64c7c677) ran in parallel on an OVERLAPPING signal batch and independently converged on the identical root causes for the freshnessSlaMonitorJob path bug and the BCTC report-swap dedup (see `docs/agent-memory/decisions/po-decisions.md` top entry) — both sets of annotations now coexist harmlessly on the same rows (distinct field-name suffixes, no data loss, conservation-clean). That session's ADDITIONAL findings, not overlapping with this notebook: **S1 context_bloat_breach** (`sprint-ULTRACODE-AUDIT-FIXALL-qa.md`, 507L/41244B) — DEFER, confirmed LIVE sprint journal, not PO's chain (belongs to claude-manager-helper Pass 5b), NO MINT. **S5 ci_red** `CI-RED-6ba39d3c` — confirmed re-observation of the already-dispatched BDI/1408 fix, now visibly DONE_VERIFIED by qa (commit c56c6d350) since this notebook section was written. Its planned `STRANDED-AGENT-MODELS-PERFORMANCE-MODE-COMMIT` UNBLOCK draft was DROPPED as a duplicate once `FIX-STRANDED-SWEEP-CLASSIFY-AGENT-MODEL-SWITCH` (below) was found already landed — no new BATCH entry this cycle, Return=NOTHING. Possible router dup-spawn on identical/overlapping triage inputs — worth a look if it recurs (memory: `feedback_router_skip_po_respawn_identical_inputs`).
+## This cycle — dedup-only tick
 
-## Shipped
-
-| What | State |
-|---|---|
-| **MINT** `FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM` | P1·architect·plan_only·supervised. qa-recommended follow-up to the closed P0: uvicorn PARENT RSS (VmHWM 97% of cap), not tesseract, is the OOM driver — sawtooth, not a leak (corrected an informal "accumulation" framing before it shipped). |
-| **MINT** `FIX-PDFX-EXTRACTION-ENGINE-EMPTY-STRING-SWALLOW` | P2·dev-pdf-extractor. extraction_engine.py:177-178 swallows OCR failure as `""`=success; flagged by both dev+qa, out of P0 scope. |
-| **MINT** `FIX-PDFX-GENERIC-MD-TABLE-OCR-UNROUTED-GATEWAY` | P3·dev-pdf-extractor. Scoped to generic_md_table/extractor.py only — verified ocr_worker.py already composes correctly via parent-side slot_async(), excluded it from the router's initial framing. |
-| **MINT** `FIX-STRANDED-SWEEP-CLASSIFY-AGENT-MODEL-SWITCH` | P3·CLEAN·dev-team. 20 dirty `.claude/agents/*.md`+agent-models.json are routine model-switch churn (git-diff verified 1-line each), not orphan work — did NOT touch those files (CLAUDE.md: agent-models.json owned elsewhere). |
-| Attach evidence → `FIX-L4-FRESHNESS-SLA-MONITOR-SELF-POLICING` | READY row's own AC1/AC2 answered: freshnessSlaMonitorJob.ts:34-36 broken relative path → ENOENT, monitor fires but can't read input. No dup mint. |
-| Attach evidence → `FIX-BCTC-INGEST-PERIOD-IDENTITY-UNVALIDATED-VS-CONTENT` | REVIEW row corroborated in real time by cowork signal (DPM 5b0dad71→3e2a26d9) — same defect, already fixed by dev_close_out's migration. No dup mint. |
-| 3 signal_queue rows (READ→RESOLVED) | sys-20260728T171555-7cb3, dev-20260728T171505, cowork-...-reportid-swap-midflight — all disposed via attach, not mint. |
-| `docs/data/DASHBOARD.md` +1 row | SLA-1 (freshnessSlaMonitorJob ENOENT) — router's own write-boundary gap, reconciled. |
-
-## Lessons
-
-- **Verify the router's bundled framing, don't inherit it.** ocr_worker.py was named alongside generic_md_table/extractor.py as "unrouted" — a direct grep+read showed it already composes correctly (parent-side semaphore wrap around the ProcessPoolExecutor dispatch). Scoped the mint to the real gap only.
-- **A qa status_note correction is itself prior art.** The parent-RSS mint came straight from qa's own recommendation text on the closed P0, not a fresh discovery — cheapest, most-verified path to a new row.
+- **Overlap w/ peer PO invocation (same coordination_session, ~13min earlier) confirmed clean, no re-mint.** ci-red-6ba39d3c re-verified: FIX-BDI-SHIPPING-STALE-404-GUARD is DONE_VERIFIED (commit c56c6d350), cold-evicted to archive/2026-07.json at 17:36:29Z. FIX-STRANDED-SWEEP-CLASSIFY-AGENT-MODEL-SWITCH re-verified already minted (17:33:25Z, BACKLOG). Both independently re-derived, same conclusion as peer's notebook entry — no action.
+- **New this drain (17:43-17:47Z), genuinely unprocessed before this tick:** 4× notebook-single-section-breach + 1× context-bloat, all `docs/agent-memory/notebooks/digest-predict.md`, ~1min apart (digest-daily flow's own cycle writing repeatedly, not a retry-loop bug). This is the just-shipped byte-cap pruner (`FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES`, status REVIEW) firing its designed safe-fail path correctly (single section, cannot auto-prune without data loss). Already covered by `FIX-ALERT-COMMANDER-NOTEBOOK-SINGLE-BLOB-UNPRUNABLE` AC#5 (minted 2026-07-25, explicitly anticipated digest-predict.md as the marginal case). Live re-verify: file now 174L/45834B/2 sections (was 190L/39614B on 07-25 — growing). Correctly BLOCKED pending sibling fix landing QA. No new mint, no BATCH.
+- `cowork-team-2026-07-28T17:37:14Z`: routine digest-daily FIRE, 0 errors — no action.
+- 22 unresolved telegram reports (ids 3830-3849, all dated 2026-07-26): pre-existing BCTC guard-rail notices + 1 sla-monitor breach (3838), every underlying defect already board-tracked (FIX-BCTC-VALIDATION-GATE-NONBANK-ZERO-SCALE, FIX-SLA-SIGNALQUALITYAUDIT-MONTHLY-CADENCE-MISCLASSIFIED-48H). Resurfacing itself is the known unfixed gap `FIX-TELEGRAM-REPORT-ACK-STATUS-STOP-RESURFACE` (no ack tool exists yet). No new mint.
 
 ## Carry-over
 
-- Peer session (dev-team) holds `FIX-PRESSURE-HOST-HEADROOM-WRONG-MACHINE-WRONG-QUANTITY` (in_progress) + `FIX-BDI-SHIPPING-STALE-404-GUARD` (qa) — untouched, as instructed.
-- `review`≈118 / `qa`=0 capacity gap (from prior tick) still open on architect via `FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN` — not re-triaged this cycle.
+- `FIX-PRESSURE-HOST-HEADROOM-WRONG-MACHINE-WRONG-QUANTITY` in_progress (dev-mcp-server, WIP=1) — untouched.
+- NEW: `FIX-PDFEXTRACTOR-TIER1-OCR-TIMEOUT` (REVIEW, next_agent=po, stale since 2026-07-22 — its own po_disposition text says "route to dev-team/qa" but the next_agent field was never flipped) + `RAG-FTS-BUILD-MEMORY-BOUND` (REVIEW, next_agent=po, owner=developer, updated_at null) — both out of this tick's signal scope, not opened; flag for a dedicated PO sign-off pass.
+- `review`≈116 / `qa`=0 lane-capacity gap still open (prior tick, `FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN`).
