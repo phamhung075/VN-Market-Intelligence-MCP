@@ -129,8 +129,9 @@ Lifecycle recipe (2 calls, id round-trip) → `docs/agents/tools/list/log_agent_
 
 ## Task-Lock Coordination Tools
 
-`task_claim` is ACTIVE — main.md's PUBLISHED MARKER GATE (Step G-2, weekly dedup mutex on `tnb-audit`)
-is a mandatory hard gate that runs before Dispatch on every cycle. `task_heartbeat`/`task_release`/
+`task_claim` is ACTIVE — main.md's PUBLISHED MARKER GATE (Step G-2, daily dedup mutex on `tnb-audit`,
+re-keyed from weekly 2026-07-29 per FIX-CADENCE-TNB-AUDIT-WEEKLY-MARKER-BLOCKS-DAILY-CRON — the cron
+is daily, so the key period must be daily too) is a mandatory hard gate that runs before Dispatch on every cycle. `task_heartbeat`/`task_release`/
 `task_list_held` remain available for future exclusive-work locking (not yet wired beyond the
 publish-marker gate).
 

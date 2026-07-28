@@ -73,11 +73,17 @@ if SESSION_BLIND == true:
             EXIT (do not call send_telegram)
        4. if publish_claim.claimed == true:
             proceed with send_telegram(...)
-     Weekly slots (digest-sunday, tnb-audit): FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP (2026-06-14):
+     Weekly slots (digest-sunday only — FIX-CADENCE-TNB-AUDIT-WEEKLY-MARKER-BLOCKS-DAILY-CRON
+     2026-07-29 removed tnb-audit from this list; tnb-audit's cron is daily, so it now follows
+     the daily-slot template below, same as chef-morning/eod/evening/fb-daily):
+     FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP (2026-06-14):
        (A) use get_week_period MCP tool to get the canonical week period (not local `date +%G-W%V`)
        (B) key the mutex on periodKey (date-range "YYYY-MM-DD/YYYY-MM-DD"), NOT weekLabel.
        e.g. "published:digest-sunday:2026-06-08/2026-06-14" not "published:digest-sunday:2026-W24".
        ttl_seconds=691200 (8d) per spawn-fanout.md.
+     INVARIANT: a marker's key period MUST equal its slot's cron period — daily cron -> daily
+     key (ttl 100800), weekly cron -> ISO-week periodKey (ttl 691200). Check the target slot's
+     actual cron cadence before copy-pasting either pattern onto a new slot.
      The publisher owns the marker — the dispatcher (this flow) does NOT call publish markers. -->
 
 **Important — Published marker gate (FR-P2-7):** Each spawned agent MUST check and set a
@@ -100,8 +106,8 @@ MARKER_CLAIM=$(call_tool(server="vn-market", tool="task_claim", arguments={
   task_kind:            "cowork-slot",
   owner_agent:          "<agent_id>",
   owner_client_session: $CLAUDE_CODE_SESSION_ID,   // REQUIRED — P1-FINAL (TASK_1980)
-  ttl_seconds:          100800    # 28h for daily slots (ARCH-DECIDE-D)
-                                  # Weekly slots (digest-sunday, tnb-audit): ttl_seconds = ~8 days
+  ttl_seconds:          100800    # 28h for daily slots (ARCH-DECIDE-D) — includes tnb-audit
+                                  # Weekly slots (digest-sunday only): ttl_seconds = ~8 days
                                   # (see coordinationStore TTL cap)
 }))
 
@@ -117,7 +123,10 @@ TTL values:
   with a 4h buffer against timezone drift. A 24h TTL risks a same-day retry leaking through
   at a 23h59m gap.
 - **Weekly slots** (`ttl_seconds` = ~8 days, see coordinationStore TTL cap): digest-sunday
-  and tnb-audit use ISO week as `work_date` (`YYYY-WW` format, e.g. `2026-W22`).
+  uses ISO week as `work_date` (`YYYY-WW` format, e.g. `2026-W22`). tnb-audit's cron is daily
+  (`13 20 * * *`) — it uses the daily-slot pattern above, NOT this one (moved here 2026-07-29,
+  FIX-CADENCE-TNB-AUDIT-WEEKLY-MARKER-BLOCKS-DAILY-CRON — a weekly key on a daily cron silently
+  blocked 5 of 6 daily audits per ISO week).
 
 Where this gate lives: inside each spawned agent's own flow, co-located with `send_telegram`.
 The dispatcher (this file) does NOT set published markers — the publishing agent is responsible.

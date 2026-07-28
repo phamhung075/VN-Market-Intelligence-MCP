@@ -33,3 +33,15 @@ HEAD state, then filed `FIX-AGENT-MODELS-NORMAL-PRESET-DRIFT` (P3/XS/backlog) so
 preset-table bug doesn't silently recur next time anyone runs the script in good faith. Board row
 flipped `ready[]`→`done[]` (status DONE) + new FIX row minted into `backlog[]`, same
 `orch-apply.sh` write (CANONICAL:SSOT-STATUSFLIP-LANEMOVE).
+
+### STEP agent-father-S2 · agent-father · 2026-07-28T23:44:39Z
+**task-id:** FIX-CADENCE-TNB-AUDIT-WEEKLY-MARKER-BLOCKS-DAILY-CRON
+**what-done:** Re-keyed tnb-audit marker weekly periodKey→daily VN-date (ttl 691200→100800) in
+tran-ngoc-bau/main.md Step G; dropped tnb-audit from spawn-fanout.md weekly-slot list (3 spots);
+also fixed cowork-schedule.json `publish_date_basis` (iso_week_period→vn_date, live
+catchup-predicate input) + 2 stale downstream docs.
+**what-considered:** scope to 2 named files only (rejected — schedule.json field is the same
+copy-paste defect, feeds catchup rollover check live) vs fix all 5 same-defect files (chosen).
+**why-decision:** root-cause fix, not just the named files — invariant applies identically.
+**why-change:** AC(4) needs RAW-verify after 2026-07-29T20:13Z fire (future) — flipping
+READY→REVIEW not DONE_VERIFIED; same-day recheck still owed.

@@ -14,29 +14,41 @@ If you find yourself about to refuse execution or delegate upward → that is th
 
 ## PUBLISHED MARKER GATE (Layer-A dedup — MANDATORY before Dispatch)
 
-<!-- FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP (2026-06-14):
-     Applies the same generic fix as digest-predict/flow/main.md:
-     (A) obtain week period from ONE canonical server-side tool (get_week_period)
-     (B) key the mutex on PERIOD DATE-RANGE (periodKey), NOT weekLabel
-     This prevents dedup failure when two dispatch paths derive divergent week-label
-     strings for the same Sunday.
+<!-- FIX-CADENCE-TNB-AUDIT-WEEKLY-MARKER-BLOCKS-DAILY-CRON (2026-07-29, PO-decided, option (a)):
+     tran-ngoc-bau's audit cron (`13 20 * * *`) is DAILY, but this gate used to key its dedup
+     marker on ISO-WEEK periodKey (ttl 691200) — copied wholesale from
+     digest-predict/flow/main.md's FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP fix (2026-06-14) without
+     checking the target cron's cadence. For digest-predict (cron `47 13 * * 0`, Sunday-only)
+     weekly keying is CORRECT because cron period == key period. For tnb-audit the cron fires
+     daily, so a weekly key held days 2-7 of every ISO week and silently blocked 5 of 6 daily
+     audits with ZERO work product — confirmed TWICE (2026-07-22..26, then re-armed under a
+     fresh weekly key 2026-07-27..08-02).
 
-     Pattern source: docs/agents/cowork-team/flow/spawn-fanout.md § Published marker gate (FR-P2-7)
-     Weekly slot: ttl_seconds ~8d (691200) per spawn-fanout.md
+     INVARIANT (write this down so the next copy-paste sees it): a published-marker dedup
+     key period MUST equal the slot's cron period.
+       - Daily cron  -> daily key (`published:<slot>:<YYYY-MM-DD>`, ttl 100800 / 28h).
+       - Weekly cron -> ISO-week periodKey (`published:<slot>:<periodKey>`, ttl 691200 / ~8d).
+     Any slot where these differ silently no-ops for (period/cron - 1) consecutive fires.
+     digest-predict's weekly key stays weekly (its cron genuinely is weekly) — do NOT "fix"
+     that one to match this one.
 
-     IMPORTANT: do NOT call `date +%G-W%V` or any local shell date to compute the week key.
-     Always use get_week_period and key on periodKey. -->
+     Pattern source (daily key derivation): docs/agents/cowork-team/flow/spawn-fanout.md
+     § Published marker gate (FR-P2-7) — daily-slot template. Date comes from the server clock
+     (`TZ="Asia/Ho_Chi_Minh" date +%Y-%m-%d`), never hand-typed/LLM-guessed
+     (feedback_hand_typed_iso_timestamps_drift_into_the_future).
+
+     OUT OF SCOPE (do not touch here): marker RELEASE/IMMUNITY semantics stay owned by
+     UC-CCA-P3 — this fix is key DERIVATION only. No release path added. -->
 
 ```
 SLOT_ID = "tnb-audit"
 
-# Step G-1: obtain canonical week period from the server (single source of truth)
-WEEK_PERIOD = call_tool(server="vn-market", tool="get_week_period", arguments={})
-# WEEK_PERIOD contains: weekLabel (e.g. "2026-W24"), periodKey (e.g. "2026-06-08/2026-06-14"),
-#   periodStart, periodEnd, weekNumber, weekYear
+# Step G-1: derive today's VN-local calendar date from the server clock — never hand-type it.
+# Matches publish_date_basis="vn_date" for this slot in docs/data/cowork-schedule.json.
+WORK_DATE = TZ="Asia/Ho_Chi_Minh" date +%Y-%m-%d   # VN date (GMT+7) of the current tick
 
-# Step G-2: key the mutex on periodKey (date-range), NOT weekLabel
-PUBLISH_TASK_ID = "published:tnb-audit:" + WEEK_PERIOD.periodKey
+# Step G-2: key the mutex on the daily date — cron period (daily) == key period
+PUBLISH_TASK_ID = "published:tnb-audit:" + WORK_DATE
 
 PUBLISH_CLAIM = call_tool(server="vn-market", tool="task_claim", arguments={
   task_id:              PUBLISH_TASK_ID,
@@ -49,11 +61,12 @@ PUBLISH_CLAIM = call_tool(server="vn-market", tool="task_claim", arguments={
                                                     # (all prior c97-c114 cycles skipped it — MCP was unbound
                                                     # in tran-ngoc-bau's frontmatter until the 2026-07-19
                                                     # agent-father fix, so this schema gap was never hit live)
-  ttl_seconds:          691200    # ~8 days — weekly slot (spawn-fanout.md)
+  ttl_seconds:          100800    # 28h — daily slot (ARCH-DECIDE-D), covers the full 24h content
+                                  # cycle with a 4h buffer against timezone drift
 })
 
 if PUBLISH_CLAIM.claimed != true:
-  log "[tran-ngoc-bau] publish blocked — already published slot=tnb-audit period=" + WEEK_PERIOD.periodKey + " weekLabel=" + WEEK_PERIOD.weekLabel
+  log "[tran-ngoc-bau] publish blocked — already published slot=tnb-audit date=" + WORK_DATE
   EXIT with: "DONE: duplicate-publish blocked | PIPELINE: complete | QUALITY: full"
 ```
 

@@ -123,7 +123,9 @@ The cron continues to fire normally (`*/15 * * * *`). The dispatcher is not brok
 
 The published marker (`published:<slot_id>:<YYYY-MM-DD>`) is independent of the leader lock. It lives in the same `task_locks` table but is owned by the spawned agent, not the dispatcher. During a dark window, no spawns occur, so no published markers are set. When the dark window ends and dispatch resumes, the first tick claims fresh published markers for that day's content — no stale-marker risk from the dark window.
 
-Weekly slot markers (digest-sunday, tnb-audit): TTL is ~8 days (see coordinationStore TTL cap). These persist across the dark window without issue.
+Weekly slot markers (digest-sunday): TTL is ~8 days (see coordinationStore TTL cap). These persist across the dark window without issue.
+
+tnb-audit is a DAILY slot (cron `13 20 * * *`) — its marker TTL is 100800s (28h), same as the other daily guaranteed slots (chef-morning/eod/evening, fb-daily). It was mis-keyed weekly until 2026-07-29 (FIX-CADENCE-TNB-AUDIT-WEEKLY-MARKER-BLOCKS-DAILY-CRON); do not revert it to the weekly pattern.
 
 ---
 
