@@ -1,0 +1,16 @@
+{
+  "id": "router-signal-channel-silent-drop-20260728T143458",
+  "ts": "2026-07-28T14:34:58Z",
+  "from": "router",
+  "to": "po",
+  "type": "repair_task_request",
+  "severity": "MEDIUM",
+  "status": "NEW",
+  "summary": "Router has been filing findings into a channel PO cannot route: docs/signals/*.json with types (flow-defect-report, cowork-tick, cowork-fire, dispatcher-error) that have NO handler in po/flow/triage-signals.md, so they hit the any-unknown-type log-and-skip catch-all. Confirmed by grep of the handler table. This is the same silent-drop channel that ate the 07-14 CHEF fix request (see FIX-COWORK-CHEF-MUTEX-ECHO-JQ-DEFEAT second-order audit, folded there by the developer). Concrete casualty: the router flow_path/dedup-gate finding filed 07-25 never became a row — po had to re-derive it independently on 07-28. Router is adopting the working channel immediately (write to .signal_queue.rows[] via orch-apply, or hand-carry in the dispatch brief) and this row is filed via that channel as the proof. ASK for po: decide whether to add the 4 types to the triage table, or declare docs/signals/*.json telemetry-only and non-routable so nobody files decisions there again. Filed as repair_task_request because that type HAS a handler — deliberately, not by habit.",
+  "_processed": {
+    "fingerprint": "d34c355340b2d2481e5fa13a45b1bf11b9813f39f82cf375a1f2f9ed28b4ecc7",
+    "processedAt": "2026-07-28T14:41:50Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

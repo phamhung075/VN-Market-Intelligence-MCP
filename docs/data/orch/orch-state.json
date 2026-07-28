@@ -419,11 +419,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-07-28T14:28:44Z",
-    "updated_by": "developer",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "active_task_id": "TASK-COWORK-CATCHUP-1",
+    "next_agent": "qa",
+    "next_action": "TASK-COWORK-CATCHUP-1 at QA — verify-committed mode (branch:null). Verifying it unblocks CATCHUP-2/3/4/5/6.",
+    "updated_at": "2026-07-28T14:42:14Z",
+    "updated_by": "dev-team (router deliberate QA dispatch)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2350,7 +2351,7 @@
         "severity": "MEDIUM",
         "status": "NEW",
         "summary": "Router findings filed as docs/signals/*.json with types flow-defect-report/cowork-tick/cowork-fire/dispatcher-error have NO handler in po/flow/triage-signals.md — they hit the unknown-type log-and-skip catch-all. Same channel that ate the 07-14 CHEF fix request. Casualty: router flow_path finding filed 07-25 never became a row; po re-derived it 07-28. Router now files via signal_queue.rows[] (this row). ASK: add the 4 types to the triage table, or declare docs/signals/*.json non-routable telemetry.",
-        "payload_ref": "docs/signals/router-signal-channel-silent-drop-20260728T143458.json"
+        "payload_ref": "docs/signals/processed/router-signal-channel-silent-drop-20260728T143458.json"
       }
     ],
     "last_triaged_at": "2026-07-28T13:24:57Z",
@@ -16073,32 +16074,6 @@
         "review_note": "Premise confirmed at source: byte cap (LINE_CAP*60=12000B, TE-T24) already existed via context-bloat-backstop.sh with a detector only; notebook-auto-prune.sh's early-exit (:135) and loop-break (:174) were line-only, so the actuator never fired on the byte axis (alert-commander.md 632 bytes/line vs a 60 bytes/line budget). FIX: both stopping conditions now require lines<=LINE_CAP AND bytes<=BYTE_CAP. LINE_CAP read at runtime from docs/data/file-size-caps.json (same SSOT context-bloat-backstop.sh reads); BYTE_CAP=LINE_CAP*60 — never a second hardcoded 12000 literal (explicitly avoiding the USD/VND three-SSOT duplication class). Loop recount switched echo->printf %s\\n so byte count matches the final atomic write exactly. OPEN QUESTION decided: option [a] — kept the single-section safe-fail path unchanged (honest signal, no truncation), now reachable on the byte axis too; added byte_count/byte_cap to both safe-fail signal payloads for audit parity with the backstop hook. New scripts/agents-flow/notebook-auto-prune.test.sh, 4/4 PASS: T1 byte-axis regression (142L/30403B -> 49L/10166B, 2 sections remain, no safe-fail); T2 line-axis not regressed (250L/3920B -> 167L); T3 within-both-caps untouched (hash-identical); T4 single-section byte-only breach (67L/18145B, line cap NOT tripped -> hash-identical, notebook_single_section_overage_breach emitted with byte_cap:12000, no truncation). Existing test-notebook-auto-prune.sh (5/5) and context-bloat-backstop.test.sh (4/4) re-run clean, unaffected. Live validation: this very fix, applied to itself, correctly byte-pruned docs/agent-memory/notebooks/developer.md (49L/10324B post-prune) when this task own notebook entry pushed it over the byte cap while still under the line cap. CI: full bun test baseline established fresh (the 3-day-old 1-failure note had moved) = 14824 pass/40 skip/53 fail/1231 files/591s; confirmed 1408-tool-diacritics.test.ts:113 (owned by FIX-BDI-SHIPPING-STALE-404-GUARD) still among them, unchanged. Zero net new failures — this change touches 0 files under apps/mcp-server/. Cited as instance 13/sub-class 7 on SPIKE-SATURATED-COUNT-THRESHOLD-GATES-SWEEP — that row NOT closed. FOLLOW-UP FINDING, not fixed (out of this row's enumerated scope): scripts/agents-flow/notebook-linecap-sweep.sh (6h cron TE-T17 backstop) has its own independent line-only pre-filter before delegating to notebook-auto-prune.sh — a byte-over/line-under notebook written via a non-hook path (Bash heredoc/append) still will not reach the fixed logic through that cron path; flagging for PO/dispatcher to decide whether a follow-up task is warranted. Commits: fix(agents-flow/notebook-prune) implementation+test+docs, chore(memory/developer) notebook."
       },
       {
-        "id": "TASK-COWORK-CATCHUP-1",
-        "title": "FR-1 + FR-2: Core domain module cowork-catchup-predicate.js with per-dish-type config",
-        "type": "SPRINT-M",
-        "size": "M",
-        "priority": "P0",
-        "zone": "scripts/agents-flow/",
-        "sprint": "COWORK-GUARANTEED-SLOT-CATCHUP",
-        "status": "REVIEW",
-        "depends_on": [],
-        "created_at": "2026-07-22T22:12:59Z",
-        "created_by": "pm",
-        "updated_at": "2026-07-28T14:06:15Z",
-        "next_agent": "qa",
-        "po_routing_20260728": "PO 2026-07-28T13Z lane routing. pm's decomposition minted this row with next_agent unset, which no dispatch lane resolves (verified by executing scripts/lib/devteam-eligibility.jq predicates, not by reading the row). Handler = developer per docs/handoffs/TASK-COWORK-CATCHUP-10.md ('developer completes code TASK-1..9, then agent-father integrates this doc-only subtask') + docs/data/system-map.json scripts/ zone. dev-role next_agent + backlog lane = BOUNDED-1, per docs/agents/po/flow/zone-routing.md Step A2.",
-        "updated_by": "developer",
-        "po_lane_move_20260728": "MOVED ready[] -> backlog[] by PO. Dep-free P0 head of the epic chain; backlog[] is the BOUNDED-1 lane (1st in the head-idle chain) and this row is currently the only rank-0 BOUNDED-1-eligible row, so it is the next unattended pick. ready[] would have parked it behind RLC (3rd in the chain, reachable only when BOUNDED-1 declines).",
-        "promoted_at": "2026-07-28T13:42:42Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
-        "claimed_at": "2026-07-28T13:42:42Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "qa_verify_mode": "verify-committed",
-        "branch": null,
-        "commit": "06808a8a1"
-      },
-      {
         "id": "FIX-COWORK-CHEF-MUTEX-ECHO-JQ-DEFEAT",
         "title": "CHEF same-tick mutex DEFEATABLE: pressure-cadence.md Step 4.5c uses echo \"$SCHEDULE\"|jq — zsh expands the escaped \\n in chef-intraday trigger_prompt to a real newline -> jq control-char parse error -> G_ARR/NG_ARR empty -> CHEF_MUTEX_APPLIED=false -> chef-morning + chef-intraday BOTH spawn -> DOUBLE MARKET PUBLISH; fails silently",
         "type": "FIX",
@@ -16125,7 +16100,35 @@
         "review_note": "developer: Reproduced the defect live before fixing it -- `zsh -c 'echo \"$SCHEDULE\" | jq ...'` against the real (unmodified) docs/data/cowork-schedule.json reproduced the exact historical failure verbatim: `jq: parse error: Invalid string: control characters ... must be escaped`. Root cause confirmed: zsh's `echo` builtin interprets backslash escapes by default (unlike bash), so re-emitting cowork-schedule.json's raw text through `echo \"$SCHEDULE\" | jq` turned chef-intraday's trigger_prompt embedded `\\n` into a real newline byte, illegal unescaped inside a JSON string.\nExtracted Step 4.5c's mutex to scripts/agents-flow/cowork-chef-mutex.js -- pure `applyChefMutex(matches, scheduleSlots)` + a CLI entrypoint (MATCHES via stdin, schedule read file-direct via fs.readFileSync, never shelled). New scripts/agents-flow/cowork-chef-mutex.test.js: 25/25 PASS, incl. TC-7 (CLI stdin integration against a fixture carrying the REAL chef-intraday trigger_prompt with its embedded `\\n`, proving the script itself never corrupts it) and TC-8 (a REGRESSION GUARD, run under actual zsh via spawnSync, that reproduces the historical `echo|jq` control-character failure on the same fixture, then proves `printf '%s'|jq` survives it -- so a future re-introduction of `echo` would be caught by CI, not silently regress a third time).\ndocs/agents/cowork-team/flow/pressure-cadence.md Step 4.5c rewired: MATCHES is piped to the script via `printf '%s'` (never `echo`), and $RESULT is consumed back via `jq -n --argjson` (argv, not a pipe an interpreter could re-read/re-escape) -- matching the row's prescribed \"jq -n --argjson bound params\" direction exactly, symmetrically at both ends.\nAC PROOF: live-ran the exact documented invocation against the REAL, unmodified, read-only docs/data/cowork-schedule.json under zsh, simulating the 05:15Z coincidence tick with MATCHES=[chef-morning,chef-intraday] (chef-intraday carrying its real embedded-\\n trigger_prompt) -> RESULT={\"ok\":true,\"matches\":[{\"slot_id\":\"chef-morning\"}],\"chef_mutex_applied\":true,\"dropped\":[\"chef-intraday\"]} -- exactly ONE CHEF dish survives. AC satisfied, not just unit-asserted.\nCommit 120e5d42b (fix). No apps/mcp-server/ files touched (docs/ + scripts/agents-flow/ only, plain Node scripts outside the bun test surface) -- ran full `bun test` anyway for an honest before/after baseline per task constraints; see notebook for the exact pass/fail counts."
       }
     ],
-    "qa": [],
+    "qa": [
+      {
+        "id": "TASK-COWORK-CATCHUP-1",
+        "title": "FR-1 + FR-2: Core domain module cowork-catchup-predicate.js with per-dish-type config",
+        "type": "SPRINT-M",
+        "size": "M",
+        "priority": "P0",
+        "zone": "scripts/agents-flow/",
+        "sprint": "COWORK-GUARANTEED-SLOT-CATCHUP",
+        "status": "QA",
+        "depends_on": [],
+        "created_at": "2026-07-22T22:12:59Z",
+        "created_by": "pm",
+        "updated_at": "2026-07-28T14:42:15Z",
+        "next_agent": "qa",
+        "po_routing_20260728": "PO 2026-07-28T13Z lane routing. pm's decomposition minted this row with next_agent unset, which no dispatch lane resolves (verified by executing scripts/lib/devteam-eligibility.jq predicates, not by reading the row). Handler = developer per docs/handoffs/TASK-COWORK-CATCHUP-10.md ('developer completes code TASK-1..9, then agent-father integrates this doc-only subtask') + docs/data/system-map.json scripts/ zone. dev-role next_agent + backlog lane = BOUNDED-1, per docs/agents/po/flow/zone-routing.md Step A2.",
+        "updated_by": "developer",
+        "po_lane_move_20260728": "MOVED ready[] -> backlog[] by PO. Dep-free P0 head of the epic chain; backlog[] is the BOUNDED-1 lane (1st in the head-idle chain) and this row is currently the only rank-0 BOUNDED-1-eligible row, so it is the next unattended pick. ready[] would have parked it behind RLC (3rd in the chain, reachable only when BOUNDED-1 declines).",
+        "promoted_at": "2026-07-28T13:42:42Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "claimed_at": "2026-07-28T14:42:14Z",
+        "claimed_by": "router (deliberate QA dispatch — epic gate)",
+        "qa_verify_mode": "verify-committed",
+        "branch": null,
+        "commit": "06808a8a1",
+        "router_dispatch_note": "Router overrode the QA-Drain age-ordering deliberately. Age-order would have picked UC-GCP-P8 (gates nothing). CATCHUP-1 is depends_on for CATCHUP-2/3/4/5/6 — verifying it unblocks the whole downstream epic that fixes guaranteed-slot catch-up, a defect that measurably cost 3 days of missed publishes during the 07-25/07-28 outage. Same qa<1 budget, different row; UC-GCP-P8 remains the next age-ordered pick and loses one cycle only."
+      }
+    ],
     "_closed_signals_20260614": {
       "_by": "po-S50",
       "_at": "2026-06-14T14:45:14Z",
