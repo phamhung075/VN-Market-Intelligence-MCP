@@ -1,0 +1,73 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-28T16:11:35Z",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "market-watcher-eod",
+      "alert-commander-critical"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "market-watcher-eod",
+      "alert-commander-critical"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "news-scout-offhours": "cron",
+      "market-watcher-offhours": "cron",
+      "market-watcher-eod": "cron",
+      "alert-commander-critical": "cron"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": null,
+      "market-watcher-offhours": null,
+      "market-watcher-eod": null,
+      "alert-commander-critical": null
+    },
+    "last_fired_timestamp": "2026-07-28T16:11:24Z",
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "market-watcher-eod",
+      "alert-commander-critical"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "16:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 3,
+    "note": "WORK tick via preflight script; pressure-state stale (~89min, threshold 20min) -> legacy cadence fallback; market-watcher matched 2 slots (offhours+eod) per R3 collision policy, WARN telegram sent; 3 NEW signal_queue rows all to:po left unflipped per feedback on blanket-ACK burying other agents' signals"
+  },
+  "priority": "low",
+  "createdAt": "2026-07-28T16:11:35Z",
+  "_processed": {
+    "fingerprint": "3338e72244b4fef057a045b38400dd7b7100936ff02e7503c88b763d0c8317da",
+    "processedAt": "2026-07-28T16:16:41Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

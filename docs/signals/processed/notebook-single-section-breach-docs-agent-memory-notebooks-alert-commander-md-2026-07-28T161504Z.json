@@ -3,18 +3,20 @@
   "to": "claude-manager-helper",
   "type": "notebook_single_section_overage_breach",
   "priority": "high",
-  "createdAt": "2026-07-21T15:18:05Z",
+  "createdAt": "2026-07-28T16:15:04Z",
   "payload": {
-    "file": "docs/agent-memory/notebooks/agent-father.md",
-    "line_count": 243,
+    "file": "docs/agent-memory/notebooks/alert-commander.md",
+    "line_count": 198,
     "cap": 200,
+    "byte_count": 125174,
+    "byte_cap": 12000,
     "section_count": 1,
     "reason": "only preamble+1 section remain; cannot prune further without data loss",
     "action_required": "manual_split_to_archive"
   },
   "_processed": {
-    "fingerprint": "ad438b5682770346295649251bd73f542227f3b155f3b2af264f1940c6454176",
-    "processedAt": "2026-07-21T15:23:58Z",
+    "fingerprint": "b912c45ed87106434e2d9f3cc6267d1cc3e324285366185f5df8fe63e85a6624",
+    "processedAt": "2026-07-28T16:16:41Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
