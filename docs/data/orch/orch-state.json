@@ -2361,6 +2361,28 @@
         "severity": "WARN",
         "status": "NEW",
         "payload_ref": null
+      },
+      {
+        "id": "sys-20260728T131219-3fca",
+        "ts": "2026-07-28T13:12:19Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "memory_pressure",
+        "summary": "pdf-extractor memory 85.54% of 2.5 GiB (2.138 GiB) — stable plateau",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260728T131227-5964",
+        "ts": "2026-07-28T13:12:27Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "memory_pressure",
+        "summary": "rag-service memory 88.32% of 768 MiB after restart — elevated post-restart",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-25T15:29:39Z",
@@ -11947,39 +11969,7 @@
         "po_signoff_verdict": "APPROVE — independent PO sign-off 2026-07-23T05:07:33Z. Re-read qa_reverify_20260723 (PASS; both QA gate passes clean, closes the single probe.sh:86 blocking issue). Confirmed probe.sh:86 carries the || fallback guard idiom matching :31/:66/:71/:92 (git show 685285a7c: single-file, 1 insertion/1 deletion). Forbidden files UNTOUCHED at HEAD + working-tree: tier1-probe.md logic, scripts/audits/verify-a30-mcp-memory-reclamation.sh, scripts/emit-audit-signal.sh, app code (git status clean). Detection-layer-only fix per brief docs/architecture-briefs/2026-07-23-auditor-a30-reclamation-gate-a21-windowed-restart.md; E-3 append-always observation-ledger contract preserved. Supervised converge pipeline design->impl->QA verify->QA delta re-verify->PO sign-off now fully closed. RESIDUAL non-blocking: field-acceptance of the >=85% deep-probe branch awaits the next live Tier-1 cycle at genuine mem pressure (cron-gated, monitored separately, not a gate on close)."
       }
     ],
-    "done_verified": [
-      {
-        "id": "UC-GCP-P1",
-        "type": "CLEAN",
-        "title": "Consolidate the 4 commit-convention docs into ONE SSOT documenting the format actually in use + reconcile audit script + tree-map",
-        "status": "DONE_VERIFIED",
-        "priority": "P1",
-        "size": "M",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "RESCOPE",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#git-ci-publish-P1",
-        "note": "SCOPE=verifier Rescope note. Rewrite docs/policies/commit-convention.md as single SSOT (slug task IDs, decide type vocab incl incident/role types), CARRY FORWARD the live heredoc `git commit -m`-only/never-`-a` rule (c47 root cause, merge-gate Control4). Delete the 3 sibling docs. Grep BOTH 'commit-convention.md §' AND path-only refs (two cite a nonexistent .claude/knowledge path). Update commit-convention-audit.sh predicates+VOCAB (or deprecate) and tree-map.md 4-file subtree (DAG invariant).",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "priority_bumped_from": "P2",
-        "priority_bumped_at": "2026-07-17T04:54:03Z",
-        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
-        "promoted_at": "2026-07-23T06:16:59Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "updated_at": "2026-07-28T12:55:36Z",
-        "claimed_at": "2026-07-28T12:45:44Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "updated_by": "developer",
-        "review_note": "commit-convention.md rewritten as single-file SSOT (140L); 3 sibling docs deleted; 2 dangling .claude/knowledge path refs fixed (audit script + 2026-05-17 audit brief); commit-convention-audit.sh deprecated in place (0 live invocation paths confirmed); tree-map.md 4-file subtree collapsed to 1 node. Commits: 7dcf90919 (main), 8c6d71683 (memory/journal+notebook). Post-change grep confirms zero dangling refs outside historical/archival docs (left untouched by design). graphify --update could not run this session (no LLM API key in env) — flagged, not silently skipped. [QA] Review Record (direct-commit verify, 2026-07-28T12:55:36Z): independently re-verified all 6 acceptance points against live tree (commit-convention.md format-in-use match to real git log; 3 siblings deleted; both named .claude/knowledge dangling refs confirmed fixed, remaining .claude/knowledge hits are pre-existing archival docs only; -a/-am rule diffed verbatim-carried-forward against pre-consolidation source; audit-script diff is exactly header+comment, deprecated-in-place not silently stale, zero live invocation paths re-confirmed; tree-map 4-file subtree collapsed to 1 node, no orphans). Zero src/apps production files touched -> tsc/DDD/bun-test Smart-Skip N/A. APPROVED, DONE_VERIFIED.",
-        "qa_commit": "7dcf90919,8c6d71683",
-        "qa_verified_at": "2026-07-28T12:55:36Z",
-        "qa_verdict": "APPROVED",
-        "branch": null
-      }
-    ],
+    "done_verified": [],
     "head": {
       "status": "idle",
       "active_task_id": null,
