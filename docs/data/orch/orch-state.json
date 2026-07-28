@@ -2310,7 +2310,9 @@
         "summary": "sbv_fx stale 43min (SLA 30min) — zero-value rejects upstream",
         "severity": "HIGH",
         "status": "NEW",
-        "payload_ref": null
+        "payload_ref": null,
+        "router_note": "sbv_fx oscillates: 24min(12:23) -> 70min(13:33) -> 2min/ok(13:50) -> 43min now. Intermittent by nature, not a stall. BOTH theses already on the board — FIX-SBV-FETCHER-ZERO-VALUE-EMIT (source emits zeros, guard correctly rejects) and FIX-AUDITOR-SBVFX-SLA-POSTMARKET-TOLERANCE (flat 30-min SLA vs a once-per-business-day source is structurally wrong). Do not re-mint either.",
+        "router_second_order_correction": "The sweep concluded no second-order outage effect because rag_analyses had 239 rows/24h. WRONG LAYER — rag_analyses is written by the mcp-server pollNews INGESTION job, not by the news-scout cowork AGENT. Agent cycles verifiably have NOT run: news-scout-offhours last_fired 2026-07-25T16:13:49Z, news-scout-sentiment last_fired 2026-07-24T05:06:28Z. This is the SAME fetch-vs-analysis two-layer conflation the sweep had just correctly diagnosed in the C-06 finding. The second-order effect TASK-COWORK-CATCHUP exists to address is real and remains UNMEASURED — do not record it as cleared."
       },
       {
         "id": "sys-20260728T143010-6ec2",
@@ -2321,7 +2323,9 @@
         "summary": "pdf-extractor at memory limit 98.87% (2.472/2.5 GiB) — sustained after OCR workload",
         "severity": "WARN",
         "status": "NEW",
-        "payload_ref": null
+        "payload_ref": null,
+        "router_verification": "CORROBORATED with 2 corrections (router 14:32Z). CONFIRMED: router sampled independently 4x over 90s at 98.77/98.78/98.84/98.79% — agrees with the auditor 12x/60s series (98.78-98.87%). Sustained at ceiling, not releasing, after the refine_bctc_md OCR workload FINISHED at ~14:08Z. CORRECTION 1: auditor reports RestartCount=0 in two places incl. the section certifying the RestartCount-with-StartedAt check as VERIFIED CORRECT. Actual is RestartCount=2, StartedAt=2026-07-28T09:26:20Z, OOMKilled=false. StartedAt was right, the count was not. Conclusion unchanged (2 restarts over 5h uptime is still no recent relief) but a self-certifying check misread its own field. CORRECTION 2 (router self-check): the router characterised this as a benign transient plateau at 13:30Z and declined to spawn twice on that basis. Three flat 30-min-apart probes straddled a slow climb — the same insufficient-window error the router had been criticising in others, committed at 30-min granularity. SEVERITY: WARN is right — failure mode is OOM -> docker restart -> recovery, not permanent damage. Restart is USER-GATED and was NOT performed.",
+        "router_verified_at": "2026-07-28T14:33:15Z"
       }
     ],
     "last_triaged_at": "2026-07-28T13:24:57Z",
