@@ -481,3 +481,27 @@ env-var overrides), SSOT-boundary grep-confirmed read-only, and the flow-doc/scr
 shapes cross-checked line-for-line — all match. Deferred `--all` backfill (~202 files, `--dry-run`
 verified) correctly left unexecuted, a separate PO-routed mutating action out of this task's scope.
 **why-change:** No change from plan — verify-committed JUMP-TO, zero blocking issues, APPROVED.
+
+### STEP qa-S19 · qa · 2026-07-28T17:00:09Z
+**task-id:** UC-GCP-P8
+**what-done:** Direct-commit verify (`qa[]`, branch:null, oldest of 83-deep review-lane backlog) of
+`stranded-state-sweep.sh` — commit `231860c6a`, main-ancestor confirmed, touches all 7 claimed files
+per `git show --stat`. Re-ran `stranded-state-sweep.test.sh` myself — 19/19 PASS, exit 0 (matches
+dev claim). Live sanity re-run (dispatcher-requested, 5-day drift check) against CURRENT dirty tree
+(44 entries, not the dev's 2026-07-23 57-entry snapshot): exit 0, valid JSON, 7 owned-elsewhere/5
+young-skipped/20 unknown (cap-enforced)/0 auto-commit — classifier still healthy live.
+**what-considered:**
+- Trust "zero git/orch-state writes itself" prose vs grep: grepped script — no `git add`/`commit`,
+  `ORCH_STATE` used only in one read-only `jq` dedup probe; only stdout(JSON)/stderr(log) writes.
+- Trust commented `# task_claim(...)`/`# task_release(...)` in post-cycle.md Step 4.3 as a defect vs
+  convention: cross-checked Step 4.2 (cold-evict) immediately above — identical commented-pseudocode
+  mutex-claim style already established there; not a gap specific to this task.
+- Shellcheck severity: default run showed only info-level SC2015/SC2329 on the *test* file; re-ran at
+  project's own `-S warning` convention (per cycle-486 precedent) — both files exit 0, clean.
+- mock-guard + secrets/process.env grep on both `.sh` files: clean (no production TS touched,
+  Smart-Skip applies).
+**why-decision:** Test suite RAW-reproduced, live 5-day-drift sanity check independently run (not
+trusted from the 2026-07-23 dry-run claim alone), both flow-doc (post-cycle.md Step 4.3) and
+dev-standards.md CANONICAL pointer confirmed live and accurate against the actual script behavior,
+signal-dashboard SKILL.md § WRITE pointer resolves. Zero blocking issues found.
+**why-change:** No change from plan — verify-committed JUMP-TO, zero blocking issues, APPROVED.
