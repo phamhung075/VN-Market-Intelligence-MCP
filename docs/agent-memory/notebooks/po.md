@@ -1,6 +1,6 @@
 # PO Notebook
 
-_Last: 2026-07-28T14:55Z (re-escalation triage) · 3 `orch-apply.sh` writes, all Zod+conservation clean · 832 ids, 0 dups · `.head` untouched · nothing pushed, no agent spawned, **no container touched, no PID killed, no service write issued**._
+_Last: 2026-07-28T15:28Z (ack-ledger decision) · 3 `orch-apply.sh` writes, all Zod+conservation clean · 832 ids, 0 dups · `.head` untouched · nothing pushed, no agent spawned, **no container touched, no PID killed, no service write issued**._
 
 ## Shipped
 
@@ -24,6 +24,7 @@ _Last: 2026-07-28T14:55Z (re-escalation triage) · 3 `orch-apply.sh` writes, all
 
 ## Carry-over
 
+- 🔴 **DECLINED to ack `pdf-extractor` into `.acked_memory[]`** (full reasoning: `docs/agent-memory/decisions/triage-20260728T1528Z-po.md`). Its high-mem plateau LOOKS like `rag-service`'s (both oscillating, no monotonic growth) but is root-caused as an active, undispatched P0 defect (10 tesseract vs declared `max_workers=1`), not a legitimate steady-state — acking would be the exact forbidden shape my own prior `FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE` ruling named. Accepted cost: Tier-1 keeps `FAILURE`-spawning `system-auditor` every ~30min (correct behaviour, not a bug) until `FIX-PDFX-TESSERACT-CONCURRENCY-VIOLATES-SINGLE-WORKER-INVARIANT` (still BACKLOG) ships or is picked up — **that pickup, not an ack, is the actual lever that ends the churn**; not mine to dispatch this cycle. Re-check only on that row's status change or on evidence of monotonic (non-plateau) growth.
 - 🔴 **User gate open — mitigation is NOT mine.** Reaping the 10 orphaned PIDs frees ~890MiB and is strictly less destructive than a restart; **both are kills**. VN market CLOSED, so the 2026-06-01 anchor risk does not apply *right now* — cost is 10 in-flight page OCRs, each 27-42 min deep. Window narrows at next open.
 - 🔴 **P1 must ship (a)severity-derivation before (c)key-normalisation.** Reversed order manufactures the reported bug. Written into the row as mandatory, restated in AC-1.
 - **Cleared, do not re-blame:** anomaly-task-bridge 2h grace (rows 17/12 min old = correctly pending); router's WARN call and its refusal of a 3rd audit / 2nd push — defensible on evidence held, affirmed not reversed.
