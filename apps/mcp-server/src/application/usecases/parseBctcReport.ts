@@ -33,6 +33,7 @@ import {
   recordBctcSignalSent,
   BCTC_SIGNAL_DEBOUNCE_HOURS,
 } from "../../infrastructure/db/bctcSignalDebounce.js";
+import { checkPeriodContentConsistency, BctcPeriodContentMismatchError } from "../../domain/services/financial-reports/periodContentExtractor.js";
 import { logger } from "../../infrastructure/logger.js";
 
 import type {
@@ -558,6 +559,44 @@ export async function parseBctcReport(
   params: ParseBctcReportParams,
 ): Promise<FinancialReport> {
   const { rawText, actionCode, period, shares, price, previousReport, publishedAt: callerPublishedAt, _telegramBugFn } = params;
+
+  // ── Step 0: FIX-BCTC-INGEST-PERIOD-IDENTITY-UNVALIDATED-VS-CONTENT ────────
+  // period_year/period_quarter (and the (action_code, sort_key) conflict-target
+  // identity) are caller-supplied and were NEVER checked against the document
+  // itself — a wrong caller-supplied period silently occupies the slot the
+  // correct filing for that period needs, with no defense anywhere. Class
+  // parallel: memory lesson
+  // feedback_pressure_state_caller_supplied_fields_dead_server_computed_live
+  // (UC-CDC-P1) — compute the correct value server-side at the boundary, gate
+  // the caller override. `checkPeriodContentConsistency` derives the period
+  // the PDF text itself claims to cover (repeated quarter-boundary date
+  // statements) and only flags `consistent: false` on a CONFIDENT disagreement
+  // — an inconclusive signal (poor OCR / no boundary dates present) or a
+  // matching signal is indistinguishable from today's behavior (AC-3 negative
+  // control: never blocks a poor-OCR filing). On a confident mismatch the
+  // report is REJECTED before any extraction/storage — written under NEITHER
+  // period key (AC-2/AC-5) — with a loud, debounced Telegram bug naming both
+  // periods (AC-2).
+  await initDatabase();
+  const periodCheck = checkPeriodContentConsistency(rawText, period.year, period.quarter);
+  if (!periodCheck.consistent && periodCheck.contentSignal) {
+    const mismatchErr = new BctcPeriodContentMismatchError(actionCode, period.sortKey, periodCheck.contentSignal);
+    logger.error(mismatchErr.message);
+
+    const debounceKey = `${period.sortKey}:period-mismatch`;
+    const debounceDb = getDb();
+    if (!isBctcSignalDebounced(debounceDb, actionCode, debounceKey, BCTC_SIGNAL_DEBOUNCE_HOURS)) {
+      recordBctcSignalSent(debounceDb, actionCode, debounceKey);
+      if (_telegramBugFn) {
+        await _telegramBugFn(mismatchErr.message).catch(() => {});
+      } else {
+        const { sendTelegramBug } = await import("../../infrastructure/notifiers/telegram.js");
+        await sendTelegramBug(mismatchErr.message).catch(() => {});
+      }
+    }
+
+    throw mismatchErr;
+  }
 
   // ── Step 1: Extract the three financial statements ────────────────────────
   const balanceSheet = extractBalanceSheet(rawText);

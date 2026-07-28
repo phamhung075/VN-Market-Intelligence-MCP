@@ -384,6 +384,42 @@ reasons were explicitly out of scope for this standalone run (PO ruling) — scr
 default query naturally excludes `is_excluded=1` rows so a future run cannot
 accidentally touch them; a separate task is needed for (b)/(c).
 
+**CANONICAL: Mislabelled-BCTC-period dedupe (FIX-BCTC-INGEST-PERIOD-IDENTITY-UNVALIDATED-VS-CONTENT AC-1, 2026-07-28)**
+```bash
+# Dry-run (default — read-only snapshot + decision, no writes):
+bun scripts/migrations/dedupe-mislabeled-bctc-period.ts
+bun scripts/migrations/dedupe-mislabeled-bctc-period.ts --source <id> --target <id>
+
+# Apply (re-parents bctc_refined_units, deletes the duplicate financial_reports
+# row, resets the freed bctc_vps_queue row to pending):
+bun scripts/migrations/dedupe-mislabeled-bctc-period.ts --apply
+
+# Against the live named-volume DB (docker exec — matches other CANONICAL scripts):
+docker cp scripts/migrations/dedupe-mislabeled-bctc-period.ts \
+  vn-market-intelligence-mcp-mcp-server-1:/app/dedupe-mislabeled-bctc-period.ts
+docker exec vn-market-intelligence-mcp-mcp-server-1 \
+  bun /app/dedupe-mislabeled-bctc-period.ts --apply
+```
+Decision-table gated (never guesses): refuses when source `refine_status='DONE'`
+(already finalized — the exact `time_gate` this script exists to respect, needs a
+human/PO call instead), target `confirm_status='CONFIRMED'`, action_code mismatch,
+source/target share a sort_key, target already has `bctc_refined_units` (manual
+reconciliation), or — when both pdf files exist on disk — their md5 hashes differ
+(duplicate hypothesis unconfirmed). Idempotent: a second run finds the source row
+already absent → no-op (exit 0). Default source/target: DPM
+`5b0dad71-3b05-4455-9823-c2072442777d` (mislabelled `2025-Q4`, real content
+`2026-Q1`) → `3e2a26d9-525a-4dba-8ebe-fcaecc0cb28e` (correctly-labelled `2026-Q1`).
+**LIVE RESULT (2026-07-28T16:45Z, executed):** confirmed byte-identical PDF
+duplicate (md5 `bec27c51…` both files) before applying. 23 `bctc_refined_units`
+windows re-parented onto the target, duplicate row deleted, `bctc_vps_queue`
+`(DPM, 2025, Q4)` reset to `pending`/0/NULL/NULL. Independently RAW-verified via a
+fresh DB connection post-apply (not the same connection the script used): exactly
+one DPM row remains (`2026-Q1`, `refine_status=PENDING`, 23 units intact),
+`get_bctc_report_id(code="DPM", year=2025, quarter="Q4")` now correctly returns
+nothing. Applied while `refine_status` was still `PENDING` (re-verified
+immediately before the run) — the `time_gate` this script's guard exists to
+respect.
+
 ---
 
 ## Low-Confidence Reparse Runbook

@@ -113,6 +113,73 @@ part of the 16-ticker incident's actual write-back path. Left as a known,
 reported gap for a follow-up scope decision (see the matching note under
 `fetchParseAndStoreBctc.ts` below) rather than folded into this task.
 
+**FIX-BCTC-INGEST-PERIOD-IDENTITY-UNVALIDATED-VS-CONTENT (2026-07-28):**
+`period_year`/`period_quarter` (and therefore `sort_key`, the
+`(action_code, sort_key)` UPSERT conflict-target identity) were entirely
+caller-supplied — `bctcVpsIngestHandler.ts` reads them straight off multipart
+form fields with only SHAPE validation (year 2000–2099, quarter enum), never
+checked against the PDF's own content. Concrete incident: report_id
+`5b0dad71-…` was ingested keyed `(DPM, 2025-Q4)` from a VPS-side
+listing-association bug, but its content was unambiguously Q1-2026 — a
+`(action_code, sort_key)` slot occupied by the wrong document is a durable
+data-loss condition (the real filing for that slot can never land while the
+wrong row holds it), not a display bug. Class parallel: memory lesson
+`feedback_pressure_state_caller_supplied_fields_dead_server_computed_live`
+(UC-CDC-P1) — compute the correct value server-side at the boundary, gate the
+caller override.
+
+Remedy: new domain module `domain/services/financial-reports/
+periodContentExtractor.ts` — `extractPeriodFromContent(rawText)` scans for
+repeated VAS quarter-boundary date statements (balance sheet "Tại ngày …" /
+income-cashflow "Từ ngày … đến ngày …", plus a `DD/MM/YYYY` fallback) and
+derives the (year, quarter) the DOCUMENT claims to cover. Diacritic/OCR-font
+corruption tolerant by design (anchors on digit groups + short ASCII stems
+"ng"/"th"/"n", not on the accented letters themselves — verified against the
+actual report `5b0dad71` PDF's mangled pdf-parse extraction). Conservative:
+a candidate only counts once it reaches `MIN_SIGNAL_COUNT=3` independent
+occurrences AND strictly dominates the runner-up; otherwise returns `null`
+("cannot determine" — never a guess). `checkPeriodContentConsistency()`
+compares that signal to the caller-supplied period; `consistent: false` is
+returned ONLY on a confident disagreement (annual reports and inconclusive
+signals are always `consistent: true` — the negative control that keeps a
+poor-OCR filing ingesting normally, exactly as before).
+
+`parseBctcReport()` runs this check as Step 0, before any statement
+extraction or DB write. On a confident mismatch it throws
+`BctcPeriodContentMismatchError` (naming both periods) — the report is
+written under NEITHER key. This propagates through the EXISTING fail-loud
+paths with zero plumbing changes: `fetchParseAndStoreBctc.ts`'s Step 3
+`try/catch` already returns `null` on any `parseBctcReport` throw, and
+`pushBctcExtraction.ts`'s `runPipeline` `try/catch` already turns any throw
+into `{outcome:"failed", reason: err.message}`, which
+`bctcVpsIngestHandler.ts`'s `applyPushBctcExtractionOutcome` already routes to
+a `sendTelegramBug` alert. A dedicated, debounced (`bctc_signal_debounce`,
+1h cooldown, same mechanism as the 1792 low-confidence alert) Telegram bug is
+also fired directly from `parseBctcReport()` so the alert fires unconditionally
+regardless of caller path. Test: `src/__tests__/
+FIX-BCTC-INGEST-PERIOD-IDENTITY-UNVALIDATED-VS-CONTENT.test.ts` (domain unit
+tests incl. the real diacritic-corruption fingerprint, + integration tests
+proving AC-2 rejection, AC-3 negative controls, AC-4 slot-recovery, AC-5
+regression). Zero net-new failures verified base-vs-head across the full
+70-file / 670-test pre-existing BCTC test corpus.
+
+**AC-1 (DATA, applied 2026-07-28):** report_id `5b0dad71-…` was a
+byte-identical duplicate (`md5sum` confirmed) of `3e2a26d9-…`
+(correctly-labelled `DPM_2026_Q1`) — root cause traced in `bctc_vps_queue`:
+the VPS-side `(DPM, 2025, Q4)` backfill target associated the wrong SSC
+listing URL (the newest DPM filing, actually Q1-2026) with an old empty
+backfill slot. One-shot migration `scripts/migrations/
+dedupe-mislabeled-bctc-period.ts` (dry-run default, `--apply` to execute;
+decision-table gated — refuses on source already-finalized, target
+confirmed, action_code mismatch, same sort_key, target-has-units, or pdf-hash
+mismatch) re-parented the 23 completed `bctc_refined_units` windows from the
+duplicate onto the correct row, deleted the duplicate `financial_reports`
+row, and reset the freed `bctc_vps_queue` row to `pending` so the real
+Q4-2025 filing can be genuinely re-discovered. Applied BEFORE the row's
+`refine_status` reached `DONE` (verified live immediately before the run),
+satisfying the task's `time_gate` — `get_bctc_report_id(code="DPM",
+year=2025, quarter="Q4")` now correctly returns nothing.
+
 ### bctc/ensureFinancialReportShellRow.ts
 
 **FIX-BCTC-D2-ENSURE-SHELL-ROW (2026-07-10):** idempotent upsert that ensures a
