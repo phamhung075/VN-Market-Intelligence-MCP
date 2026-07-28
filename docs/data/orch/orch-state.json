@@ -11976,47 +11976,7 @@
         "po_signoff_verdict": "APPROVE — independent PO sign-off 2026-07-23T05:07:33Z. Re-read qa_reverify_20260723 (PASS; both QA gate passes clean, closes the single probe.sh:86 blocking issue). Confirmed probe.sh:86 carries the || fallback guard idiom matching :31/:66/:71/:92 (git show 685285a7c: single-file, 1 insertion/1 deletion). Forbidden files UNTOUCHED at HEAD + working-tree: tier1-probe.md logic, scripts/audits/verify-a30-mcp-memory-reclamation.sh, scripts/emit-audit-signal.sh, app code (git status clean). Detection-layer-only fix per brief docs/architecture-briefs/2026-07-23-auditor-a30-reclamation-gate-a21-windowed-restart.md; E-3 append-always observation-ledger contract preserved. Supervised converge pipeline design->impl->QA verify->QA delta re-verify->PO sign-off now fully closed. RESIDUAL non-blocking: field-acceptance of the >=85% deep-probe branch awaits the next live Tier-1 cycle at genuine mem pressure (cron-gated, monitored separately, not a gate on close)."
       }
     ],
-    "done_verified": [
-      {
-        "id": "UC-GCP-P8",
-        "type": "FIX",
-        "title": "Stranded machine-state sweep: bounded converging-owner step on the dev-team tick (stranded-state-sweep.sh)",
-        "status": "DONE_VERIFIED",
-        "priority": "P1",
-        "size": "M",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "RESCOPE",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#git-ci-publish-P8",
-        "note": "SCOPE=verifier Rescope note. Add post-cycle Step 4.3 (<=20L) running stranded-state-sweep.sh --plan: 3 buckets — AUTO-COMMIT (notebooks/decisions/sessions/scripts, mtime>24h, D-entries eligible), OWNED-ELSEWHERE skip (docs/signals owned by drain, orch-state, modules/*.json owned by SYSREMAKE RC-GITSTATE, cowork/auditor churn), UNKNOWN -> ONE aggregated deduped PO signal/tick. Cap 20 paths, commit-mutex:main, explicit paths only. COORDINATE with UC-GCP-P2 + SYSREMAKE RC-GITSTATE.",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "related": [
-          "SYSREMAKE-P2-STRUCTURAL-REMAKE-ROUTE",
-          "UC-GCP-P2"
-        ],
-        "priority_bumped_from": "P2",
-        "priority_bumped_at": "2026-07-17T04:54:03Z",
-        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
-        "promoted_at": "2026-07-23T06:48:49Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "updated_at": "2026-07-28T17:02:07Z",
-        "claimed_at": "2026-07-28T16:57:16Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "owner": "developer",
-        "next_agent": "qa",
-        "dev_result": "DONE: scripts/agents-flow/stranded-state-sweep.sh shipped per RESCOPE spec — classifier-only, 3-bucket (AUTO-COMMIT/OWNED-ELSEWHERE/UNKNOWN), --plan emits JSON, zero git/orch-state writes itself. mtime>24h gate (D-deletions exempt), agent-memory/modules/*.json excluded (RC-GITSTATE), docs/signals + orch-state.json + cowork-schedule.json + coverage-state.json + auditor-*-last-healthy.json OWNED-ELSEWHERE (verified UC-GCP-P2 DONE_VERIFIED + queued SYSREMAKE-P2 RC-GITSTATE ownership live before hardcoding skip-list). 20-path cap across AUTO-COMMIT+UNKNOWN. Dedup-checked aggregated UNKNOWN signal + scripts-pointer signal to po. Wired as post-cycle.md Step 4.3 (15L body, <=20L cap) between Step 4.2/4.5; CANONICAL pointer in dev-standards.md. stranded-state-sweep.test.sh 19/19 GREEN, sandboxed. --plan dry-run against live 57-entry dirty tree confirmed correct classification (9 owned-elsewhere, 2 auto-commit-eligible, 18 unknown). Did NOT execute any live sweep-commit (flow's own future tick responsibility, out of this FIX's scope). Shell-only, shellcheck-clean.",
-        "dev_commit": "231860c6a (script+test+flow-doc+dev-standards+notebook+decisions+WORK)",
-        "dev_completed_at": "2026-07-23T07:12:48Z",
-        "status_note": "[QA] Review Record (direct-commit verify, 2026-07-28): commit 231860c6a (script+test+flow-doc+dev-standards+notebook+decisions+WORK), main-ancestor confirmed, git show --stat touches all 7 files claimed. stranded-state-sweep.test.sh re-run live: 19/19 PASS, exit 0 (matches dev claim). Live 5-day-drift sanity re-run against CURRENT dirty tree (44 entries, not the devs 2026-07-23 57-entry snapshot) per dispatcher request: --plan exit 0, valid JSON, 7 owned-elsewhere/5 young-skipped/20 unknown (cap-enforced)/0 auto-commit -- classifier still healthy live, no drift regression. Grep-confirmed classifier is truly zero-write (no git add/commit in script; ORCH_STATE touched only via one read-only jq dedup probe). post-cycle.md Step 4.3 wiring confirmed live and matches CANON-SCRIPT spec; the commented task_claim/task_release lines match the identical established pseudocode-mutex convention already used in Step 4.2 (cold-evict) immediately above -- not a defect specific to this task. dev-standards.md CANONICAL pointer confirmed live and accurate. signal-dashboard SKILL.md WRITE section resolves. shellcheck -S warning (project convention, cycle-486 precedent): both script+test clean exit 0 (default-severity run flagged only info-level SC2015/SC2329 on the test file, below project bar). mock-guard PASS (no production TS touched), secrets/process.env grep clean, Smart-Skip applies. VERDICT: APPROVED.",
-        "qa_verdict": "APPROVED",
-        "qa_verified_at": "2026-07-28T17:02:00Z",
-        "qa_commit": "231860c6a",
-        "updated_by": "qa"
-      }
-    ],
+    "done_verified": [],
     "head": {
       "status": "idle",
       "active_task_id": null,
