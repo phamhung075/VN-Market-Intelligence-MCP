@@ -1,3 +1,41 @@
+## ck9r3m7v · 2026-07-28T19:12:21Z
+### Audit Run Tier-1 (19:07-19:12 UTC 2026-07-28)
+- Tier: 1 | Services: 12/12 host_runtime_set Up(healthy) | Health: 4/5 OK, 1 known-transient (api-gateway CURL_ERR, self-resolved) | A-20 pdf-extractor 3/3 OK | A-21 mcp-server crashRestarts=1 (<2, PASS) | A-30 mcp-server MemPerc=47.12% (baseline skip)
+- Anomalies: 0 new (0 critical, 0 warn, 0 info) | 1 dedup-skipped
+- Status: HEALTHY (Tier-1 SSOT A-01..A-32 all PASS or known-corroborated-transient)
+
+Fire-election: tick=2026-07-28T19:00Z (`*/30 * * * *` boundary) — `task_claim` returned `claimed:true`, no peer holder found. **Led this tick.**
+
+### RAW-PROBE: (docs/agents/system-auditor/probe.sh, 2026-07-28T19:07:53Z)
+```
+=== AUDITOR PROBE 2026-07-28T19:07:53Z ===
+--- docker ps -a --- 13/13 Up(healthy); 12/12 host_runtime_set present
+--- health endpoints --- mcp-server/macro-indicators/pdf-extractor/frontend OK; api-gateway:4000/health FAIL (HTTP CURL_ERR)
+--- restart count --- mcp-server RestartCount=2 (cumulative)
+--- memory pressure --- mcp-server MemPerc=47.12% (1.414GiB/3GiB)
+--- A-30 multi-probe --- SKIP deep-probe, baseline 47.12% < 85%
+--- disk --- 37% used
+--- A-20 pdf-extractor multi-probe --- HTTP 200/200/200, pass_count=3/3
+```
+A-21 windowed: crashRestarts=1 @2026-07-28T17:22:24Z, <2 threshold -> PASS (unchanged since 17:47Z cycle).
+
+#### A-01 api-gateway CURL_ERR — investigated, known transient (not new)
+Single-probe FAIL only [RAW-PROBE L4]. Live re-verification: 5x immediate `curl --max-time 3 localhost:4000/health` all HTTP 200 (4-2000ms); `docker inspect .State.Health.Status`=healthy. Root-caused via api-gateway's own request log: a `/health` call logged at 19:07:56.737Z carries `latency_ms=3006` — 6ms over the probe's 3000ms cap. This is the extensively-corroborated SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP class (10+ prior occurrences; devteam corroboration 2026-07-25: genuine intermittent latency transient crossing a tight timeout, not an outage, not a pure probe-FP). Dedup ledger `microservice_degraded:api-gateway:A-01` last BUG-sent 2026-07-22T01:41:24Z (within 7d) -> emitted via emit-audit-signal.sh, correctly SKIP-dedup (no new Telegram spam), E-1/E-3 fired. DASHBOARD.md row (A-12->A-01 relabel) timestamp/evidence updated — no new row minted (SPIKE already owns this class; recurring-FAILED-FIX per governance note, debounce guard still absent from tier1-probe.md's general Health Endpoints section).
+
+`[emit-signal] SKIP-dedup dedup_key=microservice_degraded:api-gateway:A-01 last_sent=2026-07-22T01:41:24Z id=sys-20260728T191048-7f8f`
+
+#### State-anomaly files — unchanged, not chased (per dispatch)
+- auditor-tier1-last-healthy.json: content still `last_healthy_at=2026-07-28T14:12:23Z`, mtime still `16:25:02Z` (TZ=UTC stat) — unexplained, still fails-OPEN. Not written by this Tier-1 subagent flow (heartbeat write is Tier-2/3 only, main.md:750).
+- auditor-tier3-last-healthy.json: unchanged `2026-07-25T00:34:00Z` — Tier-3 still ~3.8d overdue vs `0 2 * * *`.
+- Orphan `auditor-tier-last-healthy.json` (no digit): unchanged `2026-07-22T03:42:05Z`, dead file, untracked.
+
+#### get_system_status / get_cron_health cross-check
+88 cron jobs, all 100%/near-100% success, none flagged. VN market CLOSED (19:12Z outside 02:00-08:59 UTC) — hose/vnstock rate-limit + kinhdich 503 in recent-errors are expected off-hours quiet-window noise (Tier-2 scope; Tier-2 already ran 18:31-18:41Z this window, HEALTHY, not re-litigated here).
+
+#### DASHBOARD.md hygiene observation (not actioned — out of Tier-1 scope)
+3 of 6 pre-existing DASHBOARD rows (A-30 mcp-server mem 07-19, A-11 pdf-extractor 07-20, A-20 pdf-extractor event-loop 07-20) still show Status:OPEN, Last-reported 8-9 days stale, pre-dating this session's confirmed-healthy probes (mcp-server MemPerc 47%, pdf-extractor 3/3 A-20 OK). Flagging for po/dev triage — not self-resolved (detect only, not my job).
+
+[OUTPUT-CONTRACT] signals_posted=1 | telegram_sent=0 | signal_queue_rows_written=1 | dashboard_rows=1
 ## cs2t8h1w · 2026-07-28T18:40:41Z
 ### Audit Run Tier-2 (18:31–18:41 UTC 2026-07-28)
 - Tier: 2 | Sources: 28 checked (SLA+cadence, system-map.json) | Cron: 88 jobs (get_cron_health, no gap >2x cadence) | DB spot: C-06,C-07,B-09,B-13
@@ -51,33 +89,3 @@ A-21 windowed: crashRestarts=1 @2026-07-28T17:22:24Z, <2 threshold -> PASS.
 DASHBOARD.md row appended (T1-PREGATE-SAMPLE-FREQ, OPEN) — in-boundary this cycle.
 
 [OUTPUT-CONTRACT] signals_posted=1 | telegram_sent=1 | signal_queue_rows_written=1 | dashboard_rows=1
-## cq2h9wt5 · 2026-07-28T17:18:30Z
-### Audit Run Tier-1 (17:09–17:18 UTC 2026-07-28)
-- Tier: 1 | Services: 12/12 host_runtime_set Up(healthy) | Health: 5/5 endpoints OK | A-20 pdf-extractor: 3/3 in-container OK | A-21 mcp-server crashRestarts=0 (windowed) | A-30 mcp-server MemPerc=15.35% (baseline, deep-probe skip)
-- Anomalies: 0 new in D1 scope | 1 signal emitted (out-of-D1, router-directed, see below) | 0 dedup-skipped
-- Status: HEALTHY (Tier-1 D1 scope — all A-01..A-32 checks PASS)
-
-### RAW-PROBE: (docs/agents/system-auditor/probe.sh, 2026-07-28T17:10:07Z)
-```
-=== AUDITOR PROBE 2026-07-28T17:10:07Z ===
---- docker ps -a --- 13/13 containers Up(healthy); 12/12 host_runtime_set present
---- health endpoints --- mcp-server/api-gateway/macro-indicators/pdf-extractor/frontend all OK (HTTP 200)
---- restart count --- mcp-server RestartCount=1 (cumulative)
---- memory pressure --- mcp-server MemPerc=15.35% (471.6MiB/3GiB)
---- A-30 multi-probe --- SKIP deep-probe, baseline 17.03% < 85%
---- disk --- 37% used
---- A-20 pdf-extractor multi-probe --- HTTP 200/200/200, pass_count=3/3
-```
-
-#### Router-directed verification (read-only whitelist probes only, AUD-ND-1 respected)
-1. **pdf-extractor "climbing again post-fix" claim** — peak PARTIALLY CORROBORATED, ongoing-climb framing REFUTED. `/proc/1/status` VmHWM=2541184kB (~97% of 2.5GiB cap) proves a real peak occurred inside this container's post-fix life (started 16:45:08Z), consistent w/ router's own 78-81% samples at 17:06-07Z. But 2 of my own live reads 6min apart (17:10:56Z 45.18%, 17:16:32Z 44.74%) show STABLE/DECLINING, not climbing — already well below the 80% AC-4 bar. Tesseract concurrency held at 1 throughout (/health `ocr.semaphore=1 os_children=1`, matches `ps`). NOT signalled: condition already owned by FIX-PDFX-TESSERACT-CONCURRENCY-VIOLATES-SINGLE-WORKER-INVARIANT (REVIEW, next_agent=qa, live peer session verifying now); this evidence bears on that row's AC-4 (peak transiently breached 80%, then self-resolved) — logged here for QA/PO, no new row/signal minted (no live threshold breach at write time, avoiding duplicate/noise during active QA verification).
-2. **rag-service** — corroborated unchanged: MemPerc=92.53% (710.6/768MiB), RestartCount=16, ExitCode=0, OOMKilled=false. Matches 3 existing backlog rows (FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP, DIAGNOSE-RAG-SERVICE-RESTART-LOOP, RAG-SERVICE-AVAIL-01-FIX) + ack ledger (tracked_by RAG-FTS-BUILD-MEMORY-BOUND). No new signal.
-3. **freshnessSlaMonitorJob coverage-map ENOENT** — NEW, live-verified, not previously recorded: `freshnessSlaMonitorJob.ts:34-36` resolves a 5-level climb from `/app/src/scheduler/system/` -> `/docs/data/...` (confirmed ENOENT via `docker exec ls`); actual mount is `/app/docs/data/...` (confirmed present). `docker logs --since=6h`: 12x `[sla-monitor] coverage-map second pass failed` (~30min cadence). Directly answers the open question on FIX-L4-FRESHNESS-SLA-MONITOR-SELF-POLICING (READY/P1/dev-mcp-server: "never confirmed... or observed raising a breach") — the monitor fires on schedule but structurally can never read its input. Emitted as evidence attached to that existing row, NOT a duplicate mint.
-4. mcp-server restart 16:26:46Z (cumulative RestartCount=1) — A-21 windowed query: crashRestarts=0 in trailing 4h window, bootstrap-sentinel present. Within-threshold, no recurrence. launchd docker-events(exit 1)/fleet-push(exit 78) statuses match already ack-suppressed state — no new action. polymarket gamma-api TLS-block: not re-verified (out of host_runtime_set scope, already root-caused/fixed per router, not minted per instruction).
-
-#### Signals Emitted:
-- `[emit-signal] OK dedup_key=l4_sla_monitor_path_bug:coverage-map:ENOENT id=sys-20260728T171555-7cb3` (WARN — new evidence for existing P1 row FIX-L4-FRESHNESS-SLA-MONITOR-SELF-POLICING)
-
-Note: DASHBOARD.md write SKIPPED this cycle — this invocation's explicit WRITE BOUNDARY restricts writes to notebook + signal_queue + own auditor-*.json state files (DASHBOARD.md not listed); flagging vs. standard flow contract for router awareness, not a self-authorized scope deviation.
-
-[OUTPUT-CONTRACT] signals_posted=1 | telegram_sent=1 | signal_queue_rows_written=1 | dashboard_rows=0
