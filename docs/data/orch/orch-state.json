@@ -2326,6 +2326,39 @@
         "payload_ref": null,
         "router_verification": "CORROBORATED with 2 corrections (router 14:32Z). CONFIRMED: router sampled independently 4x over 90s at 98.77/98.78/98.84/98.79% — agrees with the auditor 12x/60s series (98.78-98.87%). Sustained at ceiling, not releasing, after the refine_bctc_md OCR workload FINISHED at ~14:08Z. CORRECTION 1: auditor reports RestartCount=0 in two places incl. the section certifying the RestartCount-with-StartedAt check as VERIFIED CORRECT. Actual is RestartCount=2, StartedAt=2026-07-28T09:26:20Z, OOMKilled=false. StartedAt was right, the count was not. Conclusion unchanged (2 restarts over 5h uptime is still no recent relief) but a self-certifying check misread its own field. CORRECTION 2 (router self-check): the router characterised this as a benign transient plateau at 13:30Z and declined to spawn twice on that basis. Three flat 30-min-apart probes straddled a slow climb — the same insufficient-window error the router had been criticising in others, committed at 30-min granularity. SEVERITY: WARN is right — failure mode is OOM -> docker restart -> recovery, not permanent damage. Restart is USER-GATED and was NOT performed.",
         "router_verified_at": "2026-07-28T14:33:15Z"
+      },
+      {
+        "id": "sys-20260728T143455-6a8a",
+        "ts": "2026-07-28T14:34:55Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "sbv_fx stale 47min (check B-02-SBV)",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260728T143457-0d5b",
+        "ts": "2026-07-28T14:34:57Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "pdf-extractor memory at 98.84% capacity (A-30)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "router-signal-channel-silent-drop-20260728T143458",
+        "ts": "2026-07-28T14:34:58Z",
+        "from": "router",
+        "to": "po",
+        "type": "repair_task_request",
+        "severity": "MEDIUM",
+        "status": "NEW",
+        "summary": "Router findings filed as docs/signals/*.json with types flow-defect-report/cowork-tick/cowork-fire/dispatcher-error have NO handler in po/flow/triage-signals.md — they hit the unknown-type log-and-skip catch-all. Same channel that ate the 07-14 CHEF fix request. Casualty: router flow_path finding filed 07-25 never became a row; po re-derived it 07-28. Router now files via signal_queue.rows[] (this row). ASK: add the 4 types to the triage table, or declare docs/signals/*.json non-routable telemetry.",
+        "payload_ref": "docs/signals/router-signal-channel-silent-drop-20260728T143458.json"
       }
     ],
     "last_triaged_at": "2026-07-28T13:24:57Z",
