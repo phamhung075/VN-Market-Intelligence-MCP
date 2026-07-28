@@ -1,3 +1,16 @@
+## c8v5x2m7 · 2026-07-28T13:12:27Z
+### Audit Run Tier-1 (13:07 UTC 2026-07-28) — Memory Pressure Continuation
+- Tier: 1 | Services: 13 checked | Health: 5 endpoints
+- A-01–A-11: ALL UP (13/13) ✓ | A-12–A-19: ALL 200 OK (5/5) ✓
+- A-20 pdf-extractor: 3/3 PASS ✓ | A-21 restarts: 0 (4h) ✓ | A-32 disk: 35% ✓
+- A-30 mcp-server: 69.58% (< 85% gate, SKIP deep-probe) ✓
+- **FINDINGS:** pdf-extractor 85.54% (same as 12:45Z, plateau confirmed). rag-service 88.32% post-restart (restarted 12:21Z from 99.10%, RestartCount=15). Both WARN signals emitted (ids: sys-20260728T131219-3fca, sys-20260728T131227-5964).
+- Anomalies: 2 memory pressure events (both continuation/monitoring)
+- Status: DEGRADED
+
+### RAW-PROBE:
+[PROBE 2026-07-28T13:07:55Z]: All services UP, all health endpoints 200 OK, mcp-server mem 69.58%, disk 35%, pdf-extractor multi-probe 3/3, restarts=0 in 4h window.
+
 ## c6m2p9k1 · 2026-07-28T12:45:35Z
 ### Audit Run Tier-1 (12:45 UTC 2026-07-28) — PDF-Extractor Memory WARN
 - Tier: 1 | Services: 13 checked | Health: 5 endpoints
