@@ -260,3 +260,22 @@
 - Mint standalone and tell agent-father to batch it with the verdict row
 **why-decision:** Verdict-assertion makes the dish admit "degraded" without saying which layer died; L6-persistence covers tokens generated-then-lost, whereas here none is generated. Distinct halves — minted standalone with an explicit batch instruction so neither ships a half-fix. Capped the batch at 4 P1s (deferred notebook-collision, L6 broadening, business-context) because WIP was 0 and an over-long batch is not throughput.
 **why-change:** no change from plan
+
+### STEP po-S28 · po · 2026-07-28T23:28:19Z
+**task-id:** CI-RED-cdd5fa5a-FIX
+**what-done:** Diagnosed + locally reproduced the ci_red signal, minted the FIX into ready[] LEAD (P0), stamped a qa gate on the REVIEW row whose commit caused it.
+**what-considered:**
+- Mint the ci_red row to backlog[] per the contract default — rejected: backlog is not dispatchable without a promotion step, and main has been RED 6 pushes.
+- Fold into FIX-PRESSURE-HOST-HEADROOM (REVIEW) as CHANGES_REQUESTED, no new row — rejected: different verification gates (two-plane 10% agreement vs CI-green-on-new-sha); one green would mask the other.
+- Repoint .head at the new row (po-s111 precedent) — rejected: dev-team owns Step-3 dispatch this tick, a PO repoint double-drives it.
+**why-decision:** Root cause was reproduced, not inferred (stub `free` on PATH flips 31/0 to 30/1 with the exact CI signature), so the row could ship a named fix site and skip the diagnose-then-promote round trip.
+**why-change:** Deviates from the triage-signals ci_red contract's backlog[] default; deviation + justification recorded in the row's own placement_note rather than left implicit.
+
+### STEP po-S29 · po · 2026-07-28T23:28:19Z
+**task-id:** FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD
+**what-done:** Wrongly unblocked this row to ready/architect during the pre-check, then self-caught and reverted it to BLOCKED/backlog/po; escalated the real bottleneck (child ..-HOOK) into the BATCH instead.
+**what-considered:**
+- Leave the unblock in place — rejected: it re-routed a decision architect already made on 07-21 and contradicted the row's own dated disposition written earlier today.
+- Revert silently — rejected: the misread is reusable, so the row carries a named po_correction field.
+**why-decision:** blocked_reason/blocked_on/po_question were all null, which I read as "nothing pending"; the actual parked state lived in named fields (plan_only, decomposed_into, po_lane_disposition_*). Null generic slots are not evidence of a stranded row.
+**why-change:** Caught only because the PO notebook Carry-over named a '-HOOK' sibling; the ci_red-scoped dedup scan would not have surfaced it.
