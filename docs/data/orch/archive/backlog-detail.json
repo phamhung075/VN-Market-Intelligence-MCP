@@ -3825,25 +3825,29 @@
     },
     {
       "id": "FIX-SBV-FETCHER-ZERO-VALUE-EMIT",
-      "title": "vn-sbv-fetch storeSbvSnapshot emits ZERO-VALUE snapshots — DB guard rejects x3, recurs post-restart (11:59 UTC). Distinct from FIX-SBV-FX-VPS-FETCHER-UNHEALTHY (that=staleness/health). This=fetcher producing all-zero data: parse/fetch returns empty→serialized as zeros→guard correctly rejects→data never lands. Root not fixed by restart. zone dev-macro-indicators.",
+      "title": "vn-sbv-fetch push-path storeSbvSnapshot rejected-zero events — root cause traced 2026-07-28, zone corrected apps/macro-indicators/ -> apps/mcp-server/ (fix NOT yet applied). Distinct from FIX-SBV-FX-VPS-FETCHER-UNHEALTHY (that=staleness/health, DONE_VERIFIED).",
       "type": "FIX",
       "priority": "P1",
       "status": "BACKLOG",
-      "zone": "apps/macro-indicators/",
+      "zone": "apps/mcp-server/",
       "owner": "developer",
-      "root_cause": "storeSbvSnapshot serializes a zero/empty fetch result into a snapshot row; DB integrity guard (correctly) rejects zero-value rows; the WRITER emitting zeros is the bug, not the guard. Likely upstream SBV parse returning empty on layout/endpoint change while the fetcher still attempts a write.",
-      "generic_mandate": "Fix the fetcher to FAIL-CLOSED (no write, leave gap, log) on an empty/zero parse rather than emit a guard-rejected zero snapshot; trace ALL writers into the SBV snapshot table; do not relocate the guard.",
-      "verification_gate": "LIVE: after fix, vn-sbv-fetch either writes REAL non-zero SBV-FX data OR cleanly skips with an honest gap+log — ZERO storeSbvSnapshot rejected-zero events across 2 fetch cycles; RAW-verify against named-volume DB, not steady-state tests.",
+      "owner_agent": "dev-mcp-server",
+      "root_cause": "CONFIRMED LIVE 2026-07-28 by dev-macro-indicators (see docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-macro-indicators.md STEP dev-macro-indicators-S1). apps/macro-indicators/ has ZERO write path into sbv_rates (Go pilot's SBVRateSQLiteAdapter.GetRate is read-only, safe-degrade). All 3 storeSbvSnapshot call sites are in apps/mcp-server/: (1) src/interface/mcp/routes/pushSbvRatesHandler.ts (VPS-push handler) — BUGGY: defaults 6 optional rate fields (overnightRatePct/refinancingRatePct/discountRatePct/maxDepositRatePct/maxLendingRatePct/interbankOvernightPct) to 0 whenever the VPS payload omits them, which it always does (vps-scripts/fetch-sbv.sh only ever sends usdVndOfficial+fetchedAt, and that script already fails closed on empty VCB XML/rate<=0 before POSTing) — those synthetic 0s trip storeSbvSnapshot's own SENTINEL_ZERO_COLUMNS guard (src/infrastructure/fetchers/sbv.ts) and reject the WHOLE snapshot, including the valid non-zero FX rate; handler also never checks the {skipped,zeroColumns} return, so it logs a false-positive 'stored' line either way. (2) src/scheduler/macro/sbvRatesJob.ts (4h cron) — ALREADY correctly fail-closed (pre-flight sentinel check + WORK alert + skip). Not buggy. (3) src/scheduler/news-analysis/intelligenceCycleJob.ts step A2 (best-effort, every cycle) — missing the pre-flight guard (2) has, ignores the return value; likely secondary contributor to recurring rejected-zero volume.",
+      "generic_mandate": "Fix pushSbvRatesHandler.ts to merge-with-prior-row (or pre-flight skip) for the 6 optional rate fields it never carries, instead of defaulting them to 0 and letting storeSbvSnapshot's guard reject the whole snapshot; wire intelligenceCycleJob.ts's call site through the same pre-flight guard sbvRatesJob.ts already has. Do not relocate/weaken storeSbvSnapshot's SENTINEL_ZERO_COLUMNS guard — it is correct.",
+      "verification_gate": "LIVE: after fix, vn-sbv-fetch (VPS push) either writes REAL non-zero SBV-FX data OR cleanly skips with an honest gap+log — ZERO storeSbvSnapshot rejected-zero events across 2 fetch cycles; RAW-verify against named-volume DB, not steady-state tests.",
       "depends": [
         "FIX-SBV-FX-VPS-FETCHER-UNHEALTHY"
       ],
+      "depends_status": "FIX-SBV-FX-VPS-FETCHER-UNHEALTHY confirmed DONE_VERIFIED (docs/data/orch/archive/2026-07.json, verified 2026-07-07) — dependency clear, this row is READY-eligible once re-zoned owner picks it up.",
       "related_reports": [
         3237,
         3238
       ],
       "minted_by": "po",
       "minted_at": "2026-06-18T12:34:24Z",
-      "note": "Distinct-from: FIX-SBV-FX-VPS-FETCHER-UNHEALTHY is the VPS-infra-down/staleness layer; this is the in-band data-integrity emit-zero layer. Both can be true."
+      "zone_corrected_by": "dev-macro-indicators",
+      "zone_corrected_at": "2026-07-28T22:24:00Z",
+      "note": "Distinct-from: FIX-SBV-FX-VPS-FETCHER-UNHEALTHY is the VPS-infra-down/staleness layer; this is the in-band data-integrity emit-zero layer. Both can be true. Original mint mislabeled zone as apps/macro-indicators/ (that agent only reads sbv_rates read-only); corrected 2026-07-28 after live trace found the actual writer/guard/bug in apps/mcp-server/."
     },
     {
       "id": "FIX-DOWJONES-STALE-WRONG-VALUE",
