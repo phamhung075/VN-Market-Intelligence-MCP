@@ -2287,21 +2287,6 @@
         "po_disposition_note": "CONCUR with the do-not-mint instruction. Evidence folded into UC-CDC-P1 and FIX-COWORK-CADENCE-DANGLING-POLICY-ID (both BACKLOG, both re-stamped this tick). Net-new contribution recorded: the (a)-adaptive vs (b)-legacy isolation that UC-CDC-P1 flagged as OPEN on 2026-07-25T09:48Z is now CLOSED in favour of (a), via pressure_mode=adaptive co-occurring with calendar_status=closed and cadence_minutes=240 in one telemetry row. Sequencing unchanged: UC-SDF-P2 first, then UC-CDC-P1 + FIX-COWORK-CADENCE-DANGLING-POLICY-ID as one change set."
       },
       {
-        "id": "sys-20260728T142957-693e",
-        "ts": "2026-07-28T14:29:57Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "data_stale",
-        "summary": "sbv_fx stale 43min (SLA 30min) — zero-value rejects upstream",
-        "severity": "HIGH",
-        "status": "READ",
-        "payload_ref": null,
-        "router_note": "sbv_fx oscillates: 24min(12:23) -> 70min(13:33) -> 2min/ok(13:50) -> 43min now. Intermittent by nature, not a stall. BOTH theses already on the board — FIX-SBV-FETCHER-ZERO-VALUE-EMIT (source emits zeros, guard correctly rejects) and FIX-AUDITOR-SBVFX-SLA-POSTMARKET-TOLERANCE (flat 30-min SLA vs a once-per-business-day source is structurally wrong). Do not re-mint either.",
-        "router_second_order_correction": "The sweep concluded no second-order outage effect because rag_analyses had 239 rows/24h. WRONG LAYER — rag_analyses is written by the mcp-server pollNews INGESTION job, not by the news-scout cowork AGENT. Agent cycles verifiably have NOT run: news-scout-offhours last_fired 2026-07-25T16:13:49Z, news-scout-sentiment last_fired 2026-07-24T05:06:28Z. This is the SAME fetch-vs-analysis two-layer conflation the sweep had just correctly diagnosed in the C-06 finding. The second-order effect TASK-COWORK-CATCHUP exists to address is real and remains UNMEASURED — do not record it as cleared.",
-        "router_dedup_note": "The tier-2 sweep emitted 4 signal_queue rows for 2 distinct conditions while its own OUTPUT-CONTRACT declared signals_posted=2. Intra-cycle duplication from two check paths (freshness + A-30/B-02) with no dedup between them. DISTINCT from FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE (DONE), which addresses re-emission ACROSS cycles, not duplication WITHIN one. po decides: regression of that row, or a new intra-cycle dedup row. Router annotated rather than minting — adding a row to report queue inflation would inflate the queue.",
-        "router_noted_at": "2026-07-28T14:38:37Z"
-      },
-      {
         "id": "sys-20260728T143010-6ec2",
         "ts": "2026-07-28T14:30:10Z",
         "from": "system-auditor",
@@ -2319,19 +2304,6 @@
         "po_disposition_at": "2026-07-28T14:53:00Z"
       },
       {
-        "id": "sys-20260728T143455-6a8a",
-        "ts": "2026-07-28T14:34:55Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "data_stale",
-        "summary": "sbv_fx stale 47min (check B-02-SBV)",
-        "severity": "CRITICAL",
-        "status": "READ",
-        "payload_ref": null,
-        "router_dedup_note": "INTRA-CYCLE DUPLICATE of sys-20260728T142957-693e (same tier-2 sweep, same sbv_fx condition, 5 min apart, HIGH then CRITICAL). Triage as ONE condition. Root already known: sbv VPS emits zero-values, DB guard correctly rejects — FIX-SBV-FETCHER-ZERO-VALUE-EMIT; and the flat 30-min SLA vs a once-per-business-day source is FIX-AUDITOR-SBVFX-SLA-POSTMARKET-TOLERANCE. Neither needs a new row.",
-        "router_noted_at": "2026-07-28T14:38:37Z"
-      },
-      {
         "id": "sys-20260728T143457-0d5b",
         "ts": "2026-07-28T14:34:57Z",
         "from": "system-auditor",
@@ -2345,17 +2317,6 @@
         "router_noted_at": "2026-07-28T14:38:37Z",
         "po_disposition_20260728T1453": "RE-ESCALATION FIRED AS PRE-COMMITTED -> MINTED. Supersedes PO's 2026-07-28T13:12Z MONITOR ruling on archived row sys-20260728T131219-3fca, whose terms were: 'RESOLVED, no mint, MONITOR with a named re-escalation threshold ... RE-ESCALATE, and mint then, if ANY of: crosses 95% of cap, OOMKilled=true, or RestartCount climbs.' PREDICATE STATUS at 2026-07-28T14:46Z: 95%-of-cap CROSSED on five independent PO-captured samples (14:38:41Z 98.27%, 14:38:51Z 99.19%, 14:39:01Z 99.19%, 14:41:56Z 98.36%, 14:45:53Z 96.44%); OOMKilled=false NOT crossed; RestartCount=2 unchanged NOT crossed. One of three is sufficient by the ruling's own terms. MINTED: FIX-PDFX-TESSERACT-CONCURRENCY-VIOLATES-SINGLE-WORKER-INVARIANT (P0, zone apps/pdf-extractor/, next_agent=architect, plan_only, supervised) — verified present in .task_board.backlog. MECHANISM FOUND, which is what the earlier ruling lacked and why it declined to mint: pdf-extractor is running TEN concurrent tesseract processes against a code-declared, code-commented, unit-tested single-worker invariant (apps/pdf-extractor/main.py:154 `ocr_executor = ProcessPoolExecutor(max_workers=1)` commented 'no parallel Tesseract processes on the 16GB Mac — matches PekEngineAdapter Semaphore(1)'; interface/handlers.py:451 'PekEngineAdapter uses threading.Semaphore(1). Contention -> HTTP 429.'). Same ten PIDs at 14:39:01Z and 14:46:02Z with every ELAPSED advanced in lockstep, all PPID=1, distinct /tmp/tess_* basenames, ~890 MiB combined RSS. The near-cap state is therefore SUSTAINED (~40-minute stretches, matching the already-filed 30-40min/page latency of PERF-PEK-PER-PAGE-LATENCY) and RE-ARMED by each 15-wide POST /extract burst from mcp-server (172.18.0.12; bursts at 12:14, 12:16, 13:57, 14:11, 14:24). CORRECTION TO THE ROUTER'S SEVERITY CALL recorded on sys-20260728T143010-6ec2 ('SEVERITY: WARN is right — failure mode is OOM -> docker restart -> recovery, not permanent damage'): the reasoning is sound for an unexplained plateau but the premise no longer holds. This is not self-recovering — the invariant violation re-arms on every caller burst, so 'wait for RestartCount to increment' is a plan to learn about an OOM after it happens, repeatedly. Severity is upgraded on the WORK plane (P0 board row); PO does NOT re-label the signal rows themselves, since the router's WARN judgement was defensible on the evidence it held. THE ROUTER'S RESTRAINT WAS CORRECT AND IS AFFIRMED: declining a third audit inside 40 minutes and declining a second push notification were both right calls, and PO is not reversing them. CONFIRMED NOT DONE by PO, all user-gated: no docker stop/kill/rm/restart, no compose down/up, no kill of the ten tesseract PIDs, no POST/PUT/PATCH/DELETE to any pdf-extractor endpoint (deliberate — ~20 MiB headroom means a write probe could itself trigger the OOM). Interim mitigation is a PLAN for ops under user gating and is recorded on the board row: reaping the ten re-parented tesseract PIDs frees ~890 MiB and is strictly less destructive than a container restart, but both are kills. Timing note for the gate-holder: VN market is CLOSED (14:53Z = 21:53 GMT+7), so the 2026-06-01 anchor risk (intraday price data destroyed by a false-positive docker stop) does not apply right now; the cost is instead the loss of ten in-flight page OCRs, each 27-42 min deep. NOTIFICATION-PATH FINDING, filed separately as FIX-AUDITOR-EMIT-SEVERITY-LABEL-FLAT-ESCALATION-BYPASS-NEVER-FIRES (P1, zone cross-service/, next_agent=developer, supervised) — verified present on the board. The claim that reached PO ('the BUG Telegram was DEDUP-SKIPPED because the key had been sent at 14:30:09Z for the BENIGN 85% state, silencing escalation for 7 days') is REFUTED: this row's own summary at 14:30:10Z reads 'pdf-extractor at memory limit 98.87% (2.472/2.5 GiB)', so the 14:30:09Z Telegram WAS the near-cap alert and it WAS sent; what 14:34:57Z hit was a 4-minute-later re-observation of the same state, which the router itself annotated on sys-20260728T143457-0d5b as 'INTRA-CYCLE DUPLICATE ... Triage as ONE'. The dedup gate behaved correctly. The real defects are producer-side and survive the refutation on independent evidence: 98.87% emitted as WARN when tier1-probe.md clause 5 maps 'peak >97%' to CRITICAL (sbv_fx escalated HIGH->CRITICAL on the same sweep minutes later, proving the ladder works when the producer varies the label); and three improvised dedup_keys for one condition in 101 minutes, whose drift is the ONLY reason the 98.87% alert was not suppressed — correct key hygiene alone, shipped without severity-derivation, would CREATE the bug that was reported. ANOMALY-TASK-BRIDGE CLEARED, not at fault: ATB-1's 2h grace gate means these rows (17 and 12 min old at triage) are correctly grace-window-pending, not dropped.",
         "po_disposition_at": "2026-07-28T14:53:00Z"
-      },
-      {
-        "id": "router-signal-channel-silent-drop-20260728T143458",
-        "ts": "2026-07-28T14:34:58Z",
-        "from": "router",
-        "to": "po",
-        "type": "repair_task_request",
-        "severity": "MEDIUM",
-        "status": "READ",
-        "summary": "Router findings filed as docs/signals/*.json with types flow-defect-report/cowork-tick/cowork-fire/dispatcher-error have NO handler in po/flow/triage-signals.md — they hit the unknown-type log-and-skip catch-all. Same channel that ate the 07-14 CHEF fix request. Casualty: router flow_path finding filed 07-25 never became a row; po re-derived it 07-28. Router now files via signal_queue.rows[] (this row). ASK: add the 4 types to the triage table, or declare docs/signals/*.json non-routable telemetry.",
-        "payload_ref": "docs/signals/processed/router-signal-channel-silent-drop-20260728T143458.json"
       }
     ],
     "last_triaged_at": "2026-07-28T14:53:00Z",
