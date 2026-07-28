@@ -1,24 +1,10 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-28 | **Cycle:** FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES (dual-axis notebook pruner — line cap had an actuator, byte cap only a detector; fixed the loop's stopping condition, not the cap value)
-
-## Session 2026-07-25 — FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE — REVIEW
-
-**Task:** BOUNDED-1 auto-pickup. Tier-1's only memory detector (`_check_mem_creep` in `scripts/agents-flow/auditor-tier1-probe.sh`) hardcoded its subject to `docker ps | grep -i mcp-server | head -1` — 12 of 13 running containers had ZERO memory coverage. Demonstrated live false-pass 2026-07-25 08:30Z: Tier-1 reported HEALTHY/0-anomalies while rag-service sat at 98.46% of its 768m cap.
-
-**Actions taken:** Rewrote the check to loop `docker ps -q` → `docker inspect -f '{{.Name}} {{.HostConfig.Memory}}'` (live daemon, never a hardcoded list), skip `HostConfig.Memory==0` (uncapped — MemPerc vs total host mem is not a headroom signal), same `WARN_PCT=85` per container, detail line names ALL breaching containers (never the old "mcp-server mem" literal), dropped `head -1`. Per binding PO decision, resolved rag-service's legitimate ~94-98% steady-state via the ACK LEDGER not thresholds — extended `docs/data/auditor-launchd-ack.json` with a parallel `acked_memory[]` array (same file, `_check_launchd_agents`'s two guarantees mirrored exactly: mixed case never suppresses, staleness rule = remove at DONE_VERIFIED), seeded rag-service tracked_by `RAG-FTS-BUILD-MEMORY-BOUND` (verified OPEN before seeding). Explicitly rejected per-container threshold overrides and a global `WARN_PCT` move (both named-rejected in the PO decision); absolute-headroom secondary predicate explicitly out of scope.
-
-**Verification:** Rewrote `auditor-tier1-probe.test.sh`'s `docker()` stub (`ps -q`/`inspect`/multi-container `stats`) + CLI stub binary; repurposed T9-T11; added T40-T43 (acked-ALL_GREEN-transparent, MIXED acked+unacked-still-FAILURE-names-the-second, uncapped-skipped-even-forced-99%, ledger-present-nothing-degraded-no-false-note). 141/141 PASS, re-run twice clean. RAW live-fleet evidence (`date -u` timestamped): rag-service absent from ledger → FAILURE naming `vn-market-intelligence-mcp-rag-service-1(93.70%)`; real seeded ledger → ALL_GREEN, rag-service on acknowledged-degraded line; mcp-gateway confirmed in `docker ps` yet absent from both lists. `shellcheck -x` clean on the diff.
-
-**Board:** `task_board.in_progress[FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE]` → `review` (`next_agent:qa`), `.head` synced to idle, via `orch-apply.sh`.
-
-**Scope discipline:** Touched exactly the 2 declared files (`scripts/agents-flow/auditor-tier1-probe.sh`, `docs/data/auditor-launchd-ack.json`) + its paired test file. `rebuild_required=false` — host shell script, no container rebuild gate.
-
-Zone health: no drift detected
+**Last updated:** 2026-07-28 | **Cycle:** TASK-COWORK-CATCHUP-1 (foundation domain module for guaranteed-slot catch-up)
 
 ## Session 2026-07-25 — FIX-COVERAGE-SWEEP-BLANKET-STAMP-DEAD-TRIGGER — REVIEW
 
-**Task:** BOUNDED-1, routed direct by po. news-scout+market-watcher's coverage-state write contract ("for each ticker analyzed this cycle, set last_covered=now") is correct prose, non-deterministically executed: re-run against a 57-entry blob every cycle, it blanket-stamped ALL 57 tickers (measured: both agents' distinct-stamp group counts collapsed to 1, repeatedly, no code change between), permanently unsatisfying the 48h staleness trigger both flows read — the sweep rotation has been dead. Co-shipped `FIX-COVERAGE-STATE-CROSS-AGENT-LOST-UPDATE`: the deleted top-level `sweep_config` key was independent proof the old write was a full-doc overwrite, not a merge.
+**Task:** BOUNDED-1, routed direct by po. news-scout+market-watcher's coverage-state write contract ("for each ticker analyzed this cycle, set last_covered=now") is correct prose, non-deterministically executed (re-run against a 57-entry blob every cycle, it blanket-stamped ALL 57 tickers (measured: both agents' distinct-stamp group counts collapsed to 1, repeatedly, no code change between), permanently unsatisfying the 48h staleness trigger both flows read — the sweep rotation has been dead. Co-shipped `FIX-COVERAGE-STATE-CROSS-AGENT-LOST-UPDATE`: the deleted top-level `sweep_config` key was independent proof the old write was a full-doc overwrite, not a merge.
 
 **Actions taken:** Built `scripts/agents-flow/coverage-stamp.sh` — surgical jq merge (touches ONLY named tickers' `last_covered_<agent>` field, never regenerates the file), `task_claim("coverage-state:main")` mutex around the write (serializes the 2 writers), auto-repairs `sweep_config` if absent, and owns `--list-stale` (deterministic STALE_TICKERS filter — the row's one open question: decided the script owns read+write both, since AC 2 has no automatable meaning otherwise). Rewired all 4 read/write contract sites in news-scout + market-watcher's flow docs to call it.
 
@@ -45,5 +31,19 @@ Zone health: transport-gap drift detected on 2 agents (news-scout, market-watche
 **Board:** `task_board.in_progress[FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES]` → `review` (`next_agent:qa`, `qa_verify_mode:verify-committed` — branch:null on this row), `.head` synced to idle, via `orch-apply.sh`. Did not close SPIKE-SATURATED-COUNT-THRESHOLD-GATES-SWEEP (already carries instance 13/sub-class 7 citation from PO's mint).
 
 **Follow-up finding (not fixed, flagged for PO/dispatcher):** `scripts/agents-flow/notebook-linecap-sweep.sh` (the 6h cron TE-T17 backstop for non-hook writes) has its OWN independent line-only pre-filter before delegating to the pruner — a byte-over/line-under notebook written via Bash heredoc/append will still never reach the fixed logic through THAT path. Only the PostToolUse hook's direct-call path is fixed by this row. Out of this row's enumerated scope; not touched.
+
+Zone health: no drift detected
+
+## Session 2026-07-28 — TASK-COWORK-CATCHUP-1 — REVIEW
+
+**Task:** BOUNDED-1 auto-pickup, sprint COWORK-GUARANTEED-SLOT-CATCHUP (FR-1/FR-2). Session-down window 2026-07-25T18:00Z→07-28T12:00Z permanently missed 3+ chef-evening fires, chef-morning/eod/fb-daily on 2 days, tnb-audit 3 nights, and ~17 fires each on the three 4-hourly slots — no catch-up mechanism existed. This task builds the pure domain predicate that all 3 later callers (dispatcher, tick-preflight, firer) will depend on.
+
+**Actions taken:** Created `scripts/agents-flow/cowork-catchup-predicate.js` (zero-I/O, mirrors `cadence-policy.js` sibling pattern; `field`/`dowMatch` dependency-injected from `cowork-match-slots.js`, never `require`'d, to keep the edge one-directional). 3 exports: `computeCatchupCandidates`, `mostRecentCronFireBefore` (generic bounded 8-day reverse-cron walker), `toVnDateString`. Handles all 4 `publish_date_basis` values so the FR-4 rollover check compares like-for-like per slot's real publish-marker key (re-grep-verified against live flow gate code, not trusted from the 07-22 brief verbatim). Migrated `docs/data/cowork-schedule.json` additively via a new one-off script `scripts/dev-task-cowork-catchup-1-migrate-schedule.js` (JSON.parse→mutate→stringify(null,2)+atomic rename, mirrors `cowork-write-last-fired.js`'s convention for this exact hot file — 2 prior corruptions came from hand-rolled edits): added top-level `_dish_type_catchup_config` + `publish_date_basis` on the 8 guaranteed slots.
+
+**Verification:** RED confirmed (module renamed away → `MODULE_NOT_FOUND`, hard fail) before GREEN. `cowork-catchup-predicate.test.js` 34/34 PASS (AC-1 due=true within bound, AC-2 `rolled_past_vn_date` takes precedence over lateness, AC-3 `freshness_window_exceeded`, plus basis/exclusion/edge coverage). Sibling `cowork-match-slots.test.js` 26/26 unchanged (file untouched). Schema migration verified: `jq -e .` parses clean, all 23 slots' `last_fired` diffed byte-identical before/after, exactly the 8 named guaranteed slots carry the correct basis; `git diff` shows only additive lines. `bun tsc --noEmit` 0 errors (file is plain `.js`/`.json`, outside `tsconfig.json` include — AC-10 satisfied as no-regression). Full `bun test`: 14826 pass/40 skip/51 fail/1231 files — at/better than today's already-established 53-fail baseline; this task touches 0 files under `apps/mcp-server/src/`, so no regression is structurally possible.
+
+**Board:** `task_board` row → `review` (`next_agent:qa`, `qa_verify_mode:verify-committed`), `.head` synced to idle, via `orch-apply.sh`. Blocks TASK-COWORK-CATCHUP-2/3/4/5 (now unblocked).
+
+**Simplicity gate:** PASS — Q1 clean (`ctx.excludeSlotIds` and all 4 basis branches are required by the handoff's specified export signature/schema, not speculative), Q2 no single-use abstractions, Q3 senior-test clean, Q4 ratio <50% overhead (module is comment-heavy by repo convention, matching `cadence-policy.js`).
 
 Zone health: no drift detected
