@@ -422,9 +422,9 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "router",
-    "next_action": "idle — FACTORY-ALERT-dedup-window-config flipped to REVIEW (dev-alert-engine self-closeout); route to qa (verify-committed, no task branch)",
-    "updated_at": "2026-07-28T21:27:44Z",
-    "updated_by": "dev-alert-engine"
+    "next_action": "FACTORY-TECHANALYSIS-delete-orphaned-ts-service moved to REVIEW (branch:null direct-execute, qa_verify_mode=verify-committed). Idle terminal state — no task branch to mirror onto .head.",
+    "updated_at": "2026-07-28T21:57:23Z",
+    "updated_by": "dev-technical-analysis"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2328,6 +2328,17 @@
         "severity": "WARN",
         "status": "READ",
         "payload_ref": null
+      },
+      {
+        "id": "sys-20260728T215425-23ef",
+        "ts": "2026-07-28T21:54:25Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-30 CRITICAL: mcp-server >93% no-reclamation tripwire TRIPPED (12/12 samples, 180s, zero dips)",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-28T14:53:00Z",
@@ -2561,8 +2572,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-28T17:33:25Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-07-28T21:57:23Z",
+    "_updated_by": "dev-technical-analysis (FACTORY-TECHANALYSIS-delete-orphaned-ts-service -> REVIEW)",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -7612,15 +7623,6 @@
         "type": "FIX",
         "zone": "pdf-extractor",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK"
-      },
-      {
-        "title": "Delete or attic the orphaned TS shadow service under src/",
-        "priority": "P1",
-        "zone": "technical-analysis",
-        "type": "FACTORY",
-        "status": "BACKLOG",
-        "id": "FACTORY-TECHANALYSIS-delete-orphaned-ts-service",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-TECHANALYSIS-delete-orphaned-ts-service"
       },
       {
         "id": "FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK",
@@ -16340,6 +16342,28 @@
         "qa_verify_mode": "verify-committed",
         "entered_review_at": "2026-07-28T21:27:44Z",
         "review_note": "dev-alert-engine self-closeout: added domain.CooldownConfig.DedupWindowMinutes (default 60, confirmed against live mcp.config.json alertQuality.dedupWindowMinutes / apps/mcp-server config.ts numVal default), wired into pipeline.go HasDuplicateFingerprint call site (was reusing CooldownMinutes=30) and the dedup reason string (fmt.Sprintf). RED test first (mockRepo captures withinMinutes; domain test pins default=60) failed to compile pre-fix, GREEN after. go build/vet/test ./pkg/... green (60 top-level, 70 incl subtests, 0 failing), golangci-lint 0 issues, sandbox 11/11 scenarios green. Doc-review: domain-model.md, usecases.md, api-reference.md, testing.md updated. Journal: docs/agent-memory/decisions/sprint-FACTORY-ALERT-dedup-window-config-dev-alert-engine.md. Commit 43f4e3add (code+docs) + 60c3272b2 (memory)."
+      },
+      {
+        "title": "Delete or attic the orphaned TS shadow service under src/",
+        "priority": "P1",
+        "zone": "technical-analysis",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-TECHANALYSIS-delete-orphaned-ts-service",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-TECHANALYSIS-delete-orphaned-ts-service",
+        "promoted_at": "2026-07-28T21:47:06Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "updated_at": "2026-07-28T21:57:23Z",
+        "claimed_at": "2026-07-28T21:47:11Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "qa_verify_mode": "verify-committed",
+        "rebuild_required": false,
+        "reviewed_at": "2026-07-28T21:57:23Z",
+        "reviewed_by": "dev-technical-analysis",
+        "updated_by": "dev-technical-analysis",
+        "review_note": "src/ TS shadow service deleted (commit 099afddd3) — live-import grep confirmed zero external importers outside its own now-deleted __tests__/; package.json start/build wiring + hono dep + tsconfig.json removed; 4 docs + 2 code comments updated. go build/vet/test 12/12 GREEN, sandbox 35/35 GREEN + render PASS, Dockerfile/compose untouched. qa_verify_mode=verify-committed (branch:null direct-execute, no task branch exists)."
       }
     ],
     "qa": [],
@@ -16359,7 +16383,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-28T21:17:15Z",
+    "last_triaged_at": "2026-07-28T21:47:06Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": []
   },
