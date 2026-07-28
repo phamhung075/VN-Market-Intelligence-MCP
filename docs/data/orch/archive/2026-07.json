@@ -14924,6 +14924,22 @@
       "payload_ref": null,
       "resolved_at": "2026-07-28T13:48:17Z",
       "resolved_by": "router (re-measured + prior-art)"
+    },
+    {
+      "id": "sys-20260728T134549-4b19",
+      "ts": "2026-07-28T13:45:49Z",
+      "from": "system-auditor",
+      "to": "po",
+      "type": "data_stale",
+      "summary": "HEADLINE CLAIM REFUTED. Original: news pipeline stall 389 min, DB frozen since 07:15:02Z, 100% duplicate rejection. Ground truth (dev-mcp-server, live readonly DB probe): rag_analyses had 126 new rows in the trailing 3h with MAX(created_at) ~2 min before the signal fired — ingestion never stopped. 07:15:02Z is an exact literal match to market_messages.sent_at, an unrelated outbound MARKET-briefing post; the auditor C-06 probe mislabelled it news. slaStatusTools.ts:48 confirms the news SLA reads rag_analyses.created_at, and news now reads 13 min / ok. The SLA breach the router observed separately (34-44 min) was REAL but transient on the correct table, not a 6.5h stall. The counter gap (fetched-duplicates-inserted != 0) was REAL but benign: the VN-relevance pre-filter drops items before the dedup loop and logged that count at debug level only — loop invariant holds, no silent third path. FIXED as observability: PollNewsResult now carries irrelevant, surfaced in both log lines (2945d4fcb). rebuild_required:true, NOT performed (user-gated) so the improved counters are not live yet.",
+      "severity": "LOW",
+      "status": "RESOLVED",
+      "payload_ref": null,
+      "router_action": "Router dispatched dev-mcp-server 2026-07-28T13:52Z (intent:dev-mcp-server:news-dedup-100pct-rejection) with log-verified evidence. LEFT NEW DELIBERATELY: engineering is in flight but po still owns minting the board row — marking it READ would bury it and reproduce the filed-but-never-minted gap. Router-verified beyond the auditor: the counters do not conserve (70 fetched - 60 duplicates - 0 inserted = 10 items with NO disposition, errors:0), which is a sharper lead than over-matching dedup. Possible contributing cause: FIX-SCHEDULER-DOUBLE-REGISTRATION (pollNews 4-5x/min) — 13:30:05 and 13:30:06 cycles fire one second apart, so cycle N+1 would legitimately see cycle N rows as duplicates.",
+      "router_action_at": "2026-07-28T13:52:51Z",
+      "resolved_at": "2026-07-28T14:20:46Z",
+      "resolved_by": "router (dev-mcp-server ground-truth probe + slaStatusTools source read)",
+      "router_selfcheck": "Router passed the 07:15:02Z figure through to the dispatch brief as fact without verifying it — the DB was unreachable from the router shell, the same wall hit twice earlier today. The 458-stuck-jobs claim WAS labelled unverified in an earlier brief; this one was not. Inconsistent, and the dispatch premise was wrong in its headline. Corroborates 3 existing rows rather than minting: FIX-AUDITOR-C06-OFFMARKET-RECALIBRATE, FIX-AUDITOR-C12-READONLY-BLINDED-AND-TABLENAME, FIX-MARKET-MESSAGES-TIMESTAMP-FORMAT."
     }
   ],
   "backlog_detail": [
