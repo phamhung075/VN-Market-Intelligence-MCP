@@ -32,6 +32,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { join } from "node:path";
+import { execSync as nodeExecSync } from "node:child_process";
 
 import {
   runEmitPressureState,
@@ -205,10 +206,14 @@ describe("computeDevQueueDepth", () => {
 //     source fixture's own `available` column exactly (the two planes are, by
 //     construction, the same number — proving the parser reads the RIGHT
 //     column of the RIGHT command, not a substitute).
-//   - "macOS path" (the negative control — this field's non-intended
-//     machine): the REAL, unmocked default execFn is exercised directly on
-//     this dev host (macOS, no `free` binary) and must return null, never a
-//     fabricated/wrong-machine number. This is a REAL run, not a fixture.
+//   - "no-`free`-host path" (the negative control — this field's
+//     non-intended machine): the REAL, unmocked default execFn is exercised
+//     directly on whatever host runs this suite. [CI-RED-cdd5fa5a-FIX] The
+//     null-vs-number expectation is gated behind a runtime probe for whether
+//     THIS host actually has a `free` binary (never an assumption about the
+//     OS) — a host without `free` (e.g. macOS dev) must return null, never a
+//     fabricated/wrong-machine number; a host with `free` (e.g. ubuntu-latest
+//     CI) must return a real number. This is a REAL run, not a fixture.
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("computeContainerVmHeadroomMb", () => {
@@ -243,14 +248,59 @@ describe("computeContainerVmHeadroomMb", () => {
     expect(result).toBeNull();
   });
 
-  test("[macOS path, REAL — negative control] the real default execFn on this dev host (macOS, no `free` binary) returns null, never a substituted wrong-machine number", () => {
-    // No execFn override — exercises the REAL production default (real execSync).
-    // On macOS there is no `free` binary, so this must honestly return null
-    // rather than falling through to a different machine's reading (the
-    // exact defect this task fixes — root cause (A), FIX-PRESSURE-HOST-
-    // HEADROOM-WRONG-MACHINE-WRONG-QUANTITY).
-    const result = computeContainerVmHeadroomMb();
-    expect(result).toBeNull();
+  test("[REAL default execFn, platform-aware negative control] honestly reflects whatever `free` binary this host actually has — null when absent, a plausible number when present — never a substituted wrong-machine number", () => {
+    // [CI-RED-cdd5fa5a-FIX] The prior version of this test unconditionally
+    // asserted `toBeNull()`, which is only true on a host with no `free`
+    // binary (e.g. this repo's macOS dev host). `.github/workflows/ci.yml`
+    // runs on `ubuntu-latest`, which DOES have `free` — the real execSync
+    // there succeeds and returns a real number, so the old assertion always
+    // failed on CI (verified: 30 pass / 1 fail with `Received: 3410` when a
+    // stub `free` is placed on PATH locally). That failure was a property of
+    // the CI runner OS, not of the code under test — `computeContainerVmHeadroomMb`
+    // returning a real number on Linux is CORRECT (see FIX-PRESSURE-HOST-
+    // HEADROOM-WRONG-MACHINE-WRONG-QUANTITY, commit 98917416a).
+    //
+    // Fix: probe for the `free` binary's actual presence on THIS host — the
+    // real gating condition the production code's own try/catch depends on —
+    // instead of hardcoding an assumption about which OS runs the test. This
+    // keeps the assertion true and meaningful on BOTH a macOS dev host (no
+    // `free` → null) and a Linux CI runner (`free` present → real number),
+    // still using the REAL unmocked default execFn (no execFn override), so
+    // it continues to exercise the real production code path end-to-end.
+    let hasFree = true;
+    try {
+      nodeExecSync("command -v free", { stdio: "ignore" });
+    } catch {
+      hasFree = false;
+    }
+
+    // Platform-independent invariant, asserted unconditionally regardless of
+    // which host runs this: the real default execFn never throws into the
+    // caller (production wraps execSync in its own try/catch).
+    let result: number | null = null;
+    expect(() => {
+      result = computeContainerVmHeadroomMb();
+    }).not.toThrow();
+
+    // Platform-independent invariant, part 2: whatever it returns is either
+    // null (sentinel) or a non-negative finite number — never NaN, negative,
+    // or otherwise fabricated.
+    expect(result === null || (typeof result === "number" && Number.isFinite(result) && result >= 0)).toBe(true);
+
+    // The strict leg — WHICH of the two the invariant resolves to — is gated
+    // behind the real presence-probe above, not an OS assumption.
+    if (hasFree) {
+      // Host genuinely has `free` (e.g. ubuntu-latest CI runner) — the real
+      // exec path succeeds and must return a real number, never null-masking
+      // a working binary.
+      expect(result).not.toBeNull();
+    } else {
+      // Host has no `free` binary (e.g. macOS dev host) — must honestly
+      // return null rather than falling through to a different machine's
+      // reading (the exact defect root-caused as (A) in FIX-PRESSURE-HOST-
+      // HEADROOM-WRONG-MACHINE-WRONG-QUANTITY).
+      expect(result).toBeNull();
+    }
   });
 });
 

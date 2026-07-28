@@ -90,6 +90,25 @@ if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
   if [ "${#FAILED_FILES[@]}" -gt 0 ]; then
     echo "### Failed files:" >> "$GITHUB_STEP_SUMMARY"
     printf -- '- %s\n' "${FAILED_FILES[@]}" >> "$GITHUB_STEP_SUMMARY"
+
+    # CI-RED-cdd5fa5a-FIX: surface each failed file's captured output (written
+    # to $RESULT_DIR/${slug}.log by run_one_file above) BEFORE the rm -rf below
+    # destroys it. Previously CI only ever emitted "FAILEDFILE: <path>" with
+    # zero detail, forcing local reproduction instead of reading CI logs.
+    # Truncated to the last 100 lines per file — enough for a bun test failure
+    # summary + stack without risking a runaway step-summary size.
+    echo "### Failure detail (captured output, last 100 lines per file)" >> "$GITHUB_STEP_SUMMARY"
+    for logf in "$RESULT_DIR"/*.log; do
+      [ -e "$logf" ] || continue
+      {
+        echo "<details><summary>$(basename "$logf" .log)</summary>"
+        echo ""
+        echo '```'
+        tail -n 100 "$logf"
+        echo '```'
+        echo "</details>"
+      } >> "$GITHUB_STEP_SUMMARY"
+    done
   fi
 fi
 
