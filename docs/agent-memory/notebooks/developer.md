@@ -1,20 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-28 | **Cycle:** FIX-DEPSSATISFIED-COLD-ARCHIVED-DEP-RESOLVES-MISSING (dep_status_map cold-archive fallback + eviction referential guard)
-
-## Session 2026-07-28 — TASK-COWORK-CATCHUP-1 — REVIEW
-
-**Task:** BOUNDED-1 auto-pickup, sprint COWORK-GUARANTEED-SLOT-CATCHUP (FR-1/FR-2). Session-down window 2026-07-25T18:00Z→07-28T12:00Z permanently missed 3+ chef-evening fires, chef-morning/eod/fb-daily on 2 days, tnb-audit 3 nights, and ~17 fires each on the three 4-hourly slots — no catch-up mechanism existed. This task builds the pure domain predicate that all 3 later callers (dispatcher, tick-preflight, firer) will depend on.
-
-**Actions taken:** Created `scripts/agents-flow/cowork-catchup-predicate.js` (zero-I/O, mirrors `cadence-policy.js` sibling pattern; `field`/`dowMatch` dependency-injected from `cowork-match-slots.js`, never `require`'d, to keep the edge one-directional). 3 exports: `computeCatchupCandidates`, `mostRecentCronFireBefore` (generic bounded 8-day reverse-cron walker), `toVnDateString`. Handles all 4 `publish_date_basis` values so the FR-4 rollover check compares like-for-like per slot's real publish-marker key (re-grep-verified against live flow gate code, not trusted from the 07-22 brief verbatim). Migrated `docs/data/cowork-schedule.json` additively via a new one-off script `scripts/dev-task-cowork-catchup-1-migrate-schedule.js` (JSON.parse→mutate→stringify(null,2)+atomic rename, mirrors `cowork-write-last-fired.js`'s convention for this exact hot file — 2 prior corruptions came from hand-rolled edits): added top-level `_dish_type_catchup_config` + `publish_date_basis` on the 8 guaranteed slots.
-
-**Verification:** RED confirmed (module renamed away → `MODULE_NOT_FOUND`, hard fail) before GREEN. `cowork-catchup-predicate.test.js` 34/34 PASS (AC-1 due=true within bound, AC-2 `reason=rolled_past_vn_date` takes precedence over lateness, AC-3 `reason=freshness_window_exceeded`, plus basis/exclusion/edge-case coverage). Sibling `cowork-match-slots.test.js` 26/26 unchanged (file untouched). Schema migration verified: `jq -e .` parses clean, all 23 slots' `last_fired` diffed byte-identical before/after, exactly the 8 named guaranteed slots carry the correct basis; `git diff` shows only additive lines. `bun tsc --noEmit` 0 errors (file is plain `.js`/`.json`, outside `tsconfig.json` include — AC-10 satisfied as no-regression). Full `bun test`: 14826 pass/40 skip/51 fail/1231 files — at/better than today's already-established 53-fail baseline; this task touches 0 files under `apps/mcp-server/src/`, so no regression is structurally possible.
-
-**Board:** `task_board` row → `review` (`next_agent:qa`, `qa_verify_mode:verify-committed`), `.head` synced to idle, via `orch-apply.sh`. Blocks TASK-COWORK-CATCHUP-2/3/4/5 (now unblocked).
-
-**Simplicity gate:** PASS — Q1 clean (`ctx.excludeSlotIds` and all 4 basis branches are required by the handoff's specified export signature/schema, not speculative), Q2 no single-use abstractions, Q3 senior-test clean, Q4 ratio <50% overhead (module is comment-heavy by repo convention, matching `cadence-policy.js`).
-
-Zone health: no drift detected
+**Last updated:** 2026-07-28 | **Cycle:** TASK-COWORK-CATCHUP-2 (cowork-catchup-predicate.js wired into cowork-match-slots.js CLI, catchup_raw field)
 
 ## Session 2026-07-28 — FIX-COWORK-CHEF-MUTEX-ECHO-JQ-DEFEAT — REVIEW
 
@@ -41,5 +27,21 @@ Zone health: no drift detected
 **Verification:** Extended `scripts/audits/devteam-dispatch-gate-satisfiability.sh` (not a new instrument, per the row's own instruction) with AC-DEP-1 (live, dynamic: 0 post-fix leaks, 34 pre-fix INFO baseline matches PO's own measurement), AC-DEP-MECH (same real BOUNDED-1 promote script, only archive content varied — proves the mechanism FIRES, not just predicate resolution, grounded in a real live archived id), AC-DEP-NEG-A/B (nowhere-dep and cold-archived-non-terminal both stay UNSATISFIED), AC-EVICT-1/2/3 (real `orch-cold-evict.sh` run against a scratch fixture — referenced row held, unreferenced sibling evicted, guard proven both directions end-to-end). All pre-existing assertions in this file + 4 sibling audit scripts re-run GREEN (2 needed their own `--slurpfile archive` added since bounded1 promote now requires it unconditionally). Incidental fix (verified pre-existing/unrelated via git-HEAD replay before touching it): `devteam-bounded1-detail-disposition-gate-verify.sh`'s `make_isolated_fixture()` never cleared `.task_board.ready`, silently leaking the live board's stale `ready[0]` into equality-checking assertions. Zero TypeScript touched — `bun tsc`/`bun test` not applicable.
 
 **Board:** `task_board.in_progress[FIX-DEPSSATISFIED-COLD-ARCHIVED-DEP-RESOLVES-MISSING]` → `review` (`next_agent:qa`, `branch:null`), `.head` synced to idle, via `orch-apply.sh`.
+
+Zone health: no drift detected
+
+## Session 2026-07-28 — TASK-COWORK-CATCHUP-2 — REVIEW
+
+**Task:** BOUNDED-1 auto-pickup, sprint COWORK-GUARANTEED-SLOT-CATCHUP (FR-9a). `depends_on TASK-COWORK-CATCHUP-1` (DONE_VERIFIED, cold-archived — confirmed via archive lookup before starting). Wire CATCHUP-1's pure predicate module into `cowork-match-slots.js`'s CLI entrypoint so the 3 downstream callers (dispatcher, tick-preflight, firer) share ONE `catchup_raw` computation instead of 3 divergent copies.
+
+**Actions taken:** CLI-block-only edit (`require.main===module`, lines ~270-300 unchanged elsewhere) — additive conditional `require('./cowork-catchup-predicate.js')` mirroring the existing `cadence-policy.js` pattern; computes `catchup_raw = computeCatchupCandidates(sched, nowUnix, {excludeSlotIds: hits.map(slot_id)}, {field, dowMatch})` and adds it as a new top-level JSON stdout key. Live-matched slots this tick (`hits`) are excluded so an on-time fire is never double-counted as its own catch-up candidate. `matchSlots()` (exported JS function used by tests) left byte-identical (NFR-2). Module-unavailable path falls back to `catchup_raw=[]` with a stderr WARN, never crashes.
+
+**Verification:** RED confirmed live (`git stash push` scoped to only the source file, re-ran the new CLI-contract test blocks → hard `TypeError` crash) before GREEN (stash pop, 43/43 assertions: 26 pre-existing unit tests unchanged + 4 new CLI-level blocks spawning the real CLI against an isolated mkdtemp harness with a controlled schedule fixture, mirrors `drain-signals.test.js`'s `makeHarness` convention — field-presence/type, a real eligible candidate surfacing end-to-end, a real `freshness_window_exceeded` candidate, missing-module graceful fallback; all deterministic regardless of wall-clock via a `catchup_max_lateness_minutes:999999`/`:-1` construction, not a time-window coincidence). Sibling `cowork-catchup-predicate.test.js` 34/34 unchanged (file untouched). `bun tsc --noEmit` 0 errors (plain `.js`, outside `tsconfig.json` include, same AC-10 posture as CATCHUP-1). `docs/agents/cowork-team/flow/match-slots.md` updated to document the new `catchup_raw` field shape (consumption wiring deferred to a later sprint task).
+
+**Board:** `task_board.in_progress[TASK-COWORK-CATCHUP-2]` → `review` (`next_agent:qa`, `qa_verify_mode:verify-committed`, `branch:null`, `commit:c5e7c6747`), `.head` synced to idle, via `orch-apply.sh`.
+
+**Commits:** `c5e7c6747` (code+test), `fd5d4565e` (docs), `64c41a6e0` (orch-state board move). No `apps/mcp-server/` files touched (`scripts/agents-flow/` + `docs/` only).
+
+**Simplicity gate:** PASS — Q1 clean (every added line required by AC: require+compute+catch+field-add), Q2 no single-use abstractions (reused CATCHUP-1's exports as-is), Q3 senior-test clean, Q4 ratio <50% overhead (comment density matches the `cadence-policy.js` block it mirrors).
 
 Zone health: no drift detected
