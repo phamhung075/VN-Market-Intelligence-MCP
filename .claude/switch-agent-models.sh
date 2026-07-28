@@ -4,6 +4,22 @@ set -e
 CONFIG_FILE="$(dirname "$0")/agent-models.json"
 AGENTS_DIR="$(dirname "$0")/agents"
 
+# Known Cowork-cloud-only keys: legitimate agent-models.json entries with NO
+# local .claude/agents/<key>.md file — their model lives in the Claude.ai
+# workspace UI, not a local file. SSOT for this list: AGENT_MODELS_README.md
+# § Config File ("EXCEPT `financial-analyst` and `report-analyzer` ..."). Keep
+# both in sync if the roster of cloud-only agents ever changes.
+COWORK_CLOUD_ONLY_AGENTS=("financial-analyst" "report-analyzer")
+
+is_cowork_cloud_only() {
+  local AGENT="$1"
+  local KNOWN
+  for KNOWN in "${COWORK_CLOUD_ONLY_AGENTS[@]}"; do
+    [[ "$AGENT" == "$KNOWN" ]] && return 0
+  done
+  return 1
+}
+
 if [[ ! -f "$CONFIG_FILE" ]]; then
   echo "❌ Error: agent-models.json not found at $CONFIG_FILE"
   exit 1
@@ -38,7 +54,11 @@ apply_model() {
   local AGENT_FILE="$AGENTS_DIR/${AGENT}.md"
 
   if [[ ! -f "$AGENT_FILE" ]]; then
-    echo "⚠️  Warning: Agent file not found: $AGENT_FILE (skipping)"
+    if is_cowork_cloud_only "$AGENT"; then
+      echo "ℹ️  Skipping $AGENT — Cowork-cloud-only agent, model managed in Claude.ai workspace UI"
+    else
+      echo "⚠️  Warning: Agent file not found: $AGENT_FILE (skipping)"
+    fi
     return 1
   fi
 
