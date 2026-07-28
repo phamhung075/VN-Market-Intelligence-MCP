@@ -1,3 +1,22 @@
+## cs2t8h1w · 2026-07-28T18:40:41Z
+### Audit Run Tier-2 (18:31–18:41 UTC 2026-07-28)
+- Tier: 2 | Sources: 28 checked (SLA+cadence, system-map.json) | Cron: 88 jobs (get_cron_health, no gap >2x cadence) | DB spot: C-06,C-07,B-09,B-13
+- Anomalies: 1 new (0 critical, 1 warn, 0 info) | 0 dedup-skipped (3 candidate findings judged NON-anomalous — off-hours/schedule-blind SLA artifacts + one known stale-reemission bug — see below, not "known-but-muted")
+- Status: HEALTHY (Tier-2 SSOT B-01..B-13 pass) — 1 new service-health WARN (vn-sbv-fetch), separate track, evidence-only against existing P1
+
+Fire-election: tick=2026-07-28T16:00Z (`0 */4 * * *` boundary, ~2.5h behind wall-clock 18:31Z per dispatch note) — `task_claim` returned `claimed:true`, no peer holder found. **Led this tick** (not a re-entrant/skip case).
+
+#### Findings
+1. **sbv_fx SLA "breach"** (get_sla_status: CRITICAL, age=62min > 30min SLA) — NOT emitted. Live DB read `sbv_rates.fetched_at=2026-07-28T17:30:09.775Z` + VN-local cross-check (`check-foreign-flow-freshness.sh` → `now_ict=2026-07-29T01:35`, Wed = business day) confirms this is the already-documented market-hours-blind flat-30min SLA bug (`FIX-AUDITOR-SBVFX-SLA-POSTMARKET-TOLERANCE`, P1 BACKLOG, unpicked — orch-state.json:7078) — SBV publishes once/business-day, SLA gate applies the tight threshold 24h/day regardless of hour. Per dispatch instruction: off-hours-explained staleness → state explicitly, don't emit WARN.
+2. **vn-sbv-fetch VPS service unhealthy** (get_vps_service_health: uptime=59m, i.e. VPS-side restart ~17:33Z) — DISTINCT genuine service-health signal (board precedent explicitly separates this from #1: orch-state.json:1544). EMITTED: dedup_key=`service_health:vn-sbv-fetch:B-07` → `[emit-signal] OK id=sys-20260728T183937-73b5` (ledger key was >7d stale — fresh BUG telegram sent). DASHBOARD.md row appended. Tracks existing `FIX-SBV-FETCHER-ZERO-VALUE-EMIT` (P1 BACKLOG, dev-macro-indicators) — evidence-attach, no mint.
+3. **C-06 market_messages=0/3h** — off-schedule quiet window (last row=evening-summary id=1051 sent_at=2026-07-28 15:31:18, ~3h09m before check; digest jobs are schedule/event-driven, not continuous). Known FP class, both BACKLOG unpicked: `FIX-AUDITOR-C06-OFFMARKET-RECALIBRATE`, `FIX-MARKET-MESSAGES-TIMESTAMP-FORMAT`. Stated explicitly, not emitted.
+4. **D-BCTC-EVAL sweep**: GET /api/bctc-eval → 20 reports (9 red / 11 yellow), all `computed_at` ≥4 days old (newest red = MBB Q1-2026 @2026-07-24T18:03:21Z). No prior `BCTC-EVAL-SNAPSHOT:` block found in loaded notebook (pruned/absent) → baseline capture only, no delta computed. Per-report emit WITHHELD: `FIX-AUDITOR-EVAL-DELTA-RECENCY-BOUND` (P2 BACKLOG, agent-father, unpicked — orch-state.json:9444) already documents this exact mechanism (emits weeks-old red rows as fresh HIGH every cycle, no recency bound) — running it verbatim would reproduce a known bug, not surface new information.
+5. Rest PASS: C-07=14 (>0) | B-09=0 (SSC URLs) | B-13=0 (stale-pending BCTC) | B-12 rate-limits 12/12 ready, 0 waiting | VPS proxy 4/4 routes ok (prices/news/sbv/bctc, per get_vps_proxy_health) | foreign-flow canonical calendar script PASS (`verdict=PASS latest_date=2026-07-28`); flat-cadence foreign-flow check correctly skipped (18:32Z outside 02:00–08:30 UTC VN market hours) | D-IMPROVE: 0 candidates (`improve_check_log` empty for last 24h; all CRITICAL-severity sources found already have an open FIX row).
+
+#### BCTC-EVAL-SNAPSHOT: (baseline only — no prior snapshot to diff)
+9 red / 11 yellow of 20 reports. Newest red=MBB(Q1-2026,computed 2026-07-24T18:03Z). Full 20-row detail not persisted here (size) — re-fetch via GET /api/bctc-eval next cycle for diff.
+
+[OUTPUT-CONTRACT] signals_posted=1 | telegram_sent=1 | signal_queue_rows_written=1 | dashboard_rows=1
 ## cx7q2m4t · 2026-07-28T17:47:49Z
 ### Audit Run Tier-1 (17:40-17:48 UTC 2026-07-28)
 - Tier: 1 | Services: 12/12 host_runtime_set Up(healthy) | Health: 5/5 OK | A-20 pdf-extractor 3/3 OK | A-21 mcp-server crashRestarts=1 (<2, PASS) | A-30 mcp-server MemPerc=22.91% (baseline skip)
@@ -62,30 +81,3 @@ DASHBOARD.md row appended (T1-PREGATE-SAMPLE-FREQ, OPEN) — in-boundary this cy
 Note: DASHBOARD.md write SKIPPED this cycle — this invocation's explicit WRITE BOUNDARY restricts writes to notebook + signal_queue + own auditor-*.json state files (DASHBOARD.md not listed); flagging vs. standard flow contract for router awareness, not a self-authorized scope deviation.
 
 [OUTPUT-CONTRACT] signals_posted=1 | telegram_sent=1 | signal_queue_rows_written=1 | dashboard_rows=0
-
-## cw3f9m2q · 2026-07-28T15:10:56Z
-### Audit Run Tier-1 (15:07–15:11 UTC 2026-07-28)
-- Tier: 1 | Services: 12/12 host_runtime_set checked | Health: 5/5 endpoints | A-20 pdf-extractor: 3/3 in-container OK
-- Anomalies: 0 new | 0 dedup-skipped (all Tier-1-scope checks PASS)
-- Status: HEALTHY (Tier-1 runtime scope only — pdf-extractor memory condition below is Tier-2/pre-gate scope, already tracked)
-
-### RAW-PROBE: (docs/agents/system-auditor/probe.sh, 2026-07-28T15:07:54Z)
-```
-=== AUDITOR PROBE 2026-07-28T15:07:54Z ===
---- docker ps -a --- 13/13 containers Up(healthy); 12/12 host_runtime_set present
---- health endpoints --- mcp-server/api-gateway/macro-indicators/pdf-extractor/frontend all OK (HTTP 200)
---- restart count --- mcp-server RestartCount=0
---- memory pressure --- mcp-server MemPerc=78.38%
---- A-30 multi-probe --- SKIP deep-probe, baseline 78.78% < 85%
---- disk --- 32% used
---- A-20 pdf-extractor multi-probe --- HTTP 200/200/200, pass_count=3/3
-```
-
-#### Investigation: two router-flagged leads (read-only probes only, AUD-ND-1 respected)
-1. **Unexplained green heartbeat (14:12:23Z mem_creep=PASS)** — DISCRIMINATED, not a gate bug. `docs/data/auditor-launchd-ack.json .acked_memory[]` has never listed pdf-extractor (only rag-service since 2026-07-25T15:48:56Z, unchanged today — no commits to this file today) so a PASS at 14:12Z could only be a genuine <85% reading, never suppression. Fresh `docker inspect` (15:08:40Z): RestartCount=2 (cumulative since Created=2026-07-21), current-run StartedAt=09:26:20.035Z unbroken (FinishedAt=09:26:19.47Z belongs to the prior run, before this window) — no restart between 14:12Z and now. Best-supported explanation: genuine pre-burst dip below 85%, then climb to 98.87% by 14:30:10Z tracking the mcp-server POST /extract burst PO logged at 14:24Z (orch-state.json po_disposition_20260728T1453). Mechanism already MINTED: FIX-PDFX-TESSERACT-CONCURRENCY-VIOLATES-SINGLE-WORKER-INVARIANT (P0, backlog) — not re-minted.
-2. **Severity mapping (98.87%/98.84% emitted WARN; tier1-probe.md A-30 clause maps peak>97%→CRITICAL)** — CORROBORATED. signal_queue rows sys-20260728T143010-6ec2 (98.87%, WARN) and sys-20260728T143457-0d5b (98.84%, WARN) both exceed 97% yet both WARN; control row sbv_fx sys-20260728T142957-693e(HIGH)→sys-20260728T143455-6a8a(CRITICAL) proves the ladder escalates when the producer varies the label. Already tracked: FIX-AUDITOR-EMIT-SEVERITY-LABEL-FLAT-ESCALATION-BYPASS-NEVER-FIRES (P1, backlog) — not re-minted.
-3. **Live re-check (15:08:40Z, read-only)**: pdf-extractor MemPerc=95.59% (2.39/2.5GiB); 10 tesseract PIDs all PPID=1, elapsed 01:03:36→00:07:17 — population still pinned at 10 (unchanged mechanism from router's snapshot; youngest PID turned over, oldest aged further).
-
-#### Signals Emitted: none this cycle. Tier-1's own scope (A-30 override in tier1-probe.md is mcp-server-only) is ALL_GREEN. pdf-extractor's memory condition is a pre-existing Tier-2/pre-gate finding already carrying open signal_queue rows + a PO disposition (14:53Z) + a P0 board task — no re-triage, per write-fence.
-
-[OUTPUT-CONTRACT] signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0

@@ -1,5 +1,17 @@
 # System Audit Dashboard
 
+## Anomaly: B-07 · vn-sbv-fetch VPS service unhealthy
+**Severity:** WARN | **Date:** 2026-07-28 | **Status:** OPEN
+**Location:** VPS vinahost (125.212.251.27) — vn-sbv-fetch service (SBV FX/rates fetcher)
+**Details:** `get_vps_service_health` reports vn-sbv-fetch=unhealthy (poll age 2m, VPS uptime=59m — process restarted ~17:33Z). Corroborated via DB read: `sbv_rates` table last row `fetched_at=2026-07-28T17:30:09.775Z` (pre-restart), `is_estimate=1`. All other VPS services healthy or idle (vn-bctc-fetch healthy, vn-news-fetch healthy, vn-foreign-flow/vn-price-fetch idle — market closed).
+**Impact:** SBV FX/rates data pipeline not confirmed producing fresh real (non-estimate) values since the VPS-side restart.
+**Root cause:** Pre-existing, already root-caused: `storeSbvSnapshot` emits ZERO-VALUE snapshots that the DB guard rejects, recurring post-restart — tracked by FIX-SBV-FETCHER-ZERO-VALUE-EMIT (P1 BACKLOG, dev-macro-indicators). This finding is evidence attachment, not a new mechanism.
+**Zone owner:** dev-macro-indicators
+**Last reported:** 2026-07-28T18:39:37Z (signal sys-20260728T183937-73b5, system-auditor -> po)
+**Mitigation:** No new action — feeds existing FIX-SBV-FETCHER-ZERO-VALUE-EMIT (BACKLOG, unpicked). VPS restart is user-gated, not authorized here (AUD-ND-1 plan-only).
+
+---
+
 ## Anomaly: T1-PREGATE-SAMPLE-FREQ · mem_creep pre-gate single-point-sample missed pdf-extractor peak
 **Severity:** WARN | **Date:** 2026-07-28 | **Status:** OPEN
 **Location:** scripts/agents-flow/auditor-tier1-probe.sh `_check_mem_creep()` (Tier-1 cron pre-gate, distinct from the subagent's own docs/agents/system-auditor/probe.sh)
