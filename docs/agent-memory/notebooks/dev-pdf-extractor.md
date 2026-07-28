@@ -6,48 +6,6 @@ Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (writ
 
 ---
 
-## Cycle 2026-07-09 — FACTORY-PDF-split-generic-md-table
-
-**Sprint:** SYSTEMIC-REMAKE-P1 | **Zone:** apps/pdf-extractor/ | **Size:** XL | P0 | epic: FACTORY-MAINTAINABILITY-2026-06 | BOUNDED-1 auto-pickup
-
-### Refactor
-Split the 4111L `generic_md_table_extractor.py` god-file into `infrastructure/
-generic_md_table/` (constants, markdown_emit, grid_cleanup, ordinal_grid,
-document_map, page_zoning, unit_ocr, extractor) behind a 164L thin re-export shim —
-8 sequential commits, one sub-module per PR, verbatim moves (ast span extraction +
-byte-diff verified against pre-move bodies at every stage). `_process_page` (the
-largest method) split into 3 named stage helpers (Step A tokenize, Step A2
-classify+measure, Steps C5-G per-region reconstruct+emit) while staying a bound
-method (test seam: tests call/monkeypatch `extractor._process_page` directly).
-`scripts/pdf-extractor-god-file-extract.py` (new, reusable) does the line-accurate
-ast-based extraction/removal.
-
-### RAW-verify
-Baseline: `pytest -q` = 11 failed/1017 passed/1 skipped (pre-existing env-only —
-no PDF fixtures/Tesseract/poppler in sandbox). Identical after every one of the 8
-stages. Symbol-parity: AST-diffed the original module's 112 top-level names
-(`c2069debd`, pre-split) vs the final shim's `dir()` — 0 missing (except 5 unused
-stdlib typing re-exports), 0 extras. `test_generic_md_table_extractor.py`
-(incl. AC-1 Fence-A check): 149/149 pass post-split. mypy: pre-existing
-"not a valid Python package name" env error, confirmed identical via `git stash`.
-
-### G12 sandbox gate — N/A
-`pilot-status-pdf-extractor.json` status=DONE (closed 2026-05-24); the flow doc's
-`sandbox_runner.py --tier=primitive/module` script does not exist in this repo
-state (only `sandbox/` dashboard-trace tooling remains) — same stale-gate drift
-flagged in the prior split cycle's Zone health note. pytest is the live DoD gate.
-
-### Commits
-`21686062b`..`f261bd4b6` (8 commits) — refactor(pdf-extractor): FACTORY-PDF-split-generic-md-table Stage 1/8..8/8
-
-Zone health: G12 pilot-gate doc drift (flagged twice now, prior cycle + this one) —
-still not fixed, needs PO/architect to update or retire the stale flow-doc section.
-
-### Status
-REVIEW → next_agent=qa (rebuild_required: true; ops rebuild+swap, then qa live-verify)
-
----
-
 ## Cycle 2026-07-09 — FIX-BCTC-FPT-BT5-BALANCE-GATE
 
 **Sprint:** n/a (BOUNDED-1 auto-pickup) | **Zone:** apps/pdf-extractor/ | **Size:** M | P1
@@ -150,3 +108,46 @@ Zone health: G12 pilot-gate doc drift flagged a 3rd time (2026-07-09 ×2,
 REVIEW → next_agent=qa (rebuild_required: true — DEFERRED user-gated, no
 rebuild performed this cycle per explicit task scope bound; ops rebuild+swap
 + qa live-verify batches onto a future rebuild)
+
+---
+
+## Cycle 2026-07-28 — FIX-PDFX-TESSERACT-CONCURRENCY-VIOLATES-SINGLE-WORKER-INVARIANT
+
+**Sprint:** n/a (router direct dispatch, supervised) | P0 | size M
+
+### Bug
+`/extract` (100% of live OCR traffic) reached tesseract via `asyncio.to_thread`
+bound to the asyncio DEFAULT executor (`min(32,cpu+4)`=10 in prod) — an
+accident, not a guard; NEITHER declared guard (ProcessPoolExecutor(1),
+PekEngineAdapter Semaphore(1)) was ever on that path. No `timeout=` meant an
+abandoned request (mcp-server's 120s abort) permanently ratcheted a slot.
+
+### Fix
+New `infrastructure/ocr_gateway.py`: process-global `BoundedSemaphore(N)`
+(`PDFX_OCR_MAX_CONCURRENCY`, default 1) + dedicated `ThreadPoolExecutor`,
+bounded deadline (`PDFX_OCR_PAGE_TIMEOUT_S`, default 600s) passed to
+pytesseract's own `timeout=` (breaks the ratchet — bounded hold, not
+permanent). Queue-wait overflow → `OcrCapacityExceededError` → HTTP 429 +
+Retry-After. `/health` gains `ocr` block (semaphore/os_children via /proc).
+Rewired: extraction_engine.py (the live defect), ocr_backends.py, ocr_adapter.py,
+generic_md_table/unit_ocr.py. `extract_tables_usecase.py`'s ProcessPoolExecutor
+path composes via `ocr_gateway.slot_async()` in the parent. NOT rewired
+(documented, not silent): ocr_worker.py (subprocess child, can't see this
+process's semaphore) and generic_md_table/extractor.py (40-test direct seam —
+follow-up recommended). extraction_engine.py:177-178 empty-string-on-failure
+swallow left OPEN (flagged separately, per task instruction).
+
+### Verify
+New `test_ocr_concurrency_invariant.py` (8 tests): T1 drives 15 concurrent
+POST /extract via the REAL route (ASGITransport), asserts peak<=1 — RED-
+verified on unfixed main first via throwaway worktree (peak=15, pasted in
+close-out) before GREEN. Fence test (AST-based, not regex) + deadline-
+backstop (proves slot releases, not held forever) + /health observability +
+portable /proc-parsing unit tests. Full suite: same 11 pre-existing failures
+byte-identical before/after (confirmed via worktree diff) — 0 regressions.
+import-linter: 3/3 contracts kept. Rebuilt single service: image ID changed
+(`c9f3d366`→`a75ddd73`), live tesseract 10→1, MemPerc ~95%→~9-11%,
+`ocr.semaphore==ocr.os_children` across samples.
+
+### Status
+REVIEW → next_agent=qa (supervised:true — not self-certified)
