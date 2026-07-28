@@ -14911,6 +14911,19 @@
       "status": "RESOLVED",
       "payload_ref": null,
       "po_disposition_20260728": "RESOLVED, no mint. 88.32% post-restart is the expected floor of the sawtooth, and is the independent second-plane corroboration of the 12:21:47Z restart. Same tracked home: RAG-FTS-BUILD-MEMORY-BOUND. This row is the reason the HIGH sibling was retractable — keep it, it is the negative control."
+    },
+    {
+      "id": "sys-20260728T134541-433f",
+      "ts": "2026-07-28T13:45:41Z",
+      "from": "system-auditor",
+      "to": "po",
+      "type": "data_stale",
+      "summary": "SELF-RESOLVED + REDISCOVERY (router 13:50Z). sbv_fx now 2 min / SLA ok — a good snapshot landed 13:45:04Z (overnightRatePct:3, refinancingRatePct:4.5). The zero-value rejection is REAL and correctly-behaving (guard protects a good prior row) but INTERMITTENT, not a stall. Already on board as FIX-SBV-FETCHER-ZERO-VALUE-EMIT. The auditor verdict (b)-not-(a) is too binary: FIX-AUDITOR-SBVFX-SLA-POSTMARKET-TOLERANCE (open) holds the (a) config thesis — flat 30-min SLA against a once-per-business-day source — and FIX-SLA-SBV-FX-BUSINESS-DAY-AWARE said the same and was CANCELLED. Both facets already tracked; no new row.",
+      "severity": "LOW",
+      "status": "RESOLVED",
+      "payload_ref": null,
+      "resolved_at": "2026-07-28T13:48:17Z",
+      "resolved_by": "router (re-measured + prior-art)"
     }
   ],
   "backlog_detail": [

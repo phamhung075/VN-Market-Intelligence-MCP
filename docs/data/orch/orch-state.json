@@ -2286,19 +2286,6 @@
         "po_disposition_note": "CONCUR with the do-not-mint instruction. Evidence folded into UC-CDC-P1 and FIX-COWORK-CADENCE-DANGLING-POLICY-ID (both BACKLOG, both re-stamped this tick). Net-new contribution recorded: the (a)-adaptive vs (b)-legacy isolation that UC-CDC-P1 flagged as OPEN on 2026-07-25T09:48Z is now CLOSED in favour of (a), via pressure_mode=adaptive co-occurring with calendar_status=closed and cadence_minutes=240 in one telemetry row. Sequencing unchanged: UC-SDF-P2 first, then UC-CDC-P1 + FIX-COWORK-CADENCE-DANGLING-POLICY-ID as one change set."
       },
       {
-        "id": "sys-20260728T134541-433f",
-        "ts": "2026-07-28T13:45:41Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "data_stale",
-        "summary": "SELF-RESOLVED + REDISCOVERY (router 13:50Z). sbv_fx now 2 min / SLA ok — a good snapshot landed 13:45:04Z (overnightRatePct:3, refinancingRatePct:4.5). The zero-value rejection is REAL and correctly-behaving (guard protects a good prior row) but INTERMITTENT, not a stall. Already on board as FIX-SBV-FETCHER-ZERO-VALUE-EMIT. The auditor verdict (b)-not-(a) is too binary: FIX-AUDITOR-SBVFX-SLA-POSTMARKET-TOLERANCE (open) holds the (a) config thesis — flat 30-min SLA against a once-per-business-day source — and FIX-SLA-SBV-FX-BUSINESS-DAY-AWARE said the same and was CANCELLED. Both facets already tracked; no new row.",
-        "severity": "LOW",
-        "status": "RESOLVED",
-        "payload_ref": null,
-        "resolved_at": "2026-07-28T13:48:17Z",
-        "resolved_by": "router (re-measured + prior-art)"
-      },
-      {
         "id": "sys-20260728T134549-4b19",
         "ts": "2026-07-28T13:45:49Z",
         "from": "system-auditor",
