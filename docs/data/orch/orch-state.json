@@ -10226,149 +10226,6 @@
         "updated_by": "po"
       },
       {
-        "id": "TASK-COWORK-CATCHUP-3",
-        "title": "FR-9b + FR-3 + FR-5: New catchup-check.md dispatcher sub-flow",
-        "type": "SPRINT-M",
-        "size": "M",
-        "priority": "P0",
-        "zone": "docs/agents/cowork-team/flow/",
-        "sprint": "COWORK-GUARANTEED-SLOT-CATCHUP",
-        "status": "BACKLOG",
-        "depends_on": [
-          "TASK-COWORK-CATCHUP-1",
-          "TASK-COWORK-CATCHUP-2"
-        ],
-        "created_at": "2026-07-22T22:12:59Z",
-        "created_by": "pm",
-        "updated_at": "2026-07-28T13:16:19Z",
-        "next_agent": "developer",
-        "po_routing_20260728": "PO 2026-07-28T13Z lane routing. pm's decomposition minted this row with next_agent unset, which no dispatch lane resolves (verified by executing scripts/lib/devteam-eligibility.jq predicates, not by reading the row). Handler = developer per docs/handoffs/TASK-COWORK-CATCHUP-10.md ('developer completes code TASK-1..9, then agent-father integrates this doc-only subtask') + docs/data/system-map.json scripts/ zone. dev-role next_agent + backlog lane = BOUNDED-1, per docs/agents/po/flow/zone-routing.md Step A2.",
-        "updated_by": "po/route-20260728T13"
-      },
-      {
-        "id": "TASK-COWORK-CATCHUP-4",
-        "title": "FR-9c: Extend cowork-tick-preflight.sh Step 6.5",
-        "type": "SPRINT-M",
-        "size": "M",
-        "priority": "P0",
-        "zone": "scripts/agents-flow/",
-        "sprint": "COWORK-GUARANTEED-SLOT-CATCHUP",
-        "status": "BACKLOG",
-        "depends_on": [
-          "TASK-COWORK-CATCHUP-1",
-          "TASK-COWORK-CATCHUP-2"
-        ],
-        "created_at": "2026-07-22T22:12:59Z",
-        "created_by": "pm",
-        "updated_at": "2026-07-28T13:16:19Z",
-        "next_agent": "developer",
-        "po_routing_20260728": "PO 2026-07-28T13Z lane routing. pm's decomposition minted this row with next_agent unset, which no dispatch lane resolves (verified by executing scripts/lib/devteam-eligibility.jq predicates, not by reading the row). Handler = developer per docs/handoffs/TASK-COWORK-CATCHUP-10.md ('developer completes code TASK-1..9, then agent-father integrates this doc-only subtask') + docs/data/system-map.json scripts/ zone. dev-role next_agent + backlog lane = BOUNDED-1, per docs/agents/po/flow/zone-routing.md Step A2.",
-        "updated_by": "po/route-20260728T13"
-      },
-      {
-        "id": "TASK-COWORK-CATCHUP-5",
-        "title": "FR-9d: Extend cowork-guaranteed-slot-firer.sh with MCP access",
-        "type": "SPRINT-M",
-        "size": "M",
-        "priority": "P0",
-        "zone": "scripts/agents-flow/",
-        "sprint": "COWORK-GUARANTEED-SLOT-CATCHUP",
-        "status": "BACKLOG",
-        "depends_on": [
-          "TASK-COWORK-CATCHUP-1",
-          "TASK-COWORK-CATCHUP-2"
-        ],
-        "created_at": "2026-07-22T22:12:59Z",
-        "created_by": "pm",
-        "updated_at": "2026-07-28T13:16:19Z",
-        "next_agent": "developer",
-        "po_routing_20260728": "PO 2026-07-28T13Z lane routing. pm's decomposition minted this row with next_agent unset, which no dispatch lane resolves (verified by executing scripts/lib/devteam-eligibility.jq predicates, not by reading the row). Handler = developer per docs/handoffs/TASK-COWORK-CATCHUP-10.md ('developer completes code TASK-1..9, then agent-father integrates this doc-only subtask') + docs/data/system-map.json scripts/ zone. dev-role next_agent + backlog lane = BOUNDED-1, per docs/agents/po/flow/zone-routing.md Step A2.",
-        "updated_by": "po/route-20260728T13"
-      },
-      {
-        "id": "TASK-COWORK-CATCHUP-6",
-        "title": "FR-7: Rewrite last-fired.md Step 5b as reconciliation logic",
-        "type": "SPRINT-M",
-        "size": "M",
-        "priority": "P0",
-        "zone": "docs/agents/cowork-team/flow/",
-        "sprint": "COWORK-GUARANTEED-SLOT-CATCHUP",
-        "status": "BACKLOG",
-        "depends_on": [
-          "TASK-COWORK-CATCHUP-1",
-          "TASK-COWORK-CATCHUP-3"
-        ],
-        "created_at": "2026-07-22T22:12:59Z",
-        "created_by": "pm",
-        "updated_at": "2026-07-28T13:16:19Z",
-        "next_agent": "developer",
-        "po_routing_20260728": "PO 2026-07-28T13Z lane routing. pm's decomposition minted this row with next_agent unset, which no dispatch lane resolves (verified by executing scripts/lib/devteam-eligibility.jq predicates, not by reading the row). Handler = developer per docs/handoffs/TASK-COWORK-CATCHUP-10.md ('developer completes code TASK-1..9, then agent-father integrates this doc-only subtask') + docs/data/system-map.json scripts/ zone. dev-role next_agent + backlog lane = BOUNDED-1, per docs/agents/po/flow/zone-routing.md Step A2.",
-        "updated_by": "po/route-20260728T13"
-      },
-      {
-        "id": "TASK-COWORK-CATCHUP-7",
-        "title": "FR-8: Apply per-dish-type fire_timeout_seconds config",
-        "type": "SPRINT-S",
-        "size": "S",
-        "priority": "P0",
-        "zone": "cross-service/",
-        "sprint": "COWORK-GUARANTEED-SLOT-CATCHUP",
-        "status": "BACKLOG",
-        "depends_on": [
-          "TASK-COWORK-CATCHUP-1",
-          "TASK-COWORK-CATCHUP-5"
-        ],
-        "created_at": "2026-07-22T22:12:59Z",
-        "created_by": "pm",
-        "updated_at": "2026-07-28T13:16:19Z",
-        "next_agent": "developer",
-        "po_routing_20260728": "PO 2026-07-28T13Z lane routing. pm's decomposition minted this row with next_agent unset, which no dispatch lane resolves (verified by executing scripts/lib/devteam-eligibility.jq predicates, not by reading the row). Handler = developer per docs/handoffs/TASK-COWORK-CATCHUP-10.md ('developer completes code TASK-1..9, then agent-father integrates this doc-only subtask') + docs/data/system-map.json scripts/ zone. dev-role next_agent + backlog lane = BOUNDED-1, per docs/agents/po/flow/zone-routing.md Step A2.",
-        "updated_by": "po/route-20260728T13"
-      },
-      {
-        "id": "TASK-COWORK-CATCHUP-8",
-        "title": "Test suite extension: AC-1..AC-12 coverage",
-        "type": "SPRINT-M",
-        "size": "M",
-        "priority": "P0",
-        "zone": "scripts/agents-flow/",
-        "sprint": "COWORK-GUARANTEED-SLOT-CATCHUP",
-        "status": "BACKLOG",
-        "depends_on": [
-          "TASK-COWORK-CATCHUP-1",
-          "TASK-COWORK-CATCHUP-4",
-          "TASK-COWORK-CATCHUP-5",
-          "TASK-COWORK-CATCHUP-6"
-        ],
-        "created_at": "2026-07-22T22:12:59Z",
-        "created_by": "pm",
-        "updated_at": "2026-07-28T13:16:19Z",
-        "next_agent": "developer",
-        "po_routing_20260728": "PO 2026-07-28T13Z lane routing. pm's decomposition minted this row with next_agent unset, which no dispatch lane resolves (verified by executing scripts/lib/devteam-eligibility.jq predicates, not by reading the row). Handler = developer per docs/handoffs/TASK-COWORK-CATCHUP-10.md ('developer completes code TASK-1..9, then agent-father integrates this doc-only subtask') + docs/data/system-map.json scripts/ zone. dev-role next_agent + backlog lane = BOUNDED-1, per docs/agents/po/flow/zone-routing.md Step A2.",
-        "updated_by": "po/route-20260728T13"
-      },
-      {
-        "id": "TASK-COWORK-CATCHUP-9",
-        "title": "FR-10: Documentation updates and flow clarifications",
-        "type": "SPRINT-S",
-        "size": "S",
-        "priority": "P0",
-        "zone": "docs/",
-        "sprint": "COWORK-GUARANTEED-SLOT-CATCHUP",
-        "status": "BACKLOG",
-        "depends_on": [
-          "TASK-COWORK-CATCHUP-1",
-          "TASK-COWORK-CATCHUP-3",
-          "TASK-COWORK-CATCHUP-6"
-        ],
-        "created_at": "2026-07-22T22:12:59Z",
-        "created_by": "pm",
-        "updated_at": "2026-07-28T13:16:19Z",
-        "next_agent": "developer",
-        "po_routing_20260728": "PO 2026-07-28T13Z lane routing. pm's decomposition minted this row with next_agent unset, which no dispatch lane resolves (verified by executing scripts/lib/devteam-eligibility.jq predicates, not by reading the row). Handler = developer per docs/handoffs/TASK-COWORK-CATCHUP-10.md ('developer completes code TASK-1..9, then agent-father integrates this doc-only subtask') + docs/data/system-map.json scripts/ zone. dev-role next_agent + backlog lane = BOUNDED-1, per docs/agents/po/flow/zone-routing.md Step A2.",
-        "updated_by": "po/route-20260728T13"
-      },
-      {
         "id": "UC-CDC-P5",
         "type": "FIX",
         "title": "Make cowork/detect-loop re-arm self-healing without regressing TE-T01 or duplicating cron hosts",
@@ -12086,29 +11943,6 @@
         "resolved_by": "agent-father",
         "resolved_at": "2026-07-28T19:13:14Z",
         "journal_ref": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father.md"
-      }
-    ],
-    "done_verified": [
-      {
-        "title": "Extract assembleBriefing's 19 numbered steps into briefing/ query modules",
-        "priority": "P0",
-        "zone": "mcp-server-application",
-        "type": "FACTORY",
-        "status": "DONE_VERIFIED",
-        "id": "FACTORY-APP-split-assembleBriefing",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APP-split-assembleBriefing",
-        "promoted_at": "2026-07-28T19:17:29Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
-        "updated_at": "2026-07-28T20:17:56Z",
-        "claimed_at": "2026-07-28T19:17:33Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
-        "updated_by": "dev-mcp-server",
-        "entered_review_at": "2026-07-28T19:59:55Z",
-        "review_note": "dev-mcp-server COMPLETE: split _assembleBriefingImpl (1327L file, ~620L inline-SQL orchestration in one function) into usecases/briefing/ -- 24 single-owner modules (types.ts + 22 step/helper files) covering all 19 numbered steps + persist + freshness-gate. Sequencer now 72L. Per-step error isolation moved from centralized sequencer try/catch to inside each owning step module (same catch scope/log-ctx/fallback default). Public exports (DailyBriefing, AssembleBriefingOptions, defaultComputeTa, queryForeignFlowSummary_TEST, BEARISH_WARNING_THRESHOLD, TaSignal, GlobalSnapshot, BctcDeadlineRow, VnIndexSnapshot, BriefingAlert, TopStory, NewReport, WatchlistEntry) re-exported verbatim -- zero call-site edits across 27 dependent test files + 5 consumer modules. Dropped dead computeRSILocal (zero call sites, verified via repo-wide grep before removal). Verification: tsc clean; targeted 27-file briefing/TA suite 251 pass/1 fail before AND after (same pre-existing unrelated cron-expr test, zero net-new); full bun test 14844 pass/40 skip/57 fail/1 error across 1233 files, grepped all 57 fail lines to 17 unique files (none touching briefing/watchlist/TA/conviction/foreignFlow/insiderRecent), re-ran all 17 in isolation = 55/55 pass confirming standing FIX-MCP-SUITE-HEALTH-BASELINE order-dependent flakiness (dev-standards.md:590), not a regression; gen-project-stats toolCount=184/cronJobCount=88 unchanged; live server startup (PORT=3099, did not disturb the running :3000 production container) healthy, /health toolCount=184, scheduler 90 cron keys registered; /api/bctc-inspect + /dashboards/news-fetch/ both returned HTML (dashboard circular-dep check clean). Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md STEP dev-mcp-server-S14. Commit 4744b0792 (code) + 09ae11440 (memory). Ready for qa. NOTE: a concurrent shared-index write (unrelated po session content: signal-queue dispositions + a duplicate BACKLOG-row removal for this same task) landed bundled into the memory commit 09ae11440 due to a bare git-commit-after-git-add TOCTOU race -- content independently orch-validate.mjs-verified clean/non-destructive, no history rewrite performed per standing incident-handling precedent; flagging for awareness only. | [QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Verified commits 4744b0792 (code, 26 files: 24 briefing/ modules + types.ts + sequencer + usecases.md doc) + 09ae11440 (memory) + 7bb2a6784 (board flip) all on main ancestry. Independently re-ran: bun tsc --noEmit 0 errors; broader-than-claimed targeted suite (38 files matching assembleBriefing|briefing/, superset of devs claimed 27+5) = 366 pass/0 fail; mock-guard.sh PASS (26 files); DDD/security grep scans clean; gen-project-stats toolCount=184/cronJobCount=88 exact match; live health probe alt-port 3098 healthy (toolCount=184, dashboard 200), port freed after. Verified every non-types.ts module <=120L (max 107L), _assembleBriefingImpl body exactly 72L (lines 216-287), computeRSILocal zero live references (dead-code claim confirmed), all 5 consumer modules import assembleBriefing.js AND were untouched by the split commit (zero call-site churn independently confirmed via git show --name-only). Repo-wide full bun test attempted, killed at ~23% (284/1233 files) after ~8min under host load, non-blocking per pinned CANONICAL dev-standards.md:591 (targeted/merge-gate suite governs, repo-wide 0-fail permanently unsatisfiable per standing FIX-MCP-SUITE-HEALTH-BASELINE). 09ae11440 TOCTOU incident not re-litigated per dispatch note (already tracked: FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD + -LAYER2). DJ-GATE-1: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa.md STEP qa-S4. head untouched (owned by unrelated in_progress task TASK-COWORK-CATCHUP-2).",
-        "qa_verified_at": "2026-07-28T20:17:55Z",
-        "qa_verified_by": "qa"
       },
       {
         "id": "TASK-COWORK-CATCHUP-2",
@@ -12118,13 +11952,13 @@
         "priority": "P0",
         "zone": "scripts/agents-flow/",
         "sprint": "COWORK-GUARANTEED-SLOT-CATCHUP",
-        "status": "DONE_VERIFIED",
+        "status": "DONE",
         "depends_on": [
           "TASK-COWORK-CATCHUP-1"
         ],
         "created_at": "2026-07-22T22:12:59Z",
         "created_by": "pm",
-        "updated_at": "2026-07-28T20:36:18Z",
+        "updated_at": "2026-07-28T20:39:16Z",
         "next_agent": "qa",
         "po_routing_20260728": "PO 2026-07-28T13Z lane routing. pm's decomposition minted this row with next_agent unset, which no dispatch lane resolves (verified by executing scripts/lib/devteam-eligibility.jq predicates, not by reading the row). Handler = developer per docs/handoffs/TASK-COWORK-CATCHUP-10.md ('developer completes code TASK-1..9, then agent-father integrates this doc-only subtask') + docs/data/system-map.json scripts/ zone. dev-role next_agent + backlog lane = BOUNDED-1, per docs/agents/po/flow/zone-routing.md Step A2.",
         "updated_by": "qa",
@@ -12139,8 +11973,30 @@
         "review_note": "developer: Wired TASK-COWORK-CATCHUP-1's cowork-catchup-predicate.js into cowork-match-slots.js's CLI entrypoint (require.main===module block only) -- additive conditional require(./cowork-catchup-predicate.js), mirrors the existing cadence-policy.js pattern. Computes catchup_raw = computeCatchupCandidates(sched, nowUnix, {excludeSlotIds: hits.map(slot_id)}, {field, dowMatch}) and adds it as a new top-level JSON stdout key -- the ONE shared computation all 3 downstream callers (dispatcher/tick-preflight/firer) will consume. Live-matched slots this tick (hits) are excluded so an on-time fire is never double-counted as its own catch-up candidate. matchSlots() (exported JS function used by tests) left byte-identical (NFR-2); module-unavailable path falls back to catchup_raw=[] with a stderr WARN, never crashes.\\nRED confirmed live (git stash push scoped to only the source file, re-ran the new CLI-contract test blocks -> hard TypeError crash) before GREEN (stash pop, 43/43 assertions: 26 pre-existing unit tests unchanged + 4 new CLI-level blocks spawning the real CLI against an isolated mkdtemp harness with a controlled fixture -- field-presence/type, a real eligible candidate surfacing end-to-end, a real freshness_window_exceeded candidate, missing-module graceful fallback -- all deterministic regardless of wall-clock via a catchup_max_lateness_minutes:999999/:-1 construction). Sibling cowork-catchup-predicate.test.js 34/34 unchanged (file untouched). bun tsc --noEmit 0 errors (plain .js, outside tsconfig include, same AC-10 posture as CATCHUP-1). docs/agents/cowork-team/flow/match-slots.md updated to document the new catchup_raw field shape (consumption wiring deferred to a later sprint task per architecture brief, not this task's AC).\\nCommits: c5e7c6747 (code+test), fd5d4565e (docs). No apps/mcp-server/ files touched (scripts/agents-flow/ + docs/ only) -- bun tsc/bun test ran anyway for an honest baseline per task rules. | [QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Independently verified all 4 commits (c5e7c6747 code+test / fd5d4565e docs / 64c41a6e0 board-move / d7330d539 memory) on both local main AND origin/main ancestry -- zero peer-sweep, each commit's file-list matches its claimed scope exactly (git show --stat), matches developer journal STEP developer-S16 verbatim. NFR-2 (matchSlots byte-identical) verified LITERALLY -- diffed pre/post cowork-match-slots.js at git show c5e7c6747^ vs c5e7c6747: lines 1-298 (incl. matchSlots() fn body + module.exports) byte-identical MD5, sole diff is 22 additive lines inside the require.main===module CLI block. Ran node cowork-match-slots.test.js myself: 43/43 pass. Reproduced RED independently (git show c5e7c6747^ source file swapped in, test file kept HEAD) -- hard TypeError crash on TC-25 exactly as claimed, restored to byte-identical HEAD after (empty git diff). Sibling cowork-catchup-predicate.test.js re-run 34/34 green, file untouched by this commit (confirmed via git show --stat). bun tsc --noEmit (apps/mcp-server) 0 errors. Docs spot-checked: match-slots.md Step2+3 documents catchup_raw shape+consumption-deferral exactly, WORK.md carries the 1-line summary. Exercised the fallback-on-missing-module path directly (not just via the test) in an isolated scratch dir with the predicate file deleted -- exits 0, catchup_raw:[], stderr WARN, never crashes. Live-ran the CLI against the real production schedule -- output matches documented schema exactly, no crash. Grep scans (infra/application imports, process.env, secrets) clean on both touched files; mock-guard.sh PASS. Confirmed developer's commit-mutex-exemption claim is a real structural constraint, not an excuse: .claude/agents/developer.md frontmatter tools grant is literally 'Read, Edit, Write, Glob, Grep, Bash' -- no MCP tool present, consistent with INV-GATEWAY-1; developer journal STEP developer-S16 independently corroborates the pathspec-scoped git add/commit + git diff --cached emptiness-check-before/after approach used in place of the mutex. orch-validate.mjs Stage0+1 PASS post-move. DJ-GATE-1: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa.md STEP qa-S5.",
         "qa_verified_at": "2026-07-28T20:35:33Z",
         "qa_verified_by": "qa"
+      },
+      {
+        "title": "Extract assembleBriefing's 19 numbered steps into briefing/ query modules",
+        "priority": "P0",
+        "zone": "mcp-server-application",
+        "type": "FACTORY",
+        "status": "DONE",
+        "id": "FACTORY-APP-split-assembleBriefing",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APP-split-assembleBriefing",
+        "promoted_at": "2026-07-28T19:17:29Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "updated_at": "2026-07-28T20:39:40Z",
+        "claimed_at": "2026-07-28T19:17:33Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "updated_by": "dev-mcp-server",
+        "entered_review_at": "2026-07-28T19:59:55Z",
+        "review_note": "dev-mcp-server COMPLETE: split _assembleBriefingImpl (1327L file, ~620L inline-SQL orchestration in one function) into usecases/briefing/ -- 24 single-owner modules (types.ts + 22 step/helper files) covering all 19 numbered steps + persist + freshness-gate. Sequencer now 72L. Per-step error isolation moved from centralized sequencer try/catch to inside each owning step module (same catch scope/log-ctx/fallback default). Public exports (DailyBriefing, AssembleBriefingOptions, defaultComputeTa, queryForeignFlowSummary_TEST, BEARISH_WARNING_THRESHOLD, TaSignal, GlobalSnapshot, BctcDeadlineRow, VnIndexSnapshot, BriefingAlert, TopStory, NewReport, WatchlistEntry) re-exported verbatim -- zero call-site edits across 27 dependent test files + 5 consumer modules. Dropped dead computeRSILocal (zero call sites, verified via repo-wide grep before removal). Verification: tsc clean; targeted 27-file briefing/TA suite 251 pass/1 fail before AND after (same pre-existing unrelated cron-expr test, zero net-new); full bun test 14844 pass/40 skip/57 fail/1 error across 1233 files, grepped all 57 fail lines to 17 unique files (none touching briefing/watchlist/TA/conviction/foreignFlow/insiderRecent), re-ran all 17 in isolation = 55/55 pass confirming standing FIX-MCP-SUITE-HEALTH-BASELINE order-dependent flakiness (dev-standards.md:590), not a regression; gen-project-stats toolCount=184/cronJobCount=88 unchanged; live server startup (PORT=3099, did not disturb the running :3000 production container) healthy, /health toolCount=184, scheduler 90 cron keys registered; /api/bctc-inspect + /dashboards/news-fetch/ both returned HTML (dashboard circular-dep check clean). Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md STEP dev-mcp-server-S14. Commit 4744b0792 (code) + 09ae11440 (memory). Ready for qa. NOTE: a concurrent shared-index write (unrelated po session content: signal-queue dispositions + a duplicate BACKLOG-row removal for this same task) landed bundled into the memory commit 09ae11440 due to a bare git-commit-after-git-add TOCTOU race -- content independently orch-validate.mjs-verified clean/non-destructive, no history rewrite performed per standing incident-handling precedent; flagging for awareness only. | [QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Verified commits 4744b0792 (code, 26 files: 24 briefing/ modules + types.ts + sequencer + usecases.md doc) + 09ae11440 (memory) + 7bb2a6784 (board flip) all on main ancestry. Independently re-ran: bun tsc --noEmit 0 errors; broader-than-claimed targeted suite (38 files matching assembleBriefing|briefing/, superset of devs claimed 27+5) = 366 pass/0 fail; mock-guard.sh PASS (26 files); DDD/security grep scans clean; gen-project-stats toolCount=184/cronJobCount=88 exact match; live health probe alt-port 3098 healthy (toolCount=184, dashboard 200), port freed after. Verified every non-types.ts module <=120L (max 107L), _assembleBriefingImpl body exactly 72L (lines 216-287), computeRSILocal zero live references (dead-code claim confirmed), all 5 consumer modules import assembleBriefing.js AND were untouched by the split commit (zero call-site churn independently confirmed via git show --name-only). Repo-wide full bun test attempted, killed at ~23% (284/1233 files) after ~8min under host load, non-blocking per pinned CANONICAL dev-standards.md:591 (targeted/merge-gate suite governs, repo-wide 0-fail permanently unsatisfiable per standing FIX-MCP-SUITE-HEALTH-BASELINE). 09ae11440 TOCTOU incident not re-litigated per dispatch note (already tracked: FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD + -LAYER2). DJ-GATE-1: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa.md STEP qa-S4. head untouched (owned by unrelated in_progress task TASK-COWORK-CATCHUP-2).",
+        "qa_verified_at": "2026-07-28T20:17:55Z",
+        "qa_verified_by": "qa"
       }
     ],
+    "done_verified": [],
     "head": {
       "status": "idle",
       "active_task_id": null,
@@ -13381,6 +13237,149 @@
           "docs/agents/dev-team/flow/drain-signals.md"
         ],
         "po_note_scope": "DOC/FLOW-ONLY — no app code. scripts/agents-flow/drain-signals.js is CORRECT per its own spec and MUST NOT be changed by this row. If a future design decision moves routing into the script, that is a separate architect-owned brief."
+      },
+      {
+        "id": "TASK-COWORK-CATCHUP-3",
+        "title": "FR-9b + FR-3 + FR-5: New catchup-check.md dispatcher sub-flow",
+        "type": "SPRINT-M",
+        "size": "M",
+        "priority": "P0",
+        "zone": "docs/agents/cowork-team/flow/",
+        "sprint": "COWORK-GUARANTEED-SLOT-CATCHUP",
+        "status": "READY",
+        "depends_on": [
+          "TASK-COWORK-CATCHUP-1",
+          "TASK-COWORK-CATCHUP-2"
+        ],
+        "created_at": "2026-07-22T22:12:59Z",
+        "created_by": "pm",
+        "updated_at": "2026-07-28T20:39:16Z",
+        "next_agent": "developer",
+        "po_routing_20260728": "PO 2026-07-28T13Z lane routing. pm's decomposition minted this row with next_agent unset, which no dispatch lane resolves (verified by executing scripts/lib/devteam-eligibility.jq predicates, not by reading the row). Handler = developer per docs/handoffs/TASK-COWORK-CATCHUP-10.md ('developer completes code TASK-1..9, then agent-father integrates this doc-only subtask') + docs/data/system-map.json scripts/ zone. dev-role next_agent + backlog lane = BOUNDED-1, per docs/agents/po/flow/zone-routing.md Step A2.",
+        "updated_by": "po/route-20260728T13"
+      },
+      {
+        "id": "TASK-COWORK-CATCHUP-4",
+        "title": "FR-9c: Extend cowork-tick-preflight.sh Step 6.5",
+        "type": "SPRINT-M",
+        "size": "M",
+        "priority": "P0",
+        "zone": "scripts/agents-flow/",
+        "sprint": "COWORK-GUARANTEED-SLOT-CATCHUP",
+        "status": "READY",
+        "depends_on": [
+          "TASK-COWORK-CATCHUP-1",
+          "TASK-COWORK-CATCHUP-2"
+        ],
+        "created_at": "2026-07-22T22:12:59Z",
+        "created_by": "pm",
+        "updated_at": "2026-07-28T20:39:16Z",
+        "next_agent": "developer",
+        "po_routing_20260728": "PO 2026-07-28T13Z lane routing. pm's decomposition minted this row with next_agent unset, which no dispatch lane resolves (verified by executing scripts/lib/devteam-eligibility.jq predicates, not by reading the row). Handler = developer per docs/handoffs/TASK-COWORK-CATCHUP-10.md ('developer completes code TASK-1..9, then agent-father integrates this doc-only subtask') + docs/data/system-map.json scripts/ zone. dev-role next_agent + backlog lane = BOUNDED-1, per docs/agents/po/flow/zone-routing.md Step A2.",
+        "updated_by": "po/route-20260728T13"
+      },
+      {
+        "id": "TASK-COWORK-CATCHUP-5",
+        "title": "FR-9d: Extend cowork-guaranteed-slot-firer.sh with MCP access",
+        "type": "SPRINT-M",
+        "size": "M",
+        "priority": "P0",
+        "zone": "scripts/agents-flow/",
+        "sprint": "COWORK-GUARANTEED-SLOT-CATCHUP",
+        "status": "READY",
+        "depends_on": [
+          "TASK-COWORK-CATCHUP-1",
+          "TASK-COWORK-CATCHUP-2"
+        ],
+        "created_at": "2026-07-22T22:12:59Z",
+        "created_by": "pm",
+        "updated_at": "2026-07-28T20:39:16Z",
+        "next_agent": "developer",
+        "po_routing_20260728": "PO 2026-07-28T13Z lane routing. pm's decomposition minted this row with next_agent unset, which no dispatch lane resolves (verified by executing scripts/lib/devteam-eligibility.jq predicates, not by reading the row). Handler = developer per docs/handoffs/TASK-COWORK-CATCHUP-10.md ('developer completes code TASK-1..9, then agent-father integrates this doc-only subtask') + docs/data/system-map.json scripts/ zone. dev-role next_agent + backlog lane = BOUNDED-1, per docs/agents/po/flow/zone-routing.md Step A2.",
+        "updated_by": "po/route-20260728T13"
+      },
+      {
+        "id": "TASK-COWORK-CATCHUP-6",
+        "title": "FR-7: Rewrite last-fired.md Step 5b as reconciliation logic",
+        "type": "SPRINT-M",
+        "size": "M",
+        "priority": "P0",
+        "zone": "docs/agents/cowork-team/flow/",
+        "sprint": "COWORK-GUARANTEED-SLOT-CATCHUP",
+        "status": "READY",
+        "depends_on": [
+          "TASK-COWORK-CATCHUP-1",
+          "TASK-COWORK-CATCHUP-3"
+        ],
+        "created_at": "2026-07-22T22:12:59Z",
+        "created_by": "pm",
+        "updated_at": "2026-07-28T20:39:16Z",
+        "next_agent": "developer",
+        "po_routing_20260728": "PO 2026-07-28T13Z lane routing. pm's decomposition minted this row with next_agent unset, which no dispatch lane resolves (verified by executing scripts/lib/devteam-eligibility.jq predicates, not by reading the row). Handler = developer per docs/handoffs/TASK-COWORK-CATCHUP-10.md ('developer completes code TASK-1..9, then agent-father integrates this doc-only subtask') + docs/data/system-map.json scripts/ zone. dev-role next_agent + backlog lane = BOUNDED-1, per docs/agents/po/flow/zone-routing.md Step A2.",
+        "updated_by": "po/route-20260728T13"
+      },
+      {
+        "id": "TASK-COWORK-CATCHUP-7",
+        "title": "FR-8: Apply per-dish-type fire_timeout_seconds config",
+        "type": "SPRINT-S",
+        "size": "S",
+        "priority": "P0",
+        "zone": "cross-service/",
+        "sprint": "COWORK-GUARANTEED-SLOT-CATCHUP",
+        "status": "READY",
+        "depends_on": [
+          "TASK-COWORK-CATCHUP-1",
+          "TASK-COWORK-CATCHUP-5"
+        ],
+        "created_at": "2026-07-22T22:12:59Z",
+        "created_by": "pm",
+        "updated_at": "2026-07-28T20:39:16Z",
+        "next_agent": "developer",
+        "po_routing_20260728": "PO 2026-07-28T13Z lane routing. pm's decomposition minted this row with next_agent unset, which no dispatch lane resolves (verified by executing scripts/lib/devteam-eligibility.jq predicates, not by reading the row). Handler = developer per docs/handoffs/TASK-COWORK-CATCHUP-10.md ('developer completes code TASK-1..9, then agent-father integrates this doc-only subtask') + docs/data/system-map.json scripts/ zone. dev-role next_agent + backlog lane = BOUNDED-1, per docs/agents/po/flow/zone-routing.md Step A2.",
+        "updated_by": "po/route-20260728T13"
+      },
+      {
+        "id": "TASK-COWORK-CATCHUP-8",
+        "title": "Test suite extension: AC-1..AC-12 coverage",
+        "type": "SPRINT-M",
+        "size": "M",
+        "priority": "P0",
+        "zone": "scripts/agents-flow/",
+        "sprint": "COWORK-GUARANTEED-SLOT-CATCHUP",
+        "status": "READY",
+        "depends_on": [
+          "TASK-COWORK-CATCHUP-1",
+          "TASK-COWORK-CATCHUP-4",
+          "TASK-COWORK-CATCHUP-5",
+          "TASK-COWORK-CATCHUP-6"
+        ],
+        "created_at": "2026-07-22T22:12:59Z",
+        "created_by": "pm",
+        "updated_at": "2026-07-28T20:39:16Z",
+        "next_agent": "developer",
+        "po_routing_20260728": "PO 2026-07-28T13Z lane routing. pm's decomposition minted this row with next_agent unset, which no dispatch lane resolves (verified by executing scripts/lib/devteam-eligibility.jq predicates, not by reading the row). Handler = developer per docs/handoffs/TASK-COWORK-CATCHUP-10.md ('developer completes code TASK-1..9, then agent-father integrates this doc-only subtask') + docs/data/system-map.json scripts/ zone. dev-role next_agent + backlog lane = BOUNDED-1, per docs/agents/po/flow/zone-routing.md Step A2.",
+        "updated_by": "po/route-20260728T13"
+      },
+      {
+        "id": "TASK-COWORK-CATCHUP-9",
+        "title": "FR-10: Documentation updates and flow clarifications",
+        "type": "SPRINT-S",
+        "size": "S",
+        "priority": "P0",
+        "zone": "docs/",
+        "sprint": "COWORK-GUARANTEED-SLOT-CATCHUP",
+        "status": "READY",
+        "depends_on": [
+          "TASK-COWORK-CATCHUP-1",
+          "TASK-COWORK-CATCHUP-3",
+          "TASK-COWORK-CATCHUP-6"
+        ],
+        "created_at": "2026-07-22T22:12:59Z",
+        "created_by": "pm",
+        "updated_at": "2026-07-28T20:39:16Z",
+        "next_agent": "developer",
+        "po_routing_20260728": "PO 2026-07-28T13Z lane routing. pm's decomposition minted this row with next_agent unset, which no dispatch lane resolves (verified by executing scripts/lib/devteam-eligibility.jq predicates, not by reading the row). Handler = developer per docs/handoffs/TASK-COWORK-CATCHUP-10.md ('developer completes code TASK-1..9, then agent-father integrates this doc-only subtask') + docs/data/system-map.json scripts/ zone. dev-role next_agent + backlog lane = BOUNDED-1, per docs/agents/po/flow/zone-routing.md Step A2.",
+        "updated_by": "po/route-20260728T13"
       }
     ],
     "review": [
