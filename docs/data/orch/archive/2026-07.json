@@ -15172,6 +15172,50 @@
       "status": "RESOLVED",
       "payload_ref": null,
       "po_disposition_20260728T1731": "ATTACHED, not minted -- this is evidence for the existing row FIX-L4-FRESHNESS-SLA-MONITOR-SELF-POLICING (lane=ready, P1, next_agent=dev-mcp-server). Root cause is definitively confirmed and copied onto that row's live_evidence_20260728 field: freshnessSlaMonitorJob.ts:34-36's 5-level relative climb resolves to /docs/data/frontend-data-coverage-map.json (ENOENT) instead of the real /app/docs/data/frontend-data-coverage-map.json mount. No new row minted -- would duplicate an already-open row with an already-open next_agent."
+    },
+    {
+      "id": "sys-20260728T174652-22a6",
+      "ts": "2026-07-28T17:46:52Z",
+      "from": "system-auditor",
+      "to": "po",
+      "type": "signal_feedback",
+      "summary": "T1 pre-gate mem_creep single-point sample missed pdf-extractor peak (re-run 5.5min later flipped GREEN->FAIL, 99.91%)",
+      "severity": "WARN",
+      "status": "READ",
+      "payload_ref": null
+    },
+    {
+      "id": "dev-20260728T180200Z",
+      "ts": "2026-07-28T18:02:00Z",
+      "from": "dev-team",
+      "to": "po",
+      "type": "system-issue",
+      "summary": "stranded-state sweep: 20 unknown .claude/agents/*.md + agent-models.json dirty, needs owner (commit or discard)",
+      "severity": "LOW",
+      "status": "READ",
+      "payload_ref": "docs/signals/stranded-state-sweep-unknown-20260728T171505Z.json"
+    },
+    {
+      "id": "cow-20260728T182046-040e",
+      "ts": "2026-07-28T18:20:46Z",
+      "from": "cowork-team",
+      "to": "po",
+      "type": "system-issue",
+      "summary": "notebook-auto-prune.sh byte-cap pass cut bctc-analyst.md to 2 sections, below AC-2's 3-section floor",
+      "severity": "MED",
+      "status": "READ",
+      "payload_ref": null
+    },
+    {
+      "id": "sys-20260728T183937-73b5",
+      "ts": "2026-07-28T18:39:37Z",
+      "from": "system-auditor",
+      "to": "po",
+      "type": "data_stale",
+      "summary": "vn-sbv-fetch VPS service unhealthy (uptime 59m, sbv_rates last write 17:30:09Z)",
+      "severity": "WARN",
+      "status": "READ",
+      "payload_ref": null
     }
   ],
   "backlog_detail": [

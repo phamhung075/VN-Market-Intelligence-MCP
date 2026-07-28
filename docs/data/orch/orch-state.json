@@ -2318,47 +2318,14 @@
         "po_disposition_at": "2026-07-28T14:53:00Z"
       },
       {
-        "id": "sys-20260728T174652-22a6",
-        "ts": "2026-07-28T17:46:52Z",
+        "id": "sys-20260728T191048-7f8f",
+        "ts": "2026-07-28T19:10:48Z",
         "from": "system-auditor",
         "to": "po",
         "type": "signal_feedback",
-        "summary": "T1 pre-gate mem_creep single-point sample missed pdf-extractor peak (re-run 5.5min later flipped GREEN->FAIL, 99.91%)",
+        "summary": "api-gateway A-01 FAIL: health endpoint CURL_ERR (timeout, self-resolved <15s)",
         "severity": "WARN",
-        "status": "READ",
-        "payload_ref": null
-      },
-      {
-        "id": "dev-20260728T180200Z",
-        "ts": "2026-07-28T18:02:00Z",
-        "from": "dev-team",
-        "to": "po",
-        "type": "system-issue",
-        "summary": "stranded-state sweep: 20 unknown .claude/agents/*.md + agent-models.json dirty, needs owner (commit or discard)",
-        "severity": "LOW",
-        "status": "READ",
-        "payload_ref": "docs/signals/stranded-state-sweep-unknown-20260728T171505Z.json"
-      },
-      {
-        "id": "cow-20260728T182046-040e",
-        "ts": "2026-07-28T18:20:46Z",
-        "from": "cowork-team",
-        "to": "po",
-        "type": "system-issue",
-        "summary": "notebook-auto-prune.sh byte-cap pass cut bctc-analyst.md to 2 sections, below AC-2's 3-section floor",
-        "severity": "MED",
-        "status": "READ",
-        "payload_ref": null
-      },
-      {
-        "id": "sys-20260728T183937-73b5",
-        "ts": "2026-07-28T18:39:37Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "data_stale",
-        "summary": "vn-sbv-fetch VPS service unhealthy (uptime 59m, sbv_rates last write 17:30:09Z)",
-        "severity": "WARN",
-        "status": "READ",
+        "status": "NEW",
         "payload_ref": null
       }
     ],
@@ -11450,6 +11417,22 @@
         "note": "System-auditor commit 7ee6eede5 (T1-PREGATE-SAMPLE-FREQ signal, 2026-07-28T17:51Z). Distinct from FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE (loop scope, already fixed) and FIX-AUDITOR-A30-VMHWM-VETO-TAUTOLOGY-FALSE-NEGATIVE (mcp-server veto tautology) — this is a NEW detector-methodology gap: a single sample can miss a transient memory peak, understating real risk during exactly the pdf-extractor P0 concurrency window (FIX-PDFX-TESSERACT-CONCURRENCY-VIOLATES-SINGLE-WORKER-INVARIANT). pdf-extractor's own memory condition is NOT re-signalled here — already owned by FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM.",
         "acceptance": "_check_mem_creep() in scripts/agents-flow/auditor-tier1-probe.sh takes N>=2 samples over a short window (or retries once before flipping ALL_GREEN) so a transient peak cannot be missed by a single unlucky sample; regression test reproduces the observed GREEN->FAIL flip scenario.",
         "updated_at": "2026-07-28T19:02:26Z"
+      },
+      {
+        "id": "FIX-AGENT-MODELS-NORMAL-PRESET-DRIFT",
+        "type": "FIX",
+        "title": "agent-models.json modes.normal.agents preset table drifted from live .claude/agents/*.md frontmatter for 3 agents (ops/po/semble-search) — switch-agent-models.sh normal silently mis-restores them",
+        "status": "BACKLOG",
+        "priority": "P3",
+        "size": "XS",
+        "zone": ".claude/",
+        "owner": "agent-father",
+        "created_at": "2026-07-28T19:13:14Z",
+        "created_by": "agent-father/UNBLOCK-AGENT-MODELS-SWITCH-COMMIT-DISPOSITION",
+        "origin_signal_id": "dev-20260728T180200Z",
+        "note": "Discovered while dispositioning UNBLOCK-AGENT-MODELS-SWITCH-COMMIT-DISPOSITION: after running `.claude/switch-agent-models.sh normal` to revert an uncommitted performance-mode test run, git diff vs HEAD was NOT empty for 3 files. Systematic scan of every modes.normal.agents key vs its live .claude/agents/<key>.md model: frontmatter found exactly 3 mismatches: ops (preset=sonnet, live=haiku), po (preset=haiku, live=opus), semble-search (preset=haiku, live=claude-haiku-4-5). Commit a98c47ce1s own message already flagged the ops/po instance as Known pre-existing drift left untouched (out of scope) -- semble-search is a newly-found third instance (likely because a98c47ce1 added it as one of 22 new keys but recorded the generic haiku preset value instead of the verbatim current frontmatter value claude-haiku-4-5 its own commit message claims was the convention used). Net effect: any future normal-mode switch silently downgrades po opus->haiku and semble-search claude-haiku-4-5->haiku, and changes ops haiku->sonnet, none of which match the agents current committed/intended model.",
+        "acceptance": "Decide per-agent which value is authoritative (live frontmatter, per a98c47ce1s own normal=verbatim current frontmatter model value convention for new entries -- so frontmatter should win) then edit modes.normal.agents.ops/po/semble-search in .claude/agent-models.json to match (ops->haiku, po->opus, semble-search->claude-haiku-4-5). Re-run `.claude/switch-agent-models.sh normal` afterward and confirm git diff on all .claude/agents/*.md + agent-models.json is empty (full clean round-trip). Commit the 1 file (agent-models.json only, explicit pathspec).",
+        "updated_at": "2026-07-28T19:13:14Z"
       }
     ],
     "closed_sprints": [
@@ -12101,6 +12084,30 @@
         "po_signoff_at": "2026-07-23T05:07:33Z",
         "po_signoff_by": "po",
         "po_signoff_verdict": "APPROVE — independent PO sign-off 2026-07-23T05:07:33Z. Re-read qa_reverify_20260723 (PASS; both QA gate passes clean, closes the single probe.sh:86 blocking issue). Confirmed probe.sh:86 carries the || fallback guard idiom matching :31/:66/:71/:92 (git show 685285a7c: single-file, 1 insertion/1 deletion). Forbidden files UNTOUCHED at HEAD + working-tree: tier1-probe.md logic, scripts/audits/verify-a30-mcp-memory-reclamation.sh, scripts/emit-audit-signal.sh, app code (git status clean). Detection-layer-only fix per brief docs/architecture-briefs/2026-07-23-auditor-a30-reclamation-gate-a21-windowed-restart.md; E-3 append-always observation-ledger contract preserved. Supervised converge pipeline design->impl->QA verify->QA delta re-verify->PO sign-off now fully closed. RESIDUAL non-blocking: field-acceptance of the >=85% deep-probe branch awaits the next live Tier-1 cycle at genuine mem pressure (cron-gated, monitored separately, not a gate on close)."
+      },
+      {
+        "id": "UNBLOCK-AGENT-MODELS-SWITCH-COMMIT-DISPOSITION",
+        "type": "UNBLOCK",
+        "status": "DONE",
+        "priority": "P3",
+        "size": "XS",
+        "zone": ".claude/agents/",
+        "owner": "po",
+        "next_agent": "agent-father",
+        "plan_only": false,
+        "supervised": false,
+        "created_at": "2026-07-28T19:00:26Z",
+        "created_by": "po/triage-20260728T1837",
+        "origin_signal_id": "dev-20260728T180200Z",
+        "title": "Verify + commit (or discard) the .claude/switch-agent-models.sh performance-mode output — 20 .claude/agents/*.md + .claude/agent-models.json dirty since ~17:xxZ today, PO forbidden from touching agent-definition files",
+        "note": "RAW-diffed all 21 files (repeat of PO's own 2026-07-28T17:35Z disposition, docs/agent-memory/decisions/po-decisions.md 'S3 — system-issue' entry — that entry recorded 'MINTED UNBLOCK -> agent-father' but the board write never actually landed; only the companion classifier task FIX-STRANDED-SWEEP-CLASSIFY-AGENT-MODEL-SWITCH made it to backlog. Files STILL dirty ~85min later per live git status, confirming the mint was a notebook-only artifact, not a board row — PO mint != board != dispatchable). Each file carries exactly a 1-line intentional edit: agent-models.json current_mode normal->performance; each agent .md model: frontmatter flipped per the performance preset (e.g. po.md opus->sonnet) via the already-shipped .claude/switch-agent-models.sh (landed a98c47ce1 + 289a9d8e2, both today). Per PO boundary_rules ('NEVER modify agent definition files — use agent-father for that'), PO does not commit/discard directly.",
+        "acceptance": "(1) Confirm whether current_mode=performance is the desired STANDING state (vs a stale one-off local test that should revert to normal). (2) If intended: commit all 21 files as ONE batch with an explicit pathspec commit (never bare — see FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD), e.g. 'chore(claude/agent-models): switch fleet to performance mode'. (3) If stale: run .claude/switch-agent-models.sh normal, verify git diff is then empty, note why performance mode was engaged. (4) Report disposition back to po in notebook.",
+        "updated_at": "2026-07-28T19:13:14Z",
+        "disposition": "STALE_ONE_OFF_TEST_REVERTED",
+        "resolution_note": "Investigated: no sprint/task/decision-journal anywhere declared intent to switch fleet to performance mode; last-committed current_mode was normal (README labels normal=production/default, performance=critical-task-specific/temporary); dirty-file mtime (18:25:02 CEST) landed ~82min after the switch-script fix commit 289a9d8e2 (17:03:21 CEST) whose own message says testing was done in an isolated sandbox copy, never touching real files -- pattern matches a live post-fix verification run on the real repo, not a deliberate standing-mode decision. Ran .claude/switch-agent-models.sh normal, then discovered it does NOT cleanly restore HEAD for 3 agents (ops/po/semble-search) due to pre-existing modes.normal.agents preset drift vs live frontmatter (a98c47ce1 commit message itself flagged ops/po drift as known-and-out-of-scope; semble-search drift newly found here). Restored exact HEAD content for those 3 files via git checkout -- <pathspec>. git diff on all 21 originally-flagged paths (.claude/agent-models.json + 20 .claude/agents/*.md) now empty, confirmed via git status --porcelain. Filed follow-up FIX-AGENT-MODELS-NORMAL-PRESET-DRIFT for the preset-table bug itself.",
+        "resolved_by": "agent-father",
+        "resolved_at": "2026-07-28T19:13:14Z",
+        "journal_ref": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father.md"
       }
     ],
     "done_verified": [],
@@ -13322,25 +13329,6 @@
         "sprint": "BACKLOG",
         "po_triage_20260722": "Bootstrap-deadlock break (PO triage 2026-07-22): this review-lane sweeper FIX was itself stranded in REVIEW because no review-lane sweeper exists (the very bug it fixes -- recursive deadlock). Moved REVIEW->BACKLOG so BOUNDED-1/RLC promote it via the existing backlog machinery when a WIP slot frees. Once built, this + its sibling sweeper drain the ~20 other owner-stranded REVIEW rows. PLAN-ONLY design: architect.",
         "po_triage_20260728": "[po 2026-07-28T16:59Z] Re-promoted BACKLOG->READY on fresh evidence, AC(3)-adjacent but not yet DONE_VERIFIED. Mechanism confirmed LIVE this tick: dev-team's own devteam-review-claim-qa-drain.jq fired and claimed UC-GCP-P8 (oldest PRIMARY row) per scripts/audits/devteam-review-lane-drain-report.sh, matching this row's SUGGESTED REMEDY exactly. So the drain STEP works. What it does NOT do is keep pace: PRIMARY (status==REVIEW && next_agent=='qa') was 32 at this row's 2026-07-21/22 baseline, is 83 today (ages 3-5d), net +51 in 6 days against a 1-row/tick drain that (per dev-team's own report) sits LAST in the head-idle fall-through chain (after BOUNDED-1/SLS/RLC) and therefore does not even fire every tick. This is a throughput/capacity gap in an already-shipped mechanism, not a re-open of the original \"no drain exists\" defect — do not conflate the two when scoping.\nSECONDARY set (status==REVIEW && next_agent!='qa', i.e. the null-next_agent subset this row's own 2026-07-21 AC-addition(1) flagged plus non-null non-qa owners like po/architect/dev-team/ba/ops) is now ~17-33 rows depending on exact predicate (dev-team counted 17+ excl. some; PO's own group_by this tick counted null=11 + agent-father=2 + architect=2 + ba=1 + dev-kinh-dich=1 + dev-team=8 + developer=1 + ops=4 + po=2 + router=1 = 33 non-qa review rows total), ages up to 18d (FIX-FOREIGN-FLOW-COVERAGE, OPS-BCTC-BANK-2025Q4-ENRICH-0ROW-REPARSE, RAG-FTS-BUILD-MEMORY-BOUND cited by dev-team). AC-addition(1) from 2026-07-21 asked for \"a defined destination\" for this subset — it still has NONE. This is the worse gap: zero automated sweep of any kind, not merely a slow one.\nDECISION FOR ARCHITECT (2 candidate remedy shapes, PO does not pick — architecture call): (a) raise the PRIMARY drain's per-tick cap (parallel-claim N-oldest instead of 1) and/or move it earlier in the head-idle fall-through chain so it fires more reliably; (b) build an equivalent age-ordered sweep for the SECONDARY set, routing each row to its own next_agent's normal triage surface (or to po/architect stale-review triage if next_agent is null) rather than to qa. Do NOT let (b) silently piggyback on the qa-drain script's qa[] destination — SECONDARY rows are not qa-ready by definition (next_agent says so).\nDoD: review[] PRIMARY count trending down (not just non-increasing) across 5 consecutive dev-team ticks with drained ids named, AND a SECONDARY drain step exists and has drained >=1 row with the same evidence standard. Source: scripts/audits/devteam-review-lane-drain-report.sh (already exists, PRIMARY/SECONDARY split) — reuse, do not re-invent.\n"
-      },
-      {
-        "id": "UNBLOCK-AGENT-MODELS-SWITCH-COMMIT-DISPOSITION",
-        "type": "UNBLOCK",
-        "status": "READY",
-        "priority": "P3",
-        "size": "XS",
-        "zone": ".claude/agents/",
-        "owner": "po",
-        "next_agent": "agent-father",
-        "plan_only": false,
-        "supervised": false,
-        "created_at": "2026-07-28T19:00:26Z",
-        "created_by": "po/triage-20260728T1837",
-        "origin_signal_id": "dev-20260728T180200Z",
-        "title": "Verify + commit (or discard) the .claude/switch-agent-models.sh performance-mode output — 20 .claude/agents/*.md + .claude/agent-models.json dirty since ~17:xxZ today, PO forbidden from touching agent-definition files",
-        "note": "RAW-diffed all 21 files (repeat of PO's own 2026-07-28T17:35Z disposition, docs/agent-memory/decisions/po-decisions.md 'S3 — system-issue' entry — that entry recorded 'MINTED UNBLOCK -> agent-father' but the board write never actually landed; only the companion classifier task FIX-STRANDED-SWEEP-CLASSIFY-AGENT-MODEL-SWITCH made it to backlog. Files STILL dirty ~85min later per live git status, confirming the mint was a notebook-only artifact, not a board row — PO mint != board != dispatchable). Each file carries exactly a 1-line intentional edit: agent-models.json current_mode normal->performance; each agent .md model: frontmatter flipped per the performance preset (e.g. po.md opus->sonnet) via the already-shipped .claude/switch-agent-models.sh (landed a98c47ce1 + 289a9d8e2, both today). Per PO boundary_rules ('NEVER modify agent definition files — use agent-father for that'), PO does not commit/discard directly.",
-        "acceptance": "(1) Confirm whether current_mode=performance is the desired STANDING state (vs a stale one-off local test that should revert to normal). (2) If intended: commit all 21 files as ONE batch with an explicit pathspec commit (never bare — see FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD), e.g. 'chore(claude/agent-models): switch fleet to performance mode'. (3) If stale: run .claude/switch-agent-models.sh normal, verify git diff is then empty, note why performance mode was engaged. (4) Report disposition back to po in notebook.",
-        "updated_at": "2026-07-28T19:02:26Z"
       }
     ],
     "review": [

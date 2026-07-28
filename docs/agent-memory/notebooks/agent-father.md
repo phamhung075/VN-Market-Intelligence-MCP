@@ -1,5 +1,22 @@
 # Agent Father — Notebook
 
+### Disposition (po/router-dispatched) 19:13 — 2026-07-28 UNBLOCK-AGENT-MODELS-SWITCH-COMMIT-DISPOSITION
+- Disposition for po: `current_mode: performance` was a **stale one-off local verification run**,
+  not the intended standing fleet state — no sprint/task/journal declared it, `README` labels
+  `normal` as production/default, and the dirty-file mtime lands ~82min after the switch-script fix
+  commit (289a9d8e2) whose own message says its test was sandbox-only, never touching real files.
+  Reverted (did NOT commit) all 21 files; `git diff`/`git status --porcelain` on
+  `.claude/agent-models.json` + the 20 `.claude/agents/*.md` paths is now empty.
+- `switch-agent-models.sh normal` alone did NOT clean the diff — found live `modes.normal.agents`
+  preset drift vs committed frontmatter for 3 agents (ops preset=sonnet/live=haiku,
+  po preset=haiku/live=opus, semble-search preset=haiku/live=claude-haiku-4-5; ops/po drift was
+  already flagged out-of-scope in a98c47ce1, semble-search is new). Restored true HEAD via
+  `git checkout -- <exact 3 paths>`. Filed `FIX-AGENT-MODELS-NORMAL-PRESET-DRIFT` (P3/XS/backlog,
+  owner agent-father) so this doesn't silently bite the next real `normal`-mode switch.
+- Board: `UNBLOCK-AGENT-MODELS-SWITCH-COMMIT-DISPOSITION` `ready[]`→`done[]` (DONE) + new FIX row
+  minted into `backlog[]`, same `orch-apply.sh` write. Journal:
+  `docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father.md` §agent-father-S1.
+
 ### Edit (qa) 06:55 — 2026-07-25 qa-flow-quality-audit-checklist-freshness (router-dispatched)
 - Task: "QA adds+verifies quality-audit checklist items, driven by architect doc + freshness
   demand, mints dev-team task for gaps" existed only as an ephemeral router spawn prompt (zero

@@ -48,15 +48,15 @@
 
 ---
 
-## Anomaly: A-12 · api-gateway health endpoint CURL_ERR
-**Severity:** WARN | **Date:** 2026-07-21 | **Status:** OPEN  
-**Location:** api-gateway service (4000/health endpoint)  
-**Details:** Health endpoint returned CURL_ERR (connection failed or timeout from probing host)  
-**Impact:** Health aggregation for downstream services may be stale; affects cowork agent liveness detection  
-**Root cause:** Transient network issue or api-gateway process CPU stall; correlates with recurring A-12 pattern since 2026-07-20  
-**Zone owner:** dev-api-gateway  
-**Last reported:** 2026-07-20T06:12:10Z (dedup 7d)  
-**Mitigation:** Check api-gateway logs; restart if stall persists  
+## Anomaly: A-01 · api-gateway health endpoint CURL_ERR (recurring transient — SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP)
+**Severity:** WARN | **Date:** 2026-07-28 | **Status:** OPEN
+**Location:** api-gateway service (4000/health endpoint)
+**Details:** probe.sh single-probe CURL_ERR (--max-time 3) at 2026-07-28T19:07:5xZ. Corroborated via api-gateway's own internal request log: a `/health` request at 19:07:56.737Z logged `latency_ms=3006` — crosses the probe's 3000ms timeout by 6ms. 5x immediate manual re-checks all HTTP 200 (4-2000ms); docker inspect Health.Status=healthy throughout. Not a new mechanism — 10+ prior occurrences already tracked (SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP, architect, plan-only); devteam corroboration 2026-07-25 concluded this is a genuine intermittent api-gateway latency transient (not a real outage, not a pure probe-side FP) crossing a tight probe timeout.
+**Impact:** Health aggregation for downstream services may be transiently stale during the spike window; self-resolves within seconds. Recurring-FAILED-FIX class — the recommended N-consecutive debounce guard is not yet implemented in tier1-probe.md's general Health Endpoints check (only A-20/pdf-extractor has a multi-probe discriminator today).
+**Root cause:** api-gateway's /health handler fans out to 9 downstream service checks; latency is highly variable (observed 4ms-3006ms in the surrounding 5min log window) and occasionally exceeds the 3s probe timeout. Root-cause of the latency variance itself not yet diagnosed (SPIKE deliverable, unpicked).
+**Zone owner:** dev-api-gateway
+**Last reported:** 2026-07-28T19:10:48Z (signal sys-20260728T191048-7f8f, dedup_key=microservice_degraded:api-gateway:A-01, SKIP-dedup — last BUG telegram 2026-07-22T01:41:24Z, still within 7d window)
+**Mitigation:** No new action — evidence-attach to open SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP (architect, plan-only). Do NOT restart (AUD-ND-1).
 
 ---
 
