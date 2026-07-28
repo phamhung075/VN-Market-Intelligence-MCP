@@ -51,6 +51,8 @@ Get watchlist for cross-referencing tickers:
 call_tool(server="vn-market", tool="get_watchlist", arguments={})
 ```
 
+**Authoritative score note:** when `newsText` is a manually-composed headline/summary (not the raw article body), `run_impact_chain`'s own root-entry `impact`/`confidence` is frequently lower than the original `fetch_and_analyze` per-article `impactScore` (the recompute loses source-text signal). Treat `run_impact_chain` as the tool for **cascade discovery** (which watchlist tickers + sectors are affected, and in which direction) — the `impactScore` from `fetch_and_analyze` remains authoritative for `urgent_news`/`chain_catalyst` threshold decisions unless `run_impact_chain` scores *higher*.
+
 **PMI leading indicator detection:**
 - Extract Vietnam Manufacturing PMI value from news (S&P Global, published 2nd–3rd of each month)
 - If PMI < 50 AND previous month PMI also < 50 → set `gdp_warning_signal=true` in signal `finding_data`

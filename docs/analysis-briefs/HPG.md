@@ -16,3 +16,5 @@
 2026-07-01 16:00 | Close: 23,450 VND (+0.64%) | RSI: 39.9 (oversold) | Vol: N/A | YoY: N/A | Regime: Neutral, HIGH news_mention on UOB Sg investment in HCMC | Brief action: Watch — Brent stable, structural steel demand support
 2026-07-02 16:00 | Close: 23,400 VND | RSI: 50 | Vol: 13.37M (+18.7% avg) | YoY: -1.3% | Sentiment: Neutral | Brief action: Hold (stable, elevated volume support) | Regime: NEUTRAL
 2026-07-24 16:00 | Close: 20,800 VND (+0.00%) | RSI: 22.2 | Vol: 18.9M (92% avg) | YoY: -32.1% | Anomaly: YES — deeply oversold (RSI<25); steel sector -3.30% avg broad decline; foreign liquidation 1.4T VND; support at 20.1k; buy-dip opportunity for structural Brent-linked recovery
+
+2026-07-28 16:16 | Close: 21,000 VND (+3.19%) | RSI: 32.6 (oversold) | Vol: 29.15M (+27% vs 20d avg) | YoY: N/A | Anomaly: YES — bounce conflicts with 24h MEDIUM alert of ~3,000bn VND foreign net-sell in a VN30 name (HPG); MA5<MA20<MA50 downtrend intact (Tổng thể: GIẢM) | Insider: no activity | Regime: NEUTRAL | Brief action: Hold — bounce vs large foreign sell-off, mixed

@@ -89,6 +89,12 @@ Each ESC check is independent. Any single TRUE fires Opus deep-dive. Gate does N
     (existing_refine_status={existing_refine_status}) — skipping.`
   - `report_id != null` → proceed to the `get_bctc_refined` call below with the resolved `report_id`.
 - Call: `get_bctc_refined(report_id)` (tool #141, live per AR-MCP commit 76a3b8d2).
+  **Large-payload note (live-verified 2026-07-28):** for reports with many prose-heavy refine
+  units (e.g. FPT's 15 units incl. full company-registry notes), the gateway response can exceed
+  the per-call token cap and error with "result exceeds maximum allowed tokens" — the full payload
+  is still auto-saved to a local tool-results file referenced in that error message. This is NOT a
+  tool failure: `Read` that file in sequential ≤60-line chunks (offset/limit) to extract each
+  unit's `confidence` field rather than treating the error as ESC-5=FALSE.
 - If no rows returned → ESC-5 = FALSE (refine not yet run for this report — graceful, no error).
   Log: `[ESC-5] bctc_refined_units empty for {report_id} — skipping.`
 - If rows returned: check each unit's `confidence` field.

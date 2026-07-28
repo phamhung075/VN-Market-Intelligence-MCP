@@ -75,4 +75,6 @@ git_commit_retry -m "chore(memory/market-session-eod): notebook YYYY-MM-DD cycle
 > `git_commit_retry` idiom: retry up to 3× on `HEAD.lock` / `index.lock` only — see `docs/protocols/head-lock-self-cure.md` § F4.
 > If commit fails after retries: log to BUG channel + `send_telegram(channel="bug", message="[eod] notebook batch commit failed — manual recovery needed: docs/protocols/head-lock-self-cure.md")`. Notebook writes are on disk; git loss window is bounded to this market session.
 
+> ⚠ TRANSPORT GAP (open 2026-07-25, same root cause as cycle.md Step 0-sweep/5c — see `.claude/agents/market-watcher.md:5`): this agent holds no Bash and cannot run `git add`/`git_commit_retry` directly. Until a Bash-capable caller wires this in (governance decision pending), SKIP this step entirely and log `[git-commit-skipped: no-transport]` on the Step C WORK ping — do NOT fabricate the commit or silently drop the note. Ledger + signal file writes (Steps A/B) are unaffected; only the git-commit bookkeeping is deferred.
+
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`

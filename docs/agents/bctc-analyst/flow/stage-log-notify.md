@@ -33,6 +33,16 @@ git add docs/agent-memory/notebooks/bctc-analyst.md
 git commit -m "chore(memory/bctc-analyst): notebook YYYY-MM-DD"
 ```
 
+**5d-1. Published-marker guard (dedup vs peer double-post of the same slot's WORK telegram)** —
+established practice since c120, not previously documented here:
+```
+task_claim(task_id="published:bctc-analyst-<slot_id>:<cycle_tick_ISO>", task_kind="sprint-task",
+  owner_agent="bctc-analyst", owner_client_session=$CLAUDE_CODE_SESSION_ID, ttl_seconds=3600)
+```
+`claimed:true` → proceed to 5e (WORK telegram). `claimed:false` (peer already posted this slot) →
+skip 5e, log `"[bctc-analyst] published-marker held by peer — WORK telegram skipped this cycle"` to
+notebook carry-over instead.
+
 **5e. WORK** — `send_telegram(channel="work", message=...)`:
 
 Routine-only format:
