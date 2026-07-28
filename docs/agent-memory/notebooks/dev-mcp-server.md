@@ -1,19 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-07-25 — FIX-PREDCLAIM-BACKFILL-NULL-CREATIONPRICE (P0 TIME-CRITICAL, deliverable (a) standalone) → REVIEW, next_agent=qa
-
-**Session:** e3a3f331-f086-4c43-bd81-f40de22ef599. PO ruling 2026-07-25T12:07Z removed this row's `depends_on` (producer fix in REVIEW, REBUILD_REQUIRED/user-gated, unsatisfiable before the 2026-07-28T16:35Z resolution tick) and narrowed scope to deliverable (a) ONLY — backfill `creation_price` for the 5 still-PENDING claims (ids 13-17). Deliverables (b) reconstruct-the-6-excluded and (c) machine-readable exclusion reasons explicitly deferred, not started.
-
-New generic script `scripts/migrations/backfill-predclaim-creation-price.ts` (no ticker/date/id literals): selects `prediction_claims` rows `creation_price IS NULL AND is_excluded=0`, backfills from the EXACT-date `daily_ohlcv` close for that ticker on `created_at`'s trading date — no nearest-day fallback; a missing exact bar is left untouched and reported `disposition=no_bar` (never fabricated, negative-control unit-tested). Idempotent write guard (`WHERE creation_price IS NULL`).
-
-Ran dry-run → `--apply` via `docker cp`+`docker exec` against the live named-volume DB (no container rebuild/restart — permitted CANONICAL pattern, precedent: 10+ prior migration scripts in this flow doc). Result: 5/5 (ids 13,14,15,16,17 — VIC×4/VNM×1) backfilled with a real source bar each, cross-checked against the claim's own narrative price mentions (e.g. id16 "Giá hiện 213.100" == VIC 2026-07-24 close 213100; id15 "214.000đ phiên 23/7" == VIC 2026-07-23 close). Second dry-run confirms idempotent (0 candidates left).
-
-**Verification — LIVE served endpoint, not host-CLI** (per `feedback_host_cli_integrity_check_false_ok_verify_through_runtime`): `curl :3000/api/prediction-claims` (server's own long-lived connection, separate process from the docker-exec write) shows all 5 ids with non-null `creationPrice` matching the source bars exactly; `calibration.total` held at 17, `pending` held at 5, `excluded` held at 6 — no row dropped/status-flipped.
-
-Evidence: 14/14 new unit tests pass (31 expect() calls, incl. negative control + a regression-pin reproducing the exact 5 live source-bar values). Script persisted per Script Persistence policy + CANONICAL pointer added to `docs/agents/dev-mcp-server/flow/main.md`. No `apps/mcp-server/src/` files touched (pure data-migration script under `scripts/migrations/`) — G12 tsc/tool-count/scheduler-count gates N/A, unaffected by construction. Decision journal: `docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md` STEP dev-mcp-server-S10.
-
-Zone health: 5/5 pending rows backfilled + live-endpoint-verified before the 07-28 deadline, negative control passed (no fabrication), idempotent, deliverables (b)/(c) cleanly out of scope by query construction | HEALTHY.
-
 ## 2026-07-28 — FIX-POLLNEWS-COUNTER-CONSERVATION (router incident dispatch, news-ingestion-stall) → diagnosis + safe fix, no board row
 
 **Session:** e3a3f331-f086-4c43-bd81-f40de22ef599. Router brief claimed a 6.5h news-ingestion stall (last row 07:15:02Z) plus an unreconciled fetched/duplicates/inserted arithmetic gap. Investigated both; neither is what it looked like.
@@ -35,3 +21,13 @@ Zone health: tsc clean, 130/130 targeted green, full-suite zero net-new fail, to
 Tests: `FIX-BCTC-INGEST-PERIOD-IDENTITY-UNVALIDATED-VS-CONTENT.test.ts` 16/16 (domain unit + integration: AC-2 reject, AC-3 both negative controls, AC-4 slot-recovery, AC-5 regression) + `dedupe-mislabeled-bctc-period.test.ts` 14/14. tsc clean (0 errors). Server startup healthy, toolCount=184/cronJobCount=88 both match baseline exactly. Base-vs-head A/B on the full pre-existing 70-file/670-test BCTC corpus: 635 pass/34 fail/15 errors on BOTH — zero net-new failures (the 34/15 are pre-existing, unrelated `scanDiskForStrandedPdfs`/disk-scan failures, confirmed via git-stash A/B, not touched by this change). Docs: `usecases.md` + `financial-reports.md` (new invariant #10) + flow-doc CANONICAL pointer updated.
 
 Zone health: tsc clean, 30/30 new tests green, zero net-new regression (base-vs-head A/B verified), tool/cron counts unchanged, AC-1 DATA action live-applied + independently re-verified, time_gate respected (applied while still PENDING) | HEALTHY.
+
+## 2026-07-28 — FIX-BDI-SHIPPING-STALE-404-GUARD (UNBLOCK dispatch, PO ci_red root-cause) → QA, next_agent=qa
+
+**Session:** 64c7c677-0f0f-4cee-a3ce-dba79d70b7ae. Router UNBLOCK: PO root-caused (`po_ci_red_rootcause_20260725T1736`, re-triaged 07-28) a 3+ day CI RED (fingerprint bda56d1c/1a4cbfb0, 16+ consecutive fails) to a stale assertion in `1408-tool-diacritics.test.ts` case 5a — it still asserted the literal `"ổn định"` fake-conclusion string this same row's own already-landed guard fix (`646960658`) deliberately removed from `supplyChainTools.ts` when `indices=[]`.
+
+Verified live source first (not blind-swap, per PO instruction): `buildSupplyChainExposureOutput([],[],null)` reaches the `indices.length===0` branch and produces exactly PO's prescribed string (`"TỔNG KẾT: Không đủ dữ liệu vận tải biển hiện thời để kết luận..."`). Swapped the assertion + renamed the `it()` title; zero production-code touch — guard behaviour re-verified unchanged (stale/absent shipping input never reads as `ổn định`).
+
+Evidence: 1408 standalone 8/8 pass (was 7/1). Targeted/merge-gate suite (1408 + the 10 precedent-listed affected supply-chain/commodity/BDI suites) 115/115 pass, 0 fail. `bun tsc --noEmit` exit 0. `toolCount=184`/`cronJobCount=88` unchanged (test-only diff; confirmed via `gen-project-stats.ts` + running container `/health`). Repo-wide plain `bun test`: 14840 pass/40 skip/56 fail/1 error — standing `FIX-MCP-SUITE-HEALTH-BASELINE` red (dev-standards.md:590 pinned reading), confirmed unrelated (diff = 1 test file, 5 insertions/4 deletions, assertion-only; unrelated failures live in `src/_deprecated/`). Commit `9374e65e0` (explicit-path, test-only). Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md STEP dev-mcp-server-S12. Board row `task_board.review[]`→`task_board.qa[]` via `orch-apply.sh` in the same write (status QA, next_agent=qa); `.head` left untouched (already pointing at a different peer task, not this one).
+
+Zone health: tsc clean, 115/115 targeted-suite green, zero touch to production code, root-cause independently re-verified against live source (not PO's prose alone), full-suite red confirmed pre-existing/unrelated | HEALTHY.

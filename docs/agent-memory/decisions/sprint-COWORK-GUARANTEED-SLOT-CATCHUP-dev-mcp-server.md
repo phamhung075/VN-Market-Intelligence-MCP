@@ -110,3 +110,12 @@
 **why-decision:** live DB probe (not the reporter's relayed evidence) was decisive for AC-1: `md5sum` proved the two PDFs byte-identical and `bctc_vps_queue` proved the VPS-side root cause (wrong SSC URL association) — this ruled out "correct in place" (would collide) and confirmed "re-parent" as the only non-destructive, non-colliding remedy.
 **why-change:** none — PO's settled direction and open-choice framing were followed as specified; AC-1 executed BEFORE the code fix per the task's explicit `time_gate`, re-verified PENDING immediately before the apply run.
 
+### STEP dev-mcp-server-S12 · dev-mcp-server · 2026-07-28T17:20:14Z
+**task-id:** FIX-BDI-SHIPPING-STALE-404-GUARD
+**what-done:** Repaired the stale test regression PO root-caused (3+ day CI RED, fingerprint bda56d1c/1a4cbfb0): `1408-tool-diacritics.test.ts` case 5a still asserted the literal `"ổn định"` fake-conclusion string this row's own already-landed fix (`646960658`) deliberately removed from `supplyChainTools.ts` when `indices=[]`. Verified live source first (did not blind-swap): `buildSupplyChainExposureOutput([],[],null)` now reaches the `indices.length === 0` branch producing `"TỔNG KẾT: Không đủ dữ liệu vận tải biển hiện thời để kết luận..."`, exactly matching PO's prescribed string. Swapped the assertion + renamed the `it()` title; no touch to `supplyChainTools.ts`.
+**what-considered:**
+- Blind-swap the prescribed string vs re-verify against live code first — re-verified (ran the RED repro, read `buildSupplyChainExposureOutput`'s branch logic) since PO's note explicitly asked for confirmation before force-fitting; confirmed exact match, no discrepancy to report.
+- Deleting/skipping the assertion to reach green — rejected outright per PUSH-AUTONOMY-1 clause 2 (explicitly barred in PO's note); kept full diacritics coverage by asserting the new (still accented) string instead.
+**why-decision:** the guard behaviour itself (empty/stale shipping input → "Không đủ dữ liệu", never "ổn định") is unchanged and correct per the 07-25 root-cause; only the stale test assertion was repairing a defect that no longer exists in the code.
+**why-change:** none — PO's prescribed remedy matched live source exactly (`git diff` scope = test file only, 1 assertion + 1 title + 1 negative-control string).
+
