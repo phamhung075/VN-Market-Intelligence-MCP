@@ -193,3 +193,21 @@
 **what-considered:** only path — all three are dedup/confirm-no-change dispositions, not new decisions.
 **why-decision:** growth rate slow (+2), all root causes already tracked; re-prioritizing would not change dispatch order.
 **why-change:** no change from plan.
+
+### STEP po-S21 · po · 2026-07-28T19:56:00Z
+**task-id:** FIX-SIGNAL-ROUTING-ROWS-COVERAGE-GAP-DEEPDIVE
+**what-done:** Promoted existing row backlog->ready, low->P1, re-scoped to the catch-all silent-drop class after measuring 206/322 (64%) of drained signals hit "unknown type -> log and skip".
+**what-considered:**
+- Mint a NEW row for drain-signals.js ignoring the `to` field — REJECTED: drain-signals.md:152 makes PO the authoritative handler by design, so the script honours spec; blaming it would have been detector-blaming.
+- Add two table rows (context_bloat_breach, notebook_unparseable_breach) — REJECTED as whack-a-mole: the table structurally lags emitters, which is what produced the backlog.
+- Promote + re-scope the prior-art row to a route-by-`to` fallback — CHOSEN.
+**why-decision:** Prior art existed at priority low; minting a duplicate would re-strand it. Route-by-`to` fixes the class, not the instance, and the DB already persists `to` unused.
+**why-change:** Plan assumed a fresh mint; the board grep found prior art, so re-scope replaced mint.
+
+### STEP po-S22 · po · 2026-07-28T19:56:00Z
+**task-id:** FIX-SLA-SIGNALQUALITYAUDIT-MONTHLY-CADENCE-MISCLASSIFIED-48H
+**what-done:** Appended anti-false-green arithmetic — 73217min = 50.85d implies last artifact 2026-06-05, so a monthly job also missed its 2026-07-01 firing; two stacked defects, row named only one.
+**what-considered:**
+- only: the row as written invites a threshold-widening close that greens the board over a ~51-day-dead job.
+**why-decision:** Acceptance must assert threshold correctness AND job liveness separately, else the fix silences the breach instead of curing it.
+**why-change:** no change from plan.

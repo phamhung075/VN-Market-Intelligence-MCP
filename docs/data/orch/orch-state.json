@@ -419,11 +419,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-07-28T18:51:46Z",
-    "updated_by": "developer"
+    "status": "in_progress",
+    "active_task_id": "FACTORY-APP-split-assembleBriefing",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-APP-split-assembleBriefing — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-28T19:17:33Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2325,8 +2326,38 @@
         "type": "signal_feedback",
         "summary": "api-gateway A-01 FAIL: health endpoint CURL_ERR (timeout, self-resolved <15s)",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "READ",
+        "payload_ref": null,
+        "po_disposition": "TRANSIENT, NO MINT (2026-07-28T19:5xZ). A-01 api-gateway health CURL_ERR self-resolved <15s. Corroborated on the OTHER plane before closing: `docker ps` shows vn-market-intelligence-mcp-api-gateway-1 'Up 13 days (healthy)' — no restart, no crash-loop, uptime spans the incident window. Single transient probe timeout, not a broken mechanism. No board row."
+      },
+      {
+        "id": "dev-20260728T192120Z",
+        "ts": "2026-07-28T19:21:20Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "stranded-state sweep: 12 unknown dirty paths need owner (4 flow docs + 8 analysis-briefs)",
+        "severity": "LOW",
+        "status": "READ",
+        "payload_ref": null,
+        "payload": {
+          "paths": [
+            "docs/agents/bctc-analyst/flow/main.md",
+            "docs/agents/bctc-analyst/flow/stage-log-notify.md",
+            "docs/agents/market-watcher/flow/eod.md",
+            "docs/agents/news-scout/flow/stage-sentiment.md",
+            "docs/analysis-briefs/HPG.md",
+            "docs/analysis-briefs/SSI.md",
+            "docs/analysis-briefs/VCI.md",
+            "docs/analysis-briefs/VIX.md",
+            "docs/analysis-briefs/HUT.md",
+            "docs/analysis-briefs/KDH.md",
+            "docs/analysis-briefs/PDR.md",
+            "docs/analysis-briefs/VND.md"
+          ],
+          "dedup_key": "stranded-state-sweep-unknown"
+        },
+        "po_disposition": "DISPOSITIONED 2026-07-28T19:5xZ — split verdict; both halves COMMIT-AS-ROUTINE, neither is discard. (A) The 8 docs/analysis-briefs/*.md (HPG/SSI/VCI/VIX modified, HUT/KDH/PDR/VND untracked) are normal per-cycle cowork analysis output — routine churn, commit. (B) The 4 flow docs (bctc-analyst/flow/main.md +6L, bctc-analyst/flow/stage-log-notify.md +10L, market-watcher/flow/eod.md +2L, news-scout/flow/stage-sentiment.md +2L) are NOT churn: PO read all four diffs; each is a pure-addition, live-verified operational note of real value (gateway per-call token cap on get_bctc_refined + chunked-Read workaround; published-marker task_claim dedup guard practiced since c120 but undocumented; market-watcher no-Bash transport gap with an explicit do-not-fabricate instruction; run_impact_chain vs fetch_and_analyze score-authority rule). COMMIT THEM — discarding destroys live-verified operational knowledge. They are ALSO fresh evidence for GUARD-COWORK-NOTEBOOK-AGENTS-SELF-EDIT-FLOW-DOC (backlog/P1/architect), appended to that row this tick: cowork agents ARE self-editing their flow docs unsupervised and this batch sat ~3 days uncommitted (the market-watcher note self-dates 'open 2026-07-25'). (C) OUT-OF-SCOPE-BUT-SEEN, no new row: the same tree carries 15 uncommitted DELETIONS under docs/signals/processed/ (07-21 vintage) — already owned by UC-GCP-P3 (REVIEW/P1/qa, 'drain commit deletion drop: tracked-only pathspec sweep git add -u')."
       }
     ],
     "last_triaged_at": "2026-07-28T14:53:00Z",
@@ -6385,15 +6416,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APP-split-pollNews"
       },
       {
-        "title": "Extract assembleBriefing's 19 numbered steps into briefing/ query modules",
-        "priority": "P0",
-        "zone": "mcp-server-application",
-        "type": "FACTORY",
-        "status": "BACKLOG",
-        "id": "FACTORY-APP-split-assembleBriefing",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APP-split-assembleBriefing"
-      },
-      {
         "title": "Refactor assembleEveningSummary to reuse the shared briefing step modules",
         "priority": "P1",
         "zone": "mcp-server-application",
@@ -7376,15 +7398,6 @@
         "zone": "dev-mcp-server",
         "title": "momentumIndicatorsHandler.ts:270 computeForeignAccumRank({}) passes empty codes -> foreign_accum leg null on live (unset WATCHLIST_TICKERS env). Fix: pass {codes: watchlistCodes} like commit 73b82471, OR set WATCHLIST_TICKERS on stock-price container (root-fix for ALL {} callers).",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MOMENTUM-HANDLER-EMPTY-FOREIGN-ACCUM-CODES"
-      },
-      {
-        "id": "FIX-SIGNAL-ROUTING-ROWS-COVERAGE-GAP-DEEPDIVE",
-        "title": "FIX — add routing rows for signal types data-coverage-gap (→ops) + deep_dive_result (→po) in drain-signals.md §0a-3 + po/triage-signals.md (both currently hit the generic catch-all)",
-        "status": "BACKLOG",
-        "zone": "cross-service",
-        "priority": "low",
-        "type": "FIX",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-SIGNAL-ROUTING-ROWS-COVERAGE-GAP-DEEPDIVE"
       },
       {
         "id": "FIX-BCTC-ANALYST-STAGELOG-NOTIFY-NO-BASH",
@@ -8481,7 +8494,9 @@
         "supervised": true,
         "supervised_at": "2026-07-16T17:02:01Z",
         "supervised_by": "po (autolaunch_safety_hold adjudication, dev-team 16:37Z)",
-        "supervised_note": "BOUNDED-1 stopgap: plan_only design/spec ask with a non-dev board next_agent that leaks past the detail-only promote gates (inline plan_only + no backlog-detail entry). Held from idle auto-pickup so BOUNDED-1 reaches genuinely dev-routable rows. Deliberate router/ba/architect dispatch is UNAFFECTED. Durable structural fix: FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE (once shipped this stamp is belt-and-suspenders)."
+        "supervised_note": "BOUNDED-1 stopgap: plan_only design/spec ask with a non-dev board next_agent that leaks past the detail-only promote gates (inline plan_only + no backlog-detail entry). Held from idle auto-pickup so BOUNDED-1 reaches genuinely dev-routable rows. Deliberate router/ba/architect dispatch is UNAFFECTED. Durable structural fix: FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE (once shipped this stamp is belt-and-suspenders).",
+        "updated_at": "2026-07-28T19:54:32Z",
+        "po_evidence_20260728": "FRESH CORROBORATION 2026-07-28T19:4xZ by po, from the dev-team stranded-state sweep (signal dev-20260728T192120Z). FOUR agent flow docs are sitting dirty and uncommitted, each edited by the very agent that runs it: docs/agents/bctc-analyst/flow/main.md (+6L), docs/agents/bctc-analyst/flow/stage-log-notify.md (+10L), docs/agents/market-watcher/flow/eod.md (+2L), docs/agents/news-scout/flow/stage-sentiment.md (+2L). PO read all four diffs. IMPORTANT NUANCE FOR WHOEVER TAKES THIS ROW — the content is GOOD, not vandalism: gateway per-call token-cap workaround for get_bctc_refined; a published-marker task_claim dedup guard described as 'established practice since c120, not previously documented here'; a market-watcher no-Bash transport gap carrying an explicit do-NOT-fabricate instruction; and a run_impact_chain-vs-fetch_and_analyze score-authority rule. All four are live-verified operational knowledge that would be destroyed by a blanket revert. So the guard this row designs must be a ROUTING guard (self-observed findings -> agent-father / architect for review-then-merge), NOT a write-block that silently discards field knowledge. Dwell time is the real defect: the market-watcher note self-dates 'open 2026-07-25', i.e. ~3 days uncommitted and invisible to everyone but a dirty-tree sweep."
       },
       {
         "id": "FIX-VNINDEX-CROSS-PLANE-PLAUSIBILITY-GATE",
@@ -9456,7 +9471,9 @@
         ],
         "created_at": "2026-07-21T19:29:49Z",
         "created_by": "po/triage-20260721T1907",
-        "updated_at": "2026-07-21T19:29:49Z"
+        "updated_at": "2026-07-28T19:54:32Z",
+        "next_agent": "agent-father",
+        "po_recheck_20260728": "RE-VERIFIED LIVE 2026-07-28T19:4xZ by po (7 days after mint; row sat BACKLOG with next_agent=null that entire time). PREMISE HOLDS, TWO CORRECTIONS. (a) MEASUREMENT REFRESHED: agent-father.md is now 343L / 30730 bytes (was 211L at mint), grep -c '^## ' STILL = 0, with 10 '### ' sections. Caps are 200L / 12000B, so overage is 143L / 18730B. The volume of history the AC-4 fallback would destroy has GROWN 62% while the row went unrouted. (b) TIMING PREDICTION REFUTED, HAZARD NOT REFUTED: the mint claimed the trap 'fires on agent-father's very next notebook write'. It did not — the file took multiple writes across 07-23 and 07-28 (newest '### Disposition ... 2026-07-28' at L3, oldest '### Edit 2026-07-21T19:13Z' still intact at L331) and history survived every one. Re-read of .claude/skills/notebook-write/SKILL.md explains why: AC-4 ('If grep -c \"^## \" returns 0 -> single Write to initialize') is a natural-language INSTRUCTION to the writing agent, not automated code, so it only detonates if the writing agent actually consults that branch. Correct characterisation: a LATENT, PROBABILISTIC instruction hazard, armed on every write, not a deterministic next-write detonation. P1 stands on the armed-hazard leg alone. (c) WHY NOBODY ACTED (new): the notebook-auto-prune hook has been emitting correctly all along — 4 signal PAIRS (07-23 x2, 07-25, 07-28), each carrying line_count/byte_count and reason='no ## section boundaries found; cannot safely prune' + action_required='manual_review', addressed to='claude-manager-helper'. NONE reached an owner. Root cause is neither this row nor the hook — it is the PO triage-table catch-all, promoted to P1/ready this same tick as FIX-SIGNAL-ROUTING-ROWS-COVERAGE-GAP-DEEPDIVE. Dispatch THAT first or this row simply gets re-stranded."
       },
       {
         "id": "DESIGN-ACCEPTANCE-WRITE-OWNERSHIP-DISPATCHER",
@@ -11281,12 +11298,13 @@
         "supervised": false,
         "created_at": "2026-07-28T17:03:55Z",
         "created_by": "po/triage-20260728T1637",
-        "updated_at": "2026-07-28T17:03:55Z",
+        "updated_at": "2026-07-28T19:56:04Z",
         "updated_by": "po",
         "title": "sla-monitor grades signal_quality_audit (a monthly cron, 0 0 1 * *) against a 48h event-driven SLA — CRITICAL breach fires almost permanently; 37 unresolved alerts 2026-07-26->07-28, staleness climbing 73217->76067min (~52.8d), longer than even a working monthly cadence explains — job may also be genuinely dead since ~2026-06.",
         "status_note": "MECHANICALLY VERIFIED (not inferred) from list_unresolved_reports() this tick: 37 unresolved [sla-monitor] CRITICAL breach alerts for signal_quality_audit, every hour from 2026-07-26T16:30:03Z (stale=73217min) through 2026-07-28T16:00:09Z (stale=76067min, still climbing), threshold constant at 2880min (48h) throughout — none marked resolved. Telegram report id 3838 (created 2026-07-26T16:30:03Z, status=new, unclaimed) is the first of this run.\nROOT-CAUSE HYPOTHESIS, read at source, TWO SEPARATE DEFECTS COMPOUNDING:\n(1) MISCLASSIFICATION: apps/mcp-server/src/scheduler/system/freshnessSlaMonitorJob.ts:97 comments signal_quality_audit as \"event-driven; 48h SLA\" — but cronConfig.ts:129 + schedulerJobTable.ts:227-233 register it as monthlySignalQualityAuditJob, cron `0 0 1 * *` (1st-of-month only). A monthly-cadence job graded against a 48h SLA is CRITICAL for ~28 of every ~30 days even when working correctly — same defect class as FIX-SLA-BCTC-THRESHOLD-TRACKS-STALENESS-NOT-CONSTANT (this file, adjacent metric) though the specific mechanism differs (there: threshold itself computed, not constant; here: a correct constant threshold applied to the wrong cadence class).\n(2) POSSIBLY-DEAD JOB ON TOP OF THAT: even a perfectly-functioning monthly cron caps observed staleness at ~31 days; 76067min = 52.8 days and climbing means the job has NOT fired since ~2026-06-06 — it should have fired 2026-07-01 and did not. schedulerJobTable.ts:227 registers this job with `recoverMissedExecutions: false` (explicit opt-out, code comment: \"recovery is opt-out here until a T4 dedup guard is added ... in a future sprint\") — if the mcp-server process was down/restarting at exactly 2026-07-01T00:00 UTC (this repo rebuilds/restarts containers frequently per ops history), that month's run is silently and permanently skipped, with zero recovery and zero distinguishing alert from \"normal quiet month\".\nREMEDY (direction, not fully prescribed): (a) give signal_quality_audit its own SLA class/threshold sized to the monthly cadence (e.g. ~35-40d grace, mirroring how bond_maturity already gets a 168h/7d threshold for its own weekly cadence in the SAME file) instead of the shared 48h \"event-driven\" bucket; (b) verify at source whether the 2026-07-01 fire actually ran (check logs/audit table for a row near that date) — if missed, this is the concrete, datable instance the code comment already anticipated, and argues for pulling the deferred T4 dedup/recovery guard forward rather than leaving it another sprint.\nACCEPTANCE: (1) signal_quality_audit threshold no longer fires CRITICAL merely for being mid-cycle on a working monthly cadence — assert against a fixture where MAX(created_at) is 20 days old (should NOT breach) and 40 days old (SHOULD breach); (2) confirm/refute at source whether the 2026-07-01 run actually executed — state the finding in the closing report, do not guess; (3) if confirmed missed, either backfill a corrective run or file the recoverMissedExecutions follow-up explicitly (do not silently leave both defects unaddressed).\nNOT BLOCKING: unlike ci_red, this does not gate any push or pipeline — P2, no urgency beyond \"alert trust\" (memory: feedback_passive_health_masks_dead_data). baseline_pass note: cd apps/mcp-server && bun test is RED right now for the SAME unrelated pre-existing reason as sibling row FIX-SLA-BCTC-THRESHOLD-TRACKS-STALENESS-NOT-CONSTANT (1408-tool-diacritics.test.ts stale assertion) — PO is routing that fix as UNBLOCK this same tick via FIX-BDI-SHIPPING-STALE-404-GUARD; re-check CI status before treating any bun-test red as this row's own regression.\n",
         "baseline_pass": "cd apps/mcp-server && bun test",
-        "origin_signal_id": "telegram:3838"
+        "origin_signal_id": "telegram:3838",
+        "po_evidence_20260728": "ANTI-FALSE-GREEN WARNING + ARITHMETIC, appended by po 2026-07-28T19:5xZ. LIVE OBSERVATION: Telegram report id 3838 (2026-07-26T16:30:03Z, from_agent=analysis-agent, still status=new) reads '[sla-monitor] CRITICAL breach: signal_quality_audit stale 73217min (threshold 2880min)'. THE ARITHMETIC THIS ROW IS MISSING: 73217min = 50.85 days; back-solving from the report timestamp puts the last signal_quality_audit artifact at 2026-06-05T20:13Z. TWO CONSEQUENCES THE CURRENT ROW TITLE HIDES. (1) The stated cadence may be wrong: 2026-06-05 is not a 1st-of-month, so the artifact does not line up with the '0 0 1 * *' schedule this row asserts — confirm the real cadence from the live cron/scheduler before tuning anything. (2) THE JOB ALSO APPEARS GENUINELY DEAD, independent of the threshold bug: a monthly job last seen 2026-06-05 should have produced another artifact on 2026-07-01. It did not. So there are TWO defects stacked here and this row only names one. DO NOT CLOSE BY WIDENING THE THRESHOLD ALONE. A fixer who simply relabels the threshold from 2880min to a monthly value will produce a green board while a ~51-day-dead job stays dead — and if the chosen value carries any grace beyond 31 days, the breach signal is permanently silenced instead of fixed. ACCEPTANCE MUST INCLUDE a live probe showing a NEW signal_quality_audit artifact produced AFTER the fix, with its own timestamp — not merely that the CRITICAL alert stopped firing. Threshold correctness and job liveness must be verified as two separate assertions."
       },
       {
         "id": "FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM",
@@ -13225,10 +13243,11 @@
         "note": "Highest-leverage of the freshness residuals: the runtime self-policing the user really wants ('the audit auto-catches stale data'). Promoted from backlog by po after prior-art: the FFT sprint that owned this anchor is CLOSED (TASK-FFT-L4 DONE), so scope is verify-live + wire-if-missing, NOT fresh build. Complements dev-frontend's in-flight audit-time gen-frontend-page-checks.mjs upgrade (audit-time probe). Note: quality-audit checklist base is 45d stale (generated_at 2026-06-10); dev-frontend regenerating now.",
         "created_at": "2026-06-27T00:00:00Z",
         "created_by": "po (FFT anchor)",
-        "updated_at": "2026-07-28T17:35:17Z",
+        "updated_at": "2026-07-28T19:56:04Z",
         "updated_by": "po (triage-20260728T1731 -- attached live evidence from signal sys-20260728T171555-7cb3, root cause now definitively known, no lane/priority/next_agent change)",
         "live_evidence_20260728": "From signal_queue row sys-20260728T171555-7cb3 (system-auditor -> po, WARN, 2026-07-28T17:15:55Z): VERIFIED ROOT CAUSE, definitively answers part of AC1/AC4. apps/mcp-server/src/scheduler/system/freshnessSlaMonitorJob.ts:34-36 builds a 5-level relative path climb from /app/src/scheduler/system/, resolving to /docs/data/frontend-data-coverage-map.json (confirmed ENOENT via docker exec ls) instead of the real mount /app/docs/data/frontend-data-coverage-map.json (confirmed present via docker exec ls). docker logs --since=6h on mcp-server shows 12 occurrences of '[sla-monitor] coverage-map second pass failed' at ~30min cadence -- i.e. AC1's 'invoked every tick' clause IS satisfied (the scheduler fires the second pass on schedule), but the job is structurally unable to read its own input, so it can never observe a real breach and can never satisfy AC2 (forced-breach test) as currently wired -- it fails toward silence, not toward false alarms. This is a ONE-LINE path fix (correct the relative climb to match the real /app/docs/data/... mount), not a re-investigation -- dev-mcp-server picking this up should fix the path first, then re-attempt AC2's forced-breach live test.",
-        "po_rootcause_20260728": "po 2026-07-28T17:35:16Z — RAW root-caused AC1 in advance, from system-auditor signal_feedback sys-20260728T171555-7cb3 (freshnessSlaMonitorJob coverage-map path climbs above /app -> ENOENT every ~30min, never reads input). Confirmed by source read: apps/mcp-server/src/scheduler/system/freshnessSlaMonitorJob.ts:34-37 COVERAGE_MAP_JSON_PATH = resolve(import.meta.dir, \"../../../../../docs/data/frontend-data-coverage-map.json\") — 5 levels up, correct ONLY for local monorepo depth (apps/mcp-server/src/scheduler/system/). Dockerfile COPYs apps/mcp-server/src/ directly to /app/src/ (2 levels shallower, no apps/mcp-server/ prefix — confirmed apps/mcp-server/Dockerfile:61) so in the running container the identical 5-up traversal climbs past /app entirely; caught by the non-fatal try/catch at :647-653 (console.warn \"[sla-monitor] coverage-map second pass failed (non-fatal)\"), so this is a SILENT, PERMANENT failure, never crash-visible. This directly explains AC1 (second pass never invokes checker on the live coverage map) and is the mechanical reason AC4 will find it unwired. Root-cause confirmed against sibling resolve() calls in the SAME file/codebase that get this right: schema.ts:43, coordinationStore.ts:57, qaResponderSpawner.ts:26 all use 3 \".\" relative to the PACKAGE root (apps/mcp-server locally == /app in container — both reachable, apps/mcp-server/docs is a symlink to ../../docs locally, docs/data is bind-mounted at /app/docs/data per docker-compose.yml) — freshnessSlaMonitorJob.ts is the one outlier using monorepo-root depth instead of package-root depth. FIX: change to 3 \"..\" from src/scheduler/system/ (resolve(import.meta.dir, \"../../../docs/data/frontend-data-coverage-map.json\")) or reuse the shared PROJECT_ROOT pattern already established in schema.ts. This narrows AC1+AC4 from exploratory verify-live to a near-1-line diagnosed fix — implementer should NOT need to re-diagnose wiring, just apply the path fix and confirm live per AC2. NOT re-minting a duplicate FIX row for this — folds directly into this row per existing prior-art dedup discipline."
+        "po_rootcause_20260728": "po 2026-07-28T17:35:16Z — RAW root-caused AC1 in advance, from system-auditor signal_feedback sys-20260728T171555-7cb3 (freshnessSlaMonitorJob coverage-map path climbs above /app -> ENOENT every ~30min, never reads input). Confirmed by source read: apps/mcp-server/src/scheduler/system/freshnessSlaMonitorJob.ts:34-37 COVERAGE_MAP_JSON_PATH = resolve(import.meta.dir, \"../../../../../docs/data/frontend-data-coverage-map.json\") — 5 levels up, correct ONLY for local monorepo depth (apps/mcp-server/src/scheduler/system/). Dockerfile COPYs apps/mcp-server/src/ directly to /app/src/ (2 levels shallower, no apps/mcp-server/ prefix — confirmed apps/mcp-server/Dockerfile:61) so in the running container the identical 5-up traversal climbs past /app entirely; caught by the non-fatal try/catch at :647-653 (console.warn \"[sla-monitor] coverage-map second pass failed (non-fatal)\"), so this is a SILENT, PERMANENT failure, never crash-visible. This directly explains AC1 (second pass never invokes checker on the live coverage map) and is the mechanical reason AC4 will find it unwired. Root-cause confirmed against sibling resolve() calls in the SAME file/codebase that get this right: schema.ts:43, coordinationStore.ts:57, qaResponderSpawner.ts:26 all use 3 \".\" relative to the PACKAGE root (apps/mcp-server locally == /app in container — both reachable, apps/mcp-server/docs is a symlink to ../../docs locally, docs/data is bind-mounted at /app/docs/data per docker-compose.yml) — freshnessSlaMonitorJob.ts is the one outlier using monorepo-root depth instead of package-root depth. FIX: change to 3 \"..\" from src/scheduler/system/ (resolve(import.meta.dir, \"../../../docs/data/frontend-data-coverage-map.json\")) or reuse the shared PROJECT_ROOT pattern already established in schema.ts. This narrows AC1+AC4 from exploratory verify-live to a near-1-line diagnosed fix — implementer should NOT need to re-diagnose wiring, just apply the path fix and confirm live per AC2. NOT re-minting a duplicate FIX row for this — folds directly into this row per existing prior-art dedup discipline.",
+        "po_evidence_20260728": "PARTIAL VERIFY-LIVE ANSWER, appended by po 2026-07-28T19:5xZ — this row's open question is whether the monitor 'actually runs and emits SLA-breach signals', noting it was 'never ... observed raising a breach'. IT HAS NOW BEEN OBSERVED. RAW: Telegram report id 3838, created_at 2026-07-26T16:30:03Z, from_agent=analysis-agent, text '[sla-monitor] CRITICAL breach: signal_quality_audit stale 73217min (threshold 2880min)'. So the emit path (monitor -> breach detection -> Telegram) is LIVE and does fire with real numbers attached. SCOPE LIMIT — do not over-read this: it evidences the sla-monitor emit path generally, NOT specifically the coverage-map checker (coverageMapFreshnessChecker.ts) that this row is actually about. The remaining VERIFY-LIVE burden is unchanged: confirm coverageMapFreshnessChecker is wired into freshnessSlaMonitorJob's scheduler and observe a COVERAGE-MAP breach specifically. Useful secondary signal for whoever takes this row: report 3838 has sat status=new since 07-26 with resolution=none, so even a correctly-emitted CRITICAL currently reaches no owner — see FIX-TELEGRAM-REPORT-ACK-STATUS-STOP-RESURFACE (P3) and FIX-SIGNAL-ROUTING-ROWS-COVERAGE-GAP-DEEPDIVE (P1/ready, promoted this tick). Emitting is only half the capability; nobody is receiving."
       },
       {
         "id": "FIX-COWORK-BASH-GRANT-COVERAGE-STAMP-TRANSPORT",
@@ -13329,6 +13348,26 @@
         "sprint": "BACKLOG",
         "po_triage_20260722": "Bootstrap-deadlock break (PO triage 2026-07-22): this review-lane sweeper FIX was itself stranded in REVIEW because no review-lane sweeper exists (the very bug it fixes -- recursive deadlock). Moved REVIEW->BACKLOG so BOUNDED-1/RLC promote it via the existing backlog machinery when a WIP slot frees. Once built, this + its sibling sweeper drain the ~20 other owner-stranded REVIEW rows. PLAN-ONLY design: architect.",
         "po_triage_20260728": "[po 2026-07-28T16:59Z] Re-promoted BACKLOG->READY on fresh evidence, AC(3)-adjacent but not yet DONE_VERIFIED. Mechanism confirmed LIVE this tick: dev-team's own devteam-review-claim-qa-drain.jq fired and claimed UC-GCP-P8 (oldest PRIMARY row) per scripts/audits/devteam-review-lane-drain-report.sh, matching this row's SUGGESTED REMEDY exactly. So the drain STEP works. What it does NOT do is keep pace: PRIMARY (status==REVIEW && next_agent=='qa') was 32 at this row's 2026-07-21/22 baseline, is 83 today (ages 3-5d), net +51 in 6 days against a 1-row/tick drain that (per dev-team's own report) sits LAST in the head-idle fall-through chain (after BOUNDED-1/SLS/RLC) and therefore does not even fire every tick. This is a throughput/capacity gap in an already-shipped mechanism, not a re-open of the original \"no drain exists\" defect — do not conflate the two when scoping.\nSECONDARY set (status==REVIEW && next_agent!='qa', i.e. the null-next_agent subset this row's own 2026-07-21 AC-addition(1) flagged plus non-null non-qa owners like po/architect/dev-team/ba/ops) is now ~17-33 rows depending on exact predicate (dev-team counted 17+ excl. some; PO's own group_by this tick counted null=11 + agent-father=2 + architect=2 + ba=1 + dev-kinh-dich=1 + dev-team=8 + developer=1 + ops=4 + po=2 + router=1 = 33 non-qa review rows total), ages up to 18d (FIX-FOREIGN-FLOW-COVERAGE, OPS-BCTC-BANK-2025Q4-ENRICH-0ROW-REPARSE, RAG-FTS-BUILD-MEMORY-BOUND cited by dev-team). AC-addition(1) from 2026-07-21 asked for \"a defined destination\" for this subset — it still has NONE. This is the worse gap: zero automated sweep of any kind, not merely a slow one.\nDECISION FOR ARCHITECT (2 candidate remedy shapes, PO does not pick — architecture call): (a) raise the PRIMARY drain's per-tick cap (parallel-claim N-oldest instead of 1) and/or move it earlier in the head-idle fall-through chain so it fires more reliably; (b) build an equivalent age-ordered sweep for the SECONDARY set, routing each row to its own next_agent's normal triage surface (or to po/architect stale-review triage if next_agent is null) rather than to qa. Do NOT let (b) silently piggyback on the qa-drain script's qa[] destination — SECONDARY rows are not qa-ready by definition (next_agent says so).\nDoD: review[] PRIMARY count trending down (not just non-increasing) across 5 consecutive dev-team ticks with drained ids named, AND a SECONDARY drain step exists and has drained >=1 row with the same evidence standard. Source: scripts/audits/devteam-review-lane-drain-report.sh (already exists, PRIMARY/SECONDARY split) — reuse, do not re-invent.\n"
+      },
+      {
+        "id": "FIX-SIGNAL-ROUTING-ROWS-COVERAGE-GAP-DEEPDIVE",
+        "title": "PO triage-table catch-all silently drops 64% of every drained signal (206/322 in the live 7d window) — the recipient declared in the signal's own `to` field is parsed and stored in signals.db, then discarded; fix = route-by-`to` fallback, not one-table-row-per-type whack-a-mole",
+        "status": "READY",
+        "zone": "cross-service",
+        "priority": "P1",
+        "type": "FIX",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-SIGNAL-ROUTING-ROWS-COVERAGE-GAP-DEEPDIVE",
+        "size": "S",
+        "owner": "agent-father",
+        "next_agent": "agent-father",
+        "updated_at": "2026-07-28T19:54:32Z",
+        "po_evidence": "QUANTIFIED RAW 2026-07-28T19:5xZ by po against docs/signals/signals.db (table signals_processed, 7-day retention = 322 rows). METHOD: DB `type` column cross-referenced against the routing table in docs/agents/po/flow/triage-signals.md. FINDING 1 — COVERAGE: only 3 drained types have a real table row (bctc_signal 110, ci_red 5, audit-handoff 1) = 116/322. The remaining 206/322 (64%) fall through to the terminal row 'any unknown `type` | any | Log \"[po] Unknown signal type ... payload retained\" and skip'. That row is a SILENT DROP: no durable artifact, no owner notification, nothing on the board. FINDING 2 — THE DROPPED POPULATION IS NOT NOISE: context_bloat_breach 90, cowork-fire 62, notebook_single_section_overage_breach 12, notebook_unparseable_breach 4, data-coverage-gap 3, esc-deep-dive-request 3, flow-defect-report 3, recurring-bug 3, system-issue 2, board_deadlock_finding 1, bug-escalation 1, deep_dive_result 1, plus dispatcher-telemetry variants. FINDING 3 — THE DECLARED OWNER IS PRESENT AND IS BEING DISCARDED: `SELECT to_agent, COUNT(*)` returns po 139, claude-manager-helper 106, dev-team 68, ops 4, architect 1, agent-father 1 — while `SELECT result, COUNT(*)` returns routed-to-po = 322/322 (100%). scripts/agents-flow/drain-signals.js:168 reads `const to = j.to ?? 'po'`, persists it to the DB to_agent column at :186, then never uses it again — :181 hardcodes `result = 'routed-to-po'` unconditionally. THIS IS NOT A SCRIPT BUG: docs/agents/dev-team/flow/drain-signals.md:152 states the design explicitly — 'All routed signals are appended to pendingSignals[] regardless of type — routing annotation is informational only; PO's triage-signals.md is the authoritative dispatch handler.' The script honours its spec. The defect is that the authoritative handler has no dispatch path for 64% of what it authoritatively handles. FINDING 4 — SATURATED GATE: `result` has exactly ONE distinct value across all 322 rows, so it carries zero bits and cannot discriminate — the same pattern SPIKE-SATURATED-COUNT-THRESHOLD-GATES-SWEEP (ready/P1) exists to sweep for. FINDING 5 — CONFIRMED DOWNSTREAM CASUALTY (not theoretical): the notebook-hygiene cluster (context_bloat_breach + notebook_single_section_overage_breach + notebook_unparseable_breach = 106 signals, ALL addressed to claude-manager-helper) is fully absorbed by the catch-all; its owner has received zero of the 106. Live consequence: docs/agent-memory/notebooks/agent-father.md grew 211L -> 343L (+62%) over 7 days while holding an armed AC-4 blank-state-overwrite hazard (FIX-NOTEBOOK-PRUNE-HEADING-LEVEL-MISMATCH, P1, BACKLOG/next_agent=null that whole period), and alert-commander.md reached a 119KB single blob (FIX-ALERT-COMMANDER-NOTEBOOK-SINGLE-BLOB-UNPRUNABLE, P2). Detection worked perfectly at every layer; only the actuator was blind.",
+        "acceptance": "(1) ROOT-CAUSE FIX, not whack-a-mole: replace the terminal 'any unknown type -> log and skip' row in docs/agents/po/flow/triage-signals.md with a route-by-declared-owner fallback — when a drained signal's type has no explicit table row, PO MUST emit a durable artifact addressed to the signal's own `to` value (a signal_queue row per .claude/skills/signal-dashboard/SKILL.md WRITE, or a .task_board.backlog[] row owned by `to`), falling back to log-and-skip ONLY when `to` is absent or unresolvable. Rationale: appending one table row per newly-observed type is exactly the failure mode that produced this backlog — the table will always lag the emitters. (2) Add EXPLICIT rows for the three notebook-hygiene types (context_bloat_breach, notebook_unparseable_breach, notebook_single_section_overage_breach) -> claude-manager-helper; they are 106/322 of live volume and have a named owner. (3) Keep this row's original scope: data-coverage-gap -> ops, deep_dive_result -> po. (4) DEDUP GUARD (mandatory): the fallback MUST dedup on (type, payload.file) or on fingerprint so a permanently-firing detector — context_bloat_breach fires ~90x/week across a handful of files — yields ONE open artifact per subject, not 90. Without this, the fix converts a silent drop into a board flood and will be reverted. (5) VERIFICATION GATE — must be a measurement, not prose: after the fix, re-run the FINDING-1 method (`sqlite3 docs/signals/signals.db \"SELECT type, COUNT(*) FROM signals_processed GROUP BY type\"` cross-referenced against the triage-signals.md table) and demonstrate that every type with count >= 3 in the window either has an explicit row or is provably covered by the route-by-`to` fallback WITH a durable artifact that actually exists on the board / in signal_queue. Citing the edited table alone is NOT acceptance — that is the false-green this row exists to kill.",
+        "files": [
+          "docs/agents/po/flow/triage-signals.md",
+          "docs/agents/dev-team/flow/drain-signals.md"
+        ],
+        "po_note_scope": "DOC/FLOW-ONLY — no app code. scripts/agents-flow/drain-signals.js is CORRECT per its own spec and MUST NOT be changed by this row. If a future design decision moves routing into the script, that is a separate architect-owned brief."
       }
     ],
     "review": [
@@ -16306,9 +16345,25 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-28T18:16:08Z",
+    "last_triaged_at": "2026-07-28T19:17:29Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "title": "Extract assembleBriefing's 19 numbered steps into briefing/ query modules",
+        "priority": "P0",
+        "zone": "mcp-server-application",
+        "type": "FACTORY",
+        "status": "IN_PROGRESS",
+        "id": "FACTORY-APP-split-assembleBriefing",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APP-split-assembleBriefing",
+        "promoted_at": "2026-07-28T19:17:29Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "updated_at": "2026-07-28T19:17:34Z",
+        "claimed_at": "2026-07-28T19:17:33Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
