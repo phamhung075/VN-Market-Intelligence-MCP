@@ -2353,6 +2353,17 @@
         "severity": "WARN",
         "status": "NEW",
         "payload_ref": null
+      },
+      {
+        "id": "rag-mem-ceiling-pinned-20260728T122201",
+        "ts": "2026-07-28T12:22:01Z",
+        "from": "router",
+        "to": "po",
+        "type": "system_issue",
+        "severity": "HIGH",
+        "status": "NEW",
+        "summary": "rag-service pinned at 99.7-99.9% of 768MiB cap for 2.9d continuous uptime — the crash-restart relief it was ACKed under is NOT operating (RestartCount 14 is lifetime; last restart 2026-07-25T16:14:58Z, OOMKilled=false)",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-25T15:29:39Z",
