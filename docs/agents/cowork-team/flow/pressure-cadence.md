@@ -1,4 +1,4 @@
-<!-- size-justification: 110L — Steps 4.4 + 4.5 + 4.5b: cadence due-check, freshness downgrade, CADENCE_MATCHES rebind. Child of main.md. -->
+<!-- size-justification: 166L — Steps 4.4 + 4.5 + 4.5b + 4.5c: cadence due-check, freshness downgrade, CADENCE_MATCHES rebind, same-tick CHEF mutex (delegates to scripts/agents-flow/cowork-chef-mutex.js — FIX-COWORK-CHEF-MUTEX-ECHO-JQ-DEFEAT). Child of main.md. -->
 
 ## Step 4.4 — Cadence due-check (adaptive mode) (DWF-PHASE1)
 
@@ -133,26 +133,28 @@ Telemetry fields added to Step 6 payload (for observability):
      Applies unconditionally to guarantee the mutex across all pressure states. -->
 
 ```
-# Read schedule to identify CHEF slots (jq-native with --argjson — no xargs string concat)
-SCHEDULE=$(cat docs/data/cowork-schedule.json)
+# FIX-COWORK-CHEF-MUTEX-ECHO-JQ-DEFEAT (2nd occurrence, 07-14 + 07-16T05:15Z): the prior
+# inline `SCHEDULE=$(cat ...); echo "$SCHEDULE" | jq ...` pattern was defeated by zsh's
+# `echo` builtin, which interprets backslash escapes BY DEFAULT (unlike bash). chef-intraday's
+# trigger_prompt contains a literal `\n` inside its JSON string value; echoing it back turned
+# that escaped `\n` into a real newline byte, which is illegal unescaped inside a JSON string
+# — jq then failed with a control-character parse error, G_ARR/NG_ARR came back EMPTY,
+# CHEF_MUTEX_APPLIED silently stayed false, and BOTH chef-morning + chef-intraday spawned —
+# a double market publish, failing silently. NEVER round-trip a JSON payload through `echo`.
+# The mutex logic is now a tested helper (scripts/agents-flow/cowork-chef-mutex.test.js
+# includes a regression guard reproducing this exact corruption against the real fixture).
+#
+# MATCHES is piped via `printf '%s'` (never `echo` — printf never interprets backslash
+# escapes in its %s argument) and the schedule is read file-direct inside the script
+# (fs.readFileSync, no shell cat/echo involved). $RESULT is consumed back via
+# `jq -n --argjson` (execve argv, not a pipe an interpreter could re-read/re-escape).
+RESULT=$(printf '%s' "$MATCHES" | node scripts/agents-flow/cowork-chef-mutex.js)
 
-# Build arrays of guaranteed vs non-guaranteed CHEF slots (jq native — no shell string manipulation)
-G_ARR=$(echo "$SCHEDULE" | jq -c '[.slots[] | select(.parallel_group=="chef" and .guaranteed==true) | .slot_id]')
-NG_ARR=$(echo "$SCHEDULE" | jq -c '[.slots[] | select(.parallel_group=="chef" and .guaranteed==false) | .slot_id]')
+MATCHES=$(jq -n --argjson r "$RESULT" -c '$r.matches')
+CHEF_MUTEX_APPLIED=$(jq -n --argjson r "$RESULT" '$r.chef_mutex_applied')
 
-# Check if MATCHES contains both guaranteed AND non-guaranteed slots (using jq index() for membership)
-HAS_GUARANTEED=$(echo "$MATCHES" | jq --argjson g "$G_ARR" 'any(.[]; .slot_id as $s | ($g | index($s)) != null)')
-HAS_NON_GUARANTEED=$(echo "$MATCHES" | jq --argjson ng "$NG_ARR" 'any(.[]; .slot_id as $s | ($ng | index($s)) != null)')
-
-if [ "$HAS_GUARANTEED" = "true" ] && [ "$HAS_NON_GUARANTEED" = "true" ]; then
-  # Drop non-guaranteed CHEF slots; keep the rest (using jq index() for filtering)
-  MATCHES=$(echo "$MATCHES" | jq --argjson ng "$NG_ARR" 'map(select(.slot_id as $s | ($ng | index($s)) == null))')
-  
+if [ "$CHEF_MUTEX_APPLIED" = "true" ]; then
   log "[cowork] CHEF mutex: dropped non-guaranteed CHEF slots; guaranteed CHEF slot will publish this tick"
-  # Telemetry flag (added to Step 6 payload)
-  CHEF_MUTEX_APPLIED=true
-else
-  CHEF_MUTEX_APPLIED=false
 fi
 ```
 
