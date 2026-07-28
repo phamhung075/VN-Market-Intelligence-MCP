@@ -422,9 +422,8 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "router",
-    "updated_at": "2026-07-28T18:01:00Z",
-    "updated_by": "dev-mcp-server",
-    "next_action": "FIX-PRESSURE-HOST-HEADROOM-WRONG-MACHINE-WRONG-QUANTITY flipped IN_PROGRESS->REVIEW, next_agent=qa. Commit 98917416a on main."
+    "updated_at": "2026-07-28T18:51:46Z",
+    "updated_by": "developer"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2325,6 +2324,39 @@
         "to": "po",
         "type": "signal_feedback",
         "summary": "T1 pre-gate mem_creep single-point sample missed pdf-extractor peak (re-run 5.5min later flipped GREEN->FAIL, 99.91%)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "dev-20260728T180200Z",
+        "ts": "2026-07-28T18:02:00Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "stranded-state sweep: 20 unknown .claude/agents/*.md + agent-models.json dirty, needs owner (commit or discard)",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": "docs/signals/stranded-state-sweep-unknown-20260728T171505Z.json"
+      },
+      {
+        "id": "cow-20260728T182046-040e",
+        "ts": "2026-07-28T18:20:46Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "notebook-auto-prune.sh byte-cap pass cut bctc-analyst.md to 2 sections, below AC-2's 3-section floor",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260728T183937-73b5",
+        "ts": "2026-07-28T18:39:37Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "vn-sbv-fetch VPS service unhealthy (uptime 59m, sbv_rates last write 17:30:09Z)",
         "severity": "WARN",
         "status": "NEW",
         "payload_ref": null
@@ -11213,24 +11245,6 @@
         "unblock_action": "LANE NOTE — this row has NO automated lane while BLOCKED, and that is deliberate (deps_satisfied=false by design; verified by EXECUTING scripts/lib/devteam-eligibility.jq against live data, not inferred). It will NOT self-dispatch when its blockers close.\n\nWHOEVER CLOSES THE LAST OF blocked_by (FIX-BDI-SHIPPING-STALE-404-GUARD, FIX-COWORK-BASH-GRANT-COVERAGE-STAMP-TRANSPORT) MUST, in one write:\n  1. clear .blocked_by\n  2. set status = \"READY\"\n  3. MOVE the row from backlog[] into ready[]\nThen the Ready-Lane Consumer (scripts/devteam-backlog-claim-ready-lane-consumer.jq) claims it and spawns next_agent=qa directly — RLC has no dev/non-dev gate, so a qa-owned row is a valid target there. Leaving it BLOCKED-in-backlog matches nothing: BOUNDED-1 gates out non-dev next_agent, and SLS needs plan_only AND supervised both true (this row is supervised:true, plan_only:false).\n\nTHIS IS NOT HYPOTHETICAL. The sibling precedent row VERIFY-FIX-VPS-SSH-TRIGGER-FAIL-LOUD-REALDATA was minted BLOCKED on 2026-07-22 under the identical PUSH-AUTONOMY-1 clause 5 obligation and has sat untouched ever since, because nothing sweeps a BLOCKED backlog row and no one owned the transition. Do not repeat that.\n\nAll orch-state writes via: jq '...' docs/data/orch/orch-state.json | bash scripts/orch-apply.sh — never raw mv/cp/redirect.\n"
       },
       {
-        "id": "FIX-DEPSSATISFIED-COLD-ARCHIVED-DEP-RESOLVES-MISSING",
-        "title": "deps_satisfied() treats every cold-evicted dependency as UNSATISFIED forever: dep_status_map scans only the HOT board's lanes, so 34 live rows are permanently un-dispatchable — 29 of the 40 distinct blocking dep-ids are already DONE_VERIFIED in docs/data/orch/archive/",
-        "status": "BACKLOG",
-        "type": "FIX",
-        "priority": "P1",
-        "size": "M",
-        "zone": "cross-service/",
-        "owner": "developer",
-        "next_agent": "developer",
-        "created_at": "2026-07-28T13:24:57Z",
-        "created_by": "po/triage-20260728T13",
-        "root_cause": "scripts/lib/devteam-eligibility.jq dep_status_map builds its id->status map by reducing over ['backlog','ready','in_progress','qa','review','done','done_verified'] of the HOT docs/data/orch/orch-state.json ONLY. deps_satisfied() then documents 'a dep id found in NO lane = UNSATISFIED (conservative-skip)'. That conservative default is correct against a typo and catastrophic against cold eviction: the moment scripts/orch-cold-evict.sh moves a DONE_VERIFIED row to docs/data/orch/archive/YYYY-MM.json, every live row depending on it silently becomes permanently ineligible in BOUNDED-1, SLS and RLC simultaneously (all three call the same predicate). MEASURED LIVE 2026-07-28T13:2xZ: 34 rows across backlog/ready/review carry at least one dep resolving to MISSING; 40 distinct missing dep-ids; 29 of those 40 (72.5%) are present in docs/data/orch/archive/2026-07.json or 2026-06.json with status DONE_VERIFIED — i.e. the blocking work is FINISHED and the block is an artefact. The remaining 11 are genuine unknowns or free-text prose deps (e.g. 'user-escalation-vps-restart', 'vnstock-rate-limit-clear / next-fundamentals-sweep') and are a separate, smaller class. Acute instance hand-repaired this tick: QA-COWORK-SLOT-SESSION-DOWN-SURVIVAL was blocked on FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED, DONE_VERIFIED 2026-07-08, cold-archived.",
-        "deliverable": "Preferred shape (developer may refine the mechanism, not re-open the choice — leaving designs open is why rows sit): fold cold-archive statuses into dep_status_map in the ONE shared library, so all four pickers inherit it with no forked logic, per scripts/lib/devteam-eligibility.jq's own one-shared-contract principle. Callers already pass --slurpfile detail; add the archive slurp the same way and thread it through. PLUS a referential guard at eviction time so new instances stop being created: scripts/orch-cold-evict.sh must not evict a row that is still named in any live row's effective_depends_on (this mirrors orch-validate's existing ref-integrity stage). Do NOT 'fix' this by rewriting dependents' depends_on at eviction time — that destroys the provenance the dep encodes.",
-        "acceptance": "A live-data instrument reports ZERO live rows whose effective_depends_on contains an id that is DONE_VERIFIED in cold archive but resolves to MISSING (today: 29 such ids across 34 rows). Negative control, both directions: (a) a dep-id that exists NOWHERE (hot or cold) still resolves UNSATISFIED — do not blanket-satisfy; (b) a dep-id that is cold-archived with a NON-terminal status still resolves UNSATISFIED. Eviction guard proven by attempting to evict a still-referenced row and observing refusal. Extend scripts/audits/devteam-dispatch-gate-satisfiability.sh rather than minting a new instrument, and heed its own recorded lesson: bounded1-supervised-lane-report.sh shipped GREEN while the gate it guarded was dead, because it tested lane RESOLUTION instead of gate FIRING.",
-        "note": "Prior-art grep before minting (feedback_file_prior_art_check_before_minting_row): FIX-BACKLOG-TERMINAL-ROW-DRIFT-EVICT-BLIND, FIX-COLD-EVICT-EXCLUDE-IDS-VS-HARD-COHERENCE, FIX-COLDEVICT-WITHIN-FILE-PEER-CONTENT-CAPTURE, FIX-COLDEVICT-DONE-LANE-TRIGGER-ACTION-AXIS-NOOP — all four are about eviction MECHANICS (what moves, when, what it sweeps). None covers the dep-resolution consequence on the rows left behind. Also distinct from FIX-PO-LOSTMINT-RECOVERY-ARCHIVE-SCAN-GUARD (recovery heuristic scanning ready[] only). This row is the systemic form of the acute repair applied to QA-COWORK-SLOT-SESSION-DOWN-SURVIVAL in the same PO write.",
-        "updated_at": "2026-07-28T13:24:57Z"
-      },
-      {
         "id": "FIX-COWORK-SPAWNFANOUT-FLOWPATH-BYPASSES-DIGEST-DAILY-DEDUP-GATE",
         "title": "cowork spawn-fanout dispatches slot.flow_path, not slot.trigger_prompt — digest-daily is the one slot whose two fields disagree, so every dispatcher fire enters daily-predict.md directly and never evaluates the published:digest-daily:<UTC_DATE> duplicate-claim gate, which lives only in main.md",
         "status": "BACKLOG",
@@ -16216,6 +16230,34 @@
         "updated_by": "dev-mcp-server",
         "entered_review_at": "2026-07-28T18:01:00Z",
         "review_note": "dev-mcp-server COMPLETE: renamed host_headroom_mb -> container_vm_headroom_mb throughout the 9-key pressure-state schema/deps/tool (apps/mcp-server/src/interface/mcp/tools/system/emitPressureStateTool.ts). computeHostHeadroomMb() -> computeContainerVmHeadroomMb(execFn): the macOS vm_stat branch is DELETED (not repaired) -- mcp-server only ever runs inside its own Docker container in this deployment, so a macOS reading would still be the wrong machine under any name; free -m (available column, already correct quantity) is now the ONLY source, injectable execFn for tests. Unavailable -> null (never a substituted number). Updated the 2 live consumers: spawn-fanout.md Step 5.1 field ref (+ stale size-justification header corrected 227L->255L) and telemetry.md description line. cadence-policy.json _fanout._description re-derives the UNCHANGED headroom_floor_mb:1500 against Docker Desktop live-confirmed MemoryMiB=8192 VM budget (~18%) -- no numeric change needed, the tool only ever measured the container plane in production. Acceptance evidence both planes same-minute, real on both legs: container path -- docker cp a standalone script replicating the exact parser into the LIVE running container (no image rebuild, CANONICAL-script pattern), docker exec parsed=3544 vs independent docker exec free -m=3547 in the same second (0.1% delta, well inside 10%). macOS path (negative control) -- real unmocked computeContainerVmHeadroomMb() call on this dev host (confirmed no free binary) returns null. Tests: emit-pressure-state.test.ts 31/31 pass (26 renamed + 5 new). tsc clean. toolCount=184/cronJobCount=88 match baseline exactly (no barrel touched). Full bun test (contention-free rerun): 14842 pass/40 skip/59 fail/0 error across 1233 files -- grepped all 59 fail lines, zero relate to pressure/headroom/fanout/cadence; matches standing FIX-MCP-SUITE-HEALTH-BASELINE order-dependent drift (dev-standards.md:590), not a regression. Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md STEP dev-mcp-server-S13. Commit 98917416a. Ready for qa."
+      },
+      {
+        "id": "FIX-DEPSSATISFIED-COLD-ARCHIVED-DEP-RESOLVES-MISSING",
+        "title": "deps_satisfied() treats every cold-evicted dependency as UNSATISFIED forever: dep_status_map scans only the HOT board's lanes, so 34 live rows are permanently un-dispatchable — 29 of the 40 distinct blocking dep-ids are already DONE_VERIFIED in docs/data/orch/archive/",
+        "status": "REVIEW",
+        "type": "FIX",
+        "priority": "P1",
+        "size": "M",
+        "zone": "cross-service/",
+        "owner": "developer",
+        "next_agent": "qa",
+        "created_at": "2026-07-28T13:24:57Z",
+        "created_by": "po/triage-20260728T13",
+        "root_cause": "scripts/lib/devteam-eligibility.jq dep_status_map builds its id->status map by reducing over ['backlog','ready','in_progress','qa','review','done','done_verified'] of the HOT docs/data/orch/orch-state.json ONLY. deps_satisfied() then documents 'a dep id found in NO lane = UNSATISFIED (conservative-skip)'. That conservative default is correct against a typo and catastrophic against cold eviction: the moment scripts/orch-cold-evict.sh moves a DONE_VERIFIED row to docs/data/orch/archive/YYYY-MM.json, every live row depending on it silently becomes permanently ineligible in BOUNDED-1, SLS and RLC simultaneously (all three call the same predicate). MEASURED LIVE 2026-07-28T13:2xZ: 34 rows across backlog/ready/review carry at least one dep resolving to MISSING; 40 distinct missing dep-ids; 29 of those 40 (72.5%) are present in docs/data/orch/archive/2026-07.json or 2026-06.json with status DONE_VERIFIED — i.e. the blocking work is FINISHED and the block is an artefact. The remaining 11 are genuine unknowns or free-text prose deps (e.g. 'user-escalation-vps-restart', 'vnstock-rate-limit-clear / next-fundamentals-sweep') and are a separate, smaller class. Acute instance hand-repaired this tick: QA-COWORK-SLOT-SESSION-DOWN-SURVIVAL was blocked on FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED, DONE_VERIFIED 2026-07-08, cold-archived.",
+        "deliverable": "Preferred shape (developer may refine the mechanism, not re-open the choice — leaving designs open is why rows sit): fold cold-archive statuses into dep_status_map in the ONE shared library, so all four pickers inherit it with no forked logic, per scripts/lib/devteam-eligibility.jq's own one-shared-contract principle. Callers already pass --slurpfile detail; add the archive slurp the same way and thread it through. PLUS a referential guard at eviction time so new instances stop being created: scripts/orch-cold-evict.sh must not evict a row that is still named in any live row's effective_depends_on (this mirrors orch-validate's existing ref-integrity stage). Do NOT 'fix' this by rewriting dependents' depends_on at eviction time — that destroys the provenance the dep encodes.",
+        "acceptance": "A live-data instrument reports ZERO live rows whose effective_depends_on contains an id that is DONE_VERIFIED in cold archive but resolves to MISSING (today: 29 such ids across 34 rows). Negative control, both directions: (a) a dep-id that exists NOWHERE (hot or cold) still resolves UNSATISFIED — do not blanket-satisfy; (b) a dep-id that is cold-archived with a NON-terminal status still resolves UNSATISFIED. Eviction guard proven by attempting to evict a still-referenced row and observing refusal. Extend scripts/audits/devteam-dispatch-gate-satisfiability.sh rather than minting a new instrument, and heed its own recorded lesson: bounded1-supervised-lane-report.sh shipped GREEN while the gate it guarded was dead, because it tested lane RESOLUTION instead of gate FIRING.",
+        "note": "Prior-art grep before minting (feedback_file_prior_art_check_before_minting_row): FIX-BACKLOG-TERMINAL-ROW-DRIFT-EVICT-BLIND, FIX-COLD-EVICT-EXCLUDE-IDS-VS-HARD-COHERENCE, FIX-COLDEVICT-WITHIN-FILE-PEER-CONTENT-CAPTURE, FIX-COLDEVICT-DONE-LANE-TRIGGER-ACTION-AXIS-NOOP — all four are about eviction MECHANICS (what moves, when, what it sweeps). None covers the dep-resolution consequence on the rows left behind. Also distinct from FIX-PO-LOSTMINT-RECOVERY-ARCHIVE-SCAN-GUARD (recovery heuristic scanning ready[] only). This row is the systemic form of the acute repair applied to QA-COWORK-SLOT-SESSION-DOWN-SURVIVAL in the same PO write.",
+        "updated_at": "2026-07-28T18:51:47Z",
+        "promoted_at": "2026-07-28T18:16:08Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-28T18:16:08Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "qa_verify_mode": "verify-committed",
+        "branch": null,
+        "commit": "0a56c46ae",
+        "updated_by": "developer",
+        "review_note": "developer: dep_status_map() (scripts/lib/devteam-eligibility.jq) scanned only the HOT board's 7 lanes, so any live row depending on a cold-evicted (scripts/orch-cold-evict.sh) DONE_VERIFIED row resolved MISSING forever (34 live rows / 41 distinct dep-ids measured, ~35 already DONE_VERIFIED in cold archive). Added dep_status_map($archive) (archive-seeded, hot-lane entries overwrite) + archive_status_map($archive)/normalize_archive_status (case/separator-insensitive DONE_VERIFIED match only). 0-arg dep_status_map kept as a literal dep_status_map([]) proxy -- jq arity overload, zero behavior change for every pre-existing caller, single merge implementation not forked logic. New scripts/lib/archive-glob-cat.sh (find|sort|for-loop concat of the monthly archive files -- a naive <(cat 2026-*.json)/$(ls ...) glob silently produced an EMPTY archive under this session's actual shell with zero error, caught and fixed) threaded via --slurpfile archive into the 3 real callers (BOUNDED-1/SLS promote, RLC claim -- exhaustively grep-verified, not guessed).\\nPLUS a referential eviction guard: orch-cold-evict.sh compute_id_maps() now computes $referenced_dep_ids (effective_depends_on union across TASK_LANES live rows) and holds any still-referenced terminal-status row in hot instead of evicting it.\\nExtended scripts/audits/devteam-dispatch-gate-satisfiability.sh (not a new instrument, per the row's own instruction) with AC-DEP-1 (live dynamic: 0 post-fix leaks, 34 pre-fix baseline matches PO's own measurement), AC-DEP-MECH (same real BOUNDED-1 promote script, only archive content varied -- before=NOT promoted, after=promoted, proves the mechanism FIRES not just predicate resolution, grounded in a real live archived id), AC-DEP-NEG-A/B (nowhere-dep and cold-archived-non-terminal-status both stay UNSATISFIED), AC-EVICT-1/2/3 (real orch-cold-evict.sh run against a scratch ORCH_STATE+ARCHIVE_DIR fixture, never touches the live file -- referenced row HELD in hot, unreferenced sibling row evicted normally, guard proven both directions end-to-end). All pre-existing assertions in this instrument plus 4 sibling audit scripts (devteam-bounded1-prose-sequencing-gate-verify.sh, devteam-bounded1-detail-disposition-gate-verify.sh, bounded1-supervised-lane-report.sh, devteam-review-lane-drain-report.sh) re-run GREEN after the plumbing change; 2 needed --slurpfile archive added to their own run_promote_picked_id helpers since bounded1 promote now requires it unconditionally.\\nIncidental fix (verified pre-existing and unrelated to this task via git-HEAD replay before touching it): devteam-bounded1-detail-disposition-gate-verify.sh's make_isolated_fixture() never cleared .task_board.ready, silently leaking the live board's stale ready[0] into equality-checking assertions -- one-line fix, turned several previously-vacuous inequality assertions into genuinely meaningful ones too.\\nCommits: 0a56c46ae (fix), 4c2cc93ed (memory). No apps/mcp-server/ files touched (scripts/*.jq, scripts/*.sh, docs/*.md only) -- bun tsc/bun test not meaningfully applicable, not run."
       }
     ],
     "qa": [],
@@ -16235,8 +16277,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-28T17:33:25Z",
-    "last_triaged_by": "po/triage-20260728T1731",
+    "last_triaged_at": "2026-07-28T18:16:08Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": []
   },
   "_meta": {
