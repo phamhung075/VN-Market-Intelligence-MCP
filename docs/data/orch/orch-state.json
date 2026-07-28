@@ -419,12 +419,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "TASK-COWORK-CATCHUP-2",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of TASK-COWORK-CATCHUP-2 — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-28T20:16:26Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "updated_by": "developer",
+    "updated_at": "2026-07-28T20:29:06Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -16310,6 +16309,34 @@
         "commit": "0a56c46ae",
         "updated_by": "developer",
         "review_note": "developer: dep_status_map() (scripts/lib/devteam-eligibility.jq) scanned only the HOT board's 7 lanes, so any live row depending on a cold-evicted (scripts/orch-cold-evict.sh) DONE_VERIFIED row resolved MISSING forever (34 live rows / 41 distinct dep-ids measured, ~35 already DONE_VERIFIED in cold archive). Added dep_status_map($archive) (archive-seeded, hot-lane entries overwrite) + archive_status_map($archive)/normalize_archive_status (case/separator-insensitive DONE_VERIFIED match only). 0-arg dep_status_map kept as a literal dep_status_map([]) proxy -- jq arity overload, zero behavior change for every pre-existing caller, single merge implementation not forked logic. New scripts/lib/archive-glob-cat.sh (find|sort|for-loop concat of the monthly archive files -- a naive <(cat 2026-*.json)/$(ls ...) glob silently produced an EMPTY archive under this session's actual shell with zero error, caught and fixed) threaded via --slurpfile archive into the 3 real callers (BOUNDED-1/SLS promote, RLC claim -- exhaustively grep-verified, not guessed).\\nPLUS a referential eviction guard: orch-cold-evict.sh compute_id_maps() now computes $referenced_dep_ids (effective_depends_on union across TASK_LANES live rows) and holds any still-referenced terminal-status row in hot instead of evicting it.\\nExtended scripts/audits/devteam-dispatch-gate-satisfiability.sh (not a new instrument, per the row's own instruction) with AC-DEP-1 (live dynamic: 0 post-fix leaks, 34 pre-fix baseline matches PO's own measurement), AC-DEP-MECH (same real BOUNDED-1 promote script, only archive content varied -- before=NOT promoted, after=promoted, proves the mechanism FIRES not just predicate resolution, grounded in a real live archived id), AC-DEP-NEG-A/B (nowhere-dep and cold-archived-non-terminal-status both stay UNSATISFIED), AC-EVICT-1/2/3 (real orch-cold-evict.sh run against a scratch ORCH_STATE+ARCHIVE_DIR fixture, never touches the live file -- referenced row HELD in hot, unreferenced sibling row evicted normally, guard proven both directions end-to-end). All pre-existing assertions in this instrument plus 4 sibling audit scripts (devteam-bounded1-prose-sequencing-gate-verify.sh, devteam-bounded1-detail-disposition-gate-verify.sh, bounded1-supervised-lane-report.sh, devteam-review-lane-drain-report.sh) re-run GREEN after the plumbing change; 2 needed --slurpfile archive added to their own run_promote_picked_id helpers since bounded1 promote now requires it unconditionally.\\nIncidental fix (verified pre-existing and unrelated to this task via git-HEAD replay before touching it): devteam-bounded1-detail-disposition-gate-verify.sh's make_isolated_fixture() never cleared .task_board.ready, silently leaking the live board's stale ready[0] into equality-checking assertions -- one-line fix, turned several previously-vacuous inequality assertions into genuinely meaningful ones too.\\nCommits: 0a56c46ae (fix), 4c2cc93ed (memory). No apps/mcp-server/ files touched (scripts/*.jq, scripts/*.sh, docs/*.md only) -- bun tsc/bun test not meaningfully applicable, not run."
+      },
+      {
+        "id": "TASK-COWORK-CATCHUP-2",
+        "title": "FR-9a: Extend cowork-match-slots.js CLI to emit catchup_raw field",
+        "type": "SPRINT-M",
+        "size": "S",
+        "priority": "P0",
+        "zone": "scripts/agents-flow/",
+        "sprint": "COWORK-GUARANTEED-SLOT-CATCHUP",
+        "status": "REVIEW",
+        "depends_on": [
+          "TASK-COWORK-CATCHUP-1"
+        ],
+        "created_at": "2026-07-22T22:12:59Z",
+        "created_by": "pm",
+        "updated_at": "2026-07-28T20:29:06Z",
+        "next_agent": "qa",
+        "po_routing_20260728": "PO 2026-07-28T13Z lane routing. pm's decomposition minted this row with next_agent unset, which no dispatch lane resolves (verified by executing scripts/lib/devteam-eligibility.jq predicates, not by reading the row). Handler = developer per docs/handoffs/TASK-COWORK-CATCHUP-10.md ('developer completes code TASK-1..9, then agent-father integrates this doc-only subtask') + docs/data/system-map.json scripts/ zone. dev-role next_agent + backlog lane = BOUNDED-1, per docs/agents/po/flow/zone-routing.md Step A2.",
+        "updated_by": "developer",
+        "promoted_at": "2026-07-28T20:16:16Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "claimed_at": "2026-07-28T20:16:26Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "qa_verify_mode": "verify-committed",
+        "branch": null,
+        "commit": "c5e7c6747",
+        "review_note": "developer: Wired TASK-COWORK-CATCHUP-1's cowork-catchup-predicate.js into cowork-match-slots.js's CLI entrypoint (require.main===module block only) -- additive conditional require(./cowork-catchup-predicate.js), mirrors the existing cadence-policy.js pattern. Computes catchup_raw = computeCatchupCandidates(sched, nowUnix, {excludeSlotIds: hits.map(slot_id)}, {field, dowMatch}) and adds it as a new top-level JSON stdout key -- the ONE shared computation all 3 downstream callers (dispatcher/tick-preflight/firer) will consume. Live-matched slots this tick (hits) are excluded so an on-time fire is never double-counted as its own catch-up candidate. matchSlots() (exported JS function used by tests) left byte-identical (NFR-2); module-unavailable path falls back to catchup_raw=[] with a stderr WARN, never crashes.\\nRED confirmed live (git stash push scoped to only the source file, re-ran the new CLI-contract test blocks -> hard TypeError crash) before GREEN (stash pop, 43/43 assertions: 26 pre-existing unit tests unchanged + 4 new CLI-level blocks spawning the real CLI against an isolated mkdtemp harness with a controlled fixture -- field-presence/type, a real eligible candidate surfacing end-to-end, a real freshness_window_exceeded candidate, missing-module graceful fallback -- all deterministic regardless of wall-clock via a catchup_max_lateness_minutes:999999/:-1 construction). Sibling cowork-catchup-predicate.test.js 34/34 unchanged (file untouched). bun tsc --noEmit 0 errors (plain .js, outside tsconfig include, same AC-10 posture as CATCHUP-1). docs/agents/cowork-team/flow/match-slots.md updated to document the new catchup_raw field shape (consumption wiring deferred to a later sprint task per architecture brief, not this task's AC).\\nCommits: c5e7c6747 (code+test), fd5d4565e (docs). No apps/mcp-server/ files touched (scripts/agents-flow/ + docs/ only) -- bun tsc/bun test ran anyway for an honest baseline per task rules."
       }
     ],
     "qa": [],
@@ -16331,32 +16358,7 @@
     },
     "last_triaged_at": "2026-07-28T20:16:16Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "TASK-COWORK-CATCHUP-2",
-        "title": "FR-9a: Extend cowork-match-slots.js CLI to emit catchup_raw field",
-        "type": "SPRINT-M",
-        "size": "S",
-        "priority": "P0",
-        "zone": "scripts/agents-flow/",
-        "sprint": "COWORK-GUARANTEED-SLOT-CATCHUP",
-        "status": "IN_PROGRESS",
-        "depends_on": [
-          "TASK-COWORK-CATCHUP-1"
-        ],
-        "created_at": "2026-07-22T22:12:59Z",
-        "created_by": "pm",
-        "updated_at": "2026-07-28T20:16:26Z",
-        "next_agent": "developer",
-        "po_routing_20260728": "PO 2026-07-28T13Z lane routing. pm's decomposition minted this row with next_agent unset, which no dispatch lane resolves (verified by executing scripts/lib/devteam-eligibility.jq predicates, not by reading the row). Handler = developer per docs/handoffs/TASK-COWORK-CATCHUP-10.md ('developer completes code TASK-1..9, then agent-father integrates this doc-only subtask') + docs/data/system-map.json scripts/ zone. dev-role next_agent + backlog lane = BOUNDED-1, per docs/agents/po/flow/zone-routing.md Step A2.",
-        "updated_by": "po/route-20260728T13",
-        "promoted_at": "2026-07-28T20:16:16Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
-        "claimed_at": "2026-07-28T20:16:26Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
