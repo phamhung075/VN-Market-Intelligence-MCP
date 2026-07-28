@@ -6,7 +6,8 @@ Control model usage across both agent teams (Dev + Cowork) to optimize for token
 
 ```bash
 cd .claude
-./switch-agent-models.sh [eco|normal|performance]
+./switch-agent-models.sh [eco|normal|performance]      # apply a full preset to every agent in agent-models.json
+./switch-agent-models.sh <agent-name> <model>          # override ONE agent's model directly (ad hoc; not persisted to agent-models.json)
 ```
 
 ## Modes
@@ -29,42 +30,32 @@ cd .claude
 
 ## Config File
 
-Original settings stored in `.claude/agent-models.json`:
+Settings stored in `.claude/agent-models.json` — actual shape (not the illustrative snippet this doc used to show):
 
 ```json
 {
-  "original": {
-    "architect.md": "sonnet",
-    "ba.md": "sonnet",
-    "code-janitor.md": "haiku",
-    "cowork-refactory-expert.md": "opus",
-    "developer.md": "sonnet",
-    ...
-  }
+  "modes": {
+    "eco":         { "description": "...", "agents": { "<agent-key>": "haiku", ... } },
+    "normal":      { "description": "...", "agents": { "<agent-key>": "sonnet|haiku|claude-opus-4-5|...", ... } },
+    "performance": { "description": "...", "agents": { "<agent-key>": "sonnet", ... } }
+  },
+  "current_mode": "normal"
 }
 ```
 
-The `normal` mode restores these original settings automatically.
+Each `<agent-key>` maps 1:1 to `.claude/agents/<agent-key>.md` (script looks the file up by that exact name), EXCEPT `financial-analyst` and `report-analyzer` which are Cowork-cloud-only keys kept here for cross-team reference — the script skips them with a warning since no local `.md` exists (see Two-Team Architecture below).
+
+The `normal` mode restores each agent's original/default model automatically. Roster completeness (does every `.claude/agents/*.md` file have a key here) is enforced by verification, not by hand-copying a second list anywhere — query directly:
+```bash
+jq -r '.modes.normal.agents | keys[]' .claude/agent-models.json | sort
+```
 
 ## Two-Team Architecture
 
 ### Dev Team (.claude/agents/)
-✅ Automatic — script handles all dev-team agents (count: `docs/data/project-stats.json#devAgentCount`)
-
-```
-architect.md
-ba.md
-claude-manager-helper.md
-code-janitor.md
-cowork-refactory-expert.md
-developer.md
-fixer.md
-idea-forge.md
-market-analyst.md
-pm.md
-po.md
-qa.md
-system-auditor.md
+✅ Automatic — the script derives its agent list from `agent-models.json` keys, not a hardcoded list in this doc or in the script itself. Every `.claude/agents/*.md` file is expected to have a matching key. List the live roster with:
+```bash
+ls .claude/agents/*.md | xargs -n1 basename | sed 's/\.md$//' | sort
 ```
 
 ### Cowork Team (cowork-workspace-team-claude-desktop/)
@@ -103,9 +94,16 @@ Use Sonnet for heavy-duty sprint:
 ./switch-agent-models.sh performance
 ```
 
+Override a single agent's model without touching the rest of the fleet:
+```bash
+./switch-agent-models.sh developer sonnet
+./switch-agent-models.sh dev-mcp-server claude-opus-4-5
+```
+This is ad hoc — it patches only that agent's `.md` frontmatter and does NOT persist into `agent-models.json`. A later `./switch-agent-models.sh <mode>` will reset that agent back to the preset's recorded value.
+
 ## Verification
 
-Script automatically verifies with `bun tsc --noEmit` after each switch. If there are type errors, models are NOT changed.
+The script fails loud on missing config/agents-dir (exit 1) and warns-and-skips per-agent if a key has no matching `.claude/agents/<key>.md` file (e.g. the two Cowork-only keys) — it does not run a build/type-check step; frontmatter is plain YAML, not code. Since this is a config file change, verify with `git diff` after any switch and revert (`git checkout -- .claude/agents/`) if a switch was unintended.
 
 ## Notes
 
