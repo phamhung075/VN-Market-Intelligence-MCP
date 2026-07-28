@@ -419,12 +419,12 @@
     }
   ],
   "head": {
-    "status": "review",
-    "active_task_id": "FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES",
-    "next_agent": "qa",
-    "next_action": "FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES at REVIEW — qa: verify-committed mode (branch:null, host scripts on main). Check scripts/agents-flow/notebook-auto-prune.sh dual-axis fix (LINE_CAP+BYTE_CAP derivation, both stopping conditions), run scripts/agents-flow/notebook-auto-prune.test.sh (4/4), test-notebook-auto-prune.sh (5/5), context-bloat-backstop.test.sh (4/4). No rebuild/deploy needed (bash script + test, consumed live by the PostToolUse hook on next notebook write).",
-    "updated_at": "2026-07-28T12:27:08Z",
-    "updated_by": "developer"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "FIX-NOTEBOOK-PRUNER-... handed to qa (row in review, qa_verify_mode=verify-committed). head reset idle so BOUNDED-1/SLS/RLC/QA-drain are reachable again.",
+    "updated_at": "2026-07-28T12:29:33Z",
+    "updated_by": "router (head=review strands every dispatch lane; Step 0b has no review branch)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
