@@ -35,6 +35,7 @@ import logging
 import uuid
 from typing import Any, Dict, List, Optional
 
+from infrastructure import ocr_gateway
 from infrastructure.generic_md_table.constants import (
     MAX_TESSERACT_RETRIES,
     _TESSERACT_RETRY_SLEEP_S,
@@ -64,6 +65,12 @@ def _tesseract_image_to_data(
     as a dependency.  ocr_unit() calls this wrapper instead of calling
     pytesseract directly.
 
+    FIX-PDFX-TESSERACT-CONCURRENCY: each retry attempt goes through the OCR
+    concurrency gateway (infrastructure/ocr_gateway.py) INDEPENDENTLY — the
+    retry loop stays here (outside any held slot) so a retrying page re-queues
+    for a slot on each attempt rather than holding one across all retries
+    (design brief §5.3 — "retry loop preserved outside the slot").
+
     Args:
         page_img: PIL Image to OCR.
         lang:     Tesseract language string (e.g. "vie+eng").
@@ -76,16 +83,16 @@ def _tesseract_image_to_data(
         Exception: The last exception raised if all attempts are exhausted.
     """
     import time
-    import pytesseract  # type: ignore
 
     last_exc: Optional[Exception] = None
     for attempt in range(MAX_TESSERACT_RETRIES + 1):
         try:
-            return pytesseract.image_to_data(
+            return ocr_gateway.run_image_sync(
                 page_img,
+                mode="data",
                 lang=lang,
                 config=config,
-                output_type=pytesseract.Output.DICT,
+                output_type=ocr_gateway.OUTPUT_DICT,
             )
         except Exception as exc:
             last_exc = exc

@@ -44,6 +44,22 @@ def build_lifespan(cfg: Config, ocr_executor: Optional[Executor] = None):  # typ
             )
         yield
         _log.info("pdf-extractor shutting down")
+
+        # FIX-PDFX-TESSERACT-CONCURRENCY (brief §5.1 reap_orphans): SIGTERM
+        # every live tesseract child of this process, wait, then SIGKILL
+        # stragglers, so a restart never leaves an orphaned tesseract behind.
+        try:
+            from infrastructure import ocr_gateway
+            reaped = ocr_gateway.reap_orphans()
+            if reaped:
+                _log.info(
+                    "FIX-PDFX-TESSERACT-CONCURRENCY: reap_orphans signalled %d "
+                    "live tesseract child(ren) at shutdown",
+                    reaped,
+                )
+        except Exception as exc:
+            _log.warning("FIX-PDFX-TESSERACT-CONCURRENCY: reap_orphans failed: %s", exc)
+
         if ocr_executor is not None:
             _log.info(
                 "PDFX-SINGLE-WORKER-BLOCKING: shutting down ProcessPoolExecutor "

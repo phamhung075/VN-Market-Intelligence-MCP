@@ -10,7 +10,11 @@ from uuid import uuid4
 from application.dtos import ExtractPDFRequest, ExtractPDFResponse, ExtractedTableDTO
 from domain.models import PDFDocument
 from domain.services import ExtractPDFService
-from domain.errors import PDFProcessingError
+from domain.errors import (
+    OcrCapacityExceededError,
+    OcrDeadlineExceededError,
+    PDFProcessingError,
+)
 
 
 class ExtractPDFUseCase:
@@ -42,6 +46,12 @@ class ExtractPDFUseCase:
 
         On PDFProcessingError: returns a failed response DTO (no re-raise)
         so the HTTP handler can serialize cleanly without an uncaught exception.
+
+        FIX-PDFX-TESSERACT-CONCURRENCY: OcrCapacityExceededError /
+        OcrDeadlineExceededError are PDFProcessingError subtypes but are
+        deliberately RE-RAISED (not swallowed into a "status": "failed" 200
+        response) — the interface layer maps them to HTTP 429 (+ Retry-After)
+        / 503 respectively, per the backpressure contract.
         """
         doc_id = str(uuid4())
         # Local-file mode: store pdf_path as url so storage_repo.fetch_pdf receives it.
@@ -76,6 +86,8 @@ class ExtractPDFUseCase:
                 confidence_financial=content.confidence_financial,
             )
 
+        except (OcrCapacityExceededError, OcrDeadlineExceededError):
+            raise
         except PDFProcessingError:
             return ExtractPDFResponse(
                 document_id=doc_id,

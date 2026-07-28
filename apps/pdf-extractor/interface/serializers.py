@@ -6,7 +6,7 @@ Keeps handler code thin by centralizing type coercion logic here.
 """
 
 from pydantic import BaseModel, field_validator, model_validator
-from typing import Literal, Optional
+from typing import Any, Dict, Literal, Optional
 
 from application.dtos import ExtractPDFRequest
 
@@ -64,3 +64,10 @@ class HealthResponse(BaseModel):
     status: Literal["ok"] = "ok"
     service: str = "pdf-extractor"
     ocr_source_ok: bool = True
+    # FIX-PDFX-TESSERACT-CONCURRENCY (brief §5.2 / AC-6): OCR concurrency-gate
+    # bookkeeping ALONGSIDE OS ground truth — {"max", "semaphore", "os_children",
+    # "oldest_child_s"} from infrastructure.ocr_gateway.inflight(). Makes the
+    # "counter that disagreed with reality" defect class permanently
+    # diagnosable without `docker exec ps`. None when the gateway could not
+    # be introspected (should not normally happen — always populated in prod).
+    ocr: Optional[Dict[str, Any]] = None

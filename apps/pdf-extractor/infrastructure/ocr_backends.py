@@ -43,6 +43,7 @@ import logging
 import os
 from typing import Any, Optional, Tuple
 
+from infrastructure import ocr_gateway
 from infrastructure.tesseract_config import TESSERACT_LANG, TESSERACT_PSM6_CONFIG
 
 logger = logging.getLogger(__name__)
@@ -141,8 +142,8 @@ class TesseractVieBackend:
             return ("", 0.0)
 
         try:
-            import pytesseract  # type: ignore
-            import pandas as pd  # type: ignore
+            import pytesseract  # type: ignore  # noqa: F401 (existence check only)
+            import pandas as pd  # type: ignore  # noqa: F401
         except ImportError as exc:
             # PEK-OCR-ROOTCAUSE: RAISE instead of returning empty.
             # pytesseract/pandas missing = infra misconfiguration.
@@ -156,12 +157,17 @@ class TesseractVieBackend:
         if pil_image is None:
             return ("", 0.0)
 
-        # Use image_to_data to get per-word confidence scores
-        data = pytesseract.image_to_data(
+        # FIX-PDFX-TESSERACT-CONCURRENCY: the actual tesseract invocation now
+        # goes through the OCR concurrency gateway (THE single process-global
+        # bound — see infrastructure/ocr_gateway.py) instead of calling
+        # pytesseract.image_to_data() directly. Same call contract (lang,
+        # config, DATAFRAME output) — only the dispatch point moved.
+        data = ocr_gateway.run_image_sync(
             pil_image,
+            mode="data",
             lang=TESSERACT_LANG,
             config=TESSERACT_PSM6_CONFIG,
-            output_type=pytesseract.Output.DATAFRAME,
+            output_type=ocr_gateway.OUTPUT_DATAFRAME,
         )
 
         # Filter to rows with valid text (non-empty, confidence > 0)

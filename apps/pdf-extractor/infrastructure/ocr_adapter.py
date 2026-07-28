@@ -82,6 +82,7 @@ import os
 import re
 from typing import Dict, List, Optional
 
+from infrastructure import ocr_gateway
 from infrastructure.tesseract_config import (
     OCR_RASTER_DPI,
     TESSERACT_LANG,
@@ -451,8 +452,12 @@ class PdfOcrAdapter:
 
                 # Tesseract config — see infrastructure/tesseract_config.py for the
                 # single authoritative "DO NOT remove --psm 6" rationale.
-                text: str = pytesseract.image_to_string(
-                    images[0], lang=TESSERACT_LANG, config=TESSERACT_PSM6_CONFIG
+                # FIX-PDFX-TESSERACT-CONCURRENCY: dispatched through the OCR
+                # concurrency gateway (THE single process-global bound) rather
+                # than calling pytesseract.image_to_string() directly. Same
+                # call contract — only the dispatch point moved.
+                text: str = ocr_gateway.run_image_sync(
+                    images[0], mode="string", lang=TESSERACT_LANG, config=TESSERACT_PSM6_CONFIG
                 )
 
                 # ── FIX-BCTC-BANK-PDF-OCR-RASTERIZE: PaddleOCR fallback ──────────

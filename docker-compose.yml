@@ -101,6 +101,15 @@ services:
       BCTC_PAGE_TEXT_BACKEND: sqlite
       MARKET_DB_PATH: /app/data/market.db
       APP_ENV: production
+      # FIX-PDFX-TESSERACT-CONCURRENCY: OCR concurrency gate (infrastructure/
+      # ocr_gateway.py) — THE single process-global bound on concurrent
+      # tesseract invocations, replacing the previously-ungoverned asyncio
+      # default executor (min(32, os.cpu_count()+4) = 10 on this host). Env-
+      # driven so retuning never needs a rebuild (docs/architecture-briefs/
+      # 2026-07-28-pdfx-tesseract-concurrency-invariant.md §8).
+      PDFX_OCR_MAX_CONCURRENCY: '1'
+      PDFX_OCR_QUEUE_WAIT_S: '5'
+      PDFX_OCR_PAGE_TIMEOUT_S: '600'
     restart: unless-stopped
     healthcheck:
       test:

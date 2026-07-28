@@ -535,10 +535,13 @@ class ExtractTablesUseCase:
                 # dependency on infrastructure/ — composition root injects executor.
                 import importlib
                 _ocr_worker = importlib.import_module("infrastructure.ocr_worker")
+                _ocr_gateway = importlib.import_module("infrastructure.ocr_gateway")
                 _locate_fn = _ocr_worker.locate_balance_sheet_pages_worker
                 _ocr_fn = _ocr_worker.ocr_pages_worker
 
                 loop = asyncio.get_running_loop()
+                # locate_balance_sheet_pages_worker is pdfplumber-only (no
+                # Tesseract) — does NOT need the OCR gateway's slot.
                 bs_page_numbers: List[int] = await loop.run_in_executor(
                     self._ocr_executor, _locate_fn, pdf_path
                 )
@@ -549,10 +552,19 @@ class ExtractTablesUseCase:
                 )
                 # functools.partial needed because run_in_executor takes fn + *args
                 import functools
-                pages = await loop.run_in_executor(
-                    self._ocr_executor,
-                    functools.partial(_ocr_fn, pdf_path, bs_page_numbers),
-                )
+                # FIX-PDFX-TESSERACT-CONCURRENCY (brief §5.4): ocr_pages_worker
+                # runs Tesseract INSIDE the ProcessPoolExecutor child — a
+                # separate OS process that cannot see this (parent) process's
+                # in-memory OCR gateway semaphore. The bound is composed here,
+                # in the PARENT, by acquiring the gateway's slot BEFORE
+                # dispatching to the pool, so the two bounds (process-pool
+                # max_workers=1 + gateway's process-global semaphore) cannot
+                # diverge into two independent, non-composing limits.
+                async with _ocr_gateway.slot_async():
+                    pages = await loop.run_in_executor(
+                        self._ocr_executor,
+                        functools.partial(_ocr_fn, pdf_path, bs_page_numbers),
+                    )
                 logger.info(
                     "ExtractTablesUseCase [process-pool]: OCR complete — %d pages, total chars=%d",
                     len(pages),

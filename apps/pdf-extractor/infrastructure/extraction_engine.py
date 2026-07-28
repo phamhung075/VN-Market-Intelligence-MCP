@@ -12,8 +12,10 @@ import asyncio
 import io
 from typing import Optional
 
+from domain.errors import OcrCapacityExceededError, OcrDeadlineExceededError
 from domain.models import ExtractedTable
 from domain.repositories import PDFExtractionEngine
+from infrastructure import ocr_gateway
 from infrastructure.tesseract_config import (
     OCR_RASTER_DPI,
     TESSERACT_LANG,
@@ -120,6 +122,16 @@ class PdfplumberExtractionEngine(PDFExtractionEngine):
         3. Aggregate all page texts, track minimum confidence.
 
         Each call creates its own BytesIO + pdfplumber handle; thread-safe.
+
+        FIX-PDFX-TESSERACT-CONCURRENCY: OcrCapacityExceededError /
+        OcrDeadlineExceededError raised by the OCR gateway (via _ocr_page)
+        are deliberately re-raised THROUGH this method's broad
+        `except Exception` — they are backpressure/deadline signals that must
+        reach the HTTP layer as 429/503, not the pre-existing "corrupt /
+        password-protected PDF -> return ('', 0.0)" fallback. That fallback,
+        and extraction_engine.py's separate empty-string-on-OCR-failure
+        behavior in _ocr_page, are UNCHANGED and NOT addressed by this fix
+        (flagged separately — see FIX-PDFX-TESSERACT-CONCURRENCY task close-out).
         """
         try:
             import pdfplumber  # type: ignore[import]
@@ -148,6 +160,10 @@ class PdfplumberExtractionEngine(PDFExtractionEngine):
                         else:
                             confidence = min(confidence, 0.3)
 
+        except (OcrCapacityExceededError, OcrDeadlineExceededError):
+            # Must propagate — these are transport-layer signals (429/503),
+            # not extraction failures. See docstring note above.
+            raise
         except Exception:
             return "", 0.0
 
@@ -156,12 +172,24 @@ class PdfplumberExtractionEngine(PDFExtractionEngine):
 
     def _ocr_page(self, page: object) -> str:
         """
-        Run Tesseract on a single pdfplumber page image.
+        Run Tesseract on a single pdfplumber page image, through the OCR
+        concurrency gateway (infrastructure/ocr_gateway.py — THE single
+        process-global concurrency bound; see FIX-PDFX-TESSERACT-CONCURRENCY).
 
-        Returns empty string if pytesseract or Pillow is not installed.
+        Runs on a worker thread already (this method is only ever reached via
+        asyncio.to_thread(self._extract_text_ocr_sync, ...) from
+        extract_text_ocr()) — no event loop is available here, so this calls
+        the gateway's SYNC entry point (run_image_sync), which still funnels
+        through the same BoundedSemaphore + private ThreadPoolExecutor as the
+        async entry point.
+
+        Returns empty string if pytesseract/Pillow is not installed, or if the
+        underlying OCR call fails for any OTHER reason (pre-existing behavior,
+        UNCHANGED — see docstring note on the caller). OcrCapacityExceededError
+        and OcrDeadlineExceededError are NOT swallowed here — they propagate.
         """
         try:
-            import pytesseract  # type: ignore[import]
+            import pytesseract  # noqa: F401  (existence check only — real call goes through the gateway)
         except ImportError:
             return ""
 
@@ -170,9 +198,11 @@ class PdfplumberExtractionEngine(PDFExtractionEngine):
             img = page.to_image(resolution=OCR_RASTER_DPI)  # type: ignore[attr-defined]
             # Tesseract config — see infrastructure/tesseract_config.py for the
             # single authoritative "DO NOT remove --psm 6" rationale.
-            text: str = pytesseract.image_to_string(
-                img.original, lang=TESSERACT_LANG, config=TESSERACT_PSM6_CONFIG
+            text: str = ocr_gateway.run_image_sync(
+                img.original, mode="string", lang=TESSERACT_LANG, config=TESSERACT_PSM6_CONFIG
             )
             return text.strip()
+        except (OcrCapacityExceededError, OcrDeadlineExceededError):
+            raise
         except Exception:
             return ""

@@ -163,10 +163,17 @@ def _make_fake_pytesseract_module(side_effects):
     """
     Return a fake pytesseract module whose image_to_data cycles through side_effects.
     Raises RuntimeError for Exception instances, returns dict for dict instances.
+
+    FIX-PDFX-TESSERACT-CONCURRENCY: accepts **kwargs (specifically `timeout=`)
+    because ocr_unit's _tesseract_image_to_data now dispatches through
+    infrastructure.ocr_gateway.run_image_sync(), which always passes a
+    `timeout=` kwarg through to pytesseract.image_to_data() (the OCR
+    concurrency gate's bounded-deadline mechanism). The retry behavior under
+    test is unaffected — only the call signature widened.
     """
     call_count = {"n": 0}
 
-    def _image_to_data(img, lang=None, config=None, output_type=None):
+    def _image_to_data(img, lang=None, config=None, output_type=None, **kwargs):
         idx = call_count["n"]
         call_count["n"] += 1
         effect = side_effects[idx] if idx < len(side_effects) else side_effects[-1]

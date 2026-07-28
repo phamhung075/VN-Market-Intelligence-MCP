@@ -27,6 +27,12 @@ from interface.serializers import ExtractPDFRequestSchema, HealthResponse
 # Domain import is permitted in interface layer (interface → domain is valid DDD flow).
 from domain.primitives.market_hours.primitive import is_vn_market_open_utc
 
+# FIX-PDFX-TESSERACT-CONCURRENCY: domain-level backpressure/deadline signals
+# from the OCR concurrency gateway (infrastructure/ocr_gateway.py). Domain
+# import in the interface layer is valid DDD flow (same pattern as
+# is_vn_market_open_utc above).
+from domain.errors import OcrCapacityExceededError, OcrDeadlineExceededError
+
 
 # ---------------------------------------------------------------------------
 # BT-3-B: POST /extract-tables request schema
@@ -310,8 +316,25 @@ def register_routes(
         FU-1 RISK-1: ocr_source_ok reflects startup probe for SqliteOcrTextSource.
         False = MARKET_DB_PATH wrong or volume unmounted — /page-text will return
         source_reachable:false. Fix before running refine to avoid fabrication.
+
+        FIX-PDFX-TESSERACT-CONCURRENCY (brief §5.2 / AC-6): ocr block publishes
+        the concurrency gate's bookkeeping ALONGSIDE OS ground truth
+        (semaphore count vs. actual live tesseract children via /proc) so the
+        exact defect class this row exists to fix — "a counter that disagreed
+        with reality" — is diagnosable from this endpoint alone.
         """
-        return HealthResponse(ocr_source_ok=ocr_source_ok)
+        import logging as _log_mod
+
+        try:
+            from infrastructure import ocr_gateway
+            ocr_block = ocr_gateway.inflight()
+        except Exception as exc:  # never let observability break liveness
+            _log_mod.getLogger(__name__).warning(
+                "health: ocr_gateway.inflight() failed: %s", exc
+            )
+            ocr_block = None
+
+        return HealthResponse(ocr_source_ok=ocr_source_ok, ocr=ocr_block)
 
     @router.post("/extract-tables")
     async def extract_tables(body: ExtractTablesRequestSchema) -> dict:
@@ -354,6 +377,22 @@ def register_routes(
                 "balance_pass": result.get("balance_pass", False),
                 "balance_delta": result.get("balance_delta", 0.0),
             }
+        except OcrCapacityExceededError as exc:
+            retry_after_s = max(1, int(round(getattr(exc, "retry_after_s", 5.0))))
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail={
+                    "status": "failed",
+                    "error": "ocr_capacity",
+                    "retry_after_s": retry_after_s,
+                },
+                headers={"Retry-After": str(retry_after_s)},
+            ) from exc
+        except OcrDeadlineExceededError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail={"status": "failed", "error": "ocr_deadline_exceeded", "message": str(exc)},
+            ) from exc
         except Exception as exc:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -536,6 +575,28 @@ def register_routes(
             return response.to_json()
         except HTTPException:
             raise
+        except OcrCapacityExceededError as exc:
+            # FIX-PDFX-TESSERACT-CONCURRENCY (brief §7 backpressure contract):
+            # the OCR gateway's bounded queue wait elapsed — signal the caller
+            # to back off rather than let the request queue indefinitely.
+            retry_after_s = max(1, int(round(getattr(exc, "retry_after_s", 5.0))))
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail={
+                    "status": "failed",
+                    "error": "ocr_capacity",
+                    "retry_after_s": retry_after_s,
+                },
+                headers={"Retry-After": str(retry_after_s)},
+            ) from exc
+        except OcrDeadlineExceededError as exc:
+            # A single OCR call exceeded its bounded page deadline — the slot
+            # HAS been released (this is the ratchet-break: bounded, not
+            # permanent). Surfaced as 503 (transient) rather than 500.
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail={"status": "failed", "error": "ocr_deadline_exceeded", "message": str(exc)},
+            ) from exc
         except Exception as exc:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
