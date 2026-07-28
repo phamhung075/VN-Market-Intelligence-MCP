@@ -1,5 +1,15 @@
 # QA — Notebook
 
+## cycle-494 · 2026-07-28 · TASK-COWORK-CATCHUP-2 — APPROVED, DONE_VERIFIED (direct-commit verify, `review[]` row, 4-commit stack, developer's self-report independently re-derived from source not trusted)
+
+Row `review[]`, `branch:null`, `qa_verify_mode:verify-committed`, `commit:c5e7c6747`. Verified all 4 commits (`c5e7c6747` code+test / `fd5d4565e` docs / `64c41a6e0` board / `d7330d539` memory) on both local `main` AND `origin/main` ancestry — no push gap, no peer-sweep (each commit's `git show --stat` file-list matches its claimed scope exactly).
+
+NFR-2 (`matchSlots()` byte-identical) verified literally, not just prose-trusted: diffed `git show c5e7c6747^` vs `c5e7c6747` — lines 1-298 (the entire exported function body + `module.exports` line) MD5-identical; the sole diff is 22 additive lines strictly inside `if (require.main === module)`. Ran `node cowork-match-slots.test.js` myself: 43/43 pass. Reproduced RED independently (swapped in the pre-change source file only, kept HEAD's test file) — hard `TypeError` crash on TC-25 exactly as claimed, restored byte-identical after (`git diff` empty). Sibling `cowork-catchup-predicate.test.js` re-run 34/34, confirmed untouched by the commit. `bun tsc --noEmit` (apps/mcp-server) 0 errors. Docs spot-checked: `match-slots.md` documents the `catchup_raw` field shape exactly matching the live JSON output; `WORK.md` carries the 1-liner.
+
+Exercised the fallback-on-missing-module path directly (not just via the CLI test harness) — deleted the predicate module in an isolated scratch dir: exits 0, `catchup_raw:[]`, stderr WARN, never crashes. Live-ran the CLI against the real production `cowork-schedule.json` — output schema matches docs exactly, no crash. Tool-grant claim confirmed structural not an excuse: `.claude/agents/developer.md` frontmatter is literally `Read, Edit, Write, Glob, Grep, Bash` — no MCP tool, matching INV-GATEWAY-1; developer's own journal STEP developer-S16 independently corroborates the pathspec-scoped `git add`/`commit -- <paths>` + `git diff --cached` before/after emptiness-check approach used in place of the commit-mutex.
+
+VERDICT: APPROVED, DONE_VERIFIED. Board row moved `task_board.review[]`→`task_board.done_verified[]` via `jq`+`scripts/orch-apply.sh` (conservation task_total 668=668). DJ: `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa.md` §qa-S5.
+
 ## cycle-493 · 2026-07-28 · FACTORY-APP-split-assembleBriefing — APPROVED, DONE_VERIFIED (direct-commit verify, review[] row never drained; router explicit dispatch)
 
 Row `review[]`, `branch:null`, next_agent=qa on row itself (drain script would have picked an older 2026-07-23 row from a 90+-deep queue; verified this id directly per router's ask, did not run the generic drain). Commits `4744b0792` (code, 26 files)/`09ae11440` (memory, TOCTOU from an unrelated peer PO race, already tracked, not re-litigated)/`7bb2a6784` (board flip), all main-ancestor confirmed.

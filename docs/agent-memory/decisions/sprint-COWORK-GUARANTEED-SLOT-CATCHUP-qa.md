@@ -51,3 +51,15 @@
 - `.head` (top-level, authoritative) is currently owned by an unrelated task (`TASK-COWORK-CATCHUP-2`, in_progress) — did NOT touch `.head` at all, only the two board-array entries for this row's own id.
 **why-decision:** APPROVED, DONE_VERIFIED. Every claim in the dev's review_note independently re-derived from source (not trusted at face value) — split is a genuine zero-drift extraction, all budgets met, all exports/consumers verified byte-for-byte unchanged, dead code confirmed removed, doc updated, stats/health live-confirmed. The one repo-wide full-suite gap is explicitly non-blocking per pinned CANONICAL policy and does not affect this row's own blast radius, which is independently proven clean.
 **why-change:** none — dispatch brief's explicit instruction (re-run independent verification, verify-committed mode, do not re-litigate the 09ae11440 TOCTOU) followed as given.
+
+### STEP qa-S5 · qa · 2026-07-28T20:35:33Z
+**task-id:** TASK-COWORK-CATCHUP-2
+**what-done:** Direct-commit verify (`review[]` row, `branch:null`, `qa_verify_mode:verify-committed`) of 4-commit stack `c5e7c6747`(code+test)/`fd5d4565e`(docs)/`64c41a6e0`(board)/`d7330d539`(memory), all confirmed on local main AND `origin/main` ancestry.
+**what-considered:**
+- NFR-2 literal byte-diff: `git show c5e7c6747^:...js` vs current — lines 1-298 (incl. `matchSlots()` body + `module.exports`) MD5-identical; sole diff is 22 additive lines inside `require.main===module`. Ran `node cowork-match-slots.test.js` myself: 43/43. Reproduced RED independently (swapped in pre-change source only) — hard TypeError crash on TC-25, restored byte-identical after (empty `git diff`).
+- Sibling `cowork-catchup-predicate.test.js`: re-ran 34/34, confirmed file untouched by this commit via `git show --stat`. `bun tsc --noEmit` (apps/mcp-server) 0 errors. Docs spot-check: `match-slots.md` documents `catchup_raw` shape exactly; `WORK.md` 1-liner present.
+- Exercised fallback-path directly (not just via test): predicate module deleted in isolated scratch dir — exits 0, `catchup_raw:[]`, stderr WARN, no crash. Live-ran CLI against real production schedule — schema matches docs exactly.
+- Tool-grant claim: `.claude/agents/developer.md` frontmatter = `Read, Edit, Write, Glob, Grep, Bash` — no MCP tool, confirms structural (not excuse) basis for pathspec-scoped commits instead of commit-mutex, corroborated by developer journal STEP developer-S16.
+- All 4 commits' `git show --stat` file-lists match exactly what each commit claims — no peer-sweep. `orch-validate.mjs` Stage0+1 PASS.
+**why-decision:** Every claim independently re-derived from source (byte-diff, live RED/GREEN reproduction, direct fallback exercise, live CLI run), not trusted at face value — genuine additive-only change, NFR-2 literally holds, docs accurate, tests real. APPROVED, DONE_VERIFIED.
+**why-change:** none — followed dispatch brief's explicit verification checklist.
