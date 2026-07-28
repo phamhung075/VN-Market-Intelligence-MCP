@@ -1,5 +1,52 @@
-## a7k2p9m1 · 2026-07-28T22:33:30Z
-### Audit Run Tier-2 (20:00–22:33 UTC 2026-07-28)
+## q3r8n5x2 · 2026-07-28T22:41:40Z
+### Audit Run Tier-1 (22:39-22:41 UTC 2026-07-28)
+- Tier: 1 | Services: 12/12 host_runtime_set Up(healthy) | Health: 5/5 OK | A-20 pdf-extractor 3/3 pass | A-21 crashRestarts=0 PASS | A-30 MemPerc=93.83% verdict=FOLD (benign GC) | A-32 Disk 39% PASS
+- Anomalies: 0 new (0 critical, 0 warn, 0 info)
+- Status: HEALTHY
+
+Fire-election: tick=2026-07-28T22:30Z (`*/30 * * * *` boundary) — `task_claim` returned `claimed:true`. Led this tick.
+
+### RAW-PROBE: (docs/agents/system-auditor/probe.sh, 2026-07-28T22:39:41Z)
+```
+=== AUDITOR PROBE 2026-07-28T22:39:41Z ===
+
+--- docker ps -a ---
+NAMES                                             STATUS                 IMAGE
+vn-market-intelligence-mcp-pdf-extractor-1        Up 5 hours (healthy)   vn-market-intelligence-mcp-pdf-extractor
+vn-market-intelligence-mcp-mcp-server-1           Up 5 hours (healthy)   vn-market-intelligence-mcp-mcp-server
+vn-market-intelligence-mcp-frontend-1             Up 4 days (healthy)    vn-market-intelligence-mcp-frontend
+mcp-gateway                                       Up 13 days (healthy)   mcpservergatway-gateway
+vn-market-intelligence-mcp-api-gateway-1          Up 13 days (healthy)   vn-market-intelligence-mcp-api-gateway
+vn-market-intelligence-mcp-flaresolverr-1         Up 13 days (healthy)   ghcr.io/flaresolverr/flaresolverr:latest
+vn-market-intelligence-mcp-news-fetch-1           Up 13 days (healthy)   vn-market-intelligence-mcp-news-fetch
+vn-market-intelligence-mcp-rag-service-1          Up 2 hours (healthy)   vn-market-intelligence-mcp-rag-service
+vn-market-intelligence-mcp-macro-indicators-1     Up 13 days (healthy)   vn-market-intelligence-mcp-macro-indicators
+vn-market-intelligence-mcp-technical-analysis-1   Up 13 days (healthy)   vn-market-intelligence-mcp-technical-analysis
+vn-market-intelligence-mcp-alert-engine-1         Up 13 days (healthy)   vn-market-intelligence-mcp-alert-engine
+vn-market-intelligence-mcp-stock-price-1          Up 13 days (healthy)   vn-market-intelligence-mcp-stock-price
+vn-market-intelligence-mcp-kinh-dich-service-1    Up 13 days (healthy)   vn-market-intelligence-mcp-kinh-dich-service
+
+--- health endpoints --- mcp-server:3000/health OK (HTTP 200) | api-gateway:4000/health OK (HTTP 200) | macro-indicators:5004/health OK (HTTP 200) | pdf-extractor:5001/health OK (HTTP 200) | frontend:3001/ OK (HTTP 200)
+
+--- restart count --- Container=vn-market-intelligence-mcp-mcp-server-1 RestartCount=2
+
+--- memory pressure --- Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=93.83% MemUsage=2.815GiB / 3GiB
+
+--- A-30 memory reclamation verdict --- verdict:FOLD reason:"benign GC sawtooth or below tripwire" | vmhwm_kb=3148684 vmrss_kb=2782372 (gap=366.3MiB proves reclamation) | min_pct=91.27 max_pct=94.66 | reclamation_dips=2
+
+--- disk df -h / --- Capacity 39% (233Gi total, 13Gi used, 22Gi avail)
+
+--- A-20 pdf-extractor multi-probe --- [A-20-PROBE-1] HTTP 200 | [A-20-PROBE-2] HTTP 200 | [A-20-PROBE-3] HTTP 200 | pass_count=3/3 PASS
+
+=== PROBE DONE ===
+```
+
+**A-29 Cron Health**: All 129 cron jobs with success_rate ≥80%, most at 100%, no fire-gap alerts.
+
+**A-30 Memory Reclamation Gate** (per prior FIX-AUDITOR-A30-VMHWM-VETO-TAUTOLOGY review): VmHWM 3148684 kB >> VmRSS 2782372 kB. Gap of 366 MiB proves post-window reclamation occurred despite 6-sample plateau. FOLD verdict confirmed. No signal.
+
+[OUTPUT-CONTRACT] signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0
+
 - Tier: 2 | Cron: 129 jobs checked | Sources: 30+ monitored | VPS: 4 routes ok
 - Anomalies: 0 new (0 critical, 0 warn, 0 info)
 - Status: HEALTHY
