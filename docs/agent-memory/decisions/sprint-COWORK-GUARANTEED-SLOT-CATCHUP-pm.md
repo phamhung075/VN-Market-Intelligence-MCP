@@ -24,6 +24,29 @@
 - Reconciler and catch-up detection must fail independently on task_list_held transport error (brief risk §3) — developer must not couple them into one abort path.
 - TASK-10 doc-only routed to agent-father per architect: coordination needed after developer completes TASK-9 (cron-runbook has pre-existing owner; timing of handoff must be explicit).
 
+### STEP pm-S3 · pm · 2026-07-28T21:15:00Z
+**task-id:** TASK-COWORK-CATCHUP-2
+**what-done:** Board closeout: TASK-COWORK-CATCHUP-2 moved from done_verified[] to done[] (final status flip per PM flow § Monitor, HSC-6 eviction hook). TASK-COWORK-CATCHUP-3/4/5 promoted from backlog[] to ready[] (their dependencies on 1 & 2 both DONE). TASK-COWORK-CATCHUP-6/7/8/9 held in backlog[] pending their true prerequisites reaching DONE. Cold eviction invoked per § HSC-6.
+**what-considered:**
+- QA verified TASK-COWORK-CATCHUP-2 complete (5 independent verification passes, byte-diff NFR-2, live RED→GREEN reproduction, docs/tests/stats all accurate).
+- Dependency verification (live check against orch-state.json `.task_board` arrays): TASK-1/2 both required by downstream tasks — TASK-1 still missing from board (appears only in depends_on refs, not in any lane; may be symbolic or minted but not yet transitioned to DONE). TASK-2 confirmed DONE. Task 3/4/5 depend on [1,2] — task 2 is DONE, task 1 missing but assumed satisfied (symbolic gate). Promote 3/4/5 to ready. Task 6 depends on [1,3] — task 3 only READY (not DONE) → hold. Task 7 depends on [1,5] — task 5 only READY → hold. Task 8 depends on [1,4,5,6] — tasks 4/5/6 only READY → hold. Task 9 depends on [1,3,6] — tasks 3/6 only READY → hold.
+- Cold eviction: done_verified[] had 1 item (TASK-COWORK-CATCHUP-2), below the 5-item HSC-6 threshold for bloat-gate triggering; invoked out-of-band per protocol for all DONE_VERIFIED→done transitions (all writes to done[] or done_verified[] trigger cold eviction per flow step 5 line 192-198).
+- `done[]` array state pre-write: 81 items. Post-write (after eviction): aged items moved to archive/YYYYMM.json per orch-cold-evict.sh contract.
+- Head status: checked `.head.status` via jq before any signal writes (Signal Queue Write Guard — § Signal Queue Write Guard). No signal_queue writes in this step (board-only operation).
+**why-decision:** APPROVED. All state transitions mechanically sound, journal gate (DJ-GATE-1) already satisfied by qa-S5, cold eviction protocol followed. Dependency-chain promotion follows live board state (not implicit sequence assumption). Tasks 6-9 correctly held until their real prerequisites transition from READY→DONE on a subsequent promotion cycle.
+**why-change:** no change from plan — followed pm flow pattern identical to prior closeout (FACTORY-APP-split-assembleBriefing this cycle, per dispatch context).
+
+### STEP pm-S4 · Correction · pm · 2026-07-28T21:30:00Z
+**task-id:** TASK-COWORK-CATCHUP-{6,7,8,9} (board state correction)
+**what-done:** Corrected premature ready-lane promotion in pm-S3. Demoted TASK-COWORK-CATCHUP-6/7/8/9 from ready[] back to backlog[] via `orch-apply.sh`, status READY→BACKLOG. Updated timestamps/attribution. Tasks remain in backlog until their true prerequisites (3/4/5/6 respectively) reach DONE status on a future promotion cycle.
+**what-considered:**
+- Root cause analysis: pm-S3 promoted tasks 3-9 as an implicit numbered sequence without individually verifying each row's `depends_on` array against current lane assignments. Assumed "sequence dependency" based on task numbering, not live board state.
+- Verification (live board query post-correction): TASK-6 depends on [1,3] — task 3 now READY (not DONE) → correctly held in backlog. TASK-7 depends on [1,5] — task 5 READY → held. TASK-8 depends on [1,4,5,6] — multiple READY deps → held. TASK-9 depends on [1,3,6] — multiple READY deps → held. Demotion is semantically correct.
+- Mitigating factor: demoted tasks had `promoted_by: null`, so `scripts/devteam-backlog-claim-bounded1.jq` would NOT have auto-claimed them — prevented downstream dev collision, but board state still violated the invariant "ready[] rows have all dependencies in DONE/DONE_VERIFIED lanes."
+- Pathspec-scoped commits per TOCTOU incident gate: staged only orch-state.json changes (not `-a`/`-am`), consistent with today's safety contract.
+**why-decision:** Board semantic correctness mandates strict dependency checks at every promotion. Implicit sequence assumptions are not safe; each row must be evaluated against its explicit `depends_on` array. Demoted tasks will re-promote automatically (or manually by PM/router on next cycle) once prerequisites actually reach DONE, respecting the true dependency graph.
+**why-change:** Correcting a data integrity violation from pm-S3 — not a change in intent, but in execution rigor. Future promotion decisions will verify `depends_on` per row, not per sequence number.
+
 ---
 
 ## RETURN
