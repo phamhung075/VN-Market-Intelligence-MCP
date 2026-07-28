@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# Post-commit hook: SHA-correlation companion to scripts/git-hooks/pre-commit's sweep guard.
+#
+# TASK: FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK — brief §4.1 companion hook.
+#
+# pre-commit cannot know the commit's own SHA (it hasn't been created yet). When
+# pre-commit fires a WARN (never on reject — the commit never lands in that case), it
+# drops a short-lived marker at .git/sweep-guard.pending containing the staged file
+# list. This hook, run immediately after the commit object exists, appends the
+# resulting SHA to the SAME .git/sweep-guard.log so recovery is one command
+# (`git show <sha>:<path>`) instead of a git-log archaeology exercise, then removes
+# the marker. Purely additive observability — never affects commit outcome (the
+# commit has already happened by the time this hook runs) and never blocks anything.
+
+set -u
+
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || true)"
+[ -z "$REPO_ROOT" ] && exit 0
+
+MARKER_FILE="$REPO_ROOT/.git/sweep-guard.pending"
+LOG_FILE="$REPO_ROOT/.git/sweep-guard.log"
+
+[ -f "$MARKER_FILE" ] || exit 0
+
+sha="$(git rev-parse HEAD 2>/dev/null || true)"
+if [ -n "$sha" ]; then
+  {
+    echo "$(date -u +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null || true) correlated sha=${sha} staged_at_warn=[$(tr '\n' ' ' < "$MARKER_FILE" 2>/dev/null || true)]"
+  } >> "$LOG_FILE" 2>/dev/null || true
+fi
+
+rm -f "$MARKER_FILE" 2>/dev/null || true
+exit 0

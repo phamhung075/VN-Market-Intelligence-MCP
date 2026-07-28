@@ -1,0 +1,169 @@
+#!/usr/bin/env bash
+# Pre-commit hook: commit-path peer-index sweep guard (Layer 0, universal backstop).
+#
+# TASK: FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK (docs/data/orch/orch-state.json
+#       .task_board, P0). Parent: FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD.
+# SPEC: docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md §4.1/§4.3
+# VERIFY: scripts/audits/verify-commit-sweep-discriminator.sh (re-run before trusting this
+#         hook on a new git version — the discriminator depends on git-internal
+#         `next-index-<pid>.lock` naming, not a documented public API).
+#
+# BUG THIS PREVENTS (4 confirmed live occurrences, most recently 2026-07-28T19:5xZ,
+# commit 09ae11440): a BARE (pathspec-less) `git commit -m ...` commits WHATEVER is
+# currently staged in the shared index, including a concurrent peer's `git add`'d WIP
+# that landed after the committing actor's own last check — a snapshot-then-commit
+# check (e.g. `git diff --cached --name-only` run as a separate script step before
+# `git commit`) cannot close this: it is TOCTOU, a peer can `git add` in the gap.
+#
+# WHY A GIT HOOK: this control lives beneath the OS `git commit` invocation itself,
+# so it binds the INV-GATEWAY-1-exempt population too (dev-*/qa/ba/pm/architect
+# specialists never call the dispatcher's commit-mutex MCP skill by design — a git
+# hook is transport-agnostic, so it structurally cannot be opted out of the way an
+# MCP-bound skill can).
+#
+# DISCRIMINATOR ($GIT_INDEX_FILE basename — race-free, git-locked at hook time):
+#   index | index.lock       -> BARE   (real, shared, persistent index; a peer's
+#                                        `git add` could have landed in it moments ago)
+#   next-index-<pid>.lock    -> SCOPED (git already resolved an explicit commit-line
+#                                        pathspec into a private scratch index BEFORE
+#                                        invoking this hook — structurally immune)
+#   anything else            -> UNKNOWN (git-internal shape changed / unrecognized —
+#                                        fail OPEN, never block on our own uncertainty,
+#                                        but never silent either; mirrors commit-mutex's
+#                                        own C-2/C-2b fail-open-but-loud precedent)
+#
+# DISPOSITION: WARN-by-default, fleet-wide, on day 1 — never blocks unless the caller
+# has opted its OWN commit into GIT_SWEEP_GUARD_MODE=reject (only sensible once that
+# call site's own commit line has migrated to pathspec form — see
+# .claude/skills/commit-mutex/SKILL.md Step 3c for the reference migration). A
+# hard-reject default would ALSO catch all 3 real occurrences, but would additionally
+# block the majority of fleet commits day 1 (bare-commit-after-`git add` is still the
+# dominant idiom across 60+ flow docs) — that is strictly worse than the silent-but-
+# recoverable sweep bug it replaces. See brief §3 for the full trade-off writeup.
+#
+# ZERO required external dependencies for the GATING decision itself (no jq, no curl,
+# no network — only git builtins + POSIX shell), so this can never become a new
+# network-availability failure mode inside the commit hot path. `jq` is used ONLY for
+# the best-effort docs/signals/ write (§ below), which is itself wrapped so its own
+# failure can never affect the gating decision or block the commit.
+#
+# Install: ./scripts/git-hooks/install.sh  (symlinks into .git/hooks/, re-run on a
+# fresh clone or a `.git` rebuild — .git/hooks is untracked).
+# Bypass (NOT recommended, equivalent to --no-verify which is forbidden fleet-wide):
+#   git commit --no-verify
+
+set -u
+
+# --- Resolve repo root (hooks run with CWD at the top of the working tree already,
+#     per empirical verification in the owning brief §2.2 — but resolve explicitly
+#     anyway so this hook does not silently depend on that undocumented behavior). ---
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || true)"
+if [ -z "$REPO_ROOT" ]; then
+  # Cannot even resolve the repo root inside a git hook — mechanism-broken, fail
+  # OPEN + LOUD (never silently swallow, per AC-3 / commit-mutex C-2b precedent).
+  echo "[sweep-guard] INTERNAL: could not resolve repo root via 'git rev-parse --show-toplevel' — fail-open" >&2
+  exit 0
+fi
+
+LOG_FILE="$REPO_ROOT/.git/sweep-guard.log"
+SIGNALS_DIR="$REPO_ROOT/docs/signals"
+MARKER_FILE="$REPO_ROOT/.git/sweep-guard.pending"
+
+# --- Best-effort, never-blocking docs/signals/ bug-escalation write -----------------
+# Shape matches the LIVE bug-escalation convention (verified against
+# docs/signals/processed/news-scout-20260724T040000Z.json and
+# docs/protocols/fail-loud-protocol.md § Output Boundary): {from,to,type,payload,
+# priority,createdAt}. Zero MCP/network dependency — pure bash+jq, local file only.
+write_signal() {
+  msg="$1"
+  command -v jq >/dev/null 2>&1 || return 0
+  [ -d "$SIGNALS_DIR" ] || return 0
+  ts="$(date -u +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null || true)"
+  [ -z "$ts" ] && return 0
+  sig_file="$SIGNALS_DIR/commit-sweep-guard-$(printf '%s' "$ts" | tr -d ':')-$$.json"
+  jq -n \
+    --arg from "commit-sweep-guard" \
+    --arg to "po" \
+    --arg type "bug-escalation" \
+    --arg priority "high" \
+    --arg createdAt "$ts" \
+    --arg payload "$msg" \
+    '{from:$from, to:$to, type:$type, priority:$priority, createdAt:$createdAt, payload:$payload}' \
+    > "$sig_file" 2>/dev/null || true
+  return 0
+}
+
+idx_base="$(basename -- "${GIT_INDEX_FILE:-}" 2>/dev/null || true)"
+
+case "$idx_base" in
+  index|index.lock)   mode="BARE"   ;;
+  next-index-*.lock)  mode="SCOPED" ;;
+  *)                  mode="UNKNOWN";;
+esac
+
+# AC-4: pathspec-scoped commits are NEVER blocked or warned — completely silent.
+[ "$mode" = "SCOPED" ] && exit 0
+
+if [ "$mode" = "UNKNOWN" ]; then
+  # Internal/mechanism-broken path (future git version changed the internal
+  # $GIT_INDEX_FILE naming, or some other unrecognized state) — AC-3: never silently
+  # swallow, but never hard-block on our OWN uncertainty either. Fail OPEN + LOUD.
+  msg="[sweep-guard] INTERNAL: unrecognized GIT_INDEX_FILE shape ('${GIT_INDEX_FILE:-<unset>}', basename='${idx_base}') on git $(git --version 2>/dev/null) — discriminator cannot classify this commit, failing open (never block on our own uncertainty). Re-run scripts/audits/verify-commit-sweep-discriminator.sh."
+  echo "$msg" >&2
+  write_signal "$msg"
+  exit 0
+fi
+
+# mode == BARE — race-free from here: this hook runs inside git's own index.lock
+# transaction over the REAL shared index, so `git diff --cached` below reflects
+# exactly what is about to be committed, not a stale earlier snapshot (closes the
+# commit-mutex Step 3b/3c TOCTOU gap — see brief §2.2).
+#
+# AC-3: a genuine failure of this command (distinct from "succeeded, nothing
+# staged") must NOT be silently reinterpreted as "0 files, nothing to warn
+# about" — that would be exactly the kind of silent swallow this guard exists
+# to prevent, just moved one level down. Capture the exit code explicitly.
+if ! staged="$(git diff --cached --name-only 2>&1)"; then
+  msg="[sweep-guard] INTERNAL: 'git diff --cached --name-only' failed inside the hook (mode=BARE) — cannot determine the staged set, failing open (never block on our own uncertainty). Output: ${staged}"
+  echo "$msg" >&2
+  write_signal "$msg"
+  exit 0
+fi
+n=0
+[ -n "$staged" ] && n=$(printf '%s\n' "$staged" | wc -l | tr -d ' ')
+
+# Nothing staged (e.g. `git commit --allow-empty`) — nothing at risk of being swept.
+[ "$n" -eq 0 ] 2>/dev/null && exit 0
+
+actor="${CLAUDE_CODE_SESSION_ID:-$(git config user.name 2>/dev/null || echo unknown)}"
+staged_oneline="$(printf '%s' "$staged" | tr '\n' ' ')"
+mode_effective="${GIT_SWEEP_GUARD_MODE:-warn}"
+
+{
+  echo "=============================================================================="
+  echo "[sweep-guard] WARNING: this commit has NO pathspec — it will absorb ALL"
+  echo "[sweep-guard] ${n} currently-staged file(s), including anything a PEER staged"
+  echo "[sweep-guard] and has not committed yet:"
+  echo "[sweep-guard]   ${staged_oneline}"
+  echo "[sweep-guard] Fix: git commit -m \"<msg>\" -- <only-your-own-files>  (exact"
+  echo "[sweep-guard] file paths only — never a directory or '.', those sweep too)."
+  echo "[sweep-guard] mode=${mode_effective} actor=${actor}"
+  echo "=============================================================================="
+} >&2
+
+log_line="$(date -u +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null || true) mode=${mode_effective} actor=${actor} n=${n} staged=[${staged_oneline}]"
+printf '%s\n' "$log_line" >> "$LOG_FILE" 2>/dev/null || true
+
+signal_msg="[sweep-guard] BARE commit about to absorb ${n} staged file(s) not necessarily this actor's own: ${staged_oneline}. actor=${actor} mode=${mode_effective}. Fix: git commit -m \"<msg>\" -- <own-files-only>."
+write_signal "$signal_msg"
+
+if [ "$mode_effective" = "reject" ]; then
+  echo "[sweep-guard] GIT_SWEEP_GUARD_MODE=reject — BLOCKING this commit. Index is untouched; re-run with an explicit pathspec." >&2
+  exit 1
+fi
+
+# WARN path: leave a short-lived marker for post-commit to correlate the resulting
+# SHA back into the same log line (best-effort, non-blocking — see post-commit).
+printf '%s' "$staged" > "$MARKER_FILE" 2>/dev/null || true
+
+exit 0
