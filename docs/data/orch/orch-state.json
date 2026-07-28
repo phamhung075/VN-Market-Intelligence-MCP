@@ -12045,39 +12045,7 @@
         "po_signoff_verdict": "APPROVE — independent PO sign-off 2026-07-23T05:07:33Z. Re-read qa_reverify_20260723 (PASS; both QA gate passes clean, closes the single probe.sh:86 blocking issue). Confirmed probe.sh:86 carries the || fallback guard idiom matching :31/:66/:71/:92 (git show 685285a7c: single-file, 1 insertion/1 deletion). Forbidden files UNTOUCHED at HEAD + working-tree: tier1-probe.md logic, scripts/audits/verify-a30-mcp-memory-reclamation.sh, scripts/emit-audit-signal.sh, app code (git status clean). Detection-layer-only fix per brief docs/architecture-briefs/2026-07-23-auditor-a30-reclamation-gate-a21-windowed-restart.md; E-3 append-always observation-ledger contract preserved. Supervised converge pipeline design->impl->QA verify->QA delta re-verify->PO sign-off now fully closed. RESIDUAL non-blocking: field-acceptance of the >=85% deep-probe branch awaits the next live Tier-1 cycle at genuine mem pressure (cron-gated, monitored separately, not a gate on close)."
       }
     ],
-    "done_verified": [
-      {
-        "id": "TASK-COWORK-CATCHUP-1",
-        "title": "FR-1 + FR-2: Core domain module cowork-catchup-predicate.js with per-dish-type config",
-        "type": "SPRINT-M",
-        "size": "M",
-        "priority": "P0",
-        "zone": "scripts/agents-flow/",
-        "sprint": "COWORK-GUARANTEED-SLOT-CATCHUP",
-        "status": "DONE_VERIFIED",
-        "depends_on": [],
-        "created_at": "2026-07-22T22:12:59Z",
-        "created_by": "pm",
-        "updated_at": "2026-07-28T14:47:59Z",
-        "next_agent": "qa",
-        "po_routing_20260728": "PO 2026-07-28T13Z lane routing. pm's decomposition minted this row with next_agent unset, which no dispatch lane resolves (verified by executing scripts/lib/devteam-eligibility.jq predicates, not by reading the row). Handler = developer per docs/handoffs/TASK-COWORK-CATCHUP-10.md ('developer completes code TASK-1..9, then agent-father integrates this doc-only subtask') + docs/data/system-map.json scripts/ zone. dev-role next_agent + backlog lane = BOUNDED-1, per docs/agents/po/flow/zone-routing.md Step A2.",
-        "updated_by": "qa",
-        "po_lane_move_20260728": "MOVED ready[] -> backlog[] by PO. Dep-free P0 head of the epic chain; backlog[] is the BOUNDED-1 lane (1st in the head-idle chain) and this row is currently the only rank-0 BOUNDED-1-eligible row, so it is the next unattended pick. ready[] would have parked it behind RLC (3rd in the chain, reachable only when BOUNDED-1 declines).",
-        "promoted_at": "2026-07-28T13:42:42Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
-        "claimed_at": "2026-07-28T14:42:14Z",
-        "claimed_by": "router (deliberate QA dispatch — epic gate)",
-        "qa_verify_mode": "verify-committed",
-        "branch": null,
-        "commit": "06808a8a1",
-        "router_dispatch_note": "Router overrode the QA-Drain age-ordering deliberately. Age-order would have picked UC-GCP-P8 (gates nothing). CATCHUP-1 is depends_on for CATCHUP-2/3/4/5/6 — verifying it unblocks the whole downstream epic that fixes guaranteed-slot catch-up, a defect that measurably cost 3 days of missed publishes during the 07-25/07-28 outage. Same qa<1 budget, different row; UC-GCP-P8 remains the next age-ordered pick and loses one cycle only.",
-        "qa_verify_result": "APPROVED",
-        "qa_review_20260728": "[QA] Review Record (direct-commit verify) 2026-07-28T14:52Z — APPROVED. Verified commit 06808a8a1 on main ancestry, touches exactly the handoff files[] (docs/WORK.md, docs/data/cowork-schedule.json, scripts/agents-flow/cowork-catchup-predicate.{js,test.js}, scripts/dev-task-cowork-catchup-1-migrate-schedule.js). Ran node cowork-catchup-predicate.test.js myself: 34/34 PASS, read every assertion — TC-1..4 genuinely assert AC-1 (due=true within bound)/AC-2 (rolled_past_vn_date precedence over lateness)/AC-3 (freshness_window_exceeded, same VN-date), not shallow pass-throughs. 3 required exports present with exact signatures: computeCatchupCandidates(schedule,nowUnix,ctx,{field,dowMatch}), mostRecentCronFireBefore(cron,nowUnix,{field,dowMatch}), toVnDateString(unixSeconds). DDD purity confirmed: zero require()/import in the module, nowUnix fully ctx-injectable, no task_list_held call (grep-verified, only appears in comments explaining why it is NOT called). mock-guard.sh PASS, no process.env/secret patterns. Schedule-file edit: _dish_type_catchup_config present + byte-matches spec; 8 slots carry publish_date_basis, values byte-match spec incl. digest-daily=utc_date (confirmed deliberate, NOT corrected to vn_date). last_fired: diffed all 23 slots parent-commit vs this commit — 22 byte-identical, 1 (digest-daily) advanced forward 07-24->07-25T17:40:32Z; root-caused to the migrate script's full read-modify-write picking up a pre-existing UNCOMMITTED live dispatcher write present at read time (script never itself touches last_fired) — forward-only, cron-schedule-consistent, no data lost, slot count unchanged 23->23; independently corroborated by developer's own decision-journal S14 disclosure of the same artifact. AC-10 (tsc passes clean on new module): recorded as UNSATISFIABLE-AS-SPECIFIED, not silently ticked and not failed — apps/mcp-server/tsconfig.json include is [\"src/**/*\",\"*.ts\"] only, scripts/agents-flow/*.js is structurally never in scope (verified live, same as sibling cadence-policy.js); bun tsc --noEmit reports 0 errors but that is evidence of non-regression, not of this file being typechecked. What would satisfy AC-10 as specified: either port the module to apps/mcp-server/src/ as .ts, or add a dedicated scripts/ tsconfig.json + CI tsc-check step for scripts/agents-flow/*.js — neither done here, out of this task's scope. Unblocks TASK-COWORK-CATCHUP-2/3/4/5/6 (depends_on gate).\n",
-        "completed_at": "2026-07-28T14:47:58Z",
-        "completed_by": "qa"
-      }
-    ],
+    "done_verified": [],
     "head": {
       "status": "idle",
       "active_task_id": null,
