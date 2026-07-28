@@ -80,6 +80,14 @@ PROMOTE_JQ="scripts/devteam-backlog-promote-bounded1.jq"
 WORK=$(mktemp -d)
 trap 'rm -rf "$WORK"' EXIT
 
+# FIX-DEPSSATISFIED-COLD-ARCHIVED-DEP-RESOLVES-MISSING (2026-07-28): the
+# promote script now requires --slurpfile archive unconditionally
+# (dep_status_map($archive)). Empty archive here is deliberate — every
+# fixture in this file is synthetic (ZZ-SYNTH-* ids never present in any
+# real cold-archive month doc), so archive-awareness is a no-op for these
+# assertions; only the required-flag plumbing changed.
+: > "$WORK/empty-archive.json"
+
 NOW="2026-01-01T00:00:00Z"   # fixed synthetic timestamp — value irrelevant to the assertions
 FAIL=0
 
@@ -88,7 +96,7 @@ JQ_DEFS='include "scripts/lib/devteam-eligibility";'
 run_promote_picked_id() {
   # $1 = synthetic state json path, $2 = detail json path -> prints picked
   # ready[] id (or empty). Mirrors the sibling verifier's helper.
-  jq --arg now "$NOW" --slurpfile detail "$2" -f "$PROMOTE_JQ" "$1" \
+  jq --arg now "$NOW" --slurpfile detail "$2" --slurpfile archive "$WORK/empty-archive.json" -f "$PROMOTE_JQ" "$1" \
     | jq -r '.task_board.ready[0].id // empty'
 }
 

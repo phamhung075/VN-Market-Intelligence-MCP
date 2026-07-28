@@ -49,6 +49,13 @@ trap 'rm -rf "$WORK"' EXIT
 FAIL=0
 NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
+# FIX-DEPSSATISFIED-COLD-ARCHIVED-DEP-RESOLVES-MISSING (2026-07-28): BOUNDED-
+# 1/SLS/RLC now require --slurpfile archive (dep_status_map($archive) —
+# scripts/lib/devteam-eligibility.jq). Materialized ONCE into a real scratch
+# file (not re-globbed per invocation below) via the shared helper.
+ARCHIVE="$WORK/archive.json"
+bash scripts/lib/archive-glob-cat.sh > "$ARCHIVE"
+
 assert() {
   local desc="$1" cond="$2"
   if [ "$cond" = "true" ]; then
@@ -117,7 +124,7 @@ echo ""
 echo "=== POSITIVE PATH: WIP(in_progress)=$INPROG_N < 2 — BOUNDED-1/SLS/RLC gates MUST be satisfiable ==="
 
 cp "$WORK/fixture.json" "$WORK/t1.json"
-jq --arg now "$NOW" --slurpfile detail "$DETAIL" -f scripts/devteam-backlog-promote-bounded1.jq "$WORK/t1.json" > "$WORK/t1b.json"
+jq --arg now "$NOW" --slurpfile detail "$DETAIL" --slurpfile archive "$ARCHIVE" -f scripts/devteam-backlog-promote-bounded1.jq "$WORK/t1.json" > "$WORK/t1b.json"
 jq --arg now "$NOW" -f scripts/devteam-backlog-claim-bounded1.jq "$WORK/t1b.json" > "$WORK/t1c.json"
 B1_MOVED=$([ "$(jq '.task_board.in_progress|length' "$WORK/t1c.json")" -gt "$INPROG_N" ] && echo true || echo false)
 # BOUNDED-1's OWN gate is in_progress<1 (independent, stricter cap) — with
@@ -130,7 +137,7 @@ else
 fi
 
 cp "$WORK/fixture.json" "$WORK/t2.json"
-jq --arg now "$NOW" --slurpfile detail "$DETAIL" -f scripts/devteam-backlog-promote-supervised-lane-sweep.jq "$WORK/t2.json" > "$WORK/t2b.json"
+jq --arg now "$NOW" --slurpfile detail "$DETAIL" --slurpfile archive "$ARCHIVE" -f scripts/devteam-backlog-promote-supervised-lane-sweep.jq "$WORK/t2.json" > "$WORK/t2b.json"
 jq --arg now "$NOW" -f scripts/devteam-backlog-claim-supervised-lane-sweep.jq "$WORK/t2b.json" > "$WORK/t2c.json"
 SLS_READY_BEFORE=$(jq '.task_board.ready|length' "$WORK/t2.json")
 SLS_INPROG_AFTER=$(jq '.task_board.in_progress|length' "$WORK/t2c.json")
@@ -138,7 +145,7 @@ SLS_FIRED=$([ "$SLS_INPROG_AFTER" -gt "$INPROG_N" ] && echo true || echo false)
 assert "SLS gate (in_progress<2) is SATISFIABLE at in_progress=$INPROG_N despite ready[]=$SLS_READY_BEFORE (the exact instance-9 saturated shape) — SLS claims a row" "$SLS_FIRED"
 
 cp "$WORK/fixture.json" "$WORK/t3.json"
-jq --arg now "$NOW" --slurpfile detail "$DETAIL" -f scripts/devteam-backlog-claim-ready-lane-consumer.jq "$WORK/t3.json" > "$WORK/t3c.json"
+jq --arg now "$NOW" --slurpfile detail "$DETAIL" --slurpfile archive "$ARCHIVE" -f scripts/devteam-backlog-claim-ready-lane-consumer.jq "$WORK/t3.json" > "$WORK/t3c.json"
 RLC_INPROG_AFTER=$(jq '.task_board.in_progress|length' "$WORK/t3c.json")
 RLC_READY_AFTER=$(jq '.task_board.ready|length' "$WORK/t3c.json")
 RLC_FIRED=$([ "$RLC_INPROG_AFTER" -gt "$INPROG_N" ] && [ "$RLC_READY_AFTER" -lt "$READY_N" ] && echo true || echo false)
@@ -179,10 +186,157 @@ assert "at in_progress=$CAPPED_INPROG (== cap), main.md's own WIP2<2 pre-check w
 # (e.g. a future caller bug bypassing the bash pre-check), confirm the
 # underlying jq scripts do not themselves fabricate extra in_progress rows
 # beyond whatever promote legitimately staged into ready[] this call.
-jq --arg now "$NOW" --slurpfile detail "$DETAIL" -f scripts/devteam-backlog-promote-supervised-lane-sweep.jq "$WORK/capped.json" > "$WORK/capped-sls.json"
+jq --arg now "$NOW" --slurpfile detail "$DETAIL" --slurpfile archive "$ARCHIVE" -f scripts/devteam-backlog-promote-supervised-lane-sweep.jq "$WORK/capped.json" > "$WORK/capped-sls.json"
 jq --arg now "$NOW" -f scripts/devteam-backlog-claim-supervised-lane-sweep.jq "$WORK/capped-sls.json" > "$WORK/capped-sls2.json"
 CAPPED_SLS_CLAIMED_AT_MOST_ONE=$([ "$(jq '.task_board.in_progress|length' "$WORK/capped-sls2.json")" -le "$((CAPPED_INPROG + 1))" ] && echo true || echo false)
 assert "defense-in-depth: SLS claim script never claims more than ONE additional row per invocation even if called at/above the cap" "$CAPPED_SLS_CLAIMED_AT_MOST_ONE"
+
+# =============================================================================
+# ---- Step 4: FIX-DEPSSATISFIED-COLD-ARCHIVED-DEP-RESOLVES-MISSING ----
+# Extends this instrument (per its own recorded lesson: test gate FIRING via
+# the REAL production scripts, not a reimplementation of their logic) rather
+# than minting a new one. Covers: (a) the live-data healing claim, (b) the
+# mechanism actually firing through the REAL BOUNDED-1 promote script with
+# only the archive content varied, (c) both required negative controls, and
+# (d) the eviction referential guard via the REAL orch-cold-evict.sh.
+# =============================================================================
+echo ""
+echo "=== COLD-ARCHIVE DEP RESOLUTION (dep_status_map(\$archive), scripts/lib/devteam-eligibility.jq) ==="
+
+JQ_DEFS='include "scripts/lib/devteam-eligibility";'
+
+# AC-DEP-1 (LIVE, dynamic — no hardcoded task/dep ids): against the REAL
+# live board + REAL detail + REAL archive, using the REAL
+# dep_status_map($archive) (not a reimplementation), zero live rows (any
+# lane) may carry an effective_depends_on entry that is DONE_VERIFIED in
+# cold archive but still resolves MISSING via the fixed map.
+AC_DEP1_BEFORE=$(jq -c --slurpfile detail "$DETAIL" --slurpfile archive "$ARCHIVE" "$JQ_DEFS"'
+  (detail_items_from($detail)) as $detail_items
+  | dep_status_map as $status_map
+  | archive_status_map($archive) as $archive_map
+  | [ .task_board | to_entries[] | select(.value|type=="array") | .value[]?
+      | select(type=="object")
+      | (effective_depends_on($detail_items))[]
+      | select($archive_map[.] == "DONE_VERIFIED")
+      | select(($status_map[.] // "MISSING") == "MISSING")
+    ] | unique
+' "$STATE")
+echo "  [INFO] pre-fix (hot-only dep_status_map) baseline: $(echo "$AC_DEP1_BEFORE" | jq 'length') live dep-ids resolve MISSING despite being DONE_VERIFIED in cold archive — informational, shows the defect class this fix closes (drains naturally as BOUNDED-1 picks rows, zero here is not a failure)."
+
+AC_DEP1_LEAKS=$(jq -c --slurpfile detail "$DETAIL" --slurpfile archive "$ARCHIVE" "$JQ_DEFS"'
+  (detail_items_from($detail)) as $detail_items
+  | dep_status_map($archive) as $status_map
+  | archive_status_map($archive) as $archive_map
+  | [ .task_board | to_entries[] | select(.value|type=="array") | .value[]?
+      | select(type=="object")
+      | (effective_depends_on($detail_items))[]
+      | select($archive_map[.] == "DONE_VERIFIED")
+      | select(($status_map[.] // "MISSING") == "MISSING")
+    ] | unique
+' "$STATE")
+AC_DEP1_N=$(echo "$AC_DEP1_LEAKS" | jq 'length')
+assert "AC-DEP-1 (live, dynamic): 0 live effective_depends_on ids resolve MISSING via dep_status_map(\$archive) despite being DONE_VERIFIED in cold archive (found ${AC_DEP1_N}: ${AC_DEP1_LEAKS})" \
+  "$([ "$AC_DEP1_N" -eq 0 ] && echo true || echo false)"
+
+# AC-DEP-MECH: the mechanism actually FIRES through the REAL BOUNDED-1
+# promote script (not lane-resolution-only) — grounded in a REAL cold-
+# archived DONE_VERIFIED id (dynamic, no hardcoded id), isolated single-row
+# fixture (mirrors scripts/audits/devteam-bounded1-prose-sequencing-gate-
+# verify.sh's own synthetic-fixture discipline). Same script, only the
+# archive content varies between the BEFORE (empty) and AFTER (real) runs.
+: > "$WORK/empty-archive.json"   # zero JSON values -> --slurpfile gives []
+REAL_ARCHIVED_ID=$(jq -rs '[ .[] | (.done_tasks // [])[] | select((.status // "") == "DONE_VERIFIED") | .id ] | first // empty' "$ARCHIVE")
+
+if [ -n "$REAL_ARCHIVED_ID" ]; then
+  jq -n --arg now "$NOW" --arg dep "$REAL_ARCHIVED_ID" '
+    { task_board: {
+        backlog: [ { id: "GATESAT-ARCHDEP-BACKLOG-1", status: "BACKLOG",
+                      priority: "P0", next_agent: "developer",
+                      depends_on: [$dep], created_at: $now } ],
+        ready: [], in_progress: [], qa: [], review: [], done: [], done_verified: []
+      } }
+  ' > "$WORK/archdep.json"
+
+  ARCHDEP_BEFORE=$(jq --arg now "$NOW" --slurpfile detail "$DETAIL" --slurpfile archive "$WORK/empty-archive.json" \
+    -f scripts/devteam-backlog-promote-bounded1.jq "$WORK/archdep.json" | jq -r '.task_board.ready[0].id // empty')
+  assert "AC-DEP-MECH (control): archive-blind run (same real script, empty archive) does NOT promote a row depending on real archived id ${REAL_ARCHIVED_ID} (picked='${ARCHDEP_BEFORE:-<none>}')" \
+    "$([ "$ARCHDEP_BEFORE" != "GATESAT-ARCHDEP-BACKLOG-1" ] && echo true || echo false)"
+
+  ARCHDEP_AFTER=$(jq --arg now "$NOW" --slurpfile detail "$DETAIL" --slurpfile archive "$ARCHIVE" \
+    -f scripts/devteam-backlog-promote-bounded1.jq "$WORK/archdep.json" | jq -r '.task_board.ready[0].id // empty')
+  assert "AC-DEP-MECH: BOUNDED-1 promote (real script) NOW promotes a row depending on real cold-archived DONE_VERIFIED id ${REAL_ARCHIVED_ID} (picked='${ARCHDEP_AFTER:-<none>}')" \
+    "$([ "$ARCHDEP_AFTER" = "GATESAT-ARCHDEP-BACKLOG-1" ] && echo true || echo false)"
+else
+  echo "  [SKIP] AC-DEP-MECH: no DONE_VERIFIED id found in cold archive (archive empty?) — mechanism control skipped"
+fi
+
+# AC-DEP-NEG-A (negative control, required): a dep-id existing NOWHERE (hot
+# or cold) must still resolve UNSATISFIED — never blanket-satisfied.
+jq -n --arg now "$NOW" '
+  { task_board: {
+      backlog: [ { id: "GATESAT-ARCHDEP-NOWHERE", status: "BACKLOG", priority: "P0",
+                    next_agent: "developer", depends_on: ["GATESAT-ARCHDEP-NOWHERE-DEP-NOT-REAL"], created_at: $now } ],
+      ready: [], in_progress: [], qa: [], review: [], done: [], done_verified: []
+    } }
+' > "$WORK/archdep-nowhere.json"
+NOWHERE_PICKED=$(jq --arg now "$NOW" --slurpfile detail "$DETAIL" --slurpfile archive "$ARCHIVE" \
+  -f scripts/devteam-backlog-promote-bounded1.jq "$WORK/archdep-nowhere.json" | jq -r '.task_board.ready[0].id // empty')
+assert "AC-DEP-NEG-A: dep-id existing NOWHERE (hot or cold) stays UNSATISFIED — NOT promoted (picked='${NOWHERE_PICKED:-<none>}')" \
+  "$([ "$NOWHERE_PICKED" != "GATESAT-ARCHDEP-NOWHERE" ] && echo true || echo false)"
+
+# AC-DEP-NEG-B (negative control, required): a dep-id cold-archived with a
+# NON-terminal status must still resolve UNSATISFIED (synthetic archive
+# fixture, deterministic — not dependent on the real archive happening to
+# contain a non-terminal row).
+echo '{"month":"2099-01","done_tasks":[{"id":"GATESAT-ARCHDEP-NONTERM-DEP","status":"IN_PROGRESS"}]}' > "$WORK/nonterm-archive.json"
+jq -n --arg now "$NOW" '
+  { task_board: {
+      backlog: [ { id: "GATESAT-ARCHDEP-NONTERM", status: "BACKLOG", priority: "P0",
+                    next_agent: "developer", depends_on: ["GATESAT-ARCHDEP-NONTERM-DEP"], created_at: $now } ],
+      ready: [], in_progress: [], qa: [], review: [], done: [], done_verified: []
+    } }
+' > "$WORK/archdep-nonterm.json"
+NONTERM_PICKED=$(jq --arg now "$NOW" --slurpfile detail "$DETAIL" --slurpfile archive "$WORK/nonterm-archive.json" \
+  -f scripts/devteam-backlog-promote-bounded1.jq "$WORK/archdep-nonterm.json" | jq -r '.task_board.ready[0].id // empty')
+assert "AC-DEP-NEG-B: dep-id cold-archived with NON-terminal status (IN_PROGRESS) stays UNSATISFIED — NOT promoted (picked='${NONTERM_PICKED:-<none>}')" \
+  "$([ "$NONTERM_PICKED" != "GATESAT-ARCHDEP-NONTERM" ] && echo true || echo false)"
+
+echo ""
+echo "=== EVICTION REFERENTIAL GUARD (scripts/orch-cold-evict.sh) ==="
+
+EVICT_WORK="$WORK/coldevict"
+mkdir -p "$EVICT_WORK/archive"
+cp "$STATE" "$EVICT_WORK/fixture.json"
+jq --arg now "$NOW" '
+  .task_board.backlog += [
+    {"id": "GATESAT-REFGUARD-DEPENDENT", "status": "BACKLOG", "priority": "P2",
+     "depends_on": ["GATESAT-REFGUARD-DEP-REFERENCED"], "next_agent": "developer",
+     "type": "FIX", "zone": "cross-service/", "created_at": $now}
+  ]
+  | .task_board.done_verified += [
+    {"id": "GATESAT-REFGUARD-DEP-REFERENCED", "status": "DONE_VERIFIED", "created_at": "2026-01-01T00:00:00Z"},
+    {"id": "GATESAT-REFGUARD-DEP-UNREFERENCED", "status": "DONE_VERIFIED", "created_at": "2026-01-01T00:00:00Z"}
+  ]
+' "$EVICT_WORK/fixture.json" > "$EVICT_WORK/fixture2.json"
+mv "$EVICT_WORK/fixture2.json" "$EVICT_WORK/fixture.json"
+
+# Never writes to the live orch-state.json/archive dir — both overridden to
+# scratch paths (mirrors this script's own header discipline).
+if ORCH_STATE="$EVICT_WORK/fixture.json" ARCHIVE_DIR="$EVICT_WORK/archive" \
+    bash scripts/orch-cold-evict.sh > "$EVICT_WORK/run.log" 2>&1; then
+  EVICT_RC=0
+else
+  EVICT_RC=$?
+fi
+assert "AC-EVICT-1: orch-cold-evict.sh completes cleanly against the guard fixture (exit 0)" \
+  "$([ "$EVICT_RC" -eq 0 ] && echo true || echo false)"
+
+REFERENCED_STILL_HOT=$(jq '[.task_board.done_verified[] | select(.id=="GATESAT-REFGUARD-DEP-REFERENCED")] | length' "$EVICT_WORK/fixture.json")
+UNREFERENCED_STILL_HOT=$(jq '[.task_board.done_verified[] | select(.id=="GATESAT-REFGUARD-DEP-UNREFERENCED")] | length' "$EVICT_WORK/fixture.json")
+assert "AC-EVICT-2 (guard REFUSAL proven): still-referenced row GATESAT-REFGUARD-DEP-REFERENCED HELD in hot done_verified[] (NOT evicted — a live rows depends_on still names it)" \
+  "$([ "$REFERENCED_STILL_HOT" -eq 1 ] && echo true || echo false)"
+assert "AC-EVICT-3 (positive control — guard does not over-hold): unreferenced row GATESAT-REFGUARD-DEP-UNREFERENCED WAS evicted normally" \
+  "$([ "$UNREFERENCED_STILL_HOT" -eq 0 ] && echo true || echo false)"
 
 echo ""
 if [ "$FAIL" -eq 1 ]; then

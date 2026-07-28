@@ -102,8 +102,13 @@
 #   NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 #   jq --arg now "$NOW" \
 #     --slurpfile detail docs/data/orch/archive/backlog-detail.json \
+#     --slurpfile archive <(bash scripts/lib/archive-glob-cat.sh) \
 #     -f scripts/devteam-backlog-claim-ready-lane-consumer.jq \
 #     docs/data/orch/orch-state.json | bash scripts/orch-apply.sh
+#
+# `--slurpfile archive` (FIX-DEPSSATISFIED-COLD-ARCHIVED-DEP-RESOLVES-
+# MISSING, 2026-07-28): same cold-archive dep_status_map($archive) fallback
+# as BOUNDED-1/SLS — see scripts/lib/devteam-eligibility.jq header.
 #
 # Pointer: docs/agents/dev-team/flow/main.md § Ready-Lane Consumer (RLC),
 # inserted immediately after the Supervised-Lane Sweep block, on the same
@@ -112,7 +117,7 @@
 include "scripts/lib/devteam-eligibility";
 
 (detail_items_from($detail)) as $detail_items
-| dep_status_map as $status_map
+| dep_status_map($archive) as $status_map
 | ( [ .task_board.ready
     | to_entries[]
     | select(.value.status == "READY" or .value.status == "TODO")

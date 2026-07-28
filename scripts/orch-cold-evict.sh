@@ -107,6 +107,23 @@ TASK_LANES="${TASK_LANES:-backlog,review,qa,in_progress,ready}"
 # D0-flagged false-positive (label says terminal, reality says still open).
 # Settable via env directly, or appended to via repeatable `--exclude-ids` flag.
 EXCLUDE_TASK_IDS="${EXCLUDE_TASK_IDS:-}"
+
+# FIX-DEPSSATISFIED-COLD-ARCHIVED-DEP-RESOLVES-MISSING (2026-07-28):
+# referential-integrity eviction guard — a candidate row (done[]/
+# done_verified[]/flat-task-lane terminal) is NEVER evicted this pass if its
+# own `.id` is still named in ANY LIVE row's effective_depends_on (scanned
+# across TASK_LANES — the same non-terminal lane set above; done/
+# done_verified rows don't need active dispatch so their own depends_on is
+# irrelevant here). Independent, preventative defense-in-depth alongside
+# scripts/lib/devteam-eligibility.jq dep_status_map($archive)'s cold-archive
+# fallback (that fix HEALS existing dep_status_map lookups against already-
+# evicted rows; this guard PREVENTS new instances of the same class from
+# ever being created by eviction in the first place — see that file's
+# dep_status_map($archive) header for the shared root-cause). Always reads
+# the REAL repo backlog-detail.json (read-only reference lookup for
+# detail_ref'd depends_on, not the per-run cold-write target) — never
+# overridden by ARCHIVE_DIR, mirrors every other caller's DETAIL constant.
+DETAIL_FILE="${REPO_ROOT}/docs/data/orch/archive/backlog-detail.json"
 # =============================================================================
 
 DRY_RUN=false
@@ -198,8 +215,10 @@ compute_id_maps() {
   local cold_signal="$4"
   local cold_sprint_goal="$5"
   local cold_backlog_detail="$6"
+  local detail_file="$7"
 
   jq \
+    -L "${REPO_ROOT}" \
     --argjson keep_n      "${KEEP_RECENT_DONE}" \
     --argjson max_days    "${DONE_MAX_AGE_DAYS}" \
     --arg     term_sprint "${TERMINAL_SPRINT_STATUSES}" \
@@ -212,7 +231,10 @@ compute_id_maps() {
     --argjson cold_signal "${cold_signal}" \
     --argjson cold_sprint_goal "${cold_sprint_goal}" \
     --argjson cold_backlog_detail "${cold_backlog_detail}" \
+    --slurpfile task_detail "${detail_file}" \
     '
+      include "scripts/lib/devteam-eligibility";
+
       . as $root |
 
       # ── parse config ─────────────────────────────────────────────────────
@@ -223,6 +245,23 @@ compute_id_maps() {
       ($exclude_ids | split(",") | map(select(. != ""))
         | map({key: ., value: true}) | from_entries) as $excl_set |
       (now - ($max_days * 86400)) as $cutoff |
+
+      # ── FIX-DEPSSATISFIED-COLD-ARCHIVED-DEP-RESOLVES-MISSING referential
+      # eviction guard: union of effective_depends_on across every row in
+      # every LIVE lane ($lane_arr == TASK_LANES, the same non-terminal set
+      # scanned by the terminal-task-status pass below — done[]/
+      # done_verified[] rows need no active dispatch so their own
+      # depends_on is irrelevant here). A terminal-status candidate named
+      # in ANY live rows effective_depends_on/depends/blocked_by is held
+      # OUT of eviction this pass — see DETAIL_FILE header comment above
+      # for why this is independent, preventative defense-in-depth
+      # alongside scripts/lib/devteam-eligibility.jq dep_status_map($archive).
+      (detail_items_from($task_detail)) as $detail_items |
+      ( [ $lane_arr[] as $lane
+          | ($root.task_board[$lane] // [])[]
+          | effective_depends_on($detail_items)[]
+        ] | map({key: ., value: true}) | from_entries
+      ) as $referenced_dep_ids |
 
       # cold-known ID sets (for idempotency + partial-failure recovery)
       ($cold_done   | map({key: (. // ""), value: true}) | from_entries) as $cd_set   |
@@ -254,7 +293,15 @@ compute_id_maps() {
           (.value.created_at == null or
            (try (.value.created_at | fromdateiso8601) catch 0) < $cutoff)
         ) | (.value.id // "")
-      ] as $all_terminal_done_ids |
+      ] as $all_terminal_done_ids_raw |
+
+      # FIX-DEPSSATISFIED-COLD-ARCHIVED-DEP-RESOLVES-MISSING referential
+      # guard: drop any still-referenced id (see guard comment above).
+      # downstream new_done_ids/rm_done/counts all derive from the guarded
+      # set, not the raw one — the raw set is kept only so the report below
+      # can show an exact "held back by guard" count.
+      [$all_terminal_done_ids_raw[] | select($referenced_dep_ids[.] != true)]
+        as $all_terminal_done_ids |
 
       # done[] IDs that are new to cold (not already there)
       [$all_terminal_done_ids[] | select(
@@ -273,7 +320,12 @@ compute_id_maps() {
       # and applying `// ""` per-element (a per-id null-id fallback, not an
       # empty-array fallback) fixes both: empty array -> [], and a real
       # element with a null id -> "".
-      [(.task_board.done_verified // [])[] | (.id // "")] as $all_terminal_dv_ids |
+      [(.task_board.done_verified // [])[] | (.id // "")] as $all_terminal_dv_ids_raw |
+
+      # FIX-DEPSSATISFIED-COLD-ARCHIVED-DEP-RESOLVES-MISSING referential
+      # guard — same raw/guarded split as done[] above.
+      [$all_terminal_dv_ids_raw[] | select($referenced_dep_ids[.] != true)]
+        as $all_terminal_dv_ids |
 
       [$all_terminal_dv_ids[] | select(
           . != "" and ($cd_set[.] != true)
@@ -320,6 +372,11 @@ compute_id_maps() {
       # status (D4-BACKLOG-HYGIENE-ORCH-COLD-EVICT-EXTEND) ──────────────────
       # done[]/done_verified[] are excluded from $lane_arr by config (own logic
       # above). --exclude-ids safety valve applied here (per-lane, per-row).
+      # Referential guard (FIX-DEPSSATISFIED-COLD-ARCHIVED-DEP-RESOLVES-
+      # MISSING) applied inline the same way as $excl_set — a row still
+      # named in $referenced_dep_ids is never terminal-evicted this pass.
+      # $terminal_ids_by_lane_raw (no referential guard) is kept ONLY so the
+      # report below can show an exact "held back by guard" count.
       (reduce $lane_arr[] as $lane (
         {};
         . + { ($lane): [
@@ -329,7 +386,11 @@ compute_id_maps() {
             ($excl_set[(.id // "")] != true)
           ) | .id
         ] }
-      )) as $terminal_ids_by_lane |
+      )) as $terminal_ids_by_lane_raw |
+
+      ($terminal_ids_by_lane_raw
+        | map_values([.[] | select($referenced_dep_ids[.] != true)])
+      ) as $terminal_ids_by_lane |
 
       [$lane_arr[] as $lane | $terminal_ids_by_lane[$lane][]] as $all_terminal_task_ids |
 
@@ -375,6 +436,23 @@ compute_id_maps() {
           ($new_sprint_ids | length) + ($new_sprint_goal_ids | length) +
           ($new_sig_row_ids | length) + ($new_sig_arch_ids | length) +
           ($new_task_ids | length)
+        ),
+
+        # FIX-DEPSSATISFIED-COLD-ARCHIVED-DEP-RESOLVES-MISSING referential
+        # eviction guard — ids that WOULD have been evicted this pass but
+        # were held back because a live rows effective_depends_on still
+        # names them. Empty in the normal case; non-empty is expected and
+        # healthy (not an error) whenever a dependent has not drained yet.
+        guard_ref_held_ids: (
+          [$all_terminal_done_ids_raw[] | select($referenced_dep_ids[.] == true)]
+          + [$all_terminal_dv_ids_raw[] | select($referenced_dep_ids[.] == true)]
+          + [$lane_arr[] as $lane | $terminal_ids_by_lane_raw[$lane][] | select($referenced_dep_ids[.] == true)]
+        ) | unique,
+        n_guard_ref_held: (
+          ([$all_terminal_done_ids_raw[] | select($referenced_dep_ids[.] == true)]
+          + [$all_terminal_dv_ids_raw[] | select($referenced_dep_ids[.] == true)]
+          + [$lane_arr[] as $lane | $terminal_ids_by_lane_raw[$lane][] | select($referenced_dep_ids[.] == true)]
+          ) | unique | length
         )
       }
     ' "${src}"
@@ -542,7 +620,7 @@ if [[ "${DRY_RUN}" == "true" ]]; then
   CURRENT_SIZE=$(wc -c < "${ORCH_STATE}" | tr -d ' ')
 
   read_cold_ids
-  MAPS=$(compute_id_maps "${ORCH_STATE}" "${COLD_DONE_IDS}" "${COLD_SPRINT_IDS}" "${COLD_SIGNAL_IDS}" "${COLD_SPRINT_GOAL_IDS}" "${COLD_BACKLOG_DETAIL_IDS}")
+  MAPS=$(compute_id_maps "${ORCH_STATE}" "${COLD_DONE_IDS}" "${COLD_SPRINT_IDS}" "${COLD_SIGNAL_IDS}" "${COLD_SPRINT_GOAL_IDS}" "${COLD_BACKLOG_DETAIL_IDS}" "${DETAIL_FILE}")
 
   N_DONE=$(echo "${MAPS}"    | jq '.n_evict_done')
   N_DV=$(echo "${MAPS}"      | jq '.n_evict_dv')
@@ -594,7 +672,7 @@ while [[ ${ATTEMPT} -lt ${MTIME_CAS_RETRIES} ]]; do
   read_cold_ids
 
   # ── Pass 1: compute ID maps (small output, safe for --argjson) ────────────
-  MAPS=$(compute_id_maps "${ORCH_STATE}" "${COLD_DONE_IDS}" "${COLD_SPRINT_IDS}" "${COLD_SIGNAL_IDS}" "${COLD_SPRINT_GOAL_IDS}" "${COLD_BACKLOG_DETAIL_IDS}")
+  MAPS=$(compute_id_maps "${ORCH_STATE}" "${COLD_DONE_IDS}" "${COLD_SPRINT_IDS}" "${COLD_SIGNAL_IDS}" "${COLD_SPRINT_GOAL_IDS}" "${COLD_BACKLOG_DETAIL_IDS}" "${DETAIL_FILE}")
 
   log "Attempt $((ATTEMPT + 1))/${MTIME_CAS_RETRIES}: ID maps computed"
   log "  done[]:              $(echo "${MAPS}" | jq '.n_evict_done') to evict from hot"

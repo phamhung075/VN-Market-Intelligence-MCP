@@ -125,6 +125,14 @@ PROMOTE_JQ="scripts/devteam-backlog-promote-bounded1.jq"
 WORK=$(mktemp -d)
 trap 'rm -rf "$WORK"' EXIT
 
+# FIX-DEPSSATISFIED-COLD-ARCHIVED-DEP-RESOLVES-MISSING (2026-07-28): the
+# promote script now requires --slurpfile archive unconditionally
+# (dep_status_map($archive)). Empty archive here is deliberate — every
+# fixture in this file uses synthetic ids never present in any real
+# cold-archive month doc, so archive-awareness is a no-op for these
+# assertions; only the required-flag plumbing changed.
+: > "$WORK/empty-archive.json"
+
 NOW="2026-01-01T00:00:00Z"   # fixed synthetic timestamp — value irrelevant to the assertions
 FAIL=0
 
@@ -158,7 +166,7 @@ board_inline_clean() {
 
 run_promote_picked_id() {
   # $1 = synthetic state json path -> prints picked ready[] id (or empty)
-  jq --arg now "$NOW" --slurpfile detail "$DETAIL" -f "$PROMOTE_JQ" "$1" \
+  jq --arg now "$NOW" --slurpfile detail "$DETAIL" --slurpfile archive "$WORK/empty-archive.json" -f "$PROMOTE_JQ" "$1" \
     | jq -r '.task_board.ready[0].id // empty'
 }
 
@@ -167,7 +175,7 @@ run_promote_picked_id_with_detail() {
   # AC-7 needs a SYNTHETIC detail entry (a controlled owner conflict that
   # does not exist in live backlog-detail.json), so this variant threads a
   # caller-supplied detail file instead of the live $DETAIL.
-  jq --arg now "$NOW" --slurpfile detail "$2" -f "$PROMOTE_JQ" "$1" \
+  jq --arg now "$NOW" --slurpfile detail "$2" --slurpfile archive "$WORK/empty-archive.json" -f "$PROMOTE_JQ" "$1" \
     | jq -r '.task_board.ready[0].id // empty'
 }
 
@@ -248,9 +256,21 @@ make_synthetic_ac7b() {
 
 make_isolated_fixture() {
   # $1 = id, $2 = output path — reduces backlog[] to exactly this one row
-  # (forced to P0 priority) and clears in_progress[] to simulate WIP=0.
+  # (forced to P0 priority), clears in_progress[] to simulate WIP=0, AND
+  # clears ready[] (pre-existing latent bug, found+fixed incidentally
+  # 2026-07-28 while regression-testing FIX-DEPSSATISFIED-COLD-ARCHIVED-DEP-
+  # RESOLVES-MISSING: run_promote_picked_id() reads `.task_board.ready[0]`,
+  # which promote-bounded1.jq APPENDS to — so a non-empty live ready[]
+  # (routine; ready[] is a staging queue, 47 rows live 2026-07-28) leaked
+  # its OWN pre-existing ready[0] entry into every equality-checking
+  # assertion using this fixture, independent of whether THIS fixture's
+  # single backlog row was actually promoted. Verified pre-existing and
+  # unrelated to that fix: reproduced identically against the git-HEAD
+  # (pre-fix) promote-bounded1.jq + devteam-eligibility.jq before applying
+  # this correction.
   jq --arg id "$1" '
     .task_board.in_progress = []
+    | .task_board.ready = []
     | .task_board.backlog = ([ .task_board.backlog[] | select(.id == $id) ] | map(. + {priority: "P0"}))
   ' "$STATE" > "$2"
 }

@@ -140,20 +140,83 @@ def effective_depends_on($detail_items):
       []
     end;
 
+# ---- cold-archive dep status ingest
+# (FIX-DEPSSATISFIED-COLD-ARCHIVED-DEP-RESOLVES-MISSING, 2026-07-28) ----
+# ROOT CAUSE this closes: dep_status_map (below) used to scan ONLY the HOT
+# document's task_board lanes. The moment scripts/orch-cold-evict.sh moves a
+# DONE_VERIFIED row out of hot into docs/data/orch/archive/YYYY-MM.json
+# (`.done_tasks[]`), every live row that still names it in effective_
+# depends_on silently resolved MISSING forever — 34 live rows / 29 of 40
+# distinct dep-ids measured live 2026-07-28T13:2xZ, i.e. the blocking work
+# was FINISHED and the block was a pure artefact of eviction.
+#
+# `$archive` = the slurped array of monthly cold-archive documents — one
+# element per docs/data/orch/archive/YYYY-MM.json file, ascending
+# (chronological) order. Build it via
+# `scripts/lib/archive-glob-cat.sh` (Usage: see dep_status_map($archive)
+# below) — NOT docs/data/orch/archive/backlog-detail.json, which is a
+# different shape already threaded separately as `$detail`/$detail_items.
+#
+# Status normalization: live archive data mixes "DONE_VERIFIED" /
+# "done_verified" / "DONE-VERIFIED" across the pre- and post-
+# canonicalization eras (verified empirically across 2026-06.json/
+# 2026-07.json). Case/separator-insensitive match against "DONE_VERIFIED"
+# ONLY — every other archived status (DONE, CANCELLED, SUPERSEDED,
+# IN_PROGRESS, ...) passes through UNNORMALIZED so it can never
+# accidentally string-equal "DONE_VERIFIED" in deps_satisfied()'s
+# `all(. == "DONE_VERIFIED")` check. Negative control: a dep-id cold-
+# archived with a NON-terminal status must still resolve UNSATISFIED — this
+# def does not blanket-satisfy anything that isn't actually terminal.
+def normalize_archive_status($s):
+  ($s // "" | tostring) as $raw
+  | ($raw | ascii_upcase | gsub("[- ]"; "_")) as $norm
+  | if $norm == "DONE_VERIFIED" then "DONE_VERIFIED" else $raw end;
+
+def archive_status_map($archive):
+  [ ($archive // [])[]
+    | (.done_tasks // [])[]
+    | select(.id != null)
+    | { key: .id, value: (.status | normalize_archive_status(.)) }
+  ] | from_entries;
+
 # Global dep-id -> status map, scanned across EVERY task_board lane so a
 # dependency satisfied by a done_verified/done/review/qa/in_progress/ready
 # row still resolves correctly. `.` = the WHOLE orch-state document (NOT a
-# candidate row) — call as `$doc | dep_status_map`.
-def dep_status_map:
+# candidate row) — call as `$doc | dep_status_map` (hot-only, unchanged
+# legacy behavior — a plain proxy for `dep_status_map([])` below, kept for
+# every existing 0-arg caller; ZERO behavior change) or
+# `$doc | dep_status_map($archive)` (hot + cold-archive fallback — the fix).
+# Cold-archive statuses SEED the map; any HOT lane entry for the same id
+# OVERWRITES it (hot is authoritative for a still-live id; archive is a
+# fallback layer only, for ids evicted out of hot entirely).
+#
+# Usage (the 3 real callers — BOUNDED-1 promote, Supervised-Lane Sweep
+# promote, Ready-Lane Consumer claim — all thread `--slurpfile archive` the
+# same way `--slurpfile detail` is already threaded):
+#   jq --arg now "$NOW" \
+#     --slurpfile detail docs/data/orch/archive/backlog-detail.json \
+#     --slurpfile archive <(bash scripts/lib/archive-glob-cat.sh) \
+#     -f scripts/devteam-backlog-promote-bounded1.jq \
+#     docs/data/orch/orch-state.json | bash scripts/orch-apply.sh
+# NOTE ON DEF ORDER: `dep_status_map($archive)` (arity 1) MUST be defined
+# BEFORE the `dep_status_map` (arity 0) proxy below — jq resolves a def's
+# body against only the defs already in scope at that point in the file, so
+# an arity-0 def calling an not-yet-defined arity-1 sibling fails to compile
+# ("dep_status_map/1 is not defined"), even though both share the base
+# name. Verified empirically 2026-07-28, jq 1.8.1.
+def dep_status_map($archive):
   . as $doc
   | ["backlog", "ready", "in_progress", "qa", "review", "done", "done_verified"] as $lanes
+  | (archive_status_map($archive)) as $archive_map
   | reduce $lanes[] as $lane
-      ( {}
+      ( $archive_map
       ; . + ( [ ($doc.task_board[$lane] // [])[]
                 | select(.id != null)
                 | { key: .id, value: .status }
               ] | from_entries )
       );
+
+def dep_status_map: dep_status_map([]);
 
 # `.` = candidate row object. Satisfied only when EVERY effective depends_on
 # entry resolves to DONE_VERIFIED (plain DONE is NOT sufficient). A dep id

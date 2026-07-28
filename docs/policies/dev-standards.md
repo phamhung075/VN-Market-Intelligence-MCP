@@ -369,6 +369,7 @@ NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 #    BACKLOG/TODO row, no-op if WIP>=1):
 jq --arg now "$NOW" \
   --slurpfile detail docs/data/orch/archive/backlog-detail.json \
+  --slurpfile archive <(bash scripts/lib/archive-glob-cat.sh) \
   -f scripts/devteam-backlog-promote-bounded1.jq \
   docs/data/orch/orch-state.json | bash scripts/orch-apply.sh
 # 2. Claim (ready[] -> in_progress[] + .head, no-op if nothing bounded-1-stamped waiting):

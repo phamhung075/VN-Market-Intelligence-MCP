@@ -77,8 +77,17 @@
 #   NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 #   jq --arg now "$NOW" \
 #     --slurpfile detail docs/data/orch/archive/backlog-detail.json \
+#     --slurpfile archive <(bash scripts/lib/archive-glob-cat.sh) \
 #     -f scripts/devteam-backlog-promote-bounded1.jq \
 #     docs/data/orch/orch-state.json | bash scripts/orch-apply.sh
+#
+# `--slurpfile archive` (FIX-DEPSSATISFIED-COLD-ARCHIVED-DEP-RESOLVES-
+# MISSING, 2026-07-28): threaded into dep_status_map($archive) below so a
+# depends_on entry whose predecessor was cold-evicted to
+# docs/data/orch/archive/YYYY-MM.json (DONE_VERIFIED) still resolves
+# SATISFIED instead of permanently MISSING — see
+# scripts/lib/devteam-eligibility.jq dep_status_map($archive) header for the
+# full root-cause + normalization contract.
 #
 # Pointer: docs/agents/dev-team/flow/main.md § Idle-capacity backlog pickup
 # (BOUNDED-1), inserted at the head-idle fall-through before Step 1 PO triage.
@@ -89,7 +98,7 @@ if (wip_in_progress >= 1) then
   .   # BOUNDED-1 GATE: WIP (in_progress only) >= 1 — refuse to promote (no-op, idempotent re-run-safe)
 else
   (detail_items_from($detail)) as $detail_items
-  | dep_status_map as $status_map
+  | dep_status_map($archive) as $status_map
   | ( [ .task_board.backlog
       | to_entries[]
       | select(.value.status == "BACKLOG" or .value.status == "TODO")

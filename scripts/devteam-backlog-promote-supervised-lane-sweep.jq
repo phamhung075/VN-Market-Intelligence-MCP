@@ -86,8 +86,13 @@
 #   NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 #   jq --arg now "$NOW" \
 #     --slurpfile detail docs/data/orch/archive/backlog-detail.json \
+#     --slurpfile archive <(bash scripts/lib/archive-glob-cat.sh) \
 #     -f scripts/devteam-backlog-promote-supervised-lane-sweep.jq \
 #     docs/data/orch/orch-state.json | bash scripts/orch-apply.sh
+#
+# `--slurpfile archive` (FIX-DEPSSATISFIED-COLD-ARCHIVED-DEP-RESOLVES-
+# MISSING, 2026-07-28): same cold-archive dep_status_map($archive) fallback
+# as BOUNDED-1 — see scripts/lib/devteam-eligibility.jq header.
 #
 # Pointer: docs/agents/dev-team/flow/main.md § Supervised-Lane Sweep (SLS),
 # inserted immediately after the BOUNDED-1 Idle-capacity backlog pickup
@@ -96,7 +101,7 @@
 include "scripts/lib/devteam-eligibility";
 
 (detail_items_from($detail)) as $detail_items
-| dep_status_map as $status_map
+| dep_status_map($archive) as $status_map
 | ( [ .task_board.backlog
     | to_entries[]
     | select(.value.status == "BACKLOG" or .value.status == "TODO")
