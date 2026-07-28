@@ -1,5 +1,17 @@
 # System Audit Dashboard
 
+## Anomaly: SLA-1 · freshnessSlaMonitorJob coverage-map path ENOENT
+**Severity:** WARN | **Date:** 2026-07-28 | **Status:** OPEN
+**Location:** mcp-server container (apps/mcp-server/src/scheduler/system/freshnessSlaMonitorJob.ts:34-36)
+**Details:** Job builds a 5-level relative path climb from /app/src/scheduler/system/, resolving to /docs/data/frontend-data-coverage-map.json (ENOENT, confirmed via docker exec ls) instead of the real mount /app/docs/data/frontend-data-coverage-map.json (confirmed present). docker logs --since=6h shows 12 occurrences of "[sla-monitor] coverage-map second pass failed" at ~30min cadence.
+**Impact:** The scheduler fires the coverage-map second pass on schedule but is structurally unable to read its own input — it can never observe a real SLA breach and fails toward silence, not false alarms.
+**Root cause:** Broken relative-path resolution — one-line fix (correct the climb to match the real /app/docs/data/... mount).
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-07-28T17:15:55Z (signal sys-20260728T171555-7cb3, system-auditor -> po)
+**Mitigation:** Tracked on task_board row FIX-L4-FRESHNESS-SLA-MONITOR-SELF-POLICING (ready, P1) — evidence attached 2026-07-28T17:33Z.
+
+---
+
 ## Anomaly: A-30 · mcp-server memory pressure
 **Severity:** WARN | **Date:** 2026-07-21 | **Status:** OPEN  
 **Location:** mcp-server container (vn-market-intelligence-mcp-mcp-server-1)  
