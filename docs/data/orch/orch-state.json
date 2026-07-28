@@ -419,11 +419,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-07-28T12:55:36Z",
-    "updated_by": "qa",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "active_task_id": "TASK-COWORK-CATCHUP-1",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of TASK-COWORK-CATCHUP-1 — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-28T13:42:42Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -11246,24 +11247,6 @@
         "unblock_action": "LANE NOTE — this row has NO automated lane while BLOCKED, and that is deliberate (deps_satisfied=false by design; verified by EXECUTING scripts/lib/devteam-eligibility.jq against live data, not inferred). It will NOT self-dispatch when its blockers close.\n\nWHOEVER CLOSES THE LAST OF blocked_by (FIX-BDI-SHIPPING-STALE-404-GUARD, FIX-COWORK-BASH-GRANT-COVERAGE-STAMP-TRANSPORT) MUST, in one write:\n  1. clear .blocked_by\n  2. set status = \"READY\"\n  3. MOVE the row from backlog[] into ready[]\nThen the Ready-Lane Consumer (scripts/devteam-backlog-claim-ready-lane-consumer.jq) claims it and spawns next_agent=qa directly — RLC has no dev/non-dev gate, so a qa-owned row is a valid target there. Leaving it BLOCKED-in-backlog matches nothing: BOUNDED-1 gates out non-dev next_agent, and SLS needs plan_only AND supervised both true (this row is supervised:true, plan_only:false).\n\nTHIS IS NOT HYPOTHETICAL. The sibling precedent row VERIFY-FIX-VPS-SSH-TRIGGER-FAIL-LOUD-REALDATA was minted BLOCKED on 2026-07-22 under the identical PUSH-AUTONOMY-1 clause 5 obligation and has sat untouched ever since, because nothing sweeps a BLOCKED backlog row and no one owned the transition. Do not repeat that.\n\nAll orch-state writes via: jq '...' docs/data/orch/orch-state.json | bash scripts/orch-apply.sh — never raw mv/cp/redirect.\n"
       },
       {
-        "id": "TASK-COWORK-CATCHUP-1",
-        "title": "FR-1 + FR-2: Core domain module cowork-catchup-predicate.js with per-dish-type config",
-        "type": "SPRINT-M",
-        "size": "M",
-        "priority": "P0",
-        "zone": "scripts/agents-flow/",
-        "sprint": "COWORK-GUARANTEED-SLOT-CATCHUP",
-        "status": "BACKLOG",
-        "depends_on": [],
-        "created_at": "2026-07-22T22:12:59Z",
-        "created_by": "pm",
-        "updated_at": "2026-07-28T13:16:19Z",
-        "next_agent": "developer",
-        "po_routing_20260728": "PO 2026-07-28T13Z lane routing. pm's decomposition minted this row with next_agent unset, which no dispatch lane resolves (verified by executing scripts/lib/devteam-eligibility.jq predicates, not by reading the row). Handler = developer per docs/handoffs/TASK-COWORK-CATCHUP-10.md ('developer completes code TASK-1..9, then agent-father integrates this doc-only subtask') + docs/data/system-map.json scripts/ zone. dev-role next_agent + backlog lane = BOUNDED-1, per docs/agents/po/flow/zone-routing.md Step A2.",
-        "updated_by": "po/route-20260728T13",
-        "po_lane_move_20260728": "MOVED ready[] -> backlog[] by PO. Dep-free P0 head of the epic chain; backlog[] is the BOUNDED-1 lane (1st in the head-idle chain) and this row is currently the only rank-0 BOUNDED-1-eligible row, so it is the next unattended pick. ready[] would have parked it behind RLC (3rd in the chain, reachable only when BOUNDED-1 declines)."
-      },
-      {
         "id": "FIX-PRESSURE-HOST-HEADROOM-WRONG-MACHINE-WRONG-QUANTITY",
         "title": "pressure-state host_headroom_mb is neither the host nor headroom: computeHostHeadroomMb() falls through to Linux `free -m` inside the mcp-server container (measures the Docker VM, not the macOS host), and its macOS branch would return `Pages free` alone (261 MB live) which is ~25x smaller than real available memory — the value gates spawn-fanout Step 5.1 degraded mode at a hardcoded < 1500 floor",
         "status": "BACKLOG",
@@ -16058,9 +16041,33 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-25T17:51:26Z",
+    "last_triaged_at": "2026-07-28T13:42:42Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "TASK-COWORK-CATCHUP-1",
+        "title": "FR-1 + FR-2: Core domain module cowork-catchup-predicate.js with per-dish-type config",
+        "type": "SPRINT-M",
+        "size": "M",
+        "priority": "P0",
+        "zone": "scripts/agents-flow/",
+        "sprint": "COWORK-GUARANTEED-SLOT-CATCHUP",
+        "status": "IN_PROGRESS",
+        "depends_on": [],
+        "created_at": "2026-07-22T22:12:59Z",
+        "created_by": "pm",
+        "updated_at": "2026-07-28T13:42:43Z",
+        "next_agent": "developer",
+        "po_routing_20260728": "PO 2026-07-28T13Z lane routing. pm's decomposition minted this row with next_agent unset, which no dispatch lane resolves (verified by executing scripts/lib/devteam-eligibility.jq predicates, not by reading the row). Handler = developer per docs/handoffs/TASK-COWORK-CATCHUP-10.md ('developer completes code TASK-1..9, then agent-father integrates this doc-only subtask') + docs/data/system-map.json scripts/ zone. dev-role next_agent + backlog lane = BOUNDED-1, per docs/agents/po/flow/zone-routing.md Step A2.",
+        "updated_by": "po/route-20260728T13",
+        "po_lane_move_20260728": "MOVED ready[] -> backlog[] by PO. Dep-free P0 head of the epic chain; backlog[] is the BOUNDED-1 lane (1st in the head-idle chain) and this row is currently the only rank-0 BOUNDED-1-eligible row, so it is the next unattended pick. ready[] would have parked it behind RLC (3rd in the chain, reachable only when BOUNDED-1 declines).",
+        "promoted_at": "2026-07-28T13:42:42Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "claimed_at": "2026-07-28T13:42:42Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
