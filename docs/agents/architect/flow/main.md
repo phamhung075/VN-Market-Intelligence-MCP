@@ -64,7 +64,7 @@ For multi-zone tasks, repeat for each zone. Rule: existing interface covers need
 - Test strategy (unit/integration/e2e)
 - Risk flags (security, memory, perf, DDD violations)
 
-**5. Append to handoff file** `docs/handoffs/TASK_NNN.md`:
+**5. Append to handoff file** `docs/handoffs/TASK_NNN.md` — BA/sprint-pipeline tasks only. For a task that originated as a direct PO `.task_board` mint (no BA spec, no handoff file to append to — e.g. a supervised P1 FIX row dispatched straight to architect), write the equivalent findings into that row's own `architect_review_note` field via `scripts/orch-apply.sh` instead (established convention — see live rows under any WF-* / FIX-* id with a populated `architect_review_note`); do not invent a `docs/handoffs/` file for a row that never had one.
 ```markdown
 ## [Architect] Brownfield Findings
 
