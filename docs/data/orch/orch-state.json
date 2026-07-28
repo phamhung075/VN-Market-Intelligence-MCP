@@ -419,11 +419,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-07-28T14:06:04Z",
-    "updated_by": "developer",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "active_task_id": "FIX-COWORK-CHEF-MUTEX-ECHO-JQ-DEFEAT",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-COWORK-CHEF-MUTEX-ECHO-JQ-DEFEAT — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-28T14:13:20Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -8584,23 +8585,6 @@
         "po_evidence_20260725T1507": "po_evidence_20260725T1507: EVIDENCE ATTACHED, NO NEW ROW MINTED. This row already carries a 2026-07-25T09:27Z note refuting its own \"(240 genuinely safe)\" premise; that refutation is now backed by a DIRECT MEASUREMENT rather than inference. docs/signals/processed/cowork-team-20260725T151200Z.json, tick 15:12Z Saturday: cadence_minutes {\"bctc-analyst-slot-1\":\"240\"}, due_reasons {\"bctc-analyst-slot-1\":\"cadence\"}, pressure_mode \"adaptive\", calendar_status \"closed\". Config cross-check by PO this tick: cowork-schedule.json binds bctc-analyst-slot-1 to policy bctc-offmarket; cadence-policy.json bctc-offmarket has a weekend row of 1440min and NO closed row. So a real, present policy with a real, present weekend rule was silently replaced by the 240 generic default on the exact calendar day its weekend rule exists to govern — 6x over-fire, nothing logged. This is the \"unmatched-rule-in-real-policy\" case this row declares safe, measured and unsafe. The AC ADDITION already written into this row (domain-check every policy-matching axis VALUE, not just the policy_id axis) is the correct fix and is unchanged. RANK: stays high, co-ship with UC-CDC-P1, sequenced after UC-SDF-P2."
       },
       {
-        "id": "FIX-COWORK-CHEF-MUTEX-ECHO-JQ-DEFEAT",
-        "title": "CHEF same-tick mutex DEFEATABLE: pressure-cadence.md Step 4.5c uses echo \"$SCHEDULE\"|jq — zsh expands the escaped \\n in chef-intraday trigger_prompt to a real newline -> jq control-char parse error -> G_ARR/NG_ARR empty -> CHEF_MUTEX_APPLIED=false -> chef-morning + chef-intraday BOTH spawn -> DOUBLE MARKET PUBLISH; fails silently",
-        "type": "FIX",
-        "priority": "P1",
-        "status": "BACKLOG",
-        "zone": "cross-service/",
-        "owner": "po",
-        "created_by": "po-devteam-triage-20260716T0637",
-        "source": "cow-20260716T052700",
-        "note": "RECURRING (2nd occurrence 07-14 + 07-16T05:15Z; recurring-bug-escalation -> FIX this triage). Root: docs/agents/cowork-team/flow/pressure-cadence.md L137,140-141,144-145,149. Prior lesson feedback_cowork_chef_mutex_echo_jq_mangles_escaped_newline exists but the doc is STILL vulnerable — the fix never landed in the doc (or regressed). 07-16 only avoided a double-post because the dispatcher computed the mutex file-direct from memory; a dispatcher following the doc LITERALLY double-posts to users. FIX: replace echo-a-JSON-payload with file-direct jq -c ... docs/data/cowork-schedule.json + jq -n --argjson bound params; ideally EXTRACT the mutex to a tested scripts/ helper (per CLAUDE.md script-persistence) instead of shell-in-markdown. DISTINCT vector from UC-CCA-P3 (published-marker lifecycle) and FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS (router intent namespace). AC: on the 05:15Z coincidence tick a literal doc-follower fires exactly 1 CHEF dish; add a regression guard that cowork-schedule.json round-trips through the mutex membership check without echo corruption. SECOND-ORDER (fold, do not re-mint): audit whether other flows route fix requests via custom payload sub-fields instead of .signal_queue.rows[] — this fix request itself was silently dropped on 07-14 as payload.robustness_note_for_dev_team.",
-        "created_at": "2026-07-16T07:07:00Z",
-        "next_agent": "developer",
-        "updated_by": "po/triage-20260728T13",
-        "po_lane_repair_20260728": "LANE REPAIR. Verified by execution: is_non_dev_owner_unrouted=true — owner 'po' is a non-dev deliberate-launch owner AND the board row's next_agent was empty, which gates it out of BOUNDED-1 while matching neither SLS (not supervised, not plan_only) nor RLC (not in ready[]). deps_satisfied=true, not an epic wrapper, not detail-deferred: the ONLY thing holding it was the missing next_agent. Zone is the cowork pressure-cadence flow + scripts, so the handler is the generic developer per docs/data/system-map.json (scripts/ -> developer). Found by PO's own prior-art grep for this tick's spawn-fanout mint, not reported by anyone.",
-        "updated_at": "2026-07-28T13:28:25Z"
-      },
-      {
         "id": "FIX-VNINDEX-ESTIMATE-IMPLAUSIBLE-DELTA-GATE",
         "title": "VN-Index estimate cites implausible delta (1280.5 / -526pp ~29% move) with no plausibility gate — tier-4 fallback estimate (is_estimate=true, prevFetchedAt=null) emits a wrong-but-non-null vnIndexDelta that chef dishes publish to MARKET uncaught; add a plausibility bound on the vnIndex delta",
         "type": "FIX",
@@ -16079,9 +16063,32 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-28T13:42:42Z",
+    "last_triaged_at": "2026-07-28T14:13:20Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-COWORK-CHEF-MUTEX-ECHO-JQ-DEFEAT",
+        "title": "CHEF same-tick mutex DEFEATABLE: pressure-cadence.md Step 4.5c uses echo \"$SCHEDULE\"|jq — zsh expands the escaped \\n in chef-intraday trigger_prompt to a real newline -> jq control-char parse error -> G_ARR/NG_ARR empty -> CHEF_MUTEX_APPLIED=false -> chef-morning + chef-intraday BOTH spawn -> DOUBLE MARKET PUBLISH; fails silently",
+        "type": "FIX",
+        "priority": "P1",
+        "status": "IN_PROGRESS",
+        "zone": "cross-service/",
+        "owner": "po",
+        "created_by": "po-devteam-triage-20260716T0637",
+        "source": "cow-20260716T052700",
+        "note": "RECURRING (2nd occurrence 07-14 + 07-16T05:15Z; recurring-bug-escalation -> FIX this triage). Root: docs/agents/cowork-team/flow/pressure-cadence.md L137,140-141,144-145,149. Prior lesson feedback_cowork_chef_mutex_echo_jq_mangles_escaped_newline exists but the doc is STILL vulnerable — the fix never landed in the doc (or regressed). 07-16 only avoided a double-post because the dispatcher computed the mutex file-direct from memory; a dispatcher following the doc LITERALLY double-posts to users. FIX: replace echo-a-JSON-payload with file-direct jq -c ... docs/data/cowork-schedule.json + jq -n --argjson bound params; ideally EXTRACT the mutex to a tested scripts/ helper (per CLAUDE.md script-persistence) instead of shell-in-markdown. DISTINCT vector from UC-CCA-P3 (published-marker lifecycle) and FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS (router intent namespace). AC: on the 05:15Z coincidence tick a literal doc-follower fires exactly 1 CHEF dish; add a regression guard that cowork-schedule.json round-trips through the mutex membership check without echo corruption. SECOND-ORDER (fold, do not re-mint): audit whether other flows route fix requests via custom payload sub-fields instead of .signal_queue.rows[] — this fix request itself was silently dropped on 07-14 as payload.robustness_note_for_dev_team.",
+        "created_at": "2026-07-16T07:07:00Z",
+        "next_agent": "developer",
+        "updated_by": "po/triage-20260728T13",
+        "po_lane_repair_20260728": "LANE REPAIR. Verified by execution: is_non_dev_owner_unrouted=true — owner 'po' is a non-dev deliberate-launch owner AND the board row's next_agent was empty, which gates it out of BOUNDED-1 while matching neither SLS (not supervised, not plan_only) nor RLC (not in ready[]). deps_satisfied=true, not an epic wrapper, not detail-deferred: the ONLY thing holding it was the missing next_agent. Zone is the cowork pressure-cadence flow + scripts, so the handler is the generic developer per docs/data/system-map.json (scripts/ -> developer). Found by PO's own prior-art grep for this tick's spawn-fanout mint, not reported by anyone.",
+        "updated_at": "2026-07-28T14:13:21Z",
+        "promoted_at": "2026-07-28T14:13:20Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-28T14:13:20Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
