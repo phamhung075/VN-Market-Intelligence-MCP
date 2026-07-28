@@ -464,54 +464,6 @@
     "archive": [],
     "rows": [
       {
-        "id": "sau-d4-data-quality-anomaly-dgc-q1-2026-not_found-20260728",
-        "ts": "2026-07-28T03:00Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "system_issue",
-        "summary": "held lock data-quality-anomaly:DGC:Q1-2026 has no orch-state task_board row",
-        "severity": "LOW",
-        "status": "RESOLVED",
-        "payload_ref": null,
-        "po_disposition_20260728": "RESOLVED, no mint — DETECTOR NOISE with a tracked home. All 4 rows (2 facets x 2 days) belong to FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX (backlog, dev-mcp-server, minted 2026-07-25 from the identical 07-25 pair, origin_signal_id sau-d4-...-not_found-20260725), which PO augmented in this same write with the pipeline_mismatch facet and raised P3 -> P2. NOT a DGC data problem: the lock data-quality-anomaly:DGC:Q1-2026 is a live, legitimate 7-day bctc-analyst escalation claim expiring 2026-07-30T15:15:40Z, and a held lock without a board row is documented-legitimate (feedback_esc3_held_lock_no_board_row_is_legit). DO NOT RELEASE THE LOCK. Route future instances at the auditor's D4 check, never at DGC."
-      },
-      {
-        "id": "sau-d4-data-quality-anomaly-dgc-q1-2026-pipeline_mismatch-20260728",
-        "ts": "2026-07-28T03:00Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "system_issue",
-        "summary": "orch-state/lock mismatch: active=FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES held=data-quality-an...",
-        "severity": "LOW",
-        "status": "RESOLVED",
-        "payload_ref": null,
-        "po_disposition_20260728": "RESOLVED, no mint — DETECTOR NOISE with a tracked home. All 4 rows (2 facets x 2 days) belong to FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX (backlog, dev-mcp-server, minted 2026-07-25 from the identical 07-25 pair, origin_signal_id sau-d4-...-not_found-20260725), which PO augmented in this same write with the pipeline_mismatch facet and raised P3 -> P2. NOT a DGC data problem: the lock data-quality-anomaly:DGC:Q1-2026 is a live, legitimate 7-day bctc-analyst escalation claim expiring 2026-07-30T15:15:40Z, and a held lock without a board row is documented-legitimate (feedback_esc3_held_lock_no_board_row_is_legit). DO NOT RELEASE THE LOCK. Route future instances at the auditor's D4 check, never at DGC."
-      },
-      {
-        "id": "sau-d4-data-quality-anomaly-dgc-q1-2026-not_found-20260727",
-        "ts": "2026-07-27T03:00Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "system_issue",
-        "summary": "held lock data-quality-anomaly:DGC:Q1-2026 has no orch-state task_board row",
-        "severity": "LOW",
-        "status": "RESOLVED",
-        "payload_ref": null,
-        "po_disposition_20260728": "RESOLVED, no mint — DETECTOR NOISE with a tracked home. All 4 rows (2 facets x 2 days) belong to FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX (backlog, dev-mcp-server, minted 2026-07-25 from the identical 07-25 pair, origin_signal_id sau-d4-...-not_found-20260725), which PO augmented in this same write with the pipeline_mismatch facet and raised P3 -> P2. NOT a DGC data problem: the lock data-quality-anomaly:DGC:Q1-2026 is a live, legitimate 7-day bctc-analyst escalation claim expiring 2026-07-30T15:15:40Z, and a held lock without a board row is documented-legitimate (feedback_esc3_held_lock_no_board_row_is_legit). DO NOT RELEASE THE LOCK. Route future instances at the auditor's D4 check, never at DGC."
-      },
-      {
-        "id": "sau-d4-data-quality-anomaly-dgc-q1-2026-pipeline_mismatch-20260727",
-        "ts": "2026-07-27T03:00Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "system_issue",
-        "summary": "orch-state/lock mismatch: active=FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES held=data-quality-an...",
-        "severity": "LOW",
-        "status": "RESOLVED",
-        "payload_ref": null,
-        "po_disposition_20260728": "RESOLVED, no mint — DETECTOR NOISE with a tracked home. All 4 rows (2 facets x 2 days) belong to FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX (backlog, dev-mcp-server, minted 2026-07-25 from the identical 07-25 pair, origin_signal_id sau-d4-...-not_found-20260725), which PO augmented in this same write with the pipeline_mismatch facet and raised P3 -> P2. NOT a DGC data problem: the lock data-quality-anomaly:DGC:Q1-2026 is a live, legitimate 7-day bctc-analyst escalation claim expiring 2026-07-30T15:15:40Z, and a held lock without a board row is documented-legitimate (feedback_esc3_held_lock_no_board_row_is_legit). DO NOT RELEASE THE LOCK. Route future instances at the auditor's D4 check, never at DGC."
-      },
-      {
         "id": "po-20260720T052606",
         "ts": "2026-07-20T05:26:06Z",
         "from": "po",
@@ -2332,68 +2284,6 @@
         "disposition": "evidence-attached-no-new-row",
         "triage_note": "Do not mint a new row; attach as evidence to the two backlog rows and re-rank. The recorded premise was: landmine is latent ONLY while calendar_status is frozen at \"unknown\" (the conservative no-op at every consumer). That premise is now FALSE — observed 2026-07-25T15:12Z pressure-state.json calendar_status=\"closed\", outside the policy 5-value domain (half_day/holiday/open/unknown/weekend). Two live consequences, both on a Saturday: (1) cadence — bctc-offmarket takes the unmatched 240min generic default instead of its weekend 1440min rule, so FIX-COWORK-CADENCE-DANGLING-POLICY-ID's \"(240 genuinely safe)\" premise is actively violated, not hypothetically; (2) suppression — Step 4.3 calendar-suppress and Step 4.5 freshness-downgrade both gate on [holiday,weekend], and \"closed\" matches neither, so weekend suppression is dead by a second independent path. Echo loop confirmed live this tick: cowork-tick-preflight.sh:83 reads calendar_status FROM pressure-state.json, :88 defaults only on empty (never on invalid), :95-97 passes it back to emit_pressure_state, emitPressureStateTool.ts:387 stores args.calendar_status ?? \"unknown\", cowork-match-slots.js:203 reads it back for evaluateCadence. Zod schema :459 is bare z.string() — the docstring enumerates the 5 legal values but nothing enforces them, so \"closed\" validates silently. Widening the policy domain must ship WITH UC-CDC-P1, not after.",
         "po_disposition_note": "CONCUR with the do-not-mint instruction. Evidence folded into UC-CDC-P1 and FIX-COWORK-CADENCE-DANGLING-POLICY-ID (both BACKLOG, both re-stamped this tick). Net-new contribution recorded: the (a)-adaptive vs (b)-legacy isolation that UC-CDC-P1 flagged as OPEN on 2026-07-25T09:48Z is now CLOSED in favour of (a), via pressure_mode=adaptive co-occurring with calendar_status=closed and cadence_minutes=240 in one telemetry row. Sequencing unchanged: UC-SDF-P2 first, then UC-CDC-P1 + FIX-COWORK-CADENCE-DANGLING-POLICY-ID as one change set."
-      },
-      {
-        "id": "sys-20260728T120919-7e1e",
-        "ts": "2026-07-28T12:09:19Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "signal_feedback",
-        "summary": "rag-service memory at 99.10% of cap (761.1 MiB / 768 MiB)",
-        "severity": "WARN",
-        "status": "RESOLVED",
-        "payload_ref": null,
-        "po_disposition_20260728": "RESOLVED, no mint. 99.10% sample at 12:09Z is the pre-restart peak of the same ~3-day sawtooth; the container restarted at 12:21:47Z, 12 minutes later. Same tracked home: RAG-FTS-BUILD-MEMORY-BOUND (review/next=po)."
-      },
-      {
-        "id": "rag-mem-ceiling-pinned-20260728T122201",
-        "ts": "2026-07-28T12:22:01Z",
-        "from": "router",
-        "to": "po",
-        "type": "system_issue",
-        "severity": "LOW",
-        "status": "RESOLVED",
-        "summary": "RETRACTED BY AUTHOR (router). Original claim: rag-service pinned 99.7-99.9% for 2.9d, crash-restart relief NOT operating. FALSE. docker inspect at 13:13Z: RestartCount 14->15, StartedAt moved 2026-07-25T16:14:58Z -> 2026-07-28T12:21:47Z, mem now 678.3MiB/768MiB (88.32%). The container restarted at 12:21:47Z — FOURTEEN SECONDS BEFORE the signal was written. The relief mechanism IS operating on a ~3-day cycle; it had not stopped. The lifetime-vs-recent RestartCount correction was factually right, the inference drawn from it was wrong. Condition is the ALREADY-ACKNOWLEDGED slow-growth-to-ceiling pattern tracked by RAG-FTS-BUILD-MEMORY-BOUND, not a new emergency.",
-        "payload_ref": null,
-        "retracted_at": "2026-07-28T13:14:31Z",
-        "retracted_by": "router (self-correction on re-measurement)",
-        "po_disposition_20260728": "RESOLVED, no mint. Author (router) retracted it at 13:14:31Z on re-measurement: the container restarted 2026-07-28T12:21:47Z, 14s BEFORE the signal was written, RestartCount 14->15, memory 766.5 -> 678.3 MiB. The '2.9d continuous uptime proves the crash-restart relief has stopped' inference was reading a mid-cycle sample as a ceased mechanism. Independently corroborated on the other plane by sibling signal sys-20260728T131227-5964 ('88.32% after restart'). Condition is the already-acknowledged slow-growth-to-ceiling sawtooth tracked by RAG-FTS-BUILD-MEMORY-BOUND (review/next=po); its ACK premise has NOT changed and is not being revisited. Standing caveat recorded, not actioned: a service that climbs to its cap and restarts every ~3 days is a leak with a crude relief valve, not a steady state — which is what that row already covers."
-      },
-      {
-        "id": "sys-20260728T124939-50a8",
-        "ts": "2026-07-28T12:49:39Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "microservice_degraded",
-        "summary": "pdf-extractor memory at 85.54% (2.138 GiB / 2.5 GiB limit)",
-        "severity": "WARN",
-        "status": "RESOLVED",
-        "payload_ref": null,
-        "po_disposition_20260728": "RESOLVED, no mint, MONITOR with a named re-escalation threshold (not a silent file-and-forget). pdf-extractor 85.54% of 2.5 GiB (2.138 GiB), health=healthy, RestartCount=2, and byte-identical across 4 router samples over 94s plus a second signal 23 minutes later — a stable plateau UNDER cap is not a defect, and minting on it would be the auditor-memory-FP class (feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn). RE-ESCALATE, and mint then, if ANY of: crosses 95% of cap, OOMKilled=true, or RestartCount climbs. SEPARATELY: the tier-1 auditor's 2026-07-28T12:49Z cycle asserted IN PROSE ONLY (never signalled) '458 PDF extraction jobs stuck in processing, 0 completed in 24h'. PO could not reach the live DB either, but the '0 completed in 24h' half is REFUTED on two independent planes: list_stored_pdfs shows files dated 2026-07-28 (today) and get_sla_status reports bctc age 235 min against a 19552 min SLA. Treat 458 as UNSUBSTANTIATED; if anyone re-raises it, it needs a live jobs-table count, not a prose repeat."
-      },
-      {
-        "id": "sys-20260728T131219-3fca",
-        "ts": "2026-07-28T13:12:19Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "memory_pressure",
-        "summary": "pdf-extractor memory 85.54% of 2.5 GiB (2.138 GiB) — stable plateau",
-        "severity": "WARN",
-        "status": "RESOLVED",
-        "payload_ref": null,
-        "po_disposition_20260728": "RESOLVED, no mint, MONITOR with a named re-escalation threshold (not a silent file-and-forget). pdf-extractor 85.54% of 2.5 GiB (2.138 GiB), health=healthy, RestartCount=2, and byte-identical across 4 router samples over 94s plus a second signal 23 minutes later — a stable plateau UNDER cap is not a defect, and minting on it would be the auditor-memory-FP class (feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn). RE-ESCALATE, and mint then, if ANY of: crosses 95% of cap, OOMKilled=true, or RestartCount climbs. SEPARATELY: the tier-1 auditor's 2026-07-28T12:49Z cycle asserted IN PROSE ONLY (never signalled) '458 PDF extraction jobs stuck in processing, 0 completed in 24h'. PO could not reach the live DB either, but the '0 completed in 24h' half is REFUTED on two independent planes: list_stored_pdfs shows files dated 2026-07-28 (today) and get_sla_status reports bctc age 235 min against a 19552 min SLA. Treat 458 as UNSUBSTANTIATED; if anyone re-raises it, it needs a live jobs-table count, not a prose repeat."
-      },
-      {
-        "id": "sys-20260728T131227-5964",
-        "ts": "2026-07-28T13:12:27Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "memory_pressure",
-        "summary": "rag-service memory 88.32% of 768 MiB after restart — elevated post-restart",
-        "severity": "WARN",
-        "status": "RESOLVED",
-        "payload_ref": null,
-        "po_disposition_20260728": "RESOLVED, no mint. 88.32% post-restart is the expected floor of the sawtooth, and is the independent second-plane corroboration of the 12:21:47Z restart. Same tracked home: RAG-FTS-BUILD-MEMORY-BOUND. This row is the reason the HIGH sibling was retractable — keep it, it is the negative control."
       }
     ],
     "last_triaged_at": "2026-07-28T13:24:57Z",
