@@ -1,0 +1,16 @@
+{
+  "ticker": "VIX",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "product": "Securities brokerage, margin lending, proprietary trading",
+  "customer": "Retail and institutional equity traders",
+  "ops": "DATA GAP: BCTC still unavailable ('Chưa có dữ liệu'), unextracted PDF backlog persists. Sector-comparison only: ROE 28.9% (well above sector median 10.0%), PE 5.5x vs sector median 14.6x (DISCOUNT -63%) — securities sector rallied broadly today (SSI+4.55%/VCI+6.78%/VND+6.84%/VIX+4.68%).",
+  "mgmt": "No BCTC-sourced management data this cycle (blocked). KD reading Quẻ Cấn(52)/TRUNG TÍNH/GIỮ, confidence 21% — matches prior cycle exactly (2nd consecutive touch), confirms the reversal away from the earlier Tỵ(8)/THUẬN LỢI 100% reading is durable.",
+  "_processed": {
+    "fingerprint": "edb68e7acfbe8a95ad6bf4d1738d689e789baaaf387b4dd055ca64fe51784e8f",
+    "processedAt": "2026-07-28T21:15:34Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

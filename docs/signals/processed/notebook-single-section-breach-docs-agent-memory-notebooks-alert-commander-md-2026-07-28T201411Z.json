@@ -1,0 +1,23 @@
+{
+  "from": "notebook-auto-prune-hook",
+  "to": "claude-manager-helper",
+  "type": "notebook_single_section_overage_breach",
+  "priority": "high",
+  "createdAt": "2026-07-28T20:14:11Z",
+  "payload": {
+    "file": "docs/agent-memory/notebooks/alert-commander.md",
+    "line_count": 190,
+    "cap": 200,
+    "byte_count": 119233,
+    "byte_cap": 12000,
+    "section_count": 1,
+    "reason": "only preamble+1 section remain; cannot prune further without data loss",
+    "action_required": "manual_split_to_archive"
+  },
+  "_processed": {
+    "fingerprint": "b3a4114173d28d4f85fa1b0f4f5534b4dd513d978f39fa33e53f5340761dc7a2",
+    "processedAt": "2026-07-28T20:15:19Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

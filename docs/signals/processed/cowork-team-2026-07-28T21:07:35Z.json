@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-28T21:07:35Z",
+    "matched_slots": [
+      "bctc-analyst-slot-3"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-3"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "bctc-analyst-slot-3": "cron"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-3": null
+    },
+    "last_fired_timestamp": "2026-07-28T21:07:00Z",
+    "last_fired_slots": [
+      "bctc-analyst-slot-3"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "21:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 15,
+    "note": "po-scoped signal dev-20260728T202014Z left untouched at NEW again this tick — TNB tnb-audit (a36a24cd727bbf46f) already routed its own explanatory audit-handoff signal to po this session (double-publish root cause confirmed), superseding this row's need for cowork action."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-28T21:07:35Z",
+  "_processed": {
+    "fingerprint": "368cb21936b4be0445f66d6f6f3ca837342ee060be483369f83ee5dcf3974e2c",
+    "processedAt": "2026-07-28T21:15:34Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

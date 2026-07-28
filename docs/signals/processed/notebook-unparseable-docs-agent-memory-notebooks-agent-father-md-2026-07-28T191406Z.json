@@ -3,17 +3,19 @@
   "to": "claude-manager-helper",
   "type": "notebook_unparseable_breach",
   "priority": "high",
-  "createdAt": "2026-07-21T19:15:14Z",
+  "createdAt": "2026-07-28T19:14:06Z",
   "payload": {
     "file": "docs/agent-memory/notebooks/agent-father.md",
-    "line_count": 211,
+    "line_count": 343,
     "cap": 200,
+    "byte_count": 30730,
+    "byte_cap": 12000,
     "reason": "no ## section boundaries found; cannot safely prune",
     "action_required": "manual_review"
   },
   "_processed": {
-    "fingerprint": "71ef9600b335c1999ecd55b30c1a50d9e0723cb34533445fa9851d0bf1946273",
-    "processedAt": "2026-07-21T19:15:29Z",
+    "fingerprint": "75feacb50846064f7c29c14204d11cd4d568fe470c4dfed869e3b385dfb89e1e",
+    "processedAt": "2026-07-28T19:16:01Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

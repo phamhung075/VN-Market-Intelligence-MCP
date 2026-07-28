@@ -1,0 +1,16 @@
+{
+  "ticker": "VCB",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "product": "Retail and corporate banking, bancassurance cross-sell, trade finance",
+  "customer": "Broad retail depositors/borrowers, SOE and large-corporate clients, FX/trade-finance customers",
+  "ops": "Operating margin 80.9%, ROE 4.2% (below bank sector median 17.6% — reflects VCB's large low-yield asset base). PE 14.1x vs sector median 9.0x (PREMIUM +57%). Balance sheet check PASS (0.37% imbalance, within 0.5% tolerance).",
+  "mgmt": "Sentiment ỔN ĐỊNH (stable), 2/2 recent mentions bullish. ESC-5 FALSE (report_id null, refine_status=PARTIAL — refine not yet run). KD reading Quẻ Khôn(2)/TRUNG TÍNH/GIỮ 37-38%, unchanged across cycles.",
+  "_processed": {
+    "fingerprint": "38ff6351104f1bc2cf28aff623a82fa06bb1a3f54154ad1f63d3d466b69ad536",
+    "processedAt": "2026-07-28T21:15:34Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

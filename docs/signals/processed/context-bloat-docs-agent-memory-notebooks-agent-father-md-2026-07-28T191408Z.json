@@ -3,18 +3,22 @@
   "to": "claude-manager-helper",
   "type": "context_bloat_breach",
   "priority": "high",
-  "createdAt": "2026-07-21T19:15:17Z",
+  "createdAt": "2026-07-28T19:14:08Z",
   "payload": {
     "file": "docs/agent-memory/notebooks/agent-father.md",
-    "line_count": 211,
+    "line_count": 343,
     "cap": 200,
+    "byte_count": 30730,
+    "byte_cap": 12000,
     "class": "agent-notebook",
-    "overage": 11,
+    "reason": "line-cap,byte-cap",
+    "overage": 143,
+    "byte_overage": 18730,
     "action_required": "prune_or_split"
   },
   "_processed": {
-    "fingerprint": "b0ea6848fd21496cbbec3b45b4efe9e5e6c5758e4f367afb24827e0200a7dc80",
-    "processedAt": "2026-07-21T19:15:29Z",
+    "fingerprint": "fece023a23045243c11d783ba96c1aa5fd4e96f7188e0a65508effc1a4f2ee1b",
+    "processedAt": "2026-07-28T19:16:01Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

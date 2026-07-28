@@ -1,0 +1,16 @@
+{
+  "ticker": "SAB",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "product": "Beer and beverage manufacturing (Sabeco brands)",
+  "customer": "Domestic on-premise and retail consumer channels",
+  "ops": "DATA GAP: BCTC still unavailable ('Chưa có dữ liệu'), unextracted PDF backlog since 2026-07-19. Sector-comparison only: ROE 19.9% (above sector median 15.5%), PE 13.1x vs sector median 8.9x (PREMIUM +48%).",
+  "mgmt": "No BCTC-sourced management data this cycle (blocked). KD reading Quẻ Khôn(2)/TRUNG TÍNH/THẬN TRỌNG, confidence 13% — matches prior cycle exactly (2nd consecutive touch), confirms durability of the reversal away from the earlier Lâm(19)/THUẬN LỢI 100% reading.",
+  "_processed": {
+    "fingerprint": "fccaec6d4b486826be45a4e2590db5a3448dd4ddd1863caa3323e6c442fc4ba8",
+    "processedAt": "2026-07-28T21:15:34Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

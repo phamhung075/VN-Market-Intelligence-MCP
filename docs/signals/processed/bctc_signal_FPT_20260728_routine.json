@@ -1,0 +1,16 @@
+{
+  "ticker": "FPT",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "product": "IT services and software exports, systems integration, telecom (FPT Telecom, now equity-method), education (FPT Edu)",
+  "customer": "Enterprise IT buyers in VN and offshore (Japan/Europe/US), telecom subscribers, education students",
+  "ops": "Gross margin 34.0%, operating margin 22.0%, ROE 6.2% (YoY comparison suppressed — FTEL deconsolidated to equity-method from 2026-01-01, PUB-7 period-basis mismatch withheld); OCF negative (-2,847.8 tỷ) vs NI 2,476.8 tỷ this quarter, ESC-3 divergence check DATA-COVERAGE-LIMITED (2/4 quarters only)",
+  "mgmt": "ESC-5 confirmed 6th consecutive cycle: 7/15 refined units (footnote/related-party notes, pages 26-45) still at confidence 0.45 (<0.50 bar), unchanged since 2026-05-31 — Opus deep-dive dispatch guard HELD (own-agent 24h TTL, dispatched c124 ~3h ago, not lapsed). KD signal shifted this cycle to Quẻ Bác(23)/BẤT LỢI/GIỮ, confidence only 25% (low-confidence, first touch — was Khôn(2)/TRUNG TÍNH 37-38% for 3 prior cycles).",
+  "_processed": {
+    "fingerprint": "612ee9d888f8994bc2eb1c88cd2be8bdfeddcb8962bdc88090846c5a6113e2ea",
+    "processedAt": "2026-07-28T21:15:34Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

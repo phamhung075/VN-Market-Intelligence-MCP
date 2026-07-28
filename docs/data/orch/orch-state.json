@@ -2325,7 +2325,7 @@
         "type": "system-issue",
         "summary": "stranded-state sweep: 3 unknown paths — 2 unified-agent synthesis + 1 fb-post daily deliverable",
         "severity": "LOW",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "paths": [

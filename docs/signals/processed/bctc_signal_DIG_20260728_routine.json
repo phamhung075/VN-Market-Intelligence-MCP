@@ -1,0 +1,16 @@
+{
+  "ticker": "DIG",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "product": "Real estate development — residential/urban projects (Đồng Nai, Bà Rịa-Vũng Tàu)",
+  "customer": "Residential property buyers, domestic real-estate investors",
+  "ops": "DATA GAP: BCTC still unavailable ('Chưa có dữ liệu') — stored PDF on disk since 2026-06-13 remains unextracted (pdf-extractor container capacity constraint per 2026-07-28 architecture brief). Sector-comparison only: ROE 7.3% (above sector median 6.3%), PE 14.9x vs sector median 19.3x (DISCOUNT -23%), PB ngang bằng sector.",
+  "mgmt": "No BCTC-sourced management data this cycle (blocked). KD reading Quẻ Mông(4)/TRUNG TÍNH/CHO, confidence 13% — matches prior cycle exactly (2nd consecutive touch), confirms the reversal away from the earlier Du(16)/THUẬN LỢI 62% reading is durable, not a one-off.",
+  "_processed": {
+    "fingerprint": "c029d48e3760028aa60530a533de5f30a91d57b4f851d9651203d54dbc2d1dd4",
+    "processedAt": "2026-07-28T21:15:34Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

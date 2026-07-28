@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-28T19:53:00Z",
+    "matched_slots": [
+      "chef-evening"
+    ],
+    "won_slots": [
+      "chef-evening"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "chef-evening": "cron"
+    },
+    "cadence_minutes": {
+      "chef-evening": null
+    },
+    "last_fired_timestamp": "2026-07-28T19:52:00Z",
+    "last_fired_slots": [
+      "chef-evening"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "19:45",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 13,
+    "note": "chef-evening guaranteed slot recovered (first CHEF dish of the day after weekly-quota outage cleared today's chef-morning/chef-eod windows)"
+  },
+  "priority": "low",
+  "createdAt": "2026-07-28T19:53:00Z",
+  "_processed": {
+    "fingerprint": "b604a1318bd3a6a65440253bf765ecaf9a5c3482a65e45a39c655264dcb53476",
+    "processedAt": "2026-07-28T20:15:19Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

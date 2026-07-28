@@ -1,0 +1,16 @@
+{
+  "ticker": "DPM",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "product": "Fertilizer production (urea, NPK) and agrochemical distribution",
+  "customer": "Domestic agricultural sector (farmers, distributors)",
+  "ops": "DATA GAP: BCTC still unavailable ('Chưa có dữ liệu'), unextracted PDF backlog since 2026-06-07. Sector-comparison only: ROE 9.6% (below sector median 17.4%), PE 18.2x vs sector median 7.7x (PREMIUM +137%, EXPENSIVE band on EY-spread ~0.49pp).",
+  "mgmt": "No BCTC-sourced management data this cycle (blocked). KD reading Quẻ Cấn(52)/TRUNG TÍNH/GIỮ, confidence 38% — matches prior cycle exactly (2nd consecutive touch), confirms durability of the reversal.",
+  "_processed": {
+    "fingerprint": "fda1b9f508feafb209918b7ecea7ad9fc1d9cf4715ed3c566bf7700d5f65874f",
+    "processedAt": "2026-07-28T21:15:34Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

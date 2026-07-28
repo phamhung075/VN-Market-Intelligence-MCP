@@ -1,0 +1,16 @@
+{
+  "ticker": "HPG",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "product": "Steel manufacturing — rebar, HRC (hot-rolled coil), integrated value chain (Dung Quat/Hai Duong complexes)",
+  "customer": "Construction and infrastructure sector domestically, export markets (HRC)",
+  "ops": "Gross margin 15.8%, ROE 6.5%. Known data-extraction defect persists: Operating Profit reported as 0 tỷ VND (0.0%) while Net Profit (9,055.9 tỷ) exceeds Gross Profit (8,365.1 tỷ) — validation flag 'possible non-operating income', ESC-4 non-operating-share check SKIPPED due to this defect. Balance sheet check PASS (0% imbalance).",
+  "mgmt": "Sentiment trend NEGATIVE over 30d (slope -0.39, 5/17 bullish vs news volume). ESC-5 FALSE (report_id null, refine_status=PARTIAL). KD reading Quẻ Di(27)/TRUNG TÍNH/GIỮ 37-38% (shifted from Khiêm(15)/THUẬN LỢI 100% seen in earlier cycles).",
+  "_processed": {
+    "fingerprint": "6ed04d9f8558f93b59c722c3481b3847974a6798f5c8b907bdda7187d5987221",
+    "processedAt": "2026-07-28T21:15:34Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

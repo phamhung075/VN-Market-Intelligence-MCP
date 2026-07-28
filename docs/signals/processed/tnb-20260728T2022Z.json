@@ -1,0 +1,15 @@
+{
+  "from": "tran-ngoc-bau",
+  "to": "po",
+  "type": "audit-handoff",
+  "payload": "docs/handoffs/tnb-audit-latest.md",
+  "priority": "high",
+  "createdAt": "2026-07-28T20:22:00Z",
+  "summary": "NEEDS_ATTENTION. Confirmed chef-evening double-publish 07-28 (date_vn mutex bypass, resolves untriaged signal dev-20260728T202014Z) + L5-silent-omission 2nd occurrence (kinhdich 503 corroborated) + gap-token/summary desync beyond L6 + 3rd notebook-write-collision incident this fleet. Fleet-wide cowork-dispatcher outage 07-24..07-28 already tracked (TASK-COWORK-CATCHUP chain), not re-escalated.",
+  "_processed": {
+    "fingerprint": "f6f095f5754d92e691f961f4f0578d02778bd757dac50dd4e8276f580bfde3f7",
+    "processedAt": "2026-07-28T21:15:34Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "id": "bca-20260728T181100Z",
+  "ts": "2026-07-28T18:11:00Z",
+  "from": "bctc-analyst",
+  "to": "dev-team",
+  "type": "esc-deep-dive-request",
+  "summary": "ESC deep-dive: FPT Q1-2026 ESC-5",
+  "severity": "HIGH",
+  "status": "NEW",
+  "payload_ref": null,
+  "payload": {
+    "trigger_id": "ESC-5",
+    "ticker": "FPT",
+    "quarter": "Q1-2026",
+    "report_id": "e8ea3df5-3f32-413d-a3eb-c71634c0438d",
+    "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
+    "context": {
+      "low_confidence_unit_ids": [
+        "unit-0008",
+        "unit-0009",
+        "unit-0010",
+        "unit-0011",
+        "unit-0012",
+        "unit-0013",
+        "unit-0014"
+      ],
+      "min_confidence": 0.45,
+      "note": "6th consecutive cycle reconfirming same 7/15 refine units <0.50 confidence (refined_at unchanged 2026-05-31T11:19:09, report_id unchanged). Prior dispatch bca-20260724T151200Z + re-escalation bca-20260725T151219Z at c123 — no evidence either was actioned by dev-team; the 24h guard lapsed again, spanning a ~3-day operational gap (no bctc-analyst cycle ran between c123 2026-07-25T15:20Z and this cycle 2026-07-28T18:00Z). Underlying finding is unchanged, not a new defect."
+    },
+    "all_esc_fired": [
+      "ESC-5"
+    ]
+  },
+  "_processed": {
+    "fingerprint": "87408ee3d0d8d884045bde5675cecbf51199f482211eb8a3dcd1a40509ed454f",
+    "processedAt": "2026-07-28T18:15:39Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
