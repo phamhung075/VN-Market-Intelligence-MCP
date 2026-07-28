@@ -1,8 +1,15 @@
 # Architect — Notebook
 
-**Last updated:** 2026-07-28 15:48 UTC | **Sprint:** COWORK-GUARANTEED-SLOT-CATCHUP
+**Last updated:** 2026-07-28 23:51 UTC | **Sprint:** COWORK-GUARANTEED-SLOT-CATCHUP
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-07-28T23:51Z — FIX-POLYMARKET-FETCH-DEAD-GEOBLOCK-ACTUATOR (zone=apps/mcp-server/, P1 supervised, PO board row)
+
+**Task:** Rule RESTORE-via-VPS vs RETIRE for a prediction_markets plane dead 28d (detector-right/actuator-blind split — a sibling row already fixed the staleness-alert path; this row is the underlying fetch). `fetchPolymarkets()` never throws on transport failure, so the poll job's `cron_job_runs` reads status=success the whole time.
+**Finding:** WebSearch on the frozen gamma-api TLS artifact (`*.anj.fr` cert) surfaced a live fact PO's triage note didn't have: France's ANJ (national gambling regulator) ordered French ISPs to block Polymarket outright on 2026-07-16, after finding rigged markets (hacked weather-sensor bets) and zero KYC. mcp-server runs on France-hosted infra (`franceSummaryJob`). This converts the (a)/(b) choice from a pure cost/effort tradeoff into a should-not: a Vinahost VN-egress VPS hop would likely technically defeat the block, but that means engineering evasion of a sovereign regulator's order against a source it found fraudulent — not the same problem class as the VN-source geoblocks (SSC/HNX/SBV/CafeF) the VPS pattern exists for.
+**Output:** RULED RETIRE. Wrote the full design to the board row's `architect_review_note` (this row is a direct PO board mint, not a BA/sprint pipeline task, so it follows the field convention 2 other in-progress rows already use rather than a `docs/handoffs/` file): kill acquisition (`config.ts` enabled-default flip); a REQUIRED-either-way `fetchPolymarkets()` throw-on-transport-failure fix (traced the actual mechanism — `recordJobRun`/`wrapRun` marks `cron_job_runs` by promise-reject, but `runPredictionMarketPoll`'s own outer catch + Step 3's inner catch both swallow unconditionally, which is the literal reason 28d of dead fetches read success); drop the 3 named consumer refs; retire the now-purposeless `prediction.md` flow + its `main.md` dispatch row + `init.md` pointer entirely (partial-editing it leaves a flow with nothing left to do); deregister the MCP tool; flagged `quality-checklist.json`'s 2 SLA rows for qa coordination (verified no "retired" status token exists in that file's enum — did not invent one).
+**Next:** dev-mcp-server — board row `next_agent` set, `decision:"RETIRE"` stamped, stayed in `ready[]` (no lane-move — status unchanged). Router/PO must dispatch next; this was an explicit supervised dispatch to architect, not auto-picked.
 
 ## 2026-07-28T15:48Z — FIX-PDFX-TESSERACT-CONCURRENCY-VIOLATES-SINGLE-WORKER-INVARIANT (zone=apps/pdf-extractor/, P0 supervised plan_only, router out-of-band spawn)
 
@@ -18,9 +25,4 @@
 **Output:** `docs/agents/dev-team/flow/main.md` — (1) all 4 sites: `try/finally` → `try` (no release on success, `ttl_seconds:3600` on the outer claim is now the sole lifetime bound) `/except` (release + `raise`, failure-path only); (2) new WF-2 SUPERVISED-HOLD check inserted between WF-1 BLOCKED and the S2 dispatcher-wrap — `effective_supervised(row) AND no ^po_goahead key on row-or-head` → fall through to Step 1, head left UNCHANGED (unlike BLOCKED) so a later `po_goahead_*` stamp resumes on the very next tick. Committed `adb426877`. Live-proved acceptance 2 (POSITIVE) and both halves of acceptance 3 (NEGATIVE CONTROL: completion-path proceeds normally; TTL-lapse crash-recovery still resumes) against the real `task_claim`/`task_release` MCP primitives via `scripts/agents-flow/mcp-call.sh` — not flow-doc prose. WF-2 gate proved on synthetic fixtures (supervised+no-stamp→hold=true; same row+stamp→hold=false; live non-supervised baseline→hold=false).
 **Next:** qa — both rows flipped `in_progress`/`backlog` → `review`, `next_agent=qa`, `qa_verify_mode=verify-committed` (direct-to-main commit, `branch:null`, mirrors the Review-Lane QA-Drain hard prerequisite). Full acceptance-proof detail on each row's own `architect_review_note`.
 
----
-
-## Archive (pre-2026-07-25T17:36Z)
-
-Split out 2026-07-28 to keep this file under its 12 000-byte cap → `docs/agent-memory/notebooks/archive/architect-archive-20260728.md`
-(cycles 2026-07-25T11:20Z, 2026-07-25T00:10Z + the prior inline archive block). Nothing lost; also in git history.
+<!-- AC-2 prune 2026-07-28T23:51Z: dropped "## Archive (pre-2026-07-25T17:36Z)" pointer (4th-oldest section, retention cap=3). Cycles before 2026-07-25T17:36Z remain in git history and in docs/agent-memory/notebooks/archive/architect-archive-20260728.md. -->
