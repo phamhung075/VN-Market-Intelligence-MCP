@@ -159,6 +159,36 @@ Injectable `fetchFn` option for testability: `runOhlcvBackfill(db, { fetchFn: mo
 | `shippingIndex.ts` | BDI, FBX, SCFI | - |
 | `weatherVn.ts` | Typhoon/flood forecasts | - |
 | `polymarket.ts` | Prediction market odds | - |
+| `sbv.ts` | VCB XML FX rate (live) + SBV interest-rate env-var fallbacks (portal 404) | - |
+
+**`sbv.ts` — `storeSbvSnapshot()` zero-overwrite guard (FIX-SBV-FETCHER-ZERO-VALUE-EMIT).**
+`sbv_rates` holds one row per `source` (`INSERT OR REPLACE`, full-row upsert — no
+partial-column update support). `SENTINEL_ZERO_COLUMNS`
+(`overnight_rate_pct`/`refinancing_rate_pct`/`usd_vnd_official`/
+`max_deposit_rate_pct`/`max_lending_rate_pct`) are "0 means missing, not real" —
+`storeSbvSnapshot` (`infrastructure/fetchers/sbv.ts:430`) REJECTS the entire
+snapshot (`{skipped:true, zeroColumns}`) when any sentinel column is ≤0 AND the
+prior persisted row already holds a positive value for it, so a partial/failed
+fetch can never clobber a good prior row. `interbank_overnight_pct` and
+`discount_rate_pct` are intentionally NOT sentinel-guarded (can legitimately be
+0 on market close/holiday). `getLatestSbvRatesRow()`
+(`infrastructure/fetchers/sbv.ts:384`) is the exported read-side counterpart —
+callers that only ever carry a PARTIAL snapshot use it to carry-forward the
+last-known-good value for every field they don't have, instead of defaulting
+omitted fields to a synthetic 0 that would trip the guard above. Two call
+sites: `pushSbvRatesHandler.ts` (`interface/mcp/routes/pushSbvRatesHandler.ts`)
+— the VPS-push handler for `POST /api/push-sbv-rates`; `vps-scripts/fetch-sbv.sh`
+only ever posts `{usdVndOfficial, fetchedAt}`, so every optional rate field is
+merged from `getLatestSbvRatesRow()` rather than zero-defaulted, and the
+handler checks `storeSbvSnapshot`'s `{skipped, zeroColumns}` return before
+logging "stored" (previously logged a false-positive "stored" line
+unconditionally). `sbvRatesJob.ts` (`scheduler/macro/sbvRatesJob.ts`, 4h cron)
+and `intelligenceCycleJob.ts` step A2 (`scheduler/news-analysis/
+intelligenceCycleJob.ts`, every cycle) both call the full `fetchSbvRates()`
+(all 7 fields always present) via `runSbvRatesRefreshJob()`, which runs its own
+pre-flight sentinel check (`detectZeroSentinelFields`) BEFORE calling
+`storeSbvSnapshot` — a WORK-channel alert + skip on a hit, never a
+guard-tripping store call.
 
 ### Specialized
 | Fetcher | Purpose |

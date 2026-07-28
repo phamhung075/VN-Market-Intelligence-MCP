@@ -353,6 +353,57 @@ function detectZeroOverwriteColumns(
 }
 
 /**
+ * Camel-cased shape of the columns persisted in `sbv_rates`, excluding
+ * `source`/`fetched_at`/`is_estimate` (metadata, not rate values).
+ */
+export type SbvRatesRow = Pick<
+  SbvMacroSnapshot,
+  | "overnightRatePct"
+  | "refinancingRatePct"
+  | "usdVndOfficial"
+  | "discountRatePct"
+  | "maxDepositRatePct"
+  | "maxLendingRatePct"
+  | "interbankOvernightPct"
+>;
+
+/**
+ * Reads the latest persisted `sbv_rates` row for `source` (default "sbv"),
+ * mapped to camelCase snapshot-shaped fields. Returns null when no row
+ * exists yet (fresh DB / first-ever write — nothing to carry forward).
+ *
+ * FIX-SBV-FETCHER-ZERO-VALUE-EMIT: exported so callers that receive a
+ * PARTIAL incoming snapshot (e.g. the VPS-push handler, which only ever
+ * carries `usdVndOfficial` — vps-scripts/fetch-sbv.sh has no source for the
+ * 6 interest-rate fields) can carry-forward the last-known-good value for
+ * every field they do not have, instead of defaulting the omitted fields to
+ * a synthetic 0 that would trip the SENTINEL_ZERO_COLUMNS guard below and
+ * reject the WHOLE snapshot (including the valid, fresh, non-zero field the
+ * caller DID carry).
+ */
+export function getLatestSbvRatesRow(db?: Database, source = "sbv"): SbvRatesRow | null {
+  const database = db ?? getDb();
+  const row = database
+    .query<Record<string, number>, [string]>(
+      `SELECT overnight_rate_pct, refinancing_rate_pct, usd_vnd_official,
+              discount_rate_pct, max_deposit_rate_pct, max_lending_rate_pct,
+              interbank_overnight_pct
+       FROM sbv_rates WHERE source = ?`,
+    )
+    .get(source);
+  if (!row) return null;
+  return {
+    overnightRatePct: row.overnight_rate_pct as number,
+    refinancingRatePct: row.refinancing_rate_pct as number,
+    usdVndOfficial: row.usd_vnd_official as number,
+    discountRatePct: row.discount_rate_pct as number,
+    maxDepositRatePct: row.max_deposit_rate_pct as number,
+    maxLendingRatePct: row.max_lending_rate_pct as number,
+    interbankOvernightPct: row.interbank_overnight_pct as number,
+  };
+}
+
+/**
  * Persists an SBV macro snapshot into SQLite using a dual-table write pattern:
  *
  *   1. `sbv_rates`         — single latest row per source (upsert via INSERT OR REPLACE).

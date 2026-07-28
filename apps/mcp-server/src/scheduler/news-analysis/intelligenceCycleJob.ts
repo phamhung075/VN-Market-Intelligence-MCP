@@ -257,9 +257,20 @@ async function _runCycle(deps: CycleDeps = {}): Promise<CycleResult> {
         if (commodity) await storeCommoditySnapshot(commodity);
       } catch { /* best-effort */ }
       try {
-        const { fetchSbvRates, storeSbvSnapshot } = await import("../../infrastructure/fetchers/sbv.js");
-        const sbv = await fetchSbvRates();
-        if (sbv) await storeSbvSnapshot(sbv);
+        // FIX-SBV-FETCHER-ZERO-VALUE-EMIT: this call site used to fetch+store
+        // directly, ignoring storeSbvSnapshot's {skipped, zeroColumns} return
+        // value — a secondary contributor to the recurring rejected-zero
+        // volume. Route through the SAME pre-flight sentinel-zero guard the
+        // dedicated 4h sbvRatesJob.ts cron already uses: it fetches, detects
+        // any would-be-zero sentinel field, sends a WORK alert + skips the
+        // store entirely on a hit (never calls storeSbvSnapshot with a
+        // guard-tripping snapshot), and reports the outcome via its return
+        // value — which is checked below.
+        const { runSbvRatesRefreshJob } = await import("../macro/sbvRatesJob.js");
+        const sbvResult = await runSbvRatesRefreshJob();
+        if (sbvResult.zeroRateSkipped) {
+          logger.warn("[intelligence-cycle] step A2 sbv snapshot skipped — zero-rate guard fired", { sbvResult });
+        }
       } catch { /* best-effort */ }
     });
     await withTimeout(macroFetchFn(), "step A2 macroFetch");

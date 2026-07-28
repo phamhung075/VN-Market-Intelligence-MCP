@@ -16,7 +16,7 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { Database } from "bun:sqlite";
 import { safeLogVpsPush } from "../../../infrastructure/db/vpsPushLogStore.js";
-import { storeSbvSnapshot } from "../../../infrastructure/fetchers/sbv.js";
+import { storeSbvSnapshot, getLatestSbvRatesRow } from "../../../infrastructure/fetchers/sbv.js";
 import { requireVpsApiKey } from "./_shared/requireVpsApiKey.js";
 
 export async function handlePushSbvRates(
@@ -74,18 +74,50 @@ export async function handlePushSbvRates(
       return;
     }
 
+    // FIX-SBV-FETCHER-ZERO-VALUE-EMIT: the VPS push script (vps-scripts/fetch-sbv.sh)
+    // only ever sends usdVndOfficial + fetchedAt — it has no source for the 6
+    // interest-rate fields, so they are ALWAYS omitted from this payload. Previously
+    // every omitted field was defaulted to a synthetic 0, which tripped
+    // storeSbvSnapshot's own SENTINEL_ZERO_COLUMNS guard and rejected the WHOLE
+    // snapshot — including the valid, fresh, non-zero FX rate. Merge omitted
+    // (undefined) fields with the most recently persisted row instead. A field the
+    // payload EXPLICITLY sends (even 0) is never overridden here — that signal is
+    // passed through unchanged and storeSbvSnapshot's guard is the correct place to
+    // reject an explicit zero over a good prior value.
+    const priorRow = getLatestSbvRatesRow(db);
+
     const finalSnapshot = {
-      overnightRatePct: overnightRatePct !== undefined ? overnightRatePct : 0,
-      refinancingRatePct: refinancingRatePct !== undefined ? refinancingRatePct : 0,
+      overnightRatePct: overnightRatePct ?? priorRow?.overnightRatePct ?? 0,
+      refinancingRatePct: refinancingRatePct ?? priorRow?.refinancingRatePct ?? 0,
       usdVndOfficial,
-      discountRatePct: discountRatePct !== undefined ? discountRatePct : 0,
-      maxDepositRatePct: maxDepositRatePct !== undefined ? maxDepositRatePct : 0,
-      maxLendingRatePct: maxLendingRatePct !== undefined ? maxLendingRatePct : 0,
-      interbankOvernightPct: interbankOvernightPct !== undefined ? interbankOvernightPct : 0,
+      discountRatePct: discountRatePct ?? priorRow?.discountRatePct ?? 0,
+      maxDepositRatePct: maxDepositRatePct ?? priorRow?.maxDepositRatePct ?? 0,
+      maxLendingRatePct: maxLendingRatePct ?? priorRow?.maxLendingRatePct ?? 0,
+      interbankOvernightPct: interbankOvernightPct ?? priorRow?.interbankOvernightPct ?? 0,
       fetchedAt: raw.fetchedAt ?? new Date().toISOString(),
     };
 
-    storeSbvSnapshot(finalSnapshot, db);
+    const storeResult = storeSbvSnapshot(finalSnapshot, db);
+
+    if (storeResult.skipped) {
+      // Do NOT log a false-positive "stored" line — check the return value.
+      log.error("[push-sbv-rates] storeSbvSnapshot REJECTED — zero-value would overwrite good prior row", {
+        zeroColumns: storeResult.zeroColumns,
+        fetchedAt: finalSnapshot.fetchedAt,
+      });
+      safeLogVpsPush(
+        {
+          service: "sbv",
+          itemsCount: 0,
+          status: "error",
+          errorMsg: `storeSbvSnapshot rejected zero-overwrite: ${storeResult.zeroColumns.join(", ")}`,
+        },
+        db,
+      );
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ ok: false, skipped: true, zeroColumns: storeResult.zeroColumns }));
+      return;
+    }
 
     log.info("[push-sbv-rates] stored VCB FX rate from VPS", {
       usdVnd: finalSnapshot.usdVndOfficial,
