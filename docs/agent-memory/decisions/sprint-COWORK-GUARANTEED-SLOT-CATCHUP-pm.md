@@ -48,3 +48,20 @@ NEXT: Developer picks up TASK-COWORK-CATCHUP-1 (ready), executes Tier 1, reports
 PIPELINE: continue (sprint active, high priority, user_prioritized)
 
 HANDOFF: docs/handoffs/TASK-COWORK-CATCHUP-{1..10}.md, docs/agent-memory/notebooks/pm.md (cycle c332 appended)
+
+---
+
+### STEP pm-S2 · Review-Lane QA Closeout · pm · 2026-07-28T20:25:43Z
+**task-id:** FACTORY-APP-split-assembleBriefing (task-archive sub-flow)
+**what-done:** Terminal-lane bloat gate triggered (done[]=7, done_verified[]=1 > 0); executed task-archive sub-flow per docs/agents/pm/flow/task-archive.md. Invoked orch-cold-evict.sh for cold eviction. Script computed n_evict_dv=0 due to referential integrity guard — FACTORY-APP-split-assembleBriefing held in place because live backlog row FACTORY-APP-split-assembleEveningSummary's effective_depends_on includes it.
+**what-considered:**
+- DJ-GATE-1 gate satisfied: QA decision journal entry exists in sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa.md STEP qa-S4 (2026-07-28T20:20:00Z), QA independently verified all technical claims, status DONE_VERIFIED confirmed.
+- Terminal-lane bloat gate: done_verified[] = 1 > 0 threshold breached, task-archive sub-flow mandatory per main.md Step 1 (line 42-47).
+- Cold archive pre-state: FACTORY-APP-split-assembleBriefing NOT in cold archive 2026-07.json done_tasks[] (346 items exist, target absent); idempotency precondition confirmed.
+- Referential integrity guard (FIX-DEPSSATISFIED-COLD-ARCHIVED-DEP-RESOLVES-MISSING): manually verified effective_depends_on computation — FACTORY-APP-split-assembleEveningSummary (lane:backlog, status:BACKLOG) depends on FACTORY-APP-split-assembleBriefing via backlog-detail.json. Guard correctly held item from eviction to prevent orphaned dependencies. This is intentional, safe, and healthy behaviour (dependent still non-terminal).
+- origin_signal_id: none on done_verified[] row — signal closure no-op per task-archive.md Step 3.
+- No evictable sprints: active_sprints[] scan found zero terminal sprints (all have non-terminal tasks), §Sprint Eviction skipped per task-archive.md §Sprint Eviction § 4 "If zero evictable sprints... skip section, proceed to Step 1".
+**why-decision:** Task-archive sub-flow completed correctly. Bloat gate properly triggered, eviction script executed, referential guard preserved dependency invariant (no manual override warranted). Item remains in hot file done_verified[] until FACTORY-APP-split-assembleEveningSummary reaches terminal status on a subsequent eviction cycle. No errors, no escalations. QA's work is complete and archived in decision journal.
+**why-change:** no change from plan — task-archive.md sub-flow executed as specified, referential guard functioned as designed (holding dependent's prerequisites), bloat condition handled correctly.
+
+---
