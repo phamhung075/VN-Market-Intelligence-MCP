@@ -419,12 +419,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "FIX-SBV-FETCHER-ZERO-VALUE-EMIT returned to backlog (zone-corrected apps/macro-indicators/ -> apps/mcp-server/, owner_agent dev-mcp-server) after dev-macro-indicators live investigation found zero write-path in its own zone. Re-dispatch to dev-mcp-server next.",
-    "updated_at": "2026-07-28T22:27:03Z",
-    "updated_by": "router (post-verify: corrected dangling top-level .head — dev-macro-indicators wrote its idle-reset to .task_board.head instead, 3rd re-inflation of the deprecated stub)"
+    "status": "in_progress",
+    "active_task_id": "FIX-SBV-FETCHER-ZERO-VALUE-EMIT",
+    "next_agent": "dev-mcp-server",
+    "next_action": "dev-mcp-server dispatched to fix pushSbvRatesHandler.ts zero-default bug (agent acf38f51ebcd7de93, background). Awaiting completion.",
+    "updated_at": "2026-07-28T22:46:34Z",
+    "updated_by": "router (board-mechanics self-correction: agent was dispatched last turn but board row was never moved out of backlog[], risking BOUNDED-1 duplicate pickup this tick)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -11307,19 +11307,6 @@
         "next_agent": "developer",
         "po_routing_20260728": "PO 2026-07-28T13Z lane routing. pm's decomposition minted this row with next_agent unset, which no dispatch lane resolves (verified by executing scripts/lib/devteam-eligibility.jq predicates, not by reading the row). Handler = developer per docs/handoffs/TASK-COWORK-CATCHUP-10.md ('developer completes code TASK-1..9, then agent-father integrates this doc-only subtask') + docs/data/system-map.json scripts/ zone. dev-role next_agent + backlog lane = BOUNDED-1, per docs/agents/po/flow/zone-routing.md Step A2.",
         "updated_by": "pm/correction-S4"
-      },
-      {
-        "id": "FIX-SBV-FETCHER-ZERO-VALUE-EMIT",
-        "title": "vn-sbv-fetch push-path storeSbvSnapshot rejected-zero events — ZONE-CORRECTED from apps/macro-indicators/ to apps/mcp-server/ (root cause traced, fix NOT yet applied)",
-        "type": "FIX",
-        "priority": "P1",
-        "zone": "apps/mcp-server/",
-        "owner": "developer",
-        "owner_agent": "dev-mcp-server",
-        "status": "BACKLOG",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-SBV-FETCHER-ZERO-VALUE-EMIT",
-        "zone_correction_note": "dev-macro-indicators (BOUNDED-1 auto-pickup, 2026-07-28T22:16Z) investigated live: apps/macro-indicators/ (Go pilot) only READS sbv_rates read-only (pkg/infrastructure/repositories_sbv_rate.go) -- zero write path into sbv_rates/sbv_rates_history. ALL 3 storeSbvSnapshot call sites live in apps/mcp-server/: (1) src/interface/mcp/routes/pushSbvRatesHandler.ts -- the VPS-push handler, confirmed buggy: defaults 6 optional rate fields (overnightRatePct/refinancingRatePct/discountRatePct/maxDepositRatePct/maxLendingRatePct/interbankOvernightPct) to 0 whenever the VPS payload omits them, which it always does (vps-scripts/fetch-sbv.sh only ever sends usdVndOfficial+fetchedAt and already fails closed on empty VCB XML/rate=0 before posting) -- those synthetic 0s trip storeSbvSnapshot's own SENTINEL_ZERO_COLUMNS guard (src/infrastructure/fetchers/sbv.ts) and reject the WHOLE snapshot including the valid non-zero FX rate; the handler also never checks the skipped/zeroColumns return value, so it logs a false-positive 'stored' line either way. (2) src/scheduler/macro/sbvRatesJob.ts (4h cron) -- ALREADY correctly fail-closed: pre-flight sentinel check before calling storeFn, alerts WORK, skips store. Not buggy. (3) src/scheduler/news-analysis/intelligenceCycleJob.ts step A2 (best-effort, every cycle) -- missing the pre-flight guard sbvRatesJob.ts has and ignores storeSbvSnapshot's return value; likely secondary contributor to the recurring rejected-zero volume. Fix belongs to dev-mcp-server: give pushSbvRatesHandler.ts a merge-with-prior-row default (or pre-flight skip) for fields it never carries, instead of defaulting them to 0; and wire the intelligenceCycleJob.ts call site through the same pre-flight guard as sbvRatesJob.ts. Full trace in docs/agent-memory/decisions/sprint-2026-07-28-dev-macro-indicators.md STEP dev-macro-indicators-S1.",
-        "updated_at": "2026-07-28T22:22:16Z"
       }
     ],
     "closed_sprints": [
@@ -16367,7 +16354,23 @@
     },
     "last_triaged_at": "2026-07-28T22:16:29Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-SBV-FETCHER-ZERO-VALUE-EMIT",
+        "title": "vn-sbv-fetch push-path storeSbvSnapshot rejected-zero events — ZONE-CORRECTED from apps/macro-indicators/ to apps/mcp-server/ (root cause traced, fix NOT yet applied)",
+        "type": "FIX",
+        "priority": "P1",
+        "zone": "apps/mcp-server/",
+        "owner": "developer",
+        "owner_agent": "dev-mcp-server",
+        "status": "IN_PROGRESS",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-SBV-FETCHER-ZERO-VALUE-EMIT",
+        "zone_correction_note": "dev-macro-indicators (BOUNDED-1 auto-pickup, 2026-07-28T22:16Z) investigated live: apps/macro-indicators/ (Go pilot) only READS sbv_rates read-only (pkg/infrastructure/repositories_sbv_rate.go) -- zero write path into sbv_rates/sbv_rates_history. ALL 3 storeSbvSnapshot call sites live in apps/mcp-server/: (1) src/interface/mcp/routes/pushSbvRatesHandler.ts -- the VPS-push handler, confirmed buggy: defaults 6 optional rate fields (overnightRatePct/refinancingRatePct/discountRatePct/maxDepositRatePct/maxLendingRatePct/interbankOvernightPct) to 0 whenever the VPS payload omits them, which it always does (vps-scripts/fetch-sbv.sh only ever sends usdVndOfficial+fetchedAt and already fails closed on empty VCB XML/rate=0 before posting) -- those synthetic 0s trip storeSbvSnapshot's own SENTINEL_ZERO_COLUMNS guard (src/infrastructure/fetchers/sbv.ts) and reject the WHOLE snapshot including the valid non-zero FX rate; the handler also never checks the skipped/zeroColumns return value, so it logs a false-positive 'stored' line either way. (2) src/scheduler/macro/sbvRatesJob.ts (4h cron) -- ALREADY correctly fail-closed: pre-flight sentinel check before calling storeFn, alerts WORK, skips store. Not buggy. (3) src/scheduler/news-analysis/intelligenceCycleJob.ts step A2 (best-effort, every cycle) -- missing the pre-flight guard sbvRatesJob.ts has and ignores storeSbvSnapshot's return value; likely secondary contributor to the recurring rejected-zero volume. Fix belongs to dev-mcp-server: give pushSbvRatesHandler.ts a merge-with-prior-row default (or pre-flight skip) for fields it never carries, instead of defaulting them to 0; and wire the intelligenceCycleJob.ts call site through the same pre-flight guard as sbvRatesJob.ts. Full trace in docs/agent-memory/decisions/sprint-2026-07-28-dev-macro-indicators.md STEP dev-macro-indicators-S1.",
+        "updated_at": "2026-07-28T22:46:35Z",
+        "claimed_at": "2026-07-28T22:46:34Z",
+        "claimed_by": "router (re-dispatch after zone correction)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
