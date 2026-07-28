@@ -1,3 +1,78 @@
+## ca9mxk7p · 2026-07-28T14:33:40Z
+### Audit Run Tier-2 (14:30–14:35 UTC 2026-07-28)
+- Tier: 2 | Freshness sweep post-dormancy | Sources: 28 checked | Cron: 1 sweep | VPS: 4 routes | DB spot: 5 checks
+- **Dormancy-spanning audit:** Fleet dormancy 66h (2026-07-25T17:49Z–2026-07-28T12:13Z), first freshness sweep since restart
+- **Findings:** sbv_fx escalated HIGH→CRITICAL (47min stale vs 30min SLA, zero-value rejects continue); pdf-extractor at 98.84% memory (capacity warning, dedup-skipped)
+- **Anomalies:** 0 net new | 1 escalation (sbv_fx HIGH→CRITICAL) | 1 dedup-skip (pdf-extractor WARN)
+- **All-green checks:** cron-fire A-29 ✓ | VPS proxy B-06/B-07 ✓ | BCTC shape B-09 ✓ | stale BCTC B-13 ✓ | market msg C-06 ✓ | signals C-07 ✓
+- **Status:** DEGRADED (1 CRITICAL sbv_fx, 1 WARN pdf-extractor at capacity)
+
+#### Signals Emitted:
+- `[emit-signal] OK-escalation-bypass dedup_key=data_stale:sbv_fx:B-02-SBV prev_sev=2→new_sev=3` (B-02 HIGH→CRITICAL)
+- `[emit-signal] SKIP-dedup dedup_key=microservice_degraded:pdf-extractor:A-30-MEMORY` (A-30 WARN, last_sent 14:30:09Z)
+
+#### Two-Layer Freshness (Dormancy Context):
+- Fetch layer: All 4 VPS routes active (prices 08:59Z, news 14:30Z, sbv 14:26Z, bctc 08:23Z) — healthy
+- Analysis layer: Crons running post-restart; 117 signals in 24h; BCTC queue 166 active rows — operational
+- Monday 2026-07-27: OHLCV current (773 rows, post-dormancy aggregation), no data loss detected
+
+## caj9n5k2 · 2026-07-28T14:29:58Z
+### Audit Run Tier-2 Freshness Sweep (14:26 UTC 2026-07-28)
+- Tier: 2 | Freshness sweep with pdf-extractor memory deep-dive
+- **KEY FINDINGS:**
+  1. **pdf-extractor MEMORY CAPACITY CRITICAL** — sustained 98.78–98.87% (2.47–2.472 GiB / 2.5 GiB) at ceiling, NOT climbing now but at capacity
+  2. **sbv_fx SLA BREACH continues** — 43 min stale vs 30 min SLA; VPS fetching but returning zero-values, pipeline integrity gate rejecting
+  3. **news (market_messages) FALSE POSITIVE ALERT** — C-06 reads wrong table; actual rag_analyses has 127 rows in 3h (FRESH)
+  4. **Three prior misinterpretations verified**: C-06 table issue = known tracked; A-30 hardcode = fixed; RestartCount+StartedAt = both read correctly
+  5. **foreign_flow OK** — 328 min vs 359 min SLA, headroom ~31 min
+  6. **cowork slot catch-up** — rag_analyses shows 239 rows/24h (127 in last 3h), pipeline running post-outage, no second-order stale data effect
+
+#### PDF-Extractor Memory Series (5-second samples 14:26–14:27Z):
+- 14:26:09Z: 98.78% (2.469 GiB / 2.5 GiB)
+- 14:26:15Z: 98.78% (2.469 GiB / 2.5 GiB)
+- 14:26:22Z: 98.79% (2.47 GiB / 2.5 GiB)
+- 14:26:28Z: 14:26:28Z: 98.79% (2.47 GiB / 2.5 GiB)
+- 14:26:34Z: 98.87% (2.472 GiB / 2.5 GiB)
+- 14:26:41Z: 98.85% (2.471 GiB / 2.5 GiB)
+- 14:26:47Z: 98.84% (2.471 GiB / 2.5 GiB)
+- 14:26:53Z: 98.84% (2.471 GiB / 2.5 GiB)
+- 14:26:59Z: 98.84% (2.471 GiB / 2.5 GiB)
+- 14:27:05Z: 98.86% (2.472 GiB / 2.5 GiB)
+- 14:27:12Z: 98.79% (2.47 GiB / 2.5 GiB)
+- 14:27:18Z: 98.79% (2.47 GiB / 2.5 GiB)
+- **Pattern:** STABLE 98.78–98.87%, NOT climbing; at memory limit ceiling
+
+#### PDF-Extractor Analysis (resolving the 14:11–14:19Z spike):
+- Container StartedAt: 2026-07-28T09:26:20Z (5h uptime as of 14:26Z)
+- RestartCount: 0 (never restarted) | OOMKilled: false
+- Process RSS: ~1.768 GB (reported in container ps aux output)
+- Context: refine_bctc_md OCR workload finished ~14:08Z; memory spike 14:11–14:19Z (3–11 min after)
+- **Hypothesis Resolution:** NOT (a) traditional leak (no cascading restarts); NOT (b) pure bursty working set (memory sustained, not released after processing); **CONCLUSION: (c) Sustained memory accumulation** — likely application-level caching (Tesseract/PIL image buffers) not garbage-collected after OCR batch. CPU oscillating 202–218% (full core usage), indicating active work or cache operations. **RISK: At limit; any additional memory demand → OOM.**
+
+#### SBV_FX Continuation (tracking FIX-SBV-FETCHER-ZERO-VALUE-EMIT):
+- Age 14:26Z: 43 minutes stale (last DB write 2026-07-28T12:13:01Z)
+- VPS proxy last push: 2026-07-28T14:26:34Z (concurrent with this audit) — HEALTHY
+- Root cause: upstream SBV source returning zero-values in overnight_rate_pct, refinancing_rate_pct, etc. Pipeline integrity gate correctly rejecting.
+- Tracking: FIX-SBV-FETCHER-ZERO-VALUE-EMIT (backlog, not re-minted)
+
+#### News Pipeline False Positive (C-06 table mismatch):
+- Previous audit at 13:44Z cited market_messages as "news stale 389 min" — **WRONG TABLE**
+- Actual news ingestion table: rag_analyses (127 rows in 3h trailing, latest 2026-07-28T14:06:14Z) = **FRESH**
+- market_messages: 1 row in 3h (outbound market briefing post, unrelated to RSS ingestion)
+- Tracking: FIX-AUDITOR-C06-OFFMARKET-RECALIBRATE (backlog; C-06 query not yet corrected in flow/main.md:589)
+
+#### Misinterpretation Verification (per fresh audit remit):
+1. **C-06 uses market_messages (WRONG)**: Confirmed KNOWN. Already tracked as FIX-AUDITOR-C06-OFFMARKET-RECALIBRATE (not yet implemented).
+2. **A-30 hardcoded to mcp-server**: Confirmed FIXED. sprint-FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE implemented; probe now checks all capped containers.
+3. **RestartCount without StartedAt**: Confirmed CORRECT. Probe reads both together (line 72 + container inspect).
+
+#### Signals Emitted:
+- `[emit-signal] OK dedup_key=data_stale:sbv_fx:B-02-SBV id=sys-20260728T142957-693e` — sbv_fx HIGH
+- `[emit-signal] OK dedup_key=microservice_degraded:pdf-extractor:A-30-MEMORY id=sys-20260728T143010-6ec2` — pdf-extractor WARN
+
+- Anomalies: 2 new (sbv_fx BREACH CONTINUES, pdf-extractor CAPACITY) | 1 FALSE POSITIVE clarified (news/C-06)
+- Status: **DEGRADED** (two active data freshness issues; pdf-extractor at capacity threshold)
+
 ## c9k7w2l4 · 2026-07-28T13:44:56Z
 ### Audit Run Tier-1 Freshness Investigation (13:44 UTC 2026-07-28)
 - Tier: 1 + Tier-2 Freshness Deep-Dive (unscheduled focus on SLA breaches)
@@ -40,65 +115,3 @@
 
 #### Anomalies: 2 CRITICAL (sbv_fx pipeline, news pipeline)
 - Status: **CRITICAL** (two data-freshness failures affecting market analysis)
-
-### RAW-PROBE:
-```
-=== AUDITOR PROBE 2026-07-28T13:42:02Z ===
-
---- docker ps -a ---
-NAMES                                             STATUS                       IMAGE                                           CREATED
-vn-market-intelligence-mcp-mcp-server-1           Up 3 days (healthy)          vn-market-intelligence-mcp-mcp-server           3 days ago
-vn-market-intelligence-mcp-frontend-1             Up 3 days (healthy)          vn-market-intelligence-mcp-frontend             3 days ago
-vn-market-intelligence-mcp-pdf-extractor-1        Up 4 hours (healthy)         vn-market-intelligence-mcp-pdf-extractor        6 days ago
-mcp-gateway                                       Up 12 days (healthy)         mcpservergatway-gateway                         12 days ago
-vn-market-intelligence-mcp-api-gateway-1          Up 12 days (healthy)         vn-market-intelligence-mcp-api-gateway          12 days ago
-vn-market-intelligence-mcp-flaresolverr-1         Up 12 days (healthy)         ghcr.io/flaresolverr/flaresolverr:latest        12 days ago
-vn-market-intelligence-mcp-news-fetch-1           Up 12 days (healthy)         vn-market-intelligence-mcp-news-fetch           12 days ago
-vn-market-intelligence-mcp-rag-service-1          Up About an hour (healthy)   vn-market-intelligence-mcp-rag-service          12 days ago
-vn-market-intelligence-mcp-macro-indicators-1     Up 12 days (healthy)         vn-market-intelligence-mcp-macro-indicators     12 days ago
-vn-market-intelligence-mcp-technical-analysis-1   Up 12 days (healthy)         vn-market-intelligence-mcp-technical-analysis   12 days ago
-vn-market-intelligence-mcp-alert-engine-1         Up 12 days (healthy)         vn-market-intelligence-mcp-alert-engine         12 days ago
-vn-market-intelligence-mcp-stock-price-1          Up 12 days (healthy)         vn-market-intelligence-mcp-stock-price          12 days ago
-vn-market-intelligence-mcp-kinh-dich-service-1    Up 12 days (healthy)         vn-market-intelligence-mcp-kinh-dich-service    12 days ago
-
---- health endpoints ---
-[health] mcp-server:3000/health OK (HTTP 200)
-[health] api-gateway:4000/health OK (HTTP 200)
-[health] macro-indicators:5004/health OK (HTTP 200)
-[health] pdf-extractor:5001/health OK (HTTP 200)
-[health] frontend:3001/ OK (HTTP 200)
-
---- restart count ---
-Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=0
-
---- memory pressure ---
-Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=75.77% MemUsage=2.273GiB / 3GiB
-
---- memory pressure multi-probe reclamation (A-30) ---
-[A-30] SKIP deep-probe — baseline 75.78% < 85% investigate-gate
-
---- disk df -h / ---
-Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
-/dev/disk1s4s1   233Gi    13Gi    26Gi    35%    393k  270M    0%   /
-
---- pdf-extractor in-container multi-probe (A-20) ---
-[A-20-PROBE-1] in-container HTTP 200
-[A-20-PROBE-2] in-container HTTP 200
-[A-20-PROBE-3] in-container HTTP 200
-[A-20] pass_count=3/3
-
-=== PROBE DONE ===
-```
-
-## c8v5x2m7 · 2026-07-28T13:12:27Z
-### Audit Run Tier-1 (13:07 UTC 2026-07-28) — Memory Pressure Continuation
-- Tier: 1 | Services: 13 checked | Health: 5 endpoints
-- A-01–A-11: ALL UP (13/13) ✓ | A-12–A-19: ALL 200 OK (5/5) ✓
-- A-20 pdf-extractor: 3/3 PASS ✓ | A-21 restarts: 0 (4h) ✓ | A-32 disk: 35% ✓
-- A-30 mcp-server: 69.58% (< 85% gate, SKIP deep-probe) ✓
-- **FINDINGS:** pdf-extractor 85.54% (same as 12:45Z, plateau confirmed). rag-service 88.32% post-restart (restarted 12:21Z from 99.10%, RestartCount=15). Both WARN signals emitted (ids: sys-20260728T131219-3fca, sys-20260728T131227-5964).
-- Anomalies: 2 memory pressure events (both continuation/monitoring)
-- Status: DEGRADED
-
-### RAW-PROBE:
-[PROBE 2026-07-28T13:07:55Z]: All services UP, all health endpoints 200 OK, mcp-server mem 69.58%, disk 35%, pdf-extractor multi-probe 3/3, restarts=0 in 4h window.
