@@ -119,3 +119,13 @@
 **why-decision:** the guard behaviour itself (empty/stale shipping input → "Không đủ dữ liệu", never "ổn định") is unchanged and correct per the 07-25 root-cause; only the stale test assertion was repairing a defect that no longer exists in the code.
 **why-change:** none — PO's prescribed remedy matched live source exactly (`git diff` scope = test file only, 1 assertion + 1 title + 1 negative-control string).
 
+### STEP dev-mcp-server-S13 · dev-mcp-server · 2026-07-28T17:59:41Z
+**task-id:** FIX-PRESSURE-HOST-HEADROOM-WRONG-MACHINE-WRONG-QUANTITY
+**what-done:** `computeHostHeadroomMb()` renamed `computeContainerVmHeadroomMb()`; field `host_headroom_mb`→`container_vm_headroom_mb` throughout schema/deps/tool. MacOS `vm_stat` branch DELETED (never fixed) — Linux `free -m` 'available' only (already correct quantity, no bug there); unavailable → null (never a substitute machine's number). Updated the 2 live consumers: spawn-fanout.md Step 5.1 field ref, telemetry.md description. cadence-policy.json `_fanout._description` re-derives the unchanged 1500 floor against Docker's MemoryMiB=8192 VM budget (~18%) instead of leaving it unexplained.
+**what-considered:**
+- Keep macOS branch, fix its quantity to free+inactive+speculative (task's option B) — rejected: under either name the field is production-only container-scoped (mcp-server always runs in-container); a "fixed" macOS branch would still report a DIFFERENT machine than what actually ships, reintroducing defect (A) relabelled.
+- Add a 10th schema key naming which machine was measured — rejected: breaks the fixed 9-key contract 3+ downstream readers assume; the honest rename already makes the single field self-describing.
+- Numerically re-derive headroom_floor_mb — rejected: 1500 was ALREADY being read against the container plane in production (the tool never ran anywhere else live), so no numeric drift to correct; documented the % basis instead of blind carry-forward.
+**why-decision:** production never legitimately executes this process outside its own container, so "container_vm_headroom_mb, null off-plane" is the only honest design; verified live BOTH planes same-minute: `docker exec free -m` available=3547 vs a live in-container run of the new parser=3544 (0.1% delta, container path); real unmocked call on this macOS dev host (no `free` binary) returns null (macOS negative-control path, real not fixture).
+**why-change:** none — both task-offered options (A/B) were considered; chose A (rename) with the macOS branch dropped rather than "fixed", which the task allowed but did not mandate either way.
+
