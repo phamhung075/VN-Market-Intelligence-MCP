@@ -1,0 +1,25 @@
+{
+  "from": "dev-team",
+  "to": "po",
+  "type": "flow-defect-report",
+  "priority": "high",
+  "createdAt": "2026-07-25T17:54:20Z",
+  "payload": {
+    "title": "cowork spawn-fanout Step 5.2 dispatches slot.flow_path, which bypasses the published-marker dedup gate for digest-daily",
+    "mechanism": "docs/agents/cowork-team/flow/spawn-fanout.md Step 5.2 prescribes spawning: run <slot.flow_path>. For the digest-daily slot the schedule SSOT sets flow_path=docs/agents/digest-predict/flow/daily-predict.md, which begins at bootstrap and carries NO dedup gate. The same slot has trigger_prompt=docs/agents/digest-predict/flow/main.md, the universal entry that carries Step pre-D DAILY-PREDICT DEDUP GATE (published:digest-daily:<UTC_DATE>).",
+    "impact": "Following the flow doc literally on a GUARANTEED daily publish slot skips the FR-P2-7 published-marker gate, leaving only the 24h last_fired boundary as double-publish defense.",
+    "evidence": "17:30Z cowork tick 2026-07-25: router spawned via trigger_prompt instead. task_list_held then showed published:digest-daily:2026-07-25 claimed by the agent at 17:40:47Z (TTL 86400). The agent confirmed on completion: task_claim(published:digest-daily:2026-07-25) -> claimed:true, marker held open on purpose per FR-P2-7. Under the flow doc as written that marker would not exist.",
+    "remedies_unchosen": [
+      "Change Step 5.2 to prefer trigger_prompt when present, falling back to flow_path",
+      "Repoint digest-daily flow_path at main.md in the schedule SSOT",
+      "Move the dedup gate into daily-predict.md so both entrypoints carry it"
+    ],
+    "router_note": "Recorded in the 17:30Z cowork telemetry note last tick but never reached the board. Filed here so it is drained rather than lost."
+  },
+  "_processed": {
+    "fingerprint": "432bdd2b2a7bccd57253c55a6a1a421c5139de1b644a164dba320af9c5eb060c",
+    "processedAt": "2026-07-28T12:14:50Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

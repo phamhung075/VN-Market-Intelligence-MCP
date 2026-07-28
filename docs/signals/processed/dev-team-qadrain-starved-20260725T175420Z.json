@@ -1,0 +1,33 @@
+{
+  "from": "dev-team",
+  "to": "po",
+  "type": "flow-defect-report",
+  "priority": "high",
+  "createdAt": "2026-07-25T17:54:20Z",
+  "payload": {
+    "title": "Review-Lane QA-Drain has a dedicated budget but is structurally unreachable — every earlier lane JUMPs to end",
+    "observed": {
+      "review_rows": 116,
+      "review_rows_targeting_qa": 84,
+      "qa_lane": 0,
+      "backlog": 396,
+      "ready": 45
+    },
+    "mechanism": "docs/agents/dev-team/flow/main.md orders four dispatch lanes: BOUNDED-1 (WIP<1, JUMP TO execute), SLS (WIP2<2, JUMP TO end), RLC (WIP3<2, JUMP TO end), Review-Lane QA-Drain (QA_WIP<1). The QA-Drain gate is explicitly NOT the shared WIP<=2 budget - main.md:679 states a dedicated qa[]<1 cap because the lane moves rows into a different board lane entirely. So it never competes for a dev slot. But it is ordered LAST and every preceding lane terminates the tick, so it is only reached on a tick where BOUNDED-1, SLS and RLC ALL decline. With backlog and ready both large, an earlier lane fires essentially every tick.",
+    "evidence": "Proved by read-only dry-run against a scratch copy this tick (no live write): scripts/devteam-review-claim-qa-drain.jq WOULD have claimed UC-GCP-P1 -> qa. The lane is not empty-handed, it is starved. BOUNDED-1 fired first and jumped to execute, so the QA-Drain block was never evaluated on the live board.",
+    "trend": "The section shipped 2026-07-22 (UNBLOCK-DEVTEAM-DISPATCH-GATE-STAGING-DEADLOCK) citing live 2026-07-21: 32 review rows, 10+ with next_agent==qa, oldest frozen 11+ days. Four days later review is 116 with 84 qa-targeted and qa[]==0. The lane it was built to drain has grown 3.6x since the fix landed.",
+    "not_a_defect_checked": "The age-ordered pick (UC-GCP-P1 ahead of four P0 rows) is CORRECT per the script contract at main.md:879 - age-ordered, not priority-ordered. Do not mint a ranking fix.",
+    "remedies_unchosen": [
+      "Move the QA-Drain block BEFORE the dev lanes (it costs no dev slot)",
+      "Let the QA-Drain run in the same tick as a dev dispatch instead of after a JUMP TO end, since its budget is independent",
+      "Drain N>1 rows per tick to work down the 84-row standing queue"
+    ],
+    "router_note": "Not minted as a board row - PO owns minting. Filed as a signal so it survives the tick and is drained next cycle."
+  },
+  "_processed": {
+    "fingerprint": "91feaf674a2120fad9bf6f03e546f6951c62ce6142a458589f372bc4e7470963",
+    "processedAt": "2026-07-28T12:14:50Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
