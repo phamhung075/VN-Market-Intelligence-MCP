@@ -1,3 +1,30 @@
+## cw3f9m2q · 2026-07-28T15:10:56Z
+### Audit Run Tier-1 (15:07–15:11 UTC 2026-07-28)
+- Tier: 1 | Services: 12/12 host_runtime_set checked | Health: 5/5 endpoints | A-20 pdf-extractor: 3/3 in-container OK
+- Anomalies: 0 new | 0 dedup-skipped (all Tier-1-scope checks PASS)
+- Status: HEALTHY (Tier-1 runtime scope only — pdf-extractor memory condition below is Tier-2/pre-gate scope, already tracked)
+
+### RAW-PROBE: (docs/agents/system-auditor/probe.sh, 2026-07-28T15:07:54Z)
+```
+=== AUDITOR PROBE 2026-07-28T15:07:54Z ===
+--- docker ps -a --- 13/13 containers Up(healthy); 12/12 host_runtime_set present
+--- health endpoints --- mcp-server/api-gateway/macro-indicators/pdf-extractor/frontend all OK (HTTP 200)
+--- restart count --- mcp-server RestartCount=0
+--- memory pressure --- mcp-server MemPerc=78.38%
+--- A-30 multi-probe --- SKIP deep-probe, baseline 78.78% < 85%
+--- disk --- 32% used
+--- A-20 pdf-extractor multi-probe --- HTTP 200/200/200, pass_count=3/3
+```
+
+#### Investigation: two router-flagged leads (read-only probes only, AUD-ND-1 respected)
+1. **Unexplained green heartbeat (14:12:23Z mem_creep=PASS)** — DISCRIMINATED, not a gate bug. `docs/data/auditor-launchd-ack.json .acked_memory[]` has never listed pdf-extractor (only rag-service since 2026-07-25T15:48:56Z, unchanged today — no commits to this file today) so a PASS at 14:12Z could only be a genuine <85% reading, never suppression. Fresh `docker inspect` (15:08:40Z): RestartCount=2 (cumulative since Created=2026-07-21), current-run StartedAt=09:26:20.035Z unbroken (FinishedAt=09:26:19.47Z belongs to the prior run, before this window) — no restart between 14:12Z and now. Best-supported explanation: genuine pre-burst dip below 85%, then climb to 98.87% by 14:30:10Z tracking the mcp-server POST /extract burst PO logged at 14:24Z (orch-state.json po_disposition_20260728T1453). Mechanism already MINTED: FIX-PDFX-TESSERACT-CONCURRENCY-VIOLATES-SINGLE-WORKER-INVARIANT (P0, backlog) — not re-minted.
+2. **Severity mapping (98.87%/98.84% emitted WARN; tier1-probe.md A-30 clause maps peak>97%→CRITICAL)** — CORROBORATED. signal_queue rows sys-20260728T143010-6ec2 (98.87%, WARN) and sys-20260728T143457-0d5b (98.84%, WARN) both exceed 97% yet both WARN; control row sbv_fx sys-20260728T142957-693e(HIGH)→sys-20260728T143455-6a8a(CRITICAL) proves the ladder escalates when the producer varies the label. Already tracked: FIX-AUDITOR-EMIT-SEVERITY-LABEL-FLAT-ESCALATION-BYPASS-NEVER-FIRES (P1, backlog) — not re-minted.
+3. **Live re-check (15:08:40Z, read-only)**: pdf-extractor MemPerc=95.59% (2.39/2.5GiB); 10 tesseract PIDs all PPID=1, elapsed 01:03:36→00:07:17 — population still pinned at 10 (unchanged mechanism from router's snapshot; youngest PID turned over, oldest aged further).
+
+#### Signals Emitted: none this cycle. Tier-1's own scope (A-30 override in tier1-probe.md is mcp-server-only) is ALL_GREEN. pdf-extractor's memory condition is a pre-existing Tier-2/pre-gate finding already carrying open signal_queue rows + a PO disposition (14:53Z) + a P0 board task — no re-triage, per write-fence.
+
+[OUTPUT-CONTRACT] signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0
+
 ## ca9mxk7p · 2026-07-28T14:33:40Z
 ### Audit Run Tier-2 (14:30–14:35 UTC 2026-07-28)
 - Tier: 2 | Freshness sweep post-dormancy | Sources: 28 checked | Cron: 1 sweep | VPS: 4 routes | DB spot: 5 checks
@@ -27,91 +54,9 @@
   5. **foreign_flow OK** — 328 min vs 359 min SLA, headroom ~31 min
   6. **cowork slot catch-up** — rag_analyses shows 239 rows/24h (127 in last 3h), pipeline running post-outage, no second-order stale data effect
 
-#### PDF-Extractor Memory Series (5-second samples 14:26–14:27Z):
-- 14:26:09Z: 98.78% (2.469 GiB / 2.5 GiB)
-- 14:26:15Z: 98.78% (2.469 GiB / 2.5 GiB)
-- 14:26:22Z: 98.79% (2.47 GiB / 2.5 GiB)
-- 14:26:28Z: 14:26:28Z: 98.79% (2.47 GiB / 2.5 GiB)
-- 14:26:34Z: 98.87% (2.472 GiB / 2.5 GiB)
-- 14:26:41Z: 98.85% (2.471 GiB / 2.5 GiB)
-- 14:26:47Z: 98.84% (2.471 GiB / 2.5 GiB)
-- 14:26:53Z: 98.84% (2.471 GiB / 2.5 GiB)
-- 14:26:59Z: 98.84% (2.471 GiB / 2.5 GiB)
-- 14:27:05Z: 98.86% (2.472 GiB / 2.5 GiB)
-- 14:27:12Z: 98.79% (2.47 GiB / 2.5 GiB)
-- 14:27:18Z: 98.79% (2.47 GiB / 2.5 GiB)
-- **Pattern:** STABLE 98.78–98.87%, NOT climbing; at memory limit ceiling
-
-#### PDF-Extractor Analysis (resolving the 14:11–14:19Z spike):
-- Container StartedAt: 2026-07-28T09:26:20Z (5h uptime as of 14:26Z)
-- RestartCount: 0 (never restarted) | OOMKilled: false
-- Process RSS: ~1.768 GB (reported in container ps aux output)
-- Context: refine_bctc_md OCR workload finished ~14:08Z; memory spike 14:11–14:19Z (3–11 min after)
-- **Hypothesis Resolution:** NOT (a) traditional leak (no cascading restarts); NOT (b) pure bursty working set (memory sustained, not released after processing); **CONCLUSION: (c) Sustained memory accumulation** — likely application-level caching (Tesseract/PIL image buffers) not garbage-collected after OCR batch. CPU oscillating 202–218% (full core usage), indicating active work or cache operations. **RISK: At limit; any additional memory demand → OOM.**
-
-#### SBV_FX Continuation (tracking FIX-SBV-FETCHER-ZERO-VALUE-EMIT):
-- Age 14:26Z: 43 minutes stale (last DB write 2026-07-28T12:13:01Z)
-- VPS proxy last push: 2026-07-28T14:26:34Z (concurrent with this audit) — HEALTHY
-- Root cause: upstream SBV source returning zero-values in overnight_rate_pct, refinancing_rate_pct, etc. Pipeline integrity gate correctly rejecting.
-- Tracking: FIX-SBV-FETCHER-ZERO-VALUE-EMIT (backlog, not re-minted)
-
-#### News Pipeline False Positive (C-06 table mismatch):
-- Previous audit at 13:44Z cited market_messages as "news stale 389 min" — **WRONG TABLE**
-- Actual news ingestion table: rag_analyses (127 rows in 3h trailing, latest 2026-07-28T14:06:14Z) = **FRESH**
-- market_messages: 1 row in 3h (outbound market briefing post, unrelated to RSS ingestion)
-- Tracking: FIX-AUDITOR-C06-OFFMARKET-RECALIBRATE (backlog; C-06 query not yet corrected in flow/main.md:589)
-
-#### Misinterpretation Verification (per fresh audit remit):
-1. **C-06 uses market_messages (WRONG)**: Confirmed KNOWN. Already tracked as FIX-AUDITOR-C06-OFFMARKET-RECALIBRATE (not yet implemented).
-2. **A-30 hardcoded to mcp-server**: Confirmed FIXED. sprint-FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE implemented; probe now checks all capped containers.
-3. **RestartCount without StartedAt**: Confirmed CORRECT. Probe reads both together (line 72 + container inspect).
-
 #### Signals Emitted:
 - `[emit-signal] OK dedup_key=data_stale:sbv_fx:B-02-SBV id=sys-20260728T142957-693e` — sbv_fx HIGH
 - `[emit-signal] OK dedup_key=microservice_degraded:pdf-extractor:A-30-MEMORY id=sys-20260728T143010-6ec2` — pdf-extractor WARN
 
 - Anomalies: 2 new (sbv_fx BREACH CONTINUES, pdf-extractor CAPACITY) | 1 FALSE POSITIVE clarified (news/C-06)
 - Status: **DEGRADED** (two active data freshness issues; pdf-extractor at capacity threshold)
-
-## c9k7w2l4 · 2026-07-28T13:44:56Z
-### Audit Run Tier-1 Freshness Investigation (13:44 UTC 2026-07-28)
-- Tier: 1 + Tier-2 Freshness Deep-Dive (unscheduled focus on SLA breaches)
-- Tier-1 Probe: All services UP (13/13) ✓ | All health endpoints 200 OK (5/5) ✓
-- pdf-extractor mem: 85.54% (continuation from 12:45Z, plateau confirmed) | rag-service mem: ~1h post-restart (12:21:47Z)
-- **INVESTIGATION: Two Data-Freshness SLA Breaches (CRITICAL + HIGH)**
-
-#### FINDING-1: sbv_fx (macro_indicators) CRITICAL Breach
-- Age: 91 minutes | SLA threshold: 30 min | Status: **CRITICAL BREACH**
-- Database last update: 2026-07-28T12:13:01Z (91 min stale)
-- VPS layer: Fetching actively (last push 13:26:32Z) but **returning zero-values**
-- Log evidence: "[sbv] storeSbvSnapshot REJECTED — zero-value would overwrite good prior row" (timestamps 12:56:31Z, 13:26:32Z)
-- Rejected zero-columns: overnight_rate_pct, refinancing_rate_pct, max_deposit_rate_pct, max_lending_rate_pct
-- Prior valid row: {overnight_rate_pct:3, refinancing_rate_pct:4.5, max_deposit_rate_pct:5, max_lending_rate_pct:12, usd_vnd_official:26145}
-- **Verdict:** (b) Genuine fetch stall — not a config/SLA-mismatch defect. Root cause: **SBV data source returning malformed data (zero-values)**. The SLA (30 min) is reasonable for macro data; the pipeline is correctly rejecting corrupt writes. Data integrity gate is working; upstream source quality is degraded.
-
-#### FINDING-2: news (market_messages) CRITICAL Breach
-- Age: 389 minutes (6h 29m) | SLA threshold: 30 min | Status: **CRITICAL BREACH**
-- Database last update: 2026-07-28T07:15:02Z (389 min stale) — pre-market window
-- VPS layer: Fetching actively (last push 13:34:12Z, 10 min ago) — **zero inserts despite fetches**
-- Log evidence (13:34 cycle): "[push-news] fetched":61, "inserted":0, "duplicates":60 — ALL news detected as duplicates, none entering DB
-- Pattern across all recent cycles (since ~07:15Z): 100% duplicate-rate, zero new inserts
-- **Verdict:** (b) Genuine pipeline stall — not a config defect. Root cause: **news deduplication logic broken or news API genuinely delivering all-duplicate articles**. Two-layer disconnect: VPS successfully receiving news → mcp-server deduplication layer rejecting 100% as duplicates → zero storage. Requires investigation into (a) duplicate-detection algorithm or (b) news source behavior.
-
-#### Two-Layer Fetch Architecture Confirmed
-- Layer 1 (VPS Proxy Fetch): HEALTHY — news/sbv data arriving on schedule
-- Layer 2 (Database Storage): BROKEN — data not reaching DB due to (sbv: data quality validation, news: deduplication overreach)
-
-#### Timing Correlation (rag-service restart 12:21:47Z)
-- sbv last DB write: 12:13:01Z (8 min BEFORE restart)
-- news last DB write: 07:15:02Z (5+ hours BEFORE restart)
-- rag-service restart appears **coincidental, not causal** — sbv/news staleness predates or is independent of restart
-
-#### Note: foreign_flow Approaching Threshold
-- Age: 283 min | SLA: 313 min | Status: OK but close (headroom ~30 min)
-- No action needed; monitor next cycle
-
-#### Note: cycle_snapshot_promoted = false (22+ days)
-- Known tracked epic TASK-COWORK-CATCHUP-1..10; not re-minting
-
-#### Anomalies: 2 CRITICAL (sbv_fx pipeline, news pipeline)
-- Status: **CRITICAL** (two data-freshness failures affecting market analysis)
