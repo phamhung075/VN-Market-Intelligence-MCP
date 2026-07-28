@@ -1,0 +1,45 @@
+{
+  "from": "cowork-team",
+  "to": "system",
+  "type": "cowork-tick-telemetry",
+  "priority": "INFO",
+  "createdAt": "2026-07-28T16:38:25Z",
+  "payload": {
+    "tick": "2026-07-28T16:30Z",
+    "drift_min": 5,
+    "classification": "WORK",
+    "matched_slots": [
+      "refine-bctc-slot-4"
+    ],
+    "won_slots": [
+      "refine-bctc-slot-4"
+    ],
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "collisions": [],
+    "pressure_mode": "adaptive",
+    "host_headroom_mb": 805,
+    "degraded": true,
+    "max_parallel": 2,
+    "spawned": [
+      "refine-bctc-slot-4"
+    ],
+    "signal_drain": {
+      "new_cowork_addressed": 0,
+      "flipped": []
+    },
+    "last_fired_timestamp": "2026-07-28T16:38:11Z",
+    "last_fired_slots": [
+      "refine-bctc-slot-4"
+    ],
+    "last_fired_write_errors": null,
+    "tick_snapshot": "docs/data/cycle-snapshot-16:36.json",
+    "note": "Single-slot tick: refine-bctc-slot-4 (bctc-offmarket policy, calendar_status=unknown -> cron_fallback). Adaptive pressure mode (pressure-state 10min fresh), degraded fanout due to low headroom (805MB < 1500MB floor). news-scout prior-tick coverage-state finding confirmed as prior art (VERIFY-FIX-COVERAGE-SWEEP-BLANKET-STAMP-REALDATA, already BLOCKED), no duplicate signal minted."
+  },
+  "_processed": {
+    "fingerprint": "e5fc2719c6c360eac7634fcadd3606f2203096ad01f1f52caf49ad018f1288b7",
+    "processedAt": "2026-07-28T16:46:09Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
