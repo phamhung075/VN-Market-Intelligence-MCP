@@ -163,3 +163,33 @@
 - File only as a Telegram ack with no task — rejected: 232-report unresolved backlog + repeating hourly for 2+ days is the exact "passive health masks dead data" pattern; needs an owner.
 **why-decision:** Root cause identified at source (two compounding code-level defects), so a scoped FIX (not a SPIKE) is warranted; sized S/P2, mirrors sibling FIX-SLA-BCTC-THRESHOLD-TRACKS-STALENESS-NOT-CONSTANT in the same file.
 **why-change:** no change from plan — new finding, routine mint.
+
+### STEP po-S17 · po · 2026-07-28T19:02:26Z
+**task-id:** UNBLOCK-AGENT-MODELS-SWITCH-COMMIT-DISPOSITION
+**what-done:** Re-minted the UNBLOCK->agent-father row for real (into ready[]); prior 17:35Z triage recorded "MINTED UNBLOCK" in po-decisions.md but no board row ever landed — files still dirty ~85min later confirmed this.
+**what-considered:**
+- Commit/discard the 21 files myself — rejected, boundary_rules forbid touching agent-definition files.
+- Re-run the same RAW diff before minting — rejected, prior diff already RAW-verified all 21 as 1-line intentional edits; re-diffing adds no new evidence.
+**why-decision:** PO mint != board != dispatchable (starred memory lesson) — closing the actual gap, not re-describing it.
+**why-change:** correction of a prior tick's incomplete write, not new work.
+
+### STEP po-S18 · po · 2026-07-28T19:02:26Z
+**task-id:** FIX-PDFEXTRACTOR-TIER1-OCR-TIMEOUT
+**what-done:** Flipped stuck next_agent po->qa; row's own 2026-07-22 po_disposition already said "route to dev-team/qa for done_verified" but the field was never mutated, stranding it 6 days.
+**what-considered:** Move straight to done_verified myself — rejected, po_disposition explicitly says "no force-close by PO"; qa/dev-team must execute the actual closure.
+**why-decision:** Fix's own ACs are deployed + qa_verdict=APPROVED already; only the routing field was stale.
+**why-change:** no change from plan — executing PO's own prior ruling.
+
+### STEP po-S19 · po · 2026-07-28T19:02:26Z
+**task-id:** FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES
+**what-done:** Appended RAW regression evidence to the REVIEW row for qa: bctc-analyst.md pruned 4->2 sections (below AC-2's 3-section floor), wrong section dropped (c123 newer than retained c122) — did not touch the notebook file myself (bctc-analyst owns it).
+**what-considered:** Flip status to CHANGES_REQUESTED myself — rejected, qa owns the verdict; PO's job is surfacing evidence before sign-off, not pre-empting the reviewer.
+**why-decision:** Concrete RAW-verified regression (git diff + section-order check) directly relevant to an open REVIEW gate; suppressing it risks a false-green approval.
+**why-change:** none — routine signal triage escalated to the right owner.
+
+### STEP po-S20 · po · 2026-07-28T19:02:26Z
+**task-id:** ambient
+**what-done:** Confirmed unresolved-telegram-reports backlog still growing (268->270, all analysis-agent BCTC low-confidence/write-blocked, all root-caused into existing backlog fixes) — no re-prioritization of FIX-TELEGRAM-REPORT-ACK-STATUS-STOP-RESURFACE (stays P3). Folded sys-20260728T183937-73b5 (vn-sbv-fetch unhealthy) as corroboration onto VPS-FRESH-02-FIX, no new mint. Live-verified RAG-FTS-BUILD-MEMORY-BOUND still time-gated (rag corpus 10183/~56254 rows, ~18%).
+**what-considered:** only path — all three are dedup/confirm-no-change dispositions, not new decisions.
+**why-decision:** growth rate slow (+2), all root causes already tracked; re-prioritizing would not change dispatch order.
+**why-change:** no change from plan.
