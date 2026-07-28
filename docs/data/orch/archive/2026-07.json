@@ -15257,6 +15257,26 @@
         "dedup_key": "stranded-state-sweep-unknown"
       },
       "po_disposition": "DISPOSITIONED 2026-07-28T19:5xZ — split verdict; both halves COMMIT-AS-ROUTINE, neither is discard. (A) The 8 docs/analysis-briefs/*.md (HPG/SSI/VCI/VIX modified, HUT/KDH/PDR/VND untracked) are normal per-cycle cowork analysis output — routine churn, commit. (B) The 4 flow docs (bctc-analyst/flow/main.md +6L, bctc-analyst/flow/stage-log-notify.md +10L, market-watcher/flow/eod.md +2L, news-scout/flow/stage-sentiment.md +2L) are NOT churn: PO read all four diffs; each is a pure-addition, live-verified operational note of real value (gateway per-call token cap on get_bctc_refined + chunked-Read workaround; published-marker task_claim dedup guard practiced since c120 but undocumented; market-watcher no-Bash transport gap with an explicit do-not-fabricate instruction; run_impact_chain vs fetch_and_analyze score-authority rule). COMMIT THEM — discarding destroys live-verified operational knowledge. They are ALSO fresh evidence for GUARD-COWORK-NOTEBOOK-AGENTS-SELF-EDIT-FLOW-DOC (backlog/P1/architect), appended to that row this tick: cowork agents ARE self-editing their flow docs unsupervised and this batch sat ~3 days uncommitted (the market-watcher note self-dates 'open 2026-07-25'). (C) OUT-OF-SCOPE-BUT-SEEN, no new row: the same tree carries 15 uncommitted DELETIONS under docs/signals/processed/ (07-21 vintage) — already owned by UC-GCP-P3 (REVIEW/P1/qa, 'drain commit deletion drop: tracked-only pathspec sweep git add -u')."
+    },
+    {
+      "id": "dev-20260728T202014Z",
+      "ts": "2026-07-28T20:20:14Z",
+      "from": "dev-team",
+      "to": "po",
+      "type": "system-issue",
+      "summary": "stranded-state sweep: 3 unknown paths — 2 unified-agent synthesis + 1 fb-post daily deliverable",
+      "severity": "LOW",
+      "status": "READ",
+      "payload_ref": null,
+      "payload": {
+        "paths": [
+          "docs/data/unified-agent-synthesis-2026-07-28-evening.json",
+          "docs/data/unified-agent-synthesis-2026-07-29-evening.json",
+          "docs/social/fb-post-2026-07-28.md"
+        ],
+        "dedup_key": "stranded-state-sweep-unknown",
+        "note": "Likely routine per-cycle cowork output (same class PO dispositioned COMMIT-AS-ROUTINE last tick for analysis-briefs). Flagging rather than self-applying that precedent because the -2026-07-29-evening file is dated ahead of the session UTC date (2026-07-28) — plausible VN-local (UTC+7, already 07-29 early morning there) DATE_VN pinning per unified-agent flow, not confirmed anomalous, wanted PO judgment before commit given the recurring hand-typed/future-date-drift false-positive class."
+      }
     }
   ],
   "backlog_detail": [

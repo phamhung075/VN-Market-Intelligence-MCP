@@ -421,9 +421,10 @@
   "head": {
     "status": "idle",
     "active_task_id": null,
-    "next_agent": null,
-    "updated_by": "developer",
-    "updated_at": "2026-07-28T20:29:06Z"
+    "next_agent": "router",
+    "next_action": "idle — FACTORY-ALERT-dedup-window-config flipped to REVIEW (dev-alert-engine self-closeout); route to qa (verify-committed, no task branch)",
+    "updated_at": "2026-07-28T21:27:44Z",
+    "updated_by": "dev-alert-engine"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2318,24 +2319,15 @@
         "po_disposition_at": "2026-07-28T14:53:00Z"
       },
       {
-        "id": "dev-20260728T202014Z",
-        "ts": "2026-07-28T20:20:14Z",
-        "from": "dev-team",
+        "id": "sys-20260728T214004-6369",
+        "ts": "2026-07-28T21:40:04Z",
+        "from": "system-auditor",
         "to": "po",
-        "type": "system-issue",
-        "summary": "stranded-state sweep: 3 unknown paths — 2 unified-agent synthesis + 1 fb-post daily deliverable",
-        "severity": "LOW",
-        "status": "READ",
-        "payload_ref": null,
-        "payload": {
-          "paths": [
-            "docs/data/unified-agent-synthesis-2026-07-28-evening.json",
-            "docs/data/unified-agent-synthesis-2026-07-29-evening.json",
-            "docs/social/fb-post-2026-07-28.md"
-          ],
-          "dedup_key": "stranded-state-sweep-unknown",
-          "note": "Likely routine per-cycle cowork output (same class PO dispositioned COMMIT-AS-ROUTINE last tick for analysis-briefs). Flagging rather than self-applying that precedent because the -2026-07-29-evening file is dated ahead of the session UTC date (2026-07-28) — plausible VN-local (UTC+7, already 07-29 early morning there) DATE_VN pinning per unified-agent flow, not confirmed anomalous, wanted PO judgment before commit given the recurring hand-typed/future-date-drift false-positive class."
-        }
+        "type": "signal_feedback",
+        "summary": "A-12 FAIL: api-gateway health endpoint unreachable",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-28T14:53:00Z",
@@ -6365,15 +6357,6 @@
         "status": "BACKLOG",
         "id": "FACTORY-STOCK-delete-dead-port-and-deprecated",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-STOCK-delete-dead-port-and-deprecated"
-      },
-      {
-        "title": "Replace hardcoded 60-min dedup window with a config-sourced DedupWindowMinutes",
-        "priority": "P1",
-        "zone": "alert-engine",
-        "type": "FACTORY",
-        "status": "BACKLOG",
-        "id": "FACTORY-ALERT-dedup-window-config",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-ALERT-dedup-window-config"
       },
       {
         "title": "Move DEFAULT_SLA_CONFIG out of freshnessSlaChecker into shared-config",
@@ -16338,6 +16321,25 @@
         "commit": "0a56c46ae",
         "updated_by": "developer",
         "review_note": "developer: dep_status_map() (scripts/lib/devteam-eligibility.jq) scanned only the HOT board's 7 lanes, so any live row depending on a cold-evicted (scripts/orch-cold-evict.sh) DONE_VERIFIED row resolved MISSING forever (34 live rows / 41 distinct dep-ids measured, ~35 already DONE_VERIFIED in cold archive). Added dep_status_map($archive) (archive-seeded, hot-lane entries overwrite) + archive_status_map($archive)/normalize_archive_status (case/separator-insensitive DONE_VERIFIED match only). 0-arg dep_status_map kept as a literal dep_status_map([]) proxy -- jq arity overload, zero behavior change for every pre-existing caller, single merge implementation not forked logic. New scripts/lib/archive-glob-cat.sh (find|sort|for-loop concat of the monthly archive files -- a naive <(cat 2026-*.json)/$(ls ...) glob silently produced an EMPTY archive under this session's actual shell with zero error, caught and fixed) threaded via --slurpfile archive into the 3 real callers (BOUNDED-1/SLS promote, RLC claim -- exhaustively grep-verified, not guessed).\\nPLUS a referential eviction guard: orch-cold-evict.sh compute_id_maps() now computes $referenced_dep_ids (effective_depends_on union across TASK_LANES live rows) and holds any still-referenced terminal-status row in hot instead of evicting it.\\nExtended scripts/audits/devteam-dispatch-gate-satisfiability.sh (not a new instrument, per the row's own instruction) with AC-DEP-1 (live dynamic: 0 post-fix leaks, 34 pre-fix baseline matches PO's own measurement), AC-DEP-MECH (same real BOUNDED-1 promote script, only archive content varied -- before=NOT promoted, after=promoted, proves the mechanism FIRES not just predicate resolution, grounded in a real live archived id), AC-DEP-NEG-A/B (nowhere-dep and cold-archived-non-terminal-status both stay UNSATISFIED), AC-EVICT-1/2/3 (real orch-cold-evict.sh run against a scratch ORCH_STATE+ARCHIVE_DIR fixture, never touches the live file -- referenced row HELD in hot, unreferenced sibling row evicted normally, guard proven both directions end-to-end). All pre-existing assertions in this instrument plus 4 sibling audit scripts (devteam-bounded1-prose-sequencing-gate-verify.sh, devteam-bounded1-detail-disposition-gate-verify.sh, bounded1-supervised-lane-report.sh, devteam-review-lane-drain-report.sh) re-run GREEN after the plumbing change; 2 needed --slurpfile archive added to their own run_promote_picked_id helpers since bounded1 promote now requires it unconditionally.\\nIncidental fix (verified pre-existing and unrelated to this task via git-HEAD replay before touching it): devteam-bounded1-detail-disposition-gate-verify.sh's make_isolated_fixture() never cleared .task_board.ready, silently leaking the live board's stale ready[0] into equality-checking assertions -- one-line fix, turned several previously-vacuous inequality assertions into genuinely meaningful ones too.\\nCommits: 0a56c46ae (fix), 4c2cc93ed (memory). No apps/mcp-server/ files touched (scripts/*.jq, scripts/*.sh, docs/*.md only) -- bun tsc/bun test not meaningfully applicable, not run."
+      },
+      {
+        "title": "Replace hardcoded 60-min dedup window with a config-sourced DedupWindowMinutes",
+        "priority": "P1",
+        "zone": "alert-engine",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-ALERT-dedup-window-config",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-ALERT-dedup-window-config",
+        "promoted_at": "2026-07-28T21:17:15Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "updated_at": "2026-07-28T21:27:44Z",
+        "claimed_at": "2026-07-28T21:17:15Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "qa_verify_mode": "verify-committed",
+        "entered_review_at": "2026-07-28T21:27:44Z",
+        "review_note": "dev-alert-engine self-closeout: added domain.CooldownConfig.DedupWindowMinutes (default 60, confirmed against live mcp.config.json alertQuality.dedupWindowMinutes / apps/mcp-server config.ts numVal default), wired into pipeline.go HasDuplicateFingerprint call site (was reusing CooldownMinutes=30) and the dedup reason string (fmt.Sprintf). RED test first (mockRepo captures withinMinutes; domain test pins default=60) failed to compile pre-fix, GREEN after. go build/vet/test ./pkg/... green (60 top-level, 70 incl subtests, 0 failing), golangci-lint 0 issues, sandbox 11/11 scenarios green. Doc-review: domain-model.md, usecases.md, api-reference.md, testing.md updated. Journal: docs/agent-memory/decisions/sprint-FACTORY-ALERT-dedup-window-config-dev-alert-engine.md. Commit 43f4e3add (code+docs) + 60c3272b2 (memory)."
       }
     ],
     "qa": [],
@@ -16357,7 +16359,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-28T20:16:16Z",
+    "last_triaged_at": "2026-07-28T21:17:15Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": []
   },
