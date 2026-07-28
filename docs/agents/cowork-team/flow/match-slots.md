@@ -25,7 +25,9 @@ MATCHES=$(echo "$RAW" | jq '.slots')
 DRIFT_MIN=$(echo "$RAW" | jq '.drift_min')
 ```
 
-Script SSOT: `scripts/agents-flow/cowork-match-slots.js` — reads `docs/data/cowork-schedule.json`, filters `enabled && !_disabled_by`, cron ±2min window, returns `{"slots": [{slot_id, agent, flow_path, cron, trigger_prompt}, ...], "drift_min": <N>}`. `drift_min` = `actualUTCMinute − nominalTick` (always 0–14).
+Script SSOT: `scripts/agents-flow/cowork-match-slots.js` — reads `docs/data/cowork-schedule.json`, filters `enabled && !_disabled_by`, cron ±2min window, returns `{"slots": [{slot_id, agent, flow_path, cron, trigger_prompt}, ...], "drift_min": <N>, "catchup_raw": [...]}`. `drift_min` = `actualUTCMinute − nominalTick` (always 0–14).
+
+`catchup_raw` (FR-9a, TASK-COWORK-CATCHUP-2): guaranteed-slot catch-up candidates computed by `cowork-catchup-predicate.js` — array, empty on the common no-catch-up tick, one record per considered `guaranteed:true` slot not already in `.slots[]` this tick: `{slot_id, dish_type, agent, flow_path, trigger_prompt, guaranteed:true, scheduled_utc_time, scheduled_key_part, expected_publish_task_id, catchup_eligible, reason}`. Not yet consumed here — wiring `catchup_raw` into a Step 4.55 sub-flow (`task_list_held` delivery-evidence check, union into `MATCHES`) is a later task in this sprint per architecture brief §2.3/§2.1 (`docs/architecture-briefs/2026-07-22-cowork-guaranteed-slot-catchup-design.md`).
 
 **On script error** (non-zero exit / non-JSON output / schedule.json missing):
 - `send_telegram(channel="work", message="[cowork-team] slot-matcher failed: <stderr first line>")`
