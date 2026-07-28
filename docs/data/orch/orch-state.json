@@ -419,11 +419,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-07-28T19:59:55Z",
-    "updated_by": "dev-mcp-server"
+    "status": "in_progress",
+    "active_task_id": "TASK-COWORK-CATCHUP-2",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of TASK-COWORK-CATCHUP-2 — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-28T20:16:26Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2316,6 +2317,26 @@
         "router_noted_at": "2026-07-28T14:38:37Z",
         "po_disposition_20260728T1453": "RE-ESCALATION FIRED AS PRE-COMMITTED -> MINTED. Supersedes PO's 2026-07-28T13:12Z MONITOR ruling on archived row sys-20260728T131219-3fca, whose terms were: 'RESOLVED, no mint, MONITOR with a named re-escalation threshold ... RE-ESCALATE, and mint then, if ANY of: crosses 95% of cap, OOMKilled=true, or RestartCount climbs.' PREDICATE STATUS at 2026-07-28T14:46Z: 95%-of-cap CROSSED on five independent PO-captured samples (14:38:41Z 98.27%, 14:38:51Z 99.19%, 14:39:01Z 99.19%, 14:41:56Z 98.36%, 14:45:53Z 96.44%); OOMKilled=false NOT crossed; RestartCount=2 unchanged NOT crossed. One of three is sufficient by the ruling's own terms. MINTED: FIX-PDFX-TESSERACT-CONCURRENCY-VIOLATES-SINGLE-WORKER-INVARIANT (P0, zone apps/pdf-extractor/, next_agent=architect, plan_only, supervised) — verified present in .task_board.backlog. MECHANISM FOUND, which is what the earlier ruling lacked and why it declined to mint: pdf-extractor is running TEN concurrent tesseract processes against a code-declared, code-commented, unit-tested single-worker invariant (apps/pdf-extractor/main.py:154 `ocr_executor = ProcessPoolExecutor(max_workers=1)` commented 'no parallel Tesseract processes on the 16GB Mac — matches PekEngineAdapter Semaphore(1)'; interface/handlers.py:451 'PekEngineAdapter uses threading.Semaphore(1). Contention -> HTTP 429.'). Same ten PIDs at 14:39:01Z and 14:46:02Z with every ELAPSED advanced in lockstep, all PPID=1, distinct /tmp/tess_* basenames, ~890 MiB combined RSS. The near-cap state is therefore SUSTAINED (~40-minute stretches, matching the already-filed 30-40min/page latency of PERF-PEK-PER-PAGE-LATENCY) and RE-ARMED by each 15-wide POST /extract burst from mcp-server (172.18.0.12; bursts at 12:14, 12:16, 13:57, 14:11, 14:24). CORRECTION TO THE ROUTER'S SEVERITY CALL recorded on sys-20260728T143010-6ec2 ('SEVERITY: WARN is right — failure mode is OOM -> docker restart -> recovery, not permanent damage'): the reasoning is sound for an unexplained plateau but the premise no longer holds. This is not self-recovering — the invariant violation re-arms on every caller burst, so 'wait for RestartCount to increment' is a plan to learn about an OOM after it happens, repeatedly. Severity is upgraded on the WORK plane (P0 board row); PO does NOT re-label the signal rows themselves, since the router's WARN judgement was defensible on the evidence it held. THE ROUTER'S RESTRAINT WAS CORRECT AND IS AFFIRMED: declining a third audit inside 40 minutes and declining a second push notification were both right calls, and PO is not reversing them. CONFIRMED NOT DONE by PO, all user-gated: no docker stop/kill/rm/restart, no compose down/up, no kill of the ten tesseract PIDs, no POST/PUT/PATCH/DELETE to any pdf-extractor endpoint (deliberate — ~20 MiB headroom means a write probe could itself trigger the OOM). Interim mitigation is a PLAN for ops under user gating and is recorded on the board row: reaping the ten re-parented tesseract PIDs frees ~890 MiB and is strictly less destructive than a container restart, but both are kills. Timing note for the gate-holder: VN market is CLOSED (14:53Z = 21:53 GMT+7), so the 2026-06-01 anchor risk (intraday price data destroyed by a false-positive docker stop) does not apply right now; the cost is instead the loss of ten in-flight page OCRs, each 27-42 min deep. NOTIFICATION-PATH FINDING, filed separately as FIX-AUDITOR-EMIT-SEVERITY-LABEL-FLAT-ESCALATION-BYPASS-NEVER-FIRES (P1, zone cross-service/, next_agent=developer, supervised) — verified present on the board. The claim that reached PO ('the BUG Telegram was DEDUP-SKIPPED because the key had been sent at 14:30:09Z for the BENIGN 85% state, silencing escalation for 7 days') is REFUTED: this row's own summary at 14:30:10Z reads 'pdf-extractor at memory limit 98.87% (2.472/2.5 GiB)', so the 14:30:09Z Telegram WAS the near-cap alert and it WAS sent; what 14:34:57Z hit was a 4-minute-later re-observation of the same state, which the router itself annotated on sys-20260728T143457-0d5b as 'INTRA-CYCLE DUPLICATE ... Triage as ONE'. The dedup gate behaved correctly. The real defects are producer-side and survive the refutation on independent evidence: 98.87% emitted as WARN when tier1-probe.md clause 5 maps 'peak >97%' to CRITICAL (sbv_fx escalated HIGH->CRITICAL on the same sweep minutes later, proving the ladder works when the producer varies the label); and three improvised dedup_keys for one condition in 101 minutes, whose drift is the ONLY reason the 98.87% alert was not suppressed — correct key hygiene alone, shipped without severity-derivation, would CREATE the bug that was reported. ANOMALY-TASK-BRIDGE CLEARED, not at fault: ATB-1's 2h grace gate means these rows (17 and 12 min old at triage) are correctly grace-window-pending, not dropped.",
         "po_disposition_at": "2026-07-28T14:53:00Z"
+      },
+      {
+        "id": "dev-20260728T202014Z",
+        "ts": "2026-07-28T20:20:14Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "stranded-state sweep: 3 unknown paths — 2 unified-agent synthesis + 1 fb-post daily deliverable",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null,
+        "payload": {
+          "paths": [
+            "docs/data/unified-agent-synthesis-2026-07-28-evening.json",
+            "docs/data/unified-agent-synthesis-2026-07-29-evening.json",
+            "docs/social/fb-post-2026-07-28.md"
+          ],
+          "dedup_key": "stranded-state-sweep-unknown",
+          "note": "Likely routine per-cycle cowork output (same class PO dispositioned COMMIT-AS-ROUTINE last tick for analysis-briefs). Flagging rather than self-applying that precedent because the -2026-07-29-evening file is dated ahead of the session UTC date (2026-07-28) — plausible VN-local (UTC+7, already 07-29 early morning there) DATE_VN pinning per unified-agent flow, not confirmed anomalous, wanted PO judgment before commit given the recurring hand-typed/future-date-drift false-positive class."
+        }
       }
     ],
     "last_triaged_at": "2026-07-28T14:53:00Z",
@@ -10206,25 +10227,6 @@
         "updated_by": "po"
       },
       {
-        "id": "TASK-COWORK-CATCHUP-2",
-        "title": "FR-9a: Extend cowork-match-slots.js CLI to emit catchup_raw field",
-        "type": "SPRINT-M",
-        "size": "S",
-        "priority": "P0",
-        "zone": "scripts/agents-flow/",
-        "sprint": "COWORK-GUARANTEED-SLOT-CATCHUP",
-        "status": "BACKLOG",
-        "depends_on": [
-          "TASK-COWORK-CATCHUP-1"
-        ],
-        "created_at": "2026-07-22T22:12:59Z",
-        "created_by": "pm",
-        "updated_at": "2026-07-28T13:16:19Z",
-        "next_agent": "developer",
-        "po_routing_20260728": "PO 2026-07-28T13Z lane routing. pm's decomposition minted this row with next_agent unset, which no dispatch lane resolves (verified by executing scripts/lib/devteam-eligibility.jq predicates, not by reading the row). Handler = developer per docs/handoffs/TASK-COWORK-CATCHUP-10.md ('developer completes code TASK-1..9, then agent-father integrates this doc-only subtask') + docs/data/system-map.json scripts/ zone. dev-role next_agent + backlog lane = BOUNDED-1, per docs/agents/po/flow/zone-routing.md Step A2.",
-        "updated_by": "po/route-20260728T13"
-      },
-      {
         "id": "TASK-COWORK-CATCHUP-3",
         "title": "FR-9b + FR-3 + FR-5: New catchup-check.md dispatcher sub-flow",
         "type": "SPRINT-M",
@@ -12087,7 +12089,29 @@
         "journal_ref": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father.md"
       }
     ],
-    "done_verified": [],
+    "done_verified": [
+      {
+        "title": "Extract assembleBriefing's 19 numbered steps into briefing/ query modules",
+        "priority": "P0",
+        "zone": "mcp-server-application",
+        "type": "FACTORY",
+        "status": "DONE_VERIFIED",
+        "id": "FACTORY-APP-split-assembleBriefing",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APP-split-assembleBriefing",
+        "promoted_at": "2026-07-28T19:17:29Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "updated_at": "2026-07-28T20:17:56Z",
+        "claimed_at": "2026-07-28T19:17:33Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "updated_by": "dev-mcp-server",
+        "entered_review_at": "2026-07-28T19:59:55Z",
+        "review_note": "dev-mcp-server COMPLETE: split _assembleBriefingImpl (1327L file, ~620L inline-SQL orchestration in one function) into usecases/briefing/ -- 24 single-owner modules (types.ts + 22 step/helper files) covering all 19 numbered steps + persist + freshness-gate. Sequencer now 72L. Per-step error isolation moved from centralized sequencer try/catch to inside each owning step module (same catch scope/log-ctx/fallback default). Public exports (DailyBriefing, AssembleBriefingOptions, defaultComputeTa, queryForeignFlowSummary_TEST, BEARISH_WARNING_THRESHOLD, TaSignal, GlobalSnapshot, BctcDeadlineRow, VnIndexSnapshot, BriefingAlert, TopStory, NewReport, WatchlistEntry) re-exported verbatim -- zero call-site edits across 27 dependent test files + 5 consumer modules. Dropped dead computeRSILocal (zero call sites, verified via repo-wide grep before removal). Verification: tsc clean; targeted 27-file briefing/TA suite 251 pass/1 fail before AND after (same pre-existing unrelated cron-expr test, zero net-new); full bun test 14844 pass/40 skip/57 fail/1 error across 1233 files, grepped all 57 fail lines to 17 unique files (none touching briefing/watchlist/TA/conviction/foreignFlow/insiderRecent), re-ran all 17 in isolation = 55/55 pass confirming standing FIX-MCP-SUITE-HEALTH-BASELINE order-dependent flakiness (dev-standards.md:590), not a regression; gen-project-stats toolCount=184/cronJobCount=88 unchanged; live server startup (PORT=3099, did not disturb the running :3000 production container) healthy, /health toolCount=184, scheduler 90 cron keys registered; /api/bctc-inspect + /dashboards/news-fetch/ both returned HTML (dashboard circular-dep check clean). Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md STEP dev-mcp-server-S14. Commit 4744b0792 (code) + 09ae11440 (memory). Ready for qa. NOTE: a concurrent shared-index write (unrelated po session content: signal-queue dispositions + a duplicate BACKLOG-row removal for this same task) landed bundled into the memory commit 09ae11440 due to a bare git-commit-after-git-add TOCTOU race -- content independently orch-validate.mjs-verified clean/non-destructive, no history rewrite performed per standing incident-handling precedent; flagging for awareness only. | [QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Verified commits 4744b0792 (code, 26 files: 24 briefing/ modules + types.ts + sequencer + usecases.md doc) + 09ae11440 (memory) + 7bb2a6784 (board flip) all on main ancestry. Independently re-ran: bun tsc --noEmit 0 errors; broader-than-claimed targeted suite (38 files matching assembleBriefing|briefing/, superset of devs claimed 27+5) = 366 pass/0 fail; mock-guard.sh PASS (26 files); DDD/security grep scans clean; gen-project-stats toolCount=184/cronJobCount=88 exact match; live health probe alt-port 3098 healthy (toolCount=184, dashboard 200), port freed after. Verified every non-types.ts module <=120L (max 107L), _assembleBriefingImpl body exactly 72L (lines 216-287), computeRSILocal zero live references (dead-code claim confirmed), all 5 consumer modules import assembleBriefing.js AND were untouched by the split commit (zero call-site churn independently confirmed via git show --name-only). Repo-wide full bun test attempted, killed at ~23% (284/1233 files) after ~8min under host load, non-blocking per pinned CANONICAL dev-standards.md:591 (targeted/merge-gate suite governs, repo-wide 0-fail permanently unsatisfiable per standing FIX-MCP-SUITE-HEALTH-BASELINE). 09ae11440 TOCTOU incident not re-litigated per dispatch note (already tracked: FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD + -LAYER2). DJ-GATE-1: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa.md STEP qa-S4. head untouched (owned by unrelated in_progress task TASK-COWORK-CATCHUP-2).",
+        "qa_verified_at": "2026-07-28T20:17:55Z",
+        "qa_verified_by": "qa"
+      }
+    ],
     "head": {
       "status": "idle",
       "active_task_id": null,
@@ -16286,25 +16310,6 @@
         "commit": "0a56c46ae",
         "updated_by": "developer",
         "review_note": "developer: dep_status_map() (scripts/lib/devteam-eligibility.jq) scanned only the HOT board's 7 lanes, so any live row depending on a cold-evicted (scripts/orch-cold-evict.sh) DONE_VERIFIED row resolved MISSING forever (34 live rows / 41 distinct dep-ids measured, ~35 already DONE_VERIFIED in cold archive). Added dep_status_map($archive) (archive-seeded, hot-lane entries overwrite) + archive_status_map($archive)/normalize_archive_status (case/separator-insensitive DONE_VERIFIED match only). 0-arg dep_status_map kept as a literal dep_status_map([]) proxy -- jq arity overload, zero behavior change for every pre-existing caller, single merge implementation not forked logic. New scripts/lib/archive-glob-cat.sh (find|sort|for-loop concat of the monthly archive files -- a naive <(cat 2026-*.json)/$(ls ...) glob silently produced an EMPTY archive under this session's actual shell with zero error, caught and fixed) threaded via --slurpfile archive into the 3 real callers (BOUNDED-1/SLS promote, RLC claim -- exhaustively grep-verified, not guessed).\\nPLUS a referential eviction guard: orch-cold-evict.sh compute_id_maps() now computes $referenced_dep_ids (effective_depends_on union across TASK_LANES live rows) and holds any still-referenced terminal-status row in hot instead of evicting it.\\nExtended scripts/audits/devteam-dispatch-gate-satisfiability.sh (not a new instrument, per the row's own instruction) with AC-DEP-1 (live dynamic: 0 post-fix leaks, 34 pre-fix baseline matches PO's own measurement), AC-DEP-MECH (same real BOUNDED-1 promote script, only archive content varied -- before=NOT promoted, after=promoted, proves the mechanism FIRES not just predicate resolution, grounded in a real live archived id), AC-DEP-NEG-A/B (nowhere-dep and cold-archived-non-terminal-status both stay UNSATISFIED), AC-EVICT-1/2/3 (real orch-cold-evict.sh run against a scratch ORCH_STATE+ARCHIVE_DIR fixture, never touches the live file -- referenced row HELD in hot, unreferenced sibling row evicted normally, guard proven both directions end-to-end). All pre-existing assertions in this instrument plus 4 sibling audit scripts (devteam-bounded1-prose-sequencing-gate-verify.sh, devteam-bounded1-detail-disposition-gate-verify.sh, bounded1-supervised-lane-report.sh, devteam-review-lane-drain-report.sh) re-run GREEN after the plumbing change; 2 needed --slurpfile archive added to their own run_promote_picked_id helpers since bounded1 promote now requires it unconditionally.\\nIncidental fix (verified pre-existing and unrelated to this task via git-HEAD replay before touching it): devteam-bounded1-detail-disposition-gate-verify.sh's make_isolated_fixture() never cleared .task_board.ready, silently leaking the live board's stale ready[0] into equality-checking assertions -- one-line fix, turned several previously-vacuous inequality assertions into genuinely meaningful ones too.\\nCommits: 0a56c46ae (fix), 4c2cc93ed (memory). No apps/mcp-server/ files touched (scripts/*.jq, scripts/*.sh, docs/*.md only) -- bun tsc/bun test not meaningfully applicable, not run."
-      },
-      {
-        "title": "Extract assembleBriefing's 19 numbered steps into briefing/ query modules",
-        "priority": "P0",
-        "zone": "mcp-server-application",
-        "type": "FACTORY",
-        "status": "REVIEW",
-        "id": "FACTORY-APP-split-assembleBriefing",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APP-split-assembleBriefing",
-        "promoted_at": "2026-07-28T19:17:29Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
-        "updated_at": "2026-07-28T20:00:21Z",
-        "claimed_at": "2026-07-28T19:17:33Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
-        "updated_by": "dev-mcp-server",
-        "entered_review_at": "2026-07-28T19:59:55Z",
-        "review_note": "dev-mcp-server COMPLETE: split _assembleBriefingImpl (1327L file, ~620L inline-SQL orchestration in one function) into usecases/briefing/ -- 24 single-owner modules (types.ts + 22 step/helper files) covering all 19 numbered steps + persist + freshness-gate. Sequencer now 72L. Per-step error isolation moved from centralized sequencer try/catch to inside each owning step module (same catch scope/log-ctx/fallback default). Public exports (DailyBriefing, AssembleBriefingOptions, defaultComputeTa, queryForeignFlowSummary_TEST, BEARISH_WARNING_THRESHOLD, TaSignal, GlobalSnapshot, BctcDeadlineRow, VnIndexSnapshot, BriefingAlert, TopStory, NewReport, WatchlistEntry) re-exported verbatim -- zero call-site edits across 27 dependent test files + 5 consumer modules. Dropped dead computeRSILocal (zero call sites, verified via repo-wide grep before removal). Verification: tsc clean; targeted 27-file briefing/TA suite 251 pass/1 fail before AND after (same pre-existing unrelated cron-expr test, zero net-new); full bun test 14844 pass/40 skip/57 fail/1 error across 1233 files, grepped all 57 fail lines to 17 unique files (none touching briefing/watchlist/TA/conviction/foreignFlow/insiderRecent), re-ran all 17 in isolation = 55/55 pass confirming standing FIX-MCP-SUITE-HEALTH-BASELINE order-dependent flakiness (dev-standards.md:590), not a regression; gen-project-stats toolCount=184/cronJobCount=88 unchanged; live server startup (PORT=3099, did not disturb the running :3000 production container) healthy, /health toolCount=184, scheduler 90 cron keys registered; /api/bctc-inspect + /dashboards/news-fetch/ both returned HTML (dashboard circular-dep check clean). Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md STEP dev-mcp-server-S14. Commit 4744b0792 (code) + 09ae11440 (memory). Ready for qa. NOTE: a concurrent shared-index write (unrelated po session content: signal-queue dispositions + a duplicate BACKLOG-row removal for this same task) landed bundled into the memory commit 09ae11440 due to a bare git-commit-after-git-add TOCTOU race -- content independently orch-validate.mjs-verified clean/non-destructive, no history rewrite performed per standing incident-handling precedent; flagging for awareness only."
       }
     ],
     "qa": [],
@@ -16324,9 +16329,34 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-28T19:17:29Z",
+    "last_triaged_at": "2026-07-28T20:16:16Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "TASK-COWORK-CATCHUP-2",
+        "title": "FR-9a: Extend cowork-match-slots.js CLI to emit catchup_raw field",
+        "type": "SPRINT-M",
+        "size": "S",
+        "priority": "P0",
+        "zone": "scripts/agents-flow/",
+        "sprint": "COWORK-GUARANTEED-SLOT-CATCHUP",
+        "status": "IN_PROGRESS",
+        "depends_on": [
+          "TASK-COWORK-CATCHUP-1"
+        ],
+        "created_at": "2026-07-22T22:12:59Z",
+        "created_by": "pm",
+        "updated_at": "2026-07-28T20:16:26Z",
+        "next_agent": "developer",
+        "po_routing_20260728": "PO 2026-07-28T13Z lane routing. pm's decomposition minted this row with next_agent unset, which no dispatch lane resolves (verified by executing scripts/lib/devteam-eligibility.jq predicates, not by reading the row). Handler = developer per docs/handoffs/TASK-COWORK-CATCHUP-10.md ('developer completes code TASK-1..9, then agent-father integrates this doc-only subtask') + docs/data/system-map.json scripts/ zone. dev-role next_agent + backlog lane = BOUNDED-1, per docs/agents/po/flow/zone-routing.md Step A2.",
+        "updated_by": "po/route-20260728T13",
+        "promoted_at": "2026-07-28T20:16:16Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "claimed_at": "2026-07-28T20:16:26Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
