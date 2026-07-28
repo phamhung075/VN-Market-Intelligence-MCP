@@ -1,0 +1,31 @@
+{
+  "generated_at": "2026-07-28T17:14:46Z",
+  "cap": 20,
+  "total_dirty": 45,
+  "considered": 20,
+  "owned_elsewhere_count": 7,
+  "young_skipped_count": 5,
+  "unknown_paths": [
+    ".claude/agent-models.json",
+    ".claude/agents/agents-architect.md",
+    ".claude/agents/architect.md",
+    ".claude/agents/claude-manager-helper.md",
+    ".claude/agents/code-janitor.md",
+    ".claude/agents/cowork-refactory-expert.md",
+    ".claude/agents/dev-kinh-dich.md",
+    ".claude/agents/dev-stock-price.md",
+    ".claude/agents/fb-market-poster.md",
+    ".claude/agents/fixer.md",
+    ".claude/agents/idea-forge.md",
+    ".claude/agents/market-watcher.md",
+    ".claude/agents/news-scout.md",
+    ".claude/agents/ops.md",
+    ".claude/agents/pm.md",
+    ".claude/agents/po.md",
+    ".claude/agents/qa-responder.md",
+    ".claude/agents/refine_bctc_md.md",
+    ".claude/agents/semble-search.md",
+    ".claude/agents/system-auditor.md"
+  ],
+  "note": "20 .claude/agents/*.md + .claude/agent-models.json dirty in working tree, category=unknown to stranded-state-sweep.sh's classifier (not owned-elsewhere, not young, not memory/session/script pattern). Needs a disposition: either a classifier-pattern addition (if this is routine agent-factory regeneration churn) or an owner to commit/discard. dedup_key=stranded-state-sweep-unknown."
+}
