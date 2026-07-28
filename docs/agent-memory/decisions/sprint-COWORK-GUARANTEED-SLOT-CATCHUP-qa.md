@@ -63,3 +63,14 @@
 - All 4 commits' `git show --stat` file-lists match exactly what each commit claims — no peer-sweep. `orch-validate.mjs` Stage0+1 PASS.
 **why-decision:** Every claim independently re-derived from source (byte-diff, live RED/GREEN reproduction, direct fallback exercise, live CLI run), not trusted at face value — genuine additive-only change, NFR-2 literally holds, docs accurate, tests real. APPROVED, DONE_VERIFIED.
 **why-change:** none — followed dispatch brief's explicit verification checklist.
+
+### STEP qa-S6 · qa · 2026-07-28T23:57:14Z
+**task-id:** UC-GCP-P3
+**what-done:** Direct-commit verify (`qa[]` row, `branch:null`, oldest-stranded pickup, 5d+ dwell) of 2-commit stack `e77635933`(spec: drain-signals.md + commit-boundary/SKILL.md)/`2d7aec151`(notebook+journal), both confirmed on main ancestry via `git merge-base --is-ancestor`.
+**what-considered:**
+- Diffed `e77635933` content against `dev_result` claim verbatim — `git add -u -- docs/signals/ && git add -- docs/signals/processed/` + post-commit `git status --porcelain` clean invariant + RULE-1 cross-ref all present, live doc text unaltered since.
+- Re-ran (not trusted): `drain-signals.test.js` 36/36 pass; `bun tsc --noEmit` 0 errors; docs-only, no production files, mock-guard N/A.
+- Bonus router ask — is the fix actually in live use, not just documented: checked today's (2026-07-29) real drain commits. `bd2d6ec903` shows 3 pure `D` entries / 0 `A` (exact `-u` semantics — deletions captured, the bug this row fixes). `24703a07fa` shows the second `git add -- processed/` picking up 1 new untracked-new file. This session's own untracked `docs/signals/*.json` litter (context-bloat-*, cowork-team-*, price_anomaly_*) stays unswept across every recent drain commit — confirms tracked-only scoping holds live, not a paper fix.
+- DJ-GATE-1 corroborated: developer's own journal entry present (`sprint-ULTRACODE-AUDIT-FIXALL-developer.md` STEP developer-S21, task-id stamped) before this verify ran.
+**why-decision:** APPROVED, DONE_VERIFIED. Fix matches claim exactly, is genuinely deployed (live commits since prove the pattern in production), zero regression, journal present. Board row moved `task_board.qa[]`→`done_verified[]` via `jq`+`scripts/orch-apply.sh` (task_total 670→671, qa-lane move nets +1 by design per cycle-490/489/492 precedent). `.head` was `active_task_id:UC-GCP-P3` — synced to idle in the same write (branch:null rule).
+**why-change:** none — router's ask followed exactly, including the bonus live-use sanity check.
