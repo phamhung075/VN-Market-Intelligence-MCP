@@ -4,7 +4,7 @@
     "last_mtime": "2026-06-06T16:22:41Z",
     "po": {
       "section_name": "po",
-      "last_mtime": "2026-07-28T16:17:45Z",
+      "last_mtime": "2026-07-28T17:20:45Z",
       "last_linecount": 131
     },
     "section_name": "po",
@@ -2325,7 +2325,7 @@
         "type": "data_integrity_event",
         "summary": "refine-bctc-slot-4 2026-07-28T16:38Z: report_id 5b0dad71-... (mislabeled DPM_2025_Q4.pdf, 22/46 units already DONE, 2 more pushed this fire) vanished from get_bctc_pending_refine mid-flight; get_bctc_page_text returned report_id not found twice. New report_id 3e2a26d9-... (DPM_2026_Q1.pdf) appeared with IDENTICAL 46-window structure; page 10 text confirms actual period is Q1 2026 (filename correction). Worker finalized old id FAILED cleanly, lock released, no orphan state — but 24 already-pushed refine units under the old id are now orphaned from any PENDING report, and it is unverified whether 3e2a26d9 is the intended replacement or whether other in-flight refine workers were similarly orphaned by this re-ingestion event.",
         "severity": "MEDIUM",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null
       },
       {
@@ -2336,7 +2336,7 @@
         "type": "system-issue",
         "summary": "stranded-state sweep: unknown paths need owner (20)",
         "severity": "LOW",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/signals/stranded-state-sweep-unknown-20260728T171505Z.json"
       },
       {
@@ -2347,7 +2347,7 @@
         "type": "signal_feedback",
         "summary": "freshnessSlaMonitorJob coverage-map path climbs above /app -> ENOENT every ~30min, never reads input",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null
       }
     ],
