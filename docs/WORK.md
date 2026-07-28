@@ -1,5 +1,10 @@
 
 ---
+## [Developer] 2026-07-28 — FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES
+
+`scripts/agents-flow/notebook-auto-prune.sh` early-exit/loop-break were line-only (≤200L); the byte cap (LINE_CAP × 60 = 12000B, TE-T24) had a detector (`context-bloat-backstop.sh`) but no actuator, so densely-written notebooks (e.g. alert-commander.md, 632 bytes/line) never got pruned. Pruner now derives LINE_CAP/BYTE_CAP from the same SSOT (`docs/data/file-size-caps.json`) and stops only when BOTH lines ≤ cap AND bytes ≤ cap. Single-section safe-fail path kept (option [a] — honest signal, no truncation), now reachable on the byte axis too. New test: `scripts/agents-flow/notebook-auto-prune.test.sh` (4 cases: byte-axis regression, line-axis regression guard, within-both-caps clean, single-section byte-only safe-fail). Cited as instance 13/sub-class 7 on SPIKE-SATURATED-COUNT-THRESHOLD-GATES-SWEEP (not closed).
+
+---
 ## [Developer] 2026-05-18 — Task 1941a: cashFlowTool OCF API-bridge preference fix
 
 `get_cash_flow` now reads `operating_cash_flow` (vnstock API bridge) before `operating_cf` (OCR/PDF). VCB Layer-7 ratio fixed: 1.23e15 → 9,947,260 triệu VND, OCF/NI ratio = 1.15 (passes guard). FPT OCF fixed (4,108,450); ratio still suppressed due to separate NI OCR extraction bug. 17 cashflow tests pass. Docker rebuilt.

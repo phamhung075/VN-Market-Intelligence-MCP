@@ -3,12 +3,14 @@
 #
 # BACKSTOPS AC-3 in .claude/skills/notebook-write/SKILL.md.
 # Fires AFTER a Write|Edit tool call. If the written file is a governed notebook
-# (docs/agent-memory/notebooks/*.md, NOT archive/) and exceeds 200L, drops
-# the OLDEST (first) ## section in a loop until ≤200L.
+# (docs/agent-memory/notebooks/*.md, NOT archive/) and exceeds EITHER the line cap
+# (200L) OR the byte cap (LINE_CAP x 60 bytes/line — same derivation as the byte-cap
+# predicate in context-bloat-backstop.sh, TE-T24), drops the OLDEST (first) ## section
+# in a loop until BOTH caps are satisfied.
 #
 # Safe-fail paths:
 #   - 0 sections found → emit notebook_unparseable_breach signal, do NOT modify file
-#   - only preamble + 1 section left and still >200L → emit notebook_single_section_overage_breach, do NOT truncate
+#   - only preamble + 1 section left and still over cap (either axis) → emit notebook_single_section_overage_breach, do NOT truncate
 #
 # Atomic write: bash mv (NOT a Claude Edit/Write tool — avoids PostToolUse re-trigger loop).
 # Always exit 0 (non-blocking). Never modifies non-notebook files.
@@ -32,6 +34,26 @@
 # JSON invocation — see scripts/agents-flow/cold-archive-sweep.sh). Unset/empty by default
 # (the normal PostToolUse hook invocation never sets it) → zero behavior change on the hot
 # path; a REL_PATH can never equal an empty string so the extra arm cannot accidentally match.
+#
+# BYTE-CAP LOCKSTEP (FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES,
+# 2026-07-28): the line cap above had an actuator (this hook) but the byte cap
+# (context-bloat-backstop.sh TE-T24, docs/data/file-size-caps.json driven) had only a
+# detector — agents satisfied the enforced line constraint by writing denser lines, and
+# nothing ever pushed back on the byte axis (observed: alert-commander.md averaging 632
+# bytes/line against a 60 bytes/line budget). This hook now recounts BOTH lines and bytes
+# on every early-exit/loop-break check and stops only when both are within cap. The byte
+# cap is derived as LINE_CAP * 60 — LINE_CAP is read from the SAME SSOT row
+# context-bloat-backstop.sh reads (docs/data/file-size-caps.json, pattern
+# "docs/agent-memory/notebooks/*.md"), never hand-typed as a literal a second time (see
+# decision journal for this task; a second hardcoded copy of the same number is exactly
+# the class of defect that produced the earlier USD/VND three-SSOT incident). Cited as
+# instance 13 / sub-class 7 on SPIKE-SATURATED-COUNT-THRESHOLD-GATES-SWEEP.
+#
+# DECISION (option [a] of the row's open question): the single-section safe-fail path
+# (below, "only 1 section left and still over cap") keeps its existing behaviour —
+# honest signal, no truncation — now reachable on either axis. Rationale: smallest
+# change, consistent with the current contract, and truncating mid-section would
+# destroy the current cycle's record, which is explicitly not acceptable.
 set -u
 
 # --- Resolve project root ---
@@ -39,6 +61,7 @@ PROJECT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || echo "${CLAUDE_PROJ
 [ -z "$PROJECT_ROOT" ] && exit 0
 
 SIGNALS_DIR="$PROJECT_ROOT/docs/signals"
+CAPS_FILE="$PROJECT_ROOT/docs/data/file-size-caps.json"
 
 # --- Duplicate-heading detector (FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH item 3) ---
 # Detection-only, never auto-fixes: code audit of the drop-oldest loop below (and git
@@ -127,12 +150,22 @@ esac
 DUP_PRE="$(detect_dup_heading < "$FILE_PATH")"
 [ -n "$DUP_PRE" ] && emit_dup_signal "$DUP_PRE" "pre-cap-scan"
 
-# --- Count lines ---
+# --- Derive LINE_CAP + BYTE_CAP from the SAME SSOT context-bloat-backstop.sh reads
+# (docs/data/file-size-caps.json) — see BYTE-CAP LOCKSTEP note above. BYTE_CAP is never
+# a second hardcoded literal; it is always LINE_CAP * 60, and LINE_CAP is always read
+# from the JSON row, not typed twice. ---
+LINE_CAP="$(jq -r '.caps[] | select(.pattern=="docs/agent-memory/notebooks/*.md") | .cap' "$CAPS_FILE" 2>/dev/null | head -1)"
+case "$LINE_CAP" in ''|*[!0-9]*) LINE_CAP=200 ;; esac  # SSOT unreadable/malformed → long-standing default
+BYTE_CAP=$((LINE_CAP * 60))  # same 60-bytes/line derivation as context-bloat-backstop.sh (TE-T24)
+
+# --- Count lines AND bytes (dual-axis) ---
 LINE_COUNT=$(wc -l < "$FILE_PATH" 2>/dev/null | tr -d ' ' || true)
 [ -z "$LINE_COUNT" ] && exit 0
+BYTE_COUNT=$(wc -c < "$FILE_PATH" 2>/dev/null | tr -d ' ' || true)
+[ -z "$BYTE_COUNT" ] && exit 0
 
-# Within cap → clean; AC-3 worked correctly
-[ "$LINE_COUNT" -le 200 ] && exit 0
+# Within BOTH caps → clean; AC-3 worked correctly
+[ "$LINE_COUNT" -le "$LINE_CAP" ] && [ "$BYTE_COUNT" -le "$BYTE_CAP" ] && exit 0
 
 # --- Over cap: parse sections ---
 # Extract line numbers of all "^## " boundaries
@@ -155,7 +188,9 @@ if [ "$SECTION_COUNT" -eq 0 ] || [ -z "$SECTION_LINES" ]; then
   "payload": {
     "file": "$REL_PATH",
     "line_count": $LINE_COUNT,
-    "cap": 200,
+    "cap": $LINE_CAP,
+    "byte_count": $BYTE_COUNT,
+    "byte_cap": $BYTE_CAP,
     "reason": "no ## section boundaries found; cannot safely prune",
     "action_required": "manual_review"
   }
@@ -169,14 +204,18 @@ fi
 FILE_CONTENT="$(cat "$FILE_PATH")"
 
 while true; do
-  # Recount
-  LINE_COUNT="$(echo "$FILE_CONTENT" | wc -l | tr -d ' ')"
-  [ "$LINE_COUNT" -le 200 ] && break
+  # Recount BOTH axes. printf '%s\n' (not echo) mirrors the final atomic-write form
+  # below exactly, so the byte count measured here matches what lands on disk.
+  LINE_COUNT="$(printf '%s\n' "$FILE_CONTENT" | wc -l | tr -d ' ')"
+  BYTE_COUNT="$(printf '%s\n' "$FILE_CONTENT" | wc -c | tr -d ' ')"
+  [ "$LINE_COUNT" -le "$LINE_CAP" ] && [ "$BYTE_COUNT" -le "$BYTE_CAP" ] && break
 
   # Count sections
   SECTION_COUNT="$(echo "$FILE_CONTENT" | grep -c "^## " 2>/dev/null || echo 0)"
 
-  # Safe-fail: only 1 section (or 0) and still >200L — cannot prune further
+  # Safe-fail: only 1 section (or 0) and still over cap (either axis) — cannot prune further.
+  # DECISION option [a] (see BYTE-CAP LOCKSTEP note above): keep this behaviour unchanged —
+  # honest signal, no truncation — now reachable via either predicate.
   if [ "$SECTION_COUNT" -le 1 ]; then
     SIGNAL_FILE="$SIGNALS_DIR/notebook-single-section-breach-$(echo "$REL_PATH" | tr '/.' '-')-$(echo "$TIMESTAMP" | tr -d ':').json"
     cat > "$SIGNAL_FILE" <<EOF 2>/dev/null || true
@@ -189,7 +228,9 @@ while true; do
   "payload": {
     "file": "$REL_PATH",
     "line_count": $LINE_COUNT,
-    "cap": 200,
+    "cap": $LINE_CAP,
+    "byte_count": $BYTE_COUNT,
+    "byte_cap": $BYTE_CAP,
     "section_count": $SECTION_COUNT,
     "reason": "only preamble+1 section remain; cannot prune further without data loss",
     "action_required": "manual_split_to_archive"
