@@ -271,7 +271,13 @@ SSC official disclosure polling
 ## Analysis & Intelligence
 
 ### assembleBriefing.ts
-Morning intelligence synthesis: market context + alerts + sector insights + news
+Morning intelligence synthesis: market context + alerts + sector insights + news.
+`_assembleBriefingImpl` is a thin 19-step sequencer (FACTORY-APP-split-assembleBriefing);
+each step's query/compute logic lives in its own module under `usecases/briefing/`
+(e.g. `queryTopStories.ts`, `queryWatchlistSummary.ts`, `defaultComputeTa.ts`,
+`queryUpcomingDeadlines.ts`, `queryGlobalSnapshot.ts`, ...). Public exports
+(`DailyBriefing`, `defaultComputeTa`, `queryForeignFlowSummary_TEST`,
+`BEARISH_WARNING_THRESHOLD`) are re-exported from `assembleBriefing.ts` unchanged.
 
 ### assembleEveningSummary.ts
 Daily close summary generation

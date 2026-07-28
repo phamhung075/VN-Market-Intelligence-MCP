@@ -1,246 +1,88 @@
 /**
  * Assemble Morning Briefing — Task 101 (Application Layer)
  *
- * Orchestrates a complete daily digest before Vietnamese market open (08:00 GMT+7):
- *   1. Best-effort pollNews() — fresh data, failure does not abort
- *   2. Best-effort fetchVnIndex() — VN-Index snapshot, null on failure
- *   3. Query rag_analyses for top 5 stories since midnight GMT+7
- *   4. Query alerts for unread alerts from the last 12 hours
- *   5. Query watchlist for tracked stocks (with market_prices join)
- *   6. Query financial_reports for new reports since midnight GMT+7
- *   7. Persist briefing to ./data/briefings/YYYY-MM-DD.json
- *   8. Return the structured DailyBriefing object
+ * Orchestrates a complete daily digest before Vietnamese market open (08:00 GMT+7).
+ * `_assembleBriefingImpl` is a thin 19-step sequencer — each step's query/compute
+ * logic lives in its own module under `usecases/briefing/`
+ * (FACTORY-APP-split-assembleBriefing). Public exports (DailyBriefing,
+ * defaultComputeTa, queryForeignFlowSummary_TEST, BEARISH_WARNING_THRESHOLD, ...)
+ * are re-exported here verbatim so every existing import site is unaffected.
  *
- * Layer: application/usecases — may import from domain/ and infrastructure/.
+ * Layer: application/usecases — may import from domain/, infrastructure/, and
+ * its own usecases/briefing/ step modules.
  */
 
 import type { Database } from "bun:sqlite";
-import { mkdirSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
-import { logger } from "../../infrastructure/logger.js";
-import { sqlInClause } from "../../infrastructure/db/sqlHelpers.js";
-import type { BriefingPredictionSignal } from "../../infrastructure/db/predictionStore.js";
-import { generateSparkline } from "../../domain/services/sparkline.js";
-import {
-  computePortfolioPnl,
-  type PortfolioPnlResult,
-} from "../../domain/services/portfolioPnlCalculator.js";
-import { runSectionAsync } from "../utils/runSection.js";
-import { failLoud } from "../../domain/utils/safeQuery.js";
-import { computeTAIndicators } from "../../infrastructure/microservices/clients.js";
-// ── Centralized helpers (FACTORY-APP-dedup-date-freshness-helpers) ─────────
-// midnightVietnamAsUtc/todayVietnam/parseAffectedCodes/isPriceFresh were
-// duplicated verbatim in assembleEveningSummary.ts (and todayVietnam also in
-// assembleAlertDigest.ts) — now one home each; local copies removed below.
 import { midnightVietnamAsUtc, todayVietnam } from "../../domain/services/timeHelpers.js";
-import { parseAffectedCodes } from "../../domain/utils/affectedCodesParser.js";
-import { isPriceFresh } from "../utils/priceFreshnessGate.js";
-// ── Local pure-math helpers (P2-B1 AC-7/AC-8 — SEV-2 fix) ───────────────────
-// computeRSI and computeMA formerly imported from domain/services/technicalIndicators.js.
-// Replaced with self-contained inline implementations so that P2-B2 can safely
-// delete the domain TS service without breaking the morning briefing at runtime.
-// Math is identical to the domain service; duplication is intentional and temporary.
+import type { BriefingPredictionSignal } from "../../infrastructure/db/predictionStore.js";
+import type { PortfolioPnlResult } from "../../domain/services/portfolioPnlCalculator.js";
 
-/** Simple Moving Average of last `period` values in `prices`. Returns null if insufficient data. */
-function computeMALocal(prices: number[], period: number): number | null {
-  if (prices.length < period) return null;
-  const window = prices.slice(-period);
-  return window.reduce((a, b) => a + b, 0) / period;
-}
+import { runPollNewsStep } from "./briefing/runPollNewsStep.js";
+import { runVnIndexStep } from "./briefing/runVnIndexStep.js";
+import { queryTopStories } from "./briefing/queryTopStories.js";
+import { queryUnreadAlerts } from "./briefing/queryUnreadAlerts.js";
+import { queryWatchlistSummary } from "./briefing/queryWatchlistSummary.js";
+import { queryNewReports } from "./briefing/queryNewReports.js";
+import { queryMacroSnapshot } from "./briefing/queryMacroSnapshot.js";
+import { querySensitiveWarnings } from "./briefing/querySensitiveWarnings.js";
+import { queryTrackedCommodities } from "./briefing/queryTrackedCommodities.js";
+import { autoResolveStaleAlerts } from "./briefing/autoResolveStaleAlerts.js";
+import { queryUnresolvedAlerts } from "./briefing/queryUnresolvedAlerts.js";
+import { computeTopConviction } from "./briefing/computeTopConviction.js";
+import { queryPredictionSignals } from "./briefing/queryPredictionSignals.js";
+import { computePortfolioPnlStep } from "./briefing/computePortfolioPnlStep.js";
+import { queryInsiderRecent } from "./briefing/queryInsiderRecent.js";
+import { queryForeignFlowSummaryStep, queryForeignFlowSummary } from "./briefing/queryForeignFlowSummary.js";
+import { queryEvidenceTopScores } from "./briefing/queryEvidenceTopScores.js";
+import { computeTaSummary } from "./briefing/computeTaSummary.js";
+import { queryUpcomingDeadlines } from "./briefing/queryUpcomingDeadlines.js";
+import { queryGlobalSnapshot } from "./briefing/queryGlobalSnapshot.js";
+import { persistBriefing } from "./briefing/persistBriefing.js";
+import { checkFreshnessGate } from "./briefing/checkFreshnessGate.js";
 
-/** RSI(period) with Wilder smoothing (k = 1/period). Returns null if insufficient data. */
-function computeRSILocal(prices: number[], period = 14): number | null {
-  if (prices.length < period + 1) return null;
-  const deltas: number[] = [];
-  for (let i = 1; i < prices.length; i++) {
-    deltas.push(prices[i]! - prices[i - 1]!);
-  }
-  const gains = deltas.map((d) => (d > 0 ? d : 0));
-  const losses = deltas.map((d) => (d < 0 ? -d : 0));
-  const wilderEma = (vals: number[], p: number): number[] => {
-    if (vals.length < p) return [];
-    const k = 1 / p;
-    const seed = vals.slice(0, p).reduce((a, b) => a + b, 0) / p;
-    const result = [seed];
-    for (let i = p; i < vals.length; i++) {
-      result.push(vals[i]! * k + result[result.length - 1]! * (1 - k));
-    }
-    return result;
-  };
-  const sg = wilderEma(gains, period);
-  const sl = wilderEma(losses, period);
-  if (!sg.length || !sl.length) return null;
-  const avgGain = sg[sg.length - 1]!;
-  const avgLoss = sl[sl.length - 1]!;
-  if (avgLoss === 0) return 100;
-  if (avgGain === 0) return 0;
-  return 100 - 100 / (1 + avgGain / avgLoss);
-}
-import {
-  getCurrentDeadline,
-  getNextDeadline,
-  classifyFilingStatus,
-} from "../../domain/services/financial-reports/earningsCalendar.js";
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Named constants
-// ─────────────────────────────────────────────────────────────────────────────
-
-/** Net bearish weight threshold below which a stock is flagged as a bearish warning. */
-export const BEARISH_WARNING_THRESHOLD = -2.0;
+// ── Re-exports (backward compatibility — FACTORY-APP-split-assembleBriefing) ──
+export { BEARISH_WARNING_THRESHOLD } from "./briefing/queryEvidenceTopScores.js";
+export { defaultComputeTa } from "./briefing/defaultComputeTa.js";
+/**
+ * Test-only export: exposes the raw (throwing) queryForeignFlowSummary for
+ * unit tests that need to exercise the SQL filter logic with an injected
+ * in-memory DB.
+ * @internal
+ */
+export const queryForeignFlowSummary_TEST = queryForeignFlowSummary;
+export type {
+  GlobalSnapshot,
+  TopStory,
+  BriefingAlert,
+  WatchlistEntry,
+  NewReport,
+  VnIndexSnapshot,
+  InsiderBriefingRow,
+  ForeignFlowBriefingRow,
+  TaSignal,
+  BctcDeadlineRow,
+  EvidenceScoreBriefingRow,
+  MacroIndicator,
+} from "./briefing/types.js";
+import type {
+  GlobalSnapshot,
+  TopStory,
+  BriefingAlert,
+  WatchlistEntry,
+  NewReport,
+  VnIndexSnapshot,
+  InsiderBriefingRow,
+  ForeignFlowBriefingRow,
+  TaSignal,
+  BctcDeadlineRow,
+  EvidenceScoreBriefingRow,
+  MacroIndicator,
+  TopConviction,
+} from "./briefing/types.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public types
 // ─────────────────────────────────────────────────────────────────────────────
-
-/** Global market snapshot from commodity_prices table (VIX, DXY, S&P500, Hang Seng). */
-export interface GlobalSnapshot {
-  vix: number;
-  dxy: number;
-  sp500: number;
-  hangSeng: number;
-  fetchedAt: string;
-  /** Previous row's VIX — for delta arrow display. */
-  prevVix?: number;
-  /** Previous row's DXY — for delta arrow display. */
-  prevDxy?: number;
-  /** Previous row's S&P500 — for delta arrow display. */
-  prevSp500?: number;
-  /** Previous row's Hang Seng — for delta arrow display. */
-  prevHangSeng?: number;
-}
-
-/** One top story from rag_analyses. */
-export interface TopStory {
-  title: string;
-  level: string;
-  sentiment: string;
-  impactScore: number;
-}
-
-/** A condensed alert entry for the briefing. */
-export interface BriefingAlert {
-  severity: string;
-  message: string;
-  /** Stock codes affected by this alert */
-  stocks: string[];
-}
-
-/** One watchlist entry for the briefing. */
-export interface WatchlistEntry {
-  code: string;
-  domain: string;
-  /** Current price in VND, if available */
-  price?: number;
-  /** Percentage change from previous close, if available */
-  changePct?: number;
-  /**
-   * 5-character ASCII sparkline of the last 5 trading days.
-   * Uses Unicode block characters ▁▂▃▄▅▆▇█ (low → high).
-   * "—" when fewer than 2 historical data points are available.
-   */
-  sparkline?: string;
-}
-
-/** One new financial report since midnight. */
-export interface NewReport {
-  code: string;
-  period: string;
-}
-
-/** VN-Index snapshot. */
-export interface VnIndexSnapshot {
-  price: number;
-  /** Absolute point change from previous close (Math.round(price - previousPrice)). */
-  change?: number;
-  changePct: number;
-  /** ISO 8601 timestamp when the price was fetched (from market_prices.fetched_at or hose fetch). Absent on legacy snapshots. */
-  fetchedAt?: string;
-}
-
-/** Insider transaction row for the briefing enrichment (Step 14). */
-export interface InsiderBriefingRow {
-  /** Stock ticker, e.g. "VCB" */
-  code: string;
-  /** "buy" | "sell" | "other" */
-  type: string;
-  /** executed_volume from insider_transactions */
-  executedVolume: number;
-  /** insider_name from insider_transactions */
-  insiderName: string;
-  /** from_date (YYYY-MM-DD) from insider_transactions */
-  fromDate: string;
-}
-
-/** Foreign flow row for the briefing enrichment (Step 15). */
-export interface ForeignFlowBriefingRow {
-  /** Stock ticker */
-  code: string;
-  /** "net_buy" | "net_sell" */
-  direction: "net_buy" | "net_sell";
-  /** foreign_volume for the queried date (raw signed value, abs in display) */
-  foreignVolume: number;
-  /** Date of the data point (YYYY-MM-DD, derived from fetched_at) */
-  date: string;
-}
-
-/** TA signal for one watchlist ticker (Step 17). */
-export interface TaSignal {
-  /** Stock ticker, e.g. "VCB" */
-  code: string;
-  /** RSI(14) value, or null when fewer than 8 candles available (adaptive RSI period) */
-  rsi14: number | null;
-  /** RSI classification: strict > 70 = overbought, < 30 = oversold, else neutral */
-  rsiStatus: "overbought" | "oversold" | "neutral";
-  /** SMA20 value, or null when fewer than 8 candles available (adaptive MA period) */
-  ma20: number | null;
-  /** Price position relative to MA20: "above" | "below" | "neutral" (when ma20 null or equal) */
-  priceVsMa20: "above" | "below" | "neutral";
-  /** Last known price (last candle close), or null when no data */
-  currentPrice: number | null;
-}
-
-/** One BCTC deadline row for watchlist stocks with SAP_DEN or QUA_HAN status. */
-export interface BctcDeadlineRow {
-  /** Watchlist ticker */
-  code: string;
-  /** Sector domain — drives extended deadline for banking/insurance */
-  domain: string;
-  /** Quarter number from DeadlineInfo.quarter */
-  quarter: 1 | 2 | 3 | 4;
-  /** Fiscal year from DeadlineInfo.year */
-  year: number;
-  /** ISO date string YYYY-MM-DD of statutory deadline */
-  deadline: string;
-  /** Negative = overdue; 0–14 = imminent */
-  daysUntilDeadline: number;
-  status: "SAP_DEN" | "QUA_HAN";
-}
-
-/** Evidence score row for the briefing enrichment (Step 16). */
-export interface EvidenceScoreBriefingRow {
-  /** Stock ticker */
-  code: string;
-  /** bullish_score - bearish_score */
-  netScore: number;
-  /** Raw bullish_score */
-  bullishScore: number;
-  /** Raw bearish_score */
-  bearishScore: number;
-  /** fragment_count for this score row */
-  fragmentCount: number;
-  /** score_date (YYYY-MM-DD) */
-  scoreDate: string;
-}
-
-/** Macro indicator status for the briefing dashboard. */
-export interface MacroIndicator {
-  name: string;
-  value: number;
-  unit: string;
-  /** σ-based status (e.g., "bình thường", "cao bất thường +2.3σ") */
-  status: string;
-}
 
 /**
  * Structured daily market digest.
@@ -270,7 +112,7 @@ export interface DailyBriefing {
   /** Unresolved HIGH/CRITICAL alerts from previous session (not yet read) */
   unresolvedAlerts: BriefingAlert[];
   /** Top conviction signal — cross-validated strongest signal for today */
-  topConviction: { code: string; score: number; direction: string; summary: string } | null;
+  topConviction: TopConviction | null;
   /** HIGH/CRITICAL prediction market signals from the last 24h (crowd-sourced early warnings) */
   predictionSignals: BriefingPredictionSignal[];
   /**
@@ -333,298 +175,6 @@ export interface AssembleBriefingOptions {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SQLite row types (internal)
-// ─────────────────────────────────────────────────────────────────────────────
-
-interface RagRow {
-  source_title: string | null;
-  level: string;
-  sentiment: string | null;
-  impact_score: number | null;
-}
-
-interface AlertRow {
-  severity: string;
-  message: string | null;
-  affected_actions_json: string | null;
-}
-
-interface WatchlistRow {
-  code: string;
-  domain: string;
-  price: number | null;
-  change_pct: number | null;
-}
-
-interface FinancialReportRow {
-  action_code: string;
-  period_type: string | null;
-  period_year: number | null;
-}
-
-interface PriceHistoryRow {
-  price: number;
-}
-
-interface InsiderTransactionRow {
-  code: string;
-  type: string;
-  executed_volume: number;
-  insider_name: string;
-  from_date: string;
-}
-
-interface VnstatsRow {
-  code: string;
-  date: string;
-  foreign_volume: number;
-}
-
-interface EvidenceScoreRow {
-  code: string;
-  score_date: string;
-  bullish_score: number;
-  bearish_score: number;
-  fragment_count: number;
-}
-
-interface OpenPositionRow {
-  code: string;
-  shares: number;
-  avg_price: number;
-}
-
-/** Internal: one daily price row — day TEXT, close_price REAL, volume REAL. */
-interface CandleRow {
-  day: string;
-  close_price: number;
-  volume: number;
-}
-
-/** Internal: filing date result from financial_reports query. */
-interface FiledAtRow {
-  filed_at: string | null;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Helpers
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Query insider_transactions for watchlist stocks active in the last 24h.
- * Returns at most 3 rows ordered by executed_volume DESC.
- * Returns [] when watchlist is empty or no rows match.
- */
-function queryInsiderRecent(
-  db: Database,
-  watchlistCodes: string[],
-): InsiderBriefingRow[] {
-  if (watchlistCodes.length === 0) return [];
-  const since24h = new Date(Date.now() - 24 * 3600_000).toISOString();
-  const placeholders = sqlInClause(watchlistCodes.length);
-  const rows = db
-    .prepare<InsiderTransactionRow, (string | number)[]>(`
-      SELECT code, type, executed_volume, insider_name, from_date
-      FROM insider_transactions
-      WHERE fetched_at >= ?
-        AND code IN (${placeholders})
-      ORDER BY executed_volume DESC
-      LIMIT 3
-    `)
-    .all(since24h, ...watchlistCodes);
-  return rows.map((r) => ({
-    code: r.code,
-    type: r.type,
-    executedVolume: r.executed_volume,
-    insiderName: r.insider_name,
-    fromDate: r.from_date,
-  }));
-}
-
-/**
- * Query vnstock_trading_stats for the most-recent foreign_volume per watchlist stock.
- * Returns top 3 net-buy + top 3 net-sell rows (up to 6 total).
- * Excludes rows where foreign_volume = 0, NULL, or the sentinel ±9999999.
- * Returns [] when watchlist is empty or no qualifying rows exist.
- */
-function queryForeignFlowSummary(
-  db: Database,
-  watchlistCodes: string[],
-): ForeignFlowBriefingRow[] {
-  if (watchlistCodes.length === 0) return [];
-  const placeholders = sqlInClause(watchlistCodes.length);
-  const rows = db
-    .prepare<VnstatsRow, (string | number)[]>(`
-      SELECT code,
-             substr(fetched_at, 1, 10) AS date,
-             foreign_volume
-      FROM vnstock_trading_stats
-      WHERE code IN (${placeholders})
-        AND foreign_volume IS NOT NULL
-        AND foreign_volume != 0
-        AND ABS(foreign_volume) != 9999999
-        AND (code, fetched_at) IN (
-              SELECT code, MAX(fetched_at)
-              FROM vnstock_trading_stats
-              WHERE code IN (${placeholders})
-              GROUP BY code
-            )
-      ORDER BY foreign_volume DESC
-    `)
-    .all(...watchlistCodes, ...watchlistCodes);
-
-  const netBuyRows = rows
-    .filter((r) => r.foreign_volume > 0)
-    .slice(0, 3)
-    .map((r): ForeignFlowBriefingRow => ({
-      code: r.code,
-      direction: "net_buy",
-      foreignVolume: r.foreign_volume,
-      date: r.date,
-    }));
-
-  // rows is ordered DESC so most-negative values are at the end
-  const netSellRows = rows
-    .filter((r) => r.foreign_volume < 0)
-    .slice(-3)
-    .map((r): ForeignFlowBriefingRow => ({
-      code: r.code,
-      direction: "net_sell",
-      foreignVolume: r.foreign_volume,
-      date: r.date,
-    }));
-
-  return [...netBuyRows, ...netSellRows];
-}
-
-/**
- * Test-only export: exposes queryForeignFlowSummary for unit tests that
- * need to exercise the SQL filter logic with an injected in-memory DB.
- * @internal
- */
-export const queryForeignFlowSummary_TEST = queryForeignFlowSummary;
-
-/**
- * Query evidence_scores for the most-recent score per watchlist stock.
- * Returns top 3 bullish leaders (netScore > 0, fragment_count >= 1) +
- * all bearish warnings (netScore < BEARISH_WARNING_THRESHOLD, fragment_count >= 1).
- * Deduplicates: bearish takes priority if a stock qualifies for both.
- * Returns [] when watchlist is empty or no qualifying rows exist.
- */
-function queryEvidenceTopScores(
-  db: Database,
-  watchlistCodes: string[],
-): EvidenceScoreBriefingRow[] {
-  if (watchlistCodes.length === 0) return [];
-  const placeholders = sqlInClause(watchlistCodes.length);
-  const rows = db
-    .prepare<EvidenceScoreRow, (string | number)[]>(`
-      SELECT stock AS code,
-             score_date,
-             bullish_score,
-             bearish_score,
-             fragment_count
-      FROM evidence_scores
-      WHERE stock IN (${placeholders})
-        AND (stock, score_date) IN (
-              SELECT stock, MAX(score_date)
-              FROM evidence_scores
-              WHERE stock IN (${placeholders})
-              GROUP BY stock
-            )
-    `)
-    .all(...watchlistCodes, ...watchlistCodes);
-
-  const enriched = rows
-    .filter((r) => r.fragment_count >= 1)
-    .map((r) => ({
-      code: r.code,
-      netScore: r.bullish_score - r.bearish_score,
-      bullishScore: r.bullish_score,
-      bearishScore: r.bearish_score,
-      fragmentCount: r.fragment_count,
-      scoreDate: r.score_date,
-    }));
-
-  const bearishWarnings = enriched.filter(
-    (r) => r.netScore < BEARISH_WARNING_THRESHOLD,
-  );
-  const bearishCodes = new Set(bearishWarnings.map((r) => r.code));
-
-  const bullishLeaders = enriched
-    .filter((r) => r.netScore > 0 && !bearishCodes.has(r.code))
-    .sort((a, b) => b.netScore - a.netScore)
-    .slice(0, 3);
-
-  return [...bullishLeaders, ...bearishWarnings];
-}
-
-/**
- * Default TA computation for one ticker: queries daily_ohlcv for the last 60
- * calendar days, delegates RSI(14) and MA20 to the canonical Go TA engine at
- * port 5003, and classifies signals.
- *
- * RSIFIX-2: rewired from TS-local computeRSILocal to Go computeTAIndicators so
- * that evening_summary RSI agrees with alert-block RSI to ≤0.1 (same Wilder
- * algorithm, same candle window).
- *
- * Min-candle gate: 35 (Go convergence recommendation — ta-engine-contract.md § 4.3).
- * Candle window: date-windowed `date >= date(now,-60 days)` matching taAlertScanJob.
- * Synthetic market_prices_history fallback: REMOVED (fail-closed is honest).
- * Stub-bar guard: rejects last candle with close<=0 or volume<=0.
- *
- * Returns null when:
- *   - fewer than 35 candles in daily_ohlcv (gate)
- *   - last candle is a stub bar (close<=0 or volume<=0)
- *   - Go TA service is unreachable or returns no RSI (fail-closed)
- */
-export async function defaultComputeTa(code: string, db: Database): Promise<TaSignal | null> {
-  const rows = db.query<CandleRow, [string]>(
-    `SELECT date AS day, close AS close_price, volume
-       FROM daily_ohlcv
-      WHERE date >= date('now', '-60 days')
-        AND code = ?
-      ORDER BY date ASC`,
-  ).all(code);
-
-  // Min-candle gate: 35 for Go Wilder convergence (ta-engine-contract.md § 4.3)
-  if (rows.length < 35) return null;
-
-  // Stub-bar guard: reject if last candle is a placeholder bar
-  const lastRow = rows[rows.length - 1]!;
-  if (!lastRow || lastRow.close_price <= 0 || lastRow.volume <= 0) return null;
-
-  const closes = rows.map((r) => r.close_price);
-  const currentPrice = closes[closes.length - 1] ?? null;
-
-  // Delegate to Go TA engine (pure-compute path: closes[] provided)
-  let taResult;
-  try {
-    taResult = await computeTAIndicators({ code, closes });
-  } catch {
-    // Go service unreachable → fail-closed (honest null, same as alert-block)
-    return null;
-  }
-
-  const rsi14 = taResult.rsi ?? null;
-  const ma20 = taResult.ma20 ?? computeMALocal(closes, Math.min(20, closes.length));
-
-  const rsiStatus: TaSignal["rsiStatus"] =
-    rsi14 === null ? "neutral"
-    : rsi14 > 70   ? "overbought"
-    : rsi14 < 30   ? "oversold"
-    :                "neutral";
-
-  const priceVsMa20: TaSignal["priceVsMa20"] =
-    ma20 === null || currentPrice === null ? "neutral"
-    : currentPrice > ma20                  ? "above"
-    : currentPrice < ma20                  ? "below"
-    :                                        "neutral";
-
-  return { code, rsi14, rsiStatus, ma20, priceVsMa20, currentPrice };
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // Main exported function
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -651,21 +201,14 @@ export async function assembleBriefing(
 }
 
 /**
- * Internal implementation of assembleBriefing.
+ * Internal implementation of assembleBriefing — thin 19-step sequencer.
  *
- * Assembles a structured morning briefing for the Vietnamese market day.
- *
- * Steps (all DB queries run against the injected `db`; best-effort calls
- * are wrapped in try/catch so a single failure never aborts the briefing):
- *
- *   1. pollNews() — best-effort pre-fetch of fresh news
- *   2. fetchVnIndex() — best-effort VN-Index snapshot
- *   3. Query top 5 rag_analyses since midnight GMT+7 sorted by impact_score
- *   4. Query unread alerts from the last 12 hours
- *   5. Query all watchlist stocks joined with latest market_prices
- *   6. Query new financial_reports since midnight GMT+7
- *   7. Persist briefing JSON to briefingsDir/YYYY-MM-DD.json
- *   8. Return DailyBriefing
+ * Each step's query/compute logic lives in usecases/briefing/; this function
+ * only resolves shared inputs (db, midnight boundary, watchlist rows),
+ * invokes each step function in order, and assembles + persists the result.
+ * Per-step error isolation is now encapsulated INSIDE each step function
+ * (same catch/log behavior as before the split — just co-located with the
+ * step's own logic rather than centralized here).
  *
  * @param options - Injectable dependencies; all are optional for production use.
  * @returns       - Structured DailyBriefing object.
@@ -673,7 +216,6 @@ export async function assembleBriefing(
 async function _assembleBriefingImpl(
   options: AssembleBriefingOptions = {},
 ): Promise<DailyBriefing> {
-  // Resolve DB lazily (avoid importing getDb at module level for testability)
   const db =
     options.db ??
     (await (async () => {
@@ -682,594 +224,36 @@ async function _assembleBriefingImpl(
     })());
 
   const briefingsDir = options.briefingsDir ?? "./data/briefings";
-
-  // ── Step 1: Best-effort pollNews ─────────────────────────────────────────
-  const pollFn =
-    options.pollNewsFn ??
-    (async () => {
-      const { pollNews } = await import("./pollNews.js");
-      return pollNews({ db });
-    });
-
-  try {
-    await pollFn();
-  } catch (err) {
-    logger.warn("[assembleBriefing] pollNews failed — continuing without fresh data", {
-      error: err instanceof Error ? err.message : String(err),
-    });
-  }
-
-  // ── Step 2: Best-effort VN-Index ─────────────────────────────────────────
-  const vnIndexFn =
-    options.fetchVnIndexFn ??
-    (async () => {
-      try {
-        const { fetchVnIndex } = await import(
-          "../../infrastructure/fetchers/hose.js"
-        );
-        const result = await fetchVnIndex();
-        if (result) {
-          const snap: VnIndexSnapshot = {
-            price: result.price,
-            changePct: result.changePct,
-          };
-          if (result.previousPrice != null && result.previousPrice !== 0) {
-            snap.change = Math.round(result.price - result.previousPrice);
-          }
-          return snap;
-        }
-        return null;
-      } catch (err) {
-        logger.warn("[assembleBriefing] fetchVnIndex failed", {
-          error: err instanceof Error ? err.message : String(err),
-        });
-        return null;
-      }
-    });
-
-  let vnIndex: VnIndexSnapshot | undefined;
-  try {
-    const result = await vnIndexFn();
-    if (result !== null && result !== undefined) {
-      vnIndex = result;
-    }
-  } catch (err) {
-    logger.warn("[assembleBriefing] fetchVnIndex failed", {
-      error: err instanceof Error ? err.message : String(err),
-    });
-    vnIndex = undefined;
-  }
-
-  // ── Step 3: Top 5 stories since midnight ─────────────────────────────────
   const midnight = midnightVietnamAsUtc();
 
-  const ragRows = db
-    .prepare<RagRow, [string]>(`
-      SELECT source_title, level, sentiment, impact_score
-      FROM rag_analyses
-      WHERE created_at >= ?
-      ORDER BY impact_score DESC
-      LIMIT 5
-    `)
-    .all(midnight);
+  await runPollNewsStep(db, options.pollNewsFn);
+  const vnIndex = await runVnIndexStep(options.fetchVnIndexFn);
 
-  const topStories: TopStory[] = ragRows.map((row) => ({
-    title: row.source_title ?? "(no title)",
-    level: row.level,
-    sentiment: row.sentiment ?? "neutral",
-    impactScore: row.impact_score ?? 0,
-  }));
+  const topStories = queryTopStories(db, midnight);
+  const alerts = queryUnreadAlerts(db);
+  const { watchlistRows, watchlistSummary } = queryWatchlistSummary(db);
+  const newReports = queryNewReports(db, midnight);
+  const macroSnapshot = await queryMacroSnapshot();
+  const sensitiveWarnings = await querySensitiveWarnings();
+  const trackedCommodities = await queryTrackedCommodities(db);
 
-  // ── Step 4: Unread alerts from last 12 hours ─────────────────────────────
-  const since12h = new Date(Date.now() - 12 * 3600_000).toISOString();
+  autoResolveStaleAlerts(db);
+  const unresolvedAlerts = queryUnresolvedAlerts(db);
 
-  const alertRows = db
-    .prepare<AlertRow, [string]>(`
-      SELECT severity, message, affected_actions_json
-      FROM alerts
-      WHERE triggered_at >= ?
-      ORDER BY triggered_at DESC
-    `)
-    .all(since12h);
+  const topConviction = await computeTopConviction(db, watchlistRows);
+  const predictionSignals = await queryPredictionSignals(db);
+  const portfolioPnl = await computePortfolioPnlStep(db);
 
-  const alerts: BriefingAlert[] = alertRows.map((row) => ({
-    severity: row.severity,
-    message: row.message ?? "",
-    stocks: parseAffectedCodes(row.affected_actions_json),
-  }));
+  const watchlistCodes = watchlistRows.map((r) => r.code);
+  const insiderRecent = queryInsiderRecent(db, watchlistCodes);
+  const foreignFlowSummary = queryForeignFlowSummaryStep(db, watchlistCodes);
+  const evidenceTopScores = queryEvidenceTopScores(db, watchlistCodes);
+  const taSummary = await computeTaSummary(db, watchlistRows, options.computeTaFn);
 
-  // ── Step 5: Watchlist with latest prices ─────────────────────────────────
-  const watchlistRows = db
-    .prepare<WatchlistRow, []>(`
-      SELECT w.code, w.domain,
-             COALESCE(
-               (SELECT mp.price FROM market_prices mp WHERE mp.code = w.code AND mp.price IS NOT NULL AND mp.price > 0 AND mp.updated_at >= datetime('now', '-3 days')),
-               (SELECT d.close FROM daily_ohlcv d WHERE d.code = w.code ORDER BY d.date DESC LIMIT 1)
-             ) AS price,
-             (SELECT mp2.change_pct FROM market_prices mp2 WHERE mp2.code = w.code AND mp2.price IS NOT NULL AND mp2.price > 0 AND mp2.updated_at >= datetime('now', '-3 days')) AS change_pct
-      FROM watchlist w
-      ORDER BY w.code
-    `)
-    .all();
+  const today = (options.nowFn ?? (() => new Date()))();
+  const upcomingDeadlines = queryUpcomingDeadlines(db, watchlistRows, today);
+  const globalSnapshot = queryGlobalSnapshot(db);
 
-  // Check whether the history table exists before querying it
-  const historyTableExists = (() => {
-    try {
-      const row = db
-        .query<{ name: string }, [string]>(
-          "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
-        )
-        .get("market_prices_history");
-      return row !== null;
-    } catch {
-      return false;
-    }
-  })();
-
-  // Pre-fetch 5-day price history for every watchlist stock (oldest first).
-  // The result is a Map<code, number[]> for efficient lookup below.
-  const historyMap = new Map<string, number[]>();
-  if (historyTableExists) {
-    const histStmt = db.prepare<PriceHistoryRow, [string]>(`
-      SELECT price
-      FROM (
-        SELECT price, fetched_at
-        FROM market_prices_history
-        WHERE code = ?
-        ORDER BY fetched_at DESC
-        LIMIT 5
-      )
-      ORDER BY fetched_at ASC
-    `);
-    for (const row of watchlistRows) {
-      try {
-        const rows = histStmt.all(row.code);
-        historyMap.set(row.code, rows.map((r) => r.price));
-      } catch {
-        // history table may exist without required columns — skip silently
-      }
-    }
-  }
-
-  const watchlistSummary: WatchlistEntry[] = watchlistRows.map((row) => {
-    const entry: WatchlistEntry = {
-      code: row.code,
-      domain: row.domain,
-    };
-    if (row.price != null) entry.price = row.price;
-    if (row.change_pct != null) entry.changePct = row.change_pct;
-
-    const history = historyMap.get(row.code) ?? [];
-    entry.sparkline = generateSparkline(history, 5);
-
-    return entry;
-  });
-
-  // ── Step 6: New financial reports since midnight ──────────────────────────
-  const reportRows = db
-    .prepare<FinancialReportRow, [string]>(`
-      SELECT action_code, period_type, period_year
-      FROM financial_reports
-      WHERE parsed_at >= ?
-      ORDER BY parsed_at DESC
-    `)
-    .all(midnight);
-
-  const newReports: NewReport[] = reportRows.map((row) => ({
-    code: row.action_code,
-    period:
-      row.period_type && row.period_year
-        ? `${row.period_year}-${row.period_type}`
-        : String(row.period_year ?? "unknown"),
-  }));
-
-  // ── Step 7: Macro dashboard (σ-based) ──────────────────────────────────────
-  // FIX-ERRAUDIT-W2-MCP-DATALAYER: was bare catch{ /* best-effort */ } → macroSnapshot=[]
-  // served as "no macro". Now uses runSectionAsync → tagged-degraded on error,
-  // no-data ONLY on genuine empty (no macro stats in DB). Never serves [] as real data.
-  let macroSnapshot: MacroIndicator[] = [];
-  const macroSectionResult = await runSectionAsync(async () => {
-    const { getAllMacroStats } = await import("../../infrastructure/db/macroStatsStore.js");
-    const { classifyDeviation } = await import("../../domain/services/macroThresholds.js");
-    const stats = getAllMacroStats();
-    return stats.map((s) => {
-      const dev = classifyDeviation(s);
-      return {
-        name: s.name,
-        value: s.current,
-        unit: s.name.includes("Pct") ? "%" : s.name.includes("usd") ? "USD" : "",
-        status: dev.summary,
-      };
-    });
-  }, "assembleBriefing.step7.macroSnapshot");
-  if (macroSectionResult.ok) {
-    macroSnapshot = macroSectionResult.value;
-  } else if (macroSectionResult.reason === "error") {
-    logger.warn("[assembleBriefing] step7 macroSnapshot degraded", { ctx: macroSectionResult.ctx });
-    // macroSnapshot stays [] — tagged-degraded in log; consumer sees empty = (lỗi truy vấn)
-  }
-  // reason:'no-data' = genuine empty (no macro stats yet) — stays [] silently
-
-  // ── Step 8: Sensitive date warnings ─────────────────────────────────────────
-  let sensitiveWarnings: string[] = [];
-  try {
-    const { detectSensitiveDates } = await import("../../domain/services/financial-reports/priceNewsValidator.js");
-    sensitiveWarnings = detectSensitiveDates();
-  } catch (err) {
-    // Non-data step (pure date math) — failLoud so we don't silently skip warnings
-    failLoud(err, "assembleBriefing.step8.sensitiveWarnings");
-  }
-
-  // ── Step 9: Auto-tracked commodities ────────────────────────────────────────
-  // FIX-COMMODITY-WTI-DELTA-CORRUPT (I10): switched from listTrackedIndicators()
-  // (no freshness signal) to listTrackedIndicatorsFromDb() (DSI-MACRO-PHANTOM-
-  // STALE-GUARD's isStale flag, 4h threshold) — news-mined indicators like
-  // wti_crude_usd have no live fetcher and can freeze for months once a source
-  // stops mentioning them (live case: stuck 102+ days). Never silently serve a
-  // frozen value as "current" — surface the staleness in the briefing text instead.
-  let trackedCommodities: { indicator: string; value: number; unit: string; dataPoints: number; previousValue?: number; isStale?: boolean }[] = [];
-  const commoditySectionResult = await runSectionAsync(async () => {
-    const { listTrackedIndicatorsFromDb, getIndicatorHistory } = await import("../../infrastructure/db/commodityTracker.js");
-    return listTrackedIndicatorsFromDb(db).map((t) => {
-      // Fetch last 2 values for this indicator to compute delta direction.
-      // history[0] = latest, history[1] = previous (ordered DESC).
-      const history = getIndicatorHistory(t.indicator, 2);
-      const previousValue = history.length >= 2 ? history[1]?.value : undefined;
-      return {
-        indicator: t.indicator,
-        value: t.value,
-        unit: t.unit,
-        dataPoints: t.dataPoints,
-        isStale: t.isStale,
-        ...(previousValue !== undefined ? { previousValue } : {}),
-      };
-    });
-  }, "assembleBriefing.step9.trackedCommodities");
-  if (commoditySectionResult.ok) {
-    trackedCommodities = commoditySectionResult.value;
-  } else if (commoditySectionResult.reason === "error") {
-    logger.warn("[assembleBriefing] step9 trackedCommodities degraded", { ctx: commoditySectionResult.ctx });
-  }
-
-  // ── Step 10: Auto-resolve stale low/medium alerts (72h) ──────────────────
-  try {
-    db.exec(`
-      UPDATE alerts
-      SET resolved_at = datetime('now'), resolution_notes = 'Auto-resolved: stale >72h'
-      WHERE severity IN ('low', 'medium')
-        AND resolved_at IS NULL
-        AND triggered_at < datetime('now', '-72 hours')
-    `);
-  } catch (err) {
-    // schema may not have resolved_at column in older DBs — log but don't abort
-    failLoud(err, "assembleBriefing.step10.autoResolveAlerts");
-  }
-
-  // ── Step 10b: Unresolved HIGH/CRITICAL alerts ─────────────────────────────
-  let unresolvedAlerts: BriefingAlert[] = [];
-  try {
-    const unresolvedRows = db
-      .prepare<AlertRow, []>(`
-        SELECT severity, message, affected_actions_json
-        FROM alerts
-        WHERE severity IN ('high', 'critical')
-          AND resolved_at IS NULL
-        GROUP BY message
-        ORDER BY MAX(triggered_at) DESC
-        LIMIT 5
-      `)
-      .all();
-    // App-level prefix-dedup: BCTC overdue rows fire weekly with updated day-counts
-    // ("BID (5d)" vs "BID (6d)"), so GROUP BY message fails to merge them.
-    // Keep highest triggered_at per 40-char prefix (SQL already orders MAX(triggered_at) DESC).
-    const seen = new Map<string, { severity: string; message: string; stocks: string[] }>();
-    for (const row of unresolvedRows) {
-      const msg = row.message ?? "";
-      const prefix = msg.slice(0, 40);
-      if (!seen.has(prefix)) {
-        seen.set(prefix, {
-          severity: row.severity,
-          message: msg,
-          stocks: parseAffectedCodes(row.affected_actions_json),
-        });
-      }
-    }
-    unresolvedAlerts = Array.from(seen.values()).slice(0, 5);
-  } catch (err) {
-    // FIX-ERRAUDIT-W2-MCP-DATALAYER: was bare catch → silently empty alerts
-    failLoud(err, "assembleBriefing.step10b.unresolvedAlerts");
-  }
-
-  // ── Step 11: Top conviction signal from watchlist ──────────────────────────
-  let topConviction: DailyBriefing["topConviction"] = null;
-  try {
-    const { computeConviction } = await import("../../domain/services/convictionScorer.js");
-    const { getImfMacroScoreForConviction } = await import("../services/imfConvictionBridge.js");
-
-    // Dimension 7: IMF macro — now returns number|undefined (never fabricates 0).
-    // undefined = drop-dimension (DB error or no fresh rows).
-    const briefingImfScore: number | undefined = getImfMacroScoreForConviction(db);
-
-    let bestScore = 0;
-
-    for (const stock of watchlistRows) {
-      if (stock.price == null || stock.change_pct == null) continue;
-      const result = computeConviction({
-        code: stock.code,
-        changePct: stock.change_pct,
-        ...(briefingImfScore !== undefined ? { imfMacroScore: briefingImfScore } : {}),
-      });
-      if (result.score > bestScore && result.level !== "weak") {
-        bestScore = result.score;
-        topConviction = {
-          code: result.code,
-          score: result.score,
-          direction: result.direction,
-          summary: result.summary,
-        };
-      }
-    }
-  } catch (err) {
-    // FIX-ERRAUDIT-W2-MCP-DATALAYER: was bare catch → silently no topConviction
-    failLoud(err, "assembleBriefing.step11.topConviction");
-  }
-
-  // ── Step 12: Prediction market signals (HIGH/CRITICAL only, last 24h) ────────
-  let predictionSignals: BriefingPredictionSignal[] = [];
-  try {
-    const { getRecentPredictionSignals } = await import("../../infrastructure/db/predictionStore.js");
-    const allSignals = getRecentPredictionSignals(db, 24);
-    predictionSignals = allSignals.filter(
-      (s) => s.severity === "high" || s.severity === "critical",
-    );
-  } catch (err) {
-    // FIX-ERRAUDIT-W2-MCP-DATALAYER: was bare catch → silently empty prediction signals
-    failLoud(err, "assembleBriefing.step12.predictionSignals");
-  }
-
-  // ── Step 13a: Portfolio P&L snapshot ─────────────────────────────────────
-  let portfolioPnl: PortfolioPnlResult | null = null;
-  try {
-    const openPositions = db
-      .prepare<OpenPositionRow, []>(
-        `SELECT code, shares, avg_price FROM positions WHERE closed_at IS NULL`,
-      )
-      .all();
-
-    if (openPositions.length > 0) {
-      // Build a price map — market_prices preferred, daily_ohlcv fallback
-      const priceRows = db
-        .prepare<{ code: string; price: number }, []>(
-          `SELECT code, price FROM market_prices
-           WHERE price IS NOT NULL AND price > 0
-             AND updated_at >= datetime('now', '-3 days')
-           UNION ALL
-           SELECT code, close AS price FROM daily_ohlcv
-           WHERE (code, date) IN (SELECT code, MAX(date) FROM daily_ohlcv GROUP BY code)
-             AND code NOT IN (
-               SELECT code FROM market_prices
-               WHERE price IS NOT NULL AND price > 0
-                 AND updated_at >= datetime('now', '-3 days')
-             )`,
-        )
-        .all();
-      const priceMap = new Map(priceRows.map((r) => [r.code, r.price]));
-
-      const result = computePortfolioPnl(
-        openPositions.map((p) => ({
-          code: p.code,
-          shares: p.shares,
-          avgPrice: p.avg_price,
-        })),
-        priceMap,
-      );
-
-      portfolioPnl = result;
-
-      // Persist snapshot (best-effort)
-      try {
-        const { savePnlSnapshot } = await import("../../infrastructure/db/pnlSnapshotStore.js");
-        const snapshotDate = todayVietnam();
-        savePnlSnapshot(db, snapshotDate, result.items);
-      } catch (snapErr) {
-        logger.warn("[assembleBriefing] savePnlSnapshot failed", {
-          error: snapErr instanceof Error ? snapErr.message : String(snapErr),
-        });
-      }
-    }
-  } catch (pnlErr) {
-    logger.warn("[assembleBriefing] portfolioPnl step failed", {
-      error: pnlErr instanceof Error ? pnlErr.message : String(pnlErr),
-    });
-  }
-
-  // ── Step 14: Insider transactions (last 24h, watchlist only) ─────────────────
-  let insiderRecent: InsiderBriefingRow[] = [];
-  try {
-    insiderRecent = queryInsiderRecent(
-      db,
-      watchlistRows.map((r) => r.code),
-    );
-  } catch (insiderErr) {
-    logger.warn("[assembleBriefing] insiderRecent step failed", {
-      error: insiderErr instanceof Error ? insiderErr.message : String(insiderErr),
-    });
-  }
-
-  // ── Step 15: Foreign flow summary (previous trading day, watchlist only) ──────
-  let foreignFlowSummary: ForeignFlowBriefingRow[] = [];
-  try {
-    foreignFlowSummary = queryForeignFlowSummary(
-      db,
-      watchlistRows.map((r) => r.code),
-    );
-  } catch (ffErr) {
-    logger.warn("[assembleBriefing] foreignFlowSummary step failed", {
-      error: ffErr instanceof Error ? ffErr.message : String(ffErr),
-    });
-  }
-
-  // ── Step 16: Evidence top scores (bullish leaders + bearish warnings) ─────────
-  let evidenceTopScores: EvidenceScoreBriefingRow[] = [];
-  try {
-    evidenceTopScores = queryEvidenceTopScores(
-      db,
-      watchlistRows.map((r) => r.code),
-    );
-  } catch (esErr) {
-    logger.warn("[assembleBriefing] evidenceTopScores step failed", {
-      error: esErr instanceof Error ? esErr.message : String(esErr),
-    });
-  }
-
-  // ── Step 17: TA signals (non-neutral only) ─────────────────────────────────
-  let taSummary: TaSignal[] = [];
-  try {
-    const taFn = options.computeTaFn ?? defaultComputeTa;
-    const signals: TaSignal[] = [];
-    for (const row of watchlistRows) {
-      try {
-        const sig = await Promise.resolve(taFn(row.code, db));
-        if (sig !== null) signals.push(sig);
-      } catch { /* per-ticker failure — skip silently */ }
-    }
-    taSummary = signals.filter(
-      (s) => s.rsiStatus !== "neutral" || s.priceVsMa20 !== "neutral",
-    );
-  } catch (taErr) {
-    logger.warn("[assembleBriefing] taSummary step failed", {
-      error: taErr instanceof Error ? taErr.message : String(taErr),
-    });
-  }
-
-  // ── Step 18: BCTC upcoming deadlines ──────────────────────────────────────
-  let upcomingDeadlines: BctcDeadlineRow[] = [];
-  try {
-    const today = (options.nowFn ?? (() => new Date()))();
-
-    // Detect whether period_quarter column exists (may be absent in legacy DBs)
-    let hasPeriodQuarter = false;
-    try {
-      const cols = db.query<{ name: string }, []>(
-        "PRAGMA table_info(financial_reports)"
-      ).all();
-      hasPeriodQuarter = cols.some((c) => c.name === "period_quarter");
-    } catch { /* schema probe failed — use fallback */ }
-
-    const filedAtStmtByQuarter = hasPeriodQuarter
-      ? db.prepare<FiledAtRow, [string, number, number]>(`
-          SELECT MAX(parsed_at) AS filed_at
-          FROM financial_reports
-          WHERE action_code = ?
-            AND period_year = ?
-            AND period_quarter = ?
-        `)
-      : null;
-
-    const rows: BctcDeadlineRow[] = [];
-
-    // Helper: query whether a stock has filed for a given quarter/year
-    const queryFiledAt = (code: string, year: number, quarter: number): string | null => {
-      if (filedAtStmtByQuarter) {
-        const r = filedAtStmtByQuarter.get(code, year, quarter);
-        return r?.filed_at ?? null;
-      }
-      // Fallback: match period_type string e.g. 'Q1'
-      const periodType = `Q${quarter}`;
-      const r = db.prepare<FiledAtRow, [string, number, string]>(`
-        SELECT MAX(parsed_at) AS filed_at
-        FROM financial_reports
-        WHERE action_code = ?
-          AND period_year = ?
-          AND period_type = ?
-      `).get(code, year, periodType);
-      return r?.filed_at ?? null;
-    };
-
-    if (!hasPeriodQuarter) {
-      logger.warn("[assembleBriefing] Step 18: period_quarter column absent — using period_type fallback");
-    }
-
-    for (const row of watchlistRows) {
-      try {
-        // Pick the deadline closest to today (minimum |daysUntilDeadline|).
-        // This avoids surfacing stale overdue quarters when a new quarter is
-        // already within the SAP_DEN window.
-        //   - getNextDeadline  → next upcoming (SAP_DEN cases)
-        //   - getCurrentDeadline → last passed (QUA_HAN cases)
-        const nextInfo = getNextDeadline(today, row.domain);
-        const currentInfo = getCurrentDeadline(today, row.domain);
-
-        // Compute days until each candidate (negative = overdue)
-        const daysToCurrent = Math.floor(
-          (currentInfo.deadline.getTime() - today.getTime()) / (24 * 3600_000)
-        );
-        const daysToNext = Math.floor(
-          (nextInfo.deadline.getTime() - today.getTime()) / (24 * 3600_000)
-        );
-
-        // Pick the candidate with smallest absolute day distance to today.
-        // When they are the same quarter, pick either (same result).
-        const info =
-          Math.abs(daysToNext) <= Math.abs(daysToCurrent) ? nextInfo : currentInfo;
-
-        const filedAt = queryFiledAt(row.code, info.year, info.quarter);
-        const fs = classifyFilingStatus(today, {
-          ...info,
-          filingDate: filedAt,
-        });
-
-        if (fs.status === "SAP_DEN" || fs.status === "QUA_HAN") {
-          rows.push({
-            code: row.code,
-            domain: row.domain,
-            quarter: info.quarter,
-            year: info.year,
-            deadline: info.deadline.toISOString().slice(0, 10),
-            daysUntilDeadline: fs.daysUntilDeadline!,
-            status: fs.status,
-          });
-        }
-      } catch { /* per-stock failure — skip silently */ }
-    }
-
-    upcomingDeadlines = rows.sort(
-      (a, b) => a.daysUntilDeadline - b.daysUntilDeadline
-    );
-  } catch (deadlineErr) {
-    logger.warn("[assembleBriefing] upcomingDeadlines step failed", {
-      error: deadlineErr instanceof Error ? deadlineErr.message : String(deadlineErr),
-    });
-  }
-
-  // ── Step 19: Global market snapshot from commodity_prices ────────────────
-  let globalSnapshot: GlobalSnapshot | undefined;
-  try {
-    interface CpRow { vix: number; dxy: number; sp500: number; hang_seng: number; fetched_at: string }
-    const cpRow = db.prepare<CpRow, []>(
-      `SELECT vix, dxy, sp500, hang_seng, fetched_at FROM commodity_prices ORDER BY fetched_at DESC LIMIT 1`
-    ).get();
-    const cpRowPrev = db.prepare<CpRow, []>(
-      `SELECT vix, dxy, sp500, hang_seng, fetched_at FROM commodity_prices ORDER BY fetched_at DESC LIMIT 1 OFFSET 1`
-    ).get();
-    if (cpRow && (cpRow.vix !== 0 || cpRow.dxy !== 0 || cpRow.sp500 !== 0 || cpRow.hang_seng !== 0)) {
-      globalSnapshot = {
-        vix: cpRow.vix,
-        dxy: cpRow.dxy,
-        sp500: cpRow.sp500,
-        hangSeng: cpRow.hang_seng,
-        fetchedAt: cpRow.fetched_at,
-        ...(cpRowPrev ? {
-          prevVix: cpRowPrev.vix,
-          prevDxy: cpRowPrev.dxy,
-          prevSp500: cpRowPrev.sp500,
-          prevHangSeng: cpRowPrev.hang_seng,
-        } : {}),
-      };
-    }
-  } catch { /* best-effort: commodity_prices may not exist in all envs */ }
-
-  // ── Step 13: Persist briefing ─────────────────────────────────────────────
   const date = todayVietnam();
   const generatedAt = new Date().toISOString();
 
@@ -1296,32 +280,8 @@ async function _assembleBriefingImpl(
     generatedAt,
   };
 
-  try {
-    mkdirSync(briefingsDir, { recursive: true });
-    const filePath = join(briefingsDir, `${date}.json`);
-    writeFileSync(filePath, JSON.stringify(briefing, null, 2), "utf-8");
-    logger.info("[assembleBriefing] briefing persisted", { filePath });
-  } catch (err) {
-    logger.warn("[assembleBriefing] failed to persist briefing", {
-      error: err instanceof Error ? err.message : String(err),
-    });
-  }
-
-  // ── Step 14: Freshness gate — check if market prices are stale ─────────────
-  const isFresh = await isPriceFresh(db, "briefing");
-  const sendTelegramFn = options.sendTelegramFn;
-
-  if (!isFresh && sendTelegramFn) {
-    // Prices are stale — suppress MARKET send and alert WORK team
-    logger.warn("[assembleBriefing] freshness gate: prices >24h stale, suppressing MARKET send");
-    const row = db
-      .prepare<{ latest: string | null }, []>("SELECT MAX(updated_at) as latest FROM daily_ohlcv")
-      .get();
-    await sendTelegramFn(
-      "work",
-      `[FRESHNESS GATE] Briefing suppressed. Last price update: ${row?.latest ?? "unknown"}`
-    );
-  }
+  persistBriefing(briefing, briefingsDir);
+  await checkFreshnessGate(db, options.sendTelegramFn);
 
   return briefing;
 }
