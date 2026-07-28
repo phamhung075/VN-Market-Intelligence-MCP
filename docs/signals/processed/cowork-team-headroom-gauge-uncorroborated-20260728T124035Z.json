@@ -1,0 +1,25 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "flow-defect-report",
+  "priority": "high",
+  "createdAt": "2026-07-28T12:40:35Z",
+  "payload": {
+    "title": "pressure-state host_headroom_mb does not corroborate against real host memory, and it gates the degraded-mode fan-out threshold",
+    "observed": {
+      "host_headroom_mb_series": "4414 (2026-07-25T17:41Z) -> 2409 (12:23:55Z) -> 2009 (12:37:48Z)",
+      "real_host_free_series_100s": "6016 / 6140 / 6097 / 5990 / 6289 MB (free+inactive+speculative via vm_stat, 5 samples over 100s) — flat, no trend",
+      "docker_fleet_total": "~1083 MiB summed across all running containers"
+    },
+    "why_it_matters": "spawn-fanout Step 5.1 branches to degraded mode on host_headroom_mb < 1500. The gauge fell 2405 MB in ~19 hours of wall-clock and 400 MB in 14 minutes while actual host free memory stayed flat at ~6 GB. If the gauge keeps declining it will cross the 1500 floor and silently halve fan-out parallelism fleet-wide for a condition that does not exist.",
+    "not_yet_established": "Whether host_headroom_mb is measuring the Docker VM allocation rather than the host (a legitimately different quantity), or is genuinely drifting. Either way it is not the host, so the field name is at best misleading. A full bun test run (1231 files) completed inside the 12:23->12:37 window and is a confounder for that specific leg — but it does not explain the 4414->2409 leg.",
+    "what_is_real": "rag-service pinned at 765-767 MiB of a 768 MiB cap is independently confirmed via docker stats and is NOT this defect — it is tracked separately (router HIGH signal, 2026-07-28T12:19Z).",
+    "router_note": "Found only because the gauge was corroborated against the other plane before acting on it. Not minted as a board row — PO owns minting."
+  },
+  "_processed": {
+    "fingerprint": "b505ae3a1cd8a96fc33f8e0aec85263e4c63990eed428d5fdf9806cd63e8c06a",
+    "processedAt": "2026-07-28T12:45:24Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

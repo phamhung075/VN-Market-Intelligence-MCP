@@ -419,12 +419,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "FIX-NOTEBOOK-PRUNER-... handed to qa (row in review, qa_verify_mode=verify-committed). head reset idle so BOUNDED-1/SLS/RLC/QA-drain are reachable again.",
-    "updated_at": "2026-07-28T12:29:33Z",
-    "updated_by": "router (head=review strands every dispatch lane; Step 0b has no review branch)"
+    "status": "in_progress",
+    "active_task_id": "UC-GCP-P1",
+    "next_agent": "qa",
+    "next_action": "Review-Lane QA-Drain claim of UC-GCP-P1 — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have).",
+    "updated_at": "2026-07-28T12:45:44Z",
+    "updated_by": "dev-team (review-lane qa-drain)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -13723,34 +13723,6 @@
         "next_agent": "agent-father"
       },
       {
-        "id": "UC-GCP-P1",
-        "type": "CLEAN",
-        "title": "Consolidate the 4 commit-convention docs into ONE SSOT documenting the format actually in use + reconcile audit script + tree-map",
-        "status": "REVIEW",
-        "priority": "P1",
-        "size": "M",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "RESCOPE",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#git-ci-publish-P1",
-        "note": "SCOPE=verifier Rescope note. Rewrite docs/policies/commit-convention.md as single SSOT (slug task IDs, decide type vocab incl incident/role types), CARRY FORWARD the live heredoc `git commit -m`-only/never-`-a` rule (c47 root cause, merge-gate Control4). Delete the 3 sibling docs. Grep BOTH 'commit-convention.md §' AND path-only refs (two cite a nonexistent .claude/knowledge path). Update commit-convention-audit.sh predicates+VOCAB (or deprecate) and tree-map.md 4-file subtree (DAG invariant).",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "priority_bumped_from": "P2",
-        "priority_bumped_at": "2026-07-17T04:54:03Z",
-        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
-        "promoted_at": "2026-07-23T06:16:59Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "updated_at": "2026-07-23T06:31:33Z",
-        "claimed_at": "2026-07-23T06:16:59Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
-        "updated_by": "developer",
-        "review_note": "commit-convention.md rewritten as single-file SSOT (140L); 3 sibling docs deleted; 2 dangling .claude/knowledge path refs fixed (audit script + 2026-05-17 audit brief); commit-convention-audit.sh deprecated in place (0 live invocation paths confirmed); tree-map.md 4-file subtree collapsed to 1 node. Commits: 7dcf90919 (main), 8c6d71683 (memory/journal+notebook). Post-change grep confirms zero dangling refs outside historical/archival docs (left untouched by design). graphify --update could not run this session (no LLM API key in env) — flagged, not silently skipped."
-      },
-      {
         "id": "UC-GCP-P8",
         "type": "FIX",
         "title": "Stranded machine-state sweep: bounded converging-owner step on the dev-team tick (stranded-state-sweep.sh)",
@@ -16013,7 +15985,36 @@
         "review_note": "Premise confirmed at source: byte cap (LINE_CAP*60=12000B, TE-T24) already existed via context-bloat-backstop.sh with a detector only; notebook-auto-prune.sh's early-exit (:135) and loop-break (:174) were line-only, so the actuator never fired on the byte axis (alert-commander.md 632 bytes/line vs a 60 bytes/line budget). FIX: both stopping conditions now require lines<=LINE_CAP AND bytes<=BYTE_CAP. LINE_CAP read at runtime from docs/data/file-size-caps.json (same SSOT context-bloat-backstop.sh reads); BYTE_CAP=LINE_CAP*60 — never a second hardcoded 12000 literal (explicitly avoiding the USD/VND three-SSOT duplication class). Loop recount switched echo->printf %s\\n so byte count matches the final atomic write exactly. OPEN QUESTION decided: option [a] — kept the single-section safe-fail path unchanged (honest signal, no truncation), now reachable on the byte axis too; added byte_count/byte_cap to both safe-fail signal payloads for audit parity with the backstop hook. New scripts/agents-flow/notebook-auto-prune.test.sh, 4/4 PASS: T1 byte-axis regression (142L/30403B -> 49L/10166B, 2 sections remain, no safe-fail); T2 line-axis not regressed (250L/3920B -> 167L); T3 within-both-caps untouched (hash-identical); T4 single-section byte-only breach (67L/18145B, line cap NOT tripped -> hash-identical, notebook_single_section_overage_breach emitted with byte_cap:12000, no truncation). Existing test-notebook-auto-prune.sh (5/5) and context-bloat-backstop.test.sh (4/4) re-run clean, unaffected. Live validation: this very fix, applied to itself, correctly byte-pruned docs/agent-memory/notebooks/developer.md (49L/10324B post-prune) when this task own notebook entry pushed it over the byte cap while still under the line cap. CI: full bun test baseline established fresh (the 3-day-old 1-failure note had moved) = 14824 pass/40 skip/53 fail/1231 files/591s; confirmed 1408-tool-diacritics.test.ts:113 (owned by FIX-BDI-SHIPPING-STALE-404-GUARD) still among them, unchanged. Zero net new failures — this change touches 0 files under apps/mcp-server/. Cited as instance 13/sub-class 7 on SPIKE-SATURATED-COUNT-THRESHOLD-GATES-SWEEP — that row NOT closed. FOLLOW-UP FINDING, not fixed (out of this row's enumerated scope): scripts/agents-flow/notebook-linecap-sweep.sh (6h cron TE-T17 backstop) has its own independent line-only pre-filter before delegating to notebook-auto-prune.sh — a byte-over/line-under notebook written via a non-hook path (Bash heredoc/append) still will not reach the fixed logic through that cron path; flagging for PO/dispatcher to decide whether a follow-up task is warranted. Commits: fix(agents-flow/notebook-prune) implementation+test+docs, chore(memory/developer) notebook."
       }
     ],
-    "qa": [],
+    "qa": [
+      {
+        "id": "UC-GCP-P1",
+        "type": "CLEAN",
+        "title": "Consolidate the 4 commit-convention docs into ONE SSOT documenting the format actually in use + reconcile audit script + tree-map",
+        "status": "QA",
+        "priority": "P1",
+        "size": "M",
+        "zone": "cross-service/",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "RESCOPE",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#git-ci-publish-P1",
+        "note": "SCOPE=verifier Rescope note. Rewrite docs/policies/commit-convention.md as single SSOT (slug task IDs, decide type vocab incl incident/role types), CARRY FORWARD the live heredoc `git commit -m`-only/never-`-a` rule (c47 root cause, merge-gate Control4). Delete the 3 sibling docs. Grep BOTH 'commit-convention.md §' AND path-only refs (two cite a nonexistent .claude/knowledge path). Update commit-convention-audit.sh predicates+VOCAB (or deprecate) and tree-map.md 4-file subtree (DAG invariant).",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "priority_bumped_from": "P2",
+        "priority_bumped_at": "2026-07-17T04:54:03Z",
+        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
+        "promoted_at": "2026-07-23T06:16:59Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "updated_at": "2026-07-28T12:45:44Z",
+        "claimed_at": "2026-07-28T12:45:44Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "qa",
+        "updated_by": "developer",
+        "review_note": "commit-convention.md rewritten as single-file SSOT (140L); 3 sibling docs deleted; 2 dangling .claude/knowledge path refs fixed (audit script + 2026-05-17 audit brief); commit-convention-audit.sh deprecated in place (0 live invocation paths confirmed); tree-map.md 4-file subtree collapsed to 1 node. Commits: 7dcf90919 (main), 8c6d71683 (memory/journal+notebook). Post-change grep confirms zero dangling refs outside historical/archival docs (left untouched by design). graphify --update could not run this session (no LLM API key in env) — flagged, not silently skipped."
+      }
+    ],
     "_closed_signals_20260614": {
       "_by": "po-S50",
       "_at": "2026-06-14T14:45:14Z",

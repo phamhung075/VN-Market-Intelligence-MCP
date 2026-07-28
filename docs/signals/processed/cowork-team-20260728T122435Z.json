@@ -1,0 +1,30 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-tick",
+  "priority": "low",
+  "createdAt": "2026-07-28T12:24:35Z",
+  "payload": {
+    "tick": "2026-07-28T12:15Z",
+    "drift_min": 7,
+    "classification": "NO_FIRE",
+    "slots_due": [],
+    "one_shots": [],
+    "spawned": [],
+    "mode": "legacy (pressure-state was 2.9d stale at read)",
+    "note": "First cowork tick after a 2.5-day router outage (weekly API quota, 2026-07-25T18:00Z-2026-07-28T12:00Z). No slots due; tick value was refreshing pressure-state, which had been stale since 2026-07-25T17:41:20Z while its own stale_warning field still read false (self-written field, same trap as the auditor heartbeat).",
+    "state_changes": {
+      "calendar_status": "closed -> unknown; the UC-CDC-P1 frozen-at-illegal-closed landmine has unfrozen, but to a non-committal value. Neither matches the holiday/weekend suppression list so gate behaviour is unchanged.",
+      "host_headroom_mb": "4414 -> 2409 across the blind window (~2GB lost). Above the 1500MB degraded floor, so non-degraded this tick, but trending down alongside rag-service pinned at 766/768 MiB.",
+      "signal_backlog": "13 -> 10",
+      "cycle_snapshot_promoted": "false again; cycle-snapshot-latest.json still all-null (~22 days dead)"
+    },
+    "step0a_deviation": "Step 0a says mark each processed signal_queue row NEW->READ. NOT done. All 6 NEW rows are to=po (cowork-addressed per the filter) but slots[] was empty, so the only outcome available was log-for-PO with nothing spawned. Marking them READ would bury them before PO ever ran - including a HIGH rag-service row raised 5 min earlier by the router. This is the documented ACK-only-what-you-spawned rule overriding the literal flow text; the contradiction is a flow defect worth filing."
+  },
+  "_processed": {
+    "fingerprint": "b784485eb034704ee101f48fd342798961b125c3620762eea2f4b2fa8b68338a",
+    "processedAt": "2026-07-28T12:45:24Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
