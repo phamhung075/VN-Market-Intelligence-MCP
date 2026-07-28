@@ -2,6 +2,8 @@
 
 _Last: 2026-07-28T17:35Z (router-dispatched triage) · 1 `orch-apply.sh` write, Zod+conservation clean (task_total 661→665) · 834 ids · `.head` untouched · nothing pushed, no agent spawned, no container touched._
 
+**CONCURRENT-PO NOTE (this same cycle):** a second PO invocation (dev-team Step-1 triage, coordination_session 64c7c677) ran in parallel on an OVERLAPPING signal batch and independently converged on the identical root causes for the freshnessSlaMonitorJob path bug and the BCTC report-swap dedup (see `docs/agent-memory/decisions/po-decisions.md` top entry) — both sets of annotations now coexist harmlessly on the same rows (distinct field-name suffixes, no data loss, conservation-clean). That session's ADDITIONAL findings, not overlapping with this notebook: **S1 context_bloat_breach** (`sprint-ULTRACODE-AUDIT-FIXALL-qa.md`, 507L/41244B) — DEFER, confirmed LIVE sprint journal, not PO's chain (belongs to claude-manager-helper Pass 5b), NO MINT. **S5 ci_red** `CI-RED-6ba39d3c` — confirmed re-observation of the already-dispatched BDI/1408 fix, now visibly DONE_VERIFIED by qa (commit c56c6d350) since this notebook section was written. Its planned `STRANDED-AGENT-MODELS-PERFORMANCE-MODE-COMMIT` UNBLOCK draft was DROPPED as a duplicate once `FIX-STRANDED-SWEEP-CLASSIFY-AGENT-MODEL-SWITCH` (below) was found already landed — no new BATCH entry this cycle, Return=NOTHING. Possible router dup-spawn on identical/overlapping triage inputs — worth a look if it recurs (memory: `feedback_router_skip_po_respawn_identical_inputs`).
+
 ## Shipped
 
 | What | State |
