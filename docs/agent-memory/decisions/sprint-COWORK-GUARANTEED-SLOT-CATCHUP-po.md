@@ -211,3 +211,13 @@
 - only: the row as written invites a threshold-widening close that greens the board over a ~51-day-dead job.
 **why-decision:** Acceptance must assert threshold correctness AND job liveness separately, else the fix silences the breach instead of curing it.
 **why-change:** no change from plan.
+
+### STEP po-S23 · po · 2026-07-28T19:59:00Z
+**task-id:** FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD
+**what-done:** Captured a live in-the-wild reproduction (peer commit 09ae11440 swept 5 PO-owned files) and recorded the two design constraints it exposes on the row + its -HOOK child.
+**what-considered:**
+- Re-commit under my own message to fix attribution — REJECTED: content is already in HEAD, a second commit would be an empty-tree no-op and would rewrite nothing.
+- Unblock the parent row now — REJECTED: the dependency on -HOOK is real; a hook is the only actuator binding agents that never call the mutex.
+- Escalate the -HOOK child + record constraints — CHOSEN.
+**why-decision:** The reproduction proves the mutex is structurally insufficient (INV-GATEWAY-1 exempts the contending population) and that the 3b-verify predicate is TOCTOU — neither fact was on the row, and both change the implementation.
+**why-change:** Unplanned — the defect fired against my own commit mid-tick; captured it rather than retrying blindly.
