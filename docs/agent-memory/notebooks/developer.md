@@ -1,20 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-28 | **Cycle:** FIX-COWORK-CHEF-MUTEX-ECHO-JQ-DEFEAT (cowork same-tick CHEF mutex, echo|jq defeat closed with a tested helper)
-
-## Session 2026-07-28 — FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES — REVIEW
-
-**Task:** re-dispatch (prior attempt killed by quota, no partial work). PO premise correction confirmed at source: the byte cap (LINE_CAP×60=12000B, TE-T24, `context-bloat-backstop.sh`) already exists and fires correctly — it has a detector but no actuator. The LINE cap's actuator (`notebook-auto-prune.sh`'s drop-oldest-`## `-section loop) is line-only at its early-exit (:135) and loop-break (:174), so densely-written notebooks satisfy the enforced line cap while blowing the byte cap (alert-commander.md: 632 bytes/line vs a 60 bytes/line budget).
-
-**Actions taken:** Changed both stopping conditions to require `lines<=LINE_CAP AND bytes<=BYTE_CAP`. `LINE_CAP` is read at runtime from `docs/data/file-size-caps.json` (same SSOT `context-bloat-backstop.sh` reads, pattern `docs/agent-memory/notebooks/*.md`) with a `200` fallback if unreadable; `BYTE_CAP=LINE_CAP*60` — never a second hardcoded `12000` literal (row explicitly cited the USD/VND three-SSOT incident as the failure class to avoid). Loop recount switched `echo`→`printf '%s\n'` so the byte count matches the final atomic write exactly. OPEN QUESTION decided: option [a] — kept the single-section safe-fail path's existing behaviour (honest signal, no truncation), now reachable via the byte axis too; added `byte_count`/`byte_cap` to its signal payload for audit parity with the backstop hook's schema.
-
-**Verification:** New `scripts/agents-flow/notebook-auto-prune.test.sh`, 4/4 PASS — T1 byte-axis regression (142L/30403B, under line cap/over byte cap → pruned to 49L/10166B, 2 sections remain, no safe-fail); T2 line-axis not regressed (250L/3920B → pruned to 167L); T3 within-both-caps untouched (hash-identical); T4 single-section byte-only breach (67L/18145B, line cap NOT tripped → hash-identical, `notebook_single_section_overage_breach` emitted with `byte_cap:12000`, no truncation). Re-ran existing `test-notebook-auto-prune.sh` (5/5) and `context-bloat-backstop.test.sh` (4/4) unaffected. Full `bun test` baseline established fresh (row's 3-day-old "1 failure" note had moved): 14824 pass/40 skip/**53 fail**/1231 files — zero net new since this change touches 0 files under `apps/mcp-server/`.
-
-**Board:** `task_board.in_progress[FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES]` → `review` (`next_agent:qa`, `qa_verify_mode:verify-committed` — branch:null on this row), `.head` synced to idle, via `orch-apply.sh`. Did not close SPIKE-SATURATED-COUNT-THRESHOLD-GATES-SWEEP (already carries instance 13/sub-class 7 citation from PO's mint).
-
-**Follow-up finding (not fixed, flagged for PO/dispatcher):** `scripts/agents-flow/notebook-linecap-sweep.sh` (the 6h cron TE-T17 backstop for non-hook writes) has its OWN independent line-only pre-filter before delegating to the pruner — a byte-over/line-under notebook written via Bash heredoc/append will still never reach the fixed logic through THAT path. Only the PostToolUse hook's direct-call path is fixed by this row. Out of this row's enumerated scope; not touched.
-
-Zone health: no drift detected
+**Last updated:** 2026-07-28 | **Cycle:** FIX-DEPSSATISFIED-COLD-ARCHIVED-DEP-RESOLVES-MISSING (dep_status_map cold-archive fallback + eviction referential guard)
 
 ## Session 2026-07-28 — TASK-COWORK-CATCHUP-1 — REVIEW
 
@@ -43,5 +29,17 @@ Zone health: no drift detected
 **Board:** `task_board.in_progress[FIX-COWORK-CHEF-MUTEX-ECHO-JQ-DEFEAT]` → `review` (`next_agent:qa`, `qa_verify_mode:verify-committed`, `branch:null`, `commit:120e5d42b`), `.head` synced to idle, via `orch-apply.sh`. Second-order finding folded into the row's `.note` field in the same write.
 
 **Full-suite baseline:** 0 files touched under `apps/mcp-server/` (docs/ + scripts/agents-flow/ only — plain Node, outside the bun test surface). Ran `bun test` anyway for an honest record: 14825 pass/40 skip/55 fail/1232 files (587s) — the +4 fail / +1 file delta from today's established 51-fail/1231-file baseline is entirely attributable to a concurrent peer session's dirty, uncommitted `pollNews.ts`/`pushNewsHandler.ts` + new untracked test file already in the working tree — structurally impossible to be this change.
+
+Zone health: no drift detected
+
+## Session 2026-07-28 — FIX-DEPSSATISFIED-COLD-ARCHIVED-DEP-RESOLVES-MISSING — REVIEW
+
+**Task:** BOUNDED-1 auto-pickup, P1 cross-service. `dep_status_map` (`scripts/lib/devteam-eligibility.jq`) scanned only the HOT board's 7 lanes — the instant `scripts/orch-cold-evict.sh` moved a DONE_VERIFIED row to `docs/data/orch/archive/YYYY-MM.json`, every live row still depending on it resolved MISSING forever in BOUNDED-1/SLS/RLC simultaneously. Measured: 34 live rows, 41 distinct missing dep-ids, ~35 of those genuinely DONE_VERIFIED in cold archive.
+
+**Actions taken:** `dep_status_map($archive)` (archive-seeded, hot-lane entries overwrite) + `archive_status_map($archive)`/`normalize_archive_status` (case/separator-insensitive `DONE_VERIFIED` match only, everything else passes through unnormalized). 0-arg `dep_status_map` kept as a literal `dep_status_map([])` proxy — zero behavior change for every pre-existing caller (jq arity overloading, not a forked copy). New `scripts/lib/archive-glob-cat.sh` (find|sort|for-loop concat of the monthly archive files — a naive `<(cat 2026-*.json)`/`$(ls ...)` glob silently produced an EMPTY archive under this session's actual shell with zero error, caught and fixed). Threaded `--slurpfile archive` into the 4 real call sites (BOUNDED-1/SLS promote, RLC claim — grep-verified exhaustively, not guessed) across main.md/dev-standards.md/the audit instrument. Eviction guard: `orch-cold-evict.sh` `compute_id_maps()` now computes `$referenced_dep_ids` (effective_depends_on union across TASK_LANES) and filters it out of every terminal-eviction candidate set — a still-referenced row is held in hot, not evicted, independent defense-in-depth alongside the dep_status_map fix.
+
+**Verification:** Extended `scripts/audits/devteam-dispatch-gate-satisfiability.sh` (not a new instrument, per the row's own instruction) with AC-DEP-1 (live, dynamic: 0 post-fix leaks, 34 pre-fix INFO baseline matches PO's own measurement), AC-DEP-MECH (same real BOUNDED-1 promote script, only archive content varied — proves the mechanism FIRES, not just predicate resolution, grounded in a real live archived id), AC-DEP-NEG-A/B (nowhere-dep and cold-archived-non-terminal both stay UNSATISFIED), AC-EVICT-1/2/3 (real `orch-cold-evict.sh` run against a scratch fixture — referenced row held, unreferenced sibling evicted, guard proven both directions end-to-end). All pre-existing assertions in this file + 4 sibling audit scripts re-run GREEN (2 needed their own `--slurpfile archive` added since bounded1 promote now requires it unconditionally). Incidental fix (verified pre-existing/unrelated via git-HEAD replay before touching it): `devteam-bounded1-detail-disposition-gate-verify.sh`'s `make_isolated_fixture()` never cleared `.task_board.ready`, silently leaking the live board's stale `ready[0]` into equality-checking assertions. Zero TypeScript touched — `bun tsc`/`bun test` not applicable.
+
+**Board:** `task_board.in_progress[FIX-DEPSSATISFIED-COLD-ARCHIVED-DEP-RESOLVES-MISSING]` → `review` (`next_agent:qa`, `branch:null`), `.head` synced to idle, via `orch-apply.sh`.
 
 Zone health: no drift detected
