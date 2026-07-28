@@ -419,12 +419,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "FIX-SBV-FETCHER-ZERO-VALUE-EMIT flipped REVIEW by dev-mcp-server — pushSbvRatesHandler.ts now merges omitted optional rate fields with the last-persisted sbv_rates row instead of defaulting to 0 (getLatestSbvRatesRow), checks storeSbvSnapshot's {skipped,zeroColumns} return instead of logging a false-positive stored line, and intelligenceCycleJob.ts step A2 routes through the same runSbvRatesRefreshJob pre-flight sentinel guard sbvRatesJob.ts already had. qa to verify-committed.",
-    "updated_at": "2026-07-28T22:48:58Z",
-    "updated_by": "dev-mcp-server"
+    "status": "in_progress",
+    "active_task_id": "ALPHA-S2-SUB5-WATCHDOG-STRETCH",
+    "next_agent": "dev-mcp-server",
+    "next_action": "BOUNDED-1 auto-pickup claim of ALPHA-S2-SUB5-WATCHDOG-STRETCH — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-28T23:51:25Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -8270,29 +8270,6 @@
         "verification_gate": "RAW-live per PUSH-AUTONOMY-1 culture: a REALLY-ingested news row in the live news store whose body/full-text column contains the FULL CafeF article text (materially longer than the RSS ~500-char excerpt), fetched via VPS:8765/proxy/article-body, confirmed by a direct read of a real stored row post-deploy — never a mocked/synthetic row."
       },
       {
-        "id": "ALPHA-S2-SUB5-WATCHDOG-STRETCH",
-        "type": "subtask",
-        "title": "[OPTIONAL STRETCH] WATCHDOG_MANIFEST self-heal entry for intraday5mCompactor (schedulerJobTable.ts)",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "XS",
-        "zone": "apps/mcp-server/",
-        "owner": "developer",
-        "next_agent": "dev-mcp-server",
-        "sprint": "FLOW-PRICE-ALPHA-LOOP",
-        "parent": "ALPHA-S2-TICK-DOWNSAMPLE-5MIN",
-        "depends": [
-          "ALPHA-S2-SUB2-JOB-CRON"
-        ],
-        "blocks": [],
-        "supervised": false,
-        "created_at": "2026-07-14T21:40:00Z",
-        "created_by": "pm (ALPHA-S2 decomposition)",
-        "note": "OPTIONAL HARDENING (brief § 4): Add entry to schedulerWatchdogJob.ts WATCHDOG_MANIFEST mirroring ohlcv-daily-aggregator/reputationComputeJob/ta-ohlcv-backfill (cadence 300_000ms, thresholdMultiplier: 3, action: 'self-heal'). Defense-in-depth against residual risk (§2: if compactor is down ≥24h, underlying ticks are purged before any cron can rescue). Optional — does not block task closure; may defer to post-launch ops tuning.",
-        "acceptance_criteria": "WATCHDOG entry added to schedulerJobTable.ts; registers intraday5mCompactor with 5-min health cadence",
-        "epic_closed_note": "ALPHA-S2 core epic (SUB1-SUB4) CLOSED done_verified 2026-07-14T23:23:17Z without SUB5. SUB5-WATCHDOG-STRETCH was optional/stretch (depends SUB2, now on trunk); de-gated from the epic close, remains a standalone optional hardening backlog row for PO triage (freshness watchdog on intraday_ohlcv_5m compactor). Not blocking; pick up separately if prioritized."
-      },
-      {
         "id": "FIX-W3-CHECKDUPLICATEPRICE-COLLAPSE",
         "type": "PLAN-ONLY",
         "title": "[W-3 LANDMINE] checkDuplicatePriceHistory.ts collapses market_prices_history to 1 row/ticker/day when 50% safeguard doesn't trip (audit-checks, follow-on hardening candidate)",
@@ -13393,7 +13370,7 @@
         "size": "M",
         "zone": "apps/mcp-server/",
         "owner": "po",
-        "next_agent": "architect",
+        "next_agent": "dev-mcp-server",
         "supervised": true,
         "created_at": "2026-07-28T22:52:38Z",
         "created_by": "po-triage-tnb-c119-20260728",
@@ -13404,7 +13381,10 @@
         "acceptance": "(1) architect rules (a) restore-via-VPS or (b) retire, in a decision journal entry with the reasoning; (2) if (a): live get_prediction_markets() returns lastPollAt within its 24h SLA and totalRelevantMarkets > 0, RAW-verified through the running container, not a host-side CLI probe (feedback_host_cli_integrity_check_false_ok_verify_through_runtime); (3) if (b): get_prediction_markets is removed from unified-agent market-analysis.md + prediction.md + qa-responder cycle.md, its SLA monitor row is retired, and no code path still reads prediction_markets; (4) EITHER WAY: fetchPolymarkets() must stop silently resolving [] on a transport failure — a TLS/403 failure must surface as an error the poll job records as a FAILURE, never status=success.",
         "files_hint": "apps/mcp-server/src/infrastructure/fetchers/polymarket.ts, apps/mcp-server/src/scheduler/macro/predictionMarketJob.ts, apps/mcp-server/src/interface/mcp/tools/macro/predictionTools.ts, apps/mcp-server/src/infrastructure/db/predictionStore.ts, docs/agents/unified-agent/flow/market-analysis.md, docs/agents/unified-agent/flow/prediction.md",
         "verification_gate": "done_verified requires a live in-container get_prediction_markets() probe (path a) or a grep proving zero remaining consumers (path b) — plus a transport-failure test asserting the poll job records FAILURE, not success.",
-        "updated_at": "2026-07-28T22:54:13Z"
+        "updated_at": "2026-07-28T23:51:08Z",
+        "architect_review_note": "RULING: RETIRE (b), not restore-via-VPS (a). WebSearch confirms gamma-api.polymarket.com's *.anj.fr TLS-cert swap is France's Autorite Nationale des Jeux (ANJ, national gambling regulator) ordering French ISPs to block Polymarket outright (2026-07-16), after an investigation finding rigged/fraudulent markets (hacked weather-sensor bets) and zero KYC for French/EU users -- not a generic anti-scraper geoblock. mcp-server runs on France-hosted infra (corroborated by franceSummaryJob in schedulerJobTable.ts + repo memory \"MCP server in France should NEVER directly fetch VN domains\"). Routing through the Vinahost VN-egress VPS would likely technically bypass this France-only ISP block, but doing so means deliberately engineering evasion of a sovereign regulator's block against a source that same regulator found fraudulent -- categorically different from the VN-source geoblocks (SSC/HNX/SBV/CafeF) the VPS pattern was built for (mundane anti-foreign-IP defenses against legitimate providers). Also scope creep: system-map.json documents the VPS's purpose as \"geo-blocked VN source proxy\", pull direction VN->main-server, not general Western-service egress. CLOB's pre-existing 403 (reports #674-696, predates ANJ) is a separate, older Polymarket-side geofence -- doesn't change the call.\n\nDESIGN for dev-mcp-server (all apps/mcp-server/ unless noted):\n(1) KILL ACQUISITION: config.ts ~L613 flip predictionMarkets.enabled default true->false (PREDICTION_MARKETS_ENABLED env override unchanged, now the re-enable switch). schedulerJobTable.ts ~L235-242 predictionMarketPollJob: remove from JOB_TABLE (or leave, gated by enabled=false -- dev-mcp-server's call). predictionResolutionJob/predictionOutcomeJob (grep-verified: no prediction_markets reference, read prediction_signals only) NOT in scope -- self-limiting once signals stop growing, leave running.\n(2) ACCEPTANCE-4 FIX (REQUIRED EITHER WAY, independent of retire/restore): fetchPolymarkets() (polymarket.ts) swallows BOTH the CLOB catch (~L250) and the Gamma catch (~L286, the CB-protected real source of truth per Task-1337 comments) and always falls through to `return results` (possibly []) -- transport failure (TLS/403/DNS/JSON-parse) is indistinguishable from \"legitimately 0 matches today\". Add a gammaTransportFailed flag set ONLY inside the Gamma catch (never on the 0-matches-after-successful-parse path); after the Gamma-fallback block (~L398) if gammaTransportFailed && results.length===0, throw PolymarketTransportError instead of returning []. In predictionMarketJob.ts, Step 3's catch (~L474) must propagate this past the sibling row's staleness-guard early-return (still correct, keep it) so a failure reaches recordJobRun() as status=error even on the FIRST failing cycle (before 24h staleness accrues) -- currently the function's own outer try/catch (~L697) plus Step 3's inner catch both swallow unconditionally, which is the literal mechanical reason 28d of dead fetches read status=success in cron_job_runs (registerJobTable -> jobRunRepo.wrapRun -> recordJobRun in cronJobRunStore.ts:200 marks status purely by promise-reject). Narrow the outer catch to rethrow PolymarketTransportError before its normal swallow-and-log; keep finally{_isRunning=false} on every path. Update the function's stale \"NEVER throws\" doc comment. New tests: injected rejecting fetchFn -> fetchPolymarkets rejects (not []); runPredictionMarketPoll rejects/records error; negative control: 0-matches-but-successful-fetch must NOT throw (guards false-positive noise).\n(3) CONSUMER REMOVAL: market-analysis.md:6 drop \"| get_prediction_markets()\". qa-responder/cycle.md:41 drop \"+ get_prediction_markets()\". prediction.md's ENTIRE purpose is this tool (5x/wk 01:00 UTC self-accuracy review) -- partial edit leaves a flow that does nothing; RETIRE the whole thing: delete flow/prediction.md, drop its row from flow/main.md's Dispatch table (single hourly :29 cron per cron-unified-agent.md, no separate CronDelete needed -- 01:00 UTC just falls to \"Any other time -> EXIT\"), drop init.md:134's prediction entry.\n(4) TOOL SURFACE: deregister get_prediction_markets (predictionTools.ts + registry.ts:25,159) so no future ad-hoc caller reads the frozen table as live -- grep-verified computePredictionAccuracy/predictionOutcomeJob/calibrationTools do NOT import predictionTools.ts, safe to remove without touching calibration. predictionStore.ts's getRecentPredictionSignals (assembleBriefing/EveningSummary consumer, NOT in PO's 3-file list) already degrades to [] gracefully on empty prediction_signals -- leave as-is, flagged only for awareness.\n(5) SLA: retire quality-checklist.json DS-FRESH-01 (~L4280, polymarket 2h) and CI-FRESH-03 (~L2988, predictionMarketPoll 35min). VERIFIED: no \"retired\" status token exists in this file's status enum (only FAIL/INFO/NEEDS_REVIEW/PASS/WARN, jq-checked) and no schema validator found for it -- do NOT invent a new enum value unilaterally. dev-mcp-server should either reuse \"INFO\" + an explicit retired-reason note on the row, or coordinate with qa (this file's owner per system-auditor's own agent description) before editing it.\n(6) DB: leave prediction_markets/prediction_signals tables as-is, no migration -- harmless once nothing reads/writes.\nVERIFICATION GATE before REVIEW: grep proving zero remaining get_prediction_markets references across the 3 flow files + prediction.md/main.md/init.md; unit tests for (2) green (positive + negative control); quality-checklist.json 2 rows show a retired marker agreed with qa.",
+        "updated_by": "architect",
+        "decision": "RETIRE"
       }
     ],
     "review": [
@@ -16513,9 +16493,39 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-28T23:25:58Z",
-    "last_triaged_by": "po-triage-20260728T2320Z",
-    "in_progress": []
+    "last_triaged_at": "2026-07-28T23:50:56Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
+    "in_progress": [
+      {
+        "id": "ALPHA-S2-SUB5-WATCHDOG-STRETCH",
+        "type": "subtask",
+        "title": "[OPTIONAL STRETCH] WATCHDOG_MANIFEST self-heal entry for intraday5mCompactor (schedulerJobTable.ts)",
+        "status": "IN_PROGRESS",
+        "priority": "P1",
+        "size": "XS",
+        "zone": "apps/mcp-server/",
+        "owner": "developer",
+        "next_agent": "dev-mcp-server",
+        "sprint": "FLOW-PRICE-ALPHA-LOOP",
+        "parent": "ALPHA-S2-TICK-DOWNSAMPLE-5MIN",
+        "depends": [
+          "ALPHA-S2-SUB2-JOB-CRON"
+        ],
+        "blocks": [],
+        "supervised": false,
+        "created_at": "2026-07-14T21:40:00Z",
+        "created_by": "pm (ALPHA-S2 decomposition)",
+        "note": "OPTIONAL HARDENING (brief § 4): Add entry to schedulerWatchdogJob.ts WATCHDOG_MANIFEST mirroring ohlcv-daily-aggregator/reputationComputeJob/ta-ohlcv-backfill (cadence 300_000ms, thresholdMultiplier: 3, action: 'self-heal'). Defense-in-depth against residual risk (§2: if compactor is down ≥24h, underlying ticks are purged before any cron can rescue). Optional — does not block task closure; may defer to post-launch ops tuning.",
+        "acceptance_criteria": "WATCHDOG entry added to schedulerJobTable.ts; registers intraday5mCompactor with 5-min health cadence",
+        "epic_closed_note": "ALPHA-S2 core epic (SUB1-SUB4) CLOSED done_verified 2026-07-14T23:23:17Z without SUB5. SUB5-WATCHDOG-STRETCH was optional/stretch (depends SUB2, now on trunk); de-gated from the epic close, remains a standalone optional hardening backlog row for PO triage (freshness watchdog on intraday_ohlcv_5m compactor). Not blocking; pick up separately if prioritized.",
+        "promoted_at": "2026-07-28T23:50:56Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "updated_at": "2026-07-28T23:51:25Z",
+        "claimed_at": "2026-07-28T23:51:25Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
