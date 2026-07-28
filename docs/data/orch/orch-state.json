@@ -2312,7 +2312,9 @@
         "status": "NEW",
         "payload_ref": null,
         "router_note": "sbv_fx oscillates: 24min(12:23) -> 70min(13:33) -> 2min/ok(13:50) -> 43min now. Intermittent by nature, not a stall. BOTH theses already on the board — FIX-SBV-FETCHER-ZERO-VALUE-EMIT (source emits zeros, guard correctly rejects) and FIX-AUDITOR-SBVFX-SLA-POSTMARKET-TOLERANCE (flat 30-min SLA vs a once-per-business-day source is structurally wrong). Do not re-mint either.",
-        "router_second_order_correction": "The sweep concluded no second-order outage effect because rag_analyses had 239 rows/24h. WRONG LAYER — rag_analyses is written by the mcp-server pollNews INGESTION job, not by the news-scout cowork AGENT. Agent cycles verifiably have NOT run: news-scout-offhours last_fired 2026-07-25T16:13:49Z, news-scout-sentiment last_fired 2026-07-24T05:06:28Z. This is the SAME fetch-vs-analysis two-layer conflation the sweep had just correctly diagnosed in the C-06 finding. The second-order effect TASK-COWORK-CATCHUP exists to address is real and remains UNMEASURED — do not record it as cleared."
+        "router_second_order_correction": "The sweep concluded no second-order outage effect because rag_analyses had 239 rows/24h. WRONG LAYER — rag_analyses is written by the mcp-server pollNews INGESTION job, not by the news-scout cowork AGENT. Agent cycles verifiably have NOT run: news-scout-offhours last_fired 2026-07-25T16:13:49Z, news-scout-sentiment last_fired 2026-07-24T05:06:28Z. This is the SAME fetch-vs-analysis two-layer conflation the sweep had just correctly diagnosed in the C-06 finding. The second-order effect TASK-COWORK-CATCHUP exists to address is real and remains UNMEASURED — do not record it as cleared.",
+        "router_dedup_note": "The tier-2 sweep emitted 4 signal_queue rows for 2 distinct conditions while its own OUTPUT-CONTRACT declared signals_posted=2. Intra-cycle duplication from two check paths (freshness + A-30/B-02) with no dedup between them. DISTINCT from FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE (DONE), which addresses re-emission ACROSS cycles, not duplication WITHIN one. po decides: regression of that row, or a new intra-cycle dedup row. Router annotated rather than minting — adding a row to report queue inflation would inflate the queue.",
+        "router_noted_at": "2026-07-28T14:38:37Z"
       },
       {
         "id": "sys-20260728T143010-6ec2",
@@ -2325,7 +2327,9 @@
         "status": "NEW",
         "payload_ref": null,
         "router_verification": "CORROBORATED with 2 corrections (router 14:32Z). CONFIRMED: router sampled independently 4x over 90s at 98.77/98.78/98.84/98.79% — agrees with the auditor 12x/60s series (98.78-98.87%). Sustained at ceiling, not releasing, after the refine_bctc_md OCR workload FINISHED at ~14:08Z. CORRECTION 1: auditor reports RestartCount=0 in two places incl. the section certifying the RestartCount-with-StartedAt check as VERIFIED CORRECT. Actual is RestartCount=2, StartedAt=2026-07-28T09:26:20Z, OOMKilled=false. StartedAt was right, the count was not. Conclusion unchanged (2 restarts over 5h uptime is still no recent relief) but a self-certifying check misread its own field. CORRECTION 2 (router self-check): the router characterised this as a benign transient plateau at 13:30Z and declined to spawn twice on that basis. Three flat 30-min-apart probes straddled a slow climb — the same insufficient-window error the router had been criticising in others, committed at 30-min granularity. SEVERITY: WARN is right — failure mode is OOM -> docker restart -> recovery, not permanent damage. Restart is USER-GATED and was NOT performed.",
-        "router_verified_at": "2026-07-28T14:33:15Z"
+        "router_verified_at": "2026-07-28T14:33:15Z",
+        "router_trend": "CONTINUED CLIMB, no new audit spawned (router 14:39Z). pdf-extractor 98.67(14:19) -> 98.79(14:27) -> 99.18(14:39), ~20MB headroom of 2.5GiB. rag-service 88.92(14:25) -> 88.94(14:27) -> 91.55(14:39), ~65MiB of 768MiB. BOTH now climbing, where earlier only pdf-extractor was. Tier-1 verdict FAILURE at 14:39 but NOT escalated to a spawn: tier-2 audited this same condition 13 min earlier, characterised it (sustained at ceiling, not releasing post-OCR, Tesseract/PIL buffer hypothesis) and filed it; a third audit inside 40 min adds no information and the only remedy — container restart — is USER-GATED. Severity stays WARN: failure mode is OOM -> docker restart -> recovery, not data loss. No push notification sent — the router already spent one push today on a memory claim it had to retract, and a second for a self-recovering WARN would be noise. If it OOMs, RestartCount will increment from 2 and that is the signal to revisit.",
+        "router_trend_at": "2026-07-28T14:40:00Z"
       },
       {
         "id": "sys-20260728T143455-6a8a",
@@ -2336,7 +2340,9 @@
         "summary": "sbv_fx stale 47min (check B-02-SBV)",
         "severity": "CRITICAL",
         "status": "NEW",
-        "payload_ref": null
+        "payload_ref": null,
+        "router_dedup_note": "INTRA-CYCLE DUPLICATE of sys-20260728T142957-693e (same tier-2 sweep, same sbv_fx condition, 5 min apart, HIGH then CRITICAL). Triage as ONE condition. Root already known: sbv VPS emits zero-values, DB guard correctly rejects — FIX-SBV-FETCHER-ZERO-VALUE-EMIT; and the flat 30-min SLA vs a once-per-business-day source is FIX-AUDITOR-SBVFX-SLA-POSTMARKET-TOLERANCE. Neither needs a new row.",
+        "router_noted_at": "2026-07-28T14:38:37Z"
       },
       {
         "id": "sys-20260728T143457-0d5b",
@@ -2347,7 +2353,9 @@
         "summary": "pdf-extractor memory at 98.84% capacity (A-30)",
         "severity": "WARN",
         "status": "NEW",
-        "payload_ref": null
+        "payload_ref": null,
+        "router_dedup_note": "INTRA-CYCLE DUPLICATE of sys-20260728T143010-6ec2 (same sweep, same pdf-extractor condition, 98.84 vs 98.87). Triage as ONE. Router corroborated the condition independently (4 samples/90s, 98.77-98.84%) — real, sustained, at ceiling, not releasing after the OCR workload ended. Severity WARN is right; failure mode is OOM->restart->recovery. Restart is USER-GATED, not performed.",
+        "router_noted_at": "2026-07-28T14:38:37Z"
       },
       {
         "id": "router-signal-channel-silent-drop-20260728T143458",
