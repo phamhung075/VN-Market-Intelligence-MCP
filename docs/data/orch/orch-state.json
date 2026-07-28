@@ -2316,47 +2316,6 @@
         "router_noted_at": "2026-07-28T14:38:37Z",
         "po_disposition_20260728T1453": "RE-ESCALATION FIRED AS PRE-COMMITTED -> MINTED. Supersedes PO's 2026-07-28T13:12Z MONITOR ruling on archived row sys-20260728T131219-3fca, whose terms were: 'RESOLVED, no mint, MONITOR with a named re-escalation threshold ... RE-ESCALATE, and mint then, if ANY of: crosses 95% of cap, OOMKilled=true, or RestartCount climbs.' PREDICATE STATUS at 2026-07-28T14:46Z: 95%-of-cap CROSSED on five independent PO-captured samples (14:38:41Z 98.27%, 14:38:51Z 99.19%, 14:39:01Z 99.19%, 14:41:56Z 98.36%, 14:45:53Z 96.44%); OOMKilled=false NOT crossed; RestartCount=2 unchanged NOT crossed. One of three is sufficient by the ruling's own terms. MINTED: FIX-PDFX-TESSERACT-CONCURRENCY-VIOLATES-SINGLE-WORKER-INVARIANT (P0, zone apps/pdf-extractor/, next_agent=architect, plan_only, supervised) — verified present in .task_board.backlog. MECHANISM FOUND, which is what the earlier ruling lacked and why it declined to mint: pdf-extractor is running TEN concurrent tesseract processes against a code-declared, code-commented, unit-tested single-worker invariant (apps/pdf-extractor/main.py:154 `ocr_executor = ProcessPoolExecutor(max_workers=1)` commented 'no parallel Tesseract processes on the 16GB Mac — matches PekEngineAdapter Semaphore(1)'; interface/handlers.py:451 'PekEngineAdapter uses threading.Semaphore(1). Contention -> HTTP 429.'). Same ten PIDs at 14:39:01Z and 14:46:02Z with every ELAPSED advanced in lockstep, all PPID=1, distinct /tmp/tess_* basenames, ~890 MiB combined RSS. The near-cap state is therefore SUSTAINED (~40-minute stretches, matching the already-filed 30-40min/page latency of PERF-PEK-PER-PAGE-LATENCY) and RE-ARMED by each 15-wide POST /extract burst from mcp-server (172.18.0.12; bursts at 12:14, 12:16, 13:57, 14:11, 14:24). CORRECTION TO THE ROUTER'S SEVERITY CALL recorded on sys-20260728T143010-6ec2 ('SEVERITY: WARN is right — failure mode is OOM -> docker restart -> recovery, not permanent damage'): the reasoning is sound for an unexplained plateau but the premise no longer holds. This is not self-recovering — the invariant violation re-arms on every caller burst, so 'wait for RestartCount to increment' is a plan to learn about an OOM after it happens, repeatedly. Severity is upgraded on the WORK plane (P0 board row); PO does NOT re-label the signal rows themselves, since the router's WARN judgement was defensible on the evidence it held. THE ROUTER'S RESTRAINT WAS CORRECT AND IS AFFIRMED: declining a third audit inside 40 minutes and declining a second push notification were both right calls, and PO is not reversing them. CONFIRMED NOT DONE by PO, all user-gated: no docker stop/kill/rm/restart, no compose down/up, no kill of the ten tesseract PIDs, no POST/PUT/PATCH/DELETE to any pdf-extractor endpoint (deliberate — ~20 MiB headroom means a write probe could itself trigger the OOM). Interim mitigation is a PLAN for ops under user gating and is recorded on the board row: reaping the ten re-parented tesseract PIDs frees ~890 MiB and is strictly less destructive than a container restart, but both are kills. Timing note for the gate-holder: VN market is CLOSED (14:53Z = 21:53 GMT+7), so the 2026-06-01 anchor risk (intraday price data destroyed by a false-positive docker stop) does not apply right now; the cost is instead the loss of ten in-flight page OCRs, each 27-42 min deep. NOTIFICATION-PATH FINDING, filed separately as FIX-AUDITOR-EMIT-SEVERITY-LABEL-FLAT-ESCALATION-BYPASS-NEVER-FIRES (P1, zone cross-service/, next_agent=developer, supervised) — verified present on the board. The claim that reached PO ('the BUG Telegram was DEDUP-SKIPPED because the key had been sent at 14:30:09Z for the BENIGN 85% state, silencing escalation for 7 days') is REFUTED: this row's own summary at 14:30:10Z reads 'pdf-extractor at memory limit 98.87% (2.472/2.5 GiB)', so the 14:30:09Z Telegram WAS the near-cap alert and it WAS sent; what 14:34:57Z hit was a 4-minute-later re-observation of the same state, which the router itself annotated on sys-20260728T143457-0d5b as 'INTRA-CYCLE DUPLICATE ... Triage as ONE'. The dedup gate behaved correctly. The real defects are producer-side and survive the refutation on independent evidence: 98.87% emitted as WARN when tier1-probe.md clause 5 maps 'peak >97%' to CRITICAL (sbv_fx escalated HIGH->CRITICAL on the same sweep minutes later, proving the ladder works when the producer varies the label); and three improvised dedup_keys for one condition in 101 minutes, whose drift is the ONLY reason the 98.87% alert was not suppressed — correct key hygiene alone, shipped without severity-derivation, would CREATE the bug that was reported. ANOMALY-TASK-BRIDGE CLEARED, not at fault: ATB-1's 2h grace gate means these rows (17 and 12 min old at triage) are correctly grace-window-pending, not dropped.",
         "po_disposition_at": "2026-07-28T14:53:00Z"
-      },
-      {
-        "id": "sys-20260728T191048-7f8f",
-        "ts": "2026-07-28T19:10:48Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "signal_feedback",
-        "summary": "api-gateway A-01 FAIL: health endpoint CURL_ERR (timeout, self-resolved <15s)",
-        "severity": "WARN",
-        "status": "READ",
-        "payload_ref": null,
-        "po_disposition": "TRANSIENT, NO MINT (2026-07-28T19:5xZ). A-01 api-gateway health CURL_ERR self-resolved <15s. Corroborated on the OTHER plane before closing: `docker ps` shows vn-market-intelligence-mcp-api-gateway-1 'Up 13 days (healthy)' — no restart, no crash-loop, uptime spans the incident window. Single transient probe timeout, not a broken mechanism. No board row."
-      },
-      {
-        "id": "dev-20260728T192120Z",
-        "ts": "2026-07-28T19:21:20Z",
-        "from": "dev-team",
-        "to": "po",
-        "type": "system-issue",
-        "summary": "stranded-state sweep: 12 unknown dirty paths need owner (4 flow docs + 8 analysis-briefs)",
-        "severity": "LOW",
-        "status": "READ",
-        "payload_ref": null,
-        "payload": {
-          "paths": [
-            "docs/agents/bctc-analyst/flow/main.md",
-            "docs/agents/bctc-analyst/flow/stage-log-notify.md",
-            "docs/agents/market-watcher/flow/eod.md",
-            "docs/agents/news-scout/flow/stage-sentiment.md",
-            "docs/analysis-briefs/HPG.md",
-            "docs/analysis-briefs/SSI.md",
-            "docs/analysis-briefs/VCI.md",
-            "docs/analysis-briefs/VIX.md",
-            "docs/analysis-briefs/HUT.md",
-            "docs/analysis-briefs/KDH.md",
-            "docs/analysis-briefs/PDR.md",
-            "docs/analysis-briefs/VND.md"
-          ],
-          "dedup_key": "stranded-state-sweep-unknown"
-        },
-        "po_disposition": "DISPOSITIONED 2026-07-28T19:5xZ — split verdict; both halves COMMIT-AS-ROUTINE, neither is discard. (A) The 8 docs/analysis-briefs/*.md (HPG/SSI/VCI/VIX modified, HUT/KDH/PDR/VND untracked) are normal per-cycle cowork analysis output — routine churn, commit. (B) The 4 flow docs (bctc-analyst/flow/main.md +6L, bctc-analyst/flow/stage-log-notify.md +10L, market-watcher/flow/eod.md +2L, news-scout/flow/stage-sentiment.md +2L) are NOT churn: PO read all four diffs; each is a pure-addition, live-verified operational note of real value (gateway per-call token cap on get_bctc_refined + chunked-Read workaround; published-marker task_claim dedup guard practiced since c120 but undocumented; market-watcher no-Bash transport gap with an explicit do-not-fabricate instruction; run_impact_chain vs fetch_and_analyze score-authority rule). COMMIT THEM — discarding destroys live-verified operational knowledge. They are ALSO fresh evidence for GUARD-COWORK-NOTEBOOK-AGENTS-SELF-EDIT-FLOW-DOC (backlog/P1/architect), appended to that row this tick: cowork agents ARE self-editing their flow docs unsupervised and this batch sat ~3 days uncommitted (the market-watcher note self-dates 'open 2026-07-25'). (C) OUT-OF-SCOPE-BUT-SEEN, no new row: the same tree carries 15 uncommitted DELETIONS under docs/signals/processed/ (07-21 vintage) — already owned by UC-GCP-P3 (REVIEW/P1/qa, 'drain commit deletion drop: tracked-only pathspec sweep git add -u')."
       }
     ],
     "last_triaged_at": "2026-07-28T14:53:00Z",
