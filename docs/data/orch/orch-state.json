@@ -4,8 +4,8 @@
     "last_mtime": "2026-06-06T16:22:41Z",
     "po": {
       "section_name": "po",
-      "last_mtime": "2026-07-10T03:18:14Z",
-      "last_linecount": 2
+      "last_mtime": "2026-07-28T16:17:45Z",
+      "last_linecount": 131
     },
     "section_name": "po",
     "start_line": 8
@@ -2293,7 +2293,7 @@
         "type": "data_stale",
         "summary": "sbv_fx stale 43min (SLA 30min) — zero-value rejects upstream",
         "severity": "HIGH",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "router_note": "sbv_fx oscillates: 24min(12:23) -> 70min(13:33) -> 2min/ok(13:50) -> 43min now. Intermittent by nature, not a stall. BOTH theses already on the board — FIX-SBV-FETCHER-ZERO-VALUE-EMIT (source emits zeros, guard correctly rejects) and FIX-AUDITOR-SBVFX-SLA-POSTMARKET-TOLERANCE (flat 30-min SLA vs a once-per-business-day source is structurally wrong). Do not re-mint either.",
         "router_second_order_correction": "The sweep concluded no second-order outage effect because rag_analyses had 239 rows/24h. WRONG LAYER — rag_analyses is written by the mcp-server pollNews INGESTION job, not by the news-scout cowork AGENT. Agent cycles verifiably have NOT run: news-scout-offhours last_fired 2026-07-25T16:13:49Z, news-scout-sentiment last_fired 2026-07-24T05:06:28Z. This is the SAME fetch-vs-analysis two-layer conflation the sweep had just correctly diagnosed in the C-06 finding. The second-order effect TASK-COWORK-CATCHUP exists to address is real and remains UNMEASURED — do not record it as cleared.",
@@ -2325,7 +2325,7 @@
         "type": "data_stale",
         "summary": "sbv_fx stale 47min (check B-02-SBV)",
         "severity": "CRITICAL",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "router_dedup_note": "INTRA-CYCLE DUPLICATE of sys-20260728T142957-693e (same tier-2 sweep, same sbv_fx condition, 5 min apart, HIGH then CRITICAL). Triage as ONE condition. Root already known: sbv VPS emits zero-values, DB guard correctly rejects — FIX-SBV-FETCHER-ZERO-VALUE-EMIT; and the flat 30-min SLA vs a once-per-business-day source is FIX-AUDITOR-SBVFX-SLA-POSTMARKET-TOLERANCE. Neither needs a new row.",
         "router_noted_at": "2026-07-28T14:38:37Z"
@@ -2352,7 +2352,7 @@
         "to": "po",
         "type": "repair_task_request",
         "severity": "MEDIUM",
-        "status": "NEW",
+        "status": "READ",
         "summary": "Router findings filed as docs/signals/*.json with types flow-defect-report/cowork-tick/cowork-fire/dispatcher-error have NO handler in po/flow/triage-signals.md — they hit the unknown-type log-and-skip catch-all. Same channel that ate the 07-14 CHEF fix request. Casualty: router flow_path finding filed 07-25 never became a row; po re-derived it 07-28. Router now files via signal_queue.rows[] (this row). ASK: add the 4 types to the triage table, or declare docs/signals/*.json non-routable telemetry.",
         "payload_ref": "docs/signals/processed/router-signal-channel-silent-drop-20260728T143458.json"
       }
