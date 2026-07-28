@@ -71,3 +71,15 @@ Zone health: HEALTHY (build/vet/test/lint all green, served values verified byte
 **Commit:** a87079574 (11 files, +781/-626). Decision journal: `sprint-FACTORY-MACRO-split-or-justify-over-cap-dev-macro-indicators.md` STEP S1-S2. `rebuild_required=true` but USER-GATED per task constraint — rebuild-verify PENDING-USER-GATED.
 
 Zone health: HEALTHY (build/vet/test/lint/sandbox all green; caught+fixed one byte-level encoding regression during self-verification) | FACTORY-MACRO-split-or-justify-over-cap → REVIEW (dev-team dispatcher closeout)
+
+---
+
+## Session 2026-07-28 (FIX-SBV-FETCHER-ZERO-VALUE-EMIT — BOUNDED-1 pickup, DECLINED: wrong zone)
+
+**Task:** BOUNDED-1 idle-capacity auto-pickup, labeled zone `apps/macro-indicators/`. Live investigation found the label was wrong.
+
+**Finding:** `apps/macro-indicators/` (Go pilot) only READS `sbv_rates` (`SBVRateSQLiteAdapter.GetRate`, safe-degrade, no writes anywhere in the Go tree). All 3 `storeSbvSnapshot` call sites are in `apps/mcp-server/`: `pushSbvRatesHandler.ts` (VPS-push handler — BUGGY, defaults 6 optional rate fields to 0 when the VPS payload omits them, tripping `storeSbvSnapshot`'s own zero-overwrite guard and rejecting the whole snapshot incl. the valid FX rate; also ignores the `{skipped}` return), `sbvRatesJob.ts` (4h cron — already correctly fail-closed), `intelligenceCycleJob.ts` step A2 (best-effort, missing the same pre-flight guard). No code touched — implementing would violate `zone_restricted: apps/macro-indicators/` + `not_my_job`.
+
+**Action:** No code change (either zone). Corrected `docs/data/orch/orch-state.json` task_board: moved row out of `in_progress` back to `backlog` with `zone: apps/mcp-server/`, `owner_agent: dev-mcp-server`, full trace embedded; `.head` reset to idle/router. Corrected `docs/data/orch/archive/backlog-detail.json`'s stale `apps/macro-indicators/` zone label. Decision journal: `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-macro-indicators.md` STEP dev-macro-indicators-S1.
+
+Zone health: HEALTHY (no code changed) | FIX-SBV-FETCHER-ZERO-VALUE-EMIT → returned to BACKLOG, re-zoned apps/mcp-server/ (not a dev-macro-indicators task)
