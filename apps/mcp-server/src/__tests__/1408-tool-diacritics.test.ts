@@ -106,13 +106,14 @@ describe("1408 — MCP tool Vietnamese diacritics", () => {
     expect(result).not.toContain("can 50 nen");
   });
 
-  // 5a. supplyChain — no signals → ổn định summary
-  it("buildSupplyChainExposureOutput([], [], null) contains TỔNG KẾT + ổn định", () => {
+  // 5a. supplyChain — no indices (FIX-BDI-SHIPPING-STALE-404-GUARD: stale/absent
+  // shipping index must never be read as "ổn định" — see supplyChainTools.ts summary branch)
+  it("buildSupplyChainExposureOutput([], [], null) contains TỔNG KẾT + Không đủ dữ liệu", () => {
     const result = buildSupplyChainExposureOutput([], [], null);
     expect(result).toContain("TỔNG KẾT");
-    expect(result).toContain("ổn định");
+    expect(result).toContain("Không đủ dữ liệu");
     expect(result).not.toContain("TONG KET");
-    expect(result).not.toContain("on dinh");
+    expect(result).not.toContain("Khong du du lieu");
   });
 
   // 5b. supplyChain — high signal → QUAN TRỌNG + theo dõi chặt chẽ
