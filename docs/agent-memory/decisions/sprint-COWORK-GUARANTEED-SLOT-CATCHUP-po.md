@@ -136,3 +136,30 @@
 - Also route the 5 subsumed rows so they can move.
 **why-decision:** AC-9 on TASK-10 already binds consolidation as the epic's exit criterion, so doing it first would close rows whose fix has not shipped; and it buys zero throughput — all 5 are already inert (is_bounded1_eligible=false on all 5, executed against live data), so consolidating changes nothing that can move while routing the epic changes the only thing that can. Declined OPS-INSTALL closure because TASK-COWORK-CATCHUP-5 rewrites the very script that row installed — signing it off now would verify a component about to be replaced.
 **why-change:** goes beyond the ruling to stamp `subsumed_by`, because the 5 rows are inert BY ACCIDENT (the NO-LANE hole), and a later triage that "helpfully" routes one would spawn duplicate work against files TASK-1..9 are rewriting.
+
+### STEP po-S14 · po · 2026-07-28T17:04:00Z
+**task-id:** FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN
+**what-done:** Re-promoted BACKLOG→READY on fresh evidence (dev-team's mid-tick report: mechanism live-confirmed, 83 PRIMARY rows 3-5d old vs a 32-row baseline, ~33 SECONDARY rows up to 18d with zero drain).
+**what-considered:**
+- Mint a new duplicate capacity-FIX row — rejected: this row already owns the exact remedy shape and history; re-minting would repeat the prior-art-blindness the row's own 2026-07-21 note warns against.
+- Design the fix myself (raise cap vs parallel-dispatch) — rejected: architecture decision, not PO's, per coordinator's own framing.
+**why-decision:** Re-promotion + evidence is the correct PO-scope action; the choice between remedy shapes is explicitly left to architect (owner unchanged).
+**why-change:** no change from plan — same row, same owner, new evidence only.
+
+### STEP po-S15 · po · 2026-07-28T17:04:00Z
+**task-id:** FIX-BDI-SHIPPING-STALE-404-GUARD
+**what-done:** Re-triaged ci_red signal CI-RED-289a9d8e as the SAME defect this row root-caused 3 days ago (verified `origin/main` unmoved since); rerouted next_agent qa→dev-mcp-server and emitted an UNBLOCK batch entry instead of leaving it ~76/83-deep in the QA-drain queue.
+**what-considered:**
+- Mint CI-RED-289a9d8e-FIX per the mechanical dedup table (title/head_sha string match only) — rejected: would duplicate an already-fully-diagnosed row; the mechanical dedup keys don't reach this case because the head_sha differs even though the defect doesn't.
+- Leave it queued, let QA-drain reach it naturally — rejected: fleet push gate (PUSH-AUTONOMY-1 clause 4) is blocked the entire time; queue position (~76/83) makes "naturally" too slow.
+**why-decision:** Same-defect judgment from RAW re-reproduction (`bun test` on the named file, identical failing assertion) + git evidence (zero commits touched the test file since); UNBLOCK bypasses the queue for a fully-specified 1-line remedy.
+**why-change:** escalation beyond normal triage — justified by fleet-wide push-gate impact, not routine.
+
+### STEP po-S16 · po · 2026-07-28T17:04:00Z
+**task-id:** FIX-SLA-SIGNALQUALITYAUDIT-MONTHLY-CADENCE-MISCLASSIFIED-48H
+**what-done:** Minted new FIX after RAW-verifying 37 unresolved [sla-monitor] alerts (list_unresolved_reports) all for signal_quality_audit, climbing 73217→76067min, and reading freshnessSlaMonitorJob.ts/cronConfig.ts/schedulerJobTable.ts at source (monthly cron graded against a 48h "event-driven" SLA; recoverMissedExecutions:false with no catch-up).
+**what-considered:**
+- Dismiss as a known/expected steady-state quiet period — rejected: 52.8d exceeds even a working monthly cadence's max possible gap, so it isn't just "mid-cycle".
+- File only as a Telegram ack with no task — rejected: 232-report unresolved backlog + repeating hourly for 2+ days is the exact "passive health masks dead data" pattern; needs an owner.
+**why-decision:** Root cause identified at source (two compounding code-level defects), so a scoped FIX (not a SPIKE) is warranted; sized S/P2, mirrors sibling FIX-SLA-BCTC-THRESHOLD-TRACKS-STALENESS-NOT-CONSTANT in the same file.
+**why-change:** no change from plan — new finding, routine mint.
