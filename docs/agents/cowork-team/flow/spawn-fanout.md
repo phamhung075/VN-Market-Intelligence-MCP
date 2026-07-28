@@ -1,10 +1,13 @@
-<!-- size-justification: 227L — Step 5: blind guard, published-marker gate contract, and the
+<!-- size-justification: 255L — Step 5: blind guard, published-marker gate contract, and the
      UC-CDC-P4 headroom-gated bounded batcher (Step 5.1 MAX_PARALLEL computation + Step 5.2
      batch fan-out with inter-batch wait) are one tightly sequential dispatch unit, child of
      main.md. UC-CDC-P4 QA AC1 fix 2026-07-23 (+21L): replaced the inline `_fanout` shadow-copy
      fallback with a `degraded_serial` MODE downgrade (MAX_PARALLEL=1 sentinel, no SSOT numeric
      literals) mirroring pressure-read.md Step 4.2's missing-policy pattern; Step 5.2 inter-batch
-     wait gained a matching mode branch since FANOUT_POLICY does not exist in that mode. -->
+     wait gained a matching mode branch since FANOUT_POLICY does not exist in that mode.
+     FIX-PRESSURE-HOST-HEADROOM-WRONG-MACHINE-WRONG-QUANTITY 2026-07-28 (+4L, count also
+     corrected for pre-existing drift): field consumer rename host_headroom_mb ->
+     container_vm_headroom_mb. -->
 <!-- BGFAN-1: every Agent spawn in this file MUST use run_in_background=true; UC-CDC-P4 bounds
      CONCURRENCY ACROSS batches via Step 5.1/5.2, it does not relax background=true within a
      batch. Canonical rule + batcher carve-out → docs/protocols/agent-chaining-protocol.md
@@ -151,8 +154,12 @@ else:
   # same session). If PRESSURE_MODE == "legacy" (pressure-state.json missing/stale/malformed —
   # Step 4.2's own isStale gate already fired), headroom is unknown → fail-safe degraded, per the
   # same NFR-P1-3 "never worse than today" posture Step 4.2 already applies.
-  if PRESSURE_MODE == "adaptive" and PRESSURE_STATE.host_headroom_mb is a number:
-    HEADROOM_MB = PRESSURE_STATE.host_headroom_mb
+  # FIX-PRESSURE-HOST-HEADROOM-WRONG-MACHINE-WRONG-QUANTITY (2026-07-28): field
+  # renamed host_headroom_mb -> container_vm_headroom_mb — it measures the
+  # mcp-server container's own Docker VM (free -m 'available'), never the
+  # macOS host; null when unavailable (unchanged fail-safe below).
+  if PRESSURE_MODE == "adaptive" and PRESSURE_STATE.container_vm_headroom_mb is a number:
+    HEADROOM_MB = PRESSURE_STATE.container_vm_headroom_mb
   else:
     HEADROOM_MB = null   # unknown → forces the degraded branch below
 

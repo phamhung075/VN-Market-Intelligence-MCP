@@ -8,7 +8,7 @@
 
 ### Step 6.0 — MANDATORY pressure-state emit (EMIT-DARK-v2 Option C)
 
-Execute this call_tool BEFORE the conditional signal-file write. It is un-skippable and independent of the SILENT guard. The tool computes signal_backlog, dev_queue_depth, and host_headroom_mb server-side (shell computations the dispatcher cannot perform) and atomically writes docs/data/pressure-state.json + promotes cycle-snapshot-latest.json. It NEVER throws — on internal error it returns {success: false, reason: "..."} and the dispatcher continues regardless.
+Execute this call_tool BEFORE the conditional signal-file write. It is un-skippable and independent of the SILENT guard. The tool computes signal_backlog, dev_queue_depth, and container_vm_headroom_mb server-side (shell computations the dispatcher cannot perform) and atomically writes docs/data/pressure-state.json + promotes cycle-snapshot-latest.json. It NEVER throws — on internal error it returns {success: false, reason: "..."} and the dispatcher continues regardless. `container_vm_headroom_mb` is the mcp-server container's own Docker VM headroom (`free -m` 'available'; renamed from `host_headroom_mb` — FIX-PRESSURE-HOST-HEADROOM-WRONG-MACHINE-WRONG-QUANTITY, 2026-07-28 — it never measured the macOS host).
 
 ```
 call_tool(server="vn-market", tool="emit_pressure_state", arguments={

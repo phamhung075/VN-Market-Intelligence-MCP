@@ -7,13 +7,13 @@
  * Why this tool exists:
  *   The cowork dispatcher is a pure LLM narration engine — it NEVER executes
  *   fenced bash. Fields like signal_backlog (ls+grep+wc), dev_queue_depth
- *   (jq orch-state), and host_headroom_mb (vm_stat/free) require REAL shell
+ *   (jq orch-state), and container_vm_headroom_mb (free -m) require REAL shell
  *   execution. Moving them server-side lets the dispatcher call_tool instead
  *   of running a bash block that silently becomes a no-op.
  *
  * Contract (brief §4 — docs/architecture-briefs/2026-06-05-emit-dark-root-cause.md):
  *   - Arguments: all optional — server defaults each to "unknown" / null.
- *   - Computes: signal_backlog, dev_queue_depth, host_headroom_mb, emitted_at.
+ *   - Computes: signal_backlog, dev_queue_depth, container_vm_headroom_mb, emitted_at.
  *   - Writes: docs/data/pressure-state.json (atomic tmp→rename).
  *   - Promotes: docs/data/cycle-snapshot-<HH:MM>.json → cycle-snapshot-latest.json
  *     if the per-tick snapshot for tick_id's HH:MM exists.
@@ -66,7 +66,7 @@ export interface PressureState {
   last_volatility_level: string;
   calendar_status: string;
   dev_queue_depth: number | null;
-  host_headroom_mb: number | null;
+  container_vm_headroom_mb: number | null;
   stale_warning: boolean;
 }
 
@@ -118,30 +118,51 @@ export function computeDevQueueDepth(orchStatePath: string): number | null {
 }
 
 /**
- * Read free memory in MB.
- * - macOS: vm_stat pages free → multiply by page size (4096 bytes typical)
- * - Linux: free -m available column
- * - Unavailable: null
+ * Read the container VM's available free memory in MB via Linux `free -m`.
+ *
+ * FIX-PRESSURE-HOST-HEADROOM-WRONG-MACHINE-WRONG-QUANTITY (2026-07-28):
+ * mcp-server always executes inside its own Docker container in this
+ * deployment — there is no legitimate code path where this process runs
+ * directly on the macOS dev host. The prior implementation tried macOS
+ * `vm_stat` FIRST, which:
+ *   (A) WRONG MACHINE — always failed inside the Linux container (no
+ *       `vm_stat` binary there), silently falling through to `free -m` and
+ *       reporting the Docker VM's memory under a field literally named
+ *       `host_headroom_mb`. LIVE PROOF (2026-07-28T13:07:45Z): gauge=2284
+ *       matched neither this host's `Pages free`=261MB nor its real
+ *       available=6427MB (free+inactive+speculative) — it was measuring a
+ *       third, different machine (the Docker VM).
+ *   (B) WRONG QUANTITY, latent — the macOS branch parsed `Pages free` ALONE,
+ *       a small, violently-oscillating fraction of real available memory
+ *       (261MB vs 6427MB actually free on the same host at the same instant).
+ *       Had this branch ever fired for real (e.g. mcp-server run on the bare
+ *       host), it would have pinned the fleet in degraded fan-out mode
+ *       forever, permanently below the 1500 floor.
+ *
+ * RESOLUTION: rename the field to `container_vm_headroom_mb` and DROP the
+ * macOS branch entirely rather than "fixing" its quantity — there is no
+ * honest way to read the Docker Desktop VM's free memory via `vm_stat` run
+ * on the raw macOS host (vm_stat there measures the host, a DIFFERENT
+ * machine than the container's own 8GB-capped VM budgeted via Docker
+ * Desktop's MemoryMiB=8192 setting — see project_host_memory_panic memory).
+ * The only honest measurement of "this container's VM headroom" is `free -m`
+ * executed FROM INSIDE a container sharing that VM — which is exactly what
+ * this function's production caller always is. Keeping a macOS fallback
+ * under the new, more honest field name would just reintroduce defect (A)
+ * under a different label. When `free` is unavailable (macOS dev host,
+ * `bun test` run locally outside any container, etc.) this now returns
+ * `null` — the documented unavailable sentinel — rather than substituting a
+ * different machine's number.
+ *
+ * @param execFn  Injectable shell-exec (tests inject a canned `free -m` output
+ *                or a throwing stub to simulate a non-Linux / no-`free` host)
+ * @returns MB available (the `available` column, 6th numeric field), or null
  */
-export function computeHostHeadroomMb(): number | null {
-  // Try macOS vm_stat first
+export function computeContainerVmHeadroomMb(
+  execFn: (cmd: string) => string = (cmd) => execSync(cmd, { encoding: "utf8", timeout: 3000 }),
+): number | null {
   try {
-    const out = execSync("vm_stat 2>/dev/null", { encoding: "utf8", timeout: 3000 });
-    const match = out.match(/Pages free:\s+(\d+)/);
-    if (match && match[1]) {
-      const pages = parseInt(match[1], 10);
-      if (!isNaN(pages) && pages > 0) {
-        // vm_stat page size is typically 4096 on macOS
-        return Math.floor((pages * 4096) / (1024 * 1024));
-      }
-    }
-  } catch {
-    // vm_stat not available
-  }
-
-  // Try Linux free -m
-  try {
-    const out = execSync("free -m 2>/dev/null", { encoding: "utf8", timeout: 3000 });
+    const out = execFn("free -m 2>/dev/null");
     // Column order: total, used, free, shared, buff/cache, available
     const match = out.match(/^Mem:\s+\d+\s+\d+\s+\d+\s+\d+\s+\d+\s+(\d+)/m);
     if (match && match[1]) {
@@ -149,7 +170,8 @@ export function computeHostHeadroomMb(): number | null {
       if (!isNaN(mb) && mb >= 0) return mb;
     }
   } catch {
-    // free not available
+    // `free` unavailable (e.g. macOS dev host, no Linux container) — honest
+    // null, never substitute a different machine's reading (root cause A).
   }
 
   return null;
@@ -281,7 +303,7 @@ export interface EmitPressureStateDeps {
   getRoot: () => string;
   computeSignalBacklogFn: (signalsDir: string) => number | null;
   computeDevQueueDepthFn: (orchStatePath: string) => number | null;
-  computeHostHeadroomMbFn: () => number | null;
+  computeContainerVmHeadroomMbFn: () => number | null;
   writePressureStateAtomicFn: (path: string, state: PressureState) => string | null;
   /** Returns { promoted, stale } — stale=true means REFUSED due to freshness gate */
   promoteCycleSnapshotFn: (dataDir: string, tickHHMM: string) => PromoteCycleSnapshotResult;
@@ -292,7 +314,7 @@ const defaultDeps: EmitPressureStateDeps = {
   getRoot: getProjectRoot,
   computeSignalBacklogFn: computeSignalBacklog,
   computeDevQueueDepthFn: computeDevQueueDepth,
-  computeHostHeadroomMbFn: computeHostHeadroomMb,
+  computeContainerVmHeadroomMbFn: computeContainerVmHeadroomMb,
   writePressureStateAtomicFn: writePressureStateAtomic,
   // Production wrapper: passes through to promoteCycleSnapshot with defaults
   promoteCycleSnapshotFn: (dataDir, tickHHMM) => promoteCycleSnapshot(dataDir, tickHHMM),
@@ -368,8 +390,8 @@ export async function runEmitPressureState(
     const dev_queue_depth = deps.computeDevQueueDepthFn(orchStatePath);
     fieldsWritten.push("dev_queue_depth");
 
-    const host_headroom_mb = deps.computeHostHeadroomMbFn();
-    fieldsWritten.push("host_headroom_mb");
+    const container_vm_headroom_mb = deps.computeContainerVmHeadroomMbFn();
+    fieldsWritten.push("container_vm_headroom_mb");
 
     // Promote cycle snapshot if present (FAIL-SAFE: freshness gate inside)
     const promoteResult: PromoteCycleSnapshotResult = tickHHMM
@@ -386,7 +408,7 @@ export async function runEmitPressureState(
       last_volatility_level: args.last_volatility_level ?? "unknown",
       calendar_status: args.calendar_status ?? "unknown",
       dev_queue_depth: dev_queue_depth,
-      host_headroom_mb: host_headroom_mb,
+      container_vm_headroom_mb: container_vm_headroom_mb,
       stale_warning: promoteResult.stale,
     };
 
@@ -405,7 +427,7 @@ export async function runEmitPressureState(
     console.log(
       `[emit_pressure_state] ok emitted_at=${emittedAt} tick_id=${tickId} ` +
         `signal_backlog=${signal_backlog} dev_queue_depth=${dev_queue_depth} ` +
-        `host_headroom_mb=${host_headroom_mb} ` +
+        `container_vm_headroom_mb=${container_vm_headroom_mb} ` +
         `cycle_snapshot_promoted=${promoteResult.promoted} stale_warning=${promoteResult.stale}`,
     );
 
@@ -451,7 +473,10 @@ export function registerEmitPressureStateTool(
       "last_volatility_level from the dispatcher (all optional — server defaults each to 'unknown'). " +
       "SERVER-COMPUTED: signal_backlog (docs/signals/*.json count excl cowork-team-*), " +
       "dev_queue_depth (orch-state.json TODO+IN_PROGRESS tasks), " +
-      "host_headroom_mb (vm_stat/free -m; null if unavailable), emitted_at (server UTC now). " +
+      "container_vm_headroom_mb (free -m 'available' column, read from inside THIS " +
+      "process's own container — i.e. the Docker VM's headroom, NOT the macOS host's; " +
+      "null if unavailable, e.g. no `free` binary outside a Linux container), " +
+      "emitted_at (server UTC now). " +
       "Writes docs/data/pressure-state.json atomically (tmp→rename). " +
       "Promotes docs/data/cycle-snapshot-<HH:MM>.json to cycle-snapshot-latest.json if present. " +
       "NEVER throws — returns {success:false, reason} on any error so the cowork dispatcher is never broken.",

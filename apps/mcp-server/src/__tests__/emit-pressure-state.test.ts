@@ -37,6 +37,7 @@ import {
   runEmitPressureState,
   computeSignalBacklog,
   computeDevQueueDepth,
+  computeContainerVmHeadroomMb,
   writePressureStateAtomic,
   promoteCycleSnapshot,
   SNAPSHOT_MAX_STALENESS_MS,
@@ -195,6 +196,65 @@ describe("computeDevQueueDepth", () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// FIX-PRESSURE-HOST-HEADROOM-WRONG-MACHINE-WRONG-QUANTITY: computeContainerVmHeadroomMb
+//
+// "Same-minute two-plane comparison ... executed on BOTH the container path
+// and (fixture or real) the macOS path" acceptance requirement:
+//   - "container path" (the field's INTENDED machine): FIXTURE tests below
+//     inject a canned `free -m` output and assert the parsed value equals the
+//     source fixture's own `available` column exactly (the two planes are, by
+//     construction, the same number — proving the parser reads the RIGHT
+//     column of the RIGHT command, not a substitute).
+//   - "macOS path" (the negative control — this field's non-intended
+//     machine): the REAL, unmocked default execFn is exercised directly on
+//     this dev host (macOS, no `free` binary) and must return null, never a
+//     fabricated/wrong-machine number. This is a REAL run, not a fixture.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("computeContainerVmHeadroomMb", () => {
+  test("[container path, fixture] parses the `available` column from a canned Linux `free -m` output", () => {
+    const fixture =
+      "              total        used        free      shared  buff/cache   available\n" +
+      "Mem:           7939        4229         912           0        2797        3410\n" +
+      "Swap:          2047        1058         989\n";
+    const result = computeContainerVmHeadroomMb(() => fixture);
+    // Two-plane comparison against the SAME fixture's own `available` column —
+    // must agree exactly (0% delta, well within the 10% acceptance bound).
+    expect(result).toBe(3410);
+  });
+
+  test("[container path, fixture] a second live-shaped sample parses correctly (not a one-fixture fluke)", () => {
+    const fixture =
+      "              total        used        free      shared  buff/cache   available\n" +
+      "Mem:           7939        4368         746           0        2824        3271\n" +
+      "Swap:          2047        1034        1013\n";
+    expect(computeContainerVmHeadroomMb(() => fixture)).toBe(3271);
+  });
+
+  test("returns null when the exec function throws (simulates `free` unavailable)", () => {
+    const result = computeContainerVmHeadroomMb(() => {
+      throw new Error("command not found: free");
+    });
+    expect(result).toBeNull();
+  });
+
+  test("returns null on malformed output (no `Mem:` line to match)", () => {
+    const result = computeContainerVmHeadroomMb(() => "garbage output, not free -m at all");
+    expect(result).toBeNull();
+  });
+
+  test("[macOS path, REAL — negative control] the real default execFn on this dev host (macOS, no `free` binary) returns null, never a substituted wrong-machine number", () => {
+    // No execFn override — exercises the REAL production default (real execSync).
+    // On macOS there is no `free` binary, so this must honestly return null
+    // rather than falling through to a different machine's reading (the
+    // exact defect this task fixes — root cause (A), FIX-PRESSURE-HOST-
+    // HEADROOM-WRONG-MACHINE-WRONG-QUANTITY).
+    const result = computeContainerVmHeadroomMb();
+    expect(result).toBeNull();
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // AC-2: writePressureStateAtomic
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -209,7 +269,7 @@ describe("writePressureStateAtomic", () => {
       last_volatility_level: "low",
       calendar_status: "open",
       dev_queue_depth: 3,
-      host_headroom_mb: 4096,
+      container_vm_headroom_mb: 4096,
       stale_warning: false,
     };
 
@@ -229,7 +289,7 @@ describe("writePressureStateAtomic", () => {
     expect(parsed.last_volatility_level).toBe("low");
     expect(parsed.calendar_status).toBe("open");
     expect(parsed.dev_queue_depth).toBe(3);
-    expect(parsed.host_headroom_mb).toBe(4096);
+    expect(parsed.container_vm_headroom_mb).toBe(4096);
     expect(parsed.stale_warning).toBe(false);
   });
 
@@ -245,7 +305,7 @@ describe("writePressureStateAtomic", () => {
         last_volatility_level: "unknown",
         calendar_status: "unknown",
         dev_queue_depth: null,
-        host_headroom_mb: null,
+        container_vm_headroom_mb: null,
         stale_warning: false,
       },
       (_p, _c) => { throw new Error("DISK_FULL"); },
@@ -264,7 +324,7 @@ describe("writePressureStateAtomic", () => {
       last_volatility_level: "unknown",
       calendar_status: "unknown",
       dev_queue_depth: null,
-      host_headroom_mb: null,
+      container_vm_headroom_mb: null,
       stale_warning: false,
     });
     // No .tmp file should remain
@@ -474,7 +534,7 @@ describe("runEmitPressureState — never throws", () => {
       getRoot: () => tmpDir,
       computeSignalBacklogFn: () => null,
       computeDevQueueDepthFn: () => null,
-      computeHostHeadroomMbFn: () => null,
+      computeContainerVmHeadroomMbFn: () => null,
       writePressureStateAtomicFn: (path, state) =>
         writePressureStateAtomic(pressureStatePath, state),
       promoteCycleSnapshotFn: (): PromoteCycleSnapshotResult => ({ promoted: false, stale: false }),
@@ -487,7 +547,7 @@ describe("runEmitPressureState — never throws", () => {
     const deps = buildDeps({
       computeSignalBacklogFn: () => null,
       computeDevQueueDepthFn: () => null,
-      computeHostHeadroomMbFn: () => null,
+      computeContainerVmHeadroomMbFn: () => null,
     });
 
     const result = await runEmitPressureState({}, deps);
@@ -556,7 +616,7 @@ describe("runEmitPressureState — stale/fresh snapshot integration", () => {
       getRoot: () => "/fake/root",
       computeSignalBacklogFn: () => 0,
       computeDevQueueDepthFn: () => 0,
-      computeHostHeadroomMbFn: () => 512,
+      computeContainerVmHeadroomMbFn: () => 512,
       writePressureStateAtomicFn: (_path, state) => {
         capturedState.value = state;
         return null; // success
@@ -684,7 +744,7 @@ describe("runEmitPressureState — end-to-end with fixtures", () => {
       getRoot: () => root,
       computeSignalBacklogFn: (dir) => computeSignalBacklog(dir),
       computeDevQueueDepthFn: (path) => computeDevQueueDepth(path),
-      computeHostHeadroomMbFn: () => 8192, // fixed for test determinism
+      computeContainerVmHeadroomMbFn: () => 8192, // fixed for test determinism
       writePressureStateAtomicFn: (path, state) =>
         writePressureStateAtomic(path, state),
       promoteCycleSnapshotFn: (): PromoteCycleSnapshotResult => ({ promoted: false, stale: false }),
@@ -724,7 +784,7 @@ describe("runEmitPressureState — end-to-end with fixtures", () => {
     expect(parsed.last_volatility_level).toBe("low");
     expect(parsed.calendar_status).toBe("open");
     expect(parsed.dev_queue_depth).toBe(2); // 1 TODO + 1 IN_PROGRESS from fixture
-    expect(parsed.host_headroom_mb).toBe(8192);
+    expect(parsed.container_vm_headroom_mb).toBe(8192);
     expect(parsed.stale_warning).toBe(false);
   });
 
@@ -751,7 +811,7 @@ describe("runEmitPressureState — end-to-end with fixtures", () => {
       getRoot: () => join(tmpDir, "root2"),
       computeSignalBacklogFn: () => 0,
       computeDevQueueDepthFn: () => 0,
-      computeHostHeadroomMbFn: () => null,
+      computeContainerVmHeadroomMbFn: () => null,
       writePressureStateAtomicFn: (_path, state) => {
         // Write to dataDir directly for this test
         const adjustedPath = join(dataDir, "pressure-state.json");
