@@ -27,3 +27,5 @@ Zone: Docker/VPS/DB operations, incident response, close-gate verification.
 - 2026-07-17 · VERIFY-FIX-DAILY-FF-VIEW-JOIN-ANCHOR-REALDATA: RAW-Live Class-A Serving Probe (Gate Verdict: PASS) → `docs/incidents/2026-07-17-verify-fix-daily-ff-view-join-anchor-realdata.md`
 - 2026-07-21 · Socat Bridge Obsolescence Finding → `docs/incidents/2026-07-21-socat-bridge-obsolescence-finding.md`
 - 2026-07-21 · Session: FIX-BCTC-Q1-2026-STORED-PDF-INGEST-STALL-15T Diagnostics → `docs/incidents/2026-07-21-fix-bctc-q1-2026-stored-pdf-ingest-stall-diagnostics.md`
+- 2026-07-29 · A-30 mcp-server Memory Tripwire: False Positive Re-confirmation → `sys-20260728T215425-23ef` marked READ
+
