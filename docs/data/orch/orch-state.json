@@ -420,11 +420,11 @@
   ],
   "head": {
     "status": "in_progress",
-    "active_task_id": "ALPHA-S2-SUB5-WATCHDOG-STRETCH",
-    "next_agent": "dev-mcp-server",
-    "next_action": "BOUNDED-1 auto-pickup claim of ALPHA-S2-SUB5-WATCHDOG-STRETCH — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-28T23:51:25Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "active_task_id": "UC-GCP-P3",
+    "next_agent": "qa",
+    "next_action": "Review-Lane QA-Drain claim of UC-GCP-P3 — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have).",
+    "updated_at": "2026-07-28T23:53:04Z",
+    "updated_by": "dev-team (review-lane qa-drain)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -14012,36 +14012,6 @@
         "next_agent": "agent-father"
       },
       {
-        "id": "UC-GCP-P3",
-        "type": "FIX",
-        "title": "Fix the drain commit deletion drop: tracked-only pathspec sweep (git add -u) scoped to the drain zone + post-commit clean check",
-        "status": "REVIEW",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "RESCOPE",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#git-ci-publish-P3",
-        "note": "SCOPE=verifier Rescope note. drain-signals.md:9 -> `git add -u -- docs/signals/ && git add -- docs/signals/processed/` (-u stages tracked mods+deletions only, never sweeps peers' untracked inbox arrivals). Post-commit invariant: porcelain minus '??' minus signals.db must be 0 else bug-telegram. Add a cross-ref note to commit-boundary SKILL RULE1. DROP the backfill (already done df0b58bd9).",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "priority_bumped_from": "P2",
-        "priority_bumped_at": "2026-07-17T04:54:03Z",
-        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
-        "promoted_at": "2026-07-23T07:18:32Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "updated_at": "2026-07-23T07:28:35Z",
-        "claimed_at": "2026-07-23T07:18:32Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "owner": "developer",
-        "next_agent": "qa",
-        "dev_result": "DONE: drain-signals.md §0a MANDATORY PERSIST GUARD staging changed to `git add -u -- docs/signals/ && git add -- docs/signals/processed/` (-u stages tracked mods+deletions only, never sweeps peers' untracked mid-write inbox arrivals; second add picks up the drain's own newly-moved untracked-new processed/ files). Added post-commit invariant: `git status --porcelain -- docs/signals/ | grep -v '^??' | grep -v signals.db | wc -l` must be 0, else send_telegram(channel=bug) naming residual paths (^?? exclusion prevents false alarms from legitimate mid-commit peer arrivals). Cross-ref note added to commit-boundary/SKILL.md RULE 1 documenting the tracked-only exception is not a directory sweep. DROPPED the one-shot backfill per instruction — already landed df0b58bd9 (2026-07-12), verified docs/signals/ has zero pending deletions today. Docs-only flow-spec change, implemented the verifier's RESCOPE text verbatim, no re-expansion.",
-        "dev_commit": "e77635933 (drain-signals.md + commit-boundary/SKILL.md), 2d7aec151 (notebook + decision journal)",
-        "dev_completed_at": "2026-07-23T07:28:35Z"
-      },
-      {
         "id": "UC-GCP-P7",
         "type": "FIX",
         "title": "Rescope /commit skill: per-commit mutex-bound, main-only, convention-aligned",
@@ -16476,7 +16446,38 @@
         "review_note": "dev-mcp-server COMPLETE (session 64c7c677-0f0f-4cee-a3ce-dba79d70b7ae): fixed entirely in the TEST per PO deliverable, zero production code touched. emit-pressure-state.test.ts \"[macOS path, REAL - negative control]\" unconditionally asserted computeContainerVmHeadroomMb() (real unmocked execFn) toBeNull(), true only on hosts with no `free` binary; ubuntu-latest CI has `free`, so the real exec returns a number and the assertion always failed there (source commit 98917416a is NOT defective - a real number on Linux is correct). Fix: runtime presence-probe (command -v free via node:child_process execSync) gates the strict leg - free present -> assert not-null/finite/>=0 (CI), free absent -> assert null (macOS dev) - still the REAL unmocked default execFn, plus an unconditional platform-independent invariant (never throws; null-or-non-negative-finite-number) ahead of the gated leg. Updated stale file-header comment block with the same assumption. Also fixed the board rows own AC-3 (secondary_finding): scripts/ci-per-file-isolation.sh captured each failed files output to $RESULT_DIR/${slug}.log but rm -rf destroyed it before CI ever surfaced it (why this required local reproduction); added a block that cats each .log into $GITHUB_STEP_SUMMARY (collapsible, tail -100L) before the rm -rf - bash -n syntax-checked + a synthetic RESULT_DIR/log fixture confirmed correct output. Evidence: targeted file 31/31 pass on BOTH legs (real macOS host + stub free-on-PATH reproducing POs exact CI-repro harness, matching acceptance criterion 1). tsc clean. gen-project-stats --dry-run: toolCount=184/cronJobCount=88 unchanged (no tool/cron file touched). CI-equivalent evidence: ran the just-fixed ci-per-file-isolation.sh itself end-to-end - 14734 pass/40 skip/6 fail across 1230 files, emit-pressure-state.test.ts NOT among the 6 fails; the 5 failing files (083-tool-analysis, 1324-push-news-all-sources, 1398/1793-pollnews-cooldown, FIX-1267-ssc-circuit-breaker) grepped for zero reference to either changed file - pre-existing unrelated drift, not a regression. Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md STEP dev-mcp-server-S16. NOT pushed by this agent per PUSH-AUTONOMY-1 (chain-mutex-holding session pushes) and this rows own VERIFICATION GATE instruction (flip to REVIEW, do not self-verify DONE) - verification_gate ci_green_on_subsequent_push stays open until a fresh CI run lands conclusion=success on a HEAD SHA != cdd5fa5ad344406298fdf70b59afd71050c30289 after this fix is committed+pushed by whoever holds the chain mutex. Ready for qa."
       }
     ],
-    "qa": [],
+    "qa": [
+      {
+        "id": "UC-GCP-P3",
+        "type": "FIX",
+        "title": "Fix the drain commit deletion drop: tracked-only pathspec sweep (git add -u) scoped to the drain zone + post-commit clean check",
+        "status": "QA",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "RESCOPE",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#git-ci-publish-P3",
+        "note": "SCOPE=verifier Rescope note. drain-signals.md:9 -> `git add -u -- docs/signals/ && git add -- docs/signals/processed/` (-u stages tracked mods+deletions only, never sweeps peers' untracked inbox arrivals). Post-commit invariant: porcelain minus '??' minus signals.db must be 0 else bug-telegram. Add a cross-ref note to commit-boundary SKILL RULE1. DROP the backfill (already done df0b58bd9).",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "priority_bumped_from": "P2",
+        "priority_bumped_at": "2026-07-17T04:54:03Z",
+        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
+        "promoted_at": "2026-07-23T07:18:32Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "updated_at": "2026-07-28T23:53:04Z",
+        "claimed_at": "2026-07-28T23:53:04Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "owner": "developer",
+        "next_agent": "qa",
+        "dev_result": "DONE: drain-signals.md §0a MANDATORY PERSIST GUARD staging changed to `git add -u -- docs/signals/ && git add -- docs/signals/processed/` (-u stages tracked mods+deletions only, never sweeps peers' untracked mid-write inbox arrivals; second add picks up the drain's own newly-moved untracked-new processed/ files). Added post-commit invariant: `git status --porcelain -- docs/signals/ | grep -v '^??' | grep -v signals.db | wc -l` must be 0, else send_telegram(channel=bug) naming residual paths (^?? exclusion prevents false alarms from legitimate mid-commit peer arrivals). Cross-ref note added to commit-boundary/SKILL.md RULE 1 documenting the tracked-only exception is not a directory sweep. DROPPED the one-shot backfill per instruction — already landed df0b58bd9 (2026-07-12), verified docs/signals/ has zero pending deletions today. Docs-only flow-spec change, implemented the verifier's RESCOPE text verbatim, no re-expansion.",
+        "dev_commit": "e77635933 (drain-signals.md + commit-boundary/SKILL.md), 2d7aec151 (notebook + decision journal)",
+        "dev_completed_at": "2026-07-23T07:28:35Z"
+      }
+    ],
     "_closed_signals_20260614": {
       "_by": "po-S50",
       "_at": "2026-06-14T14:45:14Z",
