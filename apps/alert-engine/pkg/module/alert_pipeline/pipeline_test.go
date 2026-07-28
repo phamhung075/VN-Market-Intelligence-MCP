@@ -20,6 +20,10 @@ type mockRepo struct {
 	getRecentErr error
 	dupErr       error
 	storeErr     error
+	// dupCalledWithMinutes captures the withinMinutes argument the pipeline
+	// passed to HasDuplicateFingerprint, so tests can pin the dedup window
+	// (FACTORY-ALERT-dedup-window-config) independently of the cooldown window.
+	dupCalledWithMinutes int
 }
 
 func (m *mockRepo) GetRecentAlerts(stock string, withinMinutes int) ([]domain.StoredAlert, error) {
@@ -27,6 +31,7 @@ func (m *mockRepo) GetRecentAlerts(stock string, withinMinutes int) ([]domain.St
 }
 
 func (m *mockRepo) HasDuplicateFingerprint(fingerprint string, withinMinutes int) (bool, error) {
+	m.dupCalledWithMinutes = withinMinutes
 	return m.duplicate, m.dupErr
 }
 
@@ -288,8 +293,19 @@ func TestRun_DedupHit_ShortCircuits(t *testing.T) {
 	if res.Fired {
 		t.Fatal("expected Fired=false on dedup hit")
 	}
-	if res.Reason != "duplicate: fingerprint seen recently" {
-		t.Errorf("reason=%q want dedup reason", res.Reason)
+	// FACTORY-ALERT-dedup-window-config: the dedup window is the named
+	// DedupWindowMinutes (60, mirrors mcp.config.json
+	// alertQuality.dedupWindowMinutes) — pinned here so it can never silently
+	// drift back to reusing CooldownMinutes (30).
+	if repo.dupCalledWithMinutes != domain.DefaultCooldownConfig.DedupWindowMinutes {
+		t.Errorf("HasDuplicateFingerprint called with withinMinutes=%d, want=%d (DedupWindowMinutes)", repo.dupCalledWithMinutes, domain.DefaultCooldownConfig.DedupWindowMinutes)
+	}
+	if repo.dupCalledWithMinutes == domain.DefaultCooldownConfig.CooldownMinutes {
+		t.Error("dedup window must not equal CooldownMinutes by coincidence of reuse — assert against the named default directly")
+	}
+	wantReason := fmt.Sprintf("duplicate: fingerprint seen within %dmin", domain.DefaultCooldownConfig.DedupWindowMinutes)
+	if res.Reason != wantReason {
+		t.Errorf("reason=%q want=%q", res.Reason, wantReason)
 	}
 	if len(tg.sent) != 0 {
 		t.Errorf("dedup hit must not route, got %d sends", len(tg.sent))

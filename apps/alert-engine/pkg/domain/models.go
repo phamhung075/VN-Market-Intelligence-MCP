@@ -44,18 +44,28 @@ type AlertRequest struct {
 	SendTelegram bool
 }
 
-// CooldownConfig holds cooldown and daily-cap parameters.
+// CooldownConfig holds cooldown, dedup-window, and daily-cap parameters.
 type CooldownConfig struct {
-	// CooldownMinutes is the window to suppress same stock+signal combo.
+	// CooldownMinutes is the window to suppress same stock+signal combo
+	// (cooldown-gate primitive). Mirrors mcp.config.json alertQuality.cooldownMinutes.
 	CooldownMinutes int
 	// MaxAlertsPerStockPerDay is the daily cap per stock.
 	MaxAlertsPerStockPerDay int
+	// DedupWindowMinutes is the window (minutes) for exact-duplicate
+	// fingerprint detection (AlertRepositoryPort.HasDuplicateFingerprint) —
+	// a named field distinct from CooldownMinutes, not a reuse of the
+	// cooldown window. Mirrors mcp.config.json alertQuality.dedupWindowMinutes
+	// (FACTORY-ALERT-dedup-window-config).
+	DedupWindowMinutes int
 }
 
-// DefaultCooldownConfig mirrors TS DEFAULT_COOLDOWN_CONFIG.
+// DefaultCooldownConfig mirrors the live mcp.config.json `alertQuality` block
+// (apps/mcp-server/src/infrastructure/config.ts AlertQualityConfig defaults):
+// cooldownMinutes=30, maxAlertsPerStockPerDay=3, dedupWindowMinutes=60.
 var DefaultCooldownConfig = CooldownConfig{
 	CooldownMinutes:         30,
 	MaxAlertsPerStockPerDay: 3,
+	DedupWindowMinutes:      60,
 }
 
 // StoredAlert is a persisted alert record.

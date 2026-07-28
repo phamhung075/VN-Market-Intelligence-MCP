@@ -61,7 +61,7 @@ the alert.
 
 **Suppression reasons** (exact strings, `pkg/module/alert_pipeline/pipeline.go`):
 - `invalid severity: "<value>"` — severity not one of low/medium/high/critical (dead-in-practice on this HTTP path — already 400'd by `router.go` before evaluation runs; matters for future non-HTTP callers of the module)
-- `duplicate: fingerprint seen recently` — same fingerprint within `cfg.CooldownMinutes`
+- `duplicate: fingerprint seen within <N>min` — same fingerprint within `cfg.DedupWindowMinutes` (default 60 — a named field, distinct from `cfg.CooldownMinutes`; FACTORY-ALERT-dedup-window-config)
 - `cooldown: same signal within Nmin` / `daily cap: N/M alerts for <stock>` — cooldown-gate primitive
 - `muted: stock is muted` — stock has an active mute
 

@@ -87,13 +87,16 @@ func (p *Pipeline) Run(ctx context.Context, req domain.AlertRequest, now time.Ti
 	// 2. build fingerprint.
 	fingerprint := dkb.BuildKey(req.Stock, req.SignalTypes, req.Message)
 
-	// 3. check duplicate (dedup short-circuit).
-	dup, err := p.repo.HasDuplicateFingerprint(fingerprint, p.cfg.CooldownMinutes)
+	// 3. check duplicate (dedup short-circuit). DedupWindowMinutes is a named
+	// config field distinct from CooldownMinutes — do not reuse the cooldown
+	// window here (FACTORY-ALERT-dedup-window-config).
+	dup, err := p.repo.HasDuplicateFingerprint(fingerprint, p.cfg.DedupWindowMinutes)
 	if err != nil {
 		return Result{}, fmt.Errorf("dedup check: %w", err)
 	}
 	if dup {
-		return Result{Fired: false, Fingerprint: fingerprint, Reason: "duplicate: fingerprint seen recently", CooldownSec: cooldownSec}, nil
+		reason := fmt.Sprintf("duplicate: fingerprint seen within %dmin", p.cfg.DedupWindowMinutes)
+		return Result{Fired: false, Fingerprint: fingerprint, Reason: reason, CooldownSec: cooldownSec}, nil
 	}
 
 	// 4. check cooldown over recent alerts.

@@ -47,7 +47,7 @@ type EvaluateAlertResponse struct {
 
 1. **Classify severity** — `signal-classifier` primitive; invalid → fired=false (defense-in-depth; the HTTP layer already rejects invalid severities before `Execute` is called, so this only matters for non-HTTP/future direct callers).
 2. **Build fingerprint** — `dedup-key-builder` primitive (stock + sorted signalTypes + message prefix, 8-char DJB2 hex).
-3. **Dedup check** — `AlertRepositoryPort.HasDuplicateFingerprint` (60min-equivalent window = `cfg.CooldownMinutes`) → fired=false, reason="duplicate: fingerprint seen recently".
+3. **Dedup check** — `AlertRepositoryPort.HasDuplicateFingerprint` (window = `cfg.DedupWindowMinutes`, default 60 — a named field, distinct from `cfg.CooldownMinutes`; FACTORY-ALERT-dedup-window-config) → fired=false, reason=`"duplicate: fingerprint seen within <DedupWindowMinutes>min"`.
 4. **Cooldown/cap check** — `cooldown-gate` primitive over `GetRecentAlerts` → fired=false if suppressed.
 5. **Mute check** — `MutePort.IsStockMuted` → fired=false, reason="muted: stock is muted".
 6. **Store the alert** — `AlertRepositoryPort.StoreAlert`. **Fired = gates passed AND recorded — independent of Telegram delivery** (see Reconciliation below).

@@ -27,8 +27,12 @@ type AlertRequest struct {
 ### CooldownConfig
 ```go
 type CooldownConfig struct {
-    CooldownMinutes         int // default 30
+    CooldownMinutes         int // default 30 — cooldown-gate window
     MaxAlertsPerStockPerDay int // default 3
+    DedupWindowMinutes      int // default 60 — HasDuplicateFingerprint window;
+                                // named field, distinct from CooldownMinutes
+                                // (FACTORY-ALERT-dedup-window-config). Mirrors
+                                // mcp.config.json alertQuality.dedupWindowMinutes.
 }
 ```
 
