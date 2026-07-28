@@ -6,22 +6,6 @@ Zone: `apps/alert-engine/` | Stack: Go 1.22 (migrated from TS/Bun) | DB: alert_e
 
 ---
 
-## Session: 2026-07-24 (FACTORY-ALERT-delete-deprecated-domain)
-
-**Task:** FACTORY-ALERT-delete-deprecated-domain (P2, FACTORY-MAINTAINABILITY-2026-06 audit) — delete dead `_deprecated` domain package.
-
-**Deadness proven at source (not audit-trusted blind):** `go list ./...` never surfaces `pkg/domain/_deprecated` (Go ignores `_`-prefixed dirs, no build tag needed); zero `.go` files repo-wide import the path; its own files reference `AlertRequest`/`StoredAlert`/`CooldownConfig` types not defined anywhere in that directory (live types live in sibling `pkg/domain/models.go`) — would not even compile if forced into the build. Live successors: `pkg/primitive/cooldown-gate` + `pkg/primitive/dedup-key-builder` (both self-document as the brownfield replacement). Corroborated by 2026-07-04 `FACTORY-ALERT-consolidate-dual-engines` (commit 1c45abb1e) which already rewired `cmd/server/main.go` off any `domain.*` path.
-
-**Fix:** `git rm -r apps/alert-engine/pkg/domain/_deprecated/` (services_v1.go 150L + services_v1_test.go 148L = 298L removed). Updated `docs/architecture/microservice/alert-engine/domain-model.md` (documented file path no longer exists).
-
-**Verify:** go build/vet/test ./... green (identical to pre-delete baseline) + `go test ./pkg/... -count=1` green + golangci-lint 0 issues + sandbox harness 11/11 PASS (`go run ./cmd/sandbox -tier=all -module=alert-engine -scenario=all`).
-
-**Commit:** 314461cbd — refactor(alert-engine): delete dead _deprecated domain package
-
-Zone health: dead-code audit item closed; primitives (cooldown-gate, dedup-key-builder) confirmed sole live implementation; no drift detected.
-
----
-
 ## Session: 2026-06-15 (FIX-ALERT-ENGINE-RSI-SINGLEDIGIT)
 
 **Task:** FIX-ALERT-ENGINE-RSI-SINGLEDIGIT — candle-depth guard for taAlertScanJob.
@@ -63,3 +47,23 @@ Zone health: taAlertScanJob properly guarded; 22/22 TA tests GREEN; no drift det
 **Commit:** local-only, explicit pathspecs, no push (task constraint).
 
 Zone health: no drift detected; 4/4 items closed with equivalence proofs; behavior unchanged except the intended /health port correction.
+
+---
+
+## Session: 2026-07-28 (FACTORY-ALERT-dedup-window-config)
+
+**Task:** FACTORY-ALERT-dedup-window-config (P1, BOUNDED-1 auto-pickup) — dedup window silently reused `CooldownMinutes` (30) instead of a named `DedupWindowMinutes`.
+
+**Root cause at source:** `pipeline.go:91` (post FACTORY-ALERT-consolidate-dual-engines) called `HasDuplicateFingerprint(fingerprint, p.cfg.CooldownMinutes)` — exactly the residual risk the task flagged once the two engines collapsed into one.
+
+**Default confirmed, not invented:** live `mcp.config.json` `alertQuality.dedupWindowMinutes: 60` (also `config.ts` `numVal(aq, "dedupWindowMinutes", 60)`) — matches the pre-consolidation Go history (`GetRecentAlerts(stock, 60)` for dedup, separate from `cfg.CooldownMinutes=30`).
+
+**Fix:** Added `domain.CooldownConfig.DedupWindowMinutes` (default 60), wired into the dedup call + reason string (`fmt.Sprintf("duplicate: fingerprint seen within %dmin", ...)`). TDD: RED (mockRepo captures `withinMinutes`; new domain test pins default=60) failed to compile pre-fix, GREEN after.
+
+**Verify:** go build/vet/test ./pkg/... green (60 top-level, 70 incl. subtests) + golangci-lint 0 issues + sandbox 11/11 PASS.
+
+**Docs:** domain-model.md, usecases.md, api-reference.md, testing.md updated (doc-review).
+
+**Commit:** 43f4e3add — fix(alert-engine): named DedupWindowMinutes, no longer reuses CooldownMinutes
+
+Zone health: dedup-window config defect closed; no other `CooldownMinutes`-reuse sites found in `pipeline.go`.
