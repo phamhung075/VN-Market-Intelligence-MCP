@@ -86,7 +86,7 @@ step exists in the deployed Go service — see "Trend field — dropped" below.
 > FACTORY-TECHANALYSIS-reconcile-ta-contract (2026-07-08). This section used
 > to document a `determineTrend()` heuristic that only ever existed in the
 > dead TypeScript shadow service (`apps/technical-analysis/src/domain/services.ts`
-> — never started by Dockerfile/docker-compose.yml; scheduled for deletion by
+> — never started by Dockerfile/docker-compose.yml; deleted 2026-07-28 by
 > `FACTORY-TECHANALYSIS-delete-orphaned-ts-service`):
 > - `rsi > 70 AND macdHist > 0` → `BULLISH`
 > - `rsi < 30 AND macdHist < 0` → `BEARISH`

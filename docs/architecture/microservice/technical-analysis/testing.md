@@ -18,8 +18,10 @@
 
 Backstops the live/deployed Go request path — `pkg/application` and `pkg/interface/http`
 had zero `*_test.go` files before this task, while the only green test suite covered the
-dead `src/` TypeScript shadow service (deletion tracked separately by
-`FACTORY-TECHANALYSIS-delete-orphaned-ts-service`, blocked on this task).
+dead `src/` TypeScript shadow service (deleted 2026-07-28 by
+`FACTORY-TECHANALYSIS-delete-orphaned-ts-service`, which was blocked on this task).
+`apps/technical-analysis/src/` and `__tests__/` no longer exist; the Go
+suites above are the sole test suite for this service.
 
 | Package | File | Coverage |
 |---------|------|----------|

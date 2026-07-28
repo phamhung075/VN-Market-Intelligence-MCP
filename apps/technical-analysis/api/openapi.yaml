@@ -10,7 +10,7 @@ info:
     (FACTORY-TECHANALYSIS-reconcile-ta-contract, 2026-07-08). A second,
     divergent contract used to live in a dead TypeScript shadow service
     (apps/technical-analysis/src/ — never started by Dockerfile or
-    docker-compose.yml; scheduled for deletion by
+    docker-compose.yml; deleted 2026-07-28 by
     FACTORY-TECHANALYSIS-delete-orphaned-ts-service): `{code, days} ->`
     scalar indicator values plus a `trend` field computed by a
     `determineTrend()` heuristic (RSI/MACD-sign thresholds, close-vs-close

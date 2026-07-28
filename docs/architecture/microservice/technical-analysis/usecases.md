@@ -4,7 +4,7 @@
 > FACTORY-TECHANALYSIS-reconcile-ta-contract (2026-07-08): this section used
 > to describe the dead TypeScript shadow service
 > (`apps/technical-analysis/src/application/usecases.ts` — never started by
-> Dockerfile/docker-compose.yml, scheduled for deletion by
+> Dockerfile/docker-compose.yml, deleted 2026-07-28 by
 > `FACTORY-TECHANALYSIS-delete-orphaned-ts-service`). Replaced with the real
 > Go use case. No `trend` field — see `api-reference.md` note.
 

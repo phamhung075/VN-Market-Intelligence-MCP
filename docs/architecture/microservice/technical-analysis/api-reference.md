@@ -6,8 +6,8 @@
 > (FACTORY-TECHANALYSIS-reconcile-ta-contract, 2026-07-08). A previous version
 > of this doc described the dead TypeScript shadow service's contract
 > (`apps/technical-analysis/src/interface/handlers.ts` — `{code,days}` ->
-> scalar values + `trend`). That service is never started by
-> Dockerfile/docker-compose.yml and is scheduled for deletion
+> scalar values + `trend`). That service was never started by
+> Dockerfile/docker-compose.yml and was deleted 2026-07-28
 > (`FACTORY-TECHANALYSIS-delete-orphaned-ts-service`); it was NEVER what's
 > below this line. See
 > `docs/agent-memory/decisions/sprint-SYSTEMIC-REMAKE-P1-dev-technical-analysis.md`

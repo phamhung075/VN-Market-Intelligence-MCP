@@ -5,7 +5,7 @@
 // api/openapi.yaml, is now the SINGLE authoritative /ta/indicators contract.
 // A second, divergent contract used to live in the dead TS shadow service
 // (apps/technical-analysis/src/ — never started by Dockerfile/docker-compose,
-// scheduled for deletion by FACTORY-TECHANALYSIS-delete-orphaned-ts-service):
+// deleted 2026-07-28 by FACTORY-TECHANALYSIS-delete-orphaned-ts-service):
 // {code, days} -> scalar values + a `trend` field computed by determineTrend().
 // That shape is intentionally NOT reflected here. Investigation (repo-wide
 // grep across mcp-server/frontend/alert-engine/packages/shared-types; see
