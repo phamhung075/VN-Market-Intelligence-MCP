@@ -1,3 +1,6 @@
+## d4-auto · 2026-07-29T03:00:02.863Z
+D4 candidates: R3-no-board-row:data-quality-anomaly:DGC:Q1-2026
+
 ## x1b5c2a9 · 2026-07-29T02:33:15Z
 ### Audit Run Tier-2 (02:30–02:33 UTC 2026-07-29)
 - Tier: 2 | Cron health: A-29 UNEXECUTABLE/BLOCKED (known-broken spec, FIX-AUDITOR-A29-UNEXECUTABLE-SPEC-SILENT-JOIN-DROP P1) | Data freshness: 7 checks (5 PASS, 2 CRITICAL)
