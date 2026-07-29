@@ -130,3 +130,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: B-01 · sbv_fx stale 48 minutes (SLA: 30m)
+**Severity:** CRITICAL | **Date:** 2026-07-29 | **Status:** OPEN
+**Location:** data_source/sbv_fx
+**Details:** FX rates fetch age 48 minutes, exceeds SLA threshold of 30 minutes
+**Impact:** Foreign exchange data stale; affects market context and macro signal accuracy
+**Root cause:** Unknown delay in FX data fetch pipeline
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-07-29T14:35:11Z (signal sys-20260729T143446-2c78, system-auditor -> po, dedup_key=data_stale:sbv_fx:B-01, CRITICAL Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
