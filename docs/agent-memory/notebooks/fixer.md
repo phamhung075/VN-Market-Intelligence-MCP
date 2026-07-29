@@ -27,28 +27,6 @@
 
 ---
 
-## Session 2026-05-18 (Sprint 1950-T2)
-
-**Task:** 1950-T2 — TNB audit chef pipeline cycle-coverage fix
-- **Issue:** BLOCK-1 — `pipeline_degraded` flag set by `audit-chef-coverage.md:82` but never consumed by Step 7 WORK template in `auto-cure-and-handoff.md`
-- **Fix:** Added one conditional line to Step 7 WORK message template (line 18) — when `pipeline_degraded=true`, prepends "PIPELINE DEGRADED — chef-coverage: starts={start_count} closes={close_count} stuck={stuck_count}"
-- **File:** `.claude/flows/tran-ngoc-bau/auto-cure-and-handoff.md` (95 lines, within 200L limit)
-- **Verification:** No TypeScript compilation needed (flow docs only); file structure preserved
-- **Commit:** `fix(flows/tran-ngoc-bau): pipeline_degraded surfaces in step 7 work row [1950-T2]`
-
-## Session 2026-05-18 (Sprint 1950-T3, Round 1)
-
-**Task:** 1950-T3 — Chef pipeline runbook documentation fix
-- **Issue:** BLOCK-1 — runbook cron table (L13-18) presents dispatch time-windows as cron expressions; actual registered cron is `29 * * * *` (hourly). Recovery procedure (L108) omits the explicit schedule that on-call must verify.
-- **Fixes applied:**
-  1. L3: Updated size-justification from `95L` to `128L`
-  2. L20: Added clarification line: "The registered cron expression is `29 * * * *` (hourly at :29 UTC). The schedule values above are dispatch time-windows handled inside `.claude/flows/unified-agent/main.md` — the cron fires each hour and exits immediately outside these windows."
-  3. L110: Updated recovery action row to: "Verify CronList shows `29 * * * *` for unified-agent."
-- **File:** `docs/protocols/chef-pipeline-runbook.md` (now 130 lines)
-- **Verification:** Markdown-only commit; no TypeScript source changed. All 3 edits applied exactly per QA BLOCK-1 spec.
-- **Commit:** `fix(docs/protocols): clarify unified-agent cron registration and recovery steps [1950-T3]`
-- **Status:** Handoff appended; NEXT: qa for re-verification
-
 ## Session 2026-05-19 (Sprint 1951b, Round 1)
 
 **Task:** Sprint 1951b — Tool packages QA CHANGES_REQUESTED (3 blocks)

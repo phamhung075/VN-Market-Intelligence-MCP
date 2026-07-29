@@ -15,52 +15,6 @@ Evidence: `openssl verify -CAfile hnx-ca-bundle.pem <recon leaf>` → OK rc=0. L
 
 ---
 
-## Cycle Record — 2026-06-17T18:55Z FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH DIAGNOSIS ONLY
-
-Task: FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH (CRITICAL, P0)
-Outcome: STOP — zone boundary enforced. Root is in apps/mcp-server/ not apps/vps-client/.
-Signal: docs/signals/po-2026-06-17T18-55-00Z-bctc-discover-reroute.json
-
-DJ-GATE-1:
-- what-considered: "only path: zone boundary — root proven in apps/mcp-server/src/scheduler/financial-reports/bctcQueueEnricherJob.ts"
-- why-change: "no change from flow mandate (stop if root outside apps/vps-client/)"
-
-Diagnosis findings:
-- VPS discover endpoint: HEALTHY. VCB Q1 2026 returns cached URL http://125.212.251.27:8765/bctc-files/VCB/20260429-VCB-BCTC-hop-nhat-Q1.2026.pdf. HPG Q1 2026 returns cached URL. No endpoint-structure drift.
-- 9 pending tickers (BDI, DAG, DLC, JSH, SIS, VDC, VNH, VEA x2) return empty — genuine absence (SSC row_indices=[], VEA latest = Q4 2025, no Q1 2026 filing published).
-- 65 Q1 2026 tickers already done. 210 zero-url counter in bctc_health_state.
-- Root: bctcQueueEnricherJob.ts line 509 — when attempts===0 and discovery returns 0 URLs, code intentionally skips increment ("don't penalise new rows"). Effect: rows stuck at attempts=0 forever, never reach MAX_ENRICH_ATTEMPTS=5, never marked url_not_found. Infinite cycle.
-- Fix target: apps/mcp-server/src/scheduler/financial-reports/bctcQueueEnricherJob.ts — remove attempts===0 special-case OR gate on last_attempt IS NULL instead.
-- Dispatch: dev-mcp-server.
-
----
-
-## Cycle Record — 2026-06-16T11:05Z FIX-HNX-SESSION-COOKIE + FIX-SSC-C111-EMPTY-FALLBACK DONE
-
-Tasks: FIX-HNX-SESSION-COOKIE (P1, C4) + FIX-SSC-C111-EMPTY-FALLBACK (P1, C4) — paired lane, one file.
-Commit: 4d93f767. Outcome: DONE-CODE. Both rows → review[].
-
-DJ-GATE-1:
-- what-considered: "session-GET warmup before HNX POST (same CookieJar pattern as SSC flow); c111→c3 fallback for state filers; afrLoop fallback removal"
-- why-change: "Root B (HNX 302→/Home/Error on stateless POST) + Root D (ACV-class c111 always empty); brief Contract 4 sub-risks A+B"
-- technique: "stdlib urllib + http.cookiejar, no new deps, no Chromium; _hnx_make_opener() pattern mirrors _ssc_make_opener(); generic — no per-ticker allowlist"
-- deploy-status: DONE-CODE only; LIVE VPS run required for done_verified (router gate below)
-
-Changes to vps-scripts/discover-bctc-urls-browser.py:
-- ADDED: _hnx_make_opener(), _hnx_opener_get(), _hnx_opener_post() — per-call CookieJar opener helpers
-- CHANGED: _discover_hnx_upcom() — session warmup GET before first POST; all POSTs use opener; code_lower unused var removed
-- CHANGED: afrLoop fallback "27000000000000000" removed → fail-loud return None on regex miss (co-located hardening, sub-risk A)
-- CHANGED: _ssc_parse_rows() — c111 empty → c3 fallback for title/period matching (generic; no per-ticker condition)
-
-LIVE-VPS behavioral gate (router must run before done_verified):
-1. scp vps-scripts/discover-bctc-urls-browser.py root@125.212.251.27:/root/ (or git pull on VPS)
-2. HNX gate: ssh root@125.212.251.27 "python3 /root/discover-bctc-urls-browser.py SHB 2026 Q1 2>&1" → results[] non-empty AND source=HNX AND stderr shows "session warmup GET OK"
-3. UPCOM gate: same for VEA or ACV → source=UPCOM
-4. SSC/c111 gate: ssh root@125.212.251.27 "python3 /root/discover-bctc-urls-browser.py ACV 2026 Q1 2>&1" → results[] non-empty AND stderr shows "c111 empty → c3 fallback"
-5. afrLoop gate: verify no "27000000000000000" appears in stderr; on regex miss → "failing loud" message appears and returns early
-
----
-
 ## Active Scrapers
 
 | Source | Script | Technique | Status | Last verified |
@@ -126,30 +80,6 @@ LIVE-VPS behavioral gate (router must run before done_verified):
 
 - TASK-BCTC-1: ops — increase TasksMax=512 + MemoryMax=512M in vn-bctc-fetch.service
 - TASK-BCTC-2: developer — reverse-engineer hsx.vn SPA XHR API for no-browser HOSE BCTC path
-
----
-
-## Key Findings — 2026-06-01T13:45Z VPS-DEPLOY-PLACEHOLDER-GUARD
-
-### GUARD-2: All 6 vps-scripts converted to ${VAR:-default} env-fallback form
-- Root cause: 6 scripts had bare `API_URL="__MCP_BASE__/..."` — deploy bypass (scp without render) → literal placeholder reaches curl → http=000 → silent outage
-- Fix: convert to `${ENV_VAR:-__MCP_BASE__/path}` mirroring fetch-foreign-flow.sh L32-34
-- TE_API_KEY special case: empty-string fallback `${TRADING_ECONOMICS_API_KEY:-}` per Option A (no sed rule in deployer; existing L15-17 guard handles empty correctly)
-- fetch-vn-news.sh extra fix: internal curl-response markers `__HTTP__` / `__heartbeat__` renamed to `_HTTP_` / `_heartbeat_` (single underscores) to avoid GUARD-1 regex false-block
-- All 6 files: bash -n OK. Clean-render (sed substitution): no placeholder leaks confirmed locally.
-
-### GUARD-1: Pre-scp assert + post-deploy SSH verify in deploy-vps-proxy.sh
-- 5 pre-scp assert blocks added (one after each TMP render: TMP_FETCH, TMP_BCTC, TMP_NEWS, TMP_SBV, TMP_FF)
-- Regex: `__[A-Za-z][A-Za-z0-9_]*__` (mixed-case, future-proof)
-- Post-deploy VERIFYEOF heredoc: `grep -rl '...' /root/fetch-*.sh /root/*.py` glob — fires if any deployed artifact holds a placeholder
-- Deliberate-violation local proof: inject `__GUARD_TEST_TOKEN__` into fixture, sed render, assert → exit 1 confirmed BEFORE any scp step
-
-### GUARD-3: article-body-fetcher.py brought under canonical deployer
-- Direct scp block (no sed — zero placeholders in file)
-- SSH ARTEOF heredoc: chmod +x + idempotent pip3 install beautifulsoup4
-- Closes cafef ad-hoc-scp bypass
-
-Commit: 96446b5d. No Docker rebuild required.
 
 ---
 

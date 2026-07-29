@@ -116,22 +116,6 @@ Task: 1899a-routes — Hono router + 5 routes + Reuters fallback wiring.
 
 ---
 
-## This session (cycle 6 — c78 2026-05-13T17:30Z)
-
-Task: 1899a-reuters-fallback — ReutersStealthFallback scraper.
-
-**Implemented:**
-- `apps/news-fetch/src/infrastructure/scrapers/reuters-stealth.ts` — ReutersStealthFallback class implementing ReutersNewsPort. FALLBACK path only (invoked when reuters-rss returns error or 0 articles). DataDome detection: captcha-delivery.com in body + x-dd-b: 3 header. Human simulation (pre-nav pause 500–1500ms, scroll 33% + 50%). browser.close() in finally. 133L.
-- `apps/news-fetch/__tests__/1899a-reuters-fallback-dom.test.ts` — 11 tests: DOM extraction, headline/url/publishedAt/confidence=LOW, maxItems, empty page. 197L.
-- `apps/news-fetch/__tests__/1899a-reuters-fallback-detect.test.ts` — 11 tests: captcha-delivery.com body, x-dd-b:3 header, non-block header, timeout, network error. 158L.
-- `apps/news-fetch/__tests__/1899a-reuters-fallback-lifecycle.test.ts` — 6 tests: browser.close() all paths. + 7 normalizeDate tests. 119L.
-- 28/28 new tests pass. 112/112 full suite pass. tsc: 0 new errors (2 pre-existing in factory.ts + factory.test.ts, not mine).
-- Branch: task/1899a-reuters-fallback. Commit: 50d587cd.
-- DDD: PASS — imports only domain/* and ./playwright-browser-factory.
-- RAM: ~400–500MB per scrape. Same constraint as Bloomberg. news-fetch must serialize Reuters+Bloomberg dispatches.
-
----
-
 ## Carry-over
 
 - **FRED_API_KEY needed (ops):** fred-macro adapter wired and conditional. Activates automatically when key added to .env. Free key: https://fred.stlouisfed.org/docs/api/api_key.html
