@@ -2,6 +2,14 @@
 
 **Written:** 2026-07-19T08:07Z
 
+## cycle-20260729T0507Z — head genuinely in_progress (known-live dev-mcp-server, no dupspawn attempt); WIP=1 blocks BOUNDED-1/SLS/RLC; PO triage re-spawned (skip-rule evaluated and rejected)
+
+- **Preflight/gcc/CI-health clean**: verdict RUN (RC=1 benign), no locks, single worktree, no live git procs, ORCH_CLEAN=yes. CI GREEN unchanged (`084f7652e`, no new push since last tick — expected, push is fleet-push cron's job).
+- **File-drain 2 routed-to-po**: `commit-sweep-guard-2026-07-29T051148Z-92107.json` + the `context-bloat...developer-md-2026-07-29T044819Z.json` that surfaced mid-last-tick (after that tick's own drain had already run) — correctly picked up this tick.
+- **Head in_progress, NOT idle**: `.head.active_task_id=FIX-AGENT-SIGNALS-IDENTICAL-DUP-EMISSION`, dispatched to `dev-mcp-server` (`a393777fdf27a7b42`) last tick, still live per this session's own memory — no completion notification received, so did NOT attempt any resume/re-claim that could duplicate-dispatch (same discipline as the `resume-dupspawn-gap` near-miss 3 ticks ago). WIP=`in_progress|length`=1 (not <1) independently blocks BOUNDED-1 regardless of head status; SLS/RLC gate on head-idle too — none applicable. Fell through directly to Step 1 PO Triage (same shape as the 04:07Z tick).
+- **PO respawn — evaluated the skip-rule (`feedback_router_skip_po_respawn_identical_inputs`) and rejected it**: telegram reports WERE byte-identical to the 04:07Z triage (same 20 ids 3830-3849, all 2026-07-26) and signal_queue was empty (0 NEW) — 2 of 4 conditions held. But board was NOT unchanged (in_progress 0->1, review 131->133 from two rows landing this session) and the last full PO disposition was ~60min old (the memory's own cadence guard: spawn a real triage at the hourly mark regardless). Skip did NOT apply — spawned PO normally (`a0df6fe81d50623f2`, background), gave it the condensed telegram/board/signal summary + explicit note that the 20 reports are likely already-dispositioned from last tick (asked it to only re-mint if a report id beyond 3849 or a new topic appears). `task:po-triage-20260729` claim held open (per-day key, not released at spawn) pending PO's completion notification.
+- Board at spawn time: backlog=381, ready=51, in_progress=1, review=133, qa=0, done=9. QA-Drain starvation still live (review/qa gap grew, not shrunk) — flagged to PO in the spawn prompt as context only, not re-escalated (already PO's own tracked finding).
+
 ## cycle-20260729T0437Z — BOUNDED-1 fired again (FIX-AGENT-SIGNALS-IDENTICAL-DUP-EMISSION -> dev-mcp-server); QA-Drain starvation LIVE-reconfirmed for the 2nd consecutive tick, still not overridden
 
 - **Preflight/gcc/CI-health clean**: verdict RUN, tick `2026-07-29T04:37Z`, SF-1+fire-election held. Cold-evict fired inside preflight script itself (2 signal rows -> archive/2026-07.json, commit `723127730`, benign sweep-guard warning, exactly 2 files touched).
@@ -67,15 +75,6 @@
 
 
 
-
-## cycle-20260729T0407Z — pipeline-resume duplicate-spawn near-miss caught + escalated; PO triage spawned (4 pending signals, 22 stale telegram reports)
-
-- **Preflight/gcc/CI-health clean**: verdict RUN (RC=1 benign), no HEAD.lock, worktree clean, CI GREEN on `084f7652e`.
-- **Pipeline-resume near-miss**: head still `in_progress` on `FIX-CONVICTION-HISTORY-EOD-BACKFILL` (dispatched last tick, agent `aa39fd7672098fc38`, no completion notification yet). Per Step 0b's literal spec text, attempted the S2 resume claim — it succeeded (claimed:true), because I myself released that same claim right after spawning last tick (documented "release at spawn not completion" behavior). Spec text alone would read claimed:true as "safe to spawn"; only this session's own memory of the still-live background agent caught that spawning again would duplicate-dispatch onto in-progress work. Released the claim, skipped resume. **Filed as a signal** (`dev-20260729T041600Z-resume-dupspawn-gap`, to=po): a FRESH session restarted between ticks would have no such memory and would follow the spec text into an actual duplicate spawn — this is a real gap, not just a near-miss unique to this session. Not unilaterally patched (architect-level change to main.md's own resume contract).
-- **Head genuinely in_progress (not idle)** → BOUNDED-1/SLS/RLC do not apply this tick; fell through directly to Step 1 PO Triage.
-- **0a-D signal_queue drain**: 1 NEW row (`cowork-20260729T041205Z-mw-offhours-narrate-recur`, MED, 3rd+ recurrence of market-watcher off-hours narrate-not-execute, 07-12 fix request apparently still unresolved) — drained, flagged to PO for recurring-bug follow-up.
-- **File-signal drain**: 4 routed-to-po — 1 context_bloat_breach + 2 notebook_single_section_overage_breach (alert-commander.md ~10x over byte cap, growing mid-write during an active cowork cycle, auto-prune hook reports it cannot split further without data loss) + 1 informational cowork-fire status ping (clean, no action).
-- **PO spawned** (background) with condensed pendingSignals summary + board snapshot (backlog=384, ready=51, in_progress=1, review=130, qa=0 — QA-Drain-starvation pattern still visibly live) + the 22 new/unclaimed telegram reports (mostly 3-day-old BCTC extraction-quality gate flags, plus one CRITICAL sla-monitor staleness alert on signal_quality_audit, 73217min ~51d stale). `list_unresolved_reports()` was too large (~140K chars) to embed — pointed PO at the tool directly instead of inlining. `task:po-triage-20260729` claim held open (not released at spawn, per spec — per-day key) pending PO's completion notification.
 
 ## cycle-20260719T0537Z — fully-idle (0 routable, PO channels dry, no dispatch); CI GREEN 90176484b; cowork-telemetry WATCH holds obs#1; overnight quiescence
 
