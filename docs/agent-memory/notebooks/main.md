@@ -1,6 +1,15 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-29T11:37Z
+**Written:** 2026-07-29T11:48Z
+
+## cycle-20260729T1148Z — BOUNDED-1 fired (WIP=0): claimed FIX-AUDITOR-MEMACK-HEADROOM-FLOOR-AND-DEAD-TRACKEDBY, dispatched to developer; preflight Step 5.5 cold-evict archived 2 signal rows — CONFIRMED legitimate (po genuinely triaged both since last tick), NOT a repeat of the known no-age-gate orphan bug
+
+- **Preflight/CI clean**: RUN tick `2026-07-29T11:37Z` (RC=1 on the script is expected-by-design — `return 1` unconditionally on RUN/RUN-IDLE paths, main.md's JUMP-TO table only branches on the JSON verdict field, not the shell RC). CI GREEN unchanged (`39a4dac7c`).
+- **Cold-evict at preflight Step 5.5 (a 3rd call site, distinct from 0a-D-PRUNE) archived 2 signal rows — verified NOT a recurrence**: diffed commit `dbdac08cb`; both evicted rows (`dev-20260729T104938` LOCK-LIFETIME finding, `cow-20260729T111055Z` diacritic-corruption bug — the 2 rows I restored to NEW last tick after the genuine orphan-bug occurrence) now carry real `triage_note` fields stamped `po/triage-20260729T1126Z`: one routed as corroboration onto an existing REVIEW row, the other minted new backlog row `FIX-BCTC-REFINE-DIACRITIC-COLLAPSE-A-BREVE-ACUTE`. Status was `READ` (not RESOLVED — fixes not yet shipped) at genuine PO triage time, THEN swept — correct lifecycle, no restore needed this tick. The underlying no-age-gate gap (`feedback_coldevict_no_age_gate_orphans_unread_po_escalation.md`) remains open/untracked as a dedicated FIX row — still watch every tick.
+- **Drain**: file-plane 2 routed-to-po (both `commit-sweep-guard-*` notices — benign, warn-only, no action needed). Dashboard-plane: 0 NEW rows (empty). Committed `bffd8ce1e`.
+- **BOUNDED-1 fired (WIP=0)**: promoted+claimed `FIX-AUDITOR-MEMACK-HEADROOM-FLOOR-AND-DEAD-TRACKEDBY` (priority_rank=1, P1, zone `cross-service/` — outside all dev-* zones, correctly routes to generic `developer`). Fresh PO-minted row (created 11:31Z, addendum 11:36Z): auditor's memory-ACK is all-or-nothing + `tracked_by` staleness field is dead (never read) — fix adds an absolute-headroom floor an ACK can't swallow + makes `tracked_by` resolve live against task_board. Committed `2a6c71e99`.
+- **LOCK-LIFETIME correction held again**: claimed `task:FIX-AUDITOR-MEMACK-HEADROOM-FLOOR-AND-DEAD-TRACKEDBY`, spawned `developer` (background `a3b0dc38e5d1aee83`) with full pre-diagnosed context including PO's live-measured floor-calibration evidence — lock HELD, not released at spawn (2nd consecutive tick applying the corrected behavior).
+- BOUNDED-1 claim consumed the tick (JUMP TO execute) — did not fall through to SLS/RLC/QA-Drain/Step 1. Review-lane QA-Drain remains starved (139+ rows), unchanged, still gated behind TASK-DEVTEAM-IDLE-CHAIN-2-MAIN-FLOW.
 
 ## cycle-20260729T1137Z-verify — RAW-verified developer's FIX-COLD-EVICT-EXCLUDE-IDS-VS-HARD-COHERENCE completion; 9th CONSECUTIVE clean head-sync + 6th CONSECUTIVE clean row-level next_agent=qa; LOCK-LIFETIME correction closed the loop (held through to verified completion, released only now)
 
@@ -19,13 +28,4 @@
 - **BOUNDED-1 fired (WIP=0)**: promoted+claimed `FIX-COLD-EVICT-EXCLUDE-IDS-VS-HARD-COHERENCE` (priority_rank=2, zone `scripts/` — outside all dev-* zones, correctly routes to generic `developer`). Unrelated defect in the SAME script (`--exclude-ids` vs Stage-1b hard-fail lane coherence, not the signal-row age-gate gap above) — coincidental proximity, not the same bug. Committed `050433aa4`.
 - **LOCK-LIFETIME correction applied**: claimed `task:FIX-COLD-EVICT-EXCLUDE-IDS-VS-HARD-COHERENCE` and spawned `developer` (background `a522044c7171b9d48`) with full pre-diagnosed context — this time held the lock rather than releasing immediately post-spawn (correcting the violation self-flagged last cycle, signal `dev-20260729T104938` still open/unactioned by po).
 - BOUNDED-1 claim consumed the tick (JUMP TO execute) — did not fall through to SLS/RLC/QA-Drain/Step 1. Review-lane QA-Drain remains starved (139+ rows), unchanged, still gated behind TASK-DEVTEAM-IDLE-CHAIN-2-MAIN-FLOW.
-
-## cycle-20260729T1105Z-verify — RAW-verified dev-mcp-server's FIX-BCTC-D3C-FOLLOW-UP-RESET-ATTEMPTS completion; 8th CONSECUTIVE clean head-sync + 5th CONSECUTIVE clean row-level next_agent=qa
-
-- **BGFAN-1 RAW-verification, all claims confirmed real**: commits `e9caf2ac3`/`5bed47de2`/`3d7aded5a` real, on HEAD. Diff to `bctcQueueEnricherJob.ts` (Arm-2 `updateStmt` now also sets `attempts = 0`) and `bctcPdfPullJob.ts` (`updatePekTriggered` now also sets `reconcile_attempts = 0`) matches exactly the two touch points I diagnosed before reverting my own direct-implementation near-miss last tick — same statements, same rationale.
-- **Regression fix beyond original scope verified legitimate**: `1352a-async-extraction-race.test.ts`'s hand-rolled fixture was missing the `reconcile_attempts` column, which the now-unconditional `pek_triggered` write would hit — 1-line fixture column addition, correctly scoped, not silently expanded.
-- **tsc clean independently re-run**: `bun tsc --noEmit` → exit 0.
-- **Targeted tests independently re-run** (3 directly-touched files, not the full claimed 7-file/94-pass set): `FIX-BCTC-ENRICHER-STUCK-BACKLOG.test.ts` + `bctc-pdf-pull-job.test.ts` + `1352a-async-extraction-race.test.ts` → **44 pass / 0 fail**, both new regression tests present and asserting the exact reset behavior (`attempts=5→0` recycle case; `reconcile_attempts=8→0` pek_triggered-entry case). Full non-targeted suite claim (14906 pass/54 fail baseline band) not independently re-run — diff is 2 narrow UPDATE-statement additions + tests + 1 fixture line, no logic path touched outside the verified scope.
-- **Board lane-move genuine**: row `status:REVIEW`, `next_agent:"qa"` — **5th consecutive clean row-level pass**. **Head-sync MUST clause held an 8th CONSECUTIVE time**: `.head={status:idle, active_task_id:null, next_agent:router}`.
-- No discrepancies found — clean verify, nothing to patch. Review-lane QA-Drain remains starved (139+ rows), unchanged, still gated behind TASK-DEVTEAM-IDLE-CHAIN-2-MAIN-FLOW.
 
