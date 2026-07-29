@@ -6,6 +6,34 @@ Zone: `apps/technical-analysis/` | Stack: **Go** (pilot active, 2026-05-22) | DB
 
 [3 most recent cycles retained below. Archive in git history.]
 
+### 2026-07-29 — FACTORY-TECHANALYSIS-dedup-calculator — shared module.ToDomainIndicators mapper, fixed MA5/20/50 sandbox drift
+
+BOUNDED-1 idle-capacity auto-pickup. `sandboxCalculator.Calculate` (`cmd/sandbox/service_adapters.go`,
+already split by `FACTORY-TECHANALYSIS-split-sandbox`, no longer the pre-split single-file shape)
+duplicated `infrastructure.TACalculator.Calculate`'s `module.Result -> domain.TechnicalIndicators`
+mapping but omitted MA5/MA20/MA50 — real drift, not just duplication. Extracted the shared mapping
+into new `pkg/module/mapper.go::ToDomainIndicators`; both callers now delegate to it. Verified live
+(not trusted from the audit's prose) against `.golangci.yml`: Fence-B denies only `module ->
+application`/`module -> interface`, `module -> domain` is unrestricted, `pkg/domain` has zero
+imports of `pkg/module` (no cycle) — `golangci-lint run ./...` 0 issues confirms it. TDD RED
+(`module.ToDomainIndicators` undefined) → GREEN. `TACalculator.Calculate` (real service, on
+`cmd/server`'s build graph) confirmed byte-identical before/after via a temporary baseline-capture
+test (5 close-series inputs, JSON diff clean, temp file deleted before commit — never staged).
+sandbox now populates MA5/20/50 (the intended fix); grep-verified zero existing scenario JSON or
+`sandbox_test.go` assertion references MA5/20/50, so no fixture/test-expectation update was needed.
+`go build/vet/test ./...` (12 packages) green, G12 gate 35/35 + render-check PASS. Verified live the
+Dockerfile only `COPY`s+builds `./cmd/server` (`cmd/sandbox` source is copied but never compiled or
+shipped) — matches the split-sandbox precedent, so only `calculator.go` triggers
+`rebuild_required: true`, no extra ops hop for the sandbox side. Commits: `a1bb99309` (code+docs),
+`31cbb7682` (decision journal). Full reasoning: decision journal
+`sprint-FACTORY-TECHANALYSIS-dedup-calculator-dev-technical-analysis.md` STEP S1-S4.
+
+Zone health: fence-rule drift class (duplicated mapping across two composition roots) is now closed
+for the TA calculator; no other known duplicate mapper in this zone | HEALTHY
+
+**Status: REVIEW -> next_agent=ops** (Docker Microservice Code-Change Close Gate — `calculator.go`
+is on the real service's build graph; ops rebuild+swap, then qa live-verify, then po Step 6 sign-off).
+
 ### 2026-07-28 — FACTORY-TECHANALYSIS-delete-orphaned-ts-service — deleted dead TS shadow service
 
 Final task of 3-task chain (go-livepath-tests → reconcile-ta-contract → this). Live grep (filtered false-positive `../src/` hits from OTHER apps' own src/) confirmed ONLY importers of `apps/technical-analysis/src/` were its own `__tests__/` — no prod code, no other app, no CI step. Deleted `src/`(9 files)+`__tests__/`(3)+`tsconfig.json`(dead include glob); trimmed `package.json` (`module`/`start`/`check`/`test` scripts, `hono` dep — `bun test` w/ 0 files verified live to exit 1, so removed not left as silent no-op). Auto-resolved `determineTrend()` 70/30 hardcode finding (dead-code-latent, per 2026-06-15 audit). Updated 4 docs + 2 code comments "scheduled for deletion"→"deleted 2026-07-28". Gates: go build/vet/test 12/12 GREEN, sandbox 35/35 GREEN+render PASS, Dockerfile/compose untouched. Commit `099afddd3`. Full reasoning: decision journal STEP dev-technical-analysis-S1 (sprint-COWORK-GUARANTEED-SLOT-CATCHUP).
