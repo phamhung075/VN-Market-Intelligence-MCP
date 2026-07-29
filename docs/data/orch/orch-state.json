@@ -88,12 +88,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY",
-    "next_agent": "dev-mcp-server",
-    "next_action": "BOUNDED-1 auto-pickup claim of SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-29T15:18:41Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "updated_at": "2026-07-29T15:38:25Z",
+    "updated_by": "dev-team (post-dev-mcp-server SPIKE review-lane handoff to po)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -17381,12 +17380,7 @@
         "created_at": "2026-07-13T07:37:00Z",
         "created_by": "po-triage-split-20260713T0737Z",
         "verify_note": "split_from=FIX-OPS-CRONJOBRUNS-TIMESTAMP-FALSIFICATION-GUARDRAIL AC-2+AC-3; dispatch=BOUNDED-1 eligible (dev owner)",
-        "promoted_at": "2026-07-29T15:17:35Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-29T15:34:50Z",
-        "claimed_at": "2026-07-29T15:18:41Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "updated_at": "2026-07-29T15:38:25Z",
         "findings_doc": "docs/spikes/SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY.md",
         "mint_ref": "FIX-BCTC-REPARSE-DOUBLE-WRAP-DEDUP-GUARD",
         "updated_by": "dev-mcp-server"
