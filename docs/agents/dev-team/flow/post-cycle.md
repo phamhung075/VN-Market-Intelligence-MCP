@@ -1,10 +1,16 @@
-<!-- size-justification: 206L (86L overage) — Step 4/4.2/4.3/4.5/4.8/4.9 sub-flow: post-execution
+<!-- size-justification: 263L (143L overage) — Step 4/4.2/4.3/4.4/4.5/4.8/4.9 sub-flow: post-execution
      checks, cold-eviction backstop (now CANON-SCRIPT spec pointer to dev-team-tick-preflight.sh
      Step 5.5 — task UC-DTL-P2, 2026-07-15), compact-checkpoint, push-backstop fallback, and
      cycle-elapsed announce are all distinct load-bearing sequential steps; splitting fragments
      the post-cycle contract across files. UC-GCP-P8 2026-07-23: Step 4.3 stranded machine-state
      sweep added (CANON-SCRIPT pointer to scripts/agents-flow/stranded-state-sweep.sh --plan,
-     bounded to <=20 body lines per the rescope) (+21L). -->
+     bounded to <=20 body lines per the rescope) (+21L). FIX-DEVTEAM-EPIC-WRAPPER-AUTOCLOSE-SWEEP
+     2026-07-29: +57L (206→263) — Step 4.4 epic-wrapper autoclose sweep added (CANON-SCRIPT pointer
+     to scripts/devteam-wrapper-autoclose.jq + scripts/lib/devteam-eligibility.jq; the section
+     itself is a thin invocation + per-row dispatcher-wrap — longer than Step 4.3's pure script+
+     commit shape because this sweep is two-phase (SSOT lane-move, then a follow-up per-row agent
+     spawn), the bulk of the eligibility/predicate rationale lives in the .jq scripts' own headers,
+     not duplicated here). -->
 # Dev Team — Step 4 & 4.5: Scan + Compact Checkpoint
 
 **Parent flow:** `docs/agents/dev-team/flow/main.md` (Step 4 / 4.5 dispatcher)
@@ -130,6 +136,45 @@ else
   done
 fi
 ```
+
+---
+
+## Step 4.4 — Epic-Wrapper Autoclose Sweep (FIX-DEVTEAM-EPIC-WRAPPER-AUTOCLOSE-SWEEP)
+
+**Problem this closes:** Step 0b's pipeline-resume only re-checks a task while `.head.status=="in_progress"` — once pm decomposes an epic-wrapper row (non-empty `children[]`) and `.head` resets to idle per the normal decomposition convention, nothing ever re-visits the wrapper once its children finish. Live incident: `BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP`'s `ready[]` row sat open for hours after all 11 children reached `DONE_VERIFIED`, caught only by chance during a manual board inspection (2026-07-10). Distinct from `FIX-DEVTEAM-BOUNDED1-EPIC-WRAPPER-GATE` (`is_epic_wrapper` in `scripts/lib/devteam-eligibility.jq` — that gate stops a wrapper row from ever being auto-promoted as if it were atomic work; this sweep is the closeout direction, once a wrapper legitimately finished — do not conflate).
+
+Run after Step 4.3, before Step 4.5. CANON-SCRIPT: the eligibility contract lives in `scripts/lib/devteam-eligibility.jq` (`is_epic_wrapper` + `all_children_terminal`/`is_terminal_task_status`/`has_hold_reason`); the lane-move lives in `scripts/devteam-wrapper-autoclose.jq` — edit those first, this pointer second. **WIP discipline:** never gated on WIP — moving a row OUT of `ready[]`/`in_progress[]` into `review[]` can only DECREASE `.task_board.in_progress|length`, so this sweep can never compete with BOUNDED-1/SLS/RLC's own budgets. No per-tick row cap on the SSOT move (sweeps every eligible row in one write, mirrors Step 4.2/4.3's "process everything eligible this tick" idiom); the follow-up spawn below claims each swept row's own `task:<id>` lock individually, so parallel closeouts never collide with each other or with `.head`.
+
+```bash
+NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+jq --arg now "$NOW" \
+  --slurpfile detail "$PROJECT_ROOT/docs/data/orch/archive/backlog-detail.json" \
+  --slurpfile archive <(bash "$PROJECT_ROOT/scripts/lib/archive-glob-cat.sh") \
+  -f "$PROJECT_ROOT/scripts/devteam-wrapper-autoclose.jq" \
+  docs/data/orch/orch-state.json | bash "$PROJECT_ROOT/scripts/orch-apply.sh" || true
+SWEPT=$(jq -c --arg t "$NOW" '[.task_board.review[] | select(.autoclosed_at == $t)]' docs/data/orch/orch-state.json)
+```
+
+If `$SWEPT` is a non-empty array (rows were moved this tick): for EACH swept row, dispatcher-wrap a claim on that row's OWN `task:<id>` lock (the standard sprint-task lock every other dispatch site in this file uses — NOT `.head`; this dispatch is independent of the head-idle fall-through's own single resume-pointer, exactly like the on-demand-spawn pattern at the top of this file), then spawn its resolved `next_agent` in background:
+```
+for row in $SWEPT[]:
+  resume_key = "task:" + row.id
+  outer_claim = call_tool(server="vn-market", tool="task_claim", arguments={
+    task_id: resume_key, task_kind: "sprint-task",
+    owner_agent: "dev-team", owner_client_session: $CLAUDE_CODE_SESSION_ID,
+    ttl_seconds: 3600, payload: "{\"site\":\"wrapper-autoclose\",\"spawning\":\"" + row.next_agent + "\"}"
+  })
+  if not outer_claim.claimed:
+    log "[dev-team] wrapper-autoclose SKIP " + row.id + " — held by peer session"; continue
+  try:
+    Agent(row.next_agent, "Epic-wrapper closeout: " + row.id + " — every child[] reached a terminal status; verify + close out.", run_in_background=true)
+    # NO release on the success path — mirrors BOUNDED-1/SLS/RLC/QA-Drain's LOCK-LIFETIME convention (ttl_seconds bounds it)
+  except:
+    call_tool(server="vn-market", tool="task_release", arguments={ task_id: resume_key, owner_client_session: $CLAUDE_CODE_SESSION_ID })
+    raise
+```
+
+- **Reusable Scripts pointer + Acceptance/regression instrument:** `docs/agents/dev-team/flow/main.md` § Reusable Scripts — `scripts/devteam-wrapper-autoclose.jq` entry.
 
 ---
 

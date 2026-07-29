@@ -377,3 +377,56 @@ def rotation_selected($doc):
   | map({id: ., stamp: ($r[.].last_served_tick // "1970-01-01T00:00:00Z")})
   | sort_by(.stamp)
   | .[0].id;
+
+# ---- terminal task-status normalization + membership
+# (FIX-DEVTEAM-EPIC-WRAPPER-AUTOCLOSE-SWEEP, 2026-07-29) ----
+# SSOT: apps/mcp-server/src/infrastructure/orchStateSchema.ts TERMINAL_SET,
+# mirrored verbatim by scripts/orch-cold-evict.sh TERMINAL_TASK_STATUSES /
+# TERMINAL_SPRINT_STATUSES ({DONE, DONE_VERIFIED, CANCELLED, DEFERRED,
+# SKIPPED}). orch-cold-evict.sh's own comparison is a case-SENSITIVE exact
+# `IN($tt_arr[])` match against the live hot-lane `.status` field (always
+# canonical-cased there). Cold-archived docs/data/orch/archive/YYYY-MM.json
+# `.done_tasks[].status` is NOT reliably canonical-cased (empirically
+# confirmed 2026-07-29: 2026-06.json alone carries "done"/"done_verified"
+# lowercase and "DONE-VERIFIED" dash-separated, alongside the canonical
+# forms) — this def normalizes case + separator (generalizes
+# normalize_archive_status above from just DONE_VERIFIED to the full
+# 5-value set) so a child task cold-evicted under a pre-canonicalization-era
+# status string still resolves terminal instead of a false-negative
+# conservative-skip forever.
+def normalize_task_status($s):
+  ($s // "" | tostring | ascii_upcase | gsub("[- ]"; "_"));
+
+def is_terminal_task_status($s):
+  (normalize_task_status($s)) as $n
+  | ($n | IN("DONE", "DONE_VERIFIED", "CANCELLED", "DEFERRED", "SKIPPED"));
+
+# ---- hold_reason guard (FIX-DEVTEAM-EPIC-WRAPPER-AUTOCLOSE-SWEEP,
+# 2026-07-29) ----
+# Same board-OR-detail OR-precedence as every other effective_* predicate.
+# A wrapper deliberately held open past children-completion (a future-gate
+# hold, e.g. "wait for the next sprint boundary before closing") must never
+# be swept out from under whoever set that hold. No live row carries this
+# field today (schema-forward guard only) — see
+# docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md
+# #dev-team-loop-P3 risk note.
+def has_hold_reason($detail_items):
+  (((.hold_reason // "") | tostring) != "")
+    or ( (.id != null) and ((($detail_items[.id].hold_reason) // "" | tostring) != "") );
+
+# ---- all-children-terminal (FIX-DEVTEAM-EPIC-WRAPPER-AUTOCLOSE-SWEEP,
+# 2026-07-29) ----
+# `.` = candidate wrapper row object. `$status_map` = dep_status_map($archive)
+# (hot task_board lanes UNION cold-archive done_tasks[], id -> RAW status) —
+# the SAME map already threaded by BOUNDED-1/SLS/RLC for depends_on
+# resolution, reused here unchanged (no forked status lookup; the map
+# ITSELF is not re-normalized — is_terminal_task_status normalizes at
+# lookup time only, so this def stays a pure consumer). A child id absent
+# from BOTH hot and cold archive is conservative-skip (row stays open) —
+# mirrors deps_satisfied's own "MISSING = unsatisfied" default; never
+# assumes a vanished child finished.
+def all_children_terminal($detail_items; $status_map):
+  effective_children($detail_items) as $children
+  | ($children | length) > 0
+    and ( [ $children[] | ($status_map[.] // "MISSING") ]
+          | all(is_terminal_task_status(.)) );
