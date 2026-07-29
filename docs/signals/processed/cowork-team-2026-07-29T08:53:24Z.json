@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-29T08:53:24Z",
+    "matched_slots": [
+      "chef-eod"
+    ],
+    "won_slots": [
+      "chef-eod"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "chef-eod": "cron"
+    },
+    "cadence_minutes": {
+      "chef-eod": null
+    },
+    "last_fired_timestamp": "2026-07-29T08:53:12Z",
+    "last_fired_slots": [
+      "chef-eod"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "08:45",
+    "leader_lock": "acquired",
+    "dev_head": "active",
+    "devq": 0,
+    "signal_backlog": 4,
+    "note": "Single guaranteed slot (chef-eod, cron 45 8 * * 1-5) fired solo, no batching needed (1 slot < MAX_PARALLEL). Fan-out gate computed degraded (MAX_PARALLEL=2) per the ongoing container_vm_headroom_mb field-name drift flagged 08:13Z (signal cowork-20260729T0813Z-pressure-headroom-field-stale-container, still NEW/unactioned). Agent a69593e83d6792247 spawned run_in_background, still in-flight at tick close -- Step 5.3 off-flow check deferred to its completion notification (last batch, no inter-batch wait applied). Per-slot token released immediately post-spawn."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-29T08:53:24Z",
+  "_processed": {
+    "fingerprint": "5cc33385c88c8b6d0a307f92075587ab57c033799bd519f50885bf4c82038bf6",
+    "processedAt": "2026-07-29T09:16:08Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

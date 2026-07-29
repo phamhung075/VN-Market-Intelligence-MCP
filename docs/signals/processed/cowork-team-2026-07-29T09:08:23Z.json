@@ -1,0 +1,38 @@
+{
+  "from": "cowork-team",
+  "to": "system",
+  "type": "cowork-tick-telemetry",
+  "payload": {
+    "tick": "2026-07-29T09:00Z",
+    "verdict": "WORK",
+    "drift_min": 5,
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "matched_slots": [
+      "refine-bctc-slot-1"
+    ],
+    "won_slots": [
+      "refine-bctc-slot-1"
+    ],
+    "spawned": [
+      "docs/agents/refine_bctc_md/flow/main.md"
+    ],
+    "spawn_agent_ids": [
+      "a933dfedcff18c65f"
+    ],
+    "errors": [],
+    "silent": false,
+    "classification": "FIRE",
+    "max_parallel": 2,
+    "degraded": true,
+    "note": "Single non-guaranteed slot (refine-bctc-slot-1, bctc-offmarket policy, calendar_status=unknown -> _cron_fallback, no adaptive throttle). Fanout still degraded (host_headroom_mb field not renamed to container_vm_headroom_mb -- flagged 08:14Z, cow-20260729T085800Z also open) but moot at batch size 1. Step 5.3 off-flow check deferred to this spawn's completion notification (agent a933dfedcff18c65f, still in-flight at telemetry write). All 5 NEW signal_queue rows this tick addressed to po -- left untouched, not cowork-team's action."
+  },
+  "priority": "INFO",
+  "createdAt": "2026-07-29T09:08:23Z",
+  "_processed": {
+    "fingerprint": "27c1af0a8a6bfd107b7218b0cd7a0d874d3f36d9225c617687125feb384543fd",
+    "processedAt": "2026-07-29T09:16:08Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
