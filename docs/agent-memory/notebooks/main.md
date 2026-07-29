@@ -1,6 +1,15 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-29T10:32Z
+**Written:** 2026-07-29T10:52Z
+
+## cycle-20260729T1037Z — WIP=1 hold (no re-dispatch); SELF-FLAGGED own LOCK-LIFETIME invariant violation, duplicate-spawn risk
+
+- **Preflight/CI clean**: RUN tick `2026-07-29T10:37Z`; CI GREEN unchanged (`39a4dac7c`).
+- **Drain**: file-plane 1 routed-to-po (`commit-sweep-guard-*`). Dashboard-plane: 2 NEW rows (duplicate system-auditor `sbv_fx stale 32min` WARN, 1s apart) claimed/marked READ individually, cold-evicted (2 rows → `archive/2026-07.json`). Committed `3e257beba`.
+- **WIP=1** (`FIX-BCTC-D3C-FOLLOW-UP-RESET-ATTEMPTS` still `in_progress`, dispatched to `dev-mcp-server` background `aad08ce6ed61aff5e` last tick, confirmed still running via task-notification + matching dirty `apps/mcp-server` working-tree files) — BOUNDED-1 correctly did not fire.
+- **SELF-FLAGGED FINDING**: `task_list_held` confirmed `task:FIX-BCTC-D3C-FOLLOW-UP-RESET-ATTEMPTS` sprint-task lock is FREE despite the dispatch being genuinely live — because this session's last 3 dispatches (TASK_2006, FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK, this task) released the lock immediately post-spawn, directly violating `main.md`'s own documented LOCK-LIFETIME invariant (FIX-DEVTEAM-BACKGROUND-SPAWN-LOCK-RELEASED-AT-SPAWN-NOT-COMPLETION, lines 503/601/659/714: hold until completion/TTL specifically so the next tick's S2 `outer_claim` can't succeed and double-spawn). Correctly overrode the free-lock signal with direct live-agent evidence this tick (BGFAN-1) instead of mechanically re-claiming+re-spawning — but this is a real latent duplicate-spawn bug on any tick lacking that direct evidence (e.g. post-compact). Wrote signal `dev-20260729T104938` to `po` flagging it (read-back confirmed); not fixed inline — dev-team observes, doesn't own the flow-doc's lock-lifetime redesign.
+- **Step 1 PO-triage** evaluated, skipped: no P0/actionable signal this tick (all WARN-severity), PO independently active today already.
+- Review-lane QA-Drain remains starved (139+ rows), unchanged, still gated behind TASK-DEVTEAM-IDLE-CHAIN-2-MAIN-FLOW.
 
 ## cycle-20260729T1007Z — BOUNDED-1 claimed FIX-BCTC-D3C-FOLLOW-UP-RESET-ATTEMPTS, dispatched to dev-mcp-server (clean Tier-1 zone match); SELF-CAUGHT direct-implementation near-miss, reverted before commit
 
@@ -19,9 +28,3 @@
 - **Commit-mutex note carried forward**: dev-mcp-server's sub-agent invocation lacked the `mcp__gateway__call_tool` grant (structural tool-gap, flagged explicitly not silently omitted) and committed directly per its zone's own RUN-SOLO/INV-GATEWAY-1 convention — pre-commit staged-diff check + post-commit residual-paths check both run, no sweep. Worth a PO/architect look at whether dev-* zone RUN-SOLO commits should be a documented standing exception to the commit-mutex protocol.
 - No discrepancies found — clean verify, nothing to patch. Review-lane QA-Drain remains starved (139+ rows), unchanged, still gated behind TASK-DEVTEAM-IDLE-CHAIN-2-MAIN-FLOW.
 
-## cycle-20260729T0937Z — BOUNDED-1 claimed TASK_2006 (SUBTASK-DAILY-FF-7 follow-on), dispatched to dev-mcp-server (clean Tier-1 zone match)
-
-- **Preflight/gcc/CI clean**: RUN tick `2026-07-29T09:37Z`; CI GREEN unchanged (`39a4dac7c`); `.head` idle from prior tick's clean close-out (6th consecutive clean head-sync pass held).
-- **Drain**: file-plane 2 routed-to-po (`commit-sweep-guard-*` telemetry, 1× `cowork-team-*` envelope). Dashboard-plane (0a-D): 6 NEW `signal_queue` rows addressed to `po` claimed/marked READ individually (chef morning double-publish 5th recurrence, dev-team's own headfreeze-v2 escalation, chef-intraday token-budget marker leak, pressure-headroom stale-field, chef-eod router-race near-miss, refine_bctc diacritic corruption) — none pruned (all <48h old). Committed as `09354d217`.
-- **BOUNDED-1 fired (WIP=0)**: promoted+claimed `TASK_2006` (P2, size S, zone `apps/mcp-server/` — clean Tier-1 explicit match, no ambiguity). Optional annotation-only follow-on from ARCH-DAILY-FOREIGN-FLOW-TABLE (SUBTASK-DAILY-FF-7): schema-comment marking `daily_ohlcv.foreign_*` columns frozen/historical (NOT a DROP COLUMN — live named-volume DB risk). `depends_on: [TASK_2002]`, confirmed satisfied by the promote gate's own cold-archive lookup (`docs/data/orch/archive/2026-07.json`) before promotion — not re-verified by dev-team. Passed the exact AC wording + architect-design pointer (`ARCH-DAILY-FOREIGN-FLOW-TABLE-architect-design.md` § Change 2 / R-7) to the specialist. Dispatched background `a72493ea2f5d59728`.
-- BOUNDED-1 claim consumed the tick (JUMP TO execute) — did not fall through to SLS/RLC/QA-Drain/Step 1. Review-lane QA-Drain remains starved (139+ rows) — unchanged, still gated behind TASK-DEVTEAM-IDLE-CHAIN-2-MAIN-FLOW (BACKLOG, depends on T1/REVIEW-not-yet-DONE_VERIFIED).
