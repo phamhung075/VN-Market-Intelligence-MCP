@@ -419,11 +419,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-07-28T23:57:14Z",
-    "updated_by": "qa",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "active_task_id": "UC-GCP-P7",
+    "next_agent": "qa",
+    "next_action": "Review-Lane QA-Drain claim of UC-GCP-P7 — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have).",
+    "updated_at": "2026-07-29T00:18:30Z",
+    "updated_by": "dev-team (review-lane qa-drain)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -13975,36 +13976,6 @@
         "next_agent": "agent-father"
       },
       {
-        "id": "UC-GCP-P7",
-        "type": "FIX",
-        "title": "Rescope /commit skill: per-commit mutex-bound, main-only, convention-aligned",
-        "status": "REVIEW",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "RESCOPE",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#git-ci-publish-P7",
-        "note": "SCOPE=verifier Rescope note. Delete Step4 merge-and-clean-branch (no-branches invariant); wrap EACH per-category add->commit->push in its own commit-mutex critical section (TTL sized for seconds); add a stranded-peer-file age guard (skip peer-zone files mtime<2h); replace hardcoded Co-Authored-By model name with a pointer to commit-convention; reduce .claude/commands/commit.md to a one-line pointer so /commit has ONE definition.",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "priority_bumped_from": "P2",
-        "priority_bumped_at": "2026-07-17T04:54:03Z",
-        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
-        "promoted_at": "2026-07-23T07:49:33Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "updated_at": "2026-07-23T07:56:43Z",
-        "claimed_at": "2026-07-23T07:49:33Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
-        "branch": null,
-        "completed_at": "2026-07-23T07:56:21Z",
-        "completed_by": "developer",
-        "status_note": "Rewrote .claude/skills/commit/SKILL.md (deleted Step 4 merge/branch-clean; per-category commit-mutex:main acquire/critical-section/release replacing whole-run duplicated push shell, pointing at commit-mutex Step 3d-PUSH as SSOT; added Step 1 stranded-peer-file age guard citing commit-boundary RULE 2 zone table + mtime<2h; replaced hardcoded Co-Authored-By line with pointer to commit-convention.md) + reduced .claude/commands/commit.md to a one-line pointer so /commit has exactly one definition. Commits a5202512c (fix, Task/AC trailers) + 2cd532595 (memory), both pushed to main. DJ entry: sprint-ULTRACODE-AUDIT-FIXALL-developer.md STEP developer-S22. Direct-commit branch:null — qa verify-committed-fix mode applies (docs/agents/qa/flow/main.md Direct-Commit Verify)."
-      },
-      {
         "id": "TE-T17",
         "title": "T-17 ops notebook 701L (3.5x cap): fix prune bypass (non-Write/Edit writes skip auto-prune hook) + janitor sweep [~18-36k tok/day]",
         "owner": "developer",
@@ -16493,7 +16464,38 @@
         "dev_mcp_server_review_note": "dev-mcp-server COMPLETE (session 64c7c677-0f0f-4cee-a3ce-dba79d70b7ae, commit 17a906143): added intraday5mCompactorJob to schedulerWatchdogJob.ts's WATCHDOG_MANIFEST (cadenceMs=300_000, thresholdMultiplier=3, action='self-heal'), mirroring ohlcv-daily-aggregator/reputationComputeJob/ta-ohlcv-backfill. selfHealFn wired in schedulerJobTable.ts's liveManifest (same composition-root DDD pattern as the 3 existing self-heal jobs, calling jobRunRepo.wrapRun('intraday5mCompactorJob', runIntraday5mCompactor)). CANONICAL_WATCHDOG_JOB_NAMES updated in lockstep for WD-10 manifest-integrity guard. Also added the missing CN-1 tier-1 STATIC_JOB_NAME_MAP pair (cronStatusCompute.ts, intraday5mCompactor -> intraday5mCompactorJob) so /api/cron-status dashboard resolution does not fall through to the cache-unsafe tier-2/3 path -- live-verified end-to-end against a real server boot (PORT=3097, cwd=project root matching prod): job row present, job_name_db=intraday5mCompactorJob, correctly classified STALE against the dev DB's real last-run age.\n\nFixed 3 pre-existing hardcoded manifest-size invariants (25 -> 26) across FIX-CRON-WATCHDOG-COVERAGE-2026-07-22.test.ts / cronStatusHandler.test.ts / cronStatusCompute.test.ts -- an expected, direct consequence of the new entry (confirmed RED before the fix, GREEN after), not scope creep; each prior task's own historical delta claim (e.g. FIX-CRON-WATCHDOG-COVERAGE-2026-07-22's 16->25 AC-4) preserved via an explanatory note rather than rewritten. New dedicated test file ALPHA-S2-SUB5-WATCHDOG-STRETCH.test.ts (4 tests) proves manifest-entry shape, canonical registration, and stale/healthy alert behavior at the 3x/5min threshold.\n\nEvidence: targeted suites (ARCH-CRON-watchdog, FIX-CRON-WATCHDOG-COVERAGE-2026-07-22, ALPHA-S2-SUB5-WATCHDOG-STRETCH, cronStatusHandler, cronStatusCompute, FIX-CRON-SSCCHECKERJOB-DEAD-87D-classfix-registry-invariant, ALPHA-S2-intraday-5m-compactor, ALPHA-S2-FF-intraday-5m-compactor) 90/90 pass, 0 fail. tsc --noEmit clean. gen-project-stats --dry-run: toolCount=184/cronJobCount=88 unchanged (manifest-only change, no new tool/cron registered). Full bun test (608s, 1235 files): 14855 pass/40 skip/57 fail/1 error -- within the standing FIX-MCP-SUITE-HEALTH-BASELINE order-dependent band (56-59 across recent dev-mcp-server cycles this same sprint); the 2 fail details visible in the captured tail are both from unrelated src/_deprecated/1302-technical-indicators.test.ts. Live boot (PORT=3097, cwd=project root): /health toolCount=184, /api/bctc-inspect 200, /dashboards/news-fetch/ 200, /api/cron-status 200 (previously 503 only when boot cwd was wrongly apps/mcp-server -- a pre-existing local-dev-only cwd quirk documented in cronStatusHandler.test.ts's own header comment, unrelated to this change; confirmed by re-testing with the correct project-root cwd matching docker production).\n\nDoc-review: usecases.md (CN-1 tier-1 pair count 16->26) + testing.md (WATCHDOG_MANIFEST job counts + test counts corrected to current live values) -- both directly tied to the application-layer file (cronStatusCompute.ts) this task modified.\n\nNOT pushed by this agent per PUSH-AUTONOMY-1 (chain-mutex-holding session pushes). Decision journal: sprint-<TBD> per decision-journal skill (see notebook entry same session). Ready for qa."
       }
     ],
-    "qa": [],
+    "qa": [
+      {
+        "id": "UC-GCP-P7",
+        "type": "FIX",
+        "title": "Rescope /commit skill: per-commit mutex-bound, main-only, convention-aligned",
+        "status": "QA",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "RESCOPE",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#git-ci-publish-P7",
+        "note": "SCOPE=verifier Rescope note. Delete Step4 merge-and-clean-branch (no-branches invariant); wrap EACH per-category add->commit->push in its own commit-mutex critical section (TTL sized for seconds); add a stranded-peer-file age guard (skip peer-zone files mtime<2h); replace hardcoded Co-Authored-By model name with a pointer to commit-convention; reduce .claude/commands/commit.md to a one-line pointer so /commit has ONE definition.",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "priority_bumped_from": "P2",
+        "priority_bumped_at": "2026-07-17T04:54:03Z",
+        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
+        "promoted_at": "2026-07-23T07:49:33Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "updated_at": "2026-07-29T00:18:30Z",
+        "claimed_at": "2026-07-29T00:18:30Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "qa",
+        "branch": null,
+        "completed_at": "2026-07-23T07:56:21Z",
+        "completed_by": "developer",
+        "status_note": "Rewrote .claude/skills/commit/SKILL.md (deleted Step 4 merge/branch-clean; per-category commit-mutex:main acquire/critical-section/release replacing whole-run duplicated push shell, pointing at commit-mutex Step 3d-PUSH as SSOT; added Step 1 stranded-peer-file age guard citing commit-boundary RULE 2 zone table + mtime<2h; replaced hardcoded Co-Authored-By line with pointer to commit-convention.md) + reduced .claude/commands/commit.md to a one-line pointer so /commit has exactly one definition. Commits a5202512c (fix, Task/AC trailers) + 2cd532595 (memory), both pushed to main. DJ entry: sprint-ULTRACODE-AUDIT-FIXALL-developer.md STEP developer-S22. Direct-commit branch:null — qa verify-committed-fix mode applies (docs/agents/qa/flow/main.md Direct-Commit Verify)."
+      }
+    ],
     "_closed_signals_20260614": {
       "_by": "po-S50",
       "_at": "2026-06-14T14:45:14Z",
