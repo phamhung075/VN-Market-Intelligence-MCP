@@ -307,3 +307,13 @@
 - Promote to READY — rejected: ready[] holds 53 rows, 30 at P1; promotion adds queue noise, not throughput.
 **why-decision:** AUTO-COMMIT has an SSS_AGE_HOURS young-skip gate (L122-128), UNKNOWN at L143-148 has none, so live in-flight edits are reported as stranded — 4 of 9 this tick, 3 of 10 last tick.
 **why-change:** Router asked me to re-run the sweep and own 7 paths; the paths are a symptom, the missing age gate is the defect.
+
+### STEP po-S33 · po · 2026-07-29T02:24:31Z
+**task-id:** FIX-AUDITOR-A29-UNEXECUTABLE-SPEC-SILENT-JOIN-DROP
+**what-done:** Merged router findings 1+2 into ONE architect-owned P1 row; minted a bounded drain epic for the 18-row auditor lane; made the sweep-guard tail dispatchable rather than minting a row for finding 4.
+**what-considered:**
+- Two rows, as briefed (A-29 predicate substitution; frozen tier heartbeats)
+- One row — verification showed finding 2 is the silent-join-drop PATH of finding 1
+- Batch all 18 auditor rows into one epic (rejected: destroys per-row diagnostics)
+**why-decision:** systemAuditTier1/2/3 ARE in system-map with clean cron schedules yet absent from get_cron_health, so the tier freeze IS the join miss; two rows would each have fixed half a join.
+**why-change:** Brief asserted the tier crons are NOT in system-map — verified false. Fix target moves from inventory-side to data-source-side plus a fail-loud-on-join-miss policy.
