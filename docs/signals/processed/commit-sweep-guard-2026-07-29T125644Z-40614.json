@@ -1,0 +1,14 @@
+{
+  "from": "commit-sweep-guard",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-07-29T12:56:44Z",
+  "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/architect.md — retained section '## 2026-07-29T09:20Z — SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP (zone=cross-service/, plan_only supervised, router-dispatched)' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle; the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/architect.md — retained section '## 2026-07-29T07:35Z — FIX-A21-CRASH-WINDOW-PREDECESSOR-BOUND-FALSE-NEGATIVE (zone=multi, P1 supervised plan_only, PO board row)' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle; the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
+  "_processed": {
+    "fingerprint": "c6cbb194e3ecfbfd0886c84b5d108597610217641fa998827d19439968d9b33d",
+    "processedAt": "2026-07-29T13:16:17Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
