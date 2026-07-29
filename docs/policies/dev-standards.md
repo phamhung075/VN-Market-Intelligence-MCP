@@ -1,6 +1,6 @@
 # Developer Standards
 
-<!-- size-justification: 140L — unified developer reference: code search tools, test patterns, DDD rules, TypeScript conventions, naming. All read together at sprint start to set context; splitting into tool-guide + test-patterns + naming-rules fragments the unified "how we code" standard. SCRIPT-PERSIST 2026-06-07: Script Persistence section incl. maintenance clause (+15L, user directive). SYSREMAKE-P2-DEVTEAM-BACKLOG-PICKUP-BOUNDED1 2026-07-04: CANONICAL pointer for the dev-team idle-capacity backlog pickup scripts (+11L). PUSH-AUTONOMY-1 2026-07-14: Autonomous Push Gate section (+16L, user directive — push on 100% green, no user action, post-push real-data verify task). FIX-CMH-OBSOLETE-FILE-CLEANUP 2026-07-20: CANONICAL pointer for scripts/audits/clean-obsolete-files.sh (+8L). BLOCK-PUSH-CRON-AUDIT-BATCH-NO-QA 2026-07-22 (qa): pinned the "targeted/merge-gate suite" reading against the standing FIX-MCP-SUITE-HEALTH-BASELINE full-suite red so it stops being re-litigated per push (+3L). UC-MDH-P3 2026-07-23: CANONICAL pointer for scripts/agents-flow/memory-prune-sweep.sh (+14L). UC-MDH-P4 2026-07-23: CANONICAL pointer for scripts/agents-flow/decision-journal-archive.sh (+15L). UC-GCP-P8 2026-07-23: CANONICAL pointer for scripts/agents-flow/stranded-state-sweep.sh (+13L). TE-T17 2026-07-23: CANONICAL pointer for scripts/agents-flow/notebook-linecap-sweep.sh (+13L). TE-T28 2026-07-23: CANONICAL pointer for scripts/gen-tool-list-stubs.py (+15L). TE-T31 2026-07-23: CANONICAL pointer for scripts/gen-tools-index.sh (+14L). TE-T33 2026-07-23: CANONICAL pointer for scripts/agents-flow/cold-archive-sweep.sh (+18L). FFLOW-STALE-0723-B-RECHECK-HARNESS 2026-07-23: CANONICAL pointer for scripts/check-foreign-flow-freshness.sh (+16L). FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK 2026-07-28: CANONICAL pointer for scripts/git-hooks/pre-commit (+15L). FIX-AUDITOR-HEARTBEAT-OUT-OF-CONTRACT-AGENT-WRITE-TIER1 2026-07-29: CANONICAL sole-writer + shape invariant for docs/data/auditor-tier{1,2,3}-last-healthy.json, cited from both writers (+21L). FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS-followup 2026-07-29: CANONICAL pointer for scripts/audits/verify-notebook-immutability-gate.sh (+9L). -->
+<!-- size-justification: 140L — unified developer reference: code search tools, test patterns, DDD rules, TypeScript conventions, naming. All read together at sprint start to set context; splitting into tool-guide + test-patterns + naming-rules fragments the unified "how we code" standard. SCRIPT-PERSIST 2026-06-07: Script Persistence section incl. maintenance clause (+15L, user directive). SYSREMAKE-P2-DEVTEAM-BACKLOG-PICKUP-BOUNDED1 2026-07-04: CANONICAL pointer for the dev-team idle-capacity backlog pickup scripts (+11L). PUSH-AUTONOMY-1 2026-07-14: Autonomous Push Gate section (+16L, user directive — push on 100% green, no user action, post-push real-data verify task). FIX-CMH-OBSOLETE-FILE-CLEANUP 2026-07-20: CANONICAL pointer for scripts/audits/clean-obsolete-files.sh (+8L). BLOCK-PUSH-CRON-AUDIT-BATCH-NO-QA 2026-07-22 (qa): pinned the "targeted/merge-gate suite" reading against the standing FIX-MCP-SUITE-HEALTH-BASELINE full-suite red so it stops being re-litigated per push (+3L). UC-MDH-P3 2026-07-23: CANONICAL pointer for scripts/agents-flow/memory-prune-sweep.sh (+14L). UC-MDH-P4 2026-07-23: CANONICAL pointer for scripts/agents-flow/decision-journal-archive.sh (+15L). UC-GCP-P8 2026-07-23: CANONICAL pointer for scripts/agents-flow/stranded-state-sweep.sh (+13L). TE-T17 2026-07-23: CANONICAL pointer for scripts/agents-flow/notebook-linecap-sweep.sh (+13L). TE-T28 2026-07-23: CANONICAL pointer for scripts/gen-tool-list-stubs.py (+15L). TE-T31 2026-07-23: CANONICAL pointer for scripts/gen-tools-index.sh (+14L). TE-T33 2026-07-23: CANONICAL pointer for scripts/agents-flow/cold-archive-sweep.sh (+18L). FFLOW-STALE-0723-B-RECHECK-HARNESS 2026-07-23: CANONICAL pointer for scripts/check-foreign-flow-freshness.sh (+16L). FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK 2026-07-28: CANONICAL pointer for scripts/git-hooks/pre-commit (+15L). FIX-AUDITOR-HEARTBEAT-OUT-OF-CONTRACT-AGENT-WRITE-TIER1 2026-07-29: CANONICAL sole-writer + shape invariant for docs/data/auditor-tier{1,2,3}-last-healthy.json, cited from both writers (+21L). FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS-followup 2026-07-29: CANONICAL pointer for scripts/audits/verify-notebook-immutability-gate.sh (+9L). FIX-AUDITOR-DASHBOARD-APPEND-NO-ACTUATOR-CONTRACT-COUNT-NARRATED 2026-07-29: CANONICAL pointers for scripts/emit-dashboard-row.sh + scripts/audit-output-contract.sh (+24L). -->
 
 ## Script Persistence — scripts/, never /tmp
 
@@ -509,6 +509,39 @@ reimplementation) and replays them against the REAL commit history of every
 (`GIT_NOTEBOOK_IMMUTABILITY_MODE=reject` opts a caller into hard-block) until this script reads 0
 rejects across the corpus — re-run it before ever re-arming reject-mode fleet-wide or changing the
 hashing/classification logic.
+
+**CANONICAL: DASHBOARD.md append actuator (FIX-AUDITOR-DASHBOARD-APPEND-NO-ACTUATOR-CONTRACT-COUNT-NARRATED)**
+```bash
+scripts/emit-dashboard-row.sh --check-id <A-xx|B-xx|C-xx> --title "<...>" --severity <CRITICAL|WARN|INFO> \
+  --location "<...>" --details "<...>" --impact "<...>" --root-cause "<...>" --zone-owner <specialist> \
+  --signal-id <id from the paired emit-audit-signal.sh marker>          # named args, see header comment
+```
+Gives `docs/data/DASHBOARD.md` the same anti-false-green treatment `scripts/emit-audit-signal.sh`'s E-3
+step already gives signal_queue rows: tmp+mv atomic append, commit-mutex-guarded (self-contained —
+does not nest into `scripts/auditor-notebook-commit.sh`), then a MANDATORY POST-WRITE read-back
+(`grep -qF "signal <id>"`) that fails loud to the BUG channel if the anchor is not found on re-read.
+Replaces unscripted prose ("append a DASHBOARD.md row") that had no script, no path SSOT, and no
+failure path — the `docs/handoffs/DASHBOARD.md` path is a stale phantom (UC-ASL-P6 purges it) and the
+`.claude/skills/signal-dashboard/` skill governs `.signal_queue.rows[]`, a different artifact — neither
+is this script's target. Owning flow: `docs/agents/system-auditor/flow/main.md` §Anomaly Reporting →
+DASHBOARD Append. Test: `scripts/emit-dashboard-row.test.sh`.
+
+**CANONICAL: Audit OUTPUT-CONTRACT parser (FIX-AUDITOR-DASHBOARD-APPEND-NO-ACTUATOR-CONTRACT-COUNT-NARRATED)**
+```bash
+scripts/audit-output-contract.sh --markers-file <path> [--cycle-start-ts <ISO8601>] \
+  [--anomalies-count <N>] [--next-token <token>] [--orch-state-file <path>]
+```
+Mechanically parses the `[emit-signal]`/`[emit-dashboard]`/`[post-agent-signal]` marker lines a
+system-auditor cycle accumulated into a scratch file and PRINTS the
+`[OUTPUT-CONTRACT] signals_posted=N | telegram_sent=N | signal_queue_rows_written=N | dashboard_rows=N |
+dedup_skipped=N` line — the agent pastes this verbatim, it never hand-composes the counts again.
+Closes a confirmed recurring defect that failed in BOTH directions on 2026-07-29 (over-report:
+narrated N, wrote 0; under-report: narrated 0, wrote 1 — root cause: a `SKIP-dedup` marker, which
+still carries `id=`, misread as "nothing emitted"). Adds an independent `.signal_queue.rows[]`
+cross-check (closes a previously vacuous same-agent-narrates-both-operands check) and symmetric
+violation checks for `dashboard_rows==0` and RETURN-headline/`NEXT`-token consistency, each firing its
+own BUG-channel Telegram. Owning flow: `docs/agents/system-auditor/flow/main.md` §Anomaly Reporting →
+OUTPUT-CONTRACT. Test: `scripts/audit-output-contract.test.sh`.
 
 `/tmp` is allowed ONLY for throwaway run-scoped DATA (payload json, stderr capture, session-id cache) — never for executable logic.
 

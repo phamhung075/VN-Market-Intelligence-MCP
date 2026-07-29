@@ -60,7 +60,7 @@ bash scripts/emit-audit-signal.sh --check-id "<check_id>" --category-type "syste
   --summary "<check_id> not re-verified in <age_days>d (window=7d)" \
   --detail-json '{"dedup_key":"system_issue:<check_id>:PG-STALE","title":"D-PAGE audit-staleness: <check_id>"}'
 ```
-Paste each `[emit-signal] OK|SKIP-dedup|ABORT ...` marker into the notebook.
+Paste each `[emit-signal] OK|SKIP-dedup|ABORT ...` marker into the notebook AND append it to `$MARKERS_FILE` (set in `flow/main.md` §Step 0d, which Tier-5 runs — see that file's `[OUTPUT-CONTRACT]` mechanism below; no DASHBOARD.md row for D-PAGE findings — that bucket is scoped to Tier-1/2/3 CRITICAL/WARN checks, unchanged by FIX-AUDITOR-DASHBOARD-APPEND-NO-ACTUATOR-CONTRACT-COUNT-NARRATED).
 
 ## Step 3 — Coverage-map rotation (per-page `verified_at`, ledger-only)
 
@@ -83,6 +83,7 @@ Commit via `scripts/auditor-notebook-commit.sh` (same as every other tier — se
 → skill: `.claude/skills/anomaly-task-bridge/SKILL.md` — inputs: `AUDIT_TIER = 5` (ATB is tier-agnostic beyond its Tier-1 skip gate; `data_stale`/`system_issue` rows emitted above flow into the existing `repair_task_request` → PO → task_board pipeline unchanged, zero new plumbing).
 
 ## OUTPUT-CONTRACT (append to the standard line)
+The standard `[OUTPUT-CONTRACT] signals_posted=... | dashboard_rows=...` line is produced the SAME way as every other tier — `bash scripts/emit-audit-signal.sh` markers accumulate into `$MARKERS_FILE`, then `scripts/audit-output-contract.sh --markers-file "$MARKERS_FILE" --cycle-start-ts "$FIRE_TICK" ...` (`flow/main.md` §OUTPUT-CONTRACT) computes it — never hand-composed here either. This dimension's own additive counters are tallied separately (no marker grammar exists for them yet) and appended after:
 ```
 [OUTPUT-CONTRACT] page_checks_probed=N | page_drift=N | page_stale=N | map_rows_probed=N
 ```

@@ -1,5 +1,5 @@
 ---
-<!-- size-justification: 169L — agent definition covers 3-tier audit cadence (Tier 1/2/3), 6-pillar capability list, 60+ check IDs across runtime/fetch/DB surfaces, dedup policy, and typed signal shapes; each section is load-bearing and non-separable from the agent identity. +9L (2026-07-25): D-PAGE (Tier-5, daily 03:30Z quality-audit freshness rotation) capability/responsibility bullets + max_wall_time_tier5_seconds — full spec lives in flow/page-freshness.md + audit-dimensions.md §D-PAGE, kept out of this file per the same lazy-load discipline as tier1-probe.md. -->
+<!-- size-justification: 169L — agent definition covers 3-tier audit cadence (Tier 1/2/3), 6-pillar capability list, 60+ check IDs across runtime/fetch/DB surfaces, dedup policy, and typed signal shapes; each section is load-bearing and non-separable from the agent identity. +9L (2026-07-25): D-PAGE (Tier-5, daily 03:30Z quality-audit freshness rotation) capability/responsibility bullets + max_wall_time_tier5_seconds — full spec lives in flow/page-freshness.md + audit-dimensions.md §D-PAGE, kept out of this file per the same lazy-load discipline as tier1-probe.md. FIX-AUDITOR-DASHBOARD-APPEND-NO-ACTUATOR-CONTRACT-COUNT-NARRATED 2026-07-29: `on_critical_or_warn` line lengthened in place (0 new lines) to name the actuator script + correct target path. -->
 
 agent:
   id: system-auditor
@@ -81,7 +81,7 @@ agent:
         - "kill / pkill / killall (any PID or process name)"
         - "rm -rf of any live data directory (/app/data/, /root/, any DB path, any volume mount)"
         - "Any shell command that terminates, removes, or restarts a running container or process"
-      on_critical_or_warn: "emit `post_agent_signal` (signal_type: signal_feedback) → append DASHBOARD.md row → send_telegram(bug) → EXIT. Remediation belongs to ops/developer."
+      on_critical_or_warn: "emit `post_agent_signal` (signal_type: signal_feedback) → append DASHBOARD.md row via `scripts/emit-dashboard-row.sh` (target: docs/data/DASHBOARD.md — full contract: flow/main.md §Anomaly Reporting → DASHBOARD Append) → send_telegram(bug) → EXIT. Remediation belongs to ops/developer."
       violation_action: "abort cycle → send_telegram(channel=\"bug\", message=\"[system-auditor] PLAN-ONLY violation aborted: <command>\")"
       anchor: "See flow/main.md §PLAN-ONLY INVARIANT for full incident history (2026-05-31 + 2026-06-01 data loss)"
 

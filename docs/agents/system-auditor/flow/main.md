@@ -1,4 +1,4 @@
-<!-- size-justification: ~793L — three-tier dispatcher; Tier-1 detail extracted to tier1-probe.md; Tier-2/Tier-3 bodies remain inline (extraction sprint deferred per PO, see backlog T-06); full change history in git log. +2L: TIER=4 PILOT row added to AUDIT_TIER extraction + Tier Dispatch tables (2026-07-18), per brief docs/architecture-briefs/2026-07-18-cron-workflow-optimize-tier4-fleet-audit.md §8 EDIT-2 — dispatches to handlers.md §Step D-FLEET, own one-off claim, bypasses §Step 0d tick-boundary election. +6L (2026-07-25): TIER=5 row added to AUDIT_TIER extraction + Tier Dispatch tables + Step 0d fire-election branch — dispatches to flow/page-freshness.md (D-PAGE, kept fully out of this file per lazy-load discipline, unlike Tier-2/3's still-deferred inline extraction). +7L (2026-07-25, coordinator review #2): Step 0d TIER=5 FIRE_TICK comment expanded — CronCreate fires machine-local not UTC, the literal cron expression must not be hardcoded here (drifts at DST changeover); Tier-3's own 02:00Z label (line ~111) carries the same unverified-against-that-defect risk, flagged but NOT fixed here — out of scope, that cron is already live-armed. FIX-AUDITOR-HEARTBEAT-OUT-OF-CONTRACT-AGENT-WRITE-TIER1 2026-07-29: Tier-2/3 Heartbeat Write section — added SOLE-WRITER + SHAPE CONTRACT callout (cites `docs/policies/dev-standards.md` CANONICAL:SSOT-AUDITOR-HEARTBEAT-SOLE-WRITER, states the tier-1-vs-tier-2/3 semantic split, points at the new `scripts/git-hooks/pre-commit` enforcement) (+6L). -->
+<!-- size-justification: ~793L — three-tier dispatcher; Tier-1 detail extracted to tier1-probe.md; Tier-2/Tier-3 bodies remain inline (extraction sprint deferred per PO, see backlog T-06); full change history in git log. +2L: TIER=4 PILOT row added to AUDIT_TIER extraction + Tier Dispatch tables (2026-07-18), per brief docs/architecture-briefs/2026-07-18-cron-workflow-optimize-tier4-fleet-audit.md §8 EDIT-2 — dispatches to handlers.md §Step D-FLEET, own one-off claim, bypasses §Step 0d tick-boundary election. +6L (2026-07-25): TIER=5 row added to AUDIT_TIER extraction + Tier Dispatch tables + Step 0d fire-election branch — dispatches to flow/page-freshness.md (D-PAGE, kept fully out of this file per lazy-load discipline, unlike Tier-2/3's still-deferred inline extraction). +7L (2026-07-25, coordinator review #2): Step 0d TIER=5 FIRE_TICK comment expanded — CronCreate fires machine-local not UTC, the literal cron expression must not be hardcoded here (drifts at DST changeover); Tier-3's own 02:00Z label (line ~111) carries the same unverified-against-that-defect risk, flagged but NOT fixed here — out of scope, that cron is already live-armed. FIX-AUDITOR-HEARTBEAT-OUT-OF-CONTRACT-AGENT-WRITE-TIER1 2026-07-29: Tier-2/3 Heartbeat Write section — added SOLE-WRITER + SHAPE CONTRACT callout (cites `docs/policies/dev-standards.md` CANONICAL:SSOT-AUDITOR-HEARTBEAT-SOLE-WRITER, states the tier-1-vs-tier-2/3 semantic split, points at the new `scripts/git-hooks/pre-commit` enforcement) (+6L). FIX-AUDITOR-DASHBOARD-APPEND-NO-ACTUATOR-CONTRACT-COUNT-NARRATED 2026-07-29 (+~50L): DASHBOARD.md append is now a script actuator (`scripts/emit-dashboard-row.sh`, write+read-back, wired into the Tier-2/Tier-3 emit sites) instead of unscripted prose; OUTPUT-CONTRACT counters (`signals_posted`/`telegram_sent`/`signal_queue_rows_written`/`dashboard_rows`) are now mechanically parsed from a per-cycle marker log by `scripts/audit-output-contract.sh` instead of hand-composed, with an independent `.signal_queue` cross-check and a symmetric RETURN-headline consistency check; corrects the stale `signal-dashboard` skill pointer (that skill governs `.signal_queue`, not DASHBOARD.md, and was never a real write path for this artifact). -->
 # System Auditor — Main Flow
 
 ## PLAN-ONLY INVARIANT — NO DESTRUCTIVE OPS (AUD-ND-1)
@@ -14,7 +14,7 @@ This agent is a DETECTOR. It MUST NEVER perform infrastructure remediation.
 
 ### Positive contract — the ONLY permitted response to any CRITICAL/WARN finding
 1. Emit a typed signal row via `post_agent_signal` (signal_type: signal_feedback — live enum contract; carry check_id + severity + dedup_key in payload).
-2. Append a DASHBOARD.md row per signal-dashboard skill (status=OPEN, severity, zone_owner, check_id).
+2. Append a DASHBOARD.md row via `scripts/emit-dashboard-row.sh` (status=OPEN, severity, zone_owner, check_id) — full contract at §Anomaly Reporting (all tiers) → DASHBOARD Append below. Target is `docs/data/DASHBOARD.md`, the LIVE, tracked dashboard — NOT `docs/handoffs/DASHBOARD.md` (a stale phantom, untouched since 2026-07-20, chartered for removal under UC-ASL-P6) and NOT `.claude/skills/signal-dashboard/` (that skill's name is misleading: it governs `.signal_queue.rows[]` in orch-state.json, a wholly different artifact, and has no DASHBOARD.md write path at all).
 3. Send a BUG channel Telegram alert (dedup 7d per dedup_key, severity ≥ WARN).
 4. EXIT the cycle.
 
@@ -38,8 +38,9 @@ AUD-ND-1 regression history:
 ## Output
 - Typed signals via `post_agent_signal`
 - BUG channel alerts (severity ≥ WARN, dedup 7d per dedup_key)
-- DASHBOARD.md rows for all WARN/CRITICAL findings
+- DASHBOARD.md rows for all WARN/CRITICAL findings — via `scripts/emit-dashboard-row.sh`, target `docs/data/DASHBOARD.md` (§Anomaly Reporting → DASHBOARD Append)
 - Notebook section-append + prune (skill: notebook-write, ≤200L hard cap)
+- `[OUTPUT-CONTRACT]` line — mechanically computed by `scripts/audit-output-contract.sh`, never hand-composed (§OUTPUT-CONTRACT below)
 
 ---
 
@@ -155,6 +156,13 @@ if fire_result.claimed == false:
 ```
 
 **Release convention:** call `task_release(task_id=FIRE_TASK_ID, owner_client_session=$CLAUDE_CODE_SESSION_ID)` at the very end of the tier's cycle (after notebook write + commit step). This is the final step before RETURN. TTL=600s is the crash-safety backstop; explicit release is the normal exit path.
+
+**Cycle Markers Log init (FIX-AUDITOR-DASHBOARD-APPEND-NO-ACTUATOR-CONTRACT-COUNT-NARRATED):** immediately after winning the fire-election (never on a SKIP/EXIT path), initialize the per-cycle marker scratch file:
+```
+MARKERS_FILE="$PROJECT_ROOT/docs/agent-memory/.auditor-cycle-markers-${FIRE_TICK}.tmp"
+: > "$MARKERS_FILE"
+```
+Every `[emit-signal]` / `[emit-dashboard]` / `[post-agent-signal]` marker produced anywhere below this point gets appended to `$MARKERS_FILE` **in addition to** the existing "paste verbatim into the notebook" requirement — this is not a replacement, both happen. `$MARKERS_FILE` is the mechanical input to §OUTPUT-CONTRACT's `scripts/audit-output-contract.sh` call; it is scratch (never itself an artifact) and is removed (`rm -f "$MARKERS_FILE"`) at the very end of the cycle, after that script has run.
 
 ---
 
@@ -322,7 +330,18 @@ bash scripts/emit-audit-signal.sh \
   --summary "<source_id> stale <elapsed_hours>h (check <B-xx>)" \
   --detail-json '{"title":"data_stale: <source_id> (<B-xx>)","detail":"<source_id> stale <elapsed_hours>h (expected cadence <expected_cadence_hours>h, last fetch <last_fetch_ts>)","source_id":"<id>","category":"<category>","last_fetch_ts":"<ISO-8601>","expected_cadence_hours":"<from system-map>","elapsed_hours":"<computed>","zone_owner":"dev-mcp-server","dedup_key":"data_stale:<source_id>:<B-xx>"}'
 ```
-Paste the verbatim `[emit-signal] OK|SKIP-dedup|OK-escalation-bypass|ABORT ...` marker line into the notebook — this IS the E-1 (`post_agent_signal`) + E-2 (`send_telegram`, 7d dedup, severity-rank escalation bypass) + E-3 (signal-row append + POST-WRITE read-back, CAS-retry ×3) sequence; the script performs all three internally, including the ANTI-SKIP BUG-channel Telegram on any E-3 write/read-back failure. `ABORT ...` → do NOT count this source toward `signals_posted` in the OUTPUT-CONTRACT line.
+Paste the verbatim `[emit-signal] OK|SKIP-dedup|OK-escalation-bypass|ABORT ...` marker line into the notebook AND append it to `$MARKERS_FILE` — this IS the E-1 (`post_agent_signal`) + E-2 (`send_telegram`, 7d dedup, severity-rank escalation bypass) + E-3 (signal-row append + POST-WRITE read-back, CAS-retry ×3) sequence; the script performs all three internally, including the ANTI-SKIP BUG-channel Telegram on any E-3 write/read-back failure. `ABORT ...` → do NOT count this source toward `signals_posted` in the OUTPUT-CONTRACT line (the parser in `scripts/audit-output-contract.sh` already enforces this — it never reads `signals_posted` from prose).
+
+**DASHBOARD append (on any non-ABORT marker — always, even `SKIP-dedup`, per §Anomaly Reporting below):**
+```bash
+bash scripts/emit-dashboard-row.sh \
+  --check-id "<B-xx>" --title "<source_id> stale <elapsed_hours>h" --severity "<CRITICAL|WARN|INFO>" \
+  --location "<source/service>" --details "<what the check found>" --impact "<why it matters>" \
+  --root-cause "<best-known cause>" --zone-owner "dev-mcp-server" \
+  --signal-id "<the id= value parsed from this call's own [emit-signal] marker above>" \
+  --dedup-key "data_stale:<source_id>:<B-xx>"
+```
+Paste the verbatim `[emit-dashboard] OK|ABORT|WARN ...` marker into the notebook AND `$MARKERS_FILE` too.
 
 ---
 
@@ -348,7 +367,7 @@ bash scripts/emit-audit-signal.sh \
   --detail-json '{}' \
   --e3-only
 ```
-Paste the verbatim `[emit-signal] OK e3-only ...` (or `ABORT ...`) marker line into the notebook — this IS the signal-row append + POST-WRITE read-back (same anti-false-green check as all E-3 blocks, now enforced inside the script).
+Paste the verbatim `[emit-signal] OK e3-only ...` (or `ABORT ...`) marker line into the notebook AND append it to `$MARKERS_FILE` — this IS the signal-row append + POST-WRITE read-back (same anti-false-green check as all E-3 blocks, now enforced inside the script). No DASHBOARD.md row for this site — BCTC-EVAL deltas are HIGH|MED severity, not the CRITICAL/WARN AUD-ND-1 bucket §Anomaly Reporting's DASHBOARD Append governs; this is unchanged scope, not an oversight.
 
 After sweep, **hold the snapshot in memory** (compact: `{report_id, ticker, period, overall_status, stage_statuses, computed_at}` per entry) — it will be written as the `BCTC-EVAL-SNAPSHOT:` block inside the end-of-cycle settled notebook write (AC-3). Do NOT write the notebook here. If endpoint returns non-200 → log `[D-BCTC-EVAL] endpoint unavailable — skipping sweep`, set snapshot=nil, continue (non-fatal).
 
@@ -428,7 +447,7 @@ Also inspect the Tier-2 stale-source findings emitted above: any source with `se
        --detail-json '{}' \
        --e3-only
      ```
-     Paste the verbatim `[emit-signal] OK e3-only ...` (or `ABORT ...`) marker line into the notebook — this IS the signal-row append + POST-WRITE read-back (same anti-false-green check as all E-3 blocks, now enforced inside the script). NOTE: the script's generic row shape sets `payload_ref: null` (proposal traceability lives in the `docs/improvement-proposals/IMP-{id}.md` doc itself, filed at step c above, not in the dashboard row) and auto-derives the row `id` from `--from-agent` — it no longer literally equals `{id}`.
+     Paste the verbatim `[emit-signal] OK e3-only ...` (or `ABORT ...`) marker line into the notebook AND append it to `$MARKERS_FILE` — this IS the signal-row append + POST-WRITE read-back (same anti-false-green check as all E-3 blocks, now enforced inside the script). NOTE: the script's generic row shape sets `payload_ref: null` (proposal traceability lives in the `docs/improvement-proposals/IMP-{id}.md` doc itself, filed at step c above, not in the dashboard row) and auto-derives the row `id` from `--from-agent` — it no longer literally equals `{id}`. No DASHBOARD.md row for this site — INFO-severity improvement proposals are not the CRITICAL/WARN AUD-ND-1 bucket.
      **Commit (mutex-guarded):** → skill: `.claude/skills/commit-mutex/SKILL.md`
      own_paths: [`docs/improvement-proposals/IMP-{YYYYMMDD}-{slug}.md`, `docs/data/orch/orch-state.json`]
      intent: `"chore(improve): D-IMPROVE emit {id}"`
@@ -456,7 +475,7 @@ Append summary to this Tier-2 run's notebook entry.
 ```bash
 git -C "$PROJECT_ROOT" log --since="24 hours ago" --oneline 2>/tmp/sau_gitlog_err; GITLOG_EXIT=$?
 ```
-- If `GITLOG_EXIT != 0`: read `/tmp/sau_gitlog_err`; fail-loud — log `"[DOC-AUDIT] git log FAILED (exit $GITLOG_EXIT): $(cat /tmp/sau_gitlog_err)"`, emit WARN signal via `post_agent_signal` (signal_type: signal_feedback, payload.check_id: DOC-AUDIT-GIT-ERR), send BUG-channel Telegram, **do NOT early-exit** — continue with doc audit as if commits exist (safe-side).
+- If `GITLOG_EXIT != 0`: read `/tmp/sau_gitlog_err`; fail-loud — log `"[DOC-AUDIT] git log FAILED (exit $GITLOG_EXIT): $(cat /tmp/sau_gitlog_err)"`, emit WARN signal via `post_agent_signal` (signal_type: signal_feedback, payload.check_id: DOC-AUDIT-GIT-ERR), send BUG-channel Telegram, **do NOT early-exit** — continue with doc audit as if commits exist (safe-side). This is a bare `post_agent_signal` call (not via `scripts/emit-audit-signal.sh` — no signal_queue row, no dedup): append `"[post-agent-signal] OK telegram=yes"` to `$MARKERS_FILE` if BOTH calls succeeded, else `"[post-agent-signal] ABORT <which call failed>"` — this is what lets `signals_posted` count this site without ever writing a signal_queue row (see `scripts/audit-output-contract.sh` header for why the two counters are allowed to differ).
 - If `GITLOG_EXIT == 0` and output is empty: no commits in last 24h → check last-audit timestamp from notebook. Last audit < 12h AND no new commits → skip steps 1–6 (not the new DB checks below).
 - If `GITLOG_EXIT == 0` and output is non-empty: commits exist → run steps 1–6 (no early exit).
 
@@ -616,7 +635,18 @@ bash scripts/emit-audit-signal.sh \
   --summary "<table> check <C-xx> failed (actual=<actual_value>)" \
   --detail-json '{"title":"db_integrity_breach: <table> (<C-xx>)","detail":"<description> — actual=<n>, expected=<n>","db_id":"<db from system-map>","table":"<table>","actual_value":"<n>","expected_value":"<n>","zone_owner":"<specialist from zones>","dedup_key":"db_integrity_breach:<table>:<C-xx>"}'
 ```
-Paste the verbatim `[emit-signal] OK|SKIP-dedup|OK-escalation-bypass|ABORT ...` marker line into the notebook — this IS the E-1 + E-2 + E-3 sequence; the script performs all three internally, including the ANTI-SKIP BUG-channel Telegram on any E-3 write/read-back failure. `ABORT ...` → do NOT count this check toward `signals_posted` in the OUTPUT-CONTRACT line.
+Paste the verbatim `[emit-signal] OK|SKIP-dedup|OK-escalation-bypass|ABORT ...` marker line into the notebook AND append it to `$MARKERS_FILE` — this IS the E-1 + E-2 + E-3 sequence; the script performs all three internally, including the ANTI-SKIP BUG-channel Telegram on any E-3 write/read-back failure. `ABORT ...` → do NOT count this check toward `signals_posted` in the OUTPUT-CONTRACT line.
+
+**DASHBOARD append (on any non-ABORT marker — always, even `SKIP-dedup`, per §Anomaly Reporting below):**
+```bash
+bash scripts/emit-dashboard-row.sh \
+  --check-id "<C-xx>" --title "<table> check <C-xx> failed" --severity "<CRITICAL|WARN>" \
+  --location "<db>/<table>" --details "<description> — actual=<n>, expected=<n>" --impact "<why it matters>" \
+  --root-cause "<best-known cause>" --zone-owner "<specialist from zones>" \
+  --signal-id "<the id= value parsed from this call's own [emit-signal] marker above>" \
+  --dedup-key "db_integrity_breach:<table>:<C-xx>"
+```
+Paste the verbatim `[emit-dashboard] OK|ABORT|WARN ...` marker into the notebook AND `$MARKERS_FILE` too.
 
 ### Tier-3 Roll-Up Signal
 ```
@@ -636,6 +666,7 @@ call_tool(server="vn-market", tool="post_agent_signal", arguments={
   }
 })
 ```
+Bare `post_agent_signal` call (no signal_queue row — same shape as DOC-AUDIT-GIT-ERR above): append `"[post-agent-signal] OK telegram=no"` to `$MARKERS_FILE` on success (this roll-up call does not itself send Telegram — that is the separate WORK Notification below), or `"[post-agent-signal] ABORT <detail>"` on failure.
 
 → skill: `.claude/skills/anomaly-task-bridge/SKILL.md`
   inputs: `AUDIT_TIER = 3`, `PROJECT_ROOT` already set
@@ -649,7 +680,7 @@ call_tool(server="vn-market", tool="send_telegram", arguments={channel: "work", 
 
 ## Anomaly Reporting (all tiers)
 
-Known (dedup_key seen in past 7 days for BUG channel) → skip BUG write, always append DASHBOARD.md.
+Known (dedup_key seen in past 7 days for BUG channel) → skip BUG write, always append DASHBOARD.md (see DASHBOARD Append below — "always append" includes `SKIP-dedup` outcomes, never just `OK`).
 New:
 ```
 ## Anomaly: [check_id] [Name]
@@ -661,12 +692,30 @@ The signal_queue row write (Step E-3) is embedded in the per-tier emit blocks ab
 
 > Invariant: timestamp = current UTC, never future, never speculative.
 
+### DASHBOARD Append (FIX-AUDITOR-DASHBOARD-APPEND-NO-ACTUATOR-CONTRACT-COUNT-NARRATED)
+
+**Target file: `docs/data/DASHBOARD.md`** — the LIVE, git-tracked dashboard (most recent commit: `chore(system-auditor): append ... DASHBOARD row`). Two things this is explicitly NOT:
+- **NOT `docs/handoffs/DASHBOARD.md`** — a stale 650-byte phantom untouched since 2026-07-20, chartered for removal under `UC-ASL-P6`. Never write there.
+- **NOT `.claude/skills/signal-dashboard/`** — despite the name, that skill governs `.signal_queue.rows[]` in `orch-state.json` (a completely different artifact, already covered by the E-3 step inside `scripts/emit-audit-signal.sh`). It has no DASHBOARD.md write path at all; a prior version of this flow pointed at it for "per signal-dashboard skill" and that pointer was itself part of this defect (no script, no path, no read-back existed anywhere in the chain).
+
+**Actuator:** `scripts/emit-dashboard-row.sh` — a script actuator with a MANDATORY POST-WRITE read-back assert (re-reads the file and asserts the new row's `--signal-id` anchor is present), failing loud to the BUG channel otherwise. This is the exact same anti-false-green shape as `scripts/emit-audit-signal.sh`'s E-3 step, applied to this artifact — see that script's own header comment if you need the general pattern explained; this one does not repeat it.
+
+**When to call it:** immediately after ANY non-ABORT `[emit-signal]` marker from a CRITICAL/WARN/INFO finding emitted via the per-tier `scripts/emit-audit-signal.sh` call sites above (Tier-2 B-xx, Tier-3 C-xx, Tier-1 A-xx/A-20) — including `SKIP-dedup` outcomes (a known/repeated finding still gets a fresh DASHBOARD row; only the BUG Telegram is dedup-gated). Pass the paired call's `id=` value as `--signal-id` — this ties the DASHBOARD row to the exact signal_queue row it documents and is what makes the row's presence independently verifiable. D-BCTC-EVAL and D-IMPROVE (`--e3-only`, HIGH/MED/INFO severities) are explicitly OUT of this bucket — unchanged scope, see their own call sites.
+
+Paste the verbatim `[emit-dashboard] OK|ABORT|WARN ...` marker into the notebook AND append it to `$MARKERS_FILE` — `dashboard_rows` is counted from this marker by `scripts/audit-output-contract.sh`, never narrated.
+
 ### OUTPUT-CONTRACT (echo in RETURN — MANDATORY)
-At the end of every cycle, before writing the RETURN block, the agent MUST verify and echo these counts:
+At the end of every cycle, before writing the RETURN block, run the parser on this cycle's accumulated marker log — do NOT hand-compose the counts:
+```bash
+bash scripts/audit-output-contract.sh \
+  --markers-file "$MARKERS_FILE" \
+  --cycle-start-ts "$FIRE_TICK" \
+  --anomalies-count "<N you are about to write into the RETURN headline>" \
+  --next-token "<the literal NEXT: token you are about to write, e.g. clean|po|ops|user>"
 ```
-[OUTPUT-CONTRACT] signals_posted={N} | telegram_sent={N} | signal_queue_rows_written={N} | dashboard_rows={N}
-```
-If `signal_queue_rows_written` = 0 AND `signals_posted` > 0 → this is a contract violation. Log `"[OUTPUT-CONTRACT] VIOLATION: signals emitted but no signal_queue rows written"` and send BUG-channel Telegram before exiting. The RETURN block MUST include the OUTPUT-CONTRACT line verbatim.
+Paste the script's `[OUTPUT-CONTRACT] ...` line **verbatim** into both the notebook and the RETURN block — this is the MANDATORY line, and it is no longer something the agent composes by hand. Any `[OUTPUT-CONTRACT] VIOLATION: ...` line(s) the script prints are ALSO pasted verbatim into the notebook; the script has already sent the BUG-channel Telegram for each — do not send a second one, and do NOT let a violation abort the cycle (this is a self-diagnostic on the auditor's own counters, not a reason to skip finishing the audit). After this call, `rm -f "$MARKERS_FILE"` (scratch only, never itself an artifact).
+
+The previous form of this check (`signal_queue_rows_written = 0 AND signals_posted > 0` → violation) was vacuous by construction: both operands were narrated by the same agent from the same marker set, so a single misreading produced 0 and 0 and the check passed on a cycle where a row WAS written (confirmed occurrence, 2026-07-29T08:38:34Z). The script above keeps that check (now on marker-parsed, trustworthy operands) AND adds an independent cross-check against `.signal_queue.rows[]` itself when `--cycle-start-ts`/`--orch-state-file` resolve, AND extends the same symmetric-violation treatment to `dashboard_rows` and to the RETURN headline/`NEXT` token — see the script's own header comment for the full V1–V5 list.
 
 ### RAW-CITE GATE (rtr-confab2-202606060515 — occ#2; c019 invented config value; c026 cited "system-map lists 4001" for mcp-gateway port, value absent, live port 4040)
 Any config/file value cited in a finding or return (port, path, threshold, mapping) MUST be backed by a `grep -n` line captured THIS cycle (file + line number + matched text). No raw line captured → DROP the claim, do NOT report it. NEVER cite `orch-state.json .head.next_action` text as evidence — it is router-authored narrative, not a config value.
@@ -819,6 +868,8 @@ DONE: Audit complete tier-N — N anomalies (C critical, W warn, I info) | M ded
 NEXT: po (via DASHBOARD.md) | user (if clean) | ops (if CRITICAL DB or container anomaly)
 PIPELINE: complete
 QUALITY: full | partial (if early exit triggered on doc/memory pass)
-[OUTPUT-CONTRACT] signals_posted=N | telegram_sent=N | signal_queue_rows_written=N | dashboard_rows=N
+[OUTPUT-CONTRACT] signals_posted=N | telegram_sent=N | signal_queue_rows_written=N | dashboard_rows=N | dedup_skipped=N
 ```
-The `[OUTPUT-CONTRACT]` line is MANDATORY. Omitting it = contract violation (dispatcher will backfill and log recurring-bug pattern).
+The `[OUTPUT-CONTRACT]` line is MANDATORY and MUST be the verbatim output of `scripts/audit-output-contract.sh` (§Anomaly Reporting → OUTPUT-CONTRACT) — never hand-composed. Omitting it = contract violation (dispatcher will backfill and log recurring-bug pattern).
+
+**Headline consistency (in scope — same defect, RETURN-channel arm):** `N`/`C`/`W`/`I`/`M dedup-skipped` above and the `NEXT:` token are cross-checked, not independently re-derived, by the same script call: pass the `N` you are about to write as `--anomalies-count` and the `NEXT:` token you are about to write as `--next-token`. If either is inconsistent with a non-zero `signals_posted` (e.g. `anomalies=0`/`NEXT: clean` while the script's marker-derived `signals_posted>0`), the script prints a `VIOLATION` line and BUG-Telegrams it — paste that line into the RETURN block too, and correct the headline/NEXT token before finishing this cycle's RETURN rather than shipping a self-contradictory return (confirmed occurrence: a 2026-07-29T08:38:34Z cycle returned `0 anomalies ... NEXT: clean` while its own body reported `4/5 OK (api-gateway FAIL)`). `M dedup-skipped` is available directly from the script's own `dedup_skipped` field in the `[OUTPUT-CONTRACT]` line — reuse it verbatim, do not tally it separately.
