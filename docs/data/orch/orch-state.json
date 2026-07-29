@@ -419,12 +419,9 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FACTORY-TECHANALYSIS-dedup-calculator",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-TECHANALYSIS-dedup-calculator — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-29T01:46:26Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -16546,6 +16543,27 @@
         "rebuild_required": true,
         "review_note": "Split interface/handlers.py (750L; register_routes() alone ~460L, far past the 2026-06-15 audit line estimate) into domain/constants.py (STATEMENT_SECTIONS allow-set, replaces the valid_sections property), interface/schemas.py (5 request schemas), and 8 register_*_routes() modules (health/extract/extract-tables/md-tables/layout-first/pek/rasterizer/page-text). handlers.py now 65L pure delegation; every file <=120L (max 103L). Two pieces (pek route + its background runner) moved to their own files (routes_pek.py, pek_run_helper.py) because scenarios/pek_single_doc_extraction.py patches \"interface.handlers.is_vn_market_open_utc\" by string path and test_pek_engine_adapter.py asserts on logging.getLogger(\"interface.handlers\") -- both retargeted to the new module paths (mechanical string moves only, zero assertion/logic changes). Route paths/status codes/request-response shapes unchanged -- verified via live register_routes() route-table smoke (same 8 endpoints pre/post) and full pytest suite before/after: 10 failed/1032 passed/3 skipped BOTH runs, identical failing test IDs (all pre-existing env-only: missing /app/data/pdfs/*.pdf fixtures + local tesseract gaps, confirmed via git stash/pop A/B). mypy: same pre-existing \"not a valid Python package name\" env error as baseline. Full rationale + coupling-discovery trail: docs/agent-memory/decisions/sprint-FACTORY-PDF-split-handlers-dev-pdf-extractor.md. Commits: b3853e817 (code split), a6e59881b (decision journal), 63cb15ba1 (notebook). No MCP tool grant on this agent (Read/Edit/Write/Glob/Grep/Bash only) -- commit-mutex/task_claim/task_release skipped per router instruction, committed directly with explicit pathspecs.",
         "updated_by": "dev-pdf-extractor"
+      },
+      {
+        "title": "Dedup sandboxCalculator vs TACalculator via a pkg/module mapper (behavior decision)",
+        "priority": "P2",
+        "zone": "technical-analysis",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-TECHANALYSIS-dedup-calculator",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-TECHANALYSIS-dedup-calculator",
+        "promoted_at": "2026-07-29T01:46:26Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-29T01:56:59Z",
+        "claimed_at": "2026-07-29T01:46:26Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "ops",
+        "moved_to_review_at": "2026-07-29T01:55:58Z",
+        "moved_by": "dev-technical-analysis",
+        "rebuild_required": true,
+        "review_note": "dev-technical-analysis self-closeout: sandboxCalculator.Calculate (cmd/sandbox/service_adapters.go, already split by FACTORY-TECHANALYSIS-split-sandbox) duplicated infrastructure.TACalculator.Calculate's module.Result->domain.TechnicalIndicators mapping but omitted MA5/MA20/MA50 (real drift, not just duplication). Extracted shared pkg/module/mapper.go::ToDomainIndicators; both callers delegate to it. Fence check verified live against .golangci.yml (not just audit prose): Fence-B denies only module->application/module->interface, module->domain unrestricted, pkg/domain has zero imports of pkg/module (no cycle) -- golangci-lint run ./... 0 issues. TDD RED (module.ToDomainIndicators undefined) -> GREEN. TACalculator.Calculate (real service, on cmd/server build graph) confirmed byte-identical before/after via temporary baseline-capture test (5 close-series inputs, JSON diff clean, temp file deleted before commit, never staged). sandbox now populates MA5/20/50 (intended fix) -- grep-verified zero existing scenario JSON or sandbox_test.go assertion references MA5/20/50, so no fixture/test-expectation update needed. go build/vet/test ./... (12 packages) green. G12 gate: dashboard/build.sh 35/35 scenarios green, headless render-check PASS. Verified live Dockerfile only COPYs+builds ./cmd/server (cmd/sandbox source copied but never compiled/shipped) -- matches split-sandbox precedent, only calculator.go triggers rebuild_required. docs/architecture/microservice/technical-analysis/{infrastructure,testing}.md updated (doc-review). Commits: a1bb99309 (code+docs), 31cbb7682 (decision journal), 7d247bbbe (notebook). Journal: docs/agent-memory/decisions/sprint-FACTORY-TECHANALYSIS-dedup-calculator-dev-technical-analysis.md. No MCP tool grant on this agent session (Read/Edit/Write/Glob/Grep/Bash only) -- commit-mutex/task_claim/task_release skipped per router dispatch instruction, committed directly with explicit pathspecs.",
+        "updated_by": "dev-technical-analysis"
       }
     ],
     "qa": [],
@@ -16567,23 +16585,7 @@
     },
     "last_triaged_at": "2026-07-29T01:46:26Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "title": "Dedup sandboxCalculator vs TACalculator via a pkg/module mapper (behavior decision)",
-        "priority": "P2",
-        "zone": "technical-analysis",
-        "type": "FACTORY",
-        "status": "IN_PROGRESS",
-        "id": "FACTORY-TECHANALYSIS-dedup-calculator",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-TECHANALYSIS-dedup-calculator",
-        "promoted_at": "2026-07-29T01:46:26Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-29T01:46:26Z",
-        "claimed_at": "2026-07-29T01:46:26Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
