@@ -1,0 +1,14 @@
+{
+  "from": "commit-sweep-guard",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-07-29T01:04:28Z",
+  "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/main.md. actor=64c7c677-0f0f-4cee-a3ce-dba79d70b7ae mode=warn. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+  "_processed": {
+    "fingerprint": "e3182329099a02639fbe8036219879073771a75139cfdf741bb52576e2ce4f96",
+    "processedAt": "2026-07-29T01:15:27Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
