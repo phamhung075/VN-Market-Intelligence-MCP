@@ -1,6 +1,16 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-29T16:49Z
+**Written:** 2026-07-29T17:06Z
+
+## cycle-20260729T1706Z-verify — RAW-verified developer's FACTORY-GUARD-CI-SIZELINT-IMPL completion; CI size-lint guardrail confirmed live+tested, board lane-move clean (4th consecutive)
+
+- **BGFAN-1 RAW-verification, all claims confirmed real**: 3 commits (`22cd084d4`, `53159019f`, `eb3f37c34`) real, on HEAD, correctly scoped (feat delivery / board move / memory).
+- **Code independently re-read from source, not trusted**: `scripts/audits/size-lint-justification.sh` matches the claimed baseline/ratchet design exactly — 120L threshold, `size-justification:` header check (with the claimed `~NNL` tilde-tolerant regex fix), ±10%/min-5L tolerance on both header and baseline entries, `--check`/`--update` modes.
+- **Test + live-check claims independently re-run, not just trusted**: `size-lint-justification.test.sh` → **6/6 PASS** (exact match). Live `--check` against the real repo → **PASS, 0 unjustified offenders, 1347 files scanned** (exact match). Baseline `count`/`entries` length both **666** (exact match, correctly reflects drift from the brief's 2026-07-24 count of 733 via other FACTORY-* work).
+- **CI + doc wiring verified directly**: `size-lint` job present in `.github/workflows/ci.yml` (ubuntu-latest, checkout-only, runs `--check`); CANONICAL pointer present in `dev-standards.md` § Script Persistence, correctly cross-referencing the script + test + architect brief.
+- **Board lane-move genuine, 4th consecutive clean `.head` sync**: row `status:REVIEW`, `next_agent:qa`, no stale `promoted_at/promoted_by/promotion_note/claimed_at/claimed_by` markers, `.head` reset to `{status:idle, active_task_id:null, next_agent:router}`, no duplicate row in any other lane.
+- Released sprint-task lock `task:FACTORY-GUARD-CI-SIZELINT-IMPL` cleanly after full verification.
+- **NEXT: qa** — row in `review[]`, `next_agent:qa`. Review-lane QA-Drain backlog now even larger (152+ rows) — still gated behind idle-chain fallthrough, unchanged from last cycle's note.
 
 ## cycle-20260729T1649Z — Tick 16:37Z: drained 4 signals (2 self-generated notebook-WARN, 1 context-bloat backstop, 1 cowork-fire), CI dedup, found+un-stranded an 8th-class board defect (stale-write, not stale-marker), clean BOUNDED-1 claim
 
@@ -21,14 +31,4 @@
 - Released sprint-task lock `task:FIX-ORCHSTATE-CONSERVATION-GUARD-QA-LANE-BLIND` cleanly after full verification.
 - **NEXT: qa** — row in `review[]`, `next_agent:qa`. Not yet dispatched — review-lane QA-Drain remains the mechanism, still gated behind idle-chain fallthrough (now 2 rows waiting: this one + SPIKE-BOOTSTRAP-BROADCAST-CATALYST-CONSUME from the prior cycle).
 - Self-caught error this window (not from this task): a prior notebook write accidentally trimmed a retained section, caught by the immutability guard's WARN and fixed same-tick (commit `a30875d5e`) — noted here as a reminder to diff retained-section content before landing a compose, not just line/section counts.
-
-## cycle-20260729T1619Z — Tick 16:07Z: drained 2 signals (incl. context-bloat backstop from prior tick's decision journal), CI dedup, clean BOUNDED-1 claim (correctly ruled out a false-alarm stale marker), dispatched developer on a script fix
-
-- **Preflight**: verdict RUN, tick `2026-07-29T16:07Z`. No HEAD.lock, single worktree, no cold-evict this tick.
-- **Drain**: 2 routed to po (context-bloat-backstop signal for dev-mcp-server's decision journal breach flagged last tick, + 1 cowork-team). 3 pruned (>7d, unreferenced). Committed `e2a3a1cff`. CI probe deduped (same known `aa6c044b`).
-- **`.head` was correctly idle** this tick (dev-mcp-server's clean reset from the prior tick held) — WIP=0, fell through to BOUNDED-1.
-- **Proactive marker pre-check found a row that LOOKED stale but wasn't**: `FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP` carried `promoted_at` from 10:28Z (~6h old) — read the claim script (`devteam-backlog-claim-bounded1.jq`) directly rather than assuming collision: it filters strictly on `promoted_by == "dev-team (bounded-1 auto-pickup)"`, and this row's `promoted_by` is `null` (PO-touched/retracted, `supervised:true` deliberately per its own `deploy_gate` note) — correctly excluded, no action needed. Verifying the actual filter beats pattern-matching the shape of the 8 prior real instances.
-- **Claimed cleanly**: `FIX-ORCHSTATE-CONSERVATION-GUARD-QA-LANE-BLIND` (P2, zone `cross-service/`, size S) — `scripts/orch-conservation-check.mjs`'s `FLAT_TASK_LANES` omits `'qa'`, so the conservation floor-ratio guard (which gates every `orch-apply.sh` write, including this session's own) is structurally blind to a `qa[]` collapse. Confirmed the gap directly by reading the script. Committed `1b54f406e`, conservation OK (701→701 both writes).
-- **Dispatched `developer` directly** (zone is cross-service, not a specific dev-* microservice — correct per zone-detect) — add `'qa'` to the lane list, sync the documented formula, add a negative-control regression test (qa[]-drop must be rejected). Instructed to route to **qa** on completion (real code diff) and to strip lane-move markers + reset `.head` in the same write, explicitly citing the 8x recurrence this session. Sprint-task lock `task:FIX-ORCHSTATE-CONSERVATION-GUARD-QA-LANE-BLIND` held pending verified completion.
-- BOUNDED-1 dispatch consumed the tick — did not fall through to SLS/RLC/QA-Drain/Step 1.
 
