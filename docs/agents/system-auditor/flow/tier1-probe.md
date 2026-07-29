@@ -165,21 +165,26 @@ check).
 3. Otherwise parse the verbatim JSON block emitted by `verify-a30-mcp-memory-reclamation.sh`:
    `verdict`, `reason`, `analysis.{min_pct,max_pct,reclamation_dips}`, `state.oom_killed`,
    `vm.{vmhwm_kb,vmrss_kb}`.
-4. **ADDITIONAL VETO** (closes a gap in the unmodified script — it collects `vm.vmhwm_kb`/
-   `vmrss_kb` but does not gate on them): if `verdict=="ESCALATE"` AND `vmhwm_kb` and
-   `vmrss_kb` are both numeric (not `"UNAVAILABLE"`) AND `vmhwm_kb > vmrss_kb` → downgrade
-   to PASS, no emit (peak-before-window reclamation already proven, even if this window's
-   6 samples sit on a plateau that never crosses the intra-window dip detector).
-5. Remaining verdict/reason mapping:
+4. Verdict/reason mapping — CRITICAL branches are evaluated FIRST and are UNCONDITIONAL;
+   no downstream clause may veto or downgrade them
+   (FIX-AUDITOR-A30-VMHWM-VETO-TAUTOLOGY-FALSE-NEGATIVE, commit 1/2 — re-sequences the
+   clause below, still named ADDITIONAL VETO, which previously ran BEFORE this mapping and
+   pre-empted both CRITICAL branches; see that row for the full defect history):
    - `verdict=="FOLD"` → PASS, no emit.
-   - `verdict=="ESCALATE"`, reason contains `"OOMKilled=true"` → CRITICAL.
-   - `verdict=="ESCALATE"`, reason contains `"peak >97%"` → CRITICAL.
-   - `verdict=="ESCALATE"`, reason contains `"no reclamation dip"` (>93% baseline case) → WARN.
-6. This is a SINGLE self-contained per-cycle evidence bundle. NEVER compare this cycle's
+   - `verdict=="ESCALATE"`, reason contains `"OOMKilled=true"` → CRITICAL. Unvetoable.
+   - `verdict=="ESCALATE"`, reason contains `"peak >97%"` → CRITICAL. Unvetoable.
+   - `verdict=="ESCALATE"`, reason contains `"no reclamation dip"` (>93% baseline case) →
+     apply the **ADDITIONAL VETO** (closes a gap in the unmodified script — it collects
+     `vm.vmhwm_kb`/`vmrss_kb` but does not itself gate on them): if `vmhwm_kb` and
+     `vmrss_kb` are both numeric (not `"UNAVAILABLE"`) AND `vmhwm_kb > vmrss_kb` →
+     downgrade to PASS, no emit (peak-before-window reclamation already proven, even if
+     this window's 6 samples sit on a plateau that never crosses the intra-window dip
+     detector). Otherwise → WARN.
+5. This is a SINGLE self-contained per-cycle evidence bundle. NEVER compare this cycle's
    verdict against a prior cycle's notebook entry or MemPerc reading to decide escalation —
    that comparison is exactly what produced the false 03:42Z CRITICAL. Each cycle proves
    its own tripwire or it doesn't.
-7. Emit WARN/CRITICAL via the unchanged general `emit-audit-signal.sh` template, citing the
+6. Emit WARN/CRITICAL via the unchanged general `emit-audit-signal.sh` template, citing the
    RAW JSON block (same anti-carry rule as the existing RAW-PROBE discipline — verdict
    lines MUST cite this cycle's JSON, never a previous cycle's).
 
