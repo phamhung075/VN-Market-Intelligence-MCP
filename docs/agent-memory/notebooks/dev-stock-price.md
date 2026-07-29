@@ -182,6 +182,16 @@ All 3 primitives: stdlib-only (no CGO, no infra). R-CGO gate: CLEAR (CGO_ENABLED
 
 Fixed SQLite Scan order transposition (close=0 bug). **Commit:** `bc515ab2`. TestSQLiteRepo_GetHistory_OHLCFieldParity added. 8 infra tests PASS.
 
-## Session 2026-05-14 — 1912c Go Cutover COMPLETE
+## Session 2026-07-29 — FIX-DEPTHTHIN-A-PRICE-HISTORY-RETENTION-10D — BLOCKED (zone mismatch)
 
-Full cutover from Bun/TS to Go 1.22 (CGO). 31/31 go tests PASS. Signal: `docs/signals/20260514T181854Z-1912c-cutover-complete.json`. TS fully retired.
+RAW-verified market_prices_history depth: 2 distinct days (2026-07-28, 2026-07-29) — confirms task diagnosis.
+
+**Root cause in code:** `apps/mcp-server/src/interface/mcp/routes/pushPricesHandler.ts` lines 224-236 — rolling 24h cutoff:
+```typescript
+const cutoff = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+db.prepare(`DELETE FROM market_prices_history WHERE fetched_at < ?`).run(cutoff);
+```
+
+**BLOCKED:** This code is in `apps/mcp-server/` zone. Task is assigned to dev-stock-price (zone: `apps/stock-price/`). Zero market_prices_history references exist in apps/stock-price/. Re-route to dev-mcp-server required.
+
+Zone health: no drift detected (task is zone-misassigned, not a code health issue).

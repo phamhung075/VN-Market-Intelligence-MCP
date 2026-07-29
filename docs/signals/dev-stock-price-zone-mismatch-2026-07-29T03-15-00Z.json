@@ -1,0 +1,20 @@
+{
+  "from": "dev-stock-price",
+  "to": "po",
+  "type": "zone-mismatch-escalation",
+  "payload": {
+    "task_id": "FIX-DEPTHTHIN-A-PRICE-HISTORY-RETENTION-10D",
+    "assigned_zone": "apps/stock-price/",
+    "actual_code_location": "apps/mcp-server/src/interface/mcp/routes/pushPricesHandler.ts",
+    "root_cause_lines": "224-236",
+    "diagnosis": "market_prices_history table and its writer (24h rolling cutoff) are entirely in apps/mcp-server/. Zero references in apps/stock-price/. Task requires re-routing to dev-mcp-server.",
+    "raw_verification": {
+      "distinct_days": 2,
+      "min_date": "2026-07-28T03:20:02.834Z",
+      "max_date": "2026-07-29T03:20:02.691Z",
+      "total_rows": 42522
+    }
+  },
+  "priority": "high",
+  "createdAt": "2026-07-29T03:15:00Z"
+}

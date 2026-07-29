@@ -419,12 +419,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-DEPTHTHIN-A-PRICE-HISTORY-RETENTION-10D",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-DEPTHTHIN-A-PRICE-HISTORY-RETENTION-10D — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-29T03:07Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": "",
+    "next_agent": "router",
+    "next_action": "zone-mismatch escalation complete; po to re-route FIX-DEPTHTHIN-A-PRICE-HISTORY-RETENTION-10D to dev-mcp-server",
+    "updated_at": "2026-07-29T03:22:33Z",
+    "updated_by": "dev-stock-price (zone-mismatch EXIT)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -4716,6 +4716,17 @@
       }
     ],
     "backlog": [
+      {
+        "id": "FIX-DEPTHTHIN-A-PRICE-HISTORY-RETENTION-10D",
+        "title": "DEPTH_THIN (a): market_prices_history is only ~2 trading days deep -> /api/sector-rotation runs in only1dAvailable=true mode. Backfill/retain market_prices_history to >=10 trading days by fixing the retention WRITER.",
+        "type": "FIX",
+        "priority": "P2",
+        "status": "BLOCKED",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-DEPTHTHIN-A-PRICE-HISTORY-RETENTION-10D",
+        "updated_at": "2026-07-29T03:22:34Z",
+        "blocked_reason": "ZONE-MISMATCH: task was assigned to apps/stock-price/ but market_prices_history table and writer (24h rolling cutoff at pushPricesHandler.ts:224-236) are in apps/mcp-server/. Re-route to dev-mcp-server required."
+      },
       {
         "id": "UC-RDL-P4",
         "type": "SPRINT-M",
@@ -16639,23 +16650,7 @@
     },
     "last_triaged_at": "2026-07-29T03:07Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-DEPTHTHIN-A-PRICE-HISTORY-RETENTION-10D",
-        "title": "DEPTH_THIN (a): market_prices_history is only ~2 trading days deep -> /api/sector-rotation runs in only1dAvailable=true mode. Backfill/retain market_prices_history to >=10 trading days by fixing the retention WRITER.",
-        "type": "FIX",
-        "priority": "P2",
-        "status": "IN_PROGRESS",
-        "zone": "apps/stock-price/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-DEPTHTHIN-A-PRICE-HISTORY-RETENTION-10D",
-        "promoted_at": "2026-07-29T03:07Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-29T03:19:07Z",
-        "claimed_at": "2026-07-29T03:07Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
