@@ -202,3 +202,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: B-06 · VPS proxy bctc stale 38h
+**Severity:** WARN | **Date:** 2026-07-29 | **Status:** OPEN
+**Location:** data-fetch/vps_proxy
+**Details:** BCTC PDF pull service stale 38+ hours (last push 2026-07-28 08:23Z), vn-bctc-fetch unhealthy
+**Impact:** BCTC quarterly reports not being downloaded; extraction pipeline blocked
+**Root cause:** VPS service down or unreachable, network latency, or fetch process failure
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-07-29T22:35:37Z (signal sys-20260729T223504-3605, system-auditor -> po, dedup_key=data_stale:vps_proxy:B-06, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
