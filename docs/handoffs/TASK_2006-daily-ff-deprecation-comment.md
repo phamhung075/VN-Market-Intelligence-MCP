@@ -49,3 +49,18 @@ optional: true
 - **Why optional:** annotation-only improvement for future developers; doesn't block any functionality or close any risk (SSOT-freeze is already enforced by writer logic in TASK_2002)
 - **Why not a `DROP COLUMN`:** parent design explicitly decided against this due to live named-volume DB risk. Column removal is complex and risky; annotation achieves the same clarity without the risk. Can be revisited in a later maintenance sprint if needed.
 - **Placement in backlog:** suitable for a dedicated sprint slot or as low-priority follow-on once core tasks (TASK_2000-2005) are shipped and verified
+
+## [Developer] Implementation Record
+- **Service:** mcp-server
+- **Zone:** apps/mcp-server/
+- **Files modified:**
+  - `apps/mcp-server/src/infrastructure/db/schema-market-data.ts:118-152` — JS block comment above the `daily_ohlcv` `db.exec` DDL + inline SQL `--` comments on the 4 `foreign_*` columns, near-verbatim architect phrasing ("Frozen historical-only columns as of 2026-07-10 (ARCH-DAILY-FOREIGN-FLOW-TABLE). New foreign-flow data written to daily_foreign_flow table. Legacy columns retained for backward compatibility; do NOT write new data here.")
+  - `apps/mcp-server/src/infrastructure/db/ohlcvForeignFlowStore.ts:48-58` — added a short JSDoc paragraph explicitly stating `daily_ohlcv.foreign_*` is DEPRECATED in favor of `daily_foreign_flow`, cross-referencing the schema comment (existing SSOT-FREEZE block from TASK_2002/2003 already covered the mechanism; this reiterates the AC's literal wording)
+- **Tests written:** none (annotation-only, no new behavior to assert)
+- **Git commits:** (recorded post-commit below)
+- **Type check:** clean (`bun tsc --noEmit` / `pnpm check`, exit 0)
+- **bun test:** targeted `daily-foreign-flow-*` suite (backfill/integration/schema, 3 files) 33/33 pass, 0 fail. Full suite: 14904 pass / 40 skip / 54 fail / 1239 files (557s) — within the standing `FIX-MCP-SUITE-HEALTH-BASELINE` band; `git diff` confirmed both touched files changed comment-lines only (zero code/logic delta), so the 54 pre-existing failures (e.g. `_deprecated/1302-technical-indicators.test.ts`, a simulated-failure scenario in `DS-OBS-01-FIX-sla-breach-work-bug-alert.test.ts`) are unrelated to this diff.
+- **Tool count:** 184 tools — matches pre-task baseline (no tool touched)
+- **Scheduler count:** 88 cron jobs — matches pre-task baseline (no scheduler touched)
+- **Docs updated:** NONE (annotation-only, no behavior/API/schema-shape change to document)
+- **Graphify:** skipped (no docs impacted)

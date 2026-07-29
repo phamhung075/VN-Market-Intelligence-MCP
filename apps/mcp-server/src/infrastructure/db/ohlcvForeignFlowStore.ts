@@ -48,6 +48,15 @@
  * of the design doc), which prefers this table's fresh values and falls back
  * to the frozen legacy columns only for rows this table has never seen.
  *
+ * In short (SUBTASK-DAILY-FF-7, optional follow-on, annotation-only —
+ * reiterated here per the R-7 mitigation for anyone landing on this file
+ * without first reading the schema comment): `daily_ohlcv.foreign_buy_vol` /
+ * `foreign_sell_vol` / `foreign_net_vol` / `put_through_vol` are DEPRECATED
+ * in favor of `daily_foreign_flow` — frozen historical-only as of 2026-07-10,
+ * never written by this function, and not intended to be written by any
+ * future code path either. See also the matching schema comment on
+ * `daily_ohlcv` in `./schema-market-data.ts`.
+ *
  * Callers verified non-error on any `changes` value (unchanged since prior
  * strategy — no caller code change required by this cutover):
  *   - foreignFlowFetcher.ts L136-137, L219-220: const { changes } = await writeForeignFlowToOhlcv(...)

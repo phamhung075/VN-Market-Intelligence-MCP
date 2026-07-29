@@ -120,6 +120,16 @@ export function initMarketDataTables(db: Database): void {
   // Original definition 2 (line ~1122): adds foreign_buy_vol, foreign_sell_vol,
   //   foreign_net_vol, put_through_vol
   // Merged: single CREATE TABLE with all columns.
+  //
+  // SUBTASK-DAILY-FF-7 (ARCH-DAILY-FOREIGN-FLOW-TABLE, optional follow-on,
+  // annotation-only — no schema/logic change): the four foreign_* columns
+  // below are Frozen historical-only columns as of 2026-07-10
+  // (ARCH-DAILY-FOREIGN-FLOW-TABLE). New foreign-flow data written to
+  // daily_foreign_flow table. Legacy columns retained for backward
+  // compatibility; do NOT write new data here. NOT a DROP COLUMN — column
+  // removal on this live named-volume DB is out of scope per the architect
+  // design (docs/handoffs/ARCH-DAILY-FOREIGN-FLOW-TABLE-architect-design.md
+  // § Risk Flags R-7, § 5 SUBTASK-DAILY-FF-7).
   db.exec(`
     CREATE TABLE IF NOT EXISTS daily_ohlcv (
       code             TEXT NOT NULL,
@@ -130,6 +140,9 @@ export function initMarketDataTables(db: Database): void {
       close            REAL NOT NULL,
       volume           REAL NOT NULL DEFAULT 0,
       updated_at       TEXT NOT NULL DEFAULT '',
+      -- FROZEN historical-only columns as of 2026-07-10 (ARCH-DAILY-FOREIGN-FLOW-TABLE).
+      -- New foreign-flow data written to daily_foreign_flow table. Legacy columns
+      -- retained for backward compatibility; do NOT write new data here.
       foreign_buy_vol  REAL,
       foreign_sell_vol REAL,
       foreign_net_vol  REAL,
