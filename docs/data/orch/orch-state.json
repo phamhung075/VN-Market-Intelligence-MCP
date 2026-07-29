@@ -2035,8 +2035,9 @@
         "type": "system-issue",
         "summary": "dev-team violated its own LOCK-LIFETIME invariant (main.md:503) — released sprint-task lock at spawn on last 3 dispatches, risking duplicate-spawn on a live in-flight task",
         "severity": "MED",
-        "status": "READ",
-        "payload_ref": "docs/agent-memory/notebooks/main.md"
+        "status": "NEW",
+        "payload_ref": "docs/agent-memory/notebooks/main.md",
+        "restored_note": "auto-restored by dev-team after premature cold-evict (no age-gate) — po never triaged; see feedback_coldevict_no_age_gate_orphans_unread_po_escalation.md"
       },
       {
         "id": "cow-20260729T111055Z",
@@ -2046,8 +2047,9 @@
         "type": "recurring_bug",
         "summary": "2nd occurrence, diff report (DPM): refine_bctc_md ngan-han diacritic corruption confirmed systemic, escalating MED->HIGH",
         "severity": "HIGH",
-        "status": "READ",
-        "payload_ref": "docs/signals/cowork-team-2026-07-29T1110Z-refine-bctc-diacritic-corruption-2nd-report.json"
+        "status": "NEW",
+        "payload_ref": "docs/signals/cowork-team-2026-07-29T1110Z-refine-bctc-diacritic-corruption-2nd-report.json",
+        "restored_note": "auto-restored by dev-team after premature cold-evict (no age-gate) — po never triaged; see feedback_coldevict_no_age_gate_orphans_unread_po_escalation.md"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
