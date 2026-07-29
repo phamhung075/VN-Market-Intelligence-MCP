@@ -1,20 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-29 | **Cycle:** FIX-DEVTEAM-EPIC-WRAPPER-AUTOCLOSE-SWEEP
-
-## Session 2026-07-29 — FIX-COLD-EVICT-EXCLUDE-IDS-VS-HARD-COHERENCE — REVIEW
-
-**Task:** BOUNDED-1 auto-pickup, `scripts/` (outside all dev-* zones). Router-diagnosed: D5-BACKLOG-HYGIENE-VALIDATOR-HARDENING (commit `ed01c5c1b`) flipped `orch-validate.mjs` Stage-1b from warn to hard-fail; broke `orch-cold-evict.sh`'s `--exclude-ids` safety valve — an excluded terminal-status row stays in a non-terminal lane by design, which the new hard-fail rejects, aborting the WHOLE eviction run.
-
-**Findings:** Root cause confirmed exactly as diagnosed. `LANE_ALLOWED_STATUSES` (orchStateSchema.ts) admits NO terminal status in any of backlog/review/qa/in_progress/ready — any terminal-status row parked there (excluded or not) is unconditionally incoherent by construction. Adjacent discovery, flagged not fixed (0 live occurrences, out of this row's stated scope): the referential-dependency eviction guard (2026-07-28) can hit the identical latent shape for a different reason (live `depends_on` reference instead of `--exclude-ids`).
-
-**Actions taken:** `build_hot_temp()` now relabels an excluded-and-terminal row's `.status` to a lane-coherent status (new `EXCLUDE_RELABEL_STATUS` map, default BLOCKED for backlog/review/in_progress, QA/READY for qa/ready — mirrors `LANE_ALLOWED_STATUSES`) before the SHG-3 write-gate runs, stamping `verify_note` with the original status + timestamp. Zero changes to `orch-validate.mjs`/`orchStateSchema.ts` — chose this over teaching the shared validator an exemption list, which would widen a bypass mechanism's blast radius across every orch-state.json writer and walk back D5's "zero exceptions" intent. `docs/policies/dev-standards.md` CANONICAL block updated.
-
-**Verification:** `scripts/test/orch-cold-evict-tests.sh` 33/41 → 41/41 (0 regressions). Negative-path proof: a fresh genuinely-incoherent fixture (unrelated to `--exclude-ids`) still exits 2 via `orch-validate.mjs` — hard-fail intact, checker untouched. `orchStateSchema.test.ts` 104/104, `dev-team-tick-preflight.test.sh` 98/98 (both shell out to the real script) unchanged. `shellcheck -x` clean.
-
-**Board:** `task_board.in_progress[FIX-COLD-EVICT-EXCLUDE-IDS-VS-HARD-COHERENCE]` → `review` (`next_agent: qa`), `.head` synced to idle, via `orch-apply.sh`.
-
-Zone health: no drift detected.
+**Last updated:** 2026-07-29 | **Cycle:** ALPHA-S3-DIVERGENCE-SCREEN-V1
 
 ## Session 2026-07-29 — FIX-AUDITOR-MEMACK-HEADROOM-FLOOR-AND-DEAD-TRACKEDBY — REVIEW
 
@@ -43,5 +29,15 @@ Zone health: no drift detected.
 **Board:** `task_board.in_progress[FIX-DEVTEAM-EPIC-WRAPPER-AUTOCLOSE-SWEEP]` → `review` (`next_agent: qa`), `.head` synced to idle, via `orch-apply.sh`.
 
 **Simplicity gate:** clean — 1 new jq script + 1 new verifier + 4 append-only predicates on the existing shared lib, no new abstraction layer, no speculative generality (Q1-Q4 all NO).
+
+Zone health: no drift detected.
+
+## Session 2026-07-29 — ALPHA-S3-DIVERGENCE-SCREEN-V1 — BLOCKED (routed to architect)
+
+**Task:** BOUNDED-1 auto-picked this `zone: multi` row directly to developer (owner="developer"). Row note flags "Needs dev-team PM/architect decomposition when picked" — no `[Architect] Brownfield Findings` handoff exists for this task.
+
+**Recon (not a formal design pass):** All 4 required legs already have wired reuse points: `computeForeignAccumRank`/`computeRelativeStrength` (`infrastructure/microservices/clients.ts` — HTTP to stock-price:5000/technical-analysis:5003, both already return per-ticker z-score/rank/label); `rag_analyses` per-ticker sentiment (`affected_actions LIKE '%code%'`, `sentimentTrendTools.ts` precedent) + `mention_velocity` (`mentionVelocityStore.ts`) are local mcp-server tables. `alertDigestJob.ts`/`foreignFlowAlertJob.ts` is the correct existing scan→Telegram-digest reuse target. Single-zone `apps/mcp-server/` confirmed feasible — mirrors 5/5 sibling ALPHA-S* zone corrections architect already made this sprint for the identical reason.
+
+**Decision:** Did NOT implement. This is a NEW composite/divergence detector (ranking formula + per-leg honest-null thin-data threshold + digest format) feeding a live external Telegram digest — same class as `getMoneyRadarComposite.ts`, which needed a dedicated architect brief despite also reusing already-wired tools. Every ALPHA-S* task this sprint, including the "lean" ones, got an architect brief first — no exception found. Set `status:BLOCKED`, `next_agent:architect` via `orch-apply.sh`; `.head` reset idle. No code changed.
 
 Zone health: no drift detected.
