@@ -466,8 +466,14 @@ export async function runBctcQueueEnricherJob(opts: {
   // TASK-1943a: also reset status to 'pending' so grace-period url_not_found
   // rows (selected via Arm 2 query) are re-queued for the PDF pull job when
   // a source_url is found. For normal pending rows this is a no-op (already pending).
+  //
+  // FIX-BCTC-D3C-FOLLOW-UP-RESET-ATTEMPTS (2026-07-29): also reset attempts = 0.
+  // A row recycled here (Arm 2, from url_not_found/enrich_failed) previously
+  // carried its old attempts counter forward into the new pending/pek_triggered
+  // cycle, letting it re-exhaust the discovery-attempts budget prematurely on a
+  // fresh grace-period retry. No-op for Arm 1 rows (already attempts=0/pending).
   const updateStmt = db.prepare<void, [string, number]>(
-    `UPDATE bctc_vps_queue SET source_url = ?, status = 'pending' WHERE id = ?`,
+    `UPDATE bctc_vps_queue SET source_url = ?, status = 'pending', attempts = 0 WHERE id = ?`,
   );
   // Task 1782: increment attempts on every no-URL run so the max-attempts gate
   // can fire and mark exhausted rows as 'url_not_found'.

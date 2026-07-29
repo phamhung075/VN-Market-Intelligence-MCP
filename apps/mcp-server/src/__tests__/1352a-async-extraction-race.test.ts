@@ -69,6 +69,7 @@ function makeInMemoryDb(): InstanceType<typeof Database> {
       source_url TEXT NOT NULL,
       status TEXT NOT NULL DEFAULT 'pending',
       attempts INTEGER NOT NULL DEFAULT 0,
+      reconcile_attempts INTEGER NOT NULL DEFAULT 0,
       last_attempt TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     )

@@ -430,9 +430,19 @@ export async function runBctcPdfPullJob(opts: {
      * outcome — see the call site below) → 'pek_triggered'. Reconciliation to
      * 'done'/'enrich_failed' is bctcExtractReconcileJob.ts's job
      * (FIX-BCTC-D3C-RECONCILE-JOB, not yet landed).
+     *
+     * FIX-BCTC-D3C-FOLLOW-UP-RESET-ATTEMPTS (2026-07-29): also reset
+     * reconcile_attempts = 0 unconditionally on every entry into
+     * pek_triggered. bctcExtractReconcileJob.ts only ever reads/increments
+     * reconcile_attempts while status='pek_triggered', so this is the single
+     * natural reset point — a no-op for genuinely first-time rows (already
+     * defaults to 0) and the real fix for rows recycled via
+     * bctcQueueEnricherJob.ts's Arm-2 grace-period retry, which would
+     * otherwise carry a stale counter into the new cycle and re-exhaust the
+     * reconciliation budget prematurely.
      */
     const updatePekTriggered = db.prepare<void, [number]>(
-      `UPDATE bctc_vps_queue SET status = 'pek_triggered', last_attempt = datetime('now') WHERE id = ?`,
+      `UPDATE bctc_vps_queue SET status = 'pek_triggered', reconcile_attempts = 0, last_attempt = datetime('now') WHERE id = ?`,
     );
     const updateAttempt = db.prepare<void, [number]>(
       `UPDATE bctc_vps_queue SET attempts = attempts + 1, last_attempt = datetime('now') WHERE id = ?`,

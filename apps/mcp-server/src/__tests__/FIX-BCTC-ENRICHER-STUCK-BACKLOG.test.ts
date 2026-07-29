@@ -146,6 +146,36 @@ describe("FIX-BCTC-ENRICHER-STUCK-BACKLOG (b) — enrich_failed grace-period ret
     expect(row?.source_url).toContain("vcb-q1-2025.pdf");
   });
 
+  // FIX-BCTC-D3C-FOLLOW-UP-RESET-ATTEMPTS: a recycled row must get a fresh
+  // attempts budget, not carry its old (pre-terminalization) counter forward.
+  it("enrich_failed row with non-zero attempts (recycled) has attempts reset to 0 on successful re-discovery", async () => {
+    const db = makeMinimalDb();
+
+    db.prepare(
+      `INSERT INTO bctc_vps_queue (action_code, period_year, period_quarter, status, attempts, last_attempt)
+       VALUES ('VCB', 2025, 'Q2', 'enrich_failed', 5, datetime('now', '-16 days'))`,
+    ).run();
+
+    const result = await runBctcQueueEnricherJob({
+      db,
+      discoverOptions: {
+        _fetchHsx: async (_ticker, _year, _timeout) => ["https://hsx.example.com/vcb-q2-2025.pdf"],
+        _fetchVpsPlaywright: mockFetchEmpty,
+      },
+    });
+
+    expect(result.itemsProcessed).toBe(1);
+    expect(result.urlsPopulated).toBe(1);
+
+    const row = db
+      .prepare(`SELECT status, attempts, source_url FROM bctc_vps_queue WHERE action_code = 'VCB' AND period_year = 2025 AND period_quarter = 'Q2'`)
+      .get() as { status: string; attempts: number; source_url: string | null } | null;
+
+    expect(row?.status).toBe("pending");
+    expect(row?.attempts).toBe(0);
+    expect(row?.source_url).toContain("vcb-q2-2025.pdf");
+  });
+
   it("enrich_failed row with last_attempt < 7 days ago is NOT selected (grace period not expired)", async () => {
     const db = makeMinimalDb();
 

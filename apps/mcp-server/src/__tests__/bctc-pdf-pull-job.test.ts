@@ -280,6 +280,34 @@ describe("bctcPdfPullJob", () => {
     expect(row?.status).toBe("pek_triggered");
   });
 
+  // FIX-BCTC-D3C-FOLLOW-UP-RESET-ATTEMPTS: a row recycled by the enricher's
+  // Arm-2 grace-period retry may still carry a stale reconcile_attempts
+  // counter from its prior pek_triggered→enrich_failed cycle. Every entry
+  // into pek_triggered must reset it so bctcExtractReconcileJob.ts's own
+  // budget starts fresh, not pre-exhausted.
+  it("resets reconcile_attempts to 0 when a recycled row re-enters pek_triggered", async () => {
+    const sourceUrl = `${VPS_BCTC_BASE_URL}VCB/20260130-VCB-BCTC-Q1.pdf`;
+    insertQueueItem(testDb, "VCB", 2025, "Q1", sourceUrl);
+    seedExtractionResult(testDb, "VCB", 2025, "Q1");
+
+    // Simulate a stale counter left over from a prior exhausted reconcile cycle.
+    testDb.prepare(
+      `UPDATE bctc_vps_queue SET reconcile_attempts = 8 WHERE action_code = 'VCB' AND period_year = 2025 AND period_quarter = 'Q1'`,
+    ).run();
+
+    const result = await runBctcPdfPullJob({ db: testDb, deps: makeDeps() });
+    expect(result.downloaded).toBe(1);
+
+    const row = testDb
+      .prepare(
+        `SELECT status, reconcile_attempts FROM bctc_vps_queue WHERE action_code = 'VCB' AND period_year = 2025 AND period_quarter = 'Q1'`,
+      )
+      .get() as { status: string; reconcile_attempts: number } | null;
+
+    expect(row?.status).toBe("pek_triggered");
+    expect(row?.reconcile_attempts).toBe(0);
+  });
+
   // ── TC-4: size guard — PDF too small ─────────────────────────────────────
 
   it("fails when downloaded PDF is smaller than MIN_PDF_BYTES", async () => {
