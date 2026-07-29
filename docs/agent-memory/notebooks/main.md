@@ -1,6 +1,17 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-29T17:48Z
+**Written:** 2026-07-29T18:04Z
+
+## cycle-20260729T1804Z-verify — RAW-verified dev-frontend's FE-PG-BCTC-FRESH-FIX completion; all claims confirmed accurate (2nd dev-frontend report today, clean), 6th consecutive clean head-sync
+
+- **BGFAN-1, all commits real**: 4 commits (`545f2abf3`,`efddbccd9`,`137aa1d9b`,`4b988013d`) on HEAD.
+- **Code independently re-read, matches claim exactly**: `FreshnessBadge(slaTierKey="event")`+`useFreshnessRevalidator("event")` wired via existing (not forked) components. Also confirmed a real provenance bugfix: `fetchAnalysisBriefs` previously discarded the DTO's real `generated_at` for a second frontend-local `new Date().toISOString()`; now threads the DTO value through (return type widened `Omit<...,"generated_at">` → full `LoaderData`).
+- **All test claims independently re-run, exact match**: new loader test **5/5 PASS**. Full vitest **2177 pass/2 fail** (same pre-existing `QUE-TOOLTIP-DRY-1a`, unrelated). `tsc --noEmit` clean. Full Playwright **7/7 PASS** — including all 3 `quality-audit-lastverified.spec.ts` tests, the exact spec that was 2/3 FAIL in the immediately-prior verify cycle. Re-checked why: that spec hits REAL live `/api/quality-checklist` data (no fixture); `FR-FRESH-04`'s live `last_verified` is 107h old vs the 7-day/168h D-PAGE window — genuinely still fresh. No discrepancy found this cycle.
+- **Docs change confirmed**: single `api-reference.md` row added for `dashboard.bctc.tsx`, matches claim.
+- 2nd `dev-frontend` report today, both independently verified: 1st had one inflated metric ([[feedback_agent_selfreport_metalayer_confabulation]] 1st instance), this one clean end-to-end — useful counter-signal, not itself memory-worthy.
+- **Board lane-move genuine, 6th CONSECUTIVE clean `.head` sync**: row `REVIEW`, `next_agent:qa`; `.head` idle/router.
+- Released sprint-task lock `task:FE-PG-BCTC-FRESH-FIX` cleanly.
+- **NEXT: qa** — review-lane QA-Drain backlog unchanged (152+ rows), still gated behind idle-chain priority order. No new tick triggered this turn (task-notification only, not a cron fire).
 
 ## cycle-20260729T1748Z — Tick 17:37Z: drained 5 signals (digest-predict notebook now un-prunable at 3.9x byte-cap, routed to po), CI dedup, caught a passive-health false-positive before claiming, clean BOUNDED-1 dispatch to dev-frontend
 
@@ -24,12 +35,3 @@
 - Released sprint-task lock `task:FE-PG-_INDEX-FRESH-FIX` cleanly after full verification.
 - **NEXT: qa** — review-lane QA-Drain backlog unchanged (152+ rows), still gated behind idle-chain priority order.
 
-## cycle-20260729T1718Z — Tick 17:07Z: drained 2 signals (self-fired sweep-guard WARN, recurring context-bloat backstop), CI dedup, sanity-checked a status_note ambiguity before claiming, clean BOUNDED-1 dispatch to dev-frontend
-
-- **Preflight**: verdict RUN, tick `2026-07-29T17:07Z`. No HEAD.lock, worktree prune clean, no expired locks.
-- **Drain**: 2 routed to po — commit-sweep-guard WARN (fired against developer's own legit prior-cycle commit, already RAW-verified, pure noise) + context-bloat byte-cap breach (same `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md` journal, now 2nd consecutive tick flagged, still growing +42864B over cap — worth PO routing to claude-manager-helper for a prune/split soon). 0 pruned. Committed `67325e14b`. CI probe deduped (same known `aa6c044b`).
-- **`.head` correctly idle** (developer's clean reset held) — WIP=0, fell through to BOUNDED-1.
-- **Candidate sanity-check before claiming**: `FE-PG-_INDEX-FRESH-FIX` backlog row carried an oddly-worded `status_note` field ("FE-PG-_INDEX-FRESH re-check returns PASS") that looked like it might mean the check already passes (stale-duplicate risk, same class as last cycle). Verified directly instead of trusting the field: `docs/data/quality-checklist.json`'s live entry says `status:WARN`; confirmed the phrase was just the AC text echoed into a stray field (template artifact), not an actual current-state claim. Cross-checked the actual gap: `FreshnessBadge`/`useFreshnessRevalidator` components exist (from TASK-FFT-L3A) and are already used on ~24 other dashboard sub-pages, but `dashboard._index.tsx` (this task's target) imports neither — genuinely unimplemented, not stale.
-- **Claimed cleanly**: `FE-PG-_INDEX-FRESH-FIX` (P2, zone `apps/frontend/`, size S). Committed `99d211925`, conservation OK (701→701 both writes). `.head.next_agent` correctly resolved to `dev-frontend`.
-- **Dispatched `dev-frontend`** — wire the existing `FreshnessBadge`+`useFreshnessRevalidator` pattern (already used on 24 other pages, canonical example `dashboard.macro.tsx`) onto `dashboard._index.tsx`; explicitly instructed to reuse, not fork, the components. Sprint-task lock `task:FE-PG-_INDEX-FRESH-FIX` held pending verified completion.
-- BOUNDED-1 dispatch consumed the tick — did not fall through to SLS/RLC/QA-Drain. Review-lane QA-Drain backlog unchanged from last note (152+ rows) — still gated behind idle-chain priority order.
