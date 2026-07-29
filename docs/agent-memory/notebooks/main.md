@@ -19,6 +19,7 @@
 - **Test claim independently re-run, not just trusted**: `bun test src/__tests__/SPIKE-BOOTSTRAP-BROADCAST-CATALYST-CONSUME.test.ts` → **5 pass / 0 fail** (exact match). `bunx tsc --noEmit` → exit 0, clean (exact match). `toolCount`/`cronJobCount` → 184/88, unchanged (exact match).
 - **Found an 8th instance of the stale-lane-marker class** (same shape as the 5th/7th): `promoted_at/promoted_by/promotion_note/claimed_at/claimed_by` never stripped when the commit moved the row `in_progress[]`→`review[]`. Fixed with a targeted marker-strip, conservation OK (701→701), committed `bf473cee3`.
 - Released sprint-task lock `task:SPIKE-BOOTSTRAP-BROADCAST-CATALYST-CONSUME` cleanly after full verification.
+- **NEXT: qa** — row in `review[]`, `next_agent:qa` (real code diff, not investigation-only). Not yet dispatched — review-lane QA-Drain remains the mechanism, still gated behind idle-chain fallthrough.
 - Open structural gap unchanged: 8 confirmed stale-marker instances this session, still hand-patched per-instance — the underlying claim/promote jq scripts and dev-* lane-move commits still don't uniformly strip markers. Candidate for an architect-level systemic fix given the recurrence count.
 
 ## cycle-20260729T1547Z — Tick 15:37Z: cold-evicted 1 item, drained 1 signal, CI dedup, clean BOUNDED-1 claim (no collision this time), dispatched dev-mcp-server on a SPIKE->FIX
