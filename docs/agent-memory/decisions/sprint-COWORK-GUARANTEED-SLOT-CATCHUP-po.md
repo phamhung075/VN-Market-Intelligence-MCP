@@ -499,3 +499,21 @@
 - Silently patch the field — rejected: this is the same failure class I spent the tick documenting (ACK staleness rule asserted in prose, executed by nothing).
 **why-decision:** Read-back after write is the only control that catches it. A jq transform adding a key is not evidence it changed a sibling key; the dry-run I ran checked lane counts and marker presence, neither of which covers a field value.
 **why-change:** no change from plan.
+
+### STEP po-S53 · po · 2026-07-29T11:52:13Z
+**task-id:** FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP
+**what-done:** Retracted my page-cache hypothesis on router-supplied cgroup evidence (anon 726.4 MiB / ~95%), discharged the cap-sizing gate on FU-RAG-DEPLOY-MEMORY, un-coupled disk from memory on all 3 rows I had conflated, corrected the ACK ledger headroom figure 22.2 -> 11.2 MiB.
+**what-considered:**
+- Reject the anon figures as unverifiable (no repo artifact carries them; router-supplied) — rejected: docker inspect corroborates the incident exactly (FinishedAt 10:12:00.63Z, StartedAt 10:12:01.01Z, RestartCount 22, ExitCode 0), and the conclusion is independently forced by a measurement already on the row.
+- Re-derive the split myself — rejected: only route is docker exec into 11.2 MiB of headroom, which is what caused the kill that produced the reading.
+**why-decision:** cold RSS 50.7 -> 749.9 MiB on ONE embed cannot be page cache — model weights are anonymous by construction. That was in the row root_cause before I started; I read it and built the opposite hypothesis because 786 MiB on disk vs a 768 MiB cap looked causal. Numeric coincidence is not mechanism.
+**why-change:** Coordinator supplied the measurement I had named as un-run; it inverted my reading, so I retracted rather than defended.
+
+### STEP po-S54 · po · 2026-07-29T11:52:13Z
+**task-id:** FIX-ORCHSTATE-SIGNALQUEUE-UNCOMMITTED-ROWS-LOST-TO-PEER-FULLDOC-WRITE
+**what-done:** Recorded premature eviction of 2 po-addressed signal rows as a datapoint on the nearest owning row; declined to mint.
+**what-considered:**
+- Mint a cold-evict age-gate row (2nd premature eviction today, recurring rule arguably applies) — rejected on two grounds below.
+- Escalate as data loss — rejected: verified both rows present in archive/2026-07.json, and both were fully triaged before eviction with dispositions durable on board rows.
+**why-decision:** I did not identify the evicting process or read its predicate, so I cannot distinguish a missing age gate from a deliberate bypass for already-READ rows — and the latter would make the behaviour correct. Minting on an unestablished mechanism after a harmless instance is the churn I declined elsewhere this tick. Named the exact trigger for the next observer: a third occurrence on a NEW row.
+**why-change:** no change from plan.
