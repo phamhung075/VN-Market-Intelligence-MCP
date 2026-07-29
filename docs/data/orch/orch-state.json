@@ -89,7 +89,7 @@
   ],
   "head": {
     "status": "idle",
-    "updated_at": "2026-07-29T18:00:32Z",
+    "updated_at": "2026-07-29T18:26:35Z",
     "updated_by": "dev-frontend",
     "active_task_id": null,
     "next_agent": "router"
@@ -9638,25 +9638,6 @@
         "updated_at": "2026-07-23T18:08:33Z"
       },
       {
-        "id": "FE-PG-INTEL-FRESH-FIX",
-        "type": "FIX",
-        "title": "Add page-level freshness/staleness indicator to /dashboard/intel (AI Bulletin Hub) — only per-item timestamps, no page-level stale flag",
-        "status": "BACKLOG",
-        "priority": "P2",
-        "size": "S",
-        "zone": "apps/frontend/",
-        "sprint": "QUALITY-AUDIT-FRONTEND-COVERAGE",
-        "source": "quality-audit-frontend-page-coverage-20260724",
-        "owner": "dev-frontend",
-        "next_agent": "dev-frontend",
-        "check_id": "FE-PG-INTEL-FRESH",
-        "status_note": "FE-PG-INTEL-FRESH re-check returns PASS",
-        "note": "Quality-audit frontend page-coverage 2026-07-24 (FE-PG-INTEL-FRESH, WARN). GAP: dashboard.intel renders only per-item ts (ClientTimestamp); no <FreshnessBadge> / page-level staleness SLA on the AI bulletin hub, so old bulletins are not flagged as stale. Ref: project_frontend_freshness_transparency. AC: FE-PG-INTEL-FRESH re-check returns PASS (page-level freshness/staleness indicator visible).",
-        "created_at": "2026-07-24T17:22:24Z",
-        "created_by": "po",
-        "updated_at": "2026-07-24T17:22:24Z"
-      },
-      {
         "id": "FACTORY-GUARD-CI-METRICMASK-IMPL",
         "type": "SPRINT-S",
         "title": "Implement metric-mask-lint CI guardrail (script + fix live offenders + workflow wiring)",
@@ -17381,6 +17362,26 @@
         "created_by": "po",
         "updated_at": "2026-07-29T18:00:33Z",
         "review_note": "dev-frontend: FreshnessBadge + useFreshnessRevalidator(\"event\") wired onto dashboard.bctc.tsx, sourced from GET /api/analysis-briefs generated_at (already real ISO8601 UTC server-side — analysisBriefIndexHandler emits new Date().toISOString(), confirmed live against the running mcp-server, no parseDate normalization needed, unlike sibling FE-PG-_INDEX-FRESH-FIX's data_asof). Also fixed a related provenance bug: fetchAnalysisBriefs previously parsed the DTO's real generated_at then discarded it, substituting a second independently-computed frontend-local timestamp in the loader — now threads the real DTO value through (the same field now also drives the badge). Per-item updated_at unchanged. 5 new unit tests GREEN; full vitest 2177/2179 pass (2 pre-existing QUE-TOOLTIP fails, confirmed identical via git-stash A/B with this diff fully removed); tsc clean; full Playwright suite (not just render-check) 7/7 pass across all 3 spec files (smoke 1/1, render-check 3/3, quality-audit-lastverified 3/3) via PLAYWRIGHT_PORT=3021 throwaway dev server — none related to this change. Manually confirmed live SSR HTML on a second throwaway server (PORT=3022) against the real, unmodified mcp-server: green bg-green-100/bg-green-500 FreshnessBadge + \"Cập nhật lúc\" renders next to ClientTimestamp. PENDING-REBUILD: live :3001 container needs ops rebuild to serve this fix — code+behavior proven via throwaway dev server, container deploy is ops-gated, out of dev-frontend zone."
+      },
+      {
+        "id": "FE-PG-INTEL-FRESH-FIX",
+        "type": "FIX",
+        "title": "Add page-level freshness/staleness indicator to /dashboard/intel (AI Bulletin Hub) — only per-item timestamps, no page-level stale flag",
+        "status": "REVIEW",
+        "priority": "P2",
+        "size": "S",
+        "zone": "apps/frontend/",
+        "sprint": "QUALITY-AUDIT-FRONTEND-COVERAGE",
+        "source": "quality-audit-frontend-page-coverage-20260724",
+        "owner": "dev-frontend",
+        "next_agent": "qa",
+        "check_id": "FE-PG-INTEL-FRESH",
+        "status_note": "FE-PG-INTEL-FRESH re-check returns PASS",
+        "note": "Quality-audit frontend page-coverage 2026-07-24 (FE-PG-INTEL-FRESH, WARN). GAP: dashboard.intel renders only per-item ts (ClientTimestamp); no <FreshnessBadge> / page-level staleness SLA on the AI bulletin hub, so old bulletins are not flagged as stale. Ref: project_frontend_freshness_transparency. AC: FE-PG-INTEL-FRESH re-check returns PASS (page-level freshness/staleness indicator visible).",
+        "created_at": "2026-07-24T17:22:24Z",
+        "created_by": "po",
+        "updated_at": "2026-07-29T18:26:36Z",
+        "review_note": "dev-frontend: FreshnessBadge + useFreshnessRevalidator(\"daily\") wired onto dashboard.intel.tsx (AI Bulletin Hub), sourced from the same GET /api/market-digest data_asof field already fixed on the immediately-prior sibling task (FE-PG-_INDEX-FRESH-FIX, dashboard._index.tsx — identical endpoint, identical naive-SQLite string, identical parseDate normalization, no forked logic). fetchIntelData(origin) (pre-existing named test helper) now threads data_asof through instead of discarding it. Per-item ts/ClientTimestamp unchanged. Third sibling in the FE-PG-*-FRESH-FIX family — pure pattern replication. 6 new unit tests GREEN (naive-space normalization / already-ISO passthrough / absent+null honest-NULL / 502+network-error no-regression); full vitest 2183/2185 pass (2 pre-existing QUE-TOOLTIP fails, confirmed unrelated — different Kinh Dich codegen test file, zero import overlap with this route); tsc clean; full Playwright suite (all 3 spec files) 7/7 pass via PLAYWRIGHT_PORT=3031 throwaway dev server (smoke 1/1, render-check 3/3, quality-audit-lastverified 3/3) — none related to this change. Manually confirmed live SSR HTML on a second throwaway server (PORT=3032) against the real, unmodified mcp-server: green bg-green-100/bg-green-500 FreshnessBadge + \"Cập nhật lúc\" renders next to the item count and ClientTimestamp. PENDING-REBUILD: live :3001 container needs ops rebuild to serve this fix — code+behavior proven via throwaway dev server, container deploy is ops-gated, out of dev-frontend zone."
       }
     ],
     "qa": [],
@@ -17400,7 +17401,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-29T17:47:51Z",
+    "last_triaged_at": "2026-07-29T18:17:02Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": []
   },
