@@ -1,17 +1,24 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-29T16:11Z
+**Written:** 2026-07-29T16:19Z
+
+## cycle-20260729T1619Z — Tick 16:07Z: drained 2 signals (incl. context-bloat backstop from prior tick's decision journal), CI dedup, clean BOUNDED-1 claim (correctly ruled out a false-alarm stale marker), dispatched developer on a script fix
+
+- **Preflight**: verdict RUN, tick `2026-07-29T16:07Z`. No HEAD.lock, single worktree, no cold-evict this tick.
+- **Drain**: 2 routed to po (context-bloat-backstop signal for dev-mcp-server's decision journal breach flagged last tick, + 1 cowork-team). 3 pruned (>7d, unreferenced). Committed `e2a3a1cff`. CI probe deduped (same known `aa6c044b`).
+- **`.head` was correctly idle** this tick (dev-mcp-server's clean reset from the prior tick held) — WIP=0, fell through to BOUNDED-1.
+- **Proactive marker pre-check found a row that LOOKED stale but wasn't**: `FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP` carried `promoted_at` from 10:28Z (~6h old) — read the claim script (`devteam-backlog-claim-bounded1.jq`) directly rather than assuming collision: it filters strictly on `promoted_by == "dev-team (bounded-1 auto-pickup)"`, and this row's `promoted_by` is `null` (PO-touched/retracted, `supervised:true` deliberately per its own `deploy_gate` note) — correctly excluded, no action needed. Verifying the actual filter beats pattern-matching the shape of the 8 prior real instances.
+- **Claimed cleanly**: `FIX-ORCHSTATE-CONSERVATION-GUARD-QA-LANE-BLIND` (P2, zone `cross-service/`, size S) — `scripts/orch-conservation-check.mjs`'s `FLAT_TASK_LANES` omits `'qa'`, so the conservation floor-ratio guard (which gates every `orch-apply.sh` write, including this session's own) is structurally blind to a `qa[]` collapse. Confirmed the gap directly by reading the script. Committed `1b54f406e`, conservation OK (701→701 both writes).
+- **Dispatched `developer` directly** (zone is cross-service, not a specific dev-* microservice — correct per zone-detect) — add `'qa'` to the lane list, sync the documented formula, add a negative-control regression test (qa[]-drop must be rejected). Instructed to route to **qa** on completion (real code diff) and to strip lane-move markers + reset `.head` in the same write, explicitly citing the 8x recurrence this session. Sprint-task lock `task:FIX-ORCHSTATE-CONSERVATION-GUARD-QA-LANE-BLIND` held pending verified completion.
+- BOUNDED-1 dispatch consumed the tick — did not fall through to SLS/RLC/QA-Drain/Step 1.
 
 ## cycle-20260729T1611Z-verify — RAW-verified dev-mcp-server's SPIKE-BOOTSTRAP-BROADCAST-CATALYST-CONSUME completion; broadcast mark-read defect confirmed independently from source, tests re-run GREEN; found+fixed an 8th stale-marker instance (review-lane), `.head` sync was clean this time
 
 - **BGFAN-1 RAW-verification, all claims confirmed real**: commit `2ae2c19d1` real, on HEAD, pathspec-scoped to exactly the 7 claimed files (2 source, 1 new test, 2 docs, notebook, decision journal).
 - **Root cause independently re-derived from source, not trusted**: `getSignals()` (`agentSignalStore.ts:897`) matches `to_agent = ? OR to_agent = 'all'`, and its unread-only branch (`:948-951`) runs `UPDATE agent_signals SET status='read' WHERE id IN (...)` unconditionally on every matched row — confirmed this flips a broadcast row's ONE global `status` column read for ALL recipients the first time ANY of them bootstraps, exactly as claimed. New `getBroadcastSignals()` (`:1012+`) independently confirmed non-consuming: bounded only by `expires_at`, no status filter, no UPDATE. `getCycleBootstrap.ts`'s new `getInboxSignals()` helper (`:29-37`) unions `getSignals()` + `getBroadcastSignals()` deduped by id, exactly as claimed.
 - **Test claim independently re-run, not just trusted**: `bun test src/__tests__/SPIKE-BOOTSTRAP-BROADCAST-CATALYST-CONSUME.test.ts` → **5 pass / 0 fail** (exact match). `bunx tsc --noEmit` → exit 0, clean (exact match). `toolCount`/`cronJobCount` → 184/88, unchanged (exact match).
-- **Board lane-move genuine**: row `status:REVIEW`, `next_agent:qa`, no duplicate row left in `ready[]`/`backlog[]`.
-- **`.head` sync was clean this time** — dev-mcp-server correctly reset it to `{status:idle, active_task_id:null, next_agent:router}` in the same commit as the lane-move. First clean `.head` sync from a code-writing dev-* agent this session (prior instances all needed a fix).
 - **Found an 8th instance of the stale-lane-marker class** (same shape as the 5th/7th): `promoted_at/promoted_by/promotion_note/claimed_at/claimed_by` never stripped when the commit moved the row `in_progress[]`→`review[]`. Fixed with a targeted marker-strip, conservation OK (701→701), committed `bf473cee3`.
 - Released sprint-task lock `task:SPIKE-BOOTSTRAP-BROADCAST-CATALYST-CONSUME` cleanly after full verification.
-- **NEXT: qa** — row in `review[]`, `next_agent:qa` (real code diff, not investigation-only). Not yet dispatched — review-lane QA-Drain remains the mechanism, still gated behind idle-chain fallthrough.
 - Open structural gap unchanged: 8 confirmed stale-marker instances this session, still hand-patched per-instance — the underlying claim/promote jq scripts and dev-* lane-move commits still don't uniformly strip markers. Candidate for an architect-level systemic fix given the recurrence count.
 
 ## cycle-20260729T1547Z — Tick 15:37Z: cold-evicted 1 item, drained 1 signal, CI dedup, clean BOUNDED-1 claim (no collision this time), dispatched dev-mcp-server on a SPIKE->FIX
