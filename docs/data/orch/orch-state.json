@@ -2028,15 +2028,48 @@
         "payload_ref": null
       },
       {
-        "id": "arc-20260729T213046",
-        "ts": "2026-07-29T21:30:46Z",
-        "from": "architect",
+        "id": "sys-20260729T223453-211a",
+        "ts": "2026-07-29T22:34:53Z",
+        "from": "system-auditor",
         "to": "po",
-        "type": "brief_complete",
-        "summary": "DRS design for FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE — allowlist ratification needed",
-        "severity": "MED",
-        "status": "READ",
-        "payload_ref": "docs/architecture-briefs/2026-07-29-fix-bounded1-nondev-nextagent-residual-no-dispatch-lane.md"
+        "type": "data_stale",
+        "summary": "sbv_fx stale 34m (check B-01)",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260729T223454-3b28",
+        "ts": "2026-07-29T22:34:54Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "sbv_fx stale 34m (check B-01)",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260729T223503-5a31",
+        "ts": "2026-07-29T22:35:03Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "VPS proxy stale 38.4h (check B-06)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260729T223504-3605",
+        "ts": "2026-07-29T22:35:04Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "VPS proxy stale 38.4h (check B-06)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",

@@ -15805,6 +15805,17 @@
       "severity": "MED",
       "status": "READ",
       "payload_ref": null
+    },
+    {
+      "id": "arc-20260729T213046",
+      "ts": "2026-07-29T21:30:46Z",
+      "from": "architect",
+      "to": "po",
+      "type": "brief_complete",
+      "summary": "DRS design for FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE — allowlist ratification needed",
+      "severity": "MED",
+      "status": "READ",
+      "payload_ref": "docs/architecture-briefs/2026-07-29-fix-bounded1-nondev-nextagent-residual-no-dispatch-lane.md"
     }
   ],
   "backlog_detail": [
