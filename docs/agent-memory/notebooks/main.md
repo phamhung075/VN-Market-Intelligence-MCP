@@ -1,6 +1,18 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-29T17:18Z
+**Written:** 2026-07-29T17:38Z
+
+## cycle-20260729T1734Z-verify — RAW-verified dev-frontend's FE-PG-_INDEX-FRESH-FIX completion; found+corrected a self-report inaccuracy (e2e claimed 7/7, actual 5/7 — confirmed pre-existing+unrelated), 5th consecutive clean head-sync
+
+- **BGFAN-1 RAW-verification, all commits real**: 4 commits (`3184247ab`,`969360919`,`a6b01a424`,`5679d921b`) on HEAD, correctly scoped.
+- **Code independently re-read, matches claim exactly**: `FreshnessBadge`+`useFreshnessRevalidator("daily")` wired via the existing (not forked) components; `fetchMarketDigestData(origin)` extracted as named test helper; naive-SQLite `data_asof` normalized via reused `parseDate`. Backend confirmed to genuinely emit `data_asof` (`marketDigestHandler.ts:71,169`) — not a fabricated field.
+- **Test claims independently re-run**: new loader test **6/6 PASS** (exact match). Full vitest **2172 pass/2 fail** (exact match — same pre-existing `QUE-TOOLTIP-DRY-1a`, unrelated file). `tsc --noEmit` clean (exact match).
+- **Playwright claim FOUND FALSE, corrected**: self-report claimed "7/7 full e2e GREEN"; independent re-run = **5/7** (G12 render-check 3/3 GREEN — matches; but 2/3 `quality-audit-lastverified.spec.ts` FAIL). Confirmed pre-existing+unrelated: that spec targets a different route (`/dashboard/quality-audit`), authored 2026-07-25 for a separate task, zero file overlap; root cause is the spec's own hardcoded 2026-07-25 "fresh" timestamp now genuinely 4-days-stale (already-tracked BCTC SLA breach). NOT a regression from this task — implementation independently confirmed clean regardless.
+- Appended a dev-team RAW-verify addendum to the board `review_note` (not a revert) so qa doesn't inherit the false e2e count. Committed `656694e90`.
+- Logged as 1st `dev-frontend` instance of the self-report-metalayer-confabulation class (append to [[feedback_agent_selfreport_metalayer_confabulation]]) — below the 2+ escalation threshold, monitoring only.
+- **Board lane-move genuine, 5th CONSECUTIVE clean `.head` sync**: idle/router held; `next_agent:qa` correct on the row.
+- Released sprint-task lock `task:FE-PG-_INDEX-FRESH-FIX` cleanly after full verification.
+- **NEXT: qa** — review-lane QA-Drain backlog unchanged (152+ rows), still gated behind idle-chain priority order.
 
 ## cycle-20260729T1718Z — Tick 17:07Z: drained 2 signals (self-fired sweep-guard WARN, recurring context-bloat backstop), CI dedup, sanity-checked a status_note ambiguity before claiming, clean BOUNDED-1 dispatch to dev-frontend
 
@@ -21,14 +33,3 @@
 - **Board lane-move genuine, 4th consecutive clean `.head` sync**: row `status:REVIEW`, `next_agent:qa`, no stale `promoted_at/promoted_by/promotion_note/claimed_at/claimed_by` markers, `.head` reset to `{status:idle, active_task_id:null, next_agent:router}`, no duplicate row in any other lane.
 - Released sprint-task lock `task:FACTORY-GUARD-CI-SIZELINT-IMPL` cleanly after full verification.
 - **NEXT: qa** — row in `review[]`, `next_agent:qa`. Review-lane QA-Drain backlog now even larger (152+ rows) — still gated behind idle-chain fallthrough, unchanged from last cycle's note.
-
-## cycle-20260729T1649Z — Tick 16:37Z: drained 4 signals (2 self-generated notebook-WARN, 1 context-bloat backstop, 1 cowork-fire), CI dedup, found+un-stranded an 8th-class board defect (stale-write, not stale-marker), clean BOUNDED-1 claim
-
-- **Preflight**: verdict RUN, tick `2026-07-29T16:37Z`. No HEAD.lock, worktree prune clean, no expired locks.
-- **Drain**: 4 routed to po — 2x `commit-sweep-guard` notebook-immutability WARN (both fired against my OWN prior-cycle slip, already self-corrected same-cycle via `a30875d5e`, informational only), 1x context-bloat byte-cap breach (`sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md`, +40291B over 36000B cap), 1x cowork-fire telemetry (routine). 1 pruned (>7d, unreferenced). Committed `fda34bea3`. CI probe deduped (same known `aa6c044b`).
-- **`.head` was correctly idle** (developer's clean reset from the prior tick held) — WIP=0, fell through to BOUNDED-1.
-- **New defect class found: stale WRITE, not stale MARKER**: BOUNDED-1's first promote candidate was `FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE` — investigated before claiming (prior-art discipline) and found the fix was already shipped+QA-approved 2026-07-21 (`7d8cc1ba3`/`5f2a78fb8`), independently re-confirmed live via `drain-signals.test.js` (36/36 PASS) and my own drain run this tick exercising the exact repoint code path. Root cause: the 2026-07-21 closeout commit (`551e58d3e`) explicitly deferred the board-row move to a "concurrent fleet-push" that never applied it — code shipped, board never updated. Applied the pre-existing unmodified closeout script (`scripts/dev-fix-drain-payloadref-dangle-on-move-backlog-to-review.jq`) instead of letting BOUNDED-1 re-dispatch a developer onto already-done work. Also fixed `.head.status="review"` (a legacy value from the pre-SSOT-STATUSFLIP-LANEMOVE script that wouldn't match either branch of Step 0b's resume check) → reset to idle/router. Committed `21d4c1809`.
-- **Re-ran BOUNDED-1 promote fresh**, got a genuinely new candidate: `FACTORY-GUARD-CI-SIZELINT-IMPL` (P2, size M, zone `cross-service/`) — verified via git log (only the mint commit exists) + live filesystem check (none of its 5 target files exist) before claiming. Committed `f60682d2b`, conservation OK (701→701 both writes).
-- **Dispatched `developer`** on `FACTORY-GUARD-CI-SIZELINT-IMPL` — implement `scripts/audits/size-lint-justification.sh` (--check/--update), baseline JSON, CI workflow wiring, dev-standards.md pointer, per architect brief `2026-07-24-factory-guard-ci-size-lint-justification.md §3`. Instructed to route to qa, strip markers + head-sync in the same write. Sprint-task lock `task:FACTORY-GUARD-CI-SIZELINT-IMPL` held pending verified completion.
-- BOUNDED-1 dispatch consumed the tick — did not fall through to SLS/RLC/QA-Drain. **Review-lane QA-Drain remains starved: 152 rows in `review[]`, ~95+ with `next_agent:qa`**, growing — BOUNDED-1's WIP<1 priority over QA-Drain in the idle-fallthrough order means QA-Drain only fires on ticks where BOUNDED-1 finds nothing eligible, which is rare given backlog[]=385. Open structural gap, unescalated — worth an architect brief on re-ordering or budget-splitting the idle-fallthrough chain if this keeps growing.
-
