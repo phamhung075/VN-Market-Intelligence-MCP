@@ -88,12 +88,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FACTORY-GUARD-CI-METRICMASK-IMPL",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-GUARD-CI-METRICMASK-IMPL — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-29T18:47:54Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "updated_at": "2026-07-29T19:39:36Z",
+    "updated_by": "developer"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -17434,6 +17433,29 @@
         "created_by": "po",
         "updated_at": "2026-07-29T18:26:36Z",
         "review_note": "dev-frontend: FreshnessBadge + useFreshnessRevalidator(\"daily\") wired onto dashboard.intel.tsx (AI Bulletin Hub), sourced from the same GET /api/market-digest data_asof field already fixed on the immediately-prior sibling task (FE-PG-_INDEX-FRESH-FIX, dashboard._index.tsx — identical endpoint, identical naive-SQLite string, identical parseDate normalization, no forked logic). fetchIntelData(origin) (pre-existing named test helper) now threads data_asof through instead of discarding it. Per-item ts/ClientTimestamp unchanged. Third sibling in the FE-PG-*-FRESH-FIX family — pure pattern replication. 6 new unit tests GREEN (naive-space normalization / already-ISO passthrough / absent+null honest-NULL / 502+network-error no-regression); full vitest 2183/2185 pass (2 pre-existing QUE-TOOLTIP fails, confirmed unrelated — different Kinh Dich codegen test file, zero import overlap with this route); tsc clean; full Playwright suite (all 3 spec files) 7/7 pass via PLAYWRIGHT_PORT=3031 throwaway dev server (smoke 1/1, render-check 3/3, quality-audit-lastverified 3/3) — none related to this change. Manually confirmed live SSR HTML on a second throwaway server (PORT=3032) against the real, unmodified mcp-server: green bg-green-100/bg-green-500 FreshnessBadge + \"Cập nhật lúc\" renders next to the item count and ClientTimestamp. PENDING-REBUILD: live :3001 container needs ops rebuild to serve this fix — code+behavior proven via throwaway dev server, container deploy is ops-gated, out of dev-frontend zone."
+      },
+      {
+        "id": "FACTORY-GUARD-CI-METRICMASK-IMPL",
+        "type": "SPRINT-S",
+        "title": "Implement metric-mask-lint CI guardrail (script + fix live offenders + workflow wiring)",
+        "status": "REVIEW",
+        "priority": "P2",
+        "size": "S",
+        "zone": "cross-service/",
+        "epic": "FACTORY-MAINTAINABILITY-2026-06",
+        "cluster": "ci-regression-prevention",
+        "source": "architect design brief 2026-07-24, parent FACTORY-GUARD-CI-metric-mask-lint",
+        "detail_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-metric-mask-lint.md#3-build-vs-plan--decomposed-not-self-implemented",
+        "dev_agent": "developer",
+        "next_agent": "qa",
+        "parent_task": "FACTORY-GUARD-CI-metric-mask-lint",
+        "note": "files: scripts/audits/metric-mask-lint.sh (new, --check mode, zero-tolerance no baseline needed), apps/mcp-server/src/domain/services/cascadeEngine.ts (fix 3x seedEntry.confidence ?? 0.6 masks at L356/375/394 feeding stored MSCI cascade confidence), apps/mcp-server/src/domain/services/news-analysis/marketSentimentCalculator.ts (fix row.impact_score ?? 1.0 mask at L174), apps/mcp-server/src/interface/mcp/tools/system/watchlist.ts (annotate thresholds?.impactScore ?? 7 at L198 with metric-mask-allow: — genuine user config threshold, not fabricated metric), .github/workflows/ci.yml (add metric-mask-lint job), docs/policies/dev-standards.md (CANONICAL pointer), scripts/audits/metric-mask-lint.test.sh (new smoke test). approach: single cross-language regex script scanning *.ts/*.py/*.go (excl tests/vendor) for ?? / || / python or / destructuring-or-param default with a NON-ZERO numeric literal on identifiers matching /confidence|score|impact|magnitude|probability/i; 0/0.0/null always allowed (honest-absence idiom); inline metric-mask-allow: <reason> comment suppresses a match (mirrors size-justification: convention); fix the 4 real live masks + annotate the 1 legit config default FIRST so the gate opens at zero offenders and can be true zero-tolerance (no baseline manifest, unlike the size-lint sibling which had 733 debt). dod: --check exits 0 on post-fix repo state; synthetic new ?? 50-style mask fails; ?? 0 / ?? null pass; annotated line passes; the 3+1 live masks fixed with no scoring-behavior regression (RAW-verify MSCI cascade + daily sentiment score after rebuild); smoke test covers all cases; CI green on push.",
+        "created_at": "2026-07-24T17:26:06Z",
+        "created_by": "architect",
+        "updated_at": "2026-07-29T19:39:50Z",
+        "reviewed_at": "2026-07-29T19:39:50Z",
+        "reviewed_by": "developer",
+        "review_note": "Implemented per architect brief section 3 exactly. New scripts/audits/metric-mask-lint.sh (--check, zero-tolerance, no baseline) detects ??/||/python-or/destructuring-default with a non-zero literal on confidence|score|impact|magnitude|probability-matching identifiers; 0/0.0/null always allowed; comment-only mentions never scanned; metric-mask-allow: suppression. Fixed cascadeEngine.ts:356,375,394 (?? 0.6 -> ?? 0, behaviorally identical to old value for every real input since both sit below detectMsci*s 0.7 credibility floor) and marketSentimentCalculator.ts:174 (?? 1.0 -> exclude the row entirely, since impact_score is genuinely nullable unlike cascadeEngine confidence, and ?? 0 would have fabricated a zero-impact weight while still counting confidence in the denominator). Annotated watchlist.ts:198 (legit alert-threshold default). VERIFY-LIVE CATCH beyond the brief stated 4+1: a live dry-run of the built lint surfaced a 5th real hit, brokerCredibilityTools.ts:51 baseConfidence = 1 (zod .default(1)-backed documented input default the brief own manual sweep missed) -- annotated it too rather than narrowing the detector. metric-mask-lint --check exits 0 post-fix (423 files scanned). New metric-mask-lint.test.sh 10/10 PASS. Targeted suites 100 percent green: FIX-1279-msci-bullish 14/14, P0-4-market-sentiment-index 37/37, cascade files (1279a+247+FIX-1268+1224) 31/31, 915-broker-credibility 22/22, watchlist (082+220) 25/25. tsc clean, shellcheck clean. Full bun test: 14904-14907 pass/40 skip/60-63 fail/15007 total across 2 runs -- every failure pre-existing order-dependent full-suite pollution tracked by still-BACKLOG board row FIX-MCP-SUITE-HEALTH-BASELINE, none touching a file this task changed, confirmed by isolated re-run of 3 sampled failing files (32/32 pass standalone). Commits: 7a758d90f (feat), 33aee81e2 (memory)."
       }
     ],
     "qa": [],
@@ -17456,31 +17478,6 @@
     "last_triaged_at": "2026-07-29T18:47:49Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": [
-      {
-        "id": "FACTORY-GUARD-CI-METRICMASK-IMPL",
-        "type": "SPRINT-S",
-        "title": "Implement metric-mask-lint CI guardrail (script + fix live offenders + workflow wiring)",
-        "status": "IN_PROGRESS",
-        "priority": "P2",
-        "size": "S",
-        "zone": "cross-service/",
-        "epic": "FACTORY-MAINTAINABILITY-2026-06",
-        "cluster": "ci-regression-prevention",
-        "source": "architect design brief 2026-07-24, parent FACTORY-GUARD-CI-metric-mask-lint",
-        "detail_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-metric-mask-lint.md#3-build-vs-plan--decomposed-not-self-implemented",
-        "dev_agent": "developer",
-        "next_agent": "developer",
-        "parent_task": "FACTORY-GUARD-CI-metric-mask-lint",
-        "note": "files: scripts/audits/metric-mask-lint.sh (new, --check mode, zero-tolerance no baseline needed), apps/mcp-server/src/domain/services/cascadeEngine.ts (fix 3x seedEntry.confidence ?? 0.6 masks at L356/375/394 feeding stored MSCI cascade confidence), apps/mcp-server/src/domain/services/news-analysis/marketSentimentCalculator.ts (fix row.impact_score ?? 1.0 mask at L174), apps/mcp-server/src/interface/mcp/tools/system/watchlist.ts (annotate thresholds?.impactScore ?? 7 at L198 with metric-mask-allow: — genuine user config threshold, not fabricated metric), .github/workflows/ci.yml (add metric-mask-lint job), docs/policies/dev-standards.md (CANONICAL pointer), scripts/audits/metric-mask-lint.test.sh (new smoke test). approach: single cross-language regex script scanning *.ts/*.py/*.go (excl tests/vendor) for ?? / || / python or / destructuring-or-param default with a NON-ZERO numeric literal on identifiers matching /confidence|score|impact|magnitude|probability/i; 0/0.0/null always allowed (honest-absence idiom); inline metric-mask-allow: <reason> comment suppresses a match (mirrors size-justification: convention); fix the 4 real live masks + annotate the 1 legit config default FIRST so the gate opens at zero offenders and can be true zero-tolerance (no baseline manifest, unlike the size-lint sibling which had 733 debt). dod: --check exits 0 on post-fix repo state; synthetic new ?? 50-style mask fails; ?? 0 / ?? null pass; annotated line passes; the 3+1 live masks fixed with no scoring-behavior regression (RAW-verify MSCI cascade + daily sentiment score after rebuild); smoke test covers all cases; CI green on push.",
-        "created_at": "2026-07-24T17:26:06Z",
-        "created_by": "architect",
-        "updated_at": "2026-07-29T18:47:54Z",
-        "promoted_at": "2026-07-29T18:47:49Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "claimed_at": "2026-07-29T18:47:54Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      },
       {
         "id": "SPIKE-DEVTEAM-QADRAIN-HEAD-SLOT-DECOUPLE",
         "type": "SPIKE",
