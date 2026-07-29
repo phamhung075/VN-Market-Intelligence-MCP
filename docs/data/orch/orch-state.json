@@ -2025,17 +2025,6 @@
         "severity": "WARN",
         "status": "triaged",
         "payload_ref": null
-      },
-      {
-        "id": "afa-20260729T150800",
-        "ts": "2026-07-29T15:08:00Z",
-        "from": "agent-father",
-        "to": "po",
-        "type": "system-issue",
-        "summary": "Live-reproduced bug in scripts/agents-flow/notebook-auto-prune.sh drops NEWEST section on same-day ties, not oldest.",
-        "severity": "HIGH",
-        "status": "READ",
-        "payload_ref": "docs/agent-memory/notebooks/agent-father.md"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
