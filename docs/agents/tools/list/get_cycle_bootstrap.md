@@ -40,3 +40,10 @@ Partial failure: failed keys set to null with error details — agent applies fa
 - Replaces three separate MCP calls for faster agent startup
 - Timing metrics included in response (elapsed_ms, sub_call_timings)
 - Unknown agent_name triggers Zod validation error before handler runs
+- `agent_signals` unions the caller's normal inbox (mark-read on read, single
+  intended reader) with a NON-consuming query for shared/broadcast signals
+  (`to_agent='all'`, e.g. `chain_catalyst`) — every recipient sees every
+  unexpired broadcast regardless of which agent bootstraps first
+  (SPIKE-BOOTSTRAP-BROADCAST-CATALYST-CONSUME, 2026-07-29; `agent_signals`
+  has one global `status` column, not per-recipient read-state, so a
+  status-gated query alone is single-reader-consumed for `to_agent='all'` rows)

@@ -9,11 +9,32 @@
  */
 
 import type { Database } from "bun:sqlite";
-import { getSignals } from "../../infrastructure/db/agentSignalStore.js";
+import { getSignals, getBroadcastSignals, type AgentSignal } from "../../infrastructure/db/agentSignalStore.js";
 import {
   buildMarketContextText,
   buildSystemStatusText,
 } from "../../domain/services/marketContextBuilder.js";
+
+/**
+ * SPIKE-BOOTSTRAP-BROADCAST-CATALYST-CONSUME — merge the normal (consuming,
+ * mark-read) inbox query with a non-consuming to_agent='all' broadcast query,
+ * deduped by id. Without this, a shared/broadcast chain_catalyst is visible
+ * to only the FIRST recipient to bootstrap after it's created — every other
+ * recipient's own getSignals() unread-only query silently misses it because
+ * the row's single global `status` column was already flipped to 'read' by
+ * the first reader (agent_signals has no per-recipient read-state).
+ * getBroadcastSignals() is bounded only by expires_at (TTL), never status, so
+ * every recipient sees every unexpired broadcast regardless of read order.
+ */
+function getInboxSignals(db: Database, agentName: string): AgentSignal[] {
+  const consumed = getSignals(db, agentName);
+  const broadcast = getBroadcastSignals(db);
+  if (broadcast.length === 0) return consumed;
+  const seen = new Set(consumed.map((s) => s.id));
+  const extra = broadcast.filter((s) => !seen.has(s.id));
+  if (extra.length === 0) return consumed;
+  return [...consumed, ...extra].sort((a, b) => a.id - b.id);
+}
 
 export const VALID_AGENT_NAMES = [
   "news-scout",
@@ -70,7 +91,7 @@ export async function getCycleBootstrap(
   // Measure each sub-call independently
   const startSignals = Date.now();
   const signalsResult = await Promise.race([
-    Promise.resolve(getSignals(db, agentName)),
+    Promise.resolve(getInboxSignals(db, agentName)),
     new Promise<{ status: "rejected"; reason: Error }>(
       (_, reject) =>
         setTimeout(
