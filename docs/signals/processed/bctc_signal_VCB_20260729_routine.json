@@ -4,38 +4,38 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Retail and corporate banking, trade finance, bancassurance, FX (state-owned, largest VN bank by market cap)",
-  "customer": "Corporate/SOE clients, retail depositors/borrowers, trade-finance importers-exporters",
-  "ops": "Operating margin 80.9% (pre-provision); ROE 4.2%, ROA 0.4% — low by bank standards this quarter; OCF/NI ratio 1.37x (healthy, provisioning-driven gap between operating profit and PBT explains ESC-4 negative non_operating_share)",
-  "mgmt": "No insider or legal signals; KD hexagram reversed sharply this cycle — see priority flag below",
-  "cycle_id": "20260729-1800",
-  "slot": "bctc-analyst-slot-2",
-  "roe_pct": 4.21,
-  "confidence_pct": 75,
-  "kinhdich": {
-    "hexagram": "Bac(23)",
+  "product": "Retail and corporate banking, trade finance, bancassurance cross-sell",
+  "customer": "Broad retail depositor base + large corporate/SOE lending relationships",
+  "ops": "Operating margin 80.9%, net interest income 17,421 tỷ VND; ROE 4.2% quarter-level (16.7% sector-comp TTM) below 17.6% bank sector median",
+  "mgmt": "PE 14.1x PREMIUM +57% vs bank sector median (9.0x) — market pays a premium for VCB's SOE-anchor credit quality despite below-median ROE this quarter",
+  "valuation": {
+    "pe_sector": 14.1,
+    "pe_verdict": "PREMIUM_+57pct",
+    "roe_sector": 16.7,
+    "ey_spread_pp": 2.09,
+    "verdict": "FAIR"
+  },
+  "kd_reading": {
+    "que": "Bac(23)",
     "trend": "BAT_LOI",
     "signal": "BAN",
     "confidence_pct": 100,
-    "durability": "n=2 CONFIRMED (exact match vs c127 — was multi-cycle-stable Khon(2)/TRUNG_TINH before c127 flip) — PRIORITY: durable bearish signal, first high-confidence sell reading for VCB in tracked history"
+    "durable_n": 3,
+    "note": "first high-confidence SELL reading in tracked history, confirmed durable across 3 touches (c127/c128/c129) — was multi-cycle-stable TRUNG_TINH before c127"
   },
-  "esc_status": {
-    "ESC-2_balance_sheet": "PASS (imbalance 0.37%, below 0.5% threshold)",
-    "ESC-3_ocf_ni_divergence": "DATA-COVERAGE-LIMITED (3/4 quarters) — guard HELD",
-    "ESC-4_non_operating_share": "FALSE (-21.4%, negative — operating profit exceeds PBT due to credit provisioning, structurally normal for banks)",
-    "ESC-5_refine_confidence": "FALSE (report_id null, refine_status=PARTIAL)"
-  },
-  "evidence_fragment_ids": [
-    686
-  ],
-  "data_gaps": [
-    "PE/PB null"
-  ],
-  "sentiment_30d": "ỔN ĐỊNH (2/2 bullish, thin sample)",
-  "emitted_at": "2026-07-29T18:15:00Z",
+  "esc3_status": "DATA-COVERAGE-LIMITED",
+  "coverage_guard_key": "esc-datacov:VCB:Q1-2026:ESC-3",
+  "quarters_returned": 3,
+  "esc4_status": "FALSE",
+  "non_operating_share_pct": -21.4,
+  "escalation_status": "N/A — report_id null (refine PARTIAL)",
+  "e3_cache": "HIT — byte-identical vs prior cycle, 6-pass skipped",
+  "insider": "none significant",
+  "legal_risk": "zero signals (6th consecutive touch, CONFIRMED resolution)",
+  "as_of": "2026-07-29T21:11:02Z",
   "_processed": {
-    "fingerprint": "c168900eb98c579505add8b1adf50fe7ab39115f05dbe0c185aea0911f5d9588",
-    "processedAt": "2026-07-29T18:15:34Z",
+    "fingerprint": "de09ac3fd1bd3f956b3f6be8e0e7122984aad1972b91965a82a74079d833ff33",
+    "processedAt": "2026-07-29T21:19:55Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

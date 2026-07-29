@@ -2032,7 +2032,7 @@
         "type": "brief_complete",
         "summary": "DRS design for FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE — allowlist ratification needed",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/architecture-briefs/2026-07-29-fix-bounded1-nondev-nextagent-residual-no-dispatch-lane.md"
       }
     ],

@@ -1,0 +1,14 @@
+{
+  "from": "commit-sweep-guard",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-07-29T19:37:56Z",
+  "payload": "[sweep-guard] BARE commit about to absorb 11 staged file(s) not necessarily this actor's own: .github/workflows/ci.yml apps/mcp-server/src/__tests__/FIX-1279-msci-bullish.test.ts apps/mcp-server/src/__tests__/P0-4-market-sentiment-index.test.ts apps/mcp-server/src/domain/services/cascadeEngine.ts apps/mcp-server/src/domain/services/news-analysis/marketSentimentCalculator.ts apps/mcp-server/src/interface/mcp/tools/sector/brokerCredibilityTools.ts apps/mcp-server/src/interface/mcp/tools/system/watchlist.ts docs/WORK.md docs/policies/dev-standards.md scripts/audits/metric-mask-lint.sh scripts/audits/metric-mask-lint.test.sh. actor=64c7c677-0f0f-4cee-a3ce-dba79d70b7ae mode=warn. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+  "_processed": {
+    "fingerprint": "ae307ccdc0789ee11a8237e3cd6e941d3fda6ed7e23b23e9cbef8737dae00bb3",
+    "processedAt": "2026-07-29T21:19:55Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

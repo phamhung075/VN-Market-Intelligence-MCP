@@ -1,0 +1,33 @@
+{
+  "from": "ci-health-probe",
+  "to": "po",
+  "type": "ci_red",
+  "priority": "high",
+  "createdAt": "2026-07-29T21:20:00Z",
+  "dedup_key": "ci_red:c99c72bd882f83598962064c81cf502eed84eb5b:bun test",
+  "payload": {
+    "check_id": "CI-RED-c99c72bd",
+    "head_sha": "c99c72bd882f83598962064c81cf502eed84eb5b",
+    "run_id": 30484792885,
+    "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/30484792885",
+    "conclusion": "failure",
+    "failing_jobs": [
+      {
+        "name": "bun test",
+        "conclusion": "failure",
+        "jobId": 90687644230
+      }
+    ],
+    "fingerprint": "5ac1656171a790e5ca7e0ab5ed70ea1305b971bec480b3e2821f84b12ecc4063",
+    "zone_owner": "dev-team (CI fix)",
+    "summary": "CI RED on main HEAD c99c72bd882f83598962064c81cf502eed84eb5b: bun test",
+    "suggested_sprint_class": "FIX",
+    "verification_gate": "ci_green_on_subsequent_push"
+  },
+  "_processed": {
+    "fingerprint": "8eabba7659b22e07f1c54aa8a86ec89d87c6a25472ddc26cca758aec78f48c76",
+    "processedAt": "2026-07-29T21:35:59Z",
+    "processedBy": "po/triage-20260729T2107",
+    "result": "triaged-out-of-band-minted-FIX-CI-RED-ALERTOUTCOME-CLOCK-SEAM"
+  }
+}

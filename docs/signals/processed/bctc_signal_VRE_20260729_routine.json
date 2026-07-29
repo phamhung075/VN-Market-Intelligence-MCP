@@ -1,0 +1,37 @@
+{
+  "ticker": "VRE",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Retail real-estate leasing (Vincom Retail shopping malls)",
+  "customer": "Retail/F&B tenants, footfall-driven leasing income",
+  "ops": "Direct BCTC extraction CORRUPT this cycle (total_assets=0, OCR failure, pdf-extractor pool stuck) — fundamentals below are sector-comparison-only fallback, not primary-source",
+  "mgmt": "PE 9.8x DISCOUNT -49% vs real-estate sector median, ROE 14.3% (sector-comp) above 6.3% sector median",
+  "valuation": {
+    "pe_sector": 9.8,
+    "pe_verdict": "DISCOUNT_-49pct",
+    "roe_sector": 14.3,
+    "ey_spread_pp": 5.2,
+    "verdict": "CHEAP"
+  },
+  "kd_reading": {
+    "que": "Mong(4)",
+    "trend": "TRUNG_TINH",
+    "signal": "GIU",
+    "confidence_pct": 19,
+    "durable_n": 1,
+    "note": "first touch this cycle, low confidence (19%) — treat as noise, not signal, until 2nd touch"
+  },
+  "price_context": "+6.81% today, VRE volume spike 2.2x average — strongest fundamentals+valuation combination (CHEAP verdict) in today's real-estate rotation",
+  "bctc_extraction_status": "CORRUPT — pdf-extractor pool stuck (see docs/architecture-briefs/2026-07-28-pdfx-tesseract-concurrency-invariant.md, fix designed not yet shipped)",
+  "insider": "not checked (BCTC blocked)",
+  "legal_risk": "zero signals system-wide (6th consecutive touch, CONFIRMED resolution)",
+  "as_of": "2026-07-29T21:11:02Z",
+  "_processed": {
+    "fingerprint": "5a2597b0185e2f9d7c136662709222c31a6216843760b67dcbe7b1713153ed12",
+    "processedAt": "2026-07-29T21:19:55Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

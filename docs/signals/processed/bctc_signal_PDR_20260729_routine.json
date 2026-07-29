@@ -1,0 +1,37 @@
+{
+  "ticker": "PDR",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Residential real-estate development, industrial park",
+  "customer": "Homebuyers (mid-tier segment), project-transfer counterparties",
+  "ops": "Direct BCTC extraction CORRUPT this cycle (total_assets=0, OCR failure, pdf-extractor pool stuck) — fundamentals below are sector-comparison-only fallback, not primary-source",
+  "mgmt": "PE 31.0x PREMIUM +92% vs real-estate sector median, ROE 4.4% (sector-comp) BELOW 7.3% sector median — expensive AND underperforming. Do NOT post bullish.",
+  "valuation": {
+    "pe_sector": 31,
+    "pe_verdict": "PREMIUM_+92pct",
+    "roe_sector": 4.4,
+    "ey_spread_pp": -1.77,
+    "verdict": "AVOID"
+  },
+  "kd_reading": {
+    "que": "Ty(8)",
+    "trend": "THUAN_LOI",
+    "signal": "GIU",
+    "confidence_pct": 100,
+    "durable_n": 1,
+    "note": "first touch this cycle — KD strongly bullish (100%) vs fundamentals AVOID, a sharp divergence; needs 2nd-touch confirmation, valuation verdict takes precedence in the meantime"
+  },
+  "price_context": "flat 0.0% today vs sector average +2.0%",
+  "bctc_extraction_status": "CORRUPT — pdf-extractor pool stuck (see docs/architecture-briefs/2026-07-28-pdfx-tesseract-concurrency-invariant.md, fix designed not yet shipped)",
+  "insider": "not checked (BCTC blocked)",
+  "legal_risk": "zero signals system-wide (6th consecutive touch, CONFIRMED resolution)",
+  "as_of": "2026-07-29T21:11:02Z",
+  "_processed": {
+    "fingerprint": "010a34aad65a9ef285e2ce715d50990c8e74601b2fde572f9936334243016001",
+    "processedAt": "2026-07-29T21:19:55Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

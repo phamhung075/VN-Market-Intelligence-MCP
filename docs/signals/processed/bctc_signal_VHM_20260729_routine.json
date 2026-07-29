@@ -1,0 +1,38 @@
+{
+  "ticker": "VHM",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Residential real-estate development (Vinhomes townships), land-bank monetization",
+  "customer": "Homebuyers (mass + upscale segments), institutional land/project buyers",
+  "ops": "Direct BCTC extraction CORRUPT this cycle (total_assets=0, OCR failure, pdf-extractor pool stuck) — fundamentals below are sector-comparison-only fallback, not primary-source",
+  "mgmt": "PE 12.6x DISCOUNT -35% vs real-estate sector median, ROE 19.0% (sector-comp) well above 6.3% sector median — best fundamentals in today's real-estate rotation cluster",
+  "valuation": {
+    "pe_sector": 12.6,
+    "pe_verdict": "DISCOUNT_-35pct",
+    "roe_sector": 19,
+    "ey_spread_pp": 2.94,
+    "verdict": "FAIR",
+    "note": "just below 3pp CHEAP threshold"
+  },
+  "kd_reading": {
+    "que": "Tung(6)",
+    "trend": "BAT_LOI",
+    "signal": "BAN",
+    "confidence_pct": 75,
+    "durable_n": 1,
+    "note": "first touch this cycle — divergent from today's +6.14% price action and strong fundamentals; needs 2nd-touch confirmation before treating as durable"
+  },
+  "price_context": "+6.14% today, VHM volume spike 2.5x average (real-estate sector-wide rally, VN-Index +24.06)",
+  "bctc_extraction_status": "CORRUPT — pdf-extractor pool stuck (see docs/architecture-briefs/2026-07-28-pdfx-tesseract-concurrency-invariant.md, fix designed not yet shipped)",
+  "insider": "not checked (BCTC blocked)",
+  "legal_risk": "zero signals system-wide (6th consecutive touch, CONFIRMED resolution)",
+  "as_of": "2026-07-29T21:11:02Z",
+  "_processed": {
+    "fingerprint": "51f99d069c9f287019814285a8756b930e49b9d5c0ca2937a39a8ee959043bb3",
+    "processedAt": "2026-07-29T21:19:55Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "ticker": "DXG",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Residential real-estate development, brokerage services",
+  "customer": "Homebuyers, agency/brokerage clients",
+  "ops": "Direct BCTC extraction CORRUPT this cycle (total_assets=0, OCR failure, pdf-extractor pool stuck) — fundamentals below are sector-comparison-only fallback, not primary-source",
+  "mgmt": "PE 66.5x PREMIUM +312% vs real-estate sector median, ROE 1.9% (sector-comp) far BELOW 7.3% sector median — worst fundamentals+valuation combination in today's rotation cluster. Do NOT post bullish.",
+  "valuation": {
+    "pe_sector": 66.5,
+    "pe_verdict": "PREMIUM_+312pct",
+    "roe_sector": 1.9,
+    "ey_spread_pp": -3.5,
+    "verdict": "AVOID"
+  },
+  "kd_reading": {
+    "que": "Truan(3)",
+    "trend": "BAT_LOI",
+    "signal": "CHO",
+    "confidence_pct": 75,
+    "durable_n": 1,
+    "note": "first touch this cycle — KD bearish, converges with fundamentals AVOID"
+  },
+  "price_context": "+0.5% today vs sector average +1.9% (laggard within the real-estate rally)",
+  "bctc_extraction_status": "CORRUPT — pdf-extractor pool stuck (see docs/architecture-briefs/2026-07-28-pdfx-tesseract-concurrency-invariant.md, fix designed not yet shipped)",
+  "insider": "not checked (BCTC blocked)",
+  "legal_risk": "zero signals system-wide (6th consecutive touch, CONFIRMED resolution)",
+  "as_of": "2026-07-29T21:11:02Z",
+  "_processed": {
+    "fingerprint": "48c6d1013b595b3c46d608cf95bc0b1fa7d2651c614b3a494de4d1427ae66a2c",
+    "processedAt": "2026-07-29T21:19:55Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

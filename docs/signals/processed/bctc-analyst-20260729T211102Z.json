@@ -1,0 +1,42 @@
+{
+  "id": "bca-20260729T211102Z",
+  "ts": "2026-07-29T21:11:02Z",
+  "from": "bctc-analyst",
+  "to": "dev-team",
+  "type": "esc-deep-dive-request",
+  "summary": "ESC deep-dive: FPT Q1-2026 ESC-5",
+  "severity": "HIGH",
+  "status": "NEW",
+  "payload_ref": null,
+  "payload": {
+    "trigger_id": "ESC-5",
+    "ticker": "FPT",
+    "quarter": "Q1-2026",
+    "report_id": "e8ea3df5-3f32-413d-a3eb-c71634c0438d",
+    "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
+    "context": {
+      "low_confidence_unit_ids": [
+        "unit-0008",
+        "unit-0009",
+        "unit-0010",
+        "unit-0011",
+        "unit-0012",
+        "unit-0013",
+        "unit-0014"
+      ],
+      "min_confidence": 0.45,
+      "total_units": 15,
+      "refined_at_unchanged_since": "2026-05-31 11:19:09",
+      "note": "11th consecutive cycle this exact finding has fired TRUE (c119..c129) — same 7/15 units, same min_confidence=0.45, refined_at byte-identical since first observation. Prior guard (holder slot-2-20260728T1800Z) expired ~21:07Z this cycle; this dispatch is the guard's designed 24h re-arm, not a new finding. Underlying root cause is the OCR-confidence floor on the 05-31 refine pass for this report_id — likely correlated with the pdf-extractor tesseract-concurrency defect tracked in docs/architecture-briefs/2026-07-28-pdfx-tesseract-concurrency-invariant.md (design complete, not yet shipped). Recommend dev-team check whether repeat Opus deep-dive is warranted given unchanged inputs vs re-running the refine pipeline once the OCR fix ships."
+    },
+    "all_esc_fired": [
+      "ESC-5"
+    ]
+  },
+  "_processed": {
+    "fingerprint": "db725cbfe394a7ed5cc7bb856afcb0f075d9f8fccb5123e4203a67e4b439536b",
+    "processedAt": "2026-07-29T21:19:55Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

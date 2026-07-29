@@ -1,0 +1,37 @@
+{
+  "ticker": "VIC",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Diversified conglomerate holding — real estate (Vinhomes/VRE), auto (VinFast EV), retail, healthcare",
+  "customer": "Cross-segment — property buyers, EV consumers, retail/healthcare patients",
+  "ops": "Direct BCTC extraction CORRUPT this cycle (total_assets=0, OCR failure, pdf-extractor pool stuck) — fundamentals below are sector-comparison-only fallback, not primary-source",
+  "mgmt": "PE 112.8x PREMIUM +599% vs real-estate sector median — extreme premium, ROE 8.0% (sector-comp) only marginally above 6.3% sector median. Do NOT post bullish.",
+  "valuation": {
+    "pe_sector": 112.8,
+    "pe_verdict": "PREMIUM_+599pct",
+    "roe_sector": 8,
+    "ey_spread_pp": -4.11,
+    "verdict": "AVOID"
+  },
+  "kd_reading": {
+    "que": "Mong(4)",
+    "trend": "TRUNG_TINH",
+    "signal": "GIU",
+    "confidence_pct": 38,
+    "durable_n": 1,
+    "note": "first touch this cycle — KD neutral-leaning vs fundamentals AVOID; valuation verdict takes precedence, no bullish post"
+  },
+  "price_context": "+2.62% today (real-estate sector-wide rally)",
+  "bctc_extraction_status": "CORRUPT — pdf-extractor pool stuck (see docs/architecture-briefs/2026-07-28-pdfx-tesseract-concurrency-invariant.md, fix designed not yet shipped)",
+  "insider": "not checked (BCTC blocked)",
+  "legal_risk": "zero signals system-wide (6th consecutive touch, CONFIRMED resolution)",
+  "as_of": "2026-07-29T21:11:02Z",
+  "_processed": {
+    "fingerprint": "453ef4bcd7d8441ffe3232946618cd198e45352882b83916ed9bf18202a576f5",
+    "processedAt": "2026-07-29T21:19:55Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

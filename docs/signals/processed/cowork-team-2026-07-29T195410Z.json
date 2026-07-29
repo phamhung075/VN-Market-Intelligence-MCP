@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-29T19:53:26Z",
+    "matched_slots": [
+      "chef-evening"
+    ],
+    "won_slots": [
+      "chef-evening"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "chef-evening": "cron"
+    },
+    "cadence_minutes": {
+      "chef-evening": null
+    },
+    "last_fired_timestamp": "2026-07-29T19:53:26Z",
+    "last_fired_slots": [
+      "chef-evening"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "19:45",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 15,
+    "note": "chef-evening spawn completed cleanly (off-flow check PASS, no OFFFLOW_MARKERS) but did NOT publish new content — its own Step 0.5 published-marker gate found the slot already published at 19:52:16Z by peer session 52b1a3c3-393c-4f6d-82fd-8553fdc6137d, exited via the legitimate dedup EXIT path. Belt-and-suspenders design worked as intended (no duplicate MARKET post). last_fired stamped per AC-P1-7-1 (tracks spawn success, not publish outcome)."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-29T19:54:10Z",
+  "_processed": {
+    "fingerprint": "105941df2290ad6b1bea51abe39d8c750af45a6ddff4a6d6217ccaf08a698d32",
+    "processedAt": "2026-07-29T21:19:55Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
