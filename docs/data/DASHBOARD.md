@@ -142,3 +142,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: B-06 · VPS services unhealthy (2/4 down)
+**Severity:** WARN | **Date:** 2026-07-29 | **Status:** OPEN
+**Location:** infrastructure/vps_proxy
+**Details:** vn-bctc-fetch and vn-sbv-fetch services unhealthy; last BCTC push 2026-07-28 08:23:22
+**Impact:** BCTC and SBV data extraction blocked; 167 pending BCTC jobs cannot be processed
+**Root cause:** VPS host unavailable or network connectivity issues
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-07-29T14:35:11Z (signal sys-20260729T143456-2973, system-auditor -> po, dedup_key=data_stale:vps_proxy:B-06, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
