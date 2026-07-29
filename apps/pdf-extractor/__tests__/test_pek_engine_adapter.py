@@ -997,13 +997,15 @@ class TestFailLoudAndTimeout:
                 captured_records.append(record)
 
         handler = CapturingHandler(level=logging.ERROR)
-        # The handler uses logging.getLogger(__name__) where __name__ is interface.handlers
-        target_logger = logging.getLogger("interface.handlers")
+        # FACTORY-PDF-split-handlers: _run_pek_extract now lives in
+        # interface/pek_run_helper.py; the handler uses
+        # logging.getLogger(__name__) where __name__ is interface.pek_run_helper.
+        target_logger = logging.getLogger("interface.pek_run_helper")
         target_logger.addHandler(handler)
         target_logger.setLevel(logging.ERROR)
 
         try:
-            from interface.handlers import _run_pek_extract
+            from interface.pek_run_helper import _run_pek_extract
             asyncio.run(_run_pek_extract(
                 pek_adapter=failing_adapter,
                 push_client=AsyncMock(),
@@ -1064,13 +1066,15 @@ class TestFailLoudAndTimeout:
                 captured_records.append(record)
 
         handler = CapturingHandler(level=logging.INFO)
-        target_logger = logging.getLogger("interface.handlers")
+        # FACTORY-PDF-split-handlers: _run_pek_extract now lives in
+        # interface/pek_run_helper.py.
+        target_logger = logging.getLogger("interface.pek_run_helper")
         target_logger.addHandler(handler)
         original_level = target_logger.level
         target_logger.setLevel(logging.INFO)
 
         try:
-            from interface.handlers import _run_pek_extract
+            from interface.pek_run_helper import _run_pek_extract
             asyncio.run(_run_pek_extract(
                 pek_adapter=success_adapter,
                 push_client=success_push_client,

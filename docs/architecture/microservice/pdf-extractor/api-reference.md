@@ -1,6 +1,16 @@
 # pdf-extractor — API Reference
 
-**File:** `apps/pdf-extractor/interface/handlers.py`
+**Route wiring:** `apps/pdf-extractor/interface/handlers.py::register_routes()` —
+delegates to one `register_*_routes()` module per endpoint group
+(FACTORY-PDF-split-handlers, 2026-07-29):
+`routes_health.py` (`/health`), `routes_extract.py` (`/extract`),
+`routes_extract_tables.py` (`/extract-tables`),
+`routes_md_tables.py` (`/extract-md-tables`),
+`routes_layout_first.py` (`/extract-layout-first`),
+`routes_pek.py` + `pek_run_helper.py` (`/pek-extract`),
+`routes_rasterizer.py` (`/rasterize`), `routes_page_text.py` (`/page-text`).
+Request schemas: `interface/schemas.py`. Statement-section allow-set:
+`domain/constants.py::STATEMENT_SECTIONS`.
 
 ## GET /health
 ```json

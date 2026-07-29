@@ -238,7 +238,7 @@ class TestPekSingleDocExtractionScenario:
 
         # Patch is_vn_market_open_utc to return False (market closed)
         with patch(
-            "interface.handlers.is_vn_market_open_utc",
+            "interface.routes_pek.is_vn_market_open_utc",
             return_value=False,
         ):
             resp = client.post(
@@ -266,7 +266,7 @@ class TestPekSingleDocExtractionScenario:
 
         # Patch market guard to simulate open-hours (Mon 03:00 UTC)
         with patch(
-            "interface.handlers.is_vn_market_open_utc",
+            "interface.routes_pek.is_vn_market_open_utc",
             return_value=True,
         ):
             resp = client.post(
@@ -410,7 +410,7 @@ class TestPekSingleDocExtractionScenario:
 
         # Market closed so we get past the market-hours guard
         with patch(
-            "interface.handlers.is_vn_market_open_utc",
+            "interface.routes_pek.is_vn_market_open_utc",
             return_value=False,
         ):
             resp = client.post(
@@ -584,7 +584,7 @@ class TestPekOcrBackendInjectionScenario:
         app.include_router(router)
         client = TestClient(app)
 
-        with patch("interface.handlers.is_vn_market_open_utc", return_value=False):
+        with patch("interface.routes_pek.is_vn_market_open_utc", return_value=False):
             resp = client.post(
                 "/pek-extract",
                 json={

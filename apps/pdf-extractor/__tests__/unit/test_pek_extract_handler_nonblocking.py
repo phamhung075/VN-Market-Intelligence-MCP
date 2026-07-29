@@ -1,5 +1,5 @@
 """
-Unit test: interface/handlers.py::_run_pek_extract must not block the event loop.
+Unit test: interface/pek_run_helper.py::_run_pek_extract must not block the event loop.
 
 TC-PEK-HANDLER-1: PekEngineAdapter.extract_layout_and_tables() must run on a
                    worker thread, not the event loop thread.
@@ -25,7 +25,7 @@ import threading
 from typing import Dict
 from unittest.mock import MagicMock
 
-from interface.handlers import _run_pek_extract
+from interface.pek_run_helper import _run_pek_extract
 
 
 def test_tc_pek_handler_1_extract_runs_in_worker_thread_not_event_loop():
