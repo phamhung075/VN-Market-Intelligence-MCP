@@ -1,0 +1,14 @@
+{
+  "from": "commit-sweep-guard",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-07-29T13:55:42Z",
+  "payload": "[sweep-guard] BARE commit about to absorb 9 staged file(s) not necessarily this actor's own: docs/agent-memory/decisions/sprint-FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION-pm.md docs/data/orch/orch-state.json docs/handoffs/TASK_FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION.md docs/handoffs/TASK_FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION.md docs/handoffs/TASK_FIX-DEVTEAM-IDLE-CHAIN-P1B-STAMP.md docs/handoffs/TASK_FIX-DEVTEAM-IDLE-CHAIN-P2A-DURABLE-DRAIN.md docs/handoffs/TASK_FIX-DEVTEAM-IDLE-CHAIN-S1-SCHEMA-SELECTION.md docs/handoffs/TASK_FIX-DEVTEAM-IDLE-CHAIN-TEST-DURABLE.md docs/handoffs/TASK_FIX-DEVTEAM-IDLE-CHAIN-TEST-FAIRNESS.md. actor=64c7c677-0f0f-4cee-a3ce-dba79d70b7ae mode=warn. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+  "_processed": {
+    "fingerprint": "63d6287c67cb65e388e5382ee8afc35f1571f6b09cefc50935f97b8063b8d3c7",
+    "processedAt": "2026-07-29T14:15:19Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-29T14:07:58Z",
+    "matched_slots": [
+      "refine-bctc-slot-2"
+    ],
+    "won_slots": [
+      "refine-bctc-slot-2"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/refine_bctc_md/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "refine-bctc-slot-2": "cron"
+    },
+    "cadence_minutes": {
+      "refine-bctc-slot-2": null
+    },
+    "last_fired_timestamp": "2026-07-29T14:07:29Z",
+    "last_fired_slots": [
+      "refine-bctc-slot-2"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "14:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 15,
+    "note": "Single-slot tick (refine-bctc-slot-2, cron-due). MAX_PARALLEL moot (1 slot). Spawned refine_bctc_md async; consistency check passed (trigger_prompt/flow_path match). No signal_queue drain needed (0 NEW cowork-addressed rows)."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-29T14:07:58Z",
+  "_processed": {
+    "fingerprint": "ad968e49c24bf5cb35595537435648399cfcfb01eda529d780e4b067b90d82e6",
+    "processedAt": "2026-07-29T14:15:19Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
