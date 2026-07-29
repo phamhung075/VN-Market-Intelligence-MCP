@@ -6,7 +6,7 @@
  *
  * Response shape:
  *   { items: [{ id:number, text:string, ts:string, type:string, from_agent:string }],
- *     count:number, fetchedAt:string }
+ *     count:number, fetchedAt:string, data_asof?:string|null }
  *
  * items[] may be empty — renders a friendly empty state, never an error.
  * Upstream 5xx → shows error banner, never throws.
@@ -15,13 +15,23 @@
  *   - Vietnamese prose text
  *   - from_agent badge
  *   - ts timestamp via ClientTimestamp
+ *
+ * Page-level freshness (FE-PG-_INDEX-FRESH-FIX): `data_asof` is the top-level
+ * recency field of the synthesis feed (distinct from each dish's own `ts`).
+ * It arrives as a bare SQLite "YYYY-MM-DD HH:MM:SS" string (no offset) — the
+ * existing `parseDate` helper (app/lib/formatDate.ts) normalizes it to a real
+ * ISO8601 UTC string before handing it to <FreshnessBadge>, matching the
+ * pattern already used on ~24 other dashboard pages (see dashboard.macro.tsx).
  */
 import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { safeFetch } from "~/lib/api/fetchUtils";
+import { parseDate } from "~/lib/formatDate";
 import { ClientTimestamp } from "~/components/ClientTimestamp";
 import { PageHeader } from "~/components/PageHeader";
+import { FreshnessBadge } from "~/components/FreshnessBadge";
+import { useFreshnessRevalidator } from "~/lib/hooks/useFreshnessRevalidator";
 
 export const meta: MetaFunction = () => [
   { title: "Tổng Quan — VN Market Intelligence" },
@@ -43,6 +53,7 @@ interface MarketDigestDto {
   items: DigestItem[];
   count: number;
   fetchedAt: string;
+  data_asof: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -53,33 +64,40 @@ interface LoaderData {
   items: DigestItem[];
   count: number;
   fetchedAt: string;
+  data_asof: string | null;
   error: string | null;
 }
 
 function parseMarketDigestDto(raw: unknown): MarketDigestDto {
   if (raw === null) {
-    return { items: [], count: 0, fetchedAt: new Date().toISOString() };
+    return { items: [], count: 0, fetchedAt: new Date().toISOString(), data_asof: null };
   }
   if (typeof raw !== "object" || !("items" in raw)) {
     throw new Error("Unexpected response shape from /api/market-digest");
   }
   const dto = raw as MarketDigestDto;
   const items = Array.isArray(dto.items) ? dto.items : [];
+  // data_asof: mcp-server emits a bare SQLite "YYYY-MM-DD HH:MM:SS" string
+  // (no offset). Reuse parseDate (app/lib/formatDate.ts) — never fork the
+  // naive-UTC normalization logic — and hand FreshnessBadge a real ISO8601
+  // string. Absent/unparseable → null (honest-NULL, never fabricated).
+  const asofRaw = dto.data_asof;
+  const asofDate = typeof asofRaw === "string" && asofRaw ? parseDate(asofRaw) : null;
   return {
     items,
     count: typeof dto.count === "number" ? dto.count : items.length,
     fetchedAt: typeof dto.fetchedAt === "string" ? dto.fetchedAt : new Date().toISOString(),
+    data_asof: asofDate ? asofDate.toISOString() : null,
   };
 }
 
-export async function loader({ request: _request }: LoaderFunctionArgs) {
+/**
+ * fetchMarketDigestData — exported named helper for unit tests
+ * (Remix strips loader in jsdom; named helper bypasses that — same pattern
+ *  as fetchMacroData in dashboard.macro.tsx / fetchAlertsData in dashboard.alerts.tsx).
+ */
+export async function fetchMarketDigestData(origin: string): Promise<LoaderData> {
   const fetchedAt = new Date().toISOString();
-
-  // Derive frontend origin for server-side self-call (same pattern as dashboard.orchestration.tsx).
-  const origin =
-    typeof process !== "undefined" && process.env["FRONTEND_ORIGIN"]
-      ? process.env["FRONTEND_ORIGIN"]
-      : "http://localhost:3001";
 
   const { data, error } = await safeFetch<MarketDigestDto>(
     `${origin}/api/market-digest`,
@@ -88,7 +106,18 @@ export async function loader({ request: _request }: LoaderFunctionArgs) {
   );
 
   const dto = data ?? parseMarketDigestDto(null);
-  return json<LoaderData>({ items: dto.items, count: dto.count, fetchedAt, error });
+  return { items: dto.items, count: dto.count, fetchedAt, data_asof: dto.data_asof, error };
+}
+
+export async function loader({ request: _request }: LoaderFunctionArgs) {
+  // Derive frontend origin for server-side self-call (same pattern as dashboard.orchestration.tsx).
+  const origin =
+    typeof process !== "undefined" && process.env["FRONTEND_ORIGIN"]
+      ? process.env["FRONTEND_ORIGIN"]
+      : "http://localhost:3001";
+
+  const data = await fetchMarketDigestData(origin);
+  return json<LoaderData>(data);
 }
 
 // ---------------------------------------------------------------------------
@@ -158,7 +187,8 @@ function DigestCard({ item }: { item: DigestItem }) {
 // ---------------------------------------------------------------------------
 
 export default function MarketOverview() {
-  const { items, count, fetchedAt, error } = useLoaderData<typeof loader>();
+  const { items, count, fetchedAt, data_asof, error } = useLoaderData<typeof loader>();
+  useFreshnessRevalidator("daily");
 
   return (
     <div className="w-full space-y-6">
@@ -166,7 +196,8 @@ export default function MarketOverview() {
         title="Tổng Quan Thị Trường"
         subtitle="Bản tin tổng hợp từ CHEF — cập nhật tự động"
         actions={
-          <span className="text-xs text-slate-500">
+          <span className="text-xs text-slate-500 flex items-center gap-2">
+            <FreshnessBadge dataAsof={data_asof} slaTierKey="daily" />
             <ClientTimestamp iso={fetchedAt} />
           </span>
         }
