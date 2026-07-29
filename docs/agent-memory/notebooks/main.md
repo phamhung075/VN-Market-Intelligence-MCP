@@ -1,6 +1,16 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-29T18:04Z
+**Written:** 2026-07-29T18:17Z
+
+## cycle-20260729T1817Z — Tick 18:07Z: drained 14 signals (digest-predict notebook overage now 4th+5th consecutive flag), CI dedup, clean BOUNDED-1 dispatch to dev-frontend (3rd FreshnessBadge sibling)
+
+- **Preflight**: verdict RUN, tick `2026-07-29T18:07Z`. No HEAD.lock, worktree clean, dirty tree = other cowork agents' own scope.
+- **Drain**: 14 routed to po — 8 routine `bctc_signal` rows, `commit-sweep-guard` WARN, routine `cowork-team` fire, and 3x `notebook_single_section_overage_breach` + 1x `context_bloat_breach` (all `digest-predict.md`, now flagged in back-to-back ticks, still no dev-team action — routed to po/claude-manager-helper). 6 pruned (>7d unreferenced), 2 skipped (still referenced by live refs). Committed `2be148cae`. CI probe deduped (same known `aa6c044b`).
+- **`.head` correctly idle** — WIP=0, fell through to BOUNDED-1.
+- **Claimed cleanly**: `FE-PG-INTEL-FRESH-FIX` (P2, zone `apps/frontend/`, size S) — 3rd sibling in the FreshnessBadge-wiring family. Conservation OK (701→701 both writes). Checklist confirmed live `WARN` (not stale-duplicate); grep confirmed `dashboard.intel.tsx` has zero `FreshnessBadge`/`data_asof` wiring — genuinely unimplemented.
+- **Root-caused the gap before dispatch**: `dashboard.intel.tsx` hits the SAME `/api/market-digest` endpoint as `dashboard._index.tsx` but its DTO only reads `fetchedAt`, never `data_asof` — same naive-SQLite-string pattern already fixed on the sibling page.
+- **Dispatched `dev-frontend`** — explicit reuse instructions (`parseDate` normalization, `FreshnessBadge slaTierKey="daily"`, `useFreshnessRevalidator("daily")`, no forking), explicit precise-count reporting demand. Sprint-task lock `task:FE-PG-INTEL-FRESH-FIX` held pending verified completion.
+- BOUNDED-1 dispatch consumed the tick — did not fall through to SLS/RLC/QA-Drain. Review-lane QA-Drain backlog unchanged (152+ rows), still gated behind idle-chain priority order — 3rd tick in a row BOUNDED-1 has starved it via this same FreshnessBadge sibling-task streak; worth an architect brief on re-ordering if a 4th sibling appears next tick.
 
 ## cycle-20260729T1804Z-verify — RAW-verified dev-frontend's FE-PG-BCTC-FRESH-FIX completion; all claims confirmed accurate (2nd dev-frontend report today, clean), 6th consecutive clean head-sync
 
@@ -22,16 +32,4 @@
 - **Claimed cleanly**: `FE-PG-BCTC-FRESH-FIX` (P2, zone `apps/frontend/`, size S). Conservation OK (701→701 both writes), committed `c8fc21344`. `.head.next_agent` correctly resolved to `dev-frontend`.
 - **Dispatched `dev-frontend`** — same `FreshnessBadge`+`useFreshnessRevalidator` reuse pattern as the immediately-prior sibling task; instructed to use `slaTierKey="event"` (matches the checklist's own SLA formula, not "daily"). Explicitly told to report exact e2e pass/fail counts (not rounded) after last cycle's self-report correction. Sprint-task lock `task:FE-PG-BCTC-FRESH-FIX` held pending verified completion.
 - BOUNDED-1 dispatch consumed the tick — did not fall through to SLS/RLC/QA-Drain. Review-lane QA-Drain backlog unchanged (152+ rows), still gated behind idle-chain priority order.
-
-## cycle-20260729T1734Z-verify — RAW-verified dev-frontend's FE-PG-_INDEX-FRESH-FIX completion; found+corrected a self-report inaccuracy (e2e claimed 7/7, actual 5/7 — confirmed pre-existing+unrelated), 5th consecutive clean head-sync
-
-- **BGFAN-1 RAW-verification, all commits real**: 4 commits (`3184247ab`,`969360919`,`a6b01a424`,`5679d921b`) on HEAD, correctly scoped.
-- **Code independently re-read, matches claim exactly**: `FreshnessBadge`+`useFreshnessRevalidator("daily")` wired via the existing (not forked) components; `fetchMarketDigestData(origin)` extracted as named test helper; naive-SQLite `data_asof` normalized via reused `parseDate`. Backend confirmed to genuinely emit `data_asof` (`marketDigestHandler.ts:71,169`) — not a fabricated field.
-- **Test claims independently re-run**: new loader test **6/6 PASS** (exact match). Full vitest **2172 pass/2 fail** (exact match — same pre-existing `QUE-TOOLTIP-DRY-1a`, unrelated file). `tsc --noEmit` clean (exact match).
-- **Playwright claim FOUND FALSE, corrected**: self-report claimed "7/7 full e2e GREEN"; independent re-run = **5/7** (G12 render-check 3/3 GREEN — matches; but 2/3 `quality-audit-lastverified.spec.ts` FAIL). Confirmed pre-existing+unrelated: that spec targets a different route (`/dashboard/quality-audit`), authored 2026-07-25 for a separate task, zero file overlap; root cause is the spec's own hardcoded 2026-07-25 "fresh" timestamp now genuinely 4-days-stale (already-tracked BCTC SLA breach). NOT a regression from this task — implementation independently confirmed clean regardless.
-- Appended a dev-team RAW-verify addendum to the board `review_note` (not a revert) so qa doesn't inherit the false e2e count. Committed `656694e90`.
-- Logged as 1st `dev-frontend` instance of the self-report-metalayer-confabulation class (append to [[feedback_agent_selfreport_metalayer_confabulation]]) — below the 2+ escalation threshold, monitoring only.
-- **Board lane-move genuine, 5th CONSECUTIVE clean `.head` sync**: idle/router held; `next_agent:qa` correct on the row.
-- Released sprint-task lock `task:FE-PG-_INDEX-FRESH-FIX` cleanly after full verification.
-- **NEXT: qa** — review-lane QA-Drain backlog unchanged (152+ rows), still gated behind idle-chain priority order.
 
