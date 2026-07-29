@@ -1,6 +1,14 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-29T19:19Z
+**Written:** 2026-07-29T19:40Z
+
+## cycle-20260729T1935Z-verify — RAW-verified po's tick-19:07Z triage; po correctly REFUTED dev-team's own recommended QA-Drain fix (actuator does unconditional `.head` overwrite); dispatched agents-architect out-of-band without touching `.head`
+
+- **BGFAN-1, commit real**: `c99c72bd8` on HEAD, matches po's self-report exactly (2 mints, 1 dup-resolved, 1 re-prioritized, 4 signal ACKs).
+- **Independently verified the load-bearing claim**: read `scripts/devteam-review-claim-qa-drain.jq:123` directly — confirmed `.head = {status:"in_progress", active_task_id:$picked_id, ...}` IS an unconditional whole-object replace, no guard against an already-different in-flight `active_task_id`. **My own tick-19:07Z signal's recommended fix ("key it only on qa[]<1 regardless of head.status") would have been WRONG** — it would have silently orphaned `FACTORY-GUARD-CI-METRICMASK-IMPL`'s resume-tracking the next time QA-Drain fired. po's re-scoping (actuator-first, conditional `.head` write per `devteam-wrapper-autoclose.jq:122-127`'s precedent, THEN relocate reachability) is correct — verified by reading both scripts directly, not trusting the claim.
+- **Board mutations verified**: `SPIKE-DEVTEAM-QADRAIN-HEAD-SLOT-DECOUPLE` (P1) + `FIX-VPSHEALTH-DEMANDROUTE-EMPTYQUEUE-MISREPORTS-PROXY-UNREACHABLE` (P2) both real, well-formed BACKLOG rows. `FIX-AUDITOR-C06-OFFMARKET-RECALIBRATE` correctly re-prioritized (existing row, not re-minted). `CLEAN-COWORK-DISPATCHER-TELEMETRY-DRAIN-DIR` confirmed real (REVIEW/next_agent:developer) as the dup-target for the stale-signal-inbox debt signal. Conservation verified: task_total 701→703, signal_total unchanged 135. `.head`/`FACTORY-GUARD-CI-METRICMASK-IMPL` confirmed byte-identical to pre-triage state — po correctly left them alone.
+- **Out-of-band SPIKE dispatch (per po's explicit recommendation — SLS itself can't reach a supervised+plan_only row while head is busy)**: moved the row `backlog→in_progress` DELIBERATELY WITHOUT touching `.head` (would have repeated the exact bug just found) — task_total conserved (703→703), WIP now 2/2 (shared budget cap). Spawned `agents-architect` (`add73c0d74328d87d`) with the full root-cause + po's refutation + the autoclose precedent pre-loaded, explicit 3-part AC (conditional-head-write script fix, then flow-doc relocation with a machine `depends_on` on the concurrent P0 rotation rewrite, then a throughput call). Sprint-task lock held pending brief.
+- **NEXT**: awaiting `agents-architect`'s brief AND the still-in-flight `developer` (`a6a9a8bb5ee957b02`, now the longer-running of the two) — whichever lands first. WIP is now at the 2/2 cap — no further concurrent dispatch possible until one completes.
 
 ## cycle-20260729T1907Z — Tick 19:07Z: WIP=1 (developer still in flight on FACTORY-GUARD-CI-METRICMASK-IMPL), 0 drainable signals, CI dedup, correctly skipped duplicate resume-spawn, discovered + escalated NEW structural finding (QA-Drain unreachable whenever head≠idle) to po, spawned po for daily triage
 
@@ -20,16 +28,4 @@
 - **Pre-dispatch verification**: independently re-confirmed all 4 target masks (`cascadeEngine.ts:356/375/394`, `marketSentimentCalculator.ts:174`, `watchlist.ts:198`) still live at the exact lines the 2026-07-24 architect brief specifies; confirmed `scripts/audits/metric-mask-lint.sh` genuinely doesn't exist yet. Zone-detect confirmed `developer` (files span >1 zone: mcp-server domain code + CI workflow + docs + scripts) — matches the row's own pre-resolved `next_agent`, no override needed.
 - **Dispatched `developer`** — full brief summary, explicit instruction that `watchlist.ts:198` is a legitimate config default (annotate, don't fix) vs. the other 3+1 being real bugs (fix to honest-absence), exact-count DoD demand across all suites. Sprint-task lock `task:FACTORY-GUARD-CI-METRICMASK-IMPL` held pending verified completion.
 - BOUNDED-1 dispatch consumed the tick — did not fall through to SLS/RLC/QA-Drain. Review-lane QA-Drain backlog unchanged (152+ rows), now starved **5 consecutive ticks** — first tick where the streak wasn't a FreshnessBadge sibling but still the same idle-chain priority gap; worth an architect brief on re-ordering now.
-
-## cycle-20260729T1830Z-verify — RAW-verified dev-frontend's FE-PG-INTEL-FRESH-FIX completion; all claims confirmed accurate, 3rd sibling in FreshnessBadge family, 7th consecutive clean head-sync
-
-- **BGFAN-1, all commits real**: 4 commits (`eddeb7cbd`,`a63be1c33`,`e87b43799`,`5541856ab`) on HEAD.
-- **Code independently re-read, matches claim exactly**: `dashboard.intel.tsx` now imports `FreshnessBadge`+`useFreshnessRevalidator("daily")`, `parseMarketDigest` normalizes `data_asof` via shared `parseDate` (no fork), `fetchIntelData` threads `data_asof` through instead of discarding it. Grep confirmed single canonical export each for `FreshnessBadge`/`useFreshnessRevalidator` — no forking.
-- **All test claims independently re-run, exact match**: new loader test **6/6 PASS**. Full vitest **2183 pass/2 fail** (same pre-existing `QUE-TOOLTIP-DRY-1a` codegen test, confirmed unrelated — zero import overlap). `tsc --noEmit` clean. Full Playwright **7/7 PASS** (smoke 1/1, render-check 3/3, quality-audit-lastverified 3/3).
-- **Docs change confirmed**: single new `api-reference.md` row for `dashboard.intel.tsx`, matches claim exactly.
-- **Board scope confirmed clean** despite dev-frontend's self-reported `orch-apply.sh` shell-variable-scoping mistake (corrected via a 2nd pass) — `git diff` shows only the `FE-PG-INTEL-FRESH-FIX` row + `.head` touched, no collateral damage.
-- **Live `quality-checklist.json` still correctly shows the check un-rebuilt** — PENDING-REBUILD flag accurate; code fix proven via throwaway dev server only, container deploy remains ops-gated, out of scope for this review-flip.
-- **Board lane-move genuine, 7th CONSECUTIVE clean `.head` sync**: row `REVIEW`, `next_agent:qa`; `.head` idle/router.
-- Released sprint-task lock `task:FE-PG-INTEL-FRESH-FIX` cleanly.
-- **NEXT: qa** — review-lane QA-Drain backlog unchanged (152+ rows), now starved 4 consecutive ticks by this same FreshnessBadge sibling-task streak (3 dispatches + this verify, all one family) — worth an architect brief on re-ordering if a 4th sibling appears.
 
