@@ -12,5 +12,11 @@
     "Directly relevant to TASK-DEVTEAM-IDLE-CHAIN-2-MAIN-FLOW (owner: dev-team, depends: [TASK-DEVTEAM-IDLE-CHAIN-1-SCHEMA-UTILITIES], not yet dispatched -- T1 landed in REVIEW this tick, commit 589224138/c134f0369/b3e98ee9b) which is scoped to replace this fixed-priority chain with the architect-brief aged-round-robin (2026-07-25-devteam-idle-chain-rotation-durable-inbox.md). Whoever implements T2 needs this exact head-status gap in scope, not just the priority-ordering fix -- a rotation among 5 consumers gated behind the SAME head.status==idle precondition inherits the identical freeze."
   ],
   "not_yet_determined": "Whether any other path (agent-to-agent direct handoff at the moment a developer flips a row to review, a QA-side cron, or a router-side sweep) is SUPPOSED to notice head==review and dispatch qa directly -- I found no such path in main.md or qa/flow/main.md, but have not exhaustively read every dev-*/flow/*.md to rule out a per-agent direct-spawn-QA step.",
-  "recommendation": "PO/architect judgement call for TASK-DEVTEAM-IDLE-CHAIN-2-MAIN-FLOW's scope: either (a) the aged round-robin gate condition must be broadened from head.status==idle to include head.status==review (so a parked review row doesn't block the other 4 consumers), or (b) developer flows must directly spawn qa at the moment they flip a row to review (closing the gap without touching head-status semantics), or (c) both. Router did not modify main.md or any flow doc -- out of scope for router/dev-team tick execution, PLAN-ONLY per pm decomposition."
+  "recommendation": "PO/architect judgement call for TASK-DEVTEAM-IDLE-CHAIN-2-MAIN-FLOW's scope: either (a) the aged round-robin gate condition must be broadened from head.status==idle to include head.status==review (so a parked review row doesn't block the other 4 consumers), or (b) developer flows must directly spawn qa at the moment they flip a row to review (closing the gap without touching head-status semantics), or (c) both. Router did not modify main.md or any flow doc -- out of scope for router/dev-team tick execution, PLAN-ONLY per pm decomposition.",
+  "_processed": {
+    "fingerprint": "deda280f56f82d8ed1de73bee719563e7a400cb89952e25f0bdd8397c223694f",
+    "processedAt": "2026-07-29T06:21:56Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

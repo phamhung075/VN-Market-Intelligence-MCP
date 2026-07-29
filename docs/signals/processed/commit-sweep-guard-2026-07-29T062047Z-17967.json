@@ -1,0 +1,14 @@
+{
+  "from": "commit-sweep-guard",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-07-29T06:20:47Z",
+  "payload": "[sweep-guard] BARE commit about to absorb 3 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/main.md docs/data/orch/orch-state.json docs/signals/dev-team-20260729T0700Z-headpinned-review-freezes-idlechain.json. actor=64c7c677-0f0f-4cee-a3ce-dba79d70b7ae mode=warn. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+  "_processed": {
+    "fingerprint": "8f117767062426e6c33b0ced9f41eb61240339ecdf73c96021df03a3572eef53",
+    "processedAt": "2026-07-29T06:21:56Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

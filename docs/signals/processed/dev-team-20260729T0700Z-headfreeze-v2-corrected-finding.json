@@ -1,0 +1,18 @@
+{
+  "id": "dev-team-20260729T0700Z-headfreeze-v2-corrected-finding",
+  "ts": "2026-07-29T06:24:00Z",
+  "from": "dev-team",
+  "supersedes": "docs/signals/processed/dev-team-20260729T0700Z-headpinned-review-freezes-idlechain.json (retracted -- that file's framing of 'head.status==review has no handler' as a NEW gap was wrong; it is a known, already-specified defect class)",
+  "finding": "Two distinct, confirmed layers behind the review[] backlog (134 rows, 98 next_agent=qa, oldest 6+d):",
+  "layer_1_headsync_recurrence": {
+    "rule": "docs/agents/dev-team/flow/execute-tier.md SS MUST clause (CANONICAL:SSOT-STATUSFLIP-LANEMOVE, line ~109): a branch:null flip to REVIEW MUST set .head to {status:idle, active_task_id:null, next_agent:router} -- NEVER mirror the task's own status onto head.status. Shipped 2026-07-23 (commit 020b9eeeeb/7b6d878ab) as the fix for FIX-EXECTIER-HEADSYNC-BRANCHNULL-REVIEW-IDLE, origin signal dev-team-20260723T063731Z-head-review-unhandled-bypasses-qadrain.",
+    "recurrence": "TASK-DEVTEAM-IDLE-CHAIN-1-SCHEMA-UTILITIES (dev-mcp-server, this session, commit c134f0369) flipped branch:null -> REVIEW via scripts/dev-mcp-server-task-devteam-idle-chain-1-schema-utilities-to-review.jq and set .head.status=\"review\" -- violating the MUST clause. This is the 2ND live recurrence in 6 days. Router hand-reset .head to idle at 2026-07-29T06:23:54Z (same remedial action as the 2026-07-23 precedent) to unstall the chain for this tick.",
+    "why_it_recurs": "The fix is documentation-only. execute-tier.md's own text admits: 'no code-enforced call site exists to test directly: every flip is hand-written jq per agent per tick.' scripts/audits/execute-tier-branchnull-review-headidle-verify.sh only replays a SYNTHETIC fixture -- it never runs against a live agent's actual hand-authored to-review.jq script, so a new script (like this session's dev-mcp-server one) can omit the rule with nothing catching it before commit."
+  },
+  "layer_2_qadrain_starvation_independent_of_headsync": {
+    "finding": "Even when head-sync IS done correctly, QA-Drain still does not reliably clear review[]. FIX-EXECTIER-HEADSYNC-BRANCHNULL-REVIEW-IDLE's own board row (branch:null, entered_review_at 2026-07-23T19:24:10Z, review_note confirms 'head synced idle in this SAME write' -- i.e. it followed its own rule correctly) has sat in review[]/next_agent=qa, UNCLAIMED, for 6 days since.",
+    "why": "BOUNDED-1, SLS, RLC, and QA-Drain are chained in fixed priority inside the same head-idle fallthrough (main.md ~L524-700+); first eligible lane wins and consumes the whole tick. BOUNDED-1 has near-unlimited backlog ammunition (FACTORY-MAINTAINABILITY epic alone) and wins almost every tick the instant WIP frees up -- QA-Drain, last in the chain, is starved regardless of head-sync correctness.",
+    "already_being_fixed": "This IS exactly the problem TASK-DEVTEAM-IDLE-CHAIN-1..5 (pm decomposition of architect brief 2026-07-25-devteam-idle-chain-rotation-durable-inbox.md) replaces the fixed-priority chain with an aged round-robin for. T1 (schema+utilities) shipped this session, RAW-verified; T2 (main.md rewrite, dev-team-owned, depends:[T1]) is next once T1 reaches DONE_VERIFIED."
+  },
+  "recommendation": "No new PO decision required for layer 2 (already scoped as T2, in flight). For layer 1 (docs-only enforcement gap), PO/architect judgement: worth a lint/CI check that greps new *-to-review.jq scripts for a `.head.status` value other than \"idle\" when `branch` is null, since the synthetic verifier does not catch real hand-authored scripts. Router applied the immediate remedy (head reset to idle) and did not touch execute-tier.md or main.md -- out of this tick's scope."
+}
