@@ -1,6 +1,16 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-29T15:08Z
+**Written:** 2026-07-29T15:19Z
+
+## cycle-20260729T1519Z — Tick 15:07Z: cold-evicted 4 items, drained 10 signals, found+fixed a 6th stale-marker collision (BOUNDED-1 lane this time), correctly claimed a genuinely-new SPIKE candidate, dispatched dev-mcp-server
+
+- **Preflight**: cold-evict ran automatically (Step 5.5, 4 items → `archive/2026-07.json`, committed `54af5e50e` by the script itself). Verdict RUN, tick `2026-07-29T15:07Z`. No HEAD.lock, single worktree.
+- **Drain**: 10 routed to po (8 bctc-analyst routine-cycle refreshes overwriting same-day processed files, 1 commit-sweep-guard, 1 cowork-team). 3 pruned (>7d, unreferenced). Committed `f02691c86`. CI probe deduped (same known `aa6c044b`). No new dashboard rows.
+- **`.head` was correctly idle** this tick (no desync) — BOUNDED-1 ran (WIP=0).
+- **BOUNDED-1 promoted `SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY`** (dev-mcp-server, timebox 120min) — a genuinely new, eligible candidate. **The claim script then matched the WRONG row**: `FIX-PUSH-DELIVERY-ERROR-RATE-ALERT` still carried its `promoted_by` marker from the 14:48Z promotion (declined 3 ticks running, marker never stripped since it stayed in `ready[]` rather than being fully withdrawn) — `devteam-backlog-claim-bounded1.jq` picks `$auto_promoted[0]`, and that stale row sorted first. Same collision CLASS as the 14:07Z/14:37Z SLS incidents, now confirmed on the **BOUNDED-1** lane too — the script's own "at most one such row per tick" assumption breaks whenever a promoted-but-declined row survives across ticks, since the WIP gate checks `in_progress==0`, not `ready==0`.
+- **Fixed, not just patched**: moved `FIX-PUSH-DELIVERY-ERROR-RATE-ALERT` back to `backlog[]` entirely (not ready[] — so neither claim script can re-scan it), stripped all promote/claim markers, logged the collision + 4th consecutive decline on the row itself. Reset `.head` idle, re-ran the claim script — it then correctly claimed the SPIKE row. Conservation OK (task_total=700 unchanged) at every step. Committed `c23735bf3`.
+- **Dispatched `dev-mcp-server`** directly for the SPIKE (investigation only, 120min timebox, AC-2 cadence-guard call-path trace + AC-3 9-target reparse RAW-probe, findings doc to `docs/spikes/`, mint-not-fix if a code bug is found). Sprint-task lock `task:SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY` held pending verified completion.
+- BOUNDED-1 dispatch consumed the tick — did not fall through to SLS/RLC/QA-Drain/Step 1.
 
 ## cycle-20260729T1508Z-verify — RAW-verified agent-father's A-30 veto-fix completion; found+fixed a 5th stale-marker instance PLUS an uncommitted-write gap from the prior tick; released lock, surfaced a fleet-wide notebook-prune bug to PO
 
@@ -20,13 +30,3 @@
 - **`FIX-PUSH-DELIVERY-ERROR-RATE-ALERT` declined a 3rd consecutive tick** — same unresolved own-prose "PO confirm priority" ask, nothing stamped across 3 ticks. Left a stall-note on the row itself rather than silently re-declining a 4th time; PO triage runs this tick anyway (pendingSignals non-empty) so this is the natural venue for it to actually get resolved.
 - **SLS promoted+claimed `FIX-AUDITOR-A30-VMHWM-VETO-TAUTOLOGY-FALSE-NEGATIVE`** (P0) — verified architect's own design (2-commit fix: stopgap re-sequence past OOMKilled/peak>97% first, then full clause-4 tautology-veto removal from `tier1-probe.md`) was genuinely complete by reading the full `architect_review_note` on the row, not just its title. Spawned `agent-father` directly (docs/agents/*+scripts/audits/* zone) with the full commit-order/acceptance/out-of-scope context. Sprint-task lock held pending verified completion.
 - SLS dispatch consumed the tick — did not fall through to RLC/QA-Drain/Step 1.
-
-## cycle-20260729T1431Z-verify — RAW-verified architect's ruling on FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS; clean, all claims confirmed, lock released
-
-- **BGFAN-1 RAW-verification, all claims confirmed real**: commit `89d4b4340` real, on HEAD; diff matches self-report exactly (ruled Candidate A refined over B and over BA's literal Candidate A; multi-slot resolution; board note + brief).
-- **Design brief exists**: `docs/architecture-briefs/2026-07-29-fix-cowork-dispatch-router-intent-mutex-bypass-design.md` (17636 bytes). Decision journal `STEP architect-S16` entry present, matches summary word-for-word.
-- **Source claims independently verified, not trusted on assertion**: read `coordinationStore.ts`/`coordinationTools.ts` myself — confirmed `cron:cowork:<TICK>`/`cowork-slot:<slot_id>`/`published:<slot_id>:<period>` all share one `task_kind: 'cowork-slot'` CHECK-constraint value, and `task_list_held` genuinely supports `kind`/`owner_agent`/`expired` filter args as claimed. Ruling's core mechanism (1 call + client-side prefix match, zero apps/mcp-server changes) is real, not aspirational.
-- **Board row correct**: `next_agent:"pm"`, `architect_completed_at`/`architect_brief` stamped, ruling appended verbatim to `.note`, `supervised:true`/`supervised_note` UNCHANGED (hold correctly preserved), siblings explicitly not touched per its own note.
-- **`.head` correctly untouched** by architect (still shows dev-team's own SLS-claim stamp from 14:21:37Z) — consistent with the SLS contract that only dev-team owns `.head`.
-- **Context-bloat FYI claim also checked**: signal file genuinely exists; journal genuinely 41291 bytes (over 36000 cap) — correctly routed to claude-manager-helper, correctly out of architect's own scope.
-- No discrepancies found. Released sprint-task lock `task:FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS`. **NEXT: pm** — decompose per brief's file-level table (CLAUDE.md 1-line diff + SKILL.md Step 2.4 MUST land same commit per FR-6). Not yet dispatched — awaiting next tick or explicit trigger.
