@@ -1,0 +1,20 @@
+{
+  "from": "dev-team",
+  "to": "po",
+  "type": "zone_missing_tier3",
+  "priority": "medium",
+  "createdAt": "2026-07-29T08:17:00Z",
+  "payload": {
+    "taskId": "FIX-VPS-SSC-INSIDER-502",
+    "files": [
+      "vps-scripts/vps-proxy-server.js"
+    ],
+    "suggestedZone": "vps-scripts/ — not present in docs/data/system-map.json .project.zones[]; closest match by grep is vps-scripts/vps-proxy-server.js. Agent roster already has a dev-vps-crawls specialist (VPS Crawler Developer — Vinahost VPS geo-blocked VN data source scrapers) whose description fits this zone exactly, but system-map.json has no zone entry wiring vps-scripts/ -> dev-vps-crawls. zone-detect Tier-1/Tier-2 both miss on this task (zone field is 'vps-scripts/', not an apps/<service>/ path; no keyword match in the 12 mapped zones). Falling back to Tier-3 (generic developer) for this dispatch per SKILL.md protocol -- recommend PO/architect add a vps-scripts zone entry (specialist: dev-vps-crawls) to system-map.json to close this gap for future VPS-proxy/geo-block-scraper tasks."
+  },
+  "_processed": {
+    "fingerprint": "d06344e80daf68b23d6acabd4d969dcc4fa2ddc932550fd732ffc9af1d849d85",
+    "processedAt": "2026-07-29T08:45:34Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
