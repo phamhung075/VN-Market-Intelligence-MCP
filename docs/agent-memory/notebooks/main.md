@@ -2,20 +2,21 @@
 
 **Written:** 2026-07-29T08:46Z
 
+## cycle-20260729T0837Z-verify — RAW-verified dev-mcp-server's FIX-GET-FOREIGN-ROOM-TOOL-RESULT-TOKEN-BUDGET completion; 5th CONSECUTIVE clean head-sync + 2nd CONSECUTIVE clean row-level next_agent=qa
+
+- **BGFAN-1 RAW-verification, all claims confirmed real**: commits `3e8c5db91`/`a9f3e1ac2` real, on HEAD. Diff to `foreignRoomAnalyzer.ts` matches claim exactly — new pure `summarizeForeignRoomTickers()` (rollup over full universe, ranking ROOM_LOCKED/FULL_ROOM_SELL first then `|depletion_velocity_5d|` desc, `Math.min(topN, analyses.length)` — no hardcoded ceiling). `foreignRoomTools.ts` diff confirms interface-layer-only wiring (`top_n` zod param, `fetch_more.omitted_codes` handle) — `getForeignRoom` usecase itself untouched.
+- **Test claim independently re-run, not just trusted**: `bun test src/__tests__/P0-2-foreign-room-suite.test.ts` → live result **43 pass / 0 fail / 96 expect() calls** — matches the self-report exactly.
+- **Board lane-move genuine**: absent from `in_progress[]`, present in `review[]`, `status:REVIEW`, `branch:null`.
+- **Head-sync MUST clause held a 5th CONSECUTIVE time**: `.head={status:idle, active_task_id:null, next_agent:router}`.
+- **`next_agent:"qa"` held correctly on the row itself, 2nd consecutive clean pass** ([[feedback_review_flip_next_agent_qa_check_missing_strands_row]] mitigation continues to hold without further prompting drift).
+- No discrepancies found between self-report and live state — clean verify, nothing to patch.
+
 ## cycle-20260729T0837Z — BOUNDED-1 claimed FIX-GET-FOREIGN-ROOM-TOOL-RESULT-TOKEN-BUDGET, dispatched to dev-mcp-server (clean Tier-1 zone match)
 
 - **Preflight/gcc/CI clean**: RUN tick `2026-07-29T08:37Z`; CI GREEN unchanged (`39a4dac7c`); `.head` idle from prior tick's clean close-out (4th consecutive clean head-sync pass held).
 - **Drain: 4 routed-to-po** (2× `commit-sweep-guard-*` telemetry, 1 context-bloat signal on the COWORK-GUARANTEED-SLOT-CATCHUP-developer decision journal, and last tick's own `zone-missing-FIX-VPS-SSC-INSIDER-502-*` signal — confirming that signal actually reached po's lane, not just written to disk).
 - **BOUNDED-1 fired (WIP=0)**: promoted+claimed `FIX-GET-FOREIGN-ROOM-TOOL-RESULT-TOKEN-BUDGET` (P2, size S, zone `apps/mcp-server/` — clean Tier-1 explicit match, no zone-detect ambiguity this time). Recurring bug (3rd consecutive cycle per po-triage 2026-07-04T04:07Z, alert-commander telegram #3502) — NOT a repeat-failed-fix, this is the first actual fix dispatch (was PLAN-ONLY BACKLOG since triage). Root cause per detail: `get_foreign_room` dumps the full foreign-room table inline, exceeding the tool-result token cap so alert-commander can't ingest it. Passed the suggested trim/paginate/summarize direction plus the standing no-hardcode-limits rule to dev-mcp-server, and flagged that the AC's "3 consecutive cycles" clause is a QA/post-deploy live-confirmation item, not something solvable in one dispatch. Dispatched background `a3f95f05a3899344a`.
 - BOUNDED-1 claim consumed the tick (JUMP TO execute) — did not fall through to SLS/RLC/QA-Drain/Step 1. Review-lane QA-Drain remains starved (139 rows) — unchanged, still gated behind TASK-DEVTEAM-IDLE-CHAIN-2-MAIN-FLOW (BACKLOG, depends on T1/REVIEW-not-yet-DONE_VERIFIED).
-
-## cycle-20260729T0807Z-verify — RAW-verified developer's FIX-VPS-SSC-INSIDER-502 CLOSED-NO-FIX; 4th CONSECUTIVE clean head-sync + next_agent=qa held correctly
-
-- **BGFAN-1 RAW-verification, all claims confirmed real**: commits `8c72462d9`/`394ebe313` real, on HEAD, right after my dispatch commit. Diff to `vps-scripts/vps-proxy-server.js` is comment-only as claimed (`node --check` clean). Cited anti-retry precedent `a817b5139` (B-05-FU-SSC-503-RETRY) verified real and directly on point — a genuine prior revert of a retry fix for the same SSC domain, same caller-budget-mismatch class (17-day queue freeze). `sscInsider.ts withDeadline(30_000)` claim confirmed by grep. FR-2.2 watchdog's 4-day `insider_transactions` staleness alert confirmed live in `vpsProxyWatchdogJob.ts`. Decision journal `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md` STEP developer-S24 exists.
-- **Board lane-move genuine**: absent from `in_progress[]`, present in `review[]`, `status:REVIEW`, `branch:null`. `backlog-detail.json` status kept in sync (`TODO→REVIEW`).
-- **Head-sync MUST clause held a 4th CONSECUTIVE time**: `.head={status:idle, active_task_id:null, next_agent:router}`.
-- **`next_agent:"qa"` held correctly on the row itself** — the exact gap caught-and-fixed on FU-ORCH-HOT-SUB150-SPRINT-LIFECYCLE two ticks ago ([[feedback_review_flip_next_agent_qa_check_missing_strands_row]]) did NOT recur; the explicit reminder in the dispatch prompt appears to have worked. First live confirmation the reminder-in-prompt mitigation is effective, not just the memory-file existing.
-- Good engineering judgment note (not just verification-clean): developer chose NOT to add retry/backoff despite an obvious-looking "fix" being available, specifically because it cross-checked git history for a prior identical mistake first — this is the discipline the anti-retry precedent memory exists to reinforce.
 
 ## cycle-20260729T0807Z — BOUNDED-1 claimed FIX-VPS-SSC-INSIDER-502, Tier-3 fallback to generic developer (vps-scripts/ zone unmapped in system-map.json — signal dropped to po)
 
