@@ -214,3 +214,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: B-01 · sbv_fx stale 34min
+**Severity:** CRITICAL | **Date:** 2026-07-29 | **Status:** OPEN
+**Location:** data-fetch/sbv_fx
+**Details:** SBV FX data last updated 34 minutes ago, exceeds SLA of 30 minutes
+**Impact:** FX rates used in macro analysis stale; valuation signals unreliable
+**Root cause:** SBV API or VPS fetch pipeline delayed or stuck
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-07-29T22:35:37Z (signal sys-20260729T223454-3b28, system-auditor -> po, dedup_key=data_stale:sbv_fx:B-01, CRITICAL Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
