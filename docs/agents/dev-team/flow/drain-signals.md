@@ -66,7 +66,7 @@ After all NEW rows from 0a-D are marked READ, per skill `.claude/skills/signal-d
 4. Update dashboard_section_cache in docs/data/orch/orch-state.json .dashboard_section_cache:
    {section_name: "po", last_mtime: <new mtime of orch-state.json>, last_linecount: <rows count>}
 5. Commit (atomic temp→rename): git add docs/data/orch/orch-state.json
-           git commit -m "chore(signals): drain + prune {ts}"
+           git commit -m "chore(signals): drain + prune {ts}" -- docs/data/orch/orch-state.json
 ```
 NEW rows are NEVER pruned.
 Skip prune gracefully if orch-state.json was missing/skipped in 0a-D.

@@ -457,7 +457,7 @@ Also inspect the Tier-2 stale-source findings emitted above: any source with `se
      2. `git add -u docs/improvement-proposals/IMP-{YYYYMMDD}-{slug}.md docs/data/orch/orch-state.json` (explicit -u form — avoids gitignore false-warn on tracked files).
      3. `git diff --cached --name-only` → if foreign path present: `git restore --staged <foreign>` (NEVER own paths); if still foreign after restore → release mutex → abort commit → log + bug-telegram.
      4. `git diff --cached --quiet` → if nothing staged: release mutex → skip commit → log.
-     5. `git commit -m "chore(improve): D-IMPROVE emit {id}"` (NEVER -a/-am, NEVER add -f).
+     5. `git commit -m "chore(improve): D-IMPROVE emit {id}" -- docs/improvement-proposals/IMP-{YYYYMMDD}-{slug}.md docs/data/orch/orch-state.json` (NEVER -a/-am, NEVER add -f — pathspec mirrors step 2's own_paths exactly, FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-LAYER2).
      6. `call_tool(server="vn-market", tool="task_release", arguments={task_id:"commit-mutex:main", owner_client_session:$CLAUDE_CODE_SESSION_ID})` — ALWAYS, every exit path (success / skip / error).
 
 **D-IMPROVE-3 — Log outcome:**

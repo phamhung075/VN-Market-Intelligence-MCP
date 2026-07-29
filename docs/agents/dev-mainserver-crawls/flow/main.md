@@ -177,7 +177,8 @@ Next: qa validation
 # own_paths: [docs/agent-memory/notebooks/dev-mainserver-crawls.md, docs/mainserver-crawl-techniques/<technique>.md]
 # Protocol: task_claim commit-mutex:main (TTL=60s) → git add <own_paths> → verify → git commit → task_release
 git add docs/agent-memory/notebooks/dev-mainserver-crawls.md docs/mainserver-crawl-techniques/<technique>.md
-git commit -m "feat(mainserver-crawls): <source-name> scraper — <technique-name> bypass"
+git commit -m "feat(mainserver-crawls): <source-name> scraper — <technique-name> bypass" \
+  -- docs/agent-memory/notebooks/dev-mainserver-crawls.md docs/mainserver-crawl-techniques/<technique>.md
 ```
 Convention: `docs/policies/commit-convention.md`
 

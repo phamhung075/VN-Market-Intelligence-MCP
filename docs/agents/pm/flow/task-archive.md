@@ -168,7 +168,9 @@ PRE_EVICT_ACTIVE_IDS=$(jq -r '.task_board.active_sprints[]?.id // empty' "$PROJE
    #   renames per feedback_pathspec_commit_drops_rename_deletion)
    git add docs/data/orch/orch-state.json "$PROJECT_ROOT/docs/data/orch/archive/${YYYYMM}.json" \
      "$PROJECT_ROOT/docs/agent-memory/decisions/" "$PROJECT_ROOT/docs/archive/decisions/"
-   git commit -m "chore(tasks): cold-evict ${DV_N} done_verified + excess done tasks → archive/${YYYYMM}.json"
+   git commit -m "chore(tasks): cold-evict ${DV_N} done_verified + excess done tasks → archive/${YYYYMM}.json" \
+     -- docs/data/orch/orch-state.json "$PROJECT_ROOT/docs/data/orch/archive/${YYYYMM}.json" \
+        "$PROJECT_ROOT/docs/agent-memory/decisions/" "$PROJECT_ROOT/docs/archive/decisions/"
    ```
 
 7. **Release mutex**:

@@ -98,7 +98,8 @@ if [ "$BYTE_REDUCTION" -gt 0 ]; then
     || { echo "[dev-team/post-cycle] ABORT: post-eviction validation failed"; exit 1; }
   YYYYMM=$(date -u +%Y-%m)
   git add docs/data/orch/orch-state.json "$PROJECT_ROOT/docs/data/orch/archive/${YYYYMM}.json"
-  git commit -m "chore(tasks): cold-evict terminal sprints/done lanes → archive/${YYYYMM}.json"
+  git commit -m "chore(tasks): cold-evict terminal sprints/done lanes → archive/${YYYYMM}.json" \
+    -- docs/data/orch/orch-state.json "$PROJECT_ROOT/docs/data/orch/archive/${YYYYMM}.json"
   # task_release(task_id: "commit-mutex:main")
 fi
 ```
@@ -119,7 +120,9 @@ if [ "$RC" -ne 0 ]; then
 else
   # task_claim(task_kind="commit-mutex", task_id="commit-mutex:main", owner_agent="dev-team", ttl_seconds=120)
   echo "$PLAN" | jq -c '.auto_commit[]?' | while read -r c; do
-    eval "git add -- $(echo "$c" | jq -r '.paths | map(@sh) | join(" ")')" && git commit -m "$(echo "$c" | jq -r '.commit_message')"
+    PATHS_STR="$(echo "$c" | jq -r '.paths | map(@sh) | join(" ")')"
+    MSG="$(echo "$c" | jq -r '.commit_message')"
+    eval "git add -- $PATHS_STR" && eval "git commit -m \"\$MSG\" -- $PATHS_STR"
   done
   # task_release(task_id: "commit-mutex:main")
   echo "$PLAN" | jq -c '.signals[]? | select(.dedup_skip==false)' | while read -r s; do

@@ -82,7 +82,7 @@ agent:
   boundary_rules:
     scope: "YOUR flow steps ONLY. Break tasks → assign → track WIP → escalate blockers → exit."
     on_error: "Tool fails after 1 retry -> send_telegram(bug) one-line error -> EXIT. Do NOT investigate."
-    commit_discipline: "SSOT → .claude/skills/commit-boundary/SKILL.md (RULE 1-3 + mutex claim mandatory before every commit)"
+    commit_discipline: "SSOT → .claude/skills/commit-boundary/SKILL.md (RULE 1-3 (incl. 2.5) + mutex claim mandatory before every commit)"
     forbidden_outputs:
       - "NEVER create files outside session log, notebook, handoff files, and docs/data/orch/orch-state.json .task_board"
       - "NEVER modify other agents' notebooks or session logs"

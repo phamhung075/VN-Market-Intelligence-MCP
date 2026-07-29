@@ -56,7 +56,7 @@
    # INV-GATEWAY-1: commit-mutex/task_claim/task_release MCP calls are the dispatcher session's sole
    # responsibility; inner specialist agents commit directly (explicit paths), no mutex skill call.
    git add docs/spikes/SPIKE_NNN-<topic>.md
-   git commit -m "docs(spike): NNN findings — <topic>"
+   git commit -m "docs(spike): NNN findings — <topic>" -- docs/spikes/SPIKE_NNN-<topic>.md
    ```
 
 ## RETURN

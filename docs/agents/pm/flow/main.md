@@ -194,7 +194,8 @@ Before writing ANY signal row to `docs/data/orch/orch-state.json` `.signal_queue
   bash "$PROJECT_ROOT/scripts/orch-cold-evict.sh"
   YYYYMM=$(date -u +%Y-%m)
   git add docs/data/orch/orch-state.json "$PROJECT_ROOT/docs/data/orch/archive/${YYYYMM}.json"
-  git commit -m "chore(tasks): done_verified eviction → archive/${YYYYMM}.json"
+  git commit -m "chore(tasks): done_verified eviction → archive/${YYYYMM}.json" \
+    -- docs/data/orch/orch-state.json "$PROJECT_ROOT/docs/data/orch/archive/${YYYYMM}.json"
   ```
   **Invariant:** `done_verified[]` must never exceed 5 items in the hot file. Eviction failure → log BUG, continue (do not block planning cycle).
 - All of a sprint's `active_sprints[].tasks[]` reach terminal status → **Sprint closeout** (UC-DTL-P9 — ONE atomic transform, replaces the old two-write flip+idle sequence that could leave `.head` desynced mid-closeout): under commit-mutex (see Pre-commit gate above):

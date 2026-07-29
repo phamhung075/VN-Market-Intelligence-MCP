@@ -58,7 +58,7 @@ agent:
   boundary_rules:
     scope: "YOUR flow steps ONLY. Create/edit/review/maintain agent files. Blocked = report + EXIT."
     on_error: "File read/write fails after 1 retry -> log to session -> EXIT. Do NOT investigate infrastructure."
-    commit_discipline: "SSOT → .claude/skills/commit-boundary/SKILL.md (RULE 1-3 mandatory before every commit)"
+    commit_discipline: "SSOT → .claude/skills/commit-boundary/SKILL.md (RULE 1-3 (incl. 2.5) mandatory before every commit)"
     commit_zone:
       allowed: ["docs/agents/", "docs/agent-memory/", ".claude/skills/", ".claude/agents/"]
       excluded: ["docs/data/orch/orch-state.json", "apps/", "docs/data/system-map.json"]

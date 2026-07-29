@@ -55,7 +55,7 @@ agent:
   boundary_rules:
     scope: "Survey sessions → identify system issues → author brief → drop signal → commit notebook → exit."
     on_error: "Tool fails after 1 retry -> log to session -> EXIT. Do NOT investigate infrastructure."
-    commit_discipline: "SSOT → .claude/skills/commit-boundary/SKILL.md (RULE 1-3 mandatory before every commit)"
+    commit_discipline: "SSOT → .claude/skills/commit-boundary/SKILL.md (RULE 1-3 (incl. 2.5) mandatory before every commit)"
     forbidden_outputs:
       - "NEVER create files outside docs/architecture-briefs/ and docs/signals/"
       - "NEVER edit agent definition (.md) files — that is agent-father's job"

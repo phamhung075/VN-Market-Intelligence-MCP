@@ -73,5 +73,6 @@ Entries accumulate. Commit once per cycle:
 ```bash
 git add docs/agent-memory/decisions/sprint-<id>-<agent-id>.md \
         docs/agent-memory/notebooks/<agent-id>.md
-git commit -m "chore(memory/<agent-id>): notebook + journal YYYY-MM-DD"
+git commit -m "chore(memory/<agent-id>): notebook + journal YYYY-MM-DD" \
+  -- docs/agent-memory/decisions/sprint-<id>-<agent-id>.md docs/agent-memory/notebooks/<agent-id>.md
 ```

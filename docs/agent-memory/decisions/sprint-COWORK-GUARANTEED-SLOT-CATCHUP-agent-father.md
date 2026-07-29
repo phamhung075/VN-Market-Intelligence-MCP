@@ -90,3 +90,16 @@ retained-section hash comparison HEAD-vs-staged can tell them apart — validate
 positive on 9b27e9723, 0 false-positive on 01e50dbc after trailing-blank normalization.
 **why-change:** Append-Gate-bypass (single occurrence, f26526d0e) left as a rowed BACKLOG
 item — prose-parsing narrative is fragile and not yet proven-recurring (repo's 2+ bar).
+
+### STEP agent-father-S6 · agent-father · 2026-07-29T13:05:00Z
+**task-id:** FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-LAYER2
+**what-done:** Pathspec-scoped 4 named skill sites + 3 init.md RULE-1-3→"(incl.2.5)", PLUS
+10 more live-re-grepped bare `git commit -m` sites (explicit-add done, commit bare) same
+class: auditor D-IMPROVE, pm HSC-6+cold-evict, dev-team cold-evict+sweep+drain, 2x crawls,
+architect review, dev feature-spike. 16 files.
+**what-considered:** 4-site floor only (rejected, po_priority_20260729T1126 forbids) vs also
+the 35-file `chore(memory/*)` notebook tail (rejected — brief 2026-07-21 §3 names that exact
+pattern "Layer-2, not this row, PM-tracked pass").
+**why-decision:** re-scope = verified-live+in-zone+non-notebook-pattern bare sites — meets
+"floor not spec" without absorbing a separately-scoped 35-file deliverable unsupervised.
+**why-change:** extends beyond literal 4-site text per PO's own re-scope ruling on this row.

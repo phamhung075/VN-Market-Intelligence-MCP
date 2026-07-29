@@ -155,7 +155,8 @@ Write to `docs/signals/{id}-review.json`.
 **Step IP-8 — Commit** (Brief-Commit Invariant extended):
 ```bash
 git add docs/improvement-proposals/{id}.md docs/signals/{id}-review.json docs/agent-memory/notebooks/agents-architect.md
-git commit -m "chore(improve): architect-review {id}"
+git commit -m "chore(improve): architect-review {id}" \
+  -- docs/improvement-proposals/{id}.md docs/signals/{id}-review.json docs/agent-memory/notebooks/agents-architect.md
 ```
 Explicit paths only — never `-A`.
 

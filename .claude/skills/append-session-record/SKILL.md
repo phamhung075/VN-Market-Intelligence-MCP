@@ -12,7 +12,7 @@ Append cycle summary to `docs/agent-memory/notebooks/<agent-id>.md` and commit:
 
 ```bash
 git add docs/agent-memory/notebooks/<agent-id>.md
-git commit -m "chore(memory/<agent-id>): notebook YYYY-MM-DD"
+git commit -m "chore(memory/<agent-id>): notebook YYYY-MM-DD" -- docs/agent-memory/notebooks/<agent-id>.md
 ```
 
 Convention: `docs/policies/commit-convention.md` § Notebook Commits

@@ -124,6 +124,6 @@ UPDATED=$(printf '%s' "$STATE" | jq --arg now "$NOW" --argjson cutoff "$CUTOFF_2
   $root | .signal_queue.rows = $keep | .signal_queue.archive = [] | .signal_queue._updated_at = $now | .signal_queue._updated_by = $agent
 ')
 printf '%s' "$UPDATED" | bash "$PROJECT_ROOT/scripts/orch-apply.sh" || { echo "[dashboard/PRUNE] ABORTED" >&2; exit 1; }
-git add docs/data/orch/orch-state.json && git commit -m "chore(signals): drain + prune $(date -u +%Y%m%dT%H%M%SZ)"
+git add docs/data/orch/orch-state.json && git commit -m "chore(signals): drain + prune $(date -u +%Y%m%dT%H%M%SZ)" -- docs/data/orch/orch-state.json
 ```
 Cold store: `docs/data/orch/archive/YYYY-MM.json` (append-only). Dedup key: `id`. Mandatory step per HSC-7.
