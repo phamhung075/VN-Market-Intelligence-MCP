@@ -59,6 +59,16 @@
 
 
 
+## cycle-20260729T0146Z — BOUNDED-1 claimed FACTORY-TECHANALYSIS-dedup-calculator (WIP<1); QA-Drain starvation escalated to po (94 review[]/next_agent:qa rows, oldest 6+d) — SIGNAL not self-fix
+
+- **Preflight RUN**: gcc clean (single worktree @`9e019d307`, no lock, 0/40 ahead — no push, PUSH-AUTONOMY-1). No cold-evict self-commit this tick (nothing evictable).
+- **Drain (0a-A + 0a-D)**: 1 file-signal → routed-to-po (`commit-sweep-guard-2026-07-29T013514Z-32797.json`, this session's own no-pathspec warning artifact from an earlier tick). 0 dashboard rows queued for po/dev-team. Committed `bd04fdac4`.
+- **CI-health-probe**: GREEN `084f7652e`, no push yet — no signal.
+- **Head-idle chain**: entering idle, WIP=0/QA_WIP=0 — all four lanes gate-open. BOUNDED-1 fires first again: promoted+claimed `FACTORY-TECHANALYSIS-dedup-calculator` (P2, zone=technical-analysis, dev_agent=dev-technical-analysis, priority_rank=2 — dedup sandboxCalculator vs TACalculator MA5/20/50 drift via a shared pkg/module mapper; `depends_on:[FACTORY-TECHANALYSIS-split-sandbox]` independently confirmed DONE_VERIFIED in cold archive before trusting the gate). Unlike its sandbox-only predecessor (self-closed, close-gate correctly ruled inapplicable), this row touches `pkg/infrastructure/calculator.go` (shipped code) and carries `rebuild_required:true` — briefed the agent explicitly to hold at REVIEW/next_agent=ops, not self-close. Committed `4ed51d32e`. JUMP TO execute — outer `task:` claim taken, **dev-technical-analysis** spawned background (`a143661fdcb111b58`), claim released per execute-tier.md batch-return semantics immediately after spawn.
+- **QA-Drain starvation — ESCALATED, not hand-fixed**: while pulling the review[]/next_agent:qa count for the routine watch-item note, the true figure was 94 (not the "3 rows" tracked in the last two notebook entries — that undercount only reflected rows added *this session*, not the pre-existing backlog). Age-checked: oldest with a timestamp is 2026-07-23 (6+ days), several carry no timestamp at all (predate the field, older still). Root cause: BOUNDED-1 wins the head-idle fall-through race whenever WIP hits 0 AND anything is eligible in backlog[] — and the FACTORY-MAINTAINABILITY-2026-06 epic supplies enough eligible P1-P3 rows that this has held true every observed tick this session (0037Z, 0107Z, now 0146Z). Same failure shape as the historical Supervised-Lane-Sweep gap (sweeper existed on paper, never reachable) — but reordering `main.md`'s fall-through chain is an architect-level call (tradeoffs: QA-first ordering vs periodic QA-priority pass vs raising WIP budget), not something for the router to decide unilaterally. Filed signal `dev-20260729T014905Z-qadr` → po (MED, type=system-issue, read-back confirmed present), full detail inline. Committed alongside this notebook entry.
+- **Session Exit**: SF-1 + fire-election both released `{"ok":true,"released":1}`.
+- **Board**: `in_progress`=1 (this claim), `review`=128 (3 BLOCKED, 125 REVIEW — 94 of those next_agent:qa), `qa`=0.
+
 ## cycle-20260729T0139Z — dev-pdf-extractor's FACTORY-PDF-split-handlers returned + RAW-verified clean (REVIEW/next_agent:ops, rebuild_required:true); no new tick opened, deferred to next cron for close-gate continuation
 
 - **Background return (`aee8b2af14f1bd9c9`)**, not a tick — no preflight/drain/BOUNDED-1 ran this entry, just independent RAW-verification of the completion notification per BGFAN-1.
@@ -69,15 +79,6 @@
 - **DJ-GATE-1 + notebook confirmed present**: `docs/agent-memory/decisions/sprint-FACTORY-PDF-split-handlers-dev-pdf-extractor.md` has full rationale trail; `docs/agent-memory/notebooks/dev-pdf-extractor.md` closes with `REVIEW → next_agent=ops`, matching board.
 - **No-MCP-tool deviation confirmed correct**: agent's grant is Read/Edit/Write/Glob/Grep/Bash only — commits used explicit pathspecs directly, no commit-mutex needed (consistent with `FACTORY-COWORK-SPAWNFANOUT` precedent).
 - **Not actioned this entry**: this was a notification-driven verification only, not a tick — SF-1/fire-election were never taken here (they were already released at Session Exit of `0107Z`). Local `main` at 0/39 ahead of origin — no push (PUSH-AUTONOMY-1). QA-Drain backlog watch-item from `0107Z` unchanged (still 3 rows next_agent:qa, unclaimed — this task added a 4th to review[] but for ops, not qa). Next cron fire re-evaluates from preflight; `FACTORY-PDF-split-handlers` is now ops's to pick up (rebuild+swap) per the close-gate chain, not dev-team's.
-
-## cycle-20260729T0107Z — BOUNDED-1 claimed FACTORY-PDF-split-handlers (WIP<1); QA-Drain deferred again (127 review[] rows, 3 qa-eligible, not reached)
-
-- **Preflight RUN**: cold-evict side-effect ran (2 signal rows → archive), self-committed `55cc411c8`. gcc clean (single worktree, no lock, 0/32 ahead — no push, PUSH-AUTONOMY-1).
-- **Drain (0a-A + 0a-D)**: 3 file-signals → routed-to-po (2x commit-sweep-guard from this session's own no-pathspec `git commit -m` invocations, 1x context-bloat). 0 dashboard rows queued for po/dev-team. Committed `56342a349`.
-- **CI-health-probe**: GREEN, same HEAD as prior ticks (no push yet) — no signal.
-- **Head-idle chain**: entering idle, WIP=0/QA_WIP=0 — all four lanes gate-open again. BOUNDED-1 fires first: promoted+claimed `FACTORY-PDF-split-handlers` (P2, zone=pdf-extractor, dev_agent=dev-pdf-extractor, priority_rank=2 — splits handlers.py into schemas/run_helpers/thin-routes, allow-set moved to domain constant; `depends_on:[FACTORY-PDF-delete-deprecated-inspect]` independently confirmed DONE_VERIFIED in cold archive before trusting the gate script). Committed `3fd1e0b0d`. JUMP TO execute — outer `task:` claim taken, **dev-pdf-extractor** spawned background (`aee8b2af14f1bd9c9`), claim released per execute-tier.md batch-return semantics immediately after spawn.
-- **Session Exit**: SF-1 + fire-election both released `{"ok":true,"released":1}`.
-- **Board**: `in_progress`=1 (this claim), `review`=127 (3 rows next_agent:qa waiting — 1 from cycle-0102Z's spawn-fanout fix, 2 from cycle-0037Z's developer batch — QA-Drain has not fired in 3 consecutive ticks since BOUNDED-1 keeps winning the fall-through race with WIP dropping to 0 each time; not yet a concern at 3 rows but worth watching if it climbs), `qa`=0.
 
 ## cycle-20260719T0537Z — fully-idle (0 routable, PO channels dry, no dispatch); CI GREEN 90176484b; cowork-telemetry WATCH holds obs#1; overnight quiescence
 
