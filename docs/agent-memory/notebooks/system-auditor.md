@@ -1,3 +1,27 @@
+## c005 · 2026-07-29T22:37:02Z
+### Audit Run Tier-2 (20:00–22:36 UTC 2026-07-29)
+- Tier: 2 | Cron health: A-29 PASS (all crons 100% success) | Sources: 1 CRITICAL + 1 WARN checked
+- Data freshness: SBV_FX CRITICAL (34m > 30m SLA, SKIP-dedup), BCTC OK by SLA window (1712m < 21545m)
+- VPS proxy: bctc stale 38.4h (SKIP-dedup, service unhealthy), other routes healthy
+- DB spot: C-06 PASS (2 messages in 3h), C-07 PASS (20 signals in 24h)
+- BCTC queue: 167 pending | B-09 PASS (0 SSC URLs) | B-13 PASS (0 stale 72h+)
+- Anomalies: 0 new (0 critical, 0 warn, 0 info) | 2 dedup-skipped (sbv_fx B-01, vps_proxy B-06)
+- Status: DEGRADED (sbv_fx SLA breach + VPS bctc stale persist; both known 7d dedup)
+
+Fire-election: tick=2026-07-29T20:00Z (`0 */4 * * *` boundary) — claimed, led tick.
+
+[emit-signal] SKIP-dedup dedup_key=data_stale:sbv_fx:B-01 last_sent=2026-07-29T14:34:45Z id=sys-20260729T223454-3b28
+[emit-signal] SKIP-dedup dedup_key=data_stale:vps_proxy:B-06 last_sent=2026-07-29T14:34:55Z id=sys-20260729T223504-3605
+[emit-dashboard] OK id=sys-20260729T223454-3b28 check_id=B-01
+[emit-dashboard] OK id=sys-20260729T223504-3605 check_id=B-06
+
+Findings:
+- B-01: sbv_fx SLA breach 34m > 30m — dedup-skipped (same issue reported 2026-07-29T14:34:45Z)
+- B-06: VPS bctc stale 38.4h (last push 2026-07-28 08:23:22Z) — dedup-skipped (reported 2026-07-29T14:34:55Z)
+
+[OUTPUT-CONTRACT] signals_posted=2 | telegram_sent=0 | signal_queue_rows_written=4 | dashboard_rows=2 | dedup_skipped=2
+[OUTPUT-CONTRACT] VIOLATION: signal_queue_rows_written mismatch narrated=2 independent=4
+
 ## c004 · 2026-07-29T18:35:04Z
 ### Audit Run Tier-2 (16:00–18:35 UTC 2026-07-29)
 - Tier: 2 | Cron health: A-29 PASS (all crons within cadence) | Sources: 5 checked
