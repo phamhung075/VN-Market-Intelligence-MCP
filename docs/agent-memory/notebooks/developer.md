@@ -1,20 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-29 | **Cycle:** FIX-AUDITOR-MEMACK-HEADROOM-FLOOR-AND-DEAD-TRACKEDBY
-
-## Session 2026-07-29 — FIX-AUDITOR-DASHBOARD-APPEND-NO-ACTUATOR-CONTRACT-COUNT-NARRATED — REVIEW
-
-**Task:** Router dispatch, P1, cross-service/. Every counter in the auditor's `[OUTPUT-CONTRACT]` line was narrated, not derived — failing BOTH directions same day (over-report ×2: narrated N, wrote 0; under-report: narrated 0, wrote 1 — a `SKIP-dedup` marker, which still carries `id=`, misread as "nothing emitted"). Row's own `root_cause`/acceptance(2) named a nonexistent path (`scripts/agents-flow/emit-audit-signal.sh`) — verified via `ls` before reading anything; real script is `scripts/emit-audit-signal.sh`.
-
-**Actions taken:** New `scripts/emit-dashboard-row.sh` — actuator for `docs/data/DASHBOARD.md` (the LIVE dashboard, confirmed vs the stale `docs/handoffs/DASHBOARD.md` phantom UC-ASL-P6 purges; also confirmed the `.claude/skills/signal-dashboard/` pointer main.md used was itself wrong — that skill governs `.signal_queue.rows[]`, not this file): tmp+mv atomic append, self-contained commit-mutex guard, MANDATORY POST-WRITE read-back (`grep -qF "signal <id>"`) failing loud to BUG on miss. New `scripts/audit-output-contract.sh` — mechanically parses `[emit-signal]`/`[emit-dashboard]`/`[post-agent-signal]` markers accumulated into a per-cycle `$MARKERS_FILE` (introduced at `flow/main.md` §Step 0d) instead of hand-composed counts; adds an independent `.signal_queue.rows[]` cross-check (the old check was vacuous — both operands narrated by the same agent from the same marker set) plus symmetric violations for `dashboard_rows==0` and RETURN-headline/`NEXT`-token consistency. Wired into all 4 WARN/CRITICAL emit sites + 2 bare `post_agent_signal` sites + `page-freshness.md`'s standard-line portion; D-BCTC-EVAL/D-IMPROVE stay `--e3-only` unchanged.
-
-**Backfill decision (acceptance 5):** did NOT backfill the "still-missing 06:08Z A-21" DASHBOARD row — its signal_queue row (`sys-20260729T060929-39de`) was subsequently RETRACTED by PO as an out-of-spec emission contradicting the auditor's own `crashRestarts>=2` threshold. Backfilling now would resurrect a withdrawn finding. Real crash owned by `OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN`/`FIX-MCP-MEMORY-CODE-LEAK`; counting-window bug by `FIX-A21-CRASH-WINDOW-PREDECESSOR-BOUND-FALSE-NEGATIVE` (both untouched).
-
-**Verification:** `scripts/emit-dashboard-row.test.sh` 32/32, `scripts/audit-output-contract.test.sh` 35/35 (both prove a narrated-but-unwritten count cannot pass — AC-4). No regressions: `scripts/emit-audit-signal.test.sh` 49/49 (unchanged). `shellcheck -x` clean on both new scripts. No TS touched.
-
-**Board:** update via `orch-apply.sh` — `IN_PROGRESS` → `review` (`next_agent: qa`).
-
-Zone health: no drift detected.
+**Last updated:** 2026-07-29 | **Cycle:** FIX-DEVTEAM-EPIC-WRAPPER-AUTOCLOSE-SWEEP
 
 ## Session 2026-07-29 — FIX-COLD-EVICT-EXCLUDE-IDS-VS-HARD-COHERENCE — REVIEW
 
@@ -43,5 +29,19 @@ Zone health: no drift detected.
 **Board:** `task_board.in_progress[FIX-AUDITOR-MEMACK-HEADROOM-FLOOR-AND-DEAD-TRACKEDBY]` → `review` (`next_agent: qa`), `.head` synced to idle, via `orch-apply.sh`.
 
 **Simplicity gate:** clean — 2 new helper functions + 1 constant, all directly load-bearing for AC1-3, no speculative abstraction (Q1-Q4 all NO).
+
+Zone health: no drift detected.
+
+## Session 2026-07-29 — FIX-DEVTEAM-EPIC-WRAPPER-AUTOCLOSE-SWEEP — REVIEW
+
+**Task:** BOUNDED-1 auto-pickup, `docs/agents/dev-team/flow/` (shared SSOT flow-doc/tooling, no `apps/<service>/` zone match — generic developer). Router-diagnosed gap: once pm decomposes an epic-wrapper backlog row and `.head` resets to idle, nothing ever re-visits it once its children[] all finish — `BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP` sat open for hours post-2026-07-10 despite all 11 children reaching `DONE_VERIFIED`, caught only by chance during manual inspection.
+
+**Actions taken:** New `scripts/devteam-wrapper-autoclose.jq` (single-script sweep — candidates already live in `ready[]`/`in_progress[]`, no promote half needed, mirrors `devteam-backlog-claim-ready-lane-consumer.jq`'s own shape) + 4 new shared predicates in `scripts/lib/devteam-eligibility.jq` (`all_children_terminal`, `is_terminal_task_status`, `normalize_task_status`, `has_hold_reason`): sweeps both source lanes for `is_epic_wrapper` rows whose every child resolves (hot lane OR cold-archived `docs/data/orch/archive/YYYY-MM.json`, case/separator-normalized) to orchStateSchema.ts's TERMINAL_SET, not `hold_reason`-held, into `review[]` (status REVIEW, `next_agent` = resolved owner, `.head`(b)-conditional sync per CANONICAL:SSOT-STATUSFLIP-LANEMOVE). New Step 4.4 in `post-cycle.md` (after 4.3, before 4.5) invokes it then dispatcher-wraps a per-row `task:<id>` claim + `Agent()` spawn of the resolved next_agent (usually pm) — a real auto-dispatch, not just a lane move (signal_queue was considered and rejected — its `to` vocabulary is cross-team, not an intra-dev-team dispatch channel). 2 new bullets in `main.md` § Reusable Scripts; both files' size-justification headers updated.
+
+**Verification:** New `scripts/audits/devteam-wrapper-autoclose-verify.sh` — 10/10 synthetic ACs PASS (all-terminal hot+cold sweep, non-terminal-child block, case/separator-drift normalization, missing-child conservative-skip, hold_reason guard, non-wrapper no-op passthrough, `.head` sync positive+negative, `in_progress[]` source lane, idempotency). Caught + fixed a real jq `.`-rescoping bug (`$arr | index(.key)` evaluates `.key` against `$arr` itself, not the piped to_entries object) via a minimal `jq -n` repro before it reached the fixture layer. Scratch-copy end-to-end run against a live `orch-state.json` copy + `scripts/orch-state-validate.sh` (Zod) PASS; unmodified live-data dry run confirmed a true no-op today (zero wrapper rows currently in `ready[]`/`in_progress[]`). Re-ran the 3 pre-existing `devteam-eligibility.jq`-dependent regression suites (`devteam-dispatch-gate-satisfiability.sh`, `devteam-bounded1-detail-disposition-gate-verify.sh`, `devteam-bounded1-prose-sequencing-gate-verify.sh`) — all rc=0, zero regressions from the shared-lib append.
+
+**Board:** `task_board.in_progress[FIX-DEVTEAM-EPIC-WRAPPER-AUTOCLOSE-SWEEP]` → `review` (`next_agent: qa`), `.head` synced to idle, via `orch-apply.sh`.
+
+**Simplicity gate:** clean — 1 new jq script + 1 new verifier + 4 append-only predicates on the existing shared lib, no new abstraction layer, no speculative generality (Q1-Q4 all NO).
 
 Zone health: no drift detected.
