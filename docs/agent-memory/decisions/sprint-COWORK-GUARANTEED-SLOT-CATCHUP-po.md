@@ -481,3 +481,21 @@
 - Fold the diacritic report into an existing row — rejected: zero prior art in 12 lanes; 2 tickers / 2 OCR runs = systemic, recurring 2+ rule applies.
 **why-decision:** Minted zone=multi with a MANDATED first step (compare OCR plane vs refine plane on the named unit_ids) because the zone is genuinely undetermined between pdf-extractor and mcp-server, and explicitly forbade a substitution-table repair — a repair on the wrong side of that boundary hides the defect.
 **why-change:** no change from plan.
+
+### STEP po-S51 · po · 2026-07-29T11:43:08Z
+**task-id:** FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP
+**what-done:** Answered the coordinator re-scoped question (what allocates while idle) by measurement; corrected its window attribution and my own; raised FIX-RAG-COMPACTION-DISK-AMPLIFICATION P3->P2.
+**what-considered:**
+- Accept the leak reading and escalate the CLEAN-EXIT row to P1 — rejected: RestartCount is 22, unmoved across the whole 90min window, and that row sets its own bar at >~5 restarts/day.
+- Run the decisive anon-vs-file cgroup read — rejected: needs docker exec into a container at 11.4 MiB headroom, which is how it died at 10:12Z. Named it on the row instead.
+- Spawn a sibling privileged container to read the VM cgroup tree — rejected: outside read-only-at-the-level-of-effects, and infra diagnosis is not the PO lane.
+**why-decision:** The brief attributed +10.8 MiB to 2 /index; the window actually holds 2 /index AND 2 /search, and ~190 /index earlier produced -4.1 MiB. Request-proportional leak is refuted by that asymmetry. The unmeasured structural fact does the real work: the on-disk dataset is 785 MiB against a 768 MiB cap, so charged memory fills to the limit by construction.
+**why-change:** Coordinator superseded its own attribution mid-task; I re-measured rather than adopting either reading.
+
+### STEP po-S52 · po · 2026-07-29T11:43:08Z
+**task-id:** FIX-RAG-COMPACTION-DISK-AMPLIFICATION
+**what-done:** Caught my own narration-without-actuation defect — the P3->P2 note landed while the priority field stayed P3 — and applied the field in a second pass with the miss recorded on the row.
+**what-considered:**
+- Silently patch the field — rejected: this is the same failure class I spent the tick documenting (ACK staleness rule asserted in prose, executed by nothing).
+**why-decision:** Read-back after write is the only control that catches it. A jq transform adding a key is not evidence it changed a sibling key; the dry-run I ran checked lane counts and marker presence, neither of which covers a field value.
+**why-change:** no change from plan.
