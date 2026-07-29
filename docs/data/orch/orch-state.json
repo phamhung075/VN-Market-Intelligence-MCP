@@ -88,12 +88,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "FIX-BCTC-D3C-FOLLOW-UP-RESET-ATTEMPTS flipped in_progress->review by dev-mcp-server; next_agent=qa on the row.",
-    "updated_at": "2026-07-29T10:57:36Z",
-    "updated_by": "dev-mcp-server"
+    "status": "in_progress",
+    "active_task_id": "FIX-COLD-EVICT-EXCLUDE-IDS-VS-HARD-COHERENCE",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-COLD-EVICT-EXCLUDE-IDS-VS-HARD-COHERENCE — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-29T11:20:28Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7476,21 +7476,6 @@
         "subsumed_by": "BA-COWORK-GUARANTEED-SLOT-CATCHUP",
         "po_consolidation_ruling_20260728": "PO RULING 2026-07-28T13Z: CONSOLIDATION HAPPENS AFTER ROUTING, NOT BEFORE — and it is a CLOSEOUT act, not a prerequisite. Three reasons. (1) It is already bound as acceptance, not as a gate: docs/handoffs/TASK-COWORK-CATCHUP-10.md AC-9 is 'All 6 consolidated rows closed together (5 fixed rows + umbrella task)', i.e. the consolidation is the epic's exit criterion. Doing it first would be closing rows whose fix has not shipped. (2) It buys zero throughput: all 5 of these rows are ALREADY inert — verified by executing scripts/lib/devteam-eligibility.jq against live data, is_bounded1_eligible=false on all 5 (4 carry a non-dev effective next_agent pm/architect; SPIKE-COWORK-GUARANTEED-SLOT-SUPERSEDE-WIRING is supervised without plan_only, so SLS's doubly-gated select misses it too). Consolidating them changes nothing that can move; routing the epic changes the only thing that can. (3) BA section 0.8 already assigns the owner-reconciliation to architect/PM at close time, and notes the 5 owner fields are stale relative to where the fix actually lands. WHAT THIS FIELD IS FOR: they are currently inert BY ACCIDENT (the NO-LANE hole), not by design. This stamp makes the subsumption explicit so a later triage pass that 'helpfully' routes one of them does not spawn duplicate work against files TASK-COWORK-CATCHUP-1..9 are already rewriting. Do NOT route these until the epic closes; then close all 6 together per AC-9.",
         "updated_by": "po/triage-20260728T13"
-      },
-      {
-        "id": "FIX-COLD-EVICT-EXCLUDE-IDS-VS-HARD-COHERENCE",
-        "size": "S",
-        "status": "BACKLOG",
-        "title": "Reconcile orch-cold-evict.sh --exclude-ids safety valve with Stage-1b hard-fail lane coherence",
-        "type": "FIX",
-        "zone": "scripts/",
-        "owner": "developer",
-        "priority": "normal",
-        "depends": [],
-        "note": "D5-BACKLOG-HYGIENE-VALIDATOR-HARDENING (commit ed01c5c1b) flipped orch-validate.mjs Stage-1b from warn-only to hard-fail process.exit(2). Discovered side-effect: orch-cold-evict.sh --exclude-ids leaves an excluded terminal-status row in a non-terminal lane (by design, to skip it during eviction) — now lane-incoherent, aborting the whole eviction run via the script's own pre-rename validate check. Reproduced independently: scripts/test/orch-cold-evict-tests.sh 19/27 PASS (8 FAIL), git-stash-confirmed causal by D5. Risk LOW today (no cron invokes orch-cold-evict.sh; current 4 live exclusions all use direct BLOCKED relabel instead of --exclude-ids, so the flag is not live-exercised) but latent — breaks the moment --exclude-ids is actually used. Needs a design decision: force-relabel excluded rows to a coherent status (e.g. BLOCKED) at eviction time, or give Stage-1b a bounded exception list for rows under active --exclude-ids. orch-cold-evict.sh carries a pre-existing R-HIGH-1 sole-SSOT-eviction-script flag — read that context first.",
-        "created_at": "2026-07-10T19:24:28Z",
-        "created_by": "router",
-        "source": "D5-BACKLOG-HYGIENE-VALIDATOR-HARDENING self-report recommendation, independently reproduced by router before minting"
       },
       {
         "id": "FIX-DEVTEAM-EPIC-WRAPPER-AUTOCLOSE-SWEEP",
@@ -17016,9 +17001,31 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-29T10:49:19Z",
-    "last_triaged_by": "po",
-    "in_progress": []
+    "last_triaged_at": "2026-07-29T11:20:13Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
+    "in_progress": [
+      {
+        "id": "FIX-COLD-EVICT-EXCLUDE-IDS-VS-HARD-COHERENCE",
+        "size": "S",
+        "status": "IN_PROGRESS",
+        "title": "Reconcile orch-cold-evict.sh --exclude-ids safety valve with Stage-1b hard-fail lane coherence",
+        "type": "FIX",
+        "zone": "scripts/",
+        "owner": "developer",
+        "priority": "normal",
+        "depends": [],
+        "note": "D5-BACKLOG-HYGIENE-VALIDATOR-HARDENING (commit ed01c5c1b) flipped orch-validate.mjs Stage-1b from warn-only to hard-fail process.exit(2). Discovered side-effect: orch-cold-evict.sh --exclude-ids leaves an excluded terminal-status row in a non-terminal lane (by design, to skip it during eviction) — now lane-incoherent, aborting the whole eviction run via the script's own pre-rename validate check. Reproduced independently: scripts/test/orch-cold-evict-tests.sh 19/27 PASS (8 FAIL), git-stash-confirmed causal by D5. Risk LOW today (no cron invokes orch-cold-evict.sh; current 4 live exclusions all use direct BLOCKED relabel instead of --exclude-ids, so the flag is not live-exercised) but latent — breaks the moment --exclude-ids is actually used. Needs a design decision: force-relabel excluded rows to a coherent status (e.g. BLOCKED) at eviction time, or give Stage-1b a bounded exception list for rows under active --exclude-ids. orch-cold-evict.sh carries a pre-existing R-HIGH-1 sole-SSOT-eviction-script flag — read that context first.",
+        "created_at": "2026-07-10T19:24:28Z",
+        "created_by": "router",
+        "source": "D5-BACKLOG-HYGIENE-VALIDATOR-HARDENING self-report recommendation, independently reproduced by router before minting",
+        "promoted_at": "2026-07-29T11:20:13Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-29T11:20:28Z",
+        "claimed_at": "2026-07-29T11:20:28Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
