@@ -10,71 +10,12 @@
 - **PO respawn — evaluated the skip-rule (`feedback_router_skip_po_respawn_identical_inputs`) and rejected it**: telegram reports WERE byte-identical to the 04:07Z triage (same 20 ids 3830-3849, all 2026-07-26) and signal_queue was empty (0 NEW) — 2 of 4 conditions held. But board was NOT unchanged (in_progress 0->1, review 131->133 from two rows landing this session) and the last full PO disposition was ~60min old (the memory's own cadence guard: spawn a real triage at the hourly mark regardless). Skip did NOT apply — spawned PO normally (`a0df6fe81d50623f2`, background), gave it the condensed telegram/board/signal summary + explicit note that the 20 reports are likely already-dispositioned from last tick (asked it to only re-mint if a report id beyond 3849 or a new topic appears). `task:po-triage-20260729` claim held open (per-day key, not released at spawn) pending PO's completion notification.
 - Board at spawn time: backlog=381, ready=51, in_progress=1, review=133, qa=0, done=9. QA-Drain starvation still live (review/qa gap grew, not shrunk) — flagged to PO in the spawn prompt as context only, not re-escalated (already PO's own tracked finding).
 
-## cycle-20260729T0437Z — BOUNDED-1 fired again (FIX-AGENT-SIGNALS-IDENTICAL-DUP-EMISSION -> dev-mcp-server); QA-Drain starvation LIVE-reconfirmed for the 2nd consecutive tick, still not overridden
+## cycle-20260729T0507Z-cont — RAW-verified both bg completions (PO triage + dev-mcp-server); PO's CI-RED self-close and 84-commit push both check out; out-of-band pm spawn for BATCH entry (SLS structurally unreachable)
 
-- **Preflight/gcc/CI-health clean**: verdict RUN, tick `2026-07-29T04:37Z`, SF-1+fire-election held. Cold-evict fired inside preflight script itself (2 signal rows -> archive/2026-07.json, commit `723127730`, benign sweep-guard warning, exactly 2 files touched).
-- **0a-D empty, file-drain 3 routed-to-po**: commit-sweep-guard near-miss (this session's own cold-evict commit, moot), a context_bloat_breach on dev-mcp-server's own decision journal (48KB>36KB cap, noted by dev-mcp-server itself as "not mine, out of zone"), 1 cowork-fire ping.
-- **Idle-capacity chain: BOUNDED-1 won AGAIN before SLS/RLC/QA-Drain got a turn** — same structural pattern as last tick, now 2/2 observed this session. Per main.md's own control flow (`JUMP TO execute` unconditionally on a BOUNDED-1 claim), did NOT override to force QA-Drain — the documented fix path is promoting `FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION` through SLS, not a router ad-hoc bypass. Not re-escalated (PO's own finding already covers it).
-- **execute-tier.md Phase 3.5 re-read fresh (not from memory)**: confirmed its actual documented pattern (L33-66) DOES release the `task:<id>` claim in `finally` immediately after the background `Agent()` call returns — this is the exact mechanism the `dev-20260729T041600Z-resume-dupspawn-gap` signal (filed 2 ticks ago, now RESOLVED-as-duplicate by PO) describes. Followed it faithfully: claimed, spawned, released immediately — consistent with the existing dup-of-an-existing-fix-row finding, not a new deviation.
-- **BOUNDED-1 dispatch**: `FIX-AGENT-SIGNALS-IDENTICAL-DUP-EMISSION` (P2, `zone:apps/mcp-server/`, Tier-1 zone-detect match) -> `dev-mcp-server` (`a393777fdf27a7b42`, background). Task: agent_signals systemic duplicate-emission rows (5 emitters, 2 mcp-server-scheduler + 3 cowork), finding is from 2026-06-25 (~5 weeks stale) — spawn prompt explicitly requires RAW-reverification against the CURRENT DB before any code change, not blind trust of the old snapshot.
-- Did not fall through to Step 1 PO Triage this tick (BOUNDED-1 claim consumes the tick per spec). Session exit: SF-1 + fire-election locks released per `jump:end`.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+- **PO triage (`a0df6fe81d50623f2`) RAW-verified, all claims hold**: CI-RED-cdd5fa5a-FIX row confirmed `DONE_VERIFIED` with fingerprint recorded (`29f66987...`); `git merge-base --is-ancestor 084f7652e HEAD`=true and `39a4dac7c` confirmed ancestor of `origin/main` (84-commit push landed, PUSH-BACKSTOP self-triggered since primary launchd `com.vn-market.fleet-push` is `EX_CONFIG 78` dead); both cited CI runs (30409436038, 30409525475) independently `gh run view`'d = `conclusion:success`, sha's match exactly. `.head` confirmed untouched at spawn-verify time (still `in_progress`/`FIX-AGENT-SIGNALS-IDENTICAL-DUP-EMISSION`) — PO's "conservation 672=672" figure didn't reproduce against my live re-sum (576) but this is a before/after-within-PO's-own-write check, not a fixed constant — board has continuous concurrent churn (caught it mutating in_progress 1→0 mid-verification, see next item) so a later snapshot legitimately differs. `task:po-triage-20260729` released.
+- **dev-mcp-server (`a393777fdf27a7b42`) RAW-verified, all claims hold**: 3 commits (`5f2e74719` fix, `643365859` memory, `d87513167` board-flip) all exist with matching diffs; `.head` confirmed synced to `idle`; board row confirmed `REVIEW`/`next_agent=ops`/`rebuild_required=true`/`branch=null`; unique index `idx_agent_signals_dedup_identical` present in `schema-news.ts`; test file present; tool/cron counts unchanged (184/88) as claimed. This explains the in_progress→review flip observed mid-PO-verification above — not a mystery, just the two completions landing back-to-back.
+- **PO's BATCH (1 UNBLOCK entry) actioned via out-of-band router spawn, per PO's explicit instruction**: `FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION` — spawn `pm` directly to decompose the completed architect brief (`docs/architecture-briefs/2026-07-25-devteam-idle-chain-rotation-durable-inbox.md`, verified exists, 29KB), explicitly NOT through dev-team's normal S4 dispatch. Verified the row's premise first (still BACKLOG/P0/supervised+plan_only/next_agent=pm, brief exists, 0 decomposition children exist yet). Re-read main.md's actual S4 UNBLOCK pattern (L777-798) before executing — confirmed it never touches `.head` (only `task:<batch_id>` claim/release around the spawn), so it's inherently safe here regardless of head's current idle/busy state; used the pattern verbatim: claimed `task:FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION`, spawned `pm` (background, `ace83075cf145c220`) with PLAN-ONLY + do-not-touch-.head constraints stated explicitly in the prompt, released the claim immediately per the documented pattern (DJ-GATE-1 delegated to pm's own journal write, per its spawn instructions).
+- Zero new rows minted this sub-cycle (PO's own "0 new rows" + this pm spawn is dispatch of an existing row, not a mint).
 
 ## cycle-20260719T0537Z — fully-idle (0 routable, PO channels dry, no dispatch); CI GREEN 90176484b; cowork-telemetry WATCH holds obs#1; overnight quiescence
 
