@@ -1,0 +1,14 @@
+{
+  "from": "commit-sweep-guard",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-07-29T17:05:41Z",
+  "payload": "[sweep-guard] BARE commit about to absorb 6 staged file(s) not necessarily this actor's own: .github/workflows/ci.yml docs/WORK.md docs/data/size-lint-baseline.json docs/policies/dev-standards.md scripts/audits/size-lint-justification.sh scripts/audits/size-lint-justification.test.sh. actor=64c7c677-0f0f-4cee-a3ce-dba79d70b7ae mode=warn. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+  "_processed": {
+    "fingerprint": "811f169ac279bad5a344be0bede45edd4ad1126133de06619569bf0a829d6bcc",
+    "processedAt": "2026-07-29T17:15:25Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
