@@ -15434,6 +15434,40 @@
       "severity": "WARN",
       "status": "READ",
       "payload_ref": null
+    },
+    {
+      "id": "dev-20260729T014905Z-qadr",
+      "ts": "2026-07-29T01:49:05Z",
+      "from": "dev-team",
+      "to": "po",
+      "type": "system-issue",
+      "summary": "QA-Drain starved: BOUNDED-1 wins head-idle race nearly every tick; review[]/next_agent:qa backlog=94, oldest 6+d, growing",
+      "severity": "MED",
+      "status": "READ",
+      "payload_ref": null,
+      "detail": "docs/agents/dev-team/flow/main.md head-idle fall-through order is BOUNDED-1 -> SLS -> RLC -> QA-Drain, first eligible lane wins and consumes the tick (no fall-through to later lanes same tick). BOUNDED-1 fires whenever WIP(in_progress)<1 AND anything eligible sits in backlog[] -- and the FACTORY-MAINTAINABILITY-2026-06 epic alone supplies a long queue of eligible P1-P3 rows, so BOUNDED-1 has effectively unlimited ammunition and wins almost every tick the moment its own single in-flight task completes. Result: QA-Drain (dedicated qa[]<1 cap, claims oldest review[]-with-next_agent:qa row) has not fired in any observed dev-team tick this session (0037Z, 0107Z, 0146Z all won by BOUNDED-1). Live count: 94 review[] rows carry next_agent:qa/status:REVIEW; oldest with a timestamp is 2026-07-23 (6+ days), several carry no timestamp at all (older still, predate the field). This is the same failure shape as FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS (P0 idle 6+ days, no sweeper existed) and FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN (the original backlog row QA-Drain itself was built to fix) -- the sweeper now EXISTS but is structurally starved by chain ordering, not absent. Router is not reordering main.md unilaterally (architect-level change, needs PO/architect judgement on tradeoffs -- e.g. dedicated QA_WIP-first ordering vs a periodic every-Nth-tick QA-priority pass vs raising the WIP budget). Routing for triage/architect assignment."
+    },
+    {
+      "id": "sys-20260729T023252-689f",
+      "ts": "2026-07-29T02:32:52Z",
+      "from": "system-auditor",
+      "to": "po",
+      "type": "data_stale",
+      "summary": "bctc-discover stale 510 min (check B-05)",
+      "severity": "CRITICAL",
+      "status": "READ",
+      "payload_ref": null
+    },
+    {
+      "id": "sys-20260729T023259-496f",
+      "ts": "2026-07-29T02:32:59Z",
+      "from": "system-auditor",
+      "to": "po",
+      "type": "data_stale",
+      "summary": "VPS proxy bctc route stale 18h (check B-06)",
+      "severity": "CRITICAL",
+      "status": "READ",
+      "payload_ref": null
     }
   ],
   "backlog_detail": [
