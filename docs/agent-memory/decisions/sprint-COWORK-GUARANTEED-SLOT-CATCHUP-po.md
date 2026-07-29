@@ -279,3 +279,31 @@
 - Revert silently — rejected: the misread is reusable, so the row carries a named po_correction field.
 **why-decision:** blocked_reason/blocked_on/po_question were all null, which I read as "nothing pending"; the actual parked state lived in named fields (plan_only, decomposed_into, po_lane_disposition_*). Null generic slots are not evidence of a stranded row.
 **why-change:** Caught only because the PO notebook Carry-over named a '-HOOK' sibling; the ci_red-scoped dedup scan would not have surfaced it.
+
+### STEP po-S30 · po · 2026-07-29T00:05:50Z
+**task-id:** FIX-NOTEBOOK-LINECAP-SWEEP-BYTE-BLIND-BACKSTOP
+**what-done:** Declined a row for the self-resolved main.md breach; minted a P1 row for the byte-blind cadence backstop behind it instead.
+**what-considered:**
+- Accept router's "hook already fixed it, durable" and close — rejected: the hook only fires on Write|Edit, so durability is a property of the BACKSTOP, not the hook.
+- Mint a row for main.md itself — rejected: live re-measure 87L/9334B, condition gone.
+- Attack the sweep's line-only pre-filter — chosen.
+**why-decision:** RAW count: 10/46 notebooks over the 12000B cap and 9 of them are line-UNDER, so `[ line_count -le 200 ] && continue` skips them before the fixed pruner ever sees them. The developer who shipped the hook flagged this himself and asked PO to decide.
+**why-change:** Router framed signal 1 as "no action needed"; the signal was the entry point to a live actuator gap, not the finding.
+
+### STEP po-S31 · po · 2026-07-29T00:05:50Z
+**task-id:** FIX-MOCKGUARD-SCOPE-EXCLUDE-TESTGO
+**what-done:** Promoted the existing BACKLOG row to READY/P2 and corrected zone `multi` -> `cross-service/`.
+**what-considered:**
+- Mint a new row from the signal — rejected: prior art existed, board grep caught it.
+- Wait for the twin agents-architect ruling on a cross-language exclusion — rejected as a blocker, kept as AC4 design input.
+**why-decision:** Recurring every tick with exit=1 clears the recurring-bug bar. `zone: multi` was the real dispatch blocker: it forces an architect split, but the entire fix is one file — apps/macro-indicators and apps/mcp-server are SCAN targets, not edit targets.
+**why-change:** Added AC3 (planted-positive must still HARD-FAIL) so the fix cannot be a blunt exclusion that kills the detector.
+
+### STEP po-S32 · po · 2026-07-29T00:05:50Z
+**task-id:** FIX-STRANDED-SWEEP-CLASSIFY-AGENT-MODEL-SWITCH
+**what-done:** Rescoped my own 6h-old P3 row to cover the dominant new mechanism (no age gate on the UNKNOWN bucket) and raised P3->P2; left it BACKLOG.
+**what-considered:**
+- Mint a 2nd row for the age gate — rejected: same 60-line function, two agents editing it is the collision the router is avoiding elsewhere this tick.
+- Promote to READY — rejected: ready[] holds 53 rows, 30 at P1; promotion adds queue noise, not throughput.
+**why-decision:** AUTO-COMMIT has an SSS_AGE_HOURS young-skip gate (L122-128), UNKNOWN at L143-148 has none, so live in-flight edits are reported as stranded — 4 of 9 this tick, 3 of 10 last tick.
+**why-change:** Router asked me to re-run the sweep and own 7 paths; the paths are a symptom, the missing age gate is the defect.
