@@ -164,22 +164,20 @@ check).
    failed, not that memory is unhealthy).
 3. Otherwise parse the verbatim JSON block emitted by `verify-a30-mcp-memory-reclamation.sh`:
    `verdict`, `reason`, `analysis.{min_pct,max_pct,reclamation_dips}`, `state.oom_killed`,
-   `vm.{vmhwm_kb,vmrss_kb}`.
-4. Verdict/reason mapping — CRITICAL branches are evaluated FIRST and are UNCONDITIONAL;
-   no downstream clause may veto or downgrade them
-   (FIX-AUDITOR-A30-VMHWM-VETO-TAUTOLOGY-FALSE-NEGATIVE, commit 1/2 — re-sequences the
-   clause below, still named ADDITIONAL VETO, which previously ran BEFORE this mapping and
-   pre-empted both CRITICAL branches; see that row for the full defect history):
+   `vm.{vmhwm_kb,vmrss_kb}` (DIAGNOSTIC-ONLY — informational context for a human reading a
+   WARN notebook entry; not consumed by any verdict/severity mapping below — see
+   FIX-AUDITOR-A30-VMHWM-VETO-TAUTOLOGY-FALSE-NEGATIVE commit 2/2: VmHWM-vs-VmRSS was
+   removed as an automated discriminator because VmHWM is a monotone high-water mark with
+   no window membership — `vmhwm_kb > vmrss_kb` is true for almost any process not sitting
+   exactly at its lifetime peak, so it carried ~zero information and silently downgraded
+   real ESCALATE findings to PASS, including a fatal miss on 2026-07-29).
+4. Verdict/reason mapping:
    - `verdict=="FOLD"` → PASS, no emit.
-   - `verdict=="ESCALATE"`, reason contains `"OOMKilled=true"` → CRITICAL. Unvetoable.
-   - `verdict=="ESCALATE"`, reason contains `"peak >97%"` → CRITICAL. Unvetoable.
+   - `verdict=="ESCALATE"`, reason contains `"OOMKilled=true"` → CRITICAL.
+   - `verdict=="ESCALATE"`, reason contains `"peak >97%"` → CRITICAL.
    - `verdict=="ESCALATE"`, reason contains `"no reclamation dip"` (>93% baseline case) →
-     apply the **ADDITIONAL VETO** (closes a gap in the unmodified script — it collects
-     `vm.vmhwm_kb`/`vmrss_kb` but does not itself gate on them): if `vmhwm_kb` and
-     `vmrss_kb` are both numeric (not `"UNAVAILABLE"`) AND `vmhwm_kb > vmrss_kb` →
-     downgrade to PASS, no emit (peak-before-window reclamation already proven, even if
-     this window's 6 samples sit on a plateau that never crosses the intra-window dip
-     detector). Otherwise → WARN.
+     WARN. May cite `vm.{vmhwm_kb,vmrss_kb}` from clause 3 as informational context in the
+     emitted notebook entry — it must never change this verdict.
 5. This is a SINGLE self-contained per-cycle evidence bundle. NEVER compare this cycle's
    verdict against a prior cycle's notebook entry or MemPerc reading to decide escalation —
    that comparison is exactly what produced the false 03:42Z CRITICAL. Each cycle proves
