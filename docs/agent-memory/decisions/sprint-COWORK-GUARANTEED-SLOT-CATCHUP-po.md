@@ -317,3 +317,32 @@
 - Batch all 18 auditor rows into one epic (rejected: destroys per-row diagnostics)
 **why-decision:** systemAuditTier1/2/3 ARE in system-map with clean cron schedules yet absent from get_cron_health, so the tier freeze IS the join miss; two rows would each have fixed half a join.
 **why-change:** Brief asserted the tier crons are NOT in system-map — verified false. Fix target moves from inventory-side to data-source-side plus a fail-loud-on-join-miss policy.
+
+### STEP po-S34 · po · 2026-07-29T04:27:54Z
+**task-id:** FIX-COWORK-SPAWN-IDENTITY-PREAMBLE-OFFFLOW
+**what-done:** Ruled the 07-12 narrate-not-execute fix a WRONG-LAYER failure, not a missing fix; routed the recurrence to the already-minted spawn-prompt row and made it dispatchable rather than minting a 4th signal.
+**what-considered:**
+- Mint a fresh recurring_bug row (rejected: 3rd signal for a class that already has a row)
+- Harden the in-flow guard further (rejected: guard is structurally unreachable)
+- Unblock the existing spawn-prompt-preamble row (chosen)
+**why-decision:** ae7dac51a put the guard at market-watcher/flow/main.md Step -1, but the 07-29 spawn never opened that file — it ran the router CLAUDE.md dispatch protocol; the row's own detail already states "in-flow Step -0 identity guard is structurally bypassed".
+**why-change:** Dispatch asked whether the 07-12 fix was dropped. It landed and shipped — it just cannot fire for this failure mode.
+
+### STEP po-S35 · po · 2026-07-29T04:27:54Z
+**task-id:** CLEAN-BACKLOG-DETAIL-ROUTING-KEY-DRIFT
+**what-done:** Traced why the root-cause fix sat 17 days undispatched: detail carries routing intent under keys no lane resolver reads (route_to, mode) — measured 5 rows repo-wide.
+**what-considered:**
+- Hand-dispatch the one row (rejected: leaves the mechanism live)
+- Bulk-flag all 82 unrouted rows (rejected: policy change, floods SLS, not PO's call)
+- Normalize only the mechanically unambiguous key drift (chosen)
+**why-decision:** effective_next_agent/effective_plan_only read next_agent/plan_only only; route_to+mode are invisible, so the row resolves to "unrouted" and every lane conservatively withholds it.
+**why-change:** no change from plan.
+
+### STEP po-S36 · po · 2026-07-29T04:27:54Z
+**task-id:** FIX-ALERT-COMMANDER-NOTEBOOK-SINGLE-BLOB-UNPRUNABLE
+**what-done:** Declared the depends edge stale and released it; re-measured the file at source (124374B, 198L, 1 section) rather than trusting the breach signals.
+**what-considered:**
+- Wait for the dep to reach DONE_VERIFIED (rejected: dep sits in the 130-row qa queue)
+- Route to claude-manager-helper for a manual prune (rejected: symptomatic, restarts the clock)
+**why-decision:** The dep (byte-aware pruner) shipped b42f3fa3a on 07-28 and the row's own analysis says no pruner fix can reach a single-section file — the edge was never causal, and at 198/200 lines the line cap is 2 lines away.
+**why-change:** no change from plan.
