@@ -18,9 +18,12 @@
  *   leave the document) — see brief §4.2 for the rejected-design proof
  *   against the naive "no lane may ever decrease" wording.
  *
- * METRICS (brief §4.1 — literal formula, do not re-derive):
+ * METRICS (brief §4.1 formula, EXTENDED FIX-ORCHSTATE-CONSERVATION-GUARD-QA-LANE-BLIND
+ *   to include the 'qa' lane — see that task for why the original brief's lane
+ *   set went stale: 'qa' is now actively populated by the Review-Lane QA-Drain
+ *   mechanism, so a qa[] collapse must be counted or the guard is blind to it):
  *   task_total(doc)   = length(backlog) + length(ready) + length(in_progress)
- *                     + length(review) + length(done) + length(done_verified)
+ *                     + length(review) + length(qa) + length(done) + length(done_verified)
  *                     + Σ active_sprints[].tasks[].length
  *                     + Σ closed_sprints[].tasks[].length
  *   signal_total(doc) = length(signal_queue.rows)
@@ -64,7 +67,7 @@ import { existsSync, readFileSync } from 'node:fs';
 const FLOOR_RATIO = Number(process.env.CONSERVATION_FLOOR_RATIO ?? '0.5');
 const MIN_BASELINE = Number(process.env.CONSERVATION_MIN_BASELINE ?? '10');
 
-const FLAT_TASK_LANES = ['backlog', 'ready', 'in_progress', 'review', 'done', 'done_verified'];
+const FLAT_TASK_LANES = ['backlog', 'ready', 'in_progress', 'review', 'qa', 'done', 'done_verified'];
 
 /**
  * task_total(doc) per brief §4.1 — whole-board task magnitude, immune to

@@ -14,6 +14,8 @@
 #   E3    — empty stdin               → exit 3
 #   E3-NF — missing live file         → exit 3
 #   HAPPY — valid candidate           → exit 0, fixture updated
+#   QA-COLLAPSE / QA-APPEND-HAPPY — task_board.qa[] is counted in the
+#     conservation guard's task_total (FIX-ORCHSTATE-CONSERVATION-GUARD-QA-LANE-BLIND)
 #
 # SAFETY: all tests use ORCH_APPLY_LIVE_FILE_OVERRIDE pointing at a throwaway
 # fixture under mktemp. The REAL docs/data/orch/orch-state.json is NEVER touched.
@@ -447,6 +449,118 @@ else
 fi
 
 assert_real_live_unchanged "SHRINK-ALLOWED"
+
+# =============================================================================
+# QA-LANE CONSERVATION TESTS (FIX-ORCHSTATE-CONSERVATION-GUARD-QA-LANE-BLIND)
+# =============================================================================
+# scripts/orch-conservation-check.mjs FLAT_TASK_LANES omitted 'qa', so
+# task_total() never summed task_board.qa[] -- a catastrophic qa[] collapse
+# was invisible to the floor-ratio circuit-breaker (qa[] is now actively
+# populated by the Review-Lane QA-Drain mechanism, dev-team flow).
+#
+# Dedicated fixture: 10 backlog rows (baseline, untouched) + 50 qa rows (the
+# lane under test) -> task_total=60. Emptying qa[] alone drops task_total to
+# 10 (10/60 = 0.167 < 0.5 floor) -- a genuine violation IF AND ONLY IF 'qa'
+# is counted; this is the exact regression this fix closes.
+#
+# QA-COLLAPSE      -- negative control: qa[] wiped -> MUST be rejected (exit 1),
+#                     fixture byte-unchanged. RED before the FLAT_TASK_LANES fix
+#                     (both live/candidate qa[] silently excluded -> no drop
+#                     detected, exit 0) -- GREEN after.
+# QA-APPEND-HAPPY  -- regression guard: a normal additive write to qa[] (e.g.
+#                     Review-Lane QA-Drain moving a task in) must NOT be blocked.
+# =============================================================================
+QA_LANE_LIVE="$FIXTURE_DIR/qa-lane-live.json"
+N_QA_BACKLOG=10
+N_QA=50
+
+build_qa_lane_fixture() {
+  jq -n \
+    --argjson n_backlog "$N_QA_BACKLOG" \
+    --argjson n_qa "$N_QA" \
+    '{
+      "_meta": {"schema":"v4","ssot":true,"updated_at":"2026-06-01T00:00:00Z","updated_by":"fixture"},
+      "head": {"status":"idle","active_task_id":null,"next_agent":null},
+      "task_board": {
+        "backlog": [range($n_backlog) | {id: ("QA-BACKLOG-" + (. | tostring)), status: "BACKLOG"}],
+        "qa": [range($n_qa) | {id: ("QA-ROW-" + (. | tostring)), status: "QA"}],
+        "active_sprints": []
+      },
+      "signal_queue": {
+        "_updated_at": "2026-06-01T00:00:00Z",
+        "_updated_by": "fixture",
+        "rows": []
+      }
+    }' > "$QA_LANE_LIVE"
+}
+build_qa_lane_fixture
+
+if ! bun "$VALIDATOR" "$QA_LANE_LIVE" >/dev/null 2>&1; then
+  fail "QA-LANE setup — populated fixture failed standalone validation (test bug, not product bug)"
+fi
+
+QA_LANE_HASH_BEFORE=$(file_hash "$QA_LANE_LIVE")
+
+# ─────────────────────────────────────────────────────────────────────────
+# QA-COLLAPSE -- candidate wipes task_board.qa[] entirely, backlog untouched.
+# task_total: live=60 (10 backlog + 50 qa) -> candidate=10 (10 backlog + 0 qa)
+# = 0.167 < 0.5 floor. Pre-fix, qa[] was never summed on either side, so
+# live/candidate both read as 10 -- no drop detected, exit 0 (the exact gap
+# this fix closes). Post-fix, live=60 correctly counts qa[] -> caught.
+# ─────────────────────────────────────────────────────────────────────────
+QA_COLLAPSE_CANDIDATE=$(jq --arg now "2026-06-01T00:01:00Z" \
+  '.task_board.qa = [] | ._meta.updated_at = $now' \
+  "$QA_LANE_LIVE")
+
+EXIT_QA_COLLAPSE=0
+printf '%s' "$QA_COLLAPSE_CANDIDATE" \
+  | ORCH_APPLY_LIVE_FILE_OVERRIDE="$QA_LANE_LIVE" bash "$APPLY_SH" 2>/dev/null \
+  || EXIT_QA_COLLAPSE=$?
+
+if [ "$EXIT_QA_COLLAPSE" -eq 1 ]; then
+  pass "QA-COLLAPSE — qa[] wipe rejected — exit 1"
+else
+  fail "QA-COLLAPSE — expected exit 1, got $EXIT_QA_COLLAPSE (qa[] lane is still blind to the conservation guard)"
+fi
+
+QA_LANE_HASH_AFTER_COLLAPSE=$(file_hash "$QA_LANE_LIVE")
+if [ "$QA_LANE_HASH_BEFORE" = "$QA_LANE_HASH_AFTER_COLLAPSE" ]; then
+  pass "QA-COLLAPSE — populated fixture UNCHANGED (no rename occurred)"
+else
+  fail "QA-COLLAPSE — populated fixture CHANGED (CRITICAL — conservation guard did not block the qa[] collapse)"
+fi
+assert_real_live_unchanged "QA-COLLAPSE"
+
+# ─────────────────────────────────────────────────────────────────────────
+# QA-APPEND-HAPPY — regression guard: a normal additive write to qa[] (one
+# new row, e.g. a task landing in qa[] via the Review-Lane QA-Drain) must
+# NOT be blocked by the now qa[]-aware guard.
+# ─────────────────────────────────────────────────────────────────────────
+QA_APPEND_CANDIDATE=$(jq --arg now "2026-06-01T00:02:00Z" \
+  '.task_board.qa += [{"id":"QA-ROW-APPENDED","status":"QA"}] | ._meta.updated_at = $now' \
+  "$QA_LANE_LIVE")
+
+PRE_QA_APPEND_N=$(jq '.task_board.qa | length' "$QA_LANE_LIVE")
+
+EXIT_QA_APPEND=0
+printf '%s' "$QA_APPEND_CANDIDATE" \
+  | ORCH_APPLY_LIVE_FILE_OVERRIDE="$QA_LANE_LIVE" bash "$APPLY_SH" 2>/dev/null \
+  || EXIT_QA_APPEND=$?
+
+if [ "$EXIT_QA_APPEND" -eq 0 ]; then
+  pass "QA-APPEND-HAPPY — legit qa[] append accepted — exit 0"
+else
+  fail "QA-APPEND-HAPPY — expected exit 0, got $EXIT_QA_APPEND"
+fi
+
+POST_QA_APPEND_N=$(jq '.task_board.qa | length' "$QA_LANE_LIVE" 2>/dev/null || echo -1)
+if [ "$POST_QA_APPEND_N" = "$((PRE_QA_APPEND_N + 1))" ]; then
+  pass "QA-APPEND-HAPPY — task_board.qa.length == pre+1"
+else
+  fail "QA-APPEND-HAPPY — task_board.qa.length expected $((PRE_QA_APPEND_N + 1)), got $POST_QA_APPEND_N"
+fi
+
+assert_real_live_unchanged "QA-APPEND-HAPPY"
 
 # =============================================================================
 # UPDATED_AT STAMPING TESTS (FIX-ORCHSTATE-UPDATED-AT-WRITE-PATH)
