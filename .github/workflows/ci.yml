@@ -212,6 +212,21 @@ jobs:
         working-directory: apps/pdf-extractor
         run: lint-imports --config pyproject.toml
 
+  size-lint:
+    name: size-lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Pure bash/jq/wc — no bun/go/python toolchain needed, cheapest job in the pipeline.
+      # Baseline/ratchet CI guardrail for source-file size + size-justification headers.
+      # See docs/architecture-briefs/2026-07-24-factory-guard-ci-size-lint-justification.md
+      # and docs/data/size-lint-baseline.json (grandfathered debt snapshot).
+      - name: Run size-lint-justification --check
+        run: bash scripts/audits/size-lint-justification.sh --check
+
 # AC-8 (optional) — Branch protection setup:
 # To require CI jobs before merging to main, go to:
 #   GitHub repo > Settings > Branches > Add branch protection rule
