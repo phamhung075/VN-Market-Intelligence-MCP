@@ -39,3 +39,17 @@ Zone health: no drift detected.
 **Simplicity gate:** PASS — Q1 test-only override seam justified (no other way to fixture-test without polluting the real repo, matches established precedent), Q2 no single-use abstractions (both helper fns have 2 call sites), Q3 clean, Q4 comment density matches sibling CANONICAL scripts' own precedent.
 
 Zone health: no drift detected.
+
+## Session 2026-07-29 — FACTORY-GUARD-CI-METRICMASK-IMPL — REVIEW
+
+**Task:** dev-team BOUNDED-1 idle-capacity pickup (`cross-service/`, epic FACTORY-MAINTAINABILITY-2026-06), build-vs-plan child of architect brief `2026-07-24-factory-guard-ci-metric-mask-lint.md`. Deliver the metric-mask CI guardrail + fix all live offenders (zero-tolerance, no baseline — unlike the size-lint sibling).
+
+**Actions taken:** New `scripts/audits/metric-mask-lint.sh` (`--check` only). Fixed `cascadeEngine.ts:356,375,394` `seedEntry.confidence ?? 0.6` → `?? 0` (behaviorally identical for every real input, below detector's 0.7 credibility floor either way). Fixed `marketSentimentCalculator.ts:174` `row.impact_score ?? 1.0` by excluding the row (impact_score genuinely nullable, `?? 0` would have fabricated a "zero impact" weight). Annotated `watchlist.ts:198` + a 5th real hit my own lint surfaced beyond the brief's declared scope — `brokerCredibilityTools.ts:51` `baseConfidence = 1` — with `metric-mask-allow:`.
+
+**Verification:** `metric-mask-lint.test.sh` 10/10 PASS. Targeted suites 100% green (FIX-1279-msci-bullish 14/14, P0-4-market-sentiment-index 37/37, cascade files 31/31, 915-broker-credibility 22/22, watchlist 25/25). `tsc --noEmit` clean. Full `bun test`: 14904-14907/15007 pass, 60-63 fail — all pre-existing, tracked by board row `FIX-MCP-SUITE-HEALTH-BASELINE` (order-dependent full-suite pollution); confirmed by re-running 3 sampled failing files in isolation, 32/32 pass standalone.
+
+**Board:** `task_board.in_progress[FACTORY-GUARD-CI-METRICMASK-IMPL]` → `review` (`next_agent: qa`), `.head` reset to idle, same `orch-apply.sh` write.
+
+**Simplicity gate:** PASS — no excess feature beyond the brief's 3 detected shapes, no single-use abstractions, structure mirrors size-lint sibling per instruction.
+
+Zone health: no drift detected.
