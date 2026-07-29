@@ -10,6 +10,7 @@ All routes live in `apps/frontend/app/routes/`.
 |---|---|---|
 | `_index.tsx` | `/` | Gateway health check |
 | `dashboard.tsx` | `/dashboard` (layout) | None (shared nav) |
+| `dashboard._index.tsx` + `api.market-digest.tsx` | `/dashboard/` (Market Overview / Tổng Quan) | `GET /api/market-digest` (proxied via api.market-digest.tsx → mcp-server :3000). DTO: `{ items: [{id, text, ts, type, from_agent}], count, fetchedAt, data_asof }`. `items[].ts` drives each dish's per-item `ClientTimestamp`; the top-level `data_asof` (bare SQLite `"YYYY-MM-DD HH:MM:SS"`, no offset) drives a page-level `<FreshnessBadge slaTierKey="daily">` (FE-PG-_INDEX-FRESH-FIX) — normalised to ISO8601 UTC via the shared `parseDate` helper (`app/lib/formatDate.ts`) before being handed to the badge, avoiding host-TZ skew (this host resolves Europe/Paris, +2h). `fetchMarketDigestData(origin)` is the named, test-importable loader-body helper (same extraction pattern as `fetchMacroData`/`fetchAlertsData`). |
 | `dashboard.server.tsx` | `/dashboard/server` | `GET /health` |
 | `dashboard.fetch.tsx` | `/dashboard/fetch` | `GET /news/reuters/headlines`, `GET /news/bloomberg/headlines`, `GET /macro/external` |
 | `dashboard.db.tsx` | `/dashboard/db` | `GET /stock/price/history?code=VNINDEX`, `GET /news/reuters/headlines` |
