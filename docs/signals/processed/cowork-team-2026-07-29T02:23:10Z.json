@@ -3,7 +3,7 @@
   "to": "dev-team",
   "type": "cowork-fire",
   "payload": {
-    "fire_time": "20260722T022430Z",
+    "fire_time": "2026-07-29T02:21:37Z",
     "matched_slots": [
       "chef-intraday"
     ],
@@ -16,10 +16,10 @@
       "docs/agents/unified-agent/flow/chef.md"
     ],
     "silent": false,
-    "drift_min": 6,
+    "drift_min": 5,
     "errors": [],
     "pressure_mode": "adaptive",
-    "calendar_status": "unknown",
+    "calendar_status": "open",
     "suppressed_calendar": [],
     "suppressed_cadence": [],
     "downgraded": [],
@@ -28,9 +28,9 @@
       "chef-intraday": "cadence"
     },
     "cadence_minutes": {
-      "chef-intraday": "120"
+      "chef-intraday": 120
     },
-    "last_fired_timestamp": "2026-07-22T02:23:39Z",
+    "last_fired_timestamp": "2026-07-29T02:21:37Z",
     "last_fired_slots": [
       "chef-intraday"
     ],
@@ -40,15 +40,15 @@
     "nominal_tick": "02:15",
     "leader_lock": "acquired",
     "dev_head": "unknown",
-    "devq": null,
-    "signal_backlog": 3,
-    "note": "chef-intraday intraday dish spawned (unified-agent, cadence-due ~17.9h stale, market open). CHEF mutex not triggered (no guaranteed CHEF sibling in MATCHES). Step 4.7 tick-snapshot skipped (single consumer, zero-blocker fallback). No fresh A-30 re-emit to fold this tick."
+    "devq": 5,
+    "signal_backlog": 12,
+    "note": "VN market OPEN tick. chef-intraday due on 120min cadence (last fired 07-24T08:21Z). CHEF mutex no-op (single non-guaranteed CHEF slot, no guaranteed sibling this tick). Single MED po-row (dev-team QA-Drain starvation, dev-20260729T014905Z-qadr) left NEW, unchanged from prior ticks -- no cowork routing action."
   },
   "priority": "low",
-  "createdAt": "20260722T022430Z",
+  "createdAt": "2026-07-29T02:23:10Z",
   "_processed": {
-    "fingerprint": "7ab410fde899a1a392c1fe3e90b6f47b094a2da385e51f9d06e2331a25a251d1",
-    "processedAt": "2026-07-22T02:45:34Z",
+    "fingerprint": "cd1b124c1c9e483d67a27464035757ffa3396957aa7a69d0fc7ed38f2b34cf6a",
+    "processedAt": "2026-07-29T02:46:27Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
