@@ -1,6 +1,13 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-19T08:07Z
+**Written:** 2026-07-29T08:17Z
+
+## cycle-20260729T0807Z — BOUNDED-1 claimed FIX-VPS-SSC-INSIDER-502, Tier-3 fallback to generic developer (vps-scripts/ zone unmapped in system-map.json — signal dropped to po)
+
+- **Preflight/gcc/CI clean**: RUN tick `2026-07-29T08:07Z`; CI GREEN unchanged (`39a4dac7c`); `.head` idle from prior tick's clean close-out.
+- **Drain: 2 routed-to-po** (`commit-sweep-guard-*` telemetry, a cowork-team envelope). Committed as `8e7f05589`.
+- **BOUNDED-1 fired (WIP=0)**: promoted+claimed `FIX-VPS-SSC-INSIDER-502` (P2, size S) — VPS proxy HTTP 502 on ssc-insider upstream, decoupled from BA-PREDICTION-EVIDENCE-REVIVAL/TASK-EVIDENCE-HOP1-MCP. Detail_ref resolved cleanly this time (not broken, unlike last tick's row). **Zone gap found**: task zone `vps-scripts/` matches no entry in `docs/data/system-map.json .project.zones[]` (12 mapped zones, all `apps/<service>/`-shaped or the generic `cross-service`/`scripts/` catch-all) — Tier-1/Tier-2 zone-detect both miss. A `dev-vps-crawls` specialist agent exists and fits this domain by description, but system-map.json doesn't wire it to any zone path, so I did not guess the mapping — fell through to documented Tier-3 (generic `developer`) and dropped `docs/signals/zone-missing-FIX-VPS-SSC-INSIDER-502-*.json` to po recommending system-map.json get a `vps-scripts/` → `dev-vps-crawls` entry. Dispatch prompt flagged the live-SSH/ops-vps-fetch handoff option explicitly since the detail's own `decoupling_reason` says root-cause diagnosis needs VPS shell access. Dispatched background `a9ee45ba06d247cbe`, reminded on the row-level `next_agent="qa"` check (caught-and-fixed earlier today on FU-ORCH-HOT-SUB150-SPRINT-LIFECYCLE).
+- BOUNDED-1 claim consumed the tick (JUMP TO execute) — did not fall through to SLS/RLC/QA-Drain/Step 1. Review-lane QA-Drain remains starved (137 rows) — unchanged, still gated behind TASK-DEVTEAM-IDLE-CHAIN-2-MAIN-FLOW (BACKLOG, depends on T1/REVIEW-not-yet-DONE_VERIFIED).
 
 ## cycle-20260729T0737Z-verify — RAW-verified developer's FU-ORCH-HOT-SUB150-SPRINT-LIFECYCLE completion; head-sync 3rd CONSECUTIVE clean pass; found+fixed a stranded next_agent gap
 
@@ -15,13 +22,6 @@
 - **Drain: 3 routed-to-po** (`commit-sweep-guard-*` telemetry, a context-bloat signal on the COWORK-GUARANTEED-SLOT-CATCHUP-developer decision journal, and a cowork-team envelope) — none dev-team's own commits, all po's triage lane.
 - **BOUNDED-1 fired (WIP=0)**: promoted+claimed `FU-ORCH-HOT-SUB150-SPRINT-LIFECYCLE` (priority_rank=2) — "drive hot orch-state.json <150KB: sprint-lifecycle eviction (close terminal active_sprints to cold) + decision_journal/sprint_goal trim". **Found the row's `detail_ref` broken** (`backlog-detail.json#FU-ORCH-HOT-SUB150-SPRINT-LIFECYCLE` — grepped the file directly, no such `items[]` entry exists) — dispatched from the board row's own inline fields only, flagged this explicitly to the developer rather than inventing acceptance criteria. Live orch-state.json measured 2,478,170 bytes at claim time; sprint_goal.entries=18 (13 active/3 PLANNING/1 OPEN/1 null), decision_journal=49 entries — passed these numbers plus the three standing eviction-safety memories (dangling detail_ref, no-age-gate orphan, STATUSFLIP-LANEMOVE head-sync) to the developer so eviction stays conservative (terminal-only) rather than guessing at "active" rows. Zone `docs/data/orch/` correctly Tier-3-fallback'd to generic `developer` (no `apps/<service>/` match) — same confirmed-correct pattern as the auditor-heartbeat row two ticks ago. Dispatched background `a6a161e692c9bd95c`.
 - BOUNDED-1 claim consumed the tick (JUMP TO execute) — did not fall through to SLS/RLC/QA-Drain/Step 1. Review-lane QA-Drain remains starved (136 rows, 100 next_agent=qa) — unchanged from prior ticks, still gated behind TASK-DEVTEAM-IDLE-CHAIN-2-MAIN-FLOW (BACKLOG, depends on T1 which is REVIEW/not yet DONE_VERIFIED).
-
-## cycle-20260729T0707Z — BOUNDED-1 claimed FIX-AUDITOR-HEARTBEAT-OUT-OF-CONTRACT-AGENT-WRITE-TIER1, dispatched to developer (cross-service zone)
-
-- **Preflight/gcc/CI clean**: RUN tick `2026-07-29T07:07Z`; gcc clean (no lock, single worktree @`01e50dbcb`, ahead 24, no live git procs); CI GREEN unchanged (`39a4dac7c`); `.head` idle from prior tick's clean dev-mcp-server close-out.
-- **Drain: 2 routed-to-po** (both `commit-sweep-guard-*` near-miss telemetry, not dev-team's own commits).
-- **BOUNDED-1 fired (WIP=0)**: promoted+claimed `FIX-AUDITOR-HEARTBEAT-OUT-OF-CONTRACT-AGENT-WRITE-TIER1` (P2, zone `cross-service/`) — system-auditor's Tier-1 cycle (06:08:22Z) wrote `docs/data/auditor-tier1-last-healthy.json` despite main.md:748-755 explicitly excluding Tier-1 from that write path, collapsing the file's schema ({last_healthy_at,checks{}} → bare {last_healthy_at}) and falsely advancing a "healthy" marker on a DEGRADED cycle. `owner`/`next_agent` both already `developer` (generic — no `apps/<service>/` zone match, correctly not routed to a dev-* specialist). Dispatched with the full 6-point acceptance criteria from `backlog-detail.json`, background `a1bad8b57070683c0`, explicit reminder on the branch:null→REVIEW head-sync rule given today's 2-violations/1-clean-pass track record so far.
-- BOUNDED-1 claim consumed the tick (JUMP TO execute) — did not fall through to SLS/RLC/QA-Drain/Step 1.
 
 ## cycle-20260719T0537Z — fully-idle (0 routable, PO channels dry, no dispatch); CI GREEN 90176484b; cowork-telemetry WATCH holds obs#1; overnight quiescence
 
