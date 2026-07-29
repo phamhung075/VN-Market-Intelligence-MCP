@@ -1,6 +1,15 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-29T15:38Z
+**Written:** 2026-07-29T15:47Z
+
+## cycle-20260729T1547Z — Tick 15:37Z: cold-evicted 1 item, drained 1 signal, CI dedup, clean BOUNDED-1 claim (no collision this time), dispatched dev-mcp-server on a SPIKE->FIX
+
+- **Preflight**: cold-evict ran automatically (1 signal row → `archive/2026-07.json`, committed `2221bf87b` by the script itself). Verdict RUN, tick `2026-07-29T15:37Z`. No HEAD.lock, no stale worktree locks.
+- **Drain**: 1 routed to po (commit-sweep-guard, self-referencing artifact from the cold-evict commit's own sweep-guard warning). 0 pruned (2 candidates still referenced, correctly skipped). Committed `d3911ca02`. CI probe deduped (same known `aa6c044b`). 0a-D signal_queue: no NEW rows.
+- **`.head` was correctly idle** this tick (no desync, prior tick's cleanup held) — fell through to BOUNDED-1 (WIP=0).
+- **BOUNDED-1 promoted+claimed cleanly this time — no stale-marker collision**: checked `ready[]` for the promote marker BEFORE claiming (lesson applied proactively from the 6 prior instances this session) — only one row carried it, freshly stamped this exact tick. Claimed `SPIKE-BOOTSTRAP-BROADCAST-CATALYST-CONSUME` (P2, zone `apps/mcp-server/`, recurring 2+ confirmed bug: `get_cycle_bootstrap` under-returns shared/broadcast `chain_catalyst` vs `get_agent_signals`, both share `getSignals()`'s mark-read side effect — leading hypothesis is the first bootstrap-reader globally marks a broadcast signal read, starving later recipients).
+- **Dispatched `dev-mcp-server` directly** — this task is framed SPIKE->FIX (not investigation-only like the prior tick's SPIKE), so instructed it to investigate BOTH recurrences' timing (rule out a pure creation-after-bootstrap artifact), pick a fix direction (non-consuming shared-catalyst read window vs per-recipient read-state), implement, test, and route to **qa** (not po) on completion since this closes with a real code diff. Sprint-task lock `task:SPIKE-BOOTSTRAP-BROADCAST-CATALYST-CONSUME` held pending verified completion.
+- BOUNDED-1 dispatch consumed the tick — did not fall through to SLS/RLC/QA-Drain/Step 1.
 
 ## cycle-20260729T1538Z-verify — RAW-verified dev-mcp-server's SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY completion; real double-wrap defect confirmed independently from source, FIX minted; found+fixed a 7th stale-marker instance (review-lane) plus a `.head` desync
 
@@ -22,13 +31,4 @@
 - **Dispatched `dev-mcp-server`** directly for the SPIKE (investigation only, 120min timebox, AC-2 cadence-guard call-path trace + AC-3 9-target reparse RAW-probe, findings doc to `docs/spikes/`, mint-not-fix if a code bug is found). Sprint-task lock `task:SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY` held pending verified completion.
 - BOUNDED-1 dispatch consumed the tick — did not fall through to SLS/RLC/QA-Drain/Step 1.
 
-## cycle-20260729T1508Z-verify — RAW-verified agent-father's A-30 veto-fix completion; found+fixed a 5th stale-marker instance PLUS an uncommitted-write gap from the prior tick; released lock, surfaced a fleet-wide notebook-prune bug to PO
-
-- **BGFAN-1 RAW-verification, all claims confirmed real**: commits `f51ed9ede`/`e000e91f1` real, on HEAD, diffs match self-report exactly — clause-4 veto re-sequenced past OOMKilled/peak>97% CRITICAL first (stopgap), then removed entirely from the WARN mapping (redesign). `scripts/audits/verify-a30-mcp-memory-reclamation.sh` diff = 0 lines, confirming the "untouched" claim directly rather than trusting it.
-- **Found this tick's own uncommitted-write gap, not agent-father's fault**: the prior tick's SLS promote+claim and BOUNDED-1 promote+stall-note were applied to `orch-state.json` via `orch-apply.sh` but never committed before agent-father was spawned — agent-father then correctly worked on top of that same uncommitted state and correctly declined to commit the file itself (outside its declared commit zone, per its own report). Committed the full accumulated, conservation-checked diff (task_total=700 unchanged) in one pass: `d1c8fdc81`.
-- **Found a 5th instance of the stale-lane-marker class** (same shape as 14:07Z/14:37Z): the row landed in `review[]` still carrying `promoted_at/promoted_by/promotion_note/claimed_at/claimed_by/dispatch_lane` from its SLS-claim phase. Stripped in the same commit.
-- **`.head` was stale** (still `in_progress`/agent-father from the SLS claim) — reset to idle; agent-father's phase is done and the row now awaits QA in `review[]`.
-- **Surfaced agent-father's live-reproduced bug** in `scripts/agents-flow/notebook-auto-prune.sh` (same-day tie-break regex misses this repo's `HH:MM — YYYY-MM-DD` heading style, drops the NEWEST section instead of the oldest — fleet-wide APPEND-class risk, ~37 agents) as `signal_queue` row `afa-20260729T150800` (agent-father→po, HIGH) rather than leaving it buried in a notebook commit message only.
-- Released commit-mutex and sprint-task lock `task:FIX-AUDITOR-A30-VMHWM-VETO-TAUTOLOGY-FALSE-NEGATIVE` cleanly (agent-father itself has no gateway binding — structurally could not release it).
-- **NEXT: qa** — row in `review[]`, `supervised:true`/`plan_only:true` preserved (architect designed, agent-father implemented, QA verifies — no self-cert). Not yet dispatched; review-lane QA-drain is its own gated lane, awaiting next tick/trigger.
 
