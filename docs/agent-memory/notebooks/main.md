@@ -1,6 +1,15 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-07-29T11:20Z
+**Written:** 2026-07-29T11:37Z
+
+## cycle-20260729T1137Z-verify — RAW-verified developer's FIX-COLD-EVICT-EXCLUDE-IDS-VS-HARD-COHERENCE completion; 9th CONSECUTIVE clean head-sync + 6th CONSECUTIVE clean row-level next_agent=qa; LOCK-LIFETIME correction closed the loop (held through to verified completion, released only now)
+
+- **BGFAN-1 RAW-verification, all claims confirmed real**: commit `861d2672e` real, on HEAD. Diff to `scripts/orch-cold-evict.sh` matches claim exactly — `build_hot_temp()` now relabels an `--exclude-ids`-excluded terminal row's `.status` to a lane-coherent value (`EXCLUDE_RELABEL_STATUS` map) BEFORE Stage-1b's `checkLaneCoherence()` gate runs, stamping `verify_note` with original-status+timestamp; the shared validator itself is untouched (correct call — avoids widening a bypass across every orch-state.json writer).
+- **Tests independently re-run, not trusted**: `orch-cold-evict-tests.sh` **41/41** (claimed 33→41, matches). `orchStateSchema.test.ts` **104/104** (matches). `dev-team-tick-preflight.test.sh` **98/98** (matches). `shellcheck -x scripts/orch-cold-evict.sh` exit 0 (matches). All 4 claims verified exactly, not partially.
+- **Board lane-move genuine**: row `status:REVIEW`, `next_agent:"qa"`. **Head-sync MUST clause held a 9th CONSECUTIVE time**: `.head={status:idle, active_task_id:null, next_agent:router}`. `next_agent:"qa"` row-level check, 6th consecutive clean pass.
+- **LOCK-LIFETIME loop closed**: `task:FIX-COLD-EVICT-EXCLUDE-IDS-VS-HARD-COHERENCE` was held (not released at spawn, per last cycle's self-correction) through to this verified completion, then released now — first full-cycle proof the corrected behavior works as intended.
+- Adjacent finding flagged by developer, not independently re-verified (out-of-scope observation, not load-bearing to this AC): `FIX-DEPSSATISFIED-COLD-ARCHIVED-DEP-RESOLVES-MISSING` referential guard can produce the same lane-incoherence shape for a different reason; claimed 0 live occurrences today, recorded for po/architect triage.
+- No discrepancies found — clean verify. Review-lane QA-Drain remains starved (139+ rows), unchanged, still gated behind TASK-DEVTEAM-IDLE-CHAIN-2-MAIN-FLOW.
 
 ## cycle-20260729T1107Z — BOUNDED-1 fired (WIP=0): claimed FIX-COLD-EVICT-EXCLUDE-IDS-VS-HARD-COHERENCE, dispatched to developer; SELF-CAUGHT + CORRECTED live re-manifestation of coldevict-no-age-gate orphan bug; LOCK-LIFETIME correction applied (lock held, not released)
 
@@ -19,13 +28,4 @@
 - **Targeted tests independently re-run** (3 directly-touched files, not the full claimed 7-file/94-pass set): `FIX-BCTC-ENRICHER-STUCK-BACKLOG.test.ts` + `bctc-pdf-pull-job.test.ts` + `1352a-async-extraction-race.test.ts` → **44 pass / 0 fail**, both new regression tests present and asserting the exact reset behavior (`attempts=5→0` recycle case; `reconcile_attempts=8→0` pek_triggered-entry case). Full non-targeted suite claim (14906 pass/54 fail baseline band) not independently re-run — diff is 2 narrow UPDATE-statement additions + tests + 1 fixture line, no logic path touched outside the verified scope.
 - **Board lane-move genuine**: row `status:REVIEW`, `next_agent:"qa"` — **5th consecutive clean row-level pass**. **Head-sync MUST clause held an 8th CONSECUTIVE time**: `.head={status:idle, active_task_id:null, next_agent:router}`.
 - No discrepancies found — clean verify, nothing to patch. Review-lane QA-Drain remains starved (139+ rows), unchanged, still gated behind TASK-DEVTEAM-IDLE-CHAIN-2-MAIN-FLOW.
-
-## cycle-20260729T1037Z — WIP=1 hold (no re-dispatch); SELF-FLAGGED own LOCK-LIFETIME invariant violation, duplicate-spawn risk
-
-- **Preflight/CI clean**: RUN tick `2026-07-29T10:37Z`; CI GREEN unchanged (`39a4dac7c`).
-- **Drain**: file-plane 1 routed-to-po (`commit-sweep-guard-*`). Dashboard-plane: 2 NEW rows (duplicate system-auditor `sbv_fx stale 32min` WARN, 1s apart) claimed/marked READ individually, cold-evicted (2 rows → `archive/2026-07.json`). Committed `3e257beba`.
-- **WIP=1** (`FIX-BCTC-D3C-FOLLOW-UP-RESET-ATTEMPTS` still `in_progress`, dispatched to `dev-mcp-server` background `aad08ce6ed61aff5e` last tick, confirmed still running via task-notification + matching dirty `apps/mcp-server` working-tree files) — BOUNDED-1 correctly did not fire.
-- **SELF-FLAGGED FINDING**: `task_list_held` confirmed `task:FIX-BCTC-D3C-FOLLOW-UP-RESET-ATTEMPTS` sprint-task lock is FREE despite the dispatch being genuinely live — because this session's last 3 dispatches (TASK_2006, FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK, this task) released the lock immediately post-spawn, directly violating `main.md`'s own documented LOCK-LIFETIME invariant (FIX-DEVTEAM-BACKGROUND-SPAWN-LOCK-RELEASED-AT-SPAWN-NOT-COMPLETION, lines 503/601/659/714: hold until completion/TTL specifically so the next tick's S2 `outer_claim` can't succeed and double-spawn). Correctly overrode the free-lock signal with direct live-agent evidence this tick (BGFAN-1) instead of mechanically re-claiming+re-spawning — but this is a real latent duplicate-spawn bug on any tick lacking that direct evidence (e.g. post-compact). Wrote signal `dev-20260729T104938` to `po` flagging it (read-back confirmed); not fixed inline — dev-team observes, doesn't own the flow-doc's lock-lifetime redesign.
-- **Step 1 PO-triage** evaluated, skipped: no P0/actionable signal this tick (all WARN-severity), PO independently active today already.
-- Review-lane QA-Drain remains starved (139+ rows), unchanged, still gated behind TASK-DEVTEAM-IDLE-CHAIN-2-MAIN-FLOW.
 
