@@ -349,6 +349,15 @@ export const OrchStateSchema = z
     // ─────────────────────────────────────────────────────────────────────────────
     dashboard_section_cache: z.record(z.unknown()).optional(),
     decision_journal:        z.array(z.record(z.unknown())).optional(),
+    // FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION (architect brief
+    // 2026-07-25-devteam-idle-chain-rotation-durable-inbox.md §2.1) —
+    // dispatcher-internal bookkeeping for the 5-consumer aged round-robin
+    // (rotation.{bounded1,sls,rlc,qa_drain,step1_triage}.last_served_tick)
+    // + the durable pending_triage_inbox[] handoff. Same precedent as
+    // narrative/dashboard_section_cache/session_handoff_status below:
+    // loosely typed, dispatcher-internal, not a user-facing/cross-agent
+    // contract — doesn't need a fully enumerated shape.
+    dev_team_idle_chain:     z.record(z.unknown()).optional(),
     head:                    HeadSchema,
     last_tick:               z.string().optional(),
     narrative:               z.record(z.unknown()).optional(),

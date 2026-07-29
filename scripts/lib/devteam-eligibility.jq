@@ -343,3 +343,37 @@ def is_bounded1_eligible($detail_items; $status_map):
     and (effective_plan_only($detail_items) != true)
     and (is_non_dev_next_agent_unrouted($detail_items) != true)
     and (has_unbacked_sequencing_prose($detail_items) != true);
+
+# ---- idle-chain aged round-robin selection
+# (FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION, architect brief
+# 2026-07-25-devteam-idle-chain-rotation-durable-inbox.md §2.2;
+# TASK-DEVTEAM-IDLE-CHAIN-1-SCHEMA-UTILITIES) ----
+#
+# Replaces the fixed-priority BOUNDED-1 -> SLS -> RLC -> QA-Drain -> Step1
+# sequential fall-through (the starvation root cause: BOUNDED-1 always wins
+# when it has anything eligible, so the other 4 consumers can go 0/7 ticks
+# while BOUNDED-1 goes 7/7 — measured baseline in the architect brief).
+#
+# `$doc` = the WHOLE orch-state document (NOT a candidate row, unlike every
+# def above this point in the file) — call as `$doc | rotation_selected($doc)`
+# or, equivalently, `rotation_selected(.)` when `.` is already the whole doc.
+# Reads `.dev_team_idle_chain.rotation.<id>.last_served_tick` for each of the
+# 5 idle-path consumers; a missing/null stamp (including the case where
+# `.dev_team_idle_chain` itself is entirely absent — the migration/bootstrap
+# tick, brief §8 risk flag) defaults to the epoch so every consumer is
+# guaranteed a first turn before any repeat. Selects the single
+# oldest-stamped id; ties (only possible on the all-null bootstrap tick)
+# break on the fixed declared order below.
+#
+# This function is SELECTION ONLY — it does not read or write orch-state.
+# The caller (docs/agents/dev-team/flow/main.md, a separate downstream task
+# per the architect brief — NOT touched by this task) is responsible for
+# dispatching on the returned id and, after the selected consumer's block
+# runs, writing the updated stamp via scripts/devteam-idle-chain-stamp.jq
+# (§2.3 of the brief).
+def rotation_selected($doc):
+  ($doc.dev_team_idle_chain.rotation // {}) as $r
+  | ["bounded1", "sls", "rlc", "qa_drain", "step1_triage"]
+  | map({id: ., stamp: ($r[.].last_served_tick // "1970-01-01T00:00:00Z")})
+  | sort_by(.stamp)
+  | .[0].id;
