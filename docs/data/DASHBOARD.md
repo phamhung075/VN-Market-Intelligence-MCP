@@ -118,3 +118,15 @@
 **Mitigation:** Container restart may clear event loop stall; escalate to dev-pdf-extractor for investigation  
 
 ---
+
+## Anomaly: B-12 · sbv_fx stale 32min
+**Severity:** WARN | **Date:** 2026-07-29 | **Status:** OPEN
+**Location:** sbv_rates/sbv_fx
+**Details:** sbv_fx data stale 32 minutes (expected cadence 30 min, last fetch 2026-07-29T10:00Z)
+**Impact:** SBV forex rates unavailable — impacts macro carry-trade signals
+**Root cause:** VPS proxy latency or network issue
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-07-29T10:33:44Z (signal sys-20260729T103337-13e5, system-auditor -> po, dedup_key=data_stale:sbv_fx:B-12, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
