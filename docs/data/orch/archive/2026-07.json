@@ -15468,6 +15468,30 @@
       "severity": "CRITICAL",
       "status": "READ",
       "payload_ref": null
+    },
+    {
+      "id": "dev-20260728T233926-arch",
+      "ts": "2026-07-28T23:39:26Z",
+      "from": "dev-team",
+      "to": "agents-architect",
+      "type": "system-issue",
+      "summary": "mock-guard.sh likely false-positives on Go *_test.go files — exclusion covers dirs, not filename suffix",
+      "severity": "LOW",
+      "status": "READ",
+      "payload_ref": null,
+      "detail": "Same finding as the po-addressed row this tick: scripts/audits/mock-guard.sh --full HARD-FAILs on 2 lines inside *_test.go files (test stub URL builders), even though its own doc comment claims a tests/ exclusion. Suspected root cause: exclusion list is directory-name based (tests/sandbox/scenarios/spike/.venv) and never checks for the *_test.go Go filename convention. Recurring every tick since at least this session's start. Worth a small architecture/design note on whether mock-guard's exclusion should be filename-suffix-aware across all languages (*_test.go, *.test.ts, *_test.py) rather than directory-only."
+    },
+    {
+      "id": "dev-20260729T031600Z-coldevict-gap",
+      "ts": "2026-07-29T03:16:00Z",
+      "from": "dev-team",
+      "to": "po",
+      "type": "system-issue",
+      "summary": "cold-evict has no age gate on signal_queue rows: READ status alone evicts, orphaning unread-by-po escalations to cold archive",
+      "severity": "MED",
+      "status": "READ",
+      "payload_ref": null,
+      "detail": "Live-verified against scripts/orch-cold-evict.sh:358-362 (not the skill doc, which is stale): signal_queue.rows[] eviction predicate is ONLY `.status | IN(TERMINAL_SIGNAL_STATUSES)` where TERMINAL_SIGNAL_STATUSES=READ,RESOLVED,SUPERSEDED,ACUTE-RESOLVED-ROOT-TRACKED -- there is NO age/cutoff check (unlike done[]/sprint eviction, which DOES gate on a cutoff). signal-dashboard/SKILL.md PRUNE section documents a 24h-age condition that does not exist in the live script -- doc is stale, code is source of truth here. Concretely observed this tick (2026-07-29T03:07Z): dev-20260729T014905Z-qadr (the QA-Drain-starvation MED signal, created 2026-07-29T01:49:05Z, flipped NEW to READ by a prior dev-team drain tick per signal-dashboard ACK semantics) was cold-evicted to docs/data/orch/archive/2026-07.json only ~1.5h after creation, with no triaged_by/disposition ever stamped -- evicted before po triage (docs/agents/po/flow/triage-signals.md reads only the hot signal_queue.rows[], no archive reference) ever saw it as actionable. Net effect: dev-team own ACK (drain-signals.js flips routed rows NEW to READ) makes a signal effectively invisible to po within one cold-evict cycle, regardless of whether po has acted. Underlying QA-Drain-starvation problem itself is UNCHANGED and still open (review[] with next_agent:qa count still 94, flat, matching the archived signal own count -- not re-litigating that here, just flagging the process gap that ate its own escalation). Re-derived from archive: docs/data/orch/archive/2026-07.json signal_rows[] id dev-20260729T014905Z-qadr -- full original payload preserved there, status=READ, no triaged_by. Not unilaterally patching orch-cold-evict.sh (shared SSOT script, needs architect/po judgement on correct fix: add an age-gate matching done[]/sprint precedent, OR change dev-team drain semantics to not flip routed-to-po rows to READ until po actually resolves them, OR have po triage also scan the current-month cold archive for untriaged READ rows). Routing for triage/architect assignment."
     }
   ],
   "backlog_detail": [

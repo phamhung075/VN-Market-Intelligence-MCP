@@ -1,14 +1,8 @@
 {
   "dashboard_section_cache": {
-    "last_linecount": 2,
-    "last_mtime": "2026-06-06T16:22:41Z",
-    "po": {
-      "section_name": "po",
-      "last_mtime": "2026-07-28T17:20:45Z",
-      "last_linecount": 131
-    },
     "section_name": "po",
-    "start_line": 8
+    "last_mtime": 1785296978,
+    "last_linecount": 128
   },
   "decision_journal": [
     {
@@ -419,12 +413,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "zone-mismatch escalation complete; po to re-route FIX-DEPTHTHIN-A-PRICE-HISTORY-RETENTION-10D to dev-mcp-server",
-    "updated_at": "2026-07-29T03:22:33Z",
-    "updated_by": "dev-stock-price (zone-mismatch EXIT)"
+    "status": "in_progress",
+    "active_task_id": "FIX-CONVICTION-HISTORY-EOD-BACKFILL",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-CONVICTION-HISTORY-EOD-BACKFILL — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-29T03:46:42Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2317,30 +2311,6 @@
         "router_noted_at": "2026-07-28T14:38:37Z",
         "po_disposition_20260728T1453": "RE-ESCALATION FIRED AS PRE-COMMITTED -> MINTED. Supersedes PO's 2026-07-28T13:12Z MONITOR ruling on archived row sys-20260728T131219-3fca, whose terms were: 'RESOLVED, no mint, MONITOR with a named re-escalation threshold ... RE-ESCALATE, and mint then, if ANY of: crosses 95% of cap, OOMKilled=true, or RestartCount climbs.' PREDICATE STATUS at 2026-07-28T14:46Z: 95%-of-cap CROSSED on five independent PO-captured samples (14:38:41Z 98.27%, 14:38:51Z 99.19%, 14:39:01Z 99.19%, 14:41:56Z 98.36%, 14:45:53Z 96.44%); OOMKilled=false NOT crossed; RestartCount=2 unchanged NOT crossed. One of three is sufficient by the ruling's own terms. MINTED: FIX-PDFX-TESSERACT-CONCURRENCY-VIOLATES-SINGLE-WORKER-INVARIANT (P0, zone apps/pdf-extractor/, next_agent=architect, plan_only, supervised) — verified present in .task_board.backlog. MECHANISM FOUND, which is what the earlier ruling lacked and why it declined to mint: pdf-extractor is running TEN concurrent tesseract processes against a code-declared, code-commented, unit-tested single-worker invariant (apps/pdf-extractor/main.py:154 `ocr_executor = ProcessPoolExecutor(max_workers=1)` commented 'no parallel Tesseract processes on the 16GB Mac — matches PekEngineAdapter Semaphore(1)'; interface/handlers.py:451 'PekEngineAdapter uses threading.Semaphore(1). Contention -> HTTP 429.'). Same ten PIDs at 14:39:01Z and 14:46:02Z with every ELAPSED advanced in lockstep, all PPID=1, distinct /tmp/tess_* basenames, ~890 MiB combined RSS. The near-cap state is therefore SUSTAINED (~40-minute stretches, matching the already-filed 30-40min/page latency of PERF-PEK-PER-PAGE-LATENCY) and RE-ARMED by each 15-wide POST /extract burst from mcp-server (172.18.0.12; bursts at 12:14, 12:16, 13:57, 14:11, 14:24). CORRECTION TO THE ROUTER'S SEVERITY CALL recorded on sys-20260728T143010-6ec2 ('SEVERITY: WARN is right — failure mode is OOM -> docker restart -> recovery, not permanent damage'): the reasoning is sound for an unexplained plateau but the premise no longer holds. This is not self-recovering — the invariant violation re-arms on every caller burst, so 'wait for RestartCount to increment' is a plan to learn about an OOM after it happens, repeatedly. Severity is upgraded on the WORK plane (P0 board row); PO does NOT re-label the signal rows themselves, since the router's WARN judgement was defensible on the evidence it held. THE ROUTER'S RESTRAINT WAS CORRECT AND IS AFFIRMED: declining a third audit inside 40 minutes and declining a second push notification were both right calls, and PO is not reversing them. CONFIRMED NOT DONE by PO, all user-gated: no docker stop/kill/rm/restart, no compose down/up, no kill of the ten tesseract PIDs, no POST/PUT/PATCH/DELETE to any pdf-extractor endpoint (deliberate — ~20 MiB headroom means a write probe could itself trigger the OOM). Interim mitigation is a PLAN for ops under user gating and is recorded on the board row: reaping the ten re-parented tesseract PIDs frees ~890 MiB and is strictly less destructive than a container restart, but both are kills. Timing note for the gate-holder: VN market is CLOSED (14:53Z = 21:53 GMT+7), so the 2026-06-01 anchor risk (intraday price data destroyed by a false-positive docker stop) does not apply right now; the cost is instead the loss of ten in-flight page OCRs, each 27-42 min deep. NOTIFICATION-PATH FINDING, filed separately as FIX-AUDITOR-EMIT-SEVERITY-LABEL-FLAT-ESCALATION-BYPASS-NEVER-FIRES (P1, zone cross-service/, next_agent=developer, supervised) — verified present on the board. The claim that reached PO ('the BUG Telegram was DEDUP-SKIPPED because the key had been sent at 14:30:09Z for the BENIGN 85% state, silencing escalation for 7 days') is REFUTED: this row's own summary at 14:30:10Z reads 'pdf-extractor at memory limit 98.87% (2.472/2.5 GiB)', so the 14:30:09Z Telegram WAS the near-cap alert and it WAS sent; what 14:34:57Z hit was a 4-minute-later re-observation of the same state, which the router itself annotated on sys-20260728T143457-0d5b as 'INTRA-CYCLE DUPLICATE ... Triage as ONE'. The dedup gate behaved correctly. The real defects are producer-side and survive the refutation on independent evidence: 98.87% emitted as WARN when tier1-probe.md clause 5 maps 'peak >97%' to CRITICAL (sbv_fx escalated HIGH->CRITICAL on the same sweep minutes later, proving the ladder works when the producer varies the label); and three improvised dedup_keys for one condition in 101 minutes, whose drift is the ONLY reason the 98.87% alert was not suppressed — correct key hygiene alone, shipped without severity-derivation, would CREATE the bug that was reported. ANOMALY-TASK-BRIDGE CLEARED, not at fault: ATB-1's 2h grace gate means these rows (17 and 12 min old at triage) are correctly grace-window-pending, not dropped.",
         "po_disposition_at": "2026-07-28T14:53:00Z"
-      },
-      {
-        "id": "dev-20260728T233926-arch",
-        "ts": "2026-07-28T23:39:26Z",
-        "from": "dev-team",
-        "to": "agents-architect",
-        "type": "system-issue",
-        "summary": "mock-guard.sh likely false-positives on Go *_test.go files — exclusion covers dirs, not filename suffix",
-        "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null,
-        "detail": "Same finding as the po-addressed row this tick: scripts/audits/mock-guard.sh --full HARD-FAILs on 2 lines inside *_test.go files (test stub URL builders), even though its own doc comment claims a tests/ exclusion. Suspected root cause: exclusion list is directory-name based (tests/sandbox/scenarios/spike/.venv) and never checks for the *_test.go Go filename convention. Recurring every tick since at least this session's start. Worth a small architecture/design note on whether mock-guard's exclusion should be filename-suffix-aware across all languages (*_test.go, *.test.ts, *_test.py) rather than directory-only."
-      },
-      {
-        "id": "dev-20260729T031600Z-coldevict-gap",
-        "ts": "2026-07-29T03:16:00Z",
-        "from": "dev-team",
-        "to": "po",
-        "type": "system-issue",
-        "summary": "cold-evict has no age gate on signal_queue rows: READ status alone evicts, orphaning unread-by-po escalations to cold archive",
-        "severity": "MED",
-        "status": "NEW",
-        "payload_ref": null,
-        "detail": "Live-verified against scripts/orch-cold-evict.sh:358-362 (not the skill doc, which is stale): signal_queue.rows[] eviction predicate is ONLY `.status | IN(TERMINAL_SIGNAL_STATUSES)` where TERMINAL_SIGNAL_STATUSES=READ,RESOLVED,SUPERSEDED,ACUTE-RESOLVED-ROOT-TRACKED -- there is NO age/cutoff check (unlike done[]/sprint eviction, which DOES gate on a cutoff). signal-dashboard/SKILL.md PRUNE section documents a 24h-age condition that does not exist in the live script -- doc is stale, code is source of truth here. Concretely observed this tick (2026-07-29T03:07Z): dev-20260729T014905Z-qadr (the QA-Drain-starvation MED signal, created 2026-07-29T01:49:05Z, flipped NEW to READ by a prior dev-team drain tick per signal-dashboard ACK semantics) was cold-evicted to docs/data/orch/archive/2026-07.json only ~1.5h after creation, with no triaged_by/disposition ever stamped -- evicted before po triage (docs/agents/po/flow/triage-signals.md reads only the hot signal_queue.rows[], no archive reference) ever saw it as actionable. Net effect: dev-team own ACK (drain-signals.js flips routed rows NEW to READ) makes a signal effectively invisible to po within one cold-evict cycle, regardless of whether po has acted. Underlying QA-Drain-starvation problem itself is UNCHANGED and still open (review[] with next_agent:qa count still 94, flat, matching the archived signal own count -- not re-litigating that here, just flagging the process gap that ate its own escalation). Re-derived from archive: docs/data/orch/archive/2026-07.json signal_rows[] id dev-20260729T014905Z-qadr -- full original payload preserved there, status=READ, no triaged_by. Not unilaterally patching orch-cold-evict.sh (shared SSOT script, needs architect/po judgement on correct fix: add an age-gate matching done[]/sprint precedent, OR change dev-team drain semantics to not flip routed-to-po rows to READ until po actually resolves them, OR have po triage also scan the current-month cold archive for untriaged READ rows). Routing for triage/architect assignment."
       }
     ],
     "last_triaged_at": "2026-07-28T14:53:00Z",
@@ -6909,15 +6879,6 @@
         "status": "BACKLOG",
         "zone": "multi",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-DEPTHTHIN-B-GATEWAY-TA-PATH-REWRITE"
-      },
-      {
-        "id": "FIX-CONVICTION-HISTORY-EOD-BACKFILL",
-        "title": "conviction_history is MISSING two trading days (06-22 Mon, 06-25 Thu) with NO backfill path = permanent data loss. Written ONLY by live scanMarket Step 5c (scanMarket.ts:571-574, vnNow-stamped); daily_ohlcv HAS all four days (06-22=764/06-23=708/06-24=877/06-25=897) so VPS price-ingestion is healthy — the gap is conviction-specific. Add an EOD reconciliation/backfill path + a zero-row observability signal.",
-        "type": "FIX",
-        "priority": "P2",
-        "status": "BACKLOG",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-CONVICTION-HISTORY-EOD-BACKFILL"
       },
       {
         "id": "FIX-AGENT-SIGNALS-IDENTICAL-DUP-EMISSION",
@@ -16648,9 +16609,25 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-29T03:07Z",
+    "last_triaged_at": "2026-07-29T03:46:38Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-CONVICTION-HISTORY-EOD-BACKFILL",
+        "title": "conviction_history is MISSING two trading days (06-22 Mon, 06-25 Thu) with NO backfill path = permanent data loss. Written ONLY by live scanMarket Step 5c (scanMarket.ts:571-574, vnNow-stamped); daily_ohlcv HAS all four days (06-22=764/06-23=708/06-24=877/06-25=897) so VPS price-ingestion is healthy — the gap is conviction-specific. Add an EOD reconciliation/backfill path + a zero-row observability signal.",
+        "type": "FIX",
+        "priority": "P2",
+        "status": "IN_PROGRESS",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-CONVICTION-HISTORY-EOD-BACKFILL",
+        "promoted_at": "2026-07-29T03:46:38Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-29T03:46:42Z",
+        "claimed_at": "2026-07-29T03:46:42Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
