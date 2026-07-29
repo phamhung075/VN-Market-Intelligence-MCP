@@ -413,12 +413,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "FIX-CONVICTION-HISTORY-EOD-BACKFILL flipped in_progress->review by dev-mcp-server; awaiting qa pickup.",
-    "updated_at": "2026-07-29T04:32:00Z",
-    "updated_by": "dev-mcp-server (FIX-CONVICTION-HISTORY-EOD-BACKFILL closeout)"
+    "status": "in_progress",
+    "active_task_id": "FIX-AGENT-SIGNALS-IDENTICAL-DUP-EMISSION",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-AGENT-SIGNALS-IDENTICAL-DUP-EMISSION — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-29T04:47:29Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6879,15 +6879,6 @@
         "status": "BACKLOG",
         "zone": "multi",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-DEPTHTHIN-B-GATEWAY-TA-PATH-REWRITE"
-      },
-      {
-        "id": "FIX-AGENT-SIGNALS-IDENTICAL-DUP-EMISSION",
-        "title": "agent_signals has SYSTEMIC truly-identical duplicate rows from genuine double-EMISSION reaching the data layer (NOT retry/upsert). LIVE RAW (named volume vn-market-intelligence-mcp_market_data, immutable=1, scan_ts 2026-06-25T22:31Z): total=4266; 102 all-time identical dup-groups (same signal_type+stock_code+minute AND same from_agent+cycle_id+payload); 43 active dup-groups last 24h (created_at>=2026-06-24).",
-        "type": "FIX",
-        "priority": "P2",
-        "status": "BACKLOG",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AGENT-SIGNALS-IDENTICAL-DUP-EMISSION"
       },
       {
         "id": "FIX-ALERT-ENGINE-VERIFIED-DECISION-EMPTY-PAYLOAD-NULL-STOCKCODE",
@@ -16626,9 +16617,25 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-29T03:46:38Z",
+    "last_triaged_at": "2026-07-29T04:47:29Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-AGENT-SIGNALS-IDENTICAL-DUP-EMISSION",
+        "title": "agent_signals has SYSTEMIC truly-identical duplicate rows from genuine double-EMISSION reaching the data layer (NOT retry/upsert). LIVE RAW (named volume vn-market-intelligence-mcp_market_data, immutable=1, scan_ts 2026-06-25T22:31Z): total=4266; 102 all-time identical dup-groups (same signal_type+stock_code+minute AND same from_agent+cycle_id+payload); 43 active dup-groups last 24h (created_at>=2026-06-24).",
+        "type": "FIX",
+        "priority": "P2",
+        "status": "IN_PROGRESS",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AGENT-SIGNALS-IDENTICAL-DUP-EMISSION",
+        "promoted_at": "2026-07-29T04:47:29Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-29T04:47:30Z",
+        "claimed_at": "2026-07-29T04:47:29Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",

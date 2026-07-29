@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-29T04:22:31Z",
+    "matched_slots": [
+      "chef-intraday"
+    ],
+    "won_slots": [
+      "chef-intraday"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "chef-intraday": "cadence"
+    },
+    "cadence_minutes": {
+      "chef-intraday": 60
+    },
+    "last_fired_timestamp": "2026-07-29T04:22:31Z",
+    "last_fired_slots": [
+      "chef-intraday"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "04:15",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 12,
+    "note": "VN market OPEN; 1 new cowork-scoped signal (po-addressed resume-dupspawn-gap, left NEW); recovered market-watcher-offhours narrate-not-execute from 04:00Z tick via re-spawn, filed recurring_bug signal cowork-20260729T041205Z-mw-offhours-narrate-recur to po"
+  },
+  "priority": "low",
+  "createdAt": "2026-07-29T04:22:31Z",
+  "_processed": {
+    "fingerprint": "a30f31ca4847c2571deee81109ac8c3a68a22c38fbf2ec3f2fff0ef9ad5d782e",
+    "processedAt": "2026-07-29T04:46:43Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
