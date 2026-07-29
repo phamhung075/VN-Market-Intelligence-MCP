@@ -178,3 +178,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: B-06 · VPS bctc proxy route: 34+ hours stale
+**Severity:** WARN | **Date:** 2026-07-29 | **Status:** OPEN
+**Location:** VPS vinahost — vn-bctc-fetch service
+**Details:** VPS proxy bctc route last push 2026-07-28T08:23:22Z (34+ hours stale). Service unhealthy. BCTC queue: 167 pending items.
+**Impact:** BCTC PDF extraction pipeline blocked by unhealthy VPS service
+**Root cause:** VPS service unreachable or network latency high
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-07-29T18:34:53Z (signal sys-20260729T183440-1d23, system-auditor -> po, dedup_key=data_stale:vps_proxy:B-06, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
