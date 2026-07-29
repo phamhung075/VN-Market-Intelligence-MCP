@@ -88,11 +88,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-07-29T15:08:00Z",
-    "updated_by": "dev-team (post-agent-father review-lane handoff to qa)"
+    "status": "in_progress",
+    "active_task_id": "SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY",
+    "next_agent": "dev-mcp-server",
+    "next_action": "BOUNDED-1 auto-pickup claim of SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-29T15:18:41Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7768,32 +7769,6 @@
         "verify_note": "prior_status=BACKLOG; PLAN-ONLY needs BA/architect to pinpoint detector file (outside apps/mcp-server/)"
       },
       {
-        "id": "SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY",
-        "type": "SPIKE",
-        "mode": "spike",
-        "priority": "medium",
-        "size": "S",
-        "status": "BACKLOG",
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "next_agent": "dev-mcp-server",
-        "timebox": 120,
-        "split_from": "FIX-OPS-CRONJOBRUNS-TIMESTAMP-FALSIFICATION-GUARDRAIL",
-        "related": [
-          "telegram-bug:3303",
-          "telegram-bug:3550",
-          "SPIKE-BCTC-2025Q4-PDFPULL-OCR-0ROW",
-          "FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION"
-        ],
-        "title": "SPIKE: why did shouldSkipRecoveryReplay block ops' bctcReparseJob trigger on 07-10, and did the 9 targeted reports actually get reparsed?",
-        "question": "Why did shouldSkipRecoveryReplay (bctcReparseJob.ts:683, 21.6h cadence guard) block ops' bctcReparseJob trigger on 2026-07-10 ~07:36Z when ops' own pre-edit RAW-probe showed NO bctcReparseJob row with started_at within 21.6h of now (which should already satisfy the guard) — and did the 9 targeted reports (ACB/BID/EIB/D2D 2025-Q4 + VHM/VIC/VRE/HSG/MWG Q1-2026) actually get reparsed, independent of the falsified cron_job_runs?",
-        "detail": "SPLIT (AC-2 + AC-3) from FIX-OPS-CRONJOBRUNS-TIMESTAMP-FALSIFICATION-GUARDRAIL by PO triage 2026-07-13T07:37Z. Investigation half. Owner dev-mcp-server, timebox 120min. OUTPUT = findings doc docs/spikes/SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY.md; if a code bug is found, MINT A FOLLOW-UP FIX (never fix inline in a SPIKE).\n\nAC-2 (cadence-guard root-cause — the GENUINELY-OPEN question): statically trace the shouldSkipRecoveryReplay call path (bctcReparseJob.ts:683 + schedulerJobTable.ts / cronConfig.ts) for the 2026-07-10 ~07:36Z invocation. WHY did the 21.6h cadence guard block ops' trigger when ops' pre-edit RAW-probe showed NO bctcReparseJob row with started_at inside the 21.6h window (which should already satisfy the guard)? Distinguish hypotheses: (a) ops misdiagnosed a DIFFERENT block — e.g. an in-process isRunning / advisory-lock flag — as the cadence guard; (b) the guard reads a source other than the RAW-probed column (different table / TZ / ISO-string-vs-epoch compare — cf. feedback_sqlite_iso8601_datetime_strcompare_bypass.md); (c) ops overwrote the evidence before probing. The CALL-PATH TRACE (static code read) is ACTIONABLE NOW. A clean fresh cron_job_runs RAW-probe is TIME-GATED: the 25 falsified rows corrupted the window, so a trustworthy probe needs >=21.6h of NEW post-incident history to accumulate — record the earliest valid re-probe date in findings and defer only that sub-step.\n\nAC-3 (reparse verification — ACTIONABLE NOW): RAW-probe the live named-volume DB (docker exec vn-market-intelligence-mcp-mcp-server-1 bun on /app/data/market.db, readonly) to confirm whether the 9 targets got reparsed INDEPENDENT of the falsified cron_job_runs: 4 banks ACB/BID/EIB/D2D 2025-Q4 + 5 non-bank VHM/VIC/VRE/HSG/MWG Q1-2026. Ground-truth per report_id = bctc_table_rows + financial_reports parse state (extracted_at), NOT any cron_job_runs / status echo.\n\nDO-NOT-RE-TREAD (already RAW-verified — cross-reference, do not re-investigate): the 2025-Q4 0-ROW EXTRACTION axis is CLOSED. SPIKE-BCTC-2025Q4-PDFPULL-OCR-0ROW (findings docs/spikes/SPIKE-BCTC-2025Q4-PDFPULL-OCR-0ROW.md) proved bctcReparseJob was ARCHITECTURALLY INCAPABLE for 2025-Q4 (empty bctc_md_tables = zero input) so whether it 'ran' at 07:36Z is MOOT for that quarter; root cause = bctcPdfPull never calls /extract-tables; structural fix tracked as FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION. This SPIKE's NET-NEW value = (i) the cadence-guard call-path question (unanswered anywhere) and (ii) the Q1-2026 non-bank reparse verification (a DIFFERENT quarter, not covered by the 2025-Q4 cohort probe). Owner is dev (dev-mcp-server) => BOUNDED-1 auto-launch eligible; the actionable parts (AC-2 trace + AC-3 probe) form a clean atomic unit — do NOT block on the time-gated cron_job_runs re-probe.",
-        "ac": "(AC-2) findings doc traces shouldSkipRecoveryReplay call path for the 07-10 ~07:36Z invocation and distinguishes cadence-guard vs in-process isRunning/lock vs evidence-overwrite; records the earliest valid date for the time-gated cron_job_runs fresh RAW-probe. (AC-3) RAW-probe confirms or denies reparse of the 9 targets (ACB/BID/EIB/D2D 2025-Q4 + VHM/VIC/VRE/HSG/MWG Q1-2026) via bctc_table_rows/financial_reports ground-truth, independent of the falsified cron_job_runs. Any code bug found => a new FIX is minted (not fixed inline). Cross-references SPIKE-BCTC-2025Q4-PDFPULL-OCR-0ROW so the extraction axis is not re-treaded.",
-        "created_at": "2026-07-13T07:37:00Z",
-        "created_by": "po-triage-split-20260713T0737Z",
-        "verify_note": "split_from=FIX-OPS-CRONJOBRUNS-TIMESTAMP-FALSIFICATION-GUARDRAIL AC-2+AC-3; dispatch=BOUNDED-1 eligible (dev owner)"
-      },
-      {
         "id": "SPIKE-SQLITE-DOCKER-VIRT-CORRUPTION-HARDENING",
         "status": "BACKLOG",
         "type": "SPIKE",
@@ -11265,6 +11240,18 @@
           "docs/policies/dev-standards.md"
         ],
         "updated_at": "2026-07-29T13:54:37Z"
+      },
+      {
+        "id": "FIX-PUSH-DELIVERY-ERROR-RATE-ALERT",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "size": "M",
+        "zone": "multi",
+        "priority": "P2",
+        "title": "Push-delivery 5xx error-rate alert (alert-engine consuming mcp-server /metrics) — detect CF-tunnel push outage in ~10min not 69h; from INFRA-CLOUDFLARE RCA (docs/incidents/2026-07-04-cloudflare-tunnel-push-delivery-outage-rca.md); PO confirm priority + single-FIX vs ba->architect split",
+        "updated_at": "2026-07-29T15:18:35Z",
+        "dev_team_note_stall_20260729T1448": "BOUNDED-1 has now offered this row 3 CONSECUTIVE ticks (13:37Z, 14:07Z, 14:37Z) — declined each time, same reason: title still carries unresolved own-prose \"PO confirm priority + single-FIX vs ba->architect split\", no PO decision stamp added across any of the 3 ticks. Not auto-claiming an ambiguous-scope row. Surfacing explicitly for PO Step 1 triage this tick (pendingSignals non-empty regardless) rather than silently re-declining a 4th time.",
+        "dev_team_note_collision_20260729T1519": "BOUNDED-1 claim script (scripts/devteam-backlog-claim-bounded1.jq) matched THIS row's stale promoted_by marker (from the 14:48Z decline) instead of the tick's genuinely newly-promoted candidate (SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY), because the claim script's own precondition (\"ready[] was already empty\" before promote) does not hold when a previously-promoted-but-declined row is left sitting in ready[] across ticks. Same class as the 14:07Z/14:37Z SLS collisions, now confirmed on the BOUNDED-1 lane too. Undone: moved back to backlog[] (out of ready[] entirely, not just marker-stripped) so it stops being scannable by either claim script until PO resolves the underlying ambiguity — this is the 4th consecutive decline."
       }
     ],
     "closed_sprints": [
@@ -13547,20 +13534,6 @@
         "architect_completed_at": "2026-07-29T14:31:31Z",
         "architect_brief": "docs/architecture-briefs/2026-07-29-fix-cowork-dispatch-router-intent-mutex-bypass-design.md",
         "dev_team_note_20260729T1446": "architect ruling complete + verified (commit 89d4b4340); row handed to next_agent=pm but SUPERVISED HOLD stays in effect per architect own report (do not auto-dispatch past architect without supervisor go-ahead). Moved in_progress[]->ready[] so this does not pin WIP indefinitely on a row that cannot be auto-picked anyway; supervised:true continues to block BOUNDED-1/SLS auto-pickup exactly as designed. Deliberate pm dispatch remains a router/PO decision."
-      },
-      {
-        "id": "FIX-PUSH-DELIVERY-ERROR-RATE-ALERT",
-        "type": "FIX",
-        "status": "READY",
-        "size": "M",
-        "zone": "multi",
-        "priority": "P2",
-        "title": "Push-delivery 5xx error-rate alert (alert-engine consuming mcp-server /metrics) — detect CF-tunnel push outage in ~10min not 69h; from INFRA-CLOUDFLARE RCA (docs/incidents/2026-07-04-cloudflare-tunnel-push-delivery-outage-rca.md); PO confirm priority + single-FIX vs ba->architect split",
-        "promoted_at": "2026-07-29T14:48:19Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-29T14:48:56Z",
-        "dev_team_note_stall_20260729T1448": "BOUNDED-1 has now offered this row 3 CONSECUTIVE ticks (13:37Z, 14:07Z, 14:37Z) — declined each time, same reason: title still carries unresolved own-prose \"PO confirm priority + single-FIX vs ba->architect split\", no PO decision stamp added across any of the 3 ticks. Not auto-claiming an ambiguous-scope row. Surfacing explicitly for PO Step 1 triage this tick (pendingSignals non-empty regardless) rather than silently re-declining a 4th time."
       }
     ],
     "review": [
@@ -17379,9 +17352,42 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-29T14:49:03Z",
-    "last_triaged_by": "dev-team (supervised-lane sweep)",
-    "in_progress": []
+    "last_triaged_at": "2026-07-29T15:17:35Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
+    "in_progress": [
+      {
+        "id": "SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY",
+        "type": "SPIKE",
+        "mode": "spike",
+        "priority": "medium",
+        "size": "S",
+        "status": "IN_PROGRESS",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "timebox": 120,
+        "split_from": "FIX-OPS-CRONJOBRUNS-TIMESTAMP-FALSIFICATION-GUARDRAIL",
+        "related": [
+          "telegram-bug:3303",
+          "telegram-bug:3550",
+          "SPIKE-BCTC-2025Q4-PDFPULL-OCR-0ROW",
+          "FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION"
+        ],
+        "title": "SPIKE: why did shouldSkipRecoveryReplay block ops' bctcReparseJob trigger on 07-10, and did the 9 targeted reports actually get reparsed?",
+        "question": "Why did shouldSkipRecoveryReplay (bctcReparseJob.ts:683, 21.6h cadence guard) block ops' bctcReparseJob trigger on 2026-07-10 ~07:36Z when ops' own pre-edit RAW-probe showed NO bctcReparseJob row with started_at within 21.6h of now (which should already satisfy the guard) — and did the 9 targeted reports (ACB/BID/EIB/D2D 2025-Q4 + VHM/VIC/VRE/HSG/MWG Q1-2026) actually get reparsed, independent of the falsified cron_job_runs?",
+        "detail": "SPLIT (AC-2 + AC-3) from FIX-OPS-CRONJOBRUNS-TIMESTAMP-FALSIFICATION-GUARDRAIL by PO triage 2026-07-13T07:37Z. Investigation half. Owner dev-mcp-server, timebox 120min. OUTPUT = findings doc docs/spikes/SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY.md; if a code bug is found, MINT A FOLLOW-UP FIX (never fix inline in a SPIKE).\n\nAC-2 (cadence-guard root-cause — the GENUINELY-OPEN question): statically trace the shouldSkipRecoveryReplay call path (bctcReparseJob.ts:683 + schedulerJobTable.ts / cronConfig.ts) for the 2026-07-10 ~07:36Z invocation. WHY did the 21.6h cadence guard block ops' trigger when ops' pre-edit RAW-probe showed NO bctcReparseJob row with started_at inside the 21.6h window (which should already satisfy the guard)? Distinguish hypotheses: (a) ops misdiagnosed a DIFFERENT block — e.g. an in-process isRunning / advisory-lock flag — as the cadence guard; (b) the guard reads a source other than the RAW-probed column (different table / TZ / ISO-string-vs-epoch compare — cf. feedback_sqlite_iso8601_datetime_strcompare_bypass.md); (c) ops overwrote the evidence before probing. The CALL-PATH TRACE (static code read) is ACTIONABLE NOW. A clean fresh cron_job_runs RAW-probe is TIME-GATED: the 25 falsified rows corrupted the window, so a trustworthy probe needs >=21.6h of NEW post-incident history to accumulate — record the earliest valid re-probe date in findings and defer only that sub-step.\n\nAC-3 (reparse verification — ACTIONABLE NOW): RAW-probe the live named-volume DB (docker exec vn-market-intelligence-mcp-mcp-server-1 bun on /app/data/market.db, readonly) to confirm whether the 9 targets got reparsed INDEPENDENT of the falsified cron_job_runs: 4 banks ACB/BID/EIB/D2D 2025-Q4 + 5 non-bank VHM/VIC/VRE/HSG/MWG Q1-2026. Ground-truth per report_id = bctc_table_rows + financial_reports parse state (extracted_at), NOT any cron_job_runs / status echo.\n\nDO-NOT-RE-TREAD (already RAW-verified — cross-reference, do not re-investigate): the 2025-Q4 0-ROW EXTRACTION axis is CLOSED. SPIKE-BCTC-2025Q4-PDFPULL-OCR-0ROW (findings docs/spikes/SPIKE-BCTC-2025Q4-PDFPULL-OCR-0ROW.md) proved bctcReparseJob was ARCHITECTURALLY INCAPABLE for 2025-Q4 (empty bctc_md_tables = zero input) so whether it 'ran' at 07:36Z is MOOT for that quarter; root cause = bctcPdfPull never calls /extract-tables; structural fix tracked as FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION. This SPIKE's NET-NEW value = (i) the cadence-guard call-path question (unanswered anywhere) and (ii) the Q1-2026 non-bank reparse verification (a DIFFERENT quarter, not covered by the 2025-Q4 cohort probe). Owner is dev (dev-mcp-server) => BOUNDED-1 auto-launch eligible; the actionable parts (AC-2 trace + AC-3 probe) form a clean atomic unit — do NOT block on the time-gated cron_job_runs re-probe.",
+        "ac": "(AC-2) findings doc traces shouldSkipRecoveryReplay call path for the 07-10 ~07:36Z invocation and distinguishes cadence-guard vs in-process isRunning/lock vs evidence-overwrite; records the earliest valid date for the time-gated cron_job_runs fresh RAW-probe. (AC-3) RAW-probe confirms or denies reparse of the 9 targets (ACB/BID/EIB/D2D 2025-Q4 + VHM/VIC/VRE/HSG/MWG Q1-2026) via bctc_table_rows/financial_reports ground-truth, independent of the falsified cron_job_runs. Any code bug found => a new FIX is minted (not fixed inline). Cross-references SPIKE-BCTC-2025Q4-PDFPULL-OCR-0ROW so the extraction axis is not re-treaded.",
+        "created_at": "2026-07-13T07:37:00Z",
+        "created_by": "po-triage-split-20260713T0737Z",
+        "verify_note": "split_from=FIX-OPS-CRONJOBRUNS-TIMESTAMP-FALSIFICATION-GUARDRAIL AC-2+AC-3; dispatch=BOUNDED-1 eligible (dev owner)",
+        "promoted_at": "2026-07-29T15:17:35Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-29T15:18:43Z",
+        "claimed_at": "2026-07-29T15:18:41Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
