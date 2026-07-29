@@ -3,7 +3,7 @@
   "to": "dev-team",
   "type": "cowork-fire",
   "payload": {
-    "fire_time": "2026-07-22T16:10:50Z",
+    "fire_time": "2026-07-29T161110Z",
     "matched_slots": [
       "news-scout-offhours",
       "market-watcher-offhours",
@@ -25,7 +25,7 @@
       "docs/agents/alert-commander/flow/main.md"
     ],
     "silent": false,
-    "drift_min": 6,
+    "drift_min": 5,
     "errors": [],
     "pressure_mode": "adaptive",
     "calendar_status": "unknown",
@@ -45,7 +45,7 @@
       "market-watcher-eod": 240,
       "alert-commander-critical": 240
     },
-    "last_fired_timestamp": "2026-07-22T16:10:04Z",
+    "last_fired_timestamp": "2026-07-29T16:10:35Z",
     "last_fired_slots": [
       "news-scout-offhours",
       "market-watcher-offhours",
@@ -57,16 +57,16 @@
     "reason": "spawned",
     "nominal_tick": "16:00",
     "leader_lock": "acquired",
-    "dev_head": "idle",
-    "devq": 0,
-    "signal_backlog": 1,
-    "note": "4-slot gatherer+alert fan-out (news-scout-offhours, market-watcher-offhours, market-watcher-eod, alert-commander-critical); all cadence-due (240m), all 4 claimed+spawned background, adaptive mode, no suppression (calendar=unknown, backlog=7 so freshness-downgrade AND-gate not met); tick-snapshot skipped (no CHEF consumer)."
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 14,
+    "note": "market-watcher matched 2 slots this tick (offhours 4h-cadence + eod cron coincide at 16:00 UTC) - collision WARN sent, both spawned per R3. Step 5.1 headroom read null (pressure-state.json still emits legacy host_headroom_mb, not the renamed container_vm_headroom_mb field per FIX-PRESSURE-HOST-HEADROOM-WRONG-MACHINE-WRONG-QUANTITY) -> forced DEGRADED branch, MAX_PARALLEL=2, fired in 2 batches of 2."
   },
   "priority": "low",
-  "createdAt": "2026-07-22T16:10:50Z",
+  "createdAt": "2026-07-29T161110Z",
   "_processed": {
-    "fingerprint": "7c91880505360a31e4c2749132d7bfaca6bc2c97a976f0e1b2880457971c1914",
-    "processedAt": "2026-07-22T16:15:02Z",
+    "fingerprint": "9ef5e479c9008a9e205118e65a33c06b64601aacd84b52feb53f780e62e1ec52",
+    "processedAt": "2026-07-29T16:15:28Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
