@@ -1,60 +1,25 @@
-## c002 · 2026-07-29T11:12:17Z
-### Audit Run Tier-1 (11:00–11:12 UTC 2026-07-29)
-- Tier: 1 | Services: 12/12 host_runtime_set Up(healthy) | Health: 5/5 OK | A-20 pdf-extractor 3/3 pass | A-21 windowed crash-only | A-30 baseline 64.35%<85% PASS | A-32 Disk 38% PASS
-- Anomalies: 0 new (0 critical, 0 warn, 0 info)
-- Status: HEALTHY | Acknowledged-degraded (suppressed, open backlog tracks): rag-service 96.78% (tracked RAG-FTS-BUILD-MEMORY-BOUND)
-- Fire-election: tick=2026-07-29T11:00Z — claimed, led tick
+## c003 · 2026-07-29T14:35:45Z
+### Audit Run Tier-2 (12:00–14:35 UTC 2026-07-29)
+- Tier: 2 | Cron health: A-29 PASS (all crons within cadence) | Sources: 27 checked
+- Data freshness: sbv_fx CRITICAL (48m > 30m SLA), BCTC queue stale (167 pending), VPS proxy 2/4 unhealthy
+- DB spot checks: C-06 PASS (1 msg/3h), C-07 PASS (203 signals/24h)
+- Rate limits: B-12 PASS (no source at 100%)
+- Anomalies: 3 new (1 critical, 2 warn, 0 info) | 0 dedup-skipped
+- Status: DEGRADED (sbv_fx CRITICAL SLA breach; VPS services down; BCTC queue stale 30h)
 
-### RAW-PROBE:
-```
-=== AUDITOR PROBE 2026-07-29T11:12:17Z ===
+Fire-election: tick=2026-07-29T12:00Z (0 */4 * * * boundary) — claimed, led tick.
 
---- docker ps -a ---
-NAMES                                             STATUS
-vn-market-intelligence-mcp-pdf-extractor-1        Up 17 hours (healthy)
-vn-market-intelligence-mcp-mcp-server-1           Up 5 hours (healthy)
-vn-market-intelligence-mcp-frontend-1             Up 4 days (healthy)
-mcp-gateway                                       Up 13 days (healthy)
-vn-market-intelligence-mcp-api-gateway-1          Up 13 days (healthy)
-vn-market-intelligence-mcp-flaresolverr-1         Up 13 days (healthy)
-vn-market-intelligence-mcp-news-fetch-1           Up 13 days (healthy)
-vn-market-intelligence-mcp-rag-service-1          Up About an hour (healthy)
-vn-market-intelligence-mcp-macro-indicators-1     Up 13 days (healthy)
-vn-market-intelligence-mcp-technical-analysis-1   Up 13 days (healthy)
-vn-market-intelligence-mcp-alert-engine-1         Up 13 days (healthy)
-vn-market-intelligence-mcp-stock-price-1          Up 13 days (healthy)
-vn-market-intelligence-mcp-kinh-dich-service-1    Up 13 days (healthy)
+[emit-signal] OK dedup_key=data_stale:sbv_fx:B-01 id=sys-20260729T143446-2c78
+[emit-signal] OK dedup_key=data_stale:vps_proxy:B-06 id=sys-20260729T143456-2973
+[emit-signal] OK dedup_key=data_stale:bctc_discover:B-05 id=sys-20260729T143457-16cc
+[emit-dashboard] OK id=sys-20260729T143446-2c78 check_id=B-01
+[emit-dashboard] OK id=sys-20260729T143456-2973 check_id=B-06
+[emit-dashboard] OK id=sys-20260729T143457-16cc check_id=B-05
 
---- health endpoints ---
-[health] mcp-server:3000/health OK (HTTP 200)
-[health] api-gateway:4000/health OK (HTTP 200)
-[health] macro-indicators:5004/health OK (HTTP 200)
-[health] pdf-extractor:5001/health OK (HTTP 200)
-[health] frontend:3001/ OK (HTTP 200)
-
---- restart count ---
-Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=4
-
---- memory pressure ---
-Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=64.35% MemUsage=1.931GiB / 3GiB
-
---- memory pressure multi-probe reclamation (A-30) ---
-[A-30] SKIP deep-probe — baseline 64.35% < 85% investigate-gate
-
---- disk df -h / ---
-Filesystem        Size    Used   Avail Capacity
-/dev/disk1s4s1   233Gi    13Gi    22Gi    38%
-
---- pdf-extractor in-container multi-probe (A-20) ---
-[A-20-PROBE-1] in-container HTTP 200
-[A-20-PROBE-2] in-container HTTP 200
-[A-20-PROBE-3] in-container HTTP 200
-[A-20] pass_count=3/3
-```
-
-Verdict: All checks PASS — A-01/A-11 services UP (12/12), A-12 health OK (5/5), A-20 pdf-extractor pass (3/3), A-21 windowed crash-only (RestartCount=4, in-window crashes=0 PASS), A-30 mcp-server baseline 64.35%<85% PASS, A-32 disk 38%<85% PASS. Acknowledged-degraded (suppressed by open backlog): rag-service 96.78% (task=RAG-FTS-BUILD-MEMORY-BOUND), launchd docker-events/fleet-push (exit-status, tracked).
-
-[OUTPUT-CONTRACT] signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0 | dedup_skipped=0
+Findings:
+- B-01: sbv_fx age 48m exceeds SLA 30m — impact: FX data stale
+- B-05: bctc-discover queue 167 pending items; VPS unhealthy; last push 2026-07-28 08:23Z
+- B-06: VPS services unhealthy (vn-bctc-fetch, vn-sbv-fetch); BCTC/SBV extraction blocked
 
 ## c001 · 2026-07-29T10:34:31Z
 ### Audit Run Tier-2 (08:00–10:35 UTC 2026-07-29)
