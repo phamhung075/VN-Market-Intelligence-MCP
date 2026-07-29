@@ -443,6 +443,92 @@ fi
 assert_real_live_unchanged "T7-live"
 
 # =============================================================================
+# TEST 8 — FU-ORCH-HOT-SUB150-SPRINT-LIFECYCLE / P7: decision_journal[]
+#   age-gated eviction — rank-gate, age-gate (independent of rank), null-ts
+#   eviction, and INDEX-based hot removal correctness under reordering (evicted
+#   rows are NOT contiguous in the original array: idx 0,2,4 evicted while
+#   idx 1,3,5 survive — proves removal is keyed by the right original index,
+#   not by post-sort position).
+# =============================================================================
+DJ_NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+DJ_D1=$(date -u -v-1d +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -d '1 day ago' +%Y-%m-%dT%H:%M:%SZ)
+DJ_D10=$(date -u -v-10d +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -d '10 days ago' +%Y-%m-%dT%H:%M:%SZ)
+DJ_D20=$(date -u -v-20d +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -d '20 days ago' +%Y-%m-%dT%H:%M:%SZ)
+DJ_D30=$(date -u -v-30d +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -d '30 days ago' +%Y-%m-%dT%H:%M:%SZ)
+
+# Original array order (deliberately NOT rank order): OLD-2, NEW-1, NULL-1,
+# RECENT-RANKED-OUT, OLD-1, NEW-2 — indices 0..5.
+DJ_FIXTURE=$(jq -n \
+  --arg d30 "$DJ_D30" --arg now "$DJ_NOW" --arg d10 "$DJ_D10" \
+  --arg d20 "$DJ_D20" --arg d1 "$DJ_D1" \
+  '{
+    "_meta": {"schema":"v4","ssot":true,"updated_at":"2026-06-01T00:00:00Z","updated_by":"fixture"},
+    "head": {"status":"idle","active_task_id":null,"next_agent":null},
+    "task_board": {
+      "backlog": [], "review": [], "qa": [], "in_progress": [], "ready": [],
+      "done": [], "done_verified": [], "active_sprints": []
+    },
+    "signal_queue": {"_updated_at":"2026-06-01T00:00:00Z","_updated_by":"fixture","rows":[]},
+    "sprint_goal": {"entries": []},
+    "decision_journal": [
+      {"id":"DJ-OLD-2","ts":$d30},
+      {"id":"DJ-NEW-1","ts":$now},
+      {"id":"DJ-NULL-1","ts":null},
+      {"id":"DJ-RECENT-RANKED-OUT","ts":$d10},
+      {"id":"DJ-OLD-1","ts":$d20},
+      {"id":"DJ-NEW-2","ts":$d1}
+    ]
+  }')
+new_fixture "t8-decision-journal" "$DJ_FIXTURE"
+
+EXIT_T8=0
+DECISION_JOURNAL_KEEP_RECENT=2 DECISION_JOURNAL_MAX_AGE_DAYS=14 run_cold_evict || EXIT_T8=$?
+if [ "$EXIT_T8" -eq 0 ]; then
+  pass "T8 — decision_journal live run (keep=2, max_age=14d) exits 0"
+else
+  fail "T8 — expected exit 0, got $EXIT_T8 ($(cat "$FIXTURE_ROOT/.last-stderr" | tail -5))"
+fi
+
+# rank0/1 (NEW-1, NEW-2) always kept; RECENT-RANKED-OUT kept by age-gate
+# despite rank>=keep_n; OLD-1/OLD-2/NULL-1 evicted (age>cutoff or ts null).
+HOT_DJ_IDS=$(jq -c '[.decision_journal[].id] | sort' "$HOT_PATH")
+if [ "$HOT_DJ_IDS" = '["DJ-NEW-1","DJ-NEW-2","DJ-RECENT-RANKED-OUT"]' ]; then
+  pass "T8 — hot decision_journal[] keeps rank<keep_n rows + age-gate survivor, evicts the rest"
+else
+  fail "T8 — hot decision_journal[] unexpected: $HOT_DJ_IDS"
+fi
+
+COLD_FILE_T8="$ARCHIVE_PATH/$MONTH.json"
+COLD_DJ_IDS=$(jq -c '[(.decision_journal // [])[].id] | sort' "$COLD_FILE_T8" 2>/dev/null)
+if [ "$COLD_DJ_IDS" = '["DJ-NULL-1","DJ-OLD-1","DJ-OLD-2"]' ]; then
+  pass "T8 — cold .decision_journal[] contains exactly the 3 evicted rows (null-ts + both age-expired)"
+else
+  fail "T8 — cold .decision_journal[] unexpected: $COLD_DJ_IDS"
+fi
+
+# Idempotent re-run: with only 3 rows left (2 within keep_n, 1 protected by
+# age-gate), a second run must evict nothing further and leave both files
+# byte-identical.
+HASH_HOT_T8_1=$(file_hash "$HOT_PATH")
+HASH_COLD_T8_1=$(file_hash "$COLD_FILE_T8")
+EXIT_T8B=0
+DECISION_JOURNAL_KEEP_RECENT=2 DECISION_JOURNAL_MAX_AGE_DAYS=14 run_cold_evict || EXIT_T8B=$?
+if [ "$EXIT_T8B" -eq 0 ]; then
+  pass "T8 — second (idempotent) run exits 0"
+else
+  fail "T8 — expected exit 0 on re-run, got $EXIT_T8B"
+fi
+HASH_HOT_T8_2=$(file_hash "$HOT_PATH")
+HASH_COLD_T8_2=$(file_hash "$COLD_FILE_T8")
+if [ "$HASH_HOT_T8_1" = "$HASH_HOT_T8_2" ] && [ "$HASH_COLD_T8_1" = "$HASH_COLD_T8_2" ]; then
+  pass "T8 — hot + cold byte-identical after idempotent re-run (age-gate survivor stable)"
+else
+  fail "T8 — hot or cold CHANGED on decision_journal re-run (not idempotent)"
+fi
+
+assert_real_live_unchanged "T8"
+
+# =============================================================================
 # Summary
 # =============================================================================
 TOTAL=$((PASS+FAIL))

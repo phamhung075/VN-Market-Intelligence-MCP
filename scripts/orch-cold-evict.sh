@@ -29,6 +29,28 @@
 # env — lets a one-time migration run skip D0-flagged false-positives (e.g.
 # a row whose label is terminal but which is empirically still open).
 #
+# FU-ORCH-HOT-SUB150-SPRINT-LIFECYCLE (2026-07-29): extended with a new pass —
+# .decision_journal[] entries (cold target: .decision_journal[] in the monthly
+# archive), age-gated (not status-gated: this array has no status field, it is
+# an append-only WHY-record audit trail with zero live readers — confirmed by
+# grep, only 2 writers append to it and no flow reads it back). Same
+# rank-then-cutoff shape as done[] (sort by parsed .ts desc, keep newest
+# DECISION_JOURNAL_KEEP_RECENT, evict rank>=keep AND (ts null OR older than
+# DECISION_JOURNAL_MAX_AGE_DAYS)). Unlike every other array here, entries have
+# NO stable unique id (task_id/sprint_id repeat across multiple decisions) —
+# selection + hot-removal is done by original array INDEX (safe: computed and
+# applied against the same CAS-guarded hot-file snapshot within one attempt);
+# idempotency on a partial-failure retry (cold written, hot write aborted) is
+# guarded by CONTENT equality (tostring) against cold's existing
+# .decision_journal[], not by id. Root cause + design: architect finding
+# state-data-files-I7/P7, docs/architecture-briefs/2026-07-12-ultracode-
+# workflow-improvement-audit.md — every other lane had an eviction/cap story,
+# this one only grew (49 entries / ~70KB observed pre-fix). sprint_goal.entries[]
+# and task_board.active_sprints[] were ALSO in scope for this task but verified
+# EMPTY (0 evictable) at execution time — no code change was needed for those
+# two, the existing FIX-SPRINT-GOAL-STATUS-DRIFT-EVICT predicate already
+# covers them correctly and simply had nothing terminal to find.
+#
 # Usage:
 #   scripts/orch-cold-evict.sh [--dry-run] [--exclude-ids ID1,ID2 [--exclude-ids ID3]]
 #
@@ -101,6 +123,13 @@ TERMINAL_TASK_STATUSES="${TERMINAL_TASK_STATUSES:-DONE,DONE_VERIFIED,CANCELLED,D
 # for done_verified[]); re-scanning them here would double-process the same
 # rows. Matches LANE_ALLOWED_STATUSES keys minus {done, done_verified}.
 TASK_LANES="${TASK_LANES:-backlog,review,qa,in_progress,ready}"
+
+# decision_journal[] retention (FU-ORCH-HOT-SUB150-SPRINT-LIFECYCLE / P7):
+# rank by parsed .ts desc, keep the newest N, evict the rest if older than
+# max-age-days OR ts is null (unstamped — treated as unknown-age, same
+# convention as done[]'s null created_at handling above).
+DECISION_JOURNAL_KEEP_RECENT="${DECISION_JOURNAL_KEEP_RECENT:-10}"
+DECISION_JOURNAL_MAX_AGE_DAYS="${DECISION_JOURNAL_MAX_AGE_DAYS:-14}"
 
 # Safety-valve: comma-separated task IDs to NEVER evict via the terminal-task-
 # status pass, regardless of status. One-time migration use case: skip a
@@ -206,6 +235,11 @@ mkdir -p "${ARCHIVE_DIR}"
 #     — {id:true} removal maps for hot (rm_task_by_lane is {lane: {id:true}})
 #   new_cold_done_set, new_cold_sprint_set, new_cold_sprint_goal_set,
 #   new_cold_signal_set, new_cold_backlog_detail_set — {id:true} for cold select
+#   rm_decision_journal_idx — {"<original-array-index>":true} removal map (INDEX
+#     keyed, not id-keyed — decision_journal entries have no stable unique id)
+#   new_cold_decision_journal — FULL objects (small array, safe for --argjson;
+#     content-deduped against cold, unlike every other new_cold_* which is an
+#     {id:true} set resolved to full objects later in build_cold_temp)
 #   n_evict_* counts
 # =============================================================================
 compute_id_maps() {
@@ -216,6 +250,7 @@ compute_id_maps() {
   local cold_sprint_goal="$5"
   local cold_backlog_detail="$6"
   local detail_file="$7"
+  local cold_decision_journal="$8"
 
   jq \
     -L "${REPO_ROOT}" \
@@ -231,6 +266,9 @@ compute_id_maps() {
     --argjson cold_signal "${cold_signal}" \
     --argjson cold_sprint_goal "${cold_sprint_goal}" \
     --argjson cold_backlog_detail "${cold_backlog_detail}" \
+    --argjson keep_dj      "${DECISION_JOURNAL_KEEP_RECENT}" \
+    --argjson max_days_dj  "${DECISION_JOURNAL_MAX_AGE_DAYS}" \
+    --argjson cold_dj      "${cold_decision_journal}" \
     --slurpfile task_detail "${detail_file}" \
     '
       include "scripts/lib/devteam-eligibility";
@@ -245,6 +283,7 @@ compute_id_maps() {
       ($exclude_ids | split(",") | map(select(. != ""))
         | map({key: ., value: true}) | from_entries) as $excl_set |
       (now - ($max_days * 86400)) as $cutoff |
+      (now - ($max_days_dj * 86400)) as $dj_cutoff |
 
       # ── FIX-DEPSSATISFIED-COLD-ARCHIVED-DEP-RESOLVES-MISSING referential
       # eviction guard: union of effective_depends_on across every row in
@@ -401,6 +440,33 @@ compute_id_maps() {
           value: ($terminal_ids_by_lane[.] | map({key: ., value: true}) | from_entries)
         }) | from_entries) as $rm_task_by_lane |
 
+      # ── decision_journal[]: age-gated, INDEX-keyed (no stable unique id —
+      # task_id/sprint_id repeat across multiple decisions) (FU-ORCH-HOT-
+      # SUB150-SPRINT-LIFECYCLE / P7) ───────────────────────────────────────
+      ($cold_dj | map(tostring)) as $cold_dj_strs |
+      (
+        (.decision_journal // [])
+        | to_entries
+        | map(.value + {_src_idx: .key})
+      ) as $dj_indexed |
+      (
+        $dj_indexed
+        | sort_by(try (.ts | fromdateiso8601) catch 0)
+        | reverse
+        | to_entries
+      ) as $dj_ranked |
+      [
+        $dj_ranked[] | select(
+            .key >= $keep_dj and
+            (.value.ts == null or (try (.value.ts | fromdateiso8601) catch 0) < $dj_cutoff)
+        ) | .value
+      ] as $dj_evict_candidates |
+      ($dj_evict_candidates | map({key: (._src_idx | tostring), value: true}) | from_entries)
+        as $rm_decision_journal_idx |
+      ([$dj_evict_candidates[] | del(._src_idx)]) as $dj_evict_clean |
+      ([$dj_evict_clean[] | select(($cold_dj_strs | index(tostring)) == null)])
+        as $new_dj_entries |
+
       # ── output: IDs and lookup maps only (NOT full objects) ──────────────
       {
         # {id: true} removal maps for hot file transformation
@@ -411,6 +477,9 @@ compute_id_maps() {
         rm_sig_rows:    ($all_terminal_sig_row_ids | map({key: ., value: true}) | from_entries),
         # {lane: {id: true}} removal map — one sub-map per flat task lane
         rm_task_by_lane: $rm_task_by_lane,
+        # {"<original-index>": true} removal map — decision_journal has no
+        # stable unique id, so removal from hot is by array position.
+        rm_decision_journal_idx: $rm_decision_journal_idx,
 
         # {id: true} sets for selecting new items to cold
         # done + done_verified share the same cold target (done_tasks[])
@@ -421,6 +490,9 @@ compute_id_maps() {
         new_cold_signal_set: (($new_sig_row_ids + $new_sig_arch_ids) | map({key: ., value: true}) | from_entries),
         # flat-task-lane terminal rows share the cold target (backlog_detail[])
         new_cold_backlog_detail_set: ($new_task_ids | map({key: ., value: true}) | from_entries),
+        # FULL objects (content-deduped against cold), not an {id:true} set —
+        # decision_journal entries have no stable unique id to key a set by.
+        new_cold_decision_journal: $new_dj_entries,
 
         # Counts for reporting
         n_evict_done:        ($all_terminal_done_ids | length),
@@ -431,11 +503,12 @@ compute_id_maps() {
         n_evict_sig_arch:    ($all_sig_archive_ids | length),
         n_evict_task_total:  ($all_terminal_task_ids | length),
         n_evict_task_by_lane: ($lane_arr | map({key: ., value: ($terminal_ids_by_lane[.] | length)}) | from_entries),
+        n_evict_decision_journal: ($dj_evict_candidates | length),
         n_new_cold: (
           ($new_done_ids | length) + ($new_dv_ids | length) +
           ($new_sprint_ids | length) + ($new_sprint_goal_ids | length) +
           ($new_sig_row_ids | length) + ($new_sig_arch_ids | length) +
-          ($new_task_ids | length)
+          ($new_task_ids | length) + ($new_dj_entries | length)
         ),
 
         # FIX-DEPSSATISFIED-COLD-ARCHIVED-DEP-RESOLVES-MISSING referential
@@ -508,7 +581,8 @@ build_cold_temp() {
         .closed_sprints      += $new_sprints       |
         .closed_sprint_goals  = ((.closed_sprint_goals // []) + $new_sprint_goals) |
         .signal_rows         += $new_signals       |
-        .backlog_detail       = ((.backlog_detail // []) + $new_backlog_detail)
+        .backlog_detail       = ((.backlog_detail // []) + $new_backlog_detail) |
+        .decision_journal     = ((.decision_journal // []) + $maps.new_cold_decision_journal)
       ' "${COLD_FILE}" > "${output}"
   else
     # Create new cold file with schema from §3.2 of brief.
@@ -549,7 +623,10 @@ build_cold_temp() {
           backlog_detail: [
             $lane_arr[] as $lane | (.task_board[$lane] // [])[] |
             select((.id // "") as $id | $nbd_set[$id] == true)
-          ]
+          ],
+          # FU-ORCH-HOT-SUB150-SPRINT-LIFECYCLE / P7: age-evicted decision_journal
+          # entries (full objects, already computed + content-deduped upstream).
+          decision_journal: $maps.new_cold_decision_journal
         }
       ' "${ORCH_STATE}" > "${output}"
   fi
@@ -579,14 +656,19 @@ build_hot_temp() {
         .;
         .task_board[$lane] = ((.task_board[$lane] // []) |
           [.[] | select((.id // "") as $id | ($maps.rm_task_by_lane[$lane][$id] // false) != true)])
-      )
+      ) |
+      # FU-ORCH-HOT-SUB150-SPRINT-LIFECYCLE / P7: remove age-evicted
+      # decision_journal[] entries by original array INDEX (no stable id).
+      .decision_journal = ((.decision_journal // [])
+        | to_entries
+        | [.[] | select(($maps.rm_decision_journal_idx[(.key | tostring)] // false) != true) | .value])
     ' "${ORCH_STATE}" > "${output}"
 }
 
 # =============================================================================
 # Helper: read cold-known IDs from existing cold file (for idempotency)
 # Sets globals: COLD_DONE_IDS, COLD_SPRINT_IDS, COLD_SPRINT_GOAL_IDS,
-#               COLD_SIGNAL_IDS, COLD_BACKLOG_DETAIL_IDS
+#               COLD_SIGNAL_IDS, COLD_BACKLOG_DETAIL_IDS, COLD_DECISION_JOURNAL
 # =============================================================================
 read_cold_ids() {
   if [[ -f "${COLD_FILE}" ]]; then
@@ -602,12 +684,16 @@ read_cold_ids() {
     # `// []` default so pre-existing cold files (field always present but empty
     # since inception) and any legacy file missing the key still parse.
     COLD_BACKLOG_DETAIL_IDS=$(jq '[(.backlog_detail // [])[].id // ""]' "${COLD_FILE}")
+    # decision_journal is new-additive (FU-ORCH-HOT-SUB150-SPRINT-LIFECYCLE / P7) —
+    # FULL objects (not ids — content-deduped, see compute_id_maps).
+    COLD_DECISION_JOURNAL=$(jq '(.decision_journal // [])' "${COLD_FILE}")
   else
     COLD_DONE_IDS='[]'
     COLD_SPRINT_IDS='[]'
     COLD_SPRINT_GOAL_IDS='[]'
     COLD_SIGNAL_IDS='[]'
     COLD_BACKLOG_DETAIL_IDS='[]'
+    COLD_DECISION_JOURNAL='[]'
   fi
 }
 
@@ -620,7 +706,7 @@ if [[ "${DRY_RUN}" == "true" ]]; then
   CURRENT_SIZE=$(wc -c < "${ORCH_STATE}" | tr -d ' ')
 
   read_cold_ids
-  MAPS=$(compute_id_maps "${ORCH_STATE}" "${COLD_DONE_IDS}" "${COLD_SPRINT_IDS}" "${COLD_SIGNAL_IDS}" "${COLD_SPRINT_GOAL_IDS}" "${COLD_BACKLOG_DETAIL_IDS}" "${DETAIL_FILE}")
+  MAPS=$(compute_id_maps "${ORCH_STATE}" "${COLD_DONE_IDS}" "${COLD_SPRINT_IDS}" "${COLD_SIGNAL_IDS}" "${COLD_SPRINT_GOAL_IDS}" "${COLD_BACKLOG_DETAIL_IDS}" "${DETAIL_FILE}" "${COLD_DECISION_JOURNAL}")
 
   N_DONE=$(echo "${MAPS}"    | jq '.n_evict_done')
   N_DV=$(echo "${MAPS}"      | jq '.n_evict_dv')
@@ -630,6 +716,7 @@ if [[ "${DRY_RUN}" == "true" ]]; then
   N_SIG_A=$(echo "${MAPS}"   | jq '.n_evict_sig_arch')
   N_TASK=$(echo "${MAPS}"    | jq '.n_evict_task_total')
   N_TASK_BY_LANE=$(echo "${MAPS}" | jq -c '.n_evict_task_by_lane')
+  N_DJ=$(echo "${MAPS}"      | jq '.n_evict_decision_journal')
   N_NEW=$(echo "${MAPS}"     | jq '.n_new_cold')
 
   # Project hot-file size without writing (pipe jq output to wc -c)
@@ -646,6 +733,7 @@ if [[ "${DRY_RUN}" == "true" ]]; then
   log "  signal_queue.rows[] would evict: ${N_SIG_R} items from hot"
   log "  signal_queue.archive[] evict:   ${N_SIG_A} items from hot"
   log "  flat task lanes (${TASK_LANES}) would evict: ${N_TASK} items from hot -> backlog_detail[] (${N_TASK_BY_LANE})"
+  log "  decision_journal[]  would evict: ${N_DJ} items from hot"
   log "  New items to append to cold:    ${N_NEW}"
   log "  Current hot-file size:          ${CURRENT_SIZE} bytes"
   log "  Projected hot-file size:        ${PROJECTED_SIZE} bytes"
@@ -672,7 +760,7 @@ while [[ ${ATTEMPT} -lt ${MTIME_CAS_RETRIES} ]]; do
   read_cold_ids
 
   # ── Pass 1: compute ID maps (small output, safe for --argjson) ────────────
-  MAPS=$(compute_id_maps "${ORCH_STATE}" "${COLD_DONE_IDS}" "${COLD_SPRINT_IDS}" "${COLD_SIGNAL_IDS}" "${COLD_SPRINT_GOAL_IDS}" "${COLD_BACKLOG_DETAIL_IDS}" "${DETAIL_FILE}")
+  MAPS=$(compute_id_maps "${ORCH_STATE}" "${COLD_DONE_IDS}" "${COLD_SPRINT_IDS}" "${COLD_SIGNAL_IDS}" "${COLD_SPRINT_GOAL_IDS}" "${COLD_BACKLOG_DETAIL_IDS}" "${DETAIL_FILE}" "${COLD_DECISION_JOURNAL}")
 
   log "Attempt $((ATTEMPT + 1))/${MTIME_CAS_RETRIES}: ID maps computed"
   log "  done[]:              $(echo "${MAPS}" | jq '.n_evict_done') to evict from hot"
@@ -682,6 +770,7 @@ while [[ ${ATTEMPT} -lt ${MTIME_CAS_RETRIES} ]]; do
   log "  signal rows[]:       $(echo "${MAPS}" | jq '.n_evict_sig_rows') to evict from hot"
   log "  signal archive[]:    $(echo "${MAPS}" | jq '.n_evict_sig_arch') to evict from hot"
   log "  flat task lanes (${TASK_LANES}): $(echo "${MAPS}" | jq '.n_evict_task_total') to evict from hot -> backlog_detail[] ($(echo "${MAPS}" | jq -c '.n_evict_task_by_lane'))"
+  log "  decision_journal[]:  $(echo "${MAPS}" | jq '.n_evict_decision_journal') to evict from hot"
   log "  New items to cold:   $(echo "${MAPS}" | jq '.n_new_cold')"
 
   # ── Pass 2a: Build cold temp ─────────────────────────────────────────────
