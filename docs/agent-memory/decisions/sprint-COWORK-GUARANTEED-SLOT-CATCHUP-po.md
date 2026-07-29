@@ -546,3 +546,21 @@
 - Add depends[] — REJECTED: its own note deliberately keeps depends[] empty; these are independent in logic, only colliding on one file.
 **why-decision:** Its 07-29T08:12Z ruling said hand-porting, not re-breakage, is the multiplier. That has now happened to the memory predicate too — two hand-maintained copies, four days of fixes into one, false-pass #3 out of the other. Right thesis, wider than A-21. But promoting a row with no present-tense symptom ahead of a live mute spawn-loop would be inconsistent with S55.
 **why-change:** no change from plan.
+
+### STEP po-S58 · po · 2026-07-29T19:28:00Z
+**task-id:** SPIKE-DEVTEAM-QADRAIN-HEAD-SLOT-DECOUPLE
+**what-done:** Confirmed dev-team's reachability finding, REFUTED its recommended remedy by dry-running the actuator, and commissioned an architect brief re-scoped around the invariant the remedy would have broken.
+**what-considered:**
+- Accept the remedy as filed ("run QA-Drain keyed only on qa[]<1, regardless of .head.status") — REJECTED: dry-run of scripts/devteam-review-claim-qa-drain.jq against the live board replaced .head.active_task_id FACTORY-GUARD-CI-METRICMASK-IMPL with TE-T17. Line 123 is an unconditional whole-object `.head = {...}`. The gate is load-bearing.
+- Fold into FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION — REJECTED: its own AC says "BOUNDED-1/SLS/RLC/QA-Drain blocks byte-unchanged", "zero changes to per-lane gates". Rotation fixes which lane wins an IDLE tick; it cannot make any lane reachable on a BUSY tick. Orthogonal axes.
+- Re-flag only — REJECTED: 6 prior ticks already flagged it; 119 eligible rows, qa[]=0, oldest 6d.
+**why-decision:** dev-team pattern-matched this to UNBLOCK-DEVTEAM-DISPATCH-GATE-STAGING-DEADLOCK (an over-broad gate over a pure formula bug). It is not that class: here the gate protects a real single-slot `.head` invariant, and the fix must be actuator-first (make the `.head` write conditional, precedent scripts/devteam-wrapper-autoclose.jq:122-127) before the gate can move.
+**why-change:** Spawn prompt asked me to decide whether to commission. Commissioned — but the brief question is inverted from the one asked, because the asked-for design would orphan in-flight work.
+
+### STEP po-S59 · po · 2026-07-29T19:28:00Z
+**what-done:** Disposed the other 3 PO signals against live ground truth rather than their summaries; 2 minted, 1 closed as duplicate.
+**what-considered:**
+- Treat the 21 unresolved Telegram reports as actionable — REJECTED: their dominant class asserts "MAX(bctc_layout_units.extracted_at) older than 2d"; live runtime probe returns 2026-07-28 11:06:59 / n=1193. The cited condition self-resolved; the 07-17 PEK re-seed held. Already folded by SPIKE-BCTC-EXTRACTION-DORMANT's post_reseed_flood disposition.
+- Mint an incident for VPS bctc stale 35h — REJECTED: prices/news/sbv push normally on the SAME proxy, and bctc_vps_queue holds zero actionable rows (deferred_infra 328 / done 85 / enrich_failed 128 / url_not_found 39, no pending). The route is idle for want of work.
+**why-decision:** Both auditor WARNs were true observations with false inferences, so the defect is in the inferring tool, not the subject: C-06 counts rows-in-3h against a ~3x/day cadence (market_messages is live, MAX(sent_at) 15:32:13Z, n=1067), and get_vps_proxy_health prints "VPS may be down or unreachable" for a demand-driven route with an empty queue. Minted against the reporters; existing FIX-AUDITOR-C06-OFFMARKET-RECALIBRATE carries the C-06 half already.
+**why-change:** no change from plan.

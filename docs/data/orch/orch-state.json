@@ -2035,7 +2035,7 @@
         "type": "data_freshness_check",
         "summary": "market_messages table: 0 rows in last 3 hours (check C-06)",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null
       },
       {
@@ -2046,7 +2046,7 @@
         "type": "data_stale",
         "summary": "VPS proxy bctc route: stale (34+ hours since last push)",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null
       },
       {
@@ -2057,7 +2057,7 @@
         "type": "stale_signal_inbox_debt",
         "summary": "docs/signals/ 62/70 files non-signal-shape (49 cowork-team + 12 price_anomaly), never drain — deprecated backstop, since 07-03",
         "severity": "LOW",
-        "status": "NEW",
+        "status": "RESOLVED",
         "payload_ref": null
       },
       {
@@ -2068,7 +2068,7 @@
         "type": "devteam_flow_control_gap",
         "summary": "QA-Drain review->qa lane gated behind head-idle fallthrough — unreachable whenever WIP>=1 despite own qa[]<1 budget",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null
       }
     ],
@@ -6523,7 +6523,7 @@
       {
         "id": "FIX-AUDITOR-C06-OFFMARKET-RECALIBRATE",
         "type": "FIX",
-        "priority": "low",
+        "priority": "P2",
         "size": "S",
         "status": "BACKLOG",
         "title": "system-auditor C-06 (market_messages) false-positives off-market: fixed 3h-count check fires HIGH during normal off-market quiet windows",
@@ -6534,7 +6534,9 @@
           "audit": "ultracode-2026-07-12",
           "verdict": "auditor-signal-loop-P3 repoints this at scripts/auditor-db-checks.sh as predicate SSOT (market-hours window)",
           "ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#auditor-signal-loop-P3"
-        }
+        },
+        "po_occurrence_20260729": "Re-fired as sys-20260729T183438-0c12 (WARN, 18:34Z). RAW-refuted by PO the same tick through the mcp-server runtime: market_messages n=1067, MAX(sent_at)=2026-07-29 15:32:13 — table healthy, ~3.8h since last post against a ~3x/day cadence. Confirms this row diagnosis verbatim. Raised low->P2: this FP now costs a full auditor+PO triage cycle per occurrence, and the fix is a size-S doc-only edit to docs/agents/system-auditor/flow/main.md.",
+        "updated_at": "2026-07-29T19:30:16Z"
       },
       {
         "id": "FOLLOW-ON-CWKSCH-3",
@@ -11164,6 +11166,61 @@
         "created_by": "dev-mcp-server (SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY)",
         "verify_note": "found_by=SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY AC-2; live RAW-confirmed pattern (rows_written always NULL, 2-7 rows/day, crashed-row clusters correlate with restart-storm days); precedent fix pattern = FIX-BASE-RATE-COMPUTATION-CRON-DEAD",
         "updated_at": "2026-07-29T15:34:50Z"
+      },
+      {
+        "id": "SPIKE-DEVTEAM-QADRAIN-HEAD-SLOT-DECOUPLE",
+        "type": "SPIKE",
+        "mode": "spike",
+        "title": "Review-Lane QA-Drain is unreachable on any non-idle tick (119 eligible rows, qa[]=0, oldest 6d) — but the head-idle gate is LOAD-BEARING: design the .head-write decoupling, do NOT just delete the gate",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "M",
+        "timebox": 180,
+        "zone": "docs/agents/dev-team/flow/",
+        "owner": "agents-architect",
+        "next_agent": "agents-architect",
+        "supervised": true,
+        "plan_only": true,
+        "files": [
+          "scripts/devteam-review-claim-qa-drain.jq",
+          "docs/agents/dev-team/flow/main.md"
+        ],
+        "created_at": "2026-07-29T19:30:16Z",
+        "created_by": "po/triage-20260729T1928",
+        "origin_signal_id": "dev-20260729T191826",
+        "question": "How can the Review-Lane QA-Drain be made reachable on ticks where .head.status==in_progress, WITHOUT its claim script clobbering the .head slot of an unrelated in-flight task?",
+        "root_cause": "docs/agents/dev-team/flow/main.md:518 gates the entire BOUNDED-1->SLS->RLC->QA-Drain fall-through on head.status in {idle,done,missing}; :676 places QA-Drain inside that same fall-through. QA-Drain owns an INDEPENDENT budget (.task_board.qa|length < 1, main.md:685-686) that is therefore never evaluated on a busy tick.",
+        "po_refutation": "The remedy as FILED by dev-team (run it keyed only on qa[]<1 regardless of .head.status) is REJECTED. PO dry-ran scripts/devteam-review-claim-qa-drain.jq against the LIVE board 2026-07-29T19:2xZ: it selects correctly (TE-T17, oldest) BUT line 123 performs an UNCONDITIONAL whole-object replace `.head = {status:in_progress, active_task_id:$picked_id, next_agent:qa, ...}`. The dry-run output had replaced live .head.active_task_id=FACTORY-GUARD-CI-METRICMASK-IMPL (developer genuinely running) with TE-T17. The head-idle gate is LOAD-BEARING, not over-broad. This is NOT the same class as UNBLOCK-DEVTEAM-DISPATCH-GATE-STAGING-DEADLOCK (a pure WIP-formula bug with no invariant behind it).",
+        "in_repo_precedent": "scripts/devteam-wrapper-autoclose.jq is NEVER gated on WIP and runs at Step 4.4 post-cycle precisely because its .head write is CONDITIONAL (lines 122-127: syncs only if .head.active_task_id equals a swept row own id). That is the shape QA-Drain needs.",
+        "ac": "(AC-1 PART 1, script-only, shippable immediately, ZERO file conflict) Make scripts/devteam-review-claim-qa-drain.jq .head write non-destructive: never overwrite a .head whose active_task_id belongs to a different, live task. Decide+state where the spawned qa agent then reads its instruction from, since .head.next_action can no longer be assumed free. (AC-2 PART 2, flow-doc) Only AFTER AC-1: relocate/duplicate the QA-Drain invocation so it is reached on non-idle ticks. MUST carry a machine-readable depends_on on FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION (that P0 rewrites main.md 496-686 wholesale) — prose sequencing only is blind-promoted, see FIX-DEVTEAM-BOUNDED1-PROSE-SEQUENCING-UNBACKED-GATE. (AC-3) State explicitly whether one-row-per-tick against 119 eligible rows is acceptable throughput or needs its own row — PO judges reachability necessary but NOT sufficient.",
+        "dedup_checked": "NOT a duplicate of FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION / TASK-DEVTEAM-IDLE-CHAIN-2-MAIN-FLOW (both rewrite 496-686 into round-robin, but their own ACs mandate BOUNDED-1/SLS/RLC/QA-Drain blocks byte-unchanged + zero changes to per-lane gates -> they change WHICH lane wins an IDLE tick, never whether any lane is reachable on a BUSY tick). NOT a duplicate of FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION (opposite direction: QA-Drain firing too often on idle ticks starving Step 1). NOT a duplicate of FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN (that row IS the shipped lane).",
+        "evidence": "Live 2026-07-29T19:2xZ: review[]=157, 119 rows status=REVIEW+next_agent=qa, qa[]=0, oldest updated_at 2026-07-23 (6d) plus 2 rows with NO timestamp. Corroborating: CLEAN-COWORK-DISPATCHER-TELEMETRY-DRAIN-DIR (P1, owner po) is itself stranded in review[] with next_agent=developer — the non-qa SECONDARY class this lane skips by design — so signal dev-20260729T184636 own fix is blocked by this same gap.",
+        "updated_at": "2026-07-29T19:30:16Z"
+      },
+      {
+        "id": "FIX-VPSHEALTH-DEMANDROUTE-EMPTYQUEUE-MISREPORTS-PROXY-UNREACHABLE",
+        "type": "FIX",
+        "title": "get_vps_proxy_health prints \"VPS may be down or unreachable\" for the bctc route when the real cause is an EMPTY work queue — proxy is provably up (prices/news/sbv pushing on the same proxy)",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "files": [
+          "apps/mcp-server/src"
+        ],
+        "created_at": "2026-07-29T19:30:16Z",
+        "created_by": "po/triage-20260729T1928",
+        "origin_signal_id": "sys-20260729T183440-1d23",
+        "baseline_pass": true,
+        "rebuild_required": true,
+        "root_cause": "The staleness verdict is derived from last-push AGE alone and then narrated with a fixed causal claim (VPS down/unreachable). bctc is a DEMAND-DRIVEN route: it pushes only when bctc_vps_queue holds actionable rows. RAW live probe 2026-07-29T19:2xZ through the mcp-server runtime: bctc_vps_queue statuses = deferred_infra 328, done 85, enrich_failed 128, url_not_found 39 — ZERO pending/queued. Meanwhile the SAME proxy shows prices ok (373 pushes/24h), news ok (148/24h, last 19:15:19), sbv ok (38/24h, last 18:57:33). The proxy is emphatically up.",
+        "fix_spec": "Separate OBSERVATION from INFERENCE for demand-driven routes. Either (a) suppress/downgrade the STALE verdict for a route whose own work queue has no actionable rows and label it IDLE-NO-WORK, or (b) keep STALE but replace the hardcoded VPS may be down or unreachable narration with a cause discriminated by whether sibling routes on the same proxy are pushing. Generic — no route-name or date literals.",
+        "ac": "AC: with bctc_vps_queue holding zero actionable rows AND >=1 sibling route pushing within its own SLA, get_vps_proxy_health MUST NOT assert the VPS is down/unreachable. Verify against live output, not a fixture.",
+        "dedup_checked": "Distinct from FIX-VPS-NEWS-STALE-FALSEPOS (zone apps/news-fetch/, news route, threshold-vs-cadence miscalibration where the feed IS pushing) and from FIX-VPS-HEALTH-OFFHOURS-MASK-FALSE-GREEN (off-hours grace double-apply, opposite direction). Here the STALE flag is CORRECT and only the attributed cause is wrong.",
+        "user_impact": "MED — a permanent recurring false incident: the queue stays drained until ALPHA-S6-OPTIONB-DECISION-GATE trips, so this WARN re-fires indefinitely and burns a system-auditor + PO triage slot each time.",
+        "updated_at": "2026-07-29T19:30:16Z"
       }
     ],
     "closed_sprints": [
