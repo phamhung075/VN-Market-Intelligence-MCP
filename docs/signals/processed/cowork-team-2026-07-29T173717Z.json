@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-29T17:37:17Z",
+    "matched_slots": [
+      "digest-daily"
+    ],
+    "won_slots": [
+      "digest-daily"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/digest-predict/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "digest-daily": "cron"
+    },
+    "cadence_minutes": {
+      "digest-daily": null
+    },
+    "last_fired_timestamp": "2026-07-29T17:36:51Z",
+    "last_fired_slots": [
+      "digest-daily"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "17:30",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 15,
+    "note": "single guaranteed slot digest-daily fired cleanly; tick-snapshot assembled via pinned FILE_TICK=17:36 with no timing defect; container_vm_headroom_mb field-rename drift (host_headroom_mb still live) previously flagged, not re-flagged this tick"
+  },
+  "priority": "low",
+  "createdAt": "2026-07-29T17:37:17Z",
+  "_processed": {
+    "fingerprint": "88bdb1848d2d953dbae3f0bf75dd96b3d1f349e6282652306797e8c8a9ae2d3f",
+    "processedAt": "2026-07-29T17:45:23Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
