@@ -88,12 +88,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FE-PG-_INDEX-FRESH-FIX",
-    "next_agent": "dev-frontend",
-    "next_action": "BOUNDED-1 auto-pickup claim of FE-PG-_INDEX-FRESH-FIX — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-29T17:17:11Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "updated_at": "2026-07-29T17:33:05Z",
+    "updated_by": "dev-frontend"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -17361,6 +17360,26 @@
         "created_at": "2026-07-24T16:55:43Z",
         "created_by": "architect",
         "updated_at": "2026-07-29T17:05:12Z"
+      },
+      {
+        "id": "FE-PG-_INDEX-FRESH-FIX",
+        "type": "FIX",
+        "title": "Add page-level freshness/staleness indicator to /dashboard (Market Overview) — CHEF digest shows only per-dish timestamps, no page-level stale flag",
+        "status": "REVIEW",
+        "priority": "P2",
+        "size": "S",
+        "zone": "apps/frontend/",
+        "sprint": "QUALITY-AUDIT-FRONTEND-COVERAGE",
+        "source": "quality-audit-frontend-page-coverage-20260724",
+        "owner": "dev-frontend",
+        "next_agent": "qa",
+        "check_id": "FE-PG-_INDEX-FRESH",
+        "status_note": "FE-PG-_INDEX-FRESH re-check returns PASS",
+        "note": "Quality-audit frontend page-coverage 2026-07-24 (FE-PG-_INDEX-FRESH, WARN). GAP: dashboard._index (market overview front page) renders only per-dish ClientTimestamp; there is no <FreshnessBadge> / page-level staleness SLA, so a stale synthesis feed is not flagged. Ref: project_frontend_freshness_transparency. AC: FE-PG-_INDEX-FRESH re-check returns PASS (page-level 'data as of' + stale indicator visible).",
+        "created_at": "2026-07-24T17:22:24Z",
+        "created_by": "po",
+        "updated_at": "2026-07-29T17:33:06Z",
+        "review_note": "dev-frontend: FreshnessBadge + useFreshnessRevalidator(\"daily\") wired onto dashboard._index.tsx, sourced from GET /api/market-digest data_asof (naive-SQLite string normalized to ISO8601 UTC via reused app/lib/formatDate.ts::parseDate — avoids host-TZ +2h skew). fetchMarketDigestData(origin) extracted as named test helper (fetchMacroData/fetchAlertsData pattern). 6 new unit tests GREEN; vitest 2172 pass/2 fail (same pre-existing QUE-TOOLTIP, confirmed git-stash A/B); tsc clean; Playwright G12 3/3 render-check + 7/7 full e2e GREEN via PLAYWRIGHT_PORT=3011 throwaway dev server (live :3001 container is a stale image predating this commit). Manually confirmed live: green FreshnessBadge renders on GET /dashboard/ against the real, unmodified mcp-server via a second throwaway server on :3012. PENDING-REBUILD: live :3001 container needs ops rebuild to serve this fix — code+behavior proven via throwaway dev server, container deploy is ops-gated, out of dev-frontend zone."
       }
     ],
     "qa": [],
@@ -17382,32 +17401,7 @@
     },
     "last_triaged_at": "2026-07-29T17:17:11Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FE-PG-_INDEX-FRESH-FIX",
-        "type": "FIX",
-        "title": "Add page-level freshness/staleness indicator to /dashboard (Market Overview) — CHEF digest shows only per-dish timestamps, no page-level stale flag",
-        "status": "IN_PROGRESS",
-        "priority": "P2",
-        "size": "S",
-        "zone": "apps/frontend/",
-        "sprint": "QUALITY-AUDIT-FRONTEND-COVERAGE",
-        "source": "quality-audit-frontend-page-coverage-20260724",
-        "owner": "dev-frontend",
-        "next_agent": "dev-frontend",
-        "check_id": "FE-PG-_INDEX-FRESH",
-        "status_note": "FE-PG-_INDEX-FRESH re-check returns PASS",
-        "note": "Quality-audit frontend page-coverage 2026-07-24 (FE-PG-_INDEX-FRESH, WARN). GAP: dashboard._index (market overview front page) renders only per-dish ClientTimestamp; there is no <FreshnessBadge> / page-level staleness SLA, so a stale synthesis feed is not flagged. Ref: project_frontend_freshness_transparency. AC: FE-PG-_INDEX-FRESH re-check returns PASS (page-level 'data as of' + stale indicator visible).",
-        "created_at": "2026-07-24T17:22:24Z",
-        "created_by": "po",
-        "updated_at": "2026-07-29T17:17:12Z",
-        "promoted_at": "2026-07-29T17:17:11Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "claimed_at": "2026-07-29T17:17:11Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
