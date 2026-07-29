@@ -2333,6 +2333,17 @@
         "severity": "WARN",
         "status": "NEW",
         "payload_ref": null
+      },
+      {
+        "id": "dev-team-20260729T0700Z-headfreeze",
+        "ts": "2026-07-29T06:19:45Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "head pinned at status=review freezes ENTIRE idle-chain (BOUNDED-1+SLS+RLC+QA-Drain all gated on idle) -- root cause sharper than prior QA-Drain-starved signal; scopes TASK-DEVTEAM-IDLE-CHAIN-2-MAIN-FLOW",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": "docs/signals/dev-team-20260729T0700Z-headpinned-review-freezes-idlechain.json"
       }
     ],
     "last_triaged_at": "2026-07-28T14:53:00Z",
