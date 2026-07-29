@@ -11223,6 +11223,170 @@
         "claimed_at": "2026-07-29T13:19:09Z",
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
         "next_agent": "architect"
+      },
+      {
+        "id": "FIX-DEVTEAM-IDLE-CHAIN-S1-SCHEMA-SELECTION",
+        "type": "FIX",
+        "title": "Schema + rotation_selected() jq function foundation for aged round-robin consumer selection",
+        "status": "BACKLOG",
+        "priority": "P0",
+        "size": "S",
+        "zone": "docs/agents/dev-team/flow/",
+        "owner": "developer",
+        "next_agent": "developer",
+        "created_at": "2026-07-29T13:50:00Z",
+        "created_by": "pm",
+        "depends": [],
+        "blocks": [
+          "FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION",
+          "FIX-DEVTEAM-IDLE-CHAIN-P1B-STAMP",
+          "FIX-DEVTEAM-IDLE-CHAIN-P2A-DURABLE-DRAIN"
+        ],
+        "files": [
+          "apps/mcp-server/src/infrastructure/orchStateSchema.ts",
+          "scripts/lib/devteam-eligibility.jq"
+        ],
+        "updated_at": "2026-07-29T13:54:37Z"
+      },
+      {
+        "id": "FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION",
+        "type": "FIX",
+        "title": "main.md dispatcher chain rewrite: replace fixed-priority BOUNDED-1→SLS→RLC→QA-Drain→Step1 with aged round-robin selection (Part 1 — rotation)",
+        "status": "BACKLOG",
+        "priority": "P0",
+        "size": "L",
+        "zone": "docs/agents/dev-team/flow/",
+        "owner": "developer",
+        "next_agent": "developer",
+        "created_at": "2026-07-29T13:50:01Z",
+        "created_by": "pm",
+        "depends": [
+          "FIX-DEVTEAM-IDLE-CHAIN-S1-SCHEMA-SELECTION"
+        ],
+        "blocks": [
+          "FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION"
+        ],
+        "files": [
+          "docs/agents/dev-team/flow/main.md"
+        ],
+        "updated_at": "2026-07-29T13:54:37Z"
+      },
+      {
+        "id": "FIX-DEVTEAM-IDLE-CHAIN-P2A-DURABLE-DRAIN",
+        "type": "FIX",
+        "title": "drain-signals.md + drain-signals.js: durable inbox ordering — append-before-destructive for both §0a-1 and §0a-D (Part 2 — durability)",
+        "status": "BACKLOG",
+        "priority": "P0",
+        "size": "M",
+        "zone": "docs/agents/dev-team/flow/",
+        "owner": "developer",
+        "next_agent": "developer",
+        "created_at": "2026-07-29T13:50:02Z",
+        "created_by": "pm",
+        "depends": [
+          "FIX-DEVTEAM-IDLE-CHAIN-S1-SCHEMA-SELECTION"
+        ],
+        "blocks": [
+          "FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION"
+        ],
+        "files": [
+          "docs/agents/dev-team/flow/drain-signals.md",
+          "scripts/agents-flow/drain-signals.js"
+        ],
+        "updated_at": "2026-07-29T13:54:37Z"
+      },
+      {
+        "id": "FIX-DEVTEAM-IDLE-CHAIN-P1B-STAMP",
+        "type": "FIX",
+        "title": "devteam-idle-chain-stamp.jq new script + main.md integration: §2.3 unconditional post-dispatch stamp write for rotation fairness bound",
+        "status": "BACKLOG",
+        "priority": "P0",
+        "size": "S",
+        "zone": "docs/agents/dev-team/flow/",
+        "owner": "developer",
+        "next_agent": "developer",
+        "created_at": "2026-07-29T13:50:03Z",
+        "created_by": "pm",
+        "depends": [
+          "FIX-DEVTEAM-IDLE-CHAIN-S1-SCHEMA-SELECTION"
+        ],
+        "blocks": [
+          "FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION"
+        ],
+        "files": [
+          "scripts/devteam-idle-chain-stamp.jq"
+        ],
+        "updated_at": "2026-07-29T13:54:37Z"
+      },
+      {
+        "id": "FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION",
+        "type": "FIX",
+        "title": "main.md Step 1 durable inbox consumption + stamp integration: §3.2 read/clear + §2.3 stamp call site",
+        "status": "BACKLOG",
+        "priority": "P0",
+        "size": "M",
+        "zone": "docs/agents/dev-team/flow/",
+        "owner": "developer",
+        "next_agent": "developer",
+        "created_at": "2026-07-29T13:50:04Z",
+        "created_by": "pm",
+        "depends": [
+          "FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION",
+          "FIX-DEVTEAM-IDLE-CHAIN-P2A-DURABLE-DRAIN",
+          "FIX-DEVTEAM-IDLE-CHAIN-P1B-STAMP"
+        ],
+        "blocks": [
+          "FIX-DEVTEAM-IDLE-CHAIN-TEST-FAIRNESS",
+          "FIX-DEVTEAM-IDLE-CHAIN-TEST-DURABLE"
+        ],
+        "files": [
+          "docs/agents/dev-team/flow/main.md"
+        ],
+        "updated_at": "2026-07-29T13:54:37Z"
+      },
+      {
+        "id": "FIX-DEVTEAM-IDLE-CHAIN-TEST-FAIRNESS",
+        "type": "FIX",
+        "title": "AC-1/AC-4: extend devteam-dispatch-gate-satisfiability.sh — rotation fairness bounds + gate-firing proof (not just resolution)",
+        "status": "BACKLOG",
+        "priority": "P0",
+        "size": "M",
+        "zone": "docs/agents/dev-team/flow/",
+        "owner": "developer",
+        "next_agent": "developer",
+        "created_at": "2026-07-29T13:50:05Z",
+        "created_by": "pm",
+        "depends": [
+          "FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION"
+        ],
+        "blocks": [],
+        "files": [
+          "scripts/audits/devteam-dispatch-gate-satisfiability.sh"
+        ],
+        "updated_at": "2026-07-29T13:54:37Z"
+      },
+      {
+        "id": "FIX-DEVTEAM-IDLE-CHAIN-TEST-DURABLE",
+        "type": "FIX",
+        "title": "AC-2 + conservation guard + docs: drain-signals-durable.test.js new harness (AC-2 negative control) + conservation-check.mjs §3.4 extension + dev-standards.md Script Persistence pointers",
+        "status": "BACKLOG",
+        "priority": "P0",
+        "size": "M",
+        "zone": "docs/agents/dev-team/flow/",
+        "owner": "developer",
+        "next_agent": "developer",
+        "created_at": "2026-07-29T13:50:06Z",
+        "created_by": "pm",
+        "depends": [
+          "FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION"
+        ],
+        "blocks": [],
+        "files": [
+          "scripts/agents-flow/drain-signals-durable.test.js",
+          "scripts/orch-conservation-check.mjs",
+          "docs/policies/dev-standards.md"
+        ],
+        "updated_at": "2026-07-29T13:54:37Z"
       }
     ],
     "closed_sprints": [
@@ -17213,7 +17377,7 @@
           "FIX-DRAIN-PERSIST-GUARD-COUNT-DRAINABLE-ONLY"
         ],
         "note": "Router SURFACED; PO source-verified the JUMP-to-end placements before minting (grep-confirmed distinct from the QA-Drain row which adds the drain). Sequence AFTER the SLS/QA-Drain/RLC live-tick AC(3) verification lands so the two do not race the same flow file. | 2026-07-22 SHARPER FACET (from dev-team-20260722T054244Z-triage-batch-wip-deadlock): even when Step-1 triage SUCCEEDS under WIP saturation, its direct-FIX output (Step2 FIX->skip->Step3 has NO WIP gate) still requires a free WIP slot to LAND, so a successfully-triaged BATCH is silently lost if the board is saturated and it is not persisted. dev-team could neither dispatch nor persist its 07-22T05:42Z BATCH; PO minted the 2 FIXes (FIX-DRAIN-PERSIST-GUARD-COUNT-DRAINABLE-ONLY P1, FIX-ORCHSTATE-CONSERVATION-GUARD-QA-LANE-BLIND P2) to backlog[] as the workaround. Architect: the fairness fix must ALSO guarantee triaged direct-FIX output is DURABLY PERSISTED, not merely that Step-1 runs.",
-        "updated_at": "2026-07-29T13:48:12Z",
+        "updated_at": "2026-07-29T13:54:37Z",
         "updated_by": "dev-team/tick-20260725T1351Z",
         "po_evidence_20260725T0948": "LIVE EVIDENCE + PREMISE CORRECTION (folded from signal cwk-20260725T093521-b3d1's starvation leg; no new row minted — same defect class, same zone, same architect owner). PREMISE CORRECTION: this row's title asserts 'with review[] holding qa-eligible rows the QA-Drain fires every idle tick'. The live board REFUTES that — qa[] is EMPTY (0 rows) while review[] holds 105 rows, 73 of them carrying next_agent=qa, some stamped explicitly 'branch:null for QA-Drain'. QA-Drain has effectively never fired. The lane that actually wins the head-idle chain is BOUNDED-1, which is FIRST in it and draws from a 390-row backlog[], so it finds an eligible row on essentially every idle tick and JUMPs to execute — leaving SLS, RLC and QA-Drain unreachable behind it. Measured cadence 2026-07-25: seven BOUNDED-1 claim commits between 02:17Z and 05:18Z, one every ~30min (8e062bbd6, 4ba46273b, 941c3b829, 525a82e14, a87975d9d, a44ac38aa, 9f2ae6865), against ZERO RLC or QA-Drain dispatches in the same window. CONSEQUENCE: ready[] (45 rows, 18 of them P0) and review[] (105 rows) are both structurally undrainable while backlog[] is non-empty. Concrete cost: P0 FIX-BCTC-PENDING-REFINE-HEAD-OF-LINE-FAILED-ROW sat READY and undispatched from 2026-07-21 through 2026-07-25 across three independent correct detections, purely because nothing consumes ready[]; PO has re-routed that one row to backlog[] this tick as an ACUTE workaround, which does not fix the lane. So the fairness fix must cover lane ORDERING/starvation between the four dispatch lanes, not only the Step-1 PO-triage preemption this row was originally minted for. Note the chain-ordering defect is CHRONIC and independent of the ACUTE head-pin outage recorded in FIX-DEVTEAM-HEAD-PIN-STALE-THRESHOLD-24H-VS-TICK-CADENCE — the P0s were already starving for 4 days before today's pin.",
         "po_ruling_20260725T1059": "PO RULING 2026-07-25T10:59Z (po, router-referred throughput decision). DISPOSITION: FIX + RAISE P1->P0, design PRE-SELECTED (this row previously said 'PO has NOT pre-selected'; leaving the design open is part of why it sat). NOT accepted-as-is.\n\nWHY P0: this row is the only defect on the board that STRUCTURALLY BLOCKS ITS OWN REMEDIATION. It is supervised:true + plan_only:true, which routes it to the Supervised-Lane Sweep — and SLS is 2nd in the very chain this row describes, permanently unreachable behind BOUNDED-1. A defect that prevents its own fix from ever being dispatched outranks each individual row it starves. It also gates the drain rate of three whole lanes at once (ready 44 incl. 18 P0, review 105, Step-1 triage), so its priority must dominate theirs.\n\nSELECTED DESIGN (supersedes options a/b/c in .deliverable — architect may refine the mechanism, NOT re-open the choice): AGED ROUND-ROBIN over the five idle-path consumers, plus DURABLE signal handoff. Two parts, both required; part 2 is NOT optional and NOT separable.\n\nPART 1 — replace the fixed-priority chain with aged round-robin. Today BOUNDED-1 -> SLS -> RLC -> QA-Drain -> Step 1 is a FIXED-PRIORITY chain in which every lane JUMPs to a terminal on dispatch, so the first eligible lane wins every idle tick and the other four are unreachable whenever backlog[] is non-empty (it is: 391). Fix: stamp each of the five consumers with last_served_tick; on each idle tick serve the ELIGIBLE consumer with the OLDEST last_served_tick. Rationale for preferring this over the row's own option (a) 'force Step 1 every Nth idle tick': option (a) special-cases ONE victim and leaves ready[]/review[] starved by the same mechanism. Live evidence says all four non-winners starve, not just Step 1 — so the fix must be lane-generic. One mechanism, four victims.\n\nPART 2 — make the drain->triage handoff DURABLE (folds FIX-DEVTEAM-BOUNDED1-PENDINGSIGNALS-EMPTY-GUARD, now CANCELLED). Rotation alone bounds triage LATENCY but does not stop signal LOSS. Step 0a is DESTRUCTIVE-BEFORE-DELIVERY: it moves docs/signals/*.json to processed/, writes the fingerprint into signals_processed (so the next drain dedups it to skipped-duplicate and never re-routes it), and marks signal_queue rows NEW->READ — then hands the result to Step 1 via pendingSignals[], which is an IN-MEMORY per-tick variable, never persisted (grep-confirmed: pendingSignals appears only in dev-team/flow/main.md + drain-signals.md, in no script and in no orch-state key). Step 1 is its ONLY consumer. Therefore every tick that short-circuits before Step 1 CONSUMES its drained signals and DISCARDS them; recovery is possible only by hand-reading processed/ and only until the 7-day prune. Required: Step 0a persists the drained batch to a durable inbox, Step 1 consumes-and-clears it, so a short-circuited tick loses nothing and the next tick that reaches Step 1 drains the accumulation. Under rotation, triage loses 4 of every 5 idle ticks, so WITHOUT part 2 rotation would still drop ~80% of drained signals — that is why these ship together.\n\nEXPLICIT NON-CHANGE — BOUNDED-1 cap stays 1. The selected design needs no cap change: BOUNDED-1 keeps its WIP<1 gate and its 1-task-in-flight lane, it simply stops winning every idle tick. The cap is user-gated (2026-07-04) and is NOT touched. If architect's refinement turns out to require raising it, STOP and escalate to the user — do not raise it.\n\nEVIDENCE (verified live this session, not inferred): (i) Fixed-priority starvation is provable by control-flow inspection of docs/agents/dev-team/flow/main.md alone — BOUNDED-1 :514 JUMP TO execute, SLS :575 JUMP TO end, RLC :628 JUMP TO end, QA-Drain :679 JUMP TO end, Step 1 at :695 reachable only if all four decline. (ii) Measured 7/7 wins to BOUNDED-1, 0/7 to the other four, 02:17Z-05:18Z 2026-07-25 (per this row's own po_evidence_20260725T0948). (iii) Lane consequence live: qa[]=0 against review[]=105 with 73 rows carrying next_agent=qa — QA-Drain has effectively never fired. (iv) Signal-plane consequence: signals.db signals_processed holds 363 rows in the 7d window, ALL result='routed-to-po' (2026-07-18..25), across 141 drain commits — against exactly ONE dev-team Step-1 PO triage record in that same window (docs/agent-memory/decisions/triage-20260725T0948Z-po.md, and that one was spawned OUT-OF-BAND by the router as the acknowledged workaround; the prior triage-* journal is triage-20260711T0053Z-po.md, 14 days earlier). PO itself ran 62 cycles in the window, so PO is NOT idle — what is starved is specifically the dev-team Step-1 path, the only consumer of pendingSignals[]. The persistent planes (signal_queue rows, Telegram) are covered by those out-of-band router-driven PO runs; the docs/signals/ FILE plane is not, because the drain already moved and fingerprinted it. Net: the system is currently running on a live-router workaround for a broken unattended path — precisely the path the 7,37 * * * * cron exists to cover.\n\nPREMISE NOTE for architect (do not re-litigate, recorded for accuracy): the 4-day non-dispatch of P0 FIX-BCTC-PENDING-REFINE-HEAD-OF-LINE-FAILED-ROW had TWO independent causes, not one. It sat in ready[] where no lane could reach it (this row's chronic defect); PO re-routed it ready->backlog at ~09:51Z as an acute workaround, which made it BOUNDED-1-eligible; separately the tick plane was dead 05:18Z-10:37Z and was re-armed ~10:10Z. BOUNDED-1 then claimed it at priority_rank=0 on the first tick after re-arm (10:37Z, head.updated_at 2026-07-25T10:45:02Z). The tick-plane fault is REAL and is CLOSED. It does not explain the preceding ~4 days, during which the row was in a lane with no reachable consumer — that remains this row's defect and is the reason ready[] must be covered by PART 1.",
@@ -17231,7 +17395,10 @@
         "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='pm' (priority_rank=0); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
         "dispatch_lane": "pm",
         "claimed_at": "2026-07-29T13:48:12Z",
-        "claimed_by": "dev-team (supervised-lane sweep)"
+        "claimed_by": "dev-team (supervised-lane sweep)",
+        "completed_at": "2026-07-29T13:50:10Z",
+        "completed_by": "pm",
+        "pm_note": "decomposed into 6 atomic tasks per architect brief section 6 file list; tasks span Tier 1-4 with strict dependencies; all tasks marked P0 same zone docs/agents/dev-team/flow/; awaiting dev-team dispatch for implementation"
       }
     ]
   },

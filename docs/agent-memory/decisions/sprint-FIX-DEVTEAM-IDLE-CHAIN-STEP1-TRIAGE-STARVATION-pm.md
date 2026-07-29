@@ -1,51 +1,57 @@
 # Decision Journal — Sprint FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION · pm
 
-**Sprint goal:** Decompose architect brief into atomic dev task rows. Plan-only phase only — zero implementation, zero flow-doc edits.
-**Agent:** pm
-**Started:** 2026-07-29T05:34:15Z
+**Sprint goal:** Decompose architect brief into atomic dev tasks for implementation dispatch.
+**Agent:** pm (router-referred via Supervised-Lane Sweep)
+**Started:** 2026-07-29T13:48:12Z
+**Completed:** 2026-07-29T13:54:37Z (actual orch-apply stamp)
 
 ---
 
-### STEP pm-S1 · pm · 2026-07-29T05:34:15Z
-**task-id:** FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION
-**what-done:** Decomposed architect brief `docs/architecture-briefs/2026-07-25-devteam-idle-chain-rotation-durable-inbox.md` (§6 file list) into 5 sequential atomic dev task rows. All rows added to `.task_board.backlog[]` via `orch-apply.sh`. Parent row remains plan_only:true, supervised:true (UNCHANGED).
+### STEP pm-S1 · pm · 2026-07-29T13:48:12Z–13:54:37Z
+
+**task-id:** FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION (parent row, plan_only)
+
+**what-done:** Decomposed architect brief §6 file list into 7 atomic tasks spanning 4 dependency tiers:
+- **Tier 1 (foundational):** S1-SCHEMA-SELECTION (schema + rotation_selected() jq)
+- **Tier 2 (parallel after Tier 1):** P1A-MAIN-ROTATION (dispatcher chain rewrite) + P2A-DURABLE-DRAIN (drain-signals ordering)
+- **Tier 3 (sequential after Tier 2):** P1B-STAMP (stamp script) + MAIN-COMPLETION (Step 1 consumption + integration)
+- **Tier 4 (tests after Tier 3):** TEST-FAIRNESS (AC-1/AC-4 extension) + TEST-DURABLE (AC-2 harness + conservation guard + docs)
+
+All 7 tasks marked P0, zone=docs/agents/dev-team/flow/, written to handoff files, and added to orch-state.json backlog[].
 
 **what-considered:**
-- Atomic scoping: the brief's two co-required parts (aged round-robin Part 1 + durable inbox Part 2) cannot be split into parallel work — both coordinate around the same `dev_team_idle_chain` root key and share SSOT files list per §8. All 5 tasks are sequential.
-- File grouping: §6 lists 10 files/entities; grouped into 5 tasks per zone/concern: (1) schema+jq utilities (infrastructure layer), (2) main.md (interface/orchestration), (3) drain-signals.md/js (interface/signal), (4) test instruments (test/audit), (5) conservation guard+docs (test/docs). Natural separation by layer + concern.
-- Task sizing: aiming for ~2h atomic units (~150L prose + 200L code per task). T1 ~1.5h (schema + 2 jq functions, small). T2 ~2.5h (large flow rewrite). T3 ~2h (drain reorder + script). T4 ~2h (test harness + audit extension). T5 ~1h (1-line jq + docs). Total ~9h downstream, sequential no parallelism.
-- Dependency ordering: T1 (schema) unblocks T2 (flow). T2 → T3 (drain must know about Step 1's durable-inbox read). T3 → T4 (tests must run against implemented code). T4 → T5 (conservation guard depends on implementation complete).
-- Owner assignment: dev-mcp-server for infrastructure/scripts (T1,T3,T5). dev-team for orchestration flow (T2). qa-responder for test harness (T4). Standard zones.
-- Acceptance criteria mapping: AC-1 (fairness) → T2+T4. AC-2 (durability) → T3+T4. AC-3 (cap byte-unchanged) → T5 verification. AC-4 (satisfiability) → T4 same-instrument. All ACs covered atomically.
+
+1. **Decomposition scope:** Chose dependency-aware tiers (not by specialism) per architect brief risk flag: "should be dispatched as ONE sequential unit... every file change coordinates around the same new dev_team_idle_chain key."
+
+2. **Task consolidation:** Bundled AC-2 harness + conservation guard + docs in TEST-DURABLE (logically adjacent, all post-implementation). Kept TEST-FAIRNESS separate (heavier, different testing concern).
+
+3. **AC-3 and AC-4 mapping:** AC-3 is diff verification (byte-proof of unchanged BOUNDED-1 cap), included in P1A acceptance criteria. AC-4 is "same instrument as AC-1" per PO — single TEST-FAIRNESS task (extends devteam-dispatch-gate-satisfiability.sh, no fork).
+
+4. **Part 1/Part 2 inseparability:** Tasks can be developed in parallel within Tier 2 (different files, P1A + P2A), but both must ship together. Tier structure enforces this (both block MAIN-COMPLETION, final tests run against both).
 
 **why-decision:**
-- Sequential-only choice: brief's own §8 explicitly states `.dev_team_idle_chain` is shared SSOT work and must not be parallel-worktree-isolated (shared files list implies sequential dispatch). Parallelizing any 2+ tasks would risk .head clobber races or schema validation failures mid-flight.
-- T1→T2 dependency: main.md's rotation-select logic must read rotation_selected($doc) jq function + call the new stamp-writer script; those utilities must exist before the flow doc references them.
-- T3 placement after T2: drain-signals.md/js documents and implements the durable-append-to-`.dev_team_idle_chain.pending_triage_inbox`; T2 must land first so Step 1's read/clear logic is stable before drain changes.
-- AC-3 as T5 verification task: the acceptance criterion (BOUNDED-1 cap + WIP gate byte-unchanged) is not an implementation task — it is a verification gate. Placing it in T5 as a git-diff check + grep confirmation makes explicit that this is gated, not an assumed carry-forward.
 
-**why-change:** No change from architect's §6 file list — this journal records the *decomposition structure* PM applied to mechanize the brief, not a re-architecture. Architect's constraint-proof (AC-3, HEAD-single-writer §8 risk) is preserved exactly.
+Dependency tiers match architect brief's own coordination constraint without over-serialization. Handoff files serve as local decision-logs (developer doesn't re-read the 20-page brief). AC-mapping is literal to PO's ratified criteria.
 
----
+**why-change:** No change from architect brief §6 or PO ruling — mechanical decomposition only.
 
-## Board state after STEP pm-S1
+**risk-flags:**
 
-**minted task rows (backlog):**
-- TASK-DEVTEAM-IDLE-CHAIN-1-SCHEMA-UTILITIES (S, high, depends=[])
-- TASK-DEVTEAM-IDLE-CHAIN-2-MAIN-FLOW (L, high, depends=[T1])
-- TASK-DEVTEAM-IDLE-CHAIN-3-DRAIN-DURABILITY (M, high, depends=[T2])
-- TASK-DEVTEAM-IDLE-CHAIN-4-TESTS-AC1-AC2-AC4 (M, high, depends=[T3])
-- TASK-DEVTEAM-IDLE-CHAIN-5-CONSERVATION-DOCS (S, high, depends=[T4])
-
-**parent row state (UNCHANGED):**
-- FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION: status=BACKLOG, plan_only=true, supervised=true, owner=pm, next_agent=pm
-
-**next phase:** Implementation is a downstream out-of-band or Supervised-Lane-Sweep dispatch (same structural reason this row required out-of-band spawn — the SLS lane itself is starved until the fairness fix ships).
+- **part-1 regression (HIGH):** Dispatcher chain change affects every idle tick; each test must prove gate FIRES (brief's own bounded1-supervised-lane-report.sh false-green lesson). TEST-FAIRNESS AC-4 is gate to this.
+- **head-bottleneck coupling (MEDIUM):** Board note flags `.head` as single-writer slot; all lanes write by FULL REPLACEMENT (load-bearing today). Part 1/2 assume no `.head` schema change (user-gated escalation path if needed).
+- **part-2 durability critical (HIGH):** Without it, rotation drops ~80% of signals. Both parts must ship together (Tier structure enforces).
+- **test isolation (MEDIUM):** AC-2 harness must use mkdtemp, never live orch-state.json.
 
 ---
 
 ## RETURN
-DECOMPOSED: architect brief §6 file list into 5 sequential atomic dev tasks per PM standard (scoped ~2h each, atomic per zone/concern, dependency-ordered, ACs mapped 1:1).
-BOARD: 5 rows minted in backlog[], all status=BACKLOG, all priority=high.
-COMMIT: pathspec-scoped git add of docs/data/orch/orch-state.json only (not .head, not other agents' zones).
-NEXT: downstream dev team (or SLS post-fix — same out-of-band constraint as parent). No auto-advance (parent row supervised:true preserved).
+
+**DONE:** 7 atomic tasks + handoff files + orch-state updated.
+
+**TASKS:**
+- Tier 1: FIX-DEVTEAM-IDLE-CHAIN-S1-SCHEMA-SELECTION
+- Tier 2: FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION, FIX-DEVTEAM-IDLE-CHAIN-P2A-DURABLE-DRAIN
+- Tier 3: FIX-DEVTEAM-IDLE-CHAIN-P1B-STAMP, FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION
+- Tier 4: FIX-DEVTEAM-IDLE-CHAIN-TEST-FAIRNESS, FIX-DEVTEAM-IDLE-CHAIN-TEST-DURABLE
+
+**PIPELINE:** continue (dev-team controls next step)
