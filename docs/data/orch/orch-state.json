@@ -2352,6 +2352,28 @@
         "status": "READ",
         "payload_ref": null,
         "detail": "CI-RED-cdd5fa5a-FIX gate SATISFIED: QA (a62f9d579842151b5) independently confirmed CI green on subsequent push (gh run head_sha=82e200c57..., conclusion=success, ancestor of fix commit d19d6cdc5), fingerprint recorded in row status_note per feedback_ci_red_close_must_record_fingerprint_else_redrain. QA deliberately did not self-flip (router instructed reserve for po). Row still REVIEW, next_agent=po. Action: flip REVIEW->DONE_VERIFIED + review[]->done_verified[] in one orch-apply.sh write per CANONICAL:SSOT-STATUSFLIP-LANEMOVE. Separately: router found+fixed a next_agent stranding bug this tick (commit 0b0c229fb) -- agent-father flipped 3 rows (cadence+chef-evening x2) to REVIEW but left next_agent=agent-father instead of qa, which would have silently stranded them from QA-Drain forever. Corrected in-lane, no lane/status change needed. Worth a note to agent-father if this recurs (feedback_recurring_bug_escalation threshold=2)."
+      },
+      {
+        "id": "sys-20260729T003557-099e",
+        "ts": "2026-07-29T00:35:57Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_integrity_breach",
+        "summary": "market.db market_messages empty in last 3h (check C-06)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260729T003559-7c67",
+        "ts": "2026-07-29T00:35:59Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_integrity_breach",
+        "summary": "market.db orphaned alerts found (check C-08)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-28T14:53:00Z",
@@ -16536,6 +16558,43 @@
         "started_at": "2026-07-29T00:14:40Z",
         "commit": "7fd919c15 (code fix), b10870bd4 (real notebook prune)",
         "status_note": "IMPLEMENTATION: mirrored notebook-auto-prune.sh's exact LINE_CAP/BYTE_CAP derivation (read at runtime from docs/data/file-size-caps.json pattern docs/agent-memory/notebooks/*.md, BYTE_CAP=LINE_CAP*60, 200 fallback only if SSOT unreadable) into notebook-linecap-sweep.sh — removed both hardcoded 200 literals (start-banner echo L38, selection test L52). Selection predicate now: continue (skip) only if line_count<=LINE_CAP AND byte_count<=BYTE_CAP (was line_count<=200 only). Success predicate now: PRUNED if new_line_count<line_count OR new_byte_count<byte_count (was line-only), so a byte-only reduction on a line-under file is correctly reported PRUNED not NO-CHANGE. AC1/AC2/AC3 verified by code inspection + test. TDD: RED first — added AC5 fixture (127L/12255B byte-over/line-under, well under 200L cap but over 12000B byte cap) to notebook-linecap-sweep.test.sh, confirmed 4 new assertions FAIL against pre-fix script (fixture invisible to OVER-CAP path entirely, matching the row's stated defect exactly), then GREEN post-fix: 11/11 assertions pass (was 7/11). Regression: notebook-auto-prune.test.sh 4/4, test-notebook-auto-prune.sh 5/5, context-bloat-backstop.test.sh 4/4 — all unaffected (scope_out honored, notebook-auto-prune.sh itself untouched). shellcheck clean on both files (one SC2329 info-only false-positive on the test's cleanup() trap function, not a real issue). AC4 RAW LIVE VERIFICATION (not self-report): ran the fixed sweep for real against docs/agent-memory/notebooks/ (no env override, default dir/pattern) — before: 10/46 notebooks over 12000B (wc -c, matches row's stated baseline exactly: agent-father, alert-commander, ba, dev-mainserver-crawls, dev-rag-service, dev-team, dev-vps-crawls, digest-predict, fixer, pm). After one sweep run: over_cap dropped to 4/46 (agent-father, alert-commander, dev-rag-service, digest-predict) — verification_gate ('drops below 10') SATISFIED. 6 notebooks genuinely pruned (dev-mainserver-crawls 144L/13044B->128L/11675B, dev-vps-crawls 168L/15997B->98L/10743B, ba 51L/12067B->43L/10192B, dev-team 85L/23204B->44L/10980B, fixer 185L/13690B->163L/11744B, pm 195L/17670B->139L/11329B), committed separately (b10870bd4, pure oldest-section deletions, delegated to the unmodified notebook-auto-prune.sh drop-oldest logic). HONEST FINDING, NOT SILENTLY PASSED: digest-predict.md (named explicitly in AC4's own wording as 'must be <=12000B') did NOT converge. RAW-traced root cause: it has exactly 2 top-level '## ' sections (8605B preamble+Known-patterns, 37279B single Cycle-digest section); neither heading matches the drop-oldest algorithm's date-regex so both tie on the sentinel max-key and the FIRST-in-file section drops (Known patterns, 8605B) — leaving ONLY the 37279B Cycle section, which alone is still >>12000B; the loop's OWN next-iteration check sees SECTION_COUNT<=1 and hits notebook-auto-prune.sh's existing single-section safe-fail, which exit(0)s WITHOUT ever writing FILE_CONTENT back to disk — so the file is byte-IDENTICAL pre/post (verified), and the correct notebook_single_section_overage_breach signal WAS emitted (docs/signals/notebook-single-section-breach-...digest-predict...json) satisfying AC4's own fallback clause ('any file that legitimately safe-fails ... must emit signal rather than silently pass'). This is structurally the SAME unprunable-blob class as alert-commander.md (tracked separately, FIX-ALERT-COMMANDER-NOTEBOOK-SINGLE-BLOB-UNPRUNABLE, backlog P2) — just reached after one intermediate drop instead of zero. Root-causing/fixing this would require changing notebook-auto-prune.sh's section-parsing/drop-oldest algorithm, which is explicitly this row's scope_out ('Do NOT modify notebook-auto-prune.sh'). Flagging for PO/QA: recommend a small follow-up row (mirror of FIX-ALERT-COMMANDER-NOTEBOOK-SINGLE-BLOB-UNPRUNABLE, scoped to digest-predict.md) rather than reopening this one. agent-father.md (0 sections, pre-existing heading-regex mismatch, already tracked as FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH) and dev-rag-service.md (1 section) also remain over-cap, both legitimate single-section/unparseable safe-fails with correct signals, neither named in AC4. DOCS: docs/agents/code-janitor/flow/main.md updated (dual-axis wording, was line-only). docs/WORK.md appended. Graphify: SKIPPED — this subagent has no Skill-tool access to invoke /graphify interactively (graphify-out/ is a heavy multi-step LLM-extraction pipeline, not a single CLI call); consistent with actual repo practice (graphify-out/graph.json last touched e8de3c8b4, not run per dev task in the recent commit stream either). Decision journal: docs/agent-memory/decisions/sprint-FIX-NOTEBOOK-LINECAP-SWEEP-BYTE-BLIND-BACKSTOP-developer.md (4 STEPs)."
+      },
+      {
+        "id": "FIX-MOCKGUARD-SCOPE-EXCLUDE-TESTGO",
+        "size": "S",
+        "sprint": "INFRA-AUDIT",
+        "status": "REVIEW",
+        "type": "FIX",
+        "zone": "cross-service/",
+        "title": "mock-guard.sh: tighten scan scope — exclude Go *_test.go (adjacent test stubs e.g. usecases_vmt_bop_test.go/handlers_vmt_failclose_test.go return https://stub.sbv.vn) AND untracked vendored cache (apps/*/~/.bun/install/cache). Both trip HARD-FAIL/CAUTION every dev-team post-cycle tick = false positives. Add *_test.go + ~/.bun to exclusion glob.",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MOCKGUARD-SCOPE-EXCLUDE-TESTGO",
+        "verify_note": "prior_status=TODO",
+        "priority": "P2",
+        "owner": "developer",
+        "next_agent": "qa",
+        "plan_only": false,
+        "supervised": false,
+        "updated_by": "developer",
+        "promoted_at": "2026-07-29T00:02:56Z",
+        "root_cause": "scripts/audits/mock-guard.sh excludes a tests/ DIRECTORY but has no rule for the *_test.go FILENAME convention, which is how Go marks test files. Its HARD-FAIL scan therefore reads legitimate test doubles as fabricated production data. Second scope defect: --full also walks apps/mcp-server/~/.bun/install/cache (a literal tilde directory holding 124MB of vendored bun cache, gitignored via the ~/ pattern) and emits ~30 CAUTION lines of upstream library TODOs on every run — mock-guard does not honour .gitignore.",
+        "symptom": "RAW-reproduced by po 2026-07-29T00:00Z: bash scripts/audits/mock-guard.sh --full exits 1 with exactly 2 HARD-FAIL lines, BOTH inside Go *_test.go files — apps/macro-indicators/pkg/application/usecases_vmt_bop_test.go:154 and apps/macro-indicators/pkg/interface/http/handlers_vmt_failclose_test.go:85, both returning the stubBOPURLBuilder https://stub.sbv.vn URL. Recurs every dev-team post-cycle tick.",
+        "acceptance": [
+          "AC1: mock-guard.sh excludes Go test files by the *_test.go filename suffix (not only by a tests/ directory), so the 2 stubBOPURLBuilder lines no longer HARD-FAIL.",
+          "AC2: mock-guard.sh --full no longer scans vendored/ignored trees — at minimum apps/*/~/.bun/** ; prefer honouring .gitignore so any future vendored cache is excluded by construction.",
+          "AC3: bash scripts/audits/mock-guard.sh --full exits 0 on a clean tree, AND a deliberately fabricated URL planted in a NON-test production .go/.ts file still HARD-FAILs. The guard must not be blunted into uselessness — prove the detector still detects.",
+          "AC4: the exclusion is expressed once as a language-aware convention (suffix + directory), not as a growing list of one-off path literals."
+        ],
+        "verification_gate": "mock-guard.sh --full exit 0 across two consecutive dev-team post-cycle ticks AND the AC3 planted-positive still HARD-FAILs.",
+        "files": [
+          "scripts/audits/mock-guard.sh",
+          "scripts/audits/mock-guard.test.sh"
+        ],
+        "note": " [po 2026-07-29T00:02Z triage] PROMOTED BACKLOG->READY: recurring every tick with exit=1, clears the recurring-bug bar. ZONE CORRECTED multi->cross-service/: multi would have forced an architect split and blocked dispatch, but the whole fix is ONE file (scripts/audits/mock-guard.sh) — the apps/macro-indicators and apps/mcp-server paths are SCAN TARGETS, not edit targets. COORDINATION: a twin signal dev-20260728T233926-arch went to agents-architect this same tick proposing a filename-suffix-aware exclusion across languages; treat that as DESIGN INPUT for AC4 but do NOT block on it — the *_test.go + vendored-cache exclusion is independently correct and stops the per-tick HARD-FAIL now. SIDE DEBT, not this row's job: apps/mcp-server/~ is a literal tilde directory holding 124MB of bun cache, almost certainly created by an unexpanded ~ in an install command; it should be deleted and the producing command fixed.",
+        "updated_at": "2026-07-29T00:34:58Z",
+        "origin_signal_id": "dev-20260728T233926-po",
+        "started_at": "2026-07-29T00:14:40Z",
+        "commit": "1fcfa72da",
+        "status_note": "IMPLEMENTATION: RAW-reproduced first (bash scripts/audits/mock-guard.sh --full: exit 1, exactly the 2 reported HARD-FAIL lines, both apps/macro-indicators/pkg/{application,interface/http}/*_test.go stubBOPURLBuilder https://stub.sbv.vn URLs, plus ~30 CAUTION lines all under apps/mcp-server/~/.bun/install/cache). Traced WHICH pattern matches: HARD_COMMENT_QUALIFIER's same-line // comment marker matches the // inside the https://stub.sbv.vn URL literal itself — not a separate regex bug to fix, the row's own diagnosis (missing _test.go filename exclusion) is the correct/minimal remedy. AC1: added exactly ONE _test\\.go alternative to EXCLUDE_PATHS, mirroring the existing .test./.spec. TS/JS filename conventions already on that line — verified apps/mcp-server/~/.bun is gitignored (.gitignore:5 ~/, 0 tracked files there) before implementing. AC2: switched --full mode's file discovery from grep -r apps/ to git ls-files --cached --others --exclude-standard -- apps/*.ts apps/*.tsx apps/*.py apps/*.go (row's stated PREFERENCE — honour .gitignore by construction over a hand-maintained path literal), with a graceful fallback to the old recursive-grep behaviour if git ls-files returns nothing (never silently scans zero files). Also removed a pre-existing dead SCAN_CMD_PREFIX variable (shellcheck-flagged, unused both before and after, on lines already being touched — small adjacent cleanup). TDD: new scripts/audits/mock-guard.test.sh (script had ZERO prior test coverage). RED formally proven via git stash push -- scripts/audits/mock-guard.sh (reverts fix only, keeps new test file): 3/7 FAIL against pre-fix script (AC1-go-test-file-not-hard-failed, AC4-exclusion-is-single-convention, live-repo-full-scan-no-longer-hard-fails) — exactly the 3 assertions the fix targets, all other 4 already passing (proving the test suite is discriminating, not vacuous). git stash pop restored the fix -> 7/7 PASS. AC3 (detector-not-blinded) proven via 2 INDEPENDENT negative controls: (a) the EXACT SAME stub-URL content in a NON-test .go filename still HARD-FAILs (rc=1) — proves the exclusion is filename-suffix-scoped, not content-blind; (b) an explicit mockData identifier in a NON-test .ts file still HARD-FAILs (rc=1) — a second, independent HARD trigger not reliant on the //-in-URL quirk. AC3 clean-fixture (zero matching patterns) exits 0 — baseline contract proven. AC2 fixture: planted a MOCK_DATA_AC2_FIXTURE_SENTINEL file inside the REAL gitignored apps/mcp-server/~/.bun/install/cache dir, ran --full, confirmed the sentinel is INVISIBLE to the output (excluded by construction) — cleaned up via trap, verified zero leftover afterward. AC4: verified structurally (grep count on the script itself) — exactly one _test\\.go alternative added, zero new per-directory literals (e.g. no macro-indicators path literal). shellcheck clean (0 warnings) on both files. RAW live-repo regression: bash scripts/audits/mock-guard.sh --full now exits 2 (CAUTION-only, ~11 pre-existing unrelated legitimate TODO markers unrelated to this fix — non-blocking per docs/agents/dev-team/flow/post-cycle.md L32, WORK-log only, no signal-queue escalation), was exit 1 pre-fix — the row's actual stated symptom (recurring exit=1 HARD-FAIL every dev-team post-cycle tick) is resolved and RAW-verified. Runtime: --full completes in ~8.8s (3011 files via git ls-files, no perf regression observed vs the old 124MB-cache-inclusive walk). HONEST FINDING ON AC3's LITERAL WORDING: 'exits 0 on a clean tree' does NOT hold against the REAL live apps/ tree today (it has genuine, pre-existing, unrelated CAUTION markers, so real exit=2 not 0) — treated this as a controlled TEST FIXTURE assertion (proven, AC3-clean-fixture-exits-0 in the new suite) rather than a claim the live repo's unrelated TODO backlog must also vanish; the row's own symptom/impact sections are entirely about the exit=1 HARD-FAIL, never mention CAUTION/exit=2, so I judge this satisfies the row's actual intent while being transparent about the literal-wording gap for QA/PO to weigh in on if they disagree. Twin architect signal dev-20260728T233926-arch (broader cross-language exclusion design) NOT blocked on, per explicit dispatch instruction — this row ships the *_test.go + vendored-cache fix independently. Decision journal: docs/agent-memory/decisions/sprint-INFRA-AUDIT-developer.md (5 STEPs). Graphify: SKIPPED (no Skill-tool access in this subagent context; consistent with actual repo practice, graphify-out/graph.json last touched e8de3c8b4)."
       }
     ],
     "qa": [],
@@ -16555,44 +16614,9 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-29T00:23:11Z",
+    "last_triaged_at": "2026-07-29T00:34:58Z",
     "last_triaged_by": "developer",
-    "in_progress": [
-      {
-        "id": "FIX-MOCKGUARD-SCOPE-EXCLUDE-TESTGO",
-        "size": "S",
-        "sprint": "INFRA-AUDIT",
-        "status": "IN_PROGRESS",
-        "type": "FIX",
-        "zone": "cross-service/",
-        "title": "mock-guard.sh: tighten scan scope — exclude Go *_test.go (adjacent test stubs e.g. usecases_vmt_bop_test.go/handlers_vmt_failclose_test.go return https://stub.sbv.vn) AND untracked vendored cache (apps/*/~/.bun/install/cache). Both trip HARD-FAIL/CAUTION every dev-team post-cycle tick = false positives. Add *_test.go + ~/.bun to exclusion glob.",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MOCKGUARD-SCOPE-EXCLUDE-TESTGO",
-        "verify_note": "prior_status=TODO",
-        "priority": "P2",
-        "owner": "developer",
-        "next_agent": "dev-team",
-        "plan_only": false,
-        "supervised": false,
-        "updated_by": "developer",
-        "promoted_at": "2026-07-29T00:02:56Z",
-        "root_cause": "scripts/audits/mock-guard.sh excludes a tests/ DIRECTORY but has no rule for the *_test.go FILENAME convention, which is how Go marks test files. Its HARD-FAIL scan therefore reads legitimate test doubles as fabricated production data. Second scope defect: --full also walks apps/mcp-server/~/.bun/install/cache (a literal tilde directory holding 124MB of vendored bun cache, gitignored via the ~/ pattern) and emits ~30 CAUTION lines of upstream library TODOs on every run — mock-guard does not honour .gitignore.",
-        "symptom": "RAW-reproduced by po 2026-07-29T00:00Z: bash scripts/audits/mock-guard.sh --full exits 1 with exactly 2 HARD-FAIL lines, BOTH inside Go *_test.go files — apps/macro-indicators/pkg/application/usecases_vmt_bop_test.go:154 and apps/macro-indicators/pkg/interface/http/handlers_vmt_failclose_test.go:85, both returning the stubBOPURLBuilder https://stub.sbv.vn URL. Recurs every dev-team post-cycle tick.",
-        "acceptance": [
-          "AC1: mock-guard.sh excludes Go test files by the *_test.go filename suffix (not only by a tests/ directory), so the 2 stubBOPURLBuilder lines no longer HARD-FAIL.",
-          "AC2: mock-guard.sh --full no longer scans vendored/ignored trees — at minimum apps/*/~/.bun/** ; prefer honouring .gitignore so any future vendored cache is excluded by construction.",
-          "AC3: bash scripts/audits/mock-guard.sh --full exits 0 on a clean tree, AND a deliberately fabricated URL planted in a NON-test production .go/.ts file still HARD-FAILs. The guard must not be blunted into uselessness — prove the detector still detects.",
-          "AC4: the exclusion is expressed once as a language-aware convention (suffix + directory), not as a growing list of one-off path literals."
-        ],
-        "verification_gate": "mock-guard.sh --full exit 0 across two consecutive dev-team post-cycle ticks AND the AC3 planted-positive still HARD-FAILs.",
-        "files": [
-          "scripts/audits/mock-guard.sh"
-        ],
-        "note": " [po 2026-07-29T00:02Z triage] PROMOTED BACKLOG->READY: recurring every tick with exit=1, clears the recurring-bug bar. ZONE CORRECTED multi->cross-service/: multi would have forced an architect split and blocked dispatch, but the whole fix is ONE file (scripts/audits/mock-guard.sh) — the apps/macro-indicators and apps/mcp-server paths are SCAN TARGETS, not edit targets. COORDINATION: a twin signal dev-20260728T233926-arch went to agents-architect this same tick proposing a filename-suffix-aware exclusion across languages; treat that as DESIGN INPUT for AC4 but do NOT block on it — the *_test.go + vendored-cache exclusion is independently correct and stops the per-tick HARD-FAIL now. SIDE DEBT, not this row's job: apps/mcp-server/~ is a literal tilde directory holding 124MB of bun cache, almost certainly created by an unexpanded ~ in an install command; it should be deleted and the producing command fixed.",
-        "updated_at": "2026-07-29T00:14:41Z",
-        "origin_signal_id": "dev-20260728T233926-po",
-        "started_at": "2026-07-29T00:14:40Z"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
