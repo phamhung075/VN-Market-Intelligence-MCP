@@ -1,0 +1,22 @@
+# PO addendum 2026-07-29T11:35Z — self-correction on the rag-service memory
+# direction claim + absolute-headroom floor calibration input.
+# Companion to scripts/po-triage-20260729T1126-rag-ack-scope-mismatch.jq.
+# Idempotent (marker-key guarded). No lane moves, no mints.
+#
+# Usage:
+#   NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+#   jq --arg now "$NOW" -f scripts/po-triage-20260729T1135-rag-headroom-addendum.jq \
+#     docs/data/orch/orch-state.json | bash scripts/orch-apply.sh
+
+def addend($lane; $id; $key; $val):
+  .task_board[$lane] |= map(
+    if (.id? // "") == $id and (has($key) | not)
+    then . + { ($key): $val, "updated_at": $now, "updated_by": "po/triage-20260729T1135-addendum" }
+    else . end
+  );
+
+addend("ready"; "FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP"; "po_index_provenance_correction_20260729T1135";
+  "SELF-CORRECTION to po_index_provenance_20260729T1126, same PO tick, ~9 minutes later. That note said memory went DOWN 4.1 MiB across ~199 index writes and concluded the /index path is not accumulating. The DIRECTION claim was overstated on a 2-sample basis. FIVE samples now, all `docker stats --no-stream` against the same container lifetime (StartedAt 2026-07-29T10:12:01Z, RestartCount 22, OOMKilled=false, ExitCode=0, status running throughout): 749.9 MiB @10:25Z (97.65%); 745.8 MiB @~11:15Z (router); 745.8 MiB @11:19Z (97.11%); 756.6 MiB @11:34:46Z (98.52%); 756.6 MiB @11:35:02Z (98.52%). WHAT SURVIVES: the ~700 MiB remains a FIXED baseline reached on the first embed, and ~199 index writes did not multiply it — no leak is demonstrated, and the model singleton is still the whole story for the magnitude. WHAT DOES NOT SURVIVE: the word flat. The value oscillates across an ~11 MiB band (745.8-756.6 MiB, i.e. 22.2 MiB down to 11.4 MiB of absolute headroom), which is exactly the shape THIS ROW already predicts: bursts of full-table optimize() rewrites inside thin headroom, per its own fix_spec and its own LIVE PROOF burst at 09:02:36-09:02:44Z. Five samples over 70 minutes is still NOT a plateau and no stabilisation is claimed here — same sub-window error already on record in feedback_ops_readonly_diagnostic_wrote_to_live_index_and_burned_the_headroom. OPERATIONAL POINT: at 11.4 MiB free the container is roughly one ~20 MiB optimize burst from the ceiling, and its death signature is a CLEAN exit (ExitCode=0, OOMKilled=false) that no OOM-keyed triage detects. That is this row's premise reproducing live. PRIORITY UNCHANGED AT P2 THIS TICK, deliberately: the escalation trigger this row set for itself is RestartCount/day climbing above ~5, and it is still 22 restarts over 13.8 days = 1.6/day. Re-check the RATE, not the percentage, before escalating — the percentage has been in the 94-98% band since 2026-07-15 and escalating on it would be escalating on a constant.")
+
+| addend("backlog"; "FIX-AUDITOR-MEMACK-HEADROOM-FLOOR-AND-DEAD-TRACKEDBY"; "po_floor_calibration_20260729T1135";
+  "FLOOR CALIBRATION INPUT — measured. Do NOT treat the 32 MiB default proposed in fix_spec as settled; it was a round number and this note is the evidence for choosing a real one. MEASUREMENT: rag-service traversed 22.2 MiB -> 11.4 MiB of absolute headroom inside 15 minutes on 2026-07-29 (745.8 MiB @11:19Z -> 756.6 MiB @11:34:46Z, re-read identical @11:35:02Z; cap 768 MiB), the entire time ACK-suppressed and the entire time reported ALL_GREEN by Tier-1. TWO CONSEQUENCES. (1) AC2 IS SATISFIABLE AGAINST THE LIVE FLEET — you do not need to synthesise the below-floor case with a forced stub to demonstrate it, because the real container already sits under any floor at or above ~16 MiB. Capture it live for the evidence bar in AC6, and stub only for CI determinism. (2) CHOOSE THE FLOOR AGAINST THE BURST SIZE, NOT AGAINST THE CAP. The killer event on this container is a full-table optimize() rewrite documented at ~20 MiB by FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP. A floor set BELOW the largest single allocation the container can make cannot warn before the allocation that kills it — the predicate would fire only after the event it exists to anticipate, which is decorative. Justify the final value against the largest known single allocation across the capped containers in scope (rag-service ~20 MiB optimize; pdf-extractor has its own burst profile tracked at FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM) and RECORD that reasoning in the task report. Picking a floor from the cap size instead of the burst size is the same category error as picking a percentage, and it is the error this row exists to correct.")
