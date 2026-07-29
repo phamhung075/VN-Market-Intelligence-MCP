@@ -2318,18 +2318,6 @@
         "po_disposition_at": "2026-07-28T14:53:00Z"
       },
       {
-        "id": "dev-20260728T233926-po",
-        "ts": "2026-07-28T23:39:26Z",
-        "from": "dev-team",
-        "to": "po",
-        "type": "system-issue",
-        "summary": "mock-guard HARD-FAIL: fabricated data in production source (likely false-positive, see payload_ref)",
-        "severity": "LOW",
-        "status": "READ",
-        "payload_ref": null,
-        "detail": "scripts/audits/mock-guard.sh --full flags apps/macro-indicators/pkg/application/usecases_vmt_bop_test.go:154 and apps/macro-indicators/pkg/interface/http/handlers_vmt_failclose_test.go:85 as fabricated production data. Both are inside *_test.go files (stubBOPURLBuilder, a named test double returning a fake stub.sbv.vn URL) — legitimate test fixtures, not production source. mock-guard's own doc comment claims it 'excludes tests/sandbox/scenarios/spike/.venv' but that appears to be a DIRECTORY-name exclusion only; these files sit in pkg/application/ and pkg/interface/http/, not a tests/ dir, so the *_test.go FILENAME suffix is not being honored. Recurring across ticks (same 2 hits seen pre-compaction this session too). Likely fix: extend mock-guard.sh exclusion to filename pattern *_test.go (Go convention) alongside the existing directory-name exclusions. Not blocking cycle exit per Step 4.0.5 spec."
-      },
-      {
         "id": "dev-20260728T233926-arch",
         "ts": "2026-07-28T23:39:26Z",
         "from": "dev-team",
@@ -2340,18 +2328,6 @@
         "status": "NEW",
         "payload_ref": null,
         "detail": "Same finding as the po-addressed row this tick: scripts/audits/mock-guard.sh --full HARD-FAILs on 2 lines inside *_test.go files (test stub URL builders), even though its own doc comment claims a tests/ exclusion. Suspected root cause: exclusion list is directory-name based (tests/sandbox/scenarios/spike/.venv) and never checks for the *_test.go Go filename convention. Recurring every tick since at least this session's start. Worth a small architecture/design note on whether mock-guard's exclusion should be filename-suffix-aware across all languages (*_test.go, *.test.ts, *_test.py) rather than directory-only."
-      },
-      {
-        "id": "dev-20260728T234103-sss",
-        "ts": "2026-07-28T23:41:03Z",
-        "from": "dev-team",
-        "to": "po",
-        "type": "system-issue",
-        "summary": "stranded-state sweep: 10 unknown-owner dirty paths, 3 are LIVE (this tick's own dispatches, not stranded)",
-        "severity": "LOW",
-        "status": "READ",
-        "payload_ref": null,
-        "detail": "scripts/agents-flow/stranded-state-sweep.sh --plan (Step 4.3) flagged 10 unknown_paths this tick. 3 are FALSE POSITIVES the script cannot see: apps/mcp-server/src/__tests__/emit-pressure-state.test.ts (dev-mcp-server, task CI-RED-cdd5fa5a-FIX, dispatched this same tick, still running) and docs/agents/cowork-team/flow/spawn-fanout.md + docs/agents/tran-ngoc-bau/flow/main.md (agent-father, task FIX-CADENCE-TNB-AUDIT-WEEKLY-MARKER-BLOCKS-DAILY-CRON, dispatched this same tick, still running) — these are live in-flight edits from background agents this router spawned seconds before the sweep ran, not orphaned state. The remaining 7 (docs/agents/tools/package/tran-ngoc-bau.md, docs/data/DASHBOARD.md, docs/data/auditor-dedup-ledger.json, docs/protocols/dwf-ops-runbook.md, docs/data/unified-agent-synthesis-2026-07-28-evening.json, docs/data/unified-agent-synthesis-2026-07-29-evening.json, docs/social/fb-post-2026-07-28.md) were ALREADY dirty at this session tick's start (confirmed via git status captured before any dispatch this tick) and genuinely need triage — likely cowork agents (unified-agent/fb-market-poster/tran-ngoc-bau) completing cycles without committing. Full script JSON: re-run bash scripts/agents-flow/stranded-state-sweep.sh --plan for current state (paths may have changed by the time this is read, e.g. the 3 live ones should be committed by their owning agents by then)."
       },
       {
         "id": "dev-20260728T235747Z-push",
@@ -12039,39 +12015,6 @@
     ],
     "done_verified": [
       {
-        "id": "UC-GCP-P3",
-        "type": "FIX",
-        "title": "Fix the drain commit deletion drop: tracked-only pathspec sweep (git add -u) scoped to the drain zone + post-commit clean check",
-        "status": "DONE_VERIFIED",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "RESCOPE",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#git-ci-publish-P3",
-        "note": "SCOPE=verifier Rescope note. drain-signals.md:9 -> `git add -u -- docs/signals/ && git add -- docs/signals/processed/` (-u stages tracked mods+deletions only, never sweeps peers' untracked inbox arrivals). Post-commit invariant: porcelain minus '??' minus signals.db must be 0 else bug-telegram. Add a cross-ref note to commit-boundary SKILL RULE1. DROP the backfill (already done df0b58bd9).",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "priority_bumped_from": "P2",
-        "priority_bumped_at": "2026-07-17T04:54:03Z",
-        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
-        "promoted_at": "2026-07-23T07:18:32Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "updated_at": "2026-07-28T23:57:19Z",
-        "claimed_at": "2026-07-28T23:53:04Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "owner": "developer",
-        "next_agent": "qa",
-        "dev_result": "DONE: drain-signals.md §0a MANDATORY PERSIST GUARD staging changed to `git add -u -- docs/signals/ && git add -- docs/signals/processed/` (-u stages tracked mods+deletions only, never sweeps peers' untracked mid-write inbox arrivals; second add picks up the drain's own newly-moved untracked-new processed/ files). Added post-commit invariant: `git status --porcelain -- docs/signals/ | grep -v '^??' | grep -v signals.db | wc -l` must be 0, else send_telegram(channel=bug) naming residual paths (^?? exclusion prevents false alarms from legitimate mid-commit peer arrivals). Cross-ref note added to commit-boundary/SKILL.md RULE 1 documenting the tracked-only exception is not a directory sweep. DROPPED the one-shot backfill per instruction — already landed df0b58bd9 (2026-07-12), verified docs/signals/ has zero pending deletions today. Docs-only flow-spec change, implemented the verifier's RESCOPE text verbatim, no re-expansion.",
-        "dev_commit": "e77635933 (drain-signals.md + commit-boundary/SKILL.md), 2d7aec151 (notebook + decision journal)",
-        "dev_completed_at": "2026-07-23T07:28:35Z",
-        "status_note": "[QA] Review Record (direct-commit verify): Verified commits e77635933 (drain-signals.md + commit-boundary/SKILL.md) and 2d7aec151 (notebook + decision journal, DJ-GATE-1 present: sprint-ULTRACODE-AUDIT-FIXALL-developer.md STEP developer-S21, task-id stamped) both on main ancestry (git merge-base --is-ancestor). Diffed e77635933 content against dev_result claim verbatim match — `git add -u -- docs/signals/ && git add -- docs/signals/processed/` + post-commit `git status --porcelain -- docs/signals/ | grep -v ^?? | grep -v signals.db | wc -l` invariant + commit-boundary/SKILL.md RULE 1 cross-ref, all present in live file text unaltered since. Re-ran (not trusted on report alone): scripts/agents-flow/drain-signals.test.js 36/36 pass; bun tsc --noEmit (apps/mcp-server) 0 errors; docs-only diff, no production code, mock-guard N/A. Bonus sanity check (router ask): confirmed the -u pattern is actually LIVE, not just documented -- todays drain commits show tracked deletions correctly captured (bd2d6ec903 2026-07-29: 3 D / 0 A, exact -u semantics) and new processed/ files staged via the second git add (24703a07fa 2026-07-29: 1 A); this sessions own untracked docs/signals/*.json arrivals (context-bloat-*, cowork-team-*, price_anomaly_*) remain unswept across every recent drain commit -- confirms no directory-sweep regression, fix genuinely in production use. VERDICT: APPROVED, DONE_VERIFIED.",
-        "qa_verified_at": "2026-07-28T23:57:14Z",
-        "qa_verified_by": "qa"
-      },
-      {
         "id": "FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK",
         "type": "FIX",
         "title": "Pre-commit hook: detect bare commits that sweep peer staged content; install via scripts/git-hooks/install.sh",
@@ -13405,77 +13348,6 @@
         "architect_review_note": "RULING: RETIRE (b), not restore-via-VPS (a). WebSearch confirms gamma-api.polymarket.com's *.anj.fr TLS-cert swap is France's Autorite Nationale des Jeux (ANJ, national gambling regulator) ordering French ISPs to block Polymarket outright (2026-07-16), after an investigation finding rigged/fraudulent markets (hacked weather-sensor bets) and zero KYC for French/EU users -- not a generic anti-scraper geoblock. mcp-server runs on France-hosted infra (corroborated by franceSummaryJob in schedulerJobTable.ts + repo memory \"MCP server in France should NEVER directly fetch VN domains\"). Routing through the Vinahost VN-egress VPS would likely technically bypass this France-only ISP block, but doing so means deliberately engineering evasion of a sovereign regulator's block against a source that same regulator found fraudulent -- categorically different from the VN-source geoblocks (SSC/HNX/SBV/CafeF) the VPS pattern was built for (mundane anti-foreign-IP defenses against legitimate providers). Also scope creep: system-map.json documents the VPS's purpose as \"geo-blocked VN source proxy\", pull direction VN->main-server, not general Western-service egress. CLOB's pre-existing 403 (reports #674-696, predates ANJ) is a separate, older Polymarket-side geofence -- doesn't change the call.\n\nDESIGN for dev-mcp-server (all apps/mcp-server/ unless noted):\n(1) KILL ACQUISITION: config.ts ~L613 flip predictionMarkets.enabled default true->false (PREDICTION_MARKETS_ENABLED env override unchanged, now the re-enable switch). schedulerJobTable.ts ~L235-242 predictionMarketPollJob: remove from JOB_TABLE (or leave, gated by enabled=false -- dev-mcp-server's call). predictionResolutionJob/predictionOutcomeJob (grep-verified: no prediction_markets reference, read prediction_signals only) NOT in scope -- self-limiting once signals stop growing, leave running.\n(2) ACCEPTANCE-4 FIX (REQUIRED EITHER WAY, independent of retire/restore): fetchPolymarkets() (polymarket.ts) swallows BOTH the CLOB catch (~L250) and the Gamma catch (~L286, the CB-protected real source of truth per Task-1337 comments) and always falls through to `return results` (possibly []) -- transport failure (TLS/403/DNS/JSON-parse) is indistinguishable from \"legitimately 0 matches today\". Add a gammaTransportFailed flag set ONLY inside the Gamma catch (never on the 0-matches-after-successful-parse path); after the Gamma-fallback block (~L398) if gammaTransportFailed && results.length===0, throw PolymarketTransportError instead of returning []. In predictionMarketJob.ts, Step 3's catch (~L474) must propagate this past the sibling row's staleness-guard early-return (still correct, keep it) so a failure reaches recordJobRun() as status=error even on the FIRST failing cycle (before 24h staleness accrues) -- currently the function's own outer try/catch (~L697) plus Step 3's inner catch both swallow unconditionally, which is the literal mechanical reason 28d of dead fetches read status=success in cron_job_runs (registerJobTable -> jobRunRepo.wrapRun -> recordJobRun in cronJobRunStore.ts:200 marks status purely by promise-reject). Narrow the outer catch to rethrow PolymarketTransportError before its normal swallow-and-log; keep finally{_isRunning=false} on every path. Update the function's stale \"NEVER throws\" doc comment. New tests: injected rejecting fetchFn -> fetchPolymarkets rejects (not []); runPredictionMarketPoll rejects/records error; negative control: 0-matches-but-successful-fetch must NOT throw (guards false-positive noise).\n(3) CONSUMER REMOVAL: market-analysis.md:6 drop \"| get_prediction_markets()\". qa-responder/cycle.md:41 drop \"+ get_prediction_markets()\". prediction.md's ENTIRE purpose is this tool (5x/wk 01:00 UTC self-accuracy review) -- partial edit leaves a flow that does nothing; RETIRE the whole thing: delete flow/prediction.md, drop its row from flow/main.md's Dispatch table (single hourly :29 cron per cron-unified-agent.md, no separate CronDelete needed -- 01:00 UTC just falls to \"Any other time -> EXIT\"), drop init.md:134's prediction entry.\n(4) TOOL SURFACE: deregister get_prediction_markets (predictionTools.ts + registry.ts:25,159) so no future ad-hoc caller reads the frozen table as live -- grep-verified computePredictionAccuracy/predictionOutcomeJob/calibrationTools do NOT import predictionTools.ts, safe to remove without touching calibration. predictionStore.ts's getRecentPredictionSignals (assembleBriefing/EveningSummary consumer, NOT in PO's 3-file list) already degrades to [] gracefully on empty prediction_signals -- leave as-is, flagged only for awareness.\n(5) SLA: retire quality-checklist.json DS-FRESH-01 (~L4280, polymarket 2h) and CI-FRESH-03 (~L2988, predictionMarketPoll 35min). VERIFIED: no \"retired\" status token exists in this file's status enum (only FAIL/INFO/NEEDS_REVIEW/PASS/WARN, jq-checked) and no schema validator found for it -- do NOT invent a new enum value unilaterally. dev-mcp-server should either reuse \"INFO\" + an explicit retired-reason note on the row, or coordinate with qa (this file's owner per system-auditor's own agent description) before editing it.\n(6) DB: leave prediction_markets/prediction_signals tables as-is, no migration -- harmless once nothing reads/writes.\nVERIFICATION GATE before REVIEW: grep proving zero remaining get_prediction_markets references across the 3 flow files + prediction.md/main.md/init.md; unit tests for (2) green (positive + negative control); quality-checklist.json 2 rows show a retired marker agreed with qa.",
         "updated_by": "architect",
         "decision": "RETIRE"
-      },
-      {
-        "id": "FIX-NOTEBOOK-LINECAP-SWEEP-BYTE-BLIND-BACKSTOP",
-        "type": "FIX",
-        "title": "notebook-linecap-sweep.sh (the ONLY cadence backstop for notebook caps) pre-filters on lines only with a 2nd hardcoded cap=200 — 9 of the 10 live over-byte-cap notebooks are line-UNDER, so they can never reach the just-shipped byte-axis pruner through the cron path (alert-commander.md 119233B = 9.9x cap at only 190L)",
-        "status": "READY",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "owner": "developer",
-        "next_agent": "dev-team",
-        "plan_only": false,
-        "supervised": false,
-        "created_at": "2026-07-29T00:02:56Z",
-        "created_by": "po (triage-20260729T0002 dev-team tick signals 1-3)",
-        "root_cause": "b42f3fa3a (FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES, REVIEW/qa) gave the byte cap an ACTUATOR inside scripts/agents-flow/notebook-auto-prune.sh. But that hook only fires on the PostToolUse Write|Edit matcher. The ONLY write-path-independent backstop is scripts/agents-flow/notebook-linecap-sweep.sh (code-janitor 6h cron), and it is still byte-blind on BOTH ends: (1) pre-filter L49-52 is a wc -l line_count followed by [ line_count -le 200 ] && continue — no wc -c, so a byte-over/line-under notebook is skipped before it is ever handed to the fixed hook; (2) the post-prune success predicate L63-64 is new_count -lt line_count (lines only), so even a successful byte-only prune is misreported as NO-CHANGE/safe-fail. It also hardcodes cap=200 twice (L38 echo, L52 test) instead of reading docs/data/file-size-caps.json — the exact second-hardcoded-copy defect the hook fix explicitly avoided. The developer who shipped the hook flagged this in their own review_note as a FOLLOW-UP FINDING and asked PO to decide; this row is that decision.",
-        "impact": "RAW-verified 2026-07-29T00:00Z: 10 of 46 docs/agent-memory/notebooks/*.md are over the 12000B cap. Only agent-father.md (343L) is also line-over and therefore reachable by the cron. The other 9 are line-under and permanently unreachable via the cadence path: alert-commander.md 119233B/190L, digest-predict.md 45834B/174L, dev-team.md 23204B/85L, pm.md 17670B/195L, dev-vps-crawls.md 15997B/168L, dev-rag-service.md 13912B/185L, fixer.md 13690B/185L, dev-mainserver-crawls.md 13044B/144L, ba.md 12067B/51L. alert-commander.md is the very file the hook fix was motivated by and it is still 9.9x over. Context-bloat breach signals keep firing with no actuator that can reach the condition.",
-        "acceptance": [
-          "AC1: notebook-linecap-sweep.sh selects a file when EITHER lines > LINE_CAP OR bytes > BYTE_CAP (same dual-axis predicate as notebook-auto-prune.sh).",
-          "AC2: LINE_CAP is read at runtime from docs/data/file-size-caps.json (pattern docs/agent-memory/notebooks/*.md) and BYTE_CAP derived as LINE_CAP*60 — no hardcoded 200 or 12000 literal anywhere in the sweep (removes both existing cap=200 literals at L38 and L52).",
-          "AC3: the PRUNED/NO-CHANGE post-prune predicate compares BOTH axes, so a byte-only reduction is reported PRUNED, not NO-CHANGE.",
-          "AC4: RAW live verification (not self-report): after one sweep run, re-measure all 46 notebooks — the over-cap count must drop from 10 and digest-predict.md must be <=12000B. Any file that legitimately safe-fails (single-section overage) must emit notebook_single_section_overage_breach rather than silently pass.",
-          "AC5: a regression test case in the sweep's test harness covers a byte-over/line-under fixture being SELECTED and PRUNED."
-        ],
-        "files": [
-          "scripts/agents-flow/notebook-linecap-sweep.sh",
-          "docs/data/file-size-caps.json"
-        ],
-        "scope_out": "Do NOT modify scripts/agents-flow/notebook-auto-prune.sh — it already has the correct dual-axis logic and is under an open qa review (FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES). This row changes the SWEEP's selection + reporting only, and keeps delegating the actual prune to the hook.",
-        "verification_gate": "over-cap notebook count (wc -c over docs/agent-memory/notebooks/*.md against the 12000B cap) drops below 10 after a single sweep run, measured raw, not self-reported.",
-        "related": [
-          "FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES",
-          "FIX-ALERT-COMMANDER-NOTEBOOK-SINGLE-BLOB-UNPRUNABLE",
-          "FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH"
-        ],
-        "note": "PO answer to the context_bloat_breach signal on docs/agent-memory/notebooks/main.md (2026-07-28T23:42:03Z, 204L/46788B). The breach itself SELF-RESOLVED (live re-measure 87L/9334B) so no row was minted for main.md. The router's follow-up question — is the hook working as a durable fix — is answered NO by this row: the write-path hook is real, but the cadence backstop behind it cannot see the byte axis, so the fix is not durable for any notebook whose owning agent stops writing. NOTE for the implementer: FIX-ALERT-COMMANDER-NOTEBOOK-SINGLE-BLOB-UNPRUNABLE (backlog, P2) says alert-commander.md is ONE 119KB '## This session' section — it will hit the single-section safe-fail path and stay over cap even after this fix; that is expected and is that row's problem, not this one's. AC4 deliberately does NOT require alert-commander to converge if it safe-fails honestly.",
-        "updated_at": "2026-07-29T00:06:04Z",
-        "origin_signal_id": "context-bloat-docs-agent-memory-notebooks-main-md-2026-07-28T234203Z"
-      },
-      {
-        "id": "FIX-MOCKGUARD-SCOPE-EXCLUDE-TESTGO",
-        "size": "S",
-        "sprint": "INFRA-AUDIT",
-        "status": "READY",
-        "type": "FIX",
-        "zone": "cross-service/",
-        "title": "mock-guard.sh: tighten scan scope — exclude Go *_test.go (adjacent test stubs e.g. usecases_vmt_bop_test.go/handlers_vmt_failclose_test.go return https://stub.sbv.vn) AND untracked vendored cache (apps/*/~/.bun/install/cache). Both trip HARD-FAIL/CAUTION every dev-team post-cycle tick = false positives. Add *_test.go + ~/.bun to exclusion glob.",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MOCKGUARD-SCOPE-EXCLUDE-TESTGO",
-        "verify_note": "prior_status=TODO",
-        "priority": "P2",
-        "owner": "developer",
-        "next_agent": "dev-team",
-        "plan_only": false,
-        "supervised": false,
-        "updated_by": "po (triage-20260729T0002 dev-team tick signals 1-3)",
-        "promoted_at": "2026-07-29T00:02:56Z",
-        "root_cause": "scripts/audits/mock-guard.sh excludes a tests/ DIRECTORY but has no rule for the *_test.go FILENAME convention, which is how Go marks test files. Its HARD-FAIL scan therefore reads legitimate test doubles as fabricated production data. Second scope defect: --full also walks apps/mcp-server/~/.bun/install/cache (a literal tilde directory holding 124MB of vendored bun cache, gitignored via the ~/ pattern) and emits ~30 CAUTION lines of upstream library TODOs on every run — mock-guard does not honour .gitignore.",
-        "symptom": "RAW-reproduced by po 2026-07-29T00:00Z: bash scripts/audits/mock-guard.sh --full exits 1 with exactly 2 HARD-FAIL lines, BOTH inside Go *_test.go files — apps/macro-indicators/pkg/application/usecases_vmt_bop_test.go:154 and apps/macro-indicators/pkg/interface/http/handlers_vmt_failclose_test.go:85, both returning the stubBOPURLBuilder https://stub.sbv.vn URL. Recurs every dev-team post-cycle tick.",
-        "acceptance": [
-          "AC1: mock-guard.sh excludes Go test files by the *_test.go filename suffix (not only by a tests/ directory), so the 2 stubBOPURLBuilder lines no longer HARD-FAIL.",
-          "AC2: mock-guard.sh --full no longer scans vendored/ignored trees — at minimum apps/*/~/.bun/** ; prefer honouring .gitignore so any future vendored cache is excluded by construction.",
-          "AC3: bash scripts/audits/mock-guard.sh --full exits 0 on a clean tree, AND a deliberately fabricated URL planted in a NON-test production .go/.ts file still HARD-FAILs. The guard must not be blunted into uselessness — prove the detector still detects.",
-          "AC4: the exclusion is expressed once as a language-aware convention (suffix + directory), not as a growing list of one-off path literals."
-        ],
-        "verification_gate": "mock-guard.sh --full exit 0 across two consecutive dev-team post-cycle ticks AND the AC3 planted-positive still HARD-FAILs.",
-        "files": [
-          "scripts/audits/mock-guard.sh"
-        ],
-        "note": " [po 2026-07-29T00:02Z triage] PROMOTED BACKLOG->READY: recurring every tick with exit=1, clears the recurring-bug bar. ZONE CORRECTED multi->cross-service/: multi would have forced an architect split and blocked dispatch, but the whole fix is ONE file (scripts/audits/mock-guard.sh) — the apps/macro-indicators and apps/mcp-server paths are SCAN TARGETS, not edit targets. COORDINATION: a twin signal dev-20260728T233926-arch went to agents-architect this same tick proposing a filename-suffix-aware exclusion across languages; treat that as DESIGN INPUT for AC4 but do NOT block on it — the *_test.go + vendored-cache exclusion is independently correct and stops the per-tick HARD-FAIL now. SIDE DEBT, not this row's job: apps/mcp-server/~ is a literal tilde directory holding 124MB of bun cache, almost certainly created by an unexpanded ~ in an install command; it should be deleted and the producing command fixed.",
-        "updated_at": "2026-07-29T00:06:04Z",
-        "origin_signal_id": "dev-20260728T233926-po"
       }
     ],
     "review": [
@@ -16586,6 +16458,39 @@
         "review_note": "[agent-father 2026-07-28T23:57:07Z] chef.md Step 5 now wraps get_portfolio_conviction: any error/empty return sets $L5_GAP_TOKEN = [gap:L5_kinhdich_unavailable: <verbatim upstream error text>]. Step 7.5 appends it to $LAYERS_WALKED_SUMMARY on both full/degraded branches (does NOT touch $QUALITY_VERDICT computation -- that assertion is the sibling row FIX-CHEF-QUALITY-VERDICT-FALSE-FULL-NO-LAYER-ASSERTION job). Step 7.6 known_gaps[] now unions Step 6 L6-gap tokens + Step 7.5 $FAILED_CHECKS (L2/L3/L4/business_context/gap-catalogue -- these were previously computed but silently stopped at $LAYERS_WALKED_SUMMARY and never reached known_gaps[], the business-context instance of the same pattern) + $L5_GAP_TOKEN, stated once as a reusable rule per AC(2). AC(3) NOT verifiable this session -- requires a synthesis JSON produced during a real kinhdich error window. REVIEW not DONE_VERIFIED.",
         "updated_by": "agent-father",
         "status_note": " [router 2026-07-29T00:03:46Z] next_agent corrected agent-father->qa: QA-Drain requires status==REVIEW && next_agent==qa to pick a row; agent-father left self-reference, stranding this row from automated QA pickup."
+      },
+      {
+        "id": "ALPHA-S2-SUB5-WATCHDOG-STRETCH",
+        "type": "subtask",
+        "title": "[OPTIONAL STRETCH] WATCHDOG_MANIFEST self-heal entry for intraday5mCompactor (schedulerJobTable.ts)",
+        "status": "REVIEW",
+        "priority": "P1",
+        "size": "XS",
+        "zone": "apps/mcp-server/",
+        "owner": "developer",
+        "next_agent": "qa",
+        "sprint": "FLOW-PRICE-ALPHA-LOOP",
+        "parent": "ALPHA-S2-TICK-DOWNSAMPLE-5MIN",
+        "depends": [
+          "ALPHA-S2-SUB2-JOB-CRON"
+        ],
+        "blocks": [],
+        "supervised": false,
+        "created_at": "2026-07-14T21:40:00Z",
+        "created_by": "pm (ALPHA-S2 decomposition)",
+        "note": "OPTIONAL HARDENING (brief § 4): Add entry to schedulerWatchdogJob.ts WATCHDOG_MANIFEST mirroring ohlcv-daily-aggregator/reputationComputeJob/ta-ohlcv-backfill (cadence 300_000ms, thresholdMultiplier: 3, action: 'self-heal'). Defense-in-depth against residual risk (§2: if compactor is down ≥24h, underlying ticks are purged before any cron can rescue). Optional — does not block task closure; may defer to post-launch ops tuning.",
+        "acceptance_criteria": "WATCHDOG entry added to schedulerJobTable.ts; registers intraday5mCompactor with 5-min health cadence",
+        "epic_closed_note": "ALPHA-S2 core epic (SUB1-SUB4) CLOSED done_verified 2026-07-14T23:23:17Z without SUB5. SUB5-WATCHDOG-STRETCH was optional/stretch (depends SUB2, now on trunk); de-gated from the epic close, remains a standalone optional hardening backlog row for PO triage (freshness watchdog on intraday_ohlcv_5m compactor). Not blocking; pick up separately if prioritized.",
+        "promoted_at": "2026-07-28T23:50:56Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "updated_at": "2026-07-29T00:14:03Z",
+        "claimed_at": "2026-07-28T23:51:25Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "branch": null,
+        "entered_review_at": "2026-07-29T00:13:32Z",
+        "commit": "17a906143",
+        "dev_mcp_server_review_note": "dev-mcp-server COMPLETE (session 64c7c677-0f0f-4cee-a3ce-dba79d70b7ae, commit 17a906143): added intraday5mCompactorJob to schedulerWatchdogJob.ts's WATCHDOG_MANIFEST (cadenceMs=300_000, thresholdMultiplier=3, action='self-heal'), mirroring ohlcv-daily-aggregator/reputationComputeJob/ta-ohlcv-backfill. selfHealFn wired in schedulerJobTable.ts's liveManifest (same composition-root DDD pattern as the 3 existing self-heal jobs, calling jobRunRepo.wrapRun('intraday5mCompactorJob', runIntraday5mCompactor)). CANONICAL_WATCHDOG_JOB_NAMES updated in lockstep for WD-10 manifest-integrity guard. Also added the missing CN-1 tier-1 STATIC_JOB_NAME_MAP pair (cronStatusCompute.ts, intraday5mCompactor -> intraday5mCompactorJob) so /api/cron-status dashboard resolution does not fall through to the cache-unsafe tier-2/3 path -- live-verified end-to-end against a real server boot (PORT=3097, cwd=project root matching prod): job row present, job_name_db=intraday5mCompactorJob, correctly classified STALE against the dev DB's real last-run age.\n\nFixed 3 pre-existing hardcoded manifest-size invariants (25 -> 26) across FIX-CRON-WATCHDOG-COVERAGE-2026-07-22.test.ts / cronStatusHandler.test.ts / cronStatusCompute.test.ts -- an expected, direct consequence of the new entry (confirmed RED before the fix, GREEN after), not scope creep; each prior task's own historical delta claim (e.g. FIX-CRON-WATCHDOG-COVERAGE-2026-07-22's 16->25 AC-4) preserved via an explanatory note rather than rewritten. New dedicated test file ALPHA-S2-SUB5-WATCHDOG-STRETCH.test.ts (4 tests) proves manifest-entry shape, canonical registration, and stale/healthy alert behavior at the 3x/5min threshold.\n\nEvidence: targeted suites (ARCH-CRON-watchdog, FIX-CRON-WATCHDOG-COVERAGE-2026-07-22, ALPHA-S2-SUB5-WATCHDOG-STRETCH, cronStatusHandler, cronStatusCompute, FIX-CRON-SSCCHECKERJOB-DEAD-87D-classfix-registry-invariant, ALPHA-S2-intraday-5m-compactor, ALPHA-S2-FF-intraday-5m-compactor) 90/90 pass, 0 fail. tsc --noEmit clean. gen-project-stats --dry-run: toolCount=184/cronJobCount=88 unchanged (manifest-only change, no new tool/cron registered). Full bun test (608s, 1235 files): 14855 pass/40 skip/57 fail/1 error -- within the standing FIX-MCP-SUITE-HEALTH-BASELINE order-dependent band (56-59 across recent dev-mcp-server cycles this same sprint); the 2 fail details visible in the captured tail are both from unrelated src/_deprecated/1302-technical-indicators.test.ts. Live boot (PORT=3097, cwd=project root): /health toolCount=184, /api/bctc-inspect 200, /dashboards/news-fetch/ 200, /api/cron-status 200 (previously 503 only when boot cwd was wrongly apps/mcp-server -- a pre-existing local-dev-only cwd quirk documented in cronStatusHandler.test.ts's own header comment, unrelated to this change; confirmed by re-testing with the correct project-root cwd matching docker production).\n\nDoc-review: usecases.md (CN-1 tier-1 pair count 16->26) + testing.md (WATCHDOG_MANIFEST job counts + test counts corrected to current live values) -- both directly tied to the application-layer file (cronStatusCompute.ts) this task modified.\n\nNOT pushed by this agent per PUSH-AUTONOMY-1 (chain-mutex-holding session pushes). Decision journal: sprint-<TBD> per decision-journal skill (see notebook entry same session). Ready for qa."
       }
     ],
     "qa": [],
@@ -16605,37 +16510,82 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-28T23:50:56Z",
-    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
+    "last_triaged_at": "2026-07-29T00:14:40Z",
+    "last_triaged_by": "developer",
     "in_progress": [
       {
-        "id": "ALPHA-S2-SUB5-WATCHDOG-STRETCH",
-        "type": "subtask",
-        "title": "[OPTIONAL STRETCH] WATCHDOG_MANIFEST self-heal entry for intraday5mCompactor (schedulerJobTable.ts)",
+        "id": "FIX-NOTEBOOK-LINECAP-SWEEP-BYTE-BLIND-BACKSTOP",
+        "type": "FIX",
+        "title": "notebook-linecap-sweep.sh (the ONLY cadence backstop for notebook caps) pre-filters on lines only with a 2nd hardcoded cap=200 — 9 of the 10 live over-byte-cap notebooks are line-UNDER, so they can never reach the just-shipped byte-axis pruner through the cron path (alert-commander.md 119233B = 9.9x cap at only 190L)",
         "status": "IN_PROGRESS",
         "priority": "P1",
-        "size": "XS",
-        "zone": "apps/mcp-server/",
+        "size": "S",
+        "zone": "cross-service/",
         "owner": "developer",
-        "next_agent": "dev-mcp-server",
-        "sprint": "FLOW-PRICE-ALPHA-LOOP",
-        "parent": "ALPHA-S2-TICK-DOWNSAMPLE-5MIN",
-        "depends": [
-          "ALPHA-S2-SUB2-JOB-CRON"
-        ],
-        "blocks": [],
+        "next_agent": "dev-team",
+        "plan_only": false,
         "supervised": false,
-        "created_at": "2026-07-14T21:40:00Z",
-        "created_by": "pm (ALPHA-S2 decomposition)",
-        "note": "OPTIONAL HARDENING (brief § 4): Add entry to schedulerWatchdogJob.ts WATCHDOG_MANIFEST mirroring ohlcv-daily-aggregator/reputationComputeJob/ta-ohlcv-backfill (cadence 300_000ms, thresholdMultiplier: 3, action: 'self-heal'). Defense-in-depth against residual risk (§2: if compactor is down ≥24h, underlying ticks are purged before any cron can rescue). Optional — does not block task closure; may defer to post-launch ops tuning.",
-        "acceptance_criteria": "WATCHDOG entry added to schedulerJobTable.ts; registers intraday5mCompactor with 5-min health cadence",
-        "epic_closed_note": "ALPHA-S2 core epic (SUB1-SUB4) CLOSED done_verified 2026-07-14T23:23:17Z without SUB5. SUB5-WATCHDOG-STRETCH was optional/stretch (depends SUB2, now on trunk); de-gated from the epic close, remains a standalone optional hardening backlog row for PO triage (freshness watchdog on intraday_ohlcv_5m compactor). Not blocking; pick up separately if prioritized.",
-        "promoted_at": "2026-07-28T23:50:56Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "updated_at": "2026-07-28T23:51:25Z",
-        "claimed_at": "2026-07-28T23:51:25Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+        "created_at": "2026-07-29T00:02:56Z",
+        "created_by": "po (triage-20260729T0002 dev-team tick signals 1-3)",
+        "root_cause": "b42f3fa3a (FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES, REVIEW/qa) gave the byte cap an ACTUATOR inside scripts/agents-flow/notebook-auto-prune.sh. But that hook only fires on the PostToolUse Write|Edit matcher. The ONLY write-path-independent backstop is scripts/agents-flow/notebook-linecap-sweep.sh (code-janitor 6h cron), and it is still byte-blind on BOTH ends: (1) pre-filter L49-52 is a wc -l line_count followed by [ line_count -le 200 ] && continue — no wc -c, so a byte-over/line-under notebook is skipped before it is ever handed to the fixed hook; (2) the post-prune success predicate L63-64 is new_count -lt line_count (lines only), so even a successful byte-only prune is misreported as NO-CHANGE/safe-fail. It also hardcodes cap=200 twice (L38 echo, L52 test) instead of reading docs/data/file-size-caps.json — the exact second-hardcoded-copy defect the hook fix explicitly avoided. The developer who shipped the hook flagged this in their own review_note as a FOLLOW-UP FINDING and asked PO to decide; this row is that decision.",
+        "impact": "RAW-verified 2026-07-29T00:00Z: 10 of 46 docs/agent-memory/notebooks/*.md are over the 12000B cap. Only agent-father.md (343L) is also line-over and therefore reachable by the cron. The other 9 are line-under and permanently unreachable via the cadence path: alert-commander.md 119233B/190L, digest-predict.md 45834B/174L, dev-team.md 23204B/85L, pm.md 17670B/195L, dev-vps-crawls.md 15997B/168L, dev-rag-service.md 13912B/185L, fixer.md 13690B/185L, dev-mainserver-crawls.md 13044B/144L, ba.md 12067B/51L. alert-commander.md is the very file the hook fix was motivated by and it is still 9.9x over. Context-bloat breach signals keep firing with no actuator that can reach the condition.",
+        "acceptance": [
+          "AC1: notebook-linecap-sweep.sh selects a file when EITHER lines > LINE_CAP OR bytes > BYTE_CAP (same dual-axis predicate as notebook-auto-prune.sh).",
+          "AC2: LINE_CAP is read at runtime from docs/data/file-size-caps.json (pattern docs/agent-memory/notebooks/*.md) and BYTE_CAP derived as LINE_CAP*60 — no hardcoded 200 or 12000 literal anywhere in the sweep (removes both existing cap=200 literals at L38 and L52).",
+          "AC3: the PRUNED/NO-CHANGE post-prune predicate compares BOTH axes, so a byte-only reduction is reported PRUNED, not NO-CHANGE.",
+          "AC4: RAW live verification (not self-report): after one sweep run, re-measure all 46 notebooks — the over-cap count must drop from 10 and digest-predict.md must be <=12000B. Any file that legitimately safe-fails (single-section overage) must emit notebook_single_section_overage_breach rather than silently pass.",
+          "AC5: a regression test case in the sweep's test harness covers a byte-over/line-under fixture being SELECTED and PRUNED."
+        ],
+        "files": [
+          "scripts/agents-flow/notebook-linecap-sweep.sh",
+          "docs/data/file-size-caps.json"
+        ],
+        "scope_out": "Do NOT modify scripts/agents-flow/notebook-auto-prune.sh — it already has the correct dual-axis logic and is under an open qa review (FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES). This row changes the SWEEP's selection + reporting only, and keeps delegating the actual prune to the hook.",
+        "verification_gate": "over-cap notebook count (wc -c over docs/agent-memory/notebooks/*.md against the 12000B cap) drops below 10 after a single sweep run, measured raw, not self-reported.",
+        "related": [
+          "FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES",
+          "FIX-ALERT-COMMANDER-NOTEBOOK-SINGLE-BLOB-UNPRUNABLE",
+          "FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH"
+        ],
+        "note": "PO answer to the context_bloat_breach signal on docs/agent-memory/notebooks/main.md (2026-07-28T23:42:03Z, 204L/46788B). The breach itself SELF-RESOLVED (live re-measure 87L/9334B) so no row was minted for main.md. The router's follow-up question — is the hook working as a durable fix — is answered NO by this row: the write-path hook is real, but the cadence backstop behind it cannot see the byte axis, so the fix is not durable for any notebook whose owning agent stops writing. NOTE for the implementer: FIX-ALERT-COMMANDER-NOTEBOOK-SINGLE-BLOB-UNPRUNABLE (backlog, P2) says alert-commander.md is ONE 119KB '## This session' section — it will hit the single-section safe-fail path and stay over cap even after this fix; that is expected and is that row's problem, not this one's. AC4 deliberately does NOT require alert-commander to converge if it safe-fails honestly.",
+        "updated_at": "2026-07-29T00:14:41Z",
+        "origin_signal_id": "context-bloat-docs-agent-memory-notebooks-main-md-2026-07-28T234203Z",
+        "updated_by": "developer",
+        "started_at": "2026-07-29T00:14:40Z"
+      },
+      {
+        "id": "FIX-MOCKGUARD-SCOPE-EXCLUDE-TESTGO",
+        "size": "S",
+        "sprint": "INFRA-AUDIT",
+        "status": "IN_PROGRESS",
+        "type": "FIX",
+        "zone": "cross-service/",
+        "title": "mock-guard.sh: tighten scan scope — exclude Go *_test.go (adjacent test stubs e.g. usecases_vmt_bop_test.go/handlers_vmt_failclose_test.go return https://stub.sbv.vn) AND untracked vendored cache (apps/*/~/.bun/install/cache). Both trip HARD-FAIL/CAUTION every dev-team post-cycle tick = false positives. Add *_test.go + ~/.bun to exclusion glob.",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MOCKGUARD-SCOPE-EXCLUDE-TESTGO",
+        "verify_note": "prior_status=TODO",
+        "priority": "P2",
+        "owner": "developer",
+        "next_agent": "dev-team",
+        "plan_only": false,
+        "supervised": false,
+        "updated_by": "developer",
+        "promoted_at": "2026-07-29T00:02:56Z",
+        "root_cause": "scripts/audits/mock-guard.sh excludes a tests/ DIRECTORY but has no rule for the *_test.go FILENAME convention, which is how Go marks test files. Its HARD-FAIL scan therefore reads legitimate test doubles as fabricated production data. Second scope defect: --full also walks apps/mcp-server/~/.bun/install/cache (a literal tilde directory holding 124MB of vendored bun cache, gitignored via the ~/ pattern) and emits ~30 CAUTION lines of upstream library TODOs on every run — mock-guard does not honour .gitignore.",
+        "symptom": "RAW-reproduced by po 2026-07-29T00:00Z: bash scripts/audits/mock-guard.sh --full exits 1 with exactly 2 HARD-FAIL lines, BOTH inside Go *_test.go files — apps/macro-indicators/pkg/application/usecases_vmt_bop_test.go:154 and apps/macro-indicators/pkg/interface/http/handlers_vmt_failclose_test.go:85, both returning the stubBOPURLBuilder https://stub.sbv.vn URL. Recurs every dev-team post-cycle tick.",
+        "acceptance": [
+          "AC1: mock-guard.sh excludes Go test files by the *_test.go filename suffix (not only by a tests/ directory), so the 2 stubBOPURLBuilder lines no longer HARD-FAIL.",
+          "AC2: mock-guard.sh --full no longer scans vendored/ignored trees — at minimum apps/*/~/.bun/** ; prefer honouring .gitignore so any future vendored cache is excluded by construction.",
+          "AC3: bash scripts/audits/mock-guard.sh --full exits 0 on a clean tree, AND a deliberately fabricated URL planted in a NON-test production .go/.ts file still HARD-FAILs. The guard must not be blunted into uselessness — prove the detector still detects.",
+          "AC4: the exclusion is expressed once as a language-aware convention (suffix + directory), not as a growing list of one-off path literals."
+        ],
+        "verification_gate": "mock-guard.sh --full exit 0 across two consecutive dev-team post-cycle ticks AND the AC3 planted-positive still HARD-FAILs.",
+        "files": [
+          "scripts/audits/mock-guard.sh"
+        ],
+        "note": " [po 2026-07-29T00:02Z triage] PROMOTED BACKLOG->READY: recurring every tick with exit=1, clears the recurring-bug bar. ZONE CORRECTED multi->cross-service/: multi would have forced an architect split and blocked dispatch, but the whole fix is ONE file (scripts/audits/mock-guard.sh) — the apps/macro-indicators and apps/mcp-server paths are SCAN TARGETS, not edit targets. COORDINATION: a twin signal dev-20260728T233926-arch went to agents-architect this same tick proposing a filename-suffix-aware exclusion across languages; treat that as DESIGN INPUT for AC4 but do NOT block on it — the *_test.go + vendored-cache exclusion is independently correct and stops the per-tick HARD-FAIL now. SIDE DEBT, not this row's job: apps/mcp-server/~ is a literal tilde directory holding 124MB of bun cache, almost certainly created by an unexpanded ~ in an install command; it should be deleted and the producing command fixed.",
+        "updated_at": "2026-07-29T00:14:41Z",
+        "origin_signal_id": "dev-20260728T233926-po",
+        "started_at": "2026-07-29T00:14:40Z"
       }
     ]
   },

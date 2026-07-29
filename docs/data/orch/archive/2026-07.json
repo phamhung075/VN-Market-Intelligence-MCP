@@ -10427,6 +10427,39 @@
       "po_ci_red_retriage_20260728": "[po ci_red-triage 2026-07-28T17:0xZ] New ci_red signal CI-RED-289a9d8e (head_sha 289a9d8e...c165, run 30371533142, fingerprint 1a4cbfb0...) is the SAME defect this row's own po_ci_red_rootcause_20260725T1736 note already root-caused 3 days ago, re-observed on a later HEAD because origin/main has not advanced since (verified: origin/main HEAD == 289a9d8e21b...c165 right now via git fetch — nothing has been pushed since the red commit landed). RAW re-reproduced this tick: `cd apps/mcp-server && bun test src/__tests__/1408-tool-diacritics.test.ts` -> 7 pass/1 fail, identical assertion (`toContain(\"ổn định\")`). NOT minting a duplicate CI-RED-289a9d8e-FIX row — same fingerprint class, same file, same prescribed remedy already written into this row 3 days ago and never applied (git log confirms zero commits touched 1408-tool-diacritics.test.ts since it was authored).\nWHY STILL OPEN: this row sits in the Review-Lane QA-Drain PRIMARY queue (status REVIEW, was next_agent=qa) at position ~76 of 83 rows, age-ordered 1-per-tick drain — per dev-team's scripts/audits/devteam-review-lane-drain-report.sh this tick, would not be reached for a long time at current throughput (see FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN, re-promoted READY this same tick on this exact evidence). But the blocking work here is NOT a qa review — it's the one-line test-assertion edit this row's own note already fully specifies (swap the `\"ổn định\"` assertion for `toContain(\"Không đủ dữ liệu\")`, rename the `it()` title, do not touch the guard behaviour). Rerouting next_agent qa->dev-mcp-server and emitting an UNBLOCK batch entry this tick so it dispatches immediately instead of waiting in queue.\nWHY THIS IS URGENT: CI has now been RED for 3+ days straight (16 consecutive failures as of the 07-25 note; still red today) on this single stale assertion, and PUSH-AUTONOMY-1 clause 4 (ci_green_on_subsequent_push) is unsatisfiable for every agent's push in the meantime — 12 local commits are already staged ahead of origin/main unpushed, likely partly BECAUSE of this. Fixing this row unblocks the whole fleet's push gate, not just itself.\nQA close-gate UNCHANGED from the 07-25 note (still applies once the test edit lands): (1) 1408-tool-diacritics.test.ts 0 fail; (2) CI GREEN on the head SHA carrying the repair, verified RAW via gh run list, not prose; (3) BDI guard behaviour itself unchanged — stale/absent shipping input must still yield \"Không đủ dữ liệu\", never \"ổn định\".\n",
       "dev_qa_handoff_note_20260728": "dev-mcp-server 2026-07-28T17:2xZ — fixed the stale 1408-tool-diacritics.test.ts assertion PO root-caused as the sole cause of the 3+ day CI RED (fingerprint bda56d1c/1a4cbfb0). Verified live source first (no blind-swap): buildSupplyChainExposureOutput([],[],null) reaches the indices.length===0 branch producing the exact string PO prescribed (\"Không đủ dữ liệu vận tải biển hiện thời để kết luận...\"). Swapped the ổn định assertion + renamed it() title; zero production-code touch. Commit 9374e65e0 (test-only, explicit-path). Evidence: 1408 standalone 8/8 pass (0 fail); targeted/merge-gate suite (1408 + precedent-listed 10 affected supply-chain/commodity/BDI suites) 115/115 pass 0 fail; bun tsc --noEmit exit 0; toolCount=184, cronJobCount=88 (both unchanged, test-only diff, matches gen-project-stats.ts live probe + running container /health). NOTE: repo-wide plain bun test currently reports 56 fail/1 error — this is the standing, tracked, order-dependent FIX-MCP-SUITE-HEALTH-BASELINE red (pinned dev-standards.md:590 CANONICAL reading: targeted/merge-gate suite governs, not literal full-suite 0-fail), confirmed unrelated: this diff touches exactly one test file (1408-tool-diacritics.test.ts, 5 insertions/4 deletions, assertion-only) and none of the observed full-suite failures (e.g. src/_deprecated/1302-technical-indicators.test.ts) reference supply-chain/diacritics code. QA close-gate per po_ci_red_rootcause_20260725T1736 + po_ci_red_retriage_20260728: (1) 1408 0 fail — DONE; (2) CI GREEN on the head SHA carrying this repair (9374e65e0, not yet pushed — origin/main needs a fresh CI run to clear the 3-day-old red fleet-wide, push happens per PUSH-AUTONOMY-1 gate) — verify RAW via gh run list, not prose; (3) BDI guard behaviour itself unchanged (re-verified: empty/stale shipping input still yields Không đủ dữ liệu, never ổn định).",
       "qa_review_note": "[QA] Review Record (direct-commit verify, 2026-07-28T17:36:28Z) — APPROVED at mechanism level, DONE_VERIFIED. Verified commits 9374e65e0(test)/967e3578d(memory)/15da0ab80(lane-move) all on main ancestry, diff scope exactly as claimed (1 file, assertion-only). Source-read supplyChainTools.ts:114-125 myself before trusting the assertion swap: indices.length===0 branch genuinely emits \"TỔNG KẾT: Không đủ dữ liệu vận tải biển hiện thời...\", matching the new toContain() exactly. Re-ran (not trusted): 1408-tool-diacritics.test.ts 8/8 pass; 12-file merge-gate suite (1408+precedent-listed 10 supply-chain/commodity/BDI suites+FIX-BDI-SHIPPING-STALE-404-GUARD.test.ts) 115/115 pass, matches dev claim exactly; bun tsc --noEmit exit 0. Repo-wide bun-test attribution (56 fail/1 error -> standing FIX-MCP-SUITE-HEALTH-BASELINE + 1 unrelated _deprecated/1302-technical-indicators.test.ts fail) independently corroborated: FIX-MCP-SUITE-HEALTH-BASELINE confirmed a real tracked BACKLOG row (not invented); ran 1302-technical-indicators.test.ts standalone myself, 2 fail (MA/RSI/MACD text assertions) both untouched by and unrelated to this diff's scope. Full-suite run attempted but did not finish in-session under heavy concurrent host load (~15k tests); not blocking since dev-standards.md:590 CANONICAL reading pins targeted-suite-governs and this diff's blast radius (1 assertion-only test file) is independently confirmed regardless. Lane-move 15da0ab80 verified: row was in qa[] not review[], orch-validate.mjs Stage 0+1 PASS. DJ-GATE-1: dev-mcp-server journal entry confirmed present (sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md STEP dev-mcp-server-S12, task-id stamped). NOT closing the underlying ci_red signal(s) (CI-RED-6ba39d3c/bda56d1c/1a4cbfb0) here — this commit is NOT yet pushed to origin/main; PUSH-AUTONOMY-1 push + a fresh CI run returning conclusion=success on a new SHA are still required (docs/agents/dev-team/flow/ci-health-probe.md) before those signals can close. QA verdict here covers only this row's own commit correctness. DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa.md STEP qa-S3."
+    },
+    {
+      "id": "UC-GCP-P3",
+      "type": "FIX",
+      "title": "Fix the drain commit deletion drop: tracked-only pathspec sweep (git add -u) scoped to the drain zone + post-commit clean check",
+      "status": "DONE_VERIFIED",
+      "priority": "P1",
+      "size": "S",
+      "zone": "cross-service/",
+      "sprint": "ULTRACODE-AUDIT-FIXALL",
+      "source": "ultracode-audit-2026-07-12",
+      "verdict": "RESCOPE",
+      "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#git-ci-publish-P3",
+      "note": "SCOPE=verifier Rescope note. drain-signals.md:9 -> `git add -u -- docs/signals/ && git add -- docs/signals/processed/` (-u stages tracked mods+deletions only, never sweeps peers' untracked inbox arrivals). Post-commit invariant: porcelain minus '??' minus signals.db must be 0 else bug-telegram. Add a cross-ref note to commit-boundary SKILL RULE1. DROP the backfill (already done df0b58bd9).",
+      "created_at": "2026-07-13T19:31:11Z",
+      "created_by": "po",
+      "priority_bumped_from": "P2",
+      "priority_bumped_at": "2026-07-17T04:54:03Z",
+      "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
+      "promoted_at": "2026-07-23T07:18:32Z",
+      "promoted_by": "dev-team (bounded-1 auto-pickup)",
+      "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+      "updated_at": "2026-07-28T23:57:19Z",
+      "claimed_at": "2026-07-28T23:53:04Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "owner": "developer",
+      "next_agent": "qa",
+      "dev_result": "DONE: drain-signals.md §0a MANDATORY PERSIST GUARD staging changed to `git add -u -- docs/signals/ && git add -- docs/signals/processed/` (-u stages tracked mods+deletions only, never sweeps peers' untracked mid-write inbox arrivals; second add picks up the drain's own newly-moved untracked-new processed/ files). Added post-commit invariant: `git status --porcelain -- docs/signals/ | grep -v '^??' | grep -v signals.db | wc -l` must be 0, else send_telegram(channel=bug) naming residual paths (^?? exclusion prevents false alarms from legitimate mid-commit peer arrivals). Cross-ref note added to commit-boundary/SKILL.md RULE 1 documenting the tracked-only exception is not a directory sweep. DROPPED the one-shot backfill per instruction — already landed df0b58bd9 (2026-07-12), verified docs/signals/ has zero pending deletions today. Docs-only flow-spec change, implemented the verifier's RESCOPE text verbatim, no re-expansion.",
+      "dev_commit": "e77635933 (drain-signals.md + commit-boundary/SKILL.md), 2d7aec151 (notebook + decision journal)",
+      "dev_completed_at": "2026-07-23T07:28:35Z",
+      "status_note": "[QA] Review Record (direct-commit verify): Verified commits e77635933 (drain-signals.md + commit-boundary/SKILL.md) and 2d7aec151 (notebook + decision journal, DJ-GATE-1 present: sprint-ULTRACODE-AUDIT-FIXALL-developer.md STEP developer-S21, task-id stamped) both on main ancestry (git merge-base --is-ancestor). Diffed e77635933 content against dev_result claim verbatim match — `git add -u -- docs/signals/ && git add -- docs/signals/processed/` + post-commit `git status --porcelain -- docs/signals/ | grep -v ^?? | grep -v signals.db | wc -l` invariant + commit-boundary/SKILL.md RULE 1 cross-ref, all present in live file text unaltered since. Re-ran (not trusted on report alone): scripts/agents-flow/drain-signals.test.js 36/36 pass; bun tsc --noEmit (apps/mcp-server) 0 errors; docs-only diff, no production code, mock-guard N/A. Bonus sanity check (router ask): confirmed the -u pattern is actually LIVE, not just documented -- todays drain commits show tracked deletions correctly captured (bd2d6ec903 2026-07-29: 3 D / 0 A, exact -u semantics) and new processed/ files staged via the second git add (24703a07fa 2026-07-29: 1 A); this sessions own untracked docs/signals/*.json arrivals (context-bloat-*, cowork-team-*, price_anomaly_*) remain unswept across every recent drain commit -- confirms no directory-sweep regression, fix genuinely in production use. VERDICT: APPROVED, DONE_VERIFIED.",
+      "qa_verified_at": "2026-07-28T23:57:14Z",
+      "qa_verified_by": "qa"
     }
   ],
   "closed_sprints": [
@@ -15299,6 +15332,30 @@
       "severity": "CRITICAL",
       "status": "READ",
       "payload_ref": null
+    },
+    {
+      "id": "dev-20260728T233926-po",
+      "ts": "2026-07-28T23:39:26Z",
+      "from": "dev-team",
+      "to": "po",
+      "type": "system-issue",
+      "summary": "mock-guard HARD-FAIL: fabricated data in production source (likely false-positive, see payload_ref)",
+      "severity": "LOW",
+      "status": "READ",
+      "payload_ref": null,
+      "detail": "scripts/audits/mock-guard.sh --full flags apps/macro-indicators/pkg/application/usecases_vmt_bop_test.go:154 and apps/macro-indicators/pkg/interface/http/handlers_vmt_failclose_test.go:85 as fabricated production data. Both are inside *_test.go files (stubBOPURLBuilder, a named test double returning a fake stub.sbv.vn URL) — legitimate test fixtures, not production source. mock-guard's own doc comment claims it 'excludes tests/sandbox/scenarios/spike/.venv' but that appears to be a DIRECTORY-name exclusion only; these files sit in pkg/application/ and pkg/interface/http/, not a tests/ dir, so the *_test.go FILENAME suffix is not being honored. Recurring across ticks (same 2 hits seen pre-compaction this session too). Likely fix: extend mock-guard.sh exclusion to filename pattern *_test.go (Go convention) alongside the existing directory-name exclusions. Not blocking cycle exit per Step 4.0.5 spec."
+    },
+    {
+      "id": "dev-20260728T234103-sss",
+      "ts": "2026-07-28T23:41:03Z",
+      "from": "dev-team",
+      "to": "po",
+      "type": "system-issue",
+      "summary": "stranded-state sweep: 10 unknown-owner dirty paths, 3 are LIVE (this tick's own dispatches, not stranded)",
+      "severity": "LOW",
+      "status": "READ",
+      "payload_ref": null,
+      "detail": "scripts/agents-flow/stranded-state-sweep.sh --plan (Step 4.3) flagged 10 unknown_paths this tick. 3 are FALSE POSITIVES the script cannot see: apps/mcp-server/src/__tests__/emit-pressure-state.test.ts (dev-mcp-server, task CI-RED-cdd5fa5a-FIX, dispatched this same tick, still running) and docs/agents/cowork-team/flow/spawn-fanout.md + docs/agents/tran-ngoc-bau/flow/main.md (agent-father, task FIX-CADENCE-TNB-AUDIT-WEEKLY-MARKER-BLOCKS-DAILY-CRON, dispatched this same tick, still running) — these are live in-flight edits from background agents this router spawned seconds before the sweep ran, not orphaned state. The remaining 7 (docs/agents/tools/package/tran-ngoc-bau.md, docs/data/DASHBOARD.md, docs/data/auditor-dedup-ledger.json, docs/protocols/dwf-ops-runbook.md, docs/data/unified-agent-synthesis-2026-07-28-evening.json, docs/data/unified-agent-synthesis-2026-07-29-evening.json, docs/social/fb-post-2026-07-28.md) were ALREADY dirty at this session tick's start (confirmed via git status captured before any dispatch this tick) and genuinely need triage — likely cowork agents (unified-agent/fb-market-poster/tran-ngoc-bau) completing cycles without committing. Full script JSON: re-run bash scripts/agents-flow/stranded-state-sweep.sh --plan for current state (paths may have changed by the time this is read, e.g. the 3 live ones should be committed by their owning agents by then)."
     }
   ],
   "backlog_detail": [
