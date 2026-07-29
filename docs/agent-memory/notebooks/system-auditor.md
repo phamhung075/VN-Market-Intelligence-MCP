@@ -1,3 +1,26 @@
+## c004 · 2026-07-29T18:35:04Z
+### Audit Run Tier-2 (16:00–18:35 UTC 2026-07-29)
+- Tier: 2 | Cron health: A-29 PASS (all crons within cadence) | Sources: 5 checked
+- Data freshness: SBV_FX OK (18m < 30m SLA), BCTC OK by SLA (1471m < 21304m), all 5 sources within SLA
+- VPS proxy: bctc stale (34h+ since push), status ok but unhealthy service | vn-bctc-fetch unhealthy
+- DB spot: C-06 WARN (0 market_messages in 3h), C-07 PASS (13 signals in 24h)
+- BCTC queue: 167 pending | B-09 PASS (no SSC URLs) | B-13 PASS (0 stale 72h+)
+- Anomalies: 2 new (2 warn, 0 critical, 0 info) | 1 dedup-skipped
+- Status: DEGRADED (VPS bctc persistent stale; new: market_messages freshness warning)
+
+Fire-election: tick=2026-07-29T16:00Z (`0 */4 * * *` boundary) — claimed, led tick.
+
+[emit-signal] OK dedup_key=data_freshness:market_messages:C-06 id=sys-20260729T183438-0c12
+[emit-signal] SKIP-dedup dedup_key=data_stale:vps_proxy:B-06 last_sent=2026-07-29T14:34:55Z id=sys-20260729T183440-1d23
+[emit-dashboard] OK id=sys-20260729T183438-0c12 check_id=C-06
+[emit-dashboard] OK id=sys-20260729T183440-1d23 check_id=B-06
+
+Findings:
+- C-06: market_messages table stale (0 rows in 3h) — messaging pipeline may be broken
+- B-06: VPS bctc route stale 34h+ (last push 2026-07-28 08:23:22Z) — extraction blocked
+
+[OUTPUT-CONTRACT] signals_posted=2 | telegram_sent=1 | signal_queue_rows_written=2 | dashboard_rows=2 | dedup_skipped=1
+
 ## c003 · 2026-07-29T14:35:45Z
 ### Audit Run Tier-2 (12:00–14:35 UTC 2026-07-29)
 - Tier: 2 | Cron health: A-29 PASS (all crons within cadence) | Sources: 27 checked
@@ -33,15 +56,3 @@ Findings:
 Fire-election: tick=2026-07-29T08:00Z (`0 */4 * * *` boundary) — claimed, led tick.
 
 [OUTPUT-CONTRACT] signals_posted=1 | telegram_sent=0 | signal_queue_rows_written=3 | dashboard_rows=1 | dedup_skipped=1
-
-## ad265f86 · 2026-07-29T07:09:23Z
-### Audit Run Tier-1 (07:00–07:09 UTC 2026-07-29)
-- Tier: 1 | Services: 12/12 host_runtime_set Up(healthy) | Health: 5/5 OK | A-20 pdf-extractor 3/3 pass | A-21 crashRestarts=0 PASS | A-30 SKIP deep-probe (baseline 24.60% < 85%) | A-32 Disk 39% PASS
-- Anomalies: 0 new (0 critical, 0 warn, 0 info)
-- Status: HEALTHY (state-change: prior Tier-1 DEGRADED→HEALTHY)
-
-Fire-election: tick=2026-07-29T07:00Z (`*/30 * * * *` boundary) — `task_claim` returned `claimed:true`. Led this tick.
-
-Verdict: All checks PASS — A-01/A-11 services UP, A-12/A-20 health OK, A-21 crashRestarts=0<2, A-30 SKIP (24.60%<85%), A-32 disk 39%<85%.
-
-[OUTPUT-CONTRACT] signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0
