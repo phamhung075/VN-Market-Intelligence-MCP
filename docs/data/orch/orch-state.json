@@ -32,14 +32,6 @@
     {
       "by": "po-s64",
       "ts": "2026-06-15T20:18:59Z",
-      "task_id": "FIX-BCTC-BANK-PDF-OCR-RASTERIZE",
-      "decision": "ITEM 1 board reconcile. .head stale-pointed at FIX-BCTC-ENRICH-SILENT-0ROWS (in review[], done_verified=PENDING after its check-a HOLD: scanned bank PDFs=0 text-chars so Layout-6/7 parser never fires) -- head was never advanced past that HOLD, misdirecting the dev-team :07 tick away from the READY P0. Reconciled head -> FIX-BCTC-BANK-PDF-OCR-RASTERIZE (P0, dev-pdf-extractor, add OCR-rasterize leg via in-image PaddleOCR before text-table parse, GENERIC low-text-density routing no allowlist) + dispatched it ready->in_progress. Verified orch-state HEAD committed at 4763dee7/5773ee7b BEFORE writing (board itself already committed, only head was stale).",
-      "what-considered": "only path: head was the single stale field; board arrays + the OCR mint were already committed at 4763dee7. Confirmed orch-state CLEAN (no dirty/staged board) so no false-promotion sweep risk; dispatched by EXPLICIT path, did not re-sweep 83-file dirty tree.",
-      "why-change": "no change from prior-PO scoping -- only completed the un-advanced head pointer the prior cycle left stale"
-    },
-    {
-      "by": "po-s64",
-      "ts": "2026-06-15T20:18:59Z",
       "task_id": "BA-FE-PAGE-REORG",
       "decision": "ITEM 2 NEW user sprint scoped. User intent: frontend pages resemble each other, merge to categories + organize. Read-only audit already persisted (2026-06-15-frontend-page-reorg-audit.md, 7 clusters / 6-cat taxonomy / 8 opportunities / ~5.1K LOC removable). Minted sprint_goal[FE-PAGE-REORG] (Wave-1 P0+P1, Wave-2 P2+P3, owner dev-frontend) + BA-FE-PAGE-REORG TODO -> ba->architect->pm->dev-frontend->qa. Enforced in spec: one generic <ScreenerTable>/component per cluster serving ALL entities (/goal#2, no per-page fork) + every migrated cell renders REAL loader data, no destructuring-default/placeholder mask (/goal#1 + no-fake-data). No API/route/behavior change -- existing tests stay green.",
       "what-considered": "Lane sequencing under WIP<=2 + host headroom (load ~6.8/13 containers, healthy). BCTC OCR P0 is the priority dev coding lane (real-data /goal#1). Routed FE-REORG through full planning chain (ba first) -- planning consumes ZERO dev coding WIP, and the dev-frontend IMPL lane only enters after the spec lands, so it naturally becomes the 2nd lane within WIP<=2 without over-parallel fan-out NOW.",
@@ -2032,39 +2024,6 @@
         "summary": "A-12 FAIL: api-gateway health check unreachable (HTTP CURL_ERR)",
         "severity": "WARN",
         "status": "triaged",
-        "payload_ref": null
-      },
-      {
-        "id": "sys-20260729T143446-2c78",
-        "ts": "2026-07-29T14:34:46Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "data_stale",
-        "summary": "sbv_fx stale 48m (check B-01)",
-        "severity": "CRITICAL",
-        "status": "READ",
-        "payload_ref": null
-      },
-      {
-        "id": "sys-20260729T143456-2973",
-        "ts": "2026-07-29T14:34:56Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "data_stale",
-        "summary": "VPS services unhealthy (check B-06)",
-        "severity": "WARN",
-        "status": "READ",
-        "payload_ref": null
-      },
-      {
-        "id": "sys-20260729T143457-16cc",
-        "ts": "2026-07-29T14:34:57Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "data_stale",
-        "summary": "bctc-discover stale with pending work 167 items (check B-05)",
-        "severity": "WARN",
-        "status": "READ",
         "payload_ref": null
       },
       {

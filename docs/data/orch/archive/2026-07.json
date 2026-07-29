@@ -15683,6 +15683,39 @@
       "payload_ref": "docs/signals/cowork-team-2026-07-29T1110Z-refine-bctc-diacritic-corruption-2nd-report.json",
       "restored_note": "auto-restored by dev-team after premature cold-evict (no age-gate) — po never triaged; see feedback_coldevict_no_age_gate_orphans_unread_po_escalation.md",
       "triage_note": "PO 2026-07-29T11:26Z — MINTED FIX-BCTC-REFINE-DIACRITIC-COLLAPSE-A-BREVE-ACUTE (backlog, P1, zone=multi, next_agent=architect, recurring_bug_count=2). 2 occurrences across 2 tickers / 2 OCR runs => systemic, standing recurring-bug rule applies. Row mandates an OCR-plane vs refine-plane comparison BEFORE any fix, so the zone resolves to apps/pdf-extractor or apps/mcp-server on evidence rather than assumption; explicitly forbids shipping a substitution/repair table as the primary fix. Covers occurrence 1 (cow-20260729T091200Z, REE_2025_Q4) as well. READ not RESOLVED — fix has not shipped."
+    },
+    {
+      "id": "sys-20260729T143446-2c78",
+      "ts": "2026-07-29T14:34:46Z",
+      "from": "system-auditor",
+      "to": "po",
+      "type": "data_stale",
+      "summary": "sbv_fx stale 48m (check B-01)",
+      "severity": "CRITICAL",
+      "status": "READ",
+      "payload_ref": null
+    },
+    {
+      "id": "sys-20260729T143456-2973",
+      "ts": "2026-07-29T14:34:56Z",
+      "from": "system-auditor",
+      "to": "po",
+      "type": "data_stale",
+      "summary": "VPS services unhealthy (check B-06)",
+      "severity": "WARN",
+      "status": "READ",
+      "payload_ref": null
+    },
+    {
+      "id": "sys-20260729T143457-16cc",
+      "ts": "2026-07-29T14:34:57Z",
+      "from": "system-auditor",
+      "to": "po",
+      "type": "data_stale",
+      "summary": "bctc-discover stale with pending work 167 items (check B-05)",
+      "severity": "WARN",
+      "status": "READ",
+      "payload_ref": null
     }
   ],
   "backlog_detail": [
@@ -16915,6 +16948,14 @@
       "decision": "Built recoverMissingOhlcvSession() + runOhlcvCandlePresenceGuard() net-new (sibling ALPHA-S1-CANDLE-RECOVER closed false-positive, shipped no code, so its shared primitive never existed). Calendar-aware via vnTradingCalendar's new mostRecentTradingDayOnOrBefore() (bounded 14-day backward walk over isVnTradingDay) — structurally prevents ever treating a weekend/holiday as a missing session. Wired at startup (static import) + trailing inside runOhlcvDailyAggregator itself (checks the PREVIOUS trading day via nowMs-24h, dynamic import to avoid a static circular import back through this same file). Fixed a real arithmetic bug in the architect design doc's illustrative re-aggregation snippet (nowMs must be end-of-VN-session, not midnight+5h, else the afternoon close is silently dropped from the recovered candle) — disclosed in commit message, not a re-architecture. Fail-loud does not invent a new retry ladder: a persistent gap that routes through VPS-relay is escalated by the ALREADY-EXISTING R-5 ladder in handleOhlcvBackfillDone (sibling commit 599f4aee0) once the poller reports back. Commit 1bbc8cead, disjoint file set from the sibling row. Moved in_progress->review, deploy_pending:true, top-level .head synced to next_agent:qa.",
       "what_considered": "(A) implement recoverMissingOhlcvSession per the architect's §1 snippet verbatim, including the nowMs=midnight+5h re-aggregation window — REJECTED after a direct unit test (3 ticks spanning the full VN session) showed the aggregator's own window is [vnMidnight(nowMs), nowMs), so +5h truncates capture to the pre-market hours and silently drops the actual session close; would have shipped a recovery path that produces a wrong candle while looking correct. (B) leave the trailing daily-aggregator call site as a static import of ohlcvCandleGuard.ts — REJECTED: creates a 3-node static circular import (ohlcvDailyAggregatorJob -> ohlcvCandleGuard -> recoverMissingOhlcvSession -> ohlcvDailyAggregatorJob); used a dynamic import instead, mirroring the deferred-load idiom ohlcvStartupProbe.ts already uses for the same reason. (C) add a bespoke retry-cap/escalation ladder inside the guard itself for a persistent gap — REJECTED per the task's explicit instruction to reuse the existing ladder, not invent a new one: the VPS-relay branch's ohlcv_backfill_queue insert already flows into the sibling's already-fixed R-5 ladder.",
       "why_change": "Architect design (docs/handoffs/ALPHA-S1-architect-design.md §1/§2) is the design authority and was followed for orchestration/branch structure/interfaces verbatim; the one deviation (aggregation-window arithmetic) is a correctness bug-fix within the design's own illustrative code, not a scope or architecture change, and is fully disclosed in the commit message and notebook."
+    },
+    {
+      "by": "po-s64",
+      "ts": "2026-06-15T20:18:59Z",
+      "task_id": "FIX-BCTC-BANK-PDF-OCR-RASTERIZE",
+      "decision": "ITEM 1 board reconcile. .head stale-pointed at FIX-BCTC-ENRICH-SILENT-0ROWS (in review[], done_verified=PENDING after its check-a HOLD: scanned bank PDFs=0 text-chars so Layout-6/7 parser never fires) -- head was never advanced past that HOLD, misdirecting the dev-team :07 tick away from the READY P0. Reconciled head -> FIX-BCTC-BANK-PDF-OCR-RASTERIZE (P0, dev-pdf-extractor, add OCR-rasterize leg via in-image PaddleOCR before text-table parse, GENERIC low-text-density routing no allowlist) + dispatched it ready->in_progress. Verified orch-state HEAD committed at 4763dee7/5773ee7b BEFORE writing (board itself already committed, only head was stale).",
+      "what-considered": "only path: head was the single stale field; board arrays + the OCR mint were already committed at 4763dee7. Confirmed orch-state CLEAN (no dirty/staged board) so no false-promotion sweep risk; dispatched by EXPLICIT path, did not re-sweep 83-file dirty tree.",
+      "why-change": "no change from prior-PO scoping -- only completed the un-advanced head pointer the prior cycle left stale"
     }
   ]
 }
