@@ -88,11 +88,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-07-29T08:30:00Z",
-    "updated_by": "developer",
-    "active_task_id": null,
-    "next_agent": "router"
+    "status": "in_progress",
+    "active_task_id": "FIX-GET-FOREIGN-ROOM-TOOL-RESULT-TOKEN-BUDGET",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-GET-FOREIGN-ROOM-TOOL-RESULT-TOKEN-BUDGET — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-29T08:46:05Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2058,6 +2059,17 @@
         "severity": "MED",
         "status": "NEW",
         "payload_ref": "docs/signals/cowork-signal-2026-07-29T0813Z-pressure-headroom-field-stale-container.json"
+      },
+      {
+        "id": "sys-20260729T083834-4dd9",
+        "ts": "2026-07-29T08:38:34Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-12 FAIL: api-gateway health check unreachable (HTTP CURL_ERR)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
@@ -4458,31 +4470,6 @@
         "po_note": "The router disclosed authorship of the override in the triage input rather than reporting the WARN as a clean finding. That disclosure is the only reason this was reviewable at all, and it is the behaviour the artifact-level fix in AC(3) is meant to make unnecessary.",
         "updated_at": "2026-07-29T07:21:44Z",
         "po_scope_amend_20260729T0721": "SCOPE AMENDMENT to acceptance clause (5) (PO 2026-07-29T07:21Z, triage-20260729T0719). READ THIS BEFORE ACTING ON CLAUSE (5). As written, clause (5) says 'DO NOT change ALERT_THRESHOLD, the A-21 predicate, or tier1-probe.md:135-137. The detector was CORRECT and was overridden - any AC that edits the threshold is a misread of this row.' Taken literally, 'the A-21 predicate' would block a fix that is now required. RULING: clause (5) is scoped to the VERDICT MAPPING at tier1-probe.md:133-142 - the crashRestarts>=2 -> WARN rule and its ALERT_THRESHOLD=2 parity with restartCadenceAlertJob.ts. That mapping is correct, is still protected, and this row's own fix must not touch it. Clause (5) does NOT extend to the COUNTING QUERY at tier1-probe.md:112-131, which this row never inspected and which PO measured wrong at 2026-07-29T07:16:51Z: it returned crashRestarts=0 for a startup that is a crash restart by the detector's own definition and that sits inside the 4h alert window. WHY THE ORIGINAL CLAUSE WAS REASONABLE AND STILL WRONG: 'the detector was CORRECT' was inferred from the 06:09Z reading of 1, which was accurate only because the predecessor startup had not yet aged out of the fixed 8h fetch window. The same query on the same ground truth returns 0 after 06:58:42Z. Internal consistency at one instant was mistaken for correctness. THE COUNT DEFECT IS OWNED ELSEWHERE - DO NOT ABSORB IT: FIX-A21-CRASH-WINDOW-PREDECESSOR-BOUND-FALSE-NEGATIVE (P1, architect, zone=multi). THIS row owns emit PRECEDENCE (spec beats caller prose) and stays a general fleet-wide rule; THAT row owns the COUNT. Neither fix may alter the other's surface. If an implementer perceives a conflict between the two, THIS amendment governs."
-      },
-      {
-        "id": "FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS",
-        "type": "FIX",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "M",
-        "zone": "cross-service/",
-        "owner": "agent-father",
-        "next_agent": "agent-father",
-        "supervised": true,
-        "supervised_reason": "next_agent=agent-father is an on-demand MAINTENANCE-LANE agent that zone-detect (cross-service/ -> generic developer) cannot route to; idle auto-launch would mis-route SKILL-file factory work. Same precedent and reasoning as UC-ASL-P6. Dispatch deliberately on-demand.",
-        "plan_only": true,
-        "depends": [],
-        "created_at": "2026-07-29T06:25:00Z",
-        "created_by": "po/triage-20260729T0625-auditor-cycle-defect-cluster",
-        "source": "RECURRING - measured on commit 9b27e9723 (2026-07-29 Tier-1) and 5bed759a0 (2026-07-29 Tier-2, 198L->68L). Pattern visible across at least 5 of the last 12 notebook commits.",
-        "title": "RECURRING DATA LOSS: the notebook-write compose step silently REWRITES the content of RETAINED prior sections to pay for an over-cap current section, instead of trimming its own section first - and the skill has no immutability invariant, so a diff reviewer cannot tell authorized pruning from unauthorized rewriting",
-        "premise_correction_read_first": "The incoming report framed this as 'zero deletions were required, it dropped 82 lines anyway', arithmetic from the commit's NET +43/-82 diffstat. THAT PREMISE IS WRONG and an implementer who chases it will fix nothing. The new section is 71L, not 43L; 152 + 71 = 223 > 200, so cap pressure was REAL and deletions WERE required. The defect is not that it deleted - it is WHICH bytes it deleted and that no rule forbids them.",
-        "measured_evidence": "PO measured per-section line counts on both sides of 9b27e9723 (7 sections/152L -> 6 sections/113L). BEFORE -> AFTER: 05:08:58Z 81L -> 10L REWRITTEN; d4-auto 03:00 3L -> 3L intact; x1b5c2a9 02:33 25L -> 10L REWRITTEN; d986065c 00:42 10L -> DROPPED; 88ec89d6 00:36 14L -> 10L REWRITTEN; a1f7k9x5 23:39 10L -> 9L REWRITTEN; 60d26f9b 23:10 9L -> DROPPED; new section 06:09:36Z = 71L. So FOUR retained sections had their content silently rewritten, on top of two whole-section drops. The immediately-prior cycle's own audit record was compressed 81L -> 10L.",
-        "defect": "THREE findings. (1) LADDER ORDER INVERTED: the new section is 71L against the AC-6 cap of <=60L per section. AC-3 Step 1f prescribes an ordered remedy whose FIRST step is 'If current-cycle section > 60L: trim to 60L first'. The agent skipped its own trim and paid the cap out of other sections' content. The spec-compliant outcome was reachable: trim 71->60 (212L), drop oldest 60d26f9b (203L), drop next-oldest a1f7k9x5 (193L) -> 5 sections, ~193L, every retained section BYTE-IDENTICAL. Actual outcome: 6 sections, 113L, four retained sections mutated. (2) NO IMMUTABILITY INVARIANT: nothing in AC-1..AC-6 of .claude/skills/notebook-write/SKILL.md states that retained sections are immutable. Steps 1c and 1f authorise DROPPING whole oldest blocks; no clause authorises editing a retained block's content, and no clause forbids it. Because AC-3 lands the result as ONE whole-file Write/Edit, both authorized pruning and unauthorized rewriting appear in the commit diff as plain deletions - they are indistinguishable to any reviewer. That is why this ran for multiple cycles unnoticed. (3) SPEC SELF-CONTRADICTION: AC-2 says 'Keep: current cycle + 2 prior sections = last 3 total', but AC-3 Step 1c says drop ONE oldest per cycle. Under Step 1c the section count is INVARIANT (add one, drop one), so AC-2's steady state of 3 is unreachable from above - this notebook sat at 7 sections, which AC-2 forbids and Step 1c permits indefinitely. Whichever is normative, the other is wrong.",
-        "acceptance": "(1) The skill states an explicit IMMUTABILITY INVARIANT: sections retained across a cycle are byte-identical before and after. The ONLY authorized mutations are dropping a whole oldest block, the AC-2b intra-prune of a named permanent accumulator, and trimming the CURRENT cycle's own section. (2) AC-2 and AC-3 Step 1c are reconciled into one rule and the doc states which is normative. (3) The cap-pressure ladder ordering is made explicit and mandatory: trim own section to <=60L FIRST, then drop oldest whole blocks, NEVER mutate a retained section to make room. (4) A MECHANICAL check - runnable by the agent or a hook - that compares retained-section bytes before and after the settled write and fails if any surviving section changed. This is the AC that makes the class detectable at all; do not drop it for being harder than the prose ACs. (5) SCOPE FENCE: do NOT fix this in scripts/agents-flow/notebook-auto-prune.sh. That is a DIFFERENT actuator (a PostToolUse hook running AFTER the write) and already carries its own 4-row REVIEW cluster: FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH, FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES, FIX-NOTEBOOK-LINECAP-SWEEP-BYTE-BLIND-BACKSTOP, FIX-ALERT-COMMANDER-NOTEBOOK-SINGLE-BLOB-UNPRUNABLE. This row is the agent's IN-MEMORY compose step, AC-3 Step 1, which runs BEFORE the hook ever sees the file. (6) The fix applies to the shared skill and therefore to all 37 APPEND-class agents in AC-6, not to system-auditor alone.",
-        "blast_radius": ".claude/skills/notebook-write/SKILL.md is the shared end-of-cycle write path for the 37 agents listed in its AC-6 APPEND class. If the compose step can rewrite retained history for system-auditor it can do so for all of them, and durable audit history is the one artifact the fleet cannot reconstruct.",
-        "related_memory": "feedback_agent_notebook, feedback_waterfall_lazy_load, feedback_edit_tool_hook_silently_strips_multiline.",
-        "updated_at": "2026-07-29T06:26:19Z"
       },
       {
         "id": "FIX-DEPTHTHIN-A-PRICE-HISTORY-RETENTION-10D",
@@ -7194,7 +7181,8 @@
         "plan_only": true,
         "po_recurrence_20260729": "RECURRENCE CONFIRMED 2026-07-29T06:09:36Z, and the ROW ITSELF WAS THE GAP. docs/agent-memory/notebooks/system-auditor.md:1 was committed in 9b27e9723 reading '## ad265f86 - 2026-07-29T06:09:36Z', where ad265f86 is the first segment of the coordination_session UUID. The spawn prompt for that cycle carried the prohibition EXPLICITLY and it was written anyway. This row was minted 2026-07-03T18:32:21Z and sat 26 days in backlog with next_agent UNSET, i.e. structurally undispatchable by any dispatcher - the standing memory feedback_agent_commits_session_uuid_into_notebook existed, a board row existed, and still nothing could pick it up. PO is therefore setting next_agent=architect per this row's own status_note ('zone:multi -> architect splits agent-father instruction edit from the CI-guard') and raising to P1 rather than minting a 2nd row. Same undispatchable-by-construction class as EPIC-AUDITOR-DETECTOR-CORRECTNESS-DRAIN, though this row is NOT in that epic's 18. FIX DIRECTION UNCHANGED and already correct in the title: (a) agent instructions via agent-father, (b) a pre-commit/CI guard failing on a session-token-shaped UUID in a committed diff. ADD: the peer convention on this exact heading line is a fixed SOURCE LABEL - '## d4-auto - <ts>' appears in the same notebook - so the remedy for the heading is a fixed agent/source label, not a redacted UUID. NOTE for the CI guard: a bare 8-hex-segment matcher will collide with git short SHAs, which legitimately appear in notebooks; the guard must be shaped to avoid that false positive.",
         "po_recurrence_at": "2026-07-29T06:25:00Z",
-        "updated_at": "2026-07-29T06:26:19Z"
+        "updated_at": "2026-07-29T08:41:16Z",
+        "agent_father_partial_note": "PART (a) DONE 2026-07-29 by agent-father (router-dispatched): .claude/skills/notebook-write/SKILL.md AC-1 now states the c<NNN> generation rule explicitly (real incrementing counter per bctc-analyst.md c125->c126 precedent, or a fixed source label) and forbids deriving the token from $CLAUDE_CODE_SESSION_ID/owner_client_session/any session-UUID fragment, citing the confirmed live leak (## ad265f86 in system-auditor.md, ad265f86 = this dispatch session own prefix). docs/agents/system-auditor/flow/main.md local heading template updated to match. Part (b), the pre-commit/CI guard against a session-UUID-shaped heading, with the SHA-collision false-positive shape this row already flags, is UNTOUCHED and remains architect/next_agent as-is; status/owner/next_agent NOT changed by this note."
       },
       {
         "id": "FIX-MACRO-SNAPSHOT-REGIME-PARSE-DRIFT",
@@ -7234,16 +7222,6 @@
         "size": "S",
         "title": "BCTC conviction composite scores HSG Q4-2025 at composite=0.19 despite financial=1.00 (PERFECT financial extraction) -> conviction signal SKIPPED. Decide: does the composite weighting systematically suppress conviction on well-extracted financials (false-negative), or is the low composite a legitimate multi-component gate? Plus: the [BCTC-1345b] skip signal mislabels a low-COMPOSITE skip as 'Low financial confidence' even when financial=1.00.",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#SPIKE-BCTC-CONVICTION-COMPOSITE-DRAG-PERFECT-FINANCIAL"
-      },
-      {
-        "id": "FIX-GET-FOREIGN-ROOM-TOOL-RESULT-TOKEN-BUDGET",
-        "type": "FIX",
-        "priority": "normal",
-        "size": "S",
-        "status": "BACKLOG",
-        "title": "get_foreign_room tool output exceeds tool-result token budget -> alert-commander cannot consume (recurring 3x)",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-GET-FOREIGN-ROOM-TOOL-RESULT-TOKEN-BUDGET"
       },
       {
         "id": "FIX-BACKLOG-TERMINAL-ROW-DRIFT-EVICT-BLIND",
@@ -11170,6 +11148,30 @@
         "po_structural_ruling_20260729T0812": "WHY THE IMPORT IS MANDATORY AND THE HAND-PORT FALLBACK IS NOT AVAILABLE TO THE IMPLEMENTER. PO re-derived the recurrence evidence from git rather than accepting the row's recurring_bug_count=3 at face value. restartCadenceAlertJob.ts has exactly three commits: babe54c6c (2026-06-14, FEAT - original guardrail, which is where the fixed 2x lookback was introduced), 2d494f77e (2026-06-15) and ff874c821 (2026-06-15) - and those last two share ONE task id (FIX-MCP-RESTART-ALERT-DEPLOY-DISCRIMINATE) and landed the same day. So this is NOT three failed fix attempts on one bug. It is one feature plus one two-commit fix cycle, during which the 2x lookback was never once examined - and the defect then MULTIPLIED by being hand-copied into the 2026-07-23 architecture brief and from there into tier1-probe.md (2f956f1c5, 2026-07-23). The multiplier is REPLICATION, not re-breakage. It follows that shipping the corrected LAG SQL into a second hand-maintained copy would fix today's arithmetic while leaving the exact replication mechanism intact and re-armed - and would be the third hand-port of this predicate performed with full knowledge of what hand-porting already cost. That is the thing PO is refusing. Deleting the copy is the only move that makes a fourth recurrence structurally harder rather than merely less likely. This also discharges parent AC(6), which required PO to decide and RECORD whether the flow doc should keep hand-porting at all: it should not.",
         "verification_gate": "(a) Run the rewritten probe block end to end against the live container, READ-ONLY, and paste its raw output. Show it returns the same number the deployed module returns - at time of minting that is crashRestarts:0 from the still-buggy deployed image, which is the CORRECT and honest result for this row before FIX-A21-PREDBOUND-1 is deployed. Do NOT expect or manufacture crashRestarts:1 here; that number only appears after the user-gated deploy. (b) Demonstrate AC(3): force an import failure in a throwaway run and show the probe reports TOOL-UNAVAILABLE and never PASS/crashRestarts:0. (c) Show `git diff` proving the SQL heredoc at :112-131 is GONE, not edited - the point of this row is that the second copy stops existing. (d) Confirm the verdict block :133-142 is unchanged apart from any AC(3)-required wording. (e) READ-ONLY ON EFFECTS: docker exec with a readonly Database and an inert sendFn only. No writes, no Telegram send, no POST/PUT/PATCH/DELETE to any endpoint, no docker stop/kill/rm/restart/compose, no cron edits. (f) A system-auditor Tier-1 agent may be running concurrently: do NOT touch docs/agent-memory/notebooks/system-auditor.md or docs/data/auditor-*.json. (g) supervised=true, recurring-defect family - do not self-certify. Route to qa on completion.",
         "note": "Half 2 of the FIX-A21-CRASH-WINDOW-PREDECESSOR-BOUND-FALSE-NEGATIVE split minted by PO 2026-07-29T08:12Z. Sibling: FIX-A21-PREDBOUND-1-MCPSERVER-LAG-QUERY-AND-REGRESSION-TEST (dev-mcp-server, apps/mcp-server/). OWNER RATIONALE: agent-father owns docs/agents/system-auditor/flow/tier1-probe.md per established precedent - the 2026-07-23 brief that introduced this very heredoc itself returned NEXT: agent-father for this file, and 2f956f1c5 is an agent-father commit. dev-mcp-server owns the app-code half; agent-father owns the flow-doc half. DEPENDS IS DELIBERATELY EMPTY: this row is implementable TODAY and does not need half 1 merged first, because the module and its injectable (db, sendFn) signature already exist in the deployed image and the architect proved the import live read-only on 2026-07-29. What IS gated on half 1 is the joint parent AC(2)/AC(3) verification, which the parent umbrella row carries via its own depends[]. Landing this row before half 1 deploys does not regress A-21 - it returns the same 0 it returns today, but honestly, from one source of truth instead of a drifting copy. DOES NOT re-open or duplicate OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN, FIX-AUDITOR-CALLER-PROSE-OVERRIDES-DOCUMENTED-DETECTOR-THRESHOLD, FIX-AUDITOR-A30-VMHWM-VETO-TAUTOLOGY-FALSE-NEGATIVE, FIX-AUDITOR-A29-UNEXECUTABLE-SPEC-SILENT-JOIN-DROP, FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE, or FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS."
+      },
+      {
+        "id": "FIX-AUDITOR-NOTEBOOK-APPEND-GATE-BYPASSED-ALL-GREEN-WRITE",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "size": "S",
+        "zone": "docs/agents/system-auditor/",
+        "owner": "agent-father",
+        "next_agent": "agent-father",
+        "supervised": true,
+        "plan_only": true,
+        "supervised_reason": "flow-doc + pre-commit-hook edit on a live cron-driven agent's write-gate -- same class as the sibling FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS row, dispatch deliberately on-demand, not autonomous BOUNDED-1 pickup.",
+        "created_at": "2026-07-29T08:41:00Z",
+        "created_by": "agent-father/router-dispatch-20260729-notebook-write-path",
+        "source": "RAW-verified during FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS implementation, commit f26526d0ee1d2b32ca82db049c9445a513227303 (2026-07-29T07:11:48+02:00, message 'chore(auditor): Tier-1 cycle 2026-07-29T05:08:58Z -- all checks PASS'). This commit's own body proves it was a genuine ALL_GREEN cycle: 'Anomalies: 0 new (0 critical, 0 warn, 0 info)', OUTPUT-CONTRACT line reads signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0, and Status=HEALTHY matches the immediately-preceding Tier-1 entry's Status=HEALTHY (commit 7a500484e7d170d7426a318a3ff2ef635f8930bb, 02:43:08Z same day) -- i.e. all three Notebook Append Gate conditions at system-auditor/flow/main.md:684-690 ((a) new-finding>0, (b) new-signal>0, (c) state-change) were false, so the gate's own written spec required SKIP (zero notebook diff, zero commit). The write happened anyway, and the commit message itself is a SECOND tell: it does not match the mandated 'chore(memory/system-auditor): notebook YYYY-MM-DD tier-N' convention produced by scripts/auditor-notebook-commit.sh -- every surrounding commit that day used that exact format. This is evidence the write/commit did not go through the normal gated path for that cycle.",
+        "defect": "Single confirmed occurrence (NOT yet the repo's own 2+ recurrence bar for escalation to a hard mechanical gate -- see memory feedback_recurring_bug_escalation). Detection/authorization logic at main.md:684-690 is itself correct and has since held clean on multiple consecutive cycles (git diff --stat HEAD on system-auditor.md empty across several no-op ticks) -- this is a ONE-TIME bypass of that gate, cause unconfirmed (could be a stale/cached cycle narrative, a race between two concurrent auditor invocations, or a genuine prose-skip). Distinct from, and NOT to be conflated with, the retained-section-rewrite defect (that row is the in-memory compose step, AC-3 Step 1; this row is the earlier decision of whether to call Write() at all).",
+        "acceptance": "(1) Determine root cause: re-run the auditor probe artifacts from that tick if still available, or wait for a second live occurrence, before concluding whether this is a flow-doc prose gap or a race. (2) A MECHANICAL detector (not a hard reject on day 1, given single-occurrence status): a pre-commit hook check scoped to docs/agent-memory/notebooks/system-auditor.md only, that inspects a newly-added (present-in-staged, absent-in-HEAD) top '## ' section's own self-declared 'Anomalies: N new' and 'signal_queue_rows_written=N' (from its OUTPUT-CONTRACT line) plus its 'Audit Run Tier-N' + '- Status: X' line, compares Status against the same-tier entry immediately below it in the retained sections, and WARNS (write_signal + stderr, non-blocking, per the sweep-guard's own WARN-by-default-day-1 precedent -- NOT a hard reject, since this is unproven-recurring and prose-parsing over free-form audit narrative is inherently more fragile than a byte hash) if N==0 AND signal_queue_rows_written==0 AND Status is unchanged. (3) Escalate WARN to REJECT only after a second confirmed occurrence, per the 2+ bar. (4) Do NOT bundle this into _check_notebook_immutability (scripts/git-hooks/pre-commit) -- that function is a different, already-implemented, already-validated invariant (retained-section byte-identity) and mixing concerns risks destabilizing a working hard-reject gate with a new, unproven, fuzzier one.",
+        "related": [
+          "FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS",
+          "FIX-AUDITOR-COMMIT-NONEXPLICIT-PATHSPEC"
+        ],
+        "title": "system-auditor notebook Append Gate (main.md:684-690) was bypassed for a genuine ALL_GREEN cycle -- commit f26526d0e wrote+committed a Tier-1 entry with 0 new anomalies/0 signals/unchanged Status, and used a non-standard commit message not matching auditor-notebook-commit.sh's convention",
+        "updated_at": "2026-07-29T08:41:54Z"
       }
     ],
     "closed_sprints": [
@@ -16718,6 +16720,32 @@
         "branch": null,
         "next_agent": "qa",
         "status_note": "CLOSED-NO-FIX (confirmed external outage): live-diagnosed WITHOUT VPS SSH (scope guardance allowed handoff to ops-vps-fetch only if SSH was required; it was not). VPS proxy /proxy/ssc-insider -> 502 \"Upstream HTTP 503 from congbothongtin.ssc.gov.vn/...jspx\" (3x consistent). Direct sandbox curl to the SAME upstream URL -> 503 \"No server is available to handle this request\" on every path incl. domain root, identical from non-VN egress AND VN egress (VPS) -- rules out geo-block + VPS/proxy misconfig. Parent ssc.gov.vn healthy (302 nginx) but its WebCenter app tier (/webcenter/portal/ubck) times out entirely -- same app tier congbothongtin.ssc.gov.vn runs on. Confirmed genuine external SSC WebCenter outage/degradation, not code-fixable. Deliberately did NOT add retry/backoff to vps-proxy-server.js fetchUpstream() for this route -- git-verified precedent B-05-FU-SSC-503-RETRY (commit a817b5139) already tried and reverted an identical retry fix for this exact SSC domain on the sibling BCTC discovery path because it blew the mcp-server callers timeout budget and caused a 17-day queue freeze; same caller-budget mismatch applies here vs sscInsider.ts withDeadline(30_000). Added in-code comment at vps-proxy-server.js SSC_INSIDER_UPSTREAM documenting both findings so a future agent does not re-discover and re-revert the same retry. Updated docs/architecture-briefs/2026-07-01-BA-PREDICTION-EVIDENCE-REVIVAL.md + docs/WORK.md with the closure. No functional code change; FR-2.2 watchdog (vpsProxyWatchdogJob.ts, already shipped TASK-EVIDENCE-HOP1-MCP) remains the correct operator-facing signal for a prolonged outage. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md STEP developer-S24. Committed directly to main (no task branch), matching CLOSED-NO-FIX precedent 9e69d12bb."
+      },
+      {
+        "id": "FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS",
+        "type": "FIX",
+        "status": "REVIEW",
+        "priority": "P1",
+        "size": "M",
+        "zone": "cross-service/",
+        "owner": "agent-father",
+        "next_agent": "qa",
+        "supervised": true,
+        "supervised_reason": "next_agent=agent-father is an on-demand MAINTENANCE-LANE agent that zone-detect (cross-service/ -> generic developer) cannot route to; idle auto-launch would mis-route SKILL-file factory work. Same precedent and reasoning as UC-ASL-P6. Dispatch deliberately on-demand.",
+        "plan_only": true,
+        "depends": [],
+        "created_at": "2026-07-29T06:25:00Z",
+        "created_by": "po/triage-20260729T0625-auditor-cycle-defect-cluster",
+        "source": "RECURRING - measured on commit 9b27e9723 (2026-07-29 Tier-1) and 5bed759a0 (2026-07-29 Tier-2, 198L->68L). Pattern visible across at least 5 of the last 12 notebook commits.",
+        "title": "RECURRING DATA LOSS: the notebook-write compose step silently REWRITES the content of RETAINED prior sections to pay for an over-cap current section, instead of trimming its own section first - and the skill has no immutability invariant, so a diff reviewer cannot tell authorized pruning from unauthorized rewriting",
+        "premise_correction_read_first": "The incoming report framed this as 'zero deletions were required, it dropped 82 lines anyway', arithmetic from the commit's NET +43/-82 diffstat. THAT PREMISE IS WRONG and an implementer who chases it will fix nothing. The new section is 71L, not 43L; 152 + 71 = 223 > 200, so cap pressure was REAL and deletions WERE required. The defect is not that it deleted - it is WHICH bytes it deleted and that no rule forbids them.",
+        "measured_evidence": "PO measured per-section line counts on both sides of 9b27e9723 (7 sections/152L -> 6 sections/113L). BEFORE -> AFTER: 05:08:58Z 81L -> 10L REWRITTEN; d4-auto 03:00 3L -> 3L intact; x1b5c2a9 02:33 25L -> 10L REWRITTEN; d986065c 00:42 10L -> DROPPED; 88ec89d6 00:36 14L -> 10L REWRITTEN; a1f7k9x5 23:39 10L -> 9L REWRITTEN; 60d26f9b 23:10 9L -> DROPPED; new section 06:09:36Z = 71L. So FOUR retained sections had their content silently rewritten, on top of two whole-section drops. The immediately-prior cycle's own audit record was compressed 81L -> 10L.",
+        "defect": "THREE findings. (1) LADDER ORDER INVERTED: the new section is 71L against the AC-6 cap of <=60L per section. AC-3 Step 1f prescribes an ordered remedy whose FIRST step is 'If current-cycle section > 60L: trim to 60L first'. The agent skipped its own trim and paid the cap out of other sections' content. The spec-compliant outcome was reachable: trim 71->60 (212L), drop oldest 60d26f9b (203L), drop next-oldest a1f7k9x5 (193L) -> 5 sections, ~193L, every retained section BYTE-IDENTICAL. Actual outcome: 6 sections, 113L, four retained sections mutated. (2) NO IMMUTABILITY INVARIANT: nothing in AC-1..AC-6 of .claude/skills/notebook-write/SKILL.md states that retained sections are immutable. Steps 1c and 1f authorise DROPPING whole oldest blocks; no clause authorises editing a retained block's content, and no clause forbids it. Because AC-3 lands the result as ONE whole-file Write/Edit, both authorized pruning and unauthorized rewriting appear in the commit diff as plain deletions - they are indistinguishable to any reviewer. That is why this ran for multiple cycles unnoticed. (3) SPEC SELF-CONTRADICTION: AC-2 says 'Keep: current cycle + 2 prior sections = last 3 total', but AC-3 Step 1c says drop ONE oldest per cycle. Under Step 1c the section count is INVARIANT (add one, drop one), so AC-2's steady state of 3 is unreachable from above - this notebook sat at 7 sections, which AC-2 forbids and Step 1c permits indefinitely. Whichever is normative, the other is wrong.",
+        "acceptance": "(1) The skill states an explicit IMMUTABILITY INVARIANT: sections retained across a cycle are byte-identical before and after. The ONLY authorized mutations are dropping a whole oldest block, the AC-2b intra-prune of a named permanent accumulator, and trimming the CURRENT cycle's own section. (2) AC-2 and AC-3 Step 1c are reconciled into one rule and the doc states which is normative. (3) The cap-pressure ladder ordering is made explicit and mandatory: trim own section to <=60L FIRST, then drop oldest whole blocks, NEVER mutate a retained section to make room. (4) A MECHANICAL check - runnable by the agent or a hook - that compares retained-section bytes before and after the settled write and fails if any surviving section changed. This is the AC that makes the class detectable at all; do not drop it for being harder than the prose ACs. (5) SCOPE FENCE: do NOT fix this in scripts/agents-flow/notebook-auto-prune.sh. That is a DIFFERENT actuator (a PostToolUse hook running AFTER the write) and already carries its own 4-row REVIEW cluster: FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH, FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES, FIX-NOTEBOOK-LINECAP-SWEEP-BYTE-BLIND-BACKSTOP, FIX-ALERT-COMMANDER-NOTEBOOK-SINGLE-BLOB-UNPRUNABLE. This row is the agent's IN-MEMORY compose step, AC-3 Step 1, which runs BEFORE the hook ever sees the file. (6) The fix applies to the shared skill and therefore to all 37 APPEND-class agents in AC-6, not to system-auditor alone.",
+        "blast_radius": ".claude/skills/notebook-write/SKILL.md is the shared end-of-cycle write path for the 37 agents listed in its AC-6 APPEND class. If the compose step can rewrite retained history for system-auditor it can do so for all of them, and durable audit history is the one artifact the fleet cannot reconstruct.",
+        "related_memory": "feedback_agent_notebook, feedback_waterfall_lazy_load, feedback_edit_tool_hook_silently_strips_multiline.",
+        "updated_at": "2026-07-29T08:45:44Z",
+        "agent_father_impl_note": "IMPLEMENTED 2026-07-29 by agent-father (router-dispatched, session ad265f86). All 4 acceptance criteria landed: (1) AC-2a immutability invariant added to .claude/skills/notebook-write/SKILL.md; (2) AC-2/AC-3 Step 1c reconciled into a converging WHILE-loop (normative: AC-2 3-section steady state); (3) cap-pressure ladder reordered - trim own section FIRST, mirrored into docs/agents/system-auditor/flow/main.md local copy; (4) mechanical gate landed as scripts/git-hooks/pre-commit _check_notebook_immutability (hard reject, hash-diff per retained heading) - VALIDATED live: true-positive 4/4 replaying commit 9b27e97236d2 before/after content, true-negative on clean commit 01e50dbcbac6661b (after fixing a trailing-blank-line false-positive class), plus a real stage/reject/restore round-trip against the live system-auditor.md notebook (confirmed byte-identical post-revert via git status/diff). QA verify: re-run the same before/after replay (git show <sha>^:path vs git show <sha>:path piped through the hook own functions) or attempt a live retained-section edit and confirm the hook rejects it."
       }
     ],
     "qa": [],
@@ -16737,9 +16765,26 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-29T08:16:13Z",
+    "last_triaged_at": "2026-07-29T08:45:57Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-GET-FOREIGN-ROOM-TOOL-RESULT-TOKEN-BUDGET",
+        "type": "FIX",
+        "priority": "normal",
+        "size": "S",
+        "status": "IN_PROGRESS",
+        "title": "get_foreign_room tool output exceeds tool-result token budget -> alert-commander cannot consume (recurring 3x)",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-GET-FOREIGN-ROOM-TOOL-RESULT-TOKEN-BUDGET",
+        "promoted_at": "2026-07-29T08:45:57Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-29T08:46:05Z",
+        "claimed_at": "2026-07-29T08:46:05Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
