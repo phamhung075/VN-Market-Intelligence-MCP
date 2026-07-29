@@ -90,10 +90,10 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION",
-    "next_agent": "pm",
-    "next_action": "Supervised-Lane Sweep claim of FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION — spawn pm DIRECTLY (no zone-detect indirection; lane already resolved at promote time). supervised/plan_only preserved — do not clear.",
-    "updated_at": "2026-07-29T13:48:12Z",
-    "updated_by": "dev-team (supervised-lane sweep)"
+    "next_agent": "developer",
+    "next_action": "Decomposition complete. 6 atomic tasks created (S1 deleted as duplicate of already-completed TASK-1; P1B deleted as stamp-writer already exists). Next: dev-team implements P1A + P2A (parallel) -> MAIN-COMPLETION -> tests. Parent row next_agent changed from pm to developer to prevent re-entry by Supervised-Lane Sweep.",
+    "updated_at": "2026-07-29T16:00:00Z",
+    "updated_by": "pm"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",

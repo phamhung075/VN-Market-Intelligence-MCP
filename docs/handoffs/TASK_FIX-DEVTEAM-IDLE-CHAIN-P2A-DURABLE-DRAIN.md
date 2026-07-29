@@ -3,7 +3,7 @@ sprint: FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION
 branch: task/idle-chain-p2a-durable-drain
 size: M
 zone: docs/agents/dev-team/flow/
-depends_on: [FIX-DEVTEAM-IDLE-CHAIN-S1-SCHEMA-SELECTION]
+depends_on: [TASK-DEVTEAM-IDLE-CHAIN-1-SCHEMA-UTILITIES]
 blocks: [FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION]
 ---
 

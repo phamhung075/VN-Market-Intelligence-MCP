@@ -3,7 +3,7 @@ sprint: FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION
 branch: task/idle-chain-p1a-main-rotation
 size: L
 zone: docs/agents/dev-team/flow/
-depends_on: [FIX-DEVTEAM-IDLE-CHAIN-S1-SCHEMA-SELECTION]
+depends_on: [TASK-DEVTEAM-IDLE-CHAIN-1-SCHEMA-UTILITIES]
 blocks: [FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION]
 ---
 
@@ -55,15 +55,15 @@ fi
 
 ### Integration with Stamp Write
 
-The stamp write (new §2.3, separate task) happens AFTER this consumer's block runs, unconditionally:
+The stamp write (§2.3) happens AFTER this consumer's block runs, unconditionally. The script `scripts/devteam-idle-chain-stamp.jq` already exists (created by TASK-DEVTEAM-IDLE-CHAIN-1-SCHEMA-UTILITIES), so this task adds the call site to main.md:
 ```bash
 NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 jq --arg now "$NOW" --arg c "$SELECTED" \
-  '.dev_team_idle_chain.rotation[$c].last_served_tick = $now
-   | .dev_team_idle_chain._updated_at = $now | .dev_team_idle_chain._updated_by = "dev-team"' \
-  docs/data/orch/orch-state.json | bash "$PROJECT_ROOT/scripts/orch-apply.sh" || true
+  -f "$PROJECT_ROOT/scripts/devteam-idle-chain-stamp.jq" \
+  "$PROJECT_ROOT/docs/data/orch/orch-state.json" \
+  | bash "$PROJECT_ROOT/scripts/orch-apply.sh" || true
 ```
-This task does NOT implement the stamp write (that's task P1B-STAMP), but MUST account for the call site location in the flow.
+This task integrates the stamp writer call site into the rotation dispatcher flow (no need for a separate P1B task — script already exists).
 
 ### Acceptance Criteria
 
