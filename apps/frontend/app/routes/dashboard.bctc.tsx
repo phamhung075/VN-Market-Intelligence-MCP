@@ -20,6 +20,18 @@
  * Client-side exchange filter: HOSE / HNX / UPCOM chips.
  *
  * Labels: plain Vietnamese — non-technical user.
+ *
+ * Page-level freshness (FE-PG-BCTC-FRESH-FIX): `generated_at` is already a
+ * real ISO8601 UTC string emitted server-side by mcp-server's
+ * analysisBriefIndexHandler (`new Date().toISOString()` at request time) —
+ * unlike the market-digest `data_asof` field fixed in the prior sibling task
+ * (FE-PG-_INDEX-FRESH-FIX), it is NOT a naive-SQLite string, so no
+ * `parseDate` normalization is needed. `<FreshnessBadge slaTierKey="event">`
+ * uses it, matching the quality-audit check's own SLA formula
+ * (`sla_tiers["event"].max_staleness_min` in
+ * docs/data/frontend-data-coverage-map.json — 1560min, same as
+ * FreshnessBadge.tsx's SLA_TIERS.event). Per-item `updated_at` timestamps
+ * are unchanged (still plain text, no badge).
  */
 import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
@@ -28,6 +40,8 @@ import { useState } from "react";
 import { safeFetch } from "~/lib/api/fetchUtils";
 import { ClientTimestamp } from "~/components/ClientTimestamp";
 import { PageHeader } from "~/components/PageHeader";
+import { FreshnessBadge } from "~/components/FreshnessBadge";
+import { useFreshnessRevalidator } from "~/lib/hooks/useFreshnessRevalidator";
 
 export const meta: MetaFunction = () => [
   { title: "Báo Cáo Tài Chính — VN Market Intelligence" },
@@ -93,10 +107,17 @@ function parseAnalysisBriefsDto(raw: unknown): AnalysisBriefsDto {
  * Core fetch-and-parse logic — exported for unit testing.
  * Pure async function, no Remix dependency, no JSON wrapping.
  * The loader calls this and wraps it with json().
+ *
+ * FE-PG-BCTC-FRESH-FIX: `generated_at` is now threaded straight through from
+ * the parsed DTO (mcp-server's own response clock) instead of being
+ * discarded and replaced with a second, independently-computed
+ * `new Date().toISOString()` in the loader. Both values were "now" at
+ * request time in practice, but the DTO value is now also the input to
+ * `<FreshnessBadge>` — using the real upstream value (not a frontend-local
+ * clock) avoids any provenance/clock-drift ambiguity between the two
+ * processes.
  */
-export async function fetchAnalysisBriefs(
-  origin: string,
-): Promise<Omit<LoaderData, "generated_at">> {
+export async function fetchAnalysisBriefs(origin: string): Promise<LoaderData> {
   const url = `${origin}/api/analysis-briefs`;
 
   const { data, error } = await safeFetch<AnalysisBriefsDto>(url, parseAnalysisBriefsDto, {
@@ -104,12 +125,10 @@ export async function fetchAnalysisBriefs(
   });
 
   const dto = data ?? parseAnalysisBriefsDto(null);
-  return { count: dto.count, items: dto.items, error };
+  return { generated_at: dto.generated_at, count: dto.count, items: dto.items, error };
 }
 
 export async function loader({ request: _request }: LoaderFunctionArgs) {
-  const generated_at = new Date().toISOString();
-
   const origin =
     typeof process !== "undefined" && process.env["FRONTEND_ORIGIN"]
       ? process.env["FRONTEND_ORIGIN"]
@@ -117,10 +136,7 @@ export async function loader({ request: _request }: LoaderFunctionArgs) {
 
   const data = await fetchAnalysisBriefs(origin);
 
-  return json<LoaderData>({
-    generated_at,
-    ...data,
-  });
+  return json<LoaderData>(data);
 }
 
 // ---------------------------------------------------------------------------
@@ -293,6 +309,7 @@ type ExchangeFilter = (typeof EXCHANGE_OPTIONS)[number] | null;
 
 export default function FinancialReportsPage() {
   const { generated_at, count, items, error } = useLoaderData<typeof loader>();
+  useFreshnessRevalidator("event");
 
   const [search, setSearch] = useState("");
   const [exchangeFilter, setExchangeFilter] = useState<ExchangeFilter>(null);
@@ -314,7 +331,8 @@ export default function FinancialReportsPage() {
         title="Báo Cáo Tài Chính"
         subtitle="Phân tích AI cho từng cổ phiếu — chọn để xem chi tiết"
         actions={
-          <span className="text-xs text-slate-500">
+          <span className="text-xs text-slate-500 flex items-center gap-2">
+            <FreshnessBadge dataAsof={generated_at} slaTierKey="event" />
             <ClientTimestamp iso={generated_at} />
           </span>
         }
