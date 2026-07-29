@@ -2328,28 +2328,6 @@
         "status": "NEW",
         "payload_ref": null,
         "detail": "Same finding as the po-addressed row this tick: scripts/audits/mock-guard.sh --full HARD-FAILs on 2 lines inside *_test.go files (test stub URL builders), even though its own doc comment claims a tests/ exclusion. Suspected root cause: exclusion list is directory-name based (tests/sandbox/scenarios/spike/.venv) and never checks for the *_test.go Go filename convention. Recurring every tick since at least this session's start. Worth a small architecture/design note on whether mock-guard's exclusion should be filename-suffix-aware across all languages (*_test.go, *.test.ts, *_test.py) rather than directory-only."
-      },
-      {
-        "id": "sys-20260729T003557-099e",
-        "ts": "2026-07-29T00:35:57Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "db_integrity_breach",
-        "summary": "market.db market_messages empty in last 3h (check C-06)",
-        "severity": "WARN",
-        "status": "READ",
-        "payload_ref": null
-      },
-      {
-        "id": "sys-20260729T003559-7c67",
-        "ts": "2026-07-29T00:35:59Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "db_integrity_breach",
-        "summary": "market.db orphaned alerts found (check C-08)",
-        "severity": "WARN",
-        "status": "READ",
-        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-28T14:53:00Z",
