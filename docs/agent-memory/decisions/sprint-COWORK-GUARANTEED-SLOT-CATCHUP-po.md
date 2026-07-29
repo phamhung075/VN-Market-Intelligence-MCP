@@ -386,3 +386,32 @@
 - Measure per-section line counts on both sides of the commit
 **why-decision:** 43 was the NET diffstat, not the new section size. The real new section is 71L, so 152+71=223>200 and cap pressure was REAL. The defect is not over-dropping — it is that FOUR retained sections were silently REWRITTEN (81→10, 25→10, 14→10, 10→9) to pay for an over-cap current section, when AC-3 Step 1f says trim your own section FIRST.
 **why-change:** Root cause moved from "drops too much" to "mutates retained history + skill has no immutability invariant". Different fix, different owner, and the original framing would have produced a no-op patch.
+
+### STEP po-S41 · po · 2026-07-29T08:48:11Z
+**task-id:** SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP
+**what-done:** Resolved the A-12 CURL_ERR root cause from files, folded signal sys-20260729T083834-4dd9 in as occurrence #13, commissioned the row BACKLOG→READY.
+**what-considered:**
+- Close the row as a plain false positive (detector wrong, service healthy)
+- Mint a new FIX for the misclassification + a second row for the api-gateway latency
+- Fold into the existing SPIKE that already charters this exact class
+**why-decision:** The SPIKE already owned it via scope_item_home_ref_20260723 and had an OPEN question ("what stalls api-gateway ~1.4s") that today's evidence answers outright: probe.sh:48 --max-time 3 equals capability_prober.go:62 probeTimeoutMs 3000, against a SEQUENTIAL 9-way fan-out (ProbeAll :96-113) with no single-flight. A new mint would have duplicated a chartered row and split the evidence across two homes.
+**why-change:** Dispatch premise said the CURL_ERR mechanism was open and cited --max-time 6. That is auditor-tier1-probe.sh:202, which probes only :3000/:3001 and never :4000 — wrong file for A-12. Mechanism is closed, not open.
+
+### STEP po-S42 · po · 2026-07-29T08:48:11Z
+**task-id:** FIX-AUDITOR-DASHBOARD-APPEND-NO-ACTUATOR-CONTRACT-COUNT-NARRATED
+**what-done:** Folded the false-zero OUTPUT-CONTRACT report in as occurrence #3, extended acceptance to the under-report direction, corrected a non-existent script path on the row.
+**what-considered:**
+- Mint a new row for signal_queue_rows_written (different field than dashboard_rows)
+- Fold into the existing narrated-counter row
+**why-decision:** Same line, same mechanism (narrated not derived), same owner, same zone — a second row would split one fix. The under-report is materially different from occurrences 1-2 though, so acceptance (1)'s "if the write did not happen the count is 0" needed restating symmetrically.
+**why-change:** Also found main.md:669's cross-check is vacuous by construction — both operands are narrated by the same agent, so a single misread yields 0 and 0 and the check passes. Added; it was not in the original scope.
+
+### STEP po-S43 · po · 2026-07-29T08:48:11Z
+**task-id:** FIX-AUDITOR-NOTEBOOK-APPEND-GATE-BYPASSED-ALL-GREEN-WRITE
+**what-done:** Recorded the ownership ruling for the gate that evaluated on the false zero, and amended acceptance (2).
+**what-considered:**
+- Assign the whole defect to the emit path (fix the number, gate is fine)
+- Assign it to the auditor flow (fix the gate's predicate source)
+- Split: number upstream, predicate source here
+**why-decision:** Split. Correcting the counter is necessary but leaves a gate that reads a value its own agent authored — one bug from the same silence. The prescribed pre-commit detector in acceptance (2) parses that same self-reported prose, so it inherited the defect and had to be redirected at .signal_queue.rows[].
+**why-change:** Deliberately did NOT bump recurrence. Today is a first occurrence of the false-input mode, not a second of the bypass mode; summing them would fake the 2+ escalation bar.
