@@ -452,3 +452,32 @@
 - Prove provenance before blaming or absolving anyone, including myself.
 **why-decision:** They are absent from rows[] AND archive[], so no legitimate triage path explains it. `git show 3e257beba` and its parent have an IDENTICAL signal_queue id-set (comm both empty) at 131 rows — 131 committed + 2 uncommitted = the 133 I read, so a peer serialized a stale 131-row full doc over a 133-row tree. My own two writes touched only `.task_board.*` and orch-apply logged `signal_total live=132 candidate=132`, i.e. the loss preceded my first write. The write gate cannot catch it: `orch-conservation-check.mjs` FLOOR_RATIO=0.5, so 131/133 passes — it is a bulk-eviction breaker, and single-row loss is unowned.
 **why-change:** Not in the handed brief; found only because the constraint told me to leave those rows alone and I checked they were still there.
+
+### STEP po-S48 · po · 2026-07-29T11:33:07Z
+**task-id:** FIX-AUDITOR-MEMACK-HEADROOM-FLOOR-AND-DEAD-TRACKEDBY
+**what-done:** Re-pointed the rag-service memory ACK to FU-RAG-DEPLOY-MEMORY and minted the detector row; did NOT widen RAG-FTS-BUILD-MEMORY-BOUND and did NOT mint a rag-memory row.
+**what-considered:**
+- Widen the FTS row to cover model-load + /index — rejected: the mechanism is already fully owned by two open rows written 40min earlier (S44).
+- Mint a new rag-memory row — rejected as duplicate on the same grounds.
+- Remove the ACK entry — rejected: re-churns system-auditor ~48x/day, the churn the ACK exists to kill.
+- Narrow the ACK — NOT EXPRESSIBLE: probe :302-307 is a single pct>=WARN_PCT test; no middle state exists.
+**why-decision:** The router's scope mismatch is real but its consequence is worse than framed — tracked_by is read by NOTHING (:275 reads only .container), so the STALENESS RULE that makes the ACK safe is prose. Binding it to a row time-gated to ~2026-08-16 guaranteed >=18d of blindness by construction. The parent row PRE-AUTHORIZED an absolute-headroom predicate "if the loop proves the percentage view insufficient" — it has.
+**why-change:** Router asked "widen or mint"; correct answer was neither for rag, and one mint for the detector.
+
+### STEP po-S49 · po · 2026-07-29T11:33:07Z
+**task-id:** FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-LAYER2
+**what-done:** Raised LAYER2 P1->P0 with the 28-signal/8-notebook evidence; recorded a NO-BUMP disposition on FIX-AUDITOR-COMMIT-NONEXPLICIT-PATHSPEC.
+**what-considered:**
+- Bump FIX-AUDITOR-COMMIT-NONEXPLICIT-PATHSPEC as the router asked — rejected: that row is SUPERSEDED and says "DO NOT WORK THIS ROW"; bumping re-creates the duplicate the supersede prevented.
+- Leave both — rejected: LAYER2 is the SOLE remaining dependency of a P0 parent with recurring_bug_count=4.
+**why-decision:** Layer-0 ships WARN-only and cannot escalate to reject until LAYER2 lands, so 28 signals/day hit an actuator that cannot act. Also corrected LAYER2's scope: its "4 call sites" is a floor, not the spec — 8 agent commit paths swept in one day and system-auditor bypassed a mandated pathspec script it already has.
+**why-change:** no change from plan.
+
+### STEP po-S50 · po · 2026-07-29T11:33:07Z
+**task-id:** FIX-BCTC-REFINE-DIACRITIC-COLLAPSE-A-BREVE-ACUTE
+**what-done:** Routed 4 carried cowork signals + 2 NEW signal rows; 1 mint, 5 corroborations onto existing rows, 0 duplicates.
+**what-considered:**
+- Mint per signal — rejected: 5 of 6 have live owning rows (chef bail, router mutex bypass, pressure deploy-gap, lock-lifetime, marker lifecycle).
+- Fold the diacritic report into an existing row — rejected: zero prior art in 12 lanes; 2 tickers / 2 OCR runs = systemic, recurring 2+ rule applies.
+**why-decision:** Minted zone=multi with a MANDATED first step (compare OCR plane vs refine plane on the named unit_ids) because the zone is genuinely undetermined between pdf-extractor and mcp-server, and explicitly forbade a substitution-table repair — a repair on the wrong side of that boundary hides the defect.
+**why-change:** no change from plan.
