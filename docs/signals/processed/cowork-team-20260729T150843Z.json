@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-29T15:08:20Z",
+    "matched_slots": [
+      "bctc-analyst-slot-1"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-1"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "bctc-analyst-slot-1": "cron"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-1": null
+    },
+    "last_fired_timestamp": "2026-07-29T15:08:13Z",
+    "last_fired_slots": [
+      "bctc-analyst-slot-1"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "15:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 14,
+    "note": "bctc-analyst-slot-1 (0 15 * * * bctc-offmarket cron) spawned agent ae2a90b8f4f1ece35 in background"
+  },
+  "priority": "low",
+  "createdAt": "2026-07-29T15:08:20Z",
+  "_processed": {
+    "fingerprint": "885ebc4a64db6d0594dfddc2bcfae0c4c4d2e50b94a8d903d3fb4f64b2942176",
+    "processedAt": "2026-07-29T15:15:48Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
