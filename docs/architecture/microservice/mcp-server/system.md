@@ -115,6 +115,30 @@ a startup catch-up covers it. See `apps/mcp-server/src/scheduler/startScheduler.
 § FIX-CRON-SUNDAY-STARTUP-CATCHUP and `shouldRunCatchup()`'s `requiredUtcDay`
 param in `startupHelpers.ts`.
 
+**FIX-SCHEDULER-DOUBLE-REGISTRATION (2026-07-29) — same-second duplicate-fire
+guard.** `recoverMissedExecutions: true` (the missed-fire fix above) has a
+flip side: `node_modules/node-cron@3.0.3`'s `Scheduler.matchTime()` compares
+its "already executed" guard at full millisecond precision, not whole-second
+granularity, so ordinary ~1s `setTimeout`-loop jitter (no stall required) can
+cause the SAME scheduled second to be detected twice by consecutive polls —
+each detection independently fires the job. RAW-verified LIVE against
+`cron_job_runs` before any code change: this affected `vnIndexRefreshJob`
+(13.04%/7d), `vpsServiceHealthJob` (10.33%/7d), and `walCheckpointJob`
+(3.74%/7d) — a shared scheduler-layer defect, not specific to the two jobs
+named in the original bug report (`pollNewsJob`'s apparent "2x/30min" was
+separately traced to `newsHeadlinesRefreshJob`'s by-design double push to
+`/api/push-news`, Bloomberg then Reuters — not a scheduler bug, left
+untouched). Registration itself was already singular (`startScheduler()`'s
+`__vnMarketSchedulerStarted` guard; every job appears exactly once in
+`buildJobTable()`/`registerBespokeJobs()`) — the defect was execution-level,
+not registration-level. Fix: `dedupeCronTick()` (`startupHelpers.ts`) wraps
+every `scheduleCron()` callback (the single canonical registration point —
+`registerJobTable`, `registerBespokeJobs`, and `summaryJobs.ts` all funnel
+through it) with a per-registration whole-second last-fired guard; a second
+detection of an already-fired second is skipped, a genuinely new second still
+fires. `recoverMissedExecutions` stays enabled — the missed-fire class above
+is not reverted.
+
 ---
 
 ## VPS Debug-Trigger Tools — SSH Execution Boundary

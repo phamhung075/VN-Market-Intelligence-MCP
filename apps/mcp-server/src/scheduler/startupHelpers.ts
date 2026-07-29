@@ -244,13 +244,61 @@ export function shouldSkipRecoveryReplay(
 // T1 (T1-ARCH-CRON-T4-DEDUP-GUARDS commit 60b48a9b) validated all fleet jobs
 // before this wrapper was applied (T2 depends on T1 per migration plan §5.1).
 // ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// dedupeCronTick — FIX-SCHEDULER-DOUBLE-REGISTRATION (2026-07-29)
+//
+// RAW-verified LIVE (cron_job_runs, named-volume market.db) BEFORE this fix:
+// registration was already singular for every job (startScheduler() itself
+// is guarded against re-entrant init via __vnMarketSchedulerStarted) — the
+// double-registerJob/re-entrant-init hypothesis in the original bug report
+// did NOT hold. The real defect is a genuine EXECUTION-level duplicate,
+// traced to node_modules/node-cron@3.0.3's scheduler.js Scheduler.matchTime():
+// recoverMissedExecutions: true (Lever B, T2-ARCH-CRON-RECOVER-JITTER) makes
+// its `i === 0 || this.autorecover` gate always true, so under ordinary
+// ~1s setTimeout-loop jitter (no stall required — the interval routinely
+// measures just over 1000ms) the scheduler re-examines the immediately
+// preceding second on the next poll. Its "already executed" guard compares
+// FULL millisecond precision (`lastExecution.getTime() < date_tmp.getTime()`)
+// instead of whole-second granularity, so two polls that straddle the same
+// scheduled boundary with different sub-second offsets both pass the guard —
+// the identical logical tick fires (and therefore executes) twice. Confirmed
+// in-process (one Scheduler instance per job, one Bun process — NOT the
+// cowork-team-20260615T1620Z dispatcher-overlap class) and NOT specific to
+// the two originally-named jobs (vpsServiceHealthJob 10.33%, walCheckpointJob
+// 3.74% showed the identical pattern over the same 7-day window).
+//
+// Wraps a cron callback with a per-registration whole-second last-fired
+// guard: a second detection of the SAME scheduled second is skipped (no
+// duplicate execution, no duplicate cron_job_runs row); a genuinely new
+// second still fires normally. recoverMissedExecutions stays enabled — the
+// missed-fire class ARCH-CRON-SCHEDULER-RELIABILITY fixed is not reverted.
+// 'manual'/'init' string invocations (admin-triggered / startup one-shots)
+// are never deduped — only real scheduled Date ticks are guarded.
+// ─────────────────────────────────────────────────────────────────────────────
+export function dedupeCronTick(
+  func: (now: Date | 'manual' | 'init') => void,
+): (now: Date | 'manual' | 'init') => void {
+  let lastFiredSecond: number | null = null
+  return (now: Date | 'manual' | 'init') => {
+    if (now instanceof Date) {
+      const flooredSec = Math.floor(now.getTime() / 1000)
+      if (lastFiredSecond === flooredSec) {
+        log(`[scheduler-dedup] skipped re-entrant fire for already-executed tick=${now.toISOString()}`)
+        return
+      }
+      lastFiredSecond = flooredSec
+    }
+    return func(now)
+  }
+}
+
 export function scheduleCron(
   expression: string,
   func: (now: Date | 'manual' | 'init') => void,
   options: Parameters<typeof cron.schedule>[2] & { recoverMissedExecutions?: boolean } = {},
 ): ScheduledTask {
   const opts = { recoverMissedExecutions: true, ...options }
-  return cron.schedule(expression, func, opts)
+  return cron.schedule(expression, dedupeCronTick(func), opts)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
