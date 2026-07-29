@@ -564,3 +564,31 @@
 - Mint an incident for VPS bctc stale 35h — REJECTED: prices/news/sbv push normally on the SAME proxy, and bctc_vps_queue holds zero actionable rows (deferred_infra 328 / done 85 / enrich_failed 128 / url_not_found 39, no pending). The route is idle for want of work.
 **why-decision:** Both auditor WARNs were true observations with false inferences, so the defect is in the inferring tool, not the subject: C-06 counts rows-in-3h against a ~3x/day cadence (market_messages is live, MAX(sent_at) 15:32:13Z, n=1067), and get_vps_proxy_health prints "VPS may be down or unreachable" for a demand-driven route with an empty queue. Minted against the reporters; existing FIX-AUDITOR-C06-OFFMARKET-RECALIBRATE carries the C-06 half already.
 **why-change:** no change from plan.
+
+### STEP po-S-20260729T2107 · po · 2026-07-29T21:37:00Z
+**task-id:** FIX-CI-RED-ALERTOUTCOME-CLOCK-SEAM
+**what-done:** Refuted the handed premise that the 21:20Z ci_red was the standing FIX-MCP-SUITE-HEALTH-BASELINE pollution; read the CI run log, reproduced in isolation, minted a real P1 FIX plus the process row that let 8 reds be amnestied.
+**what-considered:** (a) accept the dedup premise and close per ci_red-close protocol — cheapest, and what the last 8 triages did; (b) read the failing-FILE list first. Chose (b). The premise cited full-suite order-dependent pollution, but `.github/workflows/ci.yml` has run `scripts/ci-per-file-isolation.sh 16` since 3174de0ce (2026-06-09) — one bun process per file, so cross-file pollution is structurally impossible in the CI plane, and the numbers disagreed (CI 6 fail in 1 file vs the cited 60-63 across the suite).
+**why-change:** Two measurement planes were being conflated. Local full-suite ≠ CI per-file-isolation. Deciding on plane identity BEFORE deduping flipped the verdict.
+**evidence:** 3 runs same single file (30452854795 / 30484792885 / 30492102581, HEADs aa6c044b / c99c72bd / 4381b08b); local `bun test src/__tests__/1847d-C-alert-outcome-job.test.ts` = 3 pass / 6 fail deterministic, byte-identical fail set; green baseline 0 fail proven at run 30425110302 (05:30:19Z) — 8h before the red.
+**root-cause:** `alertStore.ts:523` computes its 90d window from wall-clock `Date.now()`; `readPendingOutcomeAlerts()` takes no clock arg, so `runAlertOutcomeJob`'s `deps.nowFn` seam governs classification but NOT candidate selection. Test pins NOW=2026-05-06T12:00:00Z and seeds at `daysAgo(N)` off that same base, so fixtures aged out of the real window at ~2026-07-29T12:00Z. Exactly the 3 survivors are the `daysAgo(2)` ones.
+**residual:** `daysAgo(2)`=2026-05-04T12:00Z exits the window 2026-08-02T12:00Z ⇒ file goes 9/9 red on a schedule.
+
+### STEP po-S-20260729T2107b · po · 2026-07-29T21:37:30Z
+**task-id:** FIX-CIRED-TRIAGE-WRONG-PLANE-DEDUP-AMNESTY
+**what-done:** Audited every ci_red since 2026-07-25 by reading each run log; found 3 distinct real files across 8 signals and ZERO board rows ever minted.
+**what-considered:** Fold into FIX-SIGNAL-ROUTING-ROWS-COVERAGE-GAP-DEEPDIVE (ready). Read its AC directly: that row is unrecognised signal TYPES hitting the catch-all. This is a RECOGNISED type with a real routing row producing a wrong-plane dedup. Cross-referenced, not merged.
+**why-change:** `failing_jobs[].name` is always the literal string `bun test`, so the signal as consumed by triage-signals.md carries zero discriminating information; nothing instructs PO to read the `FAILEDFILE:` block. And both dedup layers key on check_id/head_sha — both SHA-derived, so they can never match across SHAs. Cheapest disposition wins by default.
+**cost-observed:** 1408-tool-diacritics red 07-25→07-28 while cowork filed diacritic-corruption twice (09:12Z, 11:10Z); emit-pressure-state red 07-28 21:16Z+23:16Z while cowork filed pressure-headroom-not-deployed (16:11Z). CI was corroborating both live defects from the other plane; discarded each time.
+
+### STEP po-S-20260729T2107c · po · 2026-07-29T21:38:00Z
+**task-id:** SPIKE-DEVTEAM-QADRAIN-HEAD-SLOT-DECOUPLE
+**what-done:** Signed off APPROVED (review → done_verified) and minted the 3 implementation rows the brief §8 asks PO for.
+**what-considered:** only path: all three ACs answered against read evidence, not assertion — §4a proves zero byte overlap with the concurrent P0 rewrite by direct line-range read, and AC-3 was answered in the harder direction (1-row/tick declared INSUFFICIENT rather than quietly accepted).
+**why-change:** no change from plan. Part 1 standalone/no depends; Part 2 carries machine-readable `depends` (both targets verified present, no dangling ref); Part 3 independent. `.head` deliberately untouched — it points at a different genuinely in-flight task.
+
+### STEP po-S-20260729T2107d · po · 2026-07-29T21:38:30Z
+**task-id:** FIX-COLDEVICT-WITHIN-FILE-PEER-CONTENT-CAPTURE
+**what-done:** Verified both commit-sweep-guard escalations against `git show` — BENIGN in effect (zero foreign paths), attached as corroboration instead of minting.
+**what-considered:** Mint a row per signal (priority=high on both). Grepped the board first: 5 open rows already own this class. 21:17Z case is this READY row's exact shape; 19:37Z case is victim-self-detect/LAYER2 scope.
+**why-change:** Prior-art grep turned a 2-row mint into 0 rows. Logged the real second-order finding instead: 10 sweep-guard signals on 07-29 alone, all priority=high, all warn-only, all benign — a guard firing ~2x/hour at high priority buries real signals in the same inbox.
