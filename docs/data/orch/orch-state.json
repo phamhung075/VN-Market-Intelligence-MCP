@@ -413,12 +413,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-ALERT-ENGINE-VERIFIED-DECISION-EMPTY-PAYLOAD-NULL-STOCKCODE",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-ALERT-ENGINE-VERIFIED-DECISION-EMPTY-PAYLOAD-NULL-STOCKCODE — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-29T06:25:08Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "updated_at": "2026-07-29T07:01:29Z",
+    "updated_by": "dev-mcp-server"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2335,7 +2334,8 @@
         "payload_ref": null,
         "retracted_at": "2026-07-29T06:25:00Z",
         "po_disposition_20260729T0625": "RETRACTED, NOT DELETED. RULING: the row is withdrawn as a DETECTOR SIGNAL while the observation it carries is preserved in this field. TRIGGER PROVENANCE - THIS ROW IS NOT DETECTOR OUTPUT: it was produced by router spawn-prompt prose ('If A-21 now returns >=1, that is a TRUE POSITIVE - emit it') that contradicted the agent's own flow spec at docs/agents/system-auditor/flow/tier1-probe.md:135-137 (crashRestarts>=2 -> WARN; crashRestarts<2 -> PASS, no emit). The router disclosed its own authorship. Recording it here because the emitted row carried no provenance field and was otherwise indistinguishable from ordinary detector output, and because the notebook prose that recorded the override sits on a retention path that deletes itself. WHY RETRACT RATHER THAN KEEP: retracting costs nothing that matters. crashRestarts=1 is BELOW the threshold, so A-21 remains ARMED - if a second crash restart lands in the 4h window the detector fires legitimately and on its own. Keeping the row would have left a WARN in po's inbox that the fleet reads as spec-compliant detector output, which is precisely the unreviewability defect being filed. WHAT IS REAL AND IS PRESERVED: the mcp-server crash restart at 2026-07-29T05:43:21Z (container restart 05:43:17Z) genuinely occurred; crashRestarts=1 in the 4h window is a true measurement. The agent's measurement was correct; only the emit decision was not. NOT VERIFIED BY PO and deliberately not relied upon: the router's added context that this follows a suppressed CRITICAL and an outage. Anyone citing that must verify it first. SUCCESSOR: FIX-AUDITOR-CALLER-PROSE-OVERRIDES-DOCUMENTED-DETECTOR-THRESHOLD (P1, architect) carries the generalisable defect. NOT A DETECTOR BUG - do not open a row against A-21 or ALERT_THRESHOLD; commit 2f956f1c5 set that threshold deliberately at parity with restartCadenceAlertJob.ts ALERT_THRESHOLD=2 and it behaved correctly here.",
-        "po_disposition_at": "2026-07-29T06:25:00Z"
+        "po_disposition_at": "2026-07-29T06:25:00Z",
+        "po_disposition_amend_20260729T0632": "AMENDMENT to the NOT-VERIFIED hedge above, and it makes the retraction STRONGER not weaker. The router context I declined to rely on IS corroborated - by PO's own immediately-prior cycle at 2026-07-29T05:55Z, recorded in docs/agent-memory/notebooks/po.md independently of this triage: Tier-1 at 05:41:23Z measured MemPerc 99.15% with verdict=ESCALATE reason peak-over-97%, and clause 4 of tier1-probe.md:167-171 downgraded it to PASS with signals_posted=0; the container went down at 05:43:16.520Z with RestartCount 3->4 during VN market hours. So a suppressed CRITICAL did precede this crash restart and the outage was real. WHY THIS DOES NOT REVIVE THE SIGNAL: the material event is ALREADY OWNED by three rows dispositioned in that 05:55Z cycle - FIX-AUDITOR-A30-VMHWM-VETO-TAUTOLOGY-FALSE-NEGATIVE (the suppressor, P1), OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN and FIX-MCP-MEMORY-CODE-LEAK (both given next_agent=dev-mcp-server in that same cycle). A-21 measures crash CADENCE (2+ in a 4h window), which is a different question from this single crash and is not the vehicle for tracking it. Retracting this row therefore drops NOTHING: the outage is tracked on three rows, and A-21 stays armed for a genuine second crash. The correct reading of the whole episode is that the fleet had a REAL problem it had already detected and correctly filed, and the A-21 emit added an out-of-spec fourth artifact to it rather than new information."
       },
       {
         "id": "dev-team-20260729T0700Z-headfreeze",
@@ -16868,6 +16868,25 @@
         "reviewed_at": "2026-07-29T06:12:50Z",
         "reviewed_by": "dev-mcp-server",
         "review_note": "Task 1 of 5 (pm decomposition of architect brief 2026-07-25-devteam-idle-chain-rotation-durable-inbox.md). Shipped all 3 tightly-coupled deliverables per row note: (1) dev_team_idle_chain: z.record(z.unknown()).optional() on OrchStateSchema root (orchStateSchema.ts), same precedent as narrative/dashboard_section_cache/session_handoff_status; (2) rotation_selected($doc) in scripts/lib/devteam-eligibility.jq — verbatim architect-brief §2.2 aged round-robin (oldest last_served_tick wins, missing/null defaults to epoch, fixed-order tiebreak); (3) new scripts/devteam-idle-chain-stamp.jq per-tick stamp writer (self-healing on bootstrap, guards $c against the fixed 5-id set). PLAN-ONLY constraint honored — docs/agents/dev-team/flow/main.md and drain-signals.md untouched (git status confirmed). Evidence: bun tsc --noEmit clean; direct Zod safeParse probes (with/without/loose-shape dev_team_idle_chain) PASS; bun scripts/orch-validate.mjs Stage 0+1 PASS on live orch-state.json; orchStateSchema.test.ts 104/104 pass; jq -n scenario probes (bootstrap-absent-key default, all-null tie-break, mid-rotation next-oldest-wins, simulated 5-tick cycle selects each of the 5 ids exactly once); stamp-writer probes (bootstrap self-heal, partial update, unrecognized-id no-op, jq -n -f valid-JSON output); toolCount=184/cronJobCount=88 unchanged; live boot (:memory:) health 200 + both dashboard routes 200; full bun test 14885 pass/40 skip/55 fail/1238 files — within the standing FIX-MCP-SUITE-HEALTH-BASELINE band (dev-standards.md:610), confirmed zero overlap with orchStateSchema/dev_team_idle_chain/devteam-eligibility. Handoff: docs/handoffs/TASK-DEVTEAM-IDLE-CHAIN-1-SCHEMA-UTILITIES.md. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md STEP dev-mcp-server-S20."
+      },
+      {
+        "id": "FIX-ALERT-ENGINE-VERIFIED-DECISION-EMPTY-PAYLOAD-NULL-STOCKCODE",
+        "title": "agent_signals verified_decision rows from alert-engine are 100% CONTENT-EMPTY (empty {} payload + null/empty stock_code). LIVE RAW (named volume vn-market-intelligence-mcp_market_data, read-only, immutable=1, scan_ts 2026-06-25T23:32Z): 559/559 (100%) verified_decision rows from from_agent='alert-engine' carry payload='{}'; ZERO verified_decision rows in the whole table have BOTH non-empty payload AND non-null/non-empty stock_code (i.e. zero well-formed rows exist); stock_code NULL/empty on these stock-scoped rows. Continuous/ongoing: MIN(created_at)=2026-06-13T07:59:53Z, MAX=2026-06-25T09:00:07Z (12+ days, not stale).",
+        "type": "FIX",
+        "priority": "P2",
+        "status": "REVIEW",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-ALERT-ENGINE-VERIFIED-DECISION-EMPTY-PAYLOAD-NULL-STOCKCODE",
+        "promoted_at": "2026-07-29T06:25:08Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-29T07:01:30Z",
+        "claimed_at": "2026-07-29T06:25:08Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "owner": "dev-mcp-server",
+        "entered_review_at": "2026-07-29T07:01:29Z",
+        "review_note": "[dev-mcp-server 2026-07-29] Root cause: alertStore.ts storeAlerts()/storeAlertsFromCommander() hardcoded payload='{}' as bare SQL literal (never bound) in the agent_signals verified_decision co-write. RAW-verified LIVE 52/52 current rows payload='{}' (historical 559/559). stock_code was already correct (only MACRO alerts null, by design) — that sub-finding did not reproduce, downgraded. Fix: buildVerifiedDecisionPayload() populates real content (alert_id/alert_type/title/severity/confidence/detected_at); alert_id embedded to stay collision-safe against the same-day sibling idx_agent_signals_dedup_identical index; emit-time fail-loud guard added. Commits: 0a7e91e5b (code+tests+doc), c1e21aae4 (memory). New test FIX-ALERT-ENGINE-VERIFIED-DECISION-EMPTY-PAYLOAD-NULL-STOCKCODE.test.ts 6/6 pass; targeted alert-suite 283/283 pass; tsc clean; toolCount=184/cronJobCount=88 unchanged; full bun test 14891 pass/55 fail (fail-set keyword-scanned + git-stash isolation-verified pre-existing, unrelated). Live boot health 200. QA: verify test suite + spot-check that a freshly-inserted verified_decision row round-trips non-empty payload via get_recent_signals; no rebuild/deploy strictly required for QA static verification (code correctness fix, not a live-data operational task) but this write path needs ops rebuild+deploy before it takes effect on the running container — flag for ops after qa if next steps require live behavior confirmation."
       }
     ],
     "qa": [],
@@ -16889,23 +16908,7 @@
     },
     "last_triaged_at": "2026-07-29T06:25:00Z",
     "last_triaged_by": "po/triage-20260729T0625-auditor-cycle-defect-cluster",
-    "in_progress": [
-      {
-        "id": "FIX-ALERT-ENGINE-VERIFIED-DECISION-EMPTY-PAYLOAD-NULL-STOCKCODE",
-        "title": "agent_signals verified_decision rows from alert-engine are 100% CONTENT-EMPTY (empty {} payload + null/empty stock_code). LIVE RAW (named volume vn-market-intelligence-mcp_market_data, read-only, immutable=1, scan_ts 2026-06-25T23:32Z): 559/559 (100%) verified_decision rows from from_agent='alert-engine' carry payload='{}'; ZERO verified_decision rows in the whole table have BOTH non-empty payload AND non-null/non-empty stock_code (i.e. zero well-formed rows exist); stock_code NULL/empty on these stock-scoped rows. Continuous/ongoing: MIN(created_at)=2026-06-13T07:59:53Z, MAX=2026-06-25T09:00:07Z (12+ days, not stale).",
-        "type": "FIX",
-        "priority": "P2",
-        "status": "IN_PROGRESS",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-ALERT-ENGINE-VERIFIED-DECISION-EMPTY-PAYLOAD-NULL-STOCKCODE",
-        "promoted_at": "2026-07-29T06:25:08Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-29T06:25:09Z",
-        "claimed_at": "2026-07-29T06:25:08Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
