@@ -144,6 +144,50 @@ export function initNewsTables(db: Database): void {
   db.exec(`CREATE INDEX IF NOT EXISTS idx_agent_signals_stock ON agent_signals(stock_code, created_at)`);
   try { db.exec(`CREATE INDEX IF NOT EXISTS idx_agent_signals_alert_id ON agent_signals(alert_id)`); } catch {}
 
+  // FIX-AGENT-SIGNALS-IDENTICAL-DUP-EMISSION — data-layer idempotency backstop
+  // against genuine double-EMISSION duplicates (NOT retry/upsert) reaching this
+  // table. RAW-verified LIVE 2026-07-29 (named-volume market_data): current
+  // dup-groups = 0, but the underlying mechanism (mcp-server cron scheduler
+  // re-entering jobs within the same scheduled minute — broader than
+  // FIX-SCHEDULER-DOUBLE-REGISTRATION's originally-scoped vnIndexRefreshJob/
+  // pollNewsJob; cron_job_runs shows 41 distinct job names multi-firing over 7d
+  // including freshnessSlaMonitorJob and intelligenceCycleJob) remains live —
+  // this is the permanent, emitter-agnostic guard regardless of the current
+  // 0-count. Paired with `postSignal()`'s `INSERT OR IGNORE` in
+  // agentSignalStore.ts. CREATE UNIQUE INDEX + INSERT OR IGNORE — NEVER
+  // ALTER TABLE ADD COLUMN ... UNIQUE, which is a silent no-op in SQLite
+  // (project memory: feedback_sqlite_add_column_unique_silent_noop).
+  //
+  // Key: (from_agent, signal_type, stock_code (NULL-normalised), payload,
+  // minute-bucket of created_at). `WHERE payload != '{}'` deliberately
+  // EXCLUDES alertStore.ts's verified_decision correlation stubs
+  // (from_agent='alert-engine', payload ALWAYS the literal '{}' by design —
+  // RAW-confirmed the exclusive live user of payload='{}'): that constant
+  // payload carries zero differentiating content, so this coarse key would
+  // risk silently dropping the correlation stub for two genuinely-different
+  // alerts (e.g. one TA + one BB alert) firing on the same stock in the same
+  // minute. alertStore.ts already owns a precise, alert_id-scoped dedup guard
+  // for that pattern (FIX-AGENT-SIGNALS-ORPHAN-ALERT-ID, done-live-verified) —
+  // this index intentionally does not duplicate or override it.
+  try {
+    db.exec(`
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_agent_signals_dedup_identical
+        ON agent_signals(from_agent, signal_type, COALESCE(stock_code, ''), payload, substr(created_at, 1, 16))
+        WHERE payload != '{}';
+    `);
+  } catch (err) {
+    // Fail-loud is NOT appropriate at startup for a guard index: if pre-existing
+    // rows somehow violate the constraint (should never happen post RAW-verify —
+    // confirmed 0 violations live), refusing to boot the whole server over an
+    // observability backstop would be a worse outcome than logging and
+    // continuing without it. cleanExpired() + FIX-AGENTSIGNALS-EXPIRED-GC-CRON
+    // still bound the table's growth either way.
+    console.error(
+      "[schema-news] idx_agent_signals_dedup_identical creation failed (non-fatal):",
+      err instanceof Error ? err.message : String(err),
+    );
+  }
+
   // ── Mention Velocity (Task 265) ───────────────────────────────────────────
   db.exec(`
     CREATE TABLE IF NOT EXISTS mention_velocity (

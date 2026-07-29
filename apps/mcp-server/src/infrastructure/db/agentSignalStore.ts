@@ -244,6 +244,26 @@ function expiresAt(ttlMinutes: number): string {
   return new Date(ms).toISOString().replace("T", " ").replace(/\.\d{3}Z$/, "");
 }
 
+/**
+ * FIX-AGENT-SIGNALS-IDENTICAL-DUP-EMISSION: resolve the ID to return from an
+ * `INSERT OR IGNORE INTO agent_signals` call. Every INSERT variant below now
+ * uses OR IGNORE so a genuine double-EMISSION (same from_agent, signal_type,
+ * stock_code, payload, and minute-bucket — see the partial UNIQUE INDEX
+ * idx_agent_signals_dedup_identical in schema-news.ts) is silently suppressed
+ * at the data layer instead of throwing. `result.changes === 0` means the row
+ * was suppressed (either by this new index, or by any other UNIQUE constraint
+ * on the table) — return -1, the same sentinel the Task 1862g
+ * dedupWindowMinutes path above already uses for "no row written", so callers
+ * have one consistent suppression signal regardless of which dedup layer
+ * caught it. When no such constraint is present (e.g. minimal/legacy test
+ * DBs), OR IGNORE is a no-op and this always resolves the real inserted ID —
+ * identical behaviour to the pre-existing `Number(result.lastInsertRowid)`.
+ */
+function resolveInsertId(result: { changes: number; lastInsertRowid: number | bigint }): number {
+  if (result.changes === 0) return -1;
+  return Number(result.lastInsertRowid);
+}
+
 // ── Row deserialization helper ────────────────────────────────────────────────
 
 interface RawChainRow {
@@ -532,7 +552,7 @@ function _postSignalInner(db: Database, input: PostSignalInput): number {
           if (hasContextColumns) {
             if (hasCriticColumns) {
               const stmt = db.prepare(`
-                INSERT INTO agent_signals
+                INSERT OR IGNORE INTO agent_signals
                   (from_agent, to_agent, signal_type, stock_code, payload, status,
                    created_at, expires_at, cycle_id, finding_data, causal_ref, chain_depth,
                    causal_root_id, causal_root_label, signal_class, confidence_score, validated_at,
@@ -564,10 +584,10 @@ function _postSignalInner(db: Database, input: PostSignalInput): number {
                 critic_notes !== undefined ? critic_notes : null,
                 retry_count,
               );
-              return Number(result.lastInsertRowid);
+              return resolveInsertId(result);
             }
             const stmt = db.prepare(`
-              INSERT INTO agent_signals
+              INSERT OR IGNORE INTO agent_signals
                 (from_agent, to_agent, signal_type, stock_code, payload, status,
                  created_at, expires_at, cycle_id, finding_data, causal_ref, chain_depth,
                  causal_root_id, causal_root_label, signal_class, confidence_score, validated_at,
@@ -595,10 +615,10 @@ function _postSignalInner(db: Database, input: PostSignalInput): number {
               kinhDichConfidence ?? null,
               agentSignalsMajority ?? null,
             );
-            return Number(result.lastInsertRowid);
+            return resolveInsertId(result);
           }
           const stmt = db.prepare(`
-            INSERT INTO agent_signals
+            INSERT OR IGNORE INTO agent_signals
               (from_agent, to_agent, signal_type, stock_code, payload, status,
                created_at, expires_at, cycle_id, finding_data, causal_ref, chain_depth,
                causal_root_id, causal_root_label, signal_class, confidence_score, validated_at)
@@ -622,10 +642,10 @@ function _postSignalInner(db: Database, input: PostSignalInput): number {
             confidence_score,
             validatedAtValue,
           );
-          return Number(result.lastInsertRowid);
+          return resolveInsertId(result);
         }
         const stmt = db.prepare(`
-          INSERT INTO agent_signals
+          INSERT OR IGNORE INTO agent_signals
             (from_agent, to_agent, signal_type, stock_code, payload, status,
              created_at, expires_at, cycle_id, finding_data, causal_ref, chain_depth,
              causal_root_id, causal_root_label, signal_class)
@@ -647,12 +667,12 @@ function _postSignalInner(db: Database, input: PostSignalInput): number {
           causalRootLabel,
           signalClass,
         );
-        return Number(result.lastInsertRowid);
+        return resolveInsertId(result);
       }
 
       if (hasValidationColumns) {
         const stmt = db.prepare(`
-          INSERT INTO agent_signals
+          INSERT OR IGNORE INTO agent_signals
             (from_agent, to_agent, signal_type, stock_code, payload, status,
              created_at, expires_at, cycle_id, finding_data, causal_ref, chain_depth,
              causal_root_id, causal_root_label, confidence_score, validated_at)
@@ -675,11 +695,11 @@ function _postSignalInner(db: Database, input: PostSignalInput): number {
           confidence_score,
           validatedAtValue,
         );
-        return Number(result.lastInsertRowid);
+        return resolveInsertId(result);
       }
 
       const stmt = db.prepare(`
-        INSERT INTO agent_signals
+        INSERT OR IGNORE INTO agent_signals
           (from_agent, to_agent, signal_type, stock_code, payload, status,
            created_at, expires_at, cycle_id, finding_data, causal_ref, chain_depth,
            causal_root_id, causal_root_label)
@@ -700,13 +720,13 @@ function _postSignalInner(db: Database, input: PostSignalInput): number {
         causalRootId,
         causalRootLabel,
       );
-      return Number(result.lastInsertRowid);
+      return resolveInsertId(result);
     }
 
     // Chain columns present but causal_root columns not yet migrated
     if (hasValidationColumns) {
       const stmt = db.prepare(`
-        INSERT INTO agent_signals
+        INSERT OR IGNORE INTO agent_signals
           (from_agent, to_agent, signal_type, stock_code, payload, status,
            created_at, expires_at, cycle_id, finding_data, causal_ref, chain_depth,
            confidence_score, validated_at)
@@ -727,11 +747,11 @@ function _postSignalInner(db: Database, input: PostSignalInput): number {
         confidence_score,
         validatedAtValue,
       );
-      return Number(result.lastInsertRowid);
+      return resolveInsertId(result);
     }
 
     const stmt = db.prepare(`
-      INSERT INTO agent_signals
+      INSERT OR IGNORE INTO agent_signals
         (from_agent, to_agent, signal_type, stock_code, payload, status,
          created_at, expires_at, cycle_id, finding_data, causal_ref, chain_depth)
       VALUES (?, ?, ?, ?, ?, 'unread', ?, ?, ?, ?, ?, ?)
@@ -749,7 +769,7 @@ function _postSignalInner(db: Database, input: PostSignalInput): number {
       causalRef,
       chainDepth,
     );
-    return Number(result.lastInsertRowid);
+    return resolveInsertId(result);
   }
 
   // Fallback: base schema without chain columns
@@ -757,7 +777,7 @@ function _postSignalInner(db: Database, input: PostSignalInput): number {
     const now = new Date().toISOString().replace("T", " ").replace(/\.\d{3}Z$/, "");
     const validatedAtValue = validated_at ?? now;
     const stmt = db.prepare(`
-      INSERT INTO agent_signals
+      INSERT OR IGNORE INTO agent_signals
         (from_agent, to_agent, signal_type, stock_code, payload, status, expires_at,
          confidence_score, validated_at)
       VALUES
@@ -773,11 +793,11 @@ function _postSignalInner(db: Database, input: PostSignalInput): number {
       confidence_score,
       validatedAtValue,
     );
-    return Number(result.lastInsertRowid);
+    return resolveInsertId(result);
   }
 
   const stmt = db.prepare(`
-    INSERT INTO agent_signals
+    INSERT OR IGNORE INTO agent_signals
       (from_agent, to_agent, signal_type, stock_code, payload, status, expires_at)
     VALUES
       (?, ?, ?, ?, ?, 'unread', ?)
@@ -790,7 +810,7 @@ function _postSignalInner(db: Database, input: PostSignalInput): number {
     JSON.stringify(payload),
     expiresAt(ttlMinutes ?? 120),
   );
-  return Number(result.lastInsertRowid);
+  return resolveInsertId(result);
 }
 
 // ── getSignals ──────────────────────────────────────────────────────────────

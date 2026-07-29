@@ -20,6 +20,7 @@
 
 import type { Signal, Severity } from "./signalDetector.js";
 import { isStockMuted } from "./alertMuteChecker.js";
+import { computeGenericAlertFingerprint } from "./alertDedup.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public types
@@ -282,14 +283,29 @@ export function generateAlerts(
       }
     }
 
+    const message = buildMessage(actionCode, groupSignals, severity);
+
     const alert: Alert = {
       id: chooseAlertId(actionCode, groupSignals),
       actionCode,
       signals: groupSignals,
       severity,
-      message: buildMessage(actionCode, groupSignals, severity),
+      message,
       isRead: false,
       createdAt: now,
+      // FIX-AGENT-SIGNALS-IDENTICAL-DUP-EMISSION: set unconditionally (not just
+      // for the chooseAlertId "otherwise" fallback branch) — for the two
+      // already-deterministic-id branches (price/news_mention) this is
+      // redundant-but-harmless (id already collapses repeats via a WIDER
+      // bucket); for the fallback branch this is the ONLY dedup protection
+      // against a re-entrant scheduler double-fire (see
+      // computeGenericAlertFingerprint doc for full rationale).
+      fingerprint: computeGenericAlertFingerprint(
+        actionCode,
+        groupSignals.map((s) => s.type),
+        message,
+        groupSignals[0]?.detectedAt ?? now,
+      ),
     };
 
     // Add validation fields if present in signals

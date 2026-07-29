@@ -109,7 +109,14 @@ vn_index_cache (code TEXT PK, price REAL NOT NULL, prev_price REAL DEFAULT 0,
 ```sql
 alerts (id TEXT PK, triggered_at, severity, signals_json, affected_actions_json,
   analysis_ids_json, message, read DEFAULT 0, user_note, notified_telegram DEFAULT 0,
-  resolved_at, resolution_notes, sent_by DEFAULT 'server', confidence_score, validated_at)
+  resolved_at, resolution_notes, sent_by DEFAULT 'server', confidence_score, validated_at,
+  fingerprint)
+  -- idx_alerts_fingerprint: partial UNIQUE(fingerprint) WHERE fingerprint IS NOT NULL
+  -- (schema-alerts.ts). Authoritative dedup gate for taAlertScanJob/bbAlertScanJob/
+  -- foreignFlowAlertJob/predictionMarketJob (computeScanAlertFingerprint, day-bucket)
+  -- and, since FIX-AGENT-SIGNALS-IDENTICAL-DUP-EMISSION (2026-07-29), generateAlerts()'s
+  -- "otherwise" fallback path too (computeGenericAlertFingerprint, minute-bucket) —
+  -- see alerts.md invariant 8.
 
 custom_alert_rules (id INTEGER PK, code, predicate, threshold, status DEFAULT 'active',
   created_at, triggered_at, notes)
@@ -117,6 +124,26 @@ custom_alert_rules (id INTEGER PK, code, predicate, threshold, status DEFAULT 'a
 alert_mutes (code TEXT PK, muted_until, reason)
 price_alerts (id INTEGER PK, code, alert_type, threshold, status DEFAULT 'active', ...)
 broker_sanctions (id INTEGER PK, broker_name, sanction_start, sanction_end, severity, source, ...)
+```
+
+### agent_signals (schema-news.ts — inter-agent signal bus)
+```sql
+agent_signals (id INTEGER PK, from_agent, to_agent, signal_type, stock_code, payload,
+  status DEFAULT 'unread', created_at, expires_at, cycle_id, finding_data, causal_ref,
+  chain_depth, causal_root_id, causal_root_label, signal_class, confidence_score,
+  validated_at, news_sentiment, kinh_dich_confidence, agent_signals_majority,
+  critic_score, critic_notes, retry_count, alert_id, is_correlation_stub)
+  -- idx_agent_signals_dedup_identical (FIX-AGENT-SIGNALS-IDENTICAL-DUP-EMISSION,
+  -- 2026-07-29): partial UNIQUE(from_agent, signal_type, COALESCE(stock_code,''),
+  -- payload, substr(created_at,1,16)) WHERE payload != '{}'. Data-layer backstop
+  -- against genuine double-EMISSION (NOT retry) duplicates — paired with
+  -- postSignal()'s INSERT OR IGNORE (agentSignalStore.ts), returns -1 on suppression.
+  -- WHERE payload != '{}' deliberately excludes alertStore.ts's verified_decision
+  -- correlation stubs (from_agent='alert-engine', payload always the literal '{}'
+  -- by design) — that pattern already has its own precise alert_id-scoped guard
+  -- (FIX-AGENT-SIGNALS-ORPHAN-ALERT-ID); this coarser key would risk dropping a
+  -- legitimate 2nd correlation stub for 2 genuinely-different alerts on the same
+  -- stock in the same minute.
 ```
 
 **Additional schema files:** macro, financial-reports, briefings, system, news, portfolio, backtesting (16 total)

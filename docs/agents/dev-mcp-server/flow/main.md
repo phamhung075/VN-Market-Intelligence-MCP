@@ -420,6 +420,28 @@ nothing. Applied while `refine_status` was still `PENDING` (re-verified
 immediately before the run) — the `time_gate` this script's guard exists to
 respect.
 
+**CANONICAL: agent_signals identical-duplicate RAW-verify replay (FIX-AGENT-SIGNALS-IDENTICAL-DUP-EMISSION, 2026-07-29)**
+```bash
+# Local/CI (Bun.env["DB_PATH"], defaults to /app/data/market.db):
+bun scripts/audits/check-agent-signals-dup.ts
+
+# Against the live named-volume DB (docker exec — matches other CANONICAL scripts):
+docker cp scripts/audits/check-agent-signals-dup.ts \
+  vn-market-intelligence-mcp-mcp-server-1:/tmp/check-agent-signals-dup.ts
+docker exec vn-market-intelligence-mcp-mcp-server-1 \
+  bun /tmp/check-agent-signals-dup.ts
+```
+Read-only replay of the GROUP BY (from_agent,signal_type,stock_code,minute-bucket,payload)
+HAVING COUNT(*)>1 corroboration query — the standing verification gate for the
+identical-duplicate defect class. **LIVE RESULT (2026-07-29T05:04Z):** total=202,
+ALL-TIME dup-groups=0, ACTIVE-24h dup-groups=0 — the 2026-06-25 finding (102/43)
+had already expired out of the table via TTL + `cleanExpired()` GC. Data-layer
+backstop shipped regardless (`idx_agent_signals_dedup_identical`, `schema-news.ts`
++ `postSignal()` `INSERT OR IGNORE`, `agentSignalStore.ts`) since the underlying
+scheduler re-entrancy mechanism (cron_job_runs: 41 distinct job names multi-firing
+within the same scheduled minute over 7d) remains live — see
+`FIX-SCHEDULER-DOUBLE-REGISTRATION` (still BACKLOG, separate board row).
+
 ---
 
 ## Low-Confidence Reparse Runbook

@@ -93,3 +93,44 @@ export function computeScanAlertFingerprint(
 ): string {
   return `scan:${ticker}:${alertType}:${daySlot}`;
 }
+
+/**
+ * FIX-AGENT-SIGNALS-IDENTICAL-DUP-EMISSION — deterministic per-minute
+ * fingerprint for `alertGenerator.ts`'s `chooseAlertId` "otherwise" fallback
+ * branch (signal-type combinations that are neither a single
+ * PRICE_SIGNAL_TYPES type nor a single "news_mention" — e.g. `report_new`,
+ * or any multi-type group). That branch intentionally uses a random `id`
+ * ("event-driven signals that are genuinely distinct") — correct ONLY when
+ * `generateAlerts()` runs exactly once per real-world event. RAW-confirmed
+ * live (2026-07-29, cron_job_runs): mcp-server's scheduler re-enters many jobs
+ * within the same scheduled minute (broader than
+ * FIX-SCHEDULER-DOUBLE-REGISTRATION's originally-scoped vnIndexRefreshJob/
+ * pollNewsJob) — a re-entrant `scanMarket()` call mints two independent random
+ * ids AND (before this fix) `alert.fingerprint` was never set for this branch,
+ * so the existing `alerts.fingerprint` UNIQUE gate (already the authoritative
+ * dedup mechanism for taAlertScanJob/bbAlertScanJob/foreignFlowAlertJob/
+ * predictionMarketJob — see `computeScanAlertFingerprint`) never engaged here.
+ * This is the most plausible root cause of the historical DPM 0.9s-apart
+ * genuine-duplicate `agent_signals.verified_decision` sample the task cites.
+ *
+ * Deliberately a NARROW minute-bucket (unlike `computeScanAlertFingerprint`'s
+ * day-bucket) so a genuinely-recurring one-time event on a LATER cycle is
+ * never suppressed — only truly-simultaneous re-executions (same content,
+ * same minute) collapse to one `alerts` row.
+ *
+ * @param actionCode  - Stock ticker.
+ * @param signalTypes - The contributing signal types (order-independent).
+ * @param message     - The alert's human-readable message (content-bearing).
+ * @param detectedAt  - ISO 8601 timestamp of the triggering signal.
+ */
+export function computeGenericAlertFingerprint(
+  actionCode: string,
+  signalTypes: string[],
+  message: string,
+  detectedAt: string,
+): string {
+  const minuteBucket = detectedAt.slice(0, 16); // "YYYY-MM-DDTHH:MM"
+  const typesPart = [...new Set(signalTypes)].sort().join(",");
+  const raw = `${actionCode}|${typesPart}|${message.slice(0, 80)}|${minuteBucket}`;
+  return `generic:${djb2Hash(raw)}`;
+}
