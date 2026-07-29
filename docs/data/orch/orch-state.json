@@ -91,8 +91,8 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "router",
-    "updated_at": "2026-07-29T16:24:20Z",
-    "updated_by": "developer"
+    "updated_at": "2026-07-29T16:48:21Z",
+    "updated_by": "dev-team (head-sync fix after FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE stale-row closeout)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2258,8 +2258,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-29T10:49:19Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-07-29T16:48:06Z",
+    "_updated_by": "developer (FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE -> REVIEW)",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -8958,20 +8958,6 @@
         "rationale_why_separate_row": "fix_spec(b) is supervised wave 2: I10 precursor is hard dep for heartbeat; TTL raise has container-rebuild gate; INV-GATEWAY-1 cleanup is independently shippable",
         "closure_gate_note": "This row DONE unblocks FIX-ORPHAN from its hard precondition per PO ruling",
         "status_note": "Backlog: awaiting FIX-ORPHAN ship + QA-verify"
-      },
-      {
-        "id": "FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE",
-        "type": "FIX",
-        "priority": "P2",
-        "size": "S",
-        "sprint": "BACKLOG",
-        "status": "BACKLOG",
-        "zone": "cross-service/",
-        "created_at": "2026-07-22T15:13:42Z",
-        "title": "FIX: signal drain moves a signal payload file from docs/signals/ to docs/signals/processed/ but leaves the owning signal_queue row payload_ref at the old top-level path -> dangling ref; the addressee agent cannot resolve the payload. Update the row payload_ref in the SAME drain transaction that moves the file.",
-        "status_note": "Claimed-minted-but-absent: signal_queue row po-20260720T052606 (po_ref_repair_20260721) states 'Root cause minted as FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE' but grep count=1 across the whole orch-state = only that note; the row was never persisted to any lane. Minting for real now. AC: drain moves the payload file AND rewrites the owning signal_queue row payload_ref atomically; a follow-up read of the row resolves the file at processed/. Regression test asserts no dangling payload_ref after a drain move.",
-        "origin_signal_id": "po-20260720T052606",
-        "updated_at": "2026-07-22T15:13:42Z"
       },
       {
         "id": "FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
@@ -17375,6 +17361,24 @@
         ],
         "note": "Minted from dev-team WIP-deadlock triage-persist-request (dev-team-20260722T054244Z). Full spec = PO decision journal STEP po-S2 (same file, 2026-07-22T05:31:04Z). Latent blind-spot (no active harm yet: qa[] currently 0) -> P2. NOT dispatched at mint (WIP=2/2) — auto-promote via BOUNDED-1/RLC.",
         "updated_at": "2026-07-29T16:24:26Z"
+      },
+      {
+        "id": "FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE",
+        "type": "FIX",
+        "priority": "P2",
+        "size": "S",
+        "sprint": "BACKLOG",
+        "status": "REVIEW",
+        "zone": "cross-service/",
+        "created_at": "2026-07-22T15:13:42Z",
+        "title": "FIX: signal drain moves a signal payload file from docs/signals/ to docs/signals/processed/ but leaves the owning signal_queue row payload_ref at the old top-level path -> dangling ref; the addressee agent cannot resolve the payload. Update the row payload_ref in the SAME drain transaction that moves the file.",
+        "status_note": "Claimed-minted-but-absent: signal_queue row po-20260720T052606 (po_ref_repair_20260721) states 'Root cause minted as FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE' but grep count=1 across the whole orch-state = only that note; the row was never persisted to any lane. Minting for real now. AC: drain moves the payload file AND rewrites the owning signal_queue row payload_ref atomically; a follow-up read of the row resolves the file at processed/. Regression test asserts no dangling payload_ref after a drain move.",
+        "origin_signal_id": "po-20260720T052606",
+        "updated_at": "2026-07-29T16:48:06Z",
+        "next_agent": "qa",
+        "reviewed_at": "2026-07-29T16:48:06Z",
+        "reviewed_by": "developer",
+        "review_note": "Root cause: scripts/agents-flow/drain-signals.js moved docs/signals/*.json -> processed/ with zero signal_queue awareness. Fix: after the existing move loop, the script now builds a movedRefs map (old repo-relative path -> new processed/ path, both routed-to-po and skipped-duplicate-replay branches) and, if non-empty, calls repointPayloadRefs() -- a jq filter (--argjson bound map, never string-interpolated) that rewrites signal_queue.rows[].payload_ref (fragment-preserving split on \"#\") for every row whose ref matches a moved file, computes {doc, changed}, and skips the write entirely when changed==0 (common case). When changed>0 the candidate is applied via the SAME scripts/orch-apply.sh gate every other orch-state writer uses (Zod schema + conservation + CAS), with up to 3 CAS-retry attempts (re-deriving the candidate from the live file each attempt) and a FAIL-LOUD process.exit(1) if the gated write still cannot land -- silently swallowing that failure would just reproduce the exact bug being fixed. All new diagnostics use console.error (stderr) only, so stdout stays byte-identical for every pre-existing caller/test (confirmed: existing golden-stdout regression test AC7 in drain-signals.test.js still passes verbatim). New verification-gate scenario in scripts/agents-flow/drain-signals.test.js (isolated mkdtemp harness: drain-signals.js + orch-apply.sh + orch-validate.mjs + orch-conservation-check.mjs + orchStateSchema.ts copied in, node_modules symlinked -- never the live orch-state.json) asserts live, in one run: (1) seeded docs/signals/<f>.json now under processed/, (2) the seeded signal_queue row payload_ref rewritten to the processed/ path, (3) the REAL bun scripts/orch-validate.mjs exits 0 against the harness copy. 18/18 total assertions green (15 pre-existing + 3 new). Negative control (pre-fix HEAD copy of the script, run against the identical fixture) reproduces the live bug verbatim -- payload_ref stays at the pre-move path after the file relocates, and a direct dangling-ref fixture separately confirmed orch-validate.mjs Stage 1c genuinely fails (exit 2) on this exact defect class, so the new gate is not vacuously green. Commit scoped to scripts/agents-flow/drain-signals.js + scripts/agents-flow/drain-signals.test.js only (explicit pathspec) -- did not sweep the live orch-state.json (already dirty from a separate concurrent fleet-push) into that commit; this board-transition write is a separate, additive orch-apply.sh write, also not committed by developer (left for the owning fleet-push/PO to pick up)."
       }
     ],
     "qa": [],
