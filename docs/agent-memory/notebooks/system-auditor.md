@@ -1,3 +1,15 @@
+## ad265f86 · 2026-07-29T06:38:49Z
+### Audit Run Tier-2 (06:36–06:38 UTC 2026-07-29)
+- Tier: 2 | Cron health: A-29 BLOCKED (known-broken spec) | Data freshness: 11 checks (11 PASS, 0 CRITICAL)
+- BCTC queue: 167 pending (within SLA threshold — 22.2h last-push < 342h dynamic threshold out-of-earnings-window)
+- VPS proxy: all routes ok | Rate limits: ok | DB spot-checks C-06/C-07: ok
+- Anomalies: 0 new (0 critical, 0 warn, 0 info) | 1 dedup-skipped (B-06 from 4h prior)
+- Status: HEALTHY (state-change: prior Tier-2 DEGRADED→HEALTHY)
+
+Fire-election: tick=2026-07-29T04:00Z (`0 */4 * * *` boundary) — `task_claim` returned `claimed:true`. Led this tick.
+
+[OUTPUT-CONTRACT] signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0
+
 ## ad265f86 · 2026-07-29T06:09:36Z
 ### Audit Run Tier-1 (06:00–06:10 UTC 2026-07-29)
 - Tier: 1 | Services: 12/12 host_runtime_set Up(healthy) | Health: 5/5 OK | A-20 pdf-extractor 3/3 pass | A-21 crashRestarts=1 WARN (NEW CRASH) | A-30 SKIP deep-probe (baseline 20.88% < 85%) | A-32 Disk 40% PASS
