@@ -1,0 +1,14 @@
+{
+  "from": "commit-sweep-guard",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-07-29T10:04:47Z",
+  "payload": "[sweep-guard] BARE commit about to absorb 6 staged file(s) not necessarily this actor's own: apps/mcp-server/src/infrastructure/db/ohlcvForeignFlowStore.ts apps/mcp-server/src/infrastructure/db/schema-market-data.ts docs/agent-memory/decisions/sprint-TASK_2006-dev-mcp-server.md docs/agent-memory/notebooks/dev-mcp-server.md docs/data/orch/orch-state.json docs/handoffs/TASK_2006-daily-ff-deprecation-comment.md. actor=64c7c677-0f0f-4cee-a3ce-dba79d70b7ae mode=warn. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+  "_processed": {
+    "fingerprint": "27669be81b1757f7e1984dd0eda86011660652ae75c57e84819f89b7828fb042",
+    "processedAt": "2026-07-29T10:15:35Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

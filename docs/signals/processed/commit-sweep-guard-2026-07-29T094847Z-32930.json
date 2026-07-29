@@ -1,0 +1,14 @@
+{
+  "from": "commit-sweep-guard",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-07-29T09:48:47Z",
+  "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/main.md — retained section '## cycle-20260729T0907Z-verify — RAW-verified dev-pdf-extractor's FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK completion; 6th CONSECUTIVE clean head-sync + 3rd CONSECUTIVE clean row-level next_agent=qa' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle; the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/main.md — retained section '## cycle-20260729T0907Z — BOUNDED-1 claimed FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK, dispatched to dev-pdf-extractor (clean Tier-1 zone match)' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle; the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
+  "_processed": {
+    "fingerprint": "57f76e375f31b40731e5adfee2a5f27cce7ab4b541ee434d6ff7800ab78e0208",
+    "processedAt": "2026-07-29T10:15:35Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
