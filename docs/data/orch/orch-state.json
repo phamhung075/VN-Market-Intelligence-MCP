@@ -88,9 +88,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router"
+    "status": "in_progress",
+    "active_task_id": "FIX-DEVTEAM-EPIC-WRAPPER-AUTOCLOSE-SWEEP",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-DEVTEAM-EPIC-WRAPPER-AUTOCLOSE-SWEEP — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-29T12:48:29Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7534,26 +7537,6 @@
         "subsumed_by": "BA-COWORK-GUARANTEED-SLOT-CATCHUP",
         "po_consolidation_ruling_20260728": "PO RULING 2026-07-28T13Z: CONSOLIDATION HAPPENS AFTER ROUTING, NOT BEFORE — and it is a CLOSEOUT act, not a prerequisite. Three reasons. (1) It is already bound as acceptance, not as a gate: docs/handoffs/TASK-COWORK-CATCHUP-10.md AC-9 is 'All 6 consolidated rows closed together (5 fixed rows + umbrella task)', i.e. the consolidation is the epic's exit criterion. Doing it first would be closing rows whose fix has not shipped. (2) It buys zero throughput: all 5 of these rows are ALREADY inert — verified by executing scripts/lib/devteam-eligibility.jq against live data, is_bounded1_eligible=false on all 5 (4 carry a non-dev effective next_agent pm/architect; SPIKE-COWORK-GUARANTEED-SLOT-SUPERSEDE-WIRING is supervised without plan_only, so SLS's doubly-gated select misses it too). Consolidating them changes nothing that can move; routing the epic changes the only thing that can. (3) BA section 0.8 already assigns the owner-reconciliation to architect/PM at close time, and notes the 5 owner fields are stale relative to where the fix actually lands. WHAT THIS FIELD IS FOR: they are currently inert BY ACCIDENT (the NO-LANE hole), not by design. This stamp makes the subsumption explicit so a later triage pass that 'helpfully' routes one of them does not spawn duplicate work against files TASK-COWORK-CATCHUP-1..9 are already rewriting. Do NOT route these until the epic closes; then close all 6 together per AC-9.",
         "updated_by": "po/triage-20260728T13"
-      },
-      {
-        "id": "FIX-DEVTEAM-EPIC-WRAPPER-AUTOCLOSE-SWEEP",
-        "size": "S",
-        "status": "BACKLOG",
-        "title": "dev-team post-cycle: sweep ready[]/in_progress[] for epic-wrapper rows whose children are all terminal, auto-dispatch pm for closeout",
-        "type": "FIX",
-        "zone": "docs/agents/dev-team/flow/",
-        "owner": "developer",
-        "priority": "normal",
-        "depends": [],
-        "note": "Discovered 2026-07-10: BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP's ready[] row (owner=pm) sat open for hours after all 11 children (D0/D0B/D1/D2.5/D3/D4/D5+SHG-2..5) reached DONE_VERIFIED. Root cause: Step 0b pipeline-resume in docs/agents/dev-team/flow/main.md only fires on .head.status==\"in_progress\" -- once PM decomposes an epic and head resets to idle, nothing re-checks whether the parent's children are now all terminal. Router caught this only by chance during manual board inspection. Fix: add a Step 4 (post-cycle) candidate that scans ready[]/in_progress[] for rows with non-null/non-empty children[] where every child (board-live or archived) is terminal (DONE/DONE_VERIFIED/CANCELLED/DEFERRED/SKIPPED), and auto-dispatches the row's own next_agent/owner (usually pm) for closeout instead of relying on router luck. Distinct from already-shipped FIX-DEVTEAM-BOUNDED1-EPIC-WRAPPER-GATE (that one prevents premature BOUNDED-1 pickup of a wrapper row; this one closes a wrapper once legitimately done). See feedback_epic_wrapper_closeout_gap_no_auto_revisit memory.",
-        "created_at": "2026-07-10T19:59:57Z",
-        "created_by": "router",
-        "source": "router discovery during routine board inspection, 2026-07-10 dev-team cron tick",
-        "audit_ref": {
-          "audit": "ultracode-2026-07-12",
-          "verdict": "dev-team-loop-P3 CONFIRMED — this row IS the ship vehicle; not double-minted",
-          "ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#dev-team-loop-P3"
-        }
       },
       {
         "id": "BA-ANALYSIS-QUALITY-CONVERGENCE",
@@ -17203,9 +17186,36 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-29T12:32:22Z",
-    "last_triaged_by": "dev-team/po-batch-20260729T1207Z",
-    "in_progress": []
+    "last_triaged_at": "2026-07-29T12:48:14Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
+    "in_progress": [
+      {
+        "id": "FIX-DEVTEAM-EPIC-WRAPPER-AUTOCLOSE-SWEEP",
+        "size": "S",
+        "status": "IN_PROGRESS",
+        "title": "dev-team post-cycle: sweep ready[]/in_progress[] for epic-wrapper rows whose children are all terminal, auto-dispatch pm for closeout",
+        "type": "FIX",
+        "zone": "docs/agents/dev-team/flow/",
+        "owner": "developer",
+        "priority": "normal",
+        "depends": [],
+        "note": "Discovered 2026-07-10: BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP's ready[] row (owner=pm) sat open for hours after all 11 children (D0/D0B/D1/D2.5/D3/D4/D5+SHG-2..5) reached DONE_VERIFIED. Root cause: Step 0b pipeline-resume in docs/agents/dev-team/flow/main.md only fires on .head.status==\"in_progress\" -- once PM decomposes an epic and head resets to idle, nothing re-checks whether the parent's children are now all terminal. Router caught this only by chance during manual board inspection. Fix: add a Step 4 (post-cycle) candidate that scans ready[]/in_progress[] for rows with non-null/non-empty children[] where every child (board-live or archived) is terminal (DONE/DONE_VERIFIED/CANCELLED/DEFERRED/SKIPPED), and auto-dispatches the row's own next_agent/owner (usually pm) for closeout instead of relying on router luck. Distinct from already-shipped FIX-DEVTEAM-BOUNDED1-EPIC-WRAPPER-GATE (that one prevents premature BOUNDED-1 pickup of a wrapper row; this one closes a wrapper once legitimately done). See feedback_epic_wrapper_closeout_gap_no_auto_revisit memory.",
+        "created_at": "2026-07-10T19:59:57Z",
+        "created_by": "router",
+        "source": "router discovery during routine board inspection, 2026-07-10 dev-team cron tick",
+        "audit_ref": {
+          "audit": "ultracode-2026-07-12",
+          "verdict": "dev-team-loop-P3 CONFIRMED — this row IS the ship vehicle; not double-minted",
+          "ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#dev-team-loop-P3"
+        },
+        "promoted_at": "2026-07-29T12:48:14Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-29T12:48:29Z",
+        "claimed_at": "2026-07-29T12:48:29Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
