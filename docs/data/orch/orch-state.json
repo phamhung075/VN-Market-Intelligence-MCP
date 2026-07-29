@@ -2026,6 +2026,39 @@
         "severity": "WARN",
         "status": "triaged",
         "payload_ref": null
+      },
+      {
+        "id": "sys-20260729T143446-2c78",
+        "ts": "2026-07-29T14:34:46Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "sbv_fx stale 48m (check B-01)",
+        "severity": "CRITICAL",
+        "status": "READ",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260729T143456-2973",
+        "ts": "2026-07-29T14:34:56Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "VPS services unhealthy (check B-06)",
+        "severity": "WARN",
+        "status": "READ",
+        "payload_ref": null
+      },
+      {
+        "id": "sys-20260729T143457-16cc",
+        "ts": "2026-07-29T14:34:57Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "bctc-discover stale with pending work 167 items (check B-05)",
+        "severity": "WARN",
+        "status": "READ",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",

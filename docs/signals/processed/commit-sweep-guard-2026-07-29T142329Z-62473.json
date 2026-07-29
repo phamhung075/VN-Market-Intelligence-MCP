@@ -1,0 +1,14 @@
+{
+  "from": "commit-sweep-guard",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-07-29T14:23:29Z",
+  "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/main.md — retained section '## cycle-20260729T1420Z — Tick 14:07Z: drained 3 signals to po, applied the documented epic-wrapper decomposition-closeout convention to FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION (3rd gap found in the same dispatch chain), freed WIP 1->0' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle; the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
+  "_processed": {
+    "fingerprint": "2d7e7ec3121a89c3c63f1c8aa2577523978f34a409af54651f3b1181d257a7c7",
+    "processedAt": "2026-07-29T14:45:43Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
