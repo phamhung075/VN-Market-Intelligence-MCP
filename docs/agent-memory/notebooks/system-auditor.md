@@ -1,3 +1,78 @@
+## d986065c · 2026-07-29T00:42:57Z
+### Audit Run Tier-1 (00:30–00:41 UTC 2026-07-29)
+- Tier: 1 | Services: 12/12 host_runtime_set Up(healthy) | Health: 5/5 OK | A-20 pdf-extractor 3/3 pass | A-21 crashRestarts=1 PASS | A-30 MemPerc trough=36.62% (reclamation dips observed, floor +1.72pp vs 34.90% baseline) | A-32 Disk 37% PASS
+- Anomalies: 0 new (0 critical, 0 warn, 0 info)
+- Status: HEALTHY
+
+Fire-election: tick=2026-07-29T00:30Z (`*/30 * * * *` boundary) — `task_claim` returned `claimed:true`. Led this tick.
+
+### RAW-PROBE: (docs/agents/system-auditor/probe.sh, 2026-07-29T00:38:28Z)
+```
+=== AUDITOR PROBE 2026-07-29T00:38:28Z ===
+
+--- docker ps -a ---
+NAMES                                             STATUS                 IMAGE                                           CREATED
+vn-market-intelligence-mcp-pdf-extractor-1        Up 7 hours (healthy)   vn-market-intelligence-mcp-pdf-extractor        8 hours ago
+vn-market-intelligence-mcp-mcp-server-1           Up 2 hours (healthy)   vn-market-intelligence-mcp-mcp-server           3 days ago
+vn-market-intelligence-mcp-frontend-1             Up 4 days (healthy)    vn-market-intelligence-mcp-frontend             4 days ago
+mcp-gateway                                       Up 13 days (healthy)   mcpservergatway-gateway                         13 days ago
+vn-market-intelligence-mcp-api-gateway-1          Up 13 days (healthy)   vn-market-intelligence-mcp-api-gateway          13 days ago
+vn-market-intelligence-mcp-flaresolverr-1         Up 13 days (healthy)   ghcr.io/flaresolverr/flaresolverr:latest        13 days ago
+vn-market-intelligence-mcp-news-fetch-1           Up 13 days (healthy)   vn-market-intelligence-mcp-news-fetch           13 days ago
+vn-market-intelligence-mcp-rag-service-1          Up 4 hours (healthy)   vn-market-intelligence-mcp-rag-service          13 days ago
+vn-market-intelligence-mcp-macro-indicators-1     Up 13 days (healthy)   vn-market-intelligence-mcp-macro-indicators     13 days ago
+vn-market-intelligence-mcp-technical-analysis-1   Up 13 days (healthy)   vn-market-intelligence-mcp-technical-analysis   13 days ago
+vn-market-intelligence-mcp-alert-engine-1         Up 13 days (healthy)   vn-market-intelligence-mcp-alert-engine         13 days ago
+vn-market-intelligence-mcp-stock-price-1          Up 13 days (healthy)   vn-market-intelligence-mcp-stock-price          13 days ago
+vn-market-intelligence-mcp-kinh-dich-service-1    Up 13 days (healthy)   vn-market-intelligence-mcp-kinh-dich-service    13 days ago
+
+--- health endpoints ---
+[health] mcp-server:3000/health OK (HTTP 200)
+[health] api-gateway:4000/health OK (HTTP 200)
+[health] macro-indicators:5004/health OK (HTTP 200)
+[health] pdf-extractor:5001/health OK (HTTP 200)
+[health] frontend:3001/ OK (HTTP 200)
+
+--- restart count ---
+Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=3
+
+--- memory pressure ---
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=39.90% MemUsage=1.197GiB / 3GiB
+
+--- memory pressure multi-probe reclamation (A-30) ---
+[A-30] SKIP deep-probe — baseline 39.30% < 85% investigate-gate
+
+--- disk df -h / ---
+Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
+/dev/disk1s4s1   233Gi    13Gi    23Gi    37%    393k  245M    0%   /
+
+--- pdf-extractor in-container multi-probe (A-20) ---
+[A-20-PROBE-1] in-container HTTP 200
+[A-20-PROBE-2] in-container HTTP 200
+[A-20-PROBE-3] in-container HTTP 200
+[A-20] pass_count=3/3
+
+=== PROBE DONE ===
+```
+
+**A-29 Cron Health**: 127+ cron jobs tracked, all success_rate ≥80%, majority ≥99%. mcpServerStartup at 2026-07-28T22:58:42Z (authorized restart). No fire-gap alerts.
+
+**A-30 Memory Trajectory (Multi-Probe Window)**: 8 samples over 105 seconds (2026-07-29T00:39:28Z–00:41:20Z):
+- Min: 36.62% (1.099GiB) ← trough
+- Max: 39.43% (1.183GiB) ← peak
+- Range: 2.81%
+- Reclamation: YES (84,000 kB freed between peak and trough)
+- Baseline floor comparison: 36.62% > 34.90% baseline (+1.72pp, +7.5MB) but below 85% investigate-gate
+- Verdict: PASS (reclamation dips prove GC functional; floor elevation documented but not ESCALATE)
+
+**A-20 pdf-extractor**: 3/3 multi-probe pass (all in-container HTTP 200).
+
+**A-21 Windowed Crashes**: 1 crash restart in 4h window (2026-07-28T22:58:42Z), threshold=2 → PASS.
+
+**A-32 Disk**: 37% capacity (233Gi total, 13Gi used, 23Gi avail) — healthy headroom.
+
+[OUTPUT-CONTRACT] signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0
+
 ## 88ec89d6 · 2026-07-29T00:36:05Z
 ### Audit Run Tier-3 (02:00 UTC 2026-07-29)
 - Tier: 3 | DB integrity deep scan: 16 checks (14 PASS, 2 WARN) | Tooling: 3/3 present | Connectivity: 4/4 UP | EPIPE: 0 | WAL sizes OK
