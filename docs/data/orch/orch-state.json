@@ -88,12 +88,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FACTORY-GUARD-CI-SIZELINT-IMPL",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-GUARD-CI-SIZELINT-IMPL — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-29T16:49:01Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "updated_at": "2026-07-29T17:05:12Z",
+    "updated_by": "developer"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -17360,6 +17359,26 @@
         "reviewed_at": "2026-07-29T16:48:06Z",
         "reviewed_by": "developer",
         "review_note": "Root cause: scripts/agents-flow/drain-signals.js moved docs/signals/*.json -> processed/ with zero signal_queue awareness. Fix: after the existing move loop, the script now builds a movedRefs map (old repo-relative path -> new processed/ path, both routed-to-po and skipped-duplicate-replay branches) and, if non-empty, calls repointPayloadRefs() -- a jq filter (--argjson bound map, never string-interpolated) that rewrites signal_queue.rows[].payload_ref (fragment-preserving split on \"#\") for every row whose ref matches a moved file, computes {doc, changed}, and skips the write entirely when changed==0 (common case). When changed>0 the candidate is applied via the SAME scripts/orch-apply.sh gate every other orch-state writer uses (Zod schema + conservation + CAS), with up to 3 CAS-retry attempts (re-deriving the candidate from the live file each attempt) and a FAIL-LOUD process.exit(1) if the gated write still cannot land -- silently swallowing that failure would just reproduce the exact bug being fixed. All new diagnostics use console.error (stderr) only, so stdout stays byte-identical for every pre-existing caller/test (confirmed: existing golden-stdout regression test AC7 in drain-signals.test.js still passes verbatim). New verification-gate scenario in scripts/agents-flow/drain-signals.test.js (isolated mkdtemp harness: drain-signals.js + orch-apply.sh + orch-validate.mjs + orch-conservation-check.mjs + orchStateSchema.ts copied in, node_modules symlinked -- never the live orch-state.json) asserts live, in one run: (1) seeded docs/signals/<f>.json now under processed/, (2) the seeded signal_queue row payload_ref rewritten to the processed/ path, (3) the REAL bun scripts/orch-validate.mjs exits 0 against the harness copy. 18/18 total assertions green (15 pre-existing + 3 new). Negative control (pre-fix HEAD copy of the script, run against the identical fixture) reproduces the live bug verbatim -- payload_ref stays at the pre-move path after the file relocates, and a direct dangling-ref fixture separately confirmed orch-validate.mjs Stage 1c genuinely fails (exit 2) on this exact defect class, so the new gate is not vacuously green. Commit scoped to scripts/agents-flow/drain-signals.js + scripts/agents-flow/drain-signals.test.js only (explicit pathspec) -- did not sweep the live orch-state.json (already dirty from a separate concurrent fleet-push) into that commit; this board-transition write is a separate, additive orch-apply.sh write, also not committed by developer (left for the owning fleet-push/PO to pick up)."
+      },
+      {
+        "id": "FACTORY-GUARD-CI-SIZELINT-IMPL",
+        "type": "SPRINT-S",
+        "title": "Implement size-lint-justification CI guardrail (script + baseline + workflow wiring)",
+        "status": "REVIEW",
+        "priority": "P2",
+        "size": "M",
+        "zone": "cross-service/",
+        "epic": "FACTORY-MAINTAINABILITY-2026-06",
+        "cluster": "ci-regression-prevention",
+        "source": "architect design brief 2026-07-24, parent FACTORY-GUARD-CI-size-lint-justification",
+        "detail_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-size-lint-justification.md#3-build-vs-plan--decomposed-not-self-implemented",
+        "dev_agent": "developer",
+        "next_agent": "qa",
+        "parent_task": "FACTORY-GUARD-CI-size-lint-justification",
+        "note": "files: scripts/audits/size-lint-justification.sh (new, --check/--update modes), docs/data/size-lint-baseline.json (new, generated), .github/workflows/ci.yml (edit — add size-lint job), docs/policies/dev-standards.md (edit — CANONICAL pointer), scripts/audits/size-lint-justification.test.sh (new). approach: implement --check (CI mode, exit 0/1, walks apps/**/*.ts|*.py|*.go + packages/**/*.ts excl test/vendor/.d.ts, 120L threshold, honors // (ts/go) and # (py) size-justification headers, baseline-file tolerance ±10%/min5L mirrors context-bloat-backstop.sh idiom) and --update (regen docs/data/size-lint-baseline.json from live repo state, prune-eligible entries that shrank/got justified); run --update once to generate initial baseline (grandfathers current ~733 unjustified over-cap files verified 2026-07-24); wire size-lint job into ci.yml (ubuntu-latest, checkout only, no toolchain setup needed); add CANONICAL pointer in dev-standards.md Script Persistence section. dod: --check exits 0 on current repo state (baseline covers all current offenders); synthetic new >120L file with no header fails --check; synthetic baseline file grown past tolerance fails; a justified/shrunk file is dropped by --update; smoke test (size-lint-justification.test.sh) covers all 4 cases; CI green on push.",
+        "created_at": "2026-07-24T16:55:43Z",
+        "created_by": "architect",
+        "updated_at": "2026-07-29T17:05:12Z"
       }
     ],
     "qa": [],
@@ -17381,33 +17400,7 @@
     },
     "last_triaged_at": "2026-07-29T16:49:01Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FACTORY-GUARD-CI-SIZELINT-IMPL",
-        "type": "SPRINT-S",
-        "title": "Implement size-lint-justification CI guardrail (script + baseline + workflow wiring)",
-        "status": "IN_PROGRESS",
-        "priority": "P2",
-        "size": "M",
-        "zone": "cross-service/",
-        "epic": "FACTORY-MAINTAINABILITY-2026-06",
-        "cluster": "ci-regression-prevention",
-        "source": "architect design brief 2026-07-24, parent FACTORY-GUARD-CI-size-lint-justification",
-        "detail_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-size-lint-justification.md#3-build-vs-plan--decomposed-not-self-implemented",
-        "dev_agent": "developer",
-        "next_agent": "developer",
-        "parent_task": "FACTORY-GUARD-CI-size-lint-justification",
-        "note": "files: scripts/audits/size-lint-justification.sh (new, --check/--update modes), docs/data/size-lint-baseline.json (new, generated), .github/workflows/ci.yml (edit — add size-lint job), docs/policies/dev-standards.md (edit — CANONICAL pointer), scripts/audits/size-lint-justification.test.sh (new). approach: implement --check (CI mode, exit 0/1, walks apps/**/*.ts|*.py|*.go + packages/**/*.ts excl test/vendor/.d.ts, 120L threshold, honors // (ts/go) and # (py) size-justification headers, baseline-file tolerance ±10%/min5L mirrors context-bloat-backstop.sh idiom) and --update (regen docs/data/size-lint-baseline.json from live repo state, prune-eligible entries that shrank/got justified); run --update once to generate initial baseline (grandfathers current ~733 unjustified over-cap files verified 2026-07-24); wire size-lint job into ci.yml (ubuntu-latest, checkout only, no toolchain setup needed); add CANONICAL pointer in dev-standards.md Script Persistence section. dod: --check exits 0 on current repo state (baseline covers all current offenders); synthetic new >120L file with no header fails --check; synthetic baseline file grown past tolerance fails; a justified/shrunk file is dropped by --update; smoke test (size-lint-justification.test.sh) covers all 4 cases; CI green on push.",
-        "created_at": "2026-07-24T16:55:43Z",
-        "created_by": "architect",
-        "updated_at": "2026-07-29T16:49:02Z",
-        "promoted_at": "2026-07-29T16:49:01Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "claimed_at": "2026-07-29T16:49:01Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
