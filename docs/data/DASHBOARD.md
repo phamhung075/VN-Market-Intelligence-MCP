@@ -1,5 +1,17 @@
 # System Audit Dashboard
 
+## Anomaly: B-06 · vn-bctc-fetch VPS proxy route stale
+**Severity:** CRITICAL | **Date:** 2026-07-29 | **Status:** OPEN
+**Location:** VPS vinahost (125.212.251.27) — vn-bctc-fetch service (BCTC PDF fetcher)
+**Details:** VPS proxy bctc route (get_vps_proxy_health probe) last push 2026-07-28T08:23:22Z (18+ hours stale). Corroborated via get_vps_proxy_health: `bctc | last push 2026-07-28 08:23:22 | Status ok | 24h pushes 0 | 24h errors null | Stale? YES`. Other six VPS routes (vn-sbv-fetch, vn-news-fetch, vn-foreign-flow, vn-price-fetch, vn-macro-indicators, vn-eod-fetch) report healthy or idle status and periodic push activity.
+**Impact:** BCTC PDF fetching pipeline is design-event-driven (quarterly earnings season only); off-season silence is normal. The 18h+ stale push age indicates no BCTC work triggered since 08:23Z (last push over earnings window); cannot distinguish between healthy idle and fetch failure without queue inspection.
+**Root cause:** Event-driven; off-season silence expected. BCTC Healthy-Idle Gate (Tier-2 B-05 check) gates on `queue=0 AND host-up` — that evaluation lives in Tier-2 scope and is not re-run here (PLAN-ONLY constraint: no Tier-1 re-run of Tier-2 checks).
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-07-29T02:32:58Z (signal sys-20260729T023259-496f, system-auditor -> po, dedup_key=data_stale:vps-bctc-proxy:B-06)
+**Mitigation:** BCTC pipeline is off-season idle (no active queue, healthy VPS host). Evidence-attach to FIX-BCTC-SLA-THRESHOLD-360 (context: earnings-window-dependent SLA mode handles inter-quarter quiet periods). No immediate action required.
+
+---
+
 ## Anomaly: B-07 · vn-sbv-fetch VPS service unhealthy
 **Severity:** WARN | **Date:** 2026-07-28 | **Status:** OPEN
 **Location:** VPS vinahost (125.212.251.27) — vn-sbv-fetch service (SBV FX/rates fetcher)
@@ -45,6 +57,30 @@
 **Zone owner:** dev-mcp-server  
 **Last reported:** 2026-07-19T08:11:04Z (dedup 7d)  
 **Mitigation:** Monitor memory trend; investigate for leaks if sustained >80%; consider restart if approaches 90%  
+
+---
+
+## Anomaly: A-30 · mcp-server memory >93% no-reclamation tripwire TRIPPED
+**Severity:** CRITICAL | **Date:** 2026-07-29 | **Status:** OPEN
+**Location:** mcp-server container (vn-market-intelligence-mcp-mcp-server-1)
+**Details:** Tripwire `>93% sustained with ZERO reclamation dips over 180s` TRIPPED at 2026-07-28T21:50:21Z–21:53:20Z. 12-sample window: 94.37%→94.23%→94.70%→94.62%→95.37%→95.16%→95.39%→95.40%→96.32%→96.28%→96.06%→95.97% (all >93%, largest downward move 6 MiB vs 62-64 MiB genuine reclamation earlier). VmHWM/VmRSS gap collapsed from ~180 MiB to 5,860 kB; RSS at 99.8% of its own high-water. **Qualifying evidence (post-cycle)**: after audit cycle, memory climbed to 98.25% (highest of night), then reclaimed 66 MiB and 30 MiB in two genuine GC dips; VmHWM touched 3,148,684 kB (ceiling at 3,145,728 kB / 3GiB cap); VmRSS/HWM gap reopened to 252 MiB (wider than 180 MiB benchmark). Server remained responsive (:3000/health 200 @ 1.954ms), OOMKilled=false, RestartCount=2 unchanged. Mechanism: 180s audit window sat on RISING EDGE of sawtooth with period >180s; "zero dips on rising edge" is structurally guaranteed regardless of reclamation health. Discriminator weakness: cannot separate `reclamation lost` from `sampled during climb`. What survives: VmHWM at cap + sustained 95-98% occupancy + genuine dips when period crosses 180s = memory leak, already tracked FIX-MCP-MEMORY-CODE-LEAK (BACKLOG).
+**Impact:** Pre-cap warning. Process has reached its ceiling and is reclaiming just enough to avoid OOMKilled. At current trajectory, cap exhaustion possible within hours if workload sustains.
+**Root cause:** FIX-MCP-MEMORY-CODE-LEAK — recurring leak documented as "accumulates ~87% in 12h despite fresh start at 5%" (PO escalation 2026-07-22).
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-07-28T21:54:25Z (signal sys-20260728T215425-23ef, dedup_key=microservice_degraded:mcp-server:A-30-TRIPWIRE-TRIPPED, CRITICAL Telegram sent)
+**Mitigation:** Folded to FIX-MCP-MEMORY-CODE-LEAK (HIGH priority). Board's "tripwire UNtripped → no escalation" directive no longer applies; tripwire transition is the discriminator. PLAN-ONLY: no restart (not a fix, re-leaks next cycle), no rebuild, no ops escalation.
+
+---
+
+## Anomaly: A-12 · api-gateway health endpoint WARN applied to known benign transient
+**Severity:** WARN | **Date:** 2026-07-29 | **Status:** OPEN
+**Location:** api-gateway service (4000/health endpoint), tier1-probe.sh run 2026-07-28T21:37:21Z
+**Details:** Single-probe CURL_ERR observed at 21:37:21Z (--max-time 3). This is NOT a false observation. Mechanism: api-gateway's /health endpoint logged `latency_ms=3006` at ~21:37:56Z — 6ms over the probe's 3000ms cap (confirmed via internal request log). This class of transient is KNOWN and TRACKED under SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP (10+ prior occurrences; devteam corroboration 2026-07-25: "genuine intermittent api-gateway latency transient, not a real outage, not a probe-side FP"). **Defect**: WARN-OUTAGE severity was applied to a known benign latency spike. Coordinator's post-cycle 8x HTTP 200 verification (all <7ms) is consistent with a transient latency spike having passed, not with "nothing happened". Container: RC=0, 13d uptime never restarted, Health=healthy, docker healthcheck exits=0.
+**Impact:** Severity mismatch (benign transient signalled as outage) unnecessarily escalates a recurring timing anomaly into the critical queue.
+**Root cause:** FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE marked DONE (to prevent benign health transients re-emitting as fresh signals) but post-fix we see the same class. Indicates incomplete fix scope or regression. A-20 multi-probe discriminator exists for pdf-extractor; A-12/general health lacks equivalent N-consecutive debounce guard per tier1-probe.md line ~55.
+**Zone owner:** dev-api-gateway
+**Last reported:** 2026-07-28T21:40:04Z (signal sys-20260728T214004-6369, dedup_key=microservice_degraded:api-gateway:A-12, WARN Telegram sent)
+**Mitigation:** Evidence attach to SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP (architect, plan-only). Related: FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE (post-fix regression), FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE (completes A-20/A-30 parity).
 
 ---
 
