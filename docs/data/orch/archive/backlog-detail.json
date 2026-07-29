@@ -6834,7 +6834,7 @@
       "type": "FIX",
       "zone": "vps-scripts/",
       "specialist": "developer",
-      "status": "TODO",
+      "status": "REVIEW",
       "priority": "medium",
       "created_at": "2026-07-01T06:49:50Z",
       "created_by": "pm",

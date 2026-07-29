@@ -88,12 +88,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-VPS-SSC-INSIDER-502",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-VPS-SSC-INSIDER-502 — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-29T08:16:22Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "updated_at": "2026-07-29T08:30:00Z",
+    "updated_by": "developer",
+    "active_task_id": null,
+    "next_agent": "router"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -16699,6 +16698,26 @@
         "entered_review_at": "2026-07-29T08:04:37Z",
         "review_note": "[developer] sprint_goal.entries[]/active_sprints[] eviction verified 0 (all 18/8 genuinely non-terminal, no drift; cross-checked task_board lanes + cold archive for stale-active evidence, found none). decision_journal[] trim implemented per architect finding state-data-files-P7 (docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md): extended scripts/orch-cold-evict.sh with age-ranked eviction (keep 10 newest, evict rank>=10 if ts null or >14d old), index-keyed removal + content-deduped cold append (no stable id on these entries). Live-applied: orch-state.json 2478170->2403062 bytes (-75108B, decision_journal 49->10, 39 moved to archive/2026-07.json#decision_journal). New test coverage: scripts/test/orch-cold-evict-tests.sh TEST 8 (6 assertions, rank/age-gate/null-ts/index-correctness/idempotency). Full <150KB target NOT reached by this task alone (stated up front as expected -- task_board lanes/backlog/done/active_sprints dominate remaining size, out of this task's narrow scope). Deferred, not done: architect P7's optional orch-validate.mjs coherence WARNING (decision_journal>50) and the bundled-but-separate task_board._closed_signals_20260614 legacy-key cleanup (I14) -- both flagged, neither touched, to keep blast radius to the stated scope.",
         "next_agent": "qa"
+      },
+      {
+        "id": "FIX-VPS-SSC-INSIDER-502",
+        "title": "FIX-VPS-SSC-INSIDER-502 — VPS proxy HTTP 502 on ssc-insider upstream (decoupled from BA-PREDICTION-EVIDENCE-REVIVAL)",
+        "type": "FIX",
+        "zone": "vps-scripts/",
+        "status": "REVIEW",
+        "priority": "medium",
+        "size": "S",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-VPS-SSC-INSIDER-502",
+        "verify_note": "prior_status=TODO",
+        "promoted_at": "2026-07-29T08:16:13Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-07-29T08:30:00Z",
+        "claimed_at": "2026-07-29T08:16:22Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "branch": null,
+        "next_agent": "qa",
+        "status_note": "CLOSED-NO-FIX (confirmed external outage): live-diagnosed WITHOUT VPS SSH (scope guardance allowed handoff to ops-vps-fetch only if SSH was required; it was not). VPS proxy /proxy/ssc-insider -> 502 \"Upstream HTTP 503 from congbothongtin.ssc.gov.vn/...jspx\" (3x consistent). Direct sandbox curl to the SAME upstream URL -> 503 \"No server is available to handle this request\" on every path incl. domain root, identical from non-VN egress AND VN egress (VPS) -- rules out geo-block + VPS/proxy misconfig. Parent ssc.gov.vn healthy (302 nginx) but its WebCenter app tier (/webcenter/portal/ubck) times out entirely -- same app tier congbothongtin.ssc.gov.vn runs on. Confirmed genuine external SSC WebCenter outage/degradation, not code-fixable. Deliberately did NOT add retry/backoff to vps-proxy-server.js fetchUpstream() for this route -- git-verified precedent B-05-FU-SSC-503-RETRY (commit a817b5139) already tried and reverted an identical retry fix for this exact SSC domain on the sibling BCTC discovery path because it blew the mcp-server callers timeout budget and caused a 17-day queue freeze; same caller-budget mismatch applies here vs sscInsider.ts withDeadline(30_000). Added in-code comment at vps-proxy-server.js SSC_INSIDER_UPSTREAM documenting both findings so a future agent does not re-discover and re-revert the same retry. Updated docs/architecture-briefs/2026-07-01-BA-PREDICTION-EVIDENCE-REVIVAL.md + docs/WORK.md with the closure. No functional code change; FR-2.2 watchdog (vpsProxyWatchdogJob.ts, already shipped TASK-EVIDENCE-HOP1-MCP) remains the correct operator-facing signal for a prolonged outage. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md STEP developer-S24. Committed directly to main (no task branch), matching CLOSED-NO-FIX precedent 9e69d12bb."
       }
     ],
     "qa": [],
@@ -16720,25 +16739,7 @@
     },
     "last_triaged_at": "2026-07-29T08:16:13Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-VPS-SSC-INSIDER-502",
-        "title": "FIX-VPS-SSC-INSIDER-502 — VPS proxy HTTP 502 on ssc-insider upstream (decoupled from BA-PREDICTION-EVIDENCE-REVIVAL)",
-        "type": "FIX",
-        "zone": "vps-scripts/",
-        "status": "IN_PROGRESS",
-        "priority": "medium",
-        "size": "S",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-VPS-SSC-INSIDER-502",
-        "verify_note": "prior_status=TODO",
-        "promoted_at": "2026-07-29T08:16:13Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-29T08:16:22Z",
-        "claimed_at": "2026-07-29T08:16:22Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",

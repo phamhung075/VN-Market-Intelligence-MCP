@@ -113,6 +113,35 @@ const SSC_PROXY_PREFIX = "/proxy/ssc-iboard";
 /**
  * SSC insider transaction portal URL — geo-blocked outside Vietnam.
  * Proxied at /proxy/ssc-insider (Task 1922a).
+ *
+ * FIX-VPS-SSC-INSIDER-502 (2026-07-29): if this route is 502ing, it is very
+ * likely NOT a proxy/geo-block defect — live-diagnose the upstream first.
+ * Confirmed live (no VPS SSH needed): congbothongtin.ssc.gov.vn returns
+ * HTTP 503 "No server is available to handle this request" (a backend-pool-
+ * empty error) on EVERY path, including the domain root — reproduced
+ * identically both directly (non-VN egress) and via this VPS (VN egress),
+ * which rules out geo-block and VPS/network misconfig. The parent
+ * ssc.gov.vn front (nginx) is healthy, but the underlying WebCenter/
+ * WebLogic application tier itself (ssc.gov.vn/webcenter/portal/ubck) times
+ * out entirely — the same app tier congbothongtin.ssc.gov.vn runs on. This
+ * is a genuine external SSC WebCenter outage/degradation, not something a
+ * code change here can fix.
+ *
+ * DO NOT add retry/backoff to fetchUpstream() for this route as a "fix".
+ * That was already tried for this exact SSC domain on the sibling BCTC
+ * discovery path (FIX-BCTC-SSC-503-RETRY, 2026-06-16) and reverted
+ * (B-05-FU-SSC-503-RETRY, commit a817b5139, vps-scripts/discover-bctc-
+ * urls-browser.py): the mcp-server caller's timeout budget is much tighter
+ * than any useful backoff window (sscInsider.ts uses withDeadline(30_000)),
+ * so the caller aborts regardless while the retry keeps burning wall-clock
+ * — that mismatch is what caused a 17-day queue freeze on the BCTC path.
+ * The current single-attempt fast-fail design (15s timeout below) is
+ * intentional, not an oversight.
+ *
+ * Staleness from a prolonged outage is already surfaced without a code
+ * change: vpsProxyWatchdogJob.ts readLatestInsiderTimestamp() alerts WORK
+ * Telegram once insider_transactions goes >4 days stale (FR-2.2, shipped
+ * TASK-EVIDENCE-HOP1-MCP).
  */
 const SSC_INSIDER_UPSTREAM =
   "https://congbothongtin.ssc.gov.vn/faces/oracle/webcenter/portalapp/pages/giaodichnoibo/ketquagiaodich.jspx";
