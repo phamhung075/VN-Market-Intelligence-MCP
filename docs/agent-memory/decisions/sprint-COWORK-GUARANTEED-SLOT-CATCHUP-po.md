@@ -366,3 +366,23 @@
 - Out-of-band pm spawn on the completed 2026-07-25 architect brief
 **why-decision:** Empirically ran the SLS promote on a scratch copy: it picks THIS row (P0, lane=pm) — predicate is healthy, so the defect is turn-allocation. SLS is reachable only when head=idle AND in_progress==1 exactly (BOUNDED-1 gate WIP<1 fails, SLS gate WIP2<2 passes); that window is near-unreachable, hence 2 fires ever (07-21, 07-23). Pre-staging to ready[] does not help: RLC skips supervised+plan_only, so only the same starved SLS-claim could take it.
 **why-change:** Architect design landed 2026-07-25T11:20Z and named pm as NEXT; zero decomposition children exist 4d later. The blocker is a missing spawn, not missing design.
+
+### STEP po-S39 · po · 2026-07-29T06:30:00Z
+**task-id:** FIX-AUDITOR-CALLER-PROSE-OVERRIDES-DOCUMENTED-DETECTOR-THRESHOLD
+**what-done:** Triaged a 5-defect auditor cycle cluster into 4 mints + 2 activations, and RETRACTED signal sys-20260729T060929-39de as non-detector output.
+**what-considered:**
+- Fold all 5 into EPIC-AUDITOR-DETECTOR-CORRECTNESS-DRAIN (rejected)
+- One consolidated blob row (rejected by that epic's own ruling)
+- 5 loose rows (rejected — grows the lane the epic exists to drain)
+- 4 mints + activate 2 existing rows
+**why-decision:** The epic covers detectors whose PREDICATE is wrong. Here the predicate was RIGHT and was overridden from outside — opposite direction, so folding would bury it. Wrote a scope_fence on the row saying so. D4 already had prior art (FIX-AGENT-NOTEBOOK-UUID-PROVENANCE, 07-03) whose only defect was next_agent unset, so I activated it rather than minting a 6th duplicate.
+**why-change:** Two of five router premises were WRONG on raw re-measure — recorded the corrections ON the rows so implementers do not chase them.
+
+### STEP po-S40 · po · 2026-07-29T06:31:00Z
+**task-id:** FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS
+**what-done:** Re-measured the notebook truncation claim per-section instead of trusting the diffstat, and re-rooted the row on what the bytes actually show.
+**what-considered:**
+- Accept the report's framing (152+43=195≤200, so zero deletions needed)
+- Measure per-section line counts on both sides of the commit
+**why-decision:** 43 was the NET diffstat, not the new section size. The real new section is 71L, so 152+71=223>200 and cap pressure was REAL. The defect is not over-dropping — it is that FOUR retained sections were silently REWRITTEN (81→10, 25→10, 14→10, 10→9) to pay for an over-cap current section, when AC-3 Step 1f says trim your own section FIRST.
+**why-change:** Root cause moved from "drops too much" to "mutates retained history + skill has no immutability invariant". Different fix, different owner, and the original framing would have produced a no-op patch.
