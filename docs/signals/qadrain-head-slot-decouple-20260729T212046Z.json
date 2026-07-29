@@ -1,0 +1,10 @@
+{
+  "from": "agents-architect",
+  "to": "po",
+  "cc": ["agent-father", "developer"],
+  "type": "brief_complete",
+  "payload": "docs/architecture-briefs/2026-07-29-qadrain-head-slot-decouple.md",
+  "priority": "high",
+  "createdAt": "2026-07-29T21:20:46Z",
+  "summary": "SPIKE-DEVTEAM-QADRAIN-HEAD-SLOT-DECOUPLE brief ready. Part 1: conditional .head-write guard on scripts/devteam-review-claim-qa-drain.jq (mirrors devteam-wrapper-autoclose.jq's own guard shape) — script-only, zero file conflict, ships now. Part 2: new head-decoupled QA-Drain invocation site in main.md placed AFTER Session Gate / BEFORE Step 1 — verified zero byte overlap with FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION's own §496-686 rewrite; carries depends_on that P0 row per your mandate (coordination safeguard, not strict technical necessity — traced explicitly). Part 3 both framings answered: Part 2 remains necessary even after Part 1 ships (Part 1 only makes the write safe, does not change reachability); one-row-per-tick throughput is NOT sufficient against the live 120-row eligible backlog (hourly cron, QA_WIP<1 is a system-wide cap) — recommend a SEPARATE follow-up row for throughput, out of scope here."
+}
