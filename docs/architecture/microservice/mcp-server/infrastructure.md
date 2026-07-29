@@ -321,6 +321,32 @@ RAW-verify: a scratch pre/post comparison script ran `runDailyAudit`/
 of the pre-split monolith vs the post-split module — findings[] output and
 `agent_feedback` insert ordering were byte-identical (JSON deep-equal).
 
+**D-NEW3 `checkConvictionHistoryGap`** (`audit-checks/checkConvictionHistoryGap.ts`,
+FIX-CONVICTION-HISTORY-EOD-BACKFILL, 2026-07-29) — EOD reconciliation/backfill
+for `conviction_history`. `findConvictionHistoryGapDays(db, vnToday)` finds
+trading days present in `daily_ohlcv` (code coverage >= live `watchlist`
+count — self-deriving "confirmed trading day" floor, no hardcoded ticker
+count) with ZERO `conviction_history` rows, bounded to
+`[MIN(conviction_history.date) or a 30-day fallback, vnToday)` and capped at
+15 days per run (oldest-first — a large backlog converges over consecutive
+nightly runs). `backfillConvictionForDate(db, date)` recomputes conviction
+per current-watchlist stock from `daily_ohlcv` alone (no live fetch —
+sentiment/IMF dimensions default to neutral, matching
+`computeConviction`'s documented behaviour for any omitted dimension) and
+writes via `SqliteMarketPriceRepository.upsertConvictionHistory` (SSOT
+writer, no duplicated INSERT). A "confirmed" gap day that cannot be
+backfilled (e.g. the earliest `daily_ohlcv` row on file for every watchlist
+code, no prior-day row to compute `changePct` from) is reported
+`action:"none"` — never fabricated, and never re-flagged as
+`insertFeedbackIfNew` spam since it can never gain a row. Root cause
+(RAW-verified live via `cron_job_runs.rows_written`): `scanMarket`'s Step 5c
+conviction persistence used to run AFTER an early "0 signals -> return"
+guard, so any scan cycle with zero qualifying signals across the whole
+watchlist silently lost conviction_history for that cycle — fixed at the
+source in `application/usecases/scanMarket.ts` (Step 5c now runs
+unconditionally, see `usecases.md`); this check is the EOD self-heal for the
+pre-existing backlog plus any future write-path failure.
+
 ### Intelligence Cycle Job (`scheduler/news-analysis/intelligenceCycleJob.ts` + `intelligenceCycle/`)
 FACTORY-SCHEDULER-split-intelligenceCycleJob extracted the `CycleResult`/
 `CycleDeps` contracts into `intelligenceCycle/types.ts`, `isMarketHours`

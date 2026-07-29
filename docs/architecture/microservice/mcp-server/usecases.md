@@ -7,7 +7,23 @@
 ### scanMarket.ts
 - **Input:** `ScanMarketDeps { watchlistRepo, marketPriceRepo, fetchPrices? }`
 - **Output:** `MarketScanResult { scanned, signals, alerts }`
-- **Flow:** watchlist → fetch prices (HOSE/HNX/UPCOM) → store market_prices + history → compute avgVolume (20-day) → detectSignals → generateAlerts
+- **Flow:** watchlist → fetch prices (HOSE/HNX/UPCOM) → store market_prices + history → compute avgVolume (20-day) → detectSignals → Step 5c conviction scoring → generateAlerts
+- **Step 5c conviction scoring/persistence** (`scanMarket.ts:521-577`) computes
+  `computeConviction()` and writes one `conviction_history` row per scanned
+  stock via `marketPriceRepo.upsertConvictionHistory()` — **runs
+  unconditionally, every cycle**, regardless of whether any alert-worthy
+  signal was detected (FIX-CONVICTION-HISTORY-EOD-BACKFILL, 2026-07-29; was
+  previously gated behind an early "0 signals -> return", RAW-verified live
+  via `cron_job_runs.rows_written` to silently drop conviction_history for
+  any scan cycle with zero qualifying signals across the whole watchlist).
+  `upsertConvictionHistory()` returns `boolean` (write succeeded) — if a real
+  scan (`prices.length > 0`) writes ZERO conviction rows this cycle (every
+  upsert failed), `scanMarket.ts` posts a same-day `agent_feedback` row
+  (`agent:"scanMarket"`, `category:"data_extraction_error"`,
+  `priority:"high"`) as an immediate observability signal, independent of the
+  nightly `checkConvictionHistoryGap` EOD reconciliation/backfill audit-check
+  (`infrastructure.md` § Data Audit Job D-NEW3) that self-heals any day a
+  live scan missed entirely.
 
 ### syncVnstockData.ts
 Maintains vnstock reference data (company names, exchanges)

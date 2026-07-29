@@ -50,7 +50,7 @@ export class SqliteMarketPriceRepository implements IMarketPriceRepository {
     }
   }
 
-  upsertConvictionHistory(record: ConvictionRecord): void {
+  upsertConvictionHistory(record: ConvictionRecord): boolean {
     try {
       this.db
         .prepare(
@@ -64,8 +64,10 @@ export class SqliteMarketPriceRepository implements IMarketPriceRepository {
           record.dominantSignal,
           record.createdAt,
         );
+      return true;
     } catch {
       // conviction_history table may not exist — best-effort
+      return false;
     }
   }
 

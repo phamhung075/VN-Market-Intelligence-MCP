@@ -27,8 +27,13 @@ export interface IMarketPriceRepository {
 
   /**
    * Upsert a conviction history row (INSERT OR REPLACE).
+   *
+   * @returns true if the row was written; false if the write failed (e.g. the
+   *   conviction_history table does not exist yet) — best-effort, never throws.
+   *   FIX-CONVICTION-HISTORY-EOD-BACKFILL: callers use this to detect a
+   *   same-cycle zero-row write failure for observability.
    */
-  upsertConvictionHistory(record: ConvictionRecord): void;
+  upsertConvictionHistory(record: ConvictionRecord): boolean;
 
   /**
    * Fetch recent news titles from rag_analyses for a stock within the last N hours.

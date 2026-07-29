@@ -510,21 +510,28 @@ export async function scanMarket(
 
   result.signals = allSignals.length;
 
-  if (allSignals.length === 0) {
-    logger.debug("[scanMarket] no signals detected", {
-      scanned: result.scanned,
-      sectorContextFetched: contextPrices.length,
-    });
-    return result;
-  }
-
   // ── Step 5c: Conviction scoring — cross-validate all signals per stock ───
+  // FIX-CONVICTION-HISTORY-EOD-BACKFILL root cause: this block used to run
+  // AFTER an early `if (allSignals.length === 0) return result` check, so any
+  // scan cycle with zero qualifying price/volume/sector/divergence signals
+  // across the WHOLE watchlist silently skipped conviction_history writes for
+  // every stock that cycle. RAW-verified live (cron_job_runs 2026-06-22 /
+  // 2026-06-25): both the 09:00 open AND 15:30 close scans returned
+  // rows_written=0 (zero signals, not a crash/scheduling gap) on those two
+  // dates — this block now runs unconditionally, every cycle, regardless of
+  // signal count, so conviction_history is never coupled to whether an
+  // alert-worthy signal happened to fire.
+  const vnNow = new Date(Date.now() + VN_OFFSET_MS);
+  const dateStr = `${vnNow.getUTCFullYear()}-${String(vnNow.getUTCMonth() + 1).padStart(2, "0")}-${String(vnNow.getUTCDate()).padStart(2, "0")}`;
+
   // Dimension 7: IMF macro — hoist outside loop (same value for all stocks per scan cycle)
   let imfMacroScore: number | undefined;
   try {
     const { getDb } = await import("../../infrastructure/db/schema.js");
     imfMacroScore = getImfMacroScoreForConviction(getDb());
   } catch { /* best-effort — neutral if bridge fails */ }
+
+  let convictionRowsWritten = 0;
 
   for (const price of prices) {
     const domain = codeToDomain.get(price.code);
@@ -556,7 +563,7 @@ export async function scanMarket(
 
     const conviction = computeConviction(convictionInput);
 
-    // Append conviction summary to relevant signals
+    // Append conviction summary to relevant signals (no-op when allSignals is empty)
     if (conviction.level !== "moderate" && conviction.summary) {
       for (const sig of allSignals) {
         if (sig.actionCode === price.code) {
@@ -567,16 +574,43 @@ export async function scanMarket(
 
     // Store conviction history (task 150)
     try {
-      const vnNow = new Date(Date.now() + VN_OFFSET_MS);
-      const dateStr = `${vnNow.getUTCFullYear()}-${String(vnNow.getUTCMonth() + 1).padStart(2, "0")}-${String(vnNow.getUTCDate()).padStart(2, "0")}`;
-      deps.marketPriceRepo.upsertConvictionHistory({
+      const wrote = deps.marketPriceRepo.upsertConvictionHistory({
         symbol: price.code,
         date: dateStr,
         peakScore: conviction.score,
         dominantSignal: conviction.direction,
         createdAt: new Date().toISOString(),
       });
+      if (wrote) convictionRowsWritten++;
     } catch { /* conviction_history table may not exist */ }
+  }
+
+  // Same-day observability signal (FIX-CONVICTION-HISTORY-EOD-BACKFILL requirement 2):
+  // a real scan (prices.length > 0, i.e. a confirmed trading session) that wrote
+  // ZERO conviction_history rows indicates a systemic write failure (e.g. table
+  // missing, disk full) — flag it immediately instead of waiting for the nightly
+  // EOD reconciliation audit (checkConvictionHistoryGap) to notice the gap the
+  // next day. Best-effort — must never fail the scan.
+  if (prices.length > 0 && convictionRowsWritten === 0) {
+    try {
+      const { insertAgentFeedback } = await import("../../infrastructure/db/agentFeedbackStore.js");
+      const { getDb } = await import("../../infrastructure/db/schema.js");
+      insertAgentFeedback(getDb(), {
+        agent: "scanMarket",
+        category: "data_extraction_error",
+        title: `[SCAN] conviction_history zero-row write — ${dateStr}`,
+        detail: `scanMarket wrote 0/${prices.length} conviction_history rows for ${dateStr} this cycle (all upserts failed) — EOD reconciliation (dataAuditJob checkConvictionHistoryGap) will retry at 23:00 GMT+7 if unresolved.`,
+        priority: "high",
+      });
+    } catch { /* best-effort — never fail the scan for an observability write */ }
+  }
+
+  if (allSignals.length === 0) {
+    logger.debug("[scanMarket] no signals detected", {
+      scanned: result.scanned,
+      sectorContextFetched: contextPrices.length,
+    });
+    return result;
   }
 
   // ── Step 6: Generate and persist alerts ──────────────────────────────────
