@@ -1,5 +1,16 @@
 # Agent Father — Notebook
 
+## Follow-up 09:24 — 2026-07-29 P0 fleet-block regression fix (FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS)
+- 08:37 gate blocked most of the fleet: validated on n=2 commits only; real corpus uses
+  rolling headings (`## Current state` etc), never dated, rewritten every cycle by design.
+- Fixed `pre-commit`: opt-IN `_is_dated_heading` scope (was opt-out 3-file list); trim also
+  strips trailing `---` dividers; O(n²)→O(n) hash recompute; signals now 1/commit not 1/heading.
+- Residual (not closed): un-headed rolling footers (dev-frontend.md), bulk archival commits
+  (qa-responder.md) still false-reject post-fix (42/18 files vs 152 baseline, replay script:
+  `scripts/audits/verify-notebook-immutability-gate.sh`).
+- DISARMED to warn-by-default (`GIT_NOTEBOOK_IMMUTABILITY_MODE=reject` re-arms); verified via
+  scratch-repo round-trip. Board row amended (not re-minted), `next_agent: qa` kept.
+
 ## Correction (router-dispatched) 08:47 — 2026-07-29 citation typo in prior section
 - The prior section below cited commit `9b27e97236d2eeb1` for the retained-section-rewrite
   root cause. That is a transposed-character typo (`eeb1`/`eeb2`); the correct, verified prefix

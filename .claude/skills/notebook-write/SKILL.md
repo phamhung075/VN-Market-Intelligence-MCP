@@ -83,11 +83,25 @@ which is exactly why this class went undetected for multiple cycles
 (measured recurrence across ≥5 of the last 12 `system-auditor` notebook
 commits — `FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS`). A
 pre-commit mechanical gate (`scripts/git-hooks/pre-commit`
-`_check_notebook_immutability`) enforces this for every APPEND-class notebook
-(AC-6) by hashing each `## ` section in HEAD vs staged content and rejecting
-the commit if any heading present on both sides has a different body hash.
-Prose alone was already tried on this exact class and failed — the hook is
-the control; the prose above only explains how to stay on its happy path.
+`_check_notebook_immutability`) hashes each `## ` section in HEAD vs staged
+content, SCOPED to headings carrying a cycle-unique date/timestamp token
+(`_is_dated_heading` — the AC-1 `c<NNN>·ISO` / bare-ISO / `Session: <date>`
+convention). A heading with no such token (e.g. `## Current state`, `##
+Known patterns / preferences`, `## Carry-over`) is a stable ROLLING heading
+by convention, intentionally rewritten every cycle, and is never flagged —
+this is an opt-IN scope (2026-07-29 fix, after the first cut's opt-out
+3-file list blocked most of the fleet's next commit; corpus replay:
+`scripts/audits/verify-notebook-immutability-gate.sh`). DISPOSITION:
+**warn-by-default, NOT hard-enforced** — `GIT_NOTEBOOK_IMMUTABILITY_MODE`
+defaults to `warn` (loud stderr + one aggregated `docs/signals/` write,
+never blocks); set to `reject` only after the replay script reads 0 across
+the full notebook corpus. Two known-unclosed false-positive classes as of
+this writing: an un-headed rolling footer bleeding into the last dated
+heading (no heading boundary to key on), and periodic bulk archival/
+maintenance restructuring commits that legitimately regenerate old dated
+summaries. Prose alone was already tried on the underlying data-loss class
+and failed — the hook is the eventual control; the prose above only
+explains how to stay on its happy path once reject-mode is re-armed.
 
 ### Write operation (AC-3) — ATOMIC settled-write invariant
 

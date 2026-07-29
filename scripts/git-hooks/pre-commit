@@ -189,6 +189,10 @@ _check_auditor_heartbeat_shapes || exit 1
 # TASK: FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS (docs/data/orch/
 #       orch-state.json .task_board.backlog, P1). SPEC: .claude/skills/
 #       notebook-write/SKILL.md § IMMUTABILITY INVARIANT (AC-2a).
+# REPLAY/VALIDATION: scripts/audits/verify-notebook-immutability-gate.sh (run
+#       this before trusting any future change to this gate — it replays the
+#       real corpus history through the exact functions below, sourced
+#       verbatim, not a reimplementation).
 #
 # BUG THIS PREVENTS: the notebook-write compose step lands its result as ONE
 # whole-file Write/Edit, so authorized pruning (dropping a whole oldest '## '
@@ -207,15 +211,42 @@ _check_auditor_heartbeat_shapes || exit 1
 # "which actor's index got swept" question, so it runs unconditionally here,
 # independent of the sweep-guard mode dispatch below).
 #
+# FLEET-BLOCKING REGRESSION + FIX (2026-07-29, same day as landing): the first
+# cut of this gate hard-rejected on ANY shared '## ' heading with a changed
+# body hash, for every notebook except 3 hardcoded OVERWRITE-class files
+# (po/market-watcher/orch-sentinel). Replay against the REAL corpus (all
+# docs/agent-memory/notebooks/*.md, last ~8 commits each — see the replay
+# script above) showed most of the fleet uses STABLE ROLLING headings that are
+# DESIGNED to be rewritten every cycle and never carry a cycle-unique token
+# (e.g. '## Working Memory', '## Current state', '## Known patterns /
+# preferences', '## Carry-over', '## Active Sources Under Watch', '## Active
+# Scrapers') — confirmed false-reject example: qa-responder.md's most recent
+# notebook commit rejects on '## Current state' (HEAD hash 58d83af7b997...
+# vs staged 3790c4cd679b...) even though that heading is intentionally
+# rewritten every cycle, never dated. A hardcoded per-file exemption list is
+# one new agent away from blocking the fleet again (it must enumerate every
+# exception), so the mechanism now enumerates its SUBJECTS instead (fails
+# safe): enforcement is opt-IN, scoped to headings that carry a recognizable
+# cycle-unique date/timestamp token (_is_dated_heading below) — the AC-1
+# convention this gate can actually reason about. A heading with no such
+# token is, by construction, a rolling/stable section not designed for
+# byte-identity and is skipped (never flagged), regardless of which file it
+# lives in — this generalizes automatically to new agents/notebooks without
+# needing a manually-maintained file allowlist. The 3 known OVERWRITE-class
+# files are still skipped up front as a documented fast path (matches SKILL.md
+# AC-6), though the date-heading scoping alone would already exempt their
+# rolling headings.
+#
 # MECHANISM: for every staged docs/agent-memory/notebooks/*.md file (add/
 # modify, APPEND-class only — the 3 OVERWRITE-class files intentionally
 # replace their single section every cycle and are exempt by design), hash
 # each '^## '-delimited section (heading line through the line before the
 # next '## ' or EOF) on the HEAD side and on the staged side. Any heading
-# text present on BOTH sides with a DIFFERENT body hash means a retained
-# section was mutated rather than dropped whole -> REJECT. A heading present
-# only on HEAD (dropped whole) or only on staged (the new cycle's section) is
-# always authorized and never flagged.
+# text present on BOTH sides, carrying a dated/cycle-unique token
+# (_is_dated_heading), with a DIFFERENT body hash means a retained section was
+# mutated rather than dropped whole -> REJECT. A heading present only on HEAD
+# (dropped whole), only on staged (the new cycle's section), or with no dated
+# token at all (a rolling/stable heading, exempt by design) is never flagged.
 #
 # Zero new dependencies: git + shasum only (shasum ships with macOS/Darwin
 # and virtually every Linux distro) — same "never a new commit-hot-path
@@ -256,22 +287,77 @@ HEADINGLINES
       end="$total"
     fi
     heading="$(sed -n "${start}p" "$file" 2>/dev/null)"
-    # Trim trailing blank lines before hashing: a section's position (last-in-
-    # file vs followed-by-another-heading) changes whether a trailing blank
-    # separator line is captured in its slice, which would otherwise produce a
-    # spurious hash mismatch for byte-identical content that only shifted
-    # position (verified false-positive case: commit 01e50dbcbac6661b -- only
-    # the file's true last section differed by this trailing-blank artifact).
-    hash="$(sed -n "${start},${end}p" "$file" 2>/dev/null | awk '{lines[NR]=$0; if ($0 != "") last=NR} END{for (i=1;i<=last;i++) print lines[i]}' | shasum -a 256 2>/dev/null | awk '{print $1}')"
+    # Trim trailing blank AND horizontal-rule ('---') lines before hashing: a
+    # section's position (last-in-file vs followed-by-another-heading)
+    # changes whether a trailing blank separator line, or a markdown '---'
+    # divider an agent inserts between sections when APPENDING the NEXT
+    # section, is captured in the PRECEDING section's slice — either would
+    # otherwise produce a spurious hash mismatch for byte-identical retained
+    # content that only gained trailing boilerplate (verified false-positive
+    # cases: commit 01e50dbcbac6661b for the blank-line variant; corpus replay
+    # 2026-07-29 via scripts/audits/verify-notebook-immutability-gate.sh
+    # surfaced the '---' variant across every notebook using a '---' divider
+    # convention, e.g. dev-pdf-extractor.md, qa-responder.md, dev-rag-service.md).
+    hash="$(sed -n "${start},${end}p" "$file" 2>/dev/null | awk '{lines[NR]=$0; if ($0 != "" && $0 !~ /^-{3,}[[:space:]]*$/) last=NR} END{for (i=1;i<=last;i++) print lines[i]}' | shasum -a 256 2>/dev/null | awk '{print $1}')"
     [ -n "$heading" ] && [ -n "$hash" ] && printf '%s\t%s\n' "$heading" "$hash"
   done
 }
 
+_is_dated_heading() {
+  # $1 = full heading line (e.g. "## c125 · 2026-07-28T21:12:42Z" or
+  # "## Current state"). Returns 0 (true) iff the heading text embeds a
+  # recognizable cycle-unique date/timestamp token — the AC-1 convention
+  # (c<NNN>·ISO / bare ISO / "Session: <date>" / any heading carrying a real
+  # calendar date) this gate can safely reason about. A heading with NO such
+  # token is, by construction, a stable/rolling section (e.g. 'Working
+  # Memory', 'Current state', 'Known patterns / preferences', 'Carry-over',
+  # 'Active Sources Under Watch') that is intentionally rewritten every cycle
+  # and is never flagged by _check_notebook_immutability below — this is the
+  # opt-IN half of the AC-2a fleet-block fix (2026-07-29): enforcement is
+  # scoped to recognized dated subjects rather than everything-except-a-
+  # hardcoded-file-list, so a new agent/notebook with a rolling-heading
+  # convention can never re-trigger the same fleet-wide false-reject.
+  local heading="$1"
+  # Dashed ISO date anywhere in the heading: YYYY-MM-DD.
+  [[ "$heading" =~ [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9] ]] && return 0
+  # Compact ISO date+time anywhere in the heading: YYYYMMDDTHHMM (main.md's
+  # 'cycle-20260729T0837Z' style headings use this form, no dashes).
+  [[ "$heading" =~ [0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]T[0-9][0-9][0-9][0-9] ]] && return 0
+  return 1
+}
+
 _check_notebook_immutability() {
-  local staged nb_files f old_tmp new_tmp old_hashes rc
+  local staged nb_files f old_tmp new_tmp old_hashes new_hashes rc all_msgs mode_nb verdict_word
   local overwrite1="docs/agent-memory/notebooks/po.md"
   local overwrite2="docs/agent-memory/notebooks/market-watcher.md"
   local overwrite3="docs/agent-memory/notebooks/orch-sentinel.md"
+
+  # DISARMED-BY-DEFAULT (2026-07-29, same day as the dated-heading fix above):
+  # corpus replay (scripts/audits/verify-notebook-immutability-gate.sh) found
+  # the dated-heading scoping fix, while correct and kept, is NOT sufficient
+  # for a zero-false-reject hard gate — two FURTHER false-positive classes
+  # remain, neither fixable by heading-text classification: (1) some notebooks
+  # (e.g. dev-frontend.md) keep a rolling status footer with NO '## ' heading
+  # of its own, so it gets silently absorbed into whichever DATED heading is
+  # currently last-in-file, and is legitimately rewritten every cycle — this
+  # gate cannot tell that apart from the real bug; (2) periodic BULK
+  # archival/maintenance restructuring commits (e.g. qa-responder.md's
+  # d5c78d459451 "notebook archival + YELLOW fixes" sweep, a claude-manager-
+  # helper memory-prune-sweep, not a routine per-cycle notebook-write) are
+  # AUTHORIZED to regenerate/condense old dated summaries and legitimately
+  # collide on heading text with different content — this gate cannot
+  # distinguish "routine per-cycle write silently mutated a retained section"
+  # from "authorized archival sweep intentionally recomputed one". Per the
+  # owning row's explicit contingency ("if you cannot get the opt-in
+  # classification correct and validated this run, disarm the gate"): mirrors
+  # the sweep-guard's OWN WARN-by-default/opt-in-reject precedent immediately
+  # below — never blocks a commit unless a caller explicitly opts in via
+  # GIT_NOTEBOOK_IMMUTABILITY_MODE=reject (not recommended fleet-wide until
+  # both classes above are closed and re-validated via the replay script).
+  # All detection/hashing logic stays live and loud (stderr + one aggregated
+  # docs/signals/ write per commit) so real violations are still visible —
+  # only the hard block is gated off.
+  mode_nb="${GIT_NOTEBOOK_IMMUTABILITY_MODE:-warn}"
 
   command -v shasum >/dev/null 2>&1 || {
     echo "[notebook-immutability-guard] INTERNAL: shasum unavailable — cannot verify retained-section immutability, failing open (never block on our own uncertainty)" >&2
@@ -285,6 +371,7 @@ _check_notebook_immutability() {
   [ -z "$nb_files" ] && return 0
 
   rc=0
+  all_msgs=""
   while IFS= read -r f; do
     [ -z "$f" ] && continue
     [ "$f" = "$overwrite1" ] && continue
@@ -306,16 +393,26 @@ _check_notebook_immutability() {
       rm -f "$old_tmp" "$new_tmp"; continue   # no '## ' boundaries on HEAD side — different defect, fail open
     fi
 
+    # Compute the staged side's section hashes ONCE per file (was previously
+    # recomputed — full sed+shasum pass — inside every iteration of the loop
+    # below, an O(headings_old * headings_new) subprocess cost). Reused via
+    # cheap per-heading awk lookups against this pre-computed string instead.
+    new_hashes="$(_notebook_section_hashes "$new_tmp")"
+
     while IFS=$'\t' read -r heading old_hash; do
       [ -z "$heading" ] && continue
+      _is_dated_heading "$heading" || continue   # rolling/stable heading — exempt by design, never flagged
       # Look up this exact heading in the NEW file's own hash table (not a
       # plain grep line match — headings could in theory repeat) to get its
       # staged-side content hash, if that heading still exists there at all.
-      new_hash="$(_notebook_section_hashes "$new_tmp" | awk -F'\t' -v h="$heading" '$1==h{print $2; exit}')"
+      new_hash="$(printf '%s\n' "$new_hashes" | awk -F'\t' -v h="$heading" '$1==h{print $2; exit}')"
       if [ -n "$new_hash" ] && [ "$new_hash" != "$old_hash" ]; then
-        msg="[notebook-immutability-guard] REJECT: ${f} — retained section '${heading}' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle; the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. Commit BLOCKED — recompose per skill AC-3 Step 1 and re-stage."
+        verdict_word="WARN"
+        [ "$mode_nb" = "reject" ] && verdict_word="REJECT"
+        msg="[notebook-immutability-guard] ${verdict_word}: ${f} — retained section '${heading}' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle; the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. mode=${mode_nb} (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh)."
         echo "$msg" >&2
-        write_signal "$msg"
+        all_msgs="${all_msgs}${msg}
+"
         rc=1
       fi
     done <<OLDHASHES
@@ -327,6 +424,19 @@ OLDHASHES
 $nb_files
 NBFILES
 
+  # ONE aggregated signal for the whole commit attempt, not one per rejected
+  # section — a multi-section reject on a single commit previously wrote one
+  # docs/signals/ file per violating heading, flooding po with duplicates for
+  # what is a single actionable event (this commit would be blocked in
+  # reject mode; in the default warn mode it is a visibility-only event).
+  [ -n "$all_msgs" ] && write_signal "$all_msgs"
+
+  # DISARMED-BY-DEFAULT: only propagate as a hard failure when a caller has
+  # explicitly opted this commit into GIT_NOTEBOOK_IMMUTABILITY_MODE=reject.
+  # Default (warn) always returns 0 — detection + logging stay live, the
+  # commit is never blocked, until the two residual false-positive classes
+  # documented above are closed and re-validated.
+  [ "$rc" -eq 1 ] && [ "$mode_nb" != "reject" ] && return 0
   return $rc
 }
 
