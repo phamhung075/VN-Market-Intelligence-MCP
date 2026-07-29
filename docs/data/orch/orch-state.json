@@ -2364,6 +2364,18 @@
         "status": "NEW",
         "payload_ref": null,
         "detail": "Task FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK (P0 supervised, the Layer-0 pre-commit sweep-guard hook): developer agent committed (c2c7243f8, 084f7652e) AND ran git push origin main — verified HEAD==origin/main. Board row status is REVIEW/next_agent=qa — QA never ran, no PO sign-off exists. PUSH-AUTONOMY-1 gate (docs/policies/dev-standards.md:602-613) requires supervised cascade complete for the head task (dev commit + QA APPROVE + PO sign-off, each RAW-verified) BEFORE push — this was skipped. Compare: this same tick, dev-mcp-server correctly deferred push on CI-RED-cdd5fa5a-FIX pending QA/CI confirmation, so this is not a systemic misunderstanding of the policy, an isolated deviation by this one agent. Content itself is low-risk (WARN-by-default git hook, 6/6 regression suite pass, shellcheck clean, non-blocking default) — router is NOT reverting/force-pushing, just dispatching qa for a post-hoc verify-committed review now. Flagging for your awareness."
+      },
+      {
+        "id": "dev-20260729T000419-cired-close",
+        "ts": "2026-07-29T00:04:19Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "CI-RED-cdd5fa5a-FIX ready for DONE_VERIFIED close; agent-father next_agent stranding bug found+fixed",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null,
+        "detail": "CI-RED-cdd5fa5a-FIX gate SATISFIED: QA (a62f9d579842151b5) independently confirmed CI green on subsequent push (gh run head_sha=82e200c57..., conclusion=success, ancestor of fix commit d19d6cdc5), fingerprint recorded in row status_note per feedback_ci_red_close_must_record_fingerprint_else_redrain. QA deliberately did not self-flip (router instructed reserve for po). Row still REVIEW, next_agent=po. Action: flip REVIEW->DONE_VERIFIED + review[]->done_verified[] in one orch-apply.sh write per CANONICAL:SSOT-STATUSFLIP-LANEMOVE. Separately: router found+fixed a next_agent stranding bug this tick (commit 0b0c229fb) -- agent-father flipped 3 rows (cadence+chef-evening x2) to REVIEW but left next_agent=agent-father instead of qa, which would have silently stranded them from QA-Drain forever. Corrected in-lane, no lane/status change needed. Worth a note to agent-father if this recurs (feedback_recurring_bug_escalation threshold=2)."
       }
     ],
     "last_triaged_at": "2026-07-28T14:53:00Z",
