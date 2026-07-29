@@ -75,53 +75,64 @@ try:
     import paddleocr as _real_paddle  # noqa: F401
 except ImportError:
     pass
+try:
+    import PIL as _real_pil  # noqa: F401
+except ImportError:
+    pass
+try:
+    import PIL.Image as _real_pil_image  # noqa: F401
+except ImportError:
+    pass
 
 _ensure_stub("pdf2image", convert_from_path=MagicMock())
 _ensure_stub("pytesseract", image_to_string=MagicMock(return_value=""))
 
 # pdfplumber stub: open() returns a context manager with empty pages
-_plumber_stub = types.ModuleType("pdfplumber")
-_fake_page = MagicMock()
-_fake_page.extract_text.return_value = ""
-_fake_pdf_ctx = MagicMock()
-_fake_pdf_ctx.__enter__ = MagicMock(return_value=MagicMock(pages=[_fake_page]))
-_fake_pdf_ctx.__exit__ = MagicMock(return_value=False)
-_plumber_stub.open = MagicMock(return_value=_fake_pdf_ctx)
-_ensure_stub("pdfplumber")
-sys.modules["pdfplumber"] = _plumber_stub
+# (only inserted when the real package is absent — never clobber a real
+# import that another test module may rely on; see _ensure_stub above)
+if "pdfplumber" not in sys.modules:
+    _plumber_stub = types.ModuleType("pdfplumber")
+    _fake_page = MagicMock()
+    _fake_page.extract_text.return_value = ""
+    _fake_pdf_ctx = MagicMock()
+    _fake_pdf_ctx.__enter__ = MagicMock(return_value=MagicMock(pages=[_fake_page]))
+    _fake_pdf_ctx.__exit__ = MagicMock(return_value=False)
+    _plumber_stub.open = MagicMock(return_value=_fake_pdf_ctx)
+    sys.modules["pdfplumber"] = _plumber_stub
 
-# fitz (PyMuPDF) stub
-_fitz_stub = types.ModuleType("fitz")
-_fake_fitz_doc = MagicMock()
-_fake_fitz_doc.page_count = 4
-_fake_fitz_doc.__getitem__ = MagicMock(return_value=MagicMock())
-_fake_fitz_doc.close = MagicMock()
-_fitz_stub.open = MagicMock(return_value=_fake_fitz_doc)
-_fitz_stub.Matrix = MagicMock(return_value=MagicMock())
-_ensure_stub("fitz")
-sys.modules["fitz"] = _fitz_stub
+# fitz (PyMuPDF) stub — only when the real package is absent
+if "fitz" not in sys.modules:
+    _fitz_stub = types.ModuleType("fitz")
+    _fake_fitz_doc = MagicMock()
+    _fake_fitz_doc.page_count = 4
+    _fake_fitz_doc.__getitem__ = MagicMock(return_value=MagicMock())
+    _fake_fitz_doc.close = MagicMock()
+    _fitz_stub.open = MagicMock(return_value=_fake_fitz_doc)
+    _fitz_stub.Matrix = MagicMock(return_value=MagicMock())
+    sys.modules["fitz"] = _fitz_stub
 
-# paddleocr stub
-_paddle_stub = types.ModuleType("paddleocr")
-_fake_paddle_instance = MagicMock()
-_fake_paddle_instance.ocr = MagicMock(return_value=[[]])
-_paddle_stub.PaddleOCR = MagicMock(return_value=_fake_paddle_instance)
-_ensure_stub("paddleocr")
-sys.modules["paddleocr"] = _paddle_stub
+# paddleocr stub — only when the real package is absent
+if "paddleocr" not in sys.modules:
+    _paddle_stub = types.ModuleType("paddleocr")
+    _fake_paddle_instance = MagicMock()
+    _fake_paddle_instance.ocr = MagicMock(return_value=[[]])
+    _paddle_stub.PaddleOCR = MagicMock(return_value=_fake_paddle_instance)
+    sys.modules["paddleocr"] = _paddle_stub
 
 # numpy stub
 _np_stub = types.ModuleType("numpy")
 _np_stub.array = MagicMock(return_value=MagicMock())  # type: ignore
 _ensure_stub("numpy")
 
-# PIL stub
-_pil_stub = types.ModuleType("PIL")
-_pil_image_stub = types.ModuleType("PIL.Image")
-_pil_image_stub.fromarray = MagicMock(return_value=MagicMock())  # type: ignore
-_pil_image_stub.Image = MagicMock  # type: ignore
-_ensure_stub("PIL")
-sys.modules["PIL"] = _pil_stub
-sys.modules["PIL.Image"] = _pil_image_stub
+# PIL stub — only when the real package is absent
+if "PIL" not in sys.modules:
+    _pil_stub = types.ModuleType("PIL")
+    sys.modules["PIL"] = _pil_stub
+if "PIL.Image" not in sys.modules:
+    _pil_image_stub = types.ModuleType("PIL.Image")
+    _pil_image_stub.fromarray = MagicMock(return_value=MagicMock())  # type: ignore
+    _pil_image_stub.Image = MagicMock  # type: ignore
+    sys.modules["PIL.Image"] = _pil_image_stub
 
 from infrastructure.ocr_adapter import (  # noqa: E402
     LOW_TEXT_DENSITY_THRESHOLD,
