@@ -1,20 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-29 | **Cycle:** FU-ORCH-HOT-SUB150-SPRINT-LIFECYCLE
-
-## Session 2026-07-29 — FIX-COWORK-SPAWNFANOUT-FLOWPATH-BYPASSES-DIGEST-DAILY-DEDUP-GATE — REVIEW
-
-**Task:** BOUNDED-1 auto-pickup, cross-service/. `spawn-fanout.md` Step 5.2 composed the spawn prompt from `slot.flow_path` alone, never reading `slot.trigger_prompt` — digest-daily was the sole slot where the two fields named DIFFERENT files (`flow_path`→`daily-predict.md`, `trigger_prompt`→`main.md`), so every live cowork-dispatcher fire skipped `main.md`'s Step pre-D `DAILY-PREDICT DEDUP GATE` entirely.
-
-**Actions taken:** Step 5.2 now dispatches `slot.trigger_prompt` (composed `flow_path` form is fallback-only), plus a fail-loud pre-spawn check that refuses any slot whose two fields diverge (releases the per-work-item token, logs `errors[]`, `send_telegram(bug)`) — closes the class, not just this slot. Fixed `digest-daily.flow_path` → `main.md` in `cowork-schedule.json` (now agrees with `trigger_prompt`, matches sibling `digest-sunday`). New shared predicate `extractPromptFlowPath()`/`slotEntryPathsAgree()` in `cowork-match-slots.js` (one algorithm, referenced by both the runtime check and the new test — not duplicated). New `cowork-schedule-consistency.test.js`. Corrected a stale decision-comment in `cowork-team/flow/main.md` that still described the pre-fix (buggy) behavior.
-
-**Verification:** RED reproduced directly against `git show HEAD:docs/data/cowork-schedule.json` (real pre-fix content) — new test's live-schedule assertion FAILs exactly on `digest-daily` (8/9); restored → 9/9 GREEN. Confirmed the launchd Layer-B backstop (`cowork-guaranteed-slot-firer.sh`) was never affected — it already read `trigger_prompt` verbatim; grepped it directly to be sure, not assumed. Sibling `cowork-match-slots.test.js` 43/43 and `cowork-catchup-predicate.test.js` 34/34 unaffected (purely additive exports). `bun tsc --noEmit` 0 errors; zero `apps/mcp-server/src/` files touched, no `bun test` delta structurally possible. Did NOT copy the dedup gate into `daily-predict.md` — explicitly forbidden by the row (would create a second claim-gate copy that must stay byte-identical to `main.md`'s). Graphify skipped — env check confirmed no LLM API key (same precondition as 3 prior sessions' hard failures), flagged in WORK.md not silently omitted.
-
-**Board:** `task_board.in_progress[FIX-COWORK-SPAWNFANOUT-FLOWPATH-BYPASSES-DIGEST-DAILY-DEDUP-GATE]` → `review` (`next_agent:qa`, `branch:null`), `.head` synced to idle, via `orch-apply.sh`.
-
-**Simplicity gate:** PASS — Q1 clean (every line traces to the deliverable's PREFERRED-general + assertion clauses), Q2 no single-use abstractions (predicate used by both test + doc-referenced), Q3 senior-test clean, Q4 comment density matches sibling `cadence-policy.js`/`cowork-catchup-predicate.js` precedent for this same file.
-
-Zone health: no drift detected.
+**Last updated:** 2026-07-29 | **Cycle:** FIX-VPS-SSC-INSIDER-502
 
 ## Session 2026-07-29 — FIX-AUDITOR-HEARTBEAT-OUT-OF-CONTRACT-AGENT-WRITE-TIER1 — REVIEW
 
@@ -49,5 +35,21 @@ Zone health: no drift detected.
 **Board:** `task_board.in_progress[FU-ORCH-HOT-SUB150-SPRINT-LIFECYCLE]` → `review` (`next_agent:router`, `branch:null`), `.head` synced to idle, via `orch-apply.sh`.
 
 **Commit:** `b3d9a04eb` (script+test+orch-state.json+archive+decision-journal, single commit, explicit pathspec).
+
+Zone health: no drift detected.
+
+## Session 2026-07-29 — FIX-VPS-SSC-INSIDER-502 — REVIEW (CLOSED-NO-FIX)
+
+**Task:** BOUNDED-1 auto-pickup, `vps-scripts/` (no system-map.json zone — Tier-3 generic dispatch). Decoupled from BA-PREDICTION-EVIDENCE-REVIVAL/TASK-EVIDENCE-HOP1-MCP; decoupling reason: "VPS upstream root-cause diagnosis deferred (requires live SSH, external portal may be down)".
+
+**Findings:** Live-diagnosed WITHOUT VPS SSH — direct HTTP reproduction sufficed. VPS proxy `/proxy/ssc-insider` → 502 "Upstream HTTP 503 from congbothongtin.ssc.gov.vn/...jspx" (3x consistent). Direct sandbox curl to the SAME upstream → 503 "No server is available to handle this request" on every path incl. domain root — identical from non-VN egress AND VN egress (VPS), ruling out geo-block/VPS misconfig. Parent `ssc.gov.vn` healthy (302 nginx); its WebCenter app tier (`/webcenter/portal/ubck`) times out entirely — same app tier `congbothongtin` runs on. Confirmed genuine external SSC outage, no code defect.
+
+**Actions taken:** Added in-code comment at `vps-scripts/vps-proxy-server.js`'s `SSC_INSIDER_UPSTREAM` documenting root cause + explicit "do not add retry" rationale (git-verified precedent: `B-05-FU-SSC-503-RETRY`/commit `a817b5139` already tried+reverted a 503-retry on this exact SSC domain for the sibling BCTC path — caused a 17-day queue freeze because the retry blew the caller's timeout budget; same mismatch applies here vs `sscInsider.ts`'s `withDeadline(30_000)`). Updated `docs/architecture-briefs/2026-07-01-BA-PREDICTION-EVIDENCE-REVIVAL.md` + `docs/WORK.md` with the closure. No functional code change — deliberately did NOT add retry.
+
+**Verification:** `node --check` clean on the touched file (comment-only; no runtime-testable harness exists for this standalone Node script per repo convention). No `bun test`/`tsc` delta possible — zero `apps/mcp-server/src/` files touched. Committed directly to `main`, no task branch (matches `branch:null` CLOSED-NO-FIX precedent, e.g. `9e69d12bb`). Graphify skipped — no Skill-tool grant on this spawned agent, flagged in WORK.md.
+
+**Board:** `task_board.in_progress[FIX-VPS-SSC-INSIDER-502]` → `review` (`next_agent:qa`, `branch:null`), `.head` synced to idle, via `orch-apply.sh`.
+
+**Simplicity gate:** N/A-clean — comment/doc-only change, no logic/feature/abstraction added (Q1-Q4 all trivially NO).
 
 Zone health: no drift detected.
