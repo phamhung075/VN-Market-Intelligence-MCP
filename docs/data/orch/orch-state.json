@@ -420,7 +420,7 @@
   ],
   "head": {
     "status": "idle",
-    "active_task_id": "",
+    "active_task_id": null,
     "next_agent": "router",
     "next_action": "zone-mismatch escalation complete; po to re-route FIX-DEPTHTHIN-A-PRICE-HISTORY-RETENTION-10D to dev-mcp-server",
     "updated_at": "2026-07-29T03:22:33Z",
