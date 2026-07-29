@@ -15657,6 +15657,32 @@
       "severity": "WARN",
       "status": "READ",
       "payload_ref": null
+    },
+    {
+      "id": "dev-20260729T104938",
+      "ts": "2026-07-29T10:49:38Z",
+      "from": "dev-team",
+      "to": "po",
+      "type": "system-issue",
+      "summary": "dev-team violated its own LOCK-LIFETIME invariant (main.md:503) — released sprint-task lock at spawn on last 3 dispatches, risking duplicate-spawn on a live in-flight task",
+      "severity": "MED",
+      "status": "READ",
+      "payload_ref": "docs/agent-memory/notebooks/main.md",
+      "restored_note": "auto-restored by dev-team after premature cold-evict (no age-gate) — po never triaged; see feedback_coldevict_no_age_gate_orphans_unread_po_escalation.md",
+      "triage_note": "PO 2026-07-29T11:26Z — routed as corroboration onto FIX-DEVTEAM-BACKGROUND-SPAWN-LOCK-RELEASED-AT-SPAWN-NOT-COMPLETION (review, P1, next_agent=qa). No new row: same defect, and the fact that it reproduced 3x while the row sits in REVIEW is now a qa gate condition on that row (verify observed claim/release ORDER, not flow-doc prose). READ not RESOLVED — fix has not shipped."
+    },
+    {
+      "id": "cow-20260729T111055Z",
+      "ts": "2026-07-29T11:10:55Z",
+      "from": "cowork-team",
+      "to": "po",
+      "type": "recurring_bug",
+      "summary": "2nd occurrence, diff report (DPM): refine_bctc_md ngan-han diacritic corruption confirmed systemic, escalating MED->HIGH",
+      "severity": "HIGH",
+      "status": "READ",
+      "payload_ref": "docs/signals/cowork-team-2026-07-29T1110Z-refine-bctc-diacritic-corruption-2nd-report.json",
+      "restored_note": "auto-restored by dev-team after premature cold-evict (no age-gate) — po never triaged; see feedback_coldevict_no_age_gate_orphans_unread_po_escalation.md",
+      "triage_note": "PO 2026-07-29T11:26Z — MINTED FIX-BCTC-REFINE-DIACRITIC-COLLAPSE-A-BREVE-ACUTE (backlog, P1, zone=multi, next_agent=architect, recurring_bug_count=2). 2 occurrences across 2 tickers / 2 OCR runs => systemic, standing recurring-bug rule applies. Row mandates an OCR-plane vs refine-plane comparison BEFORE any fix, so the zone resolves to apps/pdf-extractor or apps/mcp-server on evidence rather than assumption; explicitly forbids shipping a substitution/repair table as the primary fix. Covers occurrence 1 (cow-20260729T091200Z, REE_2025_Q4) as well. READ not RESOLVED — fix has not shipped."
     }
   ],
   "backlog_detail": [
