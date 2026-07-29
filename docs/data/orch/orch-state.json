@@ -88,12 +88,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK moved to review, next_agent=qa; head reset to idle per STATUSFLIP-LANEMOVE.",
-    "updated_at": "2026-07-29T09:29:54Z",
-    "updated_by": "dev-pdf-extractor"
+    "status": "in_progress",
+    "active_task_id": "TASK_2006",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of TASK_2006 — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-29T09:47:09Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7410,24 +7410,6 @@
         ],
         "detail_ref": "docs/handoffs/TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-CTG-CARRY-FORWARD.md",
         "notes": "Not a defect in the carry-forward script; the script correctly refused to promote PARTIAL status because the source rows lack balance-sheet data. This is a genuine data-completeness gap requiring re-extraction from the original CTG report source. Escalated by QA 2026-07-10 per the task's own AC-TRACK1-3 clause (if source rows are still corrupted / incomplete, escalate — found incomplete). Mint timing: after gateway-blind defect resolves (blocker confirmed live as of 2026-07-10T01:24Z). QA Review Record indicates the AC-TRACK1-3 escalation is legitimate and correctly routed to backlog."
-      },
-      {
-        "id": "TASK_2006",
-        "type": "DEVELOPMENT",
-        "title": "SUBTASK-DAILY-FF-7 (follow-on): schema comment marking daily_ohlcv.foreign_* frozen",
-        "zone": "apps/mcp-server/",
-        "status": "BACKLOG",
-        "priority": "P2",
-        "size": "S",
-        "depends_on": [
-          "TASK_2002"
-        ],
-        "blocks": [],
-        "created_at": "2026-07-10T19:30:00Z",
-        "created_by": "pm",
-        "promotion_note": "PM atomization of ARCH-DAILY-FOREIGN-FLOW-TABLE (optional follow-on)",
-        "handoff": "docs/handoffs/TASK_2006-daily-ff-deprecation-comment.md",
-        "note": "Optional: annotation-only deprecation comment for legacy columns (no DROP COLUMN per live DB risk)"
       },
       {
         "id": "FIX-VERIFY-DEPLOY-SHA-BENIGN-DOC-DRIFT",
@@ -16887,9 +16869,33 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-29T09:16:48Z",
+    "last_triaged_at": "2026-07-29T09:47:06Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "TASK_2006",
+        "type": "DEVELOPMENT",
+        "title": "SUBTASK-DAILY-FF-7 (follow-on): schema comment marking daily_ohlcv.foreign_* frozen",
+        "zone": "apps/mcp-server/",
+        "status": "IN_PROGRESS",
+        "priority": "P2",
+        "size": "S",
+        "depends_on": [
+          "TASK_2002"
+        ],
+        "blocks": [],
+        "created_at": "2026-07-10T19:30:00Z",
+        "created_by": "pm",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "handoff": "docs/handoffs/TASK_2006-daily-ff-deprecation-comment.md",
+        "note": "Optional: annotation-only deprecation comment for legacy columns (no DROP COLUMN per live DB risk)",
+        "promoted_at": "2026-07-29T09:47:06Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "updated_at": "2026-07-29T09:47:09Z",
+        "claimed_at": "2026-07-29T09:47:09Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
