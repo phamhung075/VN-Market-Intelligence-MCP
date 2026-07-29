@@ -41,7 +41,7 @@ Fires every 15 min via `*/15 * * * *` CronCreate. Reads `docs/data/cowork-schedu
 | 4.6–4.6b | Per-work-item slot claim tokens, leader heartbeat | `slot-claim.md` |
 | 4.7 | Write shared tick snapshot | `tick-snapshot.md` |
 | 4.8 | Pressure-state emit (no-op stub — Step 6 uses call_tool emit_pressure_state, EMIT-DARK-v2 Option C) | `pressure-emit.md` |
-| 5 | Parallel fan-out + published-marker gate contract | `spawn-fanout.md` |
+| 5 | Parallel fan-out + published-marker gate contract + spawn-identity preamble (5.2) + off-flow router-latch detector (5.3) | `spawn-fanout.md` |
 | 5b | Batch last_fired write | `last-fired.md` |
 | 6 + Error Guard | Write telemetry signal; Step 6.0 call_tool emit_pressure_state (mandatory, un-skippable); Step 6.1 conditional signal write; unhandled error boundary | `telemetry.md` |
 

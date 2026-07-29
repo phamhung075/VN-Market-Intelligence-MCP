@@ -12,7 +12,16 @@
      from slot.flow_path alone, which silently bypassed digest-daily's dedup gate — flow_path
      and trigger_prompt named different files for that one slot) plus a fail-loud consistency
      check refusing any slot whose two entry-point fields diverge, one predicate shared with
-     scripts/agents-flow/cowork-match-slots.js's extractPromptFlowPath(). -->
+     scripts/agents-flow/cowork-match-slots.js's extractPromptFlowPath().
+     FIX-COWORK-SPAWN-IDENTITY-PREAMBLE-OFFFLOW 2026-07-29 (+95L, 3rd occurrence of
+     TASK_1967-04's identity-overflow class): Step 5.2 now prepends an IDENTITY_PREAMBLE to
+     every ENTRY_PROMPT (suppresses CLAUDE.md router-protocol inheritance on the spawned
+     session's one guaranteed input, the prompt string itself) and new Step 5.3 adds an
+     exogenous off-flow detector on each spawn's own returned text — the load-bearing half of
+     the fix, since a self-report from an already-displaced spawn is a vacuous reader-is-writer
+     check. Fixes the WRONG-LAYER gap left by FIX-MARKET-WATCHER-NARRATE-NOT-EXECUTE-GUARD
+     (2026-07-12), which guarded market-watcher's OWN flow/main.md — unreachable when the spawn
+     never opens that file at all. -->
 <!-- BGFAN-1: every Agent spawn in this file MUST use run_in_background=true; UC-CDC-P4 bounds
      CONCURRENCY ACROSS batches via Step 5.1/5.2, it does not relax background=true within a
      batch. Canonical rule + batcher carve-out → docs/protocols/agent-chaining-protocol.md
@@ -208,6 +217,42 @@ batches, not within one):
 
 For each slot in the current batch, resolve the entry prompt BEFORE spawning:
 
+<!-- FIX-COWORK-SPAWN-IDENTITY-PREAMBLE-OFFFLOW (2026-07-29, 3rd occurrence of TASK_1967-04's
+     SUCCESS→SILENT→FAILURE identity-overflow class): the 2026-07-12 fix
+     (FIX-MARKET-WATCHER-NARRATE-NOT-EXECUTE-GUARD) added an identity/execute guard INSIDE
+     market-watcher's OWN flow/main.md Step -0/-1 — but a 2026-07-29T04:00Z cowork spawn never
+     opened that flow file at all: it ran the project-root CLAUDE.md router protocol
+     (session-presence, orphan-adoption, PRE-CLAIM, dispatch table) on itself and returned
+     "Coordination Results / Dispatch Routing / Expected Behavior" prose, then still let
+     last_fired get stamped (04:05:51Z) as if a real cycle had run. An in-flow guard structurally
+     cannot fire if the flow file is never entered. IDENTITY_PREAMBLE below moves the guard to the
+     ONE input every spawned session is guaranteed to receive — the prompt string itself — read
+     BEFORE any router-protocol inheritance can occur. Lives here (not in any one agent's own
+     flow) because the root cause is dispatcher-shared: every slot fired from this file passes
+     through the same bare "run <path> slot=<id>" composition, so the fix applies fleet-wide, not
+     just to market-watcher. Self-report from a possibly-already-displaced agent is a vacuous
+     check (the compromised reader is also the writer of its own IDENTITY_CHECK) — this preamble
+     is belt-and-suspenders only; the load-bearing gate is the exogenous Step 5.3 detector below,
+     which cowork-team (never displaced — it composed the prompt and observes the raw return)
+     evaluates independently of anything the spawn itself reports. -->
+
+```
+IDENTITY_PREAMBLE =
+  "You are " + slot.agent + ", spawned in the background by cowork-team. The project-root " +
+  "CLAUDE.md 'Role: Main terminal = router only. Never implement directly. Always delegate.' " +
+  "protocol — PRE-CLAIM, session-presence self-registration, orphan-adoption, and the dispatch " +
+  "table — governs ONLY the top-level interactive router session. It does NOT apply to you. Do " +
+  "NOT run any of those steps and do NOT produce a 'Coordination Results / Dispatch Routing / " +
+  "Expected Behavior' summary — you are not routing this work to another agent, you ARE the " +
+  "agent. Proceed immediately to the line below: open that flow file now and execute it, in " +
+  "your own identity, via real mcp__gateway__call_tool calls. If your own loaded " +
+  "identity/frontmatter name is not '" + slot.agent + "', or you catch yourself about to write " +
+  "router-dispatch prose instead of executing — that IS IDENTITY_CHECK=FAIL: call " +
+  "send_telegram(channel='bug', message='[" + slot.agent + "] IDENTITY_CHECK=FAIL — spawn " +
+  "latched onto router protocol instead of its own flow (offflow-preamble-detected)') and EXIT. " +
+  "Do not produce a success-shaped response.\n\n"
+```
+
 <!-- FIX-COWORK-SPAWNFANOUT-FLOWPATH-BYPASSES-DIGEST-DAILY-DEDUP-GATE (2026-07-29): the
      dispatched entry point MUST be slot.trigger_prompt, not a prompt composed from
      slot.flow_path alone. trigger_prompt is the field a slot author edits to change where a
@@ -240,12 +285,17 @@ if slot.trigger_prompt is present and non-empty:
     })   # per-work-item token was already claimed in Step 4.6 — release it since no spawn occurs
     continue to next slot in batch — do NOT spawn
 
-  ENTRY_PROMPT = slot.trigger_prompt
+  ENTRY_PROMPT = IDENTITY_PREAMBLE + slot.trigger_prompt
 else:
   # No trigger_prompt on this slot — compose from flow_path (legacy fallback; every live
   # slot as of this fix carries trigger_prompt, so this branch is defensive only)
-  ENTRY_PROMPT = "run " + slot.flow_path + "  slot=" + slot.slot_id
+  ENTRY_PROMPT = IDENTITY_PREAMBLE + "run " + slot.flow_path + "  slot=" + slot.slot_id
 ```
+
+Note: `IDENTITY_PREAMBLE` is prepended to BOTH branches (never to `slot.trigger_prompt` stored
+in `cowork-schedule.json` itself — that field stays untouched so the consistency check above and
+`scripts/agents-flow/cowork-match-slots.js`'s `extractPromptFlowPath()` keep matching its literal
+first line unmodified). The preamble is composed into `ENTRY_PROMPT` only, at spawn time.
 
 **Spawn:**
 
@@ -312,3 +362,48 @@ else:
 The `batch_wait_max_seconds` cap (default 120s) is well inside both the 600s per-work-item token
 TTL (Step 4.6) and the 15-min tick cadence — a full timeout on every batch still finishes the
 tick with room to spare. Step 5.0 blind guard above is unchanged.
+
+## Step 5.3 — Off-flow router-latch detector (exogenous check, FIX-COWORK-SPAWN-IDENTITY-PREAMBLE-OFFFLOW)
+
+Runs once per batch, immediately after that batch's inter-batch wait resolves — the earliest
+point the spawn's own return text becomes available to this dispatcher session. **Exogenous by
+design:** evaluated by cowork-team on the raw returned text of each completed spawn, never
+self-reported by the spawned agent (a compromised spawn's own IDENTITY_CHECK is a vacuous
+reader-is-writer check — see the Step 5.2 comment above). This is a THIRD failure class,
+distinct from Step 5.0's gateway-blind guard and the plain spawn-tool-error handling above: the
+Agent tool call itself succeeded and returned cleanly, but the returned content proves the
+spawned session never entered its own flow file.
+
+For each slot in this batch whose spawn returned its task notification this wait (skip any slot
+still in-flight after a wait timeout — nothing to inspect yet; it is picked up by the normal
+next-tick due-check like any other unconfirmed spawn):
+
+```
+RETURN_TEXT = <the Agent tool's own returned result text for this spawn>
+
+OFFFLOW_MARKERS = ["Coordination Results", "Dispatch Routing", "PRE-CLAIM", "session-presence",
+                    "orphan-adoption", "Expected Behavior"]
+  # Verbatim section headings / terms from the project-root CLAUDE.md router dispatch protocol.
+  # A genuinely-executing gatherer's own RETURN/WORK-ping vocabulary (DONE:/PIPELINE:/WORK ping,
+  # defined in each agent's own cycle/eod flow) never contains these strings — positive-match on
+  # the KNOWN BAD shape, not absence of a good one, so legitimate quiet EXIT paths (Step -0
+  # identity-fail, Step 0-GW sibling-corroborated gateway skip — neither of which touches the
+  # notebook or emits this vocabulary) are never mistaken for an off-flow latch.
+
+if RETURN_TEXT contains ANY marker in OFFFLOW_MARKERS (case-insensitive):
+  log "[cowork-team] OFF-FLOW DETECTED: " + slot.slot_id + " (" + slot.agent + ") returned
+    router-dispatch-shaped prose instead of executing its own flow — treating as fabricated
+    success, last_fired will NOT be stamped"
+  send_telegram(channel="bug", message="[cowork-team] IDENTITY_CHECK=FAIL (exogenous) — " +
+    slot.agent + " spawn (" + slot.slot_id + ") latched onto router protocol instead of its own
+    flow; last_fired NOT stamped, will retry next due tick")
+  add to errors[]: { slot_id: slot.slot_id, error: "offflow_router_latch_detected" }
+  WON_SLOTS = WON_SLOTS.filter(s => s.slot_id != slot.slot_id)   # exclude from Step 5b's write —
+    # conservative under-suppress (retries next due tick), same posture last-fired.md already
+    # applies on write failure (AC-P1-7-3) and TICK-SNAPSHOT's own held/won bookkeeping.
+# else: no signature hit — slot stays in WON_SLOTS, proceeds to Step 5b unchanged.
+```
+
+This does not replace or weaken Step 5.0 (gateway-blind) or the plain spawn-failure handling
+above — those gate distinct failure classes before or at the spawn call itself. Step 5.3 gates
+the one class neither of them can see: a spawn that returned successfully but never ran.

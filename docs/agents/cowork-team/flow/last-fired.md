@@ -9,7 +9,11 @@
      Non-fatal on write failure: log WARN, continue to Step 6, do NOT roll back spawns.
      AC-P1-7-1: last_fired written after successful spawn.
      AC-P1-7-2: spawn failure → last_fired NOT written.
-     AC-P1-7-3: write failure is non-fatal; spawn already happened. -->
+     AC-P1-7-3: write failure is non-fatal; spawn already happened.
+     AC-P1-7-4 (FIX-COWORK-SPAWN-IDENTITY-PREAMBLE-OFFFLOW, 2026-07-29): a slot Step 5.3
+     (spawn-fanout.md) flags as off-flow-router-latch-detected is already removed from
+     WON_SLOTS before this step runs — same non-stamp treatment as AC-P1-7-2, just gated on
+     the spawn's returned content instead of its transport-level success/failure. -->
 
 Only execute if `WON_SLOTS` is non-empty (skip on silent-exit path).
 
