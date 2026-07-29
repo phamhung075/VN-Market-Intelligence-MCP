@@ -1,20 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-29 | **Cycle:** FIX-COWORK-SPAWNFANOUT-FLOWPATH-BYPASSES-DIGEST-DAILY-DEDUP-GATE
-
-## Session 2026-07-28 — FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK — REVIEW
-
-**Task:** P0, explicit supervised dispatch per architect's parent-epic ruling (`FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD`, currently BLOCKED, depends on this row) — not a zone-detect Tier-3 pickup. Layer-0 universal backstop for the recurring bare-commit sweep bug: 4 confirmed live occurrences, most recently 2026-07-28T19:5xZ, commit `09ae11440`, swept 5 of PO's own staged paths into a dev-mcp-server-attributed commit under PO's own commit-mutex-held lock — the already-shipped Layer-1 skills fix (pathspec-scoping the commit-mutex/commit-boundary/commit skill lines) did NOT prevent it, because the victim never staged anything and never ran `git commit` itself.
-
-**Actions taken:** New `scripts/git-hooks/pre-commit` implementing brief §4.1's `$GIT_INDEX_FILE` basename discriminator (`index`/`index.lock`=BARE race-free; `next-index-<pid>.lock`=pathspec-SCOPED, structurally immune since git pre-resolves it into a scratch index before the hook runs). WARN-by-default fleet-wide per architect's ratified disposition (never blocks unless a caller opts its own commit into `GIT_SWEEP_GUARD_MODE=reject`); 3 observability channels, all non-silent (stderr banner, `.git/sweep-guard.log`, best-effort `docs/signals/*.json` bug-escalation write matching the live schema exactly). New companion `scripts/git-hooks/post-commit` (optional SHA-correlation). `scripts/git-hooks/install.sh` extended (`pre-push pre-commit post-commit`). New permanent regression suite `scripts/git-hooks/pre-commit.test.sh`.
-
-**Verification:** Re-ran `scripts/audits/verify-commit-sweep-discriminator.sh` before AND after implementing — VERDICT PASS both times (git 2.49.0), premise still holds. `pre-commit.test.sh` 6/6 PASS, re-run 5x with zero flakiness after fixing one real flake found during authoring (`git log --oneline | grep -q` under `set -o pipefail` can report an upstream SIGPIPE as pipeline failure even though grep matched — replaced with variable-capture, no live pipe). Tightened AC-3 beyond the brief's own pseudocode: a `git diff --cached` failure inside the BARE path was initially silently reinterpreted as "0 staged" via `2>/dev/null || true` — routed to the same fail-open+loud UNKNOWN path instead, since a swallowed downstream failure is exactly the class of bug this guard exists to prevent. `shellcheck` clean on all 4 files. **Live verification gate reproduced in a disposable scratch clone of the real repo** (real command output, not asserted from hook prose): actor A stages a file, actor B bare-commits while A's content sits in the shared index — WARN mode loudly flags it and the commit lands (documented day-1 disposition); `GIT_SWEEP_GUARD_MODE=reject` rejects the commit (exit 1), index untouched, A's content fully recoverable, B's pathspec-scoped retry lands cleanly with only B's file. AC-6 (binds the INV-GATEWAY-1-exempt population) confirmed structurally — the hook fires on every `git commit` regardless of caller or MCP binding; the only bypass is `--no-verify`, forbidden fleet-wide.
-
-**Board:** `task_board.ready[FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK]` → `review` (`next_agent:qa`, `branch:null`), `.head` synced to idle, via `orch-apply.sh`. Parent `FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD` left BLOCKED — PO's closeout call, not this task's.
-
-**Simplicity gate:** PASS — Q1 clean (`post-commit`/`GIT_SWEEP_GUARD_MODE` both explicitly named in the handoff's own files-to-create/AC list), Q2 no single-use abstractions (`write_signal()` 2 call sites, `new_repo()` 6 call sites in the test), Q3 senior-test clean (flat, maps 1:1 to brief §4.1 pseudocode), Q4 ratio <50% overhead (comment density matches existing precedent `scripts/git-hooks/pre-push` and `scripts/agents-flow/context-bloat-backstop.sh` for a foundational safety hook).
-
-Zone health: no drift detected — dogfooded the fix itself: this live repo's `main` was dirty with substantial concurrent peer WIP throughout this cycle (exactly the scenario the hook guards against); every commit below used explicit pathspec scoping (`git add <exact paths>` then `git commit ... -- <same exact paths>`), never bare, never `-A`.
+**Last updated:** 2026-07-29 | **Cycle:** FIX-AUDITOR-HEARTBEAT-OUT-OF-CONTRACT-AGENT-WRITE-TIER1
 
 ## Session 2026-07-29 — FIX-NOTEBOOK-LINECAP-SWEEP-BYTE-BLIND-BACKSTOP + FIX-MOCKGUARD-SCOPE-EXCLUDE-TESTGO — REVIEW
 
@@ -41,5 +27,23 @@ Zone health: no drift detected.
 **Board:** `task_board.in_progress[FIX-COWORK-SPAWNFANOUT-FLOWPATH-BYPASSES-DIGEST-DAILY-DEDUP-GATE]` → `review` (`next_agent:qa`, `branch:null`), `.head` synced to idle, via `orch-apply.sh`.
 
 **Simplicity gate:** PASS — Q1 clean (every line traces to the deliverable's PREFERRED-general + assertion clauses), Q2 no single-use abstractions (predicate used by both test + doc-referenced), Q3 senior-test clean, Q4 comment density matches sibling `cadence-policy.js`/`cowork-catchup-predicate.js` precedent for this same file.
+
+Zone health: no drift detected.
+
+## Session 2026-07-29 — FIX-AUDITOR-HEARTBEAT-OUT-OF-CONTRACT-AGENT-WRITE-TIER1 — REVIEW
+
+**Task:** BOUNDED-1 auto-pickup, P2, cross-service/. A Tier-1 DEGRADED cycle (06:08:22Z) wrote `docs/data/auditor-tier1-last-healthy.json` despite `main.md:748-755` explicitly gating that write out of Tier-1 — no authorizing step anywhere in the flow produced it, collapsing the file from `{last_healthy_at, checks{6 keys}}` to bare `{last_healthy_at}` and falsely advancing a "healthy" marker on a non-healthy cycle. A prose prohibition alone had already been tried and failed (2nd violation).
+
+**Actions taken:** New `scripts/git-hooks/pre-commit` `_check_auditor_heartbeat_shapes` — runs unconditionally BEFORE the pre-existing sweep-guard mode dispatch, never `GIT_SWEEP_GUARD_MODE`-gated: rejects (commit BLOCKED, loud stderr) any staged tier-1 write that isn't the exact `{last_healthy_at, checks:{6 keys, all "PASS"}}` shape, and any staged tier-2/3 write carrying a `checks` key at all. New `CANONICAL:SSOT-AUDITOR-HEARTBEAT-SOLE-WRITER` in `docs/policies/dev-standards.md`, cited from both writers (`auditor-tier1-probe.sh` header, `main.md` § Tier-2/3 Heartbeat Write — which now also states the resolved semantic split explicitly). Live file repaired by actually running the authorized writer (`bash scripts/agents-flow/auditor-tier1-probe.sh`) — genuine ALL_GREEN, not hand-edited.
+
+**Semantic judgment call (AC4):** the family's one filename says "healthy" but tier-2/3 really means "an audit completed" (fires every cycle regardless of verdict — `auditor-signal-loop-P1`, load-bearing for the SKIP-SPAWN freshness gate). Re-gating tier-2/3 on green was rejected — would starve the heartbeat on a persistently-tracked DEGRADED cycle and recreate the exact spawn-storm that P1 fix closed. Renaming the files/field was rejected — would break `FIX-AUDITOR-TIER1-FRESHNESS-CHECK-RELOCATE-TO-SENTINEL`'s already-planned OH-3.5 reads of these exact paths (sibling row, sequenced with this one). Kept both filenames/fields; made shape (bare vs `checks{}`) the enforced structural signal distinguishing the two semantics. `suppress_heartbeat` NOT ported to Tier-1; `AUDIT_TIER` 2/3 gate at `main.md:750` NOT dropped (both explicitly rejected directions per the sibling row's `.why_the_obvious_fixes_are_wrong`).
+
+**Verification:** New `scripts/git-hooks/pre-commit-auditor-heartbeat.test.sh` — RED (3/6 fail pre-guard) → GREEN (6/6). No regressions: pre-existing `pre-commit.test.sh` 6/6, `auditor-tier1-probe.test.sh` 141/141, both scripts otherwise byte-identical to before. `bash -n` syntax-clean on the hook. Shell/JSON/MD only — no `apps/mcp-server/` TS touched, `bun tsc`/`bun test` not applicable. Graphify: no Skill-tool path available to this spawned agent (same structural constraint as 2 prior sessions today) — flagged in `docs/WORK.md`, not silently skipped.
+
+**Board:** `task_board.in_progress[FIX-AUDITOR-HEARTBEAT-OUT-OF-CONTRACT-AGENT-WRITE-TIER1]` → `review` (`next_agent:po`, `branch:null`), `.head` synced to idle, via `orch-apply.sh`.
+
+**Simplicity gate:** PASS — Q1 clean (every line traces to one of the 6 acceptance criteria), Q2 single-use `_check_auditor_heartbeat_shapes` justified by direct precedent (`write_signal`/sweep-guard dispatch already single-purpose in the same file), Q3 senior-test clean (flat jq predicates, no indirection), Q4 ratio <50% overhead.
+
+**Commits:** `612ee0954` (guard+docs+test), `06f15af0d` (live file repair, separate — data vs code convention).
 
 Zone health: no drift detected.
