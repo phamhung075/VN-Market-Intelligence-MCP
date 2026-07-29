@@ -314,6 +314,14 @@ terminal in-place without a lane move previously stranded forever in these lanes
 read them). Cold sink: the `.backlog_detail[]` field in the monthly archive (present in the schema
 since inception, previously always `[]`, now wired). `--exclude-ids` is a migration-time safety
 valve only — not a permanent per-row allowlist.
+**FIX-COLD-EVICT-EXCLUDE-IDS-VS-HARD-COHERENCE (2026-07-29):** an excluded row keeps its terminal
+status only until this script's own SHG-3 write-gate runs — `build_hot_temp()` relabels it in-place
+to a lane-coherent status (`EXCLUDE_RELABEL_STATUS` env, default `BLOCKED` for backlog/review/
+in_progress, `QA`/`READY` for qa/ready — mirrors `LANE_ALLOWED_STATUSES`, orchStateSchema.ts) before
+validation, and stamps `verify_note` with the original status + timestamp for traceability. Without
+this, a terminal status parked in a non-terminal lane hard-fails Stage-1b `checkLaneCoherence()`
+(D5-BACKLOG-HYGIENE-VALIDATOR-HARDENING, commit `ed01c5c1b`) and aborts the *entire* eviction run,
+not just the excluded row. The checker itself is untouched — only the data it validates is corrected.
 Atomic temp-then-rename; cold-first ordering; mtime-CAS retry; idempotent.
 Internal orch-apply.sh call propagates `ORCH_APPLY_LIVE_FILE_OVERRIDE="${ORCH_STATE}"` (no-op in
 production — REQUIRED whenever `ORCH_STATE` is overridden, e.g. testing against a throwaway

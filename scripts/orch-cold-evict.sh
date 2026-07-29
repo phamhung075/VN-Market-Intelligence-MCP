@@ -51,6 +51,29 @@
 # two, the existing FIX-SPRINT-GOAL-STATUS-DRIFT-EVICT predicate already
 # covers them correctly and simply had nothing terminal to find.
 #
+# FIX-COLD-EVICT-EXCLUDE-IDS-VS-HARD-COHERENCE (2026-07-29): closes a latent
+# conflict between the `--exclude-ids` safety valve above (D4) and Stage-1b
+# checkLaneCoherence() in scripts/orch-validate.mjs (hard-fail since
+# D5-BACKLOG-HYGIENE-VALIDATOR-HARDENING, commit ed01c5c1b). A row named in
+# --exclude-ids keeps its TERMINAL status (DONE/CANCELLED/...) while remaining
+# in a non-terminal lane (backlog/review/qa/in_progress/ready) by construction
+# — that is exactly the shape LANE_ALLOWED_STATUSES (orchStateSchema.ts) hard-
+# rejects, so the excluded row aborted the ENTIRE run via the SHG-3 write-gate
+# below, not just its own eviction. FIX: build_hot_temp() now relabels an
+# excluded-and-terminal row's `.status` to the lane's own coherent non-terminal
+# status (EXCLUDE_RELABEL_STATUS map below) BEFORE the SHG-3 gate runs, so the
+# hard-fail check itself is untouched (still zero exceptions, D5's intent
+# preserved) — the DATA it validates is corrected instead. Chosen over the
+# alternative (teach orch-validate.mjs an exemption list for excluded ids):
+# that would touch the shared SSOT validator used by every orch-state.json
+# writer, widening the blast radius of a bypass mechanism; this fix stays
+# entirely inside the "sole SSOT eviction script" (R-HIGH-1) that already owns
+# --exclude-ids. A `verify_note` audit trail records the original status +
+# relabel timestamp so the correction is traceable, not silent. Reproduced +
+# root-caused by router (git-stash-confirmed causal); rationale recorded in
+# docs/agent-memory/decisions/ (decision-journal skill, task_id FIX-COLD-
+# EVICT-EXCLUDE-IDS-VS-HARD-COHERENCE).
+#
 # Usage:
 #   scripts/orch-cold-evict.sh [--dry-run] [--exclude-ids ID1,ID2 [--exclude-ids ID3]]
 #
@@ -136,6 +159,18 @@ DECISION_JOURNAL_MAX_AGE_DAYS="${DECISION_JOURNAL_MAX_AGE_DAYS:-14}"
 # D0-flagged false-positive (label says terminal, reality says still open).
 # Settable via env directly, or appended to via repeatable `--exclude-ids` flag.
 EXCLUDE_TASK_IDS="${EXCLUDE_TASK_IDS:-}"
+
+# FIX-COLD-EVICT-EXCLUDE-IDS-VS-HARD-COHERENCE (2026-07-29): the coherent,
+# non-terminal status a --exclude-ids row is relabeled to (build_hot_temp,
+# Pass 2b) so it never sits in a lane with a status LANE_ALLOWED_STATUSES
+# (apps/mcp-server/src/infrastructure/orchStateSchema.ts) rejects. One
+# lane=STATUS pair per TASK_LANES member. BLOCKED where the schema admits it
+# (backlog/review/in_progress — D2.5 PO-ratified sub-state); qa/ready have no
+# BLOCKED entry in LANE_ALLOWED_STATUSES so they fall back to the lane's own
+# sole/primary status. MUST stay in lockstep with LANE_ALLOWED_STATUSES if
+# that map ever changes (mirrors the TERMINAL_TASK_STATUSES/TERMINAL_SET
+# byte-identical convention above).
+EXCLUDE_RELABEL_STATUS="${EXCLUDE_RELABEL_STATUS:-backlog=BLOCKED,review=BLOCKED,qa=QA,in_progress=BLOCKED,ready=READY}"
 
 # FIX-DEPSSATISFIED-COLD-ARCHIVED-DEP-RESOLVES-MISSING (2026-07-28):
 # referential-integrity eviction guard — a candidate row (done[]/
@@ -261,6 +296,7 @@ compute_id_maps() {
     --arg     term_task   "${TERMINAL_TASK_STATUSES}" \
     --arg     task_lanes  "${TASK_LANES}" \
     --arg     exclude_ids "${EXCLUDE_TASK_IDS}" \
+    --arg     exclude_relabel_status "${EXCLUDE_RELABEL_STATUS}" \
     --argjson cold_done   "${cold_done}" \
     --argjson cold_sprint "${cold_sprint}" \
     --argjson cold_signal "${cold_signal}" \
@@ -282,6 +318,11 @@ compute_id_maps() {
       ($task_lanes  | split(",")) as $lane_arr |
       ($exclude_ids | split(",") | map(select(. != ""))
         | map({key: ., value: true}) | from_entries) as $excl_set |
+      # FIX-COLD-EVICT-EXCLUDE-IDS-VS-HARD-COHERENCE: lane -> relabel-target
+      # status map, parsed from "lane=STATUS,lane=STATUS,...".
+      ($exclude_relabel_status | split(",") | map(select(. != ""))
+        | map(split("=")) | map({key: .[0], value: .[1]}) | from_entries)
+        as $relabel_status_by_lane |
       (now - ($max_days * 86400)) as $cutoff |
       (now - ($max_days_dj * 86400)) as $dj_cutoff |
 
@@ -440,6 +481,32 @@ compute_id_maps() {
           value: ($terminal_ids_by_lane[.] | map({key: ., value: true}) | from_entries)
         }) | from_entries) as $rm_task_by_lane |
 
+      # FIX-COLD-EVICT-EXCLUDE-IDS-VS-HARD-COHERENCE: rows that WOULD have
+      # been terminal-evicted this pass but are held back by $excl_set (the
+      # --exclude-ids safety valve, D4) — the INVERSE selector of
+      # $terminal_ids_by_lane_raw above. These are relabeled (not evicted) in
+      # build_hot_temp so a terminal status never sits in a non-terminal lane
+      # (the exact shape Stage-1b checkLaneCoherence() hard-rejects).
+      (reduce $lane_arr[] as $lane (
+        {};
+        . + { ($lane): [
+          ($root.task_board[$lane] // [])[] | select(
+            (.id != null) and
+            ((.status // "") | IN($tt_arr[])) and
+            ($excl_set[(.id // "")] == true)
+          ) | .id
+        ] }
+      )) as $excluded_terminal_ids_by_lane |
+
+      ($lane_arr | map({
+          key: .,
+          value: (
+            ($relabel_status_by_lane[.] // "BLOCKED") as $target |
+            $excluded_terminal_ids_by_lane[.]
+              | map({key: ., value: $target}) | from_entries
+          )
+        }) | from_entries) as $relabel_excluded_by_lane |
+
       # ── decision_journal[]: age-gated, INDEX-keyed (no stable unique id —
       # task_id/sprint_id repeat across multiple decisions) (FU-ORCH-HOT-
       # SUB150-SPRINT-LIFECYCLE / P7) ───────────────────────────────────────
@@ -480,6 +547,9 @@ compute_id_maps() {
         # {"<original-index>": true} removal map — decision_journal has no
         # stable unique id, so removal from hot is by array position.
         rm_decision_journal_idx: $rm_decision_journal_idx,
+        # {lane: {id: target_status}} — FIX-COLD-EVICT-EXCLUDE-IDS-VS-HARD-
+        # COHERENCE: excluded rows relabeled (not removed) in build_hot_temp.
+        relabel_excluded_by_lane: $relabel_excluded_by_lane,
 
         # {id: true} sets for selecting new items to cold
         # done + done_verified share the same cold target (done_tasks[])
@@ -504,6 +574,13 @@ compute_id_maps() {
         n_evict_task_total:  ($all_terminal_task_ids | length),
         n_evict_task_by_lane: ($lane_arr | map({key: ., value: ($terminal_ids_by_lane[.] | length)}) | from_entries),
         n_evict_decision_journal: ($dj_evict_candidates | length),
+        # FIX-COLD-EVICT-EXCLUDE-IDS-VS-HARD-COHERENCE: rows relabeled (kept,
+        # not evicted) this pass because they are both terminal-status AND
+        # named in --exclude-ids. Non-zero is expected/healthy whenever the
+        # safety valve is actually in use.
+        n_relabel_excluded: (
+          [$lane_arr[] as $lane | $excluded_terminal_ids_by_lane[$lane][]] | length
+        ),
         n_new_cold: (
           ($new_done_ids | length) + ($new_dv_ids | length) +
           ($new_sprint_ids | length) + ($new_sprint_goal_ids | length) +
@@ -643,6 +720,7 @@ build_hot_temp() {
   jq \
     --argjson maps "${maps}" \
     --arg     task_lanes "${TASK_LANES}" \
+    --arg     now "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
     '
       .task_board.done           |= [.[] | select((.id // "") as $id | $maps.rm_done[$id]     != true)] |
       .task_board.done_verified  |= [.[] | select((.id // "") as $id | $maps.rm_dv[$id]       != true)] |
@@ -652,10 +730,32 @@ build_hot_temp() {
       .signal_queue.archive       = [] |
       # D4-BACKLOG-HYGIENE-ORCH-COLD-EVICT-EXTEND: remove terminal-status rows
       # from each flat task lane (backlog/review/qa/in_progress/ready).
+      # FIX-COLD-EVICT-EXCLUDE-IDS-VS-HARD-COHERENCE: rows kept because they
+      # are --exclude-ids-excluded are then RELABELED (not removed) to the
+      # lane-coherent status computed in compute_id_maps
+      # ($relabel_excluded_by_lane) — closes the Stage-1b checkLaneCoherence()
+      # hard-fail this safety valve used to trigger. verify_note records the
+      # original status + timestamp so the correction is auditable.
       reduce ($task_lanes | split(","))[] as $lane (
         .;
         .task_board[$lane] = ((.task_board[$lane] // []) |
-          [.[] | select((.id // "") as $id | ($maps.rm_task_by_lane[$lane][$id] // false) != true)])
+          [.[] | select((.id // "") as $id | ($maps.rm_task_by_lane[$lane][$id] // false) != true)]
+          | map(
+              (.id // "") as $id |
+              ($maps.relabel_excluded_by_lane[$lane][$id] // null) as $target |
+              if $target != null then
+                . + {
+                  status: $target,
+                  verify_note: (
+                    "FIX-COLD-EVICT-EXCLUDE-IDS-VS-HARD-COHERENCE: --exclude-ids safety valve relabeled "
+                    + (.status // "?") + " -> " + $target + " at " + $now + " for lane coherence"
+                    + (if ((.verify_note // "") | length) > 0
+                       then " | prior verify_note: " + .verify_note
+                       else "" end)
+                  )
+                }
+              else . end
+            ))
       ) |
       # FU-ORCH-HOT-SUB150-SPRINT-LIFECYCLE / P7: remove age-evicted
       # decision_journal[] entries by original array INDEX (no stable id).
@@ -718,6 +818,7 @@ if [[ "${DRY_RUN}" == "true" ]]; then
   N_TASK_BY_LANE=$(echo "${MAPS}" | jq -c '.n_evict_task_by_lane')
   N_DJ=$(echo "${MAPS}"      | jq '.n_evict_decision_journal')
   N_NEW=$(echo "${MAPS}"     | jq '.n_new_cold')
+  N_RELABEL=$(echo "${MAPS}" | jq '.n_relabel_excluded')
 
   # Project hot-file size without writing (pipe jq output to wc -c)
   PROJECTED_SIZE=$(build_hot_temp "${MAPS}" /dev/stdout | wc -c | tr -d ' ')
@@ -734,6 +835,7 @@ if [[ "${DRY_RUN}" == "true" ]]; then
   log "  signal_queue.archive[] evict:   ${N_SIG_A} items from hot"
   log "  flat task lanes (${TASK_LANES}) would evict: ${N_TASK} items from hot -> backlog_detail[] (${N_TASK_BY_LANE})"
   log "  decision_journal[]  would evict: ${N_DJ} items from hot"
+  log "  --exclude-ids rows  would relabel (kept, lane-coherence fix): ${N_RELABEL}"
   log "  New items to append to cold:    ${N_NEW}"
   log "  Current hot-file size:          ${CURRENT_SIZE} bytes"
   log "  Projected hot-file size:        ${PROJECTED_SIZE} bytes"
@@ -771,6 +873,7 @@ while [[ ${ATTEMPT} -lt ${MTIME_CAS_RETRIES} ]]; do
   log "  signal archive[]:    $(echo "${MAPS}" | jq '.n_evict_sig_arch') to evict from hot"
   log "  flat task lanes (${TASK_LANES}): $(echo "${MAPS}" | jq '.n_evict_task_total') to evict from hot -> backlog_detail[] ($(echo "${MAPS}" | jq -c '.n_evict_task_by_lane'))"
   log "  decision_journal[]:  $(echo "${MAPS}" | jq '.n_evict_decision_journal') to evict from hot"
+  log "  --exclude-ids rows relabeled (kept, lane-coherence fix): $(echo "${MAPS}" | jq '.n_relabel_excluded')"
   log "  New items to cold:   $(echo "${MAPS}" | jq '.n_new_cold')"
 
   # ── Pass 2a: Build cold temp ─────────────────────────────────────────────
