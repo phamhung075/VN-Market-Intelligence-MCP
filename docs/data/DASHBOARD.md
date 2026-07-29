@@ -154,3 +154,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: B-05 · BCTC queue stale with 167 pending jobs
+**Severity:** WARN | **Date:** 2026-07-29 | **Status:** OPEN
+**Location:** data_source/bctc_discover
+**Details:** Queue has 167 pending/failed items; VPS service unhealthy; last push 2026-07-28 08:23:22
+**Impact:** Financial statement extraction blocked; Q3 BCTC filings cannot be processed
+**Root cause:** Upstream VPS service unavailable blocking queue processing
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-07-29T14:35:12Z (signal sys-20260729T143457-16cc, system-auditor -> po, dedup_key=data_stale:bctc_discover:B-05, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
