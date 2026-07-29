@@ -1,0 +1,80 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-29T08:13:05Z",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence",
+      "alert-commander-critical": "cadence"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": 240,
+      "market-watcher-offhours": 240,
+      "alert-commander-critical": 240
+    },
+    "last_fired_timestamp": "2026-07-29T08:12:43Z",
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "08:00",
+    "leader_lock": "acquired",
+    "dev_head": "idle",
+    "devq": 5,
+    "signal_backlog": 14,
+    "fanout_gate": {
+      "headroom_mb": "unknown",
+      "load1m": 3,
+      "cores": 12,
+      "degraded": true,
+      "max_parallel": 2,
+      "batch_wait_timeout": true
+    },
+    "offflow_check": {
+      "news-scout-offhours": "clean",
+      "market-watcher-offhours": "clean",
+      "alert-commander-critical": "pending_completion"
+    },
+    "note": "3-slot batch fan-out (news-scout-offhours, market-watcher-offhours, alert-commander-critical), all cadence-due at 240min. Batch1 (2 slots) hit 120s wait timeout still running (not stalled) -- both later confirmed clean via Step 5.3 raw-verify on completion, no offflow markers. Batch2 (alert-commander-critical) fired as last batch, completion still pending. Fan-out gate forced DEGRADED (max_parallel=2) because pressure-state.json still emits legacy field host_headroom_mb (4819) not container_vm_headroom_mb per the 2026-07-28 FIX-PRESSURE-HOST-HEADROOM-WRONG-MACHINE-WRONG-QUANTITY rename -- source (emitPressureStateTool.ts) already emits the new field name, so this looks like a stale mcp-server container build, not a doc/code mismatch. Flagged separately via signal_queue + telegram."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-29T08:13:05Z",
+  "_processed": {
+    "fingerprint": "f9d43900be4b3c3bea246b906a69c5c0bbdb25b4bdb3a98cbf0bd2548a6b4876",
+    "processedAt": "2026-07-29T08:15:31Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
