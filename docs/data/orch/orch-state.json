@@ -1995,7 +1995,7 @@
         "type": "recurring_bug",
         "summary": "5th chef published-marker double-publish: MARKET ids 1062+1063, 194s apart, 07-29 morning. UC-CCA-P3 still BACKLOG since 07-13.",
         "severity": "HIGH",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null
       },
       {
@@ -2035,7 +2035,7 @@
         "type": "recurring_bug_escalation",
         "summary": "2nd live recurrence of FIX-EXECTIER-HEADSYNC-BRANCHNULL-REVIEW-IDLE (docs-only, no code enforcement) -- AND that fix-row itself stale 6d in review w/ head correctly idle, proving QA-Drain loses the idle-chain race independent of head-sync",
         "severity": "HIGH",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/signals/processed/dev-team-20260729T0700Z-headfreeze-v2-corrected-finding.json"
       },
       {
@@ -2046,7 +2046,7 @@
         "type": "agent_flow_defect",
         "summary": "chef-intraday w14 token-budget truncation before publish; marker leaked+released; 5 clusters unpublished",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/signals/cowork-signal-2026-07-29T0722Z-chef-intraday-tokenbudget-marker-leak.json"
       },
       {
@@ -2057,7 +2057,7 @@
         "type": "system-issue",
         "summary": "emit_pressure_state still emits host_headroom_mb; fanout Step 5.1 reads container_vm_headroom_mb -> permanently forced DEGRADED (max_parallel=2). Likely stale mcp-server image.",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/signals/cowork-signal-2026-07-29T0813Z-pressure-headroom-field-stale-container.json"
       },
       {
@@ -2079,7 +2079,7 @@
         "type": "agent_flow_defect",
         "summary": "Router session raced cowork-cron chef-eod dispatch; near-miss (1 dish, no dup) but block was luck-of-claim-order",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/signals/cowork-team-2026-07-29T0858Z-chef-eod-router-race-nearmiss.json"
       },
       {
@@ -2090,7 +2090,7 @@
         "type": "agent_flow_defect",
         "summary": "refine_bctc_md: systematic VN diacritic/word corruption in table labels, conf 0.75-0.8 (above ESC-5 gate), flags[] empty",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/signals/cowork-team-2026-07-29T0912Z-refine-bctc-diacritic-corruption.json"
       }
     ],

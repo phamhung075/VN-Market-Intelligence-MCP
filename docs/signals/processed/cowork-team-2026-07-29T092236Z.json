@@ -1,0 +1,38 @@
+{
+  "from": "cowork-team",
+  "to": "system",
+  "type": "cowork-tick-telemetry",
+  "payload": {
+    "tick": "2026-07-29T09:15Z",
+    "verdict": "WORK",
+    "drift_min": 5,
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "matched_slots": [
+      "fb-daily"
+    ],
+    "won_slots": [
+      "fb-daily"
+    ],
+    "spawned": [
+      "docs/agents/fb-market-poster/flow/main.md"
+    ],
+    "spawn_agent_ids": [
+      "ac7defe239f6b19c1"
+    ],
+    "errors": [],
+    "silent": false,
+    "classification": "FIRE",
+    "max_parallel": 2,
+    "degraded": true,
+    "note": "fb-daily guaranteed slot (cron 15 9 * * 1-5), bypasses cadence-policy table. Step 5.3 off-flow check deferred to completion notification (last/only batch, no inter-batch wait). Also escalated (this tick, pre-fanout): new signal_queue row cow-20260729T091200Z (refine_bctc_md systematic VN diacritic/word corruption in table labels, raw-verified during prior tick's Step 5.3 spot-check)."
+  },
+  "priority": "INFO",
+  "createdAt": "2026-07-29T09:22:36Z",
+  "_processed": {
+    "fingerprint": "644369d427b5a8d9cec3968f891570413db491274094cc46f84b39693b3de651",
+    "processedAt": "2026-07-29T09:45:26Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
